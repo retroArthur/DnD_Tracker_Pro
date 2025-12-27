@@ -49,7 +49,9 @@ const MODULES = [
     // Quests-Module (ersetzt render-quests.js)
     'features/quests/quests-render.js',
     'features/quests/quests-crud.js',
-    'features/render-encounters.js',
+    // Encounters-Module (ersetzt render-encounters.js)
+    'features/encounters/encounters-render.js',
+    'features/encounters/encounters-crud.js',
     
     // Features
     'features/initiative.js',
