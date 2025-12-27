@@ -54,7 +54,7 @@ export function clearDomCache(id?: string): void {
  * const debouncedSearch = debounce(search, 300);
  * input.addEventListener('input', debouncedSearch);
  */
-export function debounce<T extends (...args: any[]) => any>(
+export function debounce<T extends (...args: unknown[]) => unknown>(
     fn: T,
     delay: number = 300
 ): (...args: Parameters<T>) => void {
@@ -78,7 +78,7 @@ export function debounce<T extends (...args: any[]) => any>(
  * const throttledScroll = throttle(onScroll, 100);
  * window.addEventListener('scroll', throttledScroll);
  */
-export function throttle<T extends (...args: any[]) => any>(
+export function throttle<T extends (...args: unknown[]) => unknown>(
     fn: T,
     limit: number = 100
 ): (...args: Parameters<T>) => void {
@@ -118,18 +118,21 @@ export function throttle<T extends (...args: any[]) => any>(
  * @example
  * const expensiveCalc = memoize((n) => fibonacci(n), 50);
  */
-export function memoize<T extends (...args: any[]) => any>(fn: T, maxSize: number = 100): T {
-    const cache = new Map<string, ReturnType<T>>();
+export function memoize<TArgs extends unknown[], TReturn>(
+    fn: (...args: TArgs) => TReturn,
+    maxSize: number = 100
+): (...args: TArgs) => TReturn {
+    const cache = new Map<string, TReturn>();
     const keyOrder: string[] = [];
 
-    return function memoized(this: ThisParameterType<T>, ...args: Parameters<T>): ReturnType<T> {
+    return function memoized(...args: TArgs): TReturn {
         const key = JSON.stringify(args);
 
         if (cache.has(key)) {
-            return cache.get(key) as ReturnType<T>;
+            return cache.get(key) as TReturn;
         }
 
-        const result = fn.apply(this, args);
+        const result = fn(...args);
         cache.set(key, result);
         keyOrder.push(key);
 
@@ -142,7 +145,7 @@ export function memoize<T extends (...args: any[]) => any>(fn: T, maxSize: numbe
         }
 
         return result;
-    } as T;
+    };
 }
 
 // ============================================================
@@ -394,7 +397,7 @@ export function deepClone<T>(obj: T): T {
  * @param sources - Source objects
  * @returns Merged object
  */
-export function deepMerge<T extends Record<string, any>>(target: T, ...sources: Partial<T>[]): T {
+export function deepMerge<T extends Record<string, unknown>>(target: T, ...sources: Partial<T>[]): T {
     if (!sources.length) return target;
 
     const source = sources.shift();
@@ -413,9 +416,12 @@ export function deepMerge<T extends Record<string, any>>(target: T, ...sources: 
                 typeof targetValue === 'object' &&
                 !Array.isArray(targetValue)
             ) {
-                target[key] = deepMerge(targetValue, sourceValue);
+                (target as Record<string, unknown>)[key] = deepMerge(
+                    targetValue as Record<string, unknown>,
+                    sourceValue as Partial<Record<string, unknown>>
+                );
             } else {
-                (target as Record<string, any>)[key] = sourceValue;
+                (target as Record<string, unknown>)[key] = sourceValue;
             }
         }
     }
@@ -429,7 +435,7 @@ export function deepMerge<T extends Record<string, any>>(target: T, ...sources: 
  * @param keys - Keys to pick
  * @returns New object with only specified keys
  */
-export function pick<T extends Record<string, any>, K extends keyof T>(
+export function pick<T extends Record<string, unknown>, K extends keyof T>(
     obj: T,
     keys: K[]
 ): Pick<T, K> {
@@ -448,7 +454,7 @@ export function pick<T extends Record<string, any>, K extends keyof T>(
  * @param keys - Keys to omit
  * @returns New object without specified keys
  */
-export function omit<T extends Record<string, any>, K extends keyof T>(
+export function omit<T extends Record<string, unknown>, K extends keyof T>(
     obj: T,
     keys: K[]
 ): Omit<T, K> {
