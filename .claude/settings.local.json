@@ -12,7 +12,10 @@
       "Bash(npm install:*)",
       "Bash(npm run lint:*)",
       "Bash(npm run format:*)",
-      "Bash(git init:*)"
+      "Bash(git init:*)",
+      "Bash(git commit:*)",
+      "Bash(git config:*)",
+      "Bash(git add:*)"
     ]
   }
 }

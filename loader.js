@@ -36,7 +36,9 @@ const MODULES = [
     'features/party/party-details.js',
     'features/party/party-crud.js',
     'features/render-spells.js',
-    'features/render-locations.js',
+    // Locations-Module (ersetzt render-locations.js)
+    'features/locations/locations-render.js',
+    'features/locations/locations-crud.js',
     'features/render-loot.js',
     // NPC-Module (ersetzt render-npcs.js)
     'features/npcs/npc-render.js',
