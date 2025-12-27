@@ -77,7 +77,7 @@ function filterAssignItems() {
 }
 
 // Trigger field for NPC modal
-let triggerCount = 0;
+// triggerCount ist global in core/constants.js definiert
 
 function addTriggerField() {
     const c = $('npc-triggers-container');

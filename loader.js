@@ -55,8 +55,34 @@ const MODULES = [
     
     // Features
     'features/initiative.js',
-    'features/shops.js',
-    'features/dice.js',
+    'features/encounter-calculator.js',
+
+    // Dice-Module (ersetzt features/dice.js)
+    'features/dice/campaign-manager.js',
+    'features/dice/dice-core.js',
+    'features/dice/dice-favorites.js',
+    'features/dice/timers.js',
+    'features/dice/maps.js',
+    'features/dice/theme.js',
+    'features/dice/layout-profiles.js',
+    'features/dice/session-timer.js',
+    'features/dice/global-search.js',
+    'features/dice/spellslots-ui.js',
+    'features/dice/initiative-extras.js',
+    'features/dice/wiki-links.js',
+    'features/dice/srd-spells.js',
+    'features/dice/monster-templates.js',
+    'features/dice/performance-extras.js',
+    'features/dice/debug.js',
+
+    // Shops-Module (ersetzt features/shops.js)
+    'features/shops/shops-prolog.js',
+    'features/shops/shops-core.js',
+    'features/shops/links.js',
+    'features/shops/wiki.js',
+    'features/shops/mindmap.js',
+    'features/shops/sessions.js',
+    'features/shops/spell-editor.js',
     
     // UI
     'ui/virtual-scroll-helper.js',
