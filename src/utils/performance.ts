@@ -64,6 +64,7 @@ type AnyFunction = (...args: unknown[]) => unknown;
  */
 export function createLogger(debugMode: boolean, prefix: string = '[DnD]') {
     return {
+        // eslint-disable-next-line no-console -- Debug logger intentionally uses console.log
         log: debugMode ? (...args: unknown[]) => console.log(prefix, ...args) : () => {},
         warn: (...args: unknown[]) => console.warn(prefix, ...args),
         error: (...args: unknown[]) => console.error(prefix, ...args)
