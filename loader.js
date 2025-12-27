@@ -46,7 +46,9 @@ const MODULES = [
     'features/npcs/npc-dialogs.js',
     'features/npcs/npc-crud.js',
     'features/npcs/npc-popup.js',
-    'features/render-quests.js',
+    // Quests-Module (ersetzt render-quests.js)
+    'features/quests/quests-render.js',
+    'features/quests/quests-crud.js',
     'features/render-encounters.js',
     
     // Features
