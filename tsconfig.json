@@ -1,0 +1,86 @@
+{
+  "compilerOptions": {
+    // Basis-Einstellungen
+    "target": "ES2020",
+    "module": "ESNext",
+    "lib": ["ES2020", "DOM", "DOM.Iterable"],
+    "moduleResolution": "node",
+    
+    // Schrittweise Migration erlauben
+    "allowJs": true,
+    "checkJs": false,
+    
+    // Ausgabe
+    "outDir": "./dist/ts",
+    "rootDir": "./src",
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    
+    // Strenge Typprüfung (aktiviert)
+    "strict": true,
+    "noImplicitAny": true,
+    "strictNullChecks": true,
+    "strictFunctionTypes": true,
+    "strictBindCallApply": true,
+    "noImplicitThis": true,
+    "useUnknownInCatchVariables": true,
+    
+    // Zusätzliche Checks
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "noUncheckedIndexedAccess": false,
+    
+    // Interoperabilität
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "forceConsistentCasingInFileNames": true,
+    
+    // Experimentelle Features
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    
+    // Pfad-Aliase
+    "baseUrl": ".",
+    "paths": {
+      "@core/*": ["src/core/*"],
+      "@features/*": ["src/features/*"],
+      "@ui/*": ["src/ui/*"],
+      "@utils/*": ["src/utils/*"],
+      "@types/*": ["src/types/*"]
+    },
+    
+    // Skip Library Check für schnellere Kompilierung
+    "skipLibCheck": true,
+    
+    // Nur eigene Types verwenden, keine aus node_modules/@types
+    "types": [],
+    "typeRoots": ["./types"]
+  },
+  
+  "include": [
+    "src/**/*.ts",
+    "types/**/*.d.ts"
+  ],
+  
+  "exclude": [
+    "node_modules",
+    "dist",
+    "tools",
+    "features",
+    "core",
+    "utils",
+    "ui",
+    "render",
+    "systems",
+    "*.py",
+    "**/*.js"
+  ],
+  
+  "ts-node": {
+    "esm": true,
+    "experimentalSpecifierResolution": "node"
+  }
+}

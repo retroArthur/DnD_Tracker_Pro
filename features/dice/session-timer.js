@@ -1,0 +1,107 @@
+// [SECTION:SESSION_TIMER]
+// Extrahiert aus dice.js
+// Session-Timer
+// Zeilen: 102
+
+// SESSION TIMER
+// ============================================================
+let sessionTimerInterval = null;
+let sessionTimerSeconds = 0;
+let sessionTimerRunning = false;
+
+function formatSessionTime(totalSeconds) {
+    const hours = Math.floor(totalSeconds / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = totalSeconds % 60;
+    return [hours, minutes, seconds]
+        .map(v => v.toString().padStart(2, '0'))
+        .join(':');
+}
+
+function updateSessionTimerDisplay() {
+    const timeStr = formatSessionTime(sessionTimerSeconds);
+    
+    // Desktop Display
+    const display = $('session-timer-display');
+    if (display) display.textContent = timeStr;
+    
+    // Mobile Display
+    const mobileDisplay = $('mobile-timer-display');
+    if (mobileDisplay) mobileDisplay.textContent = timeStr;
+}
+
+function toggleSessionTimer() {
+    const timer = $('session-timer');
+    const mobileTimer = document.querySelector('.mobile-timer');
+    const toggleBtn = $('session-timer-toggle');
+    
+    if (sessionTimerRunning) {
+        // Pause
+        clearInterval(sessionTimerInterval);
+        sessionTimerRunning = false;
+        timer?.classList.remove('running');
+        timer?.classList.add('paused');
+        mobileTimer?.classList.remove('running');
+        mobileTimer?.classList.add('paused');
+        if (toggleBtn) toggleBtn.textContent = '▶️';
+        showToast('⏸️ Timer pausiert');
+    } else {
+        // Start
+        sessionTimerRunning = true;
+        timer?.classList.remove('paused');
+        timer?.classList.add('running');
+        mobileTimer?.classList.remove('paused');
+        mobileTimer?.classList.add('running');
+        if (toggleBtn) toggleBtn.textContent = '⏸️';
+        showToast('▶️ Timer gestartet');
+        
+        sessionTimerInterval = setInterval(() => {
+            sessionTimerSeconds++;
+            updateSessionTimerDisplay();
+            
+            // Auto-save Session-Zeit alle 5 Minuten
+            if (sessionTimerSeconds % 300 === 0) {
+                D.lastSessionDuration = sessionTimerSeconds;
+                save();
+            }
+        }, 1000);
+    }
+}
+
+function resetSessionTimer() {
+    if (sessionTimerRunning) {
+        toggleSessionTimer(); // Erst pausieren
+    }
+    
+    // Speichere vorherige Session-Zeit
+    if (sessionTimerSeconds > 60) {
+        D.sessionHistory = D.sessionHistory || [];
+        D.sessionHistory.push({
+            date: new Date().toISOString(),
+            duration: sessionTimerSeconds
+        });
+        // Nur letzte 20 Sessions behalten
+        if (D.sessionHistory.length > 20) {
+            D.sessionHistory = D.sessionHistory.slice(-20);
+        }
+        save();
+    }
+    
+    sessionTimerSeconds = 0;
+    updateSessionTimerDisplay();
+    
+    const timer = $('session-timer');
+    timer?.classList.remove('running', 'paused');
+    
+    showToast('⏱️ Timer zurückgesetzt');
+}
+
+function initSessionTimer() {
+    // Lade letzte Session-Zeit falls vorhanden
+    if (D.lastSessionDuration && D.lastSessionDuration > 0) {
+        sessionTimerSeconds = D.lastSessionDuration;
+        updateSessionTimerDisplay();
+    }
+}
+
+// ============================================================

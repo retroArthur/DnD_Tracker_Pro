@@ -1,0 +1,93 @@
+// [SECTION:INITIATIVE_EXTRAS]
+// Extrahiert aus dice.js
+// Initiative Auto-Roll & Drag-Drop
+// Zeilen: 88
+
+// INITIATIVE AUTO-ROLL & DRAG-DROP
+// ============================================================
+function rollAllInitiative() {
+    if (!D.initiative || !D.initiative.combatants || D.initiative.combatants.length === 0) {
+        showToast('Keine Kämpfer in der Initiative');
+        return;
+    }
+    
+    D.initiative.combatants.forEach(entry => {
+        const roll = Math.floor(Math.random() * 20) + 1;
+        const bonus = parseInt(entry.initBonus) || 0;
+        entry.initiative = roll + bonus;
+        entry.lastRoll = roll;
+    });
+    
+    // Auto-sort
+    D.initiative.combatants.sort((a, b) => b.initiative - a.initiative);
+    D.initiative.currentTurn = 0;
+    
+    renderInit();
+    save();
+    showToast('Initiative gewürfelt & sortiert');
+}
+
+function sortInitiative() {
+    if (!D.initiative || !D.initiative.combatants || D.initiative.combatants.length === 0) return;
+    D.initiative.combatants.sort((a, b) => b.initiative - a.initiative);
+    D.initiative.currentTurn = 0;
+    renderInit();
+    save();
+    showToast('Initiative sortiert');
+}
+
+// Drag and Drop for Initiative
+let draggedInitItem = null;
+
+function initDragDrop() {
+    const list = $('init-list');
+    if (!list) return;
+    
+    list.addEventListener('dragstart', function(e) {
+        const row = e.target.closest('.init-row');
+        if (!row) return;
+        draggedInitItem = row;
+        row.classList.add('dragging');
+        e.dataTransfer.effectAllowed = 'move';
+        e.dataTransfer.setData('text/plain', row.dataset.id);
+    });
+    
+    list.addEventListener('dragend', function(e) {
+        const row = e.target.closest('.init-row');
+        if (row) row.classList.remove('dragging');
+        document.querySelectorAll('.init-row').forEach(r => r.classList.remove('drag-over'));
+        draggedInitItem = null;
+    });
+    
+    list.addEventListener('dragover', function(e) {
+        e.preventDefault();
+        const row = e.target.closest('.init-row');
+        if (row && row !== draggedInitItem) {
+            document.querySelectorAll('.init-row').forEach(r => r.classList.remove('drag-over'));
+            row.classList.add('drag-over');
+        }
+    });
+    
+    list.addEventListener('drop', function(e) {
+        e.preventDefault();
+        const targetRow = e.target.closest('.init-row');
+        if (!targetRow || !draggedInitItem || targetRow === draggedInitItem) return;
+        
+        const draggedId = parseInt(draggedInitItem.dataset.id);
+        const targetId = parseInt(targetRow.dataset.id);
+        
+        const draggedIndex = D.initiative.combatants.findIndex(i => i.id === draggedId);
+        const targetIndex = D.initiative.combatants.findIndex(i => i.id === targetId);
+        
+        if (draggedIndex > -1 && targetIndex > -1) {
+            const [removed] = D.initiative.combatants.splice(draggedIndex, 1);
+            D.initiative.combatants.splice(targetIndex, 0, removed);
+            renderInit();
+            save();
+        }
+        
+        document.querySelectorAll('.init-row').forEach(r => r.classList.remove('drag-over'));
+    });
+}
+
+// ============================================================

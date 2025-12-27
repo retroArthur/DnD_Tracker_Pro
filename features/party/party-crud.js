@@ -1,0 +1,279 @@
+// ============================================================
+// PARTY CRUD - Create, Read, Update, Delete Operationen
+// ============================================================
+// Extrahiert aus features/render-party.js
+
+function saveCharacter() {
+    const id = $('edit-char-id').value;
+    const languageSelect = $('char-languages');
+    const selectedLanguages = Array.from(languageSelect.selectedOptions).map(o => o.value);
+
+    // Collect spell slots (including slot 0 for cantrips)
+    const spellSlots = {};
+    for (let i = 0; i <= 9; i++) {
+        const max = parseInt($(`char-slot-${i}`).value) || 0;
+        spellSlots[i] = { max: max, current: max };
+    }
+
+    // Collect attributes
+    const attributes = {
+        str: parseInt($('char-str').value) || 10,
+        dex: parseInt($('char-dex').value) || 10,
+        con: parseInt($('char-con').value) || 10,
+        int: parseInt($('char-int').value) || 10,
+        wis: parseInt($('char-wis').value) || 10,
+        cha: parseInt($('char-cha').value) || 10
+    };
+
+    // Collect saving throw proficiencies
+    const saveProficiencies = {
+        str: $('char-save-str').checked,
+        dex: $('char-save-dex').checked,
+        con: $('char-save-con').checked,
+        int: $('char-save-int').checked,
+        wis: $('char-save-wis').checked,
+        cha: $('char-save-cha').checked
+    };
+
+    // Collect resistances and immunities
+    const resistances = Array.from(document.querySelectorAll('#char-resistances .char-resistance-chip.selected input')).map(i => i.value);
+    const immunities = Array.from(document.querySelectorAll('#char-immunities .char-resistance-chip.selected input')).map(i => i.value);
+
+    const ch = {
+        name: $('char-name').value.trim(),
+        playerName: $('char-player').value.trim(),
+        characterClass: $('char-class').value,
+        subclass: $('char-subclass').value.trim(),
+        race: $('char-race').value,
+        level: parseInt($('char-level').value) || 1,
+        background: $('char-background').value.trim(),
+        alignment: $('char-alignment').value,
+        weight: parseInt($('char-weight').value) || 0,
+        attributes: attributes,
+        saveProficiencies: saveProficiencies,
+        hpCurrent: parseInt($('char-hp-cur').value) || 0,
+        hpMax: parseInt($('char-hp-max').value) || 0,
+        tempHp: parseInt($('char-hp-temp').value) || 0,
+        armorClass: parseInt($('char-ac').value) || 10,
+        initiative: parseInt($('char-init').value) || 0,
+        speed: $('char-speed').value.trim() || '9m',
+        proficiencyBonus: getProficiencyBonus(parseInt($('char-level').value) || 1),
+        hitDice: $('char-hitdice').value.trim(),
+        passivePerception: parseInt($('char-perception').value) || 10,
+        inspiration: $('char-inspiration').checked,
+        resistances: resistances,
+        immunities: immunities,
+        languages: selectedLanguages,
+        spellSlots: spellSlots,
+        currency: {
+            pm: parseInt($('char-pm').value) || 0,
+            gm: parseInt($('char-gm').value) || 0,
+            em: parseInt($('char-em').value) || 0,
+            sm: parseInt($('char-sm').value) || 0,
+            km: parseInt($('char-km').value) || 0
+        },
+        notes: sanitizeHTML($('char-notes').innerHTML),
+        avatar: $('char-avatar') ? $('char-avatar').value.trim() : '',
+        height: parseInt($('char-height').value) || 0
+    };
+    if (!ch.name) { showToast('⚠️ Name erforderlich', 'error'); return; }
+
+    pushUndo(id ? 'Charakter bearbeitet' : 'Charakter erstellt');
+
+    if (id) {
+        const idx = D.characters.findIndex(c => c.id === parseInt(id));
+        if (idx > -1) {
+            // Preserve current slot values when editing
+            const existing = D.characters[idx];
+            if (existing.spellSlots) {
+                for (let i = 0; i <= 9; i++) {
+                    if (existing.spellSlots[i] && ch.spellSlots[i].max === existing.spellSlots[i].max) {
+                        ch.spellSlots[i].current = existing.spellSlots[i].current;
+                    }
+                }
+            }
+            D.characters[idx] = { ...D.characters[idx], ...ch };
+        }
+    }
+    else { ch.id = nextId('characters'); ch.spells = []; ch.items = []; D.characters.push(ch); }
+
+    cancelCharEdit(); renderParty(); save();
+    showToast(id ? 'Charakter aktualisiert' : 'Charakter hinzugefügt');
+}
+
+function editChar(id) {
+    const ch = EntityLookup.character(id); if (!ch) return;
+    $('edit-char-id').value = id;
+
+    // Basic info
+    $('char-name').value = ch.name || '';
+    $('char-player').value = ch.playerName || '';
+    $('char-class').value = ch.characterClass || '';
+    $('char-subclass').value = ch.subclass || '';
+    $('char-race').value = ch.race || '';
+    $('char-level').value = ch.level || 1;
+    $('char-background').value = ch.background || '';
+    $('char-alignment').value = ch.alignment || '';
+    $('char-weight').value = ch.weight || '';
+
+    // Attributes
+    const attrs = ch.attributes || { str: 10, dex: 10, con: 10, int: 10, wis: 10, cha: 10 };
+    ['str', 'dex', 'con', 'int', 'wis', 'cha'].forEach(attr => {
+        $(`char-${attr}`).value = attrs[attr] || 10;
+        updateAttrMod(attr);
+    });
+
+    // Saving throw proficiencies
+    const saves = ch.saveProficiencies || {};
+    ['str', 'dex', 'con', 'int', 'wis', 'cha'].forEach(attr => {
+        const checkbox = $(`char-save-${attr}`);
+        const box = checkbox.closest('.char-attr-box') || checkbox.closest('.char-save-box');
+        checkbox.checked = saves[attr] || false;
+        if (saves[attr]) box.classList.add('proficient');
+        else box.classList.remove('proficient');
+    });
+
+    // Combat stats
+    $('char-hp-cur').value = ch.hpCurrent || '';
+    $('char-hp-max').value = ch.hpMax || '';
+    $('char-hp-temp').value = ch.tempHp || '';
+    $('char-ac').value = ch.armorClass || '';
+    $('char-init').value = ch.initiative || '';
+    $('char-speed').value = ch.speed || '9m';
+    $('char-hitdice').value = ch.hitDice || '';
+    $('char-perception').value = ch.passivePerception || '';
+    updateProficiencyBonus();
+
+    // Inspiration
+    $('char-inspiration').checked = ch.inspiration || false;
+    const inspBox = $('char-inspiration').closest('.char-inspiration-box');
+    if (inspBox) {
+        if (ch.inspiration) inspBox.classList.add('active');
+        else inspBox.classList.remove('active');
+    }
+
+    // Resistances and immunities
+    document.querySelectorAll('#char-resistances .char-resistance-chip').forEach(chip => {
+        const val = chip.querySelector('input').value;
+        if ((ch.resistances || []).includes(val)) chip.classList.add('selected');
+        else chip.classList.remove('selected');
+    });
+    document.querySelectorAll('#char-immunities .char-resistance-chip').forEach(chip => {
+        const val = chip.querySelector('input').value;
+        if ((ch.immunities || []).includes(val)) chip.classList.add('selected');
+        else chip.classList.remove('selected');
+    });
+
+    // Languages
+    const languageSelect = $('char-languages');
+    Array.from(languageSelect.options).forEach(o => o.selected = false);
+    if (Array.isArray(ch.languages)) {
+        ch.languages.forEach(lang => {
+            const opt = Array.from(languageSelect.options).find(o => o.value === lang);
+            if (opt) opt.selected = true;
+        });
+    } else if (ch.languages) {
+        ch.languages.split(',').map(l => l.trim()).forEach(lang => {
+            const opt = Array.from(languageSelect.options).find(o => o.value === lang);
+            if (opt) opt.selected = true;
+        });
+    }
+
+    // Spell slots
+    for (let i = 0; i <= 9; i++) {
+        const slot = ch.spellSlots && ch.spellSlots[i];
+        $(`char-slot-${i}`).value = slot ? slot.max : 0;
+    }
+
+    // Currency and notes
+    $('char-notes').innerHTML = sanitizeHTML(ch.notes) || '';
+    const cur = ch.currency || {};
+    $('char-pm').value = cur.pm || 0;
+    $('char-gm').value = cur.gm || 0;
+    $('char-em').value = cur.em || 0;
+    $('char-sm').value = cur.sm || 0;
+    $('char-km').value = cur.km || 0;
+
+    // Avatar and height
+    if ($('char-avatar')) $('char-avatar').value = ch.avatar || '';
+    if ($('char-height')) $('char-height').value = ch.height || '';
+
+    $('char-form').classList.add('open');
+    $('char-form-icon').textContent = '▲';
+}
+
+function cancelCharEdit() {
+    $('edit-char-id').value = '';
+
+    // Basic fields
+    ['char-name', 'char-player', 'char-subclass', 'char-level', 'char-background', 'char-weight', 'char-height', 'char-hp-cur', 'char-hp-max', 'char-hp-temp', 'char-ac', 'char-init', 'char-speed', 'char-hitdice', 'char-perception', 'char-avatar'].forEach(id => {
+        if ($(id)) $(id).value = '';
+    });
+    $('char-class').value = '';
+    $('char-race').value = '';
+    $('char-alignment').value = '';
+    $('char-level').value = '1';
+    $('char-proficiency').value = '+2';
+
+    // Attributes
+    ['str', 'dex', 'con', 'int', 'wis', 'cha'].forEach(attr => {
+        $(`char-${attr}`).value = '10';
+        updateAttrMod(attr);
+    });
+
+    // Saving throws
+    document.querySelectorAll('.char-save-box, .char-attr-box').forEach(box => {
+        box.classList.remove('proficient');
+        const checkbox = box.querySelector('input[type="checkbox"]');
+        if (checkbox && checkbox.id && checkbox.id.startsWith('char-save-')) {
+            checkbox.checked = false;
+        }
+    });
+
+    // Inspiration
+    $('char-inspiration').checked = false;
+    const inspBox = $('char-inspiration').closest('.char-inspiration-box');
+    if (inspBox) inspBox.classList.remove('active');
+
+    // Resistances and immunities
+    document.querySelectorAll('.char-resistance-chip').forEach(chip => chip.classList.remove('selected'));
+
+    // Languages
+    Array.from($('char-languages').options).forEach(o => o.selected = false);
+
+    // Spell slots
+    for (let i = 0; i <= 9; i++) { $(`char-slot-${i}`).value = 0; }
+
+    // Notes and currency
+    $('char-notes').innerHTML = '';
+    ['char-pm', 'char-gm', 'char-em', 'char-sm', 'char-km'].forEach(id => $(id).value = '0');
+
+    // Formular schließen
+    $('char-form').classList.remove('open');
+    $('char-form-icon').textContent = '▼';
+}
+
+// Attribute helper - nutzt globale getAttrMod() Funktion
+
+function getProficiencyBonus(level) {
+    if (level <= 4) return 2;
+    if (level <= 8) return 3;
+    if (level <= 12) return 4;
+    if (level <= 16) return 5;
+    return 6;
+}
+
+function updateProficiencyBonus() {
+    const level = parseInt($('char-level').value) || 1;
+    const bonus = getProficiencyBonus(level);
+    $('char-proficiency').value = `+${bonus}`;
+}
+
+function deleteChar(id) {
+    if (confirm('Löschen?')) {
+        pushUndo('Charakter gelöscht');
+        D.characters = D.characters.filter(c => c.id !== id);
+        renderParty();
+        save();
+    }
+}

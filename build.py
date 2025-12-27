@@ -1,0 +1,233 @@
+#!/usr/bin/env python3
+"""
+D&D Tracker Build Script
+Bündelt alle Module in eine einzige Production-HTML-Datei
+"""
+
+import os
+import re
+from pathlib import Path
+
+# Verwende das Verzeichnis, in dem das Skript liegt
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+SOURCE_DIR = SCRIPT_DIR
+OUTPUT_FILE = os.path.join(SCRIPT_DIR, 'dist', 'dnd-tracker-bundled.html')
+
+def read_file(filepath):
+    """Liest eine Datei"""
+    with open(filepath, 'r', encoding='utf-8') as f:
+        return f.read()
+
+def write_file(filepath, content):
+    """Schreibt eine Datei"""
+    os.makedirs(os.path.dirname(filepath), exist_ok=True)
+    with open(filepath, 'w', encoding='utf-8') as f:
+        f.write(content)
+
+def minify_js(js_code):
+    """Einfache JS-Minifizierung (entfernt Kommentare und Leerzeilen)"""
+    # Entferne einzeilige Kommentare
+    js_code = re.sub(r'//.*?$', '', js_code, flags=re.MULTILINE)
+    # Entferne mehrzeilige Kommentare
+    js_code = re.sub(r'/\*.*?\*/', '', js_code, flags=re.DOTALL)
+    # Entferne Leerzeilen
+    js_code = re.sub(r'^\s*$\n', '', js_code, flags=re.MULTILINE)
+    return js_code
+
+def minify_css(css_code):
+    """Einfache CSS-Minifizierung"""
+    # Entferne Kommentare
+    css_code = re.sub(r'/\*.*?\*/', '', css_code, flags=re.DOTALL)
+    # Entferne Leerzeilen
+    css_code = re.sub(r'^\s*$\n', '', css_code, flags=re.MULTILINE)
+    # Entferne überflüssige Whitespace
+    css_code = re.sub(r'\s+', ' ', css_code)
+    css_code = re.sub(r'\s*{\s*', '{', css_code)
+    css_code = re.sub(r'\s*}\s*', '}', css_code)
+    css_code = re.sub(r'\s*:\s*', ':', css_code)
+    css_code = re.sub(r'\s*;\s*', ';', css_code)
+    return css_code.strip()
+
+def build(minify=False):
+    """Erstellt die gebündelte HTML-Datei"""
+    print("🔨 Starte Build-Prozess...")
+    print(f"📂 Quelle: {SOURCE_DIR}")
+    print(f"📂 Ziel: {OUTPUT_FILE}")
+    print(f"⚙️ Minifizierung: {'Aktiviert' if minify else 'Deaktiviert'}")
+    
+    # Module in Ladereihenfolge (aus loader.js)
+    modules = [
+        'core/config.js',
+        'core/data.js',
+        'core/constants.js',
+        'utils/performance.js',
+        'utils/basic.js',
+        'utils/utilities.js',
+        'systems/undo.js',
+        # Spellslots-Module (ersetzt systems/spellslots.js)
+        'systems/spellslots/spell-slots-core.js',
+        'systems/spellslots/notes-templates.js',
+        'systems/spellslots/quick-reference.js',
+        'systems/spellslots/pwa-install.js',
+        'systems/spellslots/version-migration.js',
+        'systems/spellslots/virtual-list.js',
+        'systems/spellslots/keyboard-shortcuts.js',
+        'systems/spellslots/persistence.js',
+        'systems/spellslots/quick-roll.js',
+        'systems/spellslots/import-export.js',
+        'systems/spellslots/navigation.js',
+        'systems/conditions.js',
+        'systems/hp-calculator.js',
+        'systems/tags.js',
+        'systems/entity-links.js',
+        'systems/avatars.js',
+        'systems/backups.js',
+        'render/helpers.js',
+        # Render-Feature-Module (ersetzt render/main.js)
+        'features/render-dashboard.js',
+        'features/render-party.js',
+        'features/render-spells.js',
+        'features/render-locations.js',
+        'features/render-loot.js',
+        'features/render-npcs.js',
+        'features/render-quests.js',
+        'features/render-encounters.js',
+        # Features
+        'features/encounter-calculator.js',
+        'features/initiative.js',
+        # Shops-Module (ersetzt features/shops.js)
+        'features/shops/shops-core.js',
+        'features/shops/spell-editor.js',
+        'features/shops/sessions.js',
+        'features/shops/wiki.js',
+        'features/shops/links.js',
+        'features/shops/mindmap.js',
+        # Dice-Module (ersetzt features/dice.js)
+        'features/dice/dice-core.js',
+        'features/dice/dice-favorites.js',
+        'features/dice/timers.js',
+        'features/dice/campaign-manager.js',
+        'features/dice/global-search.js',
+        'features/dice/maps.js',
+        'features/dice/wiki-links.js',
+        'features/dice/monster-templates.js',
+        'features/dice/srd-spells.js',
+        'features/dice/spellslots-ui.js',
+        'features/dice/initiative-extras.js',
+        'features/dice/theme.js',
+        'features/dice/layout-profiles.js',
+        'features/dice/session-timer.js',
+        'features/dice/performance-extras.js',
+        'features/dice/debug.js',  # Debug-Modul (nur Development)
+        'ui/dom-builder.js',
+        'ui/safe-render.js',
+        'ui/virtual-scroll-helper.js',
+        'ui/lazy-loading.js',
+        'ui/event-delegation.js',
+        'ui/virtual-scroll.js',
+        'core/init.js'
+    ]
+    
+    # 1. Lade CSS
+    print("\n📝 Lade CSS...")
+    css_content = read_file(f"{SOURCE_DIR}/assets/styles.css")
+    if minify:
+        print("⚙️ Minifiziere CSS...")
+        css_content = minify_css(css_content)
+    print(f"✓ CSS geladen: {len(css_content):,} Zeichen")
+    
+    # 2. Lade HTML Body
+    print("\n📝 Lade HTML Body...")
+    body_content = read_file(f"{SOURCE_DIR}/assets/body.html")
+    print(f"✓ HTML Body geladen: {len(body_content):,} Zeichen")
+    
+    # 3. Lade und kombiniere JavaScript
+    print("\n📝 Lade JavaScript-Module...")
+    js_combined = ""
+    total_js_size = 0
+    
+    for i, module in enumerate(modules, 1):
+        module_path = f"{SOURCE_DIR}/{module}"
+        if os.path.exists(module_path):
+            module_content = read_file(module_path)
+            js_combined += f"\n// ========== {module} ==========\n"
+            js_combined += module_content + "\n"
+            total_js_size += len(module_content)
+            print(f"✓ [{i}/{len(modules)}] {module:40s} ({len(module_content):7,} Zeichen)")
+        else:
+            print(f"⚠ [{i}/{len(modules)}] {module:40s} NICHT GEFUNDEN")
+    
+    if minify:
+        print("\n⚙️ Minifiziere JavaScript...")
+        original_size = len(js_combined)
+        js_combined = minify_js(js_combined)
+        saved = original_size - len(js_combined)
+        print(f"✓ Gespart: {saved:,} Zeichen ({saved/original_size*100:.1f}%)")
+    
+    print(f"\n✓ JavaScript kombiniert: {len(js_combined):,} Zeichen")
+    
+    # 4. Erstelle finale HTML-Datei
+    print("\n📝 Erstelle finale HTML-Datei...")
+    
+    html_template = f"""<!DOCTYPE html>
+<html lang="de" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#0d0d0d">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="D&D Tracker">
+    <meta name="description" content="D&D Kampagnen-Tracker Pro - Modulare Version (Gebündelt)">
+    <title>D&D Kampagnen-Tracker Pro</title>
+    <link rel="manifest" href="data:application/json,{{%22name%22:%22D%26D%20Kampagnen-Tracker%20Pro%22,%22short_name%22:%22D%26D%20Tracker%22,%22start_url%22:%22.%22,%22display%22:%22standalone%22,%22background_color%22:%22%230d0d0d%22,%22theme_color%22:%22%23d4af37%22,%22icons%22:[{{%22src%22:%22data:image/svg+xml,%253Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20100%20100'%253E%253Ctext%20y='.9em'%20font-size='90'%253E%F0%9F%8E%B2%253C/text%253E%253C/svg%253E%22,%22sizes%22:%22any%22,%22type%22:%22image/svg+xml%22}}]}}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+{css_content}
+    </style>
+</head>
+{body_content}
+<script>
+{js_combined}
+
+// Manuelle Initialisierung nach dem Laden aller Module
+if (document.readyState === 'loading') {{
+    document.addEventListener('DOMContentLoaded', () => {{
+        if (typeof init === 'function') {{
+            init().catch(err => console.error('Init error:', err));
+        }}
+    }});
+}} else {{
+    if (typeof init === 'function') {{
+        init().catch(err => console.error('Init error:', err));
+    }}
+}}
+</script>
+</body>
+</html>"""
+    
+    # Schreibe finale Datei
+    write_file(OUTPUT_FILE, html_template)
+    
+    # Statistiken
+    final_size = len(html_template)
+    print(f"\n✅ Build abgeschlossen!")
+    print(f"📄 Datei: {OUTPUT_FILE}")
+    print(f"📊 Größe: {final_size:,} Zeichen ({final_size/1024/1024:.2f} MB)")
+    print(f"\n📦 Komponenten:")
+    print(f"   CSS:        {len(css_content):>10,} Zeichen")
+    print(f"   HTML Body:  {len(body_content):>10,} Zeichen")
+    print(f"   JavaScript: {len(js_combined):>10,} Zeichen")
+    print(f"   {'-' * 40}")
+    print(f"   Total:      {final_size:>10,} Zeichen")
+
+if __name__ == '__main__':
+    import argparse
+    
+    parser = argparse.ArgumentParser(description='D&D Tracker Build Script')
+    parser.add_argument('--minify', action='store_true', help='Minifiziere CSS und JS')
+    args = parser.parse_args()
+    
+    build(minify=args.minify)

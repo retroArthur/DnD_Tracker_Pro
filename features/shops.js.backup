@@ -1,0 +1,3278 @@
+// [SECTION:SHOPS]
+// SHOPS - Shop-System für Händler und Inventar
+// ============================================================
+
+const SHOP_TYPES = {
+    schmied: { icon: '🔨', name: 'Schmied' },
+    wirtshaus: { icon: '🍺', name: 'Wirtshaus' },
+    herberge: { icon: '🛏️', name: 'Herberge' },
+    taverne: { icon: '🍻', name: 'Taverne' },
+    alchemist: { icon: '⚗️', name: 'Alchemist' },
+    apotheke: { icon: '💊', name: 'Apotheke' },
+    bogenmacher: { icon: '🏹', name: 'Bogenmacher' },
+    schneiderei: { icon: '🧵', name: 'Schneiderei' },
+    juwelier: { icon: '💎', name: 'Juwelier' },
+    buchhandlung: { icon: '📚', name: 'Buchhandlung' },
+    skriptorium: { icon: '✒️', name: 'Skriptorium' },
+    magisch: { icon: '🔮', name: 'Magischer Laden' },
+    tempel: { icon: '⛪', name: 'Tempelbedarf' },
+    stall: { icon: '🐴', name: 'Stall' },
+    wagnerei: { icon: '🛒', name: 'Wagnerei' },
+    werft: { icon: '⚓', name: 'Schiffswerft' },
+    kuriositaeten: { icon: '🎭', name: 'Kuriositätenkabinett' },
+    schwarzmarkt: { icon: '🕶️', name: 'Schwarzmarkt' },
+    hehler: { icon: '🗝️', name: 'Hehler' },
+    zelt: { icon: '⛺', name: 'Zelt' },
+    bude: { icon: '🏚️', name: 'Bude' },
+    stand: { icon: '🏕️', name: 'Stand' },
+    laden: { icon: '🏬', name: 'Laden' },
+    wanderer: { icon: '🚶', name: 'Wanderer' },
+    kampagne: { icon: '📜', name: 'Kampagne' },
+    'sc-loot': { icon: '🎒', name: 'SC Loot' },
+    'kampagne-loot': { icon: '🏆', name: 'Kampagne Loot' },
+    'dungeon-loot': { icon: '🏛️', name: 'Dungeon Loot' },
+    fundus: { icon: '📦', name: 'Fundus' },
+    unbekannt: { icon: '❓', name: 'Unbekannt' }
+};
+
+const SHOP_ITEM_CATEGORIES = {
+    weapon: { icon: '⚔️', name: 'Waffe', color: 'var(--red)' },
+    armor: { icon: '🛡️', name: 'Rüstung', color: 'var(--blue)' },
+    gear: { icon: '⚙️', name: 'Ausrüstung', color: '#3498db' },
+    item: { icon: '🧪', name: 'Item', color: 'var(--green)' },
+    potion: { icon: '🧴', name: 'Trank', color: 'var(--purple)' },
+    food: { icon: '🍖', name: 'Essen', color: '#e67e22' },
+    drink: { icon: '🍺', name: 'Trinken', color: '#f39c12' },
+    lodging: { icon: '🛏️', name: 'Unterkunft', color: '#9b59b6' },
+    transport: { icon: '🐴', name: 'Transport', color: '#1abc9c' },
+    clothing: { icon: '👕', name: 'Kleidung', color: '#e91e63' },
+    accessory: { icon: '🎒', name: 'Zubehör', color: '#27ae60' },
+    craft: { icon: '🔨', name: 'Handwerk', color: '#d35400' },
+    prop: { icon: '🎪', name: 'Requisite', color: '#8e44ad' },
+    magic: { icon: '✨', name: 'Magie', color: '#9c27b0' },
+    enchant: { icon: '🔮', name: 'Verzauberung', color: '#673ab7' },
+    buff: { icon: '💪', name: 'Verstärkung', color: '#ff5722' },
+    info: { icon: '📜', name: 'Information', color: '#795548' },
+    trinket: { icon: '🎁', name: 'Kleinigkeit', color: '#607d8b' },
+    service: { icon: '🔧', name: 'Dienstleistung', color: 'var(--cyan)' },
+    misc: { icon: '📦', name: 'Sonstiges', color: 'var(--text-dim)' }
+};
+
+// Shop State
+let expandedShops = new Set();
+
+// D&D 5E Währungssystem
+const DND_CURRENCY = {
+    pp: { name: 'Platin', abbr: 'PP', icon: '💎', inCopper: 1000 },
+    gp: { name: 'Gold', abbr: 'GM', icon: '🪙', inCopper: 100 },
+    ep: { name: 'Elektrum', abbr: 'EM', icon: '⚪', inCopper: 50 },
+    sp: { name: 'Silber', abbr: 'SM', icon: '🥈', inCopper: 10 },
+    cp: { name: 'Kupfer', abbr: 'KM', icon: '🥉', inCopper: 1 }
+};
+
+// Warenkorb
+let shopCart = [];
+
+function parseCurrency(costStr) {
+    if (!costStr) return 0;
+    const str = costStr.toLowerCase().trim();
+    let totalCopper = 0;
+    
+    // Regex für verschiedene Formate: "15 GM", "2GM", "1 PP 5 GM", "100 KM"
+    const patterns = [
+        { regex: /(\d+(?:[.,]\d+)?)\s*(?:pp|platin)/gi, multiplier: 1000 },
+        { regex: /(\d+(?:[.,]\d+)?)\s*(?:gp|gm|gold)/gi, multiplier: 100 },
+        { regex: /(\d+(?:[.,]\d+)?)\s*(?:ep|em|elektrum)/gi, multiplier: 50 },
+        { regex: /(\d+(?:[.,]\d+)?)\s*(?:sp|sm|silber)/gi, multiplier: 10 },
+        { regex: /(\d+(?:[.,]\d+)?)\s*(?:cp|km|kupfer)/gi, multiplier: 1 }
+    ];
+    
+    for (const p of patterns) {
+        let match;
+        while ((match = p.regex.exec(str)) !== null) {
+            totalCopper += parseFloat(match[1].replace(',', '.')) * p.multiplier;
+        }
+    }
+    
+    // Falls nur eine Zahl ohne Währung, nehme Gold an
+    if (totalCopper === 0) {
+        const numMatch = str.match(/^(\d+(?:[.,]\d+)?)/);
+        if (numMatch) {
+            totalCopper = parseFloat(numMatch[1].replace(',', '.')) * 100;
+        }
+    }
+    
+    return Math.round(totalCopper);
+}
+
+function formatCurrency(copperAmount, format = 'optimal') {
+    if (copperAmount === 0) return '0 KM';
+    
+    if (format === 'optimal') {
+        // Optimale Darstellung - größte passende Einheit
+        const parts = [];
+        let remaining = copperAmount;
+        
+        if (remaining >= 1000) {
+            const pp = Math.floor(remaining / 1000);
+            parts.push(`${pp} PP`);
+            remaining %= 1000;
+        }
+        if (remaining >= 100) {
+            const gp = Math.floor(remaining / 100);
+            parts.push(`${gp} GM`);
+            remaining %= 100;
+        }
+        if (remaining >= 10) {
+            const sp = Math.floor(remaining / 10);
+            parts.push(`${sp} SM`);
+            remaining %= 10;
+        }
+        if (remaining > 0) {
+            parts.push(`${remaining} KM`);
+        }
+        
+        return parts.join(' ') || '0 KM';
+    } else if (format === 'gold') {
+        // Alles in Gold
+        const gp = copperAmount / 100;
+        return `${gp.toFixed(gp % 1 === 0 ? 0 : 2)} GM`;
+    }
+    
+    return `${copperAmount} KM`;
+}
+
+function addToCart(shopId, itemIdx, qty = 1) {
+    const shop = (D.shops || []).find(s => s.id === shopId);
+    if (!shop || !shop.items || !shop.items[itemIdx]) return;
+    
+    const item = shop.items[itemIdx];
+    if (item.available === false) {
+        showToast('⚠️ Artikel nicht verfügbar', 'warning');
+        return;
+    }
+    
+    // Prüfe ob bereits im Warenkorb
+    const existingIdx = shopCart.findIndex(c => c.shopId === shopId && c.itemIdx === itemIdx);
+    
+    if (existingIdx > -1) {
+        // Erhöhe Menge, aber nicht über verfügbare Menge
+        const maxQty = item.quantity || 999;
+        shopCart[existingIdx].qty = Math.min(shopCart[existingIdx].qty + qty, maxQty);
+    } else {
+        shopCart.push({
+            shopId,
+            itemIdx,
+            shopName: shop.name,
+            itemName: item.name,
+            category: item.category,
+            cost: item.cost,
+            costCopper: parseCurrency(item.cost),
+            qty: Math.min(qty, item.quantity || 999),
+            maxQty: item.quantity || 999
+        });
+    }
+    
+    updateCartBadge();
+    showToast(`🛒 ${item.name} hinzugefügt`);
+}
+
+function removeFromCart(idx) {
+    shopCart.splice(idx, 1);
+    updateCartBadge();
+    renderCartModal();
+}
+
+function updateCartQty(idx, newQty) {
+    if (shopCart[idx]) {
+        if (newQty <= 0) {
+            removeFromCart(idx);
+        } else {
+            shopCart[idx].qty = Math.min(newQty, shopCart[idx].maxQty);
+            renderCartModal();
+        }
+    }
+}
+
+/**
+ * Wrapper für onChange-Handler im Cart-System
+ * @param {HTMLInputElement} input - Das Input-Element
+ */
+function updateCartQtyFromInput(input) {
+    const idx = parseInt(input.dataset.id);
+    const newQty = parseInt(input.value) || 1;
+    updateCartQty(idx, newQty);
+}
+
+function clearCart() {
+    shopCart = [];
+    updateCartBadge();
+    renderCartModal();
+    showToast('🛒 Warenkorb geleert');
+}
+
+function updateCartBadge() {
+    const badge = $('cart-badge');
+    const totalItems = shopCart.reduce((sum, c) => sum + c.qty, 0);
+    if (badge) {
+        badge.textContent = totalItems;
+        badge.style.display = totalItems > 0 ? 'flex' : 'none';
+    }
+}
+
+function getCartTotal() {
+    return shopCart.reduce((sum, c) => sum + (c.costCopper * c.qty), 0);
+}
+
+function showCartModal() {
+    renderCartModal();
+    showModal('cart-modal');
+}
+
+function renderCartModal() {
+    const container = $('cart-items');
+    const totalEl = $('cart-total');
+    const totalGoldEl = $('cart-total-gold');
+    
+    if (!container) return;
+    
+    if (shopCart.length === 0) {
+        container.innerHTML = '<div class="cart-empty">🛒 Warenkorb ist leer</div>';
+        if (totalEl) totalEl.textContent = '0 KM';
+        if (totalGoldEl) totalGoldEl.textContent = '(0 GM)';
+        return;
+    }
+    
+    // Gruppiere nach Shop
+    const byShop = {};
+    shopCart.forEach((item, idx) => {
+        if (!byShop[item.shopName]) byShop[item.shopName] = [];
+        byShop[item.shopName].push({ ...item, cartIdx: idx });
+    });
+    
+    container.innerHTML = Object.entries(byShop).map(([shopName, items]) => `
+        <div class="cart-shop-group">
+            <div class="cart-shop-name">🏪 ${esc(shopName)}</div>
+            ${items.map(item => {
+                const cat = SHOP_ITEM_CATEGORIES[item.category] || SHOP_ITEM_CATEGORIES.misc;
+                const lineTotal = item.costCopper * item.qty;
+                return `
+                    <div class="cart-item">
+                        <div class="cart-item-info">
+                            <span class="cart-item-icon">${cat.icon}</span>
+                            <span class="cart-item-name">${esc(item.itemName)}</span>
+                        </div>
+                        <div class="cart-item-controls">
+                            <button class="btn btn-sm" data-action="cart-qty-decrease" data-id="${item.cartIdx}" data-value="${item.qty}">−</button>
+                            <input type="number" class="cart-qty-input" value="${item.qty}" min="1" max="${item.maxQty}" 
+                                   data-onChange="updateCartQtyFromInput" data-id="${item.cartIdx}">
+                            <button class="btn btn-sm" data-action="cart-qty-increase" data-id="${item.cartIdx}" data-value="${item.qty}">+</button>
+                        </div>
+                        <div class="cart-item-price">
+                            <span class="cart-item-unit">${esc(item.cost)} × ${item.qty}</span>
+                            <span class="cart-item-total">${formatCurrency(lineTotal)}</span>
+                        </div>
+                        <button class="btn btn-sm btn-danger" data-action="cart-remove" data-id="${item.cartIdx}">✕</button>
+                    </div>
+                `;
+            }).join('')}
+        </div>
+    `).join('');
+    
+    const total = getCartTotal();
+    if (totalEl) totalEl.textContent = formatCurrency(total);
+    if (totalGoldEl) totalGoldEl.textContent = `(${formatCurrency(total, 'gold')})`;
+}
+
+function checkoutCart() {
+    if (shopCart.length === 0) {
+        showToast('⚠️ Warenkorb ist leer', 'warning');
+        return;
+    }
+    
+    const total = getCartTotal();
+    const itemCount = shopCart.reduce((sum, c) => sum + c.qty, 0);
+    
+    // Generiere Quittung
+    const receipt = `═══════════════════════════════════════
+🧾 QUITTUNG
+═══════════════════════════════════════
+${shopCart.map(c => {
+    const lineTotal = c.costCopper * c.qty;
+    return `${c.qty}× ${c.itemName}
+   ${c.cost} × ${c.qty} = ${formatCurrency(lineTotal)}`;
+}).join('\n───────────────────────────────────────\n')}
+═══════════════════════════════════════
+GESAMT: ${formatCurrency(total)}
+        ${formatCurrency(total, 'gold')}
+═══════════════════════════════════════
+${itemCount} Artikel | ${new Date().toLocaleDateString('de-DE')}`;
+    
+    $('checkout-receipt').textContent = receipt;
+    $('checkout-total').textContent = formatCurrency(total);
+    $('checkout-total-breakdown').innerHTML = `
+        <div class="checkout-breakdown">
+            ${total >= 1000 ? `<span>💎 ${Math.floor(total / 1000)} PP</span>` : ''}
+            ${Math.floor((total % 1000) / 100) > 0 ? `<span>🪙 ${Math.floor((total % 1000) / 100)} GM</span>` : ''}
+            ${Math.floor((total % 100) / 10) > 0 ? `<span>🥈 ${Math.floor((total % 100) / 10)} SM</span>` : ''}
+            ${total % 10 > 0 ? `<span>🥉 ${total % 10} KM</span>` : ''}
+        </div>
+    `;
+    
+    hideModal('cart-modal');
+    showModal('checkout-modal');
+}
+
+function confirmCheckout() {
+    // Optional: Reduziere Shop-Inventar
+    shopCart.forEach(c => {
+        const shop = (D.shops || []).find(s => s.id === c.shopId);
+        if (shop && shop.items && shop.items[c.itemIdx]) {
+            const item = shop.items[c.itemIdx];
+            if (item.quantity !== undefined && item.quantity !== null) {
+                item.quantity = Math.max(0, item.quantity - c.qty);
+                if (item.quantity === 0) {
+                    item.available = false;
+                }
+            }
+        }
+    });
+    
+    clearCart();
+    hideModal('checkout-modal');
+    renderShops();
+    save();
+    showToast('✅ Kauf abgeschlossen!');
+}
+
+function copyReceipt() {
+    const receipt = $('checkout-receipt').textContent;
+    navigator.clipboard.writeText(receipt).then(() => {
+        showToast('📋 Quittung kopiert');
+    });
+}
+
+function renderShops() {
+    const container = $('shop-list');
+    if (!container) return;
+    
+    try {
+        // Ensure shops array exists
+        if (!D.shops) D.shops = [];
+        
+        // Update counter
+        updateCounters({ 'shops-io-count': D.shops.length });
+        
+        // Populate location filter
+        populateFilterDropdown('shop-location-filter', D.locations || [], { allLabel: 'Alle Orte' });
+        
+        const search = ($('shop-search')?.value || '').toLowerCase();
+        const typeFilter = $('shop-type-filter')?.value || '';
+        const locationFilter = $('shop-location-filter')?.value ? parseInt($('shop-location-filter').value) : null;
+        
+        let shops = [...D.shops];
+        
+        // Apply filters - mit sicheren Zugriffen
+        if (search) {
+            shops = shops.filter(s => 
+                (s.name || '').toLowerCase().includes(search) ||
+                (s.description || '').toLowerCase().includes(search) ||
+                (s.items || []).some(i => (i.name || '').toLowerCase().includes(search))
+            );
+        }
+        if (typeFilter) {
+            shops = shops.filter(s => s.type === typeFilter);
+        }
+        if (locationFilter) {
+            shops = shops.filter(s => s.locationId === locationFilter);
+        }
+        
+        // Sort by name - sicher
+        shops.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+        
+        if (!shops.length) {
+            container.innerHTML = renderEmptyState({
+                icon: '🏪',
+                titleEmpty: 'Keine Shops',
+                descEmpty: 'Erstelle Shops für Händler und ihre Waren.',
+                buttonText: '+ Neuer Shop',
+                buttonAction: 'call',
+                buttonValue: 'showShopModal',
+                isFiltered: D.shops.length > 0
+            });
+            return;
+        }
+        
+        container.innerHTML = shops.map(shop => {
+            try {
+                const type = SHOP_TYPES[shop.type] || SHOP_TYPES.unbekannt;
+                const npc = EntityLookup.npc(shop.npcId);
+                const location = EntityLookup.location(shop.locationId);
+                const isExpanded = expandedShops.has(shop.id);
+                const items = shop.items || [];
+                const availableItems = items.filter(i => i.available !== false);
+                
+                // Group items by category
+                const weaponCount = items.filter(i => i.category === 'weapon').length;
+                const armorCount = items.filter(i => i.category === 'armor').length;
+                const itemCount = items.filter(i => i.category === 'item').length;
+                const serviceCount = items.filter(i => i.category === 'service').length;
+                const miscCount = items.filter(i => i.category === 'misc').length;
+                
+                return `
+                    <div class="shop-card ${isExpanded ? 'expanded' : 'collapsed'}" id="shop-card-${shop.id}" data-shop-id="${shop.id}">
+                        <div class="shop-header" data-action="toggle-shop" data-id="${shop.id}">
+                            <div class="shop-header-main">
+                                <span class="shop-toggle">${isExpanded ? '▼' : '▶'}</span>
+                                <span class="shop-icon">${type.icon}</span>
+                                <div class="shop-title-block">
+                                    <span class="shop-name">${esc(shop.name || 'Unbenannt')}</span>
+                                    <span class="shop-type-label">${type.name}</span>
+                                </div>
+                            </div>
+                            <div class="shop-header-meta">
+                                ${npc ? renderEntityLink('npcs', npc.id, npc.name, { icon: '🎭', className: 'shop-meta-tag npc' }) : ''}
+                                ${location ? renderEntityLink('locations', location.id, location.name, { icon: '📍', className: 'shop-meta-tag location' }) : ''}
+                                <span class="shop-item-count">${availableItems.length}/${items.length} Artikel</span>
+                            </div>
+                            <div class="shop-header-actions" data-stop-propagation="true">
+                                <button class="btn btn-sm" data-action="edit-shop" data-id="${shop.id}" title="Bearbeiten">✏️</button>
+                                <button class="btn btn-sm btn-danger" data-action="delete-shop" data-id="${shop.id}" title="Löschen">🗑️</button>
+                            </div>
+                        </div>
+                        
+                        <div class="shop-body" style="${isExpanded ? '' : 'display: none;'}">
+                            ${shop.description ? `<div class="shop-description">${esc(shop.description)}</div>` : ''}
+                            ${shop.special ? `<div class="shop-special">✨ ${esc(shop.special)}</div>` : ''}
+                            ${shop.note ? `<div class="shop-note">📝 ${esc(shop.note)}</div>` : ''}
+                            
+                            <div class="shop-category-tabs">
+                                ${weaponCount ? `<span class="shop-cat-badge weapon">⚔️ ${weaponCount}</span>` : ''}
+                                ${armorCount ? `<span class="shop-cat-badge armor">🛡️ ${armorCount}</span>` : ''}
+                                ${itemCount ? `<span class="shop-cat-badge item">🧪 ${itemCount}</span>` : ''}
+                                ${serviceCount ? `<span class="shop-cat-badge service">🔧 ${serviceCount}</span>` : ''}
+                                ${miscCount ? `<span class="shop-cat-badge misc">📦 ${miscCount}</span>` : ''}
+                            </div>
+                            
+                            <div class="shop-items-container">
+                                ${items.length ? renderShopItems(shop.id, items) : '<div class="shop-items-empty">Keine Artikel im Sortiment</div>'}
+                            </div>
+                            
+                            <div class="shop-footer">
+                                <button class="btn btn-sm btn-success" data-action="show-shop-item-modal" data-id="${shop.id}">+ Artikel hinzufügen</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            } catch (shopErr) {
+                console.error('Fehler beim Rendern eines Shops:', shopErr, shop);
+                return `<div class="shop-card" style="color: var(--red);">Fehler beim Laden des Shops</div>`;
+            }
+        }).join('');
+    } catch (err) {
+        console.error('renderShops Fehler:', err);
+        container.innerHTML = renderEmptyState({
+            icon: '⚠️',
+            titleEmpty: 'Fehler beim Laden',
+            descEmpty: 'Die Shop-Daten konnten nicht geladen werden.',
+            gridSpan: 'auto'
+        });
+    }
+}
+
+function renderShopItems(shopId, items) {
+    if (!items || !Array.isArray(items)) return '<div class="shop-items-empty">Keine Artikel</div>';
+    
+    try {
+        return `<div class="si-list">
+            ${items.map((item, idx) => {
+                try {
+                    const cat = SHOP_ITEM_CATEGORIES[item.category] || SHOP_ITEM_CATEGORIES.misc;
+                    const isAvailable = item.available !== false;
+                    const isExpanded = expandedShopItems.has(`${shopId}-${idx}`);
+                    const itemName = item.name || 'Unbenannt';
+                    const itemCost = item.cost || '—';
+                    const itemQty = item.quantity || 1;
+                    
+                    // Details je nach Kategorie
+                    let detailTags = '';
+                    if (item.category === 'weapon') {
+                        detailTags = [
+                            item.type ? `<span class="si-tag"><span class="si-tag-l">Typ:</span> <span class="si-tag-v">${esc(item.type)}</span></span>` : '',
+                            item.damage ? `<span class="si-tag"><span class="si-tag-l">Schaden:</span> <span class="si-tag-v">${esc(item.damage)}</span></span>` : '',
+                            item.properties ? `<span class="si-tag"><span class="si-tag-l">Eigensch.:</span> <span class="si-tag-v">${esc(item.properties)}</span></span>` : '',
+                            item.mastery ? `<span class="si-tag"><span class="si-tag-l">Meisterung:</span> <span class="si-tag-v">${esc(item.mastery)}</span></span>` : '',
+                            item.weight ? `<span class="si-tag"><span class="si-tag-l">Gewicht:</span> <span class="si-tag-v">${esc(item.weight)}</span></span>` : ''
+                        ].filter(Boolean).join('');
+                    } else if (item.category === 'armor') {
+                        detailTags = [
+                            item.type ? `<span class="si-tag"><span class="si-tag-l">Typ:</span> <span class="si-tag-v">${esc(item.type)}</span></span>` : '',
+                            item.ac ? `<span class="si-tag"><span class="si-tag-l">RK:</span> <span class="si-tag-v">${esc(item.ac)}</span></span>` : '',
+                            item.strength ? `<span class="si-tag"><span class="si-tag-l">STR:</span> <span class="si-tag-v">${esc(item.strength)}</span></span>` : '',
+                            item.stealth === 'disadvantage' ? `<span class="si-tag"><span class="si-tag-l">Heiml.:</span> <span class="si-tag-v" style="color:var(--red);">Nachteil</span></span>` : '',
+                            item.weight ? `<span class="si-tag"><span class="si-tag-l">Gewicht:</span> <span class="si-tag-v">${esc(item.weight)}</span></span>` : ''
+                        ].filter(Boolean).join('');
+                    } else {
+                        detailTags = [
+                            item.type ? `<span class="si-tag"><span class="si-tag-l">Typ:</span> <span class="si-tag-v">${esc(item.type)}</span></span>` : '',
+                            item.effect ? `<span class="si-tag"><span class="si-tag-l">Wirkung:</span> <span class="si-tag-v">${esc(item.effect)}</span></span>` : '',
+                            item.description ? `<span class="si-tag"><span class="si-tag-l">Beschr.:</span> <span class="si-tag-v">${esc(item.description)}</span></span>` : '',
+                            item.weight ? `<span class="si-tag"><span class="si-tag-l">Gewicht:</span> <span class="si-tag-v">${esc(item.weight)}</span></span>` : ''
+                        ].filter(Boolean).join('');
+                    }
+                    
+                    const specialNote = item.special ? `<span class="si-special">✨ ${esc(item.special)}</span>` : '';
+                    const noteText = item.note ? `<span class="si-note">📝 ${esc(item.note)}</span>` : '';
+                    
+                    return `<div class="si-item ${item.category || 'misc'} ${isAvailable ? '' : 'si-unavailable'} ${isExpanded ? 'expanded' : ''}" data-shop="${shopId}" data-idx="${idx}">
+                        <div class="si-main" data-action="toggle-shop-item" data-id="${shopId}" data-value="${idx}">
+                            <div class="si-qty">×${itemQty}</div>
+                            <div class="si-cat">${cat.icon}</div>
+                            <div class="si-name">${esc(itemName)}</div>
+                            <div class="si-cost">
+                                <span>${esc(itemCost)}</span>
+                                ${isAvailable ? `<button class="si-cart-btn" data-action="add-to-cart-stop" data-id="${shopId}" data-value="${idx}" title="In den Warenkorb">🛒</button>` : ''}
+                            </div>
+                            <div class="si-btns" data-stop-propagation="true">
+                                <button class="btn btn-sm" data-action="edit-shop-item" data-id="${shopId}" data-value="${idx}" title="Bearbeiten">✏️</button>
+                                <button class="btn btn-sm btn-danger" data-action="delete-shop-item" data-id="${shopId}" data-value="${idx}" title="Löschen">✕</button>
+                            </div>
+                        </div>
+                        <div class="si-details">
+                            <div class="si-detail-row">${detailTags}</div>
+                            ${specialNote || noteText ? `<div class="si-detail-row">${specialNote}${noteText}</div>` : ''}
+                            <div class="si-detail-row si-detail-actions">
+                                <label class="si-avail-toggle">
+                                    <input type="checkbox" ${isAvailable ? 'checked' : ''} onchange="toggleShopItemAvailability(${shopId}, ${idx})">
+                                    <span>${isAvailable ? 'Verfügbar' : 'Nicht verfügbar'}</span>
+                                </label>
+                                ${isAvailable ? `
+                                    <div class="si-add-cart-section">
+                                        <input type="number" class="si-qty-input" id="si-qty-${shopId}-${idx}" value="1" min="1" max="${itemQty}" data-stop-propagation="true">
+                                        <button class="btn btn-sm btn-success" data-action="add-to-cart-qty-stop" data-id="${shopId}" data-value="${idx}">🛒 In Warenkorb</button>
+                                    </div>
+                                ` : ''}
+                            </div>
+                        </div>
+                    </div>`;
+                } catch (itemErr) {
+                    console.error('Fehler beim Rendern eines Shop-Items:', itemErr, item);
+                    return '';
+                }
+            }).join('')}
+        </div>`;
+    } catch (err) {
+        console.error('renderShopItems Fehler:', err);
+        return '<div class="shop-items-empty">Fehler beim Laden der Artikel</div>';
+    }
+}
+
+let expandedShopItems = new Set();
+
+function toggleShopItem(shopId, idx) {
+    const key = `${shopId}-${idx}`;
+    if (expandedShopItems.has(key)) {
+        expandedShopItems.delete(key);
+    } else {
+        expandedShopItems.add(key);
+    }
+    
+    // Direkt das DOM-Element togglen statt komplettes Re-Render
+    const item = document.querySelector(`.shop-item-row[data-shop-id="${shopId}"][data-item-idx="${idx}"]`);
+    if (item) {
+        item.classList.toggle('expanded', expandedShopItems.has(key));
+    }
+}
+
+function toggleShop(id) {
+    if (expandedShops.has(id)) {
+        expandedShops.delete(id);
+    } else {
+        expandedShops.add(id);
+    }
+    
+    // Direkt das DOM-Element togglen statt komplettes Re-Render
+    const shop = document.querySelector(`.shop-card[data-shop-id="${id}"]`);
+    if (shop) {
+        shop.classList.toggle('expanded', expandedShops.has(id));
+    }
+}
+
+function expandAllShops() {
+    (D.shops || []).forEach(s => expandedShops.add(s.id));
+    renderShops();
+    showToast('Alle Shops ausgeklappt');
+}
+
+function collapseAllShops() {
+    expandedShops.clear();
+    renderShops();
+    showToast('Alle Shops eingeklappt');
+}
+
+function showShopModal(id = null) {
+    clearShopForm();
+    
+    // Populate NPC and Location dropdowns
+    const npcSelect = $('shop-npc');
+    const locSelect = $('shop-location');
+    
+    npcSelect.innerHTML = '<option value="">-- Kein NPC --</option>' +
+        (D.npcs || []).map(n => `<option value="${n.id}">${esc(n.name)}</option>`).join('');
+    
+    locSelect.innerHTML = '<option value="">-- Kein Ort --</option>' +
+        (D.locations || []).map(l => `<option value="${l.id}">${esc(l.name)}</option>`).join('');
+    
+    if (id) {
+        const shop = (D.shops || []).find(s => s.id === id);
+        if (shop) {
+            $('edit-shop-id').value = id;
+            $('shop-type').value = shop.type || 'laden';
+            $('shop-name').value = shop.name || '';
+            $('shop-npc').value = shop.npcId || '';
+            $('shop-location').value = shop.locationId || '';
+            $('shop-description').value = shop.description || '';
+            $('shop-special').value = shop.special || '';
+            $('shop-note').value = shop.note || '';
+        }
+    }
+    
+    showModal('shop-modal');
+}
+
+function clearShopForm() {
+    $('edit-shop-id').value = '';
+    $('shop-type').value = 'laden';
+    $('shop-name').value = '';
+    $('shop-npc').value = '';
+    $('shop-location').value = '';
+    $('shop-description').value = '';
+    $('shop-special').value = '';
+    $('shop-note').value = '';
+}
+
+function saveShop() {
+    const name = $('shop-name').value.trim();
+    if (!name) {
+        showToast('⚠️ Name erforderlich', 'error');
+        return;
+    }
+    
+    if (!D.shops) D.shops = [];
+    
+    const editId = $('edit-shop-id').value;
+    const shop = {
+        type: $('shop-type').value,
+        name: name,
+        npcId: $('shop-npc').value ? parseInt($('shop-npc').value) : null,
+        locationId: $('shop-location').value ? parseInt($('shop-location').value) : null,
+        description: $('shop-description').value.trim(),
+        special: $('shop-special').value.trim(),
+        note: $('shop-note').value.trim()
+    };
+    
+    if (editId) {
+        const idx = D.shops.findIndex(s => s.id === parseInt(editId));
+        if (idx > -1) {
+            D.shops[idx] = { ...D.shops[idx], ...shop };
+            showToast('Shop aktualisiert');
+        }
+    } else {
+        shop.id = nextId('shops');
+        shop.items = [];
+        D.shops.push(shop);
+        showToast('Shop erstellt');
+    }
+    
+    hideModal('shop-modal');
+    renderShops();
+    save();
+}
+
+function editShop(id) {
+    showShopModal(id);
+}
+
+function deleteShop(id) {
+    if (confirm('Shop und alle Artikel löschen?')) {
+        D.shops = (D.shops || []).filter(s => s.id !== id);
+        expandedShops.delete(id);
+        renderShops();
+        save();
+        showToast('Shop gelöscht');
+    }
+}
+
+// Shop Item Functions
+function showShopItemModal(shopId, itemIdx = null) {
+    clearShopItemForm();
+    $('edit-shop-item-shop-id').value = shopId;
+    
+    if (itemIdx !== null) {
+        const shop = (D.shops || []).find(s => s.id === shopId);
+        if (shop && shop.items && shop.items[itemIdx]) {
+            const item = shop.items[itemIdx];
+            $('edit-shop-item-id').value = itemIdx;
+            $('shop-item-available').checked = item.available !== false;
+            $('shop-item-quantity').value = item.quantity || 1;
+            $('shop-item-category').value = item.category || 'misc';
+            $('shop-item-name').value = item.name || '';
+            $('shop-item-type').value = item.type || '';
+            $('shop-item-damage').value = item.damage || '';
+            $('shop-item-properties').value = item.properties || '';
+            $('shop-item-mastery').value = item.mastery || '';
+            $('shop-item-ac').value = item.ac || '';
+            $('shop-item-strength').value = item.strength || '';
+            $('shop-item-stealth').value = item.stealth || '';
+            $('shop-item-desc').value = item.description || '';
+            $('shop-item-effect').value = item.effect || '';
+            $('shop-item-weight').value = item.weight || '';
+            $('shop-item-cost').value = item.cost || '';
+            $('shop-item-special').value = item.special || '';
+            $('shop-item-note').value = item.note || '';
+        }
+    }
+    
+    updateShopItemFields();
+    showModal('shop-item-modal');
+}
+
+function clearShopItemForm() {
+    $('edit-shop-item-id').value = '';
+    $('shop-item-available').checked = true;
+    $('shop-item-quantity').value = 1;
+    $('shop-item-category').value = 'weapon';
+    $('shop-item-name').value = '';
+    $('shop-item-type').value = '';
+    $('shop-item-damage').value = '';
+    $('shop-item-properties').value = '';
+    $('shop-item-mastery').value = '';
+    $('shop-item-ac').value = '';
+    $('shop-item-strength').value = '';
+    $('shop-item-stealth').value = '';
+    $('shop-item-desc').value = '';
+    $('shop-item-effect').value = '';
+    $('shop-item-weight').value = '';
+    $('shop-item-cost').value = '';
+    $('shop-item-special').value = '';
+    $('shop-item-note').value = '';
+}
+
+function updateShopItemFields() {
+    const category = $('shop-item-category').value;
+    
+    // Hide all category-specific fields
+    document.querySelectorAll('.shop-item-fields').forEach(el => el.style.display = 'none');
+    
+    // Show relevant fields
+    if (category === 'weapon') {
+        $('shop-item-weapon-fields').style.display = '';
+    } else if (category === 'armor') {
+        $('shop-item-armor-fields').style.display = '';
+    } else {
+        $('shop-item-general-fields').style.display = '';
+    }
+}
+
+function saveShopItem() {
+    const name = $('shop-item-name').value.trim();
+    if (!name) {
+        showToast('⚠️ Name erforderlich', 'error');
+        return;
+    }
+    
+    const shopId = parseInt($('edit-shop-item-shop-id').value);
+    const shop = (D.shops || []).find(s => s.id === shopId);
+    if (!shop) {
+        showToast('Shop nicht gefunden', 'error');
+        return;
+    }
+    
+    if (!shop.items) shop.items = [];
+    
+    const category = $('shop-item-category').value;
+    const item = {
+        available: $('shop-item-available').checked,
+        quantity: parseInt($('shop-item-quantity').value) || 1,
+        category: category,
+        name: name,
+        type: $('shop-item-type').value.trim(),
+        weight: $('shop-item-weight').value.trim(),
+        cost: $('shop-item-cost').value.trim(),
+        special: $('shop-item-special').value.trim(),
+        note: $('shop-item-note').value.trim()
+    };
+    
+    // Category-specific fields
+    if (category === 'weapon') {
+        item.damage = $('shop-item-damage').value.trim();
+        item.properties = $('shop-item-properties').value.trim();
+        item.mastery = $('shop-item-mastery').value.trim();
+    } else if (category === 'armor') {
+        item.ac = $('shop-item-ac').value.trim();
+        item.strength = $('shop-item-strength').value.trim();
+        item.stealth = $('shop-item-stealth').value;
+    } else {
+        item.description = $('shop-item-desc').value.trim();
+        item.effect = $('shop-item-effect').value.trim();
+    }
+    
+    const editIdx = $('edit-shop-item-id').value;
+    if (editIdx !== '') {
+        shop.items[parseInt(editIdx)] = item;
+        showToast('Artikel aktualisiert');
+    } else {
+        shop.items.push(item);
+        showToast('Artikel hinzugefügt');
+    }
+    
+    hideModal('shop-item-modal');
+    expandedShops.add(shopId);
+    renderShops();
+    save();
+}
+
+function editShopItem(shopId, idx) {
+    showShopItemModal(shopId, idx);
+}
+
+function deleteShopItem(shopId, idx) {
+    if (confirm('Artikel löschen?')) {
+        const shop = (D.shops || []).find(s => s.id === shopId);
+        if (shop && shop.items) {
+            shop.items.splice(idx, 1);
+            renderShops();
+            save();
+            showToast('Artikel gelöscht');
+        }
+    }
+}
+
+function toggleShopItemAvailability(shopId, idx) {
+    const shop = (D.shops || []).find(s => s.id === shopId);
+    if (shop && shop.items && shop.items[idx]) {
+        shop.items[idx].available = !shop.items[idx].available;
+        renderShops();
+        save();
+    }
+}
+
+// ============================================================
+// SPELLS
+// ============================================================
+const SPELLS_PER_PAGE = 50; // Anzahl Zauber pro "Seite"
+let currentSpellPage = 0;
+let filteredSpellsCache = [];
+
+// Debounced Render-Funktionen für bessere Performance bei Suche
+const debouncedRenderSpells = debounce(renderSpells, 200);
+const debouncedRenderNPCs = debounce(renderNPCList, 200);
+const debouncedRenderLoot = debounce(renderLoot, 200);
+
+function renderSpells() {
+    const c = $('spell-list'); 
+    const fb = $('spell-filters'); 
+    const lfb = $('spell-level-filters'); 
+    const sfb = $('spell-school-filters');
+    const countEl = $('spell-count'); 
+    if (!c) return;
+    
+    // Typ-Filter Chips
+    if (fb) {
+        fb.innerHTML = ['all', 'spell', 'healing', 'damage', 'buff', 'debuff'].map(t => {
+            const label = t === 'all' ? 'Alle' : t === 'spell' ? '🔵' : t === 'healing' ? '🟡' : t === 'damage' ? '🔴' : t === 'buff' ? '🟢' : '🟣';
+            return `<div class="filter-chip ${currentSpellFilter === t ? 'active' : ''}" data-action="set-spell-filter" data-value="${t}" title="${t === 'all' ? 'Alle Typen' : t === 'spell' ? 'Zauber' : t === 'healing' ? 'Heilung' : t === 'damage' ? 'Schaden' : t === 'buff' ? 'Buff' : 'Debuff'}">${label}</div>`;
+        }).join('');
+    }
+    
+    // Stufen-Filter Chips
+    if (lfb) {
+        lfb.innerHTML = ['all', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9'].map(t => {
+            const label = t === 'all' ? '∞' : t === '0' ? '🔮' : t;
+            const title = t === 'all' ? 'Alle Stufen' : t === '0' ? 'Zaubertricks' : `Stufe ${t}`;
+            return `<div class="filter-chip ${currentSpellLevelFilter === t ? 'active' : ''}" data-action="spell-level-filter" data-value="${t}" title="${title}">${label}</div>`;
+        }).join('');
+    }
+    
+    // Schule-Filter Chips
+    if (sfb) {
+        const schools = ['all', 'Bannzauber', 'Beschwörung', 'Erkenntnis', 'Hervorrufung', 'Illusion', 'Nekromantie', 'Verwandlung', 'Verzauberung'];
+        const schoolEmojis = {
+            'all': '∞', 'Bannzauber': '🛡️', 'Beschwörung': '✨', 'Erkenntnis': '👁️', 
+            'Hervorrufung': '💥', 'Illusion': '🎭', 'Nekromantie': '💀', 'Verwandlung': '🔄', 'Verzauberung': '💫'
+        };
+        sfb.innerHTML = schools.map(s => {
+            const label = schoolEmojis[s] || s.charAt(0);
+            const title = s === 'all' ? 'Alle Schulen' : s;
+            return `<div class="filter-chip ${currentSpellSchoolFilter === s ? 'active' : ''}" data-action="spell-school-filter" data-value="${s}" title="${title}">${label}</div>`;
+        }).join('');
+    }
+    
+    const search = ($('spell-search')?.value || '').toLowerCase().trim();
+    const classFilter = $('spell-class-filter')?.value || '';
+    
+    let spells = D.spells || [];
+    const totalCount = spells.length;
+    
+    // Typ-Filter (aus Chips)
+    if (currentSpellFilter !== 'all') {
+        spells = spells.filter(s => s.type === currentSpellFilter);
+    }
+    
+    // Stufen-Filter (aus Chips)
+    if (currentSpellLevelFilter !== 'all') {
+        const lvl = parseInt(currentSpellLevelFilter);
+        spells = spells.filter(s => {
+            if (lvl === 0) return s.type === 'cantrip' || s.level === 0;
+            return s.level === lvl;
+        });
+    }
+    
+    // Schule-Filter (aus Chips)
+    if (currentSpellSchoolFilter !== 'all') {
+        spells = spells.filter(s => s.school === currentSpellSchoolFilter);
+    }
+    
+    // Suche (Name, Schule, Beschreibung, Material)
+    if (search) {
+        spells = spells.filter(s => {
+            const name = (s.name || '').toLowerCase();
+            const school = (s.school || '').toLowerCase();
+            const desc = (s.description || '').toLowerCase();
+            const material = (s.material || '').toLowerCase();
+            const note = (s.note || '').toLowerCase();
+            return name.includes(search) || school.includes(search) || desc.includes(search) || material.includes(search) || note.includes(search);
+        });
+    }
+    
+    // Klassen-Filter
+    if (classFilter) {
+        spells = spells.filter(s => {
+            const classes = s.spellClasses || (s.spellClass ? s.spellClass.split(',').map(c => c.trim()) : []);
+            return classes.includes(classFilter);
+        });
+    }
+    
+    // Zähler anzeigen
+    if (countEl) {
+        if (spells.length === totalCount) {
+            countEl.textContent = `📖 ${totalCount}`;
+        } else {
+            countEl.textContent = `📖 ${spells.length}/${totalCount}`;
+        }
+    }
+    
+    const isFiltered = search || classFilter || currentSpellFilter !== 'all' || currentSpellLevelFilter !== 'all' || currentSpellSchoolFilter !== 'all';
+    
+    if (!spells.length) { 
+        c.innerHTML = renderEmptyState({
+            icon: '✨',
+            titleEmpty: 'Keine Zauber',
+            descEmpty: 'Füge Zauber hinzu oder lade SRD-Zauber.',
+            buttonText: '➕ Zauber erstellen',
+            buttonAction: 'show-modal',
+            buttonValue: 'spell-modal',
+            isFiltered
+        });
+        return; 
+    }
+    
+    // Sortieren nach Stufe, dann Name
+    spells.sort((a, b) => {
+        const lvlA = a.level ?? (a.type === 'cantrip' ? 0 : 99);
+        const lvlB = b.level ?? (b.type === 'cantrip' ? 0 : 99);
+        if (lvlA !== lvlB) return lvlA - lvlB;
+        return (a.name || '').localeCompare(b.name || '');
+    });
+    
+    // Cache für Pagination
+    filteredSpellsCache = spells;
+    currentSpellPage = 0;
+    
+    // Bei vielen Zaubern: Lazy Loading
+    if (spells.length > SPELLS_PER_PAGE) {
+        const visibleSpells = spells.slice(0, SPELLS_PER_PAGE);
+        c.innerHTML = renderSpellCards(visibleSpells) + renderLoadMoreButton(spells.length, SPELLS_PER_PAGE);
+    } else {
+        c.innerHTML = renderSpellCards(spells);
+    }
+}
+
+function renderSpellCards(spells) {
+    return spells.map(s => {
+        const levelText = s.level === 0 || s.type === 'cantrip' ? 'Zaubertrick' : 'Grad ' + s.level;
+        const classText = s.spellClasses?.length ? s.spellClasses.join(', ') : (s.spellClass || '');
+        const isExpanded = expandedSpells.has(s.id);
+        
+        return `<div class="spell-card ${s.type} ${isExpanded ? 'expanded' : ''}" data-spell-id="${s.id}">
+            <div class="spell-card-header" data-action="toggle-spell-card" data-id="${s.id}">
+                <div style="flex: 1;">
+                    <div class="spell-header">
+                        <div class="spell-name">${esc(s.name)} ${s.ritual ? '<span style="color:var(--purple);">(R)</span>' : ''}</div>
+                        <div class="spell-level">${levelText}</div>
+                    </div>
+                    <div class="spell-info-line classes">${esc(classText)}</div>
+                    <div class="spell-info-line school">✨ ${esc(s.school || 'Unbekannt')}</div>
+                </div>
+                <span class="spell-card-toggle">▶</span>
+            </div>
+            <div class="spell-card-content">
+                <div class="spell-meta">
+                    <div class="spell-meta-item"><span class="spell-meta-label">Zeit:</span> <span class="spell-meta-value time">${esc(s.time || '—')}</span></div>
+                    <div class="spell-meta-item"><span class="spell-meta-label">Reichw.:</span> <span class="spell-meta-value range">${esc(s.range || '—')}</span></div>
+                </div>
+                <div class="spell-duration-line"><span style="color:var(--cyan);">Dauer:</span> ${esc(s.duration || '—')}</div>
+                <div class="spell-components">
+                    ${s.ritual ? '<div class="spell-comp active ritual">R</div>' : ''}
+                    <div class="spell-comp ${s.v ? 'active verbal' : 'inactive'}">V</div>
+                    <div class="spell-comp ${s.g ? 'active gestik' : 'inactive'}">G</div>
+                    <div class="spell-comp ${s.m ? 'active material' : 'inactive'}">M</div>
+                </div>
+                ${s.m && s.material ? `<div class="spell-material">📦 ${esc(s.material)}</div>` : ''}
+                ${s.description ? `<div class="spell-desc">${s.description}</div>` : ''}
+                ${s.note ? `<div class="spell-note">📝 ${s.note}</div>` : ''}
+                <div class="btn-group">
+                    <button class="btn btn-sm" data-action="edit-spell-stop" data-id="${s.id}">✏️ Bearbeiten</button>
+                    <button class="btn btn-sm btn-danger" data-action="delete-spell-stop" data-id="${s.id}">🗑️ Löschen</button>
+                </div>
+            </div>
+        </div>`}).join('');
+}
+
+function renderLoadMoreButton(total, perPage) {
+    const shown = Math.min((currentSpellPage + 1) * perPage, total);
+    const remaining = total - shown;
+    if (remaining <= 0) return '';
+    return `<div class="load-more-container" style="grid-column: 1/-1; text-align: center; padding: 16px;">
+        <button class="btn" data-action="call" data-value="loadMoreSpells">
+            📜 ${remaining} weitere laden (${shown}/${total} angezeigt)
+        </button>
+    </div>`;
+}
+
+function loadMoreSpells() {
+    const c = $('spell-list');
+    if (!c || !filteredSpellsCache.length) return;
+    
+    currentSpellPage++;
+    const start = 0;
+    const end = (currentSpellPage + 1) * SPELLS_PER_PAGE;
+    const visibleSpells = filteredSpellsCache.slice(start, end);
+    
+    c.innerHTML = renderSpellCards(visibleSpells) + renderLoadMoreButton(filteredSpellsCache.length, SPELLS_PER_PAGE);
+}
+
+// Expanded-Status für Zauber-Kacheln
+let expandedSpells = new Set();
+
+function toggleSpellCard(id) {
+    if (expandedSpells.has(id)) {
+        expandedSpells.delete(id);
+    } else {
+        expandedSpells.add(id);
+    }
+    
+    // Direkt das DOM-Element togglen statt komplettes Re-Render
+    const card = document.querySelector(`.spell-card[data-spell-id="${id}"]`);
+    if (card) {
+        card.classList.toggle('expanded', expandedSpells.has(id));
+    }
+}
+
+function expandAllSpells() {
+    (D.spells || []).forEach(s => expandedSpells.add(s.id));
+    renderSpells();
+}
+
+function collapseAllSpells() {
+    expandedSpells.clear();
+    renderSpells();
+}
+
+function setSpellFilter(f) { currentSpellFilter = f; renderSpells(); }
+function setSpellLevelFilter(f) { currentSpellLevelFilter = f; renderSpells(); }
+function setSpellSchoolFilter(f) { currentSpellSchoolFilter = f; renderSpells(); }
+
+function onSpellRangeChange() {
+    const sel = $('spell-range-select');
+    const custom = $('spell-range-custom');
+    if (sel.value === 'custom') {
+        custom.style.display = 'block';
+        custom.focus();
+    } else {
+        custom.style.display = 'none';
+        custom.value = '';
+    }
+}
+
+function onSpellTimeChange() {
+    const sel = $('spell-time-select');
+    const custom = $('spell-time-custom');
+    if (sel.value === 'custom') {
+        custom.style.display = 'block';
+        custom.focus();
+    } else {
+        custom.style.display = 'none';
+        custom.value = '';
+    }
+}
+
+function onSpellDurationChange() {
+    const sel = $('spell-duration-select');
+    const custom = $('spell-duration-custom');
+    if (sel.value === 'custom') {
+        custom.style.display = 'block';
+        custom.focus();
+    } else {
+        custom.style.display = 'none';
+        custom.value = '';
+    }
+}
+
+function toggleMaterialField() {
+    const mChecked = $('spell-m').checked;
+    $('spell-material-group').style.display = mChecked ? 'block' : 'none';
+}
+
+function formatText(elementId, format, value) {
+    const editor = $(elementId);
+    if (!editor) return;
+    editor.focus();
+    
+    if (format === 'bold') {
+        document.execCommand('bold', false, null);
+    } else if (format === 'italic') {
+        document.execCommand('italic', false, null);
+    } else if (format === 'underline') {
+        document.execCommand('underline', false, null);
+    } else if (format === 'strikethrough') {
+        document.execCommand('strikeThrough', false, null);
+    } else if (format === 'list') {
+        document.execCommand('insertUnorderedList', false, null);
+    } else if (format === 'heading') {
+        document.execCommand('formatBlock', false, '<h4>');
+    } else if (format === 'font') {
+        document.execCommand('fontName', false, value);
+    } else if (format === 'highlight') {
+        if (value === 'none') {
+            document.execCommand('removeFormat', false, null);
+        } else {
+            document.execCommand('backColor', false, value);
+        }
+    }
+}
+
+function setEditorFont(elementId, selectEl) {
+    const fontMap = {
+        'arial': "Arial, Helvetica, sans-serif",
+        'serif': "Georgia, 'Times New Roman', serif",
+        'mono': "'Courier New', Consolas, monospace",
+        'abadi': "Abadi MT Condensed Light, Arial Narrow, sans-serif",
+        'roboto': "Roboto, sans-serif"
+    };
+    formatText(elementId, 'font', fontMap[selectEl.value] || fontMap['arial']);
+}
+
+function setEditorFontSize(elementId, selectEl) {
+    const editor = $(elementId);
+    if (!editor) return;
+    editor.focus();
+    document.execCommand('fontSize', false, '7'); // Dummy-Größe, wird durch CSS ersetzt
+    // Ersetze font-size durch die gewählte Größe
+    const fontElements = editor.querySelectorAll('font[size="7"]');
+    fontElements.forEach(el => {
+        el.removeAttribute('size');
+        el.style.fontSize = selectEl.value;
+    });
+}
+
+function clearEditorFormatting(elementId) {
+    const editor = $(elementId);
+    if (!editor) return;
+    
+    // Nur den Text behalten, alle HTML-Tags entfernen
+    const plainText = editor.innerText || editor.textContent;
+    editor.innerHTML = '';
+    editor.textContent = plainText;
+    
+    // Alle Inline-Styles entfernen
+    editor.style.fontFamily = '';
+    editor.style.backgroundColor = '';
+    editor.style.color = '';
+    editor.style.fontSize = '';
+    
+    showToast('🧹 Formatierung entfernt');
+}
+
+function setBorderFormat(elementId) {
+    const editor = $(elementId);
+    if (!editor) return;
+    editor.focus();
+    
+    const selection = window.getSelection();
+    if (selection.rangeCount > 0) {
+        const range = selection.getRangeAt(0);
+        const selectedText = range.extractContents();
+        
+        const wrapper = document.createElement('span');
+        wrapper.style.cssText = 'border: 1px solid var(--gold); padding: 2px 6px; border-radius: 4px; display: inline-block;';
+        wrapper.appendChild(selectedText);
+        
+        range.insertNode(wrapper);
+        selection.removeAllRanges();
+    }
+}
+
+// Auto-Clean beim Einfügen - entfernt Formatierung von eingefügtem Text
+function initEditorPasteHandlers() {
+    const editorIds = [
+        'char-notes', 'npc-desc', 'loc-desc', 'quest-desc', 'quest-epilog',
+        'enc-traits', 'enc-equipment', 'enc-actions', 'enc-skills', 'loot-desc',
+        'spell-desc', 'spell-note', 'session-text', 'link-desc', 'wiki-content',
+        'quick-ref-entry-content'
+    ];
+    
+    // Setze defaultParagraphSeparator für konsistentes Verhalten bei Zeilenumbrüchen
+    // Verwende 'div' für bessere Kompatibilität (Chrome-Standard)
+    try {
+        document.execCommand('defaultParagraphSeparator', false, 'div');
+    } catch (e) {
+        // Fallback für ältere Browser - ignorieren
+    }
+    
+    editorIds.forEach(id => {
+        const editor = $(id);
+        if (editor && editor.getAttribute('contenteditable') === 'true') {
+            editor.addEventListener('paste', handleEditorPaste);
+            
+            // Keydown-Handler für konsistente Zeilenumbrüche
+            editor.addEventListener('keydown', handleEditorKeydown);
+        }
+    });
+    
+    // Auch für dynamisch erstellte Dialoge
+    document.addEventListener('paste', function(e) {
+        if (e.target.classList.contains('rich-editor') || e.target.classList.contains('dialog-text-area')) {
+            handleEditorPaste(e);
+        }
+    }, true);
+    
+    // Keydown für dynamische Editoren
+    document.addEventListener('keydown', function(e) {
+        if (e.target.classList.contains('rich-editor') || e.target.classList.contains('dialog-text-area')) {
+            handleEditorKeydown(e);
+        }
+    }, true);
+}
+
+// Handler für konsistente Zeilenumbrüche in contenteditable
+function handleEditorKeydown(e) {
+    // Strg+Shift+T: Tabelle einfügen
+    if (e.key === 'T' && e.ctrlKey && e.shiftKey) {
+        e.preventDefault();
+        floatingToolbarTarget = e.target;
+        insertTable();
+        return;
+    }
+    
+    // Bei Enter ohne Shift: Füge <br> statt <div> oder <p> ein
+    if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        
+        // Füge einen Zeilenumbruch ein
+        const selection = window.getSelection();
+        if (!selection.rangeCount) return;
+        
+        const range = selection.getRangeAt(0);
+        range.deleteContents();
+        
+        // Erstelle zwei <br> Tags (einer für den Umbruch, einer als Platzhalter für den Cursor)
+        const br = document.createElement('br');
+        range.insertNode(br);
+        
+        // Setze Cursor nach dem <br>
+        range.setStartAfter(br);
+        range.setEndAfter(br);
+        selection.removeAllRanges();
+        selection.addRange(range);
+        
+        // Scroll zum Cursor
+        const editor = e.target;
+        if (editor.scrollHeight > editor.clientHeight) {
+            const rect = br.getBoundingClientRect();
+            const editorRect = editor.getBoundingClientRect();
+            if (rect.bottom > editorRect.bottom) {
+                editor.scrollTop += rect.bottom - editorRect.bottom + 20;
+            }
+        }
+    }
+}
+
+function handleEditorPaste(e) {
+    e.preventDefault();
+    const clipboardData = e.clipboardData || window.clipboardData;
+    
+    // Prüfe auf HTML (Excel und Google Sheets kopieren HTML)
+    const html = clipboardData.getData('text/html');
+    const text = clipboardData.getData('text/plain');
+    
+    // Wenn HTML vorhanden ist und eine Tabelle enthält, nutze diese
+    if (html && (html.includes('<table') || html.includes('<TABLE'))) {
+        // Extrahiere nur die Tabelle aus dem HTML
+        const tableMatch = html.match(/<table[\s\S]*?<\/table>/i);
+        if (tableMatch) {
+            // Bereinige die Excel/Google Sheets Tabelle
+            let cleanTable = tableMatch[0]
+                // Entferne Excel/Google-spezifische Attribute und Styles
+                .replace(/\s+(class|style|width|height|border|cellpadding|cellspacing|align|valign|bgcolor|xmlns|x:|data-[\w-]+)="[^"]*"/gi, '')
+                .replace(/<\/?colgroup[^>]*>/gi, '')
+                .replace(/<\/?col[^>]*>/gi, '')
+                .replace(/<\/?tbody[^>]*>/gi, '')
+                .replace(/<\/?thead[^>]*>/gi, '')
+                .replace(/<\/?tfoot[^>]*>/gi, '')
+                .replace(/<!--[\s\S]*?-->/g, '')
+                // Google Sheets spezifische Tags entfernen
+                .replace(/<google-sheets-html-origin[^>]*>/gi, '')
+                .replace(/<\/google-sheets-html-origin>/gi, '')
+                .replace(/<meta[^>]*>/gi, '')
+                .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
+                // Bereinige leere Attribute
+                .replace(/\s+>/g, '>')
+                .replace(/<(\w+)\s+>/g, '<$1>')
+                // Füge Standard-Styling hinzu
+                .replace(/<table>/gi, '<table style="width:100%; border-collapse:collapse; margin:8px 0;">')
+                .replace(/<th>/gi, '<th style="border:1px solid var(--border); padding:6px 10px; background:var(--bg-elevated); color:var(--gold);">')
+                .replace(/<td>/gi, '<td style="border:1px solid var(--border); padding:6px 10px;">');
+            
+            document.execCommand('insertHTML', false, cleanTable);
+            showToast('📊 Tabelle eingefügt');
+            return;
+        }
+    }
+    
+    // Prüfe ob Text Tab-separiert ist (Excel/Google Sheets Format)
+    if (text && text.includes('\t')) {
+        const lines = text.trim().split('\n');
+        if (lines.length > 1 || lines[0].includes('\t')) {
+            // Konvertiere Tab-separierten Text in HTML-Tabelle
+            let tableHtml = '<table style="width:100%; border-collapse:collapse; margin:8px 0;">';
+            lines.forEach((line, rowIndex) => {
+                const cells = line.split('\t');
+                tableHtml += '<tr>';
+                cells.forEach(cell => {
+                    // Erste Zeile als Header behandeln
+                    if (rowIndex === 0) {
+                        tableHtml += `<th style="border:1px solid var(--border); padding:6px 10px; background:var(--bg-elevated); color:var(--gold);">${escapeHtml(cell.trim())}</th>`;
+                    } else {
+                        tableHtml += `<td style="border:1px solid var(--border); padding:6px 10px;">${escapeHtml(cell.trim())}</td>`;
+                    }
+                });
+                tableHtml += '</tr>';
+            });
+            tableHtml += '</table>';
+            document.execCommand('insertHTML', false, tableHtml);
+            showToast('📊 Tabelle eingefügt (' + lines.length + ' Zeilen)');
+            return;
+        }
+    }
+    
+    // Standard: Plain-Text einfügen
+    document.execCommand('insertText', false, text);
+}
+
+// Hilfsfunktion für HTML-Escaping beim Tabellen-Paste
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+// Tabelle in Editor einfügen
+function insertTable(rows = 3, cols = 3) {
+    const editor = floatingToolbarTarget || document.activeElement;
+    if (!editor || (!editor.classList.contains('rich-editor') && !editor.classList.contains('spell-editor') && !editor.classList.contains('dialog-text'))) {
+        showToast('⚠️ Bitte erst in ein Textfeld klicken', 'error');
+        return;
+    }
+    
+    editor.focus();
+    
+    let tableHtml = '<table style="width:100%; border-collapse:collapse; margin:8px 0;">';
+    for (let r = 0; r < rows; r++) {
+        tableHtml += '<tr>';
+        for (let c = 0; c < cols; c++) {
+            if (r === 0) {
+                tableHtml += `<th style="border:1px solid var(--border); padding:6px 10px; background:var(--bg-elevated); color:var(--gold);">Spalte ${c + 1}</th>`;
+            } else {
+                tableHtml += `<td style="border:1px solid var(--border); padding:6px 10px;"></td>`;
+            }
+        }
+        tableHtml += '</tr>';
+    }
+    tableHtml += '</table><p></p>';
+    
+    document.execCommand('insertHTML', false, tableHtml);
+    showToast('📊 Tabelle eingefügt (3×3) - Strg+Shift+T');
+    hideFloatingToolbar();
+}
+
+// ============================================================
+// STICKY OFFSETS - Dynamische Header-Höhen-Berechnung
+// ============================================================
+function updateStickyOffsets() {
+    const header = document.querySelector('.app-header');
+    if (!header) return;
+    
+    // Im Mobile-Layout ist der Header unten
+    const isMobile = document.documentElement.dataset.layout === 'mobile';
+    if (isMobile) {
+        document.documentElement.style.setProperty('--header-height', '0px');
+    } else {
+        const headerHeight = header.offsetHeight;
+        document.documentElement.style.setProperty('--header-height', headerHeight + 'px');
+        
+        // Update encounter-controls top position
+        const encounterControls = document.querySelector('.encounter-controls');
+        if (encounterControls) {
+            encounterControls.style.top = headerHeight + 'px';
+        }
+    }
+}
+
+// ============================================================
+// FLOATING MINI-EDITOR TOOLBAR
+// ============================================================
+let floatingToolbarTarget = null;
+let hideFloatingToolbarTimeout = null;
+
+function initFloatingToolbar() {
+    const toolbar = $('floating-toolbar');
+    if (!toolbar) return;
+    
+    // Event-Listener für Textauswahl in Rich-Editoren
+    document.addEventListener('selectionchange', debounce(handleSelectionChange, 150));
+    
+    // Mausup-Event für bessere Positionierung
+    document.addEventListener('mouseup', (e) => {
+        // Kurze Verzögerung damit die Auswahl vollständig ist
+        setTimeout(() => handleSelectionChange(), 10);
+    });
+    
+    // Klicks auf die Toolbar-Buttons
+    toolbar.addEventListener('mousedown', (e) => {
+        e.preventDefault(); // Verhindert Verlust der Textauswahl
+    });
+    
+    toolbar.addEventListener('click', (e) => {
+        const btn = e.target.closest('[data-floating-action]');
+        if (!btn || !floatingToolbarTarget) return;
+        
+        const action = btn.dataset.floatingAction;
+        floatingToolbarTarget.focus();
+        
+        // Auswahl wiederherstellen falls nötig
+        const selection = window.getSelection();
+        if (!selection.toString()) {
+            hideFloatingToolbar();
+            return;
+        }
+        
+        // Formatierung anwenden
+        if (action === 'bold') {
+            document.execCommand('bold', false, null);
+        } else if (action === 'italic') {
+            document.execCommand('italic', false, null);
+        } else if (action === 'underline') {
+            document.execCommand('underline', false, null);
+        } else if (action === 'strikethrough') {
+            document.execCommand('strikeThrough', false, null);
+        } else if (action === 'highlight') {
+            document.execCommand('backColor', false, 'rgba(251, 191, 36, 0.4)');
+        } else if (action === 'list') {
+            document.execCommand('insertUnorderedList', false, null);
+        } else if (action === 'table') {
+            insertTable();
+        }
+    });
+    
+    // Bei Klick außerhalb verstecken
+    document.addEventListener('mousedown', (e) => {
+        if (!toolbar.contains(e.target) && !e.target.closest('.rich-editor, .spell-editor, .dialog-text')) {
+            hideFloatingToolbar();
+        }
+    });
+    
+    // Bei Escape verstecken
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            hideFloatingToolbar();
+        }
+    });
+}
+
+function handleSelectionChange() {
+    const selection = window.getSelection();
+    const toolbar = $('floating-toolbar');
+    if (!toolbar) return;
+    
+    // Prüfe ob Text ausgewählt ist
+    const selectedText = selection.toString().trim();
+    if (!selectedText || selectedText.length < 1) {
+        hideFloatingToolbar();
+        return;
+    }
+    
+    // Prüfe ob die Auswahl in einem Rich-Editor ist
+    const anchorNode = selection.anchorNode;
+    if (!anchorNode) {
+        hideFloatingToolbar();
+        return;
+    }
+    
+    const editor = anchorNode.nodeType === Node.TEXT_NODE 
+        ? anchorNode.parentElement?.closest('.rich-editor, .spell-editor, .dialog-text')
+        : anchorNode.closest?.('.rich-editor, .spell-editor, .dialog-text');
+    
+    if (!editor) {
+        hideFloatingToolbar();
+        return;
+    }
+    
+    floatingToolbarTarget = editor;
+    
+    // Position der Auswahl ermitteln
+    if (selection.rangeCount === 0) return;
+    
+    const range = selection.getRangeAt(0);
+    const rect = range.getBoundingClientRect();
+    
+    // Toolbar über der Auswahl positionieren
+    const toolbarWidth = 200; // Ungefähre Breite
+    const toolbarHeight = 40; // Ungefähre Höhe
+    
+    let left = rect.left + (rect.width / 2) - (toolbarWidth / 2);
+    let top = rect.top - toolbarHeight - 10;
+    
+    // Sicherstellen, dass die Toolbar im Viewport bleibt
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
+    
+    if (left < 10) left = 10;
+    if (left + toolbarWidth > viewportWidth - 10) left = viewportWidth - toolbarWidth - 10;
+    
+    // Wenn oben kein Platz, unter der Auswahl anzeigen
+    if (top < 10) {
+        top = rect.bottom + 10;
+        toolbar.classList.add('below');
+    } else {
+        toolbar.classList.remove('below');
+    }
+    
+    toolbar.style.left = left + 'px';
+    toolbar.style.top = top + 'px';
+    toolbar.classList.add('visible');
+    
+    // Timeout zum Verstecken abbrechen
+    if (hideFloatingToolbarTimeout) {
+        clearTimeout(hideFloatingToolbarTimeout);
+        hideFloatingToolbarTimeout = null;
+    }
+}
+
+function hideFloatingToolbar() {
+    const toolbar = $('floating-toolbar');
+    if (toolbar) {
+        toolbar.classList.remove('visible');
+    }
+    floatingToolbarTarget = null;
+}
+
+function getSpellClassesFromCheckboxes() {
+    const classes = [];
+    const classIds = ['barbar', 'barde', 'druide', 'hexenmeister', 'kaempfer', 'kleriker', 'magier', 'moench', 'paladin', 'schurke', 'waldlaeufer', 'zauberer', 'artifizient'];
+    classIds.forEach(id => {
+        const cb = $('spell-class-' + id);
+        if (cb && cb.checked) classes.push(cb.value);
+    });
+    return classes;
+}
+
+function setSpellClassesCheckboxes(classes) {
+    const classMap = {
+        'Barbar': 'barbar', 'Barde': 'barde', 'Druide': 'druide', 'Hexenmeister': 'hexenmeister',
+        'Kämpfer': 'kaempfer', 'Kleriker': 'kleriker', 'Magier': 'magier', 'Mönch': 'moench',
+        'Paladin': 'paladin', 'Schurke': 'schurke', 'Waldläufer': 'waldlaeufer', 'Zauberer': 'zauberer',
+        'Artifizient': 'artifizient'
+    };
+    // Alle zurücksetzen
+    Object.values(classMap).forEach(id => {
+        const cb = $('spell-class-' + id);
+        if (cb) cb.checked = false;
+    });
+    // Ausgewählte setzen
+    classes.forEach(cls => {
+        const id = classMap[cls];
+        if (id) {
+            const cb = $('spell-class-' + id);
+            if (cb) cb.checked = true;
+        }
+    });
+}
+
+function saveSpell() {
+    const id = $('edit-spell-id').value;
+    
+    // Reichweite ermitteln
+    const rangeSelect = $('spell-range-select').value;
+    const rangeCustom = $('spell-range-custom').value.trim();
+    let range = '';
+    if (rangeSelect === 'custom') {
+        range = rangeCustom;
+    } else if (rangeSelect) {
+        range = rangeSelect;
+    }
+    
+    // Zeitaufwand ermitteln
+    const timeSelect = $('spell-time-select').value;
+    const timeCustom = $('spell-time-custom').value.trim();
+    let time = timeSelect === 'custom' ? timeCustom : timeSelect;
+    
+    // Dauer ermitteln
+    const durationSelect = $('spell-duration-select').value;
+    const durationCustom = $('spell-duration-custom').value.trim();
+    let duration = durationSelect === 'custom' ? durationCustom : durationSelect;
+    
+    // Klassen von Checkboxen
+    const classes = getSpellClassesFromCheckboxes();
+    
+    // Beschreibung als HTML
+    const descHtml = $('spell-desc').innerHTML;
+    
+    const s = {
+        name: $('spell-name').value.trim(), type: $('spell-type').value,
+        level: parseInt($('spell-level').value) || 0, 
+        spellClasses: classes,
+        school: $('spell-school').value,
+        time: time,
+        range: range, 
+        duration: duration,
+        ritual: $('spell-ritual').checked, v: $('spell-v').checked, g: $('spell-g').checked, m: $('spell-m').checked,
+        material: $('spell-material').value.trim(),
+        description: descHtml, note: $('spell-note').innerHTML.trim()
+    };
+    if (!s.name) { showToast('⚠️ Name erforderlich', 'error'); return; }
+    if (id) { const idx = D.spells.findIndex(x => x.id === parseInt(id)); if (idx > -1) D.spells[idx] = { ...D.spells[idx], ...s }; }
+    else { s.id = nextId('spells'); D.spells.push(s); }
+    hideModal('spell-modal'); clearSpellForm(); renderSpells(); save();
+}
+
+function editSpell(id) {
+    const s = EntityLookup.spell(id); if (!s) return;
+    $('edit-spell-id').value = id; 
+    $('spell-name').value = s.name; 
+    $('spell-type').value = s.type || 'spell';
+    $('spell-level').value = s.level || 0; 
+    $('spell-school').value = s.school || '';
+    $('spell-ritual').checked = s.ritual; 
+    $('spell-v').checked = s.v; 
+    $('spell-g').checked = s.g; 
+    $('spell-m').checked = s.m;
+    
+    // Material-Feld
+    $('spell-material').value = s.material || '';
+    toggleMaterialField();
+    
+    // Beschreibung als HTML
+    $('spell-desc').innerHTML = sanitizeHTML(s.description) || '';
+    $('spell-note').innerHTML = s.note || '';
+    
+    // Klassen Checkboxen
+    const classes = s.spellClasses || (s.spellClass ? s.spellClass.split(',').map(c => c.trim()) : []);
+    setSpellClassesCheckboxes(classes);
+    
+    // Zeitaufwand
+    const timeSelect = $('spell-time-select');
+    const timeCustom = $('spell-time-custom');
+    const time = s.time || '1 Aktion';
+    const timeOptions = Array.from(timeSelect.options).map(o => o.value);
+    if (timeOptions.includes(time)) {
+        timeSelect.value = time;
+        timeCustom.style.display = 'none';
+        timeCustom.value = '';
+    } else if (time) {
+        timeSelect.value = 'custom';
+        timeCustom.style.display = 'block';
+        timeCustom.value = time;
+    }
+    
+    // Reichweite
+    const rangeSelect = $('spell-range-select');
+    const rangeCustom = $('spell-range-custom');
+    const range = s.range || '';
+    const rangeOptions = Array.from(rangeSelect.options).map(o => o.value);
+    if (rangeOptions.includes(range)) {
+        rangeSelect.value = range;
+        rangeCustom.style.display = 'none';
+        rangeCustom.value = '';
+    } else if (range) {
+        rangeSelect.value = 'custom';
+        rangeCustom.style.display = 'block';
+        rangeCustom.value = range;
+    } else {
+        rangeSelect.value = '';
+        rangeCustom.style.display = 'none';
+        rangeCustom.value = '';
+    }
+    
+    // Dauer
+    const durationSelect = $('spell-duration-select');
+    const durationCustom = $('spell-duration-custom');
+    const duration = s.duration || 'Unmittelbar';
+    const durationOptions = Array.from(durationSelect.options).map(o => o.value);
+    if (durationOptions.includes(duration)) {
+        durationSelect.value = duration;
+        durationCustom.style.display = 'none';
+        durationCustom.value = '';
+    } else if (duration) {
+        durationSelect.value = 'custom';
+        durationCustom.style.display = 'block';
+        durationCustom.value = duration;
+    }
+    
+    showModal('spell-modal');
+}
+
+function deleteSpell(id) { if (confirm('Löschen?')) { D.spells = D.spells.filter(s => s.id !== id); renderSpells(); save(); } }
+
+function clearSpellForm() {
+    $('edit-spell-id').value = '';
+    $('spell-name').value = '';
+    $('spell-type').value = 'spell';
+    $('spell-level').value = '0';
+    $('spell-school').value = '';
+    // Zeitaufwand
+    $('spell-time-select').value = '1 Aktion';
+    $('spell-time-custom').value = '';
+    $('spell-time-custom').style.display = 'none';
+    // Reichweite
+    $('spell-range-select').value = '';
+    $('spell-range-custom').value = '';
+    $('spell-range-custom').style.display = 'none';
+    // Dauer
+    $('spell-duration-select').value = 'Unmittelbar';
+    $('spell-duration-custom').value = '';
+    $('spell-duration-custom').style.display = 'none';
+    // Rest
+    $('spell-desc').innerHTML = '';
+    $('spell-note').innerHTML = '';
+    $('spell-material').value = '';
+    $('spell-material-group').style.display = 'none';
+    $('spell-ritual').checked = false; 
+    $('spell-v').checked = false; 
+    $('spell-g').checked = false; 
+    $('spell-m').checked = false;
+    // Klassen-Checkboxen zurücksetzen
+    setSpellClassesCheckboxes([]);
+}
+
+// ============================================================
+// SESSIONS
+// ============================================================
+function renderSessions() {
+    const c = $('session-list'); if (!c) return;
+    const search = ($('notes-search')?.value || '').toLowerCase();
+    let notes = [...(D.sessionNotes || [])].sort((a, b) => new Date(b.date) - new Date(a.date));
+    
+    // Suche anwenden
+    if (search) {
+        notes = notes.filter(n => {
+            const content = (n.content || '').toLowerCase().replace(/<[^>]+>/g, ''); // HTML-Tags entfernen
+            const date = (n.date || '').toLowerCase();
+            const name = (n.name || '').toLowerCase();
+            return content.includes(search) || date.includes(search) || name.includes(search);
+        });
+    }
+    
+    // Counter aktualisieren
+    updateCounters({ 'notes-io-count': notes.length });
+    
+    if (!notes.length) { 
+        c.innerHTML = renderEmptyState({
+            icon: '📝',
+            titleEmpty: 'Keine Notizen',
+            titleFiltered: 'Keine Treffer',
+            descEmpty: 'Dokumentiere deine Sessions und wichtige Ereignisse.',
+            descFiltered: 'Versuche andere Suchbegriffe.',
+            isFiltered: !!search
+        });
+        return; 
+    }
+    c.innerHTML = notes.map(n => `<div class="card session-card" style="border-left:3px solid var(--gold);">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+            <div>
+                ${n.name ? `<div style="font-size: 1.1em; font-weight: 600; color: var(--text);">${esc(n.name)}</div>` : ''}
+                <span style="color:var(--gold); font-weight:${n.name ? '400' : '600'}; font-size: ${n.name ? '0.85em' : '1em'};">${formatDate(n.date)}</span>
+            </div>
+            <div class="btn-group">
+                <button class="btn btn-sm" data-action="edit-session" data-id="${n.id}" title="Bearbeiten">✏️</button>
+                <button class="btn btn-sm btn-danger" data-action="delete-session" data-id="${n.id}" title="Löschen">🗑️</button>
+            </div>
+        </div>
+        <div class="session-content">${n.content}</div>
+    </div>`).join('');
+}
+
+function saveSession() {
+    const editId = $('edit-session-id').value;
+    const name = $('session-name').value.trim();
+    const date = $('session-date').value;
+    const content = sanitizeHTML($('session-text').innerHTML);
+    
+    if (!date || !content.trim()) { showToast('⚠️ Datum und Text erforderlich', 'error'); return; }
+    
+    if (editId) {
+        // Bearbeiten
+        const idx = D.sessionNotes.findIndex(n => n.id === parseInt(editId));
+        if (idx > -1) {
+            D.sessionNotes[idx] = { ...D.sessionNotes[idx], name, date, content };
+            showToast('Notiz aktualisiert');
+        }
+    } else {
+        // Neu erstellen
+        D.sessionNotes.push({ id: nextId('sessionNotes'), name, date, content });
+        showToast('Notiz gespeichert');
+    }
+    
+    cancelSessionEdit();
+    renderSessions();
+    save();
+}
+
+function editSession(id) {
+    const note = EntityLookup.sessionNote(id);
+    if (!note) return;
+    
+    $('edit-session-id').value = id;
+    $('session-name').value = note.name || '';
+    $('session-date').value = note.date;
+    $('session-text').innerHTML = sanitizeHTML(note.content) || '';
+    $('session-form-title').textContent = '✏️ Notiz bearbeiten';
+    
+    // Formular aufklappen
+    $('session-form').classList.add('open');
+    $('session-form-icon').textContent = '▲';
+    
+    // Zum Formular scrollen
+    $('session-form').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function cancelSessionEdit() {
+    $('edit-session-id').value = '';
+    $('session-name').value = '';
+    $('session-date').value = '';
+    $('session-text').innerHTML = '';
+    $('session-form-title').textContent = '+ Neue Session-Notiz';
+    
+    // Formular einklappen
+    $('session-form').classList.remove('open');
+    $('session-form-icon').textContent = '▼';
+}
+
+function deleteSession(id) { if (confirm('Löschen?')) { D.sessionNotes = D.sessionNotes.filter(n => n.id !== id); renderSessions(); save(); } }
+
+// ============================================================
+// WIKI
+// ============================================================
+let wikiCategoryFilter = '';
+let wikiSortMode = 'recent';
+let expandedWikiEntries = new Set();
+let expandedWikiCategories = new Set(['campaign', 'locations', 'factions', 'history']);
+let selectedWikiEntryId = null;
+
+const WIKI_CATEGORIES = {
+    campaign: { icon: '🎭', name: 'Kampagne' },
+    quest: { icon: '📋', name: 'Quest' },
+    character: { icon: '🧙', name: 'Charakter' },
+    locations: { icon: '🏰', name: 'Orte' },
+    factions: { icon: '👥', name: 'Fraktionen' },
+    history: { icon: '📜', name: 'Geschichte' },
+    conflicts: { icon: '⚔️', name: 'Konflikte' },
+    world: { icon: '🌍', name: 'Weltkunde' },
+    magic: { icon: '🔮', name: 'Magie' },
+    rules: { icon: '📖', name: 'Hausregeln' },
+    notes: { icon: '🗒️', name: 'Notiz' }
+};
+
+function renderWiki() {
+    renderWikiTree();
+    renderWikiDetail();
+    
+    // Counter aktualisieren
+    const countEl = $('wiki-io-count');
+    if (countEl) countEl.textContent = D.wiki?.length || 0;
+    
+    // Parent-Dropdown im Formular aktualisieren
+    updateWikiParentSelect();
+}
+
+function renderWikiTree() {
+    const tree = $('wiki-tree');
+    if (!tree) return;
+    
+    const search = ($('wiki-search')?.value || '').toLowerCase();
+    
+    if (!D.wiki?.length) {
+        tree.innerHTML = `
+            <div style="padding: 20px; text-align: center; color: var(--text-dim);">
+                <div style="font-size: 2em; margin-bottom: 8px;">📚</div>
+                <div>Keine Einträge</div>
+            </div>
+        `;
+        return;
+    }
+    
+    // Einträge nach Kategorie gruppieren
+    const byCategory = {};
+    Object.keys(WIKI_CATEGORIES).forEach(cat => {
+        byCategory[cat] = [];
+    });
+    byCategory['other'] = [];
+    
+    let entries = [...D.wiki];
+    
+    // Suche anwenden
+    if (search) {
+        entries = entries.filter(e => 
+            e.title.toLowerCase().includes(search) ||
+            (e.content || '').toLowerCase().includes(search) ||
+            (e.tags || []).some(t => t.toLowerCase().includes(search))
+        );
+    }
+    
+    // Nach Kategorie gruppieren
+    entries.forEach(entry => {
+        const cat = entry.category || 'other';
+        if (byCategory[cat]) {
+            byCategory[cat].push(entry);
+        } else {
+            byCategory['other'].push(entry);
+        }
+    });
+    
+    // Alphabetisch sortieren innerhalb Kategorien
+    Object.keys(byCategory).forEach(cat => {
+        byCategory[cat].sort((a, b) => {
+            // Gepinnte zuerst
+            if (a.pinned && !b.pinned) return -1;
+            if (!a.pinned && b.pinned) return 1;
+            return a.title.localeCompare(b.title);
+        });
+    });
+    
+    // Baum-HTML generieren
+    let html = '';
+    Object.entries(WIKI_CATEGORIES).forEach(([catKey, catInfo]) => {
+        const catEntries = byCategory[catKey] || [];
+        if (catEntries.length === 0 && !search) return; // Leere Kategorien ausblenden (außer bei Suche)
+        
+        const isExpanded = expandedWikiCategories.has(catKey);
+        
+        // Hierarchie aufbauen: Root-Einträge und Kinder
+        const rootEntries = catEntries.filter(e => !e.parentId);
+        const childrenMap = {};
+        catEntries.forEach(e => {
+            if (e.parentId) {
+                if (!childrenMap[e.parentId]) childrenMap[e.parentId] = [];
+                childrenMap[e.parentId].push(e);
+            }
+        });
+        
+        html += `
+            <div class="wiki-tree-category ${isExpanded ? 'expanded' : ''}" data-category="${catKey}">
+                <div class="wiki-tree-cat-header" data-action="toggle-wiki-category" data-value="${catKey}">
+                    <span class="wiki-tree-toggle">▶</span>
+                    <span class="wiki-tree-cat-icon">${catInfo.icon}</span>
+                    <span class="wiki-tree-cat-name">${catInfo.name}</span>
+                    <span class="wiki-tree-cat-count">${catEntries.length}</span>
+                </div>
+                <div class="wiki-tree-items">
+                    ${renderWikiTreeItems(rootEntries, childrenMap, 0)}
+                </div>
+            </div>
+        `;
+    });
+    
+    // "Sonstige" Kategorie falls vorhanden
+    if (byCategory['other']?.length > 0) {
+        const isExpanded = expandedWikiCategories.has('other');
+        // Auch für "Sonstige" die Hierarchie aufbauen
+        const otherRootEntries = byCategory['other'].filter(e => !e.parentId);
+        const otherChildrenMap = {};
+        byCategory['other'].forEach(e => {
+            if (e.parentId) {
+                if (!otherChildrenMap[e.parentId]) otherChildrenMap[e.parentId] = [];
+                otherChildrenMap[e.parentId].push(e);
+            }
+        });
+        
+        html += `
+            <div class="wiki-tree-category ${isExpanded ? 'expanded' : ''}" data-category="other">
+                <div class="wiki-tree-cat-header" data-action="toggle-wiki-category" data-value="other">
+                    <span class="wiki-tree-toggle">▶</span>
+                    <span class="wiki-tree-cat-icon">📄</span>
+                    <span class="wiki-tree-cat-name">Sonstiges</span>
+                    <span class="wiki-tree-cat-count">${byCategory['other'].length}</span>
+                </div>
+                <div class="wiki-tree-items">
+                    ${renderWikiTreeItems(otherRootEntries, otherChildrenMap, 0)}
+                </div>
+            </div>
+        `;
+    }
+    
+    tree.innerHTML = html || '<div style="padding: 20px; text-align: center; color: var(--text-dim);">Keine Treffer</div>';
+}
+
+function renderWikiTreeItems(entries, childrenMap, depth) {
+    return entries.map(entry => {
+        const children = childrenMap[entry.id] || [];
+        const hasChildren = children.length > 0;
+        const isExpanded = expandedWikiEntries.has(entry.id);
+        
+        let html = `<div class="wiki-tree-item-wrapper ${hasChildren ? 'has-children' : ''} ${isExpanded ? 'expanded' : ''}">`;
+        html += renderWikiTreeItem(entry, childrenMap, depth);
+        
+        if (hasChildren) {
+            html += `<div class="wiki-tree-item-children">
+                ${renderWikiTreeItems(children, childrenMap, depth + 1)}
+            </div>`;
+        }
+        
+        html += '</div>';
+        return html;
+    }).join('');
+}
+
+function renderWikiTreeItem(entry, childrenMap, depth) {
+    const isSelected = selectedWikiEntryId === entry.id;
+    const hasChildren = (childrenMap[entry.id] || []).length > 0;
+    const isExpanded = expandedWikiEntries.has(entry.id);
+    const cat = WIKI_CATEGORIES[entry.category] || { icon: '📄' };
+    
+    return `
+        <div class="wiki-tree-item ${isSelected ? 'selected' : ''} ${entry.pinned ? 'pinned' : ''} ${hasChildren ? 'has-children' : ''} ${isExpanded ? 'expanded' : ''}" 
+             data-action="select-wiki-entry" data-id="${entry.id}" 
+             data-id="${entry.id}"
+             style="padding-left: ${10 + depth * 12}px;">
+            ${hasChildren ? `<span class="wiki-tree-item-toggle" data-action="toggle-wiki-stop" data-id="${entry.id}">▶</span>` : ''}
+            <span style="opacity: 0.7;">${cat.icon}</span>
+            <span style="flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${esc(entry.title)}</span>
+        </div>
+    `;
+}
+
+function renderWikiDetail() {
+    const detail = $('wiki-detail');
+    if (!detail) return;
+    
+    if (!selectedWikiEntryId) {
+        detail.innerHTML = `<div class="wiki-detail-empty">${renderEmptyState({
+            icon: '📖',
+            titleEmpty: 'Eintrag auswählen',
+            descEmpty: 'Wähle links einen Eintrag aus der Baumansicht.',
+            gridSpan: 'auto'
+        })}</div>`;
+        return;
+    }
+    
+    const entry = D.wiki?.find(e => e.id === selectedWikiEntryId);
+    if (!entry) {
+        selectedWikiEntryId = null;
+        renderWikiDetail();
+        return;
+    }
+    
+    const cat = WIKI_CATEGORIES[entry.category] || { icon: '📄', name: 'Sonstiges' };
+    const tags = entry.tags || [];
+    const parsedContent = parseWikiLinks(entry.content || '');
+    const backlinks = findBacklinks(entry.title);
+    const outlinks = extractWikiLinks(entry.content || '');
+    
+    // Parent-Info
+    let parentInfo = '';
+    if (entry.parentId) {
+        const parent = EntityLookup.wiki(entry.parentId);
+        if (parent) {
+            parentInfo = `<span style="cursor: pointer;" data-action="select-wiki-entry" data-id="${parent.id}">📁 ${esc(parent.title)}</span> → `;
+        }
+    }
+    
+    // Kinder finden
+    const children = D.wiki.filter(e => e.parentId === entry.id);
+    
+    detail.innerHTML = `
+        <div class="wiki-detail-header">
+            <div class="wiki-detail-title-section">
+                <div class="wiki-detail-title">${entry.pinned ? '📌 ' : ''}${esc(entry.title)}</div>
+                <div class="wiki-detail-meta">
+                    ${parentInfo}
+                    <span class="wiki-detail-category">${cat.icon} ${cat.name}</span>
+                </div>
+            </div>
+            <div class="wiki-detail-actions">
+                <button class="btn btn-sm" data-action="toggle-wiki-pin" data-id="${entry.id}" title="${entry.pinned ? 'Entpinnen' : 'Pinnen'}">${entry.pinned ? '📌' : '📍'}</button>
+                <button class="btn btn-sm" data-action="edit-wiki" data-id="${entry.id}" title="Bearbeiten">✏️</button>
+                <button class="btn btn-sm btn-danger" data-action="delete-wiki" data-id="${entry.id}" title="Löschen">🗑️</button>
+            </div>
+        </div>
+        
+        <div class="wiki-detail-body">
+            ${parsedContent || '<em style="color: var(--text-dim);">Kein Inhalt</em>'}
+        </div>
+        
+        ${tags.length ? `
+            <div class="wiki-detail-tags">
+                ${tags.map(t => `<span class="wiki-tag" data-action="search-wiki-tag" data-value="${esc(t)}">${esc(t)}</span>`).join('')}
+            </div>
+        ` : ''}
+        
+        ${children.length ? `
+            <div class="wiki-detail-links">
+                <div class="wiki-detail-links-section">
+                    <div class="wiki-detail-links-label">📁 Untereinträge (${children.length})</div>
+                    <div class="wiki-detail-links-list">
+                        ${children.map(c => `<span class="wiki-link" data-action="select-wiki-entry" data-id="${c.id}">${esc(c.title)}</span>`).join('')}
+                    </div>
+                </div>
+            </div>
+        ` : ''}
+        
+        ${(outlinks.length || backlinks.length) ? `
+            <div class="wiki-detail-links">
+                ${outlinks.length ? `
+                    <div class="wiki-detail-links-section">
+                        <div class="wiki-detail-links-label">→ Verlinkt zu</div>
+                        <div class="wiki-detail-links-list">
+                            ${outlinks.map(link => {
+                                const exists = D.wiki.some(e => e.title.toLowerCase() === link.toLowerCase());
+                                return `<span class="wiki-link ${exists ? '' : 'missing'}" data-action="wiki-link-click" data-value="${esc(link)}" data-exists="${exists}">${esc(link)}</span>`;
+                            }).join('')}
+                        </div>
+                    </div>
+                ` : ''}
+                ${backlinks.length ? `
+                    <div class="wiki-detail-links-section">
+                        <div class="wiki-detail-links-label">← Verlinkt von</div>
+                        <div class="wiki-detail-links-list">
+                            ${backlinks.map(link => `<span class="wiki-link" data-action="navigate-wiki-entry" data-value="${esc(link)}">${esc(link)}</span>`).join('')}
+                        </div>
+                    </div>
+                ` : ''}
+            </div>
+        ` : ''}
+        
+        <div class="wiki-detail-footer">
+            <span>Erstellt: ${new Date(entry.createdAt).toLocaleDateString('de-DE')}</span>
+            ${entry.updatedAt ? `<span>Bearbeitet: ${new Date(entry.updatedAt).toLocaleDateString('de-DE')}</span>` : ''}
+        </div>
+    `;
+}
+
+function selectWikiEntry(id) {
+    selectedWikiEntryId = id;
+    renderWiki();
+}
+
+function toggleWikiCategory(category) {
+    if (expandedWikiCategories.has(category)) {
+        expandedWikiCategories.delete(category);
+    } else {
+        expandedWikiCategories.add(category);
+    }
+    renderWikiTree();
+}
+
+function expandAllWikiCategories() {
+    Object.keys(WIKI_CATEGORIES).forEach(cat => expandedWikiCategories.add(cat));
+    expandedWikiCategories.add('other');
+    renderWikiTree();
+    showToast('Alle Kategorien ausgeklappt');
+}
+
+function collapseAllWikiCategories() {
+    expandedWikiCategories.clear();
+    renderWikiTree();
+    showToast('Alle Kategorien eingeklappt');
+}
+
+function showWikiForm(parentCategory = '') {
+    cancelWikiEdit();
+    if (parentCategory) {
+        $('wiki-category').value = parentCategory;
+    }
+    $('wiki-form-title').textContent = '+ Neuer Eintrag';
+    $('wiki-form-overlay').style.display = 'flex';
+}
+
+function hideWikiForm() {
+    $('wiki-form-overlay').style.display = 'none';
+    cancelWikiEdit();
+}
+
+function updateWikiParentSelect() {
+    const select = $('wiki-parent');
+    if (!select) return;
+    
+    const editId = $('edit-wiki-id')?.value;
+    const currentId = editId ? parseInt(editId) : null;
+    
+    select.innerHTML = '<option value="">— Kein übergeordneter Eintrag —</option>';
+    
+    (D.wiki || []).forEach(entry => {
+        // Nicht sich selbst oder eigene Kinder als Parent erlauben
+        if (entry.id === currentId) return;
+        if (isDescendantOf(entry.id, currentId)) return;
+        
+        const cat = WIKI_CATEGORIES[entry.category] || { icon: '📄' };
+        select.innerHTML += `<option value="${entry.id}">${cat.icon} ${esc(entry.title)}</option>`;
+    });
+}
+
+function isDescendantOf(entryId, potentialAncestorId) {
+    if (!potentialAncestorId) return false;
+    const entry = D.wiki?.find(e => e.id === entryId);
+    if (!entry || !entry.parentId) return false;
+    if (entry.parentId === potentialAncestorId) return true;
+    return isDescendantOf(entry.parentId, potentialAncestorId);
+}
+
+function parseWikiLinks(content) {
+    // [[Link-Name]] -> klickbarer Link
+    return content.replace(/\[\[([^\]]+)\]\]/g, (match, linkText) => {
+        const exists = D.wiki?.some(e => e.title.toLowerCase() === linkText.toLowerCase());
+        const escapedText = linkText.replace(/"/g, '&quot;');
+        return `<span class="wiki-link ${exists ? '' : 'missing'}" data-action="wiki-link-click-stop" data-value="${escapedText}" data-exists="${exists}">${linkText}</span>`;
+    });
+}
+
+function extractWikiLinks(content) {
+    const matches = content.match(/\[\[([^\]]+)\]\]/g) || [];
+    return [...new Set(matches.map(m => m.slice(2, -2)))];
+}
+
+function findBacklinks(title) {
+    if (!D.wiki) return [];
+    return D.wiki
+        .filter(e => e.content && e.content.toLowerCase().includes(`[[${title.toLowerCase()}]]`))
+        .map(e => e.title);
+}
+
+function toggleWikiEntry(id) {
+    if (expandedWikiEntries.has(id)) {
+        expandedWikiEntries.delete(id);
+    } else {
+        expandedWikiEntries.add(id);
+    }
+    renderWiki();
+}
+
+function filterWiki(category) {
+    wikiCategoryFilter = category;
+    // Filter-Buttons aktualisieren
+    document.querySelectorAll('#wiki-categories .filter-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.cat === category);
+    });
+    renderWiki();
+}
+
+function sortWiki(mode) {
+    wikiSortMode = mode;
+    // Sort-Buttons aktualisieren
+    ['alpha', 'recent', 'pinned'].forEach(m => {
+        const btn = $(`wiki-sort-${m}`);
+        if (btn) btn.classList.toggle('active', m === mode);
+    });
+    renderWiki();
+}
+
+function saveWikiEntry() {
+    const title = $('wiki-title').value.trim();
+    if (!title) { showToast('⚠️ Titel erforderlich', 'error'); return; }
+    
+    const editId = $('edit-wiki-id').value;
+    const parentVal = $('wiki-parent')?.value;
+    
+    const entry = {
+        title,
+        category: $('wiki-category').value,
+        content: sanitizeHTML($('wiki-content').innerHTML),
+        tags: $('wiki-tags').value.split(',').map(t => t.trim()).filter(t => t),
+        pinned: $('wiki-pinned').checked,
+        parentId: parentVal ? parseInt(parentVal) : null,
+        updatedAt: Date.now()
+    };
+    
+    if (editId) {
+        const idx = D.wiki.findIndex(e => e.id === parseInt(editId));
+        if (idx > -1) {
+            D.wiki[idx] = { ...D.wiki[idx], ...entry };
+            showToast('Wiki-Eintrag aktualisiert');
+            selectedWikiEntryId = parseInt(editId);
+        }
+    } else {
+        entry.id = nextId('wiki');
+        entry.createdAt = Date.now();
+        D.wiki.push(entry);
+        showToast('Wiki-Eintrag erstellt');
+        selectedWikiEntryId = entry.id;
+        // Kategorie ausklappen
+        expandedWikiCategories.add(entry.category);
+    }
+    
+    hideWikiForm();
+    renderWiki();
+    save();
+}
+
+function editWikiEntry(id) {
+    const entry = EntityLookup.wiki(id);
+    if (!entry) return;
+    
+    updateWikiParentSelect();
+    
+    $('edit-wiki-id').value = id;
+    $('wiki-title').value = entry.title;
+    $('wiki-category').value = entry.category || 'locations';
+    $('wiki-content').innerHTML = entry.content || '';
+    $('wiki-tags').value = (entry.tags || []).join(', ');
+    $('wiki-pinned').checked = entry.pinned || false;
+    
+    // Parent setzen (nach updateWikiParentSelect)
+    setTimeout(() => {
+        if ($('wiki-parent')) {
+            $('wiki-parent').value = entry.parentId || '';
+        }
+    }, 10);
+    
+    $('wiki-form-title').textContent = '✏️ Eintrag bearbeiten';
+    $('wiki-form-overlay').style.display = 'flex';
+    $('wiki-title').focus();
+}
+
+function cancelWikiEdit() {
+    clearWikiForm();
+}
+
+function clearWikiForm() {
+    $('edit-wiki-id').value = '';
+    $('wiki-title').value = '';
+    $('wiki-category').value = 'locations';
+    $('wiki-content').innerHTML = '';
+    $('wiki-tags').value = '';
+    $('wiki-pinned').checked = false;
+    if ($('wiki-parent')) $('wiki-parent').value = '';
+}
+
+function deleteWikiEntry(id) {
+    if (confirm('Wiki-Eintrag löschen?')) {
+        // Auch Kinder auf "kein Parent" setzen
+        D.wiki.forEach(e => {
+            if (e.parentId === id) e.parentId = null;
+        });
+        
+        D.wiki = D.wiki.filter(e => e.id !== id);
+        expandedWikiEntries.delete(id);
+        
+        // Falls der gelöschte Eintrag ausgewählt war
+        if (selectedWikiEntryId === id) {
+            selectedWikiEntryId = null;
+        }
+        
+        renderWiki();
+        save();
+        showToast('Wiki-Eintrag gelöscht');
+    }
+}
+
+function toggleWikiPin(id) {
+    const entry = EntityLookup.wiki(id);
+    if (!entry) return;
+    entry.pinned = !entry.pinned;
+    renderWiki();
+    save();
+    showToast(entry.pinned ? '📌 Eintrag gepinnt' : '📍 Eintrag entpinnt');
+}
+
+function navigateToWikiEntry(title) {
+    const entry = EntityLookup.findByName('wiki', title, 'title');
+    if (entry) {
+        // Kategorie ausklappen
+        expandedWikiCategories.add(entry.category || 'other');
+        // Eintrag auswählen
+        selectWikiEntry(entry.id);
+    }
+}
+
+function createWikiFromLink(title) {
+    if (confirm(`Wiki-Eintrag "${title}" existiert noch nicht. Jetzt erstellen?`)) {
+        showWikiForm();
+        $('wiki-title').value = title;
+        $('wiki-content').focus();
+    }
+}
+
+function searchWikiTag(tag) {
+    $('wiki-search').value = tag;
+    renderWiki();
+}
+
+function insertWikiLink() {
+    const title = prompt('Wiki-Link einfügen:', '');
+    if (title) {
+        document.execCommand('insertText', false, `[[${title}]]`);
+    }
+}
+
+// ============================================================
+// LINKS
+// ============================================================
+function renderLinks() {
+    const c = $('links-list'); if (!c) return;
+    const search = ($('link-search')?.value || '').toLowerCase();
+    const catFilter = $('link-filter')?.value || '';
+    
+    // Counter aktualisieren
+    const countEl = $('links-io-count');
+    if (countEl) countEl.textContent = D.links?.length || 0;
+    
+    let links = D.links || [];
+    
+    // Kategorie-Filter anwenden
+    if (catFilter) {
+        links = links.filter(l => l.category === catFilter);
+    }
+    
+    // Suche anwenden
+    if (search) {
+        links = links.filter(l => 
+            (l.title || '').toLowerCase().includes(search) ||
+            (l.url || '').toLowerCase().includes(search) ||
+            (l.description || '').toLowerCase().includes(search)
+        );
+    }
+    
+    if (!links.length) { 
+        c.innerHTML = renderEmptyState({
+            icon: '🔗',
+            titleEmpty: 'Keine Links',
+            descEmpty: 'Speichere nützliche Links zu Regeln, Tools und Karten.',
+            buttonText: '+ Link hinzufügen',
+            buttonAction: 'call',
+            buttonValue: 'toggleLinkForm',
+            isFiltered: !!(search || catFilter)
+        });
+        return; 
+    }
+    
+    c.innerHTML = links.map(l => `<div class="link-card">
+        <div class="link-icon">${LINK_CATS[l.category]?.split(' ')[0] || '🔗'}</div>
+        <div class="link-info">
+            <div class="link-title"><a href="${esc(l.url)}" target="_blank" style="color:inherit; text-decoration:none;">${esc(l.title)}</a></div>
+            <div class="link-url">${esc(l.url)}</div>
+            ${l.description ? `<div style="font-size:0.8em; color:var(--text-dim); margin-top:4px;">${esc(l.description)}</div>` : ''}
+        </div>
+        <div class="btn-group">
+            <button class="btn btn-sm" data-action="edit-link" data-id="${l.id}" title="Bearbeiten">✏️</button>
+            <button class="btn btn-sm btn-danger" data-action="delete-link" data-id="${l.id}" title="Löschen">🗑️</button>
+        </div>
+    </div>`).join('');
+}
+
+function toggleLinkForm() {
+    const form = $('link-form-card');
+    if (form) {
+        form.style.display = form.style.display === 'none' ? 'block' : 'none';
+    }
+}
+
+function saveLink() {
+    const editId = $('edit-link-id').value;
+    const title = $('link-title').value.trim();
+    const url = $('link-url').value.trim();
+    
+    if (!title || !url) { showToast('⚠️ Titel und URL erforderlich', 'error'); return; }
+    
+    const linkData = {
+        title,
+        url,
+        category: $('link-cat').value,
+        description: sanitizeHTML($('link-desc').innerHTML)
+    };
+    
+    if (editId) {
+        const idx = D.links.findIndex(l => l.id === parseInt(editId));
+        if (idx > -1) {
+            D.links[idx] = { ...D.links[idx], ...linkData };
+            showToast('Link aktualisiert');
+        }
+    } else {
+        linkData.id = nextId('links');
+        D.links.push(linkData);
+        showToast('Link hinzugefügt');
+    }
+    
+    cancelLinkEdit();
+    renderLinks();
+    save();
+}
+
+function editLink(id) {
+    const link = EntityLookup.link(id);
+    if (!link) return;
+    
+    $('edit-link-id').value = id;
+    $('link-title').value = link.title || '';
+    $('link-url').value = link.url || '';
+    $('link-cat').value = link.category || 'other';
+    $('link-desc').innerHTML = sanitizeHTML(link.description) || '';
+    
+    const form = $('link-form-card');
+    if (form) form.style.display = 'block';
+    
+    $('link-title').focus();
+}
+
+function cancelLinkEdit() {
+    $('edit-link-id').value = '';
+    $('link-title').value = '';
+    $('link-url').value = '';
+    $('link-cat').value = 'rules';
+    $('link-desc').innerHTML = '';
+    
+    const form = $('link-form-card');
+    if (form) form.style.display = 'none';
+}
+
+function deleteLink(id) { 
+    if (confirm('Löschen?')) { 
+        D.links = D.links.filter(l => l.id !== id); 
+        renderLinks(); 
+        save(); 
+    } 
+}
+
+// ============================================================
+// MINDMAP - Modern Network Visualization
+// ============================================================
+let connectMode = false;
+let connectFrom = null;
+let mindmapZoom = 1;
+let mindmapPan = { x: 0, y: 0 };
+let isPanning = false;
+let panStart = { x: 0, y: 0 };
+let dragNode = null;
+let dragOffset = { x: 0, y: 0 };
+
+const NODE_ICONS = {
+    player: '👤',
+    npc: '🎭',
+    enemy: '👹',
+    location: '🏠',
+    faction: '⚔️',
+    item: '📦',
+    quest: '📜',
+    event: '⚡',
+    group: '👥',
+    ruin: '🏚️',
+    castle: '🏰',
+    palace: '🏯',
+    dungeon: '⛓️',
+    fortress: '🛡️',
+    catacombs: '💀',
+    cave: '🕳️'
+};
+
+const NODE_LABELS = {
+    player: 'Spieler',
+    npc: 'NPC',
+    enemy: 'Feind',
+    location: 'Ort',
+    faction: 'Fraktion',
+    item: 'Item',
+    quest: 'Quest',
+    event: 'Event',
+    group: 'Gruppe',
+    ruin: 'Ruine',
+    castle: 'Burg',
+    palace: 'Schloss',
+    dungeon: 'Dungeon',
+    fortress: 'Festung',
+    catacombs: 'Katakomben',
+    cave: 'Höhle'
+};
+
+const CONN_COLORS = {
+    ally: 'var(--green)',
+    enemy: 'var(--red)',
+    neutral: 'var(--text-dim)',
+    family: 'var(--pink)',
+    business: 'var(--gold)',
+    quest: 'var(--purple)',
+    member: 'var(--cyan)'
+};
+
+let mindmapFilter = '';
+let mindmapTypeFilter = '';
+
+function renderMindmap() {
+    const container = $('mindmap-container');
+    const viewport = $('mindmap-viewport');
+    const svg = $('mindmap-svg');
+    if (!container || !viewport || !svg) return;
+    
+    // Apply zoom and pan
+    viewport.style.transform = `translate(${mindmapPan.x}px, ${mindmapPan.y}px) scale(${mindmapZoom})`;
+    
+    // Clear old nodes (keep SVG defs)
+    const defs = svg.querySelector('defs');
+    svg.innerHTML = '';
+    if (defs) svg.appendChild(defs);
+    viewport.querySelectorAll('.mindmap-node, .mindmap-connection-label').forEach(n => n.remove());
+    
+    const mm = D.mindmap;
+    if (!mm || !mm.nodes) return;
+    
+    // Draw connections with bezier curves
+    mm.connections.forEach((conn, idx) => {
+        const fromNode = mm.nodes.find(n => n.id === conn.from);
+        const toNode = mm.nodes.find(n => n.id === conn.to);
+        if (!fromNode || !toNode) return;
+        
+        const fromX = fromNode.x + 60;
+        const fromY = fromNode.y + 30;
+        const toX = toNode.x + 60;
+        const toY = toNode.y + 30;
+        
+        // Calculate control points for bezier curve
+        const dx = toX - fromX;
+        const dy = toY - fromY;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        const curvature = Math.min(dist * 0.3, 80);
+        
+        // Perpendicular offset for curve
+        const midX = (fromX + toX) / 2;
+        const midY = (fromY + toY) / 2;
+        
+        const connType = conn.type || 'neutral';
+        const color = CONN_COLORS[connType] || CONN_COLORS.neutral;
+        
+        // Create path
+        const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        const pathD = `M ${fromX} ${fromY} Q ${midX} ${midY - curvature * 0.5} ${toX} ${toY}`;
+        path.setAttribute('d', pathD);
+        path.setAttribute('fill', 'none');
+        path.setAttribute('stroke', color);
+        path.setAttribute('stroke-width', '2.5');
+        path.setAttribute('stroke-linecap', 'round');
+        path.setAttribute('marker-end', `url(#arrow-${connType})`);
+        path.setAttribute('class', `connection-${connType}`);
+        path.style.opacity = '0.8';
+        path.style.transition = 'opacity 0.2s, stroke-width 0.2s';
+        
+        // Hover effect
+        path.onmouseenter = () => { path.style.opacity = '1'; path.style.strokeWidth = '4'; };
+        path.onmouseleave = () => { path.style.opacity = '0.8'; path.style.strokeWidth = '2.5'; };
+        
+        // Click to delete
+        path.onclick = (e) => {
+            e.stopPropagation();
+            if (confirm(`Verbindung "${conn.label || 'Unbenannt'}" löschen?`)) {
+                mm.connections.splice(idx, 1);
+                renderMindmap();
+                save();
+            }
+        };
+        path.style.cursor = 'pointer';
+        
+        svg.appendChild(path);
+        
+        // Add label
+        if (conn.label) {
+            const labelDiv = document.createElement('div');
+            labelDiv.className = 'mindmap-connection-label';
+            labelDiv.textContent = conn.label;
+            labelDiv.style.left = midX + 'px';
+            labelDiv.style.top = (midY - curvature * 0.25) + 'px';
+            labelDiv.style.transform = 'translate(-50%, -50%)';
+            labelDiv.style.borderColor = color;
+            viewport.appendChild(labelDiv);
+        }
+    });
+    
+    // Draw nodes
+    mm.nodes.forEach(node => {
+        const div = document.createElement('div');
+        const isSelected = selectedNode === node.id;
+        const isConnecting = connectMode && connectFrom === node.id;
+        
+        // Check filter
+        const matchesSearch = !mindmapFilter || node.name.toLowerCase().includes(mindmapFilter);
+        const matchesType = !mindmapTypeFilter || node.type === mindmapTypeFilter;
+        const isFilteredOut = !matchesSearch || !matchesType;
+        const isHighlight = mindmapFilter && matchesSearch && !isFilteredOut;
+        
+        div.className = `mindmap-node ${node.type} ${isSelected ? 'selected' : ''} ${isConnecting ? 'connecting' : ''} ${isFilteredOut ? 'filtered-out' : ''} ${isHighlight ? 'highlight' : ''}`;
+        div.style.left = node.x + 'px';
+        div.style.top = node.y + 'px';
+        div.dataset.id = node.id;
+        
+        div.innerHTML = `
+            <div class="mindmap-node-icon">${NODE_ICONS[node.type] || '❓'}</div>
+            <div class="mindmap-node-label">${esc(node.name)}</div>
+            <div class="mindmap-node-sub">${NODE_LABELS[node.type] || node.type}</div>
+            ${node.desc ? `<div style="font-size: 9px; color: var(--text-dim); margin-top: 2px;">${esc(node.desc)}</div>` : ''}
+            ${isSelected ? `<div class="mindmap-node-actions">
+                <button class="mindmap-node-action-btn" data-action="edit-node-stop" data-id="${node.id}" title="Bearbeiten">✏️</button>
+                <button class="mindmap-node-action-btn" data-action="delete-node-stop" data-id="${node.id}" title="Löschen">🗑️</button>
+            </div>` : ''}
+            <div class="mindmap-node-connector top" data-dir="top"></div>
+            <div class="mindmap-node-connector bottom" data-dir="bottom"></div>
+            <div class="mindmap-node-connector left" data-dir="left"></div>
+            <div class="mindmap-node-connector right" data-dir="right"></div>
+        `;
+        
+        // Click handler
+        div.onclick = (e) => {
+            if (e.target.classList.contains('mindmap-node-connector')) return;
+            if (e.target.classList.contains('mindmap-node-action-btn')) return;
+            if (isFilteredOut) return; // Don't allow clicking filtered nodes
+            handleNodeClick(node.id);
+        };
+        
+        // Double-click to edit
+        div.ondblclick = (e) => {
+            if (e.target.classList.contains('mindmap-node-connector')) return;
+            if (isFilteredOut) return;
+            e.stopPropagation();
+            editNode(node.id);
+        };
+        
+        // Drag handler
+        div.onmousedown = (e) => {
+            if (e.target.classList.contains('mindmap-node-connector')) {
+                startConnectFromConnector(node.id);
+                return;
+            }
+            if (e.target.classList.contains('mindmap-node-action-btn')) return;
+            startNodeDrag(e, node.id);
+        };
+        
+        // Connector click handlers
+        div.querySelectorAll('.mindmap-node-connector').forEach(conn => {
+            conn.onclick = (e) => {
+                e.stopPropagation();
+                startConnectFromConnector(node.id);
+            };
+        });
+        
+        viewport.appendChild(div);
+    });
+    
+    // Update counter
+    const countEl = $('network-io-count');
+    if (countEl) countEl.textContent = mm.nodes.length;
+    
+    // Draw temporary connection line when connecting
+    if (connectMode && connectFrom) {
+        // This would show a line following the mouse - simplified for now
+    }
+}
+
+function handleNodeClick(nodeId) {
+    if (connectMode) {
+        if (connectFrom === null) {
+            connectFrom = nodeId;
+            renderMindmap();
+        } else if (connectFrom !== nodeId) {
+            showConnectionModal(connectFrom, nodeId);
+        }
+    } else {
+        selectedNode = selectedNode === nodeId ? null : nodeId;
+        renderMindmap();
+    }
+}
+
+function startConnectFromConnector(nodeId) {
+    if (!connectMode) {
+        startConnectMode();
+    }
+    connectFrom = nodeId;
+    renderMindmap();
+}
+
+function showAddNodeModal() {
+    $('edit-node-id').value = '';
+    $('node-name').value = '';
+    $('node-type').value = 'npc';
+    $('node-desc').value = '';
+    $('node-modal-title').textContent = '➕ Node hinzufügen';
+    $('node-save-btn').textContent = 'Hinzufügen';
+    document.querySelectorAll('.node-type-btn').forEach(btn => {
+        btn.classList.remove('btn-success');
+        if (btn.dataset.type === 'npc') btn.classList.add('btn-success');
+    });
+    showModal('add-node-modal');
+    $('node-name').focus();
+}
+
+function editNode(nodeId) {
+    const node = D.mindmap.nodes.find(n => n.id === nodeId);
+    if (!node) return;
+    
+    $('edit-node-id').value = nodeId;
+    $('node-name').value = node.name || '';
+    $('node-type').value = node.type || 'npc';
+    $('node-desc').value = node.desc || '';
+    $('node-modal-title').textContent = '✏️ Node bearbeiten';
+    $('node-save-btn').textContent = 'Speichern';
+    
+    document.querySelectorAll('.node-type-btn').forEach(btn => {
+        btn.classList.remove('btn-success');
+        if (btn.dataset.type === node.type) btn.classList.add('btn-success');
+    });
+    
+    showModal('add-node-modal');
+    $('node-name').focus();
+}
+
+function saveNodeFromModal() {
+    const name = $('node-name').value.trim();
+    if (!name) { showToast('Name erforderlich'); return; }
+    
+    const type = $('node-type').value;
+    const desc = $('node-desc').value.trim();
+    const editId = $('edit-node-id').value;
+    
+    if (editId) {
+        // Bearbeiten
+        const node = D.mindmap.nodes.find(n => n.id === parseInt(editId));
+        if (node) {
+            node.name = name;
+            node.type = type;
+            node.desc = desc;
+            showToast(`${NODE_ICONS[type]} ${name} aktualisiert`);
+        }
+    } else {
+        // Neu hinzufügen
+        const container = $('mindmap-container');
+        const centerX = (container.clientWidth / 2 - mindmapPan.x) / mindmapZoom;
+        const centerY = (container.clientHeight / 2 - mindmapPan.y) / mindmapZoom;
+        
+        D.mindmap.nodes.push({
+            id: nextId('mindmapNodes'),
+            name,
+            type,
+            desc,
+            x: centerX - 60 + (Math.random() - 0.5) * 100,
+            y: centerY - 30 + (Math.random() - 0.5) * 100
+        });
+        showToast(`${NODE_ICONS[type]} ${name} hinzugefügt`);
+    }
+    
+    hideModal('add-node-modal');
+    renderMindmap();
+    save();
+}
+
+function selectNodeType(type) {
+    $('node-type').value = type;
+    document.querySelectorAll('.node-type-btn').forEach(btn => {
+        btn.classList.toggle('btn-success', btn.dataset.type === type);
+    });
+}
+
+function deleteSelectedNode() {
+    if (!selectedNode) {
+        showToast('Kein Node ausgewählt');
+        return;
+    }
+    deleteNodeById(selectedNode);
+}
+
+function editSelectedNode() {
+    if (!selectedNode) {
+        showToast('Kein Node ausgewählt');
+        return;
+    }
+    editNode(selectedNode);
+}
+
+function deleteNodeById(nodeId) {
+    const node = D.mindmap.nodes.find(n => n.id === nodeId);
+    if (!node) return;
+    
+    if (confirm(`"${node.name}" löschen?`)) {
+        D.mindmap.nodes = D.mindmap.nodes.filter(n => n.id !== nodeId);
+        D.mindmap.connections = D.mindmap.connections.filter(c => c.from !== nodeId && c.to !== nodeId);
+        if (selectedNode === nodeId) selectedNode = null;
+        renderMindmap();
+        save();
+        showToast('🗑️ Node gelöscht');
+    }
+}
+
+// Connection Mode
+function startConnectMode() {
+    connectMode = true;
+    connectFrom = null;
+    $('connect-mode-btn').classList.add('btn-success');
+    $('connection-info').style.display = 'block';
+    renderMindmap();
+}
+
+function cancelConnectMode() {
+    connectMode = false;
+    connectFrom = null;
+    $('connect-mode-btn').classList.remove('btn-success');
+    $('connection-info').style.display = 'none';
+    renderMindmap();
+}
+
+function showConnectionModal(from, to) {
+    const fromNode = D.mindmap.nodes.find(n => n.id === from);
+    const toNode = D.mindmap.nodes.find(n => n.id === to);
+    
+    $('connection-nodes-info').innerHTML = `
+        <span style="color: var(--cyan);">${NODE_ICONS[fromNode.type]} ${esc(fromNode.name)}</span>
+        <span style="margin: 0 12px;">→</span>
+        <span style="color: var(--gold);">${NODE_ICONS[toNode.type]} ${esc(toNode.name)}</span>
+    `;
+    
+    $('conn-type').value = 'neutral';
+    $('conn-label').value = '';
+    document.querySelectorAll('.conn-type-btn').forEach(btn => {
+        btn.classList.remove('btn-success');
+        if (btn.dataset.type === 'neutral') btn.classList.add('btn-success');
+    });
+    
+    // Store connection data
+    window._pendingConnection = { from, to };
+    
+    showModal('connection-modal');
+}
+
+function selectConnType(type) {
+    $('conn-type').value = type;
+    document.querySelectorAll('.conn-type-btn').forEach(btn => {
+        btn.classList.toggle('btn-success', btn.dataset.type === type);
+    });
+}
+
+function confirmConnection() {
+    if (!window._pendingConnection) return;
+    
+    const { from, to } = window._pendingConnection;
+    const type = $('conn-type').value;
+    const label = $('conn-label').value.trim();
+    
+    // Check if connection already exists
+    const exists = D.mindmap.connections.some(c => 
+        (c.from === from && c.to === to) || (c.from === to && c.to === from)
+    );
+    
+    if (exists) {
+        showToast('Verbindung existiert bereits');
+    } else {
+        D.mindmap.connections.push({ from, to, type, label });
+        save();
+        showToast('Verbindung erstellt');
+    }
+    
+    hideModal('connection-modal');
+    cancelConnectMode();
+    delete window._pendingConnection;
+}
+
+// Drag & Drop
+function startNodeDrag(e, nodeId) {
+    if (connectMode) return;
+    
+    dragNode = D.mindmap.nodes.find(n => n.id === nodeId);
+    if (!dragNode) return;
+    
+    const rect = $('mindmap-container').getBoundingClientRect();
+    dragOffset = {
+        x: (e.clientX - rect.left - mindmapPan.x) / mindmapZoom - dragNode.x,
+        y: (e.clientY - rect.top - mindmapPan.y) / mindmapZoom - dragNode.y
+    };
+    
+    document.addEventListener('mousemove', onNodeDrag);
+    document.addEventListener('mouseup', stopNodeDrag);
+    e.preventDefault();
+}
+
+function onNodeDrag(e) {
+    if (!dragNode) return;
+    
+    const rect = $('mindmap-container').getBoundingClientRect();
+    dragNode.x = Math.max(0, (e.clientX - rect.left - mindmapPan.x) / mindmapZoom - dragOffset.x);
+    dragNode.y = Math.max(0, (e.clientY - rect.top - mindmapPan.y) / mindmapZoom - dragOffset.y);
+    
+    renderMindmap();
+}
+
+function stopNodeDrag() {
+    if (dragNode) {
+        save();
+    }
+    dragNode = null;
+    document.removeEventListener('mousemove', onNodeDrag);
+    document.removeEventListener('mouseup', stopNodeDrag);
+}
+
+// Zoom & Pan
+function zoomMindmap(delta) {
+    const newZoom = Math.max(0.3, Math.min(2, mindmapZoom + delta));
+    mindmapZoom = newZoom;
+    updateMindmapZoomDisplay();
+    renderMindmap();
+}
+
+function resetZoom() {
+    mindmapZoom = 1;
+    mindmapPan = { x: 0, y: 0 };
+    updateMindmapZoomDisplay();
+    renderMindmap();
+}
+
+function updateMindmapZoomDisplay() {
+    const display = $('mindmap-zoom-display');
+    if (display) {
+        display.textContent = Math.round(mindmapZoom * 100) + '%';
+    }
+}
+
+function centerView() {
+    if (!D.mindmap.nodes.length) {
+        resetZoom();
+        return;
+    }
+    
+    // Calculate bounding box of all nodes
+    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+    D.mindmap.nodes.forEach(n => {
+        minX = Math.min(minX, n.x);
+        minY = Math.min(minY, n.y);
+        maxX = Math.max(maxX, n.x + 120);
+        maxY = Math.max(maxY, n.y + 60);
+    });
+    
+    const container = $('mindmap-container');
+    const centerX = (minX + maxX) / 2;
+    const centerY = (minY + maxY) / 2;
+    
+    mindmapPan.x = container.clientWidth / 2 - centerX * mindmapZoom;
+    mindmapPan.y = container.clientHeight / 2 - centerY * mindmapZoom;
+    
+    renderMindmap();
+}
+
+// Auto Layout (simple force-directed)
+function autoLayoutNodes() {
+    const nodes = D.mindmap.nodes;
+    if (!nodes.length) return;
+    
+    const container = $('mindmap-container');
+    const width = container.clientWidth;
+    const height = container.clientHeight;
+    
+    // Simple circular layout for now
+    const centerX = width / 2 / mindmapZoom - mindmapPan.x / mindmapZoom;
+    const centerY = height / 2 / mindmapZoom - mindmapPan.y / mindmapZoom;
+    const radius = Math.min(width, height) * 0.35 / mindmapZoom;
+    
+    nodes.forEach((node, i) => {
+        const angle = (i / nodes.length) * Math.PI * 2 - Math.PI / 2;
+        node.x = centerX + Math.cos(angle) * radius - 60;
+        node.y = centerY + Math.sin(angle) * radius - 30;
+    });
+    
+    renderMindmap();
+    save();
+    showToast('Nodes automatisch angeordnet');
+}
+
+// Filter Mindmap Nodes
+function filterMindmapNodes() {
+    mindmapFilter = ($('mindmap-search')?.value || '').toLowerCase();
+    mindmapTypeFilter = $('mindmap-type-filter')?.value || '';
+    renderMindmap();
+    
+    // Update counter
+    const count = D.mindmap?.nodes?.length || 0;
+    const countEl = $('network-io-count');
+    if (countEl) countEl.textContent = count;
+}
+
+// Import Nodes from existing data
+function showImportNodesModal() {
+    showModal('import-nodes-modal');
+    populateImportNodesList();
+}
+
+function populateImportNodesList() {
+    const source = $('import-nodes-source').value;
+    const listEl = $('import-nodes-list');
+    
+    let items = [];
+    let itemType = 'npc';
+    
+    switch (source) {
+        case 'characters':
+            items = D.characters || [];
+            itemType = 'player';
+            break;
+        case 'npcs':
+            items = D.npcs || [];
+            itemType = 'npc';
+            break;
+        case 'locations':
+            items = D.locations || [];
+            itemType = 'location';
+            break;
+        case 'quests':
+            items = D.quests || [];
+            itemType = 'quest';
+            break;
+        case 'encounters':
+            items = D.encounters || [];
+            itemType = 'enemy';
+            break;
+    }
+    
+    if (!items.length) {
+        listEl.innerHTML = '<div style="color: var(--text-dim); text-align: center; padding: 20px;">Keine Einträge vorhanden</div>';
+        return;
+    }
+    
+    // Check which are already imported
+    const existingNames = new Set((D.mindmap?.nodes || []).map(n => n.name.toLowerCase()));
+    
+    listEl.innerHTML = items.map(item => {
+        const name = item.name || item.title || 'Unbenannt';
+        const exists = existingNames.has(name.toLowerCase());
+        const icon = NODE_ICONS[itemType] || '❓';
+        
+        return `
+            <label style="display: flex; align-items: center; gap: 8px; padding: 6px 8px; border-radius: 4px; cursor: pointer; ${exists ? 'opacity: 0.4;' : ''}" 
+                   class="import-node-item" ${exists ? 'title="Bereits importiert"' : ''}>
+                <input type="checkbox" data-name="${esc(name)}" data-type="${itemType}" data-source="${source}" data-id="${item.id}" ${exists ? 'disabled' : ''}>
+                <span>${icon}</span>
+                <span style="flex: 1;">${esc(name)}</span>
+                ${exists ? '<span style="font-size: 10px; color: var(--green);">✓</span>' : ''}
+            </label>
+        `;
+    }).join('');
+}
+
+function importSelectedNodes() {
+    const checkboxes = document.querySelectorAll('#import-nodes-list input[type="checkbox"]:checked');
+    if (!checkboxes.length) {
+        showToast('⚠️ Keine Einträge ausgewählt', 'warning');
+        return;
+    }
+    
+    const container = $('mindmap-container');
+    const centerX = (container.clientWidth / 2 - mindmapPan.x) / mindmapZoom;
+    const centerY = (container.clientHeight / 2 - mindmapPan.y) / mindmapZoom;
+    
+    let count = 0;
+    checkboxes.forEach((cb, i) => {
+        const name = cb.dataset.name;
+        const type = cb.dataset.type;
+        
+        // Add node with slight offset
+        const angle = (i / checkboxes.length) * Math.PI * 2;
+        const radius = 100 + Math.random() * 50;
+        
+        D.mindmap.nodes.push({
+            id: nextId('mindmapNodes'),
+            name,
+            type,
+            desc: '',
+            x: centerX + Math.cos(angle) * radius - 60,
+            y: centerY + Math.sin(angle) * radius - 30
+        });
+        count++;
+    });
+    
+    hideModal('import-nodes-modal');
+    renderMindmap();
+    save();
+    showToast(`📥 ${count} Node(s) importiert`);
+}
+
+function importAllNodes() {
+    const source = $('import-nodes-source').value;
+    const checkboxes = document.querySelectorAll('#import-nodes-list input[type="checkbox"]:not(:disabled)');
+    
+    checkboxes.forEach(cb => cb.checked = true);
+    importSelectedNodes();
+}
+
+// clearAllNodes ist definiert als Alias für clearMindmap() im Debug-Bereich
+
+function exportMindmapImage() {
+    showToast('🖼️ Export als PNG (In Entwicklung)');
+    // TODO: Implement html2canvas or similar
+}
+
+// Pan with mouse drag on empty space
+function initMindmapPan() {
+    const container = $('mindmap-container');
+    if (!container) return;
+    
+    container.addEventListener('mousedown', (e) => {
+        if (e.target === container || e.target.id === 'mindmap-viewport' || e.target.tagName === 'svg') {
+            isPanning = true;
+            panStart = { x: e.clientX - mindmapPan.x, y: e.clientY - mindmapPan.y };
+            container.style.cursor = 'grabbing';
+        }
+    });
+    
+    container.addEventListener('mousemove', (e) => {
+        if (!isPanning) return;
+        mindmapPan.x = e.clientX - panStart.x;
+        mindmapPan.y = e.clientY - panStart.y;
+        renderMindmap();
+    });
+    
+    container.addEventListener('mouseup', () => {
+        isPanning = false;
+        container.style.cursor = '';
+    });
+    
+    container.addEventListener('mouseleave', () => {
+        isPanning = false;
+        container.style.cursor = '';
+    });
+    
+    // Zoom with scroll wheel
+    container.addEventListener('wheel', (e) => {
+        e.preventDefault();
+        const delta = e.deltaY > 0 ? -0.1 : 0.1;
+        zoomMindmap(delta);
+    }, { passive: false });
+}
+
+// Initialize pan on load
+document.addEventListener('DOMContentLoaded', () => {
+    setTimeout(initMindmapPan, 100);
+    setTimeout(initDiceTab, 200);
+});
+
+function initDiceTab() {
+    updateDiceCharSelect();
+    updateDiceCharStats();
+    renderFormulaHistory();
+}
