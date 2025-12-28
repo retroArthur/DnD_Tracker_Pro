@@ -59,7 +59,7 @@ function showNPCPopup(npcId, event) {
             ${npc.description ? `
                 <div class="npc-popup-section">
                     <div class="npc-popup-section-title">Beschreibung</div>
-                    <div style="font-size: 0.85em; color: var(--text);">${npc.description}</div>
+                    <div style="font-size: 0.85em; color: var(--text);">${sanitizeHTML(npc.description)}</div>
                 </div>
             ` : ''}
 

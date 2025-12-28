@@ -452,7 +452,7 @@ function renderLoot() {
             </div>
             <div class="loot-item-content">
                 ${detailsHtml.length > 0 ? `<div class="loot-item-detail-row">${detailsHtml.join('')}</div>` : ''}
-                ${i.description ? `<div class="loot-item-desc">${i.description}</div>` : ''}
+                ${i.description ? `<div class="loot-item-desc">${sanitizeHTML(i.description)}</div>` : ''}
                 ${tagsHtml}
                 <div class="loot-item-footer">
                     <div class="loot-item-meta">

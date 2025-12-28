@@ -263,18 +263,18 @@ function showEntityPreviewModal(type, id, entity) {
             <div style="margin-bottom: 12px;">
                 <span style="background: ${statusColors[status]}; color: var(--bg-dark); padding: 2px 8px; border-radius: 10px; font-size: 0.8em; font-weight: 600;">${status.toUpperCase()}</span>
             </div>
-            ${entity.description ? `<div style="color: var(--text); margin-bottom: 10px;">${entity.description}</div>` : ''}
+            ${entity.description ? `<div style="color: var(--text); margin-bottom: 10px;">${sanitizeHTML(entity.description)}</div>` : ''}
             ${entity.reward ? `<div style="color: var(--gold); font-size: 0.9em;">💰 ${esc(entity.reward)}</div>` : ''}
         `;
     } else if (type === 'npcs') {
         const location = EntityLookup.location(entity.locationId);
         content = `
             ${entity.role ? `<div style="color: var(--text-dim); margin-bottom: 8px;">${esc(entity.role)}</div>` : ''}
-            ${entity.description ? `<div style="color: var(--text); margin-bottom: 10px;">${entity.description}</div>` : ''}
+            ${entity.description ? `<div style="color: var(--text); margin-bottom: 10px;">${sanitizeHTML(entity.description)}</div>` : ''}
             ${location ? `<div style="font-size: 0.85em; color: var(--cyan);">📍 ${esc(location.name)}</div>` : ''}
         `;
     } else if (type === 'locations') {
-        content = entity.description ? `<div style="color: var(--text);">${entity.description}</div>` : '';
+        content = entity.description ? `<div style="color: var(--text);">${sanitizeHTML(entity.description)}</div>` : '';
     } else if (type === 'characters') {
         content = `
             ${entity.race ? `<div style="color: var(--purple);">${esc(entity.race)} ${entity.class ? esc(entity.class) : ''}</div>` : ''}
@@ -295,7 +295,7 @@ function showEntityPreviewModal(type, id, entity) {
             ${entity.castingTime ? `<div style="font-size: 0.85em;"><span style="color: var(--text-dim);">Zeitaufwand:</span> ${esc(entity.castingTime)}</div>` : ''}
             ${entity.range ? `<div style="font-size: 0.85em;"><span style="color: var(--text-dim);">Reichweite:</span> ${esc(entity.range)}</div>` : ''}
             ${entity.duration ? `<div style="font-size: 0.85em;"><span style="color: var(--text-dim);">Dauer:</span> ${esc(entity.duration)}</div>` : ''}
-            ${entity.description ? `<div style="color: var(--text); margin-top: 10px; font-size: 0.9em;">${entity.description.substring(0, 200)}${entity.description.length > 200 ? '...' : ''}</div>` : ''}
+            ${entity.description ? `<div style="color: var(--text); margin-top: 10px; font-size: 0.9em;">${sanitizeHTML(entity.description.substring(0, 200))}${entity.description.length > 200 ? '...' : ''}</div>` : ''}
         `;
     } else if (type === 'loot') {
         const rarityColors = { common: 'var(--text)', uncommon: 'var(--green)', rare: 'var(--blue)', 'very-rare': 'var(--purple)', legendary: 'var(--gold)', artifact: 'var(--red)' };
@@ -304,7 +304,7 @@ function showEntityPreviewModal(type, id, entity) {
             ${entity.rarity ? `<div style="color: ${rarityColor}; font-weight: 600; margin-bottom: 8px;">${esc(entity.rarity.charAt(0).toUpperCase() + entity.rarity.slice(1))}</div>` : ''}
             ${entity.value ? `<div style="color: var(--gold); font-size: 0.9em;">💰 ${esc(entity.value)}</div>` : ''}
             ${entity.weight ? `<div style="font-size: 0.85em; color: var(--text-dim);">⚖️ ${esc(entity.weight)}</div>` : ''}
-            ${entity.description ? `<div style="color: var(--text); margin-top: 10px;">${entity.description}</div>` : ''}
+            ${entity.description ? `<div style="color: var(--text); margin-top: 10px;">${sanitizeHTML(entity.description)}</div>` : ''}
         `;
     } else if (type === 'wiki') {
         const parent = entity.parentId ? EntityLookup.wiki(entity.parentId) : null;

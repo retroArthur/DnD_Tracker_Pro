@@ -185,7 +185,7 @@ function renderNPCGridCard(n) {
             </div>
         </div>
         <div class="npc-card-body">
-            ${n.description ? `<div class="npc-list-desc">${n.description}</div>` : ''}
+            ${n.description ? `<div class="npc-list-desc">${sanitizeHTML(n.description)}</div>` : ''}
             ${allTags ? `<div class="npc-list-tags">${allTags}</div>` : ''}
             ${entityTags}
             ${entityLinks}

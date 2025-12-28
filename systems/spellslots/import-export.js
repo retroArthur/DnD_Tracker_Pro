@@ -190,10 +190,16 @@ function importData(dataType, inputEl) {
     
     reader.onload = e => {
         try {
-            // Sichere JSON-Parse
+            // Sichere JSON-Parse mit Prototype Pollution Protection
             let imported;
             try {
                 imported = JSON.parse(e.target.result);
+                // Prototype Pollution Protection
+                if (imported && typeof imported === 'object') {
+                    delete imported.__proto__;
+                    delete imported.constructor;
+                    delete imported.prototype;
+                }
             } catch (parseErr) {
                 throw new Error('Ungültiges JSON-Format');
             }

@@ -174,7 +174,7 @@ function renderSpellCards(spells) {
                     <div class="spell-comp ${s.m ? 'active material' : 'inactive'}">M</div>
                 </div>
                 ${s.m && s.material ? `<div class="spell-material">📦 ${esc(s.material)}</div>` : ''}
-                ${s.description ? `<div class="spell-desc">${s.description}</div>` : ''}
+                ${s.description ? `<div class="spell-desc">${sanitizeHTML(s.description)}</div>` : ''}
                 ${s.note ? `<div class="spell-note">📝 ${s.note}</div>` : ''}
                 <div class="btn-group">
                     <button class="btn btn-sm" data-action="edit-spell-stop" data-id="${s.id}">✏️ Bearbeiten</button>
