@@ -8,7 +8,7 @@
 function toggleQuickRef() {
     const panel = $('quick-ref-panel');
     if (panel) {
-        panel.classList.toggle('open');
+        panel.classList.toggle('active');
     }
 }
 

@@ -77,6 +77,7 @@ const EntityActions = {
     'toggle-location': (ctx) => toggleLocation(ctx.id),
     'toggle-location-card': (ctx) => toggleLocationCard(ctx.id),
     'set-loc-filter': (ctx) => setLocFilter(ctx.id || ctx.value),
+    'select-location': (ctx) => selectLocation(ctx.id),
     'delete-filter': (ctx) => deleteFilter(ctx.id),
 
     // Quest actions

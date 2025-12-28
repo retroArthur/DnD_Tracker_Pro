@@ -83,19 +83,34 @@ def build(minify=False):
         'systems/avatars.js',
         'systems/backups.js',
         'render/helpers.js',
-        # Render-Feature-Module (ersetzt render/main.js)
+        # Render-Feature-Module
         'features/render-dashboard.js',
-        'features/render-party.js',
+        # Party-Module
+        'features/party/party-render.js',
+        'features/party/party-details.js',
+        'features/party/party-crud.js',
         'features/render-spells.js',
-        'features/render-locations.js',
+        # Locations-Module
+        'features/locations/locations-render.js',
+        'features/locations/locations-crud.js',
         'features/render-loot.js',
-        'features/render-npcs.js',
-        'features/render-quests.js',
-        'features/render-encounters.js',
+        # NPC-Module
+        'features/npcs/npc-render.js',
+        'features/npcs/npc-interactions.js',
+        'features/npcs/npc-dialogs.js',
+        'features/npcs/npc-crud.js',
+        'features/npcs/npc-popup.js',
+        # Quests-Module
+        'features/quests/quests-render.js',
+        'features/quests/quests-crud.js',
+        # Encounters-Module
+        'features/encounters/encounters-render.js',
+        'features/encounters/encounters-crud.js',
         # Features
         'features/encounter-calculator.js',
         'features/initiative.js',
-        # Shops-Module (ersetzt features/shops.js)
+        # Shops-Module
+        'features/shops/shops-prolog.js',
         'features/shops/shops-core.js',
         'features/shops/spell-editor.js',
         'features/shops/sessions.js',
@@ -124,6 +139,15 @@ def build(minify=False):
         'ui/virtual-scroll-helper.js',
         'ui/lazy-loading.js',
         'ui/event-delegation.js',
+        # Action-Module
+        'ui/actions/entity-actions.js',
+        'ui/actions/combat-actions.js',
+        'ui/actions/ui-actions.js',
+        'ui/actions/dice-actions.js',
+        'ui/actions/wiki-actions.js',
+        'ui/actions/shop-actions.js',
+        'ui/actions/map-actions.js',
+        'ui/actions/system-actions.js',
         'ui/virtual-scroll.js',
         'core/init.js'
     ]
@@ -188,6 +212,7 @@ def build(minify=False):
 {css_content}
     </style>
 </head>
+<body>
 {body_content}
 <script>
 {js_combined}

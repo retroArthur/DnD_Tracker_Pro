@@ -1518,8 +1518,8 @@ function renderMapMarkersList() {
     
     const MARKER_COLORS = {
         party: 'var(--green)', poi: 'var(--cyan)', danger: 'var(--red)',
-        quest: 'var(--purple)', item: 'var(--gold)', secret: '#f97316',
-        npc: 'var(--pink)', shop: '#84cc16', tavern: '#f59e0b'
+        quest: 'var(--purple)', item: 'var(--gold)', secret: 'var(--orange)',
+        npc: 'var(--pink)', shop: 'var(--green)', tavern: 'var(--yellow)'
     };
     
     container.innerHTML = map.markers.map(m => {

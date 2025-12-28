@@ -375,7 +375,15 @@ function displayDiceResult(result, notation, rolls, isCrit, isFail, extraHtml = 
 }
 
 function createConfetti(container) {
-    const colors = ['#4ade80', '#fbbf24', '#60a5fa', '#f472b6', '#c084fc'];
+    // Use CSS variables for theme consistency
+    const style = getComputedStyle(document.documentElement);
+    const colors = [
+        style.getPropertyValue('--green').trim() || '#4ade80',
+        style.getPropertyValue('--yellow').trim() || '#fbbf24',
+        style.getPropertyValue('--blue').trim() || '#60a5fa',
+        style.getPropertyValue('--pink').trim() || '#f472b6',
+        style.getPropertyValue('--purple').trim() || '#c084fc'
+    ];
     for (let i = 0; i < 20; i++) {
         const confetti = document.createElement('div');
         confetti.className = 'confetti';

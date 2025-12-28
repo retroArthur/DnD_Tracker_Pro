@@ -1,203 +1,310 @@
 // ============================================================
-// LOCATIONS RENDER - Hauptrendering-Funktionen
+// LOCATIONS RENDER - Master-Detail Layout
 // ============================================================
-// Extrahiert aus features/render-locations.js
 
-// Globale State-Variable für expanded Locations
-let expandedLocations = new Set();
+// State
+let selectedLocationId = null;
+
+// Location type icons
+const LOC_ICONS = {
+    'stadt': '🏰',
+    'dorf': '🏘️',
+    'taverne': '🍺',
+    'wald': '🌲',
+    'dungeon': '🕳️',
+    'tempel': '⛪',
+    'turm': '🗼',
+    'hoehle': '🕯️',
+    'ruine': '🏚️',
+    'hafen': '⚓',
+    'markt': '🛒',
+    'schloss': '🏯',
+    'default': '📍'
+};
+
+function getLocationIcon(loc) {
+    // Try to detect type from name or description
+    const text = ((loc.name || '') + ' ' + (loc.description || '')).toLowerCase();
+    if (text.includes('tavern') || text.includes('gasth') || text.includes('schenke')) return LOC_ICONS.taverne;
+    if (text.includes('wald') || text.includes('forest')) return LOC_ICONS.wald;
+    if (text.includes('dungeon') || text.includes('verlies')) return LOC_ICONS.dungeon;
+    if (text.includes('tempel') || text.includes('kirche') || text.includes('schrein')) return LOC_ICONS.tempel;
+    if (text.includes('turm') || text.includes('tower')) return LOC_ICONS.turm;
+    if (text.includes('höhle') || text.includes('hoehle') || text.includes('cave')) return LOC_ICONS.hoehle;
+    if (text.includes('ruine') || text.includes('ruin')) return LOC_ICONS.ruine;
+    if (text.includes('hafen') || text.includes('dock') || text.includes('port')) return LOC_ICONS.hafen;
+    if (text.includes('markt') || text.includes('market') || text.includes('basar')) return LOC_ICONS.markt;
+    if (text.includes('schloss') || text.includes('burg') || text.includes('castle')) return LOC_ICONS.schloss;
+    if (text.includes('dorf') || text.includes('village')) return LOC_ICONS.dorf;
+    if (text.includes('stadt') || text.includes('city')) return LOC_ICONS.stadt;
+    return LOC_ICONS.default;
+}
 
 function renderLocations() {
-    const c = $('locations-list'); const fb = $('location-filters'); if (!c) return;
+    const listContainer = $('locations-list');
+    const filterContainer = $('location-filters');
+    if (!listContainer) return;
 
-    // Filter bar
-    fb.innerHTML = `<div class="filter-chip ${currentLocFilter === 'all' ? 'active' : ''}" data-action="set-loc-filter" data-value="all">Alle</div>` +
-        D.filters.map(f => `<div class="filter-chip color-${f.color} ${currentLocFilter === f.id ? 'active' : ''}" data-action="set-loc-filter" data-id="${f.id}">${esc(f.name)}</div>`).join('');
+    // Update counter
+    updateCounters({ 'locations-io-count': D.locations?.length || 0 });
 
-    const search = $('loc-search')?.value.toLowerCase() || '';
-    let locs = D.locations;
+    // Render filter chips
+    if (filterContainer) {
+        filterContainer.innerHTML = `
+            <div class="loc-filter-chip ${currentLocFilter === 'all' ? 'active' : ''}" data-action="set-loc-filter" data-value="all">Alle</div>
+            ${D.filters.map(f => `
+                <div class="loc-filter-chip ${currentLocFilter === f.id ? 'active' : ''}"
+                     data-action="set-loc-filter" data-id="${f.id}"
+                     style="${currentLocFilter === f.id ? '' : `border-color: var(--${f.color}); color: var(--${f.color})`}">
+                    ${esc(f.name)}
+                </div>
+            `).join('')}
+        `;
+    }
 
+    // Get search and filter
+    const search = ($('loc-search')?.value || '').toLowerCase();
+    let locs = D.locations || [];
+
+    // Apply filter
     if (currentLocFilter !== 'all') {
         locs = locs.filter(l => l.filterId === currentLocFilter);
     }
 
+    // Apply search
     if (search) {
         const npcLocs = new Set(D.npcs.filter(n => n.name.toLowerCase().includes(search)).map(n => n.locationId));
-        locs = locs.filter(l => l.name.toLowerCase().includes(search) || npcLocs.has(l.id));
+        locs = locs.filter(l =>
+            l.name.toLowerCase().includes(search) ||
+            (l.description || '').toLowerCase().includes(search) ||
+            npcLocs.has(l.id)
+        );
     }
 
+    // Empty state
     if (!locs.length) {
-        c.innerHTML = renderEmptyState({
-            icon: '🏠',
-            titleEmpty: 'Keine Orte',
-            descEmpty: 'Erstelle Orte für deine Kampagnenwelt.',
-            buttonText: '➕ Ort erstellen',
-            buttonAction: 'show-modal',
-            buttonValue: 'location-modal',
-            isFiltered: !!(search || currentLocFilter !== 'all')
-        });
+        listContainer.innerHTML = `
+            <div class="loc-empty-state">
+                <div class="loc-empty-icon">🏠</div>
+                <div class="loc-empty-title">${search || currentLocFilter !== 'all' ? 'Keine Treffer' : 'Keine Orte'}</div>
+                <div class="loc-empty-desc">${search || currentLocFilter !== 'all' ? 'Versuche andere Suchbegriffe' : 'Erstelle deinen ersten Ort'}</div>
+                ${!search && currentLocFilter === 'all' ? `
+                    <button class="loc-add-btn" data-action="show-modal" data-value="location-modal" style="margin-top: 12px;">
+                        + Ort erstellen
+                    </button>
+                ` : ''}
+            </div>
+        `;
+        clearLocationDetail();
         return;
     }
 
-    // Container-Klasse je nach View-Mode
-    c.className = viewModes.locations === 'list' ? 'list-view-container' : 'locations-list';
+    // Render list items
+    listContainer.innerHTML = locs.map(loc => renderLocationItem(loc)).join('');
 
-    // Render basierend auf View-Mode
-    if (viewModes.locations === 'list') {
-        c.innerHTML = locs.map(loc => renderLocationListItem(loc)).join('');
+    // Auto-select first if none selected
+    if (!selectedLocationId || !locs.find(l => l.id === selectedLocationId)) {
+        selectLocation(locs[0].id, false);
     } else {
-        c.innerHTML = locs.map(loc => renderLocationGridCard(loc)).join('');
+        // Re-render detail for current selection
+        showLocationDetail(selectedLocationId);
     }
 }
 
-function renderLocationListItem(loc) {
+function renderLocationItem(loc) {
     const npcs = D.npcs.filter(n => n.locationId === loc.id);
     const filter = EntityLookup.filter(loc.filterId);
-    const descText = loc.description ? stripHtml(loc.description).substring(0, 200) : '';
+    const icon = getLocationIcon(loc);
+    const isSelected = loc.id === selectedLocationId;
+    const descPreview = loc.description ? stripHtml(loc.description).substring(0, 60) : '';
 
-    // NPCs als kompakte Liste
-    const npcsPreview = npcs.slice(0, 5).map(n =>
-        `<span style="display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; background: var(--bg-dark); border-radius: 4px; margin: 2px;">
-            ${n.avatar ? `<img src="${esc(n.avatar)}" style="width: 16px; height: 16px; border-radius: 50%;">` : '🧑'}
-            ${esc(n.name)}
-        </span>`
-    ).join('');
+    // NPC avatars (max 4)
+    const npcAvatars = npcs.slice(0, 4).map(n => `
+        <div class="loc-mini-avatar" title="${esc(n.name)}">
+            ${n.avatar ? `<img src="${esc(n.avatar)}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">` : '👤'}
+        </div>
+    `).join('');
+
+    const moreNpcs = npcs.length > 4 ? `<div class="loc-mini-avatar more">+${npcs.length - 4}</div>` : '';
 
     return `
-        <div class="list-view-row location-row" data-action="toggle-location-card" data-id="${loc.id}">
-            <div class="row-icon"><span class="row-toggle">▶</span></div>
-            <div class="row-main">
-                <div class="row-title">${esc(loc.name)}</div>
-                <div class="row-subtitle">${npcs.length ? `${npcs.length} NPC${npcs.length > 1 ? 's' : ''}` : 'Keine NPCs'}</div>
+        <div class="loc-item ${isSelected ? 'selected' : ''}" data-action="select-location" data-id="${loc.id}">
+            <div class="loc-item-icon">${icon}</div>
+            <div class="loc-item-info">
+                <div class="loc-item-name">
+                    ${esc(loc.name)}
+                    ${filter ? `<span class="loc-item-tag" style="background: var(--${filter.color})">${esc(filter.name)}</span>` : ''}
+                </div>
+                <div class="loc-item-meta">
+                    ${descPreview ? descPreview + (loc.description && stripHtml(loc.description).length > 60 ? '...' : '') : 'Keine Beschreibung'}
+                    ${npcs.length ? ` • ${npcs.length} NPC${npcs.length > 1 ? 's' : ''}` : ''}
+                </div>
             </div>
-            ${filter ? `<div class="row-filter" style="background: var(--${filter.color}); color: white;">${esc(filter.name)}</div>` : '<div></div>'}
-            <div class="row-actions" data-stop-propagation="true">
-                <button class="btn btn-sm" data-action="edit-location" data-id="${loc.id}" title="Bearbeiten">✏️</button>
-                <button class="btn btn-sm btn-danger" data-action="delete-location" data-id="${loc.id}" title="Löschen">🗑️</button>
-            </div>
-            <div class="row-details">
-                ${descText ? `<div class="row-details-desc">${esc(descText)}${loc.description && stripHtml(loc.description).length > 200 ? '...' : ''}</div>` : '<div style="color: var(--text-dim);">Keine Beschreibung</div>'}
-                ${npcs.length ? `<div style="margin-top: 8px;"><strong style="color: var(--cyan);">🧑 NPCs:</strong><div style="display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px;">${npcsPreview}${npcs.length > 5 ? `<span style="color: var(--text-dim); padding: 2px 8px;">+ ${npcs.length - 5} weitere</span>` : ''}</div></div>` : ''}
-            </div>
+            ${npcs.length ? `<div class="loc-item-npcs">${npcAvatars}${moreNpcs}</div>` : ''}
         </div>
     `;
 }
 
-function renderLocationGridCard(loc) {
-    const npcs = D.npcs.filter(n => n.locationId === loc.id);
-    const filter = EntityLookup.filter(loc.filterId);
-    const entityLinks = renderEntityLinks(loc.links);
-    const entityTags = renderTagsBar(loc.tags);
-    const isExpanded = expandedLocations.has(loc.id);
+function selectLocation(id, scroll = true) {
+    selectedLocationId = id;
 
-    // NPCs als einfache Tags anzeigen
-    const npcTags = npcs.length ? `<div class="location-npc-tags">${npcs.map(n =>
-        `<span class="npc-tag" data-action="show-npc-popup-stop" data-id="${n.id}" title="${esc(n.role || n.name)}">
-            ${n.avatar ? `<img src="${esc(n.avatar)}" class="npc-tag-avatar">` : '🧑'}
-            ${esc(n.name)}
-        </span>`
-    ).join('')}</div>` : '';
+    // Update selection in list
+    document.querySelectorAll('.loc-item').forEach(el => {
+        el.classList.toggle('selected', el.dataset.id == id);
+    });
 
-    return `<div class="location-card ${isExpanded ? 'expanded' : ''}" id="loc-card-${loc.id}" data-loc-id="${loc.id}">
-        <div class="location-card-header" data-action="toggle-location-card" data-id="${loc.id}">
-            <div style="flex: 1; min-width: 0;">
-                <div class="location-name">
-                    <div class="location-name-text">
-                        <span style="flex-shrink: 0;">📍</span>
-                        <span class="loc-title" title="${esc(loc.name)}">${esc(loc.name)}</span>
-                    </div>
-                </div>
-                ${filter ? `<div class="location-filter-badge"><span class="chip color-${filter.color}" style="font-size:9px;">${esc(filter.name)}</span></div>` : ''}
-            </div>
-            <div class="location-buttons" data-stop-propagation="true">
-                <button class="btn btn-sm" data-action="show-entity-links-modal" data-type="locations" data-id="${loc.id}" title="Verknüpfungen">🔗</button>
-                <button class="btn btn-sm" data-action="show-tags-modal" data-type="locations" data-id="${loc.id}" title="Tags">🏷️</button>
-                <button class="btn btn-sm" data-action="edit-location" data-id="${loc.id}">✏️</button>
-                <button class="btn btn-sm btn-danger" data-action="delete-location" data-id="${loc.id}">🗑️</button>
-            </div>
-            <span class="location-card-toggle">▶</span>
-        </div>
-        <div class="location-card-content">
-            ${loc.description ? `<div class="location-description">${loc.description}</div>` : '<div style="color:var(--text-dim); font-size:0.85em;">Keine Beschreibung</div>'}
-            ${entityTags}
-            ${entityLinks}
-            ${npcTags}
-        </div>
-    </div>`;
+    // Show detail
+    showLocationDetail(id);
+
+    // Scroll into view if needed
+    if (scroll) {
+        const item = document.querySelector(`.loc-item[data-id="${id}"]`);
+        if (item) {
+            item.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+    }
 }
 
-function toggleLocationCard(id) {
-    // Bei Listenansicht: Expandiere inline
-    if (viewModes.locations === 'list') {
-        const row = document.querySelector(`.list-view-row.location-row[data-id="${id}"]`);
-        if (row) {
-            row.classList.toggle('expanded');
-        }
+function showLocationDetail(id) {
+    const panel = $('loc-detail-panel');
+    if (!panel) return;
+
+    const loc = EntityLookup.location(id);
+    if (!loc) {
+        clearLocationDetail();
         return;
     }
 
-    // Grid-Ansicht
-    if (expandedLocations.has(id)) {
-        expandedLocations.delete(id);
-    } else {
-        expandedLocations.add(id);
-    }
-    renderLocations();
+    const npcs = D.npcs.filter(n => n.locationId === loc.id);
+    const filter = EntityLookup.filter(loc.filterId);
+    const icon = getLocationIcon(loc);
+    const tags = loc.tags || [];
+    const links = loc.links || [];
+
+    // Build NPC list
+    const npcListHtml = npcs.length ? npcs.map(n => `
+        <div class="loc-npc-item" data-action="show-npc-popup" data-id="${n.id}">
+            <div class="loc-npc-avatar">
+                ${n.avatar ? `<img src="${esc(n.avatar)}">` : '👤'}
+            </div>
+            <div class="loc-npc-name">${esc(n.name)}</div>
+            <div class="loc-npc-role">${esc(n.role || n.race || '—')}</div>
+        </div>
+    `).join('') : '<div style="color: var(--text-dim); font-size: 0.85em;">Keine NPCs an diesem Ort</div>';
+
+    // Build links
+    const linksHtml = links.length ? links.map(link => {
+        const target = EntityLookup[link.type]?.(link.id);
+        if (!target) return '';
+        const icons = { characters: '👤', npcs: '🧑', locations: '📍', quests: '📜', encounters: '⚔️', spells: '✨', loot: '💰' };
+        return `<span class="loc-link" data-action="navigate-entity" data-type="${link.type}" data-id="${link.id}">${icons[link.type] || '🔗'} ${esc(target.name)}</span>`;
+    }).join('') : '';
+
+    // Build tags
+    const tagsHtml = tags.length ? tags.map(t => `<span class="loc-tag">${esc(t)}</span>`).join('') : '';
+
+    panel.innerHTML = `
+        <div class="loc-detail-content">
+            <div class="loc-detail-header">
+                <div class="loc-detail-icon">${icon}</div>
+                <div class="loc-detail-title">
+                    <div class="loc-detail-name">${esc(loc.name)}</div>
+                    <div class="loc-detail-region">
+                        ${filter ? `<span style="color: var(--${filter.color})">● ${esc(filter.name)}</span>` : '📍 Ort'}
+                    </div>
+                </div>
+                <div class="loc-detail-actions">
+                    <button class="loc-detail-btn" data-action="show-entity-links-modal" data-type="locations" data-id="${loc.id}" title="Verknüpfungen">🔗</button>
+                    <button class="loc-detail-btn" data-action="show-tags-modal" data-type="locations" data-id="${loc.id}" title="Tags">🏷️</button>
+                    <button class="loc-detail-btn" data-action="edit-location" data-id="${loc.id}" title="Bearbeiten">✏️</button>
+                    <button class="loc-detail-btn danger" data-action="delete-location" data-id="${loc.id}" title="Löschen">🗑️</button>
+                </div>
+            </div>
+
+            <div class="loc-section">
+                <div class="loc-section-title">Beschreibung</div>
+                <div class="loc-desc">
+                    ${loc.description ? loc.description : '<span style="color: var(--text-dim);">Keine Beschreibung vorhanden</span>'}
+                </div>
+            </div>
+
+            ${tagsHtml ? `
+                <div class="loc-section">
+                    <div class="loc-section-title">Tags</div>
+                    <div class="loc-tags">${tagsHtml}</div>
+                </div>
+            ` : ''}
+
+            <div class="loc-section">
+                <div class="loc-section-title">NPCs (${npcs.length})</div>
+                <div class="loc-npc-list">${npcListHtml}</div>
+            </div>
+
+            ${linksHtml ? `
+                <div class="loc-section">
+                    <div class="loc-section-title">Verknüpfungen</div>
+                    <div class="loc-links">${linksHtml}</div>
+                </div>
+            ` : ''}
+        </div>
+    `;
 }
 
-function expandAllLocations() {
-    if (viewModes.locations === 'list') {
-        // Listenansicht: Direkt DOM manipulieren
-        document.querySelectorAll('.list-view-row.location-row').forEach(row => {
-            row.classList.add('expanded');
-        });
-        showToast('Alle Orte ausgeklappt');
-    } else {
-        // Grid-Ansicht
-        (D.locations || []).forEach(l => expandedLocations.add(l.id));
-        renderLocations();
-    }
-}
-
-function collapseAllLocations() {
-    if (viewModes.locations === 'list') {
-        // Listenansicht: Direkt DOM manipulieren
-        document.querySelectorAll('.list-view-row.location-row').forEach(row => {
-            row.classList.remove('expanded');
-        });
-        showToast('Alle Orte eingeklappt');
-    } else {
-        // Grid-Ansicht
-        expandedLocations.clear();
-        renderLocations();
+function clearLocationDetail() {
+    const panel = $('loc-detail-panel');
+    if (panel) {
+        panel.innerHTML = `
+            <div class="loc-detail-empty">
+                <div class="loc-detail-empty-icon">🏠</div>
+                <div class="loc-detail-empty-text">Wähle einen Ort aus der Liste</div>
+            </div>
+        `;
     }
 }
 
 function setLocFilter(f) {
     currentLocFilter = f;
+    selectedLocationId = null; // Reset selection on filter change
     renderLocations();
 }
 
 function toggleLocation(id) {
-    // For search navigation: scroll to and highlight the location card
+    // For search navigation: select and show the location
     const loc = EntityLookup.location(id);
     if (!loc) return;
 
     // Reset filter to show all
     currentLocFilter = 'all';
+    selectedLocationId = id;
     renderLocations();
 
-    // Find the location card by ID and highlight it
+    // Highlight briefly
     setTimeout(() => {
-        const card = $(`loc-card-${id}`);
-        if (card) {
-            card.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            card.style.transition = 'box-shadow 0.3s ease';
-            card.style.boxShadow = '0 0 20px var(--gold)';
+        const item = document.querySelector(`.loc-item[data-id="${id}"]`);
+        if (item) {
+            item.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            item.style.transition = 'box-shadow 0.3s ease';
+            item.style.boxShadow = '0 0 20px var(--gold)';
             setTimeout(() => {
-                card.style.boxShadow = '';
+                item.style.boxShadow = '';
             }, 2000);
         }
     }, 100);
+}
+
+// Legacy functions (kept for compatibility)
+function toggleLocationCard(id) {
+    selectLocation(id);
+}
+
+function expandAllLocations() {
+    showToast('Alle Orte werden in der Liste angezeigt');
+}
+
+function collapseAllLocations() {
+    selectedLocationId = null;
+    clearLocationDetail();
+    showToast('Details-Panel geleert');
 }
 
 function renderFilterList() {
