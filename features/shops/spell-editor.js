@@ -803,7 +803,7 @@ function saveSpell() {
         duration: duration,
         ritual: $('spell-ritual').checked, v: $('spell-v').checked, g: $('spell-g').checked, m: $('spell-m').checked,
         material: $('spell-material').value.trim(),
-        description: descHtml, note: $('spell-note').innerHTML.trim()
+        description: descHtml, note: sanitizeHTML($('spell-note').innerHTML.trim())
     };
     if (!s.name) { showToast('⚠️ Name erforderlich', 'error'); return; }
     if (id) { const idx = D.spells.findIndex(x => x.id === parseInt(id)); if (idx > -1) D.spells[idx] = { ...D.spells[idx], ...s }; }
@@ -829,7 +829,7 @@ function editSpell(id) {
     
     // Beschreibung als HTML
     $('spell-desc').innerHTML = sanitizeHTML(s.description) || '';
-    $('spell-note').innerHTML = s.note || '';
+    $('spell-note').innerHTML = sanitizeHTML(s.note) || '';
     
     // Klassen Checkboxen
     const classes = s.spellClasses || (s.spellClass ? s.spellClass.split(',').map(c => c.trim()) : []);

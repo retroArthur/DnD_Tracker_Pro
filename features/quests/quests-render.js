@@ -82,7 +82,7 @@ function renderQuestItem(q) {
             </div>
         </div>
         <div class="quest-details">
-            <div style="margin-bottom:10px;">${q.description || ''}</div>
+            <div style="margin-bottom:10px;">${sanitizeHTML(q.description) || ''}</div>
             ${entityTags}
             ${entityLinks}
             <div style="display:flex; flex-wrap:wrap; gap:15px; font-size:0.9em; margin-bottom:10px;">
@@ -90,7 +90,7 @@ function renderQuestItem(q) {
                 <div><span style="color:var(--text-dim);">🎯 Ziel:</span> ${renderEntityLink('locations', q.targetId, targetDisplay || '—')}</div>
                 <div><span style="color:var(--text-dim);">💰 Belohnung:</span> <span style="color:var(--gold);">${esc(rewardDisplay)}</span></div>
             </div>
-            ${q.epilog ? `<div class="quest-epilog"><div style="font-size:0.8em; color:var(--purple); margin-bottom:4px;">Epilog / Nachwirkungen:</div><div style="font-size:0.9em;">${q.epilog}</div></div>` : ''}
+            ${q.epilog ? `<div class="quest-epilog"><div style="font-size:0.8em; color:var(--purple); margin-bottom:4px;">Epilog / Nachwirkungen:</div><div style="font-size:0.9em;">${sanitizeHTML(q.epilog)}</div></div>` : ''}
             <div class="btn-group">
                 <button class="btn btn-sm" data-action="show-entity-links-modal" data-type="quests" data-id="${q.id}" title="Verknüpfungen">🔗</button>
                 <button class="btn btn-sm" data-action="show-tags-modal" data-type="quests" data-id="${q.id}" title="Tags">🏷️</button>
