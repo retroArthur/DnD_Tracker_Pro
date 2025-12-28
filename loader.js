@@ -88,8 +88,19 @@ const MODULES = [
     'ui/virtual-scroll-helper.js',
     'ui/lazy-loading.js',
     'ui/event-delegation.js',
+
+    // Action-Module (müssen nach event-delegation.js geladen werden)
+    'ui/actions/entity-actions.js',
+    'ui/actions/combat-actions.js',
+    'ui/actions/ui-actions.js',
+    'ui/actions/dice-actions.js',
+    'ui/actions/wiki-actions.js',
+    'ui/actions/shop-actions.js',
+    'ui/actions/map-actions.js',
+    'ui/actions/system-actions.js',
+
     'ui/virtual-scroll.js',
-    
+
     // Init (muss zuletzt geladen werden)
     'core/init.js'
 ];

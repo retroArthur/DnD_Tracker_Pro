@@ -1,0 +1,60 @@
+// ============================================================
+// WIKI ACTIONS - Wiki Entries, Categories, Links
+// ============================================================
+
+const WikiActions = {
+    // Basic wiki actions
+    'edit-wiki': (ctx) => editWikiEntry(ctx.id),
+    'delete-wiki': (ctx) => deleteWikiEntry(ctx.id),
+    'toggle-wiki': (ctx) => toggleWikiEntry(ctx.id),
+    'edit-wiki-stop': (ctx) => { ctx.event.stopPropagation(); editWikiEntry(ctx.id); },
+    'delete-wiki-stop': (ctx) => { ctx.event.stopPropagation(); deleteWikiEntry(ctx.id); },
+    'toggle-wiki-stop': (ctx) => { ctx.event.stopPropagation(); toggleWikiEntry(ctx.id); },
+
+    // Wiki navigation
+    'toggle-wiki-category': (ctx) => toggleWikiCategory(ctx.value),
+    'select-wiki-entry': (ctx) => selectWikiEntry(ctx.id),
+    'toggle-wiki-pin': (ctx) => toggleWikiPin(ctx.id),
+    'toggle-wiki-pin-stop': (ctx) => { ctx.event.stopPropagation(); toggleWikiPin(ctx.id); },
+    'search-wiki-tag': (ctx) => searchWikiTag(ctx.value),
+    'navigate-wiki-entry': (ctx) => navigateToWikiEntry(ctx.value),
+
+    // Wiki links
+    'wiki-link-click': (ctx) => {
+        const exists = ctx.target.dataset.exists === 'true';
+        if (exists) navigateToWikiEntry(ctx.value);
+        else createWikiFromLink(ctx.value);
+    },
+    'wiki-link-click-stop': (ctx) => {
+        ctx.event.stopPropagation();
+        const exists = ctx.target.dataset.exists === 'true';
+        if (exists) navigateToWikiEntry(ctx.value);
+        else createWikiFromLink(ctx.value);
+    },
+
+    // Wiki sorting/filtering
+    'sort-wiki': (ctx) => sortWiki(ctx.value),
+    'filter-wiki': (ctx) => filterWiki(ctx.value),
+
+    // Session/Notes actions
+    'edit-session': (ctx) => editSession(ctx.id),
+    'delete-session': (ctx) => deleteSession(ctx.id),
+    'toggle-session-content': (ctx) => toggleSessionContent(ctx.id),
+    'toggle-session-tag-filter': (ctx) => toggleSessionTagFilter(ctx.value),
+    'remove-session-tag': (ctx) => removeSessionTag(ctx.value),
+    'add-preset-tag': (ctx) => addPresetTag(ctx.value),
+    'toggle-arc-group': (ctx) => toggleArcGroup(ctx.id),
+    'delete-story-arc': (ctx) => deleteStoryArc(ctx.id),
+    'apply-note-template': (ctx) => applyNoteTemplate(ctx.value),
+
+    // Link management
+    'edit-link': (ctx) => editLink(ctx.id),
+    'delete-link': (ctx) => deleteLink(ctx.id)
+};
+
+// Register all wiki actions
+if (typeof EventDelegation !== 'undefined') {
+    Object.entries(WikiActions).forEach(([name, handler]) => {
+        EventDelegation.registerAction(name, handler);
+    });
+}
