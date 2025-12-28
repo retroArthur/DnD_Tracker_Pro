@@ -24,6 +24,103 @@ function updateInitFromDex() {
     }
 }
 
+// Update speed display (meters to feet conversion)
+function updateSpeedDisplay() {
+    const speedSelect = $('char-speed');
+    const ftDisplay = $('char-speed-ft');
+    if (!speedSelect || !ftDisplay) return;
+
+    const selected = speedSelect.options[speedSelect.selectedIndex];
+    const ft = selected?.getAttribute('data-ft') || '30';
+    ftDisplay.textContent = ft + 'ft';
+}
+
+// Language dropdown functions
+function toggleLangDropdown() {
+    const wrapper = $('cf-languages-wrapper');
+    if (wrapper) {
+        wrapper.classList.toggle('open');
+    }
+}
+
+function updateCharLanguages() {
+    // Collect checked languages from dropdown
+    const checkboxes = document.querySelectorAll('#cf-lang-dropdown input[type="checkbox"]');
+    const selected = [];
+    checkboxes.forEach(cb => {
+        cb.closest('.cf-lang-item').classList.toggle('selected', cb.checked);
+        if (cb.checked) selected.push(cb.value);
+    });
+
+    // Update hidden select for form submission
+    const hiddenSelect = $('char-languages');
+    if (hiddenSelect) {
+        // Clear existing options
+        hiddenSelect.innerHTML = '';
+        // Add selected options
+        selected.forEach(lang => {
+            const opt = document.createElement('option');
+            opt.value = lang;
+            opt.selected = true;
+            hiddenSelect.appendChild(opt);
+        });
+    }
+
+    // Update display text
+    const display = $('cf-lang-display');
+    if (display) {
+        if (selected.length === 0) {
+            display.textContent = 'Sprachen wählen...';
+            display.classList.remove('has-selection');
+        } else if (selected.length <= 3) {
+            display.textContent = selected.join(', ');
+            display.classList.add('has-selection');
+        } else {
+            display.textContent = `${selected.slice(0, 2).join(', ')} +${selected.length - 2}`;
+            display.classList.add('has-selection');
+        }
+    }
+}
+
+function setCharLanguages(languages) {
+    // Set languages in the dropdown checkboxes
+    const checkboxes = document.querySelectorAll('#cf-lang-dropdown input[type="checkbox"]');
+    const langArray = Array.isArray(languages) ? languages :
+                      (languages ? languages.split(',').map(l => l.trim()) : []);
+
+    checkboxes.forEach(cb => {
+        cb.checked = langArray.includes(cb.value);
+        cb.closest('.cf-lang-item').classList.toggle('selected', cb.checked);
+    });
+
+    updateCharLanguages();
+}
+
+function clearCharLanguages() {
+    const checkboxes = document.querySelectorAll('#cf-lang-dropdown input[type="checkbox"]');
+    checkboxes.forEach(cb => {
+        cb.checked = false;
+        cb.closest('.cf-lang-item').classList.remove('selected');
+    });
+    updateCharLanguages();
+
+    // Close dropdown if open
+    const wrapper = $('cf-languages-wrapper');
+    if (wrapper) wrapper.classList.remove('open');
+}
+
+// Close language dropdown when clicking outside
+document.addEventListener('click', function(e) {
+    const wrapper = $('cf-languages-wrapper');
+    if (!wrapper) return;
+
+    // If click is inside the wrapper, don't close
+    if (wrapper.contains(e.target)) return;
+
+    // Close the dropdown
+    wrapper.classList.remove('open');
+});
+
 function saveCharacter() {
     const id = $('edit-char-id').value;
     const languageSelect = $('char-languages');
@@ -157,7 +254,24 @@ function editChar(id) {
     $('char-hp-temp').value = ch.tempHp || '';
     $('char-ac').value = ch.armorClass || '';
     $('char-init').value = ch.initiative || '';
-    $('char-speed').value = ch.speed || '9m';
+
+    // Speed - handle both old format (just "9m") and new format ("9m|30ft.")
+    const speedVal = ch.speed || '9m|30ft.';
+    const speedSelect = $('char-speed');
+    if (speedSelect) {
+        // Try to find matching option
+        let found = false;
+        for (let opt of speedSelect.options) {
+            if (opt.value === speedVal || opt.value.startsWith(speedVal.split('|')[0])) {
+                opt.selected = true;
+                found = true;
+                break;
+            }
+        }
+        if (!found) speedSelect.value = '9m|30ft.';
+        updateSpeedDisplay();
+    }
+
     $('char-hitdice').value = ch.hitDice || '';
     $('char-perception').value = ch.passivePerception || '';
     updateProficiencyBonus();
@@ -179,20 +293,8 @@ function editChar(id) {
         chip.classList.toggle('selected', input.checked);
     });
 
-    // Languages
-    const languageSelect = $('char-languages');
-    Array.from(languageSelect.options).forEach(o => o.selected = false);
-    if (Array.isArray(ch.languages)) {
-        ch.languages.forEach(lang => {
-            const opt = Array.from(languageSelect.options).find(o => o.value === lang);
-            if (opt) opt.selected = true;
-        });
-    } else if (ch.languages) {
-        ch.languages.split(',').map(l => l.trim()).forEach(lang => {
-            const opt = Array.from(languageSelect.options).find(o => o.value === lang);
-            if (opt) opt.selected = true;
-        });
-    }
+    // Languages - use new dropdown with checkboxes
+    setCharLanguages(ch.languages);
 
     // Spell slots
     for (let i = 0; i <= 9; i++) {
@@ -221,7 +323,7 @@ function cancelCharEdit() {
     $('edit-char-id').value = '';
 
     // Basic fields
-    ['char-name', 'char-player', 'char-subclass', 'char-level', 'char-background', 'char-weight', 'char-height', 'char-hp-cur', 'char-hp-max', 'char-hp-temp', 'char-ac', 'char-init', 'char-speed', 'char-hitdice', 'char-perception', 'char-avatar'].forEach(id => {
+    ['char-name', 'char-player', 'char-subclass', 'char-level', 'char-background', 'char-weight', 'char-height', 'char-hp-cur', 'char-hp-max', 'char-hp-temp', 'char-ac', 'char-init', 'char-hitdice', 'char-perception', 'char-avatar'].forEach(id => {
         if ($(id)) $(id).value = '';
     });
     $('char-class').value = '';
@@ -229,6 +331,13 @@ function cancelCharEdit() {
     $('char-alignment').value = '';
     $('char-level').value = '1';
     $('char-proficiency').value = '+2';
+
+    // Speed reset to default
+    const speedSelect = $('char-speed');
+    if (speedSelect) {
+        speedSelect.value = '9m|30ft.';
+        updateSpeedDisplay();
+    }
 
     // Attributes
     ['str', 'dex', 'con', 'int', 'wis', 'cha'].forEach(attr => {
@@ -251,8 +360,8 @@ function cancelCharEdit() {
         if (input) input.checked = false;
     });
 
-    // Languages
-    Array.from($('char-languages').options).forEach(o => o.selected = false);
+    // Languages - clear dropdown checkboxes
+    clearCharLanguages();
 
     // Spell slots
     for (let i = 0; i <= 9; i++) { $(`char-slot-${i}`).value = 0; }

@@ -10958,6 +10958,7 @@
 .cf-field.cf-name { flex: 2; min-width: 180px; }
 .cf-field.cf-sm { flex: 0.5; min-width: 60px; max-width: 80px; }
 .cf-field.cf-inspiration { flex: 0; min-width: auto; }
+.cf-field.cf-w300 { flex: 0 0 300px; min-width: 200px; }
 
 .cf-field label {
     display: block;
@@ -11061,6 +11062,17 @@
 .cf-stat-divider { color: var(--text-dim); font-size: 0.9em; }
 .cf-stat.cf-readonly input { color: var(--text-dim); }
 
+/* Speed with feet display */
+.cf-stat.cf-speed select { width: 70px; }
+.cf-speed-ft {
+    font-size: 0.75em;
+    color: var(--cyan);
+    background: rgba(0,180,216,0.15);
+    padding: 2px 6px;
+    border-radius: 4px;
+    margin-left: 2px;
+}
+
 /* Section Titles */
 .cf-section-title {
     font-size: 0.75em;
@@ -11072,12 +11084,13 @@
     border-bottom: 1px solid var(--border);
 }
 
-/* Attribute Row */
+/* Attribute Row - 290px breite Boxen */
 .cf-attrs {
     display: grid;
-    grid-template-columns: repeat(6, 1fr);
+    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
     gap: 8px;
     margin-bottom: 16px;
+    max-width: 580px;
 }
 
 .cf-attr {
@@ -11299,16 +11312,69 @@
     display: block;
 }
 
-.cf-languages select {
+/* Language Dropdown with Checkboxes */
+.cf-languages { position: relative; }
+
+.cf-lang-trigger {
     width: 100%;
-    height: 80px;
-    padding: 6px;
+    padding: 8px 12px;
     background: var(--bg-dark);
     border: 1px solid var(--border);
     border-radius: 6px;
     color: var(--text);
     font-size: 0.85em;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    min-height: 38px;
 }
+.cf-lang-trigger:hover { border-color: var(--gold); }
+.cf-lang-trigger .cf-lang-arrow { transition: transform 0.2s; }
+.cf-languages.open .cf-lang-trigger .cf-lang-arrow { transform: rotate(180deg); }
+
+.cf-lang-dropdown {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: var(--bg-dark);
+    border: 1px solid var(--gold);
+    border-radius: 6px;
+    max-height: 200px;
+    overflow-y: auto;
+    z-index: 100;
+    margin-top: 4px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+}
+.cf-languages.open .cf-lang-dropdown { display: block; }
+
+.cf-lang-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    cursor: pointer;
+    transition: background 0.15s;
+    font-size: 0.85em;
+}
+.cf-lang-item:hover { background: rgba(212,175,55,0.15); }
+.cf-lang-item input { margin: 0; cursor: pointer; accent-color: var(--gold); }
+.cf-lang-item.selected { background: rgba(212,175,55,0.1); }
+.cf-lang-item.selected span { color: var(--gold); }
+
+.cf-lang-selected {
+    color: var(--text-dim);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: calc(100% - 20px);
+}
+.cf-lang-selected.has-selection { color: var(--text); }
+
+/* Hidden original select for form submission */
+.cf-languages select[multiple] { display: none; }
 
 .cf-avatar input {
     width: 100%;
@@ -11338,6 +11404,8 @@
     display: flex;
     gap: 4px;
     margin-bottom: 6px;
+    flex-wrap: wrap;
+    align-items: center;
 }
 
 .cf-notes-toolbar button {
@@ -11348,11 +11416,25 @@
     color: var(--text);
     cursor: pointer;
     font-size: 0.8em;
+    min-width: 28px;
+    height: 28px;
 }
 
 .cf-notes-toolbar button:hover {
     border-color: var(--gold);
 }
+
+.cf-notes-toolbar select {
+    padding: 4px 6px;
+    background: var(--bg-dark);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    color: var(--text);
+    font-size: 0.75em;
+    height: 28px;
+    cursor: pointer;
+}
+.cf-notes-toolbar select:hover { border-color: var(--gold); }
 
 .cf-notes-editor {
     min-height: 80px;

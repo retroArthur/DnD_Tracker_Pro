@@ -19,6 +19,7 @@ const UIActions = {
     'toggle-collapse': (ctx) => toggleCollapse(ctx.value),
     'toggle-layout': () => toggleLayout(),
     'set-view-mode': (ctx) => setViewMode(ctx.type, ctx.value),
+    'toggle-lang-dropdown': () => toggleLangDropdown(),
 
     // Navigation actions
     'navigate-entity': (ctx) => navigateToEntityInPlace(ctx.type, ctx.id),
