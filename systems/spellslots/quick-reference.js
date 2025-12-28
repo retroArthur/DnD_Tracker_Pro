@@ -32,24 +32,30 @@ function initQuickRefCustom() {
 function renderQuickRefCustom() {
     const container = $('quick-ref-custom');
     if (!container) return;
-    
+
+    // Update empty state visibility
+    const emptyEl = $('qref-custom-empty');
+    if (emptyEl) {
+        emptyEl.style.display = (D.quickRefCustom && D.quickRefCustom.length > 0) ? 'none' : 'block';
+    }
+
     if (!D.quickRefCustom || D.quickRefCustom.length === 0) {
         container.innerHTML = '';
         return;
     }
-    
+
     container.innerHTML = D.quickRefCustom.map(entry => {
         const isExpanded = entry.expanded ? 'expanded' : '';
         // Parse Entity-Links im Content
         const content = parseEntityLinks(entry.content || '');
-        
+
         return `
-        <div class="quick-ref-section quick-ref-custom-entry ${isExpanded}" data-id="${entry.id}">
+        <div class="qref-custom-entry ${isExpanded}" data-id="${entry.id}">
             <div class="quick-ref-section-title" data-action="toggle-quick-ref-custom" data-id="${entry.id}">
                 <span>📌 ${esc(entry.title)}</span>
                 <div style="display: flex; align-items: center; gap: 4px;">
-                    <button class="btn btn-sm" data-action="edit-quick-ref-entry" data-id="${entry.id}" data-stop-propagation="true" title="Bearbeiten">✏️</button>
-                    <button class="btn btn-sm btn-danger" data-action="delete-quick-ref-entry" data-id="${entry.id}" data-stop-propagation="true" title="Löschen">🗑️</button>
+                    <button class="qref-btn" data-action="edit-quick-ref-entry" data-id="${entry.id}" data-stop-propagation="true" title="Bearbeiten">✏️</button>
+                    <button class="qref-btn" style="border-color: var(--red);" data-action="delete-quick-ref-entry" data-id="${entry.id}" data-stop-propagation="true" title="Löschen">🗑️</button>
                     <span class="quick-ref-toggle-arrow">▼</span>
                 </div>
             </div>
@@ -58,11 +64,6 @@ function renderQuickRefCustom() {
             </div>
         </div>`;
     }).join('');
-    
-    // Separator wenn es benutzerdefinierte Einträge gibt
-    if (D.quickRefCustom.length > 0) {
-        container.innerHTML += '<div class="quick-ref-separator"><span>📚 Standard-Referenz</span></div>';
-    }
 }
 
 function addQuickRefEntry() {

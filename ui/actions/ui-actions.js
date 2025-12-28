@@ -86,6 +86,21 @@ const UIActions = {
     'edit-quick-ref-entry': (ctx) => editQuickRefEntry(ctx.id),
     'delete-quick-ref-entry': (ctx) => deleteQuickRefEntry(ctx.id),
     'add-quick-ref-entry': () => addQuickRefEntry(),
+    'qref-tab': (ctx) => {
+        // Switch tabs in new Quick Reference panel
+        const tabId = ctx.value;
+        document.querySelectorAll('.qref-tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.qref-tab-content').forEach(c => c.classList.remove('active'));
+        ctx.target.classList.add('active');
+        const content = document.getElementById('qref-' + tabId);
+        if (content) content.classList.add('active');
+        // Update custom empty state visibility
+        if (tabId === 'custom') {
+            const hasCustom = D.quickRefCustom && D.quickRefCustom.length > 0;
+            const emptyEl = document.getElementById('qref-custom-empty');
+            if (emptyEl) emptyEl.style.display = hasCustom ? 'none' : 'block';
+        }
+    },
     'save-quick-ref-entry': () => saveQuickRefEntry(),
 
     // Tags & Entity Links

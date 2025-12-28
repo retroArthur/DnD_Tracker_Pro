@@ -3742,262 +3742,224 @@
 
     <!-- Kalender Ereignis hinzufügen Modal -->
 
-    <!-- Schnell-Referenz Toggle -->
-    <div class="quick-ref-toggle" data-action="toggle-quick-ref">📖 Referenz</div>
+    <!-- Schnell-Referenz Toggle (Kompakt) -->
+    <div class="qref-fab" data-action="toggle-quick-ref" title="Schnell-Referenz">
+        <span class="qref-fab-icon">📖</span>
+    </div>
 
-    <!-- Schnell-Referenz Panel -->
-    <div class="quick-ref-panel" id="quick-ref-panel">
-        <div class="quick-ref-header">
-            <span class="quick-ref-title">📖 Schnell-Referenz</span>
-            <div style="display: flex; gap: 4px;">
-                <button type="button" class="btn btn-sm btn-success" data-action="add-quick-ref-entry" title="Eigenen Eintrag hinzufügen">+</button>
-                <button type="button" class="btn btn-sm" data-action="toggle-quick-ref" title="Schließen">✕</button>
+    <!-- Schnell-Referenz Panel (Redesigned) -->
+    <div class="qref-panel" id="quick-ref-panel">
+        <!-- Header -->
+        <div class="qref-header">
+            <div class="qref-title">
+                <span class="qref-title-icon">📖</span>
+                <span>Referenz</span>
+            </div>
+            <div class="qref-header-actions">
+                <button class="qref-btn" data-action="add-quick-ref-entry" title="Eigenen Eintrag">+</button>
+                <button class="qref-btn" data-action="toggle-quick-ref" title="Schließen">×</button>
             </div>
         </div>
-        
-        <!-- Benutzerdefinierte Einträge -->
-        <div id="quick-ref-custom"></div>
-        
-        <div class="quick-ref-section" data-action="toggle-quick-ref-section">
-            <div class="quick-ref-section-title">
-                <span>🎭 Zustände</span>
-                <span>▼</span>
-            </div>
-            <div class="quick-ref-section-content">
-                <table class="quick-ref-table">
-                    <tr><th>Zustand</th><th>Effekt</th></tr>
-                    <tr><td>Geblendet</td><td>Kann nicht sehen, Nachteil auf Angriffe</td></tr>
-                    <tr><td>Bezaubert</td><td>Kann Bezaubernden nicht angreifen</td></tr>
-                    <tr><td>Taub</td><td>Kann nicht hören</td></tr>
-                    <tr><td>Verängstigt</td><td>Nachteil, kann sich nicht nähern</td></tr>
-                    <tr><td>Gepackt</td><td>Geschwindigkeit 0</td></tr>
-                    <tr><td>Kampfunfähig</td><td>Keine Aktionen/Reaktionen</td></tr>
-                    <tr><td>Unsichtbar</td><td>Vorteil auf Angriffe</td></tr>
-                    <tr><td>Gelähmt</td><td>Kampfunfähig, auto-fail DEX/STR</td></tr>
-                    <tr><td>Vergiftet</td><td>Nachteil auf Angriffe/Checks</td></tr>
-                    <tr><td>Liegend</td><td>Nachteil auf Angriffe</td></tr>
-                    <tr><td>Betäubt</td><td>Kampfunfähig, auto-fail DEX/STR</td></tr>
-                    <tr><td>Bewusstlos</td><td>Wie Gelähmt + fallen liegend</td></tr>
-                </table>
-            </div>
+
+        <!-- Tabs -->
+        <div class="qref-tabs">
+            <button class="qref-tab active" data-action="qref-tab" data-value="combat">⚔️ Kampf</button>
+            <button class="qref-tab" data-action="qref-tab" data-value="rules">📜 Regeln</button>
+            <button class="qref-tab" data-action="qref-tab" data-value="world">🌍 Welt</button>
+            <button class="qref-tab" data-action="qref-tab" data-value="custom">📌 Eigene</button>
         </div>
-        
-        <div class="quick-ref-section" data-action="toggle-quick-ref-section">
-            <div class="quick-ref-section-title">
-                <span>⚔️ Aktionen im Kampf</span>
-                <span>▼</span>
-            </div>
-            <div class="quick-ref-section-content">
-                <table class="quick-ref-table">
-                    <tr><th>Aktion</th><th>Beschreibung</th></tr>
-                    <tr><td>Angriff</td><td>Einen Angriff ausführen</td></tr>
-                    <tr><td>Zauber</td><td>Zauber mit Zeitaufwand "1 Aktion"</td></tr>
-                    <tr><td>Sprinten</td><td>Bewegung verdoppeln</td></tr>
-                    <tr><td>Ausweichen</td><td>Angriffe haben Nachteil</td></tr>
-                    <tr><td>Rückzug</td><td>Keine Gelegenheitsangriffe</td></tr>
-                    <tr><td>Helfen</td><td>Verbündetem Vorteil geben</td></tr>
-                    <tr><td>Verstecken</td><td>Heimlichkeit-Wurf</td></tr>
-                    <tr><td>Bereit</td><td>Reaktion für Trigger</td></tr>
-                    <tr><td>Suchen</td><td>Wahrnehmung-Wurf</td></tr>
-                    <tr><td>Benutzen</td><td>Objekt verwenden</td></tr>
-                </table>
-            </div>
-        </div>
-        
-        <div class="quick-ref-section" data-action="toggle-quick-ref-section">
-            <div class="quick-ref-section-title">
-                <span>🛡️ Deckung</span>
-                <span>▼</span>
-            </div>
-            <div class="quick-ref-section-content">
-                <table class="quick-ref-table">
-                    <tr><th>Deckung</th><th>RK/DEX Bonus</th></tr>
-                    <tr><td>Halbe Deckung</td><td>+2</td></tr>
-                    <tr><td>3/4 Deckung</td><td>+5</td></tr>
-                    <tr><td>Volle Deckung</td><td>Kann nicht angegriffen werden</td></tr>
-                </table>
-            </div>
-        </div>
-        
-        <div class="quick-ref-section" data-action="toggle-quick-ref-section">
-            <div class="quick-ref-section-title">
-                <span>💡 Lichtquellen</span>
-                <span>▼</span>
-            </div>
-            <div class="quick-ref-section-content">
-                <table class="quick-ref-table">
-                    <tr><th>Quelle</th><th>Hell/Dämmrig</th></tr>
-                    <tr><td>Kerze</td><td>1.5m / 1.5m</td></tr>
-                    <tr><td>Fackel</td><td>6m / 6m</td></tr>
-                    <tr><td>Laterne</td><td>9m / 9m</td></tr>
-                    <tr><td>Licht (Zauber)</td><td>6m / 6m</td></tr>
-                    <tr><td>Dunkelsicht</td><td>- / 18m</td></tr>
-                </table>
-            </div>
-        </div>
-        
-        <div class="quick-ref-section" data-action="toggle-quick-ref-section">
-            <div class="quick-ref-section-title">
-                <span>🎲 Schwierigkeitsgrade</span>
-                <span>▼</span>
-            </div>
-            <div class="quick-ref-section-content">
-                <table class="quick-ref-table">
-                    <tr><th>Schwierigkeit</th><th>SG</th></tr>
-                    <tr><td>Sehr leicht</td><td>5</td></tr>
-                    <tr><td>Leicht</td><td>10</td></tr>
-                    <tr><td>Mittel</td><td>15</td></tr>
-                    <tr><td>Schwer</td><td>20</td></tr>
-                    <tr><td>Sehr schwer</td><td>25</td></tr>
-                    <tr><td>Fast unmöglich</td><td>30</td></tr>
-                </table>
-            </div>
-        </div>
-        
-        <div class="quick-ref-section" data-action="toggle-quick-ref-section">
-            <div class="quick-ref-section-title">
-                <span>😴 Erschöpfung</span>
-                <span>▼</span>
-            </div>
-            <div class="quick-ref-section-content">
-                <table class="quick-ref-table">
-                    <tr><th>Stufe</th><th>Effekt</th></tr>
-                    <tr><td>1</td><td>Nachteil auf Fähigkeitswürfe</td></tr>
-                    <tr><td>2</td><td>Geschwindigkeit halbiert</td></tr>
-                    <tr><td>3</td><td>Nachteil auf Angriffe/Rettung</td></tr>
-                    <tr><td>4</td><td>HP-Maximum halbiert</td></tr>
-                    <tr><td>5</td><td>Geschwindigkeit 0</td></tr>
-                    <tr><td>6</td><td>Tod</td></tr>
-                </table>
-            </div>
-        </div>
-        
-        <div class="quick-ref-section" data-action="toggle-quick-ref-section">
-            <div class="quick-ref-section-title">
-                <span>💰 Währung</span>
-                <span>▼</span>
-            </div>
-            <div class="quick-ref-section-content">
-                <table class="quick-ref-table">
-                    <tr><th>Münze</th><th>Wert in GM</th></tr>
-                    <tr><td>Kupfer (KM)</td><td>0.01</td></tr>
-                    <tr><td>Silber (SM)</td><td>0.1</td></tr>
-                    <tr><td>Elektrum (EM)</td><td>0.5</td></tr>
-                    <tr><td>Gold (GM)</td><td>1</td></tr>
-                    <tr><td>Platin (PM)</td><td>10</td></tr>
-                </table>
-            </div>
-        </div>
-        
-        <div class="quick-ref-section" data-action="toggle-quick-ref-section">
-            <div class="quick-ref-section-title">
-                <span>🚶 Reisegeschwindigkeit</span>
-                <span>▼</span>
-            </div>
-            <div class="quick-ref-section-content">
-                <table class="quick-ref-table">
-                    <tr><th>Tempo</th><th>Stunde</th><th>Tag</th></tr>
-                    <tr><td>Schnell</td><td>6 km</td><td>45 km</td></tr>
-                    <tr><td>Normal</td><td>5 km</td><td>36 km</td></tr>
-                    <tr><td>Langsam</td><td>3 km</td><td>27 km</td></tr>
-                </table>
-                <div style="font-size:0.8em; color:var(--text-dim); margin-top:6px;">
-                    Schnell: -5 Wahrnehmung<br>
-                    Langsam: Verstecken möglich<br>
-                    Schwieriges Gelände: ×0.5
+
+        <!-- Content -->
+        <div class="qref-content">
+            <!-- Combat Tab -->
+            <div class="qref-tab-content active" id="qref-combat">
+                <!-- Zustände - Kompakt -->
+                <div class="qref-card">
+                    <div class="qref-card-title">🎭 Zustände</div>
+                    <div class="qref-chips">
+                        <span class="qref-chip" title="Kann nicht sehen, Nachteil auf Angriffe">Geblendet</span>
+                        <span class="qref-chip" title="Kann Bezaubernden nicht angreifen">Bezaubert</span>
+                        <span class="qref-chip" title="Nachteil, kann sich nicht nähern">Verängstigt</span>
+                        <span class="qref-chip" title="Geschwindigkeit 0">Gepackt</span>
+                        <span class="qref-chip" title="Keine Aktionen/Reaktionen">Kampfunfähig</span>
+                        <span class="qref-chip" title="Vorteil auf Angriffe">Unsichtbar</span>
+                        <span class="qref-chip danger" title="Kampfunfähig, auto-fail DEX/STR">Gelähmt</span>
+                        <span class="qref-chip" title="Nachteil auf Angriffe/Checks">Vergiftet</span>
+                        <span class="qref-chip" title="Nachteil auf Angriffe">Liegend</span>
+                        <span class="qref-chip danger" title="Kampfunfähig, auto-fail DEX/STR">Betäubt</span>
+                        <span class="qref-chip danger" title="Wie Gelähmt + fallen liegend">Bewusstlos</span>
+                    </div>
+                </div>
+
+                <!-- Aktionen - Kompakt Grid -->
+                <div class="qref-card">
+                    <div class="qref-card-title">⚔️ Aktionen</div>
+                    <div class="qref-grid">
+                        <div class="qref-item"><span class="qref-label">Angriff</span><span class="qref-value">1 Angriff</span></div>
+                        <div class="qref-item"><span class="qref-label">Sprinten</span><span class="qref-value">×2 Bewegung</span></div>
+                        <div class="qref-item"><span class="qref-label">Ausweichen</span><span class="qref-value">Nachteil auf dich</span></div>
+                        <div class="qref-item"><span class="qref-label">Rückzug</span><span class="qref-value">Keine Geleg.angr.</span></div>
+                        <div class="qref-item"><span class="qref-label">Helfen</span><span class="qref-value">Vorteil geben</span></div>
+                        <div class="qref-item"><span class="qref-label">Verstecken</span><span class="qref-value">Heimlichkeit</span></div>
+                    </div>
+                </div>
+
+                <!-- Deckung -->
+                <div class="qref-card compact">
+                    <div class="qref-card-title">🛡️ Deckung</div>
+                    <div class="qref-inline">
+                        <span class="qref-badge">½ = +2</span>
+                        <span class="qref-badge">¾ = +5</span>
+                        <span class="qref-badge gold">Voll = Immun</span>
+                    </div>
+                </div>
+
+                <!-- Erschöpfung -->
+                <div class="qref-card compact">
+                    <div class="qref-card-title">😴 Erschöpfung</div>
+                    <div class="qref-exhaustion">
+                        <span class="qref-ex" title="Nachteil auf Fähigkeitswürfe">1</span>
+                        <span class="qref-ex" title="Geschwindigkeit halbiert">2</span>
+                        <span class="qref-ex warn" title="Nachteil auf Angriffe/Rettung">3</span>
+                        <span class="qref-ex warn" title="HP-Maximum halbiert">4</span>
+                        <span class="qref-ex danger" title="Geschwindigkeit 0">5</span>
+                        <span class="qref-ex danger" title="Tod">6☠</span>
+                    </div>
                 </div>
             </div>
-        </div>
-        
-        <div class="quick-ref-section" data-action="toggle-quick-ref-section">
-            <div class="quick-ref-section-title">
-                <span>⬇️ Fallschaden</span>
-                <span>▼</span>
-            </div>
-            <div class="quick-ref-section-content">
-                <table class="quick-ref-table">
-                    <tr><th>Fallhöhe</th><th>Schaden</th></tr>
-                    <tr><td>3m</td><td>1d6</td></tr>
-                    <tr><td>6m</td><td>2d6</td></tr>
-                    <tr><td>9m</td><td>3d6</td></tr>
-                    <tr><td>12m</td><td>4d6</td></tr>
-                    <tr><td>15m</td><td>5d6</td></tr>
-                    <tr><td>60m+ (Max)</td><td>20d6</td></tr>
-                </table>
-                <div style="font-size:0.8em; color:var(--text-dim); margin-top:6px;">
-                    1d6 Wuchtschaden pro 3m Fallhöhe<br>
-                    Maximum: 20d6 (60m)
+
+            <!-- Rules Tab -->
+            <div class="qref-tab-content" id="qref-rules">
+                <!-- SG -->
+                <div class="qref-card compact">
+                    <div class="qref-card-title">🎲 Schwierigkeitsgrad</div>
+                    <div class="qref-sg-row">
+                        <span class="qref-sg" data-sg="5">5<small>Trivial</small></span>
+                        <span class="qref-sg" data-sg="10">10<small>Leicht</small></span>
+                        <span class="qref-sg" data-sg="15">15<small>Mittel</small></span>
+                        <span class="qref-sg" data-sg="20">20<small>Schwer</small></span>
+                        <span class="qref-sg" data-sg="25">25<small>Hart</small></span>
+                        <span class="qref-sg" data-sg="30">30<small>Episch</small></span>
+                    </div>
+                </div>
+
+                <!-- Fallschaden -->
+                <div class="qref-card compact">
+                    <div class="qref-card-title">⬇️ Fallschaden</div>
+                    <div class="qref-formula">1d6 pro 3m <span class="qref-note">(Max: 20d6 bei 60m)</span></div>
+                </div>
+
+                <!-- Lichtquellen -->
+                <div class="qref-card">
+                    <div class="qref-card-title">💡 Licht</div>
+                    <div class="qref-grid cols-3">
+                        <div class="qref-item"><span class="qref-label">Kerze</span><span class="qref-value">1.5m</span></div>
+                        <div class="qref-item"><span class="qref-label">Fackel</span><span class="qref-value">6m</span></div>
+                        <div class="qref-item"><span class="qref-label">Laterne</span><span class="qref-value">9m</span></div>
+                        <div class="qref-item"><span class="qref-label">Licht ✨</span><span class="qref-value">6m</span></div>
+                        <div class="qref-item"><span class="qref-label">Dunkelsicht</span><span class="qref-value">18m</span></div>
+                    </div>
+                </div>
+
+                <!-- Proben -->
+                <div class="qref-card">
+                    <div class="qref-card-title">🎯 Typische Proben</div>
+                    <div class="qref-mini-table">
+                        <div class="qref-row"><span>Tür eintreten</span><span class="attr-str">STR</span></div>
+                        <div class="qref-row"><span>Schloss knacken</span><span class="attr-dex">DEX</span></div>
+                        <div class="qref-row"><span>Schleichen</span><span class="attr-dex">DEX</span></div>
+                        <div class="qref-row"><span>Gift erkennen</span><span class="attr-int">INT</span></div>
+                        <div class="qref-row"><span>Fährte lesen</span><span class="attr-wis">WIS</span></div>
+                        <div class="qref-row"><span>Lüge erkennen</span><span class="attr-wis">WIS</span></div>
+                        <div class="qref-row"><span>Überzeugen</span><span class="attr-cha">CHA</span></div>
+                    </div>
+                </div>
+
+                <!-- Heilung -->
+                <div class="qref-card compact">
+                    <div class="qref-card-title">⚕️ Rasten</div>
+                    <div class="qref-rest">
+                        <div class="qref-rest-item">
+                            <span class="qref-rest-type">Kurz</span>
+                            <span class="qref-rest-info">1h • Trefferwürfel + KON</span>
+                        </div>
+                        <div class="qref-rest-item">
+                            <span class="qref-rest-type long">Lang</span>
+                            <span class="qref-rest-info">8h • Alle HP, ½ Trefferwürfel</span>
+                        </div>
+                    </div>
                 </div>
             </div>
-        </div>
-        
-        <div class="quick-ref-section" data-action="toggle-quick-ref-section">
-            <div class="quick-ref-section-title">
-                <span>🎯 Typische Attributs-Proben</span>
-                <span>▼</span>
-            </div>
-            <div class="quick-ref-section-content">
-                <table class="quick-ref-table">
-                    <tr><th>Probe</th><th>Attribut</th></tr>
-                    <tr><td>Tür eintreten</td><td>STR (Athletik)</td></tr>
-                    <tr><td>Klettern</td><td>STR (Athletik)</td></tr>
-                    <tr><td>Schloss knacken</td><td>DEX (Fingerfertigkeit)</td></tr>
-                    <tr><td>Schleichen</td><td>DEX (Heimlichkeit)</td></tr>
-                    <tr><td>Balance halten</td><td>DEX (Akrobatik)</td></tr>
-                    <tr><td>Gift erkennen</td><td>INT (Naturkunde)</td></tr>
-                    <tr><td>Fährte lesen</td><td>WIS (Überleben)</td></tr>
-                    <tr><td>Lüge erkennen</td><td>WIS (Motiv erkennen)</td></tr>
-                    <tr><td>Handeln</td><td>CHA (Überzeugen)</td></tr>
-                    <tr><td>Einschüchtern</td><td>CHA (Einschüchtern)</td></tr>
-                </table>
-            </div>
-        </div>
-        
-        <div class="quick-ref-section" data-action="toggle-quick-ref-section">
-            <div class="quick-ref-section-title">
-                <span>⚕️ Heilung & Behandlung</span>
-                <span>▼</span>
-            </div>
-            <div class="quick-ref-section-content">
-                <table class="quick-ref-table">
-                    <tr><th>Dienst</th><th>Kosten</th></tr>
-                    <tr><td>Heiltrank</td><td>50 GM</td></tr>
-                    <tr><td>Antitoxin</td><td>50 GM</td></tr>
-                    <tr><td>Heiler-Set</td><td>5 GM</td></tr>
-                    <tr><td>Heilzauber (Kleriker)</td><td>10-50 GM</td></tr>
-                    <tr><td>Krankheit heilen</td><td>50-100 GM</td></tr>
-                    <tr><td>Gift neutralisieren</td><td>100 GM</td></tr>
-                    <tr><td>Fluch brechen</td><td>90-450 GM</td></tr>
-                    <tr><td>Wiederbelebung</td><td>1.000+ GM</td></tr>
-                </table>
-                <div style="font-size:0.8em; color:var(--text-dim); margin-top:6px;">
-                    Kurze Rast: Trefferwürfel + KON<br>
-                    Lange Rast: Alle HP, ½ Trefferwürfel
+
+            <!-- World Tab -->
+            <div class="qref-tab-content" id="qref-world">
+                <!-- Währung -->
+                <div class="qref-card compact">
+                    <div class="qref-card-title">💰 Währung</div>
+                    <div class="qref-currency">
+                        <span class="qref-coin km" title="0.01 GM">KM</span>
+                        <span class="qref-arrow">→</span>
+                        <span class="qref-coin sm" title="0.1 GM">SM</span>
+                        <span class="qref-arrow">→</span>
+                        <span class="qref-coin gm" title="1 GM">GM</span>
+                        <span class="qref-arrow">→</span>
+                        <span class="qref-coin pm" title="10 GM">PM</span>
+                    </div>
+                    <div class="qref-note center">10:1 Umrechnung</div>
+                </div>
+
+                <!-- Reise -->
+                <div class="qref-card">
+                    <div class="qref-card-title">🚶 Reisegeschwindigkeit</div>
+                    <div class="qref-travel">
+                        <div class="qref-travel-row">
+                            <span class="qref-travel-pace fast">Schnell</span>
+                            <span class="qref-travel-dist">6 km/h • 45 km/Tag</span>
+                            <span class="qref-travel-note">-5 Wahrn.</span>
+                        </div>
+                        <div class="qref-travel-row">
+                            <span class="qref-travel-pace">Normal</span>
+                            <span class="qref-travel-dist">5 km/h • 36 km/Tag</span>
+                            <span class="qref-travel-note"></span>
+                        </div>
+                        <div class="qref-travel-row">
+                            <span class="qref-travel-pace slow">Langsam</span>
+                            <span class="qref-travel-dist">3 km/h • 27 km/Tag</span>
+                            <span class="qref-travel-note">Verstecken</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Taverne -->
+                <div class="qref-card">
+                    <div class="qref-card-title">🍺 Taverne</div>
+                    <div class="qref-grid cols-2">
+                        <div class="qref-item"><span class="qref-label">Bier</span><span class="qref-value">4 KM</span></div>
+                        <div class="qref-item"><span class="qref-label">Wein</span><span class="qref-value">2 SM</span></div>
+                        <div class="qref-item"><span class="qref-label">Mahlzeit</span><span class="qref-value">1-5 SM</span></div>
+                        <div class="qref-item"><span class="qref-label">Zimmer</span><span class="qref-value">5 SM - 2 GM</span></div>
+                    </div>
+                </div>
+
+                <!-- Heilung Kosten -->
+                <div class="qref-card">
+                    <div class="qref-card-title">⚕️ Heilung (Kosten)</div>
+                    <div class="qref-grid cols-2">
+                        <div class="qref-item"><span class="qref-label">Heiltrank</span><span class="qref-value gold">50 GM</span></div>
+                        <div class="qref-item"><span class="qref-label">Antitoxin</span><span class="qref-value">50 GM</span></div>
+                        <div class="qref-item"><span class="qref-label">Fluch brechen</span><span class="qref-value">90-450 GM</span></div>
+                        <div class="qref-item"><span class="qref-label">Wiederbelebung</span><span class="qref-value gold">1.000+ GM</span></div>
+                    </div>
                 </div>
             </div>
-        </div>
-        
-        <div class="quick-ref-section" data-action="toggle-quick-ref-section">
-            <div class="quick-ref-section-title">
-                <span>🍺 Tavernen-Preise</span>
-                <span>▼</span>
-            </div>
-            <div class="quick-ref-section-content">
-                <table class="quick-ref-table">
-                    <tr><th>Posten</th><th>Preis</th></tr>
-                    <tr><td>Bier (Krug)</td><td>4 KM</td></tr>
-                    <tr><td>Wein (Krug)</td><td>2 SM</td></tr>
-                    <tr><td>Met (Krug)</td><td>5 SM</td></tr>
-                    <tr><td>Einfache Mahlzeit</td><td>1 SM</td></tr>
-                    <tr><td>Gute Mahlzeit</td><td>3-5 SM</td></tr>
-                    <tr><td>Bankett</td><td>10+ GM</td></tr>
-                    <tr><td>Schlafsaal (Nacht)</td><td>7 KM</td></tr>
-                    <tr><td>Einfaches Zimmer</td><td>5 SM</td></tr>
-                    <tr><td>Komfortzimmer</td><td>8 SM - 2 GM</td></tr>
-                    <tr><td>Luxuszimmer</td><td>2-4 GM</td></tr>
-                </table>
-                <div style="font-size:0.8em; color:var(--text-dim); margin-top:6px;">
-                    Stall (pro Tier): 5 SM/Nacht
+
+            <!-- Custom Tab -->
+            <div class="qref-tab-content" id="qref-custom">
+                <div id="quick-ref-custom"></div>
+                <div class="qref-empty" id="qref-custom-empty">
+                    <div class="qref-empty-icon">📌</div>
+                    <div class="qref-empty-text">Keine eigenen Einträge</div>
+                    <button class="qref-btn-add" data-action="add-quick-ref-entry">+ Eintrag erstellen</button>
                 </div>
             </div>
         </div>
