@@ -3,6 +3,27 @@
 // ============================================================
 // Extrahiert aus features/render-party.js
 
+// Update attribute modifier display in char form
+function updateAttrMod(attr) {
+    const input = $(`char-${attr}`);
+    const modEl = $(`char-${attr}-mod`);
+    if (!input || !modEl) return;
+
+    const val = parseInt(input.value) || 10;
+    const mod = Math.floor((val - 10) / 2);
+    modEl.textContent = mod >= 0 ? `+${mod}` : `${mod}`;
+}
+
+// Update initiative from DEX modifier
+function updateInitFromDex() {
+    const dexVal = parseInt($('char-dex')?.value) || 10;
+    const dexMod = Math.floor((dexVal - 10) / 2);
+    const initInput = $('char-init');
+    if (initInput && !initInput.value) {
+        initInput.value = dexMod;
+    }
+}
+
 function saveCharacter() {
     const id = $('edit-char-id').value;
     const languageSelect = $('char-languages');
@@ -36,8 +57,8 @@ function saveCharacter() {
     };
 
     // Collect resistances and immunities
-    const resistances = Array.from(document.querySelectorAll('#char-resistances .char-resistance-chip.selected input')).map(i => i.value);
-    const immunities = Array.from(document.querySelectorAll('#char-immunities .char-resistance-chip.selected input')).map(i => i.value);
+    const resistances = Array.from(document.querySelectorAll('#char-resistances .cf-chip input:checked')).map(i => i.value);
+    const immunities = Array.from(document.querySelectorAll('#char-immunities .cf-chip input:checked')).map(i => i.value);
 
     const ch = {
         name: $('char-name').value.trim(),
@@ -127,10 +148,7 @@ function editChar(id) {
     const saves = ch.saveProficiencies || {};
     ['str', 'dex', 'con', 'int', 'wis', 'cha'].forEach(attr => {
         const checkbox = $(`char-save-${attr}`);
-        const box = checkbox.closest('.char-attr-box') || checkbox.closest('.char-save-box');
         checkbox.checked = saves[attr] || false;
-        if (saves[attr]) box.classList.add('proficient');
-        else box.classList.remove('proficient');
     });
 
     // Combat stats
@@ -146,22 +164,19 @@ function editChar(id) {
 
     // Inspiration
     $('char-inspiration').checked = ch.inspiration || false;
-    const inspBox = $('char-inspiration').closest('.char-inspiration-box');
-    if (inspBox) {
-        if (ch.inspiration) inspBox.classList.add('active');
-        else inspBox.classList.remove('active');
-    }
 
     // Resistances and immunities
-    document.querySelectorAll('#char-resistances .char-resistance-chip').forEach(chip => {
-        const val = chip.querySelector('input').value;
-        if ((ch.resistances || []).includes(val)) chip.classList.add('selected');
-        else chip.classList.remove('selected');
+    document.querySelectorAll('#char-resistances .cf-chip').forEach(chip => {
+        const input = chip.querySelector('input');
+        const val = input.value;
+        input.checked = (ch.resistances || []).includes(val);
+        chip.classList.toggle('selected', input.checked);
     });
-    document.querySelectorAll('#char-immunities .char-resistance-chip').forEach(chip => {
-        const val = chip.querySelector('input').value;
-        if ((ch.immunities || []).includes(val)) chip.classList.add('selected');
-        else chip.classList.remove('selected');
+    document.querySelectorAll('#char-immunities .cf-chip').forEach(chip => {
+        const input = chip.querySelector('input');
+        const val = input.value;
+        input.checked = (ch.immunities || []).includes(val);
+        chip.classList.toggle('selected', input.checked);
     });
 
     // Languages
@@ -222,21 +237,19 @@ function cancelCharEdit() {
     });
 
     // Saving throws
-    document.querySelectorAll('.char-save-box, .char-attr-box').forEach(box => {
-        box.classList.remove('proficient');
-        const checkbox = box.querySelector('input[type="checkbox"]');
-        if (checkbox && checkbox.id && checkbox.id.startsWith('char-save-')) {
-            checkbox.checked = false;
-        }
+    ['str', 'dex', 'con', 'int', 'wis', 'cha'].forEach(attr => {
+        $(`char-save-${attr}`).checked = false;
     });
 
     // Inspiration
     $('char-inspiration').checked = false;
-    const inspBox = $('char-inspiration').closest('.char-inspiration-box');
-    if (inspBox) inspBox.classList.remove('active');
 
     // Resistances and immunities
-    document.querySelectorAll('.char-resistance-chip').forEach(chip => chip.classList.remove('selected'));
+    document.querySelectorAll('.cf-chip').forEach(chip => {
+        chip.classList.remove('selected');
+        const input = chip.querySelector('input');
+        if (input) input.checked = false;
+    });
 
     // Languages
     Array.from($('char-languages').options).forEach(o => o.selected = false);

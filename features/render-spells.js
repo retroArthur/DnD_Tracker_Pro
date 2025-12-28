@@ -130,23 +130,20 @@ function renderAssignSpellList() {
     const charId = parseInt($('assign-char-id').value);
     const ch = EntityLookup.character(charId);
     const currentSpells = ch?.spells || [];
-    
+
     const searchTerm = ($('assign-spell-search').value || '').toLowerCase().trim();
     const classFilter = $('assign-spell-class-filter').value;
     const levelFilter = $('assign-spell-level-filter')?.value || '';
-    
-    // Filter spells - mit Beschreibungssuche und Stufen-Filter
+
+    // Filter spells
     let spells = D.spells.filter(s => {
-        // Search filter (Name, Schule, Beschreibung)
         if (searchTerm) {
             const name = (s.name || '').toLowerCase();
             const school = (s.school || '').toLowerCase();
             const desc = (s.description || '').toLowerCase();
             if (!name.includes(searchTerm) && !school.includes(searchTerm) && !desc.includes(searchTerm)) return false;
         }
-        // Class filter
         if (classFilter && (!s.spellClasses || !s.spellClasses.includes(classFilter))) return false;
-        // Level filter
         if (levelFilter !== '') {
             const lvl = parseInt(levelFilter);
             const spellLevel = s.level ?? (s.type === 'cantrip' ? 0 : -1);
@@ -154,7 +151,7 @@ function renderAssignSpellList() {
         }
         return true;
     });
-    
+
     // Sort by level then name
     spells.sort((a, b) => {
         const lvlA = a.level ?? (a.type === 'cantrip' ? 0 : 99);
@@ -162,36 +159,55 @@ function renderAssignSpellList() {
         if (lvlA !== lvlB) return lvlA - lvlB;
         return (a.name || '').localeCompare(b.name || '');
     });
-    
+
     const container = $('assign-spell-list');
-    
+
     if (!spells.length) {
-        container.innerHTML = '<div style="text-align: center; color: var(--text-dim); padding: 20px;">Keine Zauber gefunden</div>';
-        $('assign-spell-count').textContent = '(0 ausgewählt)';
+        container.innerHTML = '<div style="text-align: center; color: var(--text-dim); padding: 40px;">Keine Zauber gefunden</div>';
+        $('assign-spell-count').textContent = '0';
         return;
     }
-    
+
     container.innerHTML = spells.map(s => {
         const spellId = parseInt(s.id);
         const isChecked = currentSpells.some(sid => parseInt(sid) === spellId);
-        const levelText = (s.level === 0 || s.type === 'cantrip') ? 'Trick' : `Grad ${s.level}`;
-        const classes = (s.spellClasses || []).join(', ') || '—';
+        const level = s.level ?? (s.type === 'cantrip' ? 0 : 0);
+        const levelText = level === 0 ? '🔮' : level;
+        const levelClass = level === 0 ? 'trick' : `level-${level}`;
+        const school = s.school ? s.school.substring(0, 3) : '';
         return `<label class="assign-spell-item ${isChecked ? 'checked' : ''}">
             <input type="checkbox" value="${spellId}" ${isChecked ? 'checked' : ''} onchange="this.parentElement.classList.toggle('checked', this.checked); updateAssignSpellCount();">
             <div class="assign-spell-info">
                 <span class="assign-spell-name">${esc(s.name)}</span>
-                <div class="assign-spell-meta">${classes}</div>
+                <span class="assign-spell-meta">${school}</span>
             </div>
-            <span class="assign-spell-level">${levelText}</span>
+            <span class="assign-spell-level ${levelClass}">${levelText}</span>
         </label>`;
     }).join('');
-    
+
     updateAssignSpellCount();
 }
 
 function updateAssignSpellCount() {
     const checked = document.querySelectorAll('#assign-spell-list input[type="checkbox"]:checked').length;
-    $('assign-spell-count').textContent = `(${checked} ausgewählt)`;
+    const total = document.querySelectorAll('#assign-spell-list input[type="checkbox"]').length;
+    $('assign-spell-count').textContent = `${checked}/${total}`;
+}
+
+function assignSpellsSelectAll() {
+    document.querySelectorAll('#assign-spell-list input[type="checkbox"]').forEach(cb => {
+        cb.checked = true;
+        cb.parentElement.classList.add('checked');
+    });
+    updateAssignSpellCount();
+}
+
+function assignSpellsSelectNone() {
+    document.querySelectorAll('#assign-spell-list input[type="checkbox"]').forEach(cb => {
+        cb.checked = false;
+        cb.parentElement.classList.remove('checked');
+    });
+    updateAssignSpellCount();
 }
 
 function assignSpells() {

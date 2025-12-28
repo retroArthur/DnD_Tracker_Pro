@@ -1812,58 +1812,212 @@
         }
         
         /* Assign Spell Checkboxes */
+        /* ============================================================
+           ASSIGN SPELL MODAL - Redesigned
+           ============================================================ */
+        .assign-spell-modal {
+            max-width: 700px;
+            width: 95%;
+        }
+
+        .assign-spell-filters {
+            display: flex;
+            gap: 8px;
+            padding: 12px;
+            background: var(--bg-dark);
+            border-radius: 8px;
+            margin-bottom: 12px;
+        }
+
+        .assign-spell-search-wrap {
+            flex: 1;
+            min-width: 150px;
+        }
+
+        .assign-spell-search-wrap input {
+            width: 100%;
+            padding: 8px 12px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--text);
+            font-size: 0.9em;
+        }
+
+        .assign-spell-search-wrap input:focus {
+            border-color: var(--gold);
+            outline: none;
+        }
+
+        .assign-spell-select {
+            padding: 8px 12px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--text);
+            font-size: 0.85em;
+            min-width: 120px;
+        }
+
+        .assign-spell-list-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 4px;
+            margin-bottom: 8px;
+        }
+
+        .assign-spell-count-label {
+            font-size: 0.85em;
+            color: var(--text-dim);
+        }
+
+        .assign-spell-count-badge {
+            display: inline-block;
+            background: var(--gold);
+            color: var(--bg-dark);
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 0.85em;
+            margin-left: 6px;
+        }
+
+        .assign-spell-quick-actions {
+            display: flex;
+            gap: 6px;
+        }
+
+        .assign-spell-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 6px;
+            max-height: 400px;
+            overflow-y: auto;
+            padding: 8px;
+            background: var(--bg-dark);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+        }
+
         .assign-spell-item {
             display: flex;
             align-items: center;
-            gap: 6px;
-            padding: 4px 6px;
-            border-radius: 4px;
+            gap: 8px;
+            padding: 8px 10px;
+            background: var(--bg-card);
+            border: 1px solid transparent;
+            border-radius: 6px;
             cursor: pointer;
-            transition: background 0.15s;
-            font-size: 0.9em;
+            transition: all 0.15s;
         }
-        
+
         .assign-spell-item:hover {
-            background: var(--bg-hover);
+            border-color: var(--border);
+            background: var(--bg-elevated);
         }
-        
+
         .assign-spell-item.checked {
-            background: rgba(212, 175, 55, 0.15);
+            border-color: var(--gold);
+            background: rgba(212, 175, 55, 0.1);
         }
-        
+
         .assign-spell-item input[type="checkbox"] {
-            width: 14px;
-            height: 14px;
+            width: 16px;
+            height: 16px;
             flex-shrink: 0;
+            accent-color: var(--gold);
         }
-        
+
         .assign-spell-info {
             flex: 1;
             min-width: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
         }
-        
+
         .assign-spell-name {
-            font-weight: bold;
+            font-weight: 600;
             color: var(--text);
-            font-size: 0.95em;
+            font-size: 0.85em;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
-        
+
         .assign-spell-meta {
-            font-size: 0.75em;
+            font-size: 0.7em;
             color: var(--text-dim);
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
         }
-        
+
         .assign-spell-level {
-            display: inline-block;
-            font-size: 0.7em;
-            padding: 1px 5px;
-            border-radius: 8px;
-            background: var(--bg-elevated);
-            color: var(--cyan);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.65em;
+            font-weight: 600;
+            padding: 3px 6px;
+            border-radius: 4px;
             flex-shrink: 0;
+            min-width: 28px;
+        }
+
+        .assign-spell-level.trick {
+            background: var(--purple);
+            color: white;
+        }
+
+        .assign-spell-level.level-1,
+        .assign-spell-level.level-2 {
+            background: var(--green);
+            color: white;
+        }
+
+        .assign-spell-level.level-3,
+        .assign-spell-level.level-4 {
+            background: var(--cyan);
+            color: var(--bg-dark);
+        }
+
+        .assign-spell-level.level-5,
+        .assign-spell-level.level-6 {
+            background: var(--gold);
+            color: var(--bg-dark);
+        }
+
+        .assign-spell-level.level-7,
+        .assign-spell-level.level-8,
+        .assign-spell-level.level-9 {
+            background: var(--red);
+            color: white;
+        }
+
+        .assign-spell-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 16px;
+            padding-top: 12px;
+            border-top: 1px solid var(--border);
+        }
+
+        @media (max-width: 600px) {
+            .assign-spell-filters {
+                flex-wrap: wrap;
+            }
+            .assign-spell-search-wrap {
+                width: 100%;
+            }
+            .assign-spell-select {
+                flex: 1;
+            }
+            .assign-spell-list {
+                grid-template-columns: 1fr;
+            }
         }
         
         #assign-spell-list {
@@ -2138,7 +2292,7 @@
             gap: 16px;
             padding: 12px 16px;
             background: var(--bg-card);
-            border-bottom: 1px solid var(--border);
+            border: 1px solid var(--gold-dim);
             border-radius: 10px;
             flex-shrink: 0;
         }
@@ -2279,7 +2433,7 @@
         /* Master-Detail Layout */
         .loc-layout {
             display: grid;
-            grid-template-columns: 1fr 380px;
+            grid-template-columns: 1fr 825px;
             gap: 0;
             flex: 1;
             overflow: hidden;
@@ -9513,15 +9667,15 @@
             display: flex;
             gap: 8px;
             padding: 12px;
-            background: var(--bg-elevated);
-            border-radius: 8px;
+            background: var(--bg-card);
+            border: 1px solid var(--gold-dim);
+            border-radius: 10px;
             margin-bottom: 12px;
             flex-wrap: wrap;
             align-items: center;
             position: sticky;
             top: 75px; /* Unter dem sticky Header */
             z-index: 99; /* Unter dem Header (z-index 100) */
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
         }
         
         /* Mobile: Header ist unten, also top: 0 */
@@ -10781,247 +10935,478 @@
         }
 
 /* ========================================
-   NEUES CHARAKTER-FORMULAR LAYOUT CSS
-   Variante 2: Responsive-optimiert
+   KOMPAKTES CHARAKTER-FORMULAR V3
    ======================================== */
 
-/* 4-SPALTIGES HAUPT-GRID (Desktop) */
-.char-form-main-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 16px;
-    margin-bottom: 20px;
+#char-form {
+    padding: 16px;
 }
 
-.char-form-column {
+/* Allgemeine Zeilen */
+.cf-row {
     display: flex;
-    flex-direction: column;
     gap: 12px;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
 }
 
-/* ZWEITE REIHE: Geldbeutel (2 Spalten), Sprache, Stats */
-.char-form-second-row {
-    display: grid;
-    grid-template-columns: 2fr 1fr 1fr;
-    gap: 20px;
-    margin-bottom: 20px;
+.cf-field {
+    flex: 1;
+    min-width: 120px;
 }
 
-.char-form-currency,
-.char-form-languages,
-.char-form-stats {
-    min-width: 0; /* Verhindert Overflow */
+.cf-field.cf-name { flex: 2; min-width: 180px; }
+.cf-field.cf-sm { flex: 0.5; min-width: 60px; max-width: 80px; }
+.cf-field.cf-inspiration { flex: 0; min-width: auto; }
+
+.cf-field label {
+    display: block;
+    font-size: 0.7em;
+    color: var(--gold);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 4px;
 }
 
-/* ATTRIBUTE IN EINER ZEILE */
-.char-attributes-row {
-    display: grid;
-    grid-template-columns: repeat(6, 1fr);
-    gap: 12px;
-    margin-bottom: 20px;
+.cf-field input,
+.cf-field select {
+    width: 100%;
+    padding: 8px 10px;
+    background: var(--bg-dark);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text);
+    font-size: 0.9em;
 }
 
-.char-attr-box {
-    background: var(--bg-card);
+.cf-field input:focus,
+.cf-field select:focus {
+    border-color: var(--gold);
+    outline: none;
+}
+
+/* Inspiration Toggle */
+.cf-insp-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    background: var(--bg-dark);
     border: 2px solid var(--border);
-    border-radius: 8px;
-    padding: 12px 8px;
-    text-align: center;
-    position: relative;
+    border-radius: 50%;
+    cursor: pointer;
+    margin-top: 16px;
     transition: all 0.2s;
 }
 
-.char-attr-box.proficient {
-    border-color: var(--gold);
-    background: rgba(212, 175, 55, 0.1);
+.cf-insp-toggle input { display: none; }
+.cf-insp-star { font-size: 1.2em; filter: grayscale(1); opacity: 0.4; transition: all 0.2s; }
+.cf-insp-toggle:has(input:checked) { border-color: var(--gold); background: rgba(212,175,55,0.2); }
+.cf-insp-toggle:has(input:checked) .cf-insp-star { filter: grayscale(0); opacity: 1; }
+
+/* Combat Stats Row */
+.cf-combat-row {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+    align-items: center;
+    padding: 12px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
 }
 
-.attr-label {
-    font-size: 0.75em;
-    font-weight: 700;
+.cf-stat-group {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.cf-hp-group {
+    background: rgba(255,100,100,0.1);
+    padding: 6px 10px;
+    border-radius: 8px;
+    border: 1px solid rgba(255,100,100,0.3);
+}
+
+.cf-stat {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.cf-stat-label {
+    font-size: 0.7em;
     color: var(--gold);
-    margin-bottom: 6px;
+    text-transform: uppercase;
+    font-weight: 600;
+}
+
+.cf-stat input,
+.cf-stat select {
+    width: 55px;
+    padding: 6px 8px;
+    background: var(--bg-dark);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    color: var(--text);
+    font-size: 0.85em;
+    text-align: center;
+}
+
+.cf-stat.hp-cur input { border-color: var(--red); }
+.cf-stat.hp-temp input { border-color: var(--cyan); width: 45px; }
+.cf-stat-divider { color: var(--text-dim); font-size: 0.9em; }
+.cf-stat.cf-readonly input { color: var(--text-dim); }
+
+/* Section Titles */
+.cf-section-title {
+    font-size: 0.75em;
+    color: var(--gold);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin: 16px 0 8px;
+    padding-bottom: 4px;
+    border-bottom: 1px solid var(--border);
+}
+
+/* Attribute Row */
+.cf-attrs {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 8px;
+    margin-bottom: 16px;
+}
+
+.cf-attr {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px;
+    text-align: center;
+    transition: all 0.2s;
+}
+
+.cf-attr:has(.cf-attr-save input:checked) {
+    border-color: var(--gold);
+    background: rgba(212,175,55,0.1);
+}
+
+.cf-attr-name {
+    font-size: 0.65em;
+    color: var(--gold);
+    font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.05em;
 }
 
-.attr-input {
+.cf-attr input[type="number"] {
     width: 100%;
+    padding: 4px;
     font-size: 1.1em;
     font-weight: 600;
     text-align: center;
-    padding: 6px 4px;
     background: var(--bg-dark);
     border: 1px solid var(--border);
-    color: var(--text);
     border-radius: 4px;
-    margin-bottom: 4px;
+    color: var(--text);
+    margin: 4px 0;
 }
 
-.attr-mod {
-    font-size: 0.9em;
+.cf-attr-mod {
+    font-size: 0.85em;
     font-weight: 700;
     color: var(--cyan);
-    margin-bottom: 6px;
 }
 
-.attr-save-checkbox {
+.cf-attr-save {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 4px;
-    font-size: 0.75em;
+    gap: 3px;
+    font-size: 0.6em;
     color: var(--text-dim);
     cursor: pointer;
+    margin-top: 4px;
 }
 
-.attr-save-checkbox input[type="checkbox"] {
-    margin: 0;
-    cursor: pointer;
+.cf-attr-save input { margin: 0; }
+.cf-attr-save span { text-transform: uppercase; }
+
+/* Resources (Money + Spell Slots) */
+.cf-resources {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 20px;
+    margin-bottom: 16px;
+    padding: 12px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
 }
 
-.save-label {
+.cf-money-title,
+.cf-slots-title {
+    font-size: 0.7em;
+    color: var(--gold);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 8px;
+    display: block;
+}
+
+.cf-coins {
+    display: flex;
+    gap: 6px;
+}
+
+.cf-coin {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+}
+
+.cf-coin span {
+    font-size: 0.6em;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.cf-coin.pm span { color: #b8860b; }
+.cf-coin.gm span { color: #ffd700; }
+.cf-coin.em span { color: #50c878; }
+.cf-coin.sm span { color: #c0c0c0; }
+.cf-coin.km span { color: #cd7f32; }
+
+.cf-coin input {
+    width: 50px;
+    padding: 4px;
+    text-align: center;
+    background: var(--bg-dark);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    color: var(--text);
     font-size: 0.85em;
 }
 
-/* RESISTENZEN & IMMUNITÄTEN (2 Spalten) */
-.char-resistances-row {
+.cf-slot-row {
+    display: flex;
+    gap: 4px;
+    flex-wrap: wrap;
+}
+
+.cf-slot {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+}
+
+.cf-slot span {
+    font-size: 0.6em;
+    color: var(--text-dim);
+    font-weight: 600;
+}
+
+.cf-slot input {
+    width: 36px;
+    padding: 4px;
+    text-align: center;
+    background: var(--bg-dark);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    color: var(--text);
+    font-size: 0.85em;
+}
+
+/* Defenses (Resistances + Immunities) */
+.cf-defenses {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 20px;
-    margin-bottom: 20px;
+    gap: 16px;
+    margin-bottom: 16px;
 }
 
-.char-resistances-section {
-    min-width: 0;
+.cf-defense-title {
+    font-size: 0.7em;
+    color: var(--gold);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 8px;
+    display: block;
 }
 
-/* ========================================
-   RESPONSIVE BREAKPOINTS
-   ======================================== */
+.cf-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+}
 
-/* Tablet: 1200px - 900px */
-@media (max-width: 1200px) and (min-width: 901px) {
-    /* Haupt-Grid: 2 Spalten */
-    .char-form-main-grid {
-        grid-template-columns: repeat(2, 1fr);
-    }
-    
-    /* Zweite Reihe: 2 Spalten */
-    .char-form-second-row {
-        grid-template-columns: 1fr 1fr;
-    }
-    
-    .char-form-currency {
-        grid-column: 1 / -1; /* Volle Breite */
-    }
-    
-    /* Attribute: 3 pro Reihe */
-    .char-attributes-row {
+.cf-chip {
+    display: flex;
+    align-items: center;
+    padding: 4px 8px;
+    background: var(--bg-dark);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.15s;
+    font-size: 0.75em;
+}
+
+.cf-chip input { display: none; }
+.cf-chip span { color: var(--text-dim); }
+
+.cf-chip.selected,
+.cf-chip:has(input:checked) {
+    border-color: var(--cyan);
+    background: rgba(0,200,200,0.15);
+}
+
+.cf-chip.selected span,
+.cf-chip:has(input:checked) span {
+    color: var(--cyan);
+}
+
+.cf-chip.imm.selected,
+.cf-chip.imm:has(input:checked) {
+    border-color: var(--gold);
+    background: rgba(212,175,55,0.15);
+}
+
+.cf-chip.imm.selected span,
+.cf-chip.imm:has(input:checked) span {
+    color: var(--gold);
+}
+
+/* Extras (Languages + Avatar) */
+.cf-extras {
+    display: grid;
+    grid-template-columns: 1fr 2fr;
+    gap: 16px;
+    margin-bottom: 16px;
+}
+
+.cf-extras-title {
+    font-size: 0.7em;
+    color: var(--gold);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 6px;
+    display: block;
+}
+
+.cf-languages select {
+    width: 100%;
+    height: 80px;
+    padding: 6px;
+    background: var(--bg-dark);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text);
+    font-size: 0.85em;
+}
+
+.cf-avatar input {
+    width: 100%;
+    padding: 8px 10px;
+    background: var(--bg-dark);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text);
+    font-size: 0.85em;
+}
+
+/* Notes */
+.cf-notes {
+    margin-bottom: 16px;
+}
+
+.cf-notes-title {
+    font-size: 0.7em;
+    color: var(--gold);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 6px;
+    display: block;
+}
+
+.cf-notes-toolbar {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 6px;
+}
+
+.cf-notes-toolbar button {
+    padding: 4px 8px;
+    background: var(--bg-dark);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    color: var(--text);
+    cursor: pointer;
+    font-size: 0.8em;
+}
+
+.cf-notes-toolbar button:hover {
+    border-color: var(--gold);
+}
+
+.cf-notes-editor {
+    min-height: 80px;
+    padding: 10px;
+    background: var(--bg-dark);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text);
+    font-size: 0.9em;
+    line-height: 1.4;
+}
+
+.cf-notes-editor:focus {
+    border-color: var(--gold);
+    outline: none;
+}
+
+.cf-notes-editor:empty:before {
+    content: attr(data-placeholder);
+    color: var(--text-dim);
+}
+
+/* Action Buttons */
+.cf-actions {
+    display: flex;
+    gap: 10px;
+    padding-top: 12px;
+    border-top: 1px solid var(--border);
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+    .cf-attrs {
         grid-template-columns: repeat(3, 1fr);
     }
-}
-
-/* Mobile Large: 900px - 600px */
-@media (max-width: 900px) {
-    /* Alles untereinander */
-    .char-form-main-grid {
+    .cf-defenses {
         grid-template-columns: 1fr;
-        gap: 12px;
     }
-    
-    .char-form-second-row {
+    .cf-resources {
         grid-template-columns: 1fr;
-        gap: 12px;
     }
-    
-    /* Attribute: 2 pro Reihe */
-    .char-attributes-row {
-        grid-template-columns: repeat(2, 1fr);
-        gap: 8px;
-    }
-    
-    /* Resistenzen: untereinander */
-    .char-resistances-row {
+    .cf-extras {
         grid-template-columns: 1fr;
-        gap: 12px;
     }
 }
 
-/* Mobile Small: < 600px */
 @media (max-width: 600px) {
-    /* Attribute: volle Breite, untereinander */
-    .char-attributes-row {
-        grid-template-columns: 1fr;
+    .cf-attrs {
+        grid-template-columns: repeat(2, 1fr);
     }
-    
-    .char-attr-box {
-        display: grid;
-        grid-template-columns: auto 1fr auto auto;
-        grid-template-rows: auto auto;
-        gap: 8px;
-        text-align: left;
-        padding: 12px;
+    .cf-combat-row {
+        flex-direction: column;
+        align-items: flex-start;
     }
-    
-    .attr-label {
-        grid-column: 1;
-        grid-row: 1 / 3;
-        font-size: 1.2em;
-        margin: 0;
-        display: flex;
-        align-items: center;
-    }
-    
-    .attr-input {
-        grid-column: 2;
-        grid-row: 1;
-        margin: 0;
-    }
-    
-    .attr-mod {
-        grid-column: 3;
-        grid-row: 1;
-        margin: 0;
-        display: flex;
-        align-items: center;
-        font-size: 1em;
-        padding: 0 8px;
-    }
-    
-    .attr-save-checkbox {
-        grid-column: 2 / 4;
-        grid-row: 2;
-        justify-content: flex-start;
-    }
-}
-
-/* ========================================
-   ZUSÄTZLICHE ANPASSUNGEN
-   ======================================== */
-
-/* Char-section-title Margins anpassen */
-#char-form .char-section-title:first-of-type {
-    margin-top: 0;
-}
-
-/* Form-group innerhalb des neuen Layouts */
-.char-form-column .form-group,
-.char-form-currency .form-group,
-.char-form-languages .form-group,
-.char-form-stats .form-group {
-    margin-bottom: 0;
-}
-
-/* Speed Dropdown wie andere Inputs */
-#char-speed {
-    width: 100%;
-}
-
-/* Inspiration Checkbox in Stats-Bereich */
-.char-form-stats label[for="char-inspiration"] input[type="checkbox"] {
-    width: auto;
-    margin-right: 6px;
 }
 /* ============================================================
    ENCOUNTER CALCULATOR - OPTIMIZED DESIGN
@@ -11522,8 +11907,8 @@
     gap: 12px;
     padding: 12px 16px;
     background: var(--bg-card);
-    border: 1px solid var(--border);
-    border-radius: 8px;
+    border: 1px solid var(--gold-dim);
+    border-radius: 10px;
     margin-bottom: 12px;
     margin-top: 0;
     flex-wrap: wrap;

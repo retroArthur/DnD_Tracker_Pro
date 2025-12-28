@@ -143,7 +143,7 @@ function renderCharacterCard(ch) {
     return `
         <div class="char-card" id="char-${ch.id}" draggable="true" data-sortable data-id="${ch.id}">
             <!-- Header -->
-            <div class="char-card-header" data-action="show-char-details" data-id="${ch.id}">
+            <div class="char-card-header" data-action="edit-char" data-id="${ch.id}">
                 <div class="char-card-avatar">
                     ${ch.avatar ? `<img src="${esc(ch.avatar)}" alt="">` : '👤'}
                 </div>
@@ -244,7 +244,7 @@ function renderCharacterCard(ch) {
                     <button class="char-action-btn" data-action="show-conditions-modal" data-type="characters" data-id="${ch.id}">⚡</button>
                     <button class="char-action-btn" data-action="show-assign-spells" data-id="${ch.id}">✨</button>
                     <button class="char-action-btn" data-action="show-assign-items" data-id="${ch.id}">📦</button>
-                    <button class="char-action-btn" data-action="edit-char" data-id="${ch.id}">✏️</button>
+                    <button class="char-action-btn" data-action="show-char-details" data-id="${ch.id}" title="Details">🔍</button>
                     <button class="char-action-btn danger" data-action="delete-char" data-id="${ch.id}">🗑️</button>
                 </div>
             </div>
