@@ -154,7 +154,7 @@ function showCharacterDetails(id) {
             ${ch.notes ? `
             <div class="char-notes-section">
                 <div class="char-notes-label">📝 Notizen</div>
-                <div class="char-notes-content">${ch.notes}</div>
+                <div class="char-notes-content">${sanitizeHTML(ch.notes)}</div>
             </div>` : ''}
         </div>
 

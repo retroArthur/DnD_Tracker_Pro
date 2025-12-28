@@ -64,7 +64,7 @@ function editQuest(id) {
     $('quest-title').value = q.title;
     $('quest-type').value = q.type || 'quest';
     $('quest-desc').innerHTML = sanitizeHTML(q.description) || '';
-    $('quest-epilog').innerHTML = q.epilog || '';
+    $('quest-epilog').innerHTML = sanitizeHTML(q.epilog) || '';
     $('quest-completed').checked = q.completed;
     $('quest-rewarded').checked = q.rewardReceived;
 
