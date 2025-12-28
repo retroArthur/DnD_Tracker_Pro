@@ -1010,3 +1010,149 @@ save = function(showMessage) {
 };
 
 // ============================================================
+// DEBUG MODAL FUNCTIONS
+// ============================================================
+
+let debugLog = [];
+
+function debugLogAdd(message) {
+    const timestamp = new Date().toLocaleTimeString();
+    debugLog.push(`[${timestamp}] ${message}`);
+    if (debugLog.length > 100) debugLog.shift();
+    renderDebugLog();
+}
+
+function renderDebugLog() {
+    const el = $('debug-log');
+    if (el) {
+        el.textContent = debugLog.join('\n');
+        el.scrollTop = el.scrollHeight;
+    }
+}
+
+function clearDebugLog() {
+    debugLog = [];
+    renderDebugLog();
+    showToast('Debug-Log geleert', 'info');
+}
+
+function showDebugModal() {
+    updateDebugStats();
+    updateDebugSystemStatus();
+    showModal('debug-modal');
+}
+
+function updateDebugStats() {
+    const el = $('debug-stats');
+    if (!el) return;
+
+    const stats = [
+        { label: 'Charaktere', value: D.characters?.length || 0, icon: '👥' },
+        { label: 'NPCs', value: D.npcs?.length || 0, icon: '🎭' },
+        { label: 'Orte', value: D.locations?.length || 0, icon: '🏠' },
+        { label: 'Quests', value: D.quests?.length || 0, icon: '📜' },
+        { label: 'Encounters', value: D.encounters?.length || 0, icon: '👹' },
+        { label: 'Zauber', value: D.spells?.length || 0, icon: '✨' },
+        { label: 'Loot', value: D.loot?.length || 0, icon: '📦' },
+        { label: 'Sessions', value: D.sessionNotes?.length || 0, icon: '📝' },
+        { label: 'Wiki', value: D.wiki?.length || 0, icon: '📚' },
+        { label: 'Shops', value: D.shops?.length || 0, icon: '🏪' },
+        { label: 'Links', value: D.links?.length || 0, icon: '🔗' },
+        { label: 'Nodes', value: D.mindmap?.nodes?.length || 0, icon: '🔗' }
+    ];
+
+    el.innerHTML = stats.map(s => `
+        <div style="background: var(--bg-card); padding: 8px; border-radius: 6px; text-align: center;">
+            <div style="font-size: 1.2em;">${s.icon}</div>
+            <div style="font-size: 1.4em; font-weight: 600; color: var(--gold);">${s.value}</div>
+            <div style="font-size: 0.75em; color: var(--text-dim);">${s.label}</div>
+        </div>
+    `).join('');
+}
+
+function updateDebugSystemStatus() {
+    const el = $('debug-system-status');
+    if (!el) return;
+
+    const dataSize = new Blob([JSON.stringify(D)]).size;
+    const status = [
+        { label: 'LocalStorage', value: StorageAPI?.isAvailable() ? '✓' : '✗', color: StorageAPI?.isAvailable() ? 'var(--green)' : 'var(--red)' },
+        { label: 'Datengröße', value: `${(dataSize / 1024).toFixed(1)} KB`, color: 'var(--cyan)' },
+        { label: 'Undo-Stack', value: undoStack?.length || 0, color: 'var(--purple)' },
+        { label: 'Event-Actions', value: EventDelegation?.actionCount || 0, color: 'var(--gold)' },
+        { label: 'DOM-Elemente', value: document.querySelectorAll('*').length, color: 'var(--cyan)' },
+        { label: 'Theme', value: document.documentElement.dataset.theme || 'dark', color: 'var(--gold)' }
+    ];
+
+    el.innerHTML = status.map(s => `
+        <div style="background: var(--bg-card); padding: 8px; border-radius: 6px; text-align: center;">
+            <div style="font-size: 1.1em; font-weight: 600; color: ${s.color};">${s.value}</div>
+            <div style="font-size: 0.75em; color: var(--text-dim);">${s.label}</div>
+        </div>
+    `).join('');
+}
+
+function runValidation(silent = false) {
+    if (!silent) debugLogAdd('--- Datenvalidierung ---');
+    const results = [];
+
+    // Prüfe Datenstruktur
+    results.push({
+        name: 'Haupt-Datenobjekt',
+        pass: typeof D === 'object' && D !== null,
+        detail: 'D existiert',
+        category: 'validation'
+    });
+
+    // Prüfe Arrays
+    const arrays = ['characters', 'npcs', 'locations', 'quests', 'encounters', 'spells', 'loot', 'sessionNotes', 'wiki', 'shops', 'links'];
+    arrays.forEach(arr => {
+        const isArray = Array.isArray(D[arr]);
+        results.push({
+            name: `Array: ${arr}`,
+            pass: isArray,
+            detail: isArray ? `${D[arr].length} Einträge` : 'Kein Array',
+            category: 'validation'
+        });
+    });
+
+    // Prüfe auf doppelte IDs
+    arrays.forEach(arr => {
+        if (Array.isArray(D[arr]) && D[arr].length > 0) {
+            const ids = D[arr].map(item => item.id).filter(id => id !== undefined);
+            const uniqueIds = new Set(ids);
+            const hasDuplicates = ids.length !== uniqueIds.size;
+            results.push({
+                name: `IDs in ${arr}`,
+                pass: !hasDuplicates,
+                detail: hasDuplicates ? 'Duplikate gefunden!' : 'Alle IDs eindeutig',
+                category: 'validation'
+            });
+        }
+    });
+
+    const passed = results.filter(r => r.pass).length;
+    if (!silent) {
+        results.forEach(r => {
+            debugLogAdd(`  ${r.pass ? '✓' : '✗'} ${r.name}: ${r.detail}`);
+        });
+        debugLogAdd(`Validierung: ${passed}/${results.length} OK`);
+        showToast(`✅ Validierung: ${passed}/${results.length} OK`, passed === results.length ? 'success' : 'warning');
+    }
+
+    // Ergebnisse im Modal anzeigen
+    const valEl = $('debug-validation');
+    if (valEl) {
+        valEl.innerHTML = results.map(r => `
+            <div style="padding: 4px 0; border-bottom: 1px solid var(--border);">
+                <span style="color: ${r.pass ? 'var(--green)' : 'var(--red)'};">${r.pass ? '✓' : '✗'}</span>
+                <span style="color: var(--text);">${r.name}</span>
+                <span style="color: var(--text-dim); float: right;">${r.detail}</span>
+            </div>
+        `).join('');
+    }
+
+    return results;
+}
+
+// ============================================================
