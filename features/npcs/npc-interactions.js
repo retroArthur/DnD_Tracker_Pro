@@ -1,21 +1,18 @@
 // ============================================================
 // NPC INTERACTIONS - Toggle und Interaktions-Funktionen
 // ============================================================
-// Extrahiert aus features/render-npcs.js
+// Angepasst für Master-Detail Layout
 
 function toggleNPCCard(cardOrId) {
     const id = typeof cardOrId === 'number' ? cardOrId : parseInt(cardOrId);
 
-    // Bei Listenansicht: Expandiere inline
-    if (viewModes.npcs === 'list') {
-        const row = document.querySelector(`.list-view-row.npc-row[data-id="${id}"]`);
-        if (row) {
-            row.classList.toggle('expanded');
-        }
+    // Im Master-Detail Layout: NPC auswählen
+    if (typeof selectNPC === 'function') {
+        selectNPC(id);
         return;
     }
 
-    // Grid-Ansicht: Normal togglen
+    // Fallback für alte Layouts
     const card = $(`npc-card-${id}`);
     if (card) {
         card.classList.toggle('collapsed');
@@ -29,27 +26,33 @@ function toggleNPCTrigger(npcId, triggerIdx) {
     npc.triggers[triggerIdx].triggered = !npc.triggers[triggerIdx].triggered;
     const triggered = npc.triggers[triggerIdx].triggered;
 
-    // Nur die betroffenen DOM-Elemente aktualisieren statt alles neu zu rendern
-    const npcCard = $(`npc-card-${npcId}`);
-    if (npcCard) {
-        const triggerItems = npcCard.querySelectorAll('.npc-trigger-item');
+    // Master-Detail Layout: Detail-Panel aktualisieren
+    const detailPanel = $('npc-detail-panel');
+    if (detailPanel && typeof selectedNpcId !== 'undefined' && selectedNpcId === npcId) {
+        const triggerItems = detailPanel.querySelectorAll('.npc-trigger-item');
         const triggerItem = triggerItems[triggerIdx];
         if (triggerItem) {
+            triggerItem.classList.toggle('triggered', triggered);
             const checkBox = triggerItem.querySelector('.npc-trigger-check');
-            const revealBox = triggerItem.querySelector('.npc-trigger-reveal');
-
             if (checkBox) {
                 checkBox.classList.toggle('triggered', triggered);
                 checkBox.innerHTML = triggered ? '✓' : '';
             }
-            if (revealBox) {
-                revealBox.classList.toggle('hidden', !triggered);
+            // Reveal-Text anzeigen/verstecken
+            const revealEl = triggerItem.querySelector('.npc-trigger-reveal');
+            if (revealEl) {
+                if (triggered) {
+                    revealEl.style.display = 'block';
+                    revealEl.textContent = npc.triggers[triggerIdx].reveal || '';
+                } else {
+                    revealEl.style.display = 'none';
+                }
             }
         }
     }
 
     // Locations aktualisieren (falls NPC dort angezeigt wird)
-    renderLocations();
+    if (typeof renderLocations === 'function') renderLocations();
     save();
 
     const status = triggered ? 'aktiviert' : 'deaktiviert';
@@ -63,35 +66,34 @@ function toggleNPCDialogUsed(npcId, dialogIdx) {
     npc.dialogs[dialogIdx].used = !npc.dialogs[dialogIdx].used;
     const used = npc.dialogs[dialogIdx].used;
 
-    // Nur die betroffenen DOM-Elemente aktualisieren
-    const npcCard = $(`npc-card-${npcId}`);
-    if (npcCard) {
-        const dialogItems = npcCard.querySelectorAll('.npc-dialog-item');
+    // Master-Detail Layout: Detail-Panel aktualisieren
+    const detailPanel = $('npc-detail-panel');
+    if (detailPanel && typeof selectedNpcId !== 'undefined' && selectedNpcId === npcId) {
+        const dialogItems = detailPanel.querySelectorAll('.npc-dialog-item');
         const dialogItem = dialogItems[dialogIdx];
         if (dialogItem) {
+            dialogItem.classList.toggle('used', used);
             const marker = dialogItem.querySelector('.npc-dialog-marker');
-            const title = dialogItem.querySelector('.npc-dialog-title');
-            const status = dialogItem.querySelector('.npc-dialog-status');
-            const btn = dialogItem.querySelector('.npc-dialog-actions .btn');
-
             if (marker) marker.classList.toggle('used', used);
-            if (title) title.classList.toggle('used', used);
-            if (status) {
-                status.className = `npc-dialog-status ${used ? 'used' : 'unused'}`;
-                status.textContent = used ? '✓ Verwendet' : '○ Offen';
-            }
+
+            // Button aktualisieren
+            const btn = dialogItem.querySelector('.npc-detail-btn.small');
             if (btn) {
-                btn.className = `btn btn-sm ${used ? '' : 'btn-success'}`;
-                btn.innerHTML = used ? '↩️ Zurücksetzen' : '✓ Als verwendet markieren';
+                btn.classList.toggle('success', !used);
+                btn.innerHTML = used ? '↩️' : '✓';
+                btn.title = used ? 'Als unbenutzt markieren' : 'Als verwendet markieren';
             }
         }
 
-        // Counter im Header aktualisieren
-        const countEl = npcCard.querySelector('.npc-dialogs-count');
-        if (countEl) {
-            const usedCount = npc.dialogs.filter(d => d.used).length;
-            countEl.textContent = `${usedCount}/${npc.dialogs.length} verwendet`;
-        }
+        // Dialog-Counter in Section-Title aktualisieren
+        const usedCount = npc.dialogs.filter(d => d.used).length;
+        const sectionTitles = detailPanel.querySelectorAll('.npc-section-title');
+        sectionTitles.forEach(title => {
+            if (title.textContent.includes('Dialoge')) {
+                const btnHtml = title.querySelector('.npc-section-btn')?.outerHTML || '';
+                title.innerHTML = `💬 Dialoge (${usedCount}/${npc.dialogs.length} verwendet) ${btnHtml}`;
+            }
+        });
     }
 
     save();

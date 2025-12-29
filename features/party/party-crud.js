@@ -34,6 +34,25 @@ function updateSpeedDisplay() {
     const ft = selected?.getAttribute('data-ft') || '30';
     ftDisplay.textContent = ft + 'ft';
 }
+// Avatar preview - sichere Implementierung
+function updateAvatarPreview(url) {
+    const preview = $('cf-avatar-preview');
+    if (!preview) return;
+
+    if (url && (url.startsWith('http://') || url.startsWith('https://'))) {
+        // Sichere Erstellung ohne innerHTML mit User-Input
+        preview.innerHTML = '';
+        const img = document.createElement('img');
+        img.src = esc(url);
+        img.alt = 'Avatar Preview';
+        img.onerror = function() {
+            this.parentElement.innerHTML = '<span class="cf-avatar-placeholder">?</span>';
+        };
+        preview.appendChild(img);
+    } else {
+        preview.innerHTML = '<span class="cf-avatar-placeholder">?</span>';
+    }
+}
 
 // Language dropdown functions
 function toggleLangDropdown() {

@@ -15,8 +15,7 @@ function updateEncAttrMod(attr) {
 
 function saveEncounter() {
     const id = $('edit-enc-id').value;
-    const languageSelect = $('enc-languages');
-    const selectedLanguages = Array.from(languageSelect.selectedOptions).map(o => o.value);
+    const selectedLanguages = typeof getEncSelectedLanguages === 'function' ? getEncSelectedLanguages() : [];
 
     // Saving throw proficiencies sammeln
     const savingThrows = {};
@@ -90,19 +89,15 @@ function editEnc(id) {
     $('enc-perception').value = e.perception || '';
 
     // Handle languages (array or string for backwards compatibility)
-    const languageSelect = $('enc-languages');
-    Array.from(languageSelect.options).forEach(o => o.selected = false);
+    let langs = [];
     if (Array.isArray(e.languages)) {
-        e.languages.forEach(lang => {
-            const opt = Array.from(languageSelect.options).find(o => o.value === lang);
-            if (opt) opt.selected = true;
-        });
+        langs = e.languages;
     } else if (e.languages) {
         // Old format: comma-separated string
-        e.languages.split(',').map(l => l.trim()).forEach(lang => {
-            const opt = Array.from(languageSelect.options).find(o => o.value === lang);
-            if (opt) opt.selected = true;
-        });
+        langs = e.languages.split(',').map(l => l.trim());
+    }
+    if (typeof setEncLanguages === 'function') {
+        setEncLanguages(langs);
     }
 
     // Attribute als Zahlen laden (oder alte Format-Konversion)
@@ -176,7 +171,7 @@ function cancelEncEdit() {
             if (box) box.classList.remove('proficient');
         }
     });
-    Array.from($('enc-languages').options).forEach(o => o.selected = false);
+    if (typeof setEncLanguages === 'function') setEncLanguages([]);
     // Resistenzen & Immunitäten zurücksetzen
     document.querySelectorAll('#enc-resistances .char-resistance-chip, #enc-immunities .char-resistance-chip, #enc-condition-immunities .char-resistance-chip').forEach(chip => {
         chip.classList.remove('selected');
@@ -216,3 +211,61 @@ function addEncToInit(id) {
     sortInit();
     showToast('Zu Initiative hinzugefügt');
 }
+
+
+// Encounter Language Dropdown Functions
+function toggleEncLangDropdown() {
+    const wrapper = $('enc-languages-wrapper');
+    if (wrapper) {
+        wrapper.classList.toggle('open');
+    }
+}
+
+function updateEncLanguages() {
+    const checkboxes = document.querySelectorAll('#enc-lang-dropdown input[type="checkbox"]:checked');
+    const selected = Array.from(checkboxes).map(cb => cb.value);
+    const display = $('enc-lang-display');
+    
+    if (display) {
+        if (selected.length === 0) {
+            display.textContent = 'Sprachen wählen...';
+            display.style.color = 'var(--text-dim)';
+        } else if (selected.length <= 3) {
+            display.textContent = selected.join(', ');
+            display.style.color = 'var(--text)';
+        } else {
+            display.textContent = selected.slice(0, 2).join(', ') + ' +' + (selected.length - 2);
+            display.style.color = 'var(--text)';
+        }
+    }
+}
+
+function getEncSelectedLanguages() {
+    const checkboxes = document.querySelectorAll('#enc-lang-dropdown input[type="checkbox"]:checked');
+    return Array.from(checkboxes).map(cb => cb.value);
+}
+
+function setEncLanguages(languages) {
+    // Reset all checkboxes
+    document.querySelectorAll('#enc-lang-dropdown input[type="checkbox"]').forEach(cb => {
+        cb.checked = false;
+    });
+    
+    // Set selected languages
+    if (Array.isArray(languages)) {
+        languages.forEach(lang => {
+            const cb = document.querySelector('#enc-lang-dropdown input[value="' + lang + '"]');
+            if (cb) cb.checked = true;
+        });
+    }
+    
+    updateEncLanguages();
+}
+
+// Close dropdown when clicking outside
+document.addEventListener('click', function(e) {
+    const wrapper = $('enc-languages-wrapper');
+    if (wrapper && !wrapper.contains(e.target)) {
+        wrapper.classList.remove('open');
+    }
+});

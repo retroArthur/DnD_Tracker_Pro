@@ -1,176 +1,374 @@
 // ============================================================
-// ENCOUNTERS RENDER - Hauptrendering-Funktionen
+// ENCOUNTERS RENDER - Master-Detail Layout (wie Orte/NPCs)
 // ============================================================
-// Extrahiert aus features/render-encounters.js
 
-// State für expanded Encounter Cards
-let expandedEncounterCards = new Set();
+// State
+let selectedEncounterId = null;
+let currentEncFilter = 'all';
+
+// Creature type icons
+const ENC_ICONS = {
+    'aberration': '👁️',
+    'bestie': '🐾',
+    'himmlisch': '👼',
+    'konstrukt': '🤖',
+    'drache': '🐉',
+    'dragon': '🐉',
+    'elementar': '🌪️',
+    'feenwesen': '🧚',
+    'riese': '🗿',
+    'humanoid': '👤',
+    'monstrosität': '👹',
+    'schleim': '🟢',
+    'pflanze': '🌿',
+    'untot': '💀',
+    'undead': '💀',
+    'default': '⚔️'
+};
+
+function getEncounterIcon(enc) {
+    const type = (enc.creatureType || enc.race || '').toLowerCase();
+    for (const [key, icon] of Object.entries(ENC_ICONS)) {
+        if (type.includes(key)) return icon;
+    }
+    return ENC_ICONS.default;
+}
 
 function renderEncounters() {
-    const c = $('encounter-list'); if (!c) return;
+    const listContainer = $('encounter-list');
+    const filterContainer = $('encounter-filters');
+    if (!listContainer) return;
 
-    // Counter aktualisieren
+    // Update counter
     updateCounters({ 'encounter-io-count': D.encounters?.length || 0 });
 
-    // Suche
-    const search = ($('encounter-search')?.value || '').toLowerCase();
+    // Render filter chips (by creature type)
+    if (filterContainer) {
+        const types = [...new Set((D.encounters || []).map(e => e.creatureType).filter(Boolean))];
+        filterContainer.innerHTML = `
+            <div class="enc-filter-chip ${currentEncFilter === 'all' ? 'active' : ''}" data-action="set-enc-filter" data-value="all">Alle</div>
+            ${types.slice(0, 5).map(type => `
+                <div class="enc-filter-chip ${currentEncFilter === type ? 'active' : ''}"
+                     data-action="set-enc-filter" data-value="${esc(type)}">
+                    ${esc(type)}
+                </div>
+            `).join('')}
+            ${types.length > 5 ? `
+                <select class="enc-filter-select" onchange="setEncFilter(this.value || 'all')">
+                    <option value="">Mehr...</option>
+                    ${types.slice(5).map(type => `<option value="${esc(type)}">${esc(type)}</option>`).join('')}
+                </select>
+            ` : ''}
+        `;
+    }
+
+    // Get search and filter
+    const search = ($('enc-search')?.value || '').toLowerCase();
     let encounters = [...(D.encounters || [])];
 
+    // Apply type filter
+    if (currentEncFilter !== 'all') {
+        encounters = encounters.filter(e => e.creatureType === currentEncFilter);
+    }
+
+    // Apply search
     if (search) {
         encounters = encounters.filter(e =>
             e.name.toLowerCase().includes(search) ||
             (e.creatureType || '').toLowerCase().includes(search) ||
-            (e.race || '').toLowerCase().includes(search)
+            (e.race || '').toLowerCase().includes(search) ||
+            (e.cr || '').toString().includes(search)
         );
     }
 
+    // Sort by CR then name
+    encounters.sort((a, b) => {
+        const crA = parseCR(a.cr);
+        const crB = parseCR(b.cr);
+        if (crA !== crB) return crA - crB;
+        return a.name.localeCompare(b.name);
+    });
+
+    // Empty state
     if (!encounters.length) {
-        c.innerHTML = renderEmptyState({
-            icon: '👹',
-            titleEmpty: 'Keine Encounter',
-            descEmpty: 'Erstelle Monster und Gegner für deine Kämpfe.',
-            buttonText: '➕ Encounter erstellen',
-            buttonAction: 'toggle-collapse',
-            buttonValue: 'enc-form',
-            isFiltered: !!search
-        });
+        listContainer.innerHTML = `
+            <div class="enc-empty-state">
+                <div class="enc-empty-icon">👹</div>
+                <div class="enc-empty-title">${search || currentEncFilter !== 'all' ? 'Keine Treffer' : 'Keine Encounter'}</div>
+                <div class="enc-empty-desc">${search || currentEncFilter !== 'all' ? 'Versuche andere Suchbegriffe' : 'Erstelle Monster und Gegner'}</div>
+                ${!search && currentEncFilter === 'all' ? `
+                    <button class="enc-add-btn" data-action="show-enc-form" style="margin-top: 12px;">
+                        + Encounter erstellen
+                    </button>
+                ` : ''}
+            </div>
+        `;
+        clearEncounterDetail();
         return;
     }
 
-    // Container-Klasse je nach View-Mode
-    c.className = viewModes.encounters === 'list' ? 'list-view-container' : 'encounter-grid';
+    // Render list items
+    listContainer.innerHTML = encounters.map(enc => renderEncounterItem(enc)).join('');
 
-    // Render basierend auf View-Mode
-    if (viewModes.encounters === 'list') {
-        c.innerHTML = encounters.map(e => renderEncounterListItem(e)).join('');
+    // Auto-select first if none selected
+    if (!selectedEncounterId || !encounters.find(e => e.id === selectedEncounterId)) {
+        selectEncounter(encounters[0].id, false);
     } else {
-        c.innerHTML = encounters.map(e => renderEncounterGridCard(e)).join('');
+        showEncounterDetail(selectedEncounterId);
     }
 }
 
-function renderEncounterListItem(e) {
-    // Attribute berechnen
-    const attrs = ['str', 'dex', 'con', 'int', 'wis', 'cha'].map(a => {
-        const val = e[a] || 10;
-        const mod = Math.floor((val - 10) / 2);
-        const modStr = mod >= 0 ? `+${mod}` : `${mod}`;
-        const name = a.toUpperCase().replace('STR', 'STÄ').replace('DEX', 'GES').replace('CON', 'KON').replace('WIS', 'WEI');
-        return `<span style="display: inline-block; text-align: center; padding: 4px 8px; background: var(--bg-dark); border-radius: 4px; min-width: 50px;"><span style="color: var(--text-dim); font-size: 0.75em;">${name}</span><br><span style="color: var(--cyan);">${val}</span> <span style="font-size: 0.8em; color: ${mod >= 0 ? 'var(--green)' : 'var(--red)'};">${modStr}</span></span>`;
-    }).join('');
+// Helper to parse CR values like "1/4", "1/2" etc.
+function parseCR(cr) {
+    if (!cr) return 0;
+    if (cr === '1/8') return 0.125;
+    if (cr === '1/4') return 0.25;
+    if (cr === '1/2') return 0.5;
+    return parseFloat(cr) || 0;
+}
+
+function renderEncounterItem(enc) {
+    const icon = getEncounterIcon(enc);
+    const isSelected = enc.id === selectedEncounterId;
 
     return `
-        <div class="list-view-row encounter-row" data-action="toggle-encounter-card" data-id="${e.id}">
-            <div class="row-icon"><span class="row-toggle">▶</span></div>
-            <div class="row-main">
-                <div class="row-title">${esc(e.name)}</div>
-                <div class="row-subtitle">${esc(e.creatureType || e.race || 'Unbekannt')}</div>
-            </div>
-            <div class="row-cr" title="Challenge Rating">CR ${e.cr || '—'}</div>
-            <div class="row-stats">
-                <span class="stat-ac" title="Rüstungsklasse">🛡️ ${e.ac || '—'}</span>
-                <span class="stat-hp" title="Trefferpunkte">❤️ ${e.hp || '—'}</span>
-            </div>
-            <div class="row-actions" data-stop-propagation="true">
-                <button class="btn btn-sm" data-action="load-enc-stop" data-id="${e.id}" title="Zum Kampf">⚔️</button>
-                <button class="btn btn-sm" data-action="edit-enc-stop" data-id="${e.id}" title="Bearbeiten">✏️</button>
-                <button class="btn btn-sm btn-danger" data-action="delete-enc-stop" data-id="${e.id}" title="Löschen">🗑️</button>
-            </div>
-            <div class="row-details">
-                <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 8px;">
-                    <span>⚡ <strong>Init:</strong> ${e.init || '—'}</span>
-                    <span>🏃 <strong>Speed:</strong> ${esc(e.speed || '—')}</span>
-                    <span>👁️ <strong>Wahr:</strong> ${e.perception || '—'}</span>
+        <div class="enc-item ${isSelected ? 'selected' : ''}" data-action="select-encounter" data-id="${enc.id}">
+            <div class="enc-item-icon">${icon}</div>
+            <div class="enc-item-info">
+                <div class="enc-item-name">
+                    ${esc(enc.name)}
+                    ${enc.cr ? `<span class="enc-item-cr">CR ${enc.cr}</span>` : ''}
                 </div>
-                <div style="display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 8px;">${attrs}</div>
-                ${e.actions ? `<div style="margin-top: 8px;"><span style="color: var(--red);">⚔️ Aktionen:</span> ${stripHtml(e.actions)}</div>` : ''}
-                ${e.traits ? `<div style="margin-top: 4px;"><span style="color: var(--purple);">⚡ Eigenschaften:</span> ${stripHtml(e.traits)}</div>` : ''}
-                ${(e.resistances?.length || e.immunities?.length) ? `<div style="margin-top: 4px;">${e.resistances?.length ? `<span style="color: var(--cyan);">🛡️ Res: ${e.resistances.join(', ')}</span>` : ''}${e.immunities?.length ? ` <span style="color: var(--gold);">⭐ Imm: ${e.immunities.join(', ')}</span>` : ''}</div>` : ''}
+                <div class="enc-item-meta">
+                    ${enc.creatureType ? esc(enc.creatureType) : 'Unbekannt'}
+                </div>
+            </div>
+            <div class="enc-item-stats">
+                <span class="enc-stat-badge" title="Rüstungsklasse">🛡️ ${enc.ac || '—'}</span>
+                <span class="enc-stat-badge" title="Trefferpunkte">❤️ ${enc.hp || '—'}</span>
             </div>
         </div>
     `;
 }
 
-function renderEncounterGridCard(e) {
-    const isExpanded = expandedEncounterCards.has(e.id);
-    const attrs = ['str', 'dex', 'con', 'int', 'wis', 'cha'].map(a => {
-        const val = e[a] || 10;
-        const mod = Math.floor((val - 10) / 2);
-        const modStr = mod >= 0 ? `+${mod}` : `${mod}`;
-        return { name: a.toUpperCase().replace('STR', 'STÄ').replace('DEX', 'GES').replace('CON', 'KON').replace('WIS', 'WEI'), val, mod: modStr };
-    });
-    const languages = Array.isArray(e.languages) ? e.languages.join(', ') : (e.languages || '—');
+function selectEncounter(id, scroll = true) {
+    selectedEncounterId = id;
 
-    return `<div class="encounter-card ${isExpanded ? 'expanded' : ''}" data-enc-id="${e.id}">
-        <div class="encounter-header" data-action="toggle-encounter-card" data-id="${e.id}">
-            <div style="display: flex; align-items: center; gap: 8px; flex: 1;">
-                <div style="flex: 1;">
-                    <div class="encounter-name">${esc(e.name)}</div>
-                    <div class="encounter-race">${esc(e.creatureType || e.race || '')}${e.cr ? ` • CR ${e.cr}` : ''}</div>
-                </div>
-                <div class="encounter-compact-stats">
-                    <span title="RK">🛡️${e.ac || '—'}</span>
-                    <span title="HP">❤️${e.hp || '—'}</span>
-                    <span title="Initiative">⚡${e.init || '—'}</span>
-                </div>
-            </div>
-            <span class="encounter-toggle">▶</span>
-        </div>
-        <div class="encounter-content">
-            <div class="encounter-stats">
-                <div class="encounter-stat"><div class="encounter-stat-label">RK</div><div class="encounter-stat-value">${e.ac || '—'}</div></div>
-                <div class="encounter-stat"><div class="encounter-stat-label">HP</div><div class="encounter-stat-value">${e.hp || '—'}</div></div>
-                <div class="encounter-stat"><div class="encounter-stat-label">Init</div><div class="encounter-stat-value">${e.init || '—'}</div></div>
-                <div class="encounter-stat"><div class="encounter-stat-label">Speed</div><div class="encounter-stat-value">${esc(e.speed || '—')}</div></div>
-                <div class="encounter-stat"><div class="encounter-stat-label">Wahr.</div><div class="encounter-stat-value">${e.perception || '—'}</div></div>
-            </div>
-            <div style="font-size:0.75em; color:var(--text-dim); margin: 6px 0;">🗣️ ${esc(languages)}</div>
-            <div class="encounter-abilities">${attrs.map(a => `<div class="ability-box"><div class="ability-name">${a.name}</div><div class="ability-value">${a.val}</div><div class="ability-mod">${a.mod}</div></div>`).join('')}</div>
-            ${e.savingThrows && Object.keys(e.savingThrows).length > 0 ? `<div style="font-size:0.75em; margin-top:6px; color:var(--green);">🛡️ <span style="color:var(--text-dim);">Rettungswürfe:</span> ${Object.keys(e.savingThrows).filter(k => e.savingThrows[k]).map(attr => {
-                const val = e[attr] || 10;
-                const mod = Math.floor((val - 10) / 2);
-                const profBonus = Math.max(2, Math.floor((parseInt(e.cr) || 0) / 4) + 2);
-                const total = mod + profBonus;
-                const sign = total >= 0 ? '+' : '';
-                return `${attr.toUpperCase()} ${sign}${total}`;
-            }).join(', ')}</div>` : ''}
-            ${(e.resistances?.length || e.immunities?.length || e.conditionImmunities?.length) ? `<div style="font-size:0.75em; margin-top:6px;">
-                ${e.resistances?.length ? `<span style="color: var(--cyan);">🛡️ Res: ${e.resistances.join(', ')}</span>` : ''}
-                ${e.immunities?.length ? `<span style="color: var(--gold);">${e.resistances?.length ? ' | ' : ''}⭐ Imm: ${e.immunities.join(', ')}</span>` : ''}
-                ${e.conditionImmunities?.length ? `<span style="color: var(--purple);">${(e.resistances?.length || e.immunities?.length) ? ' | ' : ''}🚫 Zust: ${e.conditionImmunities.join(', ')}</span>` : ''}
-            </div>` : ''}
-            ${e.traits ? `<div style="font-size:0.8em; margin-top:6px;"><span style="color:var(--purple);">⚡ Eigenschaften:</span> ${e.traits}</div>` : ''}
-            ${e.equipment ? `<div style="font-size:0.8em; margin-top:4px;"><span style="color:var(--text-dim);">🎒 Ausrüstung:</span> ${e.equipment}</div>` : ''}
-            ${e.actions ? `<div style="font-size:0.8em; margin-top:4px;"><span style="color:var(--red);">⚔️ Aktionen:</span> ${e.actions}</div>` : ''}
-            ${e.skills ? `<div style="font-size:0.8em; margin-top:4px;"><span style="color:var(--cyan);">🎯 Fertigkeiten:</span> ${e.skills}</div>` : ''}
-            <div class="btn-group" style="margin-top: 8px;">
-                <button class="btn btn-sm" data-action="load-enc-stop" data-id="${e.id}">⚔️ Zum Kampf</button>
-                <button class="btn btn-sm" data-action="edit-enc-stop" data-id="${e.id}">✏️</button>
-                <button class="btn btn-sm btn-danger" data-action="delete-enc-stop" data-id="${e.id}">🗑️</button>
-            </div>
-        </div>
-    </div>`;
+    // Update selection in list
+    document.querySelectorAll('.enc-item').forEach(el => {
+        el.classList.toggle('selected', el.dataset.id == id);
+    });
+
+    // Show detail
+    showEncounterDetail(id);
+
+    // Scroll into view if needed
+    if (scroll) {
+        const item = document.querySelector(`.enc-item[data-id="${id}"]`);
+        if (item) {
+            item.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+    }
 }
 
-function toggleEncounterCard(id) {
-    // Bei Listenansicht: Expandiere inline
-    if (viewModes.encounters === 'list') {
-        const row = document.querySelector(`.list-view-row.encounter-row[data-id="${id}"]`);
-        if (row) {
-            row.classList.toggle('expanded');
-        }
+function showEncounterDetail(id) {
+    const panel = $('enc-detail-panel');
+    if (!panel) return;
+
+    const enc = EntityLookup.encounter(id);
+    if (!enc) {
+        clearEncounterDetail();
         return;
     }
 
-    // Grid-Ansicht
-    if (expandedEncounterCards.has(id)) {
-        expandedEncounterCards.delete(id);
-    } else {
-        expandedEncounterCards.add(id);
-    }
+    const icon = getEncounterIcon(enc);
+    const languages = Array.isArray(enc.languages) ? enc.languages.join(', ') : (enc.languages || '—');
 
-    // Direkt das DOM-Element togglen statt komplettes Re-Render
-    const card = document.querySelector(`.encounter-card[data-enc-id="${id}"]`);
-    if (card) {
-        card.classList.toggle('expanded', expandedEncounterCards.has(id));
+    // Build attributes
+    const attrs = ['str', 'dex', 'con', 'int', 'wis', 'cha'].map(a => {
+        const val = enc[a] || 10;
+        const mod = Math.floor((val - 10) / 2);
+        const modStr = mod >= 0 ? `+${mod}` : `${mod}`;
+        const name = a.toUpperCase().replace('STR', 'STÄ').replace('DEX', 'GES').replace('CON', 'KON').replace('WIS', 'WEI');
+        return { name, val, mod: modStr, modNum: mod };
+    });
+
+    // Build saving throws
+    const savingThrowsHtml = enc.savingThrows && Object.keys(enc.savingThrows).length > 0 ?
+        Object.keys(enc.savingThrows).filter(k => enc.savingThrows[k]).map(attr => {
+            const val = enc[attr] || 10;
+            const mod = Math.floor((val - 10) / 2);
+            const profBonus = Math.max(2, Math.floor((parseInt(enc.cr) || 0) / 4) + 2);
+            const total = mod + profBonus;
+            return `<span class="enc-save-tag">${attr.toUpperCase()} +${total}</span>`;
+        }).join('') : '';
+
+    // Build resistances/immunities
+    const resistancesHtml = (enc.resistances || []).map(r => `<span class="enc-res-tag res">${esc(r)}</span>`).join('');
+    const immunitiesHtml = (enc.immunities || []).map(i => `<span class="enc-res-tag imm">${esc(i)}</span>`).join('');
+    const condImmunitiesHtml = (enc.conditionImmunities || []).map(c => `<span class="enc-res-tag cond">${esc(c)}</span>`).join('');
+
+    panel.innerHTML = `
+        <div class="enc-detail-content">
+            <div class="enc-detail-header">
+                <div class="enc-detail-icon">${icon}</div>
+                <div class="enc-detail-title">
+                    <div class="enc-detail-name">${esc(enc.name)}</div>
+                    <div class="enc-detail-subtitle">
+                        ${enc.creatureType ? esc(enc.creatureType) : ''}
+                        ${enc.cr ? ` • CR ${enc.cr}` : ''}
+                    </div>
+                </div>
+                <div class="enc-detail-actions">
+                    <button class="enc-detail-btn success" data-action="load-encounter" data-id="${enc.id}" title="Zum Kampf hinzufügen">⚔️</button>
+                    <button class="enc-detail-btn" data-action="edit-encounter" data-id="${enc.id}" title="Bearbeiten">✏️</button>
+                    <button class="enc-detail-btn danger" data-action="delete-encounter" data-id="${enc.id}" title="Löschen">🗑️</button>
+                </div>
+            </div>
+
+            <!-- Core Stats -->
+            <div class="enc-stats-row">
+                <div class="enc-core-stat">
+                    <div class="enc-core-stat-label">RK</div>
+                    <div class="enc-core-stat-value">${enc.ac || '—'}</div>
+                </div>
+                <div class="enc-core-stat">
+                    <div class="enc-core-stat-label">HP</div>
+                    <div class="enc-core-stat-value">${enc.hp || '—'}</div>
+                </div>
+                <div class="enc-core-stat">
+                    <div class="enc-core-stat-label">Init</div>
+                    <div class="enc-core-stat-value">${enc.init || '—'}</div>
+                </div>
+                <div class="enc-core-stat">
+                    <div class="enc-core-stat-label">Speed</div>
+                    <div class="enc-core-stat-value">${esc(enc.speed || '—')}</div>
+                </div>
+                <div class="enc-core-stat">
+                    <div class="enc-core-stat-label">Wahr.</div>
+                    <div class="enc-core-stat-value">${enc.perception || '—'}</div>
+                </div>
+            </div>
+
+            <!-- Attributes -->
+            <div class="enc-section">
+                <div class="enc-section-title">Attribute</div>
+                <div class="enc-attr-grid">
+                    ${attrs.map(a => `
+                        <div class="enc-attr-box">
+                            <div class="enc-attr-name">${a.name}</div>
+                            <div class="enc-attr-value">${a.val}</div>
+                            <div class="enc-attr-mod ${a.modNum >= 0 ? 'positive' : 'negative'}">${a.mod}</div>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+
+            ${savingThrowsHtml ? `
+                <div class="enc-section">
+                    <div class="enc-section-title">Rettungswürfe</div>
+                    <div class="enc-tags">${savingThrowsHtml}</div>
+                </div>
+            ` : ''}
+
+            ${languages !== '—' ? `
+                <div class="enc-section">
+                    <div class="enc-section-title">Sprachen</div>
+                    <div class="enc-text">${esc(languages)}</div>
+                </div>
+            ` : ''}
+
+            ${resistancesHtml || immunitiesHtml || condImmunitiesHtml ? `
+                <div class="enc-section">
+                    <div class="enc-section-title">Resistenzen & Immunitäten</div>
+                    <div class="enc-tags">
+                        ${resistancesHtml}
+                        ${immunitiesHtml}
+                        ${condImmunitiesHtml}
+                    </div>
+                </div>
+            ` : ''}
+
+            ${enc.traits ? `
+                <div class="enc-section">
+                    <div class="enc-section-title">Eigenschaften</div>
+                    <div class="enc-text">${enc.traits}</div>
+                </div>
+            ` : ''}
+
+            ${enc.actions ? `
+                <div class="enc-section">
+                    <div class="enc-section-title">Aktionen</div>
+                    <div class="enc-text">${enc.actions}</div>
+                </div>
+            ` : ''}
+
+            ${enc.skills ? `
+                <div class="enc-section">
+                    <div class="enc-section-title">Fertigkeiten</div>
+                    <div class="enc-text">${enc.skills}</div>
+                </div>
+            ` : ''}
+
+            ${enc.equipment ? `
+                <div class="enc-section">
+                    <div class="enc-section-title">Ausrüstung</div>
+                    <div class="enc-text">${enc.equipment}</div>
+                </div>
+            ` : ''}
+        </div>
+    `;
+}
+
+function clearEncounterDetail() {
+    const panel = $('enc-detail-panel');
+    if (panel) {
+        panel.innerHTML = `
+            <div class="enc-detail-empty">
+                <div class="enc-detail-empty-icon">👹</div>
+                <div class="enc-detail-empty-text">Wähle einen Encounter aus der Liste</div>
+            </div>
+        `;
     }
+}
+
+function setEncFilter(f) {
+    currentEncFilter = f;
+    selectedEncounterId = null;
+    renderEncounters();
+}
+
+function toggleEncounter(id) {
+    // For search navigation: select and show the encounter
+    const enc = EntityLookup.encounter(id);
+    if (!enc) return;
+
+    currentEncFilter = 'all';
+    selectedEncounterId = id;
+    renderEncounters();
+
+    setTimeout(() => {
+        const item = document.querySelector(`.enc-item[data-id="${id}"]`);
+        if (item) {
+            item.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            item.style.transition = 'box-shadow 0.3s ease';
+            item.style.boxShadow = '0 0 20px var(--gold)';
+            setTimeout(() => {
+                item.style.boxShadow = '';
+            }, 2000);
+        }
+    }, 100);
+}
+
+// Legacy compatibility
+function toggleEncounterCard(id) {
+    selectEncounter(id);
+}
+
+// Show encounter form (opens collapsible or could be modal)
+function showEncForm() {
+    cancelEncEdit();
+    $('enc-form')?.classList.add('open');
+    const icon = $('enc-form-icon');
+    if (icon) icon.textContent = '▲';
 }

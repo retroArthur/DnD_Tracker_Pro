@@ -21,9 +21,12 @@ const EntityActions = {
     'edit-npc': (ctx) => editNPC(ctx.id),
     'delete-npc': (ctx) => deleteNPC(ctx.id),
     'toggle-npc-card': (ctx) => toggleNPCCard(ctx.id),
+    'select-npc': (ctx) => { if (typeof selectNPC === 'function') selectNPC(ctx.id); },
+    'set-npc-filter': (ctx) => { if (typeof setNpcFilter === 'function') setNpcFilter(ctx.id || ctx.value); },
     'scroll-to-npc': (ctx) => scrollToNPC(ctx.id),
     'edit-npc-stop': (ctx) => { ctx.event.stopPropagation(); editNPC(ctx.id); },
     'delete-npc-stop': (ctx) => { ctx.event.stopPropagation(); deleteNPC(ctx.id); },
+    'show-npc-popup': (ctx) => showNPCPopup(ctx.id, ctx.event),
     'show-npc-popup-stop': (ctx) => { ctx.event.stopPropagation(); showNPCPopup(ctx.id, ctx.event); },
     'edit-npc-close-popup': (ctx) => { editNPC(ctx.id); closeNPCPopup(); },
     'view-npc-details': (ctx) => {
@@ -108,6 +111,10 @@ const EntityActions = {
     'delete-enc-stop': (ctx) => { ctx.event.stopPropagation(); deleteEnc(ctx.id); },
     'load-enc-stop': (ctx) => { ctx.event.stopPropagation(); addEncToInit(ctx.id); },
     'load-monster-template': (ctx) => loadMonsterTemplate(ctx.value),
+    'select-encounter': (ctx) => { if (typeof selectEncounter === 'function') selectEncounter(ctx.id); },
+    'set-enc-filter': (ctx) => { if (typeof setEncFilter === 'function') setEncFilter(ctx.value || 'all'); },
+    'show-enc-form': (ctx) => { if (typeof showEncForm === 'function') showEncForm(); },
+    'toggle-enc-lang-dropdown': (ctx) => { if (typeof toggleEncLangDropdown === 'function') toggleEncLangDropdown(); },
 
     // Loot actions
     'edit-loot': (ctx) => { ctx.event.stopPropagation(); editLoot(ctx.id); },

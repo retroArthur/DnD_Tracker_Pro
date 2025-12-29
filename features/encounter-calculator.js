@@ -305,80 +305,80 @@ function recalculateEncounter() {
     const thresholds = calculatePartyThresholds();
     const monsters = calculateMonsterXP();
     const difficulty = getDifficulty(monsters.adjustedXP, thresholds);
-    
-    // Update UI
+
     const resultsDiv = $('calc-results');
     if (!resultsDiv) return;
-    
+
+    // Empty states
+    if (calculatorParty.length === 0 && calculatorMonsters.length === 0) {
+        resultsDiv.innerHTML = '<div class="calc-results-empty">Füge Party-Mitglieder und Monster hinzu</div>';
+        return;
+    }
+
     if (calculatorParty.length === 0) {
-        resultsDiv.innerHTML = '<div class="calc-empty">Bitte füge zuerst Party-Mitglieder hinzu</div>';
+        resultsDiv.innerHTML = '<div class="calc-results-empty">Füge zuerst Party-Mitglieder hinzu</div>';
         return;
     }
-    
+
     if (calculatorMonsters.length === 0) {
-        resultsDiv.innerHTML = '<div class="calc-empty">Bitte füge Monster hinzu</div>';
+        resultsDiv.innerHTML = '<div class="calc-results-empty">Füge Monster hinzu um die Schwierigkeit zu berechnen</div>';
         return;
     }
-    
+
+    // Calculate marker position (0-100%)
+    const maxXP = thresholds.deadly * 1.5;
+    const markerPos = Math.min((monsters.adjustedXP / maxXP) * 100, 100);
+
+    // XP per player
+    const xpPerPlayer = Math.round(monsters.baseXP / thresholds.totalPCs);
+
     resultsDiv.innerHTML = `
-        <div class="calc-results-section">
-            <h3>Party Thresholds</h3>
-            <div class="calc-thresholds">
-                <div class="calc-threshold">
-                    <span class="calc-threshold-label">🟢 Easy:</span>
-                    <span class="calc-threshold-value">${thresholds.easy.toLocaleString()} XP</span>
-                </div>
-                <div class="calc-threshold">
-                    <span class="calc-threshold-label">🟡 Medium:</span>
-                    <span class="calc-threshold-value">${thresholds.medium.toLocaleString()} XP</span>
-                </div>
-                <div class="calc-threshold">
-                    <span class="calc-threshold-label">🟠 Hard:</span>
-                    <span class="calc-threshold-value">${thresholds.hard.toLocaleString()} XP</span>
-                </div>
-                <div class="calc-threshold">
-                    <span class="calc-threshold-label">🔴 Deadly:</span>
-                    <span class="calc-threshold-value">${thresholds.deadly.toLocaleString()} XP</span>
+        <!-- Main Difficulty Display -->
+        <div class="calc-difficulty-main">
+            <div class="calc-diff-badge ${difficulty.level}">${difficulty.label}</div>
+            <div class="calc-diff-info">
+                <div class="calc-diff-xp">${monsters.adjustedXP.toLocaleString()} <span>Adjusted XP</span></div>
+                <div class="calc-diff-details">
+                    ${monsters.baseXP.toLocaleString()} Base XP × ${monsters.multiplier} (${monsters.totalMonsters} Monster)
+                    ${difficulty.percentage > 100 ? ` • ${Math.round(difficulty.percentage - 100)}% über Deadly` : ''}
                 </div>
             </div>
         </div>
-        
-        <div class="calc-results-section">
-            <h3>Encounter XP</h3>
-            <div class="calc-xp-breakdown">
-                <div class="calc-xp-row">
-                    <span class="calc-xp-label">Base XP:</span>
-                    <span class="calc-xp-value">${monsters.baseXP.toLocaleString()} XP</span>
-                </div>
-                <div class="calc-xp-row">
-                    <span class="calc-xp-label">Multiplier:</span>
-                    <span class="calc-xp-value">×${monsters.multiplier} (${monsters.totalMonsters} monster${monsters.totalMonsters !== 1 ? 's' : ''})</span>
-                </div>
-                <div class="calc-xp-row calc-xp-total">
-                    <span class="calc-xp-label">Adjusted XP:</span>
-                    <span class="calc-xp-value">${monsters.adjustedXP.toLocaleString()} XP</span>
-                </div>
+
+        <!-- Threshold Bar -->
+        <div class="calc-threshold-bar">
+            <div class="calc-threshold-labels">
+                <div class="calc-threshold-label easy">Easy<br>${thresholds.easy.toLocaleString()}</div>
+                <div class="calc-threshold-label medium">Medium<br>${thresholds.medium.toLocaleString()}</div>
+                <div class="calc-threshold-label hard">Hard<br>${thresholds.hard.toLocaleString()}</div>
+                <div class="calc-threshold-label deadly">Deadly<br>${thresholds.deadly.toLocaleString()}</div>
+            </div>
+            <div class="calc-threshold-track">
+                <div class="calc-threshold-seg easy"></div>
+                <div class="calc-threshold-seg medium"></div>
+                <div class="calc-threshold-seg hard"></div>
+                <div class="calc-threshold-seg deadly"></div>
+                <div class="calc-threshold-marker" style="left: ${markerPos}%"></div>
             </div>
         </div>
-        
-        <div class="calc-results-section">
-            <h3>Difficulty</h3>
-            <div class="calc-difficulty" style="--difficulty-color: ${difficulty.color}">
-                <div class="calc-difficulty-label">${difficulty.label}</div>
-                <div class="calc-difficulty-bar">
-                    <div class="calc-difficulty-fill" style="width: ${Math.min(difficulty.percentage, 200)}%; background: ${difficulty.color}"></div>
-                </div>
-                <div class="calc-difficulty-info">
-                    ${difficulty.percentage > 100 ? `${Math.round(difficulty.percentage - 100)}% über Deadly` : ''}
-                </div>
+
+        <!-- Stats Grid -->
+        <div class="calc-stats">
+            <div class="calc-stat">
+                <div class="calc-stat-value">${thresholds.totalPCs}</div>
+                <div class="calc-stat-label">Spieler</div>
             </div>
-        </div>
-        
-        <div class="calc-results-section">
-            <h3>XP pro Spieler</h3>
-            <div class="calc-xp-per-player">
-                <span class="calc-xp-value">${Math.round(monsters.baseXP / thresholds.totalPCs)} XP</span>
-                <span class="calc-xp-note">(Tatsächliche XP-Belohnung, ohne Multiplier)</span>
+            <div class="calc-stat">
+                <div class="calc-stat-value">${monsters.totalMonsters}</div>
+                <div class="calc-stat-label">Monster</div>
+            </div>
+            <div class="calc-stat">
+                <div class="calc-stat-value">${xpPerPlayer.toLocaleString()}</div>
+                <div class="calc-stat-label">XP/Spieler</div>
+            </div>
+            <div class="calc-stat">
+                <div class="calc-stat-value">×${monsters.multiplier}</div>
+                <div class="calc-stat-label">Multiplier</div>
             </div>
         </div>
     `;
@@ -482,29 +482,31 @@ Difficulty: ${difficulty.label}`
 function renderCalculator() {
     const partyList = $('calc-party-list');
     const monsterList = $('calc-monster-list');
-    
+
     if (!partyList || !monsterList) return;
-    
+
     // Render Party
     if (calculatorParty.length === 0) {
-        partyList.innerHTML = '<div class="calc-empty">Keine Party-Mitglieder hinzugefügt</div>';
+        partyList.innerHTML = '<div class="calc-list-empty">Keine Charaktere</div>';
     } else {
         partyList.innerHTML = calculatorParty.map((p, i) => `
             <div class="calc-list-item">
-                <span class="calc-list-info">Level ${p.level}: ${p.count} Character${p.count !== 1 ? 's' : ''}</span>
-                <button class="btn btn-sm btn-danger" data-action="calc-remove-party-level" data-value="${i}">✕</button>
+                <span class="calc-list-text">${p.count}× Level ${p.level}</span>
+                <span class="calc-list-xp">${(XP_THRESHOLDS[p.level]?.medium || 0) * p.count} XP (med)</span>
+                <button class="calc-list-remove" data-action="calc-remove-party-level" data-value="${i}">✕</button>
             </div>
         `).join('');
     }
-    
+
     // Render Monsters
     if (calculatorMonsters.length === 0) {
-        monsterList.innerHTML = '<div class="calc-empty">Keine Monster hinzugefügt</div>';
+        monsterList.innerHTML = '<div class="calc-list-empty">Keine Monster</div>';
     } else {
         monsterList.innerHTML = calculatorMonsters.map((m, i) => `
             <div class="calc-list-item">
-                <span class="calc-list-info">${m.count}× ${esc(m.name)} (CR ${m.cr}, ${CR_TO_XP[m.cr]} XP)</span>
-                <button class="btn btn-sm btn-danger" data-action="calc-remove-monster" data-value="${i}">✕</button>
+                <span class="calc-list-text">${m.count}× ${esc(m.name)}</span>
+                <span class="calc-list-xp">CR ${m.cr} (${CR_TO_XP[m.cr]} XP)</span>
+                <button class="calc-list-remove" data-action="calc-remove-monster" data-value="${i}">✕</button>
             </div>
         `).join('');
     }
@@ -556,70 +558,66 @@ document.addEventListener('click', function(e) {
 function renderCalculatorModal() {
     const modalContent = $('calculator-modal-content');
     if (!modalContent) return;
-    
+
     modalContent.innerHTML = `
-        <div class="calc-modal-body">
-            <!-- Input Panels (2 Spalten) -->
-            <div class="calc-input-panels">
-                <!-- Party Panel -->
-                <div class="calc-panel-compact">
-                    <div class="calc-panel-header-compact">
-                        <h4>🎲 Party</h4>
-                        <div class="calc-panel-actions-compact">
-                            <button class="btn btn-xs" data-action="calc-load-party" title="Aus Party laden">📥</button>
-                            <button class="btn btn-xs btn-danger" data-action="calc-clear-party" title="Löschen">🗑️</button>
+        <div class="calc-header">
+            <h3>⚔️ Encounter Balance Calculator</h3>
+            <button class="calc-close" data-action="close-calculator-modal">✕</button>
+        </div>
+        <div class="calc-body">
+            <!-- Input Grid -->
+            <div class="calc-grid">
+                <!-- Party Card -->
+                <div class="calc-card">
+                    <div class="calc-card-header">
+                        <div class="calc-card-title">🎲 Party</div>
+                        <div class="calc-card-actions">
+                            <button class="calc-card-btn" data-action="calc-load-party" title="Charaktere laden">📥</button>
+                            <button class="calc-card-btn danger" data-action="calc-clear-party" title="Leeren">🗑️</button>
                         </div>
                     </div>
-                    
-                    <div class="calc-input-compact">
-                        <input type="number" id="calc-party-level" min="1" max="20" value="1" placeholder="Level" class="calc-input-xs" style="width: 80px;">
-                        <input type="number" id="calc-party-count" min="1" value="4" placeholder="Anzahl" class="calc-input-xs" style="width: 80px;">
-                        <button class="btn btn-xs btn-primary" data-action="calc-add-party-level">➕</button>
+                    <div class="calc-input-row">
+                        <input type="number" id="calc-party-level" class="calc-input" min="1" max="20" value="1" placeholder="Lv" style="width: 60px;">
+                        <input type="number" id="calc-party-count" class="calc-input" min="1" value="4" placeholder="Anz" style="width: 60px;">
+                        <button class="calc-add-btn" data-action="calc-add-party-level">+ Hinzufügen</button>
                     </div>
-                    
-                    <div id="calc-party-list" class="calc-list-compact"></div>
+                    <div id="calc-party-list" class="calc-list"></div>
                 </div>
-                
-                <!-- Monster Panel -->
-                <div class="calc-panel-compact">
-                    <div class="calc-panel-header-compact">
-                        <h4>👹 Monster</h4>
-                        <div class="calc-panel-actions-compact">
-                            <button class="btn btn-xs" data-action="calc-show-encounter-import" title="Aus Encounter laden">📥</button>
-                            <button class="btn btn-xs btn-danger" data-action="calc-clear-monsters" title="Löschen">🗑️</button>
+
+                <!-- Monster Card -->
+                <div class="calc-card">
+                    <div class="calc-card-header">
+                        <div class="calc-card-title">👹 Monster</div>
+                        <div class="calc-card-actions">
+                            <button class="calc-card-btn" data-action="calc-show-encounter-import" title="Aus Encounters">📥</button>
+                            <button class="calc-card-btn danger" data-action="calc-clear-monsters" title="Leeren">🗑️</button>
                         </div>
                     </div>
-                    
-                    <div class="calc-input-compact">
-                        <input type="text" id="calc-monster-cr" placeholder="CR" class="calc-input-xs" list="cr-datalist" style="width: 70px;">
+                    <div class="calc-input-row">
+                        <input type="text" id="calc-monster-cr" class="calc-input" placeholder="CR" list="cr-datalist" style="width: 55px;">
                         <datalist id="cr-datalist">
                             ${['0', '1/8', '1/4', '1/2', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15', '16', '17', '18', '19', '20'].map(cr => `<option value="${cr}">`).join('')}
                         </datalist>
-                        <input type="number" id="calc-monster-count" min="1" value="1" placeholder="Anz" class="calc-input-xs" style="width: 60px;">
-                        <input type="text" id="calc-monster-name" placeholder="Name" class="calc-input-xs" style="flex: 1;">
-                        <button class="btn btn-xs btn-primary" data-action="calc-add-monster">➕</button>
+                        <input type="number" id="calc-monster-count" class="calc-input" min="1" value="1" placeholder="#" style="width: 50px;">
+                        <input type="text" id="calc-monster-name" class="calc-input" placeholder="Name (opt.)" style="flex: 1; min-width: 60px;">
+                        <button class="calc-add-btn" data-action="calc-add-monster">+</button>
                     </div>
-                    
-                    <div id="calc-monster-list" class="calc-list-compact"></div>
+                    <div id="calc-monster-list" class="calc-list"></div>
                 </div>
             </div>
-            
-            <!-- Results (Sticky, volle Breite) -->
-            <div class="calc-results-wrapper">
-                <div class="calc-results-compact">
-                    <div id="calc-results"></div>
-                </div>
-            </div>
-            
+
+            <!-- Results -->
+            <div id="calc-results" class="calc-results"></div>
+
             <!-- Actions -->
-            <div class="calc-actions-compact">
-                <button class="btn btn-secondary" data-action="calc-adjust-difficulty" data-value="easier">⬇️ Einfacher</button>
-                <button class="btn btn-secondary" data-action="calc-adjust-difficulty" data-value="harder">⬆️ Schwieriger</button>
-                <button class="btn btn-success" data-action="calc-save-encounter">💾 Als Encounter speichern</button>
+            <div class="calc-actions">
+                <button class="calc-action-btn secondary" data-action="calc-adjust-difficulty" data-value="easier">⬇️ Einfacher</button>
+                <button class="calc-action-btn secondary" data-action="calc-adjust-difficulty" data-value="harder">⬆️ Schwieriger</button>
+                <button class="calc-action-btn primary" data-action="calc-save-encounter">💾 Als Encounter speichern</button>
             </div>
         </div>
     `;
-    
+
     renderCalculator();
 }
 
@@ -629,33 +627,37 @@ function showEncounterImport() {
         showToast('Keine Encounters vorhanden');
         return;
     }
-    
-    const html = `
-        <div class="encounter-import-list">
-            <h4 style="margin: 0 0 15px 0; color: var(--gold);">Kreatur auswählen</h4>
-            ${D.encounters.map(enc => {
-                // Encounter ist eine einzelne Kreatur
-                const cr = enc.cr || enc.CR || '0';
-                const xp = CR_TO_XP[cr] || 0;
-                const type = enc.creatureType || enc.type || '';
-                
-                return `
-                    <div class="encounter-import-item" data-action="calc-import-encounter" data-value="${enc.id}">
-                        <div class="encounter-import-name">${esc(enc.name)}</div>
-                        <div class="encounter-import-info">${type} • CR ${cr} • ${xp} XP</div>
-                    </div>
-                `;
-            }).join('')}
-        </div>
-    `;
-    
+
     const modalContent = $('calculator-modal-content');
-    
+
     modalContent.innerHTML = `
-        <div class="calc-modal-body">
-            ${html}
-            <div style="margin-top: 20px; text-align: center;">
-                <button class="btn btn-secondary" data-action="calc-back-to-calculator">↩️ Zurück</button>
+        <div class="calc-header">
+            <h3>Kreatur auswaehlen</h3>
+            <button class="calc-close" data-action="calc-back-to-calculator">x</button>
+        </div>
+        <div class="calc-body">
+            <div class="calc-import-grid">
+                ${D.encounters.map(enc => {
+                    const cr = enc.cr || enc.CR || '0';
+                    const xp = CR_TO_XP[cr] || 0;
+                    const type = enc.creatureType || enc.type || '';
+
+                    return `
+                        <div class="calc-import-card">
+                            <div class="calc-import-info">
+                                <div class="calc-import-name">${esc(enc.name)}</div>
+                                <div class="calc-import-meta">${type ? type + ' - ' : ''}CR ${cr} - ${xp} XP</div>
+                            </div>
+                            <div class="calc-import-actions">
+                                <input type="number" class="calc-import-count" id="import-count-${enc.id}" min="1" value="1" title="Anzahl">
+                                <button class="calc-import-btn" data-action="calc-import-encounter" data-value="${enc.id}">+</button>
+                            </div>
+                        </div>
+                    `;
+                }).join('')}
+            </div>
+            <div class="calc-import-footer">
+                <button class="calc-action-btn secondary" data-action="calc-back-to-calculator">Zurueck</button>
             </div>
         </div>
     `;
@@ -682,7 +684,10 @@ function importEncounterMonsters(encId) {
     // Füge Kreatur zur Monster-Liste hinzu (nicht ersetzen!)
     calculatorMonsters.push({
         cr: cr,
-        count: 1,  // Standardmäßig 1
+        count: (() => {
+        const countInput = $('import-count-' + encId);
+        return countInput ? parseInt(countInput.value) || 1 : 1;
+    })(),
         name: encounter.name || `CR ${cr} Kreatur`
     });
     

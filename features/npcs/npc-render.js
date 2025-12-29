@@ -1,204 +1,338 @@
 // ============================================================
-// NPC RENDER - Hauptrendering-Funktionen
+// NPC RENDER - Master-Detail Layout (wie Orte)
 // ============================================================
-// Extrahiert aus features/render-npcs.js
+
+// State
+let selectedNpcId = null;
+let currentNpcFilter = 'all';
+
+// NPC type icons based on race
+const NPC_ICONS = {
+    'mensch': '👤',
+    'human': '👤',
+    'elf': '🧝',
+    'zwerg': '⛏️',
+    'dwarf': '⛏️',
+    'halbling': '🍀',
+    'halfling': '🍀',
+    'ork': '👹',
+    'orc': '👹',
+    'goblin': '👺',
+    'drache': '🐉',
+    'dragon': '🐉',
+    'untot': '💀',
+    'undead': '💀',
+    'dämon': '😈',
+    'demon': '😈',
+    'tiefling': '😈',
+    'gnom': '🎩',
+    'gnome': '🎩',
+    'default': '🎭'
+};
+
+function getNPCIcon(npc) {
+    const race = (npc.race || '').toLowerCase();
+    for (const [key, icon] of Object.entries(NPC_ICONS)) {
+        if (race.includes(key)) return icon;
+    }
+    return NPC_ICONS.default;
+}
 
 function renderNPCList() {
-    const container = $('npc-list');
-    if (!container) return;
+    const listContainer = $('npc-list');
+    const filterContainer = $('npc-filters');
+    if (!listContainer) return;
 
-    // Robuste Daten-Prüfung
-    if (!Array.isArray(D.npcs)) {
-        container.innerHTML = renderEmptyState({
-            icon: '⚠️',
-            titleEmpty: 'Daten beschädigt',
-            descEmpty: 'D.npcs ist kein Array. Bitte Daten reparieren.',
-            buttonText: '🔧 Reparieren',
-            buttonAction: 'call',
-            buttonValue: 'repairDataArrays'
-        });
-        return;
+    // Update counter
+    updateCounters({ 'npcs-io-count': D.npcs?.length || 0 });
+
+    // Render filter chips (by location)
+    if (filterContainer) {
+        const locations = D.locations || [];
+        filterContainer.innerHTML = `
+            <div class="npc-filter-chip ${currentNpcFilter === 'all' ? 'active' : ''}" data-action="set-npc-filter" data-value="all">Alle</div>
+            ${locations.slice(0, 5).map(loc => `
+                <div class="npc-filter-chip ${currentNpcFilter === loc.id ? 'active' : ''}"
+                     data-action="set-npc-filter" data-id="${loc.id}">
+                    ${esc(loc.name)}
+                </div>
+            `).join('')}
+            ${locations.length > 5 ? `
+                <select class="npc-filter-select" onchange="setNpcFilter(this.value ? parseInt(this.value) : 'all')">
+                    <option value="">Mehr...</option>
+                    ${locations.slice(5).map(loc => `<option value="${loc.id}">${esc(loc.name)}</option>`).join('')}
+                </select>
+            ` : ''}
+        `;
     }
 
-    // Populate location filter dropdown
-    populateFilterDropdown('npc-list-filter', D.locations || [], { allLabel: 'Alle Orte' });
-
+    // Get search and filter
     const search = ($('npc-search')?.value || '').toLowerCase();
-    const locationFilter = $('npc-list-filter')?.value ? parseInt($('npc-list-filter').value) : null;
+    let npcs = [...(D.npcs || [])];
 
-    let npcs = [...D.npcs];
+    // Apply location filter
+    if (currentNpcFilter !== 'all') {
+        npcs = npcs.filter(n => n.locationId === currentNpcFilter);
+    }
 
-    // Apply search filter
+    // Apply search
     if (search) {
         npcs = npcs.filter(n =>
             n.name.toLowerCase().includes(search) ||
             (n.role || '').toLowerCase().includes(search) ||
+            (n.race || '').toLowerCase().includes(search) ||
             (n.description || '').toLowerCase().includes(search) ||
-            (n.dialogs || []).some(d => d.text.toLowerCase().includes(search))
+            (n.dialogs || []).some(d => (d.text || '').toLowerCase().includes(search))
         );
-    }
-
-    // Apply location filter
-    if (locationFilter) {
-        npcs = npcs.filter(n => n.locationId === locationFilter);
     }
 
     // Sort alphabetically
     npcs.sort((a, b) => a.name.localeCompare(b.name));
 
+    // Empty state
     if (!npcs.length) {
-        container.innerHTML = renderEmptyState({
-            icon: '🎭',
-            titleEmpty: 'Keine NPCs',
-            descEmpty: 'Erstelle Nicht-Spieler-Charaktere für deine Welt.',
-            buttonText: '➕ NPC erstellen',
-            buttonAction: 'show-modal',
-            buttonValue: 'npc-modal',
-            isFiltered: !!(search || locationFilter)
-        });
+        listContainer.innerHTML = `
+            <div class="npc-empty-state">
+                <div class="npc-empty-icon">🎭</div>
+                <div class="npc-empty-title">${search || currentNpcFilter !== 'all' ? 'Keine Treffer' : 'Keine NPCs'}</div>
+                <div class="npc-empty-desc">${search || currentNpcFilter !== 'all' ? 'Versuche andere Suchbegriffe' : 'Erstelle deinen ersten NPC'}</div>
+                ${!search && currentNpcFilter === 'all' ? `
+                    <button class="npc-add-btn" data-action="show-modal" data-value="npc-modal" style="margin-top: 12px;">
+                        + NPC erstellen
+                    </button>
+                ` : ''}
+            </div>
+        `;
+        clearNPCDetail();
         return;
     }
 
-    // Container-Klasse je nach View-Mode
-    container.className = viewModes.npcs === 'list' ? 'list-view-container' : 'npc-grid';
+    // Render list items
+    listContainer.innerHTML = npcs.map(npc => renderNPCItem(npc)).join('');
 
-    // Render basierend auf View-Mode
-    if (viewModes.npcs === 'list') {
-        container.innerHTML = npcs.map(n => renderNPCListItem(n)).join('');
+    // Auto-select first if none selected
+    if (!selectedNpcId || !npcs.find(n => n.id === selectedNpcId)) {
+        selectNPC(npcs[0].id, false);
     } else {
-        container.innerHTML = npcs.map(n => renderNPCGridCard(n)).join('');
+        showNPCDetail(selectedNpcId);
     }
 
-    // Update statistics
+    // Update stats
     updateNPCStats();
 }
 
-function renderNPCListItem(n) {
-    const locationName = EntityLookup.getName('locations', n.locationId);
-    const dialogCount = (n.dialogs || []).length;
-    const triggerCount = (n.triggers || []).length;
-    const usedDialogs = (n.dialogs || []).filter(d => d.used).length;
-    const avatar = n.avatar
-        ? `<img src="${esc(n.avatar)}" alt="">`
-        : (n.name ? n.name.charAt(0).toUpperCase() : '?');
-
-    const descText = n.description ? stripHtml(n.description) : '';
-    const { questTags, relationTags, infoTags } = renderNPCTags(n);
-    const allTags = questTags + relationTags + infoTags;
-    const entityTags = renderTagsBar(n.tags);
-    const entityLinks = renderEntityLinks(n.links);
-    const questBacklinks = renderQuestBacklinks(n);
-    const dialogsPreview = renderDialogsPreview(n.dialogs);
-    const triggersPreview = renderTriggersPreview(n.triggers);
+function renderNPCItem(npc) {
+    const location = EntityLookup.location(npc.locationId);
+    const icon = getNPCIcon(npc);
+    const isSelected = npc.id === selectedNpcId;
+    const dialogCount = (npc.dialogs || []).length;
+    const triggerCount = (npc.triggers || []).length;
 
     return `
-        <div class="list-view-row npc-row" data-action="toggle-npc-card" data-id="${n.id}">
-            <div class="row-avatar">${avatar}</div>
-            <div class="row-main">
-                <div class="row-title">
-                    <span class="row-toggle">▶</span>
-                    ${esc(n.name)}
-                    ${n.chapter ? `<span class="row-chapter">(${esc(n.chapter)})</span>` : ''}
+        <div class="npc-item ${isSelected ? 'selected' : ''}" data-action="select-npc" data-id="${npc.id}">
+            <div class="npc-item-avatar">
+                ${npc.avatar ? `<img src="${esc(npc.avatar)}" alt="">` : icon}
+            </div>
+            <div class="npc-item-info">
+                <div class="npc-item-name">
+                    ${esc(npc.name)}
+                    ${location ? `<span class="npc-item-tag">${esc(location.name)}</span>` : ''}
                 </div>
-                <div class="row-subtitle">
-                    ${n.race ? `<span class="row-race">${esc(n.race)}</span>` : ''}
-                    ${n.race && n.role ? ' • ' : ''}
-                    ${n.role ? esc(n.role) : ''}
-                    ${locationName !== '—' ? `<span class="row-location">📍 ${locationName}</span>` : ''}
+                <div class="npc-item-meta">
+                    ${npc.race ? `<span class="npc-item-race">${esc(npc.race)}</span>` : ''}
+                    ${npc.race && npc.role ? ' • ' : ''}
+                    ${npc.role ? esc(npc.role) : ''}
                 </div>
             </div>
-            <div class="row-meta">
-                ${dialogCount ? `<span class="meta-badge dialogs" title="${usedDialogs}/${dialogCount} Dialoge verwendet">💬 ${usedDialogs}/${dialogCount}</span>` : ''}
-                ${triggerCount ? `<span class="meta-badge triggers" title="Trigger">🔔 ${triggerCount}</span>` : ''}
-            </div>
-            <div class="row-actions" data-stop-propagation="true">
-                <button class="btn btn-sm" data-action="show-avatar-modal" data-type="npcs" data-id="${n.id}" title="Bild">🖼️</button>
-                <button class="btn btn-sm" data-action="edit-npc" data-id="${n.id}" title="Bearbeiten">✏️</button>
-                <button class="btn btn-sm btn-danger" data-action="delete-npc" data-id="${n.id}" title="Löschen">🗑️</button>
-            </div>
-            <div class="row-details">
-                ${descText ? `<div class="list-detail-section description"><div class="list-detail-text">${descText}</div></div>` : ''}
-                ${allTags ? `<div class="list-detail-section tags"><div class="npc-list-tags">${allTags}</div></div>` : ''}
-                ${entityTags ? `<div class="list-detail-section entity-tags">${entityTags}</div>` : ''}
-                ${entityLinks ? `<div class="list-detail-section entity-links">${entityLinks}</div>` : ''}
-                ${questBacklinks}
-                ${dialogCount > 0 ? `
-                    <div class="list-detail-section dialogs">
-                        <div class="list-detail-header">💬 Dialoge (${usedDialogs}/${dialogCount} verwendet)</div>
-                        <div class="list-dialogs-container">${dialogsPreview}</div>
-                        ${dialogCount > 3 ? `<div class="list-detail-more">+ ${dialogCount - 3} weitere Dialoge...</div>` : ''}
-                    </div>
-                ` : ''}
-                ${triggerCount > 0 ? `
-                    <div class="list-detail-section triggers">
-                        <div class="list-detail-header">🔔 Trigger (${triggerCount})</div>
-                        <div class="list-triggers-container">${triggersPreview}</div>
-                        ${triggerCount > 2 ? `<div class="list-detail-more">+ ${triggerCount - 2} weitere Trigger...</div>` : ''}
-                    </div>
-                ` : ''}
-                <div class="list-detail-actions" data-stop-propagation="true">
-                    <button class="btn btn-sm" data-action="show-add-dialog-modal-stop" data-id="${n.id}">💬+ Dialog</button>
-                    <button class="btn btn-sm" data-action="show-entity-links-modal-stop" data-type="npcs" data-id="${n.id}">🔗 Links</button>
-                    <button class="btn btn-sm" data-action="show-tags-modal-stop" data-type="npcs" data-id="${n.id}">🏷️ Tags</button>
-                </div>
+            <div class="npc-item-badges">
+                ${dialogCount ? `<span class="npc-badge dialog" title="${dialogCount} Dialoge">💬 ${dialogCount}</span>` : ''}
+                ${triggerCount ? `<span class="npc-badge trigger" title="${triggerCount} Trigger">🔔 ${triggerCount}</span>` : ''}
             </div>
         </div>
     `;
 }
 
-function renderNPCGridCard(n) {
-    const locationName = EntityLookup.getName('locations', n.locationId);
-    const { questTags, relationTags, infoTags } = renderNPCTags(n);
-    const allTags = questTags + relationTags + infoTags;
-    const entityTags = renderTagsBar(n.tags);
-    const entityLinks = renderEntityLinks(n.links);
-    const questBacklinks = renderQuestBacklinks(n);
-    const triggersHtml = renderTriggersSection(n);
-    const dialogsHtml = renderDialogsSection(n);
-    const dialogs = n.dialogs || [];
-    const triggers = n.triggers || [];
+function selectNPC(id, scroll = true) {
+    selectedNpcId = id;
 
-    const avatarHtml = n.avatar ?
-        `<img src="${esc(n.avatar)}" alt="${esc(n.name)}">` :
-        '👤';
+    // Update selection in list
+    document.querySelectorAll('.npc-item').forEach(el => {
+        el.classList.toggle('selected', el.dataset.id == id);
+    });
 
-    return `<div class="npc-list-card collapsed" id="npc-card-${n.id}">
-        <div class="npc-card-header">
-            <span class="npc-card-toggle" data-action="toggle-npc-card" data-id="${n.id}" title="Auf-/Zuklappen">▼</span>
-            <div class="npc-card-avatar">${avatarHtml}</div>
-            <div class="npc-card-info">
-                <div class="npc-list-name">
-                    ${esc(n.name)}
-                    ${n.chapter ? `<span style="font-size: 0.7em; color: var(--text-dim); font-weight: normal;">(${esc(n.chapter)})</span>` : ''}
+    // Show detail
+    showNPCDetail(id);
+
+    // Scroll into view if needed
+    if (scroll) {
+        const item = document.querySelector(`.npc-item[data-id="${id}"]`);
+        if (item) {
+            item.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+    }
+}
+
+function showNPCDetail(id) {
+    const panel = $('npc-detail-panel');
+    if (!panel) return;
+
+    const npc = EntityLookup.npc(id);
+    if (!npc) {
+        clearNPCDetail();
+        return;
+    }
+
+    const location = EntityLookup.location(npc.locationId);
+    const icon = getNPCIcon(npc);
+    const dialogs = npc.dialogs || [];
+    const triggers = npc.triggers || [];
+    const usedDialogs = dialogs.filter(d => d.used).length;
+    const tags = npc.tags || [];
+    const links = npc.links || [];
+
+    // Build dialogs list
+    const dialogsHtml = dialogs.length ? dialogs.map((d, idx) => `
+        <div class="npc-dialog-item ${d.used ? 'used' : ''}">
+            <div class="npc-dialog-marker ${d.used ? 'used' : ''}">${idx + 1}</div>
+            <div class="npc-dialog-content">
+                <div class="npc-dialog-title">${esc(d.title || d.situation || 'Dialog ' + (idx + 1))}</div>
+                <div class="npc-dialog-text">"${esc(stripHtml(d.text || '').substring(0, 100))}${(d.text || '').length > 100 ? '...' : ''}"</div>
+            </div>
+            <div class="npc-dialog-actions">
+                <button class="npc-detail-btn small ${d.used ? '' : 'success'}"
+                        data-action="toggle-npc-dialog-stop" data-id="${npc.id}" data-value="${idx}"
+                        title="${d.used ? 'Als unbenutzt markieren' : 'Als verwendet markieren'}">
+                    ${d.used ? '↩️' : '✓'}
+                </button>
+                <button class="npc-detail-btn small" data-action="copy-dialog-text-stop" data-id="${npc.id}" data-value="${idx}" title="Kopieren">📋</button>
+            </div>
+        </div>
+    `).join('') : '<div class="npc-detail-empty-text">Keine Dialoge vorhanden</div>';
+
+    // Build triggers list
+    const triggersHtml = triggers.length ? triggers.map((t, idx) => `
+        <div class="npc-trigger-item ${t.triggered ? 'triggered' : ''}">
+            <div class="npc-trigger-check ${t.triggered ? 'triggered' : ''}"
+                 data-action="toggle-npc-trigger-stop" data-id="${npc.id}" data-value="${idx}">
+                ${t.triggered ? '✓' : ''}
+            </div>
+            <div class="npc-trigger-content">
+                <div class="npc-trigger-condition">${esc(t.condition)}</div>
+                ${t.triggered ? `<div class="npc-trigger-reveal">${esc(t.reveal)}</div>` : ''}
+            </div>
+        </div>
+    `).join('') : '<div class="npc-detail-empty-text">Keine Trigger vorhanden</div>';
+
+    // Build tags
+    const tagsHtml = tags.length ? tags.map(t => `<span class="npc-tag">${esc(t)}</span>`).join('') : '';
+
+    // Build links
+    const linksHtml = links.length ? links.map(link => {
+        const target = EntityLookup[link.type]?.(link.id);
+        if (!target) return '';
+        const icons = { characters: '👤', npcs: '🎭', locations: '📍', quests: '📜', encounters: '⚔️' };
+        return `<span class="npc-link" data-action="navigate-entity" data-type="${link.type}" data-id="${link.id}">${icons[link.type] || '🔗'} ${esc(target.name)}</span>`;
+    }).join('') : '';
+
+    panel.innerHTML = `
+        <div class="npc-detail-content">
+            <div class="npc-detail-header">
+                <div class="npc-detail-avatar">
+                    ${npc.avatar ? `<img src="${esc(npc.avatar)}" alt="">` : icon}
                 </div>
-                ${n.role || n.race ? `<div class="npc-list-role">${n.race ? `<span style="color: var(--purple);">${esc(n.race)}</span>` : ''}${n.role && n.race ? ' • ' : ''}${n.role ? esc(n.role) : ''}</div>` : ''}
-                <div class="npc-card-badges">
-                    <span class="npc-list-location">📍 ${esc(locationName)}</span>
-                    ${dialogs.length > 0 ? `<span style="font-size: 0.75em; color: var(--purple);">💬 ${dialogs.length}</span>` : ''}
-                    ${triggers.length > 0 ? `<span style="font-size: 0.75em; color: var(--yellow);">🔔 ${triggers.length}</span>` : ''}
+                <div class="npc-detail-title">
+                    <div class="npc-detail-name">${esc(npc.name)}</div>
+                    <div class="npc-detail-subtitle">
+                        ${npc.race ? `<span class="npc-detail-race">${esc(npc.race)}</span>` : ''}
+                        ${npc.race && npc.role ? ' • ' : ''}
+                        ${npc.role ? `<span class="npc-detail-role">${esc(npc.role)}</span>` : ''}
+                    </div>
+                    ${location ? `<div class="npc-detail-location">📍 ${esc(location.name)}</div>` : ''}
+                </div>
+                <div class="npc-detail-actions">
+                    <button class="npc-detail-btn" data-action="show-avatar-modal" data-type="npcs" data-id="${npc.id}" title="Bild">🖼️</button>
+                    <button class="npc-detail-btn" data-action="show-entity-links-modal" data-type="npcs" data-id="${npc.id}" title="Verknüpfungen">🔗</button>
+                    <button class="npc-detail-btn" data-action="show-tags-modal" data-type="npcs" data-id="${npc.id}" title="Tags">🏷️</button>
+                    <button class="npc-detail-btn" data-action="edit-npc" data-id="${npc.id}" title="Bearbeiten">✏️</button>
+                    <button class="npc-detail-btn danger" data-action="delete-npc" data-id="${npc.id}" title="Löschen">🗑️</button>
                 </div>
             </div>
-            <div class="npc-header-actions">
-                <button class="btn btn-sm" data-action="show-avatar-modal" data-type="npcs" data-id="${n.id}" title="Bild">🖼️</button>
-                <button class="btn btn-sm" data-action="edit-npc" data-id="${n.id}" title="Bearbeiten">✏️</button>
-                <button class="btn btn-sm btn-danger" data-action="delete-npc" data-id="${n.id}" title="Löschen">🗑️</button>
+
+            ${npc.description ? `
+                <div class="npc-section">
+                    <div class="npc-section-title">Beschreibung</div>
+                    <div class="npc-desc">${sanitizeHTML(npc.description)}</div>
+                </div>
+            ` : ''}
+
+            ${tagsHtml ? `
+                <div class="npc-section">
+                    <div class="npc-section-title">Tags</div>
+                    <div class="npc-tags">${tagsHtml}</div>
+                </div>
+            ` : ''}
+
+            <div class="npc-section">
+                <div class="npc-section-title">
+                    Dialoge (${usedDialogs}/${dialogs.length} verwendet)
+                    <button class="npc-section-btn" data-action="show-add-dialog-modal-stop" data-id="${npc.id}" title="Dialog hinzufügen">+</button>
+                </div>
+                <div class="npc-dialog-list">${dialogsHtml}</div>
             </div>
+
+            <div class="npc-section">
+                <div class="npc-section-title">Trigger (${triggers.length})</div>
+                <div class="npc-trigger-list">${triggersHtml}</div>
+            </div>
+
+            ${linksHtml ? `
+                <div class="npc-section">
+                    <div class="npc-section-title">Verknüpfungen</div>
+                    <div class="npc-links">${linksHtml}</div>
+                </div>
+            ` : ''}
         </div>
-        <div class="npc-card-body">
-            ${n.description ? `<div class="npc-list-desc">${sanitizeHTML(n.description)}</div>` : ''}
-            ${allTags ? `<div class="npc-list-tags">${allTags}</div>` : ''}
-            ${entityTags}
-            ${entityLinks}
-            ${questBacklinks}
-            ${triggersHtml}
-            ${dialogsHtml}
-        </div>
-        <div class="npc-card-footer">
-            <button class="btn btn-sm" data-action="show-add-dialog-modal-stop" data-id="${n.id}" title="Dialog hinzufügen">💬+ Dialog</button>
-            <button class="btn btn-sm" data-action="show-entity-links-modal-stop" data-type="npcs" data-id="${n.id}" title="Verknüpfungen">🔗</button>
-            <button class="btn btn-sm" data-action="show-tags-modal-stop" data-type="npcs" data-id="${n.id}" title="Tags">🏷️</button>
-        </div>
-    </div>`;
+    `;
+}
+
+function clearNPCDetail() {
+    const panel = $('npc-detail-panel');
+    if (panel) {
+        panel.innerHTML = `
+            <div class="npc-detail-empty">
+                <div class="npc-detail-empty-icon">🎭</div>
+                <div class="npc-detail-empty-text">Wähle einen NPC aus der Liste</div>
+            </div>
+        `;
+    }
+}
+
+function setNpcFilter(f) {
+    currentNpcFilter = f;
+    selectedNpcId = null;
+    renderNPCList();
+}
+
+function toggleNPC(id) {
+    // For search navigation: select and show the NPC
+    const npc = EntityLookup.npc(id);
+    if (!npc) return;
+
+    currentNpcFilter = 'all';
+    selectedNpcId = id;
+    renderNPCList();
+
+    setTimeout(() => {
+        const item = document.querySelector(`.npc-item[data-id="${id}"]`);
+        if (item) {
+            item.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            item.style.transition = 'box-shadow 0.3s ease';
+            item.style.boxShadow = '0 0 20px var(--gold)';
+            setTimeout(() => {
+                item.style.boxShadow = '';
+            }, 2000);
+        }
+    }, 100);
 }
 
 // Helper functions
@@ -227,124 +361,8 @@ function renderNPCTags(n) {
     return { questTags, relationTags, infoTags };
 }
 
-function renderQuestBacklinks(n) {
-    const linkedFromQuests = (D.quests || []).filter(q =>
-        (q.links || []).some(link => link.type === 'npcs' && link.id === n.id)
-    );
-
-    if (linkedFromQuests.length === 0) return '';
-
-    return `
-        <div class="list-detail-section">
-            <span class="list-detail-label">📜 Quest-Ziel:</span>
-            <div class="list-detail-tags">
-                ${linkedFromQuests.slice(0, 3).map(q => `
-                    <span class="link-chip" style="background: var(--purple);" data-action="navigate-entity-stop" data-type="quests" data-id="${q.id}">📜 ${esc(q.title)}</span>
-                `).join('')}
-                ${linkedFromQuests.length > 3 ? `<span class="link-chip" style="background: var(--bg-dark);">+${linkedFromQuests.length - 3}</span>` : ''}
-            </div>
-        </div>
-    `;
-}
-
-function renderDialogsPreview(dialogs) {
-    if (!dialogs || dialogs.length === 0) return '';
-
-    return dialogs.slice(0, 3).map((d, idx) => {
-        const dialogText = stripHtml(d.text || '');
-        return `<div class="list-dialog-item ${d.used ? 'used' : ''}">
-            <span class="list-dialog-marker ${d.used ? 'used' : ''}">${idx + 1}</span>
-            <div class="list-dialog-content">
-                <span class="list-dialog-title">${esc(d.title || d.situation || 'Dialog ' + (idx + 1))}</span>
-                <span class="list-dialog-text">"${dialogText.substring(0, 80)}${dialogText.length > 80 ? '...' : ''}"</span>
-            </div>
-            <span class="list-dialog-status">${d.used ? '✓' : '○'}</span>
-        </div>`;
-    }).join('');
-}
-
-function renderTriggersPreview(triggers) {
-    if (!triggers || triggers.length === 0) return '';
-
-    return triggers.slice(0, 2).map(t => `
-        <div class="list-trigger-item ${t.triggered ? 'triggered' : ''}">
-            <span class="list-trigger-check">${t.triggered ? '✓' : '○'}</span>
-            <span class="list-trigger-condition">${esc(t.condition)}</span>
-        </div>
-    `).join('');
-}
-
-function renderTriggersSection(n) {
-    const triggers = n.triggers || [];
-    if (triggers.length === 0) return '';
-
-    return `
-        <div class="npc-triggers-section">
-            <div class="npc-triggers-header" data-action="toggle-npc-section" data-id="${n.id}">
-                <span class="npc-section-arrow">▶</span>
-                <span>🔔 Trigger (${triggers.length})</span>
-            </div>
-            <div class="npc-triggers-content collapsed">
-                ${triggers.map((t, idx) => `
-                    <div class="npc-trigger-item">
-                        <div class="npc-trigger-check ${t.triggered ? 'triggered' : ''}"
-                             data-action="toggle-npc-trigger-stop" data-id="${n.id}" data-value="${idx}"
-                             title="Klicken um Trigger zu aktivieren/deaktivieren">
-                            ${t.triggered ? '✓' : ''}
-                        </div>
-                        <div style="flex: 1;">
-                            <div class="npc-trigger-condition">${esc(t.condition)}</div>
-                            <div class="npc-trigger-reveal ${t.triggered ? '' : 'hidden'}">${esc(t.reveal)}</div>
-                        </div>
-                    </div>
-                `).join('')}
-            </div>
-        </div>
-    `;
-}
-
-function renderDialogsSection(n) {
-    const dialogs = n.dialogs || [];
-    if (dialogs.length === 0) return '';
-
-    const usedCount = dialogs.filter(d => d.used).length;
-
-    return `
-        <div class="npc-dialogs-section">
-            <div class="npc-dialogs-header" data-action="toggle-npc-dialogs">
-                <span style="display: flex; align-items: center; gap: 8px;">
-                    <span>▶</span>
-                    <span>💬 Dialoge</span>
-                </span>
-                <span class="npc-dialogs-count">${usedCount}/${dialogs.length} verwendet</span>
-            </div>
-            <div class="npc-dialogs-content">
-                ${dialogs.map((d, idx) => `
-                    <div class="npc-dialog-item">
-                        <div class="npc-dialog-header" data-action="toggle-npc-dialog">
-                            <div class="npc-dialog-marker ${d.used ? 'used' : ''}">${idx + 1}</div>
-                            <div class="npc-dialog-title ${d.used ? 'used' : ''}">${esc(d.title || 'Dialog ' + (idx + 1))}</div>
-                            ${d.triggerCondition ? `<span class="npc-dialog-trigger-badge">🔔 ${esc(d.triggerCondition)}</span>` : ''}
-                            <span class="npc-dialog-status ${d.used ? 'used' : 'unused'}">${d.used ? '✓ Verwendet' : '○ Offen'}</span>
-                            <span class="npc-dialog-expand">▼</span>
-                        </div>
-                        <div class="npc-dialog-body">
-                            <div class="npc-dialog-text">${esc(d.text)}</div>
-                            <div class="npc-dialog-actions">
-                                <button class="btn btn-sm ${d.used ? '' : 'btn-success'}" data-action="toggle-npc-dialog-stop" data-id="${n.id}" data-value="${idx}">
-                                    ${d.used ? '↩️ Zurücksetzen' : '✓ Als verwendet markieren'}
-                                </button>
-                                <button class="btn btn-sm" data-action="copy-dialog-text-stop" data-id="${n.id}" data-value="${idx}" title="Text kopieren">📋</button>
-                            </div>
-                        </div>
-                    </div>
-                `).join('')}
-            </div>
-        </div>
-    `;
-}
-
 function updateNPCStats() {
+    if (!D.npcs) return;
     const totalDialogs = D.npcs.reduce((sum, n) => sum + (n.dialogs?.length || 0), 0);
     const totalTriggers = D.npcs.reduce((sum, n) => sum + (n.triggers?.length || 0), 0);
     updateCounters({
@@ -354,55 +372,25 @@ function updateNPCStats() {
     });
 }
 
-// Expand/Collapse functions
+// Legacy compatibility functions
+function toggleNPCCard(id) {
+    selectNPC(id);
+}
+
 function expandAllNPCCards() {
-    document.querySelectorAll('.npc-list-card').forEach(card => card.classList.remove('collapsed'));
-    document.querySelectorAll('.list-view-row.npc-row').forEach(row => row.classList.add('expanded'));
-    showToast('Alle NPCs ausgeklappt');
+    showToast('Alle NPCs werden in der Liste angezeigt');
 }
 
 function collapseAllNPCCards() {
-    document.querySelectorAll('.npc-list-card').forEach(card => card.classList.add('collapsed'));
-    document.querySelectorAll('.list-view-row.npc-row').forEach(row => row.classList.remove('expanded'));
-    showToast('Alle NPCs eingeklappt');
+    selectedNpcId = null;
+    clearNPCDetail();
+    showToast('Details-Panel geleert');
 }
 
 function expandAllNPCDialogs() {
-    document.querySelectorAll('.npc-dialogs-content').forEach(content => {
-        content.classList.add('open');
-        const header = content.previousElementSibling;
-        if (header) {
-            const arrow = header.querySelector('span span:first-child');
-            if (arrow) arrow.textContent = '▼';
-        }
-    });
-    document.querySelectorAll('.npc-dialog-body').forEach(body => {
-        body.classList.add('open');
-        const header = body.previousElementSibling;
-        if (header) {
-            const expand = header.querySelector('.npc-dialog-expand');
-            if (expand) expand.classList.add('open');
-        }
-    });
-    showToast('Alle Dialoge geöffnet');
+    showToast('Dialoge werden im Detail-Panel angezeigt');
 }
 
 function collapseAllNPCDialogs() {
-    document.querySelectorAll('.npc-dialogs-content').forEach(content => {
-        content.classList.remove('open');
-        const header = content.previousElementSibling;
-        if (header) {
-            const arrow = header.querySelector('span span:first-child');
-            if (arrow) arrow.textContent = '▶';
-        }
-    });
-    document.querySelectorAll('.npc-dialog-body').forEach(body => {
-        body.classList.remove('open');
-        const header = body.previousElementSibling;
-        if (header) {
-            const expand = header.querySelector('.npc-dialog-expand');
-            if (expand) expand.classList.remove('open');
-        }
-    });
-    showToast('Alle Dialoge geschlossen');
+    showToast('Wähle einen NPC für Details');
 }

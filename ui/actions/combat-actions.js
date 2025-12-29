@@ -44,6 +44,7 @@ const CombatActions = {
     'calc-save-encounter': () => saveAsEncounter(),
     'calc-import-encounter': (ctx) => importEncounterMonsters(ctx.value),
     'calc-back-to-calculator': () => renderCalculatorModal(),
+    'close-calculator-modal': () => hideCalculatorModal(),
 
     // Roll actions
     'roll-attack': () => rollAttack(),

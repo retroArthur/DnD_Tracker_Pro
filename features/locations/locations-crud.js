@@ -41,8 +41,12 @@ function editLocation(id) {
 }
 
 function deleteLocation(id) {
+    const numId = typeof id === 'number' ? id : parseInt(id);
+    if (isNaN(numId)) return;
+
     if (confirm('Löschen?')) {
-        D.locations = D.locations.filter(l => l.id !== id);
+        pushUndo('Ort gelöscht');
+        D.locations = D.locations.filter(l => l.id !== numId);
         renderLocations();
         save();
     }
