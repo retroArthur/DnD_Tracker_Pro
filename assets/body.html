@@ -1232,239 +1232,46 @@
             </div>
         </section>
         
-        <!-- LOOT VIEW -->
-        <section id="view-loot" class="view">
-            <div class="section-toolbar">
-                <!-- Gruppe 1: Identität -->
-                <div class="section-toolbar-identity">
-                    <span class="section-toolbar-title">📦 Truhe</span>
-                    <span class="section-toolbar-count" id="loot-io-count">0</span>
+        <!-- LOOT VIEW - Master-Detail Layout -->
+        <section id="view-loot" class="view loot-view">
+            <!-- Kompakte Toolbar wie NPCs -->
+            <div class="loot-toolbar">
+                <div class="loot-toolbar-left">
+                    <span class="loot-toolbar-title">📦 Truhe</span>
+                    <span class="loot-toolbar-count" id="loot-io-count">0</span>
                 </div>
-                
-                <!-- Gruppe 2: Suche -->
-                <div class="section-toolbar-search">
-                    <div class="search-wrapper">
-                        <input type="text" id="loot-search" class="toolbar-search" placeholder="🔍 Item suchen..." oninput="debouncedRenderLoot(); updateSearchClear(this);">
-                        <button class="search-clear-btn" data-action="clear-search" data-value="loot-search" title="Suche leeren">✕</button>
+                <div class="loot-toolbar-center">
+                    <div class="loot-search-wrapper">
+                        <input type="text" id="loot-search" class="loot-search" placeholder="Item suchen..." oninput="renderLootList(); updateSearchClear(this);">
+                        <button class="loot-search-clear" data-action="clear-search" data-value="loot-search">✕</button>
                     </div>
+                    <div class="loot-filter-chips" id="loot-filters"></div>
                 </div>
-                
-                <!-- Gruppe 3: Filter + IO -->
-                <div class="section-toolbar-filters">
-                    <div class="section-toolbar-io">
-                        <button class="io-btn export" data-action="export-data" data-value="loot" title="Items exportieren">📤</button>
-                        <button class="io-btn import" data-action="trigger-click" data-value="import-loot" title="Items importieren">📥</button>
+                <div class="loot-toolbar-right">
+                    <div class="loot-io-btns">
+                        <button class="loot-io-btn" data-action="export-data" data-value="loot" title="Exportieren">📤</button>
+                        <button class="loot-io-btn" data-action="trigger-click" data-value="import-loot" title="Importieren">📥</button>
                         <input type="file" id="import-loot" class="io-file-input" accept=".json" data-on-change="import-data" data-type="loot">
                     </div>
-                    <button class="btn btn-sm" data-action="call" data-value="expandAllLoot" title="Alle ausklappen">📂 Alle</button>
-                    <button class="btn btn-sm" data-action="call" data-value="collapseAllLoot" title="Alle einklappen">📁 Alle</button>
+                    <button class="loot-add-btn" data-action="show-modal" data-value="loot-modal">+ Item</button>
                 </div>
             </div>
-            <div class="filter-bar" id="loot-categories"></div>
-            
-            <!-- Einklappbares Add-Formular -->
-            <div class="card" style="margin-bottom: 12px;">
-                <div class="collapsible-header" data-action="toggle-collapse" data-value="loot-form">
-                    <span class="card-title">+ Item hinzufügen</span>
-                    <span id="loot-form-icon">▼</span>
+
+            <!-- Master-Detail Layout -->
+            <div class="loot-layout">
+                <!-- Liste (Master) -->
+                <div class="loot-master">
+                    <div class="loot-list" id="loot-list"></div>
                 </div>
-                <div id="loot-form" class="collapsible-content">
-                    <input type="hidden" id="edit-loot-id">
-                    
-                    <!-- Zweispaltiges Grid: Basis + Details -->
-                    <div class="loot-form-grid">
-                        <!-- Linke Spalte: Basis -->
-                        <div class="loot-form-section">
-                            <div class="loot-form-section-title">📦 Basis</div>
-                            <div class="form-group">
-                                <label>Name *</label>
-                                <input type="text" id="loot-name" placeholder="Gegenstandsname">
-                            </div>
-                            <div class="loot-form-row">
-                                <div class="form-group" style="flex: 1;">
-                                    <label>Typ</label>
-                                    <select id="loot-cat">
-                                        <option value="weapons">⚔️ Waffen</option>
-                                        <option value="armor">🛡️ Rüstung</option>
-                                        <option value="potions">🧪 Tränke</option>
-                                        <option value="scrolls">📜 Schriftrollen</option>
-                                        <option value="gems">💎 Edelsteine</option>
-                                        <option value="rings">💍 Ringe</option>
-                                        <option value="amulets">📿 Amulette</option>
-                                        <option value="wondrous">✨ Wundersam</option>
-                                        <option value="misc">📦 Sonstiges</option>
-                                    </select>
-                                </div>
-                                <div class="form-group" style="flex: 1;">
-                                    <label>Seltenheit</label>
-                                    <select id="loot-rarity">
-                                        <option value="normal">⚪ Normal</option>
-                                        <option value="common">🟢 Gewöhnlich</option>
-                                        <option value="uncommon">🔵 Ungewöhnlich</option>
-                                        <option value="rare">🟣 Selten</option>
-                                        <option value="veryrare">🟡 Sehr selten</option>
-                                        <option value="legendary">🟠 Legendär</option>
-                                    </select>
-                                </div>
-                            </div>
-                            <div class="loot-form-row">
-                                <div class="form-group" style="flex: 1;">
-                                    <label>Menge</label>
-                                    <input type="number" id="loot-qty" value="1" min="0">
-                                </div>
-                                <div class="form-group" style="flex: 1;">
-                                    <label>Gewicht</label>
-                                    <input type="number" id="loot-wt" step="0.1" placeholder="kg">
-                                </div>
-                                <div class="form-group" style="flex: 1;">
-                                    <label>Wert</label>
-                                    <input type="number" id="loot-val" step="0.1" placeholder="GM">
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <!-- Rechte Spalte: Details -->
-                        <div class="loot-form-section">
-                            <div class="loot-form-section-title">📋 Details</div>
-                            <div class="form-group">
-                                <label>Herkunft</label>
-                                <select id="loot-origin">
-                                    <option value="">— Keine —</option>
-                                    <option value="campaign">📜 Kampagne</option>
-                                    <option value="quest">🎯 Quest</option>
-                                    <option value="summon">✨ Beschwörung</option>
-                                    <option value="loot">💰 Loot</option>
-                                    <option value="find">🔍 Fund</option>
-                                    <option value="purchase">🛒 Kauf</option>
-                                    <option value="gift">🎁 Geschenk</option>
-                                    <option value="craft">🔨 Hergestellt</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label>Besonderheit</label>
-                                <input type="text" id="loot-special" placeholder="z.B. Glüht bei Orks">
-                            </div>
-                            <div class="form-group">
-                                <label>Eigenschaft</label>
-                                <input type="text" id="loot-property" placeholder="z.B. +1 Angriff">
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Beschreibung (volle Breite) -->
-                    <div class="form-group" style="margin-top: 12px;">
-                        <label>Beschreibung</label>
-                        <div class="editor-toolbar">
-                            <button type="button" class="editor-btn" data-action="format-text" data-cmd="loot-desc" data-editor="bold" title="Fett"><b>B</b></button>
-                            <button type="button" class="editor-btn" data-action="format-text" data-cmd="loot-desc" data-editor="italic" title="Kursiv"><i>I</i></button>
-                            <button type="button" class="editor-btn" data-action="format-text" data-cmd="loot-desc" data-editor="underline" title="Unterstrichen"><u>U</u></button>
-                            <button type="button" class="editor-btn" data-action="format-text" data-cmd="loot-desc" data-editor="list" title="Liste">☰</button>
-                            <button type="button" class="editor-btn" data-action="set-border-format" data-editor="loot-desc" title="Rahmen">◻</button>
-                            <button type="button" class="editor-btn" data-action="clear-formatting" data-value="loot-desc" title="Formatierung löschen" style="color:#888;">✕</button>
-                        </div>
-                        <div id="loot-desc" class="rich-editor" contenteditable="true" style="min-height: 60px;" data-placeholder="📝 Beschreibung (optional)"></div>
-                    </div>
-                    
-                    <!-- Tags Section -->
-                    <div class="loot-tags-section">
-                        <div class="loot-form-section-title">🏷️ Tags</div>
-                        
-                        <!-- Tag-Kategorie Filter -->
-                        <div class="loot-tag-filters">
-                            <button class="loot-tag-filter-btn active" data-tag-category="all">Alle</button>
-                            <button class="loot-tag-filter-btn" data-tag-category="type">Typ</button>
-                            <button class="loot-tag-filter-btn" data-tag-category="property">Eigensch.</button>
-                            <button class="loot-tag-filter-btn" data-tag-category="armor">Rüstung</button>
-                            <button class="loot-tag-filter-btn" data-tag-category="magic">Magie</button>
-                            <button class="loot-tag-filter-btn" data-tag-category="slot">Slot</button>
-                            <button class="loot-tag-filter-btn" data-tag-category="damage">Schaden</button>
-                            <button class="loot-tag-filter-btn" data-tag-category="other">Sonstiges</button>
-                        </div>
-                        
-                        <!-- Tag-Auswahl Grid -->
-                        <div class="loot-tag-grid" id="loot-tag-grid">
-                            <!-- Typ -->
-                            <label class="loot-tag-chip" data-category="type"><input type="checkbox" value="weapon"><span>⚔️ Waffe</span></label>
-                            <label class="loot-tag-chip" data-category="type"><input type="checkbox" value="armor"><span>🛡️ Rüstung</span></label>
-                            <label class="loot-tag-chip" data-category="type"><input type="checkbox" value="potion"><span>🧪 Trank</span></label>
-                            <label class="loot-tag-chip" data-category="type"><input type="checkbox" value="scroll"><span>📜 Schriftrolle</span></label>
-                            <label class="loot-tag-chip" data-category="type"><input type="checkbox" value="ring"><span>💍 Ring</span></label>
-                            <label class="loot-tag-chip" data-category="type"><input type="checkbox" value="wand"><span>🪄 Zauberstab</span></label>
-                            <label class="loot-tag-chip" data-category="type"><input type="checkbox" value="rod"><span>🏛️ Zepter</span></label>
-                            <label class="loot-tag-chip" data-category="type"><input type="checkbox" value="staff"><span>🪵 Stecken</span></label>
-                            <label class="loot-tag-chip" data-category="type"><input type="checkbox" value="wondrous"><span>✨ Wundersam</span></label>
-                            <label class="loot-tag-chip" data-category="type"><input type="checkbox" value="ammunition"><span>🏹 Munition</span></label>
-                            <label class="loot-tag-chip" data-category="type"><input type="checkbox" value="focus"><span>🔮 Fokus</span></label>
-                            
-                            <!-- Eigenschaften -->
-                            <label class="loot-tag-chip" data-category="property"><input type="checkbox" value="light"><span>🪶 Leicht</span></label>
-                            <label class="loot-tag-chip" data-category="property"><input type="checkbox" value="heavy"><span>🏋️ Schwer</span></label>
-                            <label class="loot-tag-chip" data-category="property"><input type="checkbox" value="finesse"><span>⚡ Finesse</span></label>
-                            <label class="loot-tag-chip" data-category="property"><input type="checkbox" value="two-handed"><span>🙌 Zweihändig</span></label>
-                            <label class="loot-tag-chip" data-category="property"><input type="checkbox" value="versatile"><span>↔️ Vielseitig</span></label>
-                            <label class="loot-tag-chip" data-category="property"><input type="checkbox" value="reach"><span>📏 Reichweite</span></label>
-                            <label class="loot-tag-chip" data-category="property"><input type="checkbox" value="thrown"><span>🎯 Wurf</span></label>
-                            <label class="loot-tag-chip" data-category="property"><input type="checkbox" value="loading"><span>⏳ Laden</span></label>
-                            <label class="loot-tag-chip" data-category="property"><input type="checkbox" value="silvered"><span>🥈 Silber</span></label>
-                            <label class="loot-tag-chip" data-category="property"><input type="checkbox" value="adamantine"><span>💠 Adamant</span></label>
-                            
-                            <!-- Rüstungstyp -->
-                            <label class="loot-tag-chip" data-category="armor"><input type="checkbox" value="light-armor"><span>👕 Leichte Rüst.</span></label>
-                            <label class="loot-tag-chip" data-category="armor"><input type="checkbox" value="medium-armor"><span>🦺 Mittlere Rüst.</span></label>
-                            <label class="loot-tag-chip" data-category="armor"><input type="checkbox" value="heavy-armor"><span>🛡️ Schwere Rüst.</span></label>
-                            <label class="loot-tag-chip" data-category="armor"><input type="checkbox" value="shield"><span>🔰 Schild</span></label>
-                            
-                            <!-- Magie -->
-                            <label class="loot-tag-chip" data-category="magic"><input type="checkbox" value="attunement"><span>🔮 Einstimmung</span></label>
-                            <label class="loot-tag-chip" data-category="magic"><input type="checkbox" value="charges"><span>⚡ Ladungen</span></label>
-                            <label class="loot-tag-chip" data-category="magic"><input type="checkbox" value="consumable"><span>💨 Verbrauchsgut</span></label>
-                            <label class="loot-tag-chip" data-category="magic"><input type="checkbox" value="cursed"><span>💀 Verflucht</span></label>
-                            <label class="loot-tag-chip" data-category="magic"><input type="checkbox" value="sentient"><span>🧠 Intelligent</span></label>
-                            
-                            <!-- Slot -->
-                            <label class="loot-tag-chip" data-category="slot"><input type="checkbox" value="head"><span>👑 Kopf</span></label>
-                            <label class="loot-tag-chip" data-category="slot"><input type="checkbox" value="neck"><span>📿 Hals</span></label>
-                            <label class="loot-tag-chip" data-category="slot"><input type="checkbox" value="back"><span>🧥 Rücken</span></label>
-                            <label class="loot-tag-chip" data-category="slot"><input type="checkbox" value="body"><span>👔 Körper</span></label>
-                            <label class="loot-tag-chip" data-category="slot"><input type="checkbox" value="hands"><span>🧤 Hände</span></label>
-                            <label class="loot-tag-chip" data-category="slot"><input type="checkbox" value="finger"><span>💍 Finger</span></label>
-                            <label class="loot-tag-chip" data-category="slot"><input type="checkbox" value="waist"><span>🎗️ Taille</span></label>
-                            <label class="loot-tag-chip" data-category="slot"><input type="checkbox" value="feet"><span>👢 Füße</span></label>
-                            
-                            <!-- Schaden -->
-                            <label class="loot-tag-chip" data-category="damage"><input type="checkbox" value="fire"><span>🔥 Feuer</span></label>
-                            <label class="loot-tag-chip" data-category="damage"><input type="checkbox" value="cold"><span>❄️ Kälte</span></label>
-                            <label class="loot-tag-chip" data-category="damage"><input type="checkbox" value="lightning"><span>⚡ Blitz</span></label>
-                            <label class="loot-tag-chip" data-category="damage"><input type="checkbox" value="acid"><span>🧪 Säure</span></label>
-                            <label class="loot-tag-chip" data-category="damage"><input type="checkbox" value="poison"><span>☠️ Gift</span></label>
-                            <label class="loot-tag-chip" data-category="damage"><input type="checkbox" value="necrotic"><span>💀 Nekrotisch</span></label>
-                            <label class="loot-tag-chip" data-category="damage"><input type="checkbox" value="radiant"><span>☀️ Strahlend</span></label>
-                            <label class="loot-tag-chip" data-category="damage"><input type="checkbox" value="healing"><span>💚 Heilung</span></label>
-                            
-                            <!-- Sonstiges -->
-                            <label class="loot-tag-chip" data-category="other"><input type="checkbox" value="tool"><span>🔧 Werkzeug</span></label>
-                            <label class="loot-tag-chip" data-category="other"><input type="checkbox" value="gemstone"><span>💎 Edelstein</span></label>
-                            <label class="loot-tag-chip" data-category="other"><input type="checkbox" value="art"><span>🖼️ Kunstobjekt</span></label>
-                            <label class="loot-tag-chip" data-category="other"><input type="checkbox" value="container"><span>📦 Behälter</span></label>
-                            <label class="loot-tag-chip" data-category="other"><input type="checkbox" value="key"><span>🗝️ Schlüssel</span></label>
-                            <label class="loot-tag-chip" data-category="other"><input type="checkbox" value="document"><span>📄 Dokument</span></label>
-                        </div>
-                        
-                        <!-- Ausgewählte Tags -->
-                        <div class="loot-selected-tags" id="loot-selected-tags">
-                            <!-- Dynamisch befüllt -->
-                        </div>
-                    </div>
-                    
-                    <!-- Buttons -->
-                    <div class="btn-group" style="margin-top: 12px;">
-                        <button class="btn btn-success" data-action="call" data-value="saveLoot" id="loot-save-btn">+ Hinzufügen</button>
-                        <button class="btn" data-action="call" data-value="cancelLootEdit" id="loot-cancel-btn">Abbrechen</button>
+
+                <!-- Detail-Sidebar -->
+                <div class="loot-detail" id="loot-detail-panel">
+                    <div class="loot-detail-empty">
+                        <div class="loot-detail-empty-icon">📦</div>
+                        <div class="loot-detail-empty-text">Wähle ein Item aus der Liste</div>
                     </div>
                 </div>
             </div>
-            
-            <div class="loot-list" id="loot-list"></div>
         </section>
         
         <!-- SHOPS VIEW -->
@@ -2509,7 +2316,124 @@
             </div>
         </div>
     </div>
-    
+
+    <!-- LOOT MODAL -->
+    <div class="modal-overlay" id="loot-modal">
+        <div class="modal" style="max-width: 700px;">
+            <div class="modal-header">
+                <span class="modal-title">Item hinzufügen</span>
+                <button class="btn btn-sm" data-action="hide-modal" data-value="loot-modal">✕</button>
+            </div>
+            <div style="max-height: 75vh; overflow-y: auto; padding-right: 5px;">
+                <input type="hidden" id="edit-loot-id">
+
+                <!-- Basis -->
+                <div class="char-section-title" style="margin-top: 0;">📦 Basis</div>
+                <div class="form-group"><label>Name *</label><input type="text" id="loot-name" placeholder="Gegenstandsname"></div>
+                <div class="form-grid">
+                    <div class="form-group"><label>Typ</label>
+                        <select id="loot-cat">
+                            <option value="weapons">⚔️ Waffen</option>
+                            <option value="armor">🛡️ Rüstung</option>
+                            <option value="potions">🧪 Tränke</option>
+                            <option value="scrolls">📜 Schriftrollen</option>
+                            <option value="gems">💎 Edelsteine</option>
+                            <option value="rings">💍 Ringe</option>
+                            <option value="amulets">📿 Amulette</option>
+                            <option value="wondrous">✨ Wundersam</option>
+                            <option value="misc">📦 Sonstiges</option>
+                        </select>
+                    </div>
+                    <div class="form-group"><label>Seltenheit</label>
+                        <select id="loot-rarity">
+                            <option value="normal">⚪ Normal</option>
+                            <option value="common">🟢 Gewöhnlich</option>
+                            <option value="uncommon">🔵 Ungewöhnlich</option>
+                            <option value="rare">🟣 Selten</option>
+                            <option value="veryrare">🟡 Sehr selten</option>
+                            <option value="legendary">🟠 Legendär</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-grid" style="grid-template-columns: repeat(3, 1fr);">
+                    <div class="form-group"><label>Menge</label><input type="number" id="loot-qty" value="1" min="0"></div>
+                    <div class="form-group"><label>Gewicht (kg)</label><input type="number" id="loot-wt" step="0.1" placeholder="kg"></div>
+                    <div class="form-group"><label>Wert (GM)</label><input type="number" id="loot-val" step="0.1" placeholder="GM"></div>
+                </div>
+
+                <!-- Details -->
+                <div class="char-section-title">📋 Details</div>
+                <div class="form-grid">
+                    <div class="form-group"><label>Herkunft</label>
+                        <select id="loot-origin">
+                            <option value="">— Keine —</option>
+                            <option value="campaign">📜 Kampagne</option>
+                            <option value="quest">🎯 Quest</option>
+                            <option value="summon">✨ Beschwörung</option>
+                            <option value="loot">💰 Loot</option>
+                            <option value="find">🔍 Fund</option>
+                            <option value="purchase">🛒 Kauf</option>
+                            <option value="gift">🎁 Geschenk</option>
+                            <option value="craft">🔨 Hergestellt</option>
+                        </select>
+                    </div>
+                    <div class="form-group"><label>Besonderheit</label><input type="text" id="loot-special" placeholder="z.B. Glüht bei Orks"></div>
+                </div>
+                <div class="form-group"><label>Eigenschaft</label><input type="text" id="loot-property" placeholder="z.B. +1 Angriff"></div>
+
+                <!-- Beschreibung -->
+                <div class="char-section-title">📝 Beschreibung</div>
+                <div class="form-group">
+                    <div class="editor-toolbar">
+                        <button type="button" class="editor-btn" data-action="format-text" data-cmd="loot-desc" data-editor="bold" title="Fett"><b>B</b></button>
+                        <button type="button" class="editor-btn" data-action="format-text" data-cmd="loot-desc" data-editor="italic" title="Kursiv"><i>I</i></button>
+                        <button type="button" class="editor-btn" data-action="format-text" data-cmd="loot-desc" data-editor="underline" title="Unterstrichen"><u>U</u></button>
+                        <button type="button" class="editor-btn" data-action="format-text" data-cmd="loot-desc" data-editor="list" title="Liste">☰</button>
+                        <button type="button" class="editor-btn" data-action="clear-formatting" data-value="loot-desc" title="Formatierung löschen" style="color:#888;">✕</button>
+                    </div>
+                    <div id="loot-desc" class="rich-editor" contenteditable="true" style="min-height: 60px;" data-placeholder="Beschreibung (optional)"></div>
+                </div>
+
+                <!-- Tags -->
+                <div class="char-section-title">🏷️ Tags</div>
+                <div class="loot-tag-filters">
+                    <button class="loot-tag-filter-btn active" data-tag-category="all">Alle</button>
+                    <button class="loot-tag-filter-btn" data-tag-category="type">Typ</button>
+                    <button class="loot-tag-filter-btn" data-tag-category="property">Eigensch.</button>
+                    <button class="loot-tag-filter-btn" data-tag-category="magic">Magie</button>
+                    <button class="loot-tag-filter-btn" data-tag-category="slot">Slot</button>
+                </div>
+                <div class="loot-tag-grid" id="loot-tag-grid">
+                    <label class="loot-tag-chip" data-category="type"><input type="checkbox" value="weapon"><span>⚔️ Waffe</span></label>
+                    <label class="loot-tag-chip" data-category="type"><input type="checkbox" value="armor"><span>🛡️ Rüstung</span></label>
+                    <label class="loot-tag-chip" data-category="type"><input type="checkbox" value="potion"><span>🧪 Trank</span></label>
+                    <label class="loot-tag-chip" data-category="type"><input type="checkbox" value="scroll"><span>📜 Schriftrolle</span></label>
+                    <label class="loot-tag-chip" data-category="type"><input type="checkbox" value="ring"><span>💍 Ring</span></label>
+                    <label class="loot-tag-chip" data-category="type"><input type="checkbox" value="wand"><span>🪄 Zauberstab</span></label>
+                    <label class="loot-tag-chip" data-category="property"><input type="checkbox" value="light"><span>🪶 Leicht</span></label>
+                    <label class="loot-tag-chip" data-category="property"><input type="checkbox" value="heavy"><span>🏋️ Schwer</span></label>
+                    <label class="loot-tag-chip" data-category="property"><input type="checkbox" value="finesse"><span>⚡ Finesse</span></label>
+                    <label class="loot-tag-chip" data-category="property"><input type="checkbox" value="two-handed"><span>🙌 Zweihändig</span></label>
+                    <label class="loot-tag-chip" data-category="property"><input type="checkbox" value="versatile"><span>↔️ Vielseitig</span></label>
+                    <label class="loot-tag-chip" data-category="magic"><input type="checkbox" value="attunement"><span>🔮 Einstimmung</span></label>
+                    <label class="loot-tag-chip" data-category="magic"><input type="checkbox" value="charges"><span>⚡ Ladungen</span></label>
+                    <label class="loot-tag-chip" data-category="magic"><input type="checkbox" value="consumable"><span>💨 Verbrauchsgut</span></label>
+                    <label class="loot-tag-chip" data-category="magic"><input type="checkbox" value="cursed"><span>💀 Verflucht</span></label>
+                    <label class="loot-tag-chip" data-category="slot"><input type="checkbox" value="head"><span>👑 Kopf</span></label>
+                    <label class="loot-tag-chip" data-category="slot"><input type="checkbox" value="body"><span>👔 Körper</span></label>
+                    <label class="loot-tag-chip" data-category="slot"><input type="checkbox" value="hands"><span>🧤 Hände</span></label>
+                    <label class="loot-tag-chip" data-category="slot"><input type="checkbox" value="feet"><span>👢 Füße</span></label>
+                </div>
+                <div class="loot-selected-tags" id="loot-selected-tags"></div>
+            </div>
+
+            <div class="btn-group" style="margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border);">
+                <button class="btn btn-success" data-action="call" data-value="saveLoot" id="loot-save-btn">💾 Speichern</button>
+                <button class="btn" data-action="hide-modal" data-value="loot-modal">Abbrechen</button>
+            </div>
+        </div>
+    </div>
+
     <div class="modal-overlay" id="quest-modal">
         <div class="modal" style="max-width: 700px;">
             <div class="modal-header">

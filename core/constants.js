@@ -123,9 +123,20 @@ const CONDITIONS = Object.freeze({
  * @type {string[]}
  */
 const TAG_COLORS = Object.freeze([
-    'red', 'green', 'blue', 'yellow', 'purple', 
+    'red', 'green', 'blue', 'yellow', 'purple',
     'orange', 'pink', 'cyan', 'gold'
 ]);
+
+/**
+ * Condition-Farben für Initiative-Tracker Effekte
+ * @type {Object.<string, string>}
+ */
+const CONDITION_COLORS = Object.freeze({
+    blinded: 'red', charmed: 'purple', deafened: 'yellow', frightened: 'purple',
+    grappled: 'purple', incapacitated: 'red', invisible: 'blue', paralyzed: 'red',
+    petrified: 'red', poisoned: 'green', prone: 'yellow', restrained: 'red',
+    stunned: 'red', unconscious: 'red', exhaustion: 'yellow', concentration: 'blue'
+});
 
 /**
  * D&D 5e Schadenstypen mit Icons
@@ -212,6 +223,63 @@ const RARITIES = Object.freeze({
     veryRare: { name: 'Sehr Selten', color: 'var(--purple)' },
     legendary: { name: 'Legendär', color: 'var(--orange)' },
     artifact: { name: 'Artefakt', color: 'var(--gold)' }
+});
+
+/**
+ * Seltenheits-Labels (deutsche Namen) - verwendet lowercase keys für Loot-System
+ * @type {Object.<string, string>}
+ */
+const RARITY_LABELS = Object.freeze({
+    normal: 'Normal',
+    common: 'Gewöhnlich',
+    uncommon: 'Ungewöhnlich',
+    rare: 'Selten',
+    veryrare: 'Sehr selten',
+    legendary: 'Legendär'
+});
+
+/**
+ * Seltenheits-Farben für Loot-System - verwendet lowercase keys
+ * @type {Object.<string, string>}
+ */
+const RARITY_COLORS = Object.freeze({
+    normal: 'var(--text)',
+    common: '#4ade80',
+    uncommon: '#60a5fa',
+    rare: '#a78bfa',
+    veryrare: '#facc15',
+    legendary: '#fb923c'
+});
+
+/**
+ * Herkunfts-Labels für Loot-Items
+ * @type {Object.<string, string>}
+ */
+const ORIGIN_LABELS = Object.freeze({
+    campaign: '📜 Kampagne',
+    quest: '🎯 Quest',
+    summon: '✨ Beschwörung',
+    loot: '💰 Loot',
+    find: '🔍 Fund',
+    purchase: '🛒 Kauf',
+    gift: '🎁 Geschenk',
+    craft: '🔨 Hergestellt'
+});
+
+/**
+ * Tag-Labels für Loot-Items mit Icons
+ * @type {Object.<string, string>}
+ */
+const LOOT_TAG_LABELS = Object.freeze({
+    weapon: '⚔️ Waffe', armor: '🛡️ Rüstung', potion: '🧪 Trank', scroll: '📜 Schriftrolle', ring: '💍 Ring',
+    wand: '🪄 Zauberstab', rod: '🏛️ Zepter', staff: '🪵 Stecken', wondrous: '✨ Wundersam', ammunition: '🏹 Munition', focus: '🔮 Fokus',
+    light: '🪶 Leicht', heavy: '🏋️ Schwer', finesse: '⚡ Finesse', 'two-handed': '🙌 Zweihändig', versatile: '↔️ Vielseitig',
+    reach: '📏 Reichweite', thrown: '🎯 Wurf', loading: '⏳ Laden', silvered: '🥈 Silber', adamantine: '💠 Adamant',
+    'light-armor': '👕 Leichte Rüst.', 'medium-armor': '🦺 Mittlere Rüst.', 'heavy-armor': '🛡️ Schwere Rüst.', shield: '🔰 Schild',
+    attunement: '🔮 Einstimmung', charges: '⚡ Ladungen', consumable: '💨 Verbrauchsgut', cursed: '💀 Verflucht', sentient: '🧠 Intelligent',
+    head: '👑 Kopf', neck: '📿 Hals', back: '🧥 Rücken', body: '👔 Körper', hands: '🧤 Hände', finger: '💍 Finger', waist: '🎗️ Taille', feet: '👢 Füße',
+    fire: '🔥 Feuer', cold: '❄️ Kälte', lightning: '⚡ Blitz', acid: '🧪 Säure', poison: '☠️ Gift', necrotic: '💀 Nekrotisch', radiant: '☀️ Strahlend', healing: '💚 Heilung',
+    tool: '🔧 Werkzeug', gemstone: '💎 Edelstein', art: '🖼️ Kunstobjekt', container: '📦 Behälter', key: '🗝️ Schlüssel', document: '📄 Dokument'
 });
 
 let D = {

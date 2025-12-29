@@ -594,11 +594,26 @@ function toggleShop(id) {
     } else {
         expandedShops.add(id);
     }
-    
+
+    const isExpanded = expandedShops.has(id);
+
     // Direkt das DOM-Element togglen statt komplettes Re-Render
     const shop = document.querySelector(`.shop-card[data-shop-id="${id}"]`);
     if (shop) {
-        shop.classList.toggle('expanded', expandedShops.has(id));
+        shop.classList.toggle('expanded', isExpanded);
+        shop.classList.toggle('collapsed', !isExpanded);
+
+        // Toggle shop-body visibility
+        const body = shop.querySelector('.shop-body');
+        if (body) {
+            body.style.display = isExpanded ? '' : 'none';
+        }
+
+        // Toggle arrow
+        const toggle = shop.querySelector('.shop-toggle');
+        if (toggle) {
+            toggle.textContent = isExpanded ? '▼' : '▶';
+        }
     }
 }
 

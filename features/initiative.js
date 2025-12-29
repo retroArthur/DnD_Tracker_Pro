@@ -252,14 +252,8 @@ function renderEffectConditionsGrid() {
     const cb = D.initiative.combatants.find(c => c.id === cbId);
     const currentEffects = cb?.effects || [];
     
-    // Mapping von CONDITIONS zu Farben für Initiative
-    const conditionColors = {
-        blinded: 'red', charmed: 'purple', deafened: 'yellow', frightened: 'purple',
-        grappled: 'purple', incapacitated: 'red', invisible: 'blue', paralyzed: 'red',
-        petrified: 'red', poisoned: 'green', prone: 'yellow', restrained: 'red',
-        stunned: 'red', unconscious: 'red', exhaustion: 'yellow', concentration: 'blue'
-    };
-    
+    // CONDITION_COLORS ist in constants.js definiert
+
     container.innerHTML = Object.entries(CONDITIONS).map(([key, cond]) => {
         const hasEffect = currentEffects.some(e => e.name.toLowerCase() === cond.name.toLowerCase());
         return `<button class="btn ${hasEffect ? 'btn-success' : ''}" data-action="add-effect-from-grid" data-value="${key}" style="justify-content: flex-start; gap: 8px; padding: 8px 10px; font-size: 0.9em;">
@@ -279,14 +273,8 @@ function addEffectFromGrid(conditionKey) {
     const cond = CONDITIONS[conditionKey];
     if (!cond) return;
     
-    // Mapping von Conditions zu Farben
-    const conditionColors = {
-        blinded: 'red', charmed: 'purple', deafened: 'yellow', frightened: 'purple',
-        grappled: 'purple', incapacitated: 'red', invisible: 'blue', paralyzed: 'red',
-        petrified: 'red', poisoned: 'green', prone: 'yellow', restrained: 'red',
-        stunned: 'red', unconscious: 'red', exhaustion: 'yellow', concentration: 'blue'
-    };
-    
+    // CONDITION_COLORS ist in constants.js definiert
+
     // Toggle: Wenn bereits vorhanden, entfernen
     const existingIdx = cb.effects.findIndex(e => e.name.toLowerCase() === cond.name.toLowerCase());
     if (existingIdx > -1) {
@@ -297,7 +285,7 @@ function addEffectFromGrid(conditionKey) {
             name: cond.name,
             duration: 999,
             permanent: true,
-            color: conditionColors[conditionKey] || 'yellow',
+            color: CONDITION_COLORS[conditionKey] || 'yellow',
             description: cond.desc
         });
     }
@@ -344,24 +332,49 @@ function removeEffect(cbId, effId) {
 }
 
 // ============================================================
-// LOOT
+// LOOT - Master-Detail Layout
 // ============================================================
-function renderLoot() {
-    const c = $('loot-list'); const catDiv = $('loot-categories'); if (!c) return;
+
+let selectedLootId = null;
+
+// RARITY_LABELS, RARITY_COLORS, ORIGIN_LABELS, LOOT_TAG_LABELS sind jetzt in constants.js definiert
+
+// Alias für Kompatibilität
+function renderLoot() { renderLootList(); }
+
+function renderLootList() {
+    const listContainer = $('loot-list');
+    const filterContainer = $('loot-filters');
+    if (!listContainer) return;
+
+    // Update counter
+    updateCounters({ 'loot-io-count': D.loot?.length || 0 });
+
+    // Render filter chips (by category)
+    if (filterContainer) {
+        filterContainer.innerHTML = `
+            <div class="loot-filter-chip ${currentLootFilter === 'all' ? 'active' : ''}" data-action="set-loot-filter" data-value="all">Alle</div>
+            ${Object.entries(CATS).map(([k, v]) => `
+                <div class="loot-filter-chip ${currentLootFilter === k ? 'active' : ''}"
+                     data-action="set-loot-filter" data-value="${k}">
+                    ${v}
+                </div>
+            `).join('')}
+        `;
+    }
+
+    // Get search and filter
     const search = ($('loot-search')?.value || '').toLowerCase();
-    let items = D.loot || [];
-    
-    // Counter aktualisieren
-    updateCounters({ 'loot-io-count': items.length });
-    
-    catDiv.innerHTML = `<div class="filter-chip ${currentLootFilter === 'all' ? 'active' : ''}" data-action="set-loot-filter" data-value="all">Alle</div>` +
-        Object.entries(CATS).map(([k, v]) => `<div class="filter-chip ${currentLootFilter === k ? 'active' : ''}" data-action="set-loot-filter" data-value="${k}">${v}</div>`).join('');
-    
-    if (currentLootFilter !== 'all') items = items.filter(i => i.category === currentLootFilter);
-    
-    // Suche anwenden
+    let items = [...(D.loot || [])];
+
+    // Apply category filter
+    if (currentLootFilter !== 'all') {
+        items = items.filter(i => i.category === currentLootFilter);
+    }
+
+    // Apply search
     if (search) {
-        items = items.filter(i => 
+        items = items.filter(i =>
             (i.name || '').toLowerCase().includes(search) ||
             (i.description || '').toLowerCase().includes(search) ||
             (i.special || '').toLowerCase().includes(search) ||
@@ -369,168 +382,257 @@ function renderLoot() {
             (i.tags || []).some(t => t.toLowerCase().includes(search))
         );
     }
-    
-    if (!items.length) { 
-        c.innerHTML = renderEmptyState({
-            icon: '📦',
-            titleEmpty: 'Truhe ist leer',
-            titleFiltered: 'Keine Gegenstände gefunden',
-            descEmpty: 'Füge Beute und Ausrüstung hinzu.',
-            buttonText: '➕ Gegenstand hinzufügen',
-            buttonAction: 'toggle-collapse',
-            buttonValue: 'loot-form',
-            isFiltered: !!(search || currentLootFilter !== 'all'),
-            gridSpan: 'auto'
-        });
-        return; 
+
+    // Sort by name
+    items.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+
+    // Empty state
+    if (!items.length) {
+        listContainer.innerHTML = `
+            <div class="loot-detail-empty" style="padding: 40px;">
+                <div class="loot-detail-empty-icon">📦</div>
+                <div class="loot-detail-empty-text">${search || currentLootFilter !== 'all' ? 'Keine Treffer' : 'Truhe ist leer'}</div>
+                ${!search && currentLootFilter === 'all' ? `
+                    <button class="loot-add-btn" data-action="show-modal" data-value="loot-modal" style="margin-top: 12px;">
+                        + Item hinzufügen
+                    </button>
+                ` : ''}
+            </div>
+        `;
+        clearLootDetail();
+        return;
     }
-    
-    const RARITY_LABELS = { normal: 'Normal', common: 'Gewöhnlich', uncommon: 'Ungewöhnlich', rare: 'Selten', veryrare: 'Sehr selten', legendary: 'Legendär' };
-    const ORIGIN_LABELS = { campaign: '📜 Kampagne', quest: '🎯 Quest', summon: '✨ Beschwörung', loot: '💰 Loot', find: '🔍 Fund', purchase: '🛒 Kauf', gift: '🎁 Geschenk', craft: '🔨 Hergestellt' };
-    const TAG_LABELS = {
-        weapon: '⚔️ Waffe', armor: '🛡️ Rüstung', potion: '🧪 Trank', scroll: '📜 Schriftrolle', ring: '💍 Ring',
-        wand: '🪄 Zauberstab', rod: '🏛️ Zepter', staff: '🪵 Stecken', wondrous: '✨ Wundersam', ammunition: '🏹 Munition', focus: '🔮 Fokus',
-        light: '🪶 Leicht', heavy: '🏋️ Schwer', finesse: '⚡ Finesse', 'two-handed': '🙌 Zweihändig', versatile: '↔️ Vielseitig',
-        reach: '📏 Reichweite', thrown: '🎯 Wurf', loading: '⏳ Laden', silvered: '🥈 Silber', adamantine: '💠 Adamant',
-        'light-armor': '👕 Leichte Rüst.', 'medium-armor': '🦺 Mittlere Rüst.', 'heavy-armor': '🛡️ Schwere Rüst.', shield: '🔰 Schild',
-        attunement: '🔮 Einstimmung', charges: '⚡ Ladungen', consumable: '💨 Verbrauchsgut', cursed: '💀 Verflucht', sentient: '🧠 Intelligent',
-        head: '👑 Kopf', neck: '📿 Hals', back: '🧥 Rücken', body: '👔 Körper', hands: '🧤 Hände', finger: '💍 Finger', waist: '🎗️ Taille', feet: '👢 Füße',
-        fire: '🔥 Feuer', cold: '❄️ Kälte', lightning: '⚡ Blitz', acid: '🧪 Säure', poison: '☠️ Gift', necrotic: '💀 Nekrotisch', radiant: '☀️ Strahlend', healing: '💚 Heilung',
-        tool: '🔧 Werkzeug', gemstone: '💎 Edelstein', art: '🖼️ Kunstobjekt', container: '📦 Behälter', key: '🗝️ Schlüssel', document: '📄 Dokument'
-    };
-    const TAG_CATEGORIES = {
-        type: ['weapon', 'armor', 'potion', 'scroll', 'ring', 'wand', 'rod', 'staff', 'wondrous', 'ammunition', 'focus'],
-        property: ['light', 'heavy', 'finesse', 'two-handed', 'versatile', 'reach', 'thrown', 'loading', 'silvered', 'adamantine'],
-        armor: ['light-armor', 'medium-armor', 'heavy-armor', 'shield'],
-        magic: ['attunement', 'charges', 'consumable', 'cursed', 'sentient'],
-        slot: ['head', 'neck', 'back', 'body', 'hands', 'finger', 'waist', 'feet'],
-        damage: ['fire', 'cold', 'lightning', 'acid', 'poison', 'necrotic', 'radiant', 'healing']
-    };
-    
-    c.innerHTML = items.map(i => {
-        const catIcon = CATS[i.category]?.split(' ')[0] || '📦';
-        const depleted = i.quantity <= 0;
-        const rarity = i.rarity || 'normal';
-        const rarityLabel = RARITY_LABELS[rarity] || 'Normal';
-        const showBadge = rarity !== 'normal';
-        const totalValue = (i.value || 0) * Math.max(0, i.quantity);
-        const isExpanded = expandedLootItems.has(i.id);
-        const hasAttunement = (i.tags || []).includes('attunement') || i.attunement;
-        
-        // Tags rendern mit Kategorie-Styling
-        const tagsHtml = (i.tags || []).length > 0 ? `<div class="loot-item-tags">${
-            (i.tags || []).map(t => {
-                const category = Object.entries(TAG_CATEGORIES).find(([_, tags]) => tags.includes(t))?.[0] || 'other';
-                return `<span class="loot-item-tag ${category}">${TAG_LABELS[t] || t}</span>`;
-            }).join('')
-        }</div>` : '';
-        
-        // Details-Bereich mit neuen Feldern
-        const detailsHtml = [];
-        if (i.origin && ORIGIN_LABELS[i.origin]) {
-            detailsHtml.push(`<div class="loot-item-detail"><span class="loot-item-detail-label">Herkunft</span><span class="loot-item-detail-value">${ORIGIN_LABELS[i.origin]}</span></div>`);
-        }
-        if (i.special) {
-            detailsHtml.push(`<div class="loot-item-detail"><span class="loot-item-detail-label">Besonderheit</span><span class="loot-item-detail-value">${esc(i.special)}</span></div>`);
-        }
-        if (i.property) {
-            detailsHtml.push(`<div class="loot-item-detail"><span class="loot-item-detail-label">Eigenschaft</span><span class="loot-item-detail-value">${esc(i.property)}</span></div>`);
-        }
-        
-        return `<div class="loot-item rarity-${rarity} ${depleted ? 'depleted' : ''} ${isExpanded ? 'expanded' : ''}" data-loot-id="${i.id}">
-            <div class="loot-item-header" data-action="toggle-loot" data-id="${i.id}">
-                <div class="loot-item-icon">${catIcon}</div>
-                <div class="loot-item-info">
-                    <div class="loot-item-name">${esc(i.name)}${hasAttunement ? '<span class="loot-attunement-badge" title="Einstimmung erforderlich">🔮</span>' : ''}</div>
-                    <div class="loot-item-meta-line">
-                        <span>×${i.quantity}</span>
-                        <span style="color: var(--gold);">${totalValue.toFixed(0)} GM</span>
-                        ${showBadge ? `<span class="rarity-badge ${rarity}">${rarityLabel}</span>` : ''}
-                    </div>
-                </div>
-                <span class="loot-item-toggle">▶</span>
-            </div>
-            <div class="loot-item-content">
-                ${detailsHtml.length > 0 ? `<div class="loot-item-detail-row">${detailsHtml.join('')}</div>` : ''}
-                ${i.description ? `<div class="loot-item-desc">${sanitizeHTML(i.description)}</div>` : ''}
-                ${tagsHtml}
-                <div class="loot-item-footer">
-                    <div class="loot-item-meta">
-                        ${i.weight ? `<span>⚖️ ${i.weight} kg</span>` : ''}
-                    </div>
-                    <div style="display: flex; gap: 4px;">
-                        <button class="btn btn-sm" data-action="edit-loot-stop" data-id="${i.id}" title="Bearbeiten">✏️</button>
-                        <button class="btn btn-sm btn-danger" data-action="delete-loot-stop" data-id="${i.id}" title="Löschen">🗑️</button>
-                    </div>
-                </div>
-            </div>
-        </div>`;
-    }).join('');
-}
 
-let expandedLootItems = new Set();
+    // Render list items
+    listContainer.innerHTML = items.map(item => renderLootItem(item)).join('');
 
-function toggleLootItem(id) {
-    if (expandedLootItems.has(id)) {
-        expandedLootItems.delete(id);
+    // Auto-select first if none selected
+    if (!selectedLootId || !items.find(i => i.id === selectedLootId)) {
+        selectLoot(items[0].id, false);
     } else {
-        expandedLootItems.add(id);
-    }
-    
-    // Direkt das DOM-Element togglen statt komplettes Re-Render
-    const item = document.querySelector(`.loot-item[data-loot-id="${id}"]`);
-    if (item) {
-        item.classList.toggle('expanded', expandedLootItems.has(id));
+        showLootDetail(selectedLootId);
     }
 }
 
-function expandAllLoot() {
-    (D.loot || []).forEach(i => expandedLootItems.add(i.id));
-    renderLoot();
+function renderLootItem(item) {
+    const catIcon = CATS[item.category]?.split(' ')[0] || '📦';
+    const isSelected = item.id === selectedLootId;
+    const rarity = item.rarity || 'normal';
+    const rarityColor = RARITY_COLORS[rarity] || RARITY_COLORS.normal;
+    const depleted = item.quantity <= 0;
+
+    return `
+        <div class="loot-item ${isSelected ? 'selected' : ''} ${depleted ? 'depleted' : ''}" data-action="select-loot" data-id="${item.id}">
+            <div class="loot-item-icon">${catIcon}</div>
+            <div class="loot-item-info">
+                <div class="loot-item-name" style="color: ${rarityColor};">
+                    ${esc(item.name)}
+                    ${rarity !== 'normal' ? `<span class="loot-item-tag" style="background: ${rarityColor}; color: var(--bg-dark);">${RARITY_LABELS[rarity]}</span>` : ''}
+                </div>
+                <div class="loot-item-meta">
+                    ×${item.quantity} • ${((item.value || 0) * item.quantity).toFixed(0)} GM
+                </div>
+            </div>
+            <div class="loot-item-badges">
+                ${(item.tags || []).includes('attunement') ? '<span class="loot-badge" title="Einstimmung">🔮</span>' : ''}
+            </div>
+        </div>
+    `;
 }
 
-function collapseAllLoot() {
-    expandedLootItems.clear();
-    renderLoot();
+function selectLoot(id, scroll = true) {
+    selectedLootId = id;
+
+    // Update selection in list
+    document.querySelectorAll('.loot-item').forEach(el => {
+        el.classList.toggle('selected', el.dataset.id == id);
+    });
+
+    // Show detail
+    showLootDetail(id);
+
+    // Scroll into view if needed
+    if (scroll) {
+        const el = document.querySelector(`.loot-item[data-id="${id}"]`);
+        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
 }
 
-function setLootFilter(f) { currentLootFilter = f; renderLoot(); }
+function showLootDetail(id) {
+    const panel = $('loot-detail-panel');
+    if (!panel) return;
+
+    const item = EntityLookup.lootItem(id);
+    if (!item) {
+        clearLootDetail();
+        return;
+    }
+
+    const catIcon = CATS[item.category]?.split(' ')[0] || '📦';
+    const rarity = item.rarity || 'normal';
+    const rarityColor = RARITY_COLORS[rarity] || RARITY_COLORS.normal;
+    const totalValue = (item.value || 0) * Math.max(0, item.quantity);
+
+    panel.innerHTML = `
+        <div class="loot-detail-content">
+            <div class="loot-detail-header">
+                <div class="loot-detail-icon">${catIcon}</div>
+                <div class="loot-detail-title">
+                    <div class="loot-detail-name" style="color: ${rarityColor};">${esc(item.name)}</div>
+                    <div class="loot-detail-subtitle">${CATS[item.category] || 'Sonstiges'} • ${RARITY_LABELS[rarity]}</div>
+                </div>
+                <div class="loot-detail-actions">
+                    <button class="loot-detail-btn" data-action="edit-loot" data-id="${id}" title="Bearbeiten">✏️</button>
+                    <button class="loot-detail-btn danger" data-action="delete-loot" data-id="${id}" title="Löschen">🗑️</button>
+                </div>
+            </div>
+
+            ${(item.tags || []).length > 0 ? `
+                <div class="loot-tags-section">
+                    <div class="loot-tags">
+                        ${(item.tags || []).map(t => `<span class="loot-tag">${LOOT_TAG_LABELS[t] || t}</span>`).join('')}
+                    </div>
+                </div>
+            ` : ''}
+
+            <div class="loot-section">
+                <div class="loot-stats">
+                    <div class="loot-stat">
+                        <div class="loot-stat-label">Menge</div>
+                        <div class="loot-stat-value">${item.quantity}</div>
+                    </div>
+                    <div class="loot-stat">
+                        <div class="loot-stat-label">Wert</div>
+                        <div class="loot-stat-value" style="color: var(--gold);">${totalValue.toFixed(0)} GM</div>
+                    </div>
+                    <div class="loot-stat">
+                        <div class="loot-stat-label">Gewicht</div>
+                        <div class="loot-stat-value">${item.weight ? item.weight + ' kg' : '—'}</div>
+                    </div>
+                </div>
+            </div>
+
+            ${item.origin ? `
+                <div class="loot-section">
+                    <div class="loot-section-title">Herkunft</div>
+                    <div>${ORIGIN_LABELS[item.origin] || item.origin}</div>
+                </div>
+            ` : ''}
+
+            ${item.special ? `
+                <div class="loot-section">
+                    <div class="loot-section-title">Besonderheit</div>
+                    <div>${esc(item.special)}</div>
+                </div>
+            ` : ''}
+
+            ${item.property ? `
+                <div class="loot-section">
+                    <div class="loot-section-title">Eigenschaft</div>
+                    <div>${esc(item.property)}</div>
+                </div>
+            ` : ''}
+
+            ${item.description ? `
+                <div class="loot-section">
+                    <div class="loot-section-title">Beschreibung</div>
+                    <div class="loot-desc">${sanitizeHTML(item.description)}</div>
+                </div>
+            ` : ''}
+        </div>
+    `;
+}
+
+function clearLootDetail() {
+    const panel = $('loot-detail-panel');
+    if (panel) {
+        panel.innerHTML = `
+            <div class="loot-detail-empty">
+                <div class="loot-detail-empty-icon">📦</div>
+                <div class="loot-detail-empty-text">Wähle ein Item aus der Liste</div>
+            </div>
+        `;
+    }
+}
+
+function setLootFilter(f) { currentLootFilter = f; renderLootList(); }
+
+function showLootModal(id = null) {
+    clearLootForm();
+    const modal = $('loot-modal');
+    const title = modal.querySelector('.modal-title');
+
+    if (id) {
+        const item = EntityLookup.lootItem(id);
+        if (!item) return;
+
+        title.textContent = 'Item bearbeiten';
+        $('edit-loot-id').value = id;
+        $('loot-name').value = item.name || '';
+        $('loot-cat').value = item.category || 'misc';
+        $('loot-rarity').value = item.rarity || 'normal';
+        $('loot-qty').value = item.quantity || 1;
+        $('loot-wt').value = item.weight || '';
+        $('loot-val').value = item.value || '';
+        $('loot-desc').innerHTML = sanitizeHTML(item.description) || '';
+
+        if ($('loot-origin')) $('loot-origin').value = item.origin || '';
+        if ($('loot-special')) $('loot-special').value = item.special || '';
+        if ($('loot-property')) $('loot-property').value = item.property || '';
+
+        // Tags laden
+        document.querySelectorAll('#loot-tag-grid .loot-tag-chip input').forEach(cb => {
+            cb.checked = (item.tags || []).includes(cb.value);
+        });
+        updateLootSelectedTags();
+
+        $('loot-save-btn').textContent = '💾 Speichern';
+    } else {
+        title.textContent = 'Item hinzufügen';
+        $('loot-save-btn').textContent = '+ Hinzufügen';
+    }
+
+    showModal('loot-modal');
+    $('loot-name').focus();
+}
 
 function saveLoot() {
-    const name = $('loot-name').value.trim(); 
+    const name = $('loot-name').value.trim();
     if (!name) { showToast('⚠️ Name erforderlich', 'error'); return; }
-    
+
     const editId = $('edit-loot-id').value;
-    
+
     // Tags aus den Checkboxen sammeln
     const tags = [];
     document.querySelectorAll('#loot-tag-grid .loot-tag-chip input:checked').forEach(cb => {
         tags.push(cb.value);
     });
-    
+
     const item = {
-        name, 
-        category: $('loot-cat').value, 
+        name,
+        category: $('loot-cat').value,
         rarity: $('loot-rarity').value,
-        quantity: parseInt($('loot-qty').value) || 1, 
+        quantity: parseInt($('loot-qty').value) || 1,
         weight: parseFloat($('loot-wt').value) || 0,
-        value: parseFloat($('loot-val').value) || 0, 
+        value: parseFloat($('loot-val').value) || 0,
         description: sanitizeHTML($('loot-desc').innerHTML),
-        // Neue Felder
         origin: $('loot-origin')?.value || '',
         special: $('loot-special')?.value?.trim() || '',
         property: $('loot-property')?.value?.trim() || '',
         tags: tags,
-        // Attunement als Tag behandeln falls vorhanden
         attunement: tags.includes('attunement')
     };
-    
+
     if (editId) {
         // Update existing item
         const idx = D.loot.findIndex(i => i.id === parseInt(editId));
         if (idx > -1) {
             D.loot[idx] = { ...D.loot[idx], ...item };
             showToast('Item aktualisiert');
+            // Detail-Panel aktualisieren falls selbes Item
+            if (selectedLootId === parseInt(editId)) {
+                showLootDetail(parseInt(editId));
+            }
         }
     } else {
         // Add new item (or merge with existing)
@@ -538,61 +640,24 @@ function saveLoot() {
         const existing = D.loot.find(i => i.name.toLowerCase() === name.toLowerCase() && i.category === item.category && i.rarity === item.rarity);
         if (existing) {
             existing.quantity += item.quantity;
+            showToast('Menge erhöht');
         } else {
             D.loot.push(item);
+            showToast('Item hinzugefügt');
+            // Neues Item selektieren
+            selectedLootId = item.id;
         }
-        showToast('Item hinzugefügt');
     }
-    
+
+    hideModal('loot-modal');
     clearLootForm();
-    // Formular einklappen
-    $('loot-form').classList.remove('open');
-    $('loot-form-icon').textContent = '▼';
-    renderLoot(); 
+    renderLootList();
+    if (selectedLootId) showLootDetail(selectedLootId);
     save();
 }
 
 function editLoot(id) {
-    const item = EntityLookup.lootItem(id);
-    if (!item) return;
-    
-    $('edit-loot-id').value = id;
-    $('loot-name').value = item.name || '';
-    $('loot-cat').value = item.category || 'misc';
-    $('loot-rarity').value = item.rarity || 'normal';
-    $('loot-qty').value = item.quantity || 1;
-    $('loot-wt').value = item.weight || '';
-    $('loot-val').value = item.value || '';
-    $('loot-desc').innerHTML = sanitizeHTML(item.description) || '';
-    
-    // Neue Felder laden
-    if ($('loot-origin')) $('loot-origin').value = item.origin || '';
-    if ($('loot-special')) $('loot-special').value = item.special || '';
-    if ($('loot-property')) $('loot-property').value = item.property || '';
-    
-    // Tags laden
-    document.querySelectorAll('#loot-tag-grid .loot-tag-chip input').forEach(cb => {
-        cb.checked = (item.tags || []).includes(cb.value);
-    });
-    updateLootSelectedTags();
-    
-    $('loot-save-btn').textContent = '✓ Speichern';
-    $('loot-name').placeholder = 'Bearbeiten: ' + (item.name || '');
-    
-    // Formular aufklappen
-    $('loot-form').classList.add('open');
-    $('loot-form-icon').textContent = '▲';
-    
-    // Scroll to form & highlight
-    $('loot-name').scrollIntoView({ behavior: 'smooth', block: 'center' });
-    $('loot-name').focus();
-}
-
-function cancelLootEdit() {
-    clearLootForm();
-    // Formular einklappen
-    $('loot-form').classList.remove('open');
-    $('loot-form-icon').textContent = '▼';
+    showLootModal(id);
 }
 
 function clearLootForm() {
@@ -620,7 +685,19 @@ function clearLootForm() {
     $('loot-name').placeholder = 'Name *';
 }
 
-function removeLoot(id) { if (confirm('Entfernen?')) { D.loot = D.loot.filter(i => i.id !== id); renderLoot(); save(); } }
+function removeLoot(id) {
+    if (confirm('Item entfernen?')) {
+        D.loot = D.loot.filter(i => i.id !== id);
+        // Selektion zurücksetzen falls gelöschtes Item selektiert war
+        if (selectedLootId === id) {
+            selectedLootId = null;
+            clearLootDetail();
+        }
+        renderLootList();
+        save();
+        showToast('Item entfernt');
+    }
+}
 
 // Loot Tag-Filter und Selection Funktionen
 function initLootTagSystem() {
@@ -653,32 +730,21 @@ function initLootTagSystem() {
 function updateLootSelectedTags() {
     const container = $('loot-selected-tags');
     if (!container) return;
-    
-    const TAG_LABELS = {
-        weapon: '⚔️ Waffe', armor: '🛡️ Rüstung', potion: '🧪 Trank', scroll: '📜 Schriftrolle', ring: '💍 Ring',
-        wand: '🪄 Zauberstab', rod: '🏛️ Zepter', staff: '🪵 Stecken', wondrous: '✨ Wundersam', ammunition: '🏹 Munition', focus: '🔮 Fokus',
-        light: '🪶 Leicht', heavy: '🏋️ Schwer', finesse: '⚡ Finesse', 'two-handed': '🙌 Zweihändig', versatile: '↔️ Vielseitig',
-        reach: '📏 Reichweite', thrown: '🎯 Wurf', loading: '⏳ Laden', silvered: '🥈 Silber', adamantine: '💠 Adamant',
-        'light-armor': '👕 Leichte Rüst.', 'medium-armor': '🦺 Mittlere Rüst.', 'heavy-armor': '🛡️ Schwere Rüst.', shield: '🔰 Schild',
-        attunement: '🔮 Einstimmung', charges: '⚡ Ladungen', consumable: '💨 Verbrauchsgut', cursed: '💀 Verflucht', sentient: '🧠 Intelligent',
-        head: '👑 Kopf', neck: '📿 Hals', back: '🧥 Rücken', body: '👔 Körper', hands: '🧤 Hände', finger: '💍 Finger', waist: '🎗️ Taille', feet: '👢 Füße',
-        fire: '🔥 Feuer', cold: '❄️ Kälte', lightning: '⚡ Blitz', acid: '🧪 Säure', poison: '☠️ Gift', necrotic: '💀 Nekrotisch', radiant: '☀️ Strahlend', healing: '💚 Heilung',
-        tool: '🔧 Werkzeug', gemstone: '💎 Edelstein', art: '🖼️ Kunstobjekt', container: '📦 Behälter', key: '🗝️ Schlüssel', document: '📄 Dokument'
-    };
-    
+
+    // Verwendet LOOT_TAG_LABELS aus constants.js
     const selectedTags = [];
     document.querySelectorAll('#loot-tag-grid .loot-tag-chip input:checked').forEach(cb => {
         selectedTags.push(cb.value);
     });
-    
+
     if (selectedTags.length === 0) {
         container.innerHTML = '';
         return;
     }
-    
-    container.innerHTML = selectedTags.map(tag => 
+
+    container.innerHTML = selectedTags.map(tag =>
         `<span class="loot-selected-tag">
-            ${TAG_LABELS[tag] || tag}
+            ${LOOT_TAG_LABELS[tag] || tag}
             <span class="remove-tag" data-action="remove-loot-tag" data-value="${tag}">✕</span>
         </span>`
     ).join('');

@@ -64,8 +64,7 @@ function renderAssignItemList() {
         return;
     }
     
-    const RARITY_COLORS = { normal: '#e0e0e0', common: '#4ade80', uncommon: '#60a5fa', rare: '#a78bfa', veryrare: '#facc15', legendary: '#fb923c' };
-    
+    // Verwendet RARITY_COLORS aus constants.js
     container.innerHTML = items.map(i => {
         const assignedQty = getAssignedQuantity(i.id);
         const maxQty = i.quantity || 1;

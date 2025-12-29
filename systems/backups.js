@@ -137,16 +137,37 @@ async function restoreBackup(index) {
         showToast('❌ Backup nicht gefunden');
         return;
     }
-    
+
     if (!confirm('Aktuellen Stand mit Backup überschreiben?')) return;
-    
+
     try {
-        D = JSON.parse(backups[index].data);
+        const parsed = JSON.parse(backups[index].data);
+
+        // Validiere Backup-Struktur
+        if (!parsed || typeof parsed !== 'object') {
+            throw new Error('Ungültiges Backup-Format');
+        }
+
+        // Prüfe auf erforderliche Arrays (mindestens leere Arrays)
+        const requiredArrays = ['characters', 'npcs', 'quests', 'locations', 'loot'];
+        for (const key of requiredArrays) {
+            if (parsed[key] !== undefined && !Array.isArray(parsed[key])) {
+                throw new Error(`Ungültiger Datentyp für ${key}`);
+            }
+        }
+
+        // Prüfe initiative-Struktur
+        if (parsed.initiative && typeof parsed.initiative !== 'object') {
+            throw new Error('Ungültige Initiative-Daten');
+        }
+
+        D = parsed;
         renderAll();
         saveImmediate();
         showToast('✅ Backup wiederhergestellt');
     } catch (e) {
-        showToast('❌ Backup fehlerhaft');
+        console.error('[Backup] Restore failed:', e);
+        showToast('❌ Backup fehlerhaft: ' + (e.message || 'Unbekannter Fehler'));
     }
 }
 

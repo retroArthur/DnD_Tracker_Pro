@@ -117,13 +117,14 @@ const EntityActions = {
     'toggle-enc-lang-dropdown': (ctx) => { if (typeof toggleEncLangDropdown === 'function') toggleEncLangDropdown(); },
 
     // Loot actions
+    'select-loot': (ctx) => { if (typeof selectLoot === 'function') selectLoot(ctx.id); },
     'edit-loot': (ctx) => { ctx.event.stopPropagation(); editLoot(ctx.id); },
     'delete-loot': (ctx) => { ctx.event.stopPropagation(); removeLoot(ctx.id); },
-    'toggle-loot': (ctx) => toggleLootItem(ctx.id),
     'edit-loot-stop': (ctx) => { ctx.event.stopPropagation(); editLoot(ctx.id); },
     'delete-loot-stop': (ctx) => { ctx.event.stopPropagation(); removeLoot(ctx.id); },
     'remove-loot-tag': (ctx) => removeLootTag(ctx.value),
     'set-loot-filter': (ctx) => setLootFilter(ctx.value || 'all'),
+    'show-loot-modal': (ctx) => { if (typeof showLootModal === 'function') showLootModal(ctx.id || null); },
 
     // Spell actions
     'edit-spell': (ctx) => editSpell(ctx.id),

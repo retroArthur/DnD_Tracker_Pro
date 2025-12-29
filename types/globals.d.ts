@@ -266,10 +266,7 @@ declare global {
   
   /** Save loot item from form */
   function saveLoot(): void;
-  
-  /** Toggle loot item expansion */
-  function toggleLootItem(id: EntityId): void;
-  
+
   // ============================================================
   // SPELL FUNCTIONS
   // ============================================================

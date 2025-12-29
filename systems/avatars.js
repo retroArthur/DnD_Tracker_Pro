@@ -15,9 +15,17 @@ function showAvatarModal(type, id) {
 function previewAvatar() {
     const url = $('avatar-url').value.trim();
     const preview = $('avatar-preview');
-    
+
     if (url) {
-        preview.innerHTML = `<img src="${esc(url)}" class="avatar avatar-xl" onerror="this.parentElement.innerHTML='❌'">`;
+        const img = document.createElement('img');
+        img.src = url;
+        img.className = 'avatar avatar-xl';
+        img.addEventListener('error', () => {
+            preview.innerHTML = '';
+            preview.textContent = '❌';
+        });
+        preview.innerHTML = '';
+        preview.appendChild(img);
     } else {
         preview.innerHTML = '?';
         preview.className = 'avatar avatar-xl avatar-placeholder';
