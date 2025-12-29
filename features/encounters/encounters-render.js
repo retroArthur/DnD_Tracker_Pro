@@ -136,8 +136,8 @@ function renderEncounterItem(enc) {
             <div class="enc-item-icon">${icon}</div>
             <div class="enc-item-info">
                 <div class="enc-item-name">
-                    ${esc(enc.name)}
                     ${enc.cr ? `<span class="enc-item-cr">CR ${enc.cr}</span>` : ''}
+                    ${esc(enc.name)}
                 </div>
                 <div class="enc-item-meta">
                     ${enc.creatureType ? esc(enc.creatureType) : 'Unbekannt'}
