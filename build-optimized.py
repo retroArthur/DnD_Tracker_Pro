@@ -26,7 +26,7 @@ MODULES = [
     'utils/performance.js',
     'utils/utilities.js',
     
-    # Systems (8 Module)
+    # Systems (18 Module)
     'systems/undo.js',
     'systems/backups.js',
     'systems/tags.js',
@@ -34,7 +34,18 @@ MODULES = [
     'systems/conditions.js',
     'systems/hp-calculator.js',
     'systems/avatars.js',
-    'systems/spellslots.js',
+    # Spellslots-Module (ersetzt systems/spellslots.js)
+    'systems/spellslots/spell-slots-core.js',
+    'systems/spellslots/notes-templates.js',
+    'systems/spellslots/quick-reference.js',
+    'systems/spellslots/pwa-install.js',
+    'systems/spellslots/version-migration.js',
+    'systems/spellslots/virtual-list.js',
+    'systems/spellslots/keyboard-shortcuts.js',
+    'systems/spellslots/persistence.js',
+    'systems/spellslots/quick-roll.js',
+    'systems/spellslots/import-export.js',
+    'systems/spellslots/navigation.js',
     
     # Render (1 Modul)
     'render/helpers.js',
