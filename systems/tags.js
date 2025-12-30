@@ -12,7 +12,7 @@ function showTagsModal(type, id) {
 
 function renderTagsModal() {
     const type = $('tags-target-type').value;
-    const id = parseInt($('tags-target-id').value);
+    const id = parseEntityId($('tags-target-id').value);
     const entity = getEntityByTypeAndId(type, id);
     
     // Entity's current tags
@@ -71,7 +71,7 @@ function addTagToEntity() {
     
     const color = $('new-tag-color').value;
     const type = $('tags-target-type').value;
-    const id = parseInt($('tags-target-id').value);
+    const id = parseEntityId($('tags-target-id').value);
     const entity = getEntityByTypeAndId(type, id);
     if (!entity) return;
     
@@ -97,7 +97,7 @@ function addTagToEntity() {
 
 function addExistingTagToEntity(name, color) {
     const type = $('tags-target-type').value;
-    const id = parseInt($('tags-target-id').value);
+    const id = parseEntityId($('tags-target-id').value);
     const entity = getEntityByTypeAndId(type, id);
     if (!entity) return;
     
@@ -112,7 +112,7 @@ function addExistingTagToEntity(name, color) {
 
 function removeTagFromEntity(index) {
     const type = $('tags-target-type').value;
-    const id = parseInt($('tags-target-id').value);
+    const id = parseEntityId($('tags-target-id').value);
     const entity = getEntityByTypeAndId(type, id);
     if (!entity || !entity.tags) return;
     

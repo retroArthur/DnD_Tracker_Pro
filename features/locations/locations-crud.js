@@ -17,7 +17,7 @@ function saveLocation() {
     if (!loc.name) { showToast('⚠️ Name erforderlich', 'error'); return; }
 
     if (id) {
-        const idx = D.locations.findIndex(l => l.id === parseInt(id));
+        const idx = D.locations.findIndex(l => l.id === parseEntityId(id));
         if (idx > -1) D.locations[idx] = { ...D.locations[idx], ...loc };
     } else {
         loc.id = nextId('locations');

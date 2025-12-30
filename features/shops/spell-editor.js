@@ -175,7 +175,7 @@ function renderSpellCards(spells) {
                 </div>
                 ${s.m && s.material ? `<div class="spell-material">📦 ${esc(s.material)}</div>` : ''}
                 ${s.description ? `<div class="spell-desc">${sanitizeHTML(s.description)}</div>` : ''}
-                ${s.note ? `<div class="spell-note">📝 ${s.note}</div>` : ''}
+                ${s.note ? `<div class="spell-note">📝 ${sanitizeHTML(s.note)}</div>` : ''}
                 <div class="btn-group">
                     <button class="btn btn-sm" data-action="edit-spell-stop" data-id="${s.id}">✏️ Bearbeiten</button>
                     <button class="btn btn-sm btn-danger" data-action="delete-spell-stop" data-id="${s.id}">🗑️ Löschen</button>
@@ -948,7 +948,7 @@ function saveSpell() {
         description: descHtml, note: sanitizeHTML($('spell-note').innerHTML.trim())
     };
     if (!s.name) { showToast('⚠️ Name erforderlich', 'error'); return; }
-    if (id) { const idx = D.spells.findIndex(x => x.id === parseInt(id)); if (idx > -1) D.spells[idx] = { ...D.spells[idx], ...s }; }
+    if (id) { const idx = D.spells.findIndex(x => x.id === parseEntityId(id)); if (idx > -1) D.spells[idx] = { ...D.spells[idx], ...s }; }
     else { s.id = nextId('spells'); D.spells.push(s); }
     hideModal('spell-modal'); clearSpellForm(); renderSpells(); save();
 }

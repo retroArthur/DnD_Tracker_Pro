@@ -44,7 +44,7 @@ function saveNPC() {
     pushUndo(id ? 'NPC bearbeitet' : 'NPC erstellt');
 
     if (id) {
-        const idx = D.npcs.findIndex(n => n.id === parseInt(id));
+        const idx = D.npcs.findIndex(n => n.id === parseEntityId(id));
         if (idx > -1) {
             // Preserve existing dialog/trigger states
             const existing = D.npcs[idx];

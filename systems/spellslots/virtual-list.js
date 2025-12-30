@@ -13,12 +13,30 @@ class VirtualList {
         this.items = [];
         this.scrollTop = 0;
         this.visibleCount = 0;
-        
+
         this.content = document.createElement('div');
         this.content.className = 'virtual-list-content';
         container.appendChild(this.content);
-        
-        container.addEventListener('scroll', () => this.onScroll());
+
+        // Store bound handler for cleanup
+        this._scrollHandler = () => this.onScroll();
+        container.addEventListener('scroll', this._scrollHandler);
+    }
+
+    /**
+     * Cleanup method to remove event listeners and prevent memory leaks
+     */
+    destroy() {
+        if (this.container && this._scrollHandler) {
+            this.container.removeEventListener('scroll', this._scrollHandler);
+        }
+        if (this.content && this.content.parentNode) {
+            this.content.parentNode.removeChild(this.content);
+        }
+        this.container = null;
+        this.content = null;
+        this.items = [];
+        this._scrollHandler = null;
     }
     
     setItems(items) {

@@ -45,7 +45,7 @@ function saveQuest() {
     pushUndo(id ? 'Quest bearbeitet' : 'Quest erstellt');
 
     if (id) {
-        const idx = D.quests.findIndex(x => x.id === parseInt(id));
+        const idx = D.quests.findIndex(x => x.id === parseEntityId(id));
         if (idx > -1) D.quests[idx] = { ...D.quests[idx], ...q };
     } else {
         q.id = nextId('quests');

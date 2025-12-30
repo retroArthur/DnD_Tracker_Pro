@@ -3,19 +3,19 @@
             <h1 class="app-title">⚔️ D&D Kampagnen-Tracker Pro</h1>
             <div class="global-search-container">
                 <span class="global-search-icon">🔍</span>
-                <input type="text" class="global-search-input" id="global-search" placeholder="Suche NPCs, Orte, Quests..." oninput="debouncedGlobalSearch()" onfocus="performGlobalSearch()">
+                <input type="text" class="global-search-input" id="global-search" placeholder="Suche NPCs, Orte, Quests..." oninput="debouncedGlobalSearch()" onfocus="performGlobalSearch()" aria-label="Globale Suche">
                 <div class="global-search-results" id="global-search-results"></div>
             </div>
             <div class="header-actions">
                 <!-- Schnellnotizen Button -->
-                <button class="header-action-btn" data-action="toggle-quick-notes" title="Schnellnotizen">📝</button>
+                <button class="header-action-btn" data-action="toggle-quick-notes" title="Schnellnotizen" aria-label="Schnellnotizen öffnen">📝</button>
                 <div class="header-divider"></div>
                 <!-- Session Timer -->
                 <div class="session-timer" id="session-timer">
                     <span class="session-timer-icon">⏱️</span>
                     <span class="session-timer-display" id="session-timer-display">00:00:00</span>
-                    <button class="session-timer-btn" data-action="call" data-value="toggleSessionTimer" id="session-timer-toggle" title="Start/Pause">▶️</button>
-                    <button class="session-timer-btn" data-action="call" data-value="resetSessionTimer" title="Reset">🔄</button>
+                    <button class="session-timer-btn" data-action="call" data-value="toggleSessionTimer" id="session-timer-toggle" title="Start/Pause" aria-label="Timer starten oder pausieren">▶️</button>
+                    <button class="session-timer-btn" data-action="call" data-value="resetSessionTimer" title="Reset" aria-label="Timer zurücksetzen">🔄</button>
                 </div>
                 <div class="header-divider"></div>
                 <!-- Save Indicator -->
@@ -24,10 +24,10 @@
                     <span class="save-indicator-text">Gespeichert</span>
                 </div>
                 <div class="header-divider"></div>
-                <button class="header-action-btn" data-action="undo" title="Rückgängig (Strg+Z)">↩️</button>
-                <button class="header-action-btn" data-action="redo" title="Wiederholen (Strg+Y)">↪️</button>
-                <button class="header-action-btn" data-action="show-shortcuts-overlay" title="Tastenkürzel (?)">⌨️</button>
-                <button class="header-action-btn" data-action="toggle-layout" title="Layout wechseln" id="layout-switcher">
+                <button class="header-action-btn" data-action="undo" title="Rückgängig (Strg+Z)" aria-label="Letzte Aktion rückgängig machen">↩️</button>
+                <button class="header-action-btn" data-action="redo" title="Wiederholen (Strg+Y)" aria-label="Letzte Aktion wiederholen">↪️</button>
+                <button class="header-action-btn" data-action="show-shortcuts-overlay" title="Tastenkürzel (?)" aria-label="Tastenkürzel anzeigen">⌨️</button>
+                <button class="header-action-btn" data-action="toggle-layout" title="Layout wechseln" id="layout-switcher" aria-label="Layout wechseln">
                     <span id="layout-icon">🖥️</span>
                 </button>
             </div>
@@ -36,25 +36,25 @@
             <span class="mobile-nav-toggle-text">📍 Navigation</span>
             <span class="mobile-nav-toggle-icon">▲</span>
         </div>
-        <nav class="nav-tabs" id="nav-tabs-container">
-            <button class="nav-tab active" data-view="dashboard" draggable="true">🏠 Start</button>
-            <button class="nav-tab" data-view="party" draggable="true">👥 Party</button>
-            <button class="nav-tab" data-view="npcs" draggable="true">🎭 NPCs</button>
-            <button class="nav-tab" data-view="locations" draggable="true">🏠 Orte</button>
-            <button class="nav-tab" data-view="network" draggable="true">🔗 Netzwerk</button>
-            <button class="nav-tab" data-view="quests" draggable="true">📜 Quests</button>
-            <button class="nav-tab" data-view="encounter" draggable="true">👹 Encounter</button>
-            <button class="nav-tab" data-view="initiative" draggable="true">⚔️ Initiative</button>
-            <button class="nav-tab" data-view="loot" draggable="true">📦 Truhe</button>
-            <button class="nav-tab" data-view="shops" draggable="true">🏪 Shops</button>
-            <button class="nav-tab" data-view="spells" draggable="true">✨ Zauber</button>
-            <button class="nav-tab" data-view="notes" draggable="true">📝 Notizen</button>
-            <button class="nav-tab" data-view="wiki" draggable="true">📚 Wiki</button>
-            <button class="nav-tab" data-view="links" draggable="true">🔗 Links</button>
-            <button class="nav-tab" data-view="dice" draggable="true">🎲 Würfel</button>
-            <button class="nav-tab" data-view="timers" draggable="true">⏱️ Timer</button>
-            <button class="nav-tab" data-view="maps" draggable="true">🗺️ Karten</button>
-            <button class="nav-tab" data-view="data" draggable="true">💾 Daten</button>
+        <nav class="nav-tabs" id="nav-tabs-container" role="tablist" aria-label="Hauptnavigation">
+            <button class="nav-tab active" data-view="dashboard" draggable="true" role="tab" aria-selected="true">🏠 Start</button>
+            <button class="nav-tab" data-view="party" draggable="true" role="tab" aria-selected="false">👥 Party</button>
+            <button class="nav-tab" data-view="npcs" draggable="true" role="tab" aria-selected="false">🎭 NPCs</button>
+            <button class="nav-tab" data-view="locations" draggable="true" role="tab" aria-selected="false">🏠 Orte</button>
+            <button class="nav-tab" data-view="network" draggable="true" role="tab" aria-selected="false">🔗 Netzwerk</button>
+            <button class="nav-tab" data-view="quests" draggable="true" role="tab" aria-selected="false">📜 Quests</button>
+            <button class="nav-tab" data-view="encounter" draggable="true" role="tab" aria-selected="false">👹 Encounter</button>
+            <button class="nav-tab" data-view="initiative" draggable="true" role="tab" aria-selected="false">⚔️ Initiative</button>
+            <button class="nav-tab" data-view="loot" draggable="true" role="tab" aria-selected="false">📦 Truhe</button>
+            <button class="nav-tab" data-view="shops" draggable="true" role="tab" aria-selected="false">🏪 Shops</button>
+            <button class="nav-tab" data-view="spells" draggable="true" role="tab" aria-selected="false">✨ Zauber</button>
+            <button class="nav-tab" data-view="notes" draggable="true" role="tab" aria-selected="false">📝 Notizen</button>
+            <button class="nav-tab" data-view="wiki" draggable="true" role="tab" aria-selected="false">📚 Wiki</button>
+            <button class="nav-tab" data-view="links" draggable="true" role="tab" aria-selected="false">🔗 Links</button>
+            <button class="nav-tab" data-view="dice" draggable="true" role="tab" aria-selected="false">🎲 Würfel</button>
+            <button class="nav-tab" data-view="timers" draggable="true" role="tab" aria-selected="false">⏱️ Timer</button>
+            <button class="nav-tab" data-view="maps" draggable="true" role="tab" aria-selected="false">🗺️ Karten</button>
+            <button class="nav-tab" data-view="data" draggable="true" role="tab" aria-selected="false">💾 Daten</button>
             <button class="nav-tab" data-action="call" data-value="showDebugModal" style="color: var(--purple);">🧪 Debug</button>
             <button class="nav-tab" data-action="call" data-value="showThemeModal" style="color: var(--cyan);">🎨</button>
         </nav>

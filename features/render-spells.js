@@ -127,7 +127,7 @@ function showAssignSpells(charId) {
 }
 
 function renderAssignSpellList() {
-    const charId = parseInt($('assign-char-id').value);
+    const charId = parseEntityId($('assign-char-id').value);
     const ch = EntityLookup.character(charId);
     const currentSpells = ch?.spells || [];
 
@@ -170,7 +170,7 @@ function renderAssignSpellList() {
 
     container.innerHTML = spells.map(s => {
         const spellId = parseEntityId(s.id);
-        const isChecked = currentSpells.some(sid => parseInt(sid) === spellId);
+        const isChecked = currentSpells.some(sid => parseEntityId(sid) === spellId);
         const level = s.level ?? (s.type === 'cantrip' ? 0 : 0);
         const levelText = level === 0 ? '🔮' : level;
         const levelClass = level === 0 ? 'trick' : `level-${level}`;
@@ -211,9 +211,9 @@ function assignSpellsSelectNone() {
 }
 
 function assignSpells() {
-    const charId = parseInt($('assign-char-id')?.value);
-    
-    if (isNaN(charId)) {
+    const charId = parseEntityId($('assign-char-id')?.value);
+
+    if (charId === null) {
         showToast('⚠️ Keine Charakter-ID', 'error');
         return;
     }

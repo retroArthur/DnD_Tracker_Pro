@@ -100,7 +100,7 @@ function saveQuickRefEntry() {
     
     if (id) {
         // Bearbeiten
-        const idx = D.quickRefCustom.findIndex(e => e.id === parseInt(id));
+        const idx = D.quickRefCustom.findIndex(e => e.id === parseEntityId(id));
         if (idx > -1) {
             D.quickRefCustom[idx].title = title;
             D.quickRefCustom[idx].content = content;

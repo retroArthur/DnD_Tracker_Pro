@@ -23,7 +23,7 @@ function rollDiceAnimated(sides) {
     const btn = document.querySelector(`.dice-die.d${sides}`) || document.querySelector(`.dice-btn.d${sides}`);
     if (btn) {
         btn.classList.add('rolling');
-        setTimeout(() => btn.classList.remove('rolling'), 300);
+        setTimeout(() => btn.classList.remove('rolling'), APP_CONFIG.ANIMATION_SLOW);
     }
     
     const result = Math.floor(Math.random() * sides) + 1;

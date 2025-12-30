@@ -27,6 +27,15 @@ const APP_CONFIG = Object.freeze({
     TOAST_DURATION: 2000,
     DEBOUNCE_DELAY: 300,
     THROTTLE_DELAY: 100,
+
+    // Animation Timing
+    ANIMATION_QUICK: 100,        // Schnelle Animationen (Focus, kleine Übergänge)
+    ANIMATION_NORMAL: 200,       // Standard-Animationen (Skalierung, Fade)
+    ANIMATION_SLOW: 300,         // Langsame Animationen (Dice-Roll, Collapse)
+    ANIMATION_FEEDBACK: 400,     // Feedback-Animationen (Button-Roll)
+    MODAL_TRANSITION: 300,       // Modal öffnen/schließen
+    CONFETTI_DURATION: 1500,     // Confetti-Animation bei Nat 20
+    HIGHLIGHT_DURATION: 2000,    // Highlight-Effekte (z.B. Box-Shadow)
     
     // Performance
     VIRTUAL_SCROLL_THRESHOLD: 50,

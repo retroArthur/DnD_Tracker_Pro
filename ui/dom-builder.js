@@ -190,25 +190,42 @@ class DOMVirtualList {
             className: 'virtual-scroll-container',
             style: { overflow: 'auto', height: '100%' }
         });
-        
+
         // Spacer für korrektes Scrolling
         this.spacer = createElement('div', {
             className: 'virtual-scroll-spacer'
         });
-        
+
         // Content-Container
         this.content = createElement('div', {
             className: 'virtual-scroll-content'
         });
-        
+
         this.scrollContainer.appendChild(this.spacer);
         this.scrollContainer.appendChild(this.content);
         this.container.appendChild(this.scrollContainer);
-        
-        // Scroll-Handler
-        this.scrollContainer.addEventListener('scroll', 
-            throttle(() => this._onScroll(), 16)
-        );
+
+        // Scroll-Handler with stored reference for cleanup
+        this._scrollHandler = throttle(() => this._onScroll(), 16);
+        this.scrollContainer.addEventListener('scroll', this._scrollHandler);
+    }
+
+    /**
+     * Cleanup method to remove event listeners and prevent memory leaks
+     */
+    destroy() {
+        if (this.scrollContainer && this._scrollHandler) {
+            this.scrollContainer.removeEventListener('scroll', this._scrollHandler);
+        }
+        if (this.scrollContainer && this.scrollContainer.parentNode) {
+            this.scrollContainer.parentNode.removeChild(this.scrollContainer);
+        }
+        this.container = null;
+        this.scrollContainer = null;
+        this.content = null;
+        this.spacer = null;
+        this.items = [];
+        this._scrollHandler = null;
     }
     
     _onScroll() {

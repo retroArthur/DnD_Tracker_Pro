@@ -23,7 +23,7 @@ function showHpCalculator(type, id) {
 
 function applyHpChange(action) {
     const type = $('hp-calc-type').value;
-    const id = parseInt($('hp-calc-id').value);
+    const id = parseEntityId($('hp-calc-id').value);
     const entity = getEntityByTypeAndId(type, id);
     if (!entity) return;
     

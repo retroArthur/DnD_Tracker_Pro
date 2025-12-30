@@ -14,7 +14,7 @@ function showAssignItems(charId) {
 
 function renderAssignItemList() {
     const container = $('assign-item-list'); if (!container) return;
-    const charId = parseInt($('assign-item-char-id').value);
+    const charId = parseEntityId($('assign-item-char-id').value);
     const ch = EntityLookup.character(charId);
     if (!ch) { container.innerHTML = '<div style="color:var(--text-dim);">Charakter nicht gefunden</div>'; return; }
     
@@ -140,7 +140,7 @@ function updateAssignItemCount() {
 }
 
 function assignItems() {
-    const charId = parseInt($('assign-item-char-id').value);
+    const charId = parseEntityId($('assign-item-char-id').value);
     const ch = EntityLookup.character(charId); 
     if (!ch) {
         showToast('⚠️ Charakter nicht gefunden', 'error');

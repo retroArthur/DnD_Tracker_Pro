@@ -64,8 +64,8 @@ function renderInsertLinkTargets() {
 
 function insertEntityLinkToEditor() {
     const targetType = $('insert-link-target-type').value;
-    const targetId = parseInt($('insert-link-target-id').value);
-    
+    const targetId = parseEntityId($('insert-link-target-id').value);
+
     if (!targetId || !insertEntityLinkTargetEditor) {
         showToast('⚠️ Bitte Entity auswählen', 'error');
         return;
@@ -101,8 +101,8 @@ function renderLinkTargets() {
     const targetType = $('link-target-type').value;
     const select = $('link-target-id');
     const sourceType = $('link-source-type').value;
-    const sourceId = parseInt($('link-source-id').value);
-    
+    const sourceId = parseEntityId($('link-source-id').value);
+
     let items = [];
     if (targetType === 'npcs') items = D.npcs || [];
     else if (targetType === 'locations') items = D.locations || [];
@@ -127,7 +127,7 @@ function renderLinkTargets() {
 
 function renderCurrentLinks() {
     const type = $('link-source-type').value;
-    const id = parseInt($('link-source-id').value);
+    const id = parseEntityId($('link-source-id').value);
     const entity = getEntityByTypeAndId(type, id);
     const container = $('entity-current-links');
     
@@ -156,9 +156,9 @@ function renderCurrentLinks() {
 
 function addEntityLink() {
     const sourceType = $('link-source-type').value;
-    const sourceId = parseInt($('link-source-id').value);
+    const sourceId = parseEntityId($('link-source-id').value);
     const targetType = $('link-target-type').value;
-    const targetId = parseInt($('link-target-id').value);
+    const targetId = parseEntityId($('link-target-id').value);
     
     if (!targetId) return;
     
@@ -188,7 +188,7 @@ function addEntityLink() {
 
 function removeEntityLink(index) {
     const sourceType = $('link-source-type').value;
-    const sourceId = parseInt($('link-source-id').value);
+    const sourceId = parseEntityId($('link-source-id').value);
     const source = getEntityByTypeAndId(sourceType, sourceId);
     
     if (!source || !source.links || !source.links[index]) return;

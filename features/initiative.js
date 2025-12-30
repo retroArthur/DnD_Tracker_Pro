@@ -248,7 +248,7 @@ function renderEffectConditionsGrid() {
     const container = $('effect-conditions-grid');
     if (!container) return;
     
-    const cbId = parseInt($('effect-combatant-id').value);
+    const cbId = parseEntityId($('effect-combatant-id').value);
     const cb = D.initiative.combatants.find(c => c.id === cbId);
     const currentEffects = cb?.effects || [];
     
@@ -265,7 +265,7 @@ function renderEffectConditionsGrid() {
 }
 
 function addEffectFromGrid(conditionKey) {
-    const cbId = parseInt($('effect-combatant-id').value);
+    const cbId = parseEntityId($('effect-combatant-id').value);
     const cb = D.initiative.combatants.find(c => c.id === cbId);
     if (!cb) return;
     if (!cb.effects) cb.effects = [];
@@ -296,7 +296,7 @@ function addEffectFromGrid(conditionKey) {
 }
 
 function saveCustomEffect() {
-    const cbId = parseInt($('effect-combatant-id').value);
+    const cbId = parseEntityId($('effect-combatant-id').value);
     const cb = D.initiative.combatants.find(c => c.id === cbId);
     if (!cb) return;
     if (!cb.effects) cb.effects = [];

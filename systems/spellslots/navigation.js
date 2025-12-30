@@ -7,9 +7,16 @@
 // ============================================================
 function switchView(name) {
     document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-    document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.nav-tab').forEach(t => {
+        t.classList.remove('active');
+        t.setAttribute('aria-selected', 'false');
+    });
     $('view-' + name)?.classList.add('active');
-    document.querySelector(`[data-view="${name}"]`)?.classList.add('active');
+    const activeTab = document.querySelector(`[data-view="${name}"]`);
+    if (activeTab) {
+        activeTab.classList.add('active');
+        activeTab.setAttribute('aria-selected', 'true');
+    }
     if (name === 'notes') $('session-date').value = new Date().toISOString().split('T')[0];
     if (name === 'network') renderMindmap();
     

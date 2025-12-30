@@ -222,7 +222,7 @@ function saveCharacter() {
     pushUndo(id ? 'Charakter bearbeitet' : 'Charakter erstellt');
 
     if (id) {
-        const idx = D.characters.findIndex(c => c.id === parseInt(id));
+        const idx = D.characters.findIndex(c => c.id === parseEntityId(id));
         if (idx > -1) {
             // Preserve current slot values when editing
             const existing = D.characters[idx];

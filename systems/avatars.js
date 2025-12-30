@@ -34,7 +34,7 @@ function previewAvatar() {
 
 function saveAvatar() {
     const type = $('avatar-target-type').value;
-    const id = parseInt($('avatar-target-id').value);
+    const id = parseEntityId($('avatar-target-id').value);
     const entity = getEntityByTypeAndId(type, id);
     if (!entity) return;
     
@@ -47,7 +47,7 @@ function saveAvatar() {
 
 function removeAvatar() {
     const type = $('avatar-target-type').value;
-    const id = parseInt($('avatar-target-id').value);
+    const id = parseEntityId($('avatar-target-id').value);
     const entity = getEntityByTypeAndId(type, id);
     if (!entity) return;
     

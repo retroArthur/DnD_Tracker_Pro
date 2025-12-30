@@ -157,40 +157,13 @@ function parseEntityId(id) {
 
 /**
  * XSS-sichere HTML-Sanitization für Rich-Text-Felder
- * Entfernt gefährliche Tags und Event-Handler
- * @deprecated Verwende stattdessen sanitizeHTML() aus basic.js - umfangreichere Whitelist-Implementierung
+ * @deprecated Verwende stattdessen sanitizeHTML() aus basic.js
  * @param {string} html - Zu bereinigendes HTML
  * @returns {string} Bereinigtes HTML
  */
 function sanitizeHtml(html) {
-    if (!html) return '';
-    
-    const div = document.createElement('div');
-    div.innerHTML = html;
-    
-    // Entferne gefährliche Tags
-    const dangerous = div.querySelectorAll(
-        'script, iframe, object, embed, form, input, link, meta, style, base, svg'
-    );
-    dangerous.forEach(el => el.remove());
-    
-    // Entferne gefährliche Attribute
-    div.querySelectorAll('*').forEach(el => {
-        [...el.attributes].forEach(attr => {
-            const name = attr.name.toLowerCase();
-            const value = attr.value.toLowerCase();
-            
-            if (name.startsWith('on') || 
-                (name === 'href' && value.includes('javascript:')) ||
-                (name === 'src' && value.includes('javascript:')) ||
-                name === 'srcdoc' ||
-                (name === 'data' && el.tagName === 'OBJECT')) {
-                el.removeAttribute(attr.name);
-            }
-        });
-    });
-    
-    return div.innerHTML;
+    // Delegiere an die Hauptimplementierung in basic.js
+    return sanitizeHTML(html);
 }
 
 /**

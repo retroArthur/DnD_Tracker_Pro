@@ -63,7 +63,7 @@ function saveEncounter() {
     if (!e.name) { showToast('⚠️ Name erforderlich', 'error'); return; }
 
     if (id) {
-        const idx = D.encounters.findIndex(x => x.id === parseInt(id));
+        const idx = D.encounters.findIndex(x => x.id === parseEntityId(id));
         if (idx > -1) D.encounters[idx] = { ...D.encounters[idx], ...e };
     } else {
         e.id = nextId('encounters');

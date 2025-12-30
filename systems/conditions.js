@@ -12,7 +12,7 @@ function showConditionsModal(type, id) {
 function renderConditionsList() {
     const c = $('conditions-list'); if (!c) return;
     const type = $('condition-target-type').value;
-    const id = parseInt($('condition-target-id').value);
+    const id = parseEntityId($('condition-target-id').value);
     
     const entity = getEntityByTypeAndId(type, id);
     const currentConditions = entity?.conditions || [];
@@ -29,7 +29,7 @@ function renderConditionsList() {
 
 function toggleCondition(conditionKey) {
     const type = $('condition-target-type').value;
-    const id = parseInt($('condition-target-id').value);
+    const id = parseEntityId($('condition-target-id').value);
     const entity = getEntityByTypeAndId(type, id);
     if (!entity) return;
     
@@ -57,7 +57,7 @@ function addCustomCondition() {
     if (!name) return;
     
     const type = $('condition-target-type').value;
-    const id = parseInt($('condition-target-id').value);
+    const id = parseEntityId($('condition-target-id').value);
     const entity = getEntityByTypeAndId(type, id);
     if (!entity) return;
     
