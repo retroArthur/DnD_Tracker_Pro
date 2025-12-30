@@ -73,8 +73,8 @@ function initDragDrop() {
         const targetRow = e.target.closest('.init-row');
         if (!targetRow || !draggedInitItem || targetRow === draggedInitItem) return;
         
-        const draggedId = parseInt(draggedInitItem.dataset.id);
-        const targetId = parseInt(targetRow.dataset.id);
+        const draggedId = parseEntityId(draggedInitItem.dataset.id);
+        const targetId = parseEntityId(targetRow.dataset.id);
         
         const draggedIndex = D.initiative.combatants.findIndex(i => i.id === draggedId);
         const targetIndex = D.initiative.combatants.findIndex(i => i.id === targetId);

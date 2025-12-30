@@ -51,7 +51,7 @@ const EventDelegation = {
         if (!target) return;
 
         const action = target.dataset.action;
-        const id = target.dataset.id ? parseInt(target.dataset.id) : null;
+        const id = target.dataset.id ? parseEntityId(target.dataset.id) : null;
         const type = target.dataset.type || null;
         const value = target.dataset.value || null;
 

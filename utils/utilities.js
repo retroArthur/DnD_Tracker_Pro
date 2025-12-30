@@ -137,10 +137,28 @@ function chunkArray(array, size) {
     }
     return chunks;
 }
+/**
+ * Parst eine Entity-ID sicher zu einer Nummer
+ * Zentrale Utility-Funktion fuer konsistente ID-Behandlung in allen Modulen
+ * @param {number|string} id - ID als Nummer oder String
+ * @returns {number|null} Numerische ID oder null wenn ungueltig
+ * @example
+ * parseEntityId(42)      // 42
+ * parseEntityId('42')    // 42
+ * parseEntityId('abc')   // null
+ * parseEntityId(null)    // null
+ */
+function parseEntityId(id) {
+    if (id === null || id === undefined) return null;
+    const numId = typeof id === 'number' ? id : parseInt(id, 10);
+    return isNaN(numId) ? null : numId;
+}
+
 
 /**
  * XSS-sichere HTML-Sanitization für Rich-Text-Felder
  * Entfernt gefährliche Tags und Event-Handler
+ * @deprecated Verwende stattdessen sanitizeHTML() aus basic.js - umfangreichere Whitelist-Implementierung
  * @param {string} html - Zu bereinigendes HTML
  * @returns {string} Bereinigtes HTML
  */
@@ -329,6 +347,15 @@ function formatMod(mod) {
  */
 function getProfBonus(level) {
     return Math.ceil(level / 4) + 1;
+}
+
+/**
+ * Alias fuer getProfBonus - fuer Rueckwaertskompatibilitaet
+ * @param {number} level - Charakterstufe (1-20)
+ * @returns {number} Uebungsbonus (2-6)
+ */
+function getProficiencyBonus(level) {
+    return getProfBonus(level);
 }
 
 /**

@@ -219,8 +219,8 @@ function handleDrop(e) {
     // Daten neu ordnen
     const dataKey = container.dataset.sortableList;
     if (dataKey && D[dataKey]) {
-        const draggedId = parseInt(draggedItem.dataset.id);
-        const targetId = parseInt(target.dataset.id);
+        const draggedId = parseEntityId(draggedItem.dataset.id);
+        const targetId = parseEntityId(target.dataset.id);
         
         const dataArray = D[dataKey];
         const draggedData = dataArray.find(x => x.id === draggedId);

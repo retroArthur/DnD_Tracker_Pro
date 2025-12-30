@@ -556,9 +556,8 @@ const EntityLookup = {
      * @returns {Object|null} Die gefundene Entity oder null
      */
     get(type, id) {
-        if (id === null || id === undefined) return null;
-        const numId = typeof id === 'string' ? parseInt(id, 10) : id;
-        if (isNaN(numId)) return null;
+        const numId = parseEntityId(id);
+        if (numId === null) return null;
         
         const key = `${type}-${numId}`;
         

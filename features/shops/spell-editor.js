@@ -307,7 +307,21 @@ function formatText(elementId, format, value) {
     }
 }
 
+// Gespeicherte Selection für Editor-Selects
+let editorSelectSavedRange = null;
+
 function setEditorFont(elementId, selectEl) {
+    const editor = $(elementId);
+    if (!editor) return;
+
+    // Selection wiederherstellen
+    editor.focus();
+    if (editorSelectSavedRange) {
+        const selection = window.getSelection();
+        selection.removeAllRanges();
+        selection.addRange(editorSelectSavedRange.cloneRange());
+    }
+
     const fontMap = {
         'arial': "Arial, Helvetica, sans-serif",
         'serif': "Georgia, 'Times New Roman', serif",
@@ -315,13 +329,21 @@ function setEditorFont(elementId, selectEl) {
         'abadi': "Abadi MT Condensed Light, Arial Narrow, sans-serif",
         'roboto': "Roboto, sans-serif"
     };
-    formatText(elementId, 'font', fontMap[selectEl.value] || fontMap['arial']);
+    document.execCommand('fontName', false, fontMap[selectEl.value] || fontMap['arial']);
 }
 
 function setEditorFontSize(elementId, selectEl) {
     const editor = $(elementId);
     if (!editor) return;
+
+    // Selection wiederherstellen
     editor.focus();
+    if (editorSelectSavedRange) {
+        const selection = window.getSelection();
+        selection.removeAllRanges();
+        selection.addRange(editorSelectSavedRange.cloneRange());
+    }
+
     document.execCommand('fontSize', false, '7'); // Dummy-Größe, wird durch CSS ersetzt
     // Ersetze font-size durch die gewählte Größe
     const fontElements = editor.querySelectorAll('font[size="7"]');
@@ -353,19 +375,48 @@ function setBorderFormat(elementId) {
     const editor = $(elementId);
     if (!editor) return;
     editor.focus();
-    
+
     const selection = window.getSelection();
     if (selection.rangeCount > 0) {
         const range = selection.getRangeAt(0);
         const selectedText = range.extractContents();
-        
+
         const wrapper = document.createElement('span');
         wrapper.style.cssText = 'border: 1px solid var(--gold); padding: 2px 6px; border-radius: 4px; display: inline-block;';
+        wrapper.className = 'editor-border';
         wrapper.appendChild(selectedText);
-        
+
         range.insertNode(wrapper);
         selection.removeAllRanges();
     }
+}
+
+// Entfernt Rahmen von der aktuellen Selection
+function removeSelectionBorders() {
+    const selection = window.getSelection();
+    if (!selection.rangeCount) return;
+
+    const range = selection.getRangeAt(0);
+    const container = range.commonAncestorContainer;
+    const editor = container.nodeType === Node.TEXT_NODE
+        ? container.parentElement?.closest('.rich-editor, .spell-editor, .dialog-text')
+        : container.closest?.('.rich-editor, .spell-editor, .dialog-text');
+
+    if (!editor) return;
+
+    // Finde alle span-Elemente mit border in der Selection oder um sie herum
+    const borderSpans = editor.querySelectorAll('span[style*="border"], span.editor-border');
+    borderSpans.forEach(span => {
+        // Prüfe ob die Selection diesen Span enthält oder darin liegt
+        if (range.intersectsNode(span) || span.contains(range.commonAncestorContainer)) {
+            // Unwrap: Inhalt behalten, span entfernen
+            const parent = span.parentNode;
+            while (span.firstChild) {
+                parent.insertBefore(span.firstChild, span);
+            }
+            parent.removeChild(span);
+        }
+    });
 }
 
 // Auto-Clean beim Einfügen - entfernt Formatierung von eingefügtem Text
@@ -588,12 +639,34 @@ function updateStickyOffsets() {
 // FLOATING MINI-EDITOR TOOLBAR
 // ============================================================
 let floatingToolbarTarget = null;
+let floatingToolbarRange = null; // Gespeicherte Selection Range
 let hideFloatingToolbarTimeout = null;
 
 function initFloatingToolbar() {
     const toolbar = $('floating-toolbar');
     if (!toolbar) return;
-    
+
+    // Verhindere Verlust der Textauswahl bei Klick auf statische Editor-Toolbar-Buttons
+    document.querySelectorAll('.editor-toolbar').forEach(editorToolbar => {
+        editorToolbar.addEventListener('mousedown', (e) => {
+            const btn = e.target.closest('.editor-btn');
+            const sel = e.target.closest('.editor-select');
+
+            // Selection speichern bei Klick auf Selects
+            if (sel) {
+                const selection = window.getSelection();
+                if (selection.rangeCount > 0 && selection.toString()) {
+                    editorSelectSavedRange = selection.getRangeAt(0).cloneRange();
+                }
+            }
+
+            // Buttons: preventDefault um Selection zu behalten
+            if (btn) {
+                e.preventDefault();
+            }
+        });
+    });
+
     // Event-Listener für Textauswahl in Rich-Editoren
     document.addEventListener('selectionchange', debounce(handleSelectionChange, 150));
     
@@ -610,35 +683,98 @@ function initFloatingToolbar() {
     
     toolbar.addEventListener('click', (e) => {
         const btn = e.target.closest('[data-floating-action]');
-        if (!btn || !floatingToolbarTarget) return;
-        
+        if (!btn || !floatingToolbarTarget || !floatingToolbarRange) return;
+
         const action = btn.dataset.floatingAction;
-        floatingToolbarTarget.focus();
-        
-        // Auswahl wiederherstellen falls nötig
-        const selection = window.getSelection();
-        if (!selection.toString()) {
-            hideFloatingToolbar();
-            return;
+
+        // Formatierung mit manuellem Wrapping anwenden
+        applyFloatingFormat(action, floatingToolbarTarget, floatingToolbarRange);
+
+        // Nach Formatierung: Range aktualisieren
+        const newSelection = window.getSelection();
+        if (newSelection.rangeCount > 0) {
+            floatingToolbarRange = newSelection.getRangeAt(0).cloneRange();
         }
-        
-        // Formatierung anwenden
-        if (action === 'bold') {
-            document.execCommand('bold', false, null);
-        } else if (action === 'italic') {
-            document.execCommand('italic', false, null);
-        } else if (action === 'underline') {
-            document.execCommand('underline', false, null);
-        } else if (action === 'strikethrough') {
-            document.execCommand('strikeThrough', false, null);
+    });
+
+    // Manuelle Formatierungs-Funktion
+    function applyFloatingFormat(action, editor, savedRange) {
+        // Aktuelle Selection prüfen
+        let selection = window.getSelection();
+
+        // Falls keine Selection, Range aus savedRange wiederherstellen
+        if (!selection.toString()) {
+            editor.focus();
+            selection = window.getSelection();
+            selection.removeAllRanges();
+            selection.addRange(savedRange.cloneRange());
+        }
+
+        if (!selection.rangeCount) return;
+
+        const range = selection.getRangeAt(0);
+        const selectedText = range.toString();
+        if (!selectedText) return;
+
+        // Tag-Mapping
+        const tagMap = {
+            'bold': 'b',
+            'italic': 'i',
+            'underline': 'u',
+            'strikethrough': 's'
+        };
+
+        if (tagMap[action]) {
+            // Prüfe ob bereits formatiert (Toggle-Verhalten)
+            const tag = tagMap[action];
+            const parentTag = range.commonAncestorContainer.parentElement?.closest(tag);
+
+            if (parentTag && parentTag.closest('.rich-editor, .spell-editor, .dialog-text')) {
+                // Bereits formatiert → entfernen (unwrap)
+                const parent = parentTag.parentNode;
+                while (parentTag.firstChild) {
+                    parent.insertBefore(parentTag.firstChild, parentTag);
+                }
+                parent.removeChild(parentTag);
+            } else {
+                // Noch nicht formatiert → hinzufügen (wrap)
+                const wrapper = document.createElement(tag);
+                try {
+                    range.surroundContents(wrapper);
+                } catch (e) {
+                    // Falls surroundContents fehlschlägt (z.B. bei partial selection)
+                    const fragment = range.extractContents();
+                    wrapper.appendChild(fragment);
+                    range.insertNode(wrapper);
+                }
+                // Selection auf neuen Inhalt setzen
+                selection.removeAllRanges();
+                const newRange = document.createRange();
+                newRange.selectNodeContents(wrapper);
+                selection.addRange(newRange);
+            }
         } else if (action === 'highlight') {
-            document.execCommand('backColor', false, 'rgba(251, 191, 36, 0.4)');
+            const wrapper = document.createElement('mark');
+            wrapper.style.backgroundColor = 'rgba(251, 191, 36, 0.4)';
+            wrapper.style.color = 'inherit';
+            try {
+                range.surroundContents(wrapper);
+            } catch (e) {
+                const fragment = range.extractContents();
+                wrapper.appendChild(fragment);
+                range.insertNode(wrapper);
+            }
         } else if (action === 'list') {
             document.execCommand('insertUnorderedList', false, null);
         } else if (action === 'table') {
             insertTable();
+        } else if (action === 'removeFormat') {
+            document.execCommand('removeFormat', false, null);
+            document.execCommand('backColor', false, 'transparent');
+            removeSelectionBorders();
+            showToast('🧹 Formatierung entfernt');
         }
-    });
+    }
     
     // Bei Klick außerhalb verstecken
     document.addEventListener('mousedown', (e) => {
@@ -663,36 +799,38 @@ function handleSelectionChange() {
     // Prüfe ob Text ausgewählt ist
     const selectedText = selection.toString().trim();
     if (!selectedText || selectedText.length < 1) {
-        hideFloatingToolbar();
+        // Range NICHT löschen - User könnte noch die gespeicherte Range nutzen wollen
+        hideFloatingToolbar(false);
         return;
     }
-    
+
     // Prüfe ob die Auswahl in einem Rich-Editor ist
     const anchorNode = selection.anchorNode;
     if (!anchorNode) {
-        hideFloatingToolbar();
+        hideFloatingToolbar(false);
         return;
     }
-    
-    const editor = anchorNode.nodeType === Node.TEXT_NODE 
+
+    const editor = anchorNode.nodeType === Node.TEXT_NODE
         ? anchorNode.parentElement?.closest('.rich-editor, .spell-editor, .dialog-text')
         : anchorNode.closest?.('.rich-editor, .spell-editor, .dialog-text');
-    
+
     if (!editor) {
-        hideFloatingToolbar();
+        hideFloatingToolbar(false);
         return;
     }
     
     floatingToolbarTarget = editor;
-    
+
     // Position der Auswahl ermitteln
     if (selection.rangeCount === 0) return;
-    
+
     const range = selection.getRangeAt(0);
+    floatingToolbarRange = range.cloneRange(); // Range speichern für spätere Wiederherstellung
     const rect = range.getBoundingClientRect();
     
     // Toolbar über der Auswahl positionieren
-    const toolbarWidth = 200; // Ungefähre Breite
+    const toolbarWidth = 320; // Ungefähre Breite (inkl. aller Buttons)
     const toolbarHeight = 40; // Ungefähre Höhe
     
     let left = rect.left + (rect.width / 2) - (toolbarWidth / 2);
@@ -724,12 +862,16 @@ function handleSelectionChange() {
     }
 }
 
-function hideFloatingToolbar() {
+function hideFloatingToolbar(clearRange = true) {
     const toolbar = $('floating-toolbar');
     if (toolbar) {
         toolbar.classList.remove('visible');
     }
     floatingToolbarTarget = null;
+    // Range nur löschen wenn explizit angefordert (nicht bei selectionchange)
+    if (clearRange) {
+        floatingToolbarRange = null;
+    }
 }
 
 function getSpellClassesFromCheckboxes() {

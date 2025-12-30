@@ -3,6 +3,10 @@
 // ============================================================
 // Extrahiert aus features/render-quests.js
 
+/**
+ * Speichert oder aktualisiert eine Quest
+ * Liest Formulardaten und erstellt/aktualisiert den Quest-Eintrag
+ */
 function saveQuest() {
     const id = $('edit-quest-id').value;
 
@@ -53,6 +57,10 @@ function saveQuest() {
     save();
 }
 
+/**
+ * Oeffnet das Bearbeitungsmodal fuer eine Quest
+ * @param {number|string} id - Quest ID
+ */
 function editQuest(id) {
     const q = EntityLookup.quest(id);
     if (!q) return;
@@ -91,6 +99,10 @@ function editQuest(id) {
     showModal('quest-modal');
 }
 
+/**
+ * Loescht eine Quest nach Bestaetigung
+ * @param {number|string} id - Quest ID
+ */
 function deleteQuest(id) {
     if (confirm('Löschen?')) {
         pushUndo('Quest gelöscht');

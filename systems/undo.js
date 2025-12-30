@@ -331,8 +331,11 @@ function renderRelationshipBadges(relationships = [], sourceType, sourceId) {
 // ============================================================
 function parseMarkdown(text) {
     if (!text) return '';
-    
-    return text
+
+    // ERST escapen, DANN Markdown parsen (XSS-Schutz)
+    let escaped = esc(text);
+
+    return escaped
         // Headers
         .replace(/^### (.+)$/gm, '<h3>$1</h3>')
         .replace(/^## (.+)$/gm, '<h2>$1</h2>')
@@ -345,8 +348,8 @@ function parseMarkdown(text) {
         .replace(/_(.+?)_/g, '<em>$1</em>')
         // Code
         .replace(/`(.+?)`/g, '<code>$1</code>')
-        // Blockquote
-        .replace(/^> (.+)$/gm, '<blockquote>$1</blockquote>')
+        // Blockquote (escaped > becomes &gt;)
+        .replace(/^&gt; (.+)$/gm, '<blockquote>$1</blockquote>')
         // Lists
         .replace(/^- (.+)$/gm, '<li>$1</li>')
         .replace(/(<li>.*<\/li>\n?)+/g, '<ul>$&</ul>')

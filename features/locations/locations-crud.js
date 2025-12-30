@@ -3,6 +3,10 @@
 // ============================================================
 // Extrahiert aus features/render-locations.js
 
+/**
+ * Speichert oder aktualisiert einen Ort
+ * Liest Formulardaten und erstellt/aktualisiert den Ort-Eintrag
+ */
 function saveLocation() {
     const id = $('edit-loc-id').value;
     const loc = {
@@ -28,6 +32,10 @@ function saveLocation() {
     save();
 }
 
+/**
+ * Oeffnet das Bearbeitungsmodal fuer einen Ort
+ * @param {number|string} id - Location ID
+ */
 function editLocation(id) {
     const loc = EntityLookup.location(id);
     if (!loc) return;
@@ -40,9 +48,13 @@ function editLocation(id) {
     showModal('location-modal');
 }
 
+/**
+ * Loescht einen Ort nach Bestaetigung
+ * @param {number|string} id - Location ID
+ */
 function deleteLocation(id) {
-    const numId = typeof id === 'number' ? id : parseInt(id);
-    if (isNaN(numId)) return;
+    const numId = parseEntityId(id);
+    if (numId === null) return;
 
     if (confirm('Löschen?')) {
         pushUndo('Ort gelöscht');

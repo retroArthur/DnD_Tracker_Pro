@@ -164,16 +164,26 @@ function performGlobalSearch() {
     // Sortiere nach Score (beste Treffer zuerst)
     matches.sort((a, b) => b.score - a.score);
     
+    // Erlaubte Typen für Whitelist-Validierung (XSS-Schutz)
+    const allowedTypes = ['character', 'npc', 'location', 'quest', 'spell', 'encounter', 'loot', 'wiki'];
+
     if (matches.length === 0) {
         results.innerHTML = '<div class="search-result-item" style="color: var(--text-dim);">Keine Ergebnisse für "' + esc(query) + '"</div>';
     } else {
-        results.innerHTML = matches.slice(0, 12).map(m => `
-            <div class="search-result-item" data-action="navigate-result" data-type="${m.type}" data-id="${m.id}" data-loc="${m.locId || 'null'}">
-                <span class="search-result-type ${m.type}">${getTypeIcon(m.type)}</span>
-                <span class="search-result-name">${highlightMatch(m.name, query)}</span>
-                ${m.detail ? `<div class="search-result-detail">${esc(m.detail)}</div>` : ''}
-            </div>
-        `).join('');
+        results.innerHTML = matches.slice(0, 12).map(m => {
+            // Sanitize type via Whitelist
+            const safeType = allowedTypes.includes(m.type) ? m.type : 'unknown';
+            const safeId = typeof m.id === 'number' ? m.id : parseInt(m.id) || 0;
+            const safeLocId = m.locId && typeof m.locId === 'number' ? m.locId : 'null';
+
+            return `
+                <div class="search-result-item" data-action="navigate-result" data-type="${safeType}" data-id="${safeId}" data-loc="${safeLocId}">
+                    <span class="search-result-type ${safeType}">${getTypeIcon(safeType)}</span>
+                    <span class="search-result-name">${highlightMatch(m.name, query)}</span>
+                    ${m.detail ? `<div class="search-result-detail">${esc(m.detail)}</div>` : ''}
+                </div>
+            `;
+        }).join('');
     }
     
     results.classList.add('visible');

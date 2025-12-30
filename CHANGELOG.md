@@ -4,6 +4,34 @@ Alle wichtigen Änderungen an diesem Projekt werden in dieser Datei dokumentiert
 
 ---
 
+## [2.3.7] - 2024-12-30 (Security & Consistency Fixes)
+
+### 🔒 Security Fixes
+- **XSS in Global Search behoben**: Whitelist-Validierung für Typ-Werte
+- **XSS in parseMarkdown behoben**: Input wird vor Markdown-Parsing escaped
+
+### 🔧 Fixes
+- **NPC-Links vereinheitlicht**: Alle NPC-Links nutzen jetzt `show-npc-popup`
+- **getProficiencyBonus Fehler behoben**: Alias für getProfBonus hinzugefügt
+
+### 🎯 Verbesserungen
+- **parseEntityId()** hinzugefügt für konsistentes ID-Parsing
+- **JSDoc-Dokumentation** für 17+ Funktionen hinzugefügt
+- **@deprecated Marker** für 4 Legacy-Funktionen
+- **Code-Konsistenz** verbessert durch Agents-Audit
+
+### 📁 Geänderte Dateien
+- `utils/utilities.js` - parseEntityId(), getProficiencyBonus alias
+- `features/dice/global-search.js` - XSS-Fix mit Whitelist
+- `systems/undo.js` - parseMarkdown XSS-Fix
+- `features/locations/locations-render.js` - NPC-Links + @deprecated
+- `features/npcs/npc-crud.js` - parseEntityId()
+- `features/party/party-crud.js` - parseEntityId()
+- `render/helpers.js` - parseEntityId()
+- Diverse Dateien - JSDoc hinzugefügt
+
+---
+
 ## [2.3.6] - 2024-12-26 (Fix: Kreatur-Import funktioniert)
 
 ### 🔧 Fixes

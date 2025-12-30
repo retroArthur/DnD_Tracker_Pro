@@ -74,11 +74,14 @@ function saveNPC() {
     showToast(id ? 'NPC aktualisiert' : 'NPC hinzugefügt');
 }
 
+/**
+ * Oeffnet das Bearbeitungsmodal fuer einen NPC
+ * @param {number|string} id - NPC ID
+ */
 function editNPC(id) {
-    // Sicherstellen dass id eine Zahl ist
-    const numId = typeof id === 'number' ? id : parseInt(id);
-    if (isNaN(numId)) {
-        log('editNPC: Ungültige ID:', id);
+    const numId = parseEntityId(id);
+    if (numId === null) {
+        log('editNPC: Ungueltige ID:', id);
         return;
     }
 
@@ -143,9 +146,13 @@ function editNPC(id) {
     showModal('npc-modal');
 }
 
+/**
+ * Loescht einen NPC nach Bestaetigung
+ * @param {number|string} id - NPC ID
+ */
 function deleteNPC(id) {
-    const numId = typeof id === 'number' ? id : parseInt(id);
-    if (isNaN(numId)) return;
+    const numId = parseEntityId(id);
+    if (numId === null) return;
 
     if (confirm('Löschen?')) {
         pushUndo('NPC gelöscht');

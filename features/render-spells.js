@@ -169,7 +169,7 @@ function renderAssignSpellList() {
     }
 
     container.innerHTML = spells.map(s => {
-        const spellId = parseInt(s.id);
+        const spellId = parseEntityId(s.id);
         const isChecked = currentSpells.some(sid => parseInt(sid) === spellId);
         const level = s.level ?? (s.type === 'cantrip' ? 0 : 0);
         const levelText = level === 0 ? '🔮' : level;

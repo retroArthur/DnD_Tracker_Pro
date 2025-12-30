@@ -38,6 +38,10 @@ function getNPCIcon(npc) {
     return NPC_ICONS.default;
 }
 
+/**
+ * Rendert die NPC-Liste im Master-Detail Layout
+ * Beruecksichtigt aktive Filter und Suchbegriffe
+ */
 function renderNPCList() {
     const listContainer = $('npc-list');
     const filterContainer = $('npc-filters');
@@ -172,6 +176,10 @@ function selectNPC(id, scroll = true) {
     }
 }
 
+/**
+ * Zeigt die Detail-Ansicht eines NPCs im rechten Panel
+ * @param {number|string} id - NPC ID
+ */
 function showNPCDetail(id) {
     const panel = $('npc-detail-panel');
     if (!panel) return;

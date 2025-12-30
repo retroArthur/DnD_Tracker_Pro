@@ -2575,6 +2575,7 @@
         /* Detail Content */
         .loc-detail-content {
             padding: 20px;
+            padding-bottom: 80px; /* Extra buffer for scrolling */
         }
 
         .loc-detail-header {
@@ -2641,6 +2642,93 @@
         .loc-detail-btn.danger:hover {
             background: var(--red);
             border-color: var(--red);
+        }
+
+        /* Info Bar: Tags, Links, NPCs */
+        .loc-info-bar {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            padding: 12px;
+            background: var(--bg-elevated);
+            border-radius: 8px;
+            margin-bottom: 16px;
+        }
+
+        .loc-info-bar .loc-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+
+        .loc-info-bar .loc-links {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+
+        .loc-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 10px;
+            background: var(--bg-dark);
+            border-radius: 12px;
+            font-size: 0.85em;
+            color: var(--cyan);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .loc-link:hover {
+            background: var(--cyan);
+            color: var(--bg-dark);
+        }
+
+        .loc-tag {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 0.8em;
+            font-weight: 500;
+        }
+
+        .loc-npcs-inline {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .loc-npc-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 10px;
+            background: var(--bg-dark);
+            border-radius: 12px;
+            font-size: 0.85em;
+            color: var(--text);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .loc-npc-chip:hover {
+            background: var(--purple);
+            color: var(--bg-dark);
+        }
+
+        .loc-npc-chip-avatar {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+
+        .loc-npc-chip.more {
+            background: var(--bg-card);
+            color: var(--text-dim);
+            cursor: default;
         }
 
 /* ============================================================
@@ -7024,7 +7112,35 @@
             line-height: 1.5;
             overflow-y: auto;
         }
-        
+
+        /* Formatierungs-Tags im Editor - Global für alle contenteditable */
+        [contenteditable="true"] b,
+        [contenteditable="true"] strong,
+        .spell-editor b, .rich-editor b, .dialog-text b,
+        .spell-editor strong, .rich-editor strong, .dialog-text strong {
+            font-weight: 700 !important;
+            font-weight: bold !important;
+        }
+
+        [contenteditable="true"] i,
+        [contenteditable="true"] em,
+        .spell-editor i, .rich-editor i, .dialog-text i,
+        .spell-editor em, .rich-editor em, .dialog-text em {
+            font-style: italic !important;
+        }
+
+        [contenteditable="true"] u,
+        .spell-editor u, .rich-editor u, .dialog-text u {
+            text-decoration: underline !important;
+        }
+
+        [contenteditable="true"] s,
+        [contenteditable="true"] strike,
+        .spell-editor s, .rich-editor s, .dialog-text s,
+        .spell-editor strike, .rich-editor strike, .dialog-text strike {
+            text-decoration: line-through !important;
+        }
+
         .spell-editor:focus, .rich-editor:focus {
             outline: none;
             border-color: var(--gold);

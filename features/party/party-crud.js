@@ -140,6 +140,10 @@ document.addEventListener('click', function(e) {
     wrapper.classList.remove('open');
 });
 
+/**
+ * Speichert oder aktualisiert einen Charakter
+ * Liest Formulardaten und erstellt/aktualisiert den Charakter-Eintrag
+ */
 function saveCharacter() {
     const id = $('edit-char-id').value;
     const languageSelect = $('char-languages');
@@ -238,6 +242,10 @@ function saveCharacter() {
     showToast(id ? 'Charakter aktualisiert' : 'Charakter hinzugefügt');
 }
 
+/**
+ * Oeffnet das Bearbeitungsformular fuer einen Charakter
+ * @param {number|string} id - Charakter ID
+ */
 function editChar(id) {
     const ch = EntityLookup.character(id); if (!ch) return;
     $('edit-char-id').value = id;
@@ -394,26 +402,26 @@ function cancelCharEdit() {
     $('char-form-icon').textContent = '▼';
 }
 
-// Attribute helper - nutzt globale getAttrMod() Funktion
-
-function getProficiencyBonus(level) {
-    if (level <= 4) return 2;
-    if (level <= 8) return 3;
-    if (level <= 12) return 4;
-    if (level <= 16) return 5;
-    return 6;
-}
+// Attribute helper - nutzt globale getAttrMod() und getProfBonus() Funktionen
+// getProficiencyBonus entfernt - verwende getProfBonus() aus utilities.js
 
 function updateProficiencyBonus() {
     const level = parseInt($('char-level').value) || 1;
-    const bonus = getProficiencyBonus(level);
+    const bonus = getProfBonus(level);
     $('char-proficiency').value = `+${bonus}`;
 }
 
+/**
+ * Loescht einen Charakter nach Bestaetigung
+ * @param {number|string} id - Charakter ID
+ */
 function deleteChar(id) {
+    const numId = parseEntityId(id);
+    if (numId === null) return;
+
     if (confirm('Löschen?')) {
         pushUndo('Charakter gelöscht');
-        D.characters = D.characters.filter(c => c.id !== id);
+        D.characters = D.characters.filter(c => c.id !== numId);
         renderParty();
         save();
     }

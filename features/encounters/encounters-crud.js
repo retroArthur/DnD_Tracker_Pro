@@ -13,6 +13,10 @@ function updateEncAttrMod(attr) {
     }
 }
 
+/**
+ * Speichert oder aktualisiert einen Encounter/Gegner
+ * Liest Formulardaten und erstellt/aktualisiert den Encounter-Eintrag
+ */
 function saveEncounter() {
     const id = $('edit-enc-id').value;
     const selectedLanguages = typeof getEncSelectedLanguages === 'function' ? getEncSelectedLanguages() : [];
@@ -74,6 +78,10 @@ function saveEncounter() {
     save();
 }
 
+/**
+ * Oeffnet das Bearbeitungsformular fuer einen Encounter/Gegner
+ * @param {number|string} id - Encounter ID
+ */
 function editEnc(id) {
     const e = EntityLookup.encounter(id);
     if (!e) return;
@@ -187,6 +195,10 @@ function cancelEncEdit() {
     $('enc-form-icon').textContent = '▼';
 }
 
+/**
+ * Loescht einen Encounter/Gegner nach Bestaetigung
+ * @param {number|string} id - Encounter ID
+ */
 function deleteEnc(id) {
     if (confirm('Löschen?')) {
         D.encounters = D.encounters.filter(e => e.id !== id);

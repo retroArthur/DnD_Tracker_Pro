@@ -192,16 +192,24 @@ function showLocationDetail(id) {
         </div>
     `).join('') : '<div style="color: var(--text-dim); font-size: 0.85em;">Keine NPCs an diesem Ort</div>';
 
-    // Build links
+    // Build links - EntityLookup methods are singular (location, npc, etc.)
+    const lookupMap = { locations: 'location', npcs: 'npc', characters: 'character', quests: 'quest', encounters: 'encounter', spells: 'spell', loot: 'lootItem', wiki: 'wiki' };
     const linksHtml = links.length ? links.map(link => {
-        const target = EntityLookup[link.type]?.(link.id);
+        const lookupFn = lookupMap[link.type];
+        const target = lookupFn && EntityLookup[lookupFn] ? EntityLookup[lookupFn](link.id) : null;
         if (!target) return '';
-        const icons = { characters: '👤', npcs: '🧑', locations: '📍', quests: '📜', encounters: '⚔️', spells: '✨', loot: '💰' };
-        return `<span class="loc-link" data-action="navigate-entity" data-type="${link.type}" data-id="${link.id}">${icons[link.type] || '🔗'} ${esc(target.name)}</span>`;
-    }).join('') : '';
+        // NPC-Links als Chips mit show-npc-popup für Konsistenz
+        if (link.type === 'npcs') {
+            return `<span class="loc-npc-chip" data-action="show-npc-popup" data-id="${link.id}">${target.avatar ? `<img src="${esc(target.avatar)}" class="loc-npc-chip-avatar">` : ''}${esc(target.name)}</span>`;
+        }
 
-    // Build tags
-    const tagsHtml = tags.length ? tags.map(t => `<span class="loc-tag">${esc(t)}</span>`).join('') : '';
+        // Alle anderen Links normal
+        const icons = { characters: '👤', locations: '📍', quests: '📜', encounters: '⚔️', spells: '✨', loot: '💰', wiki: '📖' };
+        return `<span class="loc-link" data-action="navigate-entity" data-type="${link.type}" data-id="${link.id}">${icons[link.type] || '🔗'} ${esc(target.name || target.title)}</span>`;
+    }).filter(Boolean).join('') : '';
+
+    // Build tags - Tags sind Objekte mit {name, color}
+    const tagsHtml = tags.length ? tags.map(t => `<span class="loc-tag tag-${t.color || 'blue'}">${esc(t.name || t)}</span>`).join('') : '';
 
     panel.innerHTML = `
         <div class="loc-detail-content">
@@ -221,31 +229,24 @@ function showLocationDetail(id) {
                 </div>
             </div>
 
+            ${(tagsHtml || linksHtml || npcs.length) ? `
+                <div class="loc-info-bar">
+                    ${tagsHtml ? `<div class="loc-tags">${tagsHtml}</div>` : ''}
+                    ${linksHtml ? `<div class="loc-links">${linksHtml}</div>` : ''}
+                    ${npcs.length ? `<div class="loc-npcs-inline">
+                        <span style="color: var(--text-dim); font-size: 0.85em;">👥 NPCs:</span>
+                        ${npcs.slice(0, 5).map(n => `<span class="loc-npc-chip" data-action="show-npc-popup" data-id="${n.id}">${n.avatar ? `<img src="${esc(n.avatar)}" class="loc-npc-chip-avatar">` : ''}${esc(n.name)}</span>`).join('')}
+                        ${npcs.length > 5 ? `<span class="loc-npc-chip more">+${npcs.length - 5}</span>` : ''}
+                    </div>` : ''}
+                </div>
+            ` : ''}
+
             <div class="loc-section">
                 <div class="loc-section-title">Beschreibung</div>
                 <div class="loc-desc">
                     ${loc.description ? loc.description : '<span style="color: var(--text-dim);">Keine Beschreibung vorhanden</span>'}
                 </div>
             </div>
-
-            ${tagsHtml ? `
-                <div class="loc-section">
-                    <div class="loc-section-title">Tags</div>
-                    <div class="loc-tags">${tagsHtml}</div>
-                </div>
-            ` : ''}
-
-            <div class="loc-section">
-                <div class="loc-section-title">NPCs (${npcs.length})</div>
-                <div class="loc-npc-list">${npcListHtml}</div>
-            </div>
-
-            ${linksHtml ? `
-                <div class="loc-section">
-                    <div class="loc-section-title">Verknüpfungen</div>
-                    <div class="loc-links">${linksHtml}</div>
-                </div>
-            ` : ''}
         </div>
     `;
 }
@@ -292,15 +293,28 @@ function toggleLocation(id) {
     }, 100);
 }
 
-// Legacy functions (kept for compatibility)
+// ============================================================
+// LEGACY FUNCTIONS - Kept for backwards compatibility
+// ============================================================
+
+/**
+ * @deprecated Verwende selectLocation(id) stattdessen
+ * @param {number} id - Location ID
+ */
 function toggleLocationCard(id) {
     selectLocation(id);
 }
 
+/**
+ * @deprecated Nicht mehr verwendet im Master-Detail Layout
+ */
 function expandAllLocations() {
     showToast('Alle Orte werden in der Liste angezeigt');
 }
 
+/**
+ * @deprecated Verwende clearLocationDetail() stattdessen
+ */
 function collapseAllLocations() {
     selectedLocationId = null;
     clearLocationDetail();

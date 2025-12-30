@@ -3,8 +3,13 @@
 // ============================================================
 // Angepasst für Master-Detail Layout
 
+/**
+ * Schaltet NPC-Karte um oder waehlt NPC im Master-Detail Layout
+ * @param {number|string} cardOrId - NPC ID oder Karten-Element
+ */
 function toggleNPCCard(cardOrId) {
-    const id = typeof cardOrId === 'number' ? cardOrId : parseInt(cardOrId);
+    const id = parseEntityId(cardOrId);
+    if (id === null) return;
 
     // Im Master-Detail Layout: NPC auswählen
     if (typeof selectNPC === 'function') {
@@ -19,6 +24,11 @@ function toggleNPCCard(cardOrId) {
     }
 }
 
+/**
+ * Schaltet einen NPC-Trigger um (aktiviert/deaktiviert)
+ * @param {number} npcId - NPC ID
+ * @param {number} triggerIdx - Index des Triggers im Trigger-Array
+ */
 function toggleNPCTrigger(npcId, triggerIdx) {
     const npc = EntityLookup.npc(npcId);
     if (!npc || !npc.triggers || !npc.triggers[triggerIdx]) return;
@@ -59,6 +69,11 @@ function toggleNPCTrigger(npcId, triggerIdx) {
     showToast(`Trigger ${status}`);
 }
 
+/**
+ * Markiert einen NPC-Dialog als verwendet/unbenutzt
+ * @param {number} npcId - NPC ID
+ * @param {number} dialogIdx - Index des Dialogs im Dialog-Array
+ */
 function toggleNPCDialogUsed(npcId, dialogIdx) {
     const npc = EntityLookup.npc(npcId);
     if (!npc || !npc.dialogs || !npc.dialogs[dialogIdx]) return;
@@ -102,6 +117,11 @@ function toggleNPCDialogUsed(npcId, dialogIdx) {
     showToast(`Dialog ${status}`);
 }
 
+/**
+ * Kopiert den Text eines NPC-Dialogs in die Zwischenablage
+ * @param {number} npcId - NPC ID
+ * @param {number} dialogIdx - Index des Dialogs im Dialog-Array
+ */
 function copyDialogText(npcId, dialogIdx) {
     const npc = EntityLookup.npc(npcId);
     if (!npc || !npc.dialogs || !npc.dialogs[dialogIdx]) return;
