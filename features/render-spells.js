@@ -176,7 +176,7 @@ function renderAssignSpellList() {
         const levelClass = level === 0 ? 'trick' : `level-${level}`;
         const school = s.school ? s.school.substring(0, 3) : '';
         return `<label class="assign-spell-item ${isChecked ? 'checked' : ''}">
-            <input type="checkbox" value="${spellId}" ${isChecked ? 'checked' : ''} onchange="this.parentElement.classList.toggle('checked', this.checked); updateAssignSpellCount();">
+            <input type="checkbox" value="${spellId}" ${isChecked ? 'checked' : ''} data-on-change="updateAssignSpellCount">
             <div class="assign-spell-info">
                 <span class="assign-spell-name">${esc(s.name)}</span>
                 <span class="assign-spell-meta">${school}</span>
@@ -188,7 +188,15 @@ function renderAssignSpellList() {
     updateAssignSpellCount();
 }
 
-function updateAssignSpellCount() {
+function updateAssignSpellCount(element) {
+    // Toggle 'checked' Klasse auf Parent-Label wenn Element uebergeben wurde (von data-on-change)
+    if (element && element.tagName === 'INPUT' && element.type === 'checkbox') {
+        const label = element.closest('label');
+        if (label) {
+            label.classList.toggle('checked', element.checked);
+        }
+    }
+
     const checked = document.querySelectorAll('#assign-spell-list input[type="checkbox"]:checked').length;
     const total = document.querySelectorAll('#assign-spell-list input[type="checkbox"]').length;
     $('assign-spell-count').textContent = `${checked}/${total}`;

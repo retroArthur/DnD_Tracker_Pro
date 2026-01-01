@@ -5,6 +5,26 @@
 // Kern-Infrastruktur für Event-Handling
 // Actions werden von separaten Modulen in ui/actions/ registriert
 
+// Whitelist für erlaubte onChange/onInput Handler (Sicherheit)
+const ALLOWED_CHANGE_HANDLERS = new Set([
+    'updateCartQtyFromInput',
+    'setEditorFont',
+    'setEditorFontSize',
+    'setNpcFilter',
+    'setLootFilter',
+    'setEncFilter',
+    'setLocFilter',
+    'setSpellFilter',
+    'populateImportNodesList',
+    'filterAssignSpells',
+    'filterAssignItems',
+    // Neu hinzugefügt für Migration von inline handlers
+    'toggleShopItemAvailability',
+    'performMobileSearch',
+    'validateAssignItemQty',
+    'updateAssignSpellCount'
+]);
+
 const EventDelegation = {
     _handlers: new Map(),
 
@@ -77,15 +97,22 @@ const EventDelegation = {
 
     _handleChange(e) {
         const target = e.target;
-        if (!target.dataset.onChange) return;
+        const handlerName = target.dataset.onChange;
+        if (!handlerName) return;
 
-        const fn = window[target.dataset.onChange];
+        // Whitelist-Validierung für Sicherheit
+        if (!ALLOWED_CHANGE_HANDLERS.has(handlerName)) {
+            console.warn(`[EventDelegation] Blocked unauthorized onChange handler: ${handlerName}`);
+            return;
+        }
+
+        const fn = window[handlerName];
         if (typeof fn === 'function') {
             try {
                 fn(target);
             } catch (changeError) {
                 if (typeof ErrorHandler !== 'undefined') {
-                    ErrorHandler.log('EventDelegation', changeError, `onChange: ${target.dataset.onChange}`);
+                    ErrorHandler.log('EventDelegation', changeError, `onChange: ${handlerName}`);
                 } else {
                     console.error('[EventDelegation] onChange Fehler:', changeError);
                 }
@@ -95,15 +122,22 @@ const EventDelegation = {
 
     _handleInput(e) {
         const target = e.target;
-        if (!target.dataset.onInput) return;
+        const handlerName = target.dataset.onInput;
+        if (!handlerName) return;
 
-        const fn = window[target.dataset.onInput];
+        // Whitelist-Validierung für Sicherheit
+        if (!ALLOWED_CHANGE_HANDLERS.has(handlerName)) {
+            console.warn(`[EventDelegation] Blocked unauthorized onInput handler: ${handlerName}`);
+            return;
+        }
+
+        const fn = window[handlerName];
         if (typeof fn === 'function') {
             try {
                 fn(target);
             } catch (inputError) {
                 if (typeof ErrorHandler !== 'undefined') {
-                    ErrorHandler.log('EventDelegation', inputError, `onInput: ${target.dataset.onInput}`);
+                    ErrorHandler.log('EventDelegation', inputError, `onInput: ${handlerName}`);
                 } else {
                     console.error('[EventDelegation] onInput Fehler:', inputError);
                 }

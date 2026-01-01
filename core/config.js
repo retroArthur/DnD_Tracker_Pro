@@ -15,6 +15,14 @@ const APP_CONFIG = Object.freeze({
     CAMPAIGN_INDEX_KEY: 'dnd-tracker-campaigns',
     THEME_KEY: 'dnd-tracker-theme',
     LAYOUT_KEY: 'dnd-tracker-layout',
+    DICE_FAV_KEY: 'dnd-dice-favorites',
+    TIMER_PRESETS_KEY: 'dnd-timer-presets',
+    IDB_NAME: 'dnd-tracker-db',
+    BROADCAST_CHANNEL: 'dnd-tracker-sync',
+    SW_CACHE_NAME: 'dnd-tracker-v2',
+
+    // Session Timer
+    SESSION_AUTO_SAVE_INTERVAL: 300,  // 5 Minuten in Sekunden
     
     // Limits
     UNDO_LIMIT: 30,

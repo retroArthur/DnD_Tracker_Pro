@@ -82,7 +82,8 @@ function addStoryArc() {
 
 function deleteStoryArc(id) {
     if (!confirm('Arc löschen? Sessions bleiben erhalten.')) return;
-    
+
+    pushUndo('Story Arc gelöscht');
     D.storyArcs = D.storyArcs.filter(a => a.id !== id);
     
     // Sessions von diesem Arc lösen
@@ -389,7 +390,10 @@ function saveSession() {
 function editSession(id) {
     const note = EntityLookup.sessionNote(id);
     if (!note) return;
-    
+
+    // Arc-Dropdown aktualisieren bevor Wert gesetzt wird
+    renderStoryArcSelects();
+
     $('edit-session-id').value = id;
     if ($('session-number')) $('session-number').value = note.number || '';
     $('session-name').value = note.name || '';
@@ -435,12 +439,13 @@ function cancelSessionEdit() {
     if (numInput) numInput.placeholder = getNextSessionNumber();
 }
 
-function deleteSession(id) { 
-    if (confirm('Session löschen?')) { 
-        D.sessionNotes = D.sessionNotes.filter(n => n.id !== id); 
-        renderSessions(); 
-        save(); 
-    } 
+function deleteSession(id) {
+    if (confirm('Session löschen?')) {
+        pushUndo('Session gelöscht');
+        D.sessionNotes = D.sessionNotes.filter(n => n.id !== id);
+        renderSessions();
+        save();
+    }
 }
 
 // INIT

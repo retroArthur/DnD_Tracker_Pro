@@ -20,10 +20,10 @@ async function init() {
     
     // Determine active campaign
     const index = getCampaignIndex();
-    const activeKey = index.active || 'dnd-tracker-v4';
-    
+    const activeKey = index.active || APP_CONFIG.STORAGE_KEY;
+
     // Override storage key if using different campaign
-    if (activeKey !== 'dnd-tracker-v4') {
+    if (activeKey !== APP_CONFIG.STORAGE_KEY) {
         window.STORAGE_KEY_OVERRIDE = activeKey;
     }
     
@@ -88,6 +88,9 @@ async function init() {
     
     // Loot Tag-System initialisieren
     if (typeof initLootTagSystem === 'function') initLootTagSystem();
+
+    // Wiki Kategorie-Listener initialisieren
+    if (typeof initWikiCategoryListener === 'function') initWikiCategoryListener();
     
     // Sticky-Header-Höhe für Initiative-Controls berechnen
     updateStickyOffsets();
@@ -107,8 +110,7 @@ async function init() {
     
     // PWA Installation
     initPWA();
-    
-    
+
     // Performance-Monitoring initialisieren
     initPerformanceMonitoring();
     
@@ -208,13 +210,12 @@ function initOfflineDetection() {
 // ============================================================
 // INDEXEDDB WRAPPER (für größere Datenmengen)
 // ============================================================
-const IDB_NAME = 'dnd-tracker-db';
 const IDB_VERSION = 2; // Version erhöht für neuen Index
 let idb = null;
 
 async function initIndexedDB() {
     return new Promise((resolve, reject) => {
-        const request = indexedDB.open(IDB_NAME, IDB_VERSION);
+        const request = indexedDB.open(APP_CONFIG.IDB_NAME, IDB_VERSION);
         
         request.onerror = () => reject(request.error);
         request.onsuccess = () => {
@@ -269,7 +270,7 @@ async function saveToIndexedDB(storeName, data) {
 function prevTurn() {
     if (!D.initiative.combatants.length) return;
     
-    saveUndoState('Vorheriger Zug');
+    pushUndo('Vorheriger Zug');
     
     D.initiative.currentTurn--;
     if (D.initiative.currentTurn < 0) {
@@ -284,5 +285,4 @@ function prevTurn() {
     renderInit();
 }
 
-if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
-else init();
+// HINWEIS: init() wird von loader.js aufgerufen - KEIN automatischer Aufruf hier!

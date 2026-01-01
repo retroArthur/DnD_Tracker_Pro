@@ -131,6 +131,44 @@ async function getBackups() {
     }
 }
 
+/**
+ * Validiert und bereinigt Backup-Daten gegen ein Standardschema
+ * @param {Object} parsed - Die geparsten Backup-Daten
+ * @param {Object} defaultSchema - Das Standardschema mit Defaultwerten
+ * @returns {Object} Bereinigte Daten
+ */
+function sanitizeBackupData(parsed, defaultSchema) {
+    const sanitized = {};
+
+    // Kopiere alle erlaubten Keys mit Typprüfung
+    for (const [key, defaultValue] of Object.entries(defaultSchema)) {
+        if (!(key in parsed)) {
+            // Key nicht im Backup - verwende Default
+            sanitized[key] = JSON.parse(JSON.stringify(defaultValue));
+        } else if (Array.isArray(defaultValue)) {
+            // Array-Typ erwartet
+            sanitized[key] = Array.isArray(parsed[key])
+                ? JSON.parse(JSON.stringify(parsed[key]))
+                : JSON.parse(JSON.stringify(defaultValue));
+        } else if (typeof defaultValue === 'object' && defaultValue !== null) {
+            // Object-Typ erwartet
+            sanitized[key] = (typeof parsed[key] === 'object' && parsed[key] !== null && !Array.isArray(parsed[key]))
+                ? JSON.parse(JSON.stringify(parsed[key]))
+                : JSON.parse(JSON.stringify(defaultValue));
+        } else if (typeof defaultValue === 'number') {
+            sanitized[key] = typeof parsed[key] === 'number' ? parsed[key] : defaultValue;
+        } else if (typeof defaultValue === 'string') {
+            sanitized[key] = typeof parsed[key] === 'string' ? parsed[key] : defaultValue;
+        } else if (typeof defaultValue === 'boolean') {
+            sanitized[key] = typeof parsed[key] === 'boolean' ? parsed[key] : defaultValue;
+        } else {
+            sanitized[key] = JSON.parse(JSON.stringify(defaultValue));
+        }
+    }
+
+    return sanitized;
+}
+
 async function restoreBackup(index) {
     const backups = await getBackups();
     if (!backups[index]) {
@@ -144,7 +182,7 @@ async function restoreBackup(index) {
         const parsed = JSON.parse(backups[index].data);
 
         // Validiere Backup-Struktur
-        if (!parsed || typeof parsed !== 'object') {
+        if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
             throw new Error('Ungültiges Backup-Format');
         }
 
@@ -161,7 +199,30 @@ async function restoreBackup(index) {
             throw new Error('Ungültige Initiative-Daten');
         }
 
-        D = parsed;
+        // SICHER: Verwende Default-Schema aus core/data.js für Validierung
+        // und erstelle Deep Clone statt direkter Zuweisung
+        const defaultD = {
+            characters: [],
+            npcs: [],
+            quests: [],
+            locations: [],
+            loot: [],
+            encounters: [],
+            filters: [],
+            notes: [],
+            shops: [],
+            spells: [],
+            wiki: [],
+            links: [],
+            storyArcs: [],
+            mindmap: { nodes: [], edges: [] },
+            initiative: { entries: [], round: 1 },
+            lastSync: 0
+        };
+
+        // Validiere und bereinige gegen Schema (mit Deep Clone)
+        D = sanitizeBackupData(parsed, defaultD);
+
         renderAll();
         saveImmediate();
         showToast('✅ Backup wiederhergestellt');

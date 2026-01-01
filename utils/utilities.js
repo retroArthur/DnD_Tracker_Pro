@@ -156,17 +156,6 @@ function parseEntityId(id) {
 
 
 /**
- * XSS-sichere HTML-Sanitization für Rich-Text-Felder
- * @deprecated Verwende stattdessen sanitizeHTML() aus basic.js
- * @param {string} html - Zu bereinigendes HTML
- * @returns {string} Bereinigtes HTML
- */
-function sanitizeHtml(html) {
-    // Delegiere an die Hauptimplementierung in basic.js
-    return sanitizeHTML(html);
-}
-
-/**
  * Error Boundary Wrapper für kritische Funktionen
  * Fängt Fehler ab und zeigt eine Toast-Benachrichtigung
  * Unterstützt sowohl synchrone als auch asynchrone Funktionen
@@ -241,10 +230,15 @@ function formatDate(date, options = { year: 'numeric', month: 'short', day: 'num
 function showToast(msg = '✓ Gespeichert', type = 'success', duration = APP_CONFIG.TOAST_DURATION) {
     const t = $('toast');
     if (!t) return;
-    
+
+    // Accessibility: Screen-Reader-Ankündigung
+    t.setAttribute('role', 'alert');
+    t.setAttribute('aria-live', 'polite');
+    t.setAttribute('aria-atomic', 'true');
+
     t.textContent = msg;
     t.className = 'toast show';
-    
+
     // Farbe basierend auf Typ
     const colors = {
         success: '',
@@ -253,8 +247,11 @@ function showToast(msg = '✓ Gespeichert', type = 'success', duration = APP_CON
         info: 'var(--cyan)'
     };
     t.style.background = colors[type] || '';
-    
-    setTimeout(() => t.classList.remove('show'), duration);
+
+    setTimeout(() => {
+        t.classList.remove('show');
+        t.removeAttribute('aria-live');
+    }, duration);
 }
 
 /**

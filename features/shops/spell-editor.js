@@ -310,8 +310,20 @@ function formatText(elementId, format, value) {
 // Gespeicherte Selection für Editor-Selects
 let editorSelectSavedRange = null;
 
-function setEditorFont(elementId, selectEl) {
-    const editor = $(elementId);
+function setEditorFont(elementIdOrSelect, selectEl) {
+    let editorId, select;
+
+    // Unterstuetzt sowohl direkte Argumente als auch Element (von data-on-change)
+    if (elementIdOrSelect && elementIdOrSelect.tagName === 'SELECT') {
+        // Element uebergeben - Editor-ID aus data-Attribut extrahieren
+        select = elementIdOrSelect;
+        editorId = select.dataset.editorId;
+    } else {
+        editorId = elementIdOrSelect;
+        select = selectEl;
+    }
+
+    const editor = $(editorId);
     if (!editor) return;
 
     // Selection wiederherstellen
@@ -329,11 +341,23 @@ function setEditorFont(elementId, selectEl) {
         'abadi': "Abadi MT Condensed Light, Arial Narrow, sans-serif",
         'roboto': "Roboto, sans-serif"
     };
-    document.execCommand('fontName', false, fontMap[selectEl.value] || fontMap['arial']);
+    document.execCommand('fontName', false, fontMap[select.value] || fontMap['arial']);
 }
 
-function setEditorFontSize(elementId, selectEl) {
-    const editor = $(elementId);
+function setEditorFontSize(elementIdOrSelect, selectEl) {
+    let editorId, select;
+
+    // Unterstuetzt sowohl direkte Argumente als auch Element (von data-on-change)
+    if (elementIdOrSelect && elementIdOrSelect.tagName === 'SELECT') {
+        // Element uebergeben - Editor-ID aus data-Attribut extrahieren
+        select = elementIdOrSelect;
+        editorId = select.dataset.editorId;
+    } else {
+        editorId = elementIdOrSelect;
+        select = selectEl;
+    }
+
+    const editor = $(editorId);
     if (!editor) return;
 
     // Selection wiederherstellen
@@ -349,7 +373,7 @@ function setEditorFontSize(elementId, selectEl) {
     const fontElements = editor.querySelectorAll('font[size="7"]');
     fontElements.forEach(el => {
         el.removeAttribute('size');
-        el.style.fontSize = selectEl.value;
+        el.style.fontSize = select.value;
     });
 }
 
@@ -420,7 +444,12 @@ function removeSelectionBorders() {
 }
 
 // Auto-Clean beim Einfügen - entfernt Formatierung von eingefügtem Text
+let editorHandlersInitialized = false;
 function initEditorPasteHandlers() {
+    // Verhindere mehrfache Initialisierung
+    if (editorHandlersInitialized) return;
+    editorHandlersInitialized = true;
+
     const editorIds = [
         'char-notes', 'npc-desc', 'loc-desc', 'quest-desc', 'quest-epilog',
         'enc-traits', 'enc-equipment', 'enc-actions', 'enc-skills', 'loot-desc',
@@ -440,9 +469,7 @@ function initEditorPasteHandlers() {
         const editor = $(id);
         if (editor && editor.getAttribute('contenteditable') === 'true') {
             editor.addEventListener('paste', handleEditorPaste);
-            
-            // Keydown-Handler für konsistente Zeilenumbrüche
-            editor.addEventListener('keydown', handleEditorKeydown);
+            // Keydown wird über document-level Handler abgedeckt (Zeile 457)
         }
     });
     
@@ -471,36 +498,13 @@ function handleEditorKeydown(e) {
         return;
     }
     
-    // Bei Enter ohne Shift: Füge <br> statt <div> oder <p> ein
+    // Bei Enter ohne Shift: Simuliere Shift+Enter für einfachen Zeilenumbruch
     if (e.key === 'Enter' && !e.shiftKey) {
         e.preventDefault();
-        
-        // Füge einen Zeilenumbruch ein
-        const selection = window.getSelection();
-        if (!selection.rangeCount) return;
-        
-        const range = selection.getRangeAt(0);
-        range.deleteContents();
-        
-        // Erstelle zwei <br> Tags (einer für den Umbruch, einer als Platzhalter für den Cursor)
-        const br = document.createElement('br');
-        range.insertNode(br);
-        
-        // Setze Cursor nach dem <br>
-        range.setStartAfter(br);
-        range.setEndAfter(br);
-        selection.removeAllRanges();
-        selection.addRange(range);
-        
-        // Scroll zum Cursor
-        const editor = e.target;
-        if (editor.scrollHeight > editor.clientHeight) {
-            const rect = br.getBoundingClientRect();
-            const editorRect = editor.getBoundingClientRect();
-            if (rect.bottom > editorRect.bottom) {
-                editor.scrollTop += rect.bottom - editorRect.bottom + 20;
-            }
-        }
+        e.stopImmediatePropagation();
+
+        // Verwende insertLineBreak für konsistenten einzelnen Zeilenumbruch
+        document.execCommand('insertLineBreak', false, null);
     }
 }
 
@@ -765,12 +769,70 @@ function initFloatingToolbar() {
                 range.insertNode(wrapper);
             }
         } else if (action === 'list') {
-            document.execCommand('insertUnorderedList', false, null);
+            // Manuelles Listen-Handling (execCommand ist deprecated und unzuverlässig)
+            const parentList = range.commonAncestorContainer.parentElement?.closest('ul, ol');
+
+            if (parentList && parentList.closest('.rich-editor, .spell-editor, .dialog-text')) {
+                // Bereits in Liste → Liste entfernen (unwrap)
+                const listItems = parentList.querySelectorAll('li');
+                const fragment = document.createDocumentFragment();
+                listItems.forEach((li, index) => {
+                    // Inhalt des li extrahieren
+                    while (li.firstChild) {
+                        fragment.appendChild(li.firstChild);
+                    }
+                    // Zeilenumbruch zwischen Items (außer beim letzten)
+                    if (index < listItems.length - 1) {
+                        fragment.appendChild(document.createElement('br'));
+                    }
+                });
+                parentList.parentNode.replaceChild(fragment, parentList);
+            } else {
+                // Noch nicht in Liste → Liste erstellen
+                const ul = document.createElement('ul');
+                const li = document.createElement('li');
+
+                // Ausgewählten Inhalt in li verschieben
+                try {
+                    const contents = range.extractContents();
+                    li.appendChild(contents);
+                } catch (e) {
+                    li.textContent = selectedText;
+                    range.deleteContents();
+                }
+
+                ul.appendChild(li);
+                range.insertNode(ul);
+
+                // Cursor ans Ende der Liste setzen
+                selection.removeAllRanges();
+                const newRange = document.createRange();
+                newRange.selectNodeContents(li);
+                newRange.collapse(false);
+                selection.addRange(newRange);
+            }
         } else if (action === 'table') {
             insertTable();
         } else if (action === 'removeFormat') {
             document.execCommand('removeFormat', false, null);
             document.execCommand('backColor', false, 'transparent');
+
+            // <mark> Elemente (Highlights) entfernen - alle im Editor finden und prüfen
+            const editorEl = editor;
+            if (editorEl) {
+                const marks = editorEl.querySelectorAll('mark');
+                marks.forEach(mark => {
+                    // Prüfen ob Mark in der Selection liegt oder Selection enthält
+                    if (selection.containsNode(mark, true)) {
+                        const parent = mark.parentNode;
+                        while (mark.firstChild) {
+                            parent.insertBefore(mark.firstChild, mark);
+                        }
+                        parent.removeChild(mark);
+                    }
+                });
+            }
+
             removeSelectionBorders();
             showToast('🧹 Formatierung entfernt');
         }
@@ -948,6 +1010,7 @@ function saveSpell() {
         description: descHtml, note: sanitizeHTML($('spell-note').innerHTML.trim())
     };
     if (!s.name) { showToast('⚠️ Name erforderlich', 'error'); return; }
+    pushUndo(id ? 'Zauber bearbeitet' : 'Zauber erstellt');
     if (id) { const idx = D.spells.findIndex(x => x.id === parseEntityId(id)); if (idx > -1) D.spells[idx] = { ...D.spells[idx], ...s }; }
     else { s.id = nextId('spells'); D.spells.push(s); }
     hideModal('spell-modal'); clearSpellForm(); renderSpells(); save();
@@ -1029,7 +1092,15 @@ function editSpell(id) {
     showModal('spell-modal');
 }
 
-function deleteSpell(id) { if (confirm('Löschen?')) { D.spells = D.spells.filter(s => s.id !== id); renderSpells(); save(); } }
+function deleteSpell(id) {
+    const spell = EntityLookup.spell(id);
+    if (confirm(`Zauber "${spell?.name || 'Unbekannt'}" löschen?`)) {
+        pushUndo('Zauber gelöscht');
+        D.spells = D.spells.filter(s => s.id !== id);
+        renderSpells();
+        save();
+    }
+}
 
 function clearSpellForm() {
     $('edit-spell-id').value = '';

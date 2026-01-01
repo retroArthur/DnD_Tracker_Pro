@@ -419,7 +419,8 @@ function deleteChar(id) {
     const numId = parseEntityId(id);
     if (numId === null) return;
 
-    if (confirm('Löschen?')) {
+    const char = EntityLookup.character(id);
+    if (confirm(`Charakter "${char?.name || 'Unbekannt'}" löschen?`)) {
         pushUndo('Charakter gelöscht');
         D.characters = D.characters.filter(c => c.id !== numId);
         renderParty();

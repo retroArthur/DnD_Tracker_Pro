@@ -161,7 +161,7 @@ function addToCart(shopId, itemIdx, qty = 1) {
     
     if (existingIdx > -1) {
         // Erhöhe Menge, aber nicht über verfügbare Menge
-        const maxQty = item.quantity || 999;
+        const maxQty = item.unlimited ? 9999 : (item.quantity || 999);
         shopCart[existingIdx].qty = Math.min(shopCart[existingIdx].qty + qty, maxQty);
     } else {
         shopCart.push({
@@ -172,8 +172,8 @@ function addToCart(shopId, itemIdx, qty = 1) {
             category: item.category,
             cost: item.cost,
             costCopper: parseCurrency(item.cost),
-            qty: Math.min(qty, item.quantity || 999),
-            maxQty: item.quantity || 999
+            qty: Math.min(qty, item.unlimited ? 9999 : (item.quantity || 999)),
+            maxQty: item.unlimited ? 9999 : (item.quantity || 999)
         });
     }
     
@@ -333,7 +333,7 @@ function confirmCheckout() {
         const shop = (D.shops || []).find(s => s.id === c.shopId);
         if (shop && shop.items && shop.items[c.itemIdx]) {
             const item = shop.items[c.itemIdx];
-            if (item.quantity !== undefined && item.quantity !== null) {
+            if (!item.unlimited && item.quantity !== undefined && item.quantity !== null) {
                 item.quantity = Math.max(0, item.quantity - c.qty);
                 if (item.quantity === 0) {
                     item.available = false;
@@ -496,7 +496,7 @@ function renderShopItems(shopId, items) {
                     const isExpanded = expandedShopItems.has(`${shopId}-${idx}`);
                     const itemName = item.name || 'Unbenannt';
                     const itemCost = item.cost || '—';
-                    const itemQty = item.quantity || 1;
+                    const itemQty = item.unlimited ? '∞' : (item.quantity || 1);
                     
                     // Details je nach Kategorie
                     let detailTags = '';
@@ -547,7 +547,7 @@ function renderShopItems(shopId, items) {
                             ${specialNote || noteText ? `<div class="si-detail-row">${specialNote}${noteText}</div>` : ''}
                             <div class="si-detail-row si-detail-actions">
                                 <label class="si-avail-toggle">
-                                    <input type="checkbox" ${isAvailable ? 'checked' : ''} onchange="toggleShopItemAvailability(${shopId}, ${idx})">
+                                    <input type="checkbox" ${isAvailable ? 'checked' : ''} data-on-change="toggleShopItemAvailability" data-shop-id="${shopId}" data-item-idx="${idx}">
                                     <span>${isAvailable ? 'Verfügbar' : 'Nicht verfügbar'}</span>
                                 </label>
                                 ${isAvailable ? `
@@ -714,6 +714,7 @@ function editShop(id) {
 
 function deleteShop(id) {
     if (confirm('Shop und alle Artikel löschen?')) {
+        pushUndo('Shop gelöscht');
         D.shops = (D.shops || []).filter(s => s.id !== id);
         expandedShops.delete(id);
         renderShops();
@@ -733,7 +734,11 @@ function showShopItemModal(shopId, itemIdx = null) {
             const item = shop.items[itemIdx];
             $('edit-shop-item-id').value = itemIdx;
             $('shop-item-available').checked = item.available !== false;
-            $('shop-item-quantity').value = item.quantity || 1;
+            $('shop-item-quantity').value = item.unlimited ? '' : (item.quantity || 1);
+            if ($('shop-item-unlimited')) {
+                $('shop-item-unlimited').checked = item.unlimited || false;
+                toggleShopItemUnlimited();
+            }
             $('shop-item-category').value = item.category || 'misc';
             $('shop-item-name').value = item.name || '';
             $('shop-item-type').value = item.type || '';
@@ -760,6 +765,10 @@ function clearShopItemForm() {
     $('edit-shop-item-id').value = '';
     $('shop-item-available').checked = true;
     $('shop-item-quantity').value = 1;
+    if ($('shop-item-unlimited')) {
+        $('shop-item-unlimited').checked = false;
+        toggleShopItemUnlimited();
+    }
     $('shop-item-category').value = 'weapon';
     $('shop-item-name').value = '';
     $('shop-item-type').value = '';
@@ -793,6 +802,26 @@ function updateShopItemFields() {
     }
 }
 
+
+function toggleShopItemUnlimited() {
+    const unlimitedCheckbox = $('shop-item-unlimited');
+    const quantityInput = $('shop-item-quantity');
+
+    if (unlimitedCheckbox && quantityInput) {
+        if (unlimitedCheckbox.checked) {
+            quantityInput.disabled = true;
+            quantityInput.style.opacity = '0.5';
+            quantityInput.value = '';
+            quantityInput.placeholder = '∞';
+        } else {
+            quantityInput.disabled = false;
+            quantityInput.style.opacity = '1';
+            quantityInput.placeholder = '';
+            if (!quantityInput.value) quantityInput.value = 1;
+        }
+    }
+}
+
 function saveShopItem() {
     const name = $('shop-item-name').value.trim();
     if (!name) {
@@ -810,9 +839,11 @@ function saveShopItem() {
     if (!shop.items) shop.items = [];
     
     const category = $('shop-item-category').value;
+    const isUnlimited = $('shop-item-unlimited') && $('shop-item-unlimited').checked;
     const item = {
         available: $('shop-item-available').checked,
-        quantity: parseInt($('shop-item-quantity').value) || 1,
+        unlimited: isUnlimited,
+        quantity: isUnlimited ? null : (parseInt($('shop-item-quantity').value) || 1),
         category: category,
         name: name,
         type: $('shop-item-type').value.trim(),
@@ -857,6 +888,7 @@ function editShopItem(shopId, idx) {
 
 function deleteShopItem(shopId, idx) {
     if (confirm('Artikel löschen?')) {
+        pushUndo('Shop-Artikel gelöscht');
         const shop = (D.shops || []).find(s => s.id === shopId);
         if (shop && shop.items) {
             shop.items.splice(idx, 1);
@@ -867,10 +899,20 @@ function deleteShopItem(shopId, idx) {
     }
 }
 
-function toggleShopItemAvailability(shopId, idx) {
+function toggleShopItemAvailability(shopIdOrElement, idx) {
+    let shopId = shopIdOrElement;
+    let itemIdx = idx;
+
+    // Unterstuetzt sowohl direkte Werte als auch Element (von data-on-change)
+    if (shopIdOrElement && shopIdOrElement.tagName) {
+        // Element uebergeben - Werte aus data-Attributen extrahieren
+        shopId = parseInt(shopIdOrElement.dataset.shopId, 10);
+        itemIdx = parseInt(shopIdOrElement.dataset.itemIdx, 10);
+    }
+
     const shop = (D.shops || []).find(s => s.id === shopId);
-    if (shop && shop.items && shop.items[idx]) {
-        shop.items[idx].available = !shop.items[idx].available;
+    if (shop && shop.items && shop.items[itemIdx]) {
+        shop.items[itemIdx].available = !shop.items[itemIdx].available;
         renderShops();
         save();
     }

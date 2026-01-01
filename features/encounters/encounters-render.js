@@ -54,7 +54,7 @@ function renderEncounters() {
                 </div>
             `).join('')}
             ${types.length > 5 ? `
-                <select class="enc-filter-select" onchange="setEncFilter(this.value || 'all')">
+                <select class="enc-filter-select" data-on-change="setEncFilter">
                     <option value="">Mehr...</option>
                     ${types.slice(5).map(type => `<option value="${esc(type)}">${esc(type)}</option>`).join('')}
                 </select>
@@ -333,6 +333,11 @@ function clearEncounterDetail() {
 }
 
 function setEncFilter(f) {
+    // Unterstuetzt sowohl direkte Werte als auch Element (von data-on-change)
+    if (f && f.tagName) {
+        // Element uebergeben - Wert extrahieren
+        f = f.value || 'all';
+    }
     currentEncFilter = f;
     selectedEncounterId = null;
     renderEncounters();

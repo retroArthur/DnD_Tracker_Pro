@@ -5,7 +5,7 @@
 
 // DICE FAVORITES
 // ============================================================
-const DICE_FAV_KEY = 'dnd-dice-favorites';
+const DICE_FAV_KEY = APP_CONFIG.DICE_FAV_KEY;
 
 function getDiceFavorites() {
     return StorageAPI.getJSON(DICE_FAV_KEY, []);

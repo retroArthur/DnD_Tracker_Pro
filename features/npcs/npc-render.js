@@ -62,7 +62,7 @@ function renderNPCList() {
                 </div>
             `).join('')}
             ${locations.length > 5 ? `
-                <select class="npc-filter-select" onchange="setNpcFilter(this.value ? parseInt(this.value) : 'all')">
+                <select class="npc-filter-select" data-on-change="setNpcFilter">
                     <option value="">Mehr...</option>
                     ${locations.slice(5).map(loc => `<option value="${loc.id}">${esc(loc.name)}</option>`).join('')}
                 </select>
@@ -316,6 +316,12 @@ function clearNPCDetail() {
 }
 
 function setNpcFilter(f) {
+    // Unterstuetzt sowohl direkte Werte als auch Element (von data-on-change)
+    if (f && f.tagName) {
+        // Element uebergeben - Wert extrahieren
+        const val = f.value;
+        f = val ? parseInt(val, 10) : 'all';
+    }
     currentNpcFilter = f;
     selectedNpcId = null;
     renderNPCList();

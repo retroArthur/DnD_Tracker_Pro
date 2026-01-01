@@ -123,7 +123,8 @@ function saveQuickRefEntry() {
 
 function deleteQuickRefEntry(id) {
     if (!confirm('Eintrag wirklich löschen?')) return;
-    
+
+    pushUndo('Schnellreferenz gelöscht');
     D.quickRefCustom = (D.quickRefCustom || []).filter(e => e.id !== id);
     renderQuickRefCustom();
     save();

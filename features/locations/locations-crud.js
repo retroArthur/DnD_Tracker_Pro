@@ -16,6 +16,8 @@ function saveLocation() {
     };
     if (!loc.name) { showToast('⚠️ Name erforderlich', 'error'); return; }
 
+    pushUndo(id ? 'Ort bearbeitet' : 'Ort erstellt');
+
     if (id) {
         const idx = D.locations.findIndex(l => l.id === parseEntityId(id));
         if (idx > -1) D.locations[idx] = { ...D.locations[idx], ...loc };
@@ -56,7 +58,8 @@ function deleteLocation(id) {
     const numId = parseEntityId(id);
     if (numId === null) return;
 
-    if (confirm('Löschen?')) {
+    const loc = EntityLookup.location(id);
+    if (confirm(`Ort "${loc?.name || 'Unbekannt'}" löschen?`)) {
         pushUndo('Ort gelöscht');
         D.locations = D.locations.filter(l => l.id !== numId);
         renderLocations();
@@ -69,6 +72,7 @@ function addFilter() {
     const name = $('filter-name').value.trim();
     if (!name) return;
 
+    pushUndo('Filter erstellt');
     D.filters.push({ id: nextId('filters'), name, color: $('filter-color').value });
     $('filter-name').value = '';
     renderFilterList();
@@ -77,6 +81,7 @@ function addFilter() {
 }
 
 function deleteFilter(id) {
+    pushUndo('Filter gelöscht');
     D.filters = D.filters.filter(f => f.id !== id);
     renderFilterList();
     renderLocations();

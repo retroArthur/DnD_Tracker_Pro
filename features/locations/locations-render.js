@@ -132,8 +132,7 @@ function renderLocationItem(loc) {
             <div class="loc-item-icon">${icon}</div>
             <div class="loc-item-info">
                 <div class="loc-item-name">
-                    ${esc(loc.name)}
-                    ${filter ? `<span class="loc-item-tag" style="background: var(--${filter.color})">${esc(filter.name)}</span>` : ''}
+                    ${filter ? `<span class="loc-item-tag" style="background: var(--${filter.color})">${esc(filter.name)}</span>` : ''}${esc(loc.name)}
                 </div>
                 <div class="loc-item-meta">
                     ${descPreview ? descPreview + (loc.description && stripHtml(loc.description).length > 60 ? '...' : '') : 'Keine Beschreibung'}

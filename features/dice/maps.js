@@ -60,9 +60,10 @@ function renameCurrentMap() {
 function deleteCurrentMap() {
     const map = getCurrentMap();
     if (!map) return;
-    
+
     if (!confirm(`Karte "${map.name}" wirklich löschen?`)) return;
-    
+
+    pushUndo('Karte gelöscht');
     D.maps = getMaps().filter(m => m.id !== currentMapId);
     currentMapId = D.maps.length > 0 ? D.maps[0].id : null;
     save();
@@ -625,7 +626,8 @@ function endMarkerDrag(event) {
 function deleteMarker(id) {
     const map = getCurrentMap();
     if (!map) return;
-    
+
+    pushUndo('Marker gelöscht');
     map.markers = map.markers.filter(m => m.id !== id);
     renderMapMarkers();
     renderMapMarkersList();
@@ -1072,7 +1074,17 @@ function clearMeasureLine() {
         resultEl.style.display = 'none';
         resultEl.textContent = '';
     }
+    
+    // Cursor-Tooltip verstecken
+    const tooltip = $('map-cursor-tooltip');
+    if (tooltip) {
+        tooltip.classList.remove('visible');
+        tooltip.textContent = '';
+    }
 }
+
+// Speichert letztes Messergebnis für Cursor-Tooltip
+let lastMeasureText = '';
 
 function showMeasureResult(imgRect) {
     if (!measureStart || !measureEnd) return;
@@ -1088,51 +1100,86 @@ function showMeasureResult(imgRect) {
     // Pixel-Distanz bei 100% Zoom (für Kalibrierung)
     const pixelDistAtZoom1 = pixelDist / mapZoom;
     
-    const resultEl = $('map-measure-result');
-    if (!resultEl) return;
+    let resultText = '';
     
     // Prüfen ob Karte kalibriert ist
     if (!map.calibration || !map.calibration.pixelsPerMeter) {
+        resultText = `📏 ${Math.round(pixelDistAtZoom1)} px — nicht kalibriert`;
+    } else {
+        // Kalibrierte Messung
+        const meters = pixelDistAtZoom1 / map.calibration.pixelsPerMeter;
+        const feet = meters * 3.28084;
+        
+        // Formatierung Meter
+        let meterText;
+        if (meters < 1000) {
+            meterText = Math.round(meters) + ' m';
+        } else {
+            meterText = (meters / 1000).toFixed(1) + ' km';
+        }
+        
+        // Formatierung Feet
+        let feetText;
+        if (feet < 5280) {
+            feetText = Math.round(feet) + ' ft';
+        } else {
+            feetText = (feet / 5280).toFixed(1) + ' mi';
+        }
+        
+        // Reisezeit (5 km/h zu Fuß)
+        const hours = meters / 5000;
+        let timeText = '';
+        if (hours < 0.1) {
+            timeText = ''; // Zu kurz für Reisezeit
+        } else if (hours < 1) {
+            timeText = ` = ${Math.round(hours * 60)} Min`;
+        } else if (hours < 24) {
+            timeText = ` = ${hours.toFixed(1)} Std`;
+        } else {
+            timeText = ` = ${(hours / 8).toFixed(1)} Tage`;
+        }
+        
+        resultText = `📏 ${meterText} / ${feetText}${timeText}`;
+    }
+    
+    // In der Info-Leiste anzeigen (Fallback)
+    const resultEl = $('map-measure-result');
+    if (resultEl) {
         resultEl.style.display = 'inline';
-        resultEl.textContent = `📏 ${Math.round(pixelDistAtZoom1)} px — Karte nicht kalibriert (K drücken)`;
-        return;
+        resultEl.textContent = resultText;
     }
     
-    // Kalibrierte Messung
-    const meters = pixelDistAtZoom1 / map.calibration.pixelsPerMeter;
-    const feet = meters * 3.28084;
+    // Speichern für Cursor-Tooltip
+    lastMeasureText = resultText;
     
-    // Formatierung Meter
-    let meterText;
-    if (meters < 1000) {
-        meterText = Math.round(meters) + ' m';
-    } else {
-        meterText = (meters / 1000).toFixed(1) + ' km';
+    // Cursor-Tooltip initial anzeigen
+    const tooltip = $('map-cursor-tooltip');
+    if (tooltip) {
+        tooltip.textContent = resultText;
+        tooltip.classList.add('visible');
     }
+}
+
+// Cursor-Tooltip bei Mausbewegung positionieren
+function initCursorTooltip() {
+    const viewport = $('map-viewport');
+    if (!viewport) return;
     
-    // Formatierung Feet
-    let feetText;
-    if (feet < 5280) {
-        feetText = Math.round(feet) + ' ft';
-    } else {
-        feetText = (feet / 5280).toFixed(1) + ' mi';
-    }
+    viewport.addEventListener('mousemove', function(e) {
+        const tooltip = $('map-cursor-tooltip');
+        if (!tooltip || !tooltip.classList.contains('visible')) return;
+        
+        // Tooltip 15px rechts und 15px unterhalb des Cursors
+        tooltip.style.left = (e.clientX + 15) + 'px';
+        tooltip.style.top = (e.clientY + 15) + 'px';
+    });
     
-    // Reisezeit (5 km/h zu Fuß)
-    const hours = meters / 5000;
-    let timeText = '';
-    if (hours < 0.1) {
-        timeText = ''; // Zu kurz für Reisezeit
-    } else if (hours < 1) {
-        timeText = ` ≈ ${Math.round(hours * 60)} Min`;
-    } else if (hours < 24) {
-        timeText = ` ≈ ${hours.toFixed(1)} Std`;
-    } else {
-        timeText = ` ≈ ${(hours / 8).toFixed(1)} Tage`;
-    }
-    
-    resultEl.style.display = 'inline';
-    resultEl.textContent = `📏 ${meterText} / ${feetText}${timeText}`;
+    viewport.addEventListener('mouseleave', function() {
+        const tooltip = $('map-cursor-tooltip');
+        if (tooltip) {
+            tooltip.classList.remove('visible');
+        }
+    });
 }
 
 // Kalibrierung
@@ -1640,6 +1687,10 @@ function initExtendedMapFeatures() {
     try {
         initMapConnections();
     } catch(e) { console.warn('initMapConnections error:', e); }
+    
+    try {
+        initCursorTooltip();
+    } catch(e) { console.warn('initCursorTooltip error:', e); }
     
     // Initial Toolbar anzeigen
     const toolbar = $('map-toolbar');

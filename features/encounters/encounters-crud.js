@@ -200,7 +200,9 @@ function cancelEncEdit() {
  * @param {number|string} id - Encounter ID
  */
 function deleteEnc(id) {
-    if (confirm('Löschen?')) {
+    const enc = EntityLookup.encounter(id);
+    if (confirm(`Gegner "${enc?.name || 'Unbekannt'}" löschen?`)) {
+        pushUndo('Gegner gelöscht');
         D.encounters = D.encounters.filter(e => e.id !== id);
         renderEncounters();
         save();

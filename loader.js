@@ -116,15 +116,61 @@ const MODULES = [
     'core/init.js'
 ];
 
+// Zeigt Loading-Indikator während des Modulladens
+function showLoadingIndicator() {
+    const appRoot = document.getElementById('app-root');
+    appRoot.innerHTML = `
+        <div id="loading-screen" style="
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            background: #0f0f0f;
+            color: #e0e0e0;
+            font-family: 'Segoe UI', Arial, sans-serif;
+        ">
+            <div style="font-size: 3em; margin-bottom: 20px;">⚔️</div>
+            <h1 style="margin: 0 0 10px 0; font-size: 1.5em; color: #fbbf24;">D&D Tracker</h1>
+            <p id="loading-status" style="color: #888; margin: 0 0 20px 0;">Lade Module...</p>
+            <div style="width: 250px; height: 6px; background: #2a2a2a; border-radius: 3px; overflow: hidden;">
+                <div id="loading-bar" style="
+                    width: 0%;
+                    height: 100%;
+                    background: linear-gradient(90deg, #fbbf24, #f59e0b);
+                    transition: width 0.15s ease-out;
+                "></div>
+            </div>
+            <p id="loading-count" style="color: #666; font-size: 0.85em; margin-top: 10px;">0 / ${MODULES.length}</p>
+        </div>
+    `;
+}
+
+function updateLoadingProgress(loaded, total, currentModule) {
+    const bar = document.getElementById('loading-bar');
+    const count = document.getElementById('loading-count');
+    const status = document.getElementById('loading-status');
+    if (bar) bar.style.width = `${(loaded / total) * 100}%`;
+    if (count) count.textContent = `${loaded} / ${total}`;
+    if (status && currentModule) {
+        // Zeige nur Modulname ohne Pfad
+        const shortName = currentModule.split('/').pop().replace('.js', '');
+        status.textContent = `Lade ${shortName}...`;
+    }
+}
+
 async function loadModules() {
     logLoader('🚀 Lade D&D Tracker Module...');
     logLoader(`📦 ${MODULES.length} Module werden geladen...`);
 
-    // Lade HTML Body zuerst
+    // Zeige Loading-Screen sofort
+    showLoadingIndicator();
+
+    // Lade HTML Body zuerst (aber halte Loading-Screen)
+    let bodyHTML = '';
     try {
         const response = await fetch('assets/body.html');
-        const bodyHTML = await response.text();
-        document.getElementById('app-root').innerHTML = bodyHTML;
+        bodyHTML = await response.text();
         logLoader('✓ HTML Body geladen');
     } catch (error) {
         console.error('❌ Fehler beim Laden des HTML Body:', error);
@@ -142,6 +188,7 @@ async function loadModules() {
             await new Promise((resolve, reject) => {
                 script.onload = () => {
                     loadedCount++;
+                    updateLoadingProgress(loadedCount, MODULES.length, module);
                     logLoader(`✓ [${loadedCount}/${MODULES.length}] ${module}`);
                     resolve();
                 };
@@ -160,6 +207,9 @@ async function loadModules() {
 
     logLoader(`✅ ${loadedCount}/${MODULES.length} Module erfolgreich geladen`);
 
+    // Jetzt erst HTML Body einfügen (ersetzt Loading-Screen)
+    document.getElementById('app-root').innerHTML = bodyHTML;
+
     // Rufe init() auf, nachdem alle Module geladen sind
     logLoader('🚀 Starte Initialisierung...');
     if (typeof init === 'function') {
@@ -175,37 +225,60 @@ async function loadModules() {
     }
 }
 
+// XSS-sichere Fehleranzeige
+function showLoadError(error) {
+    const appRoot = document.getElementById('app-root');
+
+    // Erstelle DOM-Elemente programmatisch statt innerHTML mit Template-Literal
+    const container = document.createElement('div');
+    container.style.cssText = 'padding: 40px; text-align: center; color: #ef4444; font-family: Arial, sans-serif;';
+
+    const h1 = document.createElement('h1');
+    h1.style.cssText = 'font-size: 2em; margin-bottom: 20px;';
+    h1.textContent = '⚠️ Fehler beim Laden';
+
+    const p1 = document.createElement('p');
+    p1.style.cssText = 'font-size: 1.2em; margin-bottom: 10px;';
+    p1.textContent = 'Die Anwendung konnte nicht geladen werden.';
+
+    const p2 = document.createElement('p');
+    p2.style.color = '#888';
+    p2.textContent = 'Bitte überprüfen Sie die Browser-Konsole (F12) für Details.';
+
+    const details = document.createElement('details');
+    details.style.cssText = 'margin-top: 20px; text-align: left; background: #1a1a1a; padding: 20px; border-radius: 8px;';
+
+    const summary = document.createElement('summary');
+    summary.style.cssText = 'cursor: pointer; font-weight: bold;';
+    summary.textContent = 'Fehlerdetails anzeigen';
+
+    const pre = document.createElement('pre');
+    pre.style.cssText = 'margin-top: 10px; color: #ff6b6b; font-family: monospace; overflow-x: auto;';
+    // SICHER: textContent statt innerHTML - verhindert XSS
+    pre.textContent = error.stack || error.message || String(error);
+
+    details.appendChild(summary);
+    details.appendChild(pre);
+    container.appendChild(h1);
+    container.appendChild(p1);
+    container.appendChild(p2);
+    container.appendChild(details);
+
+    appRoot.innerHTML = '';
+    appRoot.appendChild(container);
+}
+
 // Start loading when DOM is ready
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => {
         loadModules().catch(error => {
             console.error('❌ Kritischer Fehler beim Laden der Module:', error);
-            document.getElementById('app-root').innerHTML = `
-                <div style="padding: 40px; text-align: center; color: #ef4444; font-family: Arial, sans-serif;">
-                    <h1 style="font-size: 2em; margin-bottom: 20px;">⚠️ Fehler beim Laden</h1>
-                    <p style="font-size: 1.2em; margin-bottom: 10px;">Die Anwendung konnte nicht geladen werden.</p>
-                    <p style="color: #888;">Bitte überprüfen Sie die Browser-Konsole (F12) für Details.</p>
-                    <details style="margin-top: 20px; text-align: left; background: #1a1a1a; padding: 20px; border-radius: 8px;">
-                        <summary style="cursor: pointer; font-weight: bold;">Fehlerdetails anzeigen</summary>
-                        <pre style="margin-top: 10px; color: #ff6b6b; font-family: monospace; overflow-x: auto;">${error.stack || error.message || error}</pre>
-                    </details>
-                </div>
-            `;
+            showLoadError(error);
         });
     });
 } else {
     loadModules().catch(error => {
         console.error('❌ Kritischer Fehler beim Laden der Module:', error);
-        document.getElementById('app-root').innerHTML = `
-            <div style="padding: 40px; text-align: center; color: #ef4444; font-family: Arial, sans-serif;">
-                <h1 style="font-size: 2em; margin-bottom: 20px;">⚠️ Fehler beim Laden</h1>
-                <p style="font-size: 1.2em; margin-bottom: 10px;">Die Anwendung konnte nicht geladen werden.</p>
-                <p style="color: #888;">Bitte überprüfen Sie die Browser-Konsole (F12) für Details.</p>
-                <details style="margin-top: 20px; text-align: left; background: #1a1a1a; padding: 20px; border-radius: 8px;">
-                    <summary style="cursor: pointer; font-weight: bold;">Fehlerdetails anzeigen</summary>
-                    <pre style="margin-top: 10px; color: #ff6b6b; font-family: monospace; overflow-x: auto;">${error.stack || error.message || error}</pre>
-                </details>
-            </div>
-        `;
+        showLoadError(error);
     });
 }

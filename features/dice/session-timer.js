@@ -5,6 +5,7 @@
 
 // SESSION TIMER
 // ============================================================
+const SESSION_AUTO_SAVE_INTERVAL = APP_CONFIG.SESSION_AUTO_SAVE_INTERVAL;
 let sessionTimerInterval = null;
 let sessionTimerSeconds = 0;
 let sessionTimerRunning = false;
@@ -46,7 +47,12 @@ function toggleSessionTimer() {
         if (toggleBtn) toggleBtn.textContent = '▶️';
         showToast('⏸️ Timer pausiert');
     } else {
-        // Start
+        // Start - cleanup vorheriger Interval falls vorhanden
+        if (sessionTimerInterval) {
+            clearInterval(sessionTimerInterval);
+            sessionTimerInterval = null;
+        }
+
         sessionTimerRunning = true;
         timer?.classList.remove('paused');
         timer?.classList.add('running');
@@ -54,13 +60,13 @@ function toggleSessionTimer() {
         mobileTimer?.classList.add('running');
         if (toggleBtn) toggleBtn.textContent = '⏸️';
         showToast('▶️ Timer gestartet');
-        
+
         sessionTimerInterval = setInterval(() => {
             sessionTimerSeconds++;
             updateSessionTimerDisplay();
             
-            // Auto-save Session-Zeit alle 5 Minuten
-            if (sessionTimerSeconds % 300 === 0) {
+            // Auto-save Session-Zeit
+            if (sessionTimerSeconds % SESSION_AUTO_SAVE_INTERVAL === 0) {
                 D.lastSessionDuration = sessionTimerSeconds;
                 save();
             }

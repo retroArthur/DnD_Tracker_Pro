@@ -58,7 +58,15 @@ function showModal(id) {
     if (id === 'quest-modal') populateQuestSelects();
 }
 function hideModal(id) { $(id).classList.remove('show'); }
-function toggleCollapse(id) { const el = $(id), icon = $(id + '-icon'); el.classList.toggle('open'); if (icon) icon.textContent = el.classList.contains('open') ? '▲' : '▼'; }
+function toggleCollapse(id) {
+    const el = $(id), icon = $(id + '-icon');
+    el.classList.toggle('open');
+    if (icon) icon.textContent = el.classList.contains('open') ? '▲' : '▼';
+    // Story-Arc Dropdown aktualisieren wenn Session-Formular geöffnet wird
+    if (id === 'session-form' && el.classList.contains('open') && typeof renderStoryArcSelects === 'function') {
+        renderStoryArcSelects();
+    }
+}
 function showQuickNotesModal() { 
     $('quick-notes').value = D.quickNotes || '';
     const modal = $('quicknotes-modal');

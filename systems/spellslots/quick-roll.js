@@ -98,7 +98,7 @@ function exportAllDataAsFile() {
     
     // Kampagnennamen hinzufügen
     const index = getCampaignIndex();
-    if (index.active === 'dnd-tracker-v4') {
+    if (index.active === APP_CONFIG.STORAGE_KEY) {
         exp._campaignName = 'Standard-Kampagne';
     } else {
         const campaign = index.campaigns.find(c => c.key === index.active);

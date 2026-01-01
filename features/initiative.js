@@ -687,6 +687,7 @@ function clearLootForm() {
 
 function removeLoot(id) {
     if (confirm('Item entfernen?')) {
+        pushUndo('Beute entfernt');
         D.loot = D.loot.filter(i => i.id !== id);
         // Selektion zurücksetzen falls gelöschtes Item selektiert war
         if (selectedLootId === id) {

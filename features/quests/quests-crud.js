@@ -104,9 +104,13 @@ function editQuest(id) {
  * @param {number|string} id - Quest ID
  */
 function deleteQuest(id) {
-    if (confirm('Löschen?')) {
+    const numId = parseEntityId(id);
+    if (numId === null) return;
+
+    const quest = EntityLookup.quest(id);
+    if (confirm(`Quest "${quest?.name || 'Unbekannt'}" löschen?`)) {
         pushUndo('Quest gelöscht');
-        D.quests = D.quests.filter(q => q.id !== id);
+        D.quests = D.quests.filter(q => q.id !== numId);
         renderQuests();
         save();
     }

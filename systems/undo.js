@@ -103,14 +103,13 @@ function updateSaveIndicator(status = 'saved') {
 // ============================================================
 // KONFLIKT-ERKENNUNG
 // ============================================================
-const BROADCAST_CHANNEL = 'dnd-tracker-sync';
 let broadcastChannel = null;
 let tabId = Math.random().toString(36).substr(2, 9);
 let conflictDismissed = false;
 
 function initConflictDetection() {
     try {
-        broadcastChannel = new BroadcastChannel(BROADCAST_CHANNEL);
+        broadcastChannel = new BroadcastChannel(APP_CONFIG.BROADCAST_CHANNEL);
         
         broadcastChannel.onmessage = (event) => {
             if (event.data.tabId !== tabId && event.data.campaign === getCurrentStorageKey()) {

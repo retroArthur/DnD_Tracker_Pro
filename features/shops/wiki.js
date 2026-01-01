@@ -100,10 +100,20 @@ function renderWikiTree() {
         const isExpanded = expandedWikiCategories.has(catKey);
         
         // Hierarchie aufbauen: Root-Einträge und Kinder
-        const rootEntries = catEntries.filter(e => !e.parentId);
+        // Als Root gelten:
+        // - Einträge ohne parentId
+        // - Selbstbezüge (parentId === id)
+        // - Einträge deren Parent in einer anderen Kategorie ist
+        const catEntryIds = new Set(catEntries.map(e => e.id));
+        const rootEntries = catEntries.filter(e =>
+            !e.parentId ||
+            e.parentId === e.id ||
+            !catEntryIds.has(e.parentId) // Parent ist nicht in dieser Kategorie
+        );
         const childrenMap = {};
         catEntries.forEach(e => {
-            if (e.parentId) {
+            // Nur als Kind einordnen wenn Parent in gleicher Kategorie
+            if (e.parentId && e.parentId !== e.id && catEntryIds.has(e.parentId)) {
                 if (!childrenMap[e.parentId]) childrenMap[e.parentId] = [];
                 childrenMap[e.parentId].push(e);
             }
@@ -332,6 +342,8 @@ function showWikiForm(parentCategory = '') {
     if (parentCategory) {
         $('wiki-category').value = parentCategory;
     }
+    // Parent-Dropdown basierend auf Kategorie aktualisieren
+    updateWikiParentSelect();
     $('wiki-form-title').textContent = '+ Neuer Eintrag';
     $('wiki-form-overlay').style.display = 'flex';
 }
@@ -344,20 +356,46 @@ function hideWikiForm() {
 function updateWikiParentSelect() {
     const select = $('wiki-parent');
     if (!select) return;
-    
+
     const editId = $('edit-wiki-id')?.value;
     const currentId = editId ? parseInt(editId) : null;
-    
+    const selectedCategory = $('wiki-category')?.value || '';
+
+    // Aktuellen Wert merken um ihn wiederherzustellen falls möglich
+    const previousValue = select.value;
+
     select.innerHTML = '<option value="">— Kein übergeordneter Eintrag —</option>';
-    
+
     (D.wiki || []).forEach(entry => {
         // Nicht sich selbst oder eigene Kinder als Parent erlauben
         if (entry.id === currentId) return;
         if (isDescendantOf(entry.id, currentId)) return;
-        
+
+        // Nur Einträge aus der gleichen Kategorie anzeigen
+        if (selectedCategory && entry.category !== selectedCategory) return;
+
         const cat = WIKI_CATEGORIES[entry.category] || { icon: '📄' };
         select.innerHTML += `<option value="${entry.id}">${cat.icon} ${esc(entry.title)}</option>`;
     });
+
+    // Vorherigen Wert wiederherstellen falls noch gültig
+    if (previousValue && select.querySelector(`option[value="${previousValue}"]`)) {
+        select.value = previousValue;
+    }
+}
+
+// Event-Listener für Kategorie-Änderung im Wiki-Formular
+function initWikiCategoryListener() {
+    const categorySelect = $('wiki-category');
+    if (categorySelect) {
+        categorySelect.addEventListener('change', () => {
+            // Parent-Dropdown aktualisieren wenn Kategorie geändert wird
+            updateWikiParentSelect();
+            // Parent-Auswahl zurücksetzen da alter Parent möglicherweise nicht mehr gültig
+            const parentSelect = $('wiki-parent');
+            if (parentSelect) parentSelect.value = '';
+        });
+    }
 }
 
 function isDescendantOf(entryId, potentialAncestorId) {
@@ -437,6 +475,7 @@ function saveWikiEntry() {
     if (editId) {
         const idx = D.wiki.findIndex(e => e.id === parseInt(editId));
         if (idx > -1) {
+            saveUndoState(); // Undo-Punkt vor Änderung
             D.wiki[idx] = { ...D.wiki[idx], ...entry };
             showToast('Wiki-Eintrag aktualisiert');
             selectedWikiEntryId = parseInt(editId);
@@ -459,23 +498,22 @@ function saveWikiEntry() {
 function editWikiEntry(id) {
     const entry = EntityLookup.wiki(id);
     if (!entry) return;
-    
-    updateWikiParentSelect();
-    
+
     $('edit-wiki-id').value = id;
     $('wiki-title').value = entry.title;
     $('wiki-category').value = entry.category || 'locations';
     $('wiki-content').innerHTML = entry.content || '';
     $('wiki-tags').value = (entry.tags || []).join(', ');
     $('wiki-pinned').checked = entry.pinned || false;
-    
-    // Parent setzen (nach updateWikiParentSelect)
-    setTimeout(() => {
-        if ($('wiki-parent')) {
-            $('wiki-parent').value = entry.parentId || '';
-        }
-    }, 10);
-    
+
+    // Parent-Dropdown aktualisieren NACH Setzen der Kategorie
+    updateWikiParentSelect();
+
+    // Parent-Wert setzen
+    if ($('wiki-parent')) {
+        $('wiki-parent').value = entry.parentId || '';
+    }
+
     $('wiki-form-title').textContent = '✏️ Eintrag bearbeiten';
     $('wiki-form-overlay').style.display = 'flex';
     $('wiki-title').focus();
@@ -497,6 +535,9 @@ function clearWikiForm() {
 
 function deleteWikiEntry(id) {
     if (confirm('Wiki-Eintrag löschen?')) {
+        // Undo-Punkt speichern vor dem Löschen
+        saveUndoState();
+        
         // Auch Kinder auf "kein Parent" setzen
         D.wiki.forEach(e => {
             if (e.parentId === id) e.parentId = null;

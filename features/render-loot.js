@@ -79,9 +79,9 @@ function renderAssignItemList() {
             </div>
             <div style="display:flex; align-items:center; gap:6px; flex-shrink:0;">
                 <button class="btn btn-sm" data-action="change-assign-qty" data-id="${i.id}" data-value="-1" style="padding:4px 8px; font-size:1.1em;">−</button>
-                <input type="number" class="assign-item-qty" data-item-id="${i.id}" value="${assignedQty}" min="0" max="${maxQty}" 
+                <input type="number" class="assign-item-qty" data-item-id="${i.id}" value="${assignedQty}" min="0" max="${maxQty}"
                        style="width:50px; text-align:center; padding:4px; background:var(--bg-card); border:1px solid var(--border); border-radius:4px; color:var(--text);"
-                       onchange="validateAssignItemQty(this, ${maxQty})">
+                       data-on-change="validateAssignItemQty" data-max-qty="${maxQty}">
                 <button class="btn btn-sm" data-action="change-assign-qty" data-id="${i.id}" data-value="1" style="padding:4px 8px; font-size:1.1em;">+</button>
             </div>
         </div>`;
@@ -109,16 +109,21 @@ function changeAssignItemQty(itemId, delta) {
 }
 
 function validateAssignItemQty(input, max) {
+    // Unterstuetzt sowohl direkte Argumente als auch Element (von data-on-change)
+    if (max === undefined && input && input.dataset) {
+        max = parseInt(input.dataset.maxQty, 10) || 99;
+    }
+
     let val = parseInt(input.value) || 0;
     val = Math.max(0, Math.min(max, val));
     input.value = val;
-    
+
     // Update row highlight
     const row = input.closest('.assign-item-row');
     if (row) {
         row.style.background = val > 0 ? 'rgba(74,222,128,0.15)' : '';
     }
-    
+
     updateAssignItemCount();
 }
 

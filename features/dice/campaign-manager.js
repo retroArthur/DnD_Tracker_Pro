@@ -9,7 +9,7 @@
 const CAMPAIGN_INDEX_KEY = APP_CONFIG.CAMPAIGN_INDEX_KEY;
 
 function getCampaignIndex() {
-    return StorageAPI.getJSON(CAMPAIGN_INDEX_KEY, { campaigns: [], active: 'dnd-tracker-v4' });
+    return StorageAPI.getJSON(CAMPAIGN_INDEX_KEY, { campaigns: [], active: APP_CONFIG.STORAGE_KEY });
 }
 
 function saveCampaignIndex(index) {
@@ -56,8 +56,8 @@ function switchCampaign(key) {
 
 async function deleteCampaign() {
     const index = getCampaignIndex();
-    const isDefault = index.active === 'dnd-tracker-v4';
-    const key = isDefault ? 'dnd-tracker-v4' : index.active;
+    const isDefault = index.active === APP_CONFIG.STORAGE_KEY;
+    const key = isDefault ? APP_CONFIG.STORAGE_KEY : index.active;
     
     // Datengröße ermitteln
     const dataSize = localStorage.getItem(key);
@@ -105,7 +105,7 @@ async function deleteCampaign() {
         // 3. Wenn nicht Standard-Kampagne, aus Index entfernen
         if (!isDefault) {
             index.campaigns = index.campaigns.filter(c => c.key !== key);
-            index.active = 'dnd-tracker-v4';
+            index.active = APP_CONFIG.STORAGE_KEY;
             saveCampaignIndex(index);
         }
         
@@ -137,12 +137,12 @@ function renderCampaignList() {
     const index = getCampaignIndex();
     
     // Standard campaign
-    let html = `<div class="campaign-item ${index.active === 'dnd-tracker-v4' ? 'active' : ''}" data-action="switch-campaign" data-value="dnd-tracker-v4">
+    let html = `<div class="campaign-item ${index.active === APP_CONFIG.STORAGE_KEY ? 'active' : ''}" data-action="switch-campaign" data-value="${APP_CONFIG.STORAGE_KEY}">
         <div>
             <div class="campaign-name">📚 Standard-Kampagne</div>
             <div class="campaign-info">Ursprüngliche Daten</div>
         </div>
-        ${index.active === 'dnd-tracker-v4' ? '<span style="color:var(--green);">✓ Aktiv</span>' : ''}
+        ${index.active === APP_CONFIG.STORAGE_KEY ? '<span style="color:var(--green);">✓ Aktiv</span>' : ''}
     </div>`;
     
     // Other campaigns

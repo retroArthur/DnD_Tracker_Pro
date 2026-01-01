@@ -351,8 +351,9 @@ function editSelectedNode() {
 function deleteNodeById(nodeId) {
     const node = D.mindmap.nodes.find(n => n.id === nodeId);
     if (!node) return;
-    
+
     if (confirm(`"${node.name}" löschen?`)) {
+        pushUndo('Mindmap-Node gelöscht');
         D.mindmap.nodes = D.mindmap.nodes.filter(n => n.id !== nodeId);
         D.mindmap.connections = D.mindmap.connections.filter(c => c.from !== nodeId && c.to !== nodeId);
         if (selectedNode === nodeId) selectedNode = null;

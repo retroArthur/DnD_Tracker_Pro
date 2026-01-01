@@ -68,16 +68,18 @@ function saveLink() {
     const editId = $('edit-link-id').value;
     const title = $('link-title').value.trim();
     const url = $('link-url').value.trim();
-    
+
     if (!title || !url) { showToast('⚠️ Titel und URL erforderlich', 'error'); return; }
-    
+
     const linkData = {
         title,
         url,
         category: $('link-cat').value,
         description: sanitizeHTML($('link-desc').innerHTML)
     };
-    
+
+    pushUndo(editId ? 'Link bearbeitet' : 'Link erstellt');
+
     if (editId) {
         const idx = D.links.findIndex(l => l.id === parseInt(editId));
         if (idx > -1) {
@@ -89,7 +91,7 @@ function saveLink() {
         D.links.push(linkData);
         showToast('Link hinzugefügt');
     }
-    
+
     cancelLinkEdit();
     renderLinks();
     save();
@@ -122,12 +124,14 @@ function cancelLinkEdit() {
     if (form) form.style.display = 'none';
 }
 
-function deleteLink(id) { 
-    if (confirm('Löschen?')) { 
-        D.links = D.links.filter(l => l.id !== id); 
-        renderLinks(); 
-        save(); 
-    } 
+function deleteLink(id) {
+    const link = EntityLookup.link(id);
+    if (confirm(`Link "${link?.title || 'Unbekannt'}" löschen?`)) {
+        pushUndo('Link gelöscht');
+        D.links = D.links.filter(l => l.id !== id);
+        renderLinks();
+        save();
+    }
 }
 
 // ============================================================

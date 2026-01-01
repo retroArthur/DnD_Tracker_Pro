@@ -1651,15 +1651,13 @@
                         </div>
                         <div id="wiki-content" class="rich-editor" contenteditable="true" style="min-height: 150px;"></div>
                     </div>
-                    <div class="form-group" style="display: flex; justify-content: flex-end;">
-                        <label class="checkbox-label" style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
-                            <input type="checkbox" id="wiki-pinned">
-                            <span>📌 Eintrag pinnen</span>
-                        </label>
-                    </div>
-                    <div class="btn-group">
+                    <div class="btn-group" style="display: flex; align-items: center; gap: 12px;">
                         <button class="btn btn-success" data-action="call" data-value="saveWikiEntry">Speichern</button>
                         <button class="btn" data-action="call" data-value="hideWikiForm">Abbrechen</button>
+                        <label class="checkbox-label" style="display: flex; align-items: center; gap: 6px; cursor: pointer; margin-left: 8px;">
+                            <input type="checkbox" id="wiki-pinned">
+                            <span>📌 Pinnen</span>
+                        </label>
                     </div>
                 </div>
             </div>
@@ -2032,7 +2030,10 @@
                                 </div>
                             </div>
                         </div>
-                        
+
+                        <!-- Cursor-Tooltip für Messergebnis -->
+                        <div id="map-cursor-tooltip"></div>
+
                         <!-- Quick-Pin Kontextmenü (versteckt) -->
                         <div class="map-context-menu" id="map-context-menu" style="display: none;">
                             <div class="map-context-title">⚡ Quick-Pin</div>
@@ -2933,7 +2934,13 @@
                 </div>
                 <div class="form-group">
                     <label>Menge</label>
-                    <input type="number" id="shop-item-quantity" value="1" min="0" style="width: 80px;">
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <input type="number" id="shop-item-quantity" value="1" min="1" style="width: 70px;">
+                        <label class="checkbox-label" style="display: flex; align-items: center; gap: 4px; white-space: nowrap;">
+                            <input type="checkbox" id="shop-item-unlimited" onchange="toggleShopItemUnlimited()">
+                            <span style="font-size: 0.85em;">∞ Unbegrenzt</span>
+                        </label>
+                    </div>
                 </div>
                 <div class="form-group">
                     <label>Kategorie *</label>
