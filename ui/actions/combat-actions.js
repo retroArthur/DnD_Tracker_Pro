@@ -41,10 +41,13 @@ const CombatActions = {
     'calc-clear-monsters': () => clearMonsters(),
     'calc-add-monster': () => addMonster(),
     'calc-adjust-difficulty': (ctx) => quickAdjustDifficulty(ctx.value),
+    'calc-show-difficulty-selector': () => showDifficultySelector(),
     'calc-save-encounter': () => saveAsEncounter(),
     'calc-import-encounter': (ctx) => importEncounterMonsters(ctx.value),
     'calc-back-to-calculator': () => renderCalculatorModal(),
     'close-calculator-modal': () => hideCalculatorModal(),
+    'calc-set-terrain': (ctx) => setCalculatorTerrain(ctx.value),
+    'calc-toggle-lair': () => toggleCalculatorLair(),
 
     // Roll actions
     'roll-attack': () => rollAttack(),

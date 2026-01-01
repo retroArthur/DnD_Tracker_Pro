@@ -13223,6 +13223,121 @@
     transform: translateY(-1px);
 }
 
+/* Environment Modifiers Section */
+.calc-env-section {
+    background: var(--bg-dark);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px;
+    margin-bottom: 12px;
+}
+
+.calc-env-row {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+    align-items: flex-start;
+}
+
+.calc-env-group {
+    flex: 1;
+    min-width: 200px;
+}
+
+.calc-env-label {
+    display: block;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--text-dim);
+    margin-bottom: 8px;
+    text-transform: uppercase;
+}
+
+.calc-terrain-btns {
+    display: flex;
+    gap: 4px;
+    flex-wrap: wrap;
+}
+
+.calc-terrain-btn {
+    padding: 6px 10px;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    background: var(--bg-card);
+    color: var(--text-dim);
+    font-size: 0.7rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+}
+
+.calc-terrain-btn:hover {
+    border-color: var(--gold);
+    color: var(--text);
+}
+
+.calc-terrain-btn.active {
+    background: var(--gold);
+    border-color: var(--gold);
+    color: var(--bg-dark);
+    font-weight: 600;
+}
+
+/* Lair Toggle Switch */
+.calc-lair-toggle {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    user-select: none;
+}
+
+.calc-lair-toggle input {
+    display: none;
+}
+
+.calc-lair-slider {
+    width: 40px;
+    height: 22px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 11px;
+    position: relative;
+    transition: all 0.2s;
+}
+
+.calc-lair-slider::before {
+    content: '';
+    position: absolute;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--text-dim);
+    top: 2px;
+    left: 2px;
+    transition: all 0.2s;
+}
+
+.calc-lair-toggle input:checked + .calc-lair-slider {
+    background: var(--gold);
+    border-color: var(--gold);
+}
+
+.calc-lair-toggle input:checked + .calc-lair-slider::before {
+    background: var(--bg-dark);
+    transform: translateX(18px);
+}
+
+.calc-lair-text {
+    font-size: 0.75rem;
+    color: var(--text-dim);
+}
+
+.calc-lair-toggle input:checked ~ .calc-lair-text {
+    color: var(--gold);
+    font-weight: 500;
+}
+
 /* Responsive */
 @media (max-width: 600px) {
     .calc-grid {
