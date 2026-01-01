@@ -126,6 +126,46 @@ function deleteEntity(id) {
 - Mini roll history (last 5 rolls)
 - Syncs with main dice tab history
 
+### Party Overview (Quick Stats Header)
+- Displays above party roster when characters exist
+- Shows: Lowest passive perception, AC range, Party HP %, Party size, Active conditions count
+- Color-coded HP status (healthy/bloodied/critical)
+- File: `features/party/party-render.js` → `renderPartyOverview()`
+
+### Death Saves Tracker
+- Appears in initiative for players at 0 HP
+- 3 success dots / 3 failure dots (click to toggle)
+- Auto-stabilization at 3 successes (sets HP to 1)
+- Auto-reset when healed above 0 HP
+- Data: `combatant.deathSaves = { successes: 0, failures: 0 }`
+- File: `features/initiative.js` → `renderDeathSaves()`, `toggleDeathSave()`
+
+### Concentration Tracker
+- Badge shows active concentration spell in initiative
+- On damage: Shows DC calculation banner (DC = max(10, damage/2))
+- CON save button rolls with character's modifier
+- Modal for setting concentration (suggests character's concentration spells)
+- Data: `combatant.concentration = { active: bool, spell: string, pendingCheck: damage }`
+- File: `features/initiative.js` → `renderConcentration()`, `showConcentrationModal()`
+
+### AoE Damage Calculator
+- 💥 AoE button in initiative toolbar
+- Dice formula input (e.g., "8d6+5") with roll button
+- Multi-target selection with checkboxes
+- Save checkbox per target for half damage
+- Quick select buttons: All / None / Enemies
+- Triggers concentration checks on affected targets
+- File: `features/initiative.js` → `showAoEDamageModal()`, `applyAoEDamage()`
+
+### NPC Relations System
+- Structured relationships between NPCs and characters
+- Status levels: Friendly (green) / Neutral (gray) / Hostile (red)
+- Visual status bar in NPC detail panel
+- Modal for adding/managing relations
+- Cycle status with single click
+- Data: `npc.relations = [{ targetId, targetType, status, note }]`
+- File: `features/npcs/npc-render.js` → `renderNPCRelations()`, `showRelationsModal()`
+
 ## Conventions
 
 - **Language:** German (UI text, D&D terms, comments)
