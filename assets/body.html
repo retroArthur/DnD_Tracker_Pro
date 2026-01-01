@@ -514,6 +514,8 @@
     </div>
 </div>
             </div>
+            <!-- Party Overview Stats -->
+            <div class="party-overview" id="party-overview"></div>
             <!-- Party Roster (Quick Overview) -->
             <div class="party-roster" id="party-roster"></div>
             
@@ -1208,6 +1210,7 @@
                 <button class="btn" data-action="call" data-value="addPartyToInit">+ Party</button>
                 <button class="btn" data-action="call" data-value="rollAllInitiative">🎲 Alle würfeln</button>
                 <button class="btn" data-action="call" data-value="sortInitiative">↓ Sortieren</button>
+                <button class="btn" data-action="show-aoe-damage-modal" title="AoE Schaden auf mehrere Ziele">💥 AoE</button>
                 <button class="btn btn-danger encounter-reset-btn" data-action="call" data-value="resetEncounter">🔄 Reset</button>
                 <button class="btn btn-danger" data-action="call" data-value="endCombat">⏹️ Beenden</button>
             </div>
@@ -2256,6 +2259,7 @@
                             <option value="">-- Wählen --</option>
                             <option value="Mensch">Mensch</option>
                             <option value="Elf">Elf</option>
+                            <option value="Drow">Drow (Dunkel-Elf)</option>
                             <option value="Zwerg">Zwerg</option>
                             <option value="Halbling">Halbling</option>
                             <option value="Gnom">Gnom</option>

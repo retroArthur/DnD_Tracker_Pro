@@ -118,6 +118,9 @@ function renderInit() {
                 <div class="init-name" ${nameClickHandler}>${esc(cb.name)}</div>
                 <div class="init-type">${typeLabel}${cb.cr ? ` • CR ${cb.cr}` : ''}</div>
                 ${effects ? `<div class="init-effects">${effects}</div>` : ''}
+                ${dead && cb.type === 'player' ? renderDeathSaves(cb) : ''}
+                ${!dead ? renderConcentration(cb) : ''}
+                ${cb.concentration?.pendingCheck ? renderConcentrationCheck(cb, cb.concentration.pendingCheck) : ''}
             </div>
             ${spellSlotsHtml}
             <div class="init-right">
@@ -207,25 +210,38 @@ function removeCombatant(id) {
     if (idx > -1) { D.initiative.combatants.splice(idx, 1); if (D.initiative.currentTurn >= D.initiative.combatants.length) D.initiative.currentTurn = 0; renderInit(); save(); }
 }
 
-function modHp(id, amt) { 
-    const c = D.initiative.combatants.find(x => x.id === id); 
+function modHp(id, amt) {
+    const c = D.initiative.combatants.find(x => x.id === id);
     if (!c) return;
-    
+
+    const wasAtZero = c.currentHp <= 0;
+
     if (amt < 0) {
         // Schaden: zuerst temp HP abziehen
         let remaining = Math.abs(amt);
+        const actualDamage = remaining; // Save for concentration check
         if (c.tempHp > 0) {
             const absorbed = Math.min(c.tempHp, remaining);
             c.tempHp -= absorbed;
             remaining -= absorbed;
         }
         c.currentHp = Math.max(0, c.currentHp - remaining);
+
+        // Trigger concentration check if concentrating and took damage
+        if (c.concentration?.active && actualDamage > 0) {
+            c.concentration.pendingCheck = actualDamage;
+        }
     } else {
         // Heilung
         c.currentHp = Math.min(c.maxHp, c.currentHp + amt);
+
+        // Reset death saves when healed above 0 HP
+        if (wasAtZero && c.currentHp > 0) {
+            resetDeathSaves(c);
+        }
     }
-    renderInit(); 
-    save(); 
+    renderInit();
+    save();
 }
 
 // Wrapper-Funktion für EventDelegation: Character HP updaten
@@ -353,6 +369,518 @@ function removeEffect(cbId, effId) {
     const cb = D.initiative.combatants.find(c => c.id === cbId); if (!cb) return;
     cb.effects = (cb.effects || []).filter(e => e.id !== effId);
     renderInit(); save();
+}
+
+// ============================================================
+// DEATH SAVES TRACKER
+// ============================================================
+
+function renderDeathSaves(cb) {
+    if (!cb.deathSaves) {
+        cb.deathSaves = { successes: 0, failures: 0 };
+    }
+
+    const ds = cb.deathSaves;
+
+    // Check for final states
+    let statusHtml = '';
+    if (ds.failures >= 3) {
+        statusHtml = '<span class="death-saves-status dead">💀 Tot</span>';
+    } else if (ds.successes >= 3) {
+        statusHtml = '<span class="death-saves-status stable">✓ Stabil</span>';
+    }
+
+    return `
+        <div class="death-saves">
+            <span class="death-saves-label">☠️ Todeswürfe</span>
+            <div class="death-saves-group">
+                <span class="death-saves-group-label">✓</span>
+                <div class="death-saves-dots">
+                    ${[0, 1, 2].map(i => `
+                        <span class="death-save-dot success ${i < ds.successes ? 'active' : ''}"
+                            data-action="toggle-death-save-stop"
+                            data-id="${cb.id}"
+                            data-type="success"
+                            data-index="${i}"
+                            title="Erfolg ${i + 1}"></span>
+                    `).join('')}
+                </div>
+            </div>
+            <div class="death-saves-group">
+                <span class="death-saves-group-label">✗</span>
+                <div class="death-saves-dots">
+                    ${[0, 1, 2].map(i => `
+                        <span class="death-save-dot failure ${i < ds.failures ? 'active' : ''}"
+                            data-action="toggle-death-save-stop"
+                            data-id="${cb.id}"
+                            data-type="failure"
+                            data-index="${i}"
+                            title="Fehlschlag ${i + 1}"></span>
+                    `).join('')}
+                </div>
+            </div>
+            ${statusHtml}
+        </div>
+    `;
+}
+
+function toggleDeathSave(cbId, type, index) {
+    const cb = D.initiative.combatants.find(c => c.id === cbId);
+    if (!cb) return;
+
+    if (!cb.deathSaves) {
+        cb.deathSaves = { successes: 0, failures: 0 };
+    }
+
+    const ds = cb.deathSaves;
+    const field = type === 'success' ? 'successes' : 'failures';
+
+    // Toggle logic: if clicking on an active dot at or after current count, decrease
+    // If clicking on inactive dot, set to that level
+    if (index < ds[field]) {
+        // Clicked on active dot - reduce to this level
+        ds[field] = index;
+    } else {
+        // Clicked on inactive dot - increase to include this dot
+        ds[field] = index + 1;
+    }
+
+    // Check for death (3 failures)
+    if (ds.failures >= 3) {
+        showToast('💀 Charakter ist gestorben!', 'error');
+    }
+
+    // Check for stabilization (3 successes)
+    if (ds.successes >= 3 && cb.currentHp <= 0) {
+        cb.currentHp = 1;
+        ds.successes = 0;
+        ds.failures = 0;
+        showToast('✓ Charakter ist stabilisiert!', 'success');
+    }
+
+    renderInit();
+    save();
+}
+
+function resetDeathSaves(cb) {
+    if (cb.deathSaves) {
+        cb.deathSaves = { successes: 0, failures: 0 };
+    }
+}
+
+// ============================================================
+// CONCENTRATION TRACKER
+// ============================================================
+
+function renderConcentration(cb) {
+    const conc = cb.concentration;
+
+    // Show active concentration
+    if (conc?.active && conc.spell) {
+        return `
+            <div class="concentration-badge" title="Konzentration: ${esc(conc.spell)}">
+                <span class="conc-icon">🔮</span>
+                <span class="conc-spell">${esc(conc.spell)}</span>
+                <span class="conc-break" data-action="break-concentration-stop" data-id="${cb.id}" title="Konzentration brechen">✕</span>
+            </div>
+        `;
+    }
+
+    // Show add button for players/allies (only when no concentration active)
+    if (cb.type === 'player' || cb.type === 'ally') {
+        return `
+            <button class="concentration-add-btn" data-action="show-concentration-modal-stop" data-id="${cb.id}">
+                🔮 Konzentration
+            </button>
+        `;
+    }
+
+    return '';
+}
+
+function renderConcentrationCheck(cb, damage) {
+    if (!cb.concentration?.active) return '';
+
+    const dc = Math.max(10, Math.floor(damage / 2));
+    cb.concentration.lastDC = dc;
+
+    return `
+        <div class="concentration-check-banner">
+            <span>⚠️ Konzentrations-Check für <strong>${esc(cb.concentration.spell)}</strong></span>
+            <span class="conc-dc">DC ${dc}</span>
+            <button class="conc-roll-btn" data-action="roll-concentration-check-stop" data-id="${cb.id}" data-dc="${dc}">
+                🎲 CON-Save
+            </button>
+        </div>
+    `;
+}
+
+function showConcentrationModal(cbId) {
+    const cb = D.initiative.combatants.find(c => c.id === cbId);
+    if (!cb) return;
+
+    // Get spells from linked character if available
+    let spellOptions = '';
+    if (cb.type === 'player') {
+        const char = EntityLookup.findByName('characters', cb.name);
+        if (char && char.spells?.length) {
+            const concentrationSpells = char.spells
+                .map(sid => EntityLookup.spell(sid))
+                .filter(s => s && s.concentration);
+            if (concentrationSpells.length) {
+                spellOptions = concentrationSpells.map(s =>
+                    `<option value="${esc(s.name)}">${esc(s.name)}</option>`
+                ).join('');
+            }
+        }
+    }
+
+    const content = `
+        <div style="padding: 20px;">
+            <h3 style="margin: 0 0 16px 0; color: var(--purple);">🔮 Konzentration setzen</h3>
+            <p style="margin: 0 0 12px 0; color: var(--text-dim);">Für: <strong>${esc(cb.name)}</strong></p>
+            <div style="margin-bottom: 16px;">
+                <label style="display: block; margin-bottom: 6px; font-size: 0.9em; color: var(--text-dim);">Zauber:</label>
+                ${spellOptions ? `
+                    <select id="conc-spell-select" style="width: 100%; padding: 10px; background: var(--bg-dark); border: 1px solid var(--border); color: var(--text); border-radius: 6px; margin-bottom: 8px;">
+                        <option value="">— Wählen oder eingeben —</option>
+                        ${spellOptions}
+                    </select>
+                ` : ''}
+                <input type="text" id="conc-spell-input" placeholder="Zauber-Name eingeben..."
+                    style="width: 100%; padding: 10px; background: var(--bg-dark); border: 1px solid var(--border); color: var(--text); border-radius: 6px; box-sizing: border-box;">
+            </div>
+            <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                <button class="btn" onclick="hideModal('concentration-modal')">Abbrechen</button>
+                <button class="btn btn-primary" onclick="setConcentration(${cbId})">✓ Setzen</button>
+            </div>
+        </div>
+    `;
+
+    // Create or reuse modal
+    let modal = $('concentration-modal');
+    if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'concentration-modal';
+        modal.className = 'modal-overlay';
+        modal.innerHTML = `<div class="modal" style="max-width: 400px;">${content}</div>`;
+        modal.onclick = (e) => { if (e.target === modal) hideModal('concentration-modal'); };
+        document.body.appendChild(modal);
+    } else {
+        modal.querySelector('.modal').innerHTML = content;
+    }
+
+    showModal('concentration-modal');
+
+    // Sync select to input
+    const select = $('conc-spell-select');
+    const input = $('conc-spell-input');
+    if (select && input) {
+        select.onchange = () => { input.value = select.value; };
+    }
+    if (input) input.focus();
+}
+
+function setConcentration(cbId) {
+    const cb = D.initiative.combatants.find(c => c.id === cbId);
+    if (!cb) return;
+
+    const input = $('conc-spell-input');
+    const spell = input?.value?.trim();
+
+    if (!spell) {
+        showToast('Bitte Zauber-Name eingeben', 'error');
+        return;
+    }
+
+    cb.concentration = {
+        active: true,
+        spell: spell,
+        lastDC: 10
+    };
+
+    hideModal('concentration-modal');
+    renderInit();
+    save();
+    showToast(`🔮 Konzentration: ${spell}`);
+}
+
+function breakConcentration(cbId) {
+    const cb = D.initiative.combatants.find(c => c.id === cbId);
+    if (!cb || !cb.concentration?.active) return;
+
+    const spell = cb.concentration.spell;
+    cb.concentration = { active: false, spell: '', lastDC: 10 };
+
+    renderInit();
+    save();
+    showToast(`❌ Konzentration gebrochen: ${spell}`, 'warning');
+}
+
+function rollConcentrationCheck(cbId, dc) {
+    const cb = D.initiative.combatants.find(c => c.id === cbId);
+    if (!cb || !cb.concentration?.active) return;
+
+    // Get CON modifier from linked character
+    let conMod = 0;
+    if (cb.type === 'player') {
+        const char = EntityLookup.findByName('characters', cb.name);
+        if (char?.attributes?.con) {
+            conMod = Math.floor((char.attributes.con - 10) / 2);
+        }
+    }
+
+    // Roll d20 + CON
+    const roll = Math.floor(Math.random() * 20) + 1;
+    const total = roll + conMod;
+    const success = total >= dc;
+
+    // Format result
+    const modStr = conMod >= 0 ? `+${conMod}` : conMod;
+    const resultText = success ?
+        `✓ Konzentration gehalten! (${roll}${modStr} = ${total} vs DC ${dc})` :
+        `✕ Konzentration verloren! (${roll}${modStr} = ${total} vs DC ${dc})`;
+
+    if (success) {
+        showToast(resultText, 'success');
+    } else {
+        breakConcentration(cbId);
+        showToast(resultText, 'error');
+    }
+
+    // Clear pending check
+    if (cb.concentration) {
+        delete cb.concentration.pendingCheck;
+    }
+
+    renderInit();
+    save();
+}
+
+// ============================================================
+// AOE DAMAGE CALCULATOR
+// ============================================================
+
+let aoeCurrentDamage = 0;
+
+function showAoEDamageModal() {
+    const combatants = D.initiative.combatants.filter(c => c.type !== 'lair' && c.currentHp > 0);
+
+    if (!combatants.length) {
+        showToast('Keine Kämpfer in der Initiative', 'error');
+        return;
+    }
+
+    aoeCurrentDamage = 0;
+
+    const content = `
+        <div class="aoe-modal-content">
+            <div class="aoe-modal-header">
+                <h3>💥 AoE Schaden</h3>
+                <button class="btn btn-sm" onclick="hideModal('aoe-damage-modal')">✕</button>
+            </div>
+
+            <div class="aoe-damage-input">
+                <input type="text" id="aoe-damage-formula" placeholder="z.B. 8d6 oder 28" value="8d6">
+                <button class="aoe-roll-btn" onclick="rollAoEDamage()">
+                    🎲 Würfeln
+                </button>
+                <div class="aoe-damage-result" id="aoe-damage-result">—</div>
+            </div>
+
+            <div class="aoe-targets-header">
+                <span>Ziele auswählen:</span>
+                <div class="aoe-quick-select">
+                    <button class="aoe-quick-btn" onclick="aoeSelectAll()">Alle</button>
+                    <button class="aoe-quick-btn" onclick="aoeSelectNone()">Keine</button>
+                    <button class="aoe-quick-btn" onclick="aoeSelectEnemies()">Gegner</button>
+                </div>
+            </div>
+
+            <div class="aoe-targets-list" id="aoe-targets-list">
+                ${combatants.map(cb => {
+                    const typeIcon = cb.type === 'player' ? '👤' : cb.type === 'ally' ? '🤝' : '👹';
+                    return `
+                        <div class="aoe-target" data-id="${cb.id}">
+                            <input type="checkbox" class="aoe-target-checkbox" id="aoe-cb-${cb.id}" data-id="${cb.id}" onchange="updateAoETargetDisplay()">
+                            <div class="aoe-target-info">
+                                <div class="aoe-target-name">${typeIcon} ${esc(cb.name)}</div>
+                                <div class="aoe-target-hp">${cb.currentHp}/${cb.maxHp} HP</div>
+                            </div>
+                            <div class="aoe-target-save">
+                                <input type="checkbox" id="aoe-save-${cb.id}" data-id="${cb.id}" onchange="updateAoETargetDisplay()">
+                                <label for="aoe-save-${cb.id}">Save ½</label>
+                            </div>
+                            <div class="aoe-target-damage" id="aoe-dmg-${cb.id}">—</div>
+                        </div>
+                    `;
+                }).join('')}
+            </div>
+
+            <div class="aoe-modal-footer">
+                <button class="btn" onclick="hideModal('aoe-damage-modal')">Abbrechen</button>
+                <button class="aoe-apply-btn" id="aoe-apply-btn" onclick="applyAoEDamage()" disabled>
+                    💥 Schaden anwenden
+                </button>
+            </div>
+        </div>
+    `;
+
+    // Create or reuse modal
+    let modal = $('aoe-damage-modal');
+    if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'aoe-damage-modal';
+        modal.className = 'modal-overlay';
+        modal.innerHTML = `<div class="modal" style="max-width: 500px;">${content}</div>`;
+        modal.onclick = (e) => { if (e.target === modal) hideModal('aoe-damage-modal'); };
+        document.body.appendChild(modal);
+    } else {
+        modal.querySelector('.modal').innerHTML = content;
+    }
+
+    showModal('aoe-damage-modal');
+    $('aoe-damage-formula').focus();
+}
+
+function rollAoEDamage() {
+    const formula = $('aoe-damage-formula')?.value?.trim();
+    if (!formula) {
+        showToast('Bitte Schadenswürfel eingeben', 'error');
+        return;
+    }
+
+    // Parse and roll dice formula
+    let total = 0;
+    const diceMatch = formula.match(/(\d+)d(\d+)/i);
+
+    if (diceMatch) {
+        const count = parseInt(diceMatch[1]);
+        const sides = parseInt(diceMatch[2]);
+        for (let i = 0; i < count; i++) {
+            total += Math.floor(Math.random() * sides) + 1;
+        }
+        // Add any flat modifier
+        const rest = formula.replace(diceMatch[0], '').trim();
+        const modMatch = rest.match(/([+-])\s*(\d+)/);
+        if (modMatch) {
+            const mod = parseInt(modMatch[2]);
+            total += modMatch[1] === '+' ? mod : -mod;
+        }
+    } else {
+        // Try parsing as a number
+        total = parseInt(formula);
+        if (isNaN(total)) {
+            showToast('Ungültige Formel', 'error');
+            return;
+        }
+    }
+
+    aoeCurrentDamage = Math.max(0, total);
+
+    const resultEl = $('aoe-damage-result');
+    if (resultEl) {
+        resultEl.textContent = aoeCurrentDamage;
+        resultEl.style.animation = 'none';
+        resultEl.offsetHeight; // Trigger reflow
+        resultEl.style.animation = 'pulse 0.3s ease-out';
+    }
+
+    updateAoETargetDisplay();
+    $('aoe-apply-btn').disabled = false;
+}
+
+function updateAoETargetDisplay() {
+    document.querySelectorAll('.aoe-target').forEach(el => {
+        const id = el.dataset.id;
+        const isSelected = document.getElementById(`aoe-cb-${id}`)?.checked;
+        const hasSave = document.getElementById(`aoe-save-${id}`)?.checked;
+        const dmgEl = document.getElementById(`aoe-dmg-${id}`);
+
+        el.classList.toggle('selected', isSelected);
+
+        if (dmgEl) {
+            if (!isSelected || aoeCurrentDamage <= 0) {
+                dmgEl.textContent = '—';
+                dmgEl.className = 'aoe-target-damage';
+            } else {
+                const damage = hasSave ? Math.floor(aoeCurrentDamage / 2) : aoeCurrentDamage;
+                dmgEl.textContent = `-${damage}`;
+                dmgEl.className = `aoe-target-damage ${hasSave ? 'half' : 'full'}`;
+            }
+        }
+    });
+}
+
+function aoeSelectAll() {
+    document.querySelectorAll('.aoe-target-checkbox').forEach(cb => cb.checked = true);
+    updateAoETargetDisplay();
+}
+
+function aoeSelectNone() {
+    document.querySelectorAll('.aoe-target-checkbox').forEach(cb => cb.checked = false);
+    updateAoETargetDisplay();
+}
+
+function aoeSelectEnemies() {
+    const enemies = D.initiative.combatants.filter(c => c.type === 'enemy' || c.type === 'monster');
+    const enemyIds = enemies.map(e => e.id);
+
+    document.querySelectorAll('.aoe-target-checkbox').forEach(cb => {
+        cb.checked = enemyIds.includes(parseInt(cb.dataset.id));
+    });
+    updateAoETargetDisplay();
+}
+
+function applyAoEDamage() {
+    if (aoeCurrentDamage <= 0) {
+        showToast('Erst Schaden würfeln', 'error');
+        return;
+    }
+
+    const selectedTargets = [];
+    document.querySelectorAll('.aoe-target-checkbox:checked').forEach(cb => {
+        const id = parseInt(cb.dataset.id);
+        const hasSave = document.getElementById(`aoe-save-${id}`)?.checked;
+        selectedTargets.push({ id, hasSave });
+    });
+
+    if (!selectedTargets.length) {
+        showToast('Keine Ziele ausgewählt', 'error');
+        return;
+    }
+
+    // Apply damage to each target
+    let hitCount = 0;
+    selectedTargets.forEach(({ id, hasSave }) => {
+        const cb = D.initiative.combatants.find(c => c.id === id);
+        if (!cb) return;
+
+        const damage = hasSave ? Math.floor(aoeCurrentDamage / 2) : aoeCurrentDamage;
+        const wasAtZero = cb.currentHp <= 0;
+
+        // Apply damage (temp HP first)
+        let remaining = damage;
+        if (cb.tempHp > 0) {
+            const absorbed = Math.min(cb.tempHp, remaining);
+            cb.tempHp -= absorbed;
+            remaining -= absorbed;
+        }
+        cb.currentHp = Math.max(0, cb.currentHp - remaining);
+
+        // Trigger concentration check if applicable
+        if (cb.concentration?.active && damage > 0) {
+            cb.concentration.pendingCheck = damage;
+        }
+
+        hitCount++;
+    });
+
+    hideModal('aoe-damage-modal');
+    renderInit();
+    save();
+
+    showToast(`💥 AoE: ${aoeCurrentDamage} Schaden auf ${hitCount} Ziele`);
 }
 
 // ============================================================

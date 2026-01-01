@@ -73,6 +73,9 @@ const EntityActions = {
     'show-add-dialog-modal': (ctx) => { showAddDialogModal(ctx.id); closeNPCPopup(); },
     'show-add-dialog-modal-stop': (ctx) => { ctx.event.stopPropagation(); showAddDialogModal(ctx.id); },
     'save-quick-dialog': (ctx) => saveQuickDialog(ctx.id),
+    'show-relations-modal-stop': (ctx) => { ctx.event.stopPropagation(); showRelationsModal(ctx.id); },
+    'cycle-relation-status-stop': (ctx) => { ctx.event.stopPropagation(); cycleRelationStatus(ctx.id, parseInt(ctx.value)); },
+    'remove-relation-stop': (ctx) => { ctx.event.stopPropagation(); removeRelation(ctx.id, parseInt(ctx.value)); },
 
     // Location actions
     'edit-location': (ctx) => editLocation(ctx.id),

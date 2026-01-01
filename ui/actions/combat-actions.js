@@ -6,6 +6,23 @@ const CombatActions = {
     // Initiative actions
     'clear-battlefield': () => clearBattlefield(),
     'remove-combatant': (ctx) => removeCombatant(ctx.id),
+    'toggle-death-save-stop': (ctx) => {
+        ctx.event.stopPropagation();
+        toggleDeathSave(ctx.id, ctx.target.dataset.type, parseInt(ctx.target.dataset.index));
+    },
+    'show-concentration-modal-stop': (ctx) => {
+        ctx.event.stopPropagation();
+        showConcentrationModal(ctx.id);
+    },
+    'break-concentration-stop': (ctx) => {
+        ctx.event.stopPropagation();
+        breakConcentration(ctx.id);
+    },
+    'roll-concentration-check-stop': (ctx) => {
+        ctx.event.stopPropagation();
+        rollConcentrationCheck(ctx.id, parseInt(ctx.target.dataset.dc));
+    },
+    'show-aoe-damage-modal': () => showAoEDamageModal(),
     'update-combatant-hp': (ctx) => updateInitiativeCombatantHP(ctx.id, parseInt(ctx.value)),
     'next-turn': () => nextTurn(),
     'prev-turn': () => prevTurn(),

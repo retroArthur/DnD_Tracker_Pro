@@ -38,6 +38,9 @@ function renderParty() {
         renderPartyRoster(roster, D.characters);
     }
 
+    // Render Party Overview Stats
+    renderPartyOverview();
+
     let characters = D.characters;
 
     // Klassen-Filter anwenden
@@ -297,4 +300,72 @@ function scrollToChar(id) {
         el.classList.add('expanded');
         setTimeout(() => el.classList.remove('expanded'), 2000);
     }
+}
+
+// ============================================================
+// PARTY OVERVIEW - Quick Stats Header
+// ============================================================
+
+function renderPartyOverview() {
+    const container = $('party-overview');
+    if (!container) return;
+
+    const chars = D.characters || [];
+
+    if (chars.length === 0) {
+        container.classList.remove('show');
+        return;
+    }
+
+    // Calculate stats
+    const passivePerceptions = chars.map(c => c.passivePerception || 10);
+    const lowestPerception = Math.min(...passivePerceptions);
+
+    const acValues = chars.map(c => c.armorClass || 10);
+    const minAC = Math.min(...acValues);
+    const maxAC = Math.max(...acValues);
+    const acRange = minAC === maxAC ? `${minAC}` : `${minAC}-${maxAC}`;
+
+    const totalHP = chars.reduce((sum, c) => sum + (c.hpMax || 0), 0);
+    const currentHP = chars.reduce((sum, c) => sum + (c.hpCurrent || 0), 0);
+    const hpPercent = totalHP > 0 ? Math.round((currentHP / totalHP) * 100) : 100;
+    const hpStatus = hpPercent <= 25 ? 'critical' : hpPercent <= 50 ? 'bloodied' : 'healthy';
+
+    // Count conditions
+    const totalConditions = chars.reduce((sum, c) => sum + (c.conditions?.length || 0), 0);
+
+    container.innerHTML = `
+        <div class="party-stat-card">
+            <div class="party-stat-icon">👁️</div>
+            <div class="party-stat-value">${lowestPerception}</div>
+            <div class="party-stat-label">Niedrigste<br>Passive Wahr.</div>
+        </div>
+        <div class="party-stat-card">
+            <div class="party-stat-icon">🛡️</div>
+            <div class="party-stat-value">${acRange}</div>
+            <div class="party-stat-label">RK<br>Range</div>
+        </div>
+        <div class="party-stat-card ${hpStatus}">
+            <div class="party-stat-icon">❤️</div>
+            <div class="party-stat-value">${hpPercent}%</div>
+            <div class="party-stat-label">Party<br>HP Status</div>
+            <div class="party-hp-bar">
+                <div class="party-hp-fill ${hpStatus}" style="width: ${hpPercent}%"></div>
+            </div>
+        </div>
+        <div class="party-stat-card">
+            <div class="party-stat-icon">👥</div>
+            <div class="party-stat-value">${chars.length}</div>
+            <div class="party-stat-label">Party<br>Größe</div>
+        </div>
+        ${totalConditions > 0 ? `
+        <div class="party-stat-card ${totalConditions > 2 ? 'critical' : ''}">
+            <div class="party-stat-icon">⚠️</div>
+            <div class="party-stat-value">${totalConditions}</div>
+            <div class="party-stat-label">Aktive<br>Conditions</div>
+        </div>
+        ` : ''}
+    `;
+
+    container.classList.add('show');
 }

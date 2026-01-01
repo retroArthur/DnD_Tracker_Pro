@@ -5966,7 +5966,639 @@
         .init-spell-slots-placeholder {
             /* Leerer Platzhalter für Grid-Struktur */
         }
-        
+
+        /* Death Saves Tracker */
+        .death-saves {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 6px 10px;
+            background: rgba(239, 68, 68, 0.15);
+            border: 1px solid var(--red);
+            border-radius: 6px;
+            margin-top: 6px;
+        }
+
+        .death-saves-label {
+            font-size: 0.75em;
+            font-weight: 600;
+            color: var(--red);
+        }
+
+        .death-saves-group {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .death-saves-group-label {
+            font-size: 0.7em;
+            color: var(--text-dim);
+            min-width: 30px;
+        }
+
+        .death-saves-dots {
+            display: flex;
+            gap: 4px;
+        }
+
+        .death-save-dot {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            border: 2px solid var(--border);
+            background: var(--bg-dark);
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+
+        .death-save-dot:hover {
+            transform: scale(1.15);
+            border-color: var(--text);
+        }
+
+        .death-save-dot.success {
+            border-color: var(--green);
+        }
+
+        .death-save-dot.success.active {
+            background: var(--green);
+            border-color: var(--green);
+        }
+
+        .death-save-dot.failure {
+            border-color: var(--red);
+        }
+
+        .death-save-dot.failure.active {
+            background: var(--red);
+            border-color: var(--red);
+        }
+
+        .death-saves-status {
+            font-size: 0.75em;
+            font-weight: 600;
+            margin-left: auto;
+            padding: 3px 8px;
+            border-radius: 4px;
+        }
+
+        .death-saves-status.dead {
+            background: var(--red);
+            color: var(--bg-dark);
+        }
+
+        .death-saves-status.stable {
+            background: var(--green);
+            color: var(--bg-dark);
+        }
+
+        /* Concentration Tracker */
+        .concentration-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 10px;
+            background: linear-gradient(135deg, rgba(147, 51, 234, 0.2) 0%, rgba(168, 85, 247, 0.15) 100%);
+            border: 1px solid var(--purple);
+            border-radius: 6px;
+            font-size: 0.75em;
+            color: var(--purple);
+            cursor: pointer;
+            transition: all 0.15s;
+            margin-top: 4px;
+        }
+
+        .concentration-badge:hover {
+            background: rgba(147, 51, 234, 0.3);
+            transform: translateY(-1px);
+        }
+
+        .concentration-badge .conc-icon {
+            font-size: 1em;
+        }
+
+        .concentration-badge .conc-spell {
+            font-weight: 600;
+            max-width: 120px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .concentration-badge .conc-break {
+            color: var(--red);
+            font-weight: 700;
+            padding: 2px 6px;
+            background: rgba(239, 68, 68, 0.2);
+            border-radius: 3px;
+            margin-left: 4px;
+        }
+
+        .concentration-badge .conc-break:hover {
+            background: var(--red);
+            color: var(--bg-dark);
+        }
+
+        .concentration-add-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 3px 8px;
+            background: transparent;
+            border: 1px dashed var(--purple);
+            border-radius: 4px;
+            color: var(--purple);
+            font-size: 0.7em;
+            cursor: pointer;
+            opacity: 0.6;
+            transition: all 0.15s;
+            margin-top: 4px;
+        }
+
+        .concentration-add-btn:hover {
+            opacity: 1;
+            background: rgba(147, 51, 234, 0.1);
+        }
+
+        .concentration-check-banner {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 12px;
+            background: linear-gradient(135deg, rgba(234, 179, 8, 0.15) 0%, rgba(147, 51, 234, 0.15) 100%);
+            border: 1px solid var(--gold);
+            border-radius: 6px;
+            margin-top: 6px;
+        }
+
+        .concentration-check-banner .conc-dc {
+            font-weight: 700;
+            color: var(--gold);
+        }
+
+        .concentration-check-banner .conc-roll-btn {
+            padding: 4px 10px;
+            background: var(--purple);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.85em;
+        }
+
+        .concentration-check-banner .conc-roll-btn:hover {
+            background: var(--gold);
+            color: var(--bg-dark);
+        }
+
+        /* AoE Damage Calculator */
+        .aoe-modal-content {
+            padding: 20px;
+        }
+
+        .aoe-modal-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 16px;
+        }
+
+        .aoe-modal-header h3 {
+            margin: 0;
+            color: var(--red);
+            flex: 1;
+        }
+
+        .aoe-damage-input {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            margin-bottom: 16px;
+            padding: 12px;
+            background: var(--bg-dark);
+            border-radius: 8px;
+        }
+
+        .aoe-damage-input input {
+            flex: 1;
+            padding: 10px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            color: var(--text);
+            border-radius: 6px;
+            font-size: 1em;
+        }
+
+        .aoe-roll-btn {
+            padding: 10px 16px;
+            background: var(--red);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .aoe-roll-btn:hover {
+            background: #dc2626;
+        }
+
+        .aoe-damage-result {
+            padding: 8px 14px;
+            background: var(--red);
+            color: white;
+            border-radius: 6px;
+            font-weight: 700;
+            font-size: 1.2em;
+            min-width: 50px;
+            text-align: center;
+        }
+
+        .aoe-targets-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .aoe-targets-header span {
+            font-weight: 600;
+            color: var(--text);
+        }
+
+        .aoe-quick-select {
+            display: flex;
+            gap: 6px;
+            margin-left: auto;
+        }
+
+        .aoe-quick-btn {
+            padding: 4px 10px;
+            background: var(--bg-dark);
+            border: 1px solid var(--border);
+            color: var(--text-dim);
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.8em;
+        }
+
+        .aoe-quick-btn:hover {
+            background: var(--bg-card);
+            color: var(--text);
+        }
+
+        .aoe-targets-list {
+            max-height: 300px;
+            overflow-y: auto;
+            margin-bottom: 16px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+        }
+
+        .aoe-target {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 12px;
+            border-bottom: 1px solid var(--border);
+            transition: background 0.15s;
+        }
+
+        .aoe-target:last-child {
+            border-bottom: none;
+        }
+
+        .aoe-target:hover {
+            background: var(--bg-dark);
+        }
+
+        .aoe-target.selected {
+            background: rgba(239, 68, 68, 0.1);
+        }
+
+        .aoe-target-checkbox {
+            width: 18px;
+            height: 18px;
+            accent-color: var(--red);
+        }
+
+        .aoe-target-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .aoe-target-name {
+            font-weight: 600;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .aoe-target-hp {
+            font-size: 0.8em;
+            color: var(--text-dim);
+        }
+
+        .aoe-target-save {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .aoe-target-save label {
+            font-size: 0.8em;
+            color: var(--green);
+            cursor: pointer;
+        }
+
+        .aoe-target-save input {
+            accent-color: var(--green);
+        }
+
+        .aoe-target-damage {
+            font-weight: 600;
+            min-width: 60px;
+            text-align: right;
+        }
+
+        .aoe-target-damage.full {
+            color: var(--red);
+        }
+
+        .aoe-target-damage.half {
+            color: var(--yellow);
+        }
+
+        .aoe-modal-footer {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+
+        .aoe-apply-btn {
+            padding: 10px 20px;
+            background: var(--red);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 1em;
+        }
+
+        .aoe-apply-btn:hover {
+            background: #dc2626;
+        }
+
+        .aoe-apply-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* NPC Relations */
+        .npc-relations-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .npc-relation-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 12px;
+            background: var(--bg-dark);
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            transition: all 0.15s;
+        }
+
+        .npc-relation-item:hover {
+            border-color: var(--text-dim);
+        }
+
+        .npc-relation-icon {
+            font-size: 1.2em;
+        }
+
+        .npc-relation-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .npc-relation-name {
+            font-weight: 600;
+            cursor: pointer;
+            transition: color 0.15s;
+        }
+
+        .npc-relation-name:hover {
+            color: var(--gold);
+        }
+
+        .npc-relation-type {
+            font-size: 0.75em;
+            color: var(--text-dim);
+        }
+
+        .npc-relation-bar {
+            width: 80px;
+            height: 8px;
+            background: var(--bg-card);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .npc-relation-fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 0.3s ease;
+        }
+
+        .npc-relation-fill.friendly {
+            background: linear-gradient(90deg, var(--green), #22c55e);
+            width: 100%;
+        }
+
+        .npc-relation-fill.neutral {
+            background: linear-gradient(90deg, var(--text-dim), var(--text));
+            width: 50%;
+        }
+
+        .npc-relation-fill.hostile {
+            background: linear-gradient(90deg, #dc2626, var(--red));
+            width: 100%;
+        }
+
+        .npc-relation-status {
+            font-size: 0.75em;
+            font-weight: 600;
+            padding: 3px 8px;
+            border-radius: 4px;
+        }
+
+        .npc-relation-status.friendly {
+            background: rgba(34, 197, 94, 0.2);
+            color: var(--green);
+        }
+
+        .npc-relation-status.neutral {
+            background: rgba(156, 163, 175, 0.2);
+            color: var(--text);
+        }
+
+        .npc-relation-status.hostile {
+            background: rgba(239, 68, 68, 0.2);
+            color: var(--red);
+        }
+
+        .npc-relation-actions {
+            display: flex;
+            gap: 4px;
+        }
+
+        .npc-relation-btn {
+            padding: 4px 8px;
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--text-dim);
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.8em;
+        }
+
+        .npc-relation-btn:hover {
+            background: var(--bg-card);
+            color: var(--text);
+        }
+
+        .npc-relation-btn.danger:hover {
+            background: var(--red);
+            color: white;
+            border-color: var(--red);
+        }
+
+        /* Relations Modal */
+        .relations-modal-content {
+            padding: 20px;
+        }
+
+        .relations-modal-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 16px;
+        }
+
+        .relations-modal-header h3 {
+            margin: 0;
+            flex: 1;
+        }
+
+        .relations-form {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 20px;
+            padding: 16px;
+            background: var(--bg-dark);
+            border-radius: 8px;
+        }
+
+        .relations-form-row {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .relations-form-row select,
+        .relations-form-row input {
+            flex: 1;
+            padding: 10px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            color: var(--text);
+            border-radius: 6px;
+        }
+
+        .relations-status-btns {
+            display: flex;
+            gap: 6px;
+        }
+
+        .relations-status-btn {
+            padding: 8px 14px;
+            border: 2px solid var(--border);
+            background: transparent;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.15s;
+            font-weight: 600;
+        }
+
+        .relations-status-btn.friendly {
+            color: var(--green);
+            border-color: var(--green);
+        }
+
+        .relations-status-btn.friendly:hover,
+        .relations-status-btn.friendly.active {
+            background: var(--green);
+            color: var(--bg-dark);
+        }
+
+        .relations-status-btn.neutral {
+            color: var(--text);
+            border-color: var(--text-dim);
+        }
+
+        .relations-status-btn.neutral:hover,
+        .relations-status-btn.neutral.active {
+            background: var(--text);
+            color: var(--bg-dark);
+        }
+
+        .relations-status-btn.hostile {
+            color: var(--red);
+            border-color: var(--red);
+        }
+
+        .relations-status-btn.hostile:hover,
+        .relations-status-btn.hostile.active {
+            background: var(--red);
+            color: var(--bg-dark);
+        }
+
+        .relations-add-btn {
+            padding: 10px 20px;
+            background: var(--gold);
+            color: var(--bg-dark);
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        .relations-add-btn:hover {
+            filter: brightness(1.1);
+        }
+
+        .relations-existing {
+            border-top: 1px solid var(--border);
+            padding-top: 16px;
+        }
+
+        .relations-existing-title {
+            font-weight: 600;
+            margin-bottom: 12px;
+            color: var(--text-dim);
+        }
+
         /* ============================================================
            LOOT
            ============================================================ */
@@ -16560,4 +17192,79 @@
         width: auto;
     }
 }
+
+/* ============================================================
+   PARTY OVERVIEW - Quick Stats Header
+   ============================================================ */
+
+.party-overview {
+    display: none;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 12px;
+    padding: 12px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    margin-bottom: 12px;
+}
+
+.party-overview.show {
+    display: grid;
+}
+
+.party-stat-card {
+    text-align: center;
+    padding: 12px 8px;
+    background: var(--bg-dark);
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    transition: all 0.2s;
+}
+
+.party-stat-card:hover {
+    border-color: var(--gold);
+}
+
+.party-stat-icon {
+    font-size: 1.3em;
+    margin-bottom: 4px;
+}
+
+.party-stat-value {
+    font-size: 1.5em;
+    font-weight: 700;
+    color: var(--gold);
+    line-height: 1.2;
+}
+
+.party-stat-label {
+    font-size: 0.7em;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-top: 4px;
+}
+
+.party-stat-card.critical .party-stat-value { color: var(--red); }
+.party-stat-card.bloodied .party-stat-value { color: var(--yellow); }
+.party-stat-card.healthy .party-stat-value { color: var(--green); }
+
+/* HP Bar in Party Overview */
+.party-hp-bar {
+    height: 6px;
+    background: var(--bg-elevated);
+    border-radius: 3px;
+    margin-top: 6px;
+    overflow: hidden;
+}
+
+.party-hp-fill {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 0.3s;
+}
+
+.party-hp-fill.healthy { background: var(--green); }
+.party-hp-fill.bloodied { background: var(--yellow); }
+.party-hp-fill.critical { background: var(--red); }
 

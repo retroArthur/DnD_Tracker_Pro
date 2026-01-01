@@ -259,6 +259,7 @@ function showNPCDetail(id) {
                 </div>
                 <div class="npc-detail-actions">
                     <button class="npc-detail-btn" data-action="show-avatar-modal" data-type="npcs" data-id="${npc.id}" title="Bild">🖼️</button>
+                    <button class="npc-detail-btn" data-action="show-relations-modal-stop" data-id="${npc.id}" title="Beziehungen">🤝</button>
                     <button class="npc-detail-btn" data-action="show-entity-links-modal" data-type="npcs" data-id="${npc.id}" title="Verknüpfungen">🔗</button>
                     <button class="npc-detail-btn" data-action="show-tags-modal" data-type="npcs" data-id="${npc.id}" title="Tags">🏷️</button>
                     <button class="npc-detail-btn" data-action="edit-npc" data-id="${npc.id}" title="Bearbeiten">✏️</button>
@@ -279,6 +280,14 @@ function showNPCDetail(id) {
                     <div class="npc-tags">${tagsHtml}</div>
                 </div>
             ` : ''}
+
+            <div class="npc-section">
+                <div class="npc-section-title">
+                    Beziehungen (${(npc.relations || []).length})
+                    <button class="npc-section-btn" data-action="show-relations-modal-stop" data-id="${npc.id}" title="Beziehung hinzufügen">+</button>
+                </div>
+                ${renderNPCRelations(npc)}
+            </div>
 
             <div class="npc-section">
                 <div class="npc-section-title">
@@ -407,4 +416,222 @@ function expandAllNPCDialogs() {
 
 function collapseAllNPCDialogs() {
     showToast('Wähle einen NPC für Details');
+}
+
+// ============================================================
+// NPC RELATIONS SYSTEM
+// ============================================================
+
+const RELATION_STATUS = {
+    friendly: { label: 'Freundlich', icon: '🟢', color: 'var(--green)' },
+    neutral: { label: 'Neutral', icon: '⚪', color: 'var(--text)' },
+    hostile: { label: 'Feindlich', icon: '🔴', color: 'var(--red)' }
+};
+
+function renderNPCRelations(npc) {
+    const relations = npc.relations || [];
+
+    if (!relations.length) {
+        return '<div class="npc-detail-empty-text">Keine Beziehungen definiert</div>';
+    }
+
+    return `
+        <div class="npc-relations-list">
+            ${relations.map((rel, idx) => {
+                const target = rel.targetType === 'characters'
+                    ? EntityLookup.character(rel.targetId)
+                    : EntityLookup.npc(rel.targetId);
+
+                if (!target) return '';
+
+                const status = RELATION_STATUS[rel.status] || RELATION_STATUS.neutral;
+                const icon = rel.targetType === 'characters' ? '👤' : '🎭';
+
+                return `
+                    <div class="npc-relation-item">
+                        <span class="npc-relation-icon">${icon}</span>
+                        <div class="npc-relation-info">
+                            <div class="npc-relation-name"
+                                 data-action="navigate-entity-stop"
+                                 data-type="${rel.targetType}"
+                                 data-id="${rel.targetId}">
+                                ${esc(target.name)}
+                            </div>
+                            <div class="npc-relation-type">
+                                ${rel.targetType === 'characters' ? 'Spielercharakter' : 'NPC'}
+                                ${rel.note ? ` • ${esc(rel.note)}` : ''}
+                            </div>
+                        </div>
+                        <div class="npc-relation-bar">
+                            <div class="npc-relation-fill ${rel.status}"></div>
+                        </div>
+                        <span class="npc-relation-status ${rel.status}">${status.label}</span>
+                        <div class="npc-relation-actions">
+                            <button class="npc-relation-btn" data-action="cycle-relation-status-stop" data-id="${npc.id}" data-value="${idx}" title="Status ändern">🔄</button>
+                            <button class="npc-relation-btn danger" data-action="remove-relation-stop" data-id="${npc.id}" data-value="${idx}" title="Entfernen">✕</button>
+                        </div>
+                    </div>
+                `;
+            }).filter(Boolean).join('')}
+        </div>
+    `;
+}
+
+function showRelationsModal(npcId) {
+    const npc = EntityLookup.npc(npcId);
+    if (!npc) return;
+
+    // Build options for NPCs and Characters
+    const npcOptions = (D.npcs || [])
+        .filter(n => n.id !== npcId) // Exclude self
+        .map(n => `<option value="npcs:${n.id}">${esc(n.name)} (NPC)</option>`)
+        .join('');
+
+    const charOptions = (D.characters || [])
+        .map(c => `<option value="characters:${c.id}">${esc(c.name)} (Charakter)</option>`)
+        .join('');
+
+    const existingRelations = (npc.relations || []).map((rel, idx) => {
+        const target = rel.targetType === 'characters'
+            ? EntityLookup.character(rel.targetId)
+            : EntityLookup.npc(rel.targetId);
+        if (!target) return '';
+
+        const status = RELATION_STATUS[rel.status] || RELATION_STATUS.neutral;
+        return `
+            <div class="npc-relation-item">
+                <span class="npc-relation-icon">${rel.targetType === 'characters' ? '👤' : '🎭'}</span>
+                <div class="npc-relation-info">
+                    <div class="npc-relation-name">${esc(target.name)}</div>
+                </div>
+                <span class="npc-relation-status ${rel.status}">${status.label}</span>
+                <button class="npc-relation-btn danger" onclick="removeRelation(${npcId}, ${idx})">✕</button>
+            </div>
+        `;
+    }).filter(Boolean).join('');
+
+    const content = `
+        <div class="relations-modal-content">
+            <div class="relations-modal-header">
+                <h3>🤝 Beziehungen verwalten</h3>
+                <button class="btn btn-sm" onclick="hideModal('relations-modal')">✕</button>
+            </div>
+            <p style="color: var(--text-dim); margin-bottom: 16px;">NPC: <strong>${esc(npc.name)}</strong></p>
+
+            <div class="relations-form">
+                <div class="relations-form-row">
+                    <select id="relation-target">
+                        <option value="">— Ziel wählen —</option>
+                        <optgroup label="NPCs">${npcOptions}</optgroup>
+                        <optgroup label="Charaktere">${charOptions}</optgroup>
+                    </select>
+                </div>
+                <div class="relations-form-row">
+                    <div class="relations-status-btns">
+                        <button class="relations-status-btn friendly" onclick="setRelationStatus('friendly')" id="rel-btn-friendly">🟢 Freundlich</button>
+                        <button class="relations-status-btn neutral active" onclick="setRelationStatus('neutral')" id="rel-btn-neutral">⚪ Neutral</button>
+                        <button class="relations-status-btn hostile" onclick="setRelationStatus('hostile')" id="rel-btn-hostile">🔴 Feindlich</button>
+                    </div>
+                </div>
+                <div class="relations-form-row">
+                    <input type="text" id="relation-note" placeholder="Notiz (optional)...">
+                </div>
+                <div class="relations-form-row">
+                    <button class="relations-add-btn" onclick="addRelation(${npcId})">+ Beziehung hinzufügen</button>
+                </div>
+            </div>
+
+            ${existingRelations ? `
+                <div class="relations-existing">
+                    <div class="relations-existing-title">Bestehende Beziehungen:</div>
+                    <div class="npc-relations-list">${existingRelations}</div>
+                </div>
+            ` : ''}
+        </div>
+    `;
+
+    // Create or reuse modal
+    let modal = $('relations-modal');
+    if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'relations-modal';
+        modal.className = 'modal-overlay';
+        modal.innerHTML = `<div class="modal" style="max-width: 500px;">${content}</div>`;
+        modal.onclick = (e) => { if (e.target === modal) hideModal('relations-modal'); };
+        document.body.appendChild(modal);
+    } else {
+        modal.querySelector('.modal').innerHTML = content;
+    }
+
+    // Store current status
+    modal.dataset.currentStatus = 'neutral';
+
+    showModal('relations-modal');
+}
+
+let currentRelationStatus = 'neutral';
+
+function setRelationStatus(status) {
+    currentRelationStatus = status;
+    document.querySelectorAll('.relations-status-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.id === `rel-btn-${status}`);
+    });
+}
+
+function addRelation(npcId) {
+    const npc = EntityLookup.npc(npcId);
+    if (!npc) return;
+
+    const targetVal = $('relation-target')?.value;
+    if (!targetVal) {
+        showToast('Bitte ein Ziel wählen', 'error');
+        return;
+    }
+
+    const [targetType, targetIdStr] = targetVal.split(':');
+    const targetId = parseInt(targetIdStr);
+
+    // Check if relation already exists
+    if (!npc.relations) npc.relations = [];
+    if (npc.relations.some(r => r.targetType === targetType && r.targetId === targetId)) {
+        showToast('Beziehung existiert bereits', 'warning');
+        return;
+    }
+
+    const note = $('relation-note')?.value?.trim() || '';
+
+    npc.relations.push({
+        targetId,
+        targetType,
+        status: currentRelationStatus,
+        note
+    });
+
+    hideModal('relations-modal');
+    showNPCDetail(npcId);
+    save();
+    showToast('Beziehung hinzugefügt');
+}
+
+function removeRelation(npcId, index) {
+    const npc = EntityLookup.npc(npcId);
+    if (!npc || !npc.relations) return;
+
+    npc.relations.splice(index, 1);
+    showNPCDetail(npcId);
+    showRelationsModal(npcId); // Refresh modal
+    save();
+    showToast('Beziehung entfernt');
+}
+
+function cycleRelationStatus(npcId, index) {
+    const npc = EntityLookup.npc(npcId);
+    if (!npc || !npc.relations || !npc.relations[index]) return;
+
+    const statusOrder = ['friendly', 'neutral', 'hostile'];
+    const currentIdx = statusOrder.indexOf(npc.relations[index].status);
+    npc.relations[index].status = statusOrder[(currentIdx + 1) % 3];
+
+    showNPCDetail(npcId);
+    save();
 }
