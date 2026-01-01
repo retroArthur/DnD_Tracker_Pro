@@ -6,11 +6,14 @@ function renderInit() {
     const c = $('init-list'); const rn = $('round-num'); if (!c) return;
     const init = D.initiative;
     if (rn) rn.textContent = init.round;
-    
+
     // Update encounter-round-num as well
     const ern = $('encounter-round-num');
     if (ern) ern.textContent = init.round;
-    
+
+    // Render battlefield conditions banner
+    renderBattlefieldBanner();
+
     if (!init.combatants.length) { c.innerHTML = '<div style="text-align:center; color:var(--text-dim); padding:30px;">Keine Kämpfer</div>'; return; }
     
     c.innerHTML = init.combatants.map((cb, i) => {
@@ -86,13 +89,34 @@ function renderInit() {
             }
         }
         
+        // Special handling for lair action entry
+        if (cb.type === 'lair') {
+            return `<div class="init-entry init-row lair ${active ? 'active' : ''}" draggable="true" data-id="${cb.id}">
+                <span class="drag-handle" title="Ziehen zum Umsortieren">⠿</span>
+                <div class="init-value" title="Initiative 20 (fest)">20</div>
+                <div class="init-ac" style="visibility: hidden;">-</div>
+                <div class="init-info" style="flex: 1;">
+                    <div class="init-name">${esc(cb.name)}</div>
+                    <div class="init-type" style="color: var(--red);">Lair Action</div>
+                </div>
+                <div class="init-right">
+                    <span style="color: var(--text-dim); font-size: 0.8rem; margin-right: 8px;">Am Rundenende</span>
+                    <button class="btn btn-sm btn-danger" data-action="remove-combatant" data-id="${cb.id}">❌</button>
+                </div>
+            </div>`;
+        }
+
+        // Get type label
+        const typeLabels = { enemy: 'Gegner', player: 'Spieler', ally: 'Verbündeter', monster: 'Monster' };
+        const typeLabel = typeLabels[cb.type] || cb.type;
+
         return `<div class="init-entry init-row ${cb.type} ${active ? 'active' : ''} ${dead ? 'dead' : ''}" draggable="true" data-id="${cb.id}">
             <span class="drag-handle" title="Ziehen zum Umsortieren">⠿</span>
             <div class="init-value" data-action="edit-init-value" data-id="${cb.id}" title="Klicken zum Bearbeiten">${cb.initiative} ${rollInfo}</div>
             <div class="init-ac" title="Rüstungsklasse"><span class="init-ac-icon">🛡️</span>${ac}</div>
             <div class="init-info">
                 <div class="init-name" ${nameClickHandler}>${esc(cb.name)}</div>
-                <div class="init-type">${cb.type === 'enemy' ? 'Gegner' : cb.type === 'player' ? 'Spieler' : 'Verbündeter'}</div>
+                <div class="init-type">${typeLabel}${cb.cr ? ` • CR ${cb.cr}` : ''}</div>
                 ${effects ? `<div class="init-effects">${effects}</div>` : ''}
             </div>
             ${spellSlotsHtml}
@@ -756,6 +780,53 @@ function removeLootTag(tagValue) {
     if (checkbox) {
         checkbox.checked = false;
         updateLootSelectedTags();
+    }
+}
+
+// ============================================================
+// BATTLEFIELD CONDITIONS
+// ============================================================
+
+function renderBattlefieldBanner() {
+    const banner = $('battlefield-banner');
+    if (!banner) return;
+
+    const bf = D.initiative?.battlefield;
+
+    // Hide banner if no battlefield conditions
+    if (!bf || (bf.terrain === 'normal' && !bf.hasLair)) {
+        banner.style.display = 'none';
+        return;
+    }
+
+    banner.style.display = 'flex';
+
+    const tags = [];
+
+    // Terrain tag
+    if (bf.terrain && bf.terrain !== 'normal') {
+        tags.push(`<span class="bf-tag terrain">${bf.terrainIcon} ${bf.terrainLabel} (×${bf.terrainMod})</span>`);
+    }
+
+    // Lair tag
+    if (bf.hasLair) {
+        tags.push(`<span class="bf-tag lair">🏰 Lair Actions</span>`);
+    }
+
+    banner.innerHTML = `
+        <span class="bf-label">⚔️ Battlefield:</span>
+        <div class="bf-conditions">${tags.join('')}</div>
+        <span class="bf-xp">${bf.difficulty} • ${bf.finalXP?.toLocaleString() || '?'} XP</span>
+        <button class="bf-clear" data-action="clear-battlefield" title="Battlefield zurücksetzen">✕</button>
+    `;
+}
+
+function clearBattlefield() {
+    if (D.initiative) {
+        delete D.initiative.battlefield;
+        save();
+        renderInit();
+        showToast('Battlefield-Bedingungen entfernt');
     }
 }
 

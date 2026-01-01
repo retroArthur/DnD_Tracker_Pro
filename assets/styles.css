@@ -5726,7 +5726,93 @@
         }
         
         .round-badge span { color: var(--gold); font-weight: 700; }
-        
+
+        /* Battlefield Conditions Banner */
+        .battlefield-banner {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: linear-gradient(135deg, #2a2a4a 0%, var(--bg-dark) 100%);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 10px 14px;
+            margin-bottom: 12px;
+            flex-wrap: wrap;
+        }
+
+        .bf-label {
+            font-size: 0.75rem;
+            color: var(--text-dim);
+            font-weight: 600;
+        }
+
+        .bf-conditions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .bf-tag {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            padding: 4px 10px;
+            border-radius: 16px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+
+        .bf-tag.terrain {
+            background: rgba(249, 115, 22, 0.2);
+            border: 1px solid var(--orange, #f97316);
+            color: var(--orange, #f97316);
+        }
+
+        .bf-tag.lair {
+            background: rgba(239, 68, 68, 0.2);
+            border: 1px solid var(--red);
+            color: var(--red);
+        }
+
+        .bf-xp {
+            margin-left: auto;
+            font-size: 0.8rem;
+            color: var(--gold);
+            font-weight: 600;
+        }
+
+        .bf-clear {
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--text-dim);
+            width: 24px;
+            height: 24px;
+            border-radius: 4px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+            transition: all 0.2s;
+        }
+
+        .bf-clear:hover {
+            border-color: var(--red);
+            color: var(--red);
+            background: rgba(239, 68, 68, 0.1);
+        }
+
+        /* Lair Action Entry in Initiative */
+        .init-entry.lair {
+            border-left: 3px solid var(--red);
+            background: linear-gradient(90deg, rgba(239, 68, 68, 0.1) 0%, var(--bg-card) 100%);
+        }
+
+        .init-entry.lair .init-name {
+            color: var(--red);
+            font-weight: 600;
+        }
+
         .init-list { display: flex; flex-direction: column; gap: 6px; }
         
         .init-entry {
@@ -5746,6 +5832,7 @@
         }
         
         .init-entry.enemy { border-left: 3px solid var(--red); }
+        .init-entry.monster { border-left: 3px solid var(--red); }
         .init-entry.player { border-left: 3px solid var(--green); }
         .init-entry.ally { border-left: 3px solid var(--blue); }
         .init-entry.dead { opacity: 0.4; }
@@ -13220,6 +13307,17 @@
 
 .calc-action-btn.primary:hover {
     background: var(--green-hover, #27ae60);
+    transform: translateY(-1px);
+}
+
+.calc-action-btn.initiative {
+    background: var(--orange, #f97316);
+    border-color: var(--orange, #f97316);
+    color: var(--bg-dark);
+}
+
+.calc-action-btn.initiative:hover {
+    background: #ea580c;
     transform: translateY(-1px);
 }
 

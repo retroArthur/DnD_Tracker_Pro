@@ -4,6 +4,7 @@
 
 const CombatActions = {
     // Initiative actions
+    'clear-battlefield': () => clearBattlefield(),
     'remove-combatant': (ctx) => removeCombatant(ctx.id),
     'update-combatant-hp': (ctx) => updateInitiativeCombatantHP(ctx.id, parseInt(ctx.value)),
     'next-turn': () => nextTurn(),
@@ -48,6 +49,7 @@ const CombatActions = {
     'close-calculator-modal': () => hideCalculatorModal(),
     'calc-set-terrain': (ctx) => setCalculatorTerrain(ctx.value),
     'calc-toggle-lair': () => toggleCalculatorLair(),
+    'calc-add-to-initiative': () => addCalculatorToInitiative(),
 
     // Roll actions
     'roll-attack': () => rollAttack(),

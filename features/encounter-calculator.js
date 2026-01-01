@@ -558,13 +558,14 @@ function saveAsEncounter() {
         showToast('Keine Monster zum Speichern');
         return;
     }
-    
+
     const monsters = calculateMonsterXP();
     const thresholds = calculatePartyThresholds();
-    const difficulty = getDifficulty(monsters.adjustedXP, thresholds);
-    
-    // Create encounter name
-    const name = `Encounter (${difficulty.label}) - ${monsters.adjustedXP} XP`;
+    // Use finalXP which includes terrain and lair modifiers
+    const difficulty = getDifficulty(monsters.finalXP, thresholds);
+
+    // Create encounter name with final XP
+    const name = `Encounter (${difficulty.label}) - ${monsters.finalXP} XP`;
     
     // Create monsters array for encounter
     const encounterMonsters = calculatorMonsters.map(m => ({
@@ -575,29 +576,147 @@ function saveAsEncounter() {
         count: m.count
     }));
     
+    // Build terrain/lair info for description
+    const terrain = TERRAIN_MODIFIERS.find(t => t.id === calculatorTerrain) || TERRAIN_MODIFIERS[0];
+    const envInfo = [];
+    if (monsters.terrainMod !== 1.0) envInfo.push(`Terrain: ${terrain.label} (×${monsters.terrainMod})`);
+    if (monsters.hasLair) envInfo.push(`Lair Actions (×${monsters.lairMod})`);
+
     // Add to encounters
     const newEnc = {
         id: Date.now(),
         name: name,
         monsters: encounterMonsters,
         description: `Automatisch erstellt via CR Calculator
-        
+
 Party: ${thresholds.totalPCs} PCs
 Base XP: ${monsters.baseXP}
-Adjusted XP: ${monsters.adjustedXP}
+Adjusted XP: ${monsters.adjustedXP}${envInfo.length ? '\n' + envInfo.join(', ') : ''}
+Final XP: ${monsters.finalXP}
 Difficulty: ${difficulty.label}`
     };
     
     D.encounters = D.encounters || [];
     D.encounters.push(newEnc);
-    
+
     save();
     showToast('Als Encounter gespeichert');
-    
+
     // Ask if user wants to switch to encounters view
     if (confirm('Zu Encounters wechseln?')) {
-        switchView('encounters');
+        hideCalculatorModal();
+        switchView('encounter');
+        if (typeof renderEncounters === 'function') renderEncounters();
     }
+}
+
+// ============================================================
+// ADD TO INITIATIVE
+// ============================================================
+
+function addCalculatorToInitiative() {
+    if (calculatorMonsters.length === 0) {
+        showToast('Keine Monster vorhanden');
+        return;
+    }
+
+    // Initialize initiative if not exists
+    if (!D.initiative) {
+        D.initiative = { combatants: [], currentTurn: 0, round: 1 };
+    }
+
+    // Get terrain and lair info
+    const terrain = TERRAIN_MODIFIERS.find(t => t.id === calculatorTerrain) || TERRAIN_MODIFIERS[0];
+    const monsters = calculateMonsterXP();
+    const thresholds = calculatePartyThresholds();
+    const difficulty = getDifficulty(monsters.finalXP, thresholds);
+
+    // Store battlefield conditions
+    D.initiative.battlefield = {
+        terrain: calculatorTerrain,
+        terrainLabel: terrain.label,
+        terrainIcon: terrain.icon,
+        terrainMod: terrain.multiplier,
+        hasLair: calculatorLairActions,
+        finalXP: monsters.finalXP,
+        difficulty: difficulty.label
+    };
+
+    // Add each monster to initiative
+    let addedCount = 0;
+    calculatorMonsters.forEach(monster => {
+        // Get monster template for HP if available
+        const template = (typeof D !== 'undefined' && D.encounters)
+            ? D.encounters.find(e => e.cr === monster.cr || e.CR === monster.cr)
+            : null;
+
+        const baseHP = template?.hp || template?.HP || getDefaultHPForCR(monster.cr);
+        const initBonus = template?.initBonus || template?.dex || 0;
+
+        for (let i = 0; i < monster.count; i++) {
+            // Roll initiative (1d20 + bonus)
+            const initRoll = Math.floor(Math.random() * 20) + 1 + initBonus;
+
+            // Slight HP variation (+/- 10%)
+            const hpVariation = Math.round(baseHP * (0.9 + Math.random() * 0.2));
+            const hp = Math.max(1, hpVariation);
+
+            D.initiative.combatants.push({
+                id: nextId('combatants'),
+                name: monster.count > 1 ? `${monster.name} #${i + 1}` : monster.name,
+                initiative: initRoll,
+                initBonus: initBonus,
+                maxHp: hp,
+                currentHp: hp,
+                ac: template?.ac || template?.AC || 10,
+                type: 'monster',
+                cr: monster.cr,
+                xp: CR_TO_XP[monster.cr] || 0,
+                effects: []
+            });
+            addedCount++;
+        }
+    });
+
+    // Add lair action entry if enabled
+    if (calculatorLairActions) {
+        // Check if lair action entry already exists
+        const existingLair = D.initiative.combatants.find(c => c.type === 'lair');
+        if (!existingLair) {
+            D.initiative.combatants.push({
+                id: nextId('combatants'),
+                name: '🏰 Lair Action',
+                initiative: 20,
+                initBonus: 0,
+                maxHp: 0,
+                currentHp: 0,
+                ac: 0,
+                type: 'lair',
+                effects: []
+            });
+        }
+    }
+
+    // Sort by initiative
+    D.initiative.combatants.sort((a, b) => b.initiative - a.initiative);
+
+    save();
+    hideCalculatorModal();
+    switchView('initiative');
+    if (typeof renderInit === 'function') renderInit();
+    showToast(`${addedCount} Monster zur Initiative hinzugefügt`);
+}
+
+// Default HP by CR (rough estimates)
+function getDefaultHPForCR(cr) {
+    const hpByCR = {
+        '0': 4, '1/8': 7, '1/4': 13, '1/2': 22,
+        '1': 30, '2': 45, '3': 60, '4': 75, '5': 90,
+        '6': 105, '7': 120, '8': 135, '9': 150, '10': 165,
+        '11': 180, '12': 195, '13': 210, '14': 225, '15': 240,
+        '16': 255, '17': 270, '18': 285, '19': 300, '20': 330
+    };
+    return hpByCR[cr] || 10;
 }
 
 // ============================================================
@@ -766,7 +885,8 @@ function renderCalculatorModal() {
                 <button class="calc-action-btn secondary" data-action="calc-adjust-difficulty" data-value="easier">➖ Einfacher</button>
                 <button class="calc-action-btn secondary" data-action="calc-show-difficulty-selector">🎯 Ziel wählen</button>
                 <button class="calc-action-btn secondary" data-action="calc-adjust-difficulty" data-value="harder">➕ Schwieriger</button>
-                <button class="calc-action-btn primary" data-action="calc-save-encounter">💾 Als Encounter speichern</button>
+                <button class="calc-action-btn initiative" data-action="calc-add-to-initiative">⚔️ Zur Initiative</button>
+                <button class="calc-action-btn primary" data-action="calc-save-encounter">💾 Speichern</button>
             </div>
         </div>
     `;
