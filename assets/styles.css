@@ -16203,3 +16203,361 @@
     text-align: center;
 }
 
+/* ============================================================
+   FLOATING DICE PANEL
+   ============================================================ */
+
+/* Floating Trigger Button */
+.floating-dice-trigger {
+    position: fixed;
+    bottom: 20px;
+    left: 20px;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%);
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    color: white;
+    cursor: pointer;
+    z-index: 5000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow:
+        0 4px 16px rgba(220, 38, 38, 0.4),
+        0 0 0 0 rgba(220, 38, 38, 0.4);
+    transition: all 0.3s ease;
+    animation: floatingPulse 3s ease-in-out infinite;
+}
+
+.floating-dice-trigger:hover {
+    transform: scale(1.1);
+    box-shadow:
+        0 6px 24px rgba(220, 38, 38, 0.5),
+        0 0 20px rgba(220, 38, 38, 0.3);
+}
+
+.floating-dice-trigger:active {
+    transform: scale(0.95);
+}
+
+.floating-dice-trigger svg {
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+}
+
+@keyframes floatingPulse {
+    0%, 100% { box-shadow: 0 4px 16px rgba(220, 38, 38, 0.4), 0 0 0 0 rgba(220, 38, 38, 0.4); }
+    50% { box-shadow: 0 4px 16px rgba(220, 38, 38, 0.4), 0 0 0 8px rgba(220, 38, 38, 0); }
+}
+
+/* Floating Dice Panel */
+.floating-dice-panel {
+    position: fixed;
+    bottom: 90px;
+    left: 20px;
+    width: 280px;
+    background: rgba(26, 26, 26, 0.98);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(212, 175, 55, 0.3);
+    border-radius: 16px;
+    padding: 16px;
+    z-index: 5001;
+    box-shadow:
+        0 8px 32px rgba(0, 0, 0, 0.5),
+        0 0 0 1px rgba(255, 255, 255, 0.05) inset;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(20px) scale(0.9);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    pointer-events: none;
+}
+
+.floating-dice-panel.show {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0) scale(1);
+    pointer-events: auto;
+}
+
+/* Panel Header */
+.fdp-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.fdp-title {
+    color: var(--gold);
+    font-weight: 600;
+    font-size: 1em;
+}
+
+.fdp-close {
+    background: transparent;
+    border: none;
+    color: var(--text-dim);
+    cursor: pointer;
+    font-size: 1.2em;
+    padding: 4px 8px;
+    border-radius: 4px;
+    transition: all 0.2s;
+}
+
+.fdp-close:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--text);
+}
+
+/* Result Display */
+.fdp-result {
+    text-align: center;
+    padding: 16px 12px;
+    background: var(--bg-dark);
+    border-radius: 12px;
+    margin-bottom: 12px;
+    min-height: 80px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.fdp-number {
+    font-size: 3em;
+    font-weight: 700;
+    color: var(--gold);
+    line-height: 1;
+    transition: all 0.3s;
+}
+
+.fdp-number.crit {
+    color: var(--green);
+    text-shadow: 0 0 20px rgba(74, 222, 128, 0.5);
+    animation: critPulse 0.5s ease-out;
+}
+
+.fdp-number.fail {
+    color: var(--red);
+    text-shadow: 0 0 20px rgba(239, 68, 68, 0.5);
+}
+
+.fdp-formula {
+    font-size: 0.85em;
+    color: var(--text-dim);
+    margin-top: 4px;
+    font-family: monospace;
+}
+
+.fdp-breakdown {
+    font-size: 0.75em;
+    color: var(--text-dim);
+    margin-top: 2px;
+    opacity: 0.7;
+}
+
+/* Dice Grid */
+.fdp-dice-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-bottom: 10px;
+}
+
+.fdp-die {
+    padding: 10px 8px;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--gold);
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 0.9em;
+    transition: all 0.2s;
+}
+
+.fdp-die:hover {
+    background: var(--bg-hover);
+    border-color: var(--gold);
+    transform: scale(1.05);
+}
+
+.fdp-die:active {
+    transform: scale(0.95);
+}
+
+.fdp-die.rolling {
+    animation: diceShake 0.4s ease-in-out;
+}
+
+.fdp-die.d20 {
+    background: linear-gradient(135deg, rgba(220, 38, 38, 0.2), rgba(153, 27, 27, 0.3));
+    border-color: rgba(220, 38, 38, 0.5);
+}
+
+.fdp-die.d20:hover {
+    border-color: #dc2626;
+    box-shadow: 0 0 12px rgba(220, 38, 38, 0.3);
+}
+
+/* Quick Buttons */
+.fdp-quick-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-bottom: 10px;
+}
+
+.fdp-quick {
+    padding: 8px;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text);
+    cursor: pointer;
+    font-size: 0.8em;
+    transition: all 0.2s;
+}
+
+.fdp-quick:hover {
+    background: var(--bg-hover);
+}
+
+.fdp-quick.adv {
+    border-color: rgba(74, 222, 128, 0.3);
+}
+
+.fdp-quick.adv:hover {
+    border-color: var(--green);
+    color: var(--green);
+}
+
+.fdp-quick.dis {
+    border-color: rgba(239, 68, 68, 0.3);
+}
+
+.fdp-quick.dis:hover {
+    border-color: var(--red);
+    color: var(--red);
+}
+
+/* Custom Input Row */
+.fdp-input-row {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 10px;
+}
+
+.fdp-input {
+    flex: 1;
+    padding: 8px 12px;
+    background: var(--bg-dark);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text);
+    font-size: 0.9em;
+    font-family: monospace;
+}
+
+.fdp-input:focus {
+    outline: none;
+    border-color: var(--gold);
+}
+
+.fdp-input::placeholder {
+    color: var(--text-dim);
+    opacity: 0.5;
+}
+
+.fdp-roll-btn {
+    padding: 8px 12px;
+    background: var(--gold);
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 1em;
+    transition: all 0.2s;
+}
+
+.fdp-roll-btn:hover {
+    background: var(--gold-hover);
+    transform: scale(1.05);
+}
+
+/* History */
+.fdp-history {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding-top: 8px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.fdp-history-label {
+    font-size: 0.75em;
+    color: var(--text-dim);
+    white-space: nowrap;
+}
+
+.fdp-history-list {
+    display: flex;
+    gap: 6px;
+    overflow-x: auto;
+    flex: 1;
+    scrollbar-width: none;
+}
+
+.fdp-history-list::-webkit-scrollbar {
+    display: none;
+}
+
+.fdp-history-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 4px 8px;
+    background: var(--bg-elevated);
+    border-radius: 4px;
+    cursor: pointer;
+    min-width: 40px;
+    transition: all 0.2s;
+}
+
+.fdp-history-item:hover {
+    background: var(--bg-hover);
+}
+
+.fdp-history-result {
+    font-weight: 600;
+    color: var(--gold);
+    font-size: 0.9em;
+}
+
+.fdp-history-notation {
+    font-size: 0.65em;
+    color: var(--text-dim);
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+    .floating-dice-trigger {
+        bottom: 70px;
+        width: 48px;
+        height: 48px;
+    }
+
+    .floating-dice-trigger svg {
+        width: 24px;
+        height: 24px;
+    }
+
+    .floating-dice-panel {
+        bottom: 130px;
+        left: 10px;
+        right: 10px;
+        width: auto;
+    }
+}
+

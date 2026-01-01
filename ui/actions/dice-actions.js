@@ -24,7 +24,15 @@ const DiceActions = {
     // Favorite dice actions
     'roll-favorite': (ctx) => rollFavoriteDice(ctx.id),
     'delete-favorite': (ctx) => deleteDiceFavorite(ctx.id),
-    'delete-favorite-stop': (ctx) => { ctx.event.stopPropagation(); deleteDiceFavorite(ctx.id); }
+    'delete-favorite-stop': (ctx) => { ctx.event.stopPropagation(); deleteDiceFavorite(ctx.id); },
+
+    // Floating dice panel actions
+    'toggle-floating-dice': () => toggleFloatingDice(),
+    'roll-floating': (ctx) => rollFloatingDice(parseInt(ctx.value)),
+    'roll-floating-adv': () => rollFloatingAdvantage(),
+    'roll-floating-dis': () => rollFloatingDisadvantage(),
+    'roll-floating-custom': () => rollFloatingCustom(),
+    'reroll-floating': (ctx) => rerollFloating(ctx.value)
 };
 
 // Register all dice actions

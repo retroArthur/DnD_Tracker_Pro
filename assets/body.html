@@ -3402,7 +3402,47 @@
     </div>
     
     <div class="toast" id="toast">✓ Gespeichert</div>
-    
+
+    <!-- Floating Dice Trigger (immer sichtbar) -->
+    <button class="floating-dice-trigger" id="floating-dice-trigger" data-action="toggle-floating-dice" title="Würfel">
+        <svg viewBox="0 0 24 24" width="28" height="28" fill="currentColor">
+            <path d="M12 2L2 7v10l10 5 10-5V7L12 2zm0 2.18l6.9 3.45L12 11.09 5.1 7.63 12 4.18zM4 8.82l7 3.5v7.86l-7-3.5V8.82zm9 11.36v-7.86l7-3.5v7.86l-7 3.5z"/>
+        </svg>
+    </button>
+
+    <!-- Floating Dice Panel -->
+    <div id="floating-dice-panel" class="floating-dice-panel">
+        <div class="fdp-header">
+            <span class="fdp-title">🎲 Würfel</span>
+            <button class="fdp-close" data-action="toggle-floating-dice">✕</button>
+        </div>
+        <div class="fdp-result">
+            <div class="fdp-number" id="fdp-result">—</div>
+            <div class="fdp-formula" id="fdp-formula"></div>
+            <div class="fdp-breakdown" id="fdp-breakdown"></div>
+        </div>
+        <div class="fdp-dice-grid">
+            <button class="fdp-die d20" data-action="roll-floating" data-value="20">d20</button>
+            <button class="fdp-die d12" data-action="roll-floating" data-value="12">d12</button>
+            <button class="fdp-die d10" data-action="roll-floating" data-value="10">d10</button>
+            <button class="fdp-die d8" data-action="roll-floating" data-value="8">d8</button>
+            <button class="fdp-die d6" data-action="roll-floating" data-value="6">d6</button>
+            <button class="fdp-die d4" data-action="roll-floating" data-value="4">d4</button>
+        </div>
+        <div class="fdp-quick-row">
+            <button class="fdp-quick adv" data-action="roll-floating-adv">⬆️ Vorteil</button>
+            <button class="fdp-quick dis" data-action="roll-floating-dis">⬇️ Nachteil</button>
+        </div>
+        <div class="fdp-input-row">
+            <input type="text" id="fdp-notation" class="fdp-input" placeholder="2d6+3" onkeypress="if(event.key==='Enter')rollFloatingCustom()">
+            <button class="fdp-roll-btn" data-action="roll-floating-custom">🎲</button>
+        </div>
+        <div class="fdp-history">
+            <span class="fdp-history-label">Letzte:</span>
+            <div class="fdp-history-list" id="fdp-history"></div>
+        </div>
+    </div>
+
     <!-- Mobile Header (nur im Mobile-Modus sichtbar) -->
     <div class="mobile-header">
         <div style="display: flex; gap: 8px; align-items: center;">

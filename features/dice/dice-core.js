@@ -587,3 +587,143 @@ function rollCharInitiative() {
 }
 
 // ============================================================
+// FLOATING DICE PANEL
+// ============================================================
+
+let floatingDiceHistory = [];
+
+function toggleFloatingDice() {
+    const panel = $('floating-dice-panel');
+    if (panel) {
+        panel.classList.toggle('show');
+    }
+}
+
+function rollFloatingDice(sides) {
+    const btn = document.querySelector(`.fdp-die.d${sides}`);
+    if (btn) {
+        btn.classList.add('rolling');
+        setTimeout(() => btn.classList.remove('rolling'), 400);
+    }
+
+    const result = Math.floor(Math.random() * sides) + 1;
+    const isCrit = sides === 20 && result === 20;
+    const isFail = sides === 20 && result === 1;
+
+    updateFloatingResult(result, `1d${sides}`, [result], isCrit, isFail);
+    addToFloatingHistory(`1d${sides}`, result);
+
+    // Also update main dice display if visible
+    lastDiceRoll = { notation: `1d${sides}`, result, rolls: [result] };
+    if ($('dice-hero')) {
+        displayDiceResult(result, `1d${sides}`, [result], isCrit, isFail);
+    }
+    addToDiceHistory(`1d${sides}`, result, [result]);
+}
+
+function rollFloatingAdvantage() {
+    const result = parseDiceNotation('2d20kh1');
+    const isCrit = result.keptRolls[0] === 20;
+    const isFail = result.keptRolls[0] === 1;
+
+    updateFloatingResult(result.total, '⬆️ Vorteil', result.rolls, isCrit, isFail);
+    addToFloatingHistory('Vorteil', result.total);
+
+    lastDiceRoll = { notation: 'Vorteil', ...result };
+    if ($('dice-hero')) {
+        displayDiceResult(result.total, '⬆️ Vorteil (2d20kh1)', result.rolls, isCrit, isFail);
+    }
+    addToDiceHistory('Vorteil', result.total, result.rolls);
+}
+
+function rollFloatingDisadvantage() {
+    const result = parseDiceNotation('2d20kl1');
+    const isCrit = result.keptRolls[0] === 20;
+    const isFail = result.keptRolls[0] === 1;
+
+    updateFloatingResult(result.total, '⬇️ Nachteil', result.rolls, isCrit, isFail);
+    addToFloatingHistory('Nachteil', result.total);
+
+    lastDiceRoll = { notation: 'Nachteil', ...result };
+    if ($('dice-hero')) {
+        displayDiceResult(result.total, '⬇️ Nachteil (2d20kl1)', result.rolls, isCrit, isFail);
+    }
+    addToDiceHistory('Nachteil', result.total, result.rolls);
+}
+
+function rollFloatingCustom() {
+    const notation = $('fdp-notation')?.value?.trim();
+    if (!notation) return;
+
+    const result = parseDiceNotation(notation);
+    if (result) {
+        const isCrit = notation.includes('d20') && result.rolls.includes(20);
+        const isFail = notation.includes('d20') && result.rolls.includes(1);
+
+        updateFloatingResult(result.total, notation, result.rolls, isCrit, isFail);
+        addToFloatingHistory(notation, result.total);
+
+        lastDiceRoll = { notation, ...result };
+        if ($('dice-hero')) {
+            displayDiceResult(result.total, notation, result.rolls, isCrit, isFail);
+        }
+        addToDiceHistory(notation, result.total, result.rolls);
+        addToFormulaHistory(notation);
+    }
+}
+
+function updateFloatingResult(result, formula, rolls, isCrit, isFail) {
+    const resultEl = $('fdp-result');
+    const formulaEl = $('fdp-formula');
+    const breakdownEl = $('fdp-breakdown');
+
+    if (resultEl) {
+        resultEl.textContent = result;
+        resultEl.className = 'fdp-number';
+        if (isCrit) resultEl.classList.add('crit');
+        if (isFail) resultEl.classList.add('fail');
+
+        // Pulse animation
+        resultEl.style.transform = 'scale(1.1)';
+        setTimeout(() => resultEl.style.transform = 'scale(1)', 200);
+    }
+
+    if (formulaEl) {
+        formulaEl.textContent = formula;
+    }
+
+    if (breakdownEl) {
+        breakdownEl.textContent = `[${rolls.join(', ')}]`;
+    }
+}
+
+function addToFloatingHistory(notation, result) {
+    floatingDiceHistory.unshift({ notation, result });
+    if (floatingDiceHistory.length > 5) floatingDiceHistory.pop();
+    renderFloatingHistory();
+}
+
+function renderFloatingHistory() {
+    const container = $('fdp-history');
+    if (!container) return;
+
+    container.innerHTML = floatingDiceHistory.map(h => `
+        <div class="fdp-history-item" data-action="reroll-floating" data-value="${esc(h.notation)}">
+            <span class="fdp-history-result">${h.result}</span>
+            <span class="fdp-history-notation">${esc(h.notation)}</span>
+        </div>
+    `).join('');
+}
+
+function rerollFloating(notation) {
+    if (notation === 'Vorteil') {
+        rollFloatingAdvantage();
+    } else if (notation === 'Nachteil') {
+        rollFloatingDisadvantage();
+    } else {
+        $('fdp-notation').value = notation;
+        rollFloatingCustom();
+    }
+}
+
+// ============================================================
