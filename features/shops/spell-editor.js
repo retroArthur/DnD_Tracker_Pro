@@ -19,17 +19,6 @@ const EDITOR_FONTS = {
 
 const TOOLBAR_DIMENSIONS = { width: 380, height: 80, padding: 10 };
 
-const SPELL_SCHOOLS = {
-    'all': { emoji: '∞', name: 'Alle' },
-    'Bannzauber': { emoji: '🛡️', name: 'Bannzauber' },
-    'Beschwörung': { emoji: '✨', name: 'Beschwörung' },
-    'Erkenntnis': { emoji: '👁️', name: 'Erkenntnis' },
-    'Hervorrufung': { emoji: '💥', name: 'Hervorrufung' },
-    'Illusion': { emoji: '🎭', name: 'Illusion' },
-    'Nekromantie': { emoji: '💀', name: 'Nekromantie' },
-    'Verwandlung': { emoji: '🔄', name: 'Verwandlung' },
-    'Verzauberung': { emoji: '💫', name: 'Verzauberung' }
-};
 let currentSpellPage = 0;
 let filteredSpellsCache = [];
 

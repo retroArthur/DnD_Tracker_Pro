@@ -7942,77 +7942,10 @@
         }
 
         /* ============================================================
-           EDITOR IMPROVEMENTS v2.0 - Focus-Based & Enhanced Floating
+           EDITOR IMPROVEMENTS v2.0 - Enhanced Floating Toolbar
            ============================================================ */
 
-        /* Phase 1: Focus-Based Editor Wrapper */
-        /* Verwendet form-group als Wrapper (kein HTML-Änderung nötig) */
-        .form-group:has(.editor-toolbar) {
-            position: relative;
-        }
-
-        .form-group:has(.editor-toolbar) .editor-toolbar,
-        .cf-notes-panel .cf-notes-toolbar {
-            max-height: 0;
-            padding-top: 0;
-            padding-bottom: 0;
-            overflow: hidden;
-            opacity: 0;
-            transition: max-height 0.25s ease-out, padding 0.25s ease-out, opacity 0.2s ease-out;
-        }
-
-        .form-group:has(.editor-toolbar):focus-within .editor-toolbar,
-        .cf-notes-panel:focus-within .cf-notes-toolbar {
-            max-height: 50px;
-            padding-top: 4px;
-            padding-bottom: 4px;
-            opacity: 1;
-        }
-
-        .form-group:has(.editor-toolbar) .rich-editor,
-        .cf-notes-panel .cf-notes-editor {
-            border-radius: 6px;
-            transition: border-radius 0.25s ease-out, border-color 0.2s;
-        }
-
-        .form-group:has(.editor-toolbar):focus-within .rich-editor,
-        .cf-notes-panel:focus-within .cf-notes-editor {
-            border-radius: 0 0 6px 6px;
-            border-color: var(--gold);
-        }
-
-        /* Fallback für Browser ohne :has() - explizite Klasse */
-        .editor-wrapper {
-            position: relative;
-        }
-
-        .editor-wrapper .editor-toolbar {
-            max-height: 0;
-            padding-top: 0;
-            padding-bottom: 0;
-            overflow: hidden;
-            opacity: 0;
-            transition: max-height 0.25s ease-out, padding 0.25s ease-out, opacity 0.2s ease-out;
-        }
-
-        .editor-wrapper:focus-within .editor-toolbar {
-            max-height: 50px;
-            padding-top: 4px;
-            padding-bottom: 4px;
-            opacity: 1;
-        }
-
-        .editor-wrapper .rich-editor {
-            border-radius: 6px;
-            transition: border-radius 0.25s ease-out, border-color 0.2s;
-        }
-
-        .editor-wrapper:focus-within .rich-editor {
-            border-radius: 0 0 6px 6px;
-            border-color: var(--gold);
-        }
-
-        /* Phase 2: Enhanced Floating Toolbar */
+        /* Enhanced Floating Toolbar */
         .floating-toolbar {
             flex-direction: column;
             gap: 4px;
