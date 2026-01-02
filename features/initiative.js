@@ -3,6 +3,39 @@
 // INITIATIVE - @combat @turn @round @encounter
 // ============================================================
 
+// Konstanten
+const INIT_CONSTANTS = {
+    PERMANENT_DURATION: 999,
+    DEATH_SAVE_THRESHOLD: 3,
+    CONCENTRATION_DC_MIN: 10,
+    CONCENTRATION_DC_DIVISOR: 2,
+    D20_SIDES: 20,
+    ABILITY_MOD_BASE: 10,
+    ABILITY_MOD_DIVISOR: 2
+};
+
+const COMBATANT_TYPES = {
+    PLAYER: 'player',
+    ENEMY: 'enemy',
+    ALLY: 'ally',
+    LAIR: 'lair'
+};
+
+// Utility-Funktionen
+function getCombatant(id) {
+    return D.initiative.combatants.find(c => c.id === id);
+}
+
+function applyDamage(combatant, damage) {
+    let remaining = Math.abs(damage);
+    if (combatant.tempHp > 0) {
+        const absorbed = Math.min(combatant.tempHp, remaining);
+        combatant.tempHp -= absorbed;
+        remaining -= absorbed;
+    }
+    combatant.currentHp = Math.max(0, combatant.currentHp - remaining);
+}
+
 function renderInit() {
     const c = $('init-list'); const rn = $('round-num'); if (!c) return;
     const init = D.initiative;
@@ -188,7 +221,7 @@ function endCombat() {
 }
 
 function editInitValue(id) {
-    const cb = D.initiative.combatants.find(c => c.id === id); if (!cb) return;
+    const cb = getCombatant(id); if (!cb) return;
     const val = prompt('Initiative-Wert:', cb.initiative);
     if (val !== null && !isNaN(parseInt(val))) { cb.initiative = parseInt(val); renderInit(); save(); }
 }
@@ -311,7 +344,7 @@ function renderEffectConditionsGrid() {
     if (!container) return;
     
     const cbId = parseEntityId($('effect-combatant-id').value);
-    const cb = D.initiative.combatants.find(c => c.id === cbId);
+    const cb = getCombatant(cbId);
     const currentEffects = cb?.effects || [];
     
     // CONDITION_COLORS ist in constants.js definiert
@@ -328,7 +361,7 @@ function renderEffectConditionsGrid() {
 
 function addEffectFromGrid(conditionKey) {
     const cbId = parseEntityId($('effect-combatant-id').value);
-    const cb = D.initiative.combatants.find(c => c.id === cbId);
+    const cb = getCombatant(cbId);
     if (!cb) return;
     if (!cb.effects) cb.effects = [];
     
@@ -345,7 +378,7 @@ function addEffectFromGrid(conditionKey) {
         cb.effects.push({
             id: Date.now(),
             name: cond.name,
-            duration: 999,
+            duration: INIT_CONSTANTS.PERMANENT_DURATION,
             permanent: true,
             color: CONDITION_COLORS[conditionKey] || 'yellow',
             description: cond.desc
@@ -359,7 +392,7 @@ function addEffectFromGrid(conditionKey) {
 
 function saveCustomEffect() {
     const cbId = parseEntityId($('effect-combatant-id').value);
-    const cb = D.initiative.combatants.find(c => c.id === cbId);
+    const cb = getCombatant(cbId);
     if (!cb) return;
     if (!cb.effects) cb.effects = [];
     
@@ -375,7 +408,7 @@ function saveCustomEffect() {
     cb.effects.push({
         id: Date.now(),
         name,
-        duration: duration || 999,
+        duration: duration || INIT_CONSTANTS.PERMANENT_DURATION,
         permanent: duration === 0,
         color,
         description: ''
@@ -388,7 +421,7 @@ function saveCustomEffect() {
 }
 
 function removeEffect(cbId, effId) {
-    const cb = D.initiative.combatants.find(c => c.id === cbId); if (!cb) return;
+    const cb = getCombatant(cbId); if (!cb) return;
     cb.effects = (cb.effects || []).filter(e => e.id !== effId);
     renderInit(); save();
 }
@@ -406,9 +439,9 @@ function renderDeathSaves(cb) {
 
     // Auf Endzustände prüfen
     let statusHtml = '';
-    if (ds.failures >= 3) {
+    if (ds.failures >= INIT_CONSTANTS.DEATH_SAVE_THRESHOLD) {
         statusHtml = '<span class="death-saves-status dead">💀 Tot</span>';
-    } else if (ds.successes >= 3) {
+    } else if (ds.successes >= INIT_CONSTANTS.DEATH_SAVE_THRESHOLD) {
         statusHtml = '<span class="death-saves-status stable">✓ Stabil</span>';
     }
 
@@ -447,7 +480,7 @@ function renderDeathSaves(cb) {
 }
 
 function toggleDeathSave(cbId, type, index) {
-    const cb = D.initiative.combatants.find(c => c.id === cbId);
+    const cb = getCombatant(cbId);
     if (!cb) return;
 
     if (!cb.deathSaves) {
@@ -468,12 +501,12 @@ function toggleDeathSave(cbId, type, index) {
     }
 
     // Auf Tod prüfen (3 Fehlschläge)
-    if (ds.failures >= 3) {
+    if (ds.failures >= INIT_CONSTANTS.DEATH_SAVE_THRESHOLD) {
         showToast('💀 Charakter ist gestorben!', 'error');
     }
 
     // Auf Stabilisierung prüfen (3 Erfolge)
-    if (ds.successes >= 3 && cb.currentHp <= 0) {
+    if (ds.successes >= INIT_CONSTANTS.DEATH_SAVE_THRESHOLD && cb.currentHp <= 0) {
         cb.currentHp = 1;
         ds.successes = 0;
         ds.failures = 0;
@@ -538,7 +571,7 @@ function renderConcentrationCheck(cb, damage) {
 }
 
 function showConcentrationModal(cbId) {
-    const cb = D.initiative.combatants.find(c => c.id === cbId);
+    const cb = getCombatant(cbId);
     if (!cb) return;
 
     // Zauber vom verknüpften Charakter holen falls verfügbar
@@ -604,7 +637,7 @@ function showConcentrationModal(cbId) {
 }
 
 function setConcentration(cbId) {
-    const cb = D.initiative.combatants.find(c => c.id === cbId);
+    const cb = getCombatant(cbId);
     if (!cb) return;
 
     const input = $('conc-spell-input');
@@ -628,7 +661,7 @@ function setConcentration(cbId) {
 }
 
 function breakConcentration(cbId) {
-    const cb = D.initiative.combatants.find(c => c.id === cbId);
+    const cb = getCombatant(cbId);
     if (!cb || !cb.concentration?.active) return;
 
     const spell = cb.concentration.spell;
@@ -640,7 +673,7 @@ function breakConcentration(cbId) {
 }
 
 function rollConcentrationCheck(cbId, dc) {
-    const cb = D.initiative.combatants.find(c => c.id === cbId);
+    const cb = getCombatant(cbId);
     if (!cb || !cb.concentration?.active) return;
 
     // KON-Modifikator vom verknüpften Charakter holen
@@ -873,20 +906,14 @@ function applyAoEDamage() {
     // Apply damage to each target
     let hitCount = 0;
     selectedTargets.forEach(({ id, hasSave }) => {
-        const cb = D.initiative.combatants.find(c => c.id === id);
+        const cb = getCombatant(id);
         if (!cb) return;
 
         const damage = hasSave ? Math.floor(aoeCurrentDamage / 2) : aoeCurrentDamage;
         const wasAtZero = cb.currentHp <= 0;
 
         // Apply damage (temp HP first)
-        let remaining = damage;
-        if (cb.tempHp > 0) {
-            const absorbed = Math.min(cb.tempHp, remaining);
-            cb.tempHp -= absorbed;
-            remaining -= absorbed;
-        }
-        cb.currentHp = Math.max(0, cb.currentHp - remaining);
+        applyDamage(cb, damage);
 
         // Trigger concentration check if applicable
         if (cb.concentration?.active && damage > 0) {

@@ -3765,18 +3765,58 @@
         <div class="spell-tooltip-classes" id="stt-classes"></div>
     </div>
 
-    <!-- Schwebende Mini-Editor-Toolbar -->
+    <!-- Schwebende Mini-Editor-Toolbar (Enhanced v2) -->
     <div class="floating-toolbar" id="floating-toolbar">
-        <button type="button" class="editor-btn" data-floating-action="bold" title="Fett (Strg+B)"><b>B</b></button>
-        <button type="button" class="editor-btn" data-floating-action="italic" title="Kursiv (Strg+I)"><i>I</i></button>
-        <button type="button" class="editor-btn" data-floating-action="underline" title="Unterstrichen (Strg+U)"><u>U</u></button>
-        <button type="button" class="editor-btn" data-floating-action="strikethrough" title="Durchgestrichen"><s>S</s></button>
-        <span class="toolbar-separator"></span>
-        <button type="button" class="editor-btn" data-floating-action="highlight" title="Hervorheben">🖍️</button>
-        <button type="button" class="editor-btn" data-floating-action="list" title="Liste">☰</button>
-        <button type="button" class="editor-btn" data-floating-action="table" title="Tabelle einfügen">📊</button>
-        <span class="toolbar-separator"></span>
-        <button type="button" class="editor-btn" data-floating-action="removeFormat" title="Formatierung entfernen" style="color:#888;">✕</button>
+        <div class="toolbar-row">
+            <button type="button" class="editor-btn" data-floating-action="bold" title="Fett"><b>B</b><span class="kbd-hint">Strg+B</span></button>
+            <button type="button" class="editor-btn" data-floating-action="italic" title="Kursiv"><i>I</i><span class="kbd-hint">Strg+I</span></button>
+            <button type="button" class="editor-btn" data-floating-action="underline" title="Unterstrichen"><u>U</u><span class="kbd-hint">Strg+U</span></button>
+            <button type="button" class="editor-btn" data-floating-action="strikethrough" title="Durchgestrichen"><s>S</s></button>
+            <span class="toolbar-separator"></span>
+            <button type="button" class="editor-btn" data-floating-action="link" title="Link einfügen">🔗<span class="kbd-hint">Strg+K</span></button>
+            <button type="button" class="editor-btn" data-floating-action="list" title="Liste">☰</button>
+            <button type="button" class="editor-btn" data-floating-action="table" title="Tabelle">📊<span class="kbd-hint">Strg+⇧+T</span></button>
+            <span class="toolbar-separator"></span>
+            <select class="editor-select" data-floating-action="font" title="Schriftart">
+                <option value="arial">Arial</option>
+                <option value="serif">Serif</option>
+                <option value="mono">Mono</option>
+            </select>
+            <select class="editor-select" data-floating-action="fontSize" title="Größe">
+                <option value="0.8em">Klein</option>
+                <option value="1em" selected>Normal</option>
+                <option value="1.2em">Groß</option>
+                <option value="1.5em">Sehr groß</option>
+            </select>
+        </div>
+        <div class="color-row">
+            <div class="color-swatch" data-floating-action="highlight" data-color="#fbbf24" style="background:#fbbf24;" title="Gold"></div>
+            <div class="color-swatch" data-floating-action="highlight" data-color="#22d3ee" style="background:#22d3ee;" title="Cyan"></div>
+            <div class="color-swatch" data-floating-action="highlight" data-color="#ef4444" style="background:#ef4444;" title="Rot"></div>
+            <div class="color-swatch" data-floating-action="highlight" data-color="#22c55e" style="background:#22c55e;" title="Grün"></div>
+            <div class="color-swatch" data-floating-action="highlight" data-color="#a855f7" style="background:#a855f7;" title="Lila"></div>
+            <div class="color-swatch" data-floating-action="highlight" data-color="transparent" style="background:transparent; border:1px dashed #666;" title="Keine Farbe"></div>
+            <span style="flex:1;"></span>
+            <button type="button" class="editor-btn" data-floating-action="removeFormat" title="Formatierung entfernen" style="color:#888; font-size:11px;">✕ Format</button>
+        </div>
+        <div class="swipe-indicator">← Wischen für mehr →</div>
+    </div>
+
+    <!-- Kontext-Toolbar für Tabellen -->
+    <div class="table-context-toolbar" id="table-context-toolbar">
+        <button type="button" class="editor-btn" data-table-action="addRow" title="Zeile hinzufügen">+ Zeile</button>
+        <button type="button" class="editor-btn" data-table-action="addCol" title="Spalte hinzufügen">+ Spalte</button>
+        <button type="button" class="editor-btn" data-table-action="deleteRow" title="Zeile löschen">🗑️ Zeile</button>
+        <button type="button" class="editor-btn" data-table-action="deleteCol" title="Spalte löschen">🗑️ Spalte</button>
+        <button type="button" class="editor-btn" data-table-action="deleteTable" title="Tabelle löschen" style="color:#ef4444;">Tabelle ✕</button>
+    </div>
+
+    <!-- Kontext-Toolbar für Links -->
+    <div class="link-context-toolbar" id="link-context-toolbar">
+        <span class="link-url" id="link-context-url">🔗</span>
+        <button type="button" class="editor-btn" data-link-action="open" title="Link öffnen">Öffnen</button>
+        <button type="button" class="editor-btn" data-link-action="edit" title="Link bearbeiten">Bearbeiten</button>
+        <button type="button" class="editor-btn" data-link-action="remove" title="Link entfernen" style="color:#ef4444;">✕</button>
     </div>
 
     <!-- Kalender Modal -->

@@ -85,7 +85,10 @@ async function init() {
     
     // Schwebende Mini-Editor-Toolbar initialisieren
     initFloatingToolbar();
-    
+
+    // Kontext-Toolbars für Tabellen und Links initialisieren
+    if (typeof initContextToolbars === 'function') initContextToolbars();
+
     // Loot Tag-System initialisieren
     if (typeof initLootTagSystem === 'function') initLootTagSystem();
 

@@ -5,6 +5,33 @@
 
 // MAP INTEGRATION (Multi-Map Support)
 // ============================================================
+
+// Konstanten
+const MAP_CONSTANTS = {
+    ZOOM: { min: 0.1, max: 5, factorIn: 1.1, factorOut: 0.9 },
+    GRID: { defaultSize: 50, minSize: 20, maxSize: 200, dndMeterConversion: 1.524 },
+    FOG: { defaultBrushSize: 50, hideThreshold: 5 },
+    TOOLTIP_OFFSET: 15,
+    CONVERSIONS: { feetPerMeter: 3.28084, milesPerFeet: 5280, kmPerMeter: 1000, metersPerMile: 1609.34 },
+    TRAVEL_SPEED_MH: 5000
+};
+
+const MARKER_ICONS = {
+    party: '👥', poi: '📍', danger: '⚠️', quest: '📜', item: '💎',
+    secret: '❓', secretdoor: '🚪', npc: '🧑', action: '⚡', encounter: '⚔️',
+    entrance: '🚩', exit: '🏁', shop: '🛒', blacksmith: '⚒️', house: '🏠',
+    tavern: '🍺', inn: '🛏️', dicetest: '🎲', ruins: '🏚️', magic: '✨',
+    tower: '🗼', lair: '🐉', note: '📝'
+};
+
+// Utility-Funktionen
+function getMapCoordinates(event, rect) {
+    return {
+        x: ((event.clientX - rect.left) / rect.width) * 100,
+        y: ((event.clientY - rect.top) / rect.height) * 100
+    };
+}
+
 let mapZoom = 1;
 let currentMapId = null;
 let markerPlacementMode = false;
@@ -183,7 +210,7 @@ function displayMap() {
 
 function zoomMap(factor) {
     mapZoom *= factor;
-    mapZoom = Math.max(0.1, Math.min(5, mapZoom));
+    mapZoom = Math.max(MAP_CONSTANTS.ZOOM.min, Math.min(MAP_CONSTANTS.ZOOM.max, mapZoom));
     updateMapTransform();
     
     const map = getCurrentMap();
@@ -268,7 +295,7 @@ function initMapPanning() {
     // Mouse wheel zoom
     viewport.addEventListener('wheel', function(e) {
         e.preventDefault();
-        const factor = e.deltaY < 0 ? 1.1 : 0.9;
+        const factor = e.deltaY < 0 ? MAP_CONSTANTS.ZOOM.factorIn : MAP_CONSTANTS.ZOOM.factorOut;
         zoomMap(factor);
     }, { passive: false });
     
@@ -281,13 +308,12 @@ function initMapPanning() {
         
         const img = $('map-image');
         if (!img) return;
-        
+
         const rect = img.getBoundingClientRect();
-        const x = ((e.clientX - rect.left) / rect.width) * 100;
-        const y = ((e.clientY - rect.top) / rect.height) * 100;
-        
+        const coords = getMapCoordinates(e, rect);
+
         // Quick-Pin erstellen (Default: POI)
-        createQuickPinAt(x, y);
+        createQuickPinAt(coords.x, coords.y);
     });
 }
 
@@ -452,33 +478,7 @@ function renderMapMarkers() {
     
     const map = getCurrentMap();
     if (!map || !map.markers) return;
-    
-    const MARKER_ICONS = {
-        party: '👥',
-        poi: '📍',
-        danger: '⚠️',
-        quest: '📜',
-        item: '💎',
-        secret: '❓',
-        secretdoor: '🚪',
-        npc: '🧑',
-        action: '⚡',
-        encounter: '⚔️',
-        entrance: '🚩',
-        exit: '🏁',
-        shop: '🛒',
-        blacksmith: '⚒️',
-        house: '🏠',
-        tavern: '🍺',
-        inn: '🛏️',
-        dicetest: '🎲',
-        ruins: '🏚️',
-        magic: '✨',
-        tower: '🗼',
-        lair: '🐉',
-        note: '📝'
-    };
-    
+
     map.markers.forEach(m => {
         // Layer-Sichtbarkeit prüfen
         const markerLayer = typeof getMarkerLayer === 'function' ? getMarkerLayer(m.type) : 'poi';
@@ -792,12 +792,12 @@ function initMapContextMenu() {
         // Position berechnen (im Kartenkoordinatensystem)
         const img = $('map-image');
         if (!img) return;
-        
+
         const rect = img.getBoundingClientRect();
-        
-        contextMenuPos.x = ((e.clientX - rect.left) / rect.width) * 100;
-        contextMenuPos.y = ((e.clientY - rect.top) / rect.height) * 100;
-        
+        const coords = getMapCoordinates(e, rect);
+        contextMenuPos.x = coords.x;
+        contextMenuPos.y = coords.y;
+
         // Menü positionieren und anzeigen
         contextMenu.style.left = e.clientX + 'px';
         contextMenu.style.top = e.clientY + 'px';
@@ -996,18 +996,16 @@ function handleMapToolClick(e) {
     
     const img = $('map-image');
     if (!img) return;
-    
+
     const rect = img.getBoundingClientRect();
-    
-    const x = ((e.clientX - rect.left) / rect.width) * 100;
-    const y = ((e.clientY - rect.top) / rect.height) * 100;
-    
+    const coords = getMapCoordinates(e, rect);
+
     if (currentMapTool === 'measure') {
-        handleMeasureClick(x, y, rect);
+        handleMeasureClick(coords.x, coords.y, rect);
     } else if (currentMapTool === 'calibrate') {
-        handleCalibrationClick(x, y, rect);
+        handleCalibrationClick(coords.x, coords.y, rect);
     } else if (currentMapTool === 'fog-reveal' || currentMapTool === 'fog-hide') {
-        handleFogClick(x, y, currentMapTool === 'fog-reveal');
+        handleFogClick(coords.x, coords.y, currentMapTool === 'fog-reveal');
     }
 }
 
@@ -1554,15 +1552,7 @@ function renderMapMarkersList() {
     }
     
     if (countEl) countEl.textContent = map.markers.length;
-    
-    const MARKER_ICONS = {
-        party: '👥', poi: '📍', danger: '⚠️', quest: '📜', item: '💎',
-        secret: '❓', secretdoor: '🚪', npc: '🧑', action: '⚡', encounter: '⚔️',
-        entrance: '🚩', exit: '🏁', shop: '🛒', blacksmith: '⚒️', house: '🏠',
-        tavern: '🍺', inn: '🛏️', dicetest: '🎲', ruins: '🏚️', magic: '✨',
-        tower: '🗼', lair: '🐉', note: '📝'
-    };
-    
+
     const MARKER_COLORS = {
         party: 'var(--green)', poi: 'var(--cyan)', danger: 'var(--red)',
         quest: 'var(--purple)', item: 'var(--gold)', secret: 'var(--orange)',
@@ -1607,11 +1597,7 @@ function filterMapMarkers(query) {
         resultsContainer.innerHTML = '<div style="color: var(--text-dim); padding: 8px; font-size: 0.85em;">Keine Treffer</div>';
         return;
     }
-    
-    const MARKER_ICONS = {
-        party: '👥', poi: '📍', danger: '⚠️', quest: '📜', npc: '🧑'
-    };
-    
+
     resultsContainer.innerHTML = matches.map(m => `
         <div class="map-search-result" data-action="focus-marker" data-id="${m.id}">
             <span>${MARKER_ICONS[m.type] || '📍'}</span>

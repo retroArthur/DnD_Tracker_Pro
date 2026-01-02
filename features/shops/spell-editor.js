@@ -5,14 +5,36 @@
 
 // SPELLS
 // ============================================================
-const SPELLS_PER_PAGE = 50; // Anzahl Zauber pro "Seite"
+
+// Konstanten
+const SPELLS_PER_PAGE = 50;
+
+const EDITOR_FONTS = {
+    'arial': "Arial, Helvetica, sans-serif",
+    'serif': "Georgia, 'Times New Roman', serif",
+    'mono': "'Courier New', Consolas, monospace",
+    'abadi': "Abadi MT Condensed Light, Arial Narrow, sans-serif",
+    'roboto': "Roboto, sans-serif"
+};
+
+const TOOLBAR_DIMENSIONS = { width: 380, height: 80, padding: 10 };
+
+const SPELL_SCHOOLS = {
+    'all': { emoji: '∞', name: 'Alle' },
+    'Bannzauber': { emoji: '🛡️', name: 'Bannzauber' },
+    'Beschwörung': { emoji: '✨', name: 'Beschwörung' },
+    'Erkenntnis': { emoji: '👁️', name: 'Erkenntnis' },
+    'Hervorrufung': { emoji: '💥', name: 'Hervorrufung' },
+    'Illusion': { emoji: '🎭', name: 'Illusion' },
+    'Nekromantie': { emoji: '💀', name: 'Nekromantie' },
+    'Verwandlung': { emoji: '🔄', name: 'Verwandlung' },
+    'Verzauberung': { emoji: '💫', name: 'Verzauberung' }
+};
 let currentSpellPage = 0;
 let filteredSpellsCache = [];
 
-// Debounced Render-Funktionen für bessere Performance bei Suche
+// Debounced Render-Funktion für bessere Performance bei Suche
 const debouncedRenderSpells = debounce(renderSpells, 200);
-const debouncedRenderNPCs = debounce(renderNPCList, 200);
-const debouncedRenderLoot = debounce(renderLoot, 200);
 
 function renderSpells() {
     const c = $('spell-list'); 
@@ -334,14 +356,7 @@ function setEditorFont(elementIdOrSelect, selectEl) {
         selection.addRange(editorSelectSavedRange.cloneRange());
     }
 
-    const fontMap = {
-        'arial': "Arial, Helvetica, sans-serif",
-        'serif': "Georgia, 'Times New Roman', serif",
-        'mono': "'Courier New', Consolas, monospace",
-        'abadi': "Abadi MT Condensed Light, Arial Narrow, sans-serif",
-        'roboto': "Roboto, sans-serif"
-    };
-    document.execCommand('fontName', false, fontMap[select.value] || fontMap['arial']);
+    document.execCommand('fontName', false, EDITOR_FONTS[select.value] || EDITOR_FONTS['arial']);
 }
 
 function setEditorFontSize(elementIdOrSelect, selectEl) {
@@ -687,6 +702,18 @@ function initFloatingToolbar() {
     
     toolbar.addEventListener('click', (e) => {
         const btn = e.target.closest('[data-floating-action]');
+        const colorSwatch = e.target.closest('.color-swatch');
+
+        // Color swatch click
+        if (colorSwatch && floatingToolbarTarget && floatingToolbarRange) {
+            const color = colorSwatch.dataset.color;
+            applyFloatingHighlight(color, floatingToolbarTarget, floatingToolbarRange);
+            // Update active state
+            toolbar.querySelectorAll('.color-swatch').forEach(s => s.classList.remove('active'));
+            if (color !== 'transparent') colorSwatch.classList.add('active');
+            return;
+        }
+
         if (!btn || !floatingToolbarTarget || !floatingToolbarRange) return;
 
         const action = btn.dataset.floatingAction;
@@ -698,6 +725,37 @@ function initFloatingToolbar() {
         const newSelection = window.getSelection();
         if (newSelection.rangeCount > 0) {
             floatingToolbarRange = newSelection.getRangeAt(0).cloneRange();
+        }
+    });
+
+    // Font/Size select change handlers
+    toolbar.addEventListener('change', (e) => {
+        const select = e.target.closest('[data-floating-action]');
+        if (!select || !floatingToolbarTarget || !floatingToolbarRange) return;
+
+        const action = select.dataset.floatingAction;
+        const value = select.value;
+
+        // Restore selection
+        floatingToolbarTarget.focus();
+        const selection = window.getSelection();
+        selection.removeAllRanges();
+        selection.addRange(floatingToolbarRange.cloneRange());
+
+        if (action === 'font') {
+            document.execCommand('fontName', false, EDITOR_FONTS[value] || EDITOR_FONTS['arial']);
+        } else if (action === 'fontSize') {
+            document.execCommand('fontSize', false, '7');
+            const fontElements = floatingToolbarTarget.querySelectorAll('font[size="7"]');
+            fontElements.forEach(el => {
+                el.removeAttribute('size');
+                el.style.fontSize = value;
+            });
+        }
+
+        // Update saved range
+        if (selection.rangeCount > 0) {
+            floatingToolbarRange = selection.getRangeAt(0).cloneRange();
         }
     });
 
@@ -758,15 +816,24 @@ function initFloatingToolbar() {
                 selection.addRange(newRange);
             }
         } else if (action === 'highlight') {
-            const wrapper = document.createElement('mark');
-            wrapper.style.backgroundColor = 'rgba(251, 191, 36, 0.4)';
-            wrapper.style.color = 'inherit';
-            try {
-                range.surroundContents(wrapper);
-            } catch (e) {
-                const fragment = range.extractContents();
-                wrapper.appendChild(fragment);
-                range.insertNode(wrapper);
+            // Default highlight color (gold)
+            applyFloatingHighlight('rgba(251, 191, 36, 0.4)', editor, savedRange);
+        } else if (action === 'link') {
+            // Link einfügen
+            const url = prompt('URL eingeben:', 'https://');
+            if (url && url !== 'https://') {
+                const link = document.createElement('a');
+                link.href = url;
+                link.target = '_blank';
+                link.rel = 'noopener noreferrer';
+                try {
+                    range.surroundContents(link);
+                } catch (e) {
+                    const fragment = range.extractContents();
+                    link.appendChild(fragment);
+                    range.insertNode(link);
+                }
+                showToast('🔗 Link eingefügt');
             }
         } else if (action === 'list') {
             // Manuelles Listen-Handling (execCommand ist deprecated und unzuverlässig)
@@ -874,8 +941,8 @@ function handleSelectionChange() {
     }
 
     const editor = anchorNode.nodeType === Node.TEXT_NODE
-        ? anchorNode.parentElement?.closest('.rich-editor, .spell-editor, .dialog-text')
-        : anchorNode.closest?.('.rich-editor, .spell-editor, .dialog-text');
+        ? anchorNode.parentElement?.closest('.rich-editor, .spell-editor, .dialog-text, .cf-notes-editor')
+        : anchorNode.closest?.('.rich-editor, .spell-editor, .dialog-text, .cf-notes-editor');
 
     if (!editor) {
         hideFloatingToolbar(false);
@@ -892,22 +959,21 @@ function handleSelectionChange() {
     const rect = range.getBoundingClientRect();
     
     // Toolbar über der Auswahl positionieren
-    const toolbarWidth = 320; // Ungefähre Breite (inkl. aller Buttons)
-    const toolbarHeight = 40; // Ungefähre Höhe
-    
+    const { width: toolbarWidth, height: toolbarHeight, padding } = TOOLBAR_DIMENSIONS;
+
     let left = rect.left + (rect.width / 2) - (toolbarWidth / 2);
-    let top = rect.top - toolbarHeight - 10;
-    
+    let top = rect.top - toolbarHeight - padding;
+
     // Sicherstellen, dass die Toolbar im Viewport bleibt
     const viewportWidth = window.innerWidth;
     const viewportHeight = window.innerHeight;
-    
-    if (left < 10) left = 10;
-    if (left + toolbarWidth > viewportWidth - 10) left = viewportWidth - toolbarWidth - 10;
+
+    if (left < padding) left = padding;
+    if (left + toolbarWidth > viewportWidth - padding) left = viewportWidth - toolbarWidth - padding;
     
     // Wenn oben kein Platz, unter der Auswahl anzeigen
-    if (top < 10) {
-        top = rect.bottom + 10;
+    if (top < padding) {
+        top = rect.bottom + padding;
         toolbar.classList.add('below');
     } else {
         toolbar.classList.remove('below');
@@ -934,6 +1000,225 @@ function hideFloatingToolbar(clearRange = true) {
     if (clearRange) {
         floatingToolbarRange = null;
     }
+}
+
+// Highlight mit beliebiger Farbe anwenden
+function applyFloatingHighlight(color, editor, savedRange) {
+    let selection = window.getSelection();
+
+    if (!selection.toString()) {
+        editor.focus();
+        selection = window.getSelection();
+        selection.removeAllRanges();
+        selection.addRange(savedRange.cloneRange());
+    }
+
+    if (!selection.rangeCount) return;
+    const range = selection.getRangeAt(0);
+    const selectedText = range.toString();
+    if (!selectedText) return;
+
+    if (color === 'transparent') {
+        // Remove highlight - find and unwrap mark elements
+        const marks = editor.querySelectorAll('mark');
+        marks.forEach(mark => {
+            if (selection.containsNode(mark, true)) {
+                const parent = mark.parentNode;
+                while (mark.firstChild) {
+                    parent.insertBefore(mark.firstChild, mark);
+                }
+                parent.removeChild(mark);
+            }
+        });
+        showToast('🧹 Hervorhebung entfernt');
+    } else {
+        const wrapper = document.createElement('mark');
+        wrapper.style.backgroundColor = color.startsWith('#') ? color + '66' : color; // Add alpha if hex
+        wrapper.style.color = 'inherit';
+        wrapper.style.borderRadius = '2px';
+        wrapper.style.padding = '0 2px';
+        try {
+            range.surroundContents(wrapper);
+        } catch (e) {
+            const fragment = range.extractContents();
+            wrapper.appendChild(fragment);
+            range.insertNode(wrapper);
+        }
+    }
+}
+
+// ============================================================
+// CONTEXT TOOLBARS - Tabellen und Links
+// ============================================================
+let currentContextTable = null;
+let currentContextLink = null;
+
+function initContextToolbars() {
+    const tableToolbar = $('table-context-toolbar');
+    const linkToolbar = $('link-context-toolbar');
+
+    if (!tableToolbar || !linkToolbar) return;
+
+    // Table context toolbar handlers
+    tableToolbar.addEventListener('click', (e) => {
+        const btn = e.target.closest('[data-table-action]');
+        if (!btn || !currentContextTable) return;
+
+        const action = btn.dataset.tableAction;
+        const table = currentContextTable;
+
+        // Find current cell
+        const selection = window.getSelection();
+        const cell = selection.anchorNode?.nodeType === Node.TEXT_NODE
+            ? selection.anchorNode.parentElement?.closest('td, th')
+            : selection.anchorNode?.closest?.('td, th');
+
+        const row = cell?.parentElement;
+        const rowIndex = row ? Array.from(table.rows).indexOf(row) : -1;
+        const cellIndex = cell ? Array.from(row.cells).indexOf(cell) : -1;
+
+        if (action === 'addRow') {
+            const newRow = table.insertRow(rowIndex + 1);
+            const colCount = table.rows[0]?.cells.length || 3;
+            for (let i = 0; i < colCount; i++) {
+                const newCell = newRow.insertCell();
+                newCell.style.cssText = 'border:1px solid var(--border); padding:6px 10px;';
+            }
+            showToast('📊 Zeile hinzugefügt');
+        } else if (action === 'addCol') {
+            Array.from(table.rows).forEach((r, idx) => {
+                const newCell = idx === 0 ? document.createElement('th') : document.createElement('td');
+                newCell.style.cssText = idx === 0
+                    ? 'border:1px solid var(--border); padding:6px 10px; background:var(--bg-elevated); color:var(--gold);'
+                    : 'border:1px solid var(--border); padding:6px 10px;';
+                r.insertBefore(newCell, r.cells[cellIndex + 1] || null);
+            });
+            showToast('📊 Spalte hinzugefügt');
+        } else if (action === 'deleteRow') {
+            if (table.rows.length > 1) {
+                table.deleteRow(rowIndex);
+                showToast('📊 Zeile gelöscht');
+            } else {
+                showToast('⚠️ Letzte Zeile kann nicht gelöscht werden', 'error');
+            }
+        } else if (action === 'deleteCol') {
+            const colCount = table.rows[0]?.cells.length || 0;
+            if (colCount > 1) {
+                Array.from(table.rows).forEach(r => {
+                    if (r.cells[cellIndex]) r.deleteCell(cellIndex);
+                });
+                showToast('📊 Spalte gelöscht');
+            } else {
+                showToast('⚠️ Letzte Spalte kann nicht gelöscht werden', 'error');
+            }
+        } else if (action === 'deleteTable') {
+            if (confirm('Tabelle wirklich löschen?')) {
+                table.remove();
+                hideContextToolbars();
+                showToast('🗑️ Tabelle gelöscht');
+            }
+        }
+    });
+
+    // Link context toolbar handlers
+    linkToolbar.addEventListener('click', (e) => {
+        const btn = e.target.closest('[data-link-action]');
+        if (!btn || !currentContextLink) return;
+
+        const action = btn.dataset.linkAction;
+        const link = currentContextLink;
+
+        if (action === 'open') {
+            window.open(link.href, '_blank', 'noopener,noreferrer');
+        } else if (action === 'edit') {
+            const newUrl = prompt('URL bearbeiten:', link.href);
+            if (newUrl && newUrl !== link.href) {
+                link.href = newUrl;
+                showToast('🔗 Link aktualisiert');
+            }
+        } else if (action === 'remove') {
+            const parent = link.parentNode;
+            while (link.firstChild) {
+                parent.insertBefore(link.firstChild, link);
+            }
+            parent.removeChild(link);
+            hideContextToolbars();
+            showToast('🔗 Link entfernt');
+        }
+    });
+
+    // Detect table/link context on click
+    document.addEventListener('click', (e) => {
+        const editorSelector = '.rich-editor, .spell-editor, .dialog-text, .cf-notes-editor';
+        const editor = e.target.closest(editorSelector);
+        if (!editor) {
+            hideContextToolbars();
+            return;
+        }
+
+        // Check for table
+        const table = e.target.closest('table');
+        if (table && table.closest(editorSelector)) {
+            currentContextTable = table;
+            showTableContextToolbar(table);
+        } else {
+            hideTableContextToolbar();
+        }
+
+        // Check for link
+        const link = e.target.closest('a');
+        if (link && link.closest(editorSelector)) {
+            currentContextLink = link;
+            showLinkContextToolbar(link);
+        } else {
+            hideLinkContextToolbar();
+        }
+    });
+}
+
+function showTableContextToolbar(table) {
+    const toolbar = $('table-context-toolbar');
+    if (!toolbar) return;
+
+    const rect = table.getBoundingClientRect();
+    toolbar.style.left = rect.left + 'px';
+    toolbar.style.top = (rect.top - 40) + 'px';
+    toolbar.classList.add('visible');
+}
+
+function hideTableContextToolbar() {
+    const toolbar = $('table-context-toolbar');
+    if (toolbar) toolbar.classList.remove('visible');
+    currentContextTable = null;
+}
+
+function showLinkContextToolbar(link) {
+    const toolbar = $('link-context-toolbar');
+    const urlSpan = $('link-context-url');
+    if (!toolbar) return;
+
+    // Show truncated URL
+    if (urlSpan) {
+        const displayUrl = link.href.length > 30 ? link.href.substring(0, 30) + '...' : link.href;
+        urlSpan.textContent = '🔗 ' + displayUrl;
+        urlSpan.title = link.href;
+    }
+
+    const rect = link.getBoundingClientRect();
+    toolbar.style.left = rect.left + 'px';
+    toolbar.style.top = (rect.bottom + 5) + 'px';
+    toolbar.classList.add('visible');
+}
+
+function hideLinkContextToolbar() {
+    const toolbar = $('link-context-toolbar');
+    if (toolbar) toolbar.classList.remove('visible');
+    currentContextLink = null;
+}
+
+function hideContextToolbars() {
+    hideTableContextToolbar();
+    hideLinkContextToolbar();
 }
 
 function getSpellClassesFromCheckboxes() {

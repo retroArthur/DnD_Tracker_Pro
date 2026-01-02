@@ -280,6 +280,31 @@
 - **Fix:** CSS-Regel entfernt (neues System nutzt .rt-entry-range)
 - **Datei:** `assets/styles.css`
 
+### Feature: Editor Improvements v2.0
+- **Verbesserungen:**
+  1. **Focus-Based Toolbar**: Editor-Toolbars nur bei Fokus sichtbar (`:has()` + `:focus-within`)
+  2. **Enhanced Floating-Toolbar**: Zwei Zeilen - Formatierung + Farb-Swatches, Font/Size-Selects
+  3. **Context-Toolbars**: Separate Toolbars für Tabellen (Zeile/Spalte add/delete) und Links (öffnen/bearbeiten/entfernen)
+  4. **Mobile Bottom-Toolbar**: Responsives Layout mit fixierter Bottom-Position bei < 768px
+  5. **Swipe-Indicator**: Touch-Feedback für horizontales Scrollen
+- **CSS:**
+  - `.form-group:has(.editor-toolbar)` mit Transition für sanftes Ein-/Ausblenden
+  - `.color-row` mit Flexbox und `flex-wrap: wrap` für Farb-Swatches
+  - `.table-context-toolbar` und `.link-context-toolbar` für Kontext-Tools
+  - `@media (max-width: 768px)` für mobile Styles
+- **JS:**
+  - `applyFloatingHighlight(color, editor, savedRange)` für Text-Highlighting mit Farben
+  - `initContextToolbars()` für Tabellen- und Link-Kontext-Erkennung
+  - Tabellen-Operationen: addRow, addCol, deleteRow, deleteCol, deleteTable
+  - Link-Operationen: open, edit, remove
+- **Dateien:** `assets/styles.css`, `assets/body.html`, `features/shops/spell-editor.js`, `core/init.js`
+
+### Consistency: Editor-Toolbar onchange zu data-action migriert
+- **Problem:** 28 onchange-Handler in Editor-Toolbars statt Event-Delegation
+- **Betroffene Stellen:** Font-Size, Font-Family, Text-Alignment Selects in allen Editor-Toolbars
+- **Fix:** Umgestellt auf `data-action="editor-fontsize"`, `data-action="editor-fontfamily"`, `data-action="editor-align"`
+- **Dateien:** `assets/body.html`, `ui/actions/editor-actions.js`
+
 ---
 
 ## Muster / Lessons Learned
