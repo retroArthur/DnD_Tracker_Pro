@@ -235,6 +235,51 @@
 - **Fix:** Umgestellt auf `data-action="toggle-parent-expanded"` bzw. `data-action="call"`
 - **Datei:** `assets/body.html`
 
+### Security: XSS in Random Tables Icon-Feld
+- **Problem:** `table.icon` wurde an 6 Stellen ohne Escaping in HTML eingefügt
+- **Ursache:** Icon-Feld wurde als sicher angenommen (maxlength="2" im Input)
+- **Angriffsvektor:** LocalStorage-Manipulation oder DevTools-Umgehung von maxlength
+- **Fix:** `esc()` um alle `table.icon` und `t.icon` Referenzen hinzugefügt
+- **Datei:** `features/random-tables.js` (Zeilen 133, 167, 225, 606, 663, 704)
+
+### Security: DoS via Large Range in parseRange()
+- **Problem:** Eingabe wie "1-1000000" konnte Browser einfrieren
+- **Ursache:** Keine Größenbegrenzung in der For-Schleife
+- **Fix:** `MAX_RANGE_SIZE = 100` Konstante, Loop-Abbruch bei Überschreitung
+- **Datei:** `features/random-tables.js` (parseRange)
+
+### Security: Negative Zahlen in parseRange()
+- **Problem:** Eingabe wie "-5-5" erzeugte ungültige Werte außerhalb des Würfelbereichs
+- **Ursache:** Keine Validierung auf positive Zahlen
+- **Fix:** Regex `^(\d+)-(\d+)$` für Ranges, `num >= 1` Prüfung für Einzelwerte
+- **Datei:** `features/random-tables.js` (parseRange)
+
+### Security: Icon-Länge nicht validiert
+- **Problem:** Trotz `maxlength="2"` im HTML konnte längerer Inhalt gespeichert werden
+- **Ursache:** Keine serverseitige Validierung
+- **Fix:** Icon wird auf max 2 Unicode-Zeichen gekürzt: `[...icon].slice(0, 2).join('')`
+- **Datei:** `features/random-tables.js` (saveTable)
+
+### Code Quality: Magic Number für Default Dice Type
+- **Problem:** `|| 6` an 6+ Stellen im Code
+- **Fix:** `DEFAULT_DICE_TYPE = 6` Konstante eingeführt, `??` statt `||` für korrektes Null-Handling
+- **Datei:** `features/random-tables.js`
+
+### Accessibility: Fehlende Focus-Styles für Dice-Buttons
+- **Problem:** Keyboard-User konnten fokussierten Button nicht erkennen
+- **Fix:** `:focus-visible` Regel mit Gold-Outline hinzugefügt
+- **Datei:** `assets/styles.css` (.rt-dice-btn:focus-visible)
+
+### CSS: Fehlende .rt-entries-actions Klasse
+- **Problem:** Klasse im HTML verwendet aber nicht definiert
+- **Fix:** CSS-Definition für Flexbox-Layout hinzugefügt
+- **Datei:** `assets/styles.css`
+
+### CSS: Unbenutzte .rt-entry-weight Input-Styles entfernt
+- **Problem:** Legacy-CSS für altes Weight-Input-Feld nicht mehr verwendet
+- **Fix:** CSS-Regel entfernt (neues System nutzt .rt-entry-range)
+- **Datei:** `assets/styles.css`
+
 ---
 
 ## Muster / Lessons Learned
@@ -259,6 +304,9 @@
 | Button für nicht-existente View | Vor Feature-Buttons prüfen ob View/Handler existiert |
 | querySelectorAll in Schleifen | Statische NodeList - Array.from() nutzen bei remove() |
 | Content ohne sanitizeHTML() | Immer sanitizeHTML() für User-Content wie description, content |
+| HTML maxlength != JS Validierung | Serverseitig/JS-seitig immer auch validieren, nicht auf HTML vertrauen |
+| User-Input ohne Escape in Icon-Feldern | Auch "sichere" Felder wie Icons mit esc() escapen |
+| Unbegrenzte Schleifen bei User-Input | Immer maxValue/maxIterations setzen (DoS-Schutz) |
 
 ## Known Technical Debt
 

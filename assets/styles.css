@@ -18432,6 +18432,11 @@
     margin-bottom: 8px;
 }
 
+.rt-entries-actions {
+    display: flex;
+    gap: 6px;
+}
+
 .rt-entries-list {
     max-height: 250px;
     overflow-y: auto;
@@ -18441,17 +18446,6 @@
     display: flex;
     gap: 8px;
     margin-bottom: 8px;
-}
-
-/* Legacy weight input */
-.rt-entry-row .rt-entry-weight {
-    width: 60px;
-    padding: 8px;
-    background: var(--bg-dark);
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    color: var(--text);
-    text-align: center;
 }
 
 /* New range input */
@@ -18513,6 +18507,11 @@
 .rt-dice-btn:hover {
     border-color: var(--gold);
     color: var(--gold);
+}
+
+.rt-dice-btn:focus-visible {
+    outline: 2px solid var(--gold);
+    outline-offset: 2px;
 }
 
 .rt-dice-btn.active {

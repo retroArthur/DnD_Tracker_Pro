@@ -10,6 +10,11 @@
  * - Speichere in D.randomTables
  */
 
+// Konstanten
+const DEFAULT_DICE_TYPE = 6;
+const DICE_TYPES = Object.freeze([4, 6, 8, 10, 12, 20, 100]);
+const MAX_RANGE_SIZE = 100; // DoS-Schutz: Maximale Anzahl von Werten in einem Range
+
 // Initialisiere randomTables falls nicht vorhanden
 function initRandomTables() {
     if (!D.randomTables) {
@@ -79,7 +84,7 @@ function rollWeightedEntry(table) {
 
     if (hasRanges) {
         // Neues Format: Würfle echten Würfel und matche Range
-        const diceType = table.diceType || 6;
+        const diceType = table.diceType ?? DEFAULT_DICE_TYPE;
         const roll = Math.floor(Math.random() * diceType) + 1;
 
         // Finde passenden Eintrag
@@ -130,7 +135,7 @@ function renderRandomTables() {
     container.innerHTML = tables.map(table => `
         <div class="rt-card ${selectedTableId === table.id ? 'selected' : ''}" data-id="${table.id}">
             <div class="rt-card-header" onclick="selectTable(${table.id})">
-                <span class="rt-card-icon">${table.icon || '🎲'}</span>
+                <span class="rt-card-icon">${esc(table.icon || '🎲')}</span>
                 <span class="rt-card-name">${esc(table.name)}</span>
                 <span class="rt-card-count">${table.entries.length} Einträge</span>
             </div>
@@ -160,11 +165,11 @@ function showTablePreview(id) {
     }
 
     const hasRanges = table.entries.some(e => e.range);
-    const diceType = table.diceType || 6;
+    const diceType = table.diceType ?? DEFAULT_DICE_TYPE;
 
     preview.innerHTML = `
         <div class="rt-preview-header">
-            <span class="rt-preview-icon">${table.icon || '🎲'}</span>
+            <span class="rt-preview-icon">${esc(table.icon || '🎲')}</span>
             <span class="rt-preview-name">${esc(table.name)}</span>
             ${hasRanges ? `<span class="rt-preview-dice">1W${diceType}</span>` : ''}
             <button class="rt-roll-btn" onclick="rollOnTable(${table.id})">🎲 Würfeln</button>
@@ -222,15 +227,12 @@ function rollOnTable(id) {
         resultArea.style.animation = 'pulse 0.3s ease-out';
     }
 
-    showToast(`${table.icon || '🎲'} [${roll}] ${result.text}`, 'info');
+    showToast(`${esc(table.icon || '🎲')} [${roll}] ${esc(result.text)}`, 'info');
 }
-
-// Verfügbare Würfeltypen
-const DICE_TYPES = [4, 6, 8, 10, 12, 20, 100];
 
 function showTableModal(id = null) {
     const table = id ? D.randomTables?.find(t => t.id === id) : null;
-    const diceType = table?.diceType || 6;
+    const diceType = table?.diceType ?? DEFAULT_DICE_TYPE;
 
     const content = `
         <div class="rt-modal-content">
@@ -337,25 +339,35 @@ function renderTableEntryRow(index, entry = { range: '', text: '' }) {
 /**
  * Parst einen Bereichs-String und gibt ein Array von Zahlen zurück
  * @param {string} rangeStr - z.B. "1", "1-4", "5-8"
- * @returns {number[]} Array der abgedeckten Zahlen
+ * @param {number} [maxValue=100] - Maximaler erlaubter Wert (DoS-Schutz)
+ * @returns {number[]} Array der abgedeckten Zahlen (nur positive, <= maxValue)
  */
-function parseRange(rangeStr) {
+function parseRange(rangeStr, maxValue = MAX_RANGE_SIZE) {
     if (!rangeStr || typeof rangeStr !== 'string') return [];
 
     const result = [];
     const parts = rangeStr.split(',').map(p => p.trim());
 
     for (const part of parts) {
-        if (part.includes('-')) {
-            const [start, end] = part.split('-').map(n => parseInt(n.trim()));
-            if (!isNaN(start) && !isNaN(end)) {
-                for (let i = Math.min(start, end); i <= Math.max(start, end); i++) {
+        // DoS-Schutz: Abbrechen wenn zu viele Werte
+        if (result.length >= maxValue) break;
+
+        // Range-Format: "1-4" (muss mit Zahl beginnen um "-5" als einzelne Zahl zu erkennen)
+        const rangeMatch = part.match(/^(\d+)-(\d+)$/);
+        if (rangeMatch) {
+            const start = parseInt(rangeMatch[1]);
+            const end = parseInt(rangeMatch[2]);
+            if (!isNaN(start) && !isNaN(end) && start >= 1 && end >= 1) {
+                const min = Math.min(start, end);
+                const max = Math.min(Math.max(start, end), maxValue); // DoS-Schutz
+                for (let i = min; i <= max && result.length < maxValue; i++) {
                     if (!result.includes(i)) result.push(i);
                 }
             }
         } else {
+            // Einzelne Zahl
             const num = parseInt(part);
-            if (!isNaN(num) && !result.includes(num)) {
+            if (!isNaN(num) && num >= 1 && num <= maxValue && !result.includes(num)) {
                 result.push(num);
             }
         }
@@ -371,7 +383,7 @@ function updateRangeHint() {
     const hint = $('rt-range-hint');
     if (!hint) return;
 
-    const diceType = parseInt($('table-dice-type')?.value) || 6;
+    const diceType = parseInt($('table-dice-type')?.value) || DEFAULT_DICE_TYPE;
     const rows = $('table-entries')?.querySelectorAll('.rt-entry-row') || [];
 
     // Sammle alle abgedeckten Zahlen
@@ -417,7 +429,7 @@ function updateRangeHint() {
  * Füllt leere Bereiche automatisch mit den nächsten verfügbaren Werten
  */
 function fillRemainingRanges() {
-    const diceType = parseInt($('table-dice-type')?.value) || 6;
+    const diceType = parseInt($('table-dice-type')?.value) || DEFAULT_DICE_TYPE;
     const rows = Array.from($('table-entries')?.querySelectorAll('.rt-entry-row') || []);
 
     // Sammle bereits verwendete Zahlen
@@ -499,8 +511,13 @@ function saveTable() {
         return;
     }
 
-    const icon = $('table-icon')?.value || '🎲';
-    const diceType = parseInt($('table-dice-type')?.value) || 6;
+    // Icon validieren: Nur 1-2 Zeichen erlaubt (Emoji oder Textzeichen)
+    let icon = $('table-icon')?.value?.trim() || '🎲';
+    if ([...icon].length > 2) {
+        icon = [...icon].slice(0, 2).join(''); // Auf 2 Zeichen kürzen
+    }
+
+    const diceType = parseInt($('table-dice-type')?.value) || DEFAULT_DICE_TYPE;
     const editId = $('table-edit-id')?.value;
 
     // Einträge sammeln (neues Range-Format)
@@ -599,11 +616,11 @@ function showGeneratorModal() {
             <div class="generator-tables" id="generator-tables-list">
                 ${tables.length ? tables.map(t => {
                     const hasRanges = t.entries?.some(e => e.range);
-                    const diceType = t.diceType || 6;
+                    const diceType = t.diceType ?? DEFAULT_DICE_TYPE;
                     return `
                     <div class="generator-table-card">
                         <div class="generator-table-info">
-                            <span class="generator-table-icon">${t.icon || '🎲'}</span>
+                            <span class="generator-table-icon">${esc(t.icon || '🎲')}</span>
                             <span class="generator-table-name">${esc(t.name)}</span>
                             ${hasRanges ? `<span class="generator-table-dice">1W${diceType}</span>` : ''}
                             <span class="generator-table-count">${t.entries.length} Einträge</span>
@@ -660,7 +677,7 @@ function rollOnTableAndShow(id) {
         resultArea.innerHTML = `
             <div class="generator-result-box">
                 <div class="generator-result-header">
-                    <span class="generator-result-icon">${table.icon || '🎲'}</span>
+                    <span class="generator-result-icon">${esc(table.icon || '🎲')}</span>
                     <span class="generator-result-table">${esc(table.name)}</span>
                 </div>
                 <div class="generator-result-text">${esc(result.text)}</div>
@@ -701,7 +718,7 @@ function quickRandomRoll() {
             <div style="display: flex; flex-direction: column; gap: 8px;">
                 ${D.randomTables.map(t => `
                     <button class="btn" onclick="rollOnTable(${t.id}); hideModal('quick-roll-modal');" style="justify-content: flex-start; gap: 10px;">
-                        <span>${t.icon || '🎲'}</span>
+                        <span>${esc(t.icon || '🎲')}</span>
                         <span>${esc(t.name)}</span>
                     </button>
                 `).join('')}
