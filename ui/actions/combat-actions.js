@@ -37,7 +37,6 @@ const CombatActions = {
 
     // Quick Actions
     'apply-quick-action': (ctx) => applyQuickAction(ctx.id, ctx.value),
-    'dismiss-action-banner': (ctx) => dismissActionBanner(ctx.id),
 
     // HP Calculator actions
     'apply-hp-change': (ctx) => applyHpChange(ctx.value),
