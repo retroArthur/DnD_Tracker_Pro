@@ -38,8 +38,13 @@ const SystemActions = {
     'clear-formatting': (ctx) => clearEditorFormatting(ctx.value),
     'set-editor-font': (ctx) => {
         const editorId = ctx.target.dataset.editor;
-        const font = ctx.target.dataset.value || ctx.value;
+        const font = ctx.target.value || ctx.target.dataset.value || ctx.value;
         setEditorFont(editorId, font);
+    },
+    'set-editor-font-size': (ctx) => {
+        const editorId = ctx.target.dataset.editor;
+        const size = ctx.target.value || ctx.target.dataset.value || ctx.value;
+        setEditorFontSize(editorId, size);
     },
     'set-border-format': (ctx) => {
         const editorId = ctx.target.dataset.editor;

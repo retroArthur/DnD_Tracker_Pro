@@ -490,12 +490,12 @@
                     <button type="button" data-action="format-text" data-cmd="char-notes" data-editor="underline" title="Unterstrichen"><u>U</u></button>
                     <button type="button" data-action="format-text" data-cmd="char-notes" data-editor="list" title="Liste">☰</button>
                     <button type="button" data-action="set-border-format" data-editor="char-notes" title="Rahmen">◻</button>
-                    <select onchange="setEditorFont('char-notes', this)" title="Schriftart">
+                    <select class="editor-select" data-action="set-editor-font" data-editor="char-notes" title="Schriftart">
                         <option value="arial">Arial</option>
                         <option value="serif">Serif</option>
                         <option value="mono">Mono</option>
                     </select>
-                    <select onchange="setEditorFontSize('char-notes', this)" title="Größe">
+                    <select class="editor-select" data-action="set-editor-font-size" data-editor="char-notes" title="Größe">
                         <option value="0.8em">Klein</option>
                         <option value="1em" selected>Normal</option>
                         <option value="1.2em">Groß</option>
@@ -1140,8 +1140,8 @@
                             <button type="button" class="editor-btn" data-action="format-text" data-cmd="enc-traits" data-editor="underline" title="Unterstrichen"><u>U</u></button>
                             <button type="button" class="editor-btn" data-action="format-text" data-cmd="enc-traits" data-editor="list" title="Liste">☰</button>
                             <button type="button" class="editor-btn" data-action="set-border-format" data-editor="enc-traits" title="Rahmen">◻</button>
-                            <select class="editor-select" onchange="setEditorFont('enc-traits', this)" title="Schriftart"><option value="arial">Arial</option><option value="serif">Serif</option><option value="mono">Mono</option></select>
-                            <select class="editor-select" onchange="setEditorFontSize('enc-traits', this)" title="Größe"><option value="0.8em">Klein</option><option value="1em" selected>Normal</option><option value="1.2em">Groß</option><option value="1.5em">Sehr groß</option></select>
+                            <select class="editor-select" data-action="set-editor-font" data-editor="enc-traits" title="Schriftart"><option value="arial">Arial</option><option value="serif">Serif</option><option value="mono">Mono</option></select>
+                            <select class="editor-select" data-action="set-editor-font-size" data-editor="enc-traits" title="Größe"><option value="0.8em">Klein</option><option value="1em" selected>Normal</option><option value="1.2em">Groß</option><option value="1.5em">Sehr groß</option></select>
                             <button type="button" class="editor-btn" data-action="clear-formatting" data-value="enc-traits" title="Formatierung löschen" style="color:#888;">✕</button>
                         </div>
                         <div id="enc-traits" class="rich-editor" contenteditable="true"></div>
@@ -1154,8 +1154,8 @@
                             <button type="button" class="editor-btn" data-action="format-text" data-cmd="enc-equipment" data-editor="underline" title="Unterstrichen"><u>U</u></button>
                             <button type="button" class="editor-btn" data-action="format-text" data-cmd="enc-equipment" data-editor="list" title="Liste">☰</button>
                             <button type="button" class="editor-btn" data-action="set-border-format" data-editor="enc-equipment" title="Rahmen">◻</button>
-                            <select class="editor-select" onchange="setEditorFont('enc-equipment', this)" title="Schriftart"><option value="arial">Arial</option><option value="serif">Serif</option><option value="mono">Mono</option></select>
-                            <select class="editor-select" onchange="setEditorFontSize('enc-equipment', this)" title="Größe"><option value="0.8em">Klein</option><option value="1em" selected>Normal</option><option value="1.2em">Groß</option><option value="1.5em">Sehr groß</option></select>
+                            <select class="editor-select" data-action="set-editor-font" data-editor="enc-equipment" title="Schriftart"><option value="arial">Arial</option><option value="serif">Serif</option><option value="mono">Mono</option></select>
+                            <select class="editor-select" data-action="set-editor-font-size" data-editor="enc-equipment" title="Größe"><option value="0.8em">Klein</option><option value="1em" selected>Normal</option><option value="1.2em">Groß</option><option value="1.5em">Sehr groß</option></select>
                             <button type="button" class="editor-btn" data-action="clear-formatting" data-value="enc-equipment" title="Formatierung löschen" style="color:#888;">✕</button>
                         </div>
                         <div id="enc-equipment" class="rich-editor" contenteditable="true"></div>
@@ -1168,8 +1168,8 @@
                             <button type="button" class="editor-btn" data-action="format-text" data-cmd="enc-actions" data-editor="underline" title="Unterstrichen"><u>U</u></button>
                             <button type="button" class="editor-btn" data-action="format-text" data-cmd="enc-actions" data-editor="list" title="Liste">☰</button>
                             <button type="button" class="editor-btn" data-action="set-border-format" data-editor="enc-actions" title="Rahmen">◻</button>
-                            <select class="editor-select" onchange="setEditorFont('enc-actions', this)" title="Schriftart"><option value="arial">Arial</option><option value="serif">Serif</option><option value="mono">Mono</option></select>
-                            <select class="editor-select" onchange="setEditorFontSize('enc-actions', this)" title="Größe"><option value="0.8em">Klein</option><option value="1em" selected>Normal</option><option value="1.2em">Groß</option><option value="1.5em">Sehr groß</option></select>
+                            <select class="editor-select" data-action="set-editor-font" data-editor="enc-actions" title="Schriftart"><option value="arial">Arial</option><option value="serif">Serif</option><option value="mono">Mono</option></select>
+                            <select class="editor-select" data-action="set-editor-font-size" data-editor="enc-actions" title="Größe"><option value="0.8em">Klein</option><option value="1em" selected>Normal</option><option value="1.2em">Groß</option><option value="1.5em">Sehr groß</option></select>
                             <button type="button" class="editor-btn" data-action="clear-formatting" data-value="enc-actions" title="Formatierung löschen" style="color:#888;">✕</button>
                         </div>
                         <div id="enc-actions" class="rich-editor" contenteditable="true"></div>
@@ -1182,8 +1182,8 @@
                             <button type="button" class="editor-btn" data-action="format-text" data-cmd="enc-skills" data-editor="underline" title="Unterstrichen"><u>U</u></button>
                             <button type="button" class="editor-btn" data-action="format-text" data-cmd="enc-skills" data-editor="list" title="Liste">☰</button>
                             <button type="button" class="editor-btn" data-action="set-border-format" data-editor="enc-skills" title="Rahmen">◻</button>
-                            <select class="editor-select" onchange="setEditorFont('enc-skills', this)" title="Schriftart"><option value="arial">Arial</option><option value="serif">Serif</option><option value="mono">Mono</option></select>
-                            <select class="editor-select" onchange="setEditorFontSize('enc-skills', this)" title="Größe"><option value="0.8em">Klein</option><option value="1em" selected>Normal</option><option value="1.2em">Groß</option><option value="1.5em">Sehr groß</option></select>
+                            <select class="editor-select" data-action="set-editor-font" data-editor="enc-skills" title="Schriftart"><option value="arial">Arial</option><option value="serif">Serif</option><option value="mono">Mono</option></select>
+                            <select class="editor-select" data-action="set-editor-font-size" data-editor="enc-skills" title="Größe"><option value="0.8em">Klein</option><option value="1em" selected>Normal</option><option value="1.2em">Groß</option><option value="1.5em">Sehr groß</option></select>
                             <button type="button" class="editor-btn" data-action="clear-formatting" data-value="enc-skills" title="Formatierung löschen" style="color:#888;">✕</button>
                         </div>
                         <div id="enc-skills" class="rich-editor" contenteditable="true"></div>
@@ -1549,8 +1549,8 @@
                             <button type="button" class="editor-btn" data-action="format-text" data-cmd="session-text" data-editor="underline" title="Unterstrichen"><u>U</u></button>
                             <button type="button" class="editor-btn" data-action="format-text" data-cmd="session-text" data-editor="list" title="Liste">☰</button>
                             <button type="button" class="editor-btn" data-action="set-border-format" data-editor="session-text" title="Rahmen">◻</button>
-                            <select class="editor-select" onchange="setEditorFont('session-text', this)" title="Schriftart"><option value="arial">Arial</option><option value="serif">Serif</option><option value="mono">Mono</option></select>
-                            <select class="editor-select" onchange="setEditorFontSize('session-text', this)" title="Größe"><option value="0.8em">Klein</option><option value="1em" selected>Normal</option><option value="1.2em">Groß</option><option value="1.5em">Sehr groß</option></select>
+                            <select class="editor-select" data-action="set-editor-font" data-editor="session-text" title="Schriftart"><option value="arial">Arial</option><option value="serif">Serif</option><option value="mono">Mono</option></select>
+                            <select class="editor-select" data-action="set-editor-font-size" data-editor="session-text" title="Größe"><option value="0.8em">Klein</option><option value="1em" selected>Normal</option><option value="1.2em">Groß</option><option value="1.5em">Sehr groß</option></select>
                             <button type="button" class="editor-btn" data-action="clear-formatting" data-value="session-text" title="Formatierung löschen" style="color:#888;">✕</button>
                         </div>
                         <div id="session-text" class="rich-editor" contenteditable="true" style="min-height: 120px;"></div>
@@ -1689,8 +1689,8 @@
                             <button type="button" class="editor-btn" data-action="format-text" data-cmd="wiki-content" data-editor="underline" title="Unterstrichen"><u>U</u></button>
                             <button type="button" class="editor-btn" data-action="format-text" data-cmd="wiki-content" data-editor="list" title="Liste">☰</button>
                             <button type="button" class="editor-btn" data-action="set-border-format" data-editor="wiki-content" title="Rahmen">◻</button>
-                            <button type="button" class="editor-btn" data-action="call" data-value="insertWikiLink" title="Wiki-Link">[[]]</button><select class="editor-select" onchange="setEditorFont('wiki-content', this)" title="Schriftart"><option value="arial">Arial</option><option value="serif">Serif</option><option value="mono">Mono</option></select>
-                            <select class="editor-select" onchange="setEditorFontSize('wiki-content', this)" title="Größe"><option value="0.8em">Klein</option><option value="1em" selected>Normal</option><option value="1.2em">Groß</option><option value="1.5em">Sehr groß</option></select>
+                            <button type="button" class="editor-btn" data-action="call" data-value="insertWikiLink" title="Wiki-Link">[[]]</button><select class="editor-select" data-action="set-editor-font" data-editor="wiki-content" title="Schriftart"><option value="arial">Arial</option><option value="serif">Serif</option><option value="mono">Mono</option></select>
+                            <select class="editor-select" data-action="set-editor-font-size" data-editor="wiki-content" title="Größe"><option value="0.8em">Klein</option><option value="1em" selected>Normal</option><option value="1.2em">Groß</option><option value="1.5em">Sehr groß</option></select>
                             <button type="button" class="editor-btn" data-action="clear-formatting" data-value="wiki-content" title="Formatierung löschen" style="color:#888;">✕</button>
                         </div>
                         <div id="wiki-content" class="rich-editor" contenteditable="true" style="min-height: 150px;" oninput="handleWikiContentInput(event)"></div>
@@ -1771,8 +1771,8 @@
                             <button type="button" class="editor-btn" data-action="format-text" data-cmd="link-desc" data-editor="underline" title="Unterstrichen"><u>U</u></button>
                             <button type="button" class="editor-btn" data-action="format-text" data-cmd="link-desc" data-editor="list" title="Liste">☰</button>
                             <button type="button" class="editor-btn" data-action="set-border-format" data-editor="link-desc" title="Rahmen">◻</button>
-                            <select class="editor-select" onchange="setEditorFont('link-desc', this)" title="Schriftart"><option value="arial">Arial</option><option value="serif">Serif</option><option value="mono">Mono</option></select>
-                            <select class="editor-select" onchange="setEditorFontSize('link-desc', this)" title="Größe"><option value="0.8em">Klein</option><option value="1em" selected>Normal</option><option value="1.2em">Groß</option><option value="1.5em">Sehr groß</option></select>
+                            <select class="editor-select" data-action="set-editor-font" data-editor="link-desc" title="Schriftart"><option value="arial">Arial</option><option value="serif">Serif</option><option value="mono">Mono</option></select>
+                            <select class="editor-select" data-action="set-editor-font-size" data-editor="link-desc" title="Größe"><option value="0.8em">Klein</option><option value="1em" selected>Normal</option><option value="1.2em">Groß</option><option value="1.5em">Sehr groß</option></select>
                             <button type="button" class="editor-btn" data-action="clear-formatting" data-value="link-desc" title="Formatierung löschen" style="color:#888;">✕</button>
                         </div>
                         <div id="link-desc" class="rich-editor" contenteditable="true" style="min-height: 50px;"></div>
@@ -2284,8 +2284,8 @@
                             <button type="button" class="editor-btn" data-action="format-text" data-cmd="loc-desc" data-editor="underline" title="Unterstrichen"><u>U</u></button>
                             <button type="button" class="editor-btn" data-action="format-text" data-cmd="loc-desc" data-editor="list" title="Liste">☰</button>
                             <button type="button" class="editor-btn" data-action="set-border-format" data-editor="loc-desc" title="Rahmen">◻</button>
-                            <select class="editor-select" onchange="setEditorFont('loc-desc', this)" title="Schriftart"><option value="arial">Arial</option><option value="serif">Serif</option><option value="mono">Mono</option></select>
-                            <select class="editor-select" onchange="setEditorFontSize('loc-desc', this)" title="Größe"><option value="0.8em">Klein</option><option value="1em" selected>Normal</option><option value="1.2em">Groß</option><option value="1.5em">Sehr groß</option></select>
+                            <select class="editor-select" data-action="set-editor-font" data-editor="loc-desc" title="Schriftart"><option value="arial">Arial</option><option value="serif">Serif</option><option value="mono">Mono</option></select>
+                            <select class="editor-select" data-action="set-editor-font-size" data-editor="loc-desc" title="Größe"><option value="0.8em">Klein</option><option value="1em" selected>Normal</option><option value="1.2em">Groß</option><option value="1.5em">Sehr groß</option></select>
                             <button type="button" class="editor-btn" data-action="clear-formatting" data-value="loc-desc" title="Formatierung löschen" style="color:#888;">✕</button>
                         </div>
                         <div id="loc-desc" class="rich-editor" contenteditable="true" style="min-height: 100px;"></div>
@@ -2354,8 +2354,8 @@
                             <button type="button" class="editor-btn" data-action="format-text" data-cmd="npc-desc" data-editor="underline" title="Unterstrichen"><u>U</u></button>
                             <button type="button" class="editor-btn" data-action="format-text" data-cmd="npc-desc" data-editor="list" title="Liste">☰</button>
                             <button type="button" class="editor-btn" data-action="set-border-format" data-editor="npc-desc" title="Rahmen">◻</button>
-                            <select class="editor-select" onchange="setEditorFont('npc-desc', this)" title="Schriftart"><option value="arial">Arial</option><option value="serif">Serif</option><option value="mono">Mono</option></select>
-                            <select class="editor-select" onchange="setEditorFontSize('npc-desc', this)" title="Größe"><option value="0.8em">Klein</option><option value="1em" selected>Normal</option><option value="1.2em">Groß</option><option value="1.5em">Sehr groß</option></select>
+                            <select class="editor-select" data-action="set-editor-font" data-editor="npc-desc" title="Schriftart"><option value="arial">Arial</option><option value="serif">Serif</option><option value="mono">Mono</option></select>
+                            <select class="editor-select" data-action="set-editor-font-size" data-editor="npc-desc" title="Größe"><option value="0.8em">Klein</option><option value="1em" selected>Normal</option><option value="1.2em">Groß</option><option value="1.5em">Sehr groß</option></select>
                             <button type="button" class="editor-btn" data-action="clear-formatting" data-value="npc-desc" title="Formatierung löschen" style="color:#888;">✕</button>
                         </div>
                         <div id="npc-desc" class="rich-editor" contenteditable="true" style="min-height: 60px;"></div>
@@ -2453,6 +2453,9 @@
                         <button type="button" class="editor-btn" data-action="format-text" data-cmd="loot-desc" data-editor="italic" title="Kursiv"><i>I</i></button>
                         <button type="button" class="editor-btn" data-action="format-text" data-cmd="loot-desc" data-editor="underline" title="Unterstrichen"><u>U</u></button>
                         <button type="button" class="editor-btn" data-action="format-text" data-cmd="loot-desc" data-editor="list" title="Liste">☰</button>
+                        <button type="button" class="editor-btn" data-action="set-border-format" data-editor="loot-desc" title="Rahmen">◻</button>
+                        <select class="editor-select" data-action="set-editor-font" data-editor="loot-desc" title="Schriftart"><option value="arial">Arial</option><option value="serif">Serif</option><option value="mono">Mono</option></select>
+                        <select class="editor-select" data-action="set-editor-font-size" data-editor="loot-desc" title="Größe"><option value="0.8em">Klein</option><option value="1em" selected>Normal</option><option value="1.2em">Groß</option><option value="1.5em">Sehr groß</option></select>
                         <button type="button" class="editor-btn" data-action="clear-formatting" data-value="loot-desc" title="Formatierung löschen" style="color:#888;">✕</button>
                     </div>
                     <div id="loot-desc" class="rich-editor" contenteditable="true" style="min-height: 60px;" data-placeholder="Beschreibung (optional)"></div>
@@ -2541,8 +2544,8 @@
                             <button type="button" class="editor-btn" data-action="format-text" data-cmd="quest-desc" data-editor="underline" title="Unterstrichen"><u>U</u></button>
                             <button type="button" class="editor-btn" data-action="format-text" data-cmd="quest-desc" data-editor="list" title="Liste">☰</button>
                             <button type="button" class="editor-btn" data-action="set-border-format" data-editor="quest-desc" title="Rahmen">◻</button>
-                            <select class="editor-select" onchange="setEditorFont('quest-desc', this)" title="Schriftart"><option value="arial">Arial</option><option value="serif">Serif</option><option value="mono">Mono</option></select>
-                            <select class="editor-select" onchange="setEditorFontSize('quest-desc', this)" title="Größe"><option value="0.8em">Klein</option><option value="1em" selected>Normal</option><option value="1.2em">Groß</option><option value="1.5em">Sehr groß</option></select>
+                            <select class="editor-select" data-action="set-editor-font" data-editor="quest-desc" title="Schriftart"><option value="arial">Arial</option><option value="serif">Serif</option><option value="mono">Mono</option></select>
+                            <select class="editor-select" data-action="set-editor-font-size" data-editor="quest-desc" title="Größe"><option value="0.8em">Klein</option><option value="1em" selected>Normal</option><option value="1.2em">Groß</option><option value="1.5em">Sehr groß</option></select>
                             <button type="button" class="editor-btn" data-action="clear-formatting" data-value="quest-desc" title="Formatierung löschen" style="color:#888;">✕</button>
                         </div>
                         <div id="quest-desc" class="rich-editor" contenteditable="true"></div>
@@ -2584,8 +2587,8 @@
                             <button type="button" class="editor-btn" data-action="format-text" data-cmd="quest-epilog" data-editor="underline" title="Unterstrichen"><u>U</u></button>
                             <button type="button" class="editor-btn" data-action="format-text" data-cmd="quest-epilog" data-editor="list" title="Liste">☰</button>
                             <button type="button" class="editor-btn" data-action="set-border-format" data-editor="quest-epilog" title="Rahmen">◻</button>
-                            <select class="editor-select" onchange="setEditorFont('quest-epilog', this)" title="Schriftart"><option value="arial">Arial</option><option value="serif">Serif</option><option value="mono">Mono</option></select>
-                            <select class="editor-select" onchange="setEditorFontSize('quest-epilog', this)" title="Größe"><option value="0.8em">Klein</option><option value="1em" selected>Normal</option><option value="1.2em">Groß</option><option value="1.5em">Sehr groß</option></select>
+                            <select class="editor-select" data-action="set-editor-font" data-editor="quest-epilog" title="Schriftart"><option value="arial">Arial</option><option value="serif">Serif</option><option value="mono">Mono</option></select>
+                            <select class="editor-select" data-action="set-editor-font-size" data-editor="quest-epilog" title="Größe"><option value="0.8em">Klein</option><option value="1em" selected>Normal</option><option value="1.2em">Groß</option><option value="1.5em">Sehr groß</option></select>
                             <button type="button" class="editor-btn" data-action="clear-formatting" data-value="quest-epilog" title="Formatierung löschen" style="color:#888;">✕</button>
                         </div>
                         <div id="quest-epilog" class="rich-editor" contenteditable="true" style="min-height: 80px;"></div>
@@ -2739,8 +2742,8 @@
                             <button type="button" class="editor-btn" data-action="format-text" data-cmd="spell-desc" data-editor="underline" title="Unterstrichen"><u>U</u></button>
                             <button type="button" class="editor-btn" data-action="format-text" data-cmd="spell-desc" data-editor="list" title="Liste">☰</button>
                             <button type="button" class="editor-btn" data-action="set-border-format" data-editor="spell-desc" title="Rahmen">◻</button>
-                            <select class="editor-select" onchange="setEditorFont('spell-desc', this)" title="Schriftart"><option value="arial">Arial</option><option value="serif">Serif</option><option value="mono">Mono</option></select>
-                            <select class="editor-select" onchange="setEditorFontSize('spell-desc', this)" title="Größe"><option value="0.8em">Klein</option><option value="1em" selected>Normal</option><option value="1.2em">Groß</option><option value="1.5em">Sehr groß</option></select>
+                            <select class="editor-select" data-action="set-editor-font" data-editor="spell-desc" title="Schriftart"><option value="arial">Arial</option><option value="serif">Serif</option><option value="mono">Mono</option></select>
+                            <select class="editor-select" data-action="set-editor-font-size" data-editor="spell-desc" title="Größe"><option value="0.8em">Klein</option><option value="1em" selected>Normal</option><option value="1.2em">Groß</option><option value="1.5em">Sehr groß</option></select>
                             <button type="button" class="editor-btn" data-action="clear-formatting" data-value="spell-desc" title="Formatierung löschen" style="color:#888;">✕</button>
                         </div>
                         <div id="spell-desc" class="rich-editor" contenteditable="true" style="min-height: 100px;"></div>
@@ -2753,8 +2756,8 @@
                             <button type="button" class="editor-btn" data-action="format-text" data-cmd="spell-note" data-editor="underline" title="Unterstrichen"><u>U</u></button>
                             <button type="button" class="editor-btn" data-action="format-text" data-cmd="spell-note" data-editor="list" title="Liste">☰</button>
                             <button type="button" class="editor-btn" data-action="set-border-format" data-editor="spell-note" title="Rahmen">◻</button>
-                            <select class="editor-select" onchange="setEditorFont('spell-note', this)" title="Schriftart"><option value="arial">Arial</option><option value="serif">Serif</option><option value="mono">Mono</option></select>
-                            <select class="editor-select" onchange="setEditorFontSize('spell-note', this)" title="Größe"><option value="0.8em">Klein</option><option value="1em" selected>Normal</option><option value="1.2em">Groß</option><option value="1.5em">Sehr groß</option></select>
+                            <select class="editor-select" data-action="set-editor-font" data-editor="spell-note" title="Schriftart"><option value="arial">Arial</option><option value="serif">Serif</option><option value="mono">Mono</option></select>
+                            <select class="editor-select" data-action="set-editor-font-size" data-editor="spell-note" title="Größe"><option value="0.8em">Klein</option><option value="1em" selected>Normal</option><option value="1.2em">Groß</option><option value="1.5em">Sehr groß</option></select>
                             <button type="button" class="editor-btn" data-action="clear-formatting" data-value="spell-note" title="Formatierung löschen" style="color:#888;">✕</button>
                         </div>
                         <div id="spell-note" class="rich-editor" contenteditable="true" style="min-height: 60px;"></div>

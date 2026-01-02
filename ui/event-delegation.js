@@ -97,6 +97,28 @@ const EventDelegation = {
 
     _handleChange(e) {
         const target = e.target;
+
+        // Prüfe zuerst auf data-action (neue konsistente Methode)
+        const action = target.dataset.action;
+        if (action && this._handlers.has(action)) {
+            const id = target.dataset.id ? parseEntityId(target.dataset.id) : null;
+            const type = target.dataset.type || null;
+            const value = target.value || target.dataset.value || null;
+            const ctx = { id, type, value, target, event: e };
+
+            try {
+                this._handlers.get(action)(ctx);
+            } catch (actionError) {
+                if (typeof ErrorHandler !== 'undefined') {
+                    ErrorHandler.log('EventDelegation', actionError, `Action (change): ${action}`);
+                } else {
+                    console.error(`[EventDelegation] Fehler in Action "${action}":`, actionError);
+                }
+            }
+            return;
+        }
+
+        // Fallback: Legacy data-on-change Handler
         const handlerName = target.dataset.onChange;
         if (!handlerName) return;
 
