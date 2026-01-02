@@ -222,36 +222,86 @@ function formatDate(date, options = { year: 'numeric', month: 'short', day: 'num
 }
 
 /**
- * Zeigt eine Toast-Benachrichtigung an
+ * Zeigt einen Event-Log-Eintrag an (ersetzt Toast)
  * @param {string} [msg='✓ Gespeichert'] - Nachricht
  * @param {'success'|'error'|'warning'|'info'} [type='success'] - Nachrichtentyp
  * @param {number} [duration] - Anzeigedauer in ms (Standard: APP_CONFIG.TOAST_DURATION)
  */
 function showToast(msg = '✓ Gespeichert', type = 'success', duration = APP_CONFIG.TOAST_DURATION) {
-    const t = $('toast');
-    if (!t) return;
+    const log = $('event-log');
+    if (!log) return;
 
-    // Accessibility: Screen-Reader-Ankündigung
-    t.setAttribute('role', 'alert');
-    t.setAttribute('aria-live', 'polite');
-    t.setAttribute('aria-atomic', 'true');
-
-    t.textContent = msg;
-    t.className = 'toast show';
-
-    // Farbe basierend auf Typ
-    const colors = {
-        success: '',
-        error: 'var(--red)',
-        warning: 'var(--yellow)',
-        info: 'var(--cyan)'
+    // Icons für verschiedene Typen
+    const icons = {
+        success: '✓',
+        error: '✕',
+        warning: '⚠',
+        info: 'ℹ'
     };
-    t.style.background = colors[type] || '';
 
-    setTimeout(() => {
-        t.classList.remove('show');
-        t.removeAttribute('aria-live');
-    }, duration);
+    // Zeitstempel formatieren
+    const now = new Date();
+    const timeStr = now.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+
+    // Entry erstellen
+    const entry = document.createElement('div');
+    entry.className = `event-log-entry ${type}`;
+    entry.setAttribute('role', 'alert');
+    entry.setAttribute('aria-live', 'polite');
+    entry.innerHTML = `
+        <span class="event-log-icon">${icons[type] || icons.success}</span>
+        <div class="event-log-content">
+            <div class="event-log-message">${esc(msg)}</div>
+            <div class="event-log-time">${timeStr}</div>
+        </div>
+    `;
+
+    // Nach Header einfügen (neueste oben)
+    const header = log.querySelector('.event-log-header');
+    if (header && header.nextSibling) {
+        log.insertBefore(entry, header.nextSibling);
+    } else if (header) {
+        log.appendChild(entry);
+    } else {
+        log.insertBefore(entry, log.firstChild);
+    }
+
+    // Im persistenten Modus: mehr Einträge behalten
+    const isPersistent = log.classList.contains('persistent');
+    const maxEntries = isPersistent ? 50 : 5;
+
+    // Nur event-log-entry Elemente zählen
+    const entries = log.querySelectorAll('.event-log-entry');
+    while (entries.length > maxEntries) {
+        entries[entries.length - 1].remove();
+    }
+
+    // Nur ausblenden wenn nicht persistent
+    if (!isPersistent) {
+        setTimeout(() => {
+            entry.classList.add('fade-out');
+            setTimeout(() => entry.remove(), 400);
+        }, duration);
+    }
+}
+
+/**
+ * Toggle Event-Log persistent mode
+ */
+function toggleEventLog() {
+    const log = $('event-log');
+    if (!log) return;
+    log.classList.toggle('persistent');
+}
+
+/**
+ * Clear all event log entries
+ */
+function clearEventLog() {
+    const log = $('event-log');
+    if (!log) return;
+    const entries = log.querySelectorAll('.event-log-entry');
+    entries.forEach(e => e.remove());
 }
 
 /**

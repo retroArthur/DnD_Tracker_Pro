@@ -104,6 +104,21 @@ const UIActions = {
     },
     'save-quick-ref-entry': () => saveQuickRefEntry(),
 
+    // Quick Reference v2 - New Actions
+    'toggle-qref-section': (ctx) => toggleQrefSection(ctx.target),
+    'show-condition-detail': (ctx) => {
+        const condition = ctx.target.closest('.qref-condition')?.dataset.condition;
+        if (condition) showConditionDetail(condition);
+    },
+    'apply-qref-condition': (ctx) => {
+        ctx.event.stopPropagation();
+        applyQrefCondition(ctx.value);
+    },
+    'roll-qref-dice': (ctx) => {
+        const dice = ctx.target.dataset.dice;
+        if (dice) rollQrefDice(dice);
+    },
+
     // Tags & Entity Links
     'show-tags-modal': (ctx) => showTagsModal(ctx.type, ctx.id),
     'show-tags-modal-stop': (ctx) => { ctx.event.stopPropagation(); showTagsModal(ctx.type, ctx.id); },
@@ -151,7 +166,11 @@ const UIActions = {
         const fn = window[ctx.value];
         if (typeof fn === 'function') fn(ctx.id);
         else console.error('[EventDelegation] Function not found:', ctx.value);
-    }
+    },
+
+    // Event Log
+    'toggle-event-log': () => toggleEventLog(),
+    'clear-event-log': () => clearEventLog()
 };
 
 // Register all UI actions

@@ -203,6 +203,45 @@ function deleteEntity(id) {
 - Accessible from Initiative toolbar
 - File: `features/quick-actions.js` → `showConditionReference()`
 
+### Quick Reference Panel v2
+- Redesigned collapsible panel with tabs (Zustände, Schaden, Regeln, Eigene)
+- Search bar with `/` keyboard shortcut to open and focus
+- Interactive conditions: Click to show detail, `+` button to apply to current combatant
+- Damage types section with 13 color-coded types
+- Clickable dice formulas for fall damage (auto-roll on click)
+- Spell components (V/S/M) reference
+- Custom entries support with rich text editor
+- Data: `D.quickRefCustom = [{ id, title, content, expanded }]`
+- File: `systems/spellslots/quick-reference.js` → `QREF_CONDITIONS`, `applyQrefCondition()`, `rollQrefDice()`
+
+### Event Log (replaces Toast)
+- Centered notification panel at bottom of screen
+- Shows multiple entries with timestamps and type icons
+- Color-coded left border: green (success), red (error), yellow (warning), cyan (info)
+- Persistent mode: Press `L` to keep log visible with up to 50 entries
+- Header with "Leeren" (clear) and close buttons in persistent mode
+- File: `utils/utilities.js` → `showToast()`, `toggleEventLog()`, `clearEventLog()`
+
+## Keyboard Shortcuts
+
+| Shortcut | Action |
+|----------|--------|
+| `1-9` | Switch to tab 1-9 |
+| `Strg+Z` | Undo |
+| `Strg+Y` | Redo |
+| `Strg+S` | Save |
+| `Strg+K/F` | Focus global search |
+| `R` | Quick roll d20 |
+| `T` | Toggle session timer |
+| `L` | Toggle event log (persistent mode) |
+| `/` | Open Quick Reference and focus search |
+| `?` | Show keyboard shortcuts |
+| `N` | Next turn (Initiative) / New element (context) |
+| `P` | Previous turn (Initiative) |
+| `Shift+N` | New round (Initiative) |
+| `Space` | Next turn (Initiative) |
+| `Escape` | Close overlays/modals |
+
 ## Conventions
 
 - **Language:** German (UI text, D&D terms, comments)

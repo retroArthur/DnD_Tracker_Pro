@@ -41,19 +41,19 @@
             <button class="nav-tab" data-view="party" draggable="true" role="tab" aria-selected="false">👥 Party</button>
             <button class="nav-tab" data-view="npcs" draggable="true" role="tab" aria-selected="false">🎭 NPCs</button>
             <button class="nav-tab" data-view="locations" draggable="true" role="tab" aria-selected="false">🏠 Orte</button>
-            <button class="nav-tab" data-view="network" draggable="true" role="tab" aria-selected="false">🔗 Netzwerk</button>
             <button class="nav-tab" data-view="quests" draggable="true" role="tab" aria-selected="false">📜 Quests</button>
             <button class="nav-tab" data-view="encounter" draggable="true" role="tab" aria-selected="false">👹 Encounter</button>
             <button class="nav-tab" data-view="initiative" draggable="true" role="tab" aria-selected="false">⚔️ Initiative</button>
-            <button class="nav-tab" data-view="loot" draggable="true" role="tab" aria-selected="false">📦 Truhe</button>
             <button class="nav-tab" data-view="shops" draggable="true" role="tab" aria-selected="false">🏪 Shops</button>
+            <button class="nav-tab" data-view="loot" draggable="true" role="tab" aria-selected="false">📦 Truhe</button>
             <button class="nav-tab" data-view="spells" draggable="true" role="tab" aria-selected="false">✨ Zauber</button>
-            <button class="nav-tab" data-view="notes" draggable="true" role="tab" aria-selected="false">📝 Notizen</button>
             <button class="nav-tab" data-view="wiki" draggable="true" role="tab" aria-selected="false">📚 Wiki</button>
+            <button class="nav-tab" data-view="maps" draggable="true" role="tab" aria-selected="false">🗺️ Karten</button>
+            <button class="nav-tab" data-view="notes" draggable="true" role="tab" aria-selected="false">📝 Notizen</button>
+            <button class="nav-tab" data-view="network" draggable="true" role="tab" aria-selected="false">🔗 Netzwerk</button>
             <button class="nav-tab" data-view="links" draggable="true" role="tab" aria-selected="false">🔗 Links</button>
             <button class="nav-tab" data-view="dice" draggable="true" role="tab" aria-selected="false">🎲 Würfel</button>
             <button class="nav-tab" data-view="timers" draggable="true" role="tab" aria-selected="false">⏱️ Timer</button>
-            <button class="nav-tab" data-view="maps" draggable="true" role="tab" aria-selected="false">🗺️ Karten</button>
             <button class="nav-tab" data-view="data" draggable="true" role="tab" aria-selected="false">💾 Daten</button>
             <button class="nav-tab" data-action="call" data-value="showDebugModal" style="color: var(--purple);">🧪 Debug</button>
             <button class="nav-tab" data-action="call" data-value="showThemeModal" style="color: var(--cyan);">🎨</button>
@@ -526,26 +526,31 @@
         
         <!-- NPCS VIEW - Master-Detail Layout -->
         <section id="view-npcs" class="view npc-view">
-            <!-- Kompakte Toolbar wie Orte -->
-            <div class="npc-toolbar">
-                <div class="npc-toolbar-left">
-                    <span class="npc-toolbar-title">🎭 NPCs</span>
-                    <span class="npc-toolbar-count" id="npcs-io-count">0</span>
+            <div class="section-toolbar">
+                <!-- Gruppe 1: Identität -->
+                <div class="section-toolbar-identity">
+                    <span class="section-toolbar-title">🎭 NPCs</span>
+                    <span class="section-toolbar-count" id="npcs-io-count">0</span>
                 </div>
-                <div class="npc-toolbar-center">
-                    <div class="npc-search-wrapper">
-                        <input type="text" id="npc-search" class="npc-search" placeholder="NPC suchen..." oninput="renderNPCList(); updateSearchClear(this);">
-                        <button class="npc-search-clear" data-action="clear-search" data-value="npc-search">✕</button>
+                <!-- Gruppe 2: Suche -->
+                <div class="section-toolbar-search">
+                    <div class="search-wrapper">
+                        <input type="text" id="npc-search" class="toolbar-search" placeholder="🔍 NPC suchen..." oninput="renderNPCList(); updateSearchClear(this);">
+                        <button class="search-clear-btn" data-action="clear-search" data-value="npc-search" title="Suche leeren">✕</button>
                     </div>
-                    <div class="npc-filter-chips" id="npc-filters"></div>
                 </div>
-                <div class="npc-toolbar-right">
-                    <div class="npc-io-btns">
-                        <button class="npc-io-btn" data-action="export-data" data-value="npcs" title="Exportieren">📤</button>
-                        <button class="npc-io-btn" data-action="trigger-click" data-value="import-npcs" title="Importieren">📥</button>
+                <!-- Gruppe 3: Filter + IO -->
+                <div class="section-toolbar-filters">
+                    <div class="npc-filter-chips" id="npc-filters"></div>
+                    <div class="section-toolbar-io">
+                        <button class="io-btn export" data-action="export-data" data-value="npcs" title="NPCs exportieren">📤</button>
+                        <button class="io-btn import" data-action="trigger-click" data-value="import-npcs" title="NPCs importieren">📥</button>
                         <input type="file" id="import-npcs" class="io-file-input" accept=".json" data-on-change="import-data" data-type="npcs">
                     </div>
-                    <button class="npc-add-btn" data-action="show-modal" data-value="npc-modal">+ NPC</button>
+                </div>
+                <!-- Gruppe 4: Primäre Aktion -->
+                <div class="section-toolbar-actions">
+                    <button class="btn btn-success" data-action="show-modal" data-value="npc-modal">+ NPC</button>
                 </div>
             </div>
 
@@ -568,26 +573,31 @@
 
         <!-- LOCATIONS VIEW - Master-Detail Layout -->
         <section id="view-locations" class="view loc-view">
-            <!-- Kompakte Toolbar -->
-            <div class="loc-toolbar">
-                <div class="loc-toolbar-left">
-                    <span class="loc-toolbar-title">🏠 Orte</span>
-                    <span class="loc-toolbar-count" id="locations-io-count">0</span>
+            <div class="section-toolbar">
+                <!-- Gruppe 1: Identität -->
+                <div class="section-toolbar-identity">
+                    <span class="section-toolbar-title">🏠 Orte</span>
+                    <span class="section-toolbar-count" id="locations-io-count">0</span>
                 </div>
-                <div class="loc-toolbar-center">
-                    <div class="loc-search-wrapper">
-                        <input type="text" id="loc-search" class="loc-search" placeholder="Orte suchen..." oninput="renderLocations(); updateSearchClear(this);">
-                        <button class="loc-search-clear" data-action="clear-search" data-value="loc-search">✕</button>
+                <!-- Gruppe 2: Suche -->
+                <div class="section-toolbar-search">
+                    <div class="search-wrapper">
+                        <input type="text" id="loc-search" class="toolbar-search" placeholder="🔍 Orte suchen..." oninput="renderLocations(); updateSearchClear(this);">
+                        <button class="search-clear-btn" data-action="clear-search" data-value="loc-search" title="Suche leeren">✕</button>
                     </div>
-                    <div class="loc-filter-chips" id="location-filters"></div>
                 </div>
-                <div class="loc-toolbar-right">
-                    <div class="loc-io-btns">
-                        <button class="loc-io-btn" data-action="export-data" data-value="locations" title="Exportieren">📤</button>
-                        <button class="loc-io-btn" data-action="trigger-click" data-value="import-locations" title="Importieren">📥</button>
+                <!-- Gruppe 3: Filter + IO -->
+                <div class="section-toolbar-filters">
+                    <div class="loc-filter-chips" id="location-filters"></div>
+                    <div class="section-toolbar-io">
+                        <button class="io-btn export" data-action="export-data" data-value="locations" title="Orte exportieren">📤</button>
+                        <button class="io-btn import" data-action="trigger-click" data-value="import-locations" title="Orte importieren">📥</button>
                         <input type="file" id="import-locations" class="io-file-input" accept=".json" data-on-change="import-data" data-type="locations">
                     </div>
-                    <button class="loc-add-btn" data-action="show-modal" data-value="location-modal">+ Neuer Ort</button>
+                </div>
+                <!-- Gruppe 4: Primäre Aktion -->
+                <div class="section-toolbar-actions">
+                    <button class="btn btn-success" data-action="show-modal" data-value="location-modal">+ Neuer Ort</button>
                 </div>
             </div>
 
@@ -845,27 +855,32 @@
         
         <!-- ENCOUNTER VIEW - Master-Detail Layout -->
         <section id="view-encounter" class="view enc-view">
-            <!-- Kompakte Toolbar -->
-            <div class="enc-toolbar">
-                <div class="enc-toolbar-left">
-                    <span class="enc-toolbar-title">👹 Encounter</span>
-                    <span class="enc-toolbar-count" id="encounter-io-count">0</span>
+            <div class="section-toolbar">
+                <!-- Gruppe 1: Identität -->
+                <div class="section-toolbar-identity">
+                    <span class="section-toolbar-title">👹 Encounter</span>
+                    <span class="section-toolbar-count" id="encounter-io-count">0</span>
                 </div>
-                <div class="enc-toolbar-center">
-                    <div class="enc-search-wrapper">
-                        <input type="text" id="enc-search" class="enc-search" placeholder="Encounter suchen..." oninput="renderEncounters(); updateSearchClear(this);">
-                        <button class="enc-search-clear" data-action="clear-search" data-value="enc-search">✕</button>
+                <!-- Gruppe 2: Suche -->
+                <div class="section-toolbar-search">
+                    <div class="search-wrapper">
+                        <input type="text" id="enc-search" class="toolbar-search" placeholder="🔍 Encounter suchen..." oninput="renderEncounters(); updateSearchClear(this);">
+                        <button class="search-clear-btn" data-action="clear-search" data-value="enc-search" title="Suche leeren">✕</button>
                     </div>
-                    <div class="enc-filter-chips" id="encounter-filters"></div>
                 </div>
-                <div class="enc-toolbar-right">
-                    <button class="enc-toolbar-btn" data-action="call" data-value="showCalculatorModal" title="CR Calculator">⚖️</button>
-                    <div class="enc-io-btns">
-                        <button class="enc-io-btn" data-action="export-data" data-value="encounters" title="Exportieren">📤</button>
-                        <button class="enc-io-btn" data-action="trigger-click" data-value="import-encounters" title="Importieren">📥</button>
+                <!-- Gruppe 3: Filter + IO -->
+                <div class="section-toolbar-filters">
+                    <div class="enc-filter-chips" id="encounter-filters"></div>
+                    <button class="btn btn-sm" data-action="call" data-value="showCalculatorModal" title="CR Calculator">⚖️</button>
+                    <div class="section-toolbar-io">
+                        <button class="io-btn export" data-action="export-data" data-value="encounters" title="Encounter exportieren">📤</button>
+                        <button class="io-btn import" data-action="trigger-click" data-value="import-encounters" title="Encounter importieren">📥</button>
                         <input type="file" id="import-encounters" class="io-file-input" accept=".json,.csv" data-on-change="import-data" data-type="encounters">
                     </div>
-                    <button class="enc-add-btn" data-action="show-enc-form">+ Neuer Encounter</button>
+                </div>
+                <!-- Gruppe 4: Primäre Aktion -->
+                <div class="section-toolbar-actions">
+                    <button class="btn btn-success" data-action="show-enc-form">+ Neuer Encounter</button>
                 </div>
             </div>
             <div class="card">
@@ -1245,27 +1260,32 @@
         
         <!-- LOOT VIEW - Master-Detail Layout -->
         <section id="view-loot" class="view loot-view">
-            <!-- Kompakte Toolbar wie NPCs -->
-            <div class="loot-toolbar">
-                <div class="loot-toolbar-left">
-                    <span class="loot-toolbar-title">📦 Truhe</span>
-                    <span class="loot-toolbar-count" id="loot-io-count">0</span>
+            <div class="section-toolbar">
+                <!-- Gruppe 1: Identität -->
+                <div class="section-toolbar-identity">
+                    <span class="section-toolbar-title">📦 Truhe</span>
+                    <span class="section-toolbar-count" id="loot-io-count">0</span>
                 </div>
-                <div class="loot-toolbar-center">
-                    <div class="loot-search-wrapper">
-                        <input type="text" id="loot-search" class="loot-search" placeholder="Item suchen..." oninput="renderLootList(); updateSearchClear(this);">
-                        <button class="loot-search-clear" data-action="clear-search" data-value="loot-search">✕</button>
+                <!-- Gruppe 2: Suche -->
+                <div class="section-toolbar-search">
+                    <div class="search-wrapper">
+                        <input type="text" id="loot-search" class="toolbar-search" placeholder="🔍 Item suchen..." oninput="renderLootList(); updateSearchClear(this);">
+                        <button class="search-clear-btn" data-action="clear-search" data-value="loot-search" title="Suche leeren">✕</button>
                     </div>
-                    <div class="loot-filter-chips" id="loot-filters"></div>
                 </div>
-                <div class="loot-toolbar-right">
-                    <button class="btn btn-sm" data-action="show-loot-distribution" title="Beute auf Party verteilen">💰 Verteilen</button>
-                    <div class="loot-io-btns">
-                        <button class="loot-io-btn" data-action="export-data" data-value="loot" title="Exportieren">📤</button>
-                        <button class="loot-io-btn" data-action="trigger-click" data-value="import-loot" title="Importieren">📥</button>
+                <!-- Gruppe 3: Filter + IO -->
+                <div class="section-toolbar-filters">
+                    <div class="loot-filter-chips" id="loot-filters"></div>
+                    <button class="btn btn-sm btn-gold" data-action="show-loot-distribution" title="Beute auf Party verteilen">💰 Verteilen</button>
+                    <div class="section-toolbar-io">
+                        <button class="io-btn export" data-action="export-data" data-value="loot" title="Truhe exportieren">📤</button>
+                        <button class="io-btn import" data-action="trigger-click" data-value="import-loot" title="Truhe importieren">📥</button>
                         <input type="file" id="import-loot" class="io-file-input" accept=".json" data-on-change="import-data" data-type="loot">
                     </div>
-                    <button class="loot-add-btn" data-action="show-modal" data-value="loot-modal">+ Item</button>
+                </div>
+                <!-- Gruppe 4: Primäre Aktion -->
+                <div class="section-toolbar-actions">
+                    <button class="btn btn-success" data-action="show-modal" data-value="loot-modal">+ Item</button>
                 </div>
             </div>
 
@@ -2039,7 +2059,7 @@
                                 </div>
                             </div>
                             
-                            <button class="btn" data-action="call" data-value="addNewMap">+ Neue Karte</button>
+                            <button class="btn btn-success" data-action="call" data-value="addNewMap">+ Neue Karte</button>
                         </div>
                         
                         <!-- Karten-Tabs -->
@@ -3333,7 +3353,7 @@
     <div class="modal-overlay" id="debug-modal">
         <div class="modal" style="max-width: 900px; max-height: 90vh; overflow-y: auto;">
             <div class="modal-header">
-                <span class="modal-title">🧪 Debug & Test - v2.16</span>
+                <span class="modal-title">🧪 Debug & Test - v2.17</span>
                 <button class="btn btn-sm" data-action="hide-modal" data-value="debug-modal">✕</button>
             </div>
             
@@ -3364,8 +3384,22 @@
             
             <!-- Neue Features testen -->
             <div style="background: var(--bg-dark); padding: 12px; border-radius: 8px; margin-bottom: 12px;">
-                <h4 style="margin: 0 0 8px 0; color: var(--purple);">🆕 Neue Features (v2.16)</h4>
+                <h4 style="margin: 0 0 8px 0; color: var(--purple);">🆕 Neue Features (v2.17)</h4>
                 <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; font-size: 0.85em;">
+                    <div>
+                        <div style="font-size: 0.8em; color: var(--text-dim); margin-bottom: 4px;">Quick Reference v2</div>
+                        <div class="btn-group" style="flex-wrap: wrap; gap: 4px;">
+                            <button class="btn btn-sm" data-action="toggle-quick-ref">📖 Quick Ref öffnen</button>
+                            <button class="btn btn-sm" data-action="call" data-value="testQuickReference">🧪 Quick Ref Test</button>
+                        </div>
+                    </div>
+                    <div>
+                        <div style="font-size: 0.8em; color: var(--text-dim); margin-bottom: 4px;">Event Log</div>
+                        <div class="btn-group" style="flex-wrap: wrap; gap: 4px;">
+                            <button class="btn btn-sm" data-action="toggle-event-log">📋 Log öffnen (L)</button>
+                            <button class="btn btn-sm" data-action="call" data-value="testEventLog">🧪 Event Log Test</button>
+                        </div>
+                    </div>
                     <div>
                         <div style="font-size: 0.8em; color: var(--text-dim); margin-bottom: 4px;">Wiki-System</div>
                         <div class="btn-group" style="flex-wrap: wrap; gap: 4px;">
@@ -3441,7 +3475,16 @@
         </div>
     </div>
     
-    <div class="toast" id="toast">✓ Gespeichert</div>
+    <!-- Event Log (ersetzt Toast) -->
+    <div class="event-log" id="event-log">
+        <div class="event-log-header">
+            <span class="event-log-title">Event Log</span>
+            <div class="event-log-actions">
+                <button class="event-log-btn" data-action="clear-event-log" title="Log leeren">Leeren</button>
+                <button class="event-log-btn" data-action="toggle-event-log" title="Schließen">✕</button>
+            </div>
+        </div>
+    </div>
 
     <!-- Floating Dice Trigger (immer sichtbar) -->
     <button class="floating-dice-trigger" id="floating-dice-trigger" data-action="toggle-floating-dice" title="Würfel">
@@ -3742,13 +3785,14 @@
         <span class="qref-fab-icon">📖</span>
     </div>
 
-    <!-- Schnell-Referenz Panel (Redesigned) -->
+    <!-- Schnell-Referenz Panel (Redesigned v2) -->
     <div class="qref-panel" id="quick-ref-panel">
         <!-- Header -->
         <div class="qref-header">
             <div class="qref-title">
                 <span class="qref-title-icon">📖</span>
                 <span>Referenz</span>
+                <span class="qref-kbd-hint">?</span>
             </div>
             <div class="qref-header-actions">
                 <button class="qref-btn" data-action="add-quick-ref-entry" title="Eigenen Eintrag">+</button>
@@ -3756,69 +3800,136 @@
             </div>
         </div>
 
+        <!-- Search Bar (NEU) -->
+        <div class="qref-search">
+            <span class="qref-search-icon">🔍</span>
+            <input type="text" id="qref-search-input" placeholder="Suchen... (/)" data-action="qref-search">
+        </div>
+
         <!-- Tabs -->
         <div class="qref-tabs">
-            <button class="qref-tab active" data-action="qref-tab" data-value="combat">⚔️ Kampf</button>
-            <button class="qref-tab" data-action="qref-tab" data-value="rules">📜 Regeln</button>
-            <button class="qref-tab" data-action="qref-tab" data-value="world">🌍 Welt</button>
-            <button class="qref-tab" data-action="qref-tab" data-value="custom">📌 Eigene</button>
+            <button class="qref-tab active" data-action="qref-tab" data-value="combat">
+                <span class="qref-tab-icon">⚔️</span>Kampf
+            </button>
+            <button class="qref-tab" data-action="qref-tab" data-value="rules">
+                <span class="qref-tab-icon">📜</span>Regeln
+            </button>
+            <button class="qref-tab" data-action="qref-tab" data-value="world">
+                <span class="qref-tab-icon">🌍</span>Welt
+            </button>
+            <button class="qref-tab" data-action="qref-tab" data-value="custom">
+                <span class="qref-tab-icon">📌</span>Eigene
+            </button>
         </div>
 
         <!-- Content -->
         <div class="qref-content">
             <!-- Combat Tab -->
             <div class="qref-tab-content active" id="qref-combat">
-                <!-- Zustände - Kompakt -->
-                <div class="qref-card">
-                    <div class="qref-card-title">🎭 Zustände</div>
-                    <div class="qref-chips">
-                        <span class="qref-chip" title="Kann nicht sehen, Nachteil auf Angriffe">Geblendet</span>
-                        <span class="qref-chip" title="Kann Bezaubernden nicht angreifen">Bezaubert</span>
-                        <span class="qref-chip" title="Nachteil, kann sich nicht nähern">Verängstigt</span>
-                        <span class="qref-chip" title="Geschwindigkeit 0">Gepackt</span>
-                        <span class="qref-chip" title="Keine Aktionen/Reaktionen">Kampfunfähig</span>
-                        <span class="qref-chip" title="Vorteil auf Angriffe">Unsichtbar</span>
-                        <span class="qref-chip danger" title="Kampfunfähig, auto-fail DEX/STR">Gelähmt</span>
-                        <span class="qref-chip" title="Nachteil auf Angriffe/Checks">Vergiftet</span>
-                        <span class="qref-chip" title="Nachteil auf Angriffe">Liegend</span>
-                        <span class="qref-chip danger" title="Kampfunfähig, auto-fail DEX/STR">Betäubt</span>
-                        <span class="qref-chip danger" title="Wie Gelähmt + fallen liegend">Bewusstlos</span>
+                <!-- Zustände - Interaktiv -->
+                <div class="qref-section" data-qref-section="conditions">
+                    <div class="qref-section-header" data-action="toggle-qref-section">
+                        <span class="qref-section-title">🎭 Zustände</span>
+                        <span class="qref-collapse-icon">▼</span>
+                    </div>
+                    <div class="qref-section-body">
+                        <div class="qref-condition-chips" id="qref-condition-chips">
+                            <span class="qref-condition" data-condition="blinded" data-action="show-condition-detail">Geblendet<button class="qref-apply-btn" data-action="apply-qref-condition" data-value="blinded" title="Auf Combatant anwenden">+</button></span>
+                            <span class="qref-condition" data-condition="charmed" data-action="show-condition-detail">Bezaubert<button class="qref-apply-btn" data-action="apply-qref-condition" data-value="charmed" title="Auf Combatant anwenden">+</button></span>
+                            <span class="qref-condition" data-condition="frightened" data-action="show-condition-detail">Verängstigt<button class="qref-apply-btn" data-action="apply-qref-condition" data-value="frightened" title="Auf Combatant anwenden">+</button></span>
+                            <span class="qref-condition" data-condition="grappled" data-action="show-condition-detail">Gepackt<button class="qref-apply-btn" data-action="apply-qref-condition" data-value="grappled" title="Auf Combatant anwenden">+</button></span>
+                            <span class="qref-condition" data-condition="incapacitated" data-action="show-condition-detail">Kampfunfähig<button class="qref-apply-btn" data-action="apply-qref-condition" data-value="incapacitated" title="Auf Combatant anwenden">+</button></span>
+                            <span class="qref-condition" data-condition="invisible" data-action="show-condition-detail">Unsichtbar<button class="qref-apply-btn" data-action="apply-qref-condition" data-value="invisible" title="Auf Combatant anwenden">+</button></span>
+                            <span class="qref-condition danger" data-condition="paralyzed" data-action="show-condition-detail">Gelähmt<button class="qref-apply-btn" data-action="apply-qref-condition" data-value="paralyzed" title="Auf Combatant anwenden">+</button></span>
+                            <span class="qref-condition" data-condition="poisoned" data-action="show-condition-detail">Vergiftet<button class="qref-apply-btn" data-action="apply-qref-condition" data-value="poisoned" title="Auf Combatant anwenden">+</button></span>
+                            <span class="qref-condition" data-condition="prone" data-action="show-condition-detail">Liegend<button class="qref-apply-btn" data-action="apply-qref-condition" data-value="prone" title="Auf Combatant anwenden">+</button></span>
+                            <span class="qref-condition" data-condition="restrained" data-action="show-condition-detail">Festgesetzt<button class="qref-apply-btn" data-action="apply-qref-condition" data-value="restrained" title="Auf Combatant anwenden">+</button></span>
+                            <span class="qref-condition danger" data-condition="stunned" data-action="show-condition-detail">Betäubt<button class="qref-apply-btn" data-action="apply-qref-condition" data-value="stunned" title="Auf Combatant anwenden">+</button></span>
+                            <span class="qref-condition danger" data-condition="unconscious" data-action="show-condition-detail">Bewusstlos<button class="qref-apply-btn" data-action="apply-qref-condition" data-value="unconscious" title="Auf Combatant anwenden">+</button></span>
+                        </div>
+                        <div class="qref-condition-detail" id="qref-condition-detail">
+                            <div class="qref-detail-title">Klicke auf einen Zustand</div>
+                            <div class="qref-detail-desc">für Details...</div>
+                        </div>
                     </div>
                 </div>
 
-                <!-- Aktionen - Kompakt Grid -->
-                <div class="qref-card">
-                    <div class="qref-card-title">⚔️ Aktionen</div>
-                    <div class="qref-grid">
-                        <div class="qref-item"><span class="qref-label">Angriff</span><span class="qref-value">1 Angriff</span></div>
-                        <div class="qref-item"><span class="qref-label">Sprinten</span><span class="qref-value">×2 Bewegung</span></div>
-                        <div class="qref-item"><span class="qref-label">Ausweichen</span><span class="qref-value">Nachteil auf dich</span></div>
-                        <div class="qref-item"><span class="qref-label">Rückzug</span><span class="qref-value">Keine Geleg.angr.</span></div>
-                        <div class="qref-item"><span class="qref-label">Helfen</span><span class="qref-value">Vorteil geben</span></div>
-                        <div class="qref-item"><span class="qref-label">Verstecken</span><span class="qref-value">Heimlichkeit</span></div>
+                <!-- Aktionen -->
+                <div class="qref-section" data-qref-section="actions">
+                    <div class="qref-section-header" data-action="toggle-qref-section">
+                        <span class="qref-section-title">⚔️ Aktionen</span>
+                        <span class="qref-collapse-icon">▼</span>
+                    </div>
+                    <div class="qref-section-body">
+                        <div class="qref-actions-grid">
+                            <div class="qref-action-item"><span class="qref-action-name">Angriff</span><span class="qref-action-desc">1 Angriff</span></div>
+                            <div class="qref-action-item"><span class="qref-action-name">Sprinten</span><span class="qref-action-desc">×2 BWG</span></div>
+                            <div class="qref-action-item"><span class="qref-action-name">Ausweichen</span><span class="qref-action-desc">Nachteil ↓</span></div>
+                            <div class="qref-action-item"><span class="qref-action-name">Rückzug</span><span class="qref-action-desc">Kein GA</span></div>
+                            <div class="qref-action-item"><span class="qref-action-name">Helfen</span><span class="qref-action-desc">Vorteil ↑</span></div>
+                            <div class="qref-action-item"><span class="qref-action-name">Verstecken</span><span class="qref-action-desc">Heimlichk.</span></div>
+                            <div class="qref-action-item"><span class="qref-action-name">Bereithalten</span><span class="qref-action-desc">Reaktion</span></div>
+                            <div class="qref-action-item"><span class="qref-action-name">Suchen</span><span class="qref-action-desc">Wahrn.</span></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Schadensarten (NEU) -->
+                <div class="qref-section" data-qref-section="damage-types">
+                    <div class="qref-section-header" data-action="toggle-qref-section">
+                        <span class="qref-section-title">💥 Schadensarten</span>
+                        <span class="qref-new-badge">NEU</span>
+                        <span class="qref-collapse-icon">▼</span>
+                    </div>
+                    <div class="qref-section-body">
+                        <div class="qref-damage-types">
+                            <span class="qref-dmg physical">Wucht</span>
+                            <span class="qref-dmg physical">Stich</span>
+                            <span class="qref-dmg physical">Hieb</span>
+                            <span class="qref-dmg fire">🔥 Feuer</span>
+                            <span class="qref-dmg cold">❄️ Kälte</span>
+                            <span class="qref-dmg lightning">⚡ Blitz</span>
+                            <span class="qref-dmg thunder">🔊 Donner</span>
+                            <span class="qref-dmg acid">🧪 Säure</span>
+                            <span class="qref-dmg poison">☠️ Gift</span>
+                            <span class="qref-dmg psychic">🧠 Psychisch</span>
+                            <span class="qref-dmg radiant">✨ Strahlend</span>
+                            <span class="qref-dmg necrotic">💀 Nekrotisch</span>
+                            <span class="qref-dmg force">💫 Energie</span>
+                        </div>
                     </div>
                 </div>
 
                 <!-- Deckung -->
-                <div class="qref-card compact">
-                    <div class="qref-card-title">🛡️ Deckung</div>
-                    <div class="qref-inline">
-                        <span class="qref-badge">½ = +2</span>
-                        <span class="qref-badge">¾ = +5</span>
-                        <span class="qref-badge gold">Voll = Immun</span>
+                <div class="qref-section collapsed" data-qref-section="cover">
+                    <div class="qref-section-header" data-action="toggle-qref-section">
+                        <span class="qref-section-title">🛡️ Deckung</span>
+                        <span class="qref-collapse-icon">▼</span>
+                    </div>
+                    <div class="qref-section-body">
+                        <div class="qref-cover-row">
+                            <span class="qref-cover-badge">½ = <strong>+2</strong></span>
+                            <span class="qref-cover-badge">¾ = <strong>+5</strong></span>
+                            <span class="qref-cover-badge gold">Voll = Immun</span>
+                        </div>
                     </div>
                 </div>
 
                 <!-- Erschöpfung -->
-                <div class="qref-card compact">
-                    <div class="qref-card-title">😴 Erschöpfung</div>
-                    <div class="qref-exhaustion">
-                        <span class="qref-ex" title="Nachteil auf Fähigkeitswürfe">1</span>
-                        <span class="qref-ex" title="Geschwindigkeit halbiert">2</span>
-                        <span class="qref-ex warn" title="Nachteil auf Angriffe/Rettung">3</span>
-                        <span class="qref-ex warn" title="HP-Maximum halbiert">4</span>
-                        <span class="qref-ex danger" title="Geschwindigkeit 0">5</span>
-                        <span class="qref-ex danger" title="Tod">6☠</span>
+                <div class="qref-section collapsed" data-qref-section="exhaustion">
+                    <div class="qref-section-header" data-action="toggle-qref-section">
+                        <span class="qref-section-title">😴 Erschöpfung</span>
+                        <span class="qref-collapse-icon">▼</span>
+                    </div>
+                    <div class="qref-section-body">
+                        <div class="qref-exhaustion">
+                            <span class="qref-ex" title="Nachteil auf Fähigkeitswürfe">1</span>
+                            <span class="qref-ex" title="Geschwindigkeit halbiert">2</span>
+                            <span class="qref-ex warn" title="Nachteil auf Angriffe/Rettung">3</span>
+                            <span class="qref-ex warn" title="HP-Maximum halbiert">4</span>
+                            <span class="qref-ex danger" title="Geschwindigkeit 0">5</span>
+                            <span class="qref-ex danger" title="Tod">6☠</span>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -3826,61 +3937,113 @@
             <!-- Rules Tab -->
             <div class="qref-tab-content" id="qref-rules">
                 <!-- SG -->
-                <div class="qref-card compact">
-                    <div class="qref-card-title">🎲 Schwierigkeitsgrad</div>
-                    <div class="qref-sg-row">
-                        <span class="qref-sg" data-sg="5">5<small>Trivial</small></span>
-                        <span class="qref-sg" data-sg="10">10<small>Leicht</small></span>
-                        <span class="qref-sg" data-sg="15">15<small>Mittel</small></span>
-                        <span class="qref-sg" data-sg="20">20<small>Schwer</small></span>
-                        <span class="qref-sg" data-sg="25">25<small>Hart</small></span>
-                        <span class="qref-sg" data-sg="30">30<small>Episch</small></span>
+                <div class="qref-section" data-qref-section="dc">
+                    <div class="qref-section-header" data-action="toggle-qref-section">
+                        <span class="qref-section-title">🎲 Schwierigkeitsgrad</span>
+                        <span class="qref-collapse-icon">▼</span>
+                    </div>
+                    <div class="qref-section-body">
+                        <div class="qref-sg-row">
+                            <span class="qref-sg" data-sg="5">5<small>Trivial</small></span>
+                            <span class="qref-sg" data-sg="10">10<small>Leicht</small></span>
+                            <span class="qref-sg" data-sg="15">15<small>Mittel</small></span>
+                            <span class="qref-sg" data-sg="20">20<small>Schwer</small></span>
+                            <span class="qref-sg" data-sg="25">25<small>Hart</small></span>
+                            <span class="qref-sg" data-sg="30">30<small>Episch</small></span>
+                        </div>
                     </div>
                 </div>
 
-                <!-- Fallschaden -->
-                <div class="qref-card compact">
-                    <div class="qref-card-title">⬇️ Fallschaden</div>
-                    <div class="qref-formula">1d6 pro 3m <span class="qref-note">(Max: 20d6 bei 60m)</span></div>
+                <!-- Fallschaden - Klickbar -->
+                <div class="qref-section" data-qref-section="fall-damage">
+                    <div class="qref-section-header" data-action="toggle-qref-section">
+                        <span class="qref-section-title">⬇️ Fallschaden</span>
+                        <span class="qref-collapse-icon">▼</span>
+                    </div>
+                    <div class="qref-section-body">
+                        <div class="qref-fall-info">
+                            <span class="qref-dice-formula" data-action="roll-qref-dice" data-dice="1d6">1d6</span>
+                            <span class="qref-fall-text">pro 3m (Max: 20d6)</span>
+                        </div>
+                        <div class="qref-fall-quick">
+                            <span class="qref-dice-btn" data-action="roll-qref-dice" data-dice="1d6" title="3m Fallschaden">3m</span>
+                            <span class="qref-dice-btn" data-action="roll-qref-dice" data-dice="2d6" title="6m Fallschaden">6m</span>
+                            <span class="qref-dice-btn" data-action="roll-qref-dice" data-dice="3d6" title="9m Fallschaden">9m</span>
+                            <span class="qref-dice-btn" data-action="roll-qref-dice" data-dice="5d6" title="15m Fallschaden">15m</span>
+                            <span class="qref-dice-btn" data-action="roll-qref-dice" data-dice="10d6" title="30m Fallschaden">30m</span>
+                            <span class="qref-dice-btn" data-action="roll-qref-dice" data-dice="20d6" title="60m Fallschaden">60m</span>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Lichtquellen -->
-                <div class="qref-card">
-                    <div class="qref-card-title">💡 Licht</div>
-                    <div class="qref-grid cols-3">
-                        <div class="qref-item"><span class="qref-label">Kerze</span><span class="qref-value">1.5m</span></div>
-                        <div class="qref-item"><span class="qref-label">Fackel</span><span class="qref-value">6m</span></div>
-                        <div class="qref-item"><span class="qref-label">Laterne</span><span class="qref-value">9m</span></div>
-                        <div class="qref-item"><span class="qref-label">Licht ✨</span><span class="qref-value">6m</span></div>
-                        <div class="qref-item"><span class="qref-label">Dunkelsicht</span><span class="qref-value">18m</span></div>
+                <div class="qref-section collapsed" data-qref-section="light">
+                    <div class="qref-section-header" data-action="toggle-qref-section">
+                        <span class="qref-section-title">💡 Licht</span>
+                        <span class="qref-collapse-icon">▼</span>
+                    </div>
+                    <div class="qref-section-body">
+                        <div class="qref-grid cols-3">
+                            <div class="qref-item"><span class="qref-label">Kerze</span><span class="qref-value">1.5m</span></div>
+                            <div class="qref-item"><span class="qref-label">Fackel</span><span class="qref-value">6m</span></div>
+                            <div class="qref-item"><span class="qref-label">Laterne</span><span class="qref-value">9m</span></div>
+                            <div class="qref-item"><span class="qref-label">Licht ✨</span><span class="qref-value">6m</span></div>
+                            <div class="qref-item"><span class="qref-label">Dunkelsicht</span><span class="qref-value">18m</span></div>
+                        </div>
                     </div>
                 </div>
 
                 <!-- Proben -->
-                <div class="qref-card">
-                    <div class="qref-card-title">🎯 Typische Proben</div>
-                    <div class="qref-mini-table">
-                        <div class="qref-row"><span>Tür eintreten</span><span class="attr-str">STR</span></div>
-                        <div class="qref-row"><span>Schloss knacken</span><span class="attr-dex">DEX</span></div>
-                        <div class="qref-row"><span>Schleichen</span><span class="attr-dex">DEX</span></div>
-                        <div class="qref-row"><span>Gift erkennen</span><span class="attr-int">INT</span></div>
-                        <div class="qref-row"><span>Fährte lesen</span><span class="attr-wis">WIS</span></div>
-                        <div class="qref-row"><span>Lüge erkennen</span><span class="attr-wis">WIS</span></div>
-                        <div class="qref-row"><span>Überzeugen</span><span class="attr-cha">CHA</span></div>
+                <div class="qref-section collapsed" data-qref-section="checks">
+                    <div class="qref-section-header" data-action="toggle-qref-section">
+                        <span class="qref-section-title">🎯 Typische Proben</span>
+                        <span class="qref-collapse-icon">▼</span>
+                    </div>
+                    <div class="qref-section-body">
+                        <div class="qref-mini-table">
+                            <div class="qref-row"><span>Tür eintreten</span><span class="attr-str">STR</span></div>
+                            <div class="qref-row"><span>Schloss knacken</span><span class="attr-dex">DEX</span></div>
+                            <div class="qref-row"><span>Schleichen</span><span class="attr-dex">DEX</span></div>
+                            <div class="qref-row"><span>Gift erkennen</span><span class="attr-int">INT</span></div>
+                            <div class="qref-row"><span>Fährte lesen</span><span class="attr-wis">WIS</span></div>
+                            <div class="qref-row"><span>Lüge erkennen</span><span class="attr-wis">WIS</span></div>
+                            <div class="qref-row"><span>Überzeugen</span><span class="attr-cha">CHA</span></div>
+                        </div>
                     </div>
                 </div>
 
                 <!-- Heilung -->
-                <div class="qref-card compact">
-                    <div class="qref-card-title">⚕️ Rasten</div>
-                    <div class="qref-rest">
-                        <div class="qref-rest-item">
-                            <span class="qref-rest-type">Kurz</span>
-                            <span class="qref-rest-info">1h • Trefferwürfel + KON</span>
+                <div class="qref-section collapsed" data-qref-section="rest">
+                    <div class="qref-section-header" data-action="toggle-qref-section">
+                        <span class="qref-section-title">⚕️ Rasten</span>
+                        <span class="qref-collapse-icon">▼</span>
+                    </div>
+                    <div class="qref-section-body">
+                        <div class="qref-rest">
+                            <div class="qref-rest-item">
+                                <span class="qref-rest-type">Kurz</span>
+                                <span class="qref-rest-info">1h • Trefferwürfel + KON</span>
+                            </div>
+                            <div class="qref-rest-item">
+                                <span class="qref-rest-type long">Lang</span>
+                                <span class="qref-rest-info">8h • Alle HP, ½ Trefferwürfel</span>
+                            </div>
                         </div>
-                        <div class="qref-rest-item">
-                            <span class="qref-rest-type long">Lang</span>
-                            <span class="qref-rest-info">8h • Alle HP, ½ Trefferwürfel</span>
+                    </div>
+                </div>
+
+                <!-- Spell Components (NEU) -->
+                <div class="qref-section collapsed" data-qref-section="spell-comp">
+                    <div class="qref-section-header" data-action="toggle-qref-section">
+                        <span class="qref-section-title">✨ Zauberkomponenten</span>
+                        <span class="qref-new-badge">NEU</span>
+                        <span class="qref-collapse-icon">▼</span>
+                    </div>
+                    <div class="qref-section-body">
+                        <div class="qref-spell-comp">
+                            <div class="qref-comp"><span class="qref-comp-letter">V</span><span class="qref-comp-name">Verbal</span><span class="qref-comp-desc">Sprechen</span></div>
+                            <div class="qref-comp"><span class="qref-comp-letter">S</span><span class="qref-comp-name">Somatisch</span><span class="qref-comp-desc">Gesten</span></div>
+                            <div class="qref-comp"><span class="qref-comp-letter">M</span><span class="qref-comp-name">Material</span><span class="qref-comp-desc">Fokus/Beutel</span></div>
                         </div>
                     </div>
                 </div>
@@ -3889,61 +4052,80 @@
             <!-- World Tab -->
             <div class="qref-tab-content" id="qref-world">
                 <!-- Währung -->
-                <div class="qref-card compact">
-                    <div class="qref-card-title">💰 Währung</div>
-                    <div class="qref-currency">
-                        <span class="qref-coin km" title="0.01 GM">KM</span>
-                        <span class="qref-arrow">→</span>
-                        <span class="qref-coin sm" title="0.1 GM">SM</span>
-                        <span class="qref-arrow">→</span>
-                        <span class="qref-coin gm" title="1 GM">GM</span>
-                        <span class="qref-arrow">→</span>
-                        <span class="qref-coin pm" title="10 GM">PM</span>
+                <div class="qref-section" data-qref-section="currency">
+                    <div class="qref-section-header" data-action="toggle-qref-section">
+                        <span class="qref-section-title">💰 Währung</span>
+                        <span class="qref-collapse-icon">▼</span>
                     </div>
-                    <div class="qref-note center">10:1 Umrechnung</div>
+                    <div class="qref-section-body">
+                        <div class="qref-currency">
+                            <span class="qref-coin km" title="0.01 GM">KM</span>
+                            <span class="qref-arrow">→</span>
+                            <span class="qref-coin sm" title="0.1 GM">SM</span>
+                            <span class="qref-arrow">→</span>
+                            <span class="qref-coin gm" title="1 GM">GM</span>
+                            <span class="qref-arrow">→</span>
+                            <span class="qref-coin pm" title="10 GM">PM</span>
+                        </div>
+                        <div class="qref-note center">10:1 Umrechnung</div>
+                    </div>
                 </div>
 
                 <!-- Reise -->
-                <div class="qref-card">
-                    <div class="qref-card-title">🚶 Reisegeschwindigkeit</div>
-                    <div class="qref-travel">
-                        <div class="qref-travel-row">
-                            <span class="qref-travel-pace fast">Schnell</span>
-                            <span class="qref-travel-dist">6 km/h • 45 km/Tag</span>
-                            <span class="qref-travel-note">-5 Wahrn.</span>
-                        </div>
-                        <div class="qref-travel-row">
-                            <span class="qref-travel-pace">Normal</span>
-                            <span class="qref-travel-dist">5 km/h • 36 km/Tag</span>
-                            <span class="qref-travel-note"></span>
-                        </div>
-                        <div class="qref-travel-row">
-                            <span class="qref-travel-pace slow">Langsam</span>
-                            <span class="qref-travel-dist">3 km/h • 27 km/Tag</span>
-                            <span class="qref-travel-note">Verstecken</span>
+                <div class="qref-section" data-qref-section="travel">
+                    <div class="qref-section-header" data-action="toggle-qref-section">
+                        <span class="qref-section-title">🚶 Reisegeschwindigkeit</span>
+                        <span class="qref-collapse-icon">▼</span>
+                    </div>
+                    <div class="qref-section-body">
+                        <div class="qref-travel">
+                            <div class="qref-travel-row">
+                                <span class="qref-travel-pace fast">Schnell</span>
+                                <span class="qref-travel-dist">6 km/h • 45 km/Tag</span>
+                                <span class="qref-travel-note">-5 Wahrn.</span>
+                            </div>
+                            <div class="qref-travel-row">
+                                <span class="qref-travel-pace">Normal</span>
+                                <span class="qref-travel-dist">5 km/h • 36 km/Tag</span>
+                            </div>
+                            <div class="qref-travel-row">
+                                <span class="qref-travel-pace slow">Langsam</span>
+                                <span class="qref-travel-dist">3 km/h • 27 km/Tag</span>
+                                <span class="qref-travel-note">Verstecken</span>
+                            </div>
                         </div>
                     </div>
                 </div>
 
                 <!-- Taverne -->
-                <div class="qref-card">
-                    <div class="qref-card-title">🍺 Taverne</div>
-                    <div class="qref-grid cols-2">
-                        <div class="qref-item"><span class="qref-label">Bier</span><span class="qref-value">4 KM</span></div>
-                        <div class="qref-item"><span class="qref-label">Wein</span><span class="qref-value">2 SM</span></div>
-                        <div class="qref-item"><span class="qref-label">Mahlzeit</span><span class="qref-value">1-5 SM</span></div>
-                        <div class="qref-item"><span class="qref-label">Zimmer</span><span class="qref-value">5 SM - 2 GM</span></div>
+                <div class="qref-section collapsed" data-qref-section="tavern">
+                    <div class="qref-section-header" data-action="toggle-qref-section">
+                        <span class="qref-section-title">🍺 Taverne</span>
+                        <span class="qref-collapse-icon">▼</span>
+                    </div>
+                    <div class="qref-section-body">
+                        <div class="qref-grid cols-2">
+                            <div class="qref-item"><span class="qref-label">Bier</span><span class="qref-value">4 KM</span></div>
+                            <div class="qref-item"><span class="qref-label">Wein</span><span class="qref-value">2 SM</span></div>
+                            <div class="qref-item"><span class="qref-label">Mahlzeit</span><span class="qref-value">1-5 SM</span></div>
+                            <div class="qref-item"><span class="qref-label">Zimmer</span><span class="qref-value">5 SM - 2 GM</span></div>
+                        </div>
                     </div>
                 </div>
 
                 <!-- Heilung Kosten -->
-                <div class="qref-card">
-                    <div class="qref-card-title">⚕️ Heilung (Kosten)</div>
-                    <div class="qref-grid cols-2">
-                        <div class="qref-item"><span class="qref-label">Heiltrank</span><span class="qref-value gold">50 GM</span></div>
-                        <div class="qref-item"><span class="qref-label">Antitoxin</span><span class="qref-value">50 GM</span></div>
-                        <div class="qref-item"><span class="qref-label">Fluch brechen</span><span class="qref-value">90-450 GM</span></div>
-                        <div class="qref-item"><span class="qref-label">Wiederbelebung</span><span class="qref-value gold">1.000+ GM</span></div>
+                <div class="qref-section collapsed" data-qref-section="healing-cost">
+                    <div class="qref-section-header" data-action="toggle-qref-section">
+                        <span class="qref-section-title">⚕️ Heilung (Kosten)</span>
+                        <span class="qref-collapse-icon">▼</span>
+                    </div>
+                    <div class="qref-section-body">
+                        <div class="qref-grid cols-2">
+                            <div class="qref-item"><span class="qref-label">Heiltrank</span><span class="qref-value gold">50 GM</span></div>
+                            <div class="qref-item"><span class="qref-label">Antitoxin</span><span class="qref-value">50 GM</span></div>
+                            <div class="qref-item"><span class="qref-label">Fluch brechen</span><span class="qref-value">90-450 GM</span></div>
+                            <div class="qref-item"><span class="qref-label">Wiederbelebung</span><span class="qref-value gold">1.000+ GM</span></div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -4070,8 +4252,10 @@
                     <div class="shortcut-row"><span>Wiederholen</span><div class="shortcut-keys"><span class="shortcut-key">Strg</span><span class="shortcut-key">Y</span></div></div>
                     <div class="shortcut-row"><span>Speichern</span><div class="shortcut-keys"><span class="shortcut-key">Strg</span><span class="shortcut-key">S</span></div></div>
                     <div class="shortcut-row"><span>Suche</span><div class="shortcut-keys"><span class="shortcut-key">Strg</span><span class="shortcut-key">K</span></div></div>
-                    <div class="shortcut-row"><span>Würfeln</span><div class="shortcut-keys"><span class="shortcut-key">R</span></div></div>
+                    <div class="shortcut-row"><span>Würfeln (d20)</span><div class="shortcut-keys"><span class="shortcut-key">R</span></div></div>
                     <div class="shortcut-row"><span>Timer Start/Stop</span><div class="shortcut-keys"><span class="shortcut-key">T</span></div></div>
+                    <div class="shortcut-row"><span>Event Log</span><div class="shortcut-keys"><span class="shortcut-key">L</span></div></div>
+                    <div class="shortcut-row"><span>Quick Reference</span><div class="shortcut-keys"><span class="shortcut-key">/</span></div></div>
                     <div class="shortcut-row"><span>Diese Hilfe</span><div class="shortcut-keys"><span class="shortcut-key">?</span></div></div>
                 </div>
                 <div class="shortcuts-section">

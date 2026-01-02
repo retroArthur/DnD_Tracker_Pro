@@ -839,6 +839,75 @@ function testNodeTypes() {
     showToast(`📍 Node-Typen Test abgeschlossen`, 'info');
 }
 
+function testQuickReference() {
+    debugLogAdd('--- Quick Reference v2 Test ---');
+
+    // Panel prüfen
+    const panel = $('quick-ref-panel');
+    debugLogAdd(`  Panel vorhanden: ${panel ? '✓' : '✗'}`);
+
+    // Toggle-Funktion
+    const hasToggle = typeof toggleQuickRef === 'function';
+    debugLogAdd(`  toggleQuickRef(): ${hasToggle ? '✓' : '✗'}`);
+
+    // Conditions-Objekt
+    const hasConditions = typeof QREF_CONDITIONS === 'object' && Object.keys(QREF_CONDITIONS).length > 0;
+    debugLogAdd(`  QREF_CONDITIONS: ${hasConditions ? '✓ (' + Object.keys(QREF_CONDITIONS).length + ' Zustände)' : '✗'}`);
+
+    // Apply-Funktion
+    const hasApply = typeof applyQrefCondition === 'function';
+    debugLogAdd(`  applyQrefCondition(): ${hasApply ? '✓' : '✗'}`);
+
+    // Dice-Roll Funktion
+    const hasDiceRoll = typeof rollQrefDice === 'function';
+    debugLogAdd(`  rollQrefDice(): ${hasDiceRoll ? '✓' : '✗'}`);
+
+    // Search-Funktion
+    const hasSearch = typeof qrefSearch === 'function';
+    debugLogAdd(`  qrefSearch(): ${hasSearch ? '✓' : '✗'}`);
+
+    // Custom-Einträge
+    const customCount = D.quickRefCustom?.length || 0;
+    debugLogAdd(`  Custom-Einträge: ${customCount}`);
+
+    const allPass = panel && hasToggle && hasConditions && hasApply && hasDiceRoll;
+    showToast(`📖 Quick Ref Test: ${allPass ? 'Bestanden' : 'Fehlgeschlagen'}`, allPass ? 'success' : 'error');
+}
+
+function testEventLog() {
+    debugLogAdd('--- Event Log Test ---');
+
+    // Log-Container prüfen
+    const log = $('event-log');
+    debugLogAdd(`  Container vorhanden: ${log ? '✓' : '✗'}`);
+
+    // showToast-Funktion
+    const hasShowToast = typeof showToast === 'function';
+    debugLogAdd(`  showToast(): ${hasShowToast ? '✓' : '✗'}`);
+
+    // Toggle-Funktion
+    const hasToggle = typeof toggleEventLog === 'function';
+    debugLogAdd(`  toggleEventLog(): ${hasToggle ? '✓' : '✗'}`);
+
+    // Clear-Funktion
+    const hasClear = typeof clearEventLog === 'function';
+    debugLogAdd(`  clearEventLog(): ${hasClear ? '✓' : '✗'}`);
+
+    // Test verschiedene Typen
+    if (hasShowToast) {
+        showToast('✓ Success Test', 'success');
+        setTimeout(() => showToast('✕ Error Test', 'error'), 300);
+        setTimeout(() => showToast('⚠ Warning Test', 'warning'), 600);
+        setTimeout(() => showToast('ℹ Info Test', 'info'), 900);
+        debugLogAdd(`  Typ-Tests ausgeführt`);
+    }
+
+    const allPass = log && hasShowToast && hasToggle && hasClear;
+    setTimeout(() => {
+        showToast(`📋 Event Log Test: ${allPass ? 'Bestanden' : 'Fehlgeschlagen'}`, allPass ? 'success' : 'error');
+    }, 1200);
+}
+
 function testUndoRedo() {
     debugLogAdd('--- Undo/Redo Test ---');
     

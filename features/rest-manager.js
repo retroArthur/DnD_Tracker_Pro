@@ -128,35 +128,23 @@ function renderRestCharacters(characters, type) {
         const maxHp = char.hpMax ?? char.hp ?? 1;
         const hpPct = Math.round((currentHp / maxHp) * 100);
         const hpClass = hpPct <= 25 ? 'critical' : hpPct <= 50 ? 'bloodied' : 'healthy';
-
-        // Berechne Trefferwürfel-Typ basierend auf Klasse
         const hitDieType = getHitDieType(char.class);
 
         return `
             <div class="rest-character" data-id="${char.id}">
-                <div class="rest-char-info">
-                    <span class="rest-char-name">${esc(char.name)}</span>
-                    <span class="rest-char-class">${esc(char.class || 'Unbekannt')} Lv.${char.level || 1}</span>
-                </div>
-                <div class="rest-char-hp">
-                    <span class="rest-hp-bar ${hpClass}" style="--hp-pct: ${hpPct}%"></span>
-                    <span class="rest-hp-text">${currentHp}/${maxHp} HP</span>
-                </div>
+                <span class="rest-char-name">${esc(char.name)}</span>
+                <span class="rest-hp-bar ${hpClass}" style="--hp-pct: ${hpPct}%"></span>
+                <span class="rest-hp-text">${currentHp}/${maxHp}</span>
                 ${type === 'short' ? `
-                    <div class="rest-hit-dice">
-                        <label>Trefferwürfel (d${hitDieType}):</label>
-                        <div class="rest-hd-controls">
-                            <button class="btn btn-sm" onclick="adjustRestHitDice(${char.id}, -1)">−</button>
-                            <input type="number" id="rest-hd-${char.id}" value="0" min="0" max="${currentHitDice}" class="rest-hd-input">
-                            <button class="btn btn-sm" onclick="adjustRestHitDice(${char.id}, 1)">+</button>
-                            <span class="rest-hd-available">(${currentHitDice}/${maxHitDice} verfügbar)</span>
-                        </div>
-                    </div>
+                    <span class="rest-hd-controls">
+                        <button class="rest-hd-btn" onclick="adjustRestHitDice(${char.id}, -1)">−</button>
+                        <input type="number" id="rest-hd-${char.id}" value="0" min="0" max="${currentHitDice}" class="rest-hd-input">
+                        <button class="rest-hd-btn" onclick="adjustRestHitDice(${char.id}, 1)">+</button>
+                    </span>
+                    <span class="rest-hd-label">d${hitDieType} <span class="rest-hd-available">${currentHitDice}/${maxHitDice}</span></span>
                 ` : `
-                    <div class="rest-long-preview">
-                        <span class="rest-heal-preview">+${maxHp - currentHp} HP</span>
-                        <span class="rest-hd-restore">+${Math.max(1, Math.floor(maxHitDice / 2))} Trefferwürfel</span>
-                    </div>
+                    <span class="rest-heal-preview">+${maxHp - currentHp} HP</span>
+                    <span class="rest-hd-restore">+${Math.max(1, Math.floor(maxHitDice / 2))} HD</span>
                 `}
             </div>
         `;

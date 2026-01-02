@@ -10,57 +10,55 @@ document.addEventListener('keydown', (e) => {
     const isTyping = ['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement?.tagName) ||
                      document.activeElement?.isContentEditable;
     
-    // Shortcuts-Overlay schließen mit Escape
+    // Escape: Schließe Overlays und Modals (konsolidiert)
     if (e.key === 'Escape') {
+        // 1. Shortcuts-Overlay schließen
         const shortcutsOverlay = $('shortcuts-overlay');
         if (shortcutsOverlay?.classList.contains('show')) {
             hideShortcutsOverlay();
             return;
         }
-        // Quick-Ref schließen
+        // 2. Quick-Ref schließen
         const quickRef = $('quick-ref-panel');
         if (quickRef?.classList.contains('open')) {
             toggleQuickRef();
             return;
         }
+        // 3. Offenes Modal schließen
+        const openModal = document.querySelector('.modal-overlay.show');
+        if (openModal) {
+            openModal.classList.remove('show');
+            return;
+        }
     }
-    
+
     // Strg+Z: Undo (immer aktiv)
     if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) {
         e.preventDefault();
         undo();
         return;
     }
-    
+
     // Strg+Y oder Strg+Shift+Z: Redo (immer aktiv)
     if ((e.ctrlKey || e.metaKey) && (e.key === 'y' || (e.key === 'z' && e.shiftKey))) {
         e.preventDefault();
         redo();
         return;
     }
-    
+
     // Strg+S: Speichern (immer aktiv)
     if ((e.ctrlKey || e.metaKey) && e.key === 's') {
         e.preventDefault();
         saveImmediate();
-        showToast('💾 Gespeichert');
+        showToast('Gespeichert');
         return;
     }
-    
+
     // Strg+K oder Strg+F: Globale Suche
     if ((e.ctrlKey || e.metaKey) && (e.key === 'f' || e.key === 'k')) {
         e.preventDefault();
         $('global-search')?.focus();
         return;
-    }
-    
-    // Escape: Modal schließen
-    if (e.key === 'Escape') {
-        const openModal = document.querySelector('.modal-overlay.show');
-        if (openModal) {
-            openModal.classList.remove('show');
-            return;
-        }
     }
     
     // Folgende nur wenn nicht am Tippen
@@ -72,7 +70,18 @@ document.addEventListener('keydown', (e) => {
         showShortcutsOverlay();
         return;
     }
-    
+
+    // /: Quick Reference öffnen und Suche fokussieren
+    if (e.key === '/') {
+        e.preventDefault();
+        const panel = $('quick-ref-panel');
+        if (panel && !panel.classList.contains('active')) {
+            toggleQuickRef();
+        }
+        setTimeout(() => $('qref-search-input')?.focus(), 100);
+        return;
+    }
+
     // T: Session Timer toggle
     if (e.key === 't' && !e.ctrlKey && !e.metaKey) {
         e.preventDefault();
@@ -80,9 +89,9 @@ document.addEventListener('keydown', (e) => {
         return;
     }
     
-    // Ziffern 1-9: Tab-Wechsel
+    // Ziffern 1-9: Tab-Wechsel (entspricht der Standard-Tab-Reihenfolge)
     if (e.key >= '1' && e.key <= '9' && !e.ctrlKey && !e.metaKey && !e.altKey) {
-        const tabs = ['dashboard','party','npcs','locations','quests','encounter','initiative','spells','dice'];
+        const tabs = ['dashboard','party','npcs','locations','quests','encounter','initiative','shops','loot'];
         const idx = parseInt(e.key) - 1;
         if (tabs[idx]) {
             e.preventDefault();
@@ -142,7 +151,14 @@ document.addEventListener('keydown', (e) => {
         quickRoll(20);
         return;
     }
-    
+
+    // L: Event Log toggle
+    if (e.key === 'l' && !e.ctrlKey && !e.metaKey) {
+        e.preventDefault();
+        toggleEventLog();
+        return;
+    }
+
     // N: Neues Element (kontextabhängig)
     if (e.key === 'n' && !e.ctrlKey && !e.metaKey) {
         e.preventDefault();
@@ -174,6 +190,7 @@ function showKeyboardHelp() {
             <div style="display: flex; justify-content: space-between;"><span>Neues Element</span><kbd>N</kbd></div>
             <div style="display: flex; justify-content: space-between;"><span>Nächster Zug</span><kbd>Space</kbd></div>
             <div style="display: flex; justify-content: space-between;"><span>Würfeln (d20)</span><kbd>R</kbd></div>
+            <div style="display: flex; justify-content: space-between;"><span>Event Log</span><kbd>L</kbd></div>
         </div>
     `;
     
