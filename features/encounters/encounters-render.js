@@ -127,9 +127,61 @@ function parseCR(cr) {
     return parseFloat(cr) || 0;
 }
 
+// Quick difficulty estimation for single encounter
+function getEncounterDifficulty(cr) {
+    if (!D.characters || D.characters.length === 0) return null;
+
+    // Get party average level
+    const avgLevel = Math.round(D.characters.reduce((sum, c) => sum + (c.level || 1), 0) / D.characters.length);
+    const partySize = D.characters.length;
+
+    // XP Thresholds for average level (simplified)
+    const thresholds = {
+        1: { easy: 25, medium: 50, hard: 75, deadly: 100 },
+        2: { easy: 50, medium: 100, hard: 150, deadly: 200 },
+        3: { easy: 75, medium: 150, hard: 225, deadly: 400 },
+        4: { easy: 125, medium: 250, hard: 375, deadly: 500 },
+        5: { easy: 250, medium: 500, hard: 750, deadly: 1100 },
+        10: { easy: 600, medium: 1200, hard: 1900, deadly: 2800 },
+        15: { easy: 1400, medium: 2800, hard: 4300, deadly: 6400 },
+        20: { easy: 2800, medium: 5700, hard: 8500, deadly: 12700 }
+    };
+
+    // Get closest threshold
+    const levels = Object.keys(thresholds).map(Number).sort((a, b) => a - b);
+    let closestLevel = levels[0];
+    for (const lvl of levels) {
+        if (lvl <= avgLevel) closestLevel = lvl;
+    }
+    const t = thresholds[closestLevel];
+
+    // Party thresholds
+    const partyThresholds = {
+        easy: t.easy * partySize,
+        medium: t.medium * partySize,
+        hard: t.hard * partySize,
+        deadly: t.deadly * partySize
+    };
+
+    // CR to XP
+    const crToXP = {
+        "0": 10, "1/8": 25, "1/4": 50, "1/2": 100, "1": 200, "2": 450, "3": 700,
+        "4": 1100, "5": 1800, "6": 2300, "7": 2900, "8": 3900, "9": 5000, "10": 5900
+    };
+    const xp = crToXP[String(cr)] || (parseCR(cr) * 200);
+
+    // Determine difficulty
+    if (xp < partyThresholds.easy) return { level: 'trivial', label: 'Trivial' };
+    if (xp < partyThresholds.medium) return { level: 'easy', label: 'Leicht' };
+    if (xp < partyThresholds.hard) return { level: 'medium', label: 'Mittel' };
+    if (xp < partyThresholds.deadly) return { level: 'hard', label: 'Schwer' };
+    return { level: 'deadly', label: 'Tödlich' };
+}
+
 function renderEncounterItem(enc) {
     const icon = getEncounterIcon(enc);
     const isSelected = enc.id === selectedEncounterId;
+    const difficulty = enc.cr ? getEncounterDifficulty(enc.cr) : null;
 
     return `
         <div class="enc-item ${isSelected ? 'selected' : ''}" data-action="select-encounter" data-id="${enc.id}">
@@ -147,6 +199,11 @@ function renderEncounterItem(enc) {
                 <span class="enc-stat-badge" title="Rüstungsklasse">🛡️ ${enc.ac || '—'}</span>
                 <span class="enc-stat-badge" title="Trefferpunkte">❤️ ${enc.hp || '—'}</span>
             </div>
+            ${difficulty ? `
+                <div class="enc-item-difficulty">
+                    <span class="difficulty-badge ${difficulty.level}">${difficulty.label}</span>
+                </div>
+            ` : ''}
         </div>
     `;
 }

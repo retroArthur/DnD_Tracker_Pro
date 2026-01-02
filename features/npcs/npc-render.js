@@ -438,27 +438,39 @@ function renderNPCRelations(npc) {
     return `
         <div class="npc-relations-list">
             ${relations.map((rel, idx) => {
-                const target = rel.targetType === 'characters'
-                    ? EntityLookup.character(rel.targetId)
-                    : EntityLookup.npc(rel.targetId);
+                let targetName, icon, typeLabel, isClickable = true;
 
-                if (!target) return '';
+                if (rel.targetType === 'party') {
+                    targetName = 'Die Gruppe';
+                    icon = '👥';
+                    typeLabel = 'Heldengruppe';
+                    isClickable = false; // Party is not a single entity to navigate to
+                } else if (rel.targetType === 'characters') {
+                    const target = EntityLookup.character(rel.targetId);
+                    if (!target) return '';
+                    targetName = target.name;
+                    icon = '👤';
+                    typeLabel = 'Spielercharakter';
+                } else {
+                    const target = EntityLookup.npc(rel.targetId);
+                    if (!target) return '';
+                    targetName = target.name;
+                    icon = '🎭';
+                    typeLabel = 'NPC';
+                }
 
                 const status = RELATION_STATUS[rel.status] || RELATION_STATUS.neutral;
-                const icon = rel.targetType === 'characters' ? '👤' : '🎭';
 
                 return `
                     <div class="npc-relation-item">
                         <span class="npc-relation-icon">${icon}</span>
                         <div class="npc-relation-info">
                             <div class="npc-relation-name"
-                                 data-action="navigate-entity-stop"
-                                 data-type="${rel.targetType}"
-                                 data-id="${rel.targetId}">
-                                ${esc(target.name)}
+                                 ${isClickable ? `data-action="navigate-entity-stop" data-type="${rel.targetType}" data-id="${rel.targetId}"` : ''}>
+                                ${esc(targetName)}
                             </div>
                             <div class="npc-relation-type">
-                                ${rel.targetType === 'characters' ? 'Spielercharakter' : 'NPC'}
+                                ${typeLabel}
                                 ${rel.note ? ` • ${esc(rel.note)}` : ''}
                             </div>
                         </div>
@@ -481,7 +493,11 @@ function showRelationsModal(npcId) {
     const npc = EntityLookup.npc(npcId);
     if (!npc) return;
 
-    // Build options for NPCs and Characters
+    // Build options for Party, NPCs and Characters
+    const partyOption = D.characters?.length > 0
+        ? `<option value="party:0">👥 Die Gruppe (alle Charaktere)</option>`
+        : '';
+
     const npcOptions = (D.npcs || [])
         .filter(n => n.id !== npcId) // Exclude self
         .map(n => `<option value="npcs:${n.id}">${esc(n.name)} (NPC)</option>`)
@@ -492,17 +508,29 @@ function showRelationsModal(npcId) {
         .join('');
 
     const existingRelations = (npc.relations || []).map((rel, idx) => {
-        const target = rel.targetType === 'characters'
-            ? EntityLookup.character(rel.targetId)
-            : EntityLookup.npc(rel.targetId);
-        if (!target) return '';
+        let targetName, targetIcon;
+
+        if (rel.targetType === 'party') {
+            targetName = 'Die Gruppe';
+            targetIcon = '👥';
+        } else if (rel.targetType === 'characters') {
+            const target = EntityLookup.character(rel.targetId);
+            if (!target) return '';
+            targetName = target.name;
+            targetIcon = '👤';
+        } else {
+            const target = EntityLookup.npc(rel.targetId);
+            if (!target) return '';
+            targetName = target.name;
+            targetIcon = '🎭';
+        }
 
         const status = RELATION_STATUS[rel.status] || RELATION_STATUS.neutral;
         return `
             <div class="npc-relation-item">
-                <span class="npc-relation-icon">${rel.targetType === 'characters' ? '👤' : '🎭'}</span>
+                <span class="npc-relation-icon">${targetIcon}</span>
                 <div class="npc-relation-info">
-                    <div class="npc-relation-name">${esc(target.name)}</div>
+                    <div class="npc-relation-name">${esc(targetName)}</div>
                 </div>
                 <span class="npc-relation-status ${rel.status}">${status.label}</span>
                 <button class="npc-relation-btn danger" onclick="removeRelation(${npcId}, ${idx})">✕</button>
@@ -522,6 +550,7 @@ function showRelationsModal(npcId) {
                 <div class="relations-form-row">
                     <select id="relation-target">
                         <option value="">— Ziel wählen —</option>
+                        ${partyOption}
                         <optgroup label="NPCs">${npcOptions}</optgroup>
                         <optgroup label="Charaktere">${charOptions}</optgroup>
                     </select>

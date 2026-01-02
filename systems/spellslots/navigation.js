@@ -19,6 +19,8 @@ function switchView(name) {
     }
     if (name === 'notes') $('session-date').value = new Date().toISOString().split('T')[0];
     if (name === 'network') renderMindmap();
+    if (name === 'party') renderParty();
+    if (name === 'dashboard') renderDashboard();
     
     // Mobile: Navigation schließen und Label aktualisieren
     const header = document.querySelector('.app-header');

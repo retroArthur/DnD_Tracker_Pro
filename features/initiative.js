@@ -2,6 +2,7 @@
 // ============================================================
 // INITIATIVE - @combat @turn @round @encounter
 // ============================================================
+
 function renderInit() {
     const c = $('init-list'); const rn = $('round-num'); if (!c) return;
     const init = D.initiative;
@@ -168,10 +169,21 @@ function endCombat() {
         return;
     }
     if (confirm('Kampf beenden und alle Teilnehmer entfernen?')) {
+        // Sync HP from combatants back to party characters
+        D.initiative.combatants.forEach(cb => {
+            if (cb.type === 'player') {
+                const char = D.characters.find(c => c.name === cb.name);
+                if (char) {
+                    char.hpCurrent = cb.currentHp;
+                }
+            }
+        });
+
         D.initiative = { combatants: [], currentTurn: 0, round: 1 };
         renderInit();
+        renderParty();
         save();
-        showToast('⏹️ Kampf beendet');
+        showToast('⏹️ Kampf beendet - HP synchronisiert');
     }
 }
 
@@ -268,7 +280,12 @@ function updateInitiativeCombatantHP(id, amount) {
     modHp(id, amount);
 }
 
-function sortInit() { D.initiative.combatants.sort((a, b) => b.initiative - a.initiative); D.initiative.currentTurn = 0; renderInit(); save(); }
+function sortInit() {
+    D.initiative.combatants.sort((a, b) => b.initiative - a.initiative);
+    D.initiative.currentTurn = 0;
+    renderInit();
+    save();
+}
 
 function nextTurn() {
     const init = D.initiative; if (!init.combatants.length) return;
