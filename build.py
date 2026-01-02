@@ -6,7 +6,12 @@ Bündelt alle Module in eine einzige Production-HTML-Datei
 
 import os
 import re
+import sys
 from pathlib import Path
+
+# Logging importieren
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from tools.logging_util import log
 
 # Verwende das Verzeichnis, in dem das Skript liegt
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -48,12 +53,15 @@ def minify_css(css_code):
     css_code = re.sub(r'\s*;\s*', ';', css_code)
     return css_code.strip()
 
-def build(minify=False):
+def build(minify=False, verbose=False):
     """Erstellt die gebündelte HTML-Datei"""
-    print("🔨 Starte Build-Prozess...")
-    print(f"📂 Quelle: {SOURCE_DIR}")
-    print(f"📂 Ziel: {OUTPUT_FILE}")
-    print(f"⚙️ Minifizierung: {'Aktiviert' if minify else 'Deaktiviert'}")
+    if verbose:
+        log.set_verbose(True)
+    log.header("D&D Tracker Build")
+    log.info("🔨 Starte Build-Prozess...")
+    log.info(f"Quelle: {SOURCE_DIR}")
+    log.info(f"Ziel: {OUTPUT_FILE}")
+    log.info(f"Minifizierung: {'Aktiviert' if minify else 'Deaktiviert'}")
     
     # Module in Ladereihenfolge (aus loader.js)
     modules = [
@@ -158,14 +166,14 @@ def build(minify=False):
     print("\n📝 Lade CSS...")
     css_content = read_file(f"{SOURCE_DIR}/assets/styles.css")
     if minify:
-        print("⚙️ Minifiziere CSS...")
+        log.info("Minifiziere CSS...")
         css_content = minify_css(css_content)
-    print(f"✓ CSS geladen: {len(css_content):,} Zeichen")
+    log.success(f"CSS geladen: {len(css_content):,} Zeichen")
     
     # 2. Lade HTML Body
     print("\n📝 Lade HTML Body...")
     body_content = read_file(f"{SOURCE_DIR}/assets/body.html")
-    print(f"✓ HTML Body geladen: {len(body_content):,} Zeichen")
+    log.success(f"HTML Body geladen: {len(body_content):,} Zeichen")
     
     # 3. Lade und kombiniere JavaScript
     print("\n📝 Lade JavaScript-Module...")
@@ -179,16 +187,16 @@ def build(minify=False):
             js_combined += f"\n// ========== {module} ==========\n"
             js_combined += module_content + "\n"
             total_js_size += len(module_content)
-            print(f"✓ [{i}/{len(modules)}] {module:40s} ({len(module_content):7,} Zeichen)")
+            log.info(f"[{i}/{len(modules)}] {module}: {len(module_content):,} Zeichen")
         else:
-            print(f"⚠ [{i}/{len(modules)}] {module:40s} NICHT GEFUNDEN")
+            log.warning(f"[{i}/{len(modules)}] {module} NICHT GEFUNDEN")
     
     if minify:
         print("\n⚙️ Minifiziere JavaScript...")
         original_size = len(js_combined)
         js_combined = minify_js(js_combined)
         saved = original_size - len(js_combined)
-        print(f"✓ Gespart: {saved:,} Zeichen ({saved/original_size*100:.1f}%)")
+        log.success(f"Gespart: {saved:,} Zeichen ({saved/original_size*100:.1f}%)")
     
     print(f"\n✓ JavaScript kombiniert: {len(js_combined):,} Zeichen")
     
@@ -241,8 +249,8 @@ if (document.readyState === 'loading') {{
     # Statistiken
     final_size = len(html_template)
     print(f"\n✅ Build abgeschlossen!")
-    print(f"📄 Datei: {OUTPUT_FILE}")
-    print(f"📊 Größe: {final_size:,} Zeichen ({final_size/1024/1024:.2f} MB)")
+    log.info(f"Datei: {OUTPUT_FILE}")
+    log.info(f"Größe: {final_size:,} Zeichen ({final_size/1024/1024:.2f} MB)")
     print(f"\n📦 Komponenten:")
     print(f"   CSS:        {len(css_content):>10,} Zeichen")
     print(f"   HTML Body:  {len(body_content):>10,} Zeichen")
