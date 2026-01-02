@@ -310,7 +310,7 @@ function showEntityPreviewModal(type, id, entity) {
         const parent = entity.parentId ? EntityLookup.wiki(entity.parentId) : null;
         content = `
             ${parent ? `<div style="font-size: 0.85em; color: var(--cyan); margin-bottom: 8px;">📁 ${esc(parent.name)}</div>` : ''}
-            ${entity.content ? `<div style="color: var(--text); max-height: 300px; overflow-y: auto;">${entity.content.substring(0, 500)}${entity.content.length > 500 ? '...' : ''}</div>` : '<div style="color: var(--text-dim);">Kein Inhalt</div>'}
+            ${entity.content ? `<div style="color: var(--text); max-height: 300px; overflow-y: auto;">${sanitizeHTML(entity.content.substring(0, 500))}${entity.content.length > 500 ? '...' : ''}</div>` : '<div style="color: var(--text-dim);">Kein Inhalt</div>'}
         `;
     }
     

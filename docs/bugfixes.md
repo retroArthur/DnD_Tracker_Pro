@@ -211,6 +211,30 @@
 - **Fix:** Neue Hilfsfunktion `rollWeightedEntry(table)` erstellt, beide Funktionen refactored
 - **Datei:** `features/random-tables.js`
 
+### Security: XSS in Wiki-Content Preview
+- **Problem:** `entity.content` wurde in Entity-Preview-Modal ohne Sanitization angezeigt
+- **Ursache:** `entity.content.substring(0, 500)` direkt in innerHTML Template
+- **Fix:** `sanitizeHTML()` um den Content-Substring hinzugefügt
+- **Datei:** `systems/entity-links.js` (showEntityPreview)
+
+### Security: XSS in Location Description
+- **Problem:** `loc.description` wurde im Detail-Panel ohne Sanitization angezeigt
+- **Ursache:** Direktes Einsetzen in innerHTML Template
+- **Fix:** `sanitizeHTML(loc.description)` statt direktem Einsetzen
+- **Datei:** `features/locations/locations-render.js` (renderLocationDetail)
+
+### Event Log: Race Condition bei Entry-Cleanup
+- **Problem:** `querySelectorAll()` liefert statische NodeList - `entries.length` ändert sich nicht beim Entfernen
+- **Ursache:** While-Loop prüfte statische Länge, `.remove()` auf undefined nach erstem Durchlauf
+- **Fix:** `Array.from()` und `.pop().remove()` für korrekte Array-Mutation
+- **Datei:** `utils/utilities.js` (showToast)
+
+### Consistency: onclick-Attribute zu data-action migriert
+- **Problem:** 3 onclick-Attribute statt Event-Delegation
+- **Betroffene Stellen:** Parent-Toggle, Spell-Assign Select-All/None Buttons
+- **Fix:** Umgestellt auf `data-action="toggle-parent-expanded"` bzw. `data-action="call"`
+- **Datei:** `assets/body.html`
+
 ---
 
 ## Muster / Lessons Learned
@@ -233,6 +257,8 @@
 | Service Worker ohne Caching | Cache-First Strategie implementieren, Stale-While-Revalidate |
 | `??` Operator fängt NaN nicht | Explizite NaN-Prüfung mit `!isNaN(value)` zusätzlich verwenden |
 | Button für nicht-existente View | Vor Feature-Buttons prüfen ob View/Handler existiert |
+| querySelectorAll in Schleifen | Statische NodeList - Array.from() nutzen bei remove() |
+| Content ohne sanitizeHTML() | Immer sanitizeHTML() für User-Content wie description, content |
 
 ## Known Technical Debt
 

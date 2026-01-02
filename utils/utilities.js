@@ -270,10 +270,10 @@ function showToast(msg = '✓ Gespeichert', type = 'success', duration = APP_CON
     const isPersistent = log.classList.contains('persistent');
     const maxEntries = isPersistent ? 50 : 5;
 
-    // Nur event-log-entry Elemente zählen
-    const entries = log.querySelectorAll('.event-log-entry');
+    // Nur event-log-entry Elemente zählen (als Array für sichere Iteration)
+    const entries = Array.from(log.querySelectorAll('.event-log-entry'));
     while (entries.length > maxEntries) {
-        entries[entries.length - 1].remove();
+        entries.pop().remove();
     }
 
     // Nur ausblenden wenn nicht persistent

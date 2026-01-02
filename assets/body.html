@@ -680,7 +680,7 @@
 
                 <!-- Mini Legend (kollabierbar) -->
                 <div class="network-legend" id="mindmap-legend">
-                    <div class="network-legend-toggle" onclick="this.parentElement.classList.toggle('expanded')">?</div>
+                    <div class="network-legend-toggle" data-action="toggle-parent-expanded">?</div>
                     <div class="network-legend-content">
                         <div class="network-legend-row"><span style="background:var(--green)"></span>Spieler</div>
                         <div class="network-legend-row"><span style="background:var(--cyan)"></span>NPC</div>
@@ -2843,8 +2843,8 @@
             <div class="assign-spell-list-header">
                 <span class="assign-spell-count-label">Verfügbar <span id="assign-spell-count" class="assign-spell-count-badge">0</span></span>
                 <div class="assign-spell-quick-actions">
-                    <button class="btn btn-xs" onclick="assignSpellsSelectAll()" title="Alle auswählen">Alle</button>
-                    <button class="btn btn-xs" onclick="assignSpellsSelectNone()" title="Keine auswählen">Keine</button>
+                    <button class="btn btn-xs" data-action="call" data-value="assignSpellsSelectAll" title="Alle auswählen">Alle</button>
+                    <button class="btn btn-xs" data-action="call" data-value="assignSpellsSelectNone" title="Keine auswählen">Keine</button>
                 </div>
             </div>
 

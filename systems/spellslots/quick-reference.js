@@ -69,6 +69,11 @@ const QREF_CONDITIONS = {
 
 // SCHNELL-REFERENZ PANEL
 // ============================================================
+
+/**
+ * Oeffnet oder schliesst das Quick Reference Panel
+ * Fokussiert automatisch das Suchfeld beim Oeffnen
+ */
 function toggleQuickRef() {
     const panel = $('quick-ref-panel');
     if (panel) {
@@ -80,7 +85,10 @@ function toggleQuickRef() {
     }
 }
 
-// Toggle collapsible section
+/**
+ * Klappt eine Section im Quick Reference Panel ein/aus
+ * @param {HTMLElement} el - Element innerhalb der Section
+ */
 function toggleQrefSection(el) {
     const section = el.closest('.qref-section');
     if (section) {
@@ -88,7 +96,10 @@ function toggleQrefSection(el) {
     }
 }
 
-// Show condition detail
+/**
+ * Zeigt die Detailbeschreibung eines Zustands an
+ * @param {string} conditionKey - Schluessel des Zustands (z.B. 'blinded', 'charmed')
+ */
 function showConditionDetail(conditionKey) {
     const condition = QREF_CONDITIONS[conditionKey];
     if (!condition) return;
@@ -105,7 +116,10 @@ function showConditionDetail(conditionKey) {
     });
 }
 
-// Apply condition to current combatant
+/**
+ * Wendet einen Zustand auf den aktuellen Combatant an
+ * @param {string} conditionKey - Schluessel des Zustands aus QREF_CONDITIONS
+ */
 function applyQrefCondition(conditionKey) {
     const condition = QREF_CONDITIONS[conditionKey];
     if (!condition) return;
@@ -145,7 +159,10 @@ function applyQrefCondition(conditionKey) {
     save();
 }
 
-// Roll dice from quick reference
+/**
+ * Wuerfelt eine Formel aus der Quick Reference
+ * @param {string} diceFormula - Wuerfelformel (z.B. '3d6', '1d20')
+ */
 function rollQrefDice(diceFormula) {
     if (!diceFormula) return;
 
@@ -182,7 +199,10 @@ function rollQrefDice(diceFormula) {
     }
 }
 
-// Search functionality
+/**
+ * Filtert Quick Reference Sections nach Suchbegriff
+ * @param {string} query - Suchbegriff
+ */
 function qrefSearch(query) {
     const searchTerm = query.toLowerCase().trim();
     const sections = document.querySelectorAll('.qref-section');
@@ -213,7 +233,10 @@ function qrefSearch(query) {
     });
 }
 
-// Initialize search input
+/**
+ * Initialisiert die Suche im Quick Reference Panel
+ * Registriert Event-Listener fuer Input und Escape-Taste
+ */
 function initQrefSearch() {
     const input = $('qref-search-input');
     if (input) {
@@ -243,6 +266,9 @@ function toggleQuickRefSection(sectionEl, evt) {
 // SCHNELL-REFERENZ BENUTZERDEFINIERTE EINTRÄGE
 // ============================================================
 
+/**
+ * Initialisiert die benutzerdefinierten Quick Reference Eintraege
+ */
 function initQuickRefCustom() {
     // Initialisiere quickRefCustom Array falls nicht vorhanden
     if (!D.quickRefCustom) D.quickRefCustom = [];
@@ -250,6 +276,9 @@ function initQuickRefCustom() {
     initQrefSearch();
 }
 
+/**
+ * Rendert die benutzerdefinierten Quick Reference Eintraege
+ */
 function renderQuickRefCustom() {
     const container = $('quick-ref-custom');
     if (!container) return;
@@ -287,6 +316,9 @@ function renderQuickRefCustom() {
     }).join('');
 }
 
+/**
+ * Oeffnet das Modal zum Hinzufuegen eines neuen Quick Reference Eintrags
+ */
 function addQuickRefEntry() {
     $('quick-ref-edit-id').value = '';
     $('quick-ref-entry-title').value = '';
@@ -296,6 +328,10 @@ function addQuickRefEntry() {
     setTimeout(() => $('quick-ref-entry-title').focus(), 100);
 }
 
+/**
+ * Oeffnet das Modal zum Bearbeiten eines Quick Reference Eintrags
+ * @param {number} id - Eintrag-ID
+ */
 function editQuickRefEntry(id) {
     const entry = D.quickRefCustom?.find(e => e.id === id);
     if (!entry) return;
@@ -307,6 +343,9 @@ function editQuickRefEntry(id) {
     showModal('quick-ref-entry-modal');
 }
 
+/**
+ * Speichert einen Quick Reference Eintrag (neu oder bearbeitet)
+ */
 function saveQuickRefEntry() {
     const id = $('quick-ref-edit-id').value;
     const title = $('quick-ref-entry-title').value.trim();
@@ -342,6 +381,10 @@ function saveQuickRefEntry() {
     showToast('📌 Eintrag gespeichert');
 }
 
+/**
+ * Loescht einen Quick Reference Eintrag nach Bestaetigung
+ * @param {number} id - Eintrag-ID
+ */
 function deleteQuickRefEntry(id) {
     if (!confirm('Eintrag wirklich löschen?')) return;
 
@@ -352,6 +395,10 @@ function deleteQuickRefEntry(id) {
     showToast('🗑️ Eintrag gelöscht');
 }
 
+/**
+ * Klappt einen benutzerdefinierten Eintrag ein/aus
+ * @param {number} id - Eintrag-ID
+ */
 function toggleQuickRefCustomEntry(id) {
     const entry = D.quickRefCustom?.find(e => e.id === id);
     if (entry) {

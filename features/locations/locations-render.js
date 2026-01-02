@@ -243,7 +243,7 @@ function showLocationDetail(id) {
             <div class="loc-section">
                 <div class="loc-section-title">Beschreibung</div>
                 <div class="loc-desc">
-                    ${loc.description ? loc.description : '<span style="color: var(--text-dim);">Keine Beschreibung vorhanden</span>'}
+                    ${loc.description ? sanitizeHTML(loc.description) : '<span style="color: var(--text-dim);">Keine Beschreibung vorhanden</span>'}
                 </div>
             </div>
         </div>
