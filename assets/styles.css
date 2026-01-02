@@ -18443,6 +18443,7 @@
     margin-bottom: 8px;
 }
 
+/* Legacy weight input */
 .rt-entry-row .rt-entry-weight {
     width: 60px;
     padding: 8px;
@@ -18453,6 +18454,24 @@
     text-align: center;
 }
 
+/* New range input */
+.rt-entry-row .rt-entry-range {
+    width: 70px;
+    padding: 8px;
+    background: var(--bg-dark);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--gold);
+    text-align: center;
+    font-weight: 500;
+    font-family: 'Roboto Mono', monospace;
+}
+
+.rt-entry-row .rt-entry-range:focus {
+    border-color: var(--gold);
+    outline: none;
+}
+
 .rt-entry-row .rt-entry-text {
     flex: 1;
     padding: 8px 10px;
@@ -18460,6 +18479,100 @@
     border: 1px solid var(--border);
     border-radius: 6px;
     color: var(--text);
+}
+
+/* Dice Type Selector */
+.rt-dice-section {
+    margin-bottom: 16px;
+}
+
+.rt-dice-section label {
+    display: block;
+    margin-bottom: 8px;
+    color: var(--text-dim);
+    font-size: 0.85em;
+}
+
+.rt-dice-selector {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.rt-dice-btn {
+    padding: 8px 14px;
+    background: var(--bg-dark);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text);
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.rt-dice-btn:hover {
+    border-color: var(--gold);
+    color: var(--gold);
+}
+
+.rt-dice-btn.active {
+    background: var(--gold);
+    border-color: var(--gold);
+    color: var(--bg-dark);
+}
+
+.rt-dice-label {
+    color: var(--gold);
+    font-weight: 500;
+}
+
+/* Range Hint */
+.rt-range-hint {
+    margin-top: 10px;
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 0.85em;
+}
+
+.rt-range-hint.complete {
+    background: rgba(45, 212, 191, 0.1);
+    border: 1px solid var(--teal);
+}
+
+.rt-range-hint.incomplete {
+    background: rgba(245, 158, 11, 0.1);
+    border: 1px solid var(--orange);
+}
+
+.rt-range-hint.empty {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--border);
+}
+
+.rt-hint-ok { color: var(--teal); }
+.rt-hint-warn { color: var(--orange); }
+.rt-hint-info { color: var(--text-dim); }
+
+/* Preview dice badge */
+.rt-preview-dice {
+    padding: 4px 10px;
+    background: var(--gold);
+    color: var(--bg-dark);
+    font-weight: 600;
+    font-size: 0.85em;
+    border-radius: 12px;
+}
+
+/* Preview range column */
+.rt-entry .rt-entry-range {
+    min-width: 50px;
+    padding: 2px 8px;
+    background: rgba(212, 175, 55, 0.15);
+    color: var(--gold);
+    border-radius: 4px;
+    font-weight: 500;
+    font-size: 0.9em;
+    text-align: center;
 }
 
 .rt-modal-footer {
@@ -18503,7 +18616,7 @@
 
 .generator-tables {
     padding: 16px 20px;
-    max-height: 350px;
+    max-height: 60vh;
     overflow-y: auto;
     display: flex;
     flex-direction: column;
@@ -18540,6 +18653,15 @@
     background: var(--bg-dark);
     padding: 3px 8px;
     border-radius: 10px;
+}
+
+.generator-table-dice {
+    font-size: 0.8em;
+    color: var(--bg-dark);
+    background: var(--gold);
+    padding: 3px 10px;
+    border-radius: 10px;
+    font-weight: 600;
 }
 
 .generator-table-actions {
