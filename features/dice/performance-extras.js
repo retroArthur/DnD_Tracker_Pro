@@ -341,7 +341,7 @@ function renderDashboard() {
             <button class="dash-quick-btn" data-action="show-view" data-value="spells">✨ Zauber</button>
             <button class="dash-quick-btn" data-action="show-view" data-value="timers">⏱️ Timer</button>
             <button class="dash-quick-btn" data-action="show-view" data-value="maps">🗺️ Karten</button>
-            <button class="dash-quick-btn" data-action="show-view" data-value="generators">🎭 Generator</button>
+            <button class="dash-quick-btn" data-action="show-generator-modal">🎭 Generator</button>
         </div>
         
         <!-- Two Column Layout -->

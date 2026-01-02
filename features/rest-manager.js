@@ -181,10 +181,18 @@ function adjustRestHitDice(charId, delta) {
     const char = EntityLookup.character(charId);
     if (!char) return;
 
-    const max = char.hitDice ?? char.level ?? 1;
+    // Defensive parsing - handle NaN and undefined
+    const maxHD = parseInt(char.level) || 1;
+    const availableHD = (typeof char.hitDice === 'number' && !isNaN(char.hitDice))
+        ? char.hitDice
+        : maxHD;
     const current = parseInt(input.value) || 0;
-    const newValue = Math.max(0, Math.min(max, current + delta));
-    input.value = newValue;
+    const newValue = Math.max(0, Math.min(availableHD, current + delta));
+
+    // Only set if valid number
+    if (!isNaN(newValue)) {
+        input.value = newValue;
+    }
 }
 
 function applyRest() {

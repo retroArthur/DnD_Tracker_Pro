@@ -344,6 +344,123 @@ function deleteTable(id) {
     showToast('Tabelle gelöscht');
 }
 
+// Generator Modal für Dashboard-Button
+function showGeneratorModal() {
+    initRandomTables();
+    const tables = D.randomTables || [];
+
+    const content = `
+        <div class="generator-modal-content">
+            <div class="generator-modal-header">
+                <h3>🎭 Zufalls-Generator</h3>
+                <button class="btn btn-sm" onclick="hideModal('generator-modal')">✕</button>
+            </div>
+
+            <div class="generator-toolbar">
+                <button class="btn btn-primary" onclick="showTableModal()">+ Neue Tabelle</button>
+            </div>
+
+            <div class="generator-tables" id="generator-tables-list">
+                ${tables.length ? tables.map(t => `
+                    <div class="generator-table-card">
+                        <div class="generator-table-info">
+                            <span class="generator-table-icon">${t.icon || '🎲'}</span>
+                            <span class="generator-table-name">${esc(t.name)}</span>
+                            <span class="generator-table-count">${t.entries.length} Einträge</span>
+                        </div>
+                        <div class="generator-table-actions">
+                            <button class="btn btn-primary" onclick="rollOnTableAndShow(${t.id})">🎲 Würfeln</button>
+                            <button class="btn btn-sm" onclick="showTableModal(${t.id})">✏️</button>
+                            <button class="btn btn-sm btn-danger" onclick="deleteTableAndRefresh(${t.id})">🗑️</button>
+                        </div>
+                    </div>
+                `).join('') : `
+                    <div class="generator-empty">
+                        <div class="generator-empty-icon">🎲</div>
+                        <div class="generator-empty-text">Keine Tabellen vorhanden</div>
+                        <p>Erstelle Zufallstabellen für Begegnungen, Wetter, Gerüchte und mehr!</p>
+                    </div>
+                `}
+            </div>
+
+            <div class="generator-result" id="generator-result"></div>
+        </div>
+    `;
+
+    let modal = $('generator-modal');
+    if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'generator-modal';
+        modal.className = 'modal-overlay';
+        modal.innerHTML = `<div class="modal" style="max-width: 600px;">${content}</div>`;
+        modal.onclick = (e) => { if (e.target === modal) hideModal('generator-modal'); };
+        document.body.appendChild(modal);
+    } else {
+        modal.querySelector('.modal').innerHTML = content;
+    }
+
+    showModal('generator-modal');
+}
+
+// Würfeln und Ergebnis im Generator Modal anzeigen
+function rollOnTableAndShow(id) {
+    const table = D.randomTables?.find(t => t.id === id);
+    if (!table || !table.entries.length) {
+        showToast('Tabelle ist leer', 'error');
+        return;
+    }
+
+    // Gewichtetes Würfeln
+    const totalWeight = table.entries.reduce((sum, e) => sum + (e.weight || 1), 0);
+    let roll = Math.floor(Math.random() * totalWeight);
+    let result = null;
+    let resultIdx = 0;
+
+    for (let i = 0; i < table.entries.length; i++) {
+        roll -= (table.entries[i].weight || 1);
+        if (roll < 0) {
+            result = table.entries[i];
+            resultIdx = i + 1;
+            break;
+        }
+    }
+
+    if (!result) {
+        result = table.entries[table.entries.length - 1];
+        resultIdx = table.entries.length;
+    }
+
+    // Ergebnis im Modal anzeigen
+    const resultArea = $('generator-result');
+    if (resultArea) {
+        resultArea.innerHTML = `
+            <div class="generator-result-box">
+                <div class="generator-result-header">
+                    <span class="generator-result-icon">${table.icon || '🎲'}</span>
+                    <span class="generator-result-table">${esc(table.name)}</span>
+                </div>
+                <div class="generator-result-text">${esc(result.text)}</div>
+                <div class="generator-result-roll">Wurf: ${resultIdx} von ${table.entries.length}</div>
+            </div>
+        `;
+        resultArea.style.animation = 'none';
+        resultArea.offsetHeight;
+        resultArea.style.animation = 'pulse 0.3s ease-out';
+    }
+}
+
+// Tabelle löschen und Generator Modal refreshen
+function deleteTableAndRefresh(id) {
+    if (!confirm('Tabelle wirklich löschen?')) return;
+
+    pushUndo('Tabelle gelöscht');
+    D.randomTables = (D.randomTables || []).filter(t => t.id !== id);
+    save();
+    renderRandomTables();
+    showGeneratorModal(); // Refresh
+    showToast('Tabelle gelöscht');
+}
+
 // Quick Roll Button für Dashboard
 function quickRandomRoll() {
     initRandomTables();

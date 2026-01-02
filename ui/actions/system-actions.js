@@ -67,7 +67,8 @@ const SystemActions = {
     'apply-quick-action': (ctx) => applyQuickAction(parseInt(ctx.id), ctx.value),
     'show-condition-reference': () => showConditionReference(),
 
-    // Random Tables
+    // Random Tables / Generator
+    'show-generator-modal': () => showGeneratorModal(),
     'show-table-modal': (ctx) => showTableModal(ctx.id ? parseInt(ctx.id) : null),
     'quick-random-roll': () => quickRandomRoll(),
     'roll-on-table': (ctx) => rollOnTable(parseInt(ctx.id)),

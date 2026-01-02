@@ -17805,6 +17805,115 @@
 }
 
 /* ============================================================
+   GENERATOR MODAL (Dashboard)
+   ============================================================ */
+.generator-modal-content { padding: 0; }
+
+.generator-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border);
+}
+
+.generator-modal-header h3 { margin: 0; color: var(--gold); }
+
+.generator-toolbar {
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border);
+}
+
+.generator-tables {
+    padding: 16px 20px;
+    max-height: 350px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.generator-table-card {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    transition: all 0.2s ease;
+}
+
+.generator-table-card:hover {
+    border-color: var(--gold);
+    background: rgba(212,175,55,0.05);
+}
+
+.generator-table-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.generator-table-icon { font-size: 1.5em; }
+.generator-table-name { font-weight: 600; }
+.generator-table-count {
+    font-size: 0.8em;
+    color: var(--text-dim);
+    background: var(--bg-dark);
+    padding: 3px 8px;
+    border-radius: 10px;
+}
+
+.generator-table-actions {
+    display: flex;
+    gap: 6px;
+}
+
+.generator-empty {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--text-dim);
+}
+
+.generator-empty-icon { font-size: 3em; margin-bottom: 12px; }
+.generator-empty-text { font-size: 1.1em; margin-bottom: 8px; color: var(--text); }
+.generator-empty p { margin: 0; font-size: 0.9em; }
+
+.generator-result {
+    padding: 16px 20px;
+    border-top: 1px solid var(--border);
+}
+
+.generator-result-box {
+    padding: 16px;
+    background: linear-gradient(135deg, rgba(212,175,55,0.15), rgba(212,175,55,0.05));
+    border: 1px solid var(--gold);
+    border-radius: 10px;
+}
+
+.generator-result-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.generator-result-icon { font-size: 1.3em; }
+.generator-result-table { font-size: 0.85em; color: var(--text-dim); }
+
+.generator-result-text {
+    font-size: 1.2em;
+    font-weight: 600;
+    margin-bottom: 8px;
+}
+
+.generator-result-roll {
+    font-size: 0.8em;
+    color: var(--text-dim);
+}
+
+/* ============================================================
    LOOT DISTRIBUTION
    ============================================================ */
 .ld-modal-content { padding: 0; }
