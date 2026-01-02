@@ -17373,6 +17373,13 @@
 .rest-char-name { font-weight: 600; color: var(--text); }
 .rest-char-class { font-size: 0.85em; color: var(--text-dim); }
 
+.rest-no-chars {
+    text-align: center;
+    color: var(--text-dim);
+    padding: 20px;
+    font-style: italic;
+}
+
 .rest-char-hp { display: flex; align-items: center; gap: 8px; }
 
 .rest-hp-bar {

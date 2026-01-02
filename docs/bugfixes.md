@@ -181,6 +181,36 @@
 - **Fix:** Neues `showGeneratorModal()` erstellt, Button auf `data-action="show-generator-modal"` geändert
 - **Dateien:** `features/random-tables.js`, `features/dice/performance-extras.js`, `ui/actions/system-actions.js`, `assets/styles.css`
 
+### Quick Actions: Fehlende Undo-Unterstützung
+- **Problem:** Quick Actions (Ausweichen, Sprinten, etc.) konnten nicht rückgängig gemacht werden
+- **Ursache:** `applyQuickAction()` rief `pushUndo()` nicht vor Datenänderung auf
+- **Fix:** `pushUndo()` am Anfang von `applyQuickAction()` hinzugefügt
+- **Datei:** `features/quick-actions.js`
+
+### Random Tables: Fehlende Undo bei Tabellen-Speicherung
+- **Problem:** Tabellen-Änderungen konnten nicht rückgängig gemacht werden
+- **Ursache:** `saveTable()` rief `pushUndo()` nicht auf
+- **Fix:** `pushUndo()` vor Datenänderung in `saveTable()` hinzugefügt
+- **Datei:** `features/random-tables.js`
+
+### Rest Manager: Fehlende CSS-Klasse
+- **Problem:** `.rest-no-chars` Klasse wurde verwendet aber nicht definiert
+- **Ursache:** CSS-Definition fehlte
+- **Fix:** CSS-Definition für `.rest-no-chars` hinzugefügt
+- **Datei:** `assets/styles.css`
+
+### Loot Distribution: Race Condition bei Gold-Verteilung
+- **Problem:** `D.partyGold` wurde nach Verteilung überschrieben statt korrekt gesetzt
+- **Ursache:** Doppelte Zuweisung: erst Addition, dann sofortiges Überschreiben
+- **Fix:** Redundanten Code entfernt, nur noch `D.partyGold = remainder`
+- **Datei:** `features/loot-distribution.js`
+
+### Random Tables: Duplizierter Würfel-Code
+- **Problem:** `rollOnTable()` und `rollOnTableAndShow()` enthielten identische Würfel-Logik
+- **Ursache:** Copy-Paste bei Feature-Implementierung
+- **Fix:** Neue Hilfsfunktion `rollWeightedEntry(table)` erstellt, beide Funktionen refactored
+- **Datei:** `features/random-tables.js`
+
 ---
 
 ## Muster / Lessons Learned

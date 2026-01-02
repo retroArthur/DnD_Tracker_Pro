@@ -65,6 +65,23 @@ function getDefaultRandomTables() {
 
 let selectedTableId = null;
 
+// Hilfsfunktion für gewichtetes Würfeln (eliminiert Duplikation)
+function rollWeightedEntry(table) {
+    if (!table?.entries?.length) return null;
+
+    const totalWeight = table.entries.reduce((sum, e) => sum + (e.weight || 1), 0);
+    let roll = Math.floor(Math.random() * totalWeight);
+
+    for (let i = 0; i < table.entries.length; i++) {
+        roll -= (table.entries[i].weight || 1);
+        if (roll < 0) {
+            return { entry: table.entries[i], index: i + 1 };
+        }
+    }
+    // Fallback zum letzten Eintrag
+    return { entry: table.entries[table.entries.length - 1], index: table.entries.length };
+}
+
 function renderRandomTables() {
     const container = $('random-tables-list');
     if (!container) return;
@@ -141,30 +158,14 @@ function showTablePreview(id) {
 
 function rollOnTable(id) {
     const table = D.randomTables?.find(t => t.id === id);
-    if (!table || !table.entries.length) {
+    const rollResult = rollWeightedEntry(table);
+
+    if (!rollResult) {
         showToast('Tabelle ist leer', 'error');
         return;
     }
 
-    // Gewichtetes Würfeln
-    const totalWeight = table.entries.reduce((sum, e) => sum + (e.weight || 1), 0);
-    let roll = Math.floor(Math.random() * totalWeight);
-    let result = null;
-    let resultIdx = 0;
-
-    for (let i = 0; i < table.entries.length; i++) {
-        roll -= (table.entries[i].weight || 1);
-        if (roll < 0) {
-            result = table.entries[i];
-            resultIdx = i + 1;
-            break;
-        }
-    }
-
-    if (!result) {
-        result = table.entries[table.entries.length - 1];
-        resultIdx = table.entries.length;
-    }
+    const { entry: result, index: resultIdx } = rollResult;
 
     // Ergebnis anzeigen
     const resultArea = $(`rt-result-${id}`);
@@ -304,6 +305,7 @@ function saveTable() {
     }
 
     initRandomTables();
+    pushUndo(editId ? 'Tabelle bearbeitet' : 'Tabelle erstellt');
 
     if (editId) {
         // Update
@@ -405,30 +407,14 @@ function showGeneratorModal() {
 // Würfeln und Ergebnis im Generator Modal anzeigen
 function rollOnTableAndShow(id) {
     const table = D.randomTables?.find(t => t.id === id);
-    if (!table || !table.entries.length) {
+    const rollResult = rollWeightedEntry(table);
+
+    if (!rollResult) {
         showToast('Tabelle ist leer', 'error');
         return;
     }
 
-    // Gewichtetes Würfeln
-    const totalWeight = table.entries.reduce((sum, e) => sum + (e.weight || 1), 0);
-    let roll = Math.floor(Math.random() * totalWeight);
-    let result = null;
-    let resultIdx = 0;
-
-    for (let i = 0; i < table.entries.length; i++) {
-        roll -= (table.entries[i].weight || 1);
-        if (roll < 0) {
-            result = table.entries[i];
-            resultIdx = i + 1;
-            break;
-        }
-    }
-
-    if (!result) {
-        result = table.entries[table.entries.length - 1];
-        resultIdx = table.entries.length;
-    }
+    const { entry: result, index: resultIdx } = rollResult;
 
     // Ergebnis im Modal anzeigen
     const resultArea = $('generator-result');

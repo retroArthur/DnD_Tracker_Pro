@@ -193,12 +193,7 @@ function applyGoldSplit() {
         char.gold = (char.gold || 0) + perChar;
     });
 
-    // Rest in Party-Kasse
-    if (remainder > 0) {
-        D.partyGold = (D.partyGold || 0) + remainder;
-    }
-
-    // Party Gold auf 0 setzen (wurde verteilt)
+    // Rest in Party-Kasse (verteiltes Gold wird abgezogen, Rest bleibt)
     D.partyGold = remainder;
 
     hideModal('loot-dist-modal');

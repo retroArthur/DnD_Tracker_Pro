@@ -99,6 +99,8 @@ function applyQuickAction(cbId, actionKey) {
     const action = QUICK_ACTIONS[actionKey];
     if (!action) return;
 
+    pushUndo(`Quick Action: ${action.name}`);
+
     // Effekt anwenden falls vorhanden
     if (action.effect) {
         if (!cb.effects) cb.effects = [];
