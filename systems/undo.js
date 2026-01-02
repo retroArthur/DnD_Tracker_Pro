@@ -77,6 +77,12 @@ function redo() {
     }
 }
 
+function clearUndoHistory() {
+    undoStack.length = 0;
+    redoStack.length = 0;
+    showToast('🗑️ Undo-Historie geleert');
+}
+
 // ============================================================
 // AUTO-SAVE INDIKATOR
 // ============================================================

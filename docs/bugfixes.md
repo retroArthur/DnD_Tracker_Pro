@@ -333,6 +333,55 @@
 | User-Input ohne Escape in Icon-Feldern | Auch "sichere" Felder wie Icons mit esc() escapen |
 | Unbegrenzte Schleifen bei User-Input | Immer maxValue/maxIterations setzen (DoS-Schutz) |
 
+## Code Audit Fixes (2026-01-02)
+
+### KRITISCH: clearUndoHistory() fehlte
+- **Problem:** Button "Undo-Historie leeren" im Debug-Modal existierte aber Funktion war nicht implementiert
+- **Ursache:** `data-action="call" data-value="clearUndoHistory"` rief nicht-existente Funktion auf
+- **Fix:** `clearUndoHistory()` Funktion in undo.js hinzugefügt
+- **Datei:** `systems/undo.js`
+
+### KRITISCH: Event Listener Memory Leak in maps.js
+- **Problem:** `mousemove`/`mouseup` Listener auf `document` konnten sich bei mehrfachem Drag-Start akkumulieren
+- **Ursache:** Keine Prüfung/Cleanup vor neuem addEventListener
+- **Fix:** `removeEventListener` vor `addEventListener` in `startMarkerDrag()`
+- **Datei:** `features/dice/maps.js`
+
+### HOCH: Type Coercion == statt === (4 Stellen)
+- **Problem:** `el.dataset.id == id` verglich String mit potentieller Number
+- **Ursache:** `dataset.id` ist immer String, `id` kann Number sein
+- **Fix:** `el.dataset.id === String(id)` für typsichere Vergleiche
+- **Dateien:**
+  - `features/initiative.js:1047`
+  - `features/encounters/encounters-render.js:216`
+  - `features/locations/locations-render.js:152`
+  - `features/npcs/npc-render.js:164`
+
+### HOCH: Deprecated Funktionen entfernt
+- **Problem:** 3 deprecated Funktionen in locations-render.js verschwendeten Codezeilen
+- **Entfernt:**
+  - `toggleLocationCard(id)` - Alias für selectLocation
+  - `expandAllLocations()` - Nur Toast-Stub
+  - `collapseAllLocations()` - Wrapper für clearLocationDetail
+- **Fix:** entity-actions.js nutzt jetzt `selectLocation` direkt
+- **Dateien:** `features/locations/locations-render.js`, `ui/actions/entity-actions.js`
+
+### HOCH: sortInit/sortInitiative konsolidiert
+- **Problem:** 2 nahezu identische Sortier-Funktionen in verschiedenen Dateien
+- **Zusammenführung:**
+  - `sortInit()` (initiative.js) - Nun mit Validierung und Toast
+  - `sortInitiative()` (initiative-extras.js) - ENTFERNT
+- **Fix:** Button nutzt jetzt `data-action="sort-initiative"` statt `data-action="call"`
+- **Dateien:** `features/initiative.js`, `features/dice/initiative-extras.js`, `assets/body.html`
+
+### Floating Toolbar: Dropdown Select schließt sofort
+- **Problem:** Font/Size Dropdowns schlossen sich beim Klick sofort wieder
+- **Ursache:** `mouseup` Event triggerte `handleSelectionChange()` die Toolbar versteckte
+- **Fix:** `floatingToolbarInteracting` Flag um Toolbar-Interaktionen zu schützen
+- **Datei:** `features/shops/spell-editor.js`
+
+---
+
 ## Known Technical Debt
 
 ### spell-editor.js: 22x document.execCommand()

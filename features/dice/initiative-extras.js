@@ -27,15 +27,6 @@ function rollAllInitiative() {
     showToast('Initiative gewürfelt & sortiert');
 }
 
-function sortInitiative() {
-    if (!D.initiative || !D.initiative.combatants || D.initiative.combatants.length === 0) return;
-    D.initiative.combatants.sort((a, b) => b.initiative - a.initiative);
-    D.initiative.currentTurn = 0;
-    renderInit();
-    save();
-    showToast('Initiative sortiert');
-}
-
 // Drag and Drop for Initiative
 let draggedInitItem = null;
 

@@ -314,10 +314,12 @@ function updateInitiativeCombatantHP(id, amount) {
 }
 
 function sortInit() {
+    if (!D.initiative?.combatants?.length) return;
     D.initiative.combatants.sort((a, b) => b.initiative - a.initiative);
     D.initiative.currentTurn = 0;
     renderInit();
     save();
+    showToast('⬇️ Initiative sortiert');
 }
 
 function nextTurn() {
@@ -1044,7 +1046,7 @@ function selectLoot(id, scroll = true) {
 
     // Update selection in list
     document.querySelectorAll('.loot-item').forEach(el => {
-        el.classList.toggle('selected', el.dataset.id == id);
+        el.classList.toggle('selected', el.dataset.id === String(id));
     });
 
     // Show detail

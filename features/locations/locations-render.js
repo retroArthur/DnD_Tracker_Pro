@@ -149,7 +149,7 @@ function selectLocation(id, scroll = true) {
 
     // Update selection in list
     document.querySelectorAll('.loc-item').forEach(el => {
-        el.classList.toggle('selected', el.dataset.id == id);
+        el.classList.toggle('selected', el.dataset.id === String(id));
     });
 
     // Show detail
@@ -295,30 +295,6 @@ function toggleLocation(id) {
 // ============================================================
 // LEGACY FUNCTIONS - Kept for backwards compatibility
 // ============================================================
-
-/**
- * @deprecated Verwende selectLocation(id) stattdessen
- * @param {number} id - Location ID
- */
-function toggleLocationCard(id) {
-    selectLocation(id);
-}
-
-/**
- * @deprecated Nicht mehr verwendet im Master-Detail Layout
- */
-function expandAllLocations() {
-    showToast('Alle Orte werden in der Liste angezeigt');
-}
-
-/**
- * @deprecated Verwende clearLocationDetail() stattdessen
- */
-function collapseAllLocations() {
-    selectedLocationId = null;
-    clearLocationDetail();
-    showToast('Details-Panel geleert');
-}
 
 function renderFilterList() {
     const c = $('filter-list'); if (!c) return;

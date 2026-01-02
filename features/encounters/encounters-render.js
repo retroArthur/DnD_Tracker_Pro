@@ -213,7 +213,7 @@ function selectEncounter(id, scroll = true) {
 
     // Update selection in list
     document.querySelectorAll('.enc-item').forEach(el => {
-        el.classList.toggle('selected', el.dataset.id == id);
+        el.classList.toggle('selected', el.dataset.id === String(id));
     });
 
     // Show detail

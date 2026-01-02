@@ -649,6 +649,7 @@ function updateStickyOffsets() {
 let floatingToolbarTarget = null;
 let floatingToolbarRange = null; // Gespeicherte Selection Range
 let hideFloatingToolbarTimeout = null;
+let floatingToolbarInteracting = false; // Flag: User interagiert mit Toolbar
 
 function initFloatingToolbar() {
     const toolbar = $('floating-toolbar');
@@ -680,13 +681,37 @@ function initFloatingToolbar() {
     
     // Mausup-Event für bessere Positionierung
     document.addEventListener('mouseup', (e) => {
+        // Skip wenn User mit Toolbar-Selects interagiert
+        if (floatingToolbarInteracting) return;
         // Kurze Verzögerung damit die Auswahl vollständig ist
         setTimeout(() => handleSelectionChange(), 10);
+    });
+
+    // Select-Elemente: Flag setzen wenn User interagiert
+    toolbar.querySelectorAll('select').forEach(select => {
+        select.addEventListener('focus', () => {
+            floatingToolbarInteracting = true;
+        });
+        select.addEventListener('blur', () => {
+            // Kurze Verzögerung um race conditions zu vermeiden
+            setTimeout(() => {
+                floatingToolbarInteracting = false;
+            }, 100);
+        });
+        select.addEventListener('mousedown', () => {
+            floatingToolbarInteracting = true;
+        });
     });
     
     // Klicks auf die Toolbar-Buttons
     toolbar.addEventListener('mousedown', (e) => {
+        // Select-Elemente müssen normal funktionieren
+        if (e.target.tagName === 'SELECT' || e.target.tagName === 'OPTION') {
+            e.stopPropagation(); // Verhindert Document-Handler
+            return;
+        }
         e.preventDefault(); // Verhindert Verlust der Textauswahl
+        e.stopPropagation(); // Verhindert Document-Handler
     });
     
     toolbar.addEventListener('click', (e) => {
@@ -913,7 +938,12 @@ function handleSelectionChange() {
     const selection = window.getSelection();
     const toolbar = $('floating-toolbar');
     if (!toolbar) return;
-    
+
+    // Nicht verstecken wenn User mit Toolbar interagiert (z.B. Select öffnet)
+    if (floatingToolbarInteracting || toolbar.contains(document.activeElement)) {
+        return;
+    }
+
     // Prüfe ob Text ausgewählt ist
     const selectedText = selection.toString().trim();
     if (!selectedText || selectedText.length < 1) {

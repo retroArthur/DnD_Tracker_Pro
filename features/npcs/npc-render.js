@@ -161,7 +161,7 @@ function selectNPC(id, scroll = true) {
 
     // Update selection in list
     document.querySelectorAll('.npc-item').forEach(el => {
-        el.classList.toggle('selected', el.dataset.id == id);
+        el.classList.toggle('selected', el.dataset.id === String(id));
     });
 
     // Show detail

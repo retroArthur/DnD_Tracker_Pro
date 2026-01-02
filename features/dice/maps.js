@@ -560,19 +560,23 @@ function renderMapMarkers() {
 function startMarkerDrag(markerId, event) {
     const map = getCurrentMap();
     if (!map) return;
-    
+
     const markerData = map.markers.find(m => m.id === markerId);
     if (!markerData) return;
-    
+
+    // Cleanup: Bestehende Listener entfernen (verhindert Memory Leak)
+    document.removeEventListener('mousemove', handleMarkerDrag);
+    document.removeEventListener('mouseup', endMarkerDrag);
+
     draggedMarker = {
         id: markerId,
         element: event.target.closest('.map-marker')
     };
-    
+
     if (draggedMarker.element) {
         draggedMarker.element.classList.add('dragging');
     }
-    
+
     document.addEventListener('mousemove', handleMarkerDrag);
     document.addEventListener('mouseup', endMarkerDrag);
 }
