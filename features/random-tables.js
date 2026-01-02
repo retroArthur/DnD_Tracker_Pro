@@ -394,7 +394,7 @@ function showGeneratorModal() {
         modal = document.createElement('div');
         modal.id = 'generator-modal';
         modal.className = 'modal-overlay';
-        modal.innerHTML = `<div class="modal" style="max-width: 600px;">${content}</div>`;
+        modal.innerHTML = `<div class="modal" style="max-width: 800px;">${content}</div>`;
         modal.onclick = (e) => { if (e.target === modal) hideModal('generator-modal'); };
         document.body.appendChild(modal);
     } else {

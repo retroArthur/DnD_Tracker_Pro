@@ -17293,7 +17293,9 @@
     grid-template-columns: 1fr 1fr;
     gap: 12px;
     padding: 16px 20px;
+    margin: 0 12px;
     background: var(--bg-dark);
+    border-radius: 12px;
 }
 
 .rest-type-btn {
@@ -17448,8 +17450,10 @@
     justify-content: flex-end;
     gap: 10px;
     padding: 16px 20px;
-    border-top: 1px solid var(--border);
+    margin: 12px;
+    margin-top: 0;
     background: var(--bg-dark);
+    border-radius: 12px;
 }
 
 /* ============================================================

@@ -74,8 +74,7 @@ const SystemActions = {
     'roll-on-table': (ctx) => rollOnTable(parseInt(ctx.id)),
 
     // Loot Distribution
-    'show-loot-distribution': () => showLootDistributionModal(),
-    'show-party-inventory': () => showPartyInventory()
+    'show-loot-distribution': () => showLootDistributionModal()
 };
 
 // Register all system actions

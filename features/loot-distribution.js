@@ -28,11 +28,6 @@ function showLootDistributionModal() {
                 <button class="btn btn-sm" onclick="hideModal('loot-dist-modal')">✕</button>
             </div>
 
-            <div class="ld-tabs">
-                <button class="ld-tab active" onclick="switchLootTab('gold')">💰 Gold aufteilen</button>
-                <button class="ld-tab" onclick="switchLootTab('items')">📦 Items verteilen</button>
-            </div>
-
             <div class="ld-tab-content" id="ld-tab-gold">
                 <div class="ld-gold-section">
                     <div class="ld-gold-input">
@@ -55,12 +50,6 @@ function showLootDistributionModal() {
                     </div>
                 </div>
             </div>
-
-            <div class="ld-tab-content hidden" id="ld-tab-items">
-                <div class="ld-items-section">
-                    ${renderUnassignedItems()}
-                </div>
-            </div>
         </div>
     `;
 
@@ -77,16 +66,6 @@ function showLootDistributionModal() {
     }
 
     showModal('loot-dist-modal');
-}
-
-function switchLootTab(tab) {
-    // Tabs
-    document.querySelectorAll('.ld-tab').forEach(t => t.classList.remove('active'));
-    document.querySelector(`.ld-tab[onclick*="${tab}"]`)?.classList.add('active');
-
-    // Content
-    document.querySelectorAll('.ld-tab-content').forEach(c => c.classList.add('hidden'));
-    $(`ld-tab-${tab}`)?.classList.remove('hidden');
 }
 
 function calculatePartyGold() {
@@ -226,115 +205,4 @@ function collectAllGold() {
 
     save();
     showToast(`📥 ${total} GM in Party-Kasse gesammelt`, 'success');
-}
-
-function renderUnassignedItems() {
-    const items = (D.loot || []).filter(item =>
-        !item.assignedTo && item.category !== 'gems'
-    );
-
-    if (!items.length) {
-        return `
-            <div class="ld-items-empty">
-                <div class="ld-items-empty-icon">📦</div>
-                <div class="ld-items-empty-text">Keine unverteilten Items</div>
-            </div>
-        `;
-    }
-
-    const characters = D.characters || [];
-
-    return `
-        <div class="ld-items-list">
-            ${items.map(item => `
-                <div class="ld-item-row">
-                    <div class="ld-item-info">
-                        <span class="ld-item-name" style="color: ${RARITY_COLORS[item.rarity] || 'var(--text)'}">
-                            ${esc(item.name)}
-                        </span>
-                        <span class="ld-item-qty">×${item.quantity}</span>
-                    </div>
-                    <select class="ld-item-assign" onchange="assignItemTo(${item.id}, this.value)">
-                        <option value="">Nicht zugewiesen</option>
-                        ${characters.map(c => `
-                            <option value="${c.id}" ${item.assignedTo === c.id ? 'selected' : ''}>
-                                ${esc(c.name)}
-                            </option>
-                        `).join('')}
-                    </select>
-                </div>
-            `).join('')}
-        </div>
-    `;
-}
-
-function assignItemTo(itemId, charId) {
-    const item = EntityLookup.lootItem(itemId);
-    if (!item) return;
-
-    item.assignedTo = charId ? parseInt(charId) : null;
-    save();
-
-    if (charId) {
-        const char = EntityLookup.character(parseInt(charId));
-        showToast(`${item.name} → ${char?.name || 'Charakter'}`, 'success');
-    }
-}
-
-// Party-Inventar-Übersicht
-function showPartyInventory() {
-    const characters = D.characters || [];
-
-    const content = `
-        <div class="ld-modal-content">
-            <div class="ld-modal-header">
-                <h3>📋 Party-Inventar</h3>
-                <button class="btn btn-sm" onclick="hideModal('party-inv-modal')">✕</button>
-            </div>
-
-            <div class="ld-party-inv">
-                <div class="ld-party-gold">
-                    <span class="ld-party-gold-label">💰 Party-Kasse:</span>
-                    <span class="ld-party-gold-value">${D.partyGold || 0} GM</span>
-                </div>
-
-                <div class="ld-party-chars">
-                    ${characters.map(char => {
-                        const items = (D.loot || []).filter(i => i.assignedTo === char.id);
-                        return `
-                            <div class="ld-party-char">
-                                <div class="ld-party-char-header">
-                                    <span class="ld-party-char-name">${esc(char.name)}</span>
-                                    <span class="ld-party-char-gold">${char.gold || 0} GM</span>
-                                </div>
-                                ${items.length ? `
-                                    <div class="ld-party-char-items">
-                                        ${items.map(i => `
-                                            <span class="ld-party-item" style="color: ${RARITY_COLORS[i.rarity] || 'var(--text)'}">
-                                                ${esc(i.name)}${i.quantity > 1 ? ` ×${i.quantity}` : ''}
-                                            </span>
-                                        `).join('')}
-                                    </div>
-                                ` : '<div class="ld-party-no-items">Keine Items</div>'}
-                            </div>
-                        `;
-                    }).join('')}
-                </div>
-            </div>
-        </div>
-    `;
-
-    let modal = $('party-inv-modal');
-    if (!modal) {
-        modal = document.createElement('div');
-        modal.id = 'party-inv-modal';
-        modal.className = 'modal-overlay';
-        modal.innerHTML = `<div class="modal" style="max-width: 500px;">${content}</div>`;
-        modal.onclick = (e) => { if (e.target === modal) hideModal('party-inv-modal'); };
-        document.body.appendChild(modal);
-    } else {
-        modal.querySelector('.modal').innerHTML = content;
-    }
-
-    showModal('party-inv-modal');
 }
