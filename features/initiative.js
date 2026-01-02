@@ -119,6 +119,7 @@ function renderInit() {
                 <div class="init-name" ${nameClickHandler}>${esc(cb.name)}</div>
                 <div class="init-type">${typeLabel}${cb.cr ? ` • CR ${cb.cr}` : ''}</div>
                 ${effects ? `<div class="init-effects">${effects}</div>` : ''}
+                ${typeof renderActionBanner === 'function' ? renderActionBanner(cb) : ''}
                 ${dead && cb.type === 'player' ? renderDeathSaves(cb) : ''}
                 ${!dead ? renderConcentration(cb) : ''}
                 ${cb.concentration?.pendingCheck ? renderConcentrationCheck(cb, cb.concentration.pendingCheck) : ''}

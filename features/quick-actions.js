@@ -108,7 +108,14 @@ function applyQuickAction(cbId, actionKey) {
         // Prüfen ob Effekt bereits existiert
         const existing = cb.effects.find(e => e.name === action.effect.name);
         if (existing) {
-            showToast(`${cb.name} ist bereits ${action.effect.name}`, 'info');
+            // Zeige Info im Banner statt Toast
+            cb.actionBanner = {
+                icon: action.icon,
+                message: `Bereits ${action.effect.name}`,
+                type: 'info'
+            };
+            renderInit();
+            renderQuickActionsBar();
             return;
         }
 
@@ -122,6 +129,10 @@ function applyQuickAction(cbId, actionKey) {
         });
     }
 
+    // Action Banner erstellen statt Toast
+    let bannerMessage = '';
+    let bannerType = 'info';
+
     // Spezielle Aktionen
     switch (actionKey) {
         case 'dash':
@@ -133,7 +144,7 @@ function applyQuickAction(cbId, actionKey) {
                     speed = char.speed.split('|')[0];
                 }
             }
-            showToast(`${action.icon} ${cb.name} sprintet (2× ${speed})`, 'info');
+            bannerMessage = `Sprintet (2× ${speed})`;
             break;
 
         case 'hide':
@@ -147,11 +158,12 @@ function applyQuickAction(cbId, actionKey) {
                 }
             }
             const total = stealthRoll + stealthMod;
-            showToast(`${action.icon} ${cb.name} versteckt sich: ${stealthRoll}${stealthMod >= 0 ? '+' : ''}${stealthMod} = ${total}`, stealthRoll === 20 ? 'success' : stealthRoll === 1 ? 'error' : 'info');
+            bannerMessage = `Versteckt: ${stealthRoll}${stealthMod >= 0 ? '+' : ''}${stealthMod} = ${total}`;
+            bannerType = stealthRoll === 20 ? 'success' : stealthRoll === 1 ? 'error' : 'info';
             break;
 
         case 'help':
-            showToast(`${action.icon} ${cb.name} hilft einem Verbündeten`, 'info');
+            bannerMessage = 'Hilft einem Verbündeten';
             break;
 
         case 'search':
@@ -165,22 +177,63 @@ function applyQuickAction(cbId, actionKey) {
                 }
             }
             const percTotal = perceptionRoll + perceptionMod;
-            showToast(`${action.icon} ${cb.name} sucht: ${perceptionRoll}${perceptionMod >= 0 ? '+' : ''}${perceptionMod} = ${percTotal}`, perceptionRoll === 20 ? 'success' : perceptionRoll === 1 ? 'error' : 'info');
+            bannerMessage = `Sucht: ${perceptionRoll}${perceptionMod >= 0 ? '+' : ''}${perceptionMod} = ${percTotal}`;
+            bannerType = perceptionRoll === 20 ? 'success' : perceptionRoll === 1 ? 'error' : 'info';
             break;
 
         case 'useObject':
-            showToast(`${action.icon} ${cb.name} benutzt ein Objekt`, 'info');
+            bannerMessage = 'Benutzt ein Objekt';
             break;
 
         default:
             if (action.effect) {
-                showToast(`${action.icon} ${cb.name}: ${action.name}`, 'success');
+                bannerMessage = action.name;
+                bannerType = 'success';
             }
+    }
+
+    // Banner setzen falls Nachricht vorhanden
+    if (bannerMessage) {
+        cb.actionBanner = {
+            icon: action.icon,
+            message: bannerMessage,
+            type: bannerType
+        };
     }
 
     renderInit();
     renderQuickActionsBar();
     save();
+}
+
+// Render Action Banner für Combatant
+function renderActionBanner(cb) {
+    if (!cb.actionBanner) return '';
+
+    const typeColors = {
+        success: 'var(--green)',
+        error: 'var(--red)',
+        info: 'var(--blue)'
+    };
+    const color = typeColors[cb.actionBanner.type] || 'var(--blue)';
+
+    return `
+        <div class="init-action-banner" style="border-left-color: ${color};">
+            <span class="action-banner-icon">${cb.actionBanner.icon}</span>
+            <span class="action-banner-text">${esc(cb.actionBanner.message)}</span>
+            <button class="action-banner-dismiss" data-action="dismiss-action-banner" data-id="${cb.id}" title="Entfernen">✕</button>
+        </div>
+    `;
+}
+
+// Action Banner entfernen
+function dismissActionBanner(cbId) {
+    const cb = D.initiative.combatants.find(c => c.id === cbId);
+    if (cb) {
+        delete cb.actionBanner;
+        renderInit();
+        save();
+    }
 }
 
 // Condition Quick Reference Modal

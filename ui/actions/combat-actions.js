@@ -35,6 +35,10 @@ const CombatActions = {
     'restore-spell-slots-stop': (ctx) => { ctx.event.stopPropagation(); restoreAllSpellSlots(ctx.id); },
     'toggle-spell-slot-stop': (ctx) => { ctx.event.stopPropagation(); toggleSpellSlot(ctx.id, parseInt(ctx.value)); },
 
+    // Quick Actions
+    'apply-quick-action': (ctx) => applyQuickAction(ctx.id, ctx.value),
+    'dismiss-action-banner': (ctx) => dismissActionBanner(ctx.id),
+
     // HP Calculator actions
     'apply-hp-change': (ctx) => applyHpChange(ctx.value),
     'set-hp-preset': (ctx) => { const el = $('hp-calc-value'); if (el) el.value = ctx.value; },

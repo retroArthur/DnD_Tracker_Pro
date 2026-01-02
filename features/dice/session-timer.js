@@ -103,11 +103,9 @@ function resetSessionTimer() {
 }
 
 function initSessionTimer() {
-    // Lade letzte Session-Zeit falls vorhanden
-    if (D.lastSessionDuration && D.lastSessionDuration > 0) {
-        sessionTimerSeconds = D.lastSessionDuration;
-        updateSessionTimerDisplay();
-    }
+    // Timer immer bei 00:00:00 starten
+    sessionTimerSeconds = 0;
+    updateSessionTimerDisplay();
 }
 
 // ============================================================

@@ -36,6 +36,11 @@ const WikiActions = {
     'sort-wiki': (ctx) => sortWiki(ctx.value),
     'filter-wiki': (ctx) => filterWiki(ctx.value),
 
+    // Wiki UX improvements
+    'apply-wiki-template': (ctx) => applyWikiTemplate(ctx.target.dataset.template),
+    'wiki-toc-jump': (ctx) => scrollToTOCHeading(ctx.target.dataset.target),
+    'insert-wiki-link-suggestion': (ctx) => insertWikiLinkSuggestion(ctx.target.dataset.title),
+
     // Session/Notes actions
     'edit-session': (ctx) => editSession(ctx.id),
     'delete-session': (ctx) => deleteSession(ctx.id),

@@ -5905,7 +5905,45 @@
         }
         
         .init-effect .duration { font-weight: 600; }
-        
+
+        /* Action Banner */
+        .init-action-banner {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 6px;
+            padding: 6px 10px;
+            background: var(--bg-dark);
+            border-left: 3px solid var(--blue);
+            border-radius: 4px;
+            font-size: 12px;
+        }
+
+        .action-banner-icon {
+            font-size: 14px;
+        }
+
+        .action-banner-text {
+            flex: 1;
+            color: var(--text);
+        }
+
+        .action-banner-dismiss {
+            background: transparent;
+            border: none;
+            color: var(--text-dim);
+            cursor: pointer;
+            padding: 2px 6px;
+            font-size: 12px;
+            border-radius: 3px;
+            transition: all 0.2s;
+        }
+
+        .action-banner-dismiss:hover {
+            background: var(--red);
+            color: white;
+        }
+
         .init-right { display: flex; align-items: center; gap: 8px; }
         
         .init-hp { display: flex; align-items: center; gap: 6px; }
@@ -18603,5 +18641,344 @@
 .char-form-progress-dot.current {
     background: var(--gold);
     box-shadow: 0 0 8px var(--gold);
+}
+
+/* ============================================================
+   WIKI UX IMPROVEMENTS
+   ============================================================ */
+
+/* 1. Quick Access Bar */
+.wiki-quick-access {
+    display: flex;
+    gap: 8px;
+    padding: 10px 12px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    margin-bottom: 12px;
+    overflow-x: auto;
+    align-items: center;
+    min-height: 36px;
+}
+
+.wiki-quick-access:empty {
+    display: none;
+}
+
+.quick-access-label {
+    font-size: 10px;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    white-space: nowrap;
+    margin-right: 4px;
+}
+
+.quick-access-item {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 5px 10px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    font-size: 11px;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.2s;
+}
+
+.quick-access-item:hover {
+    border-color: var(--gold);
+    background: rgba(255, 215, 0, 0.1);
+}
+
+.quick-access-item.recent {
+    border-left: 3px solid var(--blue);
+}
+
+.quick-access-item.favorite {
+    border-left: 3px solid var(--gold);
+}
+
+.quick-access-item .remove-btn {
+    opacity: 0;
+    margin-left: 4px;
+    cursor: pointer;
+    color: var(--text-dim);
+}
+
+.quick-access-item:hover .remove-btn {
+    opacity: 1;
+}
+
+/* 2. Breadcrumb Navigation */
+.wiki-breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 10px;
+    background: var(--bg-dark);
+    border-radius: 6px;
+    font-size: 12px;
+    margin-bottom: 10px;
+    flex-wrap: wrap;
+}
+
+.wiki-breadcrumb:empty {
+    display: none;
+}
+
+.breadcrumb-item {
+    color: var(--text-dim);
+    cursor: pointer;
+    transition: color 0.2s;
+}
+
+.breadcrumb-item:hover {
+    color: var(--gold);
+}
+
+.breadcrumb-item.current {
+    color: var(--text);
+    font-weight: 600;
+    cursor: default;
+}
+
+.breadcrumb-sep {
+    color: var(--text-dim);
+    opacity: 0.4;
+}
+
+/* 3. Search Preview Dropdown */
+.wiki-search-container {
+    position: relative;
+}
+
+.wiki-search-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    margin-top: 4px;
+    max-height: 300px;
+    overflow-y: auto;
+    z-index: 100;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+    display: none;
+}
+
+.wiki-search-dropdown.show {
+    display: block;
+}
+
+.search-result-item {
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.search-result-item:hover,
+.search-result-item.selected {
+    background: rgba(255, 215, 0, 0.1);
+}
+
+.search-result-item:last-child {
+    border-bottom: none;
+}
+
+.search-result-title {
+    font-weight: 600;
+    margin-bottom: 3px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+}
+
+.search-result-title .category-tag {
+    font-size: 10px;
+    font-weight: normal;
+    color: var(--text-dim);
+    background: var(--bg-dark);
+    padding: 2px 6px;
+    border-radius: 4px;
+}
+
+.search-result-preview {
+    font-size: 11px;
+    color: var(--text-dim);
+    line-height: 1.4;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+}
+
+.search-result-preview mark {
+    background: rgba(255, 215, 0, 0.3);
+    color: var(--gold);
+    padding: 0 2px;
+    border-radius: 2px;
+}
+
+/* 4. Wiki Templates */
+.wiki-template-selector {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px;
+    margin-bottom: 12px;
+}
+
+.wiki-templates-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    gap: 8px;
+}
+
+.wiki-template-card {
+    background: var(--bg-dark);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 8px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.wiki-template-card:hover {
+    border-color: var(--purple);
+    transform: translateY(-2px);
+}
+
+.wiki-template-icon {
+    font-size: 22px;
+    margin-bottom: 4px;
+}
+
+.wiki-template-name {
+    font-size: 11px;
+    color: var(--text);
+}
+
+/* 5. Table of Contents */
+.wiki-toc {
+    background: var(--bg-dark);
+    border-radius: 8px;
+    padding: 10px;
+    font-size: 12px;
+    margin-bottom: 12px;
+}
+
+.wiki-toc-title {
+    font-weight: 600;
+    color: var(--text-dim);
+    font-size: 10px;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.wiki-toc-list {
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.toc-item {
+    padding: 4px 8px;
+    margin: 2px 0;
+    border-radius: 4px;
+    cursor: pointer;
+    color: var(--text-dim);
+    transition: all 0.2s;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.toc-item:hover {
+    background: rgba(255, 215, 0, 0.1);
+    color: var(--text);
+}
+
+.toc-item.active {
+    background: rgba(255, 215, 0, 0.15);
+    color: var(--gold);
+    border-left: 2px solid var(--gold);
+}
+
+.toc-item.level-2 {
+    padding-left: 18px;
+    font-size: 11px;
+}
+
+.toc-item.level-3 {
+    padding-left: 28px;
+    font-size: 10px;
+}
+
+/* 6. Link Auto-Suggest */
+.wiki-link-suggester {
+    position: fixed;
+    background: var(--bg-card);
+    border: 1px solid var(--gold);
+    border-radius: 6px;
+    padding: 4px;
+    max-height: 180px;
+    overflow-y: auto;
+    z-index: 1000;
+    min-width: 200px;
+    max-width: 300px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+}
+
+.link-suggestion {
+    padding: 6px 10px;
+    cursor: pointer;
+    border-radius: 4px;
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.link-suggestion:hover,
+.link-suggestion.selected {
+    background: rgba(255, 215, 0, 0.15);
+}
+
+.link-suggestion-icon {
+    font-size: 11px;
+    opacity: 0.7;
+}
+
+.link-suggestion-create {
+    color: var(--green);
+    font-style: italic;
+}
+
+/* Wiki Content Stats */
+.wiki-content-stats {
+    display: flex;
+    gap: 12px;
+    padding: 6px 10px;
+    background: var(--bg-dark);
+    border-radius: 6px;
+    font-size: 10px;
+    color: var(--text-dim);
+    margin-bottom: 10px;
+}
+
+.wiki-content-stats .stat-item {
+    display: flex;
+    align-items: center;
+    gap: 4px;
 }
 

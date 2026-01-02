@@ -1570,9 +1570,10 @@
                 
                 <!-- Gruppe 2: Suche -->
                 <div class="section-toolbar-search">
-                    <div class="search-wrapper">
-                        <input type="text" id="wiki-search" class="toolbar-search" placeholder="🔍 Wiki durchsuchen..." oninput="renderWiki(); updateSearchClear(this);">
+                    <div class="search-wrapper" style="position: relative;">
+                        <input type="text" id="wiki-search" class="toolbar-search" placeholder="🔍 Wiki durchsuchen..." oninput="renderWikiSearchDropdown(this.value); renderWikiTree(); updateSearchClear(this);" onkeydown="handleWikiSearchKeydown(event)">
                         <button class="search-clear-btn" data-action="clear-search" data-value="wiki-search" title="Suche leeren">✕</button>
+                        <div id="wiki-search-dropdown" class="wiki-search-dropdown" style="display: none;"></div>
                     </div>
                 </div>
                 
@@ -1588,6 +1589,11 @@
                 </div>
             </div>
             
+            <!-- Quick Access Bar -->
+            <div class="wiki-quick-access" id="wiki-quick-access">
+                <span style="color: var(--text-dim); font-size: 11px;">Besuche Einträge um Quick Access zu füllen</span>
+            </div>
+
             <!-- Explorer Layout -->
             <div class="wiki-explorer">
                 <!-- Sidebar Tree -->
@@ -1617,6 +1623,12 @@
                         <button class="btn btn-sm" data-action="call" data-value="hideWikiForm">✕</button>
                     </div>
                     <input type="hidden" id="edit-wiki-id">
+
+                    <!-- Template Selector -->
+                    <div id="wiki-template-selector" class="wiki-template-selector" style="display: none;">
+                        <label style="font-size: 11px; color: var(--text-dim); margin-bottom: 8px; display: block;">📋 Template wählen (optional)</label>
+                    </div>
+
                     <div class="form-grid">
                         <div class="form-group">
                             <label>Titel *</label>
@@ -1661,7 +1673,7 @@
                             <select class="editor-select" onchange="setEditorFontSize('wiki-content', this)" title="Größe"><option value="0.8em">Klein</option><option value="1em" selected>Normal</option><option value="1.2em">Groß</option><option value="1.5em">Sehr groß</option></select>
                             <button type="button" class="editor-btn" data-action="clear-formatting" data-value="wiki-content" title="Formatierung löschen" style="color:#888;">✕</button>
                         </div>
-                        <div id="wiki-content" class="rich-editor" contenteditable="true" style="min-height: 150px;"></div>
+                        <div id="wiki-content" class="rich-editor" contenteditable="true" style="min-height: 150px;" oninput="handleWikiContentInput(event)"></div>
                     </div>
                     <div class="btn-group" style="display: flex; align-items: center; gap: 12px;">
                         <button class="btn btn-success" data-action="call" data-value="saveWikiEntry">Speichern</button>
@@ -1673,8 +1685,11 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Link Auto-Suggest Container -->
+            <div id="wiki-link-suggester" class="wiki-link-suggester" style="display: none;"></div>
         </section>
-        
+
         <!-- LINKS VIEW -->
         <section id="view-links" class="view">
             <div class="section-toolbar">
