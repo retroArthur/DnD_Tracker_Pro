@@ -166,6 +166,43 @@ function deleteEntity(id) {
 - Data: `npc.relations = [{ targetId, targetType, status, note }]`
 - File: `features/npcs/npc-render.js` → `renderNPCRelations()`, `showRelationsModal()`
 
+### Rest Manager
+- Short Rest: Spend Hit Dice to heal, class-specific features
+- Long Rest: Full HP, half Hit Dice back, all spell slots
+- Party-wide rest modal with character selection
+- Hit Die type based on class (d6-d12)
+- Warlock: Spell slots on short rest
+- File: `features/rest-manager.js` → `showRestModal()`, `applyRest()`
+
+### Quick Actions Bar
+- Combat action shortcuts for active combatant in initiative
+- Actions: Dodge, Dash, Disengage, Hide, Help, Ready, Search, Use Object
+- Auto-applies effects where applicable (Dodging, Hidden, etc.)
+- Auto-rolls for Hide (Stealth) and Search (Perception)
+- File: `features/quick-actions.js` → `renderQuickActionsBar()`, `applyQuickAction()`
+
+### Random Tables
+- Custom rollable tables with weighted entries
+- Default tables: Forest Encounters, Tavern Rumors, Weather
+- Create/Edit/Delete tables with icon
+- Quick roll from Dice view
+- Data: `D.randomTables = [{ id, name, icon, entries: [{ weight, text }] }]`
+- File: `features/random-tables.js` → `renderRandomTables()`, `rollOnTable()`
+
+### Loot Distribution
+- Fair gold splitting across party members
+- Shows per-character share and remainder
+- Item assignment to characters
+- Party inventory overview modal
+- Data: `D.partyGold`, `item.assignedTo`
+- File: `features/loot-distribution.js` → `showLootDistributionModal()`, `applyGoldSplit()`
+
+### Condition Quick Reference
+- Searchable modal with all D&D 5e conditions
+- Shows icon, name, and full description
+- Accessible from Initiative toolbar
+- File: `features/quick-actions.js` → `showConditionReference()`
+
 ## Conventions
 
 - **Language:** German (UI text, D&D terms, comments)

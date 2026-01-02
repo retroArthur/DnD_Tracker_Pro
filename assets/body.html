@@ -90,6 +90,8 @@
                     <select id="party-class-filter" onchange="renderParty()">
                         <option value="">⚔️ Alle Klassen</option>
                     </select>
+                    <button class="btn btn-sm" data-action="show-rest-modal" title="Party rasten lassen">🛏️ Rasten</button>
+                    <button class="btn btn-sm" data-action="show-party-inventory" title="Party-Inventar">📋 Inventar</button>
                     <div class="section-toolbar-io">
                         <button class="io-btn export" data-action="export-data" data-value="characters" title="Party exportieren">📤</button>
                         <button class="io-btn import" data-action="trigger-click" data-value="import-characters" title="Party importieren">📥</button>
@@ -1211,12 +1213,16 @@
                 <button class="btn" data-action="call" data-value="rollAllInitiative">🎲 Alle würfeln</button>
                 <button class="btn" data-action="call" data-value="sortInitiative">↓ Sortieren</button>
                 <button class="btn" data-action="show-aoe-damage-modal" title="AoE Schaden auf mehrere Ziele">💥 AoE</button>
+                <button class="btn" data-action="show-condition-reference" title="Zustände-Nachschlag">📋 Zustände</button>
                 <button class="btn btn-danger encounter-reset-btn" data-action="call" data-value="resetEncounter">🔄 Reset</button>
                 <button class="btn btn-danger" data-action="call" data-value="endCombat">⏹️ Beenden</button>
             </div>
 
             <!-- Battlefield Conditions Banner -->
             <div id="battlefield-banner" class="battlefield-banner" style="display: none;"></div>
+
+            <!-- Quick Actions Bar -->
+            <div id="quick-actions-bar"></div>
 
             <div class="init-list" id="init-list"></div>
             <div class="card" style="margin-top: 16px;">
@@ -1254,6 +1260,7 @@
                     <div class="loot-filter-chips" id="loot-filters"></div>
                 </div>
                 <div class="loot-toolbar-right">
+                    <button class="btn btn-sm" data-action="show-loot-distribution" title="Beute auf Party verteilen">💰 Verteilen</button>
                     <div class="loot-io-btns">
                         <button class="loot-io-btn" data-action="export-data" data-value="loot" title="Exportieren">📤</button>
                         <button class="loot-io-btn" data-action="trigger-click" data-value="import-loot" title="Importieren">📥</button>
@@ -1881,6 +1888,21 @@
                         
                         <div class="dice-char-col-title" style="margin-top: 8px;">Fertigkeiten</div>
                         <div class="dice-skill-grid" id="dice-skill-grid"></div>
+                    </div>
+                </details>
+
+                <!-- Random Tables (Collapsible) -->
+                <details class="dice-details">
+                    <summary>🎲 Zufallstabellen</summary>
+                    <div class="rt-panel">
+                        <div class="rt-panel-header">
+                            <button class="btn btn-sm" data-action="show-table-modal">+ Neue Tabelle</button>
+                            <button class="btn btn-sm" data-action="quick-random-roll">🎲 Schnellwurf</button>
+                        </div>
+                        <div id="random-tables-list"></div>
+                        <div id="random-table-preview" class="rt-preview">
+                            <div class="rt-preview-empty">Wähle eine Tabelle</div>
+                        </div>
                     </div>
                 </details>
                 

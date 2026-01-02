@@ -137,6 +137,11 @@ function renderInit() {
             </div>
         </div>`;
     }).join('');
+
+    // Render Quick Actions Bar
+    if (typeof renderQuickActionsBar === 'function') {
+        renderQuickActionsBar();
+    }
 }
 
 function toggleInitSlot(charId, level, index) {

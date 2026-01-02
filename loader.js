@@ -67,6 +67,10 @@ const MODULES = [
     // Features
     'features/initiative.js',
     'features/encounter-calculator.js',
+    'features/rest-manager.js',
+    'features/quick-actions.js',
+    'features/random-tables.js',
+    'features/loot-distribution.js',
 
     // Dice-Module (ersetzt features/dice.js)
     'features/dice/campaign-manager.js',

@@ -57,7 +57,24 @@ const SystemActions = {
     'clear-error-log': () => { ErrorHandler.clearLog(); showErrorLogModal(); },
 
     // Debug/Test
-    'generate-test-wiki': (ctx) => generateTestWiki(parseInt(ctx.value) || 5)
+    'generate-test-wiki': (ctx) => generateTestWiki(parseInt(ctx.value) || 5),
+
+    // Rest Manager
+    'show-rest-modal': () => showRestModal(),
+    'quick-short-rest': (ctx) => quickShortRest(ctx.id),
+
+    // Quick Actions
+    'apply-quick-action': (ctx) => applyQuickAction(parseInt(ctx.id), ctx.value),
+    'show-condition-reference': () => showConditionReference(),
+
+    // Random Tables
+    'show-table-modal': (ctx) => showTableModal(ctx.id ? parseInt(ctx.id) : null),
+    'quick-random-roll': () => quickRandomRoll(),
+    'roll-on-table': (ctx) => rollOnTable(parseInt(ctx.id)),
+
+    // Loot Distribution
+    'show-loot-distribution': () => showLootDistributionModal(),
+    'show-party-inventory': () => showPartyInventory()
 };
 
 // Register all system actions

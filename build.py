@@ -109,6 +109,10 @@ def build(minify=False):
         # Features
         'features/encounter-calculator.js',
         'features/initiative.js',
+        'features/rest-manager.js',
+        'features/quick-actions.js',
+        'features/random-tables.js',
+        'features/loot-distribution.js',
         # Shops-Module
         'features/shops/shops-prolog.js',
         'features/shops/shops-core.js',
