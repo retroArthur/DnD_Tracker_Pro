@@ -91,7 +91,6 @@ const MODULES = [
     'features/dice/debug.js',
 
     // Shops-Module (ersetzt features/shops.js)
-    'features/shops/shops-prolog.js',
     'features/shops/shops-core.js',
     'features/shops/links.js',
     'features/shops/wiki.js',
@@ -100,7 +99,6 @@ const MODULES = [
     'features/shops/spell-editor.js',
     
     // UI
-    'ui/virtual-scroll-helper.js',
     'ui/lazy-loading.js',
     'ui/event-delegation.js',
 

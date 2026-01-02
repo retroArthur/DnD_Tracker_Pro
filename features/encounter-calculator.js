@@ -546,7 +546,6 @@ function showDifficultySelector() {
 
     const idx = parseInt(choice) - 1;
     if (idx >= 0 && idx < levels.length) {
-        console.log('Selected difficulty:', levels[idx]);
         calculateOptimalMonsterCount(levels[idx]);
     } else {
         showToast('Bitte 1-4 eingeben');

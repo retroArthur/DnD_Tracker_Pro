@@ -114,7 +114,6 @@ def build(minify=False):
         'features/random-tables.js',
         'features/loot-distribution.js',
         # Shops-Module
-        'features/shops/shops-prolog.js',
         'features/shops/shops-core.js',
         'features/shops/spell-editor.js',
         'features/shops/sessions.js',
@@ -140,7 +139,6 @@ def build(minify=False):
         'features/dice/debug.js',  # Debug-Modul (nur Development)
         'ui/dom-builder.js',
         'ui/safe-render.js',
-        'ui/virtual-scroll-helper.js',
         'ui/lazy-loading.js',
         'ui/event-delegation.js',
         # Action-Module

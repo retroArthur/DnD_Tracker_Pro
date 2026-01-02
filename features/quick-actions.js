@@ -19,7 +19,7 @@ const QUICK_ACTIONS = Object.freeze({
         name: 'Sprinten',
         icon: '🏃',
         desc: 'Verdoppelt deine Bewegungsreichweite für diesen Zug.',
-        effect: null
+        effect: { name: 'Sprintend', color: 'green', duration: 1 }
     },
     disengage: {
         name: 'Lösen',
@@ -37,7 +37,7 @@ const QUICK_ACTIONS = Object.freeze({
         name: 'Helfen',
         icon: '🤝',
         desc: 'Gib einem Verbündeten Vorteil auf seinen nächsten Wurf gegen ein Ziel.',
-        effect: null
+        effect: { name: 'Helfend', color: 'cyan', duration: 1 }
     },
     ready: {
         name: 'Bereithalten',
@@ -49,13 +49,13 @@ const QUICK_ACTIONS = Object.freeze({
         name: 'Suchen',
         icon: '🔍',
         desc: 'Wahrnehmungs- oder Nachforschungswurf um etwas zu finden.',
-        effect: null
+        effect: { name: 'Suchend', color: 'orange', duration: 1 }
     },
     useObject: {
         name: 'Objekt benutzen',
         icon: '📦',
         desc: 'Interagiere mit einem Objekt (zusätzlich zur freien Objektinteraktion).',
-        effect: null
+        effect: { name: 'Objekt genutzt', color: 'gray', duration: 1 }
     }
 });
 

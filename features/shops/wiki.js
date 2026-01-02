@@ -4,12 +4,20 @@
 
 // WIKI
 // ============================================================
-let wikiCategoryFilter = '';
-let wikiSortMode = 'recent';
-let expandedWikiEntries = new Set();
-let expandedWikiCategories = new Set(['campaign', 'locations', 'factions', 'history']);
-let selectedWikiEntryId = null;
-let wikiSearchDropdownIndex = -1;
+
+// Wiki-State Namespace - kapselt alle globalen Variablen
+const WikiState = {
+    categoryFilter: '',
+    sortMode: 'recent',
+    expandedEntries: new Set(),
+    expandedCategories: new Set(['campaign', 'locations', 'factions', 'history']),
+    selectedEntryId: null,
+    searchDropdownIndex: -1,
+    // Link-Suggester State
+    linkSuggester: null,
+    linkSuggesterIndex: -1,
+    linkSuggesterState: null
+};
 
 const WIKI_CATEGORIES = {
     campaign: { icon: '🎭', name: 'Kampagne' },
@@ -274,7 +282,7 @@ function renderWikiTree() {
         const catEntries = byCategory[catKey] || [];
         if (catEntries.length === 0 && !search) return; // Leere Kategorien ausblenden (außer bei Suche)
         
-        const isExpanded = expandedWikiCategories.has(catKey);
+        const isExpanded = WikiState.expandedCategories.has(catKey);
         
         // Hierarchie aufbauen: Root-Einträge und Kinder
         // Als Root gelten:
@@ -313,7 +321,7 @@ function renderWikiTree() {
     
     // "Sonstige" Kategorie falls vorhanden
     if (byCategory['other']?.length > 0) {
-        const isExpanded = expandedWikiCategories.has('other');
+        const isExpanded = WikiState.expandedCategories.has('other');
         // Auch für "Sonstige" die Hierarchie aufbauen
         const otherRootEntries = byCategory['other'].filter(e => !e.parentId);
         const otherChildrenMap = {};
@@ -346,7 +354,7 @@ function renderWikiTreeItems(entries, childrenMap, depth) {
     return entries.map(entry => {
         const children = childrenMap[entry.id] || [];
         const hasChildren = children.length > 0;
-        const isExpanded = expandedWikiEntries.has(entry.id);
+        const isExpanded = WikiState.expandedEntries.has(entry.id);
         
         let html = `<div class="wiki-tree-item-wrapper ${hasChildren ? 'has-children' : ''} ${isExpanded ? 'expanded' : ''}">`;
         html += renderWikiTreeItem(entry, childrenMap, depth);
@@ -363,9 +371,9 @@ function renderWikiTreeItems(entries, childrenMap, depth) {
 }
 
 function renderWikiTreeItem(entry, childrenMap, depth) {
-    const isSelected = selectedWikiEntryId === entry.id;
+    const isSelected = WikiState.selectedEntryId === entry.id;
     const hasChildren = (childrenMap[entry.id] || []).length > 0;
-    const isExpanded = expandedWikiEntries.has(entry.id);
+    const isExpanded = WikiState.expandedEntries.has(entry.id);
     const cat = WIKI_CATEGORIES[entry.category] || { icon: '📄' };
     
     return `
@@ -384,7 +392,7 @@ function renderWikiDetail() {
     const detail = $('wiki-detail');
     if (!detail) return;
 
-    if (!selectedWikiEntryId) {
+    if (!WikiState.selectedEntryId) {
         detail.innerHTML = `<div class="wiki-detail-empty">${renderEmptyState({
             icon: '📖',
             titleEmpty: 'Eintrag auswählen',
@@ -394,9 +402,9 @@ function renderWikiDetail() {
         return;
     }
 
-    const entry = D.wiki?.find(e => e.id === selectedWikiEntryId);
+    const entry = D.wiki?.find(e => e.id === WikiState.selectedEntryId);
     if (!entry) {
-        selectedWikiEntryId = null;
+        WikiState.selectedEntryId = null;
         renderWikiDetail();
         return;
     }
@@ -497,7 +505,7 @@ function renderWikiDetail() {
 }
 
 function selectWikiEntry(id) {
-    selectedWikiEntryId = id;
+    WikiState.selectedEntryId = id;
     // Track recently viewed
     if (id) {
         addToWikiRecentlyViewed(id);
@@ -509,23 +517,23 @@ function selectWikiEntry(id) {
 }
 
 function toggleWikiCategory(category) {
-    if (expandedWikiCategories.has(category)) {
-        expandedWikiCategories.delete(category);
+    if (WikiState.expandedCategories.has(category)) {
+        WikiState.expandedCategories.delete(category);
     } else {
-        expandedWikiCategories.add(category);
+        WikiState.expandedCategories.add(category);
     }
     renderWikiTree();
 }
 
 function expandAllWikiCategories() {
-    Object.keys(WIKI_CATEGORIES).forEach(cat => expandedWikiCategories.add(cat));
-    expandedWikiCategories.add('other');
+    Object.keys(WIKI_CATEGORIES).forEach(cat => WikiState.expandedCategories.add(cat));
+    WikiState.expandedCategories.add('other');
     renderWikiTree();
     showToast('Alle Kategorien ausgeklappt');
 }
 
 function collapseAllWikiCategories() {
-    expandedWikiCategories.clear();
+    WikiState.expandedCategories.clear();
     renderWikiTree();
     showToast('Alle Kategorien eingeklappt');
 }
@@ -629,16 +637,16 @@ function findBacklinks(title) {
 }
 
 function toggleWikiEntry(id) {
-    if (expandedWikiEntries.has(id)) {
-        expandedWikiEntries.delete(id);
+    if (WikiState.expandedEntries.has(id)) {
+        WikiState.expandedEntries.delete(id);
     } else {
-        expandedWikiEntries.add(id);
+        WikiState.expandedEntries.add(id);
     }
     renderWiki();
 }
 
 function filterWiki(category) {
-    wikiCategoryFilter = category;
+    WikiState.categoryFilter = category;
     // Filter-Buttons aktualisieren
     document.querySelectorAll('#wiki-categories .filter-btn').forEach(btn => {
         btn.classList.toggle('active', btn.dataset.cat === category);
@@ -647,7 +655,7 @@ function filterWiki(category) {
 }
 
 function sortWiki(mode) {
-    wikiSortMode = mode;
+    WikiState.sortMode = mode;
     // Sort-Buttons aktualisieren
     ['alpha', 'recent', 'pinned'].forEach(m => {
         const btn = $(`wiki-sort-${m}`);
@@ -679,16 +687,16 @@ function saveWikiEntry() {
             saveUndoState(); // Undo-Punkt vor Änderung
             D.wiki[idx] = { ...D.wiki[idx], ...entry };
             showToast('Wiki-Eintrag aktualisiert');
-            selectedWikiEntryId = parseInt(editId);
+            WikiState.selectedEntryId = parseInt(editId);
         }
     } else {
         entry.id = nextId('wiki');
         entry.createdAt = Date.now();
         D.wiki.push(entry);
         showToast('Wiki-Eintrag erstellt');
-        selectedWikiEntryId = entry.id;
+        WikiState.selectedEntryId = entry.id;
         // Kategorie ausklappen
-        expandedWikiCategories.add(entry.category);
+        WikiState.expandedCategories.add(entry.category);
     }
     
     hideWikiForm();
@@ -703,7 +711,7 @@ function editWikiEntry(id) {
     $('edit-wiki-id').value = id;
     $('wiki-title').value = entry.title;
     $('wiki-category').value = entry.category || 'locations';
-    $('wiki-content').innerHTML = entry.content || '';
+    $('wiki-content').innerHTML = sanitizeHTML(entry.content) || '';
     $('wiki-tags').value = (entry.tags || []).join(', ');
     $('wiki-pinned').checked = entry.pinned || false;
 
@@ -751,11 +759,11 @@ function deleteWikiEntry(id) {
         });
         
         D.wiki = D.wiki.filter(e => e.id !== id);
-        expandedWikiEntries.delete(id);
+        WikiState.expandedEntries.delete(id);
         
         // Falls der gelöschte Eintrag ausgewählt war
-        if (selectedWikiEntryId === id) {
-            selectedWikiEntryId = null;
+        if (WikiState.selectedEntryId === id) {
+            WikiState.selectedEntryId = null;
         }
         
         renderWiki();
@@ -777,7 +785,7 @@ function navigateToWikiEntry(title) {
     const entry = EntityLookup.findByName('wiki', title, 'title');
     if (entry) {
         // Kategorie ausklappen
-        expandedWikiCategories.add(entry.category || 'other');
+        WikiState.expandedCategories.add(entry.category || 'other');
         // Eintrag auswählen
         selectWikiEntry(entry.id);
     }
@@ -958,7 +966,7 @@ function renderWikiSearchDropdown(query) {
 
     if (!query || query.length < 2) {
         container.style.display = 'none';
-        wikiSearchDropdownIndex = -1;
+        WikiState.searchDropdownIndex = -1;
         return;
     }
 
@@ -1002,7 +1010,7 @@ function renderWikiSearchDropdown(query) {
         );
 
         return `
-            <div class="search-result-item ${i === wikiSearchDropdownIndex ? 'selected' : ''}"
+            <div class="search-result-item ${i === WikiState.searchDropdownIndex ? 'selected' : ''}"
                  data-action="select-wiki-entry" data-id="${r.entry.id}">
                 <div class="search-result-header">
                     <span class="search-result-icon">${cat.icon}</span>
@@ -1026,34 +1034,34 @@ function handleWikiSearchKeydown(e) {
 
     if (e.key === 'ArrowDown') {
         e.preventDefault();
-        wikiSearchDropdownIndex = Math.min(wikiSearchDropdownIndex + 1, items.length - 1);
+        WikiState.searchDropdownIndex = Math.min(WikiState.searchDropdownIndex + 1, items.length - 1);
         updateSearchDropdownSelection(items);
     } else if (e.key === 'ArrowUp') {
         e.preventDefault();
-        wikiSearchDropdownIndex = Math.max(wikiSearchDropdownIndex - 1, 0);
+        WikiState.searchDropdownIndex = Math.max(WikiState.searchDropdownIndex - 1, 0);
         updateSearchDropdownSelection(items);
-    } else if (e.key === 'Enter' && wikiSearchDropdownIndex >= 0) {
+    } else if (e.key === 'Enter' && WikiState.searchDropdownIndex >= 0) {
         e.preventDefault();
-        const selected = items[wikiSearchDropdownIndex];
+        const selected = items[WikiState.searchDropdownIndex];
         if (selected) {
             const id = parseInt(selected.dataset.id);
             selectWikiEntry(id);
             dropdown.style.display = 'none';
             $('wiki-search').value = '';
-            wikiSearchDropdownIndex = -1;
+            WikiState.searchDropdownIndex = -1;
         }
     } else if (e.key === 'Escape') {
         dropdown.style.display = 'none';
-        wikiSearchDropdownIndex = -1;
+        WikiState.searchDropdownIndex = -1;
     }
 }
 
 function updateSearchDropdownSelection(items) {
     items.forEach((item, i) => {
-        item.classList.toggle('selected', i === wikiSearchDropdownIndex);
+        item.classList.toggle('selected', i === WikiState.searchDropdownIndex);
     });
-    if (wikiSearchDropdownIndex >= 0 && items[wikiSearchDropdownIndex]) {
-        items[wikiSearchDropdownIndex].scrollIntoView({ block: 'nearest' });
+    if (WikiState.searchDropdownIndex >= 0 && items[WikiState.searchDropdownIndex]) {
+        items[WikiState.searchDropdownIndex].scrollIntoView({ block: 'nearest' });
     }
 }
 
@@ -1145,7 +1153,7 @@ function applyWikiTemplate(templateKey) {
         if (contentEl.innerHTML.trim() && !confirm('Vorhandenen Inhalt überschreiben?')) {
             return;
         }
-        contentEl.innerHTML = template.content;
+        contentEl.innerHTML = sanitizeHTML(template.content);
     }
 
     if (categoryEl && template.category) {
@@ -1159,9 +1167,7 @@ function applyWikiTemplate(templateKey) {
 // 6. LINK AUTO-SUGGEST
 // ============================================================
 
-let wikiLinkSuggester = null;
-let wikiLinkSuggesterIndex = -1;
-let wikiLinkSuggesterState = null; // Speichert Textknoten und Position
+// Link-Suggester State ist jetzt in WikiState gekapselt
 
 function showWikiLinkSuggester(input, cursorPos) {
     const container = $('wiki-link-suggester');
@@ -1189,7 +1195,7 @@ function showWikiLinkSuggester(input, cursorPos) {
             const beforeCursor = text.slice(0, range.startOffset);
             const linkStart = beforeCursor.lastIndexOf('[[');
             if (linkStart !== -1) {
-                wikiLinkSuggesterState = {
+                WikiState.linkSuggesterState = {
                     textNode: textNode,
                     linkStart: linkStart,
                     cursorPos: range.startOffset
@@ -1201,7 +1207,7 @@ function showWikiLinkSuggester(input, cursorPos) {
     container.innerHTML = suggestions.map((entry, i) => {
         const cat = WIKI_CATEGORIES[entry.category] || { icon: '📄' };
         return `
-            <div class="link-suggestion ${i === wikiLinkSuggesterIndex ? 'selected' : ''}"
+            <div class="link-suggestion ${i === WikiState.linkSuggesterIndex ? 'selected' : ''}"
                  data-action="insert-wiki-link-suggestion" data-title="${esc(entry.title)}">
                 <span class="link-suggestion-icon">${cat.icon}</span>
                 <span class="link-suggestion-title">${esc(entry.title)}</span>
@@ -1229,14 +1235,14 @@ function showWikiLinkSuggester(input, cursorPos) {
     }
 
     container.style.display = 'block';
-    wikiLinkSuggester = { input, cursorPos };
+    WikiState.linkSuggester = { input, cursorPos };
 }
 
 function hideWikiLinkSuggester() {
     const container = $('wiki-link-suggester');
     if (container) container.style.display = 'none';
-    wikiLinkSuggester = null;
-    wikiLinkSuggesterIndex = -1;
+    WikiState.linkSuggester = null;
+    WikiState.linkSuggesterIndex = -1;
     // State NICHT löschen - wird noch für insertWikiLinkSuggestion gebraucht
 }
 
@@ -1245,8 +1251,8 @@ function insertWikiLinkSuggestion(title) {
     if (!contentEl) return;
 
     // Nutze gespeicherten State (Klick hat Fokus verändert)
-    if (wikiLinkSuggesterState && wikiLinkSuggesterState.textNode) {
-        const { textNode, linkStart, cursorPos } = wikiLinkSuggesterState;
+    if (WikiState.linkSuggesterState && WikiState.linkSuggesterState.textNode) {
+        const { textNode, linkStart, cursorPos } = WikiState.linkSuggesterState;
 
         try {
             const text = textNode.textContent;
@@ -1271,7 +1277,7 @@ function insertWikiLinkSuggestion(title) {
     }
 
     // State löschen
-    wikiLinkSuggesterState = null;
+    WikiState.linkSuggesterState = null;
     hideWikiLinkSuggester();
 }
 

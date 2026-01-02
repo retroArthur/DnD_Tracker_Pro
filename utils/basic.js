@@ -28,50 +28,63 @@ function updateSearchClear(input) {
 }
 
 // HTML-Sanitizer für Rich-Text-Content (erlaubt nur sichere Tags/Attribute)
+// SICHER: Verwendet DOMParser statt innerHTML um XSS beim Parsen zu verhindern
 function sanitizeHTML(html) {
     if (!html) return '';
-    
-    // Erstelle temporäres Element
-    const temp = document.createElement('div');
-    temp.innerHTML = html;
-    
+
+    // Schritt 1: Entferne gefährliche Patterns BEVOR Parsing
+    let cleaned = String(html)
+        .replace(/<script[\s\S]*?<\/script>/gi, '')
+        .replace(/on\w+\s*=\s*["'][^"']*["']/gi, '')
+        .replace(/on\w+\s*=\s*[^\s>]*/gi, '')
+        .replace(/javascript\s*:/gi, '')
+        .replace(/vbscript\s*:/gi, '')
+        .replace(/data\s*:\s*text\/html/gi, '');
+
+    // Schritt 2: Verwende DOMParser (sicherer als innerHTML)
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(cleaned, 'text/html');
+
     // Erlaubte Tags und Attribute
     const allowedTags = ['b', 'i', 'u', 's', 'strong', 'em', 'ul', 'ol', 'li', 'p', 'br', 'div', 'span', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'table', 'thead', 'tbody', 'tr', 'th', 'td', 'mark', 'a'];
     const allowedAttributes = {
         'style': ['color', 'background-color', 'background', 'font-family', 'font-size', 'font-weight', 'text-decoration', 'border', 'border-collapse', 'padding', 'margin', 'width', 'text-align', 'vertical-align'],
         'class': true,
-        'href': true,  // Für Links (wird unten gefiltert)
+        'href': true,
         'title': true,
         'colspan': true,
         'rowspan': true
     };
-    
+
+    // Gefährliche Protokolle (case-insensitive)
+    const dangerousProtocols = ['javascript:', 'vbscript:', 'data:', 'file:', 'blob:'];
+
     // Rekursive Funktion zum Bereinigen der Nodes
     function cleanNode(node) {
         // Text-Nodes sind sicher
         if (node.nodeType === Node.TEXT_NODE) {
             return node.cloneNode(true);
         }
-        
+
         // Element-Nodes prüfen
         if (node.nodeType === Node.ELEMENT_NODE) {
             const tagName = node.tagName.toLowerCase();
-            
+
             // Nicht erlaubte Tags → nur Text-Content behalten
             if (!allowedTags.includes(tagName)) {
                 return document.createTextNode(node.textContent || '');
             }
-            
+
             // Erlaubtes Tag → neu erstellen ohne gefährliche Attribute
             const cleanElement = document.createElement(tagName);
-            
+
             // Erlaubte Attribute kopieren
             for (const attr of node.attributes) {
                 const attrName = attr.name.toLowerCase();
-                
+
                 // Event-Handler blockieren
                 if (attrName.startsWith('on')) continue;
-                
+
                 // Style-Attribute filtern
                 if (attrName === 'style' && allowedAttributes.style) {
                     const styles = attr.value.split(';').filter(s => {
@@ -84,11 +97,14 @@ function sanitizeHTML(html) {
                 else if (attrName === 'class' && allowedAttributes.class) {
                     cleanElement.setAttribute('class', attr.value);
                 }
-                // href für Links (nur sichere Protokolle)
+                // href für Links (nur sichere Protokolle - case-insensitive)
                 else if (attrName === 'href' && allowedAttributes.href && tagName === 'a') {
                     const href = attr.value.trim();
-                    // Nur relative URLs oder http(s) erlauben, kein javascript:
-                    if (!href.startsWith('javascript:') && !href.startsWith('data:')) {
+                    const hrefLower = href.toLowerCase();
+                    // Prüfe gegen gefährliche Protokolle (case-insensitive)
+                    const isSafe = dangerousProtocols.every(proto => !hrefLower.startsWith(proto));
+                    // Erlaube nur http(s), relative URLs, und Anker
+                    if (isSafe && (hrefLower.startsWith('http://') || hrefLower.startsWith('https://') || href.startsWith('/') || href.startsWith('#') || href.startsWith('./'))) {
                         cleanElement.setAttribute('href', href);
                         cleanElement.setAttribute('target', '_blank');
                         cleanElement.setAttribute('rel', 'noopener noreferrer');
@@ -107,27 +123,27 @@ function sanitizeHTML(html) {
                 }
                 // Andere Attribute blockieren (src, etc.)
             }
-            
+
             // Kinder rekursiv bereinigen
             for (const child of node.childNodes) {
                 const cleanChild = cleanNode(child);
                 if (cleanChild) cleanElement.appendChild(cleanChild);
             }
-            
+
             return cleanElement;
         }
-        
+
         return null;
     }
-    
+
     // Alle Kinder bereinigen
-    const cleaned = document.createElement('div');
-    for (const child of temp.childNodes) {
+    const result = document.createElement('div');
+    for (const child of doc.body.childNodes) {
         const cleanChild = cleanNode(child);
-        if (cleanChild) cleaned.appendChild(cleanChild);
+        if (cleanChild) result.appendChild(cleanChild);
     }
-    
-    return cleaned.innerHTML;
+
+    return result.innerHTML;
 }
 
 // Sichere localStorage-Wrapper-Funktionen

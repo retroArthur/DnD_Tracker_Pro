@@ -8,11 +8,11 @@ function renderInit() {
     const init = D.initiative;
     if (rn) rn.textContent = init.round;
 
-    // Update encounter-round-num as well
+    // Encounter-Rundenzahl aktualisieren
     const ern = $('encounter-round-num');
     if (ern) ern.textContent = init.round;
 
-    // Render battlefield conditions banner
+    // Schlachtfeld-Bedingungen Banner rendern
     renderBattlefieldBanner();
 
     if (!init.combatants.length) { c.innerHTML = '<div style="text-align:center; color:var(--text-dim); padding:30px;">Keine Kämpfer</div>'; return; }
@@ -107,7 +107,7 @@ function renderInit() {
             </div>`;
         }
 
-        // Get type label
+        // Typ-Label ermitteln
         const typeLabels = { enemy: 'Gegner', player: 'Spieler', ally: 'Verbündeter', monster: 'Monster' };
         const typeLabel = typeLabels[cb.type] || cb.type;
 
@@ -139,7 +139,7 @@ function renderInit() {
         </div>`;
     }).join('');
 
-    // Render Quick Actions Bar
+    // Schnellaktionen-Leiste rendern
     if (typeof renderQuickActionsBar === 'function') {
         renderQuickActionsBar();
     }
@@ -209,7 +209,7 @@ function addCombatant() {
 function addPartyToInit() {
     D.characters.forEach(ch => {
         if (D.initiative.combatants.some(c => c.name === ch.name)) return;
-        // Calculate initiative bonus from DEX modifier if available
+        // Initiative-Bonus aus GES-Modifikator berechnen falls verfügbar
         const initBonus = 0; // Party characters might not have DEX stored separately
         D.initiative.combatants.push({
             id: nextId('combatants'), name: ch.name, initiative: 0, initBonus: initBonus,
@@ -244,7 +244,7 @@ function modHp(id, amt) {
         }
         c.currentHp = Math.max(0, c.currentHp - remaining);
 
-        // Trigger concentration check if concentrating and took damage
+        // Konzentrationsprüfung auslösen wenn konzentriert und Schaden erlitten
         if (c.concentration?.active && actualDamage > 0) {
             c.concentration.pendingCheck = actualDamage;
         }
@@ -252,7 +252,7 @@ function modHp(id, amt) {
         // Heilung
         c.currentHp = Math.min(c.maxHp, c.currentHp + amt);
 
-        // Reset death saves when healed above 0 HP
+        // Todeswürfe zurücksetzen wenn über 0 HP geheilt
         if (wasAtZero && c.currentHp > 0) {
             resetDeathSaves(c);
         }
@@ -404,7 +404,7 @@ function renderDeathSaves(cb) {
 
     const ds = cb.deathSaves;
 
-    // Check for final states
+    // Auf Endzustände prüfen
     let statusHtml = '';
     if (ds.failures >= 3) {
         statusHtml = '<span class="death-saves-status dead">💀 Tot</span>';
@@ -457,7 +457,7 @@ function toggleDeathSave(cbId, type, index) {
     const ds = cb.deathSaves;
     const field = type === 'success' ? 'successes' : 'failures';
 
-    // Toggle logic: if clicking on an active dot at or after current count, decrease
+    // Toggle-Logik: Bei Klick auf aktiven Punkt auf oder nach aktuellem Zähler, verringern
     // If clicking on inactive dot, set to that level
     if (index < ds[field]) {
         // Clicked on active dot - reduce to this level
@@ -467,12 +467,12 @@ function toggleDeathSave(cbId, type, index) {
         ds[field] = index + 1;
     }
 
-    // Check for death (3 failures)
+    // Auf Tod prüfen (3 Fehlschläge)
     if (ds.failures >= 3) {
         showToast('💀 Charakter ist gestorben!', 'error');
     }
 
-    // Check for stabilization (3 successes)
+    // Auf Stabilisierung prüfen (3 Erfolge)
     if (ds.successes >= 3 && cb.currentHp <= 0) {
         cb.currentHp = 1;
         ds.successes = 0;
@@ -497,7 +497,7 @@ function resetDeathSaves(cb) {
 function renderConcentration(cb) {
     const conc = cb.concentration;
 
-    // Show active concentration
+    // Aktive Konzentration anzeigen
     if (conc?.active && conc.spell) {
         return `
             <div class="concentration-badge" title="Konzentration: ${esc(conc.spell)}">
@@ -508,7 +508,7 @@ function renderConcentration(cb) {
         `;
     }
 
-    // Show add button for players/allies (only when no concentration active)
+    // Hinzufügen-Button für Spieler/Verbündete anzeigen (nur wenn keine Konzentration aktiv)
     if (cb.type === 'player' || cb.type === 'ally') {
         return `
             <button class="concentration-add-btn" data-action="show-concentration-modal-stop" data-id="${cb.id}">
@@ -541,7 +541,7 @@ function showConcentrationModal(cbId) {
     const cb = D.initiative.combatants.find(c => c.id === cbId);
     if (!cb) return;
 
-    // Get spells from linked character if available
+    // Zauber vom verknüpften Charakter holen falls verfügbar
     let spellOptions = '';
     if (cb.type === 'player') {
         const char = EntityLookup.findByName('characters', cb.name);
@@ -579,7 +579,7 @@ function showConcentrationModal(cbId) {
         </div>
     `;
 
-    // Create or reuse modal
+    // Modal erstellen oder wiederverwenden
     let modal = $('concentration-modal');
     if (!modal) {
         modal = document.createElement('div');
@@ -643,7 +643,7 @@ function rollConcentrationCheck(cbId, dc) {
     const cb = D.initiative.combatants.find(c => c.id === cbId);
     if (!cb || !cb.concentration?.active) return;
 
-    // Get CON modifier from linked character
+    // KON-Modifikator vom verknüpften Charakter holen
     let conMod = 0;
     if (cb.type === 'player') {
         const char = EntityLookup.findByName('characters', cb.name);
@@ -670,7 +670,7 @@ function rollConcentrationCheck(cbId, dc) {
         showToast(resultText, 'error');
     }
 
-    // Clear pending check
+    // Ausstehende Prüfung löschen
     if (cb.concentration) {
         delete cb.concentration.pendingCheck;
     }
@@ -723,18 +723,16 @@ function showAoEDamageModal() {
                 ${combatants.map(cb => {
                     const typeIcon = cb.type === 'player' ? '👤' : cb.type === 'ally' ? '🤝' : '👹';
                     return `
-                        <div class="aoe-target" data-id="${cb.id}">
+                        <label class="aoe-target" data-id="${cb.id}">
                             <input type="checkbox" class="aoe-target-checkbox" id="aoe-cb-${cb.id}" data-id="${cb.id}" onchange="updateAoETargetDisplay()">
-                            <div class="aoe-target-info">
-                                <div class="aoe-target-name">${typeIcon} ${esc(cb.name)}</div>
-                                <div class="aoe-target-hp">${cb.currentHp}/${cb.maxHp} HP</div>
-                            </div>
-                            <div class="aoe-target-save">
+                            <span class="aoe-target-hp">${cb.currentHp}/${cb.maxHp} HP</span>
+                            <span class="aoe-target-name">${typeIcon} ${esc(cb.name)}</span>
+                            <span class="aoe-target-save">
                                 <input type="checkbox" id="aoe-save-${cb.id}" data-id="${cb.id}" onchange="updateAoETargetDisplay()">
-                                <label for="aoe-save-${cb.id}">Save ½</label>
-                            </div>
-                            <div class="aoe-target-damage" id="aoe-dmg-${cb.id}">—</div>
-                        </div>
+                                Save ½
+                            </span>
+                            <span class="aoe-target-damage" id="aoe-dmg-${cb.id}">—</span>
+                        </label>
                     `;
                 }).join('')}
             </div>
@@ -748,13 +746,13 @@ function showAoEDamageModal() {
         </div>
     `;
 
-    // Create or reuse modal
+    // Modal erstellen oder wiederverwenden
     let modal = $('aoe-damage-modal');
     if (!modal) {
         modal = document.createElement('div');
         modal.id = 'aoe-damage-modal';
         modal.className = 'modal-overlay';
-        modal.innerHTML = `<div class="modal" style="max-width: 500px;">${content}</div>`;
+        modal.innerHTML = `<div class="modal aoe-modal">${content}</div>`;
         modal.onclick = (e) => { if (e.target === modal) hideModal('aoe-damage-modal'); };
         document.body.appendChild(modal);
     } else {

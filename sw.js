@@ -14,15 +14,9 @@ const STATIC_ASSETS = [
 self.addEventListener('install', (event) => {
     event.waitUntil(
         caches.open(CACHE_NAME)
-            .then(cache => {
-                console.log('[SW] Caching static assets');
-                return cache.addAll(STATIC_ASSETS);
-            })
+            .then(cache => cache.addAll(STATIC_ASSETS))
             .then(() => self.skipWaiting())
-            .catch(err => {
-                console.warn('[SW] Failed to cache some assets:', err);
-                return self.skipWaiting();
-            })
+            .catch(() => self.skipWaiting())
     );
 });
 
@@ -34,10 +28,7 @@ self.addEventListener('activate', (event) => {
                 return Promise.all(
                     cacheNames
                         .filter(name => name !== CACHE_NAME)
-                        .map(name => {
-                            console.log('[SW] Deleting old cache:', name);
-                            return caches.delete(name);
-                        })
+                        .map(name => caches.delete(name))
                 );
             })
             .then(() => clients.claim())

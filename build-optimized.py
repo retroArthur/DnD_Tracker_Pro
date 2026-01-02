@@ -66,8 +66,7 @@ MODULES = [
     'features/shops.js',
     'features/dice.js',
     
-    # UI (4 Module)
-    'ui/virtual-scroll-helper.js',
+    # UI (3 Module)
     'ui/lazy-loading.js',
     'ui/event-delegation.js',
     'ui/virtual-scroll.js',

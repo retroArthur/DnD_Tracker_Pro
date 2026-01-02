@@ -18,30 +18,30 @@ async function init() {
         }
     };
     
-    // Determine active campaign
+    // Aktive Kampagne ermitteln
     const index = getCampaignIndex();
     const activeKey = index.active || APP_CONFIG.STORAGE_KEY;
 
-    // Override storage key if using different campaign
+    // Storage-Key überschreiben falls andere Kampagne aktiv
     if (activeKey !== APP_CONFIG.STORAGE_KEY) {
         window.STORAGE_KEY_OVERRIDE = activeKey;
     }
-    
+
     await load();
-    
-    // Initialize theme
+
+    // Theme initialisieren
     loadTheme();
-    
-    // Initialize layout profile
+
+    // Layout-Profil initialisieren
     loadLayout();
-    
-    // Initialize offline mode
+
+    // Offline-Modus initialisieren
     initOfflineMode();
     
     if ($('autosave-toggle')) $('autosave-toggle').checked = true;
     if ($('quick-notes')) $('quick-notes').value = D.quickNotes || '';
     
-    // Initialize navigation drag and drop (before adding click listeners)
+    // Navigation Drag-and-Drop initialisieren (vor Click-Listenern)
     initNavDragDrop();
     
     document.querySelectorAll('.nav-tab').forEach(tab => tab.addEventListener('click', () => switchView(tab.dataset.view)));
@@ -54,21 +54,21 @@ async function init() {
     renderDiceHistory();
     renderDiceFavorites();
     
-    // Initialize maps
+    // Karten initialisieren
     if (D.maps && D.maps.length > 0) {
         currentMapId = D.maps[0].id;
     }
     renderMapTabs();
     displayMap();
     initMapPanning();
-    
+
     // Erweiterte Map-Features (Werkzeuge, Fog, Verbindungen)
     if (typeof initExtendedMapFeatures === 'function') initExtendedMapFeatures();
-    
-    // Initialize drag and drop for initiative
+
+    // Drag-and-Drop für Initiative initialisieren
     initDragDrop();
-    
-    // Initialize sortable drag-drop for lists
+
+    // Sortierbare Listen initialisieren
     initSortableLists();
     
     // Touch-Optimierungen für iPad/Tablet
