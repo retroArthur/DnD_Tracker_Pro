@@ -104,10 +104,12 @@ function deleteEntity(id) {
 - `build.py` / `build-optimized.py` - Build scripts (Python)
 - `loader.js` - Module loading order definition
 - `core/config.js` - APP_CONFIG with all settings
+- `core/constants.js` - Centralized constants (EDITOR_FONTS, READ_ALOUD_STYLES, CONDITIONS, etc.)
 - `systems/undo.js` - Undo/redo implementation
 - `features/shops/spell-editor.js` - Rich text editor (floating toolbar)
 - `features/encounter-calculator.js` - Encounter balance calculator with terrain/lair modifiers
 - `features/dice/dice-core.js` - Dice roller with floating panel
+- `ui/actions/system-actions.js` - System action handlers (modals, editor actions)
 - `docs/bugfixes.md` - Bug fix patterns and lessons learned
 
 ## Recent Features
@@ -221,6 +223,35 @@ function deleteEntity(id) {
 - Persistent mode: Press `L` to keep log visible with up to 50 entries
 - Header with "Leeren" (clear) and close buttons in persistent mode
 - File: `utils/utilities.js` → `showToast()`, `toggleEventLog()`, `clearEventLog()`
+
+### Read-Aloud Text Styles (Vorlese-Text)
+- Boxed text formatting for DM read-aloud passages
+- 6 paper-like color variants:
+  - Parchment (default, warm beige)
+  - Crimson (subtle red)
+  - Violet (soft purple)
+  - Sage (subtle green)
+  - Sky (soft blue)
+  - Slate (neutral gray)
+- Dropdown selector in both static and floating editor toolbars
+- Toggle behavior: Click again to remove formatting
+- CSS: `.read-aloud`, `.read-aloud.crimson`, etc.
+- File: `features/shops/spell-editor.js` → `setReadAloudFormat(elementId, style)`
+- Constants: `READ_ALOUD_STYLES` in `core/constants.js`
+
+### Synchronized Editor Toolbars
+- Static toolbar (in wiki form) and floating toolbar (on text selection) now have same tools
+- Both include: Bold, Italic, Underline, Strikethrough, Link, List, Border, Table, Read-Aloud, Fonts, Sizes, Highlight colors
+- Fonts available: Arial, Serif, Mono, Roboto, Inter, Poppins, Source Sans Pro
+- Google Fonts loaded via `build.py` HTML template
+- Constants: `EDITOR_FONTS` in `core/constants.js`
+
+### About/Impressum Modal
+- Info button (ℹ️) in header opens modal
+- Shows: App name, version, developer credits, GitHub link
+- MIT License notice
+- File: `assets/body.html` → `#about-modal`
+- Action: `show-about-modal` in `ui/actions/system-actions.js`
 
 ## Keyboard Shortcuts
 
