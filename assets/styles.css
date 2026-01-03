@@ -8544,7 +8544,7 @@
             text-decoration: line-through !important;
         }
         
-        /* Markiert */
+        /* Markiert - inline styles haben Vorrang für Farben */
         .quest-details mark,
         .char-notes-content mark,
         .loot-item-desc mark,
@@ -8553,9 +8553,10 @@
         .wiki-detail-body mark,
         .encounter-content mark,
         .spell-desc mark {
-            background-color: rgba(251, 191, 36, 0.3) !important;
-            padding: 2px 4px !important;
-            border-radius: 3px !important;
+            background-color: rgba(251, 191, 36, 0.3);
+            padding: 0 3px;
+            border-radius: 2px;
+            margin: 0;
         }
         
         /* Links */
