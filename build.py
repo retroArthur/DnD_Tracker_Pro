@@ -217,7 +217,7 @@ def build(minify=False, verbose=False):
     <link rel="manifest" href="data:application/json,{{%22name%22:%22D%26D%20Kampagnen-Tracker%20Pro%22,%22short_name%22:%22D%26D%20Tracker%22,%22start_url%22:%22.%22,%22display%22:%22standalone%22,%22background_color%22:%22%230d0d0d%22,%22theme_color%22:%22%23d4af37%22,%22icons%22:[{{%22src%22:%22data:image/svg+xml,%253Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20100%20100'%253E%253Ctext%20y='.9em'%20font-size='90'%253E%F0%9F%8E%B2%253C/text%253E%253C/svg%253E%22,%22sizes%22:%22any%22,%22type%22:%22image/svg+xml%22}}]}}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Poppins:wght@400;500;600&family=Roboto:wght@400;700&family=Source+Sans+Pro:wght@400;600&display=swap" rel="stylesheet">
     <style>
 {css_content}
     </style>

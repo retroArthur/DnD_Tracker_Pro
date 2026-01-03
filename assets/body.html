@@ -1687,10 +1687,32 @@
                             <button type="button" class="editor-btn" data-action="format-text" data-cmd="wiki-content" data-editor="bold" title="Fett"><b>B</b></button>
                             <button type="button" class="editor-btn" data-action="format-text" data-cmd="wiki-content" data-editor="italic" title="Kursiv"><i>I</i></button>
                             <button type="button" class="editor-btn" data-action="format-text" data-cmd="wiki-content" data-editor="underline" title="Unterstrichen"><u>U</u></button>
+                            <button type="button" class="editor-btn" data-action="format-text" data-cmd="wiki-content" data-editor="strikethrough" title="Durchgestrichen"><s>S</s></button>
+                            <button type="button" class="editor-btn" data-action="insert-link" data-editor="wiki-content" title="Link einfügen">🔗</button>
                             <button type="button" class="editor-btn" data-action="format-text" data-cmd="wiki-content" data-editor="list" title="Liste">☰</button>
                             <button type="button" class="editor-btn" data-action="set-border-format" data-editor="wiki-content" title="Rahmen">◻</button>
-                            <button type="button" class="editor-btn" data-action="call" data-value="insertWikiLink" title="Wiki-Link">[[]]</button><select class="editor-select" data-action="set-editor-font" data-editor="wiki-content" title="Schriftart"><option value="arial">Arial</option><option value="serif">Serif</option><option value="mono">Mono</option></select>
+                            <button type="button" class="editor-btn" data-action="insert-table" data-editor="wiki-content" title="Tabelle">📊</button>
+                            <select class="editor-select" data-action="set-read-aloud-style" data-editor="wiki-content" title="Vorlese-Text">
+                                <option value="">📖 Vorlese</option>
+                                <option value="parchment">📜 Pergament</option>
+                                <option value="crimson">🍷 Karmesin</option>
+                                <option value="violet">🔮 Violett</option>
+                                <option value="sage">🌿 Salbei</option>
+                                <option value="sky">☁️ Himmel</option>
+                                <option value="slate">🪨 Schiefer</option>
+                            </select>
+                            <button type="button" class="editor-btn" data-action="call" data-value="insertWikiLink" title="Wiki-Link">[[]]</button>
+                            <select class="editor-select" data-action="set-editor-font" data-editor="wiki-content" title="Schriftart"><option value="arial">Arial</option><option value="serif">Serif</option><option value="mono">Mono</option><option value="roboto">Roboto</option><option value="inter">Inter</option><option value="poppins">Poppins</option><option value="source-sans">Source Sans</option></select>
                             <select class="editor-select" data-action="set-editor-font-size" data-editor="wiki-content" title="Größe"><option value="0.8em">Klein</option><option value="1em" selected>Normal</option><option value="1.2em">Groß</option><option value="1.5em">Sehr groß</option></select>
+                            <select class="editor-select" data-action="set-highlight-color" data-editor="wiki-content" title="Hervorheben">
+                                <option value="">🖍️ Marker</option>
+                                <option value="#fbbf24">🟡 Gold</option>
+                                <option value="#22d3ee">🔵 Cyan</option>
+                                <option value="#ef4444">🔴 Rot</option>
+                                <option value="#22c55e">🟢 Grün</option>
+                                <option value="#a855f7">🟣 Lila</option>
+                                <option value="transparent">⭕ Keine</option>
+                            </select>
                             <button type="button" class="editor-btn" data-action="clear-formatting" data-value="wiki-content" title="Formatierung löschen" style="color:#888;">✕</button>
                         </div>
                         <div id="wiki-content" class="rich-editor" contenteditable="true" style="min-height: 150px;" oninput="handleWikiContentInput(event)"></div>
@@ -3775,12 +3797,26 @@
             <span class="toolbar-separator"></span>
             <button type="button" class="editor-btn" data-floating-action="link" title="Link einfügen">🔗<span class="kbd-hint">Strg+K</span></button>
             <button type="button" class="editor-btn" data-floating-action="list" title="Liste">☰</button>
+            <button type="button" class="editor-btn" data-floating-action="border" title="Rahmen">◻</button>
             <button type="button" class="editor-btn" data-floating-action="table" title="Tabelle">📊<span class="kbd-hint">Strg+⇧+T</span></button>
             <span class="toolbar-separator"></span>
+            <select class="editor-select" data-floating-action="readAloud" title="Vorlese-Text">
+                <option value="">📖 Vorlese</option>
+                <option value="parchment">📜 Pergament</option>
+                <option value="crimson">🍷 Karmesin</option>
+                <option value="violet">🔮 Violett</option>
+                <option value="sage">🌿 Salbei</option>
+                <option value="sky">☁️ Himmel</option>
+                <option value="slate">🪨 Schiefer</option>
+            </select>
             <select class="editor-select" data-floating-action="font" title="Schriftart">
                 <option value="arial">Arial</option>
                 <option value="serif">Serif</option>
                 <option value="mono">Mono</option>
+                <option value="roboto">Roboto</option>
+                <option value="inter">Inter</option>
+                <option value="poppins">Poppins</option>
+                <option value="source-sans">Source Sans</option>
             </select>
             <select class="editor-select" data-floating-action="fontSize" title="Größe">
                 <option value="0.8em">Klein</option>

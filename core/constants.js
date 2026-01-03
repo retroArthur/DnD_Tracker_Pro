@@ -329,8 +329,19 @@ const EDITOR_FONTS = Object.freeze({
     'arial': "Arial, Helvetica, sans-serif",
     'serif': "Georgia, 'Times New Roman', serif",
     'mono': "'Courier New', Consolas, monospace",
-    'abadi': "Abadi MT Condensed Light, Arial Narrow, sans-serif",
-    'roboto': "Roboto, sans-serif"
+    'roboto': "Roboto, sans-serif",
+    'inter': "Inter, sans-serif",
+    'poppins': "Poppins, sans-serif",
+    'source-sans': "'Source Sans Pro', sans-serif"
+});
+
+const READ_ALOUD_STYLES = Object.freeze({
+    'parchment': { name: 'Pergament', icon: '📜' },
+    'crimson': { name: 'Karmesin', icon: '🍷' },
+    'violet': { name: 'Violett', icon: '🔮' },
+    'sage': { name: 'Salbei', icon: '🌿' },
+    'sky': { name: 'Himmel', icon: '☁️' },
+    'slate': { name: 'Schiefer', icon: '🪨' }
 });
 
 const TOOLBAR_DIMENSIONS = Object.freeze({ width: 380, height: 80, padding: 10 });

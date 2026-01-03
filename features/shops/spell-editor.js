@@ -404,6 +404,44 @@ function setBorderFormat(elementId) {
     }
 }
 
+// Vorlese-Text (Read-Aloud / Boxed Text) Format
+function setReadAloudFormat(elementId, style = 'parchment') {
+    const editor = $(elementId);
+    if (!editor) return;
+    editor.focus();
+
+    const selection = window.getSelection();
+    if (selection.rangeCount > 0) {
+        const range = selection.getRangeAt(0);
+
+        // Prüfe ob bereits in read-aloud Block
+        const existingBlock = range.commonAncestorContainer.nodeType === Node.TEXT_NODE
+            ? range.commonAncestorContainer.parentElement?.closest('.read-aloud')
+            : range.commonAncestorContainer.closest?.('.read-aloud');
+
+        if (existingBlock) {
+            // Entferne read-aloud Format (unwrap)
+            const parent = existingBlock.parentNode;
+            while (existingBlock.firstChild) {
+                parent.insertBefore(existingBlock.firstChild, existingBlock);
+            }
+            parent.removeChild(existingBlock);
+            showToast('📖 Vorlese-Text entfernt');
+        } else {
+            // Füge read-aloud Format hinzu
+            const selectedContent = range.extractContents();
+            const wrapper = document.createElement('div');
+            // Basis-Klasse + Stil-Klasse (parchment braucht keine extra Klasse)
+            wrapper.className = style === 'parchment' ? 'read-aloud' : `read-aloud ${style}`;
+            wrapper.appendChild(selectedContent);
+            range.insertNode(wrapper);
+            const styleNames = { parchment: 'Pergament', crimson: 'Karmesin', violet: 'Violett', sage: 'Salbei', sky: 'Himmel', slate: 'Schiefer' };
+            showToast(`📖 Vorlese-Text (${styleNames[style] || style})`);
+        }
+        selection.removeAllRanges();
+    }
+}
+
 // Entfernt Rahmen von der aktuellen Selection
 function removeSelectionBorders() {
     const selection = window.getSelection();
@@ -717,6 +755,12 @@ function initFloatingToolbar() {
 
         const action = btn.dataset.floatingAction;
 
+        // Special actions that use existing functions
+        if (action === 'border') {
+            setBorderFormat(floatingToolbarTarget.id);
+            return;
+        }
+
         // Formatierung mit manuellem Wrapping anwenden
         applyFloatingFormat(action, floatingToolbarTarget, floatingToolbarRange);
 
@@ -727,7 +771,7 @@ function initFloatingToolbar() {
         }
     });
 
-    // Font/Size select change handlers
+    // Font/Size/ReadAloud select change handlers
     toolbar.addEventListener('change', (e) => {
         const select = e.target.closest('[data-floating-action]');
         if (!select || !floatingToolbarTarget || !floatingToolbarRange) return;
@@ -750,6 +794,10 @@ function initFloatingToolbar() {
                 el.removeAttribute('size');
                 el.style.fontSize = value;
             });
+        } else if (action === 'readAloud' && value) {
+            // Apply read-aloud formatting
+            setReadAloudFormat(floatingToolbarTarget.id, value);
+            select.selectedIndex = 0;
         }
 
         // Update saved range

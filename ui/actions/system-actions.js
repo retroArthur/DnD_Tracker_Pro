@@ -52,9 +52,88 @@ const SystemActions = {
         const style = ctx.target.dataset.value || ctx.value;
         setBorderFormat(editorId, style);
     },
+    'set-read-aloud': (ctx) => {
+        const editorId = ctx.target.dataset.editor;
+        setReadAloudFormat(editorId);
+    },
+    'set-read-aloud-style': (ctx) => {
+        const editorId = ctx.target.dataset.editor;
+        const style = ctx.target.value || 'parchment';
+        if (style) {
+            setReadAloudFormat(editorId, style);
+            // Reset dropdown nach Anwendung
+            ctx.target.selectedIndex = 0;
+        }
+    },
     'insert-entity-link-btn': (ctx) => {
         const editorId = ctx.target.dataset.editor;
         showInsertEntityLinkModal(editorId);
+    },
+    'insert-link': (ctx) => {
+        const editorId = ctx.target.dataset.editor;
+        const editor = $(editorId);
+        if (editor) {
+            editor.focus();
+            const url = prompt('Link URL eingeben:');
+            if (url) {
+                document.execCommand('createLink', false, url);
+                showToast('🔗 Link eingefügt');
+            }
+        }
+    },
+    'insert-table': (ctx) => {
+        const editorId = ctx.target.dataset.editor;
+        floatingToolbarTarget = $(editorId);
+        insertTable();
+    },
+    'set-highlight-color': (ctx) => {
+        const editorId = ctx.target.dataset.editor;
+        const color = ctx.target.value;
+        const editor = $(editorId);
+        if (!editor || !color) {
+            ctx.target.selectedIndex = 0;
+            return;
+        }
+        editor.focus();
+
+        const selection = window.getSelection();
+        if (!selection.rangeCount || !selection.toString()) {
+            showToast('⚠️ Bitte erst Text markieren', 'warning');
+            ctx.target.selectedIndex = 0;
+            return;
+        }
+
+        const range = selection.getRangeAt(0);
+
+        if (color === 'transparent') {
+            // Remove highlight
+            const marks = editor.querySelectorAll('mark');
+            marks.forEach(mark => {
+                if (selection.containsNode(mark, true)) {
+                    const parent = mark.parentNode;
+                    while (mark.firstChild) {
+                        parent.insertBefore(mark.firstChild, mark);
+                    }
+                    parent.removeChild(mark);
+                }
+            });
+            showToast('🧹 Hervorhebung entfernt');
+        } else {
+            const wrapper = document.createElement('mark');
+            wrapper.style.backgroundColor = color + '66';
+            wrapper.style.color = 'inherit';
+            wrapper.style.borderRadius = '2px';
+            wrapper.style.padding = '0 3px';
+            try {
+                range.surroundContents(wrapper);
+            } catch (e) {
+                const fragment = range.extractContents();
+                wrapper.appendChild(fragment);
+                range.insertNode(wrapper);
+            }
+            showToast('🖍️ Text hervorgehoben');
+        }
+        ctx.target.selectedIndex = 0;
     },
     'set-preset-emoji': (ctx) => setPresetEmoji(ctx.value),
 
