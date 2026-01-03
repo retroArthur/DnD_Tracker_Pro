@@ -138,6 +138,7 @@ const SystemActions = {
     'set-preset-emoji': (ctx) => setPresetEmoji(ctx.value),
 
     // System
+    'show-about-modal': () => showModal('about-modal'),
     'reload-page': () => location.reload(),
     'clear-error-log': () => { ErrorHandler.clearLog(); showErrorLogModal(); },
 
