@@ -1,7 +1,7 @@
+// [SECTION:NPC_INTERACTIONS]
 // ============================================================
-// NPC INTERACTIONS - Toggle und Interaktions-Funktionen
+// NPC INTERACTIONS - @toggle @select @relations
 // ============================================================
-// Angepasst für Master-Detail Layout
 
 /**
  * Schaltet NPC-Karte um oder waehlt NPC im Master-Detail Layout

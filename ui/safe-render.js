@@ -1,12 +1,6 @@
-/**
- * D&D Tracker - Safe Render Utility
- * Optimiertes DOM-Rendering mit automatischer Strategie-Wahl
- * @module ui/safe-render
- * @version 2.7.0
- */
-
+// [SECTION:SAFE_RENDER]
 // ============================================================
-// RENDER STRATEGIES
+// SAFE RENDER - @dom @strategy @batch
 // ============================================================
 
 /**

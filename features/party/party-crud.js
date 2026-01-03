@@ -1,7 +1,7 @@
+// [SECTION:PARTY_CRUD]
 // ============================================================
-// PARTY CRUD - Create, Read, Update, Delete Operationen
+// PARTY CRUD - @create @edit @delete @character
 // ============================================================
-// Extrahiert aus features/render-party.js
 
 // Update attribute modifier display in char form
 function updateAttrMod(attr) {

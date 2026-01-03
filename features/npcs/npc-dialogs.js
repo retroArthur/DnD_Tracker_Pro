@@ -1,7 +1,7 @@
+// [SECTION:NPC_DIALOGS]
 // ============================================================
-// NPC DIALOGS - Dialog-Modal-Funktionen
+// NPC DIALOGS - @dialog @modal @conversation
 // ============================================================
-// Extrahiert aus features/render-npcs.js
 
 // Globale Counter-Variable für Dialog-Felder
 let dialogFieldCounter = 0;

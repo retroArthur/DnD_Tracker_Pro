@@ -282,6 +282,64 @@ const LOOT_TAG_LABELS = Object.freeze({
     tool: '🔧 Werkzeug', gemstone: '💎 Edelstein', art: '🖼️ Kunstobjekt', container: '📦 Behälter', key: '🗝️ Schlüssel', document: '📄 Dokument'
 });
 
+// ============================================================
+// INITIATIVE CONSTANTS
+// ============================================================
+const INIT_CONSTANTS = Object.freeze({
+    PERMANENT_DURATION: 999,
+    DEATH_SAVE_THRESHOLD: 3,
+    CONCENTRATION_DC_MIN: 10,
+    CONCENTRATION_DC_DIVISOR: 2,
+    D20_SIDES: 20,
+    ABILITY_MOD_BASE: 10,
+    ABILITY_MOD_DIVISOR: 2
+});
+
+const COMBATANT_TYPES = Object.freeze({
+    PLAYER: 'player',
+    ENEMY: 'enemy',
+    ALLY: 'ally',
+    LAIR: 'lair'
+});
+
+// ============================================================
+// MAP CONSTANTS
+// ============================================================
+const MAP_CONSTANTS = Object.freeze({
+    ZOOM: { min: 0.1, max: 5, factorIn: 1.1, factorOut: 0.9 },
+    GRID: { defaultSize: 50, minSize: 20, maxSize: 200, dndMeterConversion: 1.524 },
+    FOG: { defaultBrushSize: 50, hideThreshold: 5 },
+    TOOLTIP_OFFSET: 15,
+    CONVERSIONS: { feetPerMeter: 3.28084, milesPerFeet: 5280, kmPerMeter: 1000, metersPerMile: 1609.34 },
+    TRAVEL_SPEED_MH: 5000
+});
+
+const MARKER_ICONS = Object.freeze({
+    party: '👥', poi: '📍', danger: '⚠️', quest: '📜', item: '💎',
+    secret: '❓', secretdoor: '🚪', npc: '🧑', action: '⚡', encounter: '⚔️',
+    entrance: '🚩', exit: '🏁', shop: '🛒', blacksmith: '⚒️', house: '🏠',
+    tavern: '🍺', inn: '🛏️', dicetest: '🎲', ruins: '🏚️', magic: '✨',
+    tower: '🗼', lair: '🐉', note: '📝'
+});
+
+// ============================================================
+// EDITOR CONSTANTS
+// ============================================================
+const EDITOR_FONTS = Object.freeze({
+    'arial': "Arial, Helvetica, sans-serif",
+    'serif': "Georgia, 'Times New Roman', serif",
+    'mono': "'Courier New', Consolas, monospace",
+    'abadi': "Abadi MT Condensed Light, Arial Narrow, sans-serif",
+    'roboto': "Roboto, sans-serif"
+});
+
+const TOOLBAR_DIMENSIONS = Object.freeze({ width: 380, height: 80, padding: 10 });
+
+const SPELLS_PER_PAGE = 50;
+
+// ============================================================
+// GLOBAL DATA OBJECT
+// ============================================================
 let D = {
     locations: [], npcs: [], quests: [], characters: [], sessionNotes: [], quickNotes: '',
     initiative: { combatants: [], currentTurn: 0, round: 1 },

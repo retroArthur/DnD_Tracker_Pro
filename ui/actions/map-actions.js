@@ -1,5 +1,6 @@
+// [SECTION:MAP_ACTIONS]
 // ============================================================
-// MAP ACTIONS - Maps, Markers, Mindmap, Nodes
+// MAP ACTIONS - @maps @markers @mindmap @nodes
 // ============================================================
 
 const MapActions = {

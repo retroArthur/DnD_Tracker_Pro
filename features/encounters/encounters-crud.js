@@ -1,7 +1,7 @@
+// [SECTION:ENCOUNTERS_CRUD]
 // ============================================================
-// ENCOUNTERS CRUD - Create, Read, Update, Delete Operationen
+// ENCOUNTERS CRUD - @create @edit @delete @save
 // ============================================================
-// Extrahiert aus features/render-encounters.js
 
 function updateEncAttrMod(attr) {
     const val = parseInt($(`enc-${attr}`).value) || 10;

@@ -1,7 +1,7 @@
+// [SECTION:PARTY_RENDER]
 // ============================================================
-// PARTY RENDER - Hauptrendering-Funktionen
+// PARTY RENDER - @character @roster @overview
 // ============================================================
-// Extrahiert aus features/render-party.js
 
 function renderParty() {
     const c = $('party-list'); if (!c) return;

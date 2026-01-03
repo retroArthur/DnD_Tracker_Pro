@@ -1,5 +1,6 @@
+// [SECTION:LOCATIONS_RENDER]
 // ============================================================
-// LOCATIONS RENDER - Master-Detail Layout
+// LOCATIONS RENDER - @master-detail @filter @orte
 // ============================================================
 
 // State

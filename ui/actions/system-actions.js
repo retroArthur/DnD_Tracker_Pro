@@ -1,5 +1,6 @@
+// [SECTION:SYSTEM_ACTIONS]
 // ============================================================
-// SYSTEM ACTIONS - Undo/Redo, Export, Import, Backup, Timer
+// SYSTEM ACTIONS - @undo @redo @export @import @backup
 // ============================================================
 
 const SystemActions = {

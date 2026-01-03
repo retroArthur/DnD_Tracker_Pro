@@ -1,18 +1,9 @@
-/**
- * Testable Utilities
- * Exportierbare Version der Utility-Funktionen für Jest Tests
- * @module utils/testable-utils
- *
- * WICHTIG: Diese Datei enthält absichtlich Duplikate von Funktionen aus
- * basic.js und utilities.js. Der Grund:
- *
- * - Die Haupt-App nutzt globale Funktionen ohne module.exports (Browser)
- * - Jest Tests benötigen CommonJS exports (Node.js)
- * - Diese Datei wird NUR von Tests importiert, nicht vom Production Build
- *
- * Bei Änderungen an den Originalfunktionen müssen die Kopien hier
- * synchron gehalten werden!
- */
+// [SECTION:TESTABLE_UTILS]
+// ============================================================
+// TESTABLE UTILS - @jest @testing @exports
+// ============================================================
+// Duplikate aus basic.js/utilities.js für Jest-Kompatibilität
+// NUR von Tests importiert, nicht vom Production Build
 
 // ============================================================
 // HTML ESCAPING

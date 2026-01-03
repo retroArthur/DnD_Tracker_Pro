@@ -1,25 +1,8 @@
 // [SECTION:INITIATIVE]
 // ============================================================
 // INITIATIVE - @combat @turn @round @encounter
+// Konstanten: INIT_CONSTANTS, COMBATANT_TYPES (in core/constants.js)
 // ============================================================
-
-// Konstanten
-const INIT_CONSTANTS = {
-    PERMANENT_DURATION: 999,
-    DEATH_SAVE_THRESHOLD: 3,
-    CONCENTRATION_DC_MIN: 10,
-    CONCENTRATION_DC_DIVISOR: 2,
-    D20_SIDES: 20,
-    ABILITY_MOD_BASE: 10,
-    ABILITY_MOD_DIVISOR: 2
-};
-
-const COMBATANT_TYPES = {
-    PLAYER: 'player',
-    ENEMY: 'enemy',
-    ALLY: 'ally',
-    LAIR: 'lair'
-};
 
 // Utility-Funktionen
 function getCombatant(id) {

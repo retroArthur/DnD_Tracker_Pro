@@ -1,7 +1,7 @@
+// [SECTION:NPC_CRUD]
 // ============================================================
-// NPC CRUD - Create, Read, Update, Delete Operationen
+// NPC CRUD - @create @edit @delete @save
 // ============================================================
-// Extrahiert aus features/render-npcs.js
 
 function saveNPC() {
     const id = $('edit-npc-id').value;

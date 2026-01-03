@@ -1,7 +1,7 @@
+// [SECTION:PARTY_DETAILS]
 // ============================================================
-// PARTY DETAILS - Charakter-Details-Modal
+// PARTY DETAILS - @modal @character @stats
 // ============================================================
-// Extrahiert aus features/render-party.js
 
 function showCharacterDetails(id) {
     const ch = EntityLookup.character(id);

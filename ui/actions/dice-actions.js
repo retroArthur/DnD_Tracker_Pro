@@ -1,5 +1,6 @@
+// [SECTION:DICE_ACTIONS]
 // ============================================================
-// DICE ACTIONS - Dice Rolling, Favorites
+// DICE ACTIONS - @roll @favorites @formula
 // ============================================================
 
 const DiceActions = {

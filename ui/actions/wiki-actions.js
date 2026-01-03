@@ -1,5 +1,6 @@
+// [SECTION:WIKI_ACTIONS]
 // ============================================================
-// WIKI ACTIONS - Wiki Entries, Categories, Links
+// WIKI ACTIONS - @entries @categories @links
 // ============================================================
 
 const WikiActions = {

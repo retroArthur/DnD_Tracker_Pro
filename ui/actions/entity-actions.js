@@ -1,5 +1,6 @@
+// [SECTION:ENTITY_ACTIONS]
 // ============================================================
-// ENTITY ACTIONS - Character, NPC, Location, Quest, Encounter, Loot, Spell
+// ENTITY ACTIONS - @character @npc @location @quest @encounter
 // ============================================================
 
 const EntityActions = {

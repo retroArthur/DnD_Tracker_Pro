@@ -1,7 +1,7 @@
+// [SECTION:RENDER_SPELLS]
 // ============================================================
-// SPELLS - Render-Funktionen  
+// SPELLS - @zauber @tooltip @magic
 // ============================================================
-// Extrahiert aus render/main.js
 
 function getSpellColor(type) { return { spell: 'blue', healing: 'yellow', damage: 'red', buff: 'green', debuff: 'purple' }[type] || 'blue'; }
 

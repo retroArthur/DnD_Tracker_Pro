@@ -1,7 +1,7 @@
+// [SECTION:RENDER_DASHBOARD]
 // ============================================================
-// DASHBOARD - Render-Funktionen  
+// DASHBOARD - @render @tabs @overview
 // ============================================================
-// Extrahiert aus render/main.js
 
 // Globale Render-State-Variable
 let renderPending = false;

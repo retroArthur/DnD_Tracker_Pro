@@ -1,7 +1,7 @@
+// [SECTION:RENDER_LOOT]
 // ============================================================
-// LOOT - Render-Funktionen  
+// LOOT - @items @inventory @treasure
 // ============================================================
-// Extrahiert aus render/main.js
 
 function showAssignItems(charId) {
     const ch = EntityLookup.character(charId); if (!ch) return;

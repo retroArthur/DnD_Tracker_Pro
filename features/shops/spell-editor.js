@@ -1,23 +1,8 @@
 // [SECTION:SPELL_EDITOR]
-// Extrahiert aus shops.js
-// Zauber-Verwaltung und Editor
-// Zeilen: 918
-
-// SPELLS
 // ============================================================
-
-// Konstanten
-const SPELLS_PER_PAGE = 50;
-
-const EDITOR_FONTS = {
-    'arial': "Arial, Helvetica, sans-serif",
-    'serif': "Georgia, 'Times New Roman', serif",
-    'mono': "'Courier New', Consolas, monospace",
-    'abadi': "Abadi MT Condensed Light, Arial Narrow, sans-serif",
-    'roboto': "Roboto, sans-serif"
-};
-
-const TOOLBAR_DIMENSIONS = { width: 380, height: 80, padding: 10 };
+// SPELL EDITOR - @zauber @editor @toolbar
+// Konstanten: EDITOR_FONTS, TOOLBAR_DIMENSIONS, SPELLS_PER_PAGE (in core/constants.js)
+// ============================================================
 
 let currentSpellPage = 0;
 let filteredSpellsCache = [];

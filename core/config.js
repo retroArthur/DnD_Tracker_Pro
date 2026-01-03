@@ -1,5 +1,6 @@
+// [SECTION:CONFIG]
 // ============================================================
-// APP_CONFIG - Zentrale Anwendungskonfiguration
+// APP_CONFIG - @config @settings @version
 // ============================================================
 const APP_CONFIG = Object.freeze({
     // Version

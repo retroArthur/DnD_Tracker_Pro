@@ -1,5 +1,6 @@
+// [SECTION:UI_ACTIONS]
 // ============================================================
-// UI ACTIONS - Modals, Views, Toggles, Navigation
+// UI ACTIONS - @modals @views @toggles @navigation
 // ============================================================
 
 const UIActions = {

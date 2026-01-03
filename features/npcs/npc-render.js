@@ -1,5 +1,6 @@
+// [SECTION:NPC_RENDER]
 // ============================================================
-// NPC RENDER - Master-Detail Layout (wie Orte)
+// NPC RENDER - @master-detail @filter @icons
 // ============================================================
 
 // State

@@ -1,5 +1,6 @@
+// [SECTION:ENCOUNTERS_RENDER]
 // ============================================================
-// ENCOUNTERS RENDER - Master-Detail Layout (wie Orte/NPCs)
+// ENCOUNTERS RENDER - @master-detail @filter @monster
 // ============================================================
 
 // State

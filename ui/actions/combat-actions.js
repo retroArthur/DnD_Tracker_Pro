@@ -1,5 +1,6 @@
+// [SECTION:COMBAT_ACTIONS]
 // ============================================================
-// COMBAT ACTIONS - Initiative, HP, Effects, Conditions
+// COMBAT ACTIONS - @initiative @hp @effects @conditions
 // ============================================================
 
 const CombatActions = {

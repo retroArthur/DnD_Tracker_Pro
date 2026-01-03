@@ -1,7 +1,7 @@
+// [SECTION:NPC_POPUP]
 // ============================================================
-// NPC POPUP - Popup-Funktionen für Location-Tags
+// NPC POPUP - @tooltip @location-tag @hover
 // ============================================================
-// Extrahiert aus features/render-npcs.js
 
 function showNPCPopup(npcId, event) {
     event.stopPropagation();

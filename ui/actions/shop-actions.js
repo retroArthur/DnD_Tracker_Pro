@@ -1,5 +1,6 @@
+// [SECTION:SHOP_ACTIONS]
 // ============================================================
-// SHOP ACTIONS - Shops, Cart, Items
+// SHOP ACTIONS - @shops @cart @items
 // ============================================================
 
 const ShopActions = {

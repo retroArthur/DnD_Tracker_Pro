@@ -1,7 +1,7 @@
+// [SECTION:LOCATIONS_CRUD]
 // ============================================================
-// LOCATIONS CRUD - Create, Read, Update, Delete Operationen
+// LOCATIONS CRUD - @create @edit @delete @save
 // ============================================================
-// Extrahiert aus features/render-locations.js
 
 /**
  * Speichert oder aktualisiert einen Ort

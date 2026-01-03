@@ -1,12 +1,6 @@
-/**
- * D&D Tracker - DOM Builder Utility
- * Effizientes DOM-Rendering mit DocumentFragment
- * @module ui/dom-builder
- * @version 2.7.0
- */
-
+// [SECTION:DOM_BUILDER]
 // ============================================================
-// DOM BUILDER
+// DOM BUILDER - @dom @fragment @render
 // ============================================================
 
 /**

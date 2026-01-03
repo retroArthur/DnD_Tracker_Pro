@@ -1,7 +1,7 @@
+// [SECTION:QUESTS_CRUD]
 // ============================================================
-// QUESTS CRUD - Create, Read, Update, Delete Operationen
+// QUESTS CRUD - @create @edit @delete @save
 // ============================================================
-// Extrahiert aus features/render-quests.js
 
 /**
  * Speichert oder aktualisiert eine Quest

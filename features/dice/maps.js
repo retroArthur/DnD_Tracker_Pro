@@ -1,28 +1,8 @@
 // [SECTION:MAPS]
-// Extrahiert aus dice.js
-// Karten-Integration
-// Zeilen: 575
-
-// MAP INTEGRATION (Multi-Map Support)
 // ============================================================
-
-// Konstanten
-const MAP_CONSTANTS = {
-    ZOOM: { min: 0.1, max: 5, factorIn: 1.1, factorOut: 0.9 },
-    GRID: { defaultSize: 50, minSize: 20, maxSize: 200, dndMeterConversion: 1.524 },
-    FOG: { defaultBrushSize: 50, hideThreshold: 5 },
-    TOOLTIP_OFFSET: 15,
-    CONVERSIONS: { feetPerMeter: 3.28084, milesPerFeet: 5280, kmPerMeter: 1000, metersPerMile: 1609.34 },
-    TRAVEL_SPEED_MH: 5000
-};
-
-const MARKER_ICONS = {
-    party: '👥', poi: '📍', danger: '⚠️', quest: '📜', item: '💎',
-    secret: '❓', secretdoor: '🚪', npc: '🧑', action: '⚡', encounter: '⚔️',
-    entrance: '🚩', exit: '🏁', shop: '🛒', blacksmith: '⚒️', house: '🏠',
-    tavern: '🍺', inn: '🛏️', dicetest: '🎲', ruins: '🏚️', magic: '✨',
-    tower: '🗼', lair: '🐉', note: '📝'
-};
+// MAPS - @karten @marker @fog
+// Konstanten: MAP_CONSTANTS, MARKER_ICONS (in core/constants.js)
+// ============================================================
 
 // Utility-Funktionen
 function getMapCoordinates(event, rect) {

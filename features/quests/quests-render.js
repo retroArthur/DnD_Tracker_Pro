@@ -1,7 +1,7 @@
+// [SECTION:QUESTS_RENDER]
 // ============================================================
-// QUESTS RENDER - Hauptrendering-Funktionen
+// QUESTS RENDER - @filter @cards @status
 // ============================================================
-// Extrahiert aus features/render-quests.js
 
 function renderQuests() {
     const c = $('quests-list'); if (!c) return;
