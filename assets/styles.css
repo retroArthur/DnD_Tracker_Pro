@@ -7822,12 +7822,24 @@
             border-radius: 4px;
             cursor: pointer;
             font-size: 11px;
-            width: 100px;
+            width: auto !important;
+            min-width: 70px;
+            max-width: 100px;
+            flex-shrink: 0;
         }
-        
+
         .editor-select:hover, .editor-select:focus {
             border-color: var(--gold);
             outline: none;
+        }
+
+        /* Kompakte Editor-Toolbar in 2 Zeilen */
+        .editor-toolbar {
+            row-gap: 4px;
+        }
+
+        .editor-toolbar .editor-btn {
+            flex-shrink: 0;
         }
         
         .toolbar-separator {
@@ -8609,6 +8621,9 @@
         .encounter-content .read-aloud,
         .spell-desc .read-aloud,
         .rich-editor .read-aloud {
+            display: inline-block;
+            width: fit-content;
+            max-width: 100%;
             padding: 14px 18px;
             margin: 12px 0;
             font-family: Georgia, 'Times New Roman', serif;
@@ -9023,7 +9038,7 @@
         /* Tree Items */
         .wiki-tree-items {
             display: none;
-            padding-left: 20px;
+            padding-left: 12px;
             margin-top: 4px;
         }
         
@@ -9034,8 +9049,8 @@
         .wiki-tree-item {
             display: flex;
             align-items: center;
-            gap: 6px;
-            padding: 6px 10px;
+            gap: 4px;
+            padding: 5px 8px;
             margin: 2px 0;
             border-radius: 4px;
             cursor: pointer;
@@ -9043,6 +9058,16 @@
             color: var(--text);
             transition: all 0.15s;
             border-left: 2px solid transparent;
+            min-width: 0;
+            overflow: hidden;
+        }
+
+        .wiki-tree-item-name {
+            flex: 1;
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
         }
         
         .wiki-tree-item:hover {
@@ -9070,7 +9095,7 @@
         }
         
         .wiki-tree-item-children {
-            padding-left: 16px;
+            padding-left: 10px;
             display: none;
         }
         

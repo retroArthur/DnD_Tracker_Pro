@@ -46,14 +46,16 @@ function sanitizeHTML(html) {
     const doc = parser.parseFromString(cleaned, 'text/html');
 
     // Erlaubte Tags und Attribute
-    const allowedTags = ['b', 'i', 'u', 's', 'strong', 'em', 'ul', 'ol', 'li', 'p', 'br', 'div', 'span', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'table', 'thead', 'tbody', 'tr', 'th', 'td', 'mark', 'a'];
+    const allowedTags = ['b', 'i', 'u', 's', 'strong', 'em', 'ul', 'ol', 'li', 'p', 'br', 'div', 'span', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'table', 'thead', 'tbody', 'tr', 'th', 'td', 'mark', 'a', 'font'];
     const allowedAttributes = {
         'style': ['color', 'background-color', 'background', 'font-family', 'font-size', 'font-weight', 'text-decoration', 'border', 'border-collapse', 'padding', 'margin', 'width', 'text-align', 'vertical-align'],
         'class': true,
         'href': true,
         'title': true,
         'colspan': true,
-        'rowspan': true
+        'rowspan': true,
+        'face': true,  // für <font face="..."> (execCommand fontName)
+        'size': true   // für <font size="..."> (execCommand fontSize)
     };
 
     // Gefährliche Protokolle (case-insensitive)
@@ -120,6 +122,10 @@ function sanitizeHTML(html) {
                     if (!isNaN(val) && val > 0 && val < 100) {
                         cleanElement.setAttribute(attrName, val);
                     }
+                }
+                // face/size für font-Tags (execCommand fontName/fontSize)
+                else if ((attrName === 'face' || attrName === 'size') && allowedAttributes[attrName] && tagName === 'font') {
+                    cleanElement.setAttribute(attrName, attr.value);
                 }
                 // Andere Attribute blockieren (src, etc.)
             }

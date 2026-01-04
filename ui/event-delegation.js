@@ -70,6 +70,12 @@ const EventDelegation = {
         const target = e.target.closest('[data-action]');
         if (!target) return;
 
+        // SELECT-Elemente: Natives Verhalten erlauben, Actions werden via 'change' Event behandelt
+        // Klick auf <select> oder <option> sollte das Dropdown öffnen lassen
+        if (target.tagName === 'SELECT' || e.target.tagName === 'OPTION') {
+            return;
+        }
+
         const action = target.dataset.action;
         const id = target.dataset.id ? parseEntityId(target.dataset.id) : null;
         const type = target.dataset.type || null;

@@ -377,13 +377,14 @@ function renderWikiTreeItem(entry, childrenMap, depth) {
     const cat = WIKI_CATEGORIES[entry.category] || { icon: '📄' };
     
     return `
-        <div class="wiki-tree-item ${isSelected ? 'selected' : ''} ${entry.pinned ? 'pinned' : ''} ${hasChildren ? 'has-children' : ''} ${isExpanded ? 'expanded' : ''}" 
-             data-action="select-wiki-entry" data-id="${entry.id}" 
+        <div class="wiki-tree-item ${isSelected ? 'selected' : ''} ${entry.pinned ? 'pinned' : ''} ${hasChildren ? 'has-children' : ''} ${isExpanded ? 'expanded' : ''}"
+             data-action="select-wiki-entry" data-id="${entry.id}"
              data-id="${entry.id}"
-             style="padding-left: ${10 + depth * 12}px;">
+             style="padding-left: ${4 + depth * 8}px;"
+             title="${esc(entry.title)}">
             ${hasChildren ? `<span class="wiki-tree-item-toggle" data-action="toggle-wiki-stop" data-id="${entry.id}">▶</span>` : ''}
             <span style="opacity: 0.7;">${cat.icon}</span>
-            <span style="flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${esc(entry.title)}</span>
+            <span class="wiki-tree-item-name">${esc(entry.title)}</span>
         </div>
     `;
 }

@@ -689,12 +689,14 @@ function initFloatingToolbar() {
             const btn = e.target.closest('.editor-btn');
             const sel = e.target.closest('.editor-select');
 
-            // Selection speichern bei Klick auf Selects
+            // Select-Elemente: Native Verhalten erlauben, nur Selection speichern
             if (sel) {
                 const selection = window.getSelection();
                 if (selection.rangeCount > 0 && selection.toString()) {
                     editorSelectSavedRange = selection.getRangeAt(0).cloneRange();
                 }
+                // WICHTIG: Nicht preventDefault aufrufen, damit Dropdown öffnet
+                return;
             }
 
             // Buttons: preventDefault um Selection zu behalten
