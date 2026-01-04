@@ -77,6 +77,9 @@ const EntityActions = {
     'show-relations-modal-stop': (ctx) => { ctx.event.stopPropagation(); showRelationsModal(ctx.id); },
     'cycle-relation-status-stop': (ctx) => { ctx.event.stopPropagation(); cycleRelationStatus(ctx.id, parseInt(ctx.value)); },
     'remove-relation-stop': (ctx) => { ctx.event.stopPropagation(); removeRelation(ctx.id, parseInt(ctx.value)); },
+    'add-relation': (ctx) => addRelation(ctx.id),
+    'set-relation-status': (ctx) => setRelationStatus(ctx.value),
+    'remove-relation-modal': (ctx) => removeRelation(ctx.id, parseInt(ctx.value)),
 
     // Location actions
     'edit-location': (ctx) => editLocation(ctx.id),

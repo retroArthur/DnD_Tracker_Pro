@@ -673,8 +673,13 @@ let floatingToolbarTarget = null;
 let floatingToolbarRange = null; // Gespeicherte Selection Range
 let hideFloatingToolbarTimeout = null;
 let floatingToolbarInteracting = false; // Flag: User interagiert mit Toolbar
+let floatingToolbarInitialized = false; // Guard gegen mehrfache Initialisierung
 
 function initFloatingToolbar() {
+    // Verhindere mehrfache Initialisierung (Memory Leak Prevention)
+    if (floatingToolbarInitialized) return;
+    floatingToolbarInitialized = true;
+
     const toolbar = $('floating-toolbar');
     if (!toolbar) return;
 
@@ -1104,8 +1109,13 @@ function applyFloatingHighlight(color, editor, savedRange) {
 // ============================================================
 let currentContextTable = null;
 let currentContextLink = null;
+let contextToolbarsInitialized = false; // Guard gegen mehrfache Initialisierung
 
 function initContextToolbars() {
+    // Verhindere mehrfache Initialisierung (Memory Leak Prevention)
+    if (contextToolbarsInitialized) return;
+    contextToolbarsInitialized = true;
+
     const tableToolbar = $('table-context-toolbar');
     const linkToolbar = $('link-context-toolbar');
 

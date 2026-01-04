@@ -323,6 +323,66 @@ const MARKER_ICONS = Object.freeze({
 });
 
 // ============================================================
+// ENTITY ICONS - Zentralisierte Icons für alle Entity-Typen
+// ============================================================
+/**
+ * Icons für alle Entity-Typen (plural keys für Arrays/Listen)
+ * @type {Object.<string, string>}
+ */
+const ENTITY_ICONS = Object.freeze({
+    characters: '👥',
+    npcs: '🎭',
+    locations: '🏠',
+    quests: '📜',
+    encounters: '👹',
+    spells: '✨',
+    loot: '💎',
+    wiki: '📖',
+    shops: '🛒',
+    sessions: '📓'
+});
+
+/**
+ * Icons für Entity-Links (unterstützt sowohl Singular als auch Plural)
+ * Verwendet für [[type:id:name]] Pattern und Verlinkungen
+ * @type {Object.<string, string>}
+ */
+const LINK_ICONS = Object.freeze({
+    // Plural forms (primär)
+    npcs: '🎭',
+    locations: '🏠',
+    quests: '📜',
+    characters: '👥',
+    encounters: '👹',
+    spells: '✨',
+    loot: '💎',
+    wiki: '📖',
+    // Singular forms (für Kompatibilität)
+    npc: '🎭',
+    location: '🏠',
+    quest: '📜',
+    character: '👤',
+    encounter: '⚔️',
+    spell: '✨',
+    item: '💎'
+});
+
+/**
+ * Typnamen für Entities (deutsche Labels)
+ * @type {Object.<string, string>}
+ */
+const ENTITY_TYPE_NAMES = Object.freeze({
+    npcs: 'NPC',
+    locations: 'Ort',
+    quests: 'Quest',
+    characters: 'Charakter',
+    encounters: 'Gegner',
+    spells: 'Zauber',
+    loot: 'Item',
+    wiki: 'Wiki'
+});
+
+// ============================================================
 // EDITOR CONSTANTS
 // ============================================================
 const EDITOR_FONTS = Object.freeze({

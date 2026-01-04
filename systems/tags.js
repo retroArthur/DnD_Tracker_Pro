@@ -130,10 +130,10 @@ function renderTagsBar(tags) {
 }
 
 // Zeigt alle Entities mit einem bestimmten Tag
+// Verwendet ENTITY_ICONS aus core/constants.js
 function showEntitiesWithTag(tagName) {
     const results = [];
-    const ENTITY_ICONS = { characters: '👥', npcs: '🎭', locations: '🏠', quests: '📜', encounters: '👹', spells: '✨', loot: '💎', wiki: '📖' };
-    
+
     // Durchsuche alle Entity-Typen
     const searchIn = [
         { type: 'characters', items: D.characters || [], label: 'Charakter' },

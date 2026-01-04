@@ -190,15 +190,8 @@ function performGlobalSearch() {
 }
 
 function getTypeIcon(type) {
-    const icons = {
-        'character': '👤',
-        'npc': '🎭',
-        'location': '🏠',
-        'quest': '📜',
-        'spell': '✨',
-        'encounter': '👹'
-    };
-    return icons[type] || '📋';
+    // LINK_ICONS aus core/constants.js (unterstützt Singular und Plural)
+    return LINK_ICONS[type] || LINK_ICONS[type + 's'] || '📋';
 }
 
 function highlightMatch(text, query) {

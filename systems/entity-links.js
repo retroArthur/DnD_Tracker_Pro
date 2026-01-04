@@ -10,20 +10,10 @@ function showEntityLinksModal(type, id) {
 }
 
 // Parse Entity-Links in Text: [[type:id:name]] -> klickbare Links
+// Verwendet zentrale LINK_ICONS Konstante aus core/constants.js
 function parseEntityLinks(content) {
     if (!content) return '';
-    
-    const LINK_ICONS = { 
-        npcs: '🎭', npc: '🎭',
-        locations: '🏠', location: '🏠',
-        quests: '📜', quest: '📜',
-        characters: '👥', character: '👥',
-        encounters: '👹', encounter: '👹',
-        spells: '✨', spell: '✨',
-        loot: '💎', item: '💎',
-        wiki: '📖'
-    };
-    
+
     // Pattern: [[type:id:name]]
     return content.replace(/\[\[(\w+):(\d+):([^\]]+)\]\]/g, (match, type, id, name) => {
         const icon = LINK_ICONS[type] || '🔗';
@@ -135,9 +125,8 @@ function renderCurrentLinks() {
         container.innerHTML = '<div style="color: var(--text-dim); text-align: center; padding: 12px;">Keine Verknüpfungen</div>';
         return;
     }
-    
-    const LINK_ICONS = { npcs: '🎭', locations: '🏠', quests: '📜', characters: '👥', encounters: '👹', spells: '✨', loot: '💎', wiki: '📖' };
-    
+
+    // LINK_ICONS aus core/constants.js
     container.innerHTML = `
         <label style="font-size: 0.85em; color: var(--text-dim);">Aktuelle Verknüpfungen</label>
         <div style="display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px;">
@@ -190,9 +179,10 @@ function removeEntityLink(index) {
     const sourceType = $('link-source-type').value;
     const sourceId = parseEntityId($('link-source-id').value);
     const source = getEntityByTypeAndId(sourceType, sourceId);
-    
+
     if (!source || !source.links || !source.links[index]) return;
-    
+
+    saveUndoState('Verknüpfung entfernen');
     const link = source.links[index];
     const target = getEntityByTypeAndId(link.type, link.id);
     
@@ -213,7 +203,7 @@ function removeEntityLink(index) {
 function renderEntityLinks(links) {
     if (!links || !links.length) return '';
     
-    const LINK_ICONS = { npcs: '🎭', locations: '🏠', quests: '📜', characters: '👥', encounters: '👹', spells: '✨', loot: '💎', wiki: '📖' };
+    // LINK_ICONS aus core/constants.js
     
     return `<div class="entity-links-bar" style="display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px;">
         ${links.slice(0, 5).map(link => {
@@ -250,10 +240,8 @@ function navigateToEntityInPlace(type, id) {
 }
 
 // Zeigt ein Vorschau-Modal für eine Entity
+// Verwendet LINK_ICONS und ENTITY_TYPE_NAMES aus core/constants.js
 function showEntityPreviewModal(type, id, entity) {
-    const icons = { npcs: '🎭', locations: '🏠', quests: '📜', characters: '👥', encounters: '👹', spells: '✨', loot: '💎', wiki: '📖' };
-    const typeNames = { npcs: 'NPC', locations: 'Ort', quests: 'Quest', characters: 'Charakter', encounters: 'Gegner', spells: 'Zauber', loot: 'Item', wiki: 'Wiki' };
-    
     let content = '';
     
     if (type === 'quests') {
@@ -342,7 +330,7 @@ function showEntityPreviewModal(type, id, entity) {
         document.body.appendChild(modal);
     }
     
-    $('entity-preview-title').innerHTML = `${icons[type] || '🔗'} ${esc(entity.name || entity.title)} <span style="color: var(--text-dim); font-size: 0.8em;">(${typeNames[type] || type})</span>`;
+    $('entity-preview-title').innerHTML = `${LINK_ICONS[type] || '🔗'} ${esc(entity.name || entity.title)} <span style="color: var(--text-dim); font-size: 0.8em;">(${ENTITY_TYPE_NAMES[type] || type})</span>`;
     $('entity-preview-content').innerHTML = content || '<div style="color: var(--text-dim);">Keine Details verfügbar.</div>';
     $('entity-preview-goto').onclick = () => {
         hideModal(modalId);

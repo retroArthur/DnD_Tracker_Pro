@@ -235,12 +235,11 @@ function showNPCDetail(id) {
     // Build tags
     const tagsHtml = tags.length ? tags.map(t => `<span class="npc-tag">${esc(t)}</span>`).join('') : '';
 
-    // Build links
+    // Build links (LINK_ICONS aus core/constants.js)
     const linksHtml = links.length ? links.map(link => {
         const target = EntityLookup[link.type]?.(link.id);
         if (!target) return '';
-        const icons = { characters: '👤', npcs: '🎭', locations: '📍', quests: '📜', encounters: '⚔️' };
-        return `<span class="npc-link" data-action="navigate-entity" data-type="${link.type}" data-id="${link.id}">${icons[link.type] || '🔗'} ${esc(target.name)}</span>`;
+        return `<span class="npc-link" data-action="navigate-entity" data-type="${link.type}" data-id="${link.id}">${LINK_ICONS[link.type] || '🔗'} ${esc(target.name)}</span>`;
     }).join('') : '';
 
     panel.innerHTML = `
@@ -534,7 +533,7 @@ function showRelationsModal(npcId) {
                     <div class="npc-relation-name">${esc(targetName)}</div>
                 </div>
                 <span class="npc-relation-status ${rel.status}">${status.label}</span>
-                <button class="npc-relation-btn danger" onclick="removeRelation(${npcId}, ${idx})">✕</button>
+                <button class="npc-relation-btn danger" data-action="remove-relation-modal" data-id="${npcId}" data-value="${idx}">✕</button>
             </div>
         `;
     }).filter(Boolean).join('');
@@ -543,7 +542,7 @@ function showRelationsModal(npcId) {
         <div class="relations-modal-content">
             <div class="relations-modal-header">
                 <h3>🤝 Beziehungen verwalten</h3>
-                <button class="btn btn-sm" onclick="hideModal('relations-modal')">✕</button>
+                <button class="btn btn-sm" data-action="hide-modal" data-value="relations-modal">✕</button>
             </div>
             <p style="color: var(--text-dim); margin-bottom: 16px;">NPC: <strong>${esc(npc.name)}</strong></p>
 
@@ -558,16 +557,16 @@ function showRelationsModal(npcId) {
                 </div>
                 <div class="relations-form-row">
                     <div class="relations-status-btns">
-                        <button class="relations-status-btn friendly" onclick="setRelationStatus('friendly')" id="rel-btn-friendly">🟢 Freundlich</button>
-                        <button class="relations-status-btn neutral active" onclick="setRelationStatus('neutral')" id="rel-btn-neutral">⚪ Neutral</button>
-                        <button class="relations-status-btn hostile" onclick="setRelationStatus('hostile')" id="rel-btn-hostile">🔴 Feindlich</button>
+                        <button class="relations-status-btn friendly" data-action="set-relation-status" data-value="friendly" id="rel-btn-friendly">🟢 Freundlich</button>
+                        <button class="relations-status-btn neutral active" data-action="set-relation-status" data-value="neutral" id="rel-btn-neutral">⚪ Neutral</button>
+                        <button class="relations-status-btn hostile" data-action="set-relation-status" data-value="hostile" id="rel-btn-hostile">🔴 Feindlich</button>
                     </div>
                 </div>
                 <div class="relations-form-row">
                     <input type="text" id="relation-note" placeholder="Notiz (optional)...">
                 </div>
                 <div class="relations-form-row">
-                    <button class="relations-add-btn" onclick="addRelation(${npcId})">+ Beziehung hinzufügen</button>
+                    <button class="relations-add-btn" data-action="add-relation" data-id="${npcId}">+ Beziehung hinzufügen</button>
                 </div>
             </div>
 
@@ -628,6 +627,7 @@ function addRelation(npcId) {
         return;
     }
 
+    saveUndoState('Beziehung hinzufügen');
     const note = $('relation-note')?.value?.trim() || '';
 
     npc.relations.push({
@@ -647,6 +647,7 @@ function removeRelation(npcId, index) {
     const npc = EntityLookup.npc(npcId);
     if (!npc || !npc.relations) return;
 
+    saveUndoState('Beziehung entfernen');
     npc.relations.splice(index, 1);
     showNPCDetail(npcId);
     showRelationsModal(npcId); // Refresh modal
@@ -658,6 +659,7 @@ function cycleRelationStatus(npcId, index) {
     const npc = EntityLookup.npc(npcId);
     if (!npc || !npc.relations || !npc.relations[index]) return;
 
+    saveUndoState('Beziehungsstatus ändern');
     const statusOrder = ['friendly', 'neutral', 'hostile'];
     const currentIdx = statusOrder.indexOf(npc.relations[index].status);
     npc.relations[index].status = statusOrder[(currentIdx + 1) % 3];

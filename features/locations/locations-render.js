@@ -203,9 +203,8 @@ function showLocationDetail(id) {
             return `<span class="loc-npc-chip" data-action="show-npc-popup" data-id="${link.id}">${target.avatar ? `<img src="${esc(target.avatar)}" class="loc-npc-chip-avatar">` : ''}${esc(target.name)}</span>`;
         }
 
-        // Alle anderen Links normal
-        const icons = { characters: '👤', locations: '📍', quests: '📜', encounters: '⚔️', spells: '✨', loot: '💰', wiki: '📖' };
-        return `<span class="loc-link" data-action="navigate-entity" data-type="${link.type}" data-id="${link.id}">${icons[link.type] || '🔗'} ${esc(target.name || target.title)}</span>`;
+        // Alle anderen Links normal (LINK_ICONS aus core/constants.js)
+        return `<span class="loc-link" data-action="navigate-entity" data-type="${link.type}" data-id="${link.id}">${LINK_ICONS[link.type] || '🔗'} ${esc(target.name || target.title)}</span>`;
     }).filter(Boolean).join('') : '';
 
     // Build tags - Tags sind Objekte mit {name, color}
