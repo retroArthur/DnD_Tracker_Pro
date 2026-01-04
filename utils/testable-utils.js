@@ -31,21 +31,114 @@ function esc(s) {
 // ============================================================
 
 /**
- * Entfernt gefährliche HTML-Elemente und Attribute
+ * Entfernt gefährliche HTML-Elemente und Attribute (Production-Version)
  * @param {string} html - Zu bereinigendes HTML
  * @returns {string} Bereinigtes HTML
  */
 function sanitizeHTML(html) {
     if (!html) return '';
 
-    // Entferne Script-Tags
-    let clean = html.replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '');
+    // Schritt 1: Entferne gefährliche Patterns BEVOR Parsing
+    let cleaned = String(html)
+        .replace(/<script[\s\S]*?<\/script>/gi, '')
+        .replace(/on\w+\s*=\s*["'][^"']*["']/gi, '')
+        .replace(/on\w+\s*=\s*[^\s>]*/gi, '')
+        .replace(/javascript\s*:/gi, '')
+        .replace(/vbscript\s*:/gi, '')
+        .replace(/data\s*:\s*text\/html/gi, '');
 
-    // Entferne Event-Handler
-    clean = clean.replace(/\s*on\w+\s*=\s*(['"])[^'"]*\1/gi, '');
-    clean = clean.replace(/\s*on\w+\s*=[^\s>]*/gi, '');
+    // Schritt 2: Verwende DOMParser (sicherer als innerHTML)
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(cleaned, 'text/html');
 
-    return clean;
+    // Erlaubte Tags und Attribute
+    const allowedTags = ['b', 'i', 'u', 's', 'strong', 'em', 'ul', 'ol', 'li', 'p', 'br', 'div', 'span', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'table', 'thead', 'tbody', 'tr', 'th', 'td', 'mark', 'a', 'font'];
+    const allowedAttributes = {
+        'style': ['color', 'background-color', 'background', 'font-family', 'font-size', 'font-weight', 'text-decoration', 'border', 'border-collapse', 'padding', 'margin', 'width', 'text-align', 'vertical-align'],
+        'class': true,
+        'href': true,
+        'title': true,
+        'colspan': true,
+        'rowspan': true,
+        'face': true,
+        'size': true
+    };
+
+    // Gefährliche Protokolle (case-insensitive)
+    const dangerousProtocols = ['javascript:', 'vbscript:', 'data:', 'file:', 'blob:'];
+
+    // Rekursive Funktion zum Bereinigen der Nodes
+    function cleanNode(node) {
+        if (node.nodeType === Node.TEXT_NODE) {
+            return node.cloneNode(true);
+        }
+
+        if (node.nodeType === Node.ELEMENT_NODE) {
+            const tagName = node.tagName.toLowerCase();
+
+            if (!allowedTags.includes(tagName)) {
+                return document.createTextNode(node.textContent || '');
+            }
+
+            const cleanElement = document.createElement(tagName);
+
+            for (const attr of node.attributes) {
+                const attrName = attr.name.toLowerCase();
+
+                if (attrName.startsWith('on')) continue;
+
+                if (attrName === 'style' && allowedAttributes.style) {
+                    const styles = attr.value.split(';').filter(s => {
+                        const prop = s.split(':')[0]?.trim().toLowerCase();
+                        return allowedAttributes.style.includes(prop);
+                    }).join(';');
+                    if (styles) cleanElement.setAttribute('style', styles);
+                }
+                else if (attrName === 'class' && allowedAttributes.class) {
+                    cleanElement.setAttribute('class', attr.value);
+                }
+                else if (attrName === 'href' && allowedAttributes.href && tagName === 'a') {
+                    const href = attr.value.trim();
+                    const hrefLower = href.toLowerCase();
+                    const isSafe = dangerousProtocols.every(proto => !hrefLower.startsWith(proto));
+                    if (isSafe && (hrefLower.startsWith('http://') || hrefLower.startsWith('https://') || href.startsWith('/') || href.startsWith('#') || href.startsWith('./'))) {
+                        cleanElement.setAttribute('href', href);
+                        cleanElement.setAttribute('target', '_blank');
+                        cleanElement.setAttribute('rel', 'noopener noreferrer');
+                    }
+                }
+                else if (attrName === 'title' && allowedAttributes.title) {
+                    cleanElement.setAttribute('title', attr.value);
+                }
+                else if ((attrName === 'colspan' || attrName === 'rowspan') && allowedAttributes[attrName]) {
+                    const val = parseInt(attr.value);
+                    if (!isNaN(val) && val > 0 && val < 100) {
+                        cleanElement.setAttribute(attrName, val);
+                    }
+                }
+                else if ((attrName === 'face' || attrName === 'size') && allowedAttributes[attrName] && tagName === 'font') {
+                    cleanElement.setAttribute(attrName, attr.value);
+                }
+            }
+
+            for (const child of node.childNodes) {
+                const cleanChild = cleanNode(child);
+                if (cleanChild) cleanElement.appendChild(cleanChild);
+            }
+
+            return cleanElement;
+        }
+
+        return null;
+    }
+
+    const result = document.createElement('div');
+    for (const child of doc.body.childNodes) {
+        const cleanChild = cleanNode(child);
+        if (cleanChild) result.appendChild(cleanChild);
+    }
+
+    return result.innerHTML;
 }
 
 // ============================================================
