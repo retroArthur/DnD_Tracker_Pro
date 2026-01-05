@@ -2,9 +2,11 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+**Version:** 1.3.0 | **Last Updated:** 2025-01-05
+
 ## Project Overview
 
-D&D Kampagnen-Tracker Pro - A single-page D&D 5e campaign management application. Pure JavaScript/HTML/CSS, runs entirely offline in browser with LocalStorage persistence. German-localized.
+D&D Kampagnen-Tracker Pro - A single-page D&D 5e campaign management application. Pure JavaScript/HTML/CSS, runs entirely offline in browser with LocalStorage + IndexedDB persistence. German-localized. Supports multiple campaigns, network visualization, and comprehensive D&D 5e rules reference.
 
 ## Build Commands
 
@@ -16,20 +18,33 @@ python build.py
 python build-optimized.py
 
 # With npm (requires PYTHONIOENCODING=utf-8 on Windows)
-npm run build         # Production
+npm run build         # Production (optimized)
 npm run build:dev     # Development
+npm run build:prod    # Production variant
+
+# Webpack builds (alternative)
+npm run build:webpack      # Production bundle
+npm run build:webpack:dev  # Development bundle
+npm run dev                # Webpack dev server
 
 # Serve locally
 npm run serve         # Python HTTP server on :8000
 
 # Testing
 npm run test          # Jest unit tests
+npm run test:unit     # Unit tests only
+npm run test:watch    # Watch mode
+npm run test:coverage # With coverage report
 npm run test:e2e      # Playwright E2E tests
 npm run test:e2e:headed  # E2E with visible browser
+npm run test:e2e:ui   # E2E with Playwright UI
 
 # Code quality
 npm run lint          # ESLint
+npm run lint:fix      # Auto-fix lint errors
 npm run typecheck     # TypeScript validation
+npm run format        # Prettier formatting
+npm run check         # All checks (tsc + lint + format)
 npm run validate      # Python validation script
 ```
 
@@ -47,9 +62,23 @@ Non-ESM architecture using `<script>` tags. `loader.js` defines strict loading o
 6. **ui/** - Virtual scroll, event delegation, action handlers
 
 ### Global State
-- **`D`** - Global data object (party, encounters, locations, npcs, quests, shops, spells, etc.)
+- **`D`** - Global data object containing:
+  - `characters[]` - Party members
+  - `npcs[]` - Non-player characters with relations
+  - `locations[]` - Places and areas
+  - `quests[]` - Quest tracking
+  - `encounters[]` - Encounter definitions
+  - `initiative{}` - Combat state (combatants, currentTurn, round)
+  - `spells[]` - Spell database
+  - `loot[]` - Items and treasure
+  - `wiki[]` - Custom wiki entries
+  - `sessionNotes[]` - Session logs
+  - `mindmap{}` - Network visualization (nodes, connections)
+  - `calendar{}` - In-game calendar
+  - `randomTables[]` - Custom rollable tables
+  - `settings{}` - User preferences
 - **`APP_CONFIG`** - Frozen configuration object in `core/config.js`
-- Persisted to `localStorage[APP_CONFIG.STORAGE_KEY]`
+- Persisted to `localStorage[APP_CONFIG.STORAGE_KEY]` + IndexedDB backup
 
 ### Key Patterns
 
@@ -83,34 +112,42 @@ function deleteEntity(id) {
 
 | Directory | Purpose |
 |-----------|---------|
-| `core/` | App config, constants, initialization |
-| `utils/` | DOM helpers, debounce, throttle, caching |
-| `systems/` | Cross-cutting: undo, backups, tags, entity-links |
-| `systems/spellslots/` | Spell slot tracking subsystem |
-| `features/party/` | Character management |
-| `features/npcs/` | NPC CRUD and display |
-| `features/encounters/` | Encounter management |
-| `features/locations/` | Location tracking |
-| `features/quests/` | Quest system |
-| `features/shops/` | Shops, wiki, sessions, spell-editor |
-| `features/dice/` | Dice roller, maps, timers, search |
+| `core/` | App config, constants, data schema, initialization |
+| `utils/` | DOM helpers, debounce, throttle, caching, performance |
+| `systems/` | Cross-cutting: undo, backups, tags, entity-links, conditions, avatars, hp-calculator |
+| `systems/spellslots/` | Spell slot tracking subsystem, quick-reference, persistence, import/export |
+| `features/party/` | Character management (render, details, CRUD) |
+| `features/npcs/` | NPC CRUD, display, interactions, dialogs, popup |
+| `features/encounters/` | Encounter management (render, CRUD) |
+| `features/locations/` | Location tracking (render, CRUD) |
+| `features/quests/` | Quest system (render, CRUD) |
+| `features/shops/` | Shops, wiki, sessions, spell-editor, mindmap/network |
+| `features/dice/` | Dice roller, maps, timers, search, themes, campaign manager, SRD data |
 | `ui/` | Virtual scroll, lazy loading, event delegation |
-| `ui/actions/` | Action handlers by domain |
-| `render/` | Rendering utilities |
+| `ui/actions/` | Action handlers by domain (entity, combat, ui, dice, wiki, shop, map, system) |
+| `render/` | Rendering utilities/helpers |
 | `assets/` | styles.css, body.html |
+| `tests/` | Jest unit tests, Playwright E2E tests |
+| `tools/` | Webpack config, analysis scripts |
 
 ## Important Files
 
 - `build.py` / `build-optimized.py` - Build scripts (Python)
-- `loader.js` - Module loading order definition
+- `loader.js` - Module loading order definition (60+ modules)
 - `core/config.js` - APP_CONFIG with all settings
 - `core/constants.js` - Centralized constants (EDITOR_FONTS, READ_ALOUD_STYLES, CONDITIONS, etc.)
-- `systems/undo.js` - Undo/redo implementation
+- `core/data.js` - Global data schema (D object)
+- `systems/undo.js` - Undo/redo implementation with state snapshots
+- `systems/entity-links.js` - Cross-entity linking system
 - `features/shops/spell-editor.js` - Rich text editor (floating toolbar)
+- `features/shops/mindmap.js` - Network/relationship visualization
 - `features/encounter-calculator.js` - Encounter balance calculator with terrain/lair modifiers
 - `features/dice/dice-core.js` - Dice roller with floating panel
+- `features/dice/campaign-manager.js` - Multi-campaign management
+- `features/dice/global-search.js` - Fuzzy search across all entities
 - `ui/actions/system-actions.js` - System action handlers (modals, editor actions)
 - `docs/bugfixes.md` - Bug fix patterns and lessons learned
+- `sw.js` - Service Worker for offline support
 
 ## Recent Features
 
@@ -253,6 +290,52 @@ function deleteEntity(id) {
 - File: `assets/body.html` → `#about-modal`
 - Action: `show-about-modal` in `ui/actions/system-actions.js`
 
+### Campaign Manager
+- Multiple campaigns support with separate LocalStorage keys
+- Create, switch, delete campaigns
+- Standard campaign (default) + custom campaigns
+- Campaign index stored separately (`dnd-campaign-index`)
+- Data isolation between campaigns
+- File: `features/dice/campaign-manager.js` → `createCampaign()`, `switchCampaign()`, `deleteCampaign()`
+
+### Mindmap/Network Visualization
+- Visual relationship mapping for characters, NPCs, locations
+- Node types: Player, NPC, Enemy, Location, Faction, Item, Quest, Event, Group, and location variants
+- Connection types: Ally (green), Enemy (red), Neutral, Family (pink), Business (gold), Quest (purple), Member (cyan)
+- Features: Drag nodes, zoom/pan, connect mode, auto-layout
+- Import entities from existing data (characters, NPCs, locations, quests, encounters)
+- Filter by search and node type
+- Data: `D.mindmap = { nodes: [], connections: [] }`
+- File: `features/shops/mindmap.js` → `renderMindmap()`, `saveNodeFromModal()`
+
+### HP Calculator Modal
+- Quick HP modification modal for any entity
+- Supports: Damage (with temp HP absorption), Heal (capped at max), Temp HP
+- Dice formula parsing (e.g., "2d6+3", "1d8")
+- Works for both party characters and initiative combatants
+- File: `systems/hp-calculator.js` → `showHpCalculator()`, `applyHpChange()`
+
+### Avatar/Image System
+- URL-based portraits for characters, NPCs, locations, etc.
+- Preview before saving
+- Entity helper functions for cross-type lookups
+- Offline mode detection and touch optimizations
+- File: `systems/avatars.js` → `showAvatarModal()`, `saveAvatar()`
+
+### Global Search (Fuzzy Match)
+- Cross-entity search from header
+- Fuzzy matching algorithm with scoring
+- Results grouped by entity type
+- Keyboard shortcut: `Strg+K` or `Strg+F`
+- File: `features/dice/global-search.js` → `fuzzyMatch()`, `globalSearch()`
+
+### Session Timer
+- Track session duration with start/pause/reset
+- Displays in header (desktop) and mobile-friendly version
+- Auto-save at configurable intervals
+- Keyboard shortcut: `T` to toggle
+- File: `features/dice/session-timer.js` → `toggleSessionTimer()`, `resetSessionTimer()`
+
 ## Keyboard Shortcuts
 
 | Shortcut | Action |
@@ -295,25 +378,10 @@ npx playwright test --ui
 npx playwright test tests/e2e/features/wiki.spec.js
 ```
 
-## Known Issues
+## Known Issues & Tips
 
-- **Edit tool unreliable:** Use Python scripts for file modifications when Edit tool fails with "File unexpectedly modified"
 - **Windows encoding:** Set `PYTHONIOENCODING=utf-8` before running build.py
-
-
-## CRITICAL: File Editing on Windows
-
-### ⚠️ MANDATORY: Always Use Backslashes on Windows for File Paths
-
-**When using Edit or MultiEdit tools on Windows, you MUST use backslashes (`\`) in file paths, NOT forward slashes (`/`).**
-
-#### ❌ WRONG - Will cause errors:
-```
-Edit(file_path: "D:/repos/project/file.tsx", ...)
-MultiEdit(file_path: "D:/repos/project/file.tsx", ...)
-```
-
-#### ✅ CORRECT - Always works:
-```
-Edit(file_path: "D:\repos\project\file.tsx", ...)
-MultiEdit(file_path: "D:\repos\project\file.tsx", ...)
+- **IndexedDB:** Campaign data uses both LocalStorage and IndexedDB for redundancy
+- **Large campaigns:** Virtual scroll handles large lists; use pagination for 500+ entries
+- **Browser support:** Tested on Chrome/Edge (Chromium), Firefox. Safari may have minor CSS differences
+- **Offline mode:** Service Worker caches app shell; data persists in LocalStorage
