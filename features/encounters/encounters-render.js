@@ -27,6 +27,37 @@ const ENC_ICONS = {
     'default': '⚔️'
 };
 
+// Format speed for display (supports both old string and new object format)
+function formatEncSpeed(speed, html = false) {
+    if (!speed) return '—';
+
+    // Old format: just a string
+    if (typeof speed === 'string') return speed || '—';
+
+    // New format: object with walk, climb, swim, fly, burrow
+    const icons = { walk: '🚶', climb: '🧗', swim: '🏊', fly: '🦅', burrow: '⛏️' };
+    const labels = { walk: '', climb: 'Klettern', swim: 'Schwimmen', fly: 'Fliegen', burrow: 'Graben' };
+
+    const parts = [];
+    if (speed.walk) parts.push({ icon: icons.walk, label: labels.walk, value: speed.walk });
+    if (speed.climb) parts.push({ icon: icons.climb, label: labels.climb, value: speed.climb });
+    if (speed.swim) parts.push({ icon: icons.swim, label: labels.swim, value: speed.swim });
+    if (speed.fly) parts.push({ icon: icons.fly, label: labels.fly, value: speed.fly });
+    if (speed.burrow) parts.push({ icon: icons.burrow, label: labels.burrow, value: speed.burrow });
+
+    if (parts.length === 0) return '—';
+
+    if (html) {
+        // Return as HTML with icons for multi-line display
+        return parts.map(p =>
+            `<div class="enc-speed-line">${p.icon} ${p.label ? p.label + ' ' : ''}${p.value}</div>`
+        ).join('');
+    }
+
+    // Plain text for simple display
+    return parts.map(p => (p.label ? p.label + ' ' : '') + p.value).join(', ');
+}
+
 function getEncounterIcon(enc) {
     const type = (enc.creatureType || enc.race || '').toLowerCase();
     for (const [key, icon] of Object.entries(ENC_ICONS)) {
@@ -251,14 +282,25 @@ function showEncounterDetail(id) {
         return { name, val, mod: modStr, modNum: mod };
     });
 
-    // Build saving throws
+    // Build saving throws (use custom value if provided, otherwise calculate)
     const savingThrowsHtml = enc.savingThrows && Object.keys(enc.savingThrows).length > 0 ?
         Object.keys(enc.savingThrows).filter(k => enc.savingThrows[k]).map(attr => {
-            const val = enc[attr] || 10;
-            const mod = Math.floor((val - 10) / 2);
-            const profBonus = Math.max(2, Math.floor((parseInt(enc.cr) || 0) / 4) + 2);
-            const total = mod + profBonus;
-            return `<span class="enc-save-tag">${attr.toUpperCase()} +${total}</span>`;
+            const saveData = enc.savingThrows[attr];
+            let displayValue;
+
+            if (typeof saveData === 'string' && saveData.length > 0) {
+                // Custom value provided - use as-is
+                displayValue = saveData.startsWith('+') || saveData.startsWith('-') ? saveData : `+${saveData}`;
+            } else {
+                // Calculate from attribute + proficiency
+                const val = enc[attr] || 10;
+                const mod = Math.floor((val - 10) / 2);
+                const profBonus = Math.max(2, Math.floor((parseInt(enc.cr) || 0) / 4) + 2);
+                const total = mod + profBonus;
+                displayValue = `+${total}`;
+            }
+
+            return `<span class="enc-save-tag">${attr.toUpperCase()} ${displayValue}</span>`;
         }).join('') : '';
 
     // Build resistances/immunities
@@ -298,9 +340,9 @@ function showEncounterDetail(id) {
                     <div class="enc-core-stat-label">Init</div>
                     <div class="enc-core-stat-value">${enc.init || '—'}</div>
                 </div>
-                <div class="enc-core-stat">
+                <div class="enc-core-stat enc-speed-stat">
                     <div class="enc-core-stat-label">Speed</div>
-                    <div class="enc-core-stat-value">${esc(enc.speed || '—')}</div>
+                    <div class="enc-core-stat-value enc-speed-lines">${formatEncSpeed(enc.speed, true)}</div>
                 </div>
                 <div class="enc-core-stat">
                     <div class="enc-core-stat-label">Wahr.</div>

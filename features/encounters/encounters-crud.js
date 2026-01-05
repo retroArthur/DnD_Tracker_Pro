@@ -13,6 +13,15 @@ function updateEncAttrMod(attr) {
     }
 }
 
+// Toggle encounter saving throw box active state
+function toggleEncSaveBox(attr) {
+    const box = $(`enc-save-box-${attr}`);
+    const checkbox = $(`enc-save-${attr}`);
+    if (box && checkbox) {
+        box.classList.toggle('active', checkbox.checked);
+    }
+}
+
 /**
  * Speichert oder aktualisiert einen Encounter/Gegner
  * Liest Formulardaten und erstellt/aktualisiert den Encounter-Eintrag
@@ -21,12 +30,14 @@ function saveEncounter() {
     const id = $('edit-enc-id').value;
     const selectedLanguages = typeof getEncSelectedLanguages === 'function' ? getEncSelectedLanguages() : [];
 
-    // Saving throw proficiencies sammeln
+    // Saving throws sammeln (checkbox + custom value)
     const savingThrows = {};
     ['str', 'dex', 'con', 'int', 'wis', 'cha'].forEach(attr => {
         const checkbox = $(`enc-save-${attr}`);
+        const valueInput = $(`enc-save-val-${attr}`);
         if (checkbox && checkbox.checked) {
-            savingThrows[attr] = true;
+            const customVal = valueInput ? valueInput.value.trim() : '';
+            savingThrows[attr] = customVal || true; // Store custom value or true for proficiency-only
         }
     });
 
@@ -42,7 +53,13 @@ function saveEncounter() {
         ac: parseInt($('enc-ac').value) || 0,
         init: parseInt($('enc-init').value) || 0,
         hp: parseInt($('enc-hp').value) || 0,
-        speed: $('enc-speed').value.trim(),
+        speed: {
+            walk: $('enc-speed-walk').value.trim() || '',
+            climb: $('enc-speed-climb').value.trim() || '',
+            swim: $('enc-speed-swim').value.trim() || '',
+            fly: $('enc-speed-fly').value.trim() || '',
+            burrow: $('enc-speed-burrow').value.trim() || ''
+        },
         perception: parseInt($('enc-perception').value) || 0,
         languages: selectedLanguages,
         str: parseInt($('enc-str').value) || 10,
@@ -93,7 +110,23 @@ function editEnc(id) {
     $('enc-ac').value = e.ac || '';
     $('enc-init').value = e.init || '';
     $('enc-hp').value = e.hp || '';
-    $('enc-speed').value = e.speed || '';
+
+    // Load speed values (support both old string format and new object format)
+    if (typeof e.speed === 'object' && e.speed !== null) {
+        $('enc-speed-walk').value = e.speed.walk || '';
+        $('enc-speed-climb').value = e.speed.climb || '';
+        $('enc-speed-swim').value = e.speed.swim || '';
+        $('enc-speed-fly').value = e.speed.fly || '';
+        $('enc-speed-burrow').value = e.speed.burrow || '';
+    } else {
+        // Old format: single string -> put in walk
+        $('enc-speed-walk').value = e.speed || '';
+        $('enc-speed-climb').value = '';
+        $('enc-speed-swim').value = '';
+        $('enc-speed-fly').value = '';
+        $('enc-speed-burrow').value = '';
+    }
+
     $('enc-perception').value = e.perception || '';
 
     // Handle languages (array or string for backwards compatibility)
@@ -125,15 +158,24 @@ function editEnc(id) {
     $('enc-actions').innerHTML = sanitizeHTML(e.actions) || '';
     $('enc-skills').innerHTML = sanitizeHTML(e.skills) || '';
 
-    // Rettungswurf-Proficiency laden
+    // Rettungswürfe laden (checkbox + custom value)
     ['str', 'dex', 'con', 'int', 'wis', 'cha'].forEach(attr => {
         const checkbox = $(`enc-save-${attr}`);
+        const valueInput = $(`enc-save-val-${attr}`);
+        const box = $(`enc-save-box-${attr}`);
+
         if (checkbox) {
-            const isProf = e.savingThrows && e.savingThrows[attr] === true;
-            checkbox.checked = isProf;
+            const saveData = e.savingThrows && e.savingThrows[attr];
+            const isActive = saveData === true || (typeof saveData === 'string' && saveData.length > 0);
+            checkbox.checked = isActive;
+
+            // Custom value setzen
+            if (valueInput) {
+                valueInput.value = (typeof saveData === 'string') ? saveData : '';
+            }
+
             // CSS-Klasse für visuelles Feedback setzen
-            const box = checkbox.closest('.char-save-box');
-            if (box) box.classList.toggle('proficient', isProf);
+            if (box) box.classList.toggle('active', isActive);
         }
     });
 
@@ -167,17 +209,19 @@ function editEnc(id) {
 
 function cancelEncEdit() {
     $('edit-enc-id').value = '';
-    ['enc-name', 'enc-creature-type', 'enc-cr', 'enc-ac', 'enc-init', 'enc-hp', 'enc-speed', 'enc-perception'].forEach(id => $(id).value = '');
+    ['enc-name', 'enc-creature-type', 'enc-cr', 'enc-ac', 'enc-init', 'enc-hp', 'enc-perception'].forEach(id => $(id).value = '');
+    // Clear all speed fields
+    ['enc-speed-walk', 'enc-speed-climb', 'enc-speed-swim', 'enc-speed-fly', 'enc-speed-burrow'].forEach(id => $(id).value = '');
     ['str', 'dex', 'con', 'int', 'wis', 'cha'].forEach(attr => {
         $(`enc-${attr}`).value = 10;
         updateEncAttrMod(attr);
-        // Reset saving throw checkboxes und CSS-Klasse
+        // Reset saving throw checkboxes, values und CSS-Klasse
         const checkbox = $(`enc-save-${attr}`);
-        if (checkbox) {
-            checkbox.checked = false;
-            const box = checkbox.closest('.char-save-box');
-            if (box) box.classList.remove('proficient');
-        }
+        const valueInput = $(`enc-save-val-${attr}`);
+        const box = $(`enc-save-box-${attr}`);
+        if (checkbox) checkbox.checked = false;
+        if (valueInput) valueInput.value = '';
+        if (box) box.classList.remove('active');
     });
     if (typeof setEncLanguages === 'function') setEncLanguages([]);
     // Resistenzen & Immunitäten zurücksetzen

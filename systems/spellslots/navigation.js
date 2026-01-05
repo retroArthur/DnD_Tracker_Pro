@@ -21,6 +21,7 @@ function switchView(name) {
     if (name === 'network') renderMindmap();
     if (name === 'party') renderParty();
     if (name === 'dashboard') renderDashboard();
+    if (name === 'dmscreen' && typeof renderDMScreen === 'function') renderDMScreen();
     
     // Mobile: Navigation schließen und Label aktualisieren
     const header = document.querySelector('.app-header');
@@ -47,7 +48,8 @@ function switchView(name) {
             'dice': '🎲 Würfel',
             'timers': '⏱️ Timer',
             'maps': '🗺️ Karten',
-            'data': '💾 Daten'
+            'data': '💾 Daten',
+            'dmscreen': '🎮 DM Screen'
         };
         toggleText.textContent = viewNames[name] || '📍 Navigation';
     }

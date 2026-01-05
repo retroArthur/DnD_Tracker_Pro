@@ -263,6 +263,68 @@ function toggleQuickRefSection(sectionEl, evt) {
 }
 
 // ============================================================
+// EINHEITEN-UMRECHNER (Metrisch ↔ Imperial)
+// ============================================================
+
+// Conversion factors to meters
+const METRIC_TO_M = { cm: 0.01, m: 1, km: 1000 };
+// Conversion factors from meters to imperial
+const M_TO_IMPERIAL = { in: 39.3701, ft: 3.28084, mi: 0.000621371 };
+// Conversion factors from imperial to meters
+const IMPERIAL_TO_M = { in: 0.0254, ft: 0.3048, mi: 1609.344 };
+
+/**
+ * Rundet nach D&D-Stil: 1-4 ab, 5-9 auf
+ */
+function dndRound(value) {
+    return Math.round(value);
+}
+
+/**
+ * Konvertiert von Metrisch zu Imperial
+ */
+function convertUnitsMetric() {
+    const input = $('qref-conv-metric');
+    const metricUnit = $('qref-conv-metric-unit').value;
+    const imperialUnit = $('qref-conv-imperial-unit').value;
+    const output = $('qref-conv-imperial');
+
+    const value = parseFloat(input.value);
+    if (isNaN(value) || value === 0) {
+        output.value = '';
+        return;
+    }
+
+    // Convert to meters first, then to target imperial unit
+    const meters = value * METRIC_TO_M[metricUnit];
+    const result = meters * M_TO_IMPERIAL[imperialUnit];
+
+    output.value = dndRound(result);
+}
+
+/**
+ * Konvertiert von Imperial zu Metrisch
+ */
+function convertUnitsImperial() {
+    const input = $('qref-conv-imperial');
+    const imperialUnit = $('qref-conv-imperial-unit').value;
+    const metricUnit = $('qref-conv-metric-unit').value;
+    const output = $('qref-conv-metric');
+
+    const value = parseFloat(input.value);
+    if (isNaN(value) || value === 0) {
+        output.value = '';
+        return;
+    }
+
+    // Convert to meters first, then to target metric unit
+    const meters = value * IMPERIAL_TO_M[imperialUnit];
+    const result = meters / METRIC_TO_M[metricUnit];
+
+    output.value = dndRound(result);
+}
+
+// ============================================================
 // SCHNELL-REFERENZ BENUTZERDEFINIERTE EINTRÄGE
 // ============================================================
 

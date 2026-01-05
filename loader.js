@@ -97,6 +97,9 @@ const MODULES = [
     'features/shops/mindmap.js',
     'features/shops/sessions.js',
     'features/shops/spell-editor.js',
+
+    // DM Screen Module
+    'features/dmscreen/dmscreen-render.js',
     
     // UI
     'ui/lazy-loading.js',

@@ -58,6 +58,7 @@
             <button class="nav-tab" data-view="dice" draggable="true" role="tab" aria-selected="false">🎲 Würfel</button>
             <button class="nav-tab" data-view="timers" draggable="true" role="tab" aria-selected="false">⏱️ Timer</button>
             <button class="nav-tab" data-view="data" draggable="true" role="tab" aria-selected="false">💾 Daten</button>
+            <button class="nav-tab" data-view="dmscreen" draggable="true" role="tab" aria-selected="false">🎮 DM Screen</button>
             <button class="nav-tab" data-action="call" data-value="showDebugModal" style="color: var(--purple);">🧪 Debug</button>
             <button class="nav-tab" data-action="call" data-value="showThemeModal" style="color: var(--cyan);">🎨</button>
         </nav>
@@ -988,8 +989,17 @@
                         <div class="form-group"><label>RK</label><input type="number" id="enc-ac"></div>
                         <div class="form-group"><label>Initiative</label><input type="number" id="enc-init"></div>
                         <div class="form-group"><label>HP</label><input type="number" id="enc-hp"></div>
-                        <div class="form-group"><label>Speed</label><input type="text" id="enc-speed" placeholder="9m"></div>
                         <div class="form-group"><label>Pass. Wahr.</label><input type="number" id="enc-perception"></div>
+                    </div>
+                    <div class="enc-speed-section">
+                        <label class="enc-speed-label">Bewegungsraten</label>
+                        <div class="enc-speed-grid">
+                            <div class="enc-speed-item"><label>Laufen</label><input type="text" id="enc-speed-walk" placeholder="9m"></div>
+                            <div class="enc-speed-item"><label>Klettern</label><input type="text" id="enc-speed-climb" placeholder="—"></div>
+                            <div class="enc-speed-item"><label>Schwimmen</label><input type="text" id="enc-speed-swim" placeholder="—"></div>
+                            <div class="enc-speed-item"><label>Fliegen</label><input type="text" id="enc-speed-fly" placeholder="—"></div>
+                            <div class="enc-speed-item"><label>Graben</label><input type="text" id="enc-speed-burrow" placeholder="—"></div>
+                        </div>
                     </div>
                     <div class="form-group">
                         <label>Sprachen</label>
@@ -1007,6 +1017,8 @@
                                 <label class="enc-lang-item"><input type="checkbox" value="Goblin" onchange="updateEncLanguages()"><span>Goblin</span></label>
                                 <label class="enc-lang-item"><input type="checkbox" value="Halbling" onchange="updateEncLanguages()"><span>Halbling</span></label>
                                 <label class="enc-lang-item"><input type="checkbox" value="Orkisch" onchange="updateEncLanguages()"><span>Orkisch</span></label>
+                                <label class="enc-lang-item"><input type="checkbox" value="Druidisch" onchange="updateEncLanguages()"><span>Druidisch</span></label>
+                                <label class="enc-lang-item"><input type="checkbox" value="Diebessprache" onchange="updateEncLanguages()"><span>Diebessprache</span></label>
                                 <label class="enc-lang-item"><input type="checkbox" value="Drakonisch" onchange="updateEncLanguages()"><span>Drakonisch</span></label>
                                 <label class="enc-lang-item"><input type="checkbox" value="Tiefensprache" onchange="updateEncLanguages()"><span>Tiefensprache</span></label>
                                 <label class="enc-lang-item"><input type="checkbox" value="Infernal" onchange="updateEncLanguages()"><span>Infernal</span></label>
@@ -1052,32 +1064,38 @@
                         </div>
                     </div>
                     <div class="form-group">
-                        <div class="char-section-title">🛡️ Rettungswurf-Proficiency</div>
-                        <div class="char-saves-grid">
-                            <label class="char-save-box">
-                                <input type="checkbox" id="enc-save-str" onchange="this.closest('.char-save-box').classList.toggle('proficient', this.checked)">
-                                <span class="save-label">STR</span>
-                            </label>
-                            <label class="char-save-box">
-                                <input type="checkbox" id="enc-save-dex" onchange="this.closest('.char-save-box').classList.toggle('proficient', this.checked)">
-                                <span class="save-label">DEX</span>
-                            </label>
-                            <label class="char-save-box">
-                                <input type="checkbox" id="enc-save-con" onchange="this.closest('.char-save-box').classList.toggle('proficient', this.checked)">
-                                <span class="save-label">CON</span>
-                            </label>
-                            <label class="char-save-box">
-                                <input type="checkbox" id="enc-save-int" onchange="this.closest('.char-save-box').classList.toggle('proficient', this.checked)">
-                                <span class="save-label">INT</span>
-                            </label>
-                            <label class="char-save-box">
-                                <input type="checkbox" id="enc-save-wis" onchange="this.closest('.char-save-box').classList.toggle('proficient', this.checked)">
-                                <span class="save-label">WIS</span>
-                            </label>
-                            <label class="char-save-box">
-                                <input type="checkbox" id="enc-save-cha" onchange="this.closest('.char-save-box').classList.toggle('proficient', this.checked)">
-                                <span class="save-label">CHA</span>
-                            </label>
+                        <div class="char-section-title">🛡️ Rettungswürfe</div>
+                        <div class="enc-saves-grid">
+                            <div class="enc-save-box" id="enc-save-box-str">
+                                <input type="checkbox" id="enc-save-str" onchange="toggleEncSaveBox('str')">
+                                <span class="enc-save-label">STR</span>
+                                <input type="text" id="enc-save-val-str" class="enc-save-input" placeholder="—" title="Rettungswurf-Bonus (z.B. +5)">
+                            </div>
+                            <div class="enc-save-box" id="enc-save-box-dex">
+                                <input type="checkbox" id="enc-save-dex" onchange="toggleEncSaveBox('dex')">
+                                <span class="enc-save-label">DEX</span>
+                                <input type="text" id="enc-save-val-dex" class="enc-save-input" placeholder="—" title="Rettungswurf-Bonus (z.B. +5)">
+                            </div>
+                            <div class="enc-save-box" id="enc-save-box-con">
+                                <input type="checkbox" id="enc-save-con" onchange="toggleEncSaveBox('con')">
+                                <span class="enc-save-label">CON</span>
+                                <input type="text" id="enc-save-val-con" class="enc-save-input" placeholder="—" title="Rettungswurf-Bonus (z.B. +5)">
+                            </div>
+                            <div class="enc-save-box" id="enc-save-box-int">
+                                <input type="checkbox" id="enc-save-int" onchange="toggleEncSaveBox('int')">
+                                <span class="enc-save-label">INT</span>
+                                <input type="text" id="enc-save-val-int" class="enc-save-input" placeholder="—" title="Rettungswurf-Bonus (z.B. +5)">
+                            </div>
+                            <div class="enc-save-box" id="enc-save-box-wis">
+                                <input type="checkbox" id="enc-save-wis" onchange="toggleEncSaveBox('wis')">
+                                <span class="enc-save-label">WIS</span>
+                                <input type="text" id="enc-save-val-wis" class="enc-save-input" placeholder="—" title="Rettungswurf-Bonus (z.B. +5)">
+                            </div>
+                            <div class="enc-save-box" id="enc-save-box-cha">
+                                <input type="checkbox" id="enc-save-cha" onchange="toggleEncSaveBox('cha')">
+                                <span class="enc-save-label">CHA</span>
+                                <input type="text" id="enc-save-val-cha" class="enc-save-input" placeholder="—" title="Rettungswurf-Bonus (z.B. +5)">
+                            </div>
                         </div>
                     </div>
                     <!-- Resistenzen & Immunitäten -->
@@ -2261,6 +2279,43 @@
                 <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border);">
                     <button class="btn btn-danger" data-action="call" data-value="clearStorage">🗑️ Alle Daten löschen</button>
                 </div>
+            </div>
+        </section>
+
+        <!-- DM SCREEN VIEW -->
+        <section id="view-dmscreen" class="view dmscreen-view">
+            <div class="dmscreen-header">
+                <div class="dmscreen-title">🎮 DM Screen</div>
+                <div class="dms-quick-bar" id="dms-quick-bar">
+                    <!-- Kompakte Quick Action Buttons im Header -->
+                </div>
+                <div class="dmscreen-actions">
+                    <div class="dms-config-wrapper">
+                        <button class="btn btn-sm" id="dms-profile-btn" data-action="dms-toggle-profiles" title="Layout-Profile">📋 Profile</button>
+                        <div class="dms-config-dropdown dms-profile-dropdown" id="dms-profile-dropdown">
+                            <div class="dms-config-header">Layout-Profile</div>
+                            <div class="dms-profile-list" id="dms-profile-list">
+                                <!-- Profile dynamisch -->
+                            </div>
+                        </div>
+                    </div>
+                    <div class="dms-config-wrapper">
+                        <button class="btn btn-sm" id="dms-config-btn" data-action="dms-toggle-config" title="Widgets konfigurieren">⚙️ Widgets</button>
+                        <div class="dms-config-dropdown" id="dms-config-dropdown">
+                            <div class="dms-config-header">Widgets anzeigen</div>
+                            <div class="dms-config-list" id="dms-config-list">
+                                <!-- Widget toggles dynamisch -->
+                            </div>
+                            <div class="dms-config-footer">
+                                <span class="dms-config-hint">Drag & Drop zum Sortieren</span>
+                            </div>
+                        </div>
+                    </div>
+                    <button class="btn btn-sm" data-action="call" data-value="resetDMScreenLayout" title="Layout zurücksetzen">🔄</button>
+                </div>
+            </div>
+            <div class="dmscreen-grid" id="dmscreen-grid">
+                <!-- Widgets werden dynamisch gerendert -->
             </div>
         </section>
     </main>
@@ -4209,6 +4264,36 @@
                                 <span class="qref-travel-note">Verstecken</span>
                             </div>
                         </div>
+                    </div>
+                </div>
+
+                <!-- Einheiten-Umrechner -->
+                <div class="qref-section" data-qref-section="converter">
+                    <div class="qref-section-header" data-action="toggle-qref-section">
+                        <span class="qref-section-title">📏 Einheiten-Umrechner</span>
+                        <span class="qref-collapse-icon">▼</span>
+                    </div>
+                    <div class="qref-section-body">
+                        <div class="qref-converter">
+                            <div class="qref-converter-row">
+                                <input type="number" id="qref-conv-metric" class="qref-conv-input" placeholder="0" oninput="convertUnitsMetric()">
+                                <select id="qref-conv-metric-unit" class="qref-conv-select" onchange="convertUnitsMetric()">
+                                    <option value="cm">cm</option>
+                                    <option value="m" selected>m</option>
+                                    <option value="km">km</option>
+                                </select>
+                            </div>
+                            <div class="qref-converter-arrow">⇅</div>
+                            <div class="qref-converter-row">
+                                <input type="number" id="qref-conv-imperial" class="qref-conv-input" placeholder="0" oninput="convertUnitsImperial()">
+                                <select id="qref-conv-imperial-unit" class="qref-conv-select" onchange="convertUnitsImperial()">
+                                    <option value="in">inch</option>
+                                    <option value="ft" selected>feet</option>
+                                    <option value="mi">mile</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="qref-note center" style="margin-top: 8px;">1m ≈ 3ft • 1km ≈ 0.6mi • 1in ≈ 2.5cm</div>
                     </div>
                 </div>
 

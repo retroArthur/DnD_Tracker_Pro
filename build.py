@@ -128,6 +128,8 @@ def build(minify=False, verbose=False):
         'features/shops/wiki.js',
         'features/shops/links.js',
         'features/shops/mindmap.js',
+        # DM Screen Module
+        'features/dmscreen/dmscreen-render.js',
         # Dice-Module (ersetzt features/dice.js)
         'features/dice/dice-core.js',
         'features/dice/dice-favorites.js',
