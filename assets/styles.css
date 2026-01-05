@@ -20344,6 +20344,24 @@
     font-size: 1.3em;
     font-weight: 600;
     color: var(--gold);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.dms-live-badge {
+    font-size: 0.55em;
+    font-weight: 500;
+    color: var(--green);
+    background: rgba(34, 197, 94, 0.15);
+    padding: 3px 8px;
+    border-radius: 10px;
+    animation: dms-live-pulse 2s ease-in-out infinite;
+}
+
+@keyframes dms-live-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.6; }
 }
 
 .dmscreen-actions {
@@ -21154,5 +21172,755 @@
     .dmscreen-grid {
         column-count: 4;
     }
+}
+
+/* ========================================
+   DM SCREEN - REFERENZ-WIDGETS
+   ======================================== */
+
+/* Basis-Container für Referenz-Widgets */
+.dms-ref-widget {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+/* Sektion innerhalb eines Widgets */
+.dms-ref-section {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+/* Sektions-Titel */
+.dms-ref-title {
+    font-size: 0.85em;
+    font-weight: 600;
+    color: var(--gold);
+    padding-bottom: 4px;
+    border-bottom: 1px solid var(--border);
+}
+
+/* Tag-Liste */
+.dms-ref-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+}
+
+/* Einzelner Tag */
+.dms-ref-tag {
+    background: var(--bg-dark);
+    color: var(--text);
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-size: 0.8em;
+    border: 1px solid var(--border);
+}
+
+/* Hinweis-Text */
+.dms-ref-note {
+    font-size: 0.75em;
+    color: var(--text-dim);
+    font-style: italic;
+    padding-top: 6px;
+    border-top: 1px dashed var(--border);
+}
+
+/* ========================================
+   ATTRIBUTE-WIDGET
+   ======================================== */
+
+.dms-attr-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+}
+
+.dms-attr-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 8px 4px;
+    border-radius: 6px;
+    background: var(--bg-dark);
+    border: 1px solid var(--border);
+}
+
+.dms-attr-abbr {
+    font-size: 1em;
+    font-weight: 700;
+}
+
+.dms-attr-name {
+    font-size: 0.65em;
+    color: var(--text-dim);
+    margin-top: 2px;
+}
+
+.dms-attr-desc {
+    font-size: 0.6em;
+    color: var(--text-dim);
+    text-align: center;
+    margin-top: 4px;
+}
+
+/* Attribut-Farben */
+.dms-attr-item.str .dms-attr-abbr { color: #ef4444; }
+.dms-attr-item.dex .dms-attr-abbr { color: #22c55e; }
+.dms-attr-item.con .dms-attr-abbr { color: #f59e0b; }
+.dms-attr-item.int .dms-attr-abbr { color: #3b82f6; }
+.dms-attr-item.wis .dms-attr-abbr { color: #a855f7; }
+.dms-attr-item.cha .dms-attr-abbr { color: #ec4899; }
+
+/* Modifikator-Tabelle */
+.dms-mod-table {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 2px;
+    font-size: 0.75em;
+}
+
+.dms-mod-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 3px 6px;
+    background: var(--bg-dark);
+    border-radius: 3px;
+}
+
+.dms-mod-row span:first-child {
+    color: var(--text-dim);
+}
+
+.dms-mod-row span:last-child {
+    color: var(--cyan);
+    font-weight: 600;
+}
+
+/* ========================================
+   RETTUNGSWÜRFE-WIDGET
+   ======================================== */
+
+.dms-save-list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.dms-save-item {
+    display: grid;
+    grid-template-columns: 50px 1fr;
+    gap: 8px;
+    padding: 4px 8px;
+    background: var(--bg-dark);
+    border-radius: 4px;
+    font-size: 0.8em;
+    align-items: center;
+}
+
+.dms-save-attr {
+    font-weight: 600;
+}
+
+.dms-save-attr.str { color: #ef4444; }
+.dms-save-attr.dex { color: #22c55e; }
+.dms-save-attr.con { color: #f59e0b; }
+.dms-save-attr.int { color: #3b82f6; }
+.dms-save-attr.wis { color: #a855f7; }
+.dms-save-attr.cha { color: #ec4899; }
+
+.dms-save-examples {
+    color: var(--text-dim);
+    font-size: 0.9em;
+}
+
+/* ========================================
+   FERTIGKEITEN-WIDGET
+   ======================================== */
+
+.dms-skill-groups {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.dms-skill-group {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.dms-skill-group-header {
+    font-size: 0.75em;
+    font-weight: 600;
+    padding: 2px 6px;
+    border-radius: 3px;
+    display: inline-block;
+    width: fit-content;
+}
+
+.dms-skill-group.str .dms-skill-group-header { background: rgba(239, 68, 68, 0.2); color: #ef4444; }
+.dms-skill-group.dex .dms-skill-group-header { background: rgba(34, 197, 94, 0.2); color: #22c55e; }
+.dms-skill-group.int .dms-skill-group-header { background: rgba(59, 130, 246, 0.2); color: #3b82f6; }
+.dms-skill-group.wis .dms-skill-group-header { background: rgba(168, 85, 247, 0.2); color: #a855f7; }
+.dms-skill-group.cha .dms-skill-group-header { background: rgba(236, 72, 153, 0.2); color: #ec4899; }
+
+.dms-skill-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    padding-left: 8px;
+}
+
+.dms-skill-tag {
+    background: var(--bg-dark);
+    color: var(--text);
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 0.75em;
+    border: 1px solid var(--border);
+}
+
+/* ========================================
+   KAMPFÖKONOMIE-WIDGET
+   ======================================== */
+
+.dms-economy-widget {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.dms-economy-section {
+    padding: 8px;
+    background: var(--bg-dark);
+    border-radius: 6px;
+    border-left: 3px solid var(--border);
+}
+
+.dms-economy-section.turn { border-left-color: var(--gold); }
+.dms-economy-section.anytime { border-left-color: var(--cyan); }
+
+.dms-economy-title {
+    font-size: 0.8em;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 6px;
+}
+
+.dms-economy-list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.dms-economy-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.8em;
+}
+
+.dms-economy-icon {
+    width: 20px;
+    text-align: center;
+}
+
+.dms-economy-text {
+    color: var(--text);
+}
+
+.dms-economy-text.dim {
+    color: var(--text-dim);
+    font-size: 0.9em;
+}
+
+/* ========================================
+   KREATURENGRÖSSEN-WIDGET
+   ======================================== */
+
+.dms-size-table {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.dms-size-header {
+    display: grid;
+    grid-template-columns: 80px 1fr 1fr 60px;
+    gap: 8px;
+    padding: 4px 8px;
+    background: var(--bg-dark);
+    border-radius: 4px;
+    font-size: 0.7em;
+    font-weight: 600;
+    color: var(--text-dim);
+}
+
+.dms-size-row {
+    display: grid;
+    grid-template-columns: 80px 1fr 1fr 60px;
+    gap: 8px;
+    padding: 4px 8px;
+    background: var(--bg-dark);
+    border-radius: 4px;
+    font-size: 0.8em;
+    align-items: center;
+}
+
+.dms-size-row:nth-child(odd) {
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.dms-size-name {
+    font-weight: 500;
+    color: var(--text);
+}
+
+.dms-size-value {
+    color: var(--text-dim);
+}
+
+.dms-size-grid {
+    color: var(--cyan);
+    font-weight: 600;
+}
+
+/* ========================================
+   OBJEKTE-WIDGET
+   ======================================== */
+
+.dms-obj-tables {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.dms-obj-table {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.dms-obj-table-title {
+    font-size: 0.8em;
+    font-weight: 600;
+    color: var(--gold);
+    margin-bottom: 4px;
+}
+
+.dms-obj-row {
+    display: grid;
+    grid-template-columns: 1fr 50px;
+    gap: 8px;
+    padding: 3px 8px;
+    background: var(--bg-dark);
+    border-radius: 3px;
+    font-size: 0.8em;
+}
+
+.dms-obj-row.header {
+    font-weight: 600;
+    color: var(--text-dim);
+    font-size: 0.7em;
+}
+
+.dms-obj-material {
+    color: var(--text);
+}
+
+.dms-obj-ac {
+    color: var(--cyan);
+    font-weight: 600;
+    text-align: right;
+}
+
+.dms-obj-size-table .dms-obj-row {
+    grid-template-columns: 70px 1fr 1fr;
+}
+
+/* ========================================
+   IMPROVISIERTE WAFFEN-WIDGET
+   ======================================== */
+
+.dms-improv-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.dms-improv-item {
+    display: grid;
+    grid-template-columns: 1fr 80px 70px;
+    gap: 8px;
+    padding: 6px 8px;
+    background: var(--bg-dark);
+    border-radius: 4px;
+    font-size: 0.8em;
+    align-items: center;
+}
+
+.dms-improv-type {
+    color: var(--text);
+    font-weight: 500;
+}
+
+.dms-improv-damage {
+    color: var(--red);
+    font-weight: 600;
+}
+
+.dms-improv-range {
+    color: var(--text-dim);
+    text-align: right;
+}
+
+.dms-improv-examples {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-top: 8px;
+}
+
+.dms-improv-example {
+    background: var(--bg-dark);
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-size: 0.75em;
+    color: var(--text-dim);
+    border: 1px solid var(--border);
+}
+
+/* ========================================
+   RITUAL & KONZENTRATION-WIDGET
+   ======================================== */
+
+.dms-ritual-sections {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.dms-ritual-section {
+    padding: 8px;
+    background: var(--bg-dark);
+    border-radius: 6px;
+}
+
+.dms-ritual-title {
+    font-size: 0.85em;
+    font-weight: 600;
+    color: var(--purple);
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.dms-ritual-rules {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.dms-ritual-rule {
+    font-size: 0.8em;
+    color: var(--text);
+    padding-left: 12px;
+    position: relative;
+}
+
+.dms-ritual-rule::before {
+    content: "•";
+    position: absolute;
+    left: 0;
+    color: var(--text-dim);
+}
+
+.dms-conc-formula {
+    background: var(--bg-elevated);
+    padding: 6px 10px;
+    border-radius: 4px;
+    font-size: 0.85em;
+    color: var(--gold);
+    font-weight: 600;
+    text-align: center;
+    margin-top: 6px;
+    border: 1px solid var(--border);
+}
+
+/* ========================================
+   SCHADENSARTEN-WIDGET
+   ======================================== */
+
+.dms-damage-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+    gap: 4px;
+}
+
+.dms-dmg-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 8px;
+    background: var(--bg-dark);
+    border-radius: 4px;
+    font-size: 0.8em;
+    border-left: 3px solid var(--border);
+}
+
+.dms-dmg-icon {
+    font-size: 1em;
+}
+
+/* Physische Schadensarten */
+.dms-dmg-item.physical { border-left-color: #9ca3af; }
+
+/* Elementare Schadensarten */
+.dms-dmg-item.fire { border-left-color: #ef4444; }
+.dms-dmg-item.cold { border-left-color: #60a5fa; }
+.dms-dmg-item.lightning { border-left-color: #fbbf24; }
+.dms-dmg-item.acid { border-left-color: #84cc16; }
+.dms-dmg-item.thunder { border-left-color: #8b5cf6; }
+
+/* Spezielle Schadensarten */
+.dms-dmg-item.poison { border-left-color: #22c55e; }
+.dms-dmg-item.necrotic { border-left-color: #4b5563; }
+.dms-dmg-item.radiant { border-left-color: #fcd34d; }
+.dms-dmg-item.force { border-left-color: #c084fc; }
+.dms-dmg-item.psychic { border-left-color: #f472b6; }
+
+/* ========================================
+   GELÄNDE-WIDGET
+   ======================================== */
+
+.dms-terrain-sections {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.dms-terrain-section {
+    padding: 8px;
+    background: var(--bg-dark);
+    border-radius: 6px;
+}
+
+.dms-terrain-title {
+    font-size: 0.8em;
+    font-weight: 600;
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.dms-terrain-title.normal { color: var(--green); }
+.dms-terrain-title.difficult { color: var(--gold); }
+.dms-terrain-title.hazardous { color: var(--red); }
+
+.dms-terrain-effect {
+    font-size: 0.75em;
+    color: var(--text-dim);
+    margin-bottom: 6px;
+}
+
+.dms-terrain-examples {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+}
+
+.dms-terrain-tag {
+    background: var(--bg-elevated);
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 0.7em;
+    color: var(--text);
+}
+
+/* ========================================
+   WISSENSGEBIETE-WIDGET
+   ======================================== */
+
+.dms-knowledge-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.dms-knowledge-item {
+    padding: 8px;
+    background: var(--bg-dark);
+    border-radius: 6px;
+    border-left: 3px solid var(--border);
+}
+
+.dms-knowledge-item.arcana { border-left-color: #3b82f6; }
+.dms-knowledge-item.religion { border-left-color: #a855f7; }
+.dms-knowledge-item.history { border-left-color: #f59e0b; }
+.dms-knowledge-item.nature { border-left-color: #22c55e; }
+.dms-knowledge-item.investigation { border-left-color: #06b6d4; }
+
+.dms-knowledge-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 4px;
+}
+
+.dms-knowledge-name {
+    font-size: 0.85em;
+    font-weight: 600;
+    color: var(--text);
+}
+
+.dms-knowledge-attr {
+    font-size: 0.7em;
+    color: var(--text-dim);
+    background: var(--bg-elevated);
+    padding: 2px 6px;
+    border-radius: 3px;
+}
+
+.dms-knowledge-desc {
+    font-size: 0.75em;
+    color: var(--text-dim);
+    margin-bottom: 4px;
+}
+
+.dms-knowledge-creatures {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 3px;
+}
+
+.dms-creature-tag {
+    background: var(--bg-elevated);
+    padding: 2px 5px;
+    border-radius: 3px;
+    font-size: 0.65em;
+    color: var(--cyan);
+}
+
+/* DC-Tabelle */
+.dms-dc-table {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 4px;
+    margin-top: 8px;
+}
+
+.dms-dc-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 4px;
+    background: var(--bg-dark);
+    border-radius: 4px;
+}
+
+.dms-dc-value {
+    font-size: 0.9em;
+    font-weight: 700;
+    color: var(--gold);
+}
+
+.dms-dc-label {
+    font-size: 0.6em;
+    color: var(--text-dim);
+}
+
+/* ========================================
+   REISEN & TRAGLAST-WIDGET
+   ======================================== */
+
+.dms-travel-sections {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.dms-travel-section {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.dms-travel-title {
+    font-size: 0.8em;
+    font-weight: 600;
+    color: var(--gold);
+    margin-bottom: 4px;
+}
+
+.dms-travel-table {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.dms-travel-row {
+    display: grid;
+    grid-template-columns: 70px 1fr 1fr 1fr;
+    gap: 6px;
+    padding: 3px 6px;
+    background: var(--bg-dark);
+    border-radius: 3px;
+    font-size: 0.75em;
+    align-items: center;
+}
+
+.dms-travel-row.header {
+    font-weight: 600;
+    color: var(--text-dim);
+    font-size: 0.65em;
+}
+
+.dms-travel-tempo {
+    font-weight: 500;
+    color: var(--text);
+}
+
+.dms-travel-value {
+    color: var(--cyan);
+}
+
+.dms-travel-effect {
+    color: var(--text-dim);
+    font-size: 0.9em;
+}
+
+/* Traglast-Tabelle */
+.dms-carry-table {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.dms-carry-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    padding: 4px 8px;
+    background: var(--bg-dark);
+    border-radius: 3px;
+    font-size: 0.8em;
+}
+
+.dms-carry-label {
+    color: var(--text);
+}
+
+.dms-carry-formula {
+    color: var(--gold);
+    font-weight: 600;
+    text-align: right;
+}
+
+.dms-carry-row.penalty .dms-carry-label {
+    color: var(--red);
 }
 
