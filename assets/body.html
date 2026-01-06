@@ -787,11 +787,49 @@
                 </div>
                 <div class="form-group">
                     <label>Beschreibung</label>
-                    <textarea id="roadmap-event-description" rows="3" placeholder="Was passiert bei diesem Event?"></textarea>
-                </div>
-                <div class="form-group">
-                    <label>Geschätzte Dauer</label>
-                    <input type="text" id="roadmap-event-duration" placeholder="z.B. 2 Tage, 1 Stunde">
+                    <div class="editor-toolbar">
+                        <button type="button" class="editor-btn" data-action="format-text" data-cmd="roadmap-event-description" data-editor="bold" title="Fett"><b>B</b></button>
+                        <button type="button" class="editor-btn" data-action="format-text" data-cmd="roadmap-event-description" data-editor="italic" title="Kursiv"><i>I</i></button>
+                        <button type="button" class="editor-btn" data-action="format-text" data-cmd="roadmap-event-description" data-editor="underline" title="Unterstrichen"><u>U</u></button>
+                        <button type="button" class="editor-btn" data-action="format-text" data-cmd="roadmap-event-description" data-editor="strikethrough" title="Durchgestrichen"><s>S</s></button>
+                        <button type="button" class="editor-btn" data-action="insert-link" data-editor="roadmap-event-description" title="Link einfügen">🔗</button>
+                        <button type="button" class="editor-btn" data-action="format-text" data-cmd="roadmap-event-description" data-editor="list" title="Liste">☰</button>
+                        <button type="button" class="editor-btn" data-action="set-border-format" data-editor="roadmap-event-description" title="Rahmen">◻</button>
+                        <button type="button" class="editor-btn" data-action="insert-table" data-editor="roadmap-event-description" title="Tabelle einfügen">⊞</button>
+                        <select class="editor-select" data-action="set-read-aloud-format" data-editor="roadmap-event-description" title="Vorlese-Text">
+                            <option value="">Vorlese-Text</option>
+                            <option value="parchment">📜 Pergament</option>
+                            <option value="crimson">🔴 Karmesin</option>
+                            <option value="violet">🟣 Violett</option>
+                            <option value="sage">🟢 Salbei</option>
+                            <option value="sky">🔵 Himmel</option>
+                            <option value="slate">⚫ Schiefer</option>
+                        </select>
+                        <select class="editor-select" data-action="set-editor-font" data-editor="roadmap-event-description" title="Schriftart">
+                            <option value="arial">Arial</option>
+                            <option value="serif">Serif</option>
+                            <option value="mono">Mono</option>
+                            <option value="roboto">Roboto</option>
+                            <option value="inter">Inter</option>
+                            <option value="poppins">Poppins</option>
+                            <option value="source">Source Sans</option>
+                        </select>
+                        <select class="editor-select" data-action="set-editor-font-size" data-editor="roadmap-event-description" title="Größe">
+                            <option value="0.8em">Klein</option>
+                            <option value="1em" selected>Normal</option>
+                            <option value="1.2em">Groß</option>
+                            <option value="1.5em">Sehr groß</option>
+                        </select>
+                        <select class="editor-select" data-action="set-highlight-color" data-editor="roadmap-event-description" title="Highlight">
+                            <option value="">Highlight</option>
+                            <option value="yellow">🟨 Gelb</option>
+                            <option value="cyan">🟦 Cyan</option>
+                            <option value="pink">🟥 Pink</option>
+                            <option value="green">🟩 Grün</option>
+                        </select>
+                        <button type="button" class="editor-btn" data-action="clear-formatting" data-value="roadmap-event-description" title="Formatierung löschen" style="color:#888;">✕</button>
+                    </div>
+                    <div id="roadmap-event-description" class="rich-editor" contenteditable="true" style="min-height: 120px;" placeholder="Was passiert bei diesem Event?"></div>
                 </div>
                 <div class="form-group">
                     <label>Notizen</label>

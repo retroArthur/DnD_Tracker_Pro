@@ -22,7 +22,6 @@ function createRoadmapEvent(type = 'location') {
         linkedQuests: [],
         linkedLocations: [],
         linkedEncounters: [],
-        estimatedDuration: '',
         completed: false,
         notes: ''
     };
@@ -341,9 +340,8 @@ function validateRoadmapImport(data) {
 
         // String fields - sanitize to prevent XSS
         const title = String(event.title || 'Unbenannt').slice(0, 200);
-        const description = String(event.description || '').slice(0, 2000);
+        const description = String(event.description || '').slice(0, 5000); // Allow more chars for HTML
         const notes = String(event.notes || '').slice(0, 2000);
-        const estimatedDuration = String(event.estimatedDuration || '').slice(0, 100);
 
         // Type validation with whitelist
         const validTypes = ['location', 'encounter', 'quest', 'npc', 'event', 'milestone'];
@@ -374,7 +372,6 @@ function validateRoadmapImport(data) {
             linkedQuests: validateIdArray(event.linkedQuests, 'linkedQuests'),
             linkedLocations: validateIdArray(event.linkedLocations, 'linkedLocations'),
             linkedEncounters: validateIdArray(event.linkedEncounters, 'linkedEncounters'),
-            estimatedDuration,
             completed: Boolean(event.completed),
             notes
         };

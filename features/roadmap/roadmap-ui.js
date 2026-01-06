@@ -16,8 +16,13 @@ function showEditRoadmapEventModal(eventId) {
     // Modal-Felder füllen
     $('roadmap-event-title').value = event.title || '';
     $('roadmap-event-type').value = event.type || 'location';
-    $('roadmap-event-description').value = event.description || '';
-    $('roadmap-event-duration').value = event.estimatedDuration || '';
+
+    // Rich-Text Editor: Use innerHTML instead of value
+    const descEditor = $('roadmap-event-description');
+    if (descEditor) {
+        descEditor.innerHTML = event.description || '';
+    }
+
     $('roadmap-event-notes').value = event.notes || '';
     $('roadmap-event-completed').checked = event.completed || false;
 
@@ -40,11 +45,14 @@ function saveRoadmapEventEdit() {
         return;
     }
 
+    // Rich-Text Editor: Read innerHTML instead of value
+    const descEditor = $('roadmap-event-description');
+    const description = descEditor ? descEditor.innerHTML.trim() : '';
+
     const updates = {
         title: $('roadmap-event-title').value.trim() || 'Unbenannt',
         type: $('roadmap-event-type').value,
-        description: $('roadmap-event-description').value.trim(),
-        estimatedDuration: $('roadmap-event-duration').value.trim(),
+        description: description,
         notes: $('roadmap-event-notes').value.trim(),
         completed: $('roadmap-event-completed').checked
     };

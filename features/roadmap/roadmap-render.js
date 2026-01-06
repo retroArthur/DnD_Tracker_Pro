@@ -257,8 +257,7 @@ function createEventTile(event) {
             <span class="roadmap-event-title">${esc(event.title)}</span>
         </div>
         <div class="roadmap-event-body">
-            ${event.estimatedDuration ? `<div class="roadmap-event-duration">${esc(event.estimatedDuration)}</div>` : ''}
-            ${event.description ? `<div class="roadmap-event-description">${esc(event.description)}</div>` : ''}
+            ${event.description ? `<div class="roadmap-event-description">${event.description}</div>` : ''}
             ${linkedHTML}
         </div>
         <div class="roadmap-event-menu">
