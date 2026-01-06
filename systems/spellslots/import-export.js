@@ -172,15 +172,24 @@ function escapeCSV(value) {
 function stripHTML(html) {
     if (!html) return '';
     const temp = document.createElement('div');
-    temp.innerHTML = html;
-    return temp.textContent || temp.innerText || '';
+    temp.textContent = html;  // SAFE: textContent doesn't parse HTML
+    return temp.textContent || '';
 }
 
 // Import für einzelne Datentypen
 function importData(dataType, inputEl) {
     const file = inputEl.files[0];
     if (!file) return;
-    
+
+    // File size validation to prevent DoS attacks
+    const MAX_SIZE_MB = 10;
+    const sizeMB = file.size / (1024 * 1024);
+    if (sizeMB > MAX_SIZE_MB) {
+        showToast(`❌ Datei zu groß (${sizeMB.toFixed(1)}MB). Max: ${MAX_SIZE_MB}MB`, 'error');
+        inputEl.value = '';
+        return;
+    }
+
     const reader = new FileReader();
     reader.onerror = () => {
         ErrorHandler.log('importData', reader.error, 'FileReader Fehler');
@@ -356,10 +365,17 @@ function executeImport(dataType) {
     const modal = $('import-modal');
     const items = JSON.parse(modal.dataset.importItems || '[]');
     const mode = document.querySelector('input[name="import-mode"]:checked')?.value || 'merge';
-    
+
     saveUndoState();
-    
+
+    // Create safety backup before replace mode
     if (mode === 'replace') {
+        try {
+            createAutoBackup();
+            showToast('💾 Sicherheitskopie erstellt', 'info', 1000);
+        } catch (err) {
+            console.warn('[Import] Backup failed:', err);
+        }
         D[dataType] = items;
     } else {
         D[dataType] = [...(D[dataType] || []), ...items];
@@ -484,21 +500,66 @@ function importDataGlobal() {
     reader.readAsText(file);
 }
 
-function copyData() { const exp = { ...D }; delete exp._nextId; navigator.clipboard.writeText(JSON.stringify(exp, null, 2)).then(() => showToast('Kopiert!')); }
+function copyData() {
+    try {
+        const exp = { ...D };
+        delete exp._nextId;
+        const json = JSON.stringify(exp, null, 2);
 
-function clearStorage() { 
-    if (confirm('Alles löschen?')) { 
-        const key = window.STORAGE_KEY_OVERRIDE || STORAGE_KEY;
-        const result = StorageAPI.remove(key);
-        
-        if (result.success) {
-            location.reload();
-        } else {
-            showToast('❌ Fehler beim Löschen', 'error');
-            console.error('Clear storage failed:', result.error);
+        if (!navigator.clipboard) {
+            throw new Error('Zwischenablage nicht verfügbar (HTTPS erforderlich)');
         }
-    } 
+
+        navigator.clipboard.writeText(json)
+            .then(() => showToast('📋 Daten kopiert'))
+            .catch(err => {
+                showToast('⚠️ Automatisches Kopieren fehlgeschlagen. Bitte manuell kopieren.', 'warning');
+                console.warn('[Copy] Clipboard failed:', err);
+            });
+    } catch (err) {
+        showToast('❌ Kopieren fehlgeschlagen: ' + err.message, 'error');
+        console.error('[Copy] Error:', err);
+    }
 }
-function toggleAutosave() { if ($('autosave-toggle').checked) save(); }
+
+function clearStorage() {
+    // Step 1: Strong warning with detailed explanation
+    const confirmed = confirm(
+        '⚠️ ACHTUNG: Alle Daten löschen?\n\n' +
+        'Diese Aktion löscht ALLE Kampagnendaten unwiderruflich:\n' +
+        '• Charaktere, NPCs, Orte\n' +
+        '• Quests, Items, Zauber\n' +
+        '• Initiative, Notizen, Wiki\n\n' +
+        'Möchten Sie wirklich ALLES löschen?'
+    );
+    if (!confirmed) return;
+
+    // Step 2: Double confirmation for safety
+    const doubleCheck = confirm(
+        '🚨 LETZTE WARNUNG!\n\n' +
+        'Bitte bestätigen Sie erneut: Alle Daten unwiderruflich löschen?'
+    );
+    if (!doubleCheck) return;
+
+    // Step 3: Create safety backup before deletion
+    try {
+        createAutoBackup();
+        showToast('💾 Sicherheitskopie erstellt', 'info', 1500);
+    } catch (err) {
+        console.warn('[Clear] Backup failed:', err);
+    }
+
+    // Step 4: Execute deletion
+    const key = window.STORAGE_KEY_OVERRIDE || STORAGE_KEY;
+    const result = StorageAPI.remove(key);
+
+    if (result.success) {
+        showToast('✅ Alle Daten gelöscht', 'info');
+        setTimeout(() => location.reload(), 1000);
+    } else {
+        showToast('❌ Fehler beim Löschen', 'error');
+        console.error('Clear storage failed:', result.error);
+    }
+}
 
 // ============================================================

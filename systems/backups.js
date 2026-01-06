@@ -394,4 +394,7 @@ function getPerformanceReport() {
 // Expose für Console-Debugging
 window.getPerformanceReport = getPerformanceReport;
 
+// Export für Auto-Backup vor destruktiven Operationen
+window.createAutoBackup = createAutoBackup;
+
 // ============================================================

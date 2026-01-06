@@ -94,25 +94,34 @@ async function load() {
 }
 
 function exportAllDataAsFile() {
-    const exp = { ...D }; delete exp._nextId;
-    
-    // Kampagnennamen hinzufügen
-    const index = getCampaignIndex();
-    if (index.active === APP_CONFIG.STORAGE_KEY) {
-        exp._campaignName = 'Standard-Kampagne';
-    } else {
-        const campaign = index.campaigns.find(c => c.key === index.active);
-        exp._campaignName = campaign?.name || 'Unbenannte Kampagne';
+    try {
+        const exp = { ...D }; delete exp._nextId;
+
+        // Kampagnennamen hinzufügen
+        const index = getCampaignIndex();
+        if (index.active === APP_CONFIG.STORAGE_KEY) {
+            exp._campaignName = 'Standard-Kampagne';
+        } else {
+            const campaign = index.campaigns.find(c => c.key === index.active);
+            exp._campaignName = campaign?.name || 'Unbenannte Kampagne';
+        }
+        exp._exportDate = new Date().toISOString();
+        exp._version = '2.11';
+
+        const filename = exp._campaignName.replace(/[^a-zA-Z0-9äöüÄÖÜß\s-]/g, '').replace(/\s+/g, '-');
+        const json = JSON.stringify(exp, null, 2);
+        const blob = new Blob([json], { type: 'application/json' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = `${filename}-${new Date().toISOString().split('T')[0]}.json`;
+        a.click();
+        URL.revokeObjectURL(a.href);
+
+        showToast('📁 Daten exportiert');
+    } catch (err) {
+        showToast('❌ Export fehlgeschlagen: ' + err.message, 'error');
+        console.error('[Export] Error:', err);
     }
-    exp._exportDate = new Date().toISOString();
-    exp._version = '2.11';
-    
-    const filename = exp._campaignName.replace(/[^a-zA-Z0-9äöüÄÖÜß\s-]/g, '').replace(/\s+/g, '-');
-    const blob = new Blob([JSON.stringify(exp, null, 2)], { type: 'application/json' });
-    const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
-    a.download = `${filename}-${new Date().toISOString().split('T')[0]}.json`; a.click();
-    URL.revokeObjectURL(a.href);
-    showToast('📁 Daten exportiert');
 }
 
 // ============================================================

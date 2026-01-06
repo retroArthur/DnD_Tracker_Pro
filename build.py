@@ -128,6 +128,11 @@ def build(minify=False, verbose=False):
         'features/shops/wiki.js',
         'features/shops/links.js',
         'features/shops/mindmap.js',
+        # Roadmap-Module (ersetzt Netzwerk)
+        'features/roadmap/roadmap.js',
+        'features/roadmap/roadmap-render.js',
+        'features/roadmap/roadmap-crud.js',
+        'features/roadmap/roadmap-ui.js',
         # DM Screen Module
         'features/dmscreen/dmscreen-render.js',
         # Dice-Module (ersetzt features/dice.js)
@@ -159,13 +164,14 @@ def build(minify=False, verbose=False):
         'ui/actions/wiki-actions.js',
         'ui/actions/shop-actions.js',
         'ui/actions/map-actions.js',
+        'ui/actions/roadmap-actions.js',
         'ui/actions/system-actions.js',
         'ui/virtual-scroll.js',
         'core/init.js'
     ]
     
     # 1. Lade CSS
-    print("\n📝 Lade CSS...")
+    print("\n[BUILD] Lade CSS...")
     css_content = read_file(f"{SOURCE_DIR}/assets/styles.css")
     if minify:
         log.info("Minifiziere CSS...")
@@ -173,12 +179,12 @@ def build(minify=False, verbose=False):
     log.success(f"CSS geladen: {len(css_content):,} Zeichen")
     
     # 2. Lade HTML Body
-    print("\n📝 Lade HTML Body...")
+    print("\n[BUILD] Lade HTML Body...")
     body_content = read_file(f"{SOURCE_DIR}/assets/body.html")
     log.success(f"HTML Body geladen: {len(body_content):,} Zeichen")
     
     # 3. Lade und kombiniere JavaScript
-    print("\n📝 Lade JavaScript-Module...")
+    print("\n[BUILD] Lade JavaScript-Module...")
     js_combined = ""
     total_js_size = 0
     
@@ -200,10 +206,10 @@ def build(minify=False, verbose=False):
         saved = original_size - len(js_combined)
         log.success(f"Gespart: {saved:,} Zeichen ({saved/original_size*100:.1f}%)")
     
-    print(f"\n✓ JavaScript kombiniert: {len(js_combined):,} Zeichen")
+    print(f"\n[OK] JavaScript kombiniert: {len(js_combined):,} Zeichen")
     
     # 4. Erstelle finale HTML-Datei
-    print("\n📝 Erstelle finale HTML-Datei...")
+    print("\n[BUILD] Erstelle finale HTML-Datei...")
     
     html_template = f"""<!DOCTYPE html>
 <html lang="de" data-theme="dark">
@@ -250,10 +256,10 @@ if (document.readyState === 'loading') {{
     
     # Statistiken
     final_size = len(html_template)
-    print(f"\n✅ Build abgeschlossen!")
+    print(f"\n[SUCCESS] Build abgeschlossen!")
     log.info(f"Datei: {OUTPUT_FILE}")
     log.info(f"Größe: {final_size:,} Zeichen ({final_size/1024/1024:.2f} MB)")
-    print(f"\n📦 Komponenten:")
+    print(f"\n[INFO] Komponenten:")
     print(f"   CSS:        {len(css_content):>10,} Zeichen")
     print(f"   HTML Body:  {len(body_content):>10,} Zeichen")
     print(f"   JavaScript: {len(js_combined):>10,} Zeichen")
