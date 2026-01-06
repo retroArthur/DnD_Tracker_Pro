@@ -53,7 +53,7 @@
             <button class="nav-tab" data-view="wiki" draggable="true" role="tab" aria-selected="false">📚 Wiki</button>
             <button class="nav-tab" data-view="maps" draggable="true" role="tab" aria-selected="false">🗺️ Karten</button>
             <button class="nav-tab" data-view="notes" draggable="true" role="tab" aria-selected="false">📝 Notizen</button>
-            <button class="nav-tab" data-view="network" draggable="true" role="tab" aria-selected="false">🔗 Netzwerk</button>
+            <button class="nav-tab" data-view="roadmap" draggable="true" role="tab" aria-selected="false">🗺️ Roadmap</button>
             <button class="nav-tab" data-view="links" draggable="true" role="tab" aria-selected="false">🔗 Links</button>
             <button class="nav-tab" data-view="dice" draggable="true" role="tab" aria-selected="false">🎲 Würfel</button>
             <button class="nav-tab" data-view="timers" draggable="true" role="tab" aria-selected="false">⏱️ Timer</button>
@@ -622,87 +622,28 @@
             </div>
         </section>
         
-        <!-- NETWORK VIEW - Redesigned -->
-        <section id="view-network" class="view network-view">
-            <!-- Kompakte Top-Bar -->
-            <div class="network-topbar">
-                <div class="network-topbar-left">
-                    <span class="network-title">Netzwerk</span>
-                    <span class="network-count" id="network-io-count">0</span>
-                </div>
-                <div class="network-topbar-center">
-                    <div class="network-search">
-                        <input type="text" id="mindmap-search" placeholder="Suchen..." oninput="filterMindmapNodes(); updateSearchClear(this);">
-                        <button class="network-search-clear" data-action="clear-search" data-value="mindmap-search">×</button>
-                    </div>
-                    <select id="mindmap-type-filter" class="network-filter" onchange="filterMindmapNodes()">
-                        <option value="">Alle</option>
-                        <option value="player">👤 Spieler</option>
-                        <option value="npc">🎭 NPC</option>
-                        <option value="enemy">👹 Feind</option>
-                        <option value="location">🏠 Ort</option>
-                        <option value="faction">⚔️ Fraktion</option>
-                        <option value="quest">📜 Quest</option>
-                    </select>
-                </div>
-                <div class="network-topbar-right">
-                    <button class="network-btn" data-action="call" data-value="showImportNodesModal" title="Importieren">📥</button>
-                    <button class="network-btn" data-action="call" data-value="autoLayoutNodes" title="Auto-Layout">📐</button>
-                    <button class="network-btn" data-action="call" data-value="centerView" title="Zentrieren">⊙</button>
-                </div>
+        <!-- ROADMAP VIEW -->
+        <section id="view-roadmap" class="view roadmap-view">
+            <!-- Toolbar -->
+            <div id="roadmap-toolbar" class="roadmap-toolbar">
+                <!-- Wird dynamisch gerendert -->
             </div>
 
             <!-- Canvas Container -->
-            <div class="network-canvas" id="mindmap-container">
-                <div class="mindmap-viewport" id="mindmap-viewport">
-                    <svg class="mindmap-canvas" id="mindmap-svg">
+            <div id="roadmap-container" class="roadmap-container">
+                <div id="roadmap-viewport" class="roadmap-viewport">
+                    <svg id="roadmap-svg" class="roadmap-svg">
                         <defs>
-                            <marker id="arrow-ally" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="var(--green)"/></marker>
-                            <marker id="arrow-enemy" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="var(--red)"/></marker>
-                            <marker id="arrow-neutral" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="var(--text-dim)"/></marker>
-                            <marker id="arrow-family" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="var(--pink)"/></marker>
-                            <marker id="arrow-business" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="var(--gold)"/></marker>
-                            <marker id="arrow-quest" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="var(--purple)"/></marker>
-                            <marker id="arrow-member" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="var(--cyan)"/></marker>
+                            <!-- Marker werden beim Init erstellt -->
                         </defs>
                     </svg>
+                    <div id="roadmap-events" class="roadmap-events"></div>
                 </div>
+            </div>
 
-                <!-- Floating Action Buttons -->
-                <div class="network-fab-group">
-                    <button class="network-fab network-fab-primary" data-action="call" data-value="showAddNodeModal" title="Node hinzufügen">+</button>
-                    <button class="network-fab" data-action="call" data-value="startConnectMode" id="connect-mode-btn" title="Verbinden">🔗</button>
-                    <button class="network-fab network-fab-danger" data-action="call" data-value="deleteSelectedNode" title="Löschen">🗑</button>
-                </div>
-
-                <!-- Zoom Controls -->
-                <div class="network-zoom">
-                    <button data-action="zoom-mindmap" data-value="0.2">+</button>
-                    <span id="mindmap-zoom-display">100%</span>
-                    <button data-action="zoom-mindmap" data-value="-0.2">−</button>
-                </div>
-
-                <!-- Mini Legend (kollabierbar) -->
-                <div class="network-legend" id="mindmap-legend">
-                    <div class="network-legend-toggle" data-action="toggle-parent-expanded">?</div>
-                    <div class="network-legend-content">
-                        <div class="network-legend-row"><span style="background:var(--green)"></span>Spieler</div>
-                        <div class="network-legend-row"><span style="background:var(--cyan)"></span>NPC</div>
-                        <div class="network-legend-row"><span style="background:var(--red)"></span>Feind</div>
-                        <div class="network-legend-row"><span style="background:var(--gold)"></span>Ort</div>
-                        <div class="network-legend-row"><span style="background:var(--purple)"></span>Quest</div>
-                        <hr>
-                        <div class="network-legend-hint">Drag: Verschieben</div>
-                        <div class="network-legend-hint">Scroll: Zoom</div>
-                        <div class="network-legend-hint">Dblclick: Edit</div>
-                    </div>
-                </div>
-
-                <!-- Connection Mode Banner -->
-                <div class="network-connect-banner" id="connection-info">
-                    <span>🔗 Verbindungsmodus</span>
-                    <button data-action="call" data-value="cancelConnectMode">×</button>
-                </div>
+            <!-- Zoom Controls -->
+            <div id="roadmap-controls" class="roadmap-controls">
+                <!-- Wird dynamisch gerendert -->
             </div>
         </section>
         
@@ -819,7 +760,169 @@
                 </div>
             </div>
         </div>
-        
+
+        <!-- ROADMAP EVENT EDIT MODAL -->
+        <div class="modal-overlay" id="roadmap-event-modal">
+            <div class="modal" style="max-width: 600px;">
+                <div class="modal-header">
+                    <span class="modal-title">✏️ Event bearbeiten</span>
+                    <button class="btn btn-sm" data-action="hide-modal" data-value="roadmap-event-modal">✕</button>
+                </div>
+                <div class="form-group">
+                    <label>Titel</label>
+                    <input type="text" id="roadmap-event-title" placeholder="z.B. Ankunft in Phandalin">
+                </div>
+                <div class="form-group">
+                    <label>Typ</label>
+                    <select id="roadmap-event-type">
+                        <option value="location">📍 Ort</option>
+                        <option value="travel">🗺️ Reise</option>
+                        <option value="encounter">⚔️ Encounter</option>
+                        <option value="combat">🎯 Kampf</option>
+                        <option value="quest">📜 Quest</option>
+                        <option value="discovery">💡 Entdeckung</option>
+                        <option value="social">💬 Social</option>
+                        <option value="decision">❓ Entscheidung</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Beschreibung</label>
+                    <textarea id="roadmap-event-description" rows="3" placeholder="Was passiert bei diesem Event?"></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Geschätzte Dauer</label>
+                    <input type="text" id="roadmap-event-duration" placeholder="z.B. 2 Tage, 1 Stunde">
+                </div>
+                <div class="form-group">
+                    <label>Notizen</label>
+                    <textarea id="roadmap-event-notes" rows="2" placeholder="Zusätzliche Notizen für den DM"></textarea>
+                </div>
+                <div class="form-group">
+                    <label style="display: flex; align-items: center; gap: 8px;">
+                        <input type="checkbox" id="roadmap-event-completed">
+                        <span>Als abgeschlossen markieren</span>
+                    </label>
+                </div>
+                <div class="btn-group">
+                    <button class="btn btn-success" data-action="saveRoadmapEventEdit">💾 Speichern</button>
+                    <button class="btn" data-action="cancelRoadmapEventEdit">Abbrechen</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ROADMAP ENTITY LINKER MODAL -->
+        <div class="modal-overlay" id="roadmap-linker-modal">
+            <div class="modal" style="max-width: 700px;">
+                <div class="modal-header">
+                    <span class="modal-title">🔗 Verknüpfungen</span>
+                    <button class="btn btn-sm" data-action="hide-modal" data-value="roadmap-linker-modal">✕</button>
+                </div>
+                <div class="roadmap-linker-tabs">
+                    <button class="roadmap-linker-tab active" data-tab="npcs" data-action="switchLinkerTab">🎭 NPCs</button>
+                    <button class="roadmap-linker-tab" data-tab="quests" data-action="switchLinkerTab">📜 Quests</button>
+                    <button class="roadmap-linker-tab" data-tab="locations" data-action="switchLinkerTab">🏠 Orte</button>
+                    <button class="roadmap-linker-tab" data-tab="encounters" data-action="switchLinkerTab">⚔️ Encounters</button>
+                </div>
+                <div class="roadmap-linker-content active" id="roadmap-linker-npcs">
+                    <!-- Wird dynamisch gefüllt -->
+                </div>
+                <div class="roadmap-linker-content" id="roadmap-linker-quests">
+                    <!-- Wird dynamisch gefüllt -->
+                </div>
+                <div class="roadmap-linker-content" id="roadmap-linker-locations">
+                    <!-- Wird dynamisch gefüllt -->
+                </div>
+                <div class="roadmap-linker-content" id="roadmap-linker-encounters">
+                    <!-- Wird dynamisch gefüllt -->
+                </div>
+                <div class="btn-group">
+                    <button class="btn btn-success" data-action="saveEntityLinks">💾 Speichern</button>
+                    <button class="btn" data-action="cancelEntityLinks">Abbrechen</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ROADMAP CONNECTION OPTIONS MODAL -->
+        <div class="modal-overlay" id="roadmap-connection-options-modal">
+            <div class="modal" style="max-width: 500px;">
+                <div class="modal-header">
+                    <span class="modal-title">🔗 Verbindungsoptionen</span>
+                    <button class="btn btn-sm" data-action="hide-modal" data-value="roadmap-connection-options-modal">✕</button>
+                </div>
+                <div class="form-group">
+                    <label>Linien-Stil</label>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 8px;">
+                        <label class="roadmap-style-option" style="cursor: pointer; padding: 16px; background: rgba(59, 130, 246, 0.1); border: 2px solid rgba(59, 130, 246, 0.3); border-radius: 8px; transition: all 0.2s; text-align: center;">
+                            <input type="radio" name="connection-style" value="5" checked style="margin-right: 8px;">
+                            <div style="font-weight: 600; margin-bottom: 8px;">Stil 5: Dotted</div>
+                            <svg width="100" height="40" style="display: block; margin: 0 auto;">
+                                <path d="M 10 20 L 90 20" stroke="#60a5fa" stroke-width="2" stroke-dasharray="6,6" fill="none" style="filter: drop-shadow(0 0 4px rgba(96, 165, 250, 0.5));"></path>
+                            </svg>
+                            <div style="font-size: 11px; color: var(--text-dim); margin-top: 8px;">Gestrichelt, elegant</div>
+                        </label>
+                        <label class="roadmap-style-option" style="cursor: pointer; padding: 16px; background: rgba(59, 130, 246, 0.1); border: 2px solid rgba(59, 130, 246, 0.3); border-radius: 8px; transition: all 0.2s; text-align: center;">
+                            <input type="radio" name="connection-style" value="7" style="margin-right: 8px;">
+                            <div style="font-weight: 600; margin-bottom: 8px;">Stil 7: Double</div>
+                            <svg width="100" height="40" style="display: block; margin: 0 auto;">
+                                <path d="M 10 20 L 90 20" stroke="rgba(96, 165, 250, 0.2)" stroke-width="4" fill="none"></path>
+                                <path d="M 10 20 L 90 20" stroke="#60a5fa" stroke-width="1.5" fill="none" style="filter: drop-shadow(0 0 3px rgba(96, 165, 250, 0.4));"></path>
+                            </svg>
+                            <div style="font-size: 11px; color: var(--text-dim); margin-top: 8px;">Doppellinie, 3D-Effekt</div>
+                        </label>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Farbe</label>
+                    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 12px;">
+                        <label class="roadmap-color-swatch" style="cursor: pointer; padding: 10px; border-radius: 6px; border: 2px solid transparent; transition: all 0.2s; text-align: center; display: flex; flex-direction: column; align-items: center;">
+                            <input type="radio" name="connection-color" value="blue" checked style="display: none;">
+                            <div style="width: 32px; height: 32px; margin-bottom: 6px; border-radius: 4px; background: #60a5fa; box-shadow: 0 2px 8px rgba(96, 165, 250, 0.4);"></div>
+                            <div style="font-size: 11px; color: var(--text-dim);">Blau</div>
+                        </label>
+                        <label class="roadmap-color-swatch" style="cursor: pointer; padding: 10px; border-radius: 6px; border: 2px solid transparent; transition: all 0.2s; text-align: center; display: flex; flex-direction: column; align-items: center;">
+                            <input type="radio" name="connection-color" value="purple" style="display: none;">
+                            <div style="width: 32px; height: 32px; margin-bottom: 6px; border-radius: 4px; background: #a78bfa; box-shadow: 0 2px 8px rgba(167, 139, 250, 0.4);"></div>
+                            <div style="font-size: 11px; color: var(--text-dim);">Lila</div>
+                        </label>
+                        <label class="roadmap-color-swatch" style="cursor: pointer; padding: 10px; border-radius: 6px; border: 2px solid transparent; transition: all 0.2s; text-align: center; display: flex; flex-direction: column; align-items: center;">
+                            <input type="radio" name="connection-color" value="yellow" style="display: none;">
+                            <div style="width: 32px; height: 32px; margin-bottom: 6px; border-radius: 4px; background: #fbbf24; box-shadow: 0 2px 8px rgba(251, 191, 36, 0.4);"></div>
+                            <div style="font-size: 11px; color: var(--text-dim);">Gelb</div>
+                        </label>
+                        <label class="roadmap-color-swatch" style="cursor: pointer; padding: 10px; border-radius: 6px; border: 2px solid transparent; transition: all 0.2s; text-align: center; display: flex; flex-direction: column; align-items: center;">
+                            <input type="radio" name="connection-color" value="green" style="display: none;">
+                            <div style="width: 32px; height: 32px; margin-bottom: 6px; border-radius: 4px; background: #10b981; box-shadow: 0 2px 8px rgba(16, 185, 129, 0.4);"></div>
+                            <div style="font-size: 11px; color: var(--text-dim);">Grün</div>
+                        </label>
+                        <label class="roadmap-color-swatch" style="cursor: pointer; padding: 10px; border-radius: 6px; border: 2px solid transparent; transition: all 0.2s; text-align: center; display: flex; flex-direction: column; align-items: center;">
+                            <input type="radio" name="connection-color" value="red" style="display: none;">
+                            <div style="width: 32px; height: 32px; margin-bottom: 6px; border-radius: 4px; background: #ef4444; box-shadow: 0 2px 8px rgba(239, 68, 68, 0.4);"></div>
+                            <div style="font-size: 11px; color: var(--text-dim);">Rot</div>
+                        </label>
+                        <label class="roadmap-color-swatch" style="cursor: pointer; padding: 10px; border-radius: 6px; border: 2px solid transparent; transition: all 0.2s; text-align: center; display: flex; flex-direction: column; align-items: center;">
+                            <input type="radio" name="connection-color" value="orange" style="display: none;">
+                            <div style="width: 32px; height: 32px; margin-bottom: 6px; border-radius: 4px; background: #f59e0b; box-shadow: 0 2px 8px rgba(245, 158, 11, 0.4);"></div>
+                            <div style="font-size: 11px; color: var(--text-dim);">Orange</div>
+                        </label>
+                        <label class="roadmap-color-swatch" style="cursor: pointer; padding: 10px; border-radius: 6px; border: 2px solid transparent; transition: all 0.2s; text-align: center; display: flex; flex-direction: column; align-items: center;">
+                            <input type="radio" name="connection-color" value="pink" style="display: none;">
+                            <div style="width: 32px; height: 32px; margin-bottom: 6px; border-radius: 4px; background: #ec4899; box-shadow: 0 2px 8px rgba(236, 72, 153, 0.4);"></div>
+                            <div style="font-size: 11px; color: var(--text-dim);">Pink</div>
+                        </label>
+                        <label class="roadmap-color-swatch" style="cursor: pointer; padding: 10px; border-radius: 6px; border: 2px solid transparent; transition: all 0.2s; text-align: center; display: flex; flex-direction: column; align-items: center;">
+                            <input type="radio" name="connection-color" value="gray" style="display: none;">
+                            <div style="width: 32px; height: 32px; margin-bottom: 6px; border-radius: 4px; background: #6b7280; box-shadow: 0 2px 8px rgba(107, 114, 128, 0.4);"></div>
+                            <div style="font-size: 11px; color: var(--text-dim);">Grau</div>
+                        </label>
+                    </div>
+                </div>
+                <div class="btn-group">
+                    <button class="btn btn-success" data-action="saveConnectionOptions">💾 Speichern</button>
+                    <button class="btn" data-action="cancelConnectionOptions">Abbrechen</button>
+                </div>
+            </div>
+        </div>
+
         <!-- QUESTS VIEW -->
         <section id="view-quests" class="view">
             <div class="section-toolbar">
