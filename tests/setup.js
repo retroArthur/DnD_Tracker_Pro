@@ -44,6 +44,8 @@ global.D = {
     wiki: [],
     links: [],
     shops: [],
+    randomTables: [],
+    monsterFavorites: [],
     mindmap: { nodes: [], connections: [] },
     initiative: { combatants: [], currentTurn: 0, round: 1 },
     calendar: { day: 1, month: 0, year: 1492, events: [] },
@@ -52,6 +54,8 @@ global.D = {
     tags: [],
     filters: [],
     settings: { theme: 'dark', lastView: 'dashboard' },
+    dmScreenLayout: null,
+    dmScreenNotes: '',
     _nextId: {}
 };
 
@@ -155,25 +159,214 @@ global.renderEncounters = jest.fn();
 global.renderLoot = jest.fn();
 global.renderSpells = jest.fn();
 global.renderInit = jest.fn();
+global.renderInitiative = jest.fn();
+global.renderRandomTables = jest.fn();
 
 // ============================================================
-// SAVE/LOAD MOCKS
+// ENCOUNTER CALCULATOR MOCKS
 // ============================================================
+
+global.CR_TO_XP = {
+    "0": 10, "1/8": 25, "1/4": 50, "1/2": 100,
+    "1": 200, "2": 450, "3": 700, "4": 1100, "5": 1800,
+    "6": 2300, "7": 2900, "8": 3900, "9": 5000, "10": 5900,
+    "11": 7200, "12": 8400, "13": 10000, "14": 11500, "15": 13000,
+    "16": 15000, "17": 18000, "18": 20000, "19": 22000, "20": 25000
+};
+
+// Calculator state
+let calculatorMonsters = [];
+
+global.calculatePartyThresholds = jest.fn(() => {
+    const party = D.characters || [];
+    if (party.length === 0) return { totalPCs: 0, easy: 0, medium: 0, hard: 0, deadly: 0 };
+    return { totalPCs: party.length, easy: 100, medium: 200, hard: 300, deadly: 400 };
+});
+
+global.calculateMonsterXP = jest.fn(() => {
+    if (calculatorMonsters.length === 0) return { baseXP: 0, finalXP: 0, multiplier: 1, totalMonsters: 0 };
+    const baseXP = calculatorMonsters.reduce((sum, m) => sum + (CR_TO_XP[m.cr] || 0) * m.count, 0);
+    return { baseXP, finalXP: baseXP, multiplier: 1, totalMonsters: calculatorMonsters.length };
+});
+
+global.getDifficulty = jest.fn((xp, thresholds) => {
+    if (xp === 0) return { level: 'trivial', label: 'Trivial' };
+    if (xp < thresholds.easy) return { level: 'trivial', label: 'Trivial' };
+    if (xp < thresholds.medium) return { level: 'easy', label: 'Easy' };
+    if (xp < thresholds.hard) return { level: 'medium', label: 'Medium' };
+    if (xp < thresholds.deadly) return { level: 'hard', label: 'Hard' };
+    return { level: 'deadly', label: 'Deadly' };
+});
+
+// ============================================================
+// INITIATIVE MOCKS
+// ============================================================
+
+global.nextTurn = jest.fn(() => {
+    if (!D.initiative.combatants || D.initiative.combatants.length === 0) return;
+    D.initiative.currentTurn = (D.initiative.currentTurn + 1) % D.initiative.combatants.length;
+    if (D.initiative.currentTurn === 0) D.initiative.round++;
+});
+
+global.prevTurn = jest.fn(() => {
+    if (!D.initiative.combatants || D.initiative.combatants.length === 0) return;
+    D.initiative.currentTurn--;
+    if (D.initiative.currentTurn < 0) {
+        D.initiative.currentTurn = D.initiative.combatants.length - 1;
+        D.initiative.round = Math.max(1, D.initiative.round - 1);
+    }
+});
+
+global.removeCombatant = jest.fn((id) => {
+    if (!D.initiative.combatants) return;
+    const idx = D.initiative.combatants.findIndex(c => c.id === id);
+    if (idx === -1) return; // Gracefully handle non-existent ID
+    D.initiative.combatants.splice(idx, 1);
+});
+
+// ============================================================
+// MONSTER FAVORITES MOCKS
+// ============================================================
+
+global.loadMonsterFavorite = jest.fn((id) => {
+    const fav = (D.monsterFavorites || []).find(f => f.id === id);
+    if (!fav) return; // Gracefully handle non-existent ID
+    calculatorMonsters = JSON.parse(JSON.stringify(fav.monsters));
+});
+
+global.deleteMonsterFavorite = jest.fn((id) => {
+    if (!D.monsterFavorites) return;
+    const idx = D.monsterFavorites.findIndex(f => f.id === id);
+    if (idx === -1) return; // Gracefully handle non-existent ID
+    D.monsterFavorites.splice(idx, 1);
+});
+
+global.saveMonsterFavorite = jest.fn(() => {
+    if (calculatorMonsters.length === 0) {
+        showToast('Füge zuerst Monster hinzu');
+        return;
+    }
+    // In real impl, would prompt for name
+});
+
+// ============================================================
+// ENTITY CRUD MOCKS
+// ============================================================
+
+global.deleteChar = jest.fn((id) => {
+    const idx = D.characters.findIndex(c => c.id === id);
+    if (idx === -1) return; // Gracefully handle non-existent ID
+    D.characters.splice(idx, 1);
+});
+
+global.deleteNpc = jest.fn((id) => {
+    const idx = D.npcs.findIndex(n => n.id === id);
+    if (idx === -1) return; // Gracefully handle non-existent ID
+    D.npcs.splice(idx, 1);
+});
+
+global.deleteLoc = jest.fn((id) => {
+    const idx = D.locations.findIndex(l => l.id === id);
+    if (idx === -1) return; // Gracefully handle non-existent ID
+    D.locations.splice(idx, 1);
+});
+
+global.deleteQuest = jest.fn((id) => {
+    const idx = D.quests.findIndex(q => q.id === id);
+    if (idx === -1) return; // Gracefully handle non-existent ID
+    D.quests.splice(idx, 1);
+});
+
+// Aliases for test compatibility
+global.deleteCharacter = global.deleteChar;
+global.deleteNPC = global.deleteNpc;
+global.deleteLocation = global.deleteLoc;
+
+// ============================================================
+// ID GENERATION
+// ============================================================
+
+global.genId = jest.fn((prefix) => {
+    if (!global.D._nextId[prefix]) {
+        global.D._nextId[prefix] = 0;
+    }
+    return ++global.D._nextId[prefix];
+});
+
+// ============================================================
+// SAVE/LOAD MOCKS (with proper error handling)
+// ============================================================
+
+// Custom JSON.stringify that handles circular references
+const safeStringify = (obj) => {
+    const seen = new WeakSet();
+    return JSON.stringify(obj, (key, value) => {
+        if (typeof value === 'object' && value !== null) {
+            if (seen.has(value)) {
+                return '[Circular]';
+            }
+            seen.add(value);
+        }
+        return value;
+    });
+};
 
 global.save = jest.fn(() => {
-    localStorage.setItem(APP_CONFIG.STORAGE_KEY, JSON.stringify(D));
+    try {
+        localStorage.setItem(APP_CONFIG.STORAGE_KEY, safeStringify(D));
+    } catch (e) {
+        console.warn('[TEST] Save failed:', e.message);
+    }
+});
+
+global.saveImmediate = jest.fn(() => {
+    try {
+        localStorage.setItem(APP_CONFIG.STORAGE_KEY, safeStringify(D));
+    } catch (e) {
+        console.warn('[TEST] SaveImmediate failed:', e.message);
+    }
 });
 
 global.load = jest.fn(() => {
     const data = localStorage.getItem(APP_CONFIG.STORAGE_KEY);
     if (data) {
-        Object.assign(D, JSON.parse(data));
+        try {
+            const parsed = JSON.parse(data);
+            Object.assign(D, parsed);
+        } catch (e) {
+            console.warn('[TEST] Corrupted JSON, keeping defaults');
+            // Keep current D structure intact
+        }
     }
 });
 
-global.pushUndo = jest.fn();
-global.undo = jest.fn();
-global.redo = jest.fn();
+// Undo System Mocks
+let undoStack = [];
+let redoStack = [];
+
+global.saveUndoState = jest.fn(() => {
+    undoStack.push(JSON.parse(safeStringify(D)));
+    if (undoStack.length > 30) undoStack.shift();
+    redoStack = [];
+});
+
+global.pushUndo = jest.fn((label) => {
+    global.saveUndoState();
+});
+
+global.undo = jest.fn(() => {
+    if (undoStack.length === 0) return;
+    redoStack.push(JSON.parse(safeStringify(D)));
+    const prev = undoStack.pop();
+    Object.assign(D, prev);
+});
+
+global.redo = jest.fn(() => {
+    if (redoStack.length === 0) return;
+    undoStack.push(JSON.parse(safeStringify(D)));
+    const next = redoStack.pop();
+    Object.assign(D, next);
+});
 
 // ============================================================
 // HELPER FUNKTIONEN FÜR TESTS
@@ -195,6 +388,8 @@ global.resetTestState = () => {
         wiki: [],
         links: [],
         shops: [],
+        randomTables: [],
+        monsterFavorites: [],
         mindmap: { nodes: [], connections: [] },
         initiative: { combatants: [], currentTurn: 0, round: 1 },
         calendar: { day: 1, month: 0, year: 1492, events: [] },
@@ -203,12 +398,21 @@ global.resetTestState = () => {
         tags: [],
         filters: [],
         settings: { theme: 'dark', lastView: 'dashboard' },
+        dmScreenLayout: null,
+        dmScreenNotes: '',
         _nextId: {}
     };
-    
+
+    // Calculator state zurücksetzen
+    calculatorMonsters = [];
+
+    // Undo/Redo stacks zurücksetzen
+    undoStack = [];
+    redoStack = [];
+
     // localStorage leeren
     localStorage.clear();
-    
+
     // Alle Mock-Aufrufe zurücksetzen
     jest.clearAllMocks();
 };

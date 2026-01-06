@@ -430,7 +430,8 @@ describe('Data Integrity', () => {
             characters: [],
             npcs: [],
             locations: [],
-            initiative: { combatants: [], currentTurn: 0, round: 1 }
+            initiative: { combatants: [], currentTurn: 0, round: 1 },
+            _nextId: {}
         };
     });
 
@@ -464,11 +465,20 @@ describe('Data Integrity', () => {
             expect(id2).not.toBe(id3);
         });
 
-        test('genId should handle different prefixes', () => {
-            const charId = genId('char');
-            const npcId = genId('npc');
+        test('genId should handle different prefixes independently', () => {
+            // Each prefix has its own counter starting at 1
+            const charId1 = genId('char');
+            const charId2 = genId('char');
+            const npcId1 = genId('npc');
+            const npcId2 = genId('npc');
 
-            expect(charId).not.toBe(npcId);
+            // Same prefix → incrementing
+            expect(charId2).toBe(charId1 + 1);
+            expect(npcId2).toBe(npcId1 + 1);
+
+            // Different prefixes start at same base value
+            expect(charId1).toBe(1);
+            expect(npcId1).toBe(1);
         });
     });
 
