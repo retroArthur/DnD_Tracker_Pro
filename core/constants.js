@@ -418,6 +418,7 @@ let D = {
     filters: [], mindmap: { nodes: [], connections: [] },
     calendar: { day: 1, month: 0, year: 1492, events: [] },
     tags: [], // Global tags system
+    monsterFavorites: [], // Monster presets for encounter calculator
     settings: { theme: 'dark', lastView: 'dashboard' },
     dmScreenLayout: null, // DM Screen widget layout
     dmScreenNotes: '', // DM Screen session notes

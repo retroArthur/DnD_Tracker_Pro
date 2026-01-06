@@ -53,6 +53,7 @@ async function init() {
     renderTimerPresets();
     renderDiceHistory();
     renderDiceFavorites();
+    renderRandomTables();
     
     // Karten initialisieren
     if (D.maps && D.maps.length > 0) {

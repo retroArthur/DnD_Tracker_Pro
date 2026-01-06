@@ -71,6 +71,11 @@ const CombatActions = {
     'calc-set-terrain': (ctx) => setCalculatorTerrain(ctx.value),
     'calc-toggle-lair': () => toggleCalculatorLair(),
     'calc-add-to-initiative': () => addCalculatorToInitiative(),
+    'calc-apply-budget': () => applyBudgetTarget(),
+    'calc-toggle-favorites': () => toggleFavoritesDropdown(),
+    'calc-save-favorite': () => saveMonsterFavorite(),
+    'calc-load-favorite': (ctx) => loadMonsterFavorite(parseInt(ctx.value)),
+    'calc-delete-favorite': (ctx) => { ctx.event.stopPropagation(); deleteMonsterFavorite(parseInt(ctx.value)); },
 
     // Roll actions
     'roll-attack': () => rollAttack(),

@@ -88,6 +88,142 @@ let calculatorParty = []; // { level: number, count: number }
 let calculatorMonsters = []; // { cr: string, count: number, name?: string }
 let calculatorTerrain = 'normal'; // Terrain modifier ID
 let calculatorLairActions = false; // Has lair actions (+1 effective CR)
+let calculatorTargetDifficulty = 1; // 0=easy, 1=medium, 2=hard, 3=deadly
+
+// XP-Budget-Slider Handling
+const DIFFICULTY_LEVELS = ['easy', 'medium', 'hard', 'deadly'];
+const DIFFICULTY_LABELS = ['Easy', 'Medium', 'Hard', 'Deadly'];
+
+function onBudgetSliderChange(value) {
+    calculatorTargetDifficulty = parseInt(value) || 1;
+    updateBudgetDisplay();
+}
+
+function updateBudgetDisplay() {
+    const thresholds = calculatePartyThresholds();
+    const targetLevel = DIFFICULTY_LEVELS[calculatorTargetDifficulty] || 'medium';
+    const targetXP = thresholds[targetLevel] || 0;
+    const currentXP = calculateMonsterXP().finalXP;
+
+    const targetEl = $('calc-budget-target-xp');
+    const currentEl = $('calc-budget-current-xp');
+    const labelEl = $('calc-budget-label');
+
+    if (targetEl) targetEl.textContent = targetXP.toLocaleString();
+    if (currentEl) currentEl.textContent = currentXP.toLocaleString();
+    if (labelEl) labelEl.textContent = DIFFICULTY_LABELS[calculatorTargetDifficulty];
+}
+
+function applyBudgetTarget() {
+    if (calculatorMonsters.length === 0) {
+        showToast('Füge zuerst Monster hinzu');
+        return;
+    }
+
+    const targetLevel = DIFFICULTY_LEVELS[calculatorTargetDifficulty] || 'medium';
+    calculateOptimalMonsterCount(targetLevel);
+    updateBudgetDisplay();
+}
+
+// ============================================================
+// MONSTER FAVORITES (Presets)
+// ============================================================
+
+function saveMonsterFavorite() {
+    if (calculatorMonsters.length === 0) {
+        showToast('Füge zuerst Monster hinzu');
+        return;
+    }
+
+    const name = prompt('Name für die Vorlage:');
+    if (!name || !name.trim()) return;
+
+    if (!D.monsterFavorites) D.monsterFavorites = [];
+
+    D.monsterFavorites.push({
+        id: Date.now(),
+        name: name.trim(),
+        monsters: JSON.parse(JSON.stringify(calculatorMonsters))
+    });
+
+    saveImmediate();
+    showToast(`Vorlage "${name}" gespeichert`);
+    renderCalculator();
+}
+
+function loadMonsterFavorite(id) {
+    const fav = (D.monsterFavorites || []).find(f => f.id === id);
+    if (!fav) return;
+
+    calculatorMonsters = JSON.parse(JSON.stringify(fav.monsters));
+    renderCalculator();
+    recalculateEncounter();
+    showToast(`Vorlage "${fav.name}" geladen`);
+    closeFavoritesDropdown();
+}
+
+function deleteMonsterFavorite(id) {
+    if (!D.monsterFavorites) return;
+
+    const idx = D.monsterFavorites.findIndex(f => f.id === id);
+    if (idx === -1) return;
+
+    const name = D.monsterFavorites[idx].name;
+    D.monsterFavorites.splice(idx, 1);
+    saveImmediate();
+    showToast(`Vorlage "${name}" gelöscht`);
+    renderCalculator();
+}
+
+function toggleFavoritesDropdown() {
+    const dropdown = $('calc-favorites-dropdown');
+    if (!dropdown) return;
+
+    const isVisible = dropdown.classList.contains('show');
+    if (isVisible) {
+        closeFavoritesDropdown();
+    } else {
+        renderFavoritesDropdown();
+        dropdown.classList.add('show');
+    }
+}
+
+function closeFavoritesDropdown() {
+    const dropdown = $('calc-favorites-dropdown');
+    if (dropdown) dropdown.classList.remove('show');
+}
+
+function renderFavoritesDropdown() {
+    const dropdown = $('calc-favorites-dropdown');
+    if (!dropdown) return;
+
+    const favs = D.monsterFavorites || [];
+
+    if (favs.length === 0) {
+        dropdown.innerHTML = `
+            <div class="calc-fav-empty">Keine Vorlagen</div>
+            <div class="calc-fav-divider"></div>
+            <button class="calc-fav-item save" data-action="calc-save-favorite">
+                <span>➕</span><span>Aktuelle speichern...</span>
+            </button>
+        `;
+    } else {
+        dropdown.innerHTML = `
+            ${favs.map(f => `
+                <div class="calc-fav-item" data-action="calc-load-favorite" data-value="${f.id}">
+                    <span>⭐</span>
+                    <span class="calc-fav-name">${esc(f.name)}</span>
+                    <span class="calc-fav-count">(${f.monsters.reduce((s, m) => s + m.count, 0)})</span>
+                    <button class="calc-fav-delete" data-action="calc-delete-favorite" data-value="${f.id}" title="Löschen">×</button>
+                </div>
+            `).join('')}
+            <div class="calc-fav-divider"></div>
+            <button class="calc-fav-item save" data-action="calc-save-favorite">
+                <span>➕</span><span>Aktuelle speichern...</span>
+            </button>
+        `;
+    }
+}
 
 // ============================================================
 // PARTY MANAGEMENT
@@ -195,11 +331,12 @@ function addMonster() {
         name: name || `CR ${crInput} Monster`
     });
     
-    // Clear inputs
+    // Clear inputs and preview
     $('calc-monster-cr').value = '';
     $('calc-monster-count').value = '1';
     $('calc-monster-name').value = '';
-    
+    clearMonsterPreview();
+
     renderCalculator();
     recalculateEncounter();
 }
@@ -214,6 +351,93 @@ function clearMonsters() {
     calculatorMonsters = [];
     renderCalculator();
     recalculateEncounter();
+    clearMonsterPreview();
+}
+
+// Live-Vorschau für Monster-Eingabe
+let monsterPreviewTimer = null;
+
+function updateMonsterPreview() {
+    const previewDiv = $('calc-monster-preview');
+    if (!previewDiv) return;
+
+    const crInput = $('calc-monster-cr')?.value.trim();
+    const count = parseInt($('calc-monster-count')?.value) || 1;
+
+    // Keine Vorschau wenn kein CR oder ungültige CR
+    if (!crInput || !CR_TO_XP[crInput]) {
+        previewDiv.innerHTML = '';
+        return;
+    }
+
+    // Keine Vorschau ohne Party
+    const thresholds = calculatePartyThresholds();
+    if (thresholds.totalPCs === 0) {
+        previewDiv.innerHTML = '<span class="calc-preview-icon">📊</span><span class="calc-preview-same">Füge zuerst Party hinzu</span>';
+        return;
+    }
+
+    // Berechne hinzugefügte XP
+    const addedXP = CR_TO_XP[crInput] * count;
+    const currentXP = calculateMonsterXP().finalXP;
+    const currentDiff = getDifficulty(currentXP, thresholds);
+
+    // Simuliere das Hinzufügen
+    const tempMonsters = [...calculatorMonsters, { cr: crInput, count }];
+    const newMonsterCount = tempMonsters.reduce((sum, m) => sum + m.count, 0);
+    const newBaseXP = tempMonsters.reduce((sum, m) => sum + CR_TO_XP[m.cr] * m.count, 0);
+
+    // Berechne neuen Multiplikator
+    let newMult = 1.0;
+    for (const mult of ENCOUNTER_MULTIPLIERS) {
+        if (newMonsterCount >= mult.min && newMonsterCount <= mult.max) {
+            newMult = mult.multiplier;
+            break;
+        }
+    }
+
+    // Party-Größen-Anpassung
+    if (thresholds.totalPCs < 3 && newMonsterCount > 1) {
+        const idx = ENCOUNTER_MULTIPLIERS.findIndex(m => m.multiplier === newMult);
+        if (idx < ENCOUNTER_MULTIPLIERS.length - 1) {
+            newMult = ENCOUNTER_MULTIPLIERS[idx + 1].multiplier;
+        }
+    } else if (thresholds.totalPCs > 5) {
+        if (newMonsterCount === 1) {
+            newMult = 0.5;
+        } else {
+            const idx = ENCOUNTER_MULTIPLIERS.findIndex(m => m.multiplier === newMult);
+            if (idx > 0) {
+                newMult = ENCOUNTER_MULTIPLIERS[idx - 1].multiplier;
+            }
+        }
+    }
+
+    const newAdjustedXP = Math.round(newBaseXP * newMult);
+    const newDiff = getDifficulty(newAdjustedXP, thresholds);
+
+    // Render Vorschau
+    const diffChanged = currentDiff.level !== newDiff.level;
+    const diffHtml = diffChanged
+        ? `<span class="calc-preview-arrow">→</span><span class="calc-preview-change">${currentDiff.label} → ${newDiff.label}</span>`
+        : `<span class="calc-preview-same">${newDiff.label}</span>`;
+
+    previewDiv.innerHTML = `
+        <span class="calc-preview-icon">📊</span>
+        <span class="calc-preview-xp">+${addedXP.toLocaleString()} XP</span>
+        ${diffHtml}
+    `;
+}
+
+function clearMonsterPreview() {
+    const previewDiv = $('calc-monster-preview');
+    if (previewDiv) previewDiv.innerHTML = '';
+}
+
+// Debounced Preview-Update
+function scheduleMonsterPreview() {
+    if (monsterPreviewTimer) clearTimeout(monsterPreviewTimer);
+    monsterPreviewTimer = setTimeout(updateMonsterPreview, 100);
 }
 
 // ============================================================
@@ -321,6 +545,36 @@ function getDifficulty(adjustedXP, thresholds) {
     return { level: 'deadly', label: 'Deadly', color: '#e74c3c', percentage: 100 + Math.min(overDeadly, 100) };
 }
 
+// Erklärt den Multiplikator basierend auf Monster-Anzahl und Party-Größe
+function getMultiplierExplanation(totalMonsters, partySize, multiplier) {
+    // Finde Basis-Bracket
+    const baseBracket = ENCOUNTER_MULTIPLIERS.find(m =>
+        totalMonsters >= m.min && totalMonsters <= m.max
+    );
+
+    let lines = [];
+    if (baseBracket) {
+        lines.push(`${baseBracket.label} = ×${baseBracket.multiplier}`);
+    }
+
+    // Party-Größen-Anpassung
+    if (partySize < 3 && totalMonsters > 1) {
+        lines.push(`Kleine Party (<3): +1 Stufe`);
+    } else if (partySize > 5) {
+        if (totalMonsters === 1) {
+            lines.push(`Große Party (>5), 1 Monster: ×0.5`);
+        } else {
+            lines.push(`Große Party (>5): -1 Stufe`);
+        }
+    }
+
+    if (lines.length > 1) {
+        lines.push(`→ Final: ×${multiplier}`);
+    }
+
+    return lines.join('\n');
+}
+
 function recalculateEncounter() {
     const thresholds = calculatePartyThresholds();
     const monsters = calculateMonsterXP();
@@ -408,7 +662,10 @@ function recalculateEncounter() {
                 <div class="calc-stat-label">XP/Spieler</div>
             </div>
             <div class="calc-stat">
-                <div class="calc-stat-value">×${monsters.multiplier}</div>
+                <div class="calc-stat-value">
+                    ×${monsters.multiplier}
+                    <span class="calc-stat-info" title="${getMultiplierExplanation(monsters.totalMonsters, thresholds.totalPCs, monsters.multiplier)}">ⓘ</span>
+                </div>
                 <div class="calc-stat-label">Multiplier</div>
             </div>
         </div>
@@ -833,19 +1090,48 @@ function renderCalculatorModal() {
                         <div class="calc-card-title">👹 Monster</div>
                         <div class="calc-card-actions">
                             <button class="calc-card-btn" data-action="calc-show-encounter-import" title="Aus Encounters">📥</button>
+                            <div class="calc-favorites-wrap">
+                                <button class="calc-card-btn" data-action="calc-toggle-favorites" title="Vorlagen">⭐</button>
+                                <div id="calc-favorites-dropdown" class="calc-favorites-dropdown"></div>
+                            </div>
                             <button class="calc-card-btn danger" data-action="calc-clear-monsters" title="Leeren">🗑️</button>
                         </div>
                     </div>
                     <div class="calc-input-row">
-                        <input type="text" id="calc-monster-cr" class="calc-input" placeholder="CR" list="cr-datalist" style="width: 55px;">
+                        <input type="text" id="calc-monster-cr" class="calc-input" placeholder="CR" list="cr-datalist" style="width: 55px;" oninput="scheduleMonsterPreview()">
                         <datalist id="cr-datalist">
                             ${['0', '1/8', '1/4', '1/2', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15', '16', '17', '18', '19', '20'].map(cr => `<option value="${cr}">`).join('')}
                         </datalist>
-                        <input type="number" id="calc-monster-count" class="calc-input" min="1" value="1" placeholder="#" style="width: 50px;">
+                        <input type="number" id="calc-monster-count" class="calc-input" min="1" value="1" placeholder="#" style="width: 50px;" oninput="scheduleMonsterPreview()">
                         <input type="text" id="calc-monster-name" class="calc-input" placeholder="Name (opt.)" style="flex: 1; min-width: 60px;">
                         <button class="calc-add-btn" data-action="calc-add-monster">+</button>
                     </div>
+                    <div id="calc-monster-preview" class="calc-monster-preview"></div>
                     <div id="calc-monster-list" class="calc-list"></div>
+                </div>
+            </div>
+
+            <!-- XP Budget Slider -->
+            <div class="calc-budget-section">
+                <div class="calc-budget-header">
+                    <span class="calc-budget-title">🎯 Ziel-Schwierigkeit</span>
+                    <span id="calc-budget-label" class="calc-budget-current-level">${DIFFICULTY_LABELS[calculatorTargetDifficulty]}</span>
+                </div>
+                <div class="calc-budget-slider-wrap">
+                    <input type="range" id="calc-budget-slider"
+                           min="0" max="3" step="1" value="${calculatorTargetDifficulty}"
+                           oninput="onBudgetSliderChange(this.value)">
+                    <div class="calc-budget-labels">
+                        <span>Easy</span>
+                        <span>Medium</span>
+                        <span>Hard</span>
+                        <span>Deadly</span>
+                    </div>
+                </div>
+                <div class="calc-budget-info">
+                    <span>Ziel: <strong id="calc-budget-target-xp">0</strong> XP</span>
+                    <button class="calc-budget-apply" data-action="calc-apply-budget">Anpassen</button>
+                    <span>Aktuell: <strong id="calc-budget-current-xp">0</strong> XP</span>
                 </div>
             </div>
 
@@ -891,6 +1177,7 @@ function renderCalculatorModal() {
     `;
 
     renderCalculator();
+    updateBudgetDisplay();
 }
 
 // Terrain and Lair action handlers
