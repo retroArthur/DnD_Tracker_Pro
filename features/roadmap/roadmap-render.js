@@ -198,6 +198,9 @@ function renderRoadmapEvents() {
     const eventsContainer = $('roadmap-events');
     if (!eventsContainer) return;
 
+    // CRITICAL: Cleanup event listeners BEFORE clearing innerHTML to prevent memory leak
+    cleanupEventTiles();
+
     eventsContainer.innerHTML = '';
 
     if (!D.roadmap?.events) return;
@@ -208,12 +211,29 @@ function renderRoadmapEvents() {
     });
 }
 
+function cleanupEventTiles() {
+    const eventsContainer = $('roadmap-events');
+    if (!eventsContainer) return;
+
+    // Find all event tiles and cleanup their document-level listeners
+    const tiles = eventsContainer.querySelectorAll('.roadmap-event');
+    tiles.forEach(tile => {
+        if (tile._cleanupHandlers) {
+            tile._cleanupHandlers.forEach(cleanup => cleanup());
+            tile._cleanupHandlers = null;
+        }
+    });
+}
+
 function createEventTile(event) {
     const div = document.createElement('div');
     div.className = `roadmap-event ${event.type}`;
     div.style.left = `${event.x}px`;
     div.style.top = `${event.y}px`;
     div.dataset.id = event.id;
+
+    // Initialize cleanup handlers array for memory leak prevention
+    div._cleanupHandlers = [];
 
     // Event-Icon ermitteln
     const icon = getEventTypeIcon(event.type);
@@ -242,6 +262,14 @@ function createEventTile(event) {
             ${linkedHTML}
         </div>
         <div class="roadmap-event-menu">
+            ${event.notes ? `
+                <div class="roadmap-info-wrapper">
+                    <button class="roadmap-info-btn" data-event-id="${event.id}">ⓘ</button>
+                    <div class="roadmap-info-popup" data-event-id="${event.id}">
+                        <div class="roadmap-info-content">${esc(event.notes)}</div>
+                    </div>
+                </div>
+            ` : ''}
             <button class="roadmap-menu-btn" data-event-id="${event.id}" title="Aktionen">⋮</button>
             <div class="roadmap-menu-popup" data-event-id="${event.id}">
                 <button class="roadmap-menu-item" data-action="editRoadmapEvent" data-id="${event.id}">
@@ -261,6 +289,44 @@ function createEventTile(event) {
         ${event.completed ? '<div class="roadmap-event-status completed">✓</div>' : ''}
     `;
 
+    // Info-Button Handler
+    const infoBtn = div.querySelector('.roadmap-info-btn');
+    const infoPopup = div.querySelector('.roadmap-info-popup');
+
+    if (infoBtn && infoPopup) {
+        infoBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+
+            // Alle anderen Info-Popups schließen
+            document.querySelectorAll('.roadmap-info-popup.show').forEach(popup => {
+                if (popup !== infoPopup) {
+                    popup.classList.remove('show');
+                }
+            });
+
+            // Alle Menüs schließen
+            document.querySelectorAll('.roadmap-menu-popup.show').forEach(popup => {
+                popup.classList.remove('show');
+            });
+
+            // Dieses Info-Popup toggeln
+            infoPopup.classList.toggle('show');
+        });
+
+        // Klick außerhalb schließt Info-Popup
+        const infoClickHandler = (e) => {
+            if (!div.contains(e.target)) {
+                infoPopup.classList.remove('show');
+            }
+        };
+        document.addEventListener('click', infoClickHandler);
+
+        // Store cleanup function to prevent memory leak
+        div._cleanupHandlers.push(() => {
+            document.removeEventListener('click', infoClickHandler);
+        });
+    }
+
     // Menu-Button Handler
     const menuBtn = div.querySelector('.roadmap-menu-btn');
     const menuPopup = div.querySelector('.roadmap-menu-popup');
@@ -276,15 +342,26 @@ function createEventTile(event) {
                 }
             });
 
+            // Alle Info-Popups schließen
+            document.querySelectorAll('.roadmap-info-popup.show').forEach(popup => {
+                popup.classList.remove('show');
+            });
+
             // Dieses Menü toggeln
             menuPopup.classList.toggle('show');
         });
 
         // Klick außerhalb schließt Menü
-        document.addEventListener('click', (e) => {
+        const menuClickHandler = (e) => {
             if (!div.contains(e.target)) {
                 menuPopup.classList.remove('show');
             }
+        };
+        document.addEventListener('click', menuClickHandler);
+
+        // Store cleanup function to prevent memory leak
+        div._cleanupHandlers.push(() => {
+            document.removeEventListener('click', menuClickHandler);
         });
 
         // Menu-Item Click schließt Menü

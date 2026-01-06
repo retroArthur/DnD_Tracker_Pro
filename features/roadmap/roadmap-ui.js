@@ -28,8 +28,17 @@ function showEditRoadmapEventModal(eventId) {
 }
 
 function saveRoadmapEventEdit() {
-    const eventId = parseInt($('roadmap-event-modal').dataset.eventId);
-    if (!eventId) return;
+    const modal = $('roadmap-event-modal');
+    if (!modal || !modal.dataset.eventId) {
+        showToast('Event-ID nicht gefunden', 'error');
+        return;
+    }
+
+    const eventId = parseInt(modal.dataset.eventId, 10);
+    if (isNaN(eventId) || eventId < 0) {
+        showToast('Ungültige Event-ID', 'error');
+        return;
+    }
 
     const updates = {
         title: $('roadmap-event-title').value.trim() || 'Unbenannt',
@@ -62,6 +71,12 @@ function showEntityLinkerModal(eventId) {
     // Event-ID speichern
     $('roadmap-linker-modal').dataset.eventId = eventId;
 
+    // Suchfeld leeren
+    const searchInput = $('roadmap-linker-search-input');
+    if (searchInput) {
+        searchInput.value = '';
+    }
+
     // Tabs rendern
     renderLinkerTab('npcs', event);
     renderLinkerTab('quests', event);
@@ -71,10 +86,13 @@ function showEntityLinkerModal(eventId) {
     // Ersten Tab aktivieren
     switchLinkerTab('npcs');
 
+    // Suchfeld-Listener registrieren
+    setupLinkerSearch(event);
+
     showModal('roadmap-linker-modal');
 }
 
-function renderLinkerTab(tabName, event) {
+function renderLinkerTab(tabName, event, searchTerm = '') {
     const content = $(`roadmap-linker-${tabName}`);
     if (!content) return;
 
@@ -101,8 +119,21 @@ function renderLinkerTab(tabName, event) {
             break;
     }
 
+    // Filter nach Suchbegriff
+    if (searchTerm) {
+        const term = searchTerm.toLowerCase();
+        entities = entities.filter(entity => {
+            const name = (entity.name || entity.title || '').toLowerCase();
+            return name.includes(term);
+        });
+    }
+
     if (entities.length === 0) {
-        html = `<p class="no-entities">Keine ${getEntityLabel(tabName)} vorhanden</p>`;
+        if (searchTerm) {
+            html = `<p class="no-entities">Keine Ergebnisse für "${esc(searchTerm)}"</p>`;
+        } else {
+            html = `<p class="no-entities">Keine ${getEntityLabel(tabName)} vorhanden</p>`;
+        }
     } else {
         html = '<div class="entity-checkboxes">';
         entities.forEach(entity => {
@@ -141,37 +172,52 @@ function switchLinkerTab(tabName) {
 }
 
 function saveEntityLinks() {
-    const eventId = parseInt($('roadmap-linker-modal').dataset.eventId);
-    if (!eventId) return;
+    const modal = $('roadmap-linker-modal');
+    if (!modal || !modal.dataset.eventId) {
+        showToast('Event-ID nicht gefunden', 'error');
+        return;
+    }
+
+    const eventId = parseInt(modal.dataset.eventId, 10);
+    if (isNaN(eventId) || eventId < 0) {
+        showToast('Ungültige Event-ID', 'error');
+        return;
+    }
 
     const event = D.roadmap.events.find(e => e.id === eventId);
-    if (!event) return;
+    if (!event) {
+        showToast('Event nicht gefunden', 'error');
+        return;
+    }
 
     pushUndo('Entity-Links aktualisiert');
 
+    // Helper function to safely parse entity IDs from checkboxes
+    const parseEntityIds = (checkboxes) => {
+        return Array.from(checkboxes)
+            .filter(cb => cb.checked)
+            .map(cb => {
+                const id = parseInt(cb.value, 10);
+                return isNaN(id) ? null : id;
+            })
+            .filter(id => id !== null && id >= 0);
+    };
+
     // NPCs
     const npcCheckboxes = $$('#roadmap-linker-npcs input[type="checkbox"]');
-    event.linkedNPCs = Array.from(npcCheckboxes)
-        .filter(cb => cb.checked)
-        .map(cb => parseInt(cb.value));
+    event.linkedNPCs = parseEntityIds(npcCheckboxes);
 
     // Quests
     const questCheckboxes = $$('#roadmap-linker-quests input[type="checkbox"]');
-    event.linkedQuests = Array.from(questCheckboxes)
-        .filter(cb => cb.checked)
-        .map(cb => parseInt(cb.value));
+    event.linkedQuests = parseEntityIds(questCheckboxes);
 
     // Locations
     const locCheckboxes = $$('#roadmap-linker-locations input[type="checkbox"]');
-    event.linkedLocations = Array.from(locCheckboxes)
-        .filter(cb => cb.checked)
-        .map(cb => parseInt(cb.value));
+    event.linkedLocations = parseEntityIds(locCheckboxes);
 
     // Encounters
     const encCheckboxes = $$('#roadmap-linker-encounters input[type="checkbox"]');
-    event.linkedEncounters = Array.from(encCheckboxes)
-        .filter(cb => cb.checked)
-        .map(cb => parseInt(cb.value));
+    event.linkedEncounters = parseEntityIds(encCheckboxes);
 
     save();
     renderRoadmap();
@@ -181,6 +227,28 @@ function saveEntityLinks() {
 
 function cancelEntityLinks() {
     hideModal('roadmap-linker-modal');
+}
+
+function setupLinkerSearch(event) {
+    const searchInput = $('roadmap-linker-search-input');
+    if (!searchInput) return;
+
+    // Vorherigen Listener entfernen (falls vorhanden)
+    searchInput.removeEventListener('input', searchInput._linkerSearchHandler);
+
+    // Neuen Listener mit Event-Kontext
+    searchInput._linkerSearchHandler = function() {
+        const searchTerm = this.value.trim();
+
+        // Aktuell aktiven Tab finden
+        const activeTab = document.querySelector('.roadmap-linker-tab.active');
+        const tabName = activeTab ? activeTab.dataset.tab : 'npcs';
+
+        // Nur den aktiven Tab neu rendern
+        renderLinkerTab(tabName, event, searchTerm);
+    };
+
+    searchInput.addEventListener('input', searchInput._linkerSearchHandler);
 }
 
 function getEntityLabel(tabName) {

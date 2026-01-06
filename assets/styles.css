@@ -22582,6 +22582,73 @@
     top: 8px;
     right: 8px;
     z-index: 20;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+/* Info Button & Popup */
+.roadmap-info-wrapper {
+    position: relative;
+}
+
+.roadmap-info-btn {
+    background: rgba(96, 165, 250, 0.15);
+    border: 1px solid rgba(96, 165, 250, 0.3);
+    color: #60a5fa;
+    padding: 4px 8px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    line-height: 1;
+    transition: all 0.15s;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 28px;
+    min-width: 28px;
+}
+
+.roadmap-info-btn:hover {
+    background: rgba(96, 165, 250, 0.25);
+    color: #93c5fd;
+    border-color: rgba(96, 165, 250, 0.5);
+}
+
+.roadmap-info-popup {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    margin-top: 4px;
+    background: rgba(30, 50, 80, 0.98);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(96, 165, 250, 0.3);
+    border-radius: 8px;
+    min-width: 200px;
+    max-width: 300px;
+    box-shadow: 0 4px 12px rgba(96, 165, 250, 0.3);
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-8px);
+    transition: all 0.2s;
+    z-index: 100;
+    pointer-events: none;
+}
+
+.roadmap-info-popup.show {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+    pointer-events: auto;
+}
+
+.roadmap-info-content {
+    padding: 12px 16px;
+    color: var(--text);
+    font-size: 13px;
+    line-height: 1.5;
+    white-space: pre-wrap;
+    word-wrap: break-word;
 }
 
 .roadmap-menu-btn {
@@ -22594,6 +22661,11 @@
     font-size: 16px;
     line-height: 1;
     transition: all 0.15s;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 28px;
+    min-width: 28px;
 }
 
 .roadmap-menu-btn:hover {
@@ -22747,6 +22819,32 @@
 .roadmap-linker-tab.active {
     color: var(--cyan);
     border-bottom-color: var(--cyan);
+}
+
+.roadmap-linker-search {
+    margin-bottom: 16px;
+}
+
+.roadmap-linker-search input {
+    width: 100%;
+    padding: 10px 12px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text);
+    font-size: 14px;
+    transition: all 0.2s;
+}
+
+.roadmap-linker-search input:focus {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: var(--cyan);
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(34, 211, 238, 0.1);
+}
+
+.roadmap-linker-search input::placeholder {
+    color: var(--text-dim);
 }
 
 .roadmap-linker-content {

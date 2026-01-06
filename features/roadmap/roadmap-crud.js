@@ -287,25 +287,168 @@ function exportRoadmap() {
     showToast('Roadmap exportiert', 'success');
 }
 
+function validateRoadmapImport(data) {
+    // SECURITY: Validate import data to prevent XSS and DoS attacks
+
+    // 1. Basic structure validation
+    if (typeof data !== 'object' || data === null) {
+        throw new Error('Ungültige Datenstruktur');
+    }
+
+    if (!Array.isArray(data.events) || !Array.isArray(data.connections)) {
+        throw new Error('Events und Connections müssen Arrays sein');
+    }
+
+    // 2. Limit array sizes to prevent DoS
+    const MAX_EVENTS = 500;
+    const MAX_CONNECTIONS = 1000;
+
+    if (data.events.length > MAX_EVENTS) {
+        throw new Error(`Zu viele Events (max ${MAX_EVENTS})`);
+    }
+
+    if (data.connections.length > MAX_CONNECTIONS) {
+        throw new Error(`Zu viele Connections (max ${MAX_CONNECTIONS})`);
+    }
+
+    // 3. Validate and sanitize each event
+    const validatedEvents = data.events.map((event, index) => {
+        if (typeof event !== 'object' || event === null) {
+            throw new Error(`Event ${index} ist ungültig`);
+        }
+
+        // Required fields with type validation
+        const id = parseInt(event.id, 10);
+        if (isNaN(id) || id < 0) {
+            throw new Error(`Event ${index} hat ungültige ID`);
+        }
+
+        const x = parseFloat(event.x);
+        const y = parseFloat(event.y);
+        if (isNaN(x) || isNaN(y)) {
+            throw new Error(`Event ${index} hat ungültige Koordinaten`);
+        }
+
+        // Coordinate range validation (prevent off-canvas placement)
+        if (x < 0 || x > 10000 || y < 0 || y > 10000) {
+            throw new Error(`Event ${index} hat Koordinaten außerhalb des erlaubten Bereichs`);
+        }
+
+        const sequence = parseInt(event.sequence, 10);
+        if (isNaN(sequence)) {
+            throw new Error(`Event ${index} hat ungültige Sequence`);
+        }
+
+        // String fields - sanitize to prevent XSS
+        const title = String(event.title || 'Unbenannt').slice(0, 200);
+        const description = String(event.description || '').slice(0, 2000);
+        const notes = String(event.notes || '').slice(0, 2000);
+        const estimatedDuration = String(event.estimatedDuration || '').slice(0, 100);
+
+        // Type validation with whitelist
+        const validTypes = ['location', 'encounter', 'quest', 'npc', 'event', 'milestone'];
+        const type = validTypes.includes(event.type) ? event.type : 'location';
+
+        // Array fields - validate and sanitize IDs
+        const validateIdArray = (arr, fieldName) => {
+            if (!Array.isArray(arr)) return [];
+            return arr.map((id, i) => {
+                const parsed = parseInt(id, 10);
+                if (isNaN(parsed) || parsed < 0) {
+                    throw new Error(`Event ${index} hat ungültige ${fieldName} ID bei Index ${i}`);
+                }
+                return parsed;
+            }).slice(0, 100); // Max 100 links per event
+        };
+
+        return {
+            id,
+            title,
+            type,
+            description,
+            sequence,
+            x,
+            y,
+            color: event.color || '#60a5fa', // Default color
+            linkedNPCs: validateIdArray(event.linkedNPCs, 'linkedNPCs'),
+            linkedQuests: validateIdArray(event.linkedQuests, 'linkedQuests'),
+            linkedLocations: validateIdArray(event.linkedLocations, 'linkedLocations'),
+            linkedEncounters: validateIdArray(event.linkedEncounters, 'linkedEncounters'),
+            estimatedDuration,
+            completed: Boolean(event.completed),
+            notes
+        };
+    });
+
+    // 4. Validate and sanitize each connection
+    const validatedConnections = data.connections.map((conn, index) => {
+        if (typeof conn !== 'object' || conn === null) {
+            throw new Error(`Connection ${index} ist ungültig`);
+        }
+
+        const id = parseInt(conn.id, 10);
+        const from = parseInt(conn.from, 10);
+        const to = parseInt(conn.to, 10);
+
+        if (isNaN(id) || isNaN(from) || isNaN(to)) {
+            throw new Error(`Connection ${index} hat ungültige IDs`);
+        }
+
+        if (id < 0 || from < 0 || to < 0) {
+            throw new Error(`Connection ${index} hat negative IDs`);
+        }
+
+        // Validate pin positions
+        const validPins = ['top', 'right', 'bottom', 'left'];
+        const fromPin = validPins.includes(conn.fromPin) ? conn.fromPin : 'bottom';
+        const toPin = validPins.includes(conn.toPin) ? conn.toPin : 'top';
+
+        // Validate style and color
+        const validStyles = ['1', '2', '3', '4', '5', '6', '7'];
+        const style = validStyles.includes(String(conn.style)) ? String(conn.style) : '5';
+
+        const validColors = ['blue', 'purple', 'yellow', 'green', 'red', 'cyan', 'orange', 'pink'];
+        const color = validColors.includes(conn.color) ? conn.color : 'blue';
+
+        return {
+            id,
+            from,
+            to,
+            type: conn.type || 'main',
+            label: String(conn.label || '').slice(0, 100),
+            fromPin,
+            toPin,
+            style,
+            color
+        };
+    });
+
+    return {
+        events: validatedEvents,
+        connections: validatedConnections
+    };
+}
+
 function importRoadmap(file) {
     const reader = new FileReader();
 
     reader.onload = (e) => {
         try {
+            // Parse JSON
             const data = JSON.parse(e.target.result);
 
-            if (!data.events || !data.connections) {
-                throw new Error('Ungültiges Roadmap-Format');
-            }
+            // SECURITY: Validate and sanitize all input data
+            const validated = validateRoadmapImport(data);
 
             pushUndo('Roadmap importiert');
 
-            D.roadmap.events = data.events;
-            D.roadmap.connections = data.connections;
+            // Use validated and sanitized data
+            D.roadmap.events = validated.events;
+            D.roadmap.connections = validated.connections;
 
             save();
             renderRoadmap();
-            showToast('Roadmap importiert', 'success');
+            showToast(`Roadmap importiert: ${validated.events.length} Events, ${validated.connections.length} Connections`, 'success');
         } catch (error) {
             console.error('[ROADMAP] Import-Fehler:', error);
             showToast('Import fehlgeschlagen: ' + error.message, 'error');
