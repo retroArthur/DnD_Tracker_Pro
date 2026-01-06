@@ -2,7 +2,7 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-**Version:** 1.3.0 | **Last Updated:** 2025-01-05
+**Version:** 1.4.0 | **Last Updated:** 2025-01-06
 
 ## Project Overview
 
@@ -123,6 +123,7 @@ function deleteEntity(id) {
 | `features/quests/` | Quest system (render, CRUD) |
 | `features/shops/` | Shops, wiki, sessions, spell-editor, mindmap/network |
 | `features/dice/` | Dice roller, maps, timers, search, themes, campaign manager, SRD data |
+| `features/dmscreen/` | DM Screen with widget system, profiles, live-sync |
 | `ui/` | Virtual scroll, lazy loading, event delegation |
 | `ui/actions/` | Action handlers by domain (entity, combat, ui, dice, wiki, shop, map, system) |
 | `render/` | Rendering utilities/helpers |
@@ -146,10 +147,34 @@ function deleteEntity(id) {
 - `features/dice/campaign-manager.js` - Multi-campaign management
 - `features/dice/global-search.js` - Fuzzy search across all entities
 - `ui/actions/system-actions.js` - System action handlers (modals, editor actions)
+- `features/dmscreen/dmscreen-render.js` - DM Screen widget system with 21 widget types and profiles
 - `docs/bugfixes.md` - Bug fix patterns and lessons learned
 - `sw.js` - Service Worker for offline support
 
 ## Recent Features
+
+### DM Screen (Widget-Based Dashboard)
+- **Widget System:** Modular, toggleable widgets with masonry CSS layout
+- **Live-Sync:** Auto-updates when data changes (debounced 150ms)
+- **Profile System:** 4 presets (Standard, Kampf, Minimal, Referenz) + custom profiles
+- **21 Widget Types:**
+  - **Data Widgets:** Party stats, Initiative tracker, Dice roller, Conditions, DC reference, Random tables, Rules, Notes
+  - **Reference Widgets (13 new):**
+    - Actions (Aktionen): Combat actions, bonus, reactions, free interactions
+    - Attributes (Attribute): 6 ability scores with modifier table
+    - Saving Throws (Rettungswürfe): All saves with typical triggers
+    - Skills (Fertigkeiten): 18 skills grouped by ability
+    - Combat Economy (Kampfökonomie): Turn breakdown
+    - Creature Sizes (Größen): Tiny to Gargantuan with grid space
+    - Objects (Objekte): AC by material, HP by size
+    - Improvised Weapons: 1d4 damage rules
+    - Ritual & Concentration: Rules and DC formula
+    - Damage Types (Schadensarten): 13 types color-coded
+    - Terrain (Gelände): Normal/difficult/hazardous
+    - Knowledge Areas (Wissensgebiete): Skills with creature types
+    - Travel & Carrying (Reisen & Traglast): Speeds and capacity
+- **Data:** `D.dmScreenLayout`, `D.dmScreenProfiles`
+- **File:** `features/dmscreen/dmscreen-render.js`
 
 ### Encounter Calculator
 - **Terrain Modifiers:** Normal (×1.0), Schwieriges Gelände (×1.25), Gefährlich (×1.5), Extrem (×2.0)
@@ -385,3 +410,151 @@ npx playwright test tests/e2e/features/wiki.spec.js
 - **Large campaigns:** Virtual scroll handles large lists; use pagination for 500+ entries
 - **Browser support:** Tested on Chrome/Edge (Chromium), Firefox. Safari may have minor CSS differences
 - **Offline mode:** Service Worker caches app shell; data persists in LocalStorage
+
+---
+
+## Architecture Patterns & Lessons Learned
+
+### Widget System Pattern (DM Screen)
+
+**Problem Solved:** Need for a flexible, extensible dashboard where users can toggle, reorder, and customize which information panels they see.
+
+**Why This Approach:**
+- **Registry Pattern:** Widgets defined in a central `getDMScreenWidgets()` function returning `{ type: { name, icon, render, compact } }`
+- **Separation of Concerns:** Each widget has its own render function returning HTML string
+- **Profile-Based Configuration:** Layouts stored as arrays of `{ id, type, visible }` objects
+- **Alternative Considered:** Component-based with classes - rejected for simplicity in non-ESM architecture
+
+**Pattern to Follow:**
+```javascript
+// 1. Define widget in getDMScreenWidgets()
+'mywidget': {
+    name: 'Widget Name',
+    icon: '📊',
+    render: renderMyWidget,
+    compact: false  // true = header bar, false = grid
+}
+
+// 2. Create render function returning HTML
+function renderMyWidget() {
+    return `<div class="dms-ref-widget">...</div>`;
+}
+
+// 3. Add CSS with dms- prefix
+.dms-mywidget { ... }
+
+// 4. Add to profile if needed
+{ id: 'mywidget-ref', type: 'mywidget', visible: true }
+```
+
+**Mistakes to Avoid:**
+- Don't add event handlers in render functions - use data-action delegation
+- Don't store widget state in variables - use D.dmScreenLayout
+- Don't forget compact: false/true - determines header vs grid placement
+
+---
+
+### Live-Sync Pattern
+
+**Problem Solved:** Widgets showing stale data when user makes changes in other tabs.
+
+**Why This Approach:**
+- **Hook into save():** Override global save function to trigger refresh
+- **Debouncing:** 150ms delay prevents excessive re-renders during rapid changes
+- **Partial Update:** `renderDMScreenWidgetsOnly()` updates content without rebuilding layout
+
+**Pattern to Follow:**
+```javascript
+// Hook into existing function without breaking it
+if (typeof window._originalSave === 'undefined') {
+    window._originalSave = save;
+    window.save = function() {
+        window._originalSave.apply(this, arguments);
+        refreshIfVisible();
+    };
+}
+
+// Debounced refresh
+let timer = null;
+function refreshIfVisible() {
+    if (!isVisible()) return;
+    if (timer) clearTimeout(timer);
+    timer = setTimeout(() => {
+        doPartialRefresh();
+        timer = null;
+    }, 150);
+}
+```
+
+**Mistakes to Avoid:**
+- Don't do full re-render on every save - too slow
+- Don't forget visibility check - wastes cycles on hidden views
+- Don't use intervals - debounced events are more efficient
+
+---
+
+### Reference Data Pattern
+
+**Problem Solved:** D&D 5E rules reference data scattered across code, hard to maintain.
+
+**Why This Approach:**
+- **Inline Data:** Rules embedded in render functions for simplicity
+- **Semantic HTML:** Use CSS classes for styling, not inline styles
+- **Color Coding:** Consistent attribute colors across all widgets (STR=red, DEX=green, etc.)
+
+**Pattern to Follow:**
+```javascript
+// Use semantic class names
+<div class="dms-attr-item str">  // Not style="color: red"
+<div class="dms-dmg-item fire">  // Consistent damage type styling
+
+// Group related CSS
+.dms-attr-item.str .dms-attr-abbr { color: #ef4444; }
+.dms-attr-item.dex .dms-attr-abbr { color: #22c55e; }
+```
+
+**Mistakes to Avoid:**
+- Don't hardcode colors in HTML - use CSS classes
+- Don't mix German/English in same widget - stay consistent
+- Don't add interactive features to reference widgets - keep them static
+
+---
+
+### CSS Organization for New Features
+
+**Problem Solved:** CSS file growing large (21k+ lines), need consistent organization.
+
+**Pattern to Follow:**
+```css
+/* ========================================
+   FEATURE NAME - WIDGET TYPE
+   ======================================== */
+
+/* Base container */
+.dms-feature-widget { }
+
+/* Sub-components */
+.dms-feature-item { }
+.dms-feature-title { }
+
+/* Variants/modifiers */
+.dms-feature-item.active { }
+.dms-feature-item.disabled { }
+```
+
+**Naming Convention:**
+- Prefix with feature abbreviation: `dms-` for DM Screen
+- Use BEM-lite: `.dms-widget`, `.dms-widget-header`, `.dms-widget-body`
+- Modifiers as additional classes: `.dms-item.str`, `.dms-item.active`
+
+---
+
+### Gotchas & Common Pitfalls
+
+1. **Build Order Matters:** New modules must be added to `build.py` modules list in correct order
+2. **Global Namespace:** All functions are global - use unique prefixes to avoid collisions
+3. **No ES Modules:** Can't use import/export - everything must be in global scope
+4. **CSS Variables:** Always use `var(--gold)`, `var(--text-dim)` etc. for theming
+5. **German Localization:** UI strings in German, code comments can be English
+6. **XSS in Widgets:** Even static widgets should use `esc()` if showing any user data
+7. **Mobile First:** Test widgets at 320px width - masonry layout adjusts columns
