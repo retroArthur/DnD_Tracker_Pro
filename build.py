@@ -72,6 +72,7 @@ def build(minify=False, verbose=False):
         'utils/basic.js',
         'utils/utilities.js',
         'utils/crud-helpers.js',
+        'utils/validation.js',
         'systems/undo.js',
         # Spellslots-Module (ersetzt systems/spellslots.js)
         'systems/spellslots/spell-slots-core.js',

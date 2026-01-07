@@ -40,7 +40,9 @@ function saveQuest() {
         completed: $('quest-completed').checked,
         rewardReceived: $('quest-rewarded').checked
     };
-    if (!q.title) { showToast('⚠️ Titel erforderlich', 'error'); return; }
+
+    // Validate entity references and required fields
+    if (!validateAndShowErrors(q, 'quest')) return;
 
     pushUndo(id ? 'Quest bearbeitet' : 'Quest erstellt');
 

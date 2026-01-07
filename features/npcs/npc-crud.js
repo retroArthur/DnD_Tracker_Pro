@@ -39,7 +39,8 @@ function saveNPC() {
         dialogs
     };
 
-    if (!npc.name) { showToast('⚠️ Name erforderlich', 'error'); return; }
+    // Validate entity references and required fields
+    if (!validateAndShowErrors(npc, 'npc')) return;
 
     pushUndo(id ? 'NPC bearbeitet' : 'NPC erstellt');
 

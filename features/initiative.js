@@ -892,14 +892,17 @@ function updateAoETargetDisplay() {
     });
 }
 
+// Create debounced version for better performance with rapid selection changes
+const debouncedUpdateAoE = debounce(updateAoETargetDisplay, UI_TIMING.AOE_UPDATE_DEBOUNCE);
+
 function aoeSelectAll() {
     document.querySelectorAll('.aoe-target-checkbox').forEach(cb => cb.checked = true);
-    updateAoETargetDisplay();
+    debouncedUpdateAoE();
 }
 
 function aoeSelectNone() {
     document.querySelectorAll('.aoe-target-checkbox').forEach(cb => cb.checked = false);
-    updateAoETargetDisplay();
+    debouncedUpdateAoE();
 }
 
 function aoeSelectEnemies() {
@@ -909,7 +912,7 @@ function aoeSelectEnemies() {
     document.querySelectorAll('.aoe-target-checkbox').forEach(cb => {
         cb.checked = enemyIds.includes(parseInt(cb.dataset.id));
     });
-    updateAoETargetDisplay();
+    debouncedUpdateAoE();
 }
 
 function applyAoEDamage() {
