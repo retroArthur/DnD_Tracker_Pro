@@ -29,7 +29,7 @@ function undo() {
         showToast('↩️ Nichts zum Rückgängigmachen');
         return;
     }
-    
+
     // Aktuellen State für Redo sichern
     redoStack.push({
         action: 'Redo',
@@ -39,13 +39,20 @@ function undo() {
     if (redoStack.length > UNDO_LIMIT) {
         redoStack.shift();
     }
-    
+
     const last = undoStack.pop();
     const parsed = safeJSONParse(last.state);
     if (parsed) {
         // Update window.D by clearing and reassigning properties (D is now const)
         for (const key in window.D) delete window.D[key];
         Object.assign(window.D, parsed);
+
+        // Validate and repair _nextId after restore
+        const validation = validateAndRepairNextId();
+        if (!validation.valid) {
+            console.warn('[undo] Repaired _nextId inconsistencies:', validation.repairs);
+        }
+
         renderAll();
         saveImmediate();
         showToast(`↩️ Rückgängig: ${last.action}`);
@@ -59,20 +66,27 @@ function redo() {
         showToast('↪️ Nichts zum Wiederholen');
         return;
     }
-    
+
     // Aktuellen State für Undo sichern
     undoStack.push({
         action: 'Undo',
         state: JSON.stringify(D),
         timestamp: Date.now()
     });
-    
+
     const last = redoStack.pop();
     const parsed = safeJSONParse(last.state);
     if (parsed) {
         // Update window.D by clearing and reassigning properties (D is now const)
         for (const key in window.D) delete window.D[key];
         Object.assign(window.D, parsed);
+
+        // Validate and repair _nextId after restore
+        const validation = validateAndRepairNextId();
+        if (!validation.valid) {
+            console.warn('[redo] Repaired _nextId inconsistencies:', validation.repairs);
+        }
+
         renderAll();
         saveImmediate();
         showToast('↪️ Wiederhergestellt');

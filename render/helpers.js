@@ -346,11 +346,17 @@ function validateDataIntegrity() {
             repairs.push(`${collection}: Doppelte ID ${dup.id} zu ${newId} geändert`);
         }
     }
-    
+
+    // Validate _nextId consistency
+    const nextIdValidation = validateAndRepairNextId();
+    if (!nextIdValidation.valid) {
+        repairs.push(...nextIdValidation.repairs);
+    }
+
     if (repairs.length > 0) {
         console.warn('Daten-Reparaturen durchgeführt:', repairs);
     }
-    
+
     return { valid: repairs.length === 0, repairs };
 }
 

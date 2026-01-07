@@ -195,16 +195,56 @@ function withErrorBoundary(fn, context = 'Operation') {
  */
 function nextId(type) {
     if (!D._nextId) D._nextId = {};
-    
+
     if (!D._nextId[type]) {
         const items = D[type] || [];
-        const maxId = items.length > 0 
-            ? Math.max(...items.map(i => i.id || 0)) 
+        const maxId = items.length > 0
+            ? Math.max(...items.map(i => i.id || 0))
             : 0;
         D._nextId[type] = maxId + 1;
     }
-    
+
     return D._nextId[type]++;
+}
+
+/**
+ * Validates and repairs D._nextId for all entity types
+ * Ensures _nextId[type] is always greater than max ID in D[type]
+ * @returns {Object} { valid: boolean, repairs: string[] }
+ */
+function validateAndRepairNextId() {
+    if (!D._nextId) D._nextId = {};
+
+    const repairs = [];
+    const entityTypes = [
+        'characters', 'npcs', 'locations', 'quests', 'encounters',
+        'spells', 'loot', 'items', 'wiki', 'sessionNotes', 'randomTables'
+    ];
+
+    entityTypes.forEach(type => {
+        if (!Array.isArray(D[type])) return;
+
+        // Calculate correct next ID
+        const maxId = D[type].length > 0
+            ? Math.max(...D[type].map(i => i.id || 0))
+            : 0;
+        const correctNextId = maxId + 1;
+
+        // Check if current _nextId is valid
+        if (!D._nextId[type] || D._nextId[type] <= maxId) {
+            repairs.push(
+                `${type}: _nextId was ${D._nextId[type] || 'undefined'}, ` +
+                `corrected to ${correctNextId} (max ID in array: ${maxId})`
+            );
+            D._nextId[type] = correctNextId;
+        }
+    });
+
+    if (repairs.length > 0 && window.APP_CONFIG?.DEBUG_MODE) {
+        console.warn('[validateAndRepairNextId] Repairs:', repairs);
+    }
+
+    return { valid: repairs.length === 0, repairs };
 }
 
 /**
