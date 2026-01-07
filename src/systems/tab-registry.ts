@@ -1,0 +1,205 @@
+// [SECTION:TAB_REGISTRY]
+// Tab Navigation Registry
+// Centralized mapping of tabs to their render functions
+
+interface TabConfig {
+    /** Array of render function names to call when tab is shown */
+    renders: string[];
+    /** Optional one-time initialization function (called only on first view) */
+    init: string | null;
+    /** Optional cleanup function (called when leaving tab) */
+    cleanup: string | null;
+    /** Internal flag to track if init has been called */
+    _initialized?: boolean;
+}
+
+/**
+ * Tab-Render Registry - Maps tab names to their associated render functions
+ */
+export const TAB_RENDER_REGISTRY: Record<string, TabConfig> = {
+    'dashboard': {
+        renders: ['renderDashboard'],
+        init: null,
+        cleanup: null
+    },
+    'party': {
+        renders: ['renderParty'],
+        init: null,
+        cleanup: null
+    },
+    'npcs': {
+        renders: ['renderNPC'],
+        init: null,
+        cleanup: null
+    },
+    'locations': {
+        renders: ['renderLocations'],
+        init: null,
+        cleanup: null
+    },
+    'roadmap': {
+        renders: ['renderRoadmap'],
+        init: null,
+        cleanup: null
+    },
+    'quests': {
+        renders: ['renderQuests'],
+        init: null,
+        cleanup: null
+    },
+    'encounter': {
+        renders: ['renderEncounters'],
+        init: null,
+        cleanup: null
+    },
+    'initiative': {
+        renders: ['renderInit', 'renderBattlefieldBanner', 'renderQuickActionsBar'],
+        init: null,
+        cleanup: null
+    },
+    'loot': {
+        renders: ['renderLoot'],
+        init: null,
+        cleanup: null
+    },
+    'shops': {
+        renders: ['renderShops'],
+        init: null,
+        cleanup: null
+    },
+    'spells': {
+        renders: ['renderSpells'],
+        init: null,
+        cleanup: null
+    },
+    'notes': {
+        renders: ['renderSessionNotes'],
+        init: null,
+        cleanup: null
+    },
+    'wiki': {
+        renders: ['renderWiki'],
+        init: null,
+        cleanup: null
+    },
+    'links': {
+        renders: ['renderLinks'],
+        init: null,
+        cleanup: null
+    },
+    'dice': {
+        renders: ['renderRandomTables', 'renderDiceHistory', 'renderDiceFavorites'],
+        init: 'initDiceTab',  // Called once when first shown
+        cleanup: null
+    },
+    'timers': {
+        renders: ['renderTimers', 'renderTimerPresets'],
+        init: null,
+        cleanup: null
+    },
+    'maps': {
+        renders: ['displayMap'],
+        init: 'initMapPanning',  // Initialize pan controls once
+        cleanup: null
+    },
+    'data': {
+        renders: [],  // Data tab is mostly forms, no active renders needed
+        init: null,
+        cleanup: null
+    },
+    'dmscreen': {
+        renders: ['renderDMScreen'],
+        init: null,
+        cleanup: null
+    }
+};
+
+/**
+ * Execute all render functions for a given tab
+ * Provides error handling and validation
+ *
+ * @param tabName - The tab identifier (e.g., 'dice', 'initiative')
+ */
+export function renderTabContent(tabName: string): void {
+    const tabConfig = TAB_RENDER_REGISTRY[tabName];
+
+    if (!tabConfig) {
+        if ((window as any).APP_CONFIG?.DEBUG_MODE) {
+            console.warn(`[TabRegistry] No config for tab: ${tabName}`);
+        }
+        return;
+    }
+
+    // Call init function if it exists and hasn't been called yet
+    if (tabConfig.init && typeof (window as any)[tabConfig.init] === 'function') {
+        if (!tabConfig._initialized) {
+            try {
+                (window as any)[tabConfig.init]();
+                tabConfig._initialized = true;
+                if ((window as any).APP_CONFIG?.DEBUG_MODE) {
+                    console.log(`[TabRegistry] Init ${tabConfig.init}() for tab ${tabName}`);
+                }
+            } catch (err) {
+                console.error(`[TabRegistry] Init failed for ${tabName}:`, err);
+            }
+        }
+    }
+
+    // Call all render functions
+    tabConfig.renders.forEach(renderFn => {
+        if (typeof (window as any)[renderFn] === 'function') {
+            try {
+                (window as any)[renderFn]();
+                if ((window as any).APP_CONFIG?.DEBUG_MODE) {
+                    console.log(`[TabRegistry] Rendered ${renderFn}() for tab ${tabName}`);
+                }
+            } catch (err) {
+                console.error(`[TabRegistry] Render ${renderFn}() failed for tab ${tabName}:`, err);
+            }
+        } else {
+            console.warn(`[TabRegistry] Function ${renderFn} not found for tab ${tabName}`);
+        }
+    });
+}
+
+/**
+ * Validate the tab registry on app startup (DEBUG mode only)
+ * Checks for missing functions and invalid configurations
+ */
+export function validateTabRegistry(): void {
+    if (!(window as any).APP_CONFIG?.DEBUG_MODE) return;
+
+    console.log('[TabRegistry] Validating registry...');
+    let errors = 0;
+    let warnings = 0;
+
+    Object.entries(TAB_RENDER_REGISTRY).forEach(([tabName, config]) => {
+        // Check if render functions exist
+        config.renders.forEach(renderFn => {
+            if (typeof (window as any)[renderFn] !== 'function') {
+                console.error(`[TabRegistry] Missing render function: ${renderFn} for tab ${tabName}`);
+                errors++;
+            }
+        });
+
+        // Check if init functions exist
+        if (config.init && typeof (window as any)[config.init] !== 'function') {
+            console.warn(`[TabRegistry] Missing init function: ${config.init} for tab ${tabName}`);
+            warnings++;
+        }
+
+        // Check if cleanup functions exist
+        if (config.cleanup && typeof (window as any)[config.cleanup] !== 'function') {
+            console.warn(`[TabRegistry] Missing cleanup function: ${config.cleanup} for tab ${tabName}`);
+            warnings++;
+        }
+    });
+
+    if (errors > 0 || warnings > 0) {
+        console.warn(`[TabRegistry] Validation complete: ${errors} errors, ${warnings} warnings`);
+    } else {
+        console.log('[TabRegistry] Validation complete: No issues found ✓');
+    }
+}
+
+// ============================================================
