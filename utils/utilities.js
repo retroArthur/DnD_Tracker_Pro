@@ -173,15 +173,15 @@ function withErrorBoundary(fn, context = 'Operation') {
             // Promise-Handling für async Funktionen
             if (result instanceof Promise) {
                 return result.catch(error => {
-                    console.error(`[Error] ${context}:`, error);
+                    ErrorHandler.log('safeExecute', error, context);
                     showToast(`❌ Fehler: ${context}`, 'error');
                     return null;
                 });
             }
-            
+
             return result;
         } catch (error) {
-            console.error(`[Error] ${context}:`, error);
+            ErrorHandler.log('safeExecute', error, context);
             showToast(`❌ Fehler: ${context}`, 'error');
             return null;
         }
@@ -241,7 +241,7 @@ function validateAndRepairNextId() {
     });
 
     if (repairs.length > 0 && window.APP_CONFIG?.DEBUG_MODE) {
-        console.warn('[validateAndRepairNextId] Repairs:', repairs);
+        ErrorHandler.log('validateAndRepairNextId', new Error('ID repairs performed'), repairs.join('; '));
     }
 
     return { valid: repairs.length === 0, repairs };

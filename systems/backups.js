@@ -27,12 +27,16 @@ async function createAutoBackup() {
             await saveBackupToIndexedDB(backup);
             return;
         } catch (idbError) {
-            console.warn('[Backup] IndexedDB failed, trying localStorage:', idbError);
+            if (APP_CONFIG.DEBUG_MODE) {
+                ErrorHandler.log('createAutoBackup', idbError, 'IndexedDB failed, trying localStorage');
+            }
         }
         
         // Fallback: localStorage (nur für kleine Backups)
         if (backupSizeMB > MAX_BACKUP_SIZE_MB) {
-            console.warn(`[Backup] Backup zu groß für localStorage (${backupSizeMB.toFixed(1)}MB). Nur IndexedDB möglich.`);
+            if (APP_CONFIG.DEBUG_MODE) {
+                ErrorHandler.log('createAutoBackup', new Error('Backup too large for localStorage'), `${backupSizeMB.toFixed(1)}MB exceeds limit`);
+            }
             return;
         }
         
@@ -48,14 +52,18 @@ async function createAutoBackup() {
         if (!result.success) {
             // Bei Quota-Fehler: Alte Backups löschen und nochmal versuchen
             if (result.error?.includes('quota') || result.error?.includes('QUOTA')) {
-                console.warn('[Backup] Quota exceeded, clearing old backups...');
+                if (APP_CONFIG.DEBUG_MODE) {
+                    ErrorHandler.log('createAutoBackup', new Error('Quota exceeded'), 'Clearing old backups');
+                }
                 StorageAPI.remove(BACKUP_KEY);
                 // Nur aktuelles Backup speichern
                 StorageAPI.setJSON(BACKUP_KEY, [backup]);
             }
         }
     } catch (e) {
-        console.warn('[Backup] Auto-backup failed:', e);
+        if (APP_CONFIG.DEBUG_MODE) {
+            ErrorHandler.log('createAutoBackup', e, 'Auto-backup failed');
+        }
     }
 }
 
@@ -126,7 +134,9 @@ async function getBackups() {
         
         return uniqueBackups.slice(0, MAX_BACKUPS);
     } catch (e) {
-        console.warn('[Backup] Failed to load IndexedDB backups:', e);
+        if (APP_CONFIG.DEBUG_MODE) {
+            ErrorHandler.log('getBackups', e, 'Failed to load IndexedDB backups');
+        }
         return localBackups;
     }
 }
@@ -230,7 +240,7 @@ async function restoreBackup(index) {
         saveImmediate();
         showToast('✅ Backup wiederhergestellt');
     } catch (e) {
-        console.error('[Backup] Restore failed:', e);
+        ErrorHandler.log('restoreBackup', e, 'Backup restore failed');
         showToast('❌ Backup fehlerhaft: ' + (e.message || 'Unbekannter Fehler'));
     }
 }
@@ -343,8 +353,8 @@ function trackRenderTime(functionName, startTime) {
     }
     
     // Warnung bei langsamen Renders (>500ms)
-    if (duration > 500) {
-        console.warn(`[PERFORMANCE] Langsamer Render: ${functionName} dauerte ${duration.toFixed(0)}ms`);
+    if (duration > 500 && APP_CONFIG.DEBUG_MODE) {
+        ErrorHandler.log('trackRenderTime', new Error('Slow render detected'), `${functionName} took ${duration.toFixed(0)}ms`);
     }
 }
 
@@ -354,9 +364,9 @@ function checkPerformance() {
     const totalEntities = Object.values(performanceMetrics.entityCounts).reduce((a, b) => a + b, 0);
     
     // Warnung bei vielen Entities (>500 gesamt)
-    if (totalEntities > 500) {
-        console.warn(`[PERFORMANCE] Große Kampagne: ${totalEntities} Entities gesamt`);
-        
+    if (totalEntities > 500 && APP_CONFIG.DEBUG_MODE) {
+        ErrorHandler.log('checkPerformance', new Error('Large campaign detected'), `${totalEntities} total entities`);
+
         // Empfehlung für Virtual Scrolling
         if (totalEntities > 1000 && !window.performanceWarningShown) {
             showToast('⚠️ Große Kampagne erkannt. Performance könnte beeinträchtigt sein.', 'warning', 6000);
@@ -368,9 +378,9 @@ function checkPerformance() {
     if (performanceMetrics.renderTimes.length > 10) {
         const recentRenders = performanceMetrics.renderTimes.slice(-10);
         const avgTime = recentRenders.reduce((sum, r) => sum + r.duration, 0) / recentRenders.length;
-        
-        if (avgTime > 300) {
-            console.warn(`[PERFORMANCE] Durchschnittliche Render-Zeit: ${avgTime.toFixed(0)}ms (sollte <100ms sein)`);
+
+        if (avgTime > 300 && APP_CONFIG.DEBUG_MODE) {
+            ErrorHandler.log('checkPerformance', new Error('Slow average render time'), `${avgTime.toFixed(0)}ms average (should be <100ms)`);
         }
     }
 }

@@ -89,7 +89,8 @@ function renderSpells() {
     // Klassen-Filter
     if (classFilter) {
         spells = spells.filter(s => {
-            const classes = s.spellClasses || (s.spellClass ? s.spellClass.split(',').map(c => c.trim()) : []);
+            // Use pre-computed spellClasses array for performance
+            const classes = s.spellClasses || [];
             return classes.includes(classFilter);
         });
     }
@@ -1385,8 +1386,8 @@ function editSpell(id) {
     $('spell-desc').innerHTML = sanitizeHTML(s.description) || '';
     $('spell-note').innerHTML = sanitizeHTML(s.note) || '';
     
-    // Klassen Checkboxen
-    const classes = s.spellClasses || (s.spellClass ? s.spellClass.split(',').map(c => c.trim()) : []);
+    // Klassen Checkboxen (use pre-computed array)
+    const classes = s.spellClasses || [];
     setSpellClassesCheckboxes(classes);
     
     // Zeitaufwand

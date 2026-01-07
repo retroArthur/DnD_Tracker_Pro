@@ -80,13 +80,25 @@ async function load() {
 
             // Setze aktuelle Version
             D._version = CURRENT_VERSION;
-            
+
             // Validiere Datenintegrität
             const validation = validateDataIntegrity();
             if (!validation.valid) {
-                console.warn('[LOAD] Datenreparaturen:', validation.repairs);
+                if (APP_CONFIG.DEBUG_MODE) {
+                    ErrorHandler.log('load', new Error('Data repairs performed'), validation.repairs.join('; '));
+                }
                 // Speichere reparierte Daten
                 setTimeout(() => save(), 1000);
+            }
+
+            // Pre-compute spellClasses arrays for performance
+            if (D.spells && Array.isArray(D.spells)) {
+                D.spells.forEach(spell => {
+                    // Pre-compute spellClasses array from comma-separated string
+                    if (spell.spellClass && !spell.spellClasses) {
+                        spell.spellClasses = spell.spellClass.split(',').map(c => c.trim());
+                    }
+                });
             }
         }
     } catch(e) { 

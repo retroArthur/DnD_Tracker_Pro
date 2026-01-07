@@ -44,7 +44,9 @@ function renderInit() {
         const active = i === init.currentTurn;
         const dead = cb.currentHp <= 0;
         const hpPct = cb.maxHp > 0 ? (cb.currentHp / cb.maxHp) * 100 : 100;
-        const hpClass = hpPct <= 25 ? 'critical' : hpPct <= 50 ? 'bloodied' : 'healthy';
+        const hpClass = hpPct <= COMBAT_CONSTANTS.HP_CRITICAL_THRESHOLD ? 'critical'
+                      : hpPct <= COMBAT_CONSTANTS.HP_BLOODIED_THRESHOLD ? 'bloodied'
+                      : 'healthy';
         const effects = (cb.effects || []).map(e => `<span class="init-effect color-${e.color}" data-action="remove-effect" data-id="${cb.id}" data-value="${e.id}" title="${esc(e.description || '')}&#10;Klicken zum Entfernen">${esc(e.name)} ${e.permanent ? '<span class="duration">∞</span>' : '<span class="duration">' + e.duration + 'R</span>'}</span>`).join('');
         const rollInfo = cb.lastRoll ? `<span style="font-size: 10px; color: var(--text-dim);" title="Letzter Wurf: ${cb.lastRoll}">(${cb.lastRoll})</span>` : '';
         

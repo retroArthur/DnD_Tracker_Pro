@@ -68,7 +68,7 @@ function migrateData(data) {
                 currentData = MIGRATIONS[version](currentData);
                 currentData._version = version;
             } catch (e) {
-                console.error(`[MIGRATION] Fehler bei Migration auf ${version}:`, e);
+                ErrorHandler.log('migrateData', e, `Migration failed for version ${version}`);
             }
         }
     }

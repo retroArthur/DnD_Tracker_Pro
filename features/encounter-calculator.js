@@ -1019,7 +1019,9 @@ function renderCalculator() {
 function showCalculatorModal() {
     const modal = $('calculator-modal');
     if (!modal) {
-        console.error('Calculator Modal nicht gefunden');
+        if (APP_CONFIG.DEBUG_MODE) {
+            ErrorHandler.log('showCalculatorModal', new Error('Modal not found'), 'calculator-modal element missing');
+        }
         return;
     }
     
@@ -1240,16 +1242,18 @@ function importEncounterMonsters(encId) {
     
     if (!encounter) {
         showToast('Kreatur nicht gefunden (ID: ' + encId + ')');
-        console.error('Kreatur nicht gefunden:', encId);
+        ErrorHandler.log('importEncounterMonsters', new Error('Encounter not found'), `ID: ${encId}`);
         return;
     }
-    
+
     // Encounter IST die Kreatur selbst
     const cr = encounter.cr || encounter.CR || null;
-    
+
     if (!cr) {
         showToast('Kreatur hat kein CR');
-        console.warn('Kreatur ohne CR:', encounter);
+        if (APP_CONFIG.DEBUG_MODE) {
+            ErrorHandler.log('importEncounterMonsters', new Error('Missing CR'), `Encounter: ${encounter.name || encId}`);
+        }
         return;
     }
     

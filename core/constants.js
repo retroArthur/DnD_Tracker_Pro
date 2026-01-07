@@ -187,6 +187,29 @@ const ATTRIBUTES = Object.freeze({
 });
 
 /**
+ * D&D Combat Constants
+ * HP thresholds and death save limits
+ * @type {Object}
+ */
+const COMBAT_CONSTANTS = Object.freeze({
+    HP_CRITICAL_THRESHOLD: 25,      // At or below 25% HP = critical
+    HP_BLOODIED_THRESHOLD: 50,      // At or below 50% HP = bloodied
+    DEATH_SAVE_SUCCESSES: 3,        // Successes needed to stabilize
+    DEATH_SAVE_FAILURES: 3,         // Failures = death
+});
+
+/**
+ * UI Timing Constants (in milliseconds)
+ * Debounce and throttle delays for UI interactions
+ * @type {Object}
+ */
+const UI_TIMING = Object.freeze({
+    DM_SCREEN_SYNC_DELAY: 150,      // DM screen live-sync debounce
+    AOE_UPDATE_DEBOUNCE: 50,        // AoE target display update
+    SELECTION_CHANGE_DEBOUNCE: 150, // Floating toolbar selection
+});
+
+/**
  * D&D 5e Fertigkeiten mit zugehörigem Attribut (erweiterte Info)
  * Hinweis: SKILLS (ohne _INFO) existiert bereits mit anderer Struktur für Würfelsystem
  * @type {Object.<string, {name: string, attr: string}>}
@@ -448,7 +471,9 @@ let viewModes = {
 // View-Mode Toggle Funktion
 function setViewMode(type, mode) {
     if (!viewModes.hasOwnProperty(type)) {
-        console.warn(`[setViewMode] Unknown type: ${type}`);
+        if (APP_CONFIG.DEBUG_MODE) {
+            ErrorHandler.log('setViewMode', new Error('Unknown type'), type);
+        }
         return;
     }
     

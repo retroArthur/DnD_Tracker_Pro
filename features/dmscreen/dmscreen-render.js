@@ -97,7 +97,7 @@ const DEFAULT_DMSCREEN_PROFILES = {
  * Debounce-Timer für Live-Sync
  */
 let dmsLiveSyncTimer = null;
-const DMS_LIVE_SYNC_DELAY = 150; // ms
+const DMS_LIVE_SYNC_DELAY = UI_TIMING.DM_SCREEN_SYNC_DELAY;
 
 /**
  * Prüft ob DM Screen aktuell sichtbar ist
@@ -144,7 +144,7 @@ function renderDMScreenWidgetsOnly() {
             try {
                 widgetEl.innerHTML = def.render();
             } catch (err) {
-                console.error(`[DM Screen Live-Sync] Error updating ${widget.type}:`, err);
+                ErrorHandler.log('updateDMScreenWidget', err, `Error updating ${widget.type}`);
             }
         }
     });
@@ -345,7 +345,9 @@ function renderDMScreen() {
     const grid = $('dmscreen-grid');
     const quickBar = $('dms-quick-bar');
     if (!grid) {
-        console.warn('[DM Screen] Grid element not found');
+        if (APP_CONFIG.DEBUG_MODE) {
+            ErrorHandler.log('renderDMScreen', new Error('Grid element not found'), 'DOM element missing');
+        }
         return;
     }
 
@@ -370,7 +372,7 @@ function renderDMScreen() {
                 try {
                     return def.render();
                 } catch (err) {
-                    console.error(`[DM Screen] Error rendering compact widget ${widget.type}:`, err);
+                    ErrorHandler.log('renderDMScreen', err, `Error rendering compact widget ${widget.type}`);
                     return '';
                 }
             }).join('');
@@ -396,7 +398,9 @@ function renderDMScreen() {
         grid.innerHTML = gridWidgets.map(widget => {
             const def = widgetDefs[widget.type];
             if (!def) {
-                console.warn(`[DM Screen] Unknown widget type: ${widget.type}`);
+                if (APP_CONFIG.DEBUG_MODE) {
+                    ErrorHandler.log('renderDMScreen', new Error('Unknown widget type'), widget.type);
+                }
                 return '';
             }
 
@@ -404,7 +408,7 @@ function renderDMScreen() {
             try {
                 content = def.render();
             } catch (err) {
-                console.error(`[DM Screen] Error rendering widget ${widget.type}:`, err);
+                ErrorHandler.log('renderDMScreen', err, `Error rendering widget ${widget.type}`);
                 content = '<div class="dms-widget-empty">Fehler beim Laden</div>';
             }
 
@@ -426,7 +430,7 @@ function renderDMScreen() {
         // Initialize drag & drop
         initDMSWidgetDragDrop();
     } catch (err) {
-        console.error('[DM Screen] Error rendering:', err);
+        ErrorHandler.log('renderDMScreen', err, 'Error during grid render');
         grid.innerHTML = '<div class="dmscreen-empty">Fehler beim Rendern</div>';
     }
 
