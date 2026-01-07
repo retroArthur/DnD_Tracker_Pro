@@ -8,32 +8,23 @@ import os
 import re
 import subprocess
 
-# Konfiguration
-SOURCE_DIR = '/mnt/user-data/outputs/dnd-tracker-modular'
-OUTPUT_DIR = f'{SOURCE_DIR}/dist'
-OUTPUT_FILE = f'{OUTPUT_DIR}/dnd-tracker-optimized.html'
+# Konfiguration - Verwende das Verzeichnis, in dem das Skript liegt
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+SOURCE_DIR = SCRIPT_DIR
+OUTPUT_DIR = os.path.join(SOURCE_DIR, 'dist')
+OUTPUT_FILE = os.path.join(OUTPUT_DIR, 'dnd-tracker-optimized.html')
 
-# Module in Lade-Reihenfolge
+# Module in Ladereihenfolge (sync with build.py)
 MODULES = [
-    # Core (4 Module)
     'core/config.js',
-    'core/constants.js',
     'core/data.js',
-    'core/storage.js',
-    
-    # Utils (3 Module)
-    'utils/basic.js',
+    'core/constants.js',
     'utils/performance.js',
+    'utils/basic.js',
     'utils/utilities.js',
-    
-    # Systems (18 Module)
+    'utils/crud-helpers.js',
+    'utils/validation.js',
     'systems/undo.js',
-    'systems/backups.js',
-    'systems/tags.js',
-    'systems/entity-links.js',
-    'systems/conditions.js',
-    'systems/hp-calculator.js',
-    'systems/avatars.js',
     # Spellslots-Module (ersetzt systems/spellslots.js)
     'systems/spellslots/spell-slots-core.js',
     'systems/spellslots/notes-templates.js',
@@ -46,33 +37,91 @@ MODULES = [
     'systems/spellslots/quick-roll.js',
     'systems/spellslots/import-export.js',
     'systems/spellslots/navigation.js',
-    
-    # Render (1 Modul)
+    'systems/conditions.js',
+    'systems/hp-calculator.js',
+    'systems/tags.js',
+    'systems/entity-links.js',
+    'systems/avatars.js',
+    'systems/backups.js',
+    'systems/tab-registry.js',
     'render/helpers.js',
-    
-    # Features - Render Module (8 Module)
+    # Render-Feature-Module
     'features/render-dashboard.js',
-    'features/render-party.js',
+    # Party-Module
+    'features/party/party-render.js',
+    'features/party/party-details.js',
+    'features/party/party-crud.js',
     'features/render-spells.js',
-    'features/render-locations.js',
+    # Locations-Module
+    'features/locations/locations-render.js',
+    'features/locations/locations-crud.js',
     'features/render-loot.js',
-    'features/render-npcs.js',
-    'features/render-quests.js',
-    'features/render-encounters.js',
-    
-    # Features - Other (3 Module)
+    # NPC-Module
+    'features/npcs/npc-render.js',
+    'features/npcs/npc-interactions.js',
+    'features/npcs/npc-dialogs.js',
+    'features/npcs/npc-crud.js',
+    'features/npcs/npc-popup.js',
+    # Quests-Module
+    'features/quests/quests-render.js',
+    'features/quests/quests-crud.js',
+    # Encounters-Module
+    'features/encounters/encounters-render.js',
+    'features/encounters/encounters-crud.js',
+    # Features
     'features/encounter-calculator.js',
     'features/initiative.js',
-    'features/shops.js',
-    'features/dice.js',
-    
-    # UI (3 Module)
+    'features/rest-manager.js',
+    'features/quick-actions.js',
+    'features/random-tables.js',
+    'features/loot-distribution.js',
+    # Shops-Module
+    'features/shops/shops-core.js',
+    'features/shops/spell-editor.js',
+    'features/shops/sessions.js',
+    'features/shops/wiki.js',
+    'features/shops/links.js',
+    'features/shops/mindmap.js',
+    # Roadmap-Module (ersetzt Netzwerk)
+    'features/roadmap/roadmap.js',
+    'features/roadmap/roadmap-render.js',
+    'features/roadmap/roadmap-crud.js',
+    'features/roadmap/roadmap-ui.js',
+    # DM Screen Module
+    'features/dmscreen/dmscreen-render.js',
+    # Dice-Module (ersetzt features/dice.js)
+    'features/dice/dice-core.js',
+    'features/dice/dice-favorites.js',
+    'features/dice/timers.js',
+    'features/dice/campaign-manager.js',
+    'features/dice/global-search.js',
+    'features/dice/maps.js',
+    'features/dice/wiki-links.js',
+    'features/dice/monster-templates.js',
+    'features/dice/srd-spells.js',
+    'features/dice/spellslots-ui.js',
+    'features/dice/initiative-extras.js',
+    'features/dice/theme.js',
+    'features/dice/layout-profiles.js',
+    'features/dice/session-timer.js',
+    'features/dice/performance-extras.js',
+    'features/dice/debug.js',  # Debug-Modul (nur Development)
+    'ui/dom-builder.js',
+    'ui/safe-render.js',
     'ui/lazy-loading.js',
     'ui/event-delegation.js',
+    # Action-Module
+    'ui/actions/entity-actions.js',
+    'ui/actions/combat-actions.js',
+    'ui/actions/ui-actions.js',
+    'ui/actions/dice-actions.js',
+    'ui/actions/wiki-actions.js',
+    'ui/actions/shop-actions.js',
+    'ui/actions/map-actions.js',
+    'ui/actions/roadmap-actions.js',
+    'ui/actions/system-actions.js',
     'ui/virtual-scroll.js',
-    
-    # Init (1 Modul)
-    'core/init.js',
+    'core/init.js'
 ]
 
 def minify_js(js_code):
@@ -140,7 +189,7 @@ def build():
     
     # 1. Lade CSS
     print("📦 Lade CSS...")
-    css_file = f'{SOURCE_DIR}/assets/styles.css'
+    css_file = os.path.join(SOURCE_DIR, 'assets', 'styles.css')
     with open(css_file, 'r', encoding='utf-8') as f:
         css_content = f.read()
     
@@ -150,7 +199,7 @@ def build():
     
     # 2. Lade HTML Body
     print("\n📦 Lade HTML Body...")
-    body_file = f'{SOURCE_DIR}/assets/body.html'
+    body_file = os.path.join(SOURCE_DIR, 'assets', 'body.html')
     with open(body_file, 'r', encoding='utf-8') as f:
         body_content = f.read()
     
@@ -164,8 +213,8 @@ def build():
     total_original_size = 0
     
     for i, module_path in enumerate(MODULES, 1):
-        full_path = f'{SOURCE_DIR}/{module_path}'
-        
+        full_path = os.path.join(SOURCE_DIR, module_path)
+
         if not os.path.exists(full_path):
             print(f"⚠️  [{i}/{len(MODULES)}] {module_path} nicht gefunden!")
             continue
