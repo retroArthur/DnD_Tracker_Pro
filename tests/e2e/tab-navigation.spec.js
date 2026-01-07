@@ -29,28 +29,26 @@ async function ensureAppInitialized(page) {
 test.beforeEach(async ({ page }) => {
   const filePath = `file:///${process.cwd().replace(/\\/g, '/')}/dist/dnd-tracker-bundled.html`;
 
-  // Load the page with domcontentloaded strategy (faster than default 'load')
+  // Navigate to page first to establish context
   await page.goto(filePath, { waitUntil: 'domcontentloaded', timeout: 30000 });
 
-  // Wait for app header to be visible (simpler selector)
+  // Clear localStorage and reload to start fresh
+  await page.evaluate(() => localStorage.clear());
+  await page.reload({ waitUntil: 'domcontentloaded' });
+
+  // Wait for app header to be visible
   await page.waitForSelector('.app-header', { state: 'visible', timeout: 5000 });
 
-  // Give app time to initialize
+  // Give app time to initialize with clean state
   await page.waitForTimeout(1000);
 });
 
 test.describe('Tab Registry System', () => {
 
   test('dice tab renders random tables when switched to', async ({ page }) => {
-    // Start on dashboard
-    await page.click('[data-view="dashboard"]');
-    await page.waitForTimeout(200);
-
-    // Add a random table via localStorage
+    // Clear default tables and add test table
     await page.evaluate(() => {
-      if (!window.D) window.D = {};
-      if (!window.D.randomTables) window.D.randomTables = [];
-      window.D.randomTables.push({
+      window.D.randomTables = [{
         id: Date.now(),
         name: 'Test Table',
         icon: '🎲',
@@ -58,45 +56,48 @@ test.describe('Tab Registry System', () => {
           { weight: 1, text: 'Entry 1' },
           { weight: 1, text: 'Entry 2' }
         ]
-      });
+      }];
       window.save();
     });
 
     // Switch to dice tab
     await page.click('[data-view="dice"]');
-    await page.waitForTimeout(300);
 
-    // Verify random tables container exists and has content
+    // Wait for dice view to be active
+    await page.waitForSelector('#view-dice.active', { state: 'visible', timeout: 5000 });
+    await page.waitForTimeout(500);
+
+    // Verify random tables container is visible
     const container = page.locator('#random-tables-list');
     await expect(container).toBeVisible();
 
-    // Check if table card is rendered
-    const tableCard = page.locator('.rt-card');
+    // Check if table card is rendered (use .first() for strict mode)
+    const tableCard = page.locator('.rt-card').first();
     await expect(tableCard).toBeVisible();
     await expect(tableCard).toContainText('Test Table');
   });
 
   test('dice tab re-renders when switching back', async ({ page }) => {
-    // Setup: Add initial random table
+    // Setup: Clear defaults and add initial random table
     await page.evaluate(() => {
-      if (!window.D.randomTables) window.D.randomTables = [];
-      window.D.randomTables.push({
+      window.D.randomTables = [{
         id: 1,
         name: 'Initial Table',
         icon: '🎯',
         entries: []
-      });
+      }];
       window.save();
     });
 
     // Switch to dice tab
     await page.click('[data-view="dice"]');
-    await page.waitForTimeout(200);
-    await expect(page.locator('.rt-card')).toContainText('Initial Table');
+    await page.waitForSelector('#view-dice.active', { timeout: 5000 });
+    await page.waitForTimeout(300);
+    await expect(page.locator('.rt-card').first()).toContainText('Initial Table');
 
     // Switch away
     await page.click('[data-view="dashboard"]');
-    await page.waitForTimeout(200);
+    await page.waitForSelector('#view-dashboard.active', { timeout: 5000 });
 
     // Add a second table while away from dice tab
     await page.evaluate(() => {
@@ -111,7 +112,8 @@ test.describe('Tab Registry System', () => {
 
     // Switch back to dice tab
     await page.click('[data-view="dice"]');
-    await page.waitForTimeout(300);
+    await page.waitForSelector('#view-dice.active', { timeout: 5000 });
+    await page.waitForTimeout(500);
 
     // Both tables should be visible (re-render happened)
     const tableCards = page.locator('.rt-card');
@@ -318,11 +320,16 @@ test.describe('Tab Registry Error Handling', () => {
     await page.evaluate(() => {
       window.D.randomTables = [];
       window.save();
+      // Trigger re-render to show empty state
+      if (typeof window.renderRandomTables === 'function') {
+        window.renderRandomTables();
+      }
     });
 
     // Switch to dice tab
     await page.click('[data-view="dice"]');
-    await page.waitForTimeout(200);
+    await page.waitForSelector('#view-dice.active', { timeout: 5000 });
+    await page.waitForTimeout(500);
 
     // Container should exist but show empty message
     const container = page.locator('#random-tables-list');
@@ -464,16 +471,21 @@ test.describe('Tab Registry Integration', () => {
   });
 
   test('import data triggers re-render on active tab', async ({ page }) => {
-    // Switch to dice tab first
-    await page.click('[data-view="dice"]');
-    await page.waitForTimeout(200);
-
-    // Initially no tables
+    // Clear default tables first
     await page.evaluate(() => {
       window.D.randomTables = [];
       window.save();
+      if (typeof window.renderRandomTables === 'function') {
+        window.renderRandomTables();
+      }
     });
-    await page.waitForTimeout(100);
+
+    // Switch to dice tab
+    await page.click('[data-view="dice"]');
+    await page.waitForSelector('#view-dice.active', { timeout: 5000 });
+    await page.waitForTimeout(500);
+
+    // Verify empty state
     await expect(page.locator('#random-tables-list')).toContainText('Keine Tabellen');
 
     // Simulate import by directly setting data
@@ -484,15 +496,15 @@ test.describe('Tab Registry Integration', () => {
         icon: '📥',
         entries: [{ weight: 1, text: 'Test' }]
       }];
-      // Trigger re-render via renderAll or specific render
+      // Trigger re-render
       if (typeof window.renderRandomTables === 'function') {
         window.renderRandomTables();
       }
     });
-    await page.waitForTimeout(200);
+    await page.waitForTimeout(300);
 
     // Imported table should be visible
-    await expect(page.locator('.rt-card')).toContainText('Imported Table');
+    await expect(page.locator('.rt-card').first()).toContainText('Imported Table');
   });
 
 });
