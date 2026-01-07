@@ -154,17 +154,17 @@ function sanitizeBackupData(parsed, defaultSchema) {
     for (const [key, defaultValue] of Object.entries(defaultSchema)) {
         if (!(key in parsed)) {
             // Key nicht im Backup - verwende Default
-            sanitized[key] = JSON.parse(JSON.stringify(defaultValue));
+            sanitized[key] = structuredClone(defaultValue);
         } else if (Array.isArray(defaultValue)) {
             // Array-Typ erwartet
             sanitized[key] = Array.isArray(parsed[key])
-                ? JSON.parse(JSON.stringify(parsed[key]))
-                : JSON.parse(JSON.stringify(defaultValue));
+                ? structuredClone(parsed[key])
+                : structuredClone(defaultValue);
         } else if (typeof defaultValue === 'object' && defaultValue !== null) {
             // Object-Typ erwartet
             sanitized[key] = (typeof parsed[key] === 'object' && parsed[key] !== null && !Array.isArray(parsed[key]))
-                ? JSON.parse(JSON.stringify(parsed[key]))
-                : JSON.parse(JSON.stringify(defaultValue));
+                ? structuredClone(parsed[key])
+                : structuredClone(defaultValue);
         } else if (typeof defaultValue === 'number') {
             sanitized[key] = typeof parsed[key] === 'number' ? parsed[key] : defaultValue;
         } else if (typeof defaultValue === 'string') {
@@ -172,7 +172,7 @@ function sanitizeBackupData(parsed, defaultSchema) {
         } else if (typeof defaultValue === 'boolean') {
             sanitized[key] = typeof parsed[key] === 'boolean' ? parsed[key] : defaultValue;
         } else {
-            sanitized[key] = JSON.parse(JSON.stringify(defaultValue));
+            sanitized[key] = structuredClone(defaultValue);
         }
     }
 

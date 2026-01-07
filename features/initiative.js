@@ -110,6 +110,10 @@ function renderInit() {
         }
         return;
     }
+
+    // Enable EntityLookup cache for performance during render cycle
+    EntityLookup.enableCache();
+
     const init = D.initiative;
     if (rn) rn.textContent = init.round;
 
@@ -194,6 +198,9 @@ function renderInit() {
     if (typeof renderQuickActionsBar === 'function') {
         renderQuickActionsBar();
     }
+
+    // Clear EntityLookup cache after render to prevent stale data
+    EntityLookup.clearCache();
 }
 
 function toggleInitSlot(charId, level, index) {

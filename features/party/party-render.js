@@ -7,6 +7,9 @@ function renderParty() {
     const c = $('party-list'); if (!c) return;
     const roster = $('party-roster');
 
+    // Enable EntityLookup cache for performance during render cycle
+    EntityLookup.enableCache();
+
     // Robuste Daten-Prüfung
     if (!Array.isArray(D.characters)) {
         c.innerHTML = renderEmptyState({
@@ -18,6 +21,7 @@ function renderParty() {
             buttonValue: 'repairCharactersData'
         });
         if (roster) roster.innerHTML = '';
+        EntityLookup.clearCache();
         return;
     }
 
@@ -68,6 +72,7 @@ function renderParty() {
             buttonValue: 'char-form',
             isFiltered: !!(search || classFilter)
         });
+        EntityLookup.clearCache();
         return;
     }
 
@@ -75,6 +80,9 @@ function renderParty() {
 
     // Update dice tab character select
     if (typeof updateDiceCharSelect === 'function') updateDiceCharSelect();
+
+    // Clear EntityLookup cache after render to prevent stale data
+    EntityLookup.clearCache();
 }
 
 function renderPartyRoster(container, characters) {

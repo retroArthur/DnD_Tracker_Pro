@@ -2,6 +2,13 @@
 // CORE UTILITIES - @utils @helpers @core
 // ============================================================
 
+// Polyfill for structuredClone (for older browsers)
+if (typeof structuredClone === 'undefined') {
+    window.structuredClone = function(obj) {
+        return JSON.parse(JSON.stringify(obj));
+    };
+}
+
 /**
  * DOM-Element-Cache für häufig verwendete Elemente
  * Reduziert DOM-Abfragen bei wiederholtem Zugriff
