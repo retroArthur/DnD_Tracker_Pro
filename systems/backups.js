@@ -221,7 +221,10 @@ async function restoreBackup(index) {
         };
 
         // Validiere und bereinige gegen Schema (mit Deep Clone)
-        D = sanitizeBackupData(parsed, defaultD);
+        // D is const, cannot reassign - clear and merge instead
+        const sanitized = sanitizeBackupData(parsed, defaultD);
+        for (const key in window.D) delete window.D[key];
+        Object.assign(window.D, sanitized);
 
         renderAll();
         saveImmediate();

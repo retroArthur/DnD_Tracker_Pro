@@ -108,9 +108,11 @@ async function deleteCampaign() {
             index.active = APP_CONFIG.STORAGE_KEY;
             saveCampaignIndex(index);
         }
-        
+
         // 4. Globales D-Objekt zurücksetzen (falls Seite nicht neu lädt)
-        D = {
+        // D is const, cannot reassign - clear and recreate structure
+        for (const key in window.D) delete window.D[key];
+        Object.assign(window.D, {
             locations: [], npcs: [], quests: [], characters: [], sessionNotes: [], storyArcs: [], quickNotes: '',
             initiative: { combatants: [], currentTurn: 0, round: 1 },
             loot: [], items: [], encounters: [], spells: [], links: [], wiki: [],
@@ -119,8 +121,8 @@ async function deleteCampaign() {
             tags: [],
             settings: { theme: 'dark', lastView: 'dashboard' },
             _nextId: {}
-        };
-        
+        });
+
         alert(`✅ "${campaignName}" wurde gelöscht!\n\nDie Seite wird neu geladen...`);
         
         // 5. Seite mit Cache-Bypass neu laden

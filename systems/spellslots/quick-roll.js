@@ -66,8 +66,10 @@ async function load() {
                     // Fahre trotzdem fort mit unmigierten Daten
                 }
             }
-            
-            D = { ...D, ...p };
+
+            // Merge imported data into D (D is now const, cannot reassign)
+            Object.assign(window.D, p);
+
             if (!D.encounters) D.encounters = [];
             if (!D.spells) D.spells = [];
             if (!D.links) D.links = [];
@@ -75,7 +77,7 @@ async function load() {
             if (!D.mindmap) D.mindmap = { nodes: [], connections: [] };
             if (!D.calendar) D.calendar = { day: 1, month: 4, year: 1492, events: [] };
             if (!D._nextId) D._nextId = {};
-            
+
             // Setze aktuelle Version
             D._version = CURRENT_VERSION;
             

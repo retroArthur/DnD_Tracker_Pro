@@ -1043,9 +1043,11 @@ async function completeReset() {
                 console.warn('[completeReset] IndexedDB Fehler:', idbError);
             }
         }
-        
+
         // 3. Globales D-Objekt zurücksetzen
-        D = {
+        // D is const, cannot reassign - clear and recreate structure
+        for (const key in window.D) delete window.D[key];
+        Object.assign(window.D, {
             locations: [], npcs: [], quests: [], characters: [], sessionNotes: [], storyArcs: [], quickNotes: '',
             initiative: { combatants: [], currentTurn: 0, round: 1 },
             loot: [], items: [], encounters: [], spells: [], links: [], wiki: [],
@@ -1054,8 +1056,8 @@ async function completeReset() {
             tags: [],
             settings: { theme: 'dark', lastView: 'dashboard' },
             _nextId: {}
-        };
-        
+        });
+
         alert(`✅ Reset abgeschlossen!\n\n${keysToDelete.length} LocalStorage-Einträge gelöscht.\nIndexedDB geleert.\n\nSeite wird neu geladen...`);
         
         // 4. Kurz warten, dann Seite neu laden

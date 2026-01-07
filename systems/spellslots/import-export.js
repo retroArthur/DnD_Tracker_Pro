@@ -485,8 +485,8 @@ function importDataGlobal() {
                     throw new Error(`Speichern fehlgeschlagen: ${saveResult.error}`);
                 }
             } else {
-                // Aktuelle Kampagne überschreiben
-                D = { ...D, ...imp };
+                // Aktuelle Kampagne überschreiben (D is const, use Object.assign)
+                Object.assign(window.D, imp);
                 if (!D._nextId) D._nextId = {};
                 renderAll();
                 updateIOCounts();
