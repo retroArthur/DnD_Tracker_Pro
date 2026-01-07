@@ -244,13 +244,16 @@ function cancelEncEdit() {
  * @param {number|string} id - Encounter ID
  */
 function deleteEnc(id) {
-    const enc = EntityLookup.encounter(id);
-    if (confirm(`Gegner "${enc?.name || 'Unbekannt'}" löschen?`)) {
-        pushUndo('Gegner gelöscht');
-        D.encounters = D.encounters.filter(e => e.id !== id);
-        renderEncounters();
-        save();
-    }
+    deleteWithConfirm({
+        entityType: 'encounters',
+        id: id,
+        confirmMessage: null, // Use default message
+        undoLabel: 'Gegner gelöscht',
+        onSuccess: () => {
+            renderEncounters();
+            showToast('✅ Gegner gelöscht', 'success');
+        }
+    });
 }
 
 function addEncToInit(id) {

@@ -104,16 +104,16 @@ function editQuest(id) {
  * @param {number|string} id - Quest ID
  */
 function deleteQuest(id) {
-    const numId = parseEntityId(id);
-    if (numId === null) return;
-
-    const quest = EntityLookup.quest(id);
-    if (confirm(`Quest "${quest?.name || 'Unbekannt'}" löschen?`)) {
-        pushUndo('Quest gelöscht');
-        D.quests = D.quests.filter(q => q.id !== numId);
-        renderQuests();
-        save();
-    }
+    deleteWithConfirm({
+        entityType: 'quests',
+        id: id,
+        confirmMessage: null, // Use default message (uses 'name' property)
+        undoLabel: 'Quest gelöscht',
+        onSuccess: () => {
+            renderQuests();
+            showToast('✅ Quest gelöscht', 'success');
+        }
+    });
 }
 
 function clearQuestForm() {

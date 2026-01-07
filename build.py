@@ -71,6 +71,7 @@ def build(minify=False, verbose=False):
         'utils/performance.js',
         'utils/basic.js',
         'utils/utilities.js',
+        'utils/crud-helpers.js',
         'systems/undo.js',
         # Spellslots-Module (ersetzt systems/spellslots.js)
         'systems/spellslots/spell-slots-core.js',

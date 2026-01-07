@@ -55,16 +55,16 @@ function editLocation(id) {
  * @param {number|string} id - Location ID
  */
 function deleteLocation(id) {
-    const numId = parseEntityId(id);
-    if (numId === null) return;
-
-    const loc = EntityLookup.location(id);
-    if (confirm(`Ort "${loc?.name || 'Unbekannt'}" löschen?`)) {
-        pushUndo('Ort gelöscht');
-        D.locations = D.locations.filter(l => l.id !== numId);
-        renderLocations();
-        save();
-    }
+    deleteWithConfirm({
+        entityType: 'locations',
+        id: id,
+        confirmMessage: null, // Use default message
+        undoLabel: 'Ort gelöscht',
+        onSuccess: () => {
+            renderLocations();
+            showToast('✅ Ort gelöscht', 'success');
+        }
+    });
 }
 
 // Filter CRUD

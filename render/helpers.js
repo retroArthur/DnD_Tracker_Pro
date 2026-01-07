@@ -142,12 +142,33 @@ function safeExecute(fn, fnName, options = {}) {
  * @param {string|HTMLElement} [containerId] - Container für Fehler-Anzeige
  * @returns {*} Ergebnis oder undefined
  */
-function safeRender(fn, fnName, containerId = null) {
+function safeRender(fn, fnName, containerId = null, options = {}) {
+    const {
+        showToastOnError = false,
+        toastMessage = 'Anzeige konnte nicht aktualisiert werden',
+        fallbackRender = null,
+        rethrowInDebug = true
+    } = options;
+
     try {
         return fn();
     } catch (error) {
-        ErrorHandler.log(fnName, error);
-        
+        ErrorHandler.log(fnName, error, 'Render failure');
+
+        // Show toast notification if requested
+        if (showToastOnError) {
+            showToast(`⚠️ ${toastMessage}`, 'error');
+        }
+
+        // Try fallback render function
+        if (fallbackRender) {
+            try {
+                fallbackRender();
+            } catch (fallbackError) {
+                ErrorHandler.log(fnName, fallbackError, 'Fallback render failed');
+            }
+        }
+
         // Versuche Fehler im Container anzuzeigen
         if (containerId) {
             const container = typeof containerId === 'string' ? $(containerId) : containerId;
@@ -162,7 +183,12 @@ function safeRender(fn, fnName, containerId = null) {
                 `;
             }
         }
-        
+
+        // Re-throw in development mode for debugging
+        if (rethrowInDebug && APP_CONFIG?.DEBUG_MODE) {
+            throw error;
+        }
+
         return undefined;
     }
 }

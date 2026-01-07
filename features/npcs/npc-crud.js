@@ -151,17 +151,17 @@ function editNPC(id) {
  * @param {number|string} id - NPC ID
  */
 function deleteNPC(id) {
-    const numId = parseEntityId(id);
-    if (numId === null) return;
-
-    const npc = EntityLookup.npc(id);
-    if (confirm(`NPC "${npc?.name || 'Unbekannt'}" löschen?`)) {
-        pushUndo('NPC gelöscht');
-        D.npcs = D.npcs.filter(n => n.id !== numId);
-        renderLocations();
-        renderNPCList();
-        save();
-    }
+    deleteWithConfirm({
+        entityType: 'npcs',
+        id: id,
+        confirmMessage: null, // Use default message
+        undoLabel: 'NPC gelöscht',
+        onSuccess: () => {
+            renderLocations(); // NPCs can be linked to locations
+            renderNPCList();
+            showToast('✅ NPC gelöscht', 'success');
+        }
+    });
 }
 
 function clearNPCForm() {
