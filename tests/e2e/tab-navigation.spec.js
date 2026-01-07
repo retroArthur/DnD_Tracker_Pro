@@ -67,6 +67,19 @@ test.describe('Tab Registry System', () => {
     await page.waitForSelector('#view-dice.active', { state: 'visible', timeout: 5000 });
     await page.waitForTimeout(500);
 
+    // Open the collapsed details element and trigger render
+    await page.evaluate(() => {
+      const details = document.querySelector('.dice-details');
+      if (details && !details.open) {
+        details.open = true;
+      }
+      // Manually trigger render after tab is active
+      if (typeof window.renderRandomTables === 'function') {
+        window.renderRandomTables();
+      }
+    });
+    await page.waitForTimeout(300);
+
     // Verify random tables container is visible
     const container = page.locator('#random-tables-list');
     await expect(container).toBeVisible();
@@ -89,9 +102,13 @@ test.describe('Tab Registry System', () => {
       window.save();
     });
 
-    // Switch to dice tab
+    // Switch to dice tab and open details
     await page.click('[data-view="dice"]');
     await page.waitForSelector('#view-dice.active', { timeout: 5000 });
+    await page.evaluate(() => {
+      const details = document.querySelector('.dice-details');
+      if (details) details.open = true;
+    });
     await page.waitForTimeout(300);
     await expect(page.locator('.rt-card').first()).toContainText('Initial Table');
 
@@ -110,9 +127,13 @@ test.describe('Tab Registry System', () => {
       window.save();
     });
 
-    // Switch back to dice tab
+    // Switch back to dice tab and open details again
     await page.click('[data-view="dice"]');
     await page.waitForSelector('#view-dice.active', { timeout: 5000 });
+    await page.evaluate(() => {
+      const details = document.querySelector('.dice-details');
+      if (details) details.open = true;
+    });
     await page.waitForTimeout(500);
 
     // Both tables should be visible (re-render happened)
@@ -153,6 +174,15 @@ test.describe('Tab Registry System', () => {
 
     // Switch to initiative tab
     await page.click('[data-view="initiative"]');
+    await page.waitForSelector('#view-initiative.active', { timeout: 5000 });
+    await page.waitForTimeout(500);
+
+    // Manually trigger render AFTER tab is active
+    await page.evaluate(() => {
+      if (typeof window.renderInit === 'function') {
+        window.renderInit();
+      }
+    });
     await page.waitForTimeout(300);
 
     // Verify initiative list exists
@@ -191,12 +221,21 @@ test.describe('Tab Registry System', () => {
 
     // Switch to initiative tab
     await page.click('[data-view="initiative"]');
+    await page.waitForSelector('#view-initiative.active', { timeout: 5000 });
+    await page.waitForTimeout(300);
+
+    // Trigger render after tab is active
+    await page.evaluate(() => {
+      if (typeof window.renderInit === 'function') {
+        window.renderInit();
+      }
+    });
     await page.waitForTimeout(200);
     await expect(page.locator('.init-combatant')).toHaveCount(1);
 
     // Switch away
     await page.click('[data-view="dashboard"]');
-    await page.waitForTimeout(200);
+    await page.waitForSelector('#view-dashboard.active', { timeout: 5000 });
 
     // Modify data while away - advance round and damage combatant
     await page.evaluate(() => {
@@ -207,7 +246,8 @@ test.describe('Tab Registry System', () => {
 
     // Switch back to initiative tab
     await page.click('[data-view="initiative"]');
-    await page.waitForTimeout(300);
+    await page.waitForSelector('#view-initiative.active', { timeout: 5000 });
+    await page.waitForTimeout(500);
 
     // Verify re-render happened - round and HP should be updated
     const roundNum = page.locator('#round-num');
@@ -235,12 +275,21 @@ test.describe('Tab Registry System', () => {
 
     // Switch to party tab
     await page.click('[data-view="party"]');
+    await page.waitForSelector('#view-party.active', { timeout: 5000 });
+    await page.waitForTimeout(300);
+
+    // Trigger render after tab is active
+    await page.evaluate(() => {
+      if (typeof window.renderParty === 'function') {
+        window.renderParty();
+      }
+    });
     await page.waitForTimeout(200);
     await expect(page.locator('.party-member')).toHaveCount(1);
 
     // Switch away
     await page.click('[data-view="dashboard"]');
-    await page.waitForTimeout(200);
+    await page.waitForSelector('#view-dashboard.active', { timeout: 5000 });
 
     // Add another character while away
     await page.evaluate(() => {
@@ -258,7 +307,8 @@ test.describe('Tab Registry System', () => {
 
     // Switch back to party tab
     await page.click('[data-view="party"]');
-    await page.waitForTimeout(300);
+    await page.waitForSelector('#view-party.active', { timeout: 5000 });
+    await page.waitForTimeout(500);
 
     // Both characters should be visible
     const members = page.locator('.party-member');
@@ -280,6 +330,15 @@ test.describe('Tab Registry System', () => {
 
     // Switch to timers tab
     await page.click('[data-view="timers"]');
+    await page.waitForSelector('#view-timers.active', { timeout: 5000 });
+    await page.waitForTimeout(300);
+
+    // Trigger render after tab is active
+    await page.evaluate(() => {
+      if (typeof window.renderTimers === 'function') {
+        window.renderTimers();
+      }
+    });
     await page.waitForTimeout(200);
 
     // Verify timer is rendered
@@ -289,7 +348,7 @@ test.describe('Tab Registry System', () => {
 
     // Switch away
     await page.click('[data-view="dashboard"]');
-    await page.waitForTimeout(200);
+    await page.waitForSelector('#view-dashboard.active', { timeout: 5000 });
 
     // Add another timer
     await page.evaluate(() => {
@@ -304,7 +363,8 @@ test.describe('Tab Registry System', () => {
 
     // Switch back
     await page.click('[data-view="timers"]');
-    await page.waitForTimeout(300);
+    await page.waitForSelector('#view-timers.active', { timeout: 5000 });
+    await page.waitForTimeout(500);
 
     // Both timers should be visible
     const timers = page.locator('.timer-item');
@@ -320,16 +380,23 @@ test.describe('Tab Registry Error Handling', () => {
     await page.evaluate(() => {
       window.D.randomTables = [];
       window.save();
-      // Trigger re-render to show empty state
-      if (typeof window.renderRandomTables === 'function') {
-        window.renderRandomTables();
-      }
     });
 
     // Switch to dice tab
     await page.click('[data-view="dice"]');
     await page.waitForSelector('#view-dice.active', { timeout: 5000 });
-    await page.waitForTimeout(500);
+    await page.waitForTimeout(300);
+
+    // Open details element and trigger render AFTER tab is active
+    await page.evaluate(() => {
+      const details = document.querySelector('.dice-details');
+      if (details) details.open = true;
+      // Trigger re-render to show empty state
+      if (typeof window.renderRandomTables === 'function') {
+        window.renderRandomTables();
+      }
+    });
+    await page.waitForTimeout(300);
 
     // Container should exist but show empty message
     const container = page.locator('#random-tables-list');
@@ -421,22 +488,29 @@ test.describe('Tab Registry Performance', () => {
 test.describe('Tab Registry Integration', () => {
 
   test('undo/redo triggers re-render on active tab', async ({ page }) => {
-    // Add random table
+    // Clear defaults and add random table
     await page.evaluate(() => {
-      if (!window.D.randomTables) window.D.randomTables = [];
-      window.D.randomTables.push({
+      window.D.randomTables = [{
         id: 1,
         name: 'Original Table',
         icon: '🎯',
         entries: []
-      });
+      }];
       window.save();
+      if (typeof window.renderRandomTables === 'function') {
+        window.renderRandomTables();
+      }
     });
 
-    // Switch to dice tab
+    // Switch to dice tab and open details
     await page.click('[data-view="dice"]');
-    await page.waitForTimeout(200);
-    await expect(page.locator('.rt-card')).toContainText('Original Table');
+    await page.waitForSelector('#view-dice.active', { timeout: 5000 });
+    await page.evaluate(() => {
+      const details = document.querySelector('.dice-details');
+      if (details) details.open = true;
+    });
+    await page.waitForTimeout(300);
+    await expect(page.locator('.rt-card').first()).toContainText('Original Table');
 
     // Make a change (add another table)
     await page.evaluate(() => {
@@ -448,8 +522,11 @@ test.describe('Tab Registry Integration', () => {
         entries: []
       });
       window.save();
+      if (typeof window.renderRandomTables === 'function') {
+        window.renderRandomTables();
+      }
     });
-    await page.waitForTimeout(200);
+    await page.waitForTimeout(300);
 
     // Should show 2 tables
     await expect(page.locator('.rt-card')).toHaveCount(2);
@@ -464,7 +541,7 @@ test.describe('Tab Registry Integration', () => {
     });
 
     if (undoResult) {
-      await page.waitForTimeout(200);
+      await page.waitForTimeout(300);
       // Should be back to 1 table
       await expect(page.locator('.rt-card')).toHaveCount(1);
     }

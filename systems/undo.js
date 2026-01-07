@@ -43,7 +43,9 @@ function undo() {
     const last = undoStack.pop();
     const parsed = safeJSONParse(last.state);
     if (parsed) {
-        D = parsed;
+        // Update window.D by clearing and reassigning properties (D is now const)
+        for (const key in window.D) delete window.D[key];
+        Object.assign(window.D, parsed);
         renderAll();
         saveImmediate();
         showToast(`↩️ Rückgängig: ${last.action}`);
@@ -68,7 +70,9 @@ function redo() {
     const last = redoStack.pop();
     const parsed = safeJSONParse(last.state);
     if (parsed) {
-        D = parsed;
+        // Update window.D by clearing and reassigning properties (D is now const)
+        for (const key in window.D) delete window.D[key];
+        Object.assign(window.D, parsed);
         renderAll();
         saveImmediate();
         showToast('↪️ Wiederhergestellt');
