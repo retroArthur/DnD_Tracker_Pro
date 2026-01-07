@@ -454,6 +454,95 @@ function renderMyWidget() {
 
 ---
 
+### Tab Navigation Architecture (Tab Registry Pattern)
+
+**Problem Solved:** UI render functions failing silently when DOM elements are missing, causing blank sections when users switch between tabs.
+
+**Root Cause:**
+- `switchView()` had no centralized system for tab-specific renders
+- Only 3 out of 19 tabs had explicit re-render logic
+- When users switched tabs, content was never refreshed → stale UI
+- Test mocks referenced `renderInitiative` which didn't exist (actual: `renderInit`)
+
+**Why This Approach:**
+- **Centralized Registry Pattern:** `TAB_RENDER_REGISTRY` maps tabs to their render functions
+- **Declarative Configuration:** Easy to see which tabs have which renders
+- **Automatic Re-rendering:** `renderTabContent()` called on every tab switch
+- **Error Visibility:** Debug mode warnings for missing DOM elements and functions
+- **Lifecycle Hooks:** Supports one-time `init` and `cleanup` per tab
+
+**Pattern to Follow:**
+```javascript
+// 1. Register tab in systems/tab-registry.js
+const TAB_RENDER_REGISTRY = {
+    'mytab': {
+        renders: ['renderMyTab', 'renderMyTabStats'],  // Called on every switch
+        init: 'initMyTab',      // Called once on first view
+        cleanup: 'cleanupMyTab' // Called when leaving tab
+    }
+};
+
+// 2. Create render function with defensive checks
+function renderMyTab() {
+    const container = $('mytab-container');
+    if (!container) {
+        if (window.APP_CONFIG?.DEBUG_MODE) {
+            console.warn('[renderMyTab] Container missing - likely not on mytab');
+        }
+        return;
+    }
+
+    // Render content
+    container.innerHTML = `<div>...</div>`;
+}
+
+// 3. Navigation automatically calls renderTabContent()
+// No manual if statements needed in switchView()
+```
+
+**Benefits:**
+- ✅ All 19 tabs now re-render correctly when switched to
+- ✅ Centralized, maintainable architecture
+- ✅ Self-documenting (registry shows full tab structure)
+- ✅ Error handling catches and logs render failures
+- ✅ Test mocks aligned with production code
+
+**Mistakes to Avoid:**
+- ❌ Don't add renders directly to `switchView()` - use the registry
+- ❌ Don't use silent `if (!container) return` - add debug warnings
+- ❌ Don't put render logic in `init` hook - use `renders` array
+- ❌ Don't forget to register new tabs in the registry
+
+**Common Pitfalls:**
+```javascript
+// BAD - defeats the purpose of registry
+function switchView(name) {
+    renderTabContent(name);
+    if (name === 'mytab') renderMyTab();  // ❌ Don't do this
+}
+
+// GOOD - registry handles it
+const TAB_RENDER_REGISTRY = {
+    'mytab': { renders: ['renderMyTab'], init: null, cleanup: null }
+};
+```
+
+**Testing Tab Navigation:**
+When adding render functions, always test:
+1. Initial render (on app startup)
+2. Re-render on tab switch
+3. Re-render after data change (import/undo/restore)
+4. Multiple rapid tab switches
+
+See `tests/e2e/tab-navigation.spec.js` for examples.
+
+**Documentation:**
+- **Full Guide:** `systems/tab-registry.md`
+- **Implementation:** `systems/tab-registry.js`
+- **Integration:** `systems/spellslots/navigation.js`
+
+---
+
 ### Live-Sync Pattern
 
 **Problem Solved:** Widgets showing stale data when user makes changes in other tabs.
@@ -558,6 +647,63 @@ function refreshIfVisible() {
 5. **German Localization:** UI strings in German, code comments can be English
 6. **XSS in Widgets:** Even static widgets should use `esc()` if showing any user data
 7. **Mobile First:** Test widgets at 320px width - masonry layout adjusts columns
+
+---
+
+### Debugging Checklist
+
+#### UI Not Updating?
+
+When a tab or view isn't showing updated content:
+
+1. **✓ Is the render function registered in `TAB_RENDER_REGISTRY`?**
+   - Check `systems/tab-registry.js`
+   - Ensure tab name matches `data-view` attribute in HTML
+
+2. **✓ Is the render function being called?**
+   - Enable `APP_CONFIG.DEBUG_MODE = true` in console
+   - Check console for `[TabRegistry] Rendered X() for tab Y` messages
+   - Add `console.log()` in render function to verify execution
+
+3. **✓ Does the DOM container exist?**
+   - Check with `$('container-id')` in console
+   - Verify ID in `assets/body.html` matches JS
+   - Look for `[DOM] Element not found:` warnings in DEBUG mode
+
+4. **✓ Is the tab active when render is called?**
+   - Check if view has `class="view active"`
+   - Verify tab button has `class="nav-tab active"`
+
+5. **✓ Are there silent failures?**
+   - Enable DEBUG_MODE to see warnings
+   - Check browser console for errors
+   - Look for early `return` statements in render functions
+
+6. **✓ Is data being saved/loaded correctly?**
+   - Check `D.yourData` in console
+   - Verify `save()` is called after data changes
+   - Check localStorage in DevTools
+
+#### Missing DOM Elements?
+
+When you see blank sections or missing content:
+
+1. **Check the tab registry:** Is the tab registered with correct render functions?
+2. **Check HTML structure:** Does `assets/body.html` have the container element?
+3. **Check module loading:** Is the render function's module loaded in `build.py`?
+4. **Check function names:** Do they match between registry and actual function definitions?
+5. **Check DEBUG mode:** Enable it and look for warnings about missing elements
+
+#### Console Errors?
+
+Common error patterns and fixes:
+
+| Error | Cause | Fix |
+|-------|-------|-----|
+| `X is not a function` | Function not loaded yet | Check module load order in `build.py` |
+| `Cannot read property of undefined` | Data not initialized | Add fallback: `D.data || []` |
+| `Element not found: #X` | Container doesn't exist | Check HTML or add null check |
+| `[TabRegistry] Function X not found` | Function name typo | Fix name in registry or add function |
 
 ---
 
