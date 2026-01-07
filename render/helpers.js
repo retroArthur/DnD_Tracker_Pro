@@ -640,6 +640,59 @@ const EntityLookup = {
 };
 
 /**
+ * Get comprehensive entity details for combat/display
+ * Centralizes entity lookup pattern used across combat and rendering
+ * @param {string} entityType - 'player', 'enemy', 'ally'
+ * @param {string} entityName - Entity name to look up
+ * @returns {Object} { entity, ac, type, id, notFound }
+ */
+function getEntityForCombat(entityType, entityName) {
+    let entity = null;
+    let ac = '?';
+    let type = null;
+    let id = null;
+
+    if (entityType === 'player') {
+        entity = EntityLookup.findByName('characters', entityName);
+        if (entity) {
+            ac = entity.ac || entity.armorClass || 10;
+            type = 'characters';
+            id = entity.id;
+        }
+    } else if (entityType === 'enemy') {
+        // Check encounters first, then NPCs
+        entity = EntityLookup.findByName('encounters', entityName);
+        if (entity) {
+            ac = entity.ac || entity.armorClass || 10;
+            type = 'encounters';
+            id = entity.id;
+        } else {
+            entity = EntityLookup.findByName('npcs', entityName);
+            if (entity) {
+                ac = entity.ac || 10;
+                type = 'npcs';
+                id = entity.id;
+            }
+        }
+    } else if (entityType === 'ally') {
+        entity = EntityLookup.findByName('npcs', entityName);
+        if (entity) {
+            ac = entity.ac || 10;
+            type = 'npcs';
+            id = entity.id;
+        }
+    }
+
+    return {
+        entity,
+        ac,
+        type,
+        id,
+        notFound: entity === null
+    };
+}
+
+/**
  * Entity-Typ-Konfiguration für Links
  * @type {Object.<string, {icon: string, label: string}>}
  */

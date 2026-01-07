@@ -19,6 +19,88 @@ function applyDamage(combatant, damage) {
     combatant.currentHp = Math.max(0, combatant.currentHp - remaining);
 }
 
+// ============================================================
+// RENDER HELPER FUNCTIONS (Refactored from renderInit)
+// ============================================================
+
+/**
+ * Get combatant entity details (AC, type, ID)
+ * Uses centralized getEntityForCombat() from render/helpers.js
+ * @param {Object} combatant - Initiative combatant
+ * @returns {Object} { ac, entityType, entityId }
+ */
+function getInitCombatantDetails(combatant) {
+    // Use centralized lookup function
+    const result = getEntityForCombat(combatant.type, combatant.name);
+
+    // Fallback to combatant.ac if no entity found
+    const ac = result.ac !== '?' ? result.ac : (combatant.ac || 10);
+
+    return {
+        ac,
+        entityType: result.type,
+        entityId: result.id
+    };
+}
+
+/**
+ * Calculate combatant HP status
+ * @param {Object} combatant - Initiative combatant
+ * @returns {Object} { hpPercent, hpClass }
+ */
+function getCombatantHpStatus(combatant) {
+    const hpPct = combatant.maxHp > 0 ? (combatant.currentHp / combatant.maxHp) * 100 : 100;
+    const hpClass = hpPct <= COMBAT_CONSTANTS.HP_CRITICAL_THRESHOLD ? 'critical'
+                  : hpPct <= COMBAT_CONSTANTS.HP_BLOODIED_THRESHOLD ? 'bloodied'
+                  : 'healthy';
+    return { hpPercent: hpPct, hpClass };
+}
+
+/**
+ * Render combatant effects as HTML
+ * @param {Object} combatant - Initiative combatant
+ * @returns {string} HTML string of effects
+ */
+function renderCombatantEffects(combatant) {
+    if (!combatant.effects || combatant.effects.length === 0) return '';
+
+    return combatant.effects.map(e =>
+        `<span class="init-effect color-${e.color}" data-action="remove-effect" data-id="${combatant.id}" data-value="${e.id}" title="${esc(e.description || '')}&#10;Klicken zum Entfernen">${esc(e.name)} ${e.permanent ? '<span class="duration">∞</span>' : '<span class="duration">' + e.duration + 'R</span>'}</span>`
+    ).join('');
+}
+
+/**
+ * Render combatant spell slots for player characters
+ * @param {Object} combatant - Initiative combatant
+ * @param {Object} character - Linked character entity (optional)
+ * @returns {string} HTML string of spell slots
+ */
+function renderCombatantSpellSlots(combatant, character) {
+    // Default placeholder
+    let spellSlotsHtml = '<div class="init-spell-slots-placeholder"></div>';
+
+    if (combatant.type === 'player' && character && character.spellSlots) {
+        const slots = [];
+        for (let lvl = 1; lvl <= 9; lvl++) {
+            const slot = character.spellSlots[lvl];
+            if (slot && slot.max > 0) {
+                const used = slot.max - (slot.current || 0);
+                slots.push(`<div class="init-slot-level" title="Grad ${lvl}">
+                    <span class="init-slot-label">${lvl}</span>
+                    <div class="init-slot-boxes">${Array(slot.max).fill(0).map((_, idx) =>
+                        `<span class="init-slot-box ${idx < slot.current ? 'available' : ''}" data-action="toggle-init-slot-stop" data-id="${character.id}" data-value="${lvl},${idx}"></span>`
+                    ).join('')}</div>
+                </div>`);
+            }
+        }
+        if (slots.length > 0) {
+            spellSlotsHtml = `<div class="init-spell-slots">${slots.join('')}</div>`;
+        }
+    }
+
+    return spellSlotsHtml;
+}
+
 function renderInit() {
     const c = $('init-list');
     const rn = $('round-num');
@@ -43,77 +125,21 @@ function renderInit() {
     c.innerHTML = init.combatants.map((cb, i) => {
         const active = i === init.currentTurn;
         const dead = cb.currentHp <= 0;
-        const hpPct = cb.maxHp > 0 ? (cb.currentHp / cb.maxHp) * 100 : 100;
-        const hpClass = hpPct <= COMBAT_CONSTANTS.HP_CRITICAL_THRESHOLD ? 'critical'
-                      : hpPct <= COMBAT_CONSTANTS.HP_BLOODIED_THRESHOLD ? 'bloodied'
-                      : 'healthy';
-        const effects = (cb.effects || []).map(e => `<span class="init-effect color-${e.color}" data-action="remove-effect" data-id="${cb.id}" data-value="${e.id}" title="${esc(e.description || '')}&#10;Klicken zum Entfernen">${esc(e.name)} ${e.permanent ? '<span class="duration">∞</span>' : '<span class="duration">' + e.duration + 'R</span>'}</span>`).join('');
+
+        // Use extracted helper functions
+        const { hpPercent: hpPct, hpClass } = getCombatantHpStatus(cb);
+        const { ac, entityType, entityId } = getInitCombatantDetails(cb);
+        const effects = renderCombatantEffects(cb);
         const rollInfo = cb.lastRoll ? `<span style="font-size: 10px; color: var(--text-dim);" title="Letzter Wurf: ${cb.lastRoll}">(${cb.lastRoll})</span>` : '';
-        
-        // AC ermitteln aus verknüpfter Entity
-        let ac = cb.ac || 10;
-        let entityType = null;
-        let entityId = null;
-        
-        if (cb.type === 'player') {
-            const char = EntityLookup.findByName('characters', cb.name);
-            if (char) {
-                ac = char.ac || char.armorClass || 10;
-                entityType = 'characters';
-                entityId = char.id;
-            }
-        } else if (cb.type === 'enemy') {
-            // Prüfe zuerst Encounters, dann NPCs
-            const enc = EntityLookup.findByName('encounters', cb.name);
-            if (enc) {
-                ac = enc.ac || enc.armorClass || 10;
-                entityType = 'encounters';
-                entityId = enc.id;
-            } else {
-                const npc = EntityLookup.findByName('npcs', cb.name);
-                if (npc) {
-                    ac = npc.ac || 10;
-                    entityType = 'npcs';
-                    entityId = npc.id;
-                }
-            }
-        } else if (cb.type === 'ally') {
-            const npc = EntityLookup.findByName('npcs', cb.name);
-            if (npc) {
-                ac = npc.ac || 10;
-                entityType = 'npcs';
-                entityId = npc.id;
-            }
-        }
-        
-        // Name klickbar machen wenn Entity gefunden
-        const nameClickHandler = entityType && entityId 
-            ? `data-action="navigate-entity-stop" data-type="${entityType}" data-id="${entityId}" title="Klicken für Details"` 
+
+        // Name clickable if entity found
+        const nameClickHandler = entityType && entityId
+            ? `data-action="navigate-entity-stop" data-type="${entityType}" data-id="${entityId}" title="Klicken für Details"`
             : '';
-        
-        // Zauberslots für Spieler
-        let spellSlotsHtml = '<div class="init-spell-slots-placeholder"></div>';
-        if (cb.type === 'player') {
-            const char = EntityLookup.findByName('characters', cb.name);
-            if (char && char.spellSlots) {
-                const slots = [];
-                for (let lvl = 1; lvl <= 9; lvl++) {
-                    const slot = char.spellSlots[lvl];
-                    if (slot && slot.max > 0) {
-                        const used = slot.max - (slot.current || 0);
-                        slots.push(`<div class="init-slot-level" title="Grad ${lvl}">
-                            <span class="init-slot-label">${lvl}</span>
-                            <div class="init-slot-boxes">${Array(slot.max).fill(0).map((_, idx) => 
-                                `<span class="init-slot-box ${idx < slot.current ? 'available' : ''}" data-action="toggle-init-slot-stop" data-id="${char.id}" data-value="${lvl},${idx}"></span>`
-                            ).join('')}</div>
-                        </div>`);
-                    }
-                }
-                if (slots.length > 0) {
-                    spellSlotsHtml = `<div class="init-spell-slots">${slots.join('')}</div>`;
-                }
-            }
-        }
+
+        // Spell slots for players - get character reference
+        const character = cb.type === 'player' ? EntityLookup.findByName('characters', cb.name) : null;
+        const spellSlotsHtml = renderCombatantSpellSlots(cb, character);
         
         // Special handling for lair action entry
         if (cb.type === 'lair') {
