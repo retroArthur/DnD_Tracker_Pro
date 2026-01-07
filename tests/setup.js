@@ -159,8 +159,10 @@ global.renderEncounters = jest.fn();
 global.renderLoot = jest.fn();
 global.renderSpells = jest.fn();
 global.renderInit = jest.fn();
-global.renderInitiative = jest.fn();
+// Alias for backwards compatibility (renderInitiative doesn't exist in production)
+global.renderInitiative = global.renderInit;
 global.renderRandomTables = jest.fn();
+global.renderTabContent = jest.fn();  // Tab registry system
 
 // ============================================================
 // ENCOUNTER CALCULATOR MOCKS

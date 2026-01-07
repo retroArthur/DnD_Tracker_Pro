@@ -3,7 +3,13 @@
 // BASIC UTILITIES - @util @helper @dom @escape @sanitize
 // Grundlegende DOM- und String-Funktionen
 // ============================================================
-const $ = id => document.getElementById(id);
+const $ = function(id) {
+    const el = document.getElementById(id);
+    if (!el && window.APP_CONFIG?.DEBUG_MODE) {
+        console.warn(`[DOM] Element not found: #${id}`, new Error().stack);
+    }
+    return el;
+};
 const $$ = sel => document.querySelectorAll(sel);
 const esc = s => s ? String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;') : '';
 

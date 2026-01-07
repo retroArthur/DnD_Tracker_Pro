@@ -90,6 +90,7 @@ def build(minify=False, verbose=False):
         'systems/entity-links.js',
         'systems/avatars.js',
         'systems/backups.js',
+        'systems/tab-registry.js',
         'render/helpers.js',
         # Render-Feature-Module
         'features/render-dashboard.js',

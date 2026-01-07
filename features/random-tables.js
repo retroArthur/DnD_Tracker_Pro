@@ -116,7 +116,12 @@ function rollWeightedEntry(table) {
 
 function renderRandomTables() {
     const container = $('random-tables-list');
-    if (!container) return;
+    if (!container) {
+        if (window.APP_CONFIG?.DEBUG_MODE) {
+            console.warn('[renderRandomTables] Container missing - likely not on dice tab');
+        }
+        return;
+    }
 
     initRandomTables();
     const tables = D.randomTables || [];

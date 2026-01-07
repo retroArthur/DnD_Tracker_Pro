@@ -17,12 +17,17 @@ function switchView(name) {
         activeTab.classList.add('active');
         activeTab.setAttribute('aria-selected', 'true');
     }
-    if (name === 'notes') $('session-date').value = new Date().toISOString().split('T')[0];
-    if (name === 'network') renderMindmap();
-    if (name === 'party') renderParty();
-    if (name === 'dashboard') renderDashboard();
-    if (name === 'dmscreen' && typeof renderDMScreen === 'function') renderDMScreen();
-    
+    // LEGACY SUPPORT: Keep existing special cases for backwards compatibility
+    if (name === 'notes') {
+        $('session-date').value = new Date().toISOString().split('T')[0];
+    }
+    if (name === 'roadmap' && typeof onRoadmapViewShow === 'function') {
+        onRoadmapViewShow();
+    }
+
+    // NEW: Use tab registry to render content
+    renderTabContent(name);
+
     // Mobile: Navigation schließen und Label aktualisieren
     const header = document.querySelector('.app-header');
     if (header) header.classList.remove('nav-open');
@@ -35,7 +40,7 @@ function switchView(name) {
             'party': '👥 Party',
             'npcs': '🎭 NPCs',
             'locations': '🏠 Orte',
-            'network': '🔗 Netzwerk',
+            'roadmap': '🗺️ Roadmap',
             'quests': '📜 Quests',
             'encounter': '👹 Encounter',
             'initiative': '⚔️ Initiative',

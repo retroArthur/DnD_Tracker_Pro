@@ -20,7 +20,14 @@ function applyDamage(combatant, damage) {
 }
 
 function renderInit() {
-    const c = $('init-list'); const rn = $('round-num'); if (!c) return;
+    const c = $('init-list');
+    const rn = $('round-num');
+    if (!c) {
+        if (window.APP_CONFIG?.DEBUG_MODE) {
+            console.warn('[renderInit] Container missing - likely not on initiative tab');
+        }
+        return;
+    }
     const init = D.initiative;
     if (rn) rn.textContent = init.round;
 
