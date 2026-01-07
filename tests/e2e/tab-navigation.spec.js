@@ -13,7 +13,12 @@ import { test, expect } from '@playwright/test';
 test.beforeEach(async ({ page }) => {
   const filePath = `file:///${process.cwd().replace(/\\/g, '/')}/dist/dnd-tracker-bundled.html`;
   await page.goto(filePath);
+
+  // Wait for app to load
   await page.waitForSelector('.app-title', { timeout: 10000 });
+
+  // Give app time to initialize D object
+  await page.waitForTimeout(1000);
 });
 
 test.describe('Tab Registry System', () => {
@@ -25,6 +30,7 @@ test.describe('Tab Registry System', () => {
 
     // Add a random table via localStorage
     await page.evaluate(() => {
+      if (!window.D) window.D = {};
       if (!window.D.randomTables) window.D.randomTables = [];
       window.D.randomTables.push({
         id: Date.now(),
