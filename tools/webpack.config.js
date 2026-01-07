@@ -1,5 +1,5 @@
 // Webpack Configuration for D&D Tracker
-// Modern build system with optimization
+// TypeScript Migration: Updated for TypeScript + ES Modules
 
 const path = require('path');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
@@ -8,22 +8,30 @@ const CssMinimizerPlugin = require('css-minimizer-webpack-plugin');
 
 module.exports = (env, argv) => {
     const isProduction = argv.mode === 'production';
-    
+
     return {
-        entry: './loader.js',
-        
+        // TypeScript Migration: Changed entry point from loader.js to src/main.ts
+        entry: './src/main.ts',
+
         output: {
-            path: path.resolve(__dirname, 'dist-webpack'),
+            path: path.resolve(__dirname, '../dist'),
             filename: isProduction ? 'bundle.[contenthash].js' : 'bundle.js',
             clean: true,
         },
-        
+
         module: {
             rules: [
                 {
                     test: /\.css$/i,
                     use: ['style-loader', 'css-loader'],
                 },
+                // TypeScript files
+                {
+                    test: /\.tsx?$/,
+                    use: 'ts-loader',
+                    exclude: /node_modules/,
+                },
+                // JavaScript files (for gradual migration with allowJs)
                 {
                     test: /\.js$/,
                     exclude: /node_modules/,
@@ -36,7 +44,21 @@ module.exports = (env, argv) => {
                 }
             ],
         },
-        
+
+        // Resolve TypeScript, JavaScript, and their extensions
+        resolve: {
+            extensions: ['.tsx', '.ts', '.js'],
+            alias: {
+                '@core': path.resolve(__dirname, '../src/core'),
+                '@utils': path.resolve(__dirname, '../src/utils'),
+                '@features': path.resolve(__dirname, '../src/features'),
+                '@ui': path.resolve(__dirname, '../src/ui'),
+                '@types': path.resolve(__dirname, '../src/types'),
+                '@systems': path.resolve(__dirname, '../src/systems'),
+                '@render': path.resolve(__dirname, '../src/render'),
+            }
+        },
+
         plugins: [
             new HtmlWebpackPlugin({
                 template: './index.html',
@@ -49,7 +71,7 @@ module.exports = (env, argv) => {
                 } : false,
             }),
         ],
-        
+
         optimization: {
             minimize: isProduction,
             minimizer: [
@@ -66,42 +88,47 @@ module.exports = (env, argv) => {
                 chunks: 'all',
                 cacheGroups: {
                     vendor: {
-                        test: /[\\/]node_modules[\\/]/,
+                        test: /[\/]node_modules[\/]/,
                         name: 'vendors',
                         priority: 10,
                     },
                     core: {
-                        test: /[\\/]core[\\/]/,
+                        test: /[\/](src[\/])?core[\/]/,
                         name: 'core',
                         priority: 5,
                     },
                     features: {
-                        test: /[\\/]features[\\/]/,
+                        test: /[\/](src[\/])?features[\/]/,
                         name: 'features',
                         priority: 3,
                     },
                 },
             },
         },
-        
+
         devtool: isProduction ? 'source-map' : 'eval-source-map',
-        
+
         devServer: {
-            static: {
-                directory: path.join(__dirname, 'assets'),
-            },
+            static: [
+                {
+                    directory: path.join(__dirname, '../assets'),
+                },
+                {
+                    directory: path.join(__dirname, '..'),
+                }
+            ],
             compress: true,
             port: 8080,
             hot: true,
             open: true,
         },
-        
+
         performance: {
             hints: isProduction ? 'warning' : false,
             maxAssetSize: 500000,  // 500 KB
             maxEntrypointSize: 500000,
         },
-        
+
         stats: {
             colors: true,
             modules: false,

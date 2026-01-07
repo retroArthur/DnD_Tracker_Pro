@@ -4,7 +4,7 @@
     "target": "ES2020",
     "module": "ESNext",
     "lib": ["ES2020", "DOM", "DOM.Iterable"],
-    "moduleResolution": "node",
+    "moduleResolution": "bundler",
     
     // Schrittweise Migration erlauben
     "allowJs": true,
@@ -49,7 +49,9 @@
       "@features/*": ["src/features/*"],
       "@ui/*": ["src/ui/*"],
       "@utils/*": ["src/utils/*"],
-      "@types/*": ["src/types/*"]
+      "@types/*": ["src/types/*"],
+      "@systems/*": ["src/systems/*"],
+      "@render/*": ["src/render/*"]
     },
     
     // Skip Library Check für schnellere Kompilierung

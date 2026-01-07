@@ -4,7 +4,7 @@ module.exports = {
   testEnvironment: 'jsdom',
   
   // Roots für Tests
-  roots: ['<rootDir>/tests'],
+  roots: ['<rootDir>/tests', '<rootDir>/src'],
   
   // Test-Dateien Pattern
   testMatch: [
@@ -14,24 +14,27 @@ module.exports = {
   
   // TypeScript-Unterstützung
   transform: {
-    '^.+\\.tsx?$': ['ts-jest', {
+    '^.+\.tsx?$': ['ts-jest', {
       tsconfig: {
-        module: 'commonjs',
+        module: 'ESNext',
+        target: 'ES2020',
         esModuleInterop: true,
         allowJs: true,
         skipLibCheck: true
       }
     }],
-    '^.+\\.jsx?$': 'babel-jest'
+    '^.+\.jsx?$': 'babel-jest'
   },
   
-  // Module-Aliase
+  // Module-Aliase (TypeScript Migration: Point to src/)
   moduleNameMapper: {
-    '^@core/(.*)$': '<rootDir>/core/$1',
-    '^@features/(.*)$': '<rootDir>/features/$1',
-    '^@utils/(.*)$': '<rootDir>/utils/$1',
-    '^@ui/(.*)$': '<rootDir>/ui/$1',
-    '^@types/(.*)$': '<rootDir>/types/$1'
+    '^@core/(.*)$': '<rootDir>/src/core/$1',
+    '^@features/(.*)$': '<rootDir>/src/features/$1',
+    '^@utils/(.*)$': '<rootDir>/src/utils/$1',
+    '^@ui/(.*)$': '<rootDir>/src/ui/$1',
+    '^@types/(.*)$': '<rootDir>/src/types/$1',
+    '^@systems/(.*)$': '<rootDir>/src/systems/$1',
+    '^@render/(.*)$': '<rootDir>/src/render/$1'
   },
   
   // Setup-Dateien
