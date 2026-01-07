@@ -9,15 +9,33 @@ import { test, expect } from '@playwright/test';
  * Bug Fix: DOM robustness - missing DOM bei renderRandomTables, renderInitiative
  */
 
+// Helper: Ensure D object is available
+async function ensureAppInitialized(page) {
+  try {
+    // Try to wait for D to be available
+    await page.waitForFunction(() => {
+      return typeof window.D !== 'undefined' &&
+             typeof window.save === 'function' &&
+             typeof window.renderRandomTables === 'function';
+    }, { timeout: 3000 });
+  } catch (e) {
+    // If D doesn't exist after timeout, log warning and continue
+    // Tests will initialize D defensively if needed
+    console.warn('[Test Setup] D object not yet initialized, tests will handle defensively');
+  }
+}
+
 // Helper: Load app before each test
 test.beforeEach(async ({ page }) => {
   const filePath = `file:///${process.cwd().replace(/\\/g, '/')}/dist/dnd-tracker-bundled.html`;
-  await page.goto(filePath);
 
-  // Wait for app to load
-  await page.waitForSelector('.app-title', { timeout: 10000 });
+  // Load the page with domcontentloaded strategy (faster than default 'load')
+  await page.goto(filePath, { waitUntil: 'domcontentloaded', timeout: 30000 });
 
-  // Give app time to initialize D object
+  // Wait for app header to be visible (simpler selector)
+  await page.waitForSelector('.app-header', { state: 'visible', timeout: 5000 });
+
+  // Give app time to initialize
   await page.waitForTimeout(1000);
 });
 

@@ -411,11 +411,13 @@ const SPELLS_PER_PAGE = 50;
 // ============================================================
 // GLOBAL DATA OBJECT
 // ============================================================
-let D = {
+// Explicitly assign to window to ensure global accessibility (needed for tests and inter-module access)
+window.D = {
     locations: [], npcs: [], quests: [], characters: [], sessionNotes: [], quickNotes: '',
     initiative: { combatants: [], currentTurn: 0, round: 1 },
     loot: [], items: [], encounters: [], spells: [], links: [], wiki: [],
     filters: [], mindmap: { nodes: [], connections: [] },
+    roadmap: { events: [], connections: [], _ui: { pan: { x: 0, y: 0 }, zoom: 1, selectedEventId: null } }, // Kampagnen-Roadmap
     calendar: { day: 1, month: 0, year: 1492, events: [] },
     tags: [], // Global tags system
     monsterFavorites: [], // Monster presets for encounter calculator
@@ -424,6 +426,9 @@ let D = {
     dmScreenNotes: '', // DM Screen session notes
     _nextId: {}
 };
+
+// Alias for convenience (backward compatibility)
+const D = window.D;
 
 let currentLootFilter = 'all';
 let currentLocFilter = 'all';
