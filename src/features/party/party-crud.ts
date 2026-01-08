@@ -362,7 +362,7 @@ export function editChar(id: number | string): void {
     if (speedSelect) {
         // Try to find matching option
         let found = false;
-        for (let opt of speedSelect.options) {
+        for (const opt of speedSelect.options) {
             if (opt.value === speedVal || opt.value.startsWith(speedVal.split('|')[0])) {
                 opt.selected = true;
                 found = true;

@@ -25,13 +25,6 @@ interface ShopItemCategory {
     color: string;
 }
 
-interface Currency {
-    name: string;
-    abbr: string;
-    icon: string;
-    inCopper: number;
-}
-
 interface CartItem {
     shopId: number;
     itemIdx: number;
@@ -104,20 +97,13 @@ const SHOP_ITEM_CATEGORIES: Readonly<Record<string, ShopItemCategory>> = Object.
     misc: { icon: '📦', name: 'Sonstiges', color: 'var(--text-dim)' }
 });
 
-const DND_CURRENCY: Readonly<Record<string, Currency>> = Object.freeze({
-    pp: { name: 'Platin', abbr: 'PP', icon: '💎', inCopper: 1000 },
-    gp: { name: 'Gold', abbr: 'GM', icon: '🪙', inCopper: 100 },
-    ep: { name: 'Elektrum', abbr: 'EM', icon: '⚪', inCopper: 50 },
-    sp: { name: 'Silber', abbr: 'SM', icon: '🥈', inCopper: 10 },
-    cp: { name: 'Kupfer', abbr: 'KM', icon: '🥉', inCopper: 1 }
-});
 
 // ============================================================
 // STATE
 // ============================================================
 
-let expandedShops: Set<number> = new Set();
-let expandedShopItems: Set<string> = new Set();
+const expandedShops: Set<number> = new Set();
+const expandedShopItems: Set<string> = new Set();
 let shopCart: CartItem[] = [];
 
 // ============================================================
@@ -276,11 +262,6 @@ export function showCartModal(): void {
 }
 
 function renderCartModal(): void {
-    const D = (window as any).D;
-    const renderEmptyState = (window as any).renderEmptyState;
-    const updateCounters = (window as any).updateCounters;
-    const populateFilterDropdown = (window as any).populateFilterDropdown;
-    const renderEntityLink = (window as any).renderEntityLink;
 
     const container = $('cart-items');
     const totalEl = $('cart-total');
@@ -691,7 +672,6 @@ export function collapseAllShops(): void {
 export function showShopModal(id: number | null = null): void {
     const D = (window as any).D;
     const nextId = (window as any).nextId;
-
     clearShopForm();
 
     const npcSelect = $('shop-npc') as HTMLSelectElement | null;

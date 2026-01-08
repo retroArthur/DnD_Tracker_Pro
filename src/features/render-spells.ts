@@ -178,7 +178,7 @@ export function renderAssignSpellList(): void {
     const levelFilter = levelFilterInput?.value || '';
 
     // Filter spells
-    let spells = D.spells.filter((s: any) => {
+    const spells = D.spells.filter((s: any) => {
         if (searchTerm) {
             const name = (s.name || '').toLowerCase();
             const school = (s.school || '').toLowerCase();
@@ -312,7 +312,7 @@ export function assignSpells(): void {
     const classFilter = classFilterInput?.value || '';
     const levelFilter = levelFilterInput?.value || '';
 
-    let finalSpells = [...selectedSpells];
+    const finalSpells = [...selectedSpells];
 
     // Bei aktivem Filter: behalte nicht-sichtbare bereits zugewiesene Zauber
     if (searchTerm || classFilter || levelFilter) {

@@ -123,7 +123,7 @@ export async function loadFromIndexedDBFallback(key: string): Promise<string> {
 
 // Debounced Save (für häufige Änderungen)
 // Als Variable definiert, um spätere Erweiterung (Decorator-Pattern) zu ermöglichen
-export let save = function(showMessage: boolean = false): void {
+export const save = function(showMessage: boolean = false): void {
     const autosaveToggle = $('autosave-toggle') as HTMLInputElement;
     if (!autosaveToggle?.checked) return;
 

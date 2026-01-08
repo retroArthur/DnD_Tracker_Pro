@@ -12,7 +12,7 @@ import { showModal } from '@systems/spellslots/navigation';
 // SESSIONS STATE
 // ============================================================
 let currentSessionTags: string[] = [];
-let activeTagFilters: string[] = [];
+const activeTagFilters: string[] = [];
 
 // STORY ARCS
 // ============================================================

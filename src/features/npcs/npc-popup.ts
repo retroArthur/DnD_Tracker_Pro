@@ -18,7 +18,7 @@ export function showNPCPopup(npcId: number | string, event: MouseEvent): void {
     // Entferne vorhandenes Popup
     closeNPCPopup();
 
-    const location = EntityLookup.location(npc.locationId);
+    const _location = EntityLookup.location(npc.locationId);
     const filter = EntityLookup.filter(npc.filterId);
 
     // Tags zusammenstellen

@@ -15,7 +15,7 @@ import { EntityLookup } from '@render/helpers';
 
 let currentSpellPage: number = 0;
 let filteredSpellsCache: any[] = [];
-let expandedSpells: Set<number> = new Set();
+const expandedSpells: Set<number> = new Set();
 let editorSelectSavedRange: Range | null = null;
 let floatingToolbarTarget: HTMLElement | null = null;
 let floatingToolbarRange: Range | null = null;
@@ -570,7 +570,7 @@ function handleEditorPaste(e: ClipboardEvent): void {
     if (html && (html.includes('<table') || html.includes('<TABLE'))) {
         const tableMatch = html.match(/<table[\s\S]*?<\/table>/i);
         if (tableMatch) {
-            let cleanTable = tableMatch[0]
+            const cleanTable = tableMatch[0]
                 .replace(/\s+(class|style|width|height|border|cellpadding|cellspacing|align|valign|bgcolor|xmlns|x:|data-[\w-]+)="[^"]*"/gi, '')
                 .replace(/<\/?colgroup[^>]*>/gi, '')
                 .replace(/<\/?col[^>]*>/gi, '')
@@ -1313,11 +1313,11 @@ export function saveSpell(): void {
 
     const timeSelect = timeSelectInput?.value || '';
     const timeCustom = timeCustomInput?.value.trim() || '';
-    let time = timeSelect === 'custom' ? timeCustom : timeSelect;
+    const time = timeSelect === 'custom' ? timeCustom : timeSelect;
 
     const durationSelect = durationSelectInput?.value || '';
     const durationCustom = durationCustomInput?.value.trim() || '';
-    let duration = durationSelect === 'custom' ? durationCustom : durationSelect;
+    const duration = durationSelect === 'custom' ? durationCustom : durationSelect;
 
     const classes = getSpellClassesFromCheckboxes();
 

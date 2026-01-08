@@ -8,7 +8,7 @@ import { showToast } from '@utils/utilities';
 import { saveUndoState } from '@systems/undo';
 import { createAutoBackup } from '@systems/backups';
 import { showModal, hideModal } from './navigation';
-import { saveImmediate, save } from './persistence';
+import { save } from './persistence';
 
 // IMPORT/EXPORT SCHEMA & TYPES
 // ============================================================
@@ -148,7 +148,6 @@ export function exportData(dataType: string): void {
         // Kampagnennamen hinzufügen
         const getCampaignIndex = (window as any).getCampaignIndex;
         const index = getCampaignIndex();
-        const STORAGE_KEY = (window as any).STORAGE_KEY;
         let campaignName = 'Standard-Kampagne';
 
         if (index.active !== APP_CONFIG.STORAGE_KEY) {

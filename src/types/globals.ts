@@ -3,18 +3,11 @@
  * Diese Datei deklariert alle globalen Funktionen für TypeScript-Kompatibilität
  */
 
-import type { 
-  EntityId, 
-  EntityType, 
-  Character, 
-  NPC, 
-  Location, 
-  Quest, 
-  Encounter, 
-  LootItem, 
-  Spell,
-  WikiEntry,
-  Shop,
+
+// Only import types that are actually used in the declarations below
+import type {
+  EntityId,
+  EntityType,
   Combatant,
   Tag
 } from './entities';

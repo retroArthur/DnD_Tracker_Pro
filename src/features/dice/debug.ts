@@ -3,7 +3,7 @@
 // Debug & Test Funktionen
 // Zeilen: 1,228
 
-import { $, esc } from '@utils/basic';
+import { $ } from '@utils/basic';
 import { showToast } from '@utils/utilities';
 import { save } from '@systems/spellslots/persistence';
 import { showModal } from '@systems/spellslots/navigation';
@@ -26,7 +26,6 @@ interface TestResult {
 
 const D = (window as any).D;
 const log = (window as any).log;
-const APP_CONFIG = (window as any).APP_CONFIG;
 const StorageAPI = (window as any).StorageAPI;
 const STORAGE_KEY = (window as any).STORAGE_KEY;
 const renderAll = (window as any).renderAll;
@@ -34,10 +33,6 @@ const renderSpells = (window as any).renderSpells;
 const renderParty = (window as any).renderParty;
 const renderWiki = (window as any).renderWiki;
 const renderMindmap = (window as any).renderMindmap;
-const renderNPCList = (window as any).renderNPCList;
-const renderLocations = (window as any).renderLocations;
-const renderQuests = (window as any).renderQuests;
-const renderLoot = (window as any).renderLoot;
 const renderEmptyState = (window as any).renderEmptyState;
 const populateFilterDropdown = (window as any).populateFilterDropdown;
 const updateCounters = (window as any).updateCounters;
@@ -59,7 +54,6 @@ const setTheme = (window as any).setTheme;
 const undo = (window as any).undo;
 const redo = (window as any).redo;
 const pushUndo = (window as any).pushUndo;
-const idb = (window as any).idb;
 const QREF_CONDITIONS = (window as any).QREF_CONDITIONS;
 const toggleQuickRef = (window as any).toggleQuickRef;
 const applyQrefCondition = (window as any).applyQrefCondition;

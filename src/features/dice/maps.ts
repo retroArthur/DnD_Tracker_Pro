@@ -121,7 +121,7 @@ let mapPanStart: Coordinates = { x: 0, y: 0 };
 let mapPanOffset: Coordinates = { x: 0, y: 0 };
 
 let currentMapTool: string = 'pan';
-let mapLayerVisibility: LayerVisibility = {
+const mapLayerVisibility: LayerVisibility = {
     party: true,
     poi: true,
     danger: true,
@@ -136,26 +136,26 @@ let showMapConnections: boolean = true;
 // Mess-Werkzeug State
 let measureStart: Coordinates | null = null;
 let measureEnd: Coordinates | null = null;
-let isMeasuring: boolean = false;
+let __isMeasuring: boolean = false;
 
 // Kalibrierungs-State
 let calibrationPoint1: Coordinates | null = null;
 let calibrationPoint2: Coordinates | null = null;
-let isCalibrating: boolean = false;
+let __isCalibrating: boolean = false;
 
 // Fog of War State
 let fogCanvas: HTMLCanvasElement | null = null;
 let fogCtx: CanvasRenderingContext2D | null = null;
-let fogBrushSize: number = 50;
+const fogBrushSize: number = 50;
 
 // Verbindungs-State
 let connectionStart: number | null = null;
 
 // Context Menu Position
-let contextMenuPos: Coordinates = { x: 0, y: 0 };
+const contextMenuPos: Coordinates = { x: 0, y: 0 };
 
 // Speichert letztes Messergebnis für Cursor-Tooltip
-let lastMeasureText: string = '';
+let __lastMeasureText: string = '';
 
 // Layer-Kategorien zu Marker-Typen
 const LAYER_TO_TYPES: { [key: string]: string[] } = {
@@ -425,7 +425,7 @@ export function initMapPanning(): void {
         updateMapTransform();
     });
 
-    viewport.addEventListener('mouseup', function(e: MouseEvent) {
+    viewport.addEventListener('mouseup', function(_e: MouseEvent) {
         if (mapIsPanning) {
             mapIsPanning = false;
             viewport.classList.remove('panning');
@@ -439,7 +439,7 @@ export function initMapPanning(): void {
         }
     });
 
-    viewport.addEventListener('mouseleave', function(e: MouseEvent) {
+    viewport.addEventListener('mouseleave', function(_e: MouseEvent) {
         if (mapIsPanning) {
             mapIsPanning = false;
             viewport.classList.remove('panning');
@@ -796,7 +796,7 @@ function handleMarkerDrag(event: MouseEvent): void {
     draggedMarker.newY = y;
 }
 
-function endMarkerDrag(event: MouseEvent): void {
+function endMarkerDrag(_event: MouseEvent): void {
     if (!draggedMarker) return;
 
     if (draggedMarker.newX !== undefined) {
@@ -887,13 +887,13 @@ export function setMapTool(tool: string): void {
     if (tool !== 'measure') {
         measureStart = null;
         measureEnd = null;
-        isMeasuring = false;
+        __isMeasuring = false;
         clearMeasureLine();
     }
     if (tool !== 'calibrate') {
         calibrationPoint1 = null;
         calibrationPoint2 = null;
-        isCalibrating = false;
+        __isCalibrating = false;
         clearMeasureLine();
     }
     if (tool !== 'connect') {
@@ -1168,11 +1168,11 @@ function handleMapToolClick(e: MouseEvent): void {
 function handleMeasureClick(x: number, y: number, imgRect: DOMRect): void {
     if (!measureStart) {
         measureStart = { x, y };
-        isMeasuring = true;
+        __isMeasuring = true;
         drawMeasureLine();
     } else {
         measureEnd = { x, y };
-        isMeasuring = false;
+        __isMeasuring = false;
         drawMeasureLine();
         showMeasureResult(imgRect);
 
@@ -1301,7 +1301,7 @@ function showMeasureResult(imgRect: DOMRect): void {
     }
 
     // Speichern für Cursor-Tooltip
-    lastMeasureText = resultText;
+    __lastMeasureText = resultText;
 
     // Cursor-Tooltip initial anzeigen
     const tooltip = $('map-cursor-tooltip');
@@ -1340,12 +1340,12 @@ function initCursorTooltip(): void {
 function handleCalibrationClick(x: number, y: number, imgRect: DOMRect): void {
     if (!calibrationPoint1) {
         calibrationPoint1 = { x, y };
-        isCalibrating = true;
+        __isCalibrating = true;
         drawCalibrationLine();
         showToast('📍 Erster Punkt gesetzt. Klicke auf den zweiten Punkt.');
     } else {
         calibrationPoint2 = { x, y };
-        isCalibrating = false;
+        __isCalibrating = false;
         drawCalibrationLine();
 
         // Pixel-Distanz berechnen
@@ -1844,7 +1844,7 @@ export function initExtendedMapFeatures(): void {
     }
 }
 
-function updateCalibrationStatus(): void {
+function _updateCalibrationStatus(): void {
     const statusEl = $('map-calibration-status');
     if (!statusEl) return;
 

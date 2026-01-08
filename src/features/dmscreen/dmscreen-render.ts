@@ -643,7 +643,7 @@ function handleDMSWidgetDragStart(this: HTMLElement, e: DragEvent): void {
     }
 }
 
-function handleDMSWidgetDragEnd(this: HTMLElement, e: DragEvent): void {
+function handleDMSWidgetDragEnd(this: HTMLElement, _e: DragEvent): void {
     this.classList.remove('dragging');
     document.querySelectorAll('.dmscreen-widget').forEach(w => {
         w.classList.remove('drag-over');
@@ -665,7 +665,7 @@ function handleDMSWidgetDragEnter(this: HTMLElement, e: DragEvent): void {
     }
 }
 
-function handleDMSWidgetDragLeave(this: HTMLElement, e: DragEvent): void {
+function handleDMSWidgetDragLeave(this: HTMLElement, _e: DragEvent): void {
     this.classList.remove('drag-over');
 }
 
@@ -734,7 +734,7 @@ function handleDMSConfigDragStart(this: HTMLElement, e: DragEvent): void {
     }
 }
 
-function handleDMSConfigDragEnd(this: HTMLElement, e: DragEvent): void {
+function handleDMSConfigDragEnd(this: HTMLElement, _e: DragEvent): void {
     this.classList.remove('dragging');
     document.querySelectorAll('.dms-config-item').forEach(i => {
         i.classList.remove('drag-over');
@@ -756,7 +756,7 @@ function handleDMSConfigDragEnter(this: HTMLElement, e: DragEvent): void {
     }
 }
 
-function handleDMSConfigDragLeave(this: HTMLElement, e: DragEvent): void {
+function handleDMSConfigDragLeave(this: HTMLElement, _e: DragEvent): void {
     this.classList.remove('drag-over');
 }
 
@@ -1717,7 +1717,7 @@ export function dmsRollOnTable(tableId: number): void {
     showToast(`🎲 ${table.name}: ${result.text}`);
 }
 
-function dmsShowConditionDetail(conditionId?: string): void {
+function dmsShowConditionDetail(_conditionId?: string): void {
     // Use existing showConditionReference if available
     if (typeof (window as any).showConditionReference === 'function') {
         (window as any).showConditionReference();

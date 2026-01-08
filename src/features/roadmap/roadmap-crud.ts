@@ -283,8 +283,8 @@ export function autoLayoutRoadmap(): void {
     // 5. Koordinaten normalisieren - alle Events zu positiven Koordinaten verschieben
     // CRITICAL: Dies muss hier passieren, NICHT im Rendering (vermeidet kumulative Transformation)
     const PADDING = 500;
-    let minX = Math.min(...D.roadmap.events.map((e: any) => e.x || 0));
-    let minY = Math.min(...D.roadmap.events.map((e: any) => e.y || 0));
+    const minX = Math.min(...D.roadmap.events.map((e: any) => e.x || 0));
+    const minY = Math.min(...D.roadmap.events.map((e: any) => e.y || 0));
 
     // Nur verschieben wenn negative Koordinaten vorhanden
     if (minX < PADDING || minY < PADDING) {

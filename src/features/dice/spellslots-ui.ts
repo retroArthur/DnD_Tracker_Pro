@@ -3,10 +3,10 @@
 // Zauberplatz-UI
 // Zeilen: 106
 
-import { $ } from '@utils/basic';
 import { showToast } from '@utils/utilities';
 import { save } from '@systems/spellslots/persistence';
 import { EntityLookup } from '@render/helpers';
+import { getSpellSlotsForClass } from '@systems/spellslots/spell-slots-core';
 
 // ============================================================
 // TYPES
@@ -22,10 +22,6 @@ type SpellSlots = Record<number, SpellSlot>;
 // ============================================================
 // SPELL SLOTS TRACKING
 // ============================================================
-
-const D = (window as any).D;
-const getSpellSlotsForClass = (window as any).getSpellSlotsForClass;
-const nextId = (window as any).nextId;
 const renderParty = (window as any).renderParty;
 
 export function getSpellSlots(charId: number | string): SpellSlots | null {

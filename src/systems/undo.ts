@@ -127,7 +127,7 @@ export function clearUndoHistory(): void {
 // AUTO-SAVE INDIKATOR
 // ============================================================
 let lastSaveTime = Date.now();
-let saveIndicatorTimeout: ReturnType<typeof setTimeout> | null = null;
+const saveIndicatorTimeout: ReturnType<typeof setTimeout> | null = null;
 
 type SaveStatus = 'saved' | 'saving' | 'error';
 
@@ -152,7 +152,7 @@ export function updateSaveIndicator(status: SaveStatus = 'saved'): void {
 // KONFLIKT-ERKENNUNG
 // ============================================================
 let broadcastChannel: BroadcastChannel | null = null;
-let tabId = Math.random().toString(36).substr(2, 9);
+const tabId = Math.random().toString(36).substr(2, 9);
 let conflictDismissed = false;
 
 interface BroadcastMessage {
@@ -418,7 +418,7 @@ export function parseMarkdown(text: string): string {
 
     const esc = (window as any).esc;
     // ERST escapen, DANN Markdown parsen (XSS-Schutz)
-    let escaped = esc(text);
+    const escaped = esc(text);
 
     return escaped
         // Headers

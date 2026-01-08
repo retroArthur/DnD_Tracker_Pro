@@ -4,7 +4,6 @@
 
 import { $, esc } from '@utils/basic';
 import { showToast } from '@utils/utilities';
-import { hideModal } from '@systems/spellslots/navigation';
 
 // ============================================================
 // TYPES & INTERFACES
@@ -163,9 +162,6 @@ export function rollCustomDice(): void {
 }
 
 // Helper to access save function
-function save(): void {
-    (window as any).save();
-}
 
 export function rollMultiple(notation: string, count: number): void {
     const results: number[] = [];
@@ -759,7 +755,7 @@ export function rollCharInitiative(): void {
 // FLOATING DICE PANEL
 // ============================================================
 
-let floatingDiceHistory: { notation: string; result: number | string }[] = [];
+const floatingDiceHistory: { notation: string; result: number | string }[] = [];
 
 export function toggleFloatingDice(): void {
     const panel = $('floating-dice-panel');

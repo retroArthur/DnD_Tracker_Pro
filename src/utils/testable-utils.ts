@@ -39,7 +39,7 @@ export function sanitizeHTML(html: string): string {
     if (!html) return '';
 
     // Schritt 1: Entferne gefährliche Patterns BEVOR Parsing
-    let cleaned = String(html)
+    const cleaned = String(html)
         .replace(/<script[\s\S]*?<\/script>/gi, '')
         .replace(/on\w+\s*=\s*["'][^"']*["']/gi, '')
         .replace(/on\w+\s*=\s*[^\s>]*/gi, '')

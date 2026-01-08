@@ -2,7 +2,6 @@
 // CORE UTILITIES - @utils @helpers @core
 // ============================================================
 
-import type { AppConfig } from '@core/config';
 import { $ } from './basic';
 
 // Polyfill for structuredClone (for older browsers)
@@ -363,6 +362,35 @@ export function showToast(
         setTimeout(() => {
             entry.classList.add('fade-out');
             setTimeout(() => entry.remove(), 400);
+        }, duration);
+    }
+
+    // Backward compatibility: Update legacy #toast element for E2E tests
+    let toast = $('toast');
+    if (!toast) {
+        toast = document.createElement('div');
+        toast.id = 'toast';
+        toast.style.cssText = 'position:fixed;top:20px;left:50%;transform:translateX(-50%);z-index:10000;padding:12px 24px;border-radius:8px;font-family:sans-serif;font-size:14px;box-shadow:0 4px 12px rgba(0,0,0,0.15);';
+        document.body.appendChild(toast);
+    }
+
+    toast.textContent = msg;
+    toast.className = `toast ${type}`;
+    toast.style.display = 'block';
+
+    // Set background color based on type
+    const bgColors: Record<ToastType, string> = {
+        success: '#10b981',
+        error: '#ef4444',
+        warning: '#f59e0b',
+        info: '#3b82f6'
+    };
+    toast.style.backgroundColor = bgColors[type] || bgColors.success;
+    toast.style.color = '#ffffff';
+
+    if (!isPersistent) {
+        setTimeout(() => {
+            if (toast) toast.style.display = 'none';
         }, duration);
     }
 }

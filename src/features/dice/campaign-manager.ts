@@ -62,7 +62,6 @@ interface EmptyData {
 const APP_CONFIG = (window as any).APP_CONFIG;
 const StorageAPI = (window as any).StorageAPI;
 const log = (window as any).log;
-const idb = (window as any).idb;
 const initIndexedDB = (window as any).initIndexedDB;
 
 const CAMPAIGN_INDEX_KEY: string = APP_CONFIG.CAMPAIGN_INDEX_KEY;
@@ -146,7 +145,7 @@ export async function deleteCampaign(): Promise<void> {
                 if (!idbInstance) await initIndexedDB();
 
                 // Lösche den spezifischen Eintrag aus dem campaigns Store
-                await new Promise<void>((resolve, reject) => {
+                await new Promise<void>((resolve, _reject) => {
                     const transaction = ((window as any).idb as IDBDatabase).transaction(['campaigns'], 'readwrite');
                     const store = transaction.objectStore('campaigns');
                     const request = store.delete(key);

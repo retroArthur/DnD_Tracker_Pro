@@ -4,7 +4,6 @@
 // Grundlegende DOM- und String-Funktionen
 // ============================================================
 
-import type { AppConfig } from '@core/config';
 
 // DOM-Selektor mit Debug-Warnung
 export function $(id: string): HTMLElement | null {
@@ -53,7 +52,7 @@ export function sanitizeHTML(html: string): string {
     if (!html) return '';
 
     // Schritt 1: Entferne gefährliche Patterns BEVOR Parsing
-    let cleaned = String(html)
+    const cleaned = String(html)
         .replace(/<script[\s\S]*?<\/script>/gi, '')
         .replace(/on\w+\s*=\s*["'][^"']*["']/gi, '')
         .replace(/on\w+\s*=\s*[^\s>]*/gi, '')
@@ -250,7 +249,7 @@ export const StorageAPI = {
             localStorage.setItem(testKey, 'test');
             localStorage.removeItem(testKey);
             return true;
-        } catch (e) {
+        } catch  {
             return false;
         }
     },
@@ -259,7 +258,7 @@ export const StorageAPI = {
     getStorageInfo(): StorageInfo | null {
         try {
             let totalSize = 0;
-            for (let key in localStorage) {
+            for (const key in localStorage) {
                 if (localStorage.hasOwnProperty(key)) {
                     totalSize += localStorage[key].length + key.length;
                 }
@@ -272,7 +271,7 @@ export const StorageAPI = {
                 estimatedLimitMB: (estimatedLimit / (1024 * 1024)).toFixed(0),
                 percentUsed: ((totalSize / estimatedLimit) * 100).toFixed(1)
             };
-        } catch (e) {
+        } catch  {
             return null;
         }
     },
