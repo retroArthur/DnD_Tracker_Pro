@@ -2,7 +2,6 @@
 // Extrahiert aus spellslots.js
 // Notizen-Templates
 // Zeilen: 70
-
 // NOTIZEN TEMPLATES
 // ============================================================
 const NOTE_TEMPLATES = {
@@ -15,7 +14,6 @@ const NOTE_TEMPLATES = {
 <ul><li></li></ul>
 <h4>Notizen</h4>
 <p></p>`,
-
     sozial: `<h3>💬 Soziale Begegnung</h3>
 <p><b>NPCs:</b> </p>
 <p><b>Ort:</b> </p>
@@ -25,7 +23,6 @@ const NOTE_TEMPLATES = {
 <ul><li></li></ul>
 <h4>Offene Fragen</h4>
 <ul><li></li></ul>`,
-
     exploration: `<h3>🗺️ Exploration</h3>
 <p><b>Ort:</b> </p>
 <p><b>Entdeckungen:</b></p>
@@ -35,7 +32,6 @@ const NOTE_TEMPLATES = {
 <ul><li></li></ul>
 <h4>Nächste Schritte</h4>
 <ul><li></li></ul>`,
-
     rast: `<h3>🏕️ Rast</h3>
 <p><b>Typ:</b> Kurze Rast / Lange Rast</p>
 <p><b>Ort:</b> </p>
@@ -45,7 +41,6 @@ const NOTE_TEMPLATES = {
 <ul><li></li></ul>
 <h4>Ereignisse</h4>
 <p></p>`,
-
     einkauf: `<h3>🛒 Einkauf & Handel</h3>
 <p><b>Händler:</b> </p>
 <p><b>Ort:</b> </p>
@@ -56,11 +51,10 @@ const NOTE_TEMPLATES = {
 <h4>Sonstiges</h4>
 <p></p>`
 };
-
 function applyNoteTemplate(templateKey) {
     const template = NOTE_TEMPLATES[templateKey];
-    if (!template) return;
-    
+    if (!template)
+        return;
     const editor = $('session-text');
     if (editor) {
         // Wenn bereits Text vorhanden, frage nach
@@ -71,5 +65,5 @@ function applyNoteTemplate(templateKey) {
         editor.focus();
     }
 }
-
 // ============================================================
+//# sourceMappingURL=notes-templates.js.map

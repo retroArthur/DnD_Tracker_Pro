@@ -2,12 +2,6 @@
 // ============================================================
 // QUICK ACTIONS BAR - Combat Action Shortcuts
 // ============================================================
-
-/**
- * D&D 5e Standard-Aktionen im Kampf
- * Zeigt Quick Actions für den aktiven Combatant
- */
-
 const QUICK_ACTIONS = Object.freeze({
     dodge: {
         name: 'Ausweichen',
@@ -58,24 +52,22 @@ const QUICK_ACTIONS = Object.freeze({
         effect: { name: 'Objekt genutzt', color: 'gray', duration: 1 }
     }
 });
-
-// Quick Actions Bar in Initiative rendern
+// Render Quick Actions Bar in Initiative
 function renderQuickActionsBar() {
+    const D = window.D;
     const container = $('quick-actions-bar');
-    if (!container) return;
-
+    if (!container)
+        return;
     const init = D.initiative;
     if (!init.combatants.length) {
         container.style.display = 'none';
         return;
     }
-
     const current = init.combatants[init.currentTurn];
     if (!current || current.type === 'lair') {
         container.style.display = 'none';
         return;
     }
-
     container.style.display = 'flex';
     container.innerHTML = `
         <div class="qa-header">
@@ -91,27 +83,27 @@ function renderQuickActionsBar() {
         </div>
     `;
 }
-
 function applyQuickAction(cbId, actionKey) {
-    const cb = D.initiative.combatants.find(c => c.id === cbId);
-    if (!cb) return;
-
+    const D = window.D;
+    const renderInit = window.renderInit;
+    const id = typeof cbId === 'string' ? parseInt(cbId) : cbId;
+    const cb = D.initiative.combatants.find((c) => c.id === id);
+    if (!cb)
+        return;
     const action = QUICK_ACTIONS[actionKey];
-    if (!action) return;
-
+    if (!action)
+        return;
     pushUndo(`Quick Action: ${action.name}`);
-
-    // Effekt anwenden falls vorhanden
+    // Apply effect if present
     if (action.effect) {
-        if (!cb.effects) cb.effects = [];
-
-        // Prüfen ob Effekt bereits existiert
-        const existing = cb.effects.find(e => e.name === action.effect.name);
+        if (!cb.effects)
+            cb.effects = [];
+        // Check if effect already exists
+        const existing = cb.effects.find((e) => e.name === action.effect.name);
         if (existing) {
             showToast(`${cb.name} ist bereits ${action.effect.name}`, 'info');
             return;
         }
-
         cb.effects.push({
             id: Date.now(),
             name: action.effect.name,
@@ -120,11 +112,9 @@ function applyQuickAction(cbId, actionKey) {
             permanent: action.effect.permanent || false,
             description: action.desc
         });
-
         showToast(`${action.icon} ${cb.name}: ${action.effect.name}`, 'success');
     }
-
-    // Spezielle Aktionen ohne Effekt - nur Toast
+    // Special actions without effect - only toast
     switch (actionKey) {
         case 'dash':
             let speed = '9m';
@@ -136,9 +126,8 @@ function applyQuickAction(cbId, actionKey) {
             }
             showToast(`${action.icon} ${cb.name} sprintet (2× ${speed})`, 'info');
             break;
-
         case 'hide':
-            // Würfelt automatisch Stealth - Effekt wird oben gesetzt
+            // Automatically rolls Stealth - effect is set above
             const stealthRoll = Math.floor(Math.random() * 20) + 1;
             let stealthMod = 0;
             if (cb.type === 'player') {
@@ -150,11 +139,9 @@ function applyQuickAction(cbId, actionKey) {
             const total = stealthRoll + stealthMod;
             showToast(`${action.icon} Stealth: ${stealthRoll}${stealthMod >= 0 ? '+' : ''}${stealthMod} = ${total}`, stealthRoll === 20 ? 'success' : stealthRoll === 1 ? 'error' : 'info');
             break;
-
         case 'help':
             showToast(`${action.icon} ${cb.name} hilft einem Verbündeten`, 'info');
             break;
-
         case 'search':
             const perceptionRoll = Math.floor(Math.random() * 20) + 1;
             let perceptionMod = 0;
@@ -167,17 +154,14 @@ function applyQuickAction(cbId, actionKey) {
             const percTotal = perceptionRoll + perceptionMod;
             showToast(`${action.icon} Wahrnehmung: ${perceptionRoll}${perceptionMod >= 0 ? '+' : ''}${perceptionMod} = ${percTotal}`, perceptionRoll === 20 ? 'success' : perceptionRoll === 1 ? 'error' : 'info');
             break;
-
         case 'useObject':
             showToast(`${action.icon} ${cb.name} benutzt ein Objekt`, 'info');
             break;
     }
-
     renderInit();
     renderQuickActionsBar();
     save();
 }
-
 // Condition Quick Reference Modal
 function showConditionReference() {
     const content = `
@@ -194,32 +178,33 @@ function showConditionReference() {
             </div>
         </div>
     `;
-
     let modal = $('condition-ref-modal');
     if (!modal) {
         modal = document.createElement('div');
         modal.id = 'condition-ref-modal';
         modal.className = 'modal-overlay';
         modal.innerHTML = `<div class="modal" style="max-width: 600px; max-height: 80vh;">${content}</div>`;
-        modal.onclick = (e) => { if (e.target === modal) hideModal('condition-ref-modal'); };
+        modal.onclick = (e) => { if (e.target === modal)
+            hideModal('condition-ref-modal'); };
         document.body.appendChild(modal);
-    } else {
-        modal.querySelector('.modal').innerHTML = content;
     }
-
+    else {
+        const modalContent = modal.querySelector('.modal');
+        if (modalContent)
+            modalContent.innerHTML = content;
+    }
     showModal('condition-ref-modal');
-    $('condition-search')?.focus();
+    const searchInput = $('condition-search');
+    if (searchInput)
+        searchInput.focus();
 }
-
 function renderConditionList(filter = '') {
+    const CONDITIONS = window.CONDITIONS;
     const filterLower = filter.toLowerCase();
-
-    return Object.entries(CONDITIONS)
-        .filter(([key, cond]) =>
-            !filter ||
-            cond.name.toLowerCase().includes(filterLower) ||
-            cond.desc.toLowerCase().includes(filterLower)
-        )
+    const items = Object.entries(CONDITIONS)
+        .filter(([key, cond]) => !filter ||
+        cond.name.toLowerCase().includes(filterLower) ||
+        cond.desc.toLowerCase().includes(filterLower))
         .map(([key, cond]) => `
             <div class="condition-ref-item">
                 <div class="condition-ref-name">
@@ -228,13 +213,23 @@ function renderConditionList(filter = '') {
                 </div>
                 <div class="condition-ref-desc">${esc(cond.desc)}</div>
             </div>
-        `).join('') || '<div class="condition-ref-empty">Keine Zustände gefunden</div>';
+        `).join('');
+    return items || '<div class="condition-ref-empty">Keine Zustände gefunden</div>';
 }
-
 function filterConditions() {
-    const search = $('condition-search')?.value || '';
+    const searchInput = $('condition-search');
+    const search = searchInput?.value || '';
     const list = $('condition-ref-list');
     if (list) {
         list.innerHTML = renderConditionList(search);
     }
 }
+// ============================================================
+// EXPORTS FOR GLOBAL ACCESS
+// ============================================================
+window.QUICK_ACTIONS = QUICK_ACTIONS;
+window.renderQuickActionsBar = renderQuickActionsBar;
+window.applyQuickAction = applyQuickAction;
+window.showConditionReference = showConditionReference;
+window.filterConditions = filterConditions;
+//# sourceMappingURL=quick-actions.js.map

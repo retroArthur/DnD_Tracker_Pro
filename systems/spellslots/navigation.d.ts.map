@@ -1,0 +1,1 @@
+{"version":3,"file":"navigation.d.ts","sourceRoot":"","sources":["../../../src/systems/spellslots/navigation.ts"],"names":[],"mappings":"AAQA,iBAAS,UAAU,CAAC,IAAI,EAAE,MAAM,GAAG,IAAI,CAwDtC;AAwBD,iBAAS,cAAc,CAAC,EAAE,EAAE,MAAM,GAAG,IAAI,CAaxC;AAED,iBAAS,mBAAmB,IAAI,IAAI,CAUnC;AAED,iBAAS,mBAAmB,IAAI,IAAI,CAMnC;AAED,iBAAS,cAAc,IAAI,IAAI,CAS9B;AAED,iBAAS,eAAe,IAAI,IAAI,CAgB/B"}

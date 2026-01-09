@@ -2,35 +2,40 @@
 // ============================================================
 // QUESTS CRUD - @create @edit @delete @save
 // ============================================================
-
 /**
- * Speichert oder aktualisiert eine Quest
- * Liest Formulardaten und erstellt/aktualisiert den Quest-Eintrag
+ * Saves or updates a quest
+ * Reads form data and creates/updates the quest entry
  */
 function saveQuest() {
-    const id = $('edit-quest-id').value;
-
-    // Belohnungs-Items sammeln
+    const D = window.D;
+    const renderQuests = window.renderQuests;
+    const validateAndShowErrors = window.validateAndShowErrors;
+    const idInput = $('edit-quest-id');
+    const id = idInput?.value || '';
+    // Collect reward items
     const rewardItemsEl = $('quest-reward-items-list');
     const rewardItems = [];
     if (rewardItemsEl) {
         rewardItemsEl.querySelectorAll('.quest-reward-item-tag').forEach(tag => {
-            const itemId = tag.dataset.itemId;
-            const itemName = tag.dataset.itemName;
+            const element = tag;
+            const itemId = element.dataset.itemId;
+            const itemName = element.dataset.itemName;
             if (itemId && itemName) {
                 rewardItems.push({ id: parseInt(itemId), name: itemName });
             }
         });
     }
-
+    const giverSelect = $('quest-giver');
+    const locationSelect = $('quest-location');
+    const targetSelect = $('quest-target');
     const q = {
         title: $('quest-title').value.trim(),
-        giverId: parseInt($('quest-giver').value) || null,
-        giverName: $('quest-giver').selectedOptions[0]?.text || '',
-        locationId: parseInt($('quest-location').value) || null,
-        locationName: $('quest-location').selectedOptions[0]?.text || '',
-        targetId: parseInt($('quest-target').value) || null,
-        targetName: $('quest-target').selectedOptions[0]?.text || '',
+        giverId: parseInt(giverSelect.value) || null,
+        giverName: giverSelect.selectedOptions[0]?.text || '',
+        locationId: parseInt(locationSelect.value) || null,
+        locationName: locationSelect.selectedOptions[0]?.text || '',
+        targetId: parseInt(targetSelect.value) || null,
+        targetName: targetSelect.selectedOptions[0]?.text || '',
         type: $('quest-type').value,
         description: sanitizeHTML($('quest-desc').innerHTML),
         rewardGold: parseInt($('quest-reward-gold').value) || 0,
@@ -40,16 +45,16 @@ function saveQuest() {
         completed: $('quest-completed').checked,
         rewardReceived: $('quest-rewarded').checked
     };
-
     // Validate entity references and required fields
-    if (!validateAndShowErrors(q, 'quest')) return;
-
+    if (!validateAndShowErrors(q, 'quest'))
+        return;
     pushUndo(id ? 'Quest bearbeitet' : 'Quest erstellt');
-
     if (id) {
-        const idx = D.quests.findIndex(x => x.id === parseEntityId(id));
-        if (idx > -1) D.quests[idx] = { ...D.quests[idx], ...q };
-    } else {
+        const idx = D.quests.findIndex((x) => x.id === parseEntityId(id));
+        if (idx > -1)
+            D.quests[idx] = { ...D.quests[idx], ...q };
+    }
+    else {
         q.id = nextId('quests');
         D.quests.push(q);
     }
@@ -58,54 +63,54 @@ function saveQuest() {
     renderQuests();
     save();
 }
-
 /**
- * Oeffnet das Bearbeitungsmodal fuer eine Quest
- * @param {number|string} id - Quest ID
+ * Opens the edit modal for a quest
  */
 function editQuest(id) {
     const q = EntityLookup.quest(id);
-    if (!q) return;
-
-    // Erst Dropdowns befüllen
+    if (!q)
+        return;
+    // First populate dropdowns
     populateQuestSelects();
-
-    $('edit-quest-id').value = id;
+    const idInput = $('edit-quest-id');
+    if (idInput)
+        idInput.value = String(id);
     $('quest-title').value = q.title;
     $('quest-type').value = q.type || 'quest';
     $('quest-desc').innerHTML = sanitizeHTML(q.description) || '';
     $('quest-epilog').innerHTML = sanitizeHTML(q.epilog) || '';
     $('quest-completed').checked = q.completed;
     $('quest-rewarded').checked = q.rewardReceived;
-
-    // Belohnung
-    $('quest-reward-gold').value = q.rewardGold || '';
+    // Reward
+    $('quest-reward-gold').value = q.rewardGold ? String(q.rewardGold) : '';
     $('quest-reward-other').value = q.rewardOther || q.reward || '';
-
-    // Belohnungs-Items laden
+    // Load reward items
     const itemsList = $('quest-reward-items-list');
     if (itemsList) {
         itemsList.innerHTML = '';
-        (q.rewardItems || []).forEach(item => {
+        (q.rewardItems || []).forEach((item) => {
             addQuestRewardItemTag(item.id, item.name);
         });
     }
-
-    // Dropdowns setzen (mit Timeout damit sie gefüllt sind)
+    // Set dropdowns (with timeout so they are filled)
     setTimeout(() => {
-        if (q.giverId) $('quest-giver').value = String(q.giverId);
-        if (q.locationId) $('quest-location').value = String(q.locationId);
-        if (q.targetId) $('quest-target').value = String(q.targetId);
+        const giverSelect = $('quest-giver');
+        const locationSelect = $('quest-location');
+        const targetSelect = $('quest-target');
+        if (q.giverId && giverSelect)
+            giverSelect.value = String(q.giverId);
+        if (q.locationId && locationSelect)
+            locationSelect.value = String(q.locationId);
+        if (q.targetId && targetSelect)
+            targetSelect.value = String(q.targetId);
     }, 10);
-
     showModal('quest-modal');
 }
-
 /**
- * Loescht eine Quest nach Bestaetigung
- * @param {number|string} id - Quest ID
+ * Deletes a quest after confirmation
  */
 function deleteQuest(id) {
+    const renderQuests = window.renderQuests;
     deleteWithConfirm({
         entityType: 'quests',
         id: id,
@@ -117,9 +122,10 @@ function deleteQuest(id) {
         }
     });
 }
-
 function clearQuestForm() {
-    $('edit-quest-id').value = '';
+    const idInput = $('edit-quest-id');
+    if (idInput)
+        idInput.value = '';
     $('quest-title').value = '';
     $('quest-giver').value = '';
     $('quest-location').value = '';
@@ -131,73 +137,79 @@ function clearQuestForm() {
     $('quest-reward-other').value = '';
     $('quest-reward-item').value = '';
     const itemsList = $('quest-reward-items-list');
-    if (itemsList) itemsList.innerHTML = '';
+    if (itemsList)
+        itemsList.innerHTML = '';
     $('quest-completed').checked = false;
     $('quest-rewarded').checked = false;
 }
-
 function populateQuestSelects() {
-    // NPC-Dropdown für Quest-Geber
+    const D = window.D;
+    // NPC dropdown for quest giver
     const giverSelect = $('quest-giver');
     if (giverSelect) {
         const currentValue = giverSelect.value;
         giverSelect.innerHTML = '<option value="">-- NPC wählen --</option>' +
-            D.npcs.map(n => `<option value="${n.id}">${esc(n.name)}${n.role ? ` (${esc(n.role)})` : ''}</option>`).join('');
+            D.npcs.map((n) => `<option value="${n.id}">${esc(n.name)}${n.role ? ` (${esc(n.role)})` : ''}</option>`).join('');
         giverSelect.value = currentValue;
     }
-
-    // Ort-Dropdown
+    // Location dropdown
     const locationSelect = $('quest-location');
     if (locationSelect) {
         const currentValue = locationSelect.value;
         locationSelect.innerHTML = '<option value="">-- Ort wählen --</option>' +
-            D.locations.map(l => `<option value="${l.id}">${esc(l.name)}</option>`).join('');
+            D.locations.map((l) => `<option value="${l.id}">${esc(l.name)}</option>`).join('');
         locationSelect.value = currentValue;
     }
-
-    // Zielort-Dropdown
+    // Target location dropdown
     const targetSelect = $('quest-target');
     if (targetSelect) {
         const currentValue = targetSelect.value;
         targetSelect.innerHTML = '<option value="">-- Zielort wählen --</option>' +
-            D.locations.map(l => `<option value="${l.id}">${esc(l.name)}</option>`).join('');
+            D.locations.map((l) => `<option value="${l.id}">${esc(l.name)}</option>`).join('');
         targetSelect.value = currentValue;
     }
-
-    // Items aus Truhe für Belohnung
+    // Items from loot for reward
     const itemSelect = $('quest-reward-item');
     if (itemSelect) {
         itemSelect.innerHTML = '<option value="">-- Item wählen --</option>' +
-            D.loot.map(i => `<option value="${i.id}" data-name="${esc(i.name)}">${esc(i.name)}${i.quantity > 1 ? ` (${i.quantity}x)` : ''}</option>`).join('');
+            D.loot.map((i) => `<option value="${i.id}" data-name="${esc(i.name)}">${esc(i.name)}${i.quantity > 1 ? ` (${i.quantity}x)` : ''}</option>`).join('');
     }
 }
-
 function addQuestRewardItem() {
     const select = $('quest-reward-item');
-    if (!select || !select.value) return;
-
+    if (!select || !select.value)
+        return;
     const itemId = select.value;
-    const itemName = select.selectedOptions[0].dataset.name;
-
-    // Prüfen ob Item schon hinzugefügt
+    const option = select.selectedOptions[0];
+    const itemName = option.dataset.name || '';
+    // Check if item already added
     const itemsList = $('quest-reward-items-list');
-    if (itemsList.querySelector(`[data-item-id="${itemId}"]`)) {
+    if (itemsList?.querySelector(`[data-item-id="${itemId}"]`)) {
         showToast('Item bereits hinzugefügt');
         return;
     }
-
     addQuestRewardItemTag(itemId, itemName);
     select.value = '';
 }
-
 function addQuestRewardItemTag(itemId, itemName) {
     const itemsList = $('quest-reward-items-list');
-    if (!itemsList) return;
-
+    if (!itemsList)
+        return;
     const tag = document.createElement('span');
     tag.className = 'quest-reward-item-tag';
-    tag.dataset.itemId = itemId;
+    tag.dataset.itemId = String(itemId);
     tag.dataset.itemName = itemName;
     tag.innerHTML = `📦 ${esc(itemName)} <button type="button" class="remove-btn" data-action="remove-parent">×</button>`;
     itemsList.appendChild(tag);
 }
+// ============================================================
+// EXPORTS FOR GLOBAL ACCESS
+// ============================================================
+window.saveQuest = saveQuest;
+window.editQuest = editQuest;
+window.deleteQuest = deleteQuest;
+window.clearQuestForm = clearQuestForm;
+window.populateQuestSelects = populateQuestSelects;
+window.addQuestRewardItem = addQuestRewardItem;
+window.addQuestRewardItemTag = addQuestRewardItemTag;
+//# sourceMappingURL=quests-crud.js.map

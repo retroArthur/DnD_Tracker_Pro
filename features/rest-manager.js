@@ -2,22 +2,19 @@
 // ============================================================
 // REST MANAGER - Short & Long Rest Management
 // ============================================================
-
 /**
  * D&D 5e Rest System
  * - Short Rest: Spend Hit Dice, regain features (depends on class)
  * - Long Rest: Full HP, half Hit Dice, all spell slots, class features
  */
-
 // Rest Modal anzeigen
 function showRestModal() {
+    const D = window.D;
     const characters = D.characters || [];
-
     if (!characters.length) {
         showToast('Keine Charaktere vorhanden', 'error');
         return;
     }
-
     const content = `
         <div class="rest-modal-content">
             <div class="rest-modal-header">
@@ -52,7 +49,6 @@ function showRestModal() {
             </div>
         </div>
     `;
-
     // Modal erstellen oder wiederverwenden
     let modal = $('rest-modal');
     if (!modal) {
@@ -60,34 +56,35 @@ function showRestModal() {
         modal.id = 'rest-modal';
         modal.className = 'modal-overlay';
         modal.innerHTML = `<div class="modal" style="max-width: 600px;">${content}</div>`;
-        modal.onclick = (e) => { if (e.target === modal) hideModal('rest-modal'); };
+        modal.onclick = (e) => { if (e.target === modal)
+            hideModal('rest-modal'); };
         document.body.appendChild(modal);
-    } else {
-        modal.querySelector('.modal').innerHTML = content;
     }
-
+    else {
+        const modalContent = modal.querySelector('.modal');
+        if (modalContent)
+            modalContent.innerHTML = content;
+    }
     showModal('rest-modal');
 }
-
 function selectRestType(type) {
+    const D = window.D;
     // Button-States aktualisieren
     document.querySelectorAll('.rest-type-btn').forEach(btn => {
-        btn.classList.toggle('active', btn.dataset.type === type);
+        const button = btn;
+        button.classList.toggle('active', button.dataset.type === type);
     });
-
     // Details aktualisieren
     const detailsEl = $('rest-details');
     if (detailsEl) {
         detailsEl.innerHTML = renderRestDetails(type);
     }
-
     // Charakter-Liste aktualisieren
     const charsEl = $('rest-characters');
     if (charsEl) {
         charsEl.innerHTML = renderRestCharacters(D.characters || [], type);
     }
 }
-
 function renderRestDetails(type) {
     if (type === 'short') {
         return `
@@ -100,7 +97,8 @@ function renderRestDetails(type) {
                 </ul>
             </div>
         `;
-    } else {
+    }
+    else {
         return `
             <div class="rest-info">
                 <h4>🌙 Lange Rast (8 Stunden)</h4>
@@ -115,12 +113,10 @@ function renderRestDetails(type) {
         `;
     }
 }
-
 function renderRestCharacters(characters, type) {
     if (!characters.length) {
         return '<div class="rest-no-chars">Keine Charaktere</div>';
     }
-
     return characters.map(char => {
         const maxHitDice = char.level || 1;
         const currentHitDice = char.hitDice ?? maxHitDice;
@@ -129,7 +125,6 @@ function renderRestCharacters(characters, type) {
         const hpPct = Math.round((currentHp / maxHp) * 100);
         const hpClass = hpPct <= 25 ? 'critical' : hpPct <= 50 ? 'bloodied' : 'healthy';
         const hitDieType = getHitDieType(char.class);
-
         return `
             <div class="rest-character" data-id="${char.id}">
                 <span class="rest-char-name">${esc(char.name)}</span>
@@ -150,7 +145,6 @@ function renderRestCharacters(characters, type) {
         `;
     }).join('');
 }
-
 function getHitDieType(className) {
     const hitDice = {
         'Barbar': 12,
@@ -161,14 +155,14 @@ function getHitDieType(className) {
     };
     return hitDice[className] || 8;
 }
-
 function adjustRestHitDice(charId, delta) {
-    const input = $(`rest-hd-${charId}`);
-    if (!input) return;
-
-    const char = EntityLookup.character(charId);
-    if (!char) return;
-
+    const id = typeof charId === 'string' ? parseInt(charId) : charId;
+    const input = $(`rest-hd-${id}`);
+    if (!input)
+        return;
+    const char = EntityLookup.character(id);
+    if (!char)
+        return;
     // Defensive parsing - handle NaN and undefined
     const maxHD = parseInt(char.level) || 1;
     const availableHD = (typeof char.hitDice === 'number' && !isNaN(char.hitDice))
@@ -176,38 +170,33 @@ function adjustRestHitDice(charId, delta) {
         : maxHD;
     const current = parseInt(input.value) || 0;
     const newValue = Math.max(0, Math.min(availableHD, current + delta));
-
     // Only set if valid number
     if (!isNaN(newValue)) {
-        input.value = newValue;
+        input.value = String(newValue);
     }
 }
-
 function applyRest() {
+    const D = window.D;
+    const renderParty = window.renderParty;
+    const renderInit = window.renderInit;
     const isLongRest = document.querySelector('.rest-type-btn[data-type="long"].active') !== null;
-
     pushUndo(`${isLongRest ? 'Lange' : 'Kurze'} Rast`);
-
     let totalHealed = 0;
     let hitDiceSpent = 0;
-
-    D.characters.forEach(char => {
+    D.characters.forEach((char) => {
         const maxHp = char.hpMax ?? char.hp ?? 1;
         const maxHitDice = char.level || 1;
         const hitDieType = getHitDieType(char.class);
         const conMod = char.attributes?.con ? Math.floor((char.attributes.con - 10) / 2) : 0;
-
         if (isLongRest) {
             // Lange Rast: Volle HP, halbe Trefferwürfel zurück
             const hpBefore = char.hpCurrent ?? char.hp ?? 0;
             char.hpCurrent = maxHp;
             totalHealed += maxHp - hpBefore;
-
             // Trefferwürfel regenerieren (halbe, mind. 1)
             const currentHD = char.hitDice ?? maxHitDice;
             const hdToRestore = Math.max(1, Math.floor(maxHitDice / 2));
             char.hitDice = Math.min(maxHitDice, currentHD + hdToRestore);
-
             // Zauberplätze zurücksetzen
             if (char.spellSlots) {
                 for (let lvl = 1; lvl <= 9; lvl++) {
@@ -216,34 +205,31 @@ function applyRest() {
                     }
                 }
             }
-
             // Erschöpfung reduzieren
             if (char.exhaustion && char.exhaustion > 0) {
                 char.exhaustion = Math.max(0, char.exhaustion - 1);
             }
-        } else {
+        }
+        else {
             // Kurze Rast: Trefferwürfel ausgeben
-            const hdToSpend = parseInt($(`rest-hd-${char.id}`)?.value) || 0;
+            const hdInput = $(`rest-hd-${char.id}`);
+            const hdToSpend = parseInt(hdInput?.value || '0') || 0;
             if (hdToSpend > 0) {
                 const currentHD = char.hitDice ?? maxHitDice;
                 const actualSpend = Math.min(hdToSpend, currentHD);
-
                 // Würfeln und heilen
                 let healing = 0;
                 for (let i = 0; i < actualSpend; i++) {
                     healing += Math.floor(Math.random() * hitDieType) + 1 + conMod;
                 }
                 healing = Math.max(0, healing);
-
                 const hpBefore = char.hpCurrent ?? char.hp ?? 0;
                 char.hpCurrent = Math.min(maxHp, hpBefore + healing);
                 totalHealed += char.hpCurrent - hpBefore;
-
                 // Trefferwürfel verbrauchen
                 char.hitDice = currentHD - actualSpend;
                 hitDiceSpent += actualSpend;
             }
-
             // Hexenmeister: Zauberplätze bei kurzer Rast
             if (char.class === 'Hexenmeister' && char.spellSlots) {
                 for (let lvl = 1; lvl <= 5; lvl++) {
@@ -254,51 +240,53 @@ function applyRest() {
             }
         }
     });
-
     hideModal('rest-modal');
     save();
     renderParty();
     renderInit();
-
     // Feedback
     if (isLongRest) {
         showToast(`🌙 Lange Rast: ${totalHealed} HP geheilt`, 'success');
-    } else {
+    }
+    else {
         showToast(`⏰ Kurze Rast: ${totalHealed} HP geheilt (${hitDiceSpent} Trefferwürfel)`, 'success');
     }
 }
-
 // Quick Rest für einzelnen Charakter
 function quickShortRest(charId) {
     const char = EntityLookup.character(charId);
-    if (!char) return;
-
+    if (!char)
+        return;
     const maxHp = char.hpMax ?? char.hp ?? 1;
     const currentHp = char.hpCurrent ?? char.hp ?? 0;
-
     if (currentHp >= maxHp) {
         showToast(`${char.name} ist bereits bei voller HP`, 'info');
         return;
     }
-
     const currentHD = char.hitDice ?? char.level ?? 1;
     if (currentHD <= 0) {
         showToast(`${char.name} hat keine Trefferwürfel mehr`, 'warning');
         return;
     }
-
     const hitDieType = getHitDieType(char.class);
     const conMod = char.attributes?.con ? Math.floor((char.attributes.con - 10) / 2) : 0;
-
     // Einen Trefferwürfel ausgeben
     const healing = Math.floor(Math.random() * hitDieType) + 1 + conMod;
     const actualHeal = Math.min(healing, maxHp - currentHp);
-
     pushUndo(`${char.name} kurze Rast`);
     char.hpCurrent = currentHp + actualHeal;
     char.hitDice = currentHD - 1;
-
+    const renderParty = window.renderParty;
     save();
     renderParty();
     showToast(`${char.name}: +${actualHeal} HP (d${hitDieType}+${conMod})`, 'success');
 }
+// ============================================================
+// EXPORTS FOR GLOBAL ACCESS
+// ============================================================
+window.showRestModal = showRestModal;
+window.selectRestType = selectRestType;
+window.adjustRestHitDice = adjustRestHitDice;
+window.applyRest = applyRest;
+window.quickShortRest = quickShortRest;
+//# sourceMappingURL=rest-manager.js.map

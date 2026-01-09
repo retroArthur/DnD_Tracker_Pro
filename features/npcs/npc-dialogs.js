@@ -2,12 +2,16 @@
 // ============================================================
 // NPC DIALOGS - @dialog @modal @conversation
 // ============================================================
-
 // Globale Counter-Variable für Dialog-Felder
 let dialogFieldCounter = 0;
-
+/**
+ * Adds a dialog field to the NPC form
+ */
 function addDialogField() {
+    const handleEditorPaste = window.handleEditorPaste;
     const container = $('npc-dialogs-container');
+    if (!container)
+        return;
     const id = dialogFieldCounter++;
     const editorId = `dialog-text-${id}`;
     const div = document.createElement('div');
@@ -43,16 +47,18 @@ function addDialogField() {
         </div>
     `;
     container.appendChild(div);
-
     // Paste-Handler für dieses Feld hinzufügen
     const editor = $(editorId);
-    if (editor) editor.addEventListener('paste', handleEditorPaste);
+    if (editor)
+        editor.addEventListener('paste', handleEditorPaste);
 }
-
+/**
+ * Shows modal to add a quick dialog to an NPC
+ */
 function showAddDialogModal(npcId) {
     const npc = EntityLookup.npc(npcId);
-    if (!npc) return;
-
+    if (!npc)
+        return;
     const html = `
         <div class="modal-header">
             <span class="modal-title">💬 Dialog für ${esc(npc.name)}</span>
@@ -82,7 +88,6 @@ function showAddDialogModal(npcId) {
         </div>
         <button class="btn btn-success" data-action="save-quick-dialog" data-id="${npcId}">💾 Speichern</button>
     `;
-
     // Create modal if not exists
     let modal = $('quick-dialog-modal');
     if (!modal) {
@@ -92,36 +97,52 @@ function showAddDialogModal(npcId) {
         modal.innerHTML = '<div class="modal" style="max-width: 500px;"></div>';
         document.body.appendChild(modal);
     }
-
-    modal.querySelector('.modal').innerHTML = html;
+    const modalContent = modal.querySelector('.modal');
+    if (modalContent) {
+        modalContent.innerHTML = html;
+    }
     showModal('quick-dialog-modal');
 }
-
+/**
+ * Saves a quick dialog
+ */
 function saveQuickDialog(npcId) {
+    const renderNPCList = window.renderNPCList;
     const npc = EntityLookup.npc(npcId);
-    if (!npc) return;
-
-    const text = $('quick-dialog-text').innerHTML.trim();
+    if (!npc)
+        return;
+    const textEl = $('quick-dialog-text');
+    const titleInput = $('quick-dialog-title');
+    const triggerInput = $('quick-dialog-trigger');
+    const text = textEl?.innerHTML.trim() || '';
     if (!text) {
         showToast('⚠️ Dialog-Text erforderlich', 'error');
         return;
     }
-
-    if (!npc.dialogs) npc.dialogs = [];
-
+    if (!npc.dialogs)
+        npc.dialogs = [];
     npc.dialogs.push({
-        title: $('quick-dialog-title').value.trim(),
-        triggerCondition: $('quick-dialog-trigger').value.trim(),
+        title: titleInput?.value.trim() || '',
+        triggerCondition: triggerInput?.value.trim() || '',
         text: text,
         used: false
     });
-
     hideModal('quick-dialog-modal');
     renderNPCList();
     save();
     showToast('Dialog hinzugefügt');
 }
-
+/**
+ * Resets the dialog field counter
+ */
 function resetDialogFieldCounter() {
     dialogFieldCounter = 0;
 }
+// ============================================================
+// EXPORTS FOR GLOBAL ACCESS
+// ============================================================
+window.addDialogField = addDialogField;
+window.showAddDialogModal = showAddDialogModal;
+window.saveQuickDialog = saveQuickDialog;
+window.resetDialogFieldCounter = resetDialogFieldCounter;
+//# sourceMappingURL=npc-dialogs.js.map

@@ -1,22 +1,20 @@
 // [SECTION:WIKI_LINKS]
 // Extrahiert aus dice.js
 // Wiki-Link-Syntax
-// Zeilen: 47
-
+// Zeilen: 51
+// ============================================================
 // WIKI LINKS - [[Type:Name]] Syntax
 // ============================================================
 function processWikiLinks(text) {
-    if (!text) return text;
-    
+    if (!text)
+        return text;
     // Pattern: [[NPC:Name]], [[Ort:Name]], [[Quest:Name]], [[Zauber:Name]]
     const pattern = /\[\[([^:\]]+):([^\]]+)\]\]/g;
-    
     return text.replace(pattern, (match, type, name) => {
         const typeLower = type.toLowerCase();
         let found = null;
         let targetType = '';
-        
-        switch(typeLower) {
+        switch (typeLower) {
             case 'npc':
                 found = EntityLookup.findByName('npcs', name);
                 targetType = 'npc';
@@ -41,12 +39,14 @@ function processWikiLinks(text) {
                 targetType = 'character';
                 break;
         }
-        
         if (found) {
             return `<span class="wiki-link" data-action="navigate-result" data-type="${targetType}" data-id="${found.id}" data-loc="${found.locationId || 'null'}">${esc(name)}</span>`;
         }
         return `<span style="color: var(--red);" title="Nicht gefunden">${esc(name)}</span>`;
     });
 }
-
 // ============================================================
+// BACKWARD COMPATIBILITY EXPORTS
+// ============================================================
+window.processWikiLinks = processWikiLinks;
+//# sourceMappingURL=wiki-links.js.map

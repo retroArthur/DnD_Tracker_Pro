@@ -2,27 +2,26 @@
 // ============================================================
 // RANDOM TABLES - Custom Rollable Tables
 // ============================================================
-
-/**
- * Random Tables System
- * - Erstelle eigene Zufallstabellen
- * - Würfle auf Tabellen
- * - Speichere in D.randomTables
- */
-
-// Konstanten
+// ============================================================
+// CONSTANTS
+// ============================================================
 const DEFAULT_DICE_TYPE = 6;
 const DICE_TYPES = Object.freeze([4, 6, 8, 10, 12, 20, 100]);
 const MAX_RANGE_SIZE = 100; // DoS-Schutz: Maximale Anzahl von Werten in einem Range
-
-// Initialisiere randomTables falls nicht vorhanden
+// ============================================================
+// STATE
+// ============================================================
+let selectedTableId = null;
+// ============================================================
+// INITIALIZATION
+// ============================================================
 function initRandomTables() {
+    const D = window.D;
     if (!D.randomTables) {
         D.randomTables = getDefaultRandomTables();
-        save();
+        window.save();
     }
 }
-
 function getDefaultRandomTables() {
     return [
         {
@@ -67,42 +66,39 @@ function getDefaultRandomTables() {
         }
     ];
 }
-
-let selectedTableId = null;
-
+// ============================================================
+// CORE FUNCTIONS
+// ============================================================
 /**
  * Würfelt auf einer Tabelle und gibt das Ergebnis zurück
  * Unterstützt sowohl das neue Range-Format als auch das alte Weight-Format
- * @param {Object} table - Die Tabelle mit entries
- * @returns {Object|null} { entry, roll, diceType } oder null
+ * @param table - Die Tabelle mit entries
+ * @returns { entry, roll, diceType } oder null
  */
 function rollWeightedEntry(table) {
-    if (!table?.entries?.length) return null;
-
+    if (!table?.entries?.length)
+        return null;
     // Prüfe ob neues Range-Format (hat diceType und range in entries)
     const hasRanges = table.entries.some(e => e.range);
-
     if (hasRanges) {
         // Neues Format: Würfle echten Würfel und matche Range
         const diceType = table.diceType ?? DEFAULT_DICE_TYPE;
         const roll = Math.floor(Math.random() * diceType) + 1;
-
         // Finde passenden Eintrag
         for (const entry of table.entries) {
-            const ranges = parseRange(entry.range);
+            const ranges = parseRange(entry.range || '');
             if (ranges.includes(roll)) {
                 return { entry, roll, diceType };
             }
         }
-
         // Fallback: Kein passender Eintrag gefunden
         return { entry: { text: `Kein Eintrag für Wurf ${roll}` }, roll, diceType };
-    } else {
+    }
+    else {
         // Legacy Format: Gewichtetes Würfeln
         const totalWeight = table.entries.reduce((sum, e) => sum + (e.weight || 1), 0);
         let roll = Math.floor(Math.random() * totalWeight);
-        let rollValue = roll + 1;
-
+        const rollValue = roll + 1;
         for (let i = 0; i < table.entries.length; i++) {
             roll -= (table.entries[i].weight || 1);
             if (roll < 0) {
@@ -113,7 +109,48 @@ function rollWeightedEntry(table) {
         return { entry: table.entries[table.entries.length - 1], roll: totalWeight, diceType: totalWeight };
     }
 }
-
+/**
+ * Parst einen Bereichs-String und gibt ein Array von Zahlen zurück
+ * @param rangeStr - z.B. "1", "1-4", "5-8"
+ * @param maxValue - Maximaler erlaubter Wert (DoS-Schutz)
+ * @returns Array der abgedeckten Zahlen (nur positive, <= maxValue)
+ */
+function parseRange(rangeStr, maxValue = MAX_RANGE_SIZE) {
+    if (!rangeStr || typeof rangeStr !== 'string')
+        return [];
+    const result = [];
+    const parts = rangeStr.split(',').map(p => p.trim());
+    for (const part of parts) {
+        // DoS-Schutz: Abbrechen wenn zu viele Werte
+        if (result.length >= maxValue)
+            break;
+        // Range-Format: "1-4" (muss mit Zahl beginnen um "-5" als einzelne Zahl zu erkennen)
+        const rangeMatch = part.match(/^(\d+)-(\d+)$/);
+        if (rangeMatch) {
+            const start = parseInt(rangeMatch[1]);
+            const end = parseInt(rangeMatch[2]);
+            if (!isNaN(start) && !isNaN(end) && start >= 1 && end >= 1) {
+                const min = Math.min(start, end);
+                const max = Math.min(Math.max(start, end), maxValue); // DoS-Schutz
+                for (let i = min; i <= max && result.length < maxValue; i++) {
+                    if (!result.includes(i))
+                        result.push(i);
+                }
+            }
+        }
+        else {
+            // Einzelne Zahl
+            const num = parseInt(part);
+            if (!isNaN(num) && num >= 1 && num <= maxValue && !result.includes(num)) {
+                result.push(num);
+            }
+        }
+    }
+    return result.sort((a, b) => a - b);
+}
+// ============================================================
+// RENDERING
+// ============================================================
 function renderRandomTables() {
     const container = $('random-tables-list');
     if (!container) {
@@ -122,10 +159,9 @@ function renderRandomTables() {
         }
         return;
     }
-
     initRandomTables();
+    const D = window.D;
     const tables = D.randomTables || [];
-
     if (!tables.length) {
         container.innerHTML = `
             <div class="rt-empty">
@@ -136,7 +172,6 @@ function renderRandomTables() {
         `;
         return;
     }
-
     container.innerHTML = tables.map(table => `
         <div class="rt-card ${selectedTableId === table.id ? 'selected' : ''}" data-id="${table.id}">
             <div class="rt-card-header" onclick="selectTable(${table.id})">
@@ -152,26 +187,23 @@ function renderRandomTables() {
         </div>
     `).join('');
 }
-
 function selectTable(id) {
     selectedTableId = id;
     renderRandomTables();
     showTablePreview(id);
 }
-
 function showTablePreview(id) {
     const preview = $('random-table-preview');
-    if (!preview) return;
-
-    const table = D.randomTables?.find(t => t.id === id);
+    if (!preview)
+        return;
+    const D = window.D;
+    const table = D.randomTables?.find((t) => t.id === id);
     if (!table) {
         preview.innerHTML = '<div class="rt-preview-empty">Wähle eine Tabelle</div>';
         return;
     }
-
     const hasRanges = table.entries.some(e => e.range);
     const diceType = table.diceType ?? DEFAULT_DICE_TYPE;
-
     preview.innerHTML = `
         <div class="rt-preview-header">
             <span class="rt-preview-icon">${esc(table.icon || '🎲')}</span>
@@ -181,43 +213,41 @@ function showTablePreview(id) {
         </div>
         <div class="rt-preview-entries">
             ${table.entries.map((entry, idx) => {
-                if (hasRanges) {
-                    // Neues Range-Format
-                    return `
+        if (hasRanges) {
+            // Neues Range-Format
+            return `
                         <div class="rt-entry">
-                            <span class="rt-entry-range">${esc(entry.range)}</span>
+                            <span class="rt-entry-range">${esc(entry.range || '')}</span>
                             <span class="rt-entry-text">${esc(entry.text)}</span>
                         </div>
                     `;
-                } else {
-                    // Legacy Weight-Format
-                    const totalWeight = table.entries.reduce((sum, e) => sum + (e.weight || 1), 0);
-                    const pct = Math.round((entry.weight || 1) / totalWeight * 100);
-                    return `
+        }
+        else {
+            // Legacy Weight-Format
+            const totalWeight = table.entries.reduce((sum, e) => sum + (e.weight || 1), 0);
+            const pct = Math.round((entry.weight || 1) / totalWeight * 100);
+            return `
                         <div class="rt-entry">
                             <span class="rt-entry-num">${idx + 1}</span>
                             <span class="rt-entry-text">${esc(entry.text)}</span>
                             <span class="rt-entry-weight" title="Gewichtung: ${entry.weight || 1}">${pct}%</span>
                         </div>
                     `;
-                }
-            }).join('')}
+        }
+    }).join('')}
         </div>
         <div class="rt-result-area" id="rt-result-${id}"></div>
     `;
 }
-
 function rollOnTable(id) {
-    const table = D.randomTables?.find(t => t.id === id);
+    const D = window.D;
+    const table = D.randomTables?.find((t) => t.id === id);
     const rollResult = rollWeightedEntry(table);
-
     if (!rollResult) {
         showToast('Tabelle ist leer', 'error');
         return;
     }
-
     const { entry: result, roll, diceType } = rollResult;
-
     // Ergebnis anzeigen
     const resultArea = $(`rt-result-${id}`);
     if (resultArea) {
@@ -231,14 +261,15 @@ function rollOnTable(id) {
         resultArea.offsetHeight;
         resultArea.style.animation = 'pulse 0.3s ease-out';
     }
-
     showToast(`${esc(table.icon || '🎲')} [${roll}] ${esc(result.text)}`, 'info');
 }
-
+// ============================================================
+// TABLE MODAL
+// ============================================================
 function showTableModal(id = null) {
-    const table = id ? D.randomTables?.find(t => t.id === id) : null;
+    const D = window.D;
+    const table = id ? D.randomTables?.find((t) => t.id === id) : undefined;
     const diceType = table?.diceType ?? DEFAULT_DICE_TYPE;
-
     const content = `
         <div class="rt-modal-content">
             <div class="rt-modal-header">
@@ -294,39 +325,42 @@ function showTableModal(id = null) {
             </div>
         </div>
     `;
-
     let modal = $('table-modal');
     if (!modal) {
         modal = document.createElement('div');
         modal.id = 'table-modal';
         modal.className = 'modal-overlay';
         modal.innerHTML = `<div class="modal" style="max-width: 650px;">${content}</div>`;
-        modal.onclick = (e) => { if (e.target === modal) hideModal('table-modal'); };
+        modal.onclick = (e) => {
+            if (e.target === modal)
+                hideModal('table-modal');
+        };
         document.body.appendChild(modal);
-    } else {
-        modal.querySelector('.modal').innerHTML = content;
     }
-
+    else {
+        const modalContent = modal.querySelector('.modal');
+        if (modalContent)
+            modalContent.innerHTML = content;
+    }
     showModal('table-modal');
     $('table-name')?.focus();
     updateRangeHint();
 }
-
 function selectDiceType(diceType) {
-    $('table-dice-type').value = diceType;
-
+    const input = $('table-dice-type');
+    if (input)
+        input.value = String(diceType);
     // Update button states
     document.querySelectorAll('.rt-dice-btn').forEach(btn => {
-        btn.classList.toggle('active', parseInt(btn.dataset.dice) === diceType);
+        const btnDice = parseInt(btn.dataset.dice || '0');
+        btn.classList.toggle('active', btnDice === diceType);
     });
-
     // Update label
     const label = document.querySelector('.rt-dice-label');
-    if (label) label.textContent = `(1W${diceType})`;
-
+    if (label)
+        label.textContent = `(1W${diceType})`;
     updateRangeHint();
 }
-
 function renderTableEntryRow(index, entry = { range: '', text: '' }) {
     // Support both old (weight) and new (range) format
     const rangeValue = entry.range || '';
@@ -340,87 +374,50 @@ function renderTableEntryRow(index, entry = { range: '', text: '' }) {
         </div>
     `;
 }
-
-/**
- * Parst einen Bereichs-String und gibt ein Array von Zahlen zurück
- * @param {string} rangeStr - z.B. "1", "1-4", "5-8"
- * @param {number} [maxValue=100] - Maximaler erlaubter Wert (DoS-Schutz)
- * @returns {number[]} Array der abgedeckten Zahlen (nur positive, <= maxValue)
- */
-function parseRange(rangeStr, maxValue = MAX_RANGE_SIZE) {
-    if (!rangeStr || typeof rangeStr !== 'string') return [];
-
-    const result = [];
-    const parts = rangeStr.split(',').map(p => p.trim());
-
-    for (const part of parts) {
-        // DoS-Schutz: Abbrechen wenn zu viele Werte
-        if (result.length >= maxValue) break;
-
-        // Range-Format: "1-4" (muss mit Zahl beginnen um "-5" als einzelne Zahl zu erkennen)
-        const rangeMatch = part.match(/^(\d+)-(\d+)$/);
-        if (rangeMatch) {
-            const start = parseInt(rangeMatch[1]);
-            const end = parseInt(rangeMatch[2]);
-            if (!isNaN(start) && !isNaN(end) && start >= 1 && end >= 1) {
-                const min = Math.min(start, end);
-                const max = Math.min(Math.max(start, end), maxValue); // DoS-Schutz
-                for (let i = min; i <= max && result.length < maxValue; i++) {
-                    if (!result.includes(i)) result.push(i);
-                }
-            }
-        } else {
-            // Einzelne Zahl
-            const num = parseInt(part);
-            if (!isNaN(num) && num >= 1 && num <= maxValue && !result.includes(num)) {
-                result.push(num);
-            }
-        }
-    }
-
-    return result.sort((a, b) => a - b);
-}
-
 /**
  * Aktualisiert den Hinweis über abgedeckte/fehlende Bereiche
  */
 function updateRangeHint() {
     const hint = $('rt-range-hint');
-    if (!hint) return;
-
-    const diceType = parseInt($('table-dice-type')?.value) || DEFAULT_DICE_TYPE;
+    if (!hint)
+        return;
+    const diceTypeInput = $('table-dice-type');
+    const diceType = parseInt(diceTypeInput?.value || String(DEFAULT_DICE_TYPE));
     const rows = $('table-entries')?.querySelectorAll('.rt-entry-row') || [];
-
     // Sammle alle abgedeckten Zahlen
     const covered = new Set();
     rows.forEach(row => {
-        const rangeStr = row.querySelector('.rt-entry-range')?.value || '';
+        const rangeInput = row.querySelector('.rt-entry-range');
+        const rangeStr = rangeInput?.value || '';
         parseRange(rangeStr).forEach(n => {
-            if (n >= 1 && n <= diceType) covered.add(n);
+            if (n >= 1 && n <= diceType)
+                covered.add(n);
         });
     });
-
     // Finde fehlende Zahlen
     const missing = [];
     for (let i = 1; i <= diceType; i++) {
-        if (!covered.has(i)) missing.push(i);
+        if (!covered.has(i))
+            missing.push(i);
     }
-
     // Zeige Hinweis
     if (missing.length === 0) {
         hint.innerHTML = `<span class="rt-hint-ok">✓ Alle Werte (1-${diceType}) abgedeckt</span>`;
         hint.className = 'rt-range-hint complete';
-    } else if (missing.length === diceType) {
+    }
+    else if (missing.length === diceType) {
         hint.innerHTML = `<span class="rt-hint-info">Trage Bereiche ein (1-${diceType})</span>`;
         hint.className = 'rt-range-hint empty';
-    } else {
+    }
+    else {
         // Gruppiere aufeinanderfolgende Zahlen
         const groups = [];
         let start = missing[0], end = missing[0];
         for (let i = 1; i <= missing.length; i++) {
             if (missing[i] === end + 1) {
                 end = missing[i];
-            } else {
+            }
+            else {
                 groups.push(start === end ? `${start}` : `${start}-${end}`);
                 start = end = missing[i];
             }
@@ -429,34 +426,33 @@ function updateRangeHint() {
         hint.className = 'rt-range-hint incomplete';
     }
 }
-
 /**
  * Füllt leere Bereiche automatisch mit den nächsten verfügbaren Werten
  */
 function fillRemainingRanges() {
-    const diceType = parseInt($('table-dice-type')?.value) || DEFAULT_DICE_TYPE;
+    const diceTypeInput = $('table-dice-type');
+    const diceType = parseInt(diceTypeInput?.value || String(DEFAULT_DICE_TYPE));
     const rows = Array.from($('table-entries')?.querySelectorAll('.rt-entry-row') || []);
-
     // Sammle bereits verwendete Zahlen
     const used = new Set();
     rows.forEach(row => {
-        const rangeStr = row.querySelector('.rt-entry-range')?.value || '';
+        const rangeInput = row.querySelector('.rt-entry-range');
+        const rangeStr = rangeInput?.value || '';
         parseRange(rangeStr).forEach(n => {
-            if (n >= 1 && n <= diceType) used.add(n);
+            if (n >= 1 && n <= diceType)
+                used.add(n);
         });
     });
-
     // Finde fehlende Zahlen
     const available = [];
     for (let i = 1; i <= diceType; i++) {
-        if (!used.has(i)) available.push(i);
+        if (!used.has(i))
+            available.push(i);
     }
-
     if (available.length === 0) {
         showToast('Alle Bereiche sind bereits belegt', 'info');
         return;
     }
-
     // Finde leere Range-Felder und fülle sie
     let filled = 0;
     for (const row of rows) {
@@ -466,109 +462,112 @@ function fillRemainingRanges() {
             filled++;
         }
     }
-
     // Falls noch Werte übrig: Füge neue Zeilen hinzu
     while (available.length > 0) {
         addTableEntry();
         const newRows = $('table-entries')?.querySelectorAll('.rt-entry-row');
-        const lastRow = newRows[newRows.length - 1];
-        const rangeInput = lastRow?.querySelector('.rt-entry-range');
-        if (rangeInput) {
-            rangeInput.value = String(available.shift());
-            filled++;
+        if (newRows) {
+            const lastRow = newRows[newRows.length - 1];
+            const rangeInput = lastRow?.querySelector('.rt-entry-range');
+            if (rangeInput) {
+                rangeInput.value = String(available.shift());
+                filled++;
+            }
         }
     }
-
     updateRangeHint();
     showToast(`${filled} Bereich(e) aufgefüllt`, 'success');
 }
-
 function addTableEntry() {
     const list = $('table-entries');
-    if (!list) return;
-
+    if (!list)
+        return;
     const count = list.children.length;
     const div = document.createElement('div');
     div.innerHTML = renderTableEntryRow(count);
-    list.appendChild(div.firstElementChild);
+    const firstChild = div.firstElementChild;
+    if (firstChild)
+        list.appendChild(firstChild);
 }
-
 function removeTableEntry(index) {
     const list = $('table-entries');
     if (!list || list.children.length <= 1) {
         showToast('Mindestens ein Eintrag erforderlich', 'warning');
         return;
     }
-
-    list.children[index]?.remove();
-
+    const child = list.children[index];
+    if (child)
+        child.remove();
     // Re-Index
     Array.from(list.children).forEach((row, i) => {
-        row.dataset.index = i;
-        row.querySelector('.btn-danger').onclick = () => removeTableEntry(i);
+        row.dataset.index = String(i);
+        const btn = row.querySelector('.btn-danger');
+        if (btn)
+            btn.onclick = () => removeTableEntry(i);
     });
 }
-
 function saveTable() {
-    const name = $('table-name')?.value?.trim();
+    const nameInput = $('table-name');
+    const name = nameInput?.value?.trim();
     if (!name) {
         showToast('Name erforderlich', 'error');
         return;
     }
-
     // Icon validieren: Nur 1-2 Zeichen erlaubt (Emoji oder Textzeichen)
-    let icon = $('table-icon')?.value?.trim() || '🎲';
+    const iconInput = $('table-icon');
+    let icon = iconInput?.value?.trim() || '🎲';
     if ([...icon].length > 2) {
         icon = [...icon].slice(0, 2).join(''); // Auf 2 Zeichen kürzen
     }
-
-    const diceType = parseInt($('table-dice-type')?.value) || DEFAULT_DICE_TYPE;
-    const editId = $('table-edit-id')?.value;
-
+    const diceTypeInput = $('table-dice-type');
+    const diceType = parseInt(diceTypeInput?.value || String(DEFAULT_DICE_TYPE));
+    const editIdInput = $('table-edit-id');
+    const editId = editIdInput?.value;
     // Einträge sammeln (neues Range-Format)
     const entries = [];
     const rows = $('table-entries')?.querySelectorAll('.rt-entry-row');
     rows?.forEach(row => {
-        const range = row.querySelector('.rt-entry-range')?.value?.trim() || '';
-        const text = row.querySelector('.rt-entry-text')?.value?.trim();
+        const rangeInput = row.querySelector('.rt-entry-range');
+        const textInput = row.querySelector('.rt-entry-text');
+        const range = rangeInput?.value?.trim() || '';
+        const text = textInput?.value?.trim();
         if (text && range) {
             entries.push({ range, text });
         }
     });
-
     if (!entries.length) {
         showToast('Mindestens ein Eintrag mit Bereich erforderlich', 'error');
         return;
     }
-
     // Prüfe ob alle Würfelwerte abgedeckt sind
     const covered = new Set();
     entries.forEach(e => {
-        parseRange(e.range).forEach(n => {
-            if (n >= 1 && n <= diceType) covered.add(n);
+        parseRange(e.range || '').forEach(n => {
+            if (n >= 1 && n <= diceType)
+                covered.add(n);
         });
     });
-
     if (covered.size < diceType) {
         const missing = [];
         for (let i = 1; i <= diceType; i++) {
-            if (!covered.has(i)) missing.push(i);
+            if (!covered.has(i))
+                missing.push(i);
         }
         if (!confirm(`Warnung: Nicht alle Würfelwerte abgedeckt!\nFehlend: ${missing.join(', ')}\n\nTrotzdem speichern?`)) {
             return;
         }
     }
-
     initRandomTables();
-    pushUndo(editId ? 'Tabelle bearbeitet' : 'Tabelle erstellt');
-
+    const D = window.D;
+    window.pushUndo(editId ? 'Tabelle bearbeitet' : 'Tabelle erstellt');
     if (editId) {
         // Update
-        const idx = D.randomTables.findIndex(t => t.id === parseInt(editId));
+        const idx = D.randomTables.findIndex((t) => t.id === parseInt(editId));
         if (idx > -1) {
             D.randomTables[idx] = { ...D.randomTables[idx], name, icon, diceType, entries };
         }
-    } else {
+    }
+    else {
         // Neu
         D.randomTables.push({
             id: Date.now(),
@@ -578,35 +577,34 @@ function saveTable() {
             entries
         });
     }
-
     hideModal('table-modal');
-    save();
+    window.save();
     renderRandomTables();
     showToast('Tabelle gespeichert', 'success');
 }
-
 function deleteTable(id) {
-    if (!confirm('Tabelle wirklich löschen?')) return;
-
-    pushUndo('Tabelle gelöscht');
-    D.randomTables = (D.randomTables || []).filter(t => t.id !== id);
-
+    if (!confirm('Tabelle wirklich löschen?'))
+        return;
+    const D = window.D;
+    window.pushUndo('Tabelle gelöscht');
+    D.randomTables = (D.randomTables || []).filter((t) => t.id !== id);
     if (selectedTableId === id) {
         selectedTableId = null;
         const preview = $('random-table-preview');
-        if (preview) preview.innerHTML = '<div class="rt-preview-empty">Wähle eine Tabelle</div>';
+        if (preview)
+            preview.innerHTML = '<div class="rt-preview-empty">Wähle eine Tabelle</div>';
     }
-
-    save();
+    window.save();
     renderRandomTables();
     showToast('Tabelle gelöscht');
 }
-
-// Generator Modal für Dashboard-Button
+// ============================================================
+// GENERATOR MODAL (Dashboard-Button)
+// ============================================================
 function showGeneratorModal() {
     initRandomTables();
+    const D = window.D;
     const tables = D.randomTables || [];
-
     const content = `
         <div class="generator-modal-content">
             <div class="generator-modal-header">
@@ -620,9 +618,9 @@ function showGeneratorModal() {
 
             <div class="generator-tables" id="generator-tables-list">
                 ${tables.length ? tables.map(t => {
-                    const hasRanges = t.entries?.some(e => e.range);
-                    const diceType = t.diceType ?? DEFAULT_DICE_TYPE;
-                    return `
+        const hasRanges = t.entries?.some(e => e.range);
+        const diceType = t.diceType ?? DEFAULT_DICE_TYPE;
+        return `
                     <div class="generator-table-card">
                         <div class="generator-table-info">
                             <span class="generator-table-icon">${esc(t.icon || '🎲')}</span>
@@ -636,7 +634,8 @@ function showGeneratorModal() {
                             <button class="btn btn-sm btn-danger" onclick="deleteTableAndRefresh(${t.id})">🗑️</button>
                         </div>
                     </div>
-                `}).join('') : `
+                `;
+    }).join('') : `
                     <div class="generator-empty">
                         <div class="generator-empty-icon">🎲</div>
                         <div class="generator-empty-text">Keine Tabellen vorhanden</div>
@@ -648,34 +647,34 @@ function showGeneratorModal() {
             <div class="generator-result" id="generator-result"></div>
         </div>
     `;
-
     let modal = $('generator-modal');
     if (!modal) {
         modal = document.createElement('div');
         modal.id = 'generator-modal';
         modal.className = 'modal-overlay';
         modal.innerHTML = `<div class="modal" style="max-width: 800px;">${content}</div>`;
-        modal.onclick = (e) => { if (e.target === modal) hideModal('generator-modal'); };
+        modal.onclick = (e) => {
+            if (e.target === modal)
+                hideModal('generator-modal');
+        };
         document.body.appendChild(modal);
-    } else {
-        modal.querySelector('.modal').innerHTML = content;
     }
-
+    else {
+        const modalContent = modal.querySelector('.modal');
+        if (modalContent)
+            modalContent.innerHTML = content;
+    }
     showModal('generator-modal');
 }
-
-// Würfeln und Ergebnis im Generator Modal anzeigen
 function rollOnTableAndShow(id) {
-    const table = D.randomTables?.find(t => t.id === id);
+    const D = window.D;
+    const table = D.randomTables?.find((t) => t.id === id);
     const rollResult = rollWeightedEntry(table);
-
     if (!rollResult) {
         showToast('Tabelle ist leer', 'error');
         return;
     }
-
     const { entry: result, roll, diceType } = rollResult;
-
     // Ergebnis im Modal anzeigen
     const resultArea = $('generator-result');
     if (resultArea) {
@@ -694,34 +693,30 @@ function rollOnTableAndShow(id) {
         resultArea.style.animation = 'pulse 0.3s ease-out';
     }
 }
-
-// Tabelle löschen und Generator Modal refreshen
 function deleteTableAndRefresh(id) {
-    if (!confirm('Tabelle wirklich löschen?')) return;
-
-    pushUndo('Tabelle gelöscht');
-    D.randomTables = (D.randomTables || []).filter(t => t.id !== id);
-    save();
+    if (!confirm('Tabelle wirklich löschen?'))
+        return;
+    const D = window.D;
+    window.pushUndo('Tabelle gelöscht');
+    D.randomTables = (D.randomTables || []).filter((t) => t.id !== id);
+    window.save();
     renderRandomTables();
     showGeneratorModal(); // Refresh
     showToast('Tabelle gelöscht');
 }
-
-// Quick Roll Button für Dashboard
 function quickRandomRoll() {
     initRandomTables();
-
+    const D = window.D;
     if (!D.randomTables?.length) {
         showToast('Keine Tabellen vorhanden', 'error');
         return;
     }
-
     // Modal mit Tabellen-Auswahl
     const content = `
         <div style="padding: 20px;">
             <h3 style="margin: 0 0 16px 0;">🎲 Schnellwurf</h3>
             <div style="display: flex; flex-direction: column; gap: 8px;">
-                ${D.randomTables.map(t => `
+                ${D.randomTables.map((t) => `
                     <button class="btn" onclick="rollOnTable(${t.id}); hideModal('quick-roll-modal');" style="justify-content: flex-start; gap: 10px;">
                         <span>${esc(t.icon || '🎲')}</span>
                         <span>${esc(t.name)}</span>
@@ -730,18 +725,42 @@ function quickRandomRoll() {
             </div>
         </div>
     `;
-
     let modal = $('quick-roll-modal');
     if (!modal) {
         modal = document.createElement('div');
         modal.id = 'quick-roll-modal';
         modal.className = 'modal-overlay';
         modal.innerHTML = `<div class="modal" style="max-width: 400px;">${content}</div>`;
-        modal.onclick = (e) => { if (e.target === modal) hideModal('quick-roll-modal'); };
+        modal.onclick = (e) => {
+            if (e.target === modal)
+                hideModal('quick-roll-modal');
+        };
         document.body.appendChild(modal);
-    } else {
-        modal.querySelector('.modal').innerHTML = content;
     }
-
+    else {
+        const modalContent = modal.querySelector('.modal');
+        if (modalContent)
+            modalContent.innerHTML = content;
+    }
     showModal('quick-roll-modal');
 }
+// ============================================================
+// GLOBAL EXPORTS (for backward compatibility)
+// ============================================================
+// Export functions to window for onclick handlers
+window.renderRandomTables = renderRandomTables;
+window.selectTable = selectTable;
+window.rollOnTable = rollOnTable;
+window.showTableModal = showTableModal;
+window.selectDiceType = selectDiceType;
+window.updateRangeHint = updateRangeHint;
+window.fillRemainingRanges = fillRemainingRanges;
+window.addTableEntry = addTableEntry;
+window.removeTableEntry = removeTableEntry;
+window.saveTable = saveTable;
+window.deleteTable = deleteTable;
+window.showGeneratorModal = showGeneratorModal;
+window.rollOnTableAndShow = rollOnTableAndShow;
+window.deleteTableAndRefresh = deleteTableAndRefresh;
+window.quickRandomRoll = quickRandomRoll;
+//# sourceMappingURL=random-tables.js.map

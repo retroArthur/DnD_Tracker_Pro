@@ -1,9 +1,9 @@
 // [SECTION:MINDMAP]
 // Extrahiert aus shops.js
 // Mindmap/Netzwerk-Visualisierung
-// Zeilen: 714
-
-// MINDMAP - Modern Network Visualization
+// Zeilen: 719
+// ============================================================
+// STATE
 // ============================================================
 let connectMode = false;
 let connectFrom = null;
@@ -13,8 +13,11 @@ let isPanning = false;
 let panStart = { x: 0, y: 0 };
 let dragNode = null;
 let dragOffset = { x: 0, y: 0 };
-
-const NODE_ICONS = {
+let selectedNode = null;
+// ============================================================
+// CONSTANTS
+// ============================================================
+const NODE_ICONS = Object.freeze({
     player: '👤',
     npc: '🎭',
     enemy: '👹',
@@ -31,9 +34,8 @@ const NODE_ICONS = {
     fortress: '🛡️',
     catacombs: '💀',
     cave: '🕳️'
-};
-
-const NODE_LABELS = {
+});
+const NODE_LABELS = Object.freeze({
     player: 'Spieler',
     npc: 'NPC',
     enemy: 'Feind',
@@ -50,9 +52,8 @@ const NODE_LABELS = {
     fortress: 'Festung',
     catacombs: 'Katakomben',
     cave: 'Höhle'
-};
-
-const CONN_COLORS = {
+});
+const CONN_COLORS = Object.freeze({
     ally: 'var(--green)',
     enemy: 'var(--red)',
     neutral: 'var(--text-dim)',
@@ -60,53 +61,50 @@ const CONN_COLORS = {
     business: 'var(--gold)',
     quest: 'var(--purple)',
     member: 'var(--cyan)'
-};
-
+});
 let mindmapFilter = '';
 let mindmapTypeFilter = '';
-
+// ============================================================
+// RENDER
+// ============================================================
 function renderMindmap() {
+    const D = window.D;
     const container = $('mindmap-container');
     const viewport = $('mindmap-viewport');
     const svg = $('mindmap-svg');
-    if (!container || !viewport || !svg) return;
-    
+    if (!container || !viewport || !svg)
+        return;
     // Apply zoom and pan
     viewport.style.transform = `translate(${mindmapPan.x}px, ${mindmapPan.y}px) scale(${mindmapZoom})`;
-    
     // Clear old nodes (keep SVG defs)
     const defs = svg.querySelector('defs');
     svg.innerHTML = '';
-    if (defs) svg.appendChild(defs);
+    if (defs)
+        svg.appendChild(defs);
     viewport.querySelectorAll('.mindmap-node, .mindmap-connection-label').forEach(n => n.remove());
-    
     const mm = D.mindmap;
-    if (!mm || !mm.nodes) return;
-    
+    if (!mm || !mm.nodes)
+        return;
     // Draw connections with bezier curves
     mm.connections.forEach((conn, idx) => {
-        const fromNode = mm.nodes.find(n => n.id === conn.from);
-        const toNode = mm.nodes.find(n => n.id === conn.to);
-        if (!fromNode || !toNode) return;
-        
+        const fromNode = mm.nodes.find((n) => n.id === conn.from);
+        const toNode = mm.nodes.find((n) => n.id === conn.to);
+        if (!fromNode || !toNode)
+            return;
         const fromX = fromNode.x + 60;
         const fromY = fromNode.y + 30;
         const toX = toNode.x + 60;
         const toY = toNode.y + 30;
-        
         // Calculate control points for bezier curve
         const dx = toX - fromX;
         const dy = toY - fromY;
         const dist = Math.sqrt(dx * dx + dy * dy);
         const curvature = Math.min(dist * 0.3, 80);
-        
         // Perpendicular offset for curve
         const midX = (fromX + toX) / 2;
         const midY = (fromY + toY) / 2;
-        
         const connType = conn.type || 'neutral';
         const color = CONN_COLORS[connType] || CONN_COLORS.neutral;
-        
         // Create path
         const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
         const pathD = `M ${fromX} ${fromY} Q ${midX} ${midY - curvature * 0.5} ${toX} ${toY}`;
@@ -119,11 +117,9 @@ function renderMindmap() {
         path.setAttribute('class', `connection-${connType}`);
         path.style.opacity = '0.8';
         path.style.transition = 'opacity 0.2s, stroke-width 0.2s';
-        
         // Hover effect
         path.onmouseenter = () => { path.style.opacity = '1'; path.style.strokeWidth = '4'; };
         path.onmouseleave = () => { path.style.opacity = '0.8'; path.style.strokeWidth = '2.5'; };
-        
         // Click to delete
         path.onclick = (e) => {
             e.stopPropagation();
@@ -134,9 +130,7 @@ function renderMindmap() {
             }
         };
         path.style.cursor = 'pointer';
-        
         svg.appendChild(path);
-        
         // Add label
         if (conn.label) {
             const labelDiv = document.createElement('div');
@@ -149,24 +143,20 @@ function renderMindmap() {
             viewport.appendChild(labelDiv);
         }
     });
-    
     // Draw nodes
-    mm.nodes.forEach(node => {
+    mm.nodes.forEach((node) => {
         const div = document.createElement('div');
         const isSelected = selectedNode === node.id;
         const isConnecting = connectMode && connectFrom === node.id;
-        
         // Check filter
         const matchesSearch = !mindmapFilter || node.name.toLowerCase().includes(mindmapFilter);
         const matchesType = !mindmapTypeFilter || node.type === mindmapTypeFilter;
         const isFilteredOut = !matchesSearch || !matchesType;
         const isHighlight = mindmapFilter && matchesSearch && !isFilteredOut;
-        
         div.className = `mindmap-node ${node.type} ${isSelected ? 'selected' : ''} ${isConnecting ? 'connecting' : ''} ${isFilteredOut ? 'filtered-out' : ''} ${isHighlight ? 'highlight' : ''}`;
         div.style.left = node.x + 'px';
         div.style.top = node.y + 'px';
-        div.dataset.id = node.id;
-        
+        div.dataset.id = String(node.id);
         div.innerHTML = `
             <div class="mindmap-node-icon">${NODE_ICONS[node.type] || '❓'}</div>
             <div class="mindmap-node-label">${esc(node.name)}</div>
@@ -181,68 +171,64 @@ function renderMindmap() {
             <div class="mindmap-node-connector left" data-dir="left"></div>
             <div class="mindmap-node-connector right" data-dir="right"></div>
         `;
-        
         // Click handler
         div.onclick = (e) => {
-            if (e.target.classList.contains('mindmap-node-connector')) return;
-            if (e.target.classList.contains('mindmap-node-action-btn')) return;
-            if (isFilteredOut) return; // Don't allow clicking filtered nodes
+            if (e.target.classList.contains('mindmap-node-connector'))
+                return;
+            if (e.target.classList.contains('mindmap-node-action-btn'))
+                return;
+            if (isFilteredOut)
+                return;
             handleNodeClick(node.id);
         };
-        
         // Double-click to edit
         div.ondblclick = (e) => {
-            if (e.target.classList.contains('mindmap-node-connector')) return;
-            if (isFilteredOut) return;
+            if (e.target.classList.contains('mindmap-node-connector'))
+                return;
+            if (isFilteredOut)
+                return;
             e.stopPropagation();
             editNode(node.id);
         };
-        
         // Drag handler
         div.onmousedown = (e) => {
             if (e.target.classList.contains('mindmap-node-connector')) {
                 startConnectFromConnector(node.id);
                 return;
             }
-            if (e.target.classList.contains('mindmap-node-action-btn')) return;
+            if (e.target.classList.contains('mindmap-node-action-btn'))
+                return;
             startNodeDrag(e, node.id);
         };
-        
         // Connector click handlers
         div.querySelectorAll('.mindmap-node-connector').forEach(conn => {
-            conn.onclick = (e) => {
+            conn.addEventListener('click', (e) => {
                 e.stopPropagation();
                 startConnectFromConnector(node.id);
-            };
+            });
         });
-        
         viewport.appendChild(div);
     });
-    
     // Update counter
     const countEl = $('network-io-count');
-    if (countEl) countEl.textContent = mm.nodes.length;
-    
-    // Draw temporary connection line when connecting
-    if (connectMode && connectFrom) {
-        // This would show a line following the mouse - simplified for now
-    }
+    if (countEl)
+        countEl.textContent = String(mm.nodes.length);
 }
-
 function handleNodeClick(nodeId) {
     if (connectMode) {
         if (connectFrom === null) {
             connectFrom = nodeId;
             renderMindmap();
-        } else if (connectFrom !== nodeId) {
+        }
+        else if (connectFrom !== nodeId) {
             showConnectionModal(connectFrom, nodeId);
         }
-    } else {
+    }
+    else {
         selectedNode = selectedNode === nodeId ? null : nodeId;
         renderMindmap();
     }
 }
-
 function startConnectFromConnector(nodeId) {
     if (!connectMode) {
         startConnectMode();
@@ -250,65 +236,101 @@ function startConnectFromConnector(nodeId) {
     connectFrom = nodeId;
     renderMindmap();
 }
-
+// ============================================================
+// NODE CRUD
+// ============================================================
 function showAddNodeModal() {
-    $('edit-node-id').value = '';
-    $('node-name').value = '';
-    $('node-type').value = 'npc';
-    $('node-desc').value = '';
-    $('node-modal-title').textContent = '➕ Node hinzufügen';
-    $('node-save-btn').textContent = 'Hinzufügen';
+    const editIdInput = $('edit-node-id');
+    const nameInput = $('node-name');
+    const typeInput = $('node-type');
+    const descInput = $('node-desc');
+    const titleEl = $('node-modal-title');
+    const btnEl = $('node-save-btn');
+    if (editIdInput)
+        editIdInput.value = '';
+    if (nameInput)
+        nameInput.value = '';
+    if (typeInput)
+        typeInput.value = 'npc';
+    if (descInput)
+        descInput.value = '';
+    if (titleEl)
+        titleEl.textContent = '➕ Node hinzufügen';
+    if (btnEl)
+        btnEl.textContent = 'Hinzufügen';
     document.querySelectorAll('.node-type-btn').forEach(btn => {
         btn.classList.remove('btn-success');
-        if (btn.dataset.type === 'npc') btn.classList.add('btn-success');
+        if (btn.dataset.type === 'npc')
+            btn.classList.add('btn-success');
     });
     showModal('add-node-modal');
-    $('node-name').focus();
+    if (nameInput)
+        nameInput.focus();
 }
-
 function editNode(nodeId) {
-    const node = D.mindmap.nodes.find(n => n.id === nodeId);
-    if (!node) return;
-    
-    $('edit-node-id').value = nodeId;
-    $('node-name').value = node.name || '';
-    $('node-type').value = node.type || 'npc';
-    $('node-desc').value = node.desc || '';
-    $('node-modal-title').textContent = '✏️ Node bearbeiten';
-    $('node-save-btn').textContent = 'Speichern';
-    
+    const D = window.D;
+    const node = D.mindmap.nodes.find((n) => n.id === nodeId);
+    if (!node)
+        return;
+    const editIdInput = $('edit-node-id');
+    const nameInput = $('node-name');
+    const typeInput = $('node-type');
+    const descInput = $('node-desc');
+    const titleEl = $('node-modal-title');
+    const btnEl = $('node-save-btn');
+    if (editIdInput)
+        editIdInput.value = String(nodeId);
+    if (nameInput)
+        nameInput.value = node.name || '';
+    if (typeInput)
+        typeInput.value = node.type || 'npc';
+    if (descInput)
+        descInput.value = node.desc || '';
+    if (titleEl)
+        titleEl.textContent = '✏️ Node bearbeiten';
+    if (btnEl)
+        btnEl.textContent = 'Speichern';
     document.querySelectorAll('.node-type-btn').forEach(btn => {
         btn.classList.remove('btn-success');
-        if (btn.dataset.type === node.type) btn.classList.add('btn-success');
+        if (btn.dataset.type === node.type)
+            btn.classList.add('btn-success');
     });
-    
     showModal('add-node-modal');
-    $('node-name').focus();
+    if (nameInput)
+        nameInput.focus();
 }
-
 function saveNodeFromModal() {
-    const name = $('node-name').value.trim();
-    if (!name) { showToast('Name erforderlich'); return; }
-    
-    const type = $('node-type').value;
-    const desc = $('node-desc').value.trim();
-    const editId = $('edit-node-id').value;
-    
+    const D = window.D;
+    const nextId = window.nextId;
+    const nameInput = $('node-name');
+    const typeInput = $('node-type');
+    const descInput = $('node-desc');
+    const editIdInput = $('edit-node-id');
+    const name = nameInput?.value.trim() || '';
+    if (!name) {
+        showToast('Name erforderlich');
+        return;
+    }
+    const type = typeInput?.value || 'npc';
+    const desc = descInput?.value.trim() || '';
+    const editId = editIdInput?.value || '';
     if (editId) {
         // Bearbeiten
-        const node = D.mindmap.nodes.find(n => n.id === parseInt(editId));
+        const node = D.mindmap.nodes.find((n) => n.id === parseInt(editId));
         if (node) {
             node.name = name;
             node.type = type;
             node.desc = desc;
             showToast(`${NODE_ICONS[type]} ${name} aktualisiert`);
         }
-    } else {
+    }
+    else {
         // Neu hinzufügen
         const container = $('mindmap-container');
+        if (!container)
+            return;
         const centerX = (container.clientWidth / 2 - mindmapPan.x) / mindmapZoom;
         const centerY = (container.clientHeight / 2 - mindmapPan.y) / mindmapZoom;
-        
         D.mindmap.nodes.push({
             id: nextId('mindmapNodes'),
             name,
@@ -319,150 +341,165 @@ function saveNodeFromModal() {
         });
         showToast(`${NODE_ICONS[type]} ${name} hinzugefügt`);
     }
-    
     hideModal('add-node-modal');
     renderMindmap();
     save();
 }
-
 function selectNodeType(type) {
-    $('node-type').value = type;
+    const typeInput = $('node-type');
+    if (typeInput)
+        typeInput.value = type;
     document.querySelectorAll('.node-type-btn').forEach(btn => {
         btn.classList.toggle('btn-success', btn.dataset.type === type);
     });
 }
-
 function deleteSelectedNode() {
-    if (!selectedNode) {
+    if (selectedNode === null) {
         showToast('Kein Node ausgewählt');
         return;
     }
     deleteNodeById(selectedNode);
 }
-
 function editSelectedNode() {
-    if (!selectedNode) {
+    if (selectedNode === null) {
         showToast('Kein Node ausgewählt');
         return;
     }
     editNode(selectedNode);
 }
-
 function deleteNodeById(nodeId) {
-    const node = D.mindmap.nodes.find(n => n.id === nodeId);
-    if (!node) return;
-
+    const D = window.D;
+    const node = D.mindmap.nodes.find((n) => n.id === nodeId);
+    if (!node)
+        return;
     if (confirm(`"${node.name}" löschen?`)) {
         pushUndo('Mindmap-Node gelöscht');
-        D.mindmap.nodes = D.mindmap.nodes.filter(n => n.id !== nodeId);
-        D.mindmap.connections = D.mindmap.connections.filter(c => c.from !== nodeId && c.to !== nodeId);
-        if (selectedNode === nodeId) selectedNode = null;
+        D.mindmap.nodes = D.mindmap.nodes.filter((n) => n.id !== nodeId);
+        D.mindmap.connections = D.mindmap.connections.filter((c) => c.from !== nodeId && c.to !== nodeId);
+        if (selectedNode === nodeId)
+            selectedNode = null;
         renderMindmap();
         save();
         showToast('🗑️ Node gelöscht');
     }
 }
-
-// Connection Mode
+// ============================================================
+// CONNECTION MODE
+// ============================================================
 function startConnectMode() {
     connectMode = true;
     connectFrom = null;
-    $('connect-mode-btn').classList.add('btn-success');
-    $('connection-info').style.display = 'block';
+    const btn = $('connect-mode-btn');
+    const info = $('connection-info');
+    if (btn)
+        btn.classList.add('btn-success');
+    if (info)
+        info.style.display = 'block';
     renderMindmap();
 }
-
 function cancelConnectMode() {
     connectMode = false;
     connectFrom = null;
-    $('connect-mode-btn').classList.remove('btn-success');
-    $('connection-info').style.display = 'none';
+    const btn = $('connect-mode-btn');
+    const info = $('connection-info');
+    if (btn)
+        btn.classList.remove('btn-success');
+    if (info)
+        info.style.display = 'none';
     renderMindmap();
 }
-
 function showConnectionModal(from, to) {
-    const fromNode = D.mindmap.nodes.find(n => n.id === from);
-    const toNode = D.mindmap.nodes.find(n => n.id === to);
-    
-    $('connection-nodes-info').innerHTML = `
-        <span style="color: var(--cyan);">${NODE_ICONS[fromNode.type]} ${esc(fromNode.name)}</span>
-        <span style="margin: 0 12px;">→</span>
-        <span style="color: var(--gold);">${NODE_ICONS[toNode.type]} ${esc(toNode.name)}</span>
-    `;
-    
-    $('conn-type').value = 'neutral';
-    $('conn-label').value = '';
+    const D = window.D;
+    const fromNode = D.mindmap.nodes.find((n) => n.id === from);
+    const toNode = D.mindmap.nodes.find((n) => n.id === to);
+    const infoEl = $('connection-nodes-info');
+    if (infoEl) {
+        infoEl.innerHTML = `
+            <span style="color: var(--cyan);">${NODE_ICONS[fromNode.type]} ${esc(fromNode.name)}</span>
+            <span style="margin: 0 12px;">→</span>
+            <span style="color: var(--gold);">${NODE_ICONS[toNode.type]} ${esc(toNode.name)}</span>
+        `;
+    }
+    const typeInput = $('conn-type');
+    const labelInput = $('conn-label');
+    if (typeInput)
+        typeInput.value = 'neutral';
+    if (labelInput)
+        labelInput.value = '';
     document.querySelectorAll('.conn-type-btn').forEach(btn => {
         btn.classList.remove('btn-success');
-        if (btn.dataset.type === 'neutral') btn.classList.add('btn-success');
+        if (btn.dataset.type === 'neutral')
+            btn.classList.add('btn-success');
     });
-    
     // Store connection data
     window._pendingConnection = { from, to };
-    
     showModal('connection-modal');
 }
-
 function selectConnType(type) {
-    $('conn-type').value = type;
+    const typeInput = $('conn-type');
+    if (typeInput)
+        typeInput.value = type;
     document.querySelectorAll('.conn-type-btn').forEach(btn => {
         btn.classList.toggle('btn-success', btn.dataset.type === type);
     });
 }
-
 function confirmConnection() {
-    if (!window._pendingConnection) return;
-    
-    const { from, to } = window._pendingConnection;
-    const type = $('conn-type').value;
-    const label = $('conn-label').value.trim();
-    
+    const D = window.D;
+    const pending = window._pendingConnection;
+    if (!pending)
+        return;
+    const { from, to } = pending;
+    const typeInput = $('conn-type');
+    const labelInput = $('conn-label');
+    const type = typeInput?.value || 'neutral';
+    const label = labelInput?.value.trim() || '';
     // Check if connection already exists
-    const exists = D.mindmap.connections.some(c => 
-        (c.from === from && c.to === to) || (c.from === to && c.to === from)
-    );
-    
+    const exists = D.mindmap.connections.some((c) => (c.from === from && c.to === to) || (c.from === to && c.to === from));
     if (exists) {
         showToast('Verbindung existiert bereits');
-    } else {
+    }
+    else {
         D.mindmap.connections.push({ from, to, type, label });
         save();
         showToast('Verbindung erstellt');
     }
-    
     hideModal('connection-modal');
     cancelConnectMode();
     delete window._pendingConnection;
 }
-
-// Drag & Drop
+// ============================================================
+// DRAG & DROP
+// ============================================================
 function startNodeDrag(e, nodeId) {
-    if (connectMode) return;
-    
-    dragNode = D.mindmap.nodes.find(n => n.id === nodeId);
-    if (!dragNode) return;
-    
-    const rect = $('mindmap-container').getBoundingClientRect();
+    const D = window.D;
+    if (connectMode)
+        return;
+    dragNode = D.mindmap.nodes.find((n) => n.id === nodeId) || null;
+    if (!dragNode)
+        return;
+    const container = $('mindmap-container');
+    if (!container)
+        return;
+    const rect = container.getBoundingClientRect();
     dragOffset = {
         x: (e.clientX - rect.left - mindmapPan.x) / mindmapZoom - dragNode.x,
         y: (e.clientY - rect.top - mindmapPan.y) / mindmapZoom - dragNode.y
     };
-    
     document.addEventListener('mousemove', onNodeDrag);
     document.addEventListener('mouseup', stopNodeDrag);
     e.preventDefault();
 }
-
 function onNodeDrag(e) {
-    if (!dragNode) return;
-    
-    const rect = $('mindmap-container').getBoundingClientRect();
+    if (!dragNode)
+        return;
+    const container = $('mindmap-container');
+    if (!container)
+        return;
+    const rect = container.getBoundingClientRect();
     dragNode.x = Math.max(0, (e.clientX - rect.left - mindmapPan.x) / mindmapZoom - dragOffset.x);
     dragNode.y = Math.max(0, (e.clientY - rect.top - mindmapPan.y) / mindmapZoom - dragOffset.y);
-    
     renderMindmap();
 }
-
 function stopNodeDrag() {
     if (dragNode) {
         save();
@@ -471,104 +508,108 @@ function stopNodeDrag() {
     document.removeEventListener('mousemove', onNodeDrag);
     document.removeEventListener('mouseup', stopNodeDrag);
 }
-
-// Zoom & Pan
+// ============================================================
+// ZOOM & PAN
+// ============================================================
 function zoomMindmap(delta) {
     const newZoom = Math.max(0.3, Math.min(2, mindmapZoom + delta));
     mindmapZoom = newZoom;
     updateMindmapZoomDisplay();
     renderMindmap();
 }
-
 function resetZoom() {
     mindmapZoom = 1;
     mindmapPan = { x: 0, y: 0 };
     updateMindmapZoomDisplay();
     renderMindmap();
 }
-
 function updateMindmapZoomDisplay() {
     const display = $('mindmap-zoom-display');
     if (display) {
         display.textContent = Math.round(mindmapZoom * 100) + '%';
     }
 }
-
 function centerView() {
+    const D = window.D;
     if (!D.mindmap.nodes.length) {
         resetZoom();
         return;
     }
-    
     // Calculate bounding box of all nodes
     let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
-    D.mindmap.nodes.forEach(n => {
+    D.mindmap.nodes.forEach((n) => {
         minX = Math.min(minX, n.x);
         minY = Math.min(minY, n.y);
         maxX = Math.max(maxX, n.x + 120);
         maxY = Math.max(maxY, n.y + 60);
     });
-    
     const container = $('mindmap-container');
+    if (!container)
+        return;
     const centerX = (minX + maxX) / 2;
     const centerY = (minY + maxY) / 2;
-    
     mindmapPan.x = container.clientWidth / 2 - centerX * mindmapZoom;
     mindmapPan.y = container.clientHeight / 2 - centerY * mindmapZoom;
-    
     renderMindmap();
 }
-
-// Auto Layout (simple force-directed)
+// ============================================================
+// AUTO LAYOUT
+// ============================================================
 function autoLayoutNodes() {
+    const D = window.D;
     const nodes = D.mindmap.nodes;
-    if (!nodes.length) return;
-    
+    if (!nodes.length)
+        return;
     const container = $('mindmap-container');
+    if (!container)
+        return;
     const width = container.clientWidth;
     const height = container.clientHeight;
-    
     // Simple circular layout for now
     const centerX = width / 2 / mindmapZoom - mindmapPan.x / mindmapZoom;
     const centerY = height / 2 / mindmapZoom - mindmapPan.y / mindmapZoom;
     const radius = Math.min(width, height) * 0.35 / mindmapZoom;
-    
     nodes.forEach((node, i) => {
         const angle = (i / nodes.length) * Math.PI * 2 - Math.PI / 2;
         node.x = centerX + Math.cos(angle) * radius - 60;
         node.y = centerY + Math.sin(angle) * radius - 30;
     });
-    
     renderMindmap();
     save();
     showToast('Nodes automatisch angeordnet');
 }
-
-// Filter Mindmap Nodes
+// ============================================================
+// FILTER
+// ============================================================
 function filterMindmapNodes() {
-    mindmapFilter = ($('mindmap-search')?.value || '').toLowerCase();
-    mindmapTypeFilter = $('mindmap-type-filter')?.value || '';
+    const D = window.D;
+    const searchInput = $('mindmap-search');
+    const typeFilterInput = $('mindmap-type-filter');
+    mindmapFilter = (searchInput?.value || '').toLowerCase();
+    mindmapTypeFilter = typeFilterInput?.value || '';
     renderMindmap();
-    
     // Update counter
     const count = D.mindmap?.nodes?.length || 0;
     const countEl = $('network-io-count');
-    if (countEl) countEl.textContent = count;
+    if (countEl)
+        countEl.textContent = String(count);
 }
-
-// Import Nodes from existing data
+// ============================================================
+// IMPORT
+// ============================================================
 function showImportNodesModal() {
     showModal('import-nodes-modal');
     populateImportNodesList();
 }
-
 function populateImportNodesList() {
-    const source = $('import-nodes-source').value;
+    const D = window.D;
+    const sourceInput = $('import-nodes-source');
     const listEl = $('import-nodes-list');
-    
+    if (!listEl)
+        return;
+    const source = sourceInput?.value || 'characters';
     let items = [];
     let itemType = 'npc';
-    
     switch (source) {
         case 'characters':
             items = D.characters || [];
@@ -591,22 +632,18 @@ function populateImportNodesList() {
             itemType = 'enemy';
             break;
     }
-    
     if (!items.length) {
         listEl.innerHTML = '<div style="color: var(--text-dim); text-align: center; padding: 20px;">Keine Einträge vorhanden</div>';
         return;
     }
-    
     // Check which are already imported
-    const existingNames = new Set((D.mindmap?.nodes || []).map(n => n.name.toLowerCase()));
-    
+    const existingNames = new Set((D.mindmap?.nodes || []).map((n) => n.name.toLowerCase()));
     listEl.innerHTML = items.map(item => {
         const name = item.name || item.title || 'Unbenannt';
         const exists = existingNames.has(name.toLowerCase());
         const icon = NODE_ICONS[itemType] || '❓';
-        
         return `
-            <label style="display: flex; align-items: center; gap: 8px; padding: 6px 8px; border-radius: 4px; cursor: pointer; ${exists ? 'opacity: 0.4;' : ''}" 
+            <label style="display: flex; align-items: center; gap: 8px; padding: 6px 8px; border-radius: 4px; cursor: pointer; ${exists ? 'opacity: 0.4;' : ''}"
                    class="import-node-item" ${exists ? 'title="Bereits importiert"' : ''}>
                 <input type="checkbox" data-name="${esc(name)}" data-type="${itemType}" data-source="${source}" data-id="${item.id}" ${exists ? 'disabled' : ''}>
                 <span>${icon}</span>
@@ -616,27 +653,26 @@ function populateImportNodesList() {
         `;
     }).join('');
 }
-
 function importSelectedNodes() {
+    const D = window.D;
+    const nextId = window.nextId;
     const checkboxes = document.querySelectorAll('#import-nodes-list input[type="checkbox"]:checked');
     if (!checkboxes.length) {
         showToast('⚠️ Keine Einträge ausgewählt', 'warning');
         return;
     }
-    
     const container = $('mindmap-container');
+    if (!container)
+        return;
     const centerX = (container.clientWidth / 2 - mindmapPan.x) / mindmapZoom;
     const centerY = (container.clientHeight / 2 - mindmapPan.y) / mindmapZoom;
-    
     let count = 0;
     checkboxes.forEach((cb, i) => {
-        const name = cb.dataset.name;
-        const type = cb.dataset.type;
-        
+        const name = cb.dataset.name || '';
+        const type = cb.dataset.type || 'npc';
         // Add node with slight offset
         const angle = (i / checkboxes.length) * Math.PI * 2;
         const radius = 100 + Math.random() * 50;
-        
         D.mindmap.nodes.push({
             id: nextId('mindmapNodes'),
             name,
@@ -647,58 +683,53 @@ function importSelectedNodes() {
         });
         count++;
     });
-    
     hideModal('import-nodes-modal');
     renderMindmap();
     save();
     showToast(`📥 ${count} Node(s) importiert`);
 }
-
 function importAllNodes() {
-    const source = $('import-nodes-source').value;
     const checkboxes = document.querySelectorAll('#import-nodes-list input[type="checkbox"]:not(:disabled)');
-    
     checkboxes.forEach(cb => cb.checked = true);
     importSelectedNodes();
 }
-
-// clearAllNodes ist definiert als Alias für clearMindmap() im Debug-Bereich
-
+// ============================================================
+// EXPORT
+// ============================================================
 function exportMindmapImage() {
     showToast('🖼️ Export als PNG (In Entwicklung)');
     // TODO: Implement html2canvas or similar
 }
-
-// Pan with mouse drag on empty space
+// ============================================================
+// INITIALIZATION
+// ============================================================
 function initMindmapPan() {
     const container = $('mindmap-container');
-    if (!container) return;
-    
+    if (!container)
+        return;
     container.addEventListener('mousedown', (e) => {
-        if (e.target === container || e.target.id === 'mindmap-viewport' || e.target.tagName === 'svg') {
+        const target = e.target;
+        if (target === container || target.id === 'mindmap-viewport' || target.tagName === 'svg') {
             isPanning = true;
             panStart = { x: e.clientX - mindmapPan.x, y: e.clientY - mindmapPan.y };
             container.style.cursor = 'grabbing';
         }
     });
-    
     container.addEventListener('mousemove', (e) => {
-        if (!isPanning) return;
+        if (!isPanning)
+            return;
         mindmapPan.x = e.clientX - panStart.x;
         mindmapPan.y = e.clientY - panStart.y;
         renderMindmap();
     });
-    
     container.addEventListener('mouseup', () => {
         isPanning = false;
         container.style.cursor = '';
     });
-    
     container.addEventListener('mouseleave', () => {
         isPanning = false;
         container.style.cursor = '';
     });
-    
     // Zoom with scroll wheel
     container.addEventListener('wheel', (e) => {
         e.preventDefault();
@@ -706,15 +737,31 @@ function initMindmapPan() {
         zoomMindmap(delta);
     }, { passive: false });
 }
-
-// Initialize pan on load
-document.addEventListener('DOMContentLoaded', () => {
-    setTimeout(initMindmapPan, 100);
-    setTimeout(initDiceTab, 200);
-});
-
-function initDiceTab() {
-    updateDiceCharSelect();
-    updateDiceCharStats();
-    renderFormulaHistory();
-}
+// ============================================================
+// EXPORTS FOR GLOBAL ACCESS
+// ============================================================
+window.renderMindmap = renderMindmap;
+window.showAddNodeModal = showAddNodeModal;
+window.editNode = editNode;
+window.saveNodeFromModal = saveNodeFromModal;
+window.selectNodeType = selectNodeType;
+window.deleteSelectedNode = deleteSelectedNode;
+window.editSelectedNode = editSelectedNode;
+window.deleteNodeById = deleteNodeById;
+window.startConnectMode = startConnectMode;
+window.cancelConnectMode = cancelConnectMode;
+window.showConnectionModal = showConnectionModal;
+window.selectConnType = selectConnType;
+window.confirmConnection = confirmConnection;
+window.zoomMindmap = zoomMindmap;
+window.resetZoom = resetZoom;
+window.centerView = centerView;
+window.autoLayoutNodes = autoLayoutNodes;
+window.filterMindmapNodes = filterMindmapNodes;
+window.showImportNodesModal = showImportNodesModal;
+window.populateImportNodesList = populateImportNodesList;
+window.importSelectedNodes = importSelectedNodes;
+window.importAllNodes = importAllNodes;
+window.exportMindmapImage = exportMindmapImage;
+window.initMindmapPan = initMindmapPan;
+//# sourceMappingURL=mindmap.js.map

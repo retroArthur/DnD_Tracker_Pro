@@ -3,22 +3,31 @@
 // CONDITIONS SYSTEM - @condition @status @debuff @buff
 // ============================================================
 function showConditionsModal(type, id) {
-    $('condition-target-type').value = type;
-    $('condition-target-id').value = id;
+    const typeEl = $('condition-target-type');
+    const idEl = $('condition-target-id');
+    if (typeEl)
+        typeEl.value = type;
+    if (idEl)
+        idEl.value = String(id);
     renderConditionsList();
-    showModal('conditions-modal');
+    const showModal = window.showModal;
+    if (showModal)
+        showModal('conditions-modal');
 }
-
 function renderConditionsList() {
-    const c = $('conditions-list'); if (!c) return;
-    const type = $('condition-target-type').value;
-    const id = parseEntityId($('condition-target-id').value);
-    
+    const c = $('conditions-list');
+    if (!c)
+        return;
+    const typeEl = $('condition-target-type');
+    const idEl = $('condition-target-id');
+    const type = typeEl?.value;
+    const id = parseEntityId(idEl?.value);
+    const getEntityByTypeAndId = window.getEntityByTypeAndId;
     const entity = getEntityByTypeAndId(type, id);
     const currentConditions = entity?.conditions || [];
-    
+    const CONDITIONS = window.CONDITIONS;
     c.innerHTML = Object.entries(CONDITIONS).map(([key, cond]) => {
-        const hasCondition = currentConditions.some(c => c.type === key);
+        const hasCondition = currentConditions.some((c) => c.type === key);
         return `<button class="btn ${hasCondition ? 'btn-success' : ''}" data-action="toggle-condition" data-value="${key}" style="justify-content: flex-start; gap: 8px; padding: 10px 12px; min-width: 0; overflow: hidden;">
             <span style="flex-shrink: 0;">${cond.icon}</span>
             <span style="flex: 1; text-align: left; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${cond.name}</span>
@@ -26,77 +35,106 @@ function renderConditionsList() {
         </button>`;
     }).join('');
 }
-
 function toggleCondition(conditionKey) {
-    const type = $('condition-target-type').value;
-    const id = parseEntityId($('condition-target-id').value);
+    const typeEl = $('condition-target-type');
+    const idEl = $('condition-target-id');
+    const type = typeEl?.value;
+    const id = parseEntityId(idEl?.value);
+    const getEntityByTypeAndId = window.getEntityByTypeAndId;
     const entity = getEntityByTypeAndId(type, id);
-    if (!entity) return;
-    
-    if (!entity.conditions) entity.conditions = [];
-    
-    const idx = entity.conditions.findIndex(c => c.type === conditionKey);
+    if (!entity)
+        return;
+    if (!entity.conditions)
+        entity.conditions = [];
+    const idx = entity.conditions.findIndex((c) => c.type === conditionKey);
     if (idx > -1) {
         entity.conditions.splice(idx, 1);
-    } else {
-        entity.conditions.push({ 
-            type: conditionKey, 
+    }
+    else {
+        const CONDITIONS = window.CONDITIONS;
+        entity.conditions.push({
+            type: conditionKey,
             name: CONDITIONS[conditionKey].name,
             addedAt: Date.now()
         });
     }
-    
     renderConditionsList();
-    renderParty();
-    renderInit();
-    save();
+    const renderParty = window.renderParty;
+    const renderInit = window.renderInit;
+    const save = window.save;
+    if (renderParty)
+        renderParty();
+    if (renderInit)
+        renderInit();
+    if (save)
+        save();
 }
-
 function addCustomCondition() {
-    const name = $('custom-condition-name').value.trim();
-    if (!name) return;
-    
-    const type = $('condition-target-type').value;
-    const id = parseEntityId($('condition-target-id').value);
+    const nameEl = $('custom-condition-name');
+    const name = nameEl?.value.trim();
+    if (!name)
+        return;
+    const typeEl = $('condition-target-type');
+    const idEl = $('condition-target-id');
+    const type = typeEl?.value;
+    const id = parseEntityId(idEl?.value);
+    const getEntityByTypeAndId = window.getEntityByTypeAndId;
     const entity = getEntityByTypeAndId(type, id);
-    if (!entity) return;
-    
-    if (!entity.conditions) entity.conditions = [];
-    entity.conditions.push({ 
-        type: 'custom', 
+    if (!entity)
+        return;
+    if (!entity.conditions)
+        entity.conditions = [];
+    entity.conditions.push({
+        type: 'custom',
         name: name,
         addedAt: Date.now()
     });
-    
-    $('custom-condition-name').value = '';
-    hideModal('conditions-modal');
-    renderParty();
-    renderInit();
-    save();
+    if (nameEl)
+        nameEl.value = '';
+    const hideModal = window.hideModal;
+    const renderParty = window.renderParty;
+    const renderInit = window.renderInit;
+    const save = window.save;
+    if (hideModal)
+        hideModal('conditions-modal');
+    if (renderParty)
+        renderParty();
+    if (renderInit)
+        renderInit();
+    if (save)
+        save();
     showToast(`Zustand "${name}" hinzugefügt`);
 }
-
 function removeCondition(type, id, conditionIndex) {
+    const getEntityByTypeAndId = window.getEntityByTypeAndId;
     const entity = getEntityByTypeAndId(type, id);
-    if (!entity || !entity.conditions) return;
-    
+    if (!entity || !entity.conditions)
+        return;
     entity.conditions.splice(conditionIndex, 1);
-    renderParty();
-    renderInit();
-    save();
+    const renderParty = window.renderParty;
+    const renderInit = window.renderInit;
+    const save = window.save;
+    if (renderParty)
+        renderParty();
+    if (renderInit)
+        renderInit();
+    if (save)
+        save();
 }
-
 function renderConditionsBar(conditions, type, id) {
-    if (!conditions || !conditions.length) return '';
+    if (!conditions || !conditions.length)
+        return '';
+    const CONDITIONS = window.CONDITIONS;
+    const esc = window.esc;
     return `<div class="conditions-bar">
         ${conditions.map((c, i) => {
-            const cond = CONDITIONS[c.type] || { icon: '⚡', name: c.name };
-            return `<span class="condition-tag condition-${c.type}" title="${esc(cond.desc || c.name)}" data-action="remove-condition-stop" data-type="${type}" data-id="${id}" data-value="${i}">
+        const cond = CONDITIONS[c.type] || { icon: '⚡', name: c.name };
+        return `<span class="condition-tag condition-${c.type}" title="${esc(cond.desc || c.name)}" data-action="remove-condition-stop" data-type="${type}" data-id="${id}" data-value="${i}">
                 ${cond.icon} ${esc(c.name || cond.name)}
                 <span class="remove-condition">✕</span>
             </span>`;
-        }).join('')}
+    }).join('')}
     </div>`;
 }
-
 // ============================================================
+//# sourceMappingURL=conditions.js.map

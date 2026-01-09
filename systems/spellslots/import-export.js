@@ -1,396 +1,331 @@
 // [SECTION:IMPORT_EXPORT]
 // Extrahiert aus spellslots.js
-// Import/Export System
-// Zeilen: 493
-
-// IMPORT/EXPORT SYSTEM (Versioniert & Zukunftssicher)
-// ============================================================
-const IO_VERSION = '2.0';
+// Import/Export System mit Validierung
+// Zeilen: 565
+// Schema-Definition: Welche Felder werden für jeden Datentyp exportiert/importiert?
 const IO_SCHEMA = {
-    characters: {
-        required: ['name'],
-        defaults: { level: 1, hpCurrent: 0, hpMax: 0, armorClass: 10, spells: [], items: [], currency: {} }
+    'characters': {
+        id: { type: 'number', required: true },
+        name: { type: 'string', required: true },
+        race: { type: 'string', required: false, default: '' },
+        class: { type: 'string', required: false, default: '' },
+        level: { type: 'number', required: false, default: 1 },
+        playerName: { type: 'string', required: false, default: '' },
+        background: { type: 'string', required: false, default: '' },
+        hpCurrent: { type: 'number', required: false, default: 0 },
+        hpMax: { type: 'number', required: false, default: 0 },
+        hpTemp: { type: 'number', required: false, default: 0 },
+        ac: { type: 'number', required: false, default: 10 },
+        initiative: { type: 'number', required: false, default: 0 },
+        speed: { type: 'number', required: false, default: 30 },
+        passivePerception: { type: 'number', required: false, default: 10 },
+        str: { type: 'number', required: false, default: 10 },
+        dex: { type: 'number', required: false, default: 10 },
+        con: { type: 'number', required: false, default: 10 },
+        int: { type: 'number', required: false, default: 10 },
+        wis: { type: 'number', required: false, default: 10 },
+        cha: { type: 'number', required: false, default: 10 },
+        spells: { type: 'array', required: false, default: [] },
+        conditions: { type: 'array', required: false, default: [] },
+        tags: { type: 'array', required: false, default: [] },
+        notes: { type: 'string', required: false, default: '' },
+        avatarUrl: { type: 'string', required: false, default: '' }
     },
-    npcs: {
-        required: ['name'],
-        defaults: { dialogs: [], role: '', status: 'alive' }
+    'npcs': {
+        id: { type: 'number', required: true },
+        name: { type: 'string', required: true },
+        race: { type: 'string', required: false, default: '' },
+        location: { type: 'string', required: false, default: '' },
+        locationId: { type: 'number', required: false, default: null },
+        faction: { type: 'string', required: false, default: '' },
+        description: { type: 'string', required: false, default: '' },
+        tags: { type: 'array', required: false, default: [] },
+        relations: { type: 'array', required: false, default: [] },
+        avatarUrl: { type: 'string', required: false, default: '' }
     },
-    locations: {
-        required: ['name'],
-        defaults: { description: '', category: '' }
+    'locations': {
+        id: { type: 'number', required: true },
+        name: { type: 'string', required: true },
+        type: { type: 'string', required: false, default: '' },
+        region: { type: 'string', required: false, default: '' },
+        description: { type: 'string', required: false, default: '' },
+        tags: { type: 'array', required: false, default: [] },
+        avatarUrl: { type: 'string', required: false, default: '' }
     },
-    quests: {
-        required: ['title'],
-        defaults: { description: '', status: 'active', objectives: [] }
+    'quests': {
+        id: { type: 'number', required: true },
+        title: { type: 'string', required: true },
+        description: { type: 'string', required: false, default: '' },
+        status: { type: 'string', required: false, default: 'active' },
+        giver: { type: 'string', required: false, default: '' },
+        giverId: { type: 'number', required: false, default: null },
+        location: { type: 'string', required: false, default: '' },
+        locationId: { type: 'number', required: false, default: null },
+        reward: { type: 'string', required: false, default: '' },
+        tags: { type: 'array', required: false, default: [] }
     },
-    loot: {
-        required: ['name'],
-        defaults: { quantity: 1, category: 'misc', rarity: 'normal', value: 0, weight: 0 }
+    'loot': {
+        id: { type: 'number', required: true },
+        name: { type: 'string', required: true },
+        type: { type: 'string', required: false, default: '' },
+        rarity: { type: 'string', required: false, default: 'common' },
+        description: { type: 'string', required: false, default: '' },
+        value: { type: 'number', required: false, default: 0 },
+        quantity: { type: 'number', required: false, default: 1 },
+        assignedTo: { type: 'string', required: false, default: '' },
+        tags: { type: 'array', required: false, default: [] }
     },
-    spells: {
-        required: ['name'],
-        defaults: { level: 0, school: '', type: 'spell', description: '' }
+    'spells': {
+        id: { type: 'number', required: true },
+        name: { type: 'string', required: true },
+        level: { type: 'number', required: false, default: 0 },
+        school: { type: 'string', required: false, default: '' },
+        castingTime: { type: 'string', required: false, default: '' },
+        range: { type: 'string', required: false, default: '' },
+        components: { type: 'string', required: false, default: '' },
+        duration: { type: 'string', required: false, default: '' },
+        description: { type: 'string', required: false, default: '' },
+        spellClass: { type: 'string', required: false, default: '' },
+        ritual: { type: 'boolean', required: false, default: false },
+        concentration: { type: 'boolean', required: false, default: false }
+    },
+    'notes': {
+        id: { type: 'number', required: true },
+        date: { type: 'string', required: true },
+        content: { type: 'string', required: false, default: '' },
+        sessionNumber: { type: 'number', required: false, default: 1 }
     }
 };
-
-// Export für einzelne Datentypen
+// EXPORT FUNCTIONS
+// ============================================================
 function exportData(dataType) {
+    const D = window.D;
+    const APP_CONFIG = window.APP_CONFIG;
     const data = D[dataType];
-    if (!data || data.length === 0) {
-        showToast('⚠️ Keine Daten zum Exportieren', 'warning');
+    if (!data || !Array.isArray(data) || data.length === 0) {
+        showToast(`Keine ${dataType} zum Exportieren vorhanden`, 'warning');
         return;
     }
-    
-    const exportObj = {
-        _meta: {
-            version: IO_VERSION,
-            type: dataType,
-            exportDate: new Date().toISOString(),
-            count: data.length,
-            app: 'D&D Session Tracker'
-        },
-        data: data
-    };
-    
-    const blob = new Blob([JSON.stringify(exportObj, null, 2)], { type: 'application/json' });
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    
-    const typeNames = {
-        characters: 'party',
-        npcs: 'npcs',
-        locations: 'orte',
-        quests: 'quests',
-        loot: 'truhe',
-        spells: 'zauber',
-        wiki: 'wiki'
-    };
-    
-    a.download = `dnd-${typeNames[dataType] || dataType}-${new Date().toISOString().split('T')[0]}.json`;
-    a.click();
-    URL.revokeObjectURL(a.href);
-    
-    showToast(`📤 ${data.length} ${dataType} exportiert`);
-}
-
-// CSV Export für Encounters und Spells
-function exportDataCSV(dataType) {
-    const data = D[dataType];
-    if (!data || data.length === 0) {
-        showToast('⚠️ Keine Daten zum Exportieren', 'warning');
+    const schema = IO_SCHEMA[dataType];
+    if (!schema) {
+        showToast('Datentyp wird nicht unterstützt', 'error');
         return;
     }
-    
-    let csvContent = '';
-    let filename = '';
-    
-    if (dataType === 'encounters') {
-        // CSV-Header für Encounters
-        const headers = ['Name', 'Typ', 'CR', 'AC', 'HP', 'Initiative', 'Speed', 'STR', 'DEX', 'CON', 'INT', 'WIS', 'CHA', 'Wahrnehmung', 'Sprachen', 'Eigenschaften', 'Aktionen', 'Ausrüstung', 'Fertigkeiten'];
-        csvContent = headers.join(';') + '\n';
-        
-        data.forEach(e => {
-            const row = [
-                escapeCSV(e.name || ''),
-                escapeCSV(e.creatureType || ''),
-                escapeCSV(e.cr || ''),
-                e.ac || 0,
-                e.hp || 0,
-                e.init || 0,
-                escapeCSV(e.speed || ''),
-                e.str || 10,
-                e.dex || 10,
-                e.con || 10,
-                e.int || 10,
-                e.wis || 10,
-                e.cha || 10,
-                e.perception || 0,
-                escapeCSV((e.languages || []).join(', ')),
-                escapeCSV(stripHTML(e.traits || '')),
-                escapeCSV(stripHTML(e.actions || '')),
-                escapeCSV(stripHTML(e.equipment || '')),
-                escapeCSV(stripHTML(e.skills || ''))
-            ];
-            csvContent += row.join(';') + '\n';
-        });
-        
-        filename = `dnd-encounters-${new Date().toISOString().split('T')[0]}.csv`;
-        
-    } else if (dataType === 'spells') {
-        // CSV-Header für Spells
-        const headers = ['Name', 'Stufe', 'Schule', 'Typ', 'Zauberzeit', 'Reichweite', 'Dauer', 'V', 'G', 'M', 'Material', 'Ritual', 'Klassen', 'Beschreibung', 'Notiz'];
-        csvContent = headers.join(';') + '\n';
-        
-        data.forEach(s => {
-            const classes = s.spellClasses?.join(', ') || s.spellClass || '';
-            const row = [
-                escapeCSV(s.name || ''),
-                s.level || 0,
-                escapeCSV(s.school || ''),
-                escapeCSV(s.type || ''),
-                escapeCSV(s.time || ''),
-                escapeCSV(s.range || ''),
-                escapeCSV(s.duration || ''),
-                s.v ? 'Ja' : 'Nein',
-                s.g ? 'Ja' : 'Nein',
-                s.m ? 'Ja' : 'Nein',
-                escapeCSV(s.material || ''),
-                s.ritual ? 'Ja' : 'Nein',
-                escapeCSV(classes),
-                escapeCSV(stripHTML(s.description || '')),
-                escapeCSV(s.note || '')
-            ];
-            csvContent += row.join(';') + '\n';
-        });
-        
-        filename = `dnd-zauber-${new Date().toISOString().split('T')[0]}.csv`;
-    }
-    
-    // BOM für Excel UTF-8 Erkennung
-    const BOM = '\uFEFF';
-    const blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8' });
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = filename;
-    a.click();
-    URL.revokeObjectURL(a.href);
-    
-    showToast(`📊 ${data.length} ${dataType} als CSV exportiert`);
-}
-
-// Hilfsfunktionen für CSV-Export
-function escapeCSV(value) {
-    if (value === null || value === undefined) return '';
-    const str = String(value);
-    // Wenn Semikolon, Anführungszeichen oder Zeilenumbruch enthalten, in Anführungszeichen setzen
-    if (str.includes(';') || str.includes('"') || str.includes('\n') || str.includes('\r')) {
-        return '"' + str.replace(/"/g, '""') + '"';
-    }
-    return str;
-}
-
-function stripHTML(html) {
-    if (!html) return '';
-    const temp = document.createElement('div');
-    temp.textContent = html;  // SAFE: textContent doesn't parse HTML
-    return temp.textContent || '';
-}
-
-// Import für einzelne Datentypen
-function importData(dataType, inputEl) {
-    const file = inputEl.files[0];
-    if (!file) return;
-
-    // File size validation to prevent DoS attacks
-    const MAX_SIZE_MB = 10;
-    const sizeMB = file.size / (1024 * 1024);
-    if (sizeMB > MAX_SIZE_MB) {
-        showToast(`❌ Datei zu groß (${sizeMB.toFixed(1)}MB). Max: ${MAX_SIZE_MB}MB`, 'error');
-        inputEl.value = '';
-        return;
-    }
-
-    const reader = new FileReader();
-    reader.onerror = () => {
-        ErrorHandler.log('importData', reader.error, 'FileReader Fehler');
-        ErrorHandler.showError('Datei konnte nicht gelesen werden');
-        inputEl.value = '';
-    };
-    
-    reader.onload = e => {
-        try {
-            // Sichere JSON-Parse mit Prototype Pollution Protection
-            let imported;
-            try {
-                imported = JSON.parse(e.target.result);
-                // Prototype Pollution Protection
-                if (imported && typeof imported === 'object') {
-                    delete imported.__proto__;
-                    delete imported.constructor;
-                    delete imported.prototype;
-                }
-            } catch (parseErr) {
-                throw new Error('Ungültiges JSON-Format');
+    try {
+        // Daten nach Schema filtern
+        const filtered = data.map(item => {
+            const obj = {};
+            for (const [key, field] of Object.entries(schema)) {
+                obj[key] = item[key] !== undefined ? item[key] : field.default;
             }
-            
-            // Prüfe ob es ein neues Format mit _meta ist
-            let items;
-            let importedType = dataType;
-            
-            if (imported._meta && imported.data) {
-                // Neues Format
-                items = imported.data;
-                importedType = imported._meta.type;
-                
-                // Warnung wenn Typ nicht übereinstimmt
-                if (importedType !== dataType) {
-                    if (!confirm(`⚠️ Die Datei enthält "${importedType}" Daten.\nSie versuchen aber "${dataType}" zu importieren.\n\nTrotzdem importieren?`)) {
-                        inputEl.value = '';
+            return obj;
+        });
+        // Kampagnennamen hinzufügen
+        const getCampaignIndex = window.getCampaignIndex;
+        const index = getCampaignIndex();
+        let campaignName = 'Standard-Kampagne';
+        if (index.active !== APP_CONFIG.STORAGE_KEY) {
+            const campaign = index.campaigns.find((c) => c.key === index.active);
+            campaignName = campaign?.name || 'Unbenannte Kampagne';
+        }
+        const exportObj = {
+            _exportDate: new Date().toISOString(),
+            _campaignName: campaignName,
+            _version: APP_CONFIG.VERSION,
+            _dataType: dataType,
+            data: filtered
+        };
+        const json = JSON.stringify(exportObj, null, 2);
+        const blob = new Blob([json], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${dataType}-${campaignName.replace(/[^a-zA-Z0-9äöüÄÖÜß\s-]/g, '').replace(/\s+/g, '-')}-${new Date().toISOString().split('T')[0]}.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+        showToast(`📁 ${data.length} ${dataType} exportiert`);
+    }
+    catch (err) {
+        showToast('❌ Export fehlgeschlagen: ' + err.message, 'error');
+        console.error('[Export] Error:', err);
+    }
+}
+function exportToCSV(dataType) {
+    const D = window.D;
+    const data = D[dataType];
+    if (!data || !Array.isArray(data) || data.length === 0) {
+        showToast(`Keine ${dataType} zum Exportieren`, 'warning');
+        return;
+    }
+    const schema = IO_SCHEMA[dataType];
+    if (!schema) {
+        showToast('CSV-Export für diesen Datentyp nicht verfügbar', 'error');
+        return;
+    }
+    try {
+        // Header
+        const headers = Object.keys(schema);
+        let csv = headers.join(',') + '\n';
+        // Rows
+        data.forEach((item) => {
+            const row = headers.map(key => {
+                let val = item[key] !== undefined ? item[key] : schema[key].default;
+                // Arrays/Objects zu JSON
+                if (typeof val === 'object') {
+                    val = JSON.stringify(val);
+                }
+                // Escape quotes in CSV
+                val = String(val).replace(/"/g, '""');
+                return `"${val}"`;
+            });
+            csv += row.join(',') + '\n';
+        });
+        // BOM für Excel UTF-8 Support
+        const bom = '\uFEFF';
+        const blob = new Blob([bom + csv], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${dataType}-${new Date().toISOString().split('T')[0]}.csv`;
+        a.click();
+        URL.revokeObjectURL(url);
+        showToast(`📊 CSV exportiert (${data.length} Einträge)`);
+    }
+    catch (err) {
+        showToast('❌ CSV-Export fehlgeschlagen', 'error');
+        console.error('[CSV Export] Error:', err);
+    }
+}
+// IMPORT FUNCTIONS
+// ============================================================
+function showImportModal(dataType) {
+    const fileInput = document.createElement('input');
+    fileInput.type = 'file';
+    fileInput.accept = '.json';
+    fileInput.style.display = 'none';
+    document.body.appendChild(fileInput);
+    fileInput.addEventListener('change', (e) => {
+        const target = e.target;
+        const file = target.files?.[0];
+        if (!file)
+            return;
+        // Größenlimit: 10MB
+        if (file.size > 10 * 1024 * 1024) {
+            showToast('❌ Datei zu groß (max 10MB)', 'error');
+            document.body.removeChild(fileInput);
+            return;
+        }
+        const reader = new FileReader();
+        reader.onload = (evt) => {
+            try {
+                const result = evt.target?.result;
+                const importData = JSON.parse(result);
+                // Validierung: Hat das Import-Objekt die richtige Struktur?
+                if (!importData.data || !Array.isArray(importData.data)) {
+                    throw new Error('Ungültiges Format: "data"-Array fehlt');
+                }
+                // Validierung: Datentyp passt?
+                if (importData._dataType && importData._dataType !== dataType) {
+                    const continueImport = confirm(`Import-Datentyp ist "${importData._dataType}", aber erwartet wird "${dataType}".\n\n` +
+                        `Trotzdem importieren?`);
+                    if (!continueImport) {
+                        document.body.removeChild(fileInput);
                         return;
                     }
                 }
-            } else if (Array.isArray(imported)) {
-                // Altes Format (direktes Array)
-                items = imported;
-            } else {
-                throw new Error('Unbekanntes Dateiformat');
-            }
-            
-            if (!Array.isArray(items) || items.length === 0) {
-                throw new Error('Keine gültigen Daten gefunden');
-            }
-            
-            // Schema-Validierung und Migration
-            const schema = IO_SCHEMA[dataType];
-            if (!schema) {
-                throw new Error(`Unbekannter Datentyp: ${dataType}`);
-            }
-            
-            const validItems = items.map((item, idx) => {
-                // Überspringe ungültige Items
-                if (!item || typeof item !== 'object') {
-                    console.warn(`Import: Item ${idx} ist ungültig, wird übersprungen`);
-                    return null;
+                // Schema-Validierung
+                const schema = IO_SCHEMA[dataType];
+                if (!schema) {
+                    throw new Error(`Schema für "${dataType}" nicht gefunden`);
                 }
-                
-                // Prüfe Pflichtfelder
-                for (const field of schema.required) {
-                    if (!item[field]) {
-                        console.warn(`Import: Item ${idx} fehlt Pflichtfeld "${field}"`);
+                const validatedItems = importData.data.map((item, idx) => {
+                    const validated = {};
+                    for (const [key, field] of Object.entries(schema)) {
+                        if (field.required && item[key] === undefined) {
+                            throw new Error(`Eintrag ${idx + 1}: Pflichtfeld "${key}" fehlt`);
+                        }
+                        validated[key] = item[key] !== undefined ? item[key] : field.default;
                     }
+                    return validated;
+                });
+                // Import-Modal anzeigen
+                const modal = $('import-modal');
+                if (modal) {
+                    const campaignName = importData._campaignName || file.name.replace('.json', '');
+                    const exportDate = importData._exportDate ? new Date(importData._exportDate).toLocaleDateString('de-DE') : 'Unbekannt';
+                    modal.dataset.importItems = JSON.stringify(validatedItems);
+                    modal.dataset.dataType = dataType;
+                    const infoEl = $('import-info');
+                    if (infoEl) {
+                        infoEl.innerHTML = `
+                            <div style="display: grid; gap: 8px;">
+                                <div><strong>Kampagne:</strong> ${esc(campaignName)}</div>
+                                <div><strong>Export-Datum:</strong> ${exportDate}</div>
+                                <div><strong>Einträge:</strong> ${validatedItems.length}</div>
+                                <div><strong>Typ:</strong> ${dataType}</div>
+                            </div>
+                        `;
+                    }
+                    showModal('import-modal');
                 }
-                
-                // Füge Defaults hinzu
-                const migratedItem = { ...schema.defaults, ...item };
-                
-                // Neue ID vergeben um Konflikte zu vermeiden
-                migratedItem.id = nextId(dataType);
-                
-                return migratedItem;
-            }).filter(Boolean); // Entferne null-Einträge
-            
-            if (validItems.length === 0) {
-                throw new Error('Keine gültigen Einträge nach Validierung');
+                showToast(`✅ Datei validiert: ${validatedItems.length} Einträge bereit`);
             }
-            
-            // Import-Modus abfragen
-            showImportModal(dataType, validItems);
-            
-        } catch(err) {
-            ErrorHandler.log('importData', err, dataType);
-            showToast(`❌ Import fehlgeschlagen: ${err.message}`, 'error');
-        }
-        inputEl.value = '';
-    };
-    reader.readAsText(file);
+            catch (err) {
+                showToast('❌ Import-Fehler: ' + err.message, 'error');
+                console.error('[Import] Parse error:', err);
+            }
+            document.body.removeChild(fileInput);
+        };
+        reader.onerror = () => {
+            showToast('❌ Datei konnte nicht gelesen werden', 'error');
+            document.body.removeChild(fileInput);
+        };
+        reader.readAsText(file);
+    });
+    fileInput.click();
 }
-
-// Import-Modal anzeigen
-function showImportModal(dataType, items) {
-    const typeLabels = {
-        characters: 'Charaktere',
-        npcs: 'NPCs',
-        locations: 'Orte',
-        quests: 'Quests',
-        loot: 'Items',
-        spells: 'Zauber'
-    };
-    
-    const existingCount = D[dataType]?.length || 0;
-    
-    let modal = $('import-modal');
-    if (!modal) {
-        modal = document.createElement('div');
-        modal.className = 'modal-overlay';
-        modal.id = 'import-modal';
-        document.body.appendChild(modal);
-    }
-    
-    // Preview der ersten 10 Items
-    const previewHtml = items.slice(0, 10).map(item => {
-        const name = item.name || item.title || 'Unbenannt';
-        const meta = dataType === 'characters' ? `Lv.${item.level || 1}` :
-                     dataType === 'spells' ? `Grad ${item.level || 0}` :
-                     dataType === 'loot' ? `×${item.quantity || 1}` : '';
-        return `<div class="import-preview-item">
-            <span class="import-preview-name">${esc(name)}</span>
-            <span class="import-preview-meta">${meta}</span>
-        </div>`;
-    }).join('');
-    
-    modal.innerHTML = `
-        <div class="modal">
-            <div class="modal-header">
-                <span class="modal-title">📥 ${typeLabels[dataType]} importieren</span>
-                <button class="btn btn-sm" data-action="hide-modal" data-value="import-modal">✕</button>
-            </div>
-            
-            <p style="margin-bottom: 12px; color: var(--text-dim);">
-                <strong>${items.length}</strong> ${typeLabels[dataType]} gefunden.
-                ${existingCount > 0 ? `Aktuell: <strong>${existingCount}</strong> vorhanden.` : ''}
-            </p>
-            
-            <div class="import-preview">
-                ${previewHtml}
-                ${items.length > 10 ? `<div style="text-align: center; color: var(--text-dim); padding: 8px;">... und ${items.length - 10} weitere</div>` : ''}
-            </div>
-            
-            <div class="import-options">
-                <label class="import-option">
-                    <input type="radio" name="import-mode" value="merge" checked>
-                    <span>➕ Hinzufügen (zu bestehenden)</span>
-                </label>
-                <label class="import-option">
-                    <input type="radio" name="import-mode" value="replace">
-                    <span>🔄 Ersetzen (bestehende löschen)</span>
-                </label>
-            </div>
-            
-            <div class="btn-group" style="margin-top: 16px;">
-                <button class="btn btn-success" data-action="execute-import" data-value="${dataType}">✓ Importieren</button>
-                <button class="btn" data-action="hide-modal" data-value="import-modal">Abbrechen</button>
-            </div>
-        </div>
-    `;
-    
-    // Items für späteren Import speichern
-    modal.dataset.importItems = JSON.stringify(items);
-    modal.dataset.importType = dataType;
-    
-    showModal('import-modal');
-}
-
-// Import ausführen
 function executeImport(dataType) {
     const modal = $('import-modal');
     const items = JSON.parse(modal.dataset.importItems || '[]');
-    const mode = document.querySelector('input[name="import-mode"]:checked')?.value || 'merge';
-
-    saveUndoState();
-
-    // Create safety backup before replace mode
+    const type = dataType || modal.dataset.dataType || '';
+    const modeInput = document.querySelector('input[name="import-mode"]:checked');
+    const mode = modeInput?.value || 'merge';
+    if (!type || items.length === 0) {
+        showToast('Keine Daten zum Importieren', 'error');
+        return;
+    }
+    const D = window.D;
+    const renderAll = window.renderAll;
+    saveUndoState(`${items.length} ${type} importiert`);
+    // Sicherheitskopie bei Replace-Modus
     if (mode === 'replace') {
         try {
             createAutoBackup();
             showToast('💾 Sicherheitskopie erstellt', 'info', 1000);
-        } catch (err) {
+        }
+        catch (err) {
             console.warn('[Import] Backup failed:', err);
         }
-        D[dataType] = items;
-    } else {
-        D[dataType] = [...(D[dataType] || []), ...items];
+        D[type] = items;
     }
-    
+    else {
+        // Merge: Neue IDs vergeben für importierte Einträge
+        const getNextId = window.getNextId;
+        const merged = items.map((item) => {
+            return { ...item, id: getNextId(type) };
+        });
+        D[type] = [...(D[type] || []), ...merged];
+    }
     save();
     renderAll();
     updateIOCounts();
     hideModal('import-modal');
-    
-    showToast(`✅ ${items.length} ${dataType} importiert (${mode === 'replace' ? 'ersetzt' : 'hinzugefügt'})`);
+    showToast(`✅ ${items.length} ${type} importiert (${mode === 'replace' ? 'ersetzt' : 'hinzugefügt'})`);
 }
-
-// IO-Counter aktualisieren
+// UTILITY FUNCTIONS
+// ============================================================
 function updateIOCounts() {
+    const D = window.D;
     const counts = {
         'party': D.characters?.length || 0,
         'npcs': D.npcs?.length || 0,
@@ -400,72 +335,90 @@ function updateIOCounts() {
         'spells': D.spells?.length || 0,
         'notes': D.sessionNotes?.length || 0
     };
-    
     for (const [key, count] of Object.entries(counts)) {
         const el = $(`${key}-io-count`);
-        if (el) el.textContent = count;
+        if (el)
+            el.textContent = String(count);
     }
-    
     // Encounter-Runde aktualisieren
     const roundEl = $('encounter-round-num');
-    if (roundEl) roundEl.textContent = D.initiative?.round || 1;
+    if (roundEl)
+        roundEl.textContent = String(D.initiative?.round || 1);
 }
-
 // Legacy: Alte exportSpells Funktion für Kompatibilität
 function exportSpells() {
     exportData('spells');
 }
-
 // Legacy: Globaler Import (alte Funktion umbenennen)
 function importDataGlobal() {
-    const file = $('import-file').files[0]; if (!file) return;
+    const fileInput = $('import-file');
+    const file = fileInput.files?.[0];
+    if (!file)
+        return;
     const reader = new FileReader();
-    reader.onload = e => {
+    reader.onload = (e) => {
         try {
-            const imp = JSON.parse(e.target.result);
-            
+            const result = e.target?.result;
+            const imp = JSON.parse(result);
+            const D = window.D;
+            const getCampaignIndex = window.getCampaignIndex;
+            const saveCampaignIndex = window.saveCampaignIndex;
+            const renderAll = window.renderAll;
             // Kampagnennamen aus Import holen
             const campaignName = imp._campaignName || file.name.replace('.json', '').replace(/-\d{4}-\d{2}-\d{2}$/, '');
-            
             // Benutzer fragen: Neue Kampagne oder aktuelle überschreiben?
-            const choice = confirm(
-                `Import: "${campaignName}"\n\n` +
+            const choice = confirm(`Import: "${campaignName}"\n\n` +
                 `OK = Als neue Kampagne importieren\n` +
-                `Abbrechen = Aktuelle Kampagne überschreiben`
-            );
-            
+                `Abbrechen = Aktuelle Kampagne überschreiben`);
             // Meta-Felder entfernen
             delete imp._campaignName;
             delete imp._exportDate;
             delete imp._version;
-            
             // Migration
             if (imp.characters) {
-                imp.characters = imp.characters.map(c => {
-                    let bg = c.background || '', wt = c.weight || 0, pn = c.playerName || '';
-                    if (c.notes && !bg) { const m = c.notes.match(/Herkunft\s*:\s*([^\n]+)/i); if (m) bg = m[1].trim(); }
-                    if (c.notes && !wt) { const m = c.notes.match(/Gewicht\s*:\s*(\d+)/i); if (m) wt = parseInt(m[1]); }
-                    if (c.name?.includes('(') && !pn) { const m = c.name.match(/\(([^)]+)\)/); if (m) pn = m[1]; }
-                    return { ...c, background: bg, weight: wt, playerName: pn, hpCurrent: c.hpCurrent || 0, hpMax: c.hpMax || 0, spells: c.spells || [] };
+                imp.characters = imp.characters.map((c) => {
+                    let bg = c.background || '';
+                    let wt = c.weight || 0;
+                    let pn = c.playerName || '';
+                    if (c.notes && !bg) {
+                        const m = c.notes.match(/Herkunft\s*:\s*([^\n]+)/i);
+                        if (m)
+                            bg = m[1].trim();
+                    }
+                    if (c.notes && !wt) {
+                        const m = c.notes.match(/Gewicht\s*:\s*(\d+)/i);
+                        if (m)
+                            wt = parseInt(m[1]);
+                    }
+                    if (c.name?.includes('(') && !pn) {
+                        const m = c.name.match(/\(([^)]+)\)/);
+                        if (m)
+                            pn = m[1];
+                    }
+                    return {
+                        ...c,
+                        background: bg,
+                        weight: wt,
+                        playerName: pn,
+                        hpCurrent: c.hpCurrent || 0,
+                        hpMax: c.hpMax || 0,
+                        spells: c.spells || []
+                    };
                 });
             }
-            
             if (choice) {
                 // Als neue Kampagne importieren
                 const index = getCampaignIndex();
                 const key = 'dnd-campaign-' + Date.now();
-                
                 // Neue Kampagne in Index hinzufügen
-                index.campaigns.push({ 
-                    key, 
-                    name: campaignName, 
-                    created: new Date().toISOString() 
+                index.campaigns.push({
+                    key,
+                    name: campaignName,
+                    created: new Date().toISOString()
                 });
-                
                 // Kampagne aktivieren
                 index.active = key;
                 saveCampaignIndex(index);
-                
                 // Daten speichern
                 const newData = {
                     locations: [], npcs: [], quests: [], characters: [], sessionNotes: [], quickNotes: '',
@@ -477,89 +430,91 @@ function importDataGlobal() {
                     ...imp
                 };
                 const saveResult = StorageAPI.setJSON(key, newData);
-                
                 if (saveResult.success) {
                     showToast(`✅ Kampagne "${campaignName}" importiert`);
                     location.reload();
-                } else {
+                }
+                else {
                     throw new Error(`Speichern fehlgeschlagen: ${saveResult.error}`);
                 }
-            } else {
+            }
+            else {
                 // Aktuelle Kampagne überschreiben (D is const, use Object.assign)
-                Object.assign(window.D, imp);
-                if (!D._nextId) D._nextId = {};
+                Object.assign(D, imp);
+                if (!D._nextId)
+                    D._nextId = {};
                 renderAll();
                 updateIOCounts();
-                if ($('quick-notes')) $('quick-notes').value = D.quickNotes || '';
+                const quickNotes = $('quick-notes');
+                if (quickNotes)
+                    quickNotes.value = D.quickNotes || '';
                 save();
                 showToast('Import OK!');
             }
-        } catch(e) { alert('Fehler: ' + e.message); }
-        $('import-file').value = '';
+        }
+        catch (e) {
+            alert('Fehler: ' + e.message);
+        }
+        fileInput.value = '';
     };
     reader.readAsText(file);
 }
-
 function copyData() {
     try {
+        const D = window.D;
         const exp = { ...D };
         delete exp._nextId;
         const json = JSON.stringify(exp, null, 2);
-
         if (!navigator.clipboard) {
             throw new Error('Zwischenablage nicht verfügbar (HTTPS erforderlich)');
         }
-
         navigator.clipboard.writeText(json)
             .then(() => showToast('📋 Daten kopiert'))
             .catch(err => {
-                showToast('⚠️ Automatisches Kopieren fehlgeschlagen. Bitte manuell kopieren.', 'warning');
-                console.warn('[Copy] Clipboard failed:', err);
-            });
-    } catch (err) {
+            showToast('⚠️ Automatisches Kopieren fehlgeschlagen. Bitte manuell kopieren.', 'warning');
+            console.warn('[Copy] Clipboard failed:', err);
+        });
+    }
+    catch (err) {
         showToast('❌ Kopieren fehlgeschlagen: ' + err.message, 'error');
         console.error('[Copy] Error:', err);
     }
 }
-
 function clearStorage() {
     // Step 1: Strong warning with detailed explanation
-    const confirmed = confirm(
-        '⚠️ ACHTUNG: Alle Daten löschen?\n\n' +
+    const confirmed = confirm('⚠️ ACHTUNG: Alle Daten löschen?\n\n' +
         'Diese Aktion löscht ALLE Kampagnendaten unwiderruflich:\n' +
         '• Charaktere, NPCs, Orte\n' +
         '• Quests, Items, Zauber\n' +
         '• Initiative, Notizen, Wiki\n\n' +
-        'Möchten Sie wirklich ALLES löschen?'
-    );
-    if (!confirmed) return;
-
+        'Möchten Sie wirklich ALLES löschen?');
+    if (!confirmed)
+        return;
     // Step 2: Double confirmation for safety
-    const doubleCheck = confirm(
-        '🚨 LETZTE WARNUNG!\n\n' +
-        'Bitte bestätigen Sie erneut: Alle Daten unwiderruflich löschen?'
-    );
-    if (!doubleCheck) return;
-
+    const doubleCheck = confirm('🚨 LETZTE WARNUNG!\n\n' +
+        'Bitte bestätigen Sie erneut: Alle Daten unwiderruflich löschen?');
+    if (!doubleCheck)
+        return;
     // Step 3: Create safety backup before deletion
     try {
         createAutoBackup();
         showToast('💾 Sicherheitskopie erstellt', 'info', 1500);
-    } catch (err) {
+    }
+    catch (err) {
         console.warn('[Clear] Backup failed:', err);
     }
-
     // Step 4: Execute deletion
+    const STORAGE_KEY = window.STORAGE_KEY;
     const key = window.STORAGE_KEY_OVERRIDE || STORAGE_KEY;
     const result = StorageAPI.remove(key);
-
     if (result.success) {
         showToast('✅ Alle Daten gelöscht', 'info');
         setTimeout(() => location.reload(), 1000);
-    } else {
+    }
+    else {
         showToast('❌ Fehler beim Löschen', 'error');
         console.error('Clear storage failed:', result.error);
     }
 }
-
 // ============================================================
+//# sourceMappingURL=import-export.js.map

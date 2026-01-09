@@ -2,14 +2,21 @@
 // ============================================================
 // PARTY RENDER - @character @roster @overview
 // ============================================================
-
+/**
+ * Renders the party list with characters
+ */
 function renderParty() {
-    const c = $('party-list'); if (!c) return;
+    const D = window.D;
+    const renderConditionsBar = window.renderConditionsBar;
+    const CATS = window.CATS;
+    const repairCharactersData = window.repairCharactersData;
+    const updateDiceCharSelect = window.updateDiceCharSelect;
+    const c = $('party-list');
+    if (!c)
+        return;
     const roster = $('party-roster');
-
     // Enable EntityLookup cache for performance during render cycle
     EntityLookup.enableCache();
-
     // Robuste Daten-Prüfung
     if (!Array.isArray(D.characters)) {
         c.innerHTML = renderEmptyState({
@@ -20,48 +27,40 @@ function renderParty() {
             buttonAction: 'call',
             buttonValue: 'repairCharactersData'
         });
-        if (roster) roster.innerHTML = '';
+        if (roster)
+            roster.innerHTML = '';
         EntityLookup.clearCache();
         return;
     }
-
-    const search = ($('party-search')?.value || '').toLowerCase();
-    const classFilter = $('party-class-filter')?.value || '';
-
+    const searchInput = $('party-search');
+    const search = (searchInput?.value || '').toLowerCase();
+    const classFilterEl = $('party-class-filter');
+    const classFilter = classFilterEl?.value || '';
     // Klassen-Filter-Dropdown befüllen
-    const classes = [...new Set(D.characters.map(ch => ch.characterClass).filter(Boolean))].sort();
+    const classes = [...new Set(D.characters.map((ch) => ch.characterClass).filter(Boolean))].sort();
     populateFilterDropdown('party-class-filter', classes.map(cls => ({ id: cls, name: cls })), {
         allLabel: '⚔️ Alle Klassen'
     });
-
     // Counter aktualisieren
     updateCounters({ 'party-io-count': D.characters.length || 0 });
-
     // Render Roster (always show all characters)
     if (roster) {
         renderPartyRoster(roster, D.characters);
     }
-
     // Render Party Overview Stats
     renderPartyOverview();
-
     let characters = D.characters;
-
     // Klassen-Filter anwenden
     if (classFilter) {
-        characters = characters.filter(ch => ch.characterClass === classFilter);
+        characters = characters.filter((ch) => ch.characterClass === classFilter);
     }
-
     // Suche anwenden
     if (search) {
-        characters = characters.filter(ch =>
-            (ch.name || '').toLowerCase().includes(search) ||
+        characters = characters.filter((ch) => (ch.name || '').toLowerCase().includes(search) ||
             (ch.playerName || '').toLowerCase().includes(search) ||
             (ch.characterClass || '').toLowerCase().includes(search) ||
-            (ch.race || '').toLowerCase().includes(search)
-        );
+            (ch.race || '').toLowerCase().includes(search));
     }
-
     if (!characters.length) {
         c.innerHTML = renderEmptyState({
             icon: '👥',
@@ -75,16 +74,16 @@ function renderParty() {
         EntityLookup.clearCache();
         return;
     }
-
-    c.innerHTML = characters.map(ch => renderCharacterCard(ch)).join('');
-
+    c.innerHTML = characters.map((ch) => renderCharacterCard(ch, renderConditionsBar, CATS)).join('');
     // Update dice tab character select
-    if (typeof updateDiceCharSelect === 'function') updateDiceCharSelect();
-
+    if (typeof updateDiceCharSelect === 'function')
+        updateDiceCharSelect();
     // Clear EntityLookup cache after render to prevent stale data
     EntityLookup.clearCache();
 }
-
+/**
+ * Renders the party roster sidebar
+ */
 function renderPartyRoster(container, characters) {
     if (!characters.length) {
         container.innerHTML = `
@@ -95,12 +94,10 @@ function renderPartyRoster(container, characters) {
         `;
         return;
     }
-
     container.innerHTML = characters.map(ch => {
         const hpPct = ch.hpMax > 0 ? (ch.hpCurrent / ch.hpMax) * 100 : 100;
         const hpClass = hpPct <= 25 ? 'critical' : hpPct <= 50 ? 'bloodied' : 'healthy';
         const conditions = ch.conditions?.length || 0;
-
         return `
             <div class="roster-char ${hpClass}" data-action="scroll-to-char" data-id="${ch.id}">
                 ${conditions > 0 ? `<span class="roster-conditions">${conditions}</span>` : ''}
@@ -121,36 +118,32 @@ function renderPartyRoster(container, characters) {
         </button>
     `;
 }
-
-function renderCharacterCard(ch) {
+/**
+ * Renders a single character card
+ */
+function renderCharacterCard(ch, renderConditionsBar, CATS) {
     const hpPct = ch.hpMax > 0 ? (ch.hpCurrent / ch.hpMax) * 100 : 100;
     const hpClass = hpPct <= 25 ? 'critical' : hpPct <= 50 ? 'bloodied' : 'healthy';
     const cur = ch.currency || {};
     const coins = [cur.pm && `${cur.pm}P`, cur.gm && `${cur.gm}G`, cur.em && `${cur.em}E`, cur.sm && `${cur.sm}S`, cur.km && `${cur.km}K`].filter(Boolean).join(' ');
-
     // Spells & Items
-    const spells = (ch.spells || []).map(sid => EntityLookup.spell(sid)).filter(Boolean);
+    const spells = (ch.spells || []).map((sid) => EntityLookup.spell(sid)).filter(Boolean);
     const itemsRaw = ch.items || [];
-    const items = itemsRaw.map(item => {
+    const items = itemsRaw.map((item) => {
         const itemId = typeof item === 'number' ? item : item.id;
         const qty = typeof item === 'number' ? 1 : item.quantity;
         const lootItem = EntityLookup.lootItem(itemId);
         return lootItem ? { ...lootItem, assignedQty: qty } : null;
     }).filter(Boolean);
-
     // Attributes
     const attrs = ch.attributes || {};
     const hasAttrs = attrs.str || attrs.dex || attrs.con || attrs.int || attrs.wis || attrs.cha;
-
     // Spell slots
     const slotPips = renderCompactSpellSlots(ch);
-
     // Conditions
     const conditionsHtml = renderConditionsBar(ch.conditions, 'characters', ch.id);
-
     // Class display
     const classDisplay = ch.subclass ? `${esc(ch.characterClass || '')} (${esc(ch.subclass)})` : esc(ch.characterClass || '');
-
     return `
         <div class="char-card" id="char-${ch.id}" draggable="true" data-sortable data-id="${ch.id}">
             <!-- Header -->
@@ -204,17 +197,17 @@ function renderCharacterCard(ch) {
                     <!-- Attributes -->
                     <div class="char-card-attrs">
                         ${['str', 'dex', 'con', 'int', 'wis', 'cha'].map(attr => {
-                            const val = attrs[attr] || 10;
-                            const mod = Math.floor((val - 10) / 2);
-                            const modStr = mod >= 0 ? '+' + mod : mod;
-                            return `
+        const val = attrs[attr] || 10;
+        const mod = Math.floor((val - 10) / 2);
+        const modStr = mod >= 0 ? '+' + mod : String(mod);
+        return `
                                 <div class="char-attr-pill">
                                     <div class="char-attr-pill-name">${attr.toUpperCase()}</div>
                                     <div class="char-attr-pill-val">${val}</div>
                                     <div class="char-attr-pill-mod">${modStr}</div>
                                 </div>
                             `;
-                        }).join('')}
+    }).join('')}
                     </div>
                 ` : ''}
 
@@ -233,7 +226,7 @@ function renderCharacterCard(ch) {
 
                 ${spells.length ? `
                     <div class="char-card-tags">
-                        ${spells.slice(0, 6).map(s => `
+                        ${spells.slice(0, 6).map((s) => `
                             <span class="char-tag spell" data-action="navigate-entity-stop" data-type="spells" data-id="${s.id}">✨ ${esc(s.name)}</span>
                         `).join('')}
                         ${spells.length > 6 ? `<span class="char-tag">+${spells.length - 6}</span>` : ''}
@@ -242,7 +235,7 @@ function renderCharacterCard(ch) {
 
                 ${items.length ? `
                     <div class="char-card-tags">
-                        ${items.slice(0, 4).map(i => `
+                        ${items.slice(0, 4).map((i) => `
                             <span class="char-tag item" data-action="navigate-entity-stop" data-type="loot" data-id="${i.id}">${CATS[i.category]?.split(' ')[0] || '📦'} ${esc(i.name)}${i.assignedQty > 1 ? ' ×' + i.assignedQty : ''}</span>
                         `).join('')}
                         ${items.length > 4 ? `<span class="char-tag">+${items.length - 4}</span>` : ''}
@@ -262,25 +255,27 @@ function renderCharacterCard(ch) {
         </div>
     `;
 }
-
+/**
+ * Renders compact spell slot pips
+ */
 function renderCompactSpellSlots(ch) {
     const slots = ch.spellSlots || {};
     const used = ch.spellSlotsUsed || {};
-
     // Check if character has any spell slots
     let hasSlots = false;
     for (let i = 0; i <= 9; i++) {
-        if (slots[i] > 0) { hasSlots = true; break; }
+        if (slots[i] > 0) {
+            hasSlots = true;
+            break;
+        }
     }
-    if (!hasSlots) return '';
-
+    if (!hasSlots)
+        return '';
     let html = '<div class="char-card-slots">';
-
     for (let level = 0; level <= 9; level++) {
         const max = slots[level] || 0;
         const usedCount = used[level] || 0;
         const available = max - usedCount;
-
         if (max > 0) {
             html += `<div class="char-slot-group">
                 <span class="char-slot-label">${level === 0 ? '🔮' : level}</span>`;
@@ -296,11 +291,12 @@ function renderCompactSpellSlots(ch) {
             html += '</div>';
         }
     }
-
     html += '</div>';
     return html;
 }
-
+/**
+ * Scroll to character in list
+ */
 function scrollToChar(id) {
     const el = document.getElementById('char-' + id);
     if (el) {
@@ -309,39 +305,35 @@ function scrollToChar(id) {
         setTimeout(() => el.classList.remove('expanded'), 2000);
     }
 }
-
 // ============================================================
 // PARTY OVERVIEW - Quick Stats Header
 // ============================================================
-
+/**
+ * Renders party overview stats header
+ */
 function renderPartyOverview() {
+    const D = window.D;
     const container = $('party-overview');
-    if (!container) return;
-
+    if (!container)
+        return;
     const chars = D.characters || [];
-
     if (chars.length === 0) {
         container.classList.remove('show');
         return;
     }
-
     // Calculate stats
-    const passivePerceptions = chars.map(c => c.passivePerception || 10);
+    const passivePerceptions = chars.map((c) => c.passivePerception || 10);
     const lowestPerception = Math.min(...passivePerceptions);
-
-    const acValues = chars.map(c => c.armorClass || 10);
+    const acValues = chars.map((c) => c.armorClass || 10);
     const minAC = Math.min(...acValues);
     const maxAC = Math.max(...acValues);
     const acRange = minAC === maxAC ? `${minAC}` : `${minAC}-${maxAC}`;
-
     const totalHP = chars.reduce((sum, c) => sum + (c.hpMax || 0), 0);
     const currentHP = chars.reduce((sum, c) => sum + (c.hpCurrent || 0), 0);
     const hpPercent = totalHP > 0 ? Math.round((currentHP / totalHP) * 100) : 100;
     const hpStatus = hpPercent <= 25 ? 'critical' : hpPercent <= 50 ? 'bloodied' : 'healthy';
-
     // Count conditions
     const totalConditions = chars.reduce((sum, c) => sum + (c.conditions?.length || 0), 0);
-
     container.innerHTML = `
         <div class="party-stat-card">
             <div class="party-stat-icon">👁️</div>
@@ -374,6 +366,15 @@ function renderPartyOverview() {
         </div>
         ` : ''}
     `;
-
     container.classList.add('show');
 }
+// ============================================================
+// EXPORTS FOR GLOBAL ACCESS
+// ============================================================
+window.renderParty = renderParty;
+window.renderPartyRoster = renderPartyRoster;
+window.renderCharacterCard = renderCharacterCard;
+window.renderCompactSpellSlots = renderCompactSpellSlots;
+window.scrollToChar = scrollToChar;
+window.renderPartyOverview = renderPartyOverview;
+//# sourceMappingURL=party-render.js.map

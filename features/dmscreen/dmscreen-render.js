@@ -1,8 +1,13 @@
 // [SECTION:DMSCREEN_RENDER]
+// Converted from dmscreen-render.js to TypeScript
+// DM Screen - Haupt-Render-Logik
 // ============================================================
-// DM SCREEN - Haupt-Render-Logik
+// CONSTANTS
 // ============================================================
-
+const APP_CONFIG = window.APP_CONFIG;
+const UI_TIMING = window.UI_TIMING;
+const ErrorHandler = window.ErrorHandler;
+const D = window.D;
 /**
  * Standard-Layout für den DM Screen
  */
@@ -18,7 +23,6 @@ const DEFAULT_DMSCREEN_LAYOUT = {
         { id: 'session-notes', type: 'notes', visible: true }
     ]
 };
-
 /**
  * Vordefinierte Layout-Profile
  */
@@ -88,68 +92,67 @@ const DEFAULT_DMSCREEN_PROFILES = {
         ]
     }
 };
-
+// ============================================================
+// HELPERS
+// ============================================================
+function save() {
+    window.save();
+}
 // ============================================================
 // LIVE-SYNC SYSTEM
 // ============================================================
-
 /**
  * Debounce-Timer für Live-Sync
  */
 let dmsLiveSyncTimer = null;
 const DMS_LIVE_SYNC_DELAY = UI_TIMING.DM_SCREEN_SYNC_DELAY;
-
 /**
  * Prüft ob DM Screen aktuell sichtbar ist
  */
 function isDMScreenVisible() {
     const dmView = $('view-dmscreen');
-    return dmView && dmView.classList.contains('active');
+    return dmView !== null && dmView.classList.contains('active');
 }
-
 /**
  * Aktualisiert den DM Screen wenn sichtbar (debounced)
  */
 function refreshDMScreenIfVisible() {
-    if (!isDMScreenVisible()) return;
-
+    if (!isDMScreenVisible())
+        return;
     // Debounce: Verhindert zu häufige Updates
     if (dmsLiveSyncTimer) {
         clearTimeout(dmsLiveSyncTimer);
     }
-
-    dmsLiveSyncTimer = setTimeout(() => {
+    dmsLiveSyncTimer = window.setTimeout(() => {
         renderDMScreenWidgetsOnly();
         dmsLiveSyncTimer = null;
     }, DMS_LIVE_SYNC_DELAY);
 }
-
 /**
  * Rendert nur die Widget-Inhalte neu (ohne Layout-Neuaufbau)
  * Schneller als vollständiges renderDMScreen()
  */
 function renderDMScreenWidgetsOnly() {
-    if (!isDMScreenVisible()) return;
-
+    if (!isDMScreenVisible())
+        return;
     const widgetDefs = getDMScreenWidgets();
     const allWidgets = D.dmScreenLayout?.widgets || [];
-
     // Update nur sichtbare Grid-Widgets
-    allWidgets.filter(w => w.visible).forEach(widget => {
+    allWidgets.filter((w) => w.visible).forEach((widget) => {
         const def = widgetDefs[widget.type];
-        if (!def || def.compact) return; // Skip compact widgets
-
+        if (!def || def.compact)
+            return; // Skip compact widgets
         const widgetEl = document.querySelector(`[data-widget-id="${widget.id}"] .dmscreen-widget-body`);
         if (widgetEl) {
             try {
                 widgetEl.innerHTML = def.render();
-            } catch (err) {
+            }
+            catch (err) {
                 ErrorHandler.log('updateDMScreenWidget', err, `Error updating ${widget.type}`);
             }
         }
     });
 }
-
 /**
  * Hook: Wird bei jedem save() aufgerufen
  * Registriert sich beim globalen Save-System
@@ -158,21 +161,20 @@ function setupDMScreenLiveSync() {
     // Überschreibe die globale save-Funktion um Live-Sync zu triggern
     if (typeof window._originalSave === 'undefined' && typeof save === 'function') {
         window._originalSave = save;
-        window.save = function() {
+        window.save = function () {
             window._originalSave.apply(this, arguments);
             refreshDMScreenIfVisible();
         };
     }
 }
-
 // Live-Sync beim Laden aktivieren
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', setupDMScreenLiveSync);
-} else {
+}
+else {
     // Verzögert ausführen um sicherzustellen dass save() definiert ist
     setTimeout(setupDMScreenLiveSync, 100);
 }
-
 /**
  * Initialisiert das DM Screen Layout falls nicht vorhanden
  */
@@ -187,7 +189,6 @@ function initDMScreenLayout() {
         D.dmScreenActiveProfile = null; // null = custom
     }
 }
-
 /**
  * Setzt das DM Screen Layout auf Standard zurück
  */
@@ -201,24 +202,20 @@ function resetDMScreenLayout() {
         showToast('Layout zurückgesetzt');
     }
 }
-
 // ============================================================
 // LAYOUT PROFILES
 // ============================================================
-
 /**
  * Wechselt zu einem vordefinierten oder gespeicherten Profil
  */
 function switchDMSProfile(profileId) {
     const preset = DEFAULT_DMSCREEN_PROFILES[profileId];
     const custom = D.dmScreenProfiles[profileId];
-
     const profile = preset || custom;
     if (!profile) {
         showToast('Profil nicht gefunden', 'error');
         return;
     }
-
     pushUndo('DM Screen Profil gewechselt');
     D.dmScreenLayout = {
         widgets: JSON.parse(JSON.stringify(profile.widgets))
@@ -228,14 +225,13 @@ function switchDMSProfile(profileId) {
     renderDMScreen();
     showToast(`Profil: ${profile.name}`);
 }
-
 /**
  * Speichert aktuelles Layout als neues Profil
  */
 function saveDMSProfileAs() {
     const name = prompt('Profilname eingeben:');
-    if (!name || !name.trim()) return;
-
+    if (!name || !name.trim())
+        return;
     const id = 'custom_' + Date.now();
     D.dmScreenProfiles[id] = {
         name: name.trim(),
@@ -247,7 +243,6 @@ function saveDMSProfileAs() {
     renderDMScreen();
     showToast(`Profil "${name}" gespeichert`);
 }
-
 /**
  * Löscht ein benutzerdefiniertes Profil
  */
@@ -256,10 +251,9 @@ function deleteDMSProfile(profileId) {
         showToast('Standard-Profile können nicht gelöscht werden', 'error');
         return;
     }
-
     const profile = D.dmScreenProfiles[profileId];
-    if (!profile) return;
-
+    if (!profile)
+        return;
     if (confirm(`Profil "${profile.name}" löschen?`)) {
         delete D.dmScreenProfiles[profileId];
         if (D.dmScreenActiveProfile === profileId) {
@@ -271,7 +265,6 @@ function deleteDMSProfile(profileId) {
         showToast('Profil gelöscht');
     }
 }
-
 /**
  * Zeigt das Profil-Auswahl-Dropdown
  */
@@ -284,16 +277,14 @@ function toggleDMSProfileDropdown() {
         }
     }
 }
-
 /**
  * Rendert die Profil-Liste im Dropdown
  */
 function renderDMSProfileList() {
     const list = $('dms-profile-list');
-    if (!list) return;
-
+    if (!list)
+        return;
     const activeId = D.dmScreenActiveProfile || 'standard';
-
     // Preset profiles
     let html = '<div class="dms-profile-section">Standard</div>';
     for (const [id, profile] of Object.entries(DEFAULT_DMSCREEN_PROFILES)) {
@@ -306,7 +297,6 @@ function renderDMSProfileList() {
             </div>
         `;
     }
-
     // Custom profiles
     const customProfiles = Object.entries(D.dmScreenProfiles || {});
     if (customProfiles.length > 0) {
@@ -323,7 +313,6 @@ function renderDMSProfileList() {
             `;
         }
     }
-
     // Save as new button
     html += `
         <div class="dms-profile-section"></div>
@@ -332,16 +321,13 @@ function renderDMSProfileList() {
             <span class="dms-profile-name">Als Profil speichern...</span>
         </div>
     `;
-
     list.innerHTML = html;
 }
-
 /**
  * Rendert den gesamten DM Screen
  */
 function renderDMScreen() {
     initDMScreenLayout();
-
     const grid = $('dmscreen-grid');
     const quickBar = $('dms-quick-bar');
     if (!grid) {
@@ -350,55 +336,50 @@ function renderDMScreen() {
         }
         return;
     }
-
     // Enable EntityLookup cache for performance during widget rendering
     EntityLookup.enableCache();
-
-    const allWidgets = D.dmScreenLayout.widgets.filter(w => w.visible);
+    const allWidgets = D.dmScreenLayout.widgets.filter((w) => w.visible);
     const widgetDefs = getDMScreenWidgets();
-
     // Separate compact (Quick Bar) and regular (Grid) widgets
-    const compactWidgets = allWidgets.filter(w => {
+    const compactWidgets = allWidgets.filter((w) => {
         const def = widgetDefs[w.type];
         return def && def.compact === true;
     });
-    const gridWidgets = allWidgets.filter(w => {
+    const gridWidgets = allWidgets.filter((w) => {
         const def = widgetDefs[w.type];
         return def && def.compact !== true;
     });
-
     // Render Quick Bar (compact widgets)
     if (quickBar) {
         if (compactWidgets.length > 0) {
-            quickBar.innerHTML = compactWidgets.map(widget => {
+            quickBar.innerHTML = compactWidgets.map((widget) => {
                 const def = widgetDefs[widget.type];
                 try {
                     return def.render();
-                } catch (err) {
+                }
+                catch (err) {
                     ErrorHandler.log('renderDMScreen', err, `Error rendering compact widget ${widget.type}`);
                     return '';
                 }
             }).join('');
             quickBar.style.display = 'flex';
-        } else {
+        }
+        else {
             quickBar.innerHTML = '';
             quickBar.style.display = 'none';
         }
     }
-
     // Render Grid (regular widgets)
     if (gridWidgets.length === 0 && compactWidgets.length === 0) {
         grid.innerHTML = '<div class="dmscreen-empty">Keine Widgets aktiv. Klicke auf "⚙️ Widgets" um Widgets hinzuzufügen.</div>';
         return;
     }
-
     if (gridWidgets.length === 0) {
         grid.innerHTML = '';
         return;
     }
-
     try {
-        grid.innerHTML = gridWidgets.map(widget => {
+        grid.innerHTML = gridWidgets.map((widget) => {
             const def = widgetDefs[widget.type];
             if (!def) {
                 if (APP_CONFIG.DEBUG_MODE) {
@@ -406,15 +387,14 @@ function renderDMScreen() {
                 }
                 return '';
             }
-
             let content = '';
             try {
                 content = def.render();
-            } catch (err) {
+            }
+            catch (err) {
                 ErrorHandler.log('renderDMScreen', err, `Error rendering widget ${widget.type}`);
                 content = '<div class="dms-widget-empty">Fehler beim Laden</div>';
             }
-
             return `
                 <div class="dmscreen-widget" data-widget-id="${widget.id}" data-widget-type="${widget.type}" draggable="true">
                     <div class="dmscreen-widget-header">
@@ -429,39 +409,34 @@ function renderDMScreen() {
                 </div>
             `;
         }).join('');
-
         // Initialize drag & drop
         initDMSWidgetDragDrop();
-    } catch (err) {
+    }
+    catch (err) {
         ErrorHandler.log('renderDMScreen', err, 'Error during grid render');
         grid.innerHTML = '<div class="dmscreen-empty">Fehler beim Rendern</div>';
     }
-
     // Update config dropdown
     renderDMSConfigList();
-
     // Clear EntityLookup cache after render to prevent stale data
     EntityLookup.clearCache();
 }
-
 // ============================================================
 // WIDGET CONFIGURATION
 // ============================================================
-
 /**
  * Rendert die Widget-Konfigurations-Liste
  */
 function renderDMSConfigList() {
     const list = $('dms-config-list');
-    if (!list) return;
-
+    if (!list)
+        return;
     const widgetDefs = getDMScreenWidgets();
     const allWidgets = D.dmScreenLayout.widgets;
-
-    list.innerHTML = allWidgets.map(widget => {
+    list.innerHTML = allWidgets.map((widget) => {
         const def = widgetDefs[widget.type];
-        if (!def) return '';
-
+        if (!def)
+            return '';
         return `
             <label class="dms-config-item" data-widget-id="${widget.id}">
                 <span class="dms-config-drag" title="Ziehen zum Sortieren">⋮⋮</span>
@@ -472,28 +447,25 @@ function renderDMSConfigList() {
             </label>
         `;
     }).join('');
-
     // Initialize drag & drop for config list
     initDMSConfigDragDrop();
 }
-
 /**
  * Toggled die Sichtbarkeit eines Widgets
  */
 function toggleDMSWidget(widgetId) {
-    const widget = D.dmScreenLayout.widgets.find(w => w.id === widgetId);
+    const widget = D.dmScreenLayout.widgets.find((w) => w.id === widgetId);
     if (widget) {
         widget.visible = !widget.visible;
         saveDMScreenLayout();
         renderDMScreen();
     }
 }
-
 /**
  * Versteckt ein Widget (vom X-Button)
  */
 function hideDMSWidget(widgetId) {
-    const widget = D.dmScreenLayout.widgets.find(w => w.id === widgetId);
+    const widget = D.dmScreenLayout.widgets.find((w) => w.id === widgetId);
     if (widget) {
         widget.visible = false;
         saveDMScreenLayout();
@@ -501,7 +473,6 @@ function hideDMSWidget(widgetId) {
         showToast(`Widget ausgeblendet`);
     }
 }
-
 /**
  * Speichert das DM Screen Layout
  */
@@ -510,7 +481,6 @@ function saveDMScreenLayout() {
         save();
     }
 }
-
 /**
  * Toggle Config Dropdown
  */
@@ -520,9 +490,8 @@ function toggleDMSConfigDropdown() {
         dropdown.classList.toggle('show');
     }
 }
-
 // Close dropdown when clicking outside
-document.addEventListener('click', function(e) {
+document.addEventListener('click', function (e) {
     const dropdown = $('dms-config-dropdown');
     const btn = $('dms-config-btn');
     if (dropdown && dropdown.classList.contains('show')) {
@@ -531,19 +500,15 @@ document.addEventListener('click', function(e) {
         }
     }
 });
-
 // ============================================================
 // DRAG & DROP - WIDGET GRID
 // ============================================================
-
 let dmsDraggedWidget = null;
-
 function initDMSWidgetDragDrop() {
     const grid = $('dmscreen-grid');
-    if (!grid) return;
-
+    if (!grid)
+        return;
     const widgets = grid.querySelectorAll('.dmscreen-widget');
-
     widgets.forEach(widget => {
         widget.addEventListener('dragstart', handleDMSWidgetDragStart);
         widget.addEventListener('dragend', handleDMSWidgetDragEnd);
@@ -553,81 +518,71 @@ function initDMSWidgetDragDrop() {
         widget.addEventListener('dragleave', handleDMSWidgetDragLeave);
     });
 }
-
 function handleDMSWidgetDragStart(e) {
     dmsDraggedWidget = this;
     this.classList.add('dragging');
-    e.dataTransfer.effectAllowed = 'move';
-    e.dataTransfer.setData('text/plain', this.dataset.widgetId);
+    if (e.dataTransfer) {
+        e.dataTransfer.effectAllowed = 'move';
+        e.dataTransfer.setData('text/plain', this.dataset.widgetId || '');
+    }
 }
-
-function handleDMSWidgetDragEnd(e) {
+function handleDMSWidgetDragEnd(_e) {
     this.classList.remove('dragging');
     document.querySelectorAll('.dmscreen-widget').forEach(w => {
         w.classList.remove('drag-over');
     });
     dmsDraggedWidget = null;
 }
-
 function handleDMSWidgetDragOver(e) {
     e.preventDefault();
-    e.dataTransfer.dropEffect = 'move';
+    if (e.dataTransfer) {
+        e.dataTransfer.dropEffect = 'move';
+    }
 }
-
 function handleDMSWidgetDragEnter(e) {
     e.preventDefault();
     if (this !== dmsDraggedWidget) {
         this.classList.add('drag-over');
     }
 }
-
-function handleDMSWidgetDragLeave(e) {
+function handleDMSWidgetDragLeave(_e) {
     this.classList.remove('drag-over');
 }
-
 function handleDMSWidgetDrop(e) {
     e.preventDefault();
     this.classList.remove('drag-over');
-
     if (dmsDraggedWidget && this !== dmsDraggedWidget) {
         const draggedId = dmsDraggedWidget.dataset.widgetId;
         const targetId = this.dataset.widgetId;
-
-        // Reorder in data
-        reorderDMSWidgets(draggedId, targetId);
+        if (draggedId && targetId) {
+            // Reorder in data
+            reorderDMSWidgets(draggedId, targetId);
+        }
     }
 }
-
 function reorderDMSWidgets(draggedId, targetId) {
     const widgets = D.dmScreenLayout.widgets;
-    const draggedIdx = widgets.findIndex(w => w.id === draggedId);
-    const targetIdx = widgets.findIndex(w => w.id === targetId);
-
-    if (draggedIdx === -1 || targetIdx === -1) return;
-
+    const draggedIdx = widgets.findIndex((w) => w.id === draggedId);
+    const targetIdx = widgets.findIndex((w) => w.id === targetId);
+    if (draggedIdx === -1 || targetIdx === -1)
+        return;
     // Remove dragged widget
     const [draggedWidget] = widgets.splice(draggedIdx, 1);
-
     // Insert at new position
     widgets.splice(targetIdx, 0, draggedWidget);
-
     saveDMScreenLayout();
     renderDMScreen();
     showToast('Layout gespeichert');
 }
-
 // ============================================================
 // DRAG & DROP - CONFIG LIST
 // ============================================================
-
 let dmsConfigDraggedItem = null;
-
 function initDMSConfigDragDrop() {
     const list = $('dms-config-list');
-    if (!list) return;
-
+    if (!list)
+        return;
     const items = list.querySelectorAll('.dms-config-item');
-
     items.forEach(item => {
         item.draggable = true;
         item.addEventListener('dragstart', handleDMSConfigDragStart);
@@ -638,55 +593,51 @@ function initDMSConfigDragDrop() {
         item.addEventListener('dragleave', handleDMSConfigDragLeave);
     });
 }
-
 function handleDMSConfigDragStart(e) {
     dmsConfigDraggedItem = this;
     this.classList.add('dragging');
-    e.dataTransfer.effectAllowed = 'move';
-    e.dataTransfer.setData('text/plain', this.dataset.widgetId);
+    if (e.dataTransfer) {
+        e.dataTransfer.effectAllowed = 'move';
+        e.dataTransfer.setData('text/plain', this.dataset.widgetId || '');
+    }
 }
-
-function handleDMSConfigDragEnd(e) {
+function handleDMSConfigDragEnd(_e) {
     this.classList.remove('dragging');
     document.querySelectorAll('.dms-config-item').forEach(i => {
         i.classList.remove('drag-over');
     });
     dmsConfigDraggedItem = null;
 }
-
 function handleDMSConfigDragOver(e) {
     e.preventDefault();
-    e.dataTransfer.dropEffect = 'move';
+    if (e.dataTransfer) {
+        e.dataTransfer.dropEffect = 'move';
+    }
 }
-
 function handleDMSConfigDragEnter(e) {
     e.preventDefault();
     if (this !== dmsConfigDraggedItem) {
         this.classList.add('drag-over');
     }
 }
-
-function handleDMSConfigDragLeave(e) {
+function handleDMSConfigDragLeave(_e) {
     this.classList.remove('drag-over');
 }
-
 function handleDMSConfigDrop(e) {
     e.preventDefault();
     this.classList.remove('drag-over');
-
     if (dmsConfigDraggedItem && this !== dmsConfigDraggedItem) {
         const draggedId = dmsConfigDraggedItem.dataset.widgetId;
         const targetId = this.dataset.widgetId;
-
-        // Reorder in data
-        reorderDMSWidgets(draggedId, targetId);
+        if (draggedId && targetId) {
+            // Reorder in data
+            reorderDMSWidgets(draggedId, targetId);
+        }
     }
 }
-
 // ============================================================
 // WIDGET DEFINITIONS (lazy-loaded to avoid reference issues)
 // ============================================================
-
 function getDMScreenWidgets() {
     return {
         'party': {
@@ -818,7 +769,6 @@ function getDMScreenWidgets() {
         }
     };
 }
-
 /**
  * Compact Conditions Button für Quick Bar
  */
@@ -830,23 +780,18 @@ function renderDMSConditionsCompact() {
         </button>
     `;
 }
-
-
 // ============================================================
 // PARTY WIDGET
 // ============================================================
-
 function renderDMSPartyWidget() {
     const chars = D.characters || [];
     if (chars.length === 0) {
         return '<div class="dms-widget-empty">Keine Charaktere</div>';
     }
-
     // Calculate party HP % (using correct property names: hpCurrent, hpMax)
     const totalHp = chars.reduce((sum, c) => sum + (c.hpCurrent || 0), 0);
     const totalMaxHp = chars.reduce((sum, c) => sum + (c.hpMax || 1), 0);
     const hpPercent = totalMaxHp > 0 ? Math.round((totalHp / totalMaxHp) * 100) : 100;
-
     // Find character with HIGHEST passive perception
     let highestPP = 0;
     let highestPPChar = '';
@@ -857,12 +802,12 @@ function renderDMSPartyWidget() {
             highestPPChar = c.name || 'Unbekannt';
         }
     });
-
     // HP bar color
     let hpClass = 'healthy';
-    if (hpPercent <= 50) hpClass = 'bloodied';
-    if (hpPercent <= 25) hpClass = 'critical';
-
+    if (hpPercent <= 50)
+        hpClass = 'bloodied';
+    if (hpPercent <= 25)
+        hpClass = 'critical';
     return `
         <div class="dms-party-stats">
             <div class="dms-stat-row">
@@ -883,49 +828,45 @@ function renderDMSPartyWidget() {
         </div>
     `;
 }
-
 // ============================================================
 // INITIATIVE WIDGET
 // ============================================================
-
 function renderDMSInitiativeWidget() {
     const combatants = D.initiative?.combatants || [];
     const currentTurn = D.initiative?.currentTurn || 0;
     const round = D.initiative?.round || 1;
-
     if (combatants.length === 0) {
         return '<div class="dms-widget-empty">Kein aktiver Kampf</div>';
     }
-
     return `
         <div class="dms-initiative">
             <div class="dms-init-header">Runde ${round} <span class="dms-init-count">(${combatants.length})</span></div>
             <div class="dms-init-list">
                 ${combatants.map((c, i) => {
-                    const isCurrent = i === currentTurn;
-                    const hpPercent = c.maxHp > 0 ? Math.round((c.currentHp / c.maxHp) * 100) : 100;
-                    let hpClass = 'healthy';
-                    if (hpPercent < 50) hpClass = 'bloodied';
-                    if (hpPercent < 25) hpClass = 'critical';
-                    if (c.currentHp <= 0) hpClass = 'down';
-
-                    return `
+        const isCurrent = i === currentTurn;
+        const hpPercent = c.maxHp > 0 ? Math.round((c.currentHp / c.maxHp) * 100) : 100;
+        let hpClass = 'healthy';
+        if (hpPercent < 50)
+            hpClass = 'bloodied';
+        if (hpPercent < 25)
+            hpClass = 'critical';
+        if (c.currentHp <= 0)
+            hpClass = 'down';
+        return `
                         <div class="dms-init-entry ${isCurrent ? 'active' : ''} ${hpClass}">
                             <span class="dms-init-marker">${isCurrent ? '▶' : ''}</span>
                             <span class="dms-init-name">${esc(c.name)}</span>
                             <span class="dms-init-value">${c.initiative || 0}</span>
                         </div>
                     `;
-                }).join('')}
+    }).join('')}
             </div>
         </div>
     `;
 }
-
 // ============================================================
 // DICE WIDGET
 // ============================================================
-
 function renderDMSDiceWidget() {
     return `
         <div class="dms-dice">
@@ -946,22 +887,21 @@ function renderDMSDiceWidget() {
         </div>
     `;
 }
-
 /**
  * DM Screen Würfelwurf
  */
 function dmsRollDice(formula) {
     let result = 0;
     let rolls = [];
-
     // Use parseDiceNotation if available (returns object with total, rolls)
-    if (typeof parseDiceNotation === 'function') {
-        const parsed = parseDiceNotation(formula);
+    if (typeof window.parseDiceNotation === 'function') {
+        const parsed = window.parseDiceNotation(formula);
         if (parsed) {
             result = parsed.total;
             rolls = parsed.rolls;
         }
-    } else {
+    }
+    else {
         // Fallback: simple dice roll
         const match = formula.match(/(\d+)?d(\d+)/i);
         if (match) {
@@ -973,7 +913,6 @@ function dmsRollDice(formula) {
             result = rolls.reduce((a, b) => a + b, 0);
         }
     }
-
     const resultEl = $('dms-dice-result');
     if (resultEl) {
         const rollsStr = rolls.length > 1 ? ` [${rolls.join(', ')}]` : '';
@@ -981,19 +920,15 @@ function dmsRollDice(formula) {
         resultEl.classList.add('rolled');
         setTimeout(() => resultEl.classList.remove('rolled'), 300);
     }
-
     // Add to dice history if available
-    if (typeof addToDiceHistory === 'function') {
-        addToDiceHistory(formula, result, rolls);
+    if (typeof window.addToDiceHistory === 'function') {
+        window.addToDiceHistory(formula, result, rolls);
     }
-
     return result;
 }
-
 // ============================================================
 // DC REFERENCE WIDGET
 // ============================================================
-
 function renderDMSDCWidget() {
     const dcs = [
         { dc: 5, desc: 'Trivial', color: 'var(--green)' },
@@ -1003,7 +938,6 @@ function renderDMSDCWidget() {
         { dc: 25, desc: 'Sehr schwer', color: 'var(--red)' },
         { dc: 30, desc: 'Fast unmöglich', color: 'var(--purple)' }
     ];
-
     return `
         <div class="dms-dc-list">
             ${dcs.map(d => `
@@ -1015,18 +949,14 @@ function renderDMSDCWidget() {
         </div>
     `;
 }
-
 // ============================================================
 // RANDOM TABLES WIDGET
 // ============================================================
-
 function renderDMSTablesWidget() {
     const tables = D.randomTables || [];
-
     if (tables.length === 0) {
         return '<div class="dms-widget-empty">Keine Tabellen</div>';
     }
-
     return `
         <div class="dms-tables">
             ${tables.slice(0, 5).map(t => `
@@ -1040,11 +970,9 @@ function renderDMSTablesWidget() {
         </div>
     `;
 }
-
 // ============================================================
 // QUICK RULES WIDGET
 // ============================================================
-
 function renderDMSRulesWidget() {
     return `
         <div class="dms-rules">
@@ -1074,11 +1002,9 @@ function renderDMSRulesWidget() {
         </div>
     `;
 }
-
 // ============================================================
 // NOTES WIDGET
 // ============================================================
-
 function renderDMSNotesWidget() {
     const notes = D.dmScreenNotes || '';
     return `
@@ -1089,7 +1015,6 @@ function renderDMSNotesWidget() {
         </div>
     `;
 }
-
 function saveDMSNotes() {
     const input = $('dms-notes-input');
     if (input) {
@@ -1097,11 +1022,9 @@ function saveDMSNotes() {
         save();
     }
 }
-
 // ============================================================
 // NEUE REFERENZ-WIDGETS
 // ============================================================
-
 /**
  * Aktionen-Widget - Übersicht aller Aktionstypen im Kampf
  */
@@ -1145,7 +1068,6 @@ function renderDMSActionsWidget() {
         </div>
     `;
 }
-
 /**
  * Attribute-Widget - Die 6 Attribute mit Modifikator-Tabelle
  */
@@ -1180,7 +1102,6 @@ function renderDMSAttributesWidget() {
         </div>
     `;
 }
-
 /**
  * Rettungswürfe-Widget - Übersicht mit typischen Auslösern
  */
@@ -1217,7 +1138,6 @@ function renderDMSSavesWidget() {
         </div>
     `;
 }
-
 /**
  * Fertigkeiten-Widget - Alle 18 Fertigkeiten nach Attribut
  */
@@ -1260,7 +1180,6 @@ function renderDMSSkillsWidget() {
         </div>
     `;
 }
-
 /**
  * Kampfökonomie-Widget - Was du pro Runde tun kannst
  */
@@ -1282,7 +1201,6 @@ function renderDMSEconomyWidget() {
         </div>
     `;
 }
-
 /**
  * Kreaturengröße-Widget - Größenkategorien und Platzbedarf
  */
@@ -1308,7 +1226,6 @@ function renderDMSSizesWidget() {
         </div>
     `;
 }
-
 /**
  * Objekte-Widget - RK und TP von Gegenständen
  */
@@ -1341,7 +1258,6 @@ function renderDMSObjectsWidget() {
         </div>
     `;
 }
-
 /**
  * Improvisierte Waffen-Widget
  */
@@ -1369,7 +1285,6 @@ function renderDMSImprovisedWidget() {
         </div>
     `;
 }
-
 /**
  * Ritual & Konzentration-Widget
  */
@@ -1397,7 +1312,6 @@ function renderDMSRitualWidget() {
         </div>
     `;
 }
-
 /**
  * Schadensarten-Widget - Alle 13 Schadensarten
  */
@@ -1423,7 +1337,6 @@ function renderDMSDamageWidget() {
         </div>
     `;
 }
-
 /**
  * Gelände-Widget - Geländetypen und Effekte
  */
@@ -1465,7 +1378,6 @@ function renderDMSTerrainWidget() {
         </div>
     `;
 }
-
 /**
  * Wissensgebiete-Widget - INT-Fertigkeiten und ihre Anwendung
  */
@@ -1506,7 +1418,6 @@ function renderDMSKnowledgeWidget() {
         </div>
     `;
 }
-
 /**
  * Reisen & Traglast-Widget
  */
@@ -1534,27 +1445,27 @@ function renderDMSTravelWidget() {
         </div>
     `;
 }
-
 // ============================================================
 // EVENT HANDLERS
 // ============================================================
-
-document.addEventListener('click', function(e) {
+document.addEventListener('click', function (e) {
     const target = e.target.closest('[data-action]');
-    if (!target) return;
-
+    if (!target)
+        return;
     const action = target.dataset.action;
-
-    switch(action) {
+    switch (action) {
         case 'dms-roll':
-            dmsRollDice(target.dataset.dice);
+            if (target.dataset.dice)
+                dmsRollDice(target.dataset.dice);
             break;
         case 'dms-roll-custom':
-            const formula = $('dms-dice-formula')?.value;
-            if (formula) dmsRollDice(formula);
+            const formulaEl = $('dms-dice-formula');
+            const formula = formulaEl?.value;
+            if (formula)
+                dmsRollDice(formula);
             break;
         case 'dms-roll-table':
-            const tableId = parseInt(target.dataset.table);
+            const tableId = parseInt(target.dataset.table || '0');
             dmsRollOnTable(tableId);
             break;
         case 'dms-show-condition':
@@ -1564,50 +1475,53 @@ document.addEventListener('click', function(e) {
             toggleDMSConfigDropdown();
             break;
         case 'dms-toggle-widget':
-            toggleDMSWidget(target.dataset.widget);
+            if (target.dataset.widget)
+                toggleDMSWidget(target.dataset.widget);
             break;
         case 'dms-hide-widget':
             e.stopPropagation();
-            hideDMSWidget(target.dataset.widget);
+            if (target.dataset.widget)
+                hideDMSWidget(target.dataset.widget);
             break;
         // Profile actions
         case 'dms-toggle-profiles':
             toggleDMSProfileDropdown();
             break;
         case 'dms-switch-profile':
-            switchDMSProfile(target.dataset.profile);
+            if (target.dataset.profile)
+                switchDMSProfile(target.dataset.profile);
             const dropdown = $('dms-profile-dropdown');
-            if (dropdown) dropdown.classList.remove('show');
+            if (dropdown)
+                dropdown.classList.remove('show');
             break;
         case 'dms-save-profile':
             saveDMSProfileAs();
             const dd = $('dms-profile-dropdown');
-            if (dd) dd.classList.remove('show');
+            if (dd)
+                dd.classList.remove('show');
             break;
         case 'dms-delete-profile':
             e.stopPropagation();
-            deleteDMSProfile(target.dataset.profile);
+            if (target.dataset.profile)
+                deleteDMSProfile(target.dataset.profile);
             break;
     }
 });
-
 // Handle checkbox changes (needs change event, not click)
-document.addEventListener('change', function(e) {
+document.addEventListener('change', function (e) {
     const target = e.target.closest('[data-action="dms-toggle-widget"]');
-    if (target) {
+    if (target && target.dataset.widget) {
         toggleDMSWidget(target.dataset.widget);
     }
 });
-
 function dmsRollOnTable(tableId) {
-    const table = (D.randomTables || []).find(t => t.id === tableId);
-    if (!table || !table.entries || table.entries.length === 0) return;
-
+    const table = (D.randomTables || []).find((t) => t.id === tableId);
+    if (!table || !table.entries || table.entries.length === 0)
+        return;
     // Calculate total weight
     const totalWeight = table.entries.reduce((sum, e) => sum + (e.weight || 1), 0);
     let roll = Math.random() * totalWeight;
     let result = table.entries[0];
-
     for (const entry of table.entries) {
         roll -= (entry.weight || 1);
         if (roll <= 0) {
@@ -1615,45 +1529,38 @@ function dmsRollOnTable(tableId) {
             break;
         }
     }
-
     const resultEl = $('dms-table-result');
     if (resultEl) {
         resultEl.innerHTML = `<strong>${esc(table.name)}:</strong> ${esc(result.text)}`;
         resultEl.classList.add('show');
     }
-
     showToast(`🎲 ${table.name}: ${result.text}`);
 }
-
-function dmsShowConditionDetail(conditionId) {
+function dmsShowConditionDetail(_conditionId) {
     // Use existing showConditionReference if available
-    if (typeof showConditionReference === 'function') {
-        showConditionReference();
+    if (typeof window.showConditionReference === 'function') {
+        window.showConditionReference();
         return;
     }
-
     // Fallback: show toast
     showToast('Zustände-Referenz nicht verfügbar');
 }
-
-
 // ============================================================
 // KEYBOARD SHORTCUTS
 // ============================================================
-
 /**
  * DM Screen Keyboard Shortcuts
  * - D: Zu DM Screen wechseln
  * - 1-3: Profile schnell wechseln (wenn DM Screen aktiv)
  */
-document.addEventListener('keydown', function(e) {
+document.addEventListener('keydown', function (e) {
     // Ignore if typing in input/textarea
-    if (e.target.matches('input, textarea, [contenteditable]')) return;
-
+    if (e.target.matches('input, textarea, [contenteditable]'))
+        return;
     // Only process shortcuts if on DM Screen
     const dmView = $('view-dmscreen');
-    if (!dmView || !dmView.classList.contains('active')) return;
-
+    if (!dmView || !dmView.classList.contains('active'))
+        return;
     // Number keys 1-3: Quick profile switch
     if (e.key >= '1' && e.key <= '3' && !e.ctrlKey && !e.altKey && !e.shiftKey) {
         const profiles = ['standard', 'kampf', 'minimal'];
@@ -1664,3 +1571,19 @@ document.addEventListener('keydown', function(e) {
         }
     }
 });
+// ============================================================
+// BACKWARD COMPATIBILITY - Export to window
+// ============================================================
+window.renderDMScreen = renderDMScreen;
+window.resetDMScreenLayout = resetDMScreenLayout;
+window.switchDMSProfile = switchDMSProfile;
+window.saveDMSProfileAs = saveDMSProfileAs;
+window.deleteDMSProfile = deleteDMSProfile;
+window.toggleDMSProfileDropdown = toggleDMSProfileDropdown;
+window.toggleDMSConfigDropdown = toggleDMSConfigDropdown;
+window.toggleDMSWidget = toggleDMSWidget;
+window.hideDMSWidget = hideDMSWidget;
+window.dmsRollDice = dmsRollDice;
+window.dmsRollOnTable = dmsRollOnTable;
+window.saveDMSNotes = saveDMSNotes;
+//# sourceMappingURL=dmscreen-render.js.map

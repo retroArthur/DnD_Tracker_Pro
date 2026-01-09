@@ -2,39 +2,52 @@
 // ============================================================
 // PARTY DETAILS - @modal @character @stats
 // ============================================================
-
+/**
+ * Shows character details modal
+ */
 function showCharacterDetails(id) {
+    const CATS = window.CATS;
     const ch = EntityLookup.character(id);
-    if (!ch) return;
-
+    if (!ch)
+        return;
     const cur = ch.currency || {};
-    const coins = [cur.pm && `${cur.pm}P`, cur.gm && `${cur.gm}G`, cur.em && `${cur.em}E`, cur.sm && `${cur.sm}S`, cur.km && `${cur.km}K`].filter(Boolean).join(' ') || '—';
-    const spells = (ch.spells || []).map(sid => EntityLookup.spell(sid)).filter(Boolean);
+    const coins = [
+        cur.pm && `${cur.pm}P`,
+        cur.gm && `${cur.gm}G`,
+        cur.em && `${cur.em}E`,
+        cur.sm && `${cur.sm}S`,
+        cur.km && `${cur.km}K`
+    ].filter(Boolean).join(' ') || '—';
+    const spells = (ch.spells || []).map((sid) => EntityLookup.spell(sid)).filter(Boolean);
     // Support both old format (array of IDs) and new format (array of {id, quantity})
     const itemsRaw = ch.items || [];
-    const items = itemsRaw.map(item => {
+    const items = itemsRaw.map((item) => {
         const itemId = typeof item === 'number' ? item : item.id;
         const qty = typeof item === 'number' ? 1 : item.quantity;
         const lootItem = EntityLookup.lootItem(itemId);
         return lootItem ? { ...lootItem, assignedQty: qty } : null;
     }).filter(Boolean);
-    const languages = Array.isArray(ch.languages) ? ch.languages.join(', ') : (ch.languages || '—');
-
+    const languages = Array.isArray(ch.languages)
+        ? ch.languages.join(', ')
+        : (ch.languages || '—');
     // Attribute mit Modifiern
     const attrs = ch.attributes || {};
-    const attrMod = val => { const m = Math.floor((val - 10) / 2); return m >= 0 ? `+${m}` : `${m}`; };
-
+    const attrMod = (val) => {
+        const m = Math.floor((val - 10) / 2);
+        return m >= 0 ? `+${m}` : `${m}`;
+    };
     // Saving throw proficiencies
     const saves = ch.saveProficiencies || {};
-    const profSaves = ['str', 'dex', 'con', 'int', 'wis', 'cha'].filter(s => saves[s]).map(s => s.toUpperCase());
-
+    const profSaves = ['str', 'dex', 'con', 'int', 'wis', 'cha']
+        .filter(s => saves[s])
+        .map(s => s.toUpperCase());
     // Class display
-    const classDisplay = ch.subclass ? `${esc(ch.characterClass || '—')} (${esc(ch.subclass)})` : esc(ch.characterClass || '—');
-
+    const classDisplay = ch.subclass
+        ? `${esc(ch.characterClass || '—')} (${esc(ch.subclass)})`
+        : esc(ch.characterClass || '—');
     // HP Prozent für Farbcodierung
     const hpPct = ch.hpMax > 0 ? (ch.hpCurrent / ch.hpMax) * 100 : 100;
     const hpColor = hpPct <= 25 ? 'var(--red)' : hpPct <= 50 ? 'var(--yellow)' : 'var(--green)';
-
     const content = `
         <div class="char-modal-header">
             <div class="char-modal-avatar">
@@ -137,7 +150,7 @@ function showCharacterDetails(id) {
                         <span class="char-expand-icon">▼</span>
                     </div>
                     <div class="char-inventory-content">
-                        ${spells.length ? spells.map(s => `<span class="char-tag spell clickable" data-action="navigate-entity-stop" data-type="spells" data-id="${s.id}" title="Klicken für Details">${esc(s.name)}</span>`).join('') : '<span class="char-empty">Keine Zauber</span>'}
+                        ${spells.length ? spells.map((s) => `<span class="char-tag spell clickable" data-action="navigate-entity-stop" data-type="spells" data-id="${s.id}" title="Klicken für Details">${esc(s.name)}</span>`).join('') : '<span class="char-empty">Keine Zauber</span>'}
                     </div>
                 </div>
                 <div class="char-inventory-box">
@@ -146,7 +159,7 @@ function showCharacterDetails(id) {
                         <span class="char-expand-icon">▼</span>
                     </div>
                     <div class="char-inventory-content">
-                        ${items.length ? items.map(i => `<span class="char-tag item clickable" data-action="navigate-entity-stop" data-type="loot" data-id="${i.id}" title="Klicken für Details">${CATS[i.category]?.split(' ')[0] || '📦'} ${esc(i.name)}${i.assignedQty > 1 ? ` ×${i.assignedQty}` : ''}</span>`).join('') : '<span class="char-empty">Keine Items</span>'}
+                        ${items.length ? items.map((i) => `<span class="char-tag item clickable" data-action="navigate-entity-stop" data-type="loot" data-id="${i.id}" title="Klicken für Details">${CATS[i.category]?.split(' ')[0] || '📦'} ${esc(i.name)}${i.assignedQty > 1 ? ` ×${i.assignedQty}` : ''}</span>`).join('') : '<span class="char-empty">Keine Items</span>'}
                     </div>
                 </div>
             </div>
@@ -164,7 +177,14 @@ function showCharacterDetails(id) {
             <button class="btn" data-action="show-assign-items-from-modal" data-id="${ch.id}">📦 Items</button>
         </div>
     `;
-
-    $('char-detail-content').innerHTML = content;
+    const contentEl = $('char-detail-content');
+    if (contentEl) {
+        contentEl.innerHTML = content;
+    }
     showModal('char-detail-modal');
 }
+// ============================================================
+// EXPORTS FOR GLOBAL ACCESS
+// ============================================================
+window.showCharacterDetails = showCharacterDetails;
+//# sourceMappingURL=party-details.js.map

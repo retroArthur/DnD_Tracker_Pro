@@ -2,11 +2,10 @@
 // ============================================================
 // NPC RENDER - @master-detail @filter @icons
 // ============================================================
-
 // State
 let selectedNpcId = null;
 let currentNpcFilter = 'all';
-
+let currentRelationStatus = 'neutral';
 // NPC type icons based on race
 const NPC_ICONS = {
     'mensch': '👤',
@@ -30,33 +29,40 @@ const NPC_ICONS = {
     'gnome': '🎩',
     'default': '🎭'
 };
-
+const RELATION_STATUS = {
+    friendly: { label: 'Freundlich', icon: '🟢', color: 'var(--green)' },
+    neutral: { label: 'Neutral', icon: '⚪', color: 'var(--text)' },
+    hostile: { label: 'Feindlich', icon: '🔴', color: 'var(--red)' }
+};
+/**
+ * Gets the appropriate icon for an NPC based on race
+ */
 function getNPCIcon(npc) {
     const race = (npc.race || '').toLowerCase();
     for (const [key, icon] of Object.entries(NPC_ICONS)) {
-        if (race.includes(key)) return icon;
+        if (race.includes(key))
+            return icon;
     }
     return NPC_ICONS.default;
 }
-
 /**
- * Rendert die NPC-Liste im Master-Detail Layout
- * Beruecksichtigt aktive Filter und Suchbegriffe
+ * Renders the NPC list in master-detail layout
+ * Considers active filters and search terms
  */
 function renderNPCList() {
+    const D = window.D;
     const listContainer = $('npc-list');
     const filterContainer = $('npc-filters');
-    if (!listContainer) return;
-
+    if (!listContainer)
+        return;
     // Update counter
     updateCounters({ 'npcs-io-count': D.npcs?.length || 0 });
-
     // Render filter chips (by location)
     if (filterContainer) {
         const locations = D.locations || [];
         filterContainer.innerHTML = `
             <div class="npc-filter-chip ${currentNpcFilter === 'all' ? 'active' : ''}" data-action="set-npc-filter" data-value="all">Alle</div>
-            ${locations.slice(0, 5).map(loc => `
+            ${locations.slice(0, 5).map((loc) => `
                 <div class="npc-filter-chip ${currentNpcFilter === loc.id ? 'active' : ''}"
                      data-action="set-npc-filter" data-id="${loc.id}">
                     ${esc(loc.name)}
@@ -65,35 +71,29 @@ function renderNPCList() {
             ${locations.length > 5 ? `
                 <select class="npc-filter-select" data-on-change="setNpcFilter">
                     <option value="">Mehr...</option>
-                    ${locations.slice(5).map(loc => `<option value="${loc.id}">${esc(loc.name)}</option>`).join('')}
+                    ${locations.slice(5).map((loc) => `<option value="${loc.id}">${esc(loc.name)}</option>`).join('')}
                 </select>
             ` : ''}
         `;
     }
-
     // Get search and filter
-    const search = ($('npc-search')?.value || '').toLowerCase();
+    const searchEl = $('npc-search');
+    const search = (searchEl?.value || '').toLowerCase();
     let npcs = [...(D.npcs || [])];
-
     // Apply location filter
     if (currentNpcFilter !== 'all') {
-        npcs = npcs.filter(n => n.locationId === currentNpcFilter);
+        npcs = npcs.filter((n) => n.locationId === currentNpcFilter);
     }
-
     // Apply search
     if (search) {
-        npcs = npcs.filter(n =>
-            n.name.toLowerCase().includes(search) ||
+        npcs = npcs.filter((n) => n.name.toLowerCase().includes(search) ||
             (n.role || '').toLowerCase().includes(search) ||
             (n.race || '').toLowerCase().includes(search) ||
             (n.description || '').toLowerCase().includes(search) ||
-            (n.dialogs || []).some(d => (d.text || '').toLowerCase().includes(search))
-        );
+            (n.dialogs || []).some((d) => (d.text || '').toLowerCase().includes(search)));
     }
-
     // Sort alphabetically
     npcs.sort((a, b) => a.name.localeCompare(b.name));
-
     // Empty state
     if (!npcs.length) {
         listContainer.innerHTML = `
@@ -111,28 +111,24 @@ function renderNPCList() {
         clearNPCDetail();
         return;
     }
-
     // Render list items
-    listContainer.innerHTML = npcs.map(npc => renderNPCItem(npc)).join('');
-
+    listContainer.innerHTML = npcs.map((npc) => renderNPCItem(npc)).join('');
     // Auto-select first if none selected
-    if (!selectedNpcId || !npcs.find(n => n.id === selectedNpcId)) {
+    if (!selectedNpcId || !npcs.find((n) => n.id === selectedNpcId)) {
         selectNPC(npcs[0].id, false);
-    } else {
+    }
+    else {
         showNPCDetail(selectedNpcId);
     }
-
     // Update stats
     updateNPCStats();
 }
-
 function renderNPCItem(npc) {
     const location = EntityLookup.location(npc.locationId);
     const icon = getNPCIcon(npc);
     const isSelected = npc.id === selectedNpcId;
     const dialogCount = (npc.dialogs || []).length;
     const triggerCount = (npc.triggers || []).length;
-
     return `
         <div class="npc-item ${isSelected ? 'selected' : ''}" data-action="select-npc" data-id="${npc.id}">
             <div class="npc-item-avatar">
@@ -156,49 +152,44 @@ function renderNPCItem(npc) {
         </div>
     `;
 }
-
 function selectNPC(id, scroll = true) {
-    selectedNpcId = id;
-
+    selectedNpcId = typeof id === 'string' ? parseInt(id) : id;
     // Update selection in list
     document.querySelectorAll('.npc-item').forEach(el => {
-        el.classList.toggle('selected', el.dataset.id === String(id));
+        const element = el;
+        element.classList.toggle('selected', element.dataset.id === String(selectedNpcId));
     });
-
     // Show detail
-    showNPCDetail(id);
-
+    showNPCDetail(selectedNpcId);
     // Scroll into view if needed
     if (scroll) {
-        const item = document.querySelector(`.npc-item[data-id="${id}"]`);
+        const item = document.querySelector(`.npc-item[data-id="${selectedNpcId}"]`);
         if (item) {
             item.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         }
     }
 }
-
 /**
- * Zeigt die Detail-Ansicht eines NPCs im rechten Panel
- * @param {number|string} id - NPC ID
+ * Shows the detail view of an NPC in the right panel
  */
 function showNPCDetail(id) {
+    const LINK_ICONS = window.LINK_ICONS;
+    const stripHtml = window.stripHtml;
     const panel = $('npc-detail-panel');
-    if (!panel) return;
-
+    if (!panel)
+        return;
     const npc = EntityLookup.npc(id);
     if (!npc) {
         clearNPCDetail();
         return;
     }
-
     const location = EntityLookup.location(npc.locationId);
     const icon = getNPCIcon(npc);
     const dialogs = npc.dialogs || [];
     const triggers = npc.triggers || [];
-    const usedDialogs = dialogs.filter(d => d.used).length;
+    const usedDialogs = dialogs.filter((d) => d.used).length;
     const tags = npc.tags || [];
     const links = npc.links || [];
-
     // Build dialogs list
     const dialogsHtml = dialogs.length ? dialogs.map((d, idx) => `
         <div class="npc-dialog-item ${d.used ? 'used' : ''}">
@@ -217,7 +208,6 @@ function showNPCDetail(id) {
             </div>
         </div>
     `).join('') : '<div class="npc-detail-empty-text">Keine Dialoge vorhanden</div>';
-
     // Build triggers list
     const triggersHtml = triggers.length ? triggers.map((t, idx) => `
         <div class="npc-trigger-item ${t.triggered ? 'triggered' : ''}">
@@ -231,17 +221,15 @@ function showNPCDetail(id) {
             </div>
         </div>
     `).join('') : '<div class="npc-detail-empty-text">Keine Trigger vorhanden</div>';
-
     // Build tags
-    const tagsHtml = tags.length ? tags.map(t => `<span class="npc-tag">${esc(t)}</span>`).join('') : '';
-
-    // Build links (LINK_ICONS aus core/constants.js)
-    const linksHtml = links.length ? links.map(link => {
-        const target = EntityLookup[link.type]?.(link.id);
-        if (!target) return '';
+    const tagsHtml = tags.length ? tags.map((t) => `<span class="npc-tag">${esc(t)}</span>`).join('') : '';
+    // Build links (LINK_ICONS from core/constants.js)
+    const linksHtml = links.length ? links.map((link) => {
+        const target = EntityLookup.get(link.type, link.id);
+        if (!target)
+            return '';
         return `<span class="npc-link" data-action="navigate-entity" data-type="${link.type}" data-id="${link.id}">${LINK_ICONS[link.type] || '🔗'} ${esc(target.name)}</span>`;
     }).join('') : '';
-
     panel.innerHTML = `
         <div class="npc-detail-content">
             <div class="npc-detail-header">
@@ -311,7 +299,6 @@ function showNPCDetail(id) {
         </div>
     `;
 }
-
 function clearNPCDetail() {
     const panel = $('npc-detail-panel');
     if (panel) {
@@ -323,11 +310,10 @@ function clearNPCDetail() {
         `;
     }
 }
-
 function setNpcFilter(f) {
-    // Unterstuetzt sowohl direkte Werte als auch Element (von data-on-change)
+    // Supports both direct values and element (from data-on-change)
     if (f && f.tagName) {
-        // Element uebergeben - Wert extrahieren
+        // Element passed - extract value
         const val = f.value;
         f = val ? parseInt(val, 10) : 'all';
     }
@@ -335,18 +321,16 @@ function setNpcFilter(f) {
     selectedNpcId = null;
     renderNPCList();
 }
-
 function toggleNPC(id) {
     // For search navigation: select and show the NPC
     const npc = EntityLookup.npc(id);
-    if (!npc) return;
-
+    if (!npc)
+        return;
     currentNpcFilter = 'all';
-    selectedNpcId = id;
+    selectedNpcId = typeof id === 'string' ? parseInt(id) : id;
     renderNPCList();
-
     setTimeout(() => {
-        const item = document.querySelector(`.npc-item[data-id="${id}"]`);
+        const item = document.querySelector(`.npc-item[data-id="${selectedNpcId}"]`);
         if (item) {
             item.scrollIntoView({ behavior: 'smooth', block: 'center' });
             item.style.transition = 'box-shadow 0.3s ease';
@@ -357,35 +341,34 @@ function toggleNPC(id) {
         }
     }, 100);
 }
-
 // Helper functions
 function renderNPCTags(n) {
-    const questTags = (n.quests || []).map(q => {
-        const quest = (D.quests || []).find(qst => qst.name && qst.name.toLowerCase() === q.toLowerCase());
+    const D = window.D;
+    const questTags = (n.quests || []).map((q) => {
+        const quest = (D.quests || []).find((qst) => qst.name && qst.name.toLowerCase() === q.toLowerCase());
         if (quest) {
             return `<span class="npc-list-tag quest clickable" data-action="navigate-entity-stop" data-type="quests" data-id="${quest.id}">📜 ${esc(q)}</span>`;
         }
         return `<span class="npc-list-tag quest">📜 ${esc(q)}</span>`;
     }).join('');
-
-    const relationTags = (n.relationships || []).map(r => {
-        const npc = (D.npcs || []).find(np => np.name && np.name.toLowerCase() === r.toLowerCase());
-        const char = (D.characters || []).find(c => c.name && c.name.toLowerCase() === r.toLowerCase());
+    const relationTags = (n.relationships || []).map((r) => {
+        const npc = (D.npcs || []).find((np) => np.name && np.name.toLowerCase() === r.toLowerCase());
+        const char = (D.characters || []).find((c) => c.name && c.name.toLowerCase() === r.toLowerCase());
         if (npc) {
             return `<span class="npc-list-tag relation clickable" data-action="navigate-entity-stop" data-type="npcs" data-id="${npc.id}">👥 ${esc(r)}</span>`;
-        } else if (char) {
+        }
+        else if (char) {
             return `<span class="npc-list-tag relation clickable" data-action="navigate-entity-stop" data-type="characters" data-id="${char.id}">👥 ${esc(r)}</span>`;
         }
         return `<span class="npc-list-tag relation">👥 ${esc(r)}</span>`;
     }).join('');
-
-    const infoTags = (n.info || []).map(i => `<span class="npc-list-tag info">ℹ️ ${esc(i)}</span>`).join('');
-
+    const infoTags = (n.info || []).map((i) => `<span class="npc-list-tag info">ℹ️ ${esc(i)}</span>`).join('');
     return { questTags, relationTags, infoTags };
 }
-
 function updateNPCStats() {
-    if (!D.npcs) return;
+    const D = window.D;
+    if (!D.npcs)
+        return;
     const totalDialogs = D.npcs.reduce((sum, n) => sum + (n.dialogs?.length || 0), 0);
     const totalTriggers = D.npcs.reduce((sum, n) => sum + (n.triggers?.length || 0), 0);
     updateCounters({
@@ -394,74 +377,60 @@ function updateNPCStats() {
         'npc-stats-triggers': totalTriggers
     });
 }
-
 // Legacy compatibility functions
 function toggleNPCCard(id) {
     selectNPC(id);
 }
-
 function expandAllNPCCards() {
     showToast('Alle NPCs werden in der Liste angezeigt');
 }
-
 function collapseAllNPCCards() {
     selectedNpcId = null;
     clearNPCDetail();
     showToast('Details-Panel geleert');
 }
-
 function expandAllNPCDialogs() {
     showToast('Dialoge werden im Detail-Panel angezeigt');
 }
-
 function collapseAllNPCDialogs() {
     showToast('Wähle einen NPC für Details');
 }
-
 // ============================================================
 // NPC RELATIONS SYSTEM
 // ============================================================
-
-const RELATION_STATUS = {
-    friendly: { label: 'Freundlich', icon: '🟢', color: 'var(--green)' },
-    neutral: { label: 'Neutral', icon: '⚪', color: 'var(--text)' },
-    hostile: { label: 'Feindlich', icon: '🔴', color: 'var(--red)' }
-};
-
 function renderNPCRelations(npc) {
     const relations = npc.relations || [];
-
     if (!relations.length) {
         return '<div class="npc-detail-empty-text">Keine Beziehungen definiert</div>';
     }
-
     return `
         <div class="npc-relations-list">
             ${relations.map((rel, idx) => {
-                let targetName, icon, typeLabel, isClickable = true;
-
-                if (rel.targetType === 'party') {
-                    targetName = 'Die Gruppe';
-                    icon = '👥';
-                    typeLabel = 'Heldengruppe';
-                    isClickable = false; // Party is not a single entity to navigate to
-                } else if (rel.targetType === 'characters') {
-                    const target = EntityLookup.character(rel.targetId);
-                    if (!target) return '';
-                    targetName = target.name;
-                    icon = '👤';
-                    typeLabel = 'Spielercharakter';
-                } else {
-                    const target = EntityLookup.npc(rel.targetId);
-                    if (!target) return '';
-                    targetName = target.name;
-                    icon = '🎭';
-                    typeLabel = 'NPC';
-                }
-
-                const status = RELATION_STATUS[rel.status] || RELATION_STATUS.neutral;
-
-                return `
+        let targetName, icon, typeLabel, isClickable = true;
+        if (rel.targetType === 'party') {
+            targetName = 'Die Gruppe';
+            icon = '👥';
+            typeLabel = 'Heldengruppe';
+            isClickable = false; // Party is not a single entity to navigate to
+        }
+        else if (rel.targetType === 'characters') {
+            const target = EntityLookup.character(rel.targetId);
+            if (!target)
+                return '';
+            targetName = target.name;
+            icon = '👤';
+            typeLabel = 'Spielercharakter';
+        }
+        else {
+            const target = EntityLookup.npc(rel.targetId);
+            if (!target)
+                return '';
+            targetName = target.name;
+            icon = '🎭';
+            typeLabel = 'NPC';
+        }
+        const status = RELATION_STATUS[rel.status] || RELATION_STATUS.neutral;
+        return `
                     <div class="npc-relation-item">
                         <span class="npc-relation-icon">${icon}</span>
                         <div class="npc-relation-info">
@@ -484,47 +453,46 @@ function renderNPCRelations(npc) {
                         </div>
                     </div>
                 `;
-            }).filter(Boolean).join('')}
+    }).filter(Boolean).join('')}
         </div>
     `;
 }
-
 function showRelationsModal(npcId) {
+    const D = window.D;
     const npc = EntityLookup.npc(npcId);
-    if (!npc) return;
-
+    if (!npc)
+        return;
     // Build options for Party, NPCs and Characters
     const partyOption = D.characters?.length > 0
         ? `<option value="party:0">👥 Die Gruppe (alle Charaktere)</option>`
         : '';
-
     const npcOptions = (D.npcs || [])
-        .filter(n => n.id !== npcId) // Exclude self
-        .map(n => `<option value="npcs:${n.id}">${esc(n.name)} (NPC)</option>`)
+        .filter((n) => n.id !== npc.id) // Exclude self
+        .map((n) => `<option value="npcs:${n.id}">${esc(n.name)} (NPC)</option>`)
         .join('');
-
     const charOptions = (D.characters || [])
-        .map(c => `<option value="characters:${c.id}">${esc(c.name)} (Charakter)</option>`)
+        .map((c) => `<option value="characters:${c.id}">${esc(c.name)} (Charakter)</option>`)
         .join('');
-
     const existingRelations = (npc.relations || []).map((rel, idx) => {
         let targetName, targetIcon;
-
         if (rel.targetType === 'party') {
             targetName = 'Die Gruppe';
             targetIcon = '👥';
-        } else if (rel.targetType === 'characters') {
+        }
+        else if (rel.targetType === 'characters') {
             const target = EntityLookup.character(rel.targetId);
-            if (!target) return '';
+            if (!target)
+                return '';
             targetName = target.name;
             targetIcon = '👤';
-        } else {
+        }
+        else {
             const target = EntityLookup.npc(rel.targetId);
-            if (!target) return '';
+            if (!target)
+                return '';
             targetName = target.name;
             targetIcon = '🎭';
         }
-
         const status = RELATION_STATUS[rel.status] || RELATION_STATUS.neutral;
         return `
             <div class="npc-relation-item">
@@ -537,7 +505,6 @@ function showRelationsModal(npcId) {
             </div>
         `;
     }).filter(Boolean).join('');
-
     const content = `
         <div class="relations-modal-content">
             <div class="relations-modal-header">
@@ -578,7 +545,6 @@ function showRelationsModal(npcId) {
             ` : ''}
         </div>
     `;
-
     // Create or reuse modal
     let modal = $('relations-modal');
     if (!modal) {
@@ -586,84 +552,105 @@ function showRelationsModal(npcId) {
         modal.id = 'relations-modal';
         modal.className = 'modal-overlay';
         modal.innerHTML = `<div class="modal" style="max-width: 500px;">${content}</div>`;
-        modal.onclick = (e) => { if (e.target === modal) hideModal('relations-modal'); };
+        modal.onclick = (e) => { if (e.target === modal)
+            hideModal('relations-modal'); };
         document.body.appendChild(modal);
-    } else {
-        modal.querySelector('.modal').innerHTML = content;
     }
-
+    else {
+        const modalContent = modal.querySelector('.modal');
+        if (modalContent)
+            modalContent.innerHTML = content;
+    }
     // Store current status
     modal.dataset.currentStatus = 'neutral';
-
     showModal('relations-modal');
 }
-
-let currentRelationStatus = 'neutral';
-
 function setRelationStatus(status) {
     currentRelationStatus = status;
     document.querySelectorAll('.relations-status-btn').forEach(btn => {
         btn.classList.toggle('active', btn.id === `rel-btn-${status}`);
     });
 }
-
 function addRelation(npcId) {
     const npc = EntityLookup.npc(npcId);
-    if (!npc) return;
-
-    const targetVal = $('relation-target')?.value;
+    if (!npc)
+        return;
+    const targetEl = $('relation-target');
+    const targetVal = targetEl?.value;
     if (!targetVal) {
         showToast('Bitte ein Ziel wählen', 'error');
         return;
     }
-
     const [targetType, targetIdStr] = targetVal.split(':');
     const targetId = parseInt(targetIdStr);
-
     // Check if relation already exists
-    if (!npc.relations) npc.relations = [];
-    if (npc.relations.some(r => r.targetType === targetType && r.targetId === targetId)) {
+    if (!npc.relations)
+        npc.relations = [];
+    if (npc.relations.some((r) => r.targetType === targetType && r.targetId === targetId)) {
         showToast('Beziehung existiert bereits', 'warning');
         return;
     }
-
-    saveUndoState('Beziehung hinzufügen');
-    const note = $('relation-note')?.value?.trim() || '';
-
+    pushUndo('Beziehung hinzufügen');
+    const noteEl = $('relation-note');
+    const note = noteEl?.value?.trim() || '';
     npc.relations.push({
         targetId,
         targetType,
         status: currentRelationStatus,
         note
     });
-
     hideModal('relations-modal');
     showNPCDetail(npcId);
     save();
     showToast('Beziehung hinzugefügt');
 }
-
 function removeRelation(npcId, index) {
     const npc = EntityLookup.npc(npcId);
-    if (!npc || !npc.relations) return;
-
-    saveUndoState('Beziehung entfernen');
-    npc.relations.splice(index, 1);
+    if (!npc || !npc.relations)
+        return;
+    const idx = typeof index === 'string' ? parseInt(index) : index;
+    pushUndo('Beziehung entfernen');
+    npc.relations.splice(idx, 1);
     showNPCDetail(npcId);
     showRelationsModal(npcId); // Refresh modal
     save();
     showToast('Beziehung entfernt');
 }
-
 function cycleRelationStatus(npcId, index) {
     const npc = EntityLookup.npc(npcId);
-    if (!npc || !npc.relations || !npc.relations[index]) return;
-
-    saveUndoState('Beziehungsstatus ändern');
+    if (!npc || !npc.relations)
+        return;
+    const idx = typeof index === 'string' ? parseInt(index) : index;
+    if (!npc.relations[idx])
+        return;
+    pushUndo('Beziehungsstatus ändern');
     const statusOrder = ['friendly', 'neutral', 'hostile'];
-    const currentIdx = statusOrder.indexOf(npc.relations[index].status);
-    npc.relations[index].status = statusOrder[(currentIdx + 1) % 3];
-
+    const currentIdx = statusOrder.indexOf(npc.relations[idx].status);
+    npc.relations[idx].status = statusOrder[(currentIdx + 1) % 3];
     showNPCDetail(npcId);
     save();
 }
+// ============================================================
+// EXPORTS FOR GLOBAL ACCESS
+// ============================================================
+window.selectedNpcId = selectedNpcId;
+window.renderNPCList = renderNPCList;
+window.renderNPCItem = renderNPCItem;
+window.selectNPC = selectNPC;
+window.showNPCDetail = showNPCDetail;
+window.clearNPCDetail = clearNPCDetail;
+window.setNpcFilter = setNpcFilter;
+window.toggleNPC = toggleNPC;
+window.renderNPCTags = renderNPCTags;
+window.updateNPCStats = updateNPCStats;
+window.toggleNPCCard = toggleNPCCard;
+window.expandAllNPCCards = expandAllNPCCards;
+window.collapseAllNPCCards = collapseAllNPCCards;
+window.expandAllNPCDialogs = expandAllNPCDialogs;
+window.collapseAllNPCDialogs = collapseAllNPCDialogs;
+window.showRelationsModal = showRelationsModal;
+window.setRelationStatus = setRelationStatus;
+window.addRelation = addRelation;
+window.removeRelation = removeRelation;
+window.cycleRelationStatus = cycleRelationStatus;
+//# sourceMappingURL=npc-render.js.map

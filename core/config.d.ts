@@ -1,0 +1,40 @@
+interface AppConfig {
+    VERSION: string;
+    DEBUG_MODE: boolean;
+    DEBUG_VALIDATE_ON_SAVE: boolean;
+    DEBUG_VALIDATE_ON_RENDER: boolean;
+    PERF_MODE: boolean;
+    STORAGE_KEY: string;
+    BACKUP_KEY: string;
+    CAMPAIGN_INDEX_KEY: string;
+    THEME_KEY: string;
+    LAYOUT_KEY: string;
+    DICE_FAV_KEY: string;
+    TIMER_PRESETS_KEY: string;
+    IDB_NAME: string;
+    BROADCAST_CHANNEL: string;
+    SW_CACHE_NAME: string;
+    SESSION_AUTO_SAVE_INTERVAL: number;
+    UNDO_LIMIT: number;
+    MAX_BACKUPS: number;
+    MAX_BACKUP_SIZE_MB: number;
+    BACKUP_INTERVAL: number;
+    AUTOSAVE_DELAY: number;
+    TOAST_DURATION: number;
+    DEBOUNCE_DELAY: number;
+    THROTTLE_DELAY: number;
+    ANIMATION_QUICK: number;
+    ANIMATION_NORMAL: number;
+    ANIMATION_SLOW: number;
+    ANIMATION_FEEDBACK: number;
+    MODAL_TRANSITION: number;
+    CONFETTI_DURATION: number;
+    HIGHLIGHT_DURATION: number;
+    VIRTUAL_SCROLL_THRESHOLD: number;
+    LAZY_LOAD_THRESHOLD: string;
+    MAX_LEVEL: number;
+    ATTRIBUTE_MIN: number;
+    ATTRIBUTE_MAX: number;
+}
+declare const APP_CONFIG: Readonly<AppConfig>;
+//# sourceMappingURL=config.d.ts.map

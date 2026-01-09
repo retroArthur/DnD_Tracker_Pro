@@ -1,0 +1,26 @@
+declare let currentSessionTags: string[];
+declare const activeTagFilters: string[];
+declare function getStoryArcs(): any[];
+declare function renderStoryArcSelects(): void;
+declare function manageStoryArcs(): void;
+declare function renderStoryArcList(): void;
+declare function countSessionsInArc(arcId: number): number;
+declare function addStoryArc(): void;
+declare function deleteStoryArc(id: number | string): void;
+declare function getAllSessionTags(): string[];
+declare function renderSessionTagFilters(): void;
+declare function toggleSessionTagFilter(tag: string): void;
+declare function renderCurrentSessionTags(): void;
+declare function addSessionTag(tag: string): void;
+declare function removeSessionTag(tag: string): void;
+declare function addPresetTag(tag: string): void;
+declare function getNextSessionNumber(): number;
+declare function renderSessionCard(n: any): string;
+declare function toggleSessionContent(id: number | string): void;
+declare function toggleArcGroup(id: string | number): void;
+declare function saveSession(): void;
+declare function editSession(id: number | string): void;
+declare function cancelSessionEdit(): void;
+declare function deleteSession(id: number | string): void;
+declare function initSessionsEnhanced(): void;
+//# sourceMappingURL=sessions.d.ts.map

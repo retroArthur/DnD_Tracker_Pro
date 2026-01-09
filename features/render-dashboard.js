@@ -2,25 +2,24 @@
 // ============================================================
 // DASHBOARD - @render @tabs @overview
 // ============================================================
-
-// Globale Render-State-Variable
+// Global render state variable
 let renderPending = false;
-
 function renderAll() {
-    // Verhindere mehrfaches Rendern im selben Frame
-    if (renderPending) return;
+    const ErrorHandler = window.ErrorHandler;
+    // Prevent multiple renders in the same frame
+    if (renderPending)
+        return;
     renderPending = true;
-    
     requestAnimationFrame(() => {
         renderPending = false;
-        
-        // Jede Render-Funktion einzeln in try-catch mit ErrorHandler
+        // Each render function individually in try-catch with ErrorHandler
         const renderSafe = (fn, name, containerId = null) => {
-            try { 
-                fn(); 
-            } catch (e) { 
+            try {
+                fn();
+            }
+            catch (e) {
                 ErrorHandler.log(name, e);
-                // Bei kritischen Render-Funktionen: Fehler im Container anzeigen
+                // For critical render functions: show error in container
                 if (containerId) {
                     const container = $(containerId);
                     if (container) {
@@ -33,7 +32,22 @@ function renderAll() {
                 }
             }
         };
-        
+        const renderParty = window.renderParty;
+        const renderNPCList = window.renderNPCList;
+        const renderLocations = window.renderLocations;
+        const renderQuests = window.renderQuests;
+        const renderEncounters = window.renderEncounters;
+        const renderInit = window.renderInit;
+        const renderLoot = window.renderLoot;
+        const renderShops = window.renderShops;
+        const renderSpells = window.renderSpells;
+        const renderSessions = window.renderSessions;
+        const renderLinks = window.renderLinks;
+        const renderWiki = window.renderWiki;
+        const renderFilterList = window.renderFilterList;
+        const renderMindmap = window.renderMindmap;
+        const initQuickRefCustom = window.initQuickRefCustom;
+        const updateIOCounts = window.updateIOCounts;
         renderSafe(renderParty, 'renderParty', 'party-list');
         renderSafe(renderNPCList, 'renderNPCList', 'npc-list');
         renderSafe(renderLocations, 'renderLocations', 'loc-grid');
@@ -49,13 +63,18 @@ function renderAll() {
         renderSafe(renderFilterList, 'renderFilterList');
         renderSafe(renderMindmap, 'renderMindmap', 'mindmap-container');
         renderSafe(initQuickRefCustom, 'initQuickRefCustom');
-        
-        // IO-Counter aktualisieren
-        try { updateIOCounts(); } catch (e) { ErrorHandler.log('updateIOCounts', e); }
+        // Update IO-Counter
+        try {
+            updateIOCounts();
+        }
+        catch (e) {
+            ErrorHandler.log('updateIOCounts', e);
+        }
     });
 }
-
 // ============================================================
-// PARTY
+// EXPORTS FOR GLOBAL ACCESS
 // ============================================================
-
+window.renderAll = renderAll;
+window.renderPending = renderPending;
+//# sourceMappingURL=render-dashboard.js.map

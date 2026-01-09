@@ -2,9 +2,9 @@
 // ============================================================
 // ENCOUNTERS CRUD - @create @edit @delete @save
 // ============================================================
-
 function updateEncAttrMod(attr) {
-    const val = parseInt($(`enc-${attr}`).value) || 10;
+    const attrEl = $(`enc-${attr}`);
+    const val = parseInt(attrEl?.value || '10') || 10;
     const mod = Math.floor((val - 10) / 2);
     const modEl = $(`enc-${attr}-mod`);
     if (modEl) {
@@ -12,7 +12,6 @@ function updateEncAttrMod(attr) {
         modEl.className = 'attr-mod' + (mod > 0 ? ' positive' : mod < 0 ? ' negative' : '');
     }
 }
-
 // Toggle encounter saving throw box active state
 function toggleEncSaveBox(attr) {
     const box = $(`enc-save-box-${attr}`);
@@ -21,31 +20,31 @@ function toggleEncSaveBox(attr) {
         box.classList.toggle('active', checkbox.checked);
     }
 }
-
 /**
- * Speichert oder aktualisiert einen Encounter/Gegner
- * Liest Formulardaten und erstellt/aktualisiert den Encounter-Eintrag
+ * Saves or updates an encounter/enemy
+ * Reads form data and creates/updates the encounter entry
  */
 function saveEncounter() {
-    const id = $('edit-enc-id').value;
+    const D = window.D;
+    const renderEncounters = window.renderEncounters;
+    const sortInit = window.sortInit;
+    const idInput = $('edit-enc-id');
+    const id = idInput?.value || '';
     const selectedLanguages = typeof getEncSelectedLanguages === 'function' ? getEncSelectedLanguages() : [];
-
-    // Saving throws sammeln (checkbox + custom value)
+    // Collect saving throws (checkbox + custom value)
     const savingThrows = {};
     ['str', 'dex', 'con', 'int', 'wis', 'cha'].forEach(attr => {
         const checkbox = $(`enc-save-${attr}`);
         const valueInput = $(`enc-save-val-${attr}`);
         if (checkbox && checkbox.checked) {
-            const customVal = valueInput ? valueInput.value.trim() : '';
+            const customVal = valueInput?.value?.trim() || '';
             savingThrows[attr] = customVal || true; // Store custom value or true for proficiency-only
         }
     });
-
-    // Resistenzen & Immunitäten sammeln
+    // Collect resistances & immunities
     const resistances = Array.from(document.querySelectorAll('#enc-resistances .char-resistance-chip.selected input')).map(i => i.value);
     const immunities = Array.from(document.querySelectorAll('#enc-immunities .char-resistance-chip.selected input')).map(i => i.value);
     const conditionImmunities = Array.from(document.querySelectorAll('#enc-condition-immunities .char-resistance-chip.selected input')).map(i => i.value);
-
     const e = {
         name: $('enc-name').value.trim(),
         creatureType: $('enc-creature-type').value,
@@ -77,40 +76,46 @@ function saveEncounter() {
         actions: sanitizeHTML($('enc-actions').innerHTML),
         skills: sanitizeHTML($('enc-skills').innerHTML)
     };
-    if (!e.name) { showToast('⚠️ Name erforderlich', 'error'); return; }
-
+    if (!e.name) {
+        showToast('⚠️ Name erforderlich', 'error');
+        return;
+    }
     if (id) {
-        const idx = D.encounters.findIndex(x => x.id === parseEntityId(id));
-        if (idx > -1) D.encounters[idx] = { ...D.encounters[idx], ...e };
-    } else {
+        const idx = D.encounters.findIndex((x) => x.id === parseEntityId(id));
+        if (idx > -1)
+            D.encounters[idx] = { ...D.encounters[idx], ...e };
+    }
+    else {
         e.id = nextId('encounters');
         D.encounters.push(e);
     }
-
     cancelEncEdit();
-    // Formular einklappen
-    $('enc-form').classList.remove('open');
-    $('enc-form-icon').textContent = '▼';
+    // Collapse form
+    const form = $('enc-form');
+    const icon = $('enc-form-icon');
+    if (form)
+        form.classList.remove('open');
+    if (icon)
+        icon.textContent = '▼';
     renderEncounters();
     save();
 }
-
 /**
- * Oeffnet das Bearbeitungsformular fuer einen Encounter/Gegner
- * @param {number|string} id - Encounter ID
+ * Opens the edit form for an encounter/enemy
  */
 function editEnc(id) {
     const e = EntityLookup.encounter(id);
-    if (!e) return;
-
-    $('edit-enc-id').value = id;
+    if (!e)
+        return;
+    const idInput = $('edit-enc-id');
+    if (idInput)
+        idInput.value = String(id);
     $('enc-name').value = e.name;
     $('enc-creature-type').value = e.creatureType || '';
     $('enc-cr').value = e.cr || '';
     $('enc-ac').value = e.ac || '';
     $('enc-init').value = e.init || '';
     $('enc-hp').value = e.hp || '';
-
     // Load speed values (support both old string format and new object format)
     if (typeof e.speed === 'object' && e.speed !== null) {
         $('enc-speed-walk').value = e.speed.walk || '';
@@ -118,7 +123,8 @@ function editEnc(id) {
         $('enc-speed-swim').value = e.speed.swim || '';
         $('enc-speed-fly').value = e.speed.fly || '';
         $('enc-speed-burrow').value = e.speed.burrow || '';
-    } else {
+    }
+    else {
         // Old format: single string -> put in walk
         $('enc-speed-walk').value = e.speed || '';
         $('enc-speed-climb').value = '';
@@ -126,124 +132,161 @@ function editEnc(id) {
         $('enc-speed-fly').value = '';
         $('enc-speed-burrow').value = '';
     }
-
     $('enc-perception').value = e.perception || '';
-
     // Handle languages (array or string for backwards compatibility)
     let langs = [];
     if (Array.isArray(e.languages)) {
         langs = e.languages;
-    } else if (e.languages) {
+    }
+    else if (e.languages) {
         // Old format: comma-separated string
-        langs = e.languages.split(',').map(l => l.trim());
+        langs = e.languages.split(',').map((l) => l.trim());
     }
     if (typeof setEncLanguages === 'function') {
         setEncLanguages(langs);
     }
-
-    // Attribute als Zahlen laden (oder alte Format-Konversion)
+    // Load attributes as numbers (or old format conversion)
     ['str', 'dex', 'con', 'int', 'wis', 'cha'].forEach(attr => {
         const val = e[attr];
+        const input = $(`enc-${attr}`);
         if (typeof val === 'string' && val.includes('/')) {
-            // Altes Format: "10/+0/+0" -> nur Wert extrahieren
-            $(`enc-${attr}`).value = parseInt(val.split('/')[0]) || 10;
-        } else {
-            $(`enc-${attr}`).value = val || 10;
+            // Old format: "10/+0/+0" -> extract value only
+            input.value = String(parseInt(val.split('/')[0]) || 10);
+        }
+        else {
+            input.value = String(val || 10);
         }
         updateEncAttrMod(attr);
     });
-
-    $('enc-traits').innerHTML = sanitizeHTML(e.traits) || '';
-    $('enc-equipment').innerHTML = sanitizeHTML(e.equipment) || '';
-    $('enc-actions').innerHTML = sanitizeHTML(e.actions) || '';
-    $('enc-skills').innerHTML = sanitizeHTML(e.skills) || '';
-
-    // Rettungswürfe laden (checkbox + custom value)
+    const traitsEl = $('enc-traits');
+    const equipEl = $('enc-equipment');
+    const actionsEl = $('enc-actions');
+    const skillsEl = $('enc-skills');
+    if (traitsEl)
+        traitsEl.innerHTML = sanitizeHTML(e.traits) || '';
+    if (equipEl)
+        equipEl.innerHTML = sanitizeHTML(e.equipment) || '';
+    if (actionsEl)
+        actionsEl.innerHTML = sanitizeHTML(e.actions) || '';
+    if (skillsEl)
+        skillsEl.innerHTML = sanitizeHTML(e.skills) || '';
+    // Load saving throws (checkbox + custom value)
     ['str', 'dex', 'con', 'int', 'wis', 'cha'].forEach(attr => {
         const checkbox = $(`enc-save-${attr}`);
         const valueInput = $(`enc-save-val-${attr}`);
         const box = $(`enc-save-box-${attr}`);
-
         if (checkbox) {
             const saveData = e.savingThrows && e.savingThrows[attr];
             const isActive = saveData === true || (typeof saveData === 'string' && saveData.length > 0);
             checkbox.checked = isActive;
-
-            // Custom value setzen
+            // Set custom value
             if (valueInput) {
                 valueInput.value = (typeof saveData === 'string') ? saveData : '';
             }
-
-            // CSS-Klasse für visuelles Feedback setzen
-            if (box) box.classList.toggle('active', isActive);
+            // Set CSS class for visual feedback
+            if (box)
+                box.classList.toggle('active', isActive);
         }
     });
-
-    // Resistenzen laden
+    // Load resistances
     document.querySelectorAll('#enc-resistances .char-resistance-chip').forEach(chip => {
         const input = chip.querySelector('input');
-        const isSelected = (e.resistances || []).includes(input.value);
-        chip.classList.toggle('selected', isSelected);
-        input.checked = isSelected;
+        if (input) {
+            const isSelected = (e.resistances || []).includes(input.value);
+            chip.classList.toggle('selected', isSelected);
+            input.checked = isSelected;
+        }
     });
-
-    // Immunitäten laden
+    // Load immunities
     document.querySelectorAll('#enc-immunities .char-resistance-chip').forEach(chip => {
         const input = chip.querySelector('input');
-        const isSelected = (e.immunities || []).includes(input.value);
-        chip.classList.toggle('selected', isSelected);
-        input.checked = isSelected;
+        if (input) {
+            const isSelected = (e.immunities || []).includes(input.value);
+            chip.classList.toggle('selected', isSelected);
+            input.checked = isSelected;
+        }
     });
-
-    // Zustandsimmunitäten laden
+    // Load condition immunities
     document.querySelectorAll('#enc-condition-immunities .char-resistance-chip').forEach(chip => {
         const input = chip.querySelector('input');
-        const isSelected = (e.conditionImmunities || []).includes(input.value);
-        chip.classList.toggle('selected', isSelected);
-        input.checked = isSelected;
+        if (input) {
+            const isSelected = (e.conditionImmunities || []).includes(input.value);
+            chip.classList.toggle('selected', isSelected);
+            input.checked = isSelected;
+        }
     });
-
-    $('enc-form').classList.add('open');
-    $('enc-form-icon').textContent = '▲';
+    const form = $('enc-form');
+    const icon = $('enc-form-icon');
+    if (form)
+        form.classList.add('open');
+    if (icon)
+        icon.textContent = '▲';
 }
-
 function cancelEncEdit() {
-    $('edit-enc-id').value = '';
-    ['enc-name', 'enc-creature-type', 'enc-cr', 'enc-ac', 'enc-init', 'enc-hp', 'enc-perception'].forEach(id => $(id).value = '');
+    const idInput = $('edit-enc-id');
+    if (idInput)
+        idInput.value = '';
+    ['enc-name', 'enc-creature-type', 'enc-cr', 'enc-ac', 'enc-init', 'enc-hp', 'enc-perception'].forEach(id => {
+        const el = $(id);
+        if (el)
+            el.value = '';
+    });
     // Clear all speed fields
-    ['enc-speed-walk', 'enc-speed-climb', 'enc-speed-swim', 'enc-speed-fly', 'enc-speed-burrow'].forEach(id => $(id).value = '');
+    ['enc-speed-walk', 'enc-speed-climb', 'enc-speed-swim', 'enc-speed-fly', 'enc-speed-burrow'].forEach(id => {
+        const el = $(id);
+        if (el)
+            el.value = '';
+    });
     ['str', 'dex', 'con', 'int', 'wis', 'cha'].forEach(attr => {
-        $(`enc-${attr}`).value = 10;
+        const input = $(`enc-${attr}`);
+        if (input)
+            input.value = '10';
         updateEncAttrMod(attr);
-        // Reset saving throw checkboxes, values und CSS-Klasse
+        // Reset saving throw checkboxes, values and CSS class
         const checkbox = $(`enc-save-${attr}`);
         const valueInput = $(`enc-save-val-${attr}`);
         const box = $(`enc-save-box-${attr}`);
-        if (checkbox) checkbox.checked = false;
-        if (valueInput) valueInput.value = '';
-        if (box) box.classList.remove('active');
+        if (checkbox)
+            checkbox.checked = false;
+        if (valueInput)
+            valueInput.value = '';
+        if (box)
+            box.classList.remove('active');
     });
-    if (typeof setEncLanguages === 'function') setEncLanguages([]);
-    // Resistenzen & Immunitäten zurücksetzen
+    if (typeof setEncLanguages === 'function')
+        setEncLanguages([]);
+    // Reset resistances & immunities
     document.querySelectorAll('#enc-resistances .char-resistance-chip, #enc-immunities .char-resistance-chip, #enc-condition-immunities .char-resistance-chip').forEach(chip => {
         chip.classList.remove('selected');
         const input = chip.querySelector('input');
-        if (input) input.checked = false;
+        if (input)
+            input.checked = false;
     });
-    $('enc-traits').innerHTML = '';
-    $('enc-equipment').innerHTML = '';
-    $('enc-actions').innerHTML = '';
-    $('enc-skills').innerHTML = '';
-    // Formular einklappen
-    $('enc-form').classList.remove('open');
-    $('enc-form-icon').textContent = '▼';
+    const traitsEl = $('enc-traits');
+    const equipEl = $('enc-equipment');
+    const actionsEl = $('enc-actions');
+    const skillsEl = $('enc-skills');
+    if (traitsEl)
+        traitsEl.innerHTML = '';
+    if (equipEl)
+        equipEl.innerHTML = '';
+    if (actionsEl)
+        actionsEl.innerHTML = '';
+    if (skillsEl)
+        skillsEl.innerHTML = '';
+    // Collapse form
+    const form = $('enc-form');
+    const icon = $('enc-form-icon');
+    if (form)
+        form.classList.remove('open');
+    if (icon)
+        icon.textContent = '▼';
 }
-
 /**
- * Loescht einen Encounter/Gegner nach Bestaetigung
- * @param {number|string} id - Encounter ID
+ * Deletes an encounter/enemy after confirmation
  */
 function deleteEnc(id) {
+    const renderEncounters = window.renderEncounters;
     deleteWithConfirm({
         entityType: 'encounters',
         id: id,
@@ -255,10 +298,12 @@ function deleteEnc(id) {
         }
     });
 }
-
 function addEncToInit(id) {
+    const D = window.D;
+    const sortInit = window.sortInit;
     const e = EntityLookup.encounter(id);
-    if (!e) return;
+    if (!e)
+        return;
     D.initiative.combatants.push({
         id: nextId('combatants'),
         name: e.name,
@@ -272,8 +317,6 @@ function addEncToInit(id) {
     sortInit();
     showToast('Zu Initiative hinzugefügt');
 }
-
-
 // Encounter Language Dropdown Functions
 function toggleEncLangDropdown() {
     const wrapper = $('enc-languages-wrapper');
@@ -281,52 +324,63 @@ function toggleEncLangDropdown() {
         wrapper.classList.toggle('open');
     }
 }
-
 function updateEncLanguages() {
     const checkboxes = document.querySelectorAll('#enc-lang-dropdown input[type="checkbox"]:checked');
     const selected = Array.from(checkboxes).map(cb => cb.value);
     const display = $('enc-lang-display');
-    
     if (display) {
         if (selected.length === 0) {
             display.textContent = 'Sprachen wählen...';
             display.style.color = 'var(--text-dim)';
-        } else if (selected.length <= 3) {
+        }
+        else if (selected.length <= 3) {
             display.textContent = selected.join(', ');
             display.style.color = 'var(--text)';
-        } else {
+        }
+        else {
             display.textContent = selected.slice(0, 2).join(', ') + ' +' + (selected.length - 2);
             display.style.color = 'var(--text)';
         }
     }
 }
-
 function getEncSelectedLanguages() {
     const checkboxes = document.querySelectorAll('#enc-lang-dropdown input[type="checkbox"]:checked');
     return Array.from(checkboxes).map(cb => cb.value);
 }
-
 function setEncLanguages(languages) {
     // Reset all checkboxes
     document.querySelectorAll('#enc-lang-dropdown input[type="checkbox"]').forEach(cb => {
         cb.checked = false;
     });
-    
     // Set selected languages
     if (Array.isArray(languages)) {
         languages.forEach(lang => {
             const cb = document.querySelector('#enc-lang-dropdown input[value="' + lang + '"]');
-            if (cb) cb.checked = true;
+            if (cb)
+                cb.checked = true;
         });
     }
-    
     updateEncLanguages();
 }
-
 // Close dropdown when clicking outside
-document.addEventListener('click', function(e) {
+document.addEventListener('click', function (e) {
     const wrapper = $('enc-languages-wrapper');
     if (wrapper && !wrapper.contains(e.target)) {
         wrapper.classList.remove('open');
     }
 });
+// ============================================================
+// EXPORTS FOR GLOBAL ACCESS
+// ============================================================
+window.updateEncAttrMod = updateEncAttrMod;
+window.toggleEncSaveBox = toggleEncSaveBox;
+window.saveEncounter = saveEncounter;
+window.editEnc = editEnc;
+window.cancelEncEdit = cancelEncEdit;
+window.deleteEnc = deleteEnc;
+window.addEncToInit = addEncToInit;
+window.toggleEncLangDropdown = toggleEncLangDropdown;
+window.updateEncLanguages = updateEncLanguages;
+window.getEncSelectedLanguages = getEncSelectedLanguages;
+window.setEncLanguages = setEncLanguages;
+//# sourceMappingURL=encounters-crud.js.map

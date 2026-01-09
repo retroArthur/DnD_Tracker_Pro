@@ -2,40 +2,36 @@
 // ============================================================
 // NPC INTERACTIONS - @toggle @select @relations
 // ============================================================
-
 /**
- * Schaltet NPC-Karte um oder waehlt NPC im Master-Detail Layout
- * @param {number|string} cardOrId - NPC ID oder Karten-Element
+ * Toggles NPC card or selects NPC in master-detail layout
  */
 function toggleNPCCard(cardOrId) {
+    const selectNPC = window.selectNPC;
     const id = parseEntityId(cardOrId);
-    if (id === null) return;
-
+    if (id === null)
+        return;
     // Im Master-Detail Layout: NPC auswählen
     if (typeof selectNPC === 'function') {
         selectNPC(id);
         return;
     }
-
     // Fallback für alte Layouts
     const card = $(`npc-card-${id}`);
     if (card) {
         card.classList.toggle('collapsed');
     }
 }
-
 /**
- * Schaltet einen NPC-Trigger um (aktiviert/deaktiviert)
- * @param {number} npcId - NPC ID
- * @param {number} triggerIdx - Index des Triggers im Trigger-Array
+ * Toggles an NPC trigger (activated/deactivated)
  */
 function toggleNPCTrigger(npcId, triggerIdx) {
+    const renderLocations = window.renderLocations;
+    const selectedNpcId = window.selectedNpcId;
     const npc = EntityLookup.npc(npcId);
-    if (!npc || !npc.triggers || !npc.triggers[triggerIdx]) return;
-
+    if (!npc || !npc.triggers || !npc.triggers[triggerIdx])
+        return;
     npc.triggers[triggerIdx].triggered = !npc.triggers[triggerIdx].triggered;
     const triggered = npc.triggers[triggerIdx].triggered;
-
     // Master-Detail Layout: Detail-Panel aktualisieren
     const detailPanel = $('npc-detail-panel');
     if (detailPanel && typeof selectedNpcId !== 'undefined' && selectedNpcId === npcId) {
@@ -54,33 +50,30 @@ function toggleNPCTrigger(npcId, triggerIdx) {
                 if (triggered) {
                     revealEl.style.display = 'block';
                     revealEl.textContent = npc.triggers[triggerIdx].reveal || '';
-                } else {
+                }
+                else {
                     revealEl.style.display = 'none';
                 }
             }
         }
     }
-
     // Locations aktualisieren (falls NPC dort angezeigt wird)
-    if (typeof renderLocations === 'function') renderLocations();
+    if (typeof renderLocations === 'function')
+        renderLocations();
     save();
-
     const status = triggered ? 'aktiviert' : 'deaktiviert';
     showToast(`Trigger ${status}`);
 }
-
 /**
- * Markiert einen NPC-Dialog als verwendet/unbenutzt
- * @param {number} npcId - NPC ID
- * @param {number} dialogIdx - Index des Dialogs im Dialog-Array
+ * Marks an NPC dialog as used/unused
  */
 function toggleNPCDialogUsed(npcId, dialogIdx) {
+    const selectedNpcId = window.selectedNpcId;
     const npc = EntityLookup.npc(npcId);
-    if (!npc || !npc.dialogs || !npc.dialogs[dialogIdx]) return;
-
+    if (!npc || !npc.dialogs || !npc.dialogs[dialogIdx])
+        return;
     npc.dialogs[dialogIdx].used = !npc.dialogs[dialogIdx].used;
     const used = npc.dialogs[dialogIdx].used;
-
     // Master-Detail Layout: Detail-Panel aktualisieren
     const detailPanel = $('npc-detail-panel');
     if (detailPanel && typeof selectedNpcId !== 'undefined' && selectedNpcId === npcId) {
@@ -89,43 +82,37 @@ function toggleNPCDialogUsed(npcId, dialogIdx) {
         if (dialogItem) {
             dialogItem.classList.toggle('used', used);
             const marker = dialogItem.querySelector('.npc-dialog-marker');
-            if (marker) marker.classList.toggle('used', used);
-
+            if (marker)
+                marker.classList.toggle('used', used);
             // Button aktualisieren
             const btn = dialogItem.querySelector('.npc-detail-btn.small');
             if (btn) {
                 btn.classList.toggle('success', !used);
                 btn.innerHTML = used ? '↩️' : '✓';
-                btn.title = used ? 'Als unbenutzt markieren' : 'Als verwendet markieren';
+                btn.setAttribute('title', used ? 'Als unbenutzt markieren' : 'Als verwendet markieren');
             }
         }
-
         // Dialog-Counter in Section-Title aktualisieren
-        const usedCount = npc.dialogs.filter(d => d.used).length;
+        const usedCount = npc.dialogs.filter((d) => d.used).length;
         const sectionTitles = detailPanel.querySelectorAll('.npc-section-title');
-        sectionTitles.forEach(title => {
-            if (title.textContent.includes('Dialoge')) {
+        sectionTitles.forEach((title) => {
+            if (title.textContent?.includes('Dialoge')) {
                 const btnHtml = title.querySelector('.npc-section-btn')?.outerHTML || '';
                 title.innerHTML = `💬 Dialoge (${usedCount}/${npc.dialogs.length} verwendet) ${btnHtml}`;
             }
         });
     }
-
     save();
-
     const status = used ? 'als verwendet markiert' : 'zurückgesetzt';
     showToast(`Dialog ${status}`);
 }
-
 /**
- * Kopiert den Text eines NPC-Dialogs in die Zwischenablage
- * @param {number} npcId - NPC ID
- * @param {number} dialogIdx - Index des Dialogs im Dialog-Array
+ * Copies the text of an NPC dialog to clipboard
  */
 function copyDialogText(npcId, dialogIdx) {
     const npc = EntityLookup.npc(npcId);
-    if (!npc || !npc.dialogs || !npc.dialogs[dialogIdx]) return;
-
+    if (!npc || !npc.dialogs || !npc.dialogs[dialogIdx])
+        return;
     const text = npc.dialogs[dialogIdx].text;
     navigator.clipboard.writeText(text).then(() => {
         showToast('Dialog kopiert!');
@@ -133,3 +120,11 @@ function copyDialogText(npcId, dialogIdx) {
         showToast('Kopieren fehlgeschlagen');
     });
 }
+// ============================================================
+// EXPORTS FOR GLOBAL ACCESS
+// ============================================================
+window.toggleNPCCard = toggleNPCCard;
+window.toggleNPCTrigger = toggleNPCTrigger;
+window.toggleNPCDialogUsed = toggleNPCDialogUsed;
+window.copyDialogText = copyDialogText;
+//# sourceMappingURL=npc-interactions.js.map

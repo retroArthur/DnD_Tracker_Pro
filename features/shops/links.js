@@ -1,36 +1,36 @@
 // [SECTION:LINKS]
 // Extrahiert aus shops.js
 // Link-Verwaltung
-// Zeilen: 128
-
+// Zeilen: 136
 // LINKS
 // ============================================================
 function renderLinks() {
-    const c = $('links-list'); if (!c) return;
-    const search = ($('link-search')?.value || '').toLowerCase();
-    const catFilter = $('link-filter')?.value || '';
-    
+    const D = window.D;
+    const LINK_CATS = window.LINK_CATS;
+    const renderEmptyState = window.renderEmptyState;
+    const c = $('links-list');
+    if (!c)
+        return;
+    const searchInput = $('link-search');
+    const catFilterInput = $('link-filter');
+    const search = (searchInput?.value || '').toLowerCase();
+    const catFilter = catFilterInput?.value || '';
     // Counter aktualisieren
     const countEl = $('links-io-count');
-    if (countEl) countEl.textContent = D.links?.length || 0;
-    
+    if (countEl)
+        countEl.textContent = String(D.links?.length || 0);
     let links = D.links || [];
-    
     // Kategorie-Filter anwenden
     if (catFilter) {
-        links = links.filter(l => l.category === catFilter);
+        links = links.filter((l) => l.category === catFilter);
     }
-    
     // Suche anwenden
     if (search) {
-        links = links.filter(l => 
-            (l.title || '').toLowerCase().includes(search) ||
+        links = links.filter((l) => (l.title || '').toLowerCase().includes(search) ||
             (l.url || '').toLowerCase().includes(search) ||
-            (l.description || '').toLowerCase().includes(search)
-        );
+            (l.description || '').toLowerCase().includes(search));
     }
-    
-    if (!links.length) { 
+    if (!links.length) {
         c.innerHTML = renderEmptyState({
             icon: '🔗',
             titleEmpty: 'Keine Links',
@@ -40,10 +40,9 @@ function renderLinks() {
             buttonValue: 'toggleLinkForm',
             isFiltered: !!(search || catFilter)
         });
-        return; 
+        return;
     }
-    
-    c.innerHTML = links.map(l => `<div class="link-card">
+    c.innerHTML = links.map((l) => `<div class="link-card">
         <div class="link-icon">${LINK_CATS[l.category]?.split(' ')[0] || '🔗'}</div>
         <div class="link-info">
             <div class="link-title"><a href="${esc(l.url)}" target="_blank" style="color:inherit; text-decoration:none;">${esc(l.title)}</a></div>
@@ -56,82 +55,114 @@ function renderLinks() {
         </div>
     </div>`).join('');
 }
-
 function toggleLinkForm() {
     const form = $('link-form-card');
     if (form) {
-        form.style.display = form.style.display === 'none' ? 'block' : 'none';
+        const htmlForm = form;
+        htmlForm.style.display = htmlForm.style.display === 'none' ? 'block' : 'none';
     }
 }
-
 function saveLink() {
-    const editId = $('edit-link-id').value;
-    const title = $('link-title').value.trim();
-    const url = $('link-url').value.trim();
-
-    if (!title || !url) { showToast('⚠️ Titel und URL erforderlich', 'error'); return; }
-
+    const D = window.D;
+    const nextId = window.nextId;
+    const editIdInput = $('edit-link-id');
+    const titleInput = $('link-title');
+    const urlInput = $('link-url');
+    const catInput = $('link-cat');
+    const descInput = $('link-desc');
+    const editId = editIdInput?.value || '';
+    const title = titleInput?.value.trim() || '';
+    const url = urlInput?.value.trim() || '';
+    if (!title || !url) {
+        showToast('⚠️ Titel und URL erforderlich', 'error');
+        return;
+    }
     const linkData = {
         title,
         url,
-        category: $('link-cat').value,
-        description: sanitizeHTML($('link-desc').innerHTML)
+        category: catInput?.value || 'other',
+        description: descInput ? sanitizeHTML(descInput.innerHTML) : ''
     };
-
     pushUndo(editId ? 'Link bearbeitet' : 'Link erstellt');
-
     if (editId) {
-        const idx = D.links.findIndex(l => l.id === parseInt(editId));
+        const idx = D.links.findIndex((l) => l.id === parseInt(editId));
         if (idx > -1) {
             D.links[idx] = { ...D.links[idx], ...linkData };
             showToast('Link aktualisiert');
         }
-    } else {
+    }
+    else {
         linkData.id = nextId('links');
         D.links.push(linkData);
         showToast('Link hinzugefügt');
     }
-
     cancelLinkEdit();
     renderLinks();
     save();
 }
-
 function editLink(id) {
     const link = EntityLookup.link(id);
-    if (!link) return;
-    
-    $('edit-link-id').value = id;
-    $('link-title').value = link.title || '';
-    $('link-url').value = link.url || '';
-    $('link-cat').value = link.category || 'other';
-    $('link-desc').innerHTML = sanitizeHTML(link.description) || '';
-    
+    if (!link)
+        return;
+    const editIdInput = $('edit-link-id');
+    const titleInput = $('link-title');
+    const urlInput = $('link-url');
+    const catInput = $('link-cat');
+    const descInput = $('link-desc');
+    if (editIdInput)
+        editIdInput.value = String(id);
+    if (titleInput)
+        titleInput.value = link.title || '';
+    if (urlInput)
+        urlInput.value = link.url || '';
+    if (catInput)
+        catInput.value = link.category || 'other';
+    if (descInput)
+        descInput.innerHTML = sanitizeHTML(link.description) || '';
     const form = $('link-form-card');
-    if (form) form.style.display = 'block';
-    
-    $('link-title').focus();
+    if (form)
+        form.style.display = 'block';
+    if (titleInput)
+        titleInput.focus();
 }
-
 function cancelLinkEdit() {
-    $('edit-link-id').value = '';
-    $('link-title').value = '';
-    $('link-url').value = '';
-    $('link-cat').value = 'rules';
-    $('link-desc').innerHTML = '';
-    
+    const editIdInput = $('edit-link-id');
+    const titleInput = $('link-title');
+    const urlInput = $('link-url');
+    const catInput = $('link-cat');
+    const descInput = $('link-desc');
+    if (editIdInput)
+        editIdInput.value = '';
+    if (titleInput)
+        titleInput.value = '';
+    if (urlInput)
+        urlInput.value = '';
+    if (catInput)
+        catInput.value = 'rules';
+    if (descInput)
+        descInput.innerHTML = '';
     const form = $('link-form-card');
-    if (form) form.style.display = 'none';
+    if (form)
+        form.style.display = 'none';
 }
-
 function deleteLink(id) {
+    const D = window.D;
     const link = EntityLookup.link(id);
     if (confirm(`Link "${link?.title || 'Unbekannt'}" löschen?`)) {
         pushUndo('Link gelöscht');
-        D.links = D.links.filter(l => l.id !== id);
+        const numId = typeof id === 'string' ? parseInt(id) : id;
+        D.links = D.links.filter((l) => l.id !== numId);
         renderLinks();
         save();
     }
 }
-
 // ============================================================
+// EXPORTS FOR GLOBAL ACCESS
+// ============================================================
+window.renderLinks = renderLinks;
+window.toggleLinkForm = toggleLinkForm;
+window.saveLink = saveLink;
+window.editLink = editLink;
+window.cancelLinkEdit = cancelLinkEdit;
+window.deleteLink = deleteLink;
+//# sourceMappingURL=links.js.map

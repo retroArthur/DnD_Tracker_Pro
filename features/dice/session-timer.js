@@ -1,15 +1,16 @@
 // [SECTION:SESSION_TIMER]
 // Extrahiert aus dice.js
 // Session-Timer
-// Zeilen: 102
-
+// Zeilen: 110
+// ============================================================
 // SESSION TIMER
 // ============================================================
+const APP_CONFIG = window.APP_CONFIG;
+const D = window.D;
 const SESSION_AUTO_SAVE_INTERVAL = APP_CONFIG.SESSION_AUTO_SAVE_INTERVAL;
 let sessionTimerInterval = null;
 let sessionTimerSeconds = 0;
 let sessionTimerRunning = false;
-
 function formatSessionTime(totalSeconds) {
     const hours = Math.floor(totalSeconds / 3600);
     const minutes = Math.floor((totalSeconds % 3600) / 60);
@@ -18,53 +19,51 @@ function formatSessionTime(totalSeconds) {
         .map(v => v.toString().padStart(2, '0'))
         .join(':');
 }
-
 function updateSessionTimerDisplay() {
     const timeStr = formatSessionTime(sessionTimerSeconds);
-    
     // Desktop Display
     const display = $('session-timer-display');
-    if (display) display.textContent = timeStr;
-    
+    if (display)
+        display.textContent = timeStr;
     // Mobile Display
     const mobileDisplay = $('mobile-timer-display');
-    if (mobileDisplay) mobileDisplay.textContent = timeStr;
+    if (mobileDisplay)
+        mobileDisplay.textContent = timeStr;
 }
-
 function toggleSessionTimer() {
     const timer = $('session-timer');
     const mobileTimer = document.querySelector('.mobile-timer');
     const toggleBtn = $('session-timer-toggle');
-    
     if (sessionTimerRunning) {
         // Pause
-        clearInterval(sessionTimerInterval);
+        if (sessionTimerInterval)
+            clearInterval(sessionTimerInterval);
         sessionTimerRunning = false;
         timer?.classList.remove('running');
         timer?.classList.add('paused');
         mobileTimer?.classList.remove('running');
         mobileTimer?.classList.add('paused');
-        if (toggleBtn) toggleBtn.textContent = '▶️';
+        if (toggleBtn)
+            toggleBtn.textContent = '▶️';
         showToast('⏸️ Timer pausiert');
-    } else {
+    }
+    else {
         // Start - cleanup vorheriger Interval falls vorhanden
         if (sessionTimerInterval) {
             clearInterval(sessionTimerInterval);
             sessionTimerInterval = null;
         }
-
         sessionTimerRunning = true;
         timer?.classList.remove('paused');
         timer?.classList.add('running');
         mobileTimer?.classList.remove('paused');
         mobileTimer?.classList.add('running');
-        if (toggleBtn) toggleBtn.textContent = '⏸️';
+        if (toggleBtn)
+            toggleBtn.textContent = '⏸️';
         showToast('▶️ Timer gestartet');
-
-        sessionTimerInterval = setInterval(() => {
+        sessionTimerInterval = window.setInterval(() => {
             sessionTimerSeconds++;
             updateSessionTimerDisplay();
-            
             // Auto-save Session-Zeit
             if (sessionTimerSeconds % SESSION_AUTO_SAVE_INTERVAL === 0) {
                 D.lastSessionDuration = sessionTimerSeconds;
@@ -73,12 +72,10 @@ function toggleSessionTimer() {
         }, 1000);
     }
 }
-
 function resetSessionTimer() {
     if (sessionTimerRunning) {
         toggleSessionTimer(); // Erst pausieren
     }
-    
     // Speichere vorherige Session-Zeit
     if (sessionTimerSeconds > 60) {
         D.sessionHistory = D.sessionHistory || [];
@@ -92,20 +89,21 @@ function resetSessionTimer() {
         }
         save();
     }
-    
     sessionTimerSeconds = 0;
     updateSessionTimerDisplay();
-    
     const timer = $('session-timer');
     timer?.classList.remove('running', 'paused');
-    
     showToast('⏱️ Timer zurückgesetzt');
 }
-
 function initSessionTimer() {
     // Timer immer bei 00:00:00 starten
     sessionTimerSeconds = 0;
     updateSessionTimerDisplay();
 }
-
 // ============================================================
+// BACKWARD COMPATIBILITY EXPORTS
+// ============================================================
+window.toggleSessionTimer = toggleSessionTimer;
+window.resetSessionTimer = resetSessionTimer;
+window.initSessionTimer = initSessionTimer;
+//# sourceMappingURL=session-timer.js.map

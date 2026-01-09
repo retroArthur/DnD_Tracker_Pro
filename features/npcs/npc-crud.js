@@ -2,28 +2,45 @@
 // ============================================================
 // NPC CRUD - @create @edit @delete @save
 // ============================================================
-
+/**
+ * Saves an NPC (create or update)
+ */
 function saveNPC() {
-    const id = $('edit-npc-id').value;
-
+    const D = window.D;
+    const validateAndShowErrors = window.validateAndShowErrors;
+    const renderLocations = window.renderLocations;
+    const renderNPCList = window.renderNPCList;
+    const log = window.log;
+    const idInput = $('edit-npc-id');
+    const id = idInput.value;
     // Collect triggers
     const triggers = [];
-    $('npc-triggers-container').querySelectorAll('.npc-trigger-field').forEach(div => {
-        const cond = div.querySelector('.trigger-cond')?.value?.trim() || '';
-        const rev = div.querySelector('.trigger-reveal')?.value?.trim() || '';
-        if (cond && rev) triggers.push({ condition: cond, reveal: rev, triggered: false });
-    });
-
+    const triggersContainer = $('npc-triggers-container');
+    if (triggersContainer) {
+        triggersContainer.querySelectorAll('.npc-trigger-field').forEach(div => {
+            const condEl = div.querySelector('.trigger-cond');
+            const revEl = div.querySelector('.trigger-reveal');
+            const cond = condEl?.value?.trim() || '';
+            const rev = revEl?.value?.trim() || '';
+            if (cond && rev)
+                triggers.push({ condition: cond, reveal: rev, triggered: false });
+        });
+    }
     // Collect dialogs
     const dialogs = [];
-    $('npc-dialogs-container').querySelectorAll('.npc-dialog-field').forEach(div => {
-        const title = div.querySelector('.dialog-title')?.value?.trim() || '';
-        const trigger = div.querySelector('.dialog-trigger')?.value?.trim() || '';
-        const textEl = div.querySelector('.dialog-text');
-        const text = textEl ? sanitizeHTML(textEl.innerHTML) : '';
-        if (text) dialogs.push({ title, triggerCondition: trigger, text, used: false });
-    });
-
+    const dialogsContainer = $('npc-dialogs-container');
+    if (dialogsContainer) {
+        dialogsContainer.querySelectorAll('.npc-dialog-field').forEach(div => {
+            const titleEl = div.querySelector('.dialog-title');
+            const triggerEl = div.querySelector('.dialog-trigger');
+            const textEl = div.querySelector('.dialog-text');
+            const title = titleEl?.value?.trim() || '';
+            const trigger = triggerEl?.value?.trim() || '';
+            const text = textEl ? sanitizeHTML(textEl.innerHTML) : '';
+            if (text)
+                dialogs.push({ title, triggerCondition: trigger, text, used: false });
+        });
+    }
     const npc = {
         name: $('npc-name').value.trim(),
         role: $('npc-role').value.trim(),
@@ -38,14 +55,12 @@ function saveNPC() {
         triggers,
         dialogs
     };
-
     // Validate entity references and required fields
-    if (!validateAndShowErrors(npc, 'npc')) return;
-
+    if (!validateAndShowErrors(npc, 'npc'))
+        return;
     pushUndo(id ? 'NPC bearbeitet' : 'NPC erstellt');
-
     if (id) {
-        const idx = D.npcs.findIndex(n => n.id === parseEntityId(id));
+        const idx = D.npcs.findIndex((n) => n.id === parseEntityId(id));
         if (idx > -1) {
             // Preserve existing dialog/trigger states
             const existing = D.npcs[idx];
@@ -66,7 +81,6 @@ function saveNPC() {
         npc.id = nextId('npcs');
         D.npcs.push(npc);
     }
-
     hideModal('npc-modal');
     clearNPCForm();
     renderLocations();
@@ -74,30 +88,30 @@ function saveNPC() {
     save();
     showToast(id ? 'NPC aktualisiert' : 'NPC hinzugefügt');
 }
-
 /**
- * Oeffnet das Bearbeitungsmodal fuer einen NPC
- * @param {number|string} id - NPC ID
+ * Opens the edit modal for an NPC
  */
 function editNPC(id) {
+    const populateSelects = window.populateSelects;
+    const addTriggerField = window.addTriggerField;
+    const addDialogField = window.addDialogField;
+    const resetDialogFieldCounter = window.resetDialogFieldCounter;
+    const log = window.log;
     const numId = parseEntityId(id);
     if (numId === null) {
         log('editNPC: Ungueltige ID:', id);
         return;
     }
-
     const n = EntityLookup.npc(numId);
     if (!n) {
         log('editNPC: NPC nicht gefunden mit ID:', numId);
         showToast('NPC nicht gefunden', 'error');
         return;
     }
-
     // Zuerst Selects füllen
     populateSelects();
-
     // Dann Werte setzen
-    $('edit-npc-id').value = numId;
+    $('edit-npc-id').value = String(numId);
     $('npc-name').value = n.name || '';
     $('npc-role').value = n.role || '';
     $('npc-race').value = n.race || '';
@@ -106,52 +120,61 @@ function editNPC(id) {
     $('npc-info').value = (n.info || []).join(', ');
     $('npc-relations').value = (n.relationships || []).join(', ');
     $('npc-desc').innerHTML = sanitizeHTML(n.description) || '';
-
     // Location und Filter nach kleiner Verzögerung setzen (damit Optionen geladen sind)
     setTimeout(() => {
-        if (n.locationId) $('npc-location').value = String(n.locationId);
-        if (n.filterId) $('npc-filter').value = String(n.filterId);
+        if (n.locationId)
+            $('npc-location').value = String(n.locationId);
+        if (n.filterId)
+            $('npc-filter').value = String(n.filterId);
     }, 10);
-
     // Load triggers
-    $('npc-triggers-container').innerHTML = '';
-    (n.triggers || []).forEach(t => {
-        addTriggerField();
-        const divs = $('npc-triggers-container').querySelectorAll('.npc-trigger-field');
-        const last = divs[divs.length - 1];
-        if (last) {
-            const condEl = last.querySelector('.trigger-cond');
-            const revEl = last.querySelector('.trigger-reveal');
-            if (condEl) condEl.value = t.condition || '';
-            if (revEl) revEl.value = t.reveal || '';
-        }
-    });
-
+    const triggersContainer = $('npc-triggers-container');
+    if (triggersContainer) {
+        triggersContainer.innerHTML = '';
+        (n.triggers || []).forEach((t) => {
+            addTriggerField();
+            const divs = triggersContainer.querySelectorAll('.npc-trigger-field');
+            const last = divs[divs.length - 1];
+            if (last) {
+                const condEl = last.querySelector('.trigger-cond');
+                const revEl = last.querySelector('.trigger-reveal');
+                if (condEl)
+                    condEl.value = t.condition || '';
+                if (revEl)
+                    revEl.value = t.reveal || '';
+            }
+        });
+    }
     // Load dialogs
-    $('npc-dialogs-container').innerHTML = '';
-    resetDialogFieldCounter();
-    (n.dialogs || []).forEach(d => {
-        addDialogField();
-        const divs = $('npc-dialogs-container').querySelectorAll('.npc-dialog-field');
-        const last = divs[divs.length - 1];
-        if (last) {
-            const titleEl = last.querySelector('.dialog-title');
-            const triggerEl = last.querySelector('.dialog-trigger');
-            const textEl = last.querySelector('.dialog-text');
-            if (titleEl) titleEl.value = d.title || '';
-            if (triggerEl) triggerEl.value = d.triggerCondition || '';
-            if (textEl) textEl.innerHTML = sanitizeHTML(d.text) || '';
-        }
-    });
-
+    const dialogsContainer = $('npc-dialogs-container');
+    if (dialogsContainer) {
+        dialogsContainer.innerHTML = '';
+        resetDialogFieldCounter();
+        (n.dialogs || []).forEach((d) => {
+            addDialogField();
+            const divs = dialogsContainer.querySelectorAll('.npc-dialog-field');
+            const last = divs[divs.length - 1];
+            if (last) {
+                const titleEl = last.querySelector('.dialog-title');
+                const triggerEl = last.querySelector('.dialog-trigger');
+                const textEl = last.querySelector('.dialog-text');
+                if (titleEl)
+                    titleEl.value = d.title || '';
+                if (triggerEl)
+                    triggerEl.value = d.triggerCondition || '';
+                if (textEl)
+                    textEl.innerHTML = sanitizeHTML(d.text) || '';
+            }
+        });
+    }
     showModal('npc-modal');
 }
-
 /**
- * Loescht einen NPC nach Bestaetigung
- * @param {number|string} id - NPC ID
+ * Deletes an NPC after confirmation
  */
 function deleteNPC(id) {
+    const renderLocations = window.renderLocations;
+    const renderNPCList = window.renderNPCList;
     deleteWithConfirm({
         entityType: 'npcs',
         id: id,
@@ -164,12 +187,34 @@ function deleteNPC(id) {
         }
     });
 }
-
+/**
+ * Clears the NPC form
+ */
 function clearNPCForm() {
+    const resetDialogFieldCounter = window.resetDialogFieldCounter;
     $('edit-npc-id').value = '';
-    ['npc-name', 'npc-role', 'npc-race', 'npc-location', 'npc-chapter', 'npc-filter', 'npc-quests', 'npc-info', 'npc-relations'].forEach(id => { if ($(id)) $(id).value = ''; });
-    $('npc-desc').innerHTML = '';
-    $('npc-triggers-container').innerHTML = '';
-    $('npc-dialogs-container').innerHTML = '';
+    ['npc-name', 'npc-role', 'npc-race', 'npc-location', 'npc-chapter', 'npc-filter',
+        'npc-quests', 'npc-info', 'npc-relations'].forEach(id => {
+        const el = $(id);
+        if (el)
+            el.value = '';
+    });
+    const descEl = $('npc-desc');
+    if (descEl)
+        descEl.innerHTML = '';
+    const triggersContainer = $('npc-triggers-container');
+    if (triggersContainer)
+        triggersContainer.innerHTML = '';
+    const dialogsContainer = $('npc-dialogs-container');
+    if (dialogsContainer)
+        dialogsContainer.innerHTML = '';
     resetDialogFieldCounter();
 }
+// ============================================================
+// EXPORTS FOR GLOBAL ACCESS
+// ============================================================
+window.saveNPC = saveNPC;
+window.editNPC = editNPC;
+window.deleteNPC = deleteNPC;
+window.clearNPCForm = clearNPCForm;
+//# sourceMappingURL=npc-crud.js.map

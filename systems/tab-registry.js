@@ -1,17 +1,8 @@
 // [SECTION:TAB_REGISTRY]
 // Tab Navigation Registry
 // Centralized mapping of tabs to their render functions
-
-/**
- * @typedef {Object} TabConfig
- * @property {string[]} renders - Array of render function names to call when tab is shown
- * @property {string|null} init - Optional one-time initialization function (called only on first view)
- * @property {string|null} cleanup - Optional cleanup function (called when leaving tab)
- */
-
 /**
  * Tab-Render Registry - Maps tab names to their associated render functions
- * @type {Record<string, TabConfig>}
  */
 const TAB_RENDER_REGISTRY = {
     'dashboard': {
@@ -86,7 +77,7 @@ const TAB_RENDER_REGISTRY = {
     },
     'dice': {
         renders: ['renderRandomTables', 'renderDiceHistory', 'renderDiceFavorites'],
-        init: 'initDiceTab',  // Called once when first shown
+        init: 'initDiceTab', // Called once when first shown
         cleanup: null
     },
     'timers': {
@@ -96,11 +87,11 @@ const TAB_RENDER_REGISTRY = {
     },
     'maps': {
         renders: ['displayMap'],
-        init: 'initMapPanning',  // Initialize pan controls once
+        init: 'initMapPanning', // Initialize pan controls once
         cleanup: null
     },
     'data': {
-        renders: [],  // Data tab is mostly forms, no active renders needed
+        renders: [], // Data tab is mostly forms, no active renders needed
         init: null,
         cleanup: null
     },
@@ -110,23 +101,20 @@ const TAB_RENDER_REGISTRY = {
         cleanup: null
     }
 };
-
 /**
  * Execute all render functions for a given tab
  * Provides error handling and validation
  *
- * @param {string} tabName - The tab identifier (e.g., 'dice', 'initiative')
+ * @param tabName - The tab identifier (e.g., 'dice', 'initiative')
  */
 function renderTabContent(tabName) {
     const tabConfig = TAB_RENDER_REGISTRY[tabName];
-
     if (!tabConfig) {
         if (window.APP_CONFIG?.DEBUG_MODE) {
             console.warn(`[TabRegistry] No config for tab: ${tabName}`);
         }
         return;
     }
-
     // Call init function if it exists and hasn't been called yet
     if (tabConfig.init && typeof window[tabConfig.init] === 'function') {
         if (!tabConfig._initialized) {
@@ -136,12 +124,12 @@ function renderTabContent(tabName) {
                 if (window.APP_CONFIG?.DEBUG_MODE) {
                     console.log(`[TabRegistry] Init ${tabConfig.init}() for tab ${tabName}`);
                 }
-            } catch (err) {
+            }
+            catch (err) {
                 console.error(`[TabRegistry] Init failed for ${tabName}:`, err);
             }
         }
     }
-
     // Call all render functions
     tabConfig.renders.forEach(renderFn => {
         if (typeof window[renderFn] === 'function') {
@@ -150,26 +138,26 @@ function renderTabContent(tabName) {
                 if (window.APP_CONFIG?.DEBUG_MODE) {
                     console.log(`[TabRegistry] Rendered ${renderFn}() for tab ${tabName}`);
                 }
-            } catch (err) {
+            }
+            catch (err) {
                 console.error(`[TabRegistry] Render ${renderFn}() failed for tab ${tabName}:`, err);
             }
-        } else {
+        }
+        else {
             console.warn(`[TabRegistry] Function ${renderFn} not found for tab ${tabName}`);
         }
     });
 }
-
 /**
  * Validate the tab registry on app startup (DEBUG mode only)
  * Checks for missing functions and invalid configurations
  */
 function validateTabRegistry() {
-    if (!window.APP_CONFIG?.DEBUG_MODE) return;
-
+    if (!window.APP_CONFIG?.DEBUG_MODE)
+        return;
     console.log('[TabRegistry] Validating registry...');
     let errors = 0;
     let warnings = 0;
-
     Object.entries(TAB_RENDER_REGISTRY).forEach(([tabName, config]) => {
         // Check if render functions exist
         config.renders.forEach(renderFn => {
@@ -178,31 +166,23 @@ function validateTabRegistry() {
                 errors++;
             }
         });
-
         // Check if init functions exist
         if (config.init && typeof window[config.init] !== 'function') {
             console.warn(`[TabRegistry] Missing init function: ${config.init} for tab ${tabName}`);
             warnings++;
         }
-
         // Check if cleanup functions exist
         if (config.cleanup && typeof window[config.cleanup] !== 'function') {
             console.warn(`[TabRegistry] Missing cleanup function: ${config.cleanup} for tab ${tabName}`);
             warnings++;
         }
     });
-
     if (errors > 0 || warnings > 0) {
         console.warn(`[TabRegistry] Validation complete: ${errors} errors, ${warnings} warnings`);
-    } else {
+    }
+    else {
         console.log('[TabRegistry] Validation complete: No issues found ✓');
     }
 }
-
 // ============================================================
-// EXPORTS
-// ============================================================
-
-// Export to global scope for use in other modules
-window.renderTabContent = renderTabContent;
-window.validateTabRegistry = validateTabRegistry;
+//# sourceMappingURL=tab-registry.js.map

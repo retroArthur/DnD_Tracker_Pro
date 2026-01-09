@@ -2,7 +2,6 @@
 // Extrahiert aus spellslots.js
 // Virtual List Performance
 // Zeilen: 49
-
 // PERFORMANCE - VIRTUAL LIST
 // ============================================================
 class VirtualList {
@@ -13,16 +12,13 @@ class VirtualList {
         this.items = [];
         this.scrollTop = 0;
         this.visibleCount = 0;
-
         this.content = document.createElement('div');
         this.content.className = 'virtual-list-content';
         container.appendChild(this.content);
-
         // Store bound handler for cleanup
         this._scrollHandler = () => this.onScroll();
         container.addEventListener('scroll', this._scrollHandler);
     }
-
     /**
      * Cleanup method to remove event listeners and prevent memory leaks
      */
@@ -38,25 +34,28 @@ class VirtualList {
         this.items = [];
         this._scrollHandler = null;
     }
-    
     setItems(items) {
         this.items = items;
-        this.content.style.height = `${items.length * this.itemHeight}px`;
-        this.visibleCount = Math.ceil(this.container.clientHeight / this.itemHeight) + 2;
+        if (this.content) {
+            this.content.style.height = `${items.length * this.itemHeight}px`;
+        }
+        if (this.container) {
+            this.visibleCount = Math.ceil(this.container.clientHeight / this.itemHeight) + 2;
+        }
         this.render();
     }
-    
     onScroll() {
-        this.scrollTop = this.container.scrollTop;
+        if (this.container) {
+            this.scrollTop = this.container.scrollTop;
+        }
         this.render();
     }
-    
     render() {
+        if (!this.content)
+            return;
         const startIndex = Math.max(0, Math.floor(this.scrollTop / this.itemHeight) - 1);
         const endIndex = Math.min(this.items.length, startIndex + this.visibleCount + 2);
-        
         this.content.innerHTML = '';
-        
         for (let i = startIndex; i < endIndex; i++) {
             const item = this.items[i];
             const el = document.createElement('div');
@@ -68,5 +67,5 @@ class VirtualList {
         }
     }
 }
-
 // ============================================================
+//# sourceMappingURL=virtual-list.js.map

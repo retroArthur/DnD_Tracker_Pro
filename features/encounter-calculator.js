@@ -2,7 +2,9 @@
 // ============================================================
 // ENCOUNTER CR CALCULATOR - D&D 5e (2014 Rules)
 // ============================================================
-
+// ============================================================
+// CONSTANTS
+// ============================================================
 // XP Thresholds by Character Level (DMG p.82)
 const XP_THRESHOLDS = {
     1: { easy: 25, medium: 50, hard: 75, deadly: 100 },
@@ -26,7 +28,6 @@ const XP_THRESHOLDS = {
     19: { easy: 2400, medium: 4900, hard: 7300, deadly: 10900 },
     20: { easy: 2800, medium: 5700, hard: 8500, deadly: 12700 }
 };
-
 // CR to XP conversion (DMG p.275)
 const CR_TO_XP = {
     "0": 10,
@@ -64,7 +65,6 @@ const CR_TO_XP = {
     "29": 135000,
     "30": 155000
 };
-
 // Encounter Multipliers (DMG p.82)
 const ENCOUNTER_MULTIPLIERS = [
     { min: 1, max: 1, multiplier: 1.0, label: "1 monster" },
@@ -74,7 +74,6 @@ const ENCOUNTER_MULTIPLIERS = [
     { min: 11, max: 14, multiplier: 3.0, label: "11-14 monsters" },
     { min: 15, max: 999, multiplier: 4.0, label: "15+ monsters" }
 ];
-
 // Terrain Modifiers (homebrew, inspired by community rules)
 const TERRAIN_MODIFIERS = [
     { id: 'normal', label: 'Normal', multiplier: 1.0, icon: '🏠', desc: 'Keine besonderen Bedingungen' },
@@ -82,123 +81,120 @@ const TERRAIN_MODIFIERS = [
     { id: 'hazardous', label: 'Gefährlich', multiplier: 1.5, icon: '⚠️', desc: 'Fallen, Umweltschaden, schlechte Sicht' },
     { id: 'extreme', label: 'Extrem', multiplier: 2.0, icon: '💀', desc: 'Lava, Abgründe, Unterwasser' }
 ];
-
-// Calculator State
+// ============================================================
+// STATE
+// ============================================================
 let calculatorParty = []; // { level: number, count: number }
 let calculatorMonsters = []; // { cr: string, count: number, name?: string }
 let calculatorTerrain = 'normal'; // Terrain modifier ID
 let calculatorLairActions = false; // Has lair actions (+1 effective CR)
 let calculatorTargetDifficulty = 1; // 0=easy, 1=medium, 2=hard, 3=deadly
-
 // XP-Budget-Slider Handling
 const DIFFICULTY_LEVELS = ['easy', 'medium', 'hard', 'deadly'];
 const DIFFICULTY_LABELS = ['Easy', 'Medium', 'Hard', 'Deadly'];
-
+let monsterPreviewTimer = null;
+// ============================================================
+// BUDGET FUNCTIONS
+// ============================================================
 function onBudgetSliderChange(value) {
     calculatorTargetDifficulty = parseInt(value) || 1;
     updateBudgetDisplay();
 }
-
 function updateBudgetDisplay() {
     const thresholds = calculatePartyThresholds();
     const targetLevel = DIFFICULTY_LEVELS[calculatorTargetDifficulty] || 'medium';
     const targetXP = thresholds[targetLevel] || 0;
     const currentXP = calculateMonsterXP().finalXP;
-
     const targetEl = $('calc-budget-target-xp');
     const currentEl = $('calc-budget-current-xp');
     const labelEl = $('calc-budget-label');
-
-    if (targetEl) targetEl.textContent = targetXP.toLocaleString();
-    if (currentEl) currentEl.textContent = currentXP.toLocaleString();
-    if (labelEl) labelEl.textContent = DIFFICULTY_LABELS[calculatorTargetDifficulty];
+    if (targetEl)
+        targetEl.textContent = targetXP.toLocaleString();
+    if (currentEl)
+        currentEl.textContent = currentXP.toLocaleString();
+    if (labelEl)
+        labelEl.textContent = DIFFICULTY_LABELS[calculatorTargetDifficulty];
 }
-
 function applyBudgetTarget() {
     if (calculatorMonsters.length === 0) {
         showToast('Füge zuerst Monster hinzu');
         return;
     }
-
     const targetLevel = DIFFICULTY_LEVELS[calculatorTargetDifficulty] || 'medium';
     calculateOptimalMonsterCount(targetLevel);
     updateBudgetDisplay();
 }
-
 // ============================================================
 // MONSTER FAVORITES (Presets)
 // ============================================================
-
 function saveMonsterFavorite() {
     if (calculatorMonsters.length === 0) {
         showToast('Füge zuerst Monster hinzu');
         return;
     }
-
     const name = prompt('Name für die Vorlage:');
-    if (!name || !name.trim()) return;
-
-    if (!D.monsterFavorites) D.monsterFavorites = [];
-
+    if (!name || !name.trim())
+        return;
+    const D = window.D;
+    if (!D.monsterFavorites)
+        D.monsterFavorites = [];
     D.monsterFavorites.push({
         id: Date.now(),
         name: name.trim(),
         monsters: JSON.parse(JSON.stringify(calculatorMonsters))
     });
-
-    saveImmediate();
+    window.saveImmediate();
     showToast(`Vorlage "${name}" gespeichert`);
     renderCalculator();
 }
-
 function loadMonsterFavorite(id) {
-    const fav = (D.monsterFavorites || []).find(f => f.id === id);
-    if (!fav) return;
-
+    const D = window.D;
+    const fav = (D.monsterFavorites || []).find((f) => f.id === id);
+    if (!fav)
+        return;
     calculatorMonsters = JSON.parse(JSON.stringify(fav.monsters));
     renderCalculator();
     recalculateEncounter();
     showToast(`Vorlage "${fav.name}" geladen`);
     closeFavoritesDropdown();
 }
-
 function deleteMonsterFavorite(id) {
-    if (!D.monsterFavorites) return;
-
-    const idx = D.monsterFavorites.findIndex(f => f.id === id);
-    if (idx === -1) return;
-
+    const D = window.D;
+    if (!D.monsterFavorites)
+        return;
+    const idx = D.monsterFavorites.findIndex((f) => f.id === id);
+    if (idx === -1)
+        return;
     const name = D.monsterFavorites[idx].name;
     D.monsterFavorites.splice(idx, 1);
-    saveImmediate();
+    window.saveImmediate();
     showToast(`Vorlage "${name}" gelöscht`);
     renderCalculator();
 }
-
 function toggleFavoritesDropdown() {
     const dropdown = $('calc-favorites-dropdown');
-    if (!dropdown) return;
-
+    if (!dropdown)
+        return;
     const isVisible = dropdown.classList.contains('show');
     if (isVisible) {
         closeFavoritesDropdown();
-    } else {
+    }
+    else {
         renderFavoritesDropdown();
         dropdown.classList.add('show');
     }
 }
-
 function closeFavoritesDropdown() {
     const dropdown = $('calc-favorites-dropdown');
-    if (dropdown) dropdown.classList.remove('show');
+    if (dropdown)
+        dropdown.classList.remove('show');
 }
-
 function renderFavoritesDropdown() {
     const dropdown = $('calc-favorites-dropdown');
-    if (!dropdown) return;
-
+    if (!dropdown)
+        return;
+    const D = window.D;
     const favs = D.monsterFavorites || [];
-
     if (favs.length === 0) {
         dropdown.innerHTML = `
             <div class="calc-fav-empty">Keine Vorlagen</div>
@@ -207,7 +203,8 @@ function renderFavoritesDropdown() {
                 <span>➕</span><span>Aktuelle speichern...</span>
             </button>
         `;
-    } else {
+    }
+    else {
         dropdown.innerHTML = `
             ${favs.map(f => `
                 <div class="calc-fav-item" data-action="calc-load-favorite" data-value="${f.id}">
@@ -224,169 +221,145 @@ function renderFavoritesDropdown() {
         `;
     }
 }
-
 // ============================================================
 // PARTY MANAGEMENT
 // ============================================================
-
 function addPartyLevel() {
-    const level = parseInt($('calc-party-level').value) || 1;
-    const count = parseInt($('calc-party-count').value) || 1;
-    
+    const levelInput = $('calc-party-level');
+    const countInput = $('calc-party-count');
+    const level = parseInt(levelInput.value) || 1;
+    const count = parseInt(countInput.value) || 1;
     if (level < 1 || level > 20) {
         showToast('Level muss zwischen 1 und 20 sein');
         return;
     }
-    
     if (count < 1) {
         showToast('Anzahl muss mindestens 1 sein');
         return;
     }
-    
     // Check if level already exists
     const existing = calculatorParty.find(p => p.level === level);
     if (existing) {
         existing.count += count;
-    } else {
+    }
+    else {
         calculatorParty.push({ level, count });
     }
-    
     // Sort by level
     calculatorParty.sort((a, b) => a.level - b.level);
-    
     renderCalculator();
     recalculateEncounter();
 }
-
 function removePartyLevel(index) {
     calculatorParty.splice(index, 1);
     renderCalculator();
     recalculateEncounter();
 }
-
 function loadPartyFromCharacters() {
+    const D = window.D;
     if (!D.characters || D.characters.length === 0) {
         showToast('Keine Characters vorhanden');
         return;
     }
-    
     calculatorParty = [];
-    
     // Group characters by level
     const levelCounts = {};
-    D.characters.forEach(char => {
+    D.characters.forEach((char) => {
         const level = char.level || 1;
         levelCounts[level] = (levelCounts[level] || 0) + 1;
     });
-    
     // Convert to array
     Object.keys(levelCounts).forEach(level => {
         calculatorParty.push({
             level: parseInt(level),
-            count: levelCounts[level]
+            count: levelCounts[parseInt(level)]
         });
     });
-    
     calculatorParty.sort((a, b) => a.level - b.level);
-    
     renderCalculator();
     recalculateEncounter();
     showToast(`${D.characters.length} Characters geladen`);
 }
-
 function clearParty() {
     calculatorParty = [];
     renderCalculator();
     recalculateEncounter();
 }
-
 // ============================================================
 // MONSTER MANAGEMENT
 // ============================================================
-
 function addMonster() {
-    const crInput = $('calc-monster-cr').value.trim();
-    const count = parseInt($('calc-monster-count').value) || 1;
-    const name = $('calc-monster-name').value.trim();
-    
-    if (!crInput) {
+    const crInput = $('calc-monster-cr');
+    const countInput = $('calc-monster-count');
+    const nameInput = $('calc-monster-name');
+    const crInputValue = crInput.value.trim();
+    const count = parseInt(countInput.value) || 1;
+    const name = nameInput.value.trim();
+    if (!crInputValue) {
         showToast('Bitte CR eingeben');
         return;
     }
-    
     // Validate CR
-    if (!CR_TO_XP[crInput]) {
+    if (!CR_TO_XP[crInputValue]) {
         showToast('Ungültige CR. Erlaubt: 0, 1/8, 1/4, 1/2, 1-30');
         return;
     }
-    
     if (count < 1) {
         showToast('Anzahl muss mindestens 1 sein');
         return;
     }
-    
     calculatorMonsters.push({
-        cr: crInput,
+        cr: crInputValue,
         count: count,
-        name: name || `CR ${crInput} Monster`
+        name: name || `CR ${crInputValue} Monster`
     });
-    
     // Clear inputs and preview
-    $('calc-monster-cr').value = '';
-    $('calc-monster-count').value = '1';
-    $('calc-monster-name').value = '';
+    crInput.value = '';
+    countInput.value = '1';
+    nameInput.value = '';
     clearMonsterPreview();
-
     renderCalculator();
     recalculateEncounter();
 }
-
 function removeMonster(index) {
     calculatorMonsters.splice(index, 1);
     renderCalculator();
     recalculateEncounter();
 }
-
 function clearMonsters() {
     calculatorMonsters = [];
     renderCalculator();
     recalculateEncounter();
     clearMonsterPreview();
 }
-
 // Live-Vorschau für Monster-Eingabe
-let monsterPreviewTimer = null;
-
 function updateMonsterPreview() {
     const previewDiv = $('calc-monster-preview');
-    if (!previewDiv) return;
-
-    const crInput = $('calc-monster-cr')?.value.trim();
-    const count = parseInt($('calc-monster-count')?.value) || 1;
-
+    if (!previewDiv)
+        return;
+    const crInput = $('calc-monster-cr');
+    const countInput = $('calc-monster-count');
+    const crInputValue = crInput?.value.trim();
+    const count = parseInt(countInput?.value) || 1;
     // Keine Vorschau wenn kein CR oder ungültige CR
-    if (!crInput || !CR_TO_XP[crInput]) {
+    if (!crInputValue || !CR_TO_XP[crInputValue]) {
         previewDiv.innerHTML = '';
         return;
     }
-
     // Keine Vorschau ohne Party
     const thresholds = calculatePartyThresholds();
     if (thresholds.totalPCs === 0) {
         previewDiv.innerHTML = '<span class="calc-preview-icon">📊</span><span class="calc-preview-same">Füge zuerst Party hinzu</span>';
         return;
     }
-
     // Berechne hinzugefügte XP
-    const addedXP = CR_TO_XP[crInput] * count;
+    const addedXP = CR_TO_XP[crInputValue] * count;
     const currentXP = calculateMonsterXP().finalXP;
     const currentDiff = getDifficulty(currentXP, thresholds);
-
     // Simuliere das Hinzufügen
-    const tempMonsters = [...calculatorMonsters, { cr: crInput, count }];
+    const tempMonsters = [...calculatorMonsters, { cr: crInputValue, count, name: '' }];
     const newMonsterCount = tempMonsters.reduce((sum, m) => sum + m.count, 0);
     const newBaseXP = tempMonsters.reduce((sum, m) => sum + CR_TO_XP[m.cr] * m.count, 0);
-
     // Berechne neuen Multiplikator
     let newMult = 1.0;
     for (const mult of ENCOUNTER_MULTIPLIERS) {
@@ -395,62 +368,56 @@ function updateMonsterPreview() {
             break;
         }
     }
-
     // Party-Größen-Anpassung
     if (thresholds.totalPCs < 3 && newMonsterCount > 1) {
         const idx = ENCOUNTER_MULTIPLIERS.findIndex(m => m.multiplier === newMult);
         if (idx < ENCOUNTER_MULTIPLIERS.length - 1) {
             newMult = ENCOUNTER_MULTIPLIERS[idx + 1].multiplier;
         }
-    } else if (thresholds.totalPCs > 5) {
+    }
+    else if (thresholds.totalPCs > 5) {
         if (newMonsterCount === 1) {
             newMult = 0.5;
-        } else {
+        }
+        else {
             const idx = ENCOUNTER_MULTIPLIERS.findIndex(m => m.multiplier === newMult);
             if (idx > 0) {
                 newMult = ENCOUNTER_MULTIPLIERS[idx - 1].multiplier;
             }
         }
     }
-
     const newAdjustedXP = Math.round(newBaseXP * newMult);
     const newDiff = getDifficulty(newAdjustedXP, thresholds);
-
     // Render Vorschau
     const diffChanged = currentDiff.level !== newDiff.level;
     const diffHtml = diffChanged
         ? `<span class="calc-preview-arrow">→</span><span class="calc-preview-change">${currentDiff.label} → ${newDiff.label}</span>`
         : `<span class="calc-preview-same">${newDiff.label}</span>`;
-
     previewDiv.innerHTML = `
         <span class="calc-preview-icon">📊</span>
         <span class="calc-preview-xp">+${addedXP.toLocaleString()} XP</span>
         ${diffHtml}
     `;
 }
-
 function clearMonsterPreview() {
     const previewDiv = $('calc-monster-preview');
-    if (previewDiv) previewDiv.innerHTML = '';
+    if (previewDiv)
+        previewDiv.innerHTML = '';
 }
-
 // Debounced Preview-Update
 function scheduleMonsterPreview() {
-    if (monsterPreviewTimer) clearTimeout(monsterPreviewTimer);
-    monsterPreviewTimer = setTimeout(updateMonsterPreview, 100);
+    if (monsterPreviewTimer)
+        clearTimeout(monsterPreviewTimer);
+    monsterPreviewTimer = window.setTimeout(updateMonsterPreview, 100);
 }
-
 // ============================================================
 // CALCULATION
 // ============================================================
-
 function calculatePartyThresholds() {
     if (calculatorParty.length === 0) {
         return { easy: 0, medium: 0, hard: 0, deadly: 0, totalPCs: 0 };
     }
-    
     let easy = 0, medium = 0, hard = 0, deadly = 0, totalPCs = 0;
-    
     calculatorParty.forEach(({ level, count }) => {
         const thresholds = XP_THRESHOLDS[level];
         easy += thresholds.easy * count;
@@ -459,35 +426,28 @@ function calculatePartyThresholds() {
         deadly += thresholds.deadly * count;
         totalPCs += count;
     });
-    
     return { easy, medium, hard, deadly, totalPCs };
 }
-
 function calculateMonsterXP() {
     if (calculatorMonsters.length === 0) {
         return { baseXP: 0, adjustedXP: 0, finalXP: 0, multiplier: 1.0, totalMonsters: 0, terrainMod: 1.0, hasLair: false };
     }
-
     // Calculate base XP
     let baseXP = 0;
     let totalMonsters = 0;
-
     calculatorMonsters.forEach(({ cr, count }) => {
         baseXP += CR_TO_XP[cr] * count;
         totalMonsters += count;
     });
-
     // Get multiplier based on number of monsters
     const partySize = calculatorParty.reduce((sum, p) => sum + p.count, 0);
     let multiplier = 1.0;
-
     for (const mult of ENCOUNTER_MULTIPLIERS) {
         if (totalMonsters >= mult.min && totalMonsters <= mult.max) {
             multiplier = mult.multiplier;
             break;
         }
     }
-
     // Adjust multiplier for party size
     if (partySize < 3 && totalMonsters > 1) {
         // Small party: use next higher multiplier
@@ -495,39 +455,32 @@ function calculateMonsterXP() {
         if (currentIndex < ENCOUNTER_MULTIPLIERS.length - 1) {
             multiplier = ENCOUNTER_MULTIPLIERS[currentIndex + 1].multiplier;
         }
-    } else if (partySize > 5) {
+    }
+    else if (partySize > 5) {
         // Large party: use next lower multiplier
         const currentIndex = ENCOUNTER_MULTIPLIERS.findIndex(m => m.multiplier === multiplier);
         if (currentIndex > 0) {
             multiplier = ENCOUNTER_MULTIPLIERS[currentIndex - 1].multiplier;
         }
-
         // Special case: single monster against large party
         if (totalMonsters === 1) {
             multiplier = 0.5;
         }
     }
-
     const adjustedXP = Math.round(baseXP * multiplier);
-
     // Apply terrain modifier
     const terrain = TERRAIN_MODIFIERS.find(t => t.id === calculatorTerrain) || TERRAIN_MODIFIERS[0];
     const terrainMod = terrain.multiplier;
-
     // Apply lair actions (+25% XP, equivalent to ~1 CR increase)
     const lairMod = calculatorLairActions ? 1.25 : 1.0;
-
     // Final adjusted XP including all modifiers
     const finalXP = Math.round(adjustedXP * terrainMod * lairMod);
-
     return { baseXP, adjustedXP, finalXP, multiplier, totalMonsters, terrainMod, lairMod, hasLair: calculatorLairActions };
 }
-
 function getDifficulty(adjustedXP, thresholds) {
     if (adjustedXP === 0 || thresholds.medium === 0) {
         return { level: 'none', label: 'N/A', color: '#95a5a6', percentage: 0 };
     }
-    
     if (adjustedXP < thresholds.easy) {
         return { level: 'trivial', label: 'Trivial', color: '#3498db', percentage: (adjustedXP / thresholds.easy) * 100 };
     }
@@ -540,83 +493,71 @@ function getDifficulty(adjustedXP, thresholds) {
     if (adjustedXP < thresholds.deadly) {
         return { level: 'hard', label: 'Hard', color: '#e67e22', percentage: 75 + ((adjustedXP - thresholds.hard) / (thresholds.deadly - thresholds.hard)) * 25 };
     }
-    
     const overDeadly = ((adjustedXP - thresholds.deadly) / thresholds.deadly) * 100;
     return { level: 'deadly', label: 'Deadly', color: '#e74c3c', percentage: 100 + Math.min(overDeadly, 100) };
 }
-
 // Erklärt den Multiplikator basierend auf Monster-Anzahl und Party-Größe
 function getMultiplierExplanation(totalMonsters, partySize, multiplier) {
     // Finde Basis-Bracket
-    const baseBracket = ENCOUNTER_MULTIPLIERS.find(m =>
-        totalMonsters >= m.min && totalMonsters <= m.max
-    );
-
-    let lines = [];
+    const baseBracket = ENCOUNTER_MULTIPLIERS.find(m => totalMonsters >= m.min && totalMonsters <= m.max);
+    const lines = [];
     if (baseBracket) {
         lines.push(`${baseBracket.label} = ×${baseBracket.multiplier}`);
     }
-
     // Party-Größen-Anpassung
     if (partySize < 3 && totalMonsters > 1) {
         lines.push(`Kleine Party (<3): +1 Stufe`);
-    } else if (partySize > 5) {
+    }
+    else if (partySize > 5) {
         if (totalMonsters === 1) {
             lines.push(`Große Party (>5), 1 Monster: ×0.5`);
-        } else {
+        }
+        else {
             lines.push(`Große Party (>5): -1 Stufe`);
         }
     }
-
     if (lines.length > 1) {
         lines.push(`→ Final: ×${multiplier}`);
     }
-
     return lines.join('\n');
 }
-
 function recalculateEncounter() {
     const thresholds = calculatePartyThresholds();
     const monsters = calculateMonsterXP();
     // Use finalXP (includes terrain & lair) for difficulty calculation
     const difficulty = getDifficulty(monsters.finalXP, thresholds);
-
     const resultsDiv = $('calc-results');
-    if (!resultsDiv) return;
-
+    if (!resultsDiv)
+        return;
     // Empty states
     if (calculatorParty.length === 0 && calculatorMonsters.length === 0) {
         resultsDiv.innerHTML = '<div class="calc-results-empty">Füge Party-Mitglieder und Monster hinzu</div>';
         return;
     }
-
     if (calculatorParty.length === 0) {
         resultsDiv.innerHTML = '<div class="calc-results-empty">Füge zuerst Party-Mitglieder hinzu</div>';
         return;
     }
-
     if (calculatorMonsters.length === 0) {
         resultsDiv.innerHTML = '<div class="calc-results-empty">Füge Monster hinzu um die Schwierigkeit zu berechnen</div>';
         return;
     }
-
     // Calculate marker position (0-100%) - use finalXP
     const maxXP = thresholds.deadly * 1.5;
     const markerPos = Math.min((monsters.finalXP / maxXP) * 100, 100);
-
     // XP per player
     const xpPerPlayer = Math.round(monsters.baseXP / thresholds.totalPCs);
-
     // Build modifier info string
     const terrain = TERRAIN_MODIFIERS.find(t => t.id === calculatorTerrain) || TERRAIN_MODIFIERS[0];
     let modifierInfo = '';
     if (monsters.terrainMod !== 1.0 || monsters.hasLair) {
         const parts = [];
-        if (monsters.terrainMod !== 1.0) parts.push(`${terrain.icon} ×${monsters.terrainMod}`);
-        if (monsters.hasLair) parts.push(`🏰 Lair ×${monsters.lairMod}`);
+        if (monsters.terrainMod !== 1.0)
+            parts.push(`${terrain.icon} ×${monsters.terrainMod}`);
+        if (monsters.hasLair)
+            parts.push(`🏰 Lair ×${monsters.lairMod}`);
         modifierInfo = ` • ${parts.join(' ')}`;
     }
-
     resultsDiv.innerHTML = `
         <!-- Main Difficulty Display -->
         <div class="calc-difficulty-main">
@@ -671,19 +612,15 @@ function recalculateEncounter() {
         </div>
     `;
 }
-
 // ============================================================
 // QUICK ACTIONS
 // ============================================================
-
 function quickAdjustDifficulty(direction) {
     if (calculatorMonsters.length === 0) {
         showToast('Keine Monster vorhanden');
         return;
     }
-
     const current = calculateMonsterXP();
-
     if (direction === 'easier') {
         // Inkrementell: -1 Monster vom ersten Typ
         if (calculatorMonsters[0].count <= 1) {
@@ -693,43 +630,48 @@ function quickAdjustDifficulty(direction) {
             }
             // Entferne den ersten Monster-Typ komplett
             calculatorMonsters.shift();
-        } else {
+        }
+        else {
             calculatorMonsters[0].count--;
         }
-    } else {
+    }
+    else {
         // Inkrementell: +1 Monster vom ersten Typ
         calculatorMonsters[0].count++;
     }
-
     renderCalculator();
     recalculateEncounter();
 }
-
 // Berechnet die optimale Monster-Anzahl für ein Ziel-Schwierigkeitslevel
 function calculateOptimalMonsterCount(targetDifficultyLevel) {
     if (calculatorMonsters.length === 0) {
         showToast('Keine Monster vorhanden');
         return;
     }
-
     const thresholds = calculatePartyThresholds();
     if (thresholds.medium === 0) {
         showToast('Keine Party vorhanden');
         return;
     }
-
     // Ziel-XP basierend auf Schwierigkeitslevel
     let targetXP;
     switch (targetDifficultyLevel) {
-        case 'easy': targetXP = thresholds.easy; break;
-        case 'medium': targetXP = thresholds.medium; break;
-        case 'hard': targetXP = thresholds.hard; break;
-        case 'deadly': targetXP = thresholds.deadly; break;
+        case 'easy':
+            targetXP = thresholds.easy;
+            break;
+        case 'medium':
+            targetXP = thresholds.medium;
+            break;
+        case 'hard':
+            targetXP = thresholds.hard;
+            break;
+        case 'deadly':
+            targetXP = thresholds.deadly;
+            break;
         default:
             showToast('Ungültiger Schwierigkeitsgrad: ' + targetDifficultyLevel);
             return;
     }
-
     // XP pro einzelnes Monster (vom ersten Typ)
     const cr = calculatorMonsters[0].cr;
     const monsterXP = CR_TO_XP[cr];
@@ -737,92 +679,75 @@ function calculateOptimalMonsterCount(targetDifficultyLevel) {
         showToast('Ungültige CR: ' + cr);
         return;
     }
-
     // Iterativ die beste Anzahl finden (berücksichtigt Multiplier-Sprünge)
     let bestCount = 1;
     let bestDiff = Infinity;
-
     for (let count = 1; count <= 50; count++) {
         // Berechne angepasste XP für diese Anzahl
         const baseXP = monsterXP * count;
         let multiplier = 1.0;
-
         for (const mult of ENCOUNTER_MULTIPLIERS) {
             if (count >= mult.min && count <= mult.max) {
                 multiplier = mult.multiplier;
                 break;
             }
         }
-
         const adjustedXP = baseXP * multiplier;
         const diff = Math.abs(adjustedXP - targetXP);
-
         if (diff < bestDiff) {
             bestDiff = diff;
             bestCount = count;
         }
-
         // Stoppe wenn wir deutlich über dem Ziel sind
-        if (adjustedXP > targetXP * 1.5) break;
+        if (adjustedXP > targetXP * 1.5)
+            break;
     }
-
     calculatorMonsters[0].count = bestCount;
     renderCalculator();
     recalculateEncounter();
     showToast(`Angepasst für ${targetDifficultyLevel.charAt(0).toUpperCase() + targetDifficultyLevel.slice(1)}`);
 }
-
 // Zeigt ein Dropdown zur präzisen Schwierigkeitswahl
 function showDifficultySelector() {
     if (calculatorMonsters.length === 0) {
         showToast('Füge zuerst Monster hinzu');
         return;
     }
-
     const thresholds = calculatePartyThresholds();
     if (thresholds.medium === 0) {
         showToast('Füge zuerst Party-Mitglieder hinzu');
         return;
     }
-
     // Zeige Auswahl-Modal
     const levels = ['easy', 'medium', 'hard', 'deadly'];
     const labels = ['Easy', 'Medium', 'Hard', 'Deadly'];
-
-    const choice = prompt(
-        'Wähle Schwierigkeitsgrad:\n' +
+    const choice = prompt('Wähle Schwierigkeitsgrad:\n' +
         `1 = Easy (${thresholds.easy} XP)\n` +
         `2 = Medium (${thresholds.medium} XP)\n` +
         `3 = Hard (${thresholds.hard} XP)\n` +
-        `4 = Deadly (${thresholds.deadly} XP)`,
-        '2'
-    );
-
+        `4 = Deadly (${thresholds.deadly} XP)`, '2');
     // User clicked Cancel
-    if (choice === null) return;
-
+    if (choice === null)
+        return;
     const idx = parseInt(choice) - 1;
     if (idx >= 0 && idx < levels.length) {
         calculateOptimalMonsterCount(levels[idx]);
-    } else {
+    }
+    else {
         showToast('Bitte 1-4 eingeben');
     }
 }
-
 function saveAsEncounter() {
     if (calculatorMonsters.length === 0) {
         showToast('Keine Monster zum Speichern');
         return;
     }
-
     const monsters = calculateMonsterXP();
     const thresholds = calculatePartyThresholds();
     // Use finalXP which includes terrain and lair modifiers
     const difficulty = getDifficulty(monsters.finalXP, thresholds);
-
     // Create encounter name with final XP
     const name = `Encounter (${difficulty.label}) - ${monsters.finalXP} XP`;
-    
     // Create monsters array for encounter
     const encounterMonsters = calculatorMonsters.map(m => ({
         name: m.name,
@@ -831,13 +756,13 @@ function saveAsEncounter() {
         initiative: 0,
         count: m.count
     }));
-    
     // Build terrain/lair info for description
     const terrain = TERRAIN_MODIFIERS.find(t => t.id === calculatorTerrain) || TERRAIN_MODIFIERS[0];
     const envInfo = [];
-    if (monsters.terrainMod !== 1.0) envInfo.push(`Terrain: ${terrain.label} (×${monsters.terrainMod})`);
-    if (monsters.hasLair) envInfo.push(`Lair Actions (×${monsters.lairMod})`);
-
+    if (monsters.terrainMod !== 1.0)
+        envInfo.push(`Terrain: ${terrain.label} (×${monsters.terrainMod})`);
+    if (monsters.hasLair)
+        envInfo.push(`Lair Actions (×${monsters.lairMod})`);
     // Add to encounters
     const newEnc = {
         id: Date.now(),
@@ -851,42 +776,37 @@ Adjusted XP: ${monsters.adjustedXP}${envInfo.length ? '\n' + envInfo.join(', ') 
 Final XP: ${monsters.finalXP}
 Difficulty: ${difficulty.label}`
     };
-    
+    const D = window.D;
     D.encounters = D.encounters || [];
     D.encounters.push(newEnc);
-
-    save();
+    window.save();
     showToast('Als Encounter gespeichert');
-
     // Ask if user wants to switch to encounters view
     if (confirm('Zu Encounters wechseln?')) {
         hideCalculatorModal();
-        switchView('encounter');
-        if (typeof renderEncounters === 'function') renderEncounters();
+        window.switchView('encounter');
+        if (typeof window.renderEncounters === 'function')
+            window.renderEncounters();
     }
 }
-
 // ============================================================
 // ADD TO INITIATIVE
 // ============================================================
-
 function addCalculatorToInitiative() {
     if (calculatorMonsters.length === 0) {
         showToast('Keine Monster vorhanden');
         return;
     }
-
+    const D = window.D;
     // Initialize initiative if not exists
     if (!D.initiative) {
         D.initiative = { combatants: [], currentTurn: 0, round: 1 };
     }
-
     // Get terrain and lair info
     const terrain = TERRAIN_MODIFIERS.find(t => t.id === calculatorTerrain) || TERRAIN_MODIFIERS[0];
     const monsters = calculateMonsterXP();
     const thresholds = calculatePartyThresholds();
     const difficulty = getDifficulty(monsters.finalXP, thresholds);
-
     // Store battlefield conditions
     D.initiative.battlefield = {
         terrain: calculatorTerrain,
@@ -897,26 +817,21 @@ function addCalculatorToInitiative() {
         finalXP: monsters.finalXP,
         difficulty: difficulty.label
     };
-
     // Add each monster to initiative
     let addedCount = 0;
     calculatorMonsters.forEach(monster => {
         // Get monster template for HP if available
         const template = (typeof D !== 'undefined' && D.encounters)
-            ? D.encounters.find(e => e.cr === monster.cr || e.CR === monster.cr)
+            ? D.encounters.find((e) => e.cr === monster.cr || e.CR === monster.cr)
             : null;
-
         const baseHP = template?.hp || template?.HP || getDefaultHPForCR(monster.cr);
         const initBonus = template?.initBonus || template?.dex || 0;
-
         for (let i = 0; i < monster.count; i++) {
             // Roll initiative (1d20 + bonus)
             const initRoll = Math.floor(Math.random() * 20) + 1 + initBonus;
-
             // Slight HP variation (+/- 10%)
             const hpVariation = Math.round(baseHP * (0.9 + Math.random() * 0.2));
             const hp = Math.max(1, hpVariation);
-
             D.initiative.combatants.push({
                 id: nextId('combatants'),
                 name: monster.count > 1 ? `${monster.name} #${i + 1}` : monster.name,
@@ -933,11 +848,10 @@ function addCalculatorToInitiative() {
             addedCount++;
         }
     });
-
     // Add lair action entry if enabled
     if (calculatorLairActions) {
         // Check if lair action entry already exists
-        const existingLair = D.initiative.combatants.find(c => c.type === 'lair');
+        const existingLair = D.initiative.combatants.find((c) => c.type === 'lair');
         if (!existingLair) {
             D.initiative.combatants.push({
                 id: nextId('combatants'),
@@ -952,17 +866,15 @@ function addCalculatorToInitiative() {
             });
         }
     }
-
     // Sort by initiative
     D.initiative.combatants.sort((a, b) => b.initiative - a.initiative);
-
-    save();
+    window.save();
     hideCalculatorModal();
-    switchView('initiative');
-    if (typeof renderInit === 'function') renderInit();
+    window.switchView('initiative');
+    if (typeof window.renderInit === 'function')
+        window.renderInit();
     showToast(`${addedCount} Monster zur Initiative hinzugefügt`);
 }
-
 // Default HP by CR (rough estimates)
 function getDefaultHPForCR(cr) {
     const hpByCR = {
@@ -974,21 +886,19 @@ function getDefaultHPForCR(cr) {
     };
     return hpByCR[cr] || 10;
 }
-
 // ============================================================
 // RENDERING
 // ============================================================
-
 function renderCalculator() {
     const partyList = $('calc-party-list');
     const monsterList = $('calc-monster-list');
-
-    if (!partyList || !monsterList) return;
-
+    if (!partyList || !monsterList)
+        return;
     // Render Party
     if (calculatorParty.length === 0) {
         partyList.innerHTML = '<div class="calc-list-empty">Keine Charaktere</div>';
-    } else {
+    }
+    else {
         partyList.innerHTML = calculatorParty.map((p, i) => `
             <div class="calc-list-item">
                 <span class="calc-list-text">${p.count}× Level ${p.level}</span>
@@ -997,11 +907,11 @@ function renderCalculator() {
             </div>
         `).join('');
     }
-
     // Render Monsters
     if (calculatorMonsters.length === 0) {
         monsterList.innerHTML = '<div class="calc-list-empty">Keine Monster</div>';
-    } else {
+    }
+    else {
         monsterList.innerHTML = calculatorMonsters.map((m, i) => `
             <div class="calc-list-item">
                 <span class="calc-list-text">${m.count}× ${esc(m.name)}</span>
@@ -1011,11 +921,9 @@ function renderCalculator() {
         `).join('');
     }
 }
-
 // ============================================================
 // MODAL VERSION
 // ============================================================
-
 function showCalculatorModal() {
     const modal = $('calculator-modal');
     if (!modal) {
@@ -1024,21 +932,18 @@ function showCalculatorModal() {
         }
         return;
     }
-    
     modal.classList.add('show');
     renderCalculatorModal();
     recalculateEncounter();
 }
-
 function hideCalculatorModal() {
     const modal = $('calculator-modal');
     if (modal) {
         modal.classList.remove('show');
     }
 }
-
 // ESC-Taste schließt Modal
-document.addEventListener('keydown', function(e) {
+document.addEventListener('keydown', function (e) {
     if (e.key === 'Escape') {
         const modal = $('calculator-modal');
         if (modal && modal.classList.contains('show')) {
@@ -1046,9 +951,8 @@ document.addEventListener('keydown', function(e) {
         }
     }
 });
-
 // Klick außerhalb schließt Modal
-document.addEventListener('click', function(e) {
+document.addEventListener('click', function (e) {
     const modal = $('calculator-modal');
     if (modal && modal.classList.contains('show')) {
         if (e.target === modal) {
@@ -1056,11 +960,10 @@ document.addEventListener('click', function(e) {
         }
     }
 });
-
 function renderCalculatorModal() {
     const modalContent = $('calculator-modal-content');
-    if (!modalContent) return;
-
+    if (!modalContent)
+        return;
     modalContent.innerHTML = `
         <div class="calc-header">
             <h3>⚔️ Encounter Balance Calculator</h3>
@@ -1177,33 +1080,30 @@ function renderCalculatorModal() {
             </div>
         </div>
     `;
-
     renderCalculator();
     updateBudgetDisplay();
 }
-
 // Terrain and Lair action handlers
 function setCalculatorTerrain(terrainId) {
     calculatorTerrain = terrainId;
     renderCalculatorModal();
     recalculateEncounter();
 }
-
 function toggleCalculatorLair() {
     calculatorLairActions = !calculatorLairActions;
     renderCalculatorModal();
     recalculateEncounter();
 }
-
 // Encounter Import Dialog
 function showEncounterImport() {
+    const D = window.D;
     if (!D.encounters || D.encounters.length === 0) {
         showToast('Keine Encounters vorhanden');
         return;
     }
-
     const modalContent = $('calculator-modal-content');
-
+    if (!modalContent)
+        return;
     modalContent.innerHTML = `
         <div class="calc-header">
             <h3>Kreatur auswaehlen</h3>
@@ -1211,12 +1111,11 @@ function showEncounterImport() {
         </div>
         <div class="calc-body">
             <div class="calc-import-grid">
-                ${D.encounters.map(enc => {
-                    const cr = enc.cr || enc.CR || '0';
-                    const xp = CR_TO_XP[cr] || 0;
-                    const type = enc.creatureType || enc.type || '';
-
-                    return `
+                ${D.encounters.map((enc) => {
+        const cr = enc.cr || enc.CR || '0';
+        const xp = CR_TO_XP[cr] || 0;
+        const type = enc.creatureType || enc.type || '';
+        return `
                         <div class="calc-import-card">
                             <div class="calc-import-info">
                                 <div class="calc-import-name">${esc(enc.name)}</div>
@@ -1228,7 +1127,7 @@ function showEncounterImport() {
                             </div>
                         </div>
                     `;
-                }).join('')}
+    }).join('')}
             </div>
             <div class="calc-import-footer">
                 <button class="calc-action-btn secondary" data-action="calc-back-to-calculator">Zurueck</button>
@@ -1236,19 +1135,16 @@ function showEncounterImport() {
         </div>
     `;
 }
-
 function importEncounterMonsters(encId) {
-    const encounter = D.encounters.find(e => e.id === encId || e.id === parseInt(encId));
-    
+    const D = window.D;
+    const encounter = D.encounters.find((e) => e.id === encId || e.id === parseInt(String(encId)));
     if (!encounter) {
         showToast('Kreatur nicht gefunden (ID: ' + encId + ')');
         ErrorHandler.log('importEncounterMonsters', new Error('Encounter not found'), `ID: ${encId}`);
         return;
     }
-
     // Encounter IST die Kreatur selbst
     const cr = encounter.cr || encounter.CR || null;
-
     if (!cr) {
         showToast('Kreatur hat kein CR');
         if (APP_CONFIG.DEBUG_MODE) {
@@ -1256,23 +1152,50 @@ function importEncounterMonsters(encId) {
         }
         return;
     }
-    
     // Füge Kreatur zur Monster-Liste hinzu (nicht ersetzen!)
+    const countInput = $('import-count-' + encId);
+    const count = countInput ? parseInt(countInput.value) || 1 : 1;
     calculatorMonsters.push({
         cr: cr,
-        count: (() => {
-        const countInput = $('import-count-' + encId);
-        return countInput ? parseInt(countInput.value) || 1 : 1;
-    })(),
+        count: count,
         name: encounter.name || `CR ${cr} Kreatur`
     });
-    
     renderCalculatorModal();
     recalculateEncounter();
     showToast(`"${encounter.name}" (CR ${cr}) hinzugefügt`);
 }
-
 function renderEncounterCalculator() {
     // Legacy function - now just shows modal
     showCalculatorModal();
 }
+// ============================================================
+// GLOBAL EXPORTS (for backward compatibility)
+// ============================================================
+// Export functions to window for onclick handlers
+window.onBudgetSliderChange = onBudgetSliderChange;
+window.applyBudgetTarget = applyBudgetTarget;
+window.saveMonsterFavorite = saveMonsterFavorite;
+window.loadMonsterFavorite = loadMonsterFavorite;
+window.deleteMonsterFavorite = deleteMonsterFavorite;
+window.toggleFavoritesDropdown = toggleFavoritesDropdown;
+window.addPartyLevel = addPartyLevel;
+window.removePartyLevel = removePartyLevel;
+window.loadPartyFromCharacters = loadPartyFromCharacters;
+window.clearParty = clearParty;
+window.addMonster = addMonster;
+window.removeMonster = removeMonster;
+window.clearMonsters = clearMonsters;
+window.updateMonsterPreview = updateMonsterPreview;
+window.scheduleMonsterPreview = scheduleMonsterPreview;
+window.quickAdjustDifficulty = quickAdjustDifficulty;
+window.showDifficultySelector = showDifficultySelector;
+window.saveAsEncounter = saveAsEncounter;
+window.addCalculatorToInitiative = addCalculatorToInitiative;
+window.showCalculatorModal = showCalculatorModal;
+window.hideCalculatorModal = hideCalculatorModal;
+window.setCalculatorTerrain = setCalculatorTerrain;
+window.toggleCalculatorLair = toggleCalculatorLair;
+window.showEncounterImport = showEncounterImport;
+window.importEncounterMonsters = importEncounterMonsters;
+window.renderEncounterCalculator = renderEncounterCalculator;
+//# sourceMappingURL=encounter-calculator.js.map

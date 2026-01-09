@@ -2,10 +2,8 @@
 // ============================================================
 // LOCATIONS RENDER - @master-detail @filter @orte
 // ============================================================
-
 // State
 let selectedLocationId = null;
-
 // Location type icons
 const LOC_ICONS = {
     'stadt': '🏰',
@@ -22,38 +20,50 @@ const LOC_ICONS = {
     'schloss': '🏯',
     'default': '📍'
 };
-
 function getLocationIcon(loc) {
     // Try to detect type from name or description
     const text = ((loc.name || '') + ' ' + (loc.description || '')).toLowerCase();
-    if (text.includes('tavern') || text.includes('gasth') || text.includes('schenke')) return LOC_ICONS.taverne;
-    if (text.includes('wald') || text.includes('forest')) return LOC_ICONS.wald;
-    if (text.includes('dungeon') || text.includes('verlies')) return LOC_ICONS.dungeon;
-    if (text.includes('tempel') || text.includes('kirche') || text.includes('schrein')) return LOC_ICONS.tempel;
-    if (text.includes('turm') || text.includes('tower')) return LOC_ICONS.turm;
-    if (text.includes('höhle') || text.includes('hoehle') || text.includes('cave')) return LOC_ICONS.hoehle;
-    if (text.includes('ruine') || text.includes('ruin')) return LOC_ICONS.ruine;
-    if (text.includes('hafen') || text.includes('dock') || text.includes('port')) return LOC_ICONS.hafen;
-    if (text.includes('markt') || text.includes('market') || text.includes('basar')) return LOC_ICONS.markt;
-    if (text.includes('schloss') || text.includes('burg') || text.includes('castle')) return LOC_ICONS.schloss;
-    if (text.includes('dorf') || text.includes('village')) return LOC_ICONS.dorf;
-    if (text.includes('stadt') || text.includes('city')) return LOC_ICONS.stadt;
+    if (text.includes('tavern') || text.includes('gasth') || text.includes('schenke'))
+        return LOC_ICONS.taverne;
+    if (text.includes('wald') || text.includes('forest'))
+        return LOC_ICONS.wald;
+    if (text.includes('dungeon') || text.includes('verlies'))
+        return LOC_ICONS.dungeon;
+    if (text.includes('tempel') || text.includes('kirche') || text.includes('schrein'))
+        return LOC_ICONS.tempel;
+    if (text.includes('turm') || text.includes('tower'))
+        return LOC_ICONS.turm;
+    if (text.includes('höhle') || text.includes('hoehle') || text.includes('cave'))
+        return LOC_ICONS.hoehle;
+    if (text.includes('ruine') || text.includes('ruin'))
+        return LOC_ICONS.ruine;
+    if (text.includes('hafen') || text.includes('dock') || text.includes('port'))
+        return LOC_ICONS.hafen;
+    if (text.includes('markt') || text.includes('market') || text.includes('basar'))
+        return LOC_ICONS.markt;
+    if (text.includes('schloss') || text.includes('burg') || text.includes('castle'))
+        return LOC_ICONS.schloss;
+    if (text.includes('dorf') || text.includes('village'))
+        return LOC_ICONS.dorf;
+    if (text.includes('stadt') || text.includes('city'))
+        return LOC_ICONS.stadt;
     return LOC_ICONS.default;
 }
-
 function renderLocations() {
+    const D = window.D;
+    const currentLocFilter = window.currentLocFilter || 'all';
+    const stripHtml = window.stripHtml;
     const listContainer = $('locations-list');
     const filterContainer = $('location-filters');
-    if (!listContainer) return;
-
+    if (!listContainer)
+        return;
     // Update counter
     updateCounters({ 'locations-io-count': D.locations?.length || 0 });
-
     // Render filter chips
     if (filterContainer) {
         filterContainer.innerHTML = `
             <div class="loc-filter-chip ${currentLocFilter === 'all' ? 'active' : ''}" data-action="set-loc-filter" data-value="all">Alle</div>
-            ${D.filters.map(f => `
+            ${D.filters.map((f) => `
                 <div class="loc-filter-chip ${currentLocFilter === f.id ? 'active' : ''}"
                      data-action="set-loc-filter" data-id="${f.id}"
                      style="${currentLocFilter === f.id ? '' : `border-color: var(--${f.color}); color: var(--${f.color})`}">
@@ -62,26 +72,21 @@ function renderLocations() {
             `).join('')}
         `;
     }
-
     // Get search and filter
-    const search = ($('loc-search')?.value || '').toLowerCase();
+    const searchEl = $('loc-search');
+    const search = (searchEl?.value || '').toLowerCase();
     let locs = D.locations || [];
-
     // Apply filter
     if (currentLocFilter !== 'all') {
-        locs = locs.filter(l => l.filterId === currentLocFilter);
+        locs = locs.filter((l) => l.filterId === currentLocFilter);
     }
-
     // Apply search
     if (search) {
-        const npcLocs = new Set(D.npcs.filter(n => n.name.toLowerCase().includes(search)).map(n => n.locationId));
-        locs = locs.filter(l =>
-            l.name.toLowerCase().includes(search) ||
+        const npcLocs = new Set(D.npcs.filter((n) => n.name.toLowerCase().includes(search)).map((n) => n.locationId));
+        locs = locs.filter((l) => l.name.toLowerCase().includes(search) ||
             (l.description || '').toLowerCase().includes(search) ||
-            npcLocs.has(l.id)
-        );
+            npcLocs.has(l.id));
     }
-
     // Empty state
     if (!locs.length) {
         listContainer.innerHTML = `
@@ -99,35 +104,31 @@ function renderLocations() {
         clearLocationDetail();
         return;
     }
-
     // Render list items
-    listContainer.innerHTML = locs.map(loc => renderLocationItem(loc)).join('');
-
+    listContainer.innerHTML = locs.map((loc) => renderLocationItem(loc, stripHtml)).join('');
     // Auto-select first if none selected
-    if (!selectedLocationId || !locs.find(l => l.id === selectedLocationId)) {
+    if (!selectedLocationId || !locs.find((l) => l.id === selectedLocationId)) {
         selectLocation(locs[0].id, false);
-    } else {
+    }
+    else {
         // Re-render detail for current selection
         showLocationDetail(selectedLocationId);
     }
 }
-
-function renderLocationItem(loc) {
-    const npcs = D.npcs.filter(n => n.locationId === loc.id);
+function renderLocationItem(loc, stripHtml) {
+    const D = window.D;
+    const npcs = D.npcs.filter((n) => n.locationId === loc.id);
     const filter = EntityLookup.filter(loc.filterId);
     const icon = getLocationIcon(loc);
     const isSelected = loc.id === selectedLocationId;
     const descPreview = loc.description ? stripHtml(loc.description).substring(0, 60) : '';
-
     // NPC avatars (max 4)
-    const npcAvatars = npcs.slice(0, 4).map(n => `
+    const npcAvatars = npcs.slice(0, 4).map((n) => `
         <div class="loc-mini-avatar" title="${esc(n.name)}">
             ${n.avatar ? `<img src="${esc(n.avatar)}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">` : '👤'}
         </div>
     `).join('');
-
     const moreNpcs = npcs.length > 4 ? `<div class="loc-mini-avatar more">+${npcs.length - 4}</div>` : '';
-
     return `
         <div class="loc-item ${isSelected ? 'selected' : ''}" data-action="select-location" data-id="${loc.id}">
             <div class="loc-item-icon">${icon}</div>
@@ -144,45 +145,41 @@ function renderLocationItem(loc) {
         </div>
     `;
 }
-
 function selectLocation(id, scroll = true) {
-    selectedLocationId = id;
-
+    selectedLocationId = typeof id === 'string' ? parseInt(id) : id;
     // Update selection in list
     document.querySelectorAll('.loc-item').forEach(el => {
-        el.classList.toggle('selected', el.dataset.id === String(id));
+        const element = el;
+        element.classList.toggle('selected', element.dataset.id === String(selectedLocationId));
     });
-
     // Show detail
-    showLocationDetail(id);
-
+    showLocationDetail(selectedLocationId);
     // Scroll into view if needed
     if (scroll) {
-        const item = document.querySelector(`.loc-item[data-id="${id}"]`);
+        const item = document.querySelector(`.loc-item[data-id="${selectedLocationId}"]`);
         if (item) {
             item.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         }
     }
 }
-
 function showLocationDetail(id) {
+    const D = window.D;
+    const LINK_ICONS = window.LINK_ICONS;
     const panel = $('loc-detail-panel');
-    if (!panel) return;
-
+    if (!panel)
+        return;
     const loc = EntityLookup.location(id);
     if (!loc) {
         clearLocationDetail();
         return;
     }
-
-    const npcs = D.npcs.filter(n => n.locationId === loc.id);
+    const npcs = D.npcs.filter((n) => n.locationId === loc.id);
     const filter = EntityLookup.filter(loc.filterId);
     const icon = getLocationIcon(loc);
     const tags = loc.tags || [];
     const links = loc.links || [];
-
     // Build NPC list
-    const npcListHtml = npcs.length ? npcs.map(n => `
+    const npcListHtml = npcs.length ? npcs.map((n) => `
         <div class="loc-npc-item" data-action="show-npc-popup" data-id="${n.id}">
             <div class="loc-npc-avatar">
                 ${n.avatar ? `<img src="${esc(n.avatar)}">` : '👤'}
@@ -191,25 +188,31 @@ function showLocationDetail(id) {
             <div class="loc-npc-role">${esc(n.role || n.race || '—')}</div>
         </div>
     `).join('') : '<div style="color: var(--text-dim); font-size: 0.85em;">Keine NPCs an diesem Ort</div>';
-
     // Build links - EntityLookup methods are singular (location, npc, etc.)
-    const lookupMap = { locations: 'location', npcs: 'npc', characters: 'character', quests: 'quest', encounters: 'encounter', spells: 'spell', loot: 'lootItem', wiki: 'wiki' };
-    const linksHtml = links.length ? links.map(link => {
+    const lookupMap = {
+        locations: 'location',
+        npcs: 'npc',
+        characters: 'character',
+        quests: 'quest',
+        encounters: 'encounter',
+        spells: 'spell',
+        loot: 'lootItem',
+        wiki: 'wiki'
+    };
+    const linksHtml = links.length ? links.map((link) => {
         const lookupFn = lookupMap[link.type];
         const target = lookupFn && EntityLookup[lookupFn] ? EntityLookup[lookupFn](link.id) : null;
-        if (!target) return '';
+        if (!target)
+            return '';
         // NPC-Links als Chips mit show-npc-popup für Konsistenz
         if (link.type === 'npcs') {
             return `<span class="loc-npc-chip" data-action="show-npc-popup" data-id="${link.id}">${target.avatar ? `<img src="${esc(target.avatar)}" class="loc-npc-chip-avatar">` : ''}${esc(target.name)}</span>`;
         }
-
         // Alle anderen Links normal (LINK_ICONS aus core/constants.js)
         return `<span class="loc-link" data-action="navigate-entity" data-type="${link.type}" data-id="${link.id}">${LINK_ICONS[link.type] || '🔗'} ${esc(target.name || target.title)}</span>`;
     }).filter(Boolean).join('') : '';
-
     // Build tags - Tags sind Objekte mit {name, color}
-    const tagsHtml = tags.length ? tags.map(t => `<span class="loc-tag tag-${t.color || 'blue'}">${esc(t.name || t)}</span>`).join('') : '';
-
+    const tagsHtml = tags.length ? tags.map((t) => `<span class="loc-tag tag-${t.color || 'blue'}">${esc(t.name || t)}</span>`).join('') : '';
     panel.innerHTML = `
         <div class="loc-detail-content">
             <div class="loc-detail-header">
@@ -234,7 +237,7 @@ function showLocationDetail(id) {
                     ${linksHtml ? `<div class="loc-links">${linksHtml}</div>` : ''}
                     ${npcs.length ? `<div class="loc-npcs-inline">
                         <span style="color: var(--text-dim); font-size: 0.85em;">👥 NPCs:</span>
-                        ${npcs.slice(0, 5).map(n => `<span class="loc-npc-chip" data-action="show-npc-popup" data-id="${n.id}">${n.avatar ? `<img src="${esc(n.avatar)}" class="loc-npc-chip-avatar">` : ''}${esc(n.name)}</span>`).join('')}
+                        ${npcs.slice(0, 5).map((n) => `<span class="loc-npc-chip" data-action="show-npc-popup" data-id="${n.id}">${n.avatar ? `<img src="${esc(n.avatar)}" class="loc-npc-chip-avatar">` : ''}${esc(n.name)}</span>`).join('')}
                         ${npcs.length > 5 ? `<span class="loc-npc-chip more">+${npcs.length - 5}</span>` : ''}
                     </div>` : ''}
                 </div>
@@ -249,7 +252,6 @@ function showLocationDetail(id) {
         </div>
     `;
 }
-
 function clearLocationDetail() {
     const panel = $('loc-detail-panel');
     if (panel) {
@@ -261,26 +263,23 @@ function clearLocationDetail() {
         `;
     }
 }
-
 function setLocFilter(f) {
-    currentLocFilter = f;
+    window.currentLocFilter = f;
     selectedLocationId = null; // Reset selection on filter change
     renderLocations();
 }
-
 function toggleLocation(id) {
     // For search navigation: select and show the location
     const loc = EntityLookup.location(id);
-    if (!loc) return;
-
+    if (!loc)
+        return;
     // Reset filter to show all
-    currentLocFilter = 'all';
-    selectedLocationId = id;
+    window.currentLocFilter = 'all';
+    selectedLocationId = typeof id === 'string' ? parseInt(id) : id;
     renderLocations();
-
     // Highlight briefly
     setTimeout(() => {
-        const item = document.querySelector(`.loc-item[data-id="${id}"]`);
+        const item = document.querySelector(`.loc-item[data-id="${selectedLocationId}"]`);
         if (item) {
             item.scrollIntoView({ behavior: 'smooth', block: 'center' });
             item.style.transition = 'box-shadow 0.3s ease';
@@ -291,12 +290,25 @@ function toggleLocation(id) {
         }
     }, 100);
 }
-
 // ============================================================
 // LEGACY FUNCTIONS - Kept for backwards compatibility
 // ============================================================
-
 function renderFilterList() {
-    const c = $('filter-list'); if (!c) return;
-    c.innerHTML = D.filters.map(f => `<div class="chip color-${f.color}" style="margin:3px;">${esc(f.name)} <button data-action="delete-filter" data-id="${f.id}" style="background:none;border:none;color:inherit;cursor:pointer;">✕</button></div>`).join('');
+    const D = window.D;
+    const c = $('filter-list');
+    if (!c)
+        return;
+    c.innerHTML = D.filters.map((f) => `<div class="chip color-${f.color}" style="margin:3px;">${esc(f.name)} <button data-action="delete-filter" data-id="${f.id}" style="background:none;border:none;color:inherit;cursor:pointer;">✕</button></div>`).join('');
 }
+// ============================================================
+// EXPORTS FOR GLOBAL ACCESS
+// ============================================================
+window.selectedLocationId = selectedLocationId;
+window.renderLocations = renderLocations;
+window.selectLocation = selectLocation;
+window.showLocationDetail = showLocationDetail;
+window.clearLocationDetail = clearLocationDetail;
+window.setLocFilter = setLocFilter;
+window.toggleLocation = toggleLocation;
+window.renderFilterList = renderFilterList;
+//# sourceMappingURL=locations-render.js.map

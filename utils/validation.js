@@ -1,46 +1,42 @@
 // [SECTION:VALIDATION]
 // Input validation utilities for entity data integrity
 // Prevents invalid foreign key references and ensures required fields
-
 /**
  * Validate entity references are valid before persisting
- * @param {Object} entity - Entity to validate
- * @param {Object} schema - Validation schema with field definitions
- * @returns {Object} { valid: boolean, errors: string[] }
+ * @param entity - Entity to validate
+ * @param schema - Validation schema with field definitions
+ * @returns Validation result with errors
  */
 function validateEntityReferences(entity, schema) {
     const errors = [];
-
     Object.entries(schema).forEach(([field, config]) => {
         const value = entity[field];
-
         // Validate entity references (foreign keys)
         if (config.type === 'entityRef' && value !== null && value !== undefined && value !== 0) {
-            const numId = parseInt(value);
+            const numId = parseInt(String(value));
             if (isNaN(numId)) {
                 errors.push(`${field}: Ungültige ID-Format`);
-            } else {
-                const refEntity = EntityLookup.get(config.entityType, numId);
+            }
+            else {
+                const EntityLookup = window.EntityLookup;
+                const refEntity = EntityLookup?.get(config.entityType, numId);
                 if (!refEntity) {
                     errors.push(`${field}: Referenzierter ${config.entityType} mit ID ${numId} nicht gefunden`);
                 }
             }
         }
-
         // Validate required fields
         if (config.required) {
             if (value === null || value === undefined || value === '') {
                 errors.push(`${field}: Pflichtfeld fehlt`);
             }
         }
-
         // Validate string length if specified
         if (config.type === 'string' && config.maxLength && typeof value === 'string') {
             if (value.length > config.maxLength) {
                 errors.push(`${field}: Maximal ${config.maxLength} Zeichen erlaubt`);
             }
         }
-
         // Validate number ranges if specified
         if (config.type === 'number' && typeof value === 'number') {
             if (config.min !== undefined && value < config.min) {
@@ -51,13 +47,11 @@ function validateEntityReferences(entity, schema) {
             }
         }
     });
-
     return {
         valid: errors.length === 0,
         errors
     };
 }
-
 /**
  * Validation schemas for different entity types
  * Define required fields and entity references for each type
@@ -85,27 +79,25 @@ const VALIDATION_SCHEMAS = {
         ac: { type: 'number', required: false, min: 0, max: 30 }
     }
 };
-
 /**
  * Helper function to validate and show errors
- * @param {Object} entity - Entity to validate
- * @param {string} entityType - Type key from VALIDATION_SCHEMAS
- * @returns {boolean} True if valid, false if invalid (and shows toast)
+ * @param entity - Entity to validate
+ * @param entityType - Type key from VALIDATION_SCHEMAS
+ * @returns True if valid, false if invalid (and shows toast)
  */
 function validateAndShowErrors(entity, entityType) {
     const schema = VALIDATION_SCHEMAS[entityType];
     if (!schema) {
-        if (APP_CONFIG?.DEBUG_MODE) {
-            ErrorHandler.log('validateAndShowErrors', new Error(`Unknown entity type: ${entityType}`));
+        if (window.APP_CONFIG?.DEBUG_MODE) {
+            window.ErrorHandler?.log('validateAndShowErrors', new Error(`Unknown entity type: ${entityType}`));
         }
         return true; // No schema = no validation, allow save
     }
-
     const validation = validateEntityReferences(entity, schema);
     if (!validation.valid) {
         showToast('⚠️ Validierungsfehler:\n' + validation.errors.join('\n'), 'error', 5000);
         return false;
     }
-
     return true;
 }
+//# sourceMappingURL=validation.js.map

@@ -2,21 +2,25 @@
 // ============================================================
 // QUESTS RENDER - @filter @cards @status
 // ============================================================
-
 function renderQuests() {
-    const c = $('quests-list'); if (!c) return;
-    const activeOnly = $('quest-filter-active')?.checked;
-    const search = ($('quest-search')?.value || '').toLowerCase();
+    const D = window.D;
+    const renderEmptyState = window.renderEmptyState;
+    const renderDashboard = window.renderDashboard;
+    const c = $('quests-list');
+    if (!c)
+        return;
+    const activeOnlyEl = $('quest-filter-active');
+    const activeOnly = activeOnlyEl?.checked || false;
+    const searchEl = $('quest-search');
+    const search = (searchEl?.value || '').toLowerCase();
     let quests = D.quests;
-
-    if (activeOnly) quests = quests.filter(q => !q.completed);
-    if (search) quests = quests.filter(q =>
-        q.title.toLowerCase().includes(search) ||
-        (q.giverName || '').toLowerCase().includes(search) ||
-        (q.locationName || '').toLowerCase().includes(search) ||
-        (q.description || '').toLowerCase().includes(search)
-    );
-
+    if (activeOnly)
+        quests = quests.filter((q) => !q.completed);
+    if (search)
+        quests = quests.filter((q) => q.title.toLowerCase().includes(search) ||
+            (q.giverName || '').toLowerCase().includes(search) ||
+            (q.locationName || '').toLowerCase().includes(search) ||
+            (q.description || '').toLowerCase().includes(search));
     if (!quests.length) {
         c.innerHTML = renderEmptyState({
             icon: '📜',
@@ -29,43 +33,41 @@ function renderQuests() {
         });
         return;
     }
-
-    c.innerHTML = quests.map(q => renderQuestItem(q)).join('');
+    c.innerHTML = quests.map((q) => renderQuestItem(q)).join('');
 }
-
 function renderQuestItem(q) {
+    const renderEntityLinks = window.renderEntityLinks;
+    const renderTagsBar = window.renderTagsBar;
+    const renderEntityLink = window.renderEntityLink;
     const entityLinks = renderEntityLinks(q.links);
     const entityTags = renderTagsBar(q.tags);
-
-    // Quest-Geber Name ermitteln (mit EntityLookup)
+    // Quest giver name (with EntityLookup)
     const giverDisplay = q.giverId
         ? EntityLookup.getName('npcs', q.giverId)
         : (q.giverName || q.giver || '');
-
-    // Ort-Name ermitteln (mit EntityLookup)
+    // Location name (with EntityLookup)
     const locationDisplay = q.locationId
         ? EntityLookup.getName('locations', q.locationId)
         : (q.locationName || q.location || '');
-
-    // Zielort-Name ermitteln (mit EntityLookup)
+    // Target location name (with EntityLookup)
     const targetDisplay = q.targetId
         ? EntityLookup.getName('locations', q.targetId)
         : (q.targetName || q.target || '');
-
-    // Belohnung zusammenstellen
-    let rewardParts = [];
-    if (q.rewardGold > 0) rewardParts.push(`${q.rewardGold} GP`);
-    if (q.rewardItems?.length) rewardParts.push(q.rewardItems.map(i => i.name).join(', '));
-    if (q.rewardOther) rewardParts.push(q.rewardOther);
+    // Compile reward
+    const rewardParts = [];
+    if (q.rewardGold > 0)
+        rewardParts.push(`${q.rewardGold} GP`);
+    if (q.rewardItems?.length)
+        rewardParts.push(q.rewardItems.map((i) => i.name).join(', '));
+    if (q.rewardOther)
+        rewardParts.push(q.rewardOther);
     if (q.reward && !q.rewardGold && !q.rewardItems?.length && !q.rewardOther) {
-        rewardParts.push(q.reward); // Legacy-Feld
+        rewardParts.push(q.reward); // Legacy field
     }
     const rewardDisplay = rewardParts.join(' + ') || '—';
-
-    // Quest-Typ Badge
+    // Quest type badge
     const typeClass = q.type === 'plot' ? 'plot-quest' : q.type === 'side' ? 'side-quest' : 'quest';
     const typeLabel = q.type === 'plot' ? 'Plot' : q.type === 'side' ? 'Side' : 'Quest';
-
     return `<div class="quest-item ${typeClass} ${q.completed ? 'completed' : ''}" id="quest-${q.id}" draggable="true" data-sortable data-id="${q.id}">
         <div class="quest-header" data-action="toggle-quest" data-id="${q.id}">
             <div class="quest-title-row">
@@ -100,31 +102,43 @@ function renderQuestItem(q) {
         </div>
     </div>`;
 }
-
 function toggleQuest(id) {
-    $(`quest-${id}`)?.classList.toggle('expanded');
+    const element = $(`quest-${id}`);
+    element?.classList.toggle('expanded');
 }
-
 function toggleQuestTracked(id) {
+    const renderDashboard = window.renderDashboard;
     const q = EntityLookup.quest(id);
-    if (!q) return;
+    if (!q)
+        return;
     q.tracked = !q.tracked;
     renderQuests();
     renderDashboard();
     save();
     showToast(q.tracked ? '📌 Quest wird verfolgt' : '📌 Quest nicht mehr verfolgt');
 }
-
 function toggleQuestStatus(id, type) {
     const q = EntityLookup.quest(id);
-    if (!q) return;
+    if (!q)
+        return;
     if (type === 'completed') {
         q.completed = !q.completed;
-        if (!q.completed) q.rewardReceived = false;
-    } else {
+        if (!q.completed)
+            q.rewardReceived = false;
+    }
+    else {
         q.rewardReceived = !q.rewardReceived;
-        if (q.rewardReceived) q.completed = true;
+        if (q.rewardReceived)
+            q.completed = true;
     }
     renderQuests();
     save();
 }
+// ============================================================
+// EXPORTS FOR GLOBAL ACCESS
+// ============================================================
+window.renderQuests = renderQuests;
+window.toggleQuest = toggleQuest;
+window.toggleQuestTracked = toggleQuestTracked;
+window.toggleQuestStatus = toggleQuestStatus;
+//# sourceMappingURL=quests-render.js.map

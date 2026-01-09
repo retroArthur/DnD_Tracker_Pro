@@ -1,176 +1,146 @@
 // [SECTION:CRUD_HELPERS]
 // Generic CRUD operation helpers to reduce code duplication
 // Provides consistent UX for delete confirmations, undo support, and post-operation actions
-
 /**
  * Generic delete with confirmation and undo support
  * Reduces duplicate code across all CRUD operations
  *
- * @param {Object} config - Configuration object
- * @param {string} config.entityType - Entity collection name ('characters', 'npcs', 'quests', etc.)
- * @param {number|string} config.id - Entity ID to delete
- * @param {Function} [config.onSuccess] - Callback after successful delete
- * @param {string} [config.confirmMessage] - Custom confirmation message
- * @param {string} [config.undoLabel] - Custom undo state label
- * @returns {boolean} True if deleted, false if cancelled or not found
+ * @param config - Configuration object
+ * @returns True if deleted, false if cancelled or not found
  */
 function deleteWithConfirm(config) {
-    const {
-        entityType,
-        id,
-        onSuccess,
-        confirmMessage = null,
-        undoLabel = null
-    } = config;
-
+    const { entityType, id, onSuccess, confirmMessage = null, undoLabel = null } = config;
     // Ensure ID is numeric
-    const numId = parseInt(id);
+    const numId = parseInt(String(id));
     if (isNaN(numId)) {
         showToast('❌ Ungültige ID', 'error');
         return false;
     }
-
     // Find entity to delete
-    const entity = EntityLookup.get(entityType, numId);
+    const EntityLookup = window.EntityLookup;
+    const entity = EntityLookup?.get(entityType, numId);
     if (!entity) {
         showToast(`❌ ${entityType} nicht gefunden`, 'error');
-        if (APP_CONFIG.DEBUG_MODE) {
-            ErrorHandler.log('deleteWithConfirm', new Error(`Entity not found: ${entityType}#${numId}`));
+        if (window.APP_CONFIG?.DEBUG_MODE) {
+            window.ErrorHandler?.log('deleteWithConfirm', new Error(`Entity not found: ${entityType}#${numId}`));
         }
         return false;
     }
-
     // Get display name
     const displayName = entity.name || entity.title || 'Unbekannt';
-
     // Confirm deletion
     const message = confirmMessage || `"${displayName}" wirklich löschen?`;
     if (!confirm(message)) {
         return false;
     }
-
     // Save undo state BEFORE deletion
     const undoMessage = undoLabel || `${entityType} gelöscht: ${displayName}`;
-    saveUndoState(undoMessage);
-
+    const saveUndoState = window.saveUndoState;
+    if (saveUndoState)
+        saveUndoState(undoMessage);
     // Delete entity from collection
+    const D = window.D;
     if (!D[entityType]) {
         showToast(`❌ Unbekannter Entity-Typ: ${entityType}`, 'error');
         return false;
     }
-
-    D[entityType] = D[entityType].filter(e => e.id !== numId);
-
+    D[entityType] = D[entityType].filter((e) => e.id !== numId);
     // Call success callback if provided
     if (onSuccess) {
         try {
             onSuccess(entity);
-        } catch (err) {
-            ErrorHandler.log('deleteWithConfirm', err, 'Success callback failed');
+        }
+        catch (err) {
+            window.ErrorHandler?.log('deleteWithConfirm', err, 'Success callback failed');
         }
     }
-
     // Persist changes
-    save();
-
+    const save = window.save;
+    if (save)
+        save();
     return true;
 }
-
 /**
  * Standard CRUD sequence: render + save + toast
  * Provides consistent post-operation flow
  *
- * @param {Function} [renderFn] - Render function to call (null to skip)
- * @param {string} [message] - Toast message to show
- * @param {string} [toastType] - Toast type ('success', 'error', 'warning', 'info')
+ * @param renderFn - Render function to call (null to skip)
+ * @param message - Toast message to show
+ * @param toastType - Toast type ('success', 'error', 'warning', 'info')
  */
 function afterCrudOperation(renderFn, message = '✅ Gespeichert', toastType = 'success') {
     // Call render function if provided
     if (renderFn) {
         try {
             renderFn();
-        } catch (err) {
-            ErrorHandler.log('afterCrudOperation', err, 'Render function failed');
+        }
+        catch (err) {
+            window.ErrorHandler?.log('afterCrudOperation', err, 'Render function failed');
             showToast('⚠️ Anzeige konnte nicht aktualisiert werden', 'warning');
         }
     }
-
     // Persist changes
-    save();
-
+    const save = window.save;
+    if (save)
+        save();
     // Show confirmation
     if (message) {
         showToast(message, toastType);
     }
 }
-
 /**
  * Generic entity update with validation
  * Provides consistent update flow with undo support
  *
- * @param {Object} config - Configuration object
- * @param {string} config.entityType - Entity collection name
- * @param {number|string} config.id - Entity ID (0 for new entity)
- * @param {Object} config.data - Entity data to save
- * @param {Function} [config.onSuccess] - Callback after successful save
- * @param {string} [config.undoLabel] - Custom undo state label
- * @returns {Object|null} Saved entity or null on failure
+ * @param config - Configuration object
+ * @returns Saved entity or null on failure
  */
 function saveEntityWithUndo(config) {
-    const {
-        entityType,
-        id,
-        data,
-        onSuccess,
-        undoLabel = null
-    } = config;
-
-    const numId = parseInt(id);
+    const { entityType, id, data, onSuccess, undoLabel = null } = config;
+    const numId = parseInt(String(id));
     const isNew = numId === 0 || isNaN(numId);
-
     // Save undo state BEFORE changes
     const action = isNew ? 'erstellt' : 'bearbeitet';
     const displayName = data.name || data.title || 'Unbekannt';
     const undoMessage = undoLabel || `${entityType} ${action}: ${displayName}`;
-    saveUndoState(undoMessage);
-
+    const saveUndoState = window.saveUndoState;
+    if (saveUndoState)
+        saveUndoState(undoMessage);
     let savedEntity = null;
-
+    const D = window.D;
+    const genId = window.genId;
     if (isNew) {
         // Create new entity
-        const newId = genId(entityType);
+        const newId = genId ? genId(entityType) : Date.now();
         savedEntity = { ...data, id: newId };
-
         if (!D[entityType]) {
             D[entityType] = [];
         }
         D[entityType].push(savedEntity);
-
-    } else {
+    }
+    else {
         // Update existing entity
         if (!D[entityType]) {
             showToast(`❌ Unbekannter Entity-Typ: ${entityType}`, 'error');
             return null;
         }
-
-        const index = D[entityType].findIndex(e => e.id === numId);
+        const index = D[entityType].findIndex((e) => e.id === numId);
         if (index === -1) {
             showToast(`❌ ${entityType} nicht gefunden`, 'error');
             return null;
         }
-
         savedEntity = { ...data, id: numId };
         D[entityType][index] = savedEntity;
     }
-
     // Call success callback if provided
     if (onSuccess) {
         try {
             onSuccess(savedEntity, isNew);
-        } catch (err) {
-            ErrorHandler.log('saveEntityWithUndo', err, 'Success callback failed');
+        }
+        catch (err) {
+            window.ErrorHandler?.log('saveEntityWithUndo', err, 'Success callback failed');
         }
     }
-
     return savedEntity;
 }
+//# sourceMappingURL=crud-helpers.js.map

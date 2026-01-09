@@ -1,21 +1,21 @@
 // [SECTION:SPELLSLOTS_UI]
 // Extrahiert aus dice.js
 // Zauberplatz-UI
-// Zeilen: 102
-
+// Zeilen: 106
+// ============================================================
 // SPELL SLOTS TRACKING
 // ============================================================
+const renderParty = window.renderParty;
 function getSpellSlots(charId) {
     const ch = EntityLookup.character(charId);
-    if (!ch) return null;
-    
+    if (!ch)
+        return null;
     // Initialisiere spellSlots wenn nicht vorhanden
     if (!ch.spellSlots) {
         ch.spellSlots = {};
         for (let i = 0; i <= 9; i++) {
             ch.spellSlots[i] = { max: 0, current: 0 };
         }
-        
         // Nur bei Neu-Initialisierung: Automatische Berechnung basierend auf Klasse und Level
         const autoSlots = getSpellSlotsForClass(ch.characterClass, ch.level || 1);
         for (let i = 0; i < 9; i++) {
@@ -25,54 +25,47 @@ function getSpellSlots(charId) {
             }
         }
     }
-    
     // Stelle sicher, dass alle Slot-Levels existieren
     for (let i = 0; i <= 9; i++) {
         if (!ch.spellSlots[i]) {
             ch.spellSlots[i] = { max: 0, current: 0 };
         }
     }
-    
     return ch.spellSlots;
 }
-
 function toggleSpellSlot(charId, level) {
     const ch = EntityLookup.character(charId);
-    if (!ch || !ch.spellSlots || !ch.spellSlots[level]) return;
-    
+    if (!ch || !ch.spellSlots || !ch.spellSlots[level])
+        return;
     const slot = ch.spellSlots[level];
     if (slot.current > 0) {
         slot.current--;
-    } else {
+    }
+    else {
         slot.current = slot.max;
     }
-    
     renderParty();
     save();
 }
-
 function restoreAllSpellSlots(charId) {
     const ch = EntityLookup.character(charId);
-    if (!ch || !ch.spellSlots) return;
-    
+    if (!ch || !ch.spellSlots)
+        return;
     for (let i = 1; i <= 9; i++) {
         if (ch.spellSlots[i]) {
             ch.spellSlots[i].current = ch.spellSlots[i].max;
         }
     }
-    
     renderParty();
     save();
     showToast('Zauberslots wiederhergestellt');
 }
-
 function renderSpellSlotPips(charId) {
     const slots = getSpellSlots(charId);
-    if (!slots) return '';
-    
+    if (!slots)
+        return '';
     let html = '';
     let hasSlots = false;
-    
     // Slot 0 (Zaubertricks) - wird nicht verbraucht, nur als Zähler anzeigen
     const cantrips = slots[0];
     if (cantrips && cantrips.max > 0) {
@@ -82,7 +75,6 @@ function renderSpellSlotPips(charId) {
         html += `<span style="font-size: 11px; color: var(--purple); font-weight: 600;">${cantrips.max}</span>`;
         html += `</span>`;
     }
-    
     for (let level = 1; level <= 9; level++) {
         const slot = slots[level];
         if (slot && slot.max > 0) {
@@ -96,12 +88,16 @@ function renderSpellSlotPips(charId) {
             html += `</span>`;
         }
     }
-    
     if (hasSlots) {
         html += `<button class="btn btn-sm" style="font-size: 10px; padding: 2px 6px; margin-left: 8px;" data-action="restore-spell-slots-stop" data-id="${charId}" title="Alle Slots wiederherstellen">🔄</button>`;
     }
-    
     return hasSlots ? `<div class="spell-slots-compact" data-stop-propagation="true">${html}</div>` : '';
 }
-
 // ============================================================
+// BACKWARD COMPATIBILITY EXPORTS
+// ============================================================
+window.getSpellSlots = getSpellSlots;
+window.toggleSpellSlot = toggleSpellSlot;
+window.restoreAllSpellSlots = restoreAllSpellSlots;
+window.renderSpellSlotPips = renderSpellSlotPips;
+//# sourceMappingURL=spellslots-ui.js.map

@@ -1,10 +1,11 @@
 // [SECTION:LAYOUT_PROFILES]
 // Extrahiert aus dice.js
 // Layout-Profile
-// Zeilen: 38
-
+// Zeilen: 42
+// ============================================================
 // LAYOUT PROFILES (Desktop/Mobile)
 // ============================================================
+const D = window.D;
 function setLayout(layout) {
     document.documentElement.setAttribute('data-layout', layout);
     D.settings = D.settings || {};
@@ -13,7 +14,6 @@ function setLayout(layout) {
     updateLayoutSwitcher(layout);
     showToast(`Layout: ${layout === 'desktop' ? '🖥️ Desktop' : '📱 Mobil'}`);
 }
-
 function loadLayout() {
     // Auto-detect basierend auf Bildschirmbreite, wenn keine Einstellung
     let layout = D.settings?.layout;
@@ -23,21 +23,26 @@ function loadLayout() {
     document.documentElement.setAttribute('data-layout', layout);
     updateLayoutSwitcher(layout);
 }
-
 function toggleLayout() {
     const current = document.documentElement.getAttribute('data-layout') || 'desktop';
     const newLayout = current === 'desktop' ? 'mobile' : 'desktop';
     setLayout(newLayout);
 }
-
 function updateLayoutSwitcher(layout) {
     // Header-Button (Desktop)
     const icon = $('layout-icon');
-    if (icon) icon.textContent = layout === 'desktop' ? '🖥️' : '📱';
-    
+    if (icon)
+        icon.textContent = layout === 'desktop' ? '🖥️' : '📱';
     // Mobile-Header-Button
     const mobileBtn = $('mobile-layout-btn');
-    if (mobileBtn) mobileBtn.textContent = layout === 'desktop' ? '🖥️' : '📱';
+    if (mobileBtn)
+        mobileBtn.textContent = layout === 'desktop' ? '🖥️' : '📱';
 }
-
 // ============================================================
+// BACKWARD COMPATIBILITY EXPORTS
+// ============================================================
+window.setLayout = setLayout;
+window.loadLayout = loadLayout;
+window.toggleLayout = toggleLayout;
+window.updateLayoutSwitcher = updateLayoutSwitcher;
+//# sourceMappingURL=layout-profiles.js.map
