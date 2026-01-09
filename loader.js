@@ -30,6 +30,7 @@ const MODULES = [
     'systems/spellslots/persistence.js',
     'systems/spellslots/quick-roll.js',
     'systems/spellslots/import-export.js',
+    'systems/tab-registry.js',
     'systems/spellslots/navigation.js',
     'systems/conditions.js',
     'systems/hp-calculator.js',
@@ -63,7 +64,12 @@ const MODULES = [
     // Encounters-Module (ersetzt render-encounters.js)
     'features/encounters/encounters-render.js',
     'features/encounters/encounters-crud.js',
-    
+    // Roadmap-Module
+    'features/roadmap/roadmap.js',
+    'features/roadmap/roadmap-render.js',
+    'features/roadmap/roadmap-crud.js',
+    'features/roadmap/roadmap-ui.js',
+
     // Features
     'features/initiative.js',
     'features/encounter-calculator.js',

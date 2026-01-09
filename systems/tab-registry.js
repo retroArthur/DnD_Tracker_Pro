@@ -25,7 +25,7 @@ const TAB_RENDER_REGISTRY = {
         cleanup: null
     },
     'npcs': {
-        renders: ['renderNPC'],
+        renders: ['renderNPCList'],
         init: null,
         cleanup: null
     },
@@ -70,7 +70,7 @@ const TAB_RENDER_REGISTRY = {
         cleanup: null
     },
     'notes': {
-        renders: ['renderSessionNotes'],
+        renders: ['renderSessions'],
         init: null,
         cleanup: null
     },
@@ -200,3 +200,9 @@ function validateTabRegistry() {
 }
 
 // ============================================================
+// EXPORTS
+// ============================================================
+
+// Export to global scope for use in other modules
+window.renderTabContent = renderTabContent;
+window.validateTabRegistry = validateTabRegistry;
