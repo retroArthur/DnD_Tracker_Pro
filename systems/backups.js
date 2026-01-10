@@ -290,9 +290,10 @@ async function showBackupsModal() {
 // Auto-Backup Interval starten
 let backupInterval = null;
 function startAutoBackup() {
+    const APP_CONFIG = window.APP_CONFIG;
     if (backupInterval)
         clearInterval(backupInterval);
-    backupInterval = window.setInterval(createAutoBackup, BACKUP_INTERVAL);
+    backupInterval = window.setInterval(createAutoBackup, APP_CONFIG.BACKUP_INTERVAL);
     // Erstes Backup nach 1 Minute
     setTimeout(createAutoBackup, 60000);
 }
