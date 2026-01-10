@@ -378,9 +378,6 @@ function updateNPCStats() {
     });
 }
 // Legacy compatibility functions
-function toggleNPCCard(id) {
-    selectNPC(id);
-}
 function expandAllNPCCards() {
     showToast('Alle NPCs werden in der Liste angezeigt');
 }
