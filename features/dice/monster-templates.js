@@ -28,7 +28,7 @@ function getMonsterTemplates() {
     return _monsterTemplatesCache;
 }
 // Legacy-Kompatibilität
-const MONSTER_TEMPLATES = new Proxy({}, {
+var MONSTER_TEMPLATES = new Proxy({}, {
     get(target, prop) {
         return getMonsterTemplates()[prop];
     }

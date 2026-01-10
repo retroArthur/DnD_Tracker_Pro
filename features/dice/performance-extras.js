@@ -14,8 +14,8 @@ var getTypeIcon = window.getTypeIcon;
 var timers = window.timers;
 var formatTime = window.formatTime;
 // Debounced Render für häufige Updates (zusätzlich zu den bei SPELLS definierten)
-const debouncedRenderParty = debounce(() => renderParty(), 100);
-const debouncedRenderQuests = debounce(() => renderQuests(), 100);
+var debouncedRenderParty = debounce(() => renderParty(), 100);
+var debouncedRenderQuests = debounce(() => renderQuests(), 100);
 // Intersection Observer für Lazy Loading
 const lazyLoadObserver = new IntersectionObserver((entries) => {
     entries.forEach(entry => {

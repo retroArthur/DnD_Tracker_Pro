@@ -12,7 +12,7 @@ let timerInterval = null;
 let roundTimer = null;
 let roundTimerInterval = null;
 let focusedTimerId = null;
-const TIMER_PRESETS_KEY = APP_CONFIG.TIMER_PRESETS_KEY;
+var TIMER_PRESETS_KEY = APP_CONFIG.TIMER_PRESETS_KEY;
 function getTimerPresets() {
     return StorageAPI.getJSON(TIMER_PRESETS_KEY, []);
 }

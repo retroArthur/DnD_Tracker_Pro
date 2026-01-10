@@ -11,7 +11,7 @@ var D = window.D;
 /**
  * Standard-Layout für den DM Screen
  */
-const DEFAULT_DMSCREEN_LAYOUT = {
+var DEFAULT_DMSCREEN_LAYOUT = {
     widgets: [
         { id: 'party-stats', type: 'party', visible: true },
         { id: 'mini-initiative', type: 'initiative', visible: true },
@@ -26,7 +26,7 @@ const DEFAULT_DMSCREEN_LAYOUT = {
 /**
  * Vordefinierte Layout-Profile
  */
-const DEFAULT_DMSCREEN_PROFILES = {
+var DEFAULT_DMSCREEN_PROFILES = {
     'standard': {
         name: 'Standard',
         icon: '📋',
