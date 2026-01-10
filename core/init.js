@@ -126,6 +126,14 @@ async function init() {
 }
 
 function initSortableLists() {
+    // Check if drag-and-drop functions are available (loaded from performance-extras.js)
+    if (typeof handleDragStart !== 'function') {
+        if (APP_CONFIG.DEBUG_MODE) {
+            console.log('[init] Drag-and-drop functions not yet loaded, skipping sortable lists');
+        }
+        return;
+    }
+
     // Party-Liste sortierbar machen
     const partyList = $('party-list');
     if (partyList) {
@@ -135,7 +143,7 @@ function initSortableLists() {
         partyList.addEventListener('dragover', handleDragOver);
         partyList.addEventListener('drop', handleDrop);
     }
-    
+
     // Quest-Liste
     const questList = $('quest-list');
     if (questList) {
@@ -145,7 +153,7 @@ function initSortableLists() {
         questList.addEventListener('dragover', handleDragOver);
         questList.addEventListener('drop', handleDrop);
     }
-    
+
     // Encounter-Liste
     const encList = $('encounter-list');
     if (encList) {
