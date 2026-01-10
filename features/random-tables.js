@@ -763,4 +763,3 @@ window.showGeneratorModal = showGeneratorModal;
 window.rollOnTableAndShow = rollOnTableAndShow;
 window.deleteTableAndRefresh = deleteTableAndRefresh;
 window.quickRandomRoll = quickRandomRoll;
-//# sourceMappingURL=random-tables.js.map

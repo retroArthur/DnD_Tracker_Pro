@@ -383,4 +383,3 @@ window.toggleEncLangDropdown = toggleEncLangDropdown;
 window.updateEncLanguages = updateEncLanguages;
 window.getEncSelectedLanguages = getEncSelectedLanguages;
 window.setEncLanguages = setEncLanguages;
-//# sourceMappingURL=encounters-crud.js.map

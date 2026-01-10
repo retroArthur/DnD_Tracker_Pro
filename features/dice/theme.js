@@ -27,4 +27,3 @@ function loadTheme() {
 window.showThemeModal = showThemeModal;
 window.setTheme = setTheme;
 window.loadTheme = loadTheme;
-//# sourceMappingURL=theme.js.map

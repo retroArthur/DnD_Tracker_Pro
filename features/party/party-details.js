@@ -187,4 +187,3 @@ function showCharacterDetails(id) {
 // EXPORTS FOR GLOBAL ACCESS
 // ============================================================
 window.showCharacterDetails = showCharacterDetails;
-//# sourceMappingURL=party-details.js.map

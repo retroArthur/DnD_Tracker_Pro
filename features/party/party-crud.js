@@ -477,4 +477,3 @@ window.editChar = editChar;
 window.cancelCharEdit = cancelCharEdit;
 window.updateProficiencyBonus = updateProficiencyBonus;
 window.deleteChar = deleteChar;
-//# sourceMappingURL=party-crud.js.map

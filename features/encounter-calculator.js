@@ -1198,4 +1198,3 @@ window.toggleCalculatorLair = toggleCalculatorLair;
 window.showEncounterImport = showEncounterImport;
 window.importEncounterMonsters = importEncounterMonsters;
 window.renderEncounterCalculator = renderEncounterCalculator;
-//# sourceMappingURL=encounter-calculator.js.map

@@ -152,5 +152,3 @@ function loadSRDSpells() {
 // ============================================================
 window.getSRDSpells = getSRDSpells;
 window.SRD_SPELLS = SRD_SPELLS;
-window.loadSRDSpells = loadSRDSpells;
-//# sourceMappingURL=srd-spells.js.map

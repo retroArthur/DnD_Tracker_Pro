@@ -325,4 +325,3 @@ window.updateAssignSpellCount = updateAssignSpellCount;
 window.assignSpellsSelectAll = assignSpellsSelectAll;
 window.assignSpellsSelectNone = assignSpellsSelectNone;
 window.assignSpells = assignSpells;
-//# sourceMappingURL=render-spells.js.map

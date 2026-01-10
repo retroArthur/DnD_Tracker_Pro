@@ -217,4 +217,3 @@ window.renderAssignItemList = renderAssignItemList;
 window.changeAssignItemQty = changeAssignItemQty;
 window.validateAssignItemQty = validateAssignItemQty;
 window.assignItems = assignItems;
-//# sourceMappingURL=render-loot.js.map

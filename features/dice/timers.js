@@ -405,5 +405,3 @@ window.deleteTimer = deleteTimer;
 window.formatTime = formatTime;
 window.renderTimers = renderTimers;
 window.startRoundTimer = startRoundTimer;
-window.stopRoundTimer = stopRoundTimer;
-//# sourceMappingURL=timers.js.map

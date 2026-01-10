@@ -250,5 +250,3 @@ document.addEventListener('click', function (e) {
 // ============================================================
 window.debouncedGlobalSearch = debouncedGlobalSearch;
 window.performGlobalSearch = performGlobalSearch;
-window.navigateToResult = navigateToResult;
-//# sourceMappingURL=global-search.js.map

@@ -138,4 +138,3 @@ function closeNPCPopupOnOutsideClick(e) {
 window.showNPCPopup = showNPCPopup;
 window.closeNPCPopup = closeNPCPopup;
 window.closeNPCPopupOnOutsideClick = closeNPCPopupOnOutsideClick;
-//# sourceMappingURL=npc-popup.js.map

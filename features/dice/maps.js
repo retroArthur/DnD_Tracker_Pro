@@ -1602,4 +1602,3 @@ window.renderMapMarkersList = renderMapMarkersList;
 window.filterMapMarkers = filterMapMarkers;
 window.focusMarker = focusMarker;
 window.initExtendedMapFeatures = initExtendedMapFeatures;
-//# sourceMappingURL=maps.js.map

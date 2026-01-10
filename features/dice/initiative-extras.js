@@ -84,4 +84,3 @@ function initDragDrop() {
 // ============================================================
 window.rollAllInitiative = rollAllInitiative;
 window.initDragDrop = initDragDrop;
-//# sourceMappingURL=initiative-extras.js.map

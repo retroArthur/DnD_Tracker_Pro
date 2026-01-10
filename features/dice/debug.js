@@ -1107,5 +1107,3 @@ window.completeReset = completeReset;
 window.clearDebugLog = clearDebugLog;
 window.showDebugModal = showDebugModal;
 window.runValidation = runValidation;
-window.debugLogAdd = debugLogAdd;
-//# sourceMappingURL=debug.js.map

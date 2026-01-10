@@ -289,4 +289,3 @@ window.selectRestType = selectRestType;
 window.adjustRestHitDice = adjustRestHitDice;
 window.applyRest = applyRest;
 window.quickShortRest = quickShortRest;
-//# sourceMappingURL=rest-manager.js.map

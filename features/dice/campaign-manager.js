@@ -158,5 +158,3 @@ window.getCampaignIndex = getCampaignIndex;
 window.createCampaign = createCampaign;
 window.switchCampaign = switchCampaign;
 window.deleteCampaign = deleteCampaign;
-window.renderCampaignList = renderCampaignList;
-//# sourceMappingURL=campaign-manager.js.map

@@ -105,5 +105,3 @@ function initSessionTimer() {
 // ============================================================
 window.toggleSessionTimer = toggleSessionTimer;
 window.resetSessionTimer = resetSessionTimer;
-window.initSessionTimer = initSessionTimer;
-//# sourceMappingURL=session-timer.js.map

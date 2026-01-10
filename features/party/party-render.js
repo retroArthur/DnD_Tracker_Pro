@@ -377,4 +377,3 @@ window.renderCharacterCard = renderCharacterCard;
 window.renderCompactSpellSlots = renderCompactSpellSlots;
 window.scrollToChar = scrollToChar;
 window.renderPartyOverview = renderPartyOverview;
-//# sourceMappingURL=party-render.js.map

@@ -419,5 +419,3 @@ window.handleDragStart = handleDragStart;
 window.handleDragEnd = handleDragEnd;
 window.handleDragOver = handleDragOver;
 window.handleDrop = handleDrop;
-window.renderDashboard = renderDashboard;
-//# sourceMappingURL=performance-extras.js.map

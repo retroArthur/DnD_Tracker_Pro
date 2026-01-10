@@ -100,4 +100,3 @@ window.getSpellSlots = getSpellSlots;
 window.toggleSpellSlot = toggleSpellSlot;
 window.restoreAllSpellSlots = restoreAllSpellSlots;
 window.renderSpellSlotPips = renderSpellSlotPips;
-//# sourceMappingURL=spellslots-ui.js.map

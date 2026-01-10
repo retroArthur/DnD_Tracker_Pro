@@ -77,4 +77,3 @@ function renderAll() {
 // ============================================================
 window.renderAll = renderAll;
 window.renderPending = renderPending;
-//# sourceMappingURL=render-dashboard.js.map

@@ -145,4 +145,3 @@ window.addDialogField = addDialogField;
 window.showAddDialogModal = showAddDialogModal;
 window.saveQuickDialog = saveQuickDialog;
 window.resetDialogFieldCounter = resetDialogFieldCounter;
-//# sourceMappingURL=npc-dialogs.js.map

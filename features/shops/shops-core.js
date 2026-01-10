@@ -1032,4 +1032,3 @@ window.saveShopItem = saveShopItem;
 window.editShopItem = editShopItem;
 window.deleteShopItem = deleteShopItem;
 window.toggleShopItemAvailability = toggleShopItemAvailability;
-//# sourceMappingURL=shops-core.js.map

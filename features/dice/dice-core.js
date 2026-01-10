@@ -760,4 +760,3 @@ window.rollFloatingDisadvantage = rollFloatingDisadvantage;
 window.rollFloatingCustom = rollFloatingCustom;
 window.renderFloatingHistory = renderFloatingHistory;
 window.rerollFloating = rerollFloating;
-//# sourceMappingURL=dice-core.js.map

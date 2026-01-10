@@ -473,4 +473,3 @@ window.setEncFilter = setEncFilter;
 window.toggleEncounter = toggleEncounter;
 window.toggleEncounterCard = toggleEncounterCard;
 window.showEncForm = showEncForm;
-//# sourceMappingURL=encounters-render.js.map

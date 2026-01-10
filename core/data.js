@@ -43,4 +43,3 @@ window.D = initializeData();
 
 // Export functions
 window.initializeData = initializeData;
-//# sourceMappingURL=data.js.map

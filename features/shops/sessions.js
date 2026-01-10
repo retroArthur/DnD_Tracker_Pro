@@ -508,4 +508,3 @@ window.editSession = editSession;
 window.cancelSessionEdit = cancelSessionEdit;
 window.deleteSession = deleteSession;
 window.initSessionsEnhanced = initSessionsEnhanced;
-//# sourceMappingURL=sessions.js.map

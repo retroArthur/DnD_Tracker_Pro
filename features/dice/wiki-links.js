@@ -49,4 +49,3 @@ function processWikiLinks(text) {
 // BACKWARD COMPATIBILITY EXPORTS
 // ============================================================
 window.processWikiLinks = processWikiLinks;
-//# sourceMappingURL=wiki-links.js.map

@@ -328,4 +328,3 @@ window.createEventFromTypeSelector = createEventFromTypeSelector;
 window.showConnectionOptionsModal = showConnectionOptionsModal;
 window.saveConnectionOptions = saveConnectionOptions;
 window.cancelConnectionOptions = cancelConnectionOptions;
-//# sourceMappingURL=roadmap-ui.js.map

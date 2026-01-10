@@ -383,4 +383,3 @@ const ENTITY_TYPE_NAMES = ({
     loot: 'Item',
     wiki: 'Wiki'
 });
-//# sourceMappingURL=constants.js.map

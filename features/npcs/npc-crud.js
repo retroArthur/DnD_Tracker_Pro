@@ -217,4 +217,3 @@ window.saveNPC = saveNPC;
 window.editNPC = editNPC;
 window.deleteNPC = deleteNPC;
 window.clearNPCForm = clearNPCForm;
-//# sourceMappingURL=npc-crud.js.map

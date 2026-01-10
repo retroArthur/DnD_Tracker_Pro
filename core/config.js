@@ -53,4 +53,3 @@ const APP_CONFIG = Object.freeze({
 
 // Export to global scope
 window.APP_CONFIG = APP_CONFIG;
-//# sourceMappingURL=config.js.map

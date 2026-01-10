@@ -454,4 +454,3 @@ window.renderRoadmapToolbar = renderRoadmapToolbar;
 window.renderRoadmapControls = renderRoadmapControls;
 window.setupRoadmapSVGMarkers = setupRoadmapSVGMarkers;
 window.initRoadmapRendering = initRoadmapRendering;
-//# sourceMappingURL=roadmap-render.js.map

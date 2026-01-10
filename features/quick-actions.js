@@ -232,4 +232,3 @@ window.renderQuickActionsBar = renderQuickActionsBar;
 window.applyQuickAction = applyQuickAction;
 window.showConditionReference = showConditionReference;
 window.filterConditions = filterConditions;
-//# sourceMappingURL=quick-actions.js.map

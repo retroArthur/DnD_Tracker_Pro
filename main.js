@@ -8,4 +8,3 @@ console.log('🎲 D&D Tracker - TypeScript Migration starting...');
 const script = document.createElement('script');
 script.src = 'loader.js';
 document.body.appendChild(script);
-//# sourceMappingURL=main.js.map

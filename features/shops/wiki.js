@@ -1240,4 +1240,3 @@ window.showWikiLinkSuggester = showWikiLinkSuggester;
 window.hideWikiLinkSuggester = hideWikiLinkSuggester;
 window.insertWikiLinkSuggestion = insertWikiLinkSuggestion;
 window.handleWikiContentInput = handleWikiContentInput;
-//# sourceMappingURL=wiki.js.map

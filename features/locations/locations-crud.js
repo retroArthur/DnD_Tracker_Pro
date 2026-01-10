@@ -152,4 +152,3 @@ window.deleteFilter = deleteFilter;
 window.filterAssignSpells = filterAssignSpells;
 window.filterAssignItems = filterAssignItems;
 window.addTriggerField = addTriggerField;
-//# sourceMappingURL=locations-crud.js.map

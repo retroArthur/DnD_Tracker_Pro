@@ -196,4 +196,3 @@ window.showLootDistributionModal = showLootDistributionModal;
 window.updateGoldSplit = updateGoldSplit;
 window.applyGoldSplit = applyGoldSplit;
 window.collectAllGold = collectAllGold;
-//# sourceMappingURL=loot-distribution.js.map

@@ -127,4 +127,3 @@ window.toggleNPCCard = toggleNPCCard;
 window.toggleNPCTrigger = toggleNPCTrigger;
 window.toggleNPCDialogUsed = toggleNPCDialogUsed;
 window.copyDialogText = copyDialogText;
-//# sourceMappingURL=npc-interactions.js.map

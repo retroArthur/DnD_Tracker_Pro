@@ -653,4 +653,3 @@ window.setRelationStatus = setRelationStatus;
 window.addRelation = addRelation;
 window.removeRelation = removeRelation;
 window.cycleRelationStatus = cycleRelationStatus;
-//# sourceMappingURL=npc-render.js.map

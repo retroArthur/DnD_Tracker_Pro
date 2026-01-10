@@ -1468,4 +1468,3 @@ window.hideContextToolbars = hideContextToolbars;
 window.saveSpell = saveSpell;
 window.editSpell = editSpell;
 window.deleteSpell = deleteSpell;
-//# sourceMappingURL=spell-editor.js.map

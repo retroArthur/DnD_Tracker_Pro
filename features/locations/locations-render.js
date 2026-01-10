@@ -311,4 +311,3 @@ window.clearLocationDetail = clearLocationDetail;
 window.setLocFilter = setLocFilter;
 window.toggleLocation = toggleLocation;
 window.renderFilterList = renderFilterList;
-//# sourceMappingURL=locations-render.js.map

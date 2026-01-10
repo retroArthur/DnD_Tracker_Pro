@@ -89,5 +89,3 @@ function loadMonsterTemplate(key) {
 // ============================================================
 window.getMonsterTemplates = getMonsterTemplates;
 window.MONSTER_TEMPLATES = MONSTER_TEMPLATES;
-window.loadMonsterTemplate = loadMonsterTemplate;
-//# sourceMappingURL=monster-templates.js.map

@@ -74,5 +74,3 @@ window.getDiceFavorites = getDiceFavorites;
 window.renderDiceFavorites = renderDiceFavorites;
 window.addDiceFavorite = addDiceFavorite;
 window.deleteDiceFavorite = deleteDiceFavorite;
-window.rollFavoriteDice = rollFavoriteDice;
-//# sourceMappingURL=dice-favorites.js.map

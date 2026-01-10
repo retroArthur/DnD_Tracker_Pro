@@ -141,4 +141,3 @@ window.renderQuests = renderQuests;
 window.toggleQuest = toggleQuest;
 window.toggleQuestTracked = toggleQuestTracked;
 window.toggleQuestStatus = toggleQuestStatus;
-//# sourceMappingURL=quests-render.js.map

@@ -764,4 +764,3 @@ window.importSelectedNodes = importSelectedNodes;
 window.importAllNodes = importAllNodes;
 window.exportMindmapImage = exportMindmapImage;
 window.initMindmapPan = initMindmapPan;
-//# sourceMappingURL=mindmap.js.map

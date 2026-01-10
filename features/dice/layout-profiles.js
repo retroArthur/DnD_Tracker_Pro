@@ -45,4 +45,3 @@ window.setLayout = setLayout;
 window.loadLayout = loadLayout;
 window.toggleLayout = toggleLayout;
 window.updateLayoutSwitcher = updateLayoutSwitcher;
-//# sourceMappingURL=layout-profiles.js.map

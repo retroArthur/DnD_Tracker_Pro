@@ -1585,5 +1585,3 @@ window.toggleDMSWidget = toggleDMSWidget;
 window.hideDMSWidget = hideDMSWidget;
 window.dmsRollDice = dmsRollDice;
 window.dmsRollOnTable = dmsRollOnTable;
-window.saveDMSNotes = saveDMSNotes;
-//# sourceMappingURL=dmscreen-render.js.map

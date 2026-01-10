@@ -1392,4 +1392,3 @@ window.saveLoot = saveLoot;
 window.editLoot = editLoot;
 window.removeLoot = removeLoot;
 window.clearBattlefield = clearBattlefield;
-//# sourceMappingURL=initiative.js.map

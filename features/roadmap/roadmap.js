@@ -388,4 +388,3 @@ window.getEventTypeIcon = getEventTypeIcon;
 window.getEventTypeColor = getEventTypeColor;
 window.getConnectionTypeColor = getConnectionTypeColor;
 window.roadmapConnectionMode = roadmapConnectionMode;
-//# sourceMappingURL=roadmap.js.map
