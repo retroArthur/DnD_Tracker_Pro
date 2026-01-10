@@ -2,6 +2,10 @@
 // ============================================================
 // AUTO-BACKUP SYSTEM - @backup @restore @save @recovery
 // ============================================================
+// Constants from APP_CONFIG
+const MAX_BACKUPS = window.APP_CONFIG?.MAX_BACKUPS || 5;
+const MAX_BACKUP_SIZE_MB = window.APP_CONFIG?.MAX_BACKUP_SIZE_MB || 2;
+
 // Backups werden primär in IndexedDB gespeichert, localStorage als Fallback
 async function createAutoBackup() {
     try {
