@@ -1,4 +1,4 @@
-const STORAGE_KEY = APP_CONFIG.STORAGE_KEY;
+const STORAGE_KEY = window.APP_CONFIG.STORAGE_KEY;
 function initializeData() {
     return {
         locations: [],
@@ -6,6 +6,7 @@ function initializeData() {
         quests: [],
         characters: [],
         sessionNotes: [],
+        storyArcs: [],
         quickNotes: '',
         initiative: {
             combatants: [],
@@ -36,4 +37,10 @@ function initializeData() {
         _nextId: {}
     };
 }
+
+// Initialize global D object
+window.D = initializeData();
+
+// Export functions
+window.initializeData = initializeData;
 //# sourceMappingURL=data.js.map

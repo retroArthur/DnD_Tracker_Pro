@@ -5,8 +5,8 @@
 // ============================================================
 // SESSION TIMER
 // ============================================================
-const APP_CONFIG = window.APP_CONFIG;
-const D = window.D;
+var APP_CONFIG = window.APP_CONFIG;
+var D = window.D;
 const SESSION_AUTO_SAVE_INTERVAL = APP_CONFIG.SESSION_AUTO_SAVE_INTERVAL;
 let sessionTimerInterval = null;
 let sessionTimerSeconds = 0;

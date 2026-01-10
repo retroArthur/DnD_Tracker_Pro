@@ -4,10 +4,10 @@
 // ============================================================
 // CONSTANTS
 // ============================================================
-const APP_CONFIG = window.APP_CONFIG;
-const UI_TIMING = window.UI_TIMING;
-const ErrorHandler = window.ErrorHandler;
-const D = window.D;
+var APP_CONFIG = window.APP_CONFIG;
+var UI_TIMING = window.UI_TIMING;
+var ErrorHandler = window.ErrorHandler;
+var D = window.D;
 /**
  * Standard-Layout für den DM Screen
  */

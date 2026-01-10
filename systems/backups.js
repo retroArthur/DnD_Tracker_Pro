@@ -2,12 +2,6 @@
 // ============================================================
 // AUTO-BACKUP SYSTEM - @backup @restore @save @recovery
 // ============================================================
-// Aliase für Rückwärtskompatibilität
-const BACKUP_KEY = window.APP_CONFIG.BACKUP_KEY;
-const BACKUP_INTERVAL = window.APP_CONFIG.BACKUP_INTERVAL;
-const MAX_BACKUPS = window.APP_CONFIG.MAX_BACKUPS;
-const MAX_BACKUP_SIZE_MB = window.APP_CONFIG.MAX_BACKUP_SIZE_MB;
-const STORAGE_KEY = window.STORAGE_KEY;
 // Backups werden primär in IndexedDB gespeichert, localStorage als Fallback
 async function createAutoBackup() {
     try {

@@ -5,7 +5,7 @@
 // ============================================================
 // SPELL SLOTS TRACKING
 // ============================================================
-const renderParty = window.renderParty;
+var renderParty = window.renderParty;
 function getSpellSlots(charId) {
     const ch = EntityLookup.character(charId);
     if (!ch)

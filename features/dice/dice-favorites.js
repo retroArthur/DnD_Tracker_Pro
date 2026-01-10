@@ -5,9 +5,9 @@
 // ============================================================
 // DICE FAVORITES
 // ============================================================
-const APP_CONFIG = window.APP_CONFIG;
-const StorageAPI = window.StorageAPI;
-const rollCustomDice = window.rollCustomDice;
+var APP_CONFIG = window.APP_CONFIG;
+var StorageAPI = window.StorageAPI;
+var rollCustomDice = window.rollCustomDice;
 const DICE_FAV_KEY = APP_CONFIG.DICE_FAV_KEY;
 function getDiceFavorites() {
     return StorageAPI.getJSON(DICE_FAV_KEY, []);

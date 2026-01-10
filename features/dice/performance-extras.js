@@ -5,14 +5,14 @@
 // ============================================================
 // PERFORMANCE OPTIMIERUNGEN
 // ============================================================
-const D = window.D;
-const renderParty = window.renderParty;
-const renderQuests = window.renderQuests;
-const fuzzySearchFields = window.fuzzySearchFields;
-const highlightMatch = window.highlightMatch;
-const getTypeIcon = window.getTypeIcon;
-const timers = window.timers;
-const formatTime = window.formatTime;
+var D = window.D;
+var renderParty = window.renderParty;
+var renderQuests = window.renderQuests;
+var fuzzySearchFields = window.fuzzySearchFields;
+var highlightMatch = window.highlightMatch;
+var getTypeIcon = window.getTypeIcon;
+var timers = window.timers;
+var formatTime = window.formatTime;
 // Debounced Render für häufige Updates (zusätzlich zu den bei SPELLS definierten)
 const debouncedRenderParty = debounce(() => renderParty(), 100);
 const debouncedRenderQuests = debounce(() => renderQuests(), 100);

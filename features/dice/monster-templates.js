@@ -5,7 +5,7 @@
 // ============================================================
 // MONSTER TEMPLATES - LAZY LOADED
 // ============================================================
-const log = window.log;
+var log = window.log;
 let _monsterTemplatesCache = null;
 function getMonsterTemplates() {
     if (_monsterTemplatesCache)

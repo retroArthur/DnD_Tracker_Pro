@@ -19,8 +19,10 @@ async function init() {
     };
     
     // Aktive Kampagne ermitteln
-    const index = getCampaignIndex();
-    const activeKey = index.active || APP_CONFIG.STORAGE_KEY;
+    const index = (typeof window.getCampaignIndex === 'function')
+        ? window.getCampaignIndex()
+        : { campaigns: [], active: window.APP_CONFIG.STORAGE_KEY };
+    const activeKey = index.active || window.APP_CONFIG.STORAGE_KEY;
 
     // Storage-Key überschreiben falls andere Kampagne aktiv
     if (activeKey !== APP_CONFIG.STORAGE_KEY) {
@@ -46,14 +48,15 @@ async function init() {
     
     document.querySelectorAll('.nav-tab').forEach(tab => tab.addEventListener('click', () => switchView(tab.dataset.view)));
     
-    renderAll();
-    renderDashboard();
-    renderCampaignList();
-    renderTimers();
-    renderTimerPresets();
-    renderDiceHistory();
-    renderDiceFavorites();
-    renderRandomTables();
+    // Defensive render calls - check if functions exist
+    if (typeof renderAll === 'function') renderAll();
+    if (typeof window.renderDashboard === 'function') window.renderDashboard();
+    if (typeof window.renderCampaignList === 'function') window.renderCampaignList();
+    if (typeof window.renderTimers === 'function') window.renderTimers();
+    if (typeof window.renderTimerPresets === 'function') window.renderTimerPresets();
+    if (typeof window.renderDiceHistory === 'function') window.renderDiceHistory();
+    if (typeof window.renderDiceFavorites === 'function') window.renderDiceFavorites();
+    if (typeof window.renderRandomTables === 'function') window.renderRandomTables();
     
     // Karten initialisieren
     if (D.maps && D.maps.length > 0) {

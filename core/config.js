@@ -50,4 +50,7 @@ const APP_CONFIG = Object.freeze({
     ATTRIBUTE_MIN: 1,
     ATTRIBUTE_MAX: 30,
 });
+
+// Export to global scope
+window.APP_CONFIG = APP_CONFIG;
 //# sourceMappingURL=config.js.map

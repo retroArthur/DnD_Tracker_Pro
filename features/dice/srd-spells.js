@@ -6,10 +6,10 @@
 // SRD SPELLS DATABASE - LAZY LOADED
 // ============================================================
 // Die Daten werden erst beim ersten Zugriff initialisiert
-const log = window.log;
-const D = window.D;
-const nextId = window.nextId;
-const renderSpells = window.renderSpells;
+var log = window.log;
+var D = window.D;
+var nextId = window.nextId;
+var renderSpells = window.renderSpells;
 let _srdSpellsCache = null;
 function getSRDSpells() {
     if (_srdSpellsCache)

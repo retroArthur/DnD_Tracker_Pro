@@ -5,7 +5,7 @@
 // ============================================================
 // THEME SYSTEM
 // ============================================================
-const D = window.D;
+var D = window.D;
 function showThemeModal() {
     showModal('theme-modal');
 }

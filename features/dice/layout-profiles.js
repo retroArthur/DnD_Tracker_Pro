@@ -5,7 +5,7 @@
 // ============================================================
 // LAYOUT PROFILES (Desktop/Mobile)
 // ============================================================
-const D = window.D;
+var D = window.D;
 function setLayout(layout) {
     document.documentElement.setAttribute('data-layout', layout);
     D.settings = D.settings || {};

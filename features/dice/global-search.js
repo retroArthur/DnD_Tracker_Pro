@@ -5,14 +5,14 @@
 // ============================================================
 // GLOBAL SEARCH (mit Fuzzy-Match)
 // ============================================================
-const D = window.D;
-const LINK_ICONS = window.LINK_ICONS;
-const switchView = window.switchView;
-const toggleLocation = window.toggleLocation;
-const editChar = window.editChar;
-const editNPC = window.editNPC;
-const editQuest = window.editQuest;
-const editSpell = window.editSpell;
+var D = window.D;
+var LINK_ICONS = window.LINK_ICONS;
+var switchView = window.switchView;
+var toggleLocation = window.toggleLocation;
+var editChar = window.editChar;
+var editNPC = window.editNPC;
+var editQuest = window.editQuest;
+var editSpell = window.editSpell;
 // Fuzzy-Match Algorithmus
 function fuzzyMatch(text, query) {
     if (!text || !query)
