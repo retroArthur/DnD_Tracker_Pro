@@ -55,35 +55,64 @@ def minify_css(css_code):
 
 def deduplicate_window_assignments(js_code):
     """
-    Entfernt duplizierte 'var X = window.X;' Deklarationen.
-    Bewahrt nur die erste Instanz jeder Variable.
-    """
-    # Pattern: var IDENTIFIER = window.IDENTIFIER;
-    pattern = r'^(var|const|let)\s+(\w+)\s*=\s*window\.(\2)\s*;?\s*$'
+    Entfernt duplizierte Variablen-Deklarationen.
 
-    seen_vars = set()
+    Two-pass approach:
+    1. Scan all declarations (const/var/let X = ...)
+    2. Remove 'var X = window.X;' if X was already declared
+    """
     lines = js_code.split('\n')
-    filtered_lines = []
-    removed_count = 0
+
+    # PASS 1: Find all variable declarations (including definitions)
+    # Match: const/var/let IDENTIFIER = (anything)
+    declaration_pattern = r'^(var|const|let)\s+(\w+)\s*='
+    declared_vars = set()
 
     for line in lines:
-        match = re.match(pattern, line.strip())
+        match = re.match(declaration_pattern, line.strip())
+        if match:
+            var_name = match.group(2)
+            declared_vars.add(var_name)
+
+    log.info(f"Pass 1: {len(declared_vars)} unique variables deklariert")
+
+    # PASS 2: Remove redundant window assignments
+    # Match: var/const/let IDENTIFIER = window.IDENTIFIER;
+    window_assignment_pattern = r'^(var|const|let)\s+(\w+)\s*=\s*window\.(\2)\s*;?\s*$'
+
+    filtered_lines = []
+    removed_count = 0
+    seen_window_assigns = set()
+
+    for line in lines:
+        match = re.match(window_assignment_pattern, line.strip())
         if match:
             var_type = match.group(1)
             var_name = match.group(2)
-            if var_name in seen_vars:
-                # Skip this line - already declared
+
+            # Remove if:
+            # 1. We've already seen this window assignment OR
+            # 2. This variable was declared elsewhere (e.g., const UI_TIMING = {...})
+            if var_name in seen_window_assigns:
                 removed_count += 1
-                # Add comment to show removal
-                filtered_lines.append(f"// REMOVED DUPLICATE: {var_type} {var_name} = window.{var_name};")
+                filtered_lines.append(f"// REMOVED DUPLICATE WINDOW ASSIGN: {var_type} {var_name} = window.{var_name};")
                 continue
-            else:
-                seen_vars.add(var_name)
-                filtered_lines.append(line)
+
+            # Count how many times this var was declared
+            occurrences = sum(1 for l in lines if re.match(rf'^(var|const|let)\s+{var_name}\s*=', l.strip()))
+
+            if occurrences > 1:
+                # Multiple declarations exist - remove window assignments, keep original definitions
+                removed_count += 1
+                filtered_lines.append(f"// REMOVED (conflicts with definition): {var_type} {var_name} = window.{var_name};")
+                continue
+
+            seen_window_assigns.add(var_name)
+            filtered_lines.append(line)
         else:
             filtered_lines.append(line)
 
-    log.info(f"Deduplizierung: {removed_count} duplizierte Deklarationen entfernt")
+    log.info(f"Pass 2: {removed_count} duplizierte/konfligierende Deklarationen entfernt")
     return '\n'.join(filtered_lines)
 
 def build(minify=False, verbose=False):
