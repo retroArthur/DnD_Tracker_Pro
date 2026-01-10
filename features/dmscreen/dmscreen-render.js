@@ -784,6 +784,7 @@ function renderDMSConditionsCompact() {
 // PARTY WIDGET
 // ============================================================
 function renderDMSPartyWidget() {
+    const COMBAT_CONSTANTS = window.COMBAT_CONSTANTS;
     const chars = D.characters || [];
     if (chars.length === 0) {
         return '<div class="dms-widget-empty">Keine Charaktere</div>';
@@ -804,9 +805,9 @@ function renderDMSPartyWidget() {
     });
     // HP bar color
     let hpClass = 'healthy';
-    if (hpPercent <= 50)
+    if (hpPercent <= COMBAT_CONSTANTS.HP_BLOODIED_THRESHOLD)
         hpClass = 'bloodied';
-    if (hpPercent <= 25)
+    if (hpPercent <= COMBAT_CONSTANTS.HP_CRITICAL_THRESHOLD)
         hpClass = 'critical';
     return `
         <div class="dms-party-stats">

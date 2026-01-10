@@ -140,4 +140,3 @@ function populateSelects() {
             select.innerHTML = filterOpts;
     });
 }
-//# sourceMappingURL=navigation.js.map

@@ -83,4 +83,3 @@ function getSpellSlotsForClass(characterClass, level) {
     return [0, 0, 0, 0, 0, 0, 0, 0, 0];
 }
 // ============================================================
-//# sourceMappingURL=spell-slots-core.js.map

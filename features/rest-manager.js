@@ -114,6 +114,7 @@ function renderRestDetails(type) {
     }
 }
 function renderRestCharacters(characters, type) {
+    const COMBAT_CONSTANTS = window.COMBAT_CONSTANTS;
     if (!characters.length) {
         return '<div class="rest-no-chars">Keine Charaktere</div>';
     }
@@ -123,7 +124,7 @@ function renderRestCharacters(characters, type) {
         const currentHp = char.hpCurrent ?? char.hp ?? 0;
         const maxHp = char.hpMax ?? char.hp ?? 1;
         const hpPct = Math.round((currentHp / maxHp) * 100);
-        const hpClass = hpPct <= 25 ? 'critical' : hpPct <= 50 ? 'bloodied' : 'healthy';
+        const hpClass = hpPct <= COMBAT_CONSTANTS.HP_CRITICAL_THRESHOLD ? 'critical' : hpPct <= COMBAT_CONSTANTS.HP_BLOODIED_THRESHOLD ? 'bloodied' : 'healthy';
         const hitDieType = getHitDieType(char.class);
         return `
             <div class="rest-character" data-id="${char.id}">

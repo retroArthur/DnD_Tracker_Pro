@@ -230,4 +230,3 @@ const ObjectPool = {
         this._pools.get(type).push(obj);
     }
 };
-//# sourceMappingURL=performance.js.map

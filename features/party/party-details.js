@@ -7,6 +7,7 @@
  */
 function showCharacterDetails(id) {
     const CATS = window.CATS;
+    const COMBAT_CONSTANTS = window.COMBAT_CONSTANTS;
     const ch = EntityLookup.character(id);
     if (!ch)
         return;
@@ -47,7 +48,7 @@ function showCharacterDetails(id) {
         : esc(ch.characterClass || '—');
     // HP Prozent für Farbcodierung
     const hpPct = ch.hpMax > 0 ? (ch.hpCurrent / ch.hpMax) * 100 : 100;
-    const hpColor = hpPct <= 25 ? 'var(--red)' : hpPct <= 50 ? 'var(--yellow)' : 'var(--green)';
+    const hpColor = hpPct <= COMBAT_CONSTANTS.HP_CRITICAL_THRESHOLD ? 'var(--red)' : hpPct <= COMBAT_CONSTANTS.HP_BLOODIED_THRESHOLD ? 'var(--yellow)' : 'var(--green)';
     const content = `
         <div class="char-modal-header">
             <div class="char-modal-avatar">

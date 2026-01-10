@@ -66,4 +66,3 @@ function applyNoteTemplate(templateKey) {
     }
 }
 // ============================================================
-//# sourceMappingURL=notes-templates.js.map

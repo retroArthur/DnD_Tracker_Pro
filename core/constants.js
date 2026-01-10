@@ -383,3 +383,31 @@ const ENTITY_TYPE_NAMES = ({
     loot: 'Item',
     wiki: 'Wiki'
 });
+
+// ============================================================
+// WINDOW EXPORTS
+// ============================================================
+// Export all constants to global scope for use by other modules
+window.CATS = CATS;
+window.LINK_CATS = LINK_CATS;
+window.CONDITIONS = CONDITIONS;
+window.TAG_COLORS = TAG_COLORS;
+window.CONDITION_COLORS = CONDITION_COLORS;
+window.DAMAGE_TYPES = DAMAGE_TYPES;
+window.SPELL_SCHOOLS = SPELL_SCHOOLS;
+window.ATTRIBUTES = ATTRIBUTES;
+window.COMBAT_CONSTANTS = COMBAT_CONSTANTS;
+window.UI_TIMING = UI_TIMING;
+window.SKILL_INFO = SKILL_INFO;
+window.RARITIES = RARITIES;
+window.RARITY_LABELS = RARITY_LABELS;
+window.RARITY_COLORS = RARITY_COLORS;
+window.ORIGIN_LABELS = ORIGIN_LABELS;
+window.LOOT_TAG_LABELS = LOOT_TAG_LABELS;
+window.INIT_CONSTANTS = INIT_CONSTANTS;
+window.COMBATANT_TYPES = COMBATANT_TYPES;
+window.MAP_CONSTANTS = MAP_CONSTANTS;
+window.MARKER_ICONS = MARKER_ICONS;
+window.ENTITY_ICONS = ENTITY_ICONS;
+window.LINK_ICONS = LINK_ICONS;
+window.ENTITY_TYPE_NAMES = ENTITY_TYPE_NAMES;

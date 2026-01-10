@@ -10,8 +10,8 @@ module.exports = (env, argv) => {
     const isProduction = argv.mode === 'production';
 
     return {
-        // TypeScript Migration: Changed entry point from loader.js to src/main.ts
-        entry: './src/main.ts',
+        // Post-Migration: Entry point is main.js (loads loader.js)
+        entry: './main.js',
 
         output: {
             path: path.resolve(__dirname, '../dist'),
@@ -49,13 +49,13 @@ module.exports = (env, argv) => {
         resolve: {
             extensions: ['.tsx', '.ts', '.js'],
             alias: {
-                '@core': path.resolve(__dirname, '../src/core'),
-                '@utils': path.resolve(__dirname, '../src/utils'),
-                '@features': path.resolve(__dirname, '../src/features'),
-                '@ui': path.resolve(__dirname, '../src/ui'),
-                '@types': path.resolve(__dirname, '../src/types'),
-                '@systems': path.resolve(__dirname, '../src/systems'),
-                '@render': path.resolve(__dirname, '../src/render'),
+                '@core': path.resolve(__dirname, '../core'),
+                '@utils': path.resolve(__dirname, '../utils'),
+                '@features': path.resolve(__dirname, '../features'),
+                '@ui': path.resolve(__dirname, '../ui'),
+                '@types': path.resolve(__dirname, '../types'),
+                '@systems': path.resolve(__dirname, '../systems'),
+                '@render': path.resolve(__dirname, '../render'),
             }
         },
 

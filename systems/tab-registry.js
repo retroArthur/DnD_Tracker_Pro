@@ -83,7 +83,7 @@ const TAB_RENDER_REGISTRY = {
     'timers': {
         renders: ['renderTimers', 'renderTimerPresets'],
         init: null,
-        cleanup: null
+        cleanup: 'cleanupTimers'  // Clear interval when leaving tab
     },
     'maps': {
         renders: ['displayMap'],
@@ -185,4 +185,3 @@ function validateTabRegistry() {
     }
 }
 // ============================================================
-//# sourceMappingURL=tab-registry.js.map

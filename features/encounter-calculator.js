@@ -166,6 +166,9 @@ function deleteMonsterFavorite(id) {
     if (idx === -1)
         return;
     const name = D.monsterFavorites[idx].name;
+    if (!confirm(`Vorlage "${name}" wirklich löschen?`))
+        return;
+    window.pushUndo('Monster-Vorlage gelöscht');
     D.monsterFavorites.splice(idx, 1);
     window.saveImmediate();
     showToast(`Vorlage "${name}" gelöscht`);

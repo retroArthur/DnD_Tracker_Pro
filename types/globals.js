@@ -3,4 +3,3 @@
  * Diese Datei deklariert alle globalen Funktionen für TypeScript-Kompatibilität
  */
 export {};
-//# sourceMappingURL=globals.js.map

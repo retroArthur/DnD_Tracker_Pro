@@ -16,6 +16,8 @@ const MODULES = [
     'utils/performance.js',
     'utils/basic.js',
     'utils/utilities.js',
+    'utils/crud-helpers.js',
+    'utils/validation.js',
     
     // Systems
     'systems/undo.js',

@@ -456,4 +456,3 @@ function sleep(ms) {
 function clamp(value, min, max) {
     return Math.min(Math.max(value, min), max);
 }
-//# sourceMappingURL=utilities.js.map

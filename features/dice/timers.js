@@ -148,10 +148,14 @@ function clearPresetForm() {
 }
 function deleteTimerPreset(index) {
     const presets = getTimerPresets();
+    const presetName = presets[index]?.name || 'Vorlage';
+    if (!confirm(`Timer-Vorlage "${presetName}" löschen?`))
+        return;
     presets.splice(index, 1);
     saveTimerPresets(presets);
     renderPresetList();
     renderTimerPresets();
+    showToast('Timer-Vorlage gelöscht', 'info');
 }
 function addPresetTimer(name, totalSeconds) {
     addTimerWithSeconds(name, totalSeconds);
@@ -385,7 +389,18 @@ function stopRoundTimer() {
 // ============================================================
 // BACKWARD COMPATIBILITY EXPORTS
 // ============================================================
+// Cleanup function called when leaving timer tab
+function cleanupTimers() {
+    // Don't stop timers, but clear the render interval to prevent memory leak
+    // Timers continue running in background (checked when tab is reactivated)
+    if (timerInterval) {
+        clearInterval(timerInterval);
+        timerInterval = null;
+    }
+}
+
 window.timers = timers;
+window.cleanupTimers = cleanupTimers;
 window.renderTimerPresets = renderTimerPresets;
 window.renderPresetList = renderPresetList;
 window.setPresetEmoji = setPresetEmoji;

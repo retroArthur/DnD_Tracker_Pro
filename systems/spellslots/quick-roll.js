@@ -149,4 +149,3 @@ function exportAllDataAsFile() {
     }
 }
 // ============================================================
-//# sourceMappingURL=quick-roll.js.map

@@ -6,11 +6,12 @@ export default tseslint.config(
     // Base ESLint recommended rules
     js.configs.recommended,
 
-    // TypeScript rules for .ts files
-    ...tseslint.configs.recommended.map(config => ({
-        ...config,
-        files: ['src/**/*.ts']
-    })),
+    // TypeScript rules for .ts files (currently unused - migration complete)
+    // Note: All TypeScript source files have been migrated to JavaScript runtime
+    // ...tseslint.configs.recommended.map(config => ({
+    //     ...config,
+    //     files: ['src/**/*.ts']
+    // })),
 
     // Prettier compatibility (disables conflicting rules)
     prettier,
@@ -101,22 +102,23 @@ export default tseslint.config(
         }
     },
 
-    // TypeScript files configuration
-    {
-        files: ['src/**/*.ts'],
-        rules: {
-            // Stricter rules for new TypeScript code
-            '@typescript-eslint/no-unused-vars': ['error', {
-                argsIgnorePattern: '^_',
-                varsIgnorePattern: '^_'
-            }],
-            '@typescript-eslint/explicit-function-return-type': 'off',
-            '@typescript-eslint/no-explicit-any': 'warn',
-            '@typescript-eslint/no-non-null-assertion': 'off',
-            '@typescript-eslint/no-this-alias': 'off',
-            'no-console': ['warn', { allow: ['warn', 'error'] }]
-        }
-    },
+    // TypeScript files configuration (currently unused - migration complete)
+    // Note: All TypeScript source files have been migrated to JavaScript runtime
+    // {
+    //     files: ['src/**/*.ts'],
+    //     rules: {
+    //         // Stricter rules for new TypeScript code
+    //         '@typescript-eslint/no-unused-vars': ['error', {
+    //             argsIgnorePattern: '^_',
+    //             varsIgnorePattern: '^_'
+    //         }],
+    //         '@typescript-eslint/explicit-function-return-type': 'off',
+    //         '@typescript-eslint/no-explicit-any': 'warn',
+    //         '@typescript-eslint/no-non-null-assertion': 'off',
+    //         '@typescript-eslint/no-this-alias': 'off',
+    //         'no-console': ['warn', { allow: ['warn', 'error'] }]
+    //     }
+    // },
 
     // Test files configuration
     {

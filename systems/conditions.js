@@ -137,4 +137,3 @@ function renderConditionsBar(conditions, type, id) {
     </div>`;
 }
 // ============================================================
-//# sourceMappingURL=conditions.js.map

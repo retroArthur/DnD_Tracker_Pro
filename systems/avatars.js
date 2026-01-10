@@ -191,4 +191,3 @@ function initTouchOptimizations() {
         });
     }, { passive: true });
 }
-//# sourceMappingURL=avatars.js.map

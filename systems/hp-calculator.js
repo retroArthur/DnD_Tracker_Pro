@@ -105,4 +105,3 @@ function parseDiceFormula(formula) {
     }
     return Math.max(0, total);
 }
-//# sourceMappingURL=hp-calculator.js.map

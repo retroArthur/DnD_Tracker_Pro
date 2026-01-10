@@ -171,5 +171,4 @@ const save = function (showMessage = false) {
 // Export to global scope
 window.save = save;
 window.saveImmediate = saveImmediate;
-window.load = load;
-window.loadFromBackup = loadFromBackup;
+// Note: load() and loadFromBackup() are defined in systems/backups.js

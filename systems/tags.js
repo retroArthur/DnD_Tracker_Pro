@@ -243,4 +243,3 @@ function showEntitiesWithTag(tagName) {
         showModal('tag-search-modal');
 }
 // ============================================================
-//# sourceMappingURL=tags.js.map

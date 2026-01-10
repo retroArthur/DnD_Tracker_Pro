@@ -646,4 +646,3 @@ window.getEntityForCombat = getEntityForCombat;
 window.ENTITY_TYPE_CONFIG = ENTITY_TYPE_CONFIG;
 window.renderEntityLink = renderEntityLink;
 window.renderEntityLinkList = renderEntityLinkList;
-//# sourceMappingURL=helpers.js.map

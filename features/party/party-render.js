@@ -9,6 +9,7 @@ function renderParty() {
     const D = window.D;
     const renderConditionsBar = window.renderConditionsBar;
     const CATS = window.CATS;
+    const COMBAT_CONSTANTS = window.COMBAT_CONSTANTS;
     const repairCharactersData = window.repairCharactersData;
     const updateDiceCharSelect = window.updateDiceCharSelect;
     const c = $('party-list');
@@ -96,7 +97,7 @@ function renderPartyRoster(container, characters) {
     }
     container.innerHTML = characters.map(ch => {
         const hpPct = ch.hpMax > 0 ? (ch.hpCurrent / ch.hpMax) * 100 : 100;
-        const hpClass = hpPct <= 25 ? 'critical' : hpPct <= 50 ? 'bloodied' : 'healthy';
+        const hpClass = hpPct <= COMBAT_CONSTANTS.HP_CRITICAL_THRESHOLD ? 'critical' : hpPct <= COMBAT_CONSTANTS.HP_BLOODIED_THRESHOLD ? 'bloodied' : 'healthy';
         const conditions = ch.conditions?.length || 0;
         return `
             <div class="roster-char ${hpClass}" data-action="scroll-to-char" data-id="${ch.id}">
