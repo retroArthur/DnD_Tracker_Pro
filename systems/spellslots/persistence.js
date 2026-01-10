@@ -167,4 +167,9 @@ const save = function (showMessage = false) {
         }
     }, 300);
 };
-//# sourceMappingURL=persistence.js.map
+
+// Export to global scope
+window.save = save;
+window.saveImmediate = saveImmediate;
+window.load = load;
+window.loadFromBackup = loadFromBackup;
