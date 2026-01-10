@@ -61,6 +61,10 @@ export default tseslint.config(
                 Request: 'readonly',
                 Response: 'readonly',
                 AbortController: 'readonly',
+                DOMParser: 'readonly',
+                structuredClone: 'readonly',
+                crypto: 'readonly',
+                Audio: 'readonly',
                 // App globals
                 D: 'writable',
                 $: 'readonly',

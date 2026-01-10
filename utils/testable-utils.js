@@ -260,3 +260,21 @@ function deepClone(obj) {
 function formatMod(mod) {
     return mod >= 0 ? `+${mod}` : String(mod);
 }
+
+// ============================================================
+// MODULE EXPORTS (for Jest tests)
+// ============================================================
+module.exports = {
+    esc,
+    sanitizeHTML,
+    nextId,
+    getModifier,
+    getProficiencyBonus,
+    parseDiceNotation,
+    debounce,
+    throttle,
+    isEmpty,
+    clamp,
+    deepClone,
+    formatMod
+};
