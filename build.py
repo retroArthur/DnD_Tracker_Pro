@@ -1,7 +1,31 @@
 #!/usr/bin/env python3
 """
 D&D Tracker Build Script
-Bündelt alle Module in eine einzige Production-HTML-Datei
+========================
+
+Combines all modular JavaScript files into a single standalone HTML file.
+
+Features:
+- Three-pass deduplication system to resolve variable conflicts
+- Optional CSS/JS minification for production builds
+- Preserves module comments and structure for debugging
+- Generates 2.16 MB standalone file from 93 modules
+
+Usage:
+    python build.py              # Development build (unminified)
+    python build.py --minify     # Production build (minified)
+
+Output:
+    dist/dnd-tracker-bundled.html - Standalone HTML file
+
+Performance:
+    - Build time: ~250ms for 1.29 MB JavaScript
+    - Deduplication: Removes 523 conflicts + 1 duplicate function
+    - Output size: 2.16 MB (CSS: 551 KB, HTML: 330 KB, JS: 1.28 MB)
+
+See Also:
+    docs/build-system.md - Comprehensive documentation
+    tests/build/test_build_deduplication.py - Test suite
 """
 
 import os

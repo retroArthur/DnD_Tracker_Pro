@@ -1249,3 +1249,199 @@ svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
 **Future Consideration:**
 
 For a more robust solution, consider refactoring to use SVG `<foreignObject>` elements for tiles, which would eliminate the dual coordinate system entirely.
+
+---
+
+### Build System & Deduplication Pattern
+
+**Critical Architecture Constraint:**
+
+The non-ESM architecture (global scope, `<script>` tags) requires all modules to be concatenated into a single file. This creates variable declaration conflicts that must be resolved through **three-pass deduplication**.
+
+**Problem Solved:**
+
+When concatenating 93 modules, duplicate declarations cause `SyntaxError: Identifier 'X' has already been declared`:
+
+```javascript
+// Module A: core/constants.js
+const UI_TIMING = { DM_SCREEN_SYNC_DELAY: 150 };
+window.UI_TIMING = UI_TIMING;
+
+// Module B: features/dmscreen/dmscreen-render.js (later in build)
+var UI_TIMING = window.UI_TIMING;  // ❌ CONFLICT with const above!
+```
+
+**Three-Pass Deduplication Solution:**
+
+```python
+# Pass 1: Find Real Definitions (NOT window assignments)
+real_definitions = set()
+for line in lines:
+    if not is_window_assignment(line):
+        if matches_declaration(line):
+            real_definitions.add(var_name)
+
+# Pass 2: Remove Window Assignment Conflicts
+for line in lines:
+    if is_window_assignment(line):
+        if var_name in real_definitions:
+            # Conflict with definition - remove
+            output_comment(f"// [DEDUP] Removed: {var_name}")
+        elif var_name in seen_window_assigns:
+            # Duplicate window assignment - remove
+            output_comment(f"// [DEDUP] Removed duplicate: {var_name}")
+        else:
+            # First occurrence - keep
+            seen_window_assigns.add(var_name)
+            output_line(line)
+
+# Pass 3: Remove Duplicate Function Declarations
+seen_functions = {}
+for line in lines:
+    if matches_function(line):
+        if func_name in seen_functions:
+            comment_out_function_and_body()
+        else:
+            seen_functions[func_name] = line_num
+```
+
+**Why This Approach:**
+
+1. **Pass 1 Prevents False Positives**: Must distinguish real definitions from imports before removing anything
+2. **Pass 2 Handles Two Conflict Types**:
+   - **Duplicate imports**: `var X = window.X` appears twice
+   - **Definition vs Import**: `const X = ...` exists, later `var X = window.X` conflicts
+3. **Pass 3 Catches Functions**: Regex-based detection missed by variable patterns
+
+**Pattern to Follow:**
+
+When adding new modules that use window imports:
+
+```javascript
+// GOOD: Use var (can be deduplicated)
+var APP_CONFIG = window.APP_CONFIG;
+var D = window.D;
+var save = window.save;
+
+// BAD: Use const/let (harder to deduplicate if conflicts with definition)
+const APP_CONFIG = window.APP_CONFIG;  // ❌ Can't be removed if const exists elsewhere
+```
+
+**Module-Level Constants Pattern:**
+
+For constants from APP_CONFIG, define module-level fallbacks:
+
+```javascript
+// GOOD: Module-level constant with fallback
+const BACKUP_INTERVAL = window.APP_CONFIG?.BACKUP_INTERVAL || 300000;
+const MAX_BACKUPS = window.APP_CONFIG?.MAX_BACKUPS || 5;
+
+// Then use directly in code
+function startBackup() {
+    setInterval(createBackup, BACKUP_INTERVAL);  // ✅ No window.APP_CONFIG needed
+}
+
+// BAD: Access APP_CONFIG in every function
+function startBackup() {
+    const APP_CONFIG = window.APP_CONFIG;  // ❌ Repeated everywhere
+    setInterval(createBackup, APP_CONFIG.BACKUP_INTERVAL);
+}
+```
+
+**Benefits:**
+- ✅ Eliminates window access overhead
+- ✅ Provides fallback values for missing config
+- ✅ Makes code testable (constants can be mocked)
+- ✅ No conflicts with other modules
+
+**Test-Driven Development Pattern:**
+
+All build system changes MUST follow TDD:
+
+```bash
+# 1. Write failing tests first
+python -m pytest tests/build/test_build_deduplication.py -v
+# Should show FAILURES
+
+# 2. Implement fix
+# Edit build.py
+
+# 3. Verify tests pass
+python -m pytest tests/build/test_build_deduplication.py -v
+# Should show all PASSING
+
+# 4. Commit in two steps
+git commit -m "test: [feature] failing tests"
+git commit -m "feat: [feature] implementation"
+```
+
+**Test Coverage Requirements:**
+
+Build deduplication tests must verify:
+1. ✅ Duplicate window assignments removed
+2. ✅ Conflicting definitions handled correctly
+3. ✅ Multiple conflicts resolved
+4. ✅ Generated build has no duplicates
+5. ✅ Generated JavaScript is syntactically valid
+6. ✅ Required constants available in build
+
+**Performance Characteristics:**
+
+| Operation | Complexity | Time (1.29 MB) |
+|-----------|------------|----------------|
+| Pass 1: Scan definitions | O(n) | ~70ms |
+| Pass 2: Filter conflicts | O(n) | ~60ms |
+| Pass 3: Remove functions | O(n) | ~20ms |
+| **Total** | **O(n)** | **~150ms** |
+
+Where n = number of lines (~59,000)
+
+**Results:**
+- **Input**: 1,290,596 bytes (1.29 MB)
+- **Removed**: 523 window assignment conflicts + 1 duplicate function
+- **Output**: 1,280,596 bytes (1.28 MB)
+- **Savings**: ~11 KB (0.8%)
+
+**Files to Check When Modifying:**
+
+- `build.py:56-187` - Deduplication implementation
+- `tests/build/test_build_deduplication.py` - TDD test suite
+- `docs/build-system.md` - Comprehensive documentation
+
+**Common Pitfalls:**
+
+❌ **Removing real definitions** - Pass 1 must correctly identify them
+❌ **Missing function body** - Pass 3 must track braces to comment entire function
+❌ **Regex too greedy** - Must not match comments or string literals
+❌ **Module order wrong** - Dependencies must load before dependents
+
+**Debugging Build Issues:**
+
+```bash
+# 1. Check which variables were removed
+python build.py 2>&1 | grep "[DEDUP]"
+
+# 2. Find specific variable in build
+grep "var UI_TIMING" dist/dnd-tracker-bundled.html
+
+# 3. Test deduplication on isolated code
+python -c "
+from build import deduplicate_window_assignments
+code = '''
+var TEST = window.TEST;
+var TEST = window.TEST;
+'''
+print(deduplicate_window_assignments(code))
+"
+
+# 4. Run only build tests
+python -m pytest tests/build/ -v
+```
+
+**Related Documentation:**
+
+- **[Build System Guide](./docs/build-system.md)** - Full implementation details
+- **[Module Loading Order](./loader.js)** - Dependency graph
+- **[Testing Guide](./docs/testing.md)** - Test procedures
+
+---
