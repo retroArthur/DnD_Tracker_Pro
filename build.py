@@ -53,6 +53,39 @@ def minify_css(css_code):
     css_code = re.sub(r'\s*;\s*', ';', css_code)
     return css_code.strip()
 
+def deduplicate_window_assignments(js_code):
+    """
+    Entfernt duplizierte 'var X = window.X;' Deklarationen.
+    Bewahrt nur die erste Instanz jeder Variable.
+    """
+    # Pattern: var IDENTIFIER = window.IDENTIFIER;
+    pattern = r'^(var|const|let)\s+(\w+)\s*=\s*window\.(\2)\s*;?\s*$'
+
+    seen_vars = set()
+    lines = js_code.split('\n')
+    filtered_lines = []
+    removed_count = 0
+
+    for line in lines:
+        match = re.match(pattern, line.strip())
+        if match:
+            var_type = match.group(1)
+            var_name = match.group(2)
+            if var_name in seen_vars:
+                # Skip this line - already declared
+                removed_count += 1
+                # Add comment to show removal
+                filtered_lines.append(f"// REMOVED DUPLICATE: {var_type} {var_name} = window.{var_name};")
+                continue
+            else:
+                seen_vars.add(var_name)
+                filtered_lines.append(line)
+        else:
+            filtered_lines.append(line)
+
+    log.info(f"Deduplizierung: {removed_count} duplizierte Deklarationen entfernt")
+    return '\n'.join(filtered_lines)
+
 def build(minify=False, verbose=False):
     """Erstellt die gebündelte HTML-Datei"""
     if verbose:
@@ -201,7 +234,14 @@ def build(minify=False, verbose=False):
             log.info(f"[{i}/{len(modules)}] {module}: {len(module_content):,} Zeichen")
         else:
             log.warning(f"[{i}/{len(modules)}] {module} NICHT GEFUNDEN")
-    
+
+    # CRITICAL: Dedupliziere window-Zuweisungen BEFORE minification
+    print("\n[BUILD] Dedupliziere window-Zuweisungen...")
+    original_size = len(js_combined)
+    js_combined = deduplicate_window_assignments(js_combined)
+    dedupe_saved = original_size - len(js_combined)
+    log.success(f"Deduplizierung: {dedupe_saved:,} Zeichen gespart")
+
     if minify:
         print("\n⚙️ Minifiziere JavaScript...")
         original_size = len(js_combined)
