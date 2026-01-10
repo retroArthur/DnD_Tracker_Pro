@@ -93,12 +93,6 @@ var DEFAULT_DMSCREEN_PROFILES = {
     }
 };
 // ============================================================
-// HELPERS
-// ============================================================
-function save() {
-    window.save();
-}
-// ============================================================
 // LIVE-SYNC SYSTEM
 // ============================================================
 /**
@@ -154,13 +148,13 @@ function renderDMScreenWidgetsOnly() {
     });
 }
 /**
- * Hook: Wird bei jedem save() aufgerufen
+ * Hook: Wird bei jedem window.save() aufgerufen
  * Registriert sich beim globalen Save-System
  */
 function setupDMScreenLiveSync() {
     // Überschreibe die globale save-Funktion um Live-Sync zu triggern
-    if (typeof window._originalSave === 'undefined' && typeof save === 'function') {
-        window._originalSave = save;
+    if (typeof window._originalSave === 'undefined' && typeof window.save === 'function') {
+        window._originalSave = window.save;
         window.save = function () {
             window._originalSave.apply(this, arguments);
             refreshDMScreenIfVisible();
@@ -172,7 +166,7 @@ if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', setupDMScreenLiveSync);
 }
 else {
-    // Verzögert ausführen um sicherzustellen dass save() definiert ist
+    // Verzögert ausführen um sicherzustellen dass window.save() definiert ist
     setTimeout(setupDMScreenLiveSync, 100);
 }
 /**
@@ -197,7 +191,7 @@ function resetDMScreenLayout() {
         pushUndo('DM Screen Layout zurückgesetzt');
         D.dmScreenLayout = JSON.parse(JSON.stringify(DEFAULT_DMSCREEN_LAYOUT));
         D.dmScreenActiveProfile = 'standard';
-        save();
+        window.save();
         renderDMScreen();
         showToast('Layout zurückgesetzt');
     }
@@ -221,7 +215,7 @@ function switchDMSProfile(profileId) {
         widgets: JSON.parse(JSON.stringify(profile.widgets))
     };
     D.dmScreenActiveProfile = profileId;
-    save();
+    window.save();
     renderDMScreen();
     showToast(`Profil: ${profile.name}`);
 }
@@ -239,7 +233,7 @@ function saveDMSProfileAs() {
         widgets: JSON.parse(JSON.stringify(D.dmScreenLayout.widgets))
     };
     D.dmScreenActiveProfile = id;
-    save();
+    window.save();
     renderDMScreen();
     showToast(`Profil "${name}" gespeichert`);
 }
@@ -260,7 +254,7 @@ function deleteDMSProfile(profileId) {
             D.dmScreenActiveProfile = 'standard';
             switchDMSProfile('standard');
         }
-        save();
+        window.save();
         renderDMScreen();
         showToast('Profil gelöscht');
     }
@@ -477,8 +471,8 @@ function hideDMSWidget(widgetId) {
  * Speichert das DM Screen Layout
  */
 function saveDMScreenLayout() {
-    if (typeof save === 'function') {
-        save();
+    if (typeof window.save === 'function') {
+        window.save();
     }
 }
 /**
@@ -1020,7 +1014,7 @@ function saveDMSNotes() {
     const input = $('dms-notes-input');
     if (input) {
         D.dmScreenNotes = input.value;
-        save();
+        window.save();
     }
 }
 // ============================================================
