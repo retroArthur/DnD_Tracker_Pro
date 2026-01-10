@@ -4,7 +4,7 @@ module.exports = {
   testEnvironment: 'jsdom',
   
   // Roots für Tests
-  roots: ['<rootDir>/tests', '<rootDir>/src'],
+  roots: ['<rootDir>/tests'],
   
   // Test-Dateien Pattern
   testMatch: [
@@ -26,15 +26,15 @@ module.exports = {
     '^.+\.jsx?$': 'babel-jest'
   },
   
-  // Module-Aliase (TypeScript Migration: Point to src/)
+  // Module-Aliase (post-migration: Point to root directories)
   moduleNameMapper: {
-    '^@core/(.*)$': '<rootDir>/src/core/$1',
-    '^@features/(.*)$': '<rootDir>/src/features/$1',
-    '^@utils/(.*)$': '<rootDir>/src/utils/$1',
-    '^@ui/(.*)$': '<rootDir>/src/ui/$1',
-    '^@types/(.*)$': '<rootDir>/src/types/$1',
-    '^@systems/(.*)$': '<rootDir>/src/systems/$1',
-    '^@render/(.*)$': '<rootDir>/src/render/$1'
+    '^@core/(.*)$': '<rootDir>/core/$1',
+    '^@features/(.*)$': '<rootDir>/features/$1',
+    '^@utils/(.*)$': '<rootDir>/utils/$1',
+    '^@ui/(.*)$': '<rootDir>/ui/$1',
+    '^@types/(.*)$': '<rootDir>/types/$1',
+    '^@systems/(.*)$': '<rootDir>/systems/$1',
+    '^@render/(.*)$': '<rootDir>/render/$1'
   },
   
   // Setup-Dateien
@@ -44,8 +44,13 @@ module.exports = {
   collectCoverage: false,
   collectCoverageFrom: [
     'utils/testable-utils.js',
-    'src/**/*.ts',
-    '!src/**/*.d.ts',
+    'core/**/*.js',
+    'features/**/*.js',
+    'systems/**/*.js',
+    'ui/**/*.js',
+    'render/**/*.js',
+    '!**/*.d.ts',
+    '!**/*.test.js',
     '!**/node_modules/**',
     '!**/dist/**'
   ],

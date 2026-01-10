@@ -5,84 +5,60 @@
     "module": "ES2015",
     "lib": ["ES2020", "DOM", "DOM.Iterable"],
     "moduleResolution": "node",
-    
-    // Schrittweise Migration erlauben
+
+    // JavaScript + Declaration mode
     "allowJs": true,
     "checkJs": false,
-    
-    // Ausgabe
-    "outDir": "./compiled",
-    "rootDir": "./src",
+
+    // Output (declaration files only)
     "declaration": true,
-    "declarationMap": true,
-    "sourceMap": true,
-    
-    // Strenge Typprüfung (aktiviert)
+    "declarationMap": false,
+    "sourceMap": false,
+    "emitDeclarationOnly": true,
+    "outDir": ".",
+
+    // Type checking (relaxed for .js)
     "strict": false,
     "noImplicitAny": false,
-    "strictNullChecks": true,
-    "strictFunctionTypes": true,
-    "strictBindCallApply": true,
-    "noImplicitThis": true,
-    "useUnknownInCatchVariables": true,
-    
-    // Zusätzliche Checks
-    "noUnusedLocals": false,
-    "noUnusedParameters": false,
-    "noImplicitReturns": true,
-    "noFallthroughCasesInSwitch": true,
-    "noUncheckedIndexedAccess": false,
-    
-    // Interoperabilität
+
+    // Interoperability
     "esModuleInterop": true,
-    "allowSyntheticDefaultImports": true,
+    "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
-    
-    // Experimentelle Features
-    "experimentalDecorators": true,
-    "emitDecoratorMetadata": true,
-    
-    // Pfad-Aliase
+
+    // Path aliases
     "baseUrl": ".",
     "paths": {
-      "@core/*": ["src/core/*"],
-      "@features/*": ["src/features/*"],
-      "@ui/*": ["src/ui/*"],
-      "@utils/*": ["src/utils/*"],
-      "@types/*": ["src/types/*"],
-      "@systems/*": ["src/systems/*"],
-      "@render/*": ["src/render/*"]
+      "@core/*": ["core/*"],
+      "@features/*": ["features/*"],
+      "@ui/*": ["ui/*"],
+      "@utils/*": ["utils/*"],
+      "@types/*": ["types/*"],
+      "@systems/*": ["systems/*"],
+      "@render/*": ["render/*"]
     },
-    
-    // Skip Library Check für schnellere Kompilierung
-    "skipLibCheck": true,
-    
-    // Nur eigene Types verwenden, keine aus node_modules/@types
+
+    // Types
     "types": [],
-    "typeRoots": ["./types"]
+    "typeRoots": ["./types", "./node_modules/@types"]
   },
-  
+
   "include": [
-    "src/**/*.ts",
+    "core/**/*.js",
+    "features/**/*.js",
+    "ui/**/*.js",
+    "utils/**/*.js",
+    "systems/**/*.js",
+    "render/**/*.js",
     "types/**/*.d.ts"
   ],
-  
+
   "exclude": [
     "node_modules",
     "dist",
     "tools",
-    "features",
-    "core",
-    "utils",
-    "ui",
-    "render",
-    "systems",
+    "tests",
     "*.py",
-    "**/*.js"
-  ],
-  
-  "ts-node": {
-    "esm": true,
-    "experimentalSpecifierResolution": "node"
-  }
+    "**/*.test.js"
+  ]
 }
