@@ -6,13 +6,12 @@
  * Toggles NPC card or selects NPC in master-detail layout
  */
 function toggleNPCCard(cardOrId) {
-    const selectNPC = window.selectNPC;
     const id = parseEntityId(cardOrId);
     if (id === null)
         return;
     // Im Master-Detail Layout: NPC auswählen
-    if (typeof selectNPC === 'function') {
-        selectNPC(id);
+    if (typeof window.selectNPC === 'function') {
+        window.selectNPC(id);
         return;
     }
     // Fallback für alte Layouts
