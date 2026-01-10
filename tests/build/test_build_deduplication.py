@@ -177,14 +177,20 @@ var MAX_BACKUPS = window.MAX_BACKUPS;  // CONFLICT
                 var_name = match.group(2)
 
                 if var_name in prev_declarations:
-                    prev_line = prev_declarations[var_name]
+                    prev_line, prev_type = prev_declarations[var_name]
+
+                    # Allow const/let duplicates (local scopes) but not var
+                    if var_type in ('const', 'let') and prev_type in ('const', 'let'):
+                        # Both are block-scoped - likely different scopes, allow it
+                        continue
+
                     # Erlaubt wenn mindestens 50 Zeilen dazwischen (verschiedene Module)
                     if i - prev_line < 50:
                         pytest.fail(
-                            f"Duplicate declaration found: {var_name} at lines {prev_line} and {i}"
+                            f"Duplicate {var_type} declaration found: {var_name} at lines {prev_line} ({prev_type}) and {i} ({var_type})"
                         )
 
-                prev_declarations[var_name] = i
+                prev_declarations[var_name] = (i, var_type)
 
     def test_constants_are_available_in_build(self):
         """

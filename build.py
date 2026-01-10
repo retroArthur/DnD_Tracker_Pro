@@ -57,54 +57,67 @@ def deduplicate_window_assignments(js_code):
     """
     Entfernt duplizierte Variablen-Deklarationen.
 
-    Two-pass approach:
-    1. Scan all declarations (const/var/let X = ...)
-    2. Remove 'var X = window.X;' if X was already declared
+    Three-pass approach:
+    1. Find all non-window-assignment declarations (real definitions)
+    2. Remove window assignments that conflict with definitions
+    3. Remove duplicate function declarations
     """
     lines = js_code.split('\n')
 
-    # PASS 1: Find all variable declarations (including definitions)
-    # Match: const/var/let IDENTIFIER = (anything)
+    # PASS 1: Find real definitions (NOT window assignments)
+    # Pattern allows optional comments at end of line
+    window_assignment_pattern = r'^(var|const|let)\s+(\w+)\s*=\s*window\.(\2)\s*;?\s*(//.*)?$'
     declaration_pattern = r'^(var|const|let)\s+(\w+)\s*='
-    declared_vars = set()
+
+    real_definitions = set()
 
     for line in lines:
-        match = re.match(declaration_pattern, line.strip())
+        stripped = line.strip()
+        # Skip comments
+        if stripped.startswith('//'):
+            continue
+
+        # Check if it's a window assignment
+        if re.match(window_assignment_pattern, stripped):
+            continue
+
+        # Check if it's any other declaration
+        match = re.match(declaration_pattern, stripped)
         if match:
             var_name = match.group(2)
-            declared_vars.add(var_name)
+            real_definitions.add(var_name)
 
-    log.info(f"Pass 1: {len(declared_vars)} unique variables deklariert")
+    log.info(f"Pass 1: {len(real_definitions)} real definitions found")
 
-    # PASS 2: Remove redundant window assignments
-    # Match: var/const/let IDENTIFIER = window.IDENTIFIER;
-    window_assignment_pattern = r'^(var|const|let)\s+(\w+)\s*=\s*window\.(\2)\s*;?\s*$'
-
+    # PASS 2: Remove window assignments that conflict or are duplicated
     filtered_lines = []
     removed_count = 0
     seen_window_assigns = set()
 
     for line in lines:
-        match = re.match(window_assignment_pattern, line.strip())
+        stripped = line.strip()
+
+        # Skip empty lines and already-commented lines
+        if not stripped or stripped.startswith('//'):
+            filtered_lines.append(line)
+            continue
+
+        match = re.match(window_assignment_pattern, stripped)
         if match:
             var_type = match.group(1)
             var_name = match.group(2)
 
             # Remove if:
-            # 1. We've already seen this window assignment OR
-            # 2. This variable was declared elsewhere (e.g., const UI_TIMING = {...})
+            # 1. Already seen this window assignment (duplicate)
+            # 2. Conflicts with a real definition
             if var_name in seen_window_assigns:
                 removed_count += 1
-                filtered_lines.append(f"// REMOVED DUPLICATE WINDOW ASSIGN: {var_type} {var_name} = window.{var_name};")
+                filtered_lines.append(f"// [DEDUP] Removed duplicate window assignment: {var_name}")
                 continue
 
-            # Count how many times this var was declared
-            occurrences = sum(1 for l in lines if re.match(rf'^(var|const|let)\s+{var_name}\s*=', l.strip()))
-
-            if occurrences > 1:
-                # Multiple declarations exist - remove window assignments, keep original definitions
+            if var_name in real_definitions:
                 removed_count += 1
-                filtered_lines.append(f"// REMOVED (conflicts with definition): {var_type} {var_name} = window.{var_name};")
+                filtered_lines.append(f"// [DEDUP] Removed conflicting window assignment: {var_name}")
                 continue
 
             seen_window_assigns.add(var_name)
@@ -112,7 +125,66 @@ def deduplicate_window_assignments(js_code):
         else:
             filtered_lines.append(line)
 
-    log.info(f"Pass 2: {removed_count} duplizierte/konfligierende Deklarationen entfernt")
+    log.info(f"Pass 2: {removed_count} window assignment conflicts removed")
+
+    # PASS 3: Remove duplicate function declarations
+    js_after_pass2 = '\n'.join(filtered_lines)
+    js_final = remove_duplicate_functions(js_after_pass2)
+
+    return js_final
+
+def remove_duplicate_functions(js_code):
+    """
+    Removes duplicate function declarations.
+    Keeps first occurrence, comments out duplicates.
+    """
+    lines = js_code.split('\n')
+    function_pattern = r'^function\s+(\w+)\s*\('
+
+    seen_functions = {}
+    filtered_lines = []
+    removed_count = 0
+
+    for line_num, line in enumerate(lines):
+        stripped = line.strip()
+
+        if stripped.startswith('//'):
+            filtered_lines.append(line)
+            continue
+
+        match = re.match(function_pattern, stripped)
+        if match:
+            func_name = match.group(1)
+
+            if func_name in seen_functions:
+                # Duplicate function - comment it out
+                removed_count += 1
+                filtered_lines.append(f"// [DEDUP] Removed duplicate function: {func_name}")
+
+                # Find function body and comment it out too
+                brace_count = 0
+                in_function = False
+                for i in range(line_num, len(lines)):
+                    current_line = lines[i]
+                    if '{' in current_line:
+                        in_function = True
+                        brace_count += current_line.count('{')
+                    if '}' in current_line:
+                        brace_count -= current_line.count('}')
+
+                    if in_function and brace_count == 0:
+                        # Found end of function
+                        break
+                continue
+            else:
+                seen_functions[func_name] = line_num
+                filtered_lines.append(line)
+        else:
+            filtered_lines.append(line)
+
+    if removed_count > 0:
+        log.info(f"Pass 3: {removed_count} duplicate functions removed")
+
     return '\n'.join(filtered_lines)
 
 def build(minify=False, verbose=False):
