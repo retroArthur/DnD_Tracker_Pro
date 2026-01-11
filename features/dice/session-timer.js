@@ -103,5 +103,6 @@ function initSessionTimer() {
 // ============================================================
 // BACKWARD COMPATIBILITY EXPORTS
 // ============================================================
+window.initSessionTimer = initSessionTimer;
 window.toggleSessionTimer = toggleSessionTimer;
 window.resetSessionTimer = resetSessionTimer;

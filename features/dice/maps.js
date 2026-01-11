@@ -183,8 +183,6 @@ function uploadMapToCurrentTab(event) {
     reader.onload = function (e) {
         if (e.target && map) {
             map.image = e.target.result;
-            mapZoom = 1;
-            mapPanOffset = { x: 0, y: 0 };
             displayMap();
             saveImmediate();
             showToast('Bild hochgeladen');
@@ -225,11 +223,11 @@ function displayMap() {
         return;
     img.src = map.image;
     img.onload = function () {
-        updateMapTransform();
+        fitMapToViewport();
         renderMapMarkers();
     };
     if (img.complete) {
-        updateMapTransform();
+        fitMapToViewport();
         renderMapMarkers();
     }
 }
@@ -259,16 +257,56 @@ function resetMapZoom() {
         saveImmediate();
     }
 }
+function fitMapToViewport() {
+    const viewport = $('map-viewport');
+    const img = $('map-image');
+    const canvas = $('map-canvas');
+    if (!viewport || !img || !canvas || !img.complete)
+        return;
+    // Viewport-Größe
+    const viewportWidth = viewport.clientWidth;
+    const viewportHeight = viewport.clientHeight;
+    // Bild-Größe
+    const imgWidth = img.naturalWidth;
+    const imgHeight = img.naturalHeight;
+    if (!imgWidth || !imgHeight || !viewportWidth || !viewportHeight)
+        return;
+    // Berechne Skalierungsfaktor, damit das Bild vollständig sichtbar ist
+    const scaleX = viewportWidth / imgWidth;
+    const scaleY = viewportHeight / imgHeight;
+    // Nimm den kleineren Faktor, damit das gesamte Bild sichtbar ist
+    const scale = Math.min(scaleX, scaleY, 1); // Max 100%
+    mapZoom = scale;
+    // Pan-Offset auf 0 setzen, da .map-viewport bereits mit flexbox zentriert
+    mapPanOffset = { x: 0, y: 0 };
+    // Canvas-Dimensionen werden in updateMapTransform() gesetzt
+    updateMapTransform();
+    const map = getCurrentMap();
+    if (map) {
+        map.zoom = mapZoom;
+        map.panX = 0;
+        map.panY = 0;
+        saveImmediate();
+    }
+}
 function updateMapTransform() {
     const canvas = $('map-canvas');
+    const img = $('map-image');
     if (canvas) {
         canvas.style.transform = `translate(${mapPanOffset.x}px, ${mapPanOffset.y}px) scale(${mapZoom})`;
+        // Aktualisiere Canvas-Dimensionen bei Zoom-Änderungen (verhindert leeren Raum)
+        if (img && img.complete) {
+            const scaledWidth = img.naturalWidth * mapZoom;
+            const scaledHeight = img.naturalHeight * mapZoom;
+            canvas.style.width = `${scaledWidth}px`;
+            canvas.style.height = `${scaledHeight}px`;
+        }
     }
     const display = $('map-zoom-display');
     if (display) {
         display.textContent = Math.round(mapZoom * 100) + '%';
     }
-    // Update CSS variable for tooltip scaling
+    // Zoom in CSS-Variable speichern für Tooltip-Skalierung
     document.documentElement.style.setProperty('--map-zoom', String(mapZoom));
 }
 function initMapPanning() {
@@ -1545,6 +1583,17 @@ function initExtendedMapFeatures() {
     if (toolbar && getMaps().length > 0) {
         toolbar.style.display = 'flex';
     }
+    // Window-Resize-Listener: Karte an neuen Viewport anpassen
+    let resizeTimeout;
+    window.addEventListener('resize', function () {
+        clearTimeout(resizeTimeout);
+        resizeTimeout = setTimeout(function () {
+            const map = getCurrentMap();
+            if (map && map.image) {
+                fitMapToViewport();
+            }
+        }, 250);
+    });
 }
 function _updateCalibrationStatus() {
     const statusEl = $('map-calibration-status');
@@ -1583,6 +1632,7 @@ window.uploadMapToCurrentTab = uploadMapToCurrentTab;
 window.displayMap = displayMap;
 window.zoomMap = zoomMap;
 window.resetMapZoom = resetMapZoom;
+window.fitMapToViewport = fitMapToViewport;
 window.initMapPanning = initMapPanning;
 window.startMarkerPlacement = startMarkerPlacement;
 window.saveMarker = saveMarker;

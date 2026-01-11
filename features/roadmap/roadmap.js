@@ -209,11 +209,32 @@ function zoomToCenter(factor) {
     saveRoadmapUIState();
 }
 function roadmapResetView() {
+    const D = window.D;
+    const container = $('roadmap-container');
+
+    // Zoom auf 100% zurücksetzen
     roadmapZoom = 1;
-    roadmapPan = { x: 100, y: 50 };
+
+    // Auf erstes Event fokussieren, falls vorhanden
+    const firstEvent = D.roadmap?.events?.[0];
+    if (container && firstEvent && typeof firstEvent.x === 'number' && typeof firstEvent.y === 'number') {
+        // Container-Mitte berechnen
+        const centerX = container.clientWidth / 2;
+        const centerY = container.clientHeight / 2;
+
+        // Pan so setzen, dass das erste Event in der Mitte ist
+        roadmapPan = {
+            x: centerX - firstEvent.x * roadmapZoom,
+            y: centerY - firstEvent.y * roadmapZoom
+        };
+    } else {
+        // Fallback auf Standardposition, wenn keine Events vorhanden
+        roadmapPan = { x: 100, y: 50 };
+    }
+
     applyRoadmapTransform();
     saveRoadmapUIState();
-    save();
+    saveImmediate();
 }
 // ============================================================
 // EVENT DRAG HANDLERS
