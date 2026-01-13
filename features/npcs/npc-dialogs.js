@@ -33,15 +33,14 @@ function addDialogField() {
         </div>
         <div class="form-group" style="margin-bottom: 0;">
             <label style="font-size: 0.85em;">Dialog-Text *</label>
-            <div class="editor-toolbar">
-                <button type="button" class="editor-btn" data-action="format-text" data-cmd="${editorId}" data-editor="bold" title="Fett"><b>B</b></button>
-                <button type="button" class="editor-btn" data-action="format-text" data-cmd="${editorId}" data-editor="italic" title="Kursiv"><i>I</i></button>
-                <button type="button" class="editor-btn" data-action="format-text" data-cmd="${editorId}" data-editor="underline" title="Unterstrichen"><u>U</u></button>
-                <button type="button" class="editor-btn" data-action="format-text" data-cmd="${editorId}" data-editor="list" title="Liste">☰</button>
-                <button type="button" class="editor-btn" data-action="set-border-format" data-editor="${editorId}" title="Rahmen">◻</button>
-                <select class="editor-select" data-on-change="setEditorFont" data-editor-id="${editorId}" title="Schriftart"><option value="arial">Arial</option><option value="serif">Serif</option><option value="mono">Mono</option></select>
-                <select class="editor-select" data-on-change="setEditorFontSize" data-editor-id="${editorId}" title="Größe"><option value="0.8em">Klein</option><option value="1em" selected>Normal</option><option value="1.2em">Groß</option><option value="1.5em">Sehr groß</option></select>
-                <button type="button" class="editor-btn" data-action="clear-formatting" data-value="${editorId}" title="Formatierung löschen" style="color:#888;">✕</button>
+            <div class="editor-toolbar editor-toolbar-minimal">
+                <div class="toolbar-row">
+                    <button class="editor-btn" data-action="format-text" data-cmd="${editorId}" data-editor="bold" title="Fett"><b>B</b></button>
+                    <button class="editor-btn" data-action="format-text" data-cmd="${editorId}" data-editor="italic" title="Kursiv"><i>I</i></button>
+                    <button class="editor-btn" data-action="format-text" data-cmd="${editorId}" data-editor="underline" title="Unterstrichen"><u>U</u></button>
+                    <span class="toolbar-separator"></span>
+                    <button class="editor-btn" data-action="clear-formatting" data-value="${editorId}" title="Formatierung entfernen">🧹</button>
+                </div>
             </div>
             <div id="${editorId}" class="rich-editor dialog-text" contenteditable="true" style="min-height: 80px;" data-placeholder="Was sagt der NPC?"></div>
         </div>
@@ -74,15 +73,14 @@ function showAddDialogModal(npcId) {
         </div>
         <div class="form-group">
             <label>Dialog-Text *</label>
-            <div class="editor-toolbar">
-                <button type="button" class="editor-btn" data-action="format-text" data-cmd="quick-dialog-text" data-editor="bold" title="Fett"><b>B</b></button>
-                <button type="button" class="editor-btn" data-action="format-text" data-cmd="quick-dialog-text" data-editor="italic" title="Kursiv"><i>I</i></button>
-                <button type="button" class="editor-btn" data-action="format-text" data-cmd="quick-dialog-text" data-editor="underline" title="Unterstrichen"><u>U</u></button>
-                <button type="button" class="editor-btn" data-action="format-text" data-cmd="quick-dialog-text" data-editor="list" title="Liste">☰</button>
-                <button type="button" class="editor-btn" data-action="set-border-format" data-editor="quick-dialog-text" title="Rahmen">◻</button>
-                <select class="editor-select" data-on-change="setEditorFont" data-editor-id="quick-dialog-text" title="Schriftart"><option value="arial">Arial</option><option value="serif">Serif</option><option value="mono">Mono</option></select>
-                <select class="editor-select" data-on-change="setEditorFontSize" data-editor-id="quick-dialog-text" title="Größe"><option value="0.8em">Klein</option><option value="1em" selected>Normal</option><option value="1.2em">Groß</option><option value="1.5em">Sehr groß</option></select>
-                <button type="button" class="editor-btn" data-action="clear-formatting" data-value="quick-dialog-text" title="Formatierung löschen" style="color:#888;">✕</button>
+            <div class="editor-toolbar editor-toolbar-minimal">
+                <div class="toolbar-row">
+                    <button class="editor-btn" data-action="format-text" data-cmd="quick-dialog-text" data-editor="bold" title="Fett"><b>B</b></button>
+                    <button class="editor-btn" data-action="format-text" data-cmd="quick-dialog-text" data-editor="italic" title="Kursiv"><i>I</i></button>
+                    <button class="editor-btn" data-action="format-text" data-cmd="quick-dialog-text" data-editor="underline" title="Unterstrichen"><u>U</u></button>
+                    <span class="toolbar-separator"></span>
+                    <button class="editor-btn" data-action="clear-formatting" data-value="quick-dialog-text" title="Formatierung entfernen">🧹</button>
+                </div>
             </div>
             <div id="quick-dialog-text" class="rich-editor" contenteditable="true" style="min-height: 100px;" data-placeholder="Was sagt der NPC?"></div>
         </div>

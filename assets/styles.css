@@ -7871,23 +7871,23 @@
         .editor-btn {
             background: transparent;
             border: none;
-            color: #aaa;
+            color: var(--text);
             padding: 4px 6px;
             border-radius: 4px;
             cursor: pointer;
             font-size: 13px;
             transition: color 0.2s, background 0.2s;
         }
-        
+
         .editor-btn:hover {
             color: var(--gold);
             background: rgba(251, 191, 36, 0.1);
         }
-        
+
         .editor-select {
-            background: #1a1a2e;
-            border: 1px solid #333;
-            color: #aaa;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
+            color: var(--text);
             padding: 2px 4px;
             border-radius: 4px;
             cursor: pointer;
@@ -7915,7 +7915,7 @@
         .toolbar-separator {
             width: 1px;
             height: 16px;
-            background: #333;
+            background: var(--border);
             margin: 0 3px;
         }
         
@@ -8278,6 +8278,177 @@
             height: 4px;
             background: var(--gold);
             border-radius: 50%;
+        }
+
+        /* ============================================================ */
+
+        /* ============================================================
+           UNIFIED EDITOR TOOLBAR SYSTEM v3.0
+           Vereinheitlichte Toolbar-Styles für 3 Feature-Tiers
+           - Tier 3 (Minimal): Bold, Italic, Underline, Clear
+           - Tier 2 (Mid): + 3 Fonts, Lists
+           - Tier 1 (Full): + 7 Fonts, Font-Size, Colors, Tables, Links
+           ============================================================ */
+
+        /* Base Editor Toolbar - Floating Design */
+        .editor-toolbar {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            padding: 8px 10px;
+            background: linear-gradient(135deg, #1a1a2e 0%, #12121a 100%);
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            margin-bottom: 0;
+        }
+
+        /* Toolbar Row Container */
+        .editor-toolbar .toolbar-row {
+            display: flex;
+            gap: 4px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        /* Unified Editor Button */
+        .editor-toolbar .editor-btn {
+            background: transparent;
+            border: none;
+            color: var(--text);
+            padding: 6px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 13px;
+            transition: all 0.2s;
+            flex-shrink: 0;
+        }
+
+        .editor-toolbar .editor-btn:hover {
+            color: var(--gold);
+            background: rgba(251, 191, 36, 0.1);
+        }
+
+        .editor-toolbar .editor-btn:active {
+            transform: scale(0.95);
+        }
+
+        .editor-toolbar .editor-btn.format-active {
+            background: rgba(251, 191, 36, 0.15);
+            color: var(--gold);
+        }
+
+        /* Unified Editor Select (Dropdowns) */
+        .editor-toolbar .editor-select {
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 4px 6px;
+            border-radius: 4px;
+            font-size: 11px;
+            min-width: 70px;
+            max-width: 120px;
+            cursor: pointer;
+            transition: border-color 0.2s;
+            flex-shrink: 0;
+        }
+
+        .editor-toolbar .editor-select:hover,
+        .editor-toolbar .editor-select:focus {
+            border-color: var(--gold);
+            outline: none;
+        }
+
+        /* Toolbar Separator */
+        .editor-toolbar .toolbar-separator {
+            width: 1px;
+            height: 20px;
+            background: var(--border);
+            margin: 0 4px;
+            flex-shrink: 0;
+        }
+
+        /* Color Swatches (für Full-Tier) */
+        .editor-toolbar .color-swatch {
+            width: 20px;
+            height: 20px;
+            border-radius: 4px;
+            border: 2px solid transparent;
+            cursor: pointer;
+            transition: transform 0.15s, border-color 0.15s;
+            flex-shrink: 0;
+        }
+
+        .editor-toolbar .color-swatch:hover {
+            transform: scale(1.1);
+            border-color: var(--gold);
+        }
+
+        .editor-toolbar .color-swatch.active {
+            border-color: var(--gold);
+            box-shadow: 0 0 6px rgba(251, 191, 36, 0.5);
+        }
+
+        /* Tier-Specific Modifiers */
+
+        /* Tier 3: Minimal (1 Zeile - Basic Formatting) */
+        .editor-toolbar-minimal {
+            /* Keine zusätzlichen Styles nötig - verwendet Base */
+        }
+
+        .editor-toolbar-minimal .toolbar-row:nth-child(2),
+        .editor-toolbar-minimal .toolbar-row:nth-child(3) {
+            display: none; /* Nur erste Zeile sichtbar */
+        }
+
+        /* Tier 2: Mid (2 Zeilen - Formatting + Fonts) */
+        .editor-toolbar-mid {
+            /* Verwendet Base-Styles */
+        }
+
+        .editor-toolbar-mid .toolbar-row:nth-child(3) {
+            display: none; /* Nur erste 2 Zeilen sichtbar */
+        }
+
+        /* Tier 1: Full (3 Zeilen - All Features) */
+        .editor-toolbar-full {
+            /* Alle Zeilen sichtbar, verwendet Base-Styles */
+        }
+
+        /* Responsive: Mobile */
+        @media (max-width: 768px) {
+            .editor-toolbar {
+                padding: 6px 8px;
+                gap: 3px;
+            }
+
+            .editor-toolbar .toolbar-row {
+                gap: 3px;
+            }
+
+            .editor-toolbar .editor-btn {
+                padding: 8px 10px;
+                font-size: 14px;
+                min-width: 40px;
+            }
+
+            .editor-toolbar .editor-select {
+                font-size: 12px;
+                padding: 6px 4px;
+            }
+
+            .editor-toolbar .toolbar-separator {
+                margin: 0 2px;
+            }
+        }
+
+        /* Compatibility: Verbindung zu bestehenden Editoren */
+        .editor-wrapper .editor-toolbar {
+            border-bottom: none;
+            border-radius: 8px 8px 0 0;
+        }
+
+        .editor-wrapper .rich-editor {
+            border-radius: 0 0 8px 8px;
         }
 
         /* ============================================================ */

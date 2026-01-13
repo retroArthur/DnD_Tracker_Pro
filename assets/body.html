@@ -488,24 +488,24 @@
             <!-- Notizen (volle Breite) -->
             <div class="cf-notes-panel">
                 <span class="cf-notes-title">📝 Notizen</span>
-                <div class="cf-notes-toolbar">
-                    <button type="button" data-action="format-text" data-cmd="char-notes" data-editor="bold" title="Fett"><b>B</b></button>
-                    <button type="button" data-action="format-text" data-cmd="char-notes" data-editor="italic" title="Kursiv"><i>I</i></button>
-                    <button type="button" data-action="format-text" data-cmd="char-notes" data-editor="underline" title="Unterstrichen"><u>U</u></button>
-                    <button type="button" data-action="format-text" data-cmd="char-notes" data-editor="list" title="Liste">☰</button>
-                    <button type="button" data-action="set-border-format" data-editor="char-notes" title="Rahmen">◻</button>
-                    <select class="editor-select" data-action="set-editor-font" data-editor="char-notes" title="Schriftart">
-                        <option value="arial">Arial</option>
-                        <option value="serif">Serif</option>
-                        <option value="mono">Mono</option>
-                    </select>
-                    <select class="editor-select" data-action="set-editor-font-size" data-editor="char-notes" title="Größe">
-                        <option value="0.8em">Klein</option>
-                        <option value="1em" selected>Normal</option>
-                        <option value="1.2em">Groß</option>
-                        <option value="1.5em">Sehr groß</option>
-                    </select>
-                    <button type="button" data-action="clear-formatting" data-value="char-notes" title="Formatierung löschen" style="color:#888;">✕</button>
+                <div class="editor-toolbar editor-toolbar-mid cf-notes-toolbar">
+                    <div class="toolbar-row">
+                        <button class="editor-btn" data-action="format-text" data-cmd="char-notes" data-editor="bold" title="Fett"><b>B</b></button>
+                        <button class="editor-btn" data-action="format-text" data-cmd="char-notes" data-editor="italic" title="Kursiv"><i>I</i></button>
+                        <button class="editor-btn" data-action="format-text" data-cmd="char-notes" data-editor="underline" title="Unterstrichen"><u>U</u></button>
+                        <button class="editor-btn" data-action="format-text" data-cmd="char-notes" data-editor="strikethrough" title="Durchgestrichen"><s>S</s></button>
+                        <span class="toolbar-separator"></span>
+                        <button class="editor-btn" data-action="format-text" data-cmd="char-notes" data-editor="list" title="Liste">☰</button>
+                    </div>
+                    <div class="toolbar-row">
+                        <select class="editor-select" data-action="set-editor-font" data-editor="char-notes" title="Schriftart">
+                            <option value="arial">Arial</option>
+                            <option value="serif">Serif</option>
+                            <option value="mono">Mono</option>
+                        </select>
+                        <span class="toolbar-separator"></span>
+                        <button class="editor-btn" data-action="clear-formatting" data-value="char-notes" title="Formatierung entfernen">🧹</button>
+                    </div>
                 </div>
                 <div id="char-notes" class="cf-notes-editor" contenteditable="true" data-placeholder="Notizen..."></div>
             </div>
@@ -787,47 +787,47 @@
                 </div>
                 <div class="form-group">
                     <label>Beschreibung</label>
-                    <div class="editor-toolbar">
-                        <button type="button" class="editor-btn" data-action="format-text" data-cmd="roadmap-event-description" data-editor="bold" title="Fett"><b>B</b></button>
-                        <button type="button" class="editor-btn" data-action="format-text" data-cmd="roadmap-event-description" data-editor="italic" title="Kursiv"><i>I</i></button>
-                        <button type="button" class="editor-btn" data-action="format-text" data-cmd="roadmap-event-description" data-editor="underline" title="Unterstrichen"><u>U</u></button>
-                        <button type="button" class="editor-btn" data-action="format-text" data-cmd="roadmap-event-description" data-editor="strikethrough" title="Durchgestrichen"><s>S</s></button>
-                        <button type="button" class="editor-btn" data-action="insert-link" data-editor="roadmap-event-description" title="Link einfügen">🔗</button>
-                        <button type="button" class="editor-btn" data-action="format-text" data-cmd="roadmap-event-description" data-editor="list" title="Liste">☰</button>
-                        <button type="button" class="editor-btn" data-action="set-border-format" data-editor="roadmap-event-description" title="Rahmen">◻</button>
-                        <button type="button" class="editor-btn" data-action="insert-table" data-editor="roadmap-event-description" title="Tabelle einfügen">⊞</button>
-                        <select class="editor-select" data-action="set-read-aloud-format" data-editor="roadmap-event-description" title="Vorlese-Text">
-                            <option value="">Vorlese-Text</option>
-                            <option value="parchment">📜 Pergament</option>
-                            <option value="crimson">🔴 Karmesin</option>
-                            <option value="violet">🟣 Violett</option>
-                            <option value="sage">🟢 Salbei</option>
-                            <option value="sky">🔵 Himmel</option>
-                            <option value="slate">⚫ Schiefer</option>
-                        </select>
-                        <select class="editor-select" data-action="set-editor-font" data-editor="roadmap-event-description" title="Schriftart">
-                            <option value="arial">Arial</option>
-                            <option value="serif">Serif</option>
-                            <option value="mono">Mono</option>
-                            <option value="roboto">Roboto</option>
-                            <option value="inter">Inter</option>
-                            <option value="poppins">Poppins</option>
-                            <option value="source">Source Sans</option>
-                        </select>
-                        <select class="editor-select" data-action="set-editor-font-size" data-editor="roadmap-event-description" title="Größe">
-                            <option value="0.8em">Klein</option>
-                            <option value="1em" selected>Normal</option>
-                            <option value="1.2em">Groß</option>
-                            <option value="1.5em">Sehr groß</option>
-                        </select>
-                        <select class="editor-select" data-action="set-highlight-color" data-editor="roadmap-event-description" title="Highlight">
-                            <option value="">Highlight</option>
-                            <option value="yellow">🟨 Gelb</option>
-                            <option value="cyan">🟦 Cyan</option>
-                            <option value="pink">🟥 Pink</option>
-                            <option value="green">🟩 Grün</option>
-                        </select>
-                        <button type="button" class="editor-btn" data-action="clear-formatting" data-value="roadmap-event-description" title="Formatierung löschen" style="color:#888;">✕</button>
+                    <div class="editor-toolbar editor-toolbar-full">
+                        <div class="toolbar-row">
+                            <button class="editor-btn" data-action="format-text" data-cmd="roadmap-event-description" data-editor="bold" title="Fett"><b>B</b></button>
+                            <button class="editor-btn" data-action="format-text" data-cmd="roadmap-event-description" data-editor="italic" title="Kursiv"><i>I</i></button>
+                            <button class="editor-btn" data-action="format-text" data-cmd="roadmap-event-description" data-editor="underline" title="Unterstrichen"><u>U</u></button>
+                            <button class="editor-btn" data-action="format-text" data-cmd="roadmap-event-description" data-editor="strikethrough" title="Durchgestrichen"><s>S</s></button>
+                            <span class="toolbar-separator"></span>
+                            <button class="editor-btn" data-action="insert-link" data-editor="roadmap-event-description" title="Link einfügen">🔗</button>
+                            <button class="editor-btn" data-action="format-text" data-cmd="roadmap-event-description" data-editor="list" title="Liste">☰</button>
+                            <button class="editor-btn" data-action="insert-table" data-editor="roadmap-event-description" title="Tabelle">📊</button>
+                        </div>
+                        <div class="toolbar-row">
+                            <select class="editor-select" data-action="set-editor-font" data-editor="roadmap-event-description" title="Schriftart"><option value="arial">Arial</option><option value="serif">Serif</option><option value="mono">Mono</option><option value="roboto">Roboto</option><option value="inter">Inter</option><option value="poppins">Poppins</option><option value="source-sans">Source Sans</option></select>
+                            <select class="editor-select" data-action="set-editor-font-size" data-editor="roadmap-event-description" title="Größe"><option value="11px">11px</option><option value="13px">13px</option><option value="16px" selected>16px</option><option value="18px">18px</option><option value="20px">20px</option></select>
+                        </div>
+                        <div class="toolbar-row">
+                            <select class="editor-select" data-action="set-highlight-color" data-editor="roadmap-event-description" title="Hervorheben">
+                                <option value="">🖍️ Marker</option>
+                                <option value="#fbbf24">🟡 Gold</option>
+                                <option value="#22d3ee">🔵 Cyan</option>
+                                <option value="#ef4444">🔴 Rot</option>
+                                <option value="#22c55e">🟢 Grün</option>
+                                <option value="#a855f7">🟣 Lila</option>
+                                <option value="#f97316">🟠 Orange</option>
+                                <option value="#ec4899">🌸 Pink</option>
+                                <option value="#06b6d4">🩵 Türkis</option>
+                                <option value="transparent">⭕ Keine</option>
+                            </select>
+                            <select class="editor-select" data-action="set-read-aloud-style" data-editor="roadmap-event-description" title="Vorlese-Text">
+                                <option value="">📖 Vorlese</option>
+                                <option value="parchment">📜 Pergament</option>
+                                <option value="crimson">🍷 Karmesin</option>
+                                <option value="violet">🔮 Violett</option>
+                                <option value="sage">🌿 Salbei</option>
+                                <option value="sky">☁️ Himmel</option>
+                                <option value="slate">🪨 Schiefer</option>
+                            </select>
+                            <span class="toolbar-separator"></span>
+                            <button class="editor-btn" data-action="set-border-format" data-editor="roadmap-event-description" title="Rahmen">◻</button>
+                            <button class="editor-btn" data-action="clear-formatting" data-value="roadmap-event-description" title="Formatierung entfernen">🧹</button>
+                        </div>
                     </div>
                     <div id="roadmap-event-description" class="rich-editor" contenteditable="true" style="min-height: 120px;" placeholder="Was passiert bei diesem Event?"></div>
                 </div>
@@ -1299,57 +1299,77 @@
                     </div>
                     <div class="form-group">
                         <label>Eigenschaften</label>
-                        <div class="editor-toolbar">
-                            <button type="button" class="editor-btn" data-action="format-text" data-cmd="enc-traits" data-editor="bold" title="Fett"><b>B</b></button>
-                            <button type="button" class="editor-btn" data-action="format-text" data-cmd="enc-traits" data-editor="italic" title="Kursiv"><i>I</i></button>
-                            <button type="button" class="editor-btn" data-action="format-text" data-cmd="enc-traits" data-editor="underline" title="Unterstrichen"><u>U</u></button>
-                            <button type="button" class="editor-btn" data-action="format-text" data-cmd="enc-traits" data-editor="list" title="Liste">☰</button>
-                            <button type="button" class="editor-btn" data-action="set-border-format" data-editor="enc-traits" title="Rahmen">◻</button>
-                            <select class="editor-select" data-action="set-editor-font" data-editor="enc-traits" title="Schriftart"><option value="arial">Arial</option><option value="serif">Serif</option><option value="mono">Mono</option></select>
-                            <select class="editor-select" data-action="set-editor-font-size" data-editor="enc-traits" title="Größe"><option value="0.8em">Klein</option><option value="1em" selected>Normal</option><option value="1.2em">Groß</option><option value="1.5em">Sehr groß</option></select>
-                            <button type="button" class="editor-btn" data-action="clear-formatting" data-value="enc-traits" title="Formatierung löschen" style="color:#888;">✕</button>
+                        <div class="editor-toolbar editor-toolbar-mid">
+                            <div class="toolbar-row">
+                                <button class="editor-btn" data-action="format-text" data-cmd="enc-traits" data-editor="bold" title="Fett"><b>B</b></button>
+                                <button class="editor-btn" data-action="format-text" data-cmd="enc-traits" data-editor="italic" title="Kursiv"><i>I</i></button>
+                                <button class="editor-btn" data-action="format-text" data-cmd="enc-traits" data-editor="underline" title="Unterstrichen"><u>U</u></button>
+                                <button class="editor-btn" data-action="format-text" data-cmd="enc-traits" data-editor="strikethrough" title="Durchgestrichen"><s>S</s></button>
+                                <span class="toolbar-separator"></span>
+                                <button class="editor-btn" data-action="format-text" data-cmd="enc-traits" data-editor="list" title="Liste">☰</button>
+                            </div>
+                            <div class="toolbar-row">
+                                <select class="editor-select" data-action="set-editor-font" data-editor="enc-traits" title="Schriftart"><option value="arial">Arial</option><option value="serif">Serif</option><option value="mono">Mono</option></select>
+                                <span class="toolbar-separator"></span>
+                                <button class="editor-btn" data-action="clear-formatting" data-value="enc-traits" title="Formatierung entfernen">🧹</button>
+                            </div>
                         </div>
                         <div id="enc-traits" class="rich-editor" contenteditable="true"></div>
                     </div>
                     <div class="form-group">
                         <label>Ausrüstung</label>
-                        <div class="editor-toolbar">
-                            <button type="button" class="editor-btn" data-action="format-text" data-cmd="enc-equipment" data-editor="bold" title="Fett"><b>B</b></button>
-                            <button type="button" class="editor-btn" data-action="format-text" data-cmd="enc-equipment" data-editor="italic" title="Kursiv"><i>I</i></button>
-                            <button type="button" class="editor-btn" data-action="format-text" data-cmd="enc-equipment" data-editor="underline" title="Unterstrichen"><u>U</u></button>
-                            <button type="button" class="editor-btn" data-action="format-text" data-cmd="enc-equipment" data-editor="list" title="Liste">☰</button>
-                            <button type="button" class="editor-btn" data-action="set-border-format" data-editor="enc-equipment" title="Rahmen">◻</button>
-                            <select class="editor-select" data-action="set-editor-font" data-editor="enc-equipment" title="Schriftart"><option value="arial">Arial</option><option value="serif">Serif</option><option value="mono">Mono</option></select>
-                            <select class="editor-select" data-action="set-editor-font-size" data-editor="enc-equipment" title="Größe"><option value="0.8em">Klein</option><option value="1em" selected>Normal</option><option value="1.2em">Groß</option><option value="1.5em">Sehr groß</option></select>
-                            <button type="button" class="editor-btn" data-action="clear-formatting" data-value="enc-equipment" title="Formatierung löschen" style="color:#888;">✕</button>
+                        <div class="editor-toolbar editor-toolbar-mid">
+                            <div class="toolbar-row">
+                                <button class="editor-btn" data-action="format-text" data-cmd="enc-equipment" data-editor="bold" title="Fett"><b>B</b></button>
+                                <button class="editor-btn" data-action="format-text" data-cmd="enc-equipment" data-editor="italic" title="Kursiv"><i>I</i></button>
+                                <button class="editor-btn" data-action="format-text" data-cmd="enc-equipment" data-editor="underline" title="Unterstrichen"><u>U</u></button>
+                                <button class="editor-btn" data-action="format-text" data-cmd="enc-equipment" data-editor="strikethrough" title="Durchgestrichen"><s>S</s></button>
+                                <span class="toolbar-separator"></span>
+                                <button class="editor-btn" data-action="format-text" data-cmd="enc-equipment" data-editor="list" title="Liste">☰</button>
+                            </div>
+                            <div class="toolbar-row">
+                                <select class="editor-select" data-action="set-editor-font" data-editor="enc-equipment" title="Schriftart"><option value="arial">Arial</option><option value="serif">Serif</option><option value="mono">Mono</option></select>
+                                <span class="toolbar-separator"></span>
+                                <button class="editor-btn" data-action="clear-formatting" data-value="enc-equipment" title="Formatierung entfernen">🧹</button>
+                            </div>
                         </div>
                         <div id="enc-equipment" class="rich-editor" contenteditable="true"></div>
                     </div>
                     <div class="form-group">
                         <label>Aktionen</label>
-                        <div class="editor-toolbar">
-                            <button type="button" class="editor-btn" data-action="format-text" data-cmd="enc-actions" data-editor="bold" title="Fett"><b>B</b></button>
-                            <button type="button" class="editor-btn" data-action="format-text" data-cmd="enc-actions" data-editor="italic" title="Kursiv"><i>I</i></button>
-                            <button type="button" class="editor-btn" data-action="format-text" data-cmd="enc-actions" data-editor="underline" title="Unterstrichen"><u>U</u></button>
-                            <button type="button" class="editor-btn" data-action="format-text" data-cmd="enc-actions" data-editor="list" title="Liste">☰</button>
-                            <button type="button" class="editor-btn" data-action="set-border-format" data-editor="enc-actions" title="Rahmen">◻</button>
-                            <select class="editor-select" data-action="set-editor-font" data-editor="enc-actions" title="Schriftart"><option value="arial">Arial</option><option value="serif">Serif</option><option value="mono">Mono</option></select>
-                            <select class="editor-select" data-action="set-editor-font-size" data-editor="enc-actions" title="Größe"><option value="0.8em">Klein</option><option value="1em" selected>Normal</option><option value="1.2em">Groß</option><option value="1.5em">Sehr groß</option></select>
-                            <button type="button" class="editor-btn" data-action="clear-formatting" data-value="enc-actions" title="Formatierung löschen" style="color:#888;">✕</button>
+                        <div class="editor-toolbar editor-toolbar-mid">
+                            <div class="toolbar-row">
+                                <button class="editor-btn" data-action="format-text" data-cmd="enc-actions" data-editor="bold" title="Fett"><b>B</b></button>
+                                <button class="editor-btn" data-action="format-text" data-cmd="enc-actions" data-editor="italic" title="Kursiv"><i>I</i></button>
+                                <button class="editor-btn" data-action="format-text" data-cmd="enc-actions" data-editor="underline" title="Unterstrichen"><u>U</u></button>
+                                <button class="editor-btn" data-action="format-text" data-cmd="enc-actions" data-editor="strikethrough" title="Durchgestrichen"><s>S</s></button>
+                                <span class="toolbar-separator"></span>
+                                <button class="editor-btn" data-action="format-text" data-cmd="enc-actions" data-editor="list" title="Liste">☰</button>
+                            </div>
+                            <div class="toolbar-row">
+                                <select class="editor-select" data-action="set-editor-font" data-editor="enc-actions" title="Schriftart"><option value="arial">Arial</option><option value="serif">Serif</option><option value="mono">Mono</option></select>
+                                <span class="toolbar-separator"></span>
+                                <button class="editor-btn" data-action="clear-formatting" data-value="enc-actions" title="Formatierung entfernen">🧹</button>
+                            </div>
                         </div>
                         <div id="enc-actions" class="rich-editor" contenteditable="true"></div>
                     </div>
                     <div class="form-group">
                         <label>Fertigkeiten</label>
-                        <div class="editor-toolbar">
-                            <button type="button" class="editor-btn" data-action="format-text" data-cmd="enc-skills" data-editor="bold" title="Fett"><b>B</b></button>
-                            <button type="button" class="editor-btn" data-action="format-text" data-cmd="enc-skills" data-editor="italic" title="Kursiv"><i>I</i></button>
-                            <button type="button" class="editor-btn" data-action="format-text" data-cmd="enc-skills" data-editor="underline" title="Unterstrichen"><u>U</u></button>
-                            <button type="button" class="editor-btn" data-action="format-text" data-cmd="enc-skills" data-editor="list" title="Liste">☰</button>
-                            <button type="button" class="editor-btn" data-action="set-border-format" data-editor="enc-skills" title="Rahmen">◻</button>
-                            <select class="editor-select" data-action="set-editor-font" data-editor="enc-skills" title="Schriftart"><option value="arial">Arial</option><option value="serif">Serif</option><option value="mono">Mono</option></select>
-                            <select class="editor-select" data-action="set-editor-font-size" data-editor="enc-skills" title="Größe"><option value="0.8em">Klein</option><option value="1em" selected>Normal</option><option value="1.2em">Groß</option><option value="1.5em">Sehr groß</option></select>
-                            <button type="button" class="editor-btn" data-action="clear-formatting" data-value="enc-skills" title="Formatierung löschen" style="color:#888;">✕</button>
+                        <div class="editor-toolbar editor-toolbar-mid">
+                            <div class="toolbar-row">
+                                <button class="editor-btn" data-action="format-text" data-cmd="enc-skills" data-editor="bold" title="Fett"><b>B</b></button>
+                                <button class="editor-btn" data-action="format-text" data-cmd="enc-skills" data-editor="italic" title="Kursiv"><i>I</i></button>
+                                <button class="editor-btn" data-action="format-text" data-cmd="enc-skills" data-editor="underline" title="Unterstrichen"><u>U</u></button>
+                                <button class="editor-btn" data-action="format-text" data-cmd="enc-skills" data-editor="strikethrough" title="Durchgestrichen"><s>S</s></button>
+                                <span class="toolbar-separator"></span>
+                                <button class="editor-btn" data-action="format-text" data-cmd="enc-skills" data-editor="list" title="Liste">☰</button>
+                            </div>
+                            <div class="toolbar-row">
+                                <select class="editor-select" data-action="set-editor-font" data-editor="enc-skills" title="Schriftart"><option value="arial">Arial</option><option value="serif">Serif</option><option value="mono">Mono</option></select>
+                                <span class="toolbar-separator"></span>
+                                <button class="editor-btn" data-action="clear-formatting" data-value="enc-skills" title="Formatierung entfernen">🧹</button>
+                            </div>
                         </div>
                         <div id="enc-skills" class="rich-editor" contenteditable="true"></div>
                     </div>
@@ -1708,15 +1728,47 @@
                     <!-- Zeile 4: Notizen -->
                     <div class="form-group">
                         <label>Ausführliche Notizen</label>
-                        <div class="editor-toolbar">
-                            <button type="button" class="editor-btn" data-action="format-text" data-cmd="session-text" data-editor="bold" title="Fett"><b>B</b></button>
-                            <button type="button" class="editor-btn" data-action="format-text" data-cmd="session-text" data-editor="italic" title="Kursiv"><i>I</i></button>
-                            <button type="button" class="editor-btn" data-action="format-text" data-cmd="session-text" data-editor="underline" title="Unterstrichen"><u>U</u></button>
-                            <button type="button" class="editor-btn" data-action="format-text" data-cmd="session-text" data-editor="list" title="Liste">☰</button>
-                            <button type="button" class="editor-btn" data-action="set-border-format" data-editor="session-text" title="Rahmen">◻</button>
-                            <select class="editor-select" data-action="set-editor-font" data-editor="session-text" title="Schriftart"><option value="arial">Arial</option><option value="serif">Serif</option><option value="mono">Mono</option></select>
-                            <select class="editor-select" data-action="set-editor-font-size" data-editor="session-text" title="Größe"><option value="0.8em">Klein</option><option value="1em" selected>Normal</option><option value="1.2em">Groß</option><option value="1.5em">Sehr groß</option></select>
-                            <button type="button" class="editor-btn" data-action="clear-formatting" data-value="session-text" title="Formatierung löschen" style="color:#888;">✕</button>
+                        <div class="editor-toolbar editor-toolbar-full">
+                            <div class="toolbar-row">
+                                <button class="editor-btn" data-action="format-text" data-cmd="session-text" data-editor="bold" title="Fett"><b>B</b></button>
+                                <button class="editor-btn" data-action="format-text" data-cmd="session-text" data-editor="italic" title="Kursiv"><i>I</i></button>
+                                <button class="editor-btn" data-action="format-text" data-cmd="session-text" data-editor="underline" title="Unterstrichen"><u>U</u></button>
+                                <button class="editor-btn" data-action="format-text" data-cmd="session-text" data-editor="strikethrough" title="Durchgestrichen"><s>S</s></button>
+                                <span class="toolbar-separator"></span>
+                                <button class="editor-btn" data-action="insert-link" data-editor="session-text" title="Link einfügen">🔗</button>
+                                <button class="editor-btn" data-action="format-text" data-cmd="session-text" data-editor="list" title="Liste">☰</button>
+                                <button class="editor-btn" data-action="insert-table" data-editor="session-text" title="Tabelle">📊</button>
+                            </div>
+                            <div class="toolbar-row">
+                                <select class="editor-select" data-action="set-editor-font" data-editor="session-text" title="Schriftart"><option value="arial">Arial</option><option value="serif">Serif</option><option value="mono">Mono</option><option value="roboto">Roboto</option><option value="inter">Inter</option><option value="poppins">Poppins</option><option value="source-sans">Source Sans</option></select>
+                                <select class="editor-select" data-action="set-editor-font-size" data-editor="session-text" title="Größe"><option value="11px">11px</option><option value="13px">13px</option><option value="16px" selected>16px</option><option value="18px">18px</option><option value="20px">20px</option></select>
+                            </div>
+                            <div class="toolbar-row">
+                                <select class="editor-select" data-action="set-highlight-color" data-editor="session-text" title="Hervorheben">
+                                    <option value="">🖍️ Marker</option>
+                                    <option value="#fbbf24">🟡 Gold</option>
+                                    <option value="#22d3ee">🔵 Cyan</option>
+                                    <option value="#ef4444">🔴 Rot</option>
+                                    <option value="#22c55e">🟢 Grün</option>
+                                    <option value="#a855f7">🟣 Lila</option>
+                                    <option value="#f97316">🟠 Orange</option>
+                                    <option value="#ec4899">🌸 Pink</option>
+                                    <option value="#06b6d4">🩵 Türkis</option>
+                                    <option value="transparent">⭕ Keine</option>
+                                </select>
+                                <select class="editor-select" data-action="set-read-aloud-style" data-editor="session-text" title="Vorlese-Text">
+                                    <option value="">📖 Vorlese</option>
+                                    <option value="parchment">📜 Pergament</option>
+                                    <option value="crimson">🍷 Karmesin</option>
+                                    <option value="violet">🔮 Violett</option>
+                                    <option value="sage">🌿 Salbei</option>
+                                    <option value="sky">☁️ Himmel</option>
+                                    <option value="slate">🪨 Schiefer</option>
+                                </select>
+                                <span class="toolbar-separator"></span>
+                                <button class="editor-btn" data-action="set-border-format" data-editor="session-text" title="Rahmen">◻</button>
+                                <button class="editor-btn" data-action="clear-formatting" data-value="session-text" title="Formatierung entfernen">🧹</button>
+                            </div>
                         </div>
                         <div id="session-text" class="rich-editor" contenteditable="true" style="min-height: 120px;"></div>
                     </div>
@@ -1848,37 +1900,48 @@
                     </div>
                     <div class="form-group">
                         <label>Inhalt <span style="color: var(--text-dim); font-size: 11px;">— Verwende [[Name]] für Wiki-Links</span></label>
-                        <div class="editor-toolbar">
-                            <button type="button" class="editor-btn" data-action="format-text" data-cmd="wiki-content" data-editor="bold" title="Fett"><b>B</b></button>
-                            <button type="button" class="editor-btn" data-action="format-text" data-cmd="wiki-content" data-editor="italic" title="Kursiv"><i>I</i></button>
-                            <button type="button" class="editor-btn" data-action="format-text" data-cmd="wiki-content" data-editor="underline" title="Unterstrichen"><u>U</u></button>
-                            <button type="button" class="editor-btn" data-action="format-text" data-cmd="wiki-content" data-editor="strikethrough" title="Durchgestrichen"><s>S</s></button>
-                            <button type="button" class="editor-btn" data-action="insert-link" data-editor="wiki-content" title="Link einfügen">🔗</button>
-                            <button type="button" class="editor-btn" data-action="format-text" data-cmd="wiki-content" data-editor="list" title="Liste">☰</button>
-                            <button type="button" class="editor-btn" data-action="set-border-format" data-editor="wiki-content" title="Rahmen">◻</button>
-                            <button type="button" class="editor-btn" data-action="insert-table" data-editor="wiki-content" title="Tabelle">📊</button>
-                            <select class="editor-select" data-action="set-read-aloud-style" data-editor="wiki-content" title="Vorlese-Text">
-                                <option value="">📖 Vorlese</option>
-                                <option value="parchment">📜 Pergament</option>
-                                <option value="crimson">🍷 Karmesin</option>
-                                <option value="violet">🔮 Violett</option>
-                                <option value="sage">🌿 Salbei</option>
-                                <option value="sky">☁️ Himmel</option>
-                                <option value="slate">🪨 Schiefer</option>
-                            </select>
-                            <button type="button" class="editor-btn" data-action="call" data-value="insertWikiLink" title="Wiki-Link">[[]]</button>
-                            <select class="editor-select" data-action="set-editor-font" data-editor="wiki-content" title="Schriftart"><option value="arial">Arial</option><option value="serif">Serif</option><option value="mono">Mono</option><option value="roboto">Roboto</option><option value="inter">Inter</option><option value="poppins">Poppins</option><option value="source-sans">Source Sans</option></select>
-                            <select class="editor-select" data-action="set-editor-font-size" data-editor="wiki-content" title="Größe"><option value="0.8em">Klein</option><option value="1em" selected>Normal</option><option value="1.2em">Groß</option><option value="1.5em">Sehr groß</option></select>
-                            <select class="editor-select" data-action="set-highlight-color" data-editor="wiki-content" title="Hervorheben">
-                                <option value="">🖍️ Marker</option>
-                                <option value="#fbbf24">🟡 Gold</option>
-                                <option value="#22d3ee">🔵 Cyan</option>
-                                <option value="#ef4444">🔴 Rot</option>
-                                <option value="#22c55e">🟢 Grün</option>
-                                <option value="#a855f7">🟣 Lila</option>
-                                <option value="transparent">⭕ Keine</option>
-                            </select>
-                            <button type="button" class="editor-btn" data-action="clear-formatting" data-value="wiki-content" title="Formatierung löschen" style="color:#888;">✕</button>
+                        <div class="editor-toolbar editor-toolbar-full">
+                            <div class="toolbar-row">
+                                <button class="editor-btn" data-action="format-text" data-cmd="wiki-content" data-editor="bold" title="Fett"><b>B</b></button>
+                                <button class="editor-btn" data-action="format-text" data-cmd="wiki-content" data-editor="italic" title="Kursiv"><i>I</i></button>
+                                <button class="editor-btn" data-action="format-text" data-cmd="wiki-content" data-editor="underline" title="Unterstrichen"><u>U</u></button>
+                                <button class="editor-btn" data-action="format-text" data-cmd="wiki-content" data-editor="strikethrough" title="Durchgestrichen"><s>S</s></button>
+                                <span class="toolbar-separator"></span>
+                                <button class="editor-btn" data-action="insert-link" data-editor="wiki-content" title="Link einfügen">🔗</button>
+                                <button class="editor-btn" data-action="format-text" data-cmd="wiki-content" data-editor="list" title="Liste">☰</button>
+                                <button class="editor-btn" data-action="insert-table" data-editor="wiki-content" title="Tabelle">📊</button>
+                                <button class="editor-btn" data-action="call" data-value="insertWikiLink" title="Wiki-Link">[[]]</button>
+                            </div>
+                            <div class="toolbar-row">
+                                <select class="editor-select" data-action="set-editor-font" data-editor="wiki-content" title="Schriftart"><option value="arial">Arial</option><option value="serif">Serif</option><option value="mono">Mono</option><option value="roboto">Roboto</option><option value="inter">Inter</option><option value="poppins">Poppins</option><option value="source-sans">Source Sans</option></select>
+                                <select class="editor-select" data-action="set-editor-font-size" data-editor="wiki-content" title="Größe"><option value="11px">11px</option><option value="13px">13px</option><option value="16px" selected>16px</option><option value="18px">18px</option><option value="20px">20px</option></select>
+                            </div>
+                            <div class="toolbar-row">
+                                <select class="editor-select" data-action="set-highlight-color" data-editor="wiki-content" title="Hervorheben">
+                                    <option value="">🖍️ Marker</option>
+                                    <option value="#fbbf24">🟡 Gold</option>
+                                    <option value="#22d3ee">🔵 Cyan</option>
+                                    <option value="#ef4444">🔴 Rot</option>
+                                    <option value="#22c55e">🟢 Grün</option>
+                                    <option value="#a855f7">🟣 Lila</option>
+                                    <option value="#f97316">🟠 Orange</option>
+                                    <option value="#ec4899">🌸 Pink</option>
+                                    <option value="#06b6d4">🩵 Türkis</option>
+                                    <option value="transparent">⭕ Keine</option>
+                                </select>
+                                <select class="editor-select" data-action="set-read-aloud-style" data-editor="wiki-content" title="Vorlese-Text">
+                                    <option value="">📖 Vorlese</option>
+                                    <option value="parchment">📜 Pergament</option>
+                                    <option value="crimson">🍷 Karmesin</option>
+                                    <option value="violet">🔮 Violett</option>
+                                    <option value="sage">🌿 Salbei</option>
+                                    <option value="sky">☁️ Himmel</option>
+                                    <option value="slate">🪨 Schiefer</option>
+                                </select>
+                                <span class="toolbar-separator"></span>
+                                <button class="editor-btn" data-action="set-border-format" data-editor="wiki-content" title="Rahmen">◻</button>
+                                <button class="editor-btn" data-action="clear-formatting" data-value="wiki-content" title="Formatierung entfernen">🧹</button>
+                            </div>
                         </div>
                         <div id="wiki-content" class="rich-editor" contenteditable="true" style="min-height: 150px;" oninput="handleWikiContentInput(event)"></div>
                     </div>
@@ -2499,17 +2562,16 @@
             <div class="form-group"><label>Filter</label><select id="loc-filter"></select></div>
             <div class="form-group">
                 <label>Beschreibung</label>
-                <div class="editor-toolbar">
-                            <button type="button" class="editor-btn" data-action="format-text" data-cmd="loc-desc" data-editor="bold" title="Fett"><b>B</b></button>
-                            <button type="button" class="editor-btn" data-action="format-text" data-cmd="loc-desc" data-editor="italic" title="Kursiv"><i>I</i></button>
-                            <button type="button" class="editor-btn" data-action="format-text" data-cmd="loc-desc" data-editor="underline" title="Unterstrichen"><u>U</u></button>
-                            <button type="button" class="editor-btn" data-action="format-text" data-cmd="loc-desc" data-editor="list" title="Liste">☰</button>
-                            <button type="button" class="editor-btn" data-action="set-border-format" data-editor="loc-desc" title="Rahmen">◻</button>
-                            <select class="editor-select" data-action="set-editor-font" data-editor="loc-desc" title="Schriftart"><option value="arial">Arial</option><option value="serif">Serif</option><option value="mono">Mono</option></select>
-                            <select class="editor-select" data-action="set-editor-font-size" data-editor="loc-desc" title="Größe"><option value="0.8em">Klein</option><option value="1em" selected>Normal</option><option value="1.2em">Groß</option><option value="1.5em">Sehr groß</option></select>
-                            <button type="button" class="editor-btn" data-action="clear-formatting" data-value="loc-desc" title="Formatierung löschen" style="color:#888;">✕</button>
-                        </div>
-                        <div id="loc-desc" class="rich-editor" contenteditable="true" style="min-height: 100px;"></div>
+                <div class="editor-toolbar editor-toolbar-minimal">
+                    <div class="toolbar-row">
+                        <button class="editor-btn" data-action="format-text" data-cmd="loc-desc" data-editor="bold" title="Fett"><b>B</b></button>
+                        <button class="editor-btn" data-action="format-text" data-cmd="loc-desc" data-editor="italic" title="Kursiv"><i>I</i></button>
+                        <button class="editor-btn" data-action="format-text" data-cmd="loc-desc" data-editor="underline" title="Unterstrichen"><u>U</u></button>
+                        <span class="toolbar-separator"></span>
+                        <button class="editor-btn" data-action="clear-formatting" data-value="loc-desc" title="Formatierung entfernen">🧹</button>
+                    </div>
+                </div>
+                <div id="loc-desc" class="rich-editor" contenteditable="true" style="min-height: 100px;"></div>
             </div>
             <button class="btn btn-success" data-action="call" data-value="saveLocation">Speichern</button>
         </div>
@@ -2569,17 +2631,16 @@
                 <!-- Beschreibung -->
                 <div class="char-section-title">📝 Beschreibung</div>
                 <div class="form-group">
-                    <div class="editor-toolbar">
-                            <button type="button" class="editor-btn" data-action="format-text" data-cmd="npc-desc" data-editor="bold" title="Fett"><b>B</b></button>
-                            <button type="button" class="editor-btn" data-action="format-text" data-cmd="npc-desc" data-editor="italic" title="Kursiv"><i>I</i></button>
-                            <button type="button" class="editor-btn" data-action="format-text" data-cmd="npc-desc" data-editor="underline" title="Unterstrichen"><u>U</u></button>
-                            <button type="button" class="editor-btn" data-action="format-text" data-cmd="npc-desc" data-editor="list" title="Liste">☰</button>
-                            <button type="button" class="editor-btn" data-action="set-border-format" data-editor="npc-desc" title="Rahmen">◻</button>
-                            <select class="editor-select" data-action="set-editor-font" data-editor="npc-desc" title="Schriftart"><option value="arial">Arial</option><option value="serif">Serif</option><option value="mono">Mono</option></select>
-                            <select class="editor-select" data-action="set-editor-font-size" data-editor="npc-desc" title="Größe"><option value="0.8em">Klein</option><option value="1em" selected>Normal</option><option value="1.2em">Groß</option><option value="1.5em">Sehr groß</option></select>
-                            <button type="button" class="editor-btn" data-action="clear-formatting" data-value="npc-desc" title="Formatierung löschen" style="color:#888;">✕</button>
+                    <div class="editor-toolbar editor-toolbar-minimal">
+                        <div class="toolbar-row">
+                            <button class="editor-btn" data-action="format-text" data-cmd="npc-desc" data-editor="bold" title="Fett"><b>B</b></button>
+                            <button class="editor-btn" data-action="format-text" data-cmd="npc-desc" data-editor="italic" title="Kursiv"><i>I</i></button>
+                            <button class="editor-btn" data-action="format-text" data-cmd="npc-desc" data-editor="underline" title="Unterstrichen"><u>U</u></button>
+                            <span class="toolbar-separator"></span>
+                            <button class="editor-btn" data-action="clear-formatting" data-value="npc-desc" title="Formatierung entfernen">🧹</button>
                         </div>
-                        <div id="npc-desc" class="rich-editor" contenteditable="true" style="min-height: 60px;"></div>
+                    </div>
+                    <div id="npc-desc" class="rich-editor" contenteditable="true" style="min-height: 60px;"></div>
                 </div>
                 
                 <!-- Trigger -->
@@ -2669,15 +2730,14 @@
                 <!-- Beschreibung -->
                 <div class="char-section-title">📝 Beschreibung</div>
                 <div class="form-group">
-                    <div class="editor-toolbar">
-                        <button type="button" class="editor-btn" data-action="format-text" data-cmd="loot-desc" data-editor="bold" title="Fett"><b>B</b></button>
-                        <button type="button" class="editor-btn" data-action="format-text" data-cmd="loot-desc" data-editor="italic" title="Kursiv"><i>I</i></button>
-                        <button type="button" class="editor-btn" data-action="format-text" data-cmd="loot-desc" data-editor="underline" title="Unterstrichen"><u>U</u></button>
-                        <button type="button" class="editor-btn" data-action="format-text" data-cmd="loot-desc" data-editor="list" title="Liste">☰</button>
-                        <button type="button" class="editor-btn" data-action="set-border-format" data-editor="loot-desc" title="Rahmen">◻</button>
-                        <select class="editor-select" data-action="set-editor-font" data-editor="loot-desc" title="Schriftart"><option value="arial">Arial</option><option value="serif">Serif</option><option value="mono">Mono</option></select>
-                        <select class="editor-select" data-action="set-editor-font-size" data-editor="loot-desc" title="Größe"><option value="0.8em">Klein</option><option value="1em" selected>Normal</option><option value="1.2em">Groß</option><option value="1.5em">Sehr groß</option></select>
-                        <button type="button" class="editor-btn" data-action="clear-formatting" data-value="loot-desc" title="Formatierung löschen" style="color:#888;">✕</button>
+                    <div class="editor-toolbar editor-toolbar-minimal">
+                        <div class="toolbar-row">
+                            <button class="editor-btn" data-action="format-text" data-cmd="loot-desc" data-editor="bold" title="Fett"><b>B</b></button>
+                            <button class="editor-btn" data-action="format-text" data-cmd="loot-desc" data-editor="italic" title="Kursiv"><i>I</i></button>
+                            <button class="editor-btn" data-action="format-text" data-cmd="loot-desc" data-editor="underline" title="Unterstrichen"><u>U</u></button>
+                            <span class="toolbar-separator"></span>
+                            <button class="editor-btn" data-action="clear-formatting" data-value="loot-desc" title="Formatierung entfernen">🧹</button>
+                        </div>
                     </div>
                     <div id="loot-desc" class="rich-editor" contenteditable="true" style="min-height: 60px;" data-placeholder="Beschreibung (optional)"></div>
                 </div>
@@ -2759,17 +2819,16 @@
             </div>
             <div class="form-group">
                 <label>Beschreibung</label>
-                <div class="editor-toolbar">
-                            <button type="button" class="editor-btn" data-action="format-text" data-cmd="quest-desc" data-editor="bold" title="Fett"><b>B</b></button>
-                            <button type="button" class="editor-btn" data-action="format-text" data-cmd="quest-desc" data-editor="italic" title="Kursiv"><i>I</i></button>
-                            <button type="button" class="editor-btn" data-action="format-text" data-cmd="quest-desc" data-editor="underline" title="Unterstrichen"><u>U</u></button>
-                            <button type="button" class="editor-btn" data-action="format-text" data-cmd="quest-desc" data-editor="list" title="Liste">☰</button>
-                            <button type="button" class="editor-btn" data-action="set-border-format" data-editor="quest-desc" title="Rahmen">◻</button>
-                            <select class="editor-select" data-action="set-editor-font" data-editor="quest-desc" title="Schriftart"><option value="arial">Arial</option><option value="serif">Serif</option><option value="mono">Mono</option></select>
-                            <select class="editor-select" data-action="set-editor-font-size" data-editor="quest-desc" title="Größe"><option value="0.8em">Klein</option><option value="1em" selected>Normal</option><option value="1.2em">Groß</option><option value="1.5em">Sehr groß</option></select>
-                            <button type="button" class="editor-btn" data-action="clear-formatting" data-value="quest-desc" title="Formatierung löschen" style="color:#888;">✕</button>
-                        </div>
-                        <div id="quest-desc" class="rich-editor" contenteditable="true"></div>
+                <div class="editor-toolbar editor-toolbar-minimal">
+                    <div class="toolbar-row">
+                        <button class="editor-btn" data-action="format-text" data-cmd="quest-desc" data-editor="bold" title="Fett"><b>B</b></button>
+                        <button class="editor-btn" data-action="format-text" data-cmd="quest-desc" data-editor="italic" title="Kursiv"><i>I</i></button>
+                        <button class="editor-btn" data-action="format-text" data-cmd="quest-desc" data-editor="underline" title="Unterstrichen"><u>U</u></button>
+                        <span class="toolbar-separator"></span>
+                        <button class="editor-btn" data-action="clear-formatting" data-value="quest-desc" title="Formatierung entfernen">🧹</button>
+                    </div>
+                </div>
+                <div id="quest-desc" class="rich-editor" contenteditable="true"></div>
             </div>
             
             <!-- Belohnungs-Sektion -->
@@ -2802,17 +2861,16 @@
             
             <div class="form-group">
                 <label>Epilog / Nachwirkungen</label>
-                <div class="editor-toolbar">
-                            <button type="button" class="editor-btn" data-action="format-text" data-cmd="quest-epilog" data-editor="bold" title="Fett"><b>B</b></button>
-                            <button type="button" class="editor-btn" data-action="format-text" data-cmd="quest-epilog" data-editor="italic" title="Kursiv"><i>I</i></button>
-                            <button type="button" class="editor-btn" data-action="format-text" data-cmd="quest-epilog" data-editor="underline" title="Unterstrichen"><u>U</u></button>
-                            <button type="button" class="editor-btn" data-action="format-text" data-cmd="quest-epilog" data-editor="list" title="Liste">☰</button>
-                            <button type="button" class="editor-btn" data-action="set-border-format" data-editor="quest-epilog" title="Rahmen">◻</button>
-                            <select class="editor-select" data-action="set-editor-font" data-editor="quest-epilog" title="Schriftart"><option value="arial">Arial</option><option value="serif">Serif</option><option value="mono">Mono</option></select>
-                            <select class="editor-select" data-action="set-editor-font-size" data-editor="quest-epilog" title="Größe"><option value="0.8em">Klein</option><option value="1em" selected>Normal</option><option value="1.2em">Groß</option><option value="1.5em">Sehr groß</option></select>
-                            <button type="button" class="editor-btn" data-action="clear-formatting" data-value="quest-epilog" title="Formatierung löschen" style="color:#888;">✕</button>
-                        </div>
-                        <div id="quest-epilog" class="rich-editor" contenteditable="true" style="min-height: 80px;"></div>
+                <div class="editor-toolbar editor-toolbar-minimal">
+                    <div class="toolbar-row">
+                        <button class="editor-btn" data-action="format-text" data-cmd="quest-epilog" data-editor="bold" title="Fett"><b>B</b></button>
+                        <button class="editor-btn" data-action="format-text" data-cmd="quest-epilog" data-editor="italic" title="Kursiv"><i>I</i></button>
+                        <button class="editor-btn" data-action="format-text" data-cmd="quest-epilog" data-editor="underline" title="Unterstrichen"><u>U</u></button>
+                        <span class="toolbar-separator"></span>
+                        <button class="editor-btn" data-action="clear-formatting" data-value="quest-epilog" title="Formatierung entfernen">🧹</button>
+                    </div>
+                </div>
+                <div id="quest-epilog" class="rich-editor" contenteditable="true" style="min-height: 80px;"></div>
             </div>
             <div class="form-row">
                 <label><input type="checkbox" id="quest-completed"> Abgeschlossen</label>
@@ -2957,31 +3015,29 @@
             </div>
             <div class="form-group">
                 <label>Beschreibung</label>
-                <div class="editor-toolbar">
-                            <button type="button" class="editor-btn" data-action="format-text" data-cmd="spell-desc" data-editor="bold" title="Fett"><b>B</b></button>
-                            <button type="button" class="editor-btn" data-action="format-text" data-cmd="spell-desc" data-editor="italic" title="Kursiv"><i>I</i></button>
-                            <button type="button" class="editor-btn" data-action="format-text" data-cmd="spell-desc" data-editor="underline" title="Unterstrichen"><u>U</u></button>
-                            <button type="button" class="editor-btn" data-action="format-text" data-cmd="spell-desc" data-editor="list" title="Liste">☰</button>
-                            <button type="button" class="editor-btn" data-action="set-border-format" data-editor="spell-desc" title="Rahmen">◻</button>
-                            <select class="editor-select" data-action="set-editor-font" data-editor="spell-desc" title="Schriftart"><option value="arial">Arial</option><option value="serif">Serif</option><option value="mono">Mono</option></select>
-                            <select class="editor-select" data-action="set-editor-font-size" data-editor="spell-desc" title="Größe"><option value="0.8em">Klein</option><option value="1em" selected>Normal</option><option value="1.2em">Groß</option><option value="1.5em">Sehr groß</option></select>
-                            <button type="button" class="editor-btn" data-action="clear-formatting" data-value="spell-desc" title="Formatierung löschen" style="color:#888;">✕</button>
-                        </div>
-                        <div id="spell-desc" class="rich-editor" contenteditable="true" style="min-height: 100px;"></div>
+                <div class="editor-toolbar editor-toolbar-minimal">
+                    <div class="toolbar-row">
+                        <button class="editor-btn" data-action="format-text" data-cmd="spell-desc" data-editor="bold" title="Fett"><b>B</b></button>
+                        <button class="editor-btn" data-action="format-text" data-cmd="spell-desc" data-editor="italic" title="Kursiv"><i>I</i></button>
+                        <button class="editor-btn" data-action="format-text" data-cmd="spell-desc" data-editor="underline" title="Unterstrichen"><u>U</u></button>
+                        <span class="toolbar-separator"></span>
+                        <button class="editor-btn" data-action="clear-formatting" data-value="spell-desc" title="Formatierung entfernen">🧹</button>
+                    </div>
+                </div>
+                <div id="spell-desc" class="rich-editor" contenteditable="true" style="min-height: 100px;"></div>
             </div>
             <div class="form-group">
                 <label>Notiz</label>
-                <div class="editor-toolbar">
-                            <button type="button" class="editor-btn" data-action="format-text" data-cmd="spell-note" data-editor="bold" title="Fett"><b>B</b></button>
-                            <button type="button" class="editor-btn" data-action="format-text" data-cmd="spell-note" data-editor="italic" title="Kursiv"><i>I</i></button>
-                            <button type="button" class="editor-btn" data-action="format-text" data-cmd="spell-note" data-editor="underline" title="Unterstrichen"><u>U</u></button>
-                            <button type="button" class="editor-btn" data-action="format-text" data-cmd="spell-note" data-editor="list" title="Liste">☰</button>
-                            <button type="button" class="editor-btn" data-action="set-border-format" data-editor="spell-note" title="Rahmen">◻</button>
-                            <select class="editor-select" data-action="set-editor-font" data-editor="spell-note" title="Schriftart"><option value="arial">Arial</option><option value="serif">Serif</option><option value="mono">Mono</option></select>
-                            <select class="editor-select" data-action="set-editor-font-size" data-editor="spell-note" title="Größe"><option value="0.8em">Klein</option><option value="1em" selected>Normal</option><option value="1.2em">Groß</option><option value="1.5em">Sehr groß</option></select>
-                            <button type="button" class="editor-btn" data-action="clear-formatting" data-value="spell-note" title="Formatierung löschen" style="color:#888;">✕</button>
-                        </div>
-                        <div id="spell-note" class="rich-editor" contenteditable="true" style="min-height: 60px;"></div>
+                <div class="editor-toolbar editor-toolbar-minimal">
+                    <div class="toolbar-row">
+                        <button class="editor-btn" data-action="format-text" data-cmd="spell-note" data-editor="bold" title="Fett"><b>B</b></button>
+                        <button class="editor-btn" data-action="format-text" data-cmd="spell-note" data-editor="italic" title="Kursiv"><i>I</i></button>
+                        <button class="editor-btn" data-action="format-text" data-cmd="spell-note" data-editor="underline" title="Unterstrichen"><u>U</u></button>
+                        <span class="toolbar-separator"></span>
+                        <button class="editor-btn" data-action="clear-formatting" data-value="spell-note" title="Formatierung entfernen">🧹</button>
+                    </div>
+                </div>
+                <div id="spell-note" class="rich-editor" contenteditable="true" style="min-height: 60px;"></div>
             </div>
             <button class="btn btn-success" data-action="call" data-value="saveSpell">Speichern</button>
         </div>
@@ -4063,6 +4119,9 @@
             <div class="color-swatch" data-floating-action="highlight" data-color="#ef4444" style="background:#ef4444;" title="Rot"></div>
             <div class="color-swatch" data-floating-action="highlight" data-color="#22c55e" style="background:#22c55e;" title="Grün"></div>
             <div class="color-swatch" data-floating-action="highlight" data-color="#a855f7" style="background:#a855f7;" title="Lila"></div>
+            <div class="color-swatch" data-floating-action="highlight" data-color="#f97316" style="background:#f97316;" title="Orange"></div>
+            <div class="color-swatch" data-floating-action="highlight" data-color="#ec4899" style="background:#ec4899;" title="Pink"></div>
+            <div class="color-swatch" data-floating-action="highlight" data-color="#06b6d4" style="background:#06b6d4;" title="Türkis"></div>
             <div class="color-swatch" data-floating-action="highlight" data-color="transparent" style="background:transparent; border:1px dashed #666;" title="Keine Farbe"></div>
             <span style="flex:1;"></span>
             <button type="button" class="editor-btn" data-floating-action="removeFormat" title="Formatierung entfernen" style="color:#888; font-size:11px;">✕ Format</button>
@@ -4497,12 +4556,14 @@
             </div>
             <div class="form-group">
                 <label>Inhalt</label>
-                <div class="editor-toolbar">
-                    <button type="button" class="editor-btn" data-action="format-text" data-cmd="quick-ref-entry-content" data-editor="bold" title="Fett"><b>B</b></button>
-                    <button type="button" class="editor-btn" data-action="format-text" data-cmd="quick-ref-entry-content" data-editor="italic" title="Kursiv"><i>I</i></button>
-                    <button type="button" class="editor-btn" data-action="format-text" data-cmd="quick-ref-entry-content" data-editor="underline" title="Unterstrichen"><u>U</u></button>
-                    <button type="button" class="editor-btn" data-action="format-text" data-cmd="quick-ref-entry-content" data-editor="list" title="Liste">☰</button>
-                    <button type="button" class="editor-btn" data-action="insert-entity-link-btn" data-editor="quick-ref-entry-content" title="Entity verknüpfen">🔗</button>
+                <div class="editor-toolbar editor-toolbar-minimal">
+                    <div class="toolbar-row">
+                        <button class="editor-btn" data-action="format-text" data-cmd="quick-ref-entry-content" data-editor="bold" title="Fett"><b>B</b></button>
+                        <button class="editor-btn" data-action="format-text" data-cmd="quick-ref-entry-content" data-editor="italic" title="Kursiv"><i>I</i></button>
+                        <button class="editor-btn" data-action="format-text" data-cmd="quick-ref-entry-content" data-editor="underline" title="Unterstrichen"><u>U</u></button>
+                        <span class="toolbar-separator"></span>
+                        <button class="editor-btn" data-action="clear-formatting" data-value="quick-ref-entry-content" title="Formatierung entfernen">🧹</button>
+                    </div>
                 </div>
                 <div id="quick-ref-entry-content" class="rich-editor" contenteditable="true" style="min-height: 150px;"></div>
                 <small style="color: var(--text-dim);">Tipp: Mit 🔗 kannst du NPCs, Orte, Quests etc. verlinken. Tabellen per Copy&Paste aus Excel/Sheets.</small>
