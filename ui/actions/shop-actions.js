@@ -13,6 +13,10 @@ const ShopActions = {
     'edit-shop-item': (ctx) => editShopItem(ctx.id, parseInt(ctx.value)),
     'delete-shop-item': (ctx) => deleteShopItem(ctx.id, parseInt(ctx.value)),
 
+    // Filter & Sort actions
+    'filter-shop-category': (ctx) => filterShopCategory(ctx.id, ctx.value),
+    'set-shop-sort': (ctx) => setShopSort(ctx.value),
+
     // Cart actions
     'add-to-cart-stop': (ctx) => { ctx.event.stopPropagation(); addToCart(ctx.id, parseInt(ctx.value)); },
     'add-to-cart-qty-stop': (ctx) => {

@@ -7070,13 +7070,67 @@
             border-radius: 4px;
             background: var(--bg-card);
             border: 1px solid var(--border);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            user-select: none;
         }
-        
+
+        .shop-cat-badge:hover {
+            background: var(--bg-hover);
+            transform: translateY(-1px);
+        }
+
+        .shop-cat-badge.active {
+            background: var(--gold);
+            color: var(--bg);
+            border-color: var(--gold);
+            font-weight: bold;
+            box-shadow: 0 2px 4px rgba(212, 175, 55, 0.3);
+        }
+
         .shop-cat-badge.weapon { border-color: var(--red); color: var(--red); }
         .shop-cat-badge.armor { border-color: var(--blue); color: var(--blue); }
         .shop-cat-badge.item { border-color: var(--green); color: var(--green); }
         .shop-cat-badge.service { border-color: var(--purple); color: var(--purple); }
         .shop-cat-badge.misc { border-color: var(--text-dim); color: var(--text-dim); }
+        .shop-cat-badge.all { border-color: var(--gold); color: var(--gold); }
+
+        .shop-sort-controls {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 12px;
+            padding: 8px 12px;
+            background: var(--bg-hover);
+            border-radius: 6px;
+            border: 1px solid var(--border);
+        }
+
+        .shop-sort-btn {
+            font-size: 0.85em;
+            padding: 4px 12px;
+            border-radius: 4px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            color: var(--text);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            user-select: none;
+        }
+
+        .shop-sort-btn:hover {
+            background: var(--bg-hover);
+            border-color: var(--gold);
+            transform: translateY(-1px);
+        }
+
+        .shop-sort-btn.active {
+            background: var(--gold);
+            color: var(--bg);
+            border-color: var(--gold);
+            font-weight: bold;
+            box-shadow: 0 2px 4px rgba(212, 175, 55, 0.3);
+        }
         
         .shop-items-container {
             background: var(--bg-card);

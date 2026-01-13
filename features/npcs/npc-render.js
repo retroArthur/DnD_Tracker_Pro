@@ -468,7 +468,7 @@ function showRelationsModal(npcId) {
         return;
     // Build options for Party, NPCs and Characters
     const partyOption = D.characters?.length > 0
-        ? `<option value="party:0">👥 Die Gruppe (alle Charaktere)</option>`
+        ? `<option value="party:0" selected>👥 Die Gruppe (alle Charaktere)</option>`
         : '';
     const npcOptions = (D.npcs || [])
         .filter((n) => n.id !== npc.id) // Exclude self

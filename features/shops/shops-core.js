@@ -65,6 +65,8 @@ const SHOP_ITEM_CATEGORIES = Object.freeze({
 const expandedShops = new Set();
 const expandedShopItems = new Set();
 let shopCart = [];
+const activeShopFilters = {}; // { shopId: categoryFilter }
+let shopSortMode = 'name'; // 'name', 'price-asc', 'price-desc'
 // ============================================================
 // CURRENCY HELPERS
 // ============================================================
@@ -381,11 +383,13 @@ function renderShops() {
                 const isExpanded = expandedShops.has(shop.id);
                 const items = shop.items || [];
                 const availableItems = items.filter((i) => i.available !== false);
-                const weaponCount = items.filter((i) => i.category === 'weapon').length;
-                const armorCount = items.filter((i) => i.category === 'armor').length;
-                const itemCount = items.filter((i) => i.category === 'item').length;
-                const serviceCount = items.filter((i) => i.category === 'service').length;
-                const miscCount = items.filter((i) => i.category === 'misc').length;
+
+                // Dynamically count items by category
+                const categoryCounts = {};
+                items.forEach((item) => {
+                    const cat = item.category || 'misc';
+                    categoryCounts[cat] = (categoryCounts[cat] || 0) + 1;
+                });
                 return `
                     <div class="shop-card ${isExpanded ? 'expanded' : 'collapsed'}" id="shop-card-${shop.id}" data-shop-id="${shop.id}">
                         <div class="shop-header" data-action="toggle-shop" data-id="${shop.id}">
@@ -414,11 +418,36 @@ function renderShops() {
                             ${shop.note ? `<div class="shop-note">📝 ${esc(shop.note)}</div>` : ''}
 
                             <div class="shop-category-tabs">
-                                ${weaponCount ? `<span class="shop-cat-badge weapon">⚔️ ${weaponCount}</span>` : ''}
-                                ${armorCount ? `<span class="shop-cat-badge armor">🛡️ ${armorCount}</span>` : ''}
-                                ${itemCount ? `<span class="shop-cat-badge item">🧪 ${itemCount}</span>` : ''}
-                                ${serviceCount ? `<span class="shop-cat-badge service">🔧 ${serviceCount}</span>` : ''}
-                                ${miscCount ? `<span class="shop-cat-badge misc">📦 ${miscCount}</span>` : ''}
+                                <span class="shop-cat-badge all ${!activeShopFilters[shop.id] ? 'active' : ''}"
+                                      data-action="filter-shop-category" data-id="${shop.id}" data-value=""
+                                      title="Alle Kategorien anzeigen">
+                                    📦 Alle (${items.length})
+                                </span>
+                                ${Object.entries(categoryCounts).map(([catKey, count]) => {
+                                    const catInfo = SHOP_ITEM_CATEGORIES[catKey] || SHOP_ITEM_CATEGORIES.misc;
+                                    const isActive = activeShopFilters[shop.id] === catKey;
+                                    return `<span class="shop-cat-badge ${catKey} ${isActive ? 'active' : ''}"
+                                                  data-action="filter-shop-category" data-id="${shop.id}" data-value="${catKey}"
+                                                  title="${catInfo.name} anzeigen">
+                                        ${catInfo.icon} ${count}
+                                    </span>`;
+                                }).join('')}
+                            </div>
+
+                            <div class="shop-sort-controls">
+                                <label style="color: var(--text-dim); font-size: 0.9em; margin-right: 8px;">Sortierung:</label>
+                                <button class="shop-sort-btn ${shopSortMode === 'name' ? 'active' : ''}"
+                                        data-action="set-shop-sort" data-value="name" title="Nach Name sortieren">
+                                    📝 Name
+                                </button>
+                                <button class="shop-sort-btn ${shopSortMode === 'price-asc' ? 'active' : ''}"
+                                        data-action="set-shop-sort" data-value="price-asc" title="Preis aufsteigend">
+                                    💰↑ Preis ↑
+                                </button>
+                                <button class="shop-sort-btn ${shopSortMode === 'price-desc' ? 'active' : ''}"
+                                        data-action="set-shop-sort" data-value="price-desc" title="Preis absteigend">
+                                    💰↓ Preis ↓
+                                </button>
                             </div>
 
                             <div class="shop-items-container">
@@ -452,8 +481,30 @@ function renderShopItems(shopId, items) {
     if (!items || !Array.isArray(items))
         return '<div class="shop-items-empty">Keine Artikel</div>';
     try {
+        // Apply category filter
+        const categoryFilter = activeShopFilters[shopId];
+        let filteredItems = categoryFilter
+            ? items.map((item, idx) => ({ item, idx })).filter(({ item }) => item.category === categoryFilter)
+            : items.map((item, idx) => ({ item, idx }));
+
+        // Apply sorting
+        filteredItems = [...filteredItems].sort((a, b) => {
+            if (shopSortMode === 'name') {
+                return (a.item.name || '').localeCompare(b.item.name || '');
+            } else if (shopSortMode === 'price-asc' || shopSortMode === 'price-desc') {
+                const priceA = parseCurrency(a.item.cost || '0');
+                const priceB = parseCurrency(b.item.cost || '0');
+                return shopSortMode === 'price-asc' ? priceA - priceB : priceB - priceA;
+            }
+            return 0;
+        });
+
+        if (filteredItems.length === 0) {
+            return '<div class="shop-items-empty">Keine Artikel in dieser Kategorie</div>';
+        }
+
         return `<div class="si-list">
-            ${items.map((item, idx) => {
+            ${filteredItems.map(({ item, idx }) => {
             try {
                 const cat = SHOP_ITEM_CATEGORIES[item.category] || SHOP_ITEM_CATEGORIES.misc;
                 const isAvailable = item.available !== false;
@@ -952,6 +1003,22 @@ function toggleShopItemAvailability(shopIdOrElement, idx) {
     }
 }
 // ============================================================
+// FILTER & SORT
+// ============================================================
+function filterShopCategory(shopId, category) {
+    shopId = typeof shopId === 'string' ? parseInt(shopId) : shopId;
+    if (!category || category === '') {
+        delete activeShopFilters[shopId];
+    } else {
+        activeShopFilters[shopId] = category;
+    }
+    renderShops();
+}
+function setShopSort(mode) {
+    shopSortMode = mode || 'name';
+    renderShops();
+}
+// ============================================================
 // EXPORTS FOR GLOBAL ACCESS
 // ============================================================
 window.SHOP_TYPES = SHOP_TYPES;
@@ -981,3 +1048,5 @@ window.saveShopItem = saveShopItem;
 window.editShopItem = editShopItem;
 window.deleteShopItem = deleteShopItem;
 window.toggleShopItemAvailability = toggleShopItemAvailability;
+window.filterShopCategory = filterShopCategory;
+window.setShopSort = setShopSort;

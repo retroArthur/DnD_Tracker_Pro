@@ -89,11 +89,55 @@ const IO_SCHEMA = {
         ritual: { type: 'boolean', required: false, default: false },
         concentration: { type: 'boolean', required: false, default: false }
     },
-    'notes': {
+    'sessionNotes': {
         id: { type: 'number', required: true },
         date: { type: 'string', required: true },
         content: { type: 'string', required: false, default: '' },
         sessionNumber: { type: 'number', required: false, default: 1 }
+    },
+    'encounters': {
+        id: { type: 'number', required: true },
+        name: { type: 'string', required: true },
+        creatureType: { type: 'string', required: false, default: '' },
+        cr: { type: 'string', required: false, default: '0' },
+        ac: { type: 'number', required: false, default: 10 },
+        init: { type: 'number', required: false, default: 0 },
+        hp: { type: 'number', required: false, default: 1 },
+        speed: { type: 'object', required: false, default: {} },
+        perception: { type: 'number', required: false, default: 10 },
+        languages: { type: 'array', required: false, default: [] },
+        str: { type: 'number', required: false, default: 10 },
+        dex: { type: 'number', required: false, default: 10 },
+        con: { type: 'number', required: false, default: 10 },
+        int: { type: 'number', required: false, default: 10 },
+        wis: { type: 'number', required: false, default: 10 },
+        cha: { type: 'number', required: false, default: 10 },
+        savingThrows: { type: 'object', required: false, default: {} },
+        resistances: { type: 'array', required: false, default: [] },
+        immunities: { type: 'array', required: false, default: [] },
+        conditionImmunities: { type: 'array', required: false, default: [] },
+        traits: { type: 'string', required: false, default: '' },
+        actions: { type: 'string', required: false, default: '' },
+        skills: { type: 'string', required: false, default: '' },
+        tags: { type: 'array', required: false, default: [] }
+    },
+    'wiki': {
+        id: { type: 'number', required: true },
+        title: { type: 'string', required: true },
+        category: { type: 'string', required: false, default: 'locations' },
+        content: { type: 'string', required: false, default: '' },
+        tags: { type: 'array', required: false, default: [] },
+        pinned: { type: 'boolean', required: false, default: false },
+        parentId: { type: 'number', required: false, default: null },
+        createdAt: { type: 'number', required: false, default: 0 },
+        updatedAt: { type: 'number', required: false, default: 0 }
+    },
+    'links': {
+        id: { type: 'number', required: true },
+        title: { type: 'string', required: true },
+        url: { type: 'string', required: true },
+        category: { type: 'string', required: false, default: 'other' },
+        description: { type: 'string', required: false, default: '' }
     }
 };
 // EXPORT FUNCTIONS
@@ -198,6 +242,14 @@ function exportToCSV(dataType) {
 }
 // IMPORT FUNCTIONS
 // ============================================================
+function importData(inputEl) {
+    const dataType = inputEl.dataset.type;
+    if (!dataType) {
+        showToast('Datentyp nicht angegeben', 'error');
+        return;
+    }
+    showImportModal(dataType);
+}
 function showImportModal(dataType) {
     const fileInput = document.createElement('input');
     fileInput.type = 'file';
@@ -333,7 +385,10 @@ function updateIOCounts() {
         'quests': D.quests?.length || 0,
         'loot': D.loot?.length || 0,
         'spells': D.spells?.length || 0,
-        'notes': D.sessionNotes?.length || 0
+        'notes': D.sessionNotes?.length || 0,
+        'encounters': D.encounters?.length || 0,
+        'wiki': D.wiki?.length || 0,
+        'links': D.links?.length || 0
     };
     for (const [key, count] of Object.entries(counts)) {
         const el = $(`${key}-io-count`);

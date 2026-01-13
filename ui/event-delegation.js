@@ -22,7 +22,8 @@ const ALLOWED_CHANGE_HANDLERS = new Set([
     'toggleShopItemAvailability',
     'performMobileSearch',
     'validateAssignItemQty',
-    'updateAssignSpellCount'
+    'updateAssignSpellCount',
+    'importData'
 ]);
 
 const EventDelegation = {
