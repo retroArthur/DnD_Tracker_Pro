@@ -1,5 +1,5 @@
 // [SECTION:MINDMAP]
-// Extrahiert aus shops.js
+// Was: features/shops/mindmap.js, Now: features/network/mindmap.js
 // Mindmap/Netzwerk-Visualisierung
 // Zeilen: 719
 // ============================================================

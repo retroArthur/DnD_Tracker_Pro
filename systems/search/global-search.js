@@ -1,5 +1,5 @@
 // [SECTION:GLOBAL_SEARCH]
-// Extrahiert aus dice.js
+// Was: features/dice/global-search.js, Now: systems/search/global-search.js
 // Globale Suche mit Fuzzy-Match
 // Zeilen: 256
 // ============================================================

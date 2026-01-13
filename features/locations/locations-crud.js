@@ -32,12 +32,19 @@ function saveLocation() {
         D.locations.push(loc);
     }
     hideModal('location-modal');
-    if (idInput)
-        idInput.value = '';
-    $('loc-name').value = '';
-    $('loc-desc').innerHTML = '';
+    clearLocationForm();
     renderLocations();
     save();
+}
+/**
+ * Clears the location form
+ */
+function clearLocationForm() {
+    clearFormFields({
+        textFields: ['edit-loc-id', 'loc-name'],
+        selectFields: [{ id: 'loc-filter', defaultValue: '' }],
+        contentEditableFields: ['loc-desc']
+    });
 }
 /**
  * Opens the edit modal for a location
@@ -147,6 +154,7 @@ function addTriggerField() {
 window.saveLocation = saveLocation;
 window.editLocation = editLocation;
 window.deleteLocation = deleteLocation;
+window.clearLocationForm = clearLocationForm;
 window.addFilter = addFilter;
 window.deleteFilter = deleteFilter;
 window.filterAssignSpells = filterAssignSpells;

@@ -1,7 +1,7 @@
 // [SECTION:DEBUG]
-// Extrahiert aus dice.js
-// Debug & Test Funktionen
-// Zeilen: 1,228
+// Was: features/dice/debug.js, Now: tools/debug.js
+// Debug & Test Funktionen (nur Development)
+// Zeilen: 1,109
 // ============================================================
 // DEBUG & TEST FUNKTIONEN
 // ============================================================

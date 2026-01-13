@@ -57,6 +57,8 @@ function renderLocations() {
     const filterContainer = $('location-filters');
     if (!listContainer)
         return;
+    // Enable EntityLookup cache for performance
+    EntityLookup.enableCache();
     // Update counter
     updateCounters({ 'locations-io-count': D.locations?.length || 0 });
     // Render filter chips
@@ -75,18 +77,23 @@ function renderLocations() {
     // Get search and filter
     const searchEl = $('loc-search');
     const search = (searchEl?.value || '').toLowerCase();
-    let locs = D.locations || [];
-    // Apply filter
-    if (currentLocFilter !== 'all') {
-        locs = locs.filter((l) => l.filterId === currentLocFilter);
-    }
-    // Apply search
-    if (search) {
-        const npcLocs = new Set(D.npcs.filter((n) => n.name.toLowerCase().includes(search)).map((n) => n.locationId));
-        locs = locs.filter((l) => l.name.toLowerCase().includes(search) ||
-            (l.description || '').toLowerCase().includes(search) ||
-            npcLocs.has(l.id));
-    }
+    // Pre-compute NPC locations that match search (if searching)
+    const npcLocs = search
+        ? new Set(D.npcs.filter((n) => n.name.toLowerCase().includes(search)).map((n) => n.locationId))
+        : null;
+    // Apply filters (single pass)
+    const locs = applyFilters(D.locations || [], {
+        searchText: search,
+        searchFields: ['name', 'description'],
+        filters: {
+            filterId: currentLocFilter !== 'all' ? currentLocFilter : null
+        },
+        customFilter: (l) => {
+            // Also match locations that contain NPCs matching search
+            if (npcLocs && npcLocs.has(l.id)) return true;
+            return true;
+        }
+    });
     // Empty state
     if (!locs.length) {
         listContainer.innerHTML = `
@@ -102,6 +109,7 @@ function renderLocations() {
             </div>
         `;
         clearLocationDetail();
+        EntityLookup.clearCache();
         return;
     }
     // Render list items
@@ -114,6 +122,8 @@ function renderLocations() {
         // Re-render detail for current selection
         showLocationDetail(selectedLocationId);
     }
+    // Clear EntityLookup cache
+    EntityLookup.clearCache();
 }
 function renderLocationItem(loc, stripHtml) {
     const D = window.D;

@@ -223,64 +223,46 @@ function editEnc(id) {
         icon.textContent = '▲';
 }
 function cancelEncEdit() {
-    const idInput = $('edit-enc-id');
-    if (idInput)
-        idInput.value = '';
-    ['enc-name', 'enc-creature-type', 'enc-cr', 'enc-ac', 'enc-init', 'enc-hp', 'enc-perception'].forEach(id => {
-        const el = $(id);
-        if (el)
-            el.value = '';
+    clearFormFields({
+        textFields: [
+            'edit-enc-id', 'enc-name', 'enc-creature-type', 'enc-cr', 'enc-ac',
+            'enc-init', 'enc-hp', 'enc-perception',
+            'enc-speed-walk', 'enc-speed-climb', 'enc-speed-swim', 'enc-speed-fly', 'enc-speed-burrow',
+            'enc-save-val-str', 'enc-save-val-dex', 'enc-save-val-con',
+            'enc-save-val-int', 'enc-save-val-wis', 'enc-save-val-cha'
+        ],
+        checkboxFields: [
+            'enc-save-str', 'enc-save-dex', 'enc-save-con',
+            'enc-save-int', 'enc-save-wis', 'enc-save-cha'
+        ],
+        contentEditableFields: ['enc-traits', 'enc-equipment', 'enc-actions', 'enc-skills'],
+        customHandlers: () => {
+            // Reset attributes to 10 and update modifiers
+            resetAttributes(['str', 'dex', 'con', 'int', 'wis', 'cha'], 'enc', 10, updateEncAttrMod);
+
+            // Reset saving throw boxes CSS class
+            ['str', 'dex', 'con', 'int', 'wis', 'cha'].forEach(attr => {
+                const box = $(`enc-save-box-${attr}`);
+                if (box) box.classList.remove('active');
+            });
+
+            // Reset languages
+            if (typeof setEncLanguages === 'function') setEncLanguages([]);
+
+            // Reset resistances, immunities, condition immunities chips
+            document.querySelectorAll('#enc-resistances .char-resistance-chip, #enc-immunities .char-resistance-chip, #enc-condition-immunities .char-resistance-chip').forEach(chip => {
+                chip.classList.remove('selected');
+                const input = chip.querySelector('input');
+                if (input) input.checked = false;
+            });
+        }
     });
-    // Clear all speed fields
-    ['enc-speed-walk', 'enc-speed-climb', 'enc-speed-swim', 'enc-speed-fly', 'enc-speed-burrow'].forEach(id => {
-        const el = $(id);
-        if (el)
-            el.value = '';
-    });
-    ['str', 'dex', 'con', 'int', 'wis', 'cha'].forEach(attr => {
-        const input = $(`enc-${attr}`);
-        if (input)
-            input.value = '10';
-        updateEncAttrMod(attr);
-        // Reset saving throw checkboxes, values and CSS class
-        const checkbox = $(`enc-save-${attr}`);
-        const valueInput = $(`enc-save-val-${attr}`);
-        const box = $(`enc-save-box-${attr}`);
-        if (checkbox)
-            checkbox.checked = false;
-        if (valueInput)
-            valueInput.value = '';
-        if (box)
-            box.classList.remove('active');
-    });
-    if (typeof setEncLanguages === 'function')
-        setEncLanguages([]);
-    // Reset resistances & immunities
-    document.querySelectorAll('#enc-resistances .char-resistance-chip, #enc-immunities .char-resistance-chip, #enc-condition-immunities .char-resistance-chip').forEach(chip => {
-        chip.classList.remove('selected');
-        const input = chip.querySelector('input');
-        if (input)
-            input.checked = false;
-    });
-    const traitsEl = $('enc-traits');
-    const equipEl = $('enc-equipment');
-    const actionsEl = $('enc-actions');
-    const skillsEl = $('enc-skills');
-    if (traitsEl)
-        traitsEl.innerHTML = '';
-    if (equipEl)
-        equipEl.innerHTML = '';
-    if (actionsEl)
-        actionsEl.innerHTML = '';
-    if (skillsEl)
-        skillsEl.innerHTML = '';
+
     // Collapse form
     const form = $('enc-form');
     const icon = $('enc-form-icon');
-    if (form)
-        form.classList.remove('open');
-    if (icon)
-        icon.textContent = '▼';
+    if (form) form.classList.remove('open');
+    if (icon) icon.textContent = '▼';
 }
 /**
  * Deletes an encounter/enemy after confirmation

@@ -50,18 +50,14 @@ function renderParty() {
     }
     // Render Party Overview Stats
     renderPartyOverview();
-    let characters = D.characters;
-    // Klassen-Filter anwenden
-    if (classFilter) {
-        characters = characters.filter((ch) => ch.characterClass === classFilter);
-    }
-    // Suche anwenden
-    if (search) {
-        characters = characters.filter((ch) => (ch.name || '').toLowerCase().includes(search) ||
-            (ch.playerName || '').toLowerCase().includes(search) ||
-            (ch.characterClass || '').toLowerCase().includes(search) ||
-            (ch.race || '').toLowerCase().includes(search));
-    }
+    // Apply filters (single pass)
+    const characters = applyFilters(D.characters || [], {
+        searchText: search,
+        searchFields: ['name', 'playerName', 'characterClass', 'race'],
+        filters: {
+            characterClass: classFilter
+        }
+    });
     if (!characters.length) {
         c.innerHTML = renderEmptyState({
             icon: '👥',

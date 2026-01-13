@@ -1,5 +1,5 @@
 // [SECTION:MAPS]
-// Converted from maps.js to TypeScript
+// Was: features/dice/maps.js, Now: features/maps/maps.js
 // Karten-System mit Markern, Fog of War, Entfernungsmessung
 // ============================================================
 // HELPERS
@@ -168,10 +168,23 @@ function renderMapTabs() {
     `).join('');
 }
 function uploadMapToCurrentTab(event) {
+    const FILE_UPLOAD_LIMITS = window.FILE_UPLOAD_LIMITS;
     const input = event.target;
     const file = input.files?.[0];
     if (!file)
         return;
+    // Validate file type
+    if (!FILE_UPLOAD_LIMITS.IMAGE_ALLOWED_TYPES.includes(file.type)) {
+        showToast('❌ Nur Bilder erlaubt (PNG, JPG, WebP, GIF)', 'error');
+        input.value = '';
+        return;
+    }
+    // Validate file size
+    if (file.size > FILE_UPLOAD_LIMITS.MAP_MAX_SIZE) {
+        showToast('❌ Datei zu groß (max 10MB)', 'error');
+        input.value = '';
+        return;
+    }
     const map = getCurrentMap();
     if (!map) {
         addNewMap();
@@ -180,16 +193,37 @@ function uploadMapToCurrentTab(event) {
         return;
     }
     const reader = new FileReader();
+    reader.onerror = () => {
+        showToast('❌ Fehler beim Laden der Datei', 'error');
+        input.value = '';
+    };
     reader.onload = function (e) {
-        if (e.target && map) {
+        if (!e.target || !map) {
+            showToast('❌ Fehler beim Verarbeiten', 'error');
+            input.value = '';
+            return;
+        }
+        // Validate image dimensions and load
+        const img = new Image();
+        img.onerror = () => {
+            showToast('❌ Ungültiges Bildformat', 'error');
+            input.value = '';
+        };
+        img.onload = () => {
+            // Warn about very large images
+            if (img.width > FILE_UPLOAD_LIMITS.MAP_MAX_DIMENSION || img.height > FILE_UPLOAD_LIMITS.MAP_MAX_DIMENSION) {
+                showToast('⚠️ Sehr großes Bild - Performance-Probleme möglich', 'warning');
+            }
+            // Save the image
             map.image = e.target.result;
             displayMap();
             saveImmediate();
-            showToast('Bild hochgeladen');
-        }
+            showToast('🗺️ Karte hochgeladen');
+            input.value = '';
+        };
+        img.src = e.target.result;
     };
     reader.readAsDataURL(file);
-    input.value = '';
 }
 function displayMap() {
     const uploadZone = $('map-upload-zone');
@@ -476,34 +510,28 @@ function editMarker(id) {
     showModal('map-marker-modal');
 }
 function clearMarkerForm() {
-    const editIdEl = $('edit-marker-id');
-    const nameEl = $('marker-name');
-    const typeEl = $('marker-type');
-    const shapeEl = $('marker-shape');
-    const noteEl = $('marker-note');
-    if (editIdEl)
-        editIdEl.value = '';
-    if (nameEl)
-        nameEl.value = '';
-    if (typeEl)
-        typeEl.value = 'poi';
-    if (shapeEl)
-        shapeEl.value = 'circle';
-    if (noteEl)
-        noteEl.value = '';
-    // Update UI for add mode
-    const modalTitle = $('marker-modal-title');
-    const placementHint = $('marker-placement-hint');
-    const saveBtn = $('marker-save-btn');
-    const deleteBtn = $('marker-delete-btn');
-    if (modalTitle)
-        modalTitle.textContent = 'Marker hinzufügen';
-    if (placementHint)
-        placementHint.style.display = 'block';
-    if (saveBtn)
-        saveBtn.textContent = 'Auf Karte platzieren';
-    if (deleteBtn)
-        deleteBtn.style.display = 'none';
+    clearFormFields({
+        textFields: ['edit-marker-id', 'marker-name', 'marker-note'],
+        selectFields: [
+            { id: 'marker-type', defaultValue: 'poi' },
+            { id: 'marker-shape', defaultValue: 'circle' }
+        ],
+        customHandlers: () => {
+            // Update UI for add mode
+            const modalTitle = $('marker-modal-title');
+            const placementHint = $('marker-placement-hint');
+            const saveBtn = $('marker-save-btn');
+            const deleteBtn = $('marker-delete-btn');
+            if (modalTitle)
+                modalTitle.textContent = 'Marker hinzufügen';
+            if (placementHint)
+                placementHint.style.display = 'block';
+            if (saveBtn)
+                saveBtn.textContent = 'Auf Karte platzieren';
+            if (deleteBtn)
+                deleteBtn.style.display = 'none';
+        }
+    });
 }
 function deleteMarkerFromModal() {
     const editIdEl = $('edit-marker-id');

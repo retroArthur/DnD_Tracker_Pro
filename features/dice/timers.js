@@ -133,18 +133,22 @@ function cancelPresetEdit() {
     clearPresetForm();
 }
 function clearPresetForm() {
-    $('edit-preset-index').value = '';
-    $('preset-name').value = '';
-    $('preset-emoji').value = '';
-    $('preset-hours').value = '0';
-    $('preset-minutes').value = '10';
-    $('preset-seconds').value = '0';
-    const saveBtn = $('preset-save-btn');
-    const cancelBtn = $('preset-cancel-btn');
-    if (saveBtn)
-        saveBtn.textContent = 'Vorlage hinzufügen';
-    if (cancelBtn)
-        cancelBtn.style.display = 'none';
+    clearFormFields({
+        textFields: ['edit-preset-index', 'preset-name', 'preset-emoji'],
+        defaults: {
+            'preset-hours': '0',
+            'preset-minutes': '10',
+            'preset-seconds': '0'
+        },
+        customHandlers: () => {
+            const saveBtn = $('preset-save-btn');
+            const cancelBtn = $('preset-cancel-btn');
+            if (saveBtn)
+                saveBtn.textContent = 'Vorlage hinzufügen';
+            if (cancelBtn)
+                cancelBtn.style.display = 'none';
+        }
+    });
 }
 function deleteTimerPreset(index) {
     const presets = getTimerPresets();

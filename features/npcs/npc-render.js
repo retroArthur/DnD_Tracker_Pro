@@ -55,6 +55,8 @@ function renderNPCList() {
     const filterContainer = $('npc-filters');
     if (!listContainer)
         return;
+    // Enable EntityLookup cache for performance
+    EntityLookup.enableCache();
     // Update counter
     updateCounters({ 'npcs-io-count': D.npcs?.length || 0 });
     // Render filter chips (by location)
@@ -79,19 +81,21 @@ function renderNPCList() {
     // Get search and filter
     const searchEl = $('npc-search');
     const search = (searchEl?.value || '').toLowerCase();
-    let npcs = [...(D.npcs || [])];
-    // Apply location filter
-    if (currentNpcFilter !== 'all') {
-        npcs = npcs.filter((n) => n.locationId === currentNpcFilter);
-    }
-    // Apply search
-    if (search) {
-        npcs = npcs.filter((n) => n.name.toLowerCase().includes(search) ||
-            (n.role || '').toLowerCase().includes(search) ||
-            (n.race || '').toLowerCase().includes(search) ||
-            (n.description || '').toLowerCase().includes(search) ||
-            (n.dialogs || []).some((d) => (d.text || '').toLowerCase().includes(search)));
-    }
+    // Apply filters (single pass)
+    const npcs = applyFilters(D.npcs || [], {
+        searchText: search,
+        searchFields: ['name', 'role', 'race', 'description'],
+        filters: {
+            locationId: currentNpcFilter !== 'all' ? currentNpcFilter : null
+        },
+        customFilter: (n) => {
+            // Also search in dialog texts
+            if (search && (n.dialogs || []).length > 0) {
+                return (n.dialogs || []).some((d) => (d.text || '').toLowerCase().includes(search));
+            }
+            return true;
+        }
+    });
     // Sort alphabetically
     npcs.sort((a, b) => a.name.localeCompare(b.name));
     // Empty state
@@ -109,6 +113,7 @@ function renderNPCList() {
             </div>
         `;
         clearNPCDetail();
+        EntityLookup.clearCache();
         return;
     }
     // Render list items
@@ -122,6 +127,8 @@ function renderNPCList() {
     }
     // Update stats
     updateNPCStats();
+    // Clear EntityLookup cache
+    EntityLookup.clearCache();
 }
 function renderNPCItem(npc) {
     const location = EntityLookup.location(npc.locationId);

@@ -384,55 +384,37 @@ function editChar(id) {
  * Cancel character edit
  */
 function cancelCharEdit() {
-    $('edit-char-id').value = '';
-    // Basic fields
-    ['char-name', 'char-player', 'char-subclass', 'char-level', 'char-background', 'char-weight',
-        'char-height', 'char-hp-cur', 'char-hp-max', 'char-hp-temp', 'char-ac', 'char-init',
-        'char-hitdice', 'char-perception', 'char-avatar'].forEach(id => {
-        const el = $(id);
-        if (el)
-            el.value = '';
+    clearFormFields({
+        textFields: [
+            'edit-char-id', 'char-name', 'char-player', 'char-subclass', 'char-background',
+            'char-weight', 'char-height', 'char-hp-cur', 'char-hp-max', 'char-hp-temp',
+            'char-ac', 'char-init', 'char-hitdice', 'char-perception', 'char-avatar',
+            'char-pm', 'char-gm', 'char-em', 'char-sm', 'char-km'
+        ],
+        selectFields: [
+            'char-class', 'char-race', 'char-alignment',
+            { id: 'char-speed', defaultValue: '9m|30ft.' }
+        ],
+        checkboxFields: [
+            'char-inspiration',
+            'char-save-str', 'char-save-dex', 'char-save-con',
+            'char-save-int', 'char-save-wis', 'char-save-cha'
+        ],
+        contentEditableFields: ['char-notes'],
+        defaults: {
+            'char-level': '1',
+            'char-proficiency': '+2',
+            'char-pm': '0', 'char-gm': '0', 'char-em': '0', 'char-sm': '0', 'char-km': '0'
+        },
+        customHandlers: () => {
+            updateSpeedDisplay();
+            clearCharLanguages();
+            clearChipSelection('.cf-chip');
+            resetAttributes(['str', 'dex', 'con', 'int', 'wis', 'cha'], 'char', 10, updateAttrMod);
+            clearSpellSlots('char-slot', 9);
+        }
     });
-    $('char-class').value = '';
-    $('char-race').value = '';
-    $('char-alignment').value = '';
-    $('char-level').value = '1';
-    $('char-proficiency').value = '+2';
-    // Speed reset to default
-    const speedSelect = $('char-speed');
-    if (speedSelect) {
-        speedSelect.value = '9m|30ft.';
-        updateSpeedDisplay();
-    }
-    // Attributes
-    ['str', 'dex', 'con', 'int', 'wis', 'cha'].forEach(attr => {
-        $(`char-${attr}`).value = '10';
-        updateAttrMod(attr);
-    });
-    // Saving throws
-    ['str', 'dex', 'con', 'int', 'wis', 'cha'].forEach(attr => {
-        $(`char-save-${attr}`).checked = false;
-    });
-    // Inspiration
-    $('char-inspiration').checked = false;
-    // Resistances and immunities
-    document.querySelectorAll('.cf-chip').forEach(chip => {
-        chip.classList.remove('selected');
-        const input = chip.querySelector('input');
-        if (input)
-            input.checked = false;
-    });
-    // Languages - clear dropdown checkboxes
-    clearCharLanguages();
-    // Spell slots
-    for (let i = 0; i <= 9; i++) {
-        $(`char-slot-${i}`).value = '0';
-    }
-    // Notes and currency
-    $('char-notes').innerHTML = '';
-    ['char-pm', 'char-gm', 'char-em', 'char-sm', 'char-km'].forEach(id => {
-        $(id).value = '0';
-    });
+
     // Formular schließen
     $('char-form').classList.remove('open');
     $('char-form-icon').textContent = '▼';

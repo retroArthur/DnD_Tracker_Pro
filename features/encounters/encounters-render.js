@@ -68,6 +68,8 @@ function renderEncounters() {
     const filterContainer = $('encounter-filters');
     if (!listContainer)
         return;
+    // Enable EntityLookup cache for performance
+    EntityLookup.enableCache();
     // Update counter
     updateCounters({ 'encounter-io-count': D.encounters?.length || 0 });
     // Render filter chips (by creature type)
@@ -97,18 +99,14 @@ function renderEncounters() {
     // Get search and filter
     const searchEl = $('enc-search');
     const search = (searchEl?.value || '').toLowerCase();
-    let encounters = [...(D.encounters || [])];
-    // Apply type filter
-    if (currentEncFilter !== 'all') {
-        encounters = encounters.filter((e) => e.creatureType === currentEncFilter);
-    }
-    // Apply search
-    if (search) {
-        encounters = encounters.filter((e) => e.name.toLowerCase().includes(search) ||
-            (e.creatureType || '').toLowerCase().includes(search) ||
-            (e.race || '').toLowerCase().includes(search) ||
-            (e.cr || '').toString().includes(search));
-    }
+    // Apply filters (single pass)
+    const encounters = applyFilters(D.encounters || [], {
+        searchText: search,
+        searchFields: ['name', 'creatureType', 'race', 'cr'],
+        filters: {
+            creatureType: currentEncFilter !== 'all' ? currentEncFilter : null
+        }
+    });
     // Sort by CR then name
     encounters.sort((a, b) => {
         const crA = parseCR(a.cr);
@@ -132,6 +130,7 @@ function renderEncounters() {
             </div>
         `;
         clearEncounterDetail();
+        EntityLookup.clearCache();
         return;
     }
     // Render list items
@@ -143,6 +142,8 @@ function renderEncounters() {
     else {
         showEncounterDetail(selectedEncounterId);
     }
+    // Clear EntityLookup cache
+    EntityLookup.clearCache();
 }
 // Helper to parse CR values like "1/4", "1/2" etc.
 function parseCR(cr) {

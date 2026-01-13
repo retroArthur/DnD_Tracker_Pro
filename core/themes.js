@@ -1,6 +1,6 @@
-// [SECTION:THEME]
-// Extrahiert aus dice.js
-// Theme-System
+// [SECTION:THEMES]
+// Was: features/dice/theme.js, Now: core/themes.js
+// Theme-System für Dark/Light/Sepia/High-Contrast
 // Zeilen: 25
 // ============================================================
 // THEME SYSTEM
@@ -22,7 +22,7 @@ function loadTheme() {
     document.documentElement.setAttribute('data-theme', theme);
 }
 // ============================================================
-// BACKWARD COMPATIBILITY EXPORTS
+// EXPORTS FOR GLOBAL ACCESS
 // ============================================================
 window.showThemeModal = showThemeModal;
 window.setTheme = setTheme;

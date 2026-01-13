@@ -1,6 +1,39 @@
 // [SECTION:AVATARS]
 // AVATAR / IMAGE SYSTEM - @avatar @image @portrait
 // ============================================================
+// URL VALIDATION
+// ============================================================
+function validateAvatarURL(url) {
+    if (!url || url.trim() === '')
+        return true; // Empty is valid (will be removed)
+    const trimmed = url.trim();
+    // Block dangerous protocols
+    const dangerousProtocols = ['javascript:', 'file:', 'vbscript:', 'data:text/html'];
+    const lowerUrl = trimmed.toLowerCase();
+    if (dangerousProtocols.some(proto => lowerUrl.startsWith(proto))) {
+        return false;
+    }
+    // Allow relative paths
+    if (trimmed.startsWith('/') || trimmed.startsWith('.')) {
+        return true;
+    }
+    // Allow data: URLs for images only (base64 encoded images)
+    if (lowerUrl.startsWith('data:image/')) {
+        return true;
+    }
+    // Validate absolute URLs
+    try {
+        const parsed = new URL(trimmed);
+        return ['http:', 'https:'].includes(parsed.protocol);
+    }
+    catch {
+        // If it's not a valid URL and doesn't start with /, assume it's relative
+        return !trimmed.includes(':'); // No protocol = relative path
+    }
+}
+// ============================================================
+// AVATAR MODAL
+// ============================================================
 function showAvatarModal(type, id) {
     const typeEl = $('avatar-target-type');
     const idEl = $('avatar-target-id');
@@ -46,11 +79,17 @@ function saveAvatar() {
     const urlEl = $('avatar-url');
     const type = typeEl?.value;
     const id = parseEntityId(idEl?.value);
+    const url = urlEl?.value.trim();
+    // Validate URL for security
+    if (!validateAvatarURL(url)) {
+        showToast('❌ Ungültige URL: Nur http(s), data:image/ oder relative Pfade erlaubt', 'error');
+        return;
+    }
     const getEntityByTypeAndId = window.getEntityByTypeAndId;
     const entity = getEntityByTypeAndId(type, id);
     if (!entity)
         return;
-    entity.avatar = urlEl?.value.trim();
+    entity.avatar = url;
     const hideModal = window.hideModal;
     const renderAll = window.renderAll;
     const save = window.save;

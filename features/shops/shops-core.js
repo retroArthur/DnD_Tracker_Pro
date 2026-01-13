@@ -629,30 +629,13 @@ function showShopModal(id = null) {
     showModal('shop-modal');
 }
 function clearShopForm() {
-    const editIdInput = $('edit-shop-id');
-    const typeInput = $('shop-type');
-    const nameInput = $('shop-name');
-    const npcInput = $('shop-npc');
-    const locationInput = $('shop-location');
-    const descInput = $('shop-description');
-    const specialInput = $('shop-special');
-    const noteInput = $('shop-note');
-    if (editIdInput)
-        editIdInput.value = '';
-    if (typeInput)
-        typeInput.value = 'laden';
-    if (nameInput)
-        nameInput.value = '';
-    if (npcInput)
-        npcInput.value = '';
-    if (locationInput)
-        locationInput.value = '';
-    if (descInput)
-        descInput.value = '';
-    if (specialInput)
-        specialInput.value = '';
-    if (noteInput)
-        noteInput.value = '';
+    clearFormFields({
+        textFields: [
+            'edit-shop-id', 'shop-name', 'shop-npc', 'shop-location',
+            'shop-description', 'shop-special', 'shop-note'
+        ],
+        selectFields: [{ id: 'shop-type', defaultValue: 'laden' }]
+    });
 }
 function saveShop() {
     const D = window.D;
@@ -791,65 +774,31 @@ function showShopItemModal(shopId, itemIdx = null) {
     showModal('shop-item-modal');
 }
 function clearShopItemForm() {
-    const editIdInput = $('edit-shop-item-id');
-    const availInput = $('shop-item-available');
-    const qtyInput = $('shop-item-quantity');
-    const unlimitedInput = $('shop-item-unlimited');
-    const catInput = $('shop-item-category');
-    const nameInput = $('shop-item-name');
-    const typeInput = $('shop-item-type');
-    const damageInput = $('shop-item-damage');
-    const propsInput = $('shop-item-properties');
-    const masteryInput = $('shop-item-mastery');
-    const acInput = $('shop-item-ac');
-    const strInput = $('shop-item-strength');
-    const stealthInput = $('shop-item-stealth');
-    const descInput = $('shop-item-desc');
-    const effectInput = $('shop-item-effect');
-    const weightInput = $('shop-item-weight');
-    const costInput = $('shop-item-cost');
-    const specialInput = $('shop-item-special');
-    const noteInput = $('shop-item-note');
-    if (editIdInput)
-        editIdInput.value = '';
-    if (availInput)
-        availInput.checked = true;
-    if (qtyInput)
-        qtyInput.value = '1';
-    if (unlimitedInput) {
-        unlimitedInput.checked = false;
-        toggleShopItemUnlimited();
-    }
-    if (catInput)
-        catInput.value = 'weapon';
-    if (nameInput)
-        nameInput.value = '';
-    if (typeInput)
-        typeInput.value = '';
-    if (damageInput)
-        damageInput.value = '';
-    if (propsInput)
-        propsInput.value = '';
-    if (masteryInput)
-        masteryInput.value = '';
-    if (acInput)
-        acInput.value = '';
-    if (strInput)
-        strInput.value = '';
-    if (stealthInput)
-        stealthInput.value = '';
-    if (descInput)
-        descInput.value = '';
-    if (effectInput)
-        effectInput.value = '';
-    if (weightInput)
-        weightInput.value = '';
-    if (costInput)
-        costInput.value = '';
-    if (specialInput)
-        specialInput.value = '';
-    if (noteInput)
-        noteInput.value = '';
+    clearFormFields({
+        textFields: [
+            'edit-shop-item-id', 'shop-item-name', 'shop-item-type',
+            'shop-item-damage', 'shop-item-properties', 'shop-item-mastery',
+            'shop-item-ac', 'shop-item-strength', 'shop-item-stealth',
+            'shop-item-desc', 'shop-item-effect', 'shop-item-weight',
+            'shop-item-cost', 'shop-item-special', 'shop-item-note'
+        ],
+        selectFields: [{ id: 'shop-item-category', defaultValue: 'weapon' }],
+        defaults: {
+            'shop-item-quantity': '1'
+        },
+        customHandlers: () => {
+            // Set available checkbox to true
+            const availInput = $('shop-item-available');
+            if (availInput) availInput.checked = true;
+
+            // Reset unlimited checkbox and update display
+            const unlimitedInput = $('shop-item-unlimited');
+            if (unlimitedInput) {
+                unlimitedInput.checked = false;
+                toggleShopItemUnlimited();
+            }
+        }
+    });
 }
 function updateShopItemFields() {
     const catInput = $('shop-item-category');

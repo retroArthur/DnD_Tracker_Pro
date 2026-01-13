@@ -9,18 +9,22 @@ function renderQuests() {
     const c = $('quests-list');
     if (!c)
         return;
+    // Enable EntityLookup cache for performance
+    EntityLookup.enableCache();
     const activeOnlyEl = $('quest-filter-active');
     const activeOnly = activeOnlyEl?.checked || false;
     const searchEl = $('quest-search');
     const search = (searchEl?.value || '').toLowerCase();
-    let quests = D.quests;
-    if (activeOnly)
-        quests = quests.filter((q) => !q.completed);
-    if (search)
-        quests = quests.filter((q) => q.title.toLowerCase().includes(search) ||
-            (q.giverName || '').toLowerCase().includes(search) ||
-            (q.locationName || '').toLowerCase().includes(search) ||
-            (q.description || '').toLowerCase().includes(search));
+    // Apply filters (single pass)
+    const quests = applyFilters(D.quests || [], {
+        searchText: search,
+        searchFields: ['title', 'giverName', 'locationName', 'description'],
+        customFilter: (q) => {
+            // Filter by completed status if activeOnly is enabled
+            if (activeOnly && q.completed) return false;
+            return true;
+        }
+    });
     if (!quests.length) {
         c.innerHTML = renderEmptyState({
             icon: '📜',
@@ -31,9 +35,11 @@ function renderQuests() {
             buttonValue: 'quest-modal',
             isFiltered: !!(search || activeOnly)
         });
+        EntityLookup.clearCache();
         return;
     }
     c.innerHTML = quests.map((q) => renderQuestItem(q)).join('');
+    EntityLookup.clearCache();
 }
 function renderQuestItem(q) {
     const renderEntityLinks = window.renderEntityLinks;

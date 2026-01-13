@@ -22,7 +22,7 @@ Alle wichtigen Änderungen an diesem Projekt werden in dieser Datei dokumentiert
 
 ### 📁 Geänderte Dateien
 - `utils/utilities.js` - parseEntityId(), getProficiencyBonus alias
-- `features/dice/global-search.js` - XSS-Fix mit Whitelist
+- `systems/search/global-search.js` - XSS-Fix mit Whitelist
 - `systems/undo.js` - parseMarkdown XSS-Fix
 - `features/locations/locations-render.js` - NPC-Links + @deprecated
 - `features/npcs/npc-crud.js` - parseEntityId()

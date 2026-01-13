@@ -1,5 +1,5 @@
 // [SECTION:CAMPAIGN_MANAGER]
-// Extrahiert aus dice.js
+// Was: features/dice/campaign-manager.js, Now: systems/campaign-manager/campaign-manager.js
 // Kampagnen-Verwaltung
 // Zeilen: 163
 // ============================================================

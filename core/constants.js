@@ -319,6 +319,15 @@ const MAP_CONSTANTS = ({
     CONVERSIONS: { feetPerMeter: 3.28084, milesPerFeet: 5280, kmPerMeter: 1000, metersPerMile: 1609.34 },
     TRAVEL_SPEED_MH: 5000
 });
+// ============================================================
+// FILE UPLOAD LIMITS
+// ============================================================
+const FILE_UPLOAD_LIMITS = ({
+    MAP_MAX_SIZE: 10 * 1024 * 1024,      // 10MB for maps
+    AVATAR_MAX_SIZE: 5 * 1024 * 1024,    // 5MB for avatars
+    MAP_MAX_DIMENSION: 5000,              // 5000px max width/height
+    IMAGE_ALLOWED_TYPES: ['image/png', 'image/jpeg', 'image/jpg', 'image/webp', 'image/gif']
+});
 const MARKER_ICONS = ({
     party: '👥', poi: '📍', danger: '⚠️', quest: '📜', item: '💎',
     secret: '❓', secretdoor: '🚪', npc: '🧑', action: '⚡', encounter: '⚔️',
@@ -407,6 +416,7 @@ window.LOOT_TAG_LABELS = LOOT_TAG_LABELS;
 window.INIT_CONSTANTS = INIT_CONSTANTS;
 window.COMBATANT_TYPES = COMBATANT_TYPES;
 window.MAP_CONSTANTS = MAP_CONSTANTS;
+window.FILE_UPLOAD_LIMITS = FILE_UPLOAD_LIMITS;
 window.MARKER_ICONS = MARKER_ICONS;
 window.ENTITY_ICONS = ENTITY_ICONS;
 window.LINK_ICONS = LINK_ICONS;

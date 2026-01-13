@@ -1,5 +1,6 @@
-// [SECTION:SPELL_EDITOR]
-// Spell Editor with Rich Text Toolbar
+// [SECTION:RICH_TEXT_EDITOR]
+// Was: features/shops/spell-editor.js, Now: ui/editors/rich-text.js
+// Rich Text Editor with Floating Toolbar
 // Zeilen: 1,492
 // ============================================================
 // STATE

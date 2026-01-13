@@ -19,6 +19,7 @@ MODULES = [
     'core/config.js',
     'core/data.js',
     'core/constants.js',
+    'core/themes.js',
     'utils/performance.js',
     'utils/basic.js',
     'utils/utilities.js',
@@ -44,6 +45,9 @@ MODULES = [
     'systems/avatars.js',
     'systems/backups.js',
     'systems/tab-registry.js',
+    'systems/session-timer.js',
+    'systems/search/global-search.js',
+    'systems/campaign-manager/campaign-manager.js',
     'render/helpers.js',
     # Render-Feature-Module
     'features/render-dashboard.js',
@@ -75,13 +79,14 @@ MODULES = [
     'features/quick-actions.js',
     'features/random-tables.js',
     'features/loot-distribution.js',
+    'features/sessions/sessions.js',
+    'features/wiki/wiki.js',
+    'features/maps/maps.js',
     # Shops-Module
     'features/shops/shops-core.js',
-    'features/shops/spell-editor.js',
-    'features/shops/sessions.js',
-    'features/shops/wiki.js',
     'features/shops/links.js',
-    'features/shops/mindmap.js',
+    # Network/Mindmap Module
+    'features/network/mindmap.js',
     # Roadmap-Module (ersetzt Netzwerk)
     'features/roadmap/roadmap.js',
     'features/roadmap/roadmap-render.js',
@@ -93,23 +98,18 @@ MODULES = [
     'features/dice/dice-core.js',
     'features/dice/dice-favorites.js',
     'features/dice/timers.js',
-    'features/dice/campaign-manager.js',
-    'features/dice/global-search.js',
-    'features/dice/maps.js',
     'features/dice/wiki-links.js',
     'features/dice/monster-templates.js',
     'features/dice/srd-spells.js',
     'features/dice/spellslots-ui.js',
     'features/dice/initiative-extras.js',
-    'features/dice/theme.js',
     'features/dice/layout-profiles.js',
-    'features/dice/session-timer.js',
     'features/dice/performance-extras.js',
-    'features/dice/debug.js',  # Debug-Modul (nur Development)
     'ui/dom-builder.js',
     'ui/safe-render.js',
     'ui/lazy-loading.js',
     'ui/event-delegation.js',
+    'ui/editors/rich-text.js',
     # Action-Module
     'ui/actions/entity-actions.js',
     'ui/actions/combat-actions.js',
@@ -121,6 +121,7 @@ MODULES = [
     'ui/actions/roadmap-actions.js',
     'ui/actions/system-actions.js',
     'ui/virtual-scroll.js',
+    'tools/debug.js',
     'core/init.js'
 ]
 

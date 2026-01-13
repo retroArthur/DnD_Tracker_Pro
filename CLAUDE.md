@@ -140,12 +140,12 @@ function deleteEntity(id) {
 - `core/data.js` - Global data schema (D object)
 - `systems/undo.js` - Undo/redo implementation with state snapshots
 - `systems/entity-links.js` - Cross-entity linking system
-- `features/shops/spell-editor.js` - Rich text editor (floating toolbar)
-- `features/shops/mindmap.js` - Network/relationship visualization
+- `ui/editors/rich-text.js` - Rich text editor (floating toolbar)
+- `features/network/mindmap.js` - Network/relationship visualization
 - `features/encounter-calculator.js` - Encounter balance calculator with terrain/lair modifiers
 - `features/dice/dice-core.js` - Dice roller with floating panel
-- `features/dice/campaign-manager.js` - Multi-campaign management
-- `features/dice/global-search.js` - Fuzzy search across all entities
+- `systems/campaign-manager/campaign-manager.js` - Multi-campaign management
+- `systems/search/global-search.js` - Fuzzy search across all entities
 - `ui/actions/system-actions.js` - System action handlers (modals, editor actions)
 - `features/dmscreen/dmscreen-render.js` - DM Screen widget system with 21 widget types and profiles
 - `docs/bugfixes.md` - Bug fix patterns and lessons learned
@@ -298,7 +298,7 @@ function deleteEntity(id) {
 - Dropdown selector in both static and floating editor toolbars
 - Toggle behavior: Click again to remove formatting
 - CSS: `.read-aloud`, `.read-aloud.crimson`, etc.
-- File: `features/shops/spell-editor.js` → `setReadAloudFormat(elementId, style)`
+- File: `ui/editors/rich-text.js` → `setReadAloudFormat(elementId, style)`
 - Constants: `READ_ALOUD_STYLES` in `core/constants.js`
 
 ### Synchronized Editor Toolbars
@@ -321,7 +321,7 @@ function deleteEntity(id) {
 - Standard campaign (default) + custom campaigns
 - Campaign index stored separately (`dnd-campaign-index`)
 - Data isolation between campaigns
-- File: `features/dice/campaign-manager.js` → `createCampaign()`, `switchCampaign()`, `deleteCampaign()`
+- File: `systems/campaign-manager/campaign-manager.js` → `createCampaign()`, `switchCampaign()`, `deleteCampaign()`
 
 ### Mindmap/Network Visualization
 - Visual relationship mapping for characters, NPCs, locations
@@ -331,7 +331,7 @@ function deleteEntity(id) {
 - Import entities from existing data (characters, NPCs, locations, quests, encounters)
 - Filter by search and node type
 - Data: `D.mindmap = { nodes: [], connections: [] }`
-- File: `features/shops/mindmap.js` → `renderMindmap()`, `saveNodeFromModal()`
+- File: `features/network/mindmap.js` → `renderMindmap()`, `saveNodeFromModal()`
 
 ### HP Calculator Modal
 - Quick HP modification modal for any entity
@@ -352,14 +352,14 @@ function deleteEntity(id) {
 - Fuzzy matching algorithm with scoring
 - Results grouped by entity type
 - Keyboard shortcut: `Strg+K` or `Strg+F`
-- File: `features/dice/global-search.js` → `fuzzyMatch()`, `globalSearch()`
+- File: `systems/search/global-search.js` → `fuzzyMatch()`, `globalSearch()`
 
 ### Session Timer
 - Track session duration with start/pause/reset
 - Displays in header (desktop) and mobile-friendly version
 - Auto-save at configurable intervals
 - Keyboard shortcut: `T` to toggle
-- File: `features/dice/session-timer.js` → `toggleSessionTimer()`, `resetSessionTimer()`
+- File: `systems/session-timer.js` → `toggleSessionTimer()`, `resetSessionTimer()`
 
 ## Keyboard Shortcuts
 

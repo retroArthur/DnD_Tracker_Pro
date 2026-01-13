@@ -1,5 +1,5 @@
 // [SECTION:WIKI]
-// Extrahiert aus shops.js
+// Was: features/shops/wiki.js, Now: features/wiki/wiki.js
 // Wiki-System
 // Zeilen: 1,316
 // ============================================================
@@ -746,27 +746,12 @@ function cancelWikiEdit() {
     clearWikiForm();
 }
 function clearWikiForm() {
-    const editIdInput = $('edit-wiki-id');
-    const titleInput = $('wiki-title');
-    const catInput = $('wiki-category');
-    const contentEl = $('wiki-content');
-    const tagsInput = $('wiki-tags');
-    const pinnedInput = $('wiki-pinned');
-    const parentInput = $('wiki-parent');
-    if (editIdInput)
-        editIdInput.value = '';
-    if (titleInput)
-        titleInput.value = '';
-    if (catInput)
-        catInput.value = 'locations';
-    if (contentEl)
-        contentEl.innerHTML = '';
-    if (tagsInput)
-        tagsInput.value = '';
-    if (pinnedInput)
-        pinnedInput.checked = false;
-    if (parentInput)
-        parentInput.value = '';
+    clearFormFields({
+        textFields: ['edit-wiki-id', 'wiki-title', 'wiki-tags', 'wiki-parent'],
+        selectFields: [{ id: 'wiki-category', defaultValue: 'locations' }],
+        checkboxFields: ['wiki-pinned'],
+        contentEditableFields: ['wiki-content']
+    });
 }
 function deleteWikiEntry(id) {
     const D = window.D;

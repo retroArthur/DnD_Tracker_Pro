@@ -192,23 +192,24 @@ function deleteNPC(id) {
  */
 function clearNPCForm() {
     const resetDialogFieldCounter = window.resetDialogFieldCounter;
-    $('edit-npc-id').value = '';
-    ['npc-name', 'npc-role', 'npc-race', 'npc-location', 'npc-chapter', 'npc-filter',
-        'npc-quests', 'npc-info', 'npc-relations'].forEach(id => {
-        const el = $(id);
-        if (el)
-            el.value = '';
+
+    clearFormFields({
+        textFields: [
+            'edit-npc-id', 'npc-name', 'npc-role', 'npc-race', 'npc-location',
+            'npc-chapter', 'npc-filter', 'npc-quests', 'npc-info', 'npc-relations'
+        ],
+        contentEditableFields: ['npc-desc'],
+        customHandlers: () => {
+            // Clear dynamic containers
+            const triggersContainer = $('npc-triggers-container');
+            if (triggersContainer) triggersContainer.innerHTML = '';
+
+            const dialogsContainer = $('npc-dialogs-container');
+            if (dialogsContainer) dialogsContainer.innerHTML = '';
+
+            resetDialogFieldCounter();
+        }
     });
-    const descEl = $('npc-desc');
-    if (descEl)
-        descEl.innerHTML = '';
-    const triggersContainer = $('npc-triggers-container');
-    if (triggersContainer)
-        triggersContainer.innerHTML = '';
-    const dialogsContainer = $('npc-dialogs-container');
-    if (dialogsContainer)
-        dialogsContainer.innerHTML = '';
-    resetDialogFieldCounter();
 }
 // ============================================================
 // EXPORTS FOR GLOBAL ACCESS

@@ -123,24 +123,19 @@ function deleteQuest(id) {
     });
 }
 function clearQuestForm() {
-    const idInput = $('edit-quest-id');
-    if (idInput)
-        idInput.value = '';
-    $('quest-title').value = '';
-    $('quest-giver').value = '';
-    $('quest-location').value = '';
-    $('quest-target').value = '';
-    $('quest-type').value = 'quest';
-    $('quest-desc').innerHTML = '';
-    $('quest-epilog').innerHTML = '';
-    $('quest-reward-gold').value = '';
-    $('quest-reward-other').value = '';
-    $('quest-reward-item').value = '';
-    const itemsList = $('quest-reward-items-list');
-    if (itemsList)
-        itemsList.innerHTML = '';
-    $('quest-completed').checked = false;
-    $('quest-rewarded').checked = false;
+    clearFormFields({
+        textFields: [
+            'edit-quest-id', 'quest-title', 'quest-giver', 'quest-location',
+            'quest-target', 'quest-reward-gold', 'quest-reward-other', 'quest-reward-item'
+        ],
+        selectFields: [{ id: 'quest-type', defaultValue: 'quest' }],
+        contentEditableFields: ['quest-desc', 'quest-epilog'],
+        checkboxFields: ['quest-completed', 'quest-rewarded'],
+        customHandlers: () => {
+            const itemsList = $('quest-reward-items-list');
+            if (itemsList) itemsList.innerHTML = '';
+        }
+    });
 }
 function populateQuestSelects() {
     const D = window.D;

@@ -1,6 +1,6 @@
 // [SECTION:SESSION_TIMER]
-// Extrahiert aus dice.js
-// Session-Timer
+// Was: features/dice/session-timer.js, Now: systems/session-timer.js
+// Session-Timer für Kampagnen-Tracking
 // Zeilen: 110
 // ============================================================
 // SESSION TIMER

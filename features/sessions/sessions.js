@@ -1,5 +1,5 @@
 // [SECTION:SESSIONS]
-// Extrahiert aus shops.js
+// Was: features/shops/sessions.js, Now: features/sessions/sessions.js
 // Session Notes mit Nummern, Tags, Zusammenfassungen und Story-Arcs
 // SESSIONS STATE
 // ============================================================
