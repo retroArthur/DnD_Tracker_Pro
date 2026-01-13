@@ -9,7 +9,7 @@ const WikiState = {
     categoryFilter: '',
     sortMode: 'recent',
     expandedEntries: new Set(),
-    expandedCategories: new Set(['campaign', 'locations', 'factions', 'history']),
+    expandedCategories: new Set(), // All categories collapsed by default
     selectedEntryId: null,
     searchDropdownIndex: -1,
     linkSuggester: null,
