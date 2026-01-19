@@ -320,6 +320,9 @@ def build(minify=False, verbose=False):
         'ui/lazy-loading.js',
         'ui/event-delegation.js',
         'ui/editors/rich-text.js',
+        'ui/editors/markdown-shortcuts.js',
+        'ui/editors/markdown-converter.js',
+        'systems/markdown-import-export.js',
         # Action-Module
         'ui/actions/entity-actions.js',
         'ui/actions/combat-actions.js',

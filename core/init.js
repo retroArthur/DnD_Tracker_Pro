@@ -86,7 +86,10 @@ async function init() {
     
     // Editor Paste-Handler für Auto-Clean initialisieren
     initEditorPasteHandlers();
-    
+
+    // Markdown Settings initialisieren
+    if (typeof initMarkdownSettings === 'function') initMarkdownSettings();
+
     // Schwebende Mini-Editor-Toolbar initialisieren
     initFloatingToolbar();
 

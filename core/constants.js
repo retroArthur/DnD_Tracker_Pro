@@ -394,6 +394,25 @@ const ENTITY_TYPE_NAMES = ({
 });
 
 // ============================================================
+// MARKDOWN PATTERNS
+// ============================================================
+/**
+ * Markdown syntax patterns for live shortcuts and parsing
+ * @type {Object.<string, RegExp>}
+ */
+const MARKDOWN_PATTERNS = ({
+    BOLD: /(\*\*|__)((?:(?!\1).)+)\1/g,
+    ITALIC: /(\*|_)((?:(?!\1).)+)\1/g,
+    STRIKE: /(~~)((?:(?!\1).)+)\1/g,
+    CODE: /(`)((?:(?!\1).)+)\1/g,
+    HEADING: /^(#{1,6})\s+(.+)$/gm,
+    LINK: /\[([^\]]+)\]\(([^\)]+)\)/g,
+    BLOCKQUOTE: /^>\s+(.+)$/gm,
+    LIST_ITEM: /^[-*]\s+(.+)$/gm,
+    READ_ALOUD: /:::read-aloud\n([\s\S]*?)\n:::/g
+});
+
+// ============================================================
 // WINDOW EXPORTS
 // ============================================================
 // Export all constants to global scope for use by other modules
@@ -421,3 +440,4 @@ window.MARKER_ICONS = MARKER_ICONS;
 window.ENTITY_ICONS = ENTITY_ICONS;
 window.LINK_ICONS = LINK_ICONS;
 window.ENTITY_TYPE_NAMES = ENTITY_TYPE_NAMES;
+window.MARKDOWN_PATTERNS = MARKDOWN_PATTERNS;

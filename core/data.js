@@ -32,7 +32,10 @@ function initializeData() {
         tags: [],
         settings: {
             theme: 'dark',
-            lastView: 'dashboard'
+            lastView: 'dashboard',
+            enableMarkdownShortcuts: true,
+            enableMarkdownImportExport: true,
+            markdownOnboardingSeen: false
         },
         _nextId: {}
     };

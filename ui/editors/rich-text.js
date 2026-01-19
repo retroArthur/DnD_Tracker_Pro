@@ -484,12 +484,19 @@ function initEditorPasteHandlers() {
         const editor = $(id);
         if (editor && editor.getAttribute('contenteditable') === 'true') {
             editor.addEventListener('paste', handleEditorPaste);
+            editor.addEventListener('input', handleMarkdownInput);
         }
     });
     document.addEventListener('paste', function (e) {
         const target = e.target;
         if (target.classList.contains('rich-editor') || target.classList.contains('dialog-text-area')) {
             handleEditorPaste(e);
+        }
+    }, true);
+    document.addEventListener('input', function (e) {
+        const target = e.target;
+        if (target.classList.contains('rich-editor') || target.classList.contains('dialog-text')) {
+            handleMarkdownInput(e);
         }
     }, true);
     document.addEventListener('keydown', function (e) {
