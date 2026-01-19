@@ -210,6 +210,7 @@ function initMarkdownSettings() {
     const D = window.D;
     const save = window.save;
     const $ = window.$;
+    const showToast = window.showToast;
 
     // Sync checkbox with saved setting
     const checkbox = $('markdown-shortcuts-toggle');
@@ -225,11 +226,23 @@ function initMarkdownSettings() {
             }
 
             // Show toast
-            const showToast = window.showToast;
             if (typeof showToast === 'function') {
                 showToast(checkbox.checked ? '✅ Markdown Shortcuts aktiviert' : '❌ Markdown Shortcuts deaktiviert');
             }
         });
+    }
+
+    // Show onboarding toast on first load
+    if (D.settings && !D.settings.markdownOnboardingSeen) {
+        setTimeout(() => {
+            if (typeof showToast === 'function') {
+                showToast('📝 Neu: Markdown Shortcuts aktiviert! Nutze **bold**, *italic*, ~~strike~~, `code` in allen Editoren. Deaktivieren in Data-Tab.', 'info', 8000);
+            }
+            D.settings.markdownOnboardingSeen = true;
+            if (typeof save === 'function') {
+                save();
+            }
+        }, 2000); // 2 seconds delay after app load
     }
 }
 

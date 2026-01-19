@@ -1366,6 +1366,13 @@ function editSpell(id) {
             durationCustom.value = duration;
         }
     }
+
+    // Show markdown export/import buttons when editing
+    const markdownActions = $('spell-markdown-actions');
+    if (markdownActions) {
+        markdownActions.style.display = 'block';
+    }
+
     showModal('spell-modal');
 }
 function deleteSpell(id) {
@@ -1443,6 +1450,12 @@ function clearSpellForm() {
     if (mInput)
         mInput.checked = false;
     setSpellClassesCheckboxes([]);
+
+    // Hide markdown export/import buttons for new spells
+    const markdownActions = $('spell-markdown-actions');
+    if (markdownActions) {
+        markdownActions.style.display = 'none';
+    }
 }
 // ============================================================
 // EXPORTS FOR GLOBAL ACCESS

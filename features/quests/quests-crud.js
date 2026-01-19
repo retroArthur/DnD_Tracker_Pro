@@ -104,6 +104,13 @@ function editQuest(id) {
         if (q.targetId && targetSelect)
             targetSelect.value = String(q.targetId);
     }, 10);
+
+    // Show markdown export/import buttons when editing
+    const markdownActions = $('quest-markdown-actions');
+    if (markdownActions) {
+        markdownActions.style.display = 'block';
+    }
+
     showModal('quest-modal');
 }
 /**
@@ -134,6 +141,12 @@ function clearQuestForm() {
         customHandlers: () => {
             const itemsList = $('quest-reward-items-list');
             if (itemsList) itemsList.innerHTML = '';
+
+            // Hide markdown export/import buttons for new quests
+            const markdownActions = $('quest-markdown-actions');
+            if (markdownActions) {
+                markdownActions.style.display = 'none';
+            }
         }
     });
 }

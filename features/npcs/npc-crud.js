@@ -167,6 +167,13 @@ function editNPC(id) {
             }
         });
     }
+
+    // Show markdown export/import buttons when editing
+    const markdownActions = $('npc-markdown-actions');
+    if (markdownActions) {
+        markdownActions.style.display = 'block';
+    }
+
     showModal('npc-modal');
 }
 /**
@@ -208,6 +215,12 @@ function clearNPCForm() {
             if (dialogsContainer) dialogsContainer.innerHTML = '';
 
             resetDialogFieldCounter();
+
+            // Hide markdown export/import buttons for new NPCs
+            const markdownActions = $('npc-markdown-actions');
+            if (markdownActions) {
+                markdownActions.style.display = 'none';
+            }
         }
     });
 }

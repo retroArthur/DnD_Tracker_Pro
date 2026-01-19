@@ -160,7 +160,45 @@ const SystemActions = {
     'roll-on-table': (ctx) => rollOnTable(parseInt(ctx.id)),
 
     // Loot Distribution
-    'show-loot-distribution': () => showLootDistributionModal()
+    'show-loot-distribution': () => showLootDistributionModal(),
+
+    // Markdown Export/Import
+    'exportSpellAsMarkdown': () => {
+        const editId = $('edit-spell-id');
+        if (editId && editId.value) {
+            exportEntityAsMarkdown('spells', editId.value);
+        }
+    },
+    'importSpellMarkdown': () => {
+        const editId = $('edit-spell-id');
+        if (editId && editId.value) {
+            showMarkdownImportModal('spells', editId.value);
+        }
+    },
+    'exportNPCAsMarkdown': () => {
+        const editId = $('edit-npc-id');
+        if (editId && editId.value) {
+            exportEntityAsMarkdown('npcs', editId.value);
+        }
+    },
+    'importNPCMarkdown': () => {
+        const editId = $('edit-npc-id');
+        if (editId && editId.value) {
+            showMarkdownImportModal('npcs', editId.value);
+        }
+    },
+    'exportQuestAsMarkdown': () => {
+        const editId = $('edit-quest-id');
+        if (editId && editId.value) {
+            exportEntityAsMarkdown('quests', editId.value);
+        }
+    },
+    'importQuestMarkdown': () => {
+        const editId = $('edit-quest-id');
+        if (editId && editId.value) {
+            showMarkdownImportModal('quests', editId.value);
+        }
+    }
 };
 
 // Register all system actions
