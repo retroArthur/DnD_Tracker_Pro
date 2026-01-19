@@ -233,9 +233,57 @@ function markdownToHtml(markdown) {
 }
 
 // ============================================================
+// RENDER ON DISPLAY
+// ============================================================
+/**
+ * Converts inline Markdown syntax in existing HTML content to HTML
+ * Used for displaying content that was saved before Markdown support
+ * @param {string} html - HTML string that may contain markdown syntax
+ * @returns {string} HTML with markdown converted
+ */
+function renderMarkdownInContent(html) {
+    if (!html || typeof html !== 'string') return html;
+
+    // Check if content already contains HTML tags (already converted)
+    // If it's pure markdown, convert it
+    const hasHtmlTags = /<[^>]+>/.test(html);
+
+    let result = html;
+
+    // Convert markdown patterns to HTML
+    // Bold: **text** or __text__
+    result = result.replace(/\*\*([^*]+)\*\*/g, '<b>$1</b>');
+    result = result.replace(/__([^_]+)__/g, '<b>$1</b>');
+
+    // Italic: *text* or _text_ (but not if already inside ** or __)
+    result = result.replace(/(?<!\*)\*([^*]+)\*(?!\*)/g, '<i>$1</i>');
+    result = result.replace(/(?<!_)_([^_]+)_(?!_)/g, '<i>$1</i>');
+
+    // Strikethrough: ~~text~~
+    result = result.replace(/~~([^~]+)~~/g, '<s>$1</s>');
+
+    // Code: `text`
+    result = result.replace(/`([^`]+)`/g, '<code style="background: var(--bg-elevated); padding: 2px 4px; border-radius: 3px; font-family: monospace; font-size: 0.9em;">$1</code>');
+
+    // Headings: ## text (only at line start)
+    result = result.replace(/^######\s+(.+)$/gm, '<h6>$1</h6>');
+    result = result.replace(/^#####\s+(.+)$/gm, '<h5>$1</h5>');
+    result = result.replace(/^####\s+(.+)$/gm, '<h4>$1</h4>');
+    result = result.replace(/^###\s+(.+)$/gm, '<h3>$1</h3>');
+    result = result.replace(/^##\s+(.+)$/gm, '<h2>$1</h2>');
+    result = result.replace(/^#\s+(.+)$/gm, '<h1>$1</h1>');
+
+    // Links: [text](url)
+    result = result.replace(/\[([^\]]+)\]\(([^\)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
+
+    return result;
+}
+
+// ============================================================
 // EXPORTS
 // ============================================================
 window.htmlToMarkdown = htmlToMarkdown;
 window.markdownToHtml = markdownToHtml;
 window.convertNodeToMarkdown = convertNodeToMarkdown;
 window.convertTableToMarkdown = convertTableToMarkdown;
+window.renderMarkdownInContent = renderMarkdownInContent;

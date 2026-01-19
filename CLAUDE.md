@@ -8,6 +8,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 D&D Kampagnen-Tracker Pro - A single-page D&D 5e campaign management application. Pure JavaScript/HTML/CSS, runs entirely offline in browser with LocalStorage + IndexedDB persistence. German-localized. Supports multiple campaigns, network visualization, and comprehensive D&D 5e rules reference.
 
+## Feedback Loop
+Bevor du Code änderst oder Anpasst, gib beschreibung aus wie du den neuen Code testen würdest.
+Nach dem inplemtieren des Codes, führe dann einen Test aus.
+
 ## Build Commands
 
 ```bash

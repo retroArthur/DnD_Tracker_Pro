@@ -54,8 +54,10 @@ function showSpellTooltip(spellId, event) {
     if (componentsEl)
         componentsEl.innerHTML = comps.length ? comps.join('') : '<span class="spell-tooltip-comp">—</span>';
     // Description
-    if (descEl)
-        descEl.innerHTML = sanitizeHTML(spell.description) || '<em>Keine Beschreibung</em>';
+    if (descEl) {
+        const renderMd = window.renderMarkdownInContent || (x => x);
+        descEl.innerHTML = sanitizeHTML(renderMd(spell.description)) || '<em>Keine Beschreibung</em>';
+    }
     // Classes (spellClasses is the field name)
     const classes = spell.spellClasses || [];
     if (classesEl)

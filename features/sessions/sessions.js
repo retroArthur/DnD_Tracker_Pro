@@ -300,7 +300,7 @@ function renderSessionCard(n) {
             </div>
             ${n.summary ? `<div class="session-summary">${esc(n.summary)}</div>` : ''}
             ${tagsHtml ? `<div class="session-tags">${tagsHtml}</div>` : ''}
-            <div class="session-content collapsed" id="session-content-${n.id}">${sanitizeHTML(n.content) || ''}</div>
+            <div class="session-content collapsed" id="session-content-${n.id}">${sanitizeHTML((window.renderMarkdownInContent || (x => x))(n.content)) || ''}</div>
         </div>
     `;
 }

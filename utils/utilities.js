@@ -415,14 +415,7 @@ function formatMod(mod) {
 function getProfBonus(level) {
     return Math.ceil(level / 4) + 1;
 }
-/**
- * Alias für getProfBonus - für Rückwärtskompatibilität
- * @param level - Charakterstufe (1-20)
- * @returns Übungsbonus (2-6)
- */
-function getProficiencyBonus(level) {
-    return getProfBonus(level);
-}
+// getProficiencyBonus removed - use utils/game-rules.js instead
 /**
  * Generiert eine einfache UUID v4
  * @returns UUID v4

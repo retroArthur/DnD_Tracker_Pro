@@ -421,7 +421,10 @@ function renderWikiDetail() {
     const cat = WIKI_CATEGORIES[entry.category] || { icon: '📄', name: 'Sonstiges' };
     const tags = entry.tags || [];
     const contentWithAnchors = addTOCAnchors(entry.content || '');
-    const parsedContent = parseWikiLinks(contentWithAnchors);
+    // Convert Markdown syntax to HTML for display
+    const renderMarkdownInContent = window.renderMarkdownInContent;
+    const contentWithMarkdown = renderMarkdownInContent ? renderMarkdownInContent(contentWithAnchors) : contentWithAnchors;
+    const parsedContent = parseWikiLinks(contentWithMarkdown);
     const backlinks = findBacklinks(entry.title);
     const outlinks = extractWikiLinks(entry.content || '');
     const breadcrumb = renderWikiBreadcrumb(entry.id);

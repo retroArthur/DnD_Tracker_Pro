@@ -90,7 +90,7 @@ function renderQuestItem(q) {
             </div>
         </div>
         <div class="quest-details">
-            <div style="margin-bottom:10px;">${sanitizeHTML(q.description) || ''}</div>
+            <div style="margin-bottom:10px;">${sanitizeHTML((window.renderMarkdownInContent || (x => x))(q.description)) || ''}</div>
             ${entityTags}
             ${entityLinks}
             <div style="display:flex; flex-wrap:wrap; gap:15px; font-size:0.9em; margin-bottom:10px;">

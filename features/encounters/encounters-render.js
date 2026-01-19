@@ -379,28 +379,28 @@ function showEncounterDetail(id) {
             ${enc.traits ? `
                 <div class="enc-section">
                     <div class="enc-section-title">Eigenschaften</div>
-                    <div class="enc-text">${enc.traits}</div>
+                    <div class="enc-text">${sanitizeHTML((window.renderMarkdownInContent || (x => x))(enc.traits))}</div>
                 </div>
             ` : ''}
 
             ${enc.actions ? `
                 <div class="enc-section">
                     <div class="enc-section-title">Aktionen</div>
-                    <div class="enc-text">${enc.actions}</div>
+                    <div class="enc-text">${sanitizeHTML((window.renderMarkdownInContent || (x => x))(enc.actions))}</div>
                 </div>
             ` : ''}
 
             ${enc.skills ? `
                 <div class="enc-section">
                     <div class="enc-section-title">Fertigkeiten</div>
-                    <div class="enc-text">${enc.skills}</div>
+                    <div class="enc-text">${sanitizeHTML((window.renderMarkdownInContent || (x => x))(enc.skills))}</div>
                 </div>
             ` : ''}
 
             ${enc.equipment ? `
                 <div class="enc-section">
                     <div class="enc-section-title">Ausrüstung</div>
-                    <div class="enc-text">${enc.equipment}</div>
+                    <div class="enc-text">${sanitizeHTML((window.renderMarkdownInContent || (x => x))(enc.equipment))}</div>
                 </div>
             ` : ''}
         </div>
