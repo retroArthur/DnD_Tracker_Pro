@@ -294,6 +294,7 @@ def build(minify=False, verbose=False):
         'features/maps/maps.js',
         # Shops-Module
         'features/shops/shops-core.js',
+        'features/shops/shop-export.js',
         'features/shops/links.js',
         # Network/Mindmap Module
         'features/network/mindmap.js',

@@ -407,6 +407,7 @@ function renderShops() {
                                 <span class="shop-item-count">${availableItems.length}/${items.length} Artikel</span>
                             </div>
                             <div class="shop-header-actions" data-stop-propagation="true">
+                                <button class="btn btn-sm" data-action="export-shop-handout" data-id="${shop.id}" title="Handout exportieren">📋</button>
                                 <button class="btn btn-sm" data-action="edit-shop" data-id="${shop.id}" title="Bearbeiten">✏️</button>
                                 <button class="btn btn-sm btn-danger" data-action="delete-shop" data-id="${shop.id}" title="Löschen">🗑️</button>
                             </div>

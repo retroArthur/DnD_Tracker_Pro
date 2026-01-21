@@ -3497,7 +3497,55 @@
             </div>
         </div>
     </div>
-    
+
+    <!-- Shop Handout Export Modal -->
+    <div class="modal-overlay" id="shop-handout-modal">
+        <div class="modal" style="max-width: 500px;">
+            <div class="modal-header">
+                <span class="modal-title">📋 Shop Handout exportieren</span>
+                <button class="btn btn-sm" data-action="hide-modal" data-value="shop-handout-modal">✕</button>
+            </div>
+            <div class="modal-body">
+                <div id="shop-handout-shop-name" style="margin-bottom: 20px; font-weight: bold; color: var(--gold); font-size: 1.1em;"></div>
+
+                <div class="handout-options">
+                    <label class="handout-checkbox-label">
+                        <input type="checkbox" id="handout-show-prices" checked>
+                        <span>💰 Preise anzeigen</span>
+                    </label>
+
+                    <label class="handout-checkbox-label">
+                        <input type="checkbox" id="handout-show-descriptions" checked>
+                        <span>📝 Artikel-Beschreibungen anzeigen</span>
+                    </label>
+
+                    <label class="handout-checkbox-label">
+                        <input type="checkbox" id="handout-show-availability">
+                        <span>📊 Verfügbarkeit anzeigen</span>
+                    </label>
+
+                    <label class="handout-checkbox-label">
+                        <input type="checkbox" id="handout-group-by-category">
+                        <span>📦 Nach Kategorie gruppieren</span>
+                    </label>
+
+                    <label class="handout-checkbox-label">
+                        <input type="checkbox" id="handout-player-mode" checked>
+                        <span>👥 Spieler-Modus (DM-Notizen ausblenden)</span>
+                    </label>
+                </div>
+
+                <div class="handout-help-text">
+                    <p>💡 <strong>Hinweis:</strong> Es wird eine HTML-Datei heruntergeladen, die du öffnen und ausdrucken kannst (Strg+P).</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn" data-action="hide-modal" data-value="shop-handout-modal">Abbrechen</button>
+                <button class="btn btn-success" data-action="generate-shop-handout" data-id="">📋 Handout generieren</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Timer Modal -->
     <div class="modal-overlay" id="timer-modal">
         <div class="modal">
