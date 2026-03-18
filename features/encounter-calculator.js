@@ -1175,7 +1175,6 @@ function renderEncounterCalculator() {
 // GLOBAL EXPORTS (for backward compatibility)
 // ============================================================
 // Export functions to window for onclick handlers
-window.onBudgetSliderChange = onBudgetSliderChange;
 window.applyBudgetTarget = applyBudgetTarget;
 window.saveMonsterFavorite = saveMonsterFavorite;
 window.loadMonsterFavorite = loadMonsterFavorite;
@@ -1188,8 +1187,6 @@ window.clearParty = clearParty;
 window.addMonster = addMonster;
 window.removeMonster = removeMonster;
 window.clearMonsters = clearMonsters;
-window.updateMonsterPreview = updateMonsterPreview;
-window.scheduleMonsterPreview = scheduleMonsterPreview;
 window.quickAdjustDifficulty = quickAdjustDifficulty;
 window.showDifficultySelector = showDifficultySelector;
 window.saveAsEncounter = saveAsEncounter;
@@ -1200,4 +1197,3 @@ window.setCalculatorTerrain = setCalculatorTerrain;
 window.toggleCalculatorLair = toggleCalculatorLair;
 window.showEncounterImport = showEncounterImport;
 window.importEncounterMonsters = importEncounterMonsters;
-window.renderEncounterCalculator = renderEncounterCalculator;

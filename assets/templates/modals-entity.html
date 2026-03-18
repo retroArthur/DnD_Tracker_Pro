@@ -1,0 +1,666 @@
+    <div class="modal-overlay" id="filter-modal">
+        <div class="modal">
+            <div class="modal-header">
+                <span class="modal-title">Filter verwalten</span>
+                <button class="btn btn-sm" data-action="hide-modal" data-value="filter-modal">✕</button>
+            </div>
+            <div id="filter-list" style="margin-bottom: 12px;"></div>
+            <div class="form-grid">
+                <div class="form-group"><label>Name</label><input type="text" id="filter-name"></div>
+                <div class="form-group"><label>Farbe</label>
+                    <select id="filter-color">
+                        <option value="blue">Blau</option>
+                        <option value="red">Rot</option>
+                        <option value="green">Grün</option>
+                        <option value="yellow">Gelb</option>
+                        <option value="purple">Lila</option>
+                        <option value="cyan">Cyan</option>
+                        <option value="orange">Orange</option>
+                        <option value="pink">Pink</option>
+                    </select>
+                </div>
+            </div>
+            <button class="btn" data-action="call" data-value="addFilter">Filter hinzufügen</button>
+        </div>
+    </div>
+    
+    <div class="modal-overlay" id="location-modal">
+        <div class="modal" style="max-width: 860px;">
+            <div class="modal-header">
+                <span class="modal-title">Ort hinzufügen</span>
+                <button class="btn btn-sm" data-action="hide-modal" data-value="location-modal">✕</button>
+            </div>
+            <input type="hidden" id="edit-loc-id">
+            <div class="form-group"><label>Name</label><input type="text" id="loc-name"></div>
+            <div class="form-group"><label>Filter</label><select id="loc-filter"></select></div>
+            <div class="form-group">
+                <label>Beschreibung</label>
+                <div class="editor-toolbar editor-toolbar-minimal">
+                    <div class="toolbar-row">
+                        <button class="editor-btn" data-action="format-text" data-cmd="loc-desc" data-editor="bold" title="Fett"><b>B</b></button>
+                        <button class="editor-btn" data-action="format-text" data-cmd="loc-desc" data-editor="italic" title="Kursiv"><i>I</i></button>
+                        <button class="editor-btn" data-action="format-text" data-cmd="loc-desc" data-editor="underline" title="Unterstrichen"><u>U</u></button>
+                        <span class="toolbar-separator"></span>
+                        <button class="editor-btn" data-action="clear-formatting" data-value="loc-desc" title="Formatierung entfernen">🧹</button>
+                    </div>
+                </div>
+                <div id="loc-desc" class="rich-editor" contenteditable="true" style="min-height: 100px;"></div>
+            </div>
+            <button class="btn btn-success" data-action="call" data-value="saveLocation">Speichern</button>
+        </div>
+    </div>
+    
+    <div class="modal-overlay" id="npc-modal">
+        <div class="modal" style="max-width: 650px;">
+            <div class="modal-header">
+                <span class="modal-title">NPC hinzufügen</span>
+                <button class="btn btn-sm" data-action="hide-modal" data-value="npc-modal">✕</button>
+            </div>
+            <div style="max-height: 75vh; overflow-y: auto; padding-right: 5px;">
+                <input type="hidden" id="edit-npc-id">
+                
+                <!-- Grundinfos -->
+                <div class="char-section-title" style="margin-top: 0;">📋 Grundinformationen</div>
+                <div class="form-grid">
+                    <div class="form-group"><label>Name *</label><input type="text" id="npc-name"></div>
+                    <div class="form-group"><label>Rolle</label><input type="text" id="npc-role" placeholder="z.B. Händler, Wache"></div>
+                </div>
+                <div class="form-grid">
+                    <div class="form-group"><label>Volk</label>
+                        <select id="npc-race">
+                            <option value="">-- Wählen --</option>
+                            <option value="Mensch">Mensch</option>
+                            <option value="Elf">Elf</option>
+                            <option value="Drow">Drow (Dunkel-Elf)</option>
+                            <option value="Zwerg">Zwerg</option>
+                            <option value="Halbling">Halbling</option>
+                            <option value="Gnom">Gnom</option>
+                            <option value="Halbelf">Halbelf</option>
+                            <option value="Halbork">Halbork</option>
+                            <option value="Tiefling">Tiefling</option>
+                            <option value="Drachenblütiger">Drachenblütiger</option>
+                            <option value="Goblin">Goblin</option>
+                            <option value="Kobold">Kobold</option>
+                            <option value="Ork">Ork</option>
+                            <option value="Tabaxi">Tabaxi</option>
+                            <option value="Kenku">Kenku</option>
+                            <option value="Goliath">Goliath</option>
+                            <option value="Aasimar">Aasimar</option>
+                        </select>
+                    </div>
+                    <div class="form-group"><label>Ort</label><select id="npc-location"></select></div>
+                </div>
+                <div class="form-grid">
+                    <div class="form-group"><label>Kapitel</label><input type="text" id="npc-chapter"></div>
+                    <div class="form-group"><label>Filter</label><select id="npc-filter"></select></div>
+                </div>
+                
+                <!-- Tags -->
+                <div class="char-section-title">🏷️ Tags & Beziehungen</div>
+                <div class="form-group"><label>Quests (Komma-getrennt)</label><input type="text" id="npc-quests" placeholder="z.B. Drachenjagd, Schatz finden"></div>
+                <div class="form-group"><label>Info (Komma-getrennt)</label><input type="text" id="npc-info" placeholder="z.B. Kennt Geheimgang, Hat Schlüssel"></div>
+                <div class="form-group"><label>Beziehungen</label><input type="text" id="npc-relations" placeholder="z.B. Bruder von X, Feind von Y"></div>
+                
+                <!-- Beschreibung -->
+                <div class="char-section-title">📝 Beschreibung</div>
+                <div class="form-group">
+                    <div class="editor-toolbar editor-toolbar-minimal">
+                        <div class="toolbar-row">
+                            <button class="editor-btn" data-action="format-text" data-cmd="npc-desc" data-editor="bold" title="Fett"><b>B</b></button>
+                            <button class="editor-btn" data-action="format-text" data-cmd="npc-desc" data-editor="italic" title="Kursiv"><i>I</i></button>
+                            <button class="editor-btn" data-action="format-text" data-cmd="npc-desc" data-editor="underline" title="Unterstrichen"><u>U</u></button>
+                            <span class="toolbar-separator"></span>
+                            <button class="editor-btn" data-action="clear-formatting" data-value="npc-desc" title="Formatierung entfernen">🧹</button>
+                        </div>
+                    </div>
+                    <div id="npc-desc" class="rich-editor" contenteditable="true" style="min-height: 60px;"></div>
+                </div>
+                
+                <!-- Trigger -->
+                <div class="char-section-title">🔔 Trigger</div>
+                <small style="color: var(--text-dim); display: block; margin-bottom: 8px;">Trigger enthüllen Informationen wenn bestimmte Bedingungen erfüllt sind.</small>
+                <div id="npc-triggers-container"></div>
+                <button class="btn btn-sm" data-action="call" data-value="addTriggerField" style="margin-bottom: 16px;">+ Trigger hinzufügen</button>
+                
+                <!-- Dialoge -->
+                <div class="char-section-title">💬 Dialoge</div>
+                <small style="color: var(--text-dim); display: block; margin-bottom: 8px;">Speichere Dialogtexte die der NPC sagen kann. Optional mit Trigger-Bedingung.</small>
+                <div id="npc-dialogs-container"></div>
+                <button class="btn btn-sm" data-action="call" data-value="addDialogField" style="margin-bottom: 16px;">+ Dialog hinzufügen</button>
+            </div>
+            
+            <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border); position: relative; z-index: 10; display: flex; justify-content: space-between; align-items: center;">
+                <div id="npc-markdown-actions" style="display: none;">
+                    <button class="btn btn-sm" data-action="call" data-value="exportNPCAsMarkdown" title="Als Markdown exportieren">📄 Export</button>
+                    <button class="btn btn-sm" data-action="call" data-value="importNPCMarkdown" title="Markdown importieren">📥 Import</button>
+                </div>
+                <div class="btn-group">
+                    <button class="btn btn-success" data-action="call" data-value="saveNPC" type="button">💾 Speichern</button>
+                    <button class="btn" data-action="hide-modal" data-value="npc-modal" type="button">Abbrechen</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- LOOT MODAL -->
+    <div class="modal-overlay" id="loot-modal">
+        <div class="modal" style="max-width: 700px;">
+            <div class="modal-header">
+                <span class="modal-title">Item hinzufügen</span>
+                <button class="btn btn-sm" data-action="hide-modal" data-value="loot-modal">✕</button>
+            </div>
+            <div style="max-height: 75vh; overflow-y: auto; padding-right: 5px;">
+                <input type="hidden" id="edit-loot-id">
+
+                <!-- Basis -->
+                <div class="char-section-title" style="margin-top: 0;">📦 Basis</div>
+                <div class="form-group"><label>Name *</label><input type="text" id="loot-name" placeholder="Gegenstandsname"></div>
+                <div class="form-grid">
+                    <div class="form-group"><label>Typ</label>
+                        <select id="loot-cat">
+                            <option value="weapons">⚔️ Waffen</option>
+                            <option value="armor">🛡️ Rüstung</option>
+                            <option value="potions">🧪 Tränke</option>
+                            <option value="scrolls">📜 Schriftrollen</option>
+                            <option value="gems">💎 Edelsteine</option>
+                            <option value="rings">💍 Ringe</option>
+                            <option value="amulets">📿 Amulette</option>
+                            <option value="wondrous">✨ Wundersam</option>
+                            <option value="misc">📦 Sonstiges</option>
+                        </select>
+                    </div>
+                    <div class="form-group"><label>Seltenheit</label>
+                        <select id="loot-rarity">
+                            <option value="normal">⚪ Normal</option>
+                            <option value="common">🟢 Gewöhnlich</option>
+                            <option value="uncommon">🔵 Ungewöhnlich</option>
+                            <option value="rare">🟣 Selten</option>
+                            <option value="veryrare">🟡 Sehr selten</option>
+                            <option value="legendary">🟠 Legendär</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-grid" style="grid-template-columns: repeat(3, 1fr);">
+                    <div class="form-group"><label>Menge</label><input type="number" id="loot-qty" value="1" min="0"></div>
+                    <div class="form-group"><label>Gewicht (kg)</label><input type="number" id="loot-wt" step="0.1" placeholder="kg"></div>
+                    <div class="form-group"><label>Wert (GM)</label><input type="number" id="loot-val" step="0.1" placeholder="GM"></div>
+                </div>
+
+                <!-- Details -->
+                <div class="char-section-title">📋 Details</div>
+                <div class="form-grid">
+                    <div class="form-group"><label>Herkunft</label>
+                        <select id="loot-origin">
+                            <option value="">— Keine —</option>
+                            <option value="campaign">📜 Kampagne</option>
+                            <option value="quest">🎯 Quest</option>
+                            <option value="summon">✨ Beschwörung</option>
+                            <option value="loot">💰 Loot</option>
+                            <option value="find">🔍 Fund</option>
+                            <option value="purchase">🛒 Kauf</option>
+                            <option value="gift">🎁 Geschenk</option>
+                            <option value="craft">🔨 Hergestellt</option>
+                        </select>
+                    </div>
+                    <div class="form-group"><label>Besonderheit</label><input type="text" id="loot-special" placeholder="z.B. Glüht bei Orks"></div>
+                </div>
+                <div class="form-group"><label>Eigenschaft</label><input type="text" id="loot-property" placeholder="z.B. +1 Angriff"></div>
+
+                <!-- Beschreibung -->
+                <div class="char-section-title">📝 Beschreibung</div>
+                <div class="form-group">
+                    <div class="editor-toolbar editor-toolbar-minimal">
+                        <div class="toolbar-row">
+                            <button class="editor-btn" data-action="format-text" data-cmd="loot-desc" data-editor="bold" title="Fett"><b>B</b></button>
+                            <button class="editor-btn" data-action="format-text" data-cmd="loot-desc" data-editor="italic" title="Kursiv"><i>I</i></button>
+                            <button class="editor-btn" data-action="format-text" data-cmd="loot-desc" data-editor="underline" title="Unterstrichen"><u>U</u></button>
+                            <span class="toolbar-separator"></span>
+                            <button class="editor-btn" data-action="clear-formatting" data-value="loot-desc" title="Formatierung entfernen">🧹</button>
+                        </div>
+                    </div>
+                    <div id="loot-desc" class="rich-editor" contenteditable="true" style="min-height: 60px;" data-placeholder="Beschreibung (optional)"></div>
+                </div>
+
+                <!-- Tags -->
+                <div class="char-section-title">🏷️ Tags</div>
+                <div class="loot-tag-filters">
+                    <button class="loot-tag-filter-btn active" data-tag-category="all">Alle</button>
+                    <button class="loot-tag-filter-btn" data-tag-category="type">Typ</button>
+                    <button class="loot-tag-filter-btn" data-tag-category="property">Eigensch.</button>
+                    <button class="loot-tag-filter-btn" data-tag-category="magic">Magie</button>
+                    <button class="loot-tag-filter-btn" data-tag-category="slot">Slot</button>
+                </div>
+                <div class="loot-tag-grid" id="loot-tag-grid">
+                    <label class="loot-tag-chip" data-category="type"><input type="checkbox" value="weapon"><span>⚔️ Waffe</span></label>
+                    <label class="loot-tag-chip" data-category="type"><input type="checkbox" value="armor"><span>🛡️ Rüstung</span></label>
+                    <label class="loot-tag-chip" data-category="type"><input type="checkbox" value="potion"><span>🧪 Trank</span></label>
+                    <label class="loot-tag-chip" data-category="type"><input type="checkbox" value="scroll"><span>📜 Schriftrolle</span></label>
+                    <label class="loot-tag-chip" data-category="type"><input type="checkbox" value="ring"><span>💍 Ring</span></label>
+                    <label class="loot-tag-chip" data-category="type"><input type="checkbox" value="wand"><span>🪄 Zauberstab</span></label>
+                    <label class="loot-tag-chip" data-category="property"><input type="checkbox" value="light"><span>🪶 Leicht</span></label>
+                    <label class="loot-tag-chip" data-category="property"><input type="checkbox" value="heavy"><span>🏋️ Schwer</span></label>
+                    <label class="loot-tag-chip" data-category="property"><input type="checkbox" value="finesse"><span>⚡ Finesse</span></label>
+                    <label class="loot-tag-chip" data-category="property"><input type="checkbox" value="two-handed"><span>🙌 Zweihändig</span></label>
+                    <label class="loot-tag-chip" data-category="property"><input type="checkbox" value="versatile"><span>↔️ Vielseitig</span></label>
+                    <label class="loot-tag-chip" data-category="magic"><input type="checkbox" value="attunement"><span>🔮 Einstimmung</span></label>
+                    <label class="loot-tag-chip" data-category="magic"><input type="checkbox" value="charges"><span>⚡ Ladungen</span></label>
+                    <label class="loot-tag-chip" data-category="magic"><input type="checkbox" value="consumable"><span>💨 Verbrauchsgut</span></label>
+                    <label class="loot-tag-chip" data-category="magic"><input type="checkbox" value="cursed"><span>💀 Verflucht</span></label>
+                    <label class="loot-tag-chip" data-category="slot"><input type="checkbox" value="head"><span>👑 Kopf</span></label>
+                    <label class="loot-tag-chip" data-category="slot"><input type="checkbox" value="body"><span>👔 Körper</span></label>
+                    <label class="loot-tag-chip" data-category="slot"><input type="checkbox" value="hands"><span>🧤 Hände</span></label>
+                    <label class="loot-tag-chip" data-category="slot"><input type="checkbox" value="feet"><span>👢 Füße</span></label>
+                </div>
+                <div class="loot-selected-tags" id="loot-selected-tags"></div>
+            </div>
+
+            <div class="btn-group" style="margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border);">
+                <button class="btn btn-success" data-action="call" data-value="saveLoot" id="loot-save-btn">💾 Speichern</button>
+                <button class="btn" data-action="hide-modal" data-value="loot-modal">Abbrechen</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="quest-modal">
+        <div class="modal" style="max-width: 700px;">
+            <div class="modal-header">
+                <span class="modal-title">Quest hinzufügen</span>
+                <button class="btn btn-sm" data-action="hide-modal" data-value="quest-modal">✕</button>
+            </div>
+            <input type="hidden" id="edit-quest-id">
+            <div class="form-group"><label>Titel</label><input type="text" id="quest-title"></div>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>Quest-Geber</label>
+                    <select id="quest-giver">
+                        <option value="">-- NPC wählen --</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Ort</label>
+                    <select id="quest-location">
+                        <option value="">-- Ort wählen --</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Zielort</label>
+                    <select id="quest-target">
+                        <option value="">-- Zielort wählen --</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-group"><label>Typ</label>
+                <select id="quest-type">
+                    <option value="quest">Quest</option>
+                    <option value="side">Side-Quest</option>
+                    <option value="plot">Plot-Quest</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Beschreibung</label>
+                <div class="editor-toolbar editor-toolbar-minimal">
+                    <div class="toolbar-row">
+                        <button class="editor-btn" data-action="format-text" data-cmd="quest-desc" data-editor="bold" title="Fett"><b>B</b></button>
+                        <button class="editor-btn" data-action="format-text" data-cmd="quest-desc" data-editor="italic" title="Kursiv"><i>I</i></button>
+                        <button class="editor-btn" data-action="format-text" data-cmd="quest-desc" data-editor="underline" title="Unterstrichen"><u>U</u></button>
+                        <span class="toolbar-separator"></span>
+                        <button class="editor-btn" data-action="clear-formatting" data-value="quest-desc" title="Formatierung entfernen">🧹</button>
+                    </div>
+                </div>
+                <div id="quest-desc" class="rich-editor" contenteditable="true"></div>
+            </div>
+            
+            <!-- Belohnungs-Sektion -->
+            <div class="form-group">
+                <label>💰 Belohnung</label>
+                <div class="quest-reward-section">
+                    <div class="form-grid" style="gap: 8px;">
+                        <div class="form-group" style="margin: 0;">
+                            <label style="font-size: 0.85em;">Gold</label>
+                            <div style="display: flex; align-items: center; gap: 4px;">
+                                <input type="number" id="quest-reward-gold" min="0" placeholder="0" style="width: 100px;">
+                                <span style="color: var(--gold);">GP</span>
+                            </div>
+                        </div>
+                        <div class="form-group" style="margin: 0;">
+                            <label style="font-size: 0.85em;">Item aus Truhe</label>
+                            <select id="quest-reward-item">
+                                <option value="">-- Item wählen --</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div id="quest-reward-items-list" class="quest-reward-items"></div>
+                    <button type="button" class="btn btn-sm" data-action="call" data-value="addQuestRewardItem" style="margin-top: 8px;">+ Item hinzufügen</button>
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Sonstige Belohnung</label>
+                <input type="text" id="quest-reward-other" placeholder="z.B. Ruf, Titel, Zugang zu...">
+            </div>
+            
+            <div class="form-group">
+                <label>Epilog / Nachwirkungen</label>
+                <div class="editor-toolbar editor-toolbar-minimal">
+                    <div class="toolbar-row">
+                        <button class="editor-btn" data-action="format-text" data-cmd="quest-epilog" data-editor="bold" title="Fett"><b>B</b></button>
+                        <button class="editor-btn" data-action="format-text" data-cmd="quest-epilog" data-editor="italic" title="Kursiv"><i>I</i></button>
+                        <button class="editor-btn" data-action="format-text" data-cmd="quest-epilog" data-editor="underline" title="Unterstrichen"><u>U</u></button>
+                        <span class="toolbar-separator"></span>
+                        <button class="editor-btn" data-action="clear-formatting" data-value="quest-epilog" title="Formatierung entfernen">🧹</button>
+                    </div>
+                </div>
+                <div id="quest-epilog" class="rich-editor" contenteditable="true" style="min-height: 80px;"></div>
+            </div>
+            <div class="form-row">
+                <label><input type="checkbox" id="quest-completed"> Abgeschlossen</label>
+                <label><input type="checkbox" id="quest-rewarded"> Belohnung erhalten</label>
+            </div>
+            <div class="modal-footer" style="display: flex; justify-content: space-between; align-items: center;">
+                <div id="quest-markdown-actions" style="display: none;">
+                    <button class="btn btn-sm" data-action="call" data-value="exportQuestAsMarkdown" title="Als Markdown exportieren">📄 Export</button>
+                    <button class="btn btn-sm" data-action="call" data-value="importQuestMarkdown" title="Markdown importieren">📥 Import</button>
+                </div>
+                <button class="btn btn-success" data-action="call" data-value="saveQuest">Speichern</button>
+            </div>
+        </div>
+    </div>
+    
+    <div class="modal-overlay" id="spell-modal">
+        <div class="modal" style="max-width: 600px;">
+            <div class="modal-header">
+                <span class="modal-title">Zauber hinzufügen</span>
+                <button class="btn btn-sm" data-action="hide-modal" data-value="spell-modal">✕</button>
+            </div>
+            <input type="hidden" id="edit-spell-id">
+            <div class="form-grid">
+                <div class="form-group"><label>Name</label><input type="text" id="spell-name"></div>
+                <div class="form-group"><label>Typ</label>
+                    <select id="spell-type">
+                        <option value="spell">Zauber (blau)</option>
+                        <option value="healing">Heilung (gelb)</option>
+                        <option value="damage">Schaden (rot)</option>
+                        <option value="buff">Buff (grün)</option>
+                        <option value="debuff">Debuff (lila)</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-grid">
+                <div class="form-group"><label>Stufe</label>
+                    <select id="spell-level">
+                        <option value="0">Zaubertrick (0)</option>
+                        <option value="1">1</option>
+                        <option value="2">2</option>
+                        <option value="3">3</option>
+                        <option value="4">4</option>
+                        <option value="5">5</option>
+                        <option value="6">6</option>
+                        <option value="7">7</option>
+                        <option value="8">8</option>
+                        <option value="9">9</option>
+                    </select>
+                </div>
+                <div class="form-group"><label>Schule</label>
+                    <select id="spell-school">
+                        <option value="">-- Wählen --</option>
+                        <option value="Bannzauber">Bannzauber</option>
+                        <option value="Beschwörung">Beschwörung</option>
+                        <option value="Erkenntnis">Erkenntnis</option>
+                        <option value="Hervorrufung">Hervorrufung</option>
+                        <option value="Illusion">Illusion</option>
+                        <option value="Nekromantie">Nekromantie</option>
+                        <option value="Verwandlung">Verwandlung</option>
+                        <option value="Verzauberung">Verzauberung</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Klassen</label>
+                <div class="spell-classes-grid">
+                    <label><input type="checkbox" id="spell-class-barbar" value="Barbar"> Barbar</label>
+                    <label><input type="checkbox" id="spell-class-barde" value="Barde"> Barde</label>
+                    <label><input type="checkbox" id="spell-class-druide" value="Druide"> Druide</label>
+                    <label><input type="checkbox" id="spell-class-hexenmeister" value="Hexenmeister"> Hexenmeister</label>
+                    <label><input type="checkbox" id="spell-class-kaempfer" value="Kämpfer"> Kämpfer</label>
+                    <label><input type="checkbox" id="spell-class-kleriker" value="Kleriker"> Kleriker</label>
+                    <label><input type="checkbox" id="spell-class-magier" value="Magier"> Magier</label>
+                    <label><input type="checkbox" id="spell-class-moench" value="Mönch"> Mönch</label>
+                    <label><input type="checkbox" id="spell-class-paladin" value="Paladin"> Paladin</label>
+                    <label><input type="checkbox" id="spell-class-schurke" value="Schurke"> Schurke</label>
+                    <label><input type="checkbox" id="spell-class-waldlaeufer" value="Waldläufer"> Waldläufer</label>
+                    <label><input type="checkbox" id="spell-class-zauberer" value="Zauberer"> Zauberer</label>
+                    <label><input type="checkbox" id="spell-class-artifizient" value="Artifizient"> Artifizient</label>
+                </div>
+            </div>
+            <div class="form-grid" style="grid-template-columns: 1fr 1fr 1fr;">
+                <div class="form-group"><label>Zeitaufwand</label>
+                    <select id="spell-time-select" onchange="onSpellTimeChange()">
+                        <option value="1 Aktion">Aktion</option>
+                        <option value="1 Bonusaktion">Bonus</option>
+                        <option value="1 Reaktion">Reaktion</option>
+                        <option value="1 Runde">1 Runde</option>
+                        <option value="1 Minute">1 Min.</option>
+                        <option value="10 Minuten">10 Min.</option>
+                        <option value="1 Stunde">1 Std.</option>
+                        <option value="custom">*Eigene Eingabe*</option>
+                    </select>
+                    <input type="text" id="spell-time-custom" placeholder="z.B. 8 Stunden" style="display:none; margin-top:6px;">
+                </div>
+                <div class="form-group"><label>Reichweite</label>
+                    <select id="spell-range-select" onchange="onSpellRangeChange()">
+                        <option value="">-- Wählen --</option>
+                        <option value="Selbst">Selbst</option>
+                        <option value="Berührung">Berührung</option>
+                        <option value="30cm|1ft.">30cm | 1ft.</option>
+                        <option value="1,5m|5ft.">1,5m | 5ft.</option>
+                        <option value="3m|10ft.">3m | 10ft.</option>
+                        <option value="5m|15ft.">5m | 15ft.</option>
+                        <option value="6m|20ft.">6m | 20ft.</option>
+                        <option value="8m|25ft.">8m | 25ft.</option>
+                        <option value="9m|30ft.">9m | 30ft.</option>
+                        <option value="15m|50ft.">15m | 50ft.</option>
+                        <option value="18m|60ft.">18m | 60ft.</option>
+                        <option value="30m|100ft.">30m | 100ft.</option>
+                        <option value="36m|120ft.">36m | 120ft.</option>
+                        <option value="90m|300ft.">90m | 300ft.</option>
+                        <option value="300m|1000ft.">300m | 1000ft.</option>
+                        <option value="1,6km|5250ft.">1,6km | 5250ft.</option>
+                        <option value="Sichtweite">Sichtweite</option>
+                        <option value="Unbegrenzt">Unbegrenzt</option>
+                        <option value="custom">Eigene Eingabe...</option>
+                    </select>
+                    <input type="text" id="spell-range-custom" placeholder="z.B. 12m Radius" style="display:none; margin-top:6px;">
+                </div>
+                <div class="form-group"><label>Dauer</label>
+                    <select id="spell-duration-select" onchange="onSpellDurationChange()">
+                        <option value="Unmittelbar">Unmittelbar</option>
+                        <option value="Berührung">Berührung</option>
+                        <option value="Konzentration, bis zu 1 Minute">Konz. bis zu 1 Min.</option>
+                        <option value="Konzentration, bis zu 10 Minuten">Konz. bis zu 10 Min.</option>
+                        <option value="Konzentration, bis zu 1 Stunde">Konz. bis zu 1 Std.</option>
+                        <option value="1 Minute">1 Minute</option>
+                        <option value="10 Minuten">10 Minuten</option>
+                        <option value="1 Stunde">1 Stunde</option>
+                        <option value="8 Stunden">8 Stunden</option>
+                        <option value="24 Stunden">24 Stunden</option>
+                        <option value="Bis zur Auflösung">Bis zur Auflösung</option>
+                        <option value="custom">*Eigene Eingabe*</option>
+                    </select>
+                    <input type="text" id="spell-duration-custom" placeholder="z.B. 7 Tage" style="display:none; margin-top:6px;">
+                </div>
+            </div>
+            <div class="form-row" style="margin-bottom: 10px;">
+                <label><input type="checkbox" id="spell-ritual"> Ritual</label>
+                <label><input type="checkbox" id="spell-v"> V (Verbal)</label>
+                <label><input type="checkbox" id="spell-g"> G (Gestik)</label>
+                <label><input type="checkbox" id="spell-m" onchange="toggleMaterialField()"> M (Material)</label>
+            </div>
+            <div class="form-group" id="spell-material-group" style="display: none;">
+                <label>Materialkomponenten</label>
+                <textarea id="spell-material" placeholder="z.B. eine Fledermausfell und ein Tropfen Pech" style="width: 100%; min-height: 50px; resize: vertical; word-wrap: break-word;"></textarea>
+            </div>
+            <div class="form-group">
+                <label>Beschreibung</label>
+                <div class="editor-toolbar editor-toolbar-minimal">
+                    <div class="toolbar-row">
+                        <button class="editor-btn" data-action="format-text" data-cmd="spell-desc" data-editor="bold" title="Fett"><b>B</b></button>
+                        <button class="editor-btn" data-action="format-text" data-cmd="spell-desc" data-editor="italic" title="Kursiv"><i>I</i></button>
+                        <button class="editor-btn" data-action="format-text" data-cmd="spell-desc" data-editor="underline" title="Unterstrichen"><u>U</u></button>
+                        <span class="toolbar-separator"></span>
+                        <button class="editor-btn" data-action="clear-formatting" data-value="spell-desc" title="Formatierung entfernen">🧹</button>
+                    </div>
+                </div>
+                <div id="spell-desc" class="rich-editor" contenteditable="true" style="min-height: 100px;"></div>
+            </div>
+            <div class="form-group">
+                <label>Notiz</label>
+                <div class="editor-toolbar editor-toolbar-minimal">
+                    <div class="toolbar-row">
+                        <button class="editor-btn" data-action="format-text" data-cmd="spell-note" data-editor="bold" title="Fett"><b>B</b></button>
+                        <button class="editor-btn" data-action="format-text" data-cmd="spell-note" data-editor="italic" title="Kursiv"><i>I</i></button>
+                        <button class="editor-btn" data-action="format-text" data-cmd="spell-note" data-editor="underline" title="Unterstrichen"><u>U</u></button>
+                        <span class="toolbar-separator"></span>
+                        <button class="editor-btn" data-action="clear-formatting" data-value="spell-note" title="Formatierung entfernen">🧹</button>
+                    </div>
+                </div>
+                <div id="spell-note" class="rich-editor" contenteditable="true" style="min-height: 60px;"></div>
+            </div>
+            <div class="modal-footer" style="display: flex; justify-content: space-between; align-items: center;">
+                <div id="spell-markdown-actions" style="display: none;">
+                    <button class="btn btn-sm" data-action="call" data-value="exportSpellAsMarkdown" title="Als Markdown exportieren">📄 Export</button>
+                    <button class="btn btn-sm" data-action="call" data-value="importSpellMarkdown" title="Markdown importieren">📥 Import</button>
+                </div>
+                <button class="btn btn-success" data-action="call" data-value="saveSpell">Speichern</button>
+            </div>
+        </div>
+    </div>
+    
+    <div class="modal-overlay" id="effect-modal">
+        <div class="modal" style="max-width: 550px;">
+            <div class="modal-header">
+                <span class="modal-title">⚡ Zustand/Effekt hinzufügen</span>
+                <button class="btn btn-sm" data-action="hide-modal" data-value="effect-modal">✕</button>
+            </div>
+            <input type="hidden" id="effect-combatant-id">
+            
+            <!-- Standard-Zustände Grid -->
+            <div style="margin-bottom: 12px;">
+                <label style="display: block; margin-bottom: 8px; color: var(--text-dim); font-size: 0.9em;">Standard-Zustände (klicken zum Hinzufügen)</label>
+                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; max-height: 280px; overflow-y: auto;" id="effect-conditions-grid">
+                    <!-- Dynamisch generiert -->
+                </div>
+            </div>
+            
+            <!-- Benutzerdefinierter Effekt -->
+            <div style="border-top: 1px solid var(--border); padding-top: 12px;">
+                <label style="display: block; margin-bottom: 8px; color: var(--text-dim); font-size: 0.9em;">Benutzerdefinierter Effekt</label>
+                <div class="form-grid" style="grid-template-columns: 1fr auto;">
+                    <input type="text" id="effect-name" placeholder="Name (z.B. Brennend, Gesegnet)">
+                    <select id="effect-color" style="width: 90px;">
+                        <option value="red">🔴 Rot</option>
+                        <option value="green">🟢 Grün</option>
+                        <option value="purple">🟣 Lila</option>
+                        <option value="yellow">🟡 Gelb</option>
+                        <option value="blue">🔵 Blau</option>
+                    </select>
+                </div>
+                <div class="form-grid" style="margin-top: 8px; grid-template-columns: 1fr auto;">
+                    <input type="number" id="effect-duration" placeholder="Dauer (Runden, 0=∞)" value="1" min="0">
+                    <button class="btn btn-success" data-action="call" data-value="saveCustomEffect">+ Hinzufügen</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="modal-overlay" id="assign-spell-modal">
+        <div class="modal assign-spell-modal">
+            <div class="modal-header">
+                <span class="modal-title">✨ Zauber zuweisen</span>
+                <button class="btn btn-sm" data-action="hide-modal" data-value="assign-spell-modal">✕</button>
+            </div>
+            <input type="hidden" id="assign-char-id">
+
+            <!-- Kompakte Filter-Leiste -->
+            <div class="assign-spell-filters">
+                <div class="assign-spell-search-wrap">
+                    <input type="text" id="assign-spell-search" placeholder="🔍 Zauber suchen..." oninput="filterAssignSpells()">
+                </div>
+                <select id="assign-spell-class-filter" class="assign-spell-select" onchange="filterAssignSpells()">
+                    <option value="">Alle Klassen</option>
+                    <option value="Barde">Barde</option>
+                    <option value="Druide">Druide</option>
+                    <option value="Hexenmeister">Hexenmeister</option>
+                    <option value="Kleriker">Kleriker</option>
+                    <option value="Magier">Magier</option>
+                    <option value="Paladin">Paladin</option>
+                    <option value="Waldläufer">Waldläufer</option>
+                    <option value="Zauberer">Zauberer</option>
+                </select>
+                <select id="assign-spell-level-filter" class="assign-spell-select" onchange="filterAssignSpells()">
+                    <option value="">Alle Stufen</option>
+                    <option value="0">🔮 Tricks</option>
+                    <option value="1">⭐ Stufe 1</option>
+                    <option value="2">⭐ Stufe 2</option>
+                    <option value="3">⭐ Stufe 3</option>
+                    <option value="4">⭐ Stufe 4</option>
+                    <option value="5">⭐ Stufe 5</option>
+                    <option value="6">⭐ Stufe 6</option>
+                    <option value="7">⭐ Stufe 7</option>
+                    <option value="8">⭐ Stufe 8</option>
+                    <option value="9">⭐ Stufe 9</option>
+                </select>
+            </div>
+
+            <!-- Liste Header -->
+            <div class="assign-spell-list-header">
+                <span class="assign-spell-count-label">Verfügbar <span id="assign-spell-count" class="assign-spell-count-badge">0</span></span>
+                <div class="assign-spell-quick-actions">
+                    <button class="btn btn-xs" data-action="call" data-value="assignSpellsSelectAll" title="Alle auswählen">Alle</button>
+                    <button class="btn btn-xs" data-action="call" data-value="assignSpellsSelectNone" title="Keine auswählen">Keine</button>
+                </div>
+            </div>
+
+            <!-- Zauber-Liste -->
+            <div id="assign-spell-list" class="assign-spell-list"></div>
+
+            <!-- Footer -->
+            <div class="assign-spell-footer">
+                <button class="btn" data-action="hide-modal" data-value="assign-spell-modal">Abbrechen</button>
+                <button class="btn btn-success" data-action="call" data-value="assignSpells">✓ Zuweisen</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Item Zuweisen Modal -->
+    <div class="modal-overlay" id="assign-item-modal">
+        <div class="modal" style="max-width: 600px; width: 95%;">
+            <div class="modal-header">
+                <span class="modal-title">📦 Items zuweisen</span>
+                <button class="btn btn-sm" data-action="hide-modal" data-value="assign-item-modal">✕</button>
+            </div>
+            <input type="hidden" id="assign-item-char-id">
+            <div class="form-grid" style="margin-bottom: 10px; grid-template-columns: 1fr 1fr;">
+                <div class="form-group">
+                    <label>🔍 Suche</label>
+                    <input type="text" id="assign-item-search" placeholder="Name..." oninput="filterAssignItems()">
+                </div>
+                <div class="form-group">
+                    <label>📂 Kategorie</label>
+                    <select id="assign-item-cat-filter" onchange="filterAssignItems()">
+                        <option value="">Alle Kategorien</option>
+                        <option value="weapons">⚔️ Waffen</option>
+                        <option value="armor">🛡️ Rüstung</option>
+                        <option value="potions">🧪 Tränke</option>
+                        <option value="scrolls">📜 Schriftrollen</option>
+                        <option value="gems">💎 Edelsteine</option>
+                        <option value="misc">📦 Sonstiges</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Items wählen <span id="assign-item-count" style="color: var(--text-dim); font-size: 0.85em;">(0 ausgewählt)</span></label>
+                <div id="assign-item-list" style="max-height: 350px; overflow-y: auto; background: var(--bg-dark); border: 1px solid var(--border); border-radius: 5px; padding: 6px;"></div>
+            </div>
+            <button class="btn btn-success" data-action="call" data-value="assignItems">Zuweisen</button>
+        </div>
+    </div>
+    

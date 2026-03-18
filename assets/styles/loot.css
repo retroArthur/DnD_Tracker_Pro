@@ -1,0 +1,1010 @@
+        /* ============================================================
+           LOOT
+           ============================================================ */
+        /* Kompaktes Loot-Add Formular */
+        .loot-add-bar {
+            display: flex;
+            gap: 6px;
+            margin-bottom: 6px;
+            flex-wrap: wrap;
+            align-items: center;
+            background: var(--bg-card);
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+        }
+        
+        .loot-input-name {
+            flex: 1;
+            min-width: 120px;
+            padding: 8px 10px;
+            background: var(--bg-dark);
+            border: 1px solid var(--border);
+            color: var(--text);
+            border-radius: 6px;
+            font-size: 14px;
+        }
+        
+        .loot-input-sm {
+            width: 110px;
+            padding: 8px 6px;
+            background: var(--bg-dark);
+            border: 1px solid var(--border);
+            color: var(--text);
+            border-radius: 6px;
+            font-size: 12px;
+        }
+        
+        .loot-input-xs {
+            width: 55px;
+            padding: 8px 6px;
+            background: var(--bg-dark);
+            border: 1px solid var(--border);
+            color: var(--text);
+            border-radius: 6px;
+            font-size: 13px;
+            text-align: center;
+        }
+        
+        /* Legacy loot-add-btn entfernt - jetzt in Master-Detail Sektion definiert */
+        
+        .loot-attunement-toggle {
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            padding: 6px 8px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            height: 38px;
+            transition: all 0.2s;
+        }
+        
+        .loot-attunement-toggle:hover {
+            border-color: var(--purple);
+        }
+        
+        .loot-attunement-toggle input {
+            display: none;
+        }
+        
+        .loot-attunement-toggle .attunement-label {
+            font-size: 16px;
+            opacity: 0.4;
+            transition: opacity 0.2s;
+        }
+        
+        .loot-attunement-toggle input:checked + .attunement-label {
+            opacity: 1;
+        }
+        
+        .loot-attunement-badge {
+            font-size: 10px;
+            padding: 2px 5px;
+            background: var(--purple);
+            color: white;
+            border-radius: 3px;
+            margin-left: 4px;
+        }
+        
+        .loot-desc-input {
+            width: 100%;
+            padding: 8px 12px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            color: var(--text);
+            border-radius: 6px;
+            font-size: 13px;
+            margin-bottom: 12px;
+        }
+        
+        .loot-desc-input:focus,
+        .loot-input-name:focus,
+        .loot-input-sm:focus,
+        .loot-input-xs:focus {
+            border-color: var(--gold);
+            outline: none;
+        }
+        
+        /* Loot Formular (Modal) */
+        .loot-form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+        
+        @media (max-width: 768px) {
+            .loot-form-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .loot-form-section {
+            background: var(--bg-dark);
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+        }
+        
+        .loot-form-section-title {
+            font-weight: 600;
+            color: var(--gold);
+            margin-bottom: 12px;
+            font-size: 0.9em;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .loot-form-row {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .loot-form-row .form-group {
+            margin-bottom: 10px;
+        }
+        
+        /* Tags Section */
+        .loot-tags-section {
+            margin-top: 12px;
+            padding: 12px;
+            background: var(--bg-dark);
+            border-radius: 8px;
+            border: 1px solid var(--border);
+        }
+        
+        .loot-tag-filters {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-bottom: 12px;
+        }
+        
+        .loot-tag-filter-btn {
+            padding: 5px 12px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            color: var(--text-dim);
+            font-size: 0.8em;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .loot-tag-filter-btn:hover {
+            border-color: var(--gold);
+            color: var(--text);
+        }
+        
+        .loot-tag-filter-btn.active {
+            background: var(--gold);
+            border-color: var(--gold);
+            color: var(--bg-dark);
+        }
+        
+        .loot-tag-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            max-height: 180px;
+            overflow-y: auto;
+            padding: 4px;
+        }
+        
+        .loot-tag-chip {
+            display: inline-flex;
+            align-items: center;
+            padding: 4px 10px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            font-size: 0.8em;
+            cursor: pointer;
+            transition: all 0.15s;
+            user-select: none;
+        }
+        
+        .loot-tag-chip:hover {
+            border-color: var(--gold);
+        }
+        
+        .loot-tag-chip input {
+            display: none;
+        }
+        
+        .loot-tag-chip input:checked + span {
+            color: var(--gold);
+            font-weight: 500;
+        }
+        
+        .loot-tag-chip:has(input:checked) {
+            background: rgba(212, 175, 55, 0.2);
+            border-color: var(--gold);
+        }
+        
+        .loot-tag-chip.hidden {
+            display: none;
+        }
+        
+        .loot-selected-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid var(--border);
+            min-height: 32px;
+        }
+        
+        .loot-selected-tags:empty::before {
+            content: 'Keine Tags ausgewählt';
+            color: var(--text-dim);
+            font-size: 0.8em;
+            font-style: italic;
+        }
+        
+        .loot-selected-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 8px;
+            background: var(--gold);
+            color: var(--bg-dark);
+            border-radius: 12px;
+            font-size: 0.8em;
+            font-weight: 500;
+        }
+        
+        .loot-selected-tag .remove-tag {
+            cursor: pointer;
+            margin-left: 2px;
+            opacity: 0.7;
+        }
+        
+        .loot-selected-tag .remove-tag:hover {
+            opacity: 1;
+        }
+        
+        /* ============================================================
+           SHOPS
+           ============================================================ */
+        .shops-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        
+        .shop-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        
+        .shop-card.expanded {
+            border-color: var(--gold);
+        }
+        
+        .shop-card.expanded .shop-body {
+            display: block !important;
+        }
+        
+        .shop-card.expanded .shop-toggle {
+            transform: rotate(90deg);
+        }
+        
+        .shop-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        
+        .shop-header:hover {
+            background: var(--bg-elevated);
+        }
+        
+        .shop-header-main {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex: 1;
+            min-width: 0;
+        }
+        
+        .shop-toggle {
+            color: var(--text-dim);
+            font-size: 0.8em;
+            transition: transform 0.2s;
+        }
+        
+        .shop-icon {
+            font-size: 1.5em;
+        }
+        
+        .shop-title-block {
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+        }
+        
+        .shop-name {
+            font-weight: 600;
+            font-size: 1.1em;
+            color: var(--gold);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .shop-type-label {
+            font-size: 0.75em;
+            color: var(--text-dim);
+        }
+        
+        .shop-header-meta {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        
+        .shop-meta-tag {
+            font-size: 0.75em;
+            padding: 2px 8px;
+            border-radius: 4px;
+            background: var(--bg-dark);
+            color: var(--text-dim);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .shop-meta-tag:hover {
+            background: var(--bg-elevated);
+            color: var(--text);
+        }
+        
+        .shop-meta-tag.npc { color: var(--purple); }
+        .shop-meta-tag.location { color: var(--cyan); }
+        
+        .shop-item-count {
+            font-size: 0.8em;
+            color: var(--green);
+            background: rgba(74, 222, 128, 0.1);
+            padding: 2px 8px;
+            border-radius: 4px;
+        }
+        
+        .shop-header-actions {
+            display: flex;
+            gap: 4px;
+        }
+        
+        .shop-body {
+            padding: 16px;
+            border-top: 1px solid var(--border);
+            background: var(--bg-dark);
+        }
+        
+        .shop-description {
+            color: var(--text);
+            margin-bottom: 10px;
+            line-height: 1.5;
+        }
+        
+        .shop-special {
+            color: var(--gold);
+            font-size: 0.9em;
+            margin-bottom: 6px;
+        }
+        
+        .shop-note {
+            color: var(--text-dim);
+            font-size: 0.85em;
+            font-style: italic;
+            margin-bottom: 10px;
+        }
+        
+        .shop-category-tabs {
+            display: flex;
+            gap: 6px;
+            margin-bottom: 12px;
+            flex-wrap: wrap;
+        }
+        
+        .shop-cat-badge {
+            font-size: 0.8em;
+            padding: 4px 10px;
+            border-radius: 4px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            user-select: none;
+        }
+
+        .shop-cat-badge:hover {
+            background: var(--bg-hover);
+            transform: translateY(-1px);
+        }
+
+        .shop-cat-badge.active {
+            background: var(--gold);
+            color: var(--bg);
+            border-color: var(--gold);
+            font-weight: bold;
+            box-shadow: 0 2px 4px rgba(212, 175, 55, 0.3);
+        }
+
+        .shop-cat-badge.weapon { border-color: var(--red); color: var(--red); }
+        .shop-cat-badge.armor { border-color: var(--blue); color: var(--blue); }
+        .shop-cat-badge.item { border-color: var(--green); color: var(--green); }
+        .shop-cat-badge.service { border-color: var(--purple); color: var(--purple); }
+        .shop-cat-badge.misc { border-color: var(--text-dim); color: var(--text-dim); }
+        .shop-cat-badge.all { border-color: var(--gold); color: var(--gold); }
+
+        .shop-sort-controls {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 12px;
+            padding: 8px 12px;
+            background: var(--bg-hover);
+            border-radius: 6px;
+            border: 1px solid var(--border);
+        }
+
+        .shop-sort-btn {
+            font-size: 0.85em;
+            padding: 4px 12px;
+            border-radius: 4px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            color: var(--text);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            user-select: none;
+        }
+
+        .shop-sort-btn:hover {
+            background: var(--bg-hover);
+            border-color: var(--gold);
+            transform: translateY(-1px);
+        }
+
+        .shop-sort-btn.active {
+            background: var(--gold);
+            color: var(--bg);
+            border-color: var(--gold);
+            font-weight: bold;
+            box-shadow: 0 2px 4px rgba(212, 175, 55, 0.3);
+        }
+        
+        .shop-items-container {
+            background: var(--bg-card);
+            border-radius: 6px;
+            overflow: hidden;
+        }
+        
+        .shop-items-empty {
+            padding: 20px;
+            text-align: center;
+            color: var(--text-dim);
+        }
+        
+        /* Shop Items - Kompakte Mini-Zeilen (Variante 3) */
+        .si-list {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+        
+        .si-item {
+            background: var(--bg-dark);
+            border-left: 3px solid var(--text-dim);
+            transition: all 0.2s;
+        }
+        
+        .si-item.weapon { border-left-color: var(--red); }
+        .si-item.armor { border-left-color: var(--blue); }
+        .si-item.item { border-left-color: var(--green); }
+        .si-item.service { border-left-color: var(--purple); }
+        .si-item.misc { border-left-color: var(--text-dim); }
+        
+        .si-main {
+            display: grid;
+            grid-template-columns: 45px 28px 1fr 110px 75px;
+            align-items: center;
+            padding: 8px 10px;
+            gap: 8px;
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+        
+        .si-main:hover {
+            background: var(--bg-elevated);
+        }
+        
+        .si-qty {
+            text-align: center;
+            font-size: 0.85em;
+            color: var(--text-dim);
+        }
+        
+        .si-cat {
+            font-size: 1.1em;
+            text-align: center;
+        }
+        
+        .si-name {
+            font-weight: 500;
+            color: var(--text);
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            line-height: 1.3;
+        }
+        
+        .si-cost {
+            text-align: right;
+            color: var(--gold);
+            font-size: 0.9em;
+            font-weight: 500;
+            white-space: nowrap;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 6px;
+        }
+        
+        .si-cart-btn {
+            background: transparent;
+            border: 1px solid var(--gold);
+            color: var(--gold);
+            padding: 2px 6px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: all 0.15s;
+        }
+        
+        .si-cart-btn:hover {
+            background: var(--gold);
+            color: var(--bg-dark);
+        }
+        
+        .si-btns {
+            display: flex;
+            gap: 4px;
+            justify-content: flex-end;
+        }
+        
+        .si-btns .btn {
+            padding: 3px 6px;
+            font-size: 0.8em;
+        }
+        
+        .si-details {
+            display: none;
+            background: var(--bg-card);
+            padding: 10px 12px 10px 50px;
+            font-size: 0.85em;
+            border-top: 1px solid var(--border);
+        }
+        
+        .si-item.expanded .si-details {
+            display: block;
+        }
+        
+        .si-item.expanded .si-main {
+            background: var(--bg-elevated);
+        }
+        
+        .si-detail-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-bottom: 8px;
+        }
+        
+        .si-detail-row:last-child {
+            margin-bottom: 0;
+        }
+        
+        .si-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+        
+        .si-tag-l {
+            color: var(--text-dim);
+        }
+        
+        .si-tag-v {
+            color: var(--cyan);
+        }
+        
+        .si-special {
+            color: var(--gold);
+            font-style: italic;
+        }
+        
+        .si-note {
+            color: var(--yellow);
+            font-style: italic;
+            margin-left: 8px;
+        }
+        
+        .si-avail-toggle {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+            font-size: 0.9em;
+            color: var(--text-dim);
+        }
+        
+        .si-avail-toggle input {
+            cursor: pointer;
+        }
+        
+        .si-detail-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        
+        .si-add-cart-section {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        .si-qty-input {
+            width: 55px;
+            padding: 4px 6px;
+            text-align: center;
+            background: var(--bg-dark);
+            border: 1px solid var(--border);
+            color: var(--text);
+            border-radius: 4px;
+        }
+        
+        .si-unavailable {
+            opacity: 0.5;
+        }
+        
+        .si-unavailable .si-name {
+            text-decoration: line-through;
+        }
+        
+        /* Neue Kategoriefarben */
+        .si-item.potion { border-left-color: var(--purple); }
+        .si-item.food { border-left-color: #e67e22; }
+        .si-item.drink { border-left-color: #f39c12; }
+        .si-item.lodging { border-left-color: #9b59b6; }
+        .si-item.transport { border-left-color: #1abc9c; }
+        .si-item.clothing { border-left-color: #e91e63; }
+        .si-item.accessory { border-left-color: #27ae60; }
+        .si-item.craft { border-left-color: #d35400; }
+        .si-item.prop { border-left-color: #8e44ad; }
+        .si-item.gear { border-left-color: #3498db; }
+        .si-item.magic { border-left-color: #9c27b0; }
+        .si-item.enchant { border-left-color: #673ab7; }
+        .si-item.buff { border-left-color: #ff5722; }
+        .si-item.info { border-left-color: #795548; }
+        .si-item.trinket { border-left-color: #607d8b; }
+        
+        .shop-footer {
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid var(--border);
+        }
+        
+        /* Warenkorb Button */
+        .cart-btn {
+            position: relative;
+            background: var(--gold);
+            border: 1px solid var(--gold);
+            color: var(--bg-dark);
+            font-weight: 600;
+        }
+
+        .cart-btn:hover {
+            background: #c5a028;
+            border-color: #c5a028;
+        }
+        
+        .cart-badge {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background: var(--red);
+            color: white;
+            font-size: 0.7em;
+            font-weight: bold;
+            min-width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0 4px;
+        }
+        
+        /* Shop Item Add-to-Cart Button */
+        .si-cart-btn {
+            padding: 3px 8px;
+            font-size: 0.8em;
+            background: rgba(212, 175, 55, 0.2);
+            border: 1px solid var(--gold);
+            color: var(--gold);
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .si-cart-btn:hover {
+            background: var(--gold);
+            color: var(--bg-dark);
+        }
+        
+        /* Cart Modal Styles */
+        .cart-content {
+            padding: 12px;
+            background: var(--bg-dark);
+            border-radius: 6px;
+            margin-bottom: 12px;
+        }
+        
+        .cart-empty {
+            text-align: center;
+            color: var(--text-dim);
+            padding: 30px;
+        }
+        
+        .cart-shop-group {
+            margin-bottom: 16px;
+        }
+        
+        .cart-shop-group:last-child {
+            margin-bottom: 0;
+        }
+        
+        .cart-shop-name {
+            font-weight: 600;
+            color: var(--gold);
+            margin-bottom: 8px;
+            padding-bottom: 4px;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .cart-item {
+            display: grid;
+            grid-template-columns: 1fr auto auto auto;
+            align-items: center;
+            gap: 10px;
+            padding: 8px;
+            background: var(--bg-card);
+            border-radius: 4px;
+            margin-bottom: 4px;
+        }
+        
+        .cart-item:last-child {
+            margin-bottom: 0;
+        }
+        
+        .cart-item-info {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            min-width: 0;
+        }
+        
+        .cart-item-icon {
+            font-size: 1.1em;
+        }
+        
+        .cart-item-name {
+            font-weight: 500;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .cart-item-controls {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        
+        .cart-qty-input {
+            width: 50px;
+            text-align: center;
+            padding: 4px;
+            background: var(--bg-dark);
+            border: 1px solid var(--border);
+            color: var(--text);
+            border-radius: 4px;
+        }
+        
+        .cart-item-price {
+            text-align: right;
+            min-width: 100px;
+        }
+        
+        .cart-item-unit {
+            font-size: 0.8em;
+            color: var(--text-dim);
+            display: block;
+        }
+        
+        .cart-item-total {
+            color: var(--gold);
+            font-weight: 500;
+        }
+        
+        .cart-summary {
+            background: var(--bg-card);
+            padding: 12px;
+            border-radius: 6px;
+            border: 1px solid var(--gold);
+        }
+        
+        .cart-total-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 1.2em;
+            margin-bottom: 12px;
+        }
+        
+        .cart-total-value {
+            font-weight: bold;
+            color: var(--gold);
+        }
+        
+        .cart-total-gold {
+            font-size: 0.8em;
+            color: var(--text-dim);
+            margin-left: 8px;
+        }
+        
+        .cart-actions {
+            display: flex;
+            gap: 8px;
+            justify-content: flex-end;
+        }
+        
+        /* Checkout Modal */
+        .checkout-content {
+            text-align: center;
+        }
+        
+        .checkout-receipt-container {
+            position: relative;
+            background: var(--bg-dark);
+            border-radius: 6px;
+            padding: 12px;
+            margin-bottom: 16px;
+        }
+        
+        .checkout-receipt {
+            font-family: 'Courier New', monospace;
+            font-size: 0.85em;
+            text-align: left;
+            white-space: pre-wrap;
+            color: var(--text);
+            margin: 0;
+            max-height: 250px;
+            overflow-y: auto;
+        }
+        
+        .checkout-copy-btn {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+        }
+        
+        .checkout-total-section {
+            background: var(--bg-card);
+            padding: 16px;
+            border-radius: 8px;
+            border: 2px solid var(--gold);
+            margin-bottom: 12px;
+        }
+        
+        .checkout-label {
+            color: var(--text-dim);
+            font-size: 0.9em;
+        }
+        
+        .checkout-amount {
+            font-size: 1.8em;
+            font-weight: bold;
+            color: var(--gold);
+            margin: 8px 0;
+        }
+        
+        .checkout-breakdown {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        
+        .checkout-breakdown span {
+            background: var(--bg-dark);
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 0.9em;
+        }
+        
+        .checkout-currency-info {
+            margin-top: 12px;
+        }
+        
+        .currency-hint {
+            font-size: 0.8em;
+            color: var(--text-dim);
+            background: var(--bg-dark);
+            padding: 8px 12px;
+            border-radius: 4px;
+        }
+
+        /* Shop Handout Export Modal */
+        .handout-options {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .handout-checkbox-label {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .handout-checkbox-label:hover {
+            background: var(--bg-elevated);
+            border-color: var(--gold);
+        }
+
+        .handout-checkbox-label input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+            accent-color: var(--gold);
+        }
+
+        .handout-checkbox-label span {
+            flex: 1;
+            font-size: 0.95em;
+            user-select: none;
+        }
+
+        .handout-help-text {
+            margin-top: 16px;
+            padding: 12px;
+            background: var(--bg-elevated);
+            border-left: 3px solid var(--cyan);
+            border-radius: 4px;
+        }
+
+        .handout-help-text p {
+            margin: 0;
+            font-size: 0.9em;
+            color: var(--text-dim);
+        }
+

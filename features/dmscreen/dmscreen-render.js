@@ -4,9 +4,6 @@
 // ============================================================
 // CONSTANTS
 // ============================================================
-var APP_CONFIG = window.APP_CONFIG;
-var UI_TIMING = window.UI_TIMING;
-var ErrorHandler = window.ErrorHandler;
 var D = window.D;
 /**
  * Standard-Layout für den DM Screen
@@ -1571,12 +1568,3 @@ document.addEventListener('keydown', function (e) {
 // ============================================================
 window.renderDMScreen = renderDMScreen;
 window.resetDMScreenLayout = resetDMScreenLayout;
-window.switchDMSProfile = switchDMSProfile;
-window.saveDMSProfileAs = saveDMSProfileAs;
-window.deleteDMSProfile = deleteDMSProfile;
-window.toggleDMSProfileDropdown = toggleDMSProfileDropdown;
-window.toggleDMSConfigDropdown = toggleDMSConfigDropdown;
-window.toggleDMSWidget = toggleDMSWidget;
-window.hideDMSWidget = hideDMSWidget;
-window.dmsRollDice = dmsRollDice;
-window.dmsRollOnTable = dmsRollOnTable;

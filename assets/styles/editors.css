@@ -1,0 +1,451 @@
+        /* ============================================================ */
+
+        /* ============================================================
+           UNIFIED EDITOR TOOLBAR SYSTEM v3.0
+           Vereinheitlichte Toolbar-Styles für 3 Feature-Tiers
+           - Tier 3 (Minimal): Bold, Italic, Underline, Clear
+           - Tier 2 (Mid): + 3 Fonts, Lists
+           - Tier 1 (Full): + 7 Fonts, Font-Size, Colors, Tables, Links
+           ============================================================ */
+
+        /* Base Editor Toolbar - Floating Design */
+        .editor-toolbar {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            padding: 8px 10px;
+            background: linear-gradient(135deg, #1a1a2e 0%, #12121a 100%);
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            margin-bottom: 0;
+        }
+
+        /* Toolbar Row Container */
+        .editor-toolbar .toolbar-row {
+            display: flex;
+            gap: 4px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        /* Unified Editor Button */
+        .editor-toolbar .editor-btn {
+            background: transparent;
+            border: none;
+            color: var(--text);
+            padding: 6px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 13px;
+            transition: all 0.2s;
+            flex-shrink: 0;
+        }
+
+        .editor-toolbar .editor-btn:hover {
+            color: var(--gold);
+            background: rgba(251, 191, 36, 0.1);
+        }
+
+        .editor-toolbar .editor-btn:active {
+            transform: scale(0.95);
+        }
+
+        .editor-toolbar .editor-btn.format-active {
+            background: rgba(251, 191, 36, 0.15);
+            color: var(--gold);
+        }
+
+        /* Unified Editor Select (Dropdowns) */
+        .editor-toolbar .editor-select {
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 4px 6px;
+            border-radius: 4px;
+            font-size: 11px;
+            min-width: 70px;
+            max-width: 120px;
+            cursor: pointer;
+            transition: border-color 0.2s;
+            flex-shrink: 0;
+        }
+
+        .editor-toolbar .editor-select:hover,
+        .editor-toolbar .editor-select:focus {
+            border-color: var(--gold);
+            outline: none;
+        }
+
+        /* Toolbar Separator */
+        .editor-toolbar .toolbar-separator {
+            width: 1px;
+            height: 20px;
+            background: var(--border);
+            margin: 0 4px;
+            flex-shrink: 0;
+        }
+
+        /* Color Swatches (für Full-Tier) */
+        .editor-toolbar .color-swatch {
+            width: 20px;
+            height: 20px;
+            border-radius: 4px;
+            border: 2px solid transparent;
+            cursor: pointer;
+            transition: transform 0.15s, border-color 0.15s;
+            flex-shrink: 0;
+        }
+
+        .editor-toolbar .color-swatch:hover {
+            transform: scale(1.1);
+            border-color: var(--gold);
+        }
+
+        .editor-toolbar .color-swatch.active {
+            border-color: var(--gold);
+            box-shadow: 0 0 6px rgba(251, 191, 36, 0.5);
+        }
+
+        /* Tier-Specific Modifiers */
+
+        /* Tier 3: Minimal (1 Zeile - Basic Formatting) */
+        .editor-toolbar-minimal {
+            /* Keine zusätzlichen Styles nötig - verwendet Base */
+        }
+
+        .editor-toolbar-minimal .toolbar-row:nth-child(2),
+        .editor-toolbar-minimal .toolbar-row:nth-child(3) {
+            display: none; /* Nur erste Zeile sichtbar */
+        }
+
+        /* Tier 2: Mid (2 Zeilen - Formatting + Fonts) */
+        .editor-toolbar-mid {
+            /* Verwendet Base-Styles */
+        }
+
+        .editor-toolbar-mid .toolbar-row:nth-child(3) {
+            display: none; /* Nur erste 2 Zeilen sichtbar */
+        }
+
+        /* Tier 1: Full (3 Zeilen - All Features) */
+        .editor-toolbar-full {
+            /* Alle Zeilen sichtbar, verwendet Base-Styles */
+        }
+
+        /* Responsive: Mobile */
+        @media (max-width: 768px) {
+            .editor-toolbar {
+                padding: 6px 8px;
+                gap: 3px;
+            }
+
+            .editor-toolbar .toolbar-row {
+                gap: 3px;
+            }
+
+            .editor-toolbar .editor-btn {
+                padding: 8px 10px;
+                font-size: 14px;
+                min-width: 40px;
+            }
+
+            .editor-toolbar .editor-select {
+                font-size: 12px;
+                padding: 6px 4px;
+            }
+
+            .editor-toolbar .toolbar-separator {
+                margin: 0 2px;
+            }
+        }
+
+        /* Compatibility: Verbindung zu bestehenden Editoren */
+        .editor-wrapper .editor-toolbar {
+            border-bottom: none;
+            border-radius: 8px 8px 0 0;
+        }
+
+        .editor-wrapper .rich-editor {
+            border-radius: 0 0 8px 8px;
+        }
+
+        /* ============================================================ */
+
+        /* Listen in Kacheln/Cards - verwende list-style-position: inside um Abschneiden zu vermeiden */
+        .encounter-card ul, .loot-item ul, .wiki-entry-body ul,
+        .session-card ul, .npc-card ul, .location-card ul,
+        .quest-card ul, .spell-card ul, .link-card ul,
+        .encounter-content ul, .loot-item-content ul {
+            margin: 4px 0;
+            padding-left: 20px;
+            list-style-type: disc;
+            list-style-position: outside;
+        }
+        
+        .encounter-card li, .loot-item li, .wiki-entry-body li,
+        .session-card li, .npc-card li, .location-card li,
+        .quest-card li, .spell-card li, .link-card li,
+        .encounter-content li, .loot-item-content li {
+            margin: 2px 0;
+            padding-left: 2px;
+        }
+        
+        /* Ordered Lists */
+        .rich-editor ol, .encounter-card ol, .loot-item ol,
+        .wiki-entry-body ol, .session-card ol, .encounter-content ol {
+            margin: 4px 0;
+            padding-left: 28px;
+            list-style-type: decimal;
+            list-style-position: outside;
+        }
+        
+        /* Sicherstellen dass Inhalts-Bereiche nicht überlaufen */
+        .encounter-content, .loot-item-content, .wiki-entry-body {
+            overflow: visible;
+        }
+        
+/* ================================================
+   STANDARDISIERTE SECTION TOOLBAR (Variante A)
+   Layout: [Titel+Badge] | [Suche+ViewToggle] | [Filter+IO] | [Aktion]
+   ================================================ */
+
+.section-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    background: var(--bg-card);
+    border: 1px solid var(--gold-dim);
+    border-radius: 10px;
+    margin-bottom: 12px;
+    margin-top: 0;
+    flex-wrap: nowrap;
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    font-size: 14px;
+    width: 100%;
+    max-width: 2210px;
+    height: 74px;
+    box-sizing: border-box;
+}
+
+/* Konsistente Font-Vererbung für alle Toolbar-Elemente */
+.section-toolbar button,
+.section-toolbar input,
+.section-toolbar select,
+.section-toolbar .btn {
+    font-family: inherit;
+    font-size: inherit;
+}
+
+/* GRUPPE 1: Titel + Badge (Links, fix) */
+.section-toolbar-identity {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+}
+
+.section-toolbar-title {
+    font-size: 1em;
+    font-weight: 600;
+    color: var(--gold);
+    white-space: nowrap;
+}
+
+.section-toolbar-count {
+    font-size: 0.85em;
+    color: var(--cyan);
+    padding: 3px 10px;
+    background: var(--bg-dark);
+    border-radius: 12px;
+    font-weight: 600;
+    min-width: 28px;
+    text-align: center;
+}
+
+/* GRUPPE 2: Suche + View Toggle (Mitte, wächst) */
+.section-toolbar-search {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 1;
+    min-width: 200px;
+    max-width: 400px;
+}
+
+.section-toolbar-search .search-wrapper {
+    flex: 1;
+}
+
+.section-toolbar-search .toolbar-search {
+    width: 100%;
+}
+
+/* View Mode Toggle innerhalb der Suche */
+.section-toolbar-search .view-mode-toggle {
+    flex-shrink: 0;
+}
+
+/* GRUPPE 3: Filter (Buttons + Dropdowns) */
+.section-toolbar-filters {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.section-toolbar-filters .io-btn,
+.section-toolbar-filters .btn {
+    flex-shrink: 0;
+}
+
+.section-toolbar-filters select {
+    padding: 7px 12px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: 6px;
+    font-size: 0.85em;
+    cursor: pointer;
+    transition: border-color 0.2s;
+}
+
+.section-toolbar-filters select:hover {
+    border-color: var(--gold);
+}
+
+.section-toolbar-filters select:focus {
+    outline: none;
+    border-color: var(--gold);
+}
+
+/* Checkbox-Filter (z.B. "Aktive" bei Quests) */
+.section-toolbar-filters .filter-checkbox {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--text-dim);
+    font-size: 0.85em;
+    padding: 0 8px;
+    white-space: nowrap;
+}
+
+.section-toolbar-filters .filter-checkbox input[type="checkbox"] {
+    accent-color: var(--gold);
+}
+
+/* GRUPPE 4: Primäre Aktionen (Rechts, fix) */
+.section-toolbar-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+    margin-left: auto;
+}
+
+.section-toolbar-actions .btn-success,
+.section-toolbar-actions .btn-primary {
+    white-space: nowrap;
+}
+
+/* Spezial-Buttons (CR Calc, Warenkorb, etc.) */
+.section-toolbar-actions .btn-special {
+    background: var(--bg-elevated);
+    border: 1px solid var(--cyan);
+    color: var(--cyan);
+}
+
+.section-toolbar-actions .btn-special:hover {
+    background: var(--cyan);
+    color: var(--bg-dark);
+}
+
+/* Cart Badge für Warenkorb */
+.section-toolbar-actions .cart-btn {
+    position: relative;
+}
+
+.section-toolbar-actions .cart-badge {
+    position: absolute;
+    top: -6px;
+    right: -6px;
+    background: var(--red);
+    color: white;
+    font-size: 0.7em;
+    padding: 2px 6px;
+    border-radius: 10px;
+    font-weight: 600;
+}
+
+/* Import/Export Button Group */
+.section-toolbar-io {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+/* Responsive Anpassungen */
+@media (max-width: 1200px) {
+    .section-toolbar {
+        gap: 10px;
+    }
+    
+    .section-toolbar-search {
+        min-width: 180px;
+        max-width: 300px;
+    }
+}
+
+@media (max-width: 900px) {
+    .section-toolbar {
+        flex-wrap: wrap;
+    }
+    
+    .section-toolbar-identity {
+        width: auto;
+    }
+    
+    .section-toolbar-search {
+        order: 3;
+        flex: 1 1 100%;
+        max-width: none;
+        min-width: 0;
+    }
+    
+    .section-toolbar-filters {
+        order: 4;
+        flex: 1 1 auto;
+    }
+    
+    .section-toolbar-actions {
+        order: 2;
+        margin-left: auto;
+    }
+}
+
+@media (max-width: 600px) {
+    .section-toolbar {
+        padding: 10px 12px;
+        gap: 8px;
+    }
+    
+    .section-toolbar-title {
+        font-size: 0.9em;
+    }
+    
+    .section-toolbar-filters {
+        width: 100%;
+        justify-content: flex-start;
+    }
+    
+    .section-toolbar-actions {
+        width: 100%;
+        justify-content: flex-end;
+    }
+    
+    .section-toolbar-filters select {
+        flex: 1;
+        min-width: 0;
+    }
+}
+

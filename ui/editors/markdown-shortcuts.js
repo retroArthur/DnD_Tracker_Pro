@@ -250,6 +250,4 @@ function initMarkdownSettings() {
 // EXPORTS
 // ============================================================
 window.handleMarkdownInput = handleMarkdownInput;
-window.processMarkdownShortcuts = processMarkdownShortcuts;
-window.applyMarkdownFormat = applyMarkdownFormat;
 window.initMarkdownSettings = initMarkdownSettings;

@@ -6,7 +6,6 @@
 // SRD SPELLS DATABASE - LAZY LOADED
 // ============================================================
 // Die Daten werden erst beim ersten Zugriff initialisiert
-var log = window.log;
 var D = window.D;
 var nextId = window.nextId;
 var renderSpells = window.renderSpells;
@@ -150,5 +149,3 @@ function loadSRDSpells() {
 // ============================================================
 // BACKWARD COMPATIBILITY EXPORTS
 // ============================================================
-window.getSRDSpells = getSRDSpells;
-window.SRD_SPELLS = SRD_SPELLS;

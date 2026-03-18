@@ -6,7 +6,6 @@
 // GLOBAL SEARCH (mit Fuzzy-Match)
 // ============================================================
 var D = window.D;
-var LINK_ICONS = window.LINK_ICONS;
 var switchView = window.switchView;
 var toggleLocation = window.toggleLocation;
 var editChar = window.editChar;

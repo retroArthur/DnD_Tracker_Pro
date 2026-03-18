@@ -727,9 +727,7 @@ function rerollFloating(notation) {
 // BACKWARD COMPATIBILITY - Export to window
 // ============================================================
 window.rollDiceAnimated = rollDiceAnimated;
-window.rollDice = rollDice;
 window.rollCustomDice = rollCustomDice;
-window.rollMultiple = rollMultiple;
 window.rerollLast = rerollLast;
 window.parseDiceNotation = parseDiceNotation;
 window.rollAdvantage = rollAdvantage;
@@ -740,11 +738,8 @@ window.flipCoin = flipCoin;
 window.rollAttack = rollAttack;
 window.rollSavingThrow = rollSavingThrow;
 window.rollGroupPerception = rollGroupPerception;
-window.displayDiceResult = displayDiceResult;
 window.toggleDamageType = toggleDamageType;
 window.addToDiceHistory = addToDiceHistory;
-window.addToFormulaHistory = addToFormulaHistory;
-window.renderFormulaHistory = renderFormulaHistory;
 window.renderDiceHistory = renderDiceHistory;
 window.clearDiceHistory = clearDiceHistory;
 window.updateDiceCharSelect = updateDiceCharSelect;
@@ -758,5 +753,4 @@ window.rollFloatingDice = rollFloatingDice;
 window.rollFloatingAdvantage = rollFloatingAdvantage;
 window.rollFloatingDisadvantage = rollFloatingDisadvantage;
 window.rollFloatingCustom = rollFloatingCustom;
-window.renderFloatingHistory = renderFloatingHistory;
 window.rerollFloating = rerollFloating;

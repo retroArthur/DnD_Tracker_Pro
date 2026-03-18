@@ -5,7 +5,6 @@
 // ============================================================
 // MONSTER TEMPLATES - LAZY LOADED
 // ============================================================
-var log = window.log;
 let _monsterTemplatesCache = null;
 function getMonsterTemplates() {
     if (_monsterTemplatesCache)
@@ -87,5 +86,3 @@ function loadMonsterTemplate(key) {
 // ============================================================
 // BACKWARD COMPATIBILITY EXPORTS
 // ============================================================
-window.getMonsterTemplates = getMonsterTemplates;
-window.MONSTER_TEMPLATES = MONSTER_TEMPLATES;

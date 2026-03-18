@@ -1,0 +1,344 @@
+    <!-- Shop Modal -->
+    <div class="modal-overlay" id="shop-modal">
+        <div class="modal" style="max-width: 600px;">
+            <div class="modal-header">
+                <span class="modal-title">🏪 Shop</span>
+                <button class="btn btn-sm" data-action="hide-modal" data-value="shop-modal">✕</button>
+            </div>
+            <input type="hidden" id="edit-shop-id">
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>Typ *</label>
+                    <select id="shop-type">
+                        <option value="schmied">🔨 Schmied</option>
+                        <option value="wirtshaus">🍺 Wirtshaus</option>
+                        <option value="herberge">🛏️ Herberge</option>
+                        <option value="taverne">🍻 Taverne</option>
+                        <option value="alchemist">⚗️ Alchemist</option>
+                        <option value="apotheke">💊 Apotheke</option>
+                        <option value="bogenmacher">🏹 Bogenmacher</option>
+                        <option value="schneiderei">🧵 Schneiderei</option>
+                        <option value="juwelier">💎 Juwelier</option>
+                        <option value="buchhandlung">📚 Buchhandlung</option>
+                        <option value="skriptorium">✒️ Skriptorium</option>
+                        <option value="magisch">🔮 Magischer Laden</option>
+                        <option value="tempel">⛪ Tempelbedarf</option>
+                        <option value="stall">🐴 Stall</option>
+                        <option value="wagnerei">🛒 Wagnerei</option>
+                        <option value="werft">⚓ Schiffswerft</option>
+                        <option value="kuriositaeten">🎭 Kuriositätenkabinett</option>
+                        <option value="schwarzmarkt">🕶️ Schwarzmarkt</option>
+                        <option value="hehler">🗝️ Hehler</option>
+                        <option value="zelt">⛺ Zelt</option>
+                        <option value="bude">🏚️ Bude</option>
+                        <option value="stand">🏕️ Stand</option>
+                        <option value="laden">🏬 Laden</option>
+                        <option value="wanderer">🚶 Wanderer</option>
+                        <option value="kampagne">📜 Kampagne</option>
+                        <option value="sc-loot">🎒 SC Loot</option>
+                        <option value="kampagne-loot">🏆 Kampagne Loot</option>
+                        <option value="dungeon-loot">🏛️ Dungeon Loot</option>
+                        <option value="fundus">📦 Fundus</option>
+                        <option value="unbekannt">❓ Unbekannt</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Name *</label>
+                    <input type="text" id="shop-name" placeholder="z.B. Der Rostige Amboss">
+                </div>
+            </div>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>NPC (Besitzer)</label>
+                    <select id="shop-npc">
+                        <option value="">-- Kein NPC --</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Ort</label>
+                    <select id="shop-location">
+                        <option value="">-- Kein Ort --</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Beschreibung</label>
+                <textarea id="shop-description" rows="2" placeholder="Beschreibung des Shops..."></textarea>
+            </div>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>Besonderheit</label>
+                    <input type="text" id="shop-special" placeholder="z.B. Geheimes Hinterzimmer">
+                </div>
+                <div class="form-group">
+                    <label>Notiz</label>
+                    <input type="text" id="shop-note" placeholder="Interne Notiz...">
+                </div>
+            </div>
+            <div class="btn-group">
+                <button class="btn btn-success" data-action="call" data-value="saveShop">💾 Speichern</button>
+                <button class="btn" data-action="hide-modal" data-value="shop-modal">Abbrechen</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Shop Item Modal -->
+    <div class="modal-overlay" id="shop-item-modal">
+        <div class="modal" style="max-width: 700px; max-height: 90vh; overflow-y: auto;">
+            <div class="modal-header">
+                <span class="modal-title">📦 Shop-Artikel</span>
+                <button class="btn btn-sm" data-action="hide-modal" data-value="shop-item-modal">✕</button>
+            </div>
+            <input type="hidden" id="edit-shop-item-shop-id">
+            <input type="hidden" id="edit-shop-item-id">
+            
+            <div class="form-grid" style="grid-template-columns: auto 1fr 1fr;">
+                <div class="form-group">
+                    <label>Vorhanden</label>
+                    <label class="checkbox-label" style="display: flex; align-items: center; gap: 6px; padding-top: 8px;">
+                        <input type="checkbox" id="shop-item-available" checked>
+                        <span>Auf Lager</span>
+                    </label>
+                </div>
+                <div class="form-group">
+                    <label>Menge</label>
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <input type="number" id="shop-item-quantity" value="1" min="1" style="width: 70px;">
+                        <label class="checkbox-label" style="display: flex; align-items: center; gap: 4px; white-space: nowrap;">
+                            <input type="checkbox" id="shop-item-unlimited" onchange="toggleShopItemUnlimited()">
+                            <span style="font-size: 0.85em;">∞ Unbegrenzt</span>
+                        </label>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Kategorie *</label>
+                    <select id="shop-item-category" onchange="updateShopItemFields()">
+                        <optgroup label="Kampf & Schutz">
+                            <option value="weapon">⚔️ Waffe</option>
+                            <option value="armor">🛡️ Rüstung</option>
+                            <option value="gear">⚙️ Ausrüstung</option>
+                        </optgroup>
+                        <optgroup label="Kleidung & Zubehör">
+                            <option value="clothing">👕 Kleidung</option>
+                            <option value="accessory">🎒 Zubehör</option>
+                        </optgroup>
+                        <optgroup label="Verbrauchsgüter">
+                            <option value="potion">🧴 Trank</option>
+                            <option value="food">🍖 Essen</option>
+                            <option value="drink">🍺 Trinken</option>
+                            <option value="item">🧪 Item</option>
+                        </optgroup>
+                        <optgroup label="Handwerk & Werkzeug">
+                            <option value="craft">🔨 Handwerk</option>
+                            <option value="prop">🎪 Requisite</option>
+                        </optgroup>
+                        <optgroup label="Magisches">
+                            <option value="magic">✨ Magie</option>
+                            <option value="enchant">🔮 Verzauberung</option>
+                            <option value="buff">💪 Verstärkung</option>
+                        </optgroup>
+                        <optgroup label="Dienste">
+                            <option value="lodging">🛏️ Unterkunft</option>
+                            <option value="transport">🐴 Transport</option>
+                            <option value="service">🔧 Dienstleistung</option>
+                            <option value="info">📜 Information</option>
+                        </optgroup>
+                        <optgroup label="Sonstiges">
+                            <option value="trinket">🎁 Kleinigkeit</option>
+                            <option value="misc">📦 Sonstiges</option>
+                        </optgroup>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>Name *</label>
+                    <input type="text" id="shop-item-name" placeholder="Name des Artikels">
+                </div>
+                <div class="form-group">
+                    <label>Typ</label>
+                    <input type="text" id="shop-item-type" placeholder="z.B. Langschwert, Platte, Trank">
+                </div>
+            </div>
+            
+            <!-- Waffen-Felder -->
+            <div id="shop-item-weapon-fields" class="shop-item-fields">
+                <div class="form-grid" style="grid-template-columns: 1fr 1fr 1fr;">
+                    <div class="form-group">
+                        <label>Schaden</label>
+                        <input type="text" id="shop-item-damage" placeholder="z.B. 1W8">
+                    </div>
+                    <div class="form-group">
+                        <label>Eigenschaften</label>
+                        <input type="text" id="shop-item-properties" placeholder="z.B. Vielseitig, Finesse">
+                    </div>
+                    <div class="form-group">
+                        <label>Meisterung</label>
+                        <input type="text" id="shop-item-mastery" placeholder="z.B. Hieb">
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Rüstungs-Felder -->
+            <div id="shop-item-armor-fields" class="shop-item-fields" style="display: none;">
+                <div class="form-grid" style="grid-template-columns: 1fr 1fr 1fr;">
+                    <div class="form-group">
+                        <label>RK (Rüstungsklasse)</label>
+                        <input type="text" id="shop-item-ac" placeholder="z.B. 14 + GES">
+                    </div>
+                    <div class="form-group">
+                        <label>Stärke-Anf.</label>
+                        <input type="text" id="shop-item-strength" placeholder="z.B. 13">
+                    </div>
+                    <div class="form-group">
+                        <label>Heimlichkeit</label>
+                        <select id="shop-item-stealth">
+                            <option value="">Normal</option>
+                            <option value="disadvantage">Nachteil</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Item/Service/Misc-Felder -->
+            <div id="shop-item-general-fields" class="shop-item-fields" style="display: none;">
+                <div class="form-group">
+                    <label>Beschreibung</label>
+                    <textarea id="shop-item-desc" rows="2" placeholder="Beschreibung..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Wirkung</label>
+                    <input type="text" id="shop-item-effect" placeholder="z.B. Heilt 2W4+2 HP">
+                </div>
+            </div>
+            
+            <!-- Gemeinsame Felder -->
+            <div class="form-grid" style="grid-template-columns: 1fr 1fr 1fr;">
+                <div class="form-group">
+                    <label>Gewicht</label>
+                    <input type="text" id="shop-item-weight" placeholder="z.B. 3 Pfd.">
+                </div>
+                <div class="form-group">
+                    <label>Kosten *</label>
+                    <input type="text" id="shop-item-cost" placeholder="z.B. 15 GM">
+                </div>
+                <div class="form-group">
+                    <label>Besonderheit</label>
+                    <input type="text" id="shop-item-special" placeholder="z.B. Magisch +1">
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Notiz</label>
+                <input type="text" id="shop-item-note" placeholder="Interne Notiz...">
+            </div>
+            
+            <div class="btn-group">
+                <button class="btn btn-success" data-action="call" data-value="saveShopItem">💾 Speichern</button>
+                <button class="btn" data-action="hide-modal" data-value="shop-item-modal">Abbrechen</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Cart Modal -->
+    <div class="modal-overlay" id="cart-modal">
+        <div class="modal" style="max-width: 650px; max-height: 85vh;">
+            <div class="modal-header">
+                <span class="modal-title">🛒 Warenkorb</span>
+                <button class="btn btn-sm" data-action="hide-modal" data-value="cart-modal">✕</button>
+            </div>
+            <div class="cart-content" id="cart-items" style="max-height: 400px; overflow-y: auto;">
+                <div class="cart-empty">🛒 Warenkorb ist leer</div>
+            </div>
+            <div class="cart-summary">
+                <div class="cart-total-row">
+                    <span>Gesamt:</span>
+                    <span class="cart-total-value">
+                        <span id="cart-total">0 KM</span>
+                        <span id="cart-total-gold" class="cart-total-gold">(0 GM)</span>
+                    </span>
+                </div>
+                <div class="cart-actions">
+                    <button class="btn" data-action="call" data-value="clearCart">🗑️ Leeren</button>
+                    <button class="btn btn-success" data-action="call" data-value="checkoutCart">💰 Zur Kasse</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Checkout Modal -->
+    <div class="modal-overlay" id="checkout-modal">
+        <div class="modal" style="max-width: 500px;">
+            <div class="modal-header">
+                <span class="modal-title">💰 Kasse</span>
+                <button class="btn btn-sm" data-action="hide-modal" data-value="checkout-modal">✕</button>
+            </div>
+            <div class="checkout-content">
+                <div class="checkout-receipt-container">
+                    <pre id="checkout-receipt" class="checkout-receipt"></pre>
+                    <button class="btn btn-sm checkout-copy-btn" data-action="call" data-value="copyReceipt" title="Quittung kopieren">📋</button>
+                </div>
+                <div class="checkout-total-section">
+                    <div class="checkout-label">Zu zahlen:</div>
+                    <div class="checkout-amount" id="checkout-total">0 KM</div>
+                    <div id="checkout-total-breakdown"></div>
+                </div>
+                <div class="checkout-currency-info">
+                    <div class="currency-hint">💎 1 PP = 10 GM | 🪙 1 GM = 10 SM | 🥈 1 SM = 10 KM</div>
+                </div>
+            </div>
+            <div class="btn-group" style="margin-top: 16px;">
+                <button class="btn" data-action="back-to-cart">← Zurück</button>
+                <button class="btn btn-success" data-action="call" data-value="confirmCheckout">✅ Kauf bestätigen</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Shop Handout Export Modal -->
+    <div class="modal-overlay" id="shop-handout-modal">
+        <div class="modal" style="max-width: 500px;">
+            <div class="modal-header">
+                <span class="modal-title">📋 Shop Handout exportieren</span>
+                <button class="btn btn-sm" data-action="hide-modal" data-value="shop-handout-modal">✕</button>
+            </div>
+            <div class="modal-body">
+                <div id="shop-handout-shop-name" style="margin-bottom: 20px; font-weight: bold; color: var(--gold); font-size: 1.1em;"></div>
+
+                <div class="handout-options">
+                    <label class="handout-checkbox-label">
+                        <input type="checkbox" id="handout-show-prices" checked>
+                        <span>💰 Preise anzeigen</span>
+                    </label>
+
+                    <label class="handout-checkbox-label">
+                        <input type="checkbox" id="handout-show-descriptions" checked>
+                        <span>📝 Artikel-Beschreibungen anzeigen</span>
+                    </label>
+
+                    <label class="handout-checkbox-label">
+                        <input type="checkbox" id="handout-show-availability">
+                        <span>📊 Verfügbarkeit anzeigen</span>
+                    </label>
+
+                    <label class="handout-checkbox-label">
+                        <input type="checkbox" id="handout-group-by-category">
+                        <span>📦 Nach Kategorie gruppieren</span>
+                    </label>
+
+                    <label class="handout-checkbox-label">
+                        <input type="checkbox" id="handout-player-mode" checked>
+                        <span>👥 Spieler-Modus (DM-Notizen ausblenden)</span>
+                    </label>
+                </div>
+
+                <div class="handout-help-text">
+                    <p>💡 <strong>Hinweis:</strong> Es wird eine HTML-Datei heruntergeladen, die du öffnen und ausdrucken kannst (Strg+P).</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn" data-action="hide-modal" data-value="shop-handout-modal">Abbrechen</button>
+                <button class="btn btn-success" data-action="generate-shop-handout" data-id="">📋 Handout generieren</button>
+            </div>
+        </div>
+    </div>
+

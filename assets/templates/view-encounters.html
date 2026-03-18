@@ -1,0 +1,442 @@
+        <!-- ENCOUNTER VIEW - Master-Detail Layout -->
+        <section id="view-encounter" class="view enc-view">
+            <div class="section-toolbar">
+                <!-- Gruppe 1: Identität -->
+                <div class="section-toolbar-identity">
+                    <span class="section-toolbar-title">👹 Encounter</span>
+                    <span class="section-toolbar-count" id="encounter-io-count">0</span>
+                </div>
+                <!-- Gruppe 2: Suche -->
+                <div class="section-toolbar-search">
+                    <div class="search-wrapper">
+                        <input type="text" id="enc-search" class="toolbar-search" placeholder="🔍 Encounter suchen..." oninput="renderEncounters(); updateSearchClear(this);">
+                        <button class="search-clear-btn" data-action="clear-search" data-value="enc-search" title="Suche leeren">✕</button>
+                    </div>
+                </div>
+                <!-- Gruppe 3: Filter + IO -->
+                <div class="section-toolbar-filters">
+                    <div class="enc-filter-chips" id="encounter-filters"></div>
+                    <button class="btn btn-sm" data-action="call" data-value="showCalculatorModal" title="CR Calculator">⚖️</button>
+                    <div class="section-toolbar-io">
+                        <button class="io-btn export" data-action="export-data" data-value="encounters" title="Encounter exportieren">📤</button>
+                        <button class="io-btn import" data-action="trigger-click" data-value="import-encounters" title="Encounter importieren">📥</button>
+                        <input type="file" id="import-encounters" class="io-file-input" accept=".json,.csv" data-on-change="import-data" data-type="encounters">
+                    </div>
+                </div>
+                <!-- Gruppe 4: Primäre Aktion -->
+                <div class="section-toolbar-actions">
+                    <button class="btn btn-success" data-action="show-enc-form">+ Neuer Encounter</button>
+                </div>
+            </div>
+            <div class="card">
+                <div class="collapsible-header" data-action="toggle-collapse" data-value="enc-form">
+                    <span class="card-title">+ Encounter erstellen</span>
+                    <span id="enc-form-icon">▼</span>
+                </div>
+                <div id="enc-form" class="collapsible-content">
+                    <input type="hidden" id="edit-enc-id">
+                    <!-- Schnell-Vorlagen -->
+                    <div class="enc-templates-section" style="margin-bottom: 16px;">
+                        <div class="char-section-title">⚡ Schnell-Vorlagen</div>
+                        <div class="monster-templates">
+                            <button class="monster-template-btn" data-action="load-monster-template" data-value="goblin">🗡️ Goblin</button>
+                            <button class="monster-template-btn" data-action="load-monster-template" data-value="skeleton">💀 Skelett</button>
+                            <button class="monster-template-btn" data-action="load-monster-template" data-value="zombie">🧟 Zombie</button>
+                            <button class="monster-template-btn" data-action="load-monster-template" data-value="orc">👹 Ork</button>
+                            <button class="monster-template-btn" data-action="load-monster-template" data-value="wolf">🐺 Wolf</button>
+                            <button class="monster-template-btn" data-action="load-monster-template" data-value="bandit">🗡️ Bandit</button>
+                            <button class="monster-template-btn" data-action="load-monster-template" data-value="guard">🛡️ Wache</button>
+                            <button class="monster-template-btn" data-action="load-monster-template" data-value="kobold">🦎 Kobold</button>
+                            <button class="monster-template-btn" data-action="load-monster-template" data-value="giant_rat">🐀 Riesenratte</button>
+                            <button class="monster-template-btn" data-action="load-monster-template" data-value="cultist">👤 Kultist</button>
+                            <button class="monster-template-btn" data-action="load-monster-template" data-value="ogre">👊 Oger</button>
+                            <button class="monster-template-btn" data-action="load-monster-template" data-value="troll">🧌 Troll</button>
+                        </div>
+                    </div>
+                    <div class="form-grid">
+                        <div class="form-group"><label>Name</label><input type="text" id="enc-name"></div>
+                        <div class="form-group">
+                            <label>Kreaturtyp</label>
+                            <select id="enc-creature-type">
+                                <option value="">-- Wählen --</option>
+                                <option value="Aberration">Aberration</option>
+                                <option value="Bestie">Bestie</option>
+                                <option value="Himmlisch">Himmlisch</option>
+                                <option value="Konstrukt">Konstrukt</option>
+                                <option value="Drache">Drache</option>
+                                <option value="Elementar">Elementar</option>
+                                <option value="Feenwesen">Feenwesen</option>
+                                <option value="Riese">Riese</option>
+                                <option value="Humanoid">Humanoid</option>
+                                <option value="Monstrosität">Monstrosität</option>
+                                <option value="Schleim">Schleim</option>
+                                <option value="Pflanze">Pflanze</option>
+                                <option value="Ungeheuerlich">Ungeheuerlich</option>
+                                <option value="Untot">Untot</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>CR <span style="cursor: help; color: var(--text-dim);" title="Herausforderungsgrad: Schwierigkeit für 4er-Gruppe gleichen Levels">ⓘ</span></label>
+                            <select id="enc-cr">
+                                <option value="">-- CR --</option>
+                                <optgroup label="Low (0 - 1/2)">
+                                    <option value="0">0</option>
+                                    <option value="1/8">1/8</option>
+                                    <option value="1/4">1/4</option>
+                                    <option value="1/2">1/2</option>
+                                </optgroup>
+                                <optgroup label="Base (1-5)">
+                                    <option value="1">1</option>
+                                    <option value="2">2</option>
+                                    <option value="3">3</option>
+                                    <option value="4">4</option>
+                                    <option value="5">5</option>
+                                </optgroup>
+                                <optgroup label="Mid (6-10)">
+                                    <option value="6">6</option>
+                                    <option value="7">7</option>
+                                    <option value="8">8</option>
+                                    <option value="9">9</option>
+                                    <option value="10">10</option>
+                                </optgroup>
+                                <optgroup label="High (11-16)">
+                                    <option value="11">11</option>
+                                    <option value="12">12</option>
+                                    <option value="13">13</option>
+                                    <option value="14">14</option>
+                                    <option value="15">15</option>
+                                    <option value="16">16</option>
+                                </optgroup>
+                                <optgroup label="Epic (17-20)">
+                                    <option value="17">17</option>
+                                    <option value="18">18</option>
+                                    <option value="19">19</option>
+                                    <option value="20">20</option>
+                                </optgroup>
+                                <optgroup label="Mythic (21-30)">
+                                    <option value="21">21</option>
+                                    <option value="22">22</option>
+                                    <option value="23">23</option>
+                                    <option value="24">24</option>
+                                    <option value="25">25</option>
+                                    <option value="26">26</option>
+                                    <option value="27">27</option>
+                                    <option value="28">28</option>
+                                    <option value="29">29</option>
+                                    <option value="30">30 (MAX)</option>
+                                </optgroup>
+                            </select>
+                        </div>
+                        <div class="form-group"><label>RK</label><input type="number" id="enc-ac"></div>
+                        <div class="form-group"><label>Initiative</label><input type="number" id="enc-init"></div>
+                        <div class="form-group"><label>HP</label><input type="number" id="enc-hp"></div>
+                        <div class="form-group"><label>Pass. Wahr.</label><input type="number" id="enc-perception"></div>
+                    </div>
+                    <div class="enc-speed-section">
+                        <label class="enc-speed-label">Bewegungsraten</label>
+                        <div class="enc-speed-grid">
+                            <div class="enc-speed-item"><label>Laufen</label><input type="text" id="enc-speed-walk" placeholder="9m"></div>
+                            <div class="enc-speed-item"><label>Klettern</label><input type="text" id="enc-speed-climb" placeholder="—"></div>
+                            <div class="enc-speed-item"><label>Schwimmen</label><input type="text" id="enc-speed-swim" placeholder="—"></div>
+                            <div class="enc-speed-item"><label>Fliegen</label><input type="text" id="enc-speed-fly" placeholder="—"></div>
+                            <div class="enc-speed-item"><label>Graben</label><input type="text" id="enc-speed-burrow" placeholder="—"></div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Sprachen</label>
+                        <div class="enc-languages-wrapper" id="enc-languages-wrapper">
+                            <div class="enc-lang-trigger" data-action="toggle-enc-lang-dropdown">
+                                <span class="enc-lang-selected" id="enc-lang-display">Sprachen wählen...</span>
+                                <span class="enc-lang-arrow">▼</span>
+                            </div>
+                            <div class="enc-lang-dropdown" id="enc-lang-dropdown">
+                                <label class="enc-lang-item"><input type="checkbox" value="Gemein" onchange="updateEncLanguages()"><span>Gemein</span></label>
+                                <label class="enc-lang-item"><input type="checkbox" value="Zwergisch" onchange="updateEncLanguages()"><span>Zwergisch</span></label>
+                                <label class="enc-lang-item"><input type="checkbox" value="Elfisch" onchange="updateEncLanguages()"><span>Elfisch</span></label>
+                                <label class="enc-lang-item"><input type="checkbox" value="Riese" onchange="updateEncLanguages()"><span>Riese</span></label>
+                                <label class="enc-lang-item"><input type="checkbox" value="Gnomisch" onchange="updateEncLanguages()"><span>Gnomisch</span></label>
+                                <label class="enc-lang-item"><input type="checkbox" value="Goblin" onchange="updateEncLanguages()"><span>Goblin</span></label>
+                                <label class="enc-lang-item"><input type="checkbox" value="Halbling" onchange="updateEncLanguages()"><span>Halbling</span></label>
+                                <label class="enc-lang-item"><input type="checkbox" value="Orkisch" onchange="updateEncLanguages()"><span>Orkisch</span></label>
+                                <label class="enc-lang-item"><input type="checkbox" value="Druidisch" onchange="updateEncLanguages()"><span>Druidisch</span></label>
+                                <label class="enc-lang-item"><input type="checkbox" value="Diebessprache" onchange="updateEncLanguages()"><span>Diebessprache</span></label>
+                                <label class="enc-lang-item"><input type="checkbox" value="Drakonisch" onchange="updateEncLanguages()"><span>Drakonisch</span></label>
+                                <label class="enc-lang-item"><input type="checkbox" value="Tiefensprache" onchange="updateEncLanguages()"><span>Tiefensprache</span></label>
+                                <label class="enc-lang-item"><input type="checkbox" value="Infernal" onchange="updateEncLanguages()"><span>Infernal</span></label>
+                                <label class="enc-lang-item"><input type="checkbox" value="Sylvan" onchange="updateEncLanguages()"><span>Sylvan</span></label>
+                                <label class="enc-lang-item"><input type="checkbox" value="Abyssisch" onchange="updateEncLanguages()"><span>Abyssisch</span></label>
+                                <label class="enc-lang-item"><input type="checkbox" value="Celestisch" onchange="updateEncLanguages()"><span>Celestisch</span></label>
+                                <label class="enc-lang-item"><input type="checkbox" value="Unterreich" onchange="updateEncLanguages()"><span>Unterreich</span></label>
+                            </div>
+                            <select id="enc-languages" multiple style="display:none;"></select>
+                        </div>
+                    </div>
+                    <div class="char-section-title" style="margin-top: 12px;">⚔️ Attribute</div>
+                    <div class="char-attributes-grid">
+                        <div class="char-attr-box">
+                            <div class="attr-label">STR</div>
+                            <input type="number" class="attr-input" id="enc-str" min="1" max="30" value="10" oninput="updateEncAttrMod('str')">
+                            <div class="attr-mod" id="enc-str-mod">+0</div>
+                        </div>
+                        <div class="char-attr-box">
+                            <div class="attr-label">DEX</div>
+                            <input type="number" class="attr-input" id="enc-dex" min="1" max="30" value="10" oninput="updateEncAttrMod('dex')">
+                            <div class="attr-mod" id="enc-dex-mod">+0</div>
+                        </div>
+                        <div class="char-attr-box">
+                            <div class="attr-label">CON</div>
+                            <input type="number" class="attr-input" id="enc-con" min="1" max="30" value="10" oninput="updateEncAttrMod('con')">
+                            <div class="attr-mod" id="enc-con-mod">+0</div>
+                        </div>
+                        <div class="char-attr-box">
+                            <div class="attr-label">INT</div>
+                            <input type="number" class="attr-input" id="enc-int" min="1" max="30" value="10" oninput="updateEncAttrMod('int')">
+                            <div class="attr-mod" id="enc-int-mod">+0</div>
+                        </div>
+                        <div class="char-attr-box">
+                            <div class="attr-label">WIS</div>
+                            <input type="number" class="attr-input" id="enc-wis" min="1" max="30" value="10" oninput="updateEncAttrMod('wis')">
+                            <div class="attr-mod" id="enc-wis-mod">+0</div>
+                        </div>
+                        <div class="char-attr-box">
+                            <div class="attr-label">CHA</div>
+                            <input type="number" class="attr-input" id="enc-cha" min="1" max="30" value="10" oninput="updateEncAttrMod('cha')">
+                            <div class="attr-mod" id="enc-cha-mod">+0</div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <div class="char-section-title">🛡️ Rettungswürfe</div>
+                        <div class="enc-saves-grid">
+                            <div class="enc-save-box" id="enc-save-box-str">
+                                <input type="checkbox" id="enc-save-str" onchange="toggleEncSaveBox('str')">
+                                <span class="enc-save-label">STR</span>
+                                <input type="text" id="enc-save-val-str" class="enc-save-input" placeholder="—" title="Rettungswurf-Bonus (z.B. +5)">
+                            </div>
+                            <div class="enc-save-box" id="enc-save-box-dex">
+                                <input type="checkbox" id="enc-save-dex" onchange="toggleEncSaveBox('dex')">
+                                <span class="enc-save-label">DEX</span>
+                                <input type="text" id="enc-save-val-dex" class="enc-save-input" placeholder="—" title="Rettungswurf-Bonus (z.B. +5)">
+                            </div>
+                            <div class="enc-save-box" id="enc-save-box-con">
+                                <input type="checkbox" id="enc-save-con" onchange="toggleEncSaveBox('con')">
+                                <span class="enc-save-label">CON</span>
+                                <input type="text" id="enc-save-val-con" class="enc-save-input" placeholder="—" title="Rettungswurf-Bonus (z.B. +5)">
+                            </div>
+                            <div class="enc-save-box" id="enc-save-box-int">
+                                <input type="checkbox" id="enc-save-int" onchange="toggleEncSaveBox('int')">
+                                <span class="enc-save-label">INT</span>
+                                <input type="text" id="enc-save-val-int" class="enc-save-input" placeholder="—" title="Rettungswurf-Bonus (z.B. +5)">
+                            </div>
+                            <div class="enc-save-box" id="enc-save-box-wis">
+                                <input type="checkbox" id="enc-save-wis" onchange="toggleEncSaveBox('wis')">
+                                <span class="enc-save-label">WIS</span>
+                                <input type="text" id="enc-save-val-wis" class="enc-save-input" placeholder="—" title="Rettungswurf-Bonus (z.B. +5)">
+                            </div>
+                            <div class="enc-save-box" id="enc-save-box-cha">
+                                <input type="checkbox" id="enc-save-cha" onchange="toggleEncSaveBox('cha')">
+                                <span class="enc-save-label">CHA</span>
+                                <input type="text" id="enc-save-val-cha" class="enc-save-input" placeholder="—" title="Rettungswurf-Bonus (z.B. +5)">
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Resistenzen & Immunitäten -->
+                    <div class="char-section-title">🔥 Resistenzen & Immunitäten</div>
+                    <div style="margin-bottom: 8px;">
+                        <label style="font-size: 0.8em; color: var(--text-dim);">Resistenzen (halber Schaden)</label>
+                        <div class="char-resistances-grid" id="enc-resistances">
+                            <label class="char-resistance-chip" data-action="toggle-selected"><input type="checkbox" value="Feuer">🔥 Feuer</label>
+                            <label class="char-resistance-chip" data-action="toggle-selected"><input type="checkbox" value="Kälte">❄️ Kälte</label>
+                            <label class="char-resistance-chip" data-action="toggle-selected"><input type="checkbox" value="Blitz">⚡ Blitz</label>
+                            <label class="char-resistance-chip" data-action="toggle-selected"><input type="checkbox" value="Säure">🧪 Säure</label>
+                            <label class="char-resistance-chip" data-action="toggle-selected"><input type="checkbox" value="Gift">☠️ Gift</label>
+                            <label class="char-resistance-chip" data-action="toggle-selected"><input type="checkbox" value="Nekrotisch">💀 Nekrotisch</label>
+                            <label class="char-resistance-chip" data-action="toggle-selected"><input type="checkbox" value="Strahlend">✨ Strahlend</label>
+                            <label class="char-resistance-chip" data-action="toggle-selected"><input type="checkbox" value="Psychisch">🧠 Psychisch</label>
+                            <label class="char-resistance-chip" data-action="toggle-selected"><input type="checkbox" value="Kraft">💥 Kraft</label>
+                            <label class="char-resistance-chip" data-action="toggle-selected"><input type="checkbox" value="Donner">🔊 Donner</label>
+                            <label class="char-resistance-chip" data-action="toggle-selected"><input type="checkbox" value="Wucht">🔨 Wucht</label>
+                            <label class="char-resistance-chip" data-action="toggle-selected"><input type="checkbox" value="Stich">🗡️ Stich</label>
+                            <label class="char-resistance-chip" data-action="toggle-selected"><input type="checkbox" value="Hieb">⚔️ Hieb</label>
+                        </div>
+                    </div>
+                    <div style="margin-bottom: 12px;">
+                        <label style="font-size: 0.8em; color: var(--text-dim);">Immunitäten (kein Schaden)</label>
+                        <div class="char-resistances-grid" id="enc-immunities">
+                            <label class="char-resistance-chip" data-action="toggle-selected"><input type="checkbox" value="Feuer">🔥 Feuer</label>
+                            <label class="char-resistance-chip" data-action="toggle-selected"><input type="checkbox" value="Kälte">❄️ Kälte</label>
+                            <label class="char-resistance-chip" data-action="toggle-selected"><input type="checkbox" value="Blitz">⚡ Blitz</label>
+                            <label class="char-resistance-chip" data-action="toggle-selected"><input type="checkbox" value="Säure">🧪 Säure</label>
+                            <label class="char-resistance-chip" data-action="toggle-selected"><input type="checkbox" value="Gift">☠️ Gift</label>
+                            <label class="char-resistance-chip" data-action="toggle-selected"><input type="checkbox" value="Nekrotisch">💀 Nekrotisch</label>
+                            <label class="char-resistance-chip" data-action="toggle-selected"><input type="checkbox" value="Strahlend">✨ Strahlend</label>
+                            <label class="char-resistance-chip" data-action="toggle-selected"><input type="checkbox" value="Psychisch">🧠 Psychisch</label>
+                            <label class="char-resistance-chip" data-action="toggle-selected"><input type="checkbox" value="Kraft">💥 Kraft</label>
+                            <label class="char-resistance-chip" data-action="toggle-selected"><input type="checkbox" value="Donner">🔊 Donner</label>
+                            <label class="char-resistance-chip" data-action="toggle-selected"><input type="checkbox" value="Wucht">🔨 Wucht</label>
+                            <label class="char-resistance-chip" data-action="toggle-selected"><input type="checkbox" value="Stich">🗡️ Stich</label>
+                            <label class="char-resistance-chip" data-action="toggle-selected"><input type="checkbox" value="Hieb">⚔️ Hieb</label>
+                        </div>
+                    </div>
+                    <div style="margin-bottom: 12px;">
+                        <label style="font-size: 0.8em; color: var(--text-dim);">Zustandsimmunitäten</label>
+                        <div class="char-resistances-grid" id="enc-condition-immunities">
+                            <label class="char-resistance-chip" data-action="toggle-selected"><input type="checkbox" value="Betäubt">😵 Betäubt</label>
+                            <label class="char-resistance-chip" data-action="toggle-selected"><input type="checkbox" value="Bezaubert">😍 Bezaubert</label>
+                            <label class="char-resistance-chip" data-action="toggle-selected"><input type="checkbox" value="Blind">🙈 Blind</label>
+                            <label class="char-resistance-chip" data-action="toggle-selected"><input type="checkbox" value="Gelähmt">🧊 Gelähmt</label>
+                            <label class="char-resistance-chip" data-action="toggle-selected"><input type="checkbox" value="Erschöpfung">😓 Erschöpfung</label>
+                            <label class="char-resistance-chip" data-action="toggle-selected"><input type="checkbox" value="Festgehalten">⛓️ Festgehalten</label>
+                            <label class="char-resistance-chip" data-action="toggle-selected"><input type="checkbox" value="Taub">🙉 Taub</label>
+                            <label class="char-resistance-chip" data-action="toggle-selected"><input type="checkbox" value="Verängstigt">😱 Verängstigt</label>
+                            <label class="char-resistance-chip" data-action="toggle-selected"><input type="checkbox" value="Vergiftet">🤢 Vergiftet</label>
+                            <label class="char-resistance-chip" data-action="toggle-selected"><input type="checkbox" value="Versteinert">🗿 Versteinert</label>
+                            <label class="char-resistance-chip" data-action="toggle-selected"><input type="checkbox" value="Bewusstlos">😴 Bewusstlos</label>
+                            <label class="char-resistance-chip" data-action="toggle-selected"><input type="checkbox" value="Liegend">🛌 Liegend</label>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Eigenschaften</label>
+                        <div class="editor-toolbar editor-toolbar-mid">
+                            <div class="toolbar-row">
+                                <button class="editor-btn" data-action="format-text" data-cmd="enc-traits" data-editor="bold" title="Fett"><b>B</b></button>
+                                <button class="editor-btn" data-action="format-text" data-cmd="enc-traits" data-editor="italic" title="Kursiv"><i>I</i></button>
+                                <button class="editor-btn" data-action="format-text" data-cmd="enc-traits" data-editor="underline" title="Unterstrichen"><u>U</u></button>
+                                <button class="editor-btn" data-action="format-text" data-cmd="enc-traits" data-editor="strikethrough" title="Durchgestrichen"><s>S</s></button>
+                                <span class="toolbar-separator"></span>
+                                <button class="editor-btn" data-action="format-text" data-cmd="enc-traits" data-editor="list" title="Liste">☰</button>
+                            </div>
+                            <div class="toolbar-row">
+                                <select class="editor-select" data-action="set-editor-font" data-editor="enc-traits" title="Schriftart"><option value="arial">Arial</option><option value="serif">Serif</option><option value="mono">Mono</option></select>
+                                <span class="toolbar-separator"></span>
+                                <button class="editor-btn" data-action="clear-formatting" data-value="enc-traits" title="Formatierung entfernen">🧹</button>
+                            </div>
+                        </div>
+                        <div id="enc-traits" class="rich-editor" contenteditable="true"></div>
+                    </div>
+                    <div class="form-group">
+                        <label>Ausrüstung</label>
+                        <div class="editor-toolbar editor-toolbar-mid">
+                            <div class="toolbar-row">
+                                <button class="editor-btn" data-action="format-text" data-cmd="enc-equipment" data-editor="bold" title="Fett"><b>B</b></button>
+                                <button class="editor-btn" data-action="format-text" data-cmd="enc-equipment" data-editor="italic" title="Kursiv"><i>I</i></button>
+                                <button class="editor-btn" data-action="format-text" data-cmd="enc-equipment" data-editor="underline" title="Unterstrichen"><u>U</u></button>
+                                <button class="editor-btn" data-action="format-text" data-cmd="enc-equipment" data-editor="strikethrough" title="Durchgestrichen"><s>S</s></button>
+                                <span class="toolbar-separator"></span>
+                                <button class="editor-btn" data-action="format-text" data-cmd="enc-equipment" data-editor="list" title="Liste">☰</button>
+                            </div>
+                            <div class="toolbar-row">
+                                <select class="editor-select" data-action="set-editor-font" data-editor="enc-equipment" title="Schriftart"><option value="arial">Arial</option><option value="serif">Serif</option><option value="mono">Mono</option></select>
+                                <span class="toolbar-separator"></span>
+                                <button class="editor-btn" data-action="clear-formatting" data-value="enc-equipment" title="Formatierung entfernen">🧹</button>
+                            </div>
+                        </div>
+                        <div id="enc-equipment" class="rich-editor" contenteditable="true"></div>
+                    </div>
+                    <div class="form-group">
+                        <label>Aktionen</label>
+                        <div class="editor-toolbar editor-toolbar-mid">
+                            <div class="toolbar-row">
+                                <button class="editor-btn" data-action="format-text" data-cmd="enc-actions" data-editor="bold" title="Fett"><b>B</b></button>
+                                <button class="editor-btn" data-action="format-text" data-cmd="enc-actions" data-editor="italic" title="Kursiv"><i>I</i></button>
+                                <button class="editor-btn" data-action="format-text" data-cmd="enc-actions" data-editor="underline" title="Unterstrichen"><u>U</u></button>
+                                <button class="editor-btn" data-action="format-text" data-cmd="enc-actions" data-editor="strikethrough" title="Durchgestrichen"><s>S</s></button>
+                                <span class="toolbar-separator"></span>
+                                <button class="editor-btn" data-action="format-text" data-cmd="enc-actions" data-editor="list" title="Liste">☰</button>
+                            </div>
+                            <div class="toolbar-row">
+                                <select class="editor-select" data-action="set-editor-font" data-editor="enc-actions" title="Schriftart"><option value="arial">Arial</option><option value="serif">Serif</option><option value="mono">Mono</option></select>
+                                <span class="toolbar-separator"></span>
+                                <button class="editor-btn" data-action="clear-formatting" data-value="enc-actions" title="Formatierung entfernen">🧹</button>
+                            </div>
+                        </div>
+                        <div id="enc-actions" class="rich-editor" contenteditable="true"></div>
+                    </div>
+                    <div class="form-group">
+                        <label>Fertigkeiten</label>
+                        <div class="editor-toolbar editor-toolbar-mid">
+                            <div class="toolbar-row">
+                                <button class="editor-btn" data-action="format-text" data-cmd="enc-skills" data-editor="bold" title="Fett"><b>B</b></button>
+                                <button class="editor-btn" data-action="format-text" data-cmd="enc-skills" data-editor="italic" title="Kursiv"><i>I</i></button>
+                                <button class="editor-btn" data-action="format-text" data-cmd="enc-skills" data-editor="underline" title="Unterstrichen"><u>U</u></button>
+                                <button class="editor-btn" data-action="format-text" data-cmd="enc-skills" data-editor="strikethrough" title="Durchgestrichen"><s>S</s></button>
+                                <span class="toolbar-separator"></span>
+                                <button class="editor-btn" data-action="format-text" data-cmd="enc-skills" data-editor="list" title="Liste">☰</button>
+                            </div>
+                            <div class="toolbar-row">
+                                <select class="editor-select" data-action="set-editor-font" data-editor="enc-skills" title="Schriftart"><option value="arial">Arial</option><option value="serif">Serif</option><option value="mono">Mono</option></select>
+                                <span class="toolbar-separator"></span>
+                                <button class="editor-btn" data-action="clear-formatting" data-value="enc-skills" title="Formatierung entfernen">🧹</button>
+                            </div>
+                        </div>
+                        <div id="enc-skills" class="rich-editor" contenteditable="true"></div>
+                    </div>
+                    <div class="btn-group">
+                        <button class="btn btn-success" data-action="call" data-value="saveEncounter">Speichern</button>
+                        <button class="btn" data-action="call" data-value="cancelEncEdit">Abbrechen</button>
+                    </div>
+                </div>
+            </div>
+            <!-- Master-Detail Layout -->
+            <div class="enc-layout">
+                <!-- Liste (Master) -->
+                <div class="enc-master">
+                    <div class="enc-list" id="encounter-list"></div>
+                </div>
+
+                <!-- Detail-Sidebar -->
+                <div class="enc-detail" id="enc-detail-panel">
+                    <div class="enc-detail-empty">
+                        <div class="enc-detail-empty-icon">👹</div>
+                        <div class="enc-detail-empty-text">Wähle einen Encounter aus der Liste</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- INITIATIVE VIEW -->
+        <section id="view-initiative" class="view">
+            <!-- Encounter Controls -->
+            <div class="encounter-controls">
+                <div class="encounter-round-display">
+                    <span class="encounter-round-num" id="encounter-round-num">1</span>
+                    <span class="encounter-round-label">Runde</span>
+                </div>
+                <button class="btn" data-action="call" data-value="nextTurn">▶ Nächster</button>
+                <button class="btn" data-action="call" data-value="prevTurn">◀ Zurück</button>
+                <button class="btn" data-action="call" data-value="nextEncounterRound">⏭️ Neue Runde</button>
+                <div style="flex: 1;"></div>
+                <button class="btn" data-action="call" data-value="addPartyToInit">+ Party</button>
+                <button class="btn" data-action="call" data-value="rollAllInitiative">🎲 Alle würfeln</button>
+                <button class="btn" data-action="sort-initiative">↓ Sortieren</button>
+                <button class="btn" data-action="show-aoe-damage-modal" title="AoE Schaden auf mehrere Ziele">💥 AoE</button>
+                <button class="btn" data-action="show-condition-reference" title="Zustände-Nachschlag">📋 Zustände</button>
+                <button class="btn btn-danger encounter-reset-btn" data-action="call" data-value="resetEncounter">🔄 Reset</button>
+                <button class="btn btn-danger" data-action="call" data-value="endCombat">⏹️ Beenden</button>
+            </div>
+
+            <!-- Battlefield Conditions Banner -->
+            <div id="battlefield-banner" class="battlefield-banner" style="display: none;"></div>
+
+            <!-- Quick Actions Bar -->
+            <div id="quick-actions-bar"></div>
+
+            <div class="init-list" id="init-list"></div>
+            <div class="card" style="margin-top: 16px;">
+                <div class="card-title" style="margin-bottom: 10px;">Kämpfer hinzufügen</div>
+                <div class="form-grid">
+                    <div class="form-group"><label>Name</label><input type="text" id="init-name"></div>
+                    <div class="form-group"><label>Initiative</label><input type="number" id="init-value"></div>
+                    <div class="form-group"><label>HP</label><input type="number" id="init-hp"></div>
+                    <div class="form-group"><label>AC</label><input type="number" id="init-ac" placeholder="10"></div>
+                    <div class="form-group"><label>Typ</label>
+                        <select id="init-type">
+                            <option value="enemy">Gegner</option>
+                            <option value="player">Spieler</option>
+                            <option value="ally">Verbündeter</option>
+                        </select>
+                    </div>
+                </div>
+                <button class="btn" data-action="call" data-value="addCombatant">Hinzufügen</button>
+            </div>
+        </section>
+        

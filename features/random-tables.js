@@ -749,17 +749,8 @@ function quickRandomRoll() {
 // ============================================================
 // Export functions to window for onclick handlers
 window.renderRandomTables = renderRandomTables;
-window.selectTable = selectTable;
 window.rollOnTable = rollOnTable;
 window.showTableModal = showTableModal;
-window.selectDiceType = selectDiceType;
-window.updateRangeHint = updateRangeHint;
-window.fillRemainingRanges = fillRemainingRanges;
-window.addTableEntry = addTableEntry;
-window.removeTableEntry = removeTableEntry;
-window.saveTable = saveTable;
 window.deleteTable = deleteTable;
 window.showGeneratorModal = showGeneratorModal;
-window.rollOnTableAndShow = rollOnTableAndShow;
-window.deleteTableAndRefresh = deleteTableAndRefresh;
 window.quickRandomRoll = quickRandomRoll;

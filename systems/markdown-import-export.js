@@ -276,4 +276,3 @@ function executeMarkdownImport(entityType, entityId, markdown) {
 // ============================================================
 window.exportEntityAsMarkdown = exportEntityAsMarkdown;
 window.showMarkdownImportModal = showMarkdownImportModal;
-window.executeMarkdownImport = executeMarkdownImport;

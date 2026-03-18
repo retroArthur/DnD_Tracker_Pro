@@ -41,7 +41,5 @@ function updateLayoutSwitcher(layout) {
 // ============================================================
 // BACKWARD COMPATIBILITY EXPORTS
 // ============================================================
-window.setLayout = setLayout;
 window.loadLayout = loadLayout;
 window.toggleLayout = toggleLayout;
-window.updateLayoutSwitcher = updateLayoutSwitcher;

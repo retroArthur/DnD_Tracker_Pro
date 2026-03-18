@@ -1,0 +1,2466 @@
+        /* ============================================================
+           EINHEITLICHE RICH-EDITOR FORMATIERUNG FÜR ANZEIGE-BEREICHE
+           Stellt sicher, dass Inhalte in Übersichten genauso aussehen wie im Editor
+           ============================================================ */
+        
+        /* Basis-Formatierung für alle Anzeige-Bereiche */
+        .quest-details,
+        .char-notes-content,
+        .loot-item-desc,
+        .npc-list-desc,
+        .wiki-detail-body,
+        .encounter-content,
+        .spell-desc {
+            line-height: 1.6 !important;
+        }
+        
+        /* Absätze - einheitliche Margins */
+        .quest-details p,
+        .char-notes-content p,
+        .loot-item-desc p,
+        .location-description p,
+        .npc-list-desc p,
+        .wiki-detail-body p,
+        .encounter-content p,
+        .spell-desc p {
+            margin: 6px 0 !important;
+        }
+        
+        .quest-details p:last-child,
+        .char-notes-content p:last-child,
+        .loot-item-desc p:last-child,
+        .location-description p:last-child,
+        .npc-list-desc p:last-child,
+        .wiki-detail-body p:last-child,
+        .encounter-content p:last-child,
+        .spell-desc p:last-child {
+            margin-bottom: 0 !important;
+        }
+        
+        /* Ungeordnete Listen - identisch zum rich-editor */
+        .quest-details ul,
+        .char-notes-content ul,
+        .loot-item-desc ul,
+        .location-description ul,
+        .npc-list-desc ul,
+        .wiki-detail-body ul,
+        .encounter-content ul,
+        .spell-desc ul {
+            margin: 4px 0 !important;
+            padding-left: 28px !important;
+            list-style-type: disc !important;
+            list-style-position: outside !important;
+        }
+        
+        /* Geordnete Listen - identisch zum rich-editor */
+        .quest-details ol,
+        .char-notes-content ol,
+        .loot-item-desc ol,
+        .location-description ol,
+        .npc-list-desc ol,
+        .wiki-detail-body ol,
+        .encounter-content ol,
+        .spell-desc ol {
+            margin: 4px 0 !important;
+            padding-left: 28px !important;
+            list-style-type: decimal !important;
+            list-style-position: outside !important;
+        }
+        
+        /* Listen-Elemente */
+        .quest-details li,
+        .char-notes-content li,
+        .loot-item-desc li,
+        .location-description li,
+        .npc-list-desc li,
+        .wiki-detail-body li,
+        .encounter-content li,
+        .spell-desc li {
+            margin: 2px 0 !important;
+            padding-left: 4px !important;
+        }
+        
+        /* Tabellen - identisch zum rich-editor */
+        .quest-details table,
+        .char-notes-content table,
+        .loot-item-desc table,
+        .location-description table,
+        .npc-list-desc table,
+        .wiki-detail-body table,
+        .encounter-content table,
+        .spell-desc table {
+            border-collapse: collapse !important;
+            width: 100% !important;
+            margin: 8px 0 !important;
+            font-size: 0.9em !important;
+        }
+        
+        /* Tabellen-Zellen */
+        .quest-details th,
+        .quest-details td,
+        .char-notes-content th,
+        .char-notes-content td,
+        .loot-item-desc th,
+        .loot-item-desc td,
+        .location-description th,
+        .location-description td,
+        .npc-list-desc th,
+        .npc-list-desc td,
+        .wiki-detail-body th,
+        .wiki-detail-body td,
+        .encounter-content th,
+        .encounter-content td,
+        .spell-desc th,
+        .spell-desc td {
+            border: 1px solid var(--border) !important;
+            padding: 6px 10px !important;
+            text-align: left !important;
+        }
+        
+        /* Tabellen-Header */
+        .quest-details th,
+        .char-notes-content th,
+        .loot-item-desc th,
+        .location-description th,
+        .npc-list-desc th,
+        .wiki-detail-body th,
+        .encounter-content th,
+        .spell-desc th {
+            background: var(--bg-elevated) !important;
+            font-weight: 600 !important;
+            color: var(--gold) !important;
+        }
+        
+        /* Tabellen-Zeilen (abwechselnd) */
+        .quest-details tr:nth-child(even),
+        .char-notes-content tr:nth-child(even),
+        .loot-item-desc tr:nth-child(even),
+        .location-description tr:nth-child(even),
+        .npc-list-desc tr:nth-child(even),
+        .wiki-detail-body tr:nth-child(even),
+        .encounter-content tr:nth-child(even),
+        .spell-desc tr:nth-child(even) {
+            background: rgba(255,255,255,0.02) !important;
+        }
+        
+        /* Tabellen-Zeilen (hover) */
+        .quest-details tr:hover,
+        .char-notes-content tr:hover,
+        .loot-item-desc tr:hover,
+        .location-description tr:hover,
+        .npc-list-desc tr:hover,
+        .wiki-detail-body tr:hover,
+        .encounter-content tr:hover,
+        .spell-desc tr:hover {
+            background: rgba(251, 191, 36, 0.05) !important;
+        }
+        
+        /* Überschriften H1 */
+        .quest-details h1,
+        .char-notes-content h1,
+        .loot-item-desc h1,
+        .location-description h1,
+        .npc-list-desc h1,
+        .wiki-detail-body h1,
+        .encounter-content h1,
+        .spell-desc h1 {
+            color: var(--gold) !important;
+            margin: 12px 0 8px 0 !important;
+            font-size: 1.3em !important;
+            font-weight: 600 !important;
+        }
+        
+        /* Überschriften H2 */
+        .quest-details h2,
+        .char-notes-content h2,
+        .loot-item-desc h2,
+        .location-description h2,
+        .npc-list-desc h2,
+        .wiki-detail-body h2,
+        .encounter-content h2,
+        .spell-desc h2 {
+            color: var(--gold) !important;
+            margin: 12px 0 6px 0 !important;
+            font-size: 1.2em !important;
+            font-weight: 600 !important;
+        }
+        
+        /* Überschriften H3 */
+        .quest-details h3,
+        .char-notes-content h3,
+        .loot-item-desc h3,
+        .location-description h3,
+        .npc-list-desc h3,
+        .wiki-detail-body h3,
+        .encounter-content h3,
+        .spell-desc h3 {
+            color: var(--gold) !important;
+            margin: 10px 0 6px 0 !important;
+            font-size: 1.1em !important;
+            font-weight: 600 !important;
+        }
+        
+        /* Überschriften H4 */
+        .quest-details h4,
+        .char-notes-content h4,
+        .loot-item-desc h4,
+        .location-description h4,
+        .npc-list-desc h4,
+        .wiki-detail-body h4,
+        .encounter-content h4,
+        .spell-desc h4 {
+            color: var(--cyan) !important;
+            margin: 10px 0 4px 0 !important;
+            font-size: 1.0em !important;
+            font-weight: 600 !important;
+        }
+        
+        /* Überschriften H5 */
+        .quest-details h5,
+        .char-notes-content h5,
+        .loot-item-desc h5,
+        .location-description h5,
+        .npc-list-desc h5,
+        .wiki-detail-body h5,
+        .encounter-content h5,
+        .spell-desc h5 {
+            color: var(--cyan) !important;
+            margin: 8px 0 4px 0 !important;
+            font-size: 0.95em !important;
+            font-weight: 600 !important;
+        }
+        
+        /* Überschriften H6 */
+        .quest-details h6,
+        .char-notes-content h6,
+        .loot-item-desc h6,
+        .location-description h6,
+        .npc-list-desc h6,
+        .wiki-detail-body h6,
+        .encounter-content h6,
+        .spell-desc h6 {
+            color: var(--text-dim) !important;
+            margin: 8px 0 4px 0 !important;
+            font-size: 0.9em !important;
+            font-weight: 600 !important;
+        }
+        
+        /* Fett */
+        .quest-details strong,
+        .quest-details b,
+        .char-notes-content strong,
+        .char-notes-content b,
+        .loot-item-desc strong,
+        .loot-item-desc b,
+        .location-description strong,
+        .location-description b,
+        .npc-list-desc strong,
+        .npc-list-desc b,
+        .wiki-detail-body strong,
+        .wiki-detail-body b,
+        .encounter-content strong,
+        .encounter-content b,
+        .spell-desc strong,
+        .spell-desc b {
+            font-weight: 600 !important;
+        }
+        
+        /* Kursiv */
+        .quest-details em,
+        .quest-details i,
+        .char-notes-content em,
+        .char-notes-content i,
+        .loot-item-desc em,
+        .loot-item-desc i,
+        .location-description em,
+        .location-description i,
+        .npc-list-desc em,
+        .npc-list-desc i,
+        .wiki-detail-body em,
+        .wiki-detail-body i,
+        .encounter-content em,
+        .encounter-content i,
+        .spell-desc em,
+        .spell-desc i {
+            font-style: italic !important;
+        }
+        
+        /* Unterstrichen */
+        .quest-details u,
+        .char-notes-content u,
+        .loot-item-desc u,
+        .location-description u,
+        .npc-list-desc u,
+        .wiki-detail-body u,
+        .encounter-content u,
+        .spell-desc u {
+            text-decoration: underline !important;
+        }
+        
+        /* Durchgestrichen */
+        .quest-details s,
+        .char-notes-content s,
+        .loot-item-desc s,
+        .location-description s,
+        .npc-list-desc s,
+        .wiki-detail-body s,
+        .encounter-content s,
+        .spell-desc s {
+            text-decoration: line-through !important;
+        }
+        
+        /* Markiert - inline styles haben Vorrang für Farben */
+        .quest-details mark,
+        .char-notes-content mark,
+        .loot-item-desc mark,
+        .location-description mark,
+        .npc-list-desc mark,
+        .wiki-detail-body mark,
+        .encounter-content mark,
+        .spell-desc mark {
+            background-color: rgba(251, 191, 36, 0.3);
+            padding: 0 3px;
+            border-radius: 2px;
+            margin: 0;
+        }
+        
+        /* Links */
+        .quest-details a,
+        .char-notes-content a,
+        .loot-item-desc a,
+        .location-description a,
+        .npc-list-desc a,
+        .wiki-detail-body a,
+        .encounter-content a,
+        .spell-desc a {
+            color: var(--cyan) !important;
+            text-decoration: underline !important;
+        }
+        
+        .quest-details a:hover,
+        .char-notes-content a:hover,
+        .loot-item-desc a:hover,
+        .location-description a:hover,
+        .npc-list-desc a:hover,
+        .wiki-detail-body a:hover,
+        .encounter-content a:hover,
+        .spell-desc a:hover {
+            color: var(--gold) !important;
+        }
+        
+        /* Blockquotes */
+        .quest-details blockquote,
+        .char-notes-content blockquote,
+        .loot-item-desc blockquote,
+        .location-description blockquote,
+        .npc-list-desc blockquote,
+        .wiki-detail-body blockquote,
+        .encounter-content blockquote,
+        .spell-desc blockquote {
+            border-left: 3px solid var(--gold) !important;
+            padding-left: 12px !important;
+            margin: 8px 0 !important;
+            color: var(--text-dim) !important;
+            font-style: italic !important;
+        }
+
+        /* Vorlese-Text (Read-Aloud / Boxed Text) - Base Style */
+        .quest-details .read-aloud,
+        .char-notes-content .read-aloud,
+        .loot-item-desc .read-aloud,
+        .location-description .read-aloud,
+        .npc-list-desc .read-aloud,
+        .wiki-detail-body .read-aloud,
+        .encounter-content .read-aloud,
+        .spell-desc .read-aloud,
+        .rich-editor .read-aloud {
+            display: inline-block;
+            width: fit-content;
+            max-width: 100%;
+            padding: 14px 18px;
+            margin: 12px 0;
+            font-family: Georgia, 'Times New Roman', serif;
+            font-style: italic;
+            border-radius: 0 4px 4px 0;
+            line-height: 1.7;
+            /* Default: Parchment */
+            background: linear-gradient(135deg, #f5e6c8 0%, #e8d4a8 100%);
+            border-left: 4px solid #8b4513;
+            color: #2c1810;
+            box-shadow: inset 0 0 15px rgba(139, 69, 19, 0.08), 0 2px 6px rgba(0,0,0,0.15);
+        }
+
+        /* Parchment / Pergament (Default) */
+        .read-aloud.parchment {
+            background: linear-gradient(135deg, #f5e6c8 0%, #e8d4a8 100%);
+            border-left-color: #8b4513;
+            color: #2c1810;
+            box-shadow: inset 0 0 15px rgba(139, 69, 19, 0.08), 0 2px 6px rgba(0,0,0,0.15);
+        }
+
+        /* Crimson / Karmesin */
+        .read-aloud.crimson {
+            background: linear-gradient(135deg, #f5e1e1 0%, #e8c4c4 100%);
+            border-left-color: #991b1b;
+            color: #450a0a;
+            box-shadow: inset 0 0 15px rgba(153, 27, 27, 0.08), 0 2px 6px rgba(0,0,0,0.15);
+        }
+
+        /* Violet / Violett */
+        .read-aloud.violet {
+            background: linear-gradient(135deg, #ede9fe 0%, #ddd6fe 100%);
+            border-left-color: #6d28d9;
+            color: #2e1065;
+            box-shadow: inset 0 0 15px rgba(109, 40, 217, 0.08), 0 2px 6px rgba(0,0,0,0.15);
+        }
+
+        /* Sage / Salbei */
+        .read-aloud.sage {
+            background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+            border-left-color: #047857;
+            color: #064e3b;
+            box-shadow: inset 0 0 15px rgba(4, 120, 87, 0.06), 0 2px 6px rgba(0,0,0,0.15);
+        }
+
+        /* Sky / Himmelblau */
+        .read-aloud.sky {
+            background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%);
+            border-left-color: #0369a1;
+            color: #0c4a6e;
+            box-shadow: inset 0 0 15px rgba(3, 105, 161, 0.06), 0 2px 6px rgba(0,0,0,0.15);
+        }
+
+        /* Slate / Schiefer */
+        .read-aloud.slate {
+            background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+            border-left-color: #475569;
+            color: #1e293b;
+            box-shadow: inset 0 0 15px rgba(71, 85, 105, 0.06), 0 2px 6px rgba(0,0,0,0.15);
+        }
+
+        /* Overflow sicherstellen */
+        .quest-details,
+        .char-notes-content,
+        .loot-item-desc,
+        .location-description,
+        .npc-list-desc,
+        .wiki-detail-body,
+        .encounter-content,
+        .spell-desc {
+            overflow: visible !important;
+            word-wrap: break-word !important;
+            overflow-wrap: break-word !important;
+        }
+        
+        
+        /* ============================================================
+           LINKS
+           ============================================================ */
+        .links-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 10px;
+            align-items: start;
+        }
+        
+        .link-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 12px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .link-card:hover { border-color: var(--gold); }
+        
+        .link-icon {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-elevated);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+        }
+        
+        .link-info { flex: 1; }
+        .link-title { font-weight: 600; color: var(--cyan); }
+        .link-url { font-size: 0.75em; color: var(--text-dim); word-break: break-all; }
+        
+        /* ============================================================
+           QUICK NOTES
+           ============================================================ */
+        .quick-panel {
+            position: fixed;
+            bottom: 16px;
+            right: 16px;
+            width: 280px;
+            background: var(--bg-card);
+            border: 2px solid var(--gold);
+            border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+            z-index: 1000;
+        }
+        
+        .quick-panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 12px;
+            background: var(--bg-elevated);
+            border-radius: 6px 6px 0 0;
+            cursor: pointer;
+        }
+        
+        .quick-panel-title { color: var(--gold); font-weight: 600; font-size: 0.9em; }
+        
+        .quick-panel-content { padding: 10px; display: none; }
+        .quick-panel.open .quick-panel-content { display: block; }
+        
+        .quick-panel textarea {
+            width: 100%;
+            min-height: 80px;
+            background: var(--bg-dark);
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 8px;
+            border-radius: 5px;
+            resize: vertical;
+            font-size: 12px;
+        }
+        
+        /* Event Log (ersetzt Toast) */
+        .event-log {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            max-width: 420px;
+            width: 90%;
+            max-height: 300px;
+            overflow-y: auto;
+            z-index: 1000;
+            pointer-events: none;
+        }
+
+        /* Permanenter Modus */
+        .event-log.persistent {
+            pointer-events: auto;
+            background: rgba(15, 15, 25, 0.98);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 12px;
+            max-height: 400px;
+        }
+
+        .event-log.persistent .event-log-entry {
+            animation: none;
+        }
+
+        .event-log.persistent .event-log-entry.fade-out {
+            animation: none;
+            opacity: 1;
+        }
+
+        .event-log-header {
+            display: none;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 8px;
+        }
+
+        .event-log.persistent .event-log-header {
+            display: flex;
+        }
+
+        .event-log-title {
+            font-weight: 600;
+            color: var(--text);
+        }
+
+        .event-log-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .event-log-btn {
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--text-dim);
+            padding: 4px 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.8em;
+        }
+
+        .event-log-btn:hover {
+            background: var(--bg-alt);
+            color: var(--text);
+        }
+
+        .event-log-entry {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            background: rgba(20, 20, 30, 0.95);
+            border: 1px solid var(--border);
+            border-left: 3px solid var(--green);
+            border-radius: 6px;
+            padding: 10px 14px;
+            font-size: 0.9em;
+            color: var(--text);
+            backdrop-filter: blur(8px);
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+            animation: eventSlideIn 0.3s ease-out;
+            pointer-events: auto;
+        }
+
+        .event-log-entry.fade-out {
+            animation: eventFadeOut 0.4s ease-out forwards;
+        }
+
+        .event-log-entry.error { border-left-color: var(--red); }
+        .event-log-entry.warning { border-left-color: var(--yellow); }
+        .event-log-entry.info { border-left-color: var(--cyan); }
+
+        .event-log-icon {
+            font-size: 1.1em;
+            flex-shrink: 0;
+            margin-top: 1px;
+        }
+
+        .event-log-content {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .event-log-message {
+            line-height: 1.4;
+            word-break: break-word;
+        }
+
+        .event-log-time {
+            font-size: 0.75em;
+            color: var(--text-dim);
+            margin-top: 4px;
+        }
+
+        @keyframes eventSlideIn {
+            from {
+                opacity: 0;
+                transform: translateX(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        @keyframes eventFadeOut {
+            from {
+                opacity: 1;
+                transform: translateX(0);
+            }
+            to {
+                opacity: 0;
+                transform: translateX(30px);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .event-log {
+                bottom: 80px;
+                max-width: 320px;
+            }
+        }
+        
+        /* ============================================================
+           WIKI
+           ============================================================ */
+        /* ============================================================
+           WIKI EXPLORER
+           ============================================================ */
+        .wiki-explorer {
+            display: grid;
+            grid-template-columns: 280px 1fr;
+            gap: 16px;
+            height: calc(100vh - 200px);
+            min-height: 400px;
+        }
+        
+        @media (max-width: 768px) {
+            .wiki-explorer {
+                grid-template-columns: 1fr;
+                height: auto;
+            }
+            .wiki-sidebar {
+                max-height: 300px;
+            }
+        }
+        
+        /* Sidebar */
+        .wiki-sidebar {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        
+        .wiki-sidebar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px;
+            background: var(--bg-elevated);
+            border-bottom: 1px solid var(--border);
+            font-weight: 600;
+            color: var(--gold);
+        }
+        
+        .wiki-tree {
+            flex: 1;
+            overflow-y: auto;
+            padding: 8px;
+        }
+        
+        /* Tree Category */
+        .wiki-tree-category {
+            margin-bottom: 4px;
+        }
+        
+        .wiki-tree-cat-header {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 10px;
+            background: var(--bg-dark);
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+            user-select: none;
+        }
+        
+        .wiki-tree-cat-header:hover {
+            background: var(--bg-elevated);
+        }
+        
+        .wiki-tree-cat-header.active {
+            background: rgba(168, 85, 247, 0.2);
+        }
+        
+        .wiki-tree-toggle {
+            font-size: 10px;
+            color: var(--text-dim);
+            transition: transform 0.2s;
+            width: 12px;
+        }
+        
+        .wiki-tree-category.expanded .wiki-tree-toggle {
+            transform: rotate(90deg);
+        }
+        
+        .wiki-tree-cat-icon {
+            font-size: 1em;
+        }
+        
+        .wiki-tree-cat-name {
+            flex: 1;
+            font-size: 0.85em;
+            font-weight: 500;
+            color: var(--text);
+        }
+        
+        .wiki-tree-cat-count {
+            font-size: 0.7em;
+            color: var(--text-dim);
+            background: var(--bg-card);
+            padding: 2px 6px;
+            border-radius: 10px;
+        }
+        
+        /* Tree Items */
+        .wiki-tree-items {
+            display: none;
+            padding-left: 12px;
+            margin-top: 4px;
+        }
+        
+        .wiki-tree-category.expanded .wiki-tree-items {
+            display: block;
+        }
+        
+        .wiki-tree-item {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            padding: 5px 8px;
+            margin: 2px 0;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.8em;
+            color: var(--text);
+            transition: all 0.15s;
+            border-left: 2px solid transparent;
+            min-width: 0;
+            overflow: hidden;
+        }
+
+        .wiki-tree-item-name {
+            flex: 1;
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        
+        .wiki-tree-item:hover {
+            background: var(--bg-elevated);
+        }
+        
+        .wiki-tree-item.selected {
+            background: rgba(168, 85, 247, 0.15);
+            border-left-color: var(--purple);
+            color: var(--purple);
+        }
+        
+        .wiki-tree-item.pinned {
+            color: var(--gold);
+        }
+        
+        .wiki-tree-item.pinned::before {
+            content: '📌';
+            font-size: 0.7em;
+            margin-right: 2px;
+        }
+        
+        .wiki-tree-item-wrapper {
+            /* Container für item + children */
+        }
+        
+        .wiki-tree-item-children {
+            padding-left: 10px;
+            display: none;
+        }
+        
+        .wiki-tree-item-wrapper.expanded > .wiki-tree-item-children {
+            display: block;
+        }
+        
+        .wiki-tree-item.has-children > .wiki-tree-item-toggle {
+            display: inline;
+            cursor: pointer;
+            padding: 4px;
+            margin: -4px 4px -4px -4px;
+            border-radius: 3px;
+            transition: transform 0.2s, background 0.15s;
+        }
+        
+        .wiki-tree-item.has-children > .wiki-tree-item-toggle:hover {
+            background: rgba(255,255,255,0.1);
+        }
+        
+        .wiki-tree-item.expanded > .wiki-tree-item-toggle {
+            transform: rotate(90deg);
+        }
+        
+        .wiki-tree-item-toggle {
+            display: none;
+            font-size: 8px;
+            color: var(--text-dim);
+            margin-right: 4px;
+        }
+        
+        /* Detail Panel */
+        .wiki-detail {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            overflow-y: auto;
+            padding: 0;
+        }
+        
+        .wiki-detail-empty {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: var(--text-dim);
+            text-align: center;
+            padding: 48px 24px;
+            min-height: 200px;
+        }
+
+        .wiki-detail-empty .empty-state-icon {
+            font-size: 3.5em;
+            margin-bottom: 16px;
+            opacity: 0.4;
+            filter: grayscale(50%);
+        }
+
+        .wiki-detail-empty .empty-state-title {
+            font-size: 1.25em;
+            font-weight: 500;
+            color: var(--text);
+            margin-bottom: 8px;
+        }
+
+        .wiki-detail-empty .empty-state-desc {
+            font-size: 0.9em;
+            color: var(--text-dim);
+            max-width: 320px;
+            line-height: 1.6;
+        }
+        
+        .wiki-detail-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            padding: 16px 20px;
+            background: var(--bg-elevated);
+            border-bottom: 1px solid var(--border);
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        
+        .wiki-detail-title-section {
+            flex: 1;
+        }
+        
+        .wiki-detail-title {
+            font-size: 1.4em;
+            font-weight: 700;
+            color: var(--text);
+            margin-bottom: 4px;
+        }
+        
+        .wiki-detail-meta {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.8em;
+            color: var(--text-dim);
+        }
+        
+        .wiki-detail-category {
+            background: rgba(168, 85, 247, 0.15);
+            color: var(--purple);
+            padding: 2px 10px;
+            border-radius: 12px;
+        }
+        
+        .wiki-detail-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .wiki-detail-actions .btn {
+            padding: 8px 12px;
+            font-size: 1.1em;
+        }
+        
+        .wiki-detail-body {
+            padding: 20px;
+            line-height: 1.7;
+            color: var(--text);
+        }
+        
+        .wiki-detail-body ul, .wiki-detail-body ol {
+            margin: 10px 0;
+            padding-left: 24px;
+        }
+        
+        .wiki-detail-body li {
+            margin: 6px 0;
+        }
+        
+        .wiki-detail-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            padding: 0 20px 16px;
+        }
+        
+        .wiki-detail-links {
+            padding: 16px 20px;
+            background: var(--bg-dark);
+            border-top: 1px solid var(--border);
+        }
+        
+        .wiki-detail-links-section {
+            margin-bottom: 12px;
+        }
+        
+        .wiki-detail-links-section:last-child {
+            margin-bottom: 0;
+        }
+        
+        .wiki-detail-links-label {
+            font-size: 0.75em;
+            color: var(--text-dim);
+            margin-bottom: 6px;
+        }
+        
+        .wiki-detail-links-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+        
+        .wiki-detail-footer {
+            padding: 12px 20px;
+            background: var(--bg-elevated);
+            border-top: 1px solid var(--border);
+            font-size: 0.75em;
+            color: var(--text-dim);
+            display: flex;
+            justify-content: space-between;
+        }
+        
+        /* Form Overlay */
+        .wiki-form-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            padding: 20px;
+        }
+        
+        .wiki-form-modal {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            max-width: 700px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            padding: 20px;
+        }
+        
+        .wiki-form-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--border);
+            font-size: 1.1em;
+            font-weight: 600;
+            color: var(--gold);
+        }
+        
+        /* Legacy wiki styles for compatibility */
+        .wiki-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        
+        .wiki-entry {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            overflow: hidden;
+            border-left: 3px solid var(--purple);
+        }
+        
+        .wiki-entry.pinned {
+            border-left-color: var(--gold);
+        }
+        
+        .wiki-entry-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 14px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        
+        .wiki-entry-header:hover {
+            background: rgba(168, 85, 247, 0.1);
+        }
+        
+        .wiki-entry.pinned .wiki-entry-header:hover {
+            background: rgba(251, 191, 36, 0.1);
+        }
+        
+        .wiki-entry-title-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex: 1;
+        }
+        
+        .wiki-entry-icon {
+            font-size: 1.2em;
+        }
+        
+        .wiki-entry-title {
+            font-weight: 600;
+            color: var(--text);
+        }
+        
+        .wiki-entry-category {
+            font-size: 0.75em;
+            color: var(--purple);
+            background: rgba(168, 85, 247, 0.15);
+            padding: 2px 8px;
+            border-radius: 4px;
+        }
+        
+        .wiki-entry-pin {
+            color: var(--gold);
+            font-size: 0.9em;
+        }
+        
+        .wiki-entry-toggle {
+            color: var(--text-dim);
+            font-size: 12px;
+            margin-left: 8px;
+            transition: transform 0.2s;
+        }
+        
+        .wiki-entry-content {
+            display: none;
+            padding: 0 14px 14px 14px;
+            border-top: 1px solid var(--border);
+        }
+        
+        .wiki-entry.expanded .wiki-entry-content {
+            display: block;
+        }
+        
+        .wiki-entry.expanded .wiki-entry-toggle {
+            transform: rotate(90deg);
+        }
+        
+        .wiki-entry-body {
+            margin: 12px 0;
+            line-height: 1.6;
+            color: var(--text);
+        }
+        
+        .wiki-entry-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin: 10px 0;
+        }
+        
+        .wiki-tag {
+            font-size: 0.75em;
+            background: var(--bg-dark);
+            color: var(--cyan);
+            padding: 3px 8px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        
+        .wiki-tag:hover {
+            background: var(--cyan);
+            color: var(--bg-dark);
+        }
+        
+        .wiki-links-section {
+            margin-top: 12px;
+            padding-top: 10px;
+            border-top: 1px dashed var(--border);
+            font-size: 0.85em;
+        }
+        
+        .wiki-links-label {
+            color: var(--text-dim);
+            font-size: 0.8em;
+            margin-bottom: 4px;
+        }
+        
+        .wiki-backlinks, .wiki-outlinks {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-bottom: 8px;
+        }
+        
+        .wiki-link {
+            color: var(--purple);
+            background: rgba(168, 85, 247, 0.1);
+            padding: 2px 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.85em;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+        
+        .wiki-link:hover {
+            background: var(--purple);
+            color: white;
+        }
+        
+        .wiki-link.missing {
+            color: var(--red);
+            background: rgba(239, 68, 68, 0.1);
+            text-decoration: line-through;
+        }
+        
+        .wiki-entry-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 12px;
+            padding-top: 10px;
+            border-top: 1px solid var(--border);
+        }
+        
+        .wiki-entry-meta {
+            font-size: 0.75em;
+            color: var(--text-dim);
+        }
+        
+        /* ============================================================
+/* ========================================
+   CHARAKTER-FORMULAR V4 - MODERNES 3-SPALTEN-LAYOUT
+   Max-Breite: 2000px
+   ======================================== */
+
+#char-form {
+    padding: 24px;
+}
+
+/* === HAUPTBEREICH: 3-Spalten-Grid === */
+.cf-main-grid {
+    display: grid;
+    grid-template-columns: minmax(280px, 1fr) minmax(350px, 1.5fr) minmax(250px, 1fr);
+    gap: 24px;
+    margin-bottom: 24px;
+}
+
+/* === PANELS (Karten) === */
+.cf-panel {
+    background: var(--bg-dark);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px;
+}
+
+.cf-panel-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border);
+}
+
+.cf-panel-icon {
+    font-size: 1.3em;
+}
+
+.cf-panel-title {
+    font-size: 1em;
+    font-weight: 600;
+    color: var(--gold);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+/* === IDENTITÄTS-PANEL === */
+.cf-identity-top {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 16px;
+}
+
+.cf-avatar-preview {
+    width: 100px;
+    height: 100px;
+    min-width: 100px;
+    background: var(--bg-card);
+    border: 2px dashed var(--border);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+.cf-avatar-preview img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.cf-avatar-placeholder {
+    font-size: 2.5em;
+    color: var(--text-dim);
+}
+
+.cf-identity-names {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+/* === V4 FELDER === */
+.cf-panel .cf-field {
+    margin-bottom: 12px;
+}
+
+.cf-panel .cf-field label {
+    display: block;
+    font-size: 0.7em;
+    color: var(--gold);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 4px;
+}
+
+.cf-panel .cf-field input,
+.cf-panel .cf-field select {
+    width: 100%;
+    padding: 10px 12px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text);
+    font-size: 0.95em;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.cf-panel .cf-field input:focus,
+.cf-panel .cf-field select:focus {
+    border-color: var(--gold);
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.15);
+}
+
+.cf-row-compact {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.cf-row-compact .cf-field {
+    flex: 1;
+    margin-bottom: 0;
+}
+
+.cf-row-compact .cf-field.cf-sm {
+    flex: 0 0 70px;
+}
+
+.cf-row-compact .cf-field.cf-grow {
+    flex: 2;
+}
+
+.cf-divider {
+    height: 1px;
+    background: var(--border);
+    margin: 16px 0;
+}
+
+/* Inspiration Toggle V4 */
+.cf-panel .cf-insp-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    background: var(--bg-card);
+    border: 2px solid var(--border);
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-left: auto;
+    margin-top: 0;
+}
+
+/* === KAMPFWERTE-PANEL === */
+
+/* HP Block V4 */
+.cf-hp-block {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 16px;
+    background: rgba(255, 100, 100, 0.08);
+    border: 1px solid rgba(255, 100, 100, 0.25);
+    border-radius: 10px;
+    margin-bottom: 20px;
+}
+
+.cf-hp-main {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.cf-hp-current,
+.cf-hp-max,
+.cf-hp-temp {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+}
+
+.cf-hp-label {
+    font-size: 0.65em;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    font-weight: 600;
+}
+
+.cf-hp-current input,
+.cf-hp-max input {
+    width: 70px;
+    padding: 10px;
+    font-size: 1.3em;
+    font-weight: 700;
+    text-align: center;
+    background: var(--bg-card);
+    border: 2px solid var(--red);
+    border-radius: 8px;
+    color: var(--text);
+}
+
+.cf-hp-divider {
+    font-size: 1.5em;
+    color: var(--text-dim);
+    font-weight: 300;
+}
+
+.cf-hp-temp {
+    margin-left: auto;
+}
+
+.cf-hp-temp input {
+    width: 60px;
+    padding: 8px;
+    font-size: 1.1em;
+    font-weight: 600;
+    text-align: center;
+    background: var(--bg-card);
+    border: 2px solid var(--cyan);
+    border-radius: 8px;
+    color: var(--cyan);
+}
+
+/* Combat Stats Grid V4 */
+.cf-combat-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.cf-combat-stat {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px;
+    text-align: center;
+    transition: all 0.2s;
+}
+
+.cf-combat-stat:hover {
+    border-color: var(--gold);
+}
+
+.cf-combat-value input,
+.cf-combat-value select {
+    width: 100%;
+    padding: 8px;
+    font-size: 1.1em;
+    font-weight: 600;
+    text-align: center;
+    background: transparent;
+    border: none;
+    color: var(--text);
+}
+
+.cf-combat-value input:focus,
+.cf-combat-value select:focus {
+    outline: none;
+}
+
+/* Speed Dropdown - Dark Theme */
+.cf-combat-value select {
+    background: var(--bg-card);
+    border-radius: 6px;
+    cursor: pointer;
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23888' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 8px center;
+    padding-right: 28px;
+}
+
+.cf-combat-value select:hover {
+    background-color: var(--bg-dark);
+}
+
+.cf-combat-value select option {
+    background: var(--bg-card);
+    color: var(--text);
+    padding: 8px;
+}
+
+.cf-combat-value select option:hover,
+.cf-combat-value select option:checked {
+    background: var(--gold);
+    color: var(--bg);
+}
+
+.cf-combat-label {
+    display: block;
+    font-size: 0.7em;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    margin-top: 4px;
+}
+
+.cf-combat-stat .cf-speed-ft {
+    display: inline-block;
+    font-size: 0.85em;
+    color: var(--cyan);
+    background: rgba(0, 180, 216, 0.15);
+    padding: 2px 6px;
+    border-radius: 4px;
+    margin-left: 4px;
+}
+
+.cf-combat-readonly input {
+    color: var(--text-dim);
+}
+
+/* Section Header V4 */
+.cf-section-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+}
+
+.cf-section-header span {
+    font-size: 0.8em;
+    font-weight: 600;
+    color: var(--gold);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+/* Attributes Grid V4 */
+.cf-attrs-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+}
+
+.cf-attr-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 10px;
+    text-align: center;
+    transition: all 0.2s;
+}
+
+.cf-attr-card:has(.cf-attr-save input:checked) {
+    border-color: var(--gold);
+    background: rgba(212, 175, 55, 0.1);
+}
+
+.cf-attr-card .cf-attr-name {
+    display: block;
+    font-size: 0.7em;
+    font-weight: 700;
+    color: var(--gold);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 6px;
+}
+
+.cf-attr-card input[type="number"] {
+    width: 100%;
+    padding: 6px;
+    font-size: 1.3em;
+    font-weight: 700;
+    text-align: center;
+    background: var(--bg-dark);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text);
+}
+
+.cf-attr-card .cf-attr-mod {
+    display: block;
+    font-size: 1em;
+    font-weight: 700;
+    color: var(--cyan);
+    margin: 6px 0;
+}
+
+.cf-attr-card .cf-attr-save {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    font-size: 0.65em;
+    color: var(--text-dim);
+    cursor: pointer;
+}
+
+.cf-attr-card .cf-attr-save input { margin: 0; accent-color: var(--gold); }
+.cf-attr-card .cf-attr-save span { text-transform: uppercase; }
+
+/* === RESSOURCEN-PANEL V4 === */
+
+.cf-block-title {
+    display: block;
+    font-size: 0.7em;
+    font-weight: 600;
+    color: var(--gold);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 10px;
+}
+
+/* Geldbeutel V4 */
+.cf-money-block {
+    margin-bottom: 20px;
+}
+
+.cf-coins-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 8px;
+}
+
+.cf-coin-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+}
+
+.cf-coin-label {
+    font-size: 0.65em;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.cf-coin-item.pm .cf-coin-label { color: #b8860b; }
+.cf-coin-item.gm .cf-coin-label { color: #ffd700; }
+.cf-coin-item.em .cf-coin-label { color: #50c878; }
+.cf-coin-item.sm .cf-coin-label { color: #c0c0c0; }
+.cf-coin-item.km .cf-coin-label { color: #cd7f32; }
+
+.cf-coin-item input {
+    width: 100%;
+    padding: 8px 4px;
+    font-size: 0.95em;
+    font-weight: 600;
+    text-align: center;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text);
+}
+
+/* Zauberslots V4 */
+.cf-slots-block {
+    margin-bottom: 20px;
+}
+
+.cf-slots-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 6px;
+}
+
+.cf-slot-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+}
+
+.cf-slot-item span {
+    font-size: 0.6em;
+    color: var(--text-dim);
+    font-weight: 600;
+}
+
+.cf-slot-item input {
+    width: 100%;
+    padding: 6px 2px;
+    font-size: 0.9em;
+    text-align: center;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    color: var(--text);
+}
+
+/* Sprachen V4 */
+.cf-languages-block {
+    position: relative;
+}
+
+.cf-languages-block .cf-lang-trigger {
+    width: 100%;
+    padding: 10px 12px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text);
+    font-size: 0.85em;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: border-color 0.2s;
+}
+
+.cf-languages-block .cf-lang-trigger:hover {
+    border-color: var(--gold);
+}
+
+.cf-languages-block .cf-lang-arrow {
+    transition: transform 0.2s;
+}
+
+.cf-languages-block.open .cf-lang-arrow {
+    transform: rotate(180deg);
+}
+
+.cf-languages-block .cf-lang-dropdown {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: var(--bg-card);
+    border: 1px solid var(--gold);
+    border-radius: 6px;
+    max-height: 200px;
+    overflow-y: auto;
+    z-index: 100;
+    margin-top: 4px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+.cf-languages-block.open .cf-lang-dropdown {
+    display: block;
+}
+
+/* === UNTERER BEREICH V4 === */
+.cf-bottom-section {
+    border-top: 1px solid var(--border);
+    padding-top: 24px;
+}
+
+/* UNTERER BEREICH - wie im Prototyp */
+.cf-bottom-section {
+    border-top: 1px solid var(--border);
+    padding-top: 24px;
+}
+
+/* Resistenzen & Immunitäten: 2-Spalten-Grid */
+.cf-defenses-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    margin-bottom: 24px;
+}
+
+.cf-defense-panel {
+    background: var(--bg-dark);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px;
+}
+
+.cf-defense-panel .cf-defense-title {
+    display: block;
+    font-size: 0.85em;
+    font-weight: 600;
+    color: var(--gold);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 16px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border);
+}
+/* === RESISTENZEN/IMMUNITAETEN CHIPS V4 === */
+.cf-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.cf-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 12px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 0.85em;
+}
+
+.cf-chip:hover {
+    border-color: var(--gold);
+    background: var(--bg-hover);
+}
+
+.cf-chip.selected,
+.cf-chip:has(input:checked) {
+    background: rgba(212, 175, 55, 0.15);
+    border-color: var(--gold);
+    color: var(--gold);
+}
+
+.cf-chip.imm.selected,
+.cf-chip.imm:has(input:checked) {
+    background: rgba(78, 205, 196, 0.15);
+    border-color: var(--cyan);
+    color: var(--cyan);
+}
+
+/* Sprachen-Dropdown Items */
+.cf-lang-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 12px;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+.cf-lang-item:hover {
+    background: var(--bg-hover);
+}
+
+.cf-lang-item.selected {
+    background: rgba(212, 175, 55, 0.1);
+}
+
+.cf-lang-item input[type="checkbox"] {
+    accent-color: var(--gold);
+}
+
+
+
+/* Notizen V4 */
+.cf-notes-panel {
+    background: var(--bg-dark);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px;
+    margin-bottom: 24px;
+    display: flex;
+    flex-direction: column;
+}
+
+.cf-bottom-grid .cf-notes-panel {
+    margin-bottom: 0;
+}
+
+.cf-notes-panel .cf-notes-title {
+    display: block;
+    font-size: 0.85em;
+    font-weight: 600;
+    color: var(--gold);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 12px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border);
+}
+
+.cf-notes-panel .cf-notes-toolbar {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 10px;
+    flex-wrap: wrap;
+}
+
+.cf-notes-panel .cf-notes-toolbar button {
+    padding: 6px 10px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    color: var(--text);
+    cursor: pointer;
+    font-size: 0.85em;
+    min-width: 32px;
+    transition: all 0.15s;
+}
+
+.cf-notes-panel .cf-notes-toolbar button:hover {
+    border-color: var(--gold);
+}
+
+.cf-notes-panel .cf-notes-toolbar select {
+    padding: 6px 8px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    color: var(--text);
+    font-size: 0.8em;
+    cursor: pointer;
+}
+
+.cf-notes-panel .cf-notes-editor {
+    flex: 1;
+    min-height: 120px;
+    padding: 14px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text);
+    font-size: 0.95em;
+    line-height: 1.5;
+}
+
+.cf-notes-panel .cf-notes-editor:focus {
+    border-color: var(--gold);
+    outline: none;
+}
+
+/* === RESPONSIVE V4 === */
+@media (max-width: 1400px) {
+    .cf-main-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .cf-panel-resources {
+        grid-column: span 2;
+    }
+
+    .cf-coins-grid,
+    .cf-slots-grid {
+        grid-template-columns: repeat(10, 1fr);
+    }
+}
+
+@media (max-width: 800px) {
+    .cf-defenses-row {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 1000px) {
+    .cf-main-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .cf-panel-resources {
+        grid-column: span 1;
+    }
+
+    .cf-coins-grid {
+        grid-template-columns: repeat(5, 1fr);
+    }
+
+    .cf-slots-grid {
+        grid-template-columns: repeat(5, 1fr);
+    }
+
+    .cf-bottom-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .cf-bottom-grid > .cf-notes-panel {
+        grid-column: span 1;
+    }
+
+    .cf-combat-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 600px) {
+    .cf-identity-top {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .cf-row-compact {
+        flex-direction: column;
+    }
+
+    .cf-row-compact .cf-field.cf-sm {
+        flex: 1;
+    }
+
+    .cf-attrs-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .cf-actions {
+        flex-direction: column;
+    }
+
+    .cf-actions .btn {
+        width: 100%;
+    }
+}
+
+
+/* ============================================================
+   PARTY OVERVIEW - Quick Stats Header
+   ============================================================ */
+
+.party-overview {
+    display: none;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 12px;
+    padding: 12px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    margin-bottom: 12px;
+}
+
+.party-overview.show {
+    display: grid;
+}
+
+.party-stat-card {
+    text-align: center;
+    padding: 12px 8px;
+    background: var(--bg-dark);
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    transition: all 0.2s;
+}
+
+.party-stat-card:hover {
+    border-color: var(--gold);
+}
+
+.party-stat-icon {
+    font-size: 1.3em;
+    margin-bottom: 4px;
+}
+
+.party-stat-value {
+    font-size: 1.5em;
+    font-weight: 700;
+    color: var(--gold);
+    line-height: 1.2;
+}
+
+.party-stat-label {
+    font-size: 0.7em;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-top: 4px;
+}
+
+.party-stat-card.critical .party-stat-value { color: var(--red); }
+.party-stat-card.bloodied .party-stat-value { color: var(--yellow); }
+.party-stat-card.healthy .party-stat-value { color: var(--green); }
+
+/* HP Bar in Party Overview */
+.party-hp-bar {
+    height: 6px;
+    background: var(--bg-elevated);
+    border-radius: 3px;
+    margin-top: 6px;
+    overflow: hidden;
+}
+
+.party-hp-fill {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 0.3s;
+}
+
+.party-hp-fill.healthy { background: var(--green); }
+.party-hp-fill.bloodied { background: var(--yellow); }
+.party-hp-fill.critical { background: var(--red); }
+
+/* ============================================================
+   REST MANAGER
+   ============================================================ */
+.rest-modal-content {
+    padding: 0;
+}
+
+.rest-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border);
+}
+
+.rest-modal-header h3 {
+    margin: 0;
+    color: var(--gold);
+}
+
+.rest-type-selector {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    padding: 16px 20px;
+    margin: 0 12px;
+    background: var(--bg-dark);
+    border-radius: 12px;
+}
+
+.rest-type-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    padding: 16px;
+    background: var(--bg-card);
+    border: 2px solid var(--border);
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.rest-type-btn:hover {
+    border-color: var(--gold);
+}
+
+.rest-type-btn.active {
+    border-color: var(--gold);
+    background: rgba(212, 175, 55, 0.1);
+}
+
+.rest-type-icon { font-size: 2em; }
+.rest-type-label { font-weight: 600; color: var(--text); }
+.rest-type-desc { font-size: 0.85em; color: var(--text-dim); }
+
+.rest-details {
+    padding: 0 20px;
+}
+
+.rest-info {
+    background: var(--bg-dark);
+    border-radius: 8px;
+    padding: 12px 16px;
+    margin-bottom: 12px;
+}
+
+.rest-info h4 {
+    margin: 0 0 8px 0;
+    color: var(--gold);
+}
+
+.rest-info ul {
+    margin: 0;
+    padding-left: 20px;
+    color: var(--text-dim);
+    font-size: 0.9em;
+}
+
+.rest-info li { margin-bottom: 4px; }
+
+.rest-characters {
+    padding: 0 20px;
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.rest-character {
+    display: grid;
+    grid-template-columns: 1fr 100px 55px auto auto;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 12px;
+    background: var(--bg-dark);
+    border-radius: 6px;
+    margin-bottom: 6px;
+    border: 1px solid var(--border);
+}
+
+.rest-char-name {
+    font-weight: 600;
+    color: var(--text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.rest-no-chars {
+    text-align: center;
+    color: var(--text-dim);
+    padding: 20px;
+    font-style: italic;
+}
+
+.rest-hp-bar {
+    height: 6px;
+    background: var(--bg-elevated);
+    border-radius: 3px;
+    overflow: hidden;
+    position: relative;
+}
+
+.rest-hp-bar::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    height: 100%;
+    width: var(--hp-pct);
+    border-radius: 3px;
+}
+
+.rest-hp-bar.healthy::after { background: var(--green); }
+.rest-hp-bar.bloodied::after { background: var(--yellow); }
+.rest-hp-bar.critical::after { background: var(--red); }
+
+.rest-hp-text {
+    font-size: 0.8em;
+    color: var(--text-dim);
+    text-align: right;
+}
+
+.rest-hd-controls {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+}
+
+.rest-hd-btn {
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    color: var(--text);
+    cursor: pointer;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.rest-hd-btn:hover {
+    background: var(--bg-elevated);
+    border-color: var(--gold);
+}
+
+.rest-hd-input {
+    width: 32px;
+    height: 24px;
+    text-align: center;
+    padding: 0;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    color: var(--text);
+    font-size: 12px;
+}
+
+.rest-hd-label {
+    font-size: 0.75em;
+    color: var(--text-dim);
+    white-space: nowrap;
+}
+
+.rest-hd-available {
+    color: var(--gold);
+}
+
+.rest-heal-preview {
+    font-size: 0.85em;
+    color: var(--green);
+    font-weight: 600;
+}
+
+.rest-hd-restore {
+    font-size: 0.85em;
+    color: var(--cyan);
+}
+
+.rest-modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    padding: 16px 20px;
+    margin: 12px;
+    margin-top: 0;
+    background: var(--bg-dark);
+    border-radius: 12px;
+}
+
+/* ============================================================
+   QUICK ACTIONS BAR
+   ============================================================ */
+#quick-actions-bar {
+    display: none;
+    flex-direction: column;
+    gap: 8px;
+    padding: 12px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    margin-bottom: 12px;
+    position: sticky;
+    top: 145px;
+    z-index: 98;
+}
+
+[data-layout="mobile"] #quick-actions-bar {
+    top: 70px;
+}
+
+.qa-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.qa-label {
+    font-size: 0.9em;
+    color: var(--text-dim);
+}
+
+.qa-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.qa-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 12px;
+    background: var(--bg-dark);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+    color: var(--text);
+}
+
+.qa-btn:hover {
+    border-color: var(--gold);
+    background: var(--bg-elevated);
+}
+
+.qa-icon { font-size: 1.1em; }
+.qa-name { font-size: 0.85em; }
+
+/* ============================================================
+   CONDITION QUICK REFERENCE
+   ============================================================ */
+.condition-ref-content {
+    padding: 0;
+}
+
+.condition-ref-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border);
+}
+
+.condition-ref-header h3 {
+    margin: 0;
+    color: var(--gold);
+}
+
+.condition-ref-search {
+    padding: 12px 20px;
+    background: var(--bg-dark);
+}
+
+.condition-ref-search input {
+    width: 100%;
+    padding: 10px 14px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-size: 1em;
+}
+
+.condition-ref-search input:focus {
+    border-color: var(--gold);
+    outline: none;
+}
+
+.condition-ref-list {
+    padding: 12px 20px;
+    max-height: 50vh;
+    overflow-y: auto;
+}
+
+.condition-ref-item {
+    padding: 12px;
+    background: var(--bg-dark);
+    border-radius: 8px;
+    margin-bottom: 8px;
+    border: 1px solid var(--border);
+}
+
+.condition-ref-item:hover {
+    border-color: var(--gold);
+}
+
+.condition-ref-name {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 600;
+    color: var(--gold);
+    margin-bottom: 6px;
+}
+
+.condition-ref-icon { font-size: 1.2em; }
+
+.condition-ref-desc {
+    font-size: 0.9em;
+    color: var(--text-dim);
+    line-height: 1.4;
+}
+
+.condition-ref-empty {
+    text-align: center;
+    padding: 20px;
+    color: var(--text-dim);
+}
+
+/* ============================================================

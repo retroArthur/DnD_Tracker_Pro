@@ -227,8 +227,6 @@ function filterConditions() {
 // ============================================================
 // EXPORTS FOR GLOBAL ACCESS
 // ============================================================
-window.QUICK_ACTIONS = QUICK_ACTIONS;
 window.renderQuickActionsBar = renderQuickActionsBar;
 window.applyQuickAction = applyQuickAction;
 window.showConditionReference = showConditionReference;
-window.filterConditions = filterConditions;

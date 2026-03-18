@@ -630,8 +630,6 @@ function renderEntityLinkList(type, ids, options = {}, maxShow = 5) {
 // Export to window for backward compatibility
 window.ErrorHandler = ErrorHandler;
 window.safeExecute = safeExecute;
-window.safeRender = safeRender;
-window.validateEntity = validateEntity;
 window.ENTITY_SCHEMAS = ENTITY_SCHEMAS;
 window.validateDataIntegrity = validateDataIntegrity;
 window.repairDataArrays = repairDataArrays;
@@ -645,4 +643,3 @@ window.EntityLookup = EntityLookup;
 window.getEntityForCombat = getEntityForCombat;
 window.ENTITY_TYPE_CONFIG = ENTITY_TYPE_CONFIG;
 window.renderEntityLink = renderEntityLink;
-window.renderEntityLinkList = renderEntityLinkList;

@@ -1,0 +1,473 @@
+        <!-- NPCS VIEW - Master-Detail Layout -->
+        <section id="view-npcs" class="view npc-view">
+            <div class="section-toolbar">
+                <!-- Gruppe 1: Identität -->
+                <div class="section-toolbar-identity">
+                    <span class="section-toolbar-title">🎭 NPCs</span>
+                    <span class="section-toolbar-count" id="npcs-io-count">0</span>
+                </div>
+                <!-- Gruppe 2: Suche -->
+                <div class="section-toolbar-search">
+                    <div class="search-wrapper">
+                        <input type="text" id="npc-search" class="toolbar-search" placeholder="🔍 NPC suchen..." oninput="renderNPCList(); updateSearchClear(this);">
+                        <button class="search-clear-btn" data-action="clear-search" data-value="npc-search" title="Suche leeren">✕</button>
+                    </div>
+                </div>
+                <!-- Gruppe 3: Filter + IO -->
+                <div class="section-toolbar-filters">
+                    <div class="npc-filter-chips" id="npc-filters"></div>
+                    <div class="section-toolbar-io">
+                        <button class="io-btn export" data-action="export-data" data-value="npcs" title="NPCs exportieren">📤</button>
+                        <button class="io-btn import" data-action="trigger-click" data-value="import-npcs" title="NPCs importieren">📥</button>
+                        <input type="file" id="import-npcs" class="io-file-input" accept=".json" data-on-change="import-data" data-type="npcs">
+                    </div>
+                </div>
+                <!-- Gruppe 4: Primäre Aktion -->
+                <div class="section-toolbar-actions">
+                    <button class="btn btn-success" data-action="show-modal" data-value="npc-modal">+ NPC</button>
+                </div>
+            </div>
+
+            <!-- Master-Detail Layout -->
+            <div class="npc-layout">
+                <!-- Liste (Master) -->
+                <div class="npc-master">
+                    <div class="npc-list" id="npc-list"></div>
+                </div>
+
+                <!-- Detail-Sidebar -->
+                <div class="npc-detail" id="npc-detail-panel">
+                    <div class="npc-detail-empty">
+                        <div class="npc-detail-empty-icon">🎭</div>
+                        <div class="npc-detail-empty-text">Wähle einen NPC aus der Liste</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- LOCATIONS VIEW - Master-Detail Layout -->
+        <section id="view-locations" class="view loc-view">
+            <div class="section-toolbar">
+                <!-- Gruppe 1: Identität -->
+                <div class="section-toolbar-identity">
+                    <span class="section-toolbar-title">🏠 Orte</span>
+                    <span class="section-toolbar-count" id="locations-io-count">0</span>
+                </div>
+                <!-- Gruppe 2: Suche -->
+                <div class="section-toolbar-search">
+                    <div class="search-wrapper">
+                        <input type="text" id="loc-search" class="toolbar-search" placeholder="🔍 Orte suchen..." oninput="renderLocations(); updateSearchClear(this);">
+                        <button class="search-clear-btn" data-action="clear-search" data-value="loc-search" title="Suche leeren">✕</button>
+                    </div>
+                </div>
+                <!-- Gruppe 3: Filter + IO -->
+                <div class="section-toolbar-filters">
+                    <div class="loc-filter-chips" id="location-filters"></div>
+                    <div class="section-toolbar-io">
+                        <button class="io-btn export" data-action="export-data" data-value="locations" title="Orte exportieren">📤</button>
+                        <button class="io-btn import" data-action="trigger-click" data-value="import-locations" title="Orte importieren">📥</button>
+                        <input type="file" id="import-locations" class="io-file-input" accept=".json" data-on-change="import-data" data-type="locations">
+                    </div>
+                </div>
+                <!-- Gruppe 4: Primäre Aktion -->
+                <div class="section-toolbar-actions">
+                    <button class="btn btn-success" data-action="show-modal" data-value="location-modal">+ Neuer Ort</button>
+                </div>
+            </div>
+
+            <!-- Master-Detail Layout -->
+            <div class="loc-layout">
+                <!-- Liste (Master) -->
+                <div class="loc-master">
+                    <div class="loc-list" id="locations-list"></div>
+                </div>
+
+                <!-- Detail-Sidebar -->
+                <div class="loc-detail" id="loc-detail-panel">
+                    <div class="loc-detail-empty">
+                        <div class="loc-detail-empty-icon">🏠</div>
+                        <div class="loc-detail-empty-text">Wähle einen Ort aus der Liste</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- ROADMAP VIEW -->
+        <section id="view-roadmap" class="view roadmap-view">
+            <!-- Toolbar -->
+            <div id="roadmap-toolbar" class="roadmap-toolbar">
+                <!-- Wird dynamisch gerendert -->
+            </div>
+
+            <!-- Canvas Container -->
+            <div id="roadmap-container" class="roadmap-container">
+                <div id="roadmap-viewport" class="roadmap-viewport">
+                    <svg id="roadmap-svg" class="roadmap-svg">
+                        <defs>
+                            <!-- Marker werden beim Init erstellt -->
+                        </defs>
+                    </svg>
+                    <div id="roadmap-events" class="roadmap-events"></div>
+                </div>
+            </div>
+
+            <!-- Zoom Controls -->
+            <div id="roadmap-controls" class="roadmap-controls">
+                <!-- Wird dynamisch gerendert -->
+            </div>
+        </section>
+        
+        <!-- Add/Edit Node Modal -->
+        <div class="modal-overlay" id="add-node-modal">
+            <div class="modal" style="max-width: 500px;">
+                <div class="modal-header">
+                    <span class="modal-title" id="node-modal-title">➕ Node hinzufügen</span>
+                    <button class="btn btn-sm" data-action="hide-modal" data-value="add-node-modal">✕</button>
+                </div>
+                <input type="hidden" id="edit-node-id">
+                <div class="form-group">
+                    <label>Name</label>
+                    <input type="text" id="node-name" placeholder="Name des Nodes">
+                </div>
+                <div class="form-group">
+                    <label>Typ</label>
+                    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; max-height: 200px; overflow-y: auto; padding: 4px;">
+                        <!-- Charaktere -->
+                        <button class="btn node-type-btn" data-type="player" data-action="select-node-type" data-value="player" style="border-color: var(--green);">👤 Spieler</button>
+                        <button class="btn node-type-btn" data-type="npc" data-action="select-node-type" data-value="npc" style="border-color: var(--cyan);">🎭 NPC</button>
+                        <button class="btn node-type-btn" data-type="enemy" data-action="select-node-type" data-value="enemy" style="border-color: var(--red);">👹 Feind</button>
+                        <button class="btn node-type-btn" data-type="group" data-action="select-node-type" data-value="group" style="border-color: var(--cyan);">👥 Gruppe</button>
+                        <!-- Orte -->
+                        <button class="btn node-type-btn" data-type="location" data-action="select-node-type" data-value="location" style="border-color: var(--gold);">🏠 Ort</button>
+                        <button class="btn node-type-btn" data-type="castle" data-action="select-node-type" data-value="castle" style="border-color: var(--gold);">🏰 Burg</button>
+                        <button class="btn node-type-btn" data-type="palace" data-action="select-node-type" data-value="palace" style="border-color: var(--gold);">🏯 Schloss</button>
+                        <button class="btn node-type-btn" data-type="fortress" data-action="select-node-type" data-value="fortress" style="border-color: var(--gold);">🛡️ Festung</button>
+                        <button class="btn node-type-btn" data-type="ruin" data-action="select-node-type" data-value="ruin" style="border-color: var(--orange);">🏚️ Ruine</button>
+                        <button class="btn node-type-btn" data-type="dungeon" data-action="select-node-type" data-value="dungeon" style="border-color: var(--red);">⛓️ Dungeon</button>
+                        <button class="btn node-type-btn" data-type="catacombs" data-action="select-node-type" data-value="catacombs" style="border-color: var(--red);">💀 Katakomben</button>
+                        <button class="btn node-type-btn" data-type="cave" data-action="select-node-type" data-value="cave" style="border-color: var(--text-dim);">🕳️ Höhle</button>
+                        <!-- Sonstiges -->
+                        <button class="btn node-type-btn" data-type="faction" data-action="select-node-type" data-value="faction" style="border-color: var(--purple);">⚔️ Fraktion</button>
+                        <button class="btn node-type-btn" data-type="quest" data-action="select-node-type" data-value="quest" style="border-color: var(--purple);">📜 Quest</button>
+                        <button class="btn node-type-btn" data-type="event" data-action="select-node-type" data-value="event" style="border-color: var(--yellow);">⚡ Event</button>
+                        <button class="btn node-type-btn" data-type="item" data-action="select-node-type" data-value="item" style="border-color: var(--orange);">📦 Item</button>
+                    </div>
+                    <input type="hidden" id="node-type" value="npc">
+                </div>
+                <div class="form-group">
+                    <label>Beschreibung (optional)</label>
+                    <input type="text" id="node-desc" placeholder="Kurze Beschreibung">
+                </div>
+                <div class="btn-group">
+                    <button class="btn btn-success" data-action="call" data-value="saveNodeFromModal" id="node-save-btn">Hinzufügen</button>
+                    <button class="btn" data-action="hide-modal" data-value="add-node-modal">Abbrechen</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Connection Modal -->
+        <div class="modal-overlay" id="connection-modal">
+            <div class="modal" style="max-width: 400px;">
+                <div class="modal-header">
+                    <span class="modal-title">🔗 Verbindung erstellen</span>
+                    <button class="btn btn-sm" data-action="hide-modal" data-value="connection-modal">✕</button>
+                </div>
+                <div id="connection-nodes-info" style="text-align: center; margin-bottom: 16px; padding: 12px; background: var(--bg-dark); border-radius: 8px;"></div>
+                <div class="form-group">
+                    <label>Beziehungstyp</label>
+                    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px;">
+                        <button class="btn conn-type-btn" data-type="ally" data-action="select-conn-type" data-value="ally" style="border-color: var(--green);">💚 Verbündeter</button>
+                        <button class="btn conn-type-btn" data-type="enemy" data-action="select-conn-type" data-value="enemy" style="border-color: var(--red);">💔 Feind</button>
+                        <button class="btn conn-type-btn" data-type="neutral" data-action="select-conn-type" data-value="neutral" style="border-color: var(--text-dim);">⚪ Neutral</button>
+                        <button class="btn conn-type-btn" data-type="family" data-action="select-conn-type" data-value="family" style="border-color: var(--pink);">💗 Familie</button>
+                        <button class="btn conn-type-btn" data-type="business" data-action="select-conn-type" data-value="business" style="border-color: var(--gold);">💰 Geschäft</button>
+                        <button class="btn conn-type-btn" data-type="quest" data-action="select-conn-type" data-value="quest" style="border-color: var(--purple);">📜 Quest</button>
+                        <button class="btn conn-type-btn" data-type="member" data-action="select-conn-type" data-value="member" style="border-color: var(--cyan);">👥 Mitglied</button>
+                    </div>
+                    <input type="hidden" id="conn-type" value="neutral">
+                </div>
+                <div class="form-group">
+                    <label>Beschreibung (optional)</label>
+                    <input type="text" id="conn-label" placeholder="z.B. 'Bruder von', 'arbeitet für'">
+                </div>
+                <div class="btn-group">
+                    <button class="btn btn-success" data-action="call" data-value="confirmConnection">Verbinden</button>
+                    <button class="btn" data-action="hide-modal" data-value="connection-modal">Abbrechen</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Import Nodes Modal -->
+        <div class="modal-overlay" id="import-nodes-modal">
+            <div class="modal" style="max-width: 550px;">
+                <div class="modal-header">
+                    <span class="modal-title">📥 Daten als Nodes importieren</span>
+                    <button class="btn btn-sm" data-action="hide-modal" data-value="import-nodes-modal">✕</button>
+                </div>
+                <p style="color: var(--text-dim); font-size: 0.85em; margin-bottom: 12px;">
+                    Wähle Einträge aus deinen bestehenden Daten, um sie als Nodes ins Netzwerk zu importieren.
+                </p>
+                <div class="form-group">
+                    <label>Datenquelle</label>
+                    <select id="import-nodes-source" onchange="populateImportNodesList()" style="width: 100%;">
+                        <option value="characters">👤 Party-Charaktere</option>
+                        <option value="npcs">🎭 NPCs</option>
+                        <option value="locations">🏠 Orte</option>
+                        <option value="quests">📜 Quests</option>
+                        <option value="encounters">👹 Encounter</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Verfügbare Einträge <span style="color: var(--text-dim); font-size: 11px;">(bereits importierte sind ausgegraut)</span></label>
+                    <div id="import-nodes-list" style="max-height: 250px; overflow-y: auto; background: var(--bg-dark); border-radius: 6px; padding: 8px;">
+                        <div style="color: var(--text-dim); text-align: center; padding: 20px;">Wähle eine Datenquelle</div>
+                    </div>
+                </div>
+                <div class="btn-group">
+                    <button class="btn btn-success" data-action="call" data-value="importSelectedNodes">📥 Ausgewählte importieren</button>
+                    <button class="btn" data-action="call" data-value="importAllNodes">📥 Alle importieren</button>
+                    <button class="btn" data-action="hide-modal" data-value="import-nodes-modal">Schließen</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ROADMAP EVENT EDIT MODAL -->
+        <div class="modal-overlay" id="roadmap-event-modal">
+            <div class="modal" style="max-width: 600px;">
+                <div class="modal-header">
+                    <span class="modal-title">✏️ Event bearbeiten</span>
+                    <button class="btn btn-sm" data-action="hide-modal" data-value="roadmap-event-modal">✕</button>
+                </div>
+                <div class="form-group">
+                    <label>Titel</label>
+                    <input type="text" id="roadmap-event-title" placeholder="z.B. Ankunft in Phandalin">
+                </div>
+                <div class="form-group">
+                    <label>Typ</label>
+                    <select id="roadmap-event-type">
+                        <option value="location">📍 Ort</option>
+                        <option value="travel">🗺️ Reise</option>
+                        <option value="encounter">⚔️ Encounter</option>
+                        <option value="combat">🎯 Kampf</option>
+                        <option value="quest">📜 Quest</option>
+                        <option value="discovery">💡 Entdeckung</option>
+                        <option value="social">💬 Social</option>
+                        <option value="decision">❓ Entscheidung</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Beschreibung</label>
+                    <div class="editor-toolbar editor-toolbar-full">
+                        <div class="toolbar-row">
+                            <button class="editor-btn" data-action="format-text" data-cmd="roadmap-event-description" data-editor="bold" title="Fett"><b>B</b></button>
+                            <button class="editor-btn" data-action="format-text" data-cmd="roadmap-event-description" data-editor="italic" title="Kursiv"><i>I</i></button>
+                            <button class="editor-btn" data-action="format-text" data-cmd="roadmap-event-description" data-editor="underline" title="Unterstrichen"><u>U</u></button>
+                            <button class="editor-btn" data-action="format-text" data-cmd="roadmap-event-description" data-editor="strikethrough" title="Durchgestrichen"><s>S</s></button>
+                            <span class="toolbar-separator"></span>
+                            <button class="editor-btn" data-action="insert-link" data-editor="roadmap-event-description" title="Link einfügen">🔗</button>
+                            <button class="editor-btn" data-action="format-text" data-cmd="roadmap-event-description" data-editor="list" title="Liste">☰</button>
+                            <button class="editor-btn" data-action="insert-table" data-editor="roadmap-event-description" title="Tabelle">📊</button>
+                        </div>
+                        <div class="toolbar-row">
+                            <select class="editor-select" data-action="set-editor-font" data-editor="roadmap-event-description" title="Schriftart"><option value="arial">Arial</option><option value="serif">Serif</option><option value="mono">Mono</option><option value="roboto">Roboto</option><option value="inter">Inter</option><option value="poppins">Poppins</option><option value="source-sans">Source Sans</option></select>
+                            <select class="editor-select" data-action="set-editor-font-size" data-editor="roadmap-event-description" title="Größe"><option value="11px">11px</option><option value="13px">13px</option><option value="16px" selected>16px</option><option value="18px">18px</option><option value="20px">20px</option></select>
+                        </div>
+                        <div class="toolbar-row">
+                            <select class="editor-select" data-action="set-highlight-color" data-editor="roadmap-event-description" title="Hervorheben">
+                                <option value="">🖍️ Marker</option>
+                                <option value="#fbbf24">🟡 Gold</option>
+                                <option value="#22d3ee">🔵 Cyan</option>
+                                <option value="#ef4444">🔴 Rot</option>
+                                <option value="#22c55e">🟢 Grün</option>
+                                <option value="#a855f7">🟣 Lila</option>
+                                <option value="#f97316">🟠 Orange</option>
+                                <option value="#ec4899">🌸 Pink</option>
+                                <option value="#06b6d4">🩵 Türkis</option>
+                                <option value="transparent">⭕ Keine</option>
+                            </select>
+                            <select class="editor-select" data-action="set-read-aloud-style" data-editor="roadmap-event-description" title="Vorlese-Text">
+                                <option value="">📖 Vorlese</option>
+                                <option value="parchment">📜 Pergament</option>
+                                <option value="crimson">🍷 Karmesin</option>
+                                <option value="violet">🔮 Violett</option>
+                                <option value="sage">🌿 Salbei</option>
+                                <option value="sky">☁️ Himmel</option>
+                                <option value="slate">🪨 Schiefer</option>
+                            </select>
+                            <span class="toolbar-separator"></span>
+                            <button class="editor-btn" data-action="set-border-format" data-editor="roadmap-event-description" title="Rahmen">◻</button>
+                            <button class="editor-btn" data-action="clear-formatting" data-value="roadmap-event-description" title="Formatierung entfernen">🧹</button>
+                        </div>
+                    </div>
+                    <div id="roadmap-event-description" class="rich-editor" contenteditable="true" style="min-height: 120px;" placeholder="Was passiert bei diesem Event?"></div>
+                </div>
+                <div class="form-group">
+                    <label>Notizen</label>
+                    <textarea id="roadmap-event-notes" rows="2" placeholder="Zusätzliche Notizen für den DM"></textarea>
+                </div>
+                <div class="form-group">
+                    <label style="display: flex; align-items: center; gap: 8px;">
+                        <input type="checkbox" id="roadmap-event-completed">
+                        <span>Als abgeschlossen markieren</span>
+                    </label>
+                </div>
+                <div class="btn-group">
+                    <button class="btn btn-success" data-action="saveRoadmapEventEdit">💾 Speichern</button>
+                    <button class="btn" data-action="cancelRoadmapEventEdit">Abbrechen</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ROADMAP ENTITY LINKER MODAL -->
+        <div class="modal-overlay" id="roadmap-linker-modal">
+            <div class="modal" style="max-width: 700px;">
+                <div class="modal-header">
+                    <span class="modal-title">🔗 Verknüpfungen</span>
+                    <button class="btn btn-sm" data-action="hide-modal" data-value="roadmap-linker-modal">✕</button>
+                </div>
+                <div class="roadmap-linker-tabs">
+                    <button class="roadmap-linker-tab active" data-tab="npcs" data-action="switchLinkerTab">🎭 NPCs</button>
+                    <button class="roadmap-linker-tab" data-tab="quests" data-action="switchLinkerTab">📜 Quests</button>
+                    <button class="roadmap-linker-tab" data-tab="locations" data-action="switchLinkerTab">🏠 Orte</button>
+                    <button class="roadmap-linker-tab" data-tab="encounters" data-action="switchLinkerTab">⚔️ Encounters</button>
+                </div>
+                <div class="roadmap-linker-search">
+                    <input type="text" id="roadmap-linker-search-input" placeholder="🔍 Suchen..." autocomplete="off">
+                </div>
+                <div class="roadmap-linker-content active" id="roadmap-linker-npcs">
+                    <!-- Wird dynamisch gefüllt -->
+                </div>
+                <div class="roadmap-linker-content" id="roadmap-linker-quests">
+                    <!-- Wird dynamisch gefüllt -->
+                </div>
+                <div class="roadmap-linker-content" id="roadmap-linker-locations">
+                    <!-- Wird dynamisch gefüllt -->
+                </div>
+                <div class="roadmap-linker-content" id="roadmap-linker-encounters">
+                    <!-- Wird dynamisch gefüllt -->
+                </div>
+                <div class="btn-group">
+                    <button class="btn btn-success" data-action="saveEntityLinks">💾 Speichern</button>
+                    <button class="btn" data-action="cancelEntityLinks">Abbrechen</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ROADMAP CONNECTION OPTIONS MODAL -->
+        <div class="modal-overlay" id="roadmap-connection-options-modal">
+            <div class="modal" style="max-width: 500px;">
+                <div class="modal-header">
+                    <span class="modal-title">🔗 Verbindungsoptionen</span>
+                    <button class="btn btn-sm" data-action="hide-modal" data-value="roadmap-connection-options-modal">✕</button>
+                </div>
+                <div class="form-group">
+                    <label>Linien-Stil</label>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 8px;">
+                        <label class="roadmap-style-option" style="cursor: pointer; padding: 16px; background: rgba(59, 130, 246, 0.1); border: 2px solid rgba(59, 130, 246, 0.3); border-radius: 8px; transition: all 0.2s; text-align: center;">
+                            <input type="radio" name="connection-style" value="5" checked style="margin-right: 8px;">
+                            <div style="font-weight: 600; margin-bottom: 8px;">Stil 5: Dotted</div>
+                            <svg width="100" height="40" style="display: block; margin: 0 auto;">
+                                <path d="M 10 20 L 90 20" stroke="#60a5fa" stroke-width="2" stroke-dasharray="6,6" fill="none" style="filter: drop-shadow(0 0 4px rgba(96, 165, 250, 0.5));"></path>
+                            </svg>
+                            <div style="font-size: 11px; color: var(--text-dim); margin-top: 8px;">Gestrichelt, elegant</div>
+                        </label>
+                        <label class="roadmap-style-option" style="cursor: pointer; padding: 16px; background: rgba(59, 130, 246, 0.1); border: 2px solid rgba(59, 130, 246, 0.3); border-radius: 8px; transition: all 0.2s; text-align: center;">
+                            <input type="radio" name="connection-style" value="7" style="margin-right: 8px;">
+                            <div style="font-weight: 600; margin-bottom: 8px;">Stil 7: Double</div>
+                            <svg width="100" height="40" style="display: block; margin: 0 auto;">
+                                <path d="M 10 20 L 90 20" stroke="rgba(96, 165, 250, 0.2)" stroke-width="4" fill="none"></path>
+                                <path d="M 10 20 L 90 20" stroke="#60a5fa" stroke-width="1.5" fill="none" style="filter: drop-shadow(0 0 3px rgba(96, 165, 250, 0.4));"></path>
+                            </svg>
+                            <div style="font-size: 11px; color: var(--text-dim); margin-top: 8px;">Doppellinie, 3D-Effekt</div>
+                        </label>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Farbe</label>
+                    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 12px;">
+                        <label class="roadmap-color-swatch" style="cursor: pointer; padding: 10px; border-radius: 6px; border: 2px solid transparent; transition: all 0.2s; text-align: center; display: flex; flex-direction: column; align-items: center;">
+                            <input type="radio" name="connection-color" value="blue" checked style="display: none;">
+                            <div style="width: 32px; height: 32px; margin-bottom: 6px; border-radius: 4px; background: #60a5fa; box-shadow: 0 2px 8px rgba(96, 165, 250, 0.4);"></div>
+                            <div style="font-size: 11px; color: var(--text-dim);">Blau</div>
+                        </label>
+                        <label class="roadmap-color-swatch" style="cursor: pointer; padding: 10px; border-radius: 6px; border: 2px solid transparent; transition: all 0.2s; text-align: center; display: flex; flex-direction: column; align-items: center;">
+                            <input type="radio" name="connection-color" value="purple" style="display: none;">
+                            <div style="width: 32px; height: 32px; margin-bottom: 6px; border-radius: 4px; background: #a78bfa; box-shadow: 0 2px 8px rgba(167, 139, 250, 0.4);"></div>
+                            <div style="font-size: 11px; color: var(--text-dim);">Lila</div>
+                        </label>
+                        <label class="roadmap-color-swatch" style="cursor: pointer; padding: 10px; border-radius: 6px; border: 2px solid transparent; transition: all 0.2s; text-align: center; display: flex; flex-direction: column; align-items: center;">
+                            <input type="radio" name="connection-color" value="yellow" style="display: none;">
+                            <div style="width: 32px; height: 32px; margin-bottom: 6px; border-radius: 4px; background: #fbbf24; box-shadow: 0 2px 8px rgba(251, 191, 36, 0.4);"></div>
+                            <div style="font-size: 11px; color: var(--text-dim);">Gelb</div>
+                        </label>
+                        <label class="roadmap-color-swatch" style="cursor: pointer; padding: 10px; border-radius: 6px; border: 2px solid transparent; transition: all 0.2s; text-align: center; display: flex; flex-direction: column; align-items: center;">
+                            <input type="radio" name="connection-color" value="green" style="display: none;">
+                            <div style="width: 32px; height: 32px; margin-bottom: 6px; border-radius: 4px; background: #10b981; box-shadow: 0 2px 8px rgba(16, 185, 129, 0.4);"></div>
+                            <div style="font-size: 11px; color: var(--text-dim);">Grün</div>
+                        </label>
+                        <label class="roadmap-color-swatch" style="cursor: pointer; padding: 10px; border-radius: 6px; border: 2px solid transparent; transition: all 0.2s; text-align: center; display: flex; flex-direction: column; align-items: center;">
+                            <input type="radio" name="connection-color" value="red" style="display: none;">
+                            <div style="width: 32px; height: 32px; margin-bottom: 6px; border-radius: 4px; background: #ef4444; box-shadow: 0 2px 8px rgba(239, 68, 68, 0.4);"></div>
+                            <div style="font-size: 11px; color: var(--text-dim);">Rot</div>
+                        </label>
+                        <label class="roadmap-color-swatch" style="cursor: pointer; padding: 10px; border-radius: 6px; border: 2px solid transparent; transition: all 0.2s; text-align: center; display: flex; flex-direction: column; align-items: center;">
+                            <input type="radio" name="connection-color" value="orange" style="display: none;">
+                            <div style="width: 32px; height: 32px; margin-bottom: 6px; border-radius: 4px; background: #f59e0b; box-shadow: 0 2px 8px rgba(245, 158, 11, 0.4);"></div>
+                            <div style="font-size: 11px; color: var(--text-dim);">Orange</div>
+                        </label>
+                        <label class="roadmap-color-swatch" style="cursor: pointer; padding: 10px; border-radius: 6px; border: 2px solid transparent; transition: all 0.2s; text-align: center; display: flex; flex-direction: column; align-items: center;">
+                            <input type="radio" name="connection-color" value="pink" style="display: none;">
+                            <div style="width: 32px; height: 32px; margin-bottom: 6px; border-radius: 4px; background: #ec4899; box-shadow: 0 2px 8px rgba(236, 72, 153, 0.4);"></div>
+                            <div style="font-size: 11px; color: var(--text-dim);">Pink</div>
+                        </label>
+                        <label class="roadmap-color-swatch" style="cursor: pointer; padding: 10px; border-radius: 6px; border: 2px solid transparent; transition: all 0.2s; text-align: center; display: flex; flex-direction: column; align-items: center;">
+                            <input type="radio" name="connection-color" value="gray" style="display: none;">
+                            <div style="width: 32px; height: 32px; margin-bottom: 6px; border-radius: 4px; background: #6b7280; box-shadow: 0 2px 8px rgba(107, 114, 128, 0.4);"></div>
+                            <div style="font-size: 11px; color: var(--text-dim);">Grau</div>
+                        </label>
+                    </div>
+                </div>
+                <div class="btn-group">
+                    <button class="btn btn-success" data-action="saveConnectionOptions">💾 Speichern</button>
+                    <button class="btn" data-action="cancelConnectionOptions">Abbrechen</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- QUESTS VIEW -->
+        <section id="view-quests" class="view">
+            <div class="section-toolbar">
+                <!-- Gruppe 1: Identität -->
+                <div class="section-toolbar-identity">
+                    <span class="section-toolbar-title">📜 Quests</span>
+                    <span class="section-toolbar-count" id="quests-io-count">0</span>
+                </div>
+                
+                <!-- Gruppe 2: Suche -->
+                <div class="section-toolbar-search">
+                    <div class="search-wrapper">
+                        <input type="text" id="quest-search" class="toolbar-search" placeholder="🔍 Quest suchen..." oninput="renderQuests(); updateSearchClear(this);">
+                        <button class="search-clear-btn" data-action="clear-search" data-value="quest-search" title="Suche leeren">✕</button>
+                    </div>
+                </div>
+                
+                <!-- Gruppe 3: Filter + IO -->
+                <div class="section-toolbar-filters">
+                    <div class="section-toolbar-io">
+                        <button class="io-btn export" data-action="export-data" data-value="quests" title="Quests exportieren">📤</button>
+                        <button class="io-btn import" data-action="trigger-click" data-value="import-quests" title="Quests importieren">📥</button>
+                        <input type="file" id="import-quests" class="io-file-input" accept=".json" data-on-change="import-data" data-type="quests">
+                    </div>
+                    <label class="filter-checkbox">
+                        <input type="checkbox" id="quest-filter-active" checked onchange="renderQuests()"> Aktive
+                    </label>
+                </div>
+                
+                <!-- Gruppe 4: Primäre Aktion -->
+                <div class="section-toolbar-actions">
+                    <button class="btn btn-success" data-action="show-modal" data-value="quest-modal">+ Quest</button>
+                </div>
+            </div>
+            <div class="quest-list" id="quests-list"></div>
+        </section>
+        

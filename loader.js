@@ -6,22 +6,26 @@
 const DEBUG_LOADER = false;
 const logLoader = DEBUG_LOADER ? console.log.bind(console) : () => {};
 
+// WICHTIG: Diese Liste muss mit build.py synchron bleiben!
 const MODULES = [
     // Core (muss zuerst geladen werden)
-    'core/config.js',      // APP_CONFIG muss zuerst da sein
+    'core/config.js',
     'core/data.js',
     'core/constants.js',
-    
+    'core/themes.js',
+
     // Utils
     'utils/performance.js',
     'utils/basic.js',
     'utils/utilities.js',
     'utils/crud-helpers.js',
     'utils/validation.js',
-    
+    'utils/form-helpers.js',
+    'utils/filter-engine.js',
+    'utils/game-rules.js',
+
     // Systems
     'systems/undo.js',
-    // Spellslots-Module (ersetzt systems/spellslots.js)
     'systems/spellslots/spell-slots-core.js',
     'systems/spellslots/notes-templates.js',
     'systems/spellslots/quick-reference.js',
@@ -32,7 +36,6 @@ const MODULES = [
     'systems/spellslots/persistence.js',
     'systems/spellslots/quick-roll.js',
     'systems/spellslots/import-export.js',
-    'systems/tab-registry.js',
     'systems/spellslots/navigation.js',
     'systems/conditions.js',
     'systems/hp-calculator.js',
@@ -40,80 +43,80 @@ const MODULES = [
     'systems/entity-links.js',
     'systems/avatars.js',
     'systems/backups.js',
-    
+    'systems/tab-registry.js',
+    'systems/session-timer.js',
+    'systems/search/global-search.js',
+    'systems/campaign-manager/campaign-manager.js',
+
     // Render
     'render/helpers.js',
-    // Render-Feature-Module (ersetzt render/main.js)
     'features/render-dashboard.js',
-    // Party-Module (ersetzt render-party.js)
     'features/party/party-render.js',
     'features/party/party-details.js',
     'features/party/party-crud.js',
     'features/render-spells.js',
-    // Locations-Module (ersetzt render-locations.js)
     'features/locations/locations-render.js',
     'features/locations/locations-crud.js',
     'features/render-loot.js',
-    // NPC-Module (ersetzt render-npcs.js)
     'features/npcs/npc-render.js',
     'features/npcs/npc-interactions.js',
     'features/npcs/npc-dialogs.js',
     'features/npcs/npc-crud.js',
     'features/npcs/npc-popup.js',
-    // Quests-Module (ersetzt render-quests.js)
     'features/quests/quests-render.js',
     'features/quests/quests-crud.js',
-    // Encounters-Module (ersetzt render-encounters.js)
     'features/encounters/encounters-render.js',
     'features/encounters/encounters-crud.js',
-    // Roadmap-Module
+
+    // Features
+    'features/encounter-calculator.js',
+    'features/initiative.js',
+    'features/rest-manager.js',
+    'features/quick-actions.js',
+    'features/random-tables.js',
+    'features/loot-distribution.js',
+    'features/sessions/sessions.js',
+    'features/wiki/wiki.js',
+    'features/maps/maps.js',
+    'features/shops/shops-core.js',
+    'features/shops/shop-export.js',
+    'features/shops/links.js',
+    'features/network/mindmap.js',
+
+    // Roadmap
     'features/roadmap/roadmap.js',
     'features/roadmap/roadmap-render.js',
     'features/roadmap/roadmap-crud.js',
     'features/roadmap/roadmap-ui.js',
 
-    // Features
-    'features/initiative.js',
-    'features/encounter-calculator.js',
-    'features/rest-manager.js',
-    'features/quick-actions.js',
-    'features/random-tables.js',
-    'features/loot-distribution.js',
+    // DM Screen
+    'features/dmscreen/dmscreen-render.js',
 
-    // Dice-Module (ersetzt features/dice.js)
-    'features/dice/campaign-manager.js',
+    // Dice
     'features/dice/dice-core.js',
     'features/dice/dice-favorites.js',
-    'features/dice/timers.js',
-    'features/dice/maps.js',
-    'features/dice/theme.js',
-    'features/dice/layout-profiles.js',
-    'features/dice/session-timer.js',
-    'features/dice/global-search.js',
-    'features/dice/spellslots-ui.js',
-    'features/dice/initiative-extras.js',
-    'features/dice/wiki-links.js',
-    'features/dice/srd-spells.js',
-    'features/dice/monster-templates.js',
-    'features/dice/performance-extras.js',
-    'features/dice/debug.js',
 
-    // Shops-Module (ersetzt features/shops.js)
-    'features/shops/shops-core.js',
-    'features/shops/links.js',
-    'features/shops/wiki.js',
-    'features/shops/mindmap.js',
-    'features/shops/sessions.js',
-    'features/shops/spell-editor.js',
+    // Verschoben aus dice/ in passende Ordner
+    'features/timers/timers.js',
+    'systems/wiki-links.js',
+    'features/encounters/monster-templates.js',
+    'core/srd-spells.js',
+    'systems/spellslots/spellslots-ui.js',
+    'features/initiative-extras.js',
+    'ui/layout-profiles.js',
+    'utils/performance-extras.js',
 
-    // DM Screen Module
-    'features/dmscreen/dmscreen-render.js',
-    
     // UI
+    'ui/dom-builder.js',
+    'ui/safe-render.js',
     'ui/lazy-loading.js',
     'ui/event-delegation.js',
+    'ui/editors/rich-text.js',
+    'ui/editors/markdown-shortcuts.js',
+    'ui/editors/markdown-converter.js',
+    'systems/markdown-import-export.js',
 
-    // Action-Module (müssen nach event-delegation.js geladen werden)
+    // Action-Module (nach event-delegation.js)
     'ui/actions/entity-actions.js',
     'ui/actions/combat-actions.js',
     'ui/actions/ui-actions.js',
@@ -121,9 +124,10 @@ const MODULES = [
     'ui/actions/wiki-actions.js',
     'ui/actions/shop-actions.js',
     'ui/actions/map-actions.js',
+    'ui/actions/roadmap-actions.js',
     'ui/actions/system-actions.js',
-
     'ui/virtual-scroll.js',
+    'tools/debug.js',
 
     // Init (muss zuletzt geladen werden)
     'core/init.js'
@@ -179,14 +183,29 @@ async function loadModules() {
     // Zeige Loading-Screen sofort
     showLoadingIndicator();
 
-    // Lade HTML Body zuerst (aber halte Loading-Screen)
+    // Lade HTML Templates parallel (ersetzt monolithische body.html)
+    const TEMPLATES = [
+        'assets/templates/header.html',
+        'assets/templates/view-party.html',
+        'assets/templates/view-content.html',
+        'assets/templates/view-encounters.html',
+        'assets/templates/view-resources.html',
+        'assets/templates/view-tools.html',
+        'assets/templates/modals-entity.html',
+        'assets/templates/modals-shops.html',
+        'assets/templates/modals-tools.html',
+        'assets/templates/modals-editors.html',
+    ];
+
     let bodyHTML = '';
     try {
-        const response = await fetch('assets/body.html');
-        bodyHTML = await response.text();
-        logLoader('✓ HTML Body geladen');
+        const parts = await Promise.all(
+            TEMPLATES.map(t => fetch(t).then(r => r.text()))
+        );
+        bodyHTML = parts.join('\n');
+        logLoader(`✓ ${TEMPLATES.length} HTML Templates geladen`);
     } catch (error) {
-        console.error('❌ Fehler beim Laden des HTML Body:', error);
+        console.error('❌ Fehler beim Laden der HTML Templates:', error);
         throw error;
     }
 

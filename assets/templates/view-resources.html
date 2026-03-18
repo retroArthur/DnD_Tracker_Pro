@@ -1,0 +1,518 @@
+        <!-- LOOT VIEW - Master-Detail Layout -->
+        <section id="view-loot" class="view loot-view">
+            <div class="section-toolbar">
+                <!-- Gruppe 1: Identität -->
+                <div class="section-toolbar-identity">
+                    <span class="section-toolbar-title">📦 Truhe</span>
+                    <span class="section-toolbar-count" id="loot-io-count">0</span>
+                </div>
+                <!-- Gruppe 2: Suche -->
+                <div class="section-toolbar-search">
+                    <div class="search-wrapper">
+                        <input type="text" id="loot-search" class="toolbar-search" placeholder="🔍 Item suchen..." oninput="renderLootList(); updateSearchClear(this);">
+                        <button class="search-clear-btn" data-action="clear-search" data-value="loot-search" title="Suche leeren">✕</button>
+                    </div>
+                </div>
+                <!-- Gruppe 3: Filter + IO -->
+                <div class="section-toolbar-filters">
+                    <div class="loot-filter-chips" id="loot-filters"></div>
+                    <button class="btn btn-sm btn-gold" data-action="show-loot-distribution" title="Beute auf Party verteilen">💰 Verteilen</button>
+                    <div class="section-toolbar-io">
+                        <button class="io-btn export" data-action="export-data" data-value="loot" title="Truhe exportieren">📤</button>
+                        <button class="io-btn import" data-action="trigger-click" data-value="import-loot" title="Truhe importieren">📥</button>
+                        <input type="file" id="import-loot" class="io-file-input" accept=".json" data-on-change="import-data" data-type="loot">
+                    </div>
+                </div>
+                <!-- Gruppe 4: Primäre Aktion -->
+                <div class="section-toolbar-actions">
+                    <button class="btn btn-success" data-action="show-modal" data-value="loot-modal">+ Item</button>
+                </div>
+            </div>
+
+            <!-- Master-Detail Layout -->
+            <div class="loot-layout">
+                <!-- Liste (Master) -->
+                <div class="loot-master">
+                    <div class="loot-list" id="loot-list"></div>
+                </div>
+
+                <!-- Detail-Sidebar -->
+                <div class="loot-detail" id="loot-detail-panel">
+                    <div class="loot-detail-empty">
+                        <div class="loot-detail-empty-icon">📦</div>
+                        <div class="loot-detail-empty-text">Wähle ein Item aus der Liste</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- SHOPS VIEW -->
+        <section id="view-shops" class="view">
+            <div class="section-toolbar">
+                <!-- Gruppe 1: Identität -->
+                <div class="section-toolbar-identity">
+                    <span class="section-toolbar-title">🏪 Shops</span>
+                    <span class="section-toolbar-count" id="shops-io-count">0</span>
+                </div>
+                
+                <!-- Gruppe 2: Suche -->
+                <div class="section-toolbar-search">
+                    <div class="search-wrapper">
+                        <input type="text" id="shop-search" class="toolbar-search" placeholder="🔍 Shop suchen..." oninput="renderShops(); updateSearchClear(this);">
+                        <button class="search-clear-btn" data-action="clear-search" data-value="shop-search" title="Suche leeren">✕</button>
+                    </div>
+                </div>
+                
+                <!-- Gruppe 3: Filter -->
+                <div class="section-toolbar-filters">
+                    <select id="shop-type-filter" onchange="renderShops()">
+                        <option value="">Alle Typen</option>
+                        <option value="schmied">🔨 Schmied</option>
+                        <option value="wirtshaus">🍺 Wirtshaus</option>
+                        <option value="herberge">🛏️ Herberge</option>
+                        <option value="taverne">🍻 Taverne</option>
+                        <option value="alchemist">⚗️ Alchemist</option>
+                        <option value="apotheke">💊 Apotheke</option>
+                        <option value="bogenmacher">🏹 Bogenmacher</option>
+                        <option value="schneiderei">🧵 Schneiderei</option>
+                        <option value="juwelier">💎 Juwelier</option>
+                        <option value="buchhandlung">📚 Buchhandlung</option>
+                        <option value="skriptorium">✒️ Skriptorium</option>
+                        <option value="magisch">🔮 Magischer Laden</option>
+                        <option value="tempel">⛪ Tempelbedarf</option>
+                        <option value="stall">🐴 Stall</option>
+                        <option value="wagnerei">🛒 Wagnerei</option>
+                        <option value="werft">⚓ Schiffswerft</option>
+                        <option value="kuriositaeten">🎭 Kuriositätenkabinett</option>
+                        <option value="schwarzmarkt">🕶️ Schwarzmarkt</option>
+                        <option value="hehler">🗝️ Hehler</option>
+                        <option value="zelt">⛺ Zelt</option>
+                        <option value="bude">🏚️ Bude</option>
+                        <option value="stand">🏕️ Stand</option>
+                        <option value="laden">🏬 Laden</option>
+                        <option value="wanderer">🚶 Wanderer</option>
+                        <option value="unbekannt">❓ Unbekannt</option>
+                    </select>
+                    <select id="shop-location-filter" onchange="renderShops()">
+                        <option value="">Alle Orte</option>
+                    </select>
+                    <button class="btn btn-sm" data-action="call" data-value="expandAllShops" title="Alle ausklappen">📂</button>
+                    <button class="btn btn-sm" data-action="call" data-value="collapseAllShops" title="Alle einklappen">📁</button>
+                </div>
+                
+                <!-- Gruppe 4: Aktionen -->
+                <div class="section-toolbar-actions">
+                    <button class="btn btn-success" data-action="call" data-value="showShopModal">+ Neuer Shop</button>
+                    <button class="btn cart-btn" data-action="call" data-value="showCartModal" title="Warenkorb">
+                        🛒 Warenkorb
+                        <span class="cart-badge" id="cart-badge" style="display: none;">0</span>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Shop-Liste -->
+            <div class="shops-grid" id="shop-list"></div>
+        </section>
+        
+        <!-- SPELLS VIEW -->
+        <section id="view-spells" class="view">
+            <div class="section-toolbar">
+                <!-- Gruppe 1: Identität -->
+                <div class="section-toolbar-identity">
+                    <span class="section-toolbar-title">✨ Zauber</span>
+                    <span class="section-toolbar-count" id="spells-io-count">0</span>
+                </div>
+                
+                <!-- Gruppe 2: Suche -->
+                <div class="section-toolbar-search">
+                    <div class="search-wrapper">
+                        <input type="text" id="spell-search" class="toolbar-search" placeholder="🔍 Zauber suchen..." oninput="debouncedRenderSpells(); updateSearchClear(this);">
+                        <button class="search-clear-btn" data-action="clear-search" data-value="spell-search" title="Suche leeren">✕</button>
+                    </div>
+                </div>
+                
+                <!-- Gruppe 3: Filter + IO -->
+                <div class="section-toolbar-filters">
+                    <button class="btn btn-sm" data-action="call" data-value="expandAllSpells" title="Alle ausklappen">📂 Alle</button>
+                    <button class="btn btn-sm" data-action="call" data-value="collapseAllSpells" title="Alle einklappen">📁 Alle</button>
+                    <div class="section-toolbar-io">
+                        <div class="export-dropdown">
+                            <button class="io-btn export" title="Zauber exportieren">📤 ▾</button>
+                            <div class="export-dropdown-content">
+                                <button class="export-dropdown-item" data-action="export-json" data-value="spells">📄 JSON</button>
+                                <button class="export-dropdown-item" data-action="export-csv" data-value="spells">📊 CSV</button>
+                            </div>
+                        </div>
+                        <button class="io-btn import" data-action="trigger-click" data-value="import-spells" title="Zauber importieren">📥</button>
+                        <input type="file" id="import-spells" class="io-file-input" accept=".json,.csv" data-on-change="import-data" data-type="spells">
+                    </div>
+                    <button class="btn" data-action="call" data-value="loadSRDSpells" title="SRD-Zauber laden">📚 SRD</button>
+                    <select id="spell-class-filter" onchange="renderSpells()">
+                        <option value="">Alle Klassen</option>
+                        <option value="Barbar">Barbar</option>
+                        <option value="Barde">Barde</option>
+                        <option value="Druide">Druide</option>
+                        <option value="Hexenmeister">Hexenmeister</option>
+                        <option value="Kämpfer">Kämpfer</option>
+                        <option value="Kleriker">Kleriker</option>
+                        <option value="Magier">Magier</option>
+                        <option value="Mönch">Mönch</option>
+                        <option value="Paladin">Paladin</option>
+                        <option value="Schurke">Schurke</option>
+                        <option value="Waldläufer">Waldläufer</option>
+                        <option value="Zauberer">Zauberer</option>
+                        <option value="Artifizient">Artifizient</option>
+                    </select>
+                </div>
+                
+                <!-- Gruppe 4: Primäre Aktion -->
+                <div class="section-toolbar-actions">
+                    <button class="btn btn-success" data-action="show-modal" data-value="spell-modal">+ Zauber</button>
+                </div>
+            </div>
+            <div class="spell-filter-bar">
+                <div class="spell-filter-group">
+                    <span class="spell-filter-label">Typ:</span>
+                    <div class="filter-bar" id="spell-filters"></div>
+                </div>
+                <div class="spell-filter-group">
+                    <span class="spell-filter-label">Stufe:</span>
+                    <div class="filter-bar" id="spell-level-filters"></div>
+                </div>
+                <div class="spell-filter-group">
+                    <span class="spell-filter-label">Schule:</span>
+                    <div class="filter-bar" id="spell-school-filters"></div>
+                </div>
+                <div id="spell-count" style="font-size: 0.85em; color: var(--text-dim); white-space: nowrap; margin-left: auto;"></div>
+            </div>
+            <div class="spell-list" id="spell-list"></div>
+        </section>
+        
+        <!-- NOTES VIEW -->
+        <section id="view-notes" class="view">
+            <div class="section-toolbar">
+                <!-- Gruppe 1: Identität -->
+                <div class="section-toolbar-identity">
+                    <span class="section-toolbar-title">📝 Session-Notizen</span>
+                    <span class="section-toolbar-count" id="notes-io-count">0</span>
+                </div>
+                
+                <!-- Gruppe 2: Suche -->
+                <div class="section-toolbar-search">
+                    <div class="search-wrapper">
+                        <input type="text" id="notes-search" class="toolbar-search" placeholder="🔍 Notizen durchsuchen..." oninput="renderSessions(); updateSearchClear(this);">
+                        <button class="search-clear-btn" data-action="clear-search" data-value="notes-search" title="Suche leeren">✕</button>
+                    </div>
+                </div>
+                
+                <!-- Gruppe 3: IO -->
+                <div class="section-toolbar-filters">
+                    <div class="section-toolbar-io">
+                        <button class="io-btn export" data-action="export-data" data-value="sessionNotes" title="Notizen exportieren">📤</button>
+                    </div>
+                </div>
+            </div>
+            <div class="card" style="margin-bottom: 12px;">
+                <div class="collapsible-header" data-action="toggle-collapse" data-value="session-form">
+                    <span class="card-title" id="session-form-title">+ Neue Session-Notiz</span>
+                    <span id="session-form-icon">▼</span>
+                </div>
+                <div id="session-form" class="collapsible-content">
+                    <input type="hidden" id="edit-session-id">
+                    <div class="note-templates">
+                        <span style="font-size: 0.8em; color: var(--text-dim); margin-right: 8px;">Vorlagen:</span>
+                        <button class="note-template-btn" data-action="apply-note-template" data-value="kampf">⚔️ Kampf</button>
+                        <button class="note-template-btn" data-action="apply-note-template" data-value="sozial">💬 Sozial</button>
+                        <button class="note-template-btn" data-action="apply-note-template" data-value="exploration">🗺️ Exploration</button>
+                        <button class="note-template-btn" data-action="apply-note-template" data-value="rast">🏕️ Rast</button>
+                        <button class="note-template-btn" data-action="apply-note-template" data-value="einkauf">🛒 Einkauf</button>
+                    </div>
+                    
+                    <!-- Zeile 1: Nummer, Name, Datum -->
+                    <div style="display: grid; grid-template-columns: 80px 1fr 140px; gap: 12px; margin-bottom: 12px;">
+                        <div class="form-group" style="margin: 0;">
+                            <label>Session #</label>
+                            <input type="number" id="session-number" min="1" placeholder="Auto">
+                        </div>
+                        <div class="form-group" style="margin: 0;">
+                            <label>Titel</label>
+                            <input type="text" id="session-name" placeholder="z.B. Die Höhle des Drachen">
+                        </div>
+                        <div class="form-group" style="margin: 0;">
+                            <label>Datum</label>
+                            <input type="date" id="session-date">
+                        </div>
+                    </div>
+                    
+                    <!-- Zeile 2: Story-Arc und Tags -->
+                    <div style="display: grid; grid-template-columns: 200px 1fr; gap: 12px; margin-bottom: 12px;">
+                        <div class="form-group" style="margin: 0;">
+                            <label>Story-Arc</label>
+                            <div style="display: flex; gap: 4px;">
+                                <select id="session-arc" style="flex: 1;">
+                                    <option value="">— Kein Arc —</option>
+                                </select>
+                                <button class="btn btn-sm" data-action="call" data-value="manageStoryArcs" title="Arcs verwalten">⚙️</button>
+                            </div>
+                        </div>
+                        <div class="form-group" style="margin: 0;">
+                            <label>Tags</label>
+                            <div class="session-tags-input-wrapper">
+                                <div class="session-tags-container" id="session-tags-container"></div>
+                                <input type="text" id="session-tags-input" placeholder="Tag eingeben + Enter" data-action-keydown="add-session-tag">
+                            </div>
+                            <div class="session-tag-suggestions" id="session-tag-suggestions">
+                                <button type="button" class="tag-suggestion" data-action="add-preset-tag" data-value="wichtig">⭐ wichtig</button>
+                                <button type="button" class="tag-suggestion" data-action="add-preset-tag" data-value="kampf">⚔️ kampf</button>
+                                <button type="button" class="tag-suggestion" data-action="add-preset-tag" data-value="lore">📜 lore</button>
+                                <button type="button" class="tag-suggestion" data-action="add-preset-tag" data-value="npc">🧑 npc</button>
+                                <button type="button" class="tag-suggestion" data-action="add-preset-tag" data-value="quest">📋 quest</button>
+                                <button type="button" class="tag-suggestion" data-action="add-preset-tag" data-value="beute">💰 beute</button>
+                                <button type="button" class="tag-suggestion" data-action="add-preset-tag" data-value="rätsel">🧩 rätsel</button>
+                                <button type="button" class="tag-suggestion" data-action="add-preset-tag" data-value="plot-twist">🔄 plot-twist</button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Zeile 3: Zusammenfassung -->
+                    <div class="form-group" style="margin-bottom: 12px;">
+                        <label>Zusammenfassung <span style="color: var(--text-dim); font-weight: normal;">(1-2 Sätze für Übersicht)</span></label>
+                        <input type="text" id="session-summary" placeholder="Was ist das Wichtigste, das in dieser Session passiert ist?" maxlength="200">
+                    </div>
+                    
+                    <!-- Zeile 4: Notizen -->
+                    <div class="form-group">
+                        <label>Ausführliche Notizen</label>
+                        <div class="editor-toolbar editor-toolbar-full">
+                            <div class="toolbar-row">
+                                <button class="editor-btn" data-action="format-text" data-cmd="session-text" data-editor="bold" title="Fett"><b>B</b></button>
+                                <button class="editor-btn" data-action="format-text" data-cmd="session-text" data-editor="italic" title="Kursiv"><i>I</i></button>
+                                <button class="editor-btn" data-action="format-text" data-cmd="session-text" data-editor="underline" title="Unterstrichen"><u>U</u></button>
+                                <button class="editor-btn" data-action="format-text" data-cmd="session-text" data-editor="strikethrough" title="Durchgestrichen"><s>S</s></button>
+                                <span class="toolbar-separator"></span>
+                                <button class="editor-btn" data-action="insert-link" data-editor="session-text" title="Link einfügen">🔗</button>
+                                <button class="editor-btn" data-action="format-text" data-cmd="session-text" data-editor="list" title="Liste">☰</button>
+                                <button class="editor-btn" data-action="insert-table" data-editor="session-text" title="Tabelle">📊</button>
+                            </div>
+                            <div class="toolbar-row">
+                                <select class="editor-select" data-action="set-editor-font" data-editor="session-text" title="Schriftart"><option value="arial">Arial</option><option value="serif">Serif</option><option value="mono">Mono</option><option value="roboto">Roboto</option><option value="inter">Inter</option><option value="poppins">Poppins</option><option value="source-sans">Source Sans</option></select>
+                                <select class="editor-select" data-action="set-editor-font-size" data-editor="session-text" title="Größe"><option value="11px">11px</option><option value="13px">13px</option><option value="16px" selected>16px</option><option value="18px">18px</option><option value="20px">20px</option></select>
+                            </div>
+                            <div class="toolbar-row">
+                                <select class="editor-select" data-action="set-highlight-color" data-editor="session-text" title="Hervorheben">
+                                    <option value="">🖍️ Marker</option>
+                                    <option value="#fbbf24">🟡 Gold</option>
+                                    <option value="#22d3ee">🔵 Cyan</option>
+                                    <option value="#ef4444">🔴 Rot</option>
+                                    <option value="#22c55e">🟢 Grün</option>
+                                    <option value="#a855f7">🟣 Lila</option>
+                                    <option value="#f97316">🟠 Orange</option>
+                                    <option value="#ec4899">🌸 Pink</option>
+                                    <option value="#06b6d4">🩵 Türkis</option>
+                                    <option value="transparent">⭕ Keine</option>
+                                </select>
+                                <select class="editor-select" data-action="set-read-aloud-style" data-editor="session-text" title="Vorlese-Text">
+                                    <option value="">📖 Vorlese</option>
+                                    <option value="parchment">📜 Pergament</option>
+                                    <option value="crimson">🍷 Karmesin</option>
+                                    <option value="violet">🔮 Violett</option>
+                                    <option value="sage">🌿 Salbei</option>
+                                    <option value="sky">☁️ Himmel</option>
+                                    <option value="slate">🪨 Schiefer</option>
+                                </select>
+                                <span class="toolbar-separator"></span>
+                                <button class="editor-btn" data-action="set-border-format" data-editor="session-text" title="Rahmen">◻</button>
+                                <button class="editor-btn" data-action="clear-formatting" data-value="session-text" title="Formatierung entfernen">🧹</button>
+                            </div>
+                        </div>
+                        <div id="session-text" class="rich-editor" contenteditable="true" style="min-height: 120px;"></div>
+                    </div>
+                    <div class="btn-group">
+                        <button class="btn btn-success" data-action="call" data-value="saveSession">Speichern</button>
+                        <button class="btn" data-action="call" data-value="cancelSessionEdit">Abbrechen</button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Filter-Bar -->
+            <div class="session-filters" id="session-filters">
+                <div class="session-filter-group">
+                    <label>Arc:</label>
+                    <select id="filter-session-arc" onchange="renderSessions()">
+                        <option value="">Alle</option>
+                    </select>
+                </div>
+                <div class="session-filter-group">
+                    <label>Tags:</label>
+                    <div class="session-filter-tags" id="filter-session-tags"></div>
+                </div>
+            </div>
+            
+            <div id="session-list"></div>
+        </section>
+        
+        <!-- WIKI VIEW - Explorer Style -->
+        <section id="view-wiki" class="view">
+            <div class="section-toolbar">
+                <!-- Gruppe 1: Identität -->
+                <div class="section-toolbar-identity">
+                    <span class="section-toolbar-title">📚 Wiki</span>
+                    <span class="section-toolbar-count" id="wiki-io-count">0</span>
+                </div>
+                
+                <!-- Gruppe 2: Suche -->
+                <div class="section-toolbar-search">
+                    <div class="search-wrapper" style="position: relative;">
+                        <input type="text" id="wiki-search" class="toolbar-search" placeholder="🔍 Wiki durchsuchen..." oninput="renderWikiSearchDropdown(this.value); renderWikiTree(); updateSearchClear(this);" onkeydown="handleWikiSearchKeydown(event)">
+                        <button class="search-clear-btn" data-action="clear-search" data-value="wiki-search" title="Suche leeren">✕</button>
+                        <div id="wiki-search-dropdown" class="wiki-search-dropdown" style="display: none;"></div>
+                    </div>
+                </div>
+                
+                <!-- Gruppe 3: Filter + IO -->
+                <div class="section-toolbar-filters">
+                    <button class="btn btn-sm" data-action="call" data-value="collapseAllWikiCategories" title="Alle einklappen">📁</button>
+                    <button class="btn btn-sm" data-action="call" data-value="expandAllWikiCategories" title="Alle ausklappen">📂</button>
+                    <div class="section-toolbar-io">
+                        <button class="io-btn export" data-action="export-data" data-value="wiki" title="Wiki exportieren">📤</button>
+                        <button class="io-btn import" data-action="trigger-click" data-value="import-wiki" title="Wiki importieren">📥</button>
+                        <input type="file" id="import-wiki" class="io-file-input" accept=".json" data-on-change="import-data" data-type="wiki">
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Quick Access Bar -->
+            <div class="wiki-quick-access" id="wiki-quick-access">
+                <span style="color: var(--text-dim); font-size: 11px;">Besuche Einträge um Quick Access zu füllen</span>
+            </div>
+
+            <!-- Explorer Layout -->
+            <div class="wiki-explorer">
+                <!-- Sidebar Tree -->
+                <div class="wiki-sidebar">
+                    <div class="wiki-sidebar-header">
+                        <span>📁 Kategorien</span>
+                        <button class="btn btn-sm btn-success" data-action="call" data-value="showWikiForm" title="Neuer Eintrag">+</button>
+                    </div>
+                    <div class="wiki-tree" id="wiki-tree"></div>
+                </div>
+                
+                <!-- Detail Panel -->
+                <div class="wiki-detail" id="wiki-detail">
+                    <div class="wiki-detail-empty">
+                        <div class="empty-state-icon">📖</div>
+                        <div class="empty-state-title">Eintrag auswählen</div>
+                        <div class="empty-state-desc">Wähle links einen Eintrag aus der Baumansicht.</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Einklappbares Formular (als Modal-Overlay) -->
+            <div class="wiki-form-overlay" id="wiki-form-overlay" style="display: none;">
+                <div class="wiki-form-modal">
+                    <div class="wiki-form-header">
+                        <span id="wiki-form-title">+ Neuer Eintrag</span>
+                        <button class="btn btn-sm" data-action="call" data-value="hideWikiForm">✕</button>
+                    </div>
+                    <input type="hidden" id="edit-wiki-id">
+
+                    <!-- Template Selector -->
+                    <div id="wiki-template-selector" class="wiki-template-selector" style="display: none;">
+                        <label style="font-size: 11px; color: var(--text-dim); margin-bottom: 8px; display: block;">📋 Template wählen (optional)</label>
+                    </div>
+
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Titel *</label>
+                            <input type="text" id="wiki-title" placeholder="Name des Eintrags">
+                        </div>
+                        <div class="form-group">
+                            <label>Kategorie</label>
+                            <select id="wiki-category">
+                                <option value="campaign">🎭 Kampagne</option>
+                                <option value="quest">📋 Quest</option>
+                                <option value="character">🧙 Charakter</option>
+                                <option value="locations">🏰 Orte</option>
+                                <option value="factions">👥 Fraktionen</option>
+                                <option value="history">📜 Geschichte</option>
+                                <option value="conflicts">⚔️ Konflikte</option>
+                                <option value="world">🌍 Weltkunde</option>
+                                <option value="magic">🔮 Magie</option>
+                                <option value="rules">📖 Hausregeln</option>
+                                <option value="notes">🗒️ Notiz</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Übergeordneter Eintrag <span style="color: var(--text-dim); font-size: 11px;">(optional)</span></label>
+                        <select id="wiki-parent">
+                            <option value="">— Kein übergeordneter Eintrag —</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Tags <span style="color: var(--text-dim); font-size: 11px;">(kommagetrennt)</span></label>
+                        <input type="text" id="wiki-tags" placeholder="z.B. Stadt, Handel, Königreich">
+                    </div>
+                    <div class="form-group">
+                        <label>Inhalt <span style="color: var(--text-dim); font-size: 11px;">— Verwende [[Name]] für Wiki-Links</span></label>
+                        <div class="editor-toolbar editor-toolbar-full">
+                            <div class="toolbar-row">
+                                <button class="editor-btn" data-action="format-text" data-cmd="wiki-content" data-editor="bold" title="Fett"><b>B</b></button>
+                                <button class="editor-btn" data-action="format-text" data-cmd="wiki-content" data-editor="italic" title="Kursiv"><i>I</i></button>
+                                <button class="editor-btn" data-action="format-text" data-cmd="wiki-content" data-editor="underline" title="Unterstrichen"><u>U</u></button>
+                                <button class="editor-btn" data-action="format-text" data-cmd="wiki-content" data-editor="strikethrough" title="Durchgestrichen"><s>S</s></button>
+                                <span class="toolbar-separator"></span>
+                                <button class="editor-btn" data-action="insert-link" data-editor="wiki-content" title="Link einfügen">🔗</button>
+                                <button class="editor-btn" data-action="format-text" data-cmd="wiki-content" data-editor="list" title="Liste">☰</button>
+                                <button class="editor-btn" data-action="insert-table" data-editor="wiki-content" title="Tabelle">📊</button>
+                                <button class="editor-btn" data-action="call" data-value="insertWikiLink" title="Wiki-Link">[[]]</button>
+                            </div>
+                            <div class="toolbar-row">
+                                <select class="editor-select" data-action="set-editor-font" data-editor="wiki-content" title="Schriftart"><option value="arial">Arial</option><option value="serif">Serif</option><option value="mono">Mono</option><option value="roboto">Roboto</option><option value="inter">Inter</option><option value="poppins">Poppins</option><option value="source-sans">Source Sans</option></select>
+                                <select class="editor-select" data-action="set-editor-font-size" data-editor="wiki-content" title="Größe"><option value="11px">11px</option><option value="13px">13px</option><option value="16px" selected>16px</option><option value="18px">18px</option><option value="20px">20px</option></select>
+                            </div>
+                            <div class="toolbar-row">
+                                <select class="editor-select" data-action="set-highlight-color" data-editor="wiki-content" title="Hervorheben">
+                                    <option value="">🖍️ Marker</option>
+                                    <option value="#fbbf24">🟡 Gold</option>
+                                    <option value="#22d3ee">🔵 Cyan</option>
+                                    <option value="#ef4444">🔴 Rot</option>
+                                    <option value="#22c55e">🟢 Grün</option>
+                                    <option value="#a855f7">🟣 Lila</option>
+                                    <option value="#f97316">🟠 Orange</option>
+                                    <option value="#ec4899">🌸 Pink</option>
+                                    <option value="#06b6d4">🩵 Türkis</option>
+                                    <option value="transparent">⭕ Keine</option>
+                                </select>
+                                <select class="editor-select" data-action="set-read-aloud-style" data-editor="wiki-content" title="Vorlese-Text">
+                                    <option value="">📖 Vorlese</option>
+                                    <option value="parchment">📜 Pergament</option>
+                                    <option value="crimson">🍷 Karmesin</option>
+                                    <option value="violet">🔮 Violett</option>
+                                    <option value="sage">🌿 Salbei</option>
+                                    <option value="sky">☁️ Himmel</option>
+                                    <option value="slate">🪨 Schiefer</option>
+                                </select>
+                                <span class="toolbar-separator"></span>
+                                <button class="editor-btn" data-action="set-border-format" data-editor="wiki-content" title="Rahmen">◻</button>
+                                <button class="editor-btn" data-action="clear-formatting" data-value="wiki-content" title="Formatierung entfernen">🧹</button>
+                            </div>
+                        </div>
+                        <div id="wiki-content" class="rich-editor" contenteditable="true" style="min-height: 150px;" oninput="handleWikiContentInput(event)"></div>
+                    </div>
+                    <div class="btn-group" style="display: flex; align-items: center; gap: 12px;">
+                        <button class="btn btn-success" data-action="call" data-value="saveWikiEntry">Speichern</button>
+                        <button class="btn" data-action="call" data-value="hideWikiForm">Abbrechen</button>
+                        <label class="checkbox-label" style="display: flex; align-items: center; gap: 6px; cursor: pointer; margin-left: 8px;">
+                            <input type="checkbox" id="wiki-pinned">
+                            <span>📌 Pinnen</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Link Auto-Suggest Container -->
+            <div id="wiki-link-suggester" class="wiki-link-suggester" style="display: none;"></div>
+        </section>
+
+        <!-- LINKS VIEW -->

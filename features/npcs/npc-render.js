@@ -639,19 +639,8 @@ function cycleRelationStatus(npcId, index) {
 // ============================================================
 window.selectedNpcId = selectedNpcId;
 window.renderNPCList = renderNPCList;
-window.renderNPCItem = renderNPCItem;
 window.selectNPC = selectNPC;
-window.showNPCDetail = showNPCDetail;
-window.clearNPCDetail = clearNPCDetail;
 window.setNpcFilter = setNpcFilter;
-window.toggleNPC = toggleNPC;
-window.renderNPCTags = renderNPCTags;
-window.updateNPCStats = updateNPCStats;
-window.toggleNPCCard = toggleNPCCard;
-window.expandAllNPCCards = expandAllNPCCards;
-window.collapseAllNPCCards = collapseAllNPCCards;
-window.expandAllNPCDialogs = expandAllNPCDialogs;
-window.collapseAllNPCDialogs = collapseAllNPCDialogs;
 window.showRelationsModal = showRelationsModal;
 window.setRelationStatus = setRelationStatus;
 window.addRelation = addRelation;

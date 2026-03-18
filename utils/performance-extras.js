@@ -11,7 +11,6 @@ var renderQuests = window.renderQuests;
 var fuzzySearchFields = window.fuzzySearchFields;
 var highlightMatch = window.highlightMatch;
 var getTypeIcon = window.getTypeIcon;
-var timers = window.timers;
 var formatTime = window.formatTime;
 // Debounced Render für häufige Updates (zusätzlich zu den bei SPELLS definierten)
 var debouncedRenderParty = debounce(() => renderParty(), 100);
@@ -407,12 +406,9 @@ function renderDashboard() {
 // ============================================================
 // BACKWARD COMPATIBILITY EXPORTS
 // ============================================================
-window.debouncedRenderParty = debouncedRenderParty;
-window.debouncedRenderQuests = debouncedRenderQuests;
 window.lazyLoadObserver = lazyLoadObserver;
 window.toggleMobileNav = toggleMobileNav;
 window.showMobileQuickNotes = showMobileQuickNotes;
-window.saveMobileQuickNotes = saveMobileQuickNotes;
 window.showMobileSearch = showMobileSearch;
 window.performMobileSearch = performMobileSearch;
 window.handleDragStart = handleDragStart;

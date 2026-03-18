@@ -443,8 +443,4 @@ const batchUpdater = new BatchUpdater();
 // ============================================================
 
 if (typeof window !== 'undefined') {
-    window.SafeRender = SafeRender;
-    window.renderNPCListFast = renderNPCListFast;
-    window.renderEncounterListFast = renderEncounterListFast;
-    window.batchUpdater = batchUpdater;
 }

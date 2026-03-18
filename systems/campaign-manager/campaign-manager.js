@@ -6,9 +6,6 @@
 // CAMPAIGN MANAGER
 // ============================================================
 // Alias für Rückwärtskompatibilität
-var APP_CONFIG = window.APP_CONFIG;
-var StorageAPI = window.StorageAPI;
-var log = window.log;
 var initIndexedDB = window.initIndexedDB;
 const CAMPAIGN_INDEX_KEY = APP_CONFIG.CAMPAIGN_INDEX_KEY;
 function getCampaignIndex() {

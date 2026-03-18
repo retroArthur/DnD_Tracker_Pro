@@ -385,8 +385,6 @@ function getPerformanceReport() {
     console.log('Langsamste Renders:', report.slowestRenders);
     return report;
 }
-// Expose für Console-Debugging
-window.getPerformanceReport = getPerformanceReport;
 // Export für Auto-Backup vor destruktiven Operationen
 window.createAutoBackup = createAutoBackup;
 // ============================================================

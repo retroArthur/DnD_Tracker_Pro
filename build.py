@@ -4,28 +4,22 @@ D&D Tracker Build Script
 ========================
 
 Combines all modular JavaScript files into a single standalone HTML file.
+Supports both development and production builds.
 
 Features:
 - Three-pass deduplication system to resolve variable conflicts
-- Optional CSS/JS minification for production builds
-- Preserves module comments and structure for debugging
-- Generates 2.16 MB standalone file from 93 modules
+- Optional CSS/JS/HTML minification
+- Production mode: debug flags off, full minification
+- Preserves module comments and structure for debugging (dev mode)
 
 Usage:
-    python build.py              # Development build (unminified)
-    python build.py --minify     # Production build (minified)
+    python build.py                # Development build (unminified)
+    python build.py --minify       # Development build (minified)
+    python build.py --production   # Production build (minified, debug off)
 
 Output:
-    dist/dnd-tracker-bundled.html - Standalone HTML file
-
-Performance:
-    - Build time: ~250ms for 1.29 MB JavaScript
-    - Deduplication: Removes 523 conflicts + 1 duplicate function
-    - Output size: 2.16 MB (CSS: 551 KB, HTML: 330 KB, JS: 1.28 MB)
-
-See Also:
-    docs/build-system.md - Comprehensive documentation
-    tests/build/test_build_deduplication.py - Test suite
+    dist/dnd-tracker-bundled.html   - Development build
+    dist/dnd-tracker-optimized.html - Production build
 """
 
 import os
@@ -40,7 +34,6 @@ from tools.logging_util import log
 # Verwende das Verzeichnis, in dem das Skript liegt
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 SOURCE_DIR = SCRIPT_DIR
-OUTPUT_FILE = os.path.join(SCRIPT_DIR, 'dist', 'dnd-tracker-bundled.html')
 
 def read_file(filepath):
     """Liest eine Datei"""
@@ -76,6 +69,16 @@ def minify_css(css_code):
     css_code = re.sub(r'\s*:\s*', ':', css_code)
     css_code = re.sub(r'\s*;\s*', ';', css_code)
     return css_code.strip()
+
+def minify_html(html_code):
+    """Minifiziert HTML-Code (entfernt Kommentare und Whitespace)"""
+    # Entferne Kommentare (aber nicht DOCTYPE)
+    html_code = re.sub(r'<!--(?!DOCTYPE)[\s\S]*?-->', '', html_code)
+    # Entferne mehrfache Leerzeichen
+    html_code = re.sub(r'\s+', ' ', html_code)
+    # Entferne Whitespace zwischen Tags
+    html_code = re.sub(r'>\s+<', '><', html_code)
+    return html_code.strip()
 
 def deduplicate_window_assignments(js_code):
     """
@@ -211,14 +214,22 @@ def remove_duplicate_functions(js_code):
 
     return '\n'.join(filtered_lines)
 
-def build(minify=False, verbose=False):
+def build(minify=False, production=False, verbose=False):
     """Erstellt die gebündelte HTML-Datei"""
+    if production:
+        minify = True  # Production impliziert Minifizierung
     if verbose:
         log.set_verbose(True)
-    log.header("D&D Tracker Build")
+
+    mode = "Production" if production else "Development"
+    output_file = os.path.join(SCRIPT_DIR, 'dist',
+        'dnd-tracker-optimized.html' if production else 'dnd-tracker-bundled.html')
+
+    log.header(f"D&D Tracker Build ({mode})")
     log.info("🔨 Starte Build-Prozess...")
     log.info(f"Quelle: {SOURCE_DIR}")
-    log.info(f"Ziel: {OUTPUT_FILE}")
+    log.info(f"Ziel: {output_file}")
+    log.info(f"Modus: {mode}")
     log.info(f"Minifizierung: {'Aktiviert' if minify else 'Deaktiviert'}")
     
     # Module in Ladereihenfolge (aus loader.js)
@@ -305,17 +316,18 @@ def build(minify=False, verbose=False):
         'features/roadmap/roadmap-ui.js',
         # DM Screen Module
         'features/dmscreen/dmscreen-render.js',
-        # Dice-Module (ersetzt features/dice.js)
+        # Dice-Module
         'features/dice/dice-core.js',
         'features/dice/dice-favorites.js',
-        'features/dice/timers.js',
-        'features/dice/wiki-links.js',
-        'features/dice/monster-templates.js',
-        'features/dice/srd-spells.js',
-        'features/dice/spellslots-ui.js',
-        'features/dice/initiative-extras.js',
-        'features/dice/layout-profiles.js',
-        'features/dice/performance-extras.js',
+        # Ehemals in dice/ — verschoben in passende Ordner
+        'features/timers/timers.js',
+        'systems/wiki-links.js',
+        'features/encounters/monster-templates.js',
+        'core/srd-spells.js',
+        'systems/spellslots/spellslots-ui.js',
+        'features/initiative-extras.js',
+        'ui/layout-profiles.js',
+        'utils/performance-extras.js',
         'ui/dom-builder.js',
         'ui/safe-render.js',
         'ui/lazy-loading.js',
@@ -339,18 +351,43 @@ def build(minify=False, verbose=False):
         'core/init.js'
     ]
     
-    # 1. Lade CSS
+    # 1. Lade CSS (modulare Dateien aus assets/styles/)
     print("\n[BUILD] Lade CSS...")
-    css_content = read_file(f"{SOURCE_DIR}/assets/styles.css")
+    css_files = [
+        'variables.css', 'core.css', 'editors.css',
+        'npcs.css', 'encounters.css', 'initiative.css',
+        'loot.css', 'spells.css', 'party.css',
+        'dashboard.css', 'dmscreen.css', 'dice.css',
+        'tools.css', 'roadmap.css'
+    ]
+    css_parts = []
+    for css_file in css_files:
+        css_path = f"{SOURCE_DIR}/assets/styles/{css_file}"
+        if os.path.exists(css_path):
+            css_parts.append(read_file(css_path))
+            log.info(f"  {css_file}")
+        else:
+            log.warning(f"  {css_file} NICHT GEFUNDEN")
+    css_content = '\n'.join(css_parts)
     if minify:
         log.info("Minifiziere CSS...")
         css_content = minify_css(css_content)
-    log.success(f"CSS geladen: {len(css_content):,} Zeichen")
+    log.success(f"CSS geladen: {len(css_content):,} Zeichen ({len(css_files)} Dateien)")
     
-    # 2. Lade HTML Body
-    print("\n[BUILD] Lade HTML Body...")
-    body_content = read_file(f"{SOURCE_DIR}/assets/body.html")
-    log.success(f"HTML Body geladen: {len(body_content):,} Zeichen")
+    # 2. Lade HTML Body (aus Template-Dateien)
+    print("\n[BUILD] Lade HTML Templates...")
+    html_templates = [
+        'header.html', 'view-party.html', 'view-content.html',
+        'view-encounters.html', 'view-resources.html', 'view-tools.html',
+        'modals-entity.html', 'modals-shops.html', 'modals-tools.html',
+        'modals-editors.html'
+    ]
+    html_parts = []
+    for tf in html_templates:
+        tpl_path = f"{SOURCE_DIR}/assets/templates/{tf}"
+        html_parts.append(read_file(tpl_path))
+    body_content = '\n'.join(html_parts)
+    log.success(f"HTML Body geladen: {len(body_content):,} Zeichen ({len(html_templates)} Templates)")
     
     # 3. Lade und kombiniere JavaScript
     print("\n[BUILD] Lade JavaScript-Module...")
@@ -375,8 +412,15 @@ def build(minify=False, verbose=False):
     dedupe_saved = original_size - len(js_combined)
     log.success(f"Deduplizierung: {dedupe_saved:,} Zeichen gespart")
 
+    # Production: Setze Debug-Flags auf false
+    if production:
+        print("\n[PROD] Setze Debug-Flags fuer Production...")
+        js_combined = js_combined.replace("DEBUG_MODE: true,", "DEBUG_MODE: false,", 1)
+        js_combined = js_combined.replace("DEBUG_VALIDATE_ON_SAVE: true,", "DEBUG_VALIDATE_ON_SAVE: false,", 1)
+        log.info("DEBUG_MODE: false, DEBUG_VALIDATE_ON_SAVE: false")
+
     if minify:
-        print("\n⚙️ Minifiziere JavaScript...")
+        print("\n[MINIFY] Minifiziere JavaScript...")
         original_size = len(js_combined)
         js_combined = minify_js(js_combined)
         saved = original_size - len(js_combined)
@@ -427,13 +471,21 @@ if (document.readyState === 'loading') {{
 </body>
 </html>"""
     
+    # Production: Minifiziere das gesamte HTML
+    if production:
+        print("\n[MINIFY] Minifiziere HTML...")
+        original_html_size = len(html_template)
+        html_template = minify_html(html_template)
+        saved = original_html_size - len(html_template)
+        log.success(f"HTML minifiziert: {saved:,} Zeichen gespart ({saved/original_html_size*100:.1f}%)")
+
     # Schreibe finale Datei
-    write_file(OUTPUT_FILE, html_template)
-    
+    write_file(output_file, html_template)
+
     # Statistiken
     final_size = len(html_template)
-    print(f"\n[SUCCESS] Build abgeschlossen!")
-    log.info(f"Datei: {OUTPUT_FILE}")
+    print(f"\n[SUCCESS] Build abgeschlossen! ({mode})")
+    log.info(f"Datei: {output_file}")
     log.info(f"Größe: {final_size:,} Zeichen ({final_size/1024/1024:.2f} MB)")
     print(f"\n[INFO] Komponenten:")
     print(f"   CSS:        {len(css_content):>10,} Zeichen")
@@ -444,9 +496,10 @@ if (document.readyState === 'loading') {{
 
 if __name__ == '__main__':
     import argparse
-    
+
     parser = argparse.ArgumentParser(description='D&D Tracker Build Script')
     parser.add_argument('--minify', action='store_true', help='Minifiziere CSS und JS')
+    parser.add_argument('--production', action='store_true', help='Production-Build (minifiziert, Debug aus)')
     args = parser.parse_args()
-    
-    build(minify=args.minify)
+
+    build(minify=args.minify, production=args.production)

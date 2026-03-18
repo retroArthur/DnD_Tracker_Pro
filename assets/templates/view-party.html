@@ -1,0 +1,463 @@
+        <!-- DASHBOARD VIEW -->
+        <section id="view-dashboard" class="view active">
+            <div class="dash" id="dashboard-content">
+                <!-- Dynamisch generiert -->
+            </div>
+        </section>
+        
+        <!-- PARTY VIEW -->
+        <section id="view-party" class="view">
+            <div class="section-toolbar">
+                <!-- Gruppe 1: Identität -->
+                <div class="section-toolbar-identity">
+                    <span class="section-toolbar-title">👥 Party</span>
+                    <span class="section-toolbar-count" id="party-io-count">0</span>
+                </div>
+                
+                <!-- Gruppe 2: Suche -->
+                <div class="section-toolbar-search">
+                    <div class="search-wrapper">
+                        <input type="text" id="party-search" class="toolbar-search" placeholder="🔍 Charakter suchen..." oninput="renderParty(); updateSearchClear(this);">
+                        <button class="search-clear-btn" data-action="clear-search" data-value="party-search" title="Suche leeren">✕</button>
+                    </div>
+                </div>
+                
+                <!-- Gruppe 3: Filter + IO -->
+                <div class="section-toolbar-filters">
+                    <select id="party-class-filter" onchange="renderParty()">
+                        <option value="">⚔️ Alle Klassen</option>
+                    </select>
+                    <button class="btn btn-sm" data-action="show-rest-modal" title="Party rasten lassen">🛏️ Rasten</button>
+                    <div class="section-toolbar-io">
+                        <button class="io-btn export" data-action="export-data" data-value="characters" title="Party exportieren">📤</button>
+                        <button class="io-btn import" data-action="trigger-click" data-value="import-characters" title="Party importieren">📥</button>
+                        <input type="file" id="import-characters" class="io-file-input" accept=".json" data-on-change="import-data" data-type="characters">
+                    </div>
+                </div>
+            </div>
+            <div class="card">
+                <div class="collapsible-header" data-action="toggle-collapse" data-value="char-form">
+                    <span class="card-title">+ Charakter hinzufügen</span>
+                    <span id="char-form-icon">▼</span>
+                </div>
+<!-- CHARAKTER-FORMULAR V4 (MODERNES 3-SPALTEN-LAYOUT) -->
+<div id="char-form" class="collapsible-content">
+        <input type="hidden" id="edit-char-id">
+
+        <!-- HAUPTBEREICH: 3-Spalten-Layout -->
+        <div class="cf-main-grid">
+
+            <!-- LINKE SPALTE: Identität & Herkunft -->
+            <div class="cf-panel cf-panel-identity">
+                <div class="cf-panel-header">
+                    <span class="cf-panel-icon">👤</span>
+                    <span class="cf-panel-title">Identität</span>
+                    <label class="cf-insp-toggle" title="Inspiration">
+                        <input type="checkbox" id="char-inspiration">
+                        <span class="cf-insp-star">⭐</span>
+                    </label>
+                </div>
+
+                <!-- Avatar Preview + Name/Player -->
+                <div class="cf-identity-top">
+                    <div class="cf-avatar-preview" id="cf-avatar-preview">
+                        <span class="cf-avatar-placeholder">?</span>
+                    </div>
+                    <div class="cf-identity-names">
+                        <div class="cf-field">
+                            <label>Name *</label>
+                            <input type="text" id="char-name" placeholder="Charaktername">
+                        </div>
+                        <div class="cf-field">
+                            <label>Spieler</label>
+                            <input type="text" id="char-player" placeholder="Spielername">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Klasse & Level -->
+                <div class="cf-row-compact">
+                    <div class="cf-field cf-grow">
+                        <label>Klasse</label>
+                        <select id="char-class">
+                            <option value="">Wählen</option>
+                            <option value="Barbar">Barbar</option>
+                            <option value="Barde">Barde</option>
+                            <option value="Druide">Druide</option>
+                            <option value="Hexenmeister">Hexenmeister</option>
+                            <option value="Kämpfer">Kämpfer</option>
+                            <option value="Kleriker">Kleriker</option>
+                            <option value="Magier">Magier</option>
+                            <option value="Mönch">Mönch</option>
+                            <option value="Paladin">Paladin</option>
+                            <option value="Schurke">Schurke</option>
+                            <option value="Waldläufer">Waldläufer</option>
+                            <option value="Zauberer">Zauberer</option>
+                            <option value="Blutjäger">Blutjäger</option>
+                            <option value="Artificer">Artificer</option>
+                        </select>
+                    </div>
+                    <div class="cf-field cf-sm">
+                        <label>Lv</label>
+                        <input type="number" id="char-level" min="1" max="20" value="1" onchange="updateProficiencyBonus()">
+                    </div>
+                </div>
+
+                <div class="cf-field">
+                    <label>Unterklasse</label>
+                    <input type="text" id="char-subclass" placeholder="Champion, Evoker...">
+                </div>
+
+                <div class="cf-divider"></div>
+
+                <div class="cf-field">
+                    <label>Volk</label>
+                    <select id="char-race">
+                        <option value="">Wählen</option>
+                        <option value="Mensch">Mensch</option>
+                        <option value="Elf">Elf</option>
+                        <option value="Hochelf">Hochelf</option>
+                        <option value="Waldelf">Waldelf</option>
+                        <option value="Dunkelelfe">Dunkelelfe</option>
+                        <option value="Zwerg">Zwerg</option>
+                        <option value="Hügelzwerg">Hügelzwerg</option>
+                        <option value="Bergzwerg">Bergzwerg</option>
+                        <option value="Halbling">Halbling</option>
+                        <option value="Leichtfuß">Leichtfuß</option>
+                        <option value="Drachenblütiger">Drachenblütiger</option>
+                        <option value="Gnom">Gnom</option>
+                        <option value="Halbelf">Halbelf</option>
+                        <option value="Ork">Ork</option>
+                        <option value="Tiefling">Tiefling</option>
+                        <option value="Aasimar">Aasimar</option>
+                        <option value="Goliath">Goliath</option>
+                        <option value="Tabaxi">Tabaxi</option>
+                        <option value="Kenku">Kenku</option>
+                        <option value="Firbolg">Firbolg</option>
+                        <option value="Genasi">Genasi</option>
+                        <option value="Aarakocra">Aarakocra</option>
+                        <option value="Tortle">Tortle</option>
+                        <option value="Warforged">Warforged</option>
+                        <option value="Kalashtar">Kalashtar</option>
+                        <option value="Changeling">Changeling</option>
+                        <option value="Shifter">Shifter</option>
+                        <option value="Harengon">Harengon</option>
+                        <option value="Owlin">Owlin</option>
+                    </select>
+                </div>
+                <div class="cf-field">
+                    <label>Herkunft</label>
+                    <input type="text" id="char-background" placeholder="Soldat, Weiser...">
+                </div>
+                <div class="cf-field">
+                    <label>Gesinnung</label>
+                    <select id="char-alignment">
+                        <option value="">Wählen</option>
+                        <option value="LG">Rechtschaffen Gut</option>
+                        <option value="NG">Neutral Gut</option>
+                        <option value="CG">Chaotisch Gut</option>
+                        <option value="LN">Rechtschaffen Neutral</option>
+                        <option value="TN">Echt Neutral</option>
+                        <option value="CN">Chaotisch Neutral</option>
+                        <option value="LE">Rechtschaffen Böse</option>
+                        <option value="NE">Neutral Böse</option>
+                        <option value="CE">Chaotisch Böse</option>
+                    </select>
+                </div>
+                <div class="cf-row-compact">
+                    <div class="cf-field">
+                        <label>Größe</label>
+                        <input type="number" id="char-height" placeholder="cm">
+                    </div>
+                    <div class="cf-field">
+                        <label>Gewicht</label>
+                        <input type="number" id="char-weight" placeholder="kg">
+                    </div>
+                </div>
+
+                <div class="cf-divider"></div>
+
+                <div class="cf-field">
+                    <label>Avatar URL</label>
+                    <input type="text" id="char-avatar" placeholder="https://..." oninput="updateAvatarPreview(this.value)">
+                </div>
+            </div>
+
+            <!-- MITTLERE SPALTE: Kampfwerte & Attribute -->
+            <div class="cf-panel cf-panel-combat">
+                <div class="cf-panel-header">
+                    <span class="cf-panel-icon">⚔️</span>
+                    <span class="cf-panel-title">Kampfwerte</span>
+                </div>
+
+                <!-- HP Block -->
+                <div class="cf-hp-block">
+                    <div class="cf-hp-main">
+                        <div class="cf-hp-current">
+                            <span class="cf-hp-label">HP</span>
+                            <input type="number" id="char-hp-cur" placeholder="0">
+                        </div>
+                        <span class="cf-hp-divider">/</span>
+                        <div class="cf-hp-max">
+                            <input type="number" id="char-hp-max" placeholder="0">
+                            <span class="cf-hp-label">Max</span>
+                        </div>
+                    </div>
+                    <div class="cf-hp-temp">
+                        <span class="cf-hp-label">Temp</span>
+                        <input type="number" id="char-hp-temp" placeholder="0" title="Temp HP">
+                    </div>
+                </div>
+
+                <!-- Combat Stats Grid -->
+                <div class="cf-combat-grid">
+                    <div class="cf-combat-stat">
+                        <span class="cf-combat-value"><input type="number" id="char-ac" placeholder="10"></span>
+                        <span class="cf-combat-label">RK</span>
+                    </div>
+                    <div class="cf-combat-stat">
+                        <span class="cf-combat-value"><input type="number" id="char-init" placeholder="0"></span>
+                        <span class="cf-combat-label">Initiative</span>
+                    </div>
+                    <div class="cf-combat-stat">
+                        <span class="cf-combat-value">
+                            <select id="char-speed" onchange="updateSpeedDisplay()">
+                                <option value="3m|10ft." data-ft="10">3m</option>
+                                <option value="6m|20ft." data-ft="20">6m</option>
+                                <option value="8m|25ft." data-ft="25">8m</option>
+                                <option value="9m|30ft." data-ft="30" selected>9m</option>
+                                <option value="12m|40ft." data-ft="40">12m</option>
+                                <option value="15m|50ft." data-ft="50">15m</option>
+                                <option value="18m|60ft." data-ft="60">18m</option>
+                                <option value="27m|88ft." data-ft="88">27m</option>
+                            </select>
+                        </span>
+                        <span class="cf-combat-label">Speed <span class="cf-speed-ft" id="char-speed-ft">30ft</span></span>
+                    </div>
+                    <div class="cf-combat-stat">
+                        <span class="cf-combat-value"><input type="number" id="char-perception" placeholder="10"></span>
+                        <span class="cf-combat-label">Wahrnehmung</span>
+                    </div>
+                    <div class="cf-combat-stat">
+                        <span class="cf-combat-value"><input type="text" id="char-hitdice" placeholder="1d8"></span>
+                        <span class="cf-combat-label">Trefferwürfel</span>
+                    </div>
+                    <div class="cf-combat-stat cf-combat-readonly">
+                        <span class="cf-combat-value"><input type="text" id="char-proficiency" value="+3" readonly></span>
+                        <span class="cf-combat-label">Übungsbonus</span>
+                    </div>
+                </div>
+
+                <!-- Attribute -->
+                <div class="cf-section-header">
+                    <span>Attribute</span>
+                </div>
+                <div class="cf-attrs-grid">
+                    <div class="cf-attr-card">
+                        <span class="cf-attr-name">STR</span>
+                        <input type="number" id="char-str" min="1" max="30" value="10" oninput="updateAttrMod('str')">
+                        <span class="cf-attr-mod" id="char-str-mod">+0</span>
+                        <label class="cf-attr-save"><input type="checkbox" id="char-save-str"><span>Rettungswurf</span></label>
+                    </div>
+                    <div class="cf-attr-card">
+                        <span class="cf-attr-name">DEX</span>
+                        <input type="number" id="char-dex" min="1" max="30" value="10" oninput="updateAttrMod('dex'); updateInitFromDex()">
+                        <span class="cf-attr-mod" id="char-dex-mod">+0</span>
+                        <label class="cf-attr-save"><input type="checkbox" id="char-save-dex"><span>Rettungswurf</span></label>
+                    </div>
+                    <div class="cf-attr-card">
+                        <span class="cf-attr-name">CON</span>
+                        <input type="number" id="char-con" min="1" max="30" value="10" oninput="updateAttrMod('con')">
+                        <span class="cf-attr-mod" id="char-con-mod">+0</span>
+                        <label class="cf-attr-save"><input type="checkbox" id="char-save-con"><span>Rettungswurf</span></label>
+                    </div>
+                    <div class="cf-attr-card">
+                        <span class="cf-attr-name">INT</span>
+                        <input type="number" id="char-int" min="1" max="30" value="10" oninput="updateAttrMod('int')">
+                        <span class="cf-attr-mod" id="char-int-mod">+0</span>
+                        <label class="cf-attr-save"><input type="checkbox" id="char-save-int"><span>Rettungswurf</span></label>
+                    </div>
+                    <div class="cf-attr-card">
+                        <span class="cf-attr-name">WIS</span>
+                        <input type="number" id="char-wis" min="1" max="30" value="10" oninput="updateAttrMod('wis')">
+                        <span class="cf-attr-mod" id="char-wis-mod">+0</span>
+                        <label class="cf-attr-save"><input type="checkbox" id="char-save-wis"><span>Rettungswurf</span></label>
+                    </div>
+                    <div class="cf-attr-card">
+                        <span class="cf-attr-name">CHA</span>
+                        <input type="number" id="char-cha" min="1" max="30" value="10" oninput="updateAttrMod('cha')">
+                        <span class="cf-attr-mod" id="char-cha-mod">+0</span>
+                        <label class="cf-attr-save"><input type="checkbox" id="char-save-cha"><span>Rettungswurf</span></label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- RECHTE SPALTE: Ressourcen & Sprachen -->
+            <div class="cf-panel cf-panel-resources">
+                <div class="cf-panel-header">
+                    <span class="cf-panel-icon">💰</span>
+                    <span class="cf-panel-title">Ressourcen</span>
+                </div>
+
+                <!-- Geldbeutel -->
+                <div class="cf-money-block">
+                    <span class="cf-block-title">Geldbeutel</span>
+                    <div class="cf-coins-grid">
+                        <div class="cf-coin-item pm">
+                            <span class="cf-coin-label">PM</span>
+                            <input type="number" id="char-pm" value="0" min="0">
+                        </div>
+                        <div class="cf-coin-item gm">
+                            <span class="cf-coin-label">GM</span>
+                            <input type="number" id="char-gm" value="0" min="0">
+                        </div>
+                        <div class="cf-coin-item em">
+                            <span class="cf-coin-label">EM</span>
+                            <input type="number" id="char-em" value="0" min="0">
+                        </div>
+                        <div class="cf-coin-item sm">
+                            <span class="cf-coin-label">SM</span>
+                            <input type="number" id="char-sm" value="0" min="0">
+                        </div>
+                        <div class="cf-coin-item km">
+                            <span class="cf-coin-label">KM</span>
+                            <input type="number" id="char-km" value="0" min="0">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Zauberslots -->
+                <div class="cf-slots-block">
+                    <span class="cf-block-title">Zauberslots</span>
+                    <div class="cf-slots-grid">
+                        <div class="cf-slot-item"><span>0</span><input type="number" id="char-slot-0" min="0" max="20" value="0"></div>
+                        <div class="cf-slot-item"><span>1</span><input type="number" id="char-slot-1" min="0" max="9" value="0"></div>
+                        <div class="cf-slot-item"><span>2</span><input type="number" id="char-slot-2" min="0" max="9" value="0"></div>
+                        <div class="cf-slot-item"><span>3</span><input type="number" id="char-slot-3" min="0" max="9" value="0"></div>
+                        <div class="cf-slot-item"><span>4</span><input type="number" id="char-slot-4" min="0" max="9" value="0"></div>
+                        <div class="cf-slot-item"><span>5</span><input type="number" id="char-slot-5" min="0" max="9" value="0"></div>
+                        <div class="cf-slot-item"><span>6</span><input type="number" id="char-slot-6" min="0" max="9" value="0"></div>
+                        <div class="cf-slot-item"><span>7</span><input type="number" id="char-slot-7" min="0" max="9" value="0"></div>
+                        <div class="cf-slot-item"><span>8</span><input type="number" id="char-slot-8" min="0" max="9" value="0"></div>
+                        <div class="cf-slot-item"><span>9</span><input type="number" id="char-slot-9" min="0" max="9" value="0"></div>
+                    </div>
+                </div>
+
+                <!-- Sprachen -->
+                <div class="cf-languages-block" id="cf-languages-wrapper">
+                    <span class="cf-block-title">Sprachen</span>
+                    <div class="cf-lang-trigger" data-action="toggle-lang-dropdown">
+                        <span class="cf-lang-selected" id="cf-lang-display">Sprachen wählen...</span>
+                        <span class="cf-lang-arrow">▼</span>
+                    </div>
+                    <div class="cf-lang-dropdown" id="cf-lang-dropdown">
+                        <label class="cf-lang-item"><input type="checkbox" value="Gemein" onchange="updateCharLanguages()"><span>Gemein</span></label>
+                        <label class="cf-lang-item"><input type="checkbox" value="Zwergisch" onchange="updateCharLanguages()"><span>Zwergisch</span></label>
+                        <label class="cf-lang-item"><input type="checkbox" value="Elfisch" onchange="updateCharLanguages()"><span>Elfisch</span></label>
+                        <label class="cf-lang-item"><input type="checkbox" value="Riese" onchange="updateCharLanguages()"><span>Riese</span></label>
+                        <label class="cf-lang-item"><input type="checkbox" value="Gnomisch" onchange="updateCharLanguages()"><span>Gnomisch</span></label>
+                        <label class="cf-lang-item"><input type="checkbox" value="Goblin" onchange="updateCharLanguages()"><span>Goblin</span></label>
+                        <label class="cf-lang-item"><input type="checkbox" value="Halbling" onchange="updateCharLanguages()"><span>Halbling</span></label>
+                        <label class="cf-lang-item"><input type="checkbox" value="Orkisch" onchange="updateCharLanguages()"><span>Orkisch</span></label>
+                        <label class="cf-lang-item"><input type="checkbox" value="Druidisch" onchange="updateCharLanguages()"><span>Druidisch</span></label>
+                        <label class="cf-lang-item"><input type="checkbox" value="Diebessprache" onchange="updateCharLanguages()"><span>Diebessprache</span></label>
+                        <label class="cf-lang-item"><input type="checkbox" value="Drakonisch" onchange="updateCharLanguages()"><span>Drakonisch</span></label>
+                        <label class="cf-lang-item"><input type="checkbox" value="Tiefensprache" onchange="updateCharLanguages()"><span>Tiefensprache</span></label>
+                        <label class="cf-lang-item"><input type="checkbox" value="Infernal" onchange="updateCharLanguages()"><span>Infernal</span></label>
+                        <label class="cf-lang-item"><input type="checkbox" value="Sylvan" onchange="updateCharLanguages()"><span>Sylvan</span></label>
+                        <label class="cf-lang-item"><input type="checkbox" value="Unterreich" onchange="updateCharLanguages()"><span>Unterreich</span></label>
+                        <label class="cf-lang-item"><input type="checkbox" value="Abyssisch" onchange="updateCharLanguages()"><span>Abyssisch</span></label>
+                        <label class="cf-lang-item"><input type="checkbox" value="Celestisch" onchange="updateCharLanguages()"><span>Celestisch</span></label>
+                        <label class="cf-lang-item"><input type="checkbox" value="Gebärden" onchange="updateCharLanguages()"><span>Gebärden</span></label>
+                        <label class="cf-lang-item"><input type="checkbox" value="Primordial" onchange="updateCharLanguages()"><span>Primordial</span></label>
+                    </div>
+                    <select id="char-languages" multiple style="display:none;"></select>
+                </div>
+            </div>
+        </div>
+
+        <!-- UNTERER BEREICH -->
+        <div class="cf-bottom-section">
+            <!-- Resistenzen & Immunitäten (2-Spalten) -->
+            <div class="cf-defenses-row">
+                <div class="cf-defense-panel">
+                    <span class="cf-defense-title">🛡️ Resistenzen</span>
+                    <div class="cf-chips" id="char-resistances">
+                        <label class="cf-chip"><input type="checkbox" value="Feuer"><span>🔥 Feuer</span></label>
+                        <label class="cf-chip"><input type="checkbox" value="Kälte"><span>❄️ Kälte</span></label>
+                        <label class="cf-chip"><input type="checkbox" value="Blitz"><span>⚡ Blitz</span></label>
+                        <label class="cf-chip"><input type="checkbox" value="Säure"><span>🧪 Säure</span></label>
+                        <label class="cf-chip"><input type="checkbox" value="Gift"><span>☠️ Gift</span></label>
+                        <label class="cf-chip"><input type="checkbox" value="Nekrotisch"><span>💀 Nekr.</span></label>
+                        <label class="cf-chip"><input type="checkbox" value="Strahlend"><span>✨ Strahl.</span></label>
+                        <label class="cf-chip"><input type="checkbox" value="Psychisch"><span>🧠 Psych.</span></label>
+                        <label class="cf-chip"><input type="checkbox" value="Kraft"><span>💥 Kraft</span></label>
+                        <label class="cf-chip"><input type="checkbox" value="Donner"><span>🔊 Donner</span></label>
+                        <label class="cf-chip"><input type="checkbox" value="Wucht"><span>🔨 Wucht</span></label>
+                        <label class="cf-chip"><input type="checkbox" value="Stich"><span>🗡️ Stich</span></label>
+                        <label class="cf-chip"><input type="checkbox" value="Hieb"><span>⚔️ Hieb</span></label>
+                    </div>
+                </div>
+                <div class="cf-defense-panel">
+                    <span class="cf-defense-title">⭐ Immunitäten</span>
+                    <div class="cf-chips" id="char-immunities">
+                        <label class="cf-chip imm"><input type="checkbox" value="Feuer"><span>🔥 Feuer</span></label>
+                        <label class="cf-chip imm"><input type="checkbox" value="Kälte"><span>❄️ Kälte</span></label>
+                        <label class="cf-chip imm"><input type="checkbox" value="Blitz"><span>⚡ Blitz</span></label>
+                        <label class="cf-chip imm"><input type="checkbox" value="Säure"><span>🧪 Säure</span></label>
+                        <label class="cf-chip imm"><input type="checkbox" value="Gift"><span>☠️ Gift</span></label>
+                        <label class="cf-chip imm"><input type="checkbox" value="Nekrotisch"><span>💀 Nekr.</span></label>
+                        <label class="cf-chip imm"><input type="checkbox" value="Strahlend"><span>✨ Strahl.</span></label>
+                        <label class="cf-chip imm"><input type="checkbox" value="Psychisch"><span>🧠 Psych.</span></label>
+                        <label class="cf-chip imm"><input type="checkbox" value="Kraft"><span>💥 Kraft</span></label>
+                        <label class="cf-chip imm"><input type="checkbox" value="Donner"><span>🔊 Donner</span></label>
+                        <label class="cf-chip imm"><input type="checkbox" value="Wucht"><span>🔨 Wucht</span></label>
+                        <label class="cf-chip imm"><input type="checkbox" value="Stich"><span>🗡️ Stich</span></label>
+                        <label class="cf-chip imm"><input type="checkbox" value="Hieb"><span>⚔️ Hieb</span></label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Notizen (volle Breite) -->
+            <div class="cf-notes-panel">
+                <span class="cf-notes-title">📝 Notizen</span>
+                <div class="editor-toolbar editor-toolbar-mid cf-notes-toolbar">
+                    <div class="toolbar-row">
+                        <button class="editor-btn" data-action="format-text" data-cmd="char-notes" data-editor="bold" title="Fett"><b>B</b></button>
+                        <button class="editor-btn" data-action="format-text" data-cmd="char-notes" data-editor="italic" title="Kursiv"><i>I</i></button>
+                        <button class="editor-btn" data-action="format-text" data-cmd="char-notes" data-editor="underline" title="Unterstrichen"><u>U</u></button>
+                        <button class="editor-btn" data-action="format-text" data-cmd="char-notes" data-editor="strikethrough" title="Durchgestrichen"><s>S</s></button>
+                        <span class="toolbar-separator"></span>
+                        <button class="editor-btn" data-action="format-text" data-cmd="char-notes" data-editor="list" title="Liste">☰</button>
+                    </div>
+                    <div class="toolbar-row">
+                        <select class="editor-select" data-action="set-editor-font" data-editor="char-notes" title="Schriftart">
+                            <option value="arial">Arial</option>
+                            <option value="serif">Serif</option>
+                            <option value="mono">Mono</option>
+                        </select>
+                        <span class="toolbar-separator"></span>
+                        <button class="editor-btn" data-action="clear-formatting" data-value="char-notes" title="Formatierung entfernen">🧹</button>
+                    </div>
+                </div>
+                <div id="char-notes" class="cf-notes-editor" contenteditable="true" data-placeholder="Notizen..."></div>
+            </div>
+
+            <!-- Buttons -->
+            <div class="cf-actions">
+                <button class="btn btn-success" data-action="call" data-value="saveCharacter">Speichern</button>
+                <button class="btn" data-action="call" data-value="cancelCharEdit">Abbrechen</button>
+            </div>
+        </div>
+    </div>
+</div>
+            </div>
+            <!-- Party Overview Stats -->
+            <div class="party-overview" id="party-overview"></div>
+            <!-- Party Roster (Quick Overview) -->
+            <div class="party-roster" id="party-roster"></div>
+            
+            <!-- Party Grid (Detail Cards) -->
+            <div class="party-grid" id="party-list"></div>
+        </section>
+        

@@ -154,7 +154,6 @@ function addTriggerField() {
 window.saveLocation = saveLocation;
 window.editLocation = editLocation;
 window.deleteLocation = deleteLocation;
-window.clearLocationForm = clearLocationForm;
 window.addFilter = addFilter;
 window.deleteFilter = deleteFilter;
 window.filterAssignSpells = filterAssignSpells;

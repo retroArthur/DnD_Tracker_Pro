@@ -5,8 +5,6 @@
 // ============================================================
 // TIMERS
 // ============================================================
-var APP_CONFIG = window.APP_CONFIG;
-var StorageAPI = window.StorageAPI;
 let timers = [];
 let timerInterval = null;
 let roundTimer = null;

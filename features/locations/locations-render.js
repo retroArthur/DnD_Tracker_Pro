@@ -313,11 +313,8 @@ function renderFilterList() {
 // ============================================================
 // EXPORTS FOR GLOBAL ACCESS
 // ============================================================
-window.selectedLocationId = selectedLocationId;
 window.renderLocations = renderLocations;
 window.selectLocation = selectLocation;
-window.showLocationDetail = showLocationDetail;
-window.clearLocationDetail = clearLocationDetail;
 window.setLocFilter = setLocFilter;
 window.toggleLocation = toggleLocation;
 window.renderFilterList = renderFilterList;

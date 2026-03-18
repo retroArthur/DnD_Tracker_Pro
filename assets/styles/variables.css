@@ -1,0 +1,260 @@
+/* Theme: Dark (Default) */
+        :root, [data-theme="dark"] {
+            --bg-dark: #0d0d0d;
+            --bg-card: #1a1a1a;
+            --bg-elevated: #252525;
+            --bg-hover: #333;
+            --gold: #d4af37;
+            --gold-dim: #a68a2a;
+            --cyan: #7ec4cf;
+            --green: #4ade80;
+            --red: #ef4444;
+            --yellow: #fbbf24;
+            --purple: #a78bfa;
+            --blue: #60a5fa;
+            --orange: #fb923c;
+            --pink: #f472b6;
+            --text: #e0e0e0;
+            --text-dim: #888;
+            --border: #3a3a3a;
+            --shadow: rgba(0,0,0,0.5);
+        }
+        
+        /* Theme: Light */
+        [data-theme="light"] {
+            --bg-dark: #f5f5f5;
+            --bg-card: #ffffff;
+            --bg-elevated: #e8e8e8;
+            --bg-hover: #ddd;
+            --gold: #b8860b;
+            --gold-dim: #8b6914;
+            --cyan: #0891b2;
+            --green: #16a34a;
+            --red: #dc2626;
+            --yellow: #ca8a04;
+            --purple: #7c3aed;
+            --blue: #2563eb;
+            --orange: #ea580c;
+            --pink: #db2777;
+            --text: #1a1a1a;
+            --text-dim: #666;
+            --border: #ccc;
+            --shadow: rgba(0,0,0,0.15);
+        }
+        
+        /* Theme: Sepia/Parchment */
+        [data-theme="sepia"] {
+            --bg-dark: #f4e4c1;
+            --bg-card: #fdf6e3;
+            --bg-elevated: #eee8d5;
+            --bg-hover: #e5dbc5;
+            --gold: #8b4513;
+            --gold-dim: #6b3410;
+            --cyan: #2aa198;
+            --green: #859900;
+            --red: #dc322f;
+            --yellow: #b58900;
+            --purple: #6c71c4;
+            --blue: #268bd2;
+            --orange: #cb4b16;
+            --pink: #d33682;
+            --text: #3c3c3c;
+            --text-dim: #666;
+            --border: #c9b99a;
+            --shadow: rgba(0,0,0,0.1);
+        }
+        
+        /* Theme: High Contrast */
+        [data-theme="contrast"] {
+            --bg-dark: #000000;
+            --bg-card: #111111;
+            --bg-elevated: #222222;
+            --bg-hover: #333;
+            --gold: #ffd700;
+            --gold-dim: #ccac00;
+            --cyan: #00ffff;
+            --green: #00ff00;
+            --red: #ff0000;
+            --yellow: #ffff00;
+            --purple: #ff00ff;
+            --blue: #0080ff;
+            --orange: #ff8000;
+            --pink: #ff0080;
+            --text: #ffffff;
+            --text-dim: #aaa;
+            --border: #555;
+            --shadow: rgba(255,255,255,0.1);
+        }
+        
+        /* ============================================================
+           DESIGN PROFILES
+           ============================================================ */
+        
+        /* Desktop Profile (Default) */
+        :root, [data-layout="desktop"] {
+            --nav-direction: row;
+            --nav-position: top;
+            --content-padding: 16px;
+            --card-min-width: 280px;
+            --grid-columns: repeat(auto-fit, minmax(var(--card-min-width), 1fr));
+            --font-size-base: 14px;
+            --font-size-small: 12px;
+            --font-size-title: 1.1em;
+            --button-padding: 6px 12px;
+            --input-padding: 6px 10px;
+            --modal-width: 500px;
+            --sidebar-width: 280px;
+        }
+        
+        /* Mobile Profile */
+        [data-layout="mobile"] {
+            --nav-direction: row;
+            --nav-position: bottom;
+            --content-padding: 10px;
+            --card-min-width: 100%;
+            --grid-columns: 1fr;
+            --font-size-base: 16px;
+            --font-size-small: 14px;
+            --font-size-title: 1.2em;
+            --button-padding: 12px 16px;
+            --input-padding: 12px 14px;
+            --modal-width: 95%;
+            --sidebar-width: 100%;
+        }
+        
+        /* Mobile Layout Overrides */
+        [data-layout="mobile"] body {
+            font-size: var(--font-size-base);
+            padding-bottom: 70px;
+        }
+        
+        [data-layout="mobile"] .app-header {
+            position: fixed;
+            bottom: 0;
+            top: auto;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            padding: 0;
+            border-top: 1px solid var(--border);
+            border-bottom: none;
+            background: var(--bg-card);
+            transform: translateY(calc(100% - 56px));
+            transition: transform 0.3s ease;
+        }
+        
+        [data-layout="mobile"] .app-header.nav-open {
+            transform: translateY(0);
+        }
+        
+        [data-layout="mobile"] .app-header-top {
+            display: none;
+        }
+        
+        [data-layout="mobile"] .nav-tabs {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            padding: 8px;
+            gap: 6px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        
+        [data-layout="mobile"] .nav-tab {
+            flex-direction: column;
+            padding: 12px 8px;
+            font-size: 11px;
+            text-align: center;
+            border-radius: 8px;
+            background: var(--bg-dark);
+            min-height: 56px;
+            justify-content: center;
+            display: flex;
+            align-items: center;
+        }
+        
+        [data-layout="mobile"] .nav-tab.active {
+            background: var(--gold);
+            color: var(--bg-dark);
+        }
+        
+        [data-layout="mobile"] .nav-tab-icon {
+            font-size: 18px;
+            display: block;
+            margin-bottom: 2px;
+        }
+        
+        [data-layout="mobile"] .nav-tab-text {
+            display: block;
+            font-size: 9px;
+        }
+        
+        [data-layout="mobile"] .main-content {
+            padding: var(--content-padding);
+            padding-top: 60px;
+            margin-bottom: 70px;
+        }
+        
+        [data-layout="mobile"] .party-grid,
+        [data-layout="mobile"] .npc-grid,
+        [data-layout="mobile"] .locations-list,
+        [data-layout="mobile"] .encounter-grid,
+        [data-layout="mobile"] .spell-list,
+        [data-layout="mobile"] .quest-list,
+        [data-layout="mobile"] .loot-list {
+            grid-template-columns: var(--grid-columns);
+        }
+        
+        [data-layout="mobile"] .si-main {
+            grid-template-columns: 35px 24px 1fr 90px 60px;
+            padding: 6px 8px;
+            gap: 4px;
+        }
+        
+        [data-layout="mobile"] .si-details {
+            padding-left: 35px;
+        }
+        
+        [data-layout="mobile"] .si-detail-row {
+            gap: 8px;
+        }
+        
+        [data-layout="mobile"] .si-add-cart-section {
+            flex-wrap: wrap;
+        }
+        
+        [data-layout="mobile"] .btn {
+            padding: var(--button-padding);
+            font-size: var(--font-size-small);
+            min-height: 44px;
+        }
+        
+        [data-layout="mobile"] .form-group input,
+        [data-layout="mobile"] .form-group select,
+        [data-layout="mobile"] .form-group textarea {
+            padding: var(--input-padding);
+            font-size: var(--font-size-base);
+            min-height: 44px;
+        }
+        
+        [data-layout="mobile"] .modal {
+            max-width: var(--modal-width);
+            max-height: 90vh;
+            margin: 5vh auto;
+        }
+        
+        [data-layout="mobile"] .card {
+            padding: 12px;
+        }
+        
+        [data-layout="mobile"] .card-title {
+            font-size: var(--font-size-title);
+        }
+        
+        [data-layout="mobile"] .form-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        [data-layout="mobile"] .quick-panel {
+            display: none;
+        }

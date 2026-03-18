@@ -1191,29 +1191,21 @@ function handleWikiContentInput(e) {
 // ============================================================
 // EXPORTS FOR GLOBAL ACCESS
 // ============================================================
-window.WIKI_CATEGORIES = WIKI_CATEGORIES;
-window.WIKI_TEMPLATES = WIKI_TEMPLATES;
 window.renderWiki = renderWiki;
-window.renderWikiQuickAccess = renderWikiQuickAccess;
 window.renderWikiTree = renderWikiTree;
-window.renderWikiDetail = renderWikiDetail;
 window.selectWikiEntry = selectWikiEntry;
 window.toggleWikiCategory = toggleWikiCategory;
 window.expandAllWikiCategories = expandAllWikiCategories;
 window.collapseAllWikiCategories = collapseAllWikiCategories;
 window.showWikiForm = showWikiForm;
 window.hideWikiForm = hideWikiForm;
-window.updateWikiParentSelect = updateWikiParentSelect;
 window.initWikiCategoryListener = initWikiCategoryListener;
 window.parseWikiLinks = parseWikiLinks;
-window.extractWikiLinks = extractWikiLinks;
-window.findBacklinks = findBacklinks;
 window.toggleWikiEntry = toggleWikiEntry;
 window.filterWiki = filterWiki;
 window.sortWiki = sortWiki;
 window.saveWikiEntry = saveWikiEntry;
 window.editWikiEntry = editWikiEntry;
-window.cancelWikiEdit = cancelWikiEdit;
 window.deleteWikiEntry = deleteWikiEntry;
 window.toggleWikiPin = toggleWikiPin;
 window.navigateToWikiEntry = navigateToWikiEntry;
@@ -1224,7 +1216,5 @@ window.renderWikiSearchDropdown = renderWikiSearchDropdown;
 window.handleWikiSearchKeydown = handleWikiSearchKeydown;
 window.scrollToTOCHeading = scrollToTOCHeading;
 window.applyWikiTemplate = applyWikiTemplate;
-window.showWikiLinkSuggester = showWikiLinkSuggester;
-window.hideWikiLinkSuggester = hideWikiLinkSuggester;
 window.insertWikiLinkSuggestion = insertWikiLinkSuggestion;
 window.handleWikiContentInput = handleWikiContentInput;

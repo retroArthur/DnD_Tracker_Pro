@@ -216,7 +216,5 @@ function addQuestRewardItemTag(itemId, itemName) {
 window.saveQuest = saveQuest;
 window.editQuest = editQuest;
 window.deleteQuest = deleteQuest;
-window.clearQuestForm = clearQuestForm;
 window.populateQuestSelects = populateQuestSelects;
 window.addQuestRewardItem = addQuestRewardItem;
-window.addQuestRewardItemTag = addQuestRewardItemTag;

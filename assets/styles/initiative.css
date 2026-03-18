@@ -1,0 +1,896 @@
+        /* ============================================================
+           INITIATIVE
+           ============================================================ */
+        .init-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+        
+        .round-badge {
+            background: var(--bg-card);
+            border: 2px solid var(--gold);
+            padding: 6px 16px;
+            border-radius: 6px;
+            font-size: 1.1em;
+        }
+        
+        .round-badge span { color: var(--gold); font-weight: 700; }
+
+        /* Battlefield Conditions Banner */
+        .battlefield-banner {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: linear-gradient(135deg, #2a2a4a 0%, var(--bg-dark) 100%);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 10px 14px;
+            margin-bottom: 12px;
+            flex-wrap: wrap;
+        }
+
+        .bf-label {
+            font-size: 0.75rem;
+            color: var(--text-dim);
+            font-weight: 600;
+        }
+
+        .bf-conditions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .bf-tag {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            padding: 4px 10px;
+            border-radius: 16px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+
+        .bf-tag.terrain {
+            background: rgba(249, 115, 22, 0.2);
+            border: 1px solid var(--orange, #f97316);
+            color: var(--orange, #f97316);
+        }
+
+        .bf-tag.lair {
+            background: rgba(239, 68, 68, 0.2);
+            border: 1px solid var(--red);
+            color: var(--red);
+        }
+
+        .bf-xp {
+            margin-left: auto;
+            font-size: 0.8rem;
+            color: var(--gold);
+            font-weight: 600;
+        }
+
+        .bf-clear {
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--text-dim);
+            width: 24px;
+            height: 24px;
+            border-radius: 4px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+            transition: all 0.2s;
+        }
+
+        .bf-clear:hover {
+            border-color: var(--red);
+            color: var(--red);
+            background: rgba(239, 68, 68, 0.1);
+        }
+
+        /* Lair Action Entry in Initiative */
+        .init-entry.lair {
+            border-left: 3px solid var(--red);
+            background: linear-gradient(90deg, rgba(239, 68, 68, 0.1) 0%, var(--bg-card) 100%);
+        }
+
+        .init-entry.lair .init-name {
+            color: var(--red);
+            font-weight: 600;
+        }
+
+        .init-list { display: flex; flex-direction: column; gap: 6px; }
+        
+        .init-entry {
+            display: grid;
+            grid-template-columns: 30px 50px 40px 1fr auto auto;
+            align-items: center;
+            gap: 8px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 8px 12px;
+        }
+        
+        .init-entry.active {
+            border-color: var(--gold);
+            background: linear-gradient(90deg, rgba(212,175,55,0.1) 0%, var(--bg-card) 100%);
+        }
+        
+        .init-entry.enemy { border-left: 3px solid var(--red); }
+        .init-entry.monster { border-left: 3px solid var(--red); }
+        .init-entry.player { border-left: 3px solid var(--green); }
+        .init-entry.ally { border-left: 3px solid var(--blue); }
+        .init-entry.dead { opacity: 0.4; }
+        
+        .init-entry .drag-handle {
+            cursor: grab;
+            color: var(--text-dim);
+            font-size: 1.2em;
+            user-select: none;
+            text-align: center;
+            touch-action: none;
+        }
+        
+        .init-entry .drag-handle:active {
+            cursor: grabbing;
+        }
+        
+        .init-value { font-size: 1.2em; font-weight: 700; color: var(--gold); text-align: center; cursor: pointer; }
+        .init-value:hover { text-decoration: underline; }
+        
+        .init-ac {
+            font-size: 0.9em;
+            font-weight: 600;
+            color: var(--cyan);
+            text-align: center;
+            background: rgba(126, 196, 207, 0.15);
+            padding: 4px 6px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 2px;
+        }
+        
+        .init-ac-icon {
+            font-size: 0.85em;
+        }
+        
+        .init-info { min-width: 0; }
+        .init-name { 
+            font-weight: 600; 
+            color: var(--text); 
+            white-space: nowrap; 
+            overflow: hidden; 
+            text-overflow: ellipsis;
+            cursor: pointer;
+            transition: color 0.15s;
+        }
+        .init-name:hover {
+            color: var(--gold);
+            text-decoration: underline;
+        }
+        .init-type { font-size: 0.75em; color: var(--text-dim); }
+        
+        .init-effects {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 3px;
+            margin-top: 4px;
+        }
+        
+        .init-effect {
+            font-size: 9px;
+            padding: 2px 6px;
+            border-radius: 3px;
+            display: flex;
+            align-items: center;
+            gap: 3px;
+            cursor: pointer;
+        }
+        
+        .init-effect .duration { font-weight: 600; }
+
+        .init-right { display: flex; align-items: center; gap: 8px; }
+        
+        .init-hp { display: flex; align-items: center; gap: 6px; }
+        .init-hp-value { font-weight: 600; }
+        .init-hp-value.healthy { color: var(--green); }
+        .init-hp-value.bloodied { color: var(--yellow); }
+        .init-hp-value.critical { color: var(--red); }
+        
+        .init-hp-btns { display: flex; gap: 3px; }
+        
+        /* Initiative Zauberslots */
+        .init-spell-slots {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+            padding: 4px 8px;
+            background: var(--bg-dark);
+            border-radius: 4px;
+            margin-left: auto;
+        }
+        
+        .init-slot-level {
+            display: flex;
+            align-items: center;
+            gap: 3px;
+        }
+        
+        .init-slot-label {
+            font-size: 10px;
+            color: var(--purple);
+            font-weight: 600;
+            min-width: 10px;
+        }
+        
+        .init-slot-boxes {
+            display: flex;
+            gap: 2px;
+        }
+        
+        .init-slot-box {
+            width: 12px;
+            height: 12px;
+            border: 1px solid var(--purple);
+            border-radius: 2px;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+        
+        .init-slot-box.available {
+            background: var(--purple);
+        }
+        
+        .init-slot-box:hover {
+            transform: scale(1.2);
+            border-color: var(--gold);
+        }
+        
+        .init-spell-slots-placeholder {
+            /* Leerer Platzhalter für Grid-Struktur */
+        }
+
+        /* Death Saves Tracker */
+        .death-saves {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 6px 10px;
+            background: rgba(239, 68, 68, 0.15);
+            border: 1px solid var(--red);
+            border-radius: 6px;
+            margin-top: 6px;
+        }
+
+        .death-saves-label {
+            font-size: 0.75em;
+            font-weight: 600;
+            color: var(--red);
+        }
+
+        .death-saves-group {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .death-saves-group-label {
+            font-size: 0.7em;
+            color: var(--text-dim);
+            min-width: 30px;
+        }
+
+        .death-saves-dots {
+            display: flex;
+            gap: 4px;
+        }
+
+        .death-save-dot {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            border: 2px solid var(--border);
+            background: var(--bg-dark);
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+
+        .death-save-dot:hover {
+            transform: scale(1.15);
+            border-color: var(--text);
+        }
+
+        .death-save-dot.success {
+            border-color: var(--green);
+        }
+
+        .death-save-dot.success.active {
+            background: var(--green);
+            border-color: var(--green);
+        }
+
+        .death-save-dot.failure {
+            border-color: var(--red);
+        }
+
+        .death-save-dot.failure.active {
+            background: var(--red);
+            border-color: var(--red);
+        }
+
+        .death-saves-status {
+            font-size: 0.75em;
+            font-weight: 600;
+            margin-left: auto;
+            padding: 3px 8px;
+            border-radius: 4px;
+        }
+
+        .death-saves-status.dead {
+            background: var(--red);
+            color: var(--bg-dark);
+        }
+
+        .death-saves-status.stable {
+            background: var(--green);
+            color: var(--bg-dark);
+        }
+
+        /* Concentration Tracker */
+        .concentration-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 10px;
+            background: linear-gradient(135deg, rgba(147, 51, 234, 0.2) 0%, rgba(168, 85, 247, 0.15) 100%);
+            border: 1px solid var(--purple);
+            border-radius: 6px;
+            font-size: 0.75em;
+            color: var(--purple);
+            cursor: pointer;
+            transition: all 0.15s;
+            margin-top: 4px;
+        }
+
+        .concentration-badge:hover {
+            background: rgba(147, 51, 234, 0.3);
+            transform: translateY(-1px);
+        }
+
+        .concentration-badge .conc-icon {
+            font-size: 1em;
+        }
+
+        .concentration-badge .conc-spell {
+            font-weight: 600;
+            max-width: 120px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .concentration-badge .conc-break {
+            color: var(--red);
+            font-weight: 700;
+            padding: 2px 6px;
+            background: rgba(239, 68, 68, 0.2);
+            border-radius: 3px;
+            margin-left: 4px;
+        }
+
+        .concentration-badge .conc-break:hover {
+            background: var(--red);
+            color: var(--bg-dark);
+        }
+
+        .concentration-add-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 3px 8px;
+            background: transparent;
+            border: 1px dashed var(--purple);
+            border-radius: 4px;
+            color: var(--purple);
+            font-size: 0.7em;
+            cursor: pointer;
+            opacity: 0.6;
+            transition: all 0.15s;
+            margin-top: 4px;
+        }
+
+        .concentration-add-btn:hover {
+            opacity: 1;
+            background: rgba(147, 51, 234, 0.1);
+        }
+
+        .concentration-check-banner {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 12px;
+            background: linear-gradient(135deg, rgba(234, 179, 8, 0.15) 0%, rgba(147, 51, 234, 0.15) 100%);
+            border: 1px solid var(--gold);
+            border-radius: 6px;
+            margin-top: 6px;
+        }
+
+        .concentration-check-banner .conc-dc {
+            font-weight: 700;
+            color: var(--gold);
+        }
+
+        .concentration-check-banner .conc-roll-btn {
+            padding: 4px 10px;
+            background: var(--purple);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.85em;
+        }
+
+        .concentration-check-banner .conc-roll-btn:hover {
+            background: var(--gold);
+            color: var(--bg-dark);
+        }
+
+        /* AoE Damage Calculator */
+        .aoe-modal {
+            width: fit-content;
+            max-width: 95vw;
+        }
+
+        .aoe-modal-content {
+            padding: 20px;
+        }
+
+        .aoe-modal-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 16px;
+        }
+
+        .aoe-modal-header h3 {
+            margin: 0;
+            color: var(--red);
+            flex: 1;
+        }
+
+        .aoe-damage-input {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            margin-bottom: 16px;
+            padding: 12px;
+            background: var(--bg-dark);
+            border-radius: 8px;
+        }
+
+        .aoe-damage-input input {
+            flex: 1;
+            padding: 10px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            color: var(--text);
+            border-radius: 6px;
+            font-size: 1em;
+        }
+
+        .aoe-roll-btn {
+            padding: 10px 16px;
+            background: var(--red);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .aoe-roll-btn:hover {
+            background: #dc2626;
+        }
+
+        .aoe-damage-result {
+            padding: 8px 14px;
+            background: var(--red);
+            color: white;
+            border-radius: 6px;
+            font-weight: 700;
+            font-size: 1.2em;
+            min-width: 50px;
+            text-align: center;
+        }
+
+        .aoe-targets-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .aoe-targets-header span {
+            font-weight: 600;
+            color: var(--text);
+        }
+
+        .aoe-quick-select {
+            display: flex;
+            gap: 6px;
+            margin-left: auto;
+        }
+
+        .aoe-quick-btn {
+            padding: 4px 10px;
+            background: var(--bg-dark);
+            border: 1px solid var(--border);
+            color: var(--text-dim);
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.8em;
+        }
+
+        .aoe-quick-btn:hover {
+            background: var(--bg-card);
+            color: var(--text);
+        }
+
+        .aoe-targets-list {
+            display: grid;
+            grid-template-columns: auto auto 1fr auto auto;
+            max-height: 300px;
+            overflow-y: auto;
+            margin-bottom: 16px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+        }
+
+        .aoe-target {
+            display: grid;
+            grid-column: 1 / -1;
+            grid-template-columns: subgrid;
+            align-items: center;
+            padding: 8px 12px;
+            border-bottom: 1px solid var(--border);
+            transition: background 0.15s;
+            cursor: pointer;
+        }
+
+        .aoe-target:last-child {
+            border-bottom: none;
+        }
+
+        .aoe-target:hover {
+            background: var(--bg-dark);
+        }
+
+        .aoe-target.selected {
+            background: rgba(239, 68, 68, 0.1);
+        }
+
+        .aoe-target-checkbox {
+            width: 18px;
+            height: 18px;
+            accent-color: var(--red);
+        }
+
+        .aoe-target-name {
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        .aoe-target-hp {
+            font-size: 0.85em;
+            color: var(--text-dim);
+            white-space: nowrap;
+        }
+
+        .aoe-target-save {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.8em;
+            color: var(--green);
+            cursor: pointer;
+            white-space: nowrap;
+        }
+
+        .aoe-target-save input {
+            accent-color: var(--green);
+        }
+
+        .aoe-target-damage {
+            font-weight: 600;
+            min-width: 40px;
+            text-align: right;
+            flex-shrink: 0;
+        }
+
+        .aoe-target-damage.full {
+            color: var(--red);
+        }
+
+        .aoe-target-damage.half {
+            color: var(--yellow);
+        }
+
+        .aoe-modal-footer {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+
+        .aoe-apply-btn {
+            padding: 10px 20px;
+            background: var(--red);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 1em;
+        }
+
+        .aoe-apply-btn:hover {
+            background: #dc2626;
+        }
+
+        .aoe-apply-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* NPC Relations */
+        .npc-relations-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .npc-relation-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 12px;
+            background: var(--bg-dark);
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            transition: all 0.15s;
+        }
+
+        .npc-relation-item:hover {
+            border-color: var(--text-dim);
+        }
+
+        .npc-relation-icon {
+            font-size: 1.2em;
+        }
+
+        .npc-relation-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .npc-relation-name {
+            font-weight: 600;
+            cursor: pointer;
+            transition: color 0.15s;
+        }
+
+        .npc-relation-name:hover {
+            color: var(--gold);
+        }
+
+        .npc-relation-type {
+            font-size: 0.75em;
+            color: var(--text-dim);
+        }
+
+        .npc-relation-bar {
+            width: 80px;
+            height: 8px;
+            background: var(--bg-card);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .npc-relation-fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 0.3s ease;
+        }
+
+        .npc-relation-fill.friendly {
+            background: linear-gradient(90deg, var(--green), #22c55e);
+            width: 100%;
+        }
+
+        .npc-relation-fill.neutral {
+            background: linear-gradient(90deg, var(--text-dim), var(--text));
+            width: 50%;
+        }
+
+        .npc-relation-fill.hostile {
+            background: linear-gradient(90deg, #dc2626, var(--red));
+            width: 100%;
+        }
+
+        .npc-relation-status {
+            font-size: 0.75em;
+            font-weight: 600;
+            padding: 3px 8px;
+            border-radius: 4px;
+        }
+
+        .npc-relation-status.friendly {
+            background: rgba(34, 197, 94, 0.2);
+            color: var(--green);
+        }
+
+        .npc-relation-status.neutral {
+            background: rgba(156, 163, 175, 0.2);
+            color: var(--text);
+        }
+
+        .npc-relation-status.hostile {
+            background: rgba(239, 68, 68, 0.2);
+            color: var(--red);
+        }
+
+        .npc-relation-actions {
+            display: flex;
+            gap: 4px;
+        }
+
+        .npc-relation-btn {
+            padding: 4px 8px;
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--text-dim);
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.8em;
+        }
+
+        .npc-relation-btn:hover {
+            background: var(--bg-card);
+            color: var(--text);
+        }
+
+        .npc-relation-btn.danger:hover {
+            background: var(--red);
+            color: white;
+            border-color: var(--red);
+        }
+
+        /* Relations Modal */
+        .relations-modal-content {
+            padding: 20px;
+        }
+
+        .relations-modal-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 16px;
+        }
+
+        .relations-modal-header h3 {
+            margin: 0;
+            flex: 1;
+        }
+
+        .relations-form {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 20px;
+            padding: 16px;
+            background: var(--bg-dark);
+            border-radius: 8px;
+        }
+
+        .relations-form-row {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .relations-form-row select,
+        .relations-form-row input {
+            flex: 1;
+            padding: 10px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            color: var(--text);
+            border-radius: 6px;
+        }
+
+        .relations-status-btns {
+            display: flex;
+            gap: 6px;
+        }
+
+        .relations-status-btn {
+            padding: 8px 14px;
+            border: 2px solid var(--border);
+            background: transparent;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.15s;
+            font-weight: 600;
+        }
+
+        .relations-status-btn.friendly {
+            color: var(--green);
+            border-color: var(--green);
+        }
+
+        .relations-status-btn.friendly:hover,
+        .relations-status-btn.friendly.active {
+            background: var(--green);
+            color: var(--bg-dark);
+        }
+
+        .relations-status-btn.neutral {
+            color: var(--text);
+            border-color: var(--text-dim);
+        }
+
+        .relations-status-btn.neutral:hover,
+        .relations-status-btn.neutral.active {
+            background: var(--text);
+            color: var(--bg-dark);
+        }
+
+        .relations-status-btn.hostile {
+            color: var(--red);
+            border-color: var(--red);
+        }
+
+        .relations-status-btn.hostile:hover,
+        .relations-status-btn.hostile.active {
+            background: var(--red);
+            color: var(--bg-dark);
+        }
+
+        .relations-add-btn {
+            padding: 10px 20px;
+            background: var(--gold);
+            color: var(--bg-dark);
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        .relations-add-btn:hover {
+            filter: brightness(1.1);
+        }
+
+        .relations-existing {
+            border-top: 1px solid var(--border);
+            padding-top: 16px;
+        }
+
+        .relations-existing-title {
+            font-weight: 600;
+            margin-bottom: 12px;
+            color: var(--text-dim);
+        }
+

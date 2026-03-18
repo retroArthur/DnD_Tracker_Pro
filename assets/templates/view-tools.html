@@ -1,0 +1,575 @@
+        <section id="view-links" class="view">
+            <div class="section-toolbar">
+                <!-- Gruppe 1: Identität -->
+                <div class="section-toolbar-identity">
+                    <span class="section-toolbar-title">🔗 Links</span>
+                    <span class="section-toolbar-count" id="links-io-count">0</span>
+                </div>
+                
+                <!-- Gruppe 2: Suche -->
+                <div class="section-toolbar-search">
+                    <div class="search-wrapper">
+                        <input type="text" id="link-search" class="toolbar-search" placeholder="🔍 Link suchen..." oninput="renderLinks(); updateSearchClear(this);">
+                        <button class="search-clear-btn" data-action="clear-search" data-value="link-search" title="Suche leeren">✕</button>
+                    </div>
+                </div>
+                
+                <!-- Gruppe 3: Filter + IO -->
+                <div class="section-toolbar-filters">
+                    <select id="link-filter" onchange="renderLinks()">
+                        <option value="">📂 Alle Kategorien</option>
+                        <option value="rules">📖 Regeln</option>
+                        <option value="tools">🛠️ Tools</option>
+                        <option value="maps">🗺️ Karten</option>
+                        <option value="other">📌 Sonstiges</option>
+                    </select>
+                    <div class="section-toolbar-io">
+                        <button class="io-btn export" data-action="export-data" data-value="links" title="Links exportieren">📤</button>
+                        <button class="io-btn import" data-action="trigger-click" data-value="import-links" title="Links importieren">📥</button>
+                        <input type="file" id="import-links" class="io-file-input" accept=".json" data-on-change="import-data" data-type="links">
+                    </div>
+                </div>
+                
+                <!-- Gruppe 4: Primäre Aktion -->
+                <div class="section-toolbar-actions">
+                    <button class="btn btn-success" data-action="call" data-value="toggleLinkForm">+ Link</button>
+                </div>
+            </div>
+            <div class="card" id="link-form-card" style="display: none;">
+                <div class="card-title" style="margin-bottom: 10px;">Link hinzufügen</div>
+                <input type="hidden" id="edit-link-id">
+                <div class="form-grid">
+                    <div class="form-group"><label>Titel</label><input type="text" id="link-title"></div>
+                    <div class="form-group"><label>URL</label><input type="url" id="link-url"></div>
+                    <div class="form-group"><label>Kategorie</label>
+                        <select id="link-cat">
+                            <option value="rules">📖 Regeln</option>
+                            <option value="tools">🛠️ Tools</option>
+                            <option value="maps">🗺️ Karten</option>
+                            <option value="other">📌 Sonstiges</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Beschreibung</label>
+                    <div class="editor-toolbar">
+                            <button type="button" class="editor-btn" data-action="format-text" data-cmd="link-desc" data-editor="bold" title="Fett"><b>B</b></button>
+                            <button type="button" class="editor-btn" data-action="format-text" data-cmd="link-desc" data-editor="italic" title="Kursiv"><i>I</i></button>
+                            <button type="button" class="editor-btn" data-action="format-text" data-cmd="link-desc" data-editor="underline" title="Unterstrichen"><u>U</u></button>
+                            <button type="button" class="editor-btn" data-action="format-text" data-cmd="link-desc" data-editor="list" title="Liste">☰</button>
+                            <button type="button" class="editor-btn" data-action="set-border-format" data-editor="link-desc" title="Rahmen">◻</button>
+                            <select class="editor-select" data-action="set-editor-font" data-editor="link-desc" title="Schriftart"><option value="arial">Arial</option><option value="serif">Serif</option><option value="mono">Mono</option></select>
+                            <select class="editor-select" data-action="set-editor-font-size" data-editor="link-desc" title="Größe"><option value="0.8em">Klein</option><option value="1em" selected>Normal</option><option value="1.2em">Groß</option><option value="1.5em">Sehr groß</option></select>
+                            <button type="button" class="editor-btn" data-action="clear-formatting" data-value="link-desc" title="Formatierung löschen" style="color:#888;">✕</button>
+                        </div>
+                        <div id="link-desc" class="rich-editor" contenteditable="true" style="min-height: 50px;"></div>
+                </div>
+                <div class="btn-group">
+                    <button class="btn btn-success" data-action="call" data-value="saveLink">Speichern</button>
+                    <button class="btn" data-action="call" data-value="cancelLinkEdit">Abbrechen</button>
+                </div>
+            </div>
+            <div class="links-grid" id="links-list"></div>
+        </section>
+        
+        <!-- DICE VIEW -->
+        <section id="view-dice" class="view">
+            <div class="dice-roller">
+                <!-- Hero Result Display -->
+                <div class="dice-hero" id="dice-hero">
+                    <div class="dice-hero-result" id="dice-hero-result">—</div>
+                    <div class="dice-hero-formula" id="dice-hero-formula"></div>
+                    <div class="dice-hero-breakdown" id="dice-hero-breakdown"></div>
+                </div>
+                
+                <!-- Dice Bar -->
+                <div class="dice-bar">
+                    <button class="dice-die d4" data-action="roll-dice" data-value="4"><span>d4</span></button>
+                    <button class="dice-die d6" data-action="roll-dice" data-value="6"><span>d6</span></button>
+                    <button class="dice-die d8" data-action="roll-dice" data-value="8"><span>d8</span></button>
+                    <button class="dice-die d10" data-action="roll-dice" data-value="10"><span>d10</span></button>
+                    <button class="dice-die d12" data-action="roll-dice" data-value="12"><span>d12</span></button>
+                    <button class="dice-die d20" data-action="roll-dice" data-value="20"><span>d20</span></button>
+                    <button class="dice-die d100" data-action="roll-dice" data-value="100"><span>d%</span></button>
+                    <button class="dice-die coin" data-action="call" data-value="flipCoin"><span>🪙</span></button>
+                </div>
+                
+                <!-- Formula Input -->
+                <div class="dice-input-row">
+                    <div class="dice-input-group">
+                        <input type="number" id="dice-multi" class="dice-multi" value="1" min="1" max="20" title="Anzahl">
+                        <span class="dice-multi-x">×</span>
+                        <input type="text" id="dice-notation" class="dice-formula" placeholder="2d6+3, 4d6kh3, 1d20+5..." onkeypress="if(event.key==='Enter')rollCustomDice()">
+                        <button class="dice-roll-btn" data-action="call" data-value="rollCustomDice">🎲</button>
+                        <button class="dice-reroll-btn" data-action="call" data-value="rerollLast" title="Wiederholen">↻</button>
+                    </div>
+                </div>
+                
+                <!-- Quick Actions -->
+                <div class="dice-quick">
+                    <button class="dice-chip" data-action="roll-advantage">⬆️ Vorteil</button>
+                    <button class="dice-chip" data-action="roll-disadvantage">⬇️ Nachteil</button>
+                    <button class="dice-chip" data-action="call" data-value="rollStats">📊 Stats</button>
+                    <button class="dice-chip" data-action="roll-crit-damage">💥 Krit</button>
+                    <button class="dice-chip" data-action="roll-group-perception">👁️ Gruppe</button>
+                </div>
+                
+                <!-- Damage Type Selector (Hidden by default) -->
+                <details class="dice-details">
+                    <summary>🎯 Schadenstyp</summary>
+                    <div class="dice-damage-row" id="dice-damage-types">
+                        <span class="dmg-chip" data-action="toggle-damage-type" data-type="Wucht">🔨</span>
+                        <span class="dmg-chip" data-action="toggle-damage-type" data-type="Stich">🗡️</span>
+                        <span class="dmg-chip" data-action="toggle-damage-type" data-type="Hieb">⚔️</span>
+                        <span class="dmg-chip" data-action="toggle-damage-type" data-type="Feuer">🔥</span>
+                        <span class="dmg-chip" data-action="toggle-damage-type" data-type="Kälte">❄️</span>
+                        <span class="dmg-chip" data-action="toggle-damage-type" data-type="Blitz">⚡</span>
+                        <span class="dmg-chip" data-action="toggle-damage-type" data-type="Gift">☠️</span>
+                        <span class="dmg-chip" data-action="toggle-damage-type" data-type="Nekrotisch">💀</span>
+                        <span class="dmg-chip" data-action="toggle-damage-type" data-type="Strahlend">✨</span>
+                        <span class="dmg-chip" data-action="toggle-damage-type" data-type="Psychisch">🧠</span>
+                    </div>
+                </details>
+                
+                <!-- Combat Helper (Collapsible) -->
+                <details class="dice-details">
+                    <summary>⚔️ Kampf-Helfer</summary>
+                    <div class="dice-combat-grid">
+                        <div class="dice-combat-section">
+                            <label>Angriff</label>
+                            <div class="dice-combat-row">
+                                <span class="dice-combat-label">RK</span>
+                                <input type="number" id="target-ac" value="15" min="1" max="30">
+                                <span class="dice-combat-label">+</span>
+                                <input type="number" id="attack-bonus" value="5" min="-10" max="20">
+                                <button class="btn btn-sm" data-action="roll-attack">🎯</button>
+                                <button class="btn btn-sm" data-action="roll-attack-crit" title="Mit Vorteil">⬆️</button>
+                            </div>
+                        </div>
+                        <div class="dice-combat-section">
+                            <label>Rettungswurf</label>
+                            <div class="dice-combat-row">
+                                <span class="dice-combat-label">DC</span>
+                                <input type="number" id="save-dc" value="15" min="1" max="30">
+                                <select id="save-attr">
+                                    <option value="str">STR</option>
+                                    <option value="dex">DEX</option>
+                                    <option value="con">CON</option>
+                                    <option value="int">INT</option>
+                                    <option value="wis">WIS</option>
+                                    <option value="cha">CHA</option>
+                                </select>
+                                <span class="dice-combat-label">+</span>
+                                <input type="number" id="save-mod" value="0" min="-5" max="15">
+                                <button class="btn btn-sm" data-action="call" data-value="rollSavingThrow">🛡️</button>
+                            </div>
+                        </div>
+                    </div>
+                </details>
+                
+                <!-- Character Rolls (Collapsible) -->
+                <details class="dice-details">
+                    <summary>👤 Charakter-Würfe</summary>
+                    <div class="dice-char-panel">
+                        <div class="dice-char-header">
+                            <select id="dice-char-select" onchange="updateDiceCharStats()">
+                                <option value="">— Charakter —</option>
+                            </select>
+                            <button class="btn btn-sm" data-action="call" data-value="rollCharInitiative">🎯 Init</button>
+                        </div>
+                        
+                        <div class="dice-char-grid">
+                            <div class="dice-char-col">
+                                <div class="dice-char-col-title">Attribute</div>
+                                <div class="dice-attr-row">
+                                    <button class="dice-attr" data-action="roll-attr-check" data-attr="str"><span>STR</span><small id="dice-str-mod">+0</small></button>
+                                    <button class="dice-attr" data-action="roll-attr-check" data-attr="dex"><span>DEX</span><small id="dice-dex-mod">+0</small></button>
+                                    <button class="dice-attr" data-action="roll-attr-check" data-attr="con"><span>CON</span><small id="dice-con-mod">+0</small></button>
+                                </div>
+                                <div class="dice-attr-row">
+                                    <button class="dice-attr" data-action="roll-attr-check" data-attr="int"><span>INT</span><small id="dice-int-mod">+0</small></button>
+                                    <button class="dice-attr" data-action="roll-attr-check" data-attr="wis"><span>WIS</span><small id="dice-wis-mod">+0</small></button>
+                                    <button class="dice-attr" data-action="roll-attr-check" data-attr="cha"><span>CHA</span><small id="dice-cha-mod">+0</small></button>
+                                </div>
+                            </div>
+                            <div class="dice-char-col">
+                                <div class="dice-char-col-title">Saves</div>
+                                <div class="dice-attr-row">
+                                    <button class="dice-attr save" data-action="roll-char-save" data-attr="str"><span>STR</span><small id="dice-save-str">+0</small></button>
+                                    <button class="dice-attr save" data-action="roll-char-save" data-attr="dex"><span>DEX</span><small id="dice-save-dex">+0</small></button>
+                                    <button class="dice-attr save" data-action="roll-char-save" data-attr="con"><span>CON</span><small id="dice-save-con">+0</small></button>
+                                </div>
+                                <div class="dice-attr-row">
+                                    <button class="dice-attr save" data-action="roll-char-save" data-attr="int"><span>INT</span><small id="dice-save-int">+0</small></button>
+                                    <button class="dice-attr save" data-action="roll-char-save" data-attr="wis"><span>WIS</span><small id="dice-save-wis">+0</small></button>
+                                    <button class="dice-attr save" data-action="roll-char-save" data-attr="cha"><span>CHA</span><small id="dice-save-cha">+0</small></button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="dice-char-col-title" style="margin-top: 8px;">Fertigkeiten</div>
+                        <div class="dice-skill-grid" id="dice-skill-grid"></div>
+                    </div>
+                </details>
+
+                <!-- Random Tables (Collapsible) -->
+                <details class="dice-details">
+                    <summary>🎲 Zufallstabellen</summary>
+                    <div class="rt-panel">
+                        <div class="rt-panel-header">
+                            <button class="btn btn-sm" data-action="show-table-modal">+ Neue Tabelle</button>
+                            <button class="btn btn-sm" data-action="quick-random-roll">🎲 Schnellwurf</button>
+                        </div>
+                        <div id="random-tables-list"></div>
+                        <div id="random-table-preview" class="rt-preview">
+                            <div class="rt-preview-empty">Wähle eine Tabelle</div>
+                        </div>
+                    </div>
+                </details>
+                
+                <!-- Favorites Bar -->
+                <div class="dice-favorites-bar">
+                    <div class="dice-fav-list" id="dice-favorites-list"></div>
+                    <button class="dice-fav-add" data-action="show-modal" data-value="dice-fav-modal" title="Favorit hinzufügen">+</button>
+                </div>
+                
+                <!-- History (Horizontal Scroll) -->
+                <div class="dice-history-bar">
+                    <span class="dice-history-label">📜</span>
+                    <div class="dice-history-scroll" id="dice-history"></div>
+                    <button class="dice-history-clear" data-action="call" data-value="clearDiceHistory" title="Leeren">🗑️</button>
+                </div>
+            </div>
+        </section>
+        
+        <!-- TIMERS VIEW -->
+        <section id="view-timers" class="view">
+            <div class="timer-hub">
+                <!-- Hero Timer Display -->
+                <div class="timer-hero" id="timer-hero">
+                    <div class="timer-hero-ring">
+                        <svg viewBox="0 0 100 100">
+                            <circle class="timer-ring-bg" cx="50" cy="50" r="45"/>
+                            <circle class="timer-ring-progress" id="timer-ring-progress" cx="50" cy="50" r="45"/>
+                        </svg>
+                        <div class="timer-hero-inner">
+                            <div class="timer-hero-time" id="timer-hero-time">0:00</div>
+                            <div class="timer-hero-name" id="timer-hero-name">Kein Timer</div>
+                        </div>
+                    </div>
+                    <div class="timer-hero-controls" id="timer-hero-controls">
+                        <button class="timer-ctrl-btn" data-action="call" data-value="heroTimerToggle" title="Start/Pause">▶️</button>
+                        <button class="timer-ctrl-btn" data-action="call" data-value="heroTimerReset" title="Reset">↺</button>
+                    </div>
+                </div>
+                
+                <!-- Quick Add Bar -->
+                <div class="timer-quick-bar">
+                    <div class="timer-quick-presets" id="timer-presets"></div>
+                    <button class="timer-quick-add" data-action="show-modal" data-value="timer-modal" title="Neuer Timer">+</button>
+                    <button class="timer-quick-settings" data-action="show-modal" data-value="timer-preset-modal" title="Vorlagen">⚙️</button>
+                </div>
+                
+                <!-- Quick Time Buttons -->
+                <div class="timer-quick-times">
+                    <button class="timer-time-btn" data-action="quick-timer" data-value="30">30s</button>
+                    <button class="timer-time-btn" data-action="quick-timer" data-value="60">1m</button>
+                    <button class="timer-time-btn" data-action="quick-timer" data-value="300">5m</button>
+                    <button class="timer-time-btn" data-action="quick-timer" data-value="600">10m</button>
+                    <button class="timer-time-btn" data-action="quick-timer" data-value="1800">30m</button>
+                    <button class="timer-time-btn" data-action="quick-timer" data-value="3600">1h</button>
+                </div>
+                
+                <!-- Active Timers Grid -->
+                <div class="timer-grid" id="timer-list"></div>
+                
+                <!-- Round Timer (Collapsible) -->
+                <details class="timer-details">
+                    <summary>⚔️ Kampfrunden-Timer</summary>
+                    <div class="round-timer-panel">
+                        <div class="round-timer-info">1 Runde = 6 Sekunden (D&D)</div>
+                        <div class="round-timer-row">
+                            <input type="number" id="round-timer-rounds" value="10" min="1" max="100">
+                            <span>Runden</span>
+                            <button class="btn btn-sm" id="round-timer-start-btn" data-action="call" data-value="startRoundTimer">▶️ Start</button>
+                            <button class="btn btn-sm btn-danger" id="round-timer-stop-btn" data-action="call" data-value="stopRoundTimer" style="display: none;">⏹️ Stop</button>
+                        </div>
+                        <div class="round-timer-display" id="round-timer-display"></div>
+                    </div>
+                </details>
+            </div>
+        </section>
+        
+        <!-- MAPS VIEW -->
+        <section id="view-maps" class="view">
+            <div class="map-main-layout">
+                <!-- Linke Seite: Karte -->
+                <div class="map-main-area">
+                    <div class="card" style="height: 100%; display: flex; flex-direction: column;">
+                        <!-- Header mit integrierter Toolbar -->
+                        <div class="card-header map-header-row">
+                            <div class="card-title">🗺️ Kampagnen-Karten</div>
+                            
+                            <!-- Werkzeug-Toolbar (integriert) -->
+                            <div class="map-toolbar" id="map-toolbar" style="display: none;">
+                                <div class="map-toolbar-group">
+                                    <input type="file" id="map-upload" accept="image/*" style="display: none;" onchange="uploadMapToCurrentTab(event)">
+                                    <button class="btn btn-sm" data-action="trigger-click" data-value="map-upload" title="Bild hochladen">📁</button>
+                                    <button class="btn btn-sm" data-action="call" data-value="renameCurrentMap" title="Umbenennen">✏️</button>
+                                    <button class="btn btn-sm btn-danger" data-action="call" data-value="deleteCurrentMap" title="Löschen">🗑️</button>
+                                </div>
+                                <div class="map-toolbar-divider"></div>
+                                <div class="map-toolbar-group">
+                                    <button class="btn btn-sm btn-gold" data-action="show-add-marker-modal" title="Marker hinzufügen (P)">📍</button>
+                                </div>
+                                <div class="map-toolbar-divider"></div>
+                                <div class="map-toolbar-group map-tool-select">
+                                    <button class="btn btn-sm map-tool-btn active" data-action="set-map-tool" data-value="pan" title="Verschieben (V)">🖐️</button>
+                                    <button class="btn btn-sm map-tool-btn" data-action="set-map-tool" data-value="measure" title="Messen (M)">📏</button>
+                                    <button class="btn btn-sm map-tool-btn" data-action="set-map-tool" data-value="calibrate" title="Kalibrieren (K)">📐</button>
+                                    <button class="btn btn-sm map-tool-btn" data-action="set-map-tool" data-value="fog-reveal" title="Fog aufdecken (F)">🔦</button>
+                                    <button class="btn btn-sm map-tool-btn" data-action="set-map-tool" data-value="fog-hide" title="Fog verdecken (H)">🌫️</button>
+                                    <button class="btn btn-sm map-tool-btn" data-action="set-map-tool" data-value="connect" title="Verbinden (C)">🔗</button>
+                                </div>
+                                <div class="map-toolbar-divider"></div>
+                                <div class="map-toolbar-group">
+                                    <button class="btn btn-sm" data-action="zoom-map" data-value="1.25" title="Vergrößern">➕</button>
+                                    <button class="btn btn-sm" data-action="zoom-map" data-value="0.8" title="Verkleinern">➖</button>
+                                    <button class="btn btn-sm" data-action="call" data-value="resetMapZoom" title="Zurücksetzen">100%</button>
+                                    <span id="map-zoom-display" class="map-zoom-badge">100%</span>
+                                </div>
+                                <div class="map-toolbar-divider"></div>
+                                <div class="map-toolbar-group">
+                                    <button class="btn btn-sm map-toggle-btn" data-action="toggle-map-grid" title="Grid ein/aus">🔲</button>
+                                    <button class="btn btn-sm map-toggle-btn" data-action="toggle-map-fog" title="Fog ein/aus">🌫️</button>
+                                    <button class="btn btn-sm map-toggle-btn" data-action="toggle-map-connections" title="Verbindungen ein/aus">🔗</button>
+                                </div>
+                            </div>
+                            
+                            <button class="btn btn-success" data-action="call" data-value="addNewMap">+ Neue Karte</button>
+                        </div>
+                        
+                        <!-- Karten-Tabs -->
+                        <div class="map-tabs" id="map-tabs"></div>
+                        
+                        <!-- Werkzeug-Info Bar -->
+                        <div class="map-tool-info" id="map-tool-info" style="display: none;">
+                            <span id="map-tool-info-text">Klicke und ziehe zum Verschieben</span>
+                            <span id="map-measure-result" style="display: none;"></span>
+                            <span id="map-calibration-status" style="margin-left: 12px; color: var(--text-dim); font-size: 0.85em;"></span>
+                        </div>
+                        
+                        <!-- Karten-Container -->
+                        <div class="map-container" id="map-container" style="flex: 1;">
+                            <div class="map-upload-zone" id="map-upload-zone">
+                                <div style="font-size: 3em; margin-bottom: 10px;">🗺️</div>
+                                <div>Klicke auf "+ Neue Karte" um eine Karte hinzuzufügen</div>
+                            </div>
+                            <div class="map-viewport" id="map-viewport" style="display: none;">
+                                <div class="map-canvas" id="map-canvas">
+                                    <img id="map-image" class="map-image" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="Kampagnenkarte">
+                                    <!-- Fog of War Layer -->
+                                    <canvas id="map-fog-layer" class="map-fog-layer"></canvas>
+                                    <!-- Verbindungen Layer -->
+                                    <svg id="map-connections-layer" class="map-connections-layer"></svg>
+                                    <!-- Mess-Linie Layer -->
+                                    <svg id="map-measure-layer" class="map-measure-layer"></svg>
+                                    <!-- Marker Layer -->
+                                    <div class="map-markers-layer" id="map-markers-layer"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Cursor-Tooltip für Messergebnis -->
+                        <div id="map-cursor-tooltip"></div>
+
+                        <!-- Quick-Pin Kontextmenü (versteckt) -->
+                        <div class="map-context-menu" id="map-context-menu" style="display: none;">
+                            <div class="map-context-title">⚡ Quick-Pin</div>
+                            <button class="map-context-btn" data-action="quick-pin" data-value="party">👥 Party hier</button>
+                            <button class="map-context-btn" data-action="quick-pin" data-value="poi">📍 Sehenswürdigkeit</button>
+                            <button class="map-context-btn" data-action="quick-pin" data-value="danger">⚠️ Gefahr</button>
+                            <button class="map-context-btn" data-action="quick-pin" data-value="quest">📜 Quest</button>
+                            <button class="map-context-btn" data-action="quick-pin" data-value="npc">🧑 NPC</button>
+                            <button class="map-context-btn" data-action="quick-pin" data-value="note">📝 Notiz</button>
+                            <div class="map-context-divider"></div>
+                            <button class="map-context-btn" data-action="quick-pin" data-value="custom">✨ Benutzerdefiniert...</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Rechte Seite: Seitenpanel -->
+                <div class="map-sidebar" id="map-sidebar">
+                    <!-- Suche -->
+                    <div class="map-sidebar-section">
+                        <div class="map-sidebar-title">🔍 Suche</div>
+                        <input type="text" id="map-marker-search" class="map-search-input" placeholder="Marker suchen..." oninput="filterMapMarkers(this.value)">
+                        <div class="map-search-results" id="map-search-results"></div>
+                    </div>
+                    
+                    <!-- Ebenen -->
+                    <div class="map-sidebar-section">
+                        <div class="map-sidebar-title">📚 Ebenen</div>
+                        <div class="map-layers-list" id="map-layers-list">
+                            <label class="map-layer-item">
+                                <input type="checkbox" checked data-layer="party" onchange="toggleMapLayer('party', this.checked)">
+                                <span class="map-layer-color" style="background: var(--green);"></span>
+                                <span>👥 Party & NPCs</span>
+                            </label>
+                            <label class="map-layer-item">
+                                <input type="checkbox" checked data-layer="poi" onchange="toggleMapLayer('poi', this.checked)">
+                                <span class="map-layer-color" style="background: var(--cyan);"></span>
+                                <span>📍 Sehenswürdigkeiten</span>
+                            </label>
+                            <label class="map-layer-item">
+                                <input type="checkbox" checked data-layer="danger" onchange="toggleMapLayer('danger', this.checked)">
+                                <span class="map-layer-color" style="background: var(--red);"></span>
+                                <span>⚠️ Gefahren</span>
+                            </label>
+                            <label class="map-layer-item">
+                                <input type="checkbox" checked data-layer="quest" onchange="toggleMapLayer('quest', this.checked)">
+                                <span class="map-layer-color" style="background: var(--purple);"></span>
+                                <span>📜 Quests</span>
+                            </label>
+                            <label class="map-layer-item">
+                                <input type="checkbox" checked data-layer="buildings" onchange="toggleMapLayer('buildings', this.checked)">
+                                <span class="map-layer-color" style="background: var(--gold);"></span>
+                                <span>🏠 Gebäude</span>
+                            </label>
+                            <label class="map-layer-item">
+                                <input type="checkbox" data-layer="secret" onchange="toggleMapLayer('secret', this.checked)">
+                                <span class="map-layer-color" style="background: #f97316;"></span>
+                                <span>🔒 Geheime Orte</span>
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <!-- Marker auf dieser Karte -->
+                    <div class="map-sidebar-section" style="flex: 1; overflow: hidden; display: flex; flex-direction: column;">
+                        <div class="map-sidebar-title">
+                            📍 Marker 
+                            <span class="map-marker-count" id="map-marker-count">0</span>
+                        </div>
+                        <div class="map-markers-list" id="map-markers-list">
+                            <!-- Dynamisch befüllt -->
+                        </div>
+                    </div>
+                    
+                    <!-- Legende -->
+                    <div class="map-sidebar-section map-legend">
+                        <div class="map-sidebar-title">💡 Tipps</div>
+                        <div class="map-legend-items">
+                            <div>🖱️ Doppelklick = Quick-Pin</div>
+                            <div>🖱️ Rechtsklick = Pin-Menü</div>
+                            <div>🔄 Doppelklick Marker = Bearbeiten</div>
+                            <div>⌨️ K = Karte kalibrieren</div>
+                            <div>⌨️ V/M/F/H/C = Werkzeuge</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- DATA VIEW -->
+        
+        </section>
+        <section id="view-data" class="view">
+            <div class="card">
+                <div class="card-title" style="margin-bottom: 12px;">📚 Kampagnen-Verwaltung</div>
+                <div class="campaign-list" id="campaign-list"></div>
+                <div class="form-grid" style="margin-top: 12px;">
+                    <div class="form-group"><label>Neue Kampagne</label><input type="text" id="new-campaign-name" placeholder="Kampagnenname"></div>
+                </div>
+                <div class="btn-group">
+                    <button class="btn" data-action="call" data-value="createCampaign">+ Kampagne erstellen</button>
+                    <button class="btn btn-danger" data-action="call" data-value="deleteCampaign">Aktive löschen</button>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-title" style="margin-bottom: 12px;">💾 Daten verwalten</div>
+                <div class="data-management-grid">
+                    <div class="data-management-section">
+                        <div class="data-section-title">📤 Export</div>
+                        <div class="data-section-desc">Speichere alle Kampagnendaten als JSON-Datei</div>
+                        <div class="btn-group">
+                            <button class="btn" data-action="call" data-value="exportAllDataAsFile">📁 Als Datei speichern</button>
+                            <button class="btn" data-action="call" data-value="copyData">📋 In Zwischenablage</button>
+                        </div>
+                    </div>
+                    <div class="data-management-section">
+                        <div class="data-section-title">📥 Import</div>
+                        <div class="data-section-desc">Lade Kampagnendaten aus einer JSON-Datei</div>
+                        <div class="btn-group">
+                            <button class="btn" data-action="trigger-click" data-value="import-file">📁 Datei auswählen</button>
+                            <input type="file" id="import-file" accept=".json" onchange="importDataGlobal()" style="display: none;">
+                        </div>
+                    </div>
+                    <div class="data-management-section">
+                        <div class="data-section-title">💾 Backups</div>
+                        <div class="data-section-desc">Automatische Sicherungen (letzte 5, alle 5 Min.)</div>
+                        <button class="btn" data-action="call" data-value="showBackupsModal">Backups anzeigen</button>
+                    </div>
+                    <div class="data-management-section">
+                        <div class="data-section-title">⚙️ Einstellungen</div>
+                        <div style="margin-top: 12px;">
+                            <button class="btn btn-sm" data-action="call" data-value="resetNavOrder">🔄 Navigation zurücksetzen</button>
+                            <span style="font-size: 0.8em; color: var(--text-dim); margin-left: 8px;">Tabs können per Drag & Drop verschoben werden</span>
+                        </div>
+                    </div>
+                    <div class="data-management-section">
+                        <div class="data-section-title">📝 Editor Features</div>
+                        <label style="display: flex; align-items: center; margin-top: 12px; cursor: pointer;">
+                            <input type="checkbox" id="markdown-shortcuts-toggle" style="margin-right: 8px;" checked>
+                            <span>Markdown Shortcuts aktivieren</span>
+                        </label>
+                        <div style="font-size: 0.8em; color: var(--text-dim); margin-left: 24px; margin-top: 4px;">
+                            Automatische Konvertierung: **bold**, *italic*, ~~strike~~, `code`
+                            <a href="#" data-action="show-modal" data-value="markdown-help-modal" style="margin-left: 8px; color: var(--gold);">❓ Hilfe</a>
+                        </div>
+                    </div>
+                </div>
+                <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border);">
+                    <button class="btn btn-danger" data-action="call" data-value="clearStorage">🗑️ Alle Daten löschen</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- DM SCREEN VIEW -->
+        <section id="view-dmscreen" class="view dmscreen-view">
+            <div class="dmscreen-header">
+                <div class="dmscreen-title">🎮 DM Screen <span class="dms-live-badge" title="Widgets aktualisieren sich automatisch">● Live</span></div>
+                <div class="dms-quick-bar" id="dms-quick-bar">
+                    <!-- Kompakte Quick Action Buttons im Header -->
+                </div>
+                <div class="dmscreen-actions">
+                    <div class="dms-config-wrapper">
+                        <button class="btn btn-sm" id="dms-profile-btn" data-action="dms-toggle-profiles" title="Layout-Profile">📋 Profile</button>
+                        <div class="dms-config-dropdown dms-profile-dropdown" id="dms-profile-dropdown">
+                            <div class="dms-config-header">Layout-Profile</div>
+                            <div class="dms-profile-list" id="dms-profile-list">
+                                <!-- Profile dynamisch -->
+                            </div>
+                        </div>
+                    </div>
+                    <div class="dms-config-wrapper">
+                        <button class="btn btn-sm" id="dms-config-btn" data-action="dms-toggle-config" title="Widgets konfigurieren">⚙️ Widgets</button>
+                        <div class="dms-config-dropdown" id="dms-config-dropdown">
+                            <div class="dms-config-header">Widgets anzeigen</div>
+                            <div class="dms-config-list" id="dms-config-list">
+                                <!-- Widget toggles dynamisch -->
+                            </div>
+                            <div class="dms-config-footer">
+                                <span class="dms-config-hint">Drag & Drop zum Sortieren</span>
+                            </div>
+                        </div>
+                    </div>
+                    <button class="btn btn-sm" data-action="call" data-value="resetDMScreenLayout" title="Layout zurücksetzen">🔄</button>
+                </div>
+            </div>
+            <div class="dmscreen-grid" id="dmscreen-grid">
+                <!-- Widgets werden dynamisch gerendert -->
+            </div>
+        </section>
+    </main>
+    
+    <!-- MODALS -->

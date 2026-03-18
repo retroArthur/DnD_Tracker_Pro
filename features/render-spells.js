@@ -318,7 +318,6 @@ function assignSpells() {
 // ============================================================
 // EXPORTS FOR GLOBAL ACCESS
 // ============================================================
-window.getSpellColor = getSpellColor;
 window.showSpellTooltip = showSpellTooltip;
 window.hideSpellTooltip = hideSpellTooltip;
 window.showAssignSpells = showAssignSpells;

@@ -96,7 +96,5 @@ function renderSpellSlotPips(charId) {
 // ============================================================
 // BACKWARD COMPATIBILITY EXPORTS
 // ============================================================
-window.getSpellSlots = getSpellSlots;
 window.toggleSpellSlot = toggleSpellSlot;
 window.restoreAllSpellSlots = restoreAllSpellSlots;
-window.renderSpellSlotPips = renderSpellSlotPips;

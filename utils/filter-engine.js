@@ -156,5 +156,3 @@ function sortByField(items, field, direction = 'asc') {
 
 // Export to global scope (non-ESM architecture)
 window.applyFilters = applyFilters;
-window.getFilterState = getFilterState;
-window.sortByField = sortByField;

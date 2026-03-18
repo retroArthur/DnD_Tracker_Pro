@@ -465,12 +465,8 @@ function showEncForm() {
 // ============================================================
 // EXPORTS FOR GLOBAL ACCESS
 // ============================================================
-window.selectedEncounterId = selectedEncounterId;
 window.renderEncounters = renderEncounters;
 window.selectEncounter = selectEncounter;
-window.showEncounterDetail = showEncounterDetail;
-window.clearEncounterDetail = clearEncounterDetail;
 window.setEncFilter = setEncFilter;
-window.toggleEncounter = toggleEncounter;
 window.toggleEncounterCard = toggleEncounterCard;
 window.showEncForm = showEncForm;

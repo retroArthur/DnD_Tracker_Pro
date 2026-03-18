@@ -413,9 +413,26 @@ const MARKDOWN_PATTERNS = ({
 });
 
 // ============================================================
-// WINDOW EXPORTS
+// NAMESPACE EXPORTS (neue Struktur)
 // ============================================================
-// Export all constants to global scope for use by other modules
+// D&D Spielregel-Konstanten
+window.DND_RULES = Object.freeze({
+    CONDITIONS, CONDITION_COLORS, DAMAGE_TYPES, SPELL_SCHOOLS,
+    ATTRIBUTES, SKILL_INFO, RARITIES, RARITY_LABELS, RARITY_COLORS,
+    COMBAT_CONSTANTS, INIT_CONSTANTS, COMBATANT_TYPES,
+    CATS, LINK_CATS, ORIGIN_LABELS, LOOT_TAG_LABELS, TAG_COLORS
+});
+
+// UI/App-Konstanten
+window.UI_CONSTANTS = Object.freeze({
+    UI_TIMING, MAP_CONSTANTS, FILE_UPLOAD_LIMITS,
+    MARKER_ICONS, ENTITY_ICONS, LINK_ICONS,
+    ENTITY_TYPE_NAMES, MARKDOWN_PATTERNS
+});
+
+// ============================================================
+// LEGACY EINZELEXPORTS (abwaertskompatibel, werden schrittweise entfernt)
+// ============================================================
 window.CATS = CATS;
 window.LINK_CATS = LINK_CATS;
 window.CONDITIONS = CONDITIONS;

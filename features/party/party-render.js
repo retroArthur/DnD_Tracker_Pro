@@ -369,8 +369,4 @@ function renderPartyOverview() {
 // EXPORTS FOR GLOBAL ACCESS
 // ============================================================
 window.renderParty = renderParty;
-window.renderPartyRoster = renderPartyRoster;
-window.renderCharacterCard = renderCharacterCard;
-window.renderCompactSpellSlots = renderCompactSpellSlots;
 window.scrollToChar = scrollToChar;
-window.renderPartyOverview = renderPartyOverview;

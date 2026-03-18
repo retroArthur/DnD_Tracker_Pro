@@ -393,19 +393,14 @@ function onRoadmapViewHide() {
 // ============================================================
 // EXPORTS FOR GLOBAL ACCESS
 // ============================================================
-window.initRoadmap = initRoadmap;
 window.renderRoadmap = renderRoadmap;
 window.roadmapZoomIn = roadmapZoomIn;
 window.roadmapZoomOut = roadmapZoomOut;
 window.roadmapResetView = roadmapResetView;
 window.startEventDrag = startEventDrag;
 window.startConnectionMode = startConnectionMode;
-window.cancelConnectionMode = cancelConnectionMode;
-window.handleEventClickForConnection = handleEventClickForConnection;
 window.handlePinClickForConnection = handlePinClickForConnection;
 window.onRoadmapViewShow = onRoadmapViewShow;
-window.onRoadmapViewHide = onRoadmapViewHide;
 window.getEventTypeIcon = getEventTypeIcon;
 window.getEventTypeColor = getEventTypeColor;
-window.getConnectionTypeColor = getConnectionTypeColor;
 window.roadmapConnectionMode = roadmapConnectionMode;

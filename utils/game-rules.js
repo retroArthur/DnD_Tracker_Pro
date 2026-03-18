@@ -112,10 +112,4 @@ function calculateSpellAttackBonus(profBonus, abilityModifier) {
 }
 
 // Export to global scope (non-ESM architecture)
-window.getAbilityModifier = getAbilityModifier;
 window.getProficiencyBonus = getProficiencyBonus;
-window.formatModifier = formatModifier;
-window.calculateLevelUpHP = calculateLevelUpHP;
-window.getClassHitDie = getClassHitDie;
-window.calculateSpellSaveDC = calculateSpellSaveDC;
-window.calculateSpellAttackBonus = calculateSpellAttackBonus;

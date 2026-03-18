@@ -7,13 +7,10 @@
 
 // Import required functions from global scope
 var D = window.D;
-var EntityLookup = window.EntityLookup;
 var esc = window.esc;
 var showModal = window.showModal;
 var hideModal = window.hideModal;
 var showToast = window.showToast;
-var SHOP_TYPES = window.SHOP_TYPES;
-var SHOP_ITEM_CATEGORIES = window.SHOP_ITEM_CATEGORIES;
 var parseCurrency = window.parseCurrency;
 var formatCurrency = window.formatCurrency;
 

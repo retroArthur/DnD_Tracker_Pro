@@ -284,6 +284,4 @@ function renderMarkdownInContent(html) {
 // ============================================================
 window.htmlToMarkdown = htmlToMarkdown;
 window.markdownToHtml = markdownToHtml;
-window.convertNodeToMarkdown = convertNodeToMarkdown;
-window.convertTableToMarkdown = convertTableToMarkdown;
 window.renderMarkdownInContent = renderMarkdownInContent;

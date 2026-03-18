@@ -741,26 +741,15 @@ function initMindmapPan() {
 // EXPORTS FOR GLOBAL ACCESS
 // ============================================================
 window.renderMindmap = renderMindmap;
-window.showAddNodeModal = showAddNodeModal;
 window.editNode = editNode;
 window.saveNodeFromModal = saveNodeFromModal;
 window.selectNodeType = selectNodeType;
 window.deleteSelectedNode = deleteSelectedNode;
-window.editSelectedNode = editSelectedNode;
 window.deleteNodeById = deleteNodeById;
-window.startConnectMode = startConnectMode;
-window.cancelConnectMode = cancelConnectMode;
-window.showConnectionModal = showConnectionModal;
 window.selectConnType = selectConnType;
 window.confirmConnection = confirmConnection;
 window.zoomMindmap = zoomMindmap;
-window.resetZoom = resetZoom;
-window.centerView = centerView;
-window.autoLayoutNodes = autoLayoutNodes;
 window.filterMindmapNodes = filterMindmapNodes;
-window.showImportNodesModal = showImportNodesModal;
 window.populateImportNodesList = populateImportNodesList;
 window.importSelectedNodes = importSelectedNodes;
 window.importAllNodes = importAllNodes;
-window.exportMindmapImage = exportMindmapImage;
-window.initMindmapPan = initMindmapPan;

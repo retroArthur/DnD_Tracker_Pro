@@ -451,6 +451,4 @@ function initRoadmapRendering() {
 window.renderRoadmapConnections = renderRoadmapConnections;
 window.renderRoadmapEvents = renderRoadmapEvents;
 window.renderRoadmapToolbar = renderRoadmapToolbar;
-window.renderRoadmapControls = renderRoadmapControls;
-window.setupRoadmapSVGMarkers = setupRoadmapSVGMarkers;
 window.initRoadmapRendering = initRoadmapRendering;

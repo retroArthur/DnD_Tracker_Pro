@@ -5,8 +5,6 @@
 // ============================================================
 // DICE FAVORITES
 // ============================================================
-var APP_CONFIG = window.APP_CONFIG;
-var StorageAPI = window.StorageAPI;
 var rollCustomDice = window.rollCustomDice;
 var DICE_FAV_KEY = APP_CONFIG.DICE_FAV_KEY;
 function getDiceFavorites() {
@@ -70,7 +68,6 @@ function rollFavoriteDice(index) {
 // ============================================================
 // BACKWARD COMPATIBILITY EXPORTS
 // ============================================================
-window.getDiceFavorites = getDiceFavorites;
 window.renderDiceFavorites = renderDiceFavorites;
 window.addDiceFavorite = addDiceFavorite;
 window.deleteDiceFavorite = deleteDiceFavorite;

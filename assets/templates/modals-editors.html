@@ -1,0 +1,768 @@
+    <!-- Markdown Help Modal -->
+    <div class="modal-overlay" id="markdown-help-modal">
+        <div class="modal" style="max-width: 600px;">
+            <div class="modal-header">
+                <h3>📝 Markdown Syntax-Hilfe</h3>
+                <button class="modal-close" data-action="hide-modal" data-value="markdown-help-modal">×</button>
+            </div>
+            <div class="modal-body" style="padding: 20px;">
+                <p style="color: var(--text-dim); margin-bottom: 20px;">
+                    Markdown-Shortcuts ermöglichen schnelle Formatierung in allen Editoren.
+                </p>
+
+                <div style="display: grid; gap: 16px;">
+                    <!-- Text Formatting -->
+                    <div style="background: var(--bg-elevated); border-radius: 8px; padding: 16px;">
+                        <h4 style="margin: 0 0 12px 0; color: var(--gold);">Textformatierung</h4>
+                        <table style="width: 100%; color: var(--text-dim); font-size: 14px;">
+                            <tr style="border-bottom: 1px solid var(--border);">
+                                <td style="padding: 8px;"><code>**fett**</code></td>
+                                <td style="padding: 8px;">→</td>
+                                <td style="padding: 8px;"><b>fett</b></td>
+                            </tr>
+                            <tr style="border-bottom: 1px solid var(--border);">
+                                <td style="padding: 8px;"><code>*kursiv*</code></td>
+                                <td style="padding: 8px;">→</td>
+                                <td style="padding: 8px;"><i>kursiv</i></td>
+                            </tr>
+                            <tr style="border-bottom: 1px solid var(--border);">
+                                <td style="padding: 8px;"><code>~~durchgestrichen~~</code></td>
+                                <td style="padding: 8px;">→</td>
+                                <td style="padding: 8px;"><s>durchgestrichen</s></td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 8px;"><code>`code`</code></td>
+                                <td style="padding: 8px;">→</td>
+                                <td style="padding: 8px;"><code style="background: var(--bg); padding: 2px 4px; border-radius: 3px;">code</code></td>
+                            </tr>
+                        </table>
+                    </div>
+
+                    <!-- Import/Export -->
+                    <div style="background: var(--bg-elevated); border-radius: 8px; padding: 16px;">
+                        <h4 style="margin: 0 0 12px 0; color: var(--gold);">Import/Export</h4>
+                        <p style="color: var(--text-dim); font-size: 14px; margin: 0;">
+                            <b>Export:</b> Exportiere Zauber, NPCs, Quests als .md-Dateien.<br>
+                            → Öffne ein Entity zum Bearbeiten und klicke "📄 Export"
+                        </p>
+                        <p style="color: var(--text-dim); font-size: 14px; margin: 12px 0 0 0;">
+                            <b>Import:</b> Importiere Markdown-Dateien zurück.<br>
+                            → Öffne ein Entity und klicke "📥 Import"
+                        </p>
+                    </div>
+
+                    <!-- Settings -->
+                    <div style="background: var(--bg-elevated); border-radius: 8px; padding: 16px;">
+                        <h4 style="margin: 0 0 12px 0; color: var(--gold);">Einstellungen</h4>
+                        <p style="color: var(--text-dim); font-size: 14px; margin: 0;">
+                            Markdown-Shortcuts können im <b>Data-Tab</b> unter "📝 Editor Features" aktiviert/deaktiviert werden.
+                        </p>
+                    </div>
+                </div>
+
+                <div style="margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--border); text-align: center;">
+                    <button class="btn" data-action="hide-modal" data-value="markdown-help-modal">Schließen</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Schwebende Mini-Editor-Toolbar (Enhanced v2) -->
+    <div class="floating-toolbar" id="floating-toolbar">
+        <div class="toolbar-row">
+            <button type="button" class="editor-btn" data-floating-action="bold" title="Fett"><b>B</b><span class="kbd-hint">Strg+B</span></button>
+            <button type="button" class="editor-btn" data-floating-action="italic" title="Kursiv"><i>I</i><span class="kbd-hint">Strg+I</span></button>
+            <button type="button" class="editor-btn" data-floating-action="underline" title="Unterstrichen"><u>U</u><span class="kbd-hint">Strg+U</span></button>
+            <button type="button" class="editor-btn" data-floating-action="strikethrough" title="Durchgestrichen"><s>S</s></button>
+            <span class="toolbar-separator"></span>
+            <button type="button" class="editor-btn" data-floating-action="link" title="Link einfügen">🔗<span class="kbd-hint">Strg+K</span></button>
+            <button type="button" class="editor-btn" data-floating-action="list" title="Liste">☰</button>
+            <button type="button" class="editor-btn" data-floating-action="border" title="Rahmen">◻</button>
+            <button type="button" class="editor-btn" data-floating-action="table" title="Tabelle">📊<span class="kbd-hint">Strg+⇧+T</span></button>
+            <span class="toolbar-separator"></span>
+            <select class="editor-select" data-floating-action="readAloud" title="Vorlese-Text">
+                <option value="">📖 Vorlese</option>
+                <option value="parchment">📜 Pergament</option>
+                <option value="crimson">🍷 Karmesin</option>
+                <option value="violet">🔮 Violett</option>
+                <option value="sage">🌿 Salbei</option>
+                <option value="sky">☁️ Himmel</option>
+                <option value="slate">🪨 Schiefer</option>
+            </select>
+            <select class="editor-select" data-floating-action="font" title="Schriftart">
+                <option value="arial">Arial</option>
+                <option value="serif">Serif</option>
+                <option value="mono">Mono</option>
+                <option value="roboto">Roboto</option>
+                <option value="inter">Inter</option>
+                <option value="poppins">Poppins</option>
+                <option value="source-sans">Source Sans</option>
+            </select>
+            <select class="editor-select" data-floating-action="fontSize" title="Größe">
+                <option value="0.8em">Klein</option>
+                <option value="1em" selected>Normal</option>
+                <option value="1.2em">Groß</option>
+                <option value="1.5em">Sehr groß</option>
+            </select>
+        </div>
+        <div class="color-row">
+            <div class="color-swatch" data-floating-action="highlight" data-color="#fbbf24" style="background:#fbbf24;" title="Gold"></div>
+            <div class="color-swatch" data-floating-action="highlight" data-color="#22d3ee" style="background:#22d3ee;" title="Cyan"></div>
+            <div class="color-swatch" data-floating-action="highlight" data-color="#ef4444" style="background:#ef4444;" title="Rot"></div>
+            <div class="color-swatch" data-floating-action="highlight" data-color="#22c55e" style="background:#22c55e;" title="Grün"></div>
+            <div class="color-swatch" data-floating-action="highlight" data-color="#a855f7" style="background:#a855f7;" title="Lila"></div>
+            <div class="color-swatch" data-floating-action="highlight" data-color="#f97316" style="background:#f97316;" title="Orange"></div>
+            <div class="color-swatch" data-floating-action="highlight" data-color="#ec4899" style="background:#ec4899;" title="Pink"></div>
+            <div class="color-swatch" data-floating-action="highlight" data-color="#06b6d4" style="background:#06b6d4;" title="Türkis"></div>
+            <div class="color-swatch" data-floating-action="highlight" data-color="transparent" style="background:transparent; border:1px dashed #666;" title="Keine Farbe"></div>
+            <span style="flex:1;"></span>
+            <button type="button" class="editor-btn" data-floating-action="removeFormat" title="Formatierung entfernen" style="color:#888; font-size:11px;">✕ Format</button>
+        </div>
+        <div class="swipe-indicator">← Wischen für mehr →</div>
+    </div>
+
+    <!-- Kontext-Toolbar für Tabellen -->
+    <div class="table-context-toolbar" id="table-context-toolbar">
+        <button type="button" class="editor-btn" data-table-action="addRow" title="Zeile hinzufügen">+ Zeile</button>
+        <button type="button" class="editor-btn" data-table-action="addCol" title="Spalte hinzufügen">+ Spalte</button>
+        <button type="button" class="editor-btn" data-table-action="deleteRow" title="Zeile löschen">🗑️ Zeile</button>
+        <button type="button" class="editor-btn" data-table-action="deleteCol" title="Spalte löschen">🗑️ Spalte</button>
+        <button type="button" class="editor-btn" data-table-action="deleteTable" title="Tabelle löschen" style="color:#ef4444;">Tabelle ✕</button>
+    </div>
+
+    <!-- Kontext-Toolbar für Links -->
+    <div class="link-context-toolbar" id="link-context-toolbar">
+        <span class="link-url" id="link-context-url">🔗</span>
+        <button type="button" class="editor-btn" data-link-action="open" title="Link öffnen">Öffnen</button>
+        <button type="button" class="editor-btn" data-link-action="edit" title="Link bearbeiten">Bearbeiten</button>
+        <button type="button" class="editor-btn" data-link-action="remove" title="Link entfernen" style="color:#ef4444;">✕</button>
+    </div>
+
+    <!-- Kalender Modal -->
+
+    <!-- Kalender Ereignis hinzufügen Modal -->
+
+    <!-- Schnell-Referenz Toggle (Kompakt) -->
+    <div class="qref-fab" data-action="toggle-quick-ref" title="Schnell-Referenz">
+        <span class="qref-fab-icon">📖</span>
+    </div>
+
+    <!-- Schnell-Referenz Panel (Redesigned v2) -->
+    <div class="qref-panel" id="quick-ref-panel">
+        <!-- Header -->
+        <div class="qref-header">
+            <div class="qref-title">
+                <span class="qref-title-icon">📖</span>
+                <span>Referenz</span>
+                <span class="qref-kbd-hint">?</span>
+            </div>
+            <div class="qref-header-actions">
+                <button class="qref-btn" data-action="add-quick-ref-entry" title="Eigenen Eintrag">+</button>
+                <button class="qref-btn" data-action="toggle-quick-ref" title="Schließen">×</button>
+            </div>
+        </div>
+
+        <!-- Search Bar (NEU) -->
+        <div class="qref-search">
+            <span class="qref-search-icon">🔍</span>
+            <input type="text" id="qref-search-input" placeholder="Suchen... (/)" data-action="qref-search">
+        </div>
+
+        <!-- Tabs -->
+        <div class="qref-tabs">
+            <button class="qref-tab active" data-action="qref-tab" data-value="combat">
+                <span class="qref-tab-icon">⚔️</span>Kampf
+            </button>
+            <button class="qref-tab" data-action="qref-tab" data-value="rules">
+                <span class="qref-tab-icon">📜</span>Regeln
+            </button>
+            <button class="qref-tab" data-action="qref-tab" data-value="world">
+                <span class="qref-tab-icon">🌍</span>Welt
+            </button>
+            <button class="qref-tab" data-action="qref-tab" data-value="custom">
+                <span class="qref-tab-icon">📌</span>Eigene
+            </button>
+        </div>
+
+        <!-- Content -->
+        <div class="qref-content">
+            <!-- Combat Tab -->
+            <div class="qref-tab-content active" id="qref-combat">
+                <!-- Zustände - Interaktiv -->
+                <div class="qref-section collapsed" data-qref-section="conditions">
+                    <div class="qref-section-header" data-action="toggle-qref-section">
+                        <span class="qref-section-title">🎭 Zustände</span>
+                        <span class="qref-collapse-icon">▼</span>
+                    </div>
+                    <div class="qref-section-body">
+                        <div class="qref-condition-chips" id="qref-condition-chips">
+                            <span class="qref-condition" data-condition="blinded" data-action="show-condition-detail">Geblendet<button class="qref-apply-btn" data-action="apply-qref-condition" data-value="blinded" title="Auf Combatant anwenden">+</button></span>
+                            <span class="qref-condition" data-condition="charmed" data-action="show-condition-detail">Bezaubert<button class="qref-apply-btn" data-action="apply-qref-condition" data-value="charmed" title="Auf Combatant anwenden">+</button></span>
+                            <span class="qref-condition" data-condition="frightened" data-action="show-condition-detail">Verängstigt<button class="qref-apply-btn" data-action="apply-qref-condition" data-value="frightened" title="Auf Combatant anwenden">+</button></span>
+                            <span class="qref-condition" data-condition="grappled" data-action="show-condition-detail">Gepackt<button class="qref-apply-btn" data-action="apply-qref-condition" data-value="grappled" title="Auf Combatant anwenden">+</button></span>
+                            <span class="qref-condition" data-condition="incapacitated" data-action="show-condition-detail">Kampfunfähig<button class="qref-apply-btn" data-action="apply-qref-condition" data-value="incapacitated" title="Auf Combatant anwenden">+</button></span>
+                            <span class="qref-condition" data-condition="invisible" data-action="show-condition-detail">Unsichtbar<button class="qref-apply-btn" data-action="apply-qref-condition" data-value="invisible" title="Auf Combatant anwenden">+</button></span>
+                            <span class="qref-condition danger" data-condition="paralyzed" data-action="show-condition-detail">Gelähmt<button class="qref-apply-btn" data-action="apply-qref-condition" data-value="paralyzed" title="Auf Combatant anwenden">+</button></span>
+                            <span class="qref-condition" data-condition="poisoned" data-action="show-condition-detail">Vergiftet<button class="qref-apply-btn" data-action="apply-qref-condition" data-value="poisoned" title="Auf Combatant anwenden">+</button></span>
+                            <span class="qref-condition" data-condition="prone" data-action="show-condition-detail">Liegend<button class="qref-apply-btn" data-action="apply-qref-condition" data-value="prone" title="Auf Combatant anwenden">+</button></span>
+                            <span class="qref-condition" data-condition="restrained" data-action="show-condition-detail">Festgesetzt<button class="qref-apply-btn" data-action="apply-qref-condition" data-value="restrained" title="Auf Combatant anwenden">+</button></span>
+                            <span class="qref-condition danger" data-condition="stunned" data-action="show-condition-detail">Betäubt<button class="qref-apply-btn" data-action="apply-qref-condition" data-value="stunned" title="Auf Combatant anwenden">+</button></span>
+                            <span class="qref-condition danger" data-condition="unconscious" data-action="show-condition-detail">Bewusstlos<button class="qref-apply-btn" data-action="apply-qref-condition" data-value="unconscious" title="Auf Combatant anwenden">+</button></span>
+                        </div>
+                        <div class="qref-condition-detail" id="qref-condition-detail">
+                            <div class="qref-detail-title">Klicke auf einen Zustand</div>
+                            <div class="qref-detail-desc">für Details...</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Aktionen -->
+                <div class="qref-section collapsed" data-qref-section="actions">
+                    <div class="qref-section-header" data-action="toggle-qref-section">
+                        <span class="qref-section-title">⚔️ Aktionen</span>
+                        <span class="qref-collapse-icon">▼</span>
+                    </div>
+                    <div class="qref-section-body">
+                        <div class="qref-actions-grid">
+                            <div class="qref-action-item"><span class="qref-action-name">Angriff</span><span class="qref-action-desc">1 Angriff</span></div>
+                            <div class="qref-action-item"><span class="qref-action-name">Sprinten</span><span class="qref-action-desc">×2 BWG</span></div>
+                            <div class="qref-action-item"><span class="qref-action-name">Ausweichen</span><span class="qref-action-desc">Nachteil ↓</span></div>
+                            <div class="qref-action-item"><span class="qref-action-name">Rückzug</span><span class="qref-action-desc">Kein GA</span></div>
+                            <div class="qref-action-item"><span class="qref-action-name">Helfen</span><span class="qref-action-desc">Vorteil ↑</span></div>
+                            <div class="qref-action-item"><span class="qref-action-name">Verstecken</span><span class="qref-action-desc">Heimlichk.</span></div>
+                            <div class="qref-action-item"><span class="qref-action-name">Bereithalten</span><span class="qref-action-desc">Reaktion</span></div>
+                            <div class="qref-action-item"><span class="qref-action-name">Suchen</span><span class="qref-action-desc">Wahrn.</span></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Schadensarten (NEU) -->
+                <div class="qref-section collapsed" data-qref-section="damage-types">
+                    <div class="qref-section-header" data-action="toggle-qref-section">
+                        <span class="qref-section-title">💥 Schadensarten</span>
+                        <span class="qref-new-badge">NEU</span>
+                        <span class="qref-collapse-icon">▼</span>
+                    </div>
+                    <div class="qref-section-body">
+                        <div class="qref-damage-types">
+                            <span class="qref-dmg physical">Wucht</span>
+                            <span class="qref-dmg physical">Stich</span>
+                            <span class="qref-dmg physical">Hieb</span>
+                            <span class="qref-dmg fire">🔥 Feuer</span>
+                            <span class="qref-dmg cold">❄️ Kälte</span>
+                            <span class="qref-dmg lightning">⚡ Blitz</span>
+                            <span class="qref-dmg thunder">🔊 Donner</span>
+                            <span class="qref-dmg acid">🧪 Säure</span>
+                            <span class="qref-dmg poison">☠️ Gift</span>
+                            <span class="qref-dmg psychic">🧠 Psychisch</span>
+                            <span class="qref-dmg radiant">✨ Strahlend</span>
+                            <span class="qref-dmg necrotic">💀 Nekrotisch</span>
+                            <span class="qref-dmg force">💫 Energie</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Deckung -->
+                <div class="qref-section collapsed" data-qref-section="cover">
+                    <div class="qref-section-header" data-action="toggle-qref-section">
+                        <span class="qref-section-title">🛡️ Deckung</span>
+                        <span class="qref-collapse-icon">▼</span>
+                    </div>
+                    <div class="qref-section-body">
+                        <div class="qref-cover-row">
+                            <span class="qref-cover-badge">½ = <strong>+2</strong></span>
+                            <span class="qref-cover-badge">¾ = <strong>+5</strong></span>
+                            <span class="qref-cover-badge gold">Voll = Immun</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Erschöpfung -->
+                <div class="qref-section collapsed" data-qref-section="exhaustion">
+                    <div class="qref-section-header" data-action="toggle-qref-section">
+                        <span class="qref-section-title">😴 Erschöpfung</span>
+                        <span class="qref-collapse-icon">▼</span>
+                    </div>
+                    <div class="qref-section-body">
+                        <div class="qref-exhaustion">
+                            <span class="qref-ex" title="Nachteil auf Fähigkeitswürfe">1</span>
+                            <span class="qref-ex" title="Geschwindigkeit halbiert">2</span>
+                            <span class="qref-ex warn" title="Nachteil auf Angriffe/Rettung">3</span>
+                            <span class="qref-ex warn" title="HP-Maximum halbiert">4</span>
+                            <span class="qref-ex danger" title="Geschwindigkeit 0">5</span>
+                            <span class="qref-ex danger" title="Tod">6☠</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Rules Tab -->
+            <div class="qref-tab-content" id="qref-rules">
+                <!-- SG -->
+                <div class="qref-section collapsed" data-qref-section="dc">
+                    <div class="qref-section-header" data-action="toggle-qref-section">
+                        <span class="qref-section-title">🎲 Schwierigkeitsgrad</span>
+                        <span class="qref-collapse-icon">▼</span>
+                    </div>
+                    <div class="qref-section-body">
+                        <div class="qref-sg-row">
+                            <span class="qref-sg" data-sg="5">5<small>Trivial</small></span>
+                            <span class="qref-sg" data-sg="10">10<small>Leicht</small></span>
+                            <span class="qref-sg" data-sg="15">15<small>Mittel</small></span>
+                            <span class="qref-sg" data-sg="20">20<small>Schwer</small></span>
+                            <span class="qref-sg" data-sg="25">25<small>Hart</small></span>
+                            <span class="qref-sg" data-sg="30">30<small>Episch</small></span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Fallschaden - Klickbar -->
+                <div class="qref-section collapsed" data-qref-section="fall-damage">
+                    <div class="qref-section-header" data-action="toggle-qref-section">
+                        <span class="qref-section-title">⬇️ Fallschaden</span>
+                        <span class="qref-collapse-icon">▼</span>
+                    </div>
+                    <div class="qref-section-body">
+                        <div class="qref-fall-info">
+                            <span class="qref-dice-formula" data-action="roll-qref-dice" data-dice="1d6">1d6</span>
+                            <span class="qref-fall-text">pro 3m (Max: 20d6)</span>
+                        </div>
+                        <div class="qref-fall-quick">
+                            <span class="qref-dice-btn" data-action="roll-qref-dice" data-dice="1d6" title="3m Fallschaden">3m</span>
+                            <span class="qref-dice-btn" data-action="roll-qref-dice" data-dice="2d6" title="6m Fallschaden">6m</span>
+                            <span class="qref-dice-btn" data-action="roll-qref-dice" data-dice="3d6" title="9m Fallschaden">9m</span>
+                            <span class="qref-dice-btn" data-action="roll-qref-dice" data-dice="5d6" title="15m Fallschaden">15m</span>
+                            <span class="qref-dice-btn" data-action="roll-qref-dice" data-dice="10d6" title="30m Fallschaden">30m</span>
+                            <span class="qref-dice-btn" data-action="roll-qref-dice" data-dice="20d6" title="60m Fallschaden">60m</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Lichtquellen -->
+                <div class="qref-section collapsed" data-qref-section="light">
+                    <div class="qref-section-header" data-action="toggle-qref-section">
+                        <span class="qref-section-title">💡 Licht</span>
+                        <span class="qref-collapse-icon">▼</span>
+                    </div>
+                    <div class="qref-section-body">
+                        <div class="qref-grid cols-3">
+                            <div class="qref-item"><span class="qref-label">Kerze</span><span class="qref-value">1.5m</span></div>
+                            <div class="qref-item"><span class="qref-label">Fackel</span><span class="qref-value">6m</span></div>
+                            <div class="qref-item"><span class="qref-label">Laterne</span><span class="qref-value">9m</span></div>
+                            <div class="qref-item"><span class="qref-label">Licht ✨</span><span class="qref-value">6m</span></div>
+                            <div class="qref-item"><span class="qref-label">Dunkelsicht</span><span class="qref-value">18m</span></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Proben -->
+                <div class="qref-section collapsed" data-qref-section="checks">
+                    <div class="qref-section-header" data-action="toggle-qref-section">
+                        <span class="qref-section-title">🎯 Typische Proben</span>
+                        <span class="qref-collapse-icon">▼</span>
+                    </div>
+                    <div class="qref-section-body">
+                        <div class="qref-mini-table">
+                            <div class="qref-row"><span>Tür eintreten</span><span class="attr-str">STR</span></div>
+                            <div class="qref-row"><span>Schloss knacken</span><span class="attr-dex">DEX</span></div>
+                            <div class="qref-row"><span>Schleichen</span><span class="attr-dex">DEX</span></div>
+                            <div class="qref-row"><span>Gift erkennen</span><span class="attr-int">INT</span></div>
+                            <div class="qref-row"><span>Fährte lesen</span><span class="attr-wis">WIS</span></div>
+                            <div class="qref-row"><span>Lüge erkennen</span><span class="attr-wis">WIS</span></div>
+                            <div class="qref-row"><span>Überzeugen</span><span class="attr-cha">CHA</span></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Heilung -->
+                <div class="qref-section collapsed" data-qref-section="rest">
+                    <div class="qref-section-header" data-action="toggle-qref-section">
+                        <span class="qref-section-title">⚕️ Rasten</span>
+                        <span class="qref-collapse-icon">▼</span>
+                    </div>
+                    <div class="qref-section-body">
+                        <div class="qref-rest">
+                            <div class="qref-rest-item">
+                                <span class="qref-rest-type">Kurz</span>
+                                <span class="qref-rest-info">1h • Trefferwürfel + KON</span>
+                            </div>
+                            <div class="qref-rest-item">
+                                <span class="qref-rest-type long">Lang</span>
+                                <span class="qref-rest-info">8h • Alle HP, ½ Trefferwürfel</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Spell Components (NEU) -->
+                <div class="qref-section collapsed" data-qref-section="spell-comp">
+                    <div class="qref-section-header" data-action="toggle-qref-section">
+                        <span class="qref-section-title">✨ Zauberkomponenten</span>
+                        <span class="qref-new-badge">NEU</span>
+                        <span class="qref-collapse-icon">▼</span>
+                    </div>
+                    <div class="qref-section-body">
+                        <div class="qref-spell-comp">
+                            <div class="qref-comp"><span class="qref-comp-letter">V</span><span class="qref-comp-name">Verbal</span><span class="qref-comp-desc">Sprechen</span></div>
+                            <div class="qref-comp"><span class="qref-comp-letter">S</span><span class="qref-comp-name">Somatisch</span><span class="qref-comp-desc">Gesten</span></div>
+                            <div class="qref-comp"><span class="qref-comp-letter">M</span><span class="qref-comp-name">Material</span><span class="qref-comp-desc">Fokus/Beutel</span></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- World Tab -->
+            <div class="qref-tab-content" id="qref-world">
+                <!-- Währung -->
+                <div class="qref-section collapsed" data-qref-section="currency">
+                    <div class="qref-section-header" data-action="toggle-qref-section">
+                        <span class="qref-section-title">💰 Währung</span>
+                        <span class="qref-collapse-icon">▼</span>
+                    </div>
+                    <div class="qref-section-body">
+                        <div class="qref-currency">
+                            <span class="qref-coin km" title="0.01 GM">KM</span>
+                            <span class="qref-arrow">→</span>
+                            <span class="qref-coin sm" title="0.1 GM">SM</span>
+                            <span class="qref-arrow">→</span>
+                            <span class="qref-coin gm" title="1 GM">GM</span>
+                            <span class="qref-arrow">→</span>
+                            <span class="qref-coin pm" title="10 GM">PM</span>
+                        </div>
+                        <div class="qref-note center">10:1 Umrechnung</div>
+                    </div>
+                </div>
+
+                <!-- Reise -->
+                <div class="qref-section collapsed" data-qref-section="travel">
+                    <div class="qref-section-header" data-action="toggle-qref-section">
+                        <span class="qref-section-title">🚶 Reisegeschwindigkeit</span>
+                        <span class="qref-collapse-icon">▼</span>
+                    </div>
+                    <div class="qref-section-body">
+                        <div class="qref-travel">
+                            <div class="qref-travel-row">
+                                <span class="qref-travel-pace fast">Schnell</span>
+                                <span class="qref-travel-dist">6 km/h • 45 km/Tag</span>
+                                <span class="qref-travel-note">-5 Wahrn.</span>
+                            </div>
+                            <div class="qref-travel-row">
+                                <span class="qref-travel-pace">Normal</span>
+                                <span class="qref-travel-dist">5 km/h • 36 km/Tag</span>
+                            </div>
+                            <div class="qref-travel-row">
+                                <span class="qref-travel-pace slow">Langsam</span>
+                                <span class="qref-travel-dist">3 km/h • 27 km/Tag</span>
+                                <span class="qref-travel-note">Verstecken</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Einheiten-Umrechner -->
+                <div class="qref-section collapsed" data-qref-section="converter">
+                    <div class="qref-section-header" data-action="toggle-qref-section">
+                        <span class="qref-section-title">📏 Einheiten-Umrechner</span>
+                        <span class="qref-collapse-icon">▼</span>
+                    </div>
+                    <div class="qref-section-body">
+                        <div class="qref-converter">
+                            <div class="qref-converter-row">
+                                <input type="number" id="qref-conv-metric" class="qref-conv-input" placeholder="0" oninput="convertUnitsMetric()">
+                                <select id="qref-conv-metric-unit" class="qref-conv-select" onchange="convertUnitsMetric()">
+                                    <option value="cm">cm</option>
+                                    <option value="m" selected>m</option>
+                                    <option value="km">km</option>
+                                </select>
+                            </div>
+                            <div class="qref-converter-arrow">⇅</div>
+                            <div class="qref-converter-row">
+                                <input type="number" id="qref-conv-imperial" class="qref-conv-input" placeholder="0" oninput="convertUnitsImperial()">
+                                <select id="qref-conv-imperial-unit" class="qref-conv-select" onchange="convertUnitsImperial()">
+                                    <option value="in">inch</option>
+                                    <option value="ft" selected>feet</option>
+                                    <option value="mi">mile</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="qref-note center" style="margin-top: 8px;">1m ≈ 3ft • 1km ≈ 0.6mi • 1in ≈ 2.5cm</div>
+                    </div>
+                </div>
+
+                <!-- Taverne -->
+                <div class="qref-section collapsed" data-qref-section="tavern">
+                    <div class="qref-section-header" data-action="toggle-qref-section">
+                        <span class="qref-section-title">🍺 Taverne</span>
+                        <span class="qref-collapse-icon">▼</span>
+                    </div>
+                    <div class="qref-section-body">
+                        <div class="qref-grid cols-2">
+                            <div class="qref-item"><span class="qref-label">Bier</span><span class="qref-value">4 KM</span></div>
+                            <div class="qref-item"><span class="qref-label">Wein</span><span class="qref-value">2 SM</span></div>
+                            <div class="qref-item"><span class="qref-label">Mahlzeit</span><span class="qref-value">1-5 SM</span></div>
+                            <div class="qref-item"><span class="qref-label">Zimmer</span><span class="qref-value">5 SM - 2 GM</span></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Heilung Kosten -->
+                <div class="qref-section collapsed" data-qref-section="healing-cost">
+                    <div class="qref-section-header" data-action="toggle-qref-section">
+                        <span class="qref-section-title">⚕️ Heilung (Kosten)</span>
+                        <span class="qref-collapse-icon">▼</span>
+                    </div>
+                    <div class="qref-section-body">
+                        <div class="qref-grid cols-2">
+                            <div class="qref-item"><span class="qref-label">Heiltrank</span><span class="qref-value gold">50 GM</span></div>
+                            <div class="qref-item"><span class="qref-label">Antitoxin</span><span class="qref-value">50 GM</span></div>
+                            <div class="qref-item"><span class="qref-label">Fluch brechen</span><span class="qref-value">90-450 GM</span></div>
+                            <div class="qref-item"><span class="qref-label">Wiederbelebung</span><span class="qref-value gold">1.000+ GM</span></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Custom Tab -->
+            <div class="qref-tab-content" id="qref-custom">
+                <div id="quick-ref-custom"></div>
+                <div class="qref-empty" id="qref-custom-empty">
+                    <div class="qref-empty-icon">📌</div>
+                    <div class="qref-empty-text">Keine eigenen Einträge</div>
+                    <button class="qref-btn-add" data-action="add-quick-ref-entry">+ Eintrag erstellen</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Schnell-Referenz Eintrag Modal -->
+    <div class="modal-overlay" id="quick-ref-entry-modal">
+        <div class="modal" style="max-width: 600px;">
+            <div class="modal-header">
+                <span class="modal-title">📝 <span id="quick-ref-modal-title">Eintrag hinzufügen</span></span>
+                <button class="btn btn-sm" data-action="hide-modal" data-value="quick-ref-entry-modal">✕</button>
+            </div>
+            <input type="hidden" id="quick-ref-edit-id">
+            <div class="form-group">
+                <label>Titel</label>
+                <input type="text" id="quick-ref-entry-title" placeholder="z.B. Hausregeln, Wichtige NPCs...">
+            </div>
+            <div class="form-group">
+                <label>Inhalt</label>
+                <div class="editor-toolbar editor-toolbar-minimal">
+                    <div class="toolbar-row">
+                        <button class="editor-btn" data-action="format-text" data-cmd="quick-ref-entry-content" data-editor="bold" title="Fett"><b>B</b></button>
+                        <button class="editor-btn" data-action="format-text" data-cmd="quick-ref-entry-content" data-editor="italic" title="Kursiv"><i>I</i></button>
+                        <button class="editor-btn" data-action="format-text" data-cmd="quick-ref-entry-content" data-editor="underline" title="Unterstrichen"><u>U</u></button>
+                        <span class="toolbar-separator"></span>
+                        <button class="editor-btn" data-action="clear-formatting" data-value="quick-ref-entry-content" title="Formatierung entfernen">🧹</button>
+                    </div>
+                </div>
+                <div id="quick-ref-entry-content" class="rich-editor" contenteditable="true" style="min-height: 150px;"></div>
+                <small style="color: var(--text-dim);">Tipp: Mit 🔗 kannst du NPCs, Orte, Quests etc. verlinken. Tabellen per Copy&Paste aus Excel/Sheets.</small>
+            </div>
+            <div class="btn-group">
+                <button type="button" class="btn btn-success" data-action="save-quick-ref-entry">💾 Speichern</button>
+                <button type="button" class="btn" data-action="hide-modal" data-value="quick-ref-entry-modal">Abbrechen</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Entity-Link einfügen Modal -->
+    <div class="modal-overlay" id="insert-entity-link-modal">
+        <div class="modal" style="max-width: 400px;">
+            <div class="modal-header">
+                <span class="modal-title">🔗 Entity verknüpfen</span>
+                <button class="btn btn-sm" data-action="hide-modal" data-value="insert-entity-link-modal">✕</button>
+            </div>
+            <div class="form-group">
+                <label>Typ</label>
+                <select id="insert-link-target-type" onchange="renderInsertLinkTargets()">
+                    <option value="npcs">🎭 NPCs</option>
+                    <option value="locations">🏠 Orte</option>
+                    <option value="quests">📜 Quests</option>
+                    <option value="characters">👥 Charaktere</option>
+                    <option value="encounters">👹 Encounter</option>
+                    <option value="spells">✨ Zauber</option>
+                    <option value="loot">💎 Items</option>
+                    <option value="wiki">📖 Wiki</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Auswählen</label>
+                <select id="insert-link-target-id" size="6" style="width: 100%;"></select>
+            </div>
+            <div class="btn-group">
+                <button class="btn btn-success" data-action="call" data-value="insertEntityLinkToEditor">🔗 Einfügen</button>
+                <button class="btn" data-action="hide-modal" data-value="insert-entity-link-modal">Abbrechen</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="pwa-install-banner" id="pwa-install-banner" style="display:none;">
+        <div class="pwa-install-icon">🎲</div>
+        <div class="pwa-install-text">
+            <div class="pwa-install-title">App installieren?</div>
+            <div class="pwa-install-desc">Offline verfügbar, schneller Zugriff</div>
+        </div>
+        <div class="pwa-install-actions">
+            <button class="btn btn-success btn-sm" data-action="call" data-value="installPWA">Installieren</button>
+            <button class="btn btn-sm" data-action="call" data-value="dismissPWABanner">Später</button>
+        </div>
+    </div>
+
+    <!-- Konflikt-Banner -->
+    <div class="conflict-banner" id="conflict-banner">
+        <div class="conflict-banner-text">
+            <span>⚠️</span>
+            <span>Diese Kampagne ist in einem anderen Tab geöffnet. Änderungen können verloren gehen!</span>
+        </div>
+        <div class="conflict-banner-actions">
+            <button class="btn btn-sm" data-action="call" data-value="reloadData">🔄 Neu laden</button>
+            <button class="btn btn-sm" data-action="call" data-value="dismissConflict">✕ Ignorieren</button>
+        </div>
+    </div>
+
+    <!-- Tastenkürzel-Overlay -->
+    <div class="shortcuts-overlay" id="shortcuts-overlay" data-action="backdrop-close" data-value="hideShortcutsOverlay">
+        <div class="shortcuts-modal" data-stop-propagation="true">
+            <div class="shortcuts-title">
+                <span>⌨️ Tastenkürzel</span>
+                <button class="btn btn-sm" data-action="call" data-value="hideShortcutsOverlay">✕</button>
+            </div>
+            <div class="shortcuts-grid">
+                <div class="shortcuts-section">
+                    <div class="shortcuts-section-title">📍 Navigation</div>
+                    <div class="shortcut-row"><span>Dashboard</span><div class="shortcut-keys"><span class="shortcut-key">1</span></div></div>
+                    <div class="shortcut-row"><span>Party</span><div class="shortcut-keys"><span class="shortcut-key">2</span></div></div>
+                    <div class="shortcut-row"><span>NPCs</span><div class="shortcut-keys"><span class="shortcut-key">3</span></div></div>
+                    <div class="shortcut-row"><span>Orte</span><div class="shortcut-keys"><span class="shortcut-key">4</span></div></div>
+                    <div class="shortcut-row"><span>Quests</span><div class="shortcut-keys"><span class="shortcut-key">5</span></div></div>
+                    <div class="shortcut-row"><span>Encounter</span><div class="shortcut-keys"><span class="shortcut-key">6</span></div></div>
+                    <div class="shortcut-row"><span>Initiative</span><div class="shortcut-keys"><span class="shortcut-key">7</span></div></div>
+                </div>
+                <div class="shortcuts-section">
+                    <div class="shortcuts-section-title">⚡ Aktionen</div>
+                    <div class="shortcut-row"><span>Rückgängig</span><div class="shortcut-keys"><span class="shortcut-key">Strg</span><span class="shortcut-key">Z</span></div></div>
+                    <div class="shortcut-row"><span>Wiederholen</span><div class="shortcut-keys"><span class="shortcut-key">Strg</span><span class="shortcut-key">Y</span></div></div>
+                    <div class="shortcut-row"><span>Speichern</span><div class="shortcut-keys"><span class="shortcut-key">Strg</span><span class="shortcut-key">S</span></div></div>
+                    <div class="shortcut-row"><span>Suche</span><div class="shortcut-keys"><span class="shortcut-key">Strg</span><span class="shortcut-key">K</span></div></div>
+                    <div class="shortcut-row"><span>Würfeln (d20)</span><div class="shortcut-keys"><span class="shortcut-key">R</span></div></div>
+                    <div class="shortcut-row"><span>Timer Start/Stop</span><div class="shortcut-keys"><span class="shortcut-key">T</span></div></div>
+                    <div class="shortcut-row"><span>Event Log</span><div class="shortcut-keys"><span class="shortcut-key">L</span></div></div>
+                    <div class="shortcut-row"><span>Quick Reference</span><div class="shortcut-keys"><span class="shortcut-key">/</span></div></div>
+                    <div class="shortcut-row"><span>Diese Hilfe</span><div class="shortcut-keys"><span class="shortcut-key">?</span></div></div>
+                </div>
+                <div class="shortcuts-section">
+                    <div class="shortcuts-section-title">🎲 Würfel</div>
+                    <div class="shortcut-row"><span>W20</span><div class="shortcut-keys"><span class="shortcut-key">Alt</span><span class="shortcut-key">2</span></div></div>
+                    <div class="shortcut-row"><span>W12</span><div class="shortcut-keys"><span class="shortcut-key">Alt</span><span class="shortcut-key">1</span></div></div>
+                    <div class="shortcut-row"><span>W6</span><div class="shortcut-keys"><span class="shortcut-key">Alt</span><span class="shortcut-key">6</span></div></div>
+                    <div class="shortcut-row"><span>W4</span><div class="shortcut-keys"><span class="shortcut-key">Alt</span><span class="shortcut-key">4</span></div></div>
+                </div>
+                <div class="shortcuts-section">
+                    <div class="shortcuts-section-title">⚔️ Initiative</div>
+                    <div class="shortcut-row"><span>Nächster</span><div class="shortcut-keys"><span class="shortcut-key">N</span></div></div>
+                    <div class="shortcut-row"><span>Vorheriger</span><div class="shortcut-keys"><span class="shortcut-key">P</span></div></div>
+                    <div class="shortcut-row"><span>Neue Runde</span><div class="shortcut-keys"><span class="shortcut-key">Shift</span><span class="shortcut-key">N</span></div></div>
+                </div>
+            </div>
+            <div style="margin-top: 16px; text-align: center; color: var(--text-dim); font-size: 0.85em;">
+                Drücke <span class="shortcut-key">Esc</span> zum Schließen
+            </div>
+        </div>
+    </div>
+
+    <!-- Beziehungen Modal -->
+    <div class="modal-overlay" id="relationships-modal">
+        <div class="modal" style="max-width: 500px;">
+            <div class="modal-header">
+                <span class="modal-title">🔗 Beziehung hinzufügen</span>
+                <button class="btn btn-sm" data-action="hide-modal" data-value="relationships-modal">✕</button>
+            </div>
+            <div id="relationship-source-name" style="margin-bottom: 12px; color: var(--gold);"></div>
+            <div class="form-group">
+                <label>Ziel auswählen</label>
+                <select id="relationship-target" style="width: 100%;"></select>
+            </div>
+            <div class="form-group">
+                <label>Beziehungstyp</label>
+                <select id="relationship-type" style="width: 100%;">
+                    <option value="ally">💚 Verbündeter</option>
+                    <option value="enemy">❤️ Feind</option>
+                    <option value="neutral">🤍 Neutral</option>
+                    <option value="family">💕 Familie</option>
+                    <option value="rival">🧡 Rivale</option>
+                    <option value="mentor">💙 Mentor</option>
+                    <option value="student">💜 Schüler</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Notiz (optional)</label>
+                <input type="text" id="relationship-note" placeholder="z.B. 'Handelspartner seit 5 Jahren'">
+            </div>
+            <div class="btn-group">
+                <button class="btn btn-success" data-action="call" data-value="saveRelationship">✓ Hinzufügen</button>
+                <button class="btn" data-action="hide-modal" data-value="relationships-modal">Abbrechen</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Story-Arc Management Modal -->
+    <div class="modal-overlay" id="story-arc-modal">
+        <div class="modal" style="max-width: 500px;">
+            <div class="modal-header">
+                <span class="modal-title">📚 Story-Arcs verwalten</span>
+                <button class="btn btn-sm" data-action="hide-modal" data-value="story-arc-modal">✕</button>
+            </div>
+            <div class="modal-body">
+                <p style="color: var(--text-dim); font-size: 0.9em; margin-bottom: 12px;">
+                    Gruppiere deine Sessions in Story-Arcs (z.B. "Akt 1: Der Anfang", "Das Drachenproblem").
+                </p>
+                
+                <div class="form-group">
+                    <label>Neuer Arc</label>
+                    <div style="display: flex; gap: 8px;">
+                        <input type="text" id="new-arc-name" placeholder="Arc-Name eingeben...">
+                        <input type="color" id="new-arc-color" value="#d4af37" style="width: 40px; padding: 2px;">
+                        <button class="btn btn-success" data-action="call" data-value="addStoryArc">+</button>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label>Vorhandene Arcs</label>
+                    <div id="story-arc-list" class="story-arc-list">
+                        <div style="color: var(--text-dim); font-size: 0.9em;">Keine Arcs vorhanden</div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn" data-action="hide-modal" data-value="story-arc-modal">Schließen</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notizen-Suche Modal -->
+    <div class="modal-overlay" id="notes-search-modal">
+        <div class="modal" style="max-width: 600px;">
+            <div class="modal-header">
+                <span class="modal-title">🔍 Session-Notizen durchsuchen</span>
+                <button class="btn btn-sm" data-action="hide-modal" data-value="notes-search-modal">✕</button>
+            </div>
+            <div class="notes-search-bar">
+                <input type="text" class="notes-search-input" id="notes-search-input" placeholder="Suchbegriff eingeben..." oninput="searchNotes()">
+            </div>
+            <div class="notes-search-results" id="notes-search-results">
+                <div style="padding: 20px; text-align: center; color: var(--text-dim);">
+                    Gib einen Suchbegriff ein, um Session-Notizen zu durchsuchen.
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- CALCULATOR MODAL -->
+    <div id="calculator-modal" class="modal calc-modal">
+        <div class="modal-content" id="calculator-modal-content">
+            <!-- Entire content rendered by renderCalculatorModal() -->
+        </div>
+    </div>

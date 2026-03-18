@@ -1462,7 +1462,6 @@ function clearSpellForm() {
 // ============================================================
 window.debouncedRenderSpells = debouncedRenderSpells;
 window.renderSpells = renderSpells;
-window.loadMoreSpells = loadMoreSpells;
 window.toggleSpellCard = toggleSpellCard;
 window.expandAllSpells = expandAllSpells;
 window.collapseAllSpells = collapseAllSpells;
@@ -1483,9 +1482,7 @@ window.initEditorPasteHandlers = initEditorPasteHandlers;
 window.insertTable = insertTable;
 window.updateStickyOffsets = updateStickyOffsets;
 window.initFloatingToolbar = initFloatingToolbar;
-window.hideFloatingToolbar = hideFloatingToolbar;
 window.initContextToolbars = initContextToolbars;
-window.hideContextToolbars = hideContextToolbars;
 window.saveSpell = saveSpell;
 window.editSpell = editSpell;
 window.deleteSpell = deleteSpell;
