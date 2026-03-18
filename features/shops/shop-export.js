@@ -174,8 +174,8 @@ function buildHandoutHTML(shop, options) {
             <p class="print-tip">💡 <strong>Drucktipp:</strong> Verwende <kbd>Strg+P</kbd> (Windows) oder <kbd>⌘+P</kbd> (Mac) zum Drucken</p>
         </footer>
     </div>
-</body>
-</html>`;
+</bo` + `dy>
+</ht` + `ml>`;
 }
 
 /**
