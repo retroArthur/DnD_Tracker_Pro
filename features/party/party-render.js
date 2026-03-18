@@ -182,7 +182,7 @@ function renderCharacterCard(ch, renderConditionsBar, CATS) {
                     </div>
                     <div class="char-stat-pill">
                         <span class="char-stat-pill-label">Tempo</span>
-                        <span class="char-stat-pill-value">${ch.speed?.split('|')[0] || '—'}</span>
+                        <span class="char-stat-pill-value">${String(ch.speed || '').split('|')[0] || '—'}</span>
                     </div>
                     <div class="char-stat-pill">
                         <span class="char-stat-pill-label">Wahr</span>

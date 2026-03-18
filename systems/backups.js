@@ -6,6 +6,10 @@
 const BACKUP_INTERVAL = window.APP_CONFIG?.BACKUP_INTERVAL || 300000; // 5 minutes
 const MAX_BACKUPS = window.APP_CONFIG?.MAX_BACKUPS || 5;
 const MAX_BACKUP_SIZE_MB = window.APP_CONFIG?.MAX_BACKUP_SIZE_MB || 2;
+const BACKUP_KEY = window.APP_CONFIG?.BACKUP_KEY || 'dnd-tracker-backups';
+
+// Track if we already warned about backup failures (avoid console spam)
+let _backupFailureLogged = false;
 
 // Backups werden primär in IndexedDB gespeichert, localStorage als Fallback
 async function createAutoBackup() {
@@ -61,8 +65,9 @@ async function createAutoBackup() {
     catch (e) {
         const APP_CONFIG = window.APP_CONFIG;
         const ErrorHandler = window.ErrorHandler;
-        if (APP_CONFIG.DEBUG_MODE) {
-            ErrorHandler.log('createAutoBackup', e, 'Auto-backup failed');
+        if (APP_CONFIG?.DEBUG_MODE && !_backupFailureLogged) {
+            ErrorHandler?.log('createAutoBackup', e, 'Auto-backup failed (weitere Fehler werden unterdrückt)');
+            _backupFailureLogged = true;
         }
     }
 }

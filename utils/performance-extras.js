@@ -251,15 +251,17 @@ function renderDashboard() {
     const sessionCount = D.sessionNotes?.length || 0;
     // Party Health Overview
     const partyHealth = D.characters?.map((ch) => {
-        const pct = ch.hpMax > 0 ? (ch.hpCurrent / ch.hpMax) * 100 : 100;
+        const hpMax = ch.hpMax || ch.maxHp || 0;
+        const hpCurrent = ch.hpCurrent || ch.currentHp || 0;
+        const pct = hpMax > 0 ? (hpCurrent / hpMax) * 100 : 100;
         const status = pct <= 25 ? 'critical' : pct <= 50 ? 'bloodied' : 'healthy';
         const conditions = ch.conditions?.length || 0;
-        return { id: ch.id, name: ch.name, pct, status, conditions, avatar: ch.avatar, hp: ch.hpCurrent, hpMax: ch.hpMax };
+        return { id: ch.id, name: ch.name, pct, status, conditions, avatar: ch.avatar, hp: hpCurrent, hpMax: hpMax };
     }) || [];
     // Recent Sessions (with number support)
     const recentSessions = (D.sessionNotes || []).slice(-4).reverse();
     // Tracked Quests
-    const trackedQuestList = (D.quests || []).filter((q) => q.tracked && !q.completed).slice(0, 4);
+    const trackedQuestList = (D.quests || []).filter((q) => (q.tracked || q.pinned) && !q.completed && q.status !== 'completed').slice(0, 4);
     // Active timers (if any)
     const activeTimers = typeof timers !== 'undefined' ? timers.filter((t) => t.running) : [];
     const focusedTimer = activeTimers.length > 0 ? activeTimers[0] : null;
