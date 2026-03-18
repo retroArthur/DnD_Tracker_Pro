@@ -4,10 +4,10 @@
 
 **Ein vollwertiger D&D 5e Kampagnen-Manager - komplett offline im Browser**
 
-[![Version](https://img.shields.io/badge/version-2.4.0-blue.svg)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-2.6.0-blue.svg)](CHANGELOG.md)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
-[![Build](https://img.shields.io/badge/build-passing-brightgreen.svg)]()
-[![Size](https://img.shields.io/badge/size-1.73MB-orange.svg)]()
+[![CI](https://github.com/retroArthur/DnD_Tracker_Pro/actions/workflows/ci.yml/badge.svg)](https://github.com/retroArthur/DnD_Tracker_Pro/actions)
+[![Size](https://img.shields.io/badge/size-1.44MB-orange.svg)]()
 [![Language](https://img.shields.io/badge/language-German-yellow.svg)]()
 [![Platform](https://img.shields.io/badge/platform-Browser-purple.svg)]()
 
@@ -88,14 +88,18 @@
 | **Orte** | Hierarchische Struktur, Tags, Beschreibungen |
 | **Quests** | Status-Tracking, verknuepfte NPCs/Orte |
 | **Loot** | Items, Gold-Verteilung, Party-Inventar |
-| **Shops** | Haendler mit Inventar |
+| **Shops** | Haendler mit Inventar, Handout-Export (HTML/Print) |
 | **Zauber** | SRD-Datenbank, Filter nach Klasse/Stufe/Schule |
-| **Wuerfel** | d4-d100, Vorteil/Nachteil, History |
+| **Wuerfel** | d4-d100, Vorteil/Nachteil, History, Floating Panel |
 | **Timer** | Session-Timer, Custom-Timer |
 | **Zufallstabellen** | Eigene Tabellen mit Gewichtung |
 | **Maps** | Bild-Upload mit Markierungen |
 | **Mindmap** | Visuelle Kampagnen-Uebersicht |
 | **Sessions** | Session-Notizen und -Log |
+| **DM Screen** | Widget-Dashboard mit 21 Widgets und Profilen |
+| **Roadmap** | Visuelle Kampagnen-Timeline mit Events |
+| **Markdown** | Live-Shortcuts, Import/Export, Render-on-Display |
+| **Kampagnen** | Mehrere Kampagnen mit getrennten Daten |
 
 ---
 
@@ -153,8 +157,8 @@ xdg-open dist/dnd-tracker-bundled.html # Linux
 # Development Build (lesbar)
 python build.py
 
-# Production Build (minifiziert)
-python build-optimized.py
+# Production Build (minifiziert, Debug aus)
+python build.py --production
 
 # Mit npm
 npm run build        # Production
@@ -198,8 +202,9 @@ npm run typecheck   # TypeScript Validation
 - **Frontend**: Vanilla JavaScript (kein Framework)
 - **Styling**: Custom CSS mit CSS Variables
 - **Storage**: LocalStorage
-- **Build**: Python Scripts
+- **Build**: Python (`build.py`)
 - **Tests**: Jest + Playwright
+- **CI/CD**: GitHub Actions
 
 ---
 
