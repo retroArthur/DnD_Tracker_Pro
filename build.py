@@ -47,11 +47,14 @@ def write_file(filepath, content):
         f.write(content)
 
 def minify_js(js_code):
-    """Einfache JS-Minifizierung (entfernt Kommentare und Leerzeilen)"""
-    # Entferne einzeilige Kommentare
-    js_code = re.sub(r'//.*?$', '', js_code, flags=re.MULTILINE)
-    # Entferne mehrzeilige Kommentare
+    """Sichere JS-Minifizierung (entfernt nur standalone Kommentare und Leerzeilen).
+    Entfernt KEINE Inline-Kommentare (nach Code), da Regex nicht zwischen
+    // in Strings und echten Kommentaren unterscheiden kann."""
+    # Entferne mehrzeilige Kommentare (sicher, da /* */ nicht in Strings vorkommt)
     js_code = re.sub(r'/\*.*?\*/', '', js_code, flags=re.DOTALL)
+    # Entferne Zeilen die NUR Whitespace + Kommentar sind (keine Code-Zeilen!)
+    # Behalte [DEDUP] und [SECTION] Kommentare als Platzhalter
+    js_code = re.sub(r'^\s*//(?!\s*\[).*$', '', js_code, flags=re.MULTILINE)
     # Entferne Leerzeilen
     js_code = re.sub(r'^\s*$\n', '', js_code, flags=re.MULTILINE)
     return js_code
