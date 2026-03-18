@@ -4,6 +4,111 @@ Alle wichtigen Änderungen an diesem Projekt werden in dieser Datei dokumentiert
 
 ---
 
+## [2.6.0] - 2026-02-24 (Markdown, Shop-Export & Editor-Toolbars)
+
+### ✨ Features
+- **Markdown-Unterstützung**: Live-Shortcuts, Import/Export, Render-on-Display für alle Entity-Typen
+- **Shop-Handout-Export**: HTML-Download mit Print-CSS für Shops
+- **Editor-Toolbars vereinheitlicht**: Alle 17+ Toolbars nutzen jetzt ein 3-Tier-System
+- **Wiki-Kategorien**: Standardmäßig eingeklappt
+- **Shop-Filter & Sortierung**: Erweiterte Filter + Import/Export für alle Tabs
+
+---
+
+## [2.5.0] - 2026-01 (UI-Verbesserungen & Code-Reorganisation)
+
+### ✨ Features
+- **Quick Reference v2**: Überarbeitetes Panel
+- **Roadmap & Map auto-fit**: UI-Verbesserungen
+- **Umfassende Code-Reorganisation**: Performance-Optimierungen
+
+### 🔧 Fixes
+- Duplikate in `selectNPC` und `toggleNPCCard` entfernt
+- Build-Deduplication für `window.*`-Zuweisungen implementiert
+
+### 📚 Dokumentation
+- Build-System-Dokumentation hinzugefügt (`docs/build-system.md`)
+
+---
+
+## [2.4.0] - 2025-01 (TypeScript-Migration & Post-Migration-Stabilisierung)
+
+### 🔄 TypeScript-Migration (komplett)
+- **Phase 1-6**: Alle 93+ Module nach TypeScript migriert und zurück zu JS kompiliert
+- Core, Utils, Systems (19 Dateien), Render, Features (Party, NPCs, Encounters, Locations, Quests, Shops, Dice, DMScreen, Roadmap)
+- Kompiliertes JavaScript wird als Runtime verwendet
+
+### 🔧 Post-Migration-Fixes
+- Tab-Navigation: Fehlende Module und Funktionsnamen korrigiert
+- Source-Map-Referenzen entfernt (verhinderte Laden von `.ts`-Dateien im Browser)
+- `save()`-Funktionen korrekt auf `window` exportiert
+- `const` → `var` Deklarationen für Build-Kompatibilität
+- Build-Deduplication für `window.*`-Zuweisungen (3-Pass-System)
+- Alle Unit-Tests repariert (100% passing)
+
+---
+
+## [2.3.10] - 2025-01 (Refactoring in 5 Phasen)
+
+### ♻️ Refactoring
+- **Phase 1**: Quick Wins — Code-Qualität & Performance
+- **Phase 2**: Helper-Extraktion, zentralisierte Lookups, kombinierte Filter
+- **Phase 3**: CRUD-Helpers und erweiterte Error-Boundaries
+- **Phase 4**: Performance-Optimierung — Caching und Cloning
+- **Phase 5**: Final Polish — Debounce und Validation
+- **Undo/Redo**: Auf `Object.assign` umgestellt (const D-Kompatibilität)
+- **Tab-Registry**: Neues System verhindert fehlende DOM-Elemente
+
+### 📚 Dokumentation
+- `CLAUDE.md` v1.5.0 mit Refactoring-Lessons-Learned
+- Tab-Registry-Dokumentation + E2E-Tests
+
+---
+
+## [2.3.9] - 2025-01 (DM Screen, Roadmap & Encounter-Verbesserungen)
+
+### ✨ Features
+- **DM Screen**: Widget-basiertes Layout mit Profilen + 13 D&D 5E-Referenz-Widgets
+- **Roadmap**: Komplett-Implementation mit Rich-Text-Editor für Events
+- **Encounter Calculator**: 4 Verbesserungen (Terrain- & Lair-Action-Modifikatoren, direkte Monster-Übernahme in Initiative)
+- **Floating Dice Panel**: D&D Beyond-Style Würfel-Panel
+- **5 Combat & NPC-Features**: Neue Kampf- und NPC-Funktionen
+- **6 Utility-Features**: Kampagnen-Management-Tools
+- **Random Tables**: Redesign mit Würfeltyp-Auswahl und Range-basierten Einträgen
+
+### 🔧 Fixes
+- Rest Manager NaN-Fehler behoben
+- Generator-Button bei leerem Tab repariert
+- 5 Issues aus Code-Quality-Audit behoben
+
+---
+
+## [2.3.8] - 2025-01 (Security, Redesign & Testing)
+
+### 🔒 Security
+- Kritische XSS-Schwachstellen behoben (Spell Notes, Quests, Character Notes, Session Content, Quest Epilog)
+- Prototype-Pollution-Fix
+- Code-Hygiene und Security-Verbesserungen
+
+### 🎨 Redesign
+- **Character-Form**: Kompaktes, modernes Layout mit Icons und Sprach-Dropdown
+- **Quick Reference Panel**: Kompakt und stylisch
+- **Encounter Balance Calculator**: Neues Modal-Design
+- **About/Impressum-Modal**: Developer Credits
+
+### 🧪 Testing
+- Umfangreiche Playwright E2E-Test-Suite hinzugefügt
+- Security- und E2E-Test-Suites erweitert
+
+### 🔧 Fixes
+- Editor-Toolbar-Standardisierung auf `data-action`-Pattern
+- Dead-Code entfernt, Module konsolidiert
+- Memory-Leak-Prevention und Type-Safety-Verbesserungen
+- Read-Aloud-Text-Styles und Editor-Toolbar-Sync
+- Event-Delegation-Actions in modulare Struktur aufgeteilt
+
+---
+
 ## [2.3.7] - 2024-12-30 (Security & Consistency Fixes)
 
 ### 🔒 Security Fixes
@@ -553,36 +658,40 @@ Dieses Projekt folgt [Semantic Versioning](https://semver.org/):
 ### Tags
 - `v1.0` - Initial Release
 - `v1.1` - Erster Hotfix
-- `v1.2` - Zweiter Hotfix (aktuell)
+- `v1.2` - Zweiter Hotfix
+- `v2.6.0` - Aktuelle Version
 
 ---
 
 ## Geplante Änderungen
 
-### [1.3] - Geplant
-- [ ] `render/main.js` in 12 Feature-Module aufteilen
-- [ ] Inline Event-Handler auf `data-action` migrieren
-- [ ] ESLint-Konfiguration
+### Erledigt (ehemals geplant)
+- [x] `render/main.js` in Feature-Module aufteilen (erledigt in v2.0)
+- [x] Inline Event-Handler auf `data-action` migrieren (großteils erledigt)
+- [x] ESLint-Konfiguration (erledigt)
+- [x] TypeScript-Migration (erledigt in v2.4.0, kompiliert zu JS)
+- [x] Automatische Tests (Jest + Playwright, erledigt)
 
-### [2.0] - Langfristig
-- [ ] TypeScript-Migration
-- [ ] Webpack/Rollup Build-System
-- [ ] Automatische Tests
-- [ ] CI/CD Pipeline
+### Offen
+- [ ] Verbleibende Inline Event-Handler vollständig migrieren
+- [x] CI/CD Pipeline (GitHub Actions in `.github/workflows/ci.yml`)
+- [x] CSS aufteilen (erledigt: 14 modulare Dateien in `assets/styles/`)
+- [x] Build-System konsolidieren (Webpack entfernt, Python `build.py` als einziges Build-System)
 
 ---
 
 ## Bekannte Probleme
 
-### Nicht-kritisch
-1. **638 inline Event-Handler** - Sollten auf `data-action` System migriert werden
-2. **render/main.js zu groß** (134 KB) - Sollte aufgeteilt werden
-3. **features/dice.js zu groß** (176 KB) - Sollte optimiert werden
-4. **features/shops.js zu groß** (122 KB) - Könnte aufgeteilt werden
+### Erledigt
+1. ~~**render/main.js zu groß** (134 KB)~~ — aufgeteilt in v2.0
+2. ~~**features/dice.js zu groß** (176 KB)~~ — aufgeteilt in `features/dice/` (10 Module)
+3. ~~**features/shops.js zu groß** (122 KB)~~ — aufgeteilt in `features/shops/` (6 Module)
 
-### Dokumentiert in
-- Performance-Optimierungen → siehe `README.md`
-- Architektur-Probleme → siehe `PROJEKTBERICHT.md`
+### Offen (nicht-kritisch)
+1. **Verbleibende Inline Event-Handler** — Großteil migriert, Rest-Audit ausstehend
+2. ~~**styles.css** (23k Zeilen)~~ — Aufgeteilt in 14 modulare Dateien unter `assets/styles/`
+3. ~~**Versions-Diskrepanz**~~ zwischen `package.json` und `APP_CONFIG` wurde in v2.6.0 behoben
+4. ~~**Verwaiste .d.ts Dateien**~~ — 18 orphaned `.d.ts` ohne passendes `.js` entfernt (März 2026)
 
 ---
 
@@ -600,6 +709,6 @@ Gleiche Lizenz wie Original-Projekt
 
 ---
 
-**Letzte Aktualisierung**: 2024-12-24  
-**Aktuelle Version**: 1.2  
+**Letzte Aktualisierung**: 2026-02-24
+**Aktuelle Version**: 2.6.0
 **Status**: ✅ Stabil & Einsatzbereit

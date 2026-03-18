@@ -19,16 +19,16 @@ function showRestModal() {
         <div class="rest-modal-content">
             <div class="rest-modal-header">
                 <h3>🛏️ Rasten</h3>
-                <button class="btn btn-sm" onclick="hideModal('rest-modal')">✕</button>
+                <button class="btn btn-sm" data-action="hide-modal" data-value="rest-modal">✕</button>
             </div>
 
             <div class="rest-type-selector">
-                <button class="rest-type-btn active" data-type="short" onclick="selectRestType('short')">
+                <button class="rest-type-btn active" data-type="short" data-action="select-rest-type" data-value="short">
                     <span class="rest-type-icon">⏰</span>
                     <span class="rest-type-label">Kurze Rast</span>
                     <span class="rest-type-desc">1 Stunde</span>
                 </button>
-                <button class="rest-type-btn" data-type="long" onclick="selectRestType('long')">
+                <button class="rest-type-btn" data-type="long" data-action="select-rest-type" data-value="long">
                     <span class="rest-type-icon">🌙</span>
                     <span class="rest-type-label">Lange Rast</span>
                     <span class="rest-type-desc">8 Stunden</span>
@@ -44,8 +44,8 @@ function showRestModal() {
             </div>
 
             <div class="rest-modal-footer">
-                <button class="btn" onclick="hideModal('rest-modal')">Abbrechen</button>
-                <button class="btn btn-primary" onclick="applyRest()">✓ Rast durchführen</button>
+                <button class="btn" data-action="hide-modal" data-value="rest-modal">Abbrechen</button>
+                <button class="btn btn-primary" data-action="apply-rest">✓ Rast durchführen</button>
             </div>
         </div>
     `;
@@ -286,7 +286,4 @@ function quickShortRest(charId) {
 // EXPORTS FOR GLOBAL ACCESS
 // ============================================================
 window.showRestModal = showRestModal;
-window.selectRestType = selectRestType;
-window.adjustRestHitDice = adjustRestHitDice;
-window.applyRest = applyRest;
 window.quickShortRest = quickShortRest;

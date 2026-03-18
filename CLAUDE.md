@@ -2,7 +2,7 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-**Version:** 1.5.1 | **Last Updated:** 2026-01-10
+**Version:** 2.6.0 | **Last Updated:** 2026-03-18
 
 ## Project Overview
 
@@ -18,18 +18,19 @@ Nach dem inplemtieren des Codes, führe dann einen Test aus.
 # Development build (preserves readability)
 python build.py
 
-# Production build (minified, single HTML file)
-python build-optimized.py
+# Development build with minification
+python build.py --minify
+
+# Production build (minified, debug off, HTML minified)
+python build.py --production
 
 # With npm (requires PYTHONIOENCODING=utf-8 on Windows)
 npm run build         # Production (optimized)
 npm run build:dev     # Development
 npm run build:prod    # Production variant
 
-# Webpack builds (alternative)
-npm run build:webpack      # Production bundle
-npm run build:webpack:dev  # Development bundle
-npm run dev                # Webpack dev server
+# Dev server
+npm run dev               # Python HTTP server on :8000
 
 # Serve locally
 npm run serve         # Python HTTP server on :8000
@@ -125,19 +126,22 @@ function deleteEntity(id) {
 | `features/encounters/` | Encounter management (render, CRUD) |
 | `features/locations/` | Location tracking (render, CRUD) |
 | `features/quests/` | Quest system (render, CRUD) |
-| `features/shops/` | Shops, wiki, sessions, spell-editor, mindmap/network |
-| `features/dice/` | Dice roller, maps, timers, search, themes, campaign manager, SRD data |
+| `features/shops/` | Shops, wiki, sessions, spell-editor, mindmap/network, shop-export |
+| `features/dice/` | Dice roller, dice favorites, maps, search, themes, campaign manager |
+| `features/timers/` | Combat and session timers |
 | `features/dmscreen/` | DM Screen with widget system, profiles, live-sync |
 | `ui/` | Virtual scroll, lazy loading, event delegation |
 | `ui/actions/` | Action handlers by domain (entity, combat, ui, dice, wiki, shop, map, system) |
 | `render/` | Rendering utilities/helpers |
-| `assets/` | styles.css, body.html |
+| `assets/` | styles.css (@import hub), body.html (Hinweis-Datei) |
+| `assets/styles/` | 14 modulare CSS-Dateien (variables, core, editors, npcs, encounters, etc.) |
+| `assets/templates/` | 10 modulare HTML-Templates (header, views, modals) |
 | `tests/` | Jest unit tests, Playwright E2E tests |
-| `tools/` | Webpack config, analysis scripts |
+| `tools/` | Analysis scripts (render split, event handler migration, globals check) |
 
 ## Important Files
 
-- `build.py` / `build-optimized.py` - Build scripts (Python)
+- `build.py` - Build script (Python, --production fuer Prod-Build)
 - `loader.js` - Module loading order definition (60+ modules)
 - `core/config.js` - APP_CONFIG with all settings
 - `core/constants.js` - Centralized constants (EDITOR_FONTS, READ_ALOUD_STYLES, CONDITIONS, etc.)
@@ -152,6 +156,8 @@ function deleteEntity(id) {
 - `systems/search/global-search.js` - Fuzzy search across all entities
 - `ui/actions/system-actions.js` - System action handlers (modals, editor actions)
 - `features/dmscreen/dmscreen-render.js` - DM Screen widget system with 21 widget types and profiles
+- `features/shops/shop-export.js` - Shop handout HTML export with print CSS
+- `features/sessions/sessions.js` - Session management
 - `docs/bugfixes.md` - Bug fix patterns and lessons learned
 - `sw.js` - Service Worker for offline support
 
@@ -316,7 +322,7 @@ function deleteEntity(id) {
 - Info button (ℹ️) in header opens modal
 - Shows: App name, version, developer credits, GitHub link
 - MIT License notice
-- File: `assets/body.html` → `#about-modal`
+- File: `assets/templates/modals-tools.html` → `#about-modal`
 - Action: `show-about-modal` in `ui/actions/system-actions.js`
 
 ### Campaign Manager
@@ -364,6 +370,34 @@ function deleteEntity(id) {
 - Auto-save at configurable intervals
 - Keyboard shortcut: `T` to toggle
 - File: `systems/session-timer.js` → `toggleSessionTimer()`, `resetSessionTimer()`
+
+### Markdown Support (v2.6.0)
+- Live shortcuts in all text editors (bold, italic, headers, lists)
+- Markdown import/export for all entity types
+- Render-on-display: Markdown rendered when viewing, raw editing when editing
+- Consistent across all entity types (NPCs, locations, quests, wiki, etc.)
+- File: Various entity render files, `utils/utilities.js`
+
+### Shop Handout Export (v2.6.0)
+- HTML download with print-optimized CSS for shop inventories
+- Generates standalone HTML file for offline/printed use
+- File: `features/shops/shop-export.js` → `exportShopHandout()`
+
+### Unified Editor Toolbars (v2.6.0)
+- All 17+ editor toolbars consolidated to a 3-tier system
+- Tier 1: Basic (bold, italic, underline)
+- Tier 2: Extended (lists, links, tables)
+- Tier 3: Advanced (fonts, read-aloud, highlights)
+- Consistent toolbar across all entity editors
+
+### Wiki Categories Collapsed (v2.6.0)
+- Wiki categories default to collapsed state for better overview
+- Click to expand individual categories
+
+### Shop Filters & Sorting (v2.6.0)
+- Extended filter options for shop items
+- Sorting by name, price, category
+- Import/Export functionality for all shop tabs
 
 ## Keyboard Shortcuts
 
@@ -414,6 +448,16 @@ npx playwright test tests/e2e/features/wiki.spec.js
 - **Large campaigns:** Virtual scroll handles large lists; use pagination for 500+ entries
 - **Browser support:** Tested on Chrome/Edge (Chromium), Firefox. Safari may have minor CSS differences
 - **Offline mode:** Service Worker caches app shell; data persists in LocalStorage
+
+## Open Roadmap Items
+
+| Priority | Task | Notes |
+|----------|------|-------|
+| ~~Done~~ | ~~**CSS aufteilen**~~ | Already split into 14 modular files in `assets/styles/` (see CSS Organization) |
+| Partial | **Inline Event-Handler migrieren** | Quick wins done (17 modal handlers migrated, March 2026). ~146 remain in templates/generated HTML |
+| ~~Done~~ | ~~**Build-System konsolidieren**~~ | Webpack removed (March 2026), Python `build.py` is sole build system |
+| ~~Done~~ | ~~**CI/CD Pipeline**~~ | GitHub Actions workflow in `.github/workflows/ci.yml` (lint, typecheck, test, build) |
+| ~~Done~~ | ~~**.d.ts cleanup**~~ | 18 orphaned `.d.ts` removed (March 2026), 64 valid ones remain for `tsc --noEmit` type-checking |
 
 ---
 
@@ -615,7 +659,27 @@ function refreshIfVisible() {
 
 ### CSS Organization for New Features
 
-**Problem Solved:** CSS file growing large (21k+ lines), need consistent organization.
+**Problem Solved:** CSS file was 23k+ lines in a single file. Now split into 14 modular files under `assets/styles/`, loaded via `@import` in dev mode and concatenated by `build.py` for production.
+
+**Current Structure:**
+```
+assets/styles.css          ← @import hub (18 lines)
+assets/styles/
+├── variables.css (260)    ← CSS custom properties
+├── core.css (2500)        ← Base layout, global utilities
+├── editors.css (451)      ← Rich text editor toolbars
+├── npcs.css (2046)        ← NPC management
+├── encounters.css (2200)  ← Encounter UI
+├── initiative.css (896)   ← Combat tracker
+├── loot.css (1010)        ← Loot/treasure
+├── spells.css (674)       ← Spell management
+├── party.css (2466)       ← Character roster
+├── dashboard.css (3433)   ← Main dashboard
+├── dmscreen.css (3037)    ← DM Screen widgets
+├── dice.css (902)         ← Dice roller
+├── tools.css (2583)       ← Quick reference, tools
+└── roadmap.css (738)      ← Roadmap visualization
+```
 
 **Pattern to Follow:**
 ```css
@@ -645,8 +709,9 @@ function refreshIfVisible() {
 ### Gotchas & Common Pitfalls
 
 1. **Build Order Matters:** New modules must be added to `build.py` modules list in correct order
-2. **Global Namespace:** All functions are global - use unique prefixes to avoid collisions
+2. **Global Namespace:** Functions are global - use unique prefixes to avoid collisions. Constants are grouped in `DND_RULES` and `UI_CONSTANTS` namespaces (see `core/constants.js`)
 3. **No ES Modules:** Can't use import/export - everything must be in global scope
+4. **const/var Conflict:** Never use `var X = window.X;` to "import" a variable declared with `const`/`let` in another module - this causes SyntaxError in loader mode. The `const` is already in the global lexical scope and accessible directly
 4. **CSS Variables:** Always use `var(--gold)`, `var(--text-dim)` etc. for theming
 5. **German Localization:** UI strings in German, code comments can be English
 6. **XSS in Widgets:** Even static widgets should use `esc()` if showing any user data
@@ -1130,7 +1195,7 @@ When a tab or view isn't showing updated content:
 
 3. **✓ Does the DOM container exist?**
    - Check with `$('container-id')` in console
-   - Verify ID in `assets/body.html` matches JS
+   - Verify ID in `assets/templates/*.html` matches JS
    - Look for `[DOM] Element not found:` warnings in DEBUG mode
 
 4. **✓ Is the tab active when render is called?**
@@ -1152,7 +1217,7 @@ When a tab or view isn't showing updated content:
 When you see blank sections or missing content:
 
 1. **Check the tab registry:** Is the tab registered with correct render functions?
-2. **Check HTML structure:** Does `assets/body.html` have the container element?
+2. **Check HTML structure:** Does `assets/templates/*.html` have the container element?
 3. **Check module loading:** Is the render function's module loaded in `build.py`?
 4. **Check function names:** Do they match between registry and actual function definitions?
 5. **Check DEBUG mode:** Enable it and look for warnings about missing elements
@@ -1248,7 +1313,7 @@ svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
 
 - `features/roadmap/roadmap-render.js:32-81` - `updateSVGViewBox()` function
 - `features/roadmap/roadmap-render.js:248-249` - Tile positioning
-- `assets/styles.css:22263-22281` - SVG and overlay layer CSS
+- `assets/styles/roadmap.css` - SVG and overlay layer CSS
 
 **Future Consideration:**
 
@@ -1319,17 +1384,37 @@ for line in lines:
 
 **Pattern to Follow:**
 
-When adding new modules that use window imports:
+When adding new modules, do NOT use `var X = window.X;` for variables declared with `const`/`let` in other modules. These are already in the global lexical scope:
 
 ```javascript
-// GOOD: Use var (can be deduplicated)
-var APP_CONFIG = window.APP_CONFIG;
+// GOOD: Access const-declared globals directly (they're in global lexical scope)
+// APP_CONFIG, StorageAPI, log, ErrorHandler, etc. are all accessible without imports
+const MY_KEY = APP_CONFIG.MY_SETTING;
+StorageAPI.getJSON('key', []);
+
+// GOOD: Use var for function-declared or window-only globals
 var D = window.D;
 var save = window.save;
 
-// BAD: Use const/let (harder to deduplicate if conflicts with definition)
-const APP_CONFIG = window.APP_CONFIG;  // ❌ Can't be removed if const exists elsewhere
+// BAD: var redeclaration of const/let → SyntaxError in loader mode!
+var APP_CONFIG = window.APP_CONFIG;  // ❌ SyntaxError if const APP_CONFIG exists
+var StorageAPI = window.StorageAPI;  // ❌ SyntaxError if const StorageAPI exists
 ```
+
+**Namespace Constants (Feb 2026):**
+
+Constants from `core/constants.js` are available via namespace objects:
+```javascript
+// NEW: Namespace access (preferred)
+DND_RULES.CONDITIONS     // D&D rules: CONDITIONS, DAMAGE_TYPES, ATTRIBUTES, etc.
+UI_CONSTANTS.UI_TIMING   // UI/App: UI_TIMING, MAP_CONSTANTS, MARKER_ICONS, etc.
+
+// LEGACY: Direct access (still works, will be removed in future)
+CONDITIONS               // Same as DND_RULES.CONDITIONS
+UI_TIMING                // Same as UI_CONSTANTS.UI_TIMING
+```
+
+**Export Audit Rule:** Only export functions/variables to `window` if they are used by OTHER modules or HTML event handlers. Module-internal functions should NOT be exported.
 
 **Module-Level Constants Pattern:**
 

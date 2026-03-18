@@ -648,8 +648,8 @@ function showConcentrationModal(cbId) {
                     style="width: 100%; padding: 10px; background: var(--bg-dark); border: 1px solid var(--border); color: var(--text); border-radius: 6px; box-sizing: border-box;">
             </div>
             <div style="display: flex; gap: 10px; justify-content: flex-end;">
-                <button class="btn" onclick="hideModal('concentration-modal')">Abbrechen</button>
-                <button class="btn btn-primary" onclick="setConcentration(${cbId})">✓ Setzen</button>
+                <button class="btn" data-action="hide-modal" data-value="concentration-modal">Abbrechen</button>
+                <button class="btn btn-primary" data-action="set-concentration" data-id="${cbId}">✓ Setzen</button>
             </div>
         </div>
     `;
@@ -762,12 +762,12 @@ function showAoEDamageModal() {
         <div class="aoe-modal-content">
             <div class="aoe-modal-header">
                 <h3>💥 AoE Schaden</h3>
-                <button class="btn btn-sm" onclick="hideModal('aoe-damage-modal')">✕</button>
+                <button class="btn btn-sm" data-action="hide-modal" data-value="aoe-damage-modal">✕</button>
             </div>
 
             <div class="aoe-damage-input">
                 <input type="text" id="aoe-damage-formula" placeholder="z.B. 8d6 oder 28" value="8d6">
-                <button class="aoe-roll-btn" onclick="rollAoEDamage()">
+                <button class="aoe-roll-btn" data-action="roll-aoe-damage">
                     🎲 Würfeln
                 </button>
                 <div class="aoe-damage-result" id="aoe-damage-result">—</div>
@@ -776,9 +776,9 @@ function showAoEDamageModal() {
             <div class="aoe-targets-header">
                 <span>Ziele auswählen:</span>
                 <div class="aoe-quick-select">
-                    <button class="aoe-quick-btn" onclick="aoeSelectAll()">Alle</button>
-                    <button class="aoe-quick-btn" onclick="aoeSelectNone()">Keine</button>
-                    <button class="aoe-quick-btn" onclick="aoeSelectEnemies()">Gegner</button>
+                    <button class="aoe-quick-btn" data-action="aoe-select-all">Alle</button>
+                    <button class="aoe-quick-btn" data-action="aoe-select-none">Keine</button>
+                    <button class="aoe-quick-btn" data-action="aoe-select-enemies">Gegner</button>
                 </div>
             </div>
 
@@ -801,8 +801,8 @@ function showAoEDamageModal() {
             </div>
 
             <div class="aoe-modal-footer">
-                <button class="btn" onclick="hideModal('aoe-damage-modal')">Abbrechen</button>
-                <button class="aoe-apply-btn" id="aoe-apply-btn" onclick="applyAoEDamage()" disabled>
+                <button class="btn" data-action="hide-modal" data-value="aoe-damage-modal">Abbrechen</button>
+                <button class="aoe-apply-btn" id="aoe-apply-btn" data-action="apply-aoe-damage" disabled>
                     💥 Schaden anwenden
                 </button>
             </div>
@@ -1373,16 +1373,9 @@ window.saveCustomEffect = saveCustomEffect;
 window.removeEffect = removeEffect;
 window.toggleDeathSave = toggleDeathSave;
 window.showConcentrationModal = showConcentrationModal;
-window.setConcentration = setConcentration;
 window.breakConcentration = breakConcentration;
 window.rollConcentrationCheck = rollConcentrationCheck;
 window.showAoEDamageModal = showAoEDamageModal;
-window.rollAoEDamage = rollAoEDamage;
-window.updateAoETargetDisplay = updateAoETargetDisplay;
-window.aoeSelectAll = aoeSelectAll;
-window.aoeSelectNone = aoeSelectNone;
-window.aoeSelectEnemies = aoeSelectEnemies;
-window.applyAoEDamage = applyAoEDamage;
 window.renderLoot = renderLoot;
 window.renderLootList = renderLootList;
 window.selectLoot = selectLoot;

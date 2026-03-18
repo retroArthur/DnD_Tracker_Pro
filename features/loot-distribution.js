@@ -21,7 +21,7 @@ function showLootDistributionModal() {
         <div class="ld-modal-content">
             <div class="ld-modal-header">
                 <h3>💰 Beute verteilen</h3>
-                <button class="btn btn-sm" onclick="hideModal('loot-dist-modal')">✕</button>
+                <button class="btn btn-sm" data-action="hide-modal" data-value="loot-dist-modal">✕</button>
             </div>
 
             <div class="ld-tab-content" id="ld-tab-gold">
@@ -41,8 +41,8 @@ function showLootDistributionModal() {
                     </div>
 
                     <div class="ld-gold-actions">
-                        <button class="btn btn-primary" onclick="applyGoldSplit()">💰 Gold verteilen</button>
-                        <button class="btn" onclick="collectAllGold()">📥 Alles einsammeln</button>
+                        <button class="btn btn-primary" data-action="apply-gold-split">💰 Gold verteilen</button>
+                        <button class="btn" data-action="collect-all-gold">📥 Alles einsammeln</button>
                     </div>
                 </div>
             </div>
@@ -193,6 +193,3 @@ function collectAllGold() {
 // EXPORTS FOR GLOBAL ACCESS
 // ============================================================
 window.showLootDistributionModal = showLootDistributionModal;
-window.updateGoldSplit = updateGoldSplit;
-window.applyGoldSplit = applyGoldSplit;
-window.collectAllGold = collectAllGold;
