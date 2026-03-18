@@ -4,7 +4,7 @@
 // ============================================================
 // CONSTANTS
 // ============================================================
-var D = window.D;
+// var D = window.D;  // [REMOVED: conflicts with function declaration]
 /**
  * Standard-Layout für den DM Screen
  */

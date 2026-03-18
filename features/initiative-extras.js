@@ -5,8 +5,8 @@
 // ============================================================
 // INITIATIVE AUTO-ROLL & DRAG-DROP
 // ============================================================
-var D = window.D;
-var renderInit = window.renderInit;
+// var D = window.D;  // [REMOVED: conflicts with function declaration]
+// var renderInit = window.renderInit;  // [REMOVED: conflicts with function declaration]
 function rollAllInitiative() {
     if (!D.initiative || !D.initiative.combatants || D.initiative.combatants.length === 0) {
         showToast('Keine Kämpfer in der Initiative');

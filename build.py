@@ -47,15 +47,12 @@ def write_file(filepath, content):
         f.write(content)
 
 def minify_js(js_code):
-    """Sichere JS-Minifizierung (entfernt nur standalone Kommentare und Leerzeilen).
-    Entfernt KEINE Inline-Kommentare (nach Code), da Regex nicht zwischen
-    // in Strings und echten Kommentaren unterscheiden kann."""
-    # Entferne mehrzeilige Kommentare (sicher, da /* */ nicht in Strings vorkommt)
-    js_code = re.sub(r'/\*.*?\*/', '', js_code, flags=re.DOTALL)
-    # Entferne Zeilen die NUR Whitespace + Kommentar sind (keine Code-Zeilen!)
-    # Behalte [DEDUP] und [SECTION] Kommentare als Platzhalter
-    js_code = re.sub(r'^\s*//(?!\s*\[).*$', '', js_code, flags=re.MULTILINE)
-    # Entferne Leerzeilen
+    """Sichere JS-Minifizierung: entfernt nur Leerzeilen.
+    Kommentare werden NICHT entfernt, da regex-basierte Entfernung unsicher ist:
+    - // Kommentare koennen URLs in Strings sein (http://)
+    - /* */ Kommentare koennen Regex-Literale matchen (/<!--[\\s\\S]*?-->/g)
+    - DEDUP-Platzhalter muessen erhalten bleiben"""
+    # Entferne nur Leerzeilen
     js_code = re.sub(r'^\s*$\n', '', js_code, flags=re.MULTILINE)
     return js_code
 
@@ -74,13 +71,26 @@ def minify_css(css_code):
     return css_code.strip()
 
 def minify_html(html_code):
-    """Minifiziert HTML-Code (entfernt Kommentare und Whitespace)"""
-    # Entferne Kommentare (aber nicht DOCTYPE)
+    """Minifiziert HTML-Code (entfernt Kommentare und Whitespace).
+    Schuetzt <script> und <style> Inhalte vor Whitespace-Aenderungen."""
+    # Entferne HTML-Kommentare (aber nicht DOCTYPE)
     html_code = re.sub(r'<!--(?!DOCTYPE)[\s\S]*?-->', '', html_code)
-    # Entferne mehrfache Leerzeichen
+    # Schuetze script/style Inhalte vor Whitespace-Minifizierung
+    protected = {}
+    counter = [0]
+    def protect(match):
+        key = f'__PROTECTED_{counter[0]}__'
+        counter[0] += 1
+        protected[key] = match.group(0)
+        return key
+    html_code = re.sub(r'(<script[^>]*>)(.*?)(</script>)', protect, html_code, flags=re.DOTALL)
+    html_code = re.sub(r'(<style[^>]*>)(.*?)(</style>)', protect, html_code, flags=re.DOTALL)
+    # Minifiziere nur den HTML-Teil
     html_code = re.sub(r'\s+', ' ', html_code)
-    # Entferne Whitespace zwischen Tags
     html_code = re.sub(r'>\s+<', '><', html_code)
+    # Stelle script/style Inhalte wieder her
+    for key, value in protected.items():
+        html_code = html_code.replace(key, value)
     return html_code.strip()
 
 def deduplicate_window_assignments(js_code):

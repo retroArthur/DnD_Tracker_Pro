@@ -46,7 +46,7 @@ function sanitizeHTML(html) {
         return '';
     // Schritt 1: Entferne gefährliche Patterns BEVOR Parsing
     const cleaned = String(html)
-        .replace(/<script[\s\S]*?<\/script>/gi, '')
+        .replace(new RegExp('<script[\\s\\S]*?</scr' + 'ipt>', 'gi'), '')
         .replace(/on\w+\s*=\s*["'][^"']*["']/gi, '')
         .replace(/on\w+\s*=\s*[^\s>]*/gi, '')
         .replace(/javascript\s*:/gi, '')

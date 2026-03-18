@@ -5,13 +5,7 @@
 // ============================================================
 // GLOBAL SEARCH (mit Fuzzy-Match)
 // ============================================================
-var D = window.D;
-var switchView = window.switchView;
-var toggleLocation = window.toggleLocation;
-var editChar = window.editChar;
-var editNPC = window.editNPC;
-var editQuest = window.editQuest;
-var editSpell = window.editSpell;
+// Global references - accessed via window.* to avoid const redeclaration in build
 // Fuzzy-Match Algorithmus
 function fuzzyMatch(text, query) {
     if (!text || !query)

@@ -6,7 +6,7 @@
 // CAMPAIGN MANAGER
 // ============================================================
 // Alias für Rückwärtskompatibilität
-var initIndexedDB = window.initIndexedDB;
+// var initIndexedDB = window.initIndexedDB;  // [REMOVED: conflicts with function declaration]
 const CAMPAIGN_INDEX_KEY = APP_CONFIG.CAMPAIGN_INDEX_KEY;
 function getCampaignIndex() {
     return StorageAPI.getJSON(CAMPAIGN_INDEX_KEY, { campaigns: [], active: APP_CONFIG.STORAGE_KEY });

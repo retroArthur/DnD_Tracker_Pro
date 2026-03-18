@@ -5,13 +5,13 @@
 // ============================================================
 // PERFORMANCE OPTIMIERUNGEN
 // ============================================================
-var D = window.D;
-var renderParty = window.renderParty;
-var renderQuests = window.renderQuests;
-var fuzzySearchFields = window.fuzzySearchFields;
-var highlightMatch = window.highlightMatch;
-var getTypeIcon = window.getTypeIcon;
-var formatTime = window.formatTime;
+// var D = window.D;  // [REMOVED: conflicts with function declaration]
+// var renderParty = window.renderParty;  // [REMOVED: conflicts with function declaration]
+// var renderQuests = window.renderQuests;  // [REMOVED: conflicts with function declaration]
+// var fuzzySearchFields = window.fuzzySearchFields;  // [REMOVED: conflicts with function declaration]
+// var highlightMatch = window.highlightMatch;  // [REMOVED: conflicts with function declaration]
+// var getTypeIcon = window.getTypeIcon;  // [REMOVED: conflicts with function declaration]
+// var formatTime = window.formatTime;  // [REMOVED: conflicts with function declaration]
 // Debounced Render für häufige Updates (zusätzlich zu den bei SPELLS definierten)
 var debouncedRenderParty = debounce(() => renderParty(), 100);
 var debouncedRenderQuests = debounce(() => renderQuests(), 100);

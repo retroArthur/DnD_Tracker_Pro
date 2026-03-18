@@ -5,37 +5,37 @@
 // ============================================================
 // DEBUG & TEST FUNKTIONEN
 // ============================================================
-var D = window.D;
-var renderAll = window.renderAll;
-var renderSpells = window.renderSpells;
-var renderParty = window.renderParty;
-var renderWiki = window.renderWiki;
-var renderMindmap = window.renderMindmap;
-var renderEmptyState = window.renderEmptyState;
-var populateFilterDropdown = window.populateFilterDropdown;
-var updateCounters = window.updateCounters;
-var renderEntityLink = window.renderEntityLink;
-var safeJSONParse = window.safeJSONParse;
-var safeJSONStringify = window.safeJSONStringify;
-var repairDataArrays = window.repairDataArrays;
-var validateDataIntegrity = window.validateDataIntegrity;
-var debounce = window.debounce;
-var throttle = window.throttle;
-var setTheme = window.setTheme;
-var undo = window.undo;
-var redo = window.redo;
-var pushUndo = window.pushUndo;
-var toggleQuickRef = window.toggleQuickRef;
-var applyQrefCondition = window.applyQrefCondition;
-var rollQrefDice = window.rollQrefDice;
-var qrefSearch = window.qrefSearch;
-var toggleEventLog = window.toggleEventLog;
-var clearEventLog = window.clearEventLog;
-var parseWikiLinks = window.parseWikiLinks;
-var navigateToWikiEntry = window.navigateToWikiEntry;
-var addNode = window.addNode;
-var saveNodeFromModal = window.saveNodeFromModal;
-var selectNodeType = window.selectNodeType;
+// var D = window.D;  // [REMOVED: conflicts with function declaration]
+// var renderAll = window.renderAll;  // [REMOVED: conflicts with function declaration]
+// var renderSpells = window.renderSpells;  // [REMOVED: conflicts with function declaration]
+// var renderParty = window.renderParty;  // [REMOVED: conflicts with function declaration]
+// var renderWiki = window.renderWiki;  // [REMOVED: conflicts with function declaration]
+// var renderMindmap = window.renderMindmap;  // [REMOVED: conflicts with function declaration]
+// var renderEmptyState = window.renderEmptyState;  // [REMOVED: conflicts with function declaration]
+// var populateFilterDropdown = window.populateFilterDropdown;  // [REMOVED: conflicts with function declaration]
+// var updateCounters = window.updateCounters;  // [REMOVED: conflicts with function declaration]
+// var renderEntityLink = window.renderEntityLink;  // [REMOVED: conflicts with function declaration]
+// var safeJSONParse = window.safeJSONParse;  // [REMOVED: conflicts with function declaration]
+// var safeJSONStringify = window.safeJSONStringify;  // [REMOVED: conflicts with function declaration]
+// var repairDataArrays = window.repairDataArrays;  // [REMOVED: conflicts with function declaration]
+// var validateDataIntegrity = window.validateDataIntegrity;  // [REMOVED: conflicts with function declaration]
+// var debounce = window.debounce;  // [REMOVED: conflicts with function declaration]
+// var throttle = window.throttle;  // [REMOVED: conflicts with function declaration]
+// var setTheme = window.setTheme;  // [REMOVED: conflicts with function declaration]
+// var undo = window.undo;  // [REMOVED: conflicts with function declaration]
+// var redo = window.redo;  // [REMOVED: conflicts with function declaration]
+// var pushUndo = window.pushUndo;  // [REMOVED: conflicts with function declaration]
+// var toggleQuickRef = window.toggleQuickRef;  // [REMOVED: conflicts with function declaration]
+// var applyQrefCondition = window.applyQrefCondition;  // [REMOVED: conflicts with function declaration]
+// var rollQrefDice = window.rollQrefDice;  // [REMOVED: conflicts with function declaration]
+// var qrefSearch = window.qrefSearch;  // [REMOVED: conflicts with function declaration]
+// var toggleEventLog = window.toggleEventLog;  // [REMOVED: conflicts with function declaration]
+// var clearEventLog = window.clearEventLog;  // [REMOVED: conflicts with function declaration]
+// var parseWikiLinks = window.parseWikiLinks;  // [REMOVED: conflicts with function declaration]
+// var navigateToWikiEntry = window.navigateToWikiEntry;  // [REMOVED: conflicts with function declaration]
+// var addNode = window.addNode;  // [REMOVED: conflicts with function declaration]
+// var saveNodeFromModal = window.saveNodeFromModal;  // [REMOVED: conflicts with function declaration]
+// var selectNodeType = window.selectNodeType;  // [REMOVED: conflicts with function declaration]
 function clearTestData() {
     if (!confirm('Alle Test-Daten (mit "Test" im Namen) löschen?'))
         return;

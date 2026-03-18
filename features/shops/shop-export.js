@@ -6,13 +6,13 @@
 // ============================================================
 
 // Import required functions from global scope
-var D = window.D;
-var esc = window.esc;
-var showModal = window.showModal;
-var hideModal = window.hideModal;
-var showToast = window.showToast;
-var parseCurrency = window.parseCurrency;
-var formatCurrency = window.formatCurrency;
+// var D = window.D;  // [REMOVED: conflicts with function declaration]
+// var esc = window.esc;  // [REMOVED: conflicts with function declaration]
+// var showModal = window.showModal;  // [REMOVED: conflicts with function declaration]
+// var hideModal = window.hideModal;  // [REMOVED: conflicts with function declaration]
+// var showToast = window.showToast;  // [REMOVED: conflicts with function declaration]
+// var parseCurrency = window.parseCurrency;  // [REMOVED: conflicts with function declaration]
+// var formatCurrency = window.formatCurrency;  // [REMOVED: conflicts with function declaration]
 
 /**
  * Zeigt das Modal für Export-Optionen

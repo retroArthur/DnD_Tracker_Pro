@@ -5,7 +5,7 @@
 // ============================================================
 // THEME SYSTEM
 // ============================================================
-var D = window.D;
+// var D = window.D;  // [REMOVED: conflicts with function declaration]
 function showThemeModal() {
     showModal('theme-modal');
 }
