@@ -492,6 +492,57 @@ if (document.readyState === 'loading') {{
         saved = original_html_size - len(html_template)
         log.success(f"HTML minifiziert: {saved:,} Zeichen gespart ({saved/original_html_size*100:.1f}%)")
 
+    # Post-Build-Validierung: Pruefe auf bekannte Build-Breaker
+    print("\n[VALIDATE] Pruefe Build-Integritaet...")
+    build_errors = []
+
+    # 1. Pruefe ob HTML-Tags im JS-Block stehen (Browser interpretiert sie als echtes HTML)
+    js_match = re.search(r'<script>(.*?)</script>', html_template, re.DOTALL)
+    if js_match:
+        js_in_html = js_match.group(1)
+        dangerous_tags = {
+            '</script>': 'Schliesst das Script-Tag vorzeitig',
+            '</style>': 'Kann CSS-Parsing brechen',
+            '</body>': 'Beendet den Body vorzeitig',
+            '</html>': 'Beendet das Dokument vorzeitig',
+        }
+        for tag, desc in dangerous_tags.items():
+            if tag in js_in_html:
+                build_errors.append(f"KRITISCH: '{tag}' im JavaScript gefunden - {desc}")
+
+        # 2. Pruefe ob JS auf zu wenige Zeilen kollabiert ist (Kommentare werden zu Inline-Kommentaren)
+        js_lines = js_in_html.split('\n')
+        if len(js_lines) < 100 and len(js_in_html) > 100000:
+            build_errors.append(f"KRITISCH: JavaScript hat nur {len(js_lines)} Zeilen bei {len(js_in_html)} Zeichen - Kommentare schneiden Code ab")
+
+        # 3. Pruefe auf doppelte Top-Level const/let/function Deklarationen
+        depth = 0
+        top_decls = {}
+        for i, line in enumerate(js_lines, 1):
+            for ch in line:
+                if ch == '{': depth += 1
+                elif ch == '}': depth -= 1
+            if depth == 0:
+                m = re.match(r'^\s*(const|let|function)\s+(\w+)', line)
+                if m:
+                    name = m.group(2)
+                    if name in top_decls:
+                        build_errors.append(f"FEHLER: Doppelte Deklaration '{name}' auf Zeile {top_decls[name]} und {i}")
+                    else:
+                        top_decls[name] = i
+                m2 = re.match(r'^\s*var\s+(\w+)\s*=', line)
+                if m2 and m2.group(1) in top_decls:
+                    build_errors.append(f"FEHLER: 'var {m2.group(1)}' (Zeile {i}) kollidiert mit Deklaration auf Zeile {top_decls[m2.group(1)]}")
+
+    if build_errors:
+        print(f"\n[ERROR] {len(build_errors)} Build-Fehler gefunden:")
+        for err in build_errors:
+            print(f"   ❌ {err}")
+        print("\n[ABORTED] Build NICHT geschrieben! Bitte Fehler beheben.")
+        sys.exit(1)
+    else:
+        log.success("Alle Validierungen bestanden")
+
     # Schreibe finale Datei
     write_file(output_file, html_template)
 
