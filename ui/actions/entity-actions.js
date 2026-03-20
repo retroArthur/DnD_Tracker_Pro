@@ -142,7 +142,39 @@ const EntityActions = {
     'delete-spell-stop': (ctx) => { ctx.event.stopPropagation(); deleteSpell(ctx.id); },
     'set-spell-filter': (ctx) => setSpellFilter(ctx.value),
     'spell-level-filter': (ctx) => setSpellLevelFilter(ctx.value),
-    'spell-school-filter': (ctx) => setSpellSchoolFilter(ctx.value)
+    'spell-school-filter': (ctx) => setSpellSchoolFilter(ctx.value),
+
+    // Character form actions (migrated from inline handlers)
+    'update-proficiency-bonus': () => updateProficiencyBonus(),
+    'update-speed-display': () => updateSpeedDisplay(),
+    'update-avatar-preview': (ctx) => updateAvatarPreview(ctx.target.value),
+    'update-attr-mod': (ctx) => {
+        const attr = ctx.target.dataset.value;
+        updateAttrMod(attr);
+        if (attr === 'dex' && typeof updateInitFromDex === 'function') updateInitFromDex();
+    },
+    'update-char-languages': () => updateCharLanguages(),
+    'render-party': () => renderParty(),
+
+    // Encounter form actions
+    'update-enc-languages': () => updateEncLanguages(),
+    'update-enc-attr-mod': (ctx) => updateEncAttrMod(ctx.target.dataset.value),
+    'toggle-enc-save-box': (ctx) => toggleEncSaveBox(ctx.target.dataset.value),
+
+    // Spell form actions
+    'spell-time-change': () => onSpellTimeChange(),
+    'spell-range-change': () => onSpellRangeChange(),
+    'spell-duration-change': () => onSpellDurationChange(),
+    'toggle-material-field': () => toggleMaterialField(),
+
+    // Assign modal actions
+    'filter-assign-spells': () => filterAssignSpells(),
+    'filter-assign-items': () => filterAssignItems(),
+
+    // Render actions
+    'render-quests': () => renderQuests(),
+    'render-spells': () => renderSpells(),
+    'populate-import-nodes': () => populateImportNodesList()
 };
 
 // Register all entity actions

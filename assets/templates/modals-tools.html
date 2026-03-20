@@ -500,7 +500,7 @@
                 <div style="display: grid; grid-template-columns: auto 1fr auto; gap: 8px; align-items: end;">
                     <div class="form-group" style="margin: 0;">
                         <label style="font-size: 0.8em;">Typ</label>
-                        <select id="link-target-type" onchange="renderLinkTargets()">
+                        <select id="link-target-type" data-action="render-link-targets">
                             <option value="npcs">🎭 NPC</option>
                             <option value="locations">🏠 Ort</option>
                             <option value="quests">📜 Quest</option>
@@ -535,7 +535,7 @@
             </div>
             <div class="form-group">
                 <label>Bild-URL</label>
-                <input type="text" id="avatar-url" placeholder="https://example.com/image.jpg" oninput="previewAvatar()">
+                <input type="text" id="avatar-url" placeholder="https://example.com/image.jpg" data-action="preview-avatar">
             </div>
             <p style="font-size: 0.8em; color: var(--text-dim); margin-bottom: 12px;">
                 Tipp: Bilder von Imgur, Discord CDN, oder anderen Bild-Hostern verwenden.

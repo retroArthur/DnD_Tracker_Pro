@@ -27,7 +27,12 @@ const MapActions = {
     'delete-node-stop': (ctx) => { ctx.event.stopPropagation(); deleteNodeById(ctx.id); },
 
     // Test/Debug
-    'generate-test-mindmap': (ctx) => generateTestMindmap(parseInt(ctx.value) || 10)
+    'generate-test-mindmap': (ctx) => generateTestMindmap(parseInt(ctx.value) || 10),
+
+    // Migrated inline handlers
+    'upload-map': (ctx) => uploadMapToCurrentTab(ctx.event),
+    'filter-map-markers': (ctx) => filterMapMarkers(ctx.target.value),
+    'toggle-map-layer': (ctx) => toggleMapLayer(ctx.target.dataset.value, ctx.target.checked)
 };
 
 // Register all map actions

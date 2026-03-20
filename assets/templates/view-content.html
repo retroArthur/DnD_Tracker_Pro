@@ -9,7 +9,7 @@
                 <!-- Gruppe 2: Suche -->
                 <div class="section-toolbar-search">
                     <div class="search-wrapper">
-                        <input type="text" id="npc-search" class="toolbar-search" placeholder="🔍 NPC suchen..." oninput="renderNPCList(); updateSearchClear(this);">
+                        <input type="text" id="npc-search" class="toolbar-search" placeholder="🔍 NPC suchen..." data-action="search-input" data-render="renderNPCList">
                         <button class="search-clear-btn" data-action="clear-search" data-value="npc-search" title="Suche leeren">✕</button>
                     </div>
                 </div>
@@ -56,7 +56,7 @@
                 <!-- Gruppe 2: Suche -->
                 <div class="section-toolbar-search">
                     <div class="search-wrapper">
-                        <input type="text" id="loc-search" class="toolbar-search" placeholder="🔍 Orte suchen..." oninput="renderLocations(); updateSearchClear(this);">
+                        <input type="text" id="loc-search" class="toolbar-search" placeholder="🔍 Orte suchen..." data-action="search-input" data-render="renderLocations">
                         <button class="search-clear-btn" data-action="clear-search" data-value="loc-search" title="Suche leeren">✕</button>
                     </div>
                 </div>
@@ -209,7 +209,7 @@
                 </p>
                 <div class="form-group">
                     <label>Datenquelle</label>
-                    <select id="import-nodes-source" onchange="populateImportNodesList()" style="width: 100%;">
+                    <select id="import-nodes-source" data-action="populate-import-nodes" style="width: 100%;">
                         <option value="characters">👤 Party-Charaktere</option>
                         <option value="npcs">🎭 NPCs</option>
                         <option value="locations">🏠 Orte</option>
@@ -446,7 +446,7 @@
                 <!-- Gruppe 2: Suche -->
                 <div class="section-toolbar-search">
                     <div class="search-wrapper">
-                        <input type="text" id="quest-search" class="toolbar-search" placeholder="🔍 Quest suchen..." oninput="renderQuests(); updateSearchClear(this);">
+                        <input type="text" id="quest-search" class="toolbar-search" placeholder="🔍 Quest suchen..." data-action="search-input" data-render="renderQuests">
                         <button class="search-clear-btn" data-action="clear-search" data-value="quest-search" title="Suche leeren">✕</button>
                     </div>
                 </div>
@@ -459,7 +459,7 @@
                         <input type="file" id="import-quests" class="io-file-input" accept=".json" data-on-change="import-data" data-type="quests">
                     </div>
                     <label class="filter-checkbox">
-                        <input type="checkbox" id="quest-filter-active" checked onchange="renderQuests()"> Aktive
+                        <input type="checkbox" id="quest-filter-active" checked data-action="render-quests"> Aktive
                     </label>
                 </div>
                 

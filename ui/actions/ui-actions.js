@@ -169,6 +169,14 @@ const UIActions = {
         else console.error('[EventDelegation] Function not found:', ctx.value);
     },
 
+    // Search input (generic: calls render function + updateSearchClear)
+    'search-input': (ctx) => {
+        const fnName = ctx.target.dataset.render;
+        const fn = window[fnName];
+        if (typeof fn === 'function') fn();
+        if (typeof updateSearchClear === 'function') updateSearchClear(ctx.target);
+    },
+
     // Event Log
     'toggle-event-log': () => toggleEventLog(),
     'clear-event-log': () => clearEventLog()

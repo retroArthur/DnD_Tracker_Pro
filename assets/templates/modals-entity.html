@@ -433,7 +433,7 @@
             </div>
             <div class="form-grid" style="grid-template-columns: 1fr 1fr 1fr;">
                 <div class="form-group"><label>Zeitaufwand</label>
-                    <select id="spell-time-select" onchange="onSpellTimeChange()">
+                    <select id="spell-time-select" data-action="spell-time-change">
                         <option value="1 Aktion">Aktion</option>
                         <option value="1 Bonusaktion">Bonus</option>
                         <option value="1 Reaktion">Reaktion</option>
@@ -446,7 +446,7 @@
                     <input type="text" id="spell-time-custom" placeholder="z.B. 8 Stunden" style="display:none; margin-top:6px;">
                 </div>
                 <div class="form-group"><label>Reichweite</label>
-                    <select id="spell-range-select" onchange="onSpellRangeChange()">
+                    <select id="spell-range-select" data-action="spell-range-change">
                         <option value="">-- Wählen --</option>
                         <option value="Selbst">Selbst</option>
                         <option value="Berührung">Berührung</option>
@@ -471,7 +471,7 @@
                     <input type="text" id="spell-range-custom" placeholder="z.B. 12m Radius" style="display:none; margin-top:6px;">
                 </div>
                 <div class="form-group"><label>Dauer</label>
-                    <select id="spell-duration-select" onchange="onSpellDurationChange()">
+                    <select id="spell-duration-select" data-action="spell-duration-change">
                         <option value="Unmittelbar">Unmittelbar</option>
                         <option value="Berührung">Berührung</option>
                         <option value="Konzentration, bis zu 1 Minute">Konz. bis zu 1 Min.</option>
@@ -492,7 +492,7 @@
                 <label><input type="checkbox" id="spell-ritual"> Ritual</label>
                 <label><input type="checkbox" id="spell-v"> V (Verbal)</label>
                 <label><input type="checkbox" id="spell-g"> G (Gestik)</label>
-                <label><input type="checkbox" id="spell-m" onchange="toggleMaterialField()"> M (Material)</label>
+                <label><input type="checkbox" id="spell-m" data-action="toggle-material-field"> M (Material)</label>
             </div>
             <div class="form-group" id="spell-material-group" style="display: none;">
                 <label>Materialkomponenten</label>
@@ -582,9 +582,9 @@
             <!-- Kompakte Filter-Leiste -->
             <div class="assign-spell-filters">
                 <div class="assign-spell-search-wrap">
-                    <input type="text" id="assign-spell-search" placeholder="🔍 Zauber suchen..." oninput="filterAssignSpells()">
+                    <input type="text" id="assign-spell-search" placeholder="🔍 Zauber suchen..." data-action="filter-assign-spells">
                 </div>
-                <select id="assign-spell-class-filter" class="assign-spell-select" onchange="filterAssignSpells()">
+                <select id="assign-spell-class-filter" class="assign-spell-select" data-action="filter-assign-spells">
                     <option value="">Alle Klassen</option>
                     <option value="Barde">Barde</option>
                     <option value="Druide">Druide</option>
@@ -595,7 +595,7 @@
                     <option value="Waldläufer">Waldläufer</option>
                     <option value="Zauberer">Zauberer</option>
                 </select>
-                <select id="assign-spell-level-filter" class="assign-spell-select" onchange="filterAssignSpells()">
+                <select id="assign-spell-level-filter" class="assign-spell-select" data-action="filter-assign-spells">
                     <option value="">Alle Stufen</option>
                     <option value="0">🔮 Tricks</option>
                     <option value="1">⭐ Stufe 1</option>
@@ -641,11 +641,11 @@
             <div class="form-grid" style="margin-bottom: 10px; grid-template-columns: 1fr 1fr;">
                 <div class="form-group">
                     <label>🔍 Suche</label>
-                    <input type="text" id="assign-item-search" placeholder="Name..." oninput="filterAssignItems()">
+                    <input type="text" id="assign-item-search" placeholder="Name..." data-action="filter-assign-items">
                 </div>
                 <div class="form-group">
                     <label>📂 Kategorie</label>
-                    <select id="assign-item-cat-filter" onchange="filterAssignItems()">
+                    <select id="assign-item-cat-filter" data-action="filter-assign-items">
                         <option value="">Alle Kategorien</option>
                         <option value="weapons">⚔️ Waffen</option>
                         <option value="armor">🛡️ Rüstung</option>

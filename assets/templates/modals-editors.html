@@ -468,8 +468,8 @@
                     <div class="qref-section-body">
                         <div class="qref-converter">
                             <div class="qref-converter-row">
-                                <input type="number" id="qref-conv-metric" class="qref-conv-input" placeholder="0" oninput="convertUnitsMetric()">
-                                <select id="qref-conv-metric-unit" class="qref-conv-select" onchange="convertUnitsMetric()">
+                                <input type="number" id="qref-conv-metric" class="qref-conv-input" placeholder="0" data-action="convert-units-metric">
+                                <select id="qref-conv-metric-unit" class="qref-conv-select" data-action="convert-units-metric">
                                     <option value="cm">cm</option>
                                     <option value="m" selected>m</option>
                                     <option value="km">km</option>
@@ -477,8 +477,8 @@
                             </div>
                             <div class="qref-converter-arrow">⇅</div>
                             <div class="qref-converter-row">
-                                <input type="number" id="qref-conv-imperial" class="qref-conv-input" placeholder="0" oninput="convertUnitsImperial()">
-                                <select id="qref-conv-imperial-unit" class="qref-conv-select" onchange="convertUnitsImperial()">
+                                <input type="number" id="qref-conv-imperial" class="qref-conv-input" placeholder="0" data-action="convert-units-imperial">
+                                <select id="qref-conv-imperial-unit" class="qref-conv-select" data-action="convert-units-imperial">
                                     <option value="in">inch</option>
                                     <option value="ft" selected>feet</option>
                                     <option value="mi">mile</option>
@@ -576,7 +576,7 @@
             </div>
             <div class="form-group">
                 <label>Typ</label>
-                <select id="insert-link-target-type" onchange="renderInsertLinkTargets()">
+                <select id="insert-link-target-type" data-action="render-insert-link-targets">
                     <option value="npcs">🎭 NPCs</option>
                     <option value="locations">🏠 Orte</option>
                     <option value="quests">📜 Quests</option>
@@ -749,7 +749,7 @@
                 <button class="btn btn-sm" data-action="hide-modal" data-value="notes-search-modal">✕</button>
             </div>
             <div class="notes-search-bar">
-                <input type="text" class="notes-search-input" id="notes-search-input" placeholder="Suchbegriff eingeben..." oninput="searchNotes()">
+                <input type="text" class="notes-search-input" id="notes-search-input" placeholder="Suchbegriff eingeben..." data-action="search-notes">
             </div>
             <div class="notes-search-results" id="notes-search-results">
                 <div style="padding: 20px; text-align: center; color: var(--text-dim);">

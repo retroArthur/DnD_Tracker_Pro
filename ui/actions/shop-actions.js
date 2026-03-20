@@ -37,7 +37,12 @@ const ShopActions = {
         updateCartQty(ctx.id, currentQty + 1);
     },
     'cart-remove': (ctx) => removeFromCart(ctx.id),
-    'back-to-cart': () => { hideModal('checkout-modal'); showModal('cart-modal'); }
+    'back-to-cart': () => { hideModal('checkout-modal'); showModal('cart-modal'); },
+
+    // Migrated inline handlers
+    'render-shops': () => renderShops(),
+    'toggle-shop-item-unlimited': () => toggleShopItemUnlimited(),
+    'update-shop-item-fields': () => updateShopItemFields()
 };
 
 // Register all shop actions

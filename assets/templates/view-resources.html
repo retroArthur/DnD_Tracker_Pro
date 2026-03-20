@@ -9,7 +9,7 @@
                 <!-- Gruppe 2: Suche -->
                 <div class="section-toolbar-search">
                     <div class="search-wrapper">
-                        <input type="text" id="loot-search" class="toolbar-search" placeholder="🔍 Item suchen..." oninput="renderLootList(); updateSearchClear(this);">
+                        <input type="text" id="loot-search" class="toolbar-search" placeholder="🔍 Item suchen..." data-action="search-input" data-render="renderLootList">
                         <button class="search-clear-btn" data-action="clear-search" data-value="loot-search" title="Suche leeren">✕</button>
                     </div>
                 </div>
@@ -58,14 +58,14 @@
                 <!-- Gruppe 2: Suche -->
                 <div class="section-toolbar-search">
                     <div class="search-wrapper">
-                        <input type="text" id="shop-search" class="toolbar-search" placeholder="🔍 Shop suchen..." oninput="renderShops(); updateSearchClear(this);">
+                        <input type="text" id="shop-search" class="toolbar-search" placeholder="🔍 Shop suchen..." data-action="search-input" data-render="renderShops">
                         <button class="search-clear-btn" data-action="clear-search" data-value="shop-search" title="Suche leeren">✕</button>
                     </div>
                 </div>
                 
                 <!-- Gruppe 3: Filter -->
                 <div class="section-toolbar-filters">
-                    <select id="shop-type-filter" onchange="renderShops()">
+                    <select id="shop-type-filter" data-action="render-shops">
                         <option value="">Alle Typen</option>
                         <option value="schmied">🔨 Schmied</option>
                         <option value="wirtshaus">🍺 Wirtshaus</option>
@@ -93,7 +93,7 @@
                         <option value="wanderer">🚶 Wanderer</option>
                         <option value="unbekannt">❓ Unbekannt</option>
                     </select>
-                    <select id="shop-location-filter" onchange="renderShops()">
+                    <select id="shop-location-filter" data-action="render-shops">
                         <option value="">Alle Orte</option>
                     </select>
                     <button class="btn btn-sm" data-action="call" data-value="expandAllShops" title="Alle ausklappen">📂</button>
@@ -126,7 +126,7 @@
                 <!-- Gruppe 2: Suche -->
                 <div class="section-toolbar-search">
                     <div class="search-wrapper">
-                        <input type="text" id="spell-search" class="toolbar-search" placeholder="🔍 Zauber suchen..." oninput="debouncedRenderSpells(); updateSearchClear(this);">
+                        <input type="text" id="spell-search" class="toolbar-search" placeholder="🔍 Zauber suchen..." data-action="search-input" data-render="debouncedRenderSpells">
                         <button class="search-clear-btn" data-action="clear-search" data-value="spell-search" title="Suche leeren">✕</button>
                     </div>
                 </div>
@@ -147,7 +147,7 @@
                         <input type="file" id="import-spells" class="io-file-input" accept=".json,.csv" data-on-change="import-data" data-type="spells">
                     </div>
                     <button class="btn" data-action="call" data-value="loadSRDSpells" title="SRD-Zauber laden">📚 SRD</button>
-                    <select id="spell-class-filter" onchange="renderSpells()">
+                    <select id="spell-class-filter" data-action="render-spells">
                         <option value="">Alle Klassen</option>
                         <option value="Barbar">Barbar</option>
                         <option value="Barde">Barde</option>
@@ -200,7 +200,7 @@
                 <!-- Gruppe 2: Suche -->
                 <div class="section-toolbar-search">
                     <div class="search-wrapper">
-                        <input type="text" id="notes-search" class="toolbar-search" placeholder="🔍 Notizen durchsuchen..." oninput="renderSessions(); updateSearchClear(this);">
+                        <input type="text" id="notes-search" class="toolbar-search" placeholder="🔍 Notizen durchsuchen..." data-action="search-input" data-render="renderSessions">
                         <button class="search-clear-btn" data-action="clear-search" data-value="notes-search" title="Suche leeren">✕</button>
                     </div>
                 </div>
@@ -338,7 +338,7 @@
             <div class="session-filters" id="session-filters">
                 <div class="session-filter-group">
                     <label>Arc:</label>
-                    <select id="filter-session-arc" onchange="renderSessions()">
+                    <select id="filter-session-arc" data-action="render-sessions">
                         <option value="">Alle</option>
                     </select>
                 </div>
@@ -363,7 +363,7 @@
                 <!-- Gruppe 2: Suche -->
                 <div class="section-toolbar-search">
                     <div class="search-wrapper" style="position: relative;">
-                        <input type="text" id="wiki-search" class="toolbar-search" placeholder="🔍 Wiki durchsuchen..." oninput="renderWikiSearchDropdown(this.value); renderWikiTree(); updateSearchClear(this);" onkeydown="handleWikiSearchKeydown(event)">
+                        <input type="text" id="wiki-search" class="toolbar-search" placeholder="🔍 Wiki durchsuchen..." data-action="wiki-search-input" onkeydown="handleWikiSearchKeydown(event)">
                         <button class="search-clear-btn" data-action="clear-search" data-value="wiki-search" title="Suche leeren">✕</button>
                         <div id="wiki-search-dropdown" class="wiki-search-dropdown" style="display: none;"></div>
                     </div>
@@ -498,7 +498,7 @@
                                 <button class="editor-btn" data-action="clear-formatting" data-value="wiki-content" title="Formatierung entfernen">🧹</button>
                             </div>
                         </div>
-                        <div id="wiki-content" class="rich-editor" contenteditable="true" style="min-height: 150px;" oninput="handleWikiContentInput(event)"></div>
+                        <div id="wiki-content" class="rich-editor" contenteditable="true" style="min-height: 150px;" data-action="wiki-content-input"></div>
                     </div>
                     <div class="btn-group" style="display: flex; align-items: center; gap: 12px;">
                         <button class="btn btn-success" data-action="call" data-value="saveWikiEntry">Speichern</button>

@@ -9,14 +9,14 @@
                 <!-- Gruppe 2: Suche -->
                 <div class="section-toolbar-search">
                     <div class="search-wrapper">
-                        <input type="text" id="link-search" class="toolbar-search" placeholder="🔍 Link suchen..." oninput="renderLinks(); updateSearchClear(this);">
+                        <input type="text" id="link-search" class="toolbar-search" placeholder="🔍 Link suchen..." data-action="search-input" data-render="renderLinks">
                         <button class="search-clear-btn" data-action="clear-search" data-value="link-search" title="Suche leeren">✕</button>
                     </div>
                 </div>
                 
                 <!-- Gruppe 3: Filter + IO -->
                 <div class="section-toolbar-filters">
-                    <select id="link-filter" onchange="renderLinks()">
+                    <select id="link-filter" data-action="render-links">
                         <option value="">📂 Alle Kategorien</option>
                         <option value="rules">📖 Regeln</option>
                         <option value="tools">🛠️ Tools</option>
@@ -172,7 +172,7 @@
                     <summary>👤 Charakter-Würfe</summary>
                     <div class="dice-char-panel">
                         <div class="dice-char-header">
-                            <select id="dice-char-select" onchange="updateDiceCharStats()">
+                            <select id="dice-char-select" data-action="update-dice-char-stats">
                                 <option value="">— Charakter —</option>
                             </select>
                             <button class="btn btn-sm" data-action="call" data-value="rollCharInitiative">🎯 Init</button>
@@ -313,7 +313,7 @@
                             <!-- Werkzeug-Toolbar (integriert) -->
                             <div class="map-toolbar" id="map-toolbar" style="display: none;">
                                 <div class="map-toolbar-group">
-                                    <input type="file" id="map-upload" accept="image/*" style="display: none;" onchange="uploadMapToCurrentTab(event)">
+                                    <input type="file" id="map-upload" accept="image/*" style="display: none;" data-action="upload-map">
                                     <button class="btn btn-sm" data-action="trigger-click" data-value="map-upload" title="Bild hochladen">📁</button>
                                     <button class="btn btn-sm" data-action="call" data-value="renameCurrentMap" title="Umbenennen">✏️</button>
                                     <button class="btn btn-sm btn-danger" data-action="call" data-value="deleteCurrentMap" title="Löschen">🗑️</button>
@@ -403,7 +403,7 @@
                     <!-- Suche -->
                     <div class="map-sidebar-section">
                         <div class="map-sidebar-title">🔍 Suche</div>
-                        <input type="text" id="map-marker-search" class="map-search-input" placeholder="Marker suchen..." oninput="filterMapMarkers(this.value)">
+                        <input type="text" id="map-marker-search" class="map-search-input" placeholder="Marker suchen..." data-action="filter-map-markers">
                         <div class="map-search-results" id="map-search-results"></div>
                     </div>
                     
@@ -412,32 +412,32 @@
                         <div class="map-sidebar-title">📚 Ebenen</div>
                         <div class="map-layers-list" id="map-layers-list">
                             <label class="map-layer-item">
-                                <input type="checkbox" checked data-layer="party" onchange="toggleMapLayer('party', this.checked)">
+                                <input type="checkbox" checked data-layer="party" data-action="toggle-map-layer" data-value="party">
                                 <span class="map-layer-color" style="background: var(--green);"></span>
                                 <span>👥 Party & NPCs</span>
                             </label>
                             <label class="map-layer-item">
-                                <input type="checkbox" checked data-layer="poi" onchange="toggleMapLayer('poi', this.checked)">
+                                <input type="checkbox" checked data-layer="poi" data-action="toggle-map-layer" data-value="poi">
                                 <span class="map-layer-color" style="background: var(--cyan);"></span>
                                 <span>📍 Sehenswürdigkeiten</span>
                             </label>
                             <label class="map-layer-item">
-                                <input type="checkbox" checked data-layer="danger" onchange="toggleMapLayer('danger', this.checked)">
+                                <input type="checkbox" checked data-layer="danger" data-action="toggle-map-layer" data-value="danger">
                                 <span class="map-layer-color" style="background: var(--red);"></span>
                                 <span>⚠️ Gefahren</span>
                             </label>
                             <label class="map-layer-item">
-                                <input type="checkbox" checked data-layer="quest" onchange="toggleMapLayer('quest', this.checked)">
+                                <input type="checkbox" checked data-layer="quest" data-action="toggle-map-layer" data-value="quest">
                                 <span class="map-layer-color" style="background: var(--purple);"></span>
                                 <span>📜 Quests</span>
                             </label>
                             <label class="map-layer-item">
-                                <input type="checkbox" checked data-layer="buildings" onchange="toggleMapLayer('buildings', this.checked)">
+                                <input type="checkbox" checked data-layer="buildings" data-action="toggle-map-layer" data-value="buildings">
                                 <span class="map-layer-color" style="background: var(--gold);"></span>
                                 <span>🏠 Gebäude</span>
                             </label>
                             <label class="map-layer-item">
-                                <input type="checkbox" data-layer="secret" onchange="toggleMapLayer('secret', this.checked)">
+                                <input type="checkbox" data-layer="secret" data-action="toggle-map-layer" data-value="secret">
                                 <span class="map-layer-color" style="background: #f97316;"></span>
                                 <span>🔒 Geheime Orte</span>
                             </label>
@@ -501,7 +501,7 @@
                         <div class="data-section-desc">Lade Kampagnendaten aus einer JSON-Datei</div>
                         <div class="btn-group">
                             <button class="btn" data-action="trigger-click" data-value="import-file">📁 Datei auswählen</button>
-                            <input type="file" id="import-file" accept=".json" onchange="importDataGlobal()" style="display: none;">
+                            <input type="file" id="import-file" accept=".json" data-action="import-data-global" style="display: none;">
                         </div>
                     </div>
                     <div class="data-management-section">

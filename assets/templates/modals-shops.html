@@ -105,14 +105,14 @@
                     <div style="display: flex; align-items: center; gap: 8px;">
                         <input type="number" id="shop-item-quantity" value="1" min="1" style="width: 70px;">
                         <label class="checkbox-label" style="display: flex; align-items: center; gap: 4px; white-space: nowrap;">
-                            <input type="checkbox" id="shop-item-unlimited" onchange="toggleShopItemUnlimited()">
+                            <input type="checkbox" id="shop-item-unlimited" data-action="toggle-shop-item-unlimited">
                             <span style="font-size: 0.85em;">∞ Unbegrenzt</span>
                         </label>
                     </div>
                 </div>
                 <div class="form-group">
                     <label>Kategorie *</label>
-                    <select id="shop-item-category" onchange="updateShopItemFields()">
+                    <select id="shop-item-category" data-action="update-shop-item-fields">
                         <optgroup label="Kampf & Schutz">
                             <option value="weapon">⚔️ Waffe</option>
                             <option value="armor">🛡️ Rüstung</option>

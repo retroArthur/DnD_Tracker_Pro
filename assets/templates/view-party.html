@@ -17,14 +17,14 @@
                 <!-- Gruppe 2: Suche -->
                 <div class="section-toolbar-search">
                     <div class="search-wrapper">
-                        <input type="text" id="party-search" class="toolbar-search" placeholder="🔍 Charakter suchen..." oninput="renderParty(); updateSearchClear(this);">
+                        <input type="text" id="party-search" class="toolbar-search" placeholder="🔍 Charakter suchen..." data-action="search-input" data-render="renderParty">
                         <button class="search-clear-btn" data-action="clear-search" data-value="party-search" title="Suche leeren">✕</button>
                     </div>
                 </div>
                 
                 <!-- Gruppe 3: Filter + IO -->
                 <div class="section-toolbar-filters">
-                    <select id="party-class-filter" onchange="renderParty()">
+                    <select id="party-class-filter" data-action="render-party">
                         <option value="">⚔️ Alle Klassen</option>
                     </select>
                     <button class="btn btn-sm" data-action="show-rest-modal" title="Party rasten lassen">🛏️ Rasten</button>
@@ -99,7 +99,7 @@
                     </div>
                     <div class="cf-field cf-sm">
                         <label>Lv</label>
-                        <input type="number" id="char-level" min="1" max="20" value="1" onchange="updateProficiencyBonus()">
+                        <input type="number" id="char-level" min="1" max="20" value="1" data-action="update-proficiency-bonus">
                     </div>
                 </div>
 
@@ -179,7 +179,7 @@
 
                 <div class="cf-field">
                     <label>Avatar URL</label>
-                    <input type="text" id="char-avatar" placeholder="https://..." oninput="updateAvatarPreview(this.value)">
+                    <input type="text" id="char-avatar" placeholder="https://..." data-action="update-avatar-preview">
                 </div>
             </div>
 
@@ -221,7 +221,7 @@
                     </div>
                     <div class="cf-combat-stat">
                         <span class="cf-combat-value">
-                            <select id="char-speed" onchange="updateSpeedDisplay()">
+                            <select id="char-speed" data-action="update-speed-display">
                                 <option value="3m|10ft." data-ft="10">3m</option>
                                 <option value="6m|20ft." data-ft="20">6m</option>
                                 <option value="8m|25ft." data-ft="25">8m</option>
@@ -255,37 +255,37 @@
                 <div class="cf-attrs-grid">
                     <div class="cf-attr-card">
                         <span class="cf-attr-name">STR</span>
-                        <input type="number" id="char-str" min="1" max="30" value="10" oninput="updateAttrMod('str')">
+                        <input type="number" id="char-str" min="1" max="30" value="10" data-action="update-attr-mod" data-value="str">
                         <span class="cf-attr-mod" id="char-str-mod">+0</span>
                         <label class="cf-attr-save"><input type="checkbox" id="char-save-str"><span>Rettungswurf</span></label>
                     </div>
                     <div class="cf-attr-card">
                         <span class="cf-attr-name">DEX</span>
-                        <input type="number" id="char-dex" min="1" max="30" value="10" oninput="updateAttrMod('dex'); updateInitFromDex()">
+                        <input type="number" id="char-dex" min="1" max="30" value="10" data-action="update-attr-mod" data-value="dex">
                         <span class="cf-attr-mod" id="char-dex-mod">+0</span>
                         <label class="cf-attr-save"><input type="checkbox" id="char-save-dex"><span>Rettungswurf</span></label>
                     </div>
                     <div class="cf-attr-card">
                         <span class="cf-attr-name">CON</span>
-                        <input type="number" id="char-con" min="1" max="30" value="10" oninput="updateAttrMod('con')">
+                        <input type="number" id="char-con" min="1" max="30" value="10" data-action="update-attr-mod" data-value="con">
                         <span class="cf-attr-mod" id="char-con-mod">+0</span>
                         <label class="cf-attr-save"><input type="checkbox" id="char-save-con"><span>Rettungswurf</span></label>
                     </div>
                     <div class="cf-attr-card">
                         <span class="cf-attr-name">INT</span>
-                        <input type="number" id="char-int" min="1" max="30" value="10" oninput="updateAttrMod('int')">
+                        <input type="number" id="char-int" min="1" max="30" value="10" data-action="update-attr-mod" data-value="int">
                         <span class="cf-attr-mod" id="char-int-mod">+0</span>
                         <label class="cf-attr-save"><input type="checkbox" id="char-save-int"><span>Rettungswurf</span></label>
                     </div>
                     <div class="cf-attr-card">
                         <span class="cf-attr-name">WIS</span>
-                        <input type="number" id="char-wis" min="1" max="30" value="10" oninput="updateAttrMod('wis')">
+                        <input type="number" id="char-wis" min="1" max="30" value="10" data-action="update-attr-mod" data-value="wis">
                         <span class="cf-attr-mod" id="char-wis-mod">+0</span>
                         <label class="cf-attr-save"><input type="checkbox" id="char-save-wis"><span>Rettungswurf</span></label>
                     </div>
                     <div class="cf-attr-card">
                         <span class="cf-attr-name">CHA</span>
-                        <input type="number" id="char-cha" min="1" max="30" value="10" oninput="updateAttrMod('cha')">
+                        <input type="number" id="char-cha" min="1" max="30" value="10" data-action="update-attr-mod" data-value="cha">
                         <span class="cf-attr-mod" id="char-cha-mod">+0</span>
                         <label class="cf-attr-save"><input type="checkbox" id="char-save-cha"><span>Rettungswurf</span></label>
                     </div>
@@ -351,25 +351,25 @@
                         <span class="cf-lang-arrow">▼</span>
                     </div>
                     <div class="cf-lang-dropdown" id="cf-lang-dropdown">
-                        <label class="cf-lang-item"><input type="checkbox" value="Gemein" onchange="updateCharLanguages()"><span>Gemein</span></label>
-                        <label class="cf-lang-item"><input type="checkbox" value="Zwergisch" onchange="updateCharLanguages()"><span>Zwergisch</span></label>
-                        <label class="cf-lang-item"><input type="checkbox" value="Elfisch" onchange="updateCharLanguages()"><span>Elfisch</span></label>
-                        <label class="cf-lang-item"><input type="checkbox" value="Riese" onchange="updateCharLanguages()"><span>Riese</span></label>
-                        <label class="cf-lang-item"><input type="checkbox" value="Gnomisch" onchange="updateCharLanguages()"><span>Gnomisch</span></label>
-                        <label class="cf-lang-item"><input type="checkbox" value="Goblin" onchange="updateCharLanguages()"><span>Goblin</span></label>
-                        <label class="cf-lang-item"><input type="checkbox" value="Halbling" onchange="updateCharLanguages()"><span>Halbling</span></label>
-                        <label class="cf-lang-item"><input type="checkbox" value="Orkisch" onchange="updateCharLanguages()"><span>Orkisch</span></label>
-                        <label class="cf-lang-item"><input type="checkbox" value="Druidisch" onchange="updateCharLanguages()"><span>Druidisch</span></label>
-                        <label class="cf-lang-item"><input type="checkbox" value="Diebessprache" onchange="updateCharLanguages()"><span>Diebessprache</span></label>
-                        <label class="cf-lang-item"><input type="checkbox" value="Drakonisch" onchange="updateCharLanguages()"><span>Drakonisch</span></label>
-                        <label class="cf-lang-item"><input type="checkbox" value="Tiefensprache" onchange="updateCharLanguages()"><span>Tiefensprache</span></label>
-                        <label class="cf-lang-item"><input type="checkbox" value="Infernal" onchange="updateCharLanguages()"><span>Infernal</span></label>
-                        <label class="cf-lang-item"><input type="checkbox" value="Sylvan" onchange="updateCharLanguages()"><span>Sylvan</span></label>
-                        <label class="cf-lang-item"><input type="checkbox" value="Unterreich" onchange="updateCharLanguages()"><span>Unterreich</span></label>
-                        <label class="cf-lang-item"><input type="checkbox" value="Abyssisch" onchange="updateCharLanguages()"><span>Abyssisch</span></label>
-                        <label class="cf-lang-item"><input type="checkbox" value="Celestisch" onchange="updateCharLanguages()"><span>Celestisch</span></label>
-                        <label class="cf-lang-item"><input type="checkbox" value="Gebärden" onchange="updateCharLanguages()"><span>Gebärden</span></label>
-                        <label class="cf-lang-item"><input type="checkbox" value="Primordial" onchange="updateCharLanguages()"><span>Primordial</span></label>
+                        <label class="cf-lang-item"><input type="checkbox" value="Gemein" data-action="update-char-languages"><span>Gemein</span></label>
+                        <label class="cf-lang-item"><input type="checkbox" value="Zwergisch" data-action="update-char-languages"><span>Zwergisch</span></label>
+                        <label class="cf-lang-item"><input type="checkbox" value="Elfisch" data-action="update-char-languages"><span>Elfisch</span></label>
+                        <label class="cf-lang-item"><input type="checkbox" value="Riese" data-action="update-char-languages"><span>Riese</span></label>
+                        <label class="cf-lang-item"><input type="checkbox" value="Gnomisch" data-action="update-char-languages"><span>Gnomisch</span></label>
+                        <label class="cf-lang-item"><input type="checkbox" value="Goblin" data-action="update-char-languages"><span>Goblin</span></label>
+                        <label class="cf-lang-item"><input type="checkbox" value="Halbling" data-action="update-char-languages"><span>Halbling</span></label>
+                        <label class="cf-lang-item"><input type="checkbox" value="Orkisch" data-action="update-char-languages"><span>Orkisch</span></label>
+                        <label class="cf-lang-item"><input type="checkbox" value="Druidisch" data-action="update-char-languages"><span>Druidisch</span></label>
+                        <label class="cf-lang-item"><input type="checkbox" value="Diebessprache" data-action="update-char-languages"><span>Diebessprache</span></label>
+                        <label class="cf-lang-item"><input type="checkbox" value="Drakonisch" data-action="update-char-languages"><span>Drakonisch</span></label>
+                        <label class="cf-lang-item"><input type="checkbox" value="Tiefensprache" data-action="update-char-languages"><span>Tiefensprache</span></label>
+                        <label class="cf-lang-item"><input type="checkbox" value="Infernal" data-action="update-char-languages"><span>Infernal</span></label>
+                        <label class="cf-lang-item"><input type="checkbox" value="Sylvan" data-action="update-char-languages"><span>Sylvan</span></label>
+                        <label class="cf-lang-item"><input type="checkbox" value="Unterreich" data-action="update-char-languages"><span>Unterreich</span></label>
+                        <label class="cf-lang-item"><input type="checkbox" value="Abyssisch" data-action="update-char-languages"><span>Abyssisch</span></label>
+                        <label class="cf-lang-item"><input type="checkbox" value="Celestisch" data-action="update-char-languages"><span>Celestisch</span></label>
+                        <label class="cf-lang-item"><input type="checkbox" value="Gebärden" data-action="update-char-languages"><span>Gebärden</span></label>
+                        <label class="cf-lang-item"><input type="checkbox" value="Primordial" data-action="update-char-languages"><span>Primordial</span></label>
                     </div>
                     <select id="char-languages" multiple style="display:none;"></select>
                 </div>

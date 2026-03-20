@@ -55,7 +55,19 @@ const WikiActions = {
 
     // Link management
     'edit-link': (ctx) => editLink(ctx.id),
-    'delete-link': (ctx) => deleteLink(ctx.id)
+    'delete-link': (ctx) => deleteLink(ctx.id),
+
+    // Migrated inline handlers
+    'render-sessions': () => renderSessions(),
+    'wiki-search-input': (ctx) => {
+        renderWikiSearchDropdown(ctx.target.value);
+        renderWikiTree();
+        if (typeof updateSearchClear === 'function') updateSearchClear(ctx.target);
+    },
+    'wiki-content-input': (ctx) => handleWikiContentInput(ctx.event),
+    'render-links': () => renderLinks(),
+    'render-link-targets': () => renderLinkTargets(),
+    'render-insert-link-targets': () => renderInsertLinkTargets()
 };
 
 // Register all wiki actions

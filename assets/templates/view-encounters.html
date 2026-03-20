@@ -9,7 +9,7 @@
                 <!-- Gruppe 2: Suche -->
                 <div class="section-toolbar-search">
                     <div class="search-wrapper">
-                        <input type="text" id="enc-search" class="toolbar-search" placeholder="🔍 Encounter suchen..." oninput="renderEncounters(); updateSearchClear(this);">
+                        <input type="text" id="enc-search" class="toolbar-search" placeholder="🔍 Encounter suchen..." data-action="search-input" data-render="renderEncounters">
                         <button class="search-clear-btn" data-action="clear-search" data-value="enc-search" title="Suche leeren">✕</button>
                     </div>
                 </div>
@@ -150,23 +150,23 @@
                                 <span class="enc-lang-arrow">▼</span>
                             </div>
                             <div class="enc-lang-dropdown" id="enc-lang-dropdown">
-                                <label class="enc-lang-item"><input type="checkbox" value="Gemein" onchange="updateEncLanguages()"><span>Gemein</span></label>
-                                <label class="enc-lang-item"><input type="checkbox" value="Zwergisch" onchange="updateEncLanguages()"><span>Zwergisch</span></label>
-                                <label class="enc-lang-item"><input type="checkbox" value="Elfisch" onchange="updateEncLanguages()"><span>Elfisch</span></label>
-                                <label class="enc-lang-item"><input type="checkbox" value="Riese" onchange="updateEncLanguages()"><span>Riese</span></label>
-                                <label class="enc-lang-item"><input type="checkbox" value="Gnomisch" onchange="updateEncLanguages()"><span>Gnomisch</span></label>
-                                <label class="enc-lang-item"><input type="checkbox" value="Goblin" onchange="updateEncLanguages()"><span>Goblin</span></label>
-                                <label class="enc-lang-item"><input type="checkbox" value="Halbling" onchange="updateEncLanguages()"><span>Halbling</span></label>
-                                <label class="enc-lang-item"><input type="checkbox" value="Orkisch" onchange="updateEncLanguages()"><span>Orkisch</span></label>
-                                <label class="enc-lang-item"><input type="checkbox" value="Druidisch" onchange="updateEncLanguages()"><span>Druidisch</span></label>
-                                <label class="enc-lang-item"><input type="checkbox" value="Diebessprache" onchange="updateEncLanguages()"><span>Diebessprache</span></label>
-                                <label class="enc-lang-item"><input type="checkbox" value="Drakonisch" onchange="updateEncLanguages()"><span>Drakonisch</span></label>
-                                <label class="enc-lang-item"><input type="checkbox" value="Tiefensprache" onchange="updateEncLanguages()"><span>Tiefensprache</span></label>
-                                <label class="enc-lang-item"><input type="checkbox" value="Infernal" onchange="updateEncLanguages()"><span>Infernal</span></label>
-                                <label class="enc-lang-item"><input type="checkbox" value="Sylvan" onchange="updateEncLanguages()"><span>Sylvan</span></label>
-                                <label class="enc-lang-item"><input type="checkbox" value="Abyssisch" onchange="updateEncLanguages()"><span>Abyssisch</span></label>
-                                <label class="enc-lang-item"><input type="checkbox" value="Celestisch" onchange="updateEncLanguages()"><span>Celestisch</span></label>
-                                <label class="enc-lang-item"><input type="checkbox" value="Unterreich" onchange="updateEncLanguages()"><span>Unterreich</span></label>
+                                <label class="enc-lang-item"><input type="checkbox" value="Gemein" data-action="update-enc-languages"><span>Gemein</span></label>
+                                <label class="enc-lang-item"><input type="checkbox" value="Zwergisch" data-action="update-enc-languages"><span>Zwergisch</span></label>
+                                <label class="enc-lang-item"><input type="checkbox" value="Elfisch" data-action="update-enc-languages"><span>Elfisch</span></label>
+                                <label class="enc-lang-item"><input type="checkbox" value="Riese" data-action="update-enc-languages"><span>Riese</span></label>
+                                <label class="enc-lang-item"><input type="checkbox" value="Gnomisch" data-action="update-enc-languages"><span>Gnomisch</span></label>
+                                <label class="enc-lang-item"><input type="checkbox" value="Goblin" data-action="update-enc-languages"><span>Goblin</span></label>
+                                <label class="enc-lang-item"><input type="checkbox" value="Halbling" data-action="update-enc-languages"><span>Halbling</span></label>
+                                <label class="enc-lang-item"><input type="checkbox" value="Orkisch" data-action="update-enc-languages"><span>Orkisch</span></label>
+                                <label class="enc-lang-item"><input type="checkbox" value="Druidisch" data-action="update-enc-languages"><span>Druidisch</span></label>
+                                <label class="enc-lang-item"><input type="checkbox" value="Diebessprache" data-action="update-enc-languages"><span>Diebessprache</span></label>
+                                <label class="enc-lang-item"><input type="checkbox" value="Drakonisch" data-action="update-enc-languages"><span>Drakonisch</span></label>
+                                <label class="enc-lang-item"><input type="checkbox" value="Tiefensprache" data-action="update-enc-languages"><span>Tiefensprache</span></label>
+                                <label class="enc-lang-item"><input type="checkbox" value="Infernal" data-action="update-enc-languages"><span>Infernal</span></label>
+                                <label class="enc-lang-item"><input type="checkbox" value="Sylvan" data-action="update-enc-languages"><span>Sylvan</span></label>
+                                <label class="enc-lang-item"><input type="checkbox" value="Abyssisch" data-action="update-enc-languages"><span>Abyssisch</span></label>
+                                <label class="enc-lang-item"><input type="checkbox" value="Celestisch" data-action="update-enc-languages"><span>Celestisch</span></label>
+                                <label class="enc-lang-item"><input type="checkbox" value="Unterreich" data-action="update-enc-languages"><span>Unterreich</span></label>
                             </div>
                             <select id="enc-languages" multiple style="display:none;"></select>
                         </div>
@@ -175,32 +175,32 @@
                     <div class="char-attributes-grid">
                         <div class="char-attr-box">
                             <div class="attr-label">STR</div>
-                            <input type="number" class="attr-input" id="enc-str" min="1" max="30" value="10" oninput="updateEncAttrMod('str')">
+                            <input type="number" class="attr-input" id="enc-str" min="1" max="30" value="10" data-action="update-enc-attr-mod" data-value="str">
                             <div class="attr-mod" id="enc-str-mod">+0</div>
                         </div>
                         <div class="char-attr-box">
                             <div class="attr-label">DEX</div>
-                            <input type="number" class="attr-input" id="enc-dex" min="1" max="30" value="10" oninput="updateEncAttrMod('dex')">
+                            <input type="number" class="attr-input" id="enc-dex" min="1" max="30" value="10" data-action="update-enc-attr-mod" data-value="dex">
                             <div class="attr-mod" id="enc-dex-mod">+0</div>
                         </div>
                         <div class="char-attr-box">
                             <div class="attr-label">CON</div>
-                            <input type="number" class="attr-input" id="enc-con" min="1" max="30" value="10" oninput="updateEncAttrMod('con')">
+                            <input type="number" class="attr-input" id="enc-con" min="1" max="30" value="10" data-action="update-enc-attr-mod" data-value="con">
                             <div class="attr-mod" id="enc-con-mod">+0</div>
                         </div>
                         <div class="char-attr-box">
                             <div class="attr-label">INT</div>
-                            <input type="number" class="attr-input" id="enc-int" min="1" max="30" value="10" oninput="updateEncAttrMod('int')">
+                            <input type="number" class="attr-input" id="enc-int" min="1" max="30" value="10" data-action="update-enc-attr-mod" data-value="int">
                             <div class="attr-mod" id="enc-int-mod">+0</div>
                         </div>
                         <div class="char-attr-box">
                             <div class="attr-label">WIS</div>
-                            <input type="number" class="attr-input" id="enc-wis" min="1" max="30" value="10" oninput="updateEncAttrMod('wis')">
+                            <input type="number" class="attr-input" id="enc-wis" min="1" max="30" value="10" data-action="update-enc-attr-mod" data-value="wis">
                             <div class="attr-mod" id="enc-wis-mod">+0</div>
                         </div>
                         <div class="char-attr-box">
                             <div class="attr-label">CHA</div>
-                            <input type="number" class="attr-input" id="enc-cha" min="1" max="30" value="10" oninput="updateEncAttrMod('cha')">
+                            <input type="number" class="attr-input" id="enc-cha" min="1" max="30" value="10" data-action="update-enc-attr-mod" data-value="cha">
                             <div class="attr-mod" id="enc-cha-mod">+0</div>
                         </div>
                     </div>
@@ -208,32 +208,32 @@
                         <div class="char-section-title">🛡️ Rettungswürfe</div>
                         <div class="enc-saves-grid">
                             <div class="enc-save-box" id="enc-save-box-str">
-                                <input type="checkbox" id="enc-save-str" onchange="toggleEncSaveBox('str')">
+                                <input type="checkbox" id="enc-save-str" data-action="toggle-enc-save-box" data-value="str">
                                 <span class="enc-save-label">STR</span>
                                 <input type="text" id="enc-save-val-str" class="enc-save-input" placeholder="—" title="Rettungswurf-Bonus (z.B. +5)">
                             </div>
                             <div class="enc-save-box" id="enc-save-box-dex">
-                                <input type="checkbox" id="enc-save-dex" onchange="toggleEncSaveBox('dex')">
+                                <input type="checkbox" id="enc-save-dex" data-action="toggle-enc-save-box" data-value="dex">
                                 <span class="enc-save-label">DEX</span>
                                 <input type="text" id="enc-save-val-dex" class="enc-save-input" placeholder="—" title="Rettungswurf-Bonus (z.B. +5)">
                             </div>
                             <div class="enc-save-box" id="enc-save-box-con">
-                                <input type="checkbox" id="enc-save-con" onchange="toggleEncSaveBox('con')">
+                                <input type="checkbox" id="enc-save-con" data-action="toggle-enc-save-box" data-value="con">
                                 <span class="enc-save-label">CON</span>
                                 <input type="text" id="enc-save-val-con" class="enc-save-input" placeholder="—" title="Rettungswurf-Bonus (z.B. +5)">
                             </div>
                             <div class="enc-save-box" id="enc-save-box-int">
-                                <input type="checkbox" id="enc-save-int" onchange="toggleEncSaveBox('int')">
+                                <input type="checkbox" id="enc-save-int" data-action="toggle-enc-save-box" data-value="int">
                                 <span class="enc-save-label">INT</span>
                                 <input type="text" id="enc-save-val-int" class="enc-save-input" placeholder="—" title="Rettungswurf-Bonus (z.B. +5)">
                             </div>
                             <div class="enc-save-box" id="enc-save-box-wis">
-                                <input type="checkbox" id="enc-save-wis" onchange="toggleEncSaveBox('wis')">
+                                <input type="checkbox" id="enc-save-wis" data-action="toggle-enc-save-box" data-value="wis">
                                 <span class="enc-save-label">WIS</span>
                                 <input type="text" id="enc-save-val-wis" class="enc-save-input" placeholder="—" title="Rettungswurf-Bonus (z.B. +5)">
                             </div>
                             <div class="enc-save-box" id="enc-save-box-cha">
-                                <input type="checkbox" id="enc-save-cha" onchange="toggleEncSaveBox('cha')">
+                                <input type="checkbox" id="enc-save-cha" data-action="toggle-enc-save-box" data-value="cha">
                                 <span class="enc-save-label">CHA</span>
                                 <input type="text" id="enc-save-val-cha" class="enc-save-input" placeholder="—" title="Rettungswurf-Bonus (z.B. +5)">
                             </div>

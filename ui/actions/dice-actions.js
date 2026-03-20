@@ -33,7 +33,10 @@ const DiceActions = {
     'roll-floating-adv': () => rollFloatingAdvantage(),
     'roll-floating-dis': () => rollFloatingDisadvantage(),
     'roll-floating-custom': () => rollFloatingCustom(),
-    'reroll-floating': (ctx) => rerollFloating(ctx.value)
+    'reroll-floating': (ctx) => rerollFloating(ctx.value),
+
+    // Migrated inline handlers
+    'update-dice-char-stats': () => updateDiceCharStats()
 };
 
 // Register all dice actions

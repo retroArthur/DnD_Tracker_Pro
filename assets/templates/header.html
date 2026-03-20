@@ -3,7 +3,7 @@
             <h1 class="app-title">⚔️ D&D Kampagnen-Tracker Pro</h1>
             <div class="global-search-container">
                 <span class="global-search-icon">🔍</span>
-                <input type="text" class="global-search-input" id="global-search" placeholder="Suche NPCs, Orte, Quests..." oninput="debouncedGlobalSearch()" onfocus="performGlobalSearch()" aria-label="Globale Suche">
+                <input type="text" class="global-search-input" id="global-search" placeholder="Suche NPCs, Orte, Quests..." data-action="search-input" data-render="debouncedGlobalSearch" onfocus="performGlobalSearch()" aria-label="Globale Suche">
                 <div class="global-search-results" id="global-search-results"></div>
             </div>
             <div class="header-actions">

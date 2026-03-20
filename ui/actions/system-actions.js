@@ -198,7 +198,14 @@ const SystemActions = {
         if (editId && editId.value) {
             showMarkdownImportModal('quests', editId.value);
         }
-    }
+    },
+
+    // Migrated inline handlers
+    'convert-units-metric': () => convertUnitsMetric(),
+    'convert-units-imperial': () => convertUnitsImperial(),
+    'search-notes': () => searchNotes(),
+    'preview-avatar': () => previewAvatar(),
+    'import-data-global': () => importDataGlobal()
 };
 
 // Register all system actions
