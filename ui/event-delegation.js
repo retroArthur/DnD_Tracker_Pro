@@ -71,9 +71,10 @@ const EventDelegation = {
         const target = e.target.closest('[data-action]');
         if (!target) return;
 
-        // SELECT-Elemente: Natives Verhalten erlauben, Actions werden via 'change' Event behandelt
-        // Klick auf <select> oder <option> sollte das Dropdown öffnen lassen
-        if (target.tagName === 'SELECT' || e.target.tagName === 'OPTION') {
+        // SELECT- und FILE-Elemente: Natives Verhalten erlauben, Actions werden via 'change' Event behandelt
+        // Klick auf <select>/<option> öffnet Dropdown, Klick auf <input type="file"> öffnet Dateidialog
+        if (target.tagName === 'SELECT' || e.target.tagName === 'OPTION' ||
+            (target.tagName === 'INPUT' && target.type === 'file')) {
             return;
         }
 
