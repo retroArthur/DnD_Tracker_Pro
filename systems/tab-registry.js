@@ -25,11 +25,6 @@ const TAB_RENDER_REGISTRY = {
         init: null,
         cleanup: null
     },
-    'roadmap': {
-        renders: ['renderRoadmap'],
-        init: null,
-        cleanup: null
-    },
     'quests': {
         renders: ['renderQuests'],
         init: null,
@@ -84,11 +79,6 @@ const TAB_RENDER_REGISTRY = {
         renders: ['renderTimers', 'renderTimerPresets'],
         init: null,
         cleanup: 'cleanupTimers'  // Clear interval when leaving tab
-    },
-    'maps': {
-        renders: ['displayMap'],
-        init: 'initMapPanning', // Initialize pan controls once
-        cleanup: null
     },
     'data': {
         renders: [], // Data tab is mostly forms, no active renders needed

@@ -22,9 +22,6 @@ function switchView(name) {
         if (sessionDate)
             sessionDate.value = new Date().toISOString().split('T')[0];
     }
-    if (name === 'roadmap' && typeof window.onRoadmapViewShow === 'function') {
-        window.onRoadmapViewShow();
-    }
     // NEW: Use tab registry to render content
     const renderTabContent = window.renderTabContent;
     if (renderTabContent)
@@ -41,7 +38,6 @@ function switchView(name) {
             'party': '👥 Party',
             'npcs': '🎭 NPCs',
             'locations': '🏠 Orte',
-            'roadmap': '🗺️ Roadmap',
             'quests': '📜 Quests',
             'encounter': '👹 Encounter',
             'initiative': '⚔️ Initiative',
@@ -53,7 +49,6 @@ function switchView(name) {
             'links': '🔗 Links',
             'dice': '🎲 Würfel',
             'timers': '⏱️ Timer',
-            'maps': '🗺️ Karten',
             'data': '💾 Daten',
             'dmscreen': '🎮 DM Screen'
         };

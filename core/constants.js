@@ -309,33 +309,6 @@ const COMBATANT_TYPES = ({
     LAIR: 'lair'
 });
 // ============================================================
-// MAP CONSTANTS
-// ============================================================
-const MAP_CONSTANTS = ({
-    ZOOM: { min: 0.1, max: 5, factorIn: 1.1, factorOut: 0.9 },
-    GRID: { defaultSize: 50, minSize: 20, maxSize: 200, dndMeterConversion: 1.524 },
-    FOG: { defaultBrushSize: 50, hideThreshold: 5 },
-    TOOLTIP_OFFSET: 15,
-    CONVERSIONS: { feetPerMeter: 3.28084, milesPerFeet: 5280, kmPerMeter: 1000, metersPerMile: 1609.34 },
-    TRAVEL_SPEED_MH: 5000
-});
-// ============================================================
-// FILE UPLOAD LIMITS
-// ============================================================
-const FILE_UPLOAD_LIMITS = ({
-    MAP_MAX_SIZE: 10 * 1024 * 1024,      // 10MB for maps
-    AVATAR_MAX_SIZE: 5 * 1024 * 1024,    // 5MB for avatars
-    MAP_MAX_DIMENSION: 5000,              // 5000px max width/height
-    IMAGE_ALLOWED_TYPES: ['image/png', 'image/jpeg', 'image/jpg', 'image/webp', 'image/gif']
-});
-const MARKER_ICONS = ({
-    party: '👥', poi: '📍', danger: '⚠️', quest: '📜', item: '💎',
-    secret: '❓', secretdoor: '🚪', npc: '🧑', action: '⚡', encounter: '⚔️',
-    entrance: '🚩', exit: '🏁', shop: '🛒', blacksmith: '⚒️', house: '🏠',
-    tavern: '🍺', inn: '🛏️', dicetest: '🎲', ruins: '🏚️', magic: '✨',
-    tower: '🗼', lair: '🐉', note: '📝'
-});
-// ============================================================
 // ENTITY ICONS - Zentralisierte Icons für alle Entity-Typen
 // ============================================================
 /**
@@ -425,8 +398,7 @@ window.DND_RULES = Object.freeze({
 
 // UI/App-Konstanten
 window.UI_CONSTANTS = Object.freeze({
-    UI_TIMING, MAP_CONSTANTS, FILE_UPLOAD_LIMITS,
-    MARKER_ICONS, ENTITY_ICONS, LINK_ICONS,
+    UI_TIMING, ENTITY_ICONS, LINK_ICONS,
     ENTITY_TYPE_NAMES, MARKDOWN_PATTERNS
 });
 
@@ -451,9 +423,6 @@ window.ORIGIN_LABELS = ORIGIN_LABELS;
 window.LOOT_TAG_LABELS = LOOT_TAG_LABELS;
 window.INIT_CONSTANTS = INIT_CONSTANTS;
 window.COMBATANT_TYPES = COMBATANT_TYPES;
-window.MAP_CONSTANTS = MAP_CONSTANTS;
-window.FILE_UPLOAD_LIMITS = FILE_UPLOAD_LIMITS;
-window.MARKER_ICONS = MARKER_ICONS;
 window.ENTITY_ICONS = ENTITY_ICONS;
 window.LINK_ICONS = LINK_ICONS;
 window.ENTITY_TYPE_NAMES = ENTITY_TYPE_NAMES;

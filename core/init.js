@@ -58,17 +58,6 @@ async function init() {
     if (typeof window.renderDiceFavorites === 'function') window.renderDiceFavorites();
     if (typeof window.renderRandomTables === 'function') window.renderRandomTables();
     
-    // Karten initialisieren
-    if (D.maps && D.maps.length > 0) {
-        currentMapId = D.maps[0].id;
-    }
-    renderMapTabs();
-    displayMap();
-    initMapPanning();
-
-    // Erweiterte Map-Features (Werkzeuge, Fog, Verbindungen)
-    if (typeof initExtendedMapFeatures === 'function') initExtendedMapFeatures();
-
     // Drag-and-Drop für Initiative initialisieren
     initDragDrop();
 

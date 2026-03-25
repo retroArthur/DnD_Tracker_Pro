@@ -243,7 +243,7 @@ function validateDataIntegrity() {
     const requiredArrays = [
         'characters', 'npcs', 'locations', 'quests', 'spells',
         'loot', 'shops', 'encounters', 'sessionNotes', 'wiki',
-        'links', 'filters', 'maps', 'timers'
+        'links', 'filters', 'timers'
     ];
     for (const key of requiredArrays) {
         if (!Array.isArray(D[key])) {

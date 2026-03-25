@@ -77,17 +77,10 @@ const MODULES = [
     'features/loot-distribution.js',
     'features/sessions/sessions.js',
     'features/wiki/wiki.js',
-    'features/maps/maps.js',
     'features/shops/shops-core.js',
     'features/shops/shop-export.js',
     'features/shops/links.js',
     'features/network/mindmap.js',
-
-    // Roadmap
-    'features/roadmap/roadmap.js',
-    'features/roadmap/roadmap-render.js',
-    'features/roadmap/roadmap-crud.js',
-    'features/roadmap/roadmap-ui.js',
 
     // DM Screen
     'features/dmscreen/dmscreen-render.js',
@@ -123,8 +116,6 @@ const MODULES = [
     'ui/actions/dice-actions.js',
     'ui/actions/wiki-actions.js',
     'ui/actions/shop-actions.js',
-    'ui/actions/map-actions.js',
-    'ui/actions/roadmap-actions.js',
     'ui/actions/system-actions.js',
     'ui/virtual-scroll.js',
     'tools/debug.js',

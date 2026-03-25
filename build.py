@@ -315,18 +315,12 @@ def build(minify=False, production=False, verbose=False):
         'features/loot-distribution.js',
         'features/sessions/sessions.js',
         'features/wiki/wiki.js',
-        'features/maps/maps.js',
         # Shops-Module
         'features/shops/shops-core.js',
         'features/shops/shop-export.js',
         'features/shops/links.js',
         # Network/Mindmap Module
         'features/network/mindmap.js',
-        # Roadmap-Module (ersetzt Netzwerk)
-        'features/roadmap/roadmap.js',
-        'features/roadmap/roadmap-render.js',
-        'features/roadmap/roadmap-crud.js',
-        'features/roadmap/roadmap-ui.js',
         # DM Screen Module
         'features/dmscreen/dmscreen-render.js',
         # Dice-Module
@@ -356,8 +350,6 @@ def build(minify=False, production=False, verbose=False):
         'ui/actions/dice-actions.js',
         'ui/actions/wiki-actions.js',
         'ui/actions/shop-actions.js',
-        'ui/actions/map-actions.js',
-        'ui/actions/roadmap-actions.js',
         'ui/actions/system-actions.js',
         'ui/virtual-scroll.js',
         'tools/debug.js',
@@ -371,7 +363,7 @@ def build(minify=False, production=False, verbose=False):
         'npcs.css', 'encounters.css', 'initiative.css',
         'loot.css', 'spells.css', 'party.css',
         'dashboard.css', 'dmscreen.css', 'dice.css',
-        'tools.css', 'roadmap.css'
+        'tools.css'
     ]
     css_parts = []
     for css_file in css_files:
