@@ -2101,6 +2101,127 @@
     }
 }
 
+/* ============================================
+   ENCOUNTER - Responsive Breakpoints
+   ============================================ */
+
+/* Large desktop → reduced detail panel */
+@media (max-width: 1400px) {
+    .enc-layout {
+        grid-template-columns: 1fr 600px;
+    }
+}
+
+/* Medium screens (half window ~960px) → compact detail panel */
+@media (max-width: 1200px) {
+    .enc-layout {
+        grid-template-columns: 1fr 400px;
+    }
+
+    .enc-detail-content {
+        padding: 14px;
+    }
+
+    .enc-detail-icon {
+        width: 44px;
+        height: 44px;
+        font-size: 1.4em;
+    }
+
+    .enc-detail-header {
+        gap: 10px;
+    }
+
+    .enc-detail-name {
+        font-size: 1.05em;
+    }
+
+    .enc-stats-row {
+        gap: 6px;
+    }
+
+    .enc-core-stat {
+        padding: 6px;
+        min-width: 50px;
+    }
+
+    .enc-core-stat-value {
+        font-size: 0.95em;
+    }
+
+    .enc-attr-grid {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 6px;
+    }
+
+    .enc-toolbar {
+        gap: 8px;
+        padding: 8px 12px;
+        flex-wrap: wrap;
+    }
+
+    .enc-toolbar-right {
+        gap: 6px;
+    }
+}
+
+/* Tablet/small screens → single column, detail hidden */
+@media (max-width: 900px) {
+    .enc-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .enc-detail {
+        display: none;
+    }
+
+    .enc-item {
+        cursor: pointer;
+    }
+
+    .enc-item-stats .enc-diff-badge {
+        display: none;
+    }
+}
+
+/* Mobile → compact list items */
+@media (max-width: 600px) {
+    .enc-toolbar {
+        flex-direction: column;
+        gap: 8px;
+        align-items: stretch;
+    }
+
+    .enc-toolbar-left {
+        justify-content: space-between;
+    }
+
+    .enc-toolbar-center {
+        width: 100%;
+    }
+
+    .enc-toolbar-right {
+        justify-content: flex-end;
+    }
+
+    .enc-item {
+        gap: 8px;
+        padding: 10px;
+    }
+
+    .enc-item-icon {
+        width: 32px;
+        height: 32px;
+        font-size: 1.1em;
+    }
+
+    .enc-item-stats {
+        flex-direction: column;
+        gap: 2px;
+        font-size: 0.85em;
+    }
+}
+
 /* Calculator Import Dialog */
 .calc-import-grid {
     display: grid;
