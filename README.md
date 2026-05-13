@@ -7,7 +7,7 @@
 [![Version](https://img.shields.io/badge/version-2.6.0-blue.svg)](CHANGELOG.md)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![CI](https://github.com/retroArthur/DnD_Tracker_Pro/actions/workflows/ci.yml/badge.svg)](https://github.com/retroArthur/DnD_Tracker_Pro/actions)
-[![Size](https://img.shields.io/badge/size-1.44MB-orange.svg)]()
+[![Size](https://img.shields.io/badge/size-1.83MB-orange.svg)]()
 [![Language](https://img.shields.io/badge/language-German-yellow.svg)]()
 [![Platform](https://img.shields.io/badge/platform-Browser-purple.svg)]()
 
@@ -105,25 +105,29 @@
 
 ## Installation
 
-### Schnellstart (Empfohlen)
+### Schnellstart - Online spielen (Empfohlen)
 
-```bash
-# Einfach die fertige HTML-Datei oeffnen:
-dist/dnd-tracker-bundled.html
-```
+Direkt im Browser starten - keine Installation noetig:
 
-Keine Installation noetig - laeuft direkt im Browser!
+**[https://retroarthur.github.io/DnD_Tracker_Pro/](https://retroarthur.github.io/DnD_Tracker_Pro/)**
 
-### Von GitHub
+Alle Daten bleiben lokal in deinem Browser (LocalStorage).
+
+### Lokal aus Quellcode bauen
+
+`dist/` wird nicht eingecheckt - Build ist noetig:
 
 ```bash
 git clone https://github.com/retroArthur/DnD_Tracker_Pro.git
 cd DnD_Tracker_Pro
 
+# Production-Build erstellen (benoetigt Python 3)
+python build.py --production
+
 # App oeffnen
-start dist/dnd-tracker-bundled.html   # Windows
-open dist/dnd-tracker-bundled.html    # macOS
-xdg-open dist/dnd-tracker-bundled.html # Linux
+start dist/dnd-tracker-optimized.html   # Windows
+open dist/dnd-tracker-optimized.html    # macOS
+xdg-open dist/dnd-tracker-optimized.html # Linux
 ```
 
 ---
