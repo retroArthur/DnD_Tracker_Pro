@@ -5,10 +5,6 @@
   "description": "D&D Kampagnen-Tracker Pro - Modulare Version",
   "main": "loader.js",
   "scripts": {
-    "analyze:render": "python3 tools/analyze-render.py",
-    "analyze:handlers": "python3 tools/migrate-event-handlers.py",
-    "split:render": "python3 tools/analyze-render.py --execute",
-    "migrate:handlers": "python3 tools/migrate-event-handlers.py --execute",
     "build": "python3 build.py --production",
     "build:dev": "python3 build.py",
     "build:prod": "python3 build.py --production",
