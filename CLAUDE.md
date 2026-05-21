@@ -2,7 +2,7 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-**Version:** 2.6.0 | **Last Updated:** 2026-03-18
+**Version:** 2.6.0 | **Last Updated:** 2026-05-21
 
 ## Project Overview
 
@@ -134,7 +134,7 @@ function deleteEntity(id) {
 | `ui/actions/` | Action handlers by domain (entity, combat, ui, dice, wiki, shop, map, system) |
 | `render/` | Rendering utilities/helpers |
 | `assets/` | styles.css (@import hub), body.html (Hinweis-Datei) |
-| `assets/styles/` | 14 modulare CSS-Dateien (variables, core, editors, npcs, encounters, etc.) |
+| `assets/styles/` | 13 modulare CSS-Dateien (variables, core, editors, npcs, encounters, etc.) |
 | `assets/templates/` | 10 modulare HTML-Templates (header, views, modals) |
 | `tests/` | Jest unit tests, Playwright E2E tests |
 | `tools/` | Analysis scripts (render split, event handler migration, globals check) |
@@ -453,7 +453,7 @@ npx playwright test tests/e2e/features/wiki.spec.js
 
 | Priority | Task | Notes |
 |----------|------|-------|
-| ~~Done~~ | ~~**CSS aufteilen**~~ | Already split into 14 modular files in `assets/styles/` (see CSS Organization) |
+| ~~Done~~ | ~~**CSS aufteilen**~~ | Already split into 13 modular files in `assets/styles/` (see CSS Organization) |
 | Partial | **Inline Event-Handler migrieren** | Quick wins done (17 modal handlers migrated, March 2026). ~146 remain in templates/generated HTML |
 | ~~Done~~ | ~~**Build-System konsolidieren**~~ | Webpack removed (March 2026), Python `build.py` is sole build system |
 | ~~Done~~ | ~~**CI/CD Pipeline**~~ | GitHub Actions workflow in `.github/workflows/ci.yml` (lint, typecheck, test, build) |
@@ -659,7 +659,7 @@ function refreshIfVisible() {
 
 ### CSS Organization for New Features
 
-**Problem Solved:** CSS file was 23k+ lines in a single file. Now split into 14 modular files under `assets/styles/`, loaded via `@import` in dev mode and concatenated by `build.py` for production.
+**Problem Solved:** CSS file was 23k+ lines in a single file. Now split into 13 modular files under `assets/styles/`, loaded via `@import` in dev mode and concatenated by `build.py` for production.
 
 **Current Structure:**
 ```
@@ -677,8 +677,7 @@ assets/styles/
 ├── dashboard.css (3433)   ← Main dashboard
 ├── dmscreen.css (3037)    ← DM Screen widgets
 ├── dice.css (902)         ← Dice roller
-├── tools.css (2583)       ← Quick reference, tools
-└── roadmap.css (738)      ← Roadmap visualization
+└── tools.css (2583)       ← Quick reference, tools
 ```
 
 **Pattern to Follow:**
@@ -1232,92 +1231,6 @@ Common error patterns and fixes:
 | `Cannot read property of undefined` | Data not initialized | Add fallback: `D.data || []` |
 | `Element not found: #X` | Container doesn't exist | Check HTML or add null check |
 | `[TabRegistry] Function X not found` | Function name typo | Fix name in registry or add function |
-
----
-
-### Roadmap Coordinate System Architecture
-
-**Critical Architecture Constraint:**
-
-The Roadmap feature uses a **dual coordinate system** that must remain synchronized:
-
-```
-roadmap-viewport (transformed container)
-├── roadmap-svg (SVG with viewBox coordinate system)
-└── roadmap-events (div overlay with pixel-based positioning)
-```
-
-**Coordinate Systems:**
-
-1. **SVG Coordinate System (viewBox-based):**
-   - Uses `viewBox="x y width height"` attribute
-   - Connections rendered as SVG paths using event.x, event.y coordinates
-   - ViewBox can define custom coordinate space (e.g., starting at negative values)
-
-2. **Overlay Coordinate System (pixel-based):**
-   - Event tiles positioned with `style.left/top` in pixels
-   - Always relative to container's (0,0) origin
-   - Cannot have negative pixel positions
-
-**Synchronization Requirement:**
-
-⚠️ **CRITICAL:** ViewBox origin MUST always be `(0,0)` to match overlay container origin.
-
-```javascript
-// CORRECT: ViewBox origin at (0,0)
-svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
-
-// WRONG: Custom origin breaks overlay synchronization
-svg.setAttribute('viewBox', `${minX} ${minY} ${width} ${height}`);
-```
-
-**Why This Matters:**
-
-- If viewBox origin is set to `(minX, minY)` where minX/minY are negative
-- SVG content shifts to account for the origin offset
-- BUT overlay tiles still render at pixel (0,0) → misalignment!
-
-**Pattern to Follow:**
-
-When expanding SVG viewport, **normalize coordinates** instead of shifting viewBox origin:
-
-```javascript
-// 1. Find coordinate bounds
-let minX = Math.min(...events.map(e => e.x));
-let minY = Math.min(...events.map(e => e.y));
-
-// 2. Calculate offset to make all coordinates positive
-const offsetX = padding - minX;
-const offsetY = padding - minY;
-
-// 3. Shift all event coordinates
-if (offsetX !== 0 || offsetY !== 0) {
-    events.forEach(e => {
-        e.x += offsetX;
-        e.y += offsetY;
-    });
-    save(); // Persist normalized coordinates
-}
-
-// 4. Set viewBox with origin at (0,0)
-svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
-```
-
-**Bug Pattern to Avoid:**
-
-❌ Changing SVG viewBox origin without updating overlay positions
-❌ Assuming SVG and CSS positioning are interchangeable
-❌ Using negative coordinates without normalization
-
-**Files to Check When Modifying:**
-
-- `features/roadmap/roadmap-render.js:32-81` - `updateSVGViewBox()` function
-- `features/roadmap/roadmap-render.js:248-249` - Tile positioning
-- `assets/styles/roadmap.css` - SVG and overlay layer CSS
-
-**Future Consideration:**
-
-For a more robust solution, consider refactoring to use SVG `<foreignObject>` elements for tiles, which would eliminate the dual coordinate system entirely.
 
 ---
 

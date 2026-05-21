@@ -7,7 +7,7 @@
 [![Version](https://img.shields.io/badge/version-2.6.0-blue.svg)](CHANGELOG.md)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![CI](https://github.com/retroArthur/DnD_Tracker_Pro/actions/workflows/ci.yml/badge.svg)](https://github.com/retroArthur/DnD_Tracker_Pro/actions)
-[![Size](https://img.shields.io/badge/size-1.44MB-orange.svg)]()
+[![Size](https://img.shields.io/badge/size-1.72MB-orange.svg)]()
 [![Language](https://img.shields.io/badge/language-German-yellow.svg)]()
 [![Platform](https://img.shields.io/badge/platform-Browser-purple.svg)]()
 
@@ -93,11 +93,9 @@
 | **Wuerfel** | d4-d100, Vorteil/Nachteil, History, Floating Panel |
 | **Timer** | Session-Timer, Custom-Timer |
 | **Zufallstabellen** | Eigene Tabellen mit Gewichtung |
-| **Maps** | Bild-Upload mit Markierungen |
 | **Mindmap** | Visuelle Kampagnen-Uebersicht |
 | **Sessions** | Session-Notizen und -Log |
 | **DM Screen** | Widget-Dashboard mit 21 Widgets und Profilen |
-| **Roadmap** | Visuelle Kampagnen-Timeline mit Events |
 | **Markdown** | Live-Shortcuts, Import/Export, Render-on-Display |
 | **Kampagnen** | Mehrere Kampagnen mit getrennten Daten |
 
