@@ -23,5 +23,8 @@ npm-debug.log*
 .env
 .env.local
 tests/e2e/test-results/
+tests/e2e/reports/
 tmpclaude-*
 __pycache__/
+.pytest_cache/
+*.backup
