@@ -168,10 +168,10 @@ function showConditionReference() {
         <div class="condition-ref-content">
             <div class="condition-ref-header">
                 <h3>📋 Zustände Referenz</h3>
-                <button class="btn btn-sm" onclick="hideModal('condition-ref-modal')">✕</button>
+                <button class="btn btn-sm" data-action="hide-modal" data-value="condition-ref-modal">✕</button>
             </div>
             <div class="condition-ref-search">
-                <input type="text" id="condition-search" placeholder="🔍 Zustand suchen..." oninput="filterConditions()">
+                <input type="text" id="condition-search" placeholder="🔍 Zustand suchen..." data-on-input="filterConditions">
             </div>
             <div class="condition-ref-list" id="condition-ref-list">
                 ${renderConditionList()}

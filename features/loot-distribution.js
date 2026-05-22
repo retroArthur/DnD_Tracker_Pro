@@ -28,7 +28,7 @@ function showLootDistributionModal() {
                 <div class="ld-gold-section">
                     <div class="ld-gold-input">
                         <label>Zu verteilendes Gold:</label>
-                        <input type="number" id="ld-gold-amount" value="${partyGold}" min="0" oninput="updateGoldSplit()">
+                        <input type="number" id="ld-gold-amount" value="${partyGold}" min="0" data-on-input="updateGoldSplit">
                         <span class="ld-gold-label">GM</span>
                     </div>
 

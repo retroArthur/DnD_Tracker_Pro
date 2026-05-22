@@ -1006,11 +1006,11 @@ function renderCalculatorModal() {
                         </div>
                     </div>
                     <div class="calc-input-row">
-                        <input type="text" id="calc-monster-cr" class="calc-input" placeholder="CR" list="cr-datalist" style="width: 55px;" oninput="scheduleMonsterPreview()">
+                        <input type="text" id="calc-monster-cr" class="calc-input" placeholder="CR" list="cr-datalist" style="width: 55px;" data-on-input="scheduleMonsterPreview">
                         <datalist id="cr-datalist">
                             ${['0', '1/8', '1/4', '1/2', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15', '16', '17', '18', '19', '20'].map(cr => `<option value="${cr}">`).join('')}
                         </datalist>
-                        <input type="number" id="calc-monster-count" class="calc-input" min="1" value="1" placeholder="#" style="width: 50px;" oninput="scheduleMonsterPreview()">
+                        <input type="number" id="calc-monster-count" class="calc-input" min="1" value="1" placeholder="#" style="width: 50px;" data-on-input="scheduleMonsterPreview">
                         <input type="text" id="calc-monster-name" class="calc-input" placeholder="Name (opt.)" style="flex: 1; min-width: 60px;">
                         <button class="calc-add-btn" data-action="calc-add-monster">+</button>
                     </div>
@@ -1028,7 +1028,7 @@ function renderCalculatorModal() {
                 <div class="calc-budget-slider-wrap">
                     <input type="range" id="calc-budget-slider"
                            min="0" max="3" step="1" value="${calculatorTargetDifficulty}"
-                           oninput="onBudgetSliderChange(this.value)">
+                           data-action="calc-budget-slider-input">
                     <div class="calc-budget-labels">
                         <span>Easy</span>
                         <span>Medium</span>

@@ -1003,7 +1003,7 @@ function renderDMSNotesWidget() {
         <div class="dms-notes">
             <textarea class="dms-notes-input" id="dms-notes-input"
                 placeholder="Session-Notizen hier eingeben..."
-                oninput="saveDMSNotes()">${esc(notes)}</textarea>
+                data-on-input="saveDMSNotes">${esc(notes)}</textarea>
         </div>
     `;
 }

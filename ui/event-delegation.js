@@ -23,7 +23,13 @@ const ALLOWED_CHANGE_HANDLERS = new Set([
     'performMobileSearch',
     'validateAssignItemQty',
     'updateAssignSpellCount',
-    'importData'
+    'importData',
+    // Phase B (Mai 2026) Migration
+    'scheduleMonsterPreview',
+    'filterConditions',
+    'updateAoETargetDisplay',
+    'updateGoldSplit',
+    'saveDMSNotes'
 ]);
 
 const EventDelegation = {
@@ -71,10 +77,10 @@ const EventDelegation = {
         const target = e.target.closest('[data-action]');
         if (!target) return;
 
-        // SELECT- und FILE-Elemente: Natives Verhalten erlauben, Actions werden via 'change' Event behandelt
-        // Klick auf <select>/<option> öffnet Dropdown, Klick auf <input type="file"> öffnet Dateidialog
+        // Form-Elemente: Natives Verhalten erlauben, Actions werden via 'change'/'input' Event behandelt
+        // SELECT/OPTION → Dropdown öffnen, INPUT file → Dateidialog, checkbox/radio → Toggle
         if (target.tagName === 'SELECT' || e.target.tagName === 'OPTION' ||
-            (target.tagName === 'INPUT' && target.type === 'file')) {
+            (target.tagName === 'INPUT' && (target.type === 'file' || target.type === 'checkbox' || target.type === 'radio'))) {
             return;
         }
 

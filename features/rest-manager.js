@@ -133,9 +133,9 @@ function renderRestCharacters(characters, type) {
                 <span class="rest-hp-text">${currentHp}/${maxHp}</span>
                 ${type === 'short' ? `
                     <span class="rest-hd-controls">
-                        <button class="rest-hd-btn" onclick="adjustRestHitDice(${char.id}, -1)">−</button>
+                        <button class="rest-hd-btn" data-action="adjust-rest-hit-dice" data-id="${char.id}" data-value="-1">−</button>
                         <input type="number" id="rest-hd-${char.id}" value="0" min="0" max="${currentHitDice}" class="rest-hd-input">
-                        <button class="rest-hd-btn" onclick="adjustRestHitDice(${char.id}, 1)">+</button>
+                        <button class="rest-hd-btn" data-action="adjust-rest-hit-dice" data-id="${char.id}" data-value="1">+</button>
                     </span>
                     <span class="rest-hd-label">d${hitDieType} <span class="rest-hd-available">${currentHitDice}/${maxHitDice}</span></span>
                 ` : `

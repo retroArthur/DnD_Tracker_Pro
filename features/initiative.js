@@ -787,11 +787,11 @@ function showAoEDamageModal() {
         const typeIcon = cb.type === 'player' ? '👤' : cb.type === 'ally' ? '🤝' : '👹';
         return `
                         <label class="aoe-target" data-id="${cb.id}">
-                            <input type="checkbox" class="aoe-target-checkbox" id="aoe-cb-${cb.id}" data-id="${cb.id}" onchange="updateAoETargetDisplay()">
+                            <input type="checkbox" class="aoe-target-checkbox" id="aoe-cb-${cb.id}" data-id="${cb.id}" data-on-change="updateAoETargetDisplay">
                             <span class="aoe-target-hp">${cb.currentHp}/${cb.maxHp} HP</span>
                             <span class="aoe-target-name">${typeIcon} ${esc(cb.name)}</span>
                             <span class="aoe-target-save">
-                                <input type="checkbox" id="aoe-save-${cb.id}" data-id="${cb.id}" onchange="updateAoETargetDisplay()">
+                                <input type="checkbox" id="aoe-save-${cb.id}" data-id="${cb.id}" data-on-change="updateAoETargetDisplay">
                                 Save ½
                             </span>
                             <span class="aoe-target-damage" id="aoe-dmg-${cb.id}">—</span>

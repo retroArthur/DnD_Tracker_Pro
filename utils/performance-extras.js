@@ -93,7 +93,7 @@ function showMobileSearch() {
                 </div>
                 <div class="form-group">
                     <input type="text" id="mobile-search-input" placeholder="NPCs, Orte, Quests..."
-                           oninput="performMobileSearch()" autofocus style="font-size: 16px;">
+                           data-on-input="performMobileSearch" autofocus style="font-size: 16px;">
                 </div>
                 <div id="mobile-search-results" style="max-height: 60vh; overflow-y: auto;"></div>
             </div>
