@@ -601,6 +601,12 @@ function initWikiCategoryListener() {
         });
     }
 }
+function initWikiSearchListener() {
+    const searchInput = $('wiki-search');
+    if (searchInput) {
+        searchInput.addEventListener('keydown', handleWikiSearchKeydown);
+    }
+}
 function isDescendantOf(entryId, potentialAncestorId) {
     const D = window.D;
     if (!potentialAncestorId)
@@ -1200,6 +1206,7 @@ window.collapseAllWikiCategories = collapseAllWikiCategories;
 window.showWikiForm = showWikiForm;
 window.hideWikiForm = hideWikiForm;
 window.initWikiCategoryListener = initWikiCategoryListener;
+window.initWikiSearchListener = initWikiSearchListener;
 window.parseWikiLinks = parseWikiLinks;
 window.toggleWikiEntry = toggleWikiEntry;
 window.filterWiki = filterWiki;

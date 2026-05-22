@@ -723,10 +723,25 @@ function rerollFloating(notation) {
         rollFloatingCustom();
     }
 }
+function initDiceKeyboardListeners() {
+    const mainNotation = $('dice-notation');
+    if (mainNotation) {
+        mainNotation.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') rollCustomDice();
+        });
+    }
+    const floatingNotation = $('fdp-notation');
+    if (floatingNotation) {
+        floatingNotation.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') rollFloatingCustom();
+        });
+    }
+}
 // ============================================================
 // BACKWARD COMPATIBILITY - Export to window
 // ============================================================
 window.rollDiceAnimated = rollDiceAnimated;
+window.initDiceKeyboardListeners = initDiceKeyboardListeners;
 window.rollCustomDice = rollCustomDice;
 window.rerollLast = rerollLast;
 window.parseDiceNotation = parseDiceNotation;

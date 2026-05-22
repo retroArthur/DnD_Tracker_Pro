@@ -90,6 +90,11 @@ async function init() {
 
     // Wiki Kategorie-Listener initialisieren
     if (typeof initWikiCategoryListener === 'function') initWikiCategoryListener();
+
+    // Wiki-Suche, Würfel- und Global-Search Tastatur/Fokus-Listener
+    if (typeof initWikiSearchListener === 'function') initWikiSearchListener();
+    if (typeof initDiceKeyboardListeners === 'function') initDiceKeyboardListeners();
+    if (typeof initGlobalSearchListener === 'function') initGlobalSearchListener();
     
     // Sticky-Header-Höhe für Initiative-Controls berechnen
     updateStickyOffsets();

@@ -238,8 +238,15 @@ document.addEventListener('click', function (e) {
             results.classList.remove('visible');
     }
 });
+function initGlobalSearchListener() {
+    const input = $('global-search');
+    if (input) {
+        input.addEventListener('focus', performGlobalSearch);
+    }
+}
 // ============================================================
 // BACKWARD COMPATIBILITY EXPORTS
 // ============================================================
 window.debouncedGlobalSearch = debouncedGlobalSearch;
 window.performGlobalSearch = performGlobalSearch;
+window.initGlobalSearchListener = initGlobalSearchListener;
