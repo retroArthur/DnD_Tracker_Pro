@@ -167,22 +167,22 @@ function renderRandomTables() {
             <div class="rt-empty">
                 <div class="rt-empty-icon">🎲</div>
                 <div class="rt-empty-text">Keine Tabellen vorhanden</div>
-                <button class="btn btn-primary" onclick="showTableModal()">+ Tabelle erstellen</button>
+                <button class="btn btn-primary" data-action="show-table-modal">+ Tabelle erstellen</button>
             </div>
         `;
         return;
     }
     container.innerHTML = tables.map(table => `
         <div class="rt-card ${selectedTableId === table.id ? 'selected' : ''}" data-id="${table.id}">
-            <div class="rt-card-header" onclick="selectTable(${table.id})">
+            <div class="rt-card-header" data-action="select-table" data-id="${table.id}">
                 <span class="rt-card-icon">${esc(table.icon || '🎲')}</span>
                 <span class="rt-card-name">${esc(table.name)}</span>
                 <span class="rt-card-count">${table.entries.length} Einträge</span>
             </div>
             <div class="rt-card-actions">
-                <button class="btn btn-sm btn-primary" onclick="rollOnTable(${table.id})" title="Würfeln">🎲</button>
-                <button class="btn btn-sm" onclick="showTableModal(${table.id})" title="Bearbeiten">✏️</button>
-                <button class="btn btn-sm btn-danger" onclick="deleteTable(${table.id})" title="Löschen">🗑️</button>
+                <button class="btn btn-sm btn-primary" data-action="roll-on-table" data-id="${table.id}" title="Würfeln">🎲</button>
+                <button class="btn btn-sm" data-action="show-table-modal" data-id="${table.id}" title="Bearbeiten">✏️</button>
+                <button class="btn btn-sm btn-danger" data-action="delete-table" data-id="${table.id}" title="Löschen">🗑️</button>
             </div>
         </div>
     `).join('');
@@ -209,7 +209,7 @@ function showTablePreview(id) {
             <span class="rt-preview-icon">${esc(table.icon || '🎲')}</span>
             <span class="rt-preview-name">${esc(table.name)}</span>
             ${hasRanges ? `<span class="rt-preview-dice">1W${diceType}</span>` : ''}
-            <button class="rt-roll-btn" onclick="rollOnTable(${table.id})">🎲 Würfeln</button>
+            <button class="rt-roll-btn" data-action="roll-on-table" data-id="${table.id}">🎲 Würfeln</button>
         </div>
         <div class="rt-preview-entries">
             ${table.entries.map((entry, idx) => {
@@ -274,7 +274,7 @@ function showTableModal(id = null) {
         <div class="rt-modal-content">
             <div class="rt-modal-header">
                 <h3>${table ? '✏️ Tabelle bearbeiten' : '➕ Neue Tabelle'}</h3>
-                <button class="btn btn-sm" onclick="hideModal('table-modal')">✕</button>
+                <button class="btn btn-sm" data-action="hide-modal" data-value="table-modal">✕</button>
             </div>
 
             <div class="rt-form">
@@ -296,7 +296,7 @@ function showTableModal(id = null) {
                     <div class="rt-dice-selector" id="table-dice-selector">
                         ${DICE_TYPES.map(d => `
                             <button type="button" class="rt-dice-btn ${d === diceType ? 'active' : ''}"
-                                    data-dice="${d}" onclick="selectDiceType(${d})">
+                                    data-dice="${d}" data-action="select-dice-type" data-value="${d}">
                                 1W${d}
                             </button>
                         `).join('')}
@@ -308,8 +308,8 @@ function showTableModal(id = null) {
                     <div class="rt-entries-header">
                         <label>Einträge <span class="rt-dice-label">(1W${diceType})</span></label>
                         <div class="rt-entries-actions">
-                            <button class="btn btn-sm" onclick="fillRemainingRanges()" title="Leere Bereiche auffüllen">⚡ Auto</button>
-                            <button class="btn btn-sm" onclick="addTableEntry()">+ Eintrag</button>
+                            <button class="btn btn-sm" data-action="fill-remaining-ranges" title="Leere Bereiche auffüllen">⚡ Auto</button>
+                            <button class="btn btn-sm" data-action="add-table-entry">+ Eintrag</button>
                         </div>
                     </div>
                     <div class="rt-entries-list" id="table-entries">
@@ -320,8 +320,8 @@ function showTableModal(id = null) {
             </div>
 
             <div class="rt-modal-footer">
-                <button class="btn" onclick="hideModal('table-modal')">Abbrechen</button>
-                <button class="btn btn-primary" onclick="saveTable()">💾 Speichern</button>
+                <button class="btn" data-action="hide-modal" data-value="table-modal">Abbrechen</button>
+                <button class="btn btn-primary" data-action="save-table">💾 Speichern</button>
             </div>
         </div>
     `;
@@ -368,9 +368,9 @@ function renderTableEntryRow(index, entry = { range: '', text: '' }) {
         <div class="rt-entry-row" data-index="${index}">
             <input type="text" class="rt-entry-range" value="${esc(rangeValue)}"
                    placeholder="z.B. 1-4" title="Bereich (z.B. 1, 1-4, 5-8)"
-                   oninput="updateRangeHint()">
+                   data-on-input="updateRangeHint">
             <input type="text" class="rt-entry-text" value="${esc(entry.text)}" placeholder="Eintrag...">
-            <button class="btn btn-sm btn-danger" onclick="removeTableEntry(${index})">✕</button>
+            <button class="btn btn-sm btn-danger" data-action="remove-table-entry" data-value="${index}">✕</button>
         </div>
     `;
 }
@@ -609,11 +609,11 @@ function showGeneratorModal() {
         <div class="generator-modal-content">
             <div class="generator-modal-header">
                 <h3>🎭 Zufalls-Generator</h3>
-                <button class="btn btn-sm" onclick="hideModal('generator-modal')">✕</button>
+                <button class="btn btn-sm" data-action="hide-modal" data-value="generator-modal">✕</button>
             </div>
 
             <div class="generator-toolbar">
-                <button class="btn btn-primary" onclick="showTableModal()">+ Neue Tabelle</button>
+                <button class="btn btn-primary" data-action="show-table-modal">+ Neue Tabelle</button>
             </div>
 
             <div class="generator-tables" id="generator-tables-list">
@@ -629,9 +629,9 @@ function showGeneratorModal() {
                             <span class="generator-table-count">${t.entries.length} Einträge</span>
                         </div>
                         <div class="generator-table-actions">
-                            <button class="btn btn-primary" onclick="rollOnTableAndShow(${t.id})">🎲 Würfeln</button>
-                            <button class="btn btn-sm" onclick="showTableModal(${t.id})">✏️</button>
-                            <button class="btn btn-sm btn-danger" onclick="deleteTableAndRefresh(${t.id})">🗑️</button>
+                            <button class="btn btn-primary" data-action="roll-on-table-show" data-id="${t.id}">🎲 Würfeln</button>
+                            <button class="btn btn-sm" data-action="show-table-modal" data-id="${t.id}">✏️</button>
+                            <button class="btn btn-sm btn-danger" data-action="delete-table-refresh" data-id="${t.id}">🗑️</button>
                         </div>
                     </div>
                 `;
@@ -717,7 +717,7 @@ function quickRandomRoll() {
             <h3 style="margin: 0 0 16px 0;">🎲 Schnellwurf</h3>
             <div style="display: flex; flex-direction: column; gap: 8px;">
                 ${D.randomTables.map((t) => `
-                    <button class="btn" onclick="rollOnTable(${t.id}); hideModal('quick-roll-modal');" style="justify-content: flex-start; gap: 10px;">
+                    <button class="btn" data-action="quick-roll-table" data-id="${t.id}" style="justify-content: flex-start; gap: 10px;">
                         <span>${esc(t.icon || '🎲')}</span>
                         <span>${esc(t.name)}</span>
                     </button>

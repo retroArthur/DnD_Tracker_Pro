@@ -29,7 +29,8 @@ const ALLOWED_CHANGE_HANDLERS = new Set([
     'filterConditions',
     'updateAoETargetDisplay',
     'updateGoldSplit',
-    'saveDMSNotes'
+    'saveDMSNotes',
+    'updateRangeHint'
 ]);
 
 const EventDelegation = {

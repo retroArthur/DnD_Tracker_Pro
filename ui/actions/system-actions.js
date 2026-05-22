@@ -158,6 +158,16 @@ const SystemActions = {
     'show-table-modal': (ctx) => showTableModal(ctx.id ? parseInt(ctx.id) : null),
     'quick-random-roll': () => quickRandomRoll(),
     'roll-on-table': (ctx) => rollOnTable(parseInt(ctx.id)),
+    'select-table': (ctx) => selectTable(parseInt(ctx.id)),
+    'delete-table': (ctx) => deleteTable(parseInt(ctx.id)),
+    'delete-table-refresh': (ctx) => deleteTableAndRefresh(parseInt(ctx.id)),
+    'roll-on-table-show': (ctx) => rollOnTableAndShow(parseInt(ctx.id)),
+    'add-table-entry': () => addTableEntry(),
+    'save-table': () => saveTable(),
+    'fill-remaining-ranges': () => fillRemainingRanges(),
+    'select-dice-type': (ctx) => selectDiceType(parseInt(ctx.value)),
+    'remove-table-entry': (ctx) => removeTableEntry(parseInt(ctx.value)),
+    'quick-roll-table': (ctx) => { rollOnTable(parseInt(ctx.id)); hideModal('quick-roll-modal'); },
 
     // Loot Distribution
     'show-loot-distribution': () => showLootDistributionModal(),
