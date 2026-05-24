@@ -1800,7 +1800,6 @@
             .party-grid, .npc-grid, .encounter-grid, .links-grid, .loot-list { grid-template-columns: 1fr; }
             .locations-list, .spell-list { justify-content: center; }
             .location-card, .spell-card { width: 100%; max-width: 394px; }
-            .mindmap-container { height: 530px; }
             .quick-panel { width: calc(100% - 24px); right: 12px; }
             .dice-buttons { justify-content: center; }
             .spell-classes-grid { grid-template-columns: repeat(2, 1fr); }
