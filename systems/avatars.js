@@ -183,14 +183,15 @@ function initOfflineMode() {
     // Für echten Offline-Support müsste sw.js als separate Datei gehostet werden
     // Fallback: Speichere kritische Daten zusätzlich
     window.addEventListener('beforeunload', () => {
+        // Toggle ist optional: existiert er und ist ungecheckt → Save überspringen.
+        // Fehlt das Toggle → speichere (Default = aktiv).
         const autoSaveToggle = $('autosave-toggle');
-        if (autoSaveToggle?.checked) {
-            const STORAGE_KEY = window.STORAGE_KEY;
-            const D = window.D;
-            const StorageAPI = window.StorageAPI;
-            const key = window.STORAGE_KEY_OVERRIDE || STORAGE_KEY;
-            StorageAPI.setJSON(key, D); // Bereits mit try-catch geschützt
-        }
+        if (autoSaveToggle && !autoSaveToggle.checked) return;
+        const STORAGE_KEY = window.STORAGE_KEY;
+        const D = window.D;
+        const StorageAPI = window.StorageAPI;
+        const key = window.STORAGE_KEY_OVERRIDE || STORAGE_KEY;
+        StorageAPI.setJSON(key, D); // Bereits mit try-catch geschützt
     });
 }
 // ============================================================

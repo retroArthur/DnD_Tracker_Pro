@@ -7,8 +7,10 @@
 let saveTimeout = null;
 // Sofortiges Speichern (für kritische Aktionen)
 async function saveImmediate() {
+    // Toggle ist optional: existiert er und ist ungecheckt → Save überspringen.
+    // Fehlt das Toggle (aktueller UI-Zustand), wird gespeichert (Default = aktiv).
     const autosaveToggle = $('autosave-toggle');
-    if (!autosaveToggle?.checked)
+    if (autosaveToggle && !autosaveToggle.checked)
         return;
     const STORAGE_KEY = window.STORAGE_KEY;
     const key = window.STORAGE_KEY_OVERRIDE || STORAGE_KEY;
@@ -105,8 +107,9 @@ async function loadFromIndexedDBFallback(key) {
 // Debounced Save (für häufige Änderungen)
 // Als Variable definiert, um spätere Erweiterung (Decorator-Pattern) zu ermöglichen
 const save = function (showMessage = false) {
+    // Toggle ist optional (siehe saveImmediate). Fehlt es → Save defaultet auf aktiv.
     const autosaveToggle = $('autosave-toggle');
-    if (!autosaveToggle?.checked)
+    if (autosaveToggle && !autosaveToggle.checked)
         return;
     const updateSaveIndicator = window.updateSaveIndicator;
     updateSaveIndicator('saving');
