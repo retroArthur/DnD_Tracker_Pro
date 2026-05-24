@@ -51,7 +51,7 @@ function renderAll() {
         renderSafe(renderParty, 'renderParty', 'party-list');
         renderSafe(renderNPCList, 'renderNPCList', 'npc-list');
         renderSafe(renderLocations, 'renderLocations', 'loc-grid');
-        renderSafe(renderQuests, 'renderQuests', 'quest-list');
+        renderSafe(renderQuests, 'renderQuests', 'quests-list');
         renderSafe(renderEncounters, 'renderEncounters', 'encounter-list');
         renderSafe(renderInit, 'renderInit', 'init-list');
         renderSafe(renderLoot, 'renderLoot', 'loot-list');

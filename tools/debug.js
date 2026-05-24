@@ -521,7 +521,7 @@ function runUITests(silent = false) {
         debugLogAdd('--- UI-Tests ---');
     const results = [];
     // Haupt-Container existieren
-    const containers = ['party-list', 'npc-list', 'loc-grid', 'quest-list', 'spell-list', 'loot-list'];
+    const containers = ['party-list', 'npc-list', 'loc-grid', 'quests-list', 'spell-list', 'loot-list'];
     containers.forEach(id => {
         const el = $(id);
         results.push({

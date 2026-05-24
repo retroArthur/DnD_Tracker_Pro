@@ -40,6 +40,8 @@ async function init() {
     // Offline-Modus initialisieren
     initOfflineMode();
     
+    // Hinweis: #autosave-toggle existiert aktuell nicht im UI. Falls es zurückkommt,
+    // wird es hier auf "checked" gesetzt; sonst no-op (Save defaultet auf aktiv, siehe persistence.js).
     if ($('autosave-toggle')) $('autosave-toggle').checked = true;
     if ($('quick-notes')) $('quick-notes').value = D.quickNotes || '';
     
@@ -142,7 +144,7 @@ function initSortableLists() {
     }
 
     // Quest-Liste
-    const questList = $('quest-list');
+    const questList = $('quests-list');
     if (questList) {
         questList.dataset.sortableList = 'quests';
         questList.addEventListener('dragstart', handleDragStart);
