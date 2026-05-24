@@ -570,7 +570,7 @@ function saveTable() {
     else {
         // Neu
         D.randomTables.push({
-            id: Date.now(),
+            id: nextId('randomTables'),
             name,
             icon,
             diceType,

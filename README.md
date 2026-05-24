@@ -93,7 +93,6 @@
 | **Wuerfel** | d4-d100, Vorteil/Nachteil, History, Floating Panel |
 | **Timer** | Session-Timer, Custom-Timer |
 | **Zufallstabellen** | Eigene Tabellen mit Gewichtung |
-| **Mindmap** | Visuelle Kampagnen-Uebersicht |
 | **Sessions** | Session-Notizen und -Log |
 | **DM Screen** | Widget-Dashboard mit 21 Widgets und Profilen |
 | **Markdown** | Live-Shortcuts, Import/Export, Render-on-Display |
