@@ -90,7 +90,6 @@ function renderCombatantSpellSlots(combatant, character) {
 }
 function renderInit() {
     const c = $('init-list');
-    const rn = $('round-num');
     if (!c) {
         if (window.APP_CONFIG?.DEBUG_MODE) {
             console.warn('[renderInit] Container missing - likely not on initiative tab');
@@ -101,8 +100,6 @@ function renderInit() {
     EntityLookup.enableCache();
     const D = window.D;
     const init = D.initiative;
-    if (rn)
-        rn.textContent = String(init.round);
     // Encounter-Rundenzahl aktualisieren
     const ern = $('encounter-round-num');
     if (ern)

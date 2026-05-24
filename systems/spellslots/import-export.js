@@ -378,20 +378,24 @@ function executeImport(dataType) {
 // ============================================================
 function updateIOCounts() {
     const D = window.D;
+    // Direct id mapping — keys are the actual element ids in the templates.
+    // Not all follow `${key}-io-count`: encounter is singular, shops/notes/links
+    // map to differently-named data arrays.
     const counts = {
-        'party': D.characters?.length || 0,
-        'npcs': D.npcs?.length || 0,
-        'locations': D.locations?.length || 0,
-        'quests': D.quests?.length || 0,
-        'loot': D.loot?.length || 0,
-        'spells': D.spells?.length || 0,
-        'notes': D.sessionNotes?.length || 0,
-        'encounters': D.encounters?.length || 0,
-        'wiki': D.wiki?.length || 0,
-        'links': D.links?.length || 0
+        'party-io-count': D.characters?.length || 0,
+        'npcs-io-count': D.npcs?.length || 0,
+        'locations-io-count': D.locations?.length || 0,
+        'quests-io-count': D.quests?.length || 0,
+        'loot-io-count': D.loot?.length || 0,
+        'spells-io-count': D.spells?.length || 0,
+        'notes-io-count': D.sessionNotes?.length || 0,
+        'encounter-io-count': D.encounters?.length || 0,
+        'wiki-io-count': D.wiki?.length || 0,
+        'links-io-count': D.links?.length || 0,
+        'shops-io-count': D.shops?.length || 0
     };
-    for (const [key, count] of Object.entries(counts)) {
-        const el = $(`${key}-io-count`);
+    for (const [id, count] of Object.entries(counts)) {
+        const el = $(id);
         if (el)
             el.textContent = String(count);
     }

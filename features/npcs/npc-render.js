@@ -125,8 +125,6 @@ function renderNPCList() {
     else {
         showNPCDetail(selectedNpcId);
     }
-    // Update stats
-    updateNPCStats();
     // Clear EntityLookup cache
     EntityLookup.clearCache();
 }
@@ -371,18 +369,6 @@ function renderNPCTags(n) {
     }).join('');
     const infoTags = (n.info || []).map((i) => `<span class="npc-list-tag info">ℹ️ ${esc(i)}</span>`).join('');
     return { questTags, relationTags, infoTags };
-}
-function updateNPCStats() {
-    const D = window.D;
-    if (!D.npcs)
-        return;
-    const totalDialogs = D.npcs.reduce((sum, n) => sum + (n.dialogs?.length || 0), 0);
-    const totalTriggers = D.npcs.reduce((sum, n) => sum + (n.triggers?.length || 0), 0);
-    updateCounters({
-        'npc-stats-total': D.npcs.length,
-        'npc-stats-dialogs': totalDialogs,
-        'npc-stats-triggers': totalTriggers
-    });
 }
 // Legacy compatibility functions
 function expandAllNPCCards() {
