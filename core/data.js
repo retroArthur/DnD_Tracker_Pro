@@ -19,10 +19,6 @@ function initializeData() {
         links: [],
         wiki: [],
         filters: [],
-        mindmap: {
-            nodes: [],
-            connections: []
-        },
         calendar: {
             day: 1,
             month: 0,

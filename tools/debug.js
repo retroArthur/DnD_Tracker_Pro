@@ -10,7 +10,6 @@
 // var renderSpells = window.renderSpells;  // [REMOVED: conflicts with function declaration]
 // var renderParty = window.renderParty;  // [REMOVED: conflicts with function declaration]
 // var renderWiki = window.renderWiki;  // [REMOVED: conflicts with function declaration]
-// var renderMindmap = window.renderMindmap;  // [REMOVED: conflicts with function declaration]
 // var renderEmptyState = window.renderEmptyState;  // [REMOVED: conflicts with function declaration]
 // var populateFilterDropdown = window.populateFilterDropdown;  // [REMOVED: conflicts with function declaration]
 // var updateCounters = window.updateCounters;  // [REMOVED: conflicts with function declaration]
@@ -34,7 +33,6 @@
 // var parseWikiLinks = window.parseWikiLinks;  // [REMOVED: conflicts with function declaration]
 // var navigateToWikiEntry = window.navigateToWikiEntry;  // [REMOVED: conflicts with function declaration]
 // var addNode = window.addNode;  // [REMOVED: conflicts with function declaration]
-// var saveNodeFromModal = window.saveNodeFromModal;  // [REMOVED: conflicts with function declaration]
 // var selectNodeType = window.selectNodeType;  // [REMOVED: conflicts with function declaration]
 function clearTestData() {
     if (!confirm('Alle Test-Daten (mit "Test" im Namen) löschen?'))
@@ -60,12 +58,6 @@ function clearTestData() {
     const wikiBefore = D.wiki?.length || 0;
     D.wiki = (D.wiki || []).filter((w) => !w.title?.toLowerCase().includes('test'));
     count += wikiBefore - D.wiki.length;
-    // Mindmap-Nodes mit "Test" im Namen
-    const nodesBefore = D.mindmap?.nodes?.length || 0;
-    if (D.mindmap?.nodes) {
-        D.mindmap.nodes = D.mindmap.nodes.filter((n) => !n.label?.toLowerCase().includes('test'));
-    }
-    count += nodesBefore - (D.mindmap?.nodes?.length || 0);
     save();
     renderAll();
     debugLogAdd(`${count} Test-Einträge gelöscht`);
@@ -101,19 +93,6 @@ function clearAllWiki() {
         renderWiki();
     debugLogAdd(`${count} Wiki-Einträge gelöscht`);
     showToast(`📚 ${count} Wiki-Einträge gelöscht`, 'success');
-    updateDebugStats();
-}
-function clearMindmap() {
-    if (!confirm('Wirklich das komplette Netzwerk leeren?'))
-        return;
-    const nodeCount = D.mindmap?.nodes?.length || 0;
-    const connCount = D.mindmap?.connections?.length || 0;
-    D.mindmap = { nodes: [], connections: [] };
-    save();
-    if (typeof renderMindmap === 'function')
-        renderMindmap();
-    debugLogAdd(`Netzwerk geleert: ${nodeCount} Nodes, ${connCount} Verbindungen`);
-    showToast(`🔗 Netzwerk geleert (${nodeCount} Nodes)`, 'success');
     updateDebugStats();
 }
 // Alias für Rückwärtskompatibilität
@@ -192,13 +171,6 @@ function runNewFeatureTests(silent = false) {
         name: 'Wiki-Array',
         pass: Array.isArray(D.wiki),
         detail: `${D.wiki?.length || 0} Einträge`,
-        category: 'new-features'
-    });
-    // Mindmap/Netzwerk
-    results.push({
-        name: 'Mindmap-Struktur',
-        pass: D.mindmap && Array.isArray(D.mindmap.nodes) && Array.isArray(D.mindmap.connections),
-        detail: `${D.mindmap?.nodes?.length || 0} Nodes, ${D.mindmap?.connections?.length || 0} Verbindungen`,
         category: 'new-features'
     });
     // Undo/Redo
@@ -626,45 +598,6 @@ function generateTestWiki(count = 5) {
     showToast(`📚 ${count} Wiki-Einträge erstellt`, 'success');
     updateDebugStats();
 }
-function generateTestMindmap(count = 10) {
-    const types = ['city', 'dungeon', 'forest', 'mountain', 'ruins', 'quest', 'npc', 'player'];
-    const names = ['Aldoria', 'Bergfried', 'Schattenwald', 'Kristallhöhle', 'Drachenfels', 'Nebeltal', 'Eisspitze', 'Feuerkluft'];
-    D.mindmap = D.mindmap || { nodes: [], connections: [] };
-    const startX = 100;
-    const startY = 100;
-    for (let i = 0; i < count; i++) {
-        const type = types[Math.floor(Math.random() * types.length)];
-        const name = names[Math.floor(Math.random() * names.length)];
-        D.mindmap.nodes.push({
-            id: Date.now() + i,
-            label: `Test: ${name} ${i + 1}`,
-            type: type,
-            x: startX + (i % 5) * 150,
-            y: startY + Math.floor(i / 5) * 120,
-            notes: `Test-Node vom Typ ${type}`
-        });
-    }
-    // Einige zufällige Verbindungen erstellen
-    const nodes = D.mindmap.nodes;
-    for (let i = 0; i < Math.min(count - 1, 5); i++) {
-        const fromIdx = Math.floor(Math.random() * nodes.length);
-        const toIdx = Math.floor(Math.random() * nodes.length);
-        if (fromIdx !== toIdx) {
-            D.mindmap.connections.push({
-                id: Date.now() + count + i,
-                from: nodes[fromIdx].id,
-                to: nodes[toIdx].id,
-                type: 'connection'
-            });
-        }
-    }
-    save();
-    if (typeof renderMindmap === 'function')
-        renderMindmap();
-    debugLogAdd(`${count} Test-Mindmap-Nodes erstellt`);
-    showToast(`🔗 ${count} Nodes erstellt`, 'success');
-    updateDebugStats();
-}
 function testWikiSystem() {
     debugLogAdd('--- Wiki-System Test ---');
     // Existenz prüfen
@@ -710,37 +643,6 @@ function testWikiLinks() {
     const hasNav = typeof navigateToWikiEntry === 'function';
     debugLogAdd(`  navigateToWikiEntry(): ${hasNav ? '✓' : '✗'}`);
     showToast(`🔗 Wiki-Links Test abgeschlossen`, 'info');
-}
-function testNetworkSystem() {
-    debugLogAdd('--- Netzwerk-System Test ---');
-    // Struktur prüfen
-    const hasStructure = D.mindmap && Array.isArray(D.mindmap.nodes) && Array.isArray(D.mindmap.connections);
-    debugLogAdd(`  Datenstruktur: ${hasStructure ? '✓' : '✗'}`);
-    // Render-Funktion
-    const hasRender = typeof renderMindmap === 'function';
-    debugLogAdd(`  renderMindmap(): ${hasRender ? '✓' : '✗'}`);
-    // Canvas
-    const canvas = document.getElementById('mindmap-canvas');
-    debugLogAdd(`  Canvas: ${canvas ? '✓' : '✗'}`);
-    // Node-Funktionen
-    const hasAddNode = typeof addNode === 'function' || typeof saveNodeFromModal === 'function';
-    debugLogAdd(`  Node hinzufügen: ${hasAddNode ? '✓' : '✗'}`);
-    showToast(`🔗 Netzwerk-Test abgeschlossen`, 'info');
-}
-function testNodeTypes() {
-    debugLogAdd('--- Node-Typen Test ---');
-    // Prüfe ob Mindmap-Nodes existieren
-    const hasNodes = D.mindmap?.nodes?.length > 0;
-    debugLogAdd(`  Vorhandene Nodes: ${D.mindmap?.nodes?.length || 0}`);
-    if (hasNodes) {
-        // Typen aus vorhandenen Nodes sammeln
-        const usedTypes = [...new Set(D.mindmap.nodes.map((n) => n.type).filter(Boolean))];
-        debugLogAdd(`  Verwendete Typen: ${usedTypes.join(', ') || 'keine'}`);
-    }
-    // selectNodeType Funktion prüfen
-    const hasSelectFn = typeof selectNodeType === 'function';
-    debugLogAdd(`  selectNodeType(): ${hasSelectFn ? '✓' : '✗'}`);
-    showToast(`📍 Node-Typen Test abgeschlossen`, 'info');
 }
 function testQuickReference() {
     debugLogAdd('--- Quick Reference v2 Test ---');
@@ -977,8 +879,7 @@ function updateDebugStats() {
         { label: 'Sessions', value: D.sessionNotes?.length || 0, icon: '📝' },
         { label: 'Wiki', value: D.wiki?.length || 0, icon: '📚' },
         { label: 'Shops', value: D.shops?.length || 0, icon: '🏪' },
-        { label: 'Links', value: D.links?.length || 0, icon: '🔗' },
-        { label: 'Nodes', value: D.mindmap?.nodes?.length || 0, icon: '🔗' }
+        { label: 'Links', value: D.links?.length || 0, icon: '🔗' }
     ];
     el.innerHTML = stats.map(s => `
         <div style="background: var(--bg-card); padding: 8px; border-radius: 6px; text-align: center;">

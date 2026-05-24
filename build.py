@@ -319,8 +319,6 @@ def build(minify=False, production=False, verbose=False):
         'features/shops/shops-core.js',
         'features/shops/shop-export.js',
         'features/shops/links.js',
-        # Network/Mindmap Module
-        'features/network/mindmap.js',
         # DM Screen Module
         'features/dmscreen/dmscreen-render.js',
         # Dice-Module

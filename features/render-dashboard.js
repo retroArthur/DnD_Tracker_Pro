@@ -45,7 +45,6 @@ function renderAll() {
         const renderLinks = window.renderLinks;
         const renderWiki = window.renderWiki;
         const renderFilterList = window.renderFilterList;
-        const renderMindmap = window.renderMindmap;
         const initQuickRefCustom = window.initQuickRefCustom;
         const updateIOCounts = window.updateIOCounts;
         renderSafe(renderParty, 'renderParty', 'party-list');
@@ -61,7 +60,6 @@ function renderAll() {
         renderSafe(renderLinks, 'renderLinks', 'links-list');
         renderSafe(renderWiki, 'renderWiki');
         renderSafe(renderFilterList, 'renderFilterList');
-        renderSafe(renderMindmap, 'renderMindmap', 'mindmap-container');
         renderSafe(initQuickRefCustom, 'initQuickRefCustom');
         // Update IO-Counter
         try {

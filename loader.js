@@ -80,7 +80,6 @@ const MODULES = [
     'features/shops/shops-core.js',
     'features/shops/shop-export.js',
     'features/shops/links.js',
-    'features/network/mindmap.js',
 
     // DM Screen
     'features/dmscreen/dmscreen-render.js',
