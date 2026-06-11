@@ -94,17 +94,45 @@ Explizit ausgeschlossen. Dokumentiert, um Scope-Creep zu verhindern.
 
 ## Traceability
 
-Welche Phasen welche Requirements abdecken. Wird bei der Roadmap-Erstellung gefüllt.
-
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| _(wird vom Roadmapper gefüllt)_ | | |
+| STAB-01 | Phase 1 | Pending |
+| STAB-02 | Phase 1 | Pending |
+| STAB-03 | Phase 1 | Pending |
+| STAB-04 | Phase 1 | Pending |
+| STAB-05 | Phase 1 | Pending |
+| STAB-06 | Phase 1 | Pending |
+| STAB-07 | Phase 1 | Pending |
+| STAB-08 | Phase 1 | Pending |
+| STAB-09 | Phase 1 | Pending |
+| STAB-10 | Phase 1 | Pending |
+| STAB-11 | Phase 1 | Pending |
+| TECH-01 | Phase 2 | Pending |
+| TECH-02 | Phase 2 | Pending |
+| TECH-03 | Phase 2 | Pending |
+| TECH-04 | Phase 2 | Pending |
+| BEST-01 | Phase 3 | Pending |
+| BEST-02 | Phase 3 | Pending |
+| BEST-03 | Phase 3 | Pending |
+| INIT-01 | Phase 4 | Pending |
+| INIT-02 | Phase 4 | Pending |
+| INIT-03 | Phase 4 | Pending |
+| WELT-01 | Phase 5 | Pending |
+| WELT-02 | Phase 5 | Pending |
+| WELT-03 | Phase 5 | Pending |
+| WELT-04 | Phase 5 | Pending |
+| WELT-05 | Phase 5 | Pending |
+| CHAR-01 | Phase 6 | Pending |
+| CHAR-02 | Phase 6 | Pending |
+| CHAR-03 | Phase 6 | Pending |
+| UX-01 | Phase 7 | Pending |
+| UX-02 | Phase 7 | Pending |
 
 **Coverage:**
 - v1 requirements: 31 total
-- Mapped to phases: 0
-- Unmapped: 31 ⚠️ (Roadmap ausstehend)
+- Mapped to phases: 31
+- Unmapped: 0 ✓
 
 ---
 *Requirements defined: 2026-06-11*
-*Last updated: 2026-06-11 after initial definition*
+*Last updated: 2026-06-11 — Traceability filled by roadmapper*
