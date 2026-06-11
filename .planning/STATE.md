@@ -95,7 +95,7 @@ Progress: [          ] 0%
 
 ## Session Continuity
 
-**Last action:** Roadmap created (2026-06-11) — 7 Phasen, 31/31 Requirements gemappt
+**Last action:** Phase 1 context gathered (2026-06-12) — 17 Entscheidungen in `.planning/phases/01-stabilisierung/01-CONTEXT.md`
 **Next action:** `/gsd-plan-phase 1` — Stabilisierungs-Phase planen
 
 ---
