@@ -37,8 +37,8 @@
 - [x] 01-03-PLAN.md — Mindmap-Reste bereinigen: Smart-Strip-Migration + tote Dateien/Typen (STAB-02)
 - [x] 01-04-PLAN.md — Build-Pipeline härten: Pre-Build-Duplikat-Check, DEBUG_MODE-Assertion, Modullisten-Sync (STAB-07)
 - [x] 01-05-PLAN.md — Repo-Hygiene & Config: Lizenz MIT, Version 2.6.1, python3->python, validate.py, tote Dateien (STAB-09, STAB-06)
-- [ ] 01-06-PLAN.md — CI-Smoke-Integration & Quality-Gate: npm run check, frische Builds (STAB-08, STAB-04, STAB-03)
-- [ ] 01-07-PLAN.md — Doku- & Lizenz-Audit: CLAUDE.md/README/bugfixes Faktenkorrektur, SRD-Attribution (STAB-10, STAB-11)
+- [x] 01-06-PLAN.md — CI-Smoke-Integration & Quality-Gate: npm run check, frische Builds (STAB-08, STAB-04, STAB-03)
+- [x] 01-07-PLAN.md — Doku- & Lizenz-Audit: CLAUDE.md/README/bugfixes Faktenkorrektur, SRD-Attribution (STAB-10, STAB-11)
 
 ### Phase 2: Technik-Fundament
 **Goal**: Die App ist als PWA installierbar, schreibt automatische Datei-Backups auf die Festplatte und bietet eine Command Palette für schnelle Aktionen
