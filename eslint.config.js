@@ -102,7 +102,9 @@ export default tseslint.config(
             'no-prototype-builtins': 'off',
             'no-useless-escape': 'warn',
             'no-constant-condition': 'warn',
-            'no-fallthrough': 'warn'
+            'no-fallthrough': 'warn',
+            // Emoji-Zeichenklassen im Bestand (dice-core.js) — bewusst 'warn', kein u-Flag-Umbau in der Stabilisierungsphase
+            'no-misleading-character-class': 'warn'
         }
     },
 
@@ -143,6 +145,23 @@ export default tseslint.config(
         rules: {
             'no-unused-vars': 'off',
             '@typescript-eslint/no-unused-vars': 'off'
+        }
+    },
+
+    // CommonJS-Konfigurationsdateien (.cjs) — Node-Globals + entschärfte Stil-Regeln
+    {
+        files: ['**/*.cjs'],
+        languageOptions: {
+            sourceType: 'commonjs',
+            globals: {
+                module: 'writable',
+                require: 'readonly',
+                __dirname: 'readonly',
+                process: 'readonly'
+            }
+        },
+        rules: {
+            'no-useless-escape': 'warn'
         }
     },
 

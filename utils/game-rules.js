@@ -77,7 +77,7 @@ function getClassHitDie(className) {
         'Barde': 'd8', 'Hexenmeister': 'd8',
         'Zauberer': 'd6', 'Magier': 'd6',
         // English class names
-        'Barbarian': 'd12', 'Fighter': 'd10', 'Paladin': 'd10', 'Ranger': 'd10',
+        'Barbarian': 'd12', 'Fighter': 'd10', 'Ranger': 'd10',
         'Cleric': 'd8', 'Druid': 'd8', 'Monk': 'd8', 'Rogue': 'd8',
         'Bard': 'd8', 'Warlock': 'd8',
         'Sorcerer': 'd6', 'Wizard': 'd6'

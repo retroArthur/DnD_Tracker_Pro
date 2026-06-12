@@ -77,25 +77,28 @@ function convertNodeToMarkdown(node) {
                 markdown = `###### ${getTextContent(node)}\n\n`;
                 break;
 
-            case 'a':
+            case 'a': {
                 const href = node.getAttribute('href') || '';
                 const linkText = getTextContent(node);
                 markdown = `[${linkText}](${href})`;
                 break;
+            }
 
             case 'ul':
-            case 'ol':
+            case 'ol': {
                 const listItems = Array.from(node.children).filter(child => child.tagName.toLowerCase() === 'li');
                 markdown = listItems.map((li, index) => {
                     const prefix = tag === 'ul' ? '-' : `${index + 1}.`;
                     return `${prefix} ${getTextContent(li)}`;
                 }).join('\n') + '\n\n';
                 break;
+            }
 
-            case 'blockquote':
+            case 'blockquote': {
                 const lines = getTextContent(node).split('\n');
                 markdown = lines.map(line => `> ${line}`).join('\n') + '\n\n';
                 break;
+            }
 
             case 'table':
                 markdown = convertTableToMarkdown(node);

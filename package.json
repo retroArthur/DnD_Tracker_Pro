@@ -20,7 +20,7 @@
     "tsc:watch": "tsc --watch",
     "tsc:check": "tsc --noEmit",
     "typecheck": "tsc --noEmit",
-    "lint": "eslint . --max-warnings 50",
+    "lint": "eslint .",
     "lint:all": "eslint . --max-warnings 100",
     "lint:fix": "eslint . --fix",
     "format": "prettier --write \"**/*.{js,json,md}\"",

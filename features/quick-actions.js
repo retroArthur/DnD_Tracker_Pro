@@ -116,7 +116,7 @@ function applyQuickAction(cbId, actionKey) {
     }
     // Special actions without effect - only toast
     switch (actionKey) {
-        case 'dash':
+        case 'dash': {
             let speed = '9m';
             if (cb.type === 'player') {
                 const char = EntityLookup.findByName('characters', cb.name);
@@ -126,7 +126,8 @@ function applyQuickAction(cbId, actionKey) {
             }
             showToast(`${action.icon} ${cb.name} sprintet (2× ${speed})`, 'info');
             break;
-        case 'hide':
+        }
+        case 'hide': {
             // Automatically rolls Stealth - effect is set above
             const stealthRoll = Math.floor(Math.random() * 20) + 1;
             let stealthMod = 0;
@@ -139,10 +140,11 @@ function applyQuickAction(cbId, actionKey) {
             const total = stealthRoll + stealthMod;
             showToast(`${action.icon} Stealth: ${stealthRoll}${stealthMod >= 0 ? '+' : ''}${stealthMod} = ${total}`, stealthRoll === 20 ? 'success' : stealthRoll === 1 ? 'error' : 'info');
             break;
+        }
         case 'help':
             showToast(`${action.icon} ${cb.name} hilft einem Verbündeten`, 'info');
             break;
-        case 'search':
+        case 'search': {
             const perceptionRoll = Math.floor(Math.random() * 20) + 1;
             let perceptionMod = 0;
             if (cb.type === 'player') {
@@ -154,6 +156,7 @@ function applyQuickAction(cbId, actionKey) {
             const percTotal = perceptionRoll + perceptionMod;
             showToast(`${action.icon} Wahrnehmung: ${perceptionRoll}${perceptionMod >= 0 ? '+' : ''}${perceptionMod} = ${percTotal}`, perceptionRoll === 20 ? 'success' : perceptionRoll === 1 ? 'error' : 'info');
             break;
+        }
         case 'useObject':
             showToast(`${action.icon} ${cb.name} benutzt ein Objekt`, 'info');
             break;

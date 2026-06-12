@@ -1450,16 +1450,18 @@ document.addEventListener('click', function (e) {
             if (target.dataset.dice)
                 dmsRollDice(target.dataset.dice);
             break;
-        case 'dms-roll-custom':
+        case 'dms-roll-custom': {
             const formulaEl = $('dms-dice-formula');
             const formula = formulaEl?.value;
             if (formula)
                 dmsRollDice(formula);
             break;
-        case 'dms-roll-table':
+        }
+        case 'dms-roll-table': {
             const tableId = parseInt(target.dataset.table || '0');
             dmsRollOnTable(tableId);
             break;
+        }
         case 'dms-show-condition':
             dmsShowConditionDetail(target.dataset.condition);
             break;
@@ -1479,19 +1481,21 @@ document.addEventListener('click', function (e) {
         case 'dms-toggle-profiles':
             toggleDMSProfileDropdown();
             break;
-        case 'dms-switch-profile':
+        case 'dms-switch-profile': {
             if (target.dataset.profile)
                 switchDMSProfile(target.dataset.profile);
             const dropdown = $('dms-profile-dropdown');
             if (dropdown)
                 dropdown.classList.remove('show');
             break;
-        case 'dms-save-profile':
+        }
+        case 'dms-save-profile': {
             saveDMSProfileAs();
             const dd = $('dms-profile-dropdown');
             if (dd)
                 dd.classList.remove('show');
             break;
+        }
         case 'dms-delete-profile':
             e.stopPropagation();
             if (target.dataset.profile)
