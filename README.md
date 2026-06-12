@@ -4,7 +4,7 @@
 
 **Ein vollwertiger D&D 5e Kampagnen-Manager - komplett offline im Browser**
 
-[![Version](https://img.shields.io/badge/version-2.6.0-blue.svg)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-2.6.1-blue.svg)](CHANGELOG.md)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![CI](https://github.com/retroArthur/DnD_Tracker_Pro/actions/workflows/ci.yml/badge.svg)](https://github.com/retroArthur/DnD_Tracker_Pro/actions)
 [![Size](https://img.shields.io/badge/size-1.72MB-orange.svg)]()
