@@ -20,6 +20,23 @@ function quickRoll(sides) {
     if (D.diceHistory.length > 50)
         D.diceHistory = D.diceHistory.slice(0, 50);
 }
+// (D-07) Zeige Konflikts-Dialog wenn LS-Schatten (ohne _ts) und neuere IDB-Daten existieren.
+// Feuert NICHT wenn Inhalt identisch ist (kein unnötiger Dialog am Spieltisch).
+function showStorageConflictDialog(lsData, idbData, onUseLS, onUseIDB) {
+    // Identischer Inhalt: kein Dialog nötig
+    if (lsData === idbData) {
+        if (typeof onUseLS === 'function') onUseLS();
+        return;
+    }
+    // Konflikts-Dialog anzeigen
+    if (typeof window.showStorageConflictDialog === 'function') {
+        window.showStorageConflictDialog(lsData, idbData, onUseLS, onUseIDB);
+    } else {
+        // Fallback: IDB-Daten bevorzugen (neuere Quelle)
+        if (typeof onUseIDB === 'function') onUseIDB();
+    }
+}
+window.showStorageConflictDialogInternal = showStorageConflictDialog;
 async function load() {
     const STORAGE_KEY = window.STORAGE_KEY;
     const key = window.STORAGE_KEY_OVERRIDE || STORAGE_KEY;
@@ -29,18 +46,46 @@ async function load() {
     const CURRENT_VERSION = APP_CONFIG.VERSION;
     try {
         let s = StorageAPI.get(key, null);
+        const lsTimestamp = StorageAPI.get(key + '_ts', null);
+        // (D-01/D-07) Stale-Shadow-Detection: LS vorhanden, aber ohne _ts
+        // → prüfe ob IDB neuere Daten hat
+        if (s && !lsTimestamp) {
+            try {
+                const idbRecord = await window.loadFromIndexedDBFallbackRaw(key);
+                if (idbRecord && idbRecord.data && idbRecord.data !== s) {
+                    // IDB hat andere (neuere) Daten — Konflikts-Dialog
+                    showStorageConflictDialog(
+                        s,
+                        idbRecord.data,
+                        () => { /* LS-Daten nutzen — s bleibt unverändert */ },
+                        () => { s = idbRecord.data; }
+                    );
+                }
+                // Identischer Inhalt: kein Dialog, s bleibt (kein Datenverlust)
+            }
+            catch (e) {
+                // IDB nicht verfügbar — LS-Daten nutzen
+                if (APP_CONFIG.DEBUG_MODE) {
+                    ErrorHandler && ErrorHandler.log('load', e, '[D-07] IDB-Konfliktprüfung fehlgeschlagen');
+                }
+            }
+        }
         // Fallback zu IndexedDB wenn localStorage leer
         if (!s) {
             try {
                 const loadFromIndexedDBFallback = window.loadFromIndexedDBFallback;
                 s = await loadFromIndexedDBFallback(key);
                 if (s) {
-                    console.log('[LOAD] Daten aus IndexedDB geladen');
+                    if (APP_CONFIG.DEBUG_MODE) {
+                        ErrorHandler && ErrorHandler.log('load', null, '[LOAD] Daten aus IndexedDB geladen');
+                    }
                     showToast('💾 Kampagne aus IndexedDB geladen', 'info', 3000);
                 }
             }
             catch (e) {
-                console.log('[LOAD] Keine Daten in IndexedDB:', e.message);
+                if (APP_CONFIG.DEBUG_MODE) {
+                    ErrorHandler && ErrorHandler.log('load', e, '[LOAD] Keine Daten in IndexedDB');
+                }
             }
         }
         if (s) {
@@ -59,9 +104,20 @@ async function load() {
                 ErrorHandler.log('load', new Error('Ungültige Datenstruktur'));
                 return;
             }
+            // (D-05/STAB-06) Legacy-Stempel-Normalisierung: '2.11' wurde fälschlicherweise
+            // als "neuer als 2.6.x" behandelt (compareVersions: 11 > 6).
+            // Normalisierung auf '2.0.0' stellt sicher, dass Migration korrekt ausgeführt wird.
+            if (p._version === '2.11') {
+                p._version = '2.0.0';
+                if (APP_CONFIG.DEBUG_MODE) {
+                    ErrorHandler && ErrorHandler.log('load', null, '[LOAD] Legacy-Stempel 2.11 auf 2.0.0 normalisiert');
+                }
+            }
             // Versionierung und Migration
             if (!p._version || compareVersions(p._version, CURRENT_VERSION) < 0) {
-                console.log(`[LOAD] Migriere Daten von ${p._version || 'unbekannt'} auf ${CURRENT_VERSION}`);
+                if (APP_CONFIG.DEBUG_MODE) {
+                    ErrorHandler && ErrorHandler.log('load', null, `[LOAD] Migriere von ${p._version || 'unbekannt'} auf ${CURRENT_VERSION}`);
+                }
                 try {
                     p = migrateData(p);
                 }
@@ -130,7 +186,8 @@ function exportAllDataAsFile() {
             exp._campaignName = campaign?.name || 'Unbenannte Kampagne';
         }
         exp._exportDate = new Date().toISOString();
-        exp._version = '2.11';
+        // (D-05/STAB-06) Dynamische Versionsnummer statt hartkodiertem Stempel '2.11'
+        exp._version = APP_CONFIG.VERSION;
         const filename = exp._campaignName.replace(/[^a-zA-Z0-9äöüÄÖÜß\s-]/g, '').replace(/\s+/g, '-');
         const json = JSON.stringify(exp, null, 2);
         const blob = new Blob([json], { type: 'application/json' });
