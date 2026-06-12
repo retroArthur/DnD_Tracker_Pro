@@ -494,6 +494,42 @@ def build(minify=False, production=False, verbose=False):
             sys.exit(1)
         log.success("DEBUG_MODE deaktiviert und verifiziert.")
 
+    # Production (T-02-04): Bump CACHE_VERSION in bundled JS mit version+timestamp,
+    # damit jeder Deploy den SW-Cache invalidiert (Pitfall 5).
+    # sw.js wird nicht in den Bundle eingebunden — das dist/-Verzeichnis braucht
+    # eine separate Kopie mit gebumpter Version. Wir patchen CACHE_VERSION im
+    # kombinierten JS (falls pwa-install.js oder ein anderes Modul den Wert referenziert)
+    # UND speichern den Wert für den späteren sw.js-Schreibschritt.
+    if production:
+        import re as _re, datetime as _dt
+        # Lese VERSION aus core/config.js
+        config_path = os.path.join(SOURCE_DIR, 'core', 'config.js')
+        app_version = '2.6.1'  # Fallback
+        try:
+            config_src = read_file(config_path)
+            vm = _re.search(r"VERSION:\s*'([^']+)'", config_src)
+            if vm:
+                app_version = vm.group(1)
+        except Exception:
+            pass
+        timestamp = _dt.datetime.utcnow().strftime('%Y%m%d%H%M')
+        bumped_cache_version = f'dnd-tracker-v{app_version}-{timestamp}'
+        print(f"\n[PROD] CACHE_VERSION bump: dnd-tracker-v3 -> {bumped_cache_version}")
+        # Patch CACHE_VERSION in kombiniertem JS (falls enthalten)
+        js_combined = js_combined.replace("'dnd-tracker-v3'", f"'{bumped_cache_version}'", 1)
+        # Schreibe gepatchte sw.js nach dist/
+        dist_dir = os.path.join(SCRIPT_DIR, 'dist')
+        os.makedirs(dist_dir, exist_ok=True)
+        sw_src_path = os.path.join(SCRIPT_DIR, 'sw.js')
+        sw_dst_path = os.path.join(dist_dir, 'sw.js')
+        try:
+            sw_src = read_file(sw_src_path)
+            sw_patched = sw_src.replace("'dnd-tracker-v3'", f"'{bumped_cache_version}'", 1)
+            write_file(sw_dst_path, sw_patched)
+            log.success(f"sw.js nach dist/ kopiert (CACHE_VERSION={bumped_cache_version})")
+        except Exception as e:
+            log.warning(f"sw.js konnte nicht nach dist/ kopiert werden: {e}")
+
     if minify:
         print("\n[MINIFY] Minifiziere JavaScript...")
         original_size = len(js_combined)
