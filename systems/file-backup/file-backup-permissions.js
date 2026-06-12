@@ -25,8 +25,8 @@ const FILE_BACKUP_IDB_KEY = 'fileBackupDirHandle';
  * @returns {Promise<void>}
  */
 async function saveHandleToIDB(handle) {
-    await window.initIndexedDB();
-    const idb = window.idb;
+    // initIndexedDB() liefert die DB-Instanz zurück (core/init.js setzt zusätzlich window.idb)
+    const idb = await window.initIndexedDB();
     return new Promise((resolve, reject) => {
         // Defensiv: Falls 'fileHandles'-Store nicht existiert, wird ein Fehler gewurfen.
         // Das passiert, wenn IDB_VERSION noch nicht gebumpt wurde.
@@ -42,8 +42,14 @@ async function saveHandleToIDB(handle) {
  * @returns {Promise<FileSystemDirectoryHandle|null>}
  */
 async function loadHandleFromIDB() {
-    await window.initIndexedDB();
-    const idb = window.idb;
+    // initIndexedDB() liefert die DB-Instanz zurück (core/init.js setzt zusätzlich window.idb)
+    let idb = null;
+    try {
+        idb = await window.initIndexedDB();
+    } catch (e) {
+        return null;
+    }
+    if (!idb) return null;
     return new Promise((resolve) => {
         try {
             const tx = idb.transaction(['fileHandles'], 'readonly');

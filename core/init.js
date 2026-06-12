@@ -268,7 +268,7 @@ function initOfflineDetection() {
 // ============================================================
 // INDEXEDDB WRAPPER (für größere Datenmengen)
 // ============================================================
-const IDB_VERSION = 2; // Version erhöht für neuen Index
+const IDB_VERSION = 3; // v3: fileHandles-Store für Datei-Backup (Plan 02-04)
 let idb = null;
 
 async function initIndexedDB() {
@@ -278,6 +278,10 @@ async function initIndexedDB() {
         request.onerror = () => reject(request.error);
         request.onsuccess = () => {
             idb = request.result;
+            // Export für Module, die window.idb lesen (persistence.js, backups.js,
+            // campaign-manager.js, file-backup-permissions.js). Top-Level-`let idb`
+            // erzeugt KEINE window-Property — ohne diesen Export ist window.idb undefined.
+            window.idb = idb;
             resolve(idb);
         };
 
@@ -302,6 +306,10 @@ async function initIndexedDB() {
             }
             if (!db.objectStoreNames.contains('images')) {
                 db.createObjectStore('images', { keyPath: 'id' });
+            }
+            // v3: Store für FileSystemDirectoryHandle-Persistenz (Datei-Backup, D-16)
+            if (!db.objectStoreNames.contains('fileHandles')) {
+                db.createObjectStore('fileHandles', { keyPath: 'id' });
             }
         };
     });

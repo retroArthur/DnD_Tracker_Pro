@@ -28,17 +28,27 @@ async function showFileBackupSetup() {
         const dirHandle = await window.showDirectoryPicker({ mode: 'readwrite' });
         if (!dirHandle) return;
 
-        // Handle in IDB persistieren
-        if (typeof window.saveHandleToIDB === 'function') {
-            await window.saveHandleToIDB(dirHandle);
-        }
+        // In-Memory-Handle ZUERST setzen — das Backup muss in der laufenden
+        // Sitzung auch dann funktionieren, wenn die IDB-Persistenz fehlschlägt (CR-03)
         window._fileBackupDirHandle = dirHandle;
-
         if (typeof window.setBackupStatus === 'function') {
             window.setBackupStatus('active');
         }
         renderBackupStatus();
         window.showToast('✅ Backup-Ordner eingerichtet: ' + esc(dirHandle.name));
+
+        // Handle in IDB persistieren (separat behandelt: Fehler hier pausiert
+        // NICHT das Sitzungs-Backup, nur die Wiederherstellung nach Reload)
+        if (typeof window.saveHandleToIDB === 'function') {
+            try {
+                await window.saveHandleToIDB(dirHandle);
+            } catch (idbErr) {
+                if (window.APP_CONFIG?.DEBUG_MODE) {
+                    window.ErrorHandler?.log('showFileBackupSetup', idbErr, 'IDB-Persistenz fehlgeschlagen');
+                }
+                window.showToast('Backup aktiv — Ordner-Merken für den nächsten Start fehlgeschlagen.', 'warning');
+            }
+        }
     } catch (e) {
         // Nutzer hat Auswahl abgebrochen (AbortError) oder Fehler
         if (e?.name !== 'AbortError') {
