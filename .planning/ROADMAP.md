@@ -32,7 +32,7 @@
   4. `npm run check` (ESLint + TypeScript + Prettier) läuft durch ohne Fehler; CI-Pipeline ist grün und ein Playwright-Smoke-Test bestätigt erfolgreiche App-Initialisierung gegen den dist-Build
   5. Alle veralteten Dateien (main.js, tsconfig.json.backup, Mindmap-Reste) sind entfernt; CLAUDE.md, README und package.json-Lizenz sind konsistent mit dem tatsächlichen Code-Stand
 **Plans**: 7 plans (3 Wellen)
-- [ ] 01-01-PLAN.md — Boot-Crash-Fix (debug.js) + Smoke-Test-Harness (STAB-01, STAB-08)
+- [x] 01-01-PLAN.md — Boot-Crash-Fix (debug.js) + Smoke-Test-Harness (STAB-01, STAB-08)
 - [ ] 01-02-PLAN.md — Persistenz-Stabilität: >5MB Stale-Shadow-Fix + Export-Versionsstempel (STAB-05, STAB-06)
 - [ ] 01-03-PLAN.md — Mindmap-Reste bereinigen: Smart-Strip-Migration + tote Dateien/Typen (STAB-02)
 - [ ] 01-04-PLAN.md — Build-Pipeline härten: Pre-Build-Duplikat-Check, DEBUG_MODE-Assertion, Modullisten-Sync (STAB-07)
