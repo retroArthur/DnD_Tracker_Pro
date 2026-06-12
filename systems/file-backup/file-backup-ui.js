@@ -258,9 +258,7 @@ async function restoreFromFileBackup(filename) {
  * Exakte Texte gemaess UI-SPEC Copywriting-Abschnitt.
  */
 function renderBackupStatus() {
-    const section = typeof document !== 'undefined' && document.querySelector &&
-        document.querySelector('.backup-status-section');
-    if (!section) return;
+    if (typeof document === 'undefined' || !document.querySelector) return;
 
     const status = typeof window.getBackupStatus === 'function'
         ? window.getBackupStatus() : 'none';
@@ -272,13 +270,12 @@ function renderBackupStatus() {
     const isFileProtocol = typeof window !== 'undefined' &&
         window.location?.protocol === 'file:';
 
-    // Header-Warnindikator aktualisieren (existiert bereits im DOM aus Plan 02-01)
+    // Header-Warnindikator IMMER aktualisieren — auch wenn der Einstellungs-
+    // Bereich gerade nicht im DOM ist (CR-07: Befuellung darf nicht hinter
+    // dem Section-Guard liegen, sonst bleibt die Pausiert-Warnung leer/unsichtbar)
     const indicator = document.querySelector('.backup-warning-indicator');
     if (indicator) {
         if (status === 'paused') {
-            indicator.style.display = 'flex';
-            indicator.setAttribute('aria-hidden', 'false');
-            indicator.title = 'Datei-Backup pausiert. Klicken zum Einstellungen öffnen.';
             // Inhalt befuellen (plan: aktiviert via JS, nicht html-edit)
             if (!indicator.dataset.initialized) {
                 indicator.dataset.initialized = '1';
@@ -288,11 +285,18 @@ function renderBackupStatus() {
                 indicator.style.gap = '2px';
                 indicator.setAttribute('data-action', 'open-settings-backup');
             }
+            indicator.style.display = 'flex';
+            indicator.setAttribute('aria-hidden', 'false');
+            indicator.title = 'Datei-Backup pausiert. Klicken zum Einstellungen öffnen.';
         } else {
             indicator.style.display = 'none';
             indicator.setAttribute('aria-hidden', 'true');
         }
     }
+
+    // Einstellungs-Bereich (Daten-Tab): nur rendern wenn der Anker im DOM ist
+    const section = document.querySelector('.backup-status-section');
+    if (!section) return;
 
     // file://-Modus: Fallback anzeigen (D-18)
     if (isFileProtocol) {
@@ -443,8 +447,9 @@ function initFileBackupActions() {
         'reconnect-file-backup': () => window.reconnectFileBackup(),
         'download-file-backup': () => window.downloadFileBackup(),
         'open-settings-backup': () => {
-            // Einstellungen-Tab oeffnen und zu Backup-Bereich scrollen
-            if (typeof window.switchView === 'function') window.switchView('settings');
+            // Daten-Tab oeffnen (enthaelt den Einstellungen-/Backup-Bereich,
+            // einen eigenen settings-Tab gibt es nicht — CR-07) und hinscrollen
+            if (typeof window.switchView === 'function') window.switchView('data');
             setTimeout(() => {
                 const section = document.querySelector('.backup-status-section');
                 if (section) section.scrollIntoView({ behavior: 'smooth' });

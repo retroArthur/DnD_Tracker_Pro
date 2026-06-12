@@ -128,9 +128,12 @@ const ACTION_REGISTRY = [
     // --- Einstellungen / System ---
     {
         id: 'open-settings',
-        label: 'Einstellungen oeffnen',
-        keywords: ['einstellungen', 'optionen', 'config', 'konfiguration', 'settings'],
-        action: () => { window.showModal('settings-modal'); }
+        label: 'Einstellungen oeffnen (Daten-Tab)',
+        keywords: ['einstellungen', 'optionen', 'config', 'konfiguration', 'settings', 'daten'],
+        action: () => {
+            // Es gibt kein settings-modal — die Einstellungen liegen im Daten-Tab (CR-07)
+            if (typeof window.switchView === 'function') window.switchView('data');
+        }
     },
     {
         id: 'backup-setup',

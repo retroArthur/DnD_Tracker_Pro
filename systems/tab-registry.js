@@ -81,7 +81,7 @@ const TAB_RENDER_REGISTRY = {
         cleanup: 'cleanupTimers' // Clear interval when leaving tab
     },
     data: {
-        renders: [], // Data tab is mostly forms, no active renders needed
+        renders: ['renderBackupStatus'], // Datei-Backup-Status (D-17) — Rest sind Formulare
         init: null,
         cleanup: null
     },
