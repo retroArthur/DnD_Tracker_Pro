@@ -1,225 +1,215 @@
 ---
 phase: 01-stabilisierung
-reviewed: 2026-06-12T07:57:42Z
+reviewed: 2026-06-12T09:37:08Z
 depth: standard
-files_reviewed: 24
+files_reviewed: 25
 files_reviewed_list:
-    - .github/workflows/ci.yml
-    - CLAUDE.md
-    - LICENSE
-    - README.md
-    - build.py
-    - core/config.js
-    - docs/bugfixes.md
-    - docs/srd-license.md
-    - package.json
-    - playwright.smoke.config.js
-    - systems/campaign-manager/campaign-manager.js
-    - systems/spellslots/import-export.js
-    - systems/spellslots/persistence.js
-    - systems/spellslots/quick-roll.js
-    - systems/spellslots/version-migration.js
-    - tests/build/test_build_deduplication.py
-    - tests/e2e/smoke.spec.js
-    - tests/setup.js
-    - tests/unit/migration.test.js
-    - tests/unit/stability.test.js
-    - tools/debug.js
-    - types/entities.d.ts
-    - types/globals.d.ts
-    - validate.py
+  - systems/spellslots/quick-roll.js
+  - tests/unit/storage-conflict.test.js
+  - utils/game-rules.js
+  - features/quick-actions.js
+  - features/dmscreen/dmscreen-render.js
+  - ui/editors/markdown-converter.js
+  - eslint.config.js
+  - package.json
+  - systems/spellslots/persistence.js
+  - systems/spellslots/import-export.js
+  - systems/spellslots/version-migration.js
+  - systems/campaign-manager/campaign-manager.js
+  - core/config.js
+  - tests/unit/stability.test.js
+  - tests/unit/migration.test.js
+  - tests/setup.js
+  - tests/e2e/smoke.spec.js
+  - tests/build/test_build_deduplication.py
+  - playwright.smoke.config.js
+  - build.py
+  - validate.py
+  - tools/debug.js
+  - types/entities.d.ts
+  - types/globals.d.ts
+  - .github/workflows/ci.yml
 findings:
-    critical: 1
-    warning: 8
-    info: 6
-    total: 15
+  critical: 1
+  warning: 3
+  info: 9
+  total: 13
 status: issues_found
 ---
 
-# Phase 01: Code Review Report
+# Phase 01: Code Review Report (2. Durchlauf — nach Gap-Closure)
 
-**Reviewed:** 2026-06-12T07:57:42Z
+**Reviewed:** 2026-06-12T09:37:08Z
 **Depth:** standard
-**Files Reviewed:** 24
+**Files Reviewed:** 25
 **Status:** issues_found
 
 ## Summary
 
-Review der Phase „Stabilisierung" (Boot-Crash-Fix, Persistenz-Härtung D-01–D-08, Mindmap-Entfernung + Migration 2.6.1, Build-Härtung STAB-07, Repo-Hygiene, CI-Smoke-Test, Lizenz-Audit). Positiv: Die Persistenz-Härtung in `persistence.js` (IDB-only-Pfad mit korrekter Write-then-Remove-Reihenfolge, Begleit-Timestamp, lauter Fehler-Toast mit Auto-Export) ist sauber umgesetzt; `migration.test.js` testet mit dem vm-Ansatz erstmals echten Quellcode; der DEBUG_MODE-Flip-Guard in build.py funktioniert inkl. Abbruch-Verifikation; die SRD-Attribution ist konsistent über LICENSE/README/docs; der CI-Smoke-Test gegen das Production-Bundle schließt eine echte Lücke.
+Zweiter Review-Durchlauf nach den Gap-Closure-Plänen 01-08 (CR-01-Rekursion) und 01-09 (`npm run check` grün). Die beiden gemeldeten Vorbefunde sind verifiziert:
 
-Es gibt jedoch einen kritischen Befund: Der neue D-07-Konflikt-Dialog in `quick-roll.js` ruft sich selbst endlos rekursiv auf — bei jedem echten Speicher-Konflikt wird die Rekursions-Exception vom Lade-Pfad verschluckt und die veralteten localStorage-Daten gewinnen still. Damit ist genau das Stale-Shadow-Datenverlust-Szenario, das die Phase beheben sollte, weiterhin offen. Dass dies unentdeckt blieb, liegt an einem zweiten strukturellen Problem: Die neuen Persistenz-„Regressionstests" in `stability.test.js` testen ausschließlich ihre eigenen Inline-Simulationen, nie den Produktionscode.
+- **CR-01 (Selbstrekursion) ist sauber behoben.** `resolveStorageConflict` in `quick-roll.js` enthält keinerlei Selbstreferenz mehr. Der Identisch-Fall (`lsData === idbData`) ruft `onUseLS()` und kehrt zurück; bei Abweichung delegiert die Funktion an den **anders benannten** optionalen Hook `window.showStorageConflictDialogUI` und fällt sonst deterministisch auf `onUseIDB()` zurück. Keine Endlosrekursion, kein `RangeError`. Die neue `tests/unit/storage-conflict.test.js` lädt den **echten** Quelltext via `vm.runInContext` und prüft alle vier Pfade plus einen Quelltext-Audit (Test E). Dieser Teil von WR-06 ist damit substanziell geschlossen.
+- **Prettier-Massenformatierung:** In den geprüften Dateien keine semantischen Änderungen erkennbar. Die `case`-Block-Klammerungen in `quick-actions.js`, `dmscreen-render.js` und `markdown-converter.js` sind verhaltenserhaltend — jedes `break` liegt innerhalb der zugehörigen `{ }`, kein Fall-Through wurde verändert.
+- **Dupe-Key-Fix in `game-rules.js`** (`getClassHitDie`): bestätigt, keine doppelten Objekt-Schlüssel mehr.
+
+**Zentrale Datenverlust-Frage (Background):** Der IDB-Vorrang im Stale-Shadow-Pfad ist als bewusste Abweichung von D-07 dokumentiert. Er erzeugt **keinen neuen** stillen Verlust gegenüber dem dokumentierten Tradeoff: Der Konfliktpfad greift nur, wenn LS-Daten **ohne** `_ts`-Begleitstempel vorliegen (Legacy-/Fehlerpfad). Da auf der LS-Seite kein Timestamp existiert, ist eine „neuer/älter"-Entscheidung prinzipiell nicht möglich; „IDB bevorzugen" ist deterministisch und vermeidet den von D-07 kritisierten stillen Sieg veralteter LS-Daten. Siehe IN-01 für die verbleibende Rest-Ambiguität (zur Nachverfolgung für den späteren D-07-Dialog).
+
+Der einzige neue, gewichtige Befund liegt **außerhalb** des CR-01/Gap-Themas: ein Import-seitiger Stored-XSS-Pfad (CR-01 unten), dessen Wurzeln in zwei der geprüften Dateien liegen. Er ist **kein Regression der Stabilisierungsphase**, sondern vorbestehend, wird aber surfacing-pflichtig eingestuft, weil das Projekt selbst XSS als Hochrisiko führt und der Angriffsvektor (geteilte Kampagnen-Dateien importieren) für diese App realistisch ist.
 
 ## Critical Issues
 
-### CR-01: Endlosrekursion in `showStorageConflictDialog` — D-07-Konfliktpfad funktionslos, stille Bevorzugung veralteter Daten
+### CR-01: Stored-XSS über Import-Pfad — Wiki-Inhalt wird ungesäubert als HTML gerendert
 
-**File:** `systems/spellslots/quick-roll.js:25-39` (Aufruf: `quick-roll.js:57-62`)
-**Issue:** `showStorageConflictDialog` ist eine Top-Level-Funktionsdeklaration in einem klassischen Script (Loader- wie Bundle-Modus). Damit ist `window.showStorageConflictDialog` **die Funktion selbst** — es existiert keine andere Definition im Repo (per Grep verifiziert; die im Plan 01-02 vorgesehene UI-Dialog-Funktion wurde nie implementiert). Der Guard in Zeile 32 ist daher immer wahr, und Zeile 33 ruft die Funktion mit identischen Argumenten erneut auf:
+**File:** `ui/editors/markdown-converter.js:258-300`, `systems/spellslots/import-export.js:339-376` (+ Konsument `features/wiki/wiki.js:460`)
 
+**Issue:**
+Es existiert eine asymmetrische Sanitisierung zwischen den beiden Markdown-Konvertern:
+- `markdownToHtml()` ruft am Ende `sanitizeHTML(html)` auf (Zeile 242-244). Korrekt.
+- `renderMarkdownInContent()` ruft **kein** `sanitizeHTML` auf und gibt `result` roh zurück (Zeile 299). Diese Funktion ist der „Render-on-Display"-Pfad.
+
+Der Wiki-Anzeigepfad kombiniert das mit einem ungesäuberten `innerHTML`:
+`entry.content` → `renderMarkdownInContent(...)` → `parseWikiLinks(...)` → `wiki.js:460 ${parsedContent}` ins `innerHTML`. **Keine** `sanitizeHTML`-Stufe in dieser Kette.
+
+Der reguläre In-App-Editierpfad ist geschützt, weil `saveWikiEntry()` beim Speichern `sanitizeHTML(contentEl.innerHTML)` anwendet (`wiki.js:696`) — dabei wird u.a. `javascript:` global entfernt. **Aber:** Der Import-Pfad sanitisiert importierte Inhalte nie. Weder `executeImport()` (validiert nur Schema + Defaults, `import-export.js:292-301`/`351-368`) noch `importDataGlobal()` (`Object.assign(D, imp)`, Zeile 571) säubern String-Felder. Importierter Wiki-Inhalt wird also roh gespeichert und anschließend roh gerendert.
+
+**Exploit (ohne Klick):** Eine präparierte Kampagnen-JSON mit
+`wiki[0].content = '<img src=x onerror=alert(document.cookie)>'`
+wird importiert; beim Öffnen des Wiki-Eintrags führt der `onerror`-Handler sofort aus. Für eine Kampagnen-teilende DM-App ist „fremde Kampagne importieren" ein realistischer Vektor.
+
+**Fix:** Defense-in-Depth an der Anzeige-Grenze ODER beim Import. Minimal-invasiv an der Quelle (`markdown-converter.js`):
 ```javascript
-if (typeof window.showStorageConflictDialog === 'function') {
-    // immer true (Selbstreferenz!)
-    window.showStorageConflictDialog(lsData, idbData, onUseLS, onUseIDB); // Endlosrekursion
+function renderMarkdownInContent(html) {
+    if (!html || typeof html !== 'string') return html;
+    let result = html;
+    // ... bestehende Markdown-Konvertierungen ...
+
+    // Defense-in-Depth: identisch zu markdownToHtml() am Ende sanitisieren
+    const sanitizeHTML = window.sanitizeHTML;
+    if (typeof sanitizeHTML === 'function') {
+        result = sanitizeHTML(result);
+    }
+    return result;
 }
 ```
-
-Bei jedem echten Konflikt (`lsData !== idbData`) entsteht ein `RangeError: Maximum call stack size exceeded`. Dieser wird in `load()` vom inneren `catch` (Zeile 66-71) als „IDB-Konfliktprüfung fehlgeschlagen" verschluckt → die **alten** LS-Daten werden geladen, die neueren IDB-Daten still verworfen; der „IDB bevorzugen"-Fallback (Zeile 36) läuft nie. Das Szenario ist nicht hypothetisch: `persistence.js` erzeugt den Stale-Shadow-Zustand absichtlich im LS-Quota-Fallback (Zeile 76 bzw. 208: nur `_ts` wird entfernt, `key` bleibt stehen) — genau dann ist der Dialog die einzige Schutzschicht. Kein Unit-Test ruft die echte Funktion auf (siehe WR-06), daher blieb der Fehler unbemerkt.
-**Fix:** Selbst-Delegation entfernen (es gibt keinen externen UI-Dialog) oder die interne Funktion umbenennen und nur an einen **anders** benannten UI-Hook delegieren:
-
-```javascript
-// (D-07) Konflikt auflösen; UI-Dialog existiert (noch) nicht — IDB als neuere Quelle bevorzugen
-function resolveStorageConflict(lsData, idbData, onUseLS, onUseIDB) {
-    if (lsData === idbData) {
-        if (typeof onUseLS === 'function') onUseLS();
-        return;
-    }
-    if (typeof window.showStorageConflictDialogUI === 'function') {
-        window.showStorageConflictDialogUI(lsData, idbData, onUseLS, onUseIDB); // optionaler echter Dialog
-    } else {
-        if (typeof onUseIDB === 'function') onUseIDB(); // Fallback: IDB bevorzugen
-    }
-}
-// Aufruf in load() (Zeile 57) entsprechend auf resolveStorageConflict(...) umstellen.
-```
-
-Zusatzhinweis für eine spätere echte Dialog-Implementierung: `load()` wartet nicht auf den Dialog (kein `await`); ein asynchroner Nutzer-Dialog würde mit dem weiterlaufenden Load-Pfad um `s` racen. Der synchrone Fallback ist davon nicht betroffen.
+Zusätzlich empfohlen: importierte String-Felder beim Import durch `sanitizeHTML()` schleusen (z.B. in `executeImport()` für HTML-tragende Felder wie `content`/`description`/`traits`/`actions`), da mehrere Render-Pfade auf saubere Speicherinhalte vertrauen.
 
 ## Warnings
 
-### WR-01: `window.STORAGE_KEY` existiert nicht — Loader-Modus persistiert unter dem Key `"undefined"`
+### WR-01: Migrations-Reihenfolge nutzt lexikografisches `sort()` — bricht bei zweistelligen Versionsteilen
 
-**File:** `systems/spellslots/persistence.js:15,159`; `systems/spellslots/quick-roll.js:41`; `systems/spellslots/import-export.js:621`
-**Issue:** Diese Funktionen lesen `const STORAGE_KEY = window.STORAGE_KEY;`. Die einzige Definition ist aber `const STORAGE_KEY = window.APP_CONFIG.STORAGE_KEY;` in `core/data.js:1` — eine globale `const` erzeugt **keine** window-Property, und `window.STORAGE_KEY = ...` kommt im gesamten Repo nicht vor (verifiziert). Konsequenzen:
+**File:** `systems/spellslots/version-migration.js:70`
 
-- **Bundle (dist):** funktioniert nur zufällig, weil Dedup-Pass 2 die Zeilen als „Konflikt mit realer Definition" entfernt (418 Entfernungen im aktuellen Bundle) und der Bezeichner auf die globale `const` zurückfällt.
-- **Loader-Modus (index.html, von validate.py weiterhin als unterstützter Pfad geprüft):** Die Zeilen bleiben bestehen → `STORAGE_KEY === undefined` → `const key = window.STORAGE_KEY_OVERRIDE || STORAGE_KEY` ist für die Standard-Kampagne `undefined` → sämtliche Persistenz (Save/Load/`_ts`/clearStorage) läuft auf den localStorage-Key `"undefined"` bzw. `"undefined_ts"`. Dev- und Bundle-Modus lesen/schreiben unterschiedliche Keys.
+**Issue:**
+`const versions = Object.keys(MIGRATIONS).sort();` sortiert die Migrations-Keys **lexikografisch**, nicht semantisch. Mit den aktuellen Keys `'2.3.0' < '2.4.0' < '2.6.1'` ist die Reihenfolge zufällig korrekt. Sobald ein Key einen zweistelligen Minor/Patch erreicht (z.B. `'2.10.0'`), kippt die String-Sortierung: `'2.10.0' < '2.3.0'` (weil `'1' < '3'`), wodurch Migrationen **in falscher Reihenfolge** angewendet würden. Das ist exakt dieselbe Bug-Klasse wie der in dieser Phase behobene `2.11`-Stempel-Defekt (D-05) — hier latent.
 
-Das Muster ist vorbestehend, kollidiert aber direkt mit dem in dieser Phase eingeführten `_ts`-Mechanismus und verstößt gegen die CLAUDE.md-NEVER-Regel („kein `const X = window.X` in Funktionen"). Gleiche Stellen außerhalb des Review-Scopes: `systems/avatars.js:190`, `systems/undo.js:197`.
-**Fix:** Die funktionslokalen Import-Zeilen ersatzlos streichen — die globale `const STORAGE_KEY` ist im gesamten Script-Scope sichtbar (so macht es `tools/debug.js:737` bereits korrekt):
-
-```javascript
-// statt:
-const STORAGE_KEY = window.STORAGE_KEY;
-const key = window.STORAGE_KEY_OVERRIDE || STORAGE_KEY;
-// einfach:
-const key = window.STORAGE_KEY_OVERRIDE || STORAGE_KEY; // globale const aus core/data.js
-```
-
-### WR-02: build.py Pass 3 lässt Funktionskörper verwaist und matcht verschachtelte Funktionen, die der neue Pre-Build-Check nicht abdeckt
-
-**File:** `build.py:332-384` (Pass 3) vs. `build.py:149-167` (Pre-Build-Check)
-**Issue:** Zwei Lücken in der Build-Härtung (STAB-07):
-
-1. Bei einem Duplikat ersetzt Pass 3 nur die Deklarationszeile durch einen Kommentar; die innere Schleife (Zeile 361-373) berechnet zwar das Funktionsende, **überspringt aber keine Zeilen** — der Funktionskörper bleibt als Top-Level-Code stehen. Das ist exakt der in CLAUDE.md dokumentierte „Illegal return statement"-Incident vom 2026-01-10, dessen Mechanismus im Code unverändert ist. Ohne Pass 3 wären doppelte Funktionsdeklarationen sogar valides JS (letzte gewinnt) — Pass 3 macht aus funktionierendem Code einen SyntaxError.
-2. Pass 3 matcht auf `stripped` (Zeile 345/351), erkennt also auch **eingerückte/verschachtelte** Funktionen. Der neue Pre-Build-Check `check_duplicate_functions` prüft mit `^function` + MULTILINE nur **Top-Level**-Funktionen. Zwei Module mit gleichnamigen inneren Hilfsfunktionen (z. B. `function update()` in zwei verschiedenen äußeren Funktionen) passieren den Pre-Check und werden von Pass 3 zerstört.
-
-Aktuell feuert Pass 3 im Bundle 0-mal (verifiziert) — der Befund ist latent, untergräbt aber das STAB-07-Ziel „Build-Breaker unmöglich machen".
-**Fix:** (a) Körperzeilen anhand der bereits berechneten End-Zeile tatsächlich überspringen (z. B. `skip_until = end_line` setzen und Zeilen bis dahin als Kommentar ausgeben), und (b) Pass 3 auf unindentierte Deklarationen beschränken (`re.match(function_pattern, line)` statt `stripped`), damit Pre-Check und Pass 3 denselben Geltungsbereich haben.
-
-### WR-03: `check_module_list_sync` vergleicht nur Mengen — Reihenfolge-Abweichungen und Doppeleinträge bleiben unerkannt
-
-**File:** `build.py:170-191`
-**Issue:** Der neue Sync-Guard nutzt `set(build_modules)` vs. `set(loader_modules)`. Damit werden (a) unterschiedliche **Ladereihenfolgen** und (b) **Doppeleinträge** in einer der Listen nicht erkannt — obwohl die Ladereihenfolge laut CLAUDE.md („Build Order Matters") die kritischste Fehlerquelle ist und ein Doppeleintrag in loader.js zu doppelten Deklarationen zur Laufzeit führt. Aktuell sind beide Listen identisch inkl. Reihenfolge (92/92, verifiziert), der Guard schützt aber nicht vor dem relevantesten Drift-Fall.
-**Fix:**
-
-```python
-if loader_modules != build_modules:  # Listenvergleich statt Set
-    # bestehende Set-Diagnose beibehalten, zusätzlich:
-    for i, (a, b) in enumerate(zip(build_modules, loader_modules)):
-        if a != b:
-            print(f"[FEHLER] Reihenfolge-Abweichung ab Index {i}: build.py='{a}' vs loader.js='{b}'")
-            break
-    sys.exit(1)
-if len(loader_modules) != len(set(loader_modules)):
-    print("[FEHLER] Doppeleintrag in loader.js MODULES")
-    sys.exit(1)
-```
-
-### WR-04: `completeReset()` seedet weiterhin den entfernten `mindmap`-Key
-
-**File:** `tools/debug.js:820`
-**Issue:** Die Phase hat in genau dieser Datei alle Mindmap-Funktionen entfernt (clearMindmap, generateTestMindmap, testNetworkSystem, testNodeTypes), aber das Reset-Template seedet weiterhin `mindmap: { nodes: [], connections: [] }` — im Widerspruch zu STAB-02 (Mindmap-Entfernung) und zur 2.6.1-Smart-Strip-Migration, die solche leeren Seeds gerade beseitigt. Verwandter Fund außerhalb des Review-Scopes: `systems/backups.js:225` seedet ebenfalls `mindmap` (dort sogar mit `edges` statt `connections` — ein zweites Schema-Artefakt).
-**Fix:** In Zeile 820 die mindmap-Property streichen: `filters: [],` — und `systems/backups.js:225` im Zuge dessen mitbereinigen.
-
-### WR-05: Migrations-Reihenfolge lexikografisch sortiert — bricht ab Version `2.10.0`
-
-**File:** `systems/spellslots/version-migration.js:71`
-**Issue:** `const versions = Object.keys(MIGRATIONS).sort();` sortiert Strings: sobald eine Migration `'2.10.0'` existiert, gilt `'2.10.0' < '2.3.0'` und die Reihenfolge ist falsch. Das ist exakt die Bug-Klasse des in dieser Phase gefixten `2.11`-Stempels (D-05: numerischer vs. lexikografischer Versionsvergleich) — die vorhandene `compareVersions`-Funktion steht direkt darunter und wird hier nicht genutzt. Ergänzend: `migrateData` stempelt am Ende immer `CURRENT_VERSION` (Zeile 85), auch wenn ein Migrationsschritt geworfen hat (Zeile 80-83) — eine fehlgeschlagene Migration wird damit nie wiederholt (Daten bleiben dauerhaft unmigriert, aber als aktuell markiert).
-**Fix:**
-
+**Fix:** Mit dem bereits vorhandenen `compareVersions` sortieren:
 ```javascript
 const versions = Object.keys(MIGRATIONS).sort(compareVersions);
 ```
+Hinweis: `compareVersions` selbst ist für echte Semver (≤3 Teile, mehrstellige Teile erlaubt) korrekt — der Defekt liegt allein in der String-Sortierung der Keys.
 
-Für den Fehlerfall mindestens den Versionsstempel nicht setzen (oder einen `_migrationFailed`-Marker ablegen), damit der nächste Load erneut migrieren kann.
+### WR-02: Irreführender Stale-Shadow-Test in `stability.test.js` — WR-06 nur teilweise geschlossen
 
-### WR-06: Persistenz-„Regressionstests" testen nur ihre eigene Inline-Simulation — eine Assertion verankert sogar den Bug-Zustand
+**File:** `tests/unit/stability.test.js:657-695`
 
-**File:** `tests/unit/stability.test.js:638-899` (besonders 643-681)
-**Issue:** Kein Test in der Gruppe „Persistence Regression Tests (Plan 01-02)" ruft die echten Funktionen aus `persistence.js`/`quick-roll.js` auf — setup.js mockt save/saveImmediate/load, und die Tests re-implementieren die „erwartete Logik" inline und assertieren gegen ihre eigene Simulation. Konkret problematisch: Der Test „Nach IDB-Save bei >5MB muss LS-Schatten-Key entfernt werden" assertiert in Zeile 680 `expect(localStorage.getItem(STORAGE_KEY + '_ts')).toBe('999')` — also das **Bestehen** des Bugs — und bleibt grün, obwohl `persistence.js` den Fix längst enthält (der Kommentar „SCHLÄGT FEHL nach dem Fix" trifft nicht zu, weil die Simulation den Fix-Code auskommentiert lässt). Eine Regression in den D-01/STAB-05/D-07-Pfaden würde von keinem dieser Tests erkannt; der Rekursionsfehler CR-01 blieb genau deshalb unentdeckt. (Test-Datei-Befund gemäß Ausnahme: betrifft die Verlässlichkeit der Test-Suite.)
-**Fix:** Den vm-Ansatz aus `migration.test.js` (Quelldatei via `vm.runInContext` mit window-Mocks laden) auf `persistence.js` und `quick-roll.js` übertragen und die echten `saveImmediate`/`save`/`load`/`showStorageConflictDialog` aufrufen; die invertierte Assertion in Zeile 680 entfernen bzw. auf `toBeNull()` gegen die echte Implementierung umstellen.
+**Issue:**
+Der Test „Nach IDB-Save bei >5MB muss LS-Schatten-Key entfernt werden" setzt `_ts='999'`, lässt die Entfernungs-Zeilen **auskommentiert** (Zeile 688-689) und assertiert dann `expect(localStorage.getItem(STORAGE_KEY + '_ts')).toBe('999')`. Das ist eine Tautologie (Wert nach No-Op unverändert) und **widerspricht** dem realen Verhalten von `persistence.js`, das beide Keys im IDB-only-Pfad tatsächlich entfernt (`persistence.js:41-42` und `190-191`). Ein Leser dieses Tests zieht den falschen Schluss „`_ts` bleibt stehen". Solche bestätigend-falschen Assertions erzeugen falsche Sicherheit (Test-Reliability-Problem).
 
-### WR-07: validate.py schlägt dauerhaft fehl — Erwartungen passen nicht mehr zur Codebasis
+Allgemeiner: Der Block „Persistence Regression Tests (Plan 01-02)" testet weiterhin **Inline-Replikate** (`simulateExport`, `compareVersionsLocal`, manuell nachgebaute Entscheidungsbäume) statt der echten Quellfunktionen — der ursprüngliche WR-06-Kritikpunkt. Abgefedert wird das nur durch die zusätzlichen Quelltext-Greps (z.B. dynamische Version, Legacy-Normalisierung). Nur der **neue** `storage-conflict.test.js` testet echten Quellcode via `vm`. WR-06 ist damit für den CR-01-Pfad geschlossen, für die Persistenz-Schicht jedoch weiterhin simulationsbasiert.
 
-**File:** `validate.py:161-168` (check_module_count), `validate.py:45-76` (check_body_html)
-**Issue:** Lokal verifiziert: `python validate.py` endet mit 2/7 fehlgeschlagenen Checks (Exit 1). `check_module_count` erwartet hartkodiert 4/3/8/2/3/4 Module pro Ordner — real sind es 44 Module in völlig anderer Verteilung (z. B. features/: 10 statt 3, systems/: 11 statt 8). `check_body_html` schlägt fehl, weil `assets/body.html` laut CLAUDE.md nur noch eine Hinweis-Datei ist (Templates liegen in `assets/templates/`). Die Phase hat nur den SOURCE_DIR-Pfad repariert (gut), dadurch läuft das Tool jetzt — liefert aber permanente False Alarms. Ein dauerhaft rotes `npm run validate` ist als Hygiene-Gate unbrauchbar und maskiert echte Fehler.
-**Fix:** Erwartungswerte aktualisieren (oder dynamisch aus build.py MODULES ableiten: `from build import MODULES` und pro Ordner zählen) und den body.html-Check an die Template-Architektur anpassen oder entfernen.
+**Fix:** Entweder den Test gegen das echte Verhalten umkehren (`_ts` nach IDB-only-Save erwartet `null`) oder — analog zu `storage-conflict.test.js` — `persistence.js` per `vm.runInContext` laden und `saveImmediate()`/`save()` mit gemocktem `StorageAPI`/IDB real ausführen, dann den localStorage-Zustand prüfen.
 
-### WR-08: Mindmap-Hinweis-Dialog nutzt nicht existierende Overlay-Klassen — erscheint als Box am Seitenende statt als Modal
+### WR-03: `importDataGlobal()` überschreibt aktuelle Kampagne ohne `saveUndoState()` und ohne Backup
 
-**File:** `systems/spellslots/import-export.js:419-420`
-**Issue:** `overlay.className = 'modal show';` — das App-CSS kennt als Overlay nur `.modal-overlay` / `.modal-overlay.show` (dashboard.css:551-571, `display:none` → `display:flex`); `.modal` ist die Klasse der **inneren** Dialog-Box. Der neue Dialog erhält daher keinerlei Overlay-Positionierung: Er wird als Box im Dokumentfluss ans Ende von `<body>` gehängt (je nach Scrollposition außerhalb des Viewports), ohne Backdrop, die Seite bleibt voll bedienbar. Da `importDataGlobal()` per `await` auf den „Fortfahren"-Klick wartet (resolve nur in Zeile 451), wirkt der Import für den Nutzer wie eingefroren, wenn er die Box nicht bemerkt — es gibt keinen anderen Auflösungsweg (kein Escape, kein Backdrop-Klick).
+**File:** `systems/spellslots/import-export.js:569-578`
+
+**Issue:**
+Im Überschreib-Zweig (Nutzer wählt „Aktuelle Kampagne überschreiben") führt die Funktion `Object.assign(D, imp)` + `save()` aus, **ohne** vorher `saveUndoState()` oder `createAutoBackup()` aufzurufen. Das ist die destruktivste mögliche Edit-Operation (Komplett-Überschreibung aller Daten) und damit nicht via `Strg+Z` rückgängig zu machen. Inkonsistent zu `executeImport()`, das sowohl `saveUndoState()` (Zeile 351) als auch im Replace-Modus `createAutoBackup()` (Zeile 355) aufruft. CLAUDE.md-Regel: „Always call `saveUndoState()` before delete/edit operations."
+
 **Fix:**
-
 ```javascript
-overlay.className = 'modal-overlay show';
-overlay.innerHTML =
-    '<div class="modal" style="max-width:480px">' +  // statt "modal-content"
-    ...
+} else {
+    // Aktuelle Kampagne überschreiben
+    saveUndoState('Globaler Import (überschrieben)');   // <-- ergänzen
+    try { createAutoBackup(); } catch (e) { /* optionales Backup */ }
+    Object.assign(D, imp);
+    if (!D._nextId) D._nextId = {};
+    // ...
+}
 ```
-
-Optional: Backdrop-Klick/Escape als „Fortfahren" behandeln, damit der await nie unauflösbar wird.
 
 ## Info
 
-### IN-01: `console.log` im Produktions-Migrationspfad und verbleibende `console.warn/error` in reviewten Dateien
+### IN-01: IDB-Vorrang im Stale-Shadow-Pfad — Rest-Ambiguität (D-07-Folgearbeit)
 
-**File:** `systems/spellslots/version-migration.js:75`; weitere: `systems/spellslots/import-export.js:194,240,327,359,589,594,618,630`, `systems/spellslots/quick-roll.js:203`, `systems/campaign-manager/campaign-manager.js:87,93,122`, `tools/debug.js:804,809,833`
-**Issue:** `console.log('[MIGRATION] Migriere von ...')` läuft bei jeder Migration in Produktion; build.py entfernt console-Aufrufe nicht (minify_js löscht nur Leerzeilen). Verstößt gegen die CLAUDE.md-Konvention „Zero console.log in production builds / ErrorHandler.log + DEBUG_MODE". Die Phase hat dies in `persistence.js`/`quick-roll.js:load()` vorbildlich bereinigt — die übrigen Stellen blieben stehen.
-**Fix:** `if (window.APP_CONFIG?.DEBUG_MODE) { ErrorHandler.log('migrateData', null, \`Migriere von ${dataVersion} auf ${version}\`); }` — analog für die error/warn-Stellen.
+**File:** `systems/spellslots/quick-roll.js:33-35`, `49-73`
 
-### IN-02: Ungenutzter window-Export `showStorageConflictDialogInternal`
+**Issue:** Kein Bug, dokumentierte Abweichung. Im seltenen Fall „LS-Daten ohne `_ts` (Legacy) sind tatsächlich neuer als ein abweichender, älterer IDB-Stand" wird der neuere LS-Stand zugunsten von IDB ignoriert und beim nächsten Save überschrieben. Da auf der LS-Seite kein Timestamp existiert, ist diese Entscheidung prinzipiell nicht eindeutig lösbar; der `window.showStorageConflictDialogUI`-Hook ist genau dafür als Andockpunkt reserviert.
+**Fix:** Für die spätere D-07-Phase nachhalten (Auswahl-Dialog implementieren). Aktuell bewusst akzeptierter Tradeoff.
 
-**File:** `systems/spellslots/quick-roll.js:39`
-**Issue:** `window.showStorageConflictDialogInternal` wird nirgends im Repo referenziert (verifiziert) — Verstoß gegen die CLAUDE.md-Export-Audit-Regel („nur exportieren, was andere Module/HTML nutzen"). Entfällt ohnehin mit dem CR-01-Fix.
-**Fix:** Export-Zeile entfernen.
+### IN-02: Ungenutzte Variable `hasHtmlTags`
 
-### IN-03: Toter `</script>`-Check in der Post-Build-Validierung; DEBUG_VALIDATE_ON_SAVE-Flip unverifiziert
+**File:** `ui/editors/markdown-converter.js:263`
 
-**File:** `build.py:551-562` und `build.py:478-484`
-**Issue:** Die Validierung extrahiert das JS mit `re.search(r'<script>(.*?)</script>', ...)` (non-greedy) — `group(1)` endet am **ersten** `</script>` und kann den Tag daher nie enthalten; der „KRITISCH: '</script>' im JavaScript"-Check kann nie anschlagen, ein echtes `</script>` im JS würde die Validierung stattdessen mit verkürztem `js_in_html` durchlaufen. Außerdem verifiziert der Production-Abbruch-Guard nur `DEBUG_MODE: true`, nicht den zweiten Flip `DEBUG_VALIDATE_ON_SAVE`.
-**Fix:** Für den Tag-Check das letzte `</script>`-Vorkommen relativ zum erwarteten Script-Ende vergleichen (z. B. `html_template.count('</script>')` gegen die Soll-Anzahl) und die Verifikation um `DEBUG_VALIDATE_ON_SAVE: true` ergänzen.
+**Issue:** `const hasHtmlTags = /<[^>]+>/.test(html);` wird berechnet, aber nie verwendet (Dead Code; `no-unused-vars`-Warnung).
+**Fix:** Zeile entfernen — oder, falls ursprünglich beabsichtigt war, bereits-HTML-Inhalte von der Markdown-Konvertierung auszunehmen, die Bedingung tatsächlich auswerten.
 
-### IN-04: npm-Scripts von `python3` auf `python` umgestellt — Portabilitätsverlust auf Linux/macOS
+### IN-03: Redundanter `pushUndo()` vor Early-Return in `applyQuickAction()`
 
-**File:** `package.json:8-14`
-**Issue:** Auf Debian/Ubuntu/macOS ohne `python-is-python3` existiert kein `python`-Binary → `npm run build`/`dev`/`validate` brechen dort. CI ist unberührt (setup-python stellt `python` bereit, Workflow ruft es direkt auf). Für das Windows-Setup des Projekts korrekt — als bewusste Entscheidung sollte es im README vermerkt sein.
-**Fix:** Entweder dokumentieren oder plattformneutral lösen (z. B. `node -e`-Wrapper bzw. README-Hinweis „Linux/macOS: python-is-python3 oder Alias erforderlich"). Positiv: `license` ISC→MIT ist nun konsistent mit LICENSE.
+**File:** `features/quick-actions.js:97-106`
 
-### IN-05: Typdefinitionen inkonsistent zur Realität
+**Issue:** `pushUndo(...)` (Zeile 97) wird vor dem Effekt-Existiert-Check ausgeführt. Wenn der Effekt bereits existiert, kehrt die Funktion bei Zeile 105 ohne Datenänderung zurück — der Undo-Stack erhält einen leeren No-Op-Eintrag (ein wirkungsloses `Strg+Z`).
+**Fix:** `pushUndo(...)` erst nach dem „bereits vorhanden"-Check aufrufen (also nach Zeile 106, unmittelbar vor `cb.effects.push(...)`).
 
-**File:** `types/globals.d.ts:427`; `types/entities.d.ts:3`
-**Issue:** `getCampaignIndex(): Record<string, { name: string; lastModified: string }>` entspricht nicht der realen Struktur `{ campaigns: Array<{key, name, created}>, active: string }` (campaign-manager.js:11-13) — irreführend für künftige TS-Prüfungen. Zudem deklariert entities.d.ts `@version 2.7.0`, die App ist 2.6.1.
-**Fix:** Rückgabetyp korrigieren: `function getCampaignIndex(): { campaigns: Array<{ key: string; name: string; created: string }>; active: string };` und Versionskommentar angleichen.
+### IN-04: `types/entities.d.ts` driftet von Laufzeit-/IO-Schema-Feldnamen ab
 
-### IN-06: BASE_URL doppelt definiert — Playwright-`baseURL` wird ignoriert
+**File:** `types/entities.d.ts:104-143, 205-219, 369-381`
 
-**File:** `tests/e2e/smoke.spec.js:4-5` und `playwright.smoke.config.js:6-7`
-**Issue:** Spec und Config berechnen BASE_URL identisch, aber unabhängig; `page.goto(BASE_URL)` mit absoluter URL ignoriert das `use.baseURL` der Config. Bei Änderung nur einer Stelle driften CI- und Lokal-Verhalten auseinander.
-**Fix:** In der Spec `await page.goto('/')` bzw. die baseURL aus der Config verwenden und die lokale Duplikation entfernen.
+**Issue:** Mehrere Interface-Felder stimmen nicht mit der tatsächlichen Laufzeit-/IO-Schema-Form überein:
+- `Combatant.hpCurrent`/`hpMax` (Zeile 374-375) — Laufzeit nutzt `currentHp`/`maxHp` (`features/initiative.js`, `dmscreen-render.js:849`).
+- `Quest.name`/`giverNpcId` — IO-Schema nutzt `title`/`giverId` (`import-export.js:57,61`).
+- `Character.characterClass`/`armorClass` — IO-Schema nutzt `class`/`ac` (`import-export.js:11,18`).
+
+Rein typseitig (JS-Module werden nicht gegen diese `.d.ts` geprüft), daher kein Laufzeitfehler — aber die Typdefinitionen sind irreführend und mindern ihren Nutzen.
+**Fix:** Interfaces an die reale Datenform angleichen (oder umgekehrt dokumentieren, welche Form kanonisch ist).
+
+### IN-05: `validate.py` enthält veraltete Modul-Zähl-Erwartungen und prüft falsche Eingabedatei
+
+**File:** `validate.py:157-191`, `45-76`
+
+**Issue:** `check_module_count()` erwartet hartkodiert `core:4, utils:3, systems:8, render:2, features:3, ui:4` und nutzt nicht-rekursives `os.listdir` — das passt nicht mehr zum tatsächlichen Projekt (z.B. `utils/` hat 9 Dateien, `features/` viele Unterordner). `check_body_html()` prüft `assets/body.html`, während der Build `assets/templates/*.html` verwendet. Das Skript meldet für ein gesundes Projekt Fehlschläge. Es ist nicht in CI eingebunden (`ci.yml` nutzt `build.py` + Jest), daher kein Pipeline-Risiko, aber irreführende lokale Ausgabe (`npm run validate`).
+**Fix:** Zählerwartungen entfernen/rekursiv berechnen oder den veralteten Check streichen; `check_body_html` an die Template-Struktur anpassen.
+
+### IN-06: Python-Build-Härtungstests nicht in CI eingebunden
+
+**File:** `tests/build/test_build_deduplication.py`, `.github/workflows/ci.yml:22-31`
+
+**Issue:** Die gut strukturierten `pytest`-Tests (Dedup, Production-`DEBUG_MODE`-Flip, Modul-Sync, Duplikat-Funktionen, verwaiste Returns) werden nirgends in CI ausgeführt — der `test`-Job ruft nur `npm test` (Jest) auf. Die Build-Härtung aus STAB-07 hat damit keinen automatisierten Regressionsschutz.
+**Fix:** Im CI einen Schritt `pip install pytest && python -m pytest tests/build/ -v` ergänzen (nach dem Build-Job, damit `dist/`-abhängige Tests nicht skippen).
+
+### IN-07: `completeReset()` re-seedet entfernte `mindmap`-Struktur
+
+**File:** `tools/debug.js:917`
+
+**Issue:** Der Reset baut `mindmap: { nodes: [], connections: [] }` wieder in `D` ein, obwohl das Mindmap-Feature laut D-09 entfernt wurde. Harmlos (die 2.6.1-Migration strippt den leeren Seed beim nächsten Load), aber inkonsistent mit der Entfernungsentscheidung.
+**Fix:** `mindmap`-Zeile aus dem Reset-Template entfernen (analog zu `campaign-manager.js`, das den Seed bereits nicht mehr setzt).
+
+### IN-08: Variablen-Shadowing in `deleteCampaign()`
+
+**File:** `systems/campaign-manager/campaign-manager.js:69, 124`
+
+**Issue:** `const key = ...` (Zeile 69) wird durch `for (const key in D)` (Zeile 124) verdeckt. Block-scoped und harmlos (das äußere `key` wird nach der Schleife nicht mehr gelesen), aber verwirrend.
+**Fix:** Schleifenvariable umbenennen, z.B. `for (const k in D) delete D[k];`.
+
+### IN-09: `.gitignore` deckt Smoke-Test-`outputDir` nicht ab
+
+**File:** `playwright.smoke.config.js:26`, `.gitignore:25`
+
+**Issue:** Die Smoke-Config schreibt nach `tests/e2e/test-results-smoke`, `.gitignore` ignoriert aber nur `tests/e2e/test-results/`. Dadurch erscheint `tests/e2e/test-results-smoke/` als untracked (entspricht dem aktuellen Git-Status `?? tests/e2e/test-results-smoke/`).
+**Fix:** `.gitignore` um `tests/e2e/test-results-smoke/` ergänzen (oder die beiden `outputDir`-Pfade vereinheitlichen).
 
 ---
 
-_Reviewed: 2026-06-12T07:57:42Z_
+_Reviewed: 2026-06-12T09:37:08Z_
 _Reviewer: Claude (gsd-code-reviewer)_
 _Depth: standard_
