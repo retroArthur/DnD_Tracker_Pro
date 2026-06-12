@@ -317,6 +317,12 @@ function _processWizardFile(file, dropzone) {
  * Verwendet data-action delegation; Direktregistrierung fuer interne Logik.
  */
 function _setupWizardActions(modal) {
+    // WR-02: Listener-Guard — das Modal-Element wird beim Wiederoeffnen
+    // wiederverwendet (innerHTML-Austausch). Ohne Guard haengt jedes
+    // showMigrationWizard() einen WEITEREN Click-Listener an dasselbe Element
+    // und jede Aktion feuert N-fach (wizard-next-step springt mehrere Schritte).
+    if (modal.dataset.actionsBound) return;
+    modal.dataset.actionsBound = '1';
     // inline-click-Handler fuer Aktionen die nur im Wizard-Kontext relevant sind
     modal.addEventListener('click', e => {
         const action = e.target?.dataset?.action || e.target?.closest('[data-action]')?.dataset?.action;
