@@ -240,6 +240,32 @@ function _processWizardFile(file, dropzone) {
         try {
             const parsedObj = JSON.parse(evt.target?.result);
 
+            // Vorpruefung fuer den Bestaetigungsdialog (Vollvalidierung in importFullExport)
+            if (!parsedObj || parsedObj._exportType !== 'full-v1') {
+                throw new Error('Ungueltige Datei — kein full-v1-Export');
+            }
+
+            // CR-11: Bestand schuetzen — der Import ueberschreibt ALLE Kampagnen-Keys
+            // plus Kampagnen-Index. saveUndoState deckt nur die AKTIVE Kampagne ab;
+            // alle anderen Kampagnen waeren ohne Rueckfrage unwiederbringlich weg.
+            const indexCampaigns = typeof window.getCampaignIndex === 'function'
+                ? (window.getCampaignIndex()?.campaigns || [])
+                : [];
+            const hasExistingData = !isFreshInstall() || indexCampaigns.length > 0;
+            if (hasExistingData) {
+                const importCount = parsedObj.campaigns && typeof parsedObj.campaigns === 'object'
+                    ? Object.keys(parsedObj.campaigns).length
+                    : 0;
+                const confirmMsg = 'Achtung: Der Import ersetzt die vorhandenen Kampagnen dieser App durch '
+                    + importCount + ' Kampagne(n) aus der Datei.\n\n'
+                    + 'Nur die aktive Kampagne kann danach mit Strg+Z zurückgeholt werden — '
+                    + 'alle anderen Kampagnen werden überschrieben.\n\nFortfahren?';
+                if (!confirm(confirmMsg)) {
+                    showError('Import abgebrochen — es wurden keine Daten geändert.');
+                    return;
+                }
+            }
+
             // T-02-11: saveUndoState vor dem Import (kein stiller Datenverlust)
             if (typeof saveUndoState === 'function') {
                 saveUndoState('Migration importiert');
