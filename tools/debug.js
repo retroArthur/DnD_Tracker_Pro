@@ -95,8 +95,6 @@ function clearAllWiki() {
     showToast(`📚 ${count} Wiki-Einträge gelöscht`, 'success');
     updateDebugStats();
 }
-// Alias für Rückwärtskompatibilität
-const clearAllNodes = clearMindmap;
 function runAllTests() {
     debugLogAdd('=== ALLE TESTS STARTEN ===');
     const allResults = [];
@@ -972,17 +970,13 @@ function runValidation(silent = false) {
 window.clearTestData = clearTestData;
 window.clearAllSpells = clearAllSpells;
 window.clearAllWiki = clearAllWiki;
-window.clearMindmap = clearMindmap;
 window.runAllTests = runAllTests;
 window.runFeatureTests = runFeatureTests;
 window.runNewFeatureTests = runNewFeatureTests;
 window.runPerformanceTest = runPerformanceTest;
 window.generateTestWiki = generateTestWiki;
-window.generateTestMindmap = generateTestMindmap;
 window.testWikiSystem = testWikiSystem;
 window.testWikiLinks = testWikiLinks;
-window.testNetworkSystem = testNetworkSystem;
-window.testNodeTypes = testNodeTypes;
 window.testQuickReference = testQuickReference;
 window.testEventLog = testEventLog;
 window.testUndoRedo = testUndoRedo;
