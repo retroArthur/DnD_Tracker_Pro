@@ -305,19 +305,21 @@ function _setupWizardActions(modal) {
         } else if (action === 'wizard-close') {
             // shown-Flag setzen (erfolgreich abgeschlossen)
             StorageAPI.setJSON('migration-wizard-shown', { shown: true, completed: true });
-            _closeWizard();
-            // App neu laden, damit importierte Daten geladen werden
-            if (typeof renderAll === 'function') renderAll();
-            else if (typeof window.renderAll === 'function') window.renderAll();
-            if (typeof save === 'function') save();
-            else if (typeof window.save === 'function') window.save();
+            // App neu laden, damit die importierten Daten geladen werden.
+            // KEIN renderAll()/save() auf dem stale In-Memory-D — save() würde
+            // die frisch importierte Aktiv-Kampagne mit dem leeren D überschreiben (CR-04).
+            window.location.reload();
         } else if (action === 'wizard-setup-backup') {
             StorageAPI.setJSON('migration-wizard-shown', { shown: true, completed: true });
-            _closeWizard();
-            // Optionaler Folge-Button: Backup-Setup (Plan 02-04 — defensiv)
-            if (typeof window.showFileBackupSetup === 'function') {
-                window.showFileBackupSetup();
+            // Backup-Setup-Absicht für nach dem Reload merken (Ordner-Picker braucht
+            // ohnehin eine frische User-Geste — nach Reload wird der Daten-Tab mit
+            // dem Backup-Bereich geöffnet, siehe initMigrationWizardIfNeeded)
+            if (typeof sessionStorage !== 'undefined') {
+                sessionStorage.setItem('migration-backup-setup-pending', '1');
             }
+            // Reload aus demselben Grund wie wizard-close: stale D darf den Import
+            // nicht per Autosave überschreiben (CR-04)
+            window.location.reload();
         }
     });
 }
@@ -466,6 +468,21 @@ function initMigrationWizardIfNeeded() {
     if (window.location.protocol === 'file:') {
         // file://-Modus: KEIN Erststart-Wizard, aber aktiver Umzugs-Flow (D-10) + Divergenz-Banner (D-11)
         startMigrationFileSide();
+        return;
+    }
+    // Nach Wizard-Abschluss mit "Automatische Backups einrichten" (CR-04):
+    // Reload hat die importierten Daten geladen — jetzt Backup-Setup anbieten.
+    if (typeof sessionStorage !== 'undefined' &&
+            sessionStorage.getItem('migration-backup-setup-pending')) {
+        sessionStorage.removeItem('migration-backup-setup-pending');
+        setTimeout(() => {
+            if (typeof window.switchView === 'function') window.switchView('data');
+            if (typeof window.showToast === 'function') {
+                window.showToast('Umzug abgeschlossen — Backup-Ordner jetzt unter Einstellungen wählen.', 'info', 6000);
+            }
+            const section = document.querySelector('.backup-status-section');
+            if (section) section.scrollIntoView({ behavior: 'smooth' });
+        }, 500);
         return;
     }
     // PWA (http/https): gefuehrter Erststart-Wizard
