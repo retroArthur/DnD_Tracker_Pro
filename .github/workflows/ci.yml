@@ -81,6 +81,9 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     needs: [smoke-test]
+    # WR-07: Nur bei Push auf main deployen — sonst würde ein Same-Repo-PR
+    # nach grünem Smoke ungemergten Code auf GitHub Pages veröffentlichen
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     permissions:
       contents: read
       pages: write
