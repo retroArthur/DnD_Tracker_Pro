@@ -1,7 +1,8 @@
 ---
 phase: 2
 slug: technik-fundament
-status: draft
+status: approved
+reviewed_at: 2026-06-12
 shadcn_initialized: false
 preset: none
 created: 2026-06-12
@@ -66,7 +67,7 @@ Für Phase-2-Komponenten gelten exakt diese vier Rollen:
 |-------|-------|---------|-----------|-----------|
 | Body | 14px (Desktop) / 16px (Mobile) | 400 (regular) | 1.5 | Fließtext in Wizard-Beschreibungen, Backup-Browser-Zeilen, Command-Palette-Keywords |
 | Label | 12px (Desktop) / 14px (Mobile) | 400 (regular) | 1.4 | Metadaten (Datum, Dateigröße im Backup-Browser), Wizard-Schritt-Nummern, Status-Text im Header-Warnindikator |
-| Heading | 16px (= `1.2em` relativ zu base) | 600 (semibold) | 1.2 | Wizard-Schrittüberschriften, Modal-Titel (entspricht bestehendem `.modal-title`), Backup-Browser-Abschnittstitel |
+| Heading | 16px | 600 (semibold) | 1.2 | Wizard-Schrittüberschriften, Modal-Titel (entspricht bestehendem `.modal-title`), Backup-Browser-Abschnittstitel |
 | Display | 20px | 600 (semibold) | 1.2 | Wizard-Hauptüberschrift „Willkommen in der D&D Tracker App", Command-Palette-Overlay-Heading |
 
 Schriftgewichte: ausschließlich **400** (regular) und **600** (semibold) — keine weiteren Gewichte einführen.
@@ -141,7 +142,7 @@ Zustände:
 - **Sichtbar:** wenn `beforeinstallprompt`-Event abgefangen und App noch nicht installiert
 - **Verborgen:** `display: none` — Standard; nach Installation dauerhaft ausgeblendet (`localStorage`-Flag)
 
-Text: „App installieren" (Desktop) / Icon-only mit `title`-Tooltip auf Mobile (`⬇️` o.ä.)
+Text: „App installieren" (Desktop) / Icon-only auf Mobile mit `aria-label="Als App installieren"` und `title="Als App installieren"` (`⬇️` o.ä.)
 
 ### 3. Migrations-Wizard (D-09)
 
@@ -363,7 +364,7 @@ Alle Texte auf Deutsch. Exakte Formulierungen — keine Varianten erlaubt.
 |---------|------|
 | Hinweistext | „Neue Version verfügbar" |
 | Primärer Button | „Jetzt neu laden" |
-| Sekundärer Button | „Später" |
+| Sekundärer Button | „Jetzt nicht" |
 
 ### Einmaliger Umzugs-Hinweis in file://-App (D-10)
 
@@ -499,14 +500,14 @@ Hintergrundkreis / -form: kein zusätzliches Element — d20 direkt auf dunklem 
 
 ## Checker Sign-Off
 
-- [ ] Dimension 1 Copywriting: PASS
-- [ ] Dimension 2 Visuals: PASS
-- [ ] Dimension 3 Color: PASS
-- [ ] Dimension 4 Typography: PASS
-- [ ] Dimension 5 Spacing: PASS
-- [ ] Dimension 6 Registry Safety: PASS
+- [x] Dimension 1 Copywriting: PASS
+- [x] Dimension 2 Visuals: PASS
+- [x] Dimension 3 Color: PASS
+- [x] Dimension 4 Typography: PASS
+- [x] Dimension 5 Spacing: PASS
+- [x] Dimension 6 Registry Safety: PASS
 
-**Approval:** pending
+**Approval:** APPROVED — 2026-06-12
 
 ---
 
@@ -528,3 +529,4 @@ Hintergrundkreis / -form: kein zusätzliches Element — d20 direkt auf dunklem 
 
 *Phase: 02-technik-fundament*
 *UI-SPEC erstellt: 2026-06-12*
+*UI-SPEC genehmigt: 2026-06-12*
