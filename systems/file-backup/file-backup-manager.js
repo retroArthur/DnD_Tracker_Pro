@@ -295,6 +295,19 @@ async function _doBackup(dirHandle) {
 }
 
 /**
+ * Liefert die Backup-Dateinamen ({current, snapshot, safeName}) der AKTIVEN Kampagne.
+ * Wird vom Backup-Browser (file-backup-ui.js) genutzt, um nur Snapshots der
+ * aktiven Kampagne zu listen/wiederherzustellen (WR-11).
+ * @returns {{ current: string, snapshot: string, safeName: string }}
+ */
+function getActiveBackupFilenames() {
+    const campaignKey = (typeof window !== 'undefined' && window.APP_CONFIG?.STORAGE_KEY)
+        ? (window.STORAGE_KEY_OVERRIDE || window.APP_CONFIG.STORAGE_KEY)
+        : 'dnd-tracker-data';
+    return getBackupFilenames(campaignKey, _getActiveCampaignName(campaignKey));
+}
+
+/**
  * Ermittelt den Anzeigenamen der aktiven Kampagne.
  * @param {string} campaignKey
  * @returns {string}
@@ -361,6 +374,7 @@ function initFileBackup() {
 window.initFileBackup = initFileBackup;
 window.writeBackupForCampaign = writeBackupForCampaign;
 window.getBackupFilenames = getBackupFilenames;
+window.getActiveBackupFilenames = getActiveBackupFilenames;
 window.getSnapshotRegex = getSnapshotRegex;
 window.pruneOldSnapshots = pruneOldSnapshots;
 window.setBackupStatus = setBackupStatus;

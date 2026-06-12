@@ -82,11 +82,23 @@ async function showFileBackupBrowser() {
             </div>
         </div>`;
     } else {
+        // WR-11: Nur Snapshots der AKTIVEN Kampagne listen — der Restore schreibt
+        // bedingungslos in die aktive Kampagne; Snapshots fremder Kampagnen (oder
+        // app-fremde JSON-Dateien) wuerden sie sonst still ueberschreiben.
+        const activeNames = typeof window.getActiveBackupFilenames === 'function'
+            ? window.getActiveBackupFilenames() : null;
+        const snapshotRe = (activeNames && typeof window.getSnapshotRegex === 'function')
+            ? window.getSnapshotRegex(activeNames.safeName)
+            : null;
+
         const snapshots = [];
         try {
             for await (const [name, entry] of dirHandle.entries()) {
-                // Zeige nur datierte Snapshots (nicht -aktuell.json)
-                if (name.endsWith('.json') && !name.endsWith('-aktuell.json')) {
+                // Zeige nur datierte Snapshots der aktiven Kampagne (nicht -aktuell.json)
+                const matches = snapshotRe
+                    ? snapshotRe.test(name)
+                    : (name.endsWith('.json') && !name.endsWith('-aktuell.json'));
+                if (matches) {
                     let size = '?';
                     try {
                         const file = await entry.getFile();
@@ -107,7 +119,7 @@ async function showFileBackupBrowser() {
 
         if (snapshots.length === 0) {
             content = `<div class="backup-browser-empty" style="text-align:center; padding: 32px; color: var(--text-dim);">
-                Keine Backup-Dateien im verbundenen Ordner gefunden.
+                Keine Backup-Dateien der aktiven Kampagne im verbundenen Ordner gefunden.
             </div>`;
         } else {
             const tableHeader = `<div class="backup-entry backup-entry-header" style="font-weight:600; color: var(--text-dim); font-size: 0.85em;">
@@ -188,6 +200,17 @@ async function restoreFromFileBackup(filename) {
         return;
     }
 
+    // WR-11: Der Restore schreibt in die AKTIVE Kampagne — nur Snapshots der
+    // aktiven Kampagne zulassen (Defense-in-Depth zur Browser-Filterung)
+    if (typeof window.getActiveBackupFilenames === 'function' &&
+            typeof window.getSnapshotRegex === 'function') {
+        const activeNames = window.getActiveBackupFilenames();
+        if (!window.getSnapshotRegex(activeNames.safeName).test(filename)) {
+            window.showToast('Dieser Snapshot gehört nicht zur aktiven Kampagne — Wiederherstellung abgebrochen.', 'error');
+            return;
+        }
+    }
+
     // Datum aus Dateiname fuer Bestaetigungstext
     const dateMatch = filename.match(/(\d{4}-\d{2}-\d{2})/);
     const dateStr = dateMatch ? dateMatch[1] : filename;
@@ -228,11 +251,28 @@ async function restoreFromFileBackup(filename) {
             throw new Error('Ungültige Initiative-Daten');
         }
 
+        // WR-11: Versions-Migration wie im Import-Pfad (importFullExport → migrateData) —
+        // extern editierbares JSON kann von einer aelteren App-Version stammen
+        let restored = parsed;
+        if (typeof window.migrateData === 'function') {
+            restored = window.migrateData(restored);
+        }
+
+        // WR-11: Fehlende Kernfelder mit Defaults auffuellen (initializeData =
+        // kanonisches D-Schema aus core/data.js) — ein unvollstaendiges JSON darf
+        // kein kaputtes D (z.B. ohne initiative/settings) hinterlassen
+        if (typeof window.initializeData === 'function') {
+            const defaults = window.initializeData();
+            for (const key of Object.keys(defaults)) {
+                if (restored[key] === undefined) restored[key] = defaults[key];
+            }
+        }
+
         // Daten uebernehmen (analog restoreBackup aus systems/backups.js)
         const D = window.D;
         if (D) {
             for (const key in D) delete D[key];
-            Object.assign(D, parsed);
+            Object.assign(D, restored);
         }
 
         if (typeof window.renderAll === 'function') window.renderAll();
