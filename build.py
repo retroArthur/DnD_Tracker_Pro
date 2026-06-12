@@ -433,6 +433,12 @@ def build(minify=False, production=False, verbose=False):
         else:
             log.warning(f"  {css_file} NICHT GEFUNDEN")
     css_content = '\n'.join(css_parts)
+    # CR-08: Relative url()-Pfade aus assets/styles/fonts.css fuer das Inlining
+    # umschreiben. Inline-<style> loest gegen die DOKUMENT-URL auf, nicht mehr
+    # gegen assets/styles/ — '../fonts/' zeigte damit eine Ebene UEBER das
+    # App-Verzeichnis (404 in jedem dist-Build). Ziel: ./assets/fonts/ relativ
+    # zur HTML-Datei (Deploy legt assets/fonts/ daneben, siehe ci.yml).
+    css_content = css_content.replace("url('../fonts/", "url('./assets/fonts/")
     if minify:
         log.info("Minifiziere CSS...")
         css_content = minify_css(css_content)
