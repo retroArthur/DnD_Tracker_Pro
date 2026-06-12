@@ -5,35 +5,38 @@
 
 const fs = require('fs');
 const path = require('path');
+const vm = require('vm');
 
 // ============================================================
 // SETUP: migrateData und compareVersions aus version-migration.js laden
 // ============================================================
 
 // version-migration.js ist non-ESM und nutzt globale APP_CONFIG.
-// setup.js hat APP_CONFIG bereits als global gesetzt (VERSION: '2.7.0-test').
-// Wir laden die Datei direkt per eval(), analog zu stability.test.js.
+// Wir fuehren den Code in einem vm-Kontext aus, der die globalen Variablen kennt.
 
 let migrateData;
 let compareVersions;
 
 beforeAll(() => {
-    // window.APP_CONFIG und window.ErrorHandler brauchen wir fuer version-migration.js
-    global.window = global.window || {};
-    global.window.APP_CONFIG = global.APP_CONFIG;
-    global.window.ErrorHandler = { log: jest.fn() };
-    // getSpellSlotsForClass wird in 2.4.0-Migration gebraucht
-    global.window.getSpellSlotsForClass = jest.fn(() => [0, 0, 0, 0, 0, 0, 0, 0, 0]);
+    // Kontext-Objekt fuer vm: enthaelt alle Globals, die version-migration.js erwartet
+    const context = {
+        window: {
+            APP_CONFIG: global.APP_CONFIG,
+            ErrorHandler: { log: jest.fn() },
+            getSpellSlotsForClass: jest.fn(() => [0, 0, 0, 0, 0, 0, 0, 0, 0])
+        },
+        APP_CONFIG: global.APP_CONFIG,
+        console: console
+    };
+    vm.createContext(context);
 
-    // Datei laden und Funktionen im globalen Scope definieren
     const filePath = path.join(__dirname, '../../systems/spellslots/version-migration.js');
     const code = fs.readFileSync(filePath, 'utf8');
-    // eslint-disable-next-line no-eval
-    eval(code);
+    vm.runInContext(code, context);
 
-    // Nach eval sind migrateData und compareVersions im globalen Scope
-    migrateData = global.migrateData;
-    compareVersions = global.compareVersions;
+    // Funktionen aus dem vm-Kontext extrahieren
+    migrateData = context.migrateData;
+    compareVersions = context.compareVersions;
 });
 
 // ============================================================
@@ -84,7 +87,6 @@ describe('Mindmap Smart-Strip Migration 2.6.1', () => {
         const content = fs.readFileSync(filePath, 'utf8');
 
         // Der Seed-Template-Ausdruck darf nicht mehr im Quellcode vorkommen
-        // Wir pruefen speziell auf das mindmap-Objekt im Seed-Kontext
         expect(content).not.toMatch(/mindmap:\s*\{\s*nodes:/);
     });
 });

@@ -483,7 +483,7 @@ function importDataGlobal() {
                     locations: [], npcs: [], quests: [], characters: [], sessionNotes: [], quickNotes: '',
                     initiative: { combatants: [], currentTurn: 0, round: 1 },
                     loot: [], items: [], encounters: [], spells: [], links: [],
-                    filters: [], mindmap: { nodes: [], connections: [] },
+                    filters: [],
                     calendar: { day: 1, month: 0, year: 1492, events: [] },
                     _nextId: {},
                     ...imp
