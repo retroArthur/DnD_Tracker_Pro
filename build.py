@@ -494,6 +494,42 @@ def build(minify=False, production=False, verbose=False):
             sys.exit(1)
         log.success("DEBUG_MODE deaktiviert und verifiziert.")
 
+    # Production (T-02-04): Bump CACHE_VERSION in bundled JS mit version+timestamp,
+    # damit jeder Deploy den SW-Cache invalidiert (Pitfall 5).
+    # sw.js wird nicht in den Bundle eingebunden — das dist/-Verzeichnis braucht
+    # eine separate Kopie mit gebumpter Version. Wir patchen CACHE_VERSION im
+    # kombinierten JS (falls pwa-install.js oder ein anderes Modul den Wert referenziert)
+    # UND speichern den Wert für den späteren sw.js-Schreibschritt.
+    if production:
+        import re as _re, datetime as _dt
+        # Lese VERSION aus core/config.js
+        config_path = os.path.join(SOURCE_DIR, 'core', 'config.js')
+        app_version = '2.6.1'  # Fallback
+        try:
+            config_src = read_file(config_path)
+            vm = _re.search(r"VERSION:\s*'([^']+)'", config_src)
+            if vm:
+                app_version = vm.group(1)
+        except Exception:
+            pass
+        timestamp = _dt.datetime.utcnow().strftime('%Y%m%d%H%M')
+        bumped_cache_version = f'dnd-tracker-v{app_version}-{timestamp}'
+        print(f"\n[PROD] CACHE_VERSION bump: dnd-tracker-v3 -> {bumped_cache_version}")
+        # Patch CACHE_VERSION in kombiniertem JS (falls enthalten)
+        js_combined = js_combined.replace("'dnd-tracker-v3'", f"'{bumped_cache_version}'", 1)
+        # Schreibe gepatchte sw.js nach dist/
+        dist_dir = os.path.join(SCRIPT_DIR, 'dist')
+        os.makedirs(dist_dir, exist_ok=True)
+        sw_src_path = os.path.join(SCRIPT_DIR, 'sw.js')
+        sw_dst_path = os.path.join(dist_dir, 'sw.js')
+        try:
+            sw_src = read_file(sw_src_path)
+            sw_patched = sw_src.replace("'dnd-tracker-v3'", f"'{bumped_cache_version}'", 1)
+            write_file(sw_dst_path, sw_patched)
+            log.success(f"sw.js nach dist/ kopiert (CACHE_VERSION={bumped_cache_version})")
+        except Exception as e:
+            log.warning(f"sw.js konnte nicht nach dist/ kopiert werden: {e}")
+
     if minify:
         print("\n[MINIFY] Minifiziere JavaScript...")
         original_size = len(js_combined)
@@ -517,10 +553,8 @@ def build(minify=False, production=False, verbose=False):
     <meta name="apple-mobile-web-app-title" content="D&D Tracker">
     <meta name="description" content="D&D Kampagnen-Tracker Pro - Modulare Version (Gebündelt)">
     <title>D&D Kampagnen-Tracker Pro</title>
-    <link rel="manifest" href="data:application/json,{{%22name%22:%22D%26D%20Kampagnen-Tracker%20Pro%22,%22short_name%22:%22D%26D%20Tracker%22,%22start_url%22:%22.%22,%22display%22:%22standalone%22,%22background_color%22:%22%230d0d0d%22,%22theme_color%22:%22%23d4af37%22,%22icons%22:[{{%22src%22:%22data:image/svg+xml,%253Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20100%20100'%253E%253Ctext%20y='.9em'%20font-size='90'%253E%F0%9F%8E%B2%253C/text%253E%253C/svg%253E%22,%22sizes%22:%22any%22,%22type%22:%22image/svg+xml%22}}]}}">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Poppins:wght@400;500;600&family=Roboto:wght@400;700&family=Source+Sans+Pro:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="manifest" href="./manifest.webmanifest">
+    <!-- Fonts lokal gebündelt via assets/styles/fonts.css (D-07) — kein Google-Fonts-CDN mehr -->
     <style>
 {css_content}
     </style>
