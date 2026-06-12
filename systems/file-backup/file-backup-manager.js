@@ -309,12 +309,17 @@ function _getActiveCampaignName(campaignKey) {
  *   if (typeof window.initFileBackup === 'function') window.initFileBackup();
  */
 function initFileBackup() {
-    // Live-Sync-Hook einmalig setzen (CLAUDE.md: _originalSave-Guard)
+    // Live-Sync-Hook einmalig setzen — mit EIGENEM Guard und Verkettung.
+    // WICHTIG: NICHT den globalen _originalSave-Guard verwenden! Der trägt nur
+    // EINEN Hook und ist bereits von setupDMScreenLiveSync (dmscreen-render.js)
+    // belegt — beide Hooks müssen als Kette auf dem jeweils aktuellen window.save
+    // aufsetzen, sonst wird einer der beiden still übersprungen (CR-02).
     if (typeof window !== 'undefined' && typeof window.save === 'function' &&
-            typeof window._originalSave === 'undefined') {
-        window._originalSave = window.save;
+            !window._fileBackupSaveHooked) {
+        window._fileBackupSaveHooked = true;
+        const prevSave = window.save;
         window.save = function () {
-            window._originalSave.apply(this, arguments);
+            prevSave.apply(this, arguments);
             onAfterSave();
         };
     }
