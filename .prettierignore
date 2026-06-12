@@ -4,3 +4,9 @@ coverage/
 *.min.js
 *.min.css
 package-lock.json
+
+# Tool-generierte Artefakte — kein Quellcode, ändern sich bei jedem GSD-Schritt/Testlauf
+.planning/
+tests/e2e/test-results/
+tests/e2e/test-results-smoke/
+playwright-report/
