@@ -7,7 +7,6 @@ import { test, expect } from '@playwright/test';
  */
 
 test.describe('Wiki System', () => {
-
     test.beforeEach(async ({ page }) => {
         // Lokale HTML-Datei laden
         const filePath = `file:///${process.cwd().replace(/\\/g, '/')}/dist/dnd-tracker-bundled.html`;
@@ -26,7 +25,6 @@ test.describe('Wiki System', () => {
     // ============================================================
 
     test.describe('Wiki Eintrag erstellen', () => {
-
         test('sollte neuen Wiki-Eintrag erstellen können', async ({ page }) => {
             // Neuen Eintrag Button klicken
             await page.click('[data-action="call"][data-value="showWikiForm"]');
@@ -81,7 +79,6 @@ test.describe('Wiki System', () => {
     // ============================================================
 
     test.describe('Wiki Hierarchie', () => {
-
         test.beforeEach(async ({ page }) => {
             // Erstelle Parent-Eintrag
             await page.click('[data-action="call"][data-value="showWikiForm"]');
@@ -144,7 +141,6 @@ test.describe('Wiki System', () => {
     // ============================================================
 
     test.describe('Wiki Links', () => {
-
         test('sollte Wiki-Link Syntax [[Name]] unterstützen', async ({ page }) => {
             // Ersten Eintrag erstellen
             await page.click('[data-action="call"][data-value="showWikiForm"]');
@@ -170,7 +166,9 @@ test.describe('Wiki System', () => {
             await page.click('.wiki-tree-item:has-text("Quest: Drachenjagd")');
 
             // Link sollte als klickbarer Wiki-Link gerendert werden
-            const wikiLink = page.locator('.wiki-detail-body .wiki-link, .wiki-detail-body a:has-text("Held Max")');
+            const wikiLink = page.locator(
+                '.wiki-detail-body .wiki-link, .wiki-detail-body a:has-text("Held Max")'
+            );
             await expect(wikiLink).toBeVisible();
         });
     });
@@ -180,11 +178,14 @@ test.describe('Wiki System', () => {
     // ============================================================
 
     test.describe('Wiki Suche', () => {
-
         test.beforeEach(async ({ page }) => {
             // Mehrere Einträge erstellen
             const entries = [
-                { title: 'Zwergenstadt Ironforge', category: 'locations', content: 'Eine Stadt der Zwerge' },
+                {
+                    title: 'Zwergenstadt Ironforge',
+                    category: 'locations',
+                    content: 'Eine Stadt der Zwerge'
+                },
                 { title: 'Elfenwald', category: 'locations', content: 'Ein magischer Wald' },
                 { title: 'Schmied Thorin', category: 'character', content: 'Ein Zwergenschmied' }
             ];
@@ -215,7 +216,9 @@ test.describe('Wiki System', () => {
         });
 
         test('sollte Kategorie-Filter unterstützen', async ({ page }) => {
-            const categoryFilter = page.locator('#wiki-category-filter, [data-action="filter-wiki-category"]');
+            const categoryFilter = page.locator(
+                '#wiki-category-filter, [data-action="filter-wiki-category"]'
+            );
 
             if (await categoryFilter.first().isVisible()) {
                 // Nach Orten filtern
@@ -229,7 +232,6 @@ test.describe('Wiki System', () => {
     // ============================================================
 
     test.describe('Wiki Bearbeiten & Löschen', () => {
-
         test.beforeEach(async ({ page }) => {
             // Test-Eintrag erstellen
             await page.click('[data-action="call"][data-value="showWikiForm"]');
@@ -247,7 +249,11 @@ test.describe('Wiki System', () => {
             await page.click('.wiki-tree-item:has-text("Zu bearbeitender Eintrag")');
 
             // Bearbeiten-Button klicken
-            const editBtn = page.locator('[data-action="call"][data-value="editWikiEntry"], .wiki-detail-actions button:has-text("✏")').first();
+            const editBtn = page
+                .locator(
+                    '[data-action="call"][data-value="editWikiEntry"], .wiki-detail-actions button:has-text("✏")'
+                )
+                .first();
             if (await editBtn.isVisible()) {
                 await editBtn.click();
 
@@ -267,7 +273,9 @@ test.describe('Wiki System', () => {
             await page.click('.wiki-tree-item:has-text("Zu bearbeitender Eintrag")');
 
             // Löschen-Button klicken
-            const deleteBtn = page.locator('[data-action="delete-wiki"], .wiki-detail-actions button:has-text("🗑")').first();
+            const deleteBtn = page
+                .locator('[data-action="delete-wiki"], .wiki-detail-actions button:has-text("🗑")')
+                .first();
             if (await deleteBtn.isVisible()) {
                 // Dialog-Handler für Bestätigung
                 page.on('dialog', dialog => dialog.accept());
@@ -277,7 +285,9 @@ test.describe('Wiki System', () => {
                 await page.waitForTimeout(500);
 
                 // Eintrag sollte nicht mehr existieren
-                await expect(page.locator('.wiki-tree')).not.toContainText('Zu bearbeitender Eintrag');
+                await expect(page.locator('.wiki-tree')).not.toContainText(
+                    'Zu bearbeitender Eintrag'
+                );
             }
         });
     });
@@ -287,7 +297,6 @@ test.describe('Wiki System', () => {
     // ============================================================
 
     test.describe('Wiki Editor Formatierung', () => {
-
         test('sollte Text fett formatieren können', async ({ page }) => {
             await page.click('[data-action="call"][data-value="showWikiForm"]');
 
@@ -299,7 +308,11 @@ test.describe('Wiki System', () => {
             await editor.selectText();
 
             // Bold-Button klicken
-            const boldBtn = page.locator('.editor-toolbar [data-editor="bold"], .editor-toolbar button:has-text("B")').first();
+            const boldBtn = page
+                .locator(
+                    '.editor-toolbar [data-editor="bold"], .editor-toolbar button:has-text("B")'
+                )
+                .first();
             if (await boldBtn.isVisible()) {
                 await boldBtn.click();
             }
@@ -316,7 +329,9 @@ test.describe('Wiki System', () => {
             await editor.selectText();
 
             // Read-Aloud Dropdown
-            const readAloudSelect = page.locator('.editor-select[data-action="set-read-aloud-style"]').first();
+            const readAloudSelect = page
+                .locator('.editor-select[data-action="set-read-aloud-style"]')
+                .first();
             if (await readAloudSelect.isVisible()) {
                 await readAloudSelect.selectOption('parchment');
             }
@@ -345,7 +360,6 @@ test.describe('Wiki System', () => {
     // ============================================================
 
     test.describe('Wiki Daten Persistenz', () => {
-
         test('sollte Wiki-Einträge nach Reload behalten', async ({ page }) => {
             // Eintrag erstellen
             await page.click('[data-action="call"][data-value="showWikiForm"]');

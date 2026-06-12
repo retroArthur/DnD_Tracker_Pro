@@ -6,38 +6,38 @@ tags: [ci, playwright, smoke-test, github-actions, quality-gate]
 
 # Dependency graph
 requires:
-  - phase: 01-01
-    provides: "playwright.smoke.config.js + tests/e2e/smoke.spec.js (smoke-Infrastruktur)"
-  - phase: 01-04
-    provides: "build.py gehaertet (DEBUG_MODE-Assertion, Pre-Build-Duplikat-Check)"
-  - phase: 01-05
-    provides: "npm run check Konfiguration (eslint, tsc, prettier)"
+    - phase: 01-01
+      provides: 'playwright.smoke.config.js + tests/e2e/smoke.spec.js (smoke-Infrastruktur)'
+    - phase: 01-04
+      provides: 'build.py gehaertet (DEBUG_MODE-Assertion, Pre-Build-Duplikat-Check)'
+    - phase: 01-05
+      provides: 'npm run check Konfiguration (eslint, tsc, prettier)'
 provides:
-  - "smoke-test-Job in .github/workflows/ci.yml (needs [build], HTTP-Server, download-artifact, SMOKE_BASE_URL)"
-  - "Phase-Quality-Gate-Befund: npm run check-Status fuer Abschlusspruefung dokumentiert"
-  - "Frische dev- und prod-Builds aus gehaertetem build.py verifiziert"
-  - "Lokaler Smoke-Test (7/7) bestaetigt STAB-03 und STAB-08"
+    - 'smoke-test-Job in .github/workflows/ci.yml (needs [build], HTTP-Server, download-artifact, SMOKE_BASE_URL)'
+    - 'Phase-Quality-Gate-Befund: npm run check-Status fuer Abschlusspruefung dokumentiert'
+    - 'Frische dev- und prod-Builds aus gehaertetem build.py verifiziert'
+    - 'Lokaler Smoke-Test (7/7) bestaetigt STAB-03 und STAB-08'
 affects: [alle-kuenftigen-ci-laeufe, 07-doku-audit]
 
 # Tech tracking
 tech-stack:
-  added: []
-  patterns:
-    - "CI-Smoke-Test-Pattern: needs [build] + download-artifact@v4 + python http.server + SMOKE_BASE_URL"
-    - "Artifact-Download-Pattern: production-build Artefakt aus build-Job in smoke-test-Job"
+    added: []
+    patterns:
+        - 'CI-Smoke-Test-Pattern: needs [build] + download-artifact@v4 + python http.server + SMOKE_BASE_URL'
+        - 'Artifact-Download-Pattern: production-build Artefakt aus build-Job in smoke-test-Job'
 
 key-files:
-  created: []
-  modified:
-    - .github/workflows/ci.yml
+    created: []
+    modified:
+        - .github/workflows/ci.yml
 
 key-decisions:
-  - "Smoke-Test gegen lokalen HTTP-Server (nicht file://) wegen Playwright-localStorage-Einschraenkungen unter file:// (RESEARCH.md Entscheidung)"
-  - "npx playwright install --with-deps chromium (kein Browser-Cache, MVP-Ansatz per RESEARCH.md D-03)"
-  - "npm run check schlaegt fehl (1196 ESLint-Warnings > --max-warnings 50, Prettier 166 Dateien), STAB-04 nicht erfuellt — kein Reparieren in diesem Task"
+    - 'Smoke-Test gegen lokalen HTTP-Server (nicht file://) wegen Playwright-localStorage-Einschraenkungen unter file:// (RESEARCH.md Entscheidung)'
+    - 'npx playwright install --with-deps chromium (kein Browser-Cache, MVP-Ansatz per RESEARCH.md D-03)'
+    - 'npm run check schlaegt fehl (1196 ESLint-Warnings > --max-warnings 50, Prettier 166 Dateien), STAB-04 nicht erfuellt — kein Reparieren in diesem Task'
 
 patterns-established:
-  - "CI Smoke-Test-Job: immer nach build-Job (needs: [build]), Artefakt herunterladen, HTTP-Server starten, Smoke-Test ausfuehren"
+    - 'CI Smoke-Test-Job: immer nach build-Job (needs: [build]), Artefakt herunterladen, HTTP-Server starten, Smoke-Test ausfuehren'
 
 requirements-completed: [STAB-08]
 
@@ -101,11 +101,11 @@ Task 2 ist ein reiner Verifikations-Task. Befund wird hier dokumentiert:
 - **Exit-Code:** 1 (wegen `--max-warnings 50` ueberschritten)
 - **Gesamtprobleme:** 1227 (31 errors, 1196 warnings)
 - **Fehler-Kategorien:**
-  - `no-case-declarations` (16 Faelle): `Unexpected lexical declaration in case block`
-  - `no-misleading-character-class` (11 Faelle): Surrogate pairs / combined characters in regex
-  - `no-useless-escape` (2 Faelle): Unnecessary escape character
-  - `no-dupe-keys` (1 Fall): `Duplicate key 'Paladin'`
-  - `no-undef` (1 Fall): `'module' is not defined`
+    - `no-case-declarations` (16 Faelle): `Unexpected lexical declaration in case block`
+    - `no-misleading-character-class` (11 Faelle): Surrogate pairs / combined characters in regex
+    - `no-useless-escape` (2 Faelle): Unnecessary escape character
+    - `no-dupe-keys` (1 Fall): `Duplicate key 'Paladin'`
+    - `no-undef` (1 Fall): `'module' is not defined`
 - **Betroffene Dateien:** ca. 30+ Dateien, Hauptlast in core/, features/, utils/
 - **Hinweis:** Die 1196 "warnings" sind `no-undef`/`no-unused-vars` — legitim in Non-ESM Global-Scope-Architektur
 
@@ -122,6 +122,7 @@ Task 2 ist ein reiner Verifikations-Task. Befund wird hier dokumentiert:
 ### Empfehlung fuer Gap-Closure-Plan (ausserhalb Plan 06)
 
 Ein gezielter Folge-Plan sollte:
+
 1. `eslint --fix` ausfuehren (auto-fixierbare Regeln: no-case-declarations, no-useless-escape)
 2. `prettier --write "**/*.{js,json,md}"` ausfuehren (Formatierung normalisieren)
 3. Nicht-auto-fixierbare Errors manuell beheben (no-misleading-character-class, no-dupe-keys)
@@ -145,8 +146,9 @@ Keine — kein externer Service.
 - Plan 07 (Doku-Audit) kann unabhaengig starten (kein npm run check als Voraussetzung)
 
 ---
-*Phase: 01-stabilisierung*
-*Completed: 2026-06-12*
+
+_Phase: 01-stabilisierung_
+_Completed: 2026-06-12_
 
 ## Self-Check: PASSED
 

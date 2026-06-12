@@ -13,7 +13,7 @@ function initPWA() {
         return;
     }
     // beforeinstallprompt Event abfangen
-    window.addEventListener('beforeinstallprompt', (e) => {
+    window.addEventListener('beforeinstallprompt', e => {
         e.preventDefault();
         deferredPrompt = e;
         // Zeige Install-Banner nach 30 Sekunden
@@ -32,13 +32,11 @@ function initPWA() {
 }
 function showPWABanner() {
     const banner = $('pwa-install-banner');
-    if (banner)
-        banner.classList.add('show');
+    if (banner) banner.classList.add('show');
 }
 function hidePWABanner() {
     const banner = $('pwa-install-banner');
-    if (banner)
-        banner.classList.remove('show');
+    if (banner) banner.classList.remove('show');
 }
 function dismissPWABanner() {
     hidePWABanner();

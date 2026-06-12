@@ -5,87 +5,87 @@
  * Tab-Render Registry - Maps tab names to their associated render functions
  */
 const TAB_RENDER_REGISTRY = {
-    'dashboard': {
+    dashboard: {
         renders: ['renderDashboard'],
         init: null,
         cleanup: null
     },
-    'party': {
+    party: {
         renders: ['renderParty'],
         init: null,
         cleanup: null
     },
-    'npcs': {
+    npcs: {
         renders: ['renderNPCList'],
         init: null,
         cleanup: null
     },
-    'locations': {
+    locations: {
         renders: ['renderLocations'],
         init: null,
         cleanup: null
     },
-    'quests': {
+    quests: {
         renders: ['renderQuests'],
         init: null,
         cleanup: null
     },
-    'encounter': {
+    encounter: {
         renders: ['renderEncounters'],
         init: null,
         cleanup: null
     },
-    'initiative': {
+    initiative: {
         renders: ['renderInit', 'renderBattlefieldBanner', 'renderQuickActionsBar'],
         init: null,
         cleanup: null
     },
-    'loot': {
+    loot: {
         renders: ['renderLoot'],
         init: null,
         cleanup: null
     },
-    'shops': {
+    shops: {
         renders: ['renderShops'],
         init: null,
         cleanup: null
     },
-    'spells': {
+    spells: {
         renders: ['renderSpells'],
         init: null,
         cleanup: null
     },
-    'notes': {
+    notes: {
         renders: ['renderSessions'],
         init: null,
         cleanup: null
     },
-    'wiki': {
+    wiki: {
         renders: ['renderWiki'],
         init: null,
         cleanup: null
     },
-    'links': {
+    links: {
         renders: ['renderLinks'],
         init: null,
         cleanup: null
     },
-    'dice': {
+    dice: {
         renders: ['renderRandomTables', 'renderDiceHistory', 'renderDiceFavorites'],
         init: 'initDiceTab', // Called once when first shown
         cleanup: null
     },
-    'timers': {
+    timers: {
         renders: ['renderTimers', 'renderTimerPresets'],
         init: null,
-        cleanup: 'cleanupTimers'  // Clear interval when leaving tab
+        cleanup: 'cleanupTimers' // Clear interval when leaving tab
     },
-    'data': {
+    data: {
         renders: [], // Data tab is mostly forms, no active renders needed
         init: null,
         cleanup: null
     },
-    'dmscreen': {
+    dmscreen: {
         renders: ['renderDMScreen'],
         init: null,
         cleanup: null
@@ -114,8 +114,7 @@ function renderTabContent(tabName) {
                 if (window.APP_CONFIG?.DEBUG_MODE) {
                     console.log(`[TabRegistry] Init ${tabConfig.init}() for tab ${tabName}`);
                 }
-            }
-            catch (err) {
+            } catch (err) {
                 console.error(`[TabRegistry] Init failed for ${tabName}:`, err);
             }
         }
@@ -128,12 +127,10 @@ function renderTabContent(tabName) {
                 if (window.APP_CONFIG?.DEBUG_MODE) {
                     console.log(`[TabRegistry] Rendered ${renderFn}() for tab ${tabName}`);
                 }
-            }
-            catch (err) {
+            } catch (err) {
                 console.error(`[TabRegistry] Render ${renderFn}() failed for tab ${tabName}:`, err);
             }
-        }
-        else {
+        } else {
             console.warn(`[TabRegistry] Function ${renderFn} not found for tab ${tabName}`);
         }
     });
@@ -143,8 +140,7 @@ function renderTabContent(tabName) {
  * Checks for missing functions and invalid configurations
  */
 function validateTabRegistry() {
-    if (!window.APP_CONFIG?.DEBUG_MODE)
-        return;
+    if (!window.APP_CONFIG?.DEBUG_MODE) return;
     console.log('[TabRegistry] Validating registry...');
     let errors = 0;
     let warnings = 0;
@@ -152,7 +148,9 @@ function validateTabRegistry() {
         // Check if render functions exist
         config.renders.forEach(renderFn => {
             if (typeof window[renderFn] !== 'function') {
-                console.error(`[TabRegistry] Missing render function: ${renderFn} for tab ${tabName}`);
+                console.error(
+                    `[TabRegistry] Missing render function: ${renderFn} for tab ${tabName}`
+                );
                 errors++;
             }
         });
@@ -163,14 +161,15 @@ function validateTabRegistry() {
         }
         // Check if cleanup functions exist
         if (config.cleanup && typeof window[config.cleanup] !== 'function') {
-            console.warn(`[TabRegistry] Missing cleanup function: ${config.cleanup} for tab ${tabName}`);
+            console.warn(
+                `[TabRegistry] Missing cleanup function: ${config.cleanup} for tab ${tabName}`
+            );
             warnings++;
         }
     });
     if (errors > 0 || warnings > 0) {
         console.warn(`[TabRegistry] Validation complete: ${errors} errors, ${warnings} warnings`);
-    }
-    else {
+    } else {
         console.log('[TabRegistry] Validation complete: No issues found ✓');
     }
 }

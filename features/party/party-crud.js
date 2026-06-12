@@ -11,8 +11,7 @@
 function updateAttrMod(attr) {
     const input = $(`char-${attr}`);
     const modEl = $(`char-${attr}-mod`);
-    if (!input || !modEl)
-        return;
+    if (!input || !modEl) return;
     const val = parseInt(input.value) || 10;
     const mod = Math.floor((val - 10) / 2);
     modEl.textContent = mod >= 0 ? `+${mod}` : `${mod}`;
@@ -35,8 +34,7 @@ function updateInitFromDex() {
 function updateSpeedDisplay() {
     const speedSelect = $('char-speed');
     const ftDisplay = $('char-speed-ft');
-    if (!speedSelect || !ftDisplay)
-        return;
+    if (!speedSelect || !ftDisplay) return;
     const selected = speedSelect.options[speedSelect.selectedIndex];
     const ft = selected?.getAttribute('data-ft') || '30';
     ftDisplay.textContent = ft + 'ft';
@@ -46,8 +44,7 @@ function updateSpeedDisplay() {
  */
 function updateAvatarPreview(url) {
     const preview = $('cf-avatar-preview');
-    if (!preview)
-        return;
+    if (!preview) return;
     if (url && (url.startsWith('http://') || url.startsWith('https://'))) {
         // Sichere Erstellung ohne innerHTML mit User-Input
         preview.innerHTML = '';
@@ -60,8 +57,7 @@ function updateAvatarPreview(url) {
             }
         };
         preview.appendChild(img);
-    }
-    else {
+    } else {
         preview.innerHTML = '<span class="cf-avatar-placeholder">?</span>';
     }
 }
@@ -90,8 +86,7 @@ function updateCharLanguages() {
         if (item) {
             item.classList.toggle('selected', checkbox.checked);
         }
-        if (checkbox.checked)
-            selected.push(checkbox.value);
+        if (checkbox.checked) selected.push(checkbox.value);
     });
     // Update hidden select for form submission
     const hiddenSelect = $('char-languages');
@@ -112,12 +107,10 @@ function updateCharLanguages() {
         if (selected.length === 0) {
             display.textContent = 'Sprachen wählen...';
             display.classList.remove('has-selection');
-        }
-        else if (selected.length <= 3) {
+        } else if (selected.length <= 3) {
             display.textContent = selected.join(', ');
             display.classList.add('has-selection');
-        }
-        else {
+        } else {
             display.textContent = `${selected.slice(0, 2).join(', ')} +${selected.length - 2}`;
             display.classList.add('has-selection');
         }
@@ -129,8 +122,11 @@ function updateCharLanguages() {
 function setCharLanguages(languages) {
     // Set languages in the dropdown checkboxes
     const checkboxes = document.querySelectorAll('#cf-lang-dropdown input[type="checkbox"]');
-    const langArray = Array.isArray(languages) ? languages :
-        (languages ? languages.split(',').map(l => l.trim()) : []);
+    const langArray = Array.isArray(languages)
+        ? languages
+        : languages
+          ? languages.split(',').map(l => l.trim())
+          : [];
     checkboxes.forEach(cb => {
         const checkbox = cb;
         checkbox.checked = langArray.includes(checkbox.value);
@@ -157,17 +153,14 @@ function clearCharLanguages() {
     updateCharLanguages();
     // Close dropdown if open
     const wrapper = $('cf-languages-wrapper');
-    if (wrapper)
-        wrapper.classList.remove('open');
+    if (wrapper) wrapper.classList.remove('open');
 }
 // Close language dropdown when clicking outside
 document.addEventListener('click', function (e) {
     const wrapper = $('cf-languages-wrapper');
-    if (!wrapper)
-        return;
+    if (!wrapper) return;
     // If click is inside the wrapper, don't close
-    if (wrapper.contains(e.target))
-        return;
+    if (wrapper.contains(e.target)) return;
     // Close the dropdown
     wrapper.classList.remove('open');
 });
@@ -211,10 +204,12 @@ function saveCharacter() {
         cha: $('char-save-cha').checked
     };
     // Collect resistances and immunities
-    const resistances = Array.from(document.querySelectorAll('#char-resistances .cf-chip input:checked'))
-        .map(i => i.value);
-    const immunities = Array.from(document.querySelectorAll('#char-immunities .cf-chip input:checked'))
-        .map(i => i.value);
+    const resistances = Array.from(
+        document.querySelectorAll('#char-resistances .cf-chip input:checked')
+    ).map(i => i.value);
+    const immunities = Array.from(
+        document.querySelectorAll('#char-immunities .cf-chip input:checked')
+    ).map(i => i.value);
     const notesEl = $('char-notes');
     const ch = {
         name: $('char-name').value.trim(),
@@ -259,21 +254,23 @@ function saveCharacter() {
     }
     pushUndo(id ? 'Charakter bearbeitet' : 'Charakter erstellt');
     if (id) {
-        const idx = D.characters.findIndex((c) => c.id === parseEntityId(id));
+        const idx = D.characters.findIndex(c => c.id === parseEntityId(id));
         if (idx > -1) {
             // Preserve current slot values when editing
             const existing = D.characters[idx];
             if (existing.spellSlots) {
                 for (let i = 0; i <= 9; i++) {
-                    if (existing.spellSlots[i] && ch.spellSlots[i].max === existing.spellSlots[i].max) {
+                    if (
+                        existing.spellSlots[i] &&
+                        ch.spellSlots[i].max === existing.spellSlots[i].max
+                    ) {
                         ch.spellSlots[i].current = existing.spellSlots[i].current;
                     }
                 }
             }
             D.characters[idx] = { ...D.characters[idx], ...ch };
         }
-    }
-    else {
+    } else {
         ch.id = nextId('characters');
         ch.spells = [];
         ch.items = [];
@@ -289,8 +286,7 @@ function saveCharacter() {
  */
 function editChar(id) {
     const ch = EntityLookup.character(id);
-    if (!ch)
-        return;
+    if (!ch) return;
     $('edit-char-id').value = String(id);
     // Basic info
     $('char-name').value = ch.name || '';
@@ -333,8 +329,7 @@ function editChar(id) {
                 break;
             }
         }
-        if (!found)
-            speedSelect.value = '9m|30ft.';
+        if (!found) speedSelect.value = '9m|30ft.';
         updateSpeedDisplay();
     }
     $('char-hitdice').value = ch.hitDice || '';
@@ -372,11 +367,9 @@ function editChar(id) {
     $('char-km').value = String(cur.km || 0);
     // Avatar and height
     const avatarInput = $('char-avatar');
-    if (avatarInput)
-        avatarInput.value = ch.avatar || '';
+    if (avatarInput) avatarInput.value = ch.avatar || '';
     const heightInput = $('char-height');
-    if (heightInput)
-        heightInput.value = String(ch.height || '');
+    if (heightInput) heightInput.value = String(ch.height || '');
     $('char-form').classList.add('open');
     $('char-form-icon').textContent = '▲';
 }
@@ -386,25 +379,51 @@ function editChar(id) {
 function cancelCharEdit() {
     clearFormFields({
         textFields: [
-            'edit-char-id', 'char-name', 'char-player', 'char-subclass', 'char-background',
-            'char-weight', 'char-height', 'char-hp-cur', 'char-hp-max', 'char-hp-temp',
-            'char-ac', 'char-init', 'char-hitdice', 'char-perception', 'char-avatar',
-            'char-pm', 'char-gm', 'char-em', 'char-sm', 'char-km'
+            'edit-char-id',
+            'char-name',
+            'char-player',
+            'char-subclass',
+            'char-background',
+            'char-weight',
+            'char-height',
+            'char-hp-cur',
+            'char-hp-max',
+            'char-hp-temp',
+            'char-ac',
+            'char-init',
+            'char-hitdice',
+            'char-perception',
+            'char-avatar',
+            'char-pm',
+            'char-gm',
+            'char-em',
+            'char-sm',
+            'char-km'
         ],
         selectFields: [
-            'char-class', 'char-race', 'char-alignment',
+            'char-class',
+            'char-race',
+            'char-alignment',
             { id: 'char-speed', defaultValue: '9m|30ft.' }
         ],
         checkboxFields: [
             'char-inspiration',
-            'char-save-str', 'char-save-dex', 'char-save-con',
-            'char-save-int', 'char-save-wis', 'char-save-cha'
+            'char-save-str',
+            'char-save-dex',
+            'char-save-con',
+            'char-save-int',
+            'char-save-wis',
+            'char-save-cha'
         ],
         contentEditableFields: ['char-notes'],
         defaults: {
             'char-level': '1',
             'char-proficiency': '+2',
-            'char-pm': '0', 'char-gm': '0', 'char-em': '0', 'char-sm': '0', 'char-km': '0'
+            'char-pm': '0',
+            'char-gm': '0',
+            'char-em': '0',
+            'char-sm': '0',
+            'char-km': '0'
         },
         customHandlers: () => {
             updateSpeedDisplay();

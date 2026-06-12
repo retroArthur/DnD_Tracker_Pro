@@ -41,7 +41,9 @@ const SKILLS = {
 // ============================================================
 function rollDiceAnimated(sides) {
     // Animation - support both old .dice-btn and new .dice-die
-    const btn = document.querySelector(`.dice-die.d${sides}`) || document.querySelector(`.dice-btn.d${sides}`);
+    const btn =
+        document.querySelector(`.dice-die.d${sides}`) ||
+        document.querySelector(`.dice-btn.d${sides}`);
     if (btn) {
         btn.classList.add('rolling');
         setTimeout(() => btn.classList.remove('rolling'), window.APP_CONFIG.ANIMATION_SLOW);
@@ -60,17 +62,14 @@ function rollDice(sides) {
 function rollCustomDice() {
     const notationEl = $('dice-notation');
     const multiEl = $('dice-multi');
-    if (!notationEl)
-        return;
+    if (!notationEl) return;
     const notation = notationEl.value.trim();
-    if (!notation)
-        return;
+    if (!notation) return;
     const multiCount = parseInt(multiEl?.value || '1') || 1;
     if (multiCount > 1) {
         // Mehrfachwurf
         rollMultiple(notation, multiCount);
-    }
-    else {
+    } else {
         const result = parseDiceNotation(notation);
         if (result) {
             const isCrit = notation.includes('d20') && result.rolls.includes(20);
@@ -109,14 +108,11 @@ function rerollLast() {
     if (notation.includes('×')) {
         const parts = notation.split('× ');
         rollMultiple(parts[1], parseInt(parts[0]));
-    }
-    else {
+    } else {
         const notationEl = $('dice-notation');
         const multiEl = $('dice-multi');
-        if (notationEl)
-            notationEl.value = notation;
-        if (multiEl)
-            multiEl.value = '1';
+        if (notationEl) notationEl.value = notation;
+        if (multiEl) multiEl.value = '1';
         rollCustomDice();
     }
 }
@@ -139,18 +135,15 @@ function parseDiceNotation(notation) {
     let keptRolls = [...rolls];
     if (keep) {
         const sorted = [...rolls].sort((a, b) => b - a);
-        if (keep.includes('h'))
-            keptRolls = sorted.slice(0, keepCount);
-        else if (keep.includes('l'))
-            keptRolls = sorted.slice(-keepCount);
+        if (keep.includes('h')) keptRolls = sorted.slice(0, keepCount);
+        else if (keep.includes('l')) keptRolls = sorted.slice(-keepCount);
     }
     const total = keptRolls.reduce((a, b) => a + b, 0) + modifier;
     return { total, rolls, keptRolls, modifier };
 }
 function rollAdvantage() {
     const result = parseDiceNotation('2d20kh1');
-    if (!result)
-        return;
+    if (!result) return;
     const isCrit = result.keptRolls[0] === 20;
     const isFail = result.keptRolls[0] === 1;
     lastDiceRoll = { notation: 'Vorteil', total: result.total, rolls: result.rolls };
@@ -159,8 +152,7 @@ function rollAdvantage() {
 }
 function rollDisadvantage() {
     const result = parseDiceNotation('2d20kl1');
-    if (!result)
-        return;
+    if (!result) return;
     const isCrit = result.keptRolls[0] === 20;
     const isFail = result.keptRolls[0] === 1;
     lastDiceRoll = { notation: 'Nachteil', total: result.total, rolls: result.rolls };
@@ -185,8 +177,7 @@ function rollStats() {
 }
 function rollCritDamage() {
     const notationEl = $('dice-notation');
-    if (!notationEl)
-        return;
+    if (!notationEl) return;
     const notation = notationEl.value.trim();
     if (!notation) {
         showToast('Gib zuerst eine Schadensformel ein');
@@ -204,8 +195,18 @@ function rollCritDamage() {
     const critNotation = `${count}d${sides}${modifier}`;
     const result = parseDiceNotation(critNotation);
     if (result) {
-        lastDiceRoll = { notation: `💥 Krit: ${critNotation}`, total: result.total, rolls: result.rolls };
-        displayDiceResult(result.total, `💥 Kritischer Treffer! ${notation} → ${critNotation}`, result.rolls, true, false);
+        lastDiceRoll = {
+            notation: `💥 Krit: ${critNotation}`,
+            total: result.total,
+            rolls: result.rolls
+        };
+        displayDiceResult(
+            result.total,
+            `💥 Kritischer Treffer! ${notation} → ${critNotation}`,
+            result.rolls,
+            true,
+            false
+        );
         addToDiceHistory(`Krit: ${critNotation}`, result.total, result.rolls);
     }
 }
@@ -231,13 +232,11 @@ function rollAttack(withAdvantage = false) {
     let rolls;
     if (withAdvantage) {
         const advResult = parseDiceNotation('2d20kh1');
-        if (!advResult)
-            return;
+        if (!advResult) return;
         result = advResult.keptRolls[0] + bonus;
         rolls = advResult.rolls;
         notation = `2d20kh1+${bonus}`;
-    }
-    else {
+    } else {
         const roll = rollDice(20);
         result = roll + bonus;
         rolls = [roll];
@@ -251,14 +250,11 @@ function rollAttack(withAdvantage = false) {
     let extraHtml = '';
     if (isCrit) {
         extraHtml = `<div class="dice-result-hit">🎯 KRITISCHER TREFFER!</div>`;
-    }
-    else if (isFail) {
+    } else if (isFail) {
         extraHtml = `<div class="dice-result-miss">💨 KRITISCHER FEHLSCHLAG!</div>`;
-    }
-    else if (isHit) {
+    } else if (isHit) {
         extraHtml = `<div class="dice-result-hit">✅ Treffer! (RK ${targetAC})</div>`;
-    }
-    else {
+    } else {
         extraHtml = `<div class="dice-result-miss">❌ Verfehlt (RK ${targetAC})</div>`;
     }
     displayDiceResult(result, `⚔️ Angriff: ${notation}`, rolls, isCrit, isFail, extraHtml);
@@ -280,17 +276,21 @@ function rollSavingThrow() {
     let extraHtml = '';
     if (isCrit) {
         extraHtml = `<div class="dice-result-hit">✨ AUTO-ERFOLG! (Nat 20)</div>`;
-    }
-    else if (isFail) {
+    } else if (isFail) {
         extraHtml = `<div class="dice-result-miss">💀 AUTO-FEHLSCHLAG! (Nat 1)</div>`;
-    }
-    else if (success) {
+    } else if (success) {
         extraHtml = `<div class="dice-result-hit">✅ Erfolg! (DC ${dc})</div>`;
-    }
-    else {
+    } else {
         extraHtml = `<div class="dice-result-miss">❌ Fehlschlag (DC ${dc})</div>`;
     }
-    displayDiceResult(result, `🛡️ ${attr}-Rettungswurf: 1d20${mod >= 0 ? '+' : ''}${mod}`, [roll], isCrit, isFail, extraHtml);
+    displayDiceResult(
+        result,
+        `🛡️ ${attr}-Rettungswurf: 1d20${mod >= 0 ? '+' : ''}${mod}`,
+        [roll],
+        isCrit,
+        isFail,
+        extraHtml
+    );
     addToDiceHistory(`${attr} Save DC${dc}`, result, [roll]);
 }
 function rollGroupPerception() {
@@ -300,21 +300,36 @@ function rollGroupPerception() {
         return;
     }
     const results = [];
-    D.characters.forEach((ch) => {
+    D.characters.forEach(ch => {
         const wis = ch.attributes?.wis || 10;
         const mod = Math.floor((wis - 10) / 2);
-        const profBonus = ch.saveProficiencies?.wis ? (ch.proficiencyBonus || 2) : 0;
+        const profBonus = ch.saveProficiencies?.wis ? ch.proficiencyBonus || 2 : 0;
         const roll = rollDice(20);
         const total = roll + mod + profBonus;
         results.push({ name: ch.name, roll, total, passive: 10 + mod + profBonus });
     });
     const highest = Math.max(...results.map(r => r.total));
-    lastDiceRoll = { notation: 'Gruppen-Wahrnehmung', total: highest, rolls: results.map(r => r.roll) };
+    lastDiceRoll = {
+        notation: 'Gruppen-Wahrnehmung',
+        total: highest,
+        rolls: results.map(r => r.roll)
+    };
     const extraHtml = `<div style="text-align: left; font-size: 0.85em; margin-top: 8px;">
         ${results.map(r => `<div>${r.name}: <strong>${r.total}</strong> (🎲${r.roll}) | Passiv: ${r.passive}</div>`).join('')}
     </div>`;
-    displayDiceResult(`Höchste: ${highest}`, '👁️ Gruppen-Wahrnehmung', results.map(r => r.roll), false, false, extraHtml);
-    addToDiceHistory('Gruppen-Wahr.', `Max: ${highest}`, results.map(r => r.roll));
+    displayDiceResult(
+        `Höchste: ${highest}`,
+        '👁️ Gruppen-Wahrnehmung',
+        results.map(r => r.roll),
+        false,
+        false,
+        extraHtml
+    );
+    addToDiceHistory(
+        'Gruppen-Wahr.',
+        `Max: ${highest}`,
+        results.map(r => r.roll)
+    );
 }
 function displayDiceResult(result, notation, rolls, isCrit, isFail, extraHtml = '') {
     // Try new structure first, fall back to old
@@ -328,8 +343,7 @@ function displayDiceResult(result, notation, rolls, isCrit, isFail, extraHtml = 
         // New compact design
         heroResult.textContent = String(result);
         heroResult.className = '';
-        if (heroFormula)
-            heroFormula.textContent = notation + dmgType;
+        if (heroFormula) heroFormula.textContent = notation + dmgType;
         if (heroBreakdown) {
             const rollsStr = Array.isArray(rolls) ? rolls.join(', ') : rolls;
             heroBreakdown.textContent = `[${rollsStr}]`;
@@ -343,25 +357,23 @@ function displayDiceResult(result, notation, rolls, isCrit, isFail, extraHtml = 
         if (isCrit) {
             heroContainer.classList.add('crit');
             createConfetti(heroContainer);
-        }
-        else if (isFail) {
+        } else if (isFail) {
             heroContainer.classList.add('fail');
         }
         // Animation
         heroContainer.style.transform = 'scale(1.03)';
-        setTimeout(() => heroContainer.style.transform = 'scale(1)', 200);
-    }
-    else {
+        setTimeout(() => (heroContainer.style.transform = 'scale(1)'), 200);
+    } else {
         // Fallback to old structure
         const container = $('dice-result');
-        if (!container)
-            return;
+        if (!container) return;
         const main = container.querySelector('.dice-result-main');
         const detail = container.querySelector('.dice-result-detail');
         const extra = $('dice-result-extra');
         if (main) {
             main.textContent = String(result);
-            main.className = 'dice-result-main' + (isCrit ? ' dice-crit' : '') + (isFail ? ' dice-fail' : '');
+            main.className =
+                'dice-result-main' + (isCrit ? ' dice-crit' : '') + (isFail ? ' dice-fail' : '');
         }
         if (detail) {
             detail.innerHTML = `${notation}${dmgType} → [${Array.isArray(rolls) ? rolls.join(', ') : rolls}]`;
@@ -370,8 +382,7 @@ function displayDiceResult(result, notation, rolls, isCrit, isFail, extraHtml = 
             if (extraHtml) {
                 extra.innerHTML = extraHtml;
                 extra.style.display = 'block';
-            }
-            else {
+            } else {
                 extra.style.display = 'none';
             }
         }
@@ -379,12 +390,11 @@ function displayDiceResult(result, notation, rolls, isCrit, isFail, extraHtml = 
         if (isCrit) {
             container.classList.add('crit-effect');
             createConfetti(container);
-        }
-        else if (isFail) {
+        } else if (isFail) {
             container.classList.add('fail-effect');
         }
         container.style.transform = 'scale(1.05)';
-        setTimeout(() => container.style.transform = 'scale(1)', 200);
+        setTimeout(() => (container.style.transform = 'scale(1)'), 200);
     }
 }
 function createConfetti(container) {
@@ -411,53 +421,59 @@ function createConfetti(container) {
 function toggleDamageType(chip) {
     const wasSelected = chip.classList.contains('selected');
     // Handle both old and new class names
-    document.querySelectorAll('.damage-type-chip, .dmg-chip').forEach(c => c.classList.remove('selected'));
+    document
+        .querySelectorAll('.damage-type-chip, .dmg-chip')
+        .forEach(c => c.classList.remove('selected'));
     if (!wasSelected) {
         chip.classList.add('selected');
         selectedDamageType = chip.dataset.type || null;
-    }
-    else {
+    } else {
         selectedDamageType = null;
     }
 }
 function addToDiceHistory(notation, result, rolls) {
     const dmgType = selectedDamageType ? ` (${selectedDamageType})` : '';
     diceHistory.unshift({ notation: notation + dmgType, result, rolls, time: new Date() });
-    if (diceHistory.length > 30)
-        diceHistory.pop();
+    if (diceHistory.length > 30) diceHistory.pop();
     renderDiceHistory();
 }
 function addToFormulaHistory(formula) {
-    if (!formula || formula.includes('×'))
-        return;
+    if (!formula || formula.includes('×')) return;
     diceFormulaHistory = diceFormulaHistory.filter(f => f !== formula);
     diceFormulaHistory.unshift(formula);
-    if (diceFormulaHistory.length > 8)
-        diceFormulaHistory.pop();
+    if (diceFormulaHistory.length > 8) diceFormulaHistory.pop();
     renderFormulaHistory();
 }
 function renderFormulaHistory() {
     const c = $('dice-formula-history');
-    if (!c)
-        return;
-    c.innerHTML = diceFormulaHistory.map(f => `<span class="dice-formula-chip" data-action="set-dice-formula" data-value="${f}">${f}</span>`).join('');
+    if (!c) return;
+    c.innerHTML = diceFormulaHistory
+        .map(
+            f =>
+                `<span class="dice-formula-chip" data-action="set-dice-formula" data-value="${f}">${f}</span>`
+        )
+        .join('');
 }
 function renderDiceHistory() {
     const c = $('dice-history');
-    if (!c)
-        return;
+    if (!c) return;
     // Reverse to show most recent first, limit to 20 items for horizontal scroll
     const recent = diceHistory.slice(0, 20);
-    c.innerHTML = recent.map(h => {
-        // Extract just the dice notation without labels
-        const cleanNotation = String(h.notation).split(' ')[0].replace(/[⬆️⬇️📊💥🪙⚔️🛡️👁️🎯]/g, '').trim();
-        return `
+    c.innerHTML = recent
+        .map(h => {
+            // Extract just the dice notation without labels
+            const cleanNotation = String(h.notation)
+                .split(' ')[0]
+                .replace(/[⬆️⬇️📊💥🪙⚔️🛡️👁️🎯]/g, '')
+                .trim();
+            return `
             <div class="dice-history-item" data-action="set-dice-history" data-value="${esc(cleanNotation || h.notation)}">
                 <span class="dice-history-notation">${esc(cleanNotation || h.notation)}</span>
                 <span class="dice-history-result">${h.result}</span>
             </div>
         `;
-    }).join('');
+        })
+        .join('');
 }
 function clearDiceHistory() {
     diceHistory = [];
@@ -469,19 +485,20 @@ function clearDiceHistory() {
 // ============================================================
 function updateDiceCharSelect() {
     const select = $('dice-char-select');
-    if (!select)
-        return;
+    if (!select) return;
     const D = window.D;
-    select.innerHTML = '<option value="">— Charakter —</option>' +
-        (D.characters || []).map((ch) => `<option value="${ch.id}">${esc(ch.name)}</option>`).join('');
+    select.innerHTML =
+        '<option value="">— Charakter —</option>' +
+        (D.characters || [])
+            .map(ch => `<option value="${ch.id}">${esc(ch.name)}</option>`)
+            .join('');
 }
 function updateDiceCharStats() {
     const selectEl = $('dice-char-select');
-    if (!selectEl)
-        return;
+    if (!selectEl) return;
     const charId = parseInt(selectEl.value);
     const D = window.D;
-    const ch = D.characters?.find((c) => c.id === charId);
+    const ch = D.characters?.find(c => c.id === charId);
     const attrs = ch?.attributes || { str: 10, dex: 10, con: 10, int: 10, wis: 10, cha: 10 };
     const saves = ch?.saveProficiencies || {};
     const profBonus = ch?.proficiencyBonus || window.getProficiencyBonus(ch?.level || 1);
@@ -490,8 +507,7 @@ function updateDiceCharStats() {
         const val = attrs[attr] || 10;
         const mod = Math.floor((val - 10) / 2);
         const modEl = $(`dice-${attr}-mod`);
-        if (modEl)
-            modEl.textContent = mod >= 0 ? `+${mod}` : `${mod}`;
+        if (modEl) modEl.textContent = mod >= 0 ? `+${mod}` : `${mod}`;
         // Save mods
         const saveMod = mod + (saves[attr] ? profBonus : 0);
         const saveEl = $(`dice-save-${attr}`);
@@ -503,8 +519,7 @@ function updateDiceCharStats() {
 }
 function renderSkillButtons(ch, attrs, profBonus) {
     const grid = $('dice-skill-grid');
-    if (!grid)
-        return;
+    if (!grid) return;
     let html = '';
     Object.entries(SKILLS).forEach(([attr, skills]) => {
         const attrVal = attrs[attr] || 10;
@@ -522,11 +537,10 @@ function renderSkillButtons(ch, attrs, profBonus) {
 }
 function rollAttrCheck(attr) {
     const selectEl = $('dice-char-select');
-    if (!selectEl)
-        return;
+    if (!selectEl) return;
     const charId = parseInt(selectEl.value);
     const D = window.D;
-    const ch = D.characters?.find((c) => c.id === charId);
+    const ch = D.characters?.find(c => c.id === charId);
     const val = ch?.attributes?.[attr] || 10;
     const mod = Math.floor((val - 10) / 2);
     const roll = rollDice(20);
@@ -535,16 +549,21 @@ function rollAttrCheck(attr) {
     const isFail = roll === 1;
     const charName = ch ? `${ch.name}: ` : '';
     lastDiceRoll = { notation: `${attr.toUpperCase()}-Check`, total, rolls: [roll] };
-    displayDiceResult(total, `${charName}${attr.toUpperCase()}-Check (1d20${mod >= 0 ? '+' : ''}${mod})`, [roll], isCrit, isFail);
+    displayDiceResult(
+        total,
+        `${charName}${attr.toUpperCase()}-Check (1d20${mod >= 0 ? '+' : ''}${mod})`,
+        [roll],
+        isCrit,
+        isFail
+    );
     addToDiceHistory(`${charName}${attr.toUpperCase()}`, total, [roll]);
 }
 function rollCharSave(attr) {
     const selectEl = $('dice-char-select');
-    if (!selectEl)
-        return;
+    if (!selectEl) return;
     const charId = parseInt(selectEl.value);
     const D = window.D;
-    const ch = D.characters?.find((c) => c.id === charId);
+    const ch = D.characters?.find(c => c.id === charId);
     const val = ch?.attributes?.[attr] || 10;
     const mod = Math.floor((val - 10) / 2);
     const profBonus = ch?.proficiencyBonus || window.getProficiencyBonus(ch?.level || 1);
@@ -556,32 +575,42 @@ function rollCharSave(attr) {
     const isFail = roll === 1;
     const charName = ch ? `${ch.name}: ` : '';
     lastDiceRoll = { notation: `${attr.toUpperCase()}-Save`, total, rolls: [roll] };
-    displayDiceResult(total, `${charName}${attr.toUpperCase()}-Rettungswurf (1d20${totalMod >= 0 ? '+' : ''}${totalMod})`, [roll], isCrit, isFail);
+    displayDiceResult(
+        total,
+        `${charName}${attr.toUpperCase()}-Rettungswurf (1d20${totalMod >= 0 ? '+' : ''}${totalMod})`,
+        [roll],
+        isCrit,
+        isFail
+    );
     addToDiceHistory(`${charName}${attr.toUpperCase()} Save`, total, [roll]);
 }
 function rollSkillCheck(skill, mod, skillName) {
     const selectEl = $('dice-char-select');
-    if (!selectEl)
-        return;
+    if (!selectEl) return;
     const charId = parseInt(selectEl.value);
     const D = window.D;
-    const ch = D.characters?.find((c) => c.id === charId);
+    const ch = D.characters?.find(c => c.id === charId);
     const roll = rollDice(20);
     const total = roll + mod;
     const isCrit = roll === 20;
     const isFail = roll === 1;
     const charName = ch ? `${ch.name}: ` : '';
     lastDiceRoll = { notation: skillName, total, rolls: [roll] };
-    displayDiceResult(total, `${charName}${skillName} (1d20${mod >= 0 ? '+' : ''}${mod})`, [roll], isCrit, isFail);
+    displayDiceResult(
+        total,
+        `${charName}${skillName} (1d20${mod >= 0 ? '+' : ''}${mod})`,
+        [roll],
+        isCrit,
+        isFail
+    );
     addToDiceHistory(`${charName}${skillName}`, total, [roll]);
 }
 function rollCharInitiative() {
     const selectEl = $('dice-char-select');
-    if (!selectEl)
-        return;
+    if (!selectEl) return;
     const charId = parseInt(selectEl.value);
     const D = window.D;
-    const ch = D.characters?.find((c) => c.id === charId);
+    const ch = D.characters?.find(c => c.id === charId);
     if (!ch) {
         showToast('Wähle zuerst einen Charakter');
         return;
@@ -590,7 +619,13 @@ function rollCharInitiative() {
     const roll = rollDice(20);
     const total = roll + initBonus;
     lastDiceRoll = { notation: 'Initiative', total, rolls: [roll] };
-    displayDiceResult(total, `🎯 ${ch.name}: Initiative (1d20${initBonus >= 0 ? '+' : ''}${initBonus})`, [roll], roll === 20, roll === 1);
+    displayDiceResult(
+        total,
+        `🎯 ${ch.name}: Initiative (1d20${initBonus >= 0 ? '+' : ''}${initBonus})`,
+        [roll],
+        roll === 20,
+        roll === 1
+    );
     addToDiceHistory(`${ch.name} Init`, total, [roll]);
 }
 // ============================================================
@@ -623,8 +658,7 @@ function rollFloatingDice(sides) {
 }
 function rollFloatingAdvantage() {
     const result = parseDiceNotation('2d20kh1');
-    if (!result)
-        return;
+    if (!result) return;
     const isCrit = result.keptRolls[0] === 20;
     const isFail = result.keptRolls[0] === 1;
     updateFloatingResult(result.total, '⬆️ Vorteil', result.rolls, isCrit, isFail);
@@ -637,8 +671,7 @@ function rollFloatingAdvantage() {
 }
 function rollFloatingDisadvantage() {
     const result = parseDiceNotation('2d20kl1');
-    if (!result)
-        return;
+    if (!result) return;
     const isCrit = result.keptRolls[0] === 20;
     const isFail = result.keptRolls[0] === 1;
     updateFloatingResult(result.total, '⬇️ Nachteil', result.rolls, isCrit, isFail);
@@ -651,11 +684,9 @@ function rollFloatingDisadvantage() {
 }
 function rollFloatingCustom() {
     const notationEl = $('fdp-notation');
-    if (!notationEl)
-        return;
+    if (!notationEl) return;
     const notation = notationEl.value.trim();
-    if (!notation)
-        return;
+    if (!notation) return;
     const result = parseDiceNotation(notation);
     if (result) {
         const isCrit = notation.includes('d20') && result.rolls.includes(20);
@@ -677,13 +708,11 @@ function updateFloatingResult(result, formula, rolls, isCrit, isFail) {
     if (resultEl) {
         resultEl.textContent = String(result);
         resultEl.className = 'fdp-number';
-        if (isCrit)
-            resultEl.classList.add('crit');
-        if (isFail)
-            resultEl.classList.add('fail');
+        if (isCrit) resultEl.classList.add('crit');
+        if (isFail) resultEl.classList.add('fail');
         // Pulse animation
         resultEl.style.transform = 'scale(1.1)';
-        setTimeout(() => resultEl.style.transform = 'scale(1)', 200);
+        setTimeout(() => (resultEl.style.transform = 'scale(1)'), 200);
     }
     if (formulaEl) {
         formulaEl.textContent = formula;
@@ -694,45 +723,44 @@ function updateFloatingResult(result, formula, rolls, isCrit, isFail) {
 }
 function addToFloatingHistory(notation, result) {
     floatingDiceHistory.unshift({ notation, result });
-    if (floatingDiceHistory.length > 5)
-        floatingDiceHistory.pop();
+    if (floatingDiceHistory.length > 5) floatingDiceHistory.pop();
     renderFloatingHistory();
 }
 function renderFloatingHistory() {
     const container = $('fdp-history');
-    if (!container)
-        return;
-    container.innerHTML = floatingDiceHistory.map(h => `
+    if (!container) return;
+    container.innerHTML = floatingDiceHistory
+        .map(
+            h => `
         <div class="fdp-history-item" data-action="reroll-floating" data-value="${esc(h.notation)}">
             <span class="fdp-history-result">${h.result}</span>
             <span class="fdp-history-notation">${esc(h.notation)}</span>
         </div>
-    `).join('');
+    `
+        )
+        .join('');
 }
 function rerollFloating(notation) {
     if (notation === 'Vorteil') {
         rollFloatingAdvantage();
-    }
-    else if (notation === 'Nachteil') {
+    } else if (notation === 'Nachteil') {
         rollFloatingDisadvantage();
-    }
-    else {
+    } else {
         const notationEl = $('fdp-notation');
-        if (notationEl)
-            notationEl.value = notation;
+        if (notationEl) notationEl.value = notation;
         rollFloatingCustom();
     }
 }
 function initDiceKeyboardListeners() {
     const mainNotation = $('dice-notation');
     if (mainNotation) {
-        mainNotation.addEventListener('keypress', (e) => {
+        mainNotation.addEventListener('keypress', e => {
             if (e.key === 'Enter') rollCustomDice();
         });
     }
     const floatingNotation = $('fdp-notation');
     if (floatingNotation) {
-        floatingNotation.addEventListener('keypress', (e) => {
+        floatingNotation.addEventListener('keypress', e => {
             if (e.key === 'Enter') rollFloatingCustom();
         });
     }

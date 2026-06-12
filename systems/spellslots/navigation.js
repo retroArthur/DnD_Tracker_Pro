@@ -19,74 +19,69 @@ function switchView(name) {
     // LEGACY SUPPORT: Keep existing special cases for backwards compatibility
     if (name === 'notes') {
         const sessionDate = $('session-date');
-        if (sessionDate)
-            sessionDate.value = new Date().toISOString().split('T')[0];
+        if (sessionDate) sessionDate.value = new Date().toISOString().split('T')[0];
     }
     // NEW: Use tab registry to render content
     const renderTabContent = window.renderTabContent;
-    if (renderTabContent)
-        renderTabContent(name);
+    if (renderTabContent) renderTabContent(name);
     // Mobile: Navigation schließen und Label aktualisieren
     const header = document.querySelector('.app-header');
-    if (header)
-        header.classList.remove('nav-open');
+    if (header) header.classList.remove('nav-open');
     // View-Name in Toggle-Bar aktualisieren
     const toggleText = document.querySelector('.mobile-nav-toggle-text');
     if (toggleText) {
         const viewNames = {
-            'dashboard': '🏠 Start',
-            'party': '👥 Party',
-            'npcs': '🎭 NPCs',
-            'locations': '🏠 Orte',
-            'quests': '📜 Quests',
-            'encounter': '👹 Encounter',
-            'initiative': '⚔️ Initiative',
-            'loot': '📦 Truhe',
-            'shops': '🏪 Shops',
-            'spells': '✨ Zauber',
-            'notes': '📝 Notizen',
-            'wiki': '📚 Wiki',
-            'links': '🔗 Links',
-            'dice': '🎲 Würfel',
-            'timers': '⏱️ Timer',
-            'data': '💾 Daten',
-            'dmscreen': '🎮 DM Screen'
+            dashboard: '🏠 Start',
+            party: '👥 Party',
+            npcs: '🎭 NPCs',
+            locations: '🏠 Orte',
+            quests: '📜 Quests',
+            encounter: '👹 Encounter',
+            initiative: '⚔️ Initiative',
+            loot: '📦 Truhe',
+            shops: '🏪 Shops',
+            spells: '✨ Zauber',
+            notes: '📝 Notizen',
+            wiki: '📚 Wiki',
+            links: '🔗 Links',
+            dice: '🎲 Würfel',
+            timers: '⏱️ Timer',
+            data: '💾 Daten',
+            dmscreen: '🎮 DM Screen'
         };
         toggleText.textContent = viewNames[name] || '📍 Navigation';
     }
 }
 function showModal(id) {
     const modal = $(id);
-    if (modal)
-        modal.classList.add('show');
+    if (modal) modal.classList.add('show');
     const populateSelects = window.populateSelects;
-    if (populateSelects)
-        populateSelects();
+    if (populateSelects) populateSelects();
     if (id === 'timer-preset-modal') {
         const renderPresetList = window.renderPresetList;
-        if (renderPresetList)
-            renderPresetList();
+        if (renderPresetList) renderPresetList();
     }
     if (id === 'quest-modal') {
         const populateQuestSelects = window.populateQuestSelects;
-        if (populateQuestSelects)
-            populateQuestSelects();
+        if (populateQuestSelects) populateQuestSelects();
     }
 }
 function hideModal(id) {
     const modal = $(id);
-    if (modal)
-        modal.classList.remove('show');
+    if (modal) modal.classList.remove('show');
 }
 function toggleCollapse(id) {
     const el = $(id);
     const icon = $(id + '-icon');
     if (el) {
         el.classList.toggle('open');
-        if (icon)
-            icon.textContent = el.classList.contains('open') ? '▲' : '▼';
+        if (icon) icon.textContent = el.classList.contains('open') ? '▲' : '▼';
         // Story-Arc Dropdown aktualisieren wenn Session-Formular geöffnet wird
-        if (id === 'session-form' && el.classList.contains('open') && typeof window.renderStoryArcSelects === 'function') {
+        if (
+            id === 'session-form' &&
+            el.classList.contains('open') &&
+            typeof window.renderStoryArcSelects === 'function'
+        ) {
             window.renderStoryArcSelects();
         }
     }
@@ -94,8 +89,7 @@ function toggleCollapse(id) {
 function showQuickNotesModal() {
     const D = window.D;
     const quickNotes = $('quick-notes');
-    if (quickNotes)
-        quickNotes.value = D.quickNotes || '';
+    if (quickNotes) quickNotes.value = D.quickNotes || '';
     const modal = $('quicknotes-modal');
     if (modal) {
         modal.style.display = 'flex';
@@ -112,11 +106,9 @@ function hideQuickNotesModal() {
 function saveQuickNotes() {
     const D = window.D;
     const quickNotes = $('quick-notes');
-    if (quickNotes)
-        D.quickNotes = quickNotes.value;
+    if (quickNotes) D.quickNotes = quickNotes.value;
     const save = window.save;
-    if (save)
-        save();
+    if (save) save();
     showToast('📝 Notizen gespeichert');
 }
 function populateSelects() {
@@ -125,13 +117,18 @@ function populateSelects() {
     // Location select for NPCs
     const locSel = $('npc-location');
     if (locSel) {
-        locSel.innerHTML = '<option value="">-- Ort --</option>' + (D.locations || []).map((l) => `<option value="${l.id}">${esc(l.name)}</option>`).join('');
+        locSel.innerHTML =
+            '<option value="">-- Ort --</option>' +
+            (D.locations || [])
+                .map(l => `<option value="${l.id}">${esc(l.name)}</option>`)
+                .join('');
     }
     // Filter selects
-    const filterOpts = '<option value="">-- Kein Filter --</option>' + (D.filters || []).map((f) => `<option value="${f.id}">${esc(f.name)}</option>`).join('');
+    const filterOpts =
+        '<option value="">-- Kein Filter --</option>' +
+        (D.filters || []).map(f => `<option value="${f.id}">${esc(f.name)}</option>`).join('');
     ['loc-filter', 'npc-filter'].forEach(id => {
         const select = $(id);
-        if (select)
-            select.innerHTML = filterOpts;
+        if (select) select.innerHTML = filterOpts;
     });
 }

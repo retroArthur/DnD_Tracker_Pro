@@ -20,8 +20,7 @@ const domCache = new Map();
 function $c(id) {
     if (!domCache.has(id)) {
         const el = $(id);
-        if (el)
-            domCache.set(id, el);
+        if (el) domCache.set(id, el);
         return el;
     }
     return domCache.get(id) || null;
@@ -34,8 +33,7 @@ function $c(id) {
 function clearDomCache(id) {
     if (id) {
         domCache.delete(id);
-    }
-    else {
+    } else {
         domCache.clear();
     }
 }
@@ -51,8 +49,7 @@ function clearDomCache(id) {
 function debounce(fn, delay = window.APP_CONFIG?.DEBOUNCE_DELAY || 300) {
     let timeoutId = null;
     return function debounced(...args) {
-        if (timeoutId)
-            clearTimeout(timeoutId);
+        if (timeoutId) clearTimeout(timeoutId);
         timeoutId = setTimeout(() => fn(...args), delay);
     };
 }
@@ -83,8 +80,7 @@ function throttle(fn, limit = window.APP_CONFIG?.THROTTLE_DELAY || 100) {
                     lastThis = null;
                 }
             }, limit);
-        }
-        else {
+        } else {
             // Speichere den letzten Aufruf für später
             lastArgs = args;
             lastThis = this;
@@ -127,8 +123,7 @@ function memoize(fn, maxSize = 100) {
  * chunkArray([1,2,3,4,5], 2) // [[1,2], [3,4], [5]]
  */
 function chunkArray(array, size) {
-    if (!Array.isArray(array) || size < 1)
-        return [array];
+    if (!Array.isArray(array) || size < 1) return [array];
     const chunks = [];
     for (let i = 0; i < array.length; i += size) {
         chunks.push(array.slice(i, i + size));
@@ -147,8 +142,7 @@ function chunkArray(array, size) {
  * parseEntityId(null)    // null
  */
 function parseEntityId(id) {
-    if (id === null || id === undefined)
-        return null;
+    if (id === null || id === undefined) return null;
     const numId = typeof id === 'number' ? id : parseInt(id, 10);
     return isNaN(numId) ? null : numId;
 }
@@ -175,8 +169,7 @@ function withErrorBoundary(fn, context = 'Operation') {
                 });
             }
             return result;
-        }
-        catch (error) {
+        } catch (error) {
             window.ErrorHandler?.log('safeExecute', error, context);
             showToast(`❌ Fehler: ${context}`, 'error');
             return null;
@@ -190,13 +183,10 @@ function withErrorBoundary(fn, context = 'Operation') {
  */
 function nextId(type) {
     const D = window.D;
-    if (!D._nextId)
-        D._nextId = {};
+    if (!D._nextId) D._nextId = {};
     if (!D._nextId[type]) {
         const items = D[type] || [];
-        const maxId = items.length > 0
-            ? Math.max(...items.map((i) => i.id || 0))
-            : 0;
+        const maxId = items.length > 0 ? Math.max(...items.map(i => i.id || 0)) : 0;
         D._nextId[type] = maxId + 1;
     }
     return D._nextId[type]++;
@@ -208,30 +198,41 @@ function nextId(type) {
  */
 function validateAndRepairNextId() {
     const D = window.D;
-    if (!D._nextId)
-        D._nextId = {};
+    if (!D._nextId) D._nextId = {};
     const repairs = [];
     const entityTypes = [
-        'characters', 'npcs', 'locations', 'quests', 'encounters',
-        'spells', 'loot', 'items', 'wiki', 'sessionNotes', 'randomTables'
+        'characters',
+        'npcs',
+        'locations',
+        'quests',
+        'encounters',
+        'spells',
+        'loot',
+        'items',
+        'wiki',
+        'sessionNotes',
+        'randomTables'
     ];
     entityTypes.forEach(type => {
-        if (!Array.isArray(D[type]))
-            return;
+        if (!Array.isArray(D[type])) return;
         // Calculate correct next ID
-        const maxId = D[type].length > 0
-            ? Math.max(...D[type].map((i) => i.id || 0))
-            : 0;
+        const maxId = D[type].length > 0 ? Math.max(...D[type].map(i => i.id || 0)) : 0;
         const correctNextId = maxId + 1;
         // Check if current _nextId is valid
         if (!D._nextId[type] || D._nextId[type] <= maxId) {
-            repairs.push(`${type}: _nextId was ${D._nextId[type] || 'undefined'}, ` +
-                `corrected to ${correctNextId} (max ID in array: ${maxId})`);
+            repairs.push(
+                `${type}: _nextId was ${D._nextId[type] || 'undefined'}, ` +
+                    `corrected to ${correctNextId} (max ID in array: ${maxId})`
+            );
             D._nextId[type] = correctNextId;
         }
     });
     if (repairs.length > 0 && window.APP_CONFIG?.DEBUG_MODE) {
-        window.ErrorHandler?.log('validateAndRepairNextId', new Error('ID repairs performed'), repairs.join('; '));
+        window.ErrorHandler?.log(
+            'validateAndRepairNextId',
+            new Error('ID repairs performed'),
+            repairs.join('; ')
+        );
     }
     return { valid: repairs.length === 0, repairs };
 }
@@ -244,8 +245,7 @@ function validateAndRepairNextId() {
 function formatDate(date, options = { year: 'numeric', month: 'short', day: 'numeric' }) {
     try {
         return new Date(date).toLocaleDateString('de-DE', options);
-    }
-    catch {
+    } catch {
         return String(date);
     }
 }
@@ -255,10 +255,13 @@ function formatDate(date, options = { year: 'numeric', month: 'short', day: 'num
  * @param type - Nachrichtentyp
  * @param duration - Anzeigedauer in ms (Standard: APP_CONFIG.TOAST_DURATION)
  */
-function showToast(msg = '✓ Gespeichert', type = 'success', duration = window.APP_CONFIG?.TOAST_DURATION || 2000) {
+function showToast(
+    msg = '✓ Gespeichert',
+    type = 'success',
+    duration = window.APP_CONFIG?.TOAST_DURATION || 2000
+) {
     const log = $('event-log');
-    if (!log)
-        return;
+    if (!log) return;
     // Icons für verschiedene Typen
     const icons = {
         success: '✓',
@@ -268,7 +271,11 @@ function showToast(msg = '✓ Gespeichert', type = 'success', duration = window.
     };
     // Zeitstempel formatieren
     const now = new Date();
-    const timeStr = now.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    const timeStr = now.toLocaleTimeString('de-DE', {
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit'
+    });
     // Entry erstellen
     const entry = document.createElement('div');
     entry.className = `event-log-entry ${type}`;
@@ -287,11 +294,9 @@ function showToast(msg = '✓ Gespeichert', type = 'success', duration = window.
     const header = log.querySelector('.event-log-header');
     if (header && header.nextSibling) {
         log.insertBefore(entry, header.nextSibling);
-    }
-    else if (header) {
+    } else if (header) {
         log.appendChild(entry);
-    }
-    else {
+    } else {
         log.insertBefore(entry, log.firstChild);
     }
     // Im persistenten Modus: mehr Einträge behalten
@@ -314,7 +319,8 @@ function showToast(msg = '✓ Gespeichert', type = 'success', duration = window.
     if (!toast) {
         toast = document.createElement('div');
         toast.id = 'toast';
-        toast.style.cssText = 'position:fixed;top:20px;left:50%;transform:translateX(-50%);z-index:10000;padding:12px 24px;border-radius:8px;font-family:sans-serif;font-size:14px;box-shadow:0 4px 12px rgba(0,0,0,0.15);';
+        toast.style.cssText =
+            'position:fixed;top:20px;left:50%;transform:translateX(-50%);z-index:10000;padding:12px 24px;border-radius:8px;font-family:sans-serif;font-size:14px;box-shadow:0 4px 12px rgba(0,0,0,0.15);';
         document.body.appendChild(toast);
     }
     toast.textContent = msg;
@@ -331,8 +337,7 @@ function showToast(msg = '✓ Gespeichert', type = 'success', duration = window.
     toast.style.color = '#ffffff';
     if (!isPersistent) {
         setTimeout(() => {
-            if (toast)
-                toast.style.display = 'none';
+            if (toast) toast.style.display = 'none';
         }, duration);
     }
 }
@@ -341,8 +346,7 @@ function showToast(msg = '✓ Gespeichert', type = 'success', duration = window.
  */
 function toggleEventLog() {
     const log = $('event-log');
-    if (!log)
-        return;
+    if (!log) return;
     log.classList.toggle('persistent');
 }
 /**
@@ -350,8 +354,7 @@ function toggleEventLog() {
  */
 function clearEventLog() {
     const log = $('event-log');
-    if (!log)
-        return;
+    if (!log) return;
     const entries = log.querySelectorAll('.event-log-entry');
     entries.forEach(e => e.remove());
 }
@@ -361,14 +364,10 @@ function clearEventLog() {
  * @returns True wenn null, undefined, leerer String, leeres Array oder leeres Objekt
  */
 function isEmpty(value) {
-    if (value == null)
-        return true;
-    if (typeof value === 'string')
-        return value.trim() === '';
-    if (Array.isArray(value))
-        return value.length === 0;
-    if (typeof value === 'object')
-        return Object.keys(value).length === 0;
+    if (value == null) return true;
+    if (typeof value === 'string') return value.trim() === '';
+    if (Array.isArray(value)) return value.length === 0;
+    if (typeof value === 'object') return Object.keys(value).length === 0;
     return false;
 }
 /**
@@ -377,14 +376,12 @@ function isEmpty(value) {
  * @returns Tiefe Kopie des Objekts
  */
 function deepClone(obj) {
-    if (obj === null || typeof obj !== 'object')
-        return obj;
+    if (obj === null || typeof obj !== 'object') return obj;
     // Nutze structuredClone wenn verfügbar (moderne Browser)
     if (typeof structuredClone === 'function') {
         try {
             return structuredClone(obj);
-        }
-        catch {
+        } catch {
             // Fallback für nicht-klonbare Objekte
         }
     }
@@ -426,8 +423,8 @@ function generateId() {
     }
     // Fallback für ältere Browser
     return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
-        const r = Math.random() * 16 | 0;
-        const v = c === 'x' ? r : (r & 0x3 | 0x8);
+        const r = (Math.random() * 16) | 0;
+        const v = c === 'x' ? r : (r & 0x3) | 0x8;
         return v.toString(16);
     });
 }

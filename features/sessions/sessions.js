@@ -9,21 +9,21 @@ const activeTagFilters = [];
 // ============================================================
 function getStoryArcs() {
     const D = window.D;
-    if (!D.storyArcs)
-        D.storyArcs = [];
+    if (!D.storyArcs) D.storyArcs = [];
     return D.storyArcs;
 }
 function renderStoryArcSelects() {
     const arcs = getStoryArcs();
-    const options = '<option value="">— Kein Arc —</option>' +
-        arcs.map((a) => `<option value="${a.id}">${esc(a.name)}</option>`).join('');
+    const options =
+        '<option value="">— Kein Arc —</option>' +
+        arcs.map(a => `<option value="${a.id}">${esc(a.name)}</option>`).join('');
     const sessionArc = $('session-arc');
     const filterArc = $('filter-session-arc');
-    if (sessionArc)
-        sessionArc.innerHTML = options;
+    if (sessionArc) sessionArc.innerHTML = options;
     if (filterArc)
-        filterArc.innerHTML = '<option value="">Alle</option>' +
-            arcs.map((a) => `<option value="${a.id}">${esc(a.name)}</option>`).join('');
+        filterArc.innerHTML =
+            '<option value="">Alle</option>' +
+            arcs.map(a => `<option value="${a.id}">${esc(a.name)}</option>`).join('');
 }
 function manageStoryArcs() {
     renderStoryArcList();
@@ -31,25 +31,29 @@ function manageStoryArcs() {
 }
 function renderStoryArcList() {
     const container = $('story-arc-list');
-    if (!container)
-        return;
+    if (!container) return;
     const arcs = getStoryArcs();
     if (arcs.length === 0) {
-        container.innerHTML = '<div style="color: var(--text-dim); font-size: 0.9em;">Keine Arcs vorhanden</div>';
+        container.innerHTML =
+            '<div style="color: var(--text-dim); font-size: 0.9em;">Keine Arcs vorhanden</div>';
         return;
     }
-    container.innerHTML = arcs.map((a) => `
+    container.innerHTML = arcs
+        .map(
+            a => `
         <div class="story-arc-item" style="display: flex; align-items: center; gap: 8px; padding: 8px; background: var(--bg-dark); border-radius: 4px; margin-bottom: 4px;">
             <span style="width: 16px; height: 16px; background: ${a.color || 'var(--gold)'}; border-radius: 3px;"></span>
             <span style="flex: 1; color: var(--text);">${esc(a.name)}</span>
             <span style="color: var(--text-dim); font-size: 0.8em;">${countSessionsInArc(a.id)} Sessions</span>
             <button class="btn btn-sm btn-danger" data-action="delete-story-arc" data-id="${a.id}" title="Löschen">🗑️</button>
         </div>
-    `).join('');
+    `
+        )
+        .join('');
 }
 function countSessionsInArc(arcId) {
     const D = window.D;
-    return (D.sessionNotes || []).filter((n) => n.arcId === arcId).length;
+    return (D.sessionNotes || []).filter(n => n.arcId === arcId).length;
 }
 function addStoryArc() {
     const nameInput = $('new-arc-name');
@@ -67,24 +71,21 @@ function addStoryArc() {
         color: color,
         order: arcs.length
     });
-    if (nameInput)
-        nameInput.value = '';
+    if (nameInput) nameInput.value = '';
     save();
     renderStoryArcList();
     renderStoryArcSelects();
     showToast('📚 Arc erstellt');
 }
 function deleteStoryArc(id) {
-    if (!confirm('Arc löschen? Sessions bleiben erhalten.'))
-        return;
+    if (!confirm('Arc löschen? Sessions bleiben erhalten.')) return;
     const D = window.D;
     const numId = typeof id === 'string' ? parseInt(id) : id;
     pushUndo('Story Arc gelöscht');
-    D.storyArcs = D.storyArcs.filter((a) => a.id !== numId);
+    D.storyArcs = D.storyArcs.filter(a => a.id !== numId);
     // Sessions von diesem Arc lösen
-    (D.sessionNotes || []).forEach((n) => {
-        if (n.arcId === numId)
-            n.arcId = null;
+    (D.sessionNotes || []).forEach(n => {
+        if (n.arcId === numId) n.arcId = null;
     });
     save();
     renderStoryArcList();
@@ -97,33 +98,36 @@ function deleteStoryArc(id) {
 function getAllSessionTags() {
     const D = window.D;
     const tags = new Set();
-    (D.sessionNotes || []).forEach((n) => {
-        (n.tags || []).forEach((t) => tags.add(t));
+    (D.sessionNotes || []).forEach(n => {
+        (n.tags || []).forEach(t => tags.add(t));
     });
     return Array.from(tags).sort();
 }
 function renderSessionTagFilters() {
     const container = $('filter-session-tags');
-    if (!container)
-        return;
+    if (!container) return;
     const allTags = getAllSessionTags();
     if (allTags.length === 0) {
-        container.innerHTML = '<span style="color: var(--text-dim); font-size: 0.8em;">Keine Tags</span>';
+        container.innerHTML =
+            '<span style="color: var(--text-dim); font-size: 0.8em;">Keine Tags</span>';
         return;
     }
-    container.innerHTML = allTags.map(tag => `
+    container.innerHTML = allTags
+        .map(
+            tag => `
         <button class="session-filter-tag ${activeTagFilters.includes(tag) ? 'active' : ''}"
                 data-action="toggle-session-tag-filter" data-value="${esc(tag)}">
             ${esc(tag)}
         </button>
-    `).join('');
+    `
+        )
+        .join('');
 }
 function toggleSessionTagFilter(tag) {
     const idx = activeTagFilters.indexOf(tag);
     if (idx > -1) {
         activeTagFilters.splice(idx, 1);
-    }
-    else {
+    } else {
         activeTagFilters.push(tag);
     }
     renderSessionTagFilters();
@@ -131,24 +135,28 @@ function toggleSessionTagFilter(tag) {
 }
 function renderCurrentSessionTags() {
     const container = $('session-tags-container');
-    if (!container)
-        return;
-    container.innerHTML = currentSessionTags.map(tag => `
+    if (!container) return;
+    container.innerHTML = currentSessionTags
+        .map(
+            tag => `
         <span class="session-tag">
             ${esc(tag)}
             <span class="session-tag-remove" data-action="remove-session-tag" data-value="${esc(tag)}">×</span>
         </span>
-    `).join('');
+    `
+        )
+        .join('');
 }
 function addSessionTag(tag) {
-    tag = tag.toLowerCase().trim().replace(/[^a-zäöüß0-9-]/g, '');
-    if (!tag || currentSessionTags.includes(tag))
-        return;
+    tag = tag
+        .toLowerCase()
+        .trim()
+        .replace(/[^a-zäöüß0-9-]/g, '');
+    if (!tag || currentSessionTags.includes(tag)) return;
     currentSessionTags.push(tag);
     renderCurrentSessionTags();
     const tagInput = $('session-tags-input');
-    if (tagInput)
-        tagInput.value = '';
+    if (tagInput) tagInput.value = '';
 }
 function removeSessionTag(tag) {
     currentSessionTags = currentSessionTags.filter(t => t !== tag);
@@ -162,9 +170,8 @@ function addPresetTag(tag) {
 function getNextSessionNumber() {
     const D = window.D;
     const sessions = D.sessionNotes || [];
-    if (sessions.length === 0)
-        return 1;
-    const maxNum = Math.max(...sessions.map((s) => s.number || 0));
+    if (sessions.length === 0) return 1;
+    const maxNum = Math.max(...sessions.map(s => s.number || 0));
     return maxNum + 1;
 }
 // RENDER SESSIONS
@@ -173,8 +180,7 @@ function renderSessions() {
     const D = window.D;
     const renderEmptyState = window.renderEmptyState;
     const c = $('session-list');
-    if (!c)
-        return;
+    if (!c) return;
     const searchInput = $('notes-search');
     const arcFilterInput = $('filter-session-arc');
     const search = (searchInput?.value || '').toLowerCase();
@@ -188,8 +194,13 @@ function renderSessions() {
             const name = (n.name || '').toLowerCase();
             const summary = (n.summary || '').toLowerCase();
             const tags = (n.tags || []).join(' ').toLowerCase();
-            return content.includes(search) || date.includes(search) ||
-                name.includes(search) || summary.includes(search) || tags.includes(search);
+            return (
+                content.includes(search) ||
+                date.includes(search) ||
+                name.includes(search) ||
+                summary.includes(search) ||
+                tags.includes(search)
+            );
         });
     }
     // Arc-Filter anwenden
@@ -227,23 +238,22 @@ function renderSessions() {
         const noArc = [];
         notes.forEach(n => {
             if (n.arcId) {
-                if (!grouped[n.arcId])
-                    grouped[n.arcId] = [];
+                if (!grouped[n.arcId]) grouped[n.arcId] = [];
                 grouped[n.arcId].push(n);
-            }
-            else {
+            } else {
                 noArc.push(n);
             }
         });
         // Sortieren innerhalb der Gruppen
-        Object.values(grouped).forEach(arr => arr.sort((a, b) => (b.number || 0) - (a.number || 0)));
+        Object.values(grouped).forEach(arr =>
+            arr.sort((a, b) => (b.number || 0) - (a.number || 0))
+        );
         noArc.sort((a, b) => (b.number || 0) - (a.number || 0));
         let html = '';
         // Arcs rendern
-        arcs.forEach((arc) => {
+        arcs.forEach(arc => {
             const arcNotes = grouped[arc.id] || [];
-            if (arcNotes.length === 0)
-                return;
+            if (arcNotes.length === 0) return;
             html += `
                 <div class="session-arc-group">
                     <div class="session-arc-header" data-action="toggle-arc-group" data-id="${arc.id}">
@@ -275,15 +285,16 @@ function renderSessions() {
             `;
         }
         c.innerHTML = html;
-    }
-    else {
+    } else {
         // Flache Liste (nach Nummer sortiert)
         notes.sort((a, b) => (b.number || 0) - (a.number || 0));
         c.innerHTML = notes.map(n => renderSessionCard(n)).join('');
     }
 }
 function renderSessionCard(n) {
-    const tagsHtml = (n.tags || []).map((t) => `<span class="session-tag" style="font-size: 0.75em;">${esc(t)}</span>`).join('');
+    const tagsHtml = (n.tags || [])
+        .map(t => `<span class="session-tag" style="font-size: 0.75em;">${esc(t)}</span>`)
+        .join('');
     return `
         <div class="session-card">
             <div class="session-card-header">
@@ -347,20 +358,31 @@ function saveSession() {
     }
     if (editId) {
         // Bearbeiten
-        const idx = D.sessionNotes.findIndex((n) => n.id === parseInt(editId));
+        const idx = D.sessionNotes.findIndex(n => n.id === parseInt(editId));
         if (idx > -1) {
             D.sessionNotes[idx] = {
                 ...D.sessionNotes[idx],
-                number, name, date, arcId, summary, tags, content
+                number,
+                name,
+                date,
+                arcId,
+                summary,
+                tags,
+                content
             };
             showToast('Notiz aktualisiert');
         }
-    }
-    else {
+    } else {
         // Neu erstellen
         D.sessionNotes.push({
             id: nextId('sessionNotes'),
-            number, name, date, arcId, summary, tags, content
+            number,
+            name,
+            date,
+            arcId,
+            summary,
+            tags,
+            content
         });
         showToast('Notiz gespeichert');
     }
@@ -371,8 +393,7 @@ function saveSession() {
 }
 function editSession(id) {
     const note = EntityLookup.sessionNote(id);
-    if (!note)
-        return;
+    if (!note) return;
     // Arc-Dropdown aktualisieren bevor Wert gesetzt wird
     renderStoryArcSelects();
     const editIdInput = $('edit-session-id');
@@ -382,36 +403,25 @@ function editSession(id) {
     const arcInput = $('session-arc');
     const summaryInput = $('session-summary');
     const textInput = $('session-text');
-    if (editIdInput)
-        editIdInput.value = String(id);
-    if (numberInput)
-        numberInput.value = String(note.number || '');
-    if (nameInput)
-        nameInput.value = note.name || '';
-    if (dateInput)
-        dateInput.value = note.date || '';
-    if (arcInput)
-        arcInput.value = String(note.arcId || '');
-    if (summaryInput)
-        summaryInput.value = note.summary || '';
-    if (textInput)
-        textInput.innerHTML = sanitizeHTML(note.content) || '';
+    if (editIdInput) editIdInput.value = String(id);
+    if (numberInput) numberInput.value = String(note.number || '');
+    if (nameInput) nameInput.value = note.name || '';
+    if (dateInput) dateInput.value = note.date || '';
+    if (arcInput) arcInput.value = String(note.arcId || '');
+    if (summaryInput) summaryInput.value = note.summary || '';
+    if (textInput) textInput.innerHTML = sanitizeHTML(note.content) || '';
     // Tags laden
     currentSessionTags = [...(note.tags || [])];
     renderCurrentSessionTags();
     const formTitle = $('session-form-title');
-    if (formTitle)
-        formTitle.textContent = '✏️ Notiz bearbeiten';
+    if (formTitle) formTitle.textContent = '✏️ Notiz bearbeiten';
     // Formular aufklappen
     const form = $('session-form');
     const formIcon = $('session-form-icon');
-    if (form)
-        form.classList.add('open');
-    if (formIcon)
-        formIcon.textContent = '▲';
+    if (form) form.classList.add('open');
+    if (formIcon) formIcon.textContent = '▲';
     // Zum Formular scrollen
-    if (form)
-        form.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    if (form) form.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 function cancelSessionEdit() {
     const editIdInput = $('edit-session-id');
@@ -421,42 +431,31 @@ function cancelSessionEdit() {
     const arcInput = $('session-arc');
     const summaryInput = $('session-summary');
     const textInput = $('session-text');
-    if (editIdInput)
-        editIdInput.value = '';
-    if (numberInput)
-        numberInput.value = '';
-    if (nameInput)
-        nameInput.value = '';
-    if (dateInput)
-        dateInput.value = '';
-    if (arcInput)
-        arcInput.value = '';
-    if (summaryInput)
-        summaryInput.value = '';
-    if (textInput)
-        textInput.innerHTML = '';
+    if (editIdInput) editIdInput.value = '';
+    if (numberInput) numberInput.value = '';
+    if (nameInput) nameInput.value = '';
+    if (dateInput) dateInput.value = '';
+    if (arcInput) arcInput.value = '';
+    if (summaryInput) summaryInput.value = '';
+    if (textInput) textInput.innerHTML = '';
     currentSessionTags = [];
     renderCurrentSessionTags();
     const formTitle = $('session-form-title');
-    if (formTitle)
-        formTitle.textContent = '+ Neue Session-Notiz';
+    if (formTitle) formTitle.textContent = '+ Neue Session-Notiz';
     // Formular einklappen
     const form = $('session-form');
     const formIcon = $('session-form-icon');
-    if (form)
-        form.classList.remove('open');
-    if (formIcon)
-        formIcon.textContent = '▼';
+    if (form) form.classList.remove('open');
+    if (formIcon) formIcon.textContent = '▼';
     // Nächste Session-Nummer vorausfüllen
-    if (numberInput)
-        numberInput.placeholder = String(getNextSessionNumber());
+    if (numberInput) numberInput.placeholder = String(getNextSessionNumber());
 }
 function deleteSession(id) {
     if (confirm('Session löschen?')) {
         const D = window.D;
         const numId = typeof id === 'string' ? parseInt(id) : id;
         pushUndo('Session gelöscht');
-        D.sessionNotes = D.sessionNotes.filter((n) => n.id !== numId);
+        D.sessionNotes = D.sessionNotes.filter(n => n.id !== numId);
         renderSessions();
         save();
     }
@@ -469,7 +468,7 @@ function initSessionsEnhanced() {
     // Tag-Input Event
     const tagInput = $('session-tags-input');
     if (tagInput) {
-        tagInput.addEventListener('keydown', (e) => {
+        tagInput.addEventListener('keydown', e => {
             if (e.key === 'Enter') {
                 e.preventDefault();
                 addSessionTag(tagInput.value);
@@ -485,8 +484,7 @@ function initSessionsEnhanced() {
 // Auto-Init wenn DOM bereit
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', initSessionsEnhanced);
-}
-else {
+} else {
     setTimeout(initSessionsEnhanced, 100);
 }
 // ============================================================

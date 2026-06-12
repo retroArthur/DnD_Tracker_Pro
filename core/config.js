@@ -48,7 +48,7 @@ const APP_CONFIG = Object.freeze({
     // D&D Spezifisch
     MAX_LEVEL: 20,
     ATTRIBUTE_MIN: 1,
-    ATTRIBUTE_MAX: 30,
+    ATTRIBUTE_MAX: 30
 });
 
 // Export to global scope

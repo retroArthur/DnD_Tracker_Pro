@@ -3,7 +3,8 @@ import { defineConfig, devices } from '@playwright/test';
 
 // Smoke-Config: in CI gegen lokalen HTTP-Server (SMOKE_BASE_URL gesetzt),
 // lokal Fallback auf file://-Doppelklick-Pfad (dev-Bundle).
-const BASE_URL = process.env.SMOKE_BASE_URL ||
+const BASE_URL =
+    process.env.SMOKE_BASE_URL ||
     `file:///${process.cwd().replace(/\\/g, '/')}/dist/dnd-tracker-bundled.html`;
 
 export default defineConfig({
@@ -19,10 +20,8 @@ export default defineConfig({
     use: {
         baseURL: BASE_URL,
         screenshot: 'only-on-failure',
-        trace: 'retain-on-failure',
+        trace: 'retain-on-failure'
     },
-    projects: [
-        { name: 'chromium', use: { ...devices['Desktop Chrome'] } },
-    ],
-    outputDir: 'tests/e2e/test-results-smoke',
+    projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
+    outputDir: 'tests/e2e/test-results-smoke'
 });

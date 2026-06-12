@@ -24,7 +24,7 @@ var DEFAULT_DMSCREEN_LAYOUT = {
  * Vordefinierte Layout-Profile
  */
 var DEFAULT_DMSCREEN_PROFILES = {
-    'standard': {
+    standard: {
         name: 'Standard',
         icon: '📋',
         widgets: [
@@ -38,7 +38,7 @@ var DEFAULT_DMSCREEN_PROFILES = {
             { id: 'session-notes', type: 'notes', visible: true }
         ]
     },
-    'kampf': {
+    kampf: {
         name: 'Kampf',
         icon: '⚔️',
         widgets: [
@@ -55,7 +55,7 @@ var DEFAULT_DMSCREEN_PROFILES = {
             { id: 'session-notes', type: 'notes', visible: false }
         ]
     },
-    'minimal': {
+    minimal: {
         name: 'Minimal',
         icon: '📌',
         widgets: [
@@ -69,7 +69,7 @@ var DEFAULT_DMSCREEN_PROFILES = {
             { id: 'session-notes', type: 'notes', visible: false }
         ]
     },
-    'referenz': {
+    referenz: {
         name: 'Referenz',
         icon: '📚',
         widgets: [
@@ -108,8 +108,7 @@ function isDMScreenVisible() {
  * Aktualisiert den DM Screen wenn sichtbar (debounced)
  */
 function refreshDMScreenIfVisible() {
-    if (!isDMScreenVisible())
-        return;
+    if (!isDMScreenVisible()) return;
     // Debounce: Verhindert zu häufige Updates
     if (dmsLiveSyncTimer) {
         clearTimeout(dmsLiveSyncTimer);
@@ -124,25 +123,26 @@ function refreshDMScreenIfVisible() {
  * Schneller als vollständiges renderDMScreen()
  */
 function renderDMScreenWidgetsOnly() {
-    if (!isDMScreenVisible())
-        return;
+    if (!isDMScreenVisible()) return;
     const widgetDefs = getDMScreenWidgets();
     const allWidgets = D.dmScreenLayout?.widgets || [];
     // Update nur sichtbare Grid-Widgets
-    allWidgets.filter((w) => w.visible).forEach((widget) => {
-        const def = widgetDefs[widget.type];
-        if (!def || def.compact)
-            return; // Skip compact widgets
-        const widgetEl = document.querySelector(`[data-widget-id="${widget.id}"] .dmscreen-widget-body`);
-        if (widgetEl) {
-            try {
-                widgetEl.innerHTML = def.render();
+    allWidgets
+        .filter(w => w.visible)
+        .forEach(widget => {
+            const def = widgetDefs[widget.type];
+            if (!def || def.compact) return; // Skip compact widgets
+            const widgetEl = document.querySelector(
+                `[data-widget-id="${widget.id}"] .dmscreen-widget-body`
+            );
+            if (widgetEl) {
+                try {
+                    widgetEl.innerHTML = def.render();
+                } catch (err) {
+                    ErrorHandler.log('updateDMScreenWidget', err, `Error updating ${widget.type}`);
+                }
             }
-            catch (err) {
-                ErrorHandler.log('updateDMScreenWidget', err, `Error updating ${widget.type}`);
-            }
-        }
-    });
+        });
 }
 /**
  * Hook: Wird bei jedem window.save() aufgerufen
@@ -161,8 +161,7 @@ function setupDMScreenLiveSync() {
 // Live-Sync beim Laden aktivieren
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', setupDMScreenLiveSync);
-}
-else {
+} else {
     // Verzögert ausführen um sicherzustellen dass window.save() definiert ist
     setTimeout(setupDMScreenLiveSync, 100);
 }
@@ -221,8 +220,7 @@ function switchDMSProfile(profileId) {
  */
 function saveDMSProfileAs() {
     const name = prompt('Profilname eingeben:');
-    if (!name || !name.trim())
-        return;
+    if (!name || !name.trim()) return;
     const id = 'custom_' + Date.now();
     D.dmScreenProfiles[id] = {
         name: name.trim(),
@@ -243,8 +241,7 @@ function deleteDMSProfile(profileId) {
         return;
     }
     const profile = D.dmScreenProfiles[profileId];
-    if (!profile)
-        return;
+    if (!profile) return;
     if (confirm(`Profil "${profile.name}" löschen?`)) {
         delete D.dmScreenProfiles[profileId];
         if (D.dmScreenActiveProfile === profileId) {
@@ -273,8 +270,7 @@ function toggleDMSProfileDropdown() {
  */
 function renderDMSProfileList() {
     const list = $('dms-profile-list');
-    if (!list)
-        return;
+    if (!list) return;
     const activeId = D.dmScreenActiveProfile || 'standard';
     // Preset profiles
     let html = '<div class="dms-profile-section">Standard</div>';
@@ -323,46 +319,55 @@ function renderDMScreen() {
     const quickBar = $('dms-quick-bar');
     if (!grid) {
         if (APP_CONFIG.DEBUG_MODE) {
-            ErrorHandler.log('renderDMScreen', new Error('Grid element not found'), 'DOM element missing');
+            ErrorHandler.log(
+                'renderDMScreen',
+                new Error('Grid element not found'),
+                'DOM element missing'
+            );
         }
         return;
     }
     // Enable EntityLookup cache for performance during widget rendering
     EntityLookup.enableCache();
-    const allWidgets = D.dmScreenLayout.widgets.filter((w) => w.visible);
+    const allWidgets = D.dmScreenLayout.widgets.filter(w => w.visible);
     const widgetDefs = getDMScreenWidgets();
     // Separate compact (Quick Bar) and regular (Grid) widgets
-    const compactWidgets = allWidgets.filter((w) => {
+    const compactWidgets = allWidgets.filter(w => {
         const def = widgetDefs[w.type];
         return def && def.compact === true;
     });
-    const gridWidgets = allWidgets.filter((w) => {
+    const gridWidgets = allWidgets.filter(w => {
         const def = widgetDefs[w.type];
         return def && def.compact !== true;
     });
     // Render Quick Bar (compact widgets)
     if (quickBar) {
         if (compactWidgets.length > 0) {
-            quickBar.innerHTML = compactWidgets.map((widget) => {
-                const def = widgetDefs[widget.type];
-                try {
-                    return def.render();
-                }
-                catch (err) {
-                    ErrorHandler.log('renderDMScreen', err, `Error rendering compact widget ${widget.type}`);
-                    return '';
-                }
-            }).join('');
+            quickBar.innerHTML = compactWidgets
+                .map(widget => {
+                    const def = widgetDefs[widget.type];
+                    try {
+                        return def.render();
+                    } catch (err) {
+                        ErrorHandler.log(
+                            'renderDMScreen',
+                            err,
+                            `Error rendering compact widget ${widget.type}`
+                        );
+                        return '';
+                    }
+                })
+                .join('');
             quickBar.style.display = 'flex';
-        }
-        else {
+        } else {
             quickBar.innerHTML = '';
             quickBar.style.display = 'none';
         }
     }
     // Render Grid (regular widgets)
     if (gridWidgets.length === 0 && compactWidgets.length === 0) {
-        grid.innerHTML = '<div class="dmscreen-empty">Keine Widgets aktiv. Klicke auf "⚙️ Widgets" um Widgets hinzuzufügen.</div>';
+        grid.innerHTML =
+            '<div class="dmscreen-empty">Keine Widgets aktiv. Klicke auf "⚙️ Widgets" um Widgets hinzuzufügen.</div>';
         return;
     }
     if (gridWidgets.length === 0) {
@@ -370,23 +375,31 @@ function renderDMScreen() {
         return;
     }
     try {
-        grid.innerHTML = gridWidgets.map((widget) => {
-            const def = widgetDefs[widget.type];
-            if (!def) {
-                if (APP_CONFIG.DEBUG_MODE) {
-                    ErrorHandler.log('renderDMScreen', new Error('Unknown widget type'), widget.type);
+        grid.innerHTML = gridWidgets
+            .map(widget => {
+                const def = widgetDefs[widget.type];
+                if (!def) {
+                    if (APP_CONFIG.DEBUG_MODE) {
+                        ErrorHandler.log(
+                            'renderDMScreen',
+                            new Error('Unknown widget type'),
+                            widget.type
+                        );
+                    }
+                    return '';
                 }
-                return '';
-            }
-            let content = '';
-            try {
-                content = def.render();
-            }
-            catch (err) {
-                ErrorHandler.log('renderDMScreen', err, `Error rendering widget ${widget.type}`);
-                content = '<div class="dms-widget-empty">Fehler beim Laden</div>';
-            }
-            return `
+                let content = '';
+                try {
+                    content = def.render();
+                } catch (err) {
+                    ErrorHandler.log(
+                        'renderDMScreen',
+                        err,
+                        `Error rendering widget ${widget.type}`
+                    );
+                    content = '<div class="dms-widget-empty">Fehler beim Laden</div>';
+                }
+                return `
                 <div class="dmscreen-widget" data-widget-id="${widget.id}" data-widget-type="${widget.type}" draggable="true">
                     <div class="dmscreen-widget-header">
                         <span class="dmscreen-widget-drag" title="Ziehen zum Sortieren">⋮⋮</span>
@@ -399,11 +412,11 @@ function renderDMScreen() {
                     </div>
                 </div>
             `;
-        }).join('');
+            })
+            .join('');
         // Initialize drag & drop
         initDMSWidgetDragDrop();
-    }
-    catch (err) {
+    } catch (err) {
         ErrorHandler.log('renderDMScreen', err, 'Error during grid render');
         grid.innerHTML = '<div class="dmscreen-empty">Fehler beim Rendern</div>';
     }
@@ -420,15 +433,14 @@ function renderDMScreen() {
  */
 function renderDMSConfigList() {
     const list = $('dms-config-list');
-    if (!list)
-        return;
+    if (!list) return;
     const widgetDefs = getDMScreenWidgets();
     const allWidgets = D.dmScreenLayout.widgets;
-    list.innerHTML = allWidgets.map((widget) => {
-        const def = widgetDefs[widget.type];
-        if (!def)
-            return '';
-        return `
+    list.innerHTML = allWidgets
+        .map(widget => {
+            const def = widgetDefs[widget.type];
+            if (!def) return '';
+            return `
             <label class="dms-config-item" data-widget-id="${widget.id}">
                 <span class="dms-config-drag" title="Ziehen zum Sortieren">⋮⋮</span>
                 <input type="checkbox" ${widget.visible ? 'checked' : ''}
@@ -437,7 +449,8 @@ function renderDMSConfigList() {
                 <span class="dms-config-name">${def.name}</span>
             </label>
         `;
-    }).join('');
+        })
+        .join('');
     // Initialize drag & drop for config list
     initDMSConfigDragDrop();
 }
@@ -445,7 +458,7 @@ function renderDMSConfigList() {
  * Toggled die Sichtbarkeit eines Widgets
  */
 function toggleDMSWidget(widgetId) {
-    const widget = D.dmScreenLayout.widgets.find((w) => w.id === widgetId);
+    const widget = D.dmScreenLayout.widgets.find(w => w.id === widgetId);
     if (widget) {
         widget.visible = !widget.visible;
         saveDMScreenLayout();
@@ -456,7 +469,7 @@ function toggleDMSWidget(widgetId) {
  * Versteckt ein Widget (vom X-Button)
  */
 function hideDMSWidget(widgetId) {
-    const widget = D.dmScreenLayout.widgets.find((w) => w.id === widgetId);
+    const widget = D.dmScreenLayout.widgets.find(w => w.id === widgetId);
     if (widget) {
         widget.visible = false;
         saveDMScreenLayout();
@@ -497,8 +510,7 @@ document.addEventListener('click', function (e) {
 let dmsDraggedWidget = null;
 function initDMSWidgetDragDrop() {
     const grid = $('dmscreen-grid');
-    if (!grid)
-        return;
+    if (!grid) return;
     const widgets = grid.querySelectorAll('.dmscreen-widget');
     widgets.forEach(widget => {
         widget.addEventListener('dragstart', handleDMSWidgetDragStart);
@@ -553,10 +565,9 @@ function handleDMSWidgetDrop(e) {
 }
 function reorderDMSWidgets(draggedId, targetId) {
     const widgets = D.dmScreenLayout.widgets;
-    const draggedIdx = widgets.findIndex((w) => w.id === draggedId);
-    const targetIdx = widgets.findIndex((w) => w.id === targetId);
-    if (draggedIdx === -1 || targetIdx === -1)
-        return;
+    const draggedIdx = widgets.findIndex(w => w.id === draggedId);
+    const targetIdx = widgets.findIndex(w => w.id === targetId);
+    if (draggedIdx === -1 || targetIdx === -1) return;
     // Remove dragged widget
     const [draggedWidget] = widgets.splice(draggedIdx, 1);
     // Insert at new position
@@ -571,8 +582,7 @@ function reorderDMSWidgets(draggedId, targetId) {
 let dmsConfigDraggedItem = null;
 function initDMSConfigDragDrop() {
     const list = $('dms-config-list');
-    if (!list)
-        return;
+    if (!list) return;
     const items = list.querySelectorAll('.dms-config-item');
     items.forEach(item => {
         item.draggable = true;
@@ -631,128 +641,128 @@ function handleDMSConfigDrop(e) {
 // ============================================================
 function getDMScreenWidgets() {
     return {
-        'party': {
+        party: {
             name: 'Party Stats',
             icon: '👥',
             render: renderDMSPartyWidget,
             compact: false
         },
-        'initiative': {
+        initiative: {
             name: 'Initiative',
             icon: '⚔️',
             render: renderDMSInitiativeWidget,
             compact: false
         },
-        'dice': {
+        dice: {
             name: 'Würfel',
             icon: '🎲',
             render: renderDMSDiceWidget,
             compact: false
         },
-        'conditions': {
+        conditions: {
             name: 'Zustände',
             icon: '📋',
             render: renderDMSConditionsCompact,
             compact: true
         },
-        'dc': {
+        dc: {
             name: 'DC Referenz',
             icon: '🎯',
             render: renderDMSDCWidget,
             compact: false
         },
-        'tables': {
+        tables: {
             name: 'Tabellen',
             icon: '🎰',
             render: renderDMSTablesWidget,
             compact: false
         },
-        'rules': {
+        rules: {
             name: 'Regeln',
             icon: '📏',
             render: renderDMSRulesWidget,
             compact: false
         },
-        'notes': {
+        notes: {
             name: 'Notizen',
             icon: '📝',
             render: renderDMSNotesWidget,
             compact: false
         },
         // === NEUE REFERENZ-WIDGETS ===
-        'actions': {
+        actions: {
             name: 'Aktionen',
             icon: '⚡',
             render: renderDMSActionsWidget,
             compact: false
         },
-        'attributes': {
+        attributes: {
             name: 'Attribute',
             icon: '💪',
             render: renderDMSAttributesWidget,
             compact: false
         },
-        'saves': {
+        saves: {
             name: 'Rettungswürfe',
             icon: '🛡️',
             render: renderDMSSavesWidget,
             compact: false
         },
-        'skills': {
+        skills: {
             name: 'Fertigkeiten',
             icon: '📚',
             render: renderDMSSkillsWidget,
             compact: false
         },
-        'economy': {
+        economy: {
             name: 'Kampfökonomie',
             icon: '⏱️',
             render: renderDMSEconomyWidget,
             compact: false
         },
-        'sizes': {
+        sizes: {
             name: 'Größen',
             icon: '📏',
             render: renderDMSSizesWidget,
             compact: false
         },
-        'objects': {
+        objects: {
             name: 'Objekte',
             icon: '🪑',
             render: renderDMSObjectsWidget,
             compact: false
         },
-        'improvised': {
+        improvised: {
             name: 'Improv. Waffen',
             icon: '🍺',
             render: renderDMSImprovisedWidget,
             compact: false
         },
-        'ritual': {
+        ritual: {
             name: 'Ritual & Konz.',
             icon: '🔮',
             render: renderDMSRitualWidget,
             compact: false
         },
-        'damage': {
+        damage: {
             name: 'Schadensarten',
             icon: '💥',
             render: renderDMSDamageWidget,
             compact: false
         },
-        'terrain': {
+        terrain: {
             name: 'Gelände',
             icon: '🏔️',
             render: renderDMSTerrainWidget,
             compact: false
         },
-        'knowledge': {
+        knowledge: {
             name: 'Wissensgebiete',
             icon: '🎓',
             render: renderDMSKnowledgeWidget,
             compact: false
         },
-        'travel': {
+        travel: {
             name: 'Reisen & Traglast',
             icon: '🎒',
             render: renderDMSTravelWidget,
@@ -796,10 +806,8 @@ function renderDMSPartyWidget() {
     });
     // HP bar color
     let hpClass = 'healthy';
-    if (hpPercent <= COMBAT_CONSTANTS.HP_BLOODIED_THRESHOLD)
-        hpClass = 'bloodied';
-    if (hpPercent <= COMBAT_CONSTANTS.HP_CRITICAL_THRESHOLD)
-        hpClass = 'critical';
+    if (hpPercent <= COMBAT_CONSTANTS.HP_BLOODIED_THRESHOLD) hpClass = 'bloodied';
+    if (hpPercent <= COMBAT_CONSTANTS.HP_CRITICAL_THRESHOLD) hpClass = 'critical';
     return `
         <div class="dms-party-stats">
             <div class="dms-stat-row">
@@ -834,24 +842,24 @@ function renderDMSInitiativeWidget() {
         <div class="dms-initiative">
             <div class="dms-init-header">Runde ${round} <span class="dms-init-count">(${combatants.length})</span></div>
             <div class="dms-init-list">
-                ${combatants.map((c, i) => {
-        const isCurrent = i === currentTurn;
-        const hpPercent = c.maxHp > 0 ? Math.round((c.currentHp / c.maxHp) * 100) : 100;
-        let hpClass = 'healthy';
-        if (hpPercent < 50)
-            hpClass = 'bloodied';
-        if (hpPercent < 25)
-            hpClass = 'critical';
-        if (c.currentHp <= 0)
-            hpClass = 'down';
-        return `
+                ${combatants
+                    .map((c, i) => {
+                        const isCurrent = i === currentTurn;
+                        const hpPercent =
+                            c.maxHp > 0 ? Math.round((c.currentHp / c.maxHp) * 100) : 100;
+                        let hpClass = 'healthy';
+                        if (hpPercent < 50) hpClass = 'bloodied';
+                        if (hpPercent < 25) hpClass = 'critical';
+                        if (c.currentHp <= 0) hpClass = 'down';
+                        return `
                         <div class="dms-init-entry ${isCurrent ? 'active' : ''} ${hpClass}">
                             <span class="dms-init-marker">${isCurrent ? '▶' : ''}</span>
                             <span class="dms-init-name">${esc(c.name)}</span>
                             <span class="dms-init-value">${c.initiative || 0}</span>
                         </div>
                     `;
-    }).join('')}
+                    })
+                    .join('')}
             </div>
         </div>
     `;
@@ -892,8 +900,7 @@ function dmsRollDice(formula) {
             result = parsed.total;
             rolls = parsed.rolls;
         }
-    }
-    else {
+    } else {
         // Fallback: simple dice roll
         const match = formula.match(/(\d+)?d(\d+)/i);
         if (match) {
@@ -932,12 +939,16 @@ function renderDMSDCWidget() {
     ];
     return `
         <div class="dms-dc-list">
-            ${dcs.map(d => `
+            ${dcs
+                .map(
+                    d => `
                 <div class="dms-dc-entry" style="border-left: 3px solid ${d.color}">
                     <span class="dms-dc-value">${d.dc}</span>
                     <span class="dms-dc-desc">${d.desc}</span>
                 </div>
-            `).join('')}
+            `
+                )
+                .join('')}
         </div>
     `;
 }
@@ -951,13 +962,18 @@ function renderDMSTablesWidget() {
     }
     return `
         <div class="dms-tables">
-            ${tables.slice(0, 5).map(t => `
+            ${tables
+                .slice(0, 5)
+                .map(
+                    t => `
                 <div class="dms-table-entry">
                     <span class="dms-table-icon">${t.icon || '🎲'}</span>
                     <span class="dms-table-name">${esc(t.name)}</span>
                     <button class="btn btn-sm" data-action="dms-roll-table" data-table="${t.id}">Roll</button>
                 </div>
-            `).join('')}
+            `
+                )
+                .join('')}
             <div class="dms-table-result" id="dms-table-result"></div>
         </div>
     `;
@@ -1442,19 +1458,16 @@ function renderDMSTravelWidget() {
 // ============================================================
 document.addEventListener('click', function (e) {
     const target = e.target.closest('[data-action]');
-    if (!target)
-        return;
+    if (!target) return;
     const action = target.dataset.action;
     switch (action) {
         case 'dms-roll':
-            if (target.dataset.dice)
-                dmsRollDice(target.dataset.dice);
+            if (target.dataset.dice) dmsRollDice(target.dataset.dice);
             break;
         case 'dms-roll-custom': {
             const formulaEl = $('dms-dice-formula');
             const formula = formulaEl?.value;
-            if (formula)
-                dmsRollDice(formula);
+            if (formula) dmsRollDice(formula);
             break;
         }
         case 'dms-roll-table': {
@@ -1469,37 +1482,31 @@ document.addEventListener('click', function (e) {
             toggleDMSConfigDropdown();
             break;
         case 'dms-toggle-widget':
-            if (target.dataset.widget)
-                toggleDMSWidget(target.dataset.widget);
+            if (target.dataset.widget) toggleDMSWidget(target.dataset.widget);
             break;
         case 'dms-hide-widget':
             e.stopPropagation();
-            if (target.dataset.widget)
-                hideDMSWidget(target.dataset.widget);
+            if (target.dataset.widget) hideDMSWidget(target.dataset.widget);
             break;
         // Profile actions
         case 'dms-toggle-profiles':
             toggleDMSProfileDropdown();
             break;
         case 'dms-switch-profile': {
-            if (target.dataset.profile)
-                switchDMSProfile(target.dataset.profile);
+            if (target.dataset.profile) switchDMSProfile(target.dataset.profile);
             const dropdown = $('dms-profile-dropdown');
-            if (dropdown)
-                dropdown.classList.remove('show');
+            if (dropdown) dropdown.classList.remove('show');
             break;
         }
         case 'dms-save-profile': {
             saveDMSProfileAs();
             const dd = $('dms-profile-dropdown');
-            if (dd)
-                dd.classList.remove('show');
+            if (dd) dd.classList.remove('show');
             break;
         }
         case 'dms-delete-profile':
             e.stopPropagation();
-            if (target.dataset.profile)
-                deleteDMSProfile(target.dataset.profile);
+            if (target.dataset.profile) deleteDMSProfile(target.dataset.profile);
             break;
     }
 });
@@ -1511,15 +1518,14 @@ document.addEventListener('change', function (e) {
     }
 });
 function dmsRollOnTable(tableId) {
-    const table = (D.randomTables || []).find((t) => t.id === tableId);
-    if (!table || !table.entries || table.entries.length === 0)
-        return;
+    const table = (D.randomTables || []).find(t => t.id === tableId);
+    if (!table || !table.entries || table.entries.length === 0) return;
     // Calculate total weight
     const totalWeight = table.entries.reduce((sum, e) => sum + (e.weight || 1), 0);
     let roll = Math.random() * totalWeight;
     let result = table.entries[0];
     for (const entry of table.entries) {
-        roll -= (entry.weight || 1);
+        roll -= entry.weight || 1;
         if (roll <= 0) {
             result = entry;
             break;
@@ -1551,12 +1557,10 @@ function dmsShowConditionDetail(_conditionId) {
  */
 document.addEventListener('keydown', function (e) {
     // Ignore if typing in input/textarea
-    if (e.target.matches('input, textarea, [contenteditable]'))
-        return;
+    if (e.target.matches('input, textarea, [contenteditable]')) return;
     // Only process shortcuts if on DM Screen
     const dmView = $('view-dmscreen');
-    if (!dmView || !dmView.classList.contains('active'))
-        return;
+    if (!dmView || !dmView.classList.contains('active')) return;
     // Number keys 1-3: Quick profile switch
     if (e.key >= '1' && e.key <= '3' && !e.ctrlKey && !e.altKey && !e.shiftKey) {
         const profiles = ['standard', 'kampf', 'minimal'];

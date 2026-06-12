@@ -51,8 +51,7 @@ class VirtualList {
         this.render();
     }
     render() {
-        if (!this.content)
-            return;
+        if (!this.content) return;
         const startIndex = Math.max(0, Math.floor(this.scrollTop / this.itemHeight) - 1);
         const endIndex = Math.min(this.items.length, startIndex + this.visibleCount + 2);
         this.content.innerHTML = '';

@@ -56,8 +56,7 @@ const QUICK_ACTIONS = Object.freeze({
 function renderQuickActionsBar() {
     const D = window.D;
     const container = $('quick-actions-bar');
-    if (!container)
-        return;
+    if (!container) return;
     const init = D.initiative;
     if (!init.combatants.length) {
         container.style.display = 'none';
@@ -74,12 +73,16 @@ function renderQuickActionsBar() {
             <span class="qa-label">⚡ Aktionen für ${esc(current.name)}:</span>
         </div>
         <div class="qa-buttons">
-            ${Object.entries(QUICK_ACTIONS).map(([key, action]) => `
+            ${Object.entries(QUICK_ACTIONS)
+                .map(
+                    ([key, action]) => `
                 <button class="qa-btn" data-action="apply-quick-action" data-id="${current.id}" data-value="${key}" title="${esc(action.desc)}">
                     <span class="qa-icon">${action.icon}</span>
                     <span class="qa-name">${action.name}</span>
                 </button>
-            `).join('')}
+            `
+                )
+                .join('')}
         </div>
     `;
 }
@@ -87,19 +90,16 @@ function applyQuickAction(cbId, actionKey) {
     const D = window.D;
     const renderInit = window.renderInit;
     const id = typeof cbId === 'string' ? parseInt(cbId) : cbId;
-    const cb = D.initiative.combatants.find((c) => c.id === id);
-    if (!cb)
-        return;
+    const cb = D.initiative.combatants.find(c => c.id === id);
+    if (!cb) return;
     const action = QUICK_ACTIONS[actionKey];
-    if (!action)
-        return;
+    if (!action) return;
     pushUndo(`Quick Action: ${action.name}`);
     // Apply effect if present
     if (action.effect) {
-        if (!cb.effects)
-            cb.effects = [];
+        if (!cb.effects) cb.effects = [];
         // Check if effect already exists
-        const existing = cb.effects.find((e) => e.name === action.effect.name);
+        const existing = cb.effects.find(e => e.name === action.effect.name);
         if (existing) {
             showToast(`${cb.name} ist bereits ${action.effect.name}`, 'info');
             return;
@@ -138,7 +138,10 @@ function applyQuickAction(cbId, actionKey) {
                 }
             }
             const total = stealthRoll + stealthMod;
-            showToast(`${action.icon} Stealth: ${stealthRoll}${stealthMod >= 0 ? '+' : ''}${stealthMod} = ${total}`, stealthRoll === 20 ? 'success' : stealthRoll === 1 ? 'error' : 'info');
+            showToast(
+                `${action.icon} Stealth: ${stealthRoll}${stealthMod >= 0 ? '+' : ''}${stealthMod} = ${total}`,
+                stealthRoll === 20 ? 'success' : stealthRoll === 1 ? 'error' : 'info'
+            );
             break;
         }
         case 'help':
@@ -154,7 +157,10 @@ function applyQuickAction(cbId, actionKey) {
                 }
             }
             const percTotal = perceptionRoll + perceptionMod;
-            showToast(`${action.icon} Wahrnehmung: ${perceptionRoll}${perceptionMod >= 0 ? '+' : ''}${perceptionMod} = ${percTotal}`, perceptionRoll === 20 ? 'success' : perceptionRoll === 1 ? 'error' : 'info');
+            showToast(
+                `${action.icon} Wahrnehmung: ${perceptionRoll}${perceptionMod >= 0 ? '+' : ''}${perceptionMod} = ${percTotal}`,
+                perceptionRoll === 20 ? 'success' : perceptionRoll === 1 ? 'error' : 'info'
+            );
             break;
         }
         case 'useObject':
@@ -187,28 +193,30 @@ function showConditionReference() {
         modal.id = 'condition-ref-modal';
         modal.className = 'modal-overlay';
         modal.innerHTML = `<div class="modal" style="max-width: 600px; max-height: 80vh;">${content}</div>`;
-        modal.onclick = (e) => { if (e.target === modal)
-            hideModal('condition-ref-modal'); };
+        modal.onclick = e => {
+            if (e.target === modal) hideModal('condition-ref-modal');
+        };
         document.body.appendChild(modal);
-    }
-    else {
+    } else {
         const modalContent = modal.querySelector('.modal');
-        if (modalContent)
-            modalContent.innerHTML = content;
+        if (modalContent) modalContent.innerHTML = content;
     }
     showModal('condition-ref-modal');
     const searchInput = $('condition-search');
-    if (searchInput)
-        searchInput.focus();
+    if (searchInput) searchInput.focus();
 }
 function renderConditionList(filter = '') {
     const CONDITIONS = window.CONDITIONS;
     const filterLower = filter.toLowerCase();
     const items = Object.entries(CONDITIONS)
-        .filter(([key, cond]) => !filter ||
-        cond.name.toLowerCase().includes(filterLower) ||
-        cond.desc.toLowerCase().includes(filterLower))
-        .map(([key, cond]) => `
+        .filter(
+            ([key, cond]) =>
+                !filter ||
+                cond.name.toLowerCase().includes(filterLower) ||
+                cond.desc.toLowerCase().includes(filterLower)
+        )
+        .map(
+            ([key, cond]) => `
             <div class="condition-ref-item">
                 <div class="condition-ref-name">
                     <span class="condition-ref-icon">${cond.icon}</span>
@@ -216,7 +224,9 @@ function renderConditionList(filter = '') {
                 </div>
                 <div class="condition-ref-desc">${esc(cond.desc)}</div>
             </div>
-        `).join('');
+        `
+        )
+        .join('');
     return items || '<div class="condition-ref-empty">Keine Zustände gefunden</div>';
 }
 function filterConditions() {

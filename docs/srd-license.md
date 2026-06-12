@@ -92,4 +92,4 @@ Wizards of the Coast LLC (CC-BY-4.0). Weitere Details: docs/srd-license.md
 
 ---
 
-*Audit durchgeführt: 2026-06-12 | Entscheidung: D-16 | Anforderung: STAB-11*
+_Audit durchgeführt: 2026-06-12 | Entscheidung: D-16 | Anforderung: STAB-11_

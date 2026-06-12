@@ -24,6 +24,7 @@ The key architectural pattern for all new features is already established by `co
 The entire stack is fixed by existing architecture. No new runtime libraries, no npm dependencies, no framework. All capabilities are available in browser APIs already supported in Chromium 86+ and are implementable in vanilla JS.
 
 **Core technologies:**
+
 - Vanilla JS + HTML + CSS: sole runtime environment — no alternatives in scope
 - `build.py` (Python): production bundler, three-pass deduplication, single HTML output
 - IndexedDB: campaign backup storage and future reference-data cache (monster statblocks, File System handles)
@@ -37,6 +38,7 @@ Key capability constraints: `showSaveFilePicker`, `showDirectoryPicker`, and `be
 ### Expected Features
 
 **Must have (table stakes):**
+
 - PWA install (manifest + SW) — foundational unlock for File System API and reliable offline caching
 - File backup sync — data safety; export/import partially exists, auto-backup to disk is the upgrade
 - Command palette — power-user DX, reuses existing `fuzzyMatch()` infrastructure
@@ -47,11 +49,13 @@ Key capability constraints: `showSaveFilePicker`, `showDirectoryPicker`, and `be
 - XP / milestone tracker and Inspiration tracker
 
 **Should have (differentiators):**
+
 - Session prep assistant (scene cards, open threads) — Lazy DM methodology; competitors do not include this offline
 - NPC generator — instant NPCs for off-script moments, uses existing random tables system
 - Campaign timeline, Factions + reputation, Travel + weather simulator, Extended character sheets, Dice statistics histogram
 
 **Defer to v2+:**
+
 - Faction relationship matrix (visual), horizontal visual timeline scroll, per-character faction reputation, soundboard fade transitions
 
 ### Architecture Approach
@@ -59,6 +63,7 @@ Key capability constraints: `showSaveFilePicker`, `showDirectoryPicker`, and `be
 All new features integrate into the established six-layer architecture: `core/` → `utils/` → `systems/` → `render/helpers.js` → `features/` → `ui/actions/`. Every new persistent collection follows the schema extension pattern: add to `initializeData()` in `core/data.js`, add a migration entry in `systems/spellslots/version-migration.js` for version `3.0.0`, use `nextId('collectionName')` for IDs. Only three features justify new navigation tabs (Bestiary, Timeline, Factions); all others extend existing panels or use modals.
 
 **Major new components:**
+
 1. `core/srd-monsters.js` — lazy-cached SRD monster data, parallel to `srd-spells.js`; NOT stored in `D`
 2. `systems/file-backup.js` — File System Access API backup, hooks into `save()` with `_originalSave` guard pattern
 3. `systems/command-palette.js` — COMMAND_REGISTRY + fuzzy overlay, keyboard-shortcuts.js delegates to `openCommandPalette()`
@@ -99,6 +104,7 @@ Single migration function (`3.0.0`) in `version-migration.js` handles all persis
 **Why the discrepancy exists:** STACK.md and ARCHITECTURE.md reason from the minified+compressed size of pruned data (only the fields the app needs). ARCHITECTURE.md's estimate likely significantly underestimates because srd-spells.js lacks many statblock-equivalent fields. PITFALLS.md measured the full unminified raw JSON before any field pruning.
 
 **Recommendation — deferred to Bestiary phase planning:** Conduct a 30-minute spike at the start of the Bestiary phase:
+
 1. Download `5e-bits/5e-database` monster JSON
 2. Prune to the ARCHITECTURE.md monster schema fields
 3. Minify and measure actual byte count
@@ -120,58 +126,67 @@ FEATURES.md and ARCHITECTURE.md do not mention the `persistence.js` stale-shadow
 Suggested phases: 7
 
 ### Phase 1: Stabilization — Fix Active Blockers
+
 **Rationale:** The app does not boot. Two data-integrity bugs are active. CI has critical blind spots. No phase can be safely built on a broken foundation.
 **Delivers:** Working app, no boot crash, no silent data loss, trustworthy CI, accurate documentation, hardened build pipeline.
 **Key work:** Fix `debug.js` Mindmap crash; fix persistence stale-shadow bug; fix export version stamp; fix/replace `build.py` Pass 3; add `DEBUG_MODE: false` build assertion; add CI module-list diff check; add Playwright smoke test against `dist/`; audit and correct `CLAUDE.md`.
 **Research flag:** No additional research needed — all work is surgical fixes with direct code evidence.
 
 ### Phase 2: Tech Foundation — PWA + File Backup + Command Palette
+
 **Rationale:** PWA is a structural prerequisite for File System Access API. These are pure infrastructure changes in `systems/` and configuration with no new tabs or data migrations.
 **Delivers:** Installable app (desktop shortcut), file-based backup with auto-export, command palette.
 **Research flag:** Standard patterns — STACK.md and PITFALLS.md provide complete implementation detail. Cross-origin data migration UX (file:// → PWA) needs design before implementation.
 
 ### Phase 3: Bestiary — SRD Monster Compendium
+
 **Rationale:** Structural dependency for statblock popup, legendary auto-detection, mob mode auto-populate, XP from CR. Contains the most architecturally significant open decision (data storage).
 **Delivers:** Offline searchable monster reference, custom monster CRUD, add-to-encounter/initiative.
 **Research flag:** Needs data-size spike at phase start. German source completeness needs verification at implementation time.
 
 ### Phase 4: Initiative Extensions — Legendary Actions + Mob Mode + Statblock Popup
+
 **Rationale:** All three extend the combatant data model and require Bestiary data. Changes concentrated in `features/initiative.js` and `features/initiative-extras.js`.
 **Delivers:** Boss-fight legendary/resistance counters, grouped mob rows with pool HP, statblock popup on combatant click.
 **Research flag:** Standard combat tracker patterns — no additional research needed.
 
 ### Phase 5: World Features — Session Prep, NPC Generator, Timeline, Travel Simulator, Factions
+
 **Rationale:** Independent of Bestiary. Shared implementation pattern across all five (new D collection, CRUD module, migration). Best shipped together as coherent "story tools" release.
 **Delivers:** Lazy-DM-method session prep, instant NPC generation with German name tables, campaign event log, travel/weather simulation, faction reputation tracking.
 **Research flag:** NPC name table content (German, ~200 first names + ~100 surnames) is a content curation task, not a research task.
 
 ### Phase 6: Player Features — XP, Inspiration, Extended Character Sheets
+
 **Rationale:** All extend `D.characters[]` under a single migration entry. Low-risk, well-scoped. No new tabs or modules.
 **Research flag:** Standard D&D 5e tables — no research needed.
 
 ### Phase 7: UX Polish — Dice Statistics + Soundboard
+
 **Rationale:** P3 priority, no blocking dependencies. Best added after core workflow is stable. Dice statistics roll history must use a dedicated IndexedDB store — never in `D`.
 **Research flag:** Complete implementation patterns in STACK.md — no additional research needed.
 
 ### Research Flags Summary
 
 Needs `/gsd-research-phase` during planning:
+
 - **Phase 3 (Bestiary):** Data-size spike + German source completeness verification
 - **Phase 2 (PWA):** Cross-origin data migration UX (file:// → PWA) needs UX design before implementation
 
 Standard patterns (skip research-phase):
+
 - Phase 4 (Initiative Extensions), Phase 5 (World Features), Phase 6 (Player Features), Phase 7 (Dice/Audio)
 
 ---
 
 ## Confidence Assessment
 
-| Area | Confidence | Notes |
-|------|------------|-------|
-| Stack | HIGH | All capabilities verified against MDN/Chrome docs. No dependency risk (zero runtime deps). Browser API support confirmed for Chromium 86+. |
-| Features | HIGH | Based on competitor analysis (FeyWorks, Improved Initiative, Kanka, World Anvil), D&D community patterns, and existing codebase capabilities. |
-| Architecture | HIGH | Derived directly from reading 92 source modules — not from web search. Module insertion points, data flow, and integration points are precise. |
-| Pitfalls | HIGH | Part A: direct code evidence from CONCERNS.md and codebase inspection. Part B: verified against official MDN/Chrome documentation. 5MB stale-shadow bug confirmed as actively reproducible. |
+| Area         | Confidence | Notes                                                                                                                                                                                       |
+| ------------ | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Stack        | HIGH       | All capabilities verified against MDN/Chrome docs. No dependency risk (zero runtime deps). Browser API support confirmed for Chromium 86+.                                                  |
+| Features     | HIGH       | Based on competitor analysis (FeyWorks, Improved Initiative, Kanka, World Anvil), D&D community patterns, and existing codebase capabilities.                                               |
+| Architecture | HIGH       | Derived directly from reading 92 source modules — not from web search. Module insertion points, data flow, and integration points are precise.                                              |
+| Pitfalls     | HIGH       | Part A: direct code evidence from CONCERNS.md and codebase inspection. Part B: verified against official MDN/Chrome documentation. 5MB stale-shadow bug confirmed as actively reproducible. |
 
 **Overall confidence: HIGH**
 
@@ -185,5 +200,5 @@ Standard patterns (skip research-phase):
 
 ---
 
-*Research completed: 2026-06-11*
-*Synthesized from: STACK.md, FEATURES.md, ARCHITECTURE.md, PITFALLS.md*
+_Research completed: 2026-06-11_
+_Synthesized from: STACK.md, FEATURES.md, ARCHITECTURE.md, PITFALLS.md_

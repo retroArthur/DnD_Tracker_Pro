@@ -9,26 +9,27 @@ function renderLinks() {
     const LINK_CATS = window.LINK_CATS;
     const renderEmptyState = window.renderEmptyState;
     const c = $('links-list');
-    if (!c)
-        return;
+    if (!c) return;
     const searchInput = $('link-search');
     const catFilterInput = $('link-filter');
     const search = (searchInput?.value || '').toLowerCase();
     const catFilter = catFilterInput?.value || '';
     // Counter aktualisieren
     const countEl = $('links-io-count');
-    if (countEl)
-        countEl.textContent = String(D.links?.length || 0);
+    if (countEl) countEl.textContent = String(D.links?.length || 0);
     let links = D.links || [];
     // Kategorie-Filter anwenden
     if (catFilter) {
-        links = links.filter((l) => l.category === catFilter);
+        links = links.filter(l => l.category === catFilter);
     }
     // Suche anwenden
     if (search) {
-        links = links.filter((l) => (l.title || '').toLowerCase().includes(search) ||
-            (l.url || '').toLowerCase().includes(search) ||
-            (l.description || '').toLowerCase().includes(search));
+        links = links.filter(
+            l =>
+                (l.title || '').toLowerCase().includes(search) ||
+                (l.url || '').toLowerCase().includes(search) ||
+                (l.description || '').toLowerCase().includes(search)
+        );
     }
     if (!links.length) {
         c.innerHTML = renderEmptyState({
@@ -42,7 +43,9 @@ function renderLinks() {
         });
         return;
     }
-    c.innerHTML = links.map((l) => `<div class="link-card">
+    c.innerHTML = links
+        .map(
+            l => `<div class="link-card">
         <div class="link-icon">${LINK_CATS[l.category]?.split(' ')[0] || '🔗'}</div>
         <div class="link-info">
             <div class="link-title"><a href="${esc(l.url)}" target="_blank" style="color:inherit; text-decoration:none;">${esc(l.title)}</a></div>
@@ -53,7 +56,9 @@ function renderLinks() {
             <button class="btn btn-sm" data-action="edit-link" data-id="${l.id}" title="Bearbeiten">✏️</button>
             <button class="btn btn-sm btn-danger" data-action="delete-link" data-id="${l.id}" title="Löschen">🗑️</button>
         </div>
-    </div>`).join('');
+    </div>`
+        )
+        .join('');
 }
 function toggleLinkForm() {
     const form = $('link-form-card');
@@ -85,13 +90,12 @@ function saveLink() {
     };
     pushUndo(editId ? 'Link bearbeitet' : 'Link erstellt');
     if (editId) {
-        const idx = D.links.findIndex((l) => l.id === parseInt(editId));
+        const idx = D.links.findIndex(l => l.id === parseInt(editId));
         if (idx > -1) {
             D.links[idx] = { ...D.links[idx], ...linkData };
             showToast('Link aktualisiert');
         }
-    }
-    else {
+    } else {
         linkData.id = nextId('links');
         D.links.push(linkData);
         showToast('Link hinzugefügt');
@@ -102,28 +106,20 @@ function saveLink() {
 }
 function editLink(id) {
     const link = EntityLookup.link(id);
-    if (!link)
-        return;
+    if (!link) return;
     const editIdInput = $('edit-link-id');
     const titleInput = $('link-title');
     const urlInput = $('link-url');
     const catInput = $('link-cat');
     const descInput = $('link-desc');
-    if (editIdInput)
-        editIdInput.value = String(id);
-    if (titleInput)
-        titleInput.value = link.title || '';
-    if (urlInput)
-        urlInput.value = link.url || '';
-    if (catInput)
-        catInput.value = link.category || 'other';
-    if (descInput)
-        descInput.innerHTML = sanitizeHTML(link.description) || '';
+    if (editIdInput) editIdInput.value = String(id);
+    if (titleInput) titleInput.value = link.title || '';
+    if (urlInput) urlInput.value = link.url || '';
+    if (catInput) catInput.value = link.category || 'other';
+    if (descInput) descInput.innerHTML = sanitizeHTML(link.description) || '';
     const form = $('link-form-card');
-    if (form)
-        form.style.display = 'block';
-    if (titleInput)
-        titleInput.focus();
+    if (form) form.style.display = 'block';
+    if (titleInput) titleInput.focus();
 }
 function cancelLinkEdit() {
     const editIdInput = $('edit-link-id');
@@ -131,19 +127,13 @@ function cancelLinkEdit() {
     const urlInput = $('link-url');
     const catInput = $('link-cat');
     const descInput = $('link-desc');
-    if (editIdInput)
-        editIdInput.value = '';
-    if (titleInput)
-        titleInput.value = '';
-    if (urlInput)
-        urlInput.value = '';
-    if (catInput)
-        catInput.value = 'rules';
-    if (descInput)
-        descInput.innerHTML = '';
+    if (editIdInput) editIdInput.value = '';
+    if (titleInput) titleInput.value = '';
+    if (urlInput) urlInput.value = '';
+    if (catInput) catInput.value = 'rules';
+    if (descInput) descInput.innerHTML = '';
     const form = $('link-form-card');
-    if (form)
-        form.style.display = 'none';
+    if (form) form.style.display = 'none';
 }
 function deleteLink(id) {
     const D = window.D;
@@ -151,7 +141,7 @@ function deleteLink(id) {
     if (confirm(`Link "${link?.title || 'Unbekannt'}" löschen?`)) {
         pushUndo('Link gelöscht');
         const numId = typeof id === 'string' ? parseInt(id) : id;
-        D.links = D.links.filter((l) => l.id !== numId);
+        D.links = D.links.filter(l => l.id !== numId);
         renderLinks();
         save();
     }

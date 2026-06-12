@@ -11,9 +11,10 @@ const STATIC_ASSETS = [
 ];
 
 // Install: Cache static assets
-self.addEventListener('install', (event) => {
+self.addEventListener('install', event => {
     event.waitUntil(
-        caches.open(CACHE_NAME)
+        caches
+            .open(CACHE_NAME)
             .then(cache => cache.addAll(STATIC_ASSETS))
             .then(() => self.skipWaiting())
             .catch(() => self.skipWaiting())
@@ -21,14 +22,13 @@ self.addEventListener('install', (event) => {
 });
 
 // Activate: Clean up old caches
-self.addEventListener('activate', (event) => {
+self.addEventListener('activate', event => {
     event.waitUntil(
-        caches.keys()
+        caches
+            .keys()
             .then(cacheNames => {
                 return Promise.all(
-                    cacheNames
-                        .filter(name => name !== CACHE_NAME)
-                        .map(name => caches.delete(name))
+                    cacheNames.filter(name => name !== CACHE_NAME).map(name => caches.delete(name))
                 );
             })
             .then(() => clients.claim())
@@ -36,7 +36,7 @@ self.addEventListener('activate', (event) => {
 });
 
 // Fetch: Cache-First für lokale Ressourcen, Network-First für externe
-self.addEventListener('fetch', (event) => {
+self.addEventListener('fetch', event => {
     const url = new URL(event.request.url);
 
     // Ignoriere nicht-GET Anfragen
@@ -58,43 +58,46 @@ self.addEventListener('fetch', (event) => {
 
     // Cache-First für lokale Ressourcen
     event.respondWith(
-        caches.match(event.request)
-            .then(cachedResponse => {
-                if (cachedResponse) {
-                    // Im Hintergrund aktualisieren (Stale-While-Revalidate)
-                    fetch(event.request)
-                        .then(response => {
-                            if (response && response.status === 200) {
-                                caches.open(CACHE_NAME)
-                                    .then(cache => cache.put(event.request, response));
-                            }
-                        })
-                        .catch(() => { /* Netzwerk nicht verfügbar */ });
-
-                    return cachedResponse;
-                }
-
-                // Nicht im Cache: Netzwerk abrufen und cachen
-                return fetch(event.request)
+        caches.match(event.request).then(cachedResponse => {
+            if (cachedResponse) {
+                // Im Hintergrund aktualisieren (Stale-While-Revalidate)
+                fetch(event.request)
                     .then(response => {
-                        // Nur erfolgreiche Responses cachen
-                        if (!response || response.status !== 200 || response.type === 'opaque') {
-                            return response;
+                        if (response && response.status === 200) {
+                            caches
+                                .open(CACHE_NAME)
+                                .then(cache => cache.put(event.request, response));
                         }
-
-                        const responseToCache = response.clone();
-                        caches.open(CACHE_NAME)
-                            .then(cache => cache.put(event.request, responseToCache));
-
-                        return response;
                     })
                     .catch(() => {
-                        // Offline Fallback für HTML
-                        if (event.request.headers.get('accept')?.includes('text/html')) {
-                            return caches.match('./index.html');
-                        }
-                        return new Response('Offline', { status: 503 });
+                        /* Netzwerk nicht verfügbar */
                     });
-            })
+
+                return cachedResponse;
+            }
+
+            // Nicht im Cache: Netzwerk abrufen und cachen
+            return fetch(event.request)
+                .then(response => {
+                    // Nur erfolgreiche Responses cachen
+                    if (!response || response.status !== 200 || response.type === 'opaque') {
+                        return response;
+                    }
+
+                    const responseToCache = response.clone();
+                    caches
+                        .open(CACHE_NAME)
+                        .then(cache => cache.put(event.request, responseToCache));
+
+                    return response;
+                })
+                .catch(() => {
+                    // Offline Fallback für HTML
+                    if (event.request.headers.get('accept')?.includes('text/html')) {
+                        return caches.match('./index.html');
+                    }
+                    return new Response('Offline', { status: 503 });
+                });
+        })
     );
 });

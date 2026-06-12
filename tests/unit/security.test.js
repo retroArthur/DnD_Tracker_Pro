@@ -10,7 +10,6 @@ const { sanitizeHTML, esc } = require('../../utils/testable-utils');
 // ============================================================
 
 describe('Security: sanitizeHTML XSS Prevention', () => {
-
     // --------------------------------------------------------
     // SCRIPT INJECTION
     // --------------------------------------------------------
@@ -97,12 +96,34 @@ describe('Security: sanitizeHTML XSS Prevention', () => {
 
         test('entfernt alle on* Event-Handler', () => {
             const handlers = [
-                'onabort', 'onblur', 'onchange', 'ondblclick', 'ondrag',
-                'ondragend', 'ondragenter', 'ondragleave', 'ondragover',
-                'ondragstart', 'ondrop', 'onerror', 'onfocus', 'oninput',
-                'onkeydown', 'onkeypress', 'onkeyup', 'onload', 'onmousedown',
-                'onmousemove', 'onmouseout', 'onmouseover', 'onmouseup',
-                'onreset', 'onresize', 'onscroll', 'onselect', 'onsubmit'
+                'onabort',
+                'onblur',
+                'onchange',
+                'ondblclick',
+                'ondrag',
+                'ondragend',
+                'ondragenter',
+                'ondragleave',
+                'ondragover',
+                'ondragstart',
+                'ondrop',
+                'onerror',
+                'onfocus',
+                'oninput',
+                'onkeydown',
+                'onkeypress',
+                'onkeyup',
+                'onload',
+                'onmousedown',
+                'onmousemove',
+                'onmouseout',
+                'onmouseover',
+                'onmouseup',
+                'onreset',
+                'onresize',
+                'onscroll',
+                'onselect',
+                'onsubmit'
             ];
             handlers.forEach(handler => {
                 const dirty = `<div ${handler}="alert(1)">Test</div>`;
@@ -206,7 +227,8 @@ describe('Security: sanitizeHTML XSS Prevention', () => {
         });
 
         test('entfernt math-Tags', () => {
-            const dirty = '<math><maction actiontype="statusline#http://evil">Click</maction></math>';
+            const dirty =
+                '<math><maction actiontype="statusline#http://evil">Click</maction></math>';
             expect(sanitizeHTML(dirty)).not.toContain('<math');
         });
     });
@@ -240,7 +262,8 @@ describe('Security: sanitizeHTML XSS Prevention', () => {
         });
 
         test('behält Tabellen-Tags', () => {
-            const dirty = '<table><thead><tr><th>Header</th></tr></thead><tbody><tr><td>Cell</td></tr></tbody></table>';
+            const dirty =
+                '<table><thead><tr><th>Header</th></tr></thead><tbody><tr><td>Cell</td></tr></tbody></table>';
             const clean = sanitizeHTML(dirty);
             expect(clean).toContain('<table>');
             expect(clean).toContain('<th>');

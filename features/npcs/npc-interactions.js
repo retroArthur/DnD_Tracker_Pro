@@ -7,8 +7,7 @@
  */
 function toggleNPCCard(cardOrId) {
     const id = parseEntityId(cardOrId);
-    if (id === null)
-        return;
+    if (id === null) return;
     // Im Master-Detail Layout: NPC auswählen
     if (typeof window.selectNPC === 'function') {
         window.selectNPC(id);
@@ -27,8 +26,7 @@ function toggleNPCTrigger(npcId, triggerIdx) {
     const renderLocations = window.renderLocations;
     const selectedNpcId = window.selectedNpcId;
     const npc = EntityLookup.npc(npcId);
-    if (!npc || !npc.triggers || !npc.triggers[triggerIdx])
-        return;
+    if (!npc || !npc.triggers || !npc.triggers[triggerIdx]) return;
     npc.triggers[triggerIdx].triggered = !npc.triggers[triggerIdx].triggered;
     const triggered = npc.triggers[triggerIdx].triggered;
     // Master-Detail Layout: Detail-Panel aktualisieren
@@ -49,16 +47,14 @@ function toggleNPCTrigger(npcId, triggerIdx) {
                 if (triggered) {
                     revealEl.style.display = 'block';
                     revealEl.textContent = npc.triggers[triggerIdx].reveal || '';
-                }
-                else {
+                } else {
                     revealEl.style.display = 'none';
                 }
             }
         }
     }
     // Locations aktualisieren (falls NPC dort angezeigt wird)
-    if (typeof renderLocations === 'function')
-        renderLocations();
+    if (typeof renderLocations === 'function') renderLocations();
     save();
     const status = triggered ? 'aktiviert' : 'deaktiviert';
     showToast(`Trigger ${status}`);
@@ -69,8 +65,7 @@ function toggleNPCTrigger(npcId, triggerIdx) {
 function toggleNPCDialogUsed(npcId, dialogIdx) {
     const selectedNpcId = window.selectedNpcId;
     const npc = EntityLookup.npc(npcId);
-    if (!npc || !npc.dialogs || !npc.dialogs[dialogIdx])
-        return;
+    if (!npc || !npc.dialogs || !npc.dialogs[dialogIdx]) return;
     npc.dialogs[dialogIdx].used = !npc.dialogs[dialogIdx].used;
     const used = npc.dialogs[dialogIdx].used;
     // Master-Detail Layout: Detail-Panel aktualisieren
@@ -81,20 +76,22 @@ function toggleNPCDialogUsed(npcId, dialogIdx) {
         if (dialogItem) {
             dialogItem.classList.toggle('used', used);
             const marker = dialogItem.querySelector('.npc-dialog-marker');
-            if (marker)
-                marker.classList.toggle('used', used);
+            if (marker) marker.classList.toggle('used', used);
             // Button aktualisieren
             const btn = dialogItem.querySelector('.npc-detail-btn.small');
             if (btn) {
                 btn.classList.toggle('success', !used);
                 btn.innerHTML = used ? '↩️' : '✓';
-                btn.setAttribute('title', used ? 'Als unbenutzt markieren' : 'Als verwendet markieren');
+                btn.setAttribute(
+                    'title',
+                    used ? 'Als unbenutzt markieren' : 'Als verwendet markieren'
+                );
             }
         }
         // Dialog-Counter in Section-Title aktualisieren
-        const usedCount = npc.dialogs.filter((d) => d.used).length;
+        const usedCount = npc.dialogs.filter(d => d.used).length;
         const sectionTitles = detailPanel.querySelectorAll('.npc-section-title');
-        sectionTitles.forEach((title) => {
+        sectionTitles.forEach(title => {
             if (title.textContent?.includes('Dialoge')) {
                 const btnHtml = title.querySelector('.npc-section-btn')?.outerHTML || '';
                 title.innerHTML = `💬 Dialoge (${usedCount}/${npc.dialogs.length} verwendet) ${btnHtml}`;
@@ -110,14 +107,16 @@ function toggleNPCDialogUsed(npcId, dialogIdx) {
  */
 function copyDialogText(npcId, dialogIdx) {
     const npc = EntityLookup.npc(npcId);
-    if (!npc || !npc.dialogs || !npc.dialogs[dialogIdx])
-        return;
+    if (!npc || !npc.dialogs || !npc.dialogs[dialogIdx]) return;
     const text = npc.dialogs[dialogIdx].text;
-    navigator.clipboard.writeText(text).then(() => {
-        showToast('Dialog kopiert!');
-    }).catch(() => {
-        showToast('Kopieren fehlgeschlagen');
-    });
+    navigator.clipboard
+        .writeText(text)
+        .then(() => {
+            showToast('Dialog kopiert!');
+        })
+        .catch(() => {
+            showToast('Kopieren fehlgeschlagen');
+        });
 }
 // ============================================================
 // EXPORTS FOR GLOBAL ACCESS

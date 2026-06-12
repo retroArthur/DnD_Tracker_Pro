@@ -8,26 +8,26 @@ let currentNpcFilter = 'all';
 let currentRelationStatus = 'neutral';
 // NPC type icons based on race
 const NPC_ICONS = {
-    'mensch': '👤',
-    'human': '👤',
-    'elf': '🧝',
-    'zwerg': '⛏️',
-    'dwarf': '⛏️',
-    'halbling': '🍀',
-    'halfling': '🍀',
-    'ork': '👹',
-    'orc': '👹',
-    'goblin': '👺',
-    'drache': '🐉',
-    'dragon': '🐉',
-    'untot': '💀',
-    'undead': '💀',
-    'dämon': '😈',
-    'demon': '😈',
-    'tiefling': '😈',
-    'gnom': '🎩',
-    'gnome': '🎩',
-    'default': '🎭'
+    mensch: '👤',
+    human: '👤',
+    elf: '🧝',
+    zwerg: '⛏️',
+    dwarf: '⛏️',
+    halbling: '🍀',
+    halfling: '🍀',
+    ork: '👹',
+    orc: '👹',
+    goblin: '👺',
+    drache: '🐉',
+    dragon: '🐉',
+    untot: '💀',
+    undead: '💀',
+    dämon: '😈',
+    demon: '😈',
+    tiefling: '😈',
+    gnom: '🎩',
+    gnome: '🎩',
+    default: '🎭'
 };
 const RELATION_STATUS = {
     friendly: { label: 'Freundlich', icon: '🟢', color: 'var(--green)' },
@@ -40,8 +40,7 @@ const RELATION_STATUS = {
 function getNPCIcon(npc) {
     const race = (npc.race || '').toLowerCase();
     for (const [key, icon] of Object.entries(NPC_ICONS)) {
-        if (race.includes(key))
-            return icon;
+        if (race.includes(key)) return icon;
     }
     return NPC_ICONS.default;
 }
@@ -53,8 +52,7 @@ function renderNPCList() {
     const D = window.D;
     const listContainer = $('npc-list');
     const filterContainer = $('npc-filters');
-    if (!listContainer)
-        return;
+    if (!listContainer) return;
     // Enable EntityLookup cache for performance
     EntityLookup.enableCache();
     // Update counter
@@ -64,18 +62,30 @@ function renderNPCList() {
         const locations = D.locations || [];
         filterContainer.innerHTML = `
             <div class="npc-filter-chip ${currentNpcFilter === 'all' ? 'active' : ''}" data-action="set-npc-filter" data-value="all">Alle</div>
-            ${locations.slice(0, 5).map((loc) => `
+            ${locations
+                .slice(0, 5)
+                .map(
+                    loc => `
                 <div class="npc-filter-chip ${currentNpcFilter === loc.id ? 'active' : ''}"
                      data-action="set-npc-filter" data-id="${loc.id}">
                     ${esc(loc.name)}
                 </div>
-            `).join('')}
-            ${locations.length > 5 ? `
+            `
+                )
+                .join('')}
+            ${
+                locations.length > 5
+                    ? `
                 <select class="npc-filter-select" data-on-change="setNpcFilter">
                     <option value="">Mehr...</option>
-                    ${locations.slice(5).map((loc) => `<option value="${loc.id}">${esc(loc.name)}</option>`).join('')}
+                    ${locations
+                        .slice(5)
+                        .map(loc => `<option value="${loc.id}">${esc(loc.name)}</option>`)
+                        .join('')}
                 </select>
-            ` : ''}
+            `
+                    : ''
+            }
         `;
     }
     // Get search and filter
@@ -88,10 +98,10 @@ function renderNPCList() {
         filters: {
             locationId: currentNpcFilter !== 'all' ? currentNpcFilter : null
         },
-        customFilter: (n) => {
+        customFilter: n => {
             // Also search in dialog texts
             if (search && (n.dialogs || []).length > 0) {
-                return (n.dialogs || []).some((d) => (d.text || '').toLowerCase().includes(search));
+                return (n.dialogs || []).some(d => (d.text || '').toLowerCase().includes(search));
             }
             return true;
         }
@@ -105,11 +115,15 @@ function renderNPCList() {
                 <div class="npc-empty-icon">🎭</div>
                 <div class="npc-empty-title">${search || currentNpcFilter !== 'all' ? 'Keine Treffer' : 'Keine NPCs'}</div>
                 <div class="npc-empty-desc">${search || currentNpcFilter !== 'all' ? 'Versuche andere Suchbegriffe' : 'Erstelle deinen ersten NPC'}</div>
-                ${!search && currentNpcFilter === 'all' ? `
+                ${
+                    !search && currentNpcFilter === 'all'
+                        ? `
                     <button class="npc-add-btn" data-action="show-modal" data-value="npc-modal" style="margin-top: 12px;">
                         + NPC erstellen
                     </button>
-                ` : ''}
+                `
+                        : ''
+                }
             </div>
         `;
         clearNPCDetail();
@@ -117,12 +131,11 @@ function renderNPCList() {
         return;
     }
     // Render list items
-    listContainer.innerHTML = npcs.map((npc) => renderNPCItem(npc)).join('');
+    listContainer.innerHTML = npcs.map(npc => renderNPCItem(npc)).join('');
     // Auto-select first if none selected
-    if (!selectedNpcId || !npcs.find((n) => n.id === selectedNpcId)) {
+    if (!selectedNpcId || !npcs.find(n => n.id === selectedNpcId)) {
         selectNPC(npcs[0].id, false);
-    }
-    else {
+    } else {
         showNPCDetail(selectedNpcId);
     }
     // Clear EntityLookup cache
@@ -181,8 +194,7 @@ function showNPCDetail(id) {
     const LINK_ICONS = window.LINK_ICONS;
     const stripHtml = window.stripHtml;
     const panel = $('npc-detail-panel');
-    if (!panel)
-        return;
+    if (!panel) return;
     const npc = EntityLookup.npc(id);
     if (!npc) {
         clearNPCDetail();
@@ -192,11 +204,14 @@ function showNPCDetail(id) {
     const icon = getNPCIcon(npc);
     const dialogs = npc.dialogs || [];
     const triggers = npc.triggers || [];
-    const usedDialogs = dialogs.filter((d) => d.used).length;
+    const usedDialogs = dialogs.filter(d => d.used).length;
     const tags = npc.tags || [];
     const links = npc.links || [];
     // Build dialogs list
-    const dialogsHtml = dialogs.length ? dialogs.map((d, idx) => `
+    const dialogsHtml = dialogs.length
+        ? dialogs
+              .map(
+                  (d, idx) => `
         <div class="npc-dialog-item ${d.used ? 'used' : ''}">
             <div class="npc-dialog-marker ${d.used ? 'used' : ''}">${idx + 1}</div>
             <div class="npc-dialog-content">
@@ -212,9 +227,15 @@ function showNPCDetail(id) {
                 <button class="npc-detail-btn small" data-action="copy-dialog-text-stop" data-id="${npc.id}" data-value="${idx}" title="Kopieren">📋</button>
             </div>
         </div>
-    `).join('') : '<div class="npc-detail-empty-text">Keine Dialoge vorhanden</div>';
+    `
+              )
+              .join('')
+        : '<div class="npc-detail-empty-text">Keine Dialoge vorhanden</div>';
     // Build triggers list
-    const triggersHtml = triggers.length ? triggers.map((t, idx) => `
+    const triggersHtml = triggers.length
+        ? triggers
+              .map(
+                  (t, idx) => `
         <div class="npc-trigger-item ${t.triggered ? 'triggered' : ''}">
             <div class="npc-trigger-check ${t.triggered ? 'triggered' : ''}"
                  data-action="toggle-npc-trigger-stop" data-id="${npc.id}" data-value="${idx}">
@@ -225,16 +246,24 @@ function showNPCDetail(id) {
                 ${t.triggered ? `<div class="npc-trigger-reveal">${esc(t.reveal)}</div>` : ''}
             </div>
         </div>
-    `).join('') : '<div class="npc-detail-empty-text">Keine Trigger vorhanden</div>';
+    `
+              )
+              .join('')
+        : '<div class="npc-detail-empty-text">Keine Trigger vorhanden</div>';
     // Build tags
-    const tagsHtml = tags.length ? tags.map((t) => `<span class="npc-tag">${esc(t)}</span>`).join('') : '';
+    const tagsHtml = tags.length
+        ? tags.map(t => `<span class="npc-tag">${esc(t)}</span>`).join('')
+        : '';
     // Build links (LINK_ICONS from core/constants.js)
-    const linksHtml = links.length ? links.map((link) => {
-        const target = EntityLookup.get(link.type, link.id);
-        if (!target)
-            return '';
-        return `<span class="npc-link" data-action="navigate-entity" data-type="${link.type}" data-id="${link.id}">${LINK_ICONS[link.type] || '🔗'} ${esc(target.name)}</span>`;
-    }).join('') : '';
+    const linksHtml = links.length
+        ? links
+              .map(link => {
+                  const target = EntityLookup.get(link.type, link.id);
+                  if (!target) return '';
+                  return `<span class="npc-link" data-action="navigate-entity" data-type="${link.type}" data-id="${link.id}">${LINK_ICONS[link.type] || '🔗'} ${esc(target.name)}</span>`;
+              })
+              .join('')
+        : '';
     panel.innerHTML = `
         <div class="npc-detail-content">
             <div class="npc-detail-header">
@@ -260,19 +289,27 @@ function showNPCDetail(id) {
                 </div>
             </div>
 
-            ${npc.description ? `
+            ${
+                npc.description
+                    ? `
                 <div class="npc-section">
                     <div class="npc-section-title">Beschreibung</div>
                     <div class="npc-desc">${sanitizeHTML(npc.description)}</div>
                 </div>
-            ` : ''}
+            `
+                    : ''
+            }
 
-            ${tagsHtml ? `
+            ${
+                tagsHtml
+                    ? `
                 <div class="npc-section">
                     <div class="npc-section-title">Tags</div>
                     <div class="npc-tags">${tagsHtml}</div>
                 </div>
-            ` : ''}
+            `
+                    : ''
+            }
 
             <div class="npc-section">
                 <div class="npc-section-title">
@@ -295,12 +332,16 @@ function showNPCDetail(id) {
                 <div class="npc-trigger-list">${triggersHtml}</div>
             </div>
 
-            ${linksHtml ? `
+            ${
+                linksHtml
+                    ? `
                 <div class="npc-section">
                     <div class="npc-section-title">Verknüpfungen</div>
                     <div class="npc-links">${linksHtml}</div>
                 </div>
-            ` : ''}
+            `
+                    : ''
+            }
         </div>
     `;
 }
@@ -329,8 +370,7 @@ function setNpcFilter(f) {
 function toggleNPC(id) {
     // For search navigation: select and show the NPC
     const npc = EntityLookup.npc(id);
-    if (!npc)
-        return;
+    if (!npc) return;
     currentNpcFilter = 'all';
     selectedNpcId = typeof id === 'string' ? parseInt(id) : id;
     renderNPCList();
@@ -349,25 +389,36 @@ function toggleNPC(id) {
 // Helper functions
 function renderNPCTags(n) {
     const D = window.D;
-    const questTags = (n.quests || []).map((q) => {
-        const quest = (D.quests || []).find((qst) => qst.name && qst.name.toLowerCase() === q.toLowerCase());
-        if (quest) {
-            return `<span class="npc-list-tag quest clickable" data-action="navigate-entity-stop" data-type="quests" data-id="${quest.id}">📜 ${esc(q)}</span>`;
-        }
-        return `<span class="npc-list-tag quest">📜 ${esc(q)}</span>`;
-    }).join('');
-    const relationTags = (n.relationships || []).map((r) => {
-        const npc = (D.npcs || []).find((np) => np.name && np.name.toLowerCase() === r.toLowerCase());
-        const char = (D.characters || []).find((c) => c.name && c.name.toLowerCase() === r.toLowerCase());
-        if (npc) {
-            return `<span class="npc-list-tag relation clickable" data-action="navigate-entity-stop" data-type="npcs" data-id="${npc.id}">👥 ${esc(r)}</span>`;
-        }
-        else if (char) {
-            return `<span class="npc-list-tag relation clickable" data-action="navigate-entity-stop" data-type="characters" data-id="${char.id}">👥 ${esc(r)}</span>`;
-        }
-        return `<span class="npc-list-tag relation">👥 ${esc(r)}</span>`;
-    }).join('');
-    const infoTags = (n.info || []).map((i) => `<span class="npc-list-tag info">ℹ️ ${esc(i)}</span>`).join('');
+    const questTags = (n.quests || [])
+        .map(q => {
+            const quest = (D.quests || []).find(
+                qst => qst.name && qst.name.toLowerCase() === q.toLowerCase()
+            );
+            if (quest) {
+                return `<span class="npc-list-tag quest clickable" data-action="navigate-entity-stop" data-type="quests" data-id="${quest.id}">📜 ${esc(q)}</span>`;
+            }
+            return `<span class="npc-list-tag quest">📜 ${esc(q)}</span>`;
+        })
+        .join('');
+    const relationTags = (n.relationships || [])
+        .map(r => {
+            const npc = (D.npcs || []).find(
+                np => np.name && np.name.toLowerCase() === r.toLowerCase()
+            );
+            const char = (D.characters || []).find(
+                c => c.name && c.name.toLowerCase() === r.toLowerCase()
+            );
+            if (npc) {
+                return `<span class="npc-list-tag relation clickable" data-action="navigate-entity-stop" data-type="npcs" data-id="${npc.id}">👥 ${esc(r)}</span>`;
+            } else if (char) {
+                return `<span class="npc-list-tag relation clickable" data-action="navigate-entity-stop" data-type="characters" data-id="${char.id}">👥 ${esc(r)}</span>`;
+            }
+            return `<span class="npc-list-tag relation">👥 ${esc(r)}</span>`;
+        })
+        .join('');
+    const infoTags = (n.info || [])
+        .map(i => `<span class="npc-list-tag info">ℹ️ ${esc(i)}</span>`)
+        .join('');
     return { questTags, relationTags, infoTags };
 }
 // Legacy compatibility functions
@@ -395,32 +446,32 @@ function renderNPCRelations(npc) {
     }
     return `
         <div class="npc-relations-list">
-            ${relations.map((rel, idx) => {
-        let targetName, icon, typeLabel, isClickable = true;
-        if (rel.targetType === 'party') {
-            targetName = 'Die Gruppe';
-            icon = '👥';
-            typeLabel = 'Heldengruppe';
-            isClickable = false; // Party is not a single entity to navigate to
-        }
-        else if (rel.targetType === 'characters') {
-            const target = EntityLookup.character(rel.targetId);
-            if (!target)
-                return '';
-            targetName = target.name;
-            icon = '👤';
-            typeLabel = 'Spielercharakter';
-        }
-        else {
-            const target = EntityLookup.npc(rel.targetId);
-            if (!target)
-                return '';
-            targetName = target.name;
-            icon = '🎭';
-            typeLabel = 'NPC';
-        }
-        const status = RELATION_STATUS[rel.status] || RELATION_STATUS.neutral;
-        return `
+            ${relations
+                .map((rel, idx) => {
+                    let targetName,
+                        icon,
+                        typeLabel,
+                        isClickable = true;
+                    if (rel.targetType === 'party') {
+                        targetName = 'Die Gruppe';
+                        icon = '👥';
+                        typeLabel = 'Heldengruppe';
+                        isClickable = false; // Party is not a single entity to navigate to
+                    } else if (rel.targetType === 'characters') {
+                        const target = EntityLookup.character(rel.targetId);
+                        if (!target) return '';
+                        targetName = target.name;
+                        icon = '👤';
+                        typeLabel = 'Spielercharakter';
+                    } else {
+                        const target = EntityLookup.npc(rel.targetId);
+                        if (!target) return '';
+                        targetName = target.name;
+                        icon = '🎭';
+                        typeLabel = 'NPC';
+                    }
+                    const status = RELATION_STATUS[rel.status] || RELATION_STATUS.neutral;
+                    return `
                     <div class="npc-relation-item">
                         <span class="npc-relation-icon">${icon}</span>
                         <div class="npc-relation-info">
@@ -443,48 +494,47 @@ function renderNPCRelations(npc) {
                         </div>
                     </div>
                 `;
-    }).filter(Boolean).join('')}
+                })
+                .filter(Boolean)
+                .join('')}
         </div>
     `;
 }
 function showRelationsModal(npcId) {
     const D = window.D;
     const npc = EntityLookup.npc(npcId);
-    if (!npc)
-        return;
+    if (!npc) return;
     // Build options for Party, NPCs and Characters
-    const partyOption = D.characters?.length > 0
-        ? `<option value="party:0" selected>👥 Die Gruppe (alle Charaktere)</option>`
-        : '';
+    const partyOption =
+        D.characters?.length > 0
+            ? `<option value="party:0" selected>👥 Die Gruppe (alle Charaktere)</option>`
+            : '';
     const npcOptions = (D.npcs || [])
-        .filter((n) => n.id !== npc.id) // Exclude self
-        .map((n) => `<option value="npcs:${n.id}">${esc(n.name)} (NPC)</option>`)
+        .filter(n => n.id !== npc.id) // Exclude self
+        .map(n => `<option value="npcs:${n.id}">${esc(n.name)} (NPC)</option>`)
         .join('');
     const charOptions = (D.characters || [])
-        .map((c) => `<option value="characters:${c.id}">${esc(c.name)} (Charakter)</option>`)
+        .map(c => `<option value="characters:${c.id}">${esc(c.name)} (Charakter)</option>`)
         .join('');
-    const existingRelations = (npc.relations || []).map((rel, idx) => {
-        let targetName, targetIcon;
-        if (rel.targetType === 'party') {
-            targetName = 'Die Gruppe';
-            targetIcon = '👥';
-        }
-        else if (rel.targetType === 'characters') {
-            const target = EntityLookup.character(rel.targetId);
-            if (!target)
-                return '';
-            targetName = target.name;
-            targetIcon = '👤';
-        }
-        else {
-            const target = EntityLookup.npc(rel.targetId);
-            if (!target)
-                return '';
-            targetName = target.name;
-            targetIcon = '🎭';
-        }
-        const status = RELATION_STATUS[rel.status] || RELATION_STATUS.neutral;
-        return `
+    const existingRelations = (npc.relations || [])
+        .map((rel, idx) => {
+            let targetName, targetIcon;
+            if (rel.targetType === 'party') {
+                targetName = 'Die Gruppe';
+                targetIcon = '👥';
+            } else if (rel.targetType === 'characters') {
+                const target = EntityLookup.character(rel.targetId);
+                if (!target) return '';
+                targetName = target.name;
+                targetIcon = '👤';
+            } else {
+                const target = EntityLookup.npc(rel.targetId);
+                if (!target) return '';
+                targetName = target.name;
+                targetIcon = '🎭';
+            }
+            const status = RELATION_STATUS[rel.status] || RELATION_STATUS.neutral;
+            return `
             <div class="npc-relation-item">
                 <span class="npc-relation-icon">${targetIcon}</span>
                 <div class="npc-relation-info">
@@ -494,7 +544,9 @@ function showRelationsModal(npcId) {
                 <button class="npc-relation-btn danger" data-action="remove-relation-modal" data-id="${npcId}" data-value="${idx}">✕</button>
             </div>
         `;
-    }).filter(Boolean).join('');
+        })
+        .filter(Boolean)
+        .join('');
     const content = `
         <div class="relations-modal-content">
             <div class="relations-modal-header">
@@ -527,12 +579,16 @@ function showRelationsModal(npcId) {
                 </div>
             </div>
 
-            ${existingRelations ? `
+            ${
+                existingRelations
+                    ? `
                 <div class="relations-existing">
                     <div class="relations-existing-title">Bestehende Beziehungen:</div>
                     <div class="npc-relations-list">${existingRelations}</div>
                 </div>
-            ` : ''}
+            `
+                    : ''
+            }
         </div>
     `;
     // Create or reuse modal
@@ -542,14 +598,13 @@ function showRelationsModal(npcId) {
         modal.id = 'relations-modal';
         modal.className = 'modal-overlay';
         modal.innerHTML = `<div class="modal" style="max-width: 500px;">${content}</div>`;
-        modal.onclick = (e) => { if (e.target === modal)
-            hideModal('relations-modal'); };
+        modal.onclick = e => {
+            if (e.target === modal) hideModal('relations-modal');
+        };
         document.body.appendChild(modal);
-    }
-    else {
+    } else {
         const modalContent = modal.querySelector('.modal');
-        if (modalContent)
-            modalContent.innerHTML = content;
+        if (modalContent) modalContent.innerHTML = content;
     }
     // Store current status
     modal.dataset.currentStatus = 'neutral';
@@ -563,8 +618,7 @@ function setRelationStatus(status) {
 }
 function addRelation(npcId) {
     const npc = EntityLookup.npc(npcId);
-    if (!npc)
-        return;
+    if (!npc) return;
     const targetEl = $('relation-target');
     const targetVal = targetEl?.value;
     if (!targetVal) {
@@ -574,9 +628,8 @@ function addRelation(npcId) {
     const [targetType, targetIdStr] = targetVal.split(':');
     const targetId = parseInt(targetIdStr);
     // Check if relation already exists
-    if (!npc.relations)
-        npc.relations = [];
-    if (npc.relations.some((r) => r.targetType === targetType && r.targetId === targetId)) {
+    if (!npc.relations) npc.relations = [];
+    if (npc.relations.some(r => r.targetType === targetType && r.targetId === targetId)) {
         showToast('Beziehung existiert bereits', 'warning');
         return;
     }
@@ -596,8 +649,7 @@ function addRelation(npcId) {
 }
 function removeRelation(npcId, index) {
     const npc = EntityLookup.npc(npcId);
-    if (!npc || !npc.relations)
-        return;
+    if (!npc || !npc.relations) return;
     const idx = typeof index === 'string' ? parseInt(index) : index;
     pushUndo('Beziehung entfernen');
     npc.relations.splice(idx, 1);
@@ -608,11 +660,9 @@ function removeRelation(npcId, index) {
 }
 function cycleRelationStatus(npcId, index) {
     const npc = EntityLookup.npc(npcId);
-    if (!npc || !npc.relations)
-        return;
+    if (!npc || !npc.relations) return;
     const idx = typeof index === 'string' ? parseInt(index) : index;
-    if (!npc.relations[idx])
-        return;
+    if (!npc.relations[idx]) return;
     pushUndo('Beziehungsstatus ändern');
     const statusOrder = ['friendly', 'neutral', 'hostile'];
     const currentIdx = statusOrder.indexOf(npc.relations[idx].status);

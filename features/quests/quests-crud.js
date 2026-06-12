@@ -46,15 +46,12 @@ function saveQuest() {
         rewardReceived: $('quest-rewarded').checked
     };
     // Validate entity references and required fields
-    if (!validateAndShowErrors(q, 'quest'))
-        return;
+    if (!validateAndShowErrors(q, 'quest')) return;
     pushUndo(id ? 'Quest bearbeitet' : 'Quest erstellt');
     if (id) {
-        const idx = D.quests.findIndex((x) => x.id === parseEntityId(id));
-        if (idx > -1)
-            D.quests[idx] = { ...D.quests[idx], ...q };
-    }
-    else {
+        const idx = D.quests.findIndex(x => x.id === parseEntityId(id));
+        if (idx > -1) D.quests[idx] = { ...D.quests[idx], ...q };
+    } else {
         q.id = nextId('quests');
         D.quests.push(q);
     }
@@ -68,13 +65,11 @@ function saveQuest() {
  */
 function editQuest(id) {
     const q = EntityLookup.quest(id);
-    if (!q)
-        return;
+    if (!q) return;
     // First populate dropdowns
     populateQuestSelects();
     const idInput = $('edit-quest-id');
-    if (idInput)
-        idInput.value = String(id);
+    if (idInput) idInput.value = String(id);
     $('quest-title').value = q.title;
     $('quest-type').value = q.type || 'quest';
     $('quest-desc').innerHTML = sanitizeHTML(q.description) || '';
@@ -88,7 +83,7 @@ function editQuest(id) {
     const itemsList = $('quest-reward-items-list');
     if (itemsList) {
         itemsList.innerHTML = '';
-        (q.rewardItems || []).forEach((item) => {
+        (q.rewardItems || []).forEach(item => {
             addQuestRewardItemTag(item.id, item.name);
         });
     }
@@ -97,12 +92,9 @@ function editQuest(id) {
         const giverSelect = $('quest-giver');
         const locationSelect = $('quest-location');
         const targetSelect = $('quest-target');
-        if (q.giverId && giverSelect)
-            giverSelect.value = String(q.giverId);
-        if (q.locationId && locationSelect)
-            locationSelect.value = String(q.locationId);
-        if (q.targetId && targetSelect)
-            targetSelect.value = String(q.targetId);
+        if (q.giverId && giverSelect) giverSelect.value = String(q.giverId);
+        if (q.locationId && locationSelect) locationSelect.value = String(q.locationId);
+        if (q.targetId && targetSelect) targetSelect.value = String(q.targetId);
     }, 10);
 
     // Show markdown export/import buttons when editing
@@ -132,8 +124,14 @@ function deleteQuest(id) {
 function clearQuestForm() {
     clearFormFields({
         textFields: [
-            'edit-quest-id', 'quest-title', 'quest-giver', 'quest-location',
-            'quest-target', 'quest-reward-gold', 'quest-reward-other', 'quest-reward-item'
+            'edit-quest-id',
+            'quest-title',
+            'quest-giver',
+            'quest-location',
+            'quest-target',
+            'quest-reward-gold',
+            'quest-reward-other',
+            'quest-reward-item'
         ],
         selectFields: [{ id: 'quest-type', defaultValue: 'quest' }],
         contentEditableFields: ['quest-desc', 'quest-epilog'],
@@ -156,37 +154,50 @@ function populateQuestSelects() {
     const giverSelect = $('quest-giver');
     if (giverSelect) {
         const currentValue = giverSelect.value;
-        giverSelect.innerHTML = '<option value="">-- NPC wählen --</option>' +
-            D.npcs.map((n) => `<option value="${n.id}">${esc(n.name)}${n.role ? ` (${esc(n.role)})` : ''}</option>`).join('');
+        giverSelect.innerHTML =
+            '<option value="">-- NPC wählen --</option>' +
+            D.npcs
+                .map(
+                    n =>
+                        `<option value="${n.id}">${esc(n.name)}${n.role ? ` (${esc(n.role)})` : ''}</option>`
+                )
+                .join('');
         giverSelect.value = currentValue;
     }
     // Location dropdown
     const locationSelect = $('quest-location');
     if (locationSelect) {
         const currentValue = locationSelect.value;
-        locationSelect.innerHTML = '<option value="">-- Ort wählen --</option>' +
-            D.locations.map((l) => `<option value="${l.id}">${esc(l.name)}</option>`).join('');
+        locationSelect.innerHTML =
+            '<option value="">-- Ort wählen --</option>' +
+            D.locations.map(l => `<option value="${l.id}">${esc(l.name)}</option>`).join('');
         locationSelect.value = currentValue;
     }
     // Target location dropdown
     const targetSelect = $('quest-target');
     if (targetSelect) {
         const currentValue = targetSelect.value;
-        targetSelect.innerHTML = '<option value="">-- Zielort wählen --</option>' +
-            D.locations.map((l) => `<option value="${l.id}">${esc(l.name)}</option>`).join('');
+        targetSelect.innerHTML =
+            '<option value="">-- Zielort wählen --</option>' +
+            D.locations.map(l => `<option value="${l.id}">${esc(l.name)}</option>`).join('');
         targetSelect.value = currentValue;
     }
     // Items from loot for reward
     const itemSelect = $('quest-reward-item');
     if (itemSelect) {
-        itemSelect.innerHTML = '<option value="">-- Item wählen --</option>' +
-            D.loot.map((i) => `<option value="${i.id}" data-name="${esc(i.name)}">${esc(i.name)}${i.quantity > 1 ? ` (${i.quantity}x)` : ''}</option>`).join('');
+        itemSelect.innerHTML =
+            '<option value="">-- Item wählen --</option>' +
+            D.loot
+                .map(
+                    i =>
+                        `<option value="${i.id}" data-name="${esc(i.name)}">${esc(i.name)}${i.quantity > 1 ? ` (${i.quantity}x)` : ''}</option>`
+                )
+                .join('');
     }
 }
 function addQuestRewardItem() {
     const select = $('quest-reward-item');
-    if (!select || !select.value)
-        return;
+    if (!select || !select.value) return;
     const itemId = select.value;
     const option = select.selectedOptions[0];
     const itemName = option.dataset.name || '';
@@ -201,8 +212,7 @@ function addQuestRewardItem() {
 }
 function addQuestRewardItemTag(itemId, itemName) {
     const itemsList = $('quest-reward-items-list');
-    if (!itemsList)
-        return;
+    if (!itemsList) return;
     const tag = document.createElement('span');
     tag.className = 'quest-reward-item-tag';
     tag.dataset.itemId = String(itemId);

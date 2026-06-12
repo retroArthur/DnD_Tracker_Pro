@@ -3,15 +3,9 @@
  * Testet Initiative-Tracking, Kampfrunden und HP-Management im Kampf
  */
 
-const {
-    getModifier,
-    parseDiceNotation,
-    nextId,
-    clamp
-} = require('../../utils/testable-utils');
+const { getModifier, parseDiceNotation, nextId, clamp } = require('../../utils/testable-utils');
 
 describe('Combat System Integration', () => {
-
     let combat;
     let dataStore;
 
@@ -58,7 +52,6 @@ describe('Combat System Integration', () => {
     // ============================================================
 
     describe('Initiative-Management', () => {
-
         test('sollte Combatants nach Initiative sortieren', () => {
             combat.combatants = [
                 createCombatant({ name: 'Slow', initiative: 5 }),
@@ -79,8 +72,8 @@ describe('Combat System Integration', () => {
             };
 
             expect(rollInitiative(14, 10)).toBe(12); // 10 + 2
-            expect(rollInitiative(8, 15)).toBe(14);  // 15 - 1
-            expect(rollInitiative(10, 7)).toBe(7);   // 7 + 0
+            expect(rollInitiative(8, 15)).toBe(14); // 15 - 1
+            expect(rollInitiative(10, 7)).toBe(7); // 7 + 0
         });
 
         test('sollte bei gleicher Initiative nach DEX-Modifier sortieren', () => {
@@ -109,7 +102,6 @@ describe('Combat System Integration', () => {
     // ============================================================
 
     describe('Zug-Management', () => {
-
         beforeEach(() => {
             combat.combatants = [
                 createCombatant({ name: 'Fighter', initiative: 18 }),
@@ -154,7 +146,10 @@ describe('Combat System Integration', () => {
             expect(combat.round).toBe(1);
 
             // Durchlaufe alle 4 Combatants
-            nextTurn(); nextTurn(); nextTurn(); nextTurn();
+            nextTurn();
+            nextTurn();
+            nextTurn();
+            nextTurn();
 
             expect(combat.round).toBe(2);
             expect(combat.currentTurn).toBe(0);
@@ -189,7 +184,6 @@ describe('Combat System Integration', () => {
     // ============================================================
 
     describe('Schaden & Heilung', () => {
-
         test('sollte Schaden anwenden und HP reduzieren', () => {
             const target = createCombatant({ hpCurrent: 25, hpMax: 25 });
 
@@ -231,7 +225,7 @@ describe('Combat System Integration', () => {
             const minDamage = dice.count * 1 + dice.modifier;
             const maxDamage = dice.count * dice.sides + dice.modifier;
 
-            expect(minDamage).toBe(5);  // 2×1 + 3
+            expect(minDamage).toBe(5); // 2×1 + 3
             expect(maxDamage).toBe(15); // 2×6 + 3
         });
     });
@@ -241,7 +235,6 @@ describe('Combat System Integration', () => {
     // ============================================================
 
     describe('Zustände (Conditions)', () => {
-
         test('sollte Zustand hinzufügen', () => {
             const target = createCombatant({ conditions: [] });
 
@@ -293,12 +286,23 @@ describe('Combat System Integration', () => {
     // ============================================================
 
     describe('Kampfablauf', () => {
-
         test('sollte kompletten Kampf simulieren', () => {
             // Setup: 2 Players vs 2 Goblins
             combat.combatants = [
-                createCombatant({ name: 'Fighter', initiative: 18, hpCurrent: 40, hpMax: 40, ac: 18 }),
-                createCombatant({ name: 'Wizard', initiative: 14, hpCurrent: 20, hpMax: 20, ac: 12 }),
+                createCombatant({
+                    name: 'Fighter',
+                    initiative: 18,
+                    hpCurrent: 40,
+                    hpMax: 40,
+                    ac: 18
+                }),
+                createCombatant({
+                    name: 'Wizard',
+                    initiative: 14,
+                    hpCurrent: 20,
+                    hpMax: 20,
+                    ac: 12
+                }),
                 createMonster({ name: 'Goblin 1', initiative: 12, hpCurrent: 7, hpMax: 7, ac: 15 }),
                 createMonster({ name: 'Goblin 2', initiative: 10, hpCurrent: 7, hpMax: 7, ac: 15 })
             ];
@@ -309,7 +313,7 @@ describe('Combat System Integration', () => {
                 combatant.hpCurrent = clamp(combatant.hpCurrent - damage, 0, combatant.hpMax);
             };
 
-            const isDefeated = (combatant) => combatant.hpCurrent <= 0;
+            const isDefeated = combatant => combatant.hpCurrent <= 0;
 
             const getActiveEnemies = () =>
                 combat.combatants.filter(c => !c.isPlayer && c.hpCurrent > 0);
@@ -363,7 +367,6 @@ describe('Combat System Integration', () => {
     // ============================================================
 
     describe('Angriffsauflösung', () => {
-
         test('sollte Treffer/Verfehlen bestimmen', () => {
             const resolveAttack = (attackRoll, attackBonus, targetAC) => {
                 const total = attackRoll + attackBonus;

@@ -16,12 +16,13 @@ function validateEntityReferences(entity, schema) {
             const numId = parseInt(String(value));
             if (isNaN(numId)) {
                 errors.push(`${field}: Ungültige ID-Format`);
-            }
-            else {
+            } else {
                 const EntityLookup = window.EntityLookup;
                 const refEntity = EntityLookup?.get(config.entityType, numId);
                 if (!refEntity) {
-                    errors.push(`${field}: Referenzierter ${config.entityType} mit ID ${numId} nicht gefunden`);
+                    errors.push(
+                        `${field}: Referenzierter ${config.entityType} mit ID ${numId} nicht gefunden`
+                    );
                 }
             }
         }
@@ -89,7 +90,10 @@ function validateAndShowErrors(entity, entityType) {
     const schema = VALIDATION_SCHEMAS[entityType];
     if (!schema) {
         if (window.APP_CONFIG?.DEBUG_MODE) {
-            window.ErrorHandler?.log('validateAndShowErrors', new Error(`Unknown entity type: ${entityType}`));
+            window.ErrorHandler?.log(
+                'validateAndShowErrors',
+                new Error(`Unknown entity type: ${entityType}`)
+            );
         }
         return true; // No schema = no validation, allow save
     }

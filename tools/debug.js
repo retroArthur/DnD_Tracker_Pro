@@ -35,28 +35,27 @@
 // var addNode = window.addNode;  // [REMOVED: conflicts with function declaration]
 // var selectNodeType = window.selectNodeType;  // [REMOVED: conflicts with function declaration]
 function clearTestData() {
-    if (!confirm('Alle Test-Daten (mit "Test" im Namen) löschen?'))
-        return;
+    if (!confirm('Alle Test-Daten (mit "Test" im Namen) löschen?')) return;
     let count = 0;
     // Charaktere mit "Test" im Namen
     const charsBefore = D.characters?.length || 0;
-    D.characters = (D.characters || []).filter((c) => !c.name?.toLowerCase().includes('test'));
+    D.characters = (D.characters || []).filter(c => !c.name?.toLowerCase().includes('test'));
     count += charsBefore - D.characters.length;
     // NPCs mit "Test" im Namen
     const npcsBefore = D.npcs?.length || 0;
-    D.npcs = (D.npcs || []).filter((n) => !n.name?.toLowerCase().includes('test'));
+    D.npcs = (D.npcs || []).filter(n => !n.name?.toLowerCase().includes('test'));
     count += npcsBefore - D.npcs.length;
     // Orte mit "Test" im Namen
     const locsBefore = D.locations?.length || 0;
-    D.locations = (D.locations || []).filter((l) => !l.name?.toLowerCase().includes('test'));
+    D.locations = (D.locations || []).filter(l => !l.name?.toLowerCase().includes('test'));
     count += locsBefore - D.locations.length;
     // Quests mit "Test" im Namen
     const questsBefore = D.quests?.length || 0;
-    D.quests = (D.quests || []).filter((q) => !q.title?.toLowerCase().includes('test'));
+    D.quests = (D.quests || []).filter(q => !q.title?.toLowerCase().includes('test'));
     count += questsBefore - D.quests.length;
     // Wiki-Einträge mit "Test" im Namen
     const wikiBefore = D.wiki?.length || 0;
-    D.wiki = (D.wiki || []).filter((w) => !w.title?.toLowerCase().includes('test'));
+    D.wiki = (D.wiki || []).filter(w => !w.title?.toLowerCase().includes('test'));
     count += wikiBefore - D.wiki.length;
     save();
     renderAll();
@@ -65,32 +64,27 @@ function clearTestData() {
     updateDebugStats();
 }
 function clearAllSpells() {
-    if (!confirm(`Wirklich ALLE ${D.spells?.length || 0} Zauber löschen?`))
-        return;
+    if (!confirm(`Wirklich ALLE ${D.spells?.length || 0} Zauber löschen?`)) return;
     const count = D.spells?.length || 0;
     D.spells = [];
     // Zauber-Zuweisungen von Charakteren entfernen
-    (D.characters || []).forEach((c) => {
+    (D.characters || []).forEach(c => {
         c.spells = [];
         c.spellSlots = {};
     });
     save();
-    if (typeof renderSpells === 'function')
-        renderSpells();
-    if (typeof renderParty === 'function')
-        renderParty();
+    if (typeof renderSpells === 'function') renderSpells();
+    if (typeof renderParty === 'function') renderParty();
     debugLogAdd(`${count} Zauber gelöscht`);
     showToast(`✨ ${count} Zauber gelöscht`, 'success');
     updateDebugStats();
 }
 function clearAllWiki() {
-    if (!confirm(`Wirklich ALLE ${D.wiki?.length || 0} Wiki-Einträge löschen?`))
-        return;
+    if (!confirm(`Wirklich ALLE ${D.wiki?.length || 0} Wiki-Einträge löschen?`)) return;
     const count = D.wiki?.length || 0;
     D.wiki = [];
     save();
-    if (typeof renderWiki === 'function')
-        renderWiki();
+    if (typeof renderWiki === 'function') renderWiki();
     debugLogAdd(`${count} Wiki-Einträge gelöscht`);
     showToast(`📚 ${count} Wiki-Einträge gelöscht`, 'success');
     updateDebugStats();
@@ -109,12 +103,14 @@ function runAllTests() {
     const total = allResults.length;
     const percentage = Math.round((passed / total) * 100);
     debugLogAdd(`=== ALLE TESTS ABGESCHLOSSEN: ${passed}/${total} (${percentage}%) ===`);
-    showToast(`🧪 Gesamt: ${passed}/${total} Tests bestanden (${percentage}%)`, percentage === 100 ? 'success' : percentage >= 80 ? 'info' : 'warning');
+    showToast(
+        `🧪 Gesamt: ${passed}/${total} Tests bestanden (${percentage}%)`,
+        percentage === 100 ? 'success' : percentage >= 80 ? 'info' : 'warning'
+    );
     return allResults;
 }
 function runFeatureTests(silent = false) {
-    if (!silent)
-        debugLogAdd('--- Feature-Tests ---');
+    if (!silent) debugLogAdd('--- Feature-Tests ---');
     const results = [];
     // Test: Datenstruktur
     results.push({
@@ -124,7 +120,17 @@ function runFeatureTests(silent = false) {
         category: 'feature'
     });
     // Test: Arrays vorhanden
-    const arrays = ['characters', 'npcs', 'locations', 'quests', 'encounters', 'spells', 'loot', 'sessionNotes', 'wiki'];
+    const arrays = [
+        'characters',
+        'npcs',
+        'locations',
+        'quests',
+        'encounters',
+        'spells',
+        'loot',
+        'sessionNotes',
+        'wiki'
+    ];
     arrays.forEach(arr => {
         results.push({
             name: `Array: ${arr}`,
@@ -143,10 +149,19 @@ function runFeatureTests(silent = false) {
     // Test: Save-Funktion
     try {
         const testResult = typeof save === 'function';
-        results.push({ name: 'Save-Funktion', pass: testResult, detail: testResult ? 'OK' : 'Fehlt', category: 'feature' });
-    }
-    catch (e) {
-        results.push({ name: 'Save-Funktion', pass: false, detail: e.message, category: 'feature' });
+        results.push({
+            name: 'Save-Funktion',
+            pass: testResult,
+            detail: testResult ? 'OK' : 'Fehlt',
+            category: 'feature'
+        });
+    } catch (e) {
+        results.push({
+            name: 'Save-Funktion',
+            pass: false,
+            detail: e.message,
+            category: 'feature'
+        });
     }
     // Ergebnisse anzeigen
     const passed = results.filter(r => r.pass).length;
@@ -156,13 +171,15 @@ function runFeatureTests(silent = false) {
             debugLogAdd(`  ${r.pass ? '✓' : '✗'} ${r.name}: ${r.detail}`);
         });
         debugLogAdd(`Feature-Tests: ${passed}/${total} bestanden`);
-        showToast(`🧪 Tests: ${passed}/${total} bestanden`, passed === total ? 'success' : 'warning');
+        showToast(
+            `🧪 Tests: ${passed}/${total} bestanden`,
+            passed === total ? 'success' : 'warning'
+        );
     }
     return results;
 }
 function runNewFeatureTests(silent = false) {
-    if (!silent)
-        debugLogAdd('--- Neue Features Tests (v2.6) ---');
+    if (!silent) debugLogAdd('--- Neue Features Tests (v2.6) ---');
     const results = [];
     // Wiki-System
     results.push({
@@ -205,13 +222,15 @@ function runNewFeatureTests(silent = false) {
             debugLogAdd(`  ${r.pass ? '✓' : '✗'} ${r.name}: ${r.detail}`);
         });
         debugLogAdd(`Neue Features: ${passed}/${results.length} OK`);
-        showToast(`🆕 Neue Features: ${passed}/${results.length} OK`, passed === results.length ? 'success' : 'warning');
+        showToast(
+            `🆕 Neue Features: ${passed}/${results.length} OK`,
+            passed === results.length ? 'success' : 'warning'
+        );
     }
     return results;
 }
 function runEntitySystemTests(silent = false) {
-    if (!silent)
-        debugLogAdd('--- Entity-System Tests ---');
+    if (!silent) debugLogAdd('--- Entity-System Tests ---');
     const results = [];
     // EntityLookup existiert
     results.push({
@@ -242,11 +261,22 @@ function runEntitySystemTests(silent = false) {
     results.push({
         name: 'EntityLookup.exists()',
         pass: typeof EntityLookup.exists === 'function',
-        detail: D.npcs?.length > 0 ? `exists('npcs', ${D.npcs[0]?.id}) = ${EntityLookup.exists('npcs', D.npcs[0]?.id)}` : 'Keine NPCs zum Testen',
+        detail:
+            D.npcs?.length > 0
+                ? `exists('npcs', ${D.npcs[0]?.id}) = ${EntityLookup.exists('npcs', D.npcs[0]?.id)}`
+                : 'Keine NPCs zum Testen',
         category: 'entity-system'
     });
     // Convenience-Methoden
-    const convenienceMethods = ['npc', 'location', 'character', 'quest', 'spell', 'lootItem', 'shop'];
+    const convenienceMethods = [
+        'npc',
+        'location',
+        'character',
+        'quest',
+        'spell',
+        'lootItem',
+        'shop'
+    ];
     convenienceMethods.forEach(method => {
         results.push({
             name: `EntityLookup.${method}()`,
@@ -274,7 +304,9 @@ function runEntitySystemTests(silent = false) {
         const testLink = renderEntityLink('npcs', 1, 'Test-NPC');
         results.push({
             name: 'renderEntityLink Output',
-            pass: testLink.includes('data-action="navigate-entity"') && testLink.includes('entity-link'),
+            pass:
+                testLink.includes('data-action="navigate-entity"') &&
+                testLink.includes('entity-link'),
             detail: testLink.includes('data-action') ? 'data-action korrekt' : 'data-action fehlt',
             category: 'entity-system'
         });
@@ -285,13 +317,15 @@ function runEntitySystemTests(silent = false) {
             debugLogAdd(`  ${r.pass ? '✓' : '✗'} ${r.name}: ${r.detail}`);
         });
         debugLogAdd(`Entity-System: ${passed}/${results.length} OK`);
-        showToast(`🔗 Entity-System: ${passed}/${results.length} OK`, passed === results.length ? 'success' : 'warning');
+        showToast(
+            `🔗 Entity-System: ${passed}/${results.length} OK`,
+            passed === results.length ? 'success' : 'warning'
+        );
     }
     return results;
 }
 function runErrorHandlingTests(silent = false) {
-    if (!silent)
-        debugLogAdd('--- Error-Handling Tests ---');
+    if (!silent) debugLogAdd('--- Error-Handling Tests ---');
     const results = [];
     // ErrorHandler existiert
     results.push({
@@ -385,13 +419,15 @@ function runErrorHandlingTests(silent = false) {
             debugLogAdd(`  ${r.pass ? '✓' : '✗'} ${r.name}: ${r.detail}`);
         });
         debugLogAdd(`Error-Handling: ${passed}/${results.length} OK`);
-        showToast(`⚠️ Error-Handling: ${passed}/${results.length} OK`, passed === results.length ? 'success' : 'warning');
+        showToast(
+            `⚠️ Error-Handling: ${passed}/${results.length} OK`,
+            passed === results.length ? 'success' : 'warning'
+        );
     }
     return results;
 }
 function runPerformanceTests(silent = false) {
-    if (!silent)
-        debugLogAdd('--- Performance-Tests ---');
+    if (!silent) debugLogAdd('--- Performance-Tests ---');
     const results = [];
     // PerformanceManager existiert
     results.push({
@@ -401,7 +437,14 @@ function runPerformanceTests(silent = false) {
         category: 'performance'
     });
     // PerformanceManager Methoden
-    ['startMeasure', 'endMeasure', 'getDebounced', 'getThrottled', 'shouldUseVirtualScroll', 'renderList'].forEach(method => {
+    [
+        'startMeasure',
+        'endMeasure',
+        'getDebounced',
+        'getThrottled',
+        'shouldUseVirtualScroll',
+        'renderList'
+    ].forEach(method => {
         results.push({
             name: `PerformanceManager.${method}()`,
             pass: typeof PerformanceManager?.[method] === 'function',
@@ -475,8 +518,12 @@ function runPerformanceTests(silent = false) {
         results.forEach(r => {
             debugLogAdd(`  ${r.pass ? '✓' : '✗'} ${r.name}: ${r.detail}`);
         });
-        const rating = passed === results.length ? 'Excellent' :
-            passed >= results.length * 0.8 ? 'Gut' : 'Verbesserungswürdig';
+        const rating =
+            passed === results.length
+                ? 'Excellent'
+                : passed >= results.length * 0.8
+                  ? 'Gut'
+                  : 'Verbesserungswürdig';
         debugLogAdd(`Performance: ${passed}/${results.length} OK - ${rating}`);
         showToast(`⚡ Performance: ${rating}`, rating === 'Excellent' ? 'success' : 'info');
     }
@@ -487,11 +534,17 @@ function runPerformanceTest() {
     runPerformanceTests(false);
 }
 function runUITests(silent = false) {
-    if (!silent)
-        debugLogAdd('--- UI-Tests ---');
+    if (!silent) debugLogAdd('--- UI-Tests ---');
     const results = [];
     // Haupt-Container existieren
-    const containers = ['party-list', 'npc-list', 'loc-grid', 'quests-list', 'spell-list', 'loot-list'];
+    const containers = [
+        'party-list',
+        'npc-list',
+        'loc-grid',
+        'quests-list',
+        'spell-list',
+        'loot-list'
+    ];
     containers.forEach(id => {
         const el = $(id);
         results.push({
@@ -532,7 +585,14 @@ function runUITests(silent = false) {
         category: 'ui'
     });
     // Render-Funktionen
-    const renderFns = ['renderParty', 'renderNPCList', 'renderLocations', 'renderQuests', 'renderSpells', 'renderLoot'];
+    const renderFns = [
+        'renderParty',
+        'renderNPCList',
+        'renderLocations',
+        'renderQuests',
+        'renderSpells',
+        'renderLoot'
+    ];
     renderFns.forEach(fn => {
         results.push({
             name: fn,
@@ -568,12 +628,24 @@ function runUITests(silent = false) {
             debugLogAdd(`  ${r.pass ? '✓' : '✗'} ${r.name}: ${r.detail}`);
         });
         debugLogAdd(`UI-Tests: ${passed}/${results.length} OK`);
-        showToast(`🖥️ UI-Tests: ${passed}/${results.length} OK`, passed === results.length ? 'success' : 'warning');
+        showToast(
+            `🖥️ UI-Tests: ${passed}/${results.length} OK`,
+            passed === results.length ? 'success' : 'warning'
+        );
     }
     return results;
 }
 function generateTestWiki(count = 5) {
-    const topics = ['Drachen', 'Magie', 'Königreich', 'Dungeon', 'Artefakt', 'Legende', 'Fluch', 'Prophezeiung'];
+    const topics = [
+        'Drachen',
+        'Magie',
+        'Königreich',
+        'Dungeon',
+        'Artefakt',
+        'Legende',
+        'Fluch',
+        'Prophezeiung'
+    ];
     const adjectives = ['Alte', 'Verborgene', 'Dunkle', 'Heilige', 'Verlorene', 'Mächtige'];
     D.wiki = D.wiki || [];
     for (let i = 0; i < count; i++) {
@@ -590,8 +662,7 @@ function generateTestWiki(count = 5) {
         });
     }
     save();
-    if (typeof renderWiki === 'function')
-        renderWiki();
+    if (typeof renderWiki === 'function') renderWiki();
     debugLogAdd(`${count} Test-Wiki-Einträge erstellt`);
     showToast(`📚 ${count} Wiki-Einträge erstellt`, 'success');
     updateDebugStats();
@@ -619,11 +690,14 @@ function testWikiSystem() {
     D.wiki.push(testEntry);
     const added = EntityLookup.wiki(999999);
     debugLogAdd(`  Eintrag hinzufügen: ${added ? '✓' : '✗'}`);
-    D.wiki = D.wiki.filter((w) => w.id !== 999999);
+    D.wiki = D.wiki.filter(w => w.id !== 999999);
     const removed = !EntityLookup.wiki(999999);
     debugLogAdd(`  Eintrag entfernen: ${removed ? '✓' : '✗'}`);
     const allPass = hasWiki && hasRender && container && added && removed;
-    showToast(`📚 Wiki-Test: ${allPass ? 'Bestanden' : 'Fehlgeschlagen'}`, allPass ? 'success' : 'error');
+    showToast(
+        `📚 Wiki-Test: ${allPass ? 'Bestanden' : 'Fehlgeschlagen'}`,
+        allPass ? 'success' : 'error'
+    );
 }
 function testWikiLinks() {
     debugLogAdd('--- Wiki-Links Test ---');
@@ -651,8 +725,11 @@ function testQuickReference() {
     const hasToggle = typeof toggleQuickRef === 'function';
     debugLogAdd(`  toggleQuickRef(): ${hasToggle ? '✓' : '✗'}`);
     // Conditions-Objekt
-    const hasConditions = typeof QREF_CONDITIONS === 'object' && Object.keys(QREF_CONDITIONS).length > 0;
-    debugLogAdd(`  QREF_CONDITIONS: ${hasConditions ? '✓ (' + Object.keys(QREF_CONDITIONS).length + ' Zustände)' : '✗'}`);
+    const hasConditions =
+        typeof QREF_CONDITIONS === 'object' && Object.keys(QREF_CONDITIONS).length > 0;
+    debugLogAdd(
+        `  QREF_CONDITIONS: ${hasConditions ? '✓ (' + Object.keys(QREF_CONDITIONS).length + ' Zustände)' : '✗'}`
+    );
     // Apply-Funktion
     const hasApply = typeof applyQrefCondition === 'function';
     debugLogAdd(`  applyQrefCondition(): ${hasApply ? '✓' : '✗'}`);
@@ -666,7 +743,10 @@ function testQuickReference() {
     const customCount = D.quickRefCustom?.length || 0;
     debugLogAdd(`  Custom-Einträge: ${customCount}`);
     const allPass = panel && hasToggle && hasConditions && hasApply && hasDiceRoll;
-    showToast(`📖 Quick Ref Test: ${allPass ? 'Bestanden' : 'Fehlgeschlagen'}`, allPass ? 'success' : 'error');
+    showToast(
+        `📖 Quick Ref Test: ${allPass ? 'Bestanden' : 'Fehlgeschlagen'}`,
+        allPass ? 'success' : 'error'
+    );
 }
 function testEventLog() {
     debugLogAdd('--- Event Log Test ---');
@@ -692,7 +772,10 @@ function testEventLog() {
     }
     const allPass = logEl && hasShowToast && hasToggle && hasClear;
     setTimeout(() => {
-        showToast(`📋 Event Log Test: ${allPass ? 'Bestanden' : 'Fehlgeschlagen'}`, allPass ? 'success' : 'error');
+        showToast(
+            `📋 Event Log Test: ${allPass ? 'Bestanden' : 'Fehlgeschlagen'}`,
+            allPass ? 'success' : 'error'
+        );
     }, 1200);
 }
 function testUndoRedo() {
@@ -736,7 +819,9 @@ function testAutoSave() {
     // LocalStorage prüfen
     const key = window.STORAGE_KEY_OVERRIDE || STORAGE_KEY;
     const stored = localStorage.getItem(key);
-    debugLogAdd(`  Gespeichert: ${stored ? '✓ ' + (stored.length / 1024).toFixed(1) + ' KB' : '✗'}`);
+    debugLogAdd(
+        `  Gespeichert: ${stored ? '✓ ' + (stored.length / 1024).toFixed(1) + ' KB' : '✗'}`
+    );
     showToast(`💾 AutoSave Test abgeschlossen`, 'info');
 }
 function testIndexedDB() {
@@ -757,8 +842,7 @@ function testIndexedDB() {
             indexedDB.deleteDatabase('dnd-tracker-test');
             showToast(`🗄️ IndexedDB: OK`, 'success');
         };
-    }
-    else {
+    } else {
         showToast(`🗄️ IndexedDB nicht verfügbar`, 'error');
     }
 }
@@ -771,9 +855,10 @@ async function completeReset() {
             keysToDelete.push(key);
         }
     }
-    const message = keysToDelete.length > 0
-        ? `⚠️ KOMPLETTER RESET\n\nFolgende ${keysToDelete.length} Einträge werden gelöscht:\n\n${keysToDelete.join('\n')}\n\n+ IndexedDB Daten\n\nDies kann NICHT rückgängig gemacht werden!`
-        : 'Keine dnd-tracker Daten im LocalStorage gefunden.\n\nTrotzdem IndexedDB leeren und Seite neu laden?';
+    const message =
+        keysToDelete.length > 0
+            ? `⚠️ KOMPLETTER RESET\n\nFolgende ${keysToDelete.length} Einträge werden gelöscht:\n\n${keysToDelete.join('\n')}\n\n+ IndexedDB Daten\n\nDies kann NICHT rückgängig gemacht werden!`
+            : 'Keine dnd-tracker Daten im LocalStorage gefunden.\n\nTrotzdem IndexedDB leeren und Seite neu laden?';
     if (!confirm(message)) {
         return;
     }
@@ -800,36 +885,49 @@ async function completeReset() {
                 const dbNames = ['dnd-tracker-db', 'dnd-tracker-idb', 'dnd-tracker-test'];
                 for (const dbName of dbNames) {
                     const deleteRequest = indexedDB.deleteDatabase(dbName);
-                    deleteRequest.onsuccess = () => log('[completeReset] IndexedDB gelöscht:', dbName);
-                    deleteRequest.onerror = () => console.warn('[completeReset] IndexedDB Fehler:', dbName);
+                    deleteRequest.onsuccess = () =>
+                        log('[completeReset] IndexedDB gelöscht:', dbName);
+                    deleteRequest.onerror = () =>
+                        console.warn('[completeReset] IndexedDB Fehler:', dbName);
                 }
                 log('[completeReset] IndexedDB Löschung initiiert');
-            }
-            catch (idbError) {
+            } catch (idbError) {
                 console.warn('[completeReset] IndexedDB Fehler:', idbError);
             }
         }
         // 3. Globales D-Objekt zurücksetzen
         // D is const, cannot reassign - clear and recreate structure
-        for (const key in window.D)
-            delete window.D[key];
+        for (const key in window.D) delete window.D[key];
         Object.assign(window.D, {
-            locations: [], npcs: [], quests: [], characters: [], sessionNotes: [], storyArcs: [], quickNotes: '',
+            locations: [],
+            npcs: [],
+            quests: [],
+            characters: [],
+            sessionNotes: [],
+            storyArcs: [],
+            quickNotes: '',
             initiative: { combatants: [], currentTurn: 0, round: 1 },
-            loot: [], items: [], encounters: [], spells: [], links: [], wiki: [],
-            filters: [], mindmap: { nodes: [], connections: [] },
+            loot: [],
+            items: [],
+            encounters: [],
+            spells: [],
+            links: [],
+            wiki: [],
+            filters: [],
+            mindmap: { nodes: [], connections: [] },
             calendar: { day: 1, month: 0, year: 1492, events: [] },
             tags: [],
             settings: { theme: 'dark', lastView: 'dashboard' },
             _nextId: {}
         });
-        alert(`✅ Reset abgeschlossen!\n\n${keysToDelete.length} LocalStorage-Einträge gelöscht.\nIndexedDB geleert.\n\nSeite wird neu geladen...`);
+        alert(
+            `✅ Reset abgeschlossen!\n\n${keysToDelete.length} LocalStorage-Einträge gelöscht.\nIndexedDB geleert.\n\nSeite wird neu geladen...`
+        );
         // 4. Kurz warten, dann Seite neu laden
         setTimeout(() => {
             window.location.href = window.location.pathname + '?reset=' + Date.now();
         }, 500);
-    }
-    catch (error) {
+    } catch (error) {
         console.error('[completeReset] Fehler:', error);
         alert('❌ Fehler beim Reset:\n\n' + error.message);
     }
@@ -841,8 +939,7 @@ let debugLog = [];
 function debugLogAdd(message) {
     const timestamp = new Date().toLocaleTimeString();
     debugLog.push(`[${timestamp}] ${message}`);
-    if (debugLog.length > 100)
-        debugLog.shift();
+    if (debugLog.length > 100) debugLog.shift();
     renderDebugLog();
 }
 function renderDebugLog() {
@@ -864,8 +961,7 @@ function showDebugModal() {
 }
 function updateDebugStats() {
     const el = $('debug-stats');
-    if (!el)
-        return;
+    if (!el) return;
     const stats = [
         { label: 'Charaktere', value: D.characters?.length || 0, icon: '👥' },
         { label: 'NPCs', value: D.npcs?.length || 0, icon: '🎭' },
@@ -879,37 +975,55 @@ function updateDebugStats() {
         { label: 'Shops', value: D.shops?.length || 0, icon: '🏪' },
         { label: 'Links', value: D.links?.length || 0, icon: '🔗' }
     ];
-    el.innerHTML = stats.map(s => `
+    el.innerHTML = stats
+        .map(
+            s => `
         <div style="background: var(--bg-card); padding: 8px; border-radius: 6px; text-align: center;">
             <div style="font-size: 1.2em;">${s.icon}</div>
             <div style="font-size: 1.4em; font-weight: 600; color: var(--gold);">${s.value}</div>
             <div style="font-size: 0.75em; color: var(--text-dim);">${s.label}</div>
         </div>
-    `).join('');
+    `
+        )
+        .join('');
 }
 function updateDebugSystemStatus() {
     const el = $('debug-system-status');
-    if (!el)
-        return;
+    if (!el) return;
     const dataSize = new Blob([JSON.stringify(D)]).size;
     const status = [
-        { label: 'LocalStorage', value: StorageAPI?.isAvailable() ? '✓' : '✗', color: StorageAPI?.isAvailable() ? 'var(--green)' : 'var(--red)' },
+        {
+            label: 'LocalStorage',
+            value: StorageAPI?.isAvailable() ? '✓' : '✗',
+            color: StorageAPI?.isAvailable() ? 'var(--green)' : 'var(--red)'
+        },
         { label: 'Datengröße', value: `${(dataSize / 1024).toFixed(1)} KB`, color: 'var(--cyan)' },
         { label: 'Undo-Stack', value: undoStack?.length || 0, color: 'var(--purple)' },
         { label: 'Event-Actions', value: EventDelegation?.actionCount || 0, color: 'var(--gold)' },
-        { label: 'DOM-Elemente', value: document.querySelectorAll('*').length, color: 'var(--cyan)' },
-        { label: 'Theme', value: document.documentElement.dataset.theme || 'dark', color: 'var(--gold)' }
+        {
+            label: 'DOM-Elemente',
+            value: document.querySelectorAll('*').length,
+            color: 'var(--cyan)'
+        },
+        {
+            label: 'Theme',
+            value: document.documentElement.dataset.theme || 'dark',
+            color: 'var(--gold)'
+        }
     ];
-    el.innerHTML = status.map(s => `
+    el.innerHTML = status
+        .map(
+            s => `
         <div style="background: var(--bg-card); padding: 8px; border-radius: 6px; text-align: center;">
             <div style="font-size: 1.1em; font-weight: 600; color: ${s.color};">${s.value}</div>
             <div style="font-size: 0.75em; color: var(--text-dim);">${s.label}</div>
         </div>
-    `).join('');
+    `
+        )
+        .join('');
 }
 function runValidation(silent = false) {
-    if (!silent)
-        debugLogAdd('--- Datenvalidierung ---');
+    if (!silent) debugLogAdd('--- Datenvalidierung ---');
     const results = [];
     // Prüfe Datenstruktur
     results.push({
@@ -919,7 +1033,19 @@ function runValidation(silent = false) {
         category: 'validation'
     });
     // Prüfe Arrays
-    const arrays = ['characters', 'npcs', 'locations', 'quests', 'encounters', 'spells', 'loot', 'sessionNotes', 'wiki', 'shops', 'links'];
+    const arrays = [
+        'characters',
+        'npcs',
+        'locations',
+        'quests',
+        'encounters',
+        'spells',
+        'loot',
+        'sessionNotes',
+        'wiki',
+        'shops',
+        'links'
+    ];
     arrays.forEach(arr => {
         const isArray = Array.isArray(D[arr]);
         results.push({
@@ -932,7 +1058,7 @@ function runValidation(silent = false) {
     // Prüfe auf doppelte IDs
     arrays.forEach(arr => {
         if (Array.isArray(D[arr]) && D[arr].length > 0) {
-            const ids = D[arr].map((item) => item.id).filter((id) => id !== undefined);
+            const ids = D[arr].map(item => item.id).filter(id => id !== undefined);
             const uniqueIds = new Set(ids);
             const hasDuplicates = ids.length !== uniqueIds.size;
             results.push({
@@ -949,18 +1075,25 @@ function runValidation(silent = false) {
             debugLogAdd(`  ${r.pass ? '✓' : '✗'} ${r.name}: ${r.detail}`);
         });
         debugLogAdd(`Validierung: ${passed}/${results.length} OK`);
-        showToast(`✅ Validierung: ${passed}/${results.length} OK`, passed === results.length ? 'success' : 'warning');
+        showToast(
+            `✅ Validierung: ${passed}/${results.length} OK`,
+            passed === results.length ? 'success' : 'warning'
+        );
     }
     // Ergebnisse im Modal anzeigen
     const valEl = $('debug-validation');
     if (valEl) {
-        valEl.innerHTML = results.map(r => `
+        valEl.innerHTML = results
+            .map(
+                r => `
             <div style="padding: 4px 0; border-bottom: 1px solid var(--border);">
                 <span style="color: ${r.pass ? 'var(--green)' : 'var(--red)'};">${r.pass ? '✓' : '✗'}</span>
                 <span style="color: var(--text);">${r.name}</span>
                 <span style="color: var(--text-dim); float: right;">${r.detail}</span>
             </div>
-        `).join('');
+        `
+            )
+            .join('');
     }
     return results;
 }

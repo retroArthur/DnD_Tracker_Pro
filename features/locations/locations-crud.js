@@ -23,11 +23,9 @@ function saveLocation() {
     }
     pushUndo(id ? 'Ort bearbeitet' : 'Ort erstellt');
     if (id) {
-        const idx = D.locations.findIndex((l) => l.id === parseEntityId(id));
-        if (idx > -1)
-            D.locations[idx] = { ...D.locations[idx], ...loc };
-    }
-    else {
+        const idx = D.locations.findIndex(l => l.id === parseEntityId(id));
+        if (idx > -1) D.locations[idx] = { ...D.locations[idx], ...loc };
+    } else {
         loc.id = nextId('locations');
         D.locations.push(loc);
     }
@@ -52,11 +50,9 @@ function clearLocationForm() {
 function editLocation(id) {
     const populateSelects = window.populateSelects;
     const loc = EntityLookup.location(id);
-    if (!loc)
-        return;
+    if (!loc) return;
     const idInput = $('edit-loc-id');
-    if (idInput)
-        idInput.value = String(id);
+    if (idInput) idInput.value = String(id);
     $('loc-name').value = loc.name;
     $('loc-desc').innerHTML = sanitizeHTML(loc.description) || '';
     populateSelects();
@@ -88,8 +84,7 @@ function addFilter() {
     const renderLocations = window.renderLocations;
     const nameInput = $('filter-name');
     const name = nameInput.value.trim();
-    if (!name)
-        return;
+    if (!name) return;
     pushUndo('Filter erstellt');
     D.filters.push({
         id: nextId('filters'),
@@ -107,7 +102,7 @@ function deleteFilter(id) {
     const renderLocations = window.renderLocations;
     const numId = typeof id === 'string' ? parseInt(id) : id;
     pushUndo('Filter gelöscht');
-    D.filters = D.filters.filter((f) => f.id !== numId);
+    D.filters = D.filters.filter(f => f.id !== numId);
     renderFilterList();
     renderLocations();
     save();
@@ -125,8 +120,7 @@ function filterAssignItems() {
 // triggerCount is global in core/constants.js
 function addTriggerField() {
     const c = $('npc-triggers-container');
-    if (!c)
-        return;
+    if (!c) return;
     if (c.children.length >= 10) {
         showToast('Maximal 10 Trigger');
         return;
@@ -136,7 +130,8 @@ function addTriggerField() {
     const div = document.createElement('div');
     div.id = `trigger-${triggerCount}`;
     div.className = 'npc-trigger-field';
-    div.style.cssText = 'background: var(--bg-dark); padding: 10px; border-radius: 6px; margin-bottom: 8px; border: 1px solid var(--border);';
+    div.style.cssText =
+        'background: var(--bg-dark); padding: 10px; border-radius: 6px; margin-bottom: 8px; border: 1px solid var(--border);';
     div.innerHTML = `
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
             <span style="color: var(--yellow); font-weight: 600; font-size: 0.85em;">🔔 Trigger</span>

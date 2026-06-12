@@ -34,32 +34,66 @@ function renderSpells() {
     const lfb = $('spell-level-filters');
     const sfb = $('spell-school-filters');
     const countEl = $('spell-count');
-    if (!c)
-        return;
+    if (!c) return;
     if (fb) {
-        fb.innerHTML = ['all', 'spell', 'healing', 'damage', 'buff', 'debuff'].map(t => {
-            const label = t === 'all' ? 'Alle' : t === 'spell' ? '🔵' : t === 'healing' ? '🟡' : t === 'damage' ? '🔴' : t === 'buff' ? '🟢' : '🟣';
-            return `<div class="filter-chip ${currentSpellFilter === t ? 'active' : ''}" data-action="set-spell-filter" data-value="${t}" title="${t === 'all' ? 'Alle Typen' : t === 'spell' ? 'Zauber' : t === 'healing' ? 'Heilung' : t === 'damage' ? 'Schaden' : t === 'buff' ? 'Buff' : 'Debuff'}">${label}</div>`;
-        }).join('');
+        fb.innerHTML = ['all', 'spell', 'healing', 'damage', 'buff', 'debuff']
+            .map(t => {
+                const label =
+                    t === 'all'
+                        ? 'Alle'
+                        : t === 'spell'
+                          ? '🔵'
+                          : t === 'healing'
+                            ? '🟡'
+                            : t === 'damage'
+                              ? '🔴'
+                              : t === 'buff'
+                                ? '🟢'
+                                : '🟣';
+                return `<div class="filter-chip ${currentSpellFilter === t ? 'active' : ''}" data-action="set-spell-filter" data-value="${t}" title="${t === 'all' ? 'Alle Typen' : t === 'spell' ? 'Zauber' : t === 'healing' ? 'Heilung' : t === 'damage' ? 'Schaden' : t === 'buff' ? 'Buff' : 'Debuff'}">${label}</div>`;
+            })
+            .join('');
     }
     if (lfb) {
-        lfb.innerHTML = ['all', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9'].map(t => {
-            const label = t === 'all' ? '∞' : t === '0' ? '🔮' : t;
-            const title = t === 'all' ? 'Alle Stufen' : t === '0' ? 'Zaubertricks' : `Stufe ${t}`;
-            return `<div class="filter-chip ${currentSpellLevelFilter === t ? 'active' : ''}" data-action="spell-level-filter" data-value="${t}" title="${title}">${label}</div>`;
-        }).join('');
+        lfb.innerHTML = ['all', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
+            .map(t => {
+                const label = t === 'all' ? '∞' : t === '0' ? '🔮' : t;
+                const title =
+                    t === 'all' ? 'Alle Stufen' : t === '0' ? 'Zaubertricks' : `Stufe ${t}`;
+                return `<div class="filter-chip ${currentSpellLevelFilter === t ? 'active' : ''}" data-action="spell-level-filter" data-value="${t}" title="${title}">${label}</div>`;
+            })
+            .join('');
     }
     if (sfb) {
-        const schools = ['all', 'Bannzauber', 'Beschwörung', 'Erkenntnis', 'Hervorrufung', 'Illusion', 'Nekromantie', 'Verwandlung', 'Verzauberung'];
+        const schools = [
+            'all',
+            'Bannzauber',
+            'Beschwörung',
+            'Erkenntnis',
+            'Hervorrufung',
+            'Illusion',
+            'Nekromantie',
+            'Verwandlung',
+            'Verzauberung'
+        ];
         const schoolEmojis = {
-            'all': '∞', 'Bannzauber': '🛡️', 'Beschwörung': '✨', 'Erkenntnis': '👁️',
-            'Hervorrufung': '💥', 'Illusion': '🎭', 'Nekromantie': '💀', 'Verwandlung': '🔄', 'Verzauberung': '💫'
+            all: '∞',
+            Bannzauber: '🛡️',
+            Beschwörung: '✨',
+            Erkenntnis: '👁️',
+            Hervorrufung: '💥',
+            Illusion: '🎭',
+            Nekromantie: '💀',
+            Verwandlung: '🔄',
+            Verzauberung: '💫'
         };
-        sfb.innerHTML = schools.map(s => {
-            const label = schoolEmojis[s] || s.charAt(0);
-            const title = s === 'all' ? 'Alle Schulen' : s;
-            return `<div class="filter-chip ${currentSpellSchoolFilter === s ? 'active' : ''}" data-action="spell-school-filter" data-value="${s}" title="${title}">${label}</div>`;
-        }).join('');
+        sfb.innerHTML = schools
+            .map(s => {
+                const label = schoolEmojis[s] || s.charAt(0);
+                const title = s === 'all' ? 'Alle Schulen' : s;
+                return `<div class="filter-chip ${currentSpellSchoolFilter === s ? 'active' : ''}" data-action="spell-school-filter" data-value="${s}" title="${title}">${label}</div>`;
+            })
+            .join('');
     }
     const searchInput = $('spell-search');
     const classFilterInput = $('spell-class-filter');
@@ -67,18 +101,14 @@ function renderSpells() {
     const classFilter = classFilterInput?.value || '';
     let spells = D.spells || [];
     const totalCount = spells.length;
-    spells = spells.filter((s) => {
-        if (currentSpellFilter !== 'all' && s.type !== currentSpellFilter)
-            return false;
+    spells = spells.filter(s => {
+        if (currentSpellFilter !== 'all' && s.type !== currentSpellFilter) return false;
         if (currentSpellLevelFilter !== 'all') {
             const lvl = parseInt(currentSpellLevelFilter);
             if (lvl === 0) {
-                if (s.type !== 'cantrip' && s.level !== 0)
-                    return false;
-            }
-            else {
-                if (s.level !== lvl)
-                    return false;
+                if (s.type !== 'cantrip' && s.level !== 0) return false;
+            } else {
+                if (s.level !== lvl) return false;
             }
         }
         if (currentSpellSchoolFilter !== 'all' && s.school !== currentSpellSchoolFilter)
@@ -89,27 +119,34 @@ function renderSpells() {
             const desc = (s.description || '').toLowerCase();
             const material = (s.material || '').toLowerCase();
             const note = (s.note || '').toLowerCase();
-            if (!name.includes(search) && !school.includes(search) &&
-                !desc.includes(search) && !material.includes(search) &&
-                !note.includes(search))
+            if (
+                !name.includes(search) &&
+                !school.includes(search) &&
+                !desc.includes(search) &&
+                !material.includes(search) &&
+                !note.includes(search)
+            )
                 return false;
         }
         if (classFilter) {
             const classes = s.spellClasses || [];
-            if (!classes.includes(classFilter))
-                return false;
+            if (!classes.includes(classFilter)) return false;
         }
         return true;
     });
     if (countEl) {
         if (spells.length === totalCount) {
             countEl.textContent = `📖 ${totalCount}`;
-        }
-        else {
+        } else {
             countEl.textContent = `📖 ${spells.length}/${totalCount}`;
         }
     }
-    const isFiltered = search || classFilter || currentSpellFilter !== 'all' || currentSpellLevelFilter !== 'all' || currentSpellSchoolFilter !== 'all';
+    const isFiltered =
+        search ||
+        classFilter ||
+        currentSpellFilter !== 'all' ||
+        currentSpellLevelFilter !== 'all' ||
+        currentSpellSchoolFilter !== 'all';
     if (!spells.length) {
         c.innerHTML = renderEmptyState({
             icon: '✨',
@@ -125,26 +162,29 @@ function renderSpells() {
     spells.sort((a, b) => {
         const lvlA = a.level ?? (a.type === 'cantrip' ? 0 : 99);
         const lvlB = b.level ?? (b.type === 'cantrip' ? 0 : 99);
-        if (lvlA !== lvlB)
-            return lvlA - lvlB;
+        if (lvlA !== lvlB) return lvlA - lvlB;
         return (a.name || '').localeCompare(b.name || '');
     });
     filteredSpellsCache = spells;
     currentSpellPage = 0;
     if (spells.length > SPELLS_PER_PAGE) {
         const visibleSpells = spells.slice(0, SPELLS_PER_PAGE);
-        c.innerHTML = renderSpellCards(visibleSpells) + renderLoadMoreButton(spells.length, SPELLS_PER_PAGE);
-    }
-    else {
+        c.innerHTML =
+            renderSpellCards(visibleSpells) + renderLoadMoreButton(spells.length, SPELLS_PER_PAGE);
+    } else {
         c.innerHTML = renderSpellCards(spells);
     }
 }
 function renderSpellCards(spells) {
-    return spells.map(s => {
-        const levelText = s.level === 0 || s.type === 'cantrip' ? 'Zaubertrick' : 'Grad ' + s.level;
-        const classText = s.spellClasses?.length ? s.spellClasses.join(', ') : (s.spellClass || '');
-        const isExpanded = expandedSpells.has(s.id);
-        return `<div class="spell-card ${s.type} ${isExpanded ? 'expanded' : ''}" data-spell-id="${s.id}">
+    return spells
+        .map(s => {
+            const levelText =
+                s.level === 0 || s.type === 'cantrip' ? 'Zaubertrick' : 'Grad ' + s.level;
+            const classText = s.spellClasses?.length
+                ? s.spellClasses.join(', ')
+                : s.spellClass || '';
+            const isExpanded = expandedSpells.has(s.id);
+            return `<div class="spell-card ${s.type} ${isExpanded ? 'expanded' : ''}" data-spell-id="${s.id}">
             <div class="spell-card-header" data-action="toggle-spell-card" data-id="${s.id}">
                 <div style="flex: 1;">
                     <div class="spell-header">
@@ -177,13 +217,13 @@ function renderSpellCards(spells) {
                 </div>
             </div>
         </div>`;
-    }).join('');
+        })
+        .join('');
 }
 function renderLoadMoreButton(total, perPage) {
     const shown = Math.min((currentSpellPage + 1) * perPage, total);
     const remaining = total - shown;
-    if (remaining <= 0)
-        return '';
+    if (remaining <= 0) return '';
     return `<div class="load-more-container" style="grid-column: 1/-1; text-align: center; padding: 16px;">
         <button class="btn" data-action="call" data-value="loadMoreSpells">
             📜 ${remaining} weitere laden (${shown}/${total} angezeigt)
@@ -193,19 +233,19 @@ function renderLoadMoreButton(total, perPage) {
 function loadMoreSpells() {
     const SPELLS_PER_PAGE = window.SPELLS_PER_PAGE || 30;
     const c = $('spell-list');
-    if (!c || !filteredSpellsCache.length)
-        return;
+    if (!c || !filteredSpellsCache.length) return;
     currentSpellPage++;
     const start = 0;
     const end = (currentSpellPage + 1) * SPELLS_PER_PAGE;
     const visibleSpells = filteredSpellsCache.slice(start, end);
-    c.innerHTML = renderSpellCards(visibleSpells) + renderLoadMoreButton(filteredSpellsCache.length, SPELLS_PER_PAGE);
+    c.innerHTML =
+        renderSpellCards(visibleSpells) +
+        renderLoadMoreButton(filteredSpellsCache.length, SPELLS_PER_PAGE);
 }
 function toggleSpellCard(id) {
     if (expandedSpells.has(id)) {
         expandedSpells.delete(id);
-    }
-    else {
+    } else {
         expandedSpells.add(id);
     }
     const card = document.querySelector(`.spell-card[data-spell-id="${id}"]`);
@@ -215,7 +255,7 @@ function toggleSpellCard(id) {
 }
 function expandAllSpells() {
     const D = window.D;
-    (D.spells || []).forEach((s) => expandedSpells.add(s.id));
+    (D.spells || []).forEach(s => expandedSpells.add(s.id));
     renderSpells();
 }
 function collapseAllSpells() {
@@ -240,13 +280,11 @@ function setSpellSchoolFilter(f) {
 function onSpellRangeChange() {
     const sel = $('spell-range-select');
     const custom = $('spell-range-custom');
-    if (!sel || !custom)
-        return;
+    if (!sel || !custom) return;
     if (sel.value === 'custom') {
         custom.style.display = 'block';
         custom.focus();
-    }
-    else {
+    } else {
         custom.style.display = 'none';
         custom.value = '';
     }
@@ -254,13 +292,11 @@ function onSpellRangeChange() {
 function onSpellTimeChange() {
     const sel = $('spell-time-select');
     const custom = $('spell-time-custom');
-    if (!sel || !custom)
-        return;
+    if (!sel || !custom) return;
     if (sel.value === 'custom') {
         custom.style.display = 'block';
         custom.focus();
-    }
-    else {
+    } else {
         custom.style.display = 'none';
         custom.value = '';
     }
@@ -268,13 +304,11 @@ function onSpellTimeChange() {
 function onSpellDurationChange() {
     const sel = $('spell-duration-select');
     const custom = $('spell-duration-custom');
-    if (!sel || !custom)
-        return;
+    if (!sel || !custom) return;
     if (sel.value === 'custom') {
         custom.style.display = 'block';
         custom.focus();
-    }
-    else {
+    } else {
         custom.style.display = 'none';
         custom.value = '';
     }
@@ -282,43 +316,33 @@ function onSpellDurationChange() {
 function toggleMaterialField() {
     const mChecked = $('spell-m')?.checked || false;
     const group = $('spell-material-group');
-    if (group)
-        group.style.display = mChecked ? 'block' : 'none';
+    if (group) group.style.display = mChecked ? 'block' : 'none';
 }
 // ============================================================
 // EDITOR FORMATTING
 // ============================================================
 function formatText(elementId, format, value) {
     const editor = $(elementId);
-    if (!editor)
-        return;
+    if (!editor) return;
     editor.focus();
     if (format === 'bold') {
         document.execCommand('bold', false, undefined);
-    }
-    else if (format === 'italic') {
+    } else if (format === 'italic') {
         document.execCommand('italic', false, undefined);
-    }
-    else if (format === 'underline') {
+    } else if (format === 'underline') {
         document.execCommand('underline', false, undefined);
-    }
-    else if (format === 'strikethrough') {
+    } else if (format === 'strikethrough') {
         document.execCommand('strikeThrough', false, undefined);
-    }
-    else if (format === 'list') {
+    } else if (format === 'list') {
         document.execCommand('insertUnorderedList', false, undefined);
-    }
-    else if (format === 'heading') {
+    } else if (format === 'heading') {
         document.execCommand('formatBlock', false, '<h4>');
-    }
-    else if (format === 'font' && value) {
+    } else if (format === 'font' && value) {
         document.execCommand('fontName', false, value);
-    }
-    else if (format === 'highlight') {
+    } else if (format === 'highlight') {
         if (value === 'none') {
             document.execCommand('removeFormat', false, undefined);
-        }
-        else if (value) {
+        } else if (value) {
             document.execCommand('backColor', false, value);
         }
     }
@@ -330,14 +354,12 @@ function setEditorFont(elementIdOrSelect, selectEl) {
     if (typeof elementIdOrSelect === 'object' && elementIdOrSelect.tagName === 'SELECT') {
         select = elementIdOrSelect;
         editorId = select.dataset.editorId || '';
-    }
-    else {
+    } else {
         editorId = elementIdOrSelect;
         select = selectEl;
     }
     const editor = $(editorId);
-    if (!editor)
-        return;
+    if (!editor) return;
     editor.focus();
     if (editorSelectSavedRange) {
         const selection = window.getSelection();
@@ -354,14 +376,12 @@ function setEditorFontSize(elementIdOrSelect, selectEl) {
     if (typeof elementIdOrSelect === 'object' && elementIdOrSelect.tagName === 'SELECT') {
         select = elementIdOrSelect;
         editorId = select.dataset.editorId || '';
-    }
-    else {
+    } else {
         editorId = elementIdOrSelect;
         select = selectEl;
     }
     const editor = $(editorId);
-    if (!editor)
-        return;
+    if (!editor) return;
     editor.focus();
     if (editorSelectSavedRange) {
         const selection = window.getSelection();
@@ -379,8 +399,7 @@ function setEditorFontSize(elementIdOrSelect, selectEl) {
 }
 function clearEditorFormatting(elementId) {
     const editor = $(elementId);
-    if (!editor)
-        return;
+    if (!editor) return;
     const plainText = editor.innerText || editor.textContent;
     editor.innerHTML = '';
     editor.textContent = plainText || '';
@@ -392,15 +411,15 @@ function clearEditorFormatting(elementId) {
 }
 function setBorderFormat(elementId) {
     const editor = $(elementId);
-    if (!editor)
-        return;
+    if (!editor) return;
     editor.focus();
     const selection = window.getSelection();
     if (selection && selection.rangeCount > 0) {
         const range = selection.getRangeAt(0);
         const selectedText = range.extractContents();
         const wrapper = document.createElement('span');
-        wrapper.style.cssText = 'border: 1px solid var(--gold); padding: 2px 6px; border-radius: 4px; display: inline-block;';
+        wrapper.style.cssText =
+            'border: 1px solid var(--gold); padding: 2px 6px; border-radius: 4px; display: inline-block;';
         wrapper.className = 'editor-border';
         wrapper.appendChild(selectedText);
         range.insertNode(wrapper);
@@ -409,15 +428,15 @@ function setBorderFormat(elementId) {
 }
 function setReadAloudFormat(elementId, style = 'parchment') {
     const editor = $(elementId);
-    if (!editor)
-        return;
+    if (!editor) return;
     editor.focus();
     const selection = window.getSelection();
     if (selection && selection.rangeCount > 0) {
         const range = selection.getRangeAt(0);
-        const existingBlock = range.commonAncestorContainer.nodeType === Node.TEXT_NODE
-            ? range.commonAncestorContainer.parentElement?.closest('.read-aloud')
-            : range.commonAncestorContainer.closest?.('.read-aloud');
+        const existingBlock =
+            range.commonAncestorContainer.nodeType === Node.TEXT_NODE
+                ? range.commonAncestorContainer.parentElement?.closest('.read-aloud')
+                : range.commonAncestorContainer.closest?.('.read-aloud');
         if (existingBlock) {
             const parent = existingBlock.parentNode;
             if (parent) {
@@ -427,14 +446,20 @@ function setReadAloudFormat(elementId, style = 'parchment') {
                 parent.removeChild(existingBlock);
             }
             showToast('📖 Vorlese-Text entfernt');
-        }
-        else {
+        } else {
             const selectedContent = range.extractContents();
             const wrapper = document.createElement('div');
             wrapper.className = style === 'parchment' ? 'read-aloud' : `read-aloud ${style}`;
             wrapper.appendChild(selectedContent);
             range.insertNode(wrapper);
-            const styleNames = { parchment: 'Pergament', crimson: 'Karmesin', violet: 'Violett', sage: 'Salbei', sky: 'Himmel', slate: 'Schiefer' };
+            const styleNames = {
+                parchment: 'Pergament',
+                crimson: 'Karmesin',
+                violet: 'Violett',
+                sage: 'Salbei',
+                sky: 'Himmel',
+                slate: 'Schiefer'
+            };
             showToast(`📖 Vorlese-Text (${styleNames[style] || style})`);
         }
         selection.removeAllRanges();
@@ -442,15 +467,14 @@ function setReadAloudFormat(elementId, style = 'parchment') {
 }
 function removeSelectionBorders() {
     const selection = window.getSelection();
-    if (!selection || !selection.rangeCount)
-        return;
+    if (!selection || !selection.rangeCount) return;
     const range = selection.getRangeAt(0);
     const container = range.commonAncestorContainer;
-    const editor = container.nodeType === Node.TEXT_NODE
-        ? container.parentElement?.closest('.rich-editor, .spell-editor, .dialog-text')
-        : container.closest?.('.rich-editor, .spell-editor, .dialog-text');
-    if (!editor)
-        return;
+    const editor =
+        container.nodeType === Node.TEXT_NODE
+            ? container.parentElement?.closest('.rich-editor, .spell-editor, .dialog-text')
+            : container.closest?.('.rich-editor, .spell-editor, .dialog-text');
+    if (!editor) return;
     const borderSpans = editor.querySelectorAll('span[style*="border"], span.editor-border');
     borderSpans.forEach(span => {
         if (range.intersectsNode(span) || span.contains(range.commonAncestorContainer)) {
@@ -465,19 +489,29 @@ function removeSelectionBorders() {
     });
 }
 function initEditorPasteHandlers() {
-    if (editorHandlersInitialized)
-        return;
+    if (editorHandlersInitialized) return;
     editorHandlersInitialized = true;
     const editorIds = [
-        'char-notes', 'npc-desc', 'loc-desc', 'quest-desc', 'quest-epilog',
-        'enc-traits', 'enc-equipment', 'enc-actions', 'enc-skills', 'loot-desc',
-        'spell-desc', 'spell-note', 'session-text', 'link-desc', 'wiki-content',
+        'char-notes',
+        'npc-desc',
+        'loc-desc',
+        'quest-desc',
+        'quest-epilog',
+        'enc-traits',
+        'enc-equipment',
+        'enc-actions',
+        'enc-skills',
+        'loot-desc',
+        'spell-desc',
+        'spell-note',
+        'session-text',
+        'link-desc',
+        'wiki-content',
         'quick-ref-entry-content'
     ];
     try {
         document.execCommand('defaultParagraphSeparator', false, 'div');
-    }
-    catch (e) {
+    } catch (e) {
         // Ignore
     }
     editorIds.forEach(id => {
@@ -487,24 +521,45 @@ function initEditorPasteHandlers() {
             editor.addEventListener('input', handleMarkdownInput);
         }
     });
-    document.addEventListener('paste', function (e) {
-        const target = e.target;
-        if (target.classList.contains('rich-editor') || target.classList.contains('dialog-text-area')) {
-            handleEditorPaste(e);
-        }
-    }, true);
-    document.addEventListener('input', function (e) {
-        const target = e.target;
-        if (target.classList.contains('rich-editor') || target.classList.contains('dialog-text')) {
-            handleMarkdownInput(e);
-        }
-    }, true);
-    document.addEventListener('keydown', function (e) {
-        const target = e.target;
-        if (target.classList.contains('rich-editor') || target.classList.contains('dialog-text-area')) {
-            handleEditorKeydown(e);
-        }
-    }, true);
+    document.addEventListener(
+        'paste',
+        function (e) {
+            const target = e.target;
+            if (
+                target.classList.contains('rich-editor') ||
+                target.classList.contains('dialog-text-area')
+            ) {
+                handleEditorPaste(e);
+            }
+        },
+        true
+    );
+    document.addEventListener(
+        'input',
+        function (e) {
+            const target = e.target;
+            if (
+                target.classList.contains('rich-editor') ||
+                target.classList.contains('dialog-text')
+            ) {
+                handleMarkdownInput(e);
+            }
+        },
+        true
+    );
+    document.addEventListener(
+        'keydown',
+        function (e) {
+            const target = e.target;
+            if (
+                target.classList.contains('rich-editor') ||
+                target.classList.contains('dialog-text-area')
+            ) {
+                handleEditorKeydown(e);
+            }
+        },
+        true
+    );
 }
 function handleEditorKeydown(e) {
     if (e.key === 'T' && e.ctrlKey && e.shiftKey) {
@@ -522,15 +577,17 @@ function handleEditorKeydown(e) {
 function handleEditorPaste(e) {
     e.preventDefault();
     const clipboardData = e.clipboardData;
-    if (!clipboardData)
-        return;
+    if (!clipboardData) return;
     const html = clipboardData.getData('text/html');
     const text = clipboardData.getData('text/plain');
     if (html && (html.includes('<table') || html.includes('<TABLE'))) {
         const tableMatch = html.match(/<table[\s\S]*?<\/table>/i);
         if (tableMatch) {
             const cleanTable = tableMatch[0]
-                .replace(/\s+(class|style|width|height|border|cellpadding|cellspacing|align|valign|bgcolor|xmlns|x:|data-[\w-]+)="[^"]*"/gi, '')
+                .replace(
+                    /\s+(class|style|width|height|border|cellpadding|cellspacing|align|valign|bgcolor|xmlns|x:|data-[\w-]+)="[^"]*"/gi,
+                    ''
+                )
                 .replace(/<\/?colgroup[^>]*>/gi, '')
                 .replace(/<\/?col[^>]*>/gi, '')
                 .replace(/<\/?tbody[^>]*>/gi, '')
@@ -543,9 +600,18 @@ function handleEditorPaste(e) {
                 .replace(new RegExp('<style[^>]*>[\\s\\S]*?</sty' + 'le>', 'gi'), '')
                 .replace(/\s+>/g, '>')
                 .replace(/<(\w+)\s+>/g, '<$1>')
-                .replace(/<table>/gi, '<table style="width:100%; border-collapse:collapse; margin:8px 0;">')
-                .replace(/<th>/gi, '<th style="border:1px solid var(--border); padding:6px 10px; background:var(--bg-elevated); color:var(--gold);">')
-                .replace(/<td>/gi, '<td style="border:1px solid var(--border); padding:6px 10px;">');
+                .replace(
+                    /<table>/gi,
+                    '<table style="width:100%; border-collapse:collapse; margin:8px 0;">'
+                )
+                .replace(
+                    /<th>/gi,
+                    '<th style="border:1px solid var(--border); padding:6px 10px; background:var(--bg-elevated); color:var(--gold);">'
+                )
+                .replace(
+                    /<td>/gi,
+                    '<td style="border:1px solid var(--border); padding:6px 10px;">'
+                );
             document.execCommand('insertHTML', false, cleanTable);
             showToast('📊 Tabelle eingefügt');
             return;
@@ -561,8 +627,7 @@ function handleEditorPaste(e) {
                 cells.forEach(cell => {
                     if (rowIndex === 0) {
                         tableHtml += `<th style="border:1px solid var(--border); padding:6px 10px; background:var(--bg-elevated); color:var(--gold);">${escapeHtml(cell.trim())}</th>`;
-                    }
-                    else {
+                    } else {
                         tableHtml += `<td style="border:1px solid var(--border); padding:6px 10px;">${escapeHtml(cell.trim())}</td>`;
                     }
                 });
@@ -583,7 +648,12 @@ function escapeHtml(text) {
 }
 function insertTable(rows = 3, cols = 3) {
     const editor = floatingToolbarTarget || document.activeElement;
-    if (!editor || (!editor.classList.contains('rich-editor') && !editor.classList.contains('spell-editor') && !editor.classList.contains('dialog-text'))) {
+    if (
+        !editor ||
+        (!editor.classList.contains('rich-editor') &&
+            !editor.classList.contains('spell-editor') &&
+            !editor.classList.contains('dialog-text'))
+    ) {
         showToast('⚠️ Bitte erst in ein Textfeld klicken', 'error');
         return;
     }
@@ -594,8 +664,7 @@ function insertTable(rows = 3, cols = 3) {
         for (let c = 0; c < cols; c++) {
             if (r === 0) {
                 tableHtml += `<th style="border:1px solid var(--border); padding:6px 10px; background:var(--bg-elevated); color:var(--gold);">Spalte ${c + 1}</th>`;
-            }
-            else {
+            } else {
                 tableHtml += `<td style="border:1px solid var(--border); padding:6px 10px;"></td>`;
             }
         }
@@ -608,13 +677,11 @@ function insertTable(rows = 3, cols = 3) {
 }
 function updateStickyOffsets() {
     const header = document.querySelector('.app-header');
-    if (!header)
-        return;
+    if (!header) return;
     const isMobile = document.documentElement.dataset.layout === 'mobile';
     if (isMobile) {
         document.documentElement.style.setProperty('--header-height', '0px');
-    }
-    else {
+    } else {
         const headerHeight = header.offsetHeight;
         document.documentElement.style.setProperty('--header-height', headerHeight + 'px');
         const encounterControls = document.querySelector('.encounter-controls');
@@ -627,16 +694,14 @@ function updateStickyOffsets() {
 // FLOATING TOOLBAR
 // ============================================================
 function initFloatingToolbar() {
-    if (floatingToolbarInitialized)
-        return;
+    if (floatingToolbarInitialized) return;
     floatingToolbarInitialized = true;
     const EDITOR_FONTS = window.EDITOR_FONTS;
     const TOOLBAR_DIMENSIONS = window.TOOLBAR_DIMENSIONS;
     const toolbar = $('floating-toolbar');
-    if (!toolbar)
-        return;
+    if (!toolbar) return;
     document.querySelectorAll('.editor-toolbar').forEach(editorToolbar => {
-        editorToolbar.addEventListener('mousedown', (e) => {
+        editorToolbar.addEventListener('mousedown', e => {
             const target = e.target;
             const btn = target.closest('.editor-btn');
             const sel = target.closest('.editor-select');
@@ -653,9 +718,8 @@ function initFloatingToolbar() {
         });
     });
     document.addEventListener('selectionchange', debounce(handleSelectionChange, 150));
-    document.addEventListener('mouseup', (e) => {
-        if (floatingToolbarInteracting)
-            return;
+    document.addEventListener('mouseup', e => {
+        if (floatingToolbarInteracting) return;
         setTimeout(() => handleSelectionChange(), 10);
     });
     toolbar.querySelectorAll('select').forEach(select => {
@@ -671,7 +735,7 @@ function initFloatingToolbar() {
             floatingToolbarInteracting = true;
         });
     });
-    toolbar.addEventListener('mousedown', (e) => {
+    toolbar.addEventListener('mousedown', e => {
         const target = e.target;
         if (target.tagName === 'SELECT' || target.tagName === 'OPTION') {
             e.stopPropagation();
@@ -680,7 +744,7 @@ function initFloatingToolbar() {
         e.preventDefault();
         e.stopPropagation();
     });
-    toolbar.addEventListener('click', (e) => {
+    toolbar.addEventListener('click', e => {
         const target = e.target;
         const btn = target.closest('[data-floating-action]');
         const colorSwatch = target.closest('.color-swatch');
@@ -688,12 +752,10 @@ function initFloatingToolbar() {
             const color = colorSwatch.dataset.color || 'transparent';
             applyFloatingHighlight(color, floatingToolbarTarget, floatingToolbarRange);
             toolbar.querySelectorAll('.color-swatch').forEach(s => s.classList.remove('active'));
-            if (color !== 'transparent')
-                colorSwatch.classList.add('active');
+            if (color !== 'transparent') colorSwatch.classList.add('active');
             return;
         }
-        if (!btn || !floatingToolbarTarget || !floatingToolbarRange)
-            return;
+        if (!btn || !floatingToolbarTarget || !floatingToolbarRange) return;
         const action = btn.dataset.floatingAction || '';
         if (action === 'border') {
             setBorderFormat(floatingToolbarTarget.id);
@@ -705,11 +767,10 @@ function initFloatingToolbar() {
             floatingToolbarRange = newSelection.getRangeAt(0).cloneRange();
         }
     });
-    toolbar.addEventListener('change', (e) => {
+    toolbar.addEventListener('change', e => {
         const target = e.target;
         const select = target.closest('[data-floating-action]');
-        if (!select || !floatingToolbarTarget || !floatingToolbarRange)
-            return;
+        if (!select || !floatingToolbarTarget || !floatingToolbarRange) return;
         const action = select.dataset.floatingAction || '';
         const value = select.value;
         floatingToolbarTarget.focus();
@@ -718,17 +779,19 @@ function initFloatingToolbar() {
             selection.removeAllRanges();
             selection.addRange(floatingToolbarRange.cloneRange());
             if (action === 'font') {
-                document.execCommand('fontName', false, EDITOR_FONTS[value] || EDITOR_FONTS['arial']);
-            }
-            else if (action === 'fontSize') {
+                document.execCommand(
+                    'fontName',
+                    false,
+                    EDITOR_FONTS[value] || EDITOR_FONTS['arial']
+                );
+            } else if (action === 'fontSize') {
                 document.execCommand('fontSize', false, '7');
                 const fontElements = floatingToolbarTarget.querySelectorAll('font[size="7"]');
                 fontElements.forEach(el => {
                     el.removeAttribute('size');
                     el.style.fontSize = value;
                 });
-            }
-            else if (action === 'readAloud' && value) {
+            } else if (action === 'readAloud' && value) {
                 setReadAloudFormat(floatingToolbarTarget.id, value);
                 select.selectedIndex = 0;
             }
@@ -737,13 +800,16 @@ function initFloatingToolbar() {
             }
         }
     });
-    document.addEventListener('mousedown', (e) => {
+    document.addEventListener('mousedown', e => {
         const target = e.target;
-        if (!toolbar.contains(target) && !target.closest('.rich-editor, .spell-editor, .dialog-text')) {
+        if (
+            !toolbar.contains(target) &&
+            !target.closest('.rich-editor, .spell-editor, .dialog-text')
+        ) {
             hideFloatingToolbar();
         }
     });
-    document.addEventListener('keydown', (e) => {
+    document.addEventListener('keydown', e => {
         if (e.key === 'Escape') {
             hideFloatingToolbar();
         }
@@ -758,17 +824,15 @@ function initFloatingToolbar() {
                 selection.addRange(savedRange.cloneRange());
             }
         }
-        if (!selection || !selection.rangeCount)
-            return;
+        if (!selection || !selection.rangeCount) return;
         const range = selection.getRangeAt(0);
         const selectedText = range.toString();
-        if (!selectedText)
-            return;
+        if (!selectedText) return;
         const tagMap = {
-            'bold': 'b',
-            'italic': 'i',
-            'underline': 'u',
-            'strikethrough': 's'
+            bold: 'b',
+            italic: 'i',
+            underline: 'u',
+            strikethrough: 's'
         };
         if (tagMap[action]) {
             const tag = tagMap[action];
@@ -781,13 +845,11 @@ function initFloatingToolbar() {
                     }
                     parent.removeChild(parentTag);
                 }
-            }
-            else {
+            } else {
                 const wrapper = document.createElement(tag);
                 try {
                     range.surroundContents(wrapper);
-                }
-                catch (e) {
+                } catch (e) {
                     const fragment = range.extractContents();
                     wrapper.appendChild(fragment);
                     range.insertNode(wrapper);
@@ -797,11 +859,9 @@ function initFloatingToolbar() {
                 newRange.selectNodeContents(wrapper);
                 selection.addRange(newRange);
             }
-        }
-        else if (action === 'highlight') {
+        } else if (action === 'highlight') {
             applyFloatingHighlight('rgba(251, 191, 36, 0.4)', editor, savedRange);
-        }
-        else if (action === 'link') {
+        } else if (action === 'link') {
             const url = prompt('URL eingeben:', 'https://');
             if (url && url !== 'https://') {
                 const link = document.createElement('a');
@@ -810,16 +870,14 @@ function initFloatingToolbar() {
                 link.rel = 'noopener noreferrer';
                 try {
                     range.surroundContents(link);
-                }
-                catch (e) {
+                } catch (e) {
                     const fragment = range.extractContents();
                     link.appendChild(fragment);
                     range.insertNode(link);
                 }
                 showToast('🔗 Link eingefügt');
             }
-        }
-        else if (action === 'list') {
+        } else if (action === 'list') {
             const parentList = range.commonAncestorContainer.parentElement?.closest('ul, ol');
             if (parentList && parentList.closest('.rich-editor, .spell-editor, .dialog-text')) {
                 const listItems = parentList.querySelectorAll('li');
@@ -833,15 +891,13 @@ function initFloatingToolbar() {
                     }
                 });
                 parentList.parentNode?.replaceChild(fragment, parentList);
-            }
-            else {
+            } else {
                 const ul = document.createElement('ul');
                 const li = document.createElement('li');
                 try {
                     const contents = range.extractContents();
                     li.appendChild(contents);
-                }
-                catch (e) {
+                } catch (e) {
                     li.textContent = selectedText;
                     range.deleteContents();
                 }
@@ -853,11 +909,9 @@ function initFloatingToolbar() {
                 newRange.collapse(false);
                 selection.addRange(newRange);
             }
-        }
-        else if (action === 'table') {
+        } else if (action === 'table') {
             insertTable();
-        }
-        else if (action === 'removeFormat') {
+        } else if (action === 'removeFormat') {
             document.execCommand('removeFormat', false, undefined);
             document.execCommand('backColor', false, 'transparent');
             const editorEl = editor;
@@ -884,8 +938,7 @@ function handleSelectionChange() {
     const TOOLBAR_DIMENSIONS = window.TOOLBAR_DIMENSIONS;
     const selection = window.getSelection();
     const toolbar = $('floating-toolbar');
-    if (!toolbar || !selection)
-        return;
+    if (!toolbar || !selection) return;
     if (floatingToolbarInteracting || toolbar.contains(document.activeElement)) {
         return;
     }
@@ -899,32 +952,32 @@ function handleSelectionChange() {
         hideFloatingToolbar(false);
         return;
     }
-    const editor = anchorNode.nodeType === Node.TEXT_NODE
-        ? anchorNode.parentElement?.closest('.rich-editor, .spell-editor, .dialog-text, .cf-notes-editor')
-        : anchorNode.closest?.('.rich-editor, .spell-editor, .dialog-text, .cf-notes-editor');
+    const editor =
+        anchorNode.nodeType === Node.TEXT_NODE
+            ? anchorNode.parentElement?.closest(
+                  '.rich-editor, .spell-editor, .dialog-text, .cf-notes-editor'
+              )
+            : anchorNode.closest?.('.rich-editor, .spell-editor, .dialog-text, .cf-notes-editor');
     if (!editor) {
         hideFloatingToolbar(false);
         return;
     }
     floatingToolbarTarget = editor;
-    if (selection.rangeCount === 0)
-        return;
+    if (selection.rangeCount === 0) return;
     const range = selection.getRangeAt(0);
     floatingToolbarRange = range.cloneRange();
     const rect = range.getBoundingClientRect();
     const { width: toolbarWidth, height: toolbarHeight, padding } = TOOLBAR_DIMENSIONS;
-    let left = rect.left + (rect.width / 2) - (toolbarWidth / 2);
+    let left = rect.left + rect.width / 2 - toolbarWidth / 2;
     let top = rect.top - toolbarHeight - padding;
     const viewportWidth = window.innerWidth;
-    if (left < padding)
-        left = padding;
+    if (left < padding) left = padding;
     if (left + toolbarWidth > viewportWidth - padding)
         left = viewportWidth - toolbarWidth - padding;
     if (top < padding) {
         top = rect.bottom + padding;
         toolbar.classList.add('below');
-    }
-    else {
+    } else {
         toolbar.classList.remove('below');
     }
     toolbar.style.left = left + 'px';
@@ -955,12 +1008,10 @@ function applyFloatingHighlight(color, editor, savedRange) {
             selection.addRange(savedRange.cloneRange());
         }
     }
-    if (!selection || !selection.rangeCount)
-        return;
+    if (!selection || !selection.rangeCount) return;
     const range = selection.getRangeAt(0);
     const selectedText = range.toString();
-    if (!selectedText)
-        return;
+    if (!selectedText) return;
     if (color === 'transparent') {
         const marks = editor.querySelectorAll('mark');
         marks.forEach(mark => {
@@ -975,8 +1026,7 @@ function applyFloatingHighlight(color, editor, savedRange) {
             }
         });
         showToast('🧹 Hervorhebung entfernt');
-    }
-    else {
+    } else {
         const wrapper = document.createElement('mark');
         wrapper.style.backgroundColor = color.startsWith('#') ? color + '66' : color;
         wrapper.style.color = 'inherit';
@@ -984,8 +1034,7 @@ function applyFloatingHighlight(color, editor, savedRange) {
         wrapper.style.padding = '0 2px';
         try {
             range.surroundContents(wrapper);
-        }
-        catch (e) {
+        } catch (e) {
             const fragment = range.extractContents();
             wrapper.appendChild(fragment);
             range.insertNode(wrapper);
@@ -996,24 +1045,22 @@ function applyFloatingHighlight(color, editor, savedRange) {
 // CONTEXT TOOLBARS
 // ============================================================
 function initContextToolbars() {
-    if (contextToolbarsInitialized)
-        return;
+    if (contextToolbarsInitialized) return;
     contextToolbarsInitialized = true;
     const tableToolbar = $('table-context-toolbar');
     const linkToolbar = $('link-context-toolbar');
-    if (!tableToolbar || !linkToolbar)
-        return;
-    tableToolbar.addEventListener('click', (e) => {
+    if (!tableToolbar || !linkToolbar) return;
+    tableToolbar.addEventListener('click', e => {
         const target = e.target;
         const btn = target.closest('[data-table-action]');
-        if (!btn || !currentContextTable)
-            return;
+        if (!btn || !currentContextTable) return;
         const action = btn.dataset.tableAction || '';
         const table = currentContextTable;
         const selection = window.getSelection();
-        const cell = selection?.anchorNode?.nodeType === Node.TEXT_NODE
-            ? selection.anchorNode.parentElement?.closest('td, th')
-            : selection?.anchorNode?.closest?.('td, th');
+        const cell =
+            selection?.anchorNode?.nodeType === Node.TEXT_NODE
+                ? selection.anchorNode.parentElement?.closest('td, th')
+                : selection?.anchorNode?.closest?.('td, th');
         const row = cell?.parentElement;
         const rowIndex = row ? Array.from(table.rows).indexOf(row) : -1;
         const cellIndex = cell && row ? Array.from(row.cells).indexOf(cell) : -1;
@@ -1025,40 +1072,35 @@ function initContextToolbars() {
                 newCell.style.cssText = 'border:1px solid var(--border); padding:6px 10px;';
             }
             showToast('📊 Zeile hinzugefügt');
-        }
-        else if (action === 'addCol') {
+        } else if (action === 'addCol') {
             Array.from(table.rows).forEach((r, idx) => {
-                const newCell = idx === 0 ? document.createElement('th') : document.createElement('td');
-                newCell.style.cssText = idx === 0
-                    ? 'border:1px solid var(--border); padding:6px 10px; background:var(--bg-elevated); color:var(--gold);'
-                    : 'border:1px solid var(--border); padding:6px 10px;';
+                const newCell =
+                    idx === 0 ? document.createElement('th') : document.createElement('td');
+                newCell.style.cssText =
+                    idx === 0
+                        ? 'border:1px solid var(--border); padding:6px 10px; background:var(--bg-elevated); color:var(--gold);'
+                        : 'border:1px solid var(--border); padding:6px 10px;';
                 r.insertBefore(newCell, r.cells[cellIndex + 1] || null);
             });
             showToast('📊 Spalte hinzugefügt');
-        }
-        else if (action === 'deleteRow') {
+        } else if (action === 'deleteRow') {
             if (table.rows.length > 1) {
                 table.deleteRow(rowIndex);
                 showToast('📊 Zeile gelöscht');
-            }
-            else {
+            } else {
                 showToast('⚠️ Letzte Zeile kann nicht gelöscht werden', 'error');
             }
-        }
-        else if (action === 'deleteCol') {
+        } else if (action === 'deleteCol') {
             const colCount = table.rows[0]?.cells.length || 0;
             if (colCount > 1) {
                 Array.from(table.rows).forEach(r => {
-                    if (r.cells[cellIndex])
-                        r.deleteCell(cellIndex);
+                    if (r.cells[cellIndex]) r.deleteCell(cellIndex);
                 });
                 showToast('📊 Spalte gelöscht');
-            }
-            else {
+            } else {
                 showToast('⚠️ Letzte Spalte kann nicht gelöscht werden', 'error');
             }
-        }
-        else if (action === 'deleteTable') {
+        } else if (action === 'deleteTable') {
             if (confirm('Tabelle wirklich löschen?')) {
                 table.remove();
                 hideContextToolbars();
@@ -1066,24 +1108,21 @@ function initContextToolbars() {
             }
         }
     });
-    linkToolbar.addEventListener('click', (e) => {
+    linkToolbar.addEventListener('click', e => {
         const target = e.target;
         const btn = target.closest('[data-link-action]');
-        if (!btn || !currentContextLink)
-            return;
+        if (!btn || !currentContextLink) return;
         const action = btn.dataset.linkAction || '';
         const link = currentContextLink;
         if (action === 'open') {
             window.open(link.href, '_blank', 'noopener,noreferrer');
-        }
-        else if (action === 'edit') {
+        } else if (action === 'edit') {
             const newUrl = prompt('URL bearbeiten:', link.href);
             if (newUrl && newUrl !== link.href) {
                 link.href = newUrl;
                 showToast('🔗 Link aktualisiert');
             }
-        }
-        else if (action === 'remove') {
+        } else if (action === 'remove') {
             const parent = link.parentNode;
             if (parent) {
                 while (link.firstChild) {
@@ -1095,7 +1134,7 @@ function initContextToolbars() {
             showToast('🔗 Link entfernt');
         }
     });
-    document.addEventListener('click', (e) => {
+    document.addEventListener('click', e => {
         const target = e.target;
         const editorSelector = '.rich-editor, .spell-editor, .dialog-text, .cf-notes-editor';
         const editor = target.closest(editorSelector);
@@ -1107,40 +1146,35 @@ function initContextToolbars() {
         if (table && table.closest(editorSelector)) {
             currentContextTable = table;
             showTableContextToolbar(table);
-        }
-        else {
+        } else {
             hideTableContextToolbar();
         }
         const link = target.closest('a');
         if (link && link.closest(editorSelector)) {
             currentContextLink = link;
             showLinkContextToolbar(link);
-        }
-        else {
+        } else {
             hideLinkContextToolbar();
         }
     });
 }
 function showTableContextToolbar(table) {
     const toolbar = $('table-context-toolbar');
-    if (!toolbar)
-        return;
+    if (!toolbar) return;
     const rect = table.getBoundingClientRect();
     toolbar.style.left = rect.left + 'px';
-    toolbar.style.top = (rect.top - 40) + 'px';
+    toolbar.style.top = rect.top - 40 + 'px';
     toolbar.classList.add('visible');
 }
 function hideTableContextToolbar() {
     const toolbar = $('table-context-toolbar');
-    if (toolbar)
-        toolbar.classList.remove('visible');
+    if (toolbar) toolbar.classList.remove('visible');
     currentContextTable = null;
 }
 function showLinkContextToolbar(link) {
     const toolbar = $('link-context-toolbar');
     const urlSpan = $('link-context-url');
-    if (!toolbar)
-        return;
+    if (!toolbar) return;
     if (urlSpan) {
         const displayUrl = link.href.length > 30 ? link.href.substring(0, 30) + '...' : link.href;
         urlSpan.textContent = '🔗 ' + displayUrl;
@@ -1148,13 +1182,12 @@ function showLinkContextToolbar(link) {
     }
     const rect = link.getBoundingClientRect();
     toolbar.style.left = rect.left + 'px';
-    toolbar.style.top = (rect.bottom + 5) + 'px';
+    toolbar.style.top = rect.bottom + 5 + 'px';
     toolbar.classList.add('visible');
 }
 function hideLinkContextToolbar() {
     const toolbar = $('link-context-toolbar');
-    if (toolbar)
-        toolbar.classList.remove('visible');
+    if (toolbar) toolbar.classList.remove('visible');
     currentContextLink = null;
 }
 function hideContextToolbars() {
@@ -1166,32 +1199,52 @@ function hideContextToolbars() {
 // ============================================================
 function getSpellClassesFromCheckboxes() {
     const classes = [];
-    const classIds = ['barbar', 'barde', 'druide', 'hexenmeister', 'kaempfer', 'kleriker', 'magier', 'moench', 'paladin', 'schurke', 'waldlaeufer', 'zauberer', 'artifizient'];
+    const classIds = [
+        'barbar',
+        'barde',
+        'druide',
+        'hexenmeister',
+        'kaempfer',
+        'kleriker',
+        'magier',
+        'moench',
+        'paladin',
+        'schurke',
+        'waldlaeufer',
+        'zauberer',
+        'artifizient'
+    ];
     classIds.forEach(id => {
         const cb = $('spell-class-' + id);
-        if (cb?.checked)
-            classes.push(cb.value);
+        if (cb?.checked) classes.push(cb.value);
     });
     return classes;
 }
 function setSpellClassesCheckboxes(classes) {
     const classMap = {
-        'Barbar': 'barbar', 'Barde': 'barde', 'Druide': 'druide', 'Hexenmeister': 'hexenmeister',
-        'Kämpfer': 'kaempfer', 'Kleriker': 'kleriker', 'Magier': 'magier', 'Mönch': 'moench',
-        'Paladin': 'paladin', 'Schurke': 'schurke', 'Waldläufer': 'waldlaeufer', 'Zauberer': 'zauberer',
-        'Artifizient': 'artifizient'
+        Barbar: 'barbar',
+        Barde: 'barde',
+        Druide: 'druide',
+        Hexenmeister: 'hexenmeister',
+        Kämpfer: 'kaempfer',
+        Kleriker: 'kleriker',
+        Magier: 'magier',
+        Mönch: 'moench',
+        Paladin: 'paladin',
+        Schurke: 'schurke',
+        Waldläufer: 'waldlaeufer',
+        Zauberer: 'zauberer',
+        Artifizient: 'artifizient'
     };
     Object.values(classMap).forEach(id => {
         const cb = $('spell-class-' + id);
-        if (cb)
-            cb.checked = false;
+        if (cb) cb.checked = false;
     });
     classes.forEach(cls => {
         const id = classMap[cls];
         if (id) {
             const cb = $('spell-class-' + id);
-            if (cb)
-                cb.checked = true;
+            if (cb) cb.checked = true;
         }
     });
 }
@@ -1222,8 +1275,7 @@ function saveSpell() {
     let range = '';
     if (rangeSelect === 'custom') {
         range = rangeCustom;
-    }
-    else if (rangeSelect) {
+    } else if (rangeSelect) {
         range = rangeSelect;
     }
     const timeSelect = timeSelectInput?.value || '';
@@ -1257,11 +1309,9 @@ function saveSpell() {
     }
     pushUndo(id ? 'Zauber bearbeitet' : 'Zauber erstellt');
     if (id) {
-        const idx = D.spells.findIndex((x) => x.id === parseEntityId(id));
-        if (idx > -1)
-            D.spells[idx] = { ...D.spells[idx], ...s };
-    }
-    else {
+        const idx = D.spells.findIndex(x => x.id === parseEntityId(id));
+        if (idx > -1) D.spells[idx] = { ...D.spells[idx], ...s };
+    } else {
         s.id = nextId('spells');
         D.spells.push(s);
     }
@@ -1272,8 +1322,7 @@ function saveSpell() {
 }
 function editSpell(id) {
     const s = EntityLookup.spell(id);
-    if (!s)
-        return;
+    if (!s) return;
     const editIdInput = $('edit-spell-id');
     const nameInput = $('spell-name');
     const typeInput = $('spell-type');
@@ -1286,31 +1335,19 @@ function editSpell(id) {
     const materialInput = $('spell-material');
     const descEl = $('spell-desc');
     const noteEl = $('spell-note');
-    if (editIdInput)
-        editIdInput.value = String(id);
-    if (nameInput)
-        nameInput.value = s.name;
-    if (typeInput)
-        typeInput.value = s.type || 'spell';
-    if (levelInput)
-        levelInput.value = String(s.level || 0);
-    if (schoolInput)
-        schoolInput.value = s.school || '';
-    if (ritualInput)
-        ritualInput.checked = s.ritual;
-    if (vInput)
-        vInput.checked = s.v;
-    if (gInput)
-        gInput.checked = s.g;
-    if (mInput)
-        mInput.checked = s.m;
-    if (materialInput)
-        materialInput.value = s.material || '';
+    if (editIdInput) editIdInput.value = String(id);
+    if (nameInput) nameInput.value = s.name;
+    if (typeInput) typeInput.value = s.type || 'spell';
+    if (levelInput) levelInput.value = String(s.level || 0);
+    if (schoolInput) schoolInput.value = s.school || '';
+    if (ritualInput) ritualInput.checked = s.ritual;
+    if (vInput) vInput.checked = s.v;
+    if (gInput) gInput.checked = s.g;
+    if (mInput) mInput.checked = s.m;
+    if (materialInput) materialInput.value = s.material || '';
     toggleMaterialField();
-    if (descEl)
-        descEl.innerHTML = sanitizeHTML(s.description) || '';
-    if (noteEl)
-        noteEl.innerHTML = sanitizeHTML(s.note) || '';
+    if (descEl) descEl.innerHTML = sanitizeHTML(s.description) || '';
+    if (noteEl) noteEl.innerHTML = sanitizeHTML(s.note) || '';
     const classes = s.spellClasses || [];
     setSpellClassesCheckboxes(classes);
     const timeSelect = $('spell-time-select');
@@ -1322,8 +1359,7 @@ function editSpell(id) {
             timeSelect.value = time;
             timeCustom.style.display = 'none';
             timeCustom.value = '';
-        }
-        else if (time) {
+        } else if (time) {
             timeSelect.value = 'custom';
             timeCustom.style.display = 'block';
             timeCustom.value = time;
@@ -1338,13 +1374,11 @@ function editSpell(id) {
             rangeSelect.value = range;
             rangeCustom.style.display = 'none';
             rangeCustom.value = '';
-        }
-        else if (range) {
+        } else if (range) {
             rangeSelect.value = 'custom';
             rangeCustom.style.display = 'block';
             rangeCustom.value = range;
-        }
-        else {
+        } else {
             rangeSelect.value = '';
             rangeCustom.style.display = 'none';
             rangeCustom.value = '';
@@ -1359,8 +1393,7 @@ function editSpell(id) {
             durationSelect.value = duration;
             durationCustom.style.display = 'none';
             durationCustom.value = '';
-        }
-        else if (duration) {
+        } else if (duration) {
             durationSelect.value = 'custom';
             durationCustom.style.display = 'block';
             durationCustom.value = duration;
@@ -1380,7 +1413,7 @@ function deleteSpell(id) {
     const spell = EntityLookup.spell(id);
     if (confirm(`Zauber "${spell?.name || 'Unbekannt'}" löschen?`)) {
         pushUndo('Zauber gelöscht');
-        D.spells = D.spells.filter((s) => s.id !== id);
+        D.spells = D.spells.filter(s => s.id !== id);
         renderSpells();
         save();
     }
@@ -1405,50 +1438,34 @@ function clearSpellForm() {
     const vInput = $('spell-v');
     const gInput = $('spell-g');
     const mInput = $('spell-m');
-    if (editIdInput)
-        editIdInput.value = '';
-    if (nameInput)
-        nameInput.value = '';
-    if (typeInput)
-        typeInput.value = 'spell';
-    if (levelInput)
-        levelInput.value = '0';
-    if (schoolInput)
-        schoolInput.value = '';
-    if (timeSelectInput)
-        timeSelectInput.value = '1 Aktion';
+    if (editIdInput) editIdInput.value = '';
+    if (nameInput) nameInput.value = '';
+    if (typeInput) typeInput.value = 'spell';
+    if (levelInput) levelInput.value = '0';
+    if (schoolInput) schoolInput.value = '';
+    if (timeSelectInput) timeSelectInput.value = '1 Aktion';
     if (timeCustomInput) {
         timeCustomInput.value = '';
         timeCustomInput.style.display = 'none';
     }
-    if (rangeSelectInput)
-        rangeSelectInput.value = '';
+    if (rangeSelectInput) rangeSelectInput.value = '';
     if (rangeCustomInput) {
         rangeCustomInput.value = '';
         rangeCustomInput.style.display = 'none';
     }
-    if (durationSelectInput)
-        durationSelectInput.value = 'Unmittelbar';
+    if (durationSelectInput) durationSelectInput.value = 'Unmittelbar';
     if (durationCustomInput) {
         durationCustomInput.value = '';
         durationCustomInput.style.display = 'none';
     }
-    if (descEl)
-        descEl.innerHTML = '';
-    if (noteEl)
-        noteEl.innerHTML = '';
-    if (materialInput)
-        materialInput.value = '';
-    if (materialGroup)
-        materialGroup.style.display = 'none';
-    if (ritualInput)
-        ritualInput.checked = false;
-    if (vInput)
-        vInput.checked = false;
-    if (gInput)
-        gInput.checked = false;
-    if (mInput)
-        mInput.checked = false;
+    if (descEl) descEl.innerHTML = '';
+    if (noteEl) noteEl.innerHTML = '';
+    if (materialInput) materialInput.value = '';
+    if (materialGroup) materialGroup.style.display = 'none';
+    if (ritualInput) ritualInput.checked = false;
+    if (vInput) vInput.checked = false;
+    if (gInput) gInput.checked = false;
+    if (mInput) mInput.checked = false;
     setSpellClassesCheckboxes([]);
 
     // Hide markdown export/import buttons for new spells

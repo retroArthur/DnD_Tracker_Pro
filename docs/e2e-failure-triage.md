@@ -14,6 +14,7 @@ issues unrelated to the migration.
 Files: `tests/e2e/features/persistence.spec.js`, `tests/e2e/features/wiki.spec.js:363`
 
 Sample test "Daten werden automatisch gespeichert":
+
 - Step asserting `D.characters` contains the new character → **passes**
 - Step asserting `localStorage` has any key with > 100 bytes → **fails**
 
@@ -33,6 +34,7 @@ storage layer via the app's `StorageAPI`).
 File: `tests/e2e/features/initiative.spec.js`
 
 Sample test "sollte mehrere Combatants sortiert nach Initiative anzeigen":
+
 - `await nameInput.fill(name)` times out after 30s
 - Locator: `page.locator('#combatant-name, [name="combatant-name"]').first()`
 - **Neither `#combatant-name` nor any element with `name="combatant-name"` exists in the built HTML.**
@@ -54,6 +56,7 @@ helper to drive that flow.
 File: `tests/e2e/tab-navigation.spec.js`
 
 Sample test "dice tab renders random tables when switched to":
+
 - `expect(container).toBeVisible()` fails (`Received: hidden`)
 - Locator matches `<div id="random-tables-list">` 9 times — likely picking up
   duplicate or shadow instances. (IDs should be unique; possibly nested
@@ -74,11 +77,13 @@ rückgängig gemacht werden"
 
 Sample (party.spec.js:248): After delete + undo, the test expects the
 restored character data:
+
 ```
 expect(charData).toBeTruthy();  // received: undefined
 ```
 
 So the entity is not present in `D.characters` after the undo. Either:
+
 - Undo doesn't restore character deletion (regression / never worked here), or
 - Test reads the data from the wrong place
 
@@ -92,6 +97,7 @@ interactively, fix the test query; if it doesn't, this is a real app bug.
 ### 5. CRUD Validation (3 tests) — Implementation details changed
 
 Files:
+
 - `crud/encounters.spec.js:87` "Attribut-Modifikatoren werden berechnet"
 - `crud/party.spec.js:86` same name
 - `crud/quests.spec.js:77` "Quest ohne Titel zeigt Fehlermeldung"

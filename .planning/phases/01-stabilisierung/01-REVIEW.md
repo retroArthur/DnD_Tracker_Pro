@@ -4,35 +4,35 @@ reviewed: 2026-06-12T07:57:42Z
 depth: standard
 files_reviewed: 24
 files_reviewed_list:
-  - .github/workflows/ci.yml
-  - CLAUDE.md
-  - LICENSE
-  - README.md
-  - build.py
-  - core/config.js
-  - docs/bugfixes.md
-  - docs/srd-license.md
-  - package.json
-  - playwright.smoke.config.js
-  - systems/campaign-manager/campaign-manager.js
-  - systems/spellslots/import-export.js
-  - systems/spellslots/persistence.js
-  - systems/spellslots/quick-roll.js
-  - systems/spellslots/version-migration.js
-  - tests/build/test_build_deduplication.py
-  - tests/e2e/smoke.spec.js
-  - tests/setup.js
-  - tests/unit/migration.test.js
-  - tests/unit/stability.test.js
-  - tools/debug.js
-  - types/entities.d.ts
-  - types/globals.d.ts
-  - validate.py
+    - .github/workflows/ci.yml
+    - CLAUDE.md
+    - LICENSE
+    - README.md
+    - build.py
+    - core/config.js
+    - docs/bugfixes.md
+    - docs/srd-license.md
+    - package.json
+    - playwright.smoke.config.js
+    - systems/campaign-manager/campaign-manager.js
+    - systems/spellslots/import-export.js
+    - systems/spellslots/persistence.js
+    - systems/spellslots/quick-roll.js
+    - systems/spellslots/version-migration.js
+    - tests/build/test_build_deduplication.py
+    - tests/e2e/smoke.spec.js
+    - tests/setup.js
+    - tests/unit/migration.test.js
+    - tests/unit/stability.test.js
+    - tools/debug.js
+    - types/entities.d.ts
+    - types/globals.d.ts
+    - validate.py
 findings:
-  critical: 1
-  warning: 8
-  info: 6
-  total: 15
+    critical: 1
+    warning: 8
+    info: 6
+    total: 15
 status: issues_found
 ---
 
@@ -57,8 +57,9 @@ Es gibt jedoch einen kritischen Befund: Der neue D-07-Konflikt-Dialog in `quick-
 **Issue:** `showStorageConflictDialog` ist eine Top-Level-Funktionsdeklaration in einem klassischen Script (Loader- wie Bundle-Modus). Damit ist `window.showStorageConflictDialog` **die Funktion selbst** — es existiert keine andere Definition im Repo (per Grep verifiziert; die im Plan 01-02 vorgesehene UI-Dialog-Funktion wurde nie implementiert). Der Guard in Zeile 32 ist daher immer wahr, und Zeile 33 ruft die Funktion mit identischen Argumenten erneut auf:
 
 ```javascript
-if (typeof window.showStorageConflictDialog === 'function') {       // immer true (Selbstreferenz!)
-    window.showStorageConflictDialog(lsData, idbData, onUseLS, onUseIDB);  // Endlosrekursion
+if (typeof window.showStorageConflictDialog === 'function') {
+    // immer true (Selbstreferenz!)
+    window.showStorageConflictDialog(lsData, idbData, onUseLS, onUseIDB); // Endlosrekursion
 }
 ```
 
@@ -89,6 +90,7 @@ Zusatzhinweis für eine spätere echte Dialog-Implementierung: `load()` wartet n
 
 **File:** `systems/spellslots/persistence.js:15,159`; `systems/spellslots/quick-roll.js:41`; `systems/spellslots/import-export.js:621`
 **Issue:** Diese Funktionen lesen `const STORAGE_KEY = window.STORAGE_KEY;`. Die einzige Definition ist aber `const STORAGE_KEY = window.APP_CONFIG.STORAGE_KEY;` in `core/data.js:1` — eine globale `const` erzeugt **keine** window-Property, und `window.STORAGE_KEY = ...` kommt im gesamten Repo nicht vor (verifiziert). Konsequenzen:
+
 - **Bundle (dist):** funktioniert nur zufällig, weil Dedup-Pass 2 die Zeilen als „Konflikt mit realer Definition" entfernt (418 Entfernungen im aktuellen Bundle) und der Bezeichner auf die globale `const` zurückfällt.
 - **Loader-Modus (index.html, von validate.py weiterhin als unterstützter Pfad geprüft):** Die Zeilen bleiben bestehen → `STORAGE_KEY === undefined` → `const key = window.STORAGE_KEY_OVERRIDE || STORAGE_KEY` ist für die Standard-Kampagne `undefined` → sämtliche Persistenz (Save/Load/`_ts`/clearStorage) läuft auf den localStorage-Key `"undefined"` bzw. `"undefined_ts"`. Dev- und Bundle-Modus lesen/schreiben unterschiedliche Keys.
 
@@ -107,6 +109,7 @@ const key = window.STORAGE_KEY_OVERRIDE || STORAGE_KEY; // globale const aus cor
 
 **File:** `build.py:332-384` (Pass 3) vs. `build.py:149-167` (Pre-Build-Check)
 **Issue:** Zwei Lücken in der Build-Härtung (STAB-07):
+
 1. Bei einem Duplikat ersetzt Pass 3 nur die Deklarationszeile durch einen Kommentar; die innere Schleife (Zeile 361-373) berechnet zwar das Funktionsende, **überspringt aber keine Zeilen** — der Funktionskörper bleibt als Top-Level-Code stehen. Das ist exakt der in CLAUDE.md dokumentierte „Illegal return statement"-Incident vom 2026-01-10, dessen Mechanismus im Code unverändert ist. Ohne Pass 3 wären doppelte Funktionsdeklarationen sogar valides JS (letzte gewinnt) — Pass 3 macht aus funktionierendem Code einen SyntaxError.
 2. Pass 3 matcht auf `stripped` (Zeile 345/351), erkennt also auch **eingerückte/verschachtelte** Funktionen. Der neue Pre-Build-Check `check_duplicate_functions` prüft mit `^function` + MULTILINE nur **Top-Level**-Funktionen. Zwei Module mit gleichnamigen inneren Hilfsfunktionen (z. B. `function update()` in zwei verschiedenen äußeren Funktionen) passieren den Pre-Check und werden von Pass 3 zerstört.
 

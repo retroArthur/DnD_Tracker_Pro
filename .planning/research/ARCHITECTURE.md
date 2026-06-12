@@ -89,6 +89,7 @@ origin instead of `file://`, unlocking Service Worker caching, File System Acces
 `beforeinstallprompt`.
 
 **Boundary:**
+
 - `sw.js` already exists. It only needs its `STATIC_ASSETS` list and `CACHE_NAME` updated to match
   the bundled output file. The current list references `./assets/body.html` (stale) and
   does not include the new manifest.
@@ -113,6 +114,7 @@ auto-export a JSON backup there after every save (or on a timer), in addition to
 IndexedDB auto-backup.
 
 **Boundary:**
+
 - New module: `systems/file-backup.js` in the systems layer (cross-cutting, not feature-specific).
 - Exposes `initFileBackup()` called from `core/init.js` after `startAutoBackup()`.
 - Hooks into the existing DM Screen live-sync pattern: wraps `window.save` once with
@@ -138,6 +140,7 @@ deployed first, or the user serving locally with `npm run dev`.
 named actions (e.g., "Neue Session", "Würfle Initiative", "Öffne DM-Screen").
 
 **Boundary:**
+
 - New module: `systems/command-palette.js` in the systems layer.
 - Builds on `systems/search/global-search.js` for entity search results. Calls
   `globalSearch(query)` and renders results in the palette overlay.
@@ -170,22 +173,23 @@ command-palette.js before keyboard-shortcuts.js.
 collection for custom monsters.
 
 **Boundary:**
+
 - New module: `core/srd-monsters.js` — parallels `core/srd-spells.js` exactly. Uses the same
   lazy-cache pattern (`let _monsterCache = null; function getSRDMonsters() { if (_monsterCache)...`).
 - The existing `features/encounters/monster-templates.js` has 12 templates as a hand-keyed object.
   `srd-monsters.js` subsumes this; `monster-templates.js` can be converted to a thin wrapper that
   pulls from `getSRDMonsters()` for backward compatibility.
 - Monster schema (each entry):
-  ```
-  { id, name, cr, type, size, alignment, ac, acType, hp, hpDice,
-    speed: { walk, fly, swim, climb, burrow },
-    str, dex, con, int, wis, cha,
-    savingThrows: [], skills: [], senses: {}, languages: [],
-    immunities: [], resistances: [], vulnerabilities: [],
-    traits: [], actions: [], bonusActions: [], reactions: [],
-    legendaryActions: [], legendaryActionsCount: 0,
-    source: 'SRD'|'custom' }
-  ```
+    ```
+    { id, name, cr, type, size, alignment, ac, acType, hp, hpDice,
+      speed: { walk, fly, swim, climb, burrow },
+      str, dex, con, int, wis, cha,
+      savingThrows: [], skills: [], senses: {}, languages: [],
+      immunities: [], resistances: [], vulnerabilities: [],
+      traits: [], actions: [], bonusActions: [], reactions: [],
+      legendaryActions: [], legendaryActionsCount: 0,
+      source: 'SRD'|'custom' }
+    ```
 - `D.bestiary[]` stores custom monsters added by the user. SRD monsters are NOT stored in `D`
   (they are read-only embedded data, same approach as `D.spells` vs `core/srd-spells.js`).
 
@@ -197,6 +201,7 @@ file is currently ~1.28 MB; monsters would add ~15–25 KB minified. Acceptable.
 pattern means the data object is only parsed once on first access.
 
 **D schema change:**
+
 ```javascript
 // core/data.js initializeData() — add:
 bestiary: [],  // custom monsters only; SRD monsters are in core/srd-monsters.js
@@ -218,17 +223,18 @@ features layer.
 for custom entries.
 
 **Boundary:**
+
 - `features/bestiary/bestiary-render.js` — `renderBestiary()`, filters, statblock display.
 - `features/bestiary/bestiary-crud.js` — `saveBestiaryEntry()`, `deleteBestiaryEntry()` for custom
   monsters only. SRD entries are read-only.
 - Tab registration in `systems/tab-registry.js`:
-  ```javascript
-  'bestiary': {
-      renders: ['renderBestiary'],
-      init: 'initBestiary',
-      cleanup: null
-  }
-  ```
+    ```javascript
+    'bestiary': {
+        renders: ['renderBestiary'],
+        init: 'initBestiary',
+        cleanup: null
+    }
+    ```
 - HTML: new `<div class="view" data-view="bestiary">` in `assets/templates/view-content.html` (or
   a new `view-bestiary.html` template added to the template list in `loader.js` template fetcher
   and `build.py` template concatenation section).
@@ -246,12 +252,13 @@ for custom entries.
 tracker. Requires bestiary data to be available.
 
 **Boundary:**
+
 - Belongs in `features/initiative-extras.js` (already exists for initiative add-ons).
 - `showStatblockPopup(combatantId)` looks up the combatant's linked entity:
-  1. If `combatant.type === 'player'`: show character sheet summary.
-  2. If `combatant.type === 'enemy'`: look up `D.encounters` for the encounter definition, then
-     check `D.bestiary` and `getSRDMonsters()` for a matching monster by name.
-  3. Falls back to showing whatever fields are stored on the encounter entry.
+    1. If `combatant.type === 'player'`: show character sheet summary.
+    2. If `combatant.type === 'enemy'`: look up `D.encounters` for the encounter definition, then
+       check `D.bestiary` and `getSRDMonsters()` for a matching monster by name.
+    3. Falls back to showing whatever fields are stored on the encounter entry.
 - HTML: reuse the existing modal infrastructure (`showModal`/`hideModal` from
   `systems/spellslots/navigation.js`); add `<div id="statblock-modal">` to `modals-entity.html`.
 - No new module needed — add to `features/initiative-extras.js`.
@@ -267,14 +274,15 @@ tracker. Requires bestiary data to be available.
 **What it is:** Per-combatant legendary action counter in the initiative tracker (reset each round).
 
 **Boundary:**
+
 - Combatant model extension (runtime only, not persisted separately):
-  ```javascript
-  // On combatant object in D.initiative.combatants[]:
-  legendaryActionsTotal: 3,   // from monster statblock or manual
-  legendaryActionsUsed: 0,
-  legendaryResistancesTotal: 3,
-  legendaryResistancesUsed: 0
-  ```
+    ```javascript
+    // On combatant object in D.initiative.combatants[]:
+    legendaryActionsTotal: 3,   // from monster statblock or manual
+    legendaryActionsUsed: 0,
+    legendaryResistancesTotal: 3,
+    legendaryResistancesUsed: 0
+    ```
 - Render: `renderCombatantLegendary(combatant)` — extract from `renderInit()` cleanup, add to
   `features/initiative.js` as a helper (follows the existing `renderCombatantEffects()` pattern).
 - Reset: `resetLegendaryActions()` called in `nextRound()` function in `features/initiative.js`.
@@ -292,15 +300,16 @@ each initiative.
 or per-member HP tracking, group saving throws, grouped damage.
 
 **Boundary:**
+
 - New module: `features/mob-combat.js` in the features layer.
 - Extends combatant model:
-  ```javascript
-  // On D.initiative.combatants[]:
-  isMobGroup: true,
-  mobCount: 6,
-  mobHpPerMember: 7,
-  mobMembersAlive: 6  // decrements as members die
-  ```
+    ```javascript
+    // On D.initiative.combatants[]:
+    isMobGroup: true,
+    mobCount: 6,
+    mobHpPerMember: 7,
+    mobMembersAlive: 6  // decrements as members die
+    ```
 - `showMobGroupModal()` — UI for creating a group (count, shared initiative, per-member HP).
 - `applyMobDamage(groupId, damage)` — kill members as damage accumulates.
 - Integrates with AoE damage calculator in `features/initiative.js` (`showAoEDamageModal`).
@@ -320,15 +329,16 @@ or per-member HP tracking, group saving throws, grouped damage.
 entities (NPCs, quests, locations).
 
 **Boundary:**
+
 - `D.timeline[]` is the new collection.
 - Schema:
-  ```javascript
-  // D.timeline[]:
-  { id, title, description, date: { day, month, year },
-    calendarDay: 0,  // computed absolute day for sorting
-    tags: [],
-    linkedEntities: [] }  // same format as entity-links: [{entityType, entityId}]
-  ```
+    ```javascript
+    // D.timeline[]:
+    { id, title, description, date: { day, month, year },
+      calendarDay: 0,  // computed absolute day for sorting
+      tags: [],
+      linkedEntities: [] }  // same format as entity-links: [{entityType, entityId}]
+    ```
 - New module: `features/timeline/timeline-render.js` + `features/timeline/timeline-crud.js`.
 - Reuses `systems/entity-links.js` for `linkedEntities`.
 - The calendar sub-object in `D.calendar` is read-only from the timeline's perspective —
@@ -337,6 +347,7 @@ entities (NPCs, quests, locations).
 - HTML: new view section in `assets/templates/view-content.html`.
 
 **D schema change:**
+
 ```javascript
 // core/data.js initializeData():
 timeline: [],
@@ -358,16 +369,17 @@ timeline: [],
 locations.
 
 **Boundary:**
+
 - `D.factions[]` collection.
 - Schema:
-  ```javascript
-  // D.factions[]:
-  { id, name, description, goals, symbol, color,
-    reputation: 0,  // party-level default
-    characterReputations: {},  // { characterId: number }
-    linkedNPCs: [],   // [{ entityType: 'npcs', entityId }]
-    linkedLocations: [] }
-  ```
+    ```javascript
+    // D.factions[]:
+    { id, name, description, goals, symbol, color,
+      reputation: 0,  // party-level default
+      characterReputations: {},  // { characterId: number }
+      linkedNPCs: [],   // [{ entityType: 'npcs', entityId }]
+      linkedLocations: [] }
+    ```
 - New modules: `features/factions/factions-render.js` + `features/factions/factions-crud.js`.
 - Reuses `systems/entity-links.js` and `systems/tags.js`.
 - NPC detail panel (`features/npcs/npc-render.js`) gets a "Fraktionen" section showing which
@@ -382,6 +394,7 @@ locations.
 `D.randomTables` and `D.calendar`.
 
 **Boundary:**
+
 - New module: `features/travel-simulator.js` (single file, no split needed initially).
 - Calls `rollOnTable(tableId)` (already global from `features/random-tables.js`) for encounter
   generation.
@@ -402,6 +415,7 @@ locations.
 optionally using custom random tables.
 
 **Boundary:**
+
 - New module: `features/npc-generator.js` (single file).
 - Calls `rollOnTable(tableId)` for custom table lookups.
 - Falls back to embedded name/trait lists (inline data, same pattern as `monster-templates.js`).
@@ -422,13 +436,14 @@ optionally using custom random tables.
 **What it is:** Track XP earned per session/encounter, milestone progress, next level threshold.
 
 **Boundary:**
+
 - Extends `D.characters[]` schema per character:
-  ```javascript
-  // Added fields on each character:
-  xp: 0,
-  xpToNextLevel: 300,  // populated by migration from XP table in DND_RULES
-  milestones: []       // [{ id, description, achieved: bool, achievedAt }]
-  ```
+    ```javascript
+    // Added fields on each character:
+    xp: 0,
+    xpToNextLevel: 300,  // populated by migration from XP table in DND_RULES
+    milestones: []       // [{ id, description, achieved: bool, achievedAt }]
+    ```
 - No new tab needed — renders inside `features/party/party-details.js` (character detail panel).
 - New render helper: `renderXPTracker(character)` in `features/party/party-details.js`.
 - XP thresholds table: add `XP_THRESHOLDS` array to `core/constants.js` under `DND_RULES`.
@@ -436,6 +451,7 @@ optionally using custom random tables.
   add a "XP vergeben" button that distributes XP to living party members.
 
 **D schema change:**
+
 ```javascript
 // version-migration.js — add to the 3.0.0 migration:
 data.characters?.forEach(c => {
@@ -451,6 +467,7 @@ data.characters?.forEach(c => {
 **What it is:** Simple boolean (or count) per character showing whether they have inspiration.
 
 **Boundary:**
+
 - Extends `D.characters[]`: add `inspiration: false` (or `inspirationCount: 0` for variant).
 - Renders as a toggle in the party roster card and in the character detail panel.
 - `toggleInspiration(charId)` in `features/party/party-crud.js`.
@@ -466,14 +483,15 @@ data.characters?.forEach(c => {
 entries on the character object for quick in-play reference.
 
 **Boundary:**
+
 - Extends `D.characters[]`:
-  ```javascript
-  // Added fields:
-  proficiencyBonus: 2,
-  skillProficiencies: {},   // { athletics: 'proficient'|'expertise'|null }
-  saveProficiencies: {},    // { str: true, dex: false, ... }
-  attacks: [{ name, bonus, damageDice, damageType, notes }]
-  ```
+    ```javascript
+    // Added fields:
+    proficiencyBonus: 2,
+    skillProficiencies: {},   // { athletics: 'proficient'|'expertise'|null }
+    saveProficiencies: {},    // { str: true, dex: false, ... }
+    attacks: [{ name, bonus, damageDice, damageType, notes }]
+    ```
 - Render: new collapsible sections in the character detail panel (`features/party/party-details.js`).
 - Skill modifier computation goes into `utils/game-rules.js` (already contains HP/modifier math).
 - Migration: fill default proficiency bonus from level, empty skill/save objects.
@@ -490,6 +508,7 @@ entries on the character object for quick in-play reference.
 average per die type, streaks.
 
 **Boundary:**
+
 - New module: `features/dice/dice-stats.js` — `renderDiceStats()`.
 - Reads `D.diceHistory` (already populated by `features/dice/dice-core.js`).
 - All computation is pure JS (no charting library — render as CSS bar charts using `<div>` widths,
@@ -712,26 +731,26 @@ All additions are backward-compatible (existing saves load fine; migration adds 
 All collections use the same `nextId('bestiary')`, `nextId('timeline')` etc. via the existing
 `_nextId` map in `D`.
 
-| Collection / Field | Type | Migration Version | Lazy Init? |
-|---|---|---|---|
-| `D.bestiary[]` | Array | 3.0.0 | No (always present after migration) |
-| `D.timeline[]` | Array | 3.0.0 | No |
-| `D.factions[]` | Array | 3.0.0 | No |
-| `character.xp` | Number | 3.0.0 | No |
-| `character.xpToNextLevel` | Number | 3.0.0 | No |
-| `character.milestones[]` | Array | 3.0.0 | No |
-| `character.inspiration` | Boolean | 3.0.0 | No |
-| `character.proficiencyBonus` | Number | 3.0.0 | No |
-| `character.skillProficiencies{}` | Object | 3.0.0 | No |
-| `character.saveProficiencies{}` | Object | 3.0.0 | No |
-| `character.attacks[]` | Array | 3.0.0 | No |
-| `combatant.legendaryActionsTotal` | Number | runtime only | Yes (on add-to-initiative) |
-| `combatant.legendaryActionsUsed` | Number | runtime only | Yes |
-| `combatant.legendaryResistancesTotal` | Number | runtime only | Yes |
-| `combatant.legendaryResistancesUsed` | Number | runtime only | Yes |
-| `combatant.isMobGroup` | Boolean | runtime only | Yes |
-| `combatant.mobCount` | Number | runtime only | Yes |
-| `combatant.mobMembersAlive` | Number | runtime only | Yes |
+| Collection / Field                    | Type    | Migration Version | Lazy Init?                          |
+| ------------------------------------- | ------- | ----------------- | ----------------------------------- |
+| `D.bestiary[]`                        | Array   | 3.0.0             | No (always present after migration) |
+| `D.timeline[]`                        | Array   | 3.0.0             | No                                  |
+| `D.factions[]`                        | Array   | 3.0.0             | No                                  |
+| `character.xp`                        | Number  | 3.0.0             | No                                  |
+| `character.xpToNextLevel`             | Number  | 3.0.0             | No                                  |
+| `character.milestones[]`              | Array   | 3.0.0             | No                                  |
+| `character.inspiration`               | Boolean | 3.0.0             | No                                  |
+| `character.proficiencyBonus`          | Number  | 3.0.0             | No                                  |
+| `character.skillProficiencies{}`      | Object  | 3.0.0             | No                                  |
+| `character.saveProficiencies{}`       | Object  | 3.0.0             | No                                  |
+| `character.attacks[]`                 | Array   | 3.0.0             | No                                  |
+| `combatant.legendaryActionsTotal`     | Number  | runtime only      | Yes (on add-to-initiative)          |
+| `combatant.legendaryActionsUsed`      | Number  | runtime only      | Yes                                 |
+| `combatant.legendaryResistancesTotal` | Number  | runtime only      | Yes                                 |
+| `combatant.legendaryResistancesUsed`  | Number  | runtime only      | Yes                                 |
+| `combatant.isMobGroup`                | Boolean | runtime only      | Yes                                 |
+| `combatant.mobCount`                  | Number  | runtime only      | Yes                                 |
+| `combatant.mobMembersAlive`           | Number  | runtime only      | Yes                                 |
 
 **Single migration function handles all persistent changes** — one entry for version `3.0.0` in
 `MIGRATIONS` covers bestiary, timeline, factions, and all character field additions.
@@ -802,23 +821,23 @@ repair existing data.
 
 ## Integration Points Between New and Existing Systems
 
-| New Component | Existing System | Integration |
-|---|---|---|
-| `core/srd-monsters.js` | `features/encounters/monster-templates.js` | monster-templates becomes thin wrapper calling `getSRDMonsters()` |
-| `features/bestiary/` | `render/helpers.js` `EntityLookup` | add `bestiary` type to `EntityLookup` convenience methods |
-| `features/bestiary/` | `systems/entity-links.js` | monsters linkable from quests, locations, encounters |
-| `features/initiative-extras.js` | `core/srd-monsters.js` | statblock popup reads from `getSRDMonsters()` |
-| `systems/command-palette.js` | `systems/search/global-search.js` | calls `globalSearch(query)` for entity results |
-| `systems/command-palette.js` | `systems/spellslots/keyboard-shortcuts.js` | keyboard-shortcuts delegates Ctrl+K to `openCommandPalette()` |
-| `systems/file-backup.js` | `systems/spellslots/persistence.js` | wraps `window.save` with `_originalSave` guard pattern |
-| `features/timeline/` | `systems/entity-links.js` | timeline events link to entities via `linkedEntities[]` |
-| `features/factions/` | `features/npcs/npc-render.js` | NPC detail panel reads `D.factions` to show faction memberships |
-| `features/travel-simulator.js` | `features/random-tables.js` | calls `rollOnTable(tableId)` for encounter generation |
-| `features/npc-generator.js` | `features/npcs/npc-crud.js` | calls `saveNpc()` with generated data |
-| `features/dice/dice-stats.js` | `features/dice/dice-core.js` | reads `D.diceHistory` written by dice-core |
-| All new features | `utils/crud-helpers.js` | `deleteWithConfirm`, `afterCrudOperation`, `saveEntityWithUndo` |
-| All new features | `utils/validation.js` | add new entity schemas to `VALIDATION_SCHEMAS` |
-| All schema changes | `systems/spellslots/version-migration.js` | single 3.0.0 migration entry |
+| New Component                   | Existing System                            | Integration                                                       |
+| ------------------------------- | ------------------------------------------ | ----------------------------------------------------------------- |
+| `core/srd-monsters.js`          | `features/encounters/monster-templates.js` | monster-templates becomes thin wrapper calling `getSRDMonsters()` |
+| `features/bestiary/`            | `render/helpers.js` `EntityLookup`         | add `bestiary` type to `EntityLookup` convenience methods         |
+| `features/bestiary/`            | `systems/entity-links.js`                  | monsters linkable from quests, locations, encounters              |
+| `features/initiative-extras.js` | `core/srd-monsters.js`                     | statblock popup reads from `getSRDMonsters()`                     |
+| `systems/command-palette.js`    | `systems/search/global-search.js`          | calls `globalSearch(query)` for entity results                    |
+| `systems/command-palette.js`    | `systems/spellslots/keyboard-shortcuts.js` | keyboard-shortcuts delegates Ctrl+K to `openCommandPalette()`     |
+| `systems/file-backup.js`        | `systems/spellslots/persistence.js`        | wraps `window.save` with `_originalSave` guard pattern            |
+| `features/timeline/`            | `systems/entity-links.js`                  | timeline events link to entities via `linkedEntities[]`           |
+| `features/factions/`            | `features/npcs/npc-render.js`              | NPC detail panel reads `D.factions` to show faction memberships   |
+| `features/travel-simulator.js`  | `features/random-tables.js`                | calls `rollOnTable(tableId)` for encounter generation             |
+| `features/npc-generator.js`     | `features/npcs/npc-crud.js`                | calls `saveNpc()` with generated data                             |
+| `features/dice/dice-stats.js`   | `features/dice/dice-core.js`               | reads `D.diceHistory` written by dice-core                        |
+| All new features                | `utils/crud-helpers.js`                    | `deleteWithConfirm`, `afterCrudOperation`, `saveEntityWithUndo`   |
+| All new features                | `utils/validation.js`                      | add new entity schemas to `VALIDATION_SCHEMAS`                    |
+| All schema changes              | `systems/spellslots/version-migration.js`  | single 3.0.0 migration entry                                      |
 
 ---
 
@@ -835,5 +854,5 @@ repair existing data.
 
 ---
 
-*Architecture research for: D&D Kampagnen-Tracker Pro — Stabilisierung und Ausbau*
-*Researched: 2026-06-11*
+_Architecture research for: D&D Kampagnen-Tracker Pro — Stabilisierung und Ausbau_
+_Researched: 2026-06-11_

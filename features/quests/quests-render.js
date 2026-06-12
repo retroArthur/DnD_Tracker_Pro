@@ -7,8 +7,7 @@ function renderQuests() {
     const renderEmptyState = window.renderEmptyState;
     const renderDashboard = window.renderDashboard;
     const c = $('quests-list');
-    if (!c)
-        return;
+    if (!c) return;
     // Enable EntityLookup cache for performance
     EntityLookup.enableCache();
     const activeOnlyEl = $('quest-filter-active');
@@ -19,7 +18,7 @@ function renderQuests() {
     const quests = applyFilters(D.quests || [], {
         searchText: search,
         searchFields: ['title', 'giverName', 'locationName', 'description'],
-        customFilter: (q) => {
+        customFilter: q => {
             // Filter by completed status if activeOnly is enabled
             if (activeOnly && q.completed) return false;
             return true;
@@ -38,7 +37,7 @@ function renderQuests() {
         EntityLookup.clearCache();
         return;
     }
-    c.innerHTML = quests.map((q) => renderQuestItem(q)).join('');
+    c.innerHTML = quests.map(q => renderQuestItem(q)).join('');
     EntityLookup.clearCache();
 }
 function renderQuestItem(q) {
@@ -50,23 +49,20 @@ function renderQuestItem(q) {
     // Quest giver name (with EntityLookup)
     const giverDisplay = q.giverId
         ? EntityLookup.getName('npcs', q.giverId)
-        : (q.giverName || q.giver || '');
+        : q.giverName || q.giver || '';
     // Location name (with EntityLookup)
     const locationDisplay = q.locationId
         ? EntityLookup.getName('locations', q.locationId)
-        : (q.locationName || q.location || '');
+        : q.locationName || q.location || '';
     // Target location name (with EntityLookup)
     const targetDisplay = q.targetId
         ? EntityLookup.getName('locations', q.targetId)
-        : (q.targetName || q.target || '');
+        : q.targetName || q.target || '';
     // Compile reward
     const rewardParts = [];
-    if (q.rewardGold > 0)
-        rewardParts.push(`${q.rewardGold} GP`);
-    if (q.rewardItems?.length)
-        rewardParts.push(q.rewardItems.map((i) => i.name).join(', '));
-    if (q.rewardOther)
-        rewardParts.push(q.rewardOther);
+    if (q.rewardGold > 0) rewardParts.push(`${q.rewardGold} GP`);
+    if (q.rewardItems?.length) rewardParts.push(q.rewardItems.map(i => i.name).join(', '));
+    if (q.rewardOther) rewardParts.push(q.rewardOther);
     if (q.reward && !q.rewardGold && !q.rewardItems?.length && !q.rewardOther) {
         rewardParts.push(q.reward); // Legacy field
     }
@@ -115,8 +111,7 @@ function toggleQuest(id) {
 function toggleQuestTracked(id) {
     const renderDashboard = window.renderDashboard;
     const q = EntityLookup.quest(id);
-    if (!q)
-        return;
+    if (!q) return;
     q.tracked = !q.tracked;
     renderQuests();
     renderDashboard();
@@ -125,17 +120,13 @@ function toggleQuestTracked(id) {
 }
 function toggleQuestStatus(id, type) {
     const q = EntityLookup.quest(id);
-    if (!q)
-        return;
+    if (!q) return;
     if (type === 'completed') {
         q.completed = !q.completed;
-        if (!q.completed)
-            q.rewardReceived = false;
-    }
-    else {
+        if (!q.completed) q.rewardReceived = false;
+    } else {
         q.rewardReceived = !q.rewardReceived;
-        if (q.rewardReceived)
-            q.completed = true;
+        if (q.rewardReceived) q.completed = true;
     }
     renderQuests();
     save();

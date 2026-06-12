@@ -28,6 +28,7 @@ function switchView(name) {
 ```
 
 **Problems:**
+
 - ❌ Inconsistent: Only 3 out of 19 tabs had explicit renders
 - ❌ Maintainability: Developers had to manually remember to add renders
 - ❌ Stale UI: Tabs that weren't explicitly rendered showed outdated content
@@ -40,21 +41,22 @@ The Tab Registry System uses a centralized mapping:
 ```javascript
 // NEW APPROACH - Declarative, centralized
 const TAB_RENDER_REGISTRY = {
-    'dice': {
+    dice: {
         renders: ['renderRandomTables', 'renderDiceHistory', 'renderDiceFavorites'],
         init: 'initDiceTab',
         cleanup: null
-    },
+    }
     // ... 18 more tabs
 };
 
 function switchView(name) {
     // ... show/hide tabs ...
-    renderTabContent(name);  // ✓ Uses registry
+    renderTabContent(name); // ✓ Uses registry
 }
 ```
 
 **Benefits:**
+
 - ✅ Centralized: All tab-render mappings in one place
 - ✅ Declarative: Easy to see which tabs have which renders
 - ✅ Self-documenting: Registry shows the full architecture
@@ -71,10 +73,10 @@ Each tab in `TAB_RENDER_REGISTRY` has the following structure:
 
 ```typescript
 type TabConfig = {
-    renders: string[];    // Array of render function names
-    init: string | null;  // One-time initialization function
+    renders: string[]; // Array of render function names
+    init: string | null; // One-time initialization function
     cleanup: string | null; // Cleanup function (called on tab exit)
-}
+};
 ```
 
 ### Example Entries
@@ -167,6 +169,7 @@ function renderMyTab() {
 ```
 
 **Best Practices:**
+
 - ✅ Always check if container exists before rendering
 - ✅ Add debug warnings for missing containers
 - ✅ Use `esc()` to prevent XSS when rendering user content
@@ -180,9 +183,9 @@ Add your tab to `systems/tab-registry.js`:
 const TAB_RENDER_REGISTRY = {
     // ... existing tabs ...
 
-    'mytab': {
+    mytab: {
         renders: ['renderMyTab'],
-        init: null,  // Add initialization function if needed
+        init: null, // Add initialization function if needed
         cleanup: null
     }
 };
@@ -194,9 +197,7 @@ Add a navigation button to the header (if not already present):
 
 ```html
 <!-- In assets/body.html, within .nav-tabs -->
-<button class="nav-tab" data-view="mytab" aria-selected="false">
-    🎯 My Tab
-</button>
+<button class="nav-tab" data-view="mytab" aria-selected="false">🎯 My Tab</button>
 ```
 
 ### Step 5: Test
@@ -228,12 +229,14 @@ function initMapPanning() {
 ```
 
 **When to use `init`:**
+
 - Setting up event listeners that persist across tab switches
 - Loading external resources (images, data files)
 - Initializing third-party libraries
 - Creating permanent DOM elements
 
 **When NOT to use `init`:**
+
 - Simple data rendering (use `renders` instead)
 - Operations that need to run every time tab is shown
 
@@ -255,6 +258,7 @@ function cleanupMyTab() {
 ```
 
 **When to use `cleanup`:**
+
 - Removing event listeners added in `init`
 - Clearing intervals/timeouts
 - Releasing resources (WebGL contexts, large data structures)
@@ -294,6 +298,7 @@ console.warn(`[renderMyTab] Container missing - likely not on mytab`);
 ```
 
 **Common Causes:**
+
 - Tab HTML not loaded (check `body.html`)
 - ID typo in HTML or JavaScript
 - Container conditionally rendered by another function
@@ -310,7 +315,7 @@ APP_CONFIG.DEBUG_MODE = true;
 
 // Or permanently in core/config.js:
 const APP_CONFIG = Object.freeze({
-    DEBUG_MODE: true,  // Change to true
+    DEBUG_MODE: true // Change to true
     // ...
 });
 ```
@@ -320,12 +325,14 @@ const APP_CONFIG = Object.freeze({
 With `DEBUG_MODE` enabled, you'll see:
 
 **On App Startup:**
+
 ```
 [TabRegistry] Validating registry...
 [TabRegistry] Validation complete: No issues found ✓
 ```
 
 **On Tab Switch:**
+
 ```
 [TabRegistry] Init initDiceTab() for tab dice
 [TabRegistry] Rendered renderRandomTables() for tab dice
@@ -334,6 +341,7 @@ With `DEBUG_MODE` enabled, you'll see:
 ```
 
 **On Missing Elements:**
+
 ```
 [DOM] Element not found: #mytab-container
     at $ (basic.js:9)
@@ -388,7 +396,7 @@ test('switching to dice tab renders random tables', async () => {
 // BAD - defeats the purpose of the registry
 function switchView(name) {
     renderTabContent(name);
-    if (name === 'mytab') renderMyTab();  // ❌ Don't do this
+    if (name === 'mytab') renderMyTab(); // ❌ Don't do this
 }
 ```
 
@@ -397,7 +405,7 @@ function switchView(name) {
 ```javascript
 // GOOD - centralized, maintainable
 const TAB_RENDER_REGISTRY = {
-    'mytab': { renders: ['renderMyTab'], init: null, cleanup: null }
+    mytab: { renders: ['renderMyTab'], init: null, cleanup: null }
 };
 ```
 
@@ -407,7 +415,7 @@ const TAB_RENDER_REGISTRY = {
 // BAD - hides problems
 function renderMyTab() {
     const c = $('mytab-container');
-    if (!c) return;  // Why is it missing? Unclear.
+    if (!c) return; // Why is it missing? Unclear.
 }
 ```
 
@@ -457,12 +465,14 @@ function renderMyTab() {
 Render functions should be fast (<16ms for 60fps):
 
 **Best Practices:**
+
 - Use `requestAnimationFrame` for expensive operations
 - Implement virtual scrolling for large lists (>50 items)
 - Cache DOM elements with `$c()` instead of `$()`
 - Avoid layout thrashing (batch DOM reads/writes)
 
 **Example:**
+
 ```javascript
 function renderMyTab() {
     const container = $('mytab-container');
@@ -498,9 +508,13 @@ function renderMyTab() {
         return;
     }
 
-    container.innerHTML = items.map(item => `
+    container.innerHTML = items
+        .map(
+            item => `
         <div class="item">${esc(item.name)}</div>
-    `).join('');
+    `
+        )
+        .join('');
 }
 ```
 
@@ -565,6 +579,7 @@ If you have an existing tab that renders inconsistently:
 **Step 1: Identify the render function**
 
 Find the function that renders your tab's content. Common patterns:
+
 - `render<TabName>()`
 - `display<TabName>()`
 - `update<TabName>()`
@@ -575,7 +590,7 @@ Look in `systems/spellslots/navigation.js`:
 
 ```javascript
 if (name === 'mytab' && typeof renderMyTab === 'function') {
-    renderMyTab();  // ← Found it!
+    renderMyTab(); // ← Found it!
 }
 ```
 
@@ -587,7 +602,7 @@ Delete the manual `if` statement (the registry handles it now).
 
 ```javascript
 const TAB_RENDER_REGISTRY = {
-    'mytab': {
+    mytab: {
         renders: ['renderMyTab'],
         init: null,
         cleanup: null
@@ -608,6 +623,7 @@ Switch to the tab multiple times and verify content renders correctly.
 **Symptoms:** Blank tab or outdated content
 
 **Checklist:**
+
 1. ✓ Is tab registered in `TAB_RENDER_REGISTRY`?
 2. ✓ Is render function name spelled correctly?
 3. ✓ Is render function defined globally?
@@ -621,6 +637,7 @@ Switch to the tab multiple times and verify content renders correctly.
 ```
 
 **Causes:**
+
 - Function not defined yet (module loading order)
 - Function not global (wrapped in closure)
 - Typo in function name
@@ -635,6 +652,7 @@ Switch to the tab multiple times and verify content renders correctly.
 ```
 
 **Causes:**
+
 - Container ID doesn't match between HTML and JS
 - Container is conditionally rendered and not present
 - HTML not loaded (check `body.html`)
@@ -648,6 +666,7 @@ Switch to the tab multiple times and verify content renders correctly.
 **Cause:** Function is in `renders` array instead of `init` field
 
 **Fix:**
+
 ```javascript
 // WRONG
 'mytab': {
@@ -672,17 +691,20 @@ Switch to the tab multiple times and verify content renders correctly.
 Executes all render functions for the specified tab.
 
 **Parameters:**
+
 - `tabName` - Tab identifier (e.g., 'dice', 'initiative')
 
 **Returns:** `void`
 
 **Side Effects:**
+
 - Calls init function (if not already called)
 - Calls all render functions in order
 - Logs to console (if DEBUG_MODE enabled)
 - Catches and logs errors from render functions
 
 **Example:**
+
 ```javascript
 renderTabContent('dice');
 // Renders: renderRandomTables(), renderDiceHistory(), renderDiceFavorites()
@@ -695,11 +717,13 @@ Validates the tab registry on app startup (DEBUG_MODE only).
 **Returns:** `void`
 
 **Side Effects:**
+
 - Logs validation results to console
 - Checks for missing functions
 - Reports errors and warnings
 
 **Example:**
+
 ```javascript
 // Called automatically in init() when DEBUG_MODE is true
 if (APP_CONFIG?.DEBUG_MODE) {
@@ -723,17 +747,18 @@ if (APP_CONFIG?.DEBUG_MODE) {
 ## Version History
 
 - **1.0.0** (2026-01-07) - Initial implementation
-  - Created centralized tab registry
-  - Added lifecycle hooks (init/cleanup)
-  - Integrated with navigation system
-  - Added debug mode validation
-  - Fixed renderInitiative → renderInit mismatch
+    - Created centralized tab registry
+    - Added lifecycle hooks (init/cleanup)
+    - Integrated with navigation system
+    - Added debug mode validation
+    - Fixed renderInitiative → renderInit mismatch
 
 ---
 
 ## Support
 
 For questions or issues:
+
 1. Check console with `APP_CONFIG.DEBUG_MODE = true`
 2. Review this documentation
 3. See `CLAUDE.md` for architecture overview

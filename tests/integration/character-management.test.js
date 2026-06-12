@@ -11,7 +11,6 @@ const {
 } = require('../../utils/testable-utils');
 
 describe('Character Management Integration', () => {
-
     let dataStore;
 
     // Character Factory
@@ -47,7 +46,6 @@ describe('Character Management Integration', () => {
     // ============================================================
 
     describe('Character CRUD', () => {
-
         test('sollte Character erstellen und speichern', () => {
             const char = createCharacter({ name: 'Aragorn', level: 10 });
             dataStore.characters.push(char);
@@ -115,7 +113,6 @@ describe('Character Management Integration', () => {
     // ============================================================
 
     describe('Attribute-Berechnungen', () => {
-
         test('sollte Modifikatoren korrekt berechnen', () => {
             const char = createCharacter({
                 attributes: { str: 18, dex: 14, con: 16, int: 8, wis: 12, cha: 10 }
@@ -142,7 +139,14 @@ describe('Character Management Integration', () => {
             const char = createCharacter({
                 level: 5,
                 attributes: { str: 16, dex: 14, con: 14, int: 10, wis: 12, cha: 8 },
-                saveProficiencies: { str: true, con: true, dex: false, int: false, wis: false, cha: false }
+                saveProficiencies: {
+                    str: true,
+                    con: true,
+                    dex: false,
+                    int: false,
+                    wis: false,
+                    cha: false
+                }
             });
 
             const profBonus = getProficiencyBonus(char.level);
@@ -163,7 +167,6 @@ describe('Character Management Integration', () => {
     // ============================================================
 
     describe('HP-Management', () => {
-
         test('sollte Schaden korrekt anwenden', () => {
             const char = createCharacter({ hpCurrent: 30, hpMax: 30, tempHp: 5 });
 
@@ -228,7 +231,6 @@ describe('Character Management Integration', () => {
     // ============================================================
 
     describe('Party-Management', () => {
-
         test('sollte Party-Statistiken berechnen', () => {
             dataStore.characters.push(
                 createCharacter({ name: 'Fighter', level: 5, characterClass: 'Kämpfer' }),
@@ -239,7 +241,9 @@ describe('Character Management Integration', () => {
 
             const partyStats = {
                 size: dataStore.characters.length,
-                averageLevel: dataStore.characters.reduce((sum, c) => sum + c.level, 0) / dataStore.characters.length,
+                averageLevel:
+                    dataStore.characters.reduce((sum, c) => sum + c.level, 0) /
+                    dataStore.characters.length,
                 levels: dataStore.characters.map(c => c.level),
                 classes: dataStore.characters.map(c => c.characterClass)
             };
@@ -267,11 +271,8 @@ describe('Character Management Integration', () => {
     // ============================================================
 
     describe('Data Persistence', () => {
-
         test('sollte Daten serialisieren und deserialisieren', () => {
-            dataStore.characters.push(
-                createCharacter({ name: 'Persisted Hero', level: 10 })
-            );
+            dataStore.characters.push(createCharacter({ name: 'Persisted Hero', level: 10 }));
 
             // Simuliere localStorage
             const serialized = JSON.stringify(dataStore);

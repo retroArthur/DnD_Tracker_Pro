@@ -13,12 +13,9 @@
  * @returns Escapeter String
  */
 function esc(s) {
-    if (s === null || s === undefined)
-        return '';
-    if (s === 0)
-        return '0';
-    if (!s)
-        return '';
+    if (s === null || s === undefined) return '';
+    if (s === 0) return '0';
+    if (!s) return '';
     return String(s)
         .replace(/&/g, '&amp;')
         .replace(/</g, '&lt;')
@@ -35,8 +32,7 @@ function esc(s) {
  * @returns Bereinigtes HTML
  */
 function sanitizeHTML(html) {
-    if (!html)
-        return '';
+    if (!html) return '';
     // Schritt 1: Entferne gefährliche Patterns BEVOR Parsing
     const cleaned = String(html)
         .replace(new RegExp('<script[\\s\\S]*?</scr' + 'ipt>', 'gi'), '')
@@ -49,16 +45,60 @@ function sanitizeHTML(html) {
     const parser = new DOMParser();
     const doc = parser.parseFromString(cleaned, 'text/html');
     // Erlaubte Tags und Attribute
-    const allowedTags = ['b', 'i', 'u', 's', 'strong', 'em', 'ul', 'ol', 'li', 'p', 'br', 'div', 'span', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'table', 'thead', 'tbody', 'tr', 'th', 'td', 'mark', 'a', 'font'];
+    const allowedTags = [
+        'b',
+        'i',
+        'u',
+        's',
+        'strong',
+        'em',
+        'ul',
+        'ol',
+        'li',
+        'p',
+        'br',
+        'div',
+        'span',
+        'h1',
+        'h2',
+        'h3',
+        'h4',
+        'h5',
+        'h6',
+        'table',
+        'thead',
+        'tbody',
+        'tr',
+        'th',
+        'td',
+        'mark',
+        'a',
+        'font'
+    ];
     const allowedAttributes = {
-        'style': ['color', 'background-color', 'background', 'font-family', 'font-size', 'font-weight', 'text-decoration', 'border', 'border-collapse', 'padding', 'margin', 'width', 'text-align', 'vertical-align'],
-        'class': true,
-        'href': true,
-        'title': true,
-        'colspan': true,
-        'rowspan': true,
-        'face': true,
-        'size': true
+        style: [
+            'color',
+            'background-color',
+            'background',
+            'font-family',
+            'font-size',
+            'font-weight',
+            'text-decoration',
+            'border',
+            'border-collapse',
+            'padding',
+            'margin',
+            'width',
+            'text-align',
+            'vertical-align'
+        ],
+        class: true,
+        href: true,
+        title: true,
+        colspan: true,
+        rowspan: true,
+        face: true,
+        size: true
     };
     // Gefährliche Protokolle (case-insensitive)
     const dangerousProtocols = ['javascript:', 'vbscript:', 'data:', 'file:', 'blob:'];
@@ -76,47 +116,56 @@ function sanitizeHTML(html) {
             const cleanElement = document.createElement(tagName);
             for (const attr of element.attributes) {
                 const attrName = attr.name.toLowerCase();
-                if (attrName.startsWith('on'))
-                    continue;
+                if (attrName.startsWith('on')) continue;
                 if (attrName === 'style' && Array.isArray(allowedAttributes.style)) {
                     const styleList = allowedAttributes.style;
-                    const styles = attr.value.split(';').filter(s => {
-                        const prop = s.split(':')[0]?.trim().toLowerCase();
-                        return styleList.includes(prop);
-                    }).join(';');
-                    if (styles)
-                        cleanElement.setAttribute('style', styles);
-                }
-                else if (attrName === 'class' && allowedAttributes.class) {
+                    const styles = attr.value
+                        .split(';')
+                        .filter(s => {
+                            const prop = s.split(':')[0]?.trim().toLowerCase();
+                            return styleList.includes(prop);
+                        })
+                        .join(';');
+                    if (styles) cleanElement.setAttribute('style', styles);
+                } else if (attrName === 'class' && allowedAttributes.class) {
                     cleanElement.setAttribute('class', attr.value);
-                }
-                else if (attrName === 'href' && allowedAttributes.href && tagName === 'a') {
+                } else if (attrName === 'href' && allowedAttributes.href && tagName === 'a') {
                     const href = attr.value.trim();
                     const hrefLower = href.toLowerCase();
                     const isSafe = dangerousProtocols.every(proto => !hrefLower.startsWith(proto));
-                    if (isSafe && (hrefLower.startsWith('http://') || hrefLower.startsWith('https://') || href.startsWith('/') || href.startsWith('#') || href.startsWith('./'))) {
+                    if (
+                        isSafe &&
+                        (hrefLower.startsWith('http://') ||
+                            hrefLower.startsWith('https://') ||
+                            href.startsWith('/') ||
+                            href.startsWith('#') ||
+                            href.startsWith('./'))
+                    ) {
                         cleanElement.setAttribute('href', href);
                         cleanElement.setAttribute('target', '_blank');
                         cleanElement.setAttribute('rel', 'noopener noreferrer');
                     }
-                }
-                else if (attrName === 'title' && allowedAttributes.title) {
+                } else if (attrName === 'title' && allowedAttributes.title) {
                     cleanElement.setAttribute('title', attr.value);
-                }
-                else if ((attrName === 'colspan' || attrName === 'rowspan') && allowedAttributes[attrName]) {
+                } else if (
+                    (attrName === 'colspan' || attrName === 'rowspan') &&
+                    allowedAttributes[attrName]
+                ) {
                     const val = parseInt(attr.value);
                     if (!isNaN(val) && val > 0 && val < 100) {
                         cleanElement.setAttribute(attrName, val.toString());
                     }
-                }
-                else if ((attrName === 'face' || attrName === 'size') && allowedAttributes[attrName] && tagName === 'font') {
+                } else if (
+                    (attrName === 'face' || attrName === 'size') &&
+                    allowedAttributes[attrName] &&
+                    tagName === 'font'
+                ) {
                     cleanElement.setAttribute(attrName, attr.value);
                 }
             }
             for (const child of element.childNodes) {
                 const cleanChild = cleanNode(child);
-                if (cleanChild)
-                    cleanElement.appendChild(cleanChild);
+                if (cleanChild) cleanElement.appendChild(cleanChild);
             }
             return cleanElement;
         }
@@ -125,8 +174,7 @@ function sanitizeHTML(html) {
     const result = document.createElement('div');
     for (const child of doc.body.childNodes) {
         const cleanChild = cleanNode(child);
-        if (cleanChild)
-            result.appendChild(cleanChild);
+        if (cleanChild) result.appendChild(cleanChild);
     }
     return result.innerHTML;
 }
@@ -137,8 +185,7 @@ function sanitizeHTML(html) {
  * @returns Neue ID
  */
 function nextId(type, dataStore) {
-    if (!dataStore._nextId)
-        dataStore._nextId = {};
+    if (!dataStore._nextId) dataStore._nextId = {};
     if (!dataStore._nextId[type]) {
         dataStore._nextId[type] = 0;
     }
@@ -169,11 +216,9 @@ function getProficiencyBonus(level) {
  * @returns Geparstes Ergebnis oder null
  */
 function parseDiceNotation(notation) {
-    if (!notation)
-        return null;
+    if (!notation) return null;
     const match = notation.match(/^(\d*)d(\d+)([+-]\d+)?$/i);
-    if (!match)
-        return null;
+    if (!match) return null;
     return {
         count: parseInt(match[1]) || 1,
         sides: parseInt(match[2]),
@@ -192,8 +237,7 @@ function parseDiceNotation(notation) {
 function debounce(fn, delay = 300) {
     let timeoutId = null;
     return function debounced(...args) {
-        if (timeoutId)
-            clearTimeout(timeoutId);
+        if (timeoutId) clearTimeout(timeoutId);
         timeoutId = setTimeout(() => fn.apply(this, args), delay);
     };
 }
@@ -209,7 +253,9 @@ function throttle(fn, limit = 100) {
         if (!inThrottle) {
             fn.apply(this, args);
             inThrottle = true;
-            setTimeout(() => { inThrottle = false; }, limit);
+            setTimeout(() => {
+                inThrottle = false;
+            }, limit);
         }
     };
 }
@@ -222,14 +268,10 @@ function throttle(fn, limit = 100) {
  * @returns True wenn leer
  */
 function isEmpty(value) {
-    if (value == null)
-        return true;
-    if (typeof value === 'string')
-        return value.trim() === '';
-    if (Array.isArray(value))
-        return value.length === 0;
-    if (typeof value === 'object')
-        return Object.keys(value).length === 0;
+    if (value == null) return true;
+    if (typeof value === 'string') return value.trim() === '';
+    if (Array.isArray(value)) return value.length === 0;
+    if (typeof value === 'object') return Object.keys(value).length === 0;
     return false;
 }
 /**
@@ -248,8 +290,7 @@ function clamp(value, min, max) {
  * @returns Tiefe Kopie
  */
 function deepClone(obj) {
-    if (obj === null || typeof obj !== 'object')
-        return obj;
+    if (obj === null || typeof obj !== 'object') return obj;
     return JSON.parse(JSON.stringify(obj));
 }
 /**

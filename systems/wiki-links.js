@@ -6,8 +6,7 @@
 // WIKI LINKS - [[Type:Name]] Syntax
 // ============================================================
 function processWikiLinks(text) {
-    if (!text)
-        return text;
+    if (!text) return text;
     // Pattern: [[NPC:Name]], [[Ort:Name]], [[Quest:Name]], [[Zauber:Name]]
     const pattern = /\[\[([^:\]]+):([^\]]+)\]\]/g;
     return text.replace(pattern, (match, type, name) => {

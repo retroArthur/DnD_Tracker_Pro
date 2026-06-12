@@ -184,14 +184,12 @@ async function loadModules() {
         'assets/templates/modals-entity.html',
         'assets/templates/modals-shops.html',
         'assets/templates/modals-tools.html',
-        'assets/templates/modals-editors.html',
+        'assets/templates/modals-editors.html'
     ];
 
     let bodyHTML = '';
     try {
-        const parts = await Promise.all(
-            TEMPLATES.map(t => fetch(t).then(r => r.text()))
-        );
+        const parts = await Promise.all(TEMPLATES.map(t => fetch(t).then(r => r.text())));
         bodyHTML = parts.join('\n');
         logLoader(`✓ ${TEMPLATES.length} HTML Templates geladen`);
     } catch (error) {
@@ -214,13 +212,12 @@ async function loadModules() {
                     logLoader(`✓ [${loadedCount}/${MODULES.length}] ${module}`);
                     resolve();
                 };
-                script.onerror = (error) => {
+                script.onerror = error => {
                     console.error(`❌ Fehler in ${module}:`, error);
                     reject(error);
                 };
                 document.head.appendChild(script);
             });
-
         } catch (error) {
             console.error(`❌ Kritischer Fehler beim Laden von ${module}:`, error);
             // Fortfahren trotz Fehler, um zu sehen, welche Module funktionieren
@@ -253,7 +250,8 @@ function showLoadError(error) {
 
     // Erstelle DOM-Elemente programmatisch statt innerHTML mit Template-Literal
     const container = document.createElement('div');
-    container.style.cssText = 'padding: 40px; text-align: center; color: #ef4444; font-family: Arial, sans-serif;';
+    container.style.cssText =
+        'padding: 40px; text-align: center; color: #ef4444; font-family: Arial, sans-serif;';
 
     const h1 = document.createElement('h1');
     h1.style.cssText = 'font-size: 2em; margin-bottom: 20px;';
@@ -268,14 +266,16 @@ function showLoadError(error) {
     p2.textContent = 'Bitte überprüfen Sie die Browser-Konsole (F12) für Details.';
 
     const details = document.createElement('details');
-    details.style.cssText = 'margin-top: 20px; text-align: left; background: #1a1a1a; padding: 20px; border-radius: 8px;';
+    details.style.cssText =
+        'margin-top: 20px; text-align: left; background: #1a1a1a; padding: 20px; border-radius: 8px;';
 
     const summary = document.createElement('summary');
     summary.style.cssText = 'cursor: pointer; font-weight: bold;';
     summary.textContent = 'Fehlerdetails anzeigen';
 
     const pre = document.createElement('pre');
-    pre.style.cssText = 'margin-top: 10px; color: #ff6b6b; font-family: monospace; overflow-x: auto;';
+    pre.style.cssText =
+        'margin-top: 10px; color: #ff6b6b; font-family: monospace; overflow-x: auto;';
     // SICHER: textContent statt innerHTML - verhindert XSS
     pre.textContent = error.stack || error.message || String(error);
 

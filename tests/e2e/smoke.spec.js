@@ -1,7 +1,8 @@
 // @ts-check
 import { test, expect } from '@playwright/test';
 
-const BASE_URL = process.env.SMOKE_BASE_URL ||
+const BASE_URL =
+    process.env.SMOKE_BASE_URL ||
     `file:///${process.cwd().replace(/\\/g, '/')}/dist/dnd-tracker-bundled.html`;
 
 test('App bootet ohne Konsolen-Fehler', async ({ page }) => {

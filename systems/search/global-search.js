@@ -8,8 +8,7 @@
 // Global references - accessed via window.* to avoid const redeclaration in build
 // Fuzzy-Match Algorithmus
 function fuzzyMatch(text, query) {
-    if (!text || !query)
-        return { match: false, score: 0 };
+    if (!text || !query) return { match: false, score: 0 };
     text = text.toLowerCase();
     query = query.toLowerCase();
     // Exakte Übereinstimmung hat höchste Priorität
@@ -26,8 +25,7 @@ function fuzzyMatch(text, query) {
             score += 10 + consecutiveBonus;
             consecutiveBonus += 5; // Bonus für aufeinanderfolgende Treffer
             queryIndex++;
-        }
-        else {
+        } else {
             consecutiveBonus = 0;
         }
         textIndex++;
@@ -35,8 +33,7 @@ function fuzzyMatch(text, query) {
     // Alle Query-Zeichen gefunden?
     if (queryIndex === query.length) {
         // Bonus wenn am Wortanfang
-        if (text.startsWith(query[0]))
-            score += 15;
+        if (text.startsWith(query[0])) score += 15;
         return { match: true, score: score };
     }
     return { match: false, score: 0 };
@@ -60,8 +57,7 @@ const debouncedGlobalSearch = debounce(performGlobalSearch, 150);
 function performGlobalSearch() {
     const input = $('global-search');
     const results = $('global-search-results');
-    if (!input || !results)
-        return;
+    if (!input || !results) return;
     const query = input.value.trim();
     if (!query || query.length < 2) {
         results.classList.remove('visible');
@@ -69,8 +65,14 @@ function performGlobalSearch() {
     }
     const matches = [];
     // Search Characters (fuzzy)
-    D.characters.forEach((c) => {
-        const score = fuzzySearchFields(c, query, ['name', 'playerName', 'characterClass', 'race', 'background']);
+    D.characters.forEach(c => {
+        const score = fuzzySearchFields(c, query, [
+            'name',
+            'playerName',
+            'characterClass',
+            'race',
+            'background'
+        ]);
         if (score > 0) {
             matches.push({
                 type: 'character',
@@ -82,7 +84,7 @@ function performGlobalSearch() {
         }
     });
     // Search NPCs (fuzzy)
-    D.npcs.forEach((n) => {
+    D.npcs.forEach(n => {
         const score = fuzzySearchFields(n, query, ['name', 'role', 'description', 'chapter']);
         if (score > 0) {
             matches.push({
@@ -96,7 +98,7 @@ function performGlobalSearch() {
         }
     });
     // Search Locations (fuzzy)
-    D.locations.forEach((l) => {
+    D.locations.forEach(l => {
         const score = fuzzySearchFields(l, query, ['name', 'description', 'type']);
         if (score > 0) {
             matches.push({
@@ -109,7 +111,7 @@ function performGlobalSearch() {
         }
     });
     // Search Quests (fuzzy)
-    D.quests.forEach((q) => {
+    D.quests.forEach(q => {
         const score = fuzzySearchFields(q, query, ['title', 'description', 'giver', 'location']);
         if (score > 0) {
             matches.push({
@@ -122,7 +124,7 @@ function performGlobalSearch() {
         }
     });
     // Search Spells (fuzzy)
-    D.spells.forEach((s) => {
+    D.spells.forEach(s => {
         const score = fuzzySearchFields(s, query, ['name', 'school', 'description']);
         if (score > 0) {
             matches.push({
@@ -135,7 +137,7 @@ function performGlobalSearch() {
         }
     });
     // Search Encounters (fuzzy)
-    (D.encounters || []).forEach((e) => {
+    (D.encounters || []).forEach(e => {
         const score = fuzzySearchFields(e, query, ['name', 'type', 'notes']);
         if (score > 0) {
             matches.push({
@@ -150,24 +152,38 @@ function performGlobalSearch() {
     // Sortiere nach Score (beste Treffer zuerst)
     matches.sort((a, b) => b.score - a.score);
     // Erlaubte Typen für Whitelist-Validierung (XSS-Schutz)
-    const allowedTypes = ['character', 'npc', 'location', 'quest', 'spell', 'encounter', 'loot', 'wiki'];
+    const allowedTypes = [
+        'character',
+        'npc',
+        'location',
+        'quest',
+        'spell',
+        'encounter',
+        'loot',
+        'wiki'
+    ];
     if (matches.length === 0) {
-        results.innerHTML = '<div class="search-result-item" style="color: var(--text-dim);">Keine Ergebnisse für "' + esc(query) + '"</div>';
-    }
-    else {
-        results.innerHTML = matches.slice(0, 12).map(m => {
-            // Sanitize type via Whitelist
-            const safeType = allowedTypes.includes(m.type) ? m.type : 'unknown';
-            const safeId = typeof m.id === 'number' ? m.id : parseInt(String(m.id)) || 0;
-            const safeLocId = m.locId && typeof m.locId === 'number' ? m.locId : 'null';
-            return `
+        results.innerHTML =
+            '<div class="search-result-item" style="color: var(--text-dim);">Keine Ergebnisse für "' +
+            esc(query) +
+            '"</div>';
+    } else {
+        results.innerHTML = matches
+            .slice(0, 12)
+            .map(m => {
+                // Sanitize type via Whitelist
+                const safeType = allowedTypes.includes(m.type) ? m.type : 'unknown';
+                const safeId = typeof m.id === 'number' ? m.id : parseInt(String(m.id)) || 0;
+                const safeLocId = m.locId && typeof m.locId === 'number' ? m.locId : 'null';
+                return `
                 <div class="search-result-item" data-action="navigate-result" data-type="${safeType}" data-id="${safeId}" data-loc="${safeLocId}">
                     <span class="search-result-type ${safeType}">${getTypeIcon(safeType)}</span>
                     <span class="search-result-name">${highlightMatch(m.name, query)}</span>
                     ${m.detail ? `<div class="search-result-detail">${esc(m.detail)}</div>` : ''}
                 </div>
             `;
-        }).join('');
+            })
+            .join('');
     }
     results.classList.add('visible');
 }
@@ -176,26 +192,27 @@ function getTypeIcon(type) {
     return LINK_ICONS[type] || LINK_ICONS[type + 's'] || '📋';
 }
 function highlightMatch(text, query) {
-    if (!text || !query)
-        return esc(text);
+    if (!text || !query) return esc(text);
     const lowerText = text.toLowerCase();
     const lowerQuery = query.toLowerCase();
     // Für exakte Substring-Matches
     const index = lowerText.indexOf(lowerQuery);
     if (index >= 0) {
-        return esc(text.substring(0, index)) +
-            '<mark>' + esc(text.substring(index, index + query.length)) + '</mark>' +
-            esc(text.substring(index + query.length));
+        return (
+            esc(text.substring(0, index)) +
+            '<mark>' +
+            esc(text.substring(index, index + query.length)) +
+            '</mark>' +
+            esc(text.substring(index + query.length))
+        );
     }
     return esc(text);
 }
 function navigateToResult(type, id, locId) {
     const input = $('global-search');
     const results = $('global-search-results');
-    if (input)
-        input.value = '';
-    if (results)
-        results.classList.remove('visible');
+    if (input) input.value = '';
+    if (results) results.classList.remove('visible');
     switch (type) {
         case 'character':
             switchView('party');
@@ -206,12 +223,10 @@ function navigateToResult(type, id, locId) {
             if (locId) {
                 setTimeout(() => {
                     const loc = EntityLookup.location(locId);
-                    if (loc)
-                        toggleLocation(locId);
+                    if (loc) toggleLocation(locId);
                     editNPC(id);
                 }, 100);
-            }
-            else {
+            } else {
                 switchView('npcs');
             }
             break;
@@ -234,8 +249,7 @@ document.addEventListener('click', function (e) {
     const target = e.target;
     if (!target.closest('.global-search-container')) {
         const results = $('global-search-results');
-        if (results)
-            results.classList.remove('visible');
+        if (results) results.classList.remove('visible');
     }
 });
 function initGlobalSearchListener() {

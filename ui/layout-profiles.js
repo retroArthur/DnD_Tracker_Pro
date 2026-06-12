@@ -31,12 +31,10 @@ function toggleLayout() {
 function updateLayoutSwitcher(layout) {
     // Header-Button (Desktop)
     const icon = $('layout-icon');
-    if (icon)
-        icon.textContent = layout === 'desktop' ? '🖥️' : '📱';
+    if (icon) icon.textContent = layout === 'desktop' ? '🖥️' : '📱';
     // Mobile-Header-Button
     const mobileBtn = $('mobile-layout-btn');
-    if (mobileBtn)
-        mobileBtn.textContent = layout === 'desktop' ? '🖥️' : '📱';
+    if (mobileBtn) mobileBtn.textContent = layout === 'desktop' ? '🖥️' : '📱';
 }
 // ============================================================
 // BACKWARD COMPATIBILITY EXPORTS

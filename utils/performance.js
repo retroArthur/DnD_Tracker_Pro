@@ -6,7 +6,7 @@
 const DEBUG_MODE = window.APP_CONFIG?.DEBUG_MODE;
 const PERF_MODE = window.APP_CONFIG?.PERF_MODE;
 // Conditional logging - only logs in debug mode
-const log = DEBUG_MODE ? console.log.bind(console, '[DnD]') : () => { };
+const log = DEBUG_MODE ? console.log.bind(console, '[DnD]') : () => {};
 const warn = console.warn.bind(console, '[DnD]');
 const error = console.error.bind(console, '[DnD]');
 const PerformanceManager = {
@@ -45,8 +45,7 @@ const PerformanceManager = {
      * @param label - Messungs-Label
      */
     startMeasure(label) {
-        if (!PERF_MODE)
-            return;
+        if (!PERF_MODE) return;
         this._metrics.set(label, performance.now());
     },
     /**
@@ -55,11 +54,9 @@ const PerformanceManager = {
      * @returns Dauer in ms
      */
     endMeasure(label) {
-        if (!PERF_MODE)
-            return 0;
+        if (!PERF_MODE) return 0;
         const start = this._metrics.get(label);
-        if (!start)
-            return 0;
+        if (!start) return 0;
         const duration = performance.now() - start;
         this._metrics.delete(label);
         if (DEBUG_MODE && duration > 50) {
@@ -101,8 +98,9 @@ const PerformanceManager = {
      * @returns True wenn Virtual Scroll verwendet werden sollte
      */
     shouldUseVirtualScroll(itemCount) {
-        return this.config.virtualScroll.enabled &&
-            itemCount >= this.config.virtualScroll.threshold;
+        return (
+            this.config.virtualScroll.enabled && itemCount >= this.config.virtualScroll.threshold
+        );
     },
     /**
      * Rendert eine Liste mit Virtual Scroll wenn nötig
@@ -114,9 +112,12 @@ const PerformanceManager = {
      */
     renderList(container, items, renderItem, options = {}) {
         const el = typeof container === 'string' ? $(container) : container;
-        if (!el || !items)
-            return false;
-        const { itemHeight = this.config.virtualScroll.itemHeight, emptyState = null, gridMode = false } = options;
+        if (!el || !items) return false;
+        const {
+            itemHeight = this.config.virtualScroll.itemHeight,
+            emptyState = null,
+            gridMode = false
+        } = options;
         // Leere Liste
         if (items.length === 0) {
             el.innerHTML = emptyState || '';
@@ -144,7 +145,7 @@ const PerformanceManager = {
         let startIdx = Math.floor(scrollTop / itemHeight);
         startIdx = Math.max(0, startIdx - cfg.bufferSize);
         const visibleCount = Math.ceil(viewportHeight / itemHeight);
-        let endIdx = startIdx + visibleCount + (cfg.bufferSize * 2);
+        let endIdx = startIdx + visibleCount + cfg.bufferSize * 2;
         endIdx = Math.min(items.length, endIdx);
         const visibleItems = items.slice(startIdx, endIdx);
         const offsetY = startIdx * itemHeight;
@@ -158,7 +159,11 @@ const PerformanceManager = {
             </div>
         `;
         // Scroll-Handler (throttled)
-        const scrollHandler = this.getThrottled(`vs-${container.id}`, () => this._renderVirtualList(container, items, renderItem, itemHeight, gridMode), 50);
+        const scrollHandler = this.getThrottled(
+            `vs-${container.id}`,
+            () => this._renderVirtualList(container, items, renderItem, itemHeight, gridMode),
+            50
+        );
         container.onscroll = scrollHandler;
     },
     /**
@@ -174,26 +179,27 @@ const PerformanceManager = {
     }
 };
 // Performance: RequestIdleCallback polyfill
-const requestIdleCallback = window.requestIdleCallback || ((cb) => setTimeout(cb, 1));
+const requestIdleCallback = window.requestIdleCallback || (cb => setTimeout(cb, 1));
 const cancelIdleCallback = window.cancelIdleCallback || clearTimeout;
 // Performance: Intersection Observer for lazy rendering
 let lazyObserver = null;
 function initLazyObserver() {
-    if (!('IntersectionObserver' in window))
-        return;
-    lazyObserver = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-            if (entry.isIntersecting) {
-                const el = entry.target;
-                if (el.dataset.lazyRender) {
-                    const fn = window[el.dataset.lazyRender];
-                    if (typeof fn === 'function')
-                        fn(el);
-                    lazyObserver.unobserve(el);
+    if (!('IntersectionObserver' in window)) return;
+    lazyObserver = new IntersectionObserver(
+        entries => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const el = entry.target;
+                    if (el.dataset.lazyRender) {
+                        const fn = window[el.dataset.lazyRender];
+                        if (typeof fn === 'function') fn(el);
+                        lazyObserver.unobserve(el);
+                    }
                 }
-            }
-        });
-    }, { rootMargin: '100px' });
+            });
+        },
+        { rootMargin: '100px' }
+    );
 }
 // Performance: Efficient DOM batch updates
 const DOMBatch = {

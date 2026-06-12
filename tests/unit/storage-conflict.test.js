@@ -39,7 +39,7 @@ beforeAll(() => {
         StorageAPI: { get: jest.fn(() => null), set: jest.fn(), remove: jest.fn() },
         showToast: jest.fn(),
         compareVersions: () => 0,
-        migrateData: (d) => d,
+        migrateData: d => d,
         console
     };
     vm.createContext(context);
@@ -56,7 +56,6 @@ beforeAll(() => {
 });
 
 describe('CR-01 Regressionstests — resolveStorageConflict (vm-basiert, echter Quellcode)', () => {
-
     // Test A (Kern-Regression): Kein RangeError bei unterschiedlichen Daten
     // Ziel: Beweist CR-01-Bug (Endlosrekursion) und verifiziert den Fix.
     // RED-Zustand: context.resolveStorageConflict ist undefined (alter Name: showStorageConflictDialog)
@@ -141,5 +140,4 @@ describe('CR-01 Regressionstests — resolveStorageConflict (vm-basiert, echter 
         // Keine window.showStorageConflictDialog-Referenz erlaubt (alte Selbstrekursion)
         expect(quickRollSourceCode).not.toMatch(/window\.showStorageConflictDialog\s*\(/);
     });
-
 });

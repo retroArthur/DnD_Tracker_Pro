@@ -7,8 +7,7 @@ let renderPending = false;
 function renderAll() {
     const ErrorHandler = window.ErrorHandler;
     // Prevent multiple renders in the same frame
-    if (renderPending)
-        return;
+    if (renderPending) return;
     renderPending = true;
     requestAnimationFrame(() => {
         renderPending = false;
@@ -16,8 +15,7 @@ function renderAll() {
         const renderSafe = (fn, name, containerId = null) => {
             try {
                 fn();
-            }
-            catch (e) {
+            } catch (e) {
                 ErrorHandler.log(name, e);
                 // For critical render functions: show error in container
                 if (containerId) {
@@ -64,8 +62,7 @@ function renderAll() {
         // Update IO-Counter
         try {
             updateIOCounts();
-        }
-        catch (e) {
+        } catch (e) {
             ErrorHandler.log('updateIOCounts', e);
         }
     });

@@ -71,8 +71,7 @@ let shopSortMode = 'name'; // 'name', 'price-asc', 'price-desc'
 // CURRENCY HELPERS
 // ============================================================
 function parseCurrency(costStr) {
-    if (!costStr)
-        return 0;
+    if (!costStr) return 0;
     const str = costStr.toLowerCase().trim();
     let totalCopper = 0;
     const patterns = [
@@ -97,8 +96,7 @@ function parseCurrency(costStr) {
     return Math.round(totalCopper);
 }
 function formatCurrency(copperAmount, format = 'optimal') {
-    if (copperAmount === 0)
-        return '0 KM';
+    if (copperAmount === 0) return '0 KM';
     if (format === 'optimal') {
         const parts = [];
         let remaining = copperAmount;
@@ -121,8 +119,7 @@ function formatCurrency(copperAmount, format = 'optimal') {
             parts.push(`${remaining} KM`);
         }
         return parts.join(' ') || '0 KM';
-    }
-    else if (format === 'gold') {
+    } else if (format === 'gold') {
         const gp = copperAmount / 100;
         return `${gp.toFixed(gp % 1 === 0 ? 0 : 2)} GM`;
     }
@@ -133,9 +130,8 @@ function formatCurrency(copperAmount, format = 'optimal') {
 // ============================================================
 function addToCart(shopId, itemIdx, qty = 1) {
     const D = window.D;
-    const shop = (D.shops || []).find((s) => s.id === shopId);
-    if (!shop || !shop.items || !shop.items[itemIdx])
-        return;
+    const shop = (D.shops || []).find(s => s.id === shopId);
+    if (!shop || !shop.items || !shop.items[itemIdx]) return;
     const item = shop.items[itemIdx];
     if (item.available === false) {
         showToast('⚠️ Artikel nicht verfügbar', 'warning');
@@ -143,10 +139,9 @@ function addToCart(shopId, itemIdx, qty = 1) {
     }
     const existingIdx = shopCart.findIndex(c => c.shopId === shopId && c.itemIdx === itemIdx);
     if (existingIdx > -1) {
-        const maxQty = item.unlimited ? 9999 : (item.quantity || 999);
+        const maxQty = item.unlimited ? 9999 : item.quantity || 999;
         shopCart[existingIdx].qty = Math.min(shopCart[existingIdx].qty + qty, maxQty);
-    }
-    else {
+    } else {
         shopCart.push({
             shopId,
             itemIdx,
@@ -155,8 +150,8 @@ function addToCart(shopId, itemIdx, qty = 1) {
             category: item.category,
             cost: item.cost,
             costCopper: parseCurrency(item.cost),
-            qty: Math.min(qty, item.unlimited ? 9999 : (item.quantity || 999)),
-            maxQty: item.unlimited ? 9999 : (item.quantity || 999)
+            qty: Math.min(qty, item.unlimited ? 9999 : item.quantity || 999),
+            maxQty: item.unlimited ? 9999 : item.quantity || 999
         });
     }
     updateCartBadge();
@@ -171,8 +166,7 @@ function updateCartQty(idx, newQty) {
     if (shopCart[idx]) {
         if (newQty <= 0) {
             removeFromCart(idx);
-        }
-        else {
+        } else {
             shopCart[idx].qty = Math.min(newQty, shopCart[idx].maxQty);
             renderCartModal();
         }
@@ -198,7 +192,7 @@ function updateCartBadge() {
     }
 }
 function getCartTotal() {
-    return shopCart.reduce((sum, c) => sum + (c.costCopper * c.qty), 0);
+    return shopCart.reduce((sum, c) => sum + c.costCopper * c.qty, 0);
 }
 function showCartModal() {
     renderCartModal();
@@ -208,29 +202,28 @@ function renderCartModal() {
     const container = $('cart-items');
     const totalEl = $('cart-total');
     const totalGoldEl = $('cart-total-gold');
-    if (!container)
-        return;
+    if (!container) return;
     if (shopCart.length === 0) {
         container.innerHTML = '<div class="cart-empty">🛒 Warenkorb ist leer</div>';
-        if (totalEl)
-            totalEl.textContent = '0 KM';
-        if (totalGoldEl)
-            totalGoldEl.textContent = '(0 GM)';
+        if (totalEl) totalEl.textContent = '0 KM';
+        if (totalGoldEl) totalGoldEl.textContent = '(0 GM)';
         return;
     }
     const byShop = {};
     shopCart.forEach((item, idx) => {
-        if (!byShop[item.shopName])
-            byShop[item.shopName] = [];
+        if (!byShop[item.shopName]) byShop[item.shopName] = [];
         byShop[item.shopName].push({ ...item, cartIdx: idx });
     });
-    container.innerHTML = Object.entries(byShop).map(([shopName, items]) => `
+    container.innerHTML = Object.entries(byShop)
+        .map(
+            ([shopName, items]) => `
         <div class="cart-shop-group">
             <div class="cart-shop-name">🏪 ${esc(shopName)}</div>
-            ${items.map(item => {
-        const cat = SHOP_ITEM_CATEGORIES[item.category] || SHOP_ITEM_CATEGORIES.misc;
-        const lineTotal = item.costCopper * item.qty;
-        return `
+            ${items
+                .map(item => {
+                    const cat = SHOP_ITEM_CATEGORIES[item.category] || SHOP_ITEM_CATEGORIES.misc;
+                    const lineTotal = item.costCopper * item.qty;
+                    return `
                     <div class="cart-item">
                         <div class="cart-item-info">
                             <span class="cart-item-icon">${cat.icon}</span>
@@ -249,14 +242,15 @@ function renderCartModal() {
                         <button class="btn btn-sm btn-danger" data-action="cart-remove" data-id="${item.cartIdx}">✕</button>
                     </div>
                 `;
-    }).join('')}
+                })
+                .join('')}
         </div>
-    `).join('');
+    `
+        )
+        .join('');
     const total = getCartTotal();
-    if (totalEl)
-        totalEl.textContent = formatCurrency(total);
-    if (totalGoldEl)
-        totalGoldEl.textContent = `(${formatCurrency(total, 'gold')})`;
+    if (totalEl) totalEl.textContent = formatCurrency(total);
+    if (totalGoldEl) totalGoldEl.textContent = `(${formatCurrency(total, 'gold')})`;
 }
 function checkoutCart() {
     if (shopCart.length === 0) {
@@ -268,11 +262,13 @@ function checkoutCart() {
     const receipt = `═══════════════════════════════════════
 🧾 QUITTUNG
 ═══════════════════════════════════════
-${shopCart.map(c => {
+${shopCart
+    .map(c => {
         const lineTotal = c.costCopper * c.qty;
         return `${c.qty}× ${c.itemName}
    ${c.cost} × ${c.qty} = ${formatCurrency(lineTotal)}`;
-    }).join('\n───────────────────────────────────────\n')}
+    })
+    .join('\n───────────────────────────────────────\n')}
 ═══════════════════════════════════════
 GESAMT: ${formatCurrency(total)}
         ${formatCurrency(total, 'gold')}
@@ -281,10 +277,8 @@ ${itemCount} Artikel | ${new Date().toLocaleDateString('de-DE')}`;
     const receiptEl = $('checkout-receipt');
     const totalCheckoutEl = $('checkout-total');
     const breakdownEl = $('checkout-total-breakdown');
-    if (receiptEl)
-        receiptEl.textContent = receipt;
-    if (totalCheckoutEl)
-        totalCheckoutEl.textContent = formatCurrency(total);
+    if (receiptEl) receiptEl.textContent = receipt;
+    if (totalCheckoutEl) totalCheckoutEl.textContent = formatCurrency(total);
     if (breakdownEl) {
         breakdownEl.innerHTML = `
             <div class="checkout-breakdown">
@@ -301,7 +295,7 @@ ${itemCount} Artikel | ${new Date().toLocaleDateString('de-DE')}`;
 function confirmCheckout() {
     const D = window.D;
     shopCart.forEach(c => {
-        const shop = (D.shops || []).find((s) => s.id === c.shopId);
+        const shop = (D.shops || []).find(s => s.id === c.shopId);
         if (shop && shop.items && shop.items[c.itemIdx]) {
             const item = shop.items[c.itemIdx];
             if (!item.unlimited && item.quantity !== undefined && item.quantity !== null) {
@@ -320,8 +314,7 @@ function confirmCheckout() {
 }
 function copyReceipt() {
     const receiptEl = $('checkout-receipt');
-    if (!receiptEl)
-        return;
+    if (!receiptEl) return;
     const receipt = receiptEl.textContent || '';
     navigator.clipboard.writeText(receipt).then(() => {
         showToast('📋 Quittung kopiert');
@@ -337,30 +330,35 @@ function renderShops() {
     const populateFilterDropdown = window.populateFilterDropdown;
     const renderEntityLink = window.renderEntityLink;
     const container = $('shop-list');
-    if (!container)
-        return;
+    if (!container) return;
     try {
-        if (!D.shops)
-            D.shops = [];
+        if (!D.shops) D.shops = [];
         updateCounters({ 'shops-io-count': D.shops.length });
-        populateFilterDropdown('shop-location-filter', D.locations || [], { allLabel: 'Alle Orte' });
+        populateFilterDropdown('shop-location-filter', D.locations || [], {
+            allLabel: 'Alle Orte'
+        });
         const searchInput = $('shop-search');
         const typeFilterInput = $('shop-type-filter');
         const locationFilterInput = $('shop-location-filter');
         const search = (searchInput?.value || '').toLowerCase();
         const typeFilter = typeFilterInput?.value || '';
-        const locationFilter = locationFilterInput?.value ? parseInt(locationFilterInput.value) : null;
+        const locationFilter = locationFilterInput?.value
+            ? parseInt(locationFilterInput.value)
+            : null;
         let shops = [...D.shops];
         if (search) {
-            shops = shops.filter((s) => (s.name || '').toLowerCase().includes(search) ||
-                (s.description || '').toLowerCase().includes(search) ||
-                (s.items || []).some((i) => (i.name || '').toLowerCase().includes(search)));
+            shops = shops.filter(
+                s =>
+                    (s.name || '').toLowerCase().includes(search) ||
+                    (s.description || '').toLowerCase().includes(search) ||
+                    (s.items || []).some(i => (i.name || '').toLowerCase().includes(search))
+            );
         }
         if (typeFilter) {
-            shops = shops.filter((s) => s.type === typeFilter);
+            shops = shops.filter(s => s.type === typeFilter);
         }
         if (locationFilter) {
-            shops = shops.filter((s) => s.locationId === locationFilter);
+            shops = shops.filter(s => s.locationId === locationFilter);
         }
         shops.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
         if (!shops.length) {
@@ -375,22 +373,23 @@ function renderShops() {
             });
             return;
         }
-        container.innerHTML = shops.map((shop) => {
-            try {
-                const type = SHOP_TYPES[shop.type] || SHOP_TYPES.unbekannt;
-                const npc = EntityLookup.npc(shop.npcId);
-                const location = EntityLookup.location(shop.locationId);
-                const isExpanded = expandedShops.has(shop.id);
-                const items = shop.items || [];
-                const availableItems = items.filter((i) => i.available !== false);
+        container.innerHTML = shops
+            .map(shop => {
+                try {
+                    const type = SHOP_TYPES[shop.type] || SHOP_TYPES.unbekannt;
+                    const npc = EntityLookup.npc(shop.npcId);
+                    const location = EntityLookup.location(shop.locationId);
+                    const isExpanded = expandedShops.has(shop.id);
+                    const items = shop.items || [];
+                    const availableItems = items.filter(i => i.available !== false);
 
-                // Dynamically count items by category
-                const categoryCounts = {};
-                items.forEach((item) => {
-                    const cat = item.category || 'misc';
-                    categoryCounts[cat] = (categoryCounts[cat] || 0) + 1;
-                });
-                return `
+                    // Dynamically count items by category
+                    const categoryCounts = {};
+                    items.forEach(item => {
+                        const cat = item.category || 'misc';
+                        categoryCounts[cat] = (categoryCounts[cat] || 0) + 1;
+                    });
+                    return `
                     <div class="shop-card ${isExpanded ? 'expanded' : 'collapsed'}" id="shop-card-${shop.id}" data-shop-id="${shop.id}">
                         <div class="shop-header" data-action="toggle-shop" data-id="${shop.id}">
                             <div class="shop-header-main">
@@ -424,15 +423,19 @@ function renderShops() {
                                       title="Alle Kategorien anzeigen">
                                     📦 Alle (${items.length})
                                 </span>
-                                ${Object.entries(categoryCounts).map(([catKey, count]) => {
-                                    const catInfo = SHOP_ITEM_CATEGORIES[catKey] || SHOP_ITEM_CATEGORIES.misc;
-                                    const isActive = activeShopFilters[shop.id] === catKey;
-                                    return `<span class="shop-cat-badge ${catKey} ${isActive ? 'active' : ''}"
+                                ${Object.entries(categoryCounts)
+                                    .map(([catKey, count]) => {
+                                        const catInfo =
+                                            SHOP_ITEM_CATEGORIES[catKey] ||
+                                            SHOP_ITEM_CATEGORIES.misc;
+                                        const isActive = activeShopFilters[shop.id] === catKey;
+                                        return `<span class="shop-cat-badge ${catKey} ${isActive ? 'active' : ''}"
                                                   data-action="filter-shop-category" data-id="${shop.id}" data-value="${catKey}"
                                                   title="${catInfo.name} anzeigen">
                                         ${catInfo.icon} ${count}
                                     </span>`;
-                                }).join('')}
+                                    })
+                                    .join('')}
                             </div>
 
                             <div class="shop-sort-controls">
@@ -461,14 +464,13 @@ function renderShops() {
                         </div>
                     </div>
                 `;
-            }
-            catch (shopErr) {
-                console.error('Fehler beim Rendern eines Shops:', shopErr, shop);
-                return `<div class="shop-card" style="color: var(--red);">Fehler beim Laden des Shops</div>`;
-            }
-        }).join('');
-    }
-    catch (err) {
+                } catch (shopErr) {
+                    console.error('Fehler beim Rendern eines Shops:', shopErr, shop);
+                    return `<div class="shop-card" style="color: var(--red);">Fehler beim Laden des Shops</div>`;
+                }
+            })
+            .join('');
+    } catch (err) {
         console.error('renderShops Fehler:', err);
         container.innerHTML = renderEmptyState({
             icon: '⚠️',
@@ -479,13 +481,14 @@ function renderShops() {
     }
 }
 function renderShopItems(shopId, items) {
-    if (!items || !Array.isArray(items))
-        return '<div class="shop-items-empty">Keine Artikel</div>';
+    if (!items || !Array.isArray(items)) return '<div class="shop-items-empty">Keine Artikel</div>';
     try {
         // Apply category filter
         const categoryFilter = activeShopFilters[shopId];
         let filteredItems = categoryFilter
-            ? items.map((item, idx) => ({ item, idx })).filter(({ item }) => item.category === categoryFilter)
+            ? items
+                  .map((item, idx) => ({ item, idx }))
+                  .filter(({ item }) => item.category === categoryFilter)
             : items.map((item, idx) => ({ item, idx }));
 
         // Apply sorting
@@ -505,44 +508,82 @@ function renderShopItems(shopId, items) {
         }
 
         return `<div class="si-list">
-            ${filteredItems.map(({ item, idx }) => {
-            try {
-                const cat = SHOP_ITEM_CATEGORIES[item.category] || SHOP_ITEM_CATEGORIES.misc;
-                const isAvailable = item.available !== false;
-                const isExpanded = expandedShopItems.has(`${shopId}-${idx}`);
-                const itemName = item.name || 'Unbenannt';
-                const itemCost = item.cost || '—';
-                const itemQty = item.unlimited ? '∞' : (item.quantity || 1);
-                let detailTags = '';
-                if (item.category === 'weapon') {
-                    detailTags = [
-                        item.type ? `<span class="si-tag"><span class="si-tag-l">Typ:</span> <span class="si-tag-v">${esc(item.type)}</span></span>` : '',
-                        item.damage ? `<span class="si-tag"><span class="si-tag-l">Schaden:</span> <span class="si-tag-v">${esc(item.damage)}</span></span>` : '',
-                        item.properties ? `<span class="si-tag"><span class="si-tag-l">Eigensch.:</span> <span class="si-tag-v">${esc(item.properties)}</span></span>` : '',
-                        item.mastery ? `<span class="si-tag"><span class="si-tag-l">Meisterung:</span> <span class="si-tag-v">${esc(item.mastery)}</span></span>` : '',
-                        item.weight ? `<span class="si-tag"><span class="si-tag-l">Gewicht:</span> <span class="si-tag-v">${esc(item.weight)}</span></span>` : ''
-                    ].filter(Boolean).join('');
-                }
-                else if (item.category === 'armor') {
-                    detailTags = [
-                        item.type ? `<span class="si-tag"><span class="si-tag-l">Typ:</span> <span class="si-tag-v">${esc(item.type)}</span></span>` : '',
-                        item.ac ? `<span class="si-tag"><span class="si-tag-l">RK:</span> <span class="si-tag-v">${esc(item.ac)}</span></span>` : '',
-                        item.strength ? `<span class="si-tag"><span class="si-tag-l">STR:</span> <span class="si-tag-v">${esc(item.strength)}</span></span>` : '',
-                        item.stealth === 'disadvantage' ? `<span class="si-tag"><span class="si-tag-l">Heiml.:</span> <span class="si-tag-v" style="color:var(--red);">Nachteil</span></span>` : '',
-                        item.weight ? `<span class="si-tag"><span class="si-tag-l">Gewicht:</span> <span class="si-tag-v">${esc(item.weight)}</span></span>` : ''
-                    ].filter(Boolean).join('');
-                }
-                else {
-                    detailTags = [
-                        item.type ? `<span class="si-tag"><span class="si-tag-l">Typ:</span> <span class="si-tag-v">${esc(item.type)}</span></span>` : '',
-                        item.effect ? `<span class="si-tag"><span class="si-tag-l">Wirkung:</span> <span class="si-tag-v">${esc(item.effect)}</span></span>` : '',
-                        item.description ? `<span class="si-tag"><span class="si-tag-l">Beschr.:</span> <span class="si-tag-v">${esc(item.description)}</span></span>` : '',
-                        item.weight ? `<span class="si-tag"><span class="si-tag-l">Gewicht:</span> <span class="si-tag-v">${esc(item.weight)}</span></span>` : ''
-                    ].filter(Boolean).join('');
-                }
-                const specialNote = item.special ? `<span class="si-special">✨ ${esc(item.special)}</span>` : '';
-                const noteText = item.note ? `<span class="si-note">📝 ${esc(item.note)}</span>` : '';
-                return `<div class="si-item ${item.category || 'misc'} ${isAvailable ? '' : 'si-unavailable'} ${isExpanded ? 'expanded' : ''}" data-shop="${shopId}" data-idx="${idx}">
+            ${filteredItems
+                .map(({ item, idx }) => {
+                    try {
+                        const cat =
+                            SHOP_ITEM_CATEGORIES[item.category] || SHOP_ITEM_CATEGORIES.misc;
+                        const isAvailable = item.available !== false;
+                        const isExpanded = expandedShopItems.has(`${shopId}-${idx}`);
+                        const itemName = item.name || 'Unbenannt';
+                        const itemCost = item.cost || '—';
+                        const itemQty = item.unlimited ? '∞' : item.quantity || 1;
+                        let detailTags = '';
+                        if (item.category === 'weapon') {
+                            detailTags = [
+                                item.type
+                                    ? `<span class="si-tag"><span class="si-tag-l">Typ:</span> <span class="si-tag-v">${esc(item.type)}</span></span>`
+                                    : '',
+                                item.damage
+                                    ? `<span class="si-tag"><span class="si-tag-l">Schaden:</span> <span class="si-tag-v">${esc(item.damage)}</span></span>`
+                                    : '',
+                                item.properties
+                                    ? `<span class="si-tag"><span class="si-tag-l">Eigensch.:</span> <span class="si-tag-v">${esc(item.properties)}</span></span>`
+                                    : '',
+                                item.mastery
+                                    ? `<span class="si-tag"><span class="si-tag-l">Meisterung:</span> <span class="si-tag-v">${esc(item.mastery)}</span></span>`
+                                    : '',
+                                item.weight
+                                    ? `<span class="si-tag"><span class="si-tag-l">Gewicht:</span> <span class="si-tag-v">${esc(item.weight)}</span></span>`
+                                    : ''
+                            ]
+                                .filter(Boolean)
+                                .join('');
+                        } else if (item.category === 'armor') {
+                            detailTags = [
+                                item.type
+                                    ? `<span class="si-tag"><span class="si-tag-l">Typ:</span> <span class="si-tag-v">${esc(item.type)}</span></span>`
+                                    : '',
+                                item.ac
+                                    ? `<span class="si-tag"><span class="si-tag-l">RK:</span> <span class="si-tag-v">${esc(item.ac)}</span></span>`
+                                    : '',
+                                item.strength
+                                    ? `<span class="si-tag"><span class="si-tag-l">STR:</span> <span class="si-tag-v">${esc(item.strength)}</span></span>`
+                                    : '',
+                                item.stealth === 'disadvantage'
+                                    ? `<span class="si-tag"><span class="si-tag-l">Heiml.:</span> <span class="si-tag-v" style="color:var(--red);">Nachteil</span></span>`
+                                    : '',
+                                item.weight
+                                    ? `<span class="si-tag"><span class="si-tag-l">Gewicht:</span> <span class="si-tag-v">${esc(item.weight)}</span></span>`
+                                    : ''
+                            ]
+                                .filter(Boolean)
+                                .join('');
+                        } else {
+                            detailTags = [
+                                item.type
+                                    ? `<span class="si-tag"><span class="si-tag-l">Typ:</span> <span class="si-tag-v">${esc(item.type)}</span></span>`
+                                    : '',
+                                item.effect
+                                    ? `<span class="si-tag"><span class="si-tag-l">Wirkung:</span> <span class="si-tag-v">${esc(item.effect)}</span></span>`
+                                    : '',
+                                item.description
+                                    ? `<span class="si-tag"><span class="si-tag-l">Beschr.:</span> <span class="si-tag-v">${esc(item.description)}</span></span>`
+                                    : '',
+                                item.weight
+                                    ? `<span class="si-tag"><span class="si-tag-l">Gewicht:</span> <span class="si-tag-v">${esc(item.weight)}</span></span>`
+                                    : ''
+                            ]
+                                .filter(Boolean)
+                                .join('');
+                        }
+                        const specialNote = item.special
+                            ? `<span class="si-special">✨ ${esc(item.special)}</span>`
+                            : '';
+                        const noteText = item.note
+                            ? `<span class="si-note">📝 ${esc(item.note)}</span>`
+                            : '';
+                        return `<div class="si-item ${item.category || 'misc'} ${isAvailable ? '' : 'si-unavailable'} ${isExpanded ? 'expanded' : ''}" data-shop="${shopId}" data-idx="${idx}">
                         <div class="si-main" data-action="toggle-shop-item" data-id="${shopId}" data-value="${idx}">
                             <div class="si-qty">×${itemQty}</div>
                             <div class="si-cat">${cat.icon}</div>
@@ -564,24 +605,27 @@ function renderShopItems(shopId, items) {
                                     <input type="checkbox" ${isAvailable ? 'checked' : ''} data-on-change="toggleShopItemAvailability" data-shop-id="${shopId}" data-item-idx="${idx}">
                                     <span>${isAvailable ? 'Verfügbar' : 'Nicht verfügbar'}</span>
                                 </label>
-                                ${isAvailable ? `
+                                ${
+                                    isAvailable
+                                        ? `
                                     <div class="si-add-cart-section">
                                         <input type="number" class="si-qty-input" id="si-qty-${shopId}-${idx}" value="1" min="1" max="${itemQty}" data-stop-propagation="true">
                                         <button class="btn btn-sm btn-success" data-action="add-to-cart-qty-stop" data-id="${shopId}" data-value="${idx}">🛒 In Warenkorb</button>
                                     </div>
-                                ` : ''}
+                                `
+                                        : ''
+                                }
                             </div>
                         </div>
                     </div>`;
-            }
-            catch (itemErr) {
-                console.error('Fehler beim Rendern eines Shop-Items:', itemErr, item);
-                return '';
-            }
-        }).join('')}
+                    } catch (itemErr) {
+                        console.error('Fehler beim Rendern eines Shop-Items:', itemErr, item);
+                        return '';
+                    }
+                })
+                .join('')}
         </div>`;
-    }
-    catch (err) {
+    } catch (err) {
         console.error('renderShopItems Fehler:', err);
         return '<div class="shop-items-empty">Fehler beim Laden der Artikel</div>';
     }
@@ -590,8 +634,7 @@ function toggleShopItem(shopId, idx) {
     const key = `${shopId}-${idx}`;
     if (expandedShopItems.has(key)) {
         expandedShopItems.delete(key);
-    }
-    else {
+    } else {
         expandedShopItems.add(key);
     }
     const item = document.querySelector(`.si-item[data-shop="${shopId}"][data-idx="${idx}"]`);
@@ -602,8 +645,7 @@ function toggleShopItem(shopId, idx) {
 function toggleShop(id) {
     if (expandedShops.has(id)) {
         expandedShops.delete(id);
-    }
-    else {
+    } else {
         expandedShops.add(id);
     }
     const isExpanded = expandedShops.has(id);
@@ -623,7 +665,7 @@ function toggleShop(id) {
 }
 function expandAllShops() {
     const D = window.D;
-    (D.shops || []).forEach((s) => expandedShops.add(s.id));
+    (D.shops || []).forEach(s => expandedShops.add(s.id));
     renderShops();
     showToast('Alle Shops ausgeklappt');
 }
@@ -642,15 +684,19 @@ function showShopModal(id = null) {
     const npcSelect = $('shop-npc');
     const locSelect = $('shop-location');
     if (npcSelect) {
-        npcSelect.innerHTML = '<option value="">-- Kein NPC --</option>' +
-            (D.npcs || []).map((n) => `<option value="${n.id}">${esc(n.name)}</option>`).join('');
+        npcSelect.innerHTML =
+            '<option value="">-- Kein NPC --</option>' +
+            (D.npcs || []).map(n => `<option value="${n.id}">${esc(n.name)}</option>`).join('');
     }
     if (locSelect) {
-        locSelect.innerHTML = '<option value="">-- Kein Ort --</option>' +
-            (D.locations || []).map((l) => `<option value="${l.id}">${esc(l.name)}</option>`).join('');
+        locSelect.innerHTML =
+            '<option value="">-- Kein Ort --</option>' +
+            (D.locations || [])
+                .map(l => `<option value="${l.id}">${esc(l.name)}</option>`)
+                .join('');
     }
     if (id) {
-        const shop = (D.shops || []).find((s) => s.id === id);
+        const shop = (D.shops || []).find(s => s.id === id);
         if (shop) {
             const editIdInput = $('edit-shop-id');
             const typeInput = $('shop-type');
@@ -660,22 +706,14 @@ function showShopModal(id = null) {
             const descInput = $('shop-description');
             const specialInput = $('shop-special');
             const noteInput = $('shop-note');
-            if (editIdInput)
-                editIdInput.value = String(id);
-            if (typeInput)
-                typeInput.value = shop.type || 'laden';
-            if (nameInput)
-                nameInput.value = shop.name || '';
-            if (npcInput)
-                npcInput.value = shop.npcId || '';
-            if (locationInput)
-                locationInput.value = shop.locationId || '';
-            if (descInput)
-                descInput.value = shop.description || '';
-            if (specialInput)
-                specialInput.value = shop.special || '';
-            if (noteInput)
-                noteInput.value = shop.note || '';
+            if (editIdInput) editIdInput.value = String(id);
+            if (typeInput) typeInput.value = shop.type || 'laden';
+            if (nameInput) nameInput.value = shop.name || '';
+            if (npcInput) npcInput.value = shop.npcId || '';
+            if (locationInput) locationInput.value = shop.locationId || '';
+            if (descInput) descInput.value = shop.description || '';
+            if (specialInput) specialInput.value = shop.special || '';
+            if (noteInput) noteInput.value = shop.note || '';
         }
     }
     showModal('shop-modal');
@@ -683,8 +721,13 @@ function showShopModal(id = null) {
 function clearShopForm() {
     clearFormFields({
         textFields: [
-            'edit-shop-id', 'shop-name', 'shop-npc', 'shop-location',
-            'shop-description', 'shop-special', 'shop-note'
+            'edit-shop-id',
+            'shop-name',
+            'shop-npc',
+            'shop-location',
+            'shop-description',
+            'shop-special',
+            'shop-note'
         ],
         selectFields: [{ id: 'shop-type', defaultValue: 'laden' }]
     });
@@ -698,8 +741,7 @@ function saveShop() {
         showToast('⚠️ Name erforderlich', 'error');
         return;
     }
-    if (!D.shops)
-        D.shops = [];
+    if (!D.shops) D.shops = [];
     const editIdInput = $('edit-shop-id');
     const typeInput = $('shop-type');
     const npcInput = $('shop-npc');
@@ -718,13 +760,12 @@ function saveShop() {
         note: noteInput?.value.trim() || ''
     };
     if (editId) {
-        const idx = D.shops.findIndex((s) => s.id === parseInt(editId));
+        const idx = D.shops.findIndex(s => s.id === parseInt(editId));
         if (idx > -1) {
             D.shops[idx] = { ...D.shops[idx], ...shop };
             showToast('Shop aktualisiert');
         }
-    }
-    else {
+    } else {
         shop.id = nextId('shops');
         shop.items = [];
         D.shops.push(shop);
@@ -741,7 +782,7 @@ function deleteShop(id) {
     const D = window.D;
     if (confirm('Shop und alle Artikel löschen?')) {
         pushUndo('Shop gelöscht');
-        D.shops = (D.shops || []).filter((s) => s.id !== id);
+        D.shops = (D.shops || []).filter(s => s.id !== id);
         expandedShops.delete(id);
         renderShops();
         save();
@@ -755,10 +796,9 @@ function showShopItemModal(shopId, itemIdx = null) {
     const D = window.D;
     clearShopItemForm();
     const shopIdInput = $('edit-shop-item-shop-id');
-    if (shopIdInput)
-        shopIdInput.value = String(shopId);
+    if (shopIdInput) shopIdInput.value = String(shopId);
     if (itemIdx !== null) {
-        const shop = (D.shops || []).find((s) => s.id === shopId);
+        const shop = (D.shops || []).find(s => s.id === shopId);
         if (shop && shop.items && shop.items[itemIdx]) {
             const item = shop.items[itemIdx];
             const editIdInput = $('edit-shop-item-id');
@@ -780,46 +820,28 @@ function showShopItemModal(shopId, itemIdx = null) {
             const costInput = $('shop-item-cost');
             const specialInput = $('shop-item-special');
             const noteInput = $('shop-item-note');
-            if (editIdInput)
-                editIdInput.value = String(itemIdx);
-            if (availInput)
-                availInput.checked = item.available !== false;
-            if (qtyInput)
-                qtyInput.value = item.unlimited ? '' : (item.quantity || 1);
+            if (editIdInput) editIdInput.value = String(itemIdx);
+            if (availInput) availInput.checked = item.available !== false;
+            if (qtyInput) qtyInput.value = item.unlimited ? '' : item.quantity || 1;
             if (unlimitedInput) {
                 unlimitedInput.checked = item.unlimited || false;
                 toggleShopItemUnlimited();
             }
-            if (catInput)
-                catInput.value = item.category || 'misc';
-            if (nameInput)
-                nameInput.value = item.name || '';
-            if (typeInput)
-                typeInput.value = item.type || '';
-            if (damageInput)
-                damageInput.value = item.damage || '';
-            if (propsInput)
-                propsInput.value = item.properties || '';
-            if (masteryInput)
-                masteryInput.value = item.mastery || '';
-            if (acInput)
-                acInput.value = item.ac || '';
-            if (strInput)
-                strInput.value = item.strength || '';
-            if (stealthInput)
-                stealthInput.value = item.stealth || '';
-            if (descInput)
-                descInput.value = item.description || '';
-            if (effectInput)
-                effectInput.value = item.effect || '';
-            if (weightInput)
-                weightInput.value = item.weight || '';
-            if (costInput)
-                costInput.value = item.cost || '';
-            if (specialInput)
-                specialInput.value = item.special || '';
-            if (noteInput)
-                noteInput.value = item.note || '';
+            if (catInput) catInput.value = item.category || 'misc';
+            if (nameInput) nameInput.value = item.name || '';
+            if (typeInput) typeInput.value = item.type || '';
+            if (damageInput) damageInput.value = item.damage || '';
+            if (propsInput) propsInput.value = item.properties || '';
+            if (masteryInput) masteryInput.value = item.mastery || '';
+            if (acInput) acInput.value = item.ac || '';
+            if (strInput) strInput.value = item.strength || '';
+            if (stealthInput) stealthInput.value = item.stealth || '';
+            if (descInput) descInput.value = item.description || '';
+            if (effectInput) effectInput.value = item.effect || '';
+            if (weightInput) weightInput.value = item.weight || '';
+            if (costInput) costInput.value = item.cost || '';
+            if (specialInput) specialInput.value = item.special || '';
+            if (noteInput) noteInput.value = item.note || '';
         }
     }
     updateShopItemFields();
@@ -828,11 +850,21 @@ function showShopItemModal(shopId, itemIdx = null) {
 function clearShopItemForm() {
     clearFormFields({
         textFields: [
-            'edit-shop-item-id', 'shop-item-name', 'shop-item-type',
-            'shop-item-damage', 'shop-item-properties', 'shop-item-mastery',
-            'shop-item-ac', 'shop-item-strength', 'shop-item-stealth',
-            'shop-item-desc', 'shop-item-effect', 'shop-item-weight',
-            'shop-item-cost', 'shop-item-special', 'shop-item-note'
+            'edit-shop-item-id',
+            'shop-item-name',
+            'shop-item-type',
+            'shop-item-damage',
+            'shop-item-properties',
+            'shop-item-mastery',
+            'shop-item-ac',
+            'shop-item-strength',
+            'shop-item-stealth',
+            'shop-item-desc',
+            'shop-item-effect',
+            'shop-item-weight',
+            'shop-item-cost',
+            'shop-item-special',
+            'shop-item-note'
         ],
         selectFields: [{ id: 'shop-item-category', defaultValue: 'weapon' }],
         defaults: {
@@ -855,21 +887,16 @@ function clearShopItemForm() {
 function updateShopItemFields() {
     const catInput = $('shop-item-category');
     const category = catInput?.value || 'misc';
-    document.querySelectorAll('.shop-item-fields').forEach(el => el.style.display = 'none');
+    document.querySelectorAll('.shop-item-fields').forEach(el => (el.style.display = 'none'));
     if (category === 'weapon') {
         const weaponFields = $('shop-item-weapon-fields');
-        if (weaponFields)
-            weaponFields.style.display = '';
-    }
-    else if (category === 'armor') {
+        if (weaponFields) weaponFields.style.display = '';
+    } else if (category === 'armor') {
         const armorFields = $('shop-item-armor-fields');
-        if (armorFields)
-            armorFields.style.display = '';
-    }
-    else {
+        if (armorFields) armorFields.style.display = '';
+    } else {
         const generalFields = $('shop-item-general-fields');
-        if (generalFields)
-            generalFields.style.display = '';
+        if (generalFields) generalFields.style.display = '';
     }
 }
 function toggleShopItemUnlimited() {
@@ -881,13 +908,11 @@ function toggleShopItemUnlimited() {
             quantityInput.style.opacity = '0.5';
             quantityInput.value = '';
             quantityInput.placeholder = '∞';
-        }
-        else {
+        } else {
             quantityInput.disabled = false;
             quantityInput.style.opacity = '1';
             quantityInput.placeholder = '';
-            if (!quantityInput.value)
-                quantityInput.value = '1';
+            if (!quantityInput.value) quantityInput.value = '1';
         }
     }
 }
@@ -901,13 +926,12 @@ function saveShopItem() {
     }
     const shopIdInput = $('edit-shop-item-shop-id');
     const shopId = parseInt(shopIdInput?.value || '0');
-    const shop = (D.shops || []).find((s) => s.id === shopId);
+    const shop = (D.shops || []).find(s => s.id === shopId);
     if (!shop) {
         showToast('Shop nicht gefunden', 'error');
         return;
     }
-    if (!shop.items)
-        shop.items = [];
+    if (!shop.items) shop.items = [];
     const catInput = $('shop-item-category');
     const unlimitedInput = $('shop-item-unlimited');
     const availInput = $('shop-item-available');
@@ -930,7 +954,7 @@ function saveShopItem() {
     const item = {
         available: availInput?.checked ?? true,
         unlimited: isUnlimited,
-        quantity: isUnlimited ? null : (parseInt(qtyInput?.value || '1') || 1),
+        quantity: isUnlimited ? null : parseInt(qtyInput?.value || '1') || 1,
         category: category,
         name: name,
         type: typeInput?.value.trim() || '',
@@ -943,13 +967,11 @@ function saveShopItem() {
         item.damage = damageInput?.value.trim() || '';
         item.properties = propsInput?.value.trim() || '';
         item.mastery = masteryInput?.value.trim() || '';
-    }
-    else if (category === 'armor') {
+    } else if (category === 'armor') {
         item.ac = acInput?.value.trim() || '';
         item.strength = strInput?.value.trim() || '';
         item.stealth = stealthInput?.value || '';
-    }
-    else {
+    } else {
         item.description = descInput?.value.trim() || '';
         item.effect = effectInput?.value.trim() || '';
     }
@@ -958,8 +980,7 @@ function saveShopItem() {
     if (editIdx !== '') {
         shop.items[parseInt(editIdx)] = item;
         showToast('Artikel aktualisiert');
-    }
-    else {
+    } else {
         shop.items.push(item);
         showToast('Artikel hinzugefügt');
     }
@@ -975,7 +996,7 @@ function deleteShopItem(shopId, idx) {
     const D = window.D;
     if (confirm('Artikel löschen?')) {
         pushUndo('Shop-Artikel gelöscht');
-        const shop = (D.shops || []).find((s) => s.id === shopId);
+        const shop = (D.shops || []).find(s => s.id === shopId);
         if (shop && shop.items) {
             shop.items.splice(idx, 1);
             renderShops();
@@ -991,12 +1012,11 @@ function toggleShopItemAvailability(shopIdOrElement, idx) {
     if (typeof shopIdOrElement === 'object' && shopIdOrElement.tagName) {
         shopId = parseInt(shopIdOrElement.dataset.shopId || '0', 10);
         itemIdx = parseInt(shopIdOrElement.dataset.itemIdx || '0', 10);
-    }
-    else {
+    } else {
         shopId = shopIdOrElement;
         itemIdx = idx ?? 0;
     }
-    const shop = (D.shops || []).find((s) => s.id === shopId);
+    const shop = (D.shops || []).find(s => s.id === shopId);
     if (shop && shop.items && shop.items[itemIdx]) {
         shop.items[itemIdx].available = !shop.items[itemIdx].available;
         renderShops();

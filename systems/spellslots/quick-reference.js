@@ -97,16 +97,13 @@ function toggleQrefSection(el) {
  */
 function showConditionDetail(conditionKey) {
     const condition = QREF_CONDITIONS[conditionKey];
-    if (!condition)
-        return;
+    if (!condition) return;
     const detailEl = $('qref-condition-detail');
     if (detailEl) {
         const titleEl = detailEl.querySelector('.qref-detail-title');
         const descEl = detailEl.querySelector('.qref-detail-desc');
-        if (titleEl)
-            titleEl.textContent = condition.name;
-        if (descEl)
-            descEl.textContent = condition.desc;
+        if (titleEl) titleEl.textContent = condition.name;
+        if (descEl) descEl.textContent = condition.desc;
     }
     // Mark active condition
     document.querySelectorAll('.qref-condition').forEach(el => {
@@ -119,8 +116,7 @@ function showConditionDetail(conditionKey) {
  */
 function applyQrefCondition(conditionKey) {
     const condition = QREF_CONDITIONS[conditionKey];
-    if (!condition)
-        return;
+    if (!condition) return;
     const D = window.D;
     const init = D.initiative;
     if (!init.combatants.length) {
@@ -133,15 +129,13 @@ function applyQrefCondition(conditionKey) {
         return;
     }
     // Check if already has this condition
-    if (!current.effects)
-        current.effects = [];
-    if (current.effects.find((e) => e.name === condition.effect.name)) {
+    if (!current.effects) current.effects = [];
+    if (current.effects.find(e => e.name === condition.effect.name)) {
         showToast(`${current.name} ist bereits ${condition.effect.name}`, 'info');
         return;
     }
     const pushUndo = window.pushUndo;
-    if (pushUndo)
-        pushUndo(`Zustand: ${condition.name}`);
+    if (pushUndo) pushUndo(`Zustand: ${condition.name}`);
     current.effects.push({
         id: Date.now(),
         name: condition.effect.name,
@@ -153,18 +147,15 @@ function applyQrefCondition(conditionKey) {
     showToast(`${current.name}: ${condition.effect.name}`, 'success');
     const renderInit = window.renderInit;
     const save = window.save;
-    if (renderInit)
-        renderInit();
-    if (save)
-        save();
+    if (renderInit) renderInit();
+    if (save) save();
 }
 /**
  * Wuerfelt eine Formel aus der Quick Reference
  * @param diceFormula - Wuerfelformel (z.B. '3d6', '1d20')
  */
 function rollQrefDice(diceFormula) {
-    if (!diceFormula)
-        return;
+    if (!diceFormula) return;
     // Parse dice formula (e.g., "3d6", "1d6", "20d6")
     const match = diceFormula.match(/(\d+)d(\d+)/i);
     if (!match) {
@@ -228,11 +219,14 @@ function qrefSearch(query) {
 function initQrefSearch() {
     const input = $('qref-search-input');
     if (input) {
-        input.addEventListener('input', debounce((e) => {
-            qrefSearch(e.target.value);
-        }, 200));
+        input.addEventListener(
+            'input',
+            debounce(e => {
+                qrefSearch(e.target.value);
+            }, 200)
+        );
         // Clear search on Escape
-        input.addEventListener('keydown', (e) => {
+        input.addEventListener('keydown', e => {
             if (e.key === 'Escape') {
                 input.value = '';
                 qrefSearch('');
@@ -244,8 +238,7 @@ function initQrefSearch() {
 // Legacy toggle function for backwards compatibility
 function toggleQuickRefSection(sectionEl, evt) {
     const e = evt || window.event;
-    if (e && e.target?.closest('.quick-ref-section-content'))
-        return;
+    if (e && e.target?.closest('.quick-ref-section-content')) return;
     sectionEl.classList.toggle('expanded');
 }
 // ============================================================
@@ -271,8 +264,7 @@ function convertUnitsMetric() {
     const metricUnitEl = $('qref-conv-metric-unit');
     const imperialUnitEl = $('qref-conv-imperial-unit');
     const output = $('qref-conv-imperial');
-    if (!input || !metricUnitEl || !imperialUnitEl || !output)
-        return;
+    if (!input || !metricUnitEl || !imperialUnitEl || !output) return;
     const metricUnit = metricUnitEl.value;
     const imperialUnit = imperialUnitEl.value;
     const value = parseFloat(input.value);
@@ -293,8 +285,7 @@ function convertUnitsImperial() {
     const imperialUnitEl = $('qref-conv-imperial-unit');
     const metricUnitEl = $('qref-conv-metric-unit');
     const output = $('qref-conv-metric');
-    if (!input || !imperialUnitEl || !metricUnitEl || !output)
-        return;
+    if (!input || !imperialUnitEl || !metricUnitEl || !output) return;
     const imperialUnit = imperialUnitEl.value;
     const metricUnit = metricUnitEl.value;
     const value = parseFloat(input.value);
@@ -316,8 +307,7 @@ function convertUnitsImperial() {
 function initQuickRefCustom() {
     const D = window.D;
     // Initialisiere quickRefCustom Array falls nicht vorhanden
-    if (!D.quickRefCustom)
-        D.quickRefCustom = [];
+    if (!D.quickRefCustom) D.quickRefCustom = [];
     renderQuickRefCustom();
     initQrefSearch();
 }
@@ -329,22 +319,22 @@ function renderQuickRefCustom() {
     const esc = window.esc;
     const parseEntityLinks = window.parseEntityLinks;
     const container = $('quick-ref-custom');
-    if (!container)
-        return;
+    if (!container) return;
     // Update empty state visibility
     const emptyEl = $('qref-custom-empty');
     if (emptyEl) {
-        emptyEl.style.display = (D.quickRefCustom && D.quickRefCustom.length > 0) ? 'none' : 'block';
+        emptyEl.style.display = D.quickRefCustom && D.quickRefCustom.length > 0 ? 'none' : 'block';
     }
     if (!D.quickRefCustom || D.quickRefCustom.length === 0) {
         container.innerHTML = '';
         return;
     }
-    container.innerHTML = D.quickRefCustom.map((entry) => {
-        const isExpanded = entry.expanded ? 'expanded' : '';
-        // Parse Entity-Links im Content
-        const content = parseEntityLinks(entry.content || '');
-        return `
+    container.innerHTML = D.quickRefCustom
+        .map(entry => {
+            const isExpanded = entry.expanded ? 'expanded' : '';
+            // Parse Entity-Links im Content
+            const content = parseEntityLinks(entry.content || '');
+            return `
         <div class="qref-custom-entry ${isExpanded}" data-id="${entry.id}">
             <div class="quick-ref-section-title" data-action="toggle-quick-ref-custom" data-id="${entry.id}">
                 <span>📌 ${esc(entry.title)}</span>
@@ -358,7 +348,8 @@ function renderQuickRefCustom() {
                 <div class="quick-ref-custom-content">${content}</div>
             </div>
         </div>`;
-    }).join('');
+        })
+        .join('');
 }
 /**
  * Oeffnet das Modal zum Hinzufuegen eines neuen Quick Reference Eintrags
@@ -368,17 +359,12 @@ function addQuickRefEntry() {
     const title = $('quick-ref-entry-title');
     const content = $('quick-ref-entry-content');
     const modalTitle = $('quick-ref-modal-title');
-    if (editId)
-        editId.value = '';
-    if (title)
-        title.value = '';
-    if (content)
-        content.innerHTML = '';
-    if (modalTitle)
-        modalTitle.textContent = 'Eintrag hinzufügen';
+    if (editId) editId.value = '';
+    if (title) title.value = '';
+    if (content) content.innerHTML = '';
+    if (modalTitle) modalTitle.textContent = 'Eintrag hinzufügen';
     const showModal = window.showModal;
-    if (showModal)
-        showModal('quick-ref-entry-modal');
+    if (showModal) showModal('quick-ref-entry-modal');
     setTimeout(() => title?.focus(), 100);
 }
 /**
@@ -387,24 +373,18 @@ function addQuickRefEntry() {
  */
 function editQuickRefEntry(id) {
     const D = window.D;
-    const entry = D.quickRefCustom?.find((e) => e.id === id);
-    if (!entry)
-        return;
+    const entry = D.quickRefCustom?.find(e => e.id === id);
+    if (!entry) return;
     const editId = $('quick-ref-edit-id');
     const title = $('quick-ref-entry-title');
     const content = $('quick-ref-entry-content');
     const modalTitle = $('quick-ref-modal-title');
-    if (editId)
-        editId.value = String(id);
-    if (title)
-        title.value = entry.title || '';
-    if (content)
-        content.innerHTML = entry.content || '';
-    if (modalTitle)
-        modalTitle.textContent = 'Eintrag bearbeiten';
+    if (editId) editId.value = String(id);
+    if (title) title.value = entry.title || '';
+    if (content) content.innerHTML = entry.content || '';
+    if (modalTitle) modalTitle.textContent = 'Eintrag bearbeiten';
     const showModal = window.showModal;
-    if (showModal)
-        showModal('quick-ref-entry-modal');
+    if (showModal) showModal('quick-ref-entry-modal');
 }
 /**
  * Speichert einen Quick Reference Eintrag (neu oder bearbeitet)
@@ -417,8 +397,7 @@ function saveQuickRefEntry() {
     const editIdEl = $('quick-ref-edit-id');
     const titleEl = $('quick-ref-entry-title');
     const contentEl = $('quick-ref-entry-content');
-    if (!editIdEl || !titleEl || !contentEl)
-        return;
+    if (!editIdEl || !titleEl || !contentEl) return;
     const id = editIdEl.value;
     const title = titleEl.value.trim();
     const content = sanitizeHTML(contentEl.innerHTML);
@@ -426,17 +405,15 @@ function saveQuickRefEntry() {
         showToast('⚠️ Titel erforderlich', 'error');
         return;
     }
-    if (!D.quickRefCustom)
-        D.quickRefCustom = [];
+    if (!D.quickRefCustom) D.quickRefCustom = [];
     if (id) {
         // Bearbeiten
-        const idx = D.quickRefCustom.findIndex((e) => e.id === parseEntityId(id));
+        const idx = D.quickRefCustom.findIndex(e => e.id === parseEntityId(id));
         if (idx > -1) {
             D.quickRefCustom[idx].title = title;
             D.quickRefCustom[idx].content = content;
         }
-    }
-    else {
+    } else {
         // Neu
         D.quickRefCustom.push({
             id: nextId('quickRefCustom'),
@@ -445,11 +422,9 @@ function saveQuickRefEntry() {
             expanded: true
         });
     }
-    if (hideModal)
-        hideModal('quick-ref-entry-modal');
+    if (hideModal) hideModal('quick-ref-entry-modal');
     renderQuickRefCustom();
-    if (save)
-        save();
+    if (save) save();
     showToast('📌 Eintrag gespeichert');
 }
 /**
@@ -457,17 +432,14 @@ function saveQuickRefEntry() {
  * @param id - Eintrag-ID
  */
 function deleteQuickRefEntry(id) {
-    if (!confirm('Eintrag wirklich löschen?'))
-        return;
+    if (!confirm('Eintrag wirklich löschen?')) return;
     const D = window.D;
     const pushUndo = window.pushUndo;
     const save = window.save;
-    if (pushUndo)
-        pushUndo('Schnellreferenz gelöscht');
-    D.quickRefCustom = (D.quickRefCustom || []).filter((e) => e.id !== id);
+    if (pushUndo) pushUndo('Schnellreferenz gelöscht');
+    D.quickRefCustom = (D.quickRefCustom || []).filter(e => e.id !== id);
     renderQuickRefCustom();
-    if (save)
-        save();
+    if (save) save();
     showToast('🗑️ Eintrag gelöscht');
 }
 /**
@@ -477,12 +449,11 @@ function deleteQuickRefEntry(id) {
 function toggleQuickRefCustomEntry(id) {
     const D = window.D;
     const save = window.save;
-    const entry = D.quickRefCustom?.find((e) => e.id === id);
+    const entry = D.quickRefCustom?.find(e => e.id === id);
     if (entry) {
         entry.expanded = !entry.expanded;
         renderQuickRefCustom();
-        if (save)
-            save();
+        if (save) save();
     }
 }
 // ============================================================

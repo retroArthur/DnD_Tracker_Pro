@@ -44,7 +44,6 @@ beforeAll(() => {
 // ============================================================
 
 describe('Mindmap Smart-Strip Migration 2.6.1', () => {
-
     // Test 1: Leerer mindmap-Seed wird bei Migration still entfernt
     test('removes empty mindmap key on migration from 2.5.0', () => {
         // Vorbedingung: Gespeicherter Stand mit leerem mindmap-Seed

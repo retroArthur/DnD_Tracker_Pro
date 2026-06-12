@@ -8,9 +8,9 @@ const VirtualScroll = {
 
     // Konfiguration
     config: {
-        threshold: 50,      // Aktiviere ab 50+ Items
-        bufferSize: 5,      // Extra Items vor/nach sichtbarem Bereich
-        defaultHeight: 60   // Standard Item-Höhe
+        threshold: 50, // Aktiviere ab 50+ Items
+        bufferSize: 5, // Extra Items vor/nach sichtbarem Bereich
+        defaultHeight: 60 // Standard Item-Höhe
     },
 
     /**
@@ -58,9 +58,12 @@ const VirtualScroll = {
         const render = () => {
             const scrollTop = container.scrollTop;
             const startIdx = Math.max(0, Math.floor(scrollTop / itemHeight) - bufferSize);
-            const endIdx = Math.min(items.length, Math.ceil((scrollTop + viewportHeight) / itemHeight) + bufferSize);
+            const endIdx = Math.min(
+                items.length,
+                Math.ceil((scrollTop + viewportHeight) / itemHeight) + bufferSize
+            );
 
-            visibleContainer.style.top = (startIdx * itemHeight) + 'px';
+            visibleContainer.style.top = startIdx * itemHeight + 'px';
             visibleContainer.innerHTML = items.slice(startIdx, endIdx).map(renderItem).join('');
         };
 
@@ -105,4 +108,3 @@ if (document.readyState === 'loading') {
     EventDelegation.init();
     initLazyObserver();
 }
-

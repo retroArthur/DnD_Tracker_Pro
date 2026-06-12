@@ -4,24 +4,25 @@
 // ============================================================
 async function init() {
     // Globale Error Handler für unerwartete Fehler
-    window.onerror = function(message, source, lineno, colno, error) {
+    window.onerror = function (message, source, lineno, colno, error) {
         if (typeof ErrorHandler !== 'undefined') {
             ErrorHandler.log('window.onerror', error || new Error(message), `${source}:${lineno}`);
         }
         // Fehler nicht unterdrücken, damit sie in der Konsole sichtbar bleiben
         return false;
     };
-    
-    window.onunhandledrejection = function(event) {
+
+    window.onunhandledrejection = function (event) {
         if (typeof ErrorHandler !== 'undefined') {
             ErrorHandler.log('unhandledRejection', event.reason || new Error('Promise rejected'));
         }
     };
-    
+
     // Aktive Kampagne ermitteln
-    const index = (typeof window.getCampaignIndex === 'function')
-        ? window.getCampaignIndex()
-        : { campaigns: [], active: window.APP_CONFIG.STORAGE_KEY };
+    const index =
+        typeof window.getCampaignIndex === 'function'
+            ? window.getCampaignIndex()
+            : { campaigns: [], active: window.APP_CONFIG.STORAGE_KEY };
     const activeKey = index.active || window.APP_CONFIG.STORAGE_KEY;
 
     // Storage-Key überschreiben falls andere Kampagne aktiv
@@ -39,17 +40,19 @@ async function init() {
 
     // Offline-Modus initialisieren
     initOfflineMode();
-    
+
     // Hinweis: #autosave-toggle existiert aktuell nicht im UI. Falls es zurückkommt,
     // wird es hier auf "checked" gesetzt; sonst no-op (Save defaultet auf aktiv, siehe persistence.js).
     if ($('autosave-toggle')) $('autosave-toggle').checked = true;
     if ($('quick-notes')) $('quick-notes').value = D.quickNotes || '';
-    
+
     // Navigation Drag-and-Drop initialisieren (vor Click-Listenern)
     initNavDragDrop();
-    
-    document.querySelectorAll('.nav-tab').forEach(tab => tab.addEventListener('click', () => switchView(tab.dataset.view)));
-    
+
+    document
+        .querySelectorAll('.nav-tab')
+        .forEach(tab => tab.addEventListener('click', () => switchView(tab.dataset.view)));
+
     // Defensive render calls - check if functions exist
     if (typeof renderAll === 'function') renderAll();
     if (typeof window.renderDashboard === 'function') window.renderDashboard();
@@ -59,22 +62,22 @@ async function init() {
     if (typeof window.renderDiceHistory === 'function') window.renderDiceHistory();
     if (typeof window.renderDiceFavorites === 'function') window.renderDiceFavorites();
     if (typeof window.renderRandomTables === 'function') window.renderRandomTables();
-    
+
     // Drag-and-Drop für Initiative initialisieren
     initDragDrop();
 
     // Sortierbare Listen initialisieren
     initSortableLists();
-    
+
     // Touch-Optimierungen für iPad/Tablet
     initTouchOptimizations();
-    
+
     // Session Timer initialisieren
     initSessionTimer();
-    
+
     // Konflikt-Erkennung initialisieren
     initConflictDetection();
-    
+
     // Editor Paste-Handler für Auto-Clean initialisieren
     initEditorPasteHandlers();
 
@@ -97,29 +100,29 @@ async function init() {
     if (typeof initWikiSearchListener === 'function') initWikiSearchListener();
     if (typeof initDiceKeyboardListeners === 'function') initDiceKeyboardListeners();
     if (typeof initGlobalSearchListener === 'function') initGlobalSearchListener();
-    
+
     // Sticky-Header-Höhe für Initiative-Controls berechnen
     updateStickyOffsets();
     window.addEventListener('resize', debounce(updateStickyOffsets, 200));
-    
+
     // Encounter-Runde aus Daten laden
     encounterRound = D.initiative?.round || 1;
-    
+
     // Auto-Backup starten
     startAutoBackup();
-    
+
     // Service Worker für Offline-Sync registrieren
     registerServiceWorker();
-    
+
     // Offline-Erkennung initialisieren
     initOfflineDetection();
-    
+
     // PWA Installation
     initPWA();
 
     // Performance-Monitoring initialisieren
     initPerformanceMonitoring();
-    
+
     // Version anzeigen
     log(`[D&D Tracker] Version ${CURRENT_VERSION}`);
 }
@@ -170,28 +173,31 @@ function initSortableLists() {
 function registerServiceWorker() {
     // Service Worker funktioniert nur mit http/https, nicht mit file://
     const protocol = window.location.protocol;
-    
+
     if (protocol === 'file:') {
-        log('[SW] Lokaler Modus (file://) - Service Worker nicht verfügbar, aber App funktioniert offline via localStorage');
+        log(
+            '[SW] Lokaler Modus (file://) - Service Worker nicht verfügbar, aber App funktioniert offline via localStorage'
+        );
         return;
     }
-    
+
     if (!('serviceWorker' in navigator)) {
         log('[SW] Service Worker nicht unterstützt');
         return;
     }
-    
+
     // Nur bei http/https versuchen
     if (protocol !== 'http:' && protocol !== 'https:') {
         log('[SW] Unbekanntes Protokoll:', protocol);
         return;
     }
-    
+
     // Prüfe ob eine sw.js Datei existiert (für gehostete Versionen)
     fetch('./sw.js', { method: 'HEAD' })
         .then(response => {
             if (response.ok) {
-                navigator.serviceWorker.register('./sw.js')
+                navigator.serviceWorker
+                    .register('./sw.js')
                     .then(reg => log('[SW] Registriert:', reg.scope))
                     .catch(err => log('[SW] Registrierung fehlgeschlagen:', err.message));
             } else {
@@ -215,7 +221,7 @@ function initOfflineDetection() {
             }
         }
     };
-    
+
     window.addEventListener('online', updateOnlineStatus);
     window.addEventListener('offline', updateOnlineStatus);
     updateOnlineStatus();
@@ -230,16 +236,16 @@ let idb = null;
 async function initIndexedDB() {
     return new Promise((resolve, reject) => {
         const request = indexedDB.open(APP_CONFIG.IDB_NAME, IDB_VERSION);
-        
+
         request.onerror = () => reject(request.error);
         request.onsuccess = () => {
             idb = request.result;
             resolve(idb);
         };
-        
-        request.onupgradeneeded = (event) => {
+
+        request.onupgradeneeded = event => {
             const db = event.target.result;
-            
+
             // Stores erstellen
             if (!db.objectStoreNames.contains('campaigns')) {
                 db.createObjectStore('campaigns', { keyPath: 'id' });
@@ -265,12 +271,12 @@ async function initIndexedDB() {
 
 async function saveToIndexedDB(storeName, data) {
     if (!idb) await initIndexedDB();
-    
+
     return new Promise((resolve, reject) => {
         const transaction = idb.transaction([storeName], 'readwrite');
         const store = transaction.objectStore(storeName);
         const request = store.put(data);
-        
+
         request.onsuccess = () => resolve(request.result);
         request.onerror = () => reject(request.error);
     });
@@ -283,9 +289,9 @@ async function saveToIndexedDB(storeName, data) {
 // ============================================================
 function prevTurn() {
     if (!D.initiative.combatants.length) return;
-    
+
     pushUndo('Vorheriger Zug');
-    
+
     D.initiative.currentTurn--;
     if (D.initiative.currentTurn < 0) {
         D.initiative.currentTurn = D.initiative.combatants.length - 1;
@@ -294,7 +300,7 @@ function prevTurn() {
             D.initiative.round = encounterRound;
         }
     }
-    
+
     save();
     renderInit();
 }

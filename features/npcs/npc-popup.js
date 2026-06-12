@@ -8,8 +8,7 @@
 function showNPCPopup(npcId, event) {
     event.stopPropagation();
     const npc = EntityLookup.npc(npcId);
-    if (!npc)
-        return;
+    if (!npc) return;
     // Entferne vorhandenes Popup
     closeNPCPopup();
     const _location = EntityLookup.location(npc.locationId);
@@ -17,33 +16,56 @@ function showNPCPopup(npcId, event) {
     // Tags zusammenstellen
     const tags = [];
     if (npc.quests?.length)
-        tags.push(...npc.quests.map((q) => `<span class="chip color-green" style="font-size:0.75em;">📜 ${esc(q)}</span>`));
+        tags.push(
+            ...npc.quests.map(
+                q => `<span class="chip color-green" style="font-size:0.75em;">📜 ${esc(q)}</span>`
+            )
+        );
     if (npc.info?.length)
-        tags.push(...npc.info.map((i) => `<span class="chip color-purple" style="font-size:0.75em;">💡 ${esc(i)}</span>`));
+        tags.push(
+            ...npc.info.map(
+                i => `<span class="chip color-purple" style="font-size:0.75em;">💡 ${esc(i)}</span>`
+            )
+        );
     if (npc.relationships?.length)
-        tags.push(...npc.relationships.map((r) => `<span class="chip color-pink" style="font-size:0.75em;">🔗 ${esc(r)}</span>`));
+        tags.push(
+            ...npc.relationships.map(
+                r => `<span class="chip color-pink" style="font-size:0.75em;">🔗 ${esc(r)}</span>`
+            )
+        );
     // Trigger
-    const triggers = (npc.triggers || []).map((t) => `
+    const triggers = (npc.triggers || [])
+        .map(
+            t => `
         <div style="font-size:0.8em; margin-bottom: 4px;">
             <span style="color:var(--yellow);">⚡ ${esc(t.condition)}</span>
             <div style="color:var(--text-dim); padding-left: 16px;">→ ${esc(t.reveal)}</div>
         </div>
-    `).join('');
+    `
+        )
+        .join('');
     // Dialoge (erste 2)
-    const dialogs = (npc.dialogs || []).slice(0, 2).map((d) => `
+    const dialogs = (npc.dialogs || [])
+        .slice(0, 2)
+        .map(
+            d => `
         <div style="font-size:0.8em; margin-bottom: 4px; padding: 6px; background: var(--bg-dark); border-radius: 4px;">
             ${d.title ? `<div style="color: var(--cyan); font-weight: 500;">${esc(d.title)}</div>` : ''}
             <div style="color:var(--text-dim); font-style: italic;">"${esc(d.text.substring(0, 100))}${d.text.length > 100 ? '...' : ''}"</div>
         </div>
-    `).join('');
+    `
+        )
+        .join('');
     const popup = document.createElement('div');
     popup.className = 'npc-popup';
     popup.id = 'npc-popup';
     popup.innerHTML = `
         <div class="npc-popup-header">
-            ${npc.avatar
-        ? `<img src="${esc(npc.avatar)}" class="npc-popup-avatar">`
-        : `<div class="npc-popup-avatar-placeholder">🧑</div>`}
+            ${
+                npc.avatar
+                    ? `<img src="${esc(npc.avatar)}" class="npc-popup-avatar">`
+                    : `<div class="npc-popup-avatar-placeholder">🧑</div>`
+            }
             <div class="npc-popup-title">
                 <div class="npc-popup-name">${esc(npc.name)}</div>
                 <div class="npc-popup-role">
@@ -55,32 +77,48 @@ function showNPCPopup(npcId, event) {
             <button class="npc-popup-close" data-action="call" data-value="closeNPCPopup">✕</button>
         </div>
         <div class="npc-popup-body">
-            ${npc.description ? `
+            ${
+                npc.description
+                    ? `
                 <div class="npc-popup-section">
                     <div class="npc-popup-section-title">Beschreibung</div>
                     <div style="font-size: 0.85em; color: var(--text);">${sanitizeHTML((window.renderMarkdownInContent || (x => x))(npc.description))}</div>
                 </div>
-            ` : ''}
+            `
+                    : ''
+            }
 
-            ${tags.length ? `
+            ${
+                tags.length
+                    ? `
                 <div class="npc-popup-section">
                     <div style="display: flex; flex-wrap: wrap; gap: 4px;">${tags.join('')}</div>
                 </div>
-            ` : ''}
+            `
+                    : ''
+            }
 
-            ${triggers ? `
+            ${
+                triggers
+                    ? `
                 <div class="npc-popup-section">
                     <div class="npc-popup-section-title">🔔 Trigger</div>
                     ${triggers}
                 </div>
-            ` : ''}
+            `
+                    : ''
+            }
 
-            ${dialogs ? `
+            ${
+                dialogs
+                    ? `
                 <div class="npc-popup-section">
                     <div class="npc-popup-section-title">💬 Dialoge ${npc.dialogs?.length > 2 ? `(+${npc.dialogs.length - 2} mehr)` : ''}</div>
                     ${dialogs}
                 </div>
-            ` : ''}
+            `
+                    : ''
+            }
 
             ${npc.chapter ? `<div style="font-size: 0.75em; color: var(--text-dim);">📖 ${esc(npc.chapter)}</div>` : ''}
             ${filter ? `<span class="chip color-${filter.color}" style="font-size:0.7em; margin-top: 4px;">${esc(filter.name)}</span>` : ''}
@@ -118,8 +156,7 @@ function showNPCPopup(npcId, event) {
  */
 function closeNPCPopup() {
     const popup = $('npc-popup');
-    if (popup)
-        popup.remove();
+    if (popup) popup.remove();
     document.removeEventListener('click', closeNPCPopupOnOutsideClick);
 }
 /**

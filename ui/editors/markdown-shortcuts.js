@@ -147,7 +147,8 @@ function applyMarkdownFormat(editor, textNode, match) {
                 break;
             case 'code':
                 htmlElement = document.createElement('code');
-                htmlElement.style.cssText = 'background: var(--bg-elevated); padding: 2px 4px; border-radius: 3px; font-family: monospace; font-size: 0.9em;';
+                htmlElement.style.cssText =
+                    'background: var(--bg-elevated); padding: 2px 4px; border-radius: 3px; font-family: monospace; font-size: 0.9em;';
                 break;
             default:
                 return;
@@ -191,7 +192,6 @@ function applyMarkdownFormat(editor, textNode, match) {
         if (window.APP_CONFIG?.DEBUG_MODE) {
             console.log('[Markdown] Applied', match.type, 'formatting:', match.content);
         }
-
     } catch (err) {
         if (window.APP_CONFIG?.DEBUG_MODE) {
             console.warn('[Markdown] Format failed:', err);
@@ -218,7 +218,7 @@ function initMarkdownSettings() {
         checkbox.checked = D.settings.enableMarkdownShortcuts !== false; // Default true
 
         // Listen to changes
-        checkbox.addEventListener('change', function() {
+        checkbox.addEventListener('change', function () {
             if (!D.settings) D.settings = {};
             D.settings.enableMarkdownShortcuts = checkbox.checked;
             if (typeof save === 'function') {
@@ -227,7 +227,11 @@ function initMarkdownSettings() {
 
             // Show toast
             if (typeof showToast === 'function') {
-                showToast(checkbox.checked ? '✅ Markdown Shortcuts aktiviert' : '❌ Markdown Shortcuts deaktiviert');
+                showToast(
+                    checkbox.checked
+                        ? '✅ Markdown Shortcuts aktiviert'
+                        : '❌ Markdown Shortcuts deaktiviert'
+                );
             }
         });
     }
@@ -236,7 +240,11 @@ function initMarkdownSettings() {
     if (D.settings && !D.settings.markdownOnboardingSeen) {
         setTimeout(() => {
             if (typeof showToast === 'function') {
-                showToast('📝 Neu: Markdown Shortcuts aktiviert! Nutze **bold**, *italic*, ~~strike~~, `code` in allen Editoren. Deaktivieren in Data-Tab.', 'info', 8000);
+                showToast(
+                    '📝 Neu: Markdown Shortcuts aktiviert! Nutze **bold**, *italic*, ~~strike~~, `code` in allen Editoren. Deaktivieren in Data-Tab.',
+                    'info',
+                    8000
+                );
             }
             D.settings.markdownOnboardingSeen = true;
             if (typeof save === 'function') {

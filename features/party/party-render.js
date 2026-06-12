@@ -13,8 +13,7 @@ function renderParty() {
     const repairCharactersData = window.repairCharactersData;
     const updateDiceCharSelect = window.updateDiceCharSelect;
     const c = $('party-list');
-    if (!c)
-        return;
+    if (!c) return;
     const roster = $('party-roster');
     // Enable EntityLookup cache for performance during render cycle
     EntityLookup.enableCache();
@@ -28,8 +27,7 @@ function renderParty() {
             buttonAction: 'call',
             buttonValue: 'repairCharactersData'
         });
-        if (roster)
-            roster.innerHTML = '';
+        if (roster) roster.innerHTML = '';
         EntityLookup.clearCache();
         return;
     }
@@ -38,10 +36,14 @@ function renderParty() {
     const classFilterEl = $('party-class-filter');
     const classFilter = classFilterEl?.value || '';
     // Klassen-Filter-Dropdown befüllen
-    const classes = [...new Set(D.characters.map((ch) => ch.characterClass).filter(Boolean))].sort();
-    populateFilterDropdown('party-class-filter', classes.map(cls => ({ id: cls, name: cls })), {
-        allLabel: '⚔️ Alle Klassen'
-    });
+    const classes = [...new Set(D.characters.map(ch => ch.characterClass).filter(Boolean))].sort();
+    populateFilterDropdown(
+        'party-class-filter',
+        classes.map(cls => ({ id: cls, name: cls })),
+        {
+            allLabel: '⚔️ Alle Klassen'
+        }
+    );
     // Counter aktualisieren
     updateCounters({ 'party-io-count': D.characters.length || 0 });
     // Render Roster (always show all characters)
@@ -71,10 +73,9 @@ function renderParty() {
         EntityLookup.clearCache();
         return;
     }
-    c.innerHTML = characters.map((ch) => renderCharacterCard(ch, renderConditionsBar, CATS)).join('');
+    c.innerHTML = characters.map(ch => renderCharacterCard(ch, renderConditionsBar, CATS)).join('');
     // Update dice tab character select
-    if (typeof updateDiceCharSelect === 'function')
-        updateDiceCharSelect();
+    if (typeof updateDiceCharSelect === 'function') updateDiceCharSelect();
     // Clear EntityLookup cache after render to prevent stale data
     EntityLookup.clearCache();
 }
@@ -91,11 +92,18 @@ function renderPartyRoster(container, characters) {
         `;
         return;
     }
-    container.innerHTML = characters.map(ch => {
-        const hpPct = ch.hpMax > 0 ? (ch.hpCurrent / ch.hpMax) * 100 : 100;
-        const hpClass = hpPct <= COMBAT_CONSTANTS.HP_CRITICAL_THRESHOLD ? 'critical' : hpPct <= COMBAT_CONSTANTS.HP_BLOODIED_THRESHOLD ? 'bloodied' : 'healthy';
-        const conditions = ch.conditions?.length || 0;
-        return `
+    container.innerHTML =
+        characters
+            .map(ch => {
+                const hpPct = ch.hpMax > 0 ? (ch.hpCurrent / ch.hpMax) * 100 : 100;
+                const hpClass =
+                    hpPct <= COMBAT_CONSTANTS.HP_CRITICAL_THRESHOLD
+                        ? 'critical'
+                        : hpPct <= COMBAT_CONSTANTS.HP_BLOODIED_THRESHOLD
+                          ? 'bloodied'
+                          : 'healthy';
+                const conditions = ch.conditions?.length || 0;
+                return `
             <div class="roster-char ${hpClass}" data-action="scroll-to-char" data-id="${ch.id}">
                 ${conditions > 0 ? `<span class="roster-conditions">${conditions}</span>` : ''}
                 <div class="roster-avatar">
@@ -108,7 +116,9 @@ function renderPartyRoster(container, characters) {
                 </div>
             </div>
         `;
-    }).join('') + `
+            })
+            .join('') +
+        `
         <button class="roster-add" data-action="toggle-collapse" data-value="char-form">
             +
             <span>Neu</span>
@@ -122,16 +132,26 @@ function renderCharacterCard(ch, renderConditionsBar, CATS) {
     const hpPct = ch.hpMax > 0 ? (ch.hpCurrent / ch.hpMax) * 100 : 100;
     const hpClass = hpPct <= 25 ? 'critical' : hpPct <= 50 ? 'bloodied' : 'healthy';
     const cur = ch.currency || {};
-    const coins = [cur.pm && `${cur.pm}P`, cur.gm && `${cur.gm}G`, cur.em && `${cur.em}E`, cur.sm && `${cur.sm}S`, cur.km && `${cur.km}K`].filter(Boolean).join(' ');
+    const coins = [
+        cur.pm && `${cur.pm}P`,
+        cur.gm && `${cur.gm}G`,
+        cur.em && `${cur.em}E`,
+        cur.sm && `${cur.sm}S`,
+        cur.km && `${cur.km}K`
+    ]
+        .filter(Boolean)
+        .join(' ');
     // Spells & Items
-    const spells = (ch.spells || []).map((sid) => EntityLookup.spell(sid)).filter(Boolean);
+    const spells = (ch.spells || []).map(sid => EntityLookup.spell(sid)).filter(Boolean);
     const itemsRaw = ch.items || [];
-    const items = itemsRaw.map((item) => {
-        const itemId = typeof item === 'number' ? item : item.id;
-        const qty = typeof item === 'number' ? 1 : item.quantity;
-        const lootItem = EntityLookup.lootItem(itemId);
-        return lootItem ? { ...lootItem, assignedQty: qty } : null;
-    }).filter(Boolean);
+    const items = itemsRaw
+        .map(item => {
+            const itemId = typeof item === 'number' ? item : item.id;
+            const qty = typeof item === 'number' ? 1 : item.quantity;
+            const lootItem = EntityLookup.lootItem(itemId);
+            return lootItem ? { ...lootItem, assignedQty: qty } : null;
+        })
+        .filter(Boolean);
     // Attributes
     const attrs = ch.attributes || {};
     const hasAttrs = attrs.str || attrs.dex || attrs.con || attrs.int || attrs.wis || attrs.cha;
@@ -140,7 +160,9 @@ function renderCharacterCard(ch, renderConditionsBar, CATS) {
     // Conditions
     const conditionsHtml = renderConditionsBar(ch.conditions, 'characters', ch.id);
     // Class display
-    const classDisplay = ch.subclass ? `${esc(ch.characterClass || '')} (${esc(ch.subclass)})` : esc(ch.characterClass || '');
+    const classDisplay = ch.subclass
+        ? `${esc(ch.characterClass || '')} (${esc(ch.subclass)})`
+        : esc(ch.characterClass || '');
     return `
         <div class="char-card" id="char-${ch.id}" draggable="true" data-sortable data-id="${ch.id}">
             <!-- Header -->
@@ -190,23 +212,29 @@ function renderCharacterCard(ch, renderConditionsBar, CATS) {
                     </div>
                 </div>
 
-                ${hasAttrs ? `
+                ${
+                    hasAttrs
+                        ? `
                     <!-- Attributes -->
                     <div class="char-card-attrs">
-                        ${['str', 'dex', 'con', 'int', 'wis', 'cha'].map(attr => {
-        const val = attrs[attr] || 10;
-        const mod = Math.floor((val - 10) / 2);
-        const modStr = mod >= 0 ? '+' + mod : String(mod);
-        return `
+                        ${['str', 'dex', 'con', 'int', 'wis', 'cha']
+                            .map(attr => {
+                                const val = attrs[attr] || 10;
+                                const mod = Math.floor((val - 10) / 2);
+                                const modStr = mod >= 0 ? '+' + mod : String(mod);
+                                return `
                                 <div class="char-attr-pill">
                                     <div class="char-attr-pill-name">${attr.toUpperCase()}</div>
                                     <div class="char-attr-pill-val">${val}</div>
                                     <div class="char-attr-pill-mod">${modStr}</div>
                                 </div>
                             `;
-    }).join('')}
+                            })
+                            .join('')}
                     </div>
-                ` : ''}
+                `
+                        : ''
+                }
 
                 ${conditionsHtml}
 
@@ -214,30 +242,52 @@ function renderCharacterCard(ch, renderConditionsBar, CATS) {
 
                 ${coins ? `<div class="char-card-currency">💰 ${coins}</div>` : ''}
 
-                ${(ch.resistances?.length || ch.immunities?.length) ? `
+                ${
+                    ch.resistances?.length || ch.immunities?.length
+                        ? `
                     <div style="font-size: 0.7em; color: var(--text-dim); margin-bottom: 8px;">
                         ${ch.resistances?.length ? `<span style="color: var(--cyan);">🛡️ ${ch.resistances.join(', ')}</span>` : ''}
                         ${ch.immunities?.length ? `<span style="color: var(--gold);"> ⭐ ${ch.immunities.join(', ')}</span>` : ''}
                     </div>
-                ` : ''}
+                `
+                        : ''
+                }
 
-                ${spells.length ? `
+                ${
+                    spells.length
+                        ? `
                     <div class="char-card-tags">
-                        ${spells.slice(0, 6).map((s) => `
+                        ${spells
+                            .slice(0, 6)
+                            .map(
+                                s => `
                             <span class="char-tag spell" data-action="navigate-entity-stop" data-type="spells" data-id="${s.id}">✨ ${esc(s.name)}</span>
-                        `).join('')}
+                        `
+                            )
+                            .join('')}
                         ${spells.length > 6 ? `<span class="char-tag">+${spells.length - 6}</span>` : ''}
                     </div>
-                ` : ''}
+                `
+                        : ''
+                }
 
-                ${items.length ? `
+                ${
+                    items.length
+                        ? `
                     <div class="char-card-tags">
-                        ${items.slice(0, 4).map((i) => `
+                        ${items
+                            .slice(0, 4)
+                            .map(
+                                i => `
                             <span class="char-tag item" data-action="navigate-entity-stop" data-type="loot" data-id="${i.id}">${CATS[i.category]?.split(' ')[0] || '📦'} ${esc(i.name)}${i.assignedQty > 1 ? ' ×' + i.assignedQty : ''}</span>
-                        `).join('')}
+                        `
+                            )
+                            .join('')}
                         ${items.length > 4 ? `<span class="char-tag">+${items.length - 4}</span>` : ''}
                     </div>
-                ` : ''}
+                `
+                        : ''
+                }
 
                 <!-- Actions -->
                 <div class="char-card-actions" data-stop-propagation="true">
@@ -266,8 +316,7 @@ function renderCompactSpellSlots(ch) {
             break;
         }
     }
-    if (!hasSlots)
-        return '';
+    if (!hasSlots) return '';
     let html = '<div class="char-card-slots">';
     for (let level = 0; level <= 9; level++) {
         const max = slots[level] || 0;
@@ -311,17 +360,16 @@ function scrollToChar(id) {
 function renderPartyOverview() {
     const D = window.D;
     const container = $('party-overview');
-    if (!container)
-        return;
+    if (!container) return;
     const chars = D.characters || [];
     if (chars.length === 0) {
         container.classList.remove('show');
         return;
     }
     // Calculate stats
-    const passivePerceptions = chars.map((c) => c.passivePerception || 10);
+    const passivePerceptions = chars.map(c => c.passivePerception || 10);
     const lowestPerception = Math.min(...passivePerceptions);
-    const acValues = chars.map((c) => c.armorClass || 10);
+    const acValues = chars.map(c => c.armorClass || 10);
     const minAC = Math.min(...acValues);
     const maxAC = Math.max(...acValues);
     const acRange = minAC === maxAC ? `${minAC}` : `${minAC}-${maxAC}`;
@@ -355,13 +403,17 @@ function renderPartyOverview() {
             <div class="party-stat-value">${chars.length}</div>
             <div class="party-stat-label">Party<br>Größe</div>
         </div>
-        ${totalConditions > 0 ? `
+        ${
+            totalConditions > 0
+                ? `
         <div class="party-stat-card ${totalConditions > 2 ? 'critical' : ''}">
             <div class="party-stat-icon">⚠️</div>
             <div class="party-stat-value">${totalConditions}</div>
             <div class="party-stat-label">Aktive<br>Conditions</div>
         </div>
-        ` : ''}
+        `
+                : ''
+        }
     `;
     container.classList.add('show');
 }

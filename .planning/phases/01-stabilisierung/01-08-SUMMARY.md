@@ -6,41 +6,41 @@ tags: [storage, persistence, regression-tests, vm, jest, tdd, cr-01, stab-05]
 
 # Dependency graph
 requires:
-  - phase: 01-stabilisierung
-    plan: 02
-    provides: Persistenz-Härtung (_ts-Mechanismus, IDB-Stale-Shadow-Detection) die quick-roll.js nutzt
+    - phase: 01-stabilisierung
+      plan: 02
+      provides: Persistenz-Härtung (_ts-Mechanismus, IDB-Stale-Shadow-Detection) die quick-roll.js nutzt
 provides:
-  - vm-basierte Regressionstests für resolveStorageConflict (CR-01-Nachweis + Absicherung)
-  - Fix für Endlosrekursion in quick-roll.js (STAB-05/SC2 auf Code-Ebene erfüllt)
-  - Deterministischer IDB-Vorrang ohne externen UI-Hook
-  - Andockpunkt window.showStorageConflictDialogUI für spätere D-07-Dialog-Implementierung
+    - vm-basierte Regressionstests für resolveStorageConflict (CR-01-Nachweis + Absicherung)
+    - Fix für Endlosrekursion in quick-roll.js (STAB-05/SC2 auf Code-Ebene erfüllt)
+    - Deterministischer IDB-Vorrang ohne externen UI-Hook
+    - Andockpunkt window.showStorageConflictDialogUI für spätere D-07-Dialog-Implementierung
 affects:
-  - 01-stabilisierung (gap-closure CR-01 geschlossen)
-  - Zukünftige Phase: D-07 Auswahl-Dialog (window.showStorageConflictDialogUI-Hook)
+    - 01-stabilisierung (gap-closure CR-01 geschlossen)
+    - Zukünftige Phase: D-07 Auswahl-Dialog (window.showStorageConflictDialogUI-Hook)
 
 # Tech tracking
 tech-stack:
-  added: []
-  patterns:
-    - "vm-basierte Tests gegen echten Produktionscode (nicht Inline-Simulation) — analog migration.test.js"
-    - "Quelltext-Audit via Regex in Tests (Test E: Selbstreferenz-Guard)"
+    added: []
+    patterns:
+        - 'vm-basierte Tests gegen echten Produktionscode (nicht Inline-Simulation) — analog migration.test.js'
+        - 'Quelltext-Audit via Regex in Tests (Test E: Selbstreferenz-Guard)'
 
 key-files:
-  created:
-    - tests/unit/storage-conflict.test.js
-  modified:
-    - systems/spellslots/quick-roll.js
+    created:
+        - tests/unit/storage-conflict.test.js
+    modified:
+        - systems/spellslots/quick-roll.js
 
 key-decisions:
-  - "resolveStorageConflict statt showStorageConflictDialog — unterschiedlicher Name verhindert Selbstrekursion strukturell"
-  - "Andockpunkt window.showStorageConflictDialogUI (anders benannt) für späteren D-07-Dialog reserviert"
-  - "IDB-Vorrang als deterministischer Fallback — kein stiller LS-Sieg, SC2/STAB-05 auf Code-Ebene erfüllt"
-  - "D-07-Auswahl-Dialog bewusst NICHT in diesem Gap-Plan (nur Rekursions-Fix, kein UI-Scope-Creep)"
-  - "load() bleibt synchron/callback-basiert — kein await, verhindert Race-Condition mit laufendem Load-Pfad"
+    - 'resolveStorageConflict statt showStorageConflictDialog — unterschiedlicher Name verhindert Selbstrekursion strukturell'
+    - 'Andockpunkt window.showStorageConflictDialogUI (anders benannt) für späteren D-07-Dialog reserviert'
+    - 'IDB-Vorrang als deterministischer Fallback — kein stiller LS-Sieg, SC2/STAB-05 auf Code-Ebene erfüllt'
+    - 'D-07-Auswahl-Dialog bewusst NICHT in diesem Gap-Plan (nur Rekursions-Fix, kein UI-Scope-Creep)'
+    - 'load() bleibt synchron/callback-basiert — kein await, verhindert Race-Condition mit laufendem Load-Pfad'
 
 patterns-established:
-  - "vm-Test-Muster: fs.readFileSync + vm.createContext + vm.runInContext für echten Produktionscode (kein Inline-Replikat)"
-  - "Quelltext-Audit-Test: Regex-Prüfung direkt auf Quelldatei als dauerhafte Guard-Assertion"
+    - 'vm-Test-Muster: fs.readFileSync + vm.createContext + vm.runInContext für echten Produktionscode (kein Inline-Replikat)'
+    - 'Quelltext-Audit-Test: Regex-Prüfung direkt auf Quelldatei als dauerhafte Guard-Assertion'
 
 requirements-completed: [STAB-05]
 
@@ -131,14 +131,15 @@ None — keine externen Services, keine Umgebungsvariablen, keine Konfigurations
 
 ### TDD Gate Compliance
 
-| Gate | Commit-Pattern | Status |
-|------|---------------|--------|
-| RED  | `test(01-08): ...` | 83fc966 — PASS |
-| GREEN | `fix(01-08): ...` | 80687fb — PASS |
-| REFACTOR | Nicht erforderlich | — |
+| Gate     | Commit-Pattern     | Status         |
+| -------- | ------------------ | -------------- |
+| RED      | `test(01-08): ...` | 83fc966 — PASS |
+| GREEN    | `fix(01-08): ...`  | 80687fb — PASS |
+| REFACTOR | Nicht erforderlich | —              |
 
 ## Self-Check: PASSED
 
 ---
-*Phase: 01-stabilisierung*
-*Completed: 2026-06-12*
+
+_Phase: 01-stabilisierung_
+_Completed: 2026-06-12_

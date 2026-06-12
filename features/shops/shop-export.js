@@ -119,7 +119,8 @@ function buildHandoutHTML(shop, options) {
     let itemsHTML = '';
 
     if (itemsToShow.length === 0) {
-        itemsHTML = '<div class="empty-shop"><p>Dieser Shop hat derzeit keine verfügbaren Waren.</p></div>';
+        itemsHTML =
+            '<div class="empty-shop"><p>Dieser Shop hat derzeit keine verfügbaren Waren.</p></div>';
     } else if (options.groupByCategory) {
         // Nach Kategorie gruppieren
         const byCategory = {};
@@ -141,7 +142,8 @@ function buildHandoutHTML(shop, options) {
                         </div>
                     </div>
                 `;
-            }).join('');
+            })
+            .join('');
     } else {
         // Keine Gruppierung, alle Items direkt
         itemsHTML = `
@@ -152,14 +154,18 @@ function buildHandoutHTML(shop, options) {
     }
 
     // Vollständiges HTML-Dokument
-    return `<!DOCTYPE html>
+    return (
+        `<!DOCTYPE html>
 <html lang="de">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>${esc(shop.name)} - Handout</title>
-    <sty` + `le>${getHandoutCSS()}</sty` + `le>
-</he` + `ad>
+    <sty` +
+        `le>${getHandoutCSS()}</sty` +
+        `le>
+</he` +
+        `ad>
 <body>
     <div class="handout-container">
         ${shopHeader}
@@ -174,8 +180,11 @@ function buildHandoutHTML(shop, options) {
             <p class="print-tip">💡 <strong>Drucktipp:</strong> Verwende <kbd>Strg+P</kbd> (Windows) oder <kbd>⌘+P</kbd> (Mac) zum Drucken</p>
         </footer>
     </div>
-</bo` + `dy>
-</ht` + `ml>`;
+</bo` +
+        `dy>
+</ht` +
+        `ml>`
+    );
 }
 
 /**
@@ -215,7 +224,8 @@ function renderHandoutItem(item, options) {
         if (item.type) details.push(`Typ: ${esc(item.type)}`);
         if (item.ac) details.push(`RK: ${esc(item.ac)}`);
         if (item.strength) details.push(`STR: ${esc(item.strength)}`);
-        if (item.stealth === 'disadvantage') details.push(`Heiml.: <span style="color: #ef4444;">Nachteil</span>`);
+        if (item.stealth === 'disadvantage')
+            details.push(`Heiml.: <span style="color: #ef4444;">Nachteil</span>`);
         if (item.weight) details.push(`Gewicht: ${esc(item.weight)}`);
     } else {
         if (item.type) details.push(`Typ: ${esc(item.type)}`);
@@ -234,7 +244,7 @@ function renderHandoutItem(item, options) {
 
     // Verfügbarkeit (optional)
     if (options.showAvailability) {
-        const qtyText = item.unlimited ? '∞' : (item.quantity || 1);
+        const qtyText = item.unlimited ? '∞' : item.quantity || 1;
         const availText = isAvailable ? `Verfügbar (${qtyText}×)` : 'Nicht verfügbar';
         itemHTML += `<div class="item-availability ${isAvailable ? 'available' : 'unavailable'}">${availText}</div>`;
     }

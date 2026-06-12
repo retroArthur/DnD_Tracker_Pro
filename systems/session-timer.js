@@ -14,20 +14,16 @@ function formatSessionTime(totalSeconds) {
     const hours = Math.floor(totalSeconds / 3600);
     const minutes = Math.floor((totalSeconds % 3600) / 60);
     const seconds = totalSeconds % 60;
-    return [hours, minutes, seconds]
-        .map(v => v.toString().padStart(2, '0'))
-        .join(':');
+    return [hours, minutes, seconds].map(v => v.toString().padStart(2, '0')).join(':');
 }
 function updateSessionTimerDisplay() {
     const timeStr = formatSessionTime(sessionTimerSeconds);
     // Desktop Display
     const display = $('session-timer-display');
-    if (display)
-        display.textContent = timeStr;
+    if (display) display.textContent = timeStr;
     // Mobile Display
     const mobileDisplay = $('mobile-timer-display');
-    if (mobileDisplay)
-        mobileDisplay.textContent = timeStr;
+    if (mobileDisplay) mobileDisplay.textContent = timeStr;
 }
 function toggleSessionTimer() {
     const timer = $('session-timer');
@@ -35,18 +31,15 @@ function toggleSessionTimer() {
     const toggleBtn = $('session-timer-toggle');
     if (sessionTimerRunning) {
         // Pause
-        if (sessionTimerInterval)
-            clearInterval(sessionTimerInterval);
+        if (sessionTimerInterval) clearInterval(sessionTimerInterval);
         sessionTimerRunning = false;
         timer?.classList.remove('running');
         timer?.classList.add('paused');
         mobileTimer?.classList.remove('running');
         mobileTimer?.classList.add('paused');
-        if (toggleBtn)
-            toggleBtn.textContent = '▶️';
+        if (toggleBtn) toggleBtn.textContent = '▶️';
         showToast('⏸️ Timer pausiert');
-    }
-    else {
+    } else {
         // Start - cleanup vorheriger Interval falls vorhanden
         if (sessionTimerInterval) {
             clearInterval(sessionTimerInterval);
@@ -57,8 +50,7 @@ function toggleSessionTimer() {
         timer?.classList.add('running');
         mobileTimer?.classList.remove('paused');
         mobileTimer?.classList.add('running');
-        if (toggleBtn)
-            toggleBtn.textContent = '⏸️';
+        if (toggleBtn) toggleBtn.textContent = '⏸️';
         showToast('▶️ Timer gestartet');
         sessionTimerInterval = window.setInterval(() => {
             sessionTimerSeconds++;

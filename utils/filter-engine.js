@@ -27,12 +27,7 @@
  * });
  */
 function applyFilters(items, config) {
-    const {
-        searchText = '',
-        searchFields = [],
-        filters = {},
-        customFilter = null
-    } = config;
+    const { searchText = '', searchFields = [], filters = {}, customFilter = null } = config;
 
     const search = searchText.trim().toLowerCase();
 
@@ -141,14 +136,10 @@ function sortByField(items, field, direction = 'asc') {
         if (aVal === bVal) return 0;
 
         if (typeof aVal === 'string') {
-            return direction === 'asc'
-                ? aVal.localeCompare(bVal)
-                : bVal.localeCompare(aVal);
+            return direction === 'asc' ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
         }
 
-        return direction === 'asc'
-            ? (aVal < bVal ? -1 : 1)
-            : (aVal > bVal ? -1 : 1);
+        return direction === 'asc' ? (aVal < bVal ? -1 : 1) : aVal > bVal ? -1 : 1;
     });
 
     return sorted;

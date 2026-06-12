@@ -8,17 +8,14 @@ function quickRoll(sides) {
     const isCrit = sides === 20 && result === 20;
     const isFail = sides === 20 && result === 1;
     let msg = `🎲 d${sides}: ${result}`;
-    if (isCrit)
-        msg = '🎉 Kritisch! d20: 20';
-    if (isFail)
-        msg = '💀 Patzer! d20: 1';
+    if (isCrit) msg = '🎉 Kritisch! d20: 20';
+    if (isFail) msg = '💀 Patzer! d20: 1';
     showToast(msg);
     // Zur Würfelhistorie hinzufügen
     const D = window.D;
     D.diceHistory = D.diceHistory || [];
     D.diceHistory.unshift({ dice: `d${sides}`, result, timestamp: Date.now() });
-    if (D.diceHistory.length > 50)
-        D.diceHistory = D.diceHistory.slice(0, 50);
+    if (D.diceHistory.length > 50) D.diceHistory = D.diceHistory.slice(0, 50);
 }
 // (D-07) Speicher-Konflikt auflösen. Es gibt (noch) keinen externen UI-Dialog —
 // bei abweichendem Inhalt wird der neuere IDB-Stand bevorzugt (kein stiller Verlust).
@@ -57,16 +54,20 @@ async function load() {
                     resolveStorageConflict(
                         s,
                         idbRecord.data,
-                        () => { /* LS-Daten nutzen — s bleibt unverändert */ },
-                        () => { s = idbRecord.data; }
+                        () => {
+                            /* LS-Daten nutzen — s bleibt unverändert */
+                        },
+                        () => {
+                            s = idbRecord.data;
+                        }
                     );
                 }
                 // Identischer Inhalt: kein Dialog, s bleibt (kein Datenverlust)
-            }
-            catch (e) {
+            } catch (e) {
                 // IDB nicht verfügbar — LS-Daten nutzen
                 if (APP_CONFIG.DEBUG_MODE) {
-                    ErrorHandler && ErrorHandler.log('load', e, '[D-07] IDB-Konfliktprüfung fehlgeschlagen');
+                    ErrorHandler &&
+                        ErrorHandler.log('load', e, '[D-07] IDB-Konfliktprüfung fehlgeschlagen');
                 }
             }
         }
@@ -77,12 +78,12 @@ async function load() {
                 s = await loadFromIndexedDBFallback(key);
                 if (s) {
                     if (APP_CONFIG.DEBUG_MODE) {
-                        ErrorHandler && ErrorHandler.log('load', null, '[LOAD] Daten aus IndexedDB geladen');
+                        ErrorHandler &&
+                            ErrorHandler.log('load', null, '[LOAD] Daten aus IndexedDB geladen');
                     }
                     showToast('💾 Kampagne aus IndexedDB geladen', 'info', 3000);
                 }
-            }
-            catch (e) {
+            } catch (e) {
                 if (APP_CONFIG.DEBUG_MODE) {
                     ErrorHandler && ErrorHandler.log('load', e, '[LOAD] Keine Daten in IndexedDB');
                 }
@@ -93,8 +94,7 @@ async function load() {
             let p;
             try {
                 p = JSON.parse(s);
-            }
-            catch (parseError) {
+            } catch (parseError) {
                 ErrorHandler.log('load', parseError, 'JSON Parse fehlgeschlagen');
                 ErrorHandler.showError('Kampagnendaten sind beschädigt');
                 return;
@@ -110,36 +110,39 @@ async function load() {
             if (p._version === '2.11') {
                 p._version = '2.0.0';
                 if (APP_CONFIG.DEBUG_MODE) {
-                    ErrorHandler && ErrorHandler.log('load', null, '[LOAD] Legacy-Stempel 2.11 auf 2.0.0 normalisiert');
+                    ErrorHandler &&
+                        ErrorHandler.log(
+                            'load',
+                            null,
+                            '[LOAD] Legacy-Stempel 2.11 auf 2.0.0 normalisiert'
+                        );
                 }
             }
             // Versionierung und Migration
             if (!p._version || compareVersions(p._version, CURRENT_VERSION) < 0) {
                 if (APP_CONFIG.DEBUG_MODE) {
-                    ErrorHandler && ErrorHandler.log('load', null, `[LOAD] Migriere von ${p._version || 'unbekannt'} auf ${CURRENT_VERSION}`);
+                    ErrorHandler &&
+                        ErrorHandler.log(
+                            'load',
+                            null,
+                            `[LOAD] Migriere von ${p._version || 'unbekannt'} auf ${CURRENT_VERSION}`
+                        );
                 }
                 try {
                     p = migrateData(p);
-                }
-                catch (migrateError) {
+                } catch (migrateError) {
                     ErrorHandler.log('load', migrateError, 'Migration fehlgeschlagen');
                     // Fahre trotzdem fort mit unmigierten Daten
                 }
             }
             // Merge imported data into D (D is now const, cannot reassign)
             Object.assign(D, p);
-            if (!D.encounters)
-                D.encounters = [];
-            if (!D.spells)
-                D.spells = [];
-            if (!D.links)
-                D.links = [];
-            if (!D.filters)
-                D.filters = [];
-            if (!D.calendar)
-                D.calendar = { day: 1, month: 4, year: 1492, events: [] };
-            if (!D._nextId)
-                D._nextId = {};
+            if (!D.encounters) D.encounters = [];
+            if (!D.spells) D.spells = [];
+            if (!D.links) D.links = [];
+            if (!D.filters) D.filters = [];
+            if (!D.calendar) D.calendar = { day: 1, month: 4, year: 1492, events: [] };
+            if (!D._nextId) D._nextId = {};
             // Setze aktuelle Version
             D._version = CURRENT_VERSION;
             // Validiere Datenintegrität
@@ -147,7 +150,11 @@ async function load() {
             const validation = validateDataIntegrity();
             if (!validation.valid) {
                 if (APP_CONFIG.DEBUG_MODE) {
-                    ErrorHandler.log('load', new Error('Data repairs performed'), validation.repairs.join('; '));
+                    ErrorHandler.log(
+                        'load',
+                        new Error('Data repairs performed'),
+                        validation.repairs.join('; ')
+                    );
                 }
                 // Speichere reparierte Daten
                 const save = window.save;
@@ -155,16 +162,15 @@ async function load() {
             }
             // Pre-compute spellClasses arrays for performance
             if (D.spells && Array.isArray(D.spells)) {
-                D.spells.forEach((spell) => {
+                D.spells.forEach(spell => {
                     // Pre-compute spellClasses array from comma-separated string
                     if (spell.spellClass && !spell.spellClasses) {
-                        spell.spellClasses = spell.spellClass.split(',').map((c) => c.trim());
+                        spell.spellClasses = spell.spellClass.split(',').map(c => c.trim());
                     }
                 });
             }
         }
-    }
-    catch (e) {
+    } catch (e) {
         ErrorHandler.log('load', e);
         ErrorHandler.showError('Fehler beim Laden der Kampagne');
     }
@@ -180,15 +186,16 @@ function exportAllDataAsFile() {
         const index = getCampaignIndex();
         if (index.active === APP_CONFIG.STORAGE_KEY) {
             exp._campaignName = 'Standard-Kampagne';
-        }
-        else {
-            const campaign = index.campaigns.find((c) => c.key === index.active);
+        } else {
+            const campaign = index.campaigns.find(c => c.key === index.active);
             exp._campaignName = campaign?.name || 'Unbenannte Kampagne';
         }
         exp._exportDate = new Date().toISOString();
         // (D-05/STAB-06) Dynamische Versionsnummer statt hartkodiertem Stempel '2.11'
         exp._version = APP_CONFIG.VERSION;
-        const filename = exp._campaignName.replace(/[^a-zA-Z0-9äöüÄÖÜß\s-]/g, '').replace(/\s+/g, '-');
+        const filename = exp._campaignName
+            .replace(/[^a-zA-Z0-9äöüÄÖÜß\s-]/g, '')
+            .replace(/\s+/g, '-');
         const json = JSON.stringify(exp, null, 2);
         const blob = new Blob([json], { type: 'application/json' });
         const a = document.createElement('a');
@@ -197,8 +204,7 @@ function exportAllDataAsFile() {
         a.click();
         URL.revokeObjectURL(a.href);
         showToast('📁 Daten exportiert');
-    }
-    catch (err) {
+    } catch (err) {
         showToast('❌ Export fehlgeschlagen: ' + err.message, 'error');
         console.error('[Export] Error:', err);
     }

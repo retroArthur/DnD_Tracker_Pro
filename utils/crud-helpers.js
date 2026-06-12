@@ -22,7 +22,10 @@ function deleteWithConfirm(config) {
     if (!entity) {
         showToast(`❌ ${entityType} nicht gefunden`, 'error');
         if (window.APP_CONFIG?.DEBUG_MODE) {
-            window.ErrorHandler?.log('deleteWithConfirm', new Error(`Entity not found: ${entityType}#${numId}`));
+            window.ErrorHandler?.log(
+                'deleteWithConfirm',
+                new Error(`Entity not found: ${entityType}#${numId}`)
+            );
         }
         return false;
     }
@@ -36,28 +39,25 @@ function deleteWithConfirm(config) {
     // Save undo state BEFORE deletion
     const undoMessage = undoLabel || `${entityType} gelöscht: ${displayName}`;
     const saveUndoState = window.saveUndoState;
-    if (saveUndoState)
-        saveUndoState(undoMessage);
+    if (saveUndoState) saveUndoState(undoMessage);
     // Delete entity from collection
     const D = window.D;
     if (!D[entityType]) {
         showToast(`❌ Unbekannter Entity-Typ: ${entityType}`, 'error');
         return false;
     }
-    D[entityType] = D[entityType].filter((e) => e.id !== numId);
+    D[entityType] = D[entityType].filter(e => e.id !== numId);
     // Call success callback if provided
     if (onSuccess) {
         try {
             onSuccess(entity);
-        }
-        catch (err) {
+        } catch (err) {
             window.ErrorHandler?.log('deleteWithConfirm', err, 'Success callback failed');
         }
     }
     // Persist changes
     const save = window.save;
-    if (save)
-        save();
+    if (save) save();
     return true;
 }
 /**
@@ -73,16 +73,14 @@ function afterCrudOperation(renderFn, message = '✅ Gespeichert', toastType = '
     if (renderFn) {
         try {
             renderFn();
-        }
-        catch (err) {
+        } catch (err) {
             window.ErrorHandler?.log('afterCrudOperation', err, 'Render function failed');
             showToast('⚠️ Anzeige konnte nicht aktualisiert werden', 'warning');
         }
     }
     // Persist changes
     const save = window.save;
-    if (save)
-        save();
+    if (save) save();
     // Show confirmation
     if (message) {
         showToast(message, toastType);
@@ -104,8 +102,7 @@ function saveEntityWithUndo(config) {
     const displayName = data.name || data.title || 'Unbekannt';
     const undoMessage = undoLabel || `${entityType} ${action}: ${displayName}`;
     const saveUndoState = window.saveUndoState;
-    if (saveUndoState)
-        saveUndoState(undoMessage);
+    if (saveUndoState) saveUndoState(undoMessage);
     let savedEntity = null;
     const D = window.D;
     const genId = window.genId;
@@ -117,14 +114,13 @@ function saveEntityWithUndo(config) {
             D[entityType] = [];
         }
         D[entityType].push(savedEntity);
-    }
-    else {
+    } else {
         // Update existing entity
         if (!D[entityType]) {
             showToast(`❌ Unbekannter Entity-Typ: ${entityType}`, 'error');
             return null;
         }
-        const index = D[entityType].findIndex((e) => e.id === numId);
+        const index = D[entityType].findIndex(e => e.id === numId);
         if (index === -1) {
             showToast(`❌ ${entityType} nicht gefunden`, 'error');
             return null;
@@ -136,8 +132,7 @@ function saveEntityWithUndo(config) {
     if (onSuccess) {
         try {
             onSuccess(savedEntity, isNew);
-        }
-        catch (err) {
+        } catch (err) {
             window.ErrorHandler?.log('saveEntityWithUndo', err, 'Success callback failed');
         }
     }

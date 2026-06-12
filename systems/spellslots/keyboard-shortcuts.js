@@ -5,10 +5,11 @@
 // KEYBOARD SHORTCUTS
 // ============================================================
 function initKeyboardShortcuts() {
-    document.addEventListener('keydown', (e) => {
+    document.addEventListener('keydown', e => {
         // Ignoriere Shortcuts wenn in Input/Textarea
         const activeEl = document.activeElement;
-        const isTyping = ['INPUT', 'TEXTAREA', 'SELECT'].includes(activeEl?.tagName) ||
+        const isTyping =
+            ['INPUT', 'TEXTAREA', 'SELECT'].includes(activeEl?.tagName) ||
             activeEl?.isContentEditable;
         // Escape: Schließe Overlays und Modals (konsolidiert)
         if (e.key === 'Escape') {
@@ -16,16 +17,14 @@ function initKeyboardShortcuts() {
             const shortcutsOverlay = $('shortcuts-overlay');
             if (shortcutsOverlay?.classList.contains('show')) {
                 const hideShortcutsOverlay = window.hideShortcutsOverlay;
-                if (hideShortcutsOverlay)
-                    hideShortcutsOverlay();
+                if (hideShortcutsOverlay) hideShortcutsOverlay();
                 return;
             }
             // 2. Quick-Ref schließen
             const quickRef = $('quick-ref-panel');
             if (quickRef?.classList.contains('open')) {
                 const toggleQuickRef = window.toggleQuickRef;
-                if (toggleQuickRef)
-                    toggleQuickRef();
+                if (toggleQuickRef) toggleQuickRef();
                 return;
             }
             // 3. Offenes Modal schließen
@@ -39,16 +38,14 @@ function initKeyboardShortcuts() {
         if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) {
             e.preventDefault();
             const undo = window.undo;
-            if (undo)
-                undo();
+            if (undo) undo();
             return;
         }
         // Strg+Y oder Strg+Shift+Z: Redo (immer aktiv)
         if ((e.ctrlKey || e.metaKey) && (e.key === 'y' || (e.key === 'z' && e.shiftKey))) {
             e.preventDefault();
             const redo = window.redo;
-            if (redo)
-                redo();
+            if (redo) redo();
             return;
         }
         // Strg+S: Speichern (immer aktiv)
@@ -65,14 +62,12 @@ function initKeyboardShortcuts() {
             return;
         }
         // Folgende nur wenn nicht am Tippen
-        if (isTyping)
-            return;
+        if (isTyping) return;
         // ?: Shortcuts-Overlay
         if (e.key === '?' || (e.shiftKey && e.key === '/')) {
             e.preventDefault();
             const showShortcutsOverlay = window.showShortcutsOverlay;
-            if (showShortcutsOverlay)
-                showShortcutsOverlay();
+            if (showShortcutsOverlay) showShortcutsOverlay();
             return;
         }
         // /: Quick Reference öffnen und Suche fokussieren
@@ -81,8 +76,7 @@ function initKeyboardShortcuts() {
             const panel = $('quick-ref-panel');
             if (panel && !panel.classList.contains('active')) {
                 const toggleQuickRef = window.toggleQuickRef;
-                if (toggleQuickRef)
-                    toggleQuickRef();
+                if (toggleQuickRef) toggleQuickRef();
             }
             setTimeout(() => $('qref-search-input')?.focus(), 100);
             return;
@@ -91,13 +85,22 @@ function initKeyboardShortcuts() {
         if (e.key === 't' && !e.ctrlKey && !e.metaKey) {
             e.preventDefault();
             const toggleSessionTimer = window.toggleSessionTimer;
-            if (toggleSessionTimer)
-                toggleSessionTimer();
+            if (toggleSessionTimer) toggleSessionTimer();
             return;
         }
         // Ziffern 1-9: Tab-Wechsel (entspricht der Standard-Tab-Reihenfolge)
         if (e.key >= '1' && e.key <= '9' && !e.ctrlKey && !e.metaKey && !e.altKey) {
-            const tabs = ['dashboard', 'party', 'npcs', 'locations', 'quests', 'encounter', 'initiative', 'shops', 'loot'];
+            const tabs = [
+                'dashboard',
+                'party',
+                'npcs',
+                'locations',
+                'quests',
+                'encounter',
+                'initiative',
+                'shops',
+                'loot'
+            ];
             const idx = parseInt(e.key) - 1;
             if (tabs[idx]) {
                 e.preventDefault();
@@ -107,7 +110,7 @@ function initKeyboardShortcuts() {
         }
         // Alt+Ziffern: Schnellwürfel
         if (e.altKey && e.key >= '1' && e.key <= '9') {
-            const dice = { '1': 12, '2': 20, '4': 4, '6': 6, '8': 8 };
+            const dice = { 1: 12, 2: 20, 4: 4, 6: 6, 8: 8 };
             if (dice[e.key]) {
                 e.preventDefault();
                 quickRoll(dice[e.key]);
@@ -118,40 +121,38 @@ function initKeyboardShortcuts() {
         if (e.key === ' ' && document.querySelector('#view-initiative.active')) {
             e.preventDefault();
             const nextTurn = window.nextTurn;
-            if (nextTurn)
-                nextTurn();
+            if (nextTurn) nextTurn();
             return;
         }
         // Delete/Backspace: Node löschen (nur im Network-Tab)
-        if ((e.key === 'Delete' || e.key === 'Backspace') && document.querySelector('#view-network.active')) {
+        if (
+            (e.key === 'Delete' || e.key === 'Backspace') &&
+            document.querySelector('#view-network.active')
+        ) {
             e.preventDefault();
             const deleteSelectedNode = window.deleteSelectedNode;
-            if (deleteSelectedNode)
-                deleteSelectedNode();
+            if (deleteSelectedNode) deleteSelectedNode();
             return;
         }
         // N: Nächster Zug im Initiative
         if (e.key === 'n' && !e.shiftKey && document.querySelector('#view-initiative.active')) {
             e.preventDefault();
             const nextTurn = window.nextTurn;
-            if (nextTurn)
-                nextTurn();
+            if (nextTurn) nextTurn();
             return;
         }
         // Shift+N: Neue Runde
         if (e.key === 'N' && e.shiftKey && document.querySelector('#view-initiative.active')) {
             e.preventDefault();
             const nextEncounterRound = window.nextEncounterRound;
-            if (nextEncounterRound)
-                nextEncounterRound();
+            if (nextEncounterRound) nextEncounterRound();
             return;
         }
         // P: Vorheriger Zug
         if (e.key === 'p' && document.querySelector('#view-initiative.active')) {
             e.preventDefault();
             const prevTurn = window.prevTurn;
-            if (prevTurn)
-                prevTurn();
+            if (prevTurn) prevTurn();
             return;
         }
         // R: Quick Roll d20
@@ -164,22 +165,17 @@ function initKeyboardShortcuts() {
         if (e.key === 'l' && !e.ctrlKey && !e.metaKey) {
             e.preventDefault();
             const toggleEventLog = window.toggleEventLog;
-            if (toggleEventLog)
-                toggleEventLog();
+            if (toggleEventLog) toggleEventLog();
             return;
         }
         // N: Neues Element (kontextabhängig)
         if (e.key === 'n' && !e.ctrlKey && !e.metaKey) {
             e.preventDefault();
             const activeView = document.querySelector('.view.active')?.id;
-            if (activeView === 'view-party')
-                toggleCollapse('char-form');
-            else if (activeView === 'view-npcs')
-                showModal('npc-modal');
-            else if (activeView === 'view-quests')
-                showModal('quest-modal');
-            else if (activeView === 'view-encounter')
-                toggleCollapse('enc-form');
+            if (activeView === 'view-party') toggleCollapse('char-form');
+            else if (activeView === 'view-npcs') showModal('npc-modal');
+            else if (activeView === 'view-quests') showModal('quest-modal');
+            else if (activeView === 'view-encounter') toggleCollapse('enc-form');
             return;
         }
         // ? : Hilfe anzeigen
@@ -217,9 +213,8 @@ function showKeyboardHelp() {
             ${helpHtml}
         </div>
     `;
-    modal.addEventListener('click', (e) => {
-        if (e.target === modal)
-            modal.remove();
+    modal.addEventListener('click', e => {
+        if (e.target === modal) modal.remove();
     });
     document.body.appendChild(modal);
 }

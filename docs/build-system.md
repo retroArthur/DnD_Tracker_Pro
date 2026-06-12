@@ -27,11 +27,13 @@ dist/dnd-tracker-bundled.html (2.16 MB)
 ### Integration with System
 
 The build system is invoked by:
+
 - **`python build.py`** - Development build (preserves readability)
 - **`npm run build:dev`** - Same as above via npm
 - **CI/CD** - Automated builds on push to GitHub
 
 Output is used for:
+
 - **Standalone distribution** - No server required, open HTML directly
 - **Testing** - Playwright E2E tests run against bundled version
 - **Production deployment** - Single file for easy hosting
@@ -43,6 +45,7 @@ Output is used for:
 **Purpose**: Main build orchestrator
 
 **Responsibilities**:
+
 - Loads CSS from `assets/styles.css`
 - Loads HTML body from `assets/body.html`
 - Loads and concatenates 93 JavaScript modules in order
@@ -51,10 +54,12 @@ Output is used for:
 - Writes final file to `dist/dnd-tracker-bundled.html`
 
 **Parameters**:
+
 - `minify` (bool): If True, applies CSS/JS minification
 - `verbose` (bool): Enables detailed logging
 
 **Example Usage**:
+
 ```python
 # Development build
 build(minify=False, verbose=False)
@@ -68,6 +73,7 @@ build(minify=True, verbose=True)
 **Purpose**: Three-pass deduplication to eliminate declaration conflicts
 
 **Architecture**:
+
 ```python
 Input: Combined JS (1.29 MB, ~59,000 lines)
     ↓
@@ -91,31 +97,34 @@ Output: Deduplicated JS (1.28 MB, ~11KB saved)
 **Why Three Passes Are Needed**:
 
 1. **Pass 1** prevents false positives - must distinguish:
-   ```javascript
-   const UI_TIMING = { ... };  // REAL DEFINITION - keep
-   var UI_TIMING = window.UI_TIMING;  // CONFLICT - remove
-   ```
+
+    ```javascript
+    const UI_TIMING = { ... };  // REAL DEFINITION - keep
+    var UI_TIMING = window.UI_TIMING;  // CONFLICT - remove
+    ```
 
 2. **Pass 2** handles two types of conflicts:
-   - **Type A: Duplicate window assignments**
-     ```javascript
-     var APP_CONFIG = window.APP_CONFIG;  // First - keep
-     var APP_CONFIG = window.APP_CONFIG;  // Duplicate - remove
-     ```
+    - **Type A: Duplicate window assignments**
 
-   - **Type B: Conflicting definitions**
-     ```javascript
-     const BACKUP_INTERVAL = 300000;  // Definition - keep
-     var BACKUP_INTERVAL = window.BACKUP_INTERVAL;  // Conflict - remove
-     ```
+        ```javascript
+        var APP_CONFIG = window.APP_CONFIG; // First - keep
+        var APP_CONFIG = window.APP_CONFIG; // Duplicate - remove
+        ```
+
+    - **Type B: Conflicting definitions**
+        ```javascript
+        const BACKUP_INTERVAL = 300000; // Definition - keep
+        var BACKUP_INTERVAL = window.BACKUP_INTERVAL; // Conflict - remove
+        ```
 
 3. **Pass 3** catches function duplicates missed by regex:
-   ```javascript
-   function cleanChild(node) { ... }  // First - keep
-   function cleanChild(node) { ... }  // Duplicate - remove
-   ```
+    ```javascript
+    function cleanChild(node) { ... }  // First - keep
+    function cleanChild(node) { ... }  // Duplicate - remove
+    ```
 
 **Performance**:
+
 - Processes 1.29 MB JavaScript in ~200ms
 - Linear time complexity: O(n) where n = number of lines
 - Memory efficient: Single pass per operation
@@ -125,6 +134,7 @@ Output: Deduplicated JS (1.28 MB, ~11KB saved)
 **Purpose**: Removes duplicate function declarations
 
 **Algorithm**:
+
 ```python
 seen_functions = {}
 
@@ -137,6 +147,7 @@ for each line:
 ```
 
 **Edge Cases Handled**:
+
 - **Nested functions**: Only top-level functions are tracked
 - **Function bodies**: Entire function body is commented out, not just declaration
 - **Brace counting**: Tracks `{` and `}` to find function end
@@ -209,6 +220,7 @@ print(deduplicated)
 **Problem**: Modules must be loaded in dependency order.
 
 **Example**:
+
 ```python
 # WRONG ORDER - breaks initialization
 modules = [
@@ -226,6 +238,7 @@ modules = [
 **Current Order**: Defined in `build.py` lines 67-174 (93 modules)
 
 **How to Add New Module**:
+
 1. Find appropriate section (utils/, systems/, features/, ui/)
 2. Insert in dependency order
 3. Run build and test - if errors, adjust position
@@ -235,13 +248,14 @@ modules = [
 **Problem**: If a module exports `window.foo` but imports as `window.bar`, deduplication fails.
 
 **Example**:
+
 ```javascript
 // Module A: backups.js
 const MAX_BACKUPS = 5;
-window.MAX_BACKUPS = MAX_BACKUPS;  // Export
+window.MAX_BACKUPS = MAX_BACKUPS; // Export
 
 // Module B: some-other.js
-var MAX_BACKUP = window.MAX_BACKUP;  // ❌ TYPO - different name!
+var MAX_BACKUP = window.MAX_BACKUP; // ❌ TYPO - different name!
 ```
 
 **Solution**: Ensure exact name matching, use TypeScript definitions to catch typos.
@@ -253,12 +267,12 @@ var MAX_BACKUP = window.MAX_BACKUP;  // ❌ TYPO - different name!
 ```javascript
 // Function A
 function renderInit() {
-    const cleanChild = cleanNode(child);  // Scope A - OK
+    const cleanChild = cleanNode(child); // Scope A - OK
 }
 
 // Function B
 function renderMindmap() {
-    const cleanChild = cleanNode(node);   // Scope B - OK
+    const cleanChild = cleanNode(node); // Scope B - OK
 }
 ```
 
@@ -267,6 +281,7 @@ function renderMindmap() {
 ### 4. Performance with Large Codebases
 
 **Current Stats** (93 modules, 1.29 MB):
+
 - Load modules: ~50ms
 - Pass 1 (scan): ~70ms
 - Pass 2 (filter): ~60ms
@@ -275,11 +290,13 @@ function renderMindmap() {
 - **Total**: ~230ms
 
 **Scaling**:
+
 - Linear O(n) complexity
 - Tested up to 150 modules (2 MB) - still under 400ms
 - Memory usage: ~15 MB peak
 
 **Optimization Tips**:
+
 - Use `--minify` only for production (adds 2-3x build time)
 - Run builds in parallel for multiple branches
 - Cache `node_modules` in CI/CD
@@ -289,11 +306,13 @@ function renderMindmap() {
 **Problem**: Python console can't encode emoji on Windows.
 
 **Symptoms**:
+
 ```
 UnicodeEncodeError: 'charmap' codec can't encode character '\u2713'
 ```
 
 **Solution** (already implemented):
+
 ```python
 # Use ASCII alternatives instead of emoji
 log.info("[OK] Build completed")  # Not ✓
@@ -307,6 +326,7 @@ log.info("[ERROR] Build failed")  # Not ❌
 **Location**: `tests/build/test_build_deduplication.py`
 
 **Run Tests**:
+
 ```bash
 # All build tests
 python -m pytest tests/build/test_build_deduplication.py -v
@@ -321,73 +341,76 @@ python -m pytest tests/build/ --cov=build --cov-report=html
 **Test Coverage**:
 
 1. **`test_deduplicate_removes_duplicate_window_assignments`**
-   - Verifies: Duplicate `var X = window.X` are removed
-   - Asserts: Only 1 instance of each assignment remains
+    - Verifies: Duplicate `var X = window.X` are removed
+    - Asserts: Only 1 instance of each assignment remains
 
 2. **`test_deduplicate_removes_conflicting_definitions`**
-   - Verifies: `var X = window.X` removed when `const X = ...` exists
-   - Asserts: Original definition kept, conflicting import removed
+    - Verifies: `var X = window.X` removed when `const X = ...` exists
+    - Asserts: Original definition kept, conflicting import removed
 
 3. **`test_deduplicate_handles_multiple_conflicts`**
-   - Verifies: Multiple conflicts resolved correctly
-   - Tests: BACKUP_INTERVAL, save, MAX_BACKUPS conflicts
+    - Verifies: Multiple conflicts resolved correctly
+    - Tests: BACKUP_INTERVAL, save, MAX_BACKUPS conflicts
 
 4. **`test_full_build_has_no_duplicate_declarations`**
-   - Verifies: Generated HTML has no duplicate window assignments
-   - Scans: Entire built file, regex matches
+    - Verifies: Generated HTML has no duplicate window assignments
+    - Scans: Entire built file, regex matches
 
 5. **`test_build_generates_valid_javascript`**
-   - Verifies: No syntax errors in generated code
-   - Checks: No `var` duplicates within 50 lines (same module)
-   - Allows: `const`/`let` duplicates (block-scoped)
+    - Verifies: No syntax errors in generated code
+    - Checks: No `var` duplicates within 50 lines (same module)
+    - Allows: `const`/`let` duplicates (block-scoped)
 
 6. **`test_constants_are_available_in_build`**
-   - Verifies: Required constants present in build
-   - Checks: BACKUP_INTERVAL, MAX_BACKUPS, UI_TIMING, COMBAT_CONSTANTS
+    - Verifies: Required constants present in build
+    - Checks: BACKUP_INTERVAL, MAX_BACKUPS, UI_TIMING, COMBAT_CONSTANTS
 
 ### Manual Testing Checklist
 
 After build changes:
 
 1. **Build succeeds without errors**
-   ```bash
-   python build.py
-   # Should complete in <1 second, no errors
-   ```
+
+    ```bash
+    python build.py
+    # Should complete in <1 second, no errors
+    ```
 
 2. **Open standalone HTML**
-   ```bash
-   start dist/dnd-tracker-bundled.html
-   # Should load without console errors
-   ```
+
+    ```bash
+    start dist/dnd-tracker-bundled.html
+    # Should load without console errors
+    ```
 
 3. **Check browser console**
-   - ❌ No `SyntaxError: Identifier has already been declared`
-   - ❌ No `ReferenceError: X is not defined`
-   - ✅ Should see: `[DnD] [EventDelegation] Initialized`
+    - ❌ No `SyntaxError: Identifier has already been declared`
+    - ❌ No `ReferenceError: X is not defined`
+    - ✅ Should see: `[DnD] [EventDelegation] Initialized`
 
 4. **Test core functionality**
-   - Switch tabs (Party, NPCs, etc.)
-   - Create new character
-   - Save data (Ctrl+S)
-   - Undo/Redo (Ctrl+Z, Ctrl+Y)
+    - Switch tabs (Party, NPCs, etc.)
+    - Create new character
+    - Save data (Ctrl+S)
+    - Undo/Redo (Ctrl+Z, Ctrl+Y)
 
 5. **Performance check**
-   - Initial load: <2 seconds
-   - Tab switch: <100ms
-   - No memory leaks (leave open 5 minutes, check DevTools Memory tab)
+    - Initial load: <2 seconds
+    - Tab switch: <100ms
+    - No memory leaks (leave open 5 minutes, check DevTools Memory tab)
 
 ### Regression Testing
 
 **Known Issues Fixed**:
 
-| Issue | Symptom | Fix | Test |
-|-------|---------|-----|------|
-| Duplicate const declarations | `SyntaxError: UI_TIMING already declared` | Pass 2 conflict removal | test_deduplicate_removes_conflicting_definitions |
-| Missing BACKUP_INTERVAL | `ReferenceError: BACKUP_INTERVAL is not defined` | Added constant to backups.js | test_constants_are_available_in_build |
-| cleanChild duplicate function | 2 identical functions | Pass 3 function deduplication | test_build_generates_valid_javascript |
+| Issue                         | Symptom                                          | Fix                           | Test                                             |
+| ----------------------------- | ------------------------------------------------ | ----------------------------- | ------------------------------------------------ |
+| Duplicate const declarations  | `SyntaxError: UI_TIMING already declared`        | Pass 2 conflict removal       | test_deduplicate_removes_conflicting_definitions |
+| Missing BACKUP_INTERVAL       | `ReferenceError: BACKUP_INTERVAL is not defined` | Added constant to backups.js  | test_constants_are_available_in_build            |
+| cleanChild duplicate function | 2 identical functions                            | Pass 3 function deduplication | test_build_generates_valid_javascript            |
 
 **Verify these don't regress** after build.py changes:
+
 ```bash
 python -m pytest tests/build/test_build_deduplication.py -v
 # All 6 tests must pass
@@ -398,44 +421,50 @@ python -m pytest tests/build/test_build_deduplication.py -v
 ### Python Standard Library
 
 **`re` (regex)**: Pattern matching for variable declarations
+
 - **Why needed**: Detects `var X = window.X` patterns
 - **Performance**: Compiled regex cached, ~5μs per match
 - **Alternative considered**: AST parsing - rejected (too slow for 60K lines)
 
 **`os` / `pathlib`**: File system operations
+
 - **Why needed**: Read/write files, create directories
 - **Usage**: `os.makedirs()`, `Path.exists()`, `open()`
 
 **`sys`**: System-level operations
+
 - **Why needed**: Script arguments, Python path manipulation
 - **Usage**: `sys.argv`, `sys.path.insert()`
 
 ### Custom Modules
 
 **`tools/logging_util.py`**: Colored console logging
+
 - **Why needed**: User-friendly build output
 - **Provides**: `log.info()`, `log.success()`, `log.error()`, `log.warning()`
 - **Example**:
-  ```python
-  from tools.logging_util import log
 
-  log.info("Processing...")       # Blue text
-  log.success("Build complete!")  # Green text
-  log.error("Build failed!")      # Red text
-  ```
+    ```python
+    from tools.logging_util import log
+
+    log.info("Processing...")       # Blue text
+    log.success("Build complete!")  # Green text
+    log.error("Build failed!")      # Red text
+    ```
 
 ### External Dependencies (Optional)
 
 **None required for basic build**. Optional dependencies:
 
 - **`pytest`**: For running unit tests
-  ```bash
-  pip install pytest
-  ```
+
+    ```bash
+    pip install pytest
+    ```
 
 - **Minification tools** (future):
-  - `terser`: JavaScript minification (not yet integrated)
-  - `cssnano`: CSS minification (not yet integrated)
+    - `terser`: JavaScript minification (not yet integrated)
+    - `cssnano`: CSS minification (not yet integrated)
 
 ### Module Dependencies (Within Codebase)
 
@@ -451,6 +480,7 @@ python -m pytest tests/build/test_build_deduplication.py -v
 8. **`core/init.js`** → Last (initializes everything)
 
 **Dependency Graph** (simplified):
+
 ```
 config.js
   ↓
@@ -468,12 +498,14 @@ constants.js → utils/ → systems/ → features/ → ui/actions/
 ### Build Fails with "Module not found"
 
 **Symptom**:
+
 ```
 [BUILD] Lade JavaScript-Module...
 ❌ [42/93] features/new-feature.js NICHT GEFUNDEN
 ```
 
 **Solution**:
+
 1. Check file exists: `ls features/new-feature.js`
 2. Check path in `build.py` modules list (line 67-174)
 3. Ensure correct relative path from project root
@@ -483,15 +515,17 @@ constants.js → utils/ → systems/ → features/ → ui/actions/
 **Symptom**: Blank page, console shows `ReferenceError`
 
 **Debug Steps**:
+
 1. Open `dist/dnd-tracker-bundled.html` in browser
 2. Open DevTools Console (F12)
 3. Look for error message:
-   - `X is not defined` → Module load order issue
-   - `Y has already been declared` → Deduplication failed
+    - `X is not defined` → Module load order issue
+    - `Y has already been declared` → Deduplication failed
 4. Search bundled HTML for the variable name
 5. Check if definition exists before first use
 
 **Example**:
+
 ```
 ReferenceError: EntityLookup is not defined
   at renderInit (dnd-tracker-bundled.html:45678:12)
@@ -504,6 +538,7 @@ ReferenceError: EntityLookup is not defined
 **Symptom**: Functions/variables missing in built file
 
 **Debug**:
+
 ```bash
 # Compare before/after deduplication
 python -c "
@@ -521,6 +556,7 @@ for line in original.split('\n'):
 ```
 
 **Common Causes**:
+
 - Variable name collision (e.g., multiple modules use `temp` variable)
 - Overly aggressive regex matching
 
@@ -531,6 +567,7 @@ for line in original.split('\n'):
 **Symptoms**: Build takes >5 seconds
 
 **Profile**:
+
 ```python
 import time
 
@@ -547,6 +584,7 @@ def build(minify=False):
 ```
 
 **Optimizations**:
+
 1. Skip minification in development
 2. Use SSD (not HDD) for build directory
 3. Disable antivirus scanning for build folder
@@ -559,36 +597,36 @@ def build(minify=False):
 ### Short Term (Next Sprint)
 
 1. **Parallel Module Loading**
-   - Current: Sequential loading (93 reads)
-   - Proposed: `ThreadPoolExecutor` for parallel reads
-   - Expected: 3-5x faster module loading
+    - Current: Sequential loading (93 reads)
+    - Proposed: `ThreadPoolExecutor` for parallel reads
+    - Expected: 3-5x faster module loading
 
 2. **Incremental Builds**
-   - Current: Full rebuild every time
-   - Proposed: Track file mtimes, only rebuild changed modules
-   - Expected: 10x faster for small changes
+    - Current: Full rebuild every time
+    - Proposed: Track file mtimes, only rebuild changed modules
+    - Expected: 10x faster for small changes
 
 3. **Source Maps**
-   - Current: No source maps, hard to debug minified code
-   - Proposed: Generate `.map` files for minified builds
-   - Benefit: Debug production issues easily
+    - Current: No source maps, hard to debug minified code
+    - Proposed: Generate `.map` files for minified builds
+    - Benefit: Debug production issues easily
 
 ### Long Term (Future Releases)
 
 1. **Tree Shaking**
-   - Remove unused functions/variables
-   - Requires: Static analysis of call graph
-   - Benefit: 20-30% smaller builds
+    - Remove unused functions/variables
+    - Requires: Static analysis of call graph
+    - Benefit: 20-30% smaller builds
 
 2. **Code Splitting**
-   - Lazy-load features on demand
-   - Requires: ESM migration or dynamic script loading
-   - Benefit: Faster initial load time
+    - Lazy-load features on demand
+    - Requires: ESM migration or dynamic script loading
+    - Benefit: Faster initial load time
 
 3. **Hot Module Replacement (HMR)**
-   - Reload changed modules without full refresh
-   - Requires: Dev server with WebSocket
-   - Benefit: Instant feedback during development
+    - Reload changed modules without full refresh
+    - Requires: Dev server with WebSocket
+    - Benefit: Instant feedback during development
 
 ---
 
@@ -601,11 +639,11 @@ def build(minify=False):
 
 ## Changelog
 
-| Version | Date | Changes |
-|---------|------|---------|
-| 2.7.0 | 2026-01-10 | Added three-pass deduplication system |
-| 2.6.0 | 2026-01-07 | TypeScript migration completed |
-| 2.5.0 | 2025-12-15 | Initial build system documentation |
+| Version | Date       | Changes                               |
+| ------- | ---------- | ------------------------------------- |
+| 2.7.0   | 2026-01-10 | Added three-pass deduplication system |
+| 2.6.0   | 2026-01-07 | TypeScript migration completed        |
+| 2.5.0   | 2025-12-15 | Initial build system documentation    |
 
 ---
 

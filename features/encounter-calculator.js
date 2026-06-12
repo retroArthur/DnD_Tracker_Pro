@@ -30,56 +30,80 @@ const XP_THRESHOLDS = {
 };
 // CR to XP conversion (DMG p.275)
 const CR_TO_XP = {
-    "0": 10,
-    "1/8": 25,
-    "1/4": 50,
-    "1/2": 100,
-    "1": 200,
-    "2": 450,
-    "3": 700,
-    "4": 1100,
-    "5": 1800,
-    "6": 2300,
-    "7": 2900,
-    "8": 3900,
-    "9": 5000,
-    "10": 5900,
-    "11": 7200,
-    "12": 8400,
-    "13": 10000,
-    "14": 11500,
-    "15": 13000,
-    "16": 15000,
-    "17": 18000,
-    "18": 20000,
-    "19": 22000,
-    "20": 25000,
-    "21": 33000,
-    "22": 41000,
-    "23": 50000,
-    "24": 62000,
-    "25": 75000,
-    "26": 90000,
-    "27": 105000,
-    "28": 120000,
-    "29": 135000,
-    "30": 155000
+    0: 10,
+    '1/8': 25,
+    '1/4': 50,
+    '1/2': 100,
+    1: 200,
+    2: 450,
+    3: 700,
+    4: 1100,
+    5: 1800,
+    6: 2300,
+    7: 2900,
+    8: 3900,
+    9: 5000,
+    10: 5900,
+    11: 7200,
+    12: 8400,
+    13: 10000,
+    14: 11500,
+    15: 13000,
+    16: 15000,
+    17: 18000,
+    18: 20000,
+    19: 22000,
+    20: 25000,
+    21: 33000,
+    22: 41000,
+    23: 50000,
+    24: 62000,
+    25: 75000,
+    26: 90000,
+    27: 105000,
+    28: 120000,
+    29: 135000,
+    30: 155000
 };
 // Encounter Multipliers (DMG p.82)
 const ENCOUNTER_MULTIPLIERS = [
-    { min: 1, max: 1, multiplier: 1.0, label: "1 monster" },
-    { min: 2, max: 2, multiplier: 1.5, label: "2 monsters" },
-    { min: 3, max: 6, multiplier: 2.0, label: "3-6 monsters" },
-    { min: 7, max: 10, multiplier: 2.5, label: "7-10 monsters" },
-    { min: 11, max: 14, multiplier: 3.0, label: "11-14 monsters" },
-    { min: 15, max: 999, multiplier: 4.0, label: "15+ monsters" }
+    { min: 1, max: 1, multiplier: 1.0, label: '1 monster' },
+    { min: 2, max: 2, multiplier: 1.5, label: '2 monsters' },
+    { min: 3, max: 6, multiplier: 2.0, label: '3-6 monsters' },
+    { min: 7, max: 10, multiplier: 2.5, label: '7-10 monsters' },
+    { min: 11, max: 14, multiplier: 3.0, label: '11-14 monsters' },
+    { min: 15, max: 999, multiplier: 4.0, label: '15+ monsters' }
 ];
 // Terrain Modifiers (homebrew, inspired by community rules)
 const TERRAIN_MODIFIERS = [
-    { id: 'normal', label: 'Normal', multiplier: 1.0, icon: '🏠', desc: 'Keine besonderen Bedingungen' },
-    { id: 'difficult', label: 'Schwieriges Gelände', multiplier: 1.25, icon: '🌲', desc: 'Difficult Terrain, leichte Hindernisse' },
-    { id: 'hazardous', label: 'Gefährlich', multiplier: 1.5, icon: '⚠️', desc: 'Fallen, Umweltschaden, schlechte Sicht' },
-    { id: 'extreme', label: 'Extrem', multiplier: 2.0, icon: '💀', desc: 'Lava, Abgründe, Unterwasser' }
+    {
+        id: 'normal',
+        label: 'Normal',
+        multiplier: 1.0,
+        icon: '🏠',
+        desc: 'Keine besonderen Bedingungen'
+    },
+    {
+        id: 'difficult',
+        label: 'Schwieriges Gelände',
+        multiplier: 1.25,
+        icon: '🌲',
+        desc: 'Difficult Terrain, leichte Hindernisse'
+    },
+    {
+        id: 'hazardous',
+        label: 'Gefährlich',
+        multiplier: 1.5,
+        icon: '⚠️',
+        desc: 'Fallen, Umweltschaden, schlechte Sicht'
+    },
+    {
+        id: 'extreme',
+        label: 'Extrem',
+        multiplier: 2.0,
+        icon: '💀',
+        desc: 'Lava, Abgründe, Unterwasser'
+    }
 ];
 // ============================================================
 // STATE
@@ -108,12 +132,9 @@ function updateBudgetDisplay() {
     const targetEl = $('calc-budget-target-xp');
     const currentEl = $('calc-budget-current-xp');
     const labelEl = $('calc-budget-label');
-    if (targetEl)
-        targetEl.textContent = targetXP.toLocaleString();
-    if (currentEl)
-        currentEl.textContent = currentXP.toLocaleString();
-    if (labelEl)
-        labelEl.textContent = DIFFICULTY_LABELS[calculatorTargetDifficulty];
+    if (targetEl) targetEl.textContent = targetXP.toLocaleString();
+    if (currentEl) currentEl.textContent = currentXP.toLocaleString();
+    if (labelEl) labelEl.textContent = DIFFICULTY_LABELS[calculatorTargetDifficulty];
 }
 function applyBudgetTarget() {
     if (calculatorMonsters.length === 0) {
@@ -133,11 +154,9 @@ function saveMonsterFavorite() {
         return;
     }
     const name = prompt('Name für die Vorlage:');
-    if (!name || !name.trim())
-        return;
+    if (!name || !name.trim()) return;
     const D = window.D;
-    if (!D.monsterFavorites)
-        D.monsterFavorites = [];
+    if (!D.monsterFavorites) D.monsterFavorites = [];
     D.monsterFavorites.push({
         id: Date.now(),
         name: name.trim(),
@@ -149,9 +168,8 @@ function saveMonsterFavorite() {
 }
 function loadMonsterFavorite(id) {
     const D = window.D;
-    const fav = (D.monsterFavorites || []).find((f) => f.id === id);
-    if (!fav)
-        return;
+    const fav = (D.monsterFavorites || []).find(f => f.id === id);
+    if (!fav) return;
     calculatorMonsters = JSON.parse(JSON.stringify(fav.monsters));
     renderCalculator();
     recalculateEncounter();
@@ -160,14 +178,11 @@ function loadMonsterFavorite(id) {
 }
 function deleteMonsterFavorite(id) {
     const D = window.D;
-    if (!D.monsterFavorites)
-        return;
-    const idx = D.monsterFavorites.findIndex((f) => f.id === id);
-    if (idx === -1)
-        return;
+    if (!D.monsterFavorites) return;
+    const idx = D.monsterFavorites.findIndex(f => f.id === id);
+    if (idx === -1) return;
     const name = D.monsterFavorites[idx].name;
-    if (!confirm(`Vorlage "${name}" wirklich löschen?`))
-        return;
+    if (!confirm(`Vorlage "${name}" wirklich löschen?`)) return;
     window.pushUndo('Monster-Vorlage gelöscht');
     D.monsterFavorites.splice(idx, 1);
     window.saveImmediate();
@@ -176,26 +191,22 @@ function deleteMonsterFavorite(id) {
 }
 function toggleFavoritesDropdown() {
     const dropdown = $('calc-favorites-dropdown');
-    if (!dropdown)
-        return;
+    if (!dropdown) return;
     const isVisible = dropdown.classList.contains('show');
     if (isVisible) {
         closeFavoritesDropdown();
-    }
-    else {
+    } else {
         renderFavoritesDropdown();
         dropdown.classList.add('show');
     }
 }
 function closeFavoritesDropdown() {
     const dropdown = $('calc-favorites-dropdown');
-    if (dropdown)
-        dropdown.classList.remove('show');
+    if (dropdown) dropdown.classList.remove('show');
 }
 function renderFavoritesDropdown() {
     const dropdown = $('calc-favorites-dropdown');
-    if (!dropdown)
-        return;
+    if (!dropdown) return;
     const D = window.D;
     const favs = D.monsterFavorites || [];
     if (favs.length === 0) {
@@ -206,17 +217,20 @@ function renderFavoritesDropdown() {
                 <span>➕</span><span>Aktuelle speichern...</span>
             </button>
         `;
-    }
-    else {
+    } else {
         dropdown.innerHTML = `
-            ${favs.map(f => `
+            ${favs
+                .map(
+                    f => `
                 <div class="calc-fav-item" data-action="calc-load-favorite" data-value="${f.id}">
                     <span>⭐</span>
                     <span class="calc-fav-name">${esc(f.name)}</span>
                     <span class="calc-fav-count">(${f.monsters.reduce((s, m) => s + m.count, 0)})</span>
                     <button class="calc-fav-delete" data-action="calc-delete-favorite" data-value="${f.id}" title="Löschen">×</button>
                 </div>
-            `).join('')}
+            `
+                )
+                .join('')}
             <div class="calc-fav-divider"></div>
             <button class="calc-fav-item save" data-action="calc-save-favorite">
                 <span>➕</span><span>Aktuelle speichern...</span>
@@ -244,8 +258,7 @@ function addPartyLevel() {
     const existing = calculatorParty.find(p => p.level === level);
     if (existing) {
         existing.count += count;
-    }
-    else {
+    } else {
         calculatorParty.push({ level, count });
     }
     // Sort by level
@@ -267,7 +280,7 @@ function loadPartyFromCharacters() {
     calculatorParty = [];
     // Group characters by level
     const levelCounts = {};
-    D.characters.forEach((char) => {
+    D.characters.forEach(char => {
         const level = char.level || 1;
         levelCounts[level] = (levelCounts[level] || 0) + 1;
     });
@@ -338,8 +351,7 @@ function clearMonsters() {
 // Live-Vorschau für Monster-Eingabe
 function updateMonsterPreview() {
     const previewDiv = $('calc-monster-preview');
-    if (!previewDiv)
-        return;
+    if (!previewDiv) return;
     const crInput = $('calc-monster-cr');
     const countInput = $('calc-monster-count');
     const crInputValue = crInput?.value.trim();
@@ -352,7 +364,8 @@ function updateMonsterPreview() {
     // Keine Vorschau ohne Party
     const thresholds = calculatePartyThresholds();
     if (thresholds.totalPCs === 0) {
-        previewDiv.innerHTML = '<span class="calc-preview-icon">📊</span><span class="calc-preview-same">Füge zuerst Party hinzu</span>';
+        previewDiv.innerHTML =
+            '<span class="calc-preview-icon">📊</span><span class="calc-preview-same">Füge zuerst Party hinzu</span>';
         return;
     }
     // Berechne hinzugefügte XP
@@ -377,12 +390,10 @@ function updateMonsterPreview() {
         if (idx < ENCOUNTER_MULTIPLIERS.length - 1) {
             newMult = ENCOUNTER_MULTIPLIERS[idx + 1].multiplier;
         }
-    }
-    else if (thresholds.totalPCs > 5) {
+    } else if (thresholds.totalPCs > 5) {
         if (newMonsterCount === 1) {
             newMult = 0.5;
-        }
-        else {
+        } else {
             const idx = ENCOUNTER_MULTIPLIERS.findIndex(m => m.multiplier === newMult);
             if (idx > 0) {
                 newMult = ENCOUNTER_MULTIPLIERS[idx - 1].multiplier;
@@ -404,13 +415,11 @@ function updateMonsterPreview() {
 }
 function clearMonsterPreview() {
     const previewDiv = $('calc-monster-preview');
-    if (previewDiv)
-        previewDiv.innerHTML = '';
+    if (previewDiv) previewDiv.innerHTML = '';
 }
 // Debounced Preview-Update
 function scheduleMonsterPreview() {
-    if (monsterPreviewTimer)
-        clearTimeout(monsterPreviewTimer);
+    if (monsterPreviewTimer) clearTimeout(monsterPreviewTimer);
     monsterPreviewTimer = window.setTimeout(updateMonsterPreview, 100);
 }
 // ============================================================
@@ -420,7 +429,11 @@ function calculatePartyThresholds() {
     if (calculatorParty.length === 0) {
         return { easy: 0, medium: 0, hard: 0, deadly: 0, totalPCs: 0 };
     }
-    let easy = 0, medium = 0, hard = 0, deadly = 0, totalPCs = 0;
+    let easy = 0,
+        medium = 0,
+        hard = 0,
+        deadly = 0,
+        totalPCs = 0;
     calculatorParty.forEach(({ level, count }) => {
         const thresholds = XP_THRESHOLDS[level];
         easy += thresholds.easy * count;
@@ -433,7 +446,15 @@ function calculatePartyThresholds() {
 }
 function calculateMonsterXP() {
     if (calculatorMonsters.length === 0) {
-        return { baseXP: 0, adjustedXP: 0, finalXP: 0, multiplier: 1.0, totalMonsters: 0, terrainMod: 1.0, hasLair: false };
+        return {
+            baseXP: 0,
+            adjustedXP: 0,
+            finalXP: 0,
+            multiplier: 1.0,
+            totalMonsters: 0,
+            terrainMod: 1.0,
+            hasLair: false
+        };
     }
     // Calculate base XP
     let baseXP = 0;
@@ -458,8 +479,7 @@ function calculateMonsterXP() {
         if (currentIndex < ENCOUNTER_MULTIPLIERS.length - 1) {
             multiplier = ENCOUNTER_MULTIPLIERS[currentIndex + 1].multiplier;
         }
-    }
-    else if (partySize > 5) {
+    } else if (partySize > 5) {
         // Large party: use next lower multiplier
         const currentIndex = ENCOUNTER_MULTIPLIERS.findIndex(m => m.multiplier === multiplier);
         if (currentIndex > 0) {
@@ -478,31 +498,70 @@ function calculateMonsterXP() {
     const lairMod = calculatorLairActions ? 1.25 : 1.0;
     // Final adjusted XP including all modifiers
     const finalXP = Math.round(adjustedXP * terrainMod * lairMod);
-    return { baseXP, adjustedXP, finalXP, multiplier, totalMonsters, terrainMod, lairMod, hasLair: calculatorLairActions };
+    return {
+        baseXP,
+        adjustedXP,
+        finalXP,
+        multiplier,
+        totalMonsters,
+        terrainMod,
+        lairMod,
+        hasLair: calculatorLairActions
+    };
 }
 function getDifficulty(adjustedXP, thresholds) {
     if (adjustedXP === 0 || thresholds.medium === 0) {
         return { level: 'none', label: 'N/A', color: '#95a5a6', percentage: 0 };
     }
     if (adjustedXP < thresholds.easy) {
-        return { level: 'trivial', label: 'Trivial', color: '#3498db', percentage: (adjustedXP / thresholds.easy) * 100 };
+        return {
+            level: 'trivial',
+            label: 'Trivial',
+            color: '#3498db',
+            percentage: (adjustedXP / thresholds.easy) * 100
+        };
     }
     if (adjustedXP < thresholds.medium) {
-        return { level: 'easy', label: 'Easy', color: '#2ecc71', percentage: 25 + ((adjustedXP - thresholds.easy) / (thresholds.medium - thresholds.easy)) * 25 };
+        return {
+            level: 'easy',
+            label: 'Easy',
+            color: '#2ecc71',
+            percentage:
+                25 + ((adjustedXP - thresholds.easy) / (thresholds.medium - thresholds.easy)) * 25
+        };
     }
     if (adjustedXP < thresholds.hard) {
-        return { level: 'medium', label: 'Medium', color: '#f39c12', percentage: 50 + ((adjustedXP - thresholds.medium) / (thresholds.hard - thresholds.medium)) * 25 };
+        return {
+            level: 'medium',
+            label: 'Medium',
+            color: '#f39c12',
+            percentage:
+                50 + ((adjustedXP - thresholds.medium) / (thresholds.hard - thresholds.medium)) * 25
+        };
     }
     if (adjustedXP < thresholds.deadly) {
-        return { level: 'hard', label: 'Hard', color: '#e67e22', percentage: 75 + ((adjustedXP - thresholds.hard) / (thresholds.deadly - thresholds.hard)) * 25 };
+        return {
+            level: 'hard',
+            label: 'Hard',
+            color: '#e67e22',
+            percentage:
+                75 + ((adjustedXP - thresholds.hard) / (thresholds.deadly - thresholds.hard)) * 25
+        };
     }
     const overDeadly = ((adjustedXP - thresholds.deadly) / thresholds.deadly) * 100;
-    return { level: 'deadly', label: 'Deadly', color: '#e74c3c', percentage: 100 + Math.min(overDeadly, 100) };
+    return {
+        level: 'deadly',
+        label: 'Deadly',
+        color: '#e74c3c',
+        percentage: 100 + Math.min(overDeadly, 100)
+    };
 }
 // Erklärt den Multiplikator basierend auf Monster-Anzahl und Party-Größe
 function getMultiplierExplanation(totalMonsters, partySize, multiplier) {
     // Finde Basis-Bracket
-    const baseBracket = ENCOUNTER_MULTIPLIERS.find(m => totalMonsters >= m.min && totalMonsters <= m.max);
+    const baseBracket = ENCOUNTER_MULTIPLIERS.find(
+        m => totalMonsters >= m.min && totalMonsters <= m.max
+    );
     const lines = [];
     if (baseBracket) {
         lines.push(`${baseBracket.label} = ×${baseBracket.multiplier}`);
@@ -510,12 +569,10 @@ function getMultiplierExplanation(totalMonsters, partySize, multiplier) {
     // Party-Größen-Anpassung
     if (partySize < 3 && totalMonsters > 1) {
         lines.push(`Kleine Party (<3): +1 Stufe`);
-    }
-    else if (partySize > 5) {
+    } else if (partySize > 5) {
         if (totalMonsters === 1) {
             lines.push(`Große Party (>5), 1 Monster: ×0.5`);
-        }
-        else {
+        } else {
             lines.push(`Große Party (>5): -1 Stufe`);
         }
     }
@@ -530,19 +587,21 @@ function recalculateEncounter() {
     // Use finalXP (includes terrain & lair) for difficulty calculation
     const difficulty = getDifficulty(monsters.finalXP, thresholds);
     const resultsDiv = $('calc-results');
-    if (!resultsDiv)
-        return;
+    if (!resultsDiv) return;
     // Empty states
     if (calculatorParty.length === 0 && calculatorMonsters.length === 0) {
-        resultsDiv.innerHTML = '<div class="calc-results-empty">Füge Party-Mitglieder und Monster hinzu</div>';
+        resultsDiv.innerHTML =
+            '<div class="calc-results-empty">Füge Party-Mitglieder und Monster hinzu</div>';
         return;
     }
     if (calculatorParty.length === 0) {
-        resultsDiv.innerHTML = '<div class="calc-results-empty">Füge zuerst Party-Mitglieder hinzu</div>';
+        resultsDiv.innerHTML =
+            '<div class="calc-results-empty">Füge zuerst Party-Mitglieder hinzu</div>';
         return;
     }
     if (calculatorMonsters.length === 0) {
-        resultsDiv.innerHTML = '<div class="calc-results-empty">Füge Monster hinzu um die Schwierigkeit zu berechnen</div>';
+        resultsDiv.innerHTML =
+            '<div class="calc-results-empty">Füge Monster hinzu um die Schwierigkeit zu berechnen</div>';
         return;
     }
     // Calculate marker position (0-100%) - use finalXP
@@ -555,10 +614,8 @@ function recalculateEncounter() {
     let modifierInfo = '';
     if (monsters.terrainMod !== 1.0 || monsters.hasLair) {
         const parts = [];
-        if (monsters.terrainMod !== 1.0)
-            parts.push(`${terrain.icon} ×${monsters.terrainMod}`);
-        if (monsters.hasLair)
-            parts.push(`🏰 Lair ×${monsters.lairMod}`);
+        if (monsters.terrainMod !== 1.0) parts.push(`${terrain.icon} ×${monsters.terrainMod}`);
+        if (monsters.hasLair) parts.push(`🏰 Lair ×${monsters.lairMod}`);
         modifierInfo = ` • ${parts.join(' ')}`;
     }
     resultsDiv.innerHTML = `
@@ -633,12 +690,10 @@ function quickAdjustDifficulty(direction) {
             }
             // Entferne den ersten Monster-Typ komplett
             calculatorMonsters.shift();
-        }
-        else {
+        } else {
             calculatorMonsters[0].count--;
         }
-    }
-    else {
+    } else {
         // Inkrementell: +1 Monster vom ersten Typ
         calculatorMonsters[0].count++;
     }
@@ -702,13 +757,14 @@ function calculateOptimalMonsterCount(targetDifficultyLevel) {
             bestCount = count;
         }
         // Stoppe wenn wir deutlich über dem Ziel sind
-        if (adjustedXP > targetXP * 1.5)
-            break;
+        if (adjustedXP > targetXP * 1.5) break;
     }
     calculatorMonsters[0].count = bestCount;
     renderCalculator();
     recalculateEncounter();
-    showToast(`Angepasst für ${targetDifficultyLevel.charAt(0).toUpperCase() + targetDifficultyLevel.slice(1)}`);
+    showToast(
+        `Angepasst für ${targetDifficultyLevel.charAt(0).toUpperCase() + targetDifficultyLevel.slice(1)}`
+    );
 }
 // Zeigt ein Dropdown zur präzisen Schwierigkeitswahl
 function showDifficultySelector() {
@@ -724,19 +780,20 @@ function showDifficultySelector() {
     // Zeige Auswahl-Modal
     const levels = ['easy', 'medium', 'hard', 'deadly'];
     const labels = ['Easy', 'Medium', 'Hard', 'Deadly'];
-    const choice = prompt('Wähle Schwierigkeitsgrad:\n' +
-        `1 = Easy (${thresholds.easy} XP)\n` +
-        `2 = Medium (${thresholds.medium} XP)\n` +
-        `3 = Hard (${thresholds.hard} XP)\n` +
-        `4 = Deadly (${thresholds.deadly} XP)`, '2');
+    const choice = prompt(
+        'Wähle Schwierigkeitsgrad:\n' +
+            `1 = Easy (${thresholds.easy} XP)\n` +
+            `2 = Medium (${thresholds.medium} XP)\n` +
+            `3 = Hard (${thresholds.hard} XP)\n` +
+            `4 = Deadly (${thresholds.deadly} XP)`,
+        '2'
+    );
     // User clicked Cancel
-    if (choice === null)
-        return;
+    if (choice === null) return;
     const idx = parseInt(choice) - 1;
     if (idx >= 0 && idx < levels.length) {
         calculateOptimalMonsterCount(levels[idx]);
-    }
-    else {
+    } else {
         showToast('Bitte 1-4 eingeben');
     }
 }
@@ -764,8 +821,7 @@ function saveAsEncounter() {
     const envInfo = [];
     if (monsters.terrainMod !== 1.0)
         envInfo.push(`Terrain: ${terrain.label} (×${monsters.terrainMod})`);
-    if (monsters.hasLair)
-        envInfo.push(`Lair Actions (×${monsters.lairMod})`);
+    if (monsters.hasLair) envInfo.push(`Lair Actions (×${monsters.lairMod})`);
     // Add to encounters
     const newEnc = {
         id: Date.now(),
@@ -788,8 +844,7 @@ Difficulty: ${difficulty.label}`
     if (confirm('Zu Encounters wechseln?')) {
         hideCalculatorModal();
         window.switchView('encounter');
-        if (typeof window.renderEncounters === 'function')
-            window.renderEncounters();
+        if (typeof window.renderEncounters === 'function') window.renderEncounters();
     }
 }
 // ============================================================
@@ -824,9 +879,10 @@ function addCalculatorToInitiative() {
     let addedCount = 0;
     calculatorMonsters.forEach(monster => {
         // Get monster template for HP if available
-        const template = (typeof D !== 'undefined' && D.encounters)
-            ? D.encounters.find((e) => e.cr === monster.cr || e.CR === monster.cr)
-            : null;
+        const template =
+            typeof D !== 'undefined' && D.encounters
+                ? D.encounters.find(e => e.cr === monster.cr || e.CR === monster.cr)
+                : null;
         const baseHP = template?.hp || template?.HP || getDefaultHPForCR(monster.cr);
         const initBonus = template?.initBonus || template?.dex || 0;
         for (let i = 0; i < monster.count; i++) {
@@ -854,7 +910,7 @@ function addCalculatorToInitiative() {
     // Add lair action entry if enabled
     if (calculatorLairActions) {
         // Check if lair action entry already exists
-        const existingLair = D.initiative.combatants.find((c) => c.type === 'lair');
+        const existingLair = D.initiative.combatants.find(c => c.type === 'lair');
         if (!existingLair) {
             D.initiative.combatants.push({
                 id: nextId('combatants'),
@@ -874,18 +930,36 @@ function addCalculatorToInitiative() {
     window.save();
     hideCalculatorModal();
     window.switchView('initiative');
-    if (typeof window.renderInit === 'function')
-        window.renderInit();
+    if (typeof window.renderInit === 'function') window.renderInit();
     showToast(`${addedCount} Monster zur Initiative hinzugefügt`);
 }
 // Default HP by CR (rough estimates)
 function getDefaultHPForCR(cr) {
     const hpByCR = {
-        '0': 4, '1/8': 7, '1/4': 13, '1/2': 22,
-        '1': 30, '2': 45, '3': 60, '4': 75, '5': 90,
-        '6': 105, '7': 120, '8': 135, '9': 150, '10': 165,
-        '11': 180, '12': 195, '13': 210, '14': 225, '15': 240,
-        '16': 255, '17': 270, '18': 285, '19': 300, '20': 330
+        0: 4,
+        '1/8': 7,
+        '1/4': 13,
+        '1/2': 22,
+        1: 30,
+        2: 45,
+        3: 60,
+        4: 75,
+        5: 90,
+        6: 105,
+        7: 120,
+        8: 135,
+        9: 150,
+        10: 165,
+        11: 180,
+        12: 195,
+        13: 210,
+        14: 225,
+        15: 240,
+        16: 255,
+        17: 270,
+        18: 285,
+        19: 300,
+        20: 330
     };
     return hpByCR[cr] || 10;
 }
@@ -895,33 +969,38 @@ function getDefaultHPForCR(cr) {
 function renderCalculator() {
     const partyList = $('calc-party-list');
     const monsterList = $('calc-monster-list');
-    if (!partyList || !monsterList)
-        return;
+    if (!partyList || !monsterList) return;
     // Render Party
     if (calculatorParty.length === 0) {
         partyList.innerHTML = '<div class="calc-list-empty">Keine Charaktere</div>';
-    }
-    else {
-        partyList.innerHTML = calculatorParty.map((p, i) => `
+    } else {
+        partyList.innerHTML = calculatorParty
+            .map(
+                (p, i) => `
             <div class="calc-list-item">
                 <span class="calc-list-text">${p.count}× Level ${p.level}</span>
                 <span class="calc-list-xp">${(XP_THRESHOLDS[p.level]?.medium || 0) * p.count} XP (med)</span>
                 <button class="calc-list-remove" data-action="calc-remove-party-level" data-value="${i}">✕</button>
             </div>
-        `).join('');
+        `
+            )
+            .join('');
     }
     // Render Monsters
     if (calculatorMonsters.length === 0) {
         monsterList.innerHTML = '<div class="calc-list-empty">Keine Monster</div>';
-    }
-    else {
-        monsterList.innerHTML = calculatorMonsters.map((m, i) => `
+    } else {
+        monsterList.innerHTML = calculatorMonsters
+            .map(
+                (m, i) => `
             <div class="calc-list-item">
                 <span class="calc-list-text">${m.count}× ${esc(m.name)}</span>
                 <span class="calc-list-xp">CR ${m.cr} (${CR_TO_XP[m.cr]} XP)</span>
                 <button class="calc-list-remove" data-action="calc-remove-monster" data-value="${i}">✕</button>
             </div>
-        `).join('');
+        `
+            )
+            .join('');
     }
 }
 // ============================================================
@@ -931,7 +1010,11 @@ function showCalculatorModal() {
     const modal = $('calculator-modal');
     if (!modal) {
         if (APP_CONFIG.DEBUG_MODE) {
-            ErrorHandler.log('showCalculatorModal', new Error('Modal not found'), 'calculator-modal element missing');
+            ErrorHandler.log(
+                'showCalculatorModal',
+                new Error('Modal not found'),
+                'calculator-modal element missing'
+            );
         }
         return;
     }
@@ -965,8 +1048,7 @@ document.addEventListener('click', function (e) {
 });
 function renderCalculatorModal() {
     const modalContent = $('calculator-modal-content');
-    if (!modalContent)
-        return;
+    if (!modalContent) return;
     modalContent.innerHTML = `
         <div class="calc-header">
             <h3>⚔️ Encounter Balance Calculator</h3>
@@ -1049,13 +1131,15 @@ function renderCalculatorModal() {
                     <div class="calc-env-group">
                         <label class="calc-env-label">🗺️ Terrain</label>
                         <div class="calc-terrain-btns">
-                            ${TERRAIN_MODIFIERS.map(t => `
+                            ${TERRAIN_MODIFIERS.map(
+                                t => `
                                 <button class="calc-terrain-btn ${calculatorTerrain === t.id ? 'active' : ''}"
                                         data-action="calc-set-terrain" data-value="${t.id}"
                                         title="${t.desc}">
                                     ${t.icon} ${t.label}
                                 </button>
-                            `).join('')}
+                            `
+                            ).join('')}
                         </div>
                     </div>
                     <div class="calc-env-group">
@@ -1105,8 +1189,7 @@ function showEncounterImport() {
         return;
     }
     const modalContent = $('calculator-modal-content');
-    if (!modalContent)
-        return;
+    if (!modalContent) return;
     modalContent.innerHTML = `
         <div class="calc-header">
             <h3>Kreatur auswaehlen</h3>
@@ -1114,11 +1197,12 @@ function showEncounterImport() {
         </div>
         <div class="calc-body">
             <div class="calc-import-grid">
-                ${D.encounters.map((enc) => {
-        const cr = enc.cr || enc.CR || '0';
-        const xp = CR_TO_XP[cr] || 0;
-        const type = enc.creatureType || enc.type || '';
-        return `
+                ${D.encounters
+                    .map(enc => {
+                        const cr = enc.cr || enc.CR || '0';
+                        const xp = CR_TO_XP[cr] || 0;
+                        const type = enc.creatureType || enc.type || '';
+                        return `
                         <div class="calc-import-card">
                             <div class="calc-import-info">
                                 <div class="calc-import-name">${esc(enc.name)}</div>
@@ -1130,7 +1214,8 @@ function showEncounterImport() {
                             </div>
                         </div>
                     `;
-    }).join('')}
+                    })
+                    .join('')}
             </div>
             <div class="calc-import-footer">
                 <button class="calc-action-btn secondary" data-action="calc-back-to-calculator">Zurueck</button>
@@ -1140,10 +1225,14 @@ function showEncounterImport() {
 }
 function importEncounterMonsters(encId) {
     const D = window.D;
-    const encounter = D.encounters.find((e) => e.id === encId || e.id === parseInt(String(encId)));
+    const encounter = D.encounters.find(e => e.id === encId || e.id === parseInt(String(encId)));
     if (!encounter) {
         showToast('Kreatur nicht gefunden (ID: ' + encId + ')');
-        ErrorHandler.log('importEncounterMonsters', new Error('Encounter not found'), `ID: ${encId}`);
+        ErrorHandler.log(
+            'importEncounterMonsters',
+            new Error('Encounter not found'),
+            `ID: ${encId}`
+        );
         return;
     }
     // Encounter IST die Kreatur selbst
@@ -1151,7 +1240,11 @@ function importEncounterMonsters(encId) {
     if (!cr) {
         showToast('Kreatur hat kein CR');
         if (APP_CONFIG.DEBUG_MODE) {
-            ErrorHandler.log('importEncounterMonsters', new Error('Missing CR'), `Encounter: ${encounter.name || encId}`);
+            ErrorHandler.log(
+                'importEncounterMonsters',
+                new Error('Missing CR'),
+                `Encounter: ${encounter.name || encId}`
+            );
         }
         return;
     }

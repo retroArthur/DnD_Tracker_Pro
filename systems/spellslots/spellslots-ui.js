@@ -8,8 +8,7 @@
 // var renderParty = window.renderParty;  // [REMOVED: conflicts with function declaration]
 function getSpellSlots(charId) {
     const ch = EntityLookup.character(charId);
-    if (!ch)
-        return null;
+    if (!ch) return null;
     // Initialisiere spellSlots wenn nicht vorhanden
     if (!ch.spellSlots) {
         ch.spellSlots = {};
@@ -35,13 +34,11 @@ function getSpellSlots(charId) {
 }
 function toggleSpellSlot(charId, level) {
     const ch = EntityLookup.character(charId);
-    if (!ch || !ch.spellSlots || !ch.spellSlots[level])
-        return;
+    if (!ch || !ch.spellSlots || !ch.spellSlots[level]) return;
     const slot = ch.spellSlots[level];
     if (slot.current > 0) {
         slot.current--;
-    }
-    else {
+    } else {
         slot.current = slot.max;
     }
     renderParty();
@@ -49,8 +46,7 @@ function toggleSpellSlot(charId, level) {
 }
 function restoreAllSpellSlots(charId) {
     const ch = EntityLookup.character(charId);
-    if (!ch || !ch.spellSlots)
-        return;
+    if (!ch || !ch.spellSlots) return;
     for (let i = 1; i <= 9; i++) {
         if (ch.spellSlots[i]) {
             ch.spellSlots[i].current = ch.spellSlots[i].max;
@@ -62,8 +58,7 @@ function restoreAllSpellSlots(charId) {
 }
 function renderSpellSlotPips(charId) {
     const slots = getSpellSlots(charId);
-    if (!slots)
-        return '';
+    if (!slots) return '';
     let html = '';
     let hasSlots = false;
     // Slot 0 (Zaubertricks) - wird nicht verbraucht, nur als Zähler anzeigen
@@ -91,7 +86,9 @@ function renderSpellSlotPips(charId) {
     if (hasSlots) {
         html += `<button class="btn btn-sm" style="font-size: 10px; padding: 2px 6px; margin-left: 8px;" data-action="restore-spell-slots-stop" data-id="${charId}" title="Alle Slots wiederherstellen">🔄</button>`;
     }
-    return hasSlots ? `<div class="spell-slots-compact" data-stop-propagation="true">${html}</div>` : '';
+    return hasSlots
+        ? `<div class="spell-slots-compact" data-stop-propagation="true">${html}</div>`
+        : '';
 }
 // ============================================================
 // BACKWARD COMPATIBILITY EXPORTS

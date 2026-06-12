@@ -29,7 +29,7 @@ global.APP_CONFIG = Object.freeze({
     LAZY_LOAD_THRESHOLD: '200px',
     MAX_LEVEL: 20,
     ATTRIBUTE_MIN: 1,
-    ATTRIBUTE_MAX: 30,
+    ATTRIBUTE_MAX: 30
 });
 
 // D (Daten) Mock - Leere Grundstruktur
@@ -63,17 +63,17 @@ global.D = {
 // ============================================================
 
 // $ Funktion Mock
-global.$ = jest.fn((id) => document.getElementById(id));
+global.$ = jest.fn(id => document.getElementById(id));
 
 // $$ Funktion Mock
-global.$$ = jest.fn((selector) => document.querySelectorAll(selector));
+global.$$ = jest.fn(selector => document.querySelectorAll(selector));
 
 // ============================================================
 // UTILITY MOCKS
 // ============================================================
 
 // esc Funktion
-global.esc = jest.fn((s) => {
+global.esc = jest.fn(s => {
     if (s === null || s === undefined) return '';
     if (s === 0) return '0';
     if (!s) return '';
@@ -86,15 +86,14 @@ global.esc = jest.fn((s) => {
 });
 
 // sanitizeHTML Mock (vereinfacht)
-global.sanitizeHTML = jest.fn((html) => {
+global.sanitizeHTML = jest.fn(html => {
     if (!html) return '';
     // Einfache Sanitization für Tests
-    return html.replace(/<script[^>]*>.*?<\/script>/gi, '')
-               .replace(/on\w+\s*=/gi, '');
+    return html.replace(/<script[^>]*>.*?<\/script>/gi, '').replace(/on\w+\s*=/gi, '');
 });
 
 // nextId Mock
-global.nextId = jest.fn((type) => {
+global.nextId = jest.fn(type => {
     if (!global.D._nextId[type]) {
         global.D._nextId[type] = 0;
     }
@@ -102,10 +101,10 @@ global.nextId = jest.fn((type) => {
 });
 
 // debounce Mock (sofortige Ausführung für Tests)
-global.debounce = jest.fn((fn) => fn);
+global.debounce = jest.fn(fn => fn);
 
 // throttle Mock (sofortige Ausführung für Tests)
-global.throttle = jest.fn((fn) => fn);
+global.throttle = jest.fn(fn => fn);
 
 // ============================================================
 // STORAGE MOCKS
@@ -114,11 +113,11 @@ global.throttle = jest.fn((fn) => fn);
 // localStorage Mock
 const localStorageMock = {
     store: {},
-    getItem: jest.fn((key) => localStorageMock.store[key] || null),
+    getItem: jest.fn(key => localStorageMock.store[key] || null),
     setItem: jest.fn((key, value) => {
         localStorageMock.store[key] = String(value);
     }),
-    removeItem: jest.fn((key) => {
+    removeItem: jest.fn(key => {
         delete localStorageMock.store[key];
     }),
     clear: jest.fn(() => {
@@ -127,7 +126,7 @@ const localStorageMock = {
     get length() {
         return Object.keys(this.store).length;
     },
-    key: jest.fn((index) => {
+    key: jest.fn(index => {
         const keys = Object.keys(localStorageMock.store);
         return keys[index] || null;
     })
@@ -161,18 +160,37 @@ global.renderInit = jest.fn();
 // Alias for backwards compatibility (renderInitiative doesn't exist in production)
 global.renderInitiative = global.renderInit;
 global.renderRandomTables = jest.fn();
-global.renderTabContent = jest.fn();  // Tab registry system
+global.renderTabContent = jest.fn(); // Tab registry system
 
 // ============================================================
 // ENCOUNTER CALCULATOR MOCKS
 // ============================================================
 
 global.CR_TO_XP = {
-    "0": 10, "1/8": 25, "1/4": 50, "1/2": 100,
-    "1": 200, "2": 450, "3": 700, "4": 1100, "5": 1800,
-    "6": 2300, "7": 2900, "8": 3900, "9": 5000, "10": 5900,
-    "11": 7200, "12": 8400, "13": 10000, "14": 11500, "15": 13000,
-    "16": 15000, "17": 18000, "18": 20000, "19": 22000, "20": 25000
+    0: 10,
+    '1/8': 25,
+    '1/4': 50,
+    '1/2': 100,
+    1: 200,
+    2: 450,
+    3: 700,
+    4: 1100,
+    5: 1800,
+    6: 2300,
+    7: 2900,
+    8: 3900,
+    9: 5000,
+    10: 5900,
+    11: 7200,
+    12: 8400,
+    13: 10000,
+    14: 11500,
+    15: 13000,
+    16: 15000,
+    17: 18000,
+    18: 20000,
+    19: 22000,
+    20: 25000
 };
 
 // Calculator state
@@ -185,7 +203,8 @@ global.calculatePartyThresholds = jest.fn(() => {
 });
 
 global.calculateMonsterXP = jest.fn(() => {
-    if (calculatorMonsters.length === 0) return { baseXP: 0, finalXP: 0, multiplier: 1, totalMonsters: 0 };
+    if (calculatorMonsters.length === 0)
+        return { baseXP: 0, finalXP: 0, multiplier: 1, totalMonsters: 0 };
     const baseXP = calculatorMonsters.reduce((sum, m) => sum + (CR_TO_XP[m.cr] || 0) * m.count, 0);
     return { baseXP, finalXP: baseXP, multiplier: 1, totalMonsters: calculatorMonsters.length };
 });
@@ -218,7 +237,7 @@ global.prevTurn = jest.fn(() => {
     }
 });
 
-global.removeCombatant = jest.fn((id) => {
+global.removeCombatant = jest.fn(id => {
     if (!D.initiative.combatants) return;
     const idx = D.initiative.combatants.findIndex(c => c.id === id);
     if (idx === -1) return; // Gracefully handle non-existent ID
@@ -229,13 +248,13 @@ global.removeCombatant = jest.fn((id) => {
 // MONSTER FAVORITES MOCKS
 // ============================================================
 
-global.loadMonsterFavorite = jest.fn((id) => {
+global.loadMonsterFavorite = jest.fn(id => {
     const fav = (D.monsterFavorites || []).find(f => f.id === id);
     if (!fav) return; // Gracefully handle non-existent ID
     calculatorMonsters = JSON.parse(JSON.stringify(fav.monsters));
 });
 
-global.deleteMonsterFavorite = jest.fn((id) => {
+global.deleteMonsterFavorite = jest.fn(id => {
     if (!D.monsterFavorites) return;
     const idx = D.monsterFavorites.findIndex(f => f.id === id);
     if (idx === -1) return; // Gracefully handle non-existent ID
@@ -254,25 +273,25 @@ global.saveMonsterFavorite = jest.fn(() => {
 // ENTITY CRUD MOCKS
 // ============================================================
 
-global.deleteChar = jest.fn((id) => {
+global.deleteChar = jest.fn(id => {
     const idx = D.characters.findIndex(c => c.id === id);
     if (idx === -1) return; // Gracefully handle non-existent ID
     D.characters.splice(idx, 1);
 });
 
-global.deleteNpc = jest.fn((id) => {
+global.deleteNpc = jest.fn(id => {
     const idx = D.npcs.findIndex(n => n.id === id);
     if (idx === -1) return; // Gracefully handle non-existent ID
     D.npcs.splice(idx, 1);
 });
 
-global.deleteLoc = jest.fn((id) => {
+global.deleteLoc = jest.fn(id => {
     const idx = D.locations.findIndex(l => l.id === id);
     if (idx === -1) return; // Gracefully handle non-existent ID
     D.locations.splice(idx, 1);
 });
 
-global.deleteQuest = jest.fn((id) => {
+global.deleteQuest = jest.fn(id => {
     const idx = D.quests.findIndex(q => q.id === id);
     if (idx === -1) return; // Gracefully handle non-existent ID
     D.quests.splice(idx, 1);
@@ -287,7 +306,7 @@ global.deleteLocation = global.deleteLoc;
 // ID GENERATION
 // ============================================================
 
-global.genId = jest.fn((prefix) => {
+global.genId = jest.fn(prefix => {
     if (!global.D._nextId[prefix]) {
         global.D._nextId[prefix] = 0;
     }
@@ -299,7 +318,7 @@ global.genId = jest.fn((prefix) => {
 // ============================================================
 
 // Custom JSON.stringify that handles circular references
-const safeStringify = (obj) => {
+const safeStringify = obj => {
     const seen = new WeakSet();
     return JSON.stringify(obj, (key, value) => {
         if (typeof value === 'object' && value !== null) {
@@ -351,7 +370,7 @@ global.saveUndoState = jest.fn(() => {
     redoStack = [];
 });
 
-global.pushUndo = jest.fn((label) => {
+global.pushUndo = jest.fn(label => {
     global.saveUndoState();
 });
 

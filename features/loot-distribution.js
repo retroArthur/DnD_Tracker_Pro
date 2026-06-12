@@ -54,14 +54,13 @@ function showLootDistributionModal() {
         modal.id = 'loot-dist-modal';
         modal.className = 'modal-overlay';
         modal.innerHTML = `<div class="modal" style="max-width: 600px;">${content}</div>`;
-        modal.onclick = (e) => { if (e.target === modal)
-            hideModal('loot-dist-modal'); };
+        modal.onclick = e => {
+            if (e.target === modal) hideModal('loot-dist-modal');
+        };
         document.body.appendChild(modal);
-    }
-    else {
+    } else {
         const modalContent = modal.querySelector('.modal');
-        if (modalContent)
-            modalContent.innerHTML = content;
+        if (modalContent) modalContent.innerHTML = content;
     }
     showModal('loot-dist-modal');
 }
@@ -74,7 +73,7 @@ function calculatePartyGold() {
         total += D.partyGold;
     }
     // Gold items in loot
-    (D.loot || []).forEach((item) => {
+    (D.loot || []).forEach(item => {
         if (item.category === 'gems' || item.name?.toLowerCase().includes('gold')) {
             total += (item.value || 0) * (item.quantity || 1);
         }
@@ -82,8 +81,7 @@ function calculatePartyGold() {
     return Math.floor(total);
 }
 function renderGoldSplit(amount, characters) {
-    if (!characters.length)
-        return '';
+    if (!characters.length) return '';
     const perChar = Math.floor(amount / characters.length);
     const remainder = amount % characters.length;
     return `
@@ -92,19 +90,24 @@ function renderGoldSplit(amount, characters) {
                 <span class="ld-split-amount">${perChar}</span>
                 <span class="ld-split-unit">GM pro Person</span>
             </div>
-            ${remainder > 0 ? `
+            ${
+                remainder > 0
+                    ? `
                 <div class="ld-split-remainder">
                     <span>Rest: ${remainder} GM</span>
                     <span class="ld-split-hint">(geht an Party-Kasse)</span>
                 </div>
-            ` : ''}
+            `
+                    : ''
+            }
         </div>
     `;
 }
 function renderDistributionCharacters(characters) {
-    return characters.map(char => {
-        const currentGold = char.gold || 0;
-        return `
+    return characters
+        .map(char => {
+            const currentGold = char.gold || 0;
+            return `
             <div class="ld-char-row" data-id="${char.id}">
                 <div class="ld-char-info">
                     <span class="ld-char-name">${esc(char.name)}</span>
@@ -118,7 +121,8 @@ function renderDistributionCharacters(characters) {
                 </div>
             </div>
         `;
-    }).join('');
+        })
+        .join('');
 }
 function updateGoldSplit() {
     const amountEl = $('ld-gold-amount');
@@ -135,8 +139,7 @@ function getIncludedCharacters() {
         const element = cb;
         const charId = parseInt(element.dataset.charId || '0');
         const char = EntityLookup.character(charId);
-        if (char)
-            included.push(char);
+        if (char) included.push(char);
     });
     return included;
 }
@@ -171,15 +174,14 @@ function collectAllGold() {
     const D = window.D;
     pushUndo('Gold eingesammelt');
     let total = 0;
-    D.characters.forEach((char) => {
+    D.characters.forEach(char => {
         total += char.gold || 0;
         char.gold = 0;
     });
     D.partyGold = (D.partyGold || 0) + total;
     // Update modal
     const amountEl = $('ld-gold-amount');
-    if (amountEl)
-        amountEl.value = String(D.partyGold);
+    if (amountEl) amountEl.value = String(D.partyGold);
     updateGoldSplit();
     // Update char list
     const charList = $('ld-char-list');

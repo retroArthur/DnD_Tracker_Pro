@@ -19,7 +19,6 @@ const {
 } = require('../../utils/testable-utils');
 
 describe('Utility Functions', () => {
-
     // ============================================================
     // ESC (HTML Escaping)
     // ============================================================
@@ -110,7 +109,6 @@ describe('Utility Functions', () => {
 // ============================================================
 
 describe('D&D Calculations', () => {
-
     describe('getModifier()', () => {
         test('sollte korrekte Modifikatoren berechnen', () => {
             expect(getModifier(1)).toBe(-5);
@@ -165,7 +163,6 @@ describe('D&D Calculations', () => {
 // ============================================================
 
 describe('Dice Parsing', () => {
-
     describe('parseDiceNotation()', () => {
         test('sollte einfache Würfelnotation parsen', () => {
             const result = parseDiceNotation('1d20');
@@ -217,7 +214,6 @@ describe('Dice Parsing', () => {
 // ============================================================
 
 describe('Helper Functions', () => {
-
     describe('isEmpty()', () => {
         test('sollte leere Werte erkennen', () => {
             expect(isEmpty(null)).toBe(true);
@@ -287,7 +283,6 @@ describe('Helper Functions', () => {
 // ============================================================
 
 describe('Timing Functions', () => {
-
     beforeEach(() => {
         jest.useFakeTimers();
     });

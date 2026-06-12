@@ -38,9 +38,12 @@ const EventDelegation = {
 
     init() {
         // Event listener in CAPTURE-Phase, um Events vor onclick-Handlern abzufangen
-        document.addEventListener('click', (e) => this._handleClick(e), { capture: true, passive: false });
-        document.addEventListener('change', (e) => this._handleChange(e), { passive: true });
-        document.addEventListener('input', (e) => this._handleInput(e), { passive: true });
+        document.addEventListener('click', e => this._handleClick(e), {
+            capture: true,
+            passive: false
+        });
+        document.addEventListener('change', e => this._handleChange(e), { passive: true });
+        document.addEventListener('input', e => this._handleInput(e), { passive: true });
         log('[EventDelegation] Initialized (capture mode)');
     },
 
@@ -80,8 +83,12 @@ const EventDelegation = {
 
         // Form-Elemente: Natives Verhalten erlauben, Actions werden via 'change'/'input' Event behandelt
         // SELECT/OPTION → Dropdown öffnen, INPUT file → Dateidialog, checkbox/radio → Toggle
-        if (target.tagName === 'SELECT' || e.target.tagName === 'OPTION' ||
-            (target.tagName === 'INPUT' && (target.type === 'file' || target.type === 'checkbox' || target.type === 'radio'))) {
+        if (
+            target.tagName === 'SELECT' ||
+            e.target.tagName === 'OPTION' ||
+            (target.tagName === 'INPUT' &&
+                (target.type === 'file' || target.type === 'checkbox' || target.type === 'radio'))
+        ) {
             return;
         }
 

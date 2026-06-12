@@ -20,25 +20,27 @@ dnd-tracker-modular/
 ### Workflow für Bug-Fixes:
 
 1. **Änderungen machen:**
-   - Arbeite direkt in `features/*.js`, `systems/*.js`, `utils/*.js`
-   - Die App lädt diese Dateien (siehe `loader.js`)
+    - Arbeite direkt in `features/*.js`, `systems/*.js`, `utils/*.js`
+    - Die App lädt diese Dateien (siehe `loader.js`)
 
 2. **Type-Checking (optional):**
-   ```bash
-   npm run typecheck    # Prüft src/**/*.ts (parallel-Dokumentation)
-   ```
+
+    ```bash
+    npm run typecheck    # Prüft src/**/*.ts (parallel-Dokumentation)
+    ```
 
 3. **Testen:**
-   ```bash
-   npm run test         # Unit Tests
-   npm run test:e2e     # E2E Tests
-   ```
+
+    ```bash
+    npm run test         # Unit Tests
+    npm run test:e2e     # E2E Tests
+    ```
 
 4. **Committen:**
-   ```bash
-   git add features/xyz.js
-   git commit -m "fix: beschreibung"
-   ```
+    ```bash
+    git add features/xyz.js
+    git commit -m "fix: beschreibung"
+    ```
 
 ### Wichtig:
 

@@ -215,24 +215,23 @@ function renderWiki() {
     renderWikiDetail();
     const D = window.D;
     const countEl = $('wiki-io-count');
-    if (countEl)
-        countEl.textContent = String(D.wiki?.length || 0);
+    if (countEl) countEl.textContent = String(D.wiki?.length || 0);
     updateWikiParentSelect();
 }
 function renderWikiQuickAccess() {
     const D = window.D;
     const container = $('wiki-quick-access');
-    if (!container)
-        return;
+    if (!container) return;
     const recentIds = D.wikiRecentlyViewed || [];
-    const favorites = (D.wiki || []).filter((e) => e.pinned);
+    const favorites = (D.wiki || []).filter(e => e.pinned);
     if (!recentIds.length && !favorites.length) {
-        container.innerHTML = '<span style="color: var(--text-dim); font-size: 11px;">Besuche Einträge um Quick Access zu füllen</span>';
+        container.innerHTML =
+            '<span style="color: var(--text-dim); font-size: 11px;">Besuche Einträge um Quick Access zu füllen</span>';
         return;
     }
     let html = '';
     if (favorites.length) {
-        favorites.slice(0, 5).forEach((entry) => {
+        favorites.slice(0, 5).forEach(entry => {
             const cat = WIKI_CATEGORIES[entry.category] || { icon: '📄' };
             html += `
                 <div class="quick-access-item favorite" data-action="select-wiki-entry" data-id="${entry.id}" title="${esc(entry.title)}">
@@ -245,26 +244,27 @@ function renderWikiQuickAccess() {
     if (favorites.length && recentIds.length) {
         html += '<div class="quick-access-separator"></div>';
     }
-    const favoriteIds = new Set(favorites.map((f) => f.id));
-    recentIds.filter((id) => !favoriteIds.has(id)).slice(0, 5).forEach((id) => {
-        const entry = EntityLookup.wiki(id);
-        if (!entry)
-            return;
-        const cat = WIKI_CATEGORIES[entry.category] || { icon: '📄' };
-        html += `
+    const favoriteIds = new Set(favorites.map(f => f.id));
+    recentIds
+        .filter(id => !favoriteIds.has(id))
+        .slice(0, 5)
+        .forEach(id => {
+            const entry = EntityLookup.wiki(id);
+            if (!entry) return;
+            const cat = WIKI_CATEGORIES[entry.category] || { icon: '📄' };
+            html += `
             <div class="quick-access-item recent" data-action="select-wiki-entry" data-id="${entry.id}" title="${esc(entry.title)}">
                 <span class="quick-access-icon">${cat.icon}</span>
                 <span class="quick-access-label">${esc(entry.title)}</span>
             </div>
         `;
-    });
+        });
     container.innerHTML = html;
 }
 function renderWikiTree() {
     const D = window.D;
     const tree = $('wiki-tree');
-    if (!tree)
-        return;
+    if (!tree) return;
     const searchInput = $('wiki-search');
     const search = (searchInput?.value || '').toLowerCase();
     if (!D.wiki?.length) {
@@ -283,43 +283,41 @@ function renderWikiTree() {
     byCategory['other'] = [];
     let entries = [...D.wiki];
     if (search) {
-        entries = entries.filter((e) => e.title.toLowerCase().includes(search) ||
-            (e.content || '').toLowerCase().includes(search) ||
-            (e.tags || []).some((t) => t.toLowerCase().includes(search)));
+        entries = entries.filter(
+            e =>
+                e.title.toLowerCase().includes(search) ||
+                (e.content || '').toLowerCase().includes(search) ||
+                (e.tags || []).some(t => t.toLowerCase().includes(search))
+        );
     }
-    entries.forEach((entry) => {
+    entries.forEach(entry => {
         const cat = entry.category || 'other';
         if (byCategory[cat]) {
             byCategory[cat].push(entry);
-        }
-        else {
+        } else {
             byCategory['other'].push(entry);
         }
     });
     Object.keys(byCategory).forEach(cat => {
         byCategory[cat].sort((a, b) => {
-            if (a.pinned && !b.pinned)
-                return -1;
-            if (!a.pinned && b.pinned)
-                return 1;
+            if (a.pinned && !b.pinned) return -1;
+            if (!a.pinned && b.pinned) return 1;
             return a.title.localeCompare(b.title);
         });
     });
     let html = '';
     Object.entries(WIKI_CATEGORIES).forEach(([catKey, catInfo]) => {
         const catEntries = byCategory[catKey] || [];
-        if (catEntries.length === 0 && !search)
-            return;
+        if (catEntries.length === 0 && !search) return;
         const isExpanded = WikiState.expandedCategories.has(catKey);
-        const catEntryIds = new Set(catEntries.map((e) => e.id));
-        const rootEntries = catEntries.filter((e) => !e.parentId ||
-            e.parentId === e.id ||
-            !catEntryIds.has(e.parentId));
+        const catEntryIds = new Set(catEntries.map(e => e.id));
+        const rootEntries = catEntries.filter(
+            e => !e.parentId || e.parentId === e.id || !catEntryIds.has(e.parentId)
+        );
         const childrenMap = {};
-        catEntries.forEach((e) => {
+        catEntries.forEach(e => {
             if (e.parentId && e.parentId !== e.id && catEntryIds.has(e.parentId)) {
-                if (!childrenMap[e.parentId])
-                    childrenMap[e.parentId] = [];
+                if (!childrenMap[e.parentId]) childrenMap[e.parentId] = [];
                 childrenMap[e.parentId].push(e);
             }
         });
@@ -339,12 +337,11 @@ function renderWikiTree() {
     });
     if (byCategory['other']?.length > 0) {
         const isExpanded = WikiState.expandedCategories.has('other');
-        const otherRootEntries = byCategory['other'].filter((e) => !e.parentId);
+        const otherRootEntries = byCategory['other'].filter(e => !e.parentId);
         const otherChildrenMap = {};
-        byCategory['other'].forEach((e) => {
+        byCategory['other'].forEach(e => {
             if (e.parentId) {
-                if (!otherChildrenMap[e.parentId])
-                    otherChildrenMap[e.parentId] = [];
+                if (!otherChildrenMap[e.parentId]) otherChildrenMap[e.parentId] = [];
                 otherChildrenMap[e.parentId].push(e);
             }
         });
@@ -362,23 +359,27 @@ function renderWikiTree() {
             </div>
         `;
     }
-    tree.innerHTML = html || '<div style="padding: 20px; text-align: center; color: var(--text-dim);">Keine Treffer</div>';
+    tree.innerHTML =
+        html ||
+        '<div style="padding: 20px; text-align: center; color: var(--text-dim);">Keine Treffer</div>';
 }
 function renderWikiTreeItems(entries, childrenMap, depth) {
-    return entries.map(entry => {
-        const children = childrenMap[entry.id] || [];
-        const hasChildren = children.length > 0;
-        const isExpanded = WikiState.expandedEntries.has(entry.id);
-        let html = `<div class="wiki-tree-item-wrapper ${hasChildren ? 'has-children' : ''} ${isExpanded ? 'expanded' : ''}">`;
-        html += renderWikiTreeItem(entry, childrenMap, depth);
-        if (hasChildren) {
-            html += `<div class="wiki-tree-item-children">
+    return entries
+        .map(entry => {
+            const children = childrenMap[entry.id] || [];
+            const hasChildren = children.length > 0;
+            const isExpanded = WikiState.expandedEntries.has(entry.id);
+            let html = `<div class="wiki-tree-item-wrapper ${hasChildren ? 'has-children' : ''} ${isExpanded ? 'expanded' : ''}">`;
+            html += renderWikiTreeItem(entry, childrenMap, depth);
+            if (hasChildren) {
+                html += `<div class="wiki-tree-item-children">
                 ${renderWikiTreeItems(children, childrenMap, depth + 1)}
             </div>`;
-        }
-        html += '</div>';
-        return html;
-    }).join('');
+            }
+            html += '</div>';
+            return html;
+        })
+        .join('');
 }
 function renderWikiTreeItem(entry, childrenMap, depth) {
     const isSelected = WikiState.selectedEntryId === entry.id;
@@ -401,8 +402,7 @@ function renderWikiDetail() {
     const D = window.D;
     const renderEmptyState = window.renderEmptyState;
     const detail = $('wiki-detail');
-    if (!detail)
-        return;
+    if (!detail) return;
     if (!WikiState.selectedEntryId) {
         detail.innerHTML = `<div class="wiki-detail-empty">${renderEmptyState({
             icon: '📖',
@@ -412,7 +412,7 @@ function renderWikiDetail() {
         })}</div>`;
         return;
     }
-    const entry = D.wiki?.find((e) => e.id === WikiState.selectedEntryId);
+    const entry = D.wiki?.find(e => e.id === WikiState.selectedEntryId);
     if (!entry) {
         WikiState.selectedEntryId = null;
         renderWikiDetail();
@@ -423,15 +423,17 @@ function renderWikiDetail() {
     const contentWithAnchors = addTOCAnchors(entry.content || '');
     // Convert Markdown syntax to HTML for display
     const renderMarkdownInContent = window.renderMarkdownInContent;
-    const contentWithMarkdown = renderMarkdownInContent ? renderMarkdownInContent(contentWithAnchors) : contentWithAnchors;
+    const contentWithMarkdown = renderMarkdownInContent
+        ? renderMarkdownInContent(contentWithAnchors)
+        : contentWithAnchors;
     const parsedContent = parseWikiLinks(contentWithMarkdown);
     const backlinks = findBacklinks(entry.title);
     const outlinks = extractWikiLinks(entry.content || '');
     const breadcrumb = renderWikiBreadcrumb(entry.id);
     const toc = renderWikiTOC(entry.content || '');
     const plainText = (entry.content || '').replace(/<[^>]+>/g, ' ');
-    const wordCount = plainText.split(/\s+/).filter((w) => w.length > 0).length;
-    const children = D.wiki.filter((e) => e.parentId === entry.id);
+    const wordCount = plainText.split(/\s+/).filter(w => w.length > 0).length;
+    const children = D.wiki.filter(e => e.parentId === entry.id);
     detail.innerHTML = `
         ${breadcrumb}
 
@@ -458,46 +460,70 @@ function renderWikiDetail() {
             ${parsedContent || '<em style="color: var(--text-dim);">Kein Inhalt</em>'}
         </div>
 
-        ${tags.length ? `
+        ${
+            tags.length
+                ? `
             <div class="wiki-detail-tags">
-                ${tags.map((t) => `<span class="wiki-tag" data-action="search-wiki-tag" data-value="${esc(t)}">${esc(t)}</span>`).join('')}
+                ${tags.map(t => `<span class="wiki-tag" data-action="search-wiki-tag" data-value="${esc(t)}">${esc(t)}</span>`).join('')}
             </div>
-        ` : ''}
+        `
+                : ''
+        }
 
-        ${children.length ? `
+        ${
+            children.length
+                ? `
             <div class="wiki-detail-links">
                 <div class="wiki-detail-links-section">
                     <div class="wiki-detail-links-label">📁 Untereinträge (${children.length})</div>
                     <div class="wiki-detail-links-list">
-                        ${children.map((c) => `<span class="wiki-link" data-action="select-wiki-entry" data-id="${c.id}">${esc(c.title)}</span>`).join('')}
+                        ${children.map(c => `<span class="wiki-link" data-action="select-wiki-entry" data-id="${c.id}">${esc(c.title)}</span>`).join('')}
                     </div>
                 </div>
             </div>
-        ` : ''}
+        `
+                : ''
+        }
 
-        ${(outlinks.length || backlinks.length) ? `
+        ${
+            outlinks.length || backlinks.length
+                ? `
             <div class="wiki-detail-links">
-                ${outlinks.length ? `
+                ${
+                    outlinks.length
+                        ? `
                     <div class="wiki-detail-links-section">
                         <div class="wiki-detail-links-label">→ Verlinkt zu</div>
                         <div class="wiki-detail-links-list">
-                            ${outlinks.map((link) => {
-        const exists = D.wiki.some((e) => e.title.toLowerCase() === link.toLowerCase());
-        return `<span class="wiki-link ${exists ? '' : 'missing'}" data-action="wiki-link-click" data-value="${esc(link)}" data-exists="${exists}">${esc(link)}</span>`;
-    }).join('')}
+                            ${outlinks
+                                .map(link => {
+                                    const exists = D.wiki.some(
+                                        e => e.title.toLowerCase() === link.toLowerCase()
+                                    );
+                                    return `<span class="wiki-link ${exists ? '' : 'missing'}" data-action="wiki-link-click" data-value="${esc(link)}" data-exists="${exists}">${esc(link)}</span>`;
+                                })
+                                .join('')}
                         </div>
                     </div>
-                ` : ''}
-                ${backlinks.length ? `
+                `
+                        : ''
+                }
+                ${
+                    backlinks.length
+                        ? `
                     <div class="wiki-detail-links-section">
                         <div class="wiki-detail-links-label">← Verlinkt von</div>
                         <div class="wiki-detail-links-list">
-                            ${backlinks.map((link) => `<span class="wiki-link" data-action="navigate-wiki-entry" data-value="${esc(link)}">${esc(link)}</span>`).join('')}
+                            ${backlinks.map(link => `<span class="wiki-link" data-action="navigate-wiki-entry" data-value="${esc(link)}">${esc(link)}</span>`).join('')}
                         </div>
                     </div>
-                ` : ''}
+                `
+                        : ''
+                }
             </div>
-        ` : ''}
+        `
+                : ''
+        }
 
         <div class="wiki-detail-footer">
             <span>Erstellt: ${new Date(entry.createdAt).toLocaleDateString('de-DE')}</span>
@@ -514,15 +540,13 @@ function selectWikiEntry(id) {
         addToWikiRecentlyViewed(id);
     }
     const dropdown = $('wiki-search-dropdown');
-    if (dropdown)
-        dropdown.style.display = 'none';
+    if (dropdown) dropdown.style.display = 'none';
     renderWiki();
 }
 function toggleWikiCategory(category) {
     if (WikiState.expandedCategories.has(category)) {
         WikiState.expandedCategories.delete(category);
-    }
-    else {
+    } else {
         WikiState.expandedCategories.add(category);
     }
     renderWikiTree();
@@ -547,28 +571,24 @@ function showWikiForm(parentCategory = '') {
     }
     updateWikiParentSelect();
     const titleEl = $('wiki-form-title');
-    if (titleEl)
-        titleEl.textContent = '+ Neuer Eintrag';
+    if (titleEl) titleEl.textContent = '+ Neuer Eintrag';
     const templateContainer = $('wiki-template-selector');
     if (templateContainer) {
         templateContainer.innerHTML = renderWikiTemplateSelector();
         templateContainer.style.display = 'block';
     }
     const overlay = $('wiki-form-overlay');
-    if (overlay)
-        overlay.style.display = 'flex';
+    if (overlay) overlay.style.display = 'flex';
 }
 function hideWikiForm() {
     const overlay = $('wiki-form-overlay');
-    if (overlay)
-        overlay.style.display = 'none';
+    if (overlay) overlay.style.display = 'none';
     cancelWikiEdit();
 }
 function updateWikiParentSelect() {
     const D = window.D;
     const select = $('wiki-parent');
-    if (!select)
-        return;
+    if (!select) return;
     const editIdInput = $('edit-wiki-id');
     const catInput = $('wiki-category');
     const editId = editIdInput?.value || '';
@@ -576,13 +596,10 @@ function updateWikiParentSelect() {
     const selectedCategory = catInput?.value || '';
     const previousValue = select.value;
     select.innerHTML = '<option value="">— Kein übergeordneter Eintrag —</option>';
-    (D.wiki || []).forEach((entry) => {
-        if (entry.id === currentId)
-            return;
-        if (isDescendantOf(entry.id, currentId))
-            return;
-        if (selectedCategory && entry.category !== selectedCategory)
-            return;
+    (D.wiki || []).forEach(entry => {
+        if (entry.id === currentId) return;
+        if (isDescendantOf(entry.id, currentId)) return;
+        if (selectedCategory && entry.category !== selectedCategory) return;
         const cat = WIKI_CATEGORIES[entry.category] || { icon: '📄' };
         select.innerHTML += `<option value="${entry.id}">${cat.icon} ${esc(entry.title)}</option>`;
     });
@@ -596,8 +613,7 @@ function initWikiCategoryListener() {
         categorySelect.addEventListener('change', () => {
             updateWikiParentSelect();
             const parentSelect = $('wiki-parent');
-            if (parentSelect)
-                parentSelect.value = '';
+            if (parentSelect) parentSelect.value = '';
         });
     }
 }
@@ -609,19 +625,16 @@ function initWikiSearchListener() {
 }
 function isDescendantOf(entryId, potentialAncestorId) {
     const D = window.D;
-    if (!potentialAncestorId)
-        return false;
-    const entry = D.wiki?.find((e) => e.id === entryId);
-    if (!entry || !entry.parentId)
-        return false;
-    if (entry.parentId === potentialAncestorId)
-        return true;
+    if (!potentialAncestorId) return false;
+    const entry = D.wiki?.find(e => e.id === entryId);
+    if (!entry || !entry.parentId) return false;
+    if (entry.parentId === potentialAncestorId) return true;
     return isDescendantOf(entry.parentId, potentialAncestorId);
 }
 function parseWikiLinks(content) {
     const D = window.D;
     return content.replace(/\[\[([^\]]+)\]\]/g, (match, linkText) => {
-        const exists = D.wiki?.some((e) => e.title.toLowerCase() === linkText.toLowerCase());
+        const exists = D.wiki?.some(e => e.title.toLowerCase() === linkText.toLowerCase());
         const escapedText = linkText.replace(/"/g, '&quot;');
         return `<span class="wiki-link ${exists ? '' : 'missing'}" data-action="wiki-link-click-stop" data-value="${escapedText}" data-exists="${exists}">${linkText}</span>`;
     });
@@ -632,17 +645,15 @@ function extractWikiLinks(content) {
 }
 function findBacklinks(title) {
     const D = window.D;
-    if (!D.wiki)
-        return [];
+    if (!D.wiki) return [];
     return D.wiki
-        .filter((e) => e.content && e.content.toLowerCase().includes(`[[${title.toLowerCase()}]]`))
-        .map((e) => e.title);
+        .filter(e => e.content && e.content.toLowerCase().includes(`[[${title.toLowerCase()}]]`))
+        .map(e => e.title);
 }
 function toggleWikiEntry(id) {
     if (WikiState.expandedEntries.has(id)) {
         WikiState.expandedEntries.delete(id);
-    }
-    else {
+    } else {
         WikiState.expandedEntries.add(id);
     }
     renderWiki();
@@ -658,8 +669,7 @@ function sortWiki(mode) {
     WikiState.sortMode = mode;
     ['alpha', 'recent', 'pinned'].forEach(m => {
         const btn = $(`wiki-sort-${m}`);
-        if (btn)
-            btn.classList.toggle('active', m === mode);
+        if (btn) btn.classList.toggle('active', m === mode);
     });
     renderWiki();
 }
@@ -684,21 +694,24 @@ function saveWikiEntry() {
         title,
         category: catInput?.value || 'locations',
         content: contentEl ? sanitizeHTML(contentEl.innerHTML) : '',
-        tags: tagsInput?.value.split(',').map(t => t.trim()).filter(t => t) || [],
+        tags:
+            tagsInput?.value
+                .split(',')
+                .map(t => t.trim())
+                .filter(t => t) || [],
         pinned: pinnedInput?.checked || false,
         parentId: parentVal ? parseInt(parentVal) : null,
         updatedAt: Date.now()
     };
     if (editId) {
-        const idx = D.wiki.findIndex((e) => e.id === parseInt(editId));
+        const idx = D.wiki.findIndex(e => e.id === parseInt(editId));
         if (idx > -1) {
             saveUndoState();
             D.wiki[idx] = { ...D.wiki[idx], ...entry };
             showToast('Wiki-Eintrag aktualisiert');
             WikiState.selectedEntryId = parseInt(editId);
         }
-    }
-    else {
+    } else {
         entry.id = nextId('wiki');
         entry.createdAt = Date.now();
         D.wiki.push(entry);
@@ -713,26 +726,19 @@ function saveWikiEntry() {
 function editWikiEntry(id) {
     const showModal = window.showModal;
     const entry = EntityLookup.wiki(id);
-    if (!entry)
-        return;
+    if (!entry) return;
     const editIdInput = $('edit-wiki-id');
     const titleInput = $('wiki-title');
     const catInput = $('wiki-category');
     const contentEl = $('wiki-content');
     const tagsInput = $('wiki-tags');
     const pinnedInput = $('wiki-pinned');
-    if (editIdInput)
-        editIdInput.value = String(id);
-    if (titleInput)
-        titleInput.value = entry.title;
-    if (catInput)
-        catInput.value = entry.category || 'locations';
-    if (contentEl)
-        contentEl.innerHTML = sanitizeHTML(entry.content) || '';
-    if (tagsInput)
-        tagsInput.value = (entry.tags || []).join(', ');
-    if (pinnedInput)
-        pinnedInput.checked = entry.pinned || false;
+    if (editIdInput) editIdInput.value = String(id);
+    if (titleInput) titleInput.value = entry.title;
+    if (catInput) catInput.value = entry.category || 'locations';
+    if (contentEl) contentEl.innerHTML = sanitizeHTML(entry.content) || '';
+    if (tagsInput) tagsInput.value = (entry.tags || []).join(', ');
+    if (pinnedInput) pinnedInput.checked = entry.pinned || false;
     updateWikiParentSelect();
     const parentInput = $('wiki-parent');
     if (parentInput) {
@@ -743,13 +749,10 @@ function editWikiEntry(id) {
         templateContainer.style.display = 'none';
     }
     const titleEl = $('wiki-form-title');
-    if (titleEl)
-        titleEl.textContent = '✏️ Eintrag bearbeiten';
+    if (titleEl) titleEl.textContent = '✏️ Eintrag bearbeiten';
     const overlay = $('wiki-form-overlay');
-    if (overlay)
-        overlay.style.display = 'flex';
-    if (titleInput)
-        titleInput.focus();
+    if (overlay) overlay.style.display = 'flex';
+    if (titleInput) titleInput.focus();
 }
 function cancelWikiEdit() {
     clearWikiForm();
@@ -766,11 +769,10 @@ function deleteWikiEntry(id) {
     const D = window.D;
     if (confirm('Wiki-Eintrag löschen?')) {
         saveUndoState();
-        D.wiki.forEach((e) => {
-            if (e.parentId === id)
-                e.parentId = null;
+        D.wiki.forEach(e => {
+            if (e.parentId === id) e.parentId = null;
         });
-        D.wiki = D.wiki.filter((e) => e.id !== id);
+        D.wiki = D.wiki.filter(e => e.id !== id);
         WikiState.expandedEntries.delete(id);
         if (WikiState.selectedEntryId === id) {
             WikiState.selectedEntryId = null;
@@ -782,8 +784,7 @@ function deleteWikiEntry(id) {
 }
 function toggleWikiPin(id) {
     const entry = EntityLookup.wiki(id);
-    if (!entry)
-        return;
+    if (!entry) return;
     entry.pinned = !entry.pinned;
     renderWiki();
     save();
@@ -801,16 +802,13 @@ function createWikiFromLink(title) {
         showWikiForm();
         const titleInput = $('wiki-title');
         const contentEl = $('wiki-content');
-        if (titleInput)
-            titleInput.value = title;
-        if (contentEl)
-            contentEl.focus();
+        if (titleInput) titleInput.value = title;
+        if (contentEl) contentEl.focus();
     }
 }
 function searchWikiTag(tag) {
     const searchInput = $('wiki-search');
-    if (searchInput)
-        searchInput.value = tag;
+    if (searchInput) searchInput.value = tag;
     renderWiki();
 }
 function insertWikiLink() {
@@ -824,10 +822,9 @@ function insertWikiLink() {
 // ============================================================
 function addToWikiRecentlyViewed(id) {
     const D = window.D;
-    if (!id)
-        return;
+    if (!id) return;
     D.wikiRecentlyViewed = D.wikiRecentlyViewed || [];
-    D.wikiRecentlyViewed = D.wikiRecentlyViewed.filter((i) => i !== id);
+    D.wikiRecentlyViewed = D.wikiRecentlyViewed.filter(i => i !== id);
     D.wikiRecentlyViewed.unshift(id);
     if (D.wikiRecentlyViewed.length > 10) {
         D.wikiRecentlyViewed = D.wikiRecentlyViewed.slice(0, 10);
@@ -839,12 +836,10 @@ function getWikiBreadcrumb(entryId) {
     let currentId = entryId;
     const visited = new Set();
     while (currentId) {
-        if (visited.has(currentId))
-            break;
+        if (visited.has(currentId)) break;
         visited.add(currentId);
         const entry = EntityLookup.wiki(currentId);
-        if (!entry)
-            break;
+        if (!entry) break;
         path.unshift({ id: entry.id, title: entry.title, category: entry.category });
         currentId = entry.parentId;
     }
@@ -852,8 +847,7 @@ function getWikiBreadcrumb(entryId) {
 }
 function renderWikiBreadcrumb(entryId) {
     const path = getWikiBreadcrumb(entryId);
-    if (path.length <= 1)
-        return '';
+    if (path.length <= 1) return '';
     const entry = EntityLookup.wiki(entryId);
     const cat = entry ? WIKI_CATEGORIES[entry.category] : null;
     let html = '<div class="wiki-breadcrumb">';
@@ -865,8 +859,7 @@ function renderWikiBreadcrumb(entryId) {
         const isLast = i === path.length - 1;
         if (isLast) {
             html += `<span class="breadcrumb-item current">${esc(item.title)}</span>`;
-        }
-        else {
+        } else {
             html += `<span class="breadcrumb-item" data-action="select-wiki-entry" data-id="${item.id}">${esc(item.title)}</span>`;
             html += '<span class="breadcrumb-separator">›</span>';
         }
@@ -875,21 +868,17 @@ function renderWikiBreadcrumb(entryId) {
     return html;
 }
 function getSearchContextPreview(content, query, maxLength = 80) {
-    if (!content || !query)
-        return '';
+    if (!content || !query) return '';
     const plainText = content.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ');
     const lowerContent = plainText.toLowerCase();
     const lowerQuery = query.toLowerCase();
     const idx = lowerContent.indexOf(lowerQuery);
-    if (idx === -1)
-        return '';
+    if (idx === -1) return '';
     const start = Math.max(0, idx - 30);
     const end = Math.min(plainText.length, idx + query.length + 50);
     let preview = plainText.slice(start, end);
-    if (start > 0)
-        preview = '...' + preview;
-    if (end < plainText.length)
-        preview = preview + '...';
+    if (start > 0) preview = '...' + preview;
+    if (end < plainText.length) preview = preview + '...';
     const regex = new RegExp(`(${query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
     preview = esc(preview).replace(regex, '<mark>$1</mark>');
     return preview;
@@ -897,8 +886,7 @@ function getSearchContextPreview(content, query, maxLength = 80) {
 function renderWikiSearchDropdown(query) {
     const D = window.D;
     const container = $('wiki-search-dropdown');
-    if (!container)
-        return;
+    if (!container) return;
     if (!query || query.length < 2) {
         container.style.display = 'none';
         WikiState.searchDropdownIndex = -1;
@@ -906,38 +894,39 @@ function renderWikiSearchDropdown(query) {
     }
     const lowerQuery = query.toLowerCase();
     const results = (D.wiki || [])
-        .map((entry) => {
-        const titleMatch = entry.title.toLowerCase().includes(lowerQuery);
-        const contentMatch = (entry.content || '').toLowerCase().includes(lowerQuery);
-        const tagMatch = (entry.tags || []).some((t) => t.toLowerCase().includes(lowerQuery));
-        if (!titleMatch && !contentMatch && !tagMatch)
-            return null;
-        return {
-            entry,
-            titleMatch,
-            contentMatch,
-            tagMatch,
-            preview: contentMatch ? getSearchContextPreview(entry.content, query) : ''
-        };
-    })
+        .map(entry => {
+            const titleMatch = entry.title.toLowerCase().includes(lowerQuery);
+            const contentMatch = (entry.content || '').toLowerCase().includes(lowerQuery);
+            const tagMatch = (entry.tags || []).some(t => t.toLowerCase().includes(lowerQuery));
+            if (!titleMatch && !contentMatch && !tagMatch) return null;
+            return {
+                entry,
+                titleMatch,
+                contentMatch,
+                tagMatch,
+                preview: contentMatch ? getSearchContextPreview(entry.content, query) : ''
+            };
+        })
         .filter(Boolean)
         .sort((a, b) => {
-        if (a.titleMatch && !b.titleMatch)
-            return -1;
-        if (!a.titleMatch && b.titleMatch)
-            return 1;
-        return a.entry.title.localeCompare(b.entry.title);
-    })
+            if (a.titleMatch && !b.titleMatch) return -1;
+            if (!a.titleMatch && b.titleMatch) return 1;
+            return a.entry.title.localeCompare(b.entry.title);
+        })
         .slice(0, 8);
     if (!results.length) {
         container.innerHTML = '<div class="search-result-empty">Keine Treffer</div>';
         container.style.display = 'block';
         return;
     }
-    container.innerHTML = results.map((r, i) => {
-        const cat = WIKI_CATEGORIES[r.entry.category] || { icon: '📄' };
-        const highlightedTitle = esc(r.entry.title).replace(new RegExp(`(${query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi'), '<mark>$1</mark>');
-        return `
+    container.innerHTML = results
+        .map((r, i) => {
+            const cat = WIKI_CATEGORIES[r.entry.category] || { icon: '📄' };
+            const highlightedTitle = esc(r.entry.title).replace(
+                new RegExp(`(${query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi'),
+                '<mark>$1</mark>'
+            );
+            return `
             <div class="search-result-item ${i === WikiState.searchDropdownIndex ? 'selected' : ''}"
                  data-action="select-wiki-entry" data-id="${r.entry.id}">
                 <div class="search-result-header">
@@ -948,27 +937,27 @@ function renderWikiSearchDropdown(query) {
                 ${r.preview ? `<div class="search-result-preview">${r.preview}</div>` : ''}
             </div>
         `;
-    }).join('');
+        })
+        .join('');
     container.style.display = 'block';
 }
 function handleWikiSearchKeydown(e) {
     const dropdown = $('wiki-search-dropdown');
-    if (!dropdown || dropdown.style.display === 'none')
-        return;
+    if (!dropdown || dropdown.style.display === 'none') return;
     const items = dropdown.querySelectorAll('.search-result-item');
-    if (!items.length)
-        return;
+    if (!items.length) return;
     if (e.key === 'ArrowDown') {
         e.preventDefault();
-        WikiState.searchDropdownIndex = Math.min(WikiState.searchDropdownIndex + 1, items.length - 1);
+        WikiState.searchDropdownIndex = Math.min(
+            WikiState.searchDropdownIndex + 1,
+            items.length - 1
+        );
         updateSearchDropdownSelection(items);
-    }
-    else if (e.key === 'ArrowUp') {
+    } else if (e.key === 'ArrowUp') {
         e.preventDefault();
         WikiState.searchDropdownIndex = Math.max(WikiState.searchDropdownIndex - 1, 0);
         updateSearchDropdownSelection(items);
-    }
-    else if (e.key === 'Enter' && WikiState.searchDropdownIndex >= 0) {
+    } else if (e.key === 'Enter' && WikiState.searchDropdownIndex >= 0) {
         e.preventDefault();
         const selected = items[WikiState.searchDropdownIndex];
         if (selected) {
@@ -976,12 +965,10 @@ function handleWikiSearchKeydown(e) {
             selectWikiEntry(id);
             dropdown.style.display = 'none';
             const searchInput = $('wiki-search');
-            if (searchInput)
-                searchInput.value = '';
+            if (searchInput) searchInput.value = '';
             WikiState.searchDropdownIndex = -1;
         }
-    }
-    else if (e.key === 'Escape') {
+    } else if (e.key === 'Escape') {
         dropdown.style.display = 'none';
         WikiState.searchDropdownIndex = -1;
     }
@@ -995,8 +982,7 @@ function updateSearchDropdownSelection(items) {
     }
 }
 function extractWikiTOC(content) {
-    if (!content)
-        return [];
+    if (!content) return [];
     const headings = [];
     const regex = /<h([2-4])[^>]*>([^<]+)<\/h[2-4]>/gi;
     let match;
@@ -1012,8 +998,7 @@ function extractWikiTOC(content) {
 }
 function renderWikiTOC(content) {
     const headings = extractWikiTOC(content);
-    if (headings.length < 3)
-        return '';
+    if (headings.length < 3) return '';
     let html = '<div class="wiki-toc">';
     html += '<div class="wiki-toc-title">📋 Inhalt</div>';
     headings.forEach(h => {
@@ -1024,8 +1009,7 @@ function renderWikiTOC(content) {
     return html;
 }
 function addTOCAnchors(content) {
-    if (!content)
-        return content;
+    if (!content) return content;
     let index = 0;
     return content.replace(/<h([2-4])([^>]*)>([^<]+)<\/h[2-4]>/gi, (match, level, attrs, text) => {
         return `<h${level}${attrs} id="toc-${index++}">${text}</h${level}>`;
@@ -1036,7 +1020,7 @@ function scrollToTOCHeading(targetId) {
     if (heading) {
         heading.scrollIntoView({ behavior: 'smooth', block: 'start' });
         heading.style.background = 'rgba(255, 215, 0, 0.3)';
-        setTimeout(() => heading.style.background = '', 1500);
+        setTimeout(() => (heading.style.background = ''), 1500);
     }
 }
 function renderWikiTemplateSelector() {
@@ -1054,8 +1038,7 @@ function renderWikiTemplateSelector() {
 }
 function applyWikiTemplate(templateKey) {
     const template = WIKI_TEMPLATES[templateKey];
-    if (!template)
-        return;
+    if (!template) return;
     const contentEl = $('wiki-content');
     const categoryEl = $('wiki-category');
     if (contentEl) {
@@ -1073,14 +1056,12 @@ function applyWikiTemplate(templateKey) {
 function showWikiLinkSuggester(input, cursorPos) {
     const D = window.D;
     const container = $('wiki-link-suggester');
-    if (!container)
-        return;
+    if (!container) return;
     const suggestions = (D.wiki || [])
-        .filter((e) => {
-        if (!input)
-            return true;
-        return e.title.toLowerCase().includes(input.toLowerCase());
-    })
+        .filter(e => {
+            if (!input) return true;
+            return e.title.toLowerCase().includes(input.toLowerCase());
+        })
         .slice(0, 6);
     if (!suggestions.length) {
         hideWikiLinkSuggester();
@@ -1103,16 +1084,18 @@ function showWikiLinkSuggester(input, cursorPos) {
             }
         }
     }
-    container.innerHTML = suggestions.map((entry, i) => {
-        const cat = WIKI_CATEGORIES[entry.category] || { icon: '📄' };
-        return `
+    container.innerHTML = suggestions
+        .map((entry, i) => {
+            const cat = WIKI_CATEGORIES[entry.category] || { icon: '📄' };
+            return `
             <div class="link-suggestion ${i === WikiState.linkSuggesterIndex ? 'selected' : ''}"
                  data-action="insert-wiki-link-suggestion" data-title="${esc(entry.title)}">
                 <span class="link-suggestion-icon">${cat.icon}</span>
                 <span class="link-suggestion-title">${esc(entry.title)}</span>
             </div>
         `;
-    }).join('');
+        })
+        .join('');
     if (selection && selection.rangeCount > 0) {
         const range = selection.getRangeAt(0);
         const rect = range.getBoundingClientRect();
@@ -1121,11 +1104,10 @@ function showWikiLinkSuggester(input, cursorPos) {
         const spaceAbove = rect.top;
         if (spaceBelow < 150 && spaceAbove > dropdownHeight) {
             container.style.top = 'auto';
-            container.style.bottom = (window.innerHeight - rect.top + 5) + 'px';
-        }
-        else {
+            container.style.bottom = window.innerHeight - rect.top + 5 + 'px';
+        } else {
             container.style.bottom = 'auto';
-            container.style.top = (rect.bottom + window.scrollY + 5) + 'px';
+            container.style.top = rect.bottom + window.scrollY + 5 + 'px';
         }
         container.style.left = Math.max(10, rect.left) + 'px';
     }
@@ -1134,15 +1116,13 @@ function showWikiLinkSuggester(input, cursorPos) {
 }
 function hideWikiLinkSuggester() {
     const container = $('wiki-link-suggester');
-    if (container)
-        container.style.display = 'none';
+    if (container) container.style.display = 'none';
     WikiState.linkSuggester = null;
     WikiState.linkSuggesterIndex = -1;
 }
 function insertWikiLinkSuggestion(title) {
     const contentEl = $('wiki-content');
-    if (!contentEl)
-        return;
+    if (!contentEl) return;
     if (WikiState.linkSuggesterState && WikiState.linkSuggesterState.textNode) {
         const { textNode, linkStart, cursorPos } = WikiState.linkSuggesterState;
         try {
@@ -1160,8 +1140,7 @@ function insertWikiLinkSuggestion(title) {
                 selection.addRange(range);
             }
             contentEl.focus();
-        }
-        catch (e) {
+        } catch (e) {
             console.warn('Link insertion failed:', e);
         }
     }
@@ -1170,11 +1149,9 @@ function insertWikiLinkSuggestion(title) {
 }
 function handleWikiContentInput(e) {
     const contentEl = $('wiki-content');
-    if (!contentEl)
-        return;
+    if (!contentEl) return;
     const selection = window.getSelection();
-    if (!selection || !selection.rangeCount)
-        return;
+    if (!selection || !selection.rangeCount) return;
     const range = selection.getRangeAt(0);
     const textNode = range.startContainer;
     if (textNode.nodeType !== Node.TEXT_NODE) {
@@ -1189,8 +1166,7 @@ function handleWikiContentInput(e) {
     if (linkStart !== -1 && linkStart > linkEnd) {
         const partialInput = beforeCursor.slice(linkStart + 2);
         showWikiLinkSuggester(partialInput, cursorPos);
-    }
-    else {
+    } else {
         hideWikiLinkSuggester();
     }
 }

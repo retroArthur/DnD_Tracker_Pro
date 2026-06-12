@@ -14,6 +14,7 @@ Die App läuft zuverlässig: Boot-Crash (`clearMindmap`, tools/debug.js:99) beho
 ## Implementation Decisions
 
 ### Persistenz-Fix >5MB (STAB-05, STAB-06)
+
 - **D-01:** Stale-Shadow-Bug wird per **Timestamp-Vergleich beim Laden** behoben: Beide Speicher (LocalStorage + IndexedDB) tragen Zeitstempel, beim Laden gewinnt der neueste Stand. Redundanz bleibt erhalten; bereits betroffene Kampagnen reparieren sich beim nächsten Laden selbst. (IDB-Einträge tragen bereits `timestamp` — persistence.js:80; die LS-Seite braucht einen Begleit-Zeitstempel.)
 - **D-02:** Beim Wechsel in den IDB-only-Modus: **einmaliger Event-Log-Hinweis** pro Sitzung. Der bestehende Per-Save-Erfolgs-Toast („Große Kampagne in IndexedDB gespeichert") wird darin konsolidiert — kein Toast-Spam am Spieltisch.
 - **D-03:** Schlägt das IndexedDB-Schreiben fehl (Daten dann nur im RAM): **deutlicher Fehler-Toast + Export-Aufforderung**. Datenverlust-Risiko muss am Tisch sofort sichtbar sein.
@@ -24,6 +25,7 @@ Die App läuft zuverlässig: Boot-Crash (`clearMindmap`, tools/debug.js:99) beho
 - **D-08:** 4-MB-Warnung („Kampagne wird groß — Backup empfohlen"): **einmal pro Sitzung** als Toast, danach nur noch Event-Log-Eintrag (aktuell feuert sie bei jedem Save im 4–5-MB-Fenster).
 
 ### Mindmap-Altdaten (STAB-02)
+
 - **D-09:** `D.mindmap` in bestehenden Speicherständen und Importen: **Smart-Strip**. Leere mindmap-Keys (`{nodes:[],connections:[]}`) werden still per Migration entfernt (Normalfall — jede Kampagne trägt den leeren Seed). Enthält eine Kampagne echte Mindmap-Inhalte: einmaliger Hinweis-Dialog mit Export-Angebot vor dem Strippen. Kein stiller Verlust von Nutzer-Inhalten.
 - **D-10:** Export-Format beim Smart-Strip: **eigene JSON-Datei** (`mindmap-backup-{kampagne}.json` mit nodes/connections) als Download im Hinweis-Dialog.
 - **D-11:** `tools/debug.js` (Boot-Crash-Verursacher, 1.109 Zeilen, in dev+prod gebündelt): **nur reparieren** — tote Mindmap-Referenzen entfernen (u.a. `const clearAllNodes = clearMindmap;` Zeile 99). Bleibt in beiden Bundles, kein Build-System-Umbau dafür.
@@ -31,12 +33,14 @@ Die App läuft zuverlässig: Boot-Crash (`clearMindmap`, tools/debug.js:99) beho
 - **D-13:** `assets/styles-purged.css` **löschen** — wird von nichts konsumiert (kein Verweis in build.py, loader.js oder index.html; nur das gelöschte Generator-Skript schrieb sie).
 
 ### Doku- & Lizenz-Audit (STAB-10, STAB-11)
+
 - **D-14:** CLAUDE.md (1.715 Zeilen): **Faktenkorrektur** — alle nachweislich falschen Aussagen korrigieren: Inline-Handler-Zahl (0 statt „~146 verbleiben"), tote Datei-Verweise (`features/network/mindmap.js`, `features/shops/spell-editor.js`), Campaign-Index-Key (`dnd-tracker-campaigns` statt `dnd-campaign-index`), Mindmap-Abschnitte entfernen, Roadmap-Tabelle aktualisieren, Version 2.6.1. Struktur und historische Kapitel bleiben. Gleiches Vorgehen für README und docs/bugfixes.md („Known Technical Debt"-Abschnitt).
 - **D-15:** execCommand-Konvention: **an Realität anpassen** — die Doku beschreibt den Ist-Zustand (21+ Call-Sites in rich-text.js u.a., API deprecated); die Ablösung wird als bekannte Tech-Debt dokumentiert. Kein Code-Umbau in dieser Phase.
 - **D-16:** SRD-Zaubertexte (Repo öffentlich: github.com/retroArthur/DnD_Tracker_Pro): **Dokumentieren + Attribution** — Befund (Quelle, Lizenz, Risikobewertung) in docs/ festhalten; fehlende Pflicht-Attribution (z.B. CC-BY-4.0 für SRD 5.1) in README/LICENSE ergänzen. Ein hartes Risiko (geschützte Übersetzung) wird als eigene Folge-Entscheidung eskaliert — nicht still Texte löschen.
 - **D-17:** Lizenz-Feld `package.json`: ISC → **MIT** (Konsistenz mit LICENSE-Datei; durch STAB-10 fixiert).
 
 ### Claude's Discretion
+
 - **CI-Smoke-Test-Umfang (STAB-08):** Boot-Check vs. Tab-Sweep, ob die CI den dist-Build selbst baut — beim Planen entscheiden. (Bereich wurde bewusst nicht diskutiert.)
 - **build.py-Härtung (STAB-07):** Ansatz für Pass-3 (Fix vs. Pre-Build-Duplikat-Check), Umsetzung des Modullisten-Sync-Checks und des DEBUG_MODE-Abbruchs.
 - Tote Dateien (main.js, tsconfig.json.backup, MIGRATION_REPORT.md) und `python3`→`python` in npm-Scripts (STAB-09).
@@ -45,15 +49,18 @@ Die App läuft zuverlässig: Boot-Crash (`clearMindmap`, tools/debug.js:99) beho
 </decisions>
 
 <canonical_refs>
+
 ## Canonical References
 
 **Downstream agents MUST read these before planning or implementing.**
 
 ### Befund-Inventar (Primärquelle dieser Phase)
+
 - `.planning/codebase/CONCERNS.md` — Vollständiges Schwächen-Inventar mit Datei:Zeile-Angaben: Stale-Shadow-Bug-Mechanik, '2.11'-Export-Bug, Mindmap-Reste-Liste, CLAUDE.md-Falschaussagen, build.py-Pass-3-Problem, kaputte Tools, Lizenz-Mismatch
 - `.planning/codebase/TESTING.md` — Test-Infrastruktur-Stand (für STAB-08 Smoke-Test und D-04 Unit-Test)
 
 ### Bestehende Bug-/Fehler-Doku (Audit-Ziele + Kontext)
+
 - `docs/bugfixes.md` — Bug-Patterns; der „Known Technical Debt"-Abschnitt ist selbst Audit-Ziel (D-14)
 - `docs/e2e-failure-triage.md` — E2E-Failure-Cluster (Kontext für Smoke-Test-Design, STAB-08)
 - `CLAUDE.md` — Audit-Ziel (D-14); enthält zugleich die Build-System-Doku (Three-Pass-Dedup) für STAB-07
@@ -61,9 +68,11 @@ Die App läuft zuverlässig: Boot-Crash (`clearMindmap`, tools/debug.js:99) beho
 </canonical_refs>
 
 <code_context>
+
 ## Existing Code Insights
 
 ### Reusable Assets
+
 - IndexedDB-Save stempelt bereits Timestamps: `saveToIndexedDBFallback()` schreibt `{id, data, timestamp: Date.now()}` (systems/spellslots/persistence.js:71-84) — nur die LS-Seite braucht einen Begleit-Zeitstempel
 - Event-Log-System (`showToast`, `toggleEventLog` in utils/utilities.js) — Träger für D-02/D-03/D-08-Hinweise
 - Migrations-System: `migrateData()` + `compareVersions()` (systems/spellslots/quick-roll.js:63-72, systems/spellslots/version-migration.js) — Andockpunkt für D-05 (Legacy-Stempel) und D-09 (Mindmap-Strip-Migration)
@@ -71,12 +80,14 @@ Die App läuft zuverlässig: Boot-Crash (`clearMindmap`, tools/debug.js:99) beho
 - Auto-Backups gehen bereits primär nach IndexedDB (systems/backups.js:14-42) — kein Handlungsbedarf bei >5MB
 
 ### Established Patterns
+
 - Save-Pfad: `systems/spellslots/persistence.js` (LS_LIMIT_MB=5, LS_WARNING_MB=4, IDB-only ab >5MB, optionales IDB-Mirror ab >2MB)
 - Load-Pfad: `systems/spellslots/quick-roll.js:31-45` — liest LS zuerst, IDB nur `if (!s)` ← exakt hier sitzt der Stale-Shadow-Bug
 - Build-Dedup-Regeln: keine `const X = window.X` in Funktionen, keine doppelten Top-Level-Funktionsnamen (CLAUDE.md Build-Abschnitt)
 - Modullisten doppelt gepflegt: loader.js:10-124 + build.py:249-355 — debug.js steht in beiden (loader.js:120, build.py:353); jede Modul-Änderung synchron halten
 
 ### Integration Points
+
 - Boot-Crash: `tools/debug.js:99` (`const clearAllNodes = clearMindmap;`)
 - Mindmap-Seed: `systems/campaign-manager/campaign-manager.js:35`
 - Mindmap-Kompat-Reads: `systems/backups.js`, `systems/spellslots/import-export.js` (werden zur Smart-Strip-Logik)
@@ -106,5 +117,5 @@ Die App läuft zuverlässig: Boot-Crash (`clearMindmap`, tools/debug.js:99) beho
 
 ---
 
-*Phase: 01-stabilisierung*
-*Context gathered: 2026-06-12*
+_Phase: 01-stabilisierung_
+_Context gathered: 2026-06-12_

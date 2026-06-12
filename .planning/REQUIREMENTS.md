@@ -10,7 +10,7 @@ Requirements für diesen Milestone. Jedes wird genau einer Roadmap-Phase zugeord
 ### Stabilisierung (STAB)
 
 - [ ] **STAB-01**: App startet fehlerfrei per `file://`-Doppelklick — der `clearMindmap`-Boot-Crash (tools/debug.js:99) ist behoben
-- [ ] **STAB-02**: Alle Reste des entfernten Mindmap-Features sind bereinigt (debug.js, campaign-manager-Seed, types/*.d.ts, styles-purged.css, tests/setup.js, tools/split-shops.py)
+- [ ] **STAB-02**: Alle Reste des entfernten Mindmap-Features sind bereinigt (debug.js, campaign-manager-Seed, types/\*.d.ts, styles-purged.css, tests/setup.js, tools/split-shops.py)
 - [ ] **STAB-03**: dev- und production-Builds sind frisch aus aktuellem Quellcode gebaut; Browser-Konsole bleibt in allen Tabs fehlerfrei
 - [ ] **STAB-04**: `npm run check` läuft grün (ESLint, TypeScript, Prettier)
 - [ ] **STAB-05**: Kampagnen über 5MB verlieren beim Neuladen keine Daten mehr (Stale-Shadow-Bug in der Persistenz behoben)
@@ -80,59 +80,61 @@ Bewusst auf später verschoben. Erfasst, aber nicht in der aktuellen Roadmap.
 
 Explizit ausgeschlossen. Dokumentiert, um Scope-Creep zu verhindern.
 
-| Feature | Begründung |
-|---------|------------|
-| Spieler-Ansicht (zweiter Bildschirm) | Vom Nutzer bewusst abgewählt; file://-Origin-Isolation macht Fenster-Sync zusätzlich riskant |
-| Handout-System | Vom Nutzer bewusst abgewählt |
-| Druck-Exporte (Spell-Cards, NPC-Karten, Party-Sheet) | Vom Nutzer bewusst abgewählt |
-| Backend-/Cloud-/Server-Funktionen | App bleibt offline-first ohne Server |
-| Mindmap/Network-Reaktivierung | Feature bewusst entfernt (Commit 7ef9bf5); nur Reste werden bereinigt |
-| Framework-/ESM-Migration | Bewährte non-ESM-Vanilla-JS-Architektur bleibt |
-| KI-generierte Inhalte | Erfordert API/Netzwerk — widerspricht offline-first |
-| Streaming-Audio (Spotify/YouTube) | Erfordert Netzwerk; lokale Dateien decken den Bedarf |
-| Vollständiger digitaler Spieler-Charakterbogen | D&D Beyond u.a. machen das besser; nur DM-relevante Werte |
+| Feature                                              | Begründung                                                                                   |
+| ---------------------------------------------------- | -------------------------------------------------------------------------------------------- |
+| Spieler-Ansicht (zweiter Bildschirm)                 | Vom Nutzer bewusst abgewählt; file://-Origin-Isolation macht Fenster-Sync zusätzlich riskant |
+| Handout-System                                       | Vom Nutzer bewusst abgewählt                                                                 |
+| Druck-Exporte (Spell-Cards, NPC-Karten, Party-Sheet) | Vom Nutzer bewusst abgewählt                                                                 |
+| Backend-/Cloud-/Server-Funktionen                    | App bleibt offline-first ohne Server                                                         |
+| Mindmap/Network-Reaktivierung                        | Feature bewusst entfernt (Commit 7ef9bf5); nur Reste werden bereinigt                        |
+| Framework-/ESM-Migration                             | Bewährte non-ESM-Vanilla-JS-Architektur bleibt                                               |
+| KI-generierte Inhalte                                | Erfordert API/Netzwerk — widerspricht offline-first                                          |
+| Streaming-Audio (Spotify/YouTube)                    | Erfordert Netzwerk; lokale Dateien decken den Bedarf                                         |
+| Vollständiger digitaler Spieler-Charakterbogen       | D&D Beyond u.a. machen das besser; nur DM-relevante Werte                                    |
 
 ## Traceability
 
-| Requirement | Phase | Status |
-|-------------|-------|--------|
-| STAB-01 | Phase 1 | Pending |
-| STAB-02 | Phase 1 | Pending |
-| STAB-03 | Phase 1 | Pending |
-| STAB-04 | Phase 1 | Pending |
-| STAB-05 | Phase 1 | Pending |
-| STAB-06 | Phase 1 | Pending |
-| STAB-07 | Phase 1 | Pending |
-| STAB-08 | Phase 1 | Pending |
-| STAB-09 | Phase 1 | Pending |
-| STAB-10 | Phase 1 | Pending |
-| STAB-11 | Phase 1 | Pending |
-| TECH-01 | Phase 2 | Pending |
-| TECH-02 | Phase 2 | Pending |
-| TECH-03 | Phase 2 | Pending |
-| TECH-04 | Phase 2 | Pending |
-| BEST-01 | Phase 3 | Pending |
-| BEST-02 | Phase 3 | Pending |
-| BEST-03 | Phase 3 | Pending |
-| INIT-01 | Phase 4 | Pending |
-| INIT-02 | Phase 4 | Pending |
-| INIT-03 | Phase 4 | Pending |
-| WELT-01 | Phase 5 | Pending |
-| WELT-02 | Phase 5 | Pending |
-| WELT-03 | Phase 5 | Pending |
-| WELT-04 | Phase 5 | Pending |
-| WELT-05 | Phase 5 | Pending |
-| CHAR-01 | Phase 6 | Pending |
-| CHAR-02 | Phase 6 | Pending |
-| CHAR-03 | Phase 6 | Pending |
-| UX-01 | Phase 7 | Pending |
-| UX-02 | Phase 7 | Pending |
+| Requirement | Phase   | Status  |
+| ----------- | ------- | ------- |
+| STAB-01     | Phase 1 | Pending |
+| STAB-02     | Phase 1 | Pending |
+| STAB-03     | Phase 1 | Pending |
+| STAB-04     | Phase 1 | Pending |
+| STAB-05     | Phase 1 | Pending |
+| STAB-06     | Phase 1 | Pending |
+| STAB-07     | Phase 1 | Pending |
+| STAB-08     | Phase 1 | Pending |
+| STAB-09     | Phase 1 | Pending |
+| STAB-10     | Phase 1 | Pending |
+| STAB-11     | Phase 1 | Pending |
+| TECH-01     | Phase 2 | Pending |
+| TECH-02     | Phase 2 | Pending |
+| TECH-03     | Phase 2 | Pending |
+| TECH-04     | Phase 2 | Pending |
+| BEST-01     | Phase 3 | Pending |
+| BEST-02     | Phase 3 | Pending |
+| BEST-03     | Phase 3 | Pending |
+| INIT-01     | Phase 4 | Pending |
+| INIT-02     | Phase 4 | Pending |
+| INIT-03     | Phase 4 | Pending |
+| WELT-01     | Phase 5 | Pending |
+| WELT-02     | Phase 5 | Pending |
+| WELT-03     | Phase 5 | Pending |
+| WELT-04     | Phase 5 | Pending |
+| WELT-05     | Phase 5 | Pending |
+| CHAR-01     | Phase 6 | Pending |
+| CHAR-02     | Phase 6 | Pending |
+| CHAR-03     | Phase 6 | Pending |
+| UX-01       | Phase 7 | Pending |
+| UX-02       | Phase 7 | Pending |
 
 **Coverage:**
+
 - v1 requirements: 31 total
 - Mapped to phases: 31
 - Unmapped: 0 ✓
 
 ---
-*Requirements defined: 2026-06-11*
-*Last updated: 2026-06-11 — Traceability filled by roadmapper*
+
+_Requirements defined: 2026-06-11_
+_Last updated: 2026-06-11 — Traceability filled by roadmapper_

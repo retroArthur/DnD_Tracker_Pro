@@ -10,14 +10,14 @@ let dialogFieldCounter = 0;
 function addDialogField() {
     const handleEditorPaste = window.handleEditorPaste;
     const container = $('npc-dialogs-container');
-    if (!container)
-        return;
+    if (!container) return;
     const id = dialogFieldCounter++;
     const editorId = `dialog-text-${id}`;
     const div = document.createElement('div');
     div.id = `dialog-${id}`;
     div.className = 'npc-dialog-field';
-    div.style.cssText = 'background: var(--bg-dark); padding: 12px; border-radius: 6px; margin-bottom: 10px; border: 1px solid var(--border);';
+    div.style.cssText =
+        'background: var(--bg-dark); padding: 12px; border-radius: 6px; margin-bottom: 10px; border: 1px solid var(--border);';
     div.innerHTML = `
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
             <span style="color: var(--purple); font-weight: 600; font-size: 0.9em;">💬 Dialog ${id + 1}</span>
@@ -48,16 +48,14 @@ function addDialogField() {
     container.appendChild(div);
     // Paste-Handler für dieses Feld hinzufügen
     const editor = $(editorId);
-    if (editor)
-        editor.addEventListener('paste', handleEditorPaste);
+    if (editor) editor.addEventListener('paste', handleEditorPaste);
 }
 /**
  * Shows modal to add a quick dialog to an NPC
  */
 function showAddDialogModal(npcId) {
     const npc = EntityLookup.npc(npcId);
-    if (!npc)
-        return;
+    if (!npc) return;
     const html = `
         <div class="modal-header">
             <span class="modal-title">💬 Dialog für ${esc(npc.name)}</span>
@@ -107,8 +105,7 @@ function showAddDialogModal(npcId) {
 function saveQuickDialog(npcId) {
     const renderNPCList = window.renderNPCList;
     const npc = EntityLookup.npc(npcId);
-    if (!npc)
-        return;
+    if (!npc) return;
     const textEl = $('quick-dialog-text');
     const titleInput = $('quick-dialog-title');
     const triggerInput = $('quick-dialog-trigger');
@@ -117,8 +114,7 @@ function saveQuickDialog(npcId) {
         showToast('⚠️ Dialog-Text erforderlich', 'error');
         return;
     }
-    if (!npc.dialogs)
-        npc.dialogs = [];
+    if (!npc.dialogs) npc.dialogs = [];
     npc.dialogs.push({
         title: titleInput?.value.trim() || '',
         triggerCondition: triggerInput?.value.trim() || '',

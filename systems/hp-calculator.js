@@ -4,30 +4,24 @@
 function showHpCalculator(type, id) {
     const getEntityByTypeAndId = window.getEntityByTypeAndId;
     const entity = getEntityByTypeAndId(type, id);
-    if (!entity)
-        return;
+    if (!entity) return;
     const typeEl = $('hp-calc-type');
     const idEl = $('hp-calc-id');
     const titleEl = $('hp-calc-title');
     const currentEl = $('hp-calc-current');
     const valueEl = $('hp-calc-value');
-    if (typeEl)
-        typeEl.value = type;
-    if (idEl)
-        idEl.value = String(id);
-    if (titleEl)
-        titleEl.textContent = `HP: ${entity.name || 'Unbekannt'}`;
+    if (typeEl) typeEl.value = type;
+    if (idEl) idEl.value = String(id);
+    if (titleEl) titleEl.textContent = `HP: ${entity.name || 'Unbekannt'}`;
     // Handle different HP field names (characters vs combatants)
     const currentHp = entity.hpCurrent ?? entity.currentHp ?? 0;
     const maxHp = entity.hpMax ?? entity.maxHp ?? 0;
     const tempHp = entity.tempHp || 0;
     if (currentEl)
         currentEl.textContent = `${currentHp} / ${maxHp}${tempHp ? ` (+${tempHp})` : ''}`;
-    if (valueEl)
-        valueEl.value = '';
+    if (valueEl) valueEl.value = '';
     const showModal = window.showModal;
-    if (showModal)
-        showModal('hp-calc-modal');
+    if (showModal) showModal('hp-calc-modal');
     valueEl?.focus();
 }
 function applyHpChange(action) {
@@ -38,15 +32,12 @@ function applyHpChange(action) {
     const id = parseEntityId(idEl?.value);
     const getEntityByTypeAndId = window.getEntityByTypeAndId;
     const entity = getEntityByTypeAndId(type, id);
-    if (!entity)
-        return;
+    if (!entity) return;
     const valueStr = valueEl?.value.trim();
-    if (!valueStr)
-        return;
+    if (!valueStr) return;
     // Parse dice formula or number
     const value = parseDiceFormula(valueStr);
-    if (value <= 0 && action !== 'temp')
-        return;
+    if (value <= 0 && action !== 'temp') return;
     // Determine which HP fields to use (characters vs combatants)
     const isCombatant = type === 'combatant';
     const hpCurrentKey = isCombatant ? 'currentHp' : 'hpCurrent';
@@ -63,12 +54,10 @@ function applyHpChange(action) {
         }
         entity[hpCurrentKey] = Math.max(0, currentHp - remaining);
         showToast(`💔 ${value} Schaden (${entity.name})`);
-    }
-    else if (action === 'heal') {
+    } else if (action === 'heal') {
         entity[hpCurrentKey] = Math.min(maxHp, currentHp + value);
         showToast(`💚 ${value} geheilt (${entity.name})`);
-    }
-    else if (action === 'temp') {
+    } else if (action === 'temp') {
         entity.tempHp = Math.max(entity.tempHp || 0, value);
         showToast(`🛡️ ${value} temp HP (${entity.name})`);
     }
@@ -81,21 +70,16 @@ function applyHpChange(action) {
     const renderParty = window.renderParty;
     const renderInit = window.renderInit;
     const save = window.save;
-    if (renderParty)
-        renderParty();
-    if (renderInit)
-        renderInit();
-    if (save)
-        save();
+    if (renderParty) renderParty();
+    if (renderInit) renderInit();
+    if (save) save();
 }
 function parseDiceFormula(formula) {
     // Handle simple numbers
-    if (/^\d+$/.test(formula))
-        return parseInt(formula);
+    if (/^\d+$/.test(formula)) return parseInt(formula);
     // Handle dice formulas like 2d6+3, 1d8, 3d6-2
     const match = formula.match(/^(\d+)?d(\d+)([+-]\d+)?$/i);
-    if (!match)
-        return parseInt(formula) || 0;
+    if (!match) return parseInt(formula) || 0;
     const count = parseInt(match[1]) || 1;
     const sides = parseInt(match[2]);
     const modifier = parseInt(match[3]) || 0;

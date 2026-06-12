@@ -46,7 +46,7 @@ function clearFormFields(config) {
         // Reset select dropdowns
         selectFields.forEach(field => {
             const id = typeof field === 'string' ? field : field.id;
-            const defaultValue = typeof field === 'string' ? '' : (field.defaultValue || '');
+            const defaultValue = typeof field === 'string' ? '' : field.defaultValue || '';
             const el = $(id);
             if (el) {
                 el.value = defaults[id] || defaultValue;
@@ -136,7 +136,12 @@ function clearSpellSlots(prefix = 'char-slot', maxLevel = 9) {
  * @param {Function} updateModCallback - Optional callback to update modifier display
  * @returns {boolean} - True if successful
  */
-function resetAttributes(attributes = ['str', 'dex', 'con', 'int', 'wis', 'cha'], prefix = 'char', defaultValue = 10, updateModCallback = null) {
+function resetAttributes(
+    attributes = ['str', 'dex', 'con', 'int', 'wis', 'cha'],
+    prefix = 'char',
+    defaultValue = 10,
+    updateModCallback = null
+) {
     try {
         attributes.forEach(attr => {
             const el = $(`${prefix}-${attr}`);

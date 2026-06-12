@@ -53,8 +53,7 @@ const NOTE_TEMPLATES = {
 };
 function applyNoteTemplate(templateKey) {
     const template = NOTE_TEMPLATES[templateKey];
-    if (!template)
-        return;
+    if (!template) return;
     const editor = $('session-text');
     if (editor) {
         // Wenn bereits Text vorhanden, frage nach

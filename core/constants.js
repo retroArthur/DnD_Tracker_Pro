@@ -7,7 +7,7 @@
  * Inventar-Kategorien für Loot und Items
  * @type {Object.<string, string>}
  */
-const CATS = ({
+const CATS = {
     weapons: '⚔️ Waffen',
     armor: '🛡️ Rüstung',
     potions: '🧪 Tränke',
@@ -17,24 +17,24 @@ const CATS = ({
     amulets: '📿 Amulette',
     wondrous: '✨ Wundersame Gegenstände',
     misc: '📦 Sonstiges'
-});
+};
 /**
  * Link-Kategorien für externe Ressourcen
  * @type {Object.<string, string>}
  */
-const LINK_CATS = ({
+const LINK_CATS = {
     rules: '📖 Regeln',
     tools: '🛠️ Tools',
     maps: '🗺️ Karten',
     music: '🎵 Musik',
     images: '🖼️ Bilder',
     other: '📌 Sonstiges'
-});
+};
 /**
  * D&D 5e Zustände (Conditions) mit deutschen Namen, Icons und Beschreibungen
  * @type {Object.<string, {name: string, icon: string, desc: string}>}
  */
-const CONDITIONS = ({
+const CONDITIONS = {
     blinded: {
         name: 'Geblendet',
         icon: '👁️',
@@ -115,30 +115,39 @@ const CONDITIONS = ({
         icon: '🎯',
         desc: 'Hält einen Zauber aufrecht. Bei Schaden CON-Rettungswurf (min. 10 oder halber Schaden).'
     }
-});
+};
 /**
  * Verfügbare Tag-Farben (CSS-Variablen-Namen)
  * @type {string[]}
  */
-const TAG_COLORS = ([
-    'red', 'green', 'blue', 'yellow', 'purple',
-    'orange', 'pink', 'cyan', 'gold'
-]);
+const TAG_COLORS = ['red', 'green', 'blue', 'yellow', 'purple', 'orange', 'pink', 'cyan', 'gold'];
 /**
  * Condition-Farben für Initiative-Tracker Effekte
  * @type {Object.<string, string>}
  */
-const CONDITION_COLORS = ({
-    blinded: 'red', charmed: 'purple', deafened: 'yellow', frightened: 'purple',
-    grappled: 'purple', incapacitated: 'red', invisible: 'blue', paralyzed: 'red',
-    petrified: 'red', poisoned: 'green', prone: 'yellow', restrained: 'red',
-    stunned: 'red', unconscious: 'red', exhaustion: 'yellow', concentration: 'blue'
-});
+const CONDITION_COLORS = {
+    blinded: 'red',
+    charmed: 'purple',
+    deafened: 'yellow',
+    frightened: 'purple',
+    grappled: 'purple',
+    incapacitated: 'red',
+    invisible: 'blue',
+    paralyzed: 'red',
+    petrified: 'red',
+    poisoned: 'green',
+    prone: 'yellow',
+    restrained: 'red',
+    stunned: 'red',
+    unconscious: 'red',
+    exhaustion: 'yellow',
+    concentration: 'blue'
+};
 /**
  * D&D 5e Schadenstypen mit Icons
  * @type {Object.<string, {name: string, icon: string}>}
  */
-const DAMAGE_TYPES = ({
+const DAMAGE_TYPES = {
     bludgeoning: { name: 'Wucht', icon: '🔨' },
     piercing: { name: 'Stich', icon: '🗡️' },
     slashing: { name: 'Hieb', icon: '⚔️' },
@@ -152,12 +161,12 @@ const DAMAGE_TYPES = ({
     radiant: { name: 'Strahlend', icon: '✨' },
     psychic: { name: 'Psychisch', icon: '🧠' },
     force: { name: 'Energie', icon: '💥' }
-});
+};
 /**
  * D&D 5e Zauberschulen mit Icons
  * @type {Object.<string, {name: string, icon: string}>}
  */
-const SPELL_SCHOOLS = ({
+const SPELL_SCHOOLS = {
     abjuration: { name: 'Bannmagie', icon: '🛡️' },
     conjuration: { name: 'Beschwörung', icon: '🌀' },
     divination: { name: 'Erkenntnismagie', icon: '👁️' },
@@ -166,46 +175,46 @@ const SPELL_SCHOOLS = ({
     illusion: { name: 'Illusion', icon: '🎭' },
     necromancy: { name: 'Nekromantie', icon: '💀' },
     transmutation: { name: 'Verwandlung', icon: '🔄' }
-});
+};
 /**
  * D&D 5e Attribute
  * @type {Object.<string, {name: string, abbr: string}>}
  */
-const ATTRIBUTES = ({
+const ATTRIBUTES = {
     str: { name: 'Stärke', abbr: 'STR' },
     dex: { name: 'Geschicklichkeit', abbr: 'DEX' },
     con: { name: 'Konstitution', abbr: 'CON' },
     int: { name: 'Intelligenz', abbr: 'INT' },
     wis: { name: 'Weisheit', abbr: 'WIS' },
     cha: { name: 'Charisma', abbr: 'CHA' }
-});
+};
 /**
  * D&D Combat Constants
  * HP thresholds and death save limits
  * @type {Object}
  */
-const COMBAT_CONSTANTS = ({
+const COMBAT_CONSTANTS = {
     HP_CRITICAL_THRESHOLD: 25, // At or below 25% HP = critical
     HP_BLOODIED_THRESHOLD: 50, // At or below 50% HP = bloodied
     DEATH_SAVE_SUCCESSES: 3, // Successes needed to stabilize
-    DEATH_SAVE_FAILURES: 3, // Failures = death
-});
+    DEATH_SAVE_FAILURES: 3 // Failures = death
+};
 /**
  * UI Timing Constants (in milliseconds)
  * Debounce and throttle delays for UI interactions
  * @type {Object}
  */
-const UI_TIMING = ({
+const UI_TIMING = {
     DM_SCREEN_SYNC_DELAY: 150, // DM screen live-sync debounce
     AOE_UPDATE_DEBOUNCE: 50, // AoE target display update
-    SELECTION_CHANGE_DEBOUNCE: 150, // Floating toolbar selection
-});
+    SELECTION_CHANGE_DEBOUNCE: 150 // Floating toolbar selection
+};
 /**
  * D&D 5e Fertigkeiten mit zugehörigem Attribut (erweiterte Info)
  * Hinweis: SKILLS (ohne _INFO) existiert bereits mit anderer Struktur für Würfelsystem
  * @type {Object.<string, {name: string, attr: string}>}
  */
-const SKILL_INFO = ({
+const SKILL_INFO = {
     acrobatics: { name: 'Akrobatik', attr: 'dex' },
     animalHandling: { name: 'Tierkunde', attr: 'wis' },
     arcana: { name: 'Arkane Kunde', attr: 'int' },
@@ -224,48 +233,48 @@ const SKILL_INFO = ({
     sleightOfHand: { name: 'Fingerfertigkeit', attr: 'dex' },
     stealth: { name: 'Heimlichkeit', attr: 'dex' },
     survival: { name: 'Überlebenskunst', attr: 'wis' }
-});
+};
 /**
  * Seltenheitsstufen für magische Gegenstände
  * @type {Object.<string, {name: string, color: string}>}
  */
-const RARITIES = ({
+const RARITIES = {
     common: { name: 'Gewöhnlich', color: 'var(--text)' },
     uncommon: { name: 'Ungewöhnlich', color: 'var(--green)' },
     rare: { name: 'Selten', color: 'var(--blue)' },
     veryRare: { name: 'Sehr Selten', color: 'var(--purple)' },
     legendary: { name: 'Legendär', color: 'var(--orange)' },
     artifact: { name: 'Artefakt', color: 'var(--gold)' }
-});
+};
 /**
  * Seltenheits-Labels (deutsche Namen) - verwendet lowercase keys für Loot-System
  * @type {Object.<string, string>}
  */
-const RARITY_LABELS = ({
+const RARITY_LABELS = {
     normal: 'Normal',
     common: 'Gewöhnlich',
     uncommon: 'Ungewöhnlich',
     rare: 'Selten',
     veryrare: 'Sehr selten',
     legendary: 'Legendär'
-});
+};
 /**
  * Seltenheits-Farben für Loot-System - verwendet lowercase keys
  * @type {Object.<string, string>}
  */
-const RARITY_COLORS = ({
+const RARITY_COLORS = {
     normal: 'var(--text)',
     common: '#4ade80',
     uncommon: '#60a5fa',
     rare: '#a78bfa',
     veryrare: '#facc15',
     legendary: '#fb923c'
-});
+};
 /**
  * Herkunfts-Labels für Loot-Items
  * @type {Object.<string, string>}
  */
-const ORIGIN_LABELS = ({
+const ORIGIN_LABELS = {
     campaign: '📜 Kampagne',
     quest: '🎯 Quest',
     summon: '✨ Beschwörung',
@@ -274,26 +283,69 @@ const ORIGIN_LABELS = ({
     purchase: '🛒 Kauf',
     gift: '🎁 Geschenk',
     craft: '🔨 Hergestellt'
-});
+};
 /**
  * Tag-Labels für Loot-Items mit Icons
  * @type {Object.<string, string>}
  */
-const LOOT_TAG_LABELS = ({
-    weapon: '⚔️ Waffe', armor: '🛡️ Rüstung', potion: '🧪 Trank', scroll: '📜 Schriftrolle', ring: '💍 Ring',
-    wand: '🪄 Zauberstab', rod: '🏛️ Zepter', staff: '🪵 Stecken', wondrous: '✨ Wundersam', ammunition: '🏹 Munition', focus: '🔮 Fokus',
-    light: '🪶 Leicht', heavy: '🏋️ Schwer', finesse: '⚡ Finesse', 'two-handed': '🙌 Zweihändig', versatile: '↔️ Vielseitig',
-    reach: '📏 Reichweite', thrown: '🎯 Wurf', loading: '⏳ Laden', silvered: '🥈 Silber', adamantine: '💠 Adamant',
-    'light-armor': '👕 Leichte Rüst.', 'medium-armor': '🦺 Mittlere Rüst.', 'heavy-armor': '🛡️ Schwere Rüst.', shield: '🔰 Schild',
-    attunement: '🔮 Einstimmung', charges: '⚡ Ladungen', consumable: '💨 Verbrauchsgut', cursed: '💀 Verflucht', sentient: '🧠 Intelligent',
-    head: '👑 Kopf', neck: '📿 Hals', back: '🧥 Rücken', body: '👔 Körper', hands: '🧤 Hände', finger: '💍 Finger', waist: '🎗️ Taille', feet: '👢 Füße',
-    fire: '🔥 Feuer', cold: '❄️ Kälte', lightning: '⚡ Blitz', acid: '🧪 Säure', poison: '☠️ Gift', necrotic: '💀 Nekrotisch', radiant: '☀️ Strahlend', healing: '💚 Heilung',
-    tool: '🔧 Werkzeug', gemstone: '💎 Edelstein', art: '🖼️ Kunstobjekt', container: '📦 Behälter', key: '🗝️ Schlüssel', document: '📄 Dokument'
-});
+const LOOT_TAG_LABELS = {
+    weapon: '⚔️ Waffe',
+    armor: '🛡️ Rüstung',
+    potion: '🧪 Trank',
+    scroll: '📜 Schriftrolle',
+    ring: '💍 Ring',
+    wand: '🪄 Zauberstab',
+    rod: '🏛️ Zepter',
+    staff: '🪵 Stecken',
+    wondrous: '✨ Wundersam',
+    ammunition: '🏹 Munition',
+    focus: '🔮 Fokus',
+    light: '🪶 Leicht',
+    heavy: '🏋️ Schwer',
+    finesse: '⚡ Finesse',
+    'two-handed': '🙌 Zweihändig',
+    versatile: '↔️ Vielseitig',
+    reach: '📏 Reichweite',
+    thrown: '🎯 Wurf',
+    loading: '⏳ Laden',
+    silvered: '🥈 Silber',
+    adamantine: '💠 Adamant',
+    'light-armor': '👕 Leichte Rüst.',
+    'medium-armor': '🦺 Mittlere Rüst.',
+    'heavy-armor': '🛡️ Schwere Rüst.',
+    shield: '🔰 Schild',
+    attunement: '🔮 Einstimmung',
+    charges: '⚡ Ladungen',
+    consumable: '💨 Verbrauchsgut',
+    cursed: '💀 Verflucht',
+    sentient: '🧠 Intelligent',
+    head: '👑 Kopf',
+    neck: '📿 Hals',
+    back: '🧥 Rücken',
+    body: '👔 Körper',
+    hands: '🧤 Hände',
+    finger: '💍 Finger',
+    waist: '🎗️ Taille',
+    feet: '👢 Füße',
+    fire: '🔥 Feuer',
+    cold: '❄️ Kälte',
+    lightning: '⚡ Blitz',
+    acid: '🧪 Säure',
+    poison: '☠️ Gift',
+    necrotic: '💀 Nekrotisch',
+    radiant: '☀️ Strahlend',
+    healing: '💚 Heilung',
+    tool: '🔧 Werkzeug',
+    gemstone: '💎 Edelstein',
+    art: '🖼️ Kunstobjekt',
+    container: '📦 Behälter',
+    key: '🗝️ Schlüssel',
+    document: '📄 Dokument'
+};
 // ============================================================
 // INITIATIVE CONSTANTS
 // ============================================================
-const INIT_CONSTANTS = ({
+const INIT_CONSTANTS = {
     PERMANENT_DURATION: 999,
     DEATH_SAVE_THRESHOLD: 3,
     CONCENTRATION_DC_MIN: 10,
@@ -301,13 +353,13 @@ const INIT_CONSTANTS = ({
     D20_SIDES: 20,
     ABILITY_MOD_BASE: 10,
     ABILITY_MOD_DIVISOR: 2
-});
-const COMBATANT_TYPES = ({
+};
+const COMBATANT_TYPES = {
     PLAYER: 'player',
     ENEMY: 'enemy',
     ALLY: 'ally',
     LAIR: 'lair'
-});
+};
 // ============================================================
 // ENTITY ICONS - Zentralisierte Icons für alle Entity-Typen
 // ============================================================
@@ -315,7 +367,7 @@ const COMBATANT_TYPES = ({
  * Icons für alle Entity-Typen (plural keys für Arrays/Listen)
  * @type {Object.<string, string>}
  */
-const ENTITY_ICONS = ({
+const ENTITY_ICONS = {
     characters: '👥',
     npcs: '🎭',
     locations: '🏠',
@@ -326,13 +378,13 @@ const ENTITY_ICONS = ({
     wiki: '📖',
     shops: '🛒',
     sessions: '📓'
-});
+};
 /**
  * Icons für Entity-Links (unterstützt sowohl Singular als auch Plural)
  * Verwendet für [[type:id:name]] Pattern und Verlinkungen
  * @type {Object.<string, string>}
  */
-const LINK_ICONS = ({
+const LINK_ICONS = {
     // Plural forms (primär)
     npcs: '🎭',
     locations: '🏠',
@@ -350,12 +402,12 @@ const LINK_ICONS = ({
     encounter: '⚔️',
     spell: '✨',
     item: '💎'
-});
+};
 /**
  * Typnamen für Entities (deutsche Labels)
  * @type {Object.<string, string>}
  */
-const ENTITY_TYPE_NAMES = ({
+const ENTITY_TYPE_NAMES = {
     npcs: 'NPC',
     locations: 'Ort',
     quests: 'Quest',
@@ -364,7 +416,7 @@ const ENTITY_TYPE_NAMES = ({
     spells: 'Zauber',
     loot: 'Item',
     wiki: 'Wiki'
-});
+};
 
 // ============================================================
 // MARKDOWN PATTERNS
@@ -373,7 +425,7 @@ const ENTITY_TYPE_NAMES = ({
  * Markdown syntax patterns for live shortcuts and parsing
  * @type {Object.<string, RegExp>}
  */
-const MARKDOWN_PATTERNS = ({
+const MARKDOWN_PATTERNS = {
     BOLD: /(\*\*|__)((?:(?!\1).)+)\1/g,
     ITALIC: /(\*|_)((?:(?!\1).)+)\1/g,
     STRIKE: /(~~)((?:(?!\1).)+)\1/g,
@@ -383,23 +435,39 @@ const MARKDOWN_PATTERNS = ({
     BLOCKQUOTE: /^>\s+(.+)$/gm,
     LIST_ITEM: /^[-*]\s+(.+)$/gm,
     READ_ALOUD: /:::read-aloud\n([\s\S]*?)\n:::/g
-});
+};
 
 // ============================================================
 // NAMESPACE EXPORTS (neue Struktur)
 // ============================================================
 // D&D Spielregel-Konstanten
 window.DND_RULES = Object.freeze({
-    CONDITIONS, CONDITION_COLORS, DAMAGE_TYPES, SPELL_SCHOOLS,
-    ATTRIBUTES, SKILL_INFO, RARITIES, RARITY_LABELS, RARITY_COLORS,
-    COMBAT_CONSTANTS, INIT_CONSTANTS, COMBATANT_TYPES,
-    CATS, LINK_CATS, ORIGIN_LABELS, LOOT_TAG_LABELS, TAG_COLORS
+    CONDITIONS,
+    CONDITION_COLORS,
+    DAMAGE_TYPES,
+    SPELL_SCHOOLS,
+    ATTRIBUTES,
+    SKILL_INFO,
+    RARITIES,
+    RARITY_LABELS,
+    RARITY_COLORS,
+    COMBAT_CONSTANTS,
+    INIT_CONSTANTS,
+    COMBATANT_TYPES,
+    CATS,
+    LINK_CATS,
+    ORIGIN_LABELS,
+    LOOT_TAG_LABELS,
+    TAG_COLORS
 });
 
 // UI/App-Konstanten
 window.UI_CONSTANTS = Object.freeze({
-    UI_TIMING, ENTITY_ICONS, LINK_ICONS,
-    ENTITY_TYPE_NAMES, MARKDOWN_PATTERNS
+    UI_TIMING,
+    ENTITY_ICONS,
+    LINK_ICONS,
+    ENTITY_TYPE_NAMES,
+    MARKDOWN_PATTERNS
 });
 
 // ============================================================

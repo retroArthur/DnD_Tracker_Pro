@@ -7,49 +7,52 @@ let selectedEncounterId = null;
 let currentEncFilter = 'all';
 // Creature type icons
 const ENC_ICONS = {
-    'aberration': '👁️',
-    'bestie': '🐾',
-    'himmlisch': '👼',
-    'konstrukt': '🤖',
-    'drache': '🐉',
-    'dragon': '🐉',
-    'elementar': '🌪️',
-    'feenwesen': '🧚',
-    'riese': '🗿',
-    'humanoid': '👤',
-    'monstrosität': '👹',
-    'schleim': '🟢',
-    'pflanze': '🌿',
-    'untot': '💀',
-    'undead': '💀',
-    'default': '⚔️'
+    aberration: '👁️',
+    bestie: '🐾',
+    himmlisch: '👼',
+    konstrukt: '🤖',
+    drache: '🐉',
+    dragon: '🐉',
+    elementar: '🌪️',
+    feenwesen: '🧚',
+    riese: '🗿',
+    humanoid: '👤',
+    monstrosität: '👹',
+    schleim: '🟢',
+    pflanze: '🌿',
+    untot: '💀',
+    undead: '💀',
+    default: '⚔️'
 };
 // Format speed for display (supports both old string and new object format)
 function formatEncSpeed(speed, html = false) {
-    if (!speed)
-        return '—';
+    if (!speed) return '—';
     // Old format: just a string
-    if (typeof speed === 'string')
-        return speed || '—';
+    if (typeof speed === 'string') return speed || '—';
     // New format: object with walk, climb, swim, fly, burrow
     const icons = { walk: '🚶', climb: '🧗', swim: '🏊', fly: '🦅', burrow: '⛏️' };
-    const labels = { walk: '', climb: 'Klettern', swim: 'Schwimmen', fly: 'Fliegen', burrow: 'Graben' };
+    const labels = {
+        walk: '',
+        climb: 'Klettern',
+        swim: 'Schwimmen',
+        fly: 'Fliegen',
+        burrow: 'Graben'
+    };
     const parts = [];
-    if (speed.walk)
-        parts.push({ icon: icons.walk, label: labels.walk, value: speed.walk });
-    if (speed.climb)
-        parts.push({ icon: icons.climb, label: labels.climb, value: speed.climb });
-    if (speed.swim)
-        parts.push({ icon: icons.swim, label: labels.swim, value: speed.swim });
-    if (speed.fly)
-        parts.push({ icon: icons.fly, label: labels.fly, value: speed.fly });
-    if (speed.burrow)
-        parts.push({ icon: icons.burrow, label: labels.burrow, value: speed.burrow });
-    if (parts.length === 0)
-        return '—';
+    if (speed.walk) parts.push({ icon: icons.walk, label: labels.walk, value: speed.walk });
+    if (speed.climb) parts.push({ icon: icons.climb, label: labels.climb, value: speed.climb });
+    if (speed.swim) parts.push({ icon: icons.swim, label: labels.swim, value: speed.swim });
+    if (speed.fly) parts.push({ icon: icons.fly, label: labels.fly, value: speed.fly });
+    if (speed.burrow) parts.push({ icon: icons.burrow, label: labels.burrow, value: speed.burrow });
+    if (parts.length === 0) return '—';
     if (html) {
         // Return as HTML with icons for multi-line display
-        return parts.map(p => `<div class="enc-speed-line">${p.icon} ${p.label ? p.label + ' ' : ''}${p.value}</div>`).join('');
+        return parts
+            .map(
+                p =>
+                    `<div class="enc-speed-line">${p.icon} ${p.label ? p.label + ' ' : ''}${p.value}</div>`
+            )
+            .join('');
     }
     // Plain text for simple display
     return parts.map(p => (p.label ? p.label + ' ' : '') + p.value).join(', ');
@@ -57,8 +60,7 @@ function formatEncSpeed(speed, html = false) {
 function getEncounterIcon(enc) {
     const type = (enc.creatureType || enc.race || '').toLowerCase();
     for (const [key, icon] of Object.entries(ENC_ICONS)) {
-        if (type.includes(key))
-            return icon;
+        if (type.includes(key)) return icon;
     }
     return ENC_ICONS.default;
 }
@@ -66,8 +68,7 @@ function renderEncounters() {
     const D = window.D;
     const listContainer = $('encounter-list');
     const filterContainer = $('encounter-filters');
-    if (!listContainer)
-        return;
+    if (!listContainer) return;
     // Enable EntityLookup cache for performance
     EntityLookup.enableCache();
     // Update counter
@@ -75,25 +76,36 @@ function renderEncounters() {
     // Render filter chips (by creature type)
     if (filterContainer) {
         const typeSet = new Set();
-        (D.encounters || []).forEach((e) => {
-            if (e.creatureType)
-                typeSet.add(e.creatureType);
+        (D.encounters || []).forEach(e => {
+            if (e.creatureType) typeSet.add(e.creatureType);
         });
         const types = Array.from(typeSet);
         filterContainer.innerHTML = `
             <div class="enc-filter-chip ${currentEncFilter === 'all' ? 'active' : ''}" data-action="set-enc-filter" data-value="all">Alle</div>
-            ${types.slice(0, 5).map((type) => `
+            ${types
+                .slice(0, 5)
+                .map(
+                    type => `
                 <div class="enc-filter-chip ${currentEncFilter === type ? 'active' : ''}"
                      data-action="set-enc-filter" data-value="${esc(type)}">
                     ${esc(type)}
                 </div>
-            `).join('')}
-            ${types.length > 5 ? `
+            `
+                )
+                .join('')}
+            ${
+                types.length > 5
+                    ? `
                 <select class="enc-filter-select" data-on-change="setEncFilter">
                     <option value="">Mehr...</option>
-                    ${types.slice(5).map((type) => `<option value="${esc(type)}">${esc(type)}</option>`).join('')}
+                    ${types
+                        .slice(5)
+                        .map(type => `<option value="${esc(type)}">${esc(type)}</option>`)
+                        .join('')}
                 </select>
-            ` : ''}
+            `
+                    : ''
+            }
         `;
     }
     // Get search and filter
@@ -111,8 +123,7 @@ function renderEncounters() {
     encounters.sort((a, b) => {
         const crA = parseCR(a.cr);
         const crB = parseCR(b.cr);
-        if (crA !== crB)
-            return crA - crB;
+        if (crA !== crB) return crA - crB;
         return a.name.localeCompare(b.name);
     });
     // Empty state
@@ -122,11 +133,15 @@ function renderEncounters() {
                 <div class="enc-empty-icon">👹</div>
                 <div class="enc-empty-title">${search || currentEncFilter !== 'all' ? 'Keine Treffer' : 'Keine Encounter'}</div>
                 <div class="enc-empty-desc">${search || currentEncFilter !== 'all' ? 'Versuche andere Suchbegriffe' : 'Erstelle Monster und Gegner'}</div>
-                ${!search && currentEncFilter === 'all' ? `
+                ${
+                    !search && currentEncFilter === 'all'
+                        ? `
                     <button class="enc-add-btn" data-action="show-enc-form" style="margin-top: 12px;">
                         + Encounter erstellen
                     </button>
-                ` : ''}
+                `
+                        : ''
+                }
             </div>
         `;
         clearEncounterDetail();
@@ -134,12 +149,11 @@ function renderEncounters() {
         return;
     }
     // Render list items
-    listContainer.innerHTML = encounters.map((enc) => renderEncounterItem(enc)).join('');
+    listContainer.innerHTML = encounters.map(enc => renderEncounterItem(enc)).join('');
     // Auto-select first if none selected
-    if (!selectedEncounterId || !encounters.find((e) => e.id === selectedEncounterId)) {
+    if (!selectedEncounterId || !encounters.find(e => e.id === selectedEncounterId)) {
         selectEncounter(encounters[0].id, false);
-    }
-    else {
+    } else {
         showEncounterDetail(selectedEncounterId);
     }
     // Clear EntityLookup cache
@@ -147,23 +161,20 @@ function renderEncounters() {
 }
 // Helper to parse CR values like "1/4", "1/2" etc.
 function parseCR(cr) {
-    if (!cr)
-        return 0;
-    if (cr === '1/8')
-        return 0.125;
-    if (cr === '1/4')
-        return 0.25;
-    if (cr === '1/2')
-        return 0.5;
+    if (!cr) return 0;
+    if (cr === '1/8') return 0.125;
+    if (cr === '1/4') return 0.25;
+    if (cr === '1/2') return 0.5;
     return parseFloat(cr) || 0;
 }
 // Quick difficulty estimation for single encounter
 function getEncounterDifficulty(cr) {
     const D = window.D;
-    if (!D.characters || D.characters.length === 0)
-        return null;
+    if (!D.characters || D.characters.length === 0) return null;
     // Get party average level
-    const avgLevel = Math.round(D.characters.reduce((sum, c) => sum + (c.level || 1), 0) / D.characters.length);
+    const avgLevel = Math.round(
+        D.characters.reduce((sum, c) => sum + (c.level || 1), 0) / D.characters.length
+    );
     const partySize = D.characters.length;
     // XP Thresholds for average level (simplified)
     const thresholds = {
@@ -177,11 +188,12 @@ function getEncounterDifficulty(cr) {
         20: { easy: 2800, medium: 5700, hard: 8500, deadly: 12700 }
     };
     // Get closest threshold
-    const levels = Object.keys(thresholds).map(Number).sort((a, b) => a - b);
+    const levels = Object.keys(thresholds)
+        .map(Number)
+        .sort((a, b) => a - b);
     let closestLevel = levels[0];
     for (const lvl of levels) {
-        if (lvl <= avgLevel)
-            closestLevel = lvl;
+        if (lvl <= avgLevel) closestLevel = lvl;
     }
     const t = thresholds[closestLevel];
     // Party thresholds
@@ -193,19 +205,27 @@ function getEncounterDifficulty(cr) {
     };
     // CR to XP
     const crToXP = {
-        "0": 10, "1/8": 25, "1/4": 50, "1/2": 100, "1": 200, "2": 450, "3": 700,
-        "4": 1100, "5": 1800, "6": 2300, "7": 2900, "8": 3900, "9": 5000, "10": 5900
+        0: 10,
+        '1/8': 25,
+        '1/4': 50,
+        '1/2': 100,
+        1: 200,
+        2: 450,
+        3: 700,
+        4: 1100,
+        5: 1800,
+        6: 2300,
+        7: 2900,
+        8: 3900,
+        9: 5000,
+        10: 5900
     };
-    const xp = crToXP[String(cr)] || (parseCR(cr) * 200);
+    const xp = crToXP[String(cr)] || parseCR(cr) * 200;
     // Determine difficulty
-    if (xp < partyThresholds.easy)
-        return { level: 'trivial', label: 'Trivial' };
-    if (xp < partyThresholds.medium)
-        return { level: 'easy', label: 'Leicht' };
-    if (xp < partyThresholds.hard)
-        return { level: 'medium', label: 'Mittel' };
-    if (xp < partyThresholds.deadly)
-        return { level: 'hard', label: 'Schwer' };
+    if (xp < partyThresholds.easy) return { level: 'trivial', label: 'Trivial' };
+    if (xp < partyThresholds.medium) return { level: 'easy', label: 'Leicht' };
+    if (xp < partyThresholds.hard) return { level: 'medium', label: 'Mittel' };
+    if (xp < partyThresholds.deadly) return { level: 'hard', label: 'Schwer' };
     return { level: 'deadly', label: 'Tödlich' };
 }
 function renderEncounterItem(enc) {
@@ -228,11 +248,15 @@ function renderEncounterItem(enc) {
                 <span class="enc-stat-badge" title="Rüstungsklasse">🛡️ ${enc.ac || '—'}</span>
                 <span class="enc-stat-badge" title="Trefferpunkte">❤️ ${enc.hp || '—'}</span>
             </div>
-            ${difficulty ? `
+            ${
+                difficulty
+                    ? `
                 <div class="enc-item-difficulty">
                     <span class="difficulty-badge ${difficulty.level}">${difficulty.label}</span>
                 </div>
-            ` : ''}
+            `
+                    : ''
+            }
         </div>
     `;
 }
@@ -255,46 +279,68 @@ function selectEncounter(id, scroll = true) {
 }
 function showEncounterDetail(id) {
     const panel = $('enc-detail-panel');
-    if (!panel)
-        return;
+    if (!panel) return;
     const enc = EntityLookup.encounter(id);
     if (!enc) {
         clearEncounterDetail();
         return;
     }
     const icon = getEncounterIcon(enc);
-    const languages = Array.isArray(enc.languages) ? enc.languages.join(', ') : (enc.languages || '—');
+    const languages = Array.isArray(enc.languages)
+        ? enc.languages.join(', ')
+        : enc.languages || '—';
     // Build attributes
     const attrs = ['str', 'dex', 'con', 'int', 'wis', 'cha'].map(a => {
         const val = enc[a] || 10;
         const mod = Math.floor((val - 10) / 2);
         const modStr = mod >= 0 ? `+${mod}` : `${mod}`;
-        const name = a.toUpperCase().replace('STR', 'STÄ').replace('DEX', 'GES').replace('CON', 'KON').replace('WIS', 'WEI');
+        const name = a
+            .toUpperCase()
+            .replace('STR', 'STÄ')
+            .replace('DEX', 'GES')
+            .replace('CON', 'KON')
+            .replace('WIS', 'WEI');
         return { name, val, mod: modStr, modNum: mod };
     });
     // Build saving throws (use custom value if provided, otherwise calculate)
-    const savingThrowsHtml = enc.savingThrows && Object.keys(enc.savingThrows).length > 0 ?
-        Object.keys(enc.savingThrows).filter(k => enc.savingThrows[k]).map(attr => {
-            const saveData = enc.savingThrows[attr];
-            let displayValue;
-            if (typeof saveData === 'string' && saveData.length > 0) {
-                // Custom value provided - use as-is
-                displayValue = saveData.startsWith('+') || saveData.startsWith('-') ? saveData : `+${saveData}`;
-            }
-            else {
-                // Calculate from attribute + proficiency
-                const val = enc[attr] || 10;
-                const mod = Math.floor((val - 10) / 2);
-                const profBonus = Math.max(2, Math.floor((parseInt(enc.cr) || 0) / 4) + 2);
-                const total = mod + profBonus;
-                displayValue = `+${total}`;
-            }
-            return `<span class="enc-save-tag">${attr.toUpperCase()} ${displayValue}</span>`;
-        }).join('') : '';
+    const savingThrowsHtml =
+        enc.savingThrows && Object.keys(enc.savingThrows).length > 0
+            ? Object.keys(enc.savingThrows)
+                  .filter(k => enc.savingThrows[k])
+                  .map(attr => {
+                      const saveData = enc.savingThrows[attr];
+                      let displayValue;
+                      if (typeof saveData === 'string' && saveData.length > 0) {
+                          // Custom value provided - use as-is
+                          displayValue =
+                              saveData.startsWith('+') || saveData.startsWith('-')
+                                  ? saveData
+                                  : `+${saveData}`;
+                      } else {
+                          // Calculate from attribute + proficiency
+                          const val = enc[attr] || 10;
+                          const mod = Math.floor((val - 10) / 2);
+                          const profBonus = Math.max(
+                              2,
+                              Math.floor((parseInt(enc.cr) || 0) / 4) + 2
+                          );
+                          const total = mod + profBonus;
+                          displayValue = `+${total}`;
+                      }
+                      return `<span class="enc-save-tag">${attr.toUpperCase()} ${displayValue}</span>`;
+                  })
+                  .join('')
+            : '';
     // Build resistances/immunities
-    const resistancesHtml = (enc.resistances || []).map((r) => `<span class="enc-res-tag res">${esc(r)}</span>`).join('');
-    const immunitiesHtml = (enc.immunities || []).map((i) => `<span class="enc-res-tag imm">${esc(i)}</span>`).join('');
-    const condImmunitiesHtml = (enc.conditionImmunities || []).map((c) => `<span class="enc-res-tag cond">${esc(c)}</span>`).join('');
+    const resistancesHtml = (enc.resistances || [])
+        .map(r => `<span class="enc-res-tag res">${esc(r)}</span>`)
+        .join('');
+    const immunitiesHtml = (enc.immunities || [])
+        .map(i => `<span class="enc-res-tag imm">${esc(i)}</span>`)
+        .join('');
+    const condImmunitiesHtml = (enc.conditionImmunities || [])
+        .map(c => `<span class="enc-res-tag cond">${esc(c)}</span>`)
+        .join('');
     panel.innerHTML = `
         <div class="enc-detail-content">
             <div class="enc-detail-header">
@@ -341,31 +387,45 @@ function showEncounterDetail(id) {
             <div class="enc-section">
                 <div class="enc-section-title">Attribute</div>
                 <div class="enc-attr-grid">
-                    ${attrs.map(a => `
+                    ${attrs
+                        .map(
+                            a => `
                         <div class="enc-attr-box">
                             <div class="enc-attr-name">${a.name}</div>
                             <div class="enc-attr-value">${a.val}</div>
                             <div class="enc-attr-mod ${a.modNum >= 0 ? 'positive' : 'negative'}">${a.mod}</div>
                         </div>
-                    `).join('')}
+                    `
+                        )
+                        .join('')}
                 </div>
             </div>
 
-            ${savingThrowsHtml ? `
+            ${
+                savingThrowsHtml
+                    ? `
                 <div class="enc-section">
                     <div class="enc-section-title">Rettungswürfe</div>
                     <div class="enc-tags">${savingThrowsHtml}</div>
                 </div>
-            ` : ''}
+            `
+                    : ''
+            }
 
-            ${languages !== '—' ? `
+            ${
+                languages !== '—'
+                    ? `
                 <div class="enc-section">
                     <div class="enc-section-title">Sprachen</div>
                     <div class="enc-text">${esc(languages)}</div>
                 </div>
-            ` : ''}
+            `
+                    : ''
+            }
 
-            ${resistancesHtml || immunitiesHtml || condImmunitiesHtml ? `
+            ${
+                resistancesHtml || immunitiesHtml || condImmunitiesHtml
+                    ? `
                 <div class="enc-section">
                     <div class="enc-section-title">Resistenzen & Immunitäten</div>
                     <div class="enc-tags">
@@ -374,35 +434,53 @@ function showEncounterDetail(id) {
                         ${condImmunitiesHtml}
                     </div>
                 </div>
-            ` : ''}
+            `
+                    : ''
+            }
 
-            ${enc.traits ? `
+            ${
+                enc.traits
+                    ? `
                 <div class="enc-section">
                     <div class="enc-section-title">Eigenschaften</div>
                     <div class="enc-text">${sanitizeHTML((window.renderMarkdownInContent || (x => x))(enc.traits))}</div>
                 </div>
-            ` : ''}
+            `
+                    : ''
+            }
 
-            ${enc.actions ? `
+            ${
+                enc.actions
+                    ? `
                 <div class="enc-section">
                     <div class="enc-section-title">Aktionen</div>
                     <div class="enc-text">${sanitizeHTML((window.renderMarkdownInContent || (x => x))(enc.actions))}</div>
                 </div>
-            ` : ''}
+            `
+                    : ''
+            }
 
-            ${enc.skills ? `
+            ${
+                enc.skills
+                    ? `
                 <div class="enc-section">
                     <div class="enc-section-title">Fertigkeiten</div>
                     <div class="enc-text">${sanitizeHTML((window.renderMarkdownInContent || (x => x))(enc.skills))}</div>
                 </div>
-            ` : ''}
+            `
+                    : ''
+            }
 
-            ${enc.equipment ? `
+            ${
+                enc.equipment
+                    ? `
                 <div class="enc-section">
                     <div class="enc-section-title">Ausrüstung</div>
                     <div class="enc-text">${sanitizeHTML((window.renderMarkdownInContent || (x => x))(enc.equipment))}</div>
                 </div>
-            ` : ''}
+            `
+                    : ''
+            }
         </div>
     `;
 }
@@ -430,8 +508,7 @@ function setEncFilter(f) {
 function toggleEncounter(id) {
     // For search navigation: select and show the encounter
     const enc = EntityLookup.encounter(id);
-    if (!enc)
-        return;
+    if (!enc) return;
     currentEncFilter = 'all';
     selectedEncounterId = typeof id === 'string' ? parseInt(id) : id;
     renderEncounters();
@@ -456,11 +533,9 @@ function showEncForm() {
     const cancelEncEdit = window.cancelEncEdit;
     cancelEncEdit();
     const form = $('enc-form');
-    if (form)
-        form.classList.add('open');
+    if (form) form.classList.add('open');
     const icon = $('enc-form-icon');
-    if (icon)
-        icon.textContent = '▲';
+    if (icon) icon.textContent = '▲';
 }
 // ============================================================
 // EXPORTS FOR GLOBAL ACCESS

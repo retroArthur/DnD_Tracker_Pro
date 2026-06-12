@@ -8,31 +8,33 @@
 
 ## Datei-Klassifizierung
 
-| Neue/Modifizierte Datei | Rolle | Datenfluss | Nächster Analog | Match-Qualität |
-|------------------------|-------|-----------|----------------|----------------|
-| `systems/spellslots/persistence.js` | service | CRUD / file-I/O | `systems/spellslots/persistence.js` (self) | exact |
-| `systems/spellslots/quick-roll.js` | service | CRUD / request-response | `systems/spellslots/quick-roll.js` (self) | exact |
-| `systems/spellslots/version-migration.js` | service | transform | `systems/spellslots/version-migration.js` (self) | exact |
-| `systems/spellslots/import-export.js` | service | file-I/O | `systems/spellslots/import-export.js` (self) | exact |
-| `tools/debug.js` | utility | — | `tools/debug.js` (self) | exact |
-| `build.py` | config | batch | `build.py` (self) | exact |
-| `tests/unit/stability.test.js` | test | — | `tests/unit/stability.test.js` (self) | exact |
-| `tests/build/test_build_deduplication.py` | test | — | `tests/build/test_build_deduplication.py` (self) | exact |
-| `tests/e2e/smoke.spec.js` | test | event-driven | `tests/e2e/app.spec.js` | role-match |
-| `.github/workflows/ci.yml` | config | batch | `.github/workflows/ci.yml` (self) | exact |
-| `docs/srd-license.md` | config | — | kein direkter Analog | no-analog |
-| `CLAUDE.md` | config | — | `CLAUDE.md` (self) | exact |
+| Neue/Modifizierte Datei                   | Rolle   | Datenfluss              | Nächster Analog                                  | Match-Qualität |
+| ----------------------------------------- | ------- | ----------------------- | ------------------------------------------------ | -------------- |
+| `systems/spellslots/persistence.js`       | service | CRUD / file-I/O         | `systems/spellslots/persistence.js` (self)       | exact          |
+| `systems/spellslots/quick-roll.js`        | service | CRUD / request-response | `systems/spellslots/quick-roll.js` (self)        | exact          |
+| `systems/spellslots/version-migration.js` | service | transform               | `systems/spellslots/version-migration.js` (self) | exact          |
+| `systems/spellslots/import-export.js`     | service | file-I/O                | `systems/spellslots/import-export.js` (self)     | exact          |
+| `tools/debug.js`                          | utility | —                       | `tools/debug.js` (self)                          | exact          |
+| `build.py`                                | config  | batch                   | `build.py` (self)                                | exact          |
+| `tests/unit/stability.test.js`            | test    | —                       | `tests/unit/stability.test.js` (self)            | exact          |
+| `tests/build/test_build_deduplication.py` | test    | —                       | `tests/build/test_build_deduplication.py` (self) | exact          |
+| `tests/e2e/smoke.spec.js`                 | test    | event-driven            | `tests/e2e/app.spec.js`                          | role-match     |
+| `.github/workflows/ci.yml`                | config  | batch                   | `.github/workflows/ci.yml` (self)                | exact          |
+| `docs/srd-license.md`                     | config  | —                       | kein direkter Analog                             | no-analog      |
+| `CLAUDE.md`                               | config  | —                       | `CLAUDE.md` (self)                               | exact          |
 
 ---
 
 ## Pattern-Zuweisungen
 
 ### `systems/spellslots/persistence.js` (service, CRUD/file-I/O)
+
 **Rolle:** Save-Pfad — wird für D-01, D-02, D-03, D-08 modifiziert
 
 **Analog:** `systems/spellslots/persistence.js` (self — Erweiterung, kein Neubau)
 
 **Bestehende Imports/Globals-Pattern** (Zeilen 15-18):
+
 ```javascript
 const STORAGE_KEY = window.STORAGE_KEY;
 const key = window.STORAGE_KEY_OVERRIDE || STORAGE_KEY;
@@ -41,6 +43,7 @@ const updateSaveIndicator = window.updateSaveIndicator;
 ```
 
 **Kern-Pattern: IDB-only-Zweig** (Zeilen 33-39 — der Stale-Shadow-Bug sitzt hier):
+
 ```javascript
 if (dataSizeMB > LS_LIMIT_MB) {
     await saveToIndexedDBFallback(key, dataString);
@@ -50,7 +53,9 @@ if (dataSizeMB > LS_LIMIT_MB) {
     return;
 }
 ```
+
 **Zu ergänzen für D-01 (Stale-Shadow-Fix):** Nach `saveToIndexedDBFallback()`:
+
 ```javascript
 // NEU D-01: LS-Schatten-Key entfernen
 StorageAPI.remove(key);
@@ -58,6 +63,7 @@ StorageAPI.remove(key + '_ts');
 ```
 
 **Normaler LS-Save-Pattern** (Zeilen 41-48 — Begleit-Timestamp hier einbauen):
+
 ```javascript
 const saveResult = StorageAPI.set(key, dataString);
 if (!saveResult.success) {
@@ -66,13 +72,16 @@ if (!saveResult.success) {
 updateSaveIndicator('saved');
 broadcastSave();
 ```
+
 **Zu ergänzen für D-01:** Nach `StorageAPI.set(key, dataString)`:
+
 ```javascript
 // NEU D-01: Begleit-Timestamp setzen
 StorageAPI.set(key + '_ts', String(Date.now()));
 ```
 
 **Toast/Event-Log-Pattern für D-02 (Einmal-pro-Sitzung):**
+
 ```javascript
 // Vorlage aus bestehendem Code: window._idbModeSeen als Session-Flag
 if (!window._idbModeSeen) {
@@ -83,6 +92,7 @@ if (!window._idbModeSeen) {
 ```
 
 **Error-Toast-Pattern für D-03 (IDB-Schreibfehler):**
+
 ```javascript
 // Vorlage: bestehender catch-Block Zeilen 63-67
 catch (idbError) {
@@ -90,20 +100,27 @@ catch (idbError) {
     showToast('❌ Speichern fehlgeschlagen! Daten exportieren empfohlen!', 'error', 8000);
 }
 ```
+
 **D-03 ergänzt:** Nach dem Fehler-Toast zusätzlich `exportAllDataAsFile()` anbieten (Button in Event-Log oder direkter Aufruf).
 
 **IDB-Timestamp-Struktur** (Zeile 80 — bereits vorhanden, kein Handlungsbedarf):
+
 ```javascript
 const request = store.put({ id: key, data: dataString, timestamp: Date.now() });
 ```
 
 **4-MB-Warnung für D-08 (Einmal-pro-Sitzung):**
+
 ```javascript
 // Bestehendes Pattern Zeilen 28-31 — ersetzen durch:
 if (dataSizeMB > LS_WARNING_MB && dataSizeMB <= LS_LIMIT_MB) {
     if (!window._sizeWarningSeen) {
         window._sizeWarningSeen = true;
-        showToast(`⚠️ Kampagne wird groß (${dataSizeMB.toFixed(1)}MB). Backup empfohlen!`, 'warning', 5000);
+        showToast(
+            `⚠️ Kampagne wird groß (${dataSizeMB.toFixed(1)}MB). Backup empfohlen!`,
+            'warning',
+            5000
+        );
     }
     // Danach: nur noch Event-Log (showToast schreibt automatisch ins Event-Log)
 }
@@ -112,11 +129,13 @@ if (dataSizeMB > LS_WARNING_MB && dataSizeMB <= LS_LIMIT_MB) {
 ---
 
 ### `systems/spellslots/quick-roll.js` (service, CRUD/request-response)
+
 **Rolle:** Load-Pfad + Export-Stempel — wird für D-01, D-05, D-06, D-07 modifiziert
 
 **Analog:** `systems/spellslots/quick-roll.js` (self)
 
 **Bestehender Load-Pfad** (Zeilen 23-45 — genau hier sitzt der Stale-Shadow-Bug):
+
 ```javascript
 async function load() {
     const key = window.STORAGE_KEY_OVERRIDE || STORAGE_KEY;
@@ -130,17 +149,25 @@ async function load() {
         }
         // ... Rest: JSON-Parse, Migration, Object.assign(D, p)
 ```
+
 **Problem:** `if (!s)` — wenn LS einen alten (stale) Schatten enthält, wird IDB nie gelesen.
 
 **D-01 Fix-Pattern für den Load-Pfad:**
+
 ```javascript
 const lsData = StorageAPI.get(key, null);
 const lsTs = lsData ? parseInt(StorageAPI.get(key + '_ts', '0'), 10) : 0;
-let idbData = null, idbTs = 0;
+let idbData = null,
+    idbTs = 0;
 try {
     const idbRecord = await loadFromIndexedDBFallbackRaw(key); // gibt {data, timestamp} zurück
-    if (idbRecord) { idbData = idbRecord.data; idbTs = idbRecord.timestamp || 0; }
-} catch (e) { /* kein IDB-Eintrag */ }
+    if (idbRecord) {
+        idbData = idbRecord.data;
+        idbTs = idbRecord.timestamp || 0;
+    }
+} catch (e) {
+    /* kein IDB-Eintrag */
+}
 
 // D-07: Konflikt-Erkennung (nur beim Erstlade-Szenario)
 if (lsData && idbData && lsTs === 0 && idbTs > 0) {
@@ -154,18 +181,20 @@ if (lsData && idbData && lsTs === 0 && idbTs > 0) {
 ```
 
 **Export-Stempel-Fix (D-05)** — Zeile 133:
+
 ```javascript
 // ALT (Bug):
 exp._version = '2.11';
 // NEU (D-05):
-exp._version = APP_CONFIG.VERSION;  // z.B. '2.6.1'
+exp._version = APP_CONFIG.VERSION; // z.B. '2.6.1'
 ```
 
 **Legacy-Stempel-Erkennung beim Import (D-05)** — vor compareVersions (Zeile 63):
+
 ```javascript
 // VOR der bestehenden compareVersions-Prüfung einbauen:
 if (p._version === '2.11') {
-    p._version = '2.0.0';  // Altformat → alle Migrationen laufen
+    p._version = '2.0.0'; // Altformat → alle Migrationen laufen
 }
 if (!p._version || compareVersions(p._version, CURRENT_VERSION) < 0) {
     p = migrateData(p);
@@ -175,27 +204,36 @@ if (!p._version || compareVersions(p._version, CURRENT_VERSION) < 0) {
 ---
 
 ### `systems/spellslots/version-migration.js` (service, transform)
+
 **Rolle:** Migrations-Andockpunkt für D-09 (Smart-Strip) und D-06 (Version 2.6.1)
 
 **Analog:** `systems/spellslots/version-migration.js` (self)
 
 **Bestehende MIGRATIONS-Objekt-Struktur** (Zeilen 9-51):
+
 ```javascript
 const MIGRATIONS = {
-    '2.3.0': (data) => {
+    '2.3.0': data => {
         // Migration-Logik
-        data.characters?.forEach((c) => { /* ... */ });
+        data.characters?.forEach(c => {
+            /* ... */
+        });
         return data;
     },
-    '2.4.0': (data) => {
+    '2.4.0': data => {
         // Mehrere Felder initialisieren
-        if (!data.calendar) { data.calendar = { /* ... */ }; }
+        if (!data.calendar) {
+            data.calendar = {
+                /* ... */
+            };
+        }
         return data;
     }
 };
 ```
 
 **Neues Migrations-Pattern für D-09 (Version 2.6.1):**
+
 ```javascript
 '2.6.1': (data) => {
     // Smart-Strip: Leere D.mindmap-Keys entfernen (Normalfall)
@@ -215,6 +253,7 @@ const MIGRATIONS = {
 ```
 
 **migrateData-Funktion** (Zeilen 53-71 — unverändert, Referenz für Planer):
+
 ```javascript
 function migrateData(data) {
     const dataVersion = data._version || '2.2.0';
@@ -234,38 +273,44 @@ function migrateData(data) {
 ---
 
 ### `systems/spellslots/import-export.js` (service, file-I/O)
+
 **Rolle:** Import-Pfad — Mindmap-Hinweis-Dialog (D-09/D-10), vorhandenes Import-Pattern
 
 **Analog:** `systems/spellslots/import-export.js` (self)
 
 **Bestehender Vollimport-Pfad** (`importDataGlobal()`, Zeilen 417-519) — Vorlage für Mindmap-Check:
+
 ```javascript
-reader.onload = (e) => {
+reader.onload = e => {
     const imp = JSON.parse(result);
     // ... Kampagnenname, Benutzer-Dialog
     delete imp._campaignName;
     delete imp._exportDate;
     delete imp._version;
     // Migration
-    if (imp.characters) { imp.characters = imp.characters.map(/* ... */); }
+    if (imp.characters) {
+        imp.characters = imp.characters.map(/* ... */);
+    }
     // ...
 };
 ```
 
 **D-09 Hook-Point:** VOR `delete imp._version` und VOR `migrateData()`-Aufruf:
+
 ```javascript
 // NEU D-09: Mindmap-Inhalt prüfen VOR Migration
 if (imp.mindmap) {
-    const hasRealContent = (imp.mindmap.nodes?.length > 0 || imp.mindmap.connections?.length > 0);
+    const hasRealContent = imp.mindmap.nodes?.length > 0 || imp.mindmap.connections?.length > 0;
     if (hasRealContent) {
-        await showMindmapExportDialog(imp.mindmap, campaignName);  // D-09/D-10 Dialog
+        await showMindmapExportDialog(imp.mindmap, campaignName); // D-09/D-10 Dialog
         // Nutzer hat Backup erstellt → jetzt löschen
     }
-    delete imp.mindmap;  // Immer entfernen (Migration erledigt den Rest für LS-Daten)
+    delete imp.mindmap; // Immer entfernen (Migration erledigt den Rest für LS-Daten)
 }
 ```
 
 **JSON-Download-Pattern für D-10 (Mindmap-Export):**
+
 ```javascript
 // Vorlage: exportData() Zeilen 182-189
 const blob = new Blob([json], { type: 'application/json' });
@@ -278,6 +323,7 @@ URL.revokeObjectURL(url);
 ```
 
 **Bestehender Modal-Dialog-Ansatz** (Zeilen 303-323 — Vorlage für D-07/D-09-Dialoge):
+
 ```javascript
 const modal = $('import-modal');
 if (modal) {
@@ -298,18 +344,22 @@ if (modal) {
 ---
 
 ### `tools/debug.js` (utility, —)
+
 **Rolle:** Boot-Crash-Fix — Zeile 99 entfernen (D-11)
 
 **Analog:** `tools/debug.js` (self)
 
 **Defekte Zeile** (Zeile 99 — die einzige Änderung):
+
 ```javascript
 // ENTFERNEN:
 const clearAllNodes = clearMindmap;
 ```
+
 **Begründung:** `clearMindmap` existiert nicht mehr (Mindmap-Feature entfernt). Die `const`-Deklaration referenziert eine nicht mehr definierte Funktion und verursacht einen Boot-Crash.
 
 **Kontext** (Zeilen 86-100 — nur Zeile 99 wird entfernt, Rest bleibt):
+
 ```javascript
 function clearAllWiki() {
     if (!confirm(`Wirklich ALLE ${D.wiki?.length || 0} Wiki-Einträge löschen?`)) return;
@@ -326,11 +376,13 @@ function runAllTests() {  // ... weiter
 ---
 
 ### `build.py` (config, batch)
+
 **Rolle:** Härtung — Pre-Build-Duplikat-Check, DEBUG_MODE-Assertion, Modullisten-Sync (STAB-07)
 
 **Analog:** `build.py` (self)
 
 **Bestehende Pass-3-Implementierung** (Zeilen 176-228 — hat den Body-Skip-Bug):
+
 ```python
 def remove_duplicate_functions(js_code):
     for line_num, line in enumerate(lines):
@@ -350,6 +402,7 @@ def remove_duplicate_functions(js_code):
 ```
 
 **Empfohlenes Ersatz-Pattern: Pre-Build-Check** (anstelle des Body-Fix — RESEARCH.md Zeilen 178-195):
+
 ```python
 def check_duplicate_functions(source_dir, modules):
     """Schlägt fehl wenn doppelte Top-Level-Funktionsnamen in Quelldateien existieren."""
@@ -367,15 +420,19 @@ def check_duplicate_functions(source_dir, modules):
                 sys.exit(1)
             seen[name] = module
 ```
+
 **Aufruf-Punkt:** Vor Schritt 3 (JS kombinieren) in `build()`.
 
 **Bestehende DEBUG_MODE-Flip-Stelle** (Zeilen 418-423):
+
 ```python
 if production:
     js_combined = js_combined.replace("DEBUG_MODE: true,", "DEBUG_MODE: false,", 1)
     js_combined = js_combined.replace("DEBUG_VALIDATE_ON_SAVE: true,", "DEBUG_VALIDATE_ON_SAVE: false,", 1)
 ```
+
 **Assertion einbauen** (direkt danach):
+
 ```python
     # NEU: Post-Replace-Assertion
     if "DEBUG_MODE: true" in js_combined:
@@ -385,6 +442,7 @@ if production:
 ```
 
 **Modullisten-Sync-Check-Pattern** (RESEARCH.md Zeilen 226-246):
+
 ```python
 def check_module_list_sync(loader_path, build_modules):
     content = read_file(loader_path)
@@ -406,17 +464,21 @@ def check_module_list_sync(loader_path, build_modules):
 ---
 
 ### `tests/unit/stability.test.js` (test, —)
+
 **Rolle:** Erweiterung um STAB-05/06/02-Tests (D-04)
 
 **Analog:** `tests/unit/stability.test.js` (self — Erweiterung)
 
 **Bestehende Test-Struktur** (Zeilen 10-38):
+
 ```javascript
 describe('Data Persistence', () => {
     beforeEach(() => {
         localStorage.clear();
         global.D = {
-            characters: [], npcs: [], locations: [], /* ... */
+            characters: [],
+            npcs: [],
+            locations: [] /* ... */,
             mindmap: { nodes: [], connections: [] },
             initiative: { combatants: [], currentTurn: 0, round: 1 },
             _nextId: {}
@@ -427,6 +489,7 @@ describe('Data Persistence', () => {
 ```
 
 **Bestehender Test-Pattern für Save/Load** (Zeilen 41-49):
+
 ```javascript
 test('should save D object to localStorage', () => {
     D.characters.push({ id: 1, name: 'Test Hero', level: 5 });
@@ -437,6 +500,7 @@ test('should save D object to localStorage', () => {
 ```
 
 **Neuer >5MB-Test-Pattern (D-04):**
+
 ```javascript
 describe('>5MB Roundtrip', () => {
     test('should fall back to IndexedDB when data exceeds 5MB', async () => {
@@ -457,6 +521,7 @@ describe('>5MB Roundtrip', () => {
 ```
 
 **Neuer Migration-Test-Pattern (STAB-02):**
+
 ```javascript
 describe('Mindmap Smart-Strip Migration', () => {
     test('should remove empty mindmap key on migration', () => {
@@ -465,7 +530,10 @@ describe('Mindmap Smart-Strip Migration', () => {
         expect(migrated.mindmap).toBeUndefined();
     });
     test('should preserve real mindmap content (no auto-strip)', () => {
-        const data = { mindmap: { nodes: [{ id: 1, label: 'Test' }], connections: [] }, _version: '2.5.0' };
+        const data = {
+            mindmap: { nodes: [{ id: 1, label: 'Test' }], connections: [] },
+            _version: '2.5.0'
+        };
         const migrated = migrateData(data);
         expect(migrated.mindmap).toBeDefined();
         expect(migrated.mindmap.nodes).toHaveLength(1);
@@ -476,11 +544,13 @@ describe('Mindmap Smart-Strip Migration', () => {
 ---
 
 ### `tests/build/test_build_deduplication.py` (test, batch)
+
 **Rolle:** Erweiterung um STAB-07-Tests (DEBUG_MODE-Assertion, Pre-Build-Check, Modullisten-Sync)
 
 **Analog:** `tests/build/test_build_deduplication.py` (self)
 
 **Bestehende Klassen-Struktur** (Zeilen 22-223):
+
 ```python
 class TestBuildDeduplication:
     def test_deduplicate_removes_duplicate_window_assignments(self):
@@ -491,6 +561,7 @@ class TestBuildDeduplication:
 ```
 
 **Neuer Test-Pattern für DEBUG_MODE-Assertion:**
+
 ```python
 def test_production_build_has_debug_mode_false(self):
     """Build muss DEBUG_MODE=false im Production-Build sicherstellen."""
@@ -504,6 +575,7 @@ def test_production_build_has_debug_mode_false(self):
 ```
 
 **Neuer Test-Pattern für Modullisten-Sync:**
+
 ```python
 def test_module_lists_are_synchronized(self):
     """loader.js und build.py müssen identische Modullisten haben."""
@@ -519,11 +591,13 @@ def test_module_lists_are_synchronized(self):
 ---
 
 ### `tests/e2e/smoke.spec.js` (test, event-driven)
+
 **Rolle:** Neu erstellen — Boot-Check + Tab-Sweep für CI (STAB-08)
 
 **Analog:** `tests/e2e/app.spec.js` (role-match — gleicher Test-Framework, gleiche Selektoren)
 
 **Boot-Test-Pattern** (aus `app.spec.js` Zeilen 10-33):
+
 ```javascript
 // @ts-check
 import { test, expect } from '@playwright/test';
@@ -545,11 +619,16 @@ test('App lädt erfolgreich', async ({ page }) => {
 ```
 
 **Tab-Sweep-Pattern** (aus `app.spec.js` Zeilen 35-53):
+
 ```javascript
 test('Alle Tabs sind anklickbar', async ({ page }) => {
     const tabs = [
-        { view: 'dashboard' }, { view: 'party' }, { view: 'npcs' },
-        { view: 'locations' }, { view: 'quests' }, { view: 'encounter' },
+        { view: 'dashboard' },
+        { view: 'party' },
+        { view: 'npcs' },
+        { view: 'locations' },
+        { view: 'quests' },
+        { view: 'encounter' }
     ];
     for (const tab of tabs) {
         const tabButton = page.locator(`.nav-tab[data-view="${tab.view}"]`);
@@ -561,81 +640,87 @@ test('Alle Tabs sind anklickbar', async ({ page }) => {
 ```
 
 **Fehler-Filter-Pattern** (aus `app.spec.js` Zeile 32):
+
 ```javascript
 // favicon-Fehler ignorieren (bekanntes Phantom-Problem):
-errors.filter(e => !e.includes('favicon'))
+errors.filter(e => !e.includes('favicon'));
 ```
 
 **CI HTTP-Server-Pattern** (aus RESEARCH.md Zeilen 271-295):
+
 ```javascript
 // Umgebungsvariable für CI:
-const BASE_URL = process.env.SMOKE_BASE_URL ||
+const BASE_URL =
+    process.env.SMOKE_BASE_URL ||
     `file:///${process.cwd().replace(/\\/g, '/')}/dist/dnd-tracker-bundled.html`;
 ```
 
 ---
 
 ### `.github/workflows/ci.yml` (config, batch)
+
 **Rolle:** Neuer `smoke-test`-Job — benötigt `build`-Artefakt (STAB-08)
 
 **Analog:** `.github/workflows/ci.yml` (self — Erweiterung)
 
 **Bestehende Job-Struktur** (Zeilen 9-52):
+
 ```yaml
 jobs:
-  lint-and-typecheck:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-      - run: npm ci
-      - run: npm run typecheck
-      - run: npm run lint
+    lint-and-typecheck:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v4
+            - uses: actions/setup-node@v4
+              with:
+                  node-version: '20'
+                  cache: 'npm'
+            - run: npm ci
+            - run: npm run typecheck
+            - run: npm run lint
 
-  build:
-    runs-on: ubuntu-latest
-    needs: [lint-and-typecheck, test]
-    steps:
-      # ...
-      - uses: actions/upload-artifact@v4
-        with:
-          name: production-build
-          path: dist/dnd-tracker-optimized.html
-          retention-days: 7
+    build:
+        runs-on: ubuntu-latest
+        needs: [lint-and-typecheck, test]
+        steps:
+            # ...
+            - uses: actions/upload-artifact@v4
+              with:
+                  name: production-build
+                  path: dist/dnd-tracker-optimized.html
+                  retention-days: 7
 ```
 
 **Neuer smoke-test-Job-Pattern** (nach `build`-Job anfügen):
+
 ```yaml
-  smoke-test:
+smoke-test:
     runs-on: ubuntu-latest
     needs: [build]
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.x'
-      - run: npm ci
-      - run: npx playwright install chromium
-      - uses: actions/download-artifact@v4
-        with:
-          name: production-build
-          path: dist/
-      - name: Starte HTTP-Server
-        run: python -m http.server 8000 --directory dist &
-        shell: bash
-      - name: Warte auf Server
-        run: sleep 2
-      - name: Smoke-Test
-        run: npx playwright test tests/e2e/smoke.spec.js
-        env:
-          SMOKE_BASE_URL: http://localhost:8000/dnd-tracker-optimized.html
+        - uses: actions/checkout@v4
+        - uses: actions/setup-node@v4
+          with:
+              node-version: '20'
+              cache: 'npm'
+        - uses: actions/setup-python@v5
+          with:
+              python-version: '3.x'
+        - run: npm ci
+        - run: npx playwright install chromium
+        - uses: actions/download-artifact@v4
+          with:
+              name: production-build
+              path: dist/
+        - name: Starte HTTP-Server
+          run: python -m http.server 8000 --directory dist &
+          shell: bash
+        - name: Warte auf Server
+          run: sleep 2
+        - name: Smoke-Test
+          run: npx playwright test tests/e2e/smoke.spec.js
+          env:
+              SMOKE_BASE_URL: http://localhost:8000/dnd-tracker-optimized.html
 ```
 
 ---
@@ -643,8 +728,10 @@ jobs:
 ## Geteilte Patterns (cross-cutting)
 
 ### Toast / Event-Log
+
 **Quelle:** `utils/utilities.js` Zeilen 258-337
 **Anwenden auf:** Alle neuen Hinweise in persistence.js, import-export.js
+
 ```javascript
 // Signatur:
 function showToast(msg = '✓ Gespeichert', type = 'success', duration = 2000)
@@ -653,8 +740,10 @@ function showToast(msg = '✓ Gespeichert', type = 'success', duration = 2000)
 ```
 
 ### Modal-Dialog (showModal / hideModal)
+
 **Quelle:** `systems/spellslots/navigation.js` Zeilen 58-80
 **Anwenden auf:** D-07 Konflikt-Dialog, D-09 Mindmap-Dialog
+
 ```javascript
 function showModal(id) {
     const modal = $(id);
@@ -668,16 +757,20 @@ function hideModal(id) {
 ```
 
 ### XSS-Schutz im Dialog
+
 **Quelle:** `systems/spellslots/import-export.js` Zeile 312
 **Anwenden auf:** D-07-Konflikt-Dialog (Kampagnennamen), D-09-Mindmap-Dialog
+
 ```javascript
 infoEl.innerHTML = `<div><strong>Kampagne:</strong> ${esc(campaignName)}</div>`;
 // NIEMALS ohne esc() bei Nutzer-Strings in innerHTML
 ```
 
 ### Session-Flag-Pattern (Einmal-pro-Sitzung)
+
 **Quelle:** Implizit aus bestehendem Code — window-Flag als Session-Marker
 **Anwenden auf:** D-02, D-08
+
 ```javascript
 if (!window._idbModeSeen) {
     window._idbModeSeen = true;
@@ -687,8 +780,10 @@ if (!window._idbModeSeen) {
 ```
 
 ### JSON-Download-Pattern
+
 **Quelle:** `systems/spellslots/import-export.js` Zeilen 182-189 (`exportData()`)
 **Anwenden auf:** D-10 Mindmap-Backup-Export
+
 ```javascript
 const blob = new Blob([json], { type: 'application/json' });
 const url = URL.createObjectURL(blob);
@@ -700,8 +795,10 @@ URL.revokeObjectURL(url);
 ```
 
 ### Playwright-Fehler-Filter
+
 **Quelle:** `tests/e2e/app.spec.js` Zeile 32
 **Anwenden auf:** `tests/e2e/smoke.spec.js`
+
 ```javascript
 const errors = [];
 page.on('pageerror', err => errors.push(err.message));
@@ -710,8 +807,10 @@ expect(errors.filter(e => !e.includes('favicon'))).toHaveLength(0);
 ```
 
 ### Python-Build-Funktion-Pattern
+
 **Quelle:** `build.py` Zeilen 176-228 (`remove_duplicate_functions`)
 **Anwenden auf:** Neue `check_duplicate_functions()` und `check_module_list_sync()`
+
 ```python
 def check_duplicate_functions(source_dir, modules):
     """Konvention: Gibt None zurück oder ruft sys.exit(1) bei Fehler."""
@@ -722,9 +821,9 @@ def check_duplicate_functions(source_dir, modules):
 
 ## Kein Analog gefunden
 
-| Datei | Rolle | Datenfluss | Grund |
-|-------|-------|-----------|-------|
-| `docs/srd-license.md` | config | — | Keine vergleichbare Lizenz-Dokumentationsdatei im Repo; Inhalt basiert auf D-16-Entscheidung (manuelle Recherche) |
+| Datei                 | Rolle  | Datenfluss | Grund                                                                                                             |
+| --------------------- | ------ | ---------- | ----------------------------------------------------------------------------------------------------------------- |
+| `docs/srd-license.md` | config | —          | Keine vergleichbare Lizenz-Dokumentationsdatei im Repo; Inhalt basiert auf D-16-Entscheidung (manuelle Recherche) |
 
 Für `docs/srd-license.md`: Planer soll die Struktur aus RESEARCH.md D-16 und Standard-Attribution-Konventionen (CC-BY-4.0 SRD 5.1) ableiten. Kein Code-Pattern erforderlich.
 
@@ -737,6 +836,7 @@ Für `docs/srd-license.md`: Planer soll die Struktur aus RESEARCH.md D-16 und St
 **Extraktionsdatum:** 2026-06-12
 
 **Wichtige Constraints (aus CLAUDE.md):**
+
 - Kein `const X = window.X` innerhalb von Funktionen — nur `var X = window.X` auf Top-Level oder direkter `window.X()`-Aufruf
 - `saveUndoState()` muss VOR jeder destruktiven Operation aufgerufen werden (hier nicht relevant, da STAB-Tasks keine CRUD-Löschungen enthalten)
 - Neue Module müssen synchron in `loader.js` UND `build.py` eingetragen werden (aber: diese Phase erstellt keine neuen Module, nur Erweiterungen bestehender)

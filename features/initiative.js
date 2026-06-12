@@ -8,7 +8,7 @@
 // ============================================================
 function getCombatant(id) {
     const D = window.D;
-    return D.initiative.combatants.find((c) => c.id === id);
+    return D.initiative.combatants.find(c => c.id === id);
 }
 function applyDamage(combatant, damage) {
     let remaining = Math.abs(damage);
@@ -32,7 +32,7 @@ function getInitCombatantDetails(combatant) {
     // Use centralized lookup function
     const result = getEntityForCombat(combatant.type, combatant.name);
     // Fallback to combatant.ac if no entity found
-    const ac = result.ac !== '?' ? result.ac : (combatant.ac || 10);
+    const ac = result.ac !== '?' ? result.ac : combatant.ac || 10;
     return {
         ac,
         entityType: result.type,
@@ -46,9 +46,12 @@ function getInitCombatantDetails(combatant) {
  */
 function getCombatantHpStatus(combatant) {
     const hpPct = combatant.maxHp > 0 ? (combatant.currentHp / combatant.maxHp) * 100 : 100;
-    const hpClass = hpPct <= COMBAT_CONSTANTS.HP_CRITICAL_THRESHOLD ? 'critical'
-        : hpPct <= COMBAT_CONSTANTS.HP_BLOODIED_THRESHOLD ? 'bloodied'
-            : 'healthy';
+    const hpClass =
+        hpPct <= COMBAT_CONSTANTS.HP_CRITICAL_THRESHOLD
+            ? 'critical'
+            : hpPct <= COMBAT_CONSTANTS.HP_BLOODIED_THRESHOLD
+              ? 'bloodied'
+              : 'healthy';
     return { hpPercent: hpPct, hpClass };
 }
 /**
@@ -57,9 +60,13 @@ function getCombatantHpStatus(combatant) {
  * @returns HTML string of effects
  */
 function renderCombatantEffects(combatant) {
-    if (!combatant.effects || combatant.effects.length === 0)
-        return '';
-    return combatant.effects.map(e => `<span class="init-effect color-${e.color}" data-action="remove-effect" data-id="${combatant.id}" data-value="${e.id}" title="${esc(e.description || '')}&#10;Klicken zum Entfernen">${esc(e.name)} ${e.permanent ? '<span class="duration">∞</span>' : '<span class="duration">' + e.duration + 'R</span>'}</span>`).join('');
+    if (!combatant.effects || combatant.effects.length === 0) return '';
+    return combatant.effects
+        .map(
+            e =>
+                `<span class="init-effect color-${e.color}" data-action="remove-effect" data-id="${combatant.id}" data-value="${e.id}" title="${esc(e.description || '')}&#10;Klicken zum Entfernen">${esc(e.name)} ${e.permanent ? '<span class="duration">∞</span>' : '<span class="duration">' + e.duration + 'R</span>'}</span>`
+        )
+        .join('');
 }
 /**
  * Render combatant spell slots for player characters
@@ -78,7 +85,13 @@ function renderCombatantSpellSlots(combatant, character) {
                 const used = slot.max - (slot.current || 0);
                 slots.push(`<div class="init-slot-level" title="Grad ${lvl}">
                     <span class="init-slot-label">${lvl}</span>
-                    <div class="init-slot-boxes">${Array(slot.max).fill(0).map((_, idx) => `<span class="init-slot-box ${idx < slot.current ? 'available' : ''}" data-action="toggle-init-slot-stop" data-id="${character.id}" data-value="${lvl},${idx}"></span>`).join('')}</div>
+                    <div class="init-slot-boxes">${Array(slot.max)
+                        .fill(0)
+                        .map(
+                            (_, idx) =>
+                                `<span class="init-slot-box ${idx < slot.current ? 'available' : ''}" data-action="toggle-init-slot-stop" data-id="${character.id}" data-value="${lvl},${idx}"></span>`
+                        )
+                        .join('')}</div>
                 </div>`);
             }
         }
@@ -102,32 +115,37 @@ function renderInit() {
     const init = D.initiative;
     // Encounter-Rundenzahl aktualisieren
     const ern = $('encounter-round-num');
-    if (ern)
-        ern.textContent = String(init.round);
+    if (ern) ern.textContent = String(init.round);
     // Schlachtfeld-Bedingungen Banner rendern
     renderBattlefieldBanner();
     if (!init.combatants.length) {
-        c.innerHTML = '<div style="text-align:center; color:var(--text-dim); padding:30px;">Keine Kämpfer</div>';
+        c.innerHTML =
+            '<div style="text-align:center; color:var(--text-dim); padding:30px;">Keine Kämpfer</div>';
         return;
     }
-    c.innerHTML = init.combatants.map((cb, i) => {
-        const active = i === init.currentTurn;
-        const dead = cb.currentHp <= 0;
-        // Use extracted helper functions
-        const { hpPercent: hpPct, hpClass } = getCombatantHpStatus(cb);
-        const { ac, entityType, entityId } = getInitCombatantDetails(cb);
-        const effects = renderCombatantEffects(cb);
-        const rollInfo = cb.lastRoll ? `<span style="font-size: 10px; color: var(--text-dim);" title="Letzter Wurf: ${cb.lastRoll}">(${cb.lastRoll})</span>` : '';
-        // Name clickable if entity found
-        const nameClickHandler = entityType && entityId
-            ? `data-action="navigate-entity-stop" data-type="${entityType}" data-id="${entityId}" title="Klicken für Details"`
-            : '';
-        // Spell slots for players - get character reference
-        const character = cb.type === 'player' ? EntityLookup.findByName('characters', cb.name) : null;
-        const spellSlotsHtml = renderCombatantSpellSlots(cb, character);
-        // Special handling for lair action entry
-        if (cb.type === 'lair') {
-            return `<div class="init-entry init-row lair ${active ? 'active' : ''}" draggable="true" data-id="${cb.id}">
+    c.innerHTML = init.combatants
+        .map((cb, i) => {
+            const active = i === init.currentTurn;
+            const dead = cb.currentHp <= 0;
+            // Use extracted helper functions
+            const { hpPercent: hpPct, hpClass } = getCombatantHpStatus(cb);
+            const { ac, entityType, entityId } = getInitCombatantDetails(cb);
+            const effects = renderCombatantEffects(cb);
+            const rollInfo = cb.lastRoll
+                ? `<span style="font-size: 10px; color: var(--text-dim);" title="Letzter Wurf: ${cb.lastRoll}">(${cb.lastRoll})</span>`
+                : '';
+            // Name clickable if entity found
+            const nameClickHandler =
+                entityType && entityId
+                    ? `data-action="navigate-entity-stop" data-type="${entityType}" data-id="${entityId}" title="Klicken für Details"`
+                    : '';
+            // Spell slots for players - get character reference
+            const character =
+                cb.type === 'player' ? EntityLookup.findByName('characters', cb.name) : null;
+            const spellSlotsHtml = renderCombatantSpellSlots(cb, character);
+            // Special handling for lair action entry
+            if (cb.type === 'lair') {
+                return `<div class="init-entry init-row lair ${active ? 'active' : ''}" draggable="true" data-id="${cb.id}">
                 <span class="drag-handle" title="Ziehen zum Umsortieren">⠿</span>
                 <div class="init-value" title="Initiative 20 (fest)">20</div>
                 <div class="init-ac" style="visibility: hidden;">-</div>
@@ -140,11 +158,16 @@ function renderInit() {
                     <button class="btn btn-sm btn-danger" data-action="remove-combatant" data-id="${cb.id}">❌</button>
                 </div>
             </div>`;
-        }
-        // Typ-Label ermitteln
-        const typeLabels = { enemy: 'Gegner', player: 'Spieler', ally: 'Verbündeter', monster: 'Monster' };
-        const typeLabel = typeLabels[cb.type] || cb.type;
-        return `<div class="init-entry init-row ${cb.type} ${active ? 'active' : ''} ${dead ? 'dead' : ''}" draggable="true" data-id="${cb.id}">
+            }
+            // Typ-Label ermitteln
+            const typeLabels = {
+                enemy: 'Gegner',
+                player: 'Spieler',
+                ally: 'Verbündeter',
+                monster: 'Monster'
+            };
+            const typeLabel = typeLabels[cb.type] || cb.type;
+            return `<div class="init-entry init-row ${cb.type} ${active ? 'active' : ''} ${dead ? 'dead' : ''}" draggable="true" data-id="${cb.id}">
             <span class="drag-handle" title="Ziehen zum Umsortieren">⠿</span>
             <div class="init-value" data-action="edit-init-value" data-id="${cb.id}" title="Klicken zum Bearbeiten">${cb.initiative} ${rollInfo}</div>
             <div class="init-ac" title="Rüstungsklasse"><span class="init-ac-icon">🛡️</span>${ac}</div>
@@ -170,7 +193,8 @@ function renderInit() {
                 <button class="btn btn-sm btn-danger" data-action="remove-combatant" data-id="${cb.id}">❌</button>
             </div>
         </div>`;
-    }).join('');
+        })
+        .join('');
     // Schnellaktionen-Leiste rendern
     if (typeof window.renderQuickActionsBar === 'function') {
         window.renderQuickActionsBar();
@@ -180,15 +204,13 @@ function renderInit() {
 }
 function toggleInitSlot(charId, level, index) {
     const char = EntityLookup.character(charId);
-    if (!char || !char.spellSlots || !char.spellSlots[level])
-        return;
+    if (!char || !char.spellSlots || !char.spellSlots[level]) return;
     const slot = char.spellSlots[level];
     // Toggle: wenn angeklickte Box verfügbar ist, verbrauchen; sonst wiederherstellen
     if (index < slot.current) {
         // Box ist verfügbar -> verbrauchen (current verringern)
         slot.current = index;
-    }
-    else {
+    } else {
         // Box ist verbraucht -> wiederherstellen (current erhöhen)
         slot.current = index + 1;
     }
@@ -203,9 +225,9 @@ function endCombat() {
     }
     if (confirm('Kampf beenden und alle Teilnehmer entfernen?')) {
         // Sync HP from combatants back to party characters
-        D.initiative.combatants.forEach((cb) => {
+        D.initiative.combatants.forEach(cb => {
             if (cb.type === 'player') {
-                const char = D.characters.find((c) => c.name === cb.name);
+                const char = D.characters.find(c => c.name === cb.name);
                 if (char) {
                     char.hpCurrent = cb.currentHp;
                 }
@@ -220,8 +242,7 @@ function endCombat() {
 }
 function editInitValue(id) {
     const cb = getCombatant(id);
-    if (!cb)
-        return;
+    if (!cb) return;
     const val = prompt('Initiative-Wert:', String(cb.initiative));
     if (val !== null && !isNaN(parseInt(val))) {
         cb.initiative = parseInt(val);
@@ -263,9 +284,8 @@ function addCombatant() {
 }
 function addPartyToInit() {
     const D = window.D;
-    D.characters.forEach((ch) => {
-        if (D.initiative.combatants.some((c) => c.name === ch.name))
-            return;
+    D.characters.forEach(ch => {
+        if (D.initiative.combatants.some(c => c.name === ch.name)) return;
         // Initiative-Bonus aus GES-Modifikator berechnen falls verfügbar
         const initBonus = 0; // Party characters might not have DEX stored separately
         D.initiative.combatants.push({
@@ -286,7 +306,7 @@ function addPartyToInit() {
 }
 function removeCombatant(id) {
     const D = window.D;
-    const idx = D.initiative.combatants.findIndex((c) => c.id === id);
+    const idx = D.initiative.combatants.findIndex(c => c.id === id);
     if (idx > -1) {
         D.initiative.combatants.splice(idx, 1);
         if (D.initiative.currentTurn >= D.initiative.combatants.length)
@@ -297,8 +317,7 @@ function removeCombatant(id) {
 }
 function modHp(id, amt) {
     const c = getCombatant(id);
-    if (!c)
-        return;
+    if (!c) return;
     const wasAtZero = c.currentHp <= 0;
     if (amt < 0) {
         // Schaden: zuerst temp HP abziehen
@@ -314,8 +333,7 @@ function modHp(id, amt) {
         if (c.concentration?.active && actualDamage > 0) {
             c.concentration.pendingCheck = actualDamage;
         }
-    }
-    else {
+    } else {
         // Heilung
         c.currentHp = Math.min(c.maxHp, c.currentHp + amt);
         // Todeswürfe zurücksetzen wenn über 0 HP geheilt
@@ -329,12 +347,10 @@ function modHp(id, amt) {
 // Wrapper-Funktion für EventDelegation: Character HP updaten
 function updateCharacterHP(id, amount) {
     const ch = EntityLookup.character(id);
-    if (!ch)
-        return;
+    if (!ch) return;
     if (amount < 0) {
         ch.currentHp = Math.max(0, (ch.currentHp || ch.hp) + amount);
-    }
-    else {
+    } else {
         ch.currentHp = Math.min(ch.hp, (ch.currentHp || ch.hp) + amount);
     }
     window.renderParty();
@@ -346,8 +362,7 @@ function updateInitiativeCombatantHP(id, amount) {
 }
 function sortInit() {
     const D = window.D;
-    if (!D.initiative?.combatants?.length)
-        return;
+    if (!D.initiative?.combatants?.length) return;
     D.initiative.combatants.sort((a, b) => b.initiative - a.initiative);
     D.initiative.currentTurn = 0;
     renderInit();
@@ -357,13 +372,12 @@ function sortInit() {
 function nextTurn() {
     const D = window.D;
     const init = D.initiative;
-    if (!init.combatants.length)
-        return;
+    if (!init.combatants.length) return;
     // Decrease effect durations (not for permanent effects)
     const current = init.combatants[init.currentTurn];
     if (current?.effects) {
         current.effects = current.effects
-            .map(e => e.permanent ? e : { ...e, duration: e.duration - 1 })
+            .map(e => (e.permanent ? e : { ...e, duration: e.duration - 1 }))
             .filter(e => e.permanent || e.duration > 0);
     }
     init.currentTurn++;
@@ -382,55 +396,48 @@ function showAddEffect(id) {
     const effectNameInput = $('effect-name');
     const effectDurationInput = $('effect-duration');
     const effectColorInput = $('effect-color');
-    if (effectIdInput)
-        effectIdInput.value = String(id);
-    if (effectNameInput)
-        effectNameInput.value = '';
-    if (effectDurationInput)
-        effectDurationInput.value = '1';
-    if (effectColorInput)
-        effectColorInput.value = 'red';
+    if (effectIdInput) effectIdInput.value = String(id);
+    if (effectNameInput) effectNameInput.value = '';
+    if (effectDurationInput) effectDurationInput.value = '1';
+    if (effectColorInput) effectColorInput.value = 'red';
     renderEffectConditionsGrid();
     showModal('effect-modal');
 }
 function renderEffectConditionsGrid() {
     const container = $('effect-conditions-grid');
-    if (!container)
-        return;
+    if (!container) return;
     const effectIdInput = $('effect-combatant-id');
     const cbId = parseEntityId(effectIdInput.value);
-    if (cbId === null)
-        return;
+    if (cbId === null) return;
     const cb = getCombatant(cbId);
     const currentEffects = cb?.effects || [];
-    container.innerHTML = Object.entries(CONDITIONS).map(([key, cond]) => {
-        const hasEffect = currentEffects.some((e) => e.name.toLowerCase() === cond.name.toLowerCase());
-        return `<button class="btn ${hasEffect ? 'btn-success' : ''}" data-action="add-effect-from-grid" data-value="${key}" style="justify-content: flex-start; gap: 8px; padding: 8px 10px; font-size: 0.9em;">
+    container.innerHTML = Object.entries(CONDITIONS)
+        .map(([key, cond]) => {
+            const hasEffect = currentEffects.some(
+                e => e.name.toLowerCase() === cond.name.toLowerCase()
+            );
+            return `<button class="btn ${hasEffect ? 'btn-success' : ''}" data-action="add-effect-from-grid" data-value="${key}" style="justify-content: flex-start; gap: 8px; padding: 8px 10px; font-size: 0.9em;">
             <span>${cond.icon}</span>
             <span style="flex: 1; text-align: left;">${cond.name}</span>
             ${hasEffect ? '✓' : ''}
         </button>`;
-    }).join('');
+        })
+        .join('');
 }
 function addEffectFromGrid(conditionKey) {
     const effectIdInput = $('effect-combatant-id');
     const cbId = parseEntityId(effectIdInput.value);
-    if (cbId === null)
-        return;
+    if (cbId === null) return;
     const cb = getCombatant(cbId);
-    if (!cb)
-        return;
-    if (!cb.effects)
-        cb.effects = [];
+    if (!cb) return;
+    if (!cb.effects) cb.effects = [];
     const cond = CONDITIONS[conditionKey];
-    if (!cond)
-        return;
+    if (!cond) return;
     // Toggle: Wenn bereits vorhanden, entfernen
-    const existingIdx = cb.effects.findIndex((e) => e.name.toLowerCase() === cond.name.toLowerCase());
+    const existingIdx = cb.effects.findIndex(e => e.name.toLowerCase() === cond.name.toLowerCase());
     if (existingIdx > -1) {
         cb.effects.splice(existingIdx, 1);
-    }
-    else {
+    } else {
         cb.effects.push({
             id: Date.now(),
             name: cond.name,
@@ -450,13 +457,10 @@ function saveCustomEffect() {
     const effectColorInput = $('effect-color');
     const effectDurationInput = $('effect-duration');
     const cbId = parseEntityId(effectIdInput.value);
-    if (cbId === null)
-        return;
+    if (cbId === null) return;
     const cb = getCombatant(cbId);
-    if (!cb)
-        return;
-    if (!cb.effects)
-        cb.effects = [];
+    if (!cb) return;
+    if (!cb.effects) cb.effects = [];
     const name = effectNameInput.value.trim();
     if (!name) {
         showToast('Bitte einen Namen eingeben');
@@ -479,9 +483,8 @@ function saveCustomEffect() {
 }
 function removeEffect(cbId, effId) {
     const cb = getCombatant(cbId);
-    if (!cb)
-        return;
-    cb.effects = (cb.effects || []).filter((e) => e.id !== effId);
+    if (!cb) return;
+    cb.effects = (cb.effects || []).filter(e => e.id !== effId);
     renderInit();
     window.save();
 }
@@ -497,8 +500,7 @@ function renderDeathSaves(cb) {
     let statusHtml = '';
     if (ds.failures >= INIT_CONSTANTS.DEATH_SAVE_THRESHOLD) {
         statusHtml = '<span class="death-saves-status dead">💀 Tot</span>';
-    }
-    else if (ds.successes >= INIT_CONSTANTS.DEATH_SAVE_THRESHOLD) {
+    } else if (ds.successes >= INIT_CONSTANTS.DEATH_SAVE_THRESHOLD) {
         statusHtml = '<span class="death-saves-status stable">✓ Stabil</span>';
     }
     return `
@@ -507,27 +509,35 @@ function renderDeathSaves(cb) {
             <div class="death-saves-group">
                 <span class="death-saves-group-label">✓</span>
                 <div class="death-saves-dots">
-                    ${[0, 1, 2].map(i => `
+                    ${[0, 1, 2]
+                        .map(
+                            i => `
                         <span class="death-save-dot success ${i < ds.successes ? 'active' : ''}"
                             data-action="toggle-death-save-stop"
                             data-id="${cb.id}"
                             data-type="success"
                             data-index="${i}"
                             title="Erfolg ${i + 1}"></span>
-                    `).join('')}
+                    `
+                        )
+                        .join('')}
                 </div>
             </div>
             <div class="death-saves-group">
                 <span class="death-saves-group-label">✗</span>
                 <div class="death-saves-dots">
-                    ${[0, 1, 2].map(i => `
+                    ${[0, 1, 2]
+                        .map(
+                            i => `
                         <span class="death-save-dot failure ${i < ds.failures ? 'active' : ''}"
                             data-action="toggle-death-save-stop"
                             data-id="${cb.id}"
                             data-type="failure"
                             data-index="${i}"
                             title="Fehlschlag ${i + 1}"></span>
-                    `).join('')}
+                    `
+                        )
+                        .join('')}
                 </div>
             </div>
             ${statusHtml}
@@ -536,8 +546,7 @@ function renderDeathSaves(cb) {
 }
 function toggleDeathSave(cbId, type, index) {
     const cb = getCombatant(cbId);
-    if (!cb)
-        return;
+    if (!cb) return;
     if (!cb.deathSaves) {
         cb.deathSaves = { successes: 0, failures: 0 };
     }
@@ -548,8 +557,7 @@ function toggleDeathSave(cbId, type, index) {
     if (index < ds[field]) {
         // Clicked on active dot - reduce to this level
         ds[field] = index;
-    }
-    else {
+    } else {
         // Clicked on inactive dot - increase to include this dot
         ds[field] = index + 1;
     }
@@ -598,8 +606,7 @@ function renderConcentration(cb) {
     return '';
 }
 function renderConcentrationCheck(cb, damage) {
-    if (!cb.concentration?.active)
-        return '';
+    if (!cb.concentration?.active) return '';
     const dc = Math.max(10, Math.floor(damage / 2));
     cb.concentration.lastDC = dc;
     return `
@@ -614,18 +621,19 @@ function renderConcentrationCheck(cb, damage) {
 }
 function showConcentrationModal(cbId) {
     const cb = getCombatant(cbId);
-    if (!cb)
-        return;
+    if (!cb) return;
     // Zauber vom verknüpften Charakter holen falls verfügbar
     let spellOptions = '';
     if (cb.type === 'player') {
         const char = EntityLookup.findByName('characters', cb.name);
         if (char && char.spells?.length) {
             const concentrationSpells = char.spells
-                .map((sid) => EntityLookup.spell(sid))
-                .filter((s) => s && s.concentration);
+                .map(sid => EntityLookup.spell(sid))
+                .filter(s => s && s.concentration);
             if (concentrationSpells.length) {
-                spellOptions = concentrationSpells.map((s) => `<option value="${esc(s.name)}">${esc(s.name)}</option>`).join('');
+                spellOptions = concentrationSpells
+                    .map(s => `<option value="${esc(s.name)}">${esc(s.name)}</option>`)
+                    .join('');
             }
         }
     }
@@ -635,12 +643,16 @@ function showConcentrationModal(cbId) {
             <p style="margin: 0 0 12px 0; color: var(--text-dim);">Für: <strong>${esc(cb.name)}</strong></p>
             <div style="margin-bottom: 16px;">
                 <label style="display: block; margin-bottom: 6px; font-size: 0.9em; color: var(--text-dim);">Zauber:</label>
-                ${spellOptions ? `
+                ${
+                    spellOptions
+                        ? `
                     <select id="conc-spell-select" style="width: 100%; padding: 10px; background: var(--bg-dark); border: 1px solid var(--border); color: var(--text); border-radius: 6px; margin-bottom: 8px;">
                         <option value="">— Wählen oder eingeben —</option>
                         ${spellOptions}
                     </select>
-                ` : ''}
+                `
+                        : ''
+                }
                 <input type="text" id="conc-spell-input" placeholder="Zauber-Name eingeben..."
                     style="width: 100%; padding: 10px; background: var(--bg-dark); border: 1px solid var(--border); color: var(--text); border-radius: 6px; box-sizing: border-box;">
             </div>
@@ -657,31 +669,28 @@ function showConcentrationModal(cbId) {
         modal.id = 'concentration-modal';
         modal.className = 'modal-overlay';
         modal.innerHTML = `<div class="modal" style="max-width: 400px;">${content}</div>`;
-        modal.onclick = (e) => {
-            if (e.target === modal)
-                hideModal('concentration-modal');
+        modal.onclick = e => {
+            if (e.target === modal) hideModal('concentration-modal');
         };
         document.body.appendChild(modal);
-    }
-    else {
+    } else {
         const modalContent = modal.querySelector('.modal');
-        if (modalContent)
-            modalContent.innerHTML = content;
+        if (modalContent) modalContent.innerHTML = content;
     }
     showModal('concentration-modal');
     // Sync select to input
     const select = $('conc-spell-select');
     const input = $('conc-spell-input');
     if (select && input) {
-        select.onchange = () => { input.value = select.value; };
+        select.onchange = () => {
+            input.value = select.value;
+        };
     }
-    if (input)
-        input.focus();
+    if (input) input.focus();
 }
 function setConcentration(cbId) {
     const cb = getCombatant(cbId);
-    if (!cb)
-        return;
+    if (!cb) return;
     const input = $('conc-spell-input');
     const spell = input?.value?.trim();
     if (!spell) {
@@ -700,8 +709,7 @@ function setConcentration(cbId) {
 }
 function breakConcentration(cbId) {
     const cb = getCombatant(cbId);
-    if (!cb || !cb.concentration?.active)
-        return;
+    if (!cb || !cb.concentration?.active) return;
     const spell = cb.concentration.spell;
     cb.concentration = { active: false, spell: '', lastDC: 10 };
     renderInit();
@@ -710,8 +718,7 @@ function breakConcentration(cbId) {
 }
 function rollConcentrationCheck(cbId, dc) {
     const cb = getCombatant(cbId);
-    if (!cb || !cb.concentration?.active)
-        return;
+    if (!cb || !cb.concentration?.active) return;
     // KON-Modifikator vom verknüpften Charakter holen
     let conMod = 0;
     if (cb.type === 'player') {
@@ -726,13 +733,12 @@ function rollConcentrationCheck(cbId, dc) {
     const success = total >= dc;
     // Format result
     const modStr = conMod >= 0 ? `+${conMod}` : String(conMod);
-    const resultText = success ?
-        `✓ Konzentration gehalten! (${roll}${modStr} = ${total} vs DC ${dc})` :
-        `✕ Konzentration verloren! (${roll}${modStr} = ${total} vs DC ${dc})`;
+    const resultText = success
+        ? `✓ Konzentration gehalten! (${roll}${modStr} = ${total} vs DC ${dc})`
+        : `✕ Konzentration verloren! (${roll}${modStr} = ${total} vs DC ${dc})`;
     if (success) {
         showToast(resultText, 'success');
-    }
-    else {
+    } else {
         breakConcentration(cbId);
         showToast(resultText, 'error');
     }
@@ -749,7 +755,7 @@ function rollConcentrationCheck(cbId, dc) {
 let aoeCurrentDamage = 0;
 function showAoEDamageModal() {
     const D = window.D;
-    const combatants = D.initiative.combatants.filter((c) => c.type !== 'lair' && c.currentHp > 0);
+    const combatants = D.initiative.combatants.filter(c => c.type !== 'lair' && c.currentHp > 0);
     if (!combatants.length) {
         showToast('Keine Kämpfer in der Initiative', 'error');
         return;
@@ -780,9 +786,11 @@ function showAoEDamageModal() {
             </div>
 
             <div class="aoe-targets-list" id="aoe-targets-list">
-                ${combatants.map((cb) => {
-        const typeIcon = cb.type === 'player' ? '👤' : cb.type === 'ally' ? '🤝' : '👹';
-        return `
+                ${combatants
+                    .map(cb => {
+                        const typeIcon =
+                            cb.type === 'player' ? '👤' : cb.type === 'ally' ? '🤝' : '👹';
+                        return `
                         <label class="aoe-target" data-id="${cb.id}">
                             <input type="checkbox" class="aoe-target-checkbox" id="aoe-cb-${cb.id}" data-id="${cb.id}" data-on-change="updateAoETargetDisplay">
                             <span class="aoe-target-hp">${cb.currentHp}/${cb.maxHp} HP</span>
@@ -794,7 +802,8 @@ function showAoEDamageModal() {
                             <span class="aoe-target-damage" id="aoe-dmg-${cb.id}">—</span>
                         </label>
                     `;
-    }).join('')}
+                    })
+                    .join('')}
             </div>
 
             <div class="aoe-modal-footer">
@@ -812,16 +821,13 @@ function showAoEDamageModal() {
         modal.id = 'aoe-damage-modal';
         modal.className = 'modal-overlay';
         modal.innerHTML = `<div class="modal aoe-modal">${content}</div>`;
-        modal.onclick = (e) => {
-            if (e.target === modal)
-                hideModal('aoe-damage-modal');
+        modal.onclick = e => {
+            if (e.target === modal) hideModal('aoe-damage-modal');
         };
         document.body.appendChild(modal);
-    }
-    else {
+    } else {
         const modalContent = modal.querySelector('.modal');
-        if (modalContent)
-            modalContent.innerHTML = content;
+        if (modalContent) modalContent.innerHTML = content;
     }
     showModal('aoe-damage-modal');
     $('aoe-damage-formula')?.focus();
@@ -849,8 +855,7 @@ function rollAoEDamage() {
             const mod = parseInt(modMatch[2]);
             total += modMatch[1] === '+' ? mod : -mod;
         }
-    }
-    else {
+    } else {
         // Try parsing as a number
         total = parseInt(formula);
         if (isNaN(total)) {
@@ -868,8 +873,7 @@ function rollAoEDamage() {
     }
     updateAoETargetDisplay();
     const applyBtn = $('aoe-apply-btn');
-    if (applyBtn)
-        applyBtn.disabled = false;
+    if (applyBtn) applyBtn.disabled = false;
 }
 function updateAoETargetDisplay() {
     document.querySelectorAll('.aoe-target').forEach(el => {
@@ -882,8 +886,7 @@ function updateAoETargetDisplay() {
             if (!isSelected || aoeCurrentDamage <= 0) {
                 dmgEl.textContent = '—';
                 dmgEl.className = 'aoe-target-damage';
-            }
-            else {
+            } else {
                 const damage = hasSave ? Math.floor(aoeCurrentDamage / 2) : aoeCurrentDamage;
                 dmgEl.textContent = `-${damage}`;
                 dmgEl.className = `aoe-target-damage ${hasSave ? 'half' : 'full'}`;
@@ -894,17 +897,17 @@ function updateAoETargetDisplay() {
 // Create debounced version for better performance with rapid selection changes
 const debouncedUpdateAoE = debounce(updateAoETargetDisplay, UI_TIMING.AOE_UPDATE_DEBOUNCE);
 function aoeSelectAll() {
-    document.querySelectorAll('.aoe-target-checkbox').forEach(cb => cb.checked = true);
+    document.querySelectorAll('.aoe-target-checkbox').forEach(cb => (cb.checked = true));
     debouncedUpdateAoE();
 }
 function aoeSelectNone() {
-    document.querySelectorAll('.aoe-target-checkbox').forEach(cb => cb.checked = false);
+    document.querySelectorAll('.aoe-target-checkbox').forEach(cb => (cb.checked = false));
     debouncedUpdateAoE();
 }
 function aoeSelectEnemies() {
     const D = window.D;
-    const enemies = D.initiative.combatants.filter((c) => c.type === 'enemy' || c.type === 'monster');
-    const enemyIds = enemies.map((e) => e.id);
+    const enemies = D.initiative.combatants.filter(c => c.type === 'enemy' || c.type === 'monster');
+    const enemyIds = enemies.map(e => e.id);
     document.querySelectorAll('.aoe-target-checkbox').forEach(cb => {
         const cbId = parseInt(cb.dataset.id || '0');
         cb.checked = enemyIds.includes(cbId);
@@ -930,8 +933,7 @@ function applyAoEDamage() {
     let hitCount = 0;
     selectedTargets.forEach(({ id, hasSave }) => {
         const cb = getCombatant(id);
-        if (!cb)
-            return;
+        if (!cb) return;
         const damage = hasSave ? Math.floor(aoeCurrentDamage / 2) : aoeCurrentDamage;
         const wasAtZero = cb.currentHp <= 0;
         // Apply damage (temp HP first)
@@ -959,8 +961,7 @@ function renderLoot() {
 function renderLootList() {
     const listContainer = $('loot-list');
     const filterContainer = $('loot-filters');
-    if (!listContainer)
-        return;
+    if (!listContainer) return;
     const D = window.D;
     // Update counter
     window.updateCounters({ 'loot-io-count': D.loot?.length || 0 });
@@ -968,12 +969,16 @@ function renderLootList() {
     if (filterContainer) {
         filterContainer.innerHTML = `
             <div class="loot-filter-chip ${currentLootFilter === 'all' ? 'active' : ''}" data-action="set-loot-filter" data-value="all">Alle</div>
-            ${Object.entries(CATS).map(([k, v]) => `
+            ${Object.entries(CATS)
+                .map(
+                    ([k, v]) => `
                 <div class="loot-filter-chip ${currentLootFilter === k ? 'active' : ''}"
                      data-action="set-loot-filter" data-value="${k}">
                     ${v}
                 </div>
-            `).join('')}
+            `
+                )
+                .join('')}
         `;
     }
     // Get search and filter
@@ -986,11 +991,14 @@ function renderLootList() {
     }
     // Apply search
     if (search) {
-        items = items.filter(i => (i.name || '').toLowerCase().includes(search) ||
-            (i.description || '').toLowerCase().includes(search) ||
-            (i.special || '').toLowerCase().includes(search) ||
-            (i.property || '').toLowerCase().includes(search) ||
-            (i.tags || []).some(t => t.toLowerCase().includes(search)));
+        items = items.filter(
+            i =>
+                (i.name || '').toLowerCase().includes(search) ||
+                (i.description || '').toLowerCase().includes(search) ||
+                (i.special || '').toLowerCase().includes(search) ||
+                (i.property || '').toLowerCase().includes(search) ||
+                (i.tags || []).some(t => t.toLowerCase().includes(search))
+        );
     }
     // Sort by name
     items.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
@@ -1000,11 +1008,15 @@ function renderLootList() {
             <div class="loot-detail-empty" style="padding: 40px;">
                 <div class="loot-detail-empty-icon">📦</div>
                 <div class="loot-detail-empty-text">${search || currentLootFilter !== 'all' ? 'Keine Treffer' : 'Truhe ist leer'}</div>
-                ${!search && currentLootFilter === 'all' ? `
+                ${
+                    !search && currentLootFilter === 'all'
+                        ? `
                     <button class="loot-add-btn" data-action="show-modal" data-value="loot-modal" style="margin-top: 12px;">
                         + Item hinzufügen
                     </button>
-                ` : ''}
+                `
+                        : ''
+                }
             </div>
         `;
         clearLootDetail();
@@ -1015,8 +1027,7 @@ function renderLootList() {
     // Auto-select first if none selected
     if (!selectedLootId || !items.find(i => i.id === selectedLootId)) {
         selectLoot(items[0].id, false);
-    }
-    else {
+    } else {
         showLootDetail(selectedLootId);
     }
 }
@@ -1055,14 +1066,12 @@ function selectLoot(id, scroll = true) {
     // Scroll into view if needed
     if (scroll) {
         const el = document.querySelector(`.loot-item[data-id="${id}"]`);
-        if (el)
-            el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
 }
 function showLootDetail(id) {
     const panel = $('loot-detail-panel');
-    if (!panel)
-        return;
+    if (!panel) return;
     const item = EntityLookup.lootItem(id);
     if (!item) {
         clearLootDetail();
@@ -1086,13 +1095,17 @@ function showLootDetail(id) {
                 </div>
             </div>
 
-            ${(item.tags || []).length > 0 ? `
+            ${
+                (item.tags || []).length > 0
+                    ? `
                 <div class="loot-tags-section">
                     <div class="loot-tags">
-                        ${(item.tags || []).map((t) => `<span class="loot-tag">${LOOT_TAG_LABELS[t] || t}</span>`).join('')}
+                        ${(item.tags || []).map(t => `<span class="loot-tag">${LOOT_TAG_LABELS[t] || t}</span>`).join('')}
                     </div>
                 </div>
-            ` : ''}
+            `
+                    : ''
+            }
 
             <div class="loot-section">
                 <div class="loot-stats">
@@ -1111,33 +1124,49 @@ function showLootDetail(id) {
                 </div>
             </div>
 
-            ${item.origin ? `
+            ${
+                item.origin
+                    ? `
                 <div class="loot-section">
                     <div class="loot-section-title">Herkunft</div>
                     <div>${ORIGIN_LABELS[item.origin] || item.origin}</div>
                 </div>
-            ` : ''}
+            `
+                    : ''
+            }
 
-            ${item.special ? `
+            ${
+                item.special
+                    ? `
                 <div class="loot-section">
                     <div class="loot-section-title">Besonderheit</div>
                     <div>${esc(item.special)}</div>
                 </div>
-            ` : ''}
+            `
+                    : ''
+            }
 
-            ${item.property ? `
+            ${
+                item.property
+                    ? `
                 <div class="loot-section">
                     <div class="loot-section-title">Eigenschaft</div>
                     <div>${esc(item.property)}</div>
                 </div>
-            ` : ''}
+            `
+                    : ''
+            }
 
-            ${item.description ? `
+            ${
+                item.description
+                    ? `
                 <div class="loot-section">
                     <div class="loot-section-title">Beschreibung</div>
                     <div class="loot-desc">${sanitizeHTML(item.description)}</div>
                 </div>
-            ` : ''}
+            `
+                    : ''
+            }
         </div>
     `;
 }
@@ -1162,13 +1191,10 @@ function showLootModal(id = null) {
     const title = modal?.querySelector('.modal-title');
     if (id) {
         const item = EntityLookup.lootItem(id);
-        if (!item)
-            return;
-        if (title)
-            title.textContent = 'Item bearbeiten';
+        if (!item) return;
+        if (title) title.textContent = 'Item bearbeiten';
         const editIdInput = $('edit-loot-id');
-        if (editIdInput)
-            editIdInput.value = String(id);
+        if (editIdInput) editIdInput.value = String(id);
         const nameInput = $('loot-name');
         const catInput = $('loot-cat');
         const rarityInput = $('loot-rarity');
@@ -1176,44 +1202,30 @@ function showLootModal(id = null) {
         const wtInput = $('loot-wt');
         const valInput = $('loot-val');
         const descDiv = $('loot-desc');
-        if (nameInput)
-            nameInput.value = item.name || '';
-        if (catInput)
-            catInput.value = item.category || 'misc';
-        if (rarityInput)
-            rarityInput.value = item.rarity || 'normal';
-        if (qtyInput)
-            qtyInput.value = String(item.quantity || 1);
-        if (wtInput)
-            wtInput.value = String(item.weight || '');
-        if (valInput)
-            valInput.value = String(item.value || '');
-        if (descDiv)
-            descDiv.innerHTML = sanitizeHTML(item.description || '');
+        if (nameInput) nameInput.value = item.name || '';
+        if (catInput) catInput.value = item.category || 'misc';
+        if (rarityInput) rarityInput.value = item.rarity || 'normal';
+        if (qtyInput) qtyInput.value = String(item.quantity || 1);
+        if (wtInput) wtInput.value = String(item.weight || '');
+        if (valInput) valInput.value = String(item.value || '');
+        if (descDiv) descDiv.innerHTML = sanitizeHTML(item.description || '');
         const originInput = $('loot-origin');
         const specialInput = $('loot-special');
         const propertyInput = $('loot-property');
-        if (originInput)
-            originInput.value = item.origin || '';
-        if (specialInput)
-            specialInput.value = item.special || '';
-        if (propertyInput)
-            propertyInput.value = item.property || '';
+        if (originInput) originInput.value = item.origin || '';
+        if (specialInput) specialInput.value = item.special || '';
+        if (propertyInput) propertyInput.value = item.property || '';
         // Tags laden
         document.querySelectorAll('#loot-tag-grid .loot-tag-chip input').forEach(cb => {
             cb.checked = (item.tags || []).includes(cb.value);
         });
         window.updateLootSelectedTags();
         const saveBtn = $('loot-save-btn');
-        if (saveBtn)
-            saveBtn.textContent = '💾 Speichern';
-    }
-    else {
-        if (title)
-            title.textContent = 'Item hinzufügen';
+        if (saveBtn) saveBtn.textContent = '💾 Speichern';
+    } else {
+        if (title) title.textContent = 'Item hinzufügen';
         const saveBtn = $('loot-save-btn');
-        if (saveBtn)
-            saveBtn.textContent = '+ Hinzufügen';
+        if (saveBtn) saveBtn.textContent = '+ Hinzufügen';
     }
     showModal('loot-modal');
     $('loot-name')?.focus();
@@ -1258,7 +1270,7 @@ function saveLoot() {
     const D = window.D;
     if (editId) {
         // Update existing item
-        const idx = D.loot.findIndex((i) => i.id === parseInt(editId));
+        const idx = D.loot.findIndex(i => i.id === parseInt(editId));
         if (idx > -1) {
             D.loot[idx] = { ...D.loot[idx], ...item };
             showToast('Item aktualisiert');
@@ -1267,16 +1279,19 @@ function saveLoot() {
                 showLootDetail(parseInt(editId));
             }
         }
-    }
-    else {
+    } else {
         // Add new item (or merge with existing)
         const newItem = { ...item, id: nextId('loot') };
-        const existing = D.loot.find((i) => i.name.toLowerCase() === name.toLowerCase() && i.category === newItem.category && i.rarity === newItem.rarity);
+        const existing = D.loot.find(
+            i =>
+                i.name.toLowerCase() === name.toLowerCase() &&
+                i.category === newItem.category &&
+                i.rarity === newItem.rarity
+        );
         if (existing) {
             existing.quantity += newItem.quantity;
             showToast('Menge erhöht');
-        }
-        else {
+        } else {
             D.loot.push(newItem);
             showToast('Item hinzugefügt');
             // Neues Item selektieren
@@ -1286,8 +1301,7 @@ function saveLoot() {
     hideModal('loot-modal');
     window.clearLootForm();
     renderLootList();
-    if (selectedLootId)
-        showLootDetail(selectedLootId);
+    if (selectedLootId) showLootDetail(selectedLootId);
     window.save();
 }
 function editLoot(id) {
@@ -1297,7 +1311,7 @@ function removeLoot(id) {
     if (confirm('Item entfernen?')) {
         window.pushUndo('Beute entfernt');
         const D = window.D;
-        D.loot = D.loot.filter((i) => i.id !== id);
+        D.loot = D.loot.filter(i => i.id !== id);
         // Selektion zurücksetzen falls gelöschtes Item selektiert war
         if (selectedLootId === id) {
             selectedLootId = null;
@@ -1313,8 +1327,7 @@ function removeLoot(id) {
 // ============================================================
 function renderBattlefieldBanner() {
     const banner = $('battlefield-banner');
-    if (!banner)
-        return;
+    if (!banner) return;
     const D = window.D;
     const bf = D.initiative?.battlefield;
     // Hide banner if no battlefield conditions
@@ -1326,7 +1339,9 @@ function renderBattlefieldBanner() {
     const tags = [];
     // Terrain tag
     if (bf.terrain && bf.terrain !== 'normal') {
-        tags.push(`<span class="bf-tag terrain">${bf.terrainIcon} ${bf.terrainLabel} (×${bf.terrainMod})</span>`);
+        tags.push(
+            `<span class="bf-tag terrain">${bf.terrainIcon} ${bf.terrainLabel} (×${bf.terrainMod})</span>`
+        );
     }
     // Lair tag
     if (bf.hasLair) {

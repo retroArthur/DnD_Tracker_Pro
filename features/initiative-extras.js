@@ -12,7 +12,7 @@ function rollAllInitiative() {
         showToast('Keine Kämpfer in der Initiative');
         return;
     }
-    D.initiative.combatants.forEach((entry) => {
+    D.initiative.combatants.forEach(entry => {
         const roll = Math.floor(Math.random() * 20) + 1;
         const bonus = parseInt(entry.initBonus) || 0;
         entry.initiative = roll + bonus;
@@ -29,13 +29,11 @@ function rollAllInitiative() {
 let draggedInitItem = null;
 function initDragDrop() {
     const list = $('init-list');
-    if (!list)
-        return;
+    if (!list) return;
     list.addEventListener('dragstart', function (e) {
         const target = e.target;
         const row = target.closest('.init-row');
-        if (!row)
-            return;
+        if (!row) return;
         draggedInitItem = row;
         row.classList.add('dragging');
         if (e.dataTransfer) {
@@ -46,8 +44,7 @@ function initDragDrop() {
     list.addEventListener('dragend', function (e) {
         const target = e.target;
         const row = target.closest('.init-row');
-        if (row)
-            row.classList.remove('dragging');
+        if (row) row.classList.remove('dragging');
         document.querySelectorAll('.init-row').forEach(r => r.classList.remove('drag-over'));
         draggedInitItem = null;
     });
@@ -64,12 +61,11 @@ function initDragDrop() {
         e.preventDefault();
         const target = e.target;
         const targetRow = target.closest('.init-row');
-        if (!targetRow || !draggedInitItem || targetRow === draggedInitItem)
-            return;
+        if (!targetRow || !draggedInitItem || targetRow === draggedInitItem) return;
         const draggedId = parseEntityId(draggedInitItem.dataset.id);
         const targetId = parseEntityId(targetRow.dataset.id);
-        const draggedIndex = D.initiative.combatants.findIndex((i) => i.id === draggedId);
-        const targetIndex = D.initiative.combatants.findIndex((i) => i.id === targetId);
+        const draggedIndex = D.initiative.combatants.findIndex(i => i.id === draggedId);
+        const targetIndex = D.initiative.combatants.findIndex(i => i.id === targetId);
         if (draggedIndex > -1 && targetIndex > -1) {
             const [removed] = D.initiative.combatants.splice(draggedIndex, 1);
             D.initiative.combatants.splice(targetIndex, 0, removed);

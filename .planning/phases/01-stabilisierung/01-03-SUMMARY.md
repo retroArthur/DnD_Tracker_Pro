@@ -1,54 +1,54 @@
 ---
 phase: 01-stabilisierung
-plan: "03"
+plan: '03'
 subsystem: migration
 tags: [version-migration, mindmap-cleanup, import-export, tdd, typescript]
 
 # Dependency graph
 requires:
-  - phase: 01-01
-    provides: debug.js Boot-Crash-Fix (clearMindmap-Referenz entfernt)
+    - phase: 01-01
+      provides: debug.js Boot-Crash-Fix (clearMindmap-Referenz entfernt)
 
 provides:
-  - "Migration 2.6.1: leere mindmap-Seeds werden beim Laden still entfernt"
-  - "Import-Pfad: Hinweis-Dialog + JSON-Backup (mindmap-backup-{name}.json) bei echten Mindmap-Inhalten"
-  - "Neue Kampagnen: mindmap-frei (campaign-manager.js + import-export.js Seeds entfernt)"
-  - "Mindmap-Typen entfernt (MindmapNode, MindmapConnection, Mindmap, mindmap-Property)"
-  - "assets/styles-purged.css geloescht (D-13)"
-  - "Test-Seeds bereinigt (tests/setup.js)"
+    - 'Migration 2.6.1: leere mindmap-Seeds werden beim Laden still entfernt'
+    - 'Import-Pfad: Hinweis-Dialog + JSON-Backup (mindmap-backup-{name}.json) bei echten Mindmap-Inhalten'
+    - 'Neue Kampagnen: mindmap-frei (campaign-manager.js + import-export.js Seeds entfernt)'
+    - 'Mindmap-Typen entfernt (MindmapNode, MindmapConnection, Mindmap, mindmap-Property)'
+    - 'assets/styles-purged.css geloescht (D-13)'
+    - 'Test-Seeds bereinigt (tests/setup.js)'
 
 affects:
-  - "01-04 bis 01-07: typecheck-Baseline stabilisiert; kein mindmap-Key in neuen Kampagnen"
+    - '01-04 bis 01-07: typecheck-Baseline stabilisiert; kein mindmap-Key in neuen Kampagnen'
 
 # Tech tracking
 tech-stack:
-  added: []
-  patterns:
-    - "TDD Red/Green fuer non-ESM via vm-Kontext: vm.createContext + vm.runInContext statt eval()"
-    - "Promise-Dialog-Pattern: showMindmapExportDialog() loest Promise auf wenn Nutzer Fortfahren waehlt"
-    - "Modul-intern: showMindmapExportDialog nicht in window exportiert (CLAUDE.md Export-Audit)"
+    added: []
+    patterns:
+        - 'TDD Red/Green fuer non-ESM via vm-Kontext: vm.createContext + vm.runInContext statt eval()'
+        - 'Promise-Dialog-Pattern: showMindmapExportDialog() loest Promise auf wenn Nutzer Fortfahren waehlt'
+        - 'Modul-intern: showMindmapExportDialog nicht in window exportiert (CLAUDE.md Export-Audit)'
 
 key-files:
-  created:
-    - "tests/unit/migration.test.js"
-  modified:
-    - "systems/spellslots/version-migration.js"
-    - "systems/spellslots/import-export.js"
-    - "systems/campaign-manager/campaign-manager.js"
-    - "types/globals.d.ts"
-    - "types/entities.d.ts"
-    - "tests/setup.js"
-  deleted:
-    - "assets/styles-purged.css"
+    created:
+        - 'tests/unit/migration.test.js'
+    modified:
+        - 'systems/spellslots/version-migration.js'
+        - 'systems/spellslots/import-export.js'
+        - 'systems/campaign-manager/campaign-manager.js'
+        - 'types/globals.d.ts'
+        - 'types/entities.d.ts'
+        - 'tests/setup.js'
+    deleted:
+        - 'assets/styles-purged.css'
 
 key-decisions:
-  - "vm.createContext statt eval() fuer non-ESM-Funktionen in Tests: eval() setzt Funktionen nicht zuverlaessig in global-Scope; vm-Kontext ist sauber isoliert"
-  - "showMindmapExportDialog modul-intern (kein window-Export): wird nur von importDataGlobal() gerufen, kein anderes Modul braucht es"
-  - "mindmap-Property in AppData interface optional gemacht via Entfernung (kein Optional-Marker benoetigt, da kein Code mehr darauf zugreift)"
+    - 'vm.createContext statt eval() fuer non-ESM-Funktionen in Tests: eval() setzt Funktionen nicht zuverlaessig in global-Scope; vm-Kontext ist sauber isoliert'
+    - 'showMindmapExportDialog modul-intern (kein window-Export): wird nur von importDataGlobal() gerufen, kein anderes Modul braucht es'
+    - 'mindmap-Property in AppData interface optional gemacht via Entfernung (kein Optional-Marker benoetigt, da kein Code mehr darauf zugreift)'
 
 patterns-established:
-  - "Smart-Strip-Migration: delete data.mindmap nur wenn nodes.length === 0 && connections.length === 0"
-  - "Dialog-VOR-Migration: Hinweis-Dialog im Import-Pfad VOR migrateData()-Aufruf sichert Nutzer-Inhalte"
+    - 'Smart-Strip-Migration: delete data.mindmap nur wenn nodes.length === 0 && connections.length === 0'
+    - 'Dialog-VOR-Migration: Hinweis-Dialog im Import-Pfad VOR migrateData()-Aufruf sichert Nutzer-Inhalte'
 
 requirements-completed: [STAB-02]
 
@@ -118,7 +118,8 @@ Keine — alle implementierten Funktionen sind vollstaendig verdrahtet.
 
 ## Threat Flags
 
-Keine neuen Bedrohungsflächen — alle T-03-* aus dem Plan-Threat-Register mitgedacht:
+Keine neuen Bedrohungsflächen — alle T-03-\* aus dem Plan-Threat-Register mitgedacht:
+
 - T-03-01 (XSS): esc() fuer nodeCount und connCount in showMindmapExportDialog() mitigiert
 - T-03-02 (Download): JSON.stringify ohne HTML-Kontext; akzeptiert
 - T-03-03 (stiller Verlust): D-09-Dialog bietet Export VOR delete imp.mindmap; mitigiert
@@ -139,5 +140,6 @@ Keine neuen Bedrohungsflächen — alle T-03-* aus dem Plan-Threat-Register mitg
 - npm run typecheck: Exit-Code 0
 
 ---
-*Phase: 01-stabilisierung*
-*Completed: 2026-06-12*
+
+_Phase: 01-stabilisierung_
+_Completed: 2026-06-12_

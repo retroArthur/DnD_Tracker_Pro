@@ -54,7 +54,9 @@ describe('Data Persistence', () => {
                 npcs: [{ id: 2, name: 'Villain', faction: 'Evil' }],
                 locations: [{ id: 3, name: 'Dungeon', type: 'underground' }],
                 quests: [{ id: 4, title: 'Save the World', status: 'active' }],
-                monsterFavorites: [{ id: 5, name: 'Goblin Pack', monsters: [{ cr: '1/4', count: 4 }] }]
+                monsterFavorites: [
+                    { id: 5, name: 'Goblin Pack', monsters: [{ cr: '1/4', count: 4 }] }
+                ]
             };
 
             Object.assign(D, testData);
@@ -438,7 +440,6 @@ describe('UI Robustness', () => {
 // ============================================================
 
 describe('Persistence Regression Tests (Plan 01-02)', () => {
-
     // Gemeinsame IDB-Mock-Infrastruktur für alle Tests dieser Gruppe
     let mockIDBStore;
     let idbInstance;
@@ -454,13 +455,17 @@ describe('Persistence Regression Tests (Plan 01-02)', () => {
                                 mockIDBStore[record.id] = { ...record };
                                 const req = { onsuccess: null, onerror: null, result: record.id };
                                 // Synchron für Tests
-                                Promise.resolve().then(() => { if (req.onsuccess) req.onsuccess(); });
+                                Promise.resolve().then(() => {
+                                    if (req.onsuccess) req.onsuccess();
+                                });
                                 return req;
                             },
                             get(key) {
                                 const record = mockIDBStore[key] || null;
                                 const req = { onsuccess: null, onerror: null, result: record };
-                                Promise.resolve().then(() => { if (req.onsuccess) req.onsuccess(); });
+                                Promise.resolve().then(() => {
+                                    if (req.onsuccess) req.onsuccess();
+                                });
                                 return req;
                             }
                         };
@@ -469,7 +474,10 @@ describe('Persistence Regression Tests (Plan 01-02)', () => {
             }
         };
         window.idb = idbInstance;
-        window.initIndexedDB = jest.fn(() => { window.idb = idbInstance; return Promise.resolve(); });
+        window.initIndexedDB = jest.fn(() => {
+            window.idb = idbInstance;
+            return Promise.resolve();
+        });
     }
 
     // saveToIndexedDBFallback — echte Logik aus persistence.js extrahiert für Tests
@@ -497,9 +505,13 @@ describe('Persistence Regression Tests (Plan 01-02)', () => {
     // StorageAPI-Implementierung für Tests (greift auf globalem localStorage-Mock)
     function makeStorageAPI() {
         return {
-            get: (key, def) => localStorage.getItem(key) !== null ? localStorage.getItem(key) : def,
-            set: (key, value) => { localStorage.setItem(key, value); return { success: true }; },
-            remove: (key) => localStorage.removeItem(key)
+            get: (key, def) =>
+                localStorage.getItem(key) !== null ? localStorage.getItem(key) : def,
+            set: (key, value) => {
+                localStorage.setItem(key, value);
+                return { success: true };
+            },
+            remove: key => localStorage.removeItem(key)
         };
     }
 
@@ -607,7 +619,8 @@ describe('Persistence Regression Tests (Plan 01-02)', () => {
             };
 
             // Bug-Dokumentation (ohne Fix): compareVersions('2.11', CURRENT_VERSION) = 1 > 0
-            const wouldMigrateWithoutFix = !p._version || compareVersionsLocal(p._version, CURRENT_VERSION) < 0;
+            const wouldMigrateWithoutFix =
+                !p._version || compareVersionsLocal(p._version, CURRENT_VERSION) < 0;
             expect(wouldMigrateWithoutFix).toBe(false); // Bug: Migration übersprungen
 
             // Fix-Logik (simuliert was quick-roll.js nach Fix tut):
@@ -615,7 +628,8 @@ describe('Persistence Regression Tests (Plan 01-02)', () => {
             if (version === '2.11') {
                 version = '2.0.0'; // Normalisierung
             }
-            const wouldMigrateWithFix = !version || compareVersionsLocal(version, CURRENT_VERSION) < 0;
+            const wouldMigrateWithFix =
+                !version || compareVersionsLocal(version, CURRENT_VERSION) < 0;
             expect(wouldMigrateWithFix).toBe(true); // Fix: Migration läuft
 
             // Audit: quick-roll.js Quelltext muss Legacy-Normalisierung enthalten
@@ -745,7 +759,9 @@ describe('Persistence Regression Tests (Plan 01-02)', () => {
 
             // Setup: LS hat Stand OHNE _ts (Altdaten), IDB hat ANDEREN Stand
             const lsContent = JSON.stringify({ characters: [{ id: 1, name: 'LS-Held' }] });
-            const idbContent = JSON.stringify({ characters: [{ id: 2, name: 'IDB-Held-Abweichend' }] });
+            const idbContent = JSON.stringify({
+                characters: [{ id: 2, name: 'IDB-Held-Abweichend' }]
+            });
 
             localStorage.setItem(STORAGE_KEY, lsContent);
             // KEIN _ts-Key (simuliert Altdaten ohne Timestamp)
@@ -760,7 +776,7 @@ describe('Persistence Regression Tests (Plan 01-02)', () => {
             const lsTs = lsData ? parseInt(api.get(STORAGE_KEY + '_ts', '0'), 10) : 0;
             const idbRecord = await realLoadFromIDBRaw(STORAGE_KEY);
             const idbData = idbRecord ? idbRecord.data : null;
-            const idbTs = idbRecord ? (idbRecord.timestamp || 0) : 0;
+            const idbTs = idbRecord ? idbRecord.timestamp || 0 : 0;
 
             // D-07-Bedingung:
             if (lsData && idbData && lsTs === 0 && idbTs > 0 && lsData !== idbData) {
@@ -795,7 +811,9 @@ describe('Persistence Regression Tests (Plan 01-02)', () => {
             const dialogSpy = jest.fn().mockResolvedValue(false);
             window.showStorageConflictDialog = dialogSpy;
 
-            const identicalContent = JSON.stringify({ characters: [{ id: 1, name: 'Gleicher Held' }] });
+            const identicalContent = JSON.stringify({
+                characters: [{ id: 1, name: 'Gleicher Held' }]
+            });
 
             // LS ohne _ts, IDB mit identischem Inhalt
             localStorage.setItem(STORAGE_KEY, identicalContent);
@@ -808,7 +826,7 @@ describe('Persistence Regression Tests (Plan 01-02)', () => {
             const lsTs = lsData ? parseInt(api.get(STORAGE_KEY + '_ts', '0'), 10) : 0;
             const idbRecord = await realLoadFromIDBRaw(STORAGE_KEY);
             const idbData = idbRecord ? idbRecord.data : null;
-            const idbTs = idbRecord ? (idbRecord.timestamp || 0) : 0;
+            const idbTs = idbRecord ? idbRecord.timestamp || 0 : 0;
 
             // D-07: lsData === idbData → KEIN Dialog (Identisch-Fall)
             if (lsData && idbData && lsTs === 0 && idbTs > 0 && lsData !== idbData) {
@@ -835,7 +853,7 @@ describe('Persistence Regression Tests (Plan 01-02)', () => {
             const lsTs = lsData ? parseInt(api.get(STORAGE_KEY + '_ts', '0'), 10) : 0;
             const idbRecord = await realLoadFromIDBRaw(STORAGE_KEY);
             const idbData = idbRecord ? idbRecord.data : null;
-            const idbTs = idbRecord ? (idbRecord.timestamp || 0) : 0;
+            const idbTs = idbRecord ? idbRecord.timestamp || 0 : 0;
 
             if (lsData && idbData && lsTs === 0 && idbTs > 0 && lsData !== idbData) {
                 await window.showStorageConflictDialog(lsData, idbData, idbTs);

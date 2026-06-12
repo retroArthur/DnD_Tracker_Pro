@@ -5,58 +5,61 @@
 
 const SystemActions = {
     // Undo/Redo
-    'undo': () => undo(),
-    'redo': () => redo(),
+    undo: () => undo(),
+    redo: () => redo(),
 
     // Export/Import
-    'export-data': (ctx) => exportData(ctx.value),
-    'export-json': (ctx) => exportData(ctx.value),
-    'export-csv': (ctx) => exportDataCSV(ctx.value),
-    'execute-import': (ctx) => executeImport(ctx.value),
+    'export-data': ctx => exportData(ctx.value),
+    'export-json': ctx => exportData(ctx.value),
+    'export-csv': ctx => exportDataCSV(ctx.value),
+    'execute-import': ctx => executeImport(ctx.value),
 
     // Backup
-    'restore-backup': (ctx) => { restoreBackup(ctx.id); hideModal('backups-modal'); },
+    'restore-backup': ctx => {
+        restoreBackup(ctx.id);
+        hideModal('backups-modal');
+    },
 
     // Timer actions
-    'toggle-timer': (ctx) => toggleTimer(ctx.id),
-    'reset-timer': (ctx) => resetTimer(ctx.id),
-    'delete-timer': (ctx) => deleteTimer(ctx.id),
-    'focus-timer': (ctx) => focusTimer(ctx.id),
-    'quick-timer': (ctx) => quickTimer(parseInt(ctx.value)),
-    'edit-timer-preset': (ctx) => editTimerPreset(ctx.id),
-    'delete-timer-preset': (ctx) => deleteTimerPreset(ctx.id),
-    'add-preset-timer': (ctx) => {
+    'toggle-timer': ctx => toggleTimer(ctx.id),
+    'reset-timer': ctx => resetTimer(ctx.id),
+    'delete-timer': ctx => deleteTimer(ctx.id),
+    'focus-timer': ctx => focusTimer(ctx.id),
+    'quick-timer': ctx => quickTimer(parseInt(ctx.value)),
+    'edit-timer-preset': ctx => editTimerPreset(ctx.id),
+    'delete-timer-preset': ctx => deleteTimerPreset(ctx.id),
+    'add-preset-timer': ctx => {
         const duration = parseInt(ctx.target.dataset.duration) || 0;
         addPresetTimer(ctx.value, duration);
     },
 
     // Editor actions
-    'format-text': (ctx) => {
+    'format-text': ctx => {
         const cmd = ctx.target.dataset.cmd || ctx.value;
         const editorId = ctx.target.dataset.editor;
         formatText(cmd, editorId);
     },
-    'clear-formatting': (ctx) => clearEditorFormatting(ctx.value),
-    'set-editor-font': (ctx) => {
+    'clear-formatting': ctx => clearEditorFormatting(ctx.value),
+    'set-editor-font': ctx => {
         const editorId = ctx.target.dataset.editor;
         const font = ctx.target.value || ctx.target.dataset.value || ctx.value;
         setEditorFont(editorId, font);
     },
-    'set-editor-font-size': (ctx) => {
+    'set-editor-font-size': ctx => {
         const editorId = ctx.target.dataset.editor;
         const size = ctx.target.value || ctx.target.dataset.value || ctx.value;
         setEditorFontSize(editorId, size);
     },
-    'set-border-format': (ctx) => {
+    'set-border-format': ctx => {
         const editorId = ctx.target.dataset.editor;
         const style = ctx.target.dataset.value || ctx.value;
         setBorderFormat(editorId, style);
     },
-    'set-read-aloud': (ctx) => {
+    'set-read-aloud': ctx => {
         const editorId = ctx.target.dataset.editor;
         setReadAloudFormat(editorId);
     },
-    'set-read-aloud-style': (ctx) => {
+    'set-read-aloud-style': ctx => {
         const editorId = ctx.target.dataset.editor;
         const style = ctx.target.value || 'parchment';
         if (style) {
@@ -65,11 +68,11 @@ const SystemActions = {
             ctx.target.selectedIndex = 0;
         }
     },
-    'insert-entity-link-btn': (ctx) => {
+    'insert-entity-link-btn': ctx => {
         const editorId = ctx.target.dataset.editor;
         showInsertEntityLinkModal(editorId);
     },
-    'insert-link': (ctx) => {
+    'insert-link': ctx => {
         const editorId = ctx.target.dataset.editor;
         const editor = $(editorId);
         if (editor) {
@@ -81,12 +84,12 @@ const SystemActions = {
             }
         }
     },
-    'insert-table': (ctx) => {
+    'insert-table': ctx => {
         const editorId = ctx.target.dataset.editor;
         floatingToolbarTarget = $(editorId);
         insertTable();
     },
-    'set-highlight-color': (ctx) => {
+    'set-highlight-color': ctx => {
         const editorId = ctx.target.dataset.editor;
         const color = ctx.target.value;
         const editor = $(editorId);
@@ -135,75 +138,81 @@ const SystemActions = {
         }
         ctx.target.selectedIndex = 0;
     },
-    'set-preset-emoji': (ctx) => setPresetEmoji(ctx.value),
+    'set-preset-emoji': ctx => setPresetEmoji(ctx.value),
 
     // System
     'show-about-modal': () => showModal('about-modal'),
     'reload-page': () => location.reload(),
-    'clear-error-log': () => { ErrorHandler.clearLog(); showErrorLogModal(); },
+    'clear-error-log': () => {
+        ErrorHandler.clearLog();
+        showErrorLogModal();
+    },
 
     // Debug/Test
-    'generate-test-wiki': (ctx) => generateTestWiki(parseInt(ctx.value) || 5),
+    'generate-test-wiki': ctx => generateTestWiki(parseInt(ctx.value) || 5),
 
     // Rest Manager
     'show-rest-modal': () => showRestModal(),
-    'quick-short-rest': (ctx) => quickShortRest(ctx.id),
+    'quick-short-rest': ctx => quickShortRest(ctx.id),
 
     // Quick Actions
-    'apply-quick-action': (ctx) => applyQuickAction(parseInt(ctx.id), ctx.value),
+    'apply-quick-action': ctx => applyQuickAction(parseInt(ctx.id), ctx.value),
     'show-condition-reference': () => showConditionReference(),
 
     // Random Tables / Generator
     'show-generator-modal': () => showGeneratorModal(),
-    'show-table-modal': (ctx) => showTableModal(ctx.id ? parseInt(ctx.id) : null),
+    'show-table-modal': ctx => showTableModal(ctx.id ? parseInt(ctx.id) : null),
     'quick-random-roll': () => quickRandomRoll(),
-    'roll-on-table': (ctx) => rollOnTable(parseInt(ctx.id)),
-    'select-table': (ctx) => selectTable(parseInt(ctx.id)),
-    'delete-table': (ctx) => deleteTable(parseInt(ctx.id)),
-    'delete-table-refresh': (ctx) => deleteTableAndRefresh(parseInt(ctx.id)),
-    'roll-on-table-show': (ctx) => rollOnTableAndShow(parseInt(ctx.id)),
+    'roll-on-table': ctx => rollOnTable(parseInt(ctx.id)),
+    'select-table': ctx => selectTable(parseInt(ctx.id)),
+    'delete-table': ctx => deleteTable(parseInt(ctx.id)),
+    'delete-table-refresh': ctx => deleteTableAndRefresh(parseInt(ctx.id)),
+    'roll-on-table-show': ctx => rollOnTableAndShow(parseInt(ctx.id)),
     'add-table-entry': () => addTableEntry(),
     'save-table': () => saveTable(),
     'fill-remaining-ranges': () => fillRemainingRanges(),
-    'select-dice-type': (ctx) => selectDiceType(parseInt(ctx.value)),
-    'remove-table-entry': (ctx) => removeTableEntry(parseInt(ctx.value)),
-    'quick-roll-table': (ctx) => { rollOnTable(parseInt(ctx.id)); hideModal('quick-roll-modal'); },
+    'select-dice-type': ctx => selectDiceType(parseInt(ctx.value)),
+    'remove-table-entry': ctx => removeTableEntry(parseInt(ctx.value)),
+    'quick-roll-table': ctx => {
+        rollOnTable(parseInt(ctx.id));
+        hideModal('quick-roll-modal');
+    },
 
     // Loot Distribution
     'show-loot-distribution': () => showLootDistributionModal(),
 
     // Markdown Export/Import
-    'exportSpellAsMarkdown': () => {
+    exportSpellAsMarkdown: () => {
         const editId = $('edit-spell-id');
         if (editId && editId.value) {
             exportEntityAsMarkdown('spells', editId.value);
         }
     },
-    'importSpellMarkdown': () => {
+    importSpellMarkdown: () => {
         const editId = $('edit-spell-id');
         if (editId && editId.value) {
             showMarkdownImportModal('spells', editId.value);
         }
     },
-    'exportNPCAsMarkdown': () => {
+    exportNPCAsMarkdown: () => {
         const editId = $('edit-npc-id');
         if (editId && editId.value) {
             exportEntityAsMarkdown('npcs', editId.value);
         }
     },
-    'importNPCMarkdown': () => {
+    importNPCMarkdown: () => {
         const editId = $('edit-npc-id');
         if (editId && editId.value) {
             showMarkdownImportModal('npcs', editId.value);
         }
     },
-    'exportQuestAsMarkdown': () => {
+    exportQuestAsMarkdown: () => {
         const editId = $('edit-quest-id');
         if (editId && editId.value) {
             exportEntityAsMarkdown('quests', editId.value);
         }
     },
-    'importQuestMarkdown': () => {
+    importQuestMarkdown: () => {
         const editId = $('edit-quest-id');
         if (editId && editId.value) {
             showMarkdownImportModal('quests', editId.value);

@@ -159,12 +159,12 @@ function showMarkdownImportModal(entityType, entityId) {
 
     let markdownContent = '';
 
-    fileInput.addEventListener('change', function(e) {
+    fileInput.addEventListener('change', function (e) {
         const file = e.target.files[0];
         if (!file) return;
 
         const reader = new FileReader();
-        reader.onload = function(event) {
+        reader.onload = function (event) {
             markdownContent = event.target.result;
 
             // Show preview
@@ -188,7 +188,7 @@ function showMarkdownImportModal(entityType, entityId) {
 
     // Setup confirm handler
     if (confirmBtn) {
-        confirmBtn.onclick = function() {
+        confirmBtn.onclick = function () {
             if (!markdownContent) return;
 
             executeMarkdownImport(entityType, entityId, markdownContent);

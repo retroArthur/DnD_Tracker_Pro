@@ -4,7 +4,7 @@
 // Zeilen: 565
 // Schema-Definition: Welche Felder werden für jeden Datentyp exportiert/importiert?
 const IO_SCHEMA = {
-    'characters': {
+    characters: {
         id: { type: 'number', required: true },
         name: { type: 'string', required: true },
         race: { type: 'string', required: false, default: '' },
@@ -31,7 +31,7 @@ const IO_SCHEMA = {
         notes: { type: 'string', required: false, default: '' },
         avatarUrl: { type: 'string', required: false, default: '' }
     },
-    'npcs': {
+    npcs: {
         id: { type: 'number', required: true },
         name: { type: 'string', required: true },
         race: { type: 'string', required: false, default: '' },
@@ -43,7 +43,7 @@ const IO_SCHEMA = {
         relations: { type: 'array', required: false, default: [] },
         avatarUrl: { type: 'string', required: false, default: '' }
     },
-    'locations': {
+    locations: {
         id: { type: 'number', required: true },
         name: { type: 'string', required: true },
         type: { type: 'string', required: false, default: '' },
@@ -52,7 +52,7 @@ const IO_SCHEMA = {
         tags: { type: 'array', required: false, default: [] },
         avatarUrl: { type: 'string', required: false, default: '' }
     },
-    'quests': {
+    quests: {
         id: { type: 'number', required: true },
         title: { type: 'string', required: true },
         description: { type: 'string', required: false, default: '' },
@@ -64,7 +64,7 @@ const IO_SCHEMA = {
         reward: { type: 'string', required: false, default: '' },
         tags: { type: 'array', required: false, default: [] }
     },
-    'loot': {
+    loot: {
         id: { type: 'number', required: true },
         name: { type: 'string', required: true },
         type: { type: 'string', required: false, default: '' },
@@ -75,7 +75,7 @@ const IO_SCHEMA = {
         assignedTo: { type: 'string', required: false, default: '' },
         tags: { type: 'array', required: false, default: [] }
     },
-    'spells': {
+    spells: {
         id: { type: 'number', required: true },
         name: { type: 'string', required: true },
         level: { type: 'number', required: false, default: 0 },
@@ -89,13 +89,13 @@ const IO_SCHEMA = {
         ritual: { type: 'boolean', required: false, default: false },
         concentration: { type: 'boolean', required: false, default: false }
     },
-    'sessionNotes': {
+    sessionNotes: {
         id: { type: 'number', required: true },
         date: { type: 'string', required: true },
         content: { type: 'string', required: false, default: '' },
         sessionNumber: { type: 'number', required: false, default: 1 }
     },
-    'encounters': {
+    encounters: {
         id: { type: 'number', required: true },
         name: { type: 'string', required: true },
         creatureType: { type: 'string', required: false, default: '' },
@@ -121,7 +121,7 @@ const IO_SCHEMA = {
         skills: { type: 'string', required: false, default: '' },
         tags: { type: 'array', required: false, default: [] }
     },
-    'wiki': {
+    wiki: {
         id: { type: 'number', required: true },
         title: { type: 'string', required: true },
         category: { type: 'string', required: false, default: 'locations' },
@@ -132,7 +132,7 @@ const IO_SCHEMA = {
         createdAt: { type: 'number', required: false, default: 0 },
         updatedAt: { type: 'number', required: false, default: 0 }
     },
-    'links': {
+    links: {
         id: { type: 'number', required: true },
         title: { type: 'string', required: true },
         url: { type: 'string', required: true },
@@ -169,7 +169,7 @@ function exportData(dataType) {
         const index = getCampaignIndex();
         let campaignName = 'Standard-Kampagne';
         if (index.active !== APP_CONFIG.STORAGE_KEY) {
-            const campaign = index.campaigns.find((c) => c.key === index.active);
+            const campaign = index.campaigns.find(c => c.key === index.active);
             campaignName = campaign?.name || 'Unbenannte Kampagne';
         }
         const exportObj = {
@@ -188,8 +188,7 @@ function exportData(dataType) {
         a.click();
         URL.revokeObjectURL(url);
         showToast(`📁 ${data.length} ${dataType} exportiert`);
-    }
-    catch (err) {
+    } catch (err) {
         showToast('❌ Export fehlgeschlagen: ' + err.message, 'error');
         console.error('[Export] Error:', err);
     }
@@ -211,7 +210,7 @@ function exportToCSV(dataType) {
         const headers = Object.keys(schema);
         let csv = headers.join(',') + '\n';
         // Rows
-        data.forEach((item) => {
+        data.forEach(item => {
             const row = headers.map(key => {
                 let val = item[key] !== undefined ? item[key] : schema[key].default;
                 // Arrays/Objects zu JSON
@@ -234,8 +233,7 @@ function exportToCSV(dataType) {
         a.click();
         URL.revokeObjectURL(url);
         showToast(`📊 CSV exportiert (${data.length} Einträge)`);
-    }
-    catch (err) {
+    } catch (err) {
         showToast('❌ CSV-Export fehlgeschlagen', 'error');
         console.error('[CSV Export] Error:', err);
     }
@@ -256,11 +254,10 @@ function showImportModal(dataType) {
     fileInput.accept = '.json';
     fileInput.style.display = 'none';
     document.body.appendChild(fileInput);
-    fileInput.addEventListener('change', (e) => {
+    fileInput.addEventListener('change', e => {
         const target = e.target;
         const file = target.files?.[0];
-        if (!file)
-            return;
+        if (!file) return;
         // Größenlimit: 10MB
         if (file.size > 10 * 1024 * 1024) {
             showToast('❌ Datei zu groß (max 10MB)', 'error');
@@ -268,7 +265,7 @@ function showImportModal(dataType) {
             return;
         }
         const reader = new FileReader();
-        reader.onload = (evt) => {
+        reader.onload = evt => {
             try {
                 const result = evt.target?.result;
                 const importData = JSON.parse(result);
@@ -278,8 +275,10 @@ function showImportModal(dataType) {
                 }
                 // Validierung: Datentyp passt?
                 if (importData._dataType && importData._dataType !== dataType) {
-                    const continueImport = confirm(`Import-Datentyp ist "${importData._dataType}", aber erwartet wird "${dataType}".\n\n` +
-                        `Trotzdem importieren?`);
+                    const continueImport = confirm(
+                        `Import-Datentyp ist "${importData._dataType}", aber erwartet wird "${dataType}".\n\n` +
+                            `Trotzdem importieren?`
+                    );
                     if (!continueImport) {
                         document.body.removeChild(fileInput);
                         return;
@@ -304,7 +303,9 @@ function showImportModal(dataType) {
                 const modal = $('import-modal');
                 if (modal) {
                     const campaignName = importData._campaignName || file.name.replace('.json', '');
-                    const exportDate = importData._exportDate ? new Date(importData._exportDate).toLocaleDateString('de-DE') : 'Unbekannt';
+                    const exportDate = importData._exportDate
+                        ? new Date(importData._exportDate).toLocaleDateString('de-DE')
+                        : 'Unbekannt';
                     modal.dataset.importItems = JSON.stringify(validatedItems);
                     modal.dataset.dataType = dataType;
                     const infoEl = $('import-info');
@@ -321,8 +322,7 @@ function showImportModal(dataType) {
                     showModal('import-modal');
                 }
                 showToast(`✅ Datei validiert: ${validatedItems.length} Einträge bereit`);
-            }
-            catch (err) {
+            } catch (err) {
                 showToast('❌ Import-Fehler: ' + err.message, 'error');
                 console.error('[Import] Parse error:', err);
             }
@@ -354,16 +354,14 @@ function executeImport(dataType) {
         try {
             createAutoBackup();
             showToast('💾 Sicherheitskopie erstellt', 'info', 1000);
-        }
-        catch (err) {
+        } catch (err) {
             console.warn('[Import] Backup failed:', err);
         }
         D[type] = items;
-    }
-    else {
+    } else {
         // Merge: Neue IDs vergeben für importierte Einträge
         const getNextId = window.getNextId;
-        const merged = items.map((item) => {
+        const merged = items.map(item => {
             return { ...item, id: getNextId(type) };
         });
         D[type] = [...(D[type] || []), ...merged];
@@ -372,7 +370,9 @@ function executeImport(dataType) {
     renderAll();
     updateIOCounts();
     hideModal('import-modal');
-    showToast(`✅ ${items.length} ${type} importiert (${mode === 'replace' ? 'ersetzt' : 'hinzugefügt'})`);
+    showToast(
+        `✅ ${items.length} ${type} importiert (${mode === 'replace' ? 'ersetzt' : 'hinzugefügt'})`
+    );
 }
 // UTILITY FUNCTIONS
 // ============================================================
@@ -396,13 +396,11 @@ function updateIOCounts() {
     };
     for (const [id, count] of Object.entries(counts)) {
         const el = $(id);
-        if (el)
-            el.textContent = String(count);
+        if (el) el.textContent = String(count);
     }
     // Encounter-Runde aktualisieren
     const roundEl = $('encounter-round-num');
-    if (roundEl)
-        roundEl.textContent = String(D.initiative?.round || 1);
+    if (roundEl) roundEl.textContent = String(D.initiative?.round || 1);
 }
 // Legacy: Alte exportSpells Funktion für Kompatibilität
 function exportSpells() {
@@ -411,9 +409,10 @@ function exportSpells() {
 // STAB-02 / D-09: Hinweis-Dialog bei echten Mindmap-Inhalten vor dem Import
 // Modul-intern — kein window-Export (CLAUDE.md Export-Audit)
 function showMindmapExportDialog(mindmap, campaignName) {
-    return new Promise((resolve) => {
+    return new Promise(resolve => {
         const safeName = (campaignName || 'kampagne')
-            .replace(/[^a-zA-Z0-9äöüÄÖÜß\s\-]/g, '').replace(/\s+/g, '-');
+            .replace(/[^a-zA-Z0-9äöüÄÖÜß\s\-]/g, '')
+            .replace(/\s+/g, '-');
         const nodeCount = String(mindmap.nodes ? mindmap.nodes.length : 0);
         const connCount = String(mindmap.connections ? mindmap.connections.length : 0);
         const overlay = document.createElement('div');
@@ -421,21 +420,28 @@ function showMindmapExportDialog(mindmap, campaignName) {
         overlay.innerHTML =
             '<div class="modal-content" style="max-width:480px">' +
             '<h3>Mindmap-Daten gefunden</h3>' +
-            '<p>Diese Kampagne enthält Mindmap-Inhalte (' + esc(nodeCount) + ' Knoten, ' +
-            esc(connCount) + ' Verbindungen). Das Mindmap-Feature wurde entfernt — die Daten werden ' +
+            '<p>Diese Kampagne enthält Mindmap-Inhalte (' +
+            esc(nodeCount) +
+            ' Knoten, ' +
+            esc(connCount) +
+            ' Verbindungen). Das Mindmap-Feature wurde entfernt — die Daten werden ' +
             'beim Import verworfen. Du kannst sie vorher als Datei sichern.</p>' +
             '<div style="display:grid;gap:8px;margin:12px 0">' +
             '<button data-act="save" class="btn btn-primary">Mindmap als JSON sichern</button>' +
             '<button data-act="skip" class="btn">Fortfahren</button>' +
             '</div></div>';
-        overlay.addEventListener('click', (ev) => {
+        overlay.addEventListener('click', ev => {
             const act = ev.target && ev.target.dataset ? ev.target.dataset.act : null;
             if (act === 'save') {
                 // D-10: eigene JSON-Backup-Datei herunterladen
-                const json = JSON.stringify({
-                    nodes: mindmap.nodes || [],
-                    connections: mindmap.connections || []
-                }, null, 2);
+                const json = JSON.stringify(
+                    {
+                        nodes: mindmap.nodes || [],
+                        connections: mindmap.connections || []
+                    },
+                    null,
+                    2
+                );
                 const blob = new Blob([json], { type: 'application/json' });
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement('a');
@@ -458,10 +464,9 @@ function showMindmapExportDialog(mindmap, campaignName) {
 function importDataGlobal() {
     const fileInput = $('import-file');
     const file = fileInput.files?.[0];
-    if (!file)
-        return;
+    if (!file) return;
     const reader = new FileReader();
-    reader.onload = async (e) => {
+    reader.onload = async e => {
         try {
             const result = e.target?.result;
             const imp = JSON.parse(result);
@@ -470,14 +475,19 @@ function importDataGlobal() {
             const saveCampaignIndex = window.saveCampaignIndex;
             const renderAll = window.renderAll;
             // Kampagnennamen aus Import holen
-            const campaignName = imp._campaignName || file.name.replace('.json', '').replace(/-\d{4}-\d{2}-\d{2}$/, '');
+            const campaignName =
+                imp._campaignName ||
+                file.name.replace('.json', '').replace(/-\d{4}-\d{2}-\d{2}$/, '');
             // Benutzer fragen: Neue Kampagne oder aktuelle überschreiben?
-            const choice = confirm(`Import: "${campaignName}"\n\n` +
-                `OK = Als neue Kampagne importieren\n` +
-                `Abbrechen = Aktuelle Kampagne überschreiben`);
+            const choice = confirm(
+                `Import: "${campaignName}"\n\n` +
+                    `OK = Als neue Kampagne importieren\n` +
+                    `Abbrechen = Aktuelle Kampagne überschreiben`
+            );
             // STAB-02 / D-09: Mindmap-Inhalt pruefen, bevor er beim Import verworfen wird
             if (imp.mindmap) {
-                const hasRealContent = (imp.mindmap.nodes && imp.mindmap.nodes.length > 0) ||
+                const hasRealContent =
+                    (imp.mindmap.nodes && imp.mindmap.nodes.length > 0) ||
                     (imp.mindmap.connections && imp.mindmap.connections.length > 0);
                 if (hasRealContent) {
                     await showMindmapExportDialog(imp.mindmap, campaignName); // bietet JSON-Backup an (D-10)
@@ -490,24 +500,21 @@ function importDataGlobal() {
             delete imp._version;
             // Migration
             if (imp.characters) {
-                imp.characters = imp.characters.map((c) => {
+                imp.characters = imp.characters.map(c => {
                     let bg = c.background || '';
                     let wt = c.weight || 0;
                     let pn = c.playerName || '';
                     if (c.notes && !bg) {
                         const m = c.notes.match(/Herkunft\s*:\s*([^\n]+)/i);
-                        if (m)
-                            bg = m[1].trim();
+                        if (m) bg = m[1].trim();
                     }
                     if (c.notes && !wt) {
                         const m = c.notes.match(/Gewicht\s*:\s*(\d+)/i);
-                        if (m)
-                            wt = parseInt(m[1]);
+                        if (m) wt = parseInt(m[1]);
                     }
                     if (c.name?.includes('(') && !pn) {
                         const m = c.name.match(/\(([^)]+)\)/);
-                        if (m)
-                            pn = m[1];
+                        if (m) pn = m[1];
                     }
                     return {
                         ...c,
@@ -535,9 +542,18 @@ function importDataGlobal() {
                 saveCampaignIndex(index);
                 // Daten speichern
                 const newData = {
-                    locations: [], npcs: [], quests: [], characters: [], sessionNotes: [], quickNotes: '',
+                    locations: [],
+                    npcs: [],
+                    quests: [],
+                    characters: [],
+                    sessionNotes: [],
+                    quickNotes: '',
                     initiative: { combatants: [], currentTurn: 0, round: 1 },
-                    loot: [], items: [], encounters: [], spells: [], links: [],
+                    loot: [],
+                    items: [],
+                    encounters: [],
+                    spells: [],
+                    links: [],
                     filters: [],
                     calendar: { day: 1, month: 0, year: 1492, events: [] },
                     _nextId: {},
@@ -547,26 +563,21 @@ function importDataGlobal() {
                 if (saveResult.success) {
                     showToast(`✅ Kampagne "${campaignName}" importiert`);
                     location.reload();
-                }
-                else {
+                } else {
                     throw new Error(`Speichern fehlgeschlagen: ${saveResult.error}`);
                 }
-            }
-            else {
+            } else {
                 // Aktuelle Kampagne überschreiben (D is const, use Object.assign)
                 Object.assign(D, imp);
-                if (!D._nextId)
-                    D._nextId = {};
+                if (!D._nextId) D._nextId = {};
                 renderAll();
                 updateIOCounts();
                 const quickNotes = $('quick-notes');
-                if (quickNotes)
-                    quickNotes.value = D.quickNotes || '';
+                if (quickNotes) quickNotes.value = D.quickNotes || '';
                 save();
                 showToast('Import OK!');
             }
-        }
-        catch (e) {
+        } catch (e) {
             alert('Fehler: ' + e.message);
         }
         fileInput.value = '';
@@ -582,39 +593,42 @@ function copyData() {
         if (!navigator.clipboard) {
             throw new Error('Zwischenablage nicht verfügbar (HTTPS erforderlich)');
         }
-        navigator.clipboard.writeText(json)
+        navigator.clipboard
+            .writeText(json)
             .then(() => showToast('📋 Daten kopiert'))
             .catch(err => {
-            showToast('⚠️ Automatisches Kopieren fehlgeschlagen. Bitte manuell kopieren.', 'warning');
-            console.warn('[Copy] Clipboard failed:', err);
-        });
-    }
-    catch (err) {
+                showToast(
+                    '⚠️ Automatisches Kopieren fehlgeschlagen. Bitte manuell kopieren.',
+                    'warning'
+                );
+                console.warn('[Copy] Clipboard failed:', err);
+            });
+    } catch (err) {
         showToast('❌ Kopieren fehlgeschlagen: ' + err.message, 'error');
         console.error('[Copy] Error:', err);
     }
 }
 function clearStorage() {
     // Step 1: Strong warning with detailed explanation
-    const confirmed = confirm('⚠️ ACHTUNG: Alle Daten löschen?\n\n' +
-        'Diese Aktion löscht ALLE Kampagnendaten unwiderruflich:\n' +
-        '• Charaktere, NPCs, Orte\n' +
-        '• Quests, Items, Zauber\n' +
-        '• Initiative, Notizen, Wiki\n\n' +
-        'Möchten Sie wirklich ALLES löschen?');
-    if (!confirmed)
-        return;
+    const confirmed = confirm(
+        '⚠️ ACHTUNG: Alle Daten löschen?\n\n' +
+            'Diese Aktion löscht ALLE Kampagnendaten unwiderruflich:\n' +
+            '• Charaktere, NPCs, Orte\n' +
+            '• Quests, Items, Zauber\n' +
+            '• Initiative, Notizen, Wiki\n\n' +
+            'Möchten Sie wirklich ALLES löschen?'
+    );
+    if (!confirmed) return;
     // Step 2: Double confirmation for safety
-    const doubleCheck = confirm('🚨 LETZTE WARNUNG!\n\n' +
-        'Bitte bestätigen Sie erneut: Alle Daten unwiderruflich löschen?');
-    if (!doubleCheck)
-        return;
+    const doubleCheck = confirm(
+        '🚨 LETZTE WARNUNG!\n\n' + 'Bitte bestätigen Sie erneut: Alle Daten unwiderruflich löschen?'
+    );
+    if (!doubleCheck) return;
     // Step 3: Create safety backup before deletion
     try {
         createAutoBackup();
         showToast('💾 Sicherheitskopie erstellt', 'info', 1500);
-    }
-    catch (err) {
+    } catch (err) {
         console.warn('[Clear] Backup failed:', err);
     }
     // Step 4: Execute deletion
@@ -624,8 +638,7 @@ function clearStorage() {
     if (result.success) {
         showToast('✅ Alle Daten gelöscht', 'info');
         setTimeout(() => location.reload(), 1000);
-    }
-    else {
+    } else {
         showToast('❌ Fehler beim Löschen', 'error');
         console.error('Clear storage failed:', result.error);
     }

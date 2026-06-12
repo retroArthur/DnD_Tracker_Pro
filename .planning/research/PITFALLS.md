@@ -13,7 +13,7 @@
 **What goes wrong:**
 A feature is deleted from its main module(s) but references survive in files that are conceptually unrelated: a debug tool, a seed-data template, type declarations, generated CSS artifacts, test fixtures, and documentation. When the app initializes, the first surviving reference causes a `ReferenceError` that aborts the entire script-load chain. Every subsequent error in the console is a red herring — the root cause is at line 1 of the broken file, not the end.
 
-This is the *exact* current failure: `tools/debug.js:99` assigns `const clearAllNodes = clearMindmap` — a reference to the removed Mindmap feature — and the script load abort prevents the app from booting at all. The residue map is wider than the crash site:
+This is the _exact_ current failure: `tools/debug.js:99` assigns `const clearAllNodes = clearMindmap` — a reference to the removed Mindmap feature — and the script load abort prevents the app from booting at all. The residue map is wider than the crash site:
 
 - `tools/debug.js:99` — **active crash site** (global ReferenceError)
 - `systems/campaign-manager/campaign-manager.js:35,111` — seeds `mindmap: { nodes: [], connections: [] }` into every new campaign forever
@@ -26,12 +26,14 @@ This is the *exact* current failure: `tools/debug.js:99` assigns `const clearAll
 Non-ESM global-scope architectures have no import graph. Static analysis tools can detect unused variables in module systems but cannot follow the web of string references, `window.X` assignments, type files, and documentation files. Removal is manual and grep-driven; files outside the feature directory are easy to forget.
 
 **How to avoid:**
+
 1. Before removing any feature, run a repo-wide grep for the feature's primary symbols AND its data-key names in all file types: `*.js`, `*.d.ts`, `*.css`, `*.html`, `*.json`, `*.md`, `*.py`.
 2. Create a removal checklist before touching any code: (a) main feature files, (b) data seed/schema, (c) CSS, (d) type declarations, (e) test fixtures and mocks, (f) debug/dev tools, (g) documentation.
 3. Run the bundle (`python build.py`) and open it in a browser immediately after each deletion step — runtime ReferenceErrors surface only at load time, not via lint or typecheck in this architecture.
 4. After removal, add a CI grep that asserts the removed symbol name never appears in the source tree.
 
 **Warning signs:**
+
 - Console error on startup with `is not defined` for a symbol that used to exist
 - Lint passes cleanly but app does not boot (`no-undef` is currently a warning, not an error, and has a 50-warning budget)
 - `npm run check` shows green but `npm run build` + browser open shows crash
@@ -55,6 +57,7 @@ The lists are close but not identical — they use different path conventions an
 Make `build.py` parse the `MODULES` array out of `loader.js` at build time (single source of truth). Until that refactor, add a CI step that diffs the two lists and fails if they diverge. Also convert the `NICHT GEFUNDEN` warning in `build.py:409` to a hard error — a missing module is always a build failure, never a warning.
 
 **Warning signs:**
+
 - Feature works in dev but not in the production bundle (or vice versa)
 - `NICHT GEFUNDEN` in build output treated as acceptable noise
 - PR adds a new module file but `loader.js` and `build.py` are not both modified
@@ -74,6 +77,7 @@ Currently `core/config.js:10` reads `DEBUG_MODE: true,` with that exact formatti
 After the `replace()` call, add an assertion: `assert "DEBUG_MODE: true" not in js_combined` and abort the build if it fires. This is a one-line guard with zero ongoing maintenance cost. Document the exact string dependency in both `build.py` and `core/config.js` with a comment.
 
 **Warning signs:**
+
 - `DEBUG_MODE: true` appears in the `dist/` output file
 - Production build is noticeably slower than expected (validation overhead)
 - Browser console shows debug warnings on the production bundle
@@ -94,6 +98,7 @@ The known incident (2026-01-10, `toggleNPCCard`) matched this exact pattern. Cur
 Either fix Pass 3 to skip body lines using the computed brace range (the range is already computed — it just needs to drive a skip), OR replace Pass 3 entirely with a pre-build check that fails the build when duplicate top-level function names are found in source files. The pre-build check is simpler and catches the problem before it enters the bundle. Add a test for the orphaned-body case in `tests/build/`.
 
 **Warning signs:**
+
 - `SyntaxError: Illegal return statement` in the browser console on a fresh build
 - `[DEDUP] Removed duplicate function: X` in build output followed by lines that look like a function body
 - Two source files contain a top-level function with the same name
@@ -119,6 +124,7 @@ When an AI agent reads stale guidance and then reads the code, it faces conflict
 Treat CLAUDE.md as production code: update it in the same commit as the code changes it describes. Add a stabilization pass that audits every claim in CLAUDE.md against the actual code. Mark completed roadmap items as done. Delete references to removed files. Correct wrong constants. Add a CI check that verifies key string constants mentioned in documentation (e.g., `APP_CONFIG.CAMPAIGNS_KEY`) actually match their source definitions.
 
 **Warning signs:**
+
 - CLAUDE.md mentions files that do not exist (`find . -name "X.js"` returns nothing)
 - Constants in documentation differ from `core/config.js`
 - Roadmap items marked as "Partial" for work that was actually completed
@@ -145,6 +151,7 @@ The current failure (`clearMindmap is not defined`) is invisible to all automate
 Add a minimal smoke test to CI: build the bundle, open it with Playwright/headless Chromium, assert no console errors during init, assert at least one tab renders. This single test would have caught the current crash. Separately: harden lint (`no-undef: error`, remove the 50-warning budget for undefined globals specifically), and add `checkJs: true` incrementally per directory.
 
 **Warning signs:**
+
 - All CI checks pass but the app fails to load in a browser
 - Console shows errors that are not in any test's assertion surface
 - A function referenced in `systems/tab-registry.js` was renamed but tests still pass (registry uses string names resolved on `window`)
@@ -162,6 +169,7 @@ Both `save()` and `saveImmediate()` begin with `if (autosaveToggle && !autosaveT
 Separate the autosave-toggle gate from `saveImmediate()` entirely. `saveImmediate()` should always persist critical operations; only `save()` (the debounced background save) should respect the toggle. Add an E2E test that verifies data persists when no `autosave-toggle` element exists AND when one exists but is unchecked.
 
 **Warning signs:**
+
 - User reports "my data disappeared after closing the tab" without any error
 - A new widget or template introduces `id="autosave-toggle"` without realizing the consequence
 - `saveImmediate()` calls in delete functions return without executing any storage write
@@ -184,12 +192,14 @@ The primary usage mode is `file://` — opening the bundled HTML by double-click
 The data-migration problem is the most dangerous: a user who has months of campaign data in `file://`-origin localStorage will see an empty app after installing the PWA, with no error message.
 
 **How to avoid:**
-1. PWA installation is the *correct structural solution* — not a nice-to-have. Plan it as the foundation that unlocks all other features requiring a real origin.
+
+1. PWA installation is the _correct structural solution_ — not a nice-to-have. Plan it as the foundation that unlocks all other features requiring a real origin.
 2. Write a one-time data migration routine: on first PWA launch, detect empty storage, offer to import from a JSON export file (since direct cross-origin localStorage access is impossible), guide the user through the migration.
 3. Keep the `file://` double-click path working as a fallback (app functions without SW caching) — just do not show a broken install prompt in that mode. Guard SW registration: `if ('serviceWorker' in navigator && location.protocol !== 'file:') { ... }`.
 4. Document clearly in the UI that "Install App" requires opening via a local server or the installed shortcut.
 
 **Warning signs:**
+
 - Console shows `SecurityError: Failed to register a ServiceWorker` on `file://` open (currently swallowed silently)
 - User installs PWA and sees no data (orphaned in file-origin localStorage)
 - `sw.js:4` `CACHE_NAME = 'dnd-tracker-v2'` diverges from `APP_CONFIG.SW_CACHE_NAME` — the SW cannot read APP_CONFIG so cache version drift is manual
@@ -201,17 +211,19 @@ The data-migration problem is the most dangerous: a user who has months of campa
 ### Pitfall B2: Installed PWA Serves Stale Cached Version — User Sees Old App After Update
 
 **What goes wrong:**
-When a Service Worker update is available, the new SW waits in `waiting` state until all open tabs are closed. If `skipWaiting()` is called without user consent, the new SW activates while open windows are still running assets from the old SW — causing asset version mismatches, broken references, and "the site went weird" reports. If `skipWaiting()` is *not* called, the user sees the old version indefinitely because they never close all tabs.
+When a Service Worker update is available, the new SW waits in `waiting` state until all open tabs are closed. If `skipWaiting()` is called without user consent, the new SW activates while open windows are still running assets from the old SW — causing asset version mismatches, broken references, and "the site went weird" reports. If `skipWaiting()` is _not_ called, the user sees the old version indefinitely because they never close all tabs.
 
 For a single-file app where everything is one HTML file, the mismatch risk is lower than multi-asset apps — but the "sees old app forever" problem is real, especially since the current SW pre-caches `assets/body.html` (a stale placeholder) and runtime-caches templates only on first fetch.
 
 **How to avoid:**
+
 1. Show a visible "App-Update verfügbar — Neu laden?" toast when a new SW is in `waiting` state. Call `skipWaiting()` only after the user clicks the reload button, then reload the page.
 2. Fix `sw.js` to cache `assets/templates/*.html` (the real templates) in the install event, not `assets/body.html`.
 3. Every time the bundle changes, bump `CACHE_NAME` — wire this to the app version number to make it impossible to forget.
 4. Add the SW cache-name to the stabilization checklist: `APP_CONFIG.SW_CACHE_NAME` and `sw.js:4` must match.
 
 **Warning signs:**
+
 - User reports feature is "still broken" after you deployed a fix
 - `sw.js CACHE_NAME` and `APP_CONFIG.SW_CACHE_NAME` have diverged
 - `assets/body.html` is still in the `STATIC_ASSETS` pre-cache list
@@ -229,6 +241,7 @@ The File System Access API (planned for automatic file-based backup) is Chromium
 The sequence must be: user clicks a button → inside that click handler → call `requestPermission()` → if granted, proceed with write.
 
 **How to avoid:**
+
 1. Store the directory handle in IndexedDB after first user selection.
 2. On app init, call `handle.queryPermission({ mode: 'readwrite' })` to check status — do NOT call `requestPermission()` here (no user gesture).
 3. In the auto-backup tick: if permission is `'granted'`, write silently. If `'prompt'`, show a toast "Backup-Ordner benötigt erneute Freigabe — klicken zum Freigeben" with a button that calls `requestPermission()`.
@@ -236,6 +249,7 @@ The sequence must be: user clicks a button → inside that click handler → cal
 5. Always wrap File System writes in try/catch for `NotAllowedError`.
 
 **Warning signs:**
+
 - Auto-backup silently stops working after the user reopens the browser
 - `requestPermission()` called in `init()` or `setInterval()` callback — always fails (no user gesture)
 - No fallback when permission is revoked
@@ -259,11 +273,13 @@ The temptation during implementation is to embed the data in a JS file that gets
 
 **How to avoid:**
 Store SRD monster data separately from campaign data:
+
 1. Embed a minified, read-only monster lookup object in the bundle (names + CR + type only, for search/filter) — ~50KB instead of ~630KB.
 2. Load full statblocks lazily from a companion JSON file using `fetch()` (or File System Access API once available) on first access, caching in IndexedDB — not in `D`, not in localStorage.
 3. Never include SRD reference data in the `JSON.stringify(D)` snapshot used for saves, undo history, or exports.
 
 **Warning signs:**
+
 - `D.monsters = [...]` contains hundreds of entries (SRD data mixed into campaign state)
 - Build output exceeds 1.5MB
 - Undo history memory spikes after viewing the monster compendium
@@ -285,6 +301,7 @@ There are two distinct German D&D SRD sources with different licensing:
 **The trap:** The app already contains "deutsche SRD-Zauber" (German SRD spells). If those were copied from a community translation under OGL rather than from the official WotC CC-BY German SRD, the licensing is ambiguous. Non-SRD content (unique setting monsters, trademarked names, etc.) cannot be distributed under any open license.
 
 **How to avoid:**
+
 1. Use ONLY the official WotC German SRD (CC-BY 4.0) — not community translations whose provenance is unclear.
 2. Verify the provenance of existing German spell data in the app. If it came from an unofficial source, replace with official CC-BY content before any public distribution.
 3. For new monster data (Bestiary phase): use the SRD 5.2 English data (CC-BY 4.0, confirmed released April 22, 2025) with your own German translations, OR wait for the official WotC German SRD 5.2 localization.
@@ -292,6 +309,7 @@ There are two distinct German D&D SRD sources with different licensing:
 5. Attribution is required: include a CC-BY 4.0 attribution notice in the app.
 
 **Warning signs:**
+
 - Existing German spell/monster text cannot be traced to the official WotC CC-BY PDF
 - App distributes monster names or lore that exist only in non-SRD WotC products
 - No attribution text for SRD content anywhere in the app
@@ -317,12 +335,14 @@ Additionally: roll history for dice statistics (planned feature) generates high-
 
 **How to avoid:**
 Fix the stale-shadowing bug before roll history or other append-heavy features are added:
+
 1. When switching to IDB-only saves, write a sentinel value to localStorage: `localStorage.setItem(key, '__IDB_ONLY__')` (or delete the key entirely).
 2. At load: if localStorage contains the sentinel (or nothing), load from IndexedDB.
 3. Store roll history separately from campaign state — use a dedicated IndexedDB object store, never include it in `D` or in undo snapshots.
 4. Add a persistence unit test: mock >5MB serialized size, save, reload, assert the loaded data matches the saved data.
 
 **Warning signs:**
+
 - Campaign data reverts to an earlier state after reload when campaign is large
 - localStorage contains campaign data older than the IndexedDB entry
 - Roll history is stored in `D.rolls[]` or similar (included in saves and undo)
@@ -339,6 +359,7 @@ The app's export/import version check has a known bug: `quick-roll.js:133` stamp
 When new features add fields to existing entity shapes (e.g., `D.characters` gaining a `skills` object, `D.initiative.combatants` gaining a `legendaryActions` tracker), old exports and old IndexedDB snapshots will load without those fields. Any code that reads `character.skills.perception` without a null-guard crashes.
 
 **How to avoid:**
+
 1. Fix the export version stamp immediately: `exp._version = APP_CONFIG.VERSION`.
 2. Every time a new field is added to an entity shape, add a migration step in `version-migration.js` that sets the default value for the new field when it is absent.
 3. Add a migration test: create a fixture with the old shape, run `migrateData()`, assert the new field is present with the correct default.
@@ -346,6 +367,7 @@ When new features add fields to existing entity shapes (e.g., `D.characters` gai
 5. Never assume that an entity loaded from storage has all fields — always provide fallback defaults at point of use.
 
 **Warning signs:**
+
 - Export files contain `"_version": "2.11"` instead of the app version
 - A new feature adds `D.X` but has no migration step in `version-migration.js`
 - `D.characters[0].newField` read without optional chaining causes crash on old data
@@ -365,12 +387,14 @@ The app already binds: `1-9` (tab switch), `Ctrl+Z/Y/S/K/F` (undo/redo/save/sear
 Additionally, single-letter shortcuts (`R`, `T`, `L`, `N`, `P`) fire from any focused text input if the keydown handler doesn't check `e.target.tagName`. The documented pattern in CLAUDE.md confirms this — the app uses `data-action` delegation, but initiative's `Space` shortcut (next turn) could fire while a user is typing in a notes field.
 
 **How to avoid:**
+
 1. Map the Command Palette to `Ctrl+Shift+K` (GitHub's solution to the same collision) or `Ctrl+P` (VS Code convention). Avoid bare `Ctrl+K` since it already means search in this app.
 2. Audit every new shortcut against the existing table before implementation.
 3. Add a context guard to all single-key shortcuts: `if (e.target.matches('input, textarea, [contenteditable]')) return;` — verify this guard exists in the current keyboard handler.
 4. Show the command palette shortcut prominently in the `?` help screen and update the keyboard shortcut table.
 
 **Warning signs:**
+
 - The `?` help screen does not list all active shortcuts
 - A new shortcut silently overrides an existing one because the table was not consulted
 - `R` (roll d20) fires when the user presses R while typing an NPC name
@@ -387,6 +411,7 @@ Chromium's autoplay policy blocks `AudioContext.resume()` and any audio playback
 For a soundboard (local audio files as ambient tracks), a secondary concern is memory: decoded `AudioBuffer` objects are kept alive by JavaScript references. A soundboard with 20 ambient tracks fully decoded into buffers holds significant memory. Each `AudioBufferSourceNode` is single-use — calling `start()` twice on the same source node fails silently; a new source node must be created for each playback while reusing the underlying buffer.
 
 **How to avoid:**
+
 1. Do not create `AudioContext` at app init. Create it on first user click of any audio control.
 2. Check `audioContext.state` before every playback attempt; if `'suspended'`, call `audioContext.resume()` inside the click handler first.
 3. Decode audio files lazily (on first play), cache decoded `AudioBuffer` objects, discard source nodes after they complete.
@@ -394,6 +419,7 @@ For a soundboard (local audio files as ambient tracks), a secondary concern is m
 5. For long ambient tracks, use `<audio>` element routing through Web Audio (not `decodeAudioData` + buffer) to avoid holding the entire file decoded in memory.
 
 **Warning signs:**
+
 - `AudioContext` created in `core/init.js` or at module load time
 - `source.start()` called without checking `audioContext.state`
 - Soundboard init decodes all available audio files at once
@@ -405,61 +431,61 @@ For a soundboard (local audio files as ambient tracks), a secondary concern is m
 
 ## Technical Debt Patterns
 
-| Shortcut | Immediate Benefit | Long-term Cost | When Acceptable |
-|----------|-------------------|----------------|-----------------|
-| Embedding SRD data in `build.py` modules list | Zero additional files, no fetch logic | +630KB bundle, data in undo history, 5MB limit hit faster | Never for full statblocks; OK for a ~50KB name/CR index |
-| Extending `D` with new entity arrays for reference data (monsters, etc.) | Consistent with existing patterns | Reference data in every undo snapshot; save() serializes it; imports include it | Never for large immutable datasets |
-| Copying community German SRD translations for speed | German text immediately available | Licensing unclear; possible Ulisses Spiele copyright | Never — use only official WotC CC-BY source |
-| Skipping migration steps when adding new fields | Faster feature development | Crashes on old exports/saves without optional chaining at every read site | Never — always add migration |
-| Accepting 50-warning lint budget as permanent | CI stays green | Real undefined-global errors hide in budget | Never — ratchet down warning count |
-| String name references in TAB_RENDER_REGISTRY | Flexible, easy to read | Silent breakage on rename; no rename-refactoring safety | Acceptable until a rename causes an incident; add a registry-name validator |
+| Shortcut                                                                 | Immediate Benefit                     | Long-term Cost                                                                  | When Acceptable                                                             |
+| ------------------------------------------------------------------------ | ------------------------------------- | ------------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
+| Embedding SRD data in `build.py` modules list                            | Zero additional files, no fetch logic | +630KB bundle, data in undo history, 5MB limit hit faster                       | Never for full statblocks; OK for a ~50KB name/CR index                     |
+| Extending `D` with new entity arrays for reference data (monsters, etc.) | Consistent with existing patterns     | Reference data in every undo snapshot; save() serializes it; imports include it | Never for large immutable datasets                                          |
+| Copying community German SRD translations for speed                      | German text immediately available     | Licensing unclear; possible Ulisses Spiele copyright                            | Never — use only official WotC CC-BY source                                 |
+| Skipping migration steps when adding new fields                          | Faster feature development            | Crashes on old exports/saves without optional chaining at every read site       | Never — always add migration                                                |
+| Accepting 50-warning lint budget as permanent                            | CI stays green                        | Real undefined-global errors hide in budget                                     | Never — ratchet down warning count                                          |
+| String name references in TAB_RENDER_REGISTRY                            | Flexible, easy to read                | Silent breakage on rename; no rename-refactoring safety                         | Acceptable until a rename causes an incident; add a registry-name validator |
 
 ---
 
 ## Integration Gotchas
 
-| Integration | Common Mistake | Correct Approach |
-|-------------|----------------|------------------|
-| Service Worker + file:// | Registering SW unconditionally, assuming it works silently | Guard registration: `location.protocol !== 'file:'`; test on served origin only |
-| File System Access API + auto-backup | Calling `requestPermission()` in a timer or init | Only call from inside a user click handler; use `queryPermission()` at init to check state |
-| File System Access API + sessions | Assuming handle persists across browser restarts without re-permission | Persist handle to IndexedDB; always query permission on load; degrade gracefully |
-| SRD data + localStorage | Storing monster statblocks in `D` alongside campaign data | Separate storage: IndexedDB for reference data, localStorage (or IDB) for campaign data only |
-| Web Audio + app init | Creating `AudioContext` at load time | Create on first user gesture; check `.state` before each play call |
-| IndexedDB + data migration | Loading data without running migrations | Always run `migrateData()` before handing data to the app; never skip on version >= apparent |
+| Integration                          | Common Mistake                                                         | Correct Approach                                                                             |
+| ------------------------------------ | ---------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
+| Service Worker + file://             | Registering SW unconditionally, assuming it works silently             | Guard registration: `location.protocol !== 'file:'`; test on served origin only              |
+| File System Access API + auto-backup | Calling `requestPermission()` in a timer or init                       | Only call from inside a user click handler; use `queryPermission()` at init to check state   |
+| File System Access API + sessions    | Assuming handle persists across browser restarts without re-permission | Persist handle to IndexedDB; always query permission on load; degrade gracefully             |
+| SRD data + localStorage              | Storing monster statblocks in `D` alongside campaign data              | Separate storage: IndexedDB for reference data, localStorage (or IDB) for campaign data only |
+| Web Audio + app init                 | Creating `AudioContext` at load time                                   | Create on first user gesture; check `.state` before each play call                           |
+| IndexedDB + data migration           | Loading data without running migrations                                | Always run `migrateData()` before handing data to the app; never skip on version >= apparent |
 
 ---
 
 ## Performance Traps
 
-| Trap | Symptoms | Prevention | When It Breaks |
-|------|----------|------------|----------------|
-| SRD data in `D` state tree | Undo snapshots grow to 2-3MB each; 30 snapshots = 60-90MB in memory | Keep reference data outside `D`; use lazy IndexedDB loads | First time developer adds `D.monsters = srdData` |
-| Roll history in `D.rolls[]` | Each roll appended to undo snapshot; frequent saves serialize entire history | Separate IndexedDB store for roll history; never in `D` | After ~500 rolls at typical play frequency |
-| Full-state JSON stringify on every undo-able op | Input lag after destructive operations in large campaigns | Per-entity snapshots for CRUD; full snapshots only for bulk ops | At ~3MB campaign size (observable); ~5MB (noticeable) |
-| Web Audio decoding all tracks at init | Long startup delay; high baseline memory | Lazy decode on first play; reuse `AudioBuffer`; use `<audio>` for long tracks | First time soundboard loads 10+ files |
-| Single-file HTML >2MB over file:// | No HTTP compression; full parse cost on every open | Lazy-load SRD data; keep bundle under ~1.5MB | At ~1.9MB (with SRD data inline), parse time is measurable |
+| Trap                                            | Symptoms                                                                     | Prevention                                                                    | When It Breaks                                             |
+| ----------------------------------------------- | ---------------------------------------------------------------------------- | ----------------------------------------------------------------------------- | ---------------------------------------------------------- |
+| SRD data in `D` state tree                      | Undo snapshots grow to 2-3MB each; 30 snapshots = 60-90MB in memory          | Keep reference data outside `D`; use lazy IndexedDB loads                     | First time developer adds `D.monsters = srdData`           |
+| Roll history in `D.rolls[]`                     | Each roll appended to undo snapshot; frequent saves serialize entire history | Separate IndexedDB store for roll history; never in `D`                       | After ~500 rolls at typical play frequency                 |
+| Full-state JSON stringify on every undo-able op | Input lag after destructive operations in large campaigns                    | Per-entity snapshots for CRUD; full snapshots only for bulk ops               | At ~3MB campaign size (observable); ~5MB (noticeable)      |
+| Web Audio decoding all tracks at init           | Long startup delay; high baseline memory                                     | Lazy decode on first play; reuse `AudioBuffer`; use `<audio>` for long tracks | First time soundboard loads 10+ files                      |
+| Single-file HTML >2MB over file://              | No HTTP compression; full parse cost on every open                           | Lazy-load SRD data; keep bundle under ~1.5MB                                  | At ~1.9MB (with SRD data inline), parse time is measurable |
 
 ---
 
 ## Security Mistakes
 
-| Mistake | Risk | Prevention |
-|---------|------|------------|
-| `innerHTML` with unsanitized user content | XSS — attacker-controlled DOM; campaign data exfiltration via localStorage | Always use `esc()` or `sanitizeHTML()` in template literals; add CI grep for bare `innerHTML = \`` assignments |
-| Unit tests covering `testable-utils.js` copies, not production `esc()` | Security regression in production ships with tests green | Load `utils/basic.js` into jsdom test setup; or generate test utils from source at test time |
-| SRD content from unknown-provenance community translations | Copyright infringement if Ulisses Spiele text is re-distributed | Source all German text from official WotC CC-BY 4.0 German SRD only |
+| Mistake                                                                | Risk                                                                       | Prevention                                                                                                     |
+| ---------------------------------------------------------------------- | -------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| `innerHTML` with unsanitized user content                              | XSS — attacker-controlled DOM; campaign data exfiltration via localStorage | Always use `esc()` or `sanitizeHTML()` in template literals; add CI grep for bare `innerHTML = \`` assignments |
+| Unit tests covering `testable-utils.js` copies, not production `esc()` | Security regression in production ships with tests green                   | Load `utils/basic.js` into jsdom test setup; or generate test utils from source at test time                   |
+| SRD content from unknown-provenance community translations             | Copyright infringement if Ulisses Spiele text is re-distributed            | Source all German text from official WotC CC-BY 4.0 German SRD only                                            |
 
 ---
 
 ## UX Pitfalls
 
-| Pitfall | User Impact | Better Approach |
-|---------|-------------|-----------------|
-| PWA install silently loses all file://-origin campaign data | User installs app, finds it empty, panics about lost data | Show migration wizard on first PWA launch; guide through export/import from file:// origin |
-| Auto-backup fails silently after browser restart (File System API) | User believes backup is running; it isn't | Show persistent status indicator; toast on permission expiry; never auto-fail silently |
-| Command palette opens with Ctrl+K and redirects browser address bar | User expects search but gets URL bar focus instead | Use Ctrl+Shift+K; test in Chromium specifically |
-| Stale installed PWA shows old broken version | User is stuck on a broken version; no indication an update exists | Show update toast in `waiting` SW state; never force-skip-waiting silently |
-| Data export version `2.11` causes migrations to skip | User imports old backup; new fields are missing; app crashes on null access | Fix version stamp immediately; add null guards everywhere new fields are read |
+| Pitfall                                                             | User Impact                                                                 | Better Approach                                                                            |
+| ------------------------------------------------------------------- | --------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| PWA install silently loses all file://-origin campaign data         | User installs app, finds it empty, panics about lost data                   | Show migration wizard on first PWA launch; guide through export/import from file:// origin |
+| Auto-backup fails silently after browser restart (File System API)  | User believes backup is running; it isn't                                   | Show persistent status indicator; toast on permission expiry; never auto-fail silently     |
+| Command palette opens with Ctrl+K and redirects browser address bar | User expects search but gets URL bar focus instead                          | Use Ctrl+Shift+K; test in Chromium specifically                                            |
+| Stale installed PWA shows old broken version                        | User is stuck on a broken version; no indication an update exists           | Show update toast in `waiting` SW state; never force-skip-waiting silently                 |
+| Data export version `2.11` causes migrations to skip                | User imports old backup; new fields are missing; app crashes on null access | Fix version stamp immediately; add null guards everywhere new fields are read              |
 
 ---
 
@@ -479,38 +505,38 @@ For a soundboard (local audio files as ambient tracks), a secondary concern is m
 
 ## Recovery Strategies
 
-| Pitfall | Recovery Cost | Recovery Steps |
-|---------|---------------|----------------|
-| App won't boot (hidden residue crash) | LOW | Find first console error, grep for symbol, remove all occurrences, rebuild, browser-test |
-| PWA install loses file://-origin data | MEDIUM | User exports JSON from file:// origin, imports in PWA via migration wizard |
-| File backup writes lost (permission expired) | LOW | User grants permission again; no data lost since IDB is primary store |
-| Production build ships DEBUG_MODE: true | LOW | Add assertion, rebuild, redeploy bundle |
-| SRD text from wrong source | HIGH | Audit and replace all text from official CC-BY source; risky if volume is large |
-| Old exports skip migrations (version bug) | MEDIUM | Fix stamp, add null guards everywhere, release migration patch |
-| 5MB localStorage stale-shadow data loss | HIGH | Fix load-precedence in persistence.js; no recovery for data already lost in the field |
+| Pitfall                                      | Recovery Cost | Recovery Steps                                                                           |
+| -------------------------------------------- | ------------- | ---------------------------------------------------------------------------------------- |
+| App won't boot (hidden residue crash)        | LOW           | Find first console error, grep for symbol, remove all occurrences, rebuild, browser-test |
+| PWA install loses file://-origin data        | MEDIUM        | User exports JSON from file:// origin, imports in PWA via migration wizard               |
+| File backup writes lost (permission expired) | LOW           | User grants permission again; no data lost since IDB is primary store                    |
+| Production build ships DEBUG_MODE: true      | LOW           | Add assertion, rebuild, redeploy bundle                                                  |
+| SRD text from wrong source                   | HIGH          | Audit and replace all text from official CC-BY source; risky if volume is large          |
+| Old exports skip migrations (version bug)    | MEDIUM        | Fix stamp, add null guards everywhere, release migration patch                           |
+| 5MB localStorage stale-shadow data loss      | HIGH          | Fix load-precedence in persistence.js; no recovery for data already lost in the field    |
 
 ---
 
 ## Pitfall-to-Phase Mapping
 
-| Pitfall | Prevention Phase | Verification |
-|---------|------------------|--------------|
-| A1: Mindmap residue crash | Phase 1: Stabilization | App boots in browser with no console errors; grep finds zero occurrences of removed symbols |
-| A2: Dual module list drift | Phase 1: Stabilization | CI diff check on loader.js vs build.py module lists passes |
-| A3: Silent DEBUG_MODE flip failure | Phase 1: Stabilization | build.py asserts `DEBUG_MODE: true` not in production output |
-| A4: Orphaned function bodies | Phase 1: Stabilization | Build test for orphaned-body case added and passing |
-| A5: Stale CLAUDE.md misleads development | Phase 1: Stabilization | Every claim in CLAUDE.md verified against code; no references to non-existent files |
-| A6: CI green but app broken | Phase 1: Stabilization | Browser smoke test (Playwright) runs against dist bundle in CI |
-| A7: Autosave gate disables persistence | Phase 1: Stabilization | Unit test: saveImmediate() persists regardless of toggle state |
-| B1: SW blocked on file:// | Phase 2: Tech-Foundation / PWA | SW registration guarded by protocol check; data migration wizard works |
-| B2: Stale PWA cached version | Phase 2: Tech-Foundation / PWA | Update toast appears; skipWaiting() only on user click; template files pre-cached |
-| B3: FSAA permission expires | Phase 2: Tech-Foundation / Datei-Backup | Permission re-prompt shown on next backup attempt; writes never fail silently |
-| B4: SRD data bloats bundle | Phase C: Monster-Kompendium | Undo snapshot size unchanged after loading bestiary; bundle stays under 1.5MB |
-| B5: Wrong-license German SRD | Phase 1: Stabilization (audit) + Phase C: Monster-Kompendium (sourcing) | Attribution present; provenance documented for all SRD text |
-| B6: 5MB stale-shadow data loss | Phase 1: Stabilization | Persistence unit test: >5MB save + reload returns latest data from IDB |
-| B7: Schema migration version bug | Phase 1: Stabilization (fix stamp) + every schema-extending phase | Export round-trip test; migrateData() test for new fields |
-| B8: Command palette shortcut collisions | Phase 2: Tech-Foundation / Command Palette | Shortcut audit table updated; Ctrl+Shift+K tested in Chromium |
-| B9: Web Audio autoplay block | Phase C: Soundboard | AudioContext created only on user click; playback tested from cold start |
+| Pitfall                                  | Prevention Phase                                                        | Verification                                                                                |
+| ---------------------------------------- | ----------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
+| A1: Mindmap residue crash                | Phase 1: Stabilization                                                  | App boots in browser with no console errors; grep finds zero occurrences of removed symbols |
+| A2: Dual module list drift               | Phase 1: Stabilization                                                  | CI diff check on loader.js vs build.py module lists passes                                  |
+| A3: Silent DEBUG_MODE flip failure       | Phase 1: Stabilization                                                  | build.py asserts `DEBUG_MODE: true` not in production output                                |
+| A4: Orphaned function bodies             | Phase 1: Stabilization                                                  | Build test for orphaned-body case added and passing                                         |
+| A5: Stale CLAUDE.md misleads development | Phase 1: Stabilization                                                  | Every claim in CLAUDE.md verified against code; no references to non-existent files         |
+| A6: CI green but app broken              | Phase 1: Stabilization                                                  | Browser smoke test (Playwright) runs against dist bundle in CI                              |
+| A7: Autosave gate disables persistence   | Phase 1: Stabilization                                                  | Unit test: saveImmediate() persists regardless of toggle state                              |
+| B1: SW blocked on file://                | Phase 2: Tech-Foundation / PWA                                          | SW registration guarded by protocol check; data migration wizard works                      |
+| B2: Stale PWA cached version             | Phase 2: Tech-Foundation / PWA                                          | Update toast appears; skipWaiting() only on user click; template files pre-cached           |
+| B3: FSAA permission expires              | Phase 2: Tech-Foundation / Datei-Backup                                 | Permission re-prompt shown on next backup attempt; writes never fail silently               |
+| B4: SRD data bloats bundle               | Phase C: Monster-Kompendium                                             | Undo snapshot size unchanged after loading bestiary; bundle stays under 1.5MB               |
+| B5: Wrong-license German SRD             | Phase 1: Stabilization (audit) + Phase C: Monster-Kompendium (sourcing) | Attribution present; provenance documented for all SRD text                                 |
+| B6: 5MB stale-shadow data loss           | Phase 1: Stabilization                                                  | Persistence unit test: >5MB save + reload returns latest data from IDB                      |
+| B7: Schema migration version bug         | Phase 1: Stabilization (fix stamp) + every schema-extending phase       | Export round-trip test; migrateData() test for new fields                                   |
+| B8: Command palette shortcut collisions  | Phase 2: Tech-Foundation / Command Palette                              | Shortcut audit table updated; Ctrl+Shift+K tested in Chromium                               |
+| B9: Web Audio autoplay block             | Phase C: Soundboard                                                     | AudioContext created only on user click; playback tested from cold start                    |
 
 ---
 
@@ -534,5 +560,6 @@ For a soundboard (local audio files as ambient tracks), a secondary concern is m
 - [web.dev: web app manifest](https://web.dev/learn/pwa/web-app-manifest) — start_url and scope requirements
 
 ---
-*Pitfalls research for: offline-first D&D 5e campaign manager (vanilla JS, single HTML, file://, Windows/Chromium)*
-*Researched: 2026-06-11*
+
+_Pitfalls research for: offline-first D&D 5e campaign manager (vanilla JS, single HTML, file://, Windows/Chromium)_
+_Researched: 2026-06-11_

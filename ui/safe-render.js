@@ -7,19 +7,19 @@
  * Rendering-Strategie basierend auf Content-Größe und -Art
  */
 const RenderStrategy = {
-    INNER_HTML: 'innerHTML',      // Schnell für kleine HTML-Strings
+    INNER_HTML: 'innerHTML', // Schnell für kleine HTML-Strings
     DOCUMENT_FRAGMENT: 'fragment', // Effizient für viele Elemente
-    TEMPLATE: 'template',          // Für wiederholte Strukturen
-    VIRTUAL: 'virtual'             // Für sehr große Listen
+    TEMPLATE: 'template', // Für wiederholte Strukturen
+    VIRTUAL: 'virtual' // Für sehr große Listen
 };
 
 /**
  * Schwellwerte für Strategie-Auswahl
  */
 const THRESHOLDS = {
-    FRAGMENT_ITEMS: 20,     // Ab dieser Anzahl Items → Fragment
-    VIRTUAL_ITEMS: 100,     // Ab dieser Anzahl → Virtual Rendering
-    LARGE_HTML: 50000       // Zeichen für großen HTML-String
+    FRAGMENT_ITEMS: 20, // Ab dieser Anzahl Items → Fragment
+    VIRTUAL_ITEMS: 100, // Ab dieser Anzahl → Virtual Rendering
+    LARGE_HTML: 50000 // Zeichen für großen HTML-String
 };
 
 // ============================================================
@@ -30,7 +30,6 @@ const THRESHOLDS = {
  * SafeRender - Intelligentes DOM-Rendering
  */
 class SafeRender {
-    
     /**
      * Rendert HTML-String in Container
      * Optimiert automatisch basierend auf Content
@@ -40,19 +39,19 @@ class SafeRender {
      */
     static html(container, html, options = {}) {
         if (!container) return;
-        
-        const { 
-            append = false,      // Anhängen statt ersetzen
-            sanitize = false,    // HTML sanitieren
-            batch = true         // Batch-Update verwenden
+
+        const {
+            append = false, // Anhängen statt ersetzen
+            sanitize = false, // HTML sanitieren
+            batch = true // Batch-Update verwenden
         } = options;
-        
+
         // Sanitize wenn gewünscht
         let safeHtml = html;
         if (sanitize && typeof sanitizeHTML === 'function') {
             safeHtml = sanitizeHTML(html);
         }
-        
+
         // Rendering durchführen
         const doRender = () => {
             if (append) {
@@ -61,14 +60,14 @@ class SafeRender {
                 container.innerHTML = safeHtml;
             }
         };
-        
+
         if (batch) {
             requestAnimationFrame(doRender);
         } else {
             doRender();
         }
     }
-    
+
     /**
      * Rendert Array von Items in Container
      * Wählt automatisch beste Strategie
@@ -79,46 +78,46 @@ class SafeRender {
      */
     static list(container, items, renderFn, options = {}) {
         if (!container) return;
-        
+
         const {
             keyAttr = 'data-id',
             emptyHtml = '',
             containerClass = '',
             useVirtual = true
         } = options;
-        
+
         // Leere Liste
         if (!items || items.length === 0) {
             container.innerHTML = emptyHtml;
             return;
         }
-        
+
         // Container-Klasse setzen
         if (containerClass) {
             container.className = containerClass;
         }
-        
+
         // Strategie wählen
         const strategy = this._chooseStrategy(items.length, useVirtual);
-        
+
         switch (strategy) {
             case RenderStrategy.INNER_HTML:
                 this._renderWithInnerHTML(container, items, renderFn);
                 break;
-                
+
             case RenderStrategy.DOCUMENT_FRAGMENT:
                 this._renderWithFragment(container, items, renderFn, keyAttr);
                 break;
-                
+
             case RenderStrategy.VIRTUAL:
                 this._renderVirtual(container, items, renderFn, options);
                 break;
-                
+
             default:
                 this._renderWithInnerHTML(container, items, renderFn);
         }
     }
-    
+
     /**
      * Wählt beste Rendering-Strategie
      */
@@ -131,7 +130,7 @@ class SafeRender {
         }
         return RenderStrategy.INNER_HTML;
     }
-    
+
     /**
      * Rendert mit innerHTML (schnell für kleine Listen)
      */
@@ -142,21 +141,21 @@ class SafeRender {
             if (result instanceof HTMLElement) return result.outerHTML;
             return '';
         });
-        
+
         requestAnimationFrame(() => {
             container.innerHTML = htmlParts.join('');
         });
     }
-    
+
     /**
      * Rendert mit DocumentFragment (effizient für mittlere Listen)
      */
     static _renderWithFragment(container, items, renderFn, keyAttr) {
         const fragment = document.createDocumentFragment();
-        
+
         items.forEach(item => {
             const result = renderFn(item);
-            
+
             if (result instanceof Node) {
                 if (item.id) result.setAttribute(keyAttr, item.id);
                 fragment.appendChild(result);
@@ -173,30 +172,30 @@ class SafeRender {
                 }
             }
         });
-        
+
         requestAnimationFrame(() => {
             container.innerHTML = '';
             container.appendChild(fragment);
         });
     }
-    
+
     /**
      * Virtuelles Rendering für sehr große Listen
      */
     static _renderVirtual(container, items, renderFn, options) {
         const itemHeight = options.itemHeight || 100;
         const bufferSize = options.bufferSize || 5;
-        
+
         // Wrapper erstellen
         container.innerHTML = '';
         container.style.position = 'relative';
         container.style.overflow = 'auto';
-        
+
         // Spacer für Scroll-Höhe
         const spacer = document.createElement('div');
         spacer.style.height = `${items.length * itemHeight}px`;
         container.appendChild(spacer);
-        
+
         // Content-Container
         const content = document.createElement('div');
         content.style.position = 'absolute';
@@ -204,30 +203,32 @@ class SafeRender {
         content.style.left = '0';
         content.style.right = '0';
         container.appendChild(content);
-        
+
         // State
         let lastStart = -1;
-        
+
         // Render-Funktion
         const renderVisible = () => {
             const scrollTop = container.scrollTop;
             const containerHeight = container.clientHeight;
-            
+
             const start = Math.max(0, Math.floor(scrollTop / itemHeight) - bufferSize);
-            const end = Math.min(items.length, 
-                Math.ceil((scrollTop + containerHeight) / itemHeight) + bufferSize);
-            
+            const end = Math.min(
+                items.length,
+                Math.ceil((scrollTop + containerHeight) / itemHeight) + bufferSize
+            );
+
             // Nur neu rendern wenn nötig
             if (start === lastStart) return;
             lastStart = start;
-            
+
             // Position anpassen
             content.style.transform = `translateY(${start * itemHeight}px)`;
-            
+
             // Sichtbare Items rendern
             const visibleItems = items.slice(start, end);
             const fragment = document.createDocumentFragment();
-            
+
             visibleItems.forEach(item => {
                 const result = renderFn(item);
                 if (result instanceof Node) {
@@ -240,14 +241,14 @@ class SafeRender {
                     }
                 }
             });
-            
+
             content.innerHTML = '';
             content.appendChild(fragment);
         };
-        
+
         // Initial rendern
         renderVisible();
-        
+
         // Scroll-Handler mit Throttling
         let scrollTimeout;
         container.addEventListener('scroll', () => {
@@ -258,7 +259,7 @@ class SafeRender {
             }, 16); // ~60fps
         });
     }
-    
+
     /**
      * Aktualisiert einzelnes Element in Liste
      * @param {HTMLElement} container - Container
@@ -269,16 +270,16 @@ class SafeRender {
     static updateItem(container, keyAttr, id, newContent) {
         const existing = container.querySelector(`[${keyAttr}="${id}"]`);
         if (!existing) return false;
-        
+
         if (newContent instanceof Node) {
             existing.replaceWith(newContent);
         } else if (typeof newContent === 'string') {
             existing.outerHTML = newContent;
         }
-        
+
         return true;
     }
-    
+
     /**
      * Entfernt Element aus Liste
      */
@@ -290,21 +291,21 @@ class SafeRender {
         }
         return false;
     }
-    
+
     /**
      * Fügt Element zu Liste hinzu
      */
     static addItem(container, content, position = 'end') {
         if (!container) return;
-        
-        const insertHTML = (html) => {
+
+        const insertHTML = html => {
             if (position === 'start') {
                 container.insertAdjacentHTML('afterbegin', html);
             } else {
                 container.insertAdjacentHTML('beforeend', html);
             }
         };
-        
+
         if (content instanceof Node) {
             if (position === 'start') {
                 container.insertBefore(content, container.firstChild);
@@ -325,16 +326,22 @@ class SafeRender {
  * Optimiertes Rendering für NPC-Liste
  */
 function renderNPCListFast(container, npcs, options = {}) {
-    SafeRender.list(container, npcs, (npc) => {
-        // Inline-Template für maximale Performance
-        const locationName = typeof EntityLookup !== 'undefined' 
-            ? EntityLookup.getName('locations', npc.locationId) 
-            : '—';
-        const avatar = npc.avatar 
-            ? `<img src="${esc(npc.avatar)}" alt="">` 
-            : (npc.name ? npc.name.charAt(0).toUpperCase() : '?');
-        
-        return `
+    SafeRender.list(
+        container,
+        npcs,
+        npc => {
+            // Inline-Template für maximale Performance
+            const locationName =
+                typeof EntityLookup !== 'undefined'
+                    ? EntityLookup.getName('locations', npc.locationId)
+                    : '—';
+            const avatar = npc.avatar
+                ? `<img src="${esc(npc.avatar)}" alt="">`
+                : npc.name
+                  ? npc.name.charAt(0).toUpperCase()
+                  : '?';
+
+            return `
             <div class="npc-card" data-action="toggle-npc-card" data-id="${npc.id}">
                 <div class="npc-avatar">${avatar}</div>
                 <div class="npc-content">
@@ -348,27 +355,33 @@ function renderNPCListFast(container, npcs, options = {}) {
                 </div>
             </div>
         `;
-    }, {
-        containerClass: options.viewMode === 'list' ? 'list-view-container' : 'npc-grid',
-        emptyHtml: typeof renderEmptyState === 'function' 
-            ? renderEmptyState({
-                icon: '🎭',
-                titleEmpty: 'Keine NPCs',
-                descEmpty: 'Erstelle Nicht-Spieler-Charaktere.',
-                buttonText: '➕ NPC erstellen',
-                buttonAction: 'show-modal',
-                buttonValue: 'npc-modal'
-            })
-            : '<p>Keine NPCs</p>'
-    });
+        },
+        {
+            containerClass: options.viewMode === 'list' ? 'list-view-container' : 'npc-grid',
+            emptyHtml:
+                typeof renderEmptyState === 'function'
+                    ? renderEmptyState({
+                          icon: '🎭',
+                          titleEmpty: 'Keine NPCs',
+                          descEmpty: 'Erstelle Nicht-Spieler-Charaktere.',
+                          buttonText: '➕ NPC erstellen',
+                          buttonAction: 'show-modal',
+                          buttonValue: 'npc-modal'
+                      })
+                    : '<p>Keine NPCs</p>'
+        }
+    );
 }
 
 /**
  * Optimiertes Rendering für Encounter-Liste
  */
 function renderEncounterListFast(container, encounters, options = {}) {
-    SafeRender.list(container, encounters, (enc) => {
-        return `
+    SafeRender.list(
+        container,
+        encounters,
+        enc => {
+            return `
             <div class="enc-card" data-id="${enc.id}">
                 <div class="enc-header">
                     <span class="enc-name">${esc(enc.name)}</span>
@@ -386,10 +399,12 @@ function renderEncounterListFast(container, encounters, options = {}) {
                 </div>
             </div>
         `;
-    }, {
-        containerClass: 'enc-grid',
-        itemHeight: 120
-    });
+        },
+        {
+            containerClass: 'enc-grid',
+            itemHeight: 120
+        }
+    );
 }
 
 // ============================================================
@@ -404,19 +419,19 @@ class BatchUpdater {
         this.updates = [];
         this.scheduled = false;
     }
-    
+
     /**
      * Fügt Update zur Queue hinzu
      */
     queue(fn) {
         this.updates.push(fn);
-        
+
         if (!this.scheduled) {
             this.scheduled = true;
             requestAnimationFrame(() => this.flush());
         }
     }
-    
+
     /**
      * Führt alle gesammelten Updates aus
      */
@@ -424,7 +439,7 @@ class BatchUpdater {
         const updates = this.updates;
         this.updates = [];
         this.scheduled = false;
-        
+
         updates.forEach(fn => {
             try {
                 fn();

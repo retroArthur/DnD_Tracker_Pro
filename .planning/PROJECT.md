@@ -32,10 +32,10 @@ Die App muss am Spieltisch **zuverlässig offline laufen** — ein Spielleiter-B
 **Milestone-Teil A — Stabilisierung (zuerst):**
 
 - [ ] App startet fehlerfrei via `file://` — aktuell killt `clearMindmap is not defined` (tools/debug.js:99) die gesamte Initialisierung
-- [ ] Mindmap-Reste vollständig bereinigt (debug.js, campaign-manager Seed, types/*.d.ts, styles-purged.css, tests, tools)
+- [ ] Mindmap-Reste vollständig bereinigt (debug.js, campaign-manager Seed, types/\*.d.ts, styles-purged.css, tests, tools)
 - [ ] Frische Builds (dev + production) aus aktuellem Quellcode, Konsole fehlerfrei in allen Tabs
 - [ ] Lint/Typecheck/Format grün (`npm run check`)
-- [ ] Repo gepflegt: alles committed, CI grün, tote Dateien/Tools entfernt (main.js, tsconfig.json.backup, veraltete tools/*.py, validate.py-Pfade)
+- [ ] Repo gepflegt: alles committed, CI grün, tote Dateien/Tools entfernt (main.js, tsconfig.json.backup, veraltete tools/\*.py, validate.py-Pfade)
 - [ ] Doku aktuell: CLAUDE.md, README, docs/bugfixes.md spiegeln den echten Code-Stand (inkl. Lizenz-Korrektur ISC→MIT)
 
 **Milestone-Teil B — Technik-Fundament (erste Feature-Gruppe):**
@@ -88,19 +88,20 @@ Die App muss am Spieltisch **zuverlässig offline laufen** — ein Spielleiter-B
 
 ## Key Decisions
 
-| Decision | Rationale | Outcome |
-|----------|-----------|---------|
-| Stabilisierung vor allen Features | App startet aktuell nicht; Fundament zuerst | — Pending |
-| Technik-Fundament als erste Feature-Gruppe (PWA, Datei-Backup, Command Palette) | Löst file://-Probleme strukturell und schützt Daten, bevor große Features kommen | — Pending |
-| Spieler-Ansicht/Handouts/Druck-Exporte ausgeklammert | Vom Nutzer im Brainstorming bewusst abgewählt | — Pending |
-| Mindmap bleibt entfernt | Bereits entschieden (Commit 7ef9bf5, 2026-05-24); nur Reste bereinigen | — Pending |
-| Tests grün ist kein hartes Stabilisierungs-Kriterium | Nutzer definiert „sauber" als: Konsole fehlerfrei, Build aktuell, Lint/Typecheck grün — Tests laufen mit, sind aber nicht Gate | — Pending |
+| Decision                                                                        | Rationale                                                                                                                      | Outcome   |
+| ------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ | --------- |
+| Stabilisierung vor allen Features                                               | App startet aktuell nicht; Fundament zuerst                                                                                    | — Pending |
+| Technik-Fundament als erste Feature-Gruppe (PWA, Datei-Backup, Command Palette) | Löst file://-Probleme strukturell und schützt Daten, bevor große Features kommen                                               | — Pending |
+| Spieler-Ansicht/Handouts/Druck-Exporte ausgeklammert                            | Vom Nutzer im Brainstorming bewusst abgewählt                                                                                  | — Pending |
+| Mindmap bleibt entfernt                                                         | Bereits entschieden (Commit 7ef9bf5, 2026-05-24); nur Reste bereinigen                                                         | — Pending |
+| Tests grün ist kein hartes Stabilisierungs-Kriterium                            | Nutzer definiert „sauber" als: Konsole fehlerfrei, Build aktuell, Lint/Typecheck grün — Tests laufen mit, sind aber nicht Gate | — Pending |
 
 ## Evolution
 
 This document evolves at phase transitions and milestone boundaries.
 
 **After each phase transition** (via `/gsd-transition`):
+
 1. Requirements invalidated? → Move to Out of Scope with reason
 2. Requirements validated? → Move to Validated with phase reference
 3. New requirements emerged? → Add to Active
@@ -108,10 +109,12 @@ This document evolves at phase transitions and milestone boundaries.
 5. "What This Is" still accurate? → Update if drifted
 
 **After each milestone** (via `/gsd-complete-milestone`):
+
 1. Full review of all sections
 2. Core Value check — still the right priority?
 3. Audit Out of Scope — reasons still valid?
 4. Update Context with current state
 
 ---
-*Last updated: 2026-06-11 after initialization*
+
+_Last updated: 2026-06-11 after initialization_

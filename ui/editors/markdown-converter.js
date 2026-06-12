@@ -86,11 +86,16 @@ function convertNodeToMarkdown(node) {
 
             case 'ul':
             case 'ol': {
-                const listItems = Array.from(node.children).filter(child => child.tagName.toLowerCase() === 'li');
-                markdown = listItems.map((li, index) => {
-                    const prefix = tag === 'ul' ? '-' : `${index + 1}.`;
-                    return `${prefix} ${getTextContent(li)}`;
-                }).join('\n') + '\n\n';
+                const listItems = Array.from(node.children).filter(
+                    child => child.tagName.toLowerCase() === 'li'
+                );
+                markdown =
+                    listItems
+                        .map((li, index) => {
+                            const prefix = tag === 'ul' ? '-' : `${index + 1}.`;
+                            return `${prefix} ${getTextContent(li)}`;
+                        })
+                        .join('\n') + '\n\n';
                 break;
             }
 
@@ -212,10 +217,16 @@ function markdownToHtml(markdown) {
     html = html.replace(/~~(.+?)~~/g, '<s>$1</s>');
 
     // Code (`text`)
-    html = html.replace(/`(.+?)`/g, '<code style="background: var(--bg-elevated); padding: 2px 4px; border-radius: 3px; font-family: monospace; font-size: 0.9em;">$1</code>');
+    html = html.replace(
+        /`(.+?)`/g,
+        '<code style="background: var(--bg-elevated); padding: 2px 4px; border-radius: 3px; font-family: monospace; font-size: 0.9em;">$1</code>'
+    );
 
     // Links ([text](url))
-    html = html.replace(/\[([^\]]+)\]\(([^\)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
+    html = html.replace(
+        /\[([^\]]+)\]\(([^\)]+)\)/g,
+        '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>'
+    );
 
     // Unordered lists (lines starting with - or *)
     html = html.replace(/^[-*]\s+(.+)$/gm, '<li>$1</li>');
@@ -266,7 +277,10 @@ function renderMarkdownInContent(html) {
     result = result.replace(/~~([^~]+)~~/g, '<s>$1</s>');
 
     // Code: `text`
-    result = result.replace(/`([^`]+)`/g, '<code style="background: var(--bg-elevated); padding: 2px 4px; border-radius: 3px; font-family: monospace; font-size: 0.9em;">$1</code>');
+    result = result.replace(
+        /`([^`]+)`/g,
+        '<code style="background: var(--bg-elevated); padding: 2px 4px; border-radius: 3px; font-family: monospace; font-size: 0.9em;">$1</code>'
+    );
 
     // Headings: ## text (only at line start)
     result = result.replace(/^######\s+(.+)$/gm, '<h6>$1</h6>');
@@ -277,7 +291,10 @@ function renderMarkdownInContent(html) {
     result = result.replace(/^#\s+(.+)$/gm, '<h1>$1</h1>');
 
     // Links: [text](url)
-    result = result.replace(/\[([^\]]+)\]\(([^\)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
+    result = result.replace(
+        /\[([^\]]+)\]\(([^\)]+)\)/g,
+        '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>'
+    );
 
     return result;
 }

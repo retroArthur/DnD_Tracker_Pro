@@ -12,7 +12,7 @@
  */
 function createElement(tag, attrs = {}, ...children) {
     const el = document.createElement(tag);
-    
+
     // Attribute setzen
     for (const [key, value] of Object.entries(attrs)) {
         if (key === 'className') {
@@ -29,11 +29,11 @@ function createElement(tag, attrs = {}, ...children) {
             el.setAttribute(key, value);
         }
     }
-    
+
     // Kinder hinzufügen
     for (const child of children) {
         if (child === null || child === undefined) continue;
-        
+
         if (typeof child === 'string' || typeof child === 'number') {
             el.appendChild(document.createTextNode(String(child)));
         } else if (child instanceof Node) {
@@ -47,7 +47,7 @@ function createElement(tag, attrs = {}, ...children) {
             });
         }
     }
-    
+
     return el;
 }
 
@@ -63,10 +63,10 @@ const el = createElement;
  */
 function createFragment(...children) {
     const fragment = document.createDocumentFragment();
-    
+
     for (const child of children) {
         if (child === null || child === undefined) continue;
-        
+
         if (Array.isArray(child)) {
             child.forEach(c => {
                 if (c instanceof Node) fragment.appendChild(c);
@@ -75,7 +75,7 @@ function createFragment(...children) {
             fragment.appendChild(child);
         }
     }
-    
+
     return fragment;
 }
 
@@ -104,7 +104,7 @@ function replaceContent(container, content) {
     while (container.firstChild) {
         container.removeChild(container.firstChild);
     }
-    
+
     // Neuen Inhalt hinzufügen
     if (content instanceof DocumentFragment || content instanceof Node) {
         container.appendChild(content);
@@ -123,21 +123,21 @@ function replaceContent(container, content) {
  */
 function updateList(container, items, keyAttr, renderItem) {
     const existingMap = new Map();
-    
+
     // Bestehende Elemente indexieren
     for (const child of container.children) {
         const key = child.getAttribute(keyAttr);
         if (key) existingMap.set(key, child);
     }
-    
+
     const fragment = document.createDocumentFragment();
     const newKeys = new Set();
-    
+
     // Items rendern
     for (const item of items) {
         const key = String(item.id);
         newKeys.add(key);
-        
+
         if (existingMap.has(key)) {
             // Bestehendes Element wiederverwenden
             fragment.appendChild(existingMap.get(key));
@@ -150,7 +150,7 @@ function updateList(container, items, keyAttr, renderItem) {
             }
         }
     }
-    
+
     // Container aktualisieren
     replaceContent(container, fragment);
 }
@@ -170,14 +170,14 @@ class DOMVirtualList {
         this.itemHeight = options.itemHeight || 80;
         this.bufferSize = options.bufferSize || 5;
         this.renderItem = options.renderItem || (() => null);
-        
+
         this.scrollTop = 0;
         this.visibleStart = 0;
         this.visibleEnd = 0;
-        
+
         this._setupScroll();
     }
-    
+
     _setupScroll() {
         // Scroll-Container
         this.scrollContainer = createElement('div', {
@@ -221,46 +221,44 @@ class DOMVirtualList {
         this.items = [];
         this._scrollHandler = null;
     }
-    
+
     _onScroll() {
         this.scrollTop = this.scrollContainer.scrollTop;
         this._updateVisibleItems();
     }
-    
+
     _updateVisibleItems() {
         const containerHeight = this.scrollContainer.clientHeight;
         const totalHeight = this.items.length * this.itemHeight;
-        
+
         // Spacer-Höhe setzen
         this.spacer.style.height = `${totalHeight}px`;
-        
+
         // Sichtbaren Bereich berechnen
         const start = Math.floor(this.scrollTop / this.itemHeight);
         const visibleCount = Math.ceil(containerHeight / this.itemHeight);
-        
+
         this.visibleStart = Math.max(0, start - this.bufferSize);
         this.visibleEnd = Math.min(this.items.length, start + visibleCount + this.bufferSize);
-        
+
         // Content positionieren
         this.content.style.transform = `translateY(${this.visibleStart * this.itemHeight}px)`;
-        
+
         // Sichtbare Items rendern
         this._renderVisibleItems();
     }
-    
+
     _renderVisibleItems() {
         const visibleItems = this.items.slice(this.visibleStart, this.visibleEnd);
-        const fragment = createFragment(
-            ...visibleItems.map(item => this.renderItem(item))
-        );
+        const fragment = createFragment(...visibleItems.map(item => this.renderItem(item)));
         replaceContent(this.content, fragment);
     }
-    
+
     setItems(items) {
         this.items = items;
         this._updateVisibleItems();
     }
-    
+
     refresh() {
         this._updateVisibleItems();
     }
@@ -276,66 +274,80 @@ class DOMVirtualList {
  * @returns {HTMLElement}
  */
 function renderNPCCard(npc) {
-    const locationName = typeof EntityLookup !== 'undefined' 
-        ? EntityLookup.getName('locations', npc.locationId) 
-        : '—';
-    
+    const locationName =
+        typeof EntityLookup !== 'undefined'
+            ? EntityLookup.getName('locations', npc.locationId)
+            : '—';
+
     const dialogCount = (npc.dialogs || []).length;
     const triggerCount = (npc.triggers || []).length;
-    
+
     // Avatar
-    const avatarContent = npc.avatar 
+    const avatarContent = npc.avatar
         ? el('img', { src: npc.avatar, alt: '' })
         : document.createTextNode(npc.name ? npc.name.charAt(0).toUpperCase() : '?');
-    
+
     const avatar = el('div', { className: 'npc-avatar' }, avatarContent);
-    
+
     // Header
-    const header = el('div', { className: 'npc-header' },
+    const header = el(
+        'div',
+        { className: 'npc-header' },
         el('div', { className: 'npc-name' }, npc.name || 'Unbenannt'),
         el('div', { className: 'npc-role' }, npc.role || '')
     );
-    
+
     // Meta-Info
-    const meta = el('div', { className: 'npc-meta' },
+    const meta = el(
+        'div',
+        { className: 'npc-meta' },
         locationName !== '—' ? el('span', {}, `📍 ${locationName}`) : null,
         dialogCount ? el('span', { title: 'Dialoge' }, `💬 ${dialogCount}`) : null,
         triggerCount ? el('span', { title: 'Trigger' }, `🔔 ${triggerCount}`) : null
     );
-    
+
     // Actions
-    const actions = el('div', { 
-        className: 'npc-actions',
-        'data-stop-propagation': 'true'
-    },
-        el('button', { 
-            className: 'btn-icon',
-            'data-action': 'edit-npc',
-            'data-id': npc.id,
-            title: 'Bearbeiten'
-        }, '✏️'),
-        el('button', { 
-            className: 'btn-icon btn-danger',
-            'data-action': 'delete-npc',
-            'data-id': npc.id,
-            title: 'Löschen'
-        }, '🗑️')
-    );
-    
-    // Karte zusammenbauen
-    const card = el('div', {
-        className: 'npc-card',
-        'data-action': 'toggle-npc-card',
-        'data-id': npc.id
-    },
-        avatar,
-        el('div', { className: 'npc-content' },
-            header,
-            meta
+    const actions = el(
+        'div',
+        {
+            className: 'npc-actions',
+            'data-stop-propagation': 'true'
+        },
+        el(
+            'button',
+            {
+                className: 'btn-icon',
+                'data-action': 'edit-npc',
+                'data-id': npc.id,
+                title: 'Bearbeiten'
+            },
+            '✏️'
         ),
+        el(
+            'button',
+            {
+                className: 'btn-icon btn-danger',
+                'data-action': 'delete-npc',
+                'data-id': npc.id,
+                title: 'Löschen'
+            },
+            '🗑️'
+        )
+    );
+
+    // Karte zusammenbauen
+    const card = el(
+        'div',
+        {
+            className: 'npc-card',
+            'data-action': 'toggle-npc-card',
+            'data-id': npc.id
+        },
+        avatar,
+        el('div', { className: 'npc-content' }, header, meta),
         actions
     );
-    
+
     return card;
 }
 
@@ -347,22 +359,23 @@ function renderNPCCard(npc) {
  */
 function renderNPCListOptimized(container, npcs, options = {}) {
     if (!container) return;
-    
+
     // Leere Liste
     if (!npcs || npcs.length === 0) {
-        container.innerHTML = typeof renderEmptyState === 'function' 
-            ? renderEmptyState({
-                icon: '🎭',
-                titleEmpty: 'Keine NPCs',
-                descEmpty: 'Erstelle Nicht-Spieler-Charaktere für deine Welt.',
-                buttonText: '➕ NPC erstellen',
-                buttonAction: 'show-modal',
-                buttonValue: 'npc-modal'
-            })
-            : '<p>Keine NPCs vorhanden</p>';
+        container.innerHTML =
+            typeof renderEmptyState === 'function'
+                ? renderEmptyState({
+                      icon: '🎭',
+                      titleEmpty: 'Keine NPCs',
+                      descEmpty: 'Erstelle Nicht-Spieler-Charaktere für deine Welt.',
+                      buttonText: '➕ NPC erstellen',
+                      buttonAction: 'show-modal',
+                      buttonValue: 'npc-modal'
+                  })
+                : '<p>Keine NPCs vorhanden</p>';
         return;
     }
-    
+
     // Virtual List für viele NPCs
     if (npcs.length > 50 && options.useVirtualList !== false) {
         const virtualList = new DOMVirtualList(container, {
@@ -372,17 +385,13 @@ function renderNPCListOptimized(container, npcs, options = {}) {
         virtualList.setItems(npcs);
         return;
     }
-    
+
     // Standard-Rendering mit DocumentFragment
-    const fragment = createFragment(
-        ...npcs.map(npc => renderNPCCard(npc))
-    );
-    
+    const fragment = createFragment(...npcs.map(npc => renderNPCCard(npc)));
+
     // Container-Klasse setzen
-    container.className = options.viewMode === 'list' 
-        ? 'list-view-container' 
-        : 'npc-grid';
-    
+    container.className = options.viewMode === 'list' ? 'list-view-container' : 'npc-grid';
+
     // Effizient ersetzen
     replaceContent(container, fragment);
 }
@@ -400,7 +409,7 @@ if (typeof window !== 'undefined') {
         batchDOMUpdate,
         replaceContent,
         updateList,
-        VirtualList: DOMVirtualList,  // Alias für Kompatibilität
+        VirtualList: DOMVirtualList, // Alias für Kompatibilität
         DOMVirtualList,
         renderNPCCard,
         renderNPCListOptimized

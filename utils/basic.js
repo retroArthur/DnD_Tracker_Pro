@@ -17,11 +17,26 @@ function $$(sel) {
 }
 // HTML-Entity-Escaping für XSS-Schutz
 function esc(s) {
-    return s ? String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;') : '';
+    return s
+        ? String(s)
+              .replace(/&/g, '&amp;')
+              .replace(/</g, '&lt;')
+              .replace(/>/g, '&gt;')
+              .replace(/"/g, '&quot;')
+              .replace(/'/g, '&#39;')
+        : '';
 }
 // HTML-Tags entfernen für Plain-Text-Anzeige
 function stripHtml(s) {
-    return s ? String(s).replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').trim() : '';
+    return s
+        ? String(s)
+              .replace(/<[^>]*>/g, '')
+              .replace(/&nbsp;/g, ' ')
+              .replace(/&amp;/g, '&')
+              .replace(/&lt;/g, '<')
+              .replace(/&gt;/g, '>')
+              .trim()
+        : '';
 }
 // Search-Helper-Funktionen
 function clearSearch(inputId, renderFn) {
@@ -29,8 +44,7 @@ function clearSearch(inputId, renderFn) {
     if (input instanceof HTMLInputElement) {
         input.value = '';
         updateSearchClear(input);
-        if (typeof renderFn === 'function')
-            renderFn();
+        if (typeof renderFn === 'function') renderFn();
     }
 }
 function updateSearchClear(input) {
@@ -42,8 +56,7 @@ function updateSearchClear(input) {
 // HTML-Sanitizer für Rich-Text-Content (erlaubt nur sichere Tags/Attribute)
 // SICHER: Verwendet DOMParser statt innerHTML um XSS beim Parsen zu verhindern
 function sanitizeHTML(html) {
-    if (!html)
-        return '';
+    if (!html) return '';
     // Schritt 1: Entferne gefährliche Patterns BEVOR Parsing
     const cleaned = String(html)
         .replace(new RegExp('<script[\\s\\S]*?</scr' + 'ipt>', 'gi'), '')
@@ -56,16 +69,60 @@ function sanitizeHTML(html) {
     const parser = new DOMParser();
     const doc = parser.parseFromString(cleaned, 'text/html');
     // Erlaubte Tags und Attribute
-    const allowedTags = ['b', 'i', 'u', 's', 'strong', 'em', 'ul', 'ol', 'li', 'p', 'br', 'div', 'span', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'table', 'thead', 'tbody', 'tr', 'th', 'td', 'mark', 'a', 'font'];
+    const allowedTags = [
+        'b',
+        'i',
+        'u',
+        's',
+        'strong',
+        'em',
+        'ul',
+        'ol',
+        'li',
+        'p',
+        'br',
+        'div',
+        'span',
+        'h1',
+        'h2',
+        'h3',
+        'h4',
+        'h5',
+        'h6',
+        'table',
+        'thead',
+        'tbody',
+        'tr',
+        'th',
+        'td',
+        'mark',
+        'a',
+        'font'
+    ];
     const allowedAttributes = {
-        'style': ['color', 'background-color', 'background', 'font-family', 'font-size', 'font-weight', 'text-decoration', 'border', 'border-collapse', 'padding', 'margin', 'width', 'text-align', 'vertical-align'],
-        'class': true,
-        'href': true,
-        'title': true,
-        'colspan': true,
-        'rowspan': true,
-        'face': true, // für <font face="..."> (execCommand fontName)
-        'size': true // für <font size="..."> (execCommand fontSize)
+        style: [
+            'color',
+            'background-color',
+            'background',
+            'font-family',
+            'font-size',
+            'font-weight',
+            'text-decoration',
+            'border',
+            'border-collapse',
+            'padding',
+            'margin',
+            'width',
+            'text-align',
+            'vertical-align'
+        ],
+        class: true,
+        href: true,
+        title: true,
+        colspan: true,
+        rowspan: true,
+        face: true, // für <font face="..."> (execCommand fontName)
+        size: true // für <font size="..."> (execCommand fontSize)
     };
     // Gefährliche Protokolle (case-insensitive)
     const dangerousProtocols = ['javascript:', 'vbscript:', 'data:', 'file:', 'blob:'];
@@ -89,17 +146,18 @@ function sanitizeHTML(html) {
             for (const attr of element.attributes) {
                 const attrName = attr.name.toLowerCase();
                 // Event-Handler blockieren
-                if (attrName.startsWith('on'))
-                    continue;
+                if (attrName.startsWith('on')) continue;
                 // Style-Attribute filtern
                 if (attrName === 'style' && Array.isArray(allowedAttributes.style)) {
                     const styleList = allowedAttributes.style;
-                    const styles = attr.value.split(';').filter(s => {
-                        const prop = s.split(':')[0]?.trim().toLowerCase();
-                        return styleList.includes(prop);
-                    }).join(';');
-                    if (styles)
-                        cleanElement.setAttribute('style', styles);
+                    const styles = attr.value
+                        .split(';')
+                        .filter(s => {
+                            const prop = s.split(':')[0]?.trim().toLowerCase();
+                            return styleList.includes(prop);
+                        })
+                        .join(';');
+                    if (styles) cleanElement.setAttribute('style', styles);
                 }
                 // Class-Attribute erlauben
                 else if (attrName === 'class' && allowedAttributes.class) {
@@ -112,7 +170,14 @@ function sanitizeHTML(html) {
                     // Prüfe gegen gefährliche Protokolle (case-insensitive)
                     const isSafe = dangerousProtocols.every(proto => !hrefLower.startsWith(proto));
                     // Erlaube nur http(s), relative URLs, und Anker
-                    if (isSafe && (hrefLower.startsWith('http://') || hrefLower.startsWith('https://') || href.startsWith('/') || href.startsWith('#') || href.startsWith('./'))) {
+                    if (
+                        isSafe &&
+                        (hrefLower.startsWith('http://') ||
+                            hrefLower.startsWith('https://') ||
+                            href.startsWith('/') ||
+                            href.startsWith('#') ||
+                            href.startsWith('./'))
+                    ) {
                         cleanElement.setAttribute('href', href);
                         cleanElement.setAttribute('target', '_blank');
                         cleanElement.setAttribute('rel', 'noopener noreferrer');
@@ -123,14 +188,21 @@ function sanitizeHTML(html) {
                     cleanElement.setAttribute('title', attr.value);
                 }
                 // colspan/rowspan für Tabellen
-                else if ((attrName === 'colspan' || attrName === 'rowspan') && allowedAttributes[attrName]) {
+                else if (
+                    (attrName === 'colspan' || attrName === 'rowspan') &&
+                    allowedAttributes[attrName]
+                ) {
                     const val = parseInt(attr.value);
                     if (!isNaN(val) && val > 0 && val < 100) {
                         cleanElement.setAttribute(attrName, val.toString());
                     }
                 }
                 // face/size für font-Tags (execCommand fontName/fontSize)
-                else if ((attrName === 'face' || attrName === 'size') && allowedAttributes[attrName] && tagName === 'font') {
+                else if (
+                    (attrName === 'face' || attrName === 'size') &&
+                    allowedAttributes[attrName] &&
+                    tagName === 'font'
+                ) {
                     cleanElement.setAttribute(attrName, attr.value);
                 }
                 // Andere Attribute blockieren (src, etc.)
@@ -138,8 +210,7 @@ function sanitizeHTML(html) {
             // Kinder rekursiv bereinigen
             for (const child of element.childNodes) {
                 const cleanChild = cleanNode(child);
-                if (cleanChild)
-                    cleanElement.appendChild(cleanChild);
+                if (cleanChild) cleanElement.appendChild(cleanChild);
             }
             return cleanElement;
         }
@@ -149,8 +220,7 @@ function sanitizeHTML(html) {
     const result = document.createElement('div');
     for (const child of doc.body.childNodes) {
         const cleanChild = cleanNode(child);
-        if (cleanChild)
-            result.appendChild(cleanChild);
+        if (cleanChild) result.appendChild(cleanChild);
     }
     return result.innerHTML;
 }
@@ -161,8 +231,7 @@ const StorageAPI = {
         try {
             const value = localStorage.getItem(key);
             return value !== null ? value : fallback;
-        }
-        catch (e) {
+        } catch (e) {
             const error = e;
             console.warn(`[Storage] Fehler beim Lesen von '${key}':`, error.message);
             // Private Browsing, SecurityError, etc.
@@ -177,21 +246,21 @@ const StorageAPI = {
         try {
             localStorage.setItem(key, value);
             return { success: true };
-        }
-        catch (e) {
+        } catch (e) {
             const error = e;
             console.error(`[Storage] Fehler beim Schreiben von '${key}':`, error.message);
             if (error.name === 'QuotaExceededError') {
                 // Speicher voll
-                window.showToast?.('💾 Speicher voll! Versuche Fallback zu IndexedDB...', 'warning');
+                window.showToast?.(
+                    '💾 Speicher voll! Versuche Fallback zu IndexedDB...',
+                    'warning'
+                );
                 return { success: false, error: 'QUOTA_EXCEEDED', original: error };
-            }
-            else if (error.name === 'SecurityError') {
+            } else if (error.name === 'SecurityError') {
                 // Private Browsing
                 window.showToast?.('⚠️ Speicher nicht verfügbar (Private Browsing?)', 'error');
                 return { success: false, error: 'SECURITY_ERROR', original: error };
-            }
-            else {
+            } else {
                 // Andere Fehler
                 window.showToast?.('❌ Speichern fehlgeschlagen', 'error');
                 return { success: false, error: 'UNKNOWN', original: error };
@@ -203,8 +272,7 @@ const StorageAPI = {
         try {
             localStorage.removeItem(key);
             return { success: true };
-        }
-        catch (e) {
+        } catch (e) {
             const error = e;
             console.warn(`[Storage] Fehler beim Löschen von '${key}':`, error.message);
             return { success: false, error: error.message };
@@ -217,8 +285,7 @@ const StorageAPI = {
             localStorage.setItem(testKey, 'test');
             localStorage.removeItem(testKey);
             return true;
-        }
-        catch {
+        } catch {
             return false;
         }
     },
@@ -239,20 +306,17 @@ const StorageAPI = {
                 estimatedLimitMB: (estimatedLimit / (1024 * 1024)).toFixed(0),
                 percentUsed: ((totalSize / estimatedLimit) * 100).toFixed(1)
             };
-        }
-        catch {
+        } catch {
             return null;
         }
     },
     // JSON-spezifische Hilfsmethoden
     getJSON(key, fallback = null) {
         const value = this.get(key, null);
-        if (value === null)
-            return fallback;
+        if (value === null) return fallback;
         try {
             return JSON.parse(value);
-        }
-        catch (e) {
+        } catch (e) {
             const error = e;
             console.warn(`[Storage] JSON Parse Fehler für '${key}':`, error.message);
             return fallback;
@@ -262,8 +326,7 @@ const StorageAPI = {
         try {
             const jsonString = JSON.stringify(obj);
             return this.set(key, jsonString);
-        }
-        catch (e) {
+        } catch (e) {
             const error = e;
             console.error(`[Storage] JSON Stringify Fehler für '${key}':`, error.message);
             return { success: false, error: 'JSON_ERROR', original: error };
@@ -273,8 +336,7 @@ const StorageAPI = {
     has(key) {
         try {
             return localStorage.getItem(key) !== null;
-        }
-        catch (e) {
+        } catch (e) {
             const error = e;
             console.warn(`[Storage] Fehler bei has('${key}'):`, error.message);
             return false;
@@ -285,8 +347,7 @@ const StorageAPI = {
         try {
             localStorage.clear();
             return { success: true };
-        }
-        catch (e) {
+        } catch (e) {
             const error = e;
             console.error('[Storage] Fehler beim Löschen aller Daten:', error.message);
             return { success: false, error: error.message };

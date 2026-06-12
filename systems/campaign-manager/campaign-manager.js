@@ -9,15 +9,17 @@
 // var initIndexedDB = window.initIndexedDB;  // [REMOVED: conflicts with function declaration]
 const CAMPAIGN_INDEX_KEY = APP_CONFIG.CAMPAIGN_INDEX_KEY;
 function getCampaignIndex() {
-    return StorageAPI.getJSON(CAMPAIGN_INDEX_KEY, { campaigns: [], active: APP_CONFIG.STORAGE_KEY });
+    return StorageAPI.getJSON(CAMPAIGN_INDEX_KEY, {
+        campaigns: [],
+        active: APP_CONFIG.STORAGE_KEY
+    });
 }
 function saveCampaignIndex(index) {
     StorageAPI.setJSON(CAMPAIGN_INDEX_KEY, index);
 }
 function createCampaign() {
     const input = $('new-campaign-name');
-    if (!input)
-        return;
+    if (!input) return;
     const name = input.value.trim();
     if (!name) {
         showToast('⚠️ Name erforderlich', 'error');
@@ -29,9 +31,19 @@ function createCampaign() {
     saveCampaignIndex(index);
     // Create empty campaign data
     const emptyData = {
-        locations: [], npcs: [], quests: [], characters: [], sessionNotes: [], storyArcs: [], quickNotes: '',
+        locations: [],
+        npcs: [],
+        quests: [],
+        characters: [],
+        sessionNotes: [],
+        storyArcs: [],
+        quickNotes: '',
         initiative: { combatants: [], currentTurn: 0, round: 1 },
-        loot: [], items: [], encounters: [], spells: [], links: [],
+        loot: [],
+        items: [],
+        encounters: [],
+        spells: [],
+        links: [],
         filters: [],
         calendar: { day: 1, month: 0, year: 1492, events: [] },
         _nextId: {}
@@ -58,8 +70,14 @@ async function deleteCampaign() {
     // Datengröße ermitteln
     const dataSize = localStorage.getItem(key);
     const sizeKB = dataSize ? (dataSize.length / 1024).toFixed(1) : 0;
-    const campaignName = isDefault ? 'Standard-Kampagne' : (index.campaigns.find(c => c.key === key)?.name || 'Unbekannt');
-    if (!confirm(`⚠️ "${campaignName}" LÖSCHEN?\n\nAlle Daten (${sizeKB} KB) werden gelöscht:\n- Charaktere, NPCs, Orte\n- Quests, Encounters\n- Initiative, Beute\n- Wiki, Netzwerk\n- Sessions\n\nDieser Vorgang kann NICHT rückgängig gemacht werden!`)) {
+    const campaignName = isDefault
+        ? 'Standard-Kampagne'
+        : index.campaigns.find(c => c.key === key)?.name || 'Unbekannt';
+    if (
+        !confirm(
+            `⚠️ "${campaignName}" LÖSCHEN?\n\nAlle Daten (${sizeKB} KB) werden gelöscht:\n- Charaktere, NPCs, Orte\n- Quests, Encounters\n- Initiative, Beute\n- Wiki, Netzwerk\n- Sessions\n\nDieser Vorgang kann NICHT rückgängig gemacht werden!`
+        )
+    ) {
         return;
     }
     try {
@@ -72,8 +90,7 @@ async function deleteCampaign() {
             try {
                 // Initialisiere IDB falls nötig
                 const idbInstance = window.idb;
-                if (!idbInstance)
-                    await initIndexedDB();
+                if (!idbInstance) await initIndexedDB();
                 // Lösche den spezifischen Eintrag aus dem campaigns Store
                 await new Promise((resolve, _reject) => {
                     const transaction = window.idb.transaction(['campaigns'], 'readwrite');
@@ -84,12 +101,14 @@ async function deleteCampaign() {
                         resolve();
                     };
                     request.onerror = () => {
-                        console.warn('[deleteCampaign] IndexedDB Löschung fehlgeschlagen:', request.error);
+                        console.warn(
+                            '[deleteCampaign] IndexedDB Löschung fehlgeschlagen:',
+                            request.error
+                        );
                         resolve(); // Trotzdem weitermachen
                     };
                 });
-            }
-            catch (idbError) {
+            } catch (idbError) {
                 console.warn('[deleteCampaign] IndexedDB Fehler:', idbError);
             }
         }
@@ -102,12 +121,22 @@ async function deleteCampaign() {
         // 4. Globales D-Objekt zurücksetzen (falls Seite nicht neu lädt)
         // D is const, cannot reassign - clear and recreate structure
         const D = window.D;
-        for (const key in D)
-            delete D[key];
+        for (const key in D) delete D[key];
         Object.assign(D, {
-            locations: [], npcs: [], quests: [], characters: [], sessionNotes: [], storyArcs: [], quickNotes: '',
+            locations: [],
+            npcs: [],
+            quests: [],
+            characters: [],
+            sessionNotes: [],
+            storyArcs: [],
+            quickNotes: '',
             initiative: { combatants: [], currentTurn: 0, round: 1 },
-            loot: [], items: [], encounters: [], spells: [], links: [], wiki: [],
+            loot: [],
+            items: [],
+            encounters: [],
+            spells: [],
+            links: [],
+            wiki: [],
             filters: [],
             calendar: { day: 1, month: 0, year: 1492, events: [] },
             tags: [],
@@ -117,16 +146,14 @@ async function deleteCampaign() {
         alert(`✅ "${campaignName}" wurde gelöscht!\n\nDie Seite wird neu geladen...`);
         // 5. Seite mit Cache-Bypass neu laden
         window.location.href = window.location.pathname + '?cleared=' + Date.now();
-    }
-    catch (error) {
+    } catch (error) {
         console.error('[deleteCampaign] Fehler:', error);
         alert('❌ Fehler beim Löschen:\n\n' + error.message);
     }
 }
 function renderCampaignList() {
     const c = $('campaign-list');
-    if (!c)
-        return;
+    if (!c) return;
     const index = getCampaignIndex();
     // Standard campaign
     let html = `<div class="campaign-item ${index.active === APP_CONFIG.STORAGE_KEY ? 'active' : ''}" data-action="switch-campaign" data-value="${APP_CONFIG.STORAGE_KEY}">

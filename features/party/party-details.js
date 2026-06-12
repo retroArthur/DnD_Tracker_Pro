@@ -9,31 +9,33 @@ function showCharacterDetails(id) {
     const CATS = window.CATS;
     const COMBAT_CONSTANTS = window.COMBAT_CONSTANTS;
     const ch = EntityLookup.character(id);
-    if (!ch)
-        return;
+    if (!ch) return;
     const cur = ch.currency || {};
-    const coins = [
-        cur.pm && `${cur.pm}P`,
-        cur.gm && `${cur.gm}G`,
-        cur.em && `${cur.em}E`,
-        cur.sm && `${cur.sm}S`,
-        cur.km && `${cur.km}K`
-    ].filter(Boolean).join(' ') || '—';
-    const spells = (ch.spells || []).map((sid) => EntityLookup.spell(sid)).filter(Boolean);
+    const coins =
+        [
+            cur.pm && `${cur.pm}P`,
+            cur.gm && `${cur.gm}G`,
+            cur.em && `${cur.em}E`,
+            cur.sm && `${cur.sm}S`,
+            cur.km && `${cur.km}K`
+        ]
+            .filter(Boolean)
+            .join(' ') || '—';
+    const spells = (ch.spells || []).map(sid => EntityLookup.spell(sid)).filter(Boolean);
     // Support both old format (array of IDs) and new format (array of {id, quantity})
     const itemsRaw = ch.items || [];
-    const items = itemsRaw.map((item) => {
-        const itemId = typeof item === 'number' ? item : item.id;
-        const qty = typeof item === 'number' ? 1 : item.quantity;
-        const lootItem = EntityLookup.lootItem(itemId);
-        return lootItem ? { ...lootItem, assignedQty: qty } : null;
-    }).filter(Boolean);
-    const languages = Array.isArray(ch.languages)
-        ? ch.languages.join(', ')
-        : (ch.languages || '—');
+    const items = itemsRaw
+        .map(item => {
+            const itemId = typeof item === 'number' ? item : item.id;
+            const qty = typeof item === 'number' ? 1 : item.quantity;
+            const lootItem = EntityLookup.lootItem(itemId);
+            return lootItem ? { ...lootItem, assignedQty: qty } : null;
+        })
+        .filter(Boolean);
+    const languages = Array.isArray(ch.languages) ? ch.languages.join(', ') : ch.languages || '—';
     // Attribute mit Modifiern
     const attrs = ch.attributes || {};
-    const attrMod = (val) => {
+    const attrMod = val => {
         const m = Math.floor((val - 10) / 2);
         return m >= 0 ? `+${m}` : `${m}`;
     };
@@ -48,7 +50,12 @@ function showCharacterDetails(id) {
         : esc(ch.characterClass || '—');
     // HP Prozent für Farbcodierung
     const hpPct = ch.hpMax > 0 ? (ch.hpCurrent / ch.hpMax) * 100 : 100;
-    const hpColor = hpPct <= COMBAT_CONSTANTS.HP_CRITICAL_THRESHOLD ? 'var(--red)' : hpPct <= COMBAT_CONSTANTS.HP_BLOODIED_THRESHOLD ? 'var(--yellow)' : 'var(--green)';
+    const hpColor =
+        hpPct <= COMBAT_CONSTANTS.HP_CRITICAL_THRESHOLD
+            ? 'var(--red)'
+            : hpPct <= COMBAT_CONSTANTS.HP_BLOODIED_THRESHOLD
+              ? 'var(--yellow)'
+              : 'var(--green)';
     const content = `
         <div class="char-modal-header">
             <div class="char-modal-avatar">
@@ -94,13 +101,17 @@ function showCharacterDetails(id) {
 
             <!-- Attribute Grid -->
             <div class="char-attr-grid">
-                ${['str', 'dex', 'con', 'int', 'wis', 'cha'].map(attr => `
+                ${['str', 'dex', 'con', 'int', 'wis', 'cha']
+                    .map(
+                        attr => `
                     <div class="char-attr-box ${saves[attr] ? 'proficient' : ''}">
                         <div class="char-attr-name">${attr.toUpperCase()}</div>
                         <div class="char-attr-value">${attrs[attr] || 10}</div>
                         <div class="char-attr-mod">${attrMod(attrs[attr] || 10)}</div>
                     </div>
-                `).join('')}
+                `
+                    )
+                    .join('')}
             </div>
 
             <!-- Two Column Info -->
@@ -118,10 +129,14 @@ function showCharacterDetails(id) {
                         <span class="char-info-label">🎲 Trefferwürfel</span>
                         <span class="char-info-value">${esc(ch.hitDice || '—')}</span>
                     </div>
-                    ${profSaves.length ? `<div class="char-info-row">
+                    ${
+                        profSaves.length
+                            ? `<div class="char-info-row">
                         <span class="char-info-label">🛡️ Save-Prof.</span>
                         <span class="char-info-value">${profSaves.join(', ')}</span>
-                    </div>` : ''}
+                    </div>`
+                            : ''
+                    }
                 </div>
                 <div class="char-info-section">
                     <div class="char-info-row">
@@ -132,14 +147,22 @@ function showCharacterDetails(id) {
                         <span class="char-info-label">🗣️ Sprachen</span>
                         <span class="char-info-value wrap">${esc(languages)}</span>
                     </div>
-                    ${(ch.resistances?.length) ? `<div class="char-info-row">
+                    ${
+                        ch.resistances?.length
+                            ? `<div class="char-info-row">
                         <span class="char-info-label">🛡️ Resist.</span>
                         <span class="char-info-value wrap">${ch.resistances.join(', ')}</span>
-                    </div>` : ''}
-                    ${(ch.immunities?.length) ? `<div class="char-info-row">
+                    </div>`
+                            : ''
+                    }
+                    ${
+                        ch.immunities?.length
+                            ? `<div class="char-info-row">
                         <span class="char-info-label">⭐ Immun.</span>
                         <span class="char-info-value wrap">${ch.immunities.join(', ')}</span>
-                    </div>` : ''}
+                    </div>`
+                            : ''
+                    }
                 </div>
             </div>
 
@@ -151,7 +174,7 @@ function showCharacterDetails(id) {
                         <span class="char-expand-icon">▼</span>
                     </div>
                     <div class="char-inventory-content">
-                        ${spells.length ? spells.map((s) => `<span class="char-tag spell clickable" data-action="navigate-entity-stop" data-type="spells" data-id="${s.id}" title="Klicken für Details">${esc(s.name)}</span>`).join('') : '<span class="char-empty">Keine Zauber</span>'}
+                        ${spells.length ? spells.map(s => `<span class="char-tag spell clickable" data-action="navigate-entity-stop" data-type="spells" data-id="${s.id}" title="Klicken für Details">${esc(s.name)}</span>`).join('') : '<span class="char-empty">Keine Zauber</span>'}
                     </div>
                 </div>
                 <div class="char-inventory-box">
@@ -160,16 +183,20 @@ function showCharacterDetails(id) {
                         <span class="char-expand-icon">▼</span>
                     </div>
                     <div class="char-inventory-content">
-                        ${items.length ? items.map((i) => `<span class="char-tag item clickable" data-action="navigate-entity-stop" data-type="loot" data-id="${i.id}" title="Klicken für Details">${CATS[i.category]?.split(' ')[0] || '📦'} ${esc(i.name)}${i.assignedQty > 1 ? ` ×${i.assignedQty}` : ''}</span>`).join('') : '<span class="char-empty">Keine Items</span>'}
+                        ${items.length ? items.map(i => `<span class="char-tag item clickable" data-action="navigate-entity-stop" data-type="loot" data-id="${i.id}" title="Klicken für Details">${CATS[i.category]?.split(' ')[0] || '📦'} ${esc(i.name)}${i.assignedQty > 1 ? ` ×${i.assignedQty}` : ''}</span>`).join('') : '<span class="char-empty">Keine Items</span>'}
                     </div>
                 </div>
             </div>
 
-            ${ch.notes ? `
+            ${
+                ch.notes
+                    ? `
             <div class="char-notes-section">
                 <div class="char-notes-label">📝 Notizen</div>
                 <div class="char-notes-content">${sanitizeHTML(ch.notes)}</div>
-            </div>` : ''}
+            </div>`
+                    : ''
+            }
         </div>
 
         <div class="char-modal-actions">

@@ -1,48 +1,48 @@
 ---
 phase: 01-stabilisierung
-plan: "04"
+plan: '04'
 subsystem: build
 tags: [build, python, pytest, deduplication, tdd, stab-07]
 
 requires:
-  - phase: 01-01
-    provides: "Smoke-Test-Infrastruktur (dist/ Artefakte vorausgesetzt)"
+    - phase: 01-01
+      provides: 'Smoke-Test-Infrastruktur (dist/ Artefakte vorausgesetzt)'
 
 provides:
-  - "MODULES-Konstante auf Modul-Level in build.py (importierbar fuer Tests)"
-  - "check_duplicate_functions(): Pre-Build-Schutz gegen verwaiste Funktionskoerper"
-  - "check_module_list_sync(): Abbruch bei Abweichung loader.js vs build.py"
-  - "DEBUG_MODE-Post-Replace-Assertion: Production-Build bricht ab wenn DEBUG_MODE: true nach Flip noch vorhanden"
-  - "pytest-Suite 10/10 Tests gruen (4 neue STAB-07-Tests)"
+    - 'MODULES-Konstante auf Modul-Level in build.py (importierbar fuer Tests)'
+    - 'check_duplicate_functions(): Pre-Build-Schutz gegen verwaiste Funktionskoerper'
+    - 'check_module_list_sync(): Abbruch bei Abweichung loader.js vs build.py'
+    - 'DEBUG_MODE-Post-Replace-Assertion: Production-Build bricht ab wenn DEBUG_MODE: true nach Flip noch vorhanden'
+    - 'pytest-Suite 10/10 Tests gruen (4 neue STAB-07-Tests)'
 
 affects: [build-system, ci, alle-zukunftigen-module-hinzufuegungen]
 
 tech-stack:
-  added: []
-  patterns:
-    - "Pre-Build-Check-Pattern: check_*()-Funktionen brechen Build mit sys.exit(1) ab (deterministisch, an der Wurzel)"
-    - "Modul-Level-MODULES-Konstante: Ermoeglicht Import-Barkeit in pytest ohne Seiteneffekte"
-    - "TDD-Commit-Protokoll fuer Build-System: test(RED) -> feat(GREEN)"
+    added: []
+    patterns:
+        - 'Pre-Build-Check-Pattern: check_*()-Funktionen brechen Build mit sys.exit(1) ab (deterministisch, an der Wurzel)'
+        - 'Modul-Level-MODULES-Konstante: Ermoeglicht Import-Barkeit in pytest ohne Seiteneffekte'
+        - 'TDD-Commit-Protokoll fuer Build-System: test(RED) -> feat(GREEN)'
 
 key-files:
-  created: []
-  modified:
-    - "build.py"
-    - "tests/build/test_build_deduplication.py"
+    created: []
+    modified:
+        - 'build.py'
+        - 'tests/build/test_build_deduplication.py'
 
 key-decisions:
-  - "Pre-Build-Duplikat-Check statt Pass-3-Body-Fix (loest Problem an der Wurzel, deterministisch, kein komplexes Brace-Tracking)"
-  - "MODULES auf Modul-Level fuer Test-Import-Barkeit (pytest kann 'from build import MODULES' ohne build() aufzurufen)"
-  - "TDD-Protokoll strikt eingehalten: RED-Commit mit NameError-Fehlern, dann GREEN-Commit mit aktivierten Imports"
+    - 'Pre-Build-Duplikat-Check statt Pass-3-Body-Fix (loest Problem an der Wurzel, deterministisch, kein komplexes Brace-Tracking)'
+    - "MODULES auf Modul-Level fuer Test-Import-Barkeit (pytest kann 'from build import MODULES' ohne build() aufzurufen)"
+    - 'TDD-Protokoll strikt eingehalten: RED-Commit mit NameError-Fehlern, dann GREEN-Commit mit aktivierten Imports'
 
 patterns-established:
-  - "Build-Haertung-Pattern: Alle Pre-Build-Validierungen als eigenstaendige Funktionen, nicht inline in build()"
-  - "pytest-Sync-Test-Pattern: check_module_list_sync() wird in try/except SystemExit aufgerufen -> pytest.fail()"
+    - 'Build-Haertung-Pattern: Alle Pre-Build-Validierungen als eigenstaendige Funktionen, nicht inline in build()'
+    - 'pytest-Sync-Test-Pattern: check_module_list_sync() wird in try/except SystemExit aufgerufen -> pytest.fail()'
 
 requirements-completed: [STAB-07]
 
 duration: 40min
-completed: "2026-06-12"
+completed: '2026-06-12'
 ---
 
 # Phase 1 Plan 04: Build-System-Haertung (STAB-07) Summary
@@ -104,10 +104,12 @@ None - keine externen Services, keine Umgebungsvariablen.
 ## Self-Check
 
 Files exist check:
+
 - `build.py` — existiert und wurde committed (71db752, 937699f)
 - `tests/build/test_build_deduplication.py` — existiert und wurde committed (98716a9, 4ce64b7)
 
 Commits exist check:
+
 - 71db752 — Task 1 MODULES + Checks
 - 937699f — Task 2 DEBUG_MODE-Assertion
 - 98716a9 — Task 3 RED
@@ -118,5 +120,6 @@ Commits exist check:
 Alle 4 Commits existieren. Beide modifizierten Dateien vorhanden. Build (--production) endet mit Exit-Code 0. pytest 10/10 gruen.
 
 ---
-*Phase: 01-stabilisierung*
-*Completed: 2026-06-12*
+
+_Phase: 01-stabilisierung_
+_Completed: 2026-06-12_

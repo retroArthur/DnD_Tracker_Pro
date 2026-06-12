@@ -15,7 +15,9 @@ function setTheme(theme) {
     D.settings.theme = theme;
     save();
     hideModal('theme-modal');
-    showToast(`Theme: ${theme === 'dark' ? 'Dunkel' : theme === 'light' ? 'Hell' : theme === 'sepia' ? 'Pergament' : 'Hoher Kontrast'}`);
+    showToast(
+        `Theme: ${theme === 'dark' ? 'Dunkel' : theme === 'light' ? 'Hell' : theme === 'sepia' ? 'Pergament' : 'Hoher Kontrast'}`
+    );
 }
 function loadTheme() {
     const theme = D.settings?.theme || 'dark';

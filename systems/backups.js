@@ -18,8 +18,7 @@ async function createAutoBackup() {
         const APP_CONFIG = window.APP_CONFIG;
         const ErrorHandler = window.ErrorHandler;
         // Nur speichern wenn Daten existieren
-        if (!D.characters?.length && !D.npcs?.length && !D.quests?.length)
-            return;
+        if (!D.characters?.length && !D.npcs?.length && !D.quests?.length) return;
         const backup = {
             timestamp: Date.now(),
             campaignKey: window.STORAGE_KEY_OVERRIDE || STORAGE_KEY,
@@ -30,16 +29,23 @@ async function createAutoBackup() {
         try {
             await saveBackupToIndexedDB(backup);
             return;
-        }
-        catch (idbError) {
+        } catch (idbError) {
             if (APP_CONFIG.DEBUG_MODE) {
-                ErrorHandler.log('createAutoBackup', idbError, 'IndexedDB failed, trying localStorage');
+                ErrorHandler.log(
+                    'createAutoBackup',
+                    idbError,
+                    'IndexedDB failed, trying localStorage'
+                );
             }
         }
         // Fallback: localStorage (nur für kleine Backups)
         if (backupSizeMB > MAX_BACKUP_SIZE_MB) {
             if (APP_CONFIG.DEBUG_MODE) {
-                ErrorHandler.log('createAutoBackup', new Error('Backup too large for localStorage'), `${backupSizeMB.toFixed(1)}MB exceeds limit`);
+                ErrorHandler.log(
+                    'createAutoBackup',
+                    new Error('Backup too large for localStorage'),
+                    `${backupSizeMB.toFixed(1)}MB exceeds limit`
+                );
             }
             return;
         }
@@ -54,19 +60,26 @@ async function createAutoBackup() {
             // Bei Quota-Fehler: Alte Backups löschen und nochmal versuchen
             if (result.error?.includes('quota') || result.error?.includes('QUOTA')) {
                 if (APP_CONFIG.DEBUG_MODE) {
-                    ErrorHandler.log('createAutoBackup', new Error('Quota exceeded'), 'Clearing old backups');
+                    ErrorHandler.log(
+                        'createAutoBackup',
+                        new Error('Quota exceeded'),
+                        'Clearing old backups'
+                    );
                 }
                 StorageAPI.remove(BACKUP_KEY);
                 // Nur aktuelles Backup speichern
                 StorageAPI.setJSON(BACKUP_KEY, [backup]);
             }
         }
-    }
-    catch (e) {
+    } catch (e) {
         const APP_CONFIG = window.APP_CONFIG;
         const ErrorHandler = window.ErrorHandler;
         if (APP_CONFIG?.DEBUG_MODE && !_backupFailureLogged) {
-            ErrorHandler?.log('createAutoBackup', e, 'Auto-backup failed (weitere Fehler werden unterdrückt)');
+            ErrorHandler?.log(
+                'createAutoBackup',
+                e,
+                'Auto-backup failed (weitere Fehler werden unterdrückt)'
+            );
             _backupFailureLogged = true;
         }
     }
@@ -88,8 +101,7 @@ async function saveBackupToIndexedDB(backup) {
             // Lösche alte Backups (behalte nur MAX_BACKUPS - 1)
             const toDelete = existingBackups.slice(MAX_BACKUPS - 1);
             toDelete.forEach(old => {
-                if (old.id)
-                    store.delete(old.id);
+                if (old.id) store.delete(old.id);
             });
             // Neues Backup speichern
             backup.id = `${backup.campaignKey}-${backup.timestamp}`;
@@ -129,8 +141,7 @@ async function getBackups() {
         // Sortiere nach Timestamp (neueste zuerst)
         uniqueBackups.sort((a, b) => b.timestamp - a.timestamp);
         return uniqueBackups.slice(0, MAX_BACKUPS);
-    }
-    catch (e) {
+    } catch (e) {
         if (APP_CONFIG.DEBUG_MODE) {
             ErrorHandler.log('getBackups', e, 'Failed to load IndexedDB backups');
         }
@@ -150,29 +161,26 @@ function sanitizeBackupData(parsed, defaultSchema) {
         if (!(key in parsed)) {
             // Key nicht im Backup - verwende Default
             sanitized[key] = structuredClone(defaultValue);
-        }
-        else if (Array.isArray(defaultValue)) {
+        } else if (Array.isArray(defaultValue)) {
             // Array-Typ erwartet
             sanitized[key] = Array.isArray(parsed[key])
                 ? structuredClone(parsed[key])
                 : structuredClone(defaultValue);
-        }
-        else if (typeof defaultValue === 'object' && defaultValue !== null) {
+        } else if (typeof defaultValue === 'object' && defaultValue !== null) {
             // Object-Typ erwartet
-            sanitized[key] = (typeof parsed[key] === 'object' && parsed[key] !== null && !Array.isArray(parsed[key]))
-                ? structuredClone(parsed[key])
-                : structuredClone(defaultValue);
-        }
-        else if (typeof defaultValue === 'number') {
+            sanitized[key] =
+                typeof parsed[key] === 'object' &&
+                parsed[key] !== null &&
+                !Array.isArray(parsed[key])
+                    ? structuredClone(parsed[key])
+                    : structuredClone(defaultValue);
+        } else if (typeof defaultValue === 'number') {
             sanitized[key] = typeof parsed[key] === 'number' ? parsed[key] : defaultValue;
-        }
-        else if (typeof defaultValue === 'string') {
+        } else if (typeof defaultValue === 'string') {
             sanitized[key] = typeof parsed[key] === 'string' ? parsed[key] : defaultValue;
-        }
-        else if (typeof defaultValue === 'boolean') {
+        } else if (typeof defaultValue === 'boolean') {
             sanitized[key] = typeof parsed[key] === 'boolean' ? parsed[key] : defaultValue;
-        }
-        else {
+        } else {
             sanitized[key] = structuredClone(defaultValue);
         }
     }
@@ -184,8 +192,7 @@ async function restoreBackup(index) {
         showToast('❌ Backup nicht gefunden');
         return;
     }
-    if (!confirm('Aktuellen Stand mit Backup überschreiben?'))
-        return;
+    if (!confirm('Aktuellen Stand mit Backup überschreiben?')) return;
     const ErrorHandler = window.ErrorHandler;
     const renderAll = window.renderAll;
     const saveImmediate = window.saveImmediate;
@@ -230,16 +237,12 @@ async function restoreBackup(index) {
         // D is const, cannot reassign - clear and merge instead
         const sanitized = sanitizeBackupData(parsed, defaultD);
         const D = window.D;
-        for (const key in D)
-            delete D[key];
+        for (const key in D) delete D[key];
         Object.assign(D, sanitized);
-        if (renderAll)
-            renderAll();
-        if (saveImmediate)
-            saveImmediate();
+        if (renderAll) renderAll();
+        if (saveImmediate) saveImmediate();
         showToast('✅ Backup wiederhergestellt');
-    }
-    catch (e) {
+    } catch (e) {
         ErrorHandler.log('restoreBackup', e, 'Backup restore failed');
         showToast('❌ Backup fehlerhaft: ' + (e.message || 'Unbekannter Fehler'));
     }
@@ -256,20 +259,21 @@ async function showBackupsModal() {
             descEmpty: 'Backups werden automatisch alle 5 Minuten erstellt.',
             gridSpan: 'auto'
         });
-    }
-    else {
-        content = backups.map((b, i) => {
-            const date = new Date(b.timestamp);
-            const timeStr = date.toLocaleString('de-DE');
-            const sizeMB = b.data ? (new Blob([b.data]).size / (1024 * 1024)).toFixed(1) : '?';
-            return `<div class="backup-item" style="display: flex; justify-content: space-between; align-items: center; padding: 10px; background: var(--bg-dark); border-radius: 6px; margin-bottom: 8px;">
+    } else {
+        content = backups
+            .map((b, i) => {
+                const date = new Date(b.timestamp);
+                const timeStr = date.toLocaleString('de-DE');
+                const sizeMB = b.data ? (new Blob([b.data]).size / (1024 * 1024)).toFixed(1) : '?';
+                return `<div class="backup-item" style="display: flex; justify-content: space-between; align-items: center; padding: 10px; background: var(--bg-dark); border-radius: 6px; margin-bottom: 8px;">
                 <div>
                     <div style="font-weight: 500;">${timeStr}</div>
                     <div style="font-size: 0.85em; color: var(--text-dim);">Backup #${i + 1} (${sizeMB} MB)</div>
                 </div>
                 <button class="btn btn-sm" data-action="restore-backup" data-id="${i}">Wiederherstellen</button>
             </div>`;
-        }).join('');
+            })
+            .join('');
     }
     // Dynamisches Modal erstellen
     let modal = $('backups-modal');
@@ -292,16 +296,13 @@ async function showBackupsModal() {
         document.body.appendChild(modal);
     }
     const list = $('backups-list');
-    if (list)
-        list.innerHTML = content;
-    if (showModal)
-        showModal('backups-modal');
+    if (list) list.innerHTML = content;
+    if (showModal) showModal('backups-modal');
 }
 // Auto-Backup Interval starten
 let backupInterval = null;
 function startAutoBackup() {
-    if (backupInterval)
-        clearInterval(backupInterval);
+    if (backupInterval) clearInterval(backupInterval);
     backupInterval = window.setInterval(createAutoBackup, BACKUP_INTERVAL);
     // Erstes Backup nach 1 Minute
     setTimeout(createAutoBackup, 60000);
@@ -339,7 +340,11 @@ function updateEntityCounts() {
 }
 function trackRenderTime(functionName, startTime) {
     const duration = performance.now() - startTime;
-    performanceMetrics.renderTimes.push({ function: functionName, duration, timestamp: Date.now() });
+    performanceMetrics.renderTimes.push({
+        function: functionName,
+        duration,
+        timestamp: Date.now()
+    });
     // Behalte nur letzte 50 Messungen
     if (performanceMetrics.renderTimes.length > 50) {
         performanceMetrics.renderTimes = performanceMetrics.renderTimes.slice(-50);
@@ -348,7 +353,11 @@ function trackRenderTime(functionName, startTime) {
     const ErrorHandler = window.ErrorHandler;
     // Warnung bei langsamen Renders (>500ms)
     if (duration > 500 && APP_CONFIG.DEBUG_MODE) {
-        ErrorHandler.log('trackRenderTime', new Error('Slow render detected'), `${functionName} took ${duration.toFixed(0)}ms`);
+        ErrorHandler.log(
+            'trackRenderTime',
+            new Error('Slow render detected'),
+            `${functionName} took ${duration.toFixed(0)}ms`
+        );
     }
 }
 function checkPerformance() {
@@ -358,19 +367,32 @@ function checkPerformance() {
     const ErrorHandler = window.ErrorHandler;
     // Warnung bei vielen Entities (>500 gesamt)
     if (totalEntities > 500 && APP_CONFIG.DEBUG_MODE) {
-        ErrorHandler.log('checkPerformance', new Error('Large campaign detected'), `${totalEntities} total entities`);
+        ErrorHandler.log(
+            'checkPerformance',
+            new Error('Large campaign detected'),
+            `${totalEntities} total entities`
+        );
         // Empfehlung für Virtual Scrolling
         if (totalEntities > 1000 && !window.performanceWarningShown) {
-            showToast('⚠️ Große Kampagne erkannt. Performance könnte beeinträchtigt sein.', 'warning', 6000);
+            showToast(
+                '⚠️ Große Kampagne erkannt. Performance könnte beeinträchtigt sein.',
+                'warning',
+                6000
+            );
             window.performanceWarningShown = true;
         }
     }
     // Berechne durchschnittliche Render-Zeit
     if (performanceMetrics.renderTimes.length > 10) {
         const recentRenders = performanceMetrics.renderTimes.slice(-10);
-        const avgTime = recentRenders.reduce((sum, r) => sum + r.duration, 0) / recentRenders.length;
+        const avgTime =
+            recentRenders.reduce((sum, r) => sum + r.duration, 0) / recentRenders.length;
         if (avgTime > 300 && APP_CONFIG.DEBUG_MODE) {
-            ErrorHandler.log('checkPerformance', new Error('Slow average render time'), `${avgTime.toFixed(0)}ms average (should be <100ms)`);
+            ErrorHandler.log(
+                'checkPerformance',
+                new Error('Slow average render time'),
+                `${avgTime.toFixed(0)}ms average (should be <100ms)`
+            );
         }
     }
 }
@@ -378,9 +400,11 @@ function getPerformanceReport() {
     const report = {
         entities: performanceMetrics.entityCounts,
         totalEntities: Object.values(performanceMetrics.entityCounts).reduce((a, b) => a + b, 0),
-        avgRenderTime: performanceMetrics.renderTimes.length > 0
-            ? performanceMetrics.renderTimes.reduce((sum, r) => sum + r.duration, 0) / performanceMetrics.renderTimes.length
-            : 0,
+        avgRenderTime:
+            performanceMetrics.renderTimes.length > 0
+                ? performanceMetrics.renderTimes.reduce((sum, r) => sum + r.duration, 0) /
+                  performanceMetrics.renderTimes.length
+                : 0,
         slowestRenders: performanceMetrics.renderTimes
             .sort((a, b) => b.duration - a.duration)
             .slice(0, 5)

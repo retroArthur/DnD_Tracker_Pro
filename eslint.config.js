@@ -92,10 +92,13 @@ export default tseslint.config(
         ignores: ['node_modules/**', 'dist/**', 'coverage/**'],
         rules: {
             // Relaxed rules for existing JS code
-            'no-unused-vars': ['warn', {
-                argsIgnorePattern: '^_',
-                varsIgnorePattern: '^_'
-            }],
+            'no-unused-vars': [
+                'warn',
+                {
+                    argsIgnorePattern: '^_',
+                    varsIgnorePattern: '^_'
+                }
+            ],
             'no-undef': 'warn',
             'no-console': 'off',
             'no-empty': 'warn',
@@ -167,12 +170,6 @@ export default tseslint.config(
 
     // Ignore patterns
     {
-        ignores: [
-            'node_modules/**',
-            'dist/**',
-            'coverage/**',
-            '*.min.js',
-            'sw.js'
-        ]
+        ignores: ['node_modules/**', 'dist/**', 'coverage/**', '*.min.js', 'sw.js']
     }
 );

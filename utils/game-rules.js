@@ -54,9 +54,13 @@ function formatModifier(modifier) {
  * @returns {number} - HP to add
  */
 function calculateLevelUpHP(hitDie, conModifier) {
-    const dieValue = {
-        'd6': 6, 'd8': 8, 'd10': 10, 'd12': 12
-    }[hitDie] || 8;
+    const dieValue =
+        {
+            d6: 6,
+            d8: 8,
+            d10: 10,
+            d12: 12
+        }[hitDie] || 8;
 
     const average = Math.floor(dieValue / 2) + 1;
     const conMod = parseInt(conModifier) || 0;
@@ -72,15 +76,30 @@ function calculateLevelUpHP(hitDie, conModifier) {
 function getClassHitDie(className) {
     const hitDice = {
         // German class names
-        'Barbar': 'd12', 'Kämpfer': 'd10', 'Paladin': 'd10', 'Waldläufer': 'd10',
-        'Kleriker': 'd8', 'Druide': 'd8', 'Mönch': 'd8', 'Schurke': 'd8',
-        'Barde': 'd8', 'Hexenmeister': 'd8',
-        'Zauberer': 'd6', 'Magier': 'd6',
+        Barbar: 'd12',
+        Kämpfer: 'd10',
+        Paladin: 'd10',
+        Waldläufer: 'd10',
+        Kleriker: 'd8',
+        Druide: 'd8',
+        Mönch: 'd8',
+        Schurke: 'd8',
+        Barde: 'd8',
+        Hexenmeister: 'd8',
+        Zauberer: 'd6',
+        Magier: 'd6',
         // English class names
-        'Barbarian': 'd12', 'Fighter': 'd10', 'Ranger': 'd10',
-        'Cleric': 'd8', 'Druid': 'd8', 'Monk': 'd8', 'Rogue': 'd8',
-        'Bard': 'd8', 'Warlock': 'd8',
-        'Sorcerer': 'd6', 'Wizard': 'd6'
+        Barbarian: 'd12',
+        Fighter: 'd10',
+        Ranger: 'd10',
+        Cleric: 'd8',
+        Druid: 'd8',
+        Monk: 'd8',
+        Rogue: 'd8',
+        Bard: 'd8',
+        Warlock: 'd8',
+        Sorcerer: 'd6',
+        Wizard: 'd6'
     };
 
     return hitDice[className] || 'd8'; // Default d8

@@ -16,11 +16,9 @@ function getSpellColor(type) {
 function showSpellTooltip(spellId, event) {
     event.stopPropagation();
     const spell = EntityLookup.spell(spellId);
-    if (!spell)
-        return;
+    if (!spell) return;
     const tooltip = $('spell-tooltip');
-    if (!tooltip)
-        return;
+    if (!tooltip) return;
     // Fill tooltip content
     const nameEl = $('stt-name');
     const levelEl = $('stt-level');
@@ -31,37 +29,33 @@ function showSpellTooltip(spellId, event) {
     const componentsEl = $('stt-components');
     const descEl = $('stt-desc');
     const classesEl = $('stt-classes');
-    if (nameEl)
-        nameEl.textContent = spell.name || 'Unbekannt';
-    if (levelEl)
-        levelEl.textContent = spell.level === 0 ? 'Zaubertrick' : `Grad ${spell.level}`;
-    if (schoolEl)
-        schoolEl.textContent = spell.school || '—';
-    if (timeEl)
-        timeEl.textContent = spell.time || '—';
-    if (rangeEl)
-        rangeEl.textContent = spell.range || '—';
-    if (durationEl)
-        durationEl.textContent = spell.duration || '—';
+    if (nameEl) nameEl.textContent = spell.name || 'Unbekannt';
+    if (levelEl) levelEl.textContent = spell.level === 0 ? 'Zaubertrick' : `Grad ${spell.level}`;
+    if (schoolEl) schoolEl.textContent = spell.school || '—';
+    if (timeEl) timeEl.textContent = spell.time || '—';
+    if (rangeEl) rangeEl.textContent = spell.range || '—';
+    if (durationEl) durationEl.textContent = spell.duration || '—';
     // Components (v, g, m are the field names)
     const comps = [];
-    if (spell.v)
-        comps.push('<span class="spell-tooltip-comp">V</span>');
-    if (spell.g)
-        comps.push('<span class="spell-tooltip-comp">G</span>');
+    if (spell.v) comps.push('<span class="spell-tooltip-comp">V</span>');
+    if (spell.g) comps.push('<span class="spell-tooltip-comp">G</span>');
     if (spell.m)
-        comps.push(`<span class="spell-tooltip-comp" title="${esc(spell.material || '')}">M</span>`);
+        comps.push(
+            `<span class="spell-tooltip-comp" title="${esc(spell.material || '')}">M</span>`
+        );
     if (componentsEl)
-        componentsEl.innerHTML = comps.length ? comps.join('') : '<span class="spell-tooltip-comp">—</span>';
+        componentsEl.innerHTML = comps.length
+            ? comps.join('')
+            : '<span class="spell-tooltip-comp">—</span>';
     // Description
     if (descEl) {
         const renderMd = window.renderMarkdownInContent || (x => x);
-        descEl.innerHTML = sanitizeHTML(renderMd(spell.description)) || '<em>Keine Beschreibung</em>';
+        descEl.innerHTML =
+            sanitizeHTML(renderMd(spell.description)) || '<em>Keine Beschreibung</em>';
     }
     // Classes (spellClasses is the field name)
     const classes = spell.spellClasses || [];
-    if (classesEl)
-        classesEl.textContent = classes.length ? `Klassen: ${classes.join(', ')}` : '';
+    if (classesEl) classesEl.textContent = classes.length ? `Klassen: ${classes.join(', ')}` : '';
     // Position tooltip near mouse
     const x = event.clientX;
     const y = event.clientY;
@@ -83,17 +77,14 @@ function showSpellTooltip(spellId, event) {
         posY = y - rect.height - 10;
     }
     // Ensure not off-screen left/top
-    if (posX < 10)
-        posX = 10;
-    if (posY < 10)
-        posY = 10;
+    if (posX < 10) posX = 10;
+    if (posY < 10) posY = 10;
     tooltip.style.left = posX + 'px';
     tooltip.style.top = posY + 'px';
 }
 function hideSpellTooltip() {
     const tooltip = $('spell-tooltip');
-    if (tooltip)
-        tooltip.classList.remove('visible');
+    if (tooltip) tooltip.classList.remove('visible');
 }
 // Close tooltip when clicking anywhere
 document.addEventListener('click', function (e) {
@@ -103,55 +94,50 @@ document.addEventListener('click', function (e) {
     }
 });
 // Handle wheel scroll - allow scrolling inside tooltip desc, close if scrolling outside
-document.addEventListener('wheel', function (e) {
-    const tooltip = $('spell-tooltip');
-    if (!tooltip || !tooltip.classList.contains('visible'))
-        return;
-    const descBox = $('stt-desc');
-    const target = e.target;
-    const isInsideDesc = descBox && descBox.contains(target);
-    if (isInsideDesc && descBox) {
-        // Allow scrolling inside description box, prevent page scroll
-        const atTop = descBox.scrollTop === 0;
-        const atBottom = descBox.scrollTop + descBox.clientHeight >= descBox.scrollHeight;
-        // Only prevent default if we can scroll in the direction
-        if ((e.deltaY < 0 && !atTop) || (e.deltaY > 0 && !atBottom)) {
-            e.stopPropagation();
-        }
-        else if ((e.deltaY < 0 && atTop) || (e.deltaY > 0 && atBottom)) {
-            // At scroll boundary, prevent page scroll
+document.addEventListener(
+    'wheel',
+    function (e) {
+        const tooltip = $('spell-tooltip');
+        if (!tooltip || !tooltip.classList.contains('visible')) return;
+        const descBox = $('stt-desc');
+        const target = e.target;
+        const isInsideDesc = descBox && descBox.contains(target);
+        if (isInsideDesc && descBox) {
+            // Allow scrolling inside description box, prevent page scroll
+            const atTop = descBox.scrollTop === 0;
+            const atBottom = descBox.scrollTop + descBox.clientHeight >= descBox.scrollHeight;
+            // Only prevent default if we can scroll in the direction
+            if ((e.deltaY < 0 && !atTop) || (e.deltaY > 0 && !atBottom)) {
+                e.stopPropagation();
+            } else if ((e.deltaY < 0 && atTop) || (e.deltaY > 0 && atBottom)) {
+                // At scroll boundary, prevent page scroll
+                e.preventDefault();
+                e.stopPropagation();
+            }
+        } else if (tooltip.contains(target)) {
+            // Inside tooltip but not desc - prevent page scroll
             e.preventDefault();
             e.stopPropagation();
+        } else {
+            // Scrolling outside tooltip - close it
+            hideSpellTooltip();
         }
-    }
-    else if (tooltip.contains(target)) {
-        // Inside tooltip but not desc - prevent page scroll
-        e.preventDefault();
-        e.stopPropagation();
-    }
-    else {
-        // Scrolling outside tooltip - close it
-        hideSpellTooltip();
-    }
-}, { passive: false });
+    },
+    { passive: false }
+);
 // Close tooltip on ESC
 document.addEventListener('keydown', function (e) {
-    if (e.key === 'Escape')
-        hideSpellTooltip();
+    if (e.key === 'Escape') hideSpellTooltip();
 });
 function showAssignSpells(charId) {
     const charIdInput = $('assign-char-id');
     const searchInput = $('assign-spell-search');
     const classFilterInput = $('assign-spell-class-filter');
     const levelFilterInput = $('assign-spell-level-filter');
-    if (charIdInput)
-        charIdInput.value = String(charId);
-    if (searchInput)
-        searchInput.value = '';
-    if (classFilterInput)
-        classFilterInput.value = '';
-    if (levelFilterInput)
-        levelFilterInput.value = '';
+    if (charIdInput) charIdInput.value = String(charId);
+    if (searchInput) searchInput.value = '';
+    if (classFilterInput) classFilterInput.value = '';
+    if (levelFilterInput) levelFilterInput.value = '';
     renderAssignSpellList();
     showModal('assign-spell-modal');
 }
@@ -168,21 +154,23 @@ function renderAssignSpellList() {
     const classFilter = classFilterInput?.value || '';
     const levelFilter = levelFilterInput?.value || '';
     // Filter spells
-    const spells = D.spells.filter((s) => {
+    const spells = D.spells.filter(s => {
         if (searchTerm) {
             const name = (s.name || '').toLowerCase();
             const school = (s.school || '').toLowerCase();
             const desc = (s.description || '').toLowerCase();
-            if (!name.includes(searchTerm) && !school.includes(searchTerm) && !desc.includes(searchTerm))
+            if (
+                !name.includes(searchTerm) &&
+                !school.includes(searchTerm) &&
+                !desc.includes(searchTerm)
+            )
                 return false;
         }
-        if (classFilter && (!s.spellClasses || !s.spellClasses.includes(classFilter)))
-            return false;
+        if (classFilter && (!s.spellClasses || !s.spellClasses.includes(classFilter))) return false;
         if (levelFilter !== '') {
             const lvl = parseInt(levelFilter);
             const spellLevel = s.level ?? (s.type === 'cantrip' ? 0 : -1);
-            if (spellLevel !== lvl)
-                return false;
+            if (spellLevel !== lvl) return false;
         }
         return true;
     });
@@ -190,28 +178,27 @@ function renderAssignSpellList() {
     spells.sort((a, b) => {
         const lvlA = a.level ?? (a.type === 'cantrip' ? 0 : 99);
         const lvlB = b.level ?? (b.type === 'cantrip' ? 0 : 99);
-        if (lvlA !== lvlB)
-            return lvlA - lvlB;
+        if (lvlA !== lvlB) return lvlA - lvlB;
         return (a.name || '').localeCompare(b.name || '');
     });
     const container = $('assign-spell-list');
     const countEl = $('assign-spell-count');
-    if (!container)
-        return;
+    if (!container) return;
     if (!spells.length) {
-        container.innerHTML = '<div style="text-align: center; color: var(--text-dim); padding: 40px;">Keine Zauber gefunden</div>';
-        if (countEl)
-            countEl.textContent = '0';
+        container.innerHTML =
+            '<div style="text-align: center; color: var(--text-dim); padding: 40px;">Keine Zauber gefunden</div>';
+        if (countEl) countEl.textContent = '0';
         return;
     }
-    container.innerHTML = spells.map((s) => {
-        const spellId = parseEntityId(s.id);
-        const isChecked = currentSpells.some((sid) => parseEntityId(sid) === spellId);
-        const level = s.level ?? (s.type === 'cantrip' ? 0 : 0);
-        const levelText = level === 0 ? '🔮' : level;
-        const levelClass = level === 0 ? 'trick' : `level-${level}`;
-        const school = s.school ? s.school.substring(0, 3) : '';
-        return `<label class="assign-spell-item ${isChecked ? 'checked' : ''}">
+    container.innerHTML = spells
+        .map(s => {
+            const spellId = parseEntityId(s.id);
+            const isChecked = currentSpells.some(sid => parseEntityId(sid) === spellId);
+            const level = s.level ?? (s.type === 'cantrip' ? 0 : 0);
+            const levelText = level === 0 ? '🔮' : level;
+            const levelClass = level === 0 ? 'trick' : `level-${level}`;
+            const school = s.school ? s.school.substring(0, 3) : '';
+            return `<label class="assign-spell-item ${isChecked ? 'checked' : ''}">
             <input type="checkbox" value="${spellId}" ${isChecked ? 'checked' : ''} data-on-change="updateAssignSpellCount">
             <div class="assign-spell-info">
                 <span class="assign-spell-name">${esc(s.name)}</span>
@@ -219,7 +206,8 @@ function renderAssignSpellList() {
             </div>
             <span class="assign-spell-level ${levelClass}">${levelText}</span>
         </label>`;
-    }).join('');
+        })
+        .join('');
     updateAssignSpellCount();
 }
 function updateAssignSpellCount(element) {
@@ -230,19 +218,19 @@ function updateAssignSpellCount(element) {
             label.classList.toggle('checked', element.checked);
         }
     }
-    const checked = document.querySelectorAll('#assign-spell-list input[type="checkbox"]:checked').length;
+    const checked = document.querySelectorAll(
+        '#assign-spell-list input[type="checkbox"]:checked'
+    ).length;
     const total = document.querySelectorAll('#assign-spell-list input[type="checkbox"]').length;
     const countEl = $('assign-spell-count');
-    if (countEl)
-        countEl.textContent = `${checked}/${total}`;
+    if (countEl) countEl.textContent = `${checked}/${total}`;
 }
 function assignSpellsSelectAll() {
     document.querySelectorAll('#assign-spell-list input[type="checkbox"]').forEach(cb => {
         const checkbox = cb;
         checkbox.checked = true;
         const parent = checkbox.parentElement;
-        if (parent)
-            parent.classList.add('checked');
+        if (parent) parent.classList.add('checked');
     });
     updateAssignSpellCount();
 }
@@ -251,8 +239,7 @@ function assignSpellsSelectNone() {
         const checkbox = cb;
         checkbox.checked = false;
         const parent = checkbox.parentElement;
-        if (parent)
-            parent.classList.remove('checked');
+        if (parent) parent.classList.remove('checked');
     });
     updateAssignSpellCount();
 }
@@ -294,10 +281,10 @@ function assignSpells() {
     const finalSpells = [...selectedSpells];
     // Bei aktivem Filter: behalte nicht-sichtbare bereits zugewiesene Zauber
     if (searchTerm || classFilter || levelFilter) {
-        (ch.spells || []).forEach((sid) => {
+        (ch.spells || []).forEach(sid => {
             const spellId = parseInt(sid);
             if (!visibleSpellIds.has(spellId)) {
-                if (D.spells.some((s) => s.id === spellId)) {
+                if (D.spells.some(s => s.id === spellId)) {
                     finalSpells.push(spellId);
                 }
             }

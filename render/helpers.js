@@ -48,12 +48,10 @@ const ErrorHandler = {
      */
     _lastToastTime: 0,
     showError(message) {
-        if (!this._showToast)
-            return;
+        if (!this._showToast) return;
         // Debounce: Maximal ein Toast alle 2 Sekunden
         const now = Date.now();
-        if (now - this._lastToastTime < 2000)
-            return;
+        if (now - this._lastToastTime < 2000) return;
         this._lastToastTime = now;
         if (typeof showToast === 'function') {
             showToast(`⚠️ ${message}`, 'error');
@@ -79,8 +77,7 @@ function safeExecute(fn, fnName, options = {}) {
     const { fallback = null, showToast = false, toastMessage = null, onError = null } = options;
     try {
         return fn();
-    }
-    catch (error) {
+    } catch (error) {
         ErrorHandler.log(fnName, error);
         if (showToast) {
             ErrorHandler.showError(toastMessage || `Fehler in ${fnName}`);
@@ -88,8 +85,7 @@ function safeExecute(fn, fnName, options = {}) {
         if (onError) {
             try {
                 onError(error);
-            }
-            catch (e) {
+            } catch (e) {
                 console.error('Error in onError callback:', e);
             }
         }
@@ -101,12 +97,16 @@ function safeExecute(fn, fnName, options = {}) {
  * Zeigt einen Fehler-State im Container bei Fehlern
  */
 function safeRender(fn, fnName, containerId = null, options = {}) {
-    const { showToastOnError = false, toastMessage = 'Anzeige konnte nicht aktualisiert werden', fallbackRender = null, rethrowInDebug = true } = options;
+    const {
+        showToastOnError = false,
+        toastMessage = 'Anzeige konnte nicht aktualisiert werden',
+        fallbackRender = null,
+        rethrowInDebug = true
+    } = options;
     const APP_CONFIG = window.APP_CONFIG;
     try {
         return fn();
-    }
-    catch (error) {
+    } catch (error) {
         ErrorHandler.log(fnName, error, 'Render failure');
         // Show toast notification if requested
         if (showToastOnError) {
@@ -116,8 +116,7 @@ function safeRender(fn, fnName, containerId = null, options = {}) {
         if (fallbackRender) {
             try {
                 fallbackRender();
-            }
-            catch (fallbackError) {
+            } catch (fallbackError) {
                 ErrorHandler.log(fnName, fallbackError, 'Fallback render failed');
             }
         }
@@ -154,12 +153,10 @@ function validateEntity(entity, schema) {
     for (const [key, defaultValue] of Object.entries(schema)) {
         if (result[key] === undefined || result[key] === null) {
             result[key] = defaultValue;
-        }
-        else if (Array.isArray(defaultValue) && !Array.isArray(result[key])) {
+        } else if (Array.isArray(defaultValue) && !Array.isArray(result[key])) {
             // Sollte Array sein, ist aber keins
             result[key] = defaultValue;
-        }
-        else if (typeof defaultValue === 'number' && typeof result[key] !== 'number') {
+        } else if (typeof defaultValue === 'number' && typeof result[key] !== 'number') {
             // Sollte Nummer sein
             result[key] = parseInt(result[key]) || defaultValue;
         }
@@ -241,9 +238,19 @@ function validateDataIntegrity() {
     }
     // Prüfe und initialisiere Arrays
     const requiredArrays = [
-        'characters', 'npcs', 'locations', 'quests', 'spells',
-        'loot', 'shops', 'encounters', 'sessionNotes', 'wiki',
-        'links', 'filters', 'timers'
+        'characters',
+        'npcs',
+        'locations',
+        'quests',
+        'spells',
+        'loot',
+        'shops',
+        'encounters',
+        'sessionNotes',
+        'wiki',
+        'links',
+        'filters',
+        'timers'
     ];
     for (const key of requiredArrays) {
         if (!Array.isArray(D[key])) {
@@ -271,8 +278,7 @@ function validateDataIntegrity() {
         ['shops', ENTITY_SCHEMAS.shop],
         ['encounters', ENTITY_SCHEMAS.encounter]
     ]) {
-        if (!Array.isArray(D[collection]))
-            continue;
+        if (!Array.isArray(D[collection])) continue;
         D[collection] = D[collection].filter((item, idx) => {
             if (!item || typeof item !== 'object') {
                 repairs.push(`${collection}[${idx}] war ungültig, wurde entfernt`);
@@ -288,8 +294,7 @@ function validateDataIntegrity() {
     }
     // Prüfe auf doppelte IDs
     for (const collection of requiredArrays) {
-        if (!Array.isArray(D[collection]))
-            continue;
+        if (!Array.isArray(D[collection])) continue;
         const ids = new Set();
         const duplicates = [];
         D[collection].forEach((item, idx) => {
@@ -332,8 +337,7 @@ function repairDataArrays() {
         showToast(`🔧 ${result.repairs.length} Reparaturen durchgeführt`, 'success');
         save();
         renderAll();
-    }
-    else {
+    } else {
         showToast('✅ Keine Reparaturen nötig', 'info');
     }
     return result;
@@ -361,8 +365,7 @@ function safeJSONParse(jsonString, fallback = null) {
     }
     try {
         return JSON.parse(jsonString);
-    }
-    catch (error) {
+    } catch (error) {
         ErrorHandler.log('safeJSONParse', error, jsonString.substring(0, 100));
         return fallback;
     }
@@ -373,8 +376,7 @@ function safeJSONParse(jsonString, fallback = null) {
 function safeJSONStringify(value, fallback = '{}') {
     try {
         return JSON.stringify(value);
-    }
-    catch (error) {
+    } catch (error) {
         ErrorHandler.log('safeJSONStringify', error);
         return fallback;
     }
@@ -383,7 +385,18 @@ function safeJSONStringify(value, fallback = '{}') {
  * Rendert einen Empty-State für leere Listen
  */
 function renderEmptyState(config) {
-    const { icon = '📭', titleEmpty = 'Keine Einträge', titleFiltered = 'Keine Einträge gefunden', descEmpty = 'Erstelle einen neuen Eintrag.', descFiltered = 'Versuche andere Filteroptionen.', buttonText = null, buttonAction = null, buttonValue = null, isFiltered = false, gridSpan = '1/-1' } = config;
+    const {
+        icon = '📭',
+        titleEmpty = 'Keine Einträge',
+        titleFiltered = 'Keine Einträge gefunden',
+        descEmpty = 'Erstelle einen neuen Eintrag.',
+        descFiltered = 'Versuche andere Filteroptionen.',
+        buttonText = null,
+        buttonAction = null,
+        buttonValue = null,
+        isFiltered = false,
+        gridSpan = '1/-1'
+    } = config;
     const title = isFiltered ? titleFiltered : titleEmpty;
     const desc = isFiltered ? descFiltered : descEmpty;
     const showButton = !isFiltered && buttonText && buttonAction;
@@ -392,14 +405,18 @@ function renderEmptyState(config) {
             <div class="empty-state-icon">${icon}</div>
             <div class="empty-state-title">${title}</div>
             <div class="empty-state-desc">${desc}</div>
-            ${showButton ? `
+            ${
+                showButton
+                    ? `
                 <button class="btn btn-success"
                     data-action="${buttonAction}"
                     ${buttonValue ? `data-value="${buttonValue}"` : ''}
                     style="font-size: 1.1em; padding: 12px 24px;">
                     ${buttonText}
                 </button>
-            ` : ''}
+            `
+                    : ''
+            }
         </div>
     `;
 }
@@ -409,8 +426,7 @@ function renderEmptyState(config) {
 function updateCounters(counters) {
     for (const [id, value] of Object.entries(counters)) {
         const el = $(id);
-        if (el)
-            el.textContent = String(value);
+        if (el) el.textContent = String(value);
     }
 }
 /**
@@ -418,16 +434,24 @@ function updateCounters(counters) {
  */
 function populateFilterDropdown(selectId, items, config = {}) {
     const select = $(selectId);
-    if (!select)
-        return false;
-    const { allLabel = 'Alle', valueField = 'id', labelField = 'name', labelFn = null, preserveValue = true } = config;
+    if (!select) return false;
+    const {
+        allLabel = 'Alle',
+        valueField = 'id',
+        labelField = 'name',
+        labelFn = null,
+        preserveValue = true
+    } = config;
     const currentValue = preserveValue ? select.value : '';
-    select.innerHTML = `<option value="">${allLabel}</option>` +
-        (items || []).map(item => {
-            const value = item[valueField];
-            const label = labelFn ? labelFn(item) : esc(item[labelField] || '');
-            return `<option value="${value}">${label}</option>`;
-        }).join('');
+    select.innerHTML =
+        `<option value="">${allLabel}</option>` +
+        (items || [])
+            .map(item => {
+                const value = item[valueField];
+                const label = labelFn ? labelFn(item) : esc(item[labelField] || '');
+                return `<option value="${value}">${label}</option>`;
+            })
+            .join('');
     if (preserveValue && currentValue) {
         select.value = currentValue;
     }
@@ -463,16 +487,14 @@ const EntityLookup = {
     get(type, id) {
         const D = window.D;
         const numId = parseEntityId(id);
-        if (numId === null)
-            return null;
+        if (numId === null) return null;
         const key = `${type}-${numId}`;
         if (this._cacheEnabled && this._cache.has(key)) {
             return this._cache.get(key);
         }
         const collection = D[type];
-        if (!Array.isArray(collection))
-            return null;
-        const entity = collection.find((item) => item.id === numId) || null;
+        if (!Array.isArray(collection)) return null;
+        const entity = collection.find(item => item.id === numId) || null;
         if (this._cacheEnabled) {
             this._cache.set(key, entity);
         }
@@ -496,30 +518,54 @@ const EntityLookup = {
      */
     findByName(type, name, nameField = 'name') {
         const D = window.D;
-        if (!name || typeof name !== 'string')
-            return null;
+        if (!name || typeof name !== 'string') return null;
         const collection = D[type];
-        if (!Array.isArray(collection))
-            return null;
+        if (!Array.isArray(collection)) return null;
         const lowerName = name.toLowerCase();
-        return collection.find((item) => {
-            const itemName = item[nameField];
-            return itemName && itemName.toLowerCase() === lowerName;
-        }) || null;
+        return (
+            collection.find(item => {
+                const itemName = item[nameField];
+                return itemName && itemName.toLowerCase() === lowerName;
+            }) || null
+        );
     },
     // Convenience-Methoden für häufige Entity-Typen
-    location(id) { return this.get('locations', id); },
-    npc(id) { return this.get('npcs', id); },
-    character(id) { return this.get('characters', id); },
-    quest(id) { return this.get('quests', id); },
-    spell(id) { return this.get('spells', id); },
-    lootItem(id) { return this.get('loot', id); },
-    encounter(id) { return this.get('encounters', id); },
-    shop(id) { return this.get('shops', id); },
-    wiki(id) { return this.get('wiki', id); },
-    sessionNote(id) { return this.get('sessionNotes', id); },
-    filter(id) { return this.get('filters', id); },
-    link(id) { return this.get('links', id); }
+    location(id) {
+        return this.get('locations', id);
+    },
+    npc(id) {
+        return this.get('npcs', id);
+    },
+    character(id) {
+        return this.get('characters', id);
+    },
+    quest(id) {
+        return this.get('quests', id);
+    },
+    spell(id) {
+        return this.get('spells', id);
+    },
+    lootItem(id) {
+        return this.get('loot', id);
+    },
+    encounter(id) {
+        return this.get('encounters', id);
+    },
+    shop(id) {
+        return this.get('shops', id);
+    },
+    wiki(id) {
+        return this.get('wiki', id);
+    },
+    sessionNote(id) {
+        return this.get('sessionNotes', id);
+    },
+    filter(id) {
+        return this.get('filters', id);
+    },
+    link(id) {
+        return this.get('links', id);
+    }
 };
 /**
  * Get comprehensive entity details for combat/display
@@ -537,16 +583,14 @@ function getEntityForCombat(entityType, entityName) {
             type = 'characters';
             id = entity.id;
         }
-    }
-    else if (entityType === 'enemy') {
+    } else if (entityType === 'enemy') {
         // Check encounters first, then NPCs
         entity = EntityLookup.findByName('encounters', entityName);
         if (entity) {
             ac = entity.ac || entity.armorClass || 10;
             type = 'encounters';
             id = entity.id;
-        }
-        else {
+        } else {
             entity = EntityLookup.findByName('npcs', entityName);
             if (entity) {
                 ac = entity.ac || 10;
@@ -554,8 +598,7 @@ function getEntityForCombat(entityType, entityName) {
                 id = entity.id;
             }
         }
-    }
-    else if (entityType === 'ally') {
+    } else if (entityType === 'ally') {
         entity = EntityLookup.findByName('npcs', entityName);
         if (entity) {
             ac = entity.ac || 10;
@@ -589,7 +632,12 @@ const ENTITY_TYPE_CONFIG = {
  * Rendert einen klickbaren Entity-Link
  */
 function renderEntityLink(type, id, label, options = {}) {
-    const { icon = ENTITY_TYPE_CONFIG[type]?.icon || '', showIcon = true, fallbackColor = 'var(--gold)', className = '' } = options;
+    const {
+        icon = ENTITY_TYPE_CONFIG[type]?.icon || '',
+        showIcon = true,
+        fallbackColor = 'var(--gold)',
+        className = ''
+    } = options;
     const iconHtml = showIcon && icon ? `${icon} ` : '';
     const escapedLabel = esc(label || '—');
     // Kein Link wenn keine ID
@@ -610,18 +658,20 @@ function renderEntityLink(type, id, label, options = {}) {
  * Rendert mehrere Entity-Links als Badges/Tags
  */
 function renderEntityLinkList(type, ids, options = {}, maxShow = 5) {
-    if (!ids?.length)
-        return '';
+    if (!ids?.length) return '';
     const visibleIds = ids.slice(0, maxShow);
     const hiddenCount = ids.length - maxShow;
-    const links = visibleIds.map(id => {
-        const entity = EntityLookup.get(type, id);
-        const name = entity?.name || entity?.title || `#${id}`;
-        return renderEntityLink(type, id, name, options);
-    }).join(' ');
-    const moreIndicator = hiddenCount > 0
-        ? `<span class="entity-link-more" style="color: var(--text-dim);">+${hiddenCount}</span>`
-        : '';
+    const links = visibleIds
+        .map(id => {
+            const entity = EntityLookup.get(type, id);
+            const name = entity?.name || entity?.title || `#${id}`;
+            return renderEntityLink(type, id, name, options);
+        })
+        .join(' ');
+    const moreIndicator =
+        hiddenCount > 0
+            ? `<span class="entity-link-more" style="color: var(--text-dim);">+${hiddenCount}</span>`
+            : '';
     return links + moreIndicator;
 }
 // ============================================================

@@ -7,7 +7,6 @@ import { test, expect } from '@playwright/test';
  */
 
 test.describe('Initiative System', () => {
-
     test.beforeEach(async ({ page }) => {
         // Lokale HTML-Datei laden
         const filePath = `file:///${process.cwd().replace(/\\/g, '/')}/dist/dnd-tracker-bundled.html`;
@@ -26,10 +25,13 @@ test.describe('Initiative System', () => {
     // ============================================================
 
     test.describe('Combatant Management', () => {
-
         test('sollte Combatant hinzufügen können', async ({ page }) => {
             // Add-Button finden
-            const addBtn = page.locator('[data-action="add-combatant"], [data-action="call"][data-value="addCombatant"]').first();
+            const addBtn = page
+                .locator(
+                    '[data-action="add-combatant"], [data-action="call"][data-value="addCombatant"]'
+                )
+                .first();
 
             if (await addBtn.isVisible()) {
                 await addBtn.click();
@@ -40,7 +42,9 @@ test.describe('Initiative System', () => {
                     await nameInput.fill('Goblin Krieger');
 
                     // Initiative eingeben
-                    const initInput = page.locator('#combatant-init, [name="combatant-init"]').first();
+                    const initInput = page
+                        .locator('#combatant-init, [name="combatant-init"]')
+                        .first();
                     if (await initInput.isVisible()) {
                         await initInput.fill('15');
                     }
@@ -52,11 +56,15 @@ test.describe('Initiative System', () => {
                     }
 
                     // Speichern
-                    const saveBtn = page.locator('[data-action="save-combatant"], button:has-text("Hinzufügen")').first();
+                    const saveBtn = page
+                        .locator('[data-action="save-combatant"], button:has-text("Hinzufügen")')
+                        .first();
                     await saveBtn.click();
 
                     // Combatant sollte in der Liste erscheinen
-                    await expect(page.locator('.initiative-list, .combatant-list')).toContainText('Goblin');
+                    await expect(page.locator('.initiative-list, .combatant-list')).toContainText(
+                        'Goblin'
+                    );
                 }
             }
         });
@@ -64,15 +72,23 @@ test.describe('Initiative System', () => {
         test('sollte mehrere Combatants sortiert nach Initiative anzeigen', async ({ page }) => {
             // Hilfsfunktion zum Hinzufügen
             async function addCombatant(name, init, hp) {
-                const addBtn = page.locator('[data-action="add-combatant"], [data-action="call"][data-value="addCombatant"]').first();
+                const addBtn = page
+                    .locator(
+                        '[data-action="add-combatant"], [data-action="call"][data-value="addCombatant"]'
+                    )
+                    .first();
                 if (await addBtn.isVisible()) {
                     await addBtn.click();
                     await page.waitForTimeout(200);
 
-                    const nameInput = page.locator('#combatant-name, [name="combatant-name"]').first();
+                    const nameInput = page
+                        .locator('#combatant-name, [name="combatant-name"]')
+                        .first();
                     await nameInput.fill(name);
 
-                    const initInput = page.locator('#combatant-init, [name="combatant-init"]').first();
+                    const initInput = page
+                        .locator('#combatant-init, [name="combatant-init"]')
+                        .first();
                     if (await initInput.isVisible()) {
                         await initInput.fill(String(init));
                     }
@@ -82,7 +98,9 @@ test.describe('Initiative System', () => {
                         await hpInput.fill(String(hp));
                     }
 
-                    const saveBtn = page.locator('[data-action="save-combatant"], button:has-text("Hinzufügen")').first();
+                    const saveBtn = page
+                        .locator('[data-action="save-combatant"], button:has-text("Hinzufügen")')
+                        .first();
                     await saveBtn.click();
                     await page.waitForTimeout(300);
                 }
@@ -104,7 +122,11 @@ test.describe('Initiative System', () => {
 
         test('sollte Combatant entfernen können', async ({ page }) => {
             // Erst einen hinzufügen
-            const addBtn = page.locator('[data-action="add-combatant"], [data-action="call"][data-value="addCombatant"]').first();
+            const addBtn = page
+                .locator(
+                    '[data-action="add-combatant"], [data-action="call"][data-value="addCombatant"]'
+                )
+                .first();
             if (await addBtn.isVisible()) {
                 await addBtn.click();
                 await page.fill('#combatant-name, [name="combatant-name"]', 'Zu löschender Gegner');
@@ -112,14 +134,20 @@ test.describe('Initiative System', () => {
                 await page.waitForTimeout(300);
 
                 // Löschen-Button finden und klicken
-                const deleteBtn = page.locator('.combatant-row:has-text("Zu löschender") [data-action="remove-combatant"], .initiative-item:has-text("Zu löschender") button.delete').first();
+                const deleteBtn = page
+                    .locator(
+                        '.combatant-row:has-text("Zu löschender") [data-action="remove-combatant"], .initiative-item:has-text("Zu löschender") button.delete'
+                    )
+                    .first();
 
                 if (await deleteBtn.isVisible()) {
                     page.on('dialog', dialog => dialog.accept());
                     await deleteBtn.click();
                     await page.waitForTimeout(300);
 
-                    await expect(page.locator('.initiative-list')).not.toContainText('Zu löschender');
+                    await expect(page.locator('.initiative-list')).not.toContainText(
+                        'Zu löschender'
+                    );
                 }
             }
         });
@@ -130,11 +158,14 @@ test.describe('Initiative System', () => {
     // ============================================================
 
     test.describe('Turn Management', () => {
-
         test.beforeEach(async ({ page }) => {
             // Test-Combatants hinzufügen
             async function quickAdd(name, init) {
-                const addBtn = page.locator('[data-action="add-combatant"], [data-action="call"][data-value="addCombatant"]').first();
+                const addBtn = page
+                    .locator(
+                        '[data-action="add-combatant"], [data-action="call"][data-value="addCombatant"]'
+                    )
+                    .first();
                 if (await addBtn.isVisible()) {
                     await addBtn.click();
                     await page.waitForTimeout(100);
@@ -143,7 +174,9 @@ test.describe('Initiative System', () => {
                     if (await initInput.isVisible()) {
                         await initInput.fill(String(init));
                     }
-                    await page.click('[data-action="save-combatant"], button:has-text("Hinzufügen")');
+                    await page.click(
+                        '[data-action="save-combatant"], button:has-text("Hinzufügen")'
+                    );
                     await page.waitForTimeout(200);
                 }
             }
@@ -154,17 +187,27 @@ test.describe('Initiative System', () => {
         });
 
         test('sollte zum nächsten Turn wechseln können', async ({ page }) => {
-            const nextBtn = page.locator('[data-action="next-turn"], button:has-text("Weiter"), button:has-text("Next")').first();
+            const nextBtn = page
+                .locator(
+                    '[data-action="next-turn"], button:has-text("Weiter"), button:has-text("Next")'
+                )
+                .first();
 
             if (await nextBtn.isVisible()) {
                 // Aktuellen aktiven Combatant merken
-                const activeBefore = await page.locator('.combatant-row.active, .initiative-item.active').first().textContent();
+                const activeBefore = await page
+                    .locator('.combatant-row.active, .initiative-item.active')
+                    .first()
+                    .textContent();
 
                 await nextBtn.click();
                 await page.waitForTimeout(200);
 
                 // Aktiver Combatant sollte sich geändert haben
-                const activeAfter = await page.locator('.combatant-row.active, .initiative-item.active').first().textContent();
+                const activeAfter = await page
+                    .locator('.combatant-row.active, .initiative-item.active')
+                    .first()
+                    .textContent();
 
                 // Bei nur einem Combatant bleibt es gleich, sonst sollte es wechseln
             }
@@ -173,9 +216,11 @@ test.describe('Initiative System', () => {
         test('sollte zum vorherigen Turn wechseln können', async ({ page }) => {
             // Erst next, dann prev
             const nextBtn = page.locator('[data-action="next-turn"]').first();
-            const prevBtn = page.locator('[data-action="prev-turn"], button:has-text("Zurück")').first();
+            const prevBtn = page
+                .locator('[data-action="prev-turn"], button:has-text("Zurück")')
+                .first();
 
-            if (await nextBtn.isVisible() && await prevBtn.isVisible()) {
+            if ((await nextBtn.isVisible()) && (await prevBtn.isVisible())) {
                 await nextBtn.click();
                 await page.waitForTimeout(200);
                 await prevBtn.click();
@@ -187,7 +232,7 @@ test.describe('Initiative System', () => {
             const nextBtn = page.locator('[data-action="next-turn"]').first();
             const roundDisplay = page.locator('.round-counter, [data-round]').first();
 
-            if (await nextBtn.isVisible() && await roundDisplay.isVisible()) {
+            if ((await nextBtn.isVisible()) && (await roundDisplay.isVisible())) {
                 const initialRound = await roundDisplay.textContent();
 
                 // Durch alle Combatants durchgehen (3x next für 3 Combatants)
@@ -207,7 +252,6 @@ test.describe('Initiative System', () => {
     // ============================================================
 
     test.describe('HP Management', () => {
-
         test('sollte Schaden anwenden können', async ({ page }) => {
             // Combatant hinzufügen
             const addBtn = page.locator('[data-action="add-combatant"]').first();
@@ -219,7 +263,11 @@ test.describe('Initiative System', () => {
                 await page.waitForTimeout(300);
 
                 // Damage-Button finden
-                const damageBtn = page.locator('.combatant-row:has-text("Tank") [data-action="damage-combatant"], .combatant-row:has-text("Tank") button:has-text("-")').first();
+                const damageBtn = page
+                    .locator(
+                        '.combatant-row:has-text("Tank") [data-action="damage-combatant"], .combatant-row:has-text("Tank") button:has-text("-")'
+                    )
+                    .first();
 
                 if (await damageBtn.isVisible()) {
                     await damageBtn.click();
@@ -228,11 +276,15 @@ test.describe('Initiative System', () => {
                     const damageInput = page.locator('#damage-amount, [name="damage"]').first();
                     if (await damageInput.isVisible()) {
                         await damageInput.fill('10');
-                        await page.click('[data-action="apply-damage"], button:has-text("Anwenden")');
+                        await page.click(
+                            '[data-action="apply-damage"], button:has-text("Anwenden")'
+                        );
                         await page.waitForTimeout(200);
 
                         // HP sollte 40 sein
-                        await expect(page.locator('.combatant-row:has-text("Tank")')).toContainText('40');
+                        await expect(page.locator('.combatant-row:has-text("Tank")')).toContainText(
+                            '40'
+                        );
                     }
                 }
             }
@@ -249,7 +301,11 @@ test.describe('Initiative System', () => {
                 await page.waitForTimeout(300);
 
                 // Erst Schaden
-                const damageBtn = page.locator('.combatant-row:has-text("Verwundeter") [data-action="damage-combatant"]').first();
+                const damageBtn = page
+                    .locator(
+                        '.combatant-row:has-text("Verwundeter") [data-action="damage-combatant"]'
+                    )
+                    .first();
                 if (await damageBtn.isVisible()) {
                     await damageBtn.click();
                     await page.fill('#damage-amount', '15');
@@ -258,7 +314,11 @@ test.describe('Initiative System', () => {
                 }
 
                 // Dann Heilung
-                const healBtn = page.locator('.combatant-row:has-text("Verwundeter") [data-action="heal-combatant"], .combatant-row:has-text("Verwundeter") button:has-text("+")').first();
+                const healBtn = page
+                    .locator(
+                        '.combatant-row:has-text("Verwundeter") [data-action="heal-combatant"], .combatant-row:has-text("Verwundeter") button:has-text("+")'
+                    )
+                    .first();
                 if (await healBtn.isVisible()) {
                     await healBtn.click();
                     const healInput = page.locator('#heal-amount, [name="heal"]').first();
@@ -276,7 +336,6 @@ test.describe('Initiative System', () => {
     // ============================================================
 
     test.describe('Concentration Tracking', () => {
-
         test('sollte Concentration setzen können', async ({ page }) => {
             // Combatant hinzufügen
             const addBtn = page.locator('[data-action="add-combatant"]').first();
@@ -288,7 +347,11 @@ test.describe('Initiative System', () => {
                 await page.waitForTimeout(300);
 
                 // Concentration-Button finden
-                const concBtn = page.locator('.combatant-row:has-text("Zauberer") [data-action="set-concentration"], .concentration-btn').first();
+                const concBtn = page
+                    .locator(
+                        '.combatant-row:has-text("Zauberer") [data-action="set-concentration"], .concentration-btn'
+                    )
+                    .first();
 
                 if (await concBtn.isVisible()) {
                     await concBtn.click();
@@ -297,11 +360,15 @@ test.describe('Initiative System', () => {
                     const spellInput = page.locator('#concentration-spell, [name="spell"]').first();
                     if (await spellInput.isVisible()) {
                         await spellInput.fill('Haste');
-                        await page.click('[data-action="save-concentration"], button:has-text("Setzen")');
+                        await page.click(
+                            '[data-action="save-concentration"], button:has-text("Setzen")'
+                        );
                         await page.waitForTimeout(200);
 
                         // Concentration sollte angezeigt werden
-                        await expect(page.locator('.combatant-row:has-text("Zauberer")')).toContainText('Haste');
+                        await expect(
+                            page.locator('.combatant-row:has-text("Zauberer")')
+                        ).toContainText('Haste');
                     }
                 }
             }
@@ -318,7 +385,9 @@ test.describe('Initiative System', () => {
                 await page.waitForTimeout(300);
 
                 // Concentration setzen
-                const concBtn = page.locator('.combatant-row:has-text("Mage") [data-action="set-concentration"]').first();
+                const concBtn = page
+                    .locator('.combatant-row:has-text("Mage") [data-action="set-concentration"]')
+                    .first();
                 if (await concBtn.isVisible()) {
                     await concBtn.click();
                     await page.fill('#concentration-spell', 'Fly');
@@ -326,7 +395,9 @@ test.describe('Initiative System', () => {
                     await page.waitForTimeout(200);
 
                     // Schaden anwenden
-                    const damageBtn = page.locator('.combatant-row:has-text("Mage") [data-action="damage-combatant"]').first();
+                    const damageBtn = page
+                        .locator('.combatant-row:has-text("Mage") [data-action="damage-combatant"]')
+                        .first();
                     if (await damageBtn.isVisible()) {
                         await damageBtn.click();
                         await page.fill('#damage-amount', '20');
@@ -346,7 +417,6 @@ test.describe('Initiative System', () => {
     // ============================================================
 
     test.describe('Death Saves', () => {
-
         test('sollte Death Saves bei 0 HP anzeigen', async ({ page }) => {
             // Player-Combatant hinzufügen
             const addBtn = page.locator('[data-action="add-combatant"]').first();
@@ -356,7 +426,9 @@ test.describe('Initiative System', () => {
                 await page.fill('#combatant-hp', '5');
 
                 // Als Player markieren wenn möglich
-                const playerCheckbox = page.locator('#combatant-is-player, [name="isPlayer"]').first();
+                const playerCheckbox = page
+                    .locator('#combatant-is-player, [name="isPlayer"]')
+                    .first();
                 if (await playerCheckbox.isVisible()) {
                     await playerCheckbox.check();
                 }
@@ -365,7 +437,11 @@ test.describe('Initiative System', () => {
                 await page.waitForTimeout(300);
 
                 // Auf 0 HP reduzieren
-                const damageBtn = page.locator('.combatant-row:has-text("Sterbender") [data-action="damage-combatant"]').first();
+                const damageBtn = page
+                    .locator(
+                        '.combatant-row:has-text("Sterbender") [data-action="damage-combatant"]'
+                    )
+                    .first();
                 if (await damageBtn.isVisible()) {
                     await damageBtn.click();
                     await page.fill('#damage-amount', '10');
@@ -390,7 +466,11 @@ test.describe('Initiative System', () => {
                 await page.waitForTimeout(200);
 
                 // Auf 0 HP
-                const damageBtn = page.locator('.combatant-row:has-text("Am Sterben") [data-action="damage-combatant"]').first();
+                const damageBtn = page
+                    .locator(
+                        '.combatant-row:has-text("Am Sterben") [data-action="damage-combatant"]'
+                    )
+                    .first();
                 if (await damageBtn.isVisible()) {
                     await damageBtn.click();
                     await page.fill('#damage-amount', '5');
@@ -398,7 +478,9 @@ test.describe('Initiative System', () => {
                     await page.waitForTimeout(300);
 
                     // Success klicken
-                    const successDot = page.locator('.death-saves .success-dot, [data-action="death-save-success"]').first();
+                    const successDot = page
+                        .locator('.death-saves .success-dot, [data-action="death-save-success"]')
+                        .first();
                     if (await successDot.isVisible()) {
                         await successDot.click();
                         await page.waitForTimeout(100);
@@ -415,7 +497,6 @@ test.describe('Initiative System', () => {
     // ============================================================
 
     test.describe('Conditions', () => {
-
         test('sollte Condition hinzufügen können', async ({ page }) => {
             // Combatant hinzufügen
             const addBtn = page.locator('[data-action="add-combatant"]').first();
@@ -427,18 +508,26 @@ test.describe('Initiative System', () => {
                 await page.waitForTimeout(300);
 
                 // Condition-Button
-                const condBtn = page.locator('.combatant-row:has-text("Vergifteter") [data-action="add-condition"], .condition-btn').first();
+                const condBtn = page
+                    .locator(
+                        '.combatant-row:has-text("Vergifteter") [data-action="add-condition"], .condition-btn'
+                    )
+                    .first();
                 if (await condBtn.isVisible()) {
                     await condBtn.click();
 
                     // Condition auswählen
-                    const poisonedOption = page.locator('[data-condition="poisoned"], button:has-text("Vergiftet")').first();
+                    const poisonedOption = page
+                        .locator('[data-condition="poisoned"], button:has-text("Vergiftet")')
+                        .first();
                     if (await poisonedOption.isVisible()) {
                         await poisonedOption.click();
                         await page.waitForTimeout(200);
 
                         // Condition sollte angezeigt werden
-                        await expect(page.locator('.combatant-row:has-text("Vergifteter")')).toContainText('Vergiftet');
+                        await expect(
+                            page.locator('.combatant-row:has-text("Vergifteter")')
+                        ).toContainText('Vergiftet');
                     }
                 }
             }
@@ -455,7 +544,9 @@ test.describe('Initiative System', () => {
                 await page.waitForTimeout(200);
 
                 // Condition hinzufügen
-                const condBtn = page.locator('.combatant-row:has-text("Gelähmter") [data-action="add-condition"]').first();
+                const condBtn = page
+                    .locator('.combatant-row:has-text("Gelähmter") [data-action="add-condition"]')
+                    .first();
                 if (await condBtn.isVisible()) {
                     await condBtn.click();
                     const paraOption = page.locator('[data-condition="paralyzed"]').first();
@@ -464,7 +555,11 @@ test.describe('Initiative System', () => {
                         await page.waitForTimeout(200);
 
                         // Condition entfernen
-                        const conditionBadge = page.locator('.combatant-row:has-text("Gelähmter") .condition-badge, .condition-tag').first();
+                        const conditionBadge = page
+                            .locator(
+                                '.combatant-row:has-text("Gelähmter") .condition-badge, .condition-tag'
+                            )
+                            .first();
                         if (await conditionBadge.isVisible()) {
                             await conditionBadge.click(); // Toggle off
                         }
@@ -479,7 +574,6 @@ test.describe('Initiative System', () => {
     // ============================================================
 
     test.describe('AoE Damage', () => {
-
         test('sollte AoE-Schaden auf mehrere Ziele anwenden', async ({ page }) => {
             // Mehrere Combatants hinzufügen
             async function addEnemy(name, hp) {
@@ -496,7 +590,9 @@ test.describe('Initiative System', () => {
             await addEnemy('Goblin 3', 7);
 
             // AoE-Button
-            const aoeBtn = page.locator('[data-action="show-aoe"], button:has-text("AoE"), button:has-text("💥")').first();
+            const aoeBtn = page
+                .locator('[data-action="show-aoe"], button:has-text("AoE"), button:has-text("💥")')
+                .first();
             if (await aoeBtn.isVisible()) {
                 await aoeBtn.click();
 
@@ -506,7 +602,9 @@ test.describe('Initiative System', () => {
                     await damageFormula.fill('8d6');
 
                     // Alle Goblins auswählen
-                    const selectAllBtn = page.locator('button:has-text("Alle"), [data-action="select-all-targets"]').first();
+                    const selectAllBtn = page
+                        .locator('button:has-text("Alle"), [data-action="select-all-targets"]')
+                        .first();
                     if (await selectAllBtn.isVisible()) {
                         await selectAllBtn.click();
                     }
@@ -523,7 +621,6 @@ test.describe('Initiative System', () => {
     // ============================================================
 
     test.describe('Encounter Reset', () => {
-
         test('sollte Encounter zurücksetzen können', async ({ page }) => {
             // Combatants hinzufügen
             const addBtn = page.locator('[data-action="add-combatant"]').first();
@@ -534,14 +631,20 @@ test.describe('Initiative System', () => {
                 await page.waitForTimeout(300);
 
                 // Reset-Button
-                const resetBtn = page.locator('[data-action="reset-initiative"], button:has-text("Zurücksetzen"), button:has-text("Reset")').first();
+                const resetBtn = page
+                    .locator(
+                        '[data-action="reset-initiative"], button:has-text("Zurücksetzen"), button:has-text("Reset")'
+                    )
+                    .first();
                 if (await resetBtn.isVisible()) {
                     page.on('dialog', dialog => dialog.accept());
                     await resetBtn.click();
                     await page.waitForTimeout(500);
 
                     // Liste sollte leer sein
-                    await expect(page.locator('.initiative-list, .combatant-list')).not.toContainText('Reset-Test');
+                    await expect(
+                        page.locator('.initiative-list, .combatant-list')
+                    ).not.toContainText('Reset-Test');
                 }
             }
         });

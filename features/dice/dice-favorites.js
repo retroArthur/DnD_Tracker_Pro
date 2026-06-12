@@ -16,24 +16,27 @@ function saveDiceFavorites(favs) {
 function renderDiceFavorites() {
     const favs = getDiceFavorites();
     const container = $('dice-favorites-list');
-    if (!container)
-        return;
+    if (!container) return;
     if (!favs.length) {
-        container.innerHTML = '<span style="color: var(--text-dim); font-size: 0.75em;">Keine Favoriten</span>';
+        container.innerHTML =
+            '<span style="color: var(--text-dim); font-size: 0.75em;">Keine Favoriten</span>';
         return;
     }
-    container.innerHTML = favs.map((f, i) => `
+    container.innerHTML = favs
+        .map(
+            (f, i) => `
         <div class="dice-fav-item" data-action="roll-favorite" data-id="${i}" title="${esc(f.notation)}">
             <span class="fav-name">${esc(f.name)}</span>
             <span class="fav-del" data-action="delete-favorite-stop" data-id="${i}">✕</span>
         </div>
-    `).join('');
+    `
+        )
+        .join('');
 }
 function addDiceFavorite() {
     const nameInput = $('dice-fav-name');
     const notationInput = $('dice-fav-notation');
-    if (!nameInput || !notationInput)
-        return;
+    if (!nameInput || !notationInput) return;
     const name = nameInput.value.trim();
     const notation = notationInput.value.trim();
     if (!name || !notation) {

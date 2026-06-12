@@ -4,17 +4,13 @@
 // ============================================================
 function showAssignItems(charId) {
     const ch = EntityLookup.character(charId);
-    if (!ch)
-        return;
+    if (!ch) return;
     const charIdInput = $('assign-item-char-id');
     const searchInput = $('assign-item-search');
     const catFilterInput = $('assign-item-cat-filter');
-    if (charIdInput)
-        charIdInput.value = String(charId);
-    if (searchInput)
-        searchInput.value = '';
-    if (catFilterInput)
-        catFilterInput.value = '';
+    if (charIdInput) charIdInput.value = String(charId);
+    if (searchInput) searchInput.value = '';
+    if (catFilterInput) catFilterInput.value = '';
     renderAssignItemList();
     showModal('assign-item-modal');
 }
@@ -23,8 +19,7 @@ function renderAssignItemList() {
     const CATS = window.CATS;
     const RARITY_COLORS = window.RARITY_COLORS;
     const container = $('assign-item-list');
-    if (!container)
-        return;
+    if (!container) return;
     const charIdInput = $('assign-item-char-id');
     const charId = parseEntityId(charIdInput?.value);
     if (charId === null) {
@@ -43,49 +38,48 @@ function renderAssignItemList() {
     let items = D.loot || [];
     // Filter by category
     if (catFilter) {
-        items = items.filter((i) => i.category === catFilter);
+        items = items.filter(i => i.category === catFilter);
     }
     // Filter by search
     if (searchTerm) {
-        items = items.filter((i) => {
+        items = items.filter(i => {
             const name = (i.name || '').toLowerCase();
             const desc = (i.description || '').toLowerCase();
             return name.includes(searchTerm) || desc.includes(searchTerm);
         });
     }
     // Migrate old format (array of IDs) to new format (array of objects with quantity)
-    if (!ch.items)
-        ch.items = [];
+    if (!ch.items) ch.items = [];
     if (ch.items.length > 0 && typeof ch.items[0] === 'number') {
-        ch.items = ch.items.map((id) => ({ id: id, quantity: 1 }));
+        ch.items = ch.items.map(id => ({ id: id, quantity: 1 }));
     }
     // Get assigned item quantities
-    const getAssignedQuantity = (itemId) => {
-        const assigned = ch.items.find((i) => i.id === itemId);
+    const getAssignedQuantity = itemId => {
+        const assigned = ch.items.find(i => i.id === itemId);
         return assigned ? assigned.quantity : 0;
     };
     // Sort: assigned first, then by name
     items.sort((a, b) => {
         const aAssigned = getAssignedQuantity(a.id) > 0;
         const bAssigned = getAssignedQuantity(b.id) > 0;
-        if (aAssigned && !bAssigned)
-            return -1;
-        if (!aAssigned && bAssigned)
-            return 1;
+        if (aAssigned && !bAssigned) return -1;
+        if (!aAssigned && bAssigned) return 1;
         return (a.name || '').localeCompare(b.name || '');
     });
     if (!items.length) {
-        container.innerHTML = '<div style="color:var(--text-dim); text-align:center; padding:20px;">Keine Items gefunden. Füge Items in der Truhe hinzu.</div>';
+        container.innerHTML =
+            '<div style="color:var(--text-dim); text-align:center; padding:20px;">Keine Items gefunden. Füge Items in der Truhe hinzu.</div>';
         updateAssignItemCount();
         return;
     }
     // Uses RARITY_COLORS from constants.js
-    container.innerHTML = items.map((i) => {
-        const assignedQty = getAssignedQuantity(i.id);
-        const maxQty = i.quantity || 1;
-        const catIcon = CATS[i.category]?.split(' ')[0] || '📦';
-        const rarityColor = RARITY_COLORS[i.rarity] || RARITY_COLORS.normal;
-        return `<div class="assign-item-row" style="display:grid; grid-template-columns: 1fr auto; align-items:center; gap:10px; padding:8px 10px; border-radius:6px; margin-bottom:2px; ${assignedQty > 0 ? 'background:rgba(74,222,128,0.15);' : ''}" data-item-id="${i.id}">
+    container.innerHTML = items
+        .map(i => {
+            const assignedQty = getAssignedQuantity(i.id);
+            const maxQty = i.quantity || 1;
+            const catIcon = CATS[i.category]?.split(' ')[0] || '📦';
+            const rarityColor = RARITY_COLORS[i.rarity] || RARITY_COLORS.normal;
+            return `<div class="assign-item-row" style="display:grid; grid-template-columns: 1fr auto; align-items:center; gap:10px; padding:8px 10px; border-radius:6px; margin-bottom:2px; ${assignedQty > 0 ? 'background:rgba(74,222,128,0.15);' : ''}" data-item-id="${i.id}">
             <div style="display:flex; align-items:center; gap:10px; overflow:hidden;">
                 <span style="font-size:1.1em; flex-shrink:0;">${catIcon}</span>
                 <span style="color:${rarityColor}; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${esc(i.name)}</span>
@@ -99,15 +93,15 @@ function renderAssignItemList() {
                 <button class="btn btn-sm" data-action="change-assign-qty" data-id="${i.id}" data-value="1" style="padding:4px 8px; font-size:1.1em;">+</button>
             </div>
         </div>`;
-    }).join('');
+        })
+        .join('');
     updateAssignItemCount();
 }
 function changeAssignItemQty(itemId, delta) {
     const id = typeof itemId === 'string' ? parseInt(itemId) : itemId;
     const deltaNum = typeof delta === 'string' ? parseInt(delta) : delta;
     const input = document.querySelector(`.assign-item-qty[data-item-id="${id}"]`);
-    if (!input)
-        return;
+    if (!input) return;
     const max = parseInt(input.max) || 99;
     const current = parseInt(input.value) || 0;
     const newVal = Math.max(0, Math.min(max, current + deltaNum));
@@ -146,8 +140,7 @@ function updateAssignItemCount() {
         }
     });
     const countEl = $('assign-item-count');
-    if (countEl)
-        countEl.textContent = `(${uniqueItems} Items, ${totalItems} Stück)`;
+    if (countEl) countEl.textContent = `(${uniqueItems} Items, ${totalItems} Stück)`;
 }
 function assignItems() {
     const D = window.D;
@@ -173,7 +166,7 @@ function assignItems() {
         const qty = parseInt(input.value) || 0;
         visibleItemIds.add(itemId);
         // Check if item exists
-        if (qty > 0 && D.loot.some((l) => l.id === itemId)) {
+        if (qty > 0 && D.loot.some(l => l.id === itemId)) {
             newItems.push({ id: itemId, quantity: qty });
         }
     });
@@ -184,13 +177,12 @@ function assignItems() {
     const catFilter = catFilterInput?.value || '';
     if (searchTerm || catFilter) {
         // Filter is active - keep non-visible items
-        (ch.items || []).forEach((existingItem) => {
-            const itemObj = typeof existingItem === 'number'
-                ? { id: existingItem, quantity: 1 }
-                : existingItem;
+        (ch.items || []).forEach(existingItem => {
+            const itemObj =
+                typeof existingItem === 'number' ? { id: existingItem, quantity: 1 } : existingItem;
             if (!visibleItemIds.has(itemObj.id)) {
                 // Item was not in filtered list - keep it
-                if (D.loot.some((l) => l.id === itemObj.id)) {
+                if (D.loot.some(l => l.id === itemObj.id)) {
                     newItems.push(itemObj);
                 }
             }

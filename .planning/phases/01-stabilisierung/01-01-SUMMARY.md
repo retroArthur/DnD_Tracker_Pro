@@ -7,33 +7,41 @@ tags: [playwright, smoke-test, debug, boot-crash, mindmap-cleanup]
 # Dependency graph
 requires: []
 provides:
-  - "Boot-Crash in tools/debug.js behoben (clearMindmap-Referenz entfernt)"
-  - "Playwright-Smoke-Test-Infrastruktur (playwright.smoke.config.js + tests/e2e/smoke.spec.js)"
-  - "Frischer dev-Build ohne tote Mindmap-Referenzen"
-affects: [02-persistenz, 03-mindmap-bereinigung, 04-build-haertung, 05-lint-typecheck, 06-ci-haertung, 07-doku-audit]
+    - 'Boot-Crash in tools/debug.js behoben (clearMindmap-Referenz entfernt)'
+    - 'Playwright-Smoke-Test-Infrastruktur (playwright.smoke.config.js + tests/e2e/smoke.spec.js)'
+    - 'Frischer dev-Build ohne tote Mindmap-Referenzen'
+affects:
+    [
+        02-persistenz,
+        03-mindmap-bereinigung,
+        04-build-haertung,
+        05-lint-typecheck,
+        06-ci-haertung,
+        07-doku-audit
+    ]
 
 # Tech tracking
 tech-stack:
-  added: []
-  patterns:
-    - "Smoke-Test mit eigenständiger Config (playwright.smoke.config.js) getrennt vom Haupt-E2E"
-    - "SMOKE_BASE_URL Env-Variable für CI-HTTP-Server vs. lokaler file://-Fallback"
-    - "pageerror-Listener in Playwright-Tests für Boot-Crash-Erkennung"
+    added: []
+    patterns:
+        - 'Smoke-Test mit eigenständiger Config (playwright.smoke.config.js) getrennt vom Haupt-E2E'
+        - 'SMOKE_BASE_URL Env-Variable für CI-HTTP-Server vs. lokaler file://-Fallback'
+        - 'pageerror-Listener in Playwright-Tests für Boot-Crash-Erkennung'
 
 key-files:
-  created:
-    - playwright.smoke.config.js
-    - tests/e2e/smoke.spec.js
-  modified:
-    - tools/debug.js
+    created:
+        - playwright.smoke.config.js
+        - tests/e2e/smoke.spec.js
+    modified:
+        - tools/debug.js
 
 key-decisions:
-  - "Tote window-Exports (clearMindmap, generateTestMindmap, testNetworkSystem, testNodeTypes) ebenfalls entfernt — Rule 1 (Bug), da sie beim Script-Load ReferenceErrors verursachen"
-  - "Smoke-Config auf smoke.spec.js beschränkt (testMatch) um bekannte 26 E2E-Failures nicht zu importieren"
-  - "file://-Fallback in Smoke-Tests für lokale Entwicklung; SMOKE_BASE_URL für CI-HTTP-Server"
+    - 'Tote window-Exports (clearMindmap, generateTestMindmap, testNetworkSystem, testNodeTypes) ebenfalls entfernt — Rule 1 (Bug), da sie beim Script-Load ReferenceErrors verursachen'
+    - 'Smoke-Config auf smoke.spec.js beschränkt (testMatch) um bekannte 26 E2E-Failures nicht zu importieren'
+    - 'file://-Fallback in Smoke-Tests für lokale Entwicklung; SMOKE_BASE_URL für CI-HTTP-Server'
 
 patterns-established:
-  - "Smoke-Test-Pattern: Eigenständige Config + pageerror-Listener + Tab-Sweep ohne Interaktionstests"
+    - 'Smoke-Test-Pattern: Eigenständige Config + pageerror-Listener + Tab-Sweep ohne Interaktionstests'
 
 requirements-completed: [STAB-01, STAB-08]
 
@@ -83,6 +91,7 @@ completed: 2026-06-12
 ### Auto-fixed Issues
 
 **1. [Rule 1 - Bug] Weitere tote Mindmap-Window-Exports entfernt**
+
 - **Found during:** Task 1 (clearMindmap-Boot-Crash-Fix)
 - **Issue:** Grep zeigte nach dem initialen Fix noch `window.clearMindmap = clearMindmap;` (Zeile 973), `window.generateTestMindmap = generateTestMindmap;` (Zeile 978), `window.testNetworkSystem = testNetworkSystem;` (Zeile 981), `window.testNodeTypes = testNodeTypes;` (Zeile 982). Keine dieser Funktionen existiert mehr nach der Mindmap-Entfernung. Im gebündelten Script würden diese Zeilenim globalen Scope ausgewertet und denselben Boot-Crash wie clearAllNodes verursachen.
 - **Fix:** Alle 4 toten window-Exports aus dem Backward-Compatibility-Exports-Block entfernt.
@@ -111,8 +120,9 @@ Keine — keine externen Services konfiguriert.
 - Plan 03 (Mindmap-Reste-Bereinigung, STAB-02) profitiert vom Smoke-Test als Regressionsschutz
 
 ---
-*Phase: 01-stabilisierung*
-*Completed: 2026-06-12*
+
+_Phase: 01-stabilisierung_
+_Completed: 2026-06-12_
 
 ## Self-Check: PASSED
 

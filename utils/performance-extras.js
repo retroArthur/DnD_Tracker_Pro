@@ -16,18 +16,21 @@
 var debouncedRenderParty = debounce(() => renderParty(), 100);
 var debouncedRenderQuests = debounce(() => renderQuests(), 100);
 // Intersection Observer für Lazy Loading
-const lazyLoadObserver = new IntersectionObserver((entries) => {
-    entries.forEach(entry => {
-        if (entry.isIntersecting) {
-            const el = entry.target;
-            if (el.dataset.lazySrc) {
-                el.src = el.dataset.lazySrc;
-                delete el.dataset.lazySrc;
-                lazyLoadObserver.unobserve(el);
+const lazyLoadObserver = new IntersectionObserver(
+    entries => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                const el = entry.target;
+                if (el.dataset.lazySrc) {
+                    el.src = el.dataset.lazySrc;
+                    delete el.dataset.lazySrc;
+                    lazyLoadObserver.unobserve(el);
+                }
             }
-        }
-    });
-}, { rootMargin: '100px' });
+        });
+    },
+    { rootMargin: '100px' }
+);
 function toggleMobileNav() {
     const header = document.querySelector('.app-header');
     if (header) {
@@ -53,16 +56,14 @@ function showMobileQuickNotes() {
                 <button class="btn btn-success" data-action="call" data-value="saveMobileQuickNotes" style="width: 100%;">💾 Speichern</button>
             </div>
         `;
-        modal.addEventListener('click', (e) => {
-            if (e.target === modal)
-                hideModal('mobile-quicknotes-modal');
+        modal.addEventListener('click', e => {
+            if (e.target === modal) hideModal('mobile-quicknotes-modal');
         });
         document.body.appendChild(modal);
     }
     // Lade aktuelle Notizen
     const textarea = $('mobile-quick-notes');
-    if (textarea)
-        textarea.value = D.quickNotes || '';
+    if (textarea) textarea.value = D.quickNotes || '';
     showModal('mobile-quicknotes-modal');
     setTimeout(() => $('mobile-quick-notes')?.focus(), 100);
 }
@@ -72,8 +73,7 @@ function saveMobileQuickNotes() {
     D.quickNotes = notes;
     // Sync mit Desktop-Textarea
     const desktopNotes = $('quick-notes');
-    if (desktopNotes)
-        desktopNotes.value = notes;
+    if (desktopNotes) desktopNotes.value = notes;
     save();
     showToast('📝 Notizen gespeichert');
     hideModal('mobile-quicknotes-modal');
@@ -98,9 +98,8 @@ function showMobileSearch() {
                 <div id="mobile-search-results" style="max-height: 60vh; overflow-y: auto;"></div>
             </div>
         `;
-        modal.addEventListener('click', (e) => {
-            if (e.target === modal)
-                hideModal('mobile-search-modal');
+        modal.addEventListener('click', e => {
+            if (e.target === modal) hideModal('mobile-search-modal');
         });
         document.body.appendChild(modal);
     }
@@ -110,41 +109,65 @@ function showMobileSearch() {
 function performMobileSearch() {
     const input = $('mobile-search-input');
     const results = $('mobile-search-results');
-    if (!input || !results)
-        return;
+    if (!input || !results) return;
     const query = input.value.trim();
     if (!query || query.length < 2) {
-        results.innerHTML = '<div style="color: var(--text-dim); padding: 20px; text-align: center;">Mindestens 2 Zeichen eingeben</div>';
+        results.innerHTML =
+            '<div style="color: var(--text-dim); padding: 20px; text-align: center;">Mindestens 2 Zeichen eingeben</div>';
         return;
     }
     const matches = [];
     // Fuzzy search in all entities
-    D.characters.forEach((c) => {
+    D.characters.forEach(c => {
         const score = fuzzySearchFields(c, query, ['name', 'playerName', 'characterClass']);
         if (score > 0)
-            matches.push({ type: 'character', name: c.name, detail: c.characterClass || '', id: c.id, score });
+            matches.push({
+                type: 'character',
+                name: c.name,
+                detail: c.characterClass || '',
+                id: c.id,
+                score
+            });
     });
-    D.npcs.forEach((n) => {
+    D.npcs.forEach(n => {
         const score = fuzzySearchFields(n, query, ['name', 'role', 'description']);
         if (score > 0)
-            matches.push({ type: 'npc', name: n.name, detail: n.role || '', id: n.id, locId: n.locationId, score });
+            matches.push({
+                type: 'npc',
+                name: n.name,
+                detail: n.role || '',
+                id: n.id,
+                locId: n.locationId,
+                score
+            });
     });
-    D.locations.forEach((l) => {
+    D.locations.forEach(l => {
         const score = fuzzySearchFields(l, query, ['name', 'type', 'description']);
         if (score > 0)
             matches.push({ type: 'location', name: l.name, detail: l.type || '', id: l.id, score });
     });
-    D.quests.forEach((q) => {
+    D.quests.forEach(q => {
         const score = fuzzySearchFields(q, query, ['title', 'description', 'giver']);
         if (score > 0)
-            matches.push({ type: 'quest', name: q.title, detail: q.completed ? '✓' : '', id: q.id, score });
+            matches.push({
+                type: 'quest',
+                name: q.title,
+                detail: q.completed ? '✓' : '',
+                id: q.id,
+                score
+            });
     });
     matches.sort((a, b) => b.score - a.score);
     if (matches.length === 0) {
-        results.innerHTML = '<div style="color: var(--text-dim); padding: 20px; text-align: center;">Keine Treffer für "' + esc(query) + '"</div>';
-    }
-    else {
-        results.innerHTML = matches.slice(0, 15).map(m => `
+        results.innerHTML =
+            '<div style="color: var(--text-dim); padding: 20px; text-align: center;">Keine Treffer für "' +
+            esc(query) +
+            '"</div>';
+    } else {
+        results.innerHTML = matches
+            .slice(0, 15)
+            .map(
+                m => `
             <div style="padding: 12px; border-bottom: 1px solid var(--border); cursor: pointer;"
                  data-action="mobile-search-navigate" data-type="${m.type}" data-id="${m.id}" data-loc="${m.locId || 'null'}">
                 <div style="display: flex; align-items: center; gap: 10px;">
@@ -155,7 +178,9 @@ function performMobileSearch() {
                     </div>
                 </div>
             </div>
-        `).join('');
+        `
+            )
+            .join('');
     }
 }
 // ============================================================
@@ -166,8 +191,7 @@ let draggedList = null;
 function handleDragStart(e) {
     const target = e.target;
     const item = target.closest('[data-sortable]');
-    if (!item)
-        return;
+    if (!item) return;
     draggedItem = item;
     draggedList = item.parentElement;
     item.classList.add('dragging');
@@ -176,13 +200,12 @@ function handleDragStart(e) {
         e.dataTransfer.setData('text/plain', item.dataset.id || '');
     }
     // Ghost-Image reduzieren
-    setTimeout(() => item.style.opacity = '0.4', 0);
+    setTimeout(() => (item.style.opacity = '0.4'), 0);
 }
 function handleDragEnd(e) {
     const target = e.target;
     const item = target.closest('[data-sortable]');
-    if (!item)
-        return;
+    if (!item) return;
     item.classList.remove('dragging');
     item.style.opacity = '1';
     document.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over'));
@@ -191,12 +214,10 @@ function handleDragEnd(e) {
 }
 function handleDragOver(e) {
     e.preventDefault();
-    if (e.dataTransfer)
-        e.dataTransfer.dropEffect = 'move';
+    if (e.dataTransfer) e.dataTransfer.dropEffect = 'move';
     const targetEl = e.target;
     const target = targetEl.closest('[data-sortable]');
-    if (!target || target === draggedItem)
-        return;
+    if (!target || target === draggedItem) return;
     // Highlight
     document.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over'));
     target.classList.add('drag-over');
@@ -205,8 +226,7 @@ function handleDrop(e) {
     e.preventDefault();
     const targetEl = e.target;
     const target = targetEl.closest('[data-sortable]');
-    if (!target || !draggedItem || target === draggedItem)
-        return;
+    if (!target || !draggedItem || target === draggedItem) return;
     const container = target.parentElement;
     const items = [...container.querySelectorAll('[data-sortable]')];
     const draggedIndex = items.indexOf(draggedItem);
@@ -214,8 +234,7 @@ function handleDrop(e) {
     // DOM neu ordnen
     if (draggedIndex < targetIndex) {
         target.after(draggedItem);
-    }
-    else {
+    } else {
         target.before(draggedItem);
     }
     // Daten neu ordnen
@@ -224,8 +243,8 @@ function handleDrop(e) {
         const draggedId = parseEntityId(draggedItem.dataset.id);
         const targetId = parseEntityId(target.dataset.id);
         const dataArray = D[dataKey];
-        const draggedData = dataArray.find((x) => x.id === draggedId);
-        const targetData = dataArray.find((x) => x.id === targetId);
+        const draggedData = dataArray.find(x => x.id === draggedId);
+        const targetData = dataArray.find(x => x.id === targetId);
         if (draggedData && targetData) {
             const oldIndex = dataArray.indexOf(draggedData);
             const newIndex = dataArray.indexOf(targetData);
@@ -239,39 +258,54 @@ function handleDrop(e) {
 }
 function renderDashboard() {
     const c = $('dashboard-content');
-    if (!c)
-        return;
+    if (!c) return;
     const charCount = D.characters?.length || 0;
     const npcCount = D.npcs?.length || 0;
     const locCount = D.locations?.length || 0;
     const questCount = D.quests?.length || 0;
-    const activeQuests = D.quests?.filter((q) => q.status !== 'completed')?.length || 0;
+    const activeQuests = D.quests?.filter(q => q.status !== 'completed')?.length || 0;
     const spellCount = D.spells?.length || 0;
     const lootCount = D.loot?.length || 0;
     const sessionCount = D.sessionNotes?.length || 0;
     // Party Health Overview
-    const partyHealth = D.characters?.map((ch) => {
-        const hpMax = ch.hpMax || ch.maxHp || 0;
-        const hpCurrent = ch.hpCurrent || ch.currentHp || 0;
-        const pct = hpMax > 0 ? (hpCurrent / hpMax) * 100 : 100;
-        const status = pct <= 25 ? 'critical' : pct <= 50 ? 'bloodied' : 'healthy';
-        const conditions = ch.conditions?.length || 0;
-        return { id: ch.id, name: ch.name, pct, status, conditions, avatar: ch.avatar, hp: hpCurrent, hpMax: hpMax };
-    }) || [];
+    const partyHealth =
+        D.characters?.map(ch => {
+            const hpMax = ch.hpMax || ch.maxHp || 0;
+            const hpCurrent = ch.hpCurrent || ch.currentHp || 0;
+            const pct = hpMax > 0 ? (hpCurrent / hpMax) * 100 : 100;
+            const status = pct <= 25 ? 'critical' : pct <= 50 ? 'bloodied' : 'healthy';
+            const conditions = ch.conditions?.length || 0;
+            return {
+                id: ch.id,
+                name: ch.name,
+                pct,
+                status,
+                conditions,
+                avatar: ch.avatar,
+                hp: hpCurrent,
+                hpMax: hpMax
+            };
+        }) || [];
     // Recent Sessions (with number support)
     const recentSessions = (D.sessionNotes || []).slice(-4).reverse();
     // Tracked Quests
-    const trackedQuestList = (D.quests || []).filter((q) => (q.tracked || q.pinned) && !q.completed && q.status !== 'completed').slice(0, 4);
+    const trackedQuestList = (D.quests || [])
+        .filter(q => (q.tracked || q.pinned) && !q.completed && q.status !== 'completed')
+        .slice(0, 4);
     // Active timers (if any)
-    const activeTimers = typeof timers !== 'undefined' ? timers.filter((t) => t.running) : [];
+    const activeTimers = typeof timers !== 'undefined' ? timers.filter(t => t.running) : [];
     const focusedTimer = activeTimers.length > 0 ? activeTimers[0] : null;
     c.innerHTML = `
         <!-- Party Overview -->
         <div class="dash-party">
             <div class="dash-party-title">👥 Party Status</div>
-            ${partyHealth.length ? `
+            ${
+                partyHealth.length
+                    ? `
                 <div class="dash-party-grid">
-                    ${partyHealth.map((ch) => `
+                    ${partyHealth
+                        .map(
+                            ch => `
                         <div class="dash-char ${ch.status}" data-action="show-view" data-value="party">
                             ${ch.conditions > 0 ? `<span class="dash-char-conditions">${ch.conditions}</span>` : ''}
                             <div class="dash-char-avatar">
@@ -283,19 +317,23 @@ function renderDashboard() {
                             </div>
                             <div class="dash-char-hp-text">${ch.hp}/${ch.hpMax}</div>
                         </div>
-                    `).join('')}
+                    `
+                        )
+                        .join('')}
                 </div>
                 <div class="dash-party-actions">
                     <button class="dash-quick-btn primary" data-action="show-view" data-value="initiative">⚔️ Kampf starten</button>
                     <button class="dash-quick-btn" data-action="show-view" data-value="encounter">👹 Begegnung</button>
                 </div>
-            ` : `
+            `
+                    : `
                 <div class="dash-party-empty">
                     <div style="font-size: 2em; margin-bottom: 8px;">👥</div>
                     <div>Keine Charaktere vorhanden</div>
                     <button class="btn btn-sm" style="margin-top: 10px;" data-action="show-view" data-value="party">+ Charakter erstellen</button>
                 </div>
-            `}
+            `
+            }
         </div>
 
         <!-- Stats Row -->
@@ -347,18 +385,26 @@ function renderDashboard() {
                     <span class="dash-card-link" data-action="show-view" data-value="quests">Alle →</span>
                 </div>
                 <div class="dash-card-content">
-                    ${trackedQuestList.length ? trackedQuestList.map((q) => `
+                    ${
+                        trackedQuestList.length
+                            ? trackedQuestList
+                                  .map(
+                                      q => `
                         <div class="dash-quest" data-action="navigate-to-quest" data-id="${q.id}">
                             <span class="dash-quest-pin">📌</span>
                             <span class="dash-quest-title">${esc(q.title || q.name)}</span>
                             <span class="dash-quest-type ${q.type || 'quest'}">${q.type === 'plot' ? 'Plot' : q.type === 'side' ? 'Side' : 'Quest'}</span>
                         </div>
-                    `).join('') : `
+                    `
+                                  )
+                                  .join('')
+                            : `
                         <div class="dash-empty">
                             <div>📌 Keine Quests verfolgt</div>
                             <div style="font-size: 0.85em; margin-top: 4px;">Klicke bei einer Quest auf 📌</div>
                         </div>
-                    `}
+                    `
+                    }
                 </div>
             </div>
 
@@ -369,23 +415,33 @@ function renderDashboard() {
                     <span class="dash-card-link" data-action="show-view" data-value="notes">Alle →</span>
                 </div>
                 <div class="dash-card-content">
-                    ${recentSessions.length ? recentSessions.map((s) => `
+                    ${
+                        recentSessions.length
+                            ? recentSessions
+                                  .map(
+                                      s => `
                         <div class="dash-session" data-action="show-view" data-value="notes">
                             <span class="dash-session-num">${s.number ? '#' + s.number : '•'}</span>
                             <span class="dash-session-title">${esc(s.name || s.title || 'Session')}</span>
                             <span class="dash-session-date">${s.date ? formatDate(s.date) : ''}</span>
                         </div>
-                    `).join('') : `
+                    `
+                                  )
+                                  .join('')
+                            : `
                         <div class="dash-empty">
                             <div>📝 Keine Sessions</div>
                             <div style="font-size: 0.85em; margin-top: 4px;">Erstelle deine erste Session-Notiz</div>
                         </div>
-                    `}
+                    `
+                    }
                 </div>
             </div>
         </div>
 
-        ${focusedTimer ? `
+        ${
+            focusedTimer
+                ? `
             <!-- Active Timer Widget -->
             <div class="dash-timer">
                 <div class="dash-timer-ring">
@@ -401,7 +457,9 @@ function renderDashboard() {
                 <button class="dash-timer-btn" data-action="toggle-timer" data-id="${focusedTimer.id}">${focusedTimer.running ? '⏸' : '▶'}</button>
                 <button class="dash-timer-btn" data-action="show-view" data-value="timers">→</button>
             </div>
-        ` : ''}
+        `
+                : ''
+        }
     `;
 }
 // ============================================================

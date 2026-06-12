@@ -33,27 +33,27 @@ The transition is: serve the built HTML file through `npm run dev` (the existing
 
 **What the build must produce alongside the HTML:**
 
-| File | Purpose | Notes |
-|------|---------|-------|
-| `dist/manifest.json` | PWA manifest | Cannot be inlined as data URI — must be a separate file linked via `<link rel="manifest">` |
-| `dist/icons/icon-192.png` | Required install icon | Can be generated once by `build.py` from SVG |
-| `dist/icons/icon-512.png` | Required install icon | Same |
-| `dist/sw.js` | Service worker | `sw.js` already exists in repo root — move/update for dist |
+| File                      | Purpose               | Notes                                                                                      |
+| ------------------------- | --------------------- | ------------------------------------------------------------------------------------------ |
+| `dist/manifest.json`      | PWA manifest          | Cannot be inlined as data URI — must be a separate file linked via `<link rel="manifest">` |
+| `dist/icons/icon-192.png` | Required install icon | Can be generated once by `build.py` from SVG                                               |
+| `dist/icons/icon-512.png` | Required install icon | Same                                                                                       |
+| `dist/sw.js`              | Service worker        | `sw.js` already exists in repo root — move/update for dist                                 |
 
 **Minimum manifest (Chromium requirements, HIGH confidence):**
 
 ```json
 {
-  "name": "D&D Kampagnen-Tracker Pro",
-  "short_name": "DnD Tracker",
-  "start_url": "./dnd-tracker-optimized.html",
-  "display": "standalone",
-  "background_color": "#1a1a2e",
-  "theme_color": "#b8860b",
-  "icons": [
-    { "src": "icons/icon-192.png", "type": "image/png", "sizes": "192x192" },
-    { "src": "icons/icon-512.png", "type": "image/png", "sizes": "512x512" }
-  ]
+    "name": "D&D Kampagnen-Tracker Pro",
+    "short_name": "DnD Tracker",
+    "start_url": "./dnd-tracker-optimized.html",
+    "display": "standalone",
+    "background_color": "#1a1a2e",
+    "theme_color": "#b8860b",
+    "icons": [
+        { "src": "icons/icon-192.png", "type": "image/png", "sizes": "192x192" },
+        { "src": "icons/icon-512.png", "type": "image/png", "sizes": "512x512" }
+    ]
 }
 ```
 
@@ -66,7 +66,7 @@ The existing `sw.js` uses `self.addEventListener('install', ...)` but may need s
 ```javascript
 let deferredInstallPrompt = null;
 
-window.addEventListener('beforeinstallprompt', (e) => {
+window.addEventListener('beforeinstallprompt', e => {
     e.preventDefault();
     deferredInstallPrompt = e;
     // Show custom "App installieren" button in settings panel
@@ -89,8 +89,7 @@ document.getElementById('btn-install-pwa').addEventListener('click', async () =>
 `build.py` must copy `manifest.json`, `icons/`, and `sw.js` into `dist/` alongside the HTML. The HTML template must include:
 
 ```html
-<link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#b8860b">
+<link rel="manifest" href="manifest.json" /> <meta name="theme-color" content="#b8860b" />
 ```
 
 **What NOT to use:**
@@ -107,11 +106,11 @@ document.getElementById('btn-install-pwa').addEventListener('click', async () =>
 
 **Browser support (CONFIRMED, HIGH confidence):**
 
-| Browser | Support | Notes |
-|---------|---------|-------|
-| Chrome/Edge 86+ (Chromium) | Full support | `showSaveFilePicker`, `showOpenFilePicker`, `showDirectoryPicker` |
-| Firefox | NOT supported | Firefox ships OPFS but not the picker methods |
-| Safari | NOT supported | Same gap |
+| Browser                    | Support       | Notes                                                             |
+| -------------------------- | ------------- | ----------------------------------------------------------------- |
+| Chrome/Edge 86+ (Chromium) | Full support  | `showSaveFilePicker`, `showOpenFilePicker`, `showDirectoryPicker` |
+| Firefox                    | NOT supported | Firefox ships OPFS but not the picker methods                     |
+| Safari                     | NOT supported | Same gap                                                          |
 
 **Secure context requirement:**
 
@@ -128,7 +127,7 @@ async function exportCampaignBackup() {
         // Tier 1: File System Access API (PWA / localhost context)
         try {
             const handle = await window.showSaveFilePicker({
-                suggestedName: `dnd-backup-${new Date().toISOString().slice(0,10)}.json`,
+                suggestedName: `dnd-backup-${new Date().toISOString().slice(0, 10)}.json`,
                 types: [{ description: 'JSON Backup', accept: { 'application/json': ['.json'] } }]
             });
             const writable = await handle.createWritable();
@@ -143,7 +142,7 @@ async function exportCampaignBackup() {
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `dnd-backup-${new Date().toISOString().slice(0,10)}.json`;
+        a.download = `dnd-backup-${new Date().toISOString().slice(0, 10)}.json`;
         a.click();
         URL.revokeObjectURL(url);
         showToast('Backup heruntergeladen (Speicherort: Downloads-Ordner)', 'info');
@@ -168,6 +167,7 @@ The File System Access API allows storing `FileSystemFileHandle` objects in Inde
 ### Verdict: Build from scratch in vanilla JS — ~80 lines. No library needed.
 
 The app already has:
+
 - A global fuzzy search system (`systems/search/global-search.js`) with `fuzzyMatch()`
 - `data-action` event delegation pattern for all commands
 - Keyboard shortcut registry (`Strg+K/F` already wired to search focus)
@@ -179,9 +179,14 @@ The command palette is a search-then-act modal on top of the existing infrastruc
 ```javascript
 // Registry: actions are plain objects, not DOM nodes
 const COMMAND_REGISTRY = [
-    { id: 'new-character', label: 'Neuen Charakter anlegen', category: 'Partei', action: () => showNewCharacterModal() },
+    {
+        id: 'new-character',
+        label: 'Neuen Charakter anlegen',
+        category: 'Partei',
+        action: () => showNewCharacterModal()
+    },
     { id: 'roll-d20', label: 'W20 würfeln', category: 'Würfel', action: () => rollDice('1d20') },
-    { id: 'next-turn', label: 'Nächster Zug', category: 'Initiative', action: () => nextTurn() },
+    { id: 'next-turn', label: 'Nächster Zug', category: 'Initiative', action: () => nextTurn() }
     // ... extend per module
 ];
 
@@ -212,13 +217,13 @@ function openCommandPalette() {
 
 **License landscape (CONFIRMED, MEDIUM-HIGH confidence):**
 
-| Source | License | Status | Usable? |
-|--------|---------|--------|---------|
-| SRD 5.1 (2014 rules) | OGL 1.0a AND CC-BY 4.0 (dual-licensed since Jan 2023) | ~334 monsters | YES — attribution required |
-| SRD 5.2 / 2024 rules (released April 2025) | CC-BY 4.0 | Different monster set | YES — attribution required |
-| 5e-bits/5e-database | OGL 1.0a (code MIT) | ~334 monsters in JSON | YES — OGL attribution |
-| tkfu GitHub Gist | No explicit license | Community extract | USE WITH CAUTION — unclear license |
-| nesges/SRD-5.1-DE (Codeberg) | CC-BY 4.0 | German SRD 5.1 monsters+spells via API at openrpg.de | YES — same WotC attribution |
+| Source                                     | License                                               | Status                                               | Usable?                            |
+| ------------------------------------------ | ----------------------------------------------------- | ---------------------------------------------------- | ---------------------------------- |
+| SRD 5.1 (2014 rules)                       | OGL 1.0a AND CC-BY 4.0 (dual-licensed since Jan 2023) | ~334 monsters                                        | YES — attribution required         |
+| SRD 5.2 / 2024 rules (released April 2025) | CC-BY 4.0                                             | Different monster set                                | YES — attribution required         |
+| 5e-bits/5e-database                        | OGL 1.0a (code MIT)                                   | ~334 monsters in JSON                                | YES — OGL attribution              |
+| tkfu GitHub Gist                           | No explicit license                                   | Community extract                                    | USE WITH CAUTION — unclear license |
+| nesges/SRD-5.1-DE (Codeberg)               | CC-BY 4.0                                             | German SRD 5.1 monsters+spells via API at openrpg.de | YES — same WotC attribution        |
 
 **Recommended primary source: `5e-bits/5e-database`** (github.com/5e-bits/5e-database)
 
@@ -276,6 +281,7 @@ Assign the full array to a `const SRD_MONSTERS = [...]` global constant in a new
 **Required attribution text (OGL 1.0a):**
 
 Include an `open-game-license` section in the About modal:
+
 > "This application uses content from the System Reference Document 5.1 available at https://dnd.wizards.com/resources/systems-reference-document."
 > Full OGL 1.0a text must be included or accessible. Standard practice: collapsible section in the app's About/Impressum modal.
 
@@ -294,14 +300,14 @@ Include an `open-game-license` section in the About modal:
 
 **Web Audio API vs HTMLAudioElement decision (HIGH confidence):**
 
-| Aspect | Web Audio API | HTMLAudioElement |
-|--------|--------------|-----------------|
-| Volume/fade control | GainNode — precise | `.volume` property — coarse |
-| Looping ambience | Manual with scheduler | `loop` attribute — simpler |
-| Multiple simultaneous | Up to 1000+ | Limited (~6 per domain) |
-| Local file loading | `fetch` + `decodeAudioData` (requires HTTPS or file:// with CORS workaround) | `src = URL.createObjectURL(file)` — works everywhere |
-| Autoplay policy | `AudioContext.state` check + `resume()` | Same policy, simpler API |
-| Streaming long tracks | Requires full decode into memory first | True streaming |
+| Aspect                | Web Audio API                                                                | HTMLAudioElement                                     |
+| --------------------- | ---------------------------------------------------------------------------- | ---------------------------------------------------- |
+| Volume/fade control   | GainNode — precise                                                           | `.volume` property — coarse                          |
+| Looping ambience      | Manual with scheduler                                                        | `loop` attribute — simpler                           |
+| Multiple simultaneous | Up to 1000+                                                                  | Limited (~6 per domain)                              |
+| Local file loading    | `fetch` + `decodeAudioData` (requires HTTPS or file:// with CORS workaround) | `src = URL.createObjectURL(file)` — works everywhere |
+| Autoplay policy       | `AudioContext.state` check + `resume()`                                      | Same policy, simpler API                             |
+| Streaming long tracks | Requires full decode into memory first                                       | True streaming                                       |
 
 **Recommendation: Hybrid approach**
 
@@ -356,11 +362,15 @@ MP3 (universally), OGG/Vorbis, WAV, FLAC, AAC. Recommend MP3 or OGG for ambience
 
 ```javascript
 // First user interaction anywhere on the page unlocks audio
-document.addEventListener('click', () => {
-    if (audioCtx && audioCtx.state === 'suspended') {
-        audioCtx.resume();
-    }
-}, { once: true });
+document.addEventListener(
+    'click',
+    () => {
+        if (audioCtx && audioCtx.state === 'suspended') {
+            audioCtx.resume();
+        }
+    },
+    { once: true }
+);
 ```
 
 **Persistence:** File references cannot be persisted across sessions from `file://` (no File System Access API). From PWA/localhost, store `FileSystemFileHandle` objects in IndexedDB. From `file://`, require user to re-pick files each session (acceptable given single-user offline usage).
@@ -387,12 +397,13 @@ The dice statistics feature needs: bar charts (roll distribution), possibly a li
 function renderDiceHistogram(canvasId, rolls) {
     const canvas = document.getElementById(canvasId);
     const ctx = canvas.getContext('2d');
-    const W = canvas.width, H = canvas.height;
+    const W = canvas.width,
+        H = canvas.height;
     const padding = { top: 20, right: 20, bottom: 40, left: 40 };
 
     // Count frequencies
     const freq = {};
-    rolls.forEach(r => freq[r] = (freq[r] || 0) + 1);
+    rolls.forEach(r => (freq[r] = (freq[r] || 0) + 1));
     const maxVal = Math.max(...Object.values(freq));
 
     // Draw bars
@@ -401,7 +412,7 @@ function renderDiceHistogram(canvasId, rolls) {
 
     ctx.clearRect(0, 0, W, H);
     keys.forEach((k, i) => {
-        const barH = ((freq[k] / maxVal) * (H - padding.top - padding.bottom));
+        const barH = (freq[k] / maxVal) * (H - padding.top - padding.bottom);
         const x = padding.left + i * barW;
         const y = H - padding.bottom - barH;
 
@@ -462,12 +473,12 @@ The SRD 5.1 includes travel pace rules (PHB p. 181-182 equivalent), but NOT weat
 
 German name tables are the core challenge. Options:
 
-| Source | German Content | License | Notes |
-|--------|---------------|---------|-------|
-| DMNet.de name generator | German fantasy names | Online only | Cannot embed |
-| SRD 5.1 DE (nesges) | No name tables | — | Rules only |
-| Custom compiled tables | Manually curated | Own work | Best option |
-| D&D 5e PHB name tables | Racial name tables | NOT in SRD | Cannot redistribute |
+| Source                  | German Content       | License     | Notes               |
+| ----------------------- | -------------------- | ----------- | ------------------- |
+| DMNet.de name generator | German fantasy names | Online only | Cannot embed        |
+| SRD 5.1 DE (nesges)     | No name tables       | —           | Rules only          |
+| Custom compiled tables  | Manually curated     | Own work    | Best option         |
+| D&D 5e PHB name tables  | Racial name tables   | NOT in SRD  | Cannot redistribute |
 
 **Recommendation:** Compile a curated set of ~200 German-sounding fantasy first names (male/female) and ~100 family names/epithets, inspired by common German fantasy naming patterns (Germanic root words, Tolkien-influenced). These are original creative work, not derivative of copyrighted sources.
 
@@ -498,18 +509,18 @@ const NPC_TABLES = {
 
 ## Browser API Support Summary
 
-| API | Chromium | Firefox | PWA-only? |
-|-----|---------|---------|-----------|
-| `beforeinstallprompt` | Chrome 66+ | Not supported | Requires HTTPS/localhost |
-| `showSaveFilePicker` | Chrome 86+ | Not supported | Requires HTTPS/localhost (not file://) |
-| `showOpenFilePicker` | Chrome 86+ | Not supported | Requires HTTPS/localhost (not file://) |
-| Web Audio API / `AudioContext` | Chrome 14+ | Supported | Works from file:// |
-| `createMediaElementSource` | Chrome 14+ | Supported | Works from file:// |
-| `FileReader` / `createObjectURL` | Universal | Universal | Works from file:// |
-| `input[type=file]` | Universal | Universal | Works from file:// |
-| Canvas 2D API | Universal | Universal | Works from file:// |
-| `IndexedDB` | Universal | Universal | Works from file:// |
-| `navigator.getAutoplayPolicy` | Chrome 121+ | Firefox 112+ | Works from file:// |
+| API                              | Chromium    | Firefox       | PWA-only?                              |
+| -------------------------------- | ----------- | ------------- | -------------------------------------- |
+| `beforeinstallprompt`            | Chrome 66+  | Not supported | Requires HTTPS/localhost               |
+| `showSaveFilePicker`             | Chrome 86+  | Not supported | Requires HTTPS/localhost (not file://) |
+| `showOpenFilePicker`             | Chrome 86+  | Not supported | Requires HTTPS/localhost (not file://) |
+| Web Audio API / `AudioContext`   | Chrome 14+  | Supported     | Works from file://                     |
+| `createMediaElementSource`       | Chrome 14+  | Supported     | Works from file://                     |
+| `FileReader` / `createObjectURL` | Universal   | Universal     | Works from file://                     |
+| `input[type=file]`               | Universal   | Universal     | Works from file://                     |
+| Canvas 2D API                    | Universal   | Universal     | Works from file://                     |
+| `IndexedDB`                      | Universal   | Universal     | Works from file://                     |
+| `navigator.getAutoplayPolicy`    | Chrome 121+ | Firefox 112+  | Works from file://                     |
 
 **Key constraint summary:** The PWA transition (localhost serving) unlocks `showSaveFilePicker` and `beforeinstallprompt`. Features that only need user-picked files via `input[type=file]` (soundboard) and Canvas (dice stats) work from `file://` today.
 
@@ -517,16 +528,16 @@ const NPC_TABLES = {
 
 ## What NOT to Use
 
-| Avoid | Why | Use Instead |
-|-------|-----|-------------|
-| Chart.js / D3.js | Runtime npm deps, 200-500 KB | Canvas 2D API (~100 lines) |
-| Fuse.js / MiniSearch | Runtime dep | Existing `fuzzyMatch()` in `global-search.js` |
-| Ninja-keys / command-pal | Runtime dep, DOM lifecycle conflicts | Custom `COMMAND_REGISTRY` + modal |
-| howler.js / tone.js | Runtime dep | `HTMLAudioElement` + Web Audio API directly |
-| open5e.com API at runtime | Requires internet | Pre-bake JSON data into bundle at build time |
-| 5etools data | Scraped from non-SRD sources, unclear license for redistribution | 5e-bits/5e-database (OGL 1.0a, clear license) |
-| Inline manifest as data URI | Not standardized for install | Separate `manifest.json` file in dist/ |
-| `file://` + File System Access API | SecureContext required, fails silently or throws | Two-tier strategy: picker when available, `<a download>` fallback |
+| Avoid                              | Why                                                              | Use Instead                                                       |
+| ---------------------------------- | ---------------------------------------------------------------- | ----------------------------------------------------------------- |
+| Chart.js / D3.js                   | Runtime npm deps, 200-500 KB                                     | Canvas 2D API (~100 lines)                                        |
+| Fuse.js / MiniSearch               | Runtime dep                                                      | Existing `fuzzyMatch()` in `global-search.js`                     |
+| Ninja-keys / command-pal           | Runtime dep, DOM lifecycle conflicts                             | Custom `COMMAND_REGISTRY` + modal                                 |
+| howler.js / tone.js                | Runtime dep                                                      | `HTMLAudioElement` + Web Audio API directly                       |
+| open5e.com API at runtime          | Requires internet                                                | Pre-bake JSON data into bundle at build time                      |
+| 5etools data                       | Scraped from non-SRD sources, unclear license for redistribution | 5e-bits/5e-database (OGL 1.0a, clear license)                     |
+| Inline manifest as data URI        | Not standardized for install                                     | Separate `manifest.json` file in dist/                            |
+| `file://` + File System Access API | SecureContext required, fails silently or throws                 | Two-tier strategy: picker when available, `<a download>` fallback |
 
 ---
 
@@ -563,5 +574,6 @@ No new npm runtime packages. The only changes are:
 - web.dev PWA Web App Manifest — https://web.dev/learn/pwa/web-app-manifest (manifest field requirements confirmed)
 
 ---
-*Stack research for: Offline-first D&D 5e campaign manager — brownfield capability additions*
-*Researched: 2026-06-11*
+
+_Stack research for: Offline-first D&D 5e campaign manager — brownfield capability additions_
+_Researched: 2026-06-11_

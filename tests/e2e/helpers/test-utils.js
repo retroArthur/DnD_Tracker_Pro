@@ -9,11 +9,11 @@
  * @param {import('@playwright/test').Page} page
  */
 export async function loadApp(page) {
-  const filePath = `file:///${process.cwd().replace(/\\/g, '/')}/dist/dnd-tracker-bundled.html`;
-  await page.goto(filePath);
-  await page.waitForSelector('.app-title', { timeout: 10000 });
-  // Warte auf App-Initialisierung
-  await page.waitForTimeout(500);
+    const filePath = `file:///${process.cwd().replace(/\\/g, '/')}/dist/dnd-tracker-bundled.html`;
+    await page.goto(filePath);
+    await page.waitForSelector('.app-title', { timeout: 10000 });
+    // Warte auf App-Initialisierung
+    await page.waitForTimeout(500);
 }
 
 /**
@@ -22,8 +22,8 @@ export async function loadApp(page) {
  * @param {string} tabName - z.B. 'party', 'npcs', 'locations', 'quests', 'encounter', 'dice'
  */
 export async function navigateToTab(page, tabName) {
-  await page.click(`.nav-tab[data-view="${tabName}"]`);
-  await page.waitForTimeout(300);
+    await page.click(`.nav-tab[data-view="${tabName}"]`);
+    await page.waitForTimeout(300);
 }
 
 /**
@@ -32,13 +32,13 @@ export async function navigateToTab(page, tabName) {
  * @param {string} formName - z.B. 'char-form', 'enc-form'
  */
 export async function openCollapseForm(page, formName) {
-  const form = page.locator(`#${formName}`);
-  const isOpen = await form.evaluate(el => el.classList.contains('open'));
+    const form = page.locator(`#${formName}`);
+    const isOpen = await form.evaluate(el => el.classList.contains('open'));
 
-  if (!isOpen) {
-    await page.click(`[data-action="toggle-collapse"][data-value="${formName}"]`);
-    await page.waitForTimeout(300);
-  }
+    if (!isOpen) {
+        await page.click(`[data-action="toggle-collapse"][data-value="${formName}"]`);
+        await page.waitForTimeout(300);
+    }
 }
 
 /**
@@ -47,13 +47,13 @@ export async function openCollapseForm(page, formName) {
  * @param {string} formName
  */
 export async function closeCollapseForm(page, formName) {
-  const form = page.locator(`#${formName}`);
-  const isOpen = await form.evaluate(el => el.classList.contains('open'));
+    const form = page.locator(`#${formName}`);
+    const isOpen = await form.evaluate(el => el.classList.contains('open'));
 
-  if (isOpen) {
-    await page.click(`[data-action="toggle-collapse"][data-value="${formName}"]`);
-    await page.waitForTimeout(300);
-  }
+    if (isOpen) {
+        await page.click(`[data-action="toggle-collapse"][data-value="${formName}"]`);
+        await page.waitForTimeout(300);
+    }
 }
 
 /**
@@ -62,18 +62,20 @@ export async function closeCollapseForm(page, formName) {
  * @param {string} modalId - z.B. 'npc-modal', 'quest-modal'
  */
 export async function openModal(page, modalId) {
-  // Modal öffnen falls nicht bereits offen
-  const modal = page.locator(`#${modalId}`);
-  const isVisible = await modal.isVisible();
+    // Modal öffnen falls nicht bereits offen
+    const modal = page.locator(`#${modalId}`);
+    const isVisible = await modal.isVisible();
 
-  if (!isVisible) {
-    // Versuche über data-action zu öffnen
-    const openButton = page.locator(`[data-action="open-${modalId}"], [onclick*="${modalId}"]`).first();
-    if (await openButton.isVisible()) {
-      await openButton.click();
-      await page.waitForTimeout(300);
+    if (!isVisible) {
+        // Versuche über data-action zu öffnen
+        const openButton = page
+            .locator(`[data-action="open-${modalId}"], [onclick*="${modalId}"]`)
+            .first();
+        if (await openButton.isVisible()) {
+            await openButton.click();
+            await page.waitForTimeout(300);
+        }
     }
-  }
 }
 
 /**
@@ -81,8 +83,8 @@ export async function openModal(page, modalId) {
  * @param {import('@playwright/test').Page} page
  */
 export async function closeModal(page) {
-  await page.keyboard.press('Escape');
-  await page.waitForTimeout(200);
+    await page.keyboard.press('Escape');
+    await page.waitForTimeout(200);
 }
 
 /**
@@ -92,8 +94,8 @@ export async function closeModal(page) {
  * @param {string} value
  */
 export async function fillField(page, selector, value) {
-  const field = page.locator(selector.startsWith('#') ? selector : `#${selector}`);
-  await field.fill(value);
+    const field = page.locator(selector.startsWith('#') ? selector : `#${selector}`);
+    await field.fill(value);
 }
 
 /**
@@ -103,29 +105,28 @@ export async function fillField(page, selector, value) {
  * @param {string} value
  */
 export async function selectOption(page, selector, value) {
-  const select = page.locator(selector.startsWith('#') ? selector : `#${selector}`);
+    const select = page.locator(selector.startsWith('#') ? selector : `#${selector}`);
 
-  // Prüfe ob die Option existiert
-  const options = await select.locator('option').allTextContents();
-  const optionExists = options.some(opt =>
-    opt.toLowerCase().includes(value.toLowerCase()) ||
-    opt === value
-  );
+    // Prüfe ob die Option existiert
+    const options = await select.locator('option').allTextContents();
+    const optionExists = options.some(
+        opt => opt.toLowerCase().includes(value.toLowerCase()) || opt === value
+    );
 
-  if (optionExists) {
-    try {
-      await select.selectOption(value);
-    } catch {
-      // Falls direkte Auswahl fehlschlägt, versuche über Label
-      const matchingOption = options.find(opt =>
-        opt.toLowerCase().includes(value.toLowerCase())
-      );
-      if (matchingOption) {
-        await select.selectOption({ label: matchingOption });
-      }
+    if (optionExists) {
+        try {
+            await select.selectOption(value);
+        } catch {
+            // Falls direkte Auswahl fehlschlägt, versuche über Label
+            const matchingOption = options.find(opt =>
+                opt.toLowerCase().includes(value.toLowerCase())
+            );
+            if (matchingOption) {
+                await select.selectOption({ label: matchingOption });
+            }
+        }
     }
-  }
-  // Wenn Option nicht existiert, einfach überspringen
+    // Wenn Option nicht existiert, einfach überspringen
 }
 
 /**
@@ -135,11 +136,11 @@ export async function selectOption(page, selector, value) {
  * @param {string} [value] - Optional data-value
  */
 export async function clickAction(page, action, value) {
-  const selector = value
-    ? `[data-action="${action}"][data-value="${value}"]`
-    : `[data-action="${action}"]`;
-  await page.click(selector);
-  await page.waitForTimeout(300);
+    const selector = value
+        ? `[data-action="${action}"][data-value="${value}"]`
+        : `[data-action="${action}"]`;
+    await page.click(selector);
+    await page.waitForTimeout(300);
 }
 
 /**
@@ -148,17 +149,17 @@ export async function clickAction(page, action, value) {
  * @param {string} [text] - Optionaler Text der enthalten sein soll
  */
 export async function waitForToast(page, text) {
-  const toast = page.locator('#toast.show');
-  await toast.waitFor({ state: 'visible', timeout: 3000 });
-  if (text) {
-    await page.waitForFunction(
-      (expectedText) => document.querySelector('#toast')?.textContent?.includes(expectedText),
-      text,
-      { timeout: 3000 }
-    );
-  }
-  // Warte bis Toast verschwindet
-  await page.waitForTimeout(1500);
+    const toast = page.locator('#toast.show');
+    await toast.waitFor({ state: 'visible', timeout: 3000 });
+    if (text) {
+        await page.waitForFunction(
+            expectedText => document.querySelector('#toast')?.textContent?.includes(expectedText),
+            text,
+            { timeout: 3000 }
+        );
+    }
+    // Warte bis Toast verschwindet
+    await page.waitForTimeout(1500);
 }
 
 /**
@@ -166,26 +167,26 @@ export async function waitForToast(page, text) {
  * @param {import('@playwright/test').Page} page
  */
 export async function clearAppData(page) {
-  await page.evaluate(() => {
-    localStorage.clear();
-    // @ts-ignore
-    if (typeof D !== 'undefined') {
-      // @ts-ignore
-      D.characters = [];
-      // @ts-ignore
-      D.npcs = [];
-      // @ts-ignore
-      D.locations = [];
-      // @ts-ignore
-      D.quests = [];
-      // @ts-ignore
-      D.encounters = [];
-      // @ts-ignore
-      D.loot = [];
-      // @ts-ignore
-      D.spells = [];
-    }
-  });
+    await page.evaluate(() => {
+        localStorage.clear();
+        // @ts-ignore
+        if (typeof D !== 'undefined') {
+            // @ts-ignore
+            D.characters = [];
+            // @ts-ignore
+            D.npcs = [];
+            // @ts-ignore
+            D.locations = [];
+            // @ts-ignore
+            D.quests = [];
+            // @ts-ignore
+            D.encounters = [];
+            // @ts-ignore
+            D.loot = [];
+            // @ts-ignore
+            D.spells = [];
+        }
+    });
 }
 
 /**
@@ -194,10 +195,10 @@ export async function clearAppData(page) {
  * @param {string} type - z.B. 'characters', 'npcs', 'locations'
  */
 export async function getEntityCount(page, type) {
-  return await page.evaluate((entityType) => {
-    // @ts-ignore
-    return (D && D[entityType]) ? D[entityType].length : 0;
-  }, type);
+    return await page.evaluate(entityType => {
+        // @ts-ignore
+        return D && D[entityType] ? D[entityType].length : 0;
+    }, type);
 }
 
 /**
@@ -207,10 +208,13 @@ export async function getEntityCount(page, type) {
  * @param {number} id
  */
 export async function getEntityById(page, type, id) {
-  return await page.evaluate(({ entityType, entityId }) => {
-    // @ts-ignore
-    return D && D[entityType] ? D[entityType].find(e => e.id === entityId) : null;
-  }, { entityType: type, entityId: id });
+    return await page.evaluate(
+        ({ entityType, entityId }) => {
+            // @ts-ignore
+            return D && D[entityType] ? D[entityType].find(e => e.id === entityId) : null;
+        },
+        { entityType: type, entityId: id }
+    );
 }
 
 /**
@@ -218,7 +222,7 @@ export async function getEntityById(page, type, id) {
  * @param {string} prefix
  */
 export function generateTestName(prefix) {
-  return `${prefix}_Test_${Date.now()}`;
+    return `${prefix}_Test_${Date.now()}`;
 }
 
 /**
@@ -227,8 +231,8 @@ export function generateTestName(prefix) {
  * @param {string} selector
  */
 export async function isVisible(page, selector) {
-  const element = page.locator(selector);
-  return await element.isVisible();
+    const element = page.locator(selector);
+    return await element.isVisible();
 }
 
 /**
@@ -237,7 +241,7 @@ export async function isVisible(page, selector) {
  * @param {string} selector
  */
 export async function waitForElement(page, selector, options = {}) {
-  await page.locator(selector).waitFor({ state: 'visible', timeout: 5000, ...options });
+    await page.locator(selector).waitFor({ state: 'visible', timeout: 5000, ...options });
 }
 
 /**
@@ -245,8 +249,8 @@ export async function waitForElement(page, selector, options = {}) {
  * @param {import('@playwright/test').Page} page
  */
 export async function performUndo(page) {
-  await page.keyboard.press('Control+z');
-  await page.waitForTimeout(300);
+    await page.keyboard.press('Control+z');
+    await page.waitForTimeout(300);
 }
 
 /**
@@ -254,8 +258,8 @@ export async function performUndo(page) {
  * @param {import('@playwright/test').Page} page
  */
 export async function performRedo(page) {
-  await page.keyboard.press('Control+y');
-  await page.waitForTimeout(300);
+    await page.keyboard.press('Control+y');
+    await page.waitForTimeout(300);
 }
 
 /**
@@ -263,8 +267,8 @@ export async function performRedo(page) {
  * @param {import('@playwright/test').Page} page
  */
 export async function performSave(page) {
-  await page.keyboard.press('Control+s');
-  await page.waitForTimeout(500);
+    await page.keyboard.press('Control+s');
+    await page.waitForTimeout(500);
 }
 
 /**
@@ -273,7 +277,7 @@ export async function performSave(page) {
  * @param {string} selector
  */
 export async function getRichTextContent(page, selector) {
-  return await page.locator(selector).innerHTML();
+    return await page.locator(selector).innerHTML();
 }
 
 /**
@@ -283,59 +287,59 @@ export async function getRichTextContent(page, selector) {
  * @param {string} content
  */
 export async function setRichTextContent(page, selector, content) {
-  await page.locator(selector).fill('');
-  await page.locator(selector).pressSequentially(content);
+    await page.locator(selector).fill('');
+    await page.locator(selector).pressSequentially(content);
 }
 
 // Test-Daten Generatoren
 export const testData = {
-  character: () => ({
-    name: generateTestName('Hero'),
-    player: 'Test Player',
-    class: 'Fighter',
-    race: 'Human',
-    level: 5,
-    hp: 45,
-    ac: 16,
-    str: 16,
-    dex: 14,
-    con: 15,
-    int: 10,
-    wis: 12,
-    cha: 8
-  }),
+    character: () => ({
+        name: generateTestName('Hero'),
+        player: 'Test Player',
+        class: 'Fighter',
+        race: 'Human',
+        level: 5,
+        hp: 45,
+        ac: 16,
+        str: 16,
+        dex: 14,
+        con: 15,
+        int: 10,
+        wis: 12,
+        cha: 8
+    }),
 
-  npc: () => ({
-    name: generateTestName('NPC'),
-    role: 'Merchant',
-    race: 'Dwarf',
-    chapter: '1',
-    description: 'A friendly merchant who sells potions.'
-  }),
+    npc: () => ({
+        name: generateTestName('NPC'),
+        role: 'Merchant',
+        race: 'Dwarf',
+        chapter: '1',
+        description: 'A friendly merchant who sells potions.'
+    }),
 
-  location: () => ({
-    name: generateTestName('Location'),
-    description: 'A mysterious place full of adventure.'
-  }),
+    location: () => ({
+        name: generateTestName('Location'),
+        description: 'A mysterious place full of adventure.'
+    }),
 
-  quest: () => ({
-    title: generateTestName('Quest'),
-    description: 'Find the lost artifact.',
-    type: 'main',
-    rewardGold: 100
-  }),
+    quest: () => ({
+        title: generateTestName('Quest'),
+        description: 'Find the lost artifact.',
+        type: 'main',
+        rewardGold: 100
+    }),
 
-  encounter: () => ({
-    name: generateTestName('Monster'),
-    creatureType: 'beast',
-    cr: '1',
-    ac: 13,
-    hp: 22,
-    str: 14,
-    dex: 12,
-    con: 13,
-    int: 2,
-    wis: 10,
-    cha: 5
-  })
+    encounter: () => ({
+        name: generateTestName('Monster'),
+        creatureType: 'beast',
+        cr: '1',
+        ac: 13,
+        hp: 22,
+        str: 14,
+        dex: 12,
+        con: 13,
+        int: 2,
+        wis: 10,
+        cha: 5
+    })
 };
