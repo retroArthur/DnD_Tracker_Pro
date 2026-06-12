@@ -10,7 +10,7 @@
 ## Phases
 
 - [x] **Phase 1: Stabilisierung** — App startet, Daten sind sicher, CI erkennt Crashes, Doku ist aktuell
-- [ ] **Phase 2: Technik-Fundament** — Installierbare PWA, Datei-Backup, Command Palette
+- [x] **Phase 2: Technik-Fundament** — Installierbare PWA, Datei-Backup, Command Palette (completed 2026-06-12)
 - [ ] **Phase 3: Bestiary** — SRD-Monster-Kompendium offline + eigene Kreaturen + Encounter-Import
 - [ ] **Phase 4: Initiative-Erweiterungen** — Statblock-Popup, Legendäre Aktionen & Resistenzen, Mob-Modus
 - [ ] **Phase 5: Welt & Story** — Session-Prep, NPC-Generator, Timeline, Reise-Simulator, Fraktionen
@@ -66,10 +66,10 @@ Plans:
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
-- [ ] 02-02-PLAN.md — PWA-Deploy: Service Worker + manifest.webmanifest + Font-Bundle + d20-Icon + Install-Button + GitHub-Pages-CI (TECH-01)
-- [ ] 02-03-PLAN.md — Datenmigration: Voll-Export-Format + PWA-Erststart-Wizard + file://-Umzugs-Flow + Divergenz-Banner (TECH-02)
-- [ ] 02-04-PLAN.md — Datei-Backup: File System Access API, atomares Schreiben, Snapshots/Pruning, Restore-Browser, Status + file://-Fallback (TECH-03)
-- [ ] 02-05-PLAN.md — Command Palette: Aktions-Registry + Fuzzy-Suche (fuzzyMatch-Wiederverwendung) + Strg+Shift+K-Overlay (TECH-04)
+- [x] 02-02-PLAN.md — PWA-Deploy: Service Worker + manifest.webmanifest + Font-Bundle + d20-Icon + Install-Button + GitHub-Pages-CI (TECH-01)
+- [x] 02-03-PLAN.md — Datenmigration: Voll-Export-Format + PWA-Erststart-Wizard + file://-Umzugs-Flow + Divergenz-Banner (TECH-02)
+- [x] 02-04-PLAN.md — Datei-Backup: File System Access API, atomares Schreiben, Snapshots/Pruning, Restore-Browser, Status + file://-Fallback (TECH-03)
+- [x] 02-05-PLAN.md — Command Palette: Aktions-Registry + Fuzzy-Suche (fuzzyMatch-Wiederverwendung) + Strg+Shift+K-Overlay (TECH-04)
 
 ### Phase 3: Bestiary
 
@@ -143,7 +143,7 @@ Plans:
 | Phase                       | Plans Complete | Status      | Completed |
 | --------------------------- | -------------- | ----------- | --------- |
 | 1. Stabilisierung           | 9/9            | Complete    | 2026-06-12 |
-| 2. Technik-Fundament        | 1/5 | In Progress|  |
+| 2. Technik-Fundament        | 5/5 | Complete   | 2026-06-12 |
 | 3. Bestiary                 | 0/?            | Not started | -         |
 | 4. Initiative-Erweiterungen | 0/?            | Not started | -         |
 | 5. Welt & Story             | 0/?            | Not started | -         |
