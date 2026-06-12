@@ -126,10 +126,11 @@ describe('pruneOldSnapshots — Snapshot-Limit 10 pro Kampagne (D-12, TECH-03)',
         expect(typeof pruneOldSnapshots).toBe('function'); // Schlaegt fehl bis Plan 02-04 implementiert ist
 
         // Simuliere 15 vorhandene Snapshot-Dateien fuer diese Kampagne
+        // (reale Namenskonvention: {safeName}-YYYY-MM-DD.json, vgl. getBackupFilenames)
         const campaignKey = 'standard';
         const mockFiles = Array.from({ length: 15 }, (_, i) => {
-            const padded = String(i + 1).padStart(3, '0');
-            return `backup-${campaignKey}-2026-01-${padded}.json`;
+            const padded = String(i + 1).padStart(2, '0');
+            return `${campaignKey}-2026-01-${padded}.json`;
         });
 
         const mockDirWithFiles = {

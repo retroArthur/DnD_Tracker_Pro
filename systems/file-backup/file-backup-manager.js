@@ -123,11 +123,26 @@ async function writeBackupForCampaign(dirHandle, campaignKey, campaignName, data
 // ============================================================
 
 /**
+ * Liefert den exakten Snapshot-Dateinamen-Regex fuer eine Kampagne:
+ * ^{safeName}-YYYY-MM-DD.json$ — verankert, damit Kampagnen mit
+ * Praefix-/Substring-Namen (z.B. "kampagne" vs. "kampagne-2") sich
+ * NICHT gegenseitig matchen (CR-05).
+ *
+ * @param {string} safeName - Bereinigter Kampagnenname (aus getBackupFilenames)
+ * @returns {RegExp}
+ */
+function getSnapshotRegex(safeName) {
+    const escaped = String(safeName).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    return new RegExp('^' + escaped + '-\\d{4}-\\d{2}-\\d{2}\\.json$');
+}
+
+/**
  * Behaelt maximal MAX datierte Snapshots pro Kampagne;
  * loescht die aeltesten (alphabetisch/chronologisch) darueberhinaus.
  *
- * Erkennt Snapshot-Dateien: alle .json-Dateien im Ordner, die den
- * Kampagnen-safeName enthalten und NICHT auf '-aktuell.json' enden.
+ * Erkennt Snapshot-Dateien ueber den verankerten Regex
+ * ^{safeName}-YYYY-MM-DD.json$ — ein Substring-Match wuerde Snapshots
+ * FREMDER Kampagnen mitzaehlen und zuerst loeschen (CR-05: Datenverlust).
  *
  * @param {FileSystemDirectoryHandle} dirHandle
  * @param {string} safeName  - Bereinigter Kampagnenname (aus getBackupFilenames)
@@ -136,12 +151,13 @@ async function writeBackupForCampaign(dirHandle, campaignKey, campaignName, data
  */
 async function pruneOldSnapshots(dirHandle, safeName, MAX) {
     const max = (MAX !== undefined && MAX !== null) ? MAX : FILE_BACKUP_MAX_SNAPSHOTS;
+    const snapshotRe = getSnapshotRegex(safeName);
     const snapshots = [];
 
     // Alle Eintraege im Backup-Ordner durchsuchen
     for await (const [name] of dirHandle.entries()) {
-        // Snapshot-Datei: enthaelt safeName, endet auf .json, ist NICHT die laufende Datei
-        if (name.includes(safeName) && name.endsWith('.json') && !name.endsWith('-aktuell.json')) {
+        // Nur exakte Snapshot-Dateien DIESER Kampagne
+        if (snapshotRe.test(name)) {
             snapshots.push(name);
         }
     }
@@ -345,6 +361,7 @@ function initFileBackup() {
 window.initFileBackup = initFileBackup;
 window.writeBackupForCampaign = writeBackupForCampaign;
 window.getBackupFilenames = getBackupFilenames;
+window.getSnapshotRegex = getSnapshotRegex;
 window.pruneOldSnapshots = pruneOldSnapshots;
 window.setBackupStatus = setBackupStatus;
 window.getBackupStatus = getBackupStatus;
