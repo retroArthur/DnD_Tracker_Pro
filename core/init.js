@@ -120,6 +120,11 @@ async function init() {
     // PWA Installation
     initPWA();
 
+    // Phase-2-Module defensiv initialisieren (Implementierung: Welle 2)
+    if (typeof window.initFileBackup === 'function') window.initFileBackup();
+    if (typeof window.initMigrationWizardIfNeeded === 'function') window.initMigrationWizardIfNeeded();
+    if (typeof window.initCommandPalette === 'function') window.initCommandPalette();
+
     // Performance-Monitoring initialisieren
     initPerformanceMonitoring();
 
@@ -198,7 +203,25 @@ function registerServiceWorker() {
             if (response.ok) {
                 navigator.serviceWorker
                     .register('./sw.js')
-                    .then(reg => log('[SW] Registriert:', reg.scope))
+                    .then(reg => {
+                        log('[SW] Registriert:', reg.scope);
+
+                        // Neue Version wartet bereits (z.B. nach hartem Reload)
+                        if (reg.waiting) {
+                            showSWUpdateHintGuarded(reg.waiting);
+                        }
+
+                        // Zukünftige Updates beobachten
+                        reg.addEventListener('updatefound', () => {
+                            const newSW = reg.installing;
+                            if (!newSW) return;
+                            newSW.addEventListener('statechange', () => {
+                                if (newSW.state === 'installed' && navigator.serviceWorker.controller) {
+                                    showSWUpdateHintGuarded(newSW);
+                                }
+                            });
+                        });
+                    })
                     .catch(err => log('[SW] Registrierung fehlgeschlagen:', err.message));
             } else {
                 log('[SW] Keine sw.js gefunden - Offline-Modus via localStorage aktiv');
@@ -207,6 +230,14 @@ function registerServiceWorker() {
         .catch(() => {
             log('[SW] Offline-Modus via localStorage aktiv');
         });
+}
+
+// Hilfsfunktion: SW-Update-Hinweis defensiv delegieren (D-03 — kein erzwungener Reload)
+// Die echte UI-Implementierung liefert Plan 02-02 (pwa-install.js)
+function showSWUpdateHintGuarded(newSW) {
+    if (typeof window.showSWUpdateHint === 'function') {
+        window.showSWUpdateHint(newSW);
+    }
 }
 
 // Offline-Status überwachen (funktioniert auch ohne Service Worker)
