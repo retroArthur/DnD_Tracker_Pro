@@ -27,16 +27,17 @@ Die App muss am Spieltisch **zuverlässig offline laufen** — ein Spielleiter-B
 - ✓ Globale Fuzzy-Suche, Undo/Redo, Auto-Backups (LocalStorage + IndexedDB), Event-Log, Timer, Kalender — existing
 - ✓ Build-System (`build.py` bündelt 92 Module in eine HTML-Datei), CI-Pipeline, Jest + Playwright Tests — existing
 
+**Validated in Phase 1: Stabilisierung (2026-06-12):**
+
+- ✓ App startet fehlerfrei via `file://` — `clearMindmap`-Boot-Crash (tools/debug.js) behoben, Smoke-Tests 7/7
+- ✓ Mindmap-Reste vollständig bereinigt (debug.js, campaign-manager Seed, types/\*.d.ts, styles-purged.css, tests, tools)
+- ✓ Frische Builds (dev + production) aus aktuellem Quellcode, Konsole fehlerfrei in allen Tabs
+- ✓ Lint/Typecheck/Format grün (`npm run check` Exit 0, dauerhaft — Lint-Gate error-only, Prettier-Massenformatierung)
+- ✓ Repo gepflegt: CI grün, tote Dateien/Tools entfernt (main.js, tsconfig.json.backup, veraltete tools/\*.py, validate.py repariert)
+- ✓ Doku aktuell: CLAUDE.md, README, docs/bugfixes.md auditiert; Lizenz einheitlich MIT; SRD-Herkunft dokumentiert
+- ✓ Persistenz-Härtung: >5-MB-Stale-Shadow-Fix, Export-Versionsstempel, LS/IDB-Konfliktauflösung ohne Rekursion (`resolveStorageConflict`)
+
 ### Active
-
-**Milestone-Teil A — Stabilisierung (zuerst):**
-
-- [ ] App startet fehlerfrei via `file://` — aktuell killt `clearMindmap is not defined` (tools/debug.js:99) die gesamte Initialisierung
-- [ ] Mindmap-Reste vollständig bereinigt (debug.js, campaign-manager Seed, types/\*.d.ts, styles-purged.css, tests, tools)
-- [ ] Frische Builds (dev + production) aus aktuellem Quellcode, Konsole fehlerfrei in allen Tabs
-- [ ] Lint/Typecheck/Format grün (`npm run check`)
-- [ ] Repo gepflegt: alles committed, CI grün, tote Dateien/Tools entfernt (main.js, tsconfig.json.backup, veraltete tools/\*.py, validate.py-Pfade)
-- [ ] Doku aktuell: CLAUDE.md, README, docs/bugfixes.md spiegeln den echten Code-Stand (inkl. Lizenz-Korrektur ISC→MIT)
 
 **Milestone-Teil B — Technik-Fundament (erste Feature-Gruppe):**
 
@@ -73,7 +74,7 @@ Die App muss am Spieltisch **zuverlässig offline laufen** — ein Spielleiter-B
 ## Context
 
 - **Brownfield:** v2.6.0, 92 JS-Module (~29k Zeilen), non-ESM Global-Scope-Architektur, `build.py` bündelt alles in eine standalone HTML-Datei. Codebase-Map liegt in `.planning/codebase/` (7 Dokumente, Stand 2026-06-11).
-- **Akuter Bruch:** `tools/debug.js` referenziert das entfernte Mindmap-Feature (`const clearAllNodes = clearMindmap;` Zeile 99) → ReferenceError beim Script-Load → App initialisiert nicht. `dist/`-Builds sind vom 24. Mai, Quellcode vom 11. Juni.
+- **Akuter Bruch (behoben in Phase 1):** Der `clearMindmap`-ReferenceError in tools/debug.js ist beseitigt, frische dev-/prod-Builds liegen in `dist/`, CI mit Playwright-Smoke-Test erkennt künftige Boot-Crashes. Offen aus Phase 1: 3 manuelle Browser-Tests (01-HUMAN-UAT.md) + Code-Review-Findings (1 vorbestehender Import-XSS, siehe 01-REVIEW.md).
 - **Bekannte Schwächen (aus CONCERNS.md):** doppelt gepflegte Modullisten (loader.js + build.py), build.py Pass-3 hinterlässt verwaiste Funktionskörper, Debug-Flag-Flip per String-Match, ~504 funktions-lokale `const X = window.X`-Imports, veraltete CLAUDE.md (widerspricht Code in mehreren Punkten), kaputte Dev-Tools (validate.py mit Linux-Pfaden, `python3` in npm-Scripts auf Windows), Lizenz-Widerspruch (package.json ISC vs. LICENSE MIT), deprecated `document.execCommand` im Rich-Text-Editor (21 Call-Sites).
 - **Nutzung:** Einzelnutzer (Entwickler = Spielleiter), Windows, Chromium-Browser, App wird als `file://` per Doppelklick geöffnet. Deutsche UI durchgängig.
 
@@ -117,4 +118,4 @@ This document evolves at phase transitions and milestone boundaries.
 
 ---
 
-_Last updated: 2026-06-11 after initialization_
+_Last updated: 2026-06-12 after Phase 1 completion (Stabilisierung verifiziert, 11/11 STAB-Requirements)_
