@@ -47,6 +47,12 @@ const MODULES = [
     'systems/session-timer.js',
     'systems/search/global-search.js',
     'systems/campaign-manager/campaign-manager.js',
+    // Phase 2 Migrations- und Backup-Module (Welle 2 fuellt Implementierung)
+    'systems/migration/full-export.js',
+    'systems/migration/migration-wizard.js',
+    'systems/file-backup/file-backup-permissions.js',
+    'systems/file-backup/file-backup-manager.js',
+    'systems/file-backup/file-backup-ui.js',
 
     // Render
     'render/helpers.js',
@@ -83,6 +89,9 @@ const MODULES = [
 
     // DM Screen
     'features/dmscreen/dmscreen-render.js',
+    // Phase 2 Command-Palette-Module (Welle 2 fuellt Implementierung)
+    'features/command-palette/action-registry.js',
+    'features/command-palette/command-palette.js',
 
     // Dice
     'features/dice/dice-core.js',
