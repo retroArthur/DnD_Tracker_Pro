@@ -147,6 +147,10 @@ function _handleCPKeydown(e) {
         if (_cpFocusedIndex >= 0 && _cpFocusedIndex < _cpCurrentResults.length) {
             _executeAction(_cpCurrentResults[_cpFocusedIndex]);
             _closeCP();
+        } else if (_cpFocusedIndex === -1 && _cpCurrentResults.length > 0) {
+            // Enter ohne Pfeiltasten-Navigation: Top-Treffer ausfuehren (CR-10)
+            _executeAction(_cpCurrentResults[0]);
+            _closeCP();
         }
     } else if (e.key === 'Escape') {
         e.preventDefault();
@@ -204,7 +208,10 @@ function initCommandPalette() {
     // Hier nur sicherstellen dass data-action execute-command registriert wird.
     if (typeof EventDelegation !== 'undefined') {
         EventDelegation.registerAction('execute-command', function(ctx) {
-            var commandId = ctx.dataset ? ctx.dataset.commandId : ctx.getAttribute('data-command-id');
+            // ctx ist das Delegation-Kontextobjekt { id, type, value, target, event } —
+            // NICHT das Element selbst (CR-10). Element mit data-action: ctx.target.
+            var el = ctx && ctx.target ? ctx.target : null;
+            var commandId = el && el.dataset ? el.dataset.commandId : null;
             if (!commandId) return;
             var registry = window.ACTION_REGISTRY || [];
             var action = null;
