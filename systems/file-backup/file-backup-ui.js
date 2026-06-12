@@ -410,27 +410,24 @@ async function reconnectFileBackup() {
 }
 
 // ============================================================
-// Exports
+// Registrierung der data-actions via EventDelegation
 // ============================================================
-window.showFileBackupSetup = showFileBackupSetup;
-window.showFileBackupBrowser = showFileBackupBrowser;
-window.restoreFromFileBackup = restoreFromFileBackup;
-window.renderBackupStatus = renderBackupStatus;
-window.downloadFileBackup = downloadFileBackup;
-window.reconnectFileBackup = reconnectFileBackup;
 
-// ============================================================
-// Selbst-Registrierung der data-actions via EventDelegation
-// (Kein system-actions.js editieren — Welle-2-Konfliktfreiheit)
-// Analog ui/actions/entity-actions.js Zeilen 279-283
-// ============================================================
-if (typeof EventDelegation !== 'undefined') {
+/**
+ * Registriert alle Datei-Backup-data-actions.
+ * MUSS zur init()-Laufzeit aufgerufen werden (core/init.js), NICHT auf Modul-Ebene:
+ * Im Bundle liegt `const EventDelegation` im selben Script-Scope weiter hinten —
+ * ein Modul-Level-typeof wirft dort ReferenceError (TDZ) und killt die ganze App.
+ * Im Loader-Modus wäre die Registrierung still übersprungen (Muster: initCommandPalette).
+ */
+function initFileBackupActions() {
+    if (typeof EventDelegation === 'undefined') return;
     EventDelegation.registerActions({
         'setup-file-backup': () => window.showFileBackupSetup(),
         'open-file-backup-browser': () => window.showFileBackupBrowser(),
-        'restore-file-backup': (e) => {
-            const el = e?.target?.closest('[data-action="restore-file-backup"]');
-            const filename = el?.dataset?.filename;
+        'restore-file-backup': (ctx) => {
+            // ctx ist das Delegation-Kontextobjekt { id, type, value, target, event }
+            const filename = ctx?.target?.dataset?.filename;
             if (filename) window.restoreFromFileBackup(filename);
         },
         'reconnect-file-backup': () => window.reconnectFileBackup(),
@@ -445,3 +442,14 @@ if (typeof EventDelegation !== 'undefined') {
         }
     });
 }
+
+// ============================================================
+// Exports
+// ============================================================
+window.showFileBackupSetup = showFileBackupSetup;
+window.showFileBackupBrowser = showFileBackupBrowser;
+window.restoreFromFileBackup = restoreFromFileBackup;
+window.renderBackupStatus = renderBackupStatus;
+window.downloadFileBackup = downloadFileBackup;
+window.reconnectFileBackup = reconnectFileBackup;
+window.initFileBackupActions = initFileBackupActions;

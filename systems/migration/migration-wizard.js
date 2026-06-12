@@ -476,12 +476,21 @@ function initMigrationWizardIfNeeded() {
 }
 
 // ============================================================
-// BANNER-ACTIONS via EventDelegation (Selbst-Registrierung, Analog: entity-actions.js L279-283)
+// BANNER-ACTIONS via EventDelegation
 // ============================================================
 
-// D-09: reopen-migration-wizard ruft showMigrationWizard DIREKT auf (ohne Guards)
-// Damit ist der Wizard auch bei vorhandenen Daten erneut aufrufbar
-if (typeof EventDelegation !== 'undefined') {
+/**
+ * Registriert die Migrations-data-actions.
+ * MUSS zur init()-Laufzeit aufgerufen werden (core/init.js), NICHT auf Modul-Ebene:
+ * Im Bundle liegt `const EventDelegation` im selben Script-Scope weiter hinten —
+ * ein Modul-Level-typeof wirft dort ReferenceError (TDZ) und killt die ganze App.
+ * Im Loader-Modus wäre die Registrierung still übersprungen (Muster: initCommandPalette).
+ *
+ * D-09: reopen-migration-wizard ruft showMigrationWizard DIREKT auf (ohne Guards)
+ * Damit ist der Wizard auch bei vorhandenen Daten erneut aufrufbar.
+ */
+function initMigrationActions() {
+    if (typeof EventDelegation === 'undefined') return;
     EventDelegation.registerAction('reopen-migration-wizard', function() {
         if (typeof window.showMigrationWizard === 'function') {
             window.showMigrationWizard();
@@ -507,6 +516,7 @@ if (typeof EventDelegation !== 'undefined') {
 // EXPORTS
 // ============================================================
 window.isFreshInstall = isFreshInstall;
+window.initMigrationActions = initMigrationActions;
 window.showMigrationWizard = showMigrationWizard;
 window.showWizardStep = showWizardStep;
 window.initMigrationWizardIfNeeded = initMigrationWizardIfNeeded;

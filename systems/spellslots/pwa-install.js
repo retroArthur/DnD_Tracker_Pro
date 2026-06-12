@@ -99,9 +99,15 @@ function showSWUpdateHint(newSW) {
     banner.style.display = 'flex';
 }
 
-// Selbst-Registrierung der data-action "install-pwa" (Welle-2-Konfliktfreiheit, D-05)
-// Kein Edit von ui/actions/system-actions.js nötig
-if (typeof EventDelegation !== 'undefined') {
+/**
+ * Registriert die data-action "install-pwa" (D-05).
+ * MUSS zur init()-Laufzeit aufgerufen werden (core/init.js), NICHT auf Modul-Ebene:
+ * Im Bundle liegt `const EventDelegation` im selben Script-Scope weiter hinten —
+ * ein Modul-Level-typeof wirft dort ReferenceError (TDZ) und killt die ganze App.
+ * Im Loader-Modus wäre die Registrierung still übersprungen (Muster: initCommandPalette).
+ */
+function initPWAActions() {
+    if (typeof EventDelegation === 'undefined') return;
     EventDelegation.registerAction('install-pwa', () => {
         if (typeof window.installPWA === 'function') window.installPWA();
     });
@@ -109,6 +115,7 @@ if (typeof EventDelegation !== 'undefined') {
 
 // Exports
 window.initPWA = initPWA;
+window.initPWAActions = initPWAActions;
 window.installPWA = installPWA;
 window.showSWUpdateHint = showSWUpdateHint;
 // ============================================================

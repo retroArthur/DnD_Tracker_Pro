@@ -123,6 +123,11 @@ async function init() {
     initPWA();
 
     // Phase-2-Module defensiv initialisieren (Implementierung: Welle 2)
+    // data-action-Registrierungen MÜSSEN hier (init-Laufzeit) erfolgen — Modul-Level-
+    // typeof auf die const EventDelegation wirft im Bundle ReferenceError (TDZ, CR-01)
+    if (typeof window.initPWAActions === 'function') window.initPWAActions();
+    if (typeof window.initFileBackupActions === 'function') window.initFileBackupActions();
+    if (typeof window.initMigrationActions === 'function') window.initMigrationActions();
     if (typeof window.initFileBackup === 'function') window.initFileBackup();
     if (typeof window.initMigrationWizardIfNeeded === 'function') window.initMigrationWizardIfNeeded();
     if (typeof window.initCommandPalette === 'function') window.initCommandPalette();
