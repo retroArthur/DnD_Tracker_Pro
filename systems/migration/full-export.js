@@ -121,6 +121,24 @@ function importFullExport(parsedObj) {
     const campaignEntries = Object.entries(parsedObj.campaigns);
     let totalBytes = 0;
 
+    // WR-03: Mengenlimit — eine manipulierte Datei darf nicht beliebig viele
+    // localStorage-Keys anlegen (DoS/Quota)
+    const MAX_IMPORT_CAMPAIGNS = 100;
+    if (campaignEntries.length > MAX_IMPORT_CAMPAIGNS) {
+        throw new Error('Zu viele Kampagnen in der Datei (max ' + MAX_IMPORT_CAMPAIGNS + ')');
+    }
+
+    // WR-03: Key-Whitelist — die Keys aus der (nicht vertrauenswuerdigen) Datei
+    // werden 1:1 als localStorage-Keys verwendet. Nur echte Kampagnen-Key-Formate
+    // zulassen: 'dnd-tracker-*' (Standard-Kampagne, core/config.js) und
+    // 'dnd-campaign-*' (benannte Kampagnen, campaign-manager.js createCampaign).
+    const ALLOWED_KEY_RE = /^(dnd-tracker(-|$)|dnd-campaign-)/;
+    for (const [key] of campaignEntries) {
+        if (typeof key !== 'string' || key.length > 200 || !ALLOWED_KEY_RE.test(key)) {
+            throw new Error('Unerwarteter Kampagnen-Key: ' + key);
+        }
+    }
+
     // Jede Kampagne migrieren und speichern
     for (const [key, campaign] of campaignEntries) {
         if (!campaign.data || typeof campaign.data !== 'object') {
