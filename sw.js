@@ -1,41 +1,51 @@
 // Service Worker for D&D Tracker
-// Cache-First Strategie für Offline-Support
+// Cache-First Strategie für Offline-Support (Single-File-Build)
 
-const CACHE_NAME = 'dnd-tracker-v2';
-const STATIC_ASSETS = [
+const CACHE_VERSION = 'dnd-tracker-v3'; // wird bei Production-Build via build.py gebumpt
+const CACHED_ASSETS = [
     './',
-    './index.html',
-    './loader.js',
-    './assets/styles.css',
-    './assets/body.html'
+    './dnd-tracker-optimized.html',
+    './manifest.webmanifest',
+    './icons/icon-192.png',
+    './icons/icon-512.png',
+    './assets/fonts/roboto-400.woff2',
+    './assets/fonts/roboto-700.woff2',
+    './assets/fonts/inter-400.woff2',
+    './assets/fonts/inter-500.woff2',
+    './assets/fonts/inter-600.woff2',
+    './assets/fonts/poppins-400.woff2',
+    './assets/fonts/poppins-500.woff2',
+    './assets/fonts/poppins-600.woff2',
+    './assets/fonts/source-sans-pro-400.woff2',
+    './assets/fonts/source-sans-pro-600.woff2'
 ];
 
-// Install: Cache static assets
+// Install: Cache alle statischen Assets (KEIN self.skipWaiting() — D-03)
 self.addEventListener('install', event => {
     event.waitUntil(
         caches
-            .open(CACHE_NAME)
-            .then(cache => cache.addAll(STATIC_ASSETS))
-            .then(() => self.skipWaiting())
-            .catch(() => self.skipWaiting())
+            .open(CACHE_VERSION)
+            .then(cache => cache.addAll(CACHED_ASSETS))
     );
+    // KEIN self.skipWaiting() hier — verhindert gleichzeitigen Betrieb
+    // von altem und neuem Code (D-03 Anti-Pattern laut RESEARCH.md)
 });
 
-// Activate: Clean up old caches
+// Activate: Alte Caches bereinigen, Clients übernehmen
 self.addEventListener('activate', event => {
     event.waitUntil(
         caches
             .keys()
             .then(cacheNames => {
                 return Promise.all(
-                    cacheNames.filter(name => name !== CACHE_NAME).map(name => caches.delete(name))
+                    cacheNames.filter(name => name !== CACHE_VERSION).map(name => caches.delete(name))
                 );
             })
             .then(() => clients.claim())
     );
 });
 
-// Fetch: Cache-First für lokale Ressourcen, Network-First für externe
+// Fetch: Cache-First für lokale Ressourcen, externe Requests durchreichen
 self.addEventListener('fetch', event => {
     const url = new URL(event.request.url);
 
@@ -44,35 +54,16 @@ self.addEventListener('fetch', event => {
         return;
     }
 
-    // Ignoriere externe Anfragen (z.B. Google Fonts)
+    // Externe Requests (keine Google Fonts mehr nach D-07 — alle Fonts lokal):
+    // Einfach durchreichen ohne Caching
     if (url.origin !== location.origin) {
-        // Network-only für externe Ressourcen
-        event.respondWith(
-            fetch(event.request).catch(() => {
-                // Bei Fehler: leere Response für Fonts etc.
-                return new Response('', { status: 503 });
-            })
-        );
         return;
     }
 
-    // Cache-First für lokale Ressourcen
+    // Cache-First für alle eigenen Assets
     event.respondWith(
         caches.match(event.request).then(cachedResponse => {
             if (cachedResponse) {
-                // Im Hintergrund aktualisieren (Stale-While-Revalidate)
-                fetch(event.request)
-                    .then(response => {
-                        if (response && response.status === 200) {
-                            caches
-                                .open(CACHE_NAME)
-                                .then(cache => cache.put(event.request, response));
-                        }
-                    })
-                    .catch(() => {
-                        /* Netzwerk nicht verfügbar */
-                    });
-
                 return cachedResponse;
             }
 
@@ -86,18 +77,25 @@ self.addEventListener('fetch', event => {
 
                     const responseToCache = response.clone();
                     caches
-                        .open(CACHE_NAME)
+                        .open(CACHE_VERSION)
                         .then(cache => cache.put(event.request, responseToCache));
 
                     return response;
                 })
                 .catch(() => {
-                    // Offline Fallback für HTML
+                    // Offline Fallback: Single-File-Build ausliefern
                     if (event.request.headers.get('accept')?.includes('text/html')) {
-                        return caches.match('./index.html');
+                        return caches.match('./dnd-tracker-optimized.html');
                     }
                     return new Response('Offline', { status: 503 });
                 });
         })
     );
+});
+
+// Message Handler: SKIP_WAITING nur auf explizite Anfrage (D-03 konform)
+self.addEventListener('message', event => {
+    if (event.data?.type === 'SKIP_WAITING') {
+        self.skipWaiting();
+    }
 });

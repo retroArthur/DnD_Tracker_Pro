@@ -1,0 +1,25 @@
+{
+  "name": "D&D Kampagnen-Tracker Pro",
+  "short_name": "D&D Tracker",
+  "description": "Offline-Kampagnenverwaltung für Dungeons & Dragons 5e",
+  "start_url": "./dnd-tracker-optimized.html",
+  "id": "./dnd-tracker-optimized.html",
+  "display": "standalone",
+  "background_color": "#0d0d0d",
+  "theme_color": "#d4af37",
+  "lang": "de",
+  "icons": [
+    {
+      "src": "./icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "./icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
