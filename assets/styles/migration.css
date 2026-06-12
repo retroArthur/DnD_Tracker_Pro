@@ -1,4 +1,354 @@
 /* ========================================
-   MIGRATION - Wizard und Divergenz-Banner
-   Implementierung: Phase 2, Welle 2 (Plan 02-03)
+   MIGRATION - Wizard, Umzugs-Hinweis, Divergenz-Banner
+   Phase 2, Plan 03 (D-09, D-10, D-11)
+   UI-SPEC Komponenten 3/4/5
    ======================================== */
+
+/* ========================================
+   Komponente 3 — Migrations-Wizard (D-09)
+   ======================================== */
+
+.migration-wizard-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 1100;
+    background: rgba(0, 0, 0, 0.75);
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+}
+
+.migration-wizard {
+    background: var(--bg-card, #1a1a1a);
+    border-radius: 12px;
+    max-width: 560px;
+    width: 100%;
+    padding: 24px;
+    position: relative;
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+/* Wizard Header */
+.migration-wizard-header {
+    margin-bottom: 24px;
+}
+
+.migration-wizard-title {
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--gold, #d4af37);
+    margin: 0 0 16px 0;
+    line-height: 1.2;
+}
+
+/* Schritte-Indikator */
+.wizard-steps {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    margin-bottom: 4px;
+}
+
+.wizard-step {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--text-dim, #888);
+    transition: background 0.2s ease, box-shadow 0.2s ease;
+    flex-shrink: 0;
+}
+
+.wizard-step.active {
+    background: var(--gold, #d4af37);
+    box-shadow: 0 0 0 2px rgba(212, 175, 55, 0.3);
+}
+
+.wizard-step.done {
+    background: var(--green, #4ade80);
+}
+
+/* Schritt-Inhalte */
+.migration-step {
+    animation: fadeInStep 0.15s ease;
+}
+
+@keyframes fadeInStep {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.migration-step-heading {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text, #e0e0e0);
+    margin: 0 0 12px 0;
+    line-height: 1.2;
+}
+
+.migration-step-body {
+    font-size: 14px;
+    color: var(--text-dim, #888);
+    line-height: 1.5;
+    margin: 0 0 16px 0;
+}
+
+.migration-step-actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: 16px;
+}
+
+/* Primärer CTA Button */
+.btn.btn-primary.migration-btn-next {
+    background: var(--gold, #d4af37);
+    color: var(--bg-dark, #0d0d0d);
+    border: none;
+    padding: 10px 20px;
+    border-radius: 6px;
+    font-weight: 600;
+    min-height: 44px;
+    cursor: pointer;
+}
+
+.btn.btn-primary.migration-btn-next:hover {
+    opacity: 0.9;
+}
+
+/* Drag&Drop-Zone */
+.wizard-dropzone {
+    border: 2px dashed var(--border, #3a3a3a);
+    border-radius: 8px;
+    min-height: 120px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 24px 16px;
+    cursor: pointer;
+    transition: border-color 0.2s ease, background 0.2s ease;
+    text-align: center;
+}
+
+.wizard-dropzone:hover {
+    border-color: rgba(212, 175, 55, 0.5);
+}
+
+/* Drag-aktiv-Zustand */
+.wizard-dropzone.dragover {
+    border-color: var(--gold, #d4af37);
+    border-style: solid;
+    background: rgba(212, 175, 55, 0.08);
+}
+
+/* Datei-ausgewaehlt-Zustand */
+.wizard-dropzone.file-ready {
+    border-color: var(--green, #4ade80);
+    border-style: solid;
+}
+
+.wizard-dropzone-icon {
+    font-size: 24px;
+    display: block;
+}
+
+.wizard-dropzone-hint {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+}
+
+.wizard-dropzone-text {
+    font-size: 14px;
+    color: var(--text-dim, #888);
+}
+
+.wizard-dropzone-filename {
+    font-size: 13px;
+    color: var(--green, #4ade80);
+    word-break: break-all;
+}
+
+/* Fehlermeldung */
+.migration-step-error {
+    color: var(--red, #ef4444);
+    font-size: 13px;
+    margin-top: 8px;
+    line-height: 1.4;
+}
+
+/* Schritt 4 — Erfolg */
+.migration-success {
+    text-align: center;
+    padding: 24px 0;
+}
+
+.migration-success-icon {
+    font-size: 32px;
+    color: var(--green, #4ade80);
+    margin-bottom: 12px;
+    display: block;
+}
+
+.migration-success-meta {
+    margin: 12px 0 20px;
+}
+
+.migration-success-line {
+    font-size: 14px;
+    color: var(--text-dim, #888);
+    margin-bottom: 4px;
+}
+
+/* Wizard Footer */
+.migration-wizard-footer {
+    margin-top: 24px;
+    display: flex;
+    justify-content: flex-end;
+    border-top: 1px solid var(--border, #3a3a3a);
+    padding-top: 16px;
+}
+
+.migration-skip-btn {
+    font-size: 13px;
+    color: var(--text-dim, #888);
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px 8px;
+    text-decoration: underline;
+}
+
+.migration-skip-btn:hover {
+    color: var(--text, #e0e0e0);
+}
+
+/* reduced-motion */
+@media (prefers-reduced-motion: reduce) {
+    .migration-wizard,
+    .wizard-dropzone,
+    .wizard-step,
+    .migration-step {
+        transition: none;
+        animation: none;
+    }
+}
+
+/* ========================================
+   Komponente 4 — Einmaliger Umzugs-Hinweis (D-10)
+   .migration-hint-banner
+   ======================================== */
+
+.migration-hint-banner {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 990;
+    min-height: 48px;
+    background: var(--bg-elevated, #252525);
+    border-bottom: 1px solid rgba(212, 175, 55, 0.4);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 16px;
+    flex-wrap: wrap;
+}
+
+.migration-hint-text {
+    font-size: 14px;
+    color: var(--text, #e0e0e0);
+    flex: 1;
+    min-width: 200px;
+}
+
+.migration-hint-link {
+    font-size: 14px;
+    color: var(--gold, #d4af37);
+    text-decoration: underline;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px 8px;
+    white-space: nowrap;
+    min-height: 44px;
+}
+
+.migration-hint-link:hover {
+    opacity: 0.8;
+}
+
+.migration-hint-close {
+    background: none;
+    border: none;
+    color: var(--text-dim, #888);
+    cursor: pointer;
+    font-size: 16px;
+    padding: 4px 8px;
+    min-width: 32px;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.migration-hint-close:hover {
+    color: var(--text, #e0e0e0);
+}
+
+/* ========================================
+   Komponente 5 — Divergenz-Banner (D-11)
+   .divergence-banner
+   ======================================== */
+
+.divergence-banner {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 989;
+    height: 40px;
+    background: var(--bg-elevated, #252525);
+    border-left: 4px solid var(--yellow, #fbbf24);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 0 16px;
+    overflow: hidden;
+}
+
+.divergence-banner-text {
+    font-size: 12px;
+    color: var(--text-dim, #888);
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.divergence-banner-dismiss {
+    font-size: 12px;
+    color: var(--text-dim, #888);
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px 8px;
+    white-space: nowrap;
+    flex-shrink: 0;
+    text-decoration: underline;
+    min-height: 32px;
+}
+
+.divergence-banner-dismiss:hover {
+    color: var(--text, #e0e0e0);
+}
+
+/* Wenn beide Banner sichtbar sind, zweiten nach unten verschieben */
+.migration-hint-banner ~ .divergence-banner {
+    top: 48px;
+}
