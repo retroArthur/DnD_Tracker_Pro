@@ -1,4 +1,183 @@
 /* ========================================
    COMMAND-PALETTE - Overlay und Ergebnisliste
    Implementierung: Phase 2, Welle 2 (Plan 02-05)
+   UI-SPEC Komponente 10: .cp-overlay (z-index 1200), .cp-box (top 20vh)
    ======================================== */
+
+/* Overlay-Hintergrund */
+.cp-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 1200;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    align-items: flex-start;
+    justify-content: center;
+    padding-top: 20vh;
+}
+
+/* Sichtbarer Zustand */
+.cp-overlay.cp-visible {
+    display: flex;
+    animation: cp-fade-in 0.15s ease;
+}
+
+/* Command-Palette-Box */
+.cp-box {
+    background: var(--bg-card);
+    border: 1px solid rgba(212, 175, 55, 0.3);
+    border-radius: 12px;
+    box-shadow: 0 16px 48px rgba(0, 0, 0, 0.6);
+    width: 90%;
+    max-width: 560px;
+    overflow: hidden;
+    animation: cp-slide-down 0.2s ease;
+}
+
+/* Input-Bereich */
+.cp-input-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+    position: relative;
+}
+
+/* Fokusring via border-bottom auf .cp-input-row */
+.cp-input-row:focus-within {
+    border-bottom-color: var(--gold);
+}
+
+.cp-search-icon {
+    color: var(--text-dim);
+    font-size: 16px;
+    flex-shrink: 0;
+    line-height: 1;
+}
+
+.cp-input {
+    flex: 1;
+    border: none;
+    background: transparent;
+    font-size: 16px;
+    color: var(--text);
+    outline: none;
+    font-family: inherit;
+    min-width: 0;
+}
+
+.cp-input::placeholder {
+    color: var(--text-dim);
+}
+
+.cp-hint {
+    color: var(--text-dim);
+    font-size: 11px;
+    background: var(--bg-elevated, rgba(255, 255, 255, 0.05));
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 2px 6px;
+    flex-shrink: 0;
+    user-select: none;
+}
+
+/* Ergebnisliste */
+.cp-results {
+    max-height: 360px;
+    overflow-y: auto;
+}
+
+/* Ergebnis-Zeile */
+.cp-result {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    min-height: 48px;
+    cursor: pointer;
+    border-left: 2px solid transparent;
+    transition: background 0.1s ease;
+    user-select: none;
+}
+
+.cp-result:hover {
+    background: var(--bg-hover, rgba(255, 255, 255, 0.05));
+}
+
+/* Tastatur-Fokus (Hervorhebung) */
+.cp-result.focused {
+    background: var(--bg-elevated, rgba(255, 255, 255, 0.08));
+    border-left-color: var(--gold);
+}
+
+.cp-result-icon {
+    font-size: 18px;
+    width: 24px;
+    text-align: center;
+    flex-shrink: 0;
+    line-height: 1;
+}
+
+.cp-result-label {
+    flex: 1;
+    font-size: var(--font-size-base, 14px);
+    color: var(--text);
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Leerer Zustand */
+.cp-empty {
+    padding: 24px 16px;
+    text-align: center;
+    color: var(--text-dim);
+    font-size: var(--font-size-small, 12px);
+}
+
+/* Animationen */
+@keyframes cp-fade-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes cp-slide-down {
+    from {
+        transform: translateY(-20px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+/* Reduzierte Bewegung */
+@media (prefers-reduced-motion: reduce) {
+    .cp-overlay.cp-visible,
+    .cp-box {
+        animation: none;
+        transition: none;
+    }
+}
+
+/* Mobile */
+@media (max-width: 600px) {
+    .cp-overlay {
+        padding-top: 10vh;
+        align-items: flex-start;
+    }
+
+    .cp-box {
+        width: 95%;
+        border-radius: 8px;
+    }
+
+    .cp-results {
+        max-height: 60vh;
+    }
+}
