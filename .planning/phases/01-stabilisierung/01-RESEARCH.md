@@ -664,22 +664,21 @@ Die Phase erfordert keine algorithmisch komplexen Eigenentwicklungen. Kritische 
 
 ---
 
-## Offene Fragen
+## Offene Fragen (RESOLVED)
 
-1. **Vollständiger Lizenzsourcen-Audit (STAB-11)**
+Alle drei Fragen sind beim Planen final entschieden worden. Es bleiben keine offenen Punkte, die die Umsetzung der Plaene 01-07 blockieren.
+
+1. **Vollständiger Lizenzsourcen-Audit (STAB-11) — ENTSCHIEDEN**
    - Was bekannt: SRD 5.1 ist CC-BY-4.0; deutsche Übersetzungen können eigene Rechte haben
-   - Was unklar: Woher stammen die deutschen Zaubertexte im Repo konkret (eigene Übersetzung vs. Drittquelle)?
-   - Empfehlung: Grep nach Quellangaben in den Zaubertexten; im Zweifel Attribution-Block in README/LICENSE ohne Beschuldigung; eskalieren wenn Drittquelle gefunden (D-16: hartes Risiko wird als eigene Entscheidung behandelt)
+   - **Entscheidung (final, gemäß D-16):** Das Audit-Vorgehen in Plan 07 IST die Entscheidung — kein separater Lizenz-Audit als Vorbedingung. Plan 07 grept die Zaubertexte nach Quellangaben, dokumentiert den Befund (Quelle, Lizenz, Risikobewertung) in docs/, ergänzt fehlende Pflicht-Attribution (z.B. CC-BY-4.0 für SRD 5.1) in README/LICENSE ohne Beschuldigung. Wird eine geschützte Drittquelle gefunden, wird das harte Risiko als eigene Folge-Entscheidung eskaliert (D-16) — in dieser Phase werden KEINE Texte still gelöscht. Damit ist die Frage für die Phasenplanung abschließend beantwortet.
 
-2. **D-07-Dialog UX bei identischen Datenmengen**
+2. **D-07-Dialog UX bei identischen Datenmengen — ENTSCHIEDEN**
    - Was bekannt: Dialog erscheint nur wenn LS ohne Timestamp UND IDB mit Timestamp und unterschiedlichem Inhalt
-   - Was unklar: Wie "unterschiedlich" definieren? Hash-Vergleich zu aufwändig?
-   - Empfehlung: Größenvergleich (Byte-Länge) + IDB-Timestamp als hinreichende Heuristik. Bei gleicher Größe: kein Dialog, IDB-Stand bevorzugen.
+   - **Entscheidung (final):** Inhaltsvergleich per direktem String-Vergleich der serialisierten Speicherstände — `lsData !== idbData` (siehe Plan 02, Task 3a). Kein Hash, keine Byte-Längen-Heuristik nötig: Die Stände liegen ohnehin als Strings vor; ein direkter Vergleich ist exakt und günstig. Sind die Inhalte identisch (`lsData === idbData`), erscheint KEIN Dialog (D-07: "Sind die Inhalte identisch: kein Dialog") und der Load nimmt still den vorhandenen Stand. Plan 02 Task 1 testet diesen Identisch-Fall explizit (Dialog-Spy `not.toHaveBeenCalled`).
 
-3. **Playwright-Smoke-Test in CI: `npx playwright install chromium` Cache**
+3. **Playwright-Smoke-Test in CI: `npx playwright install chromium` Cache — ENTSCHIEDEN**
    - Was bekannt: `npx playwright install` ist nötig in CI; dauert ~30 Sekunden
-   - Was unklar: Playwright-Browser-Cache in GitHub Actions — muss er in jedem Job neu geladen werden?
-   - Empfehlung: `cache: npm` deckt Node-Modules; Browser separat. GitHub Actions hat `playwright/install`-Action oder `cache`-Step für `~/.cache/ms-playwright`. Für MVP: kein Cache, akzeptable CI-Zeit.
+   - **Entscheidung (final): Kein Browser-Cache, MVP-Ansatz.** Der smoke-test-Job (Plan 06, Task 1) nutzt `cache: 'npm'` für Node-Module und führt `npx playwright install --with-deps chromium` bei jedem Lauf ohne separaten Browser-Cache aus. Die ~30 Sekunden sind für die Phase akzeptabel; ein `~/.cache/ms-playwright`-Cache-Step kann später als Optimierung nachgezogen werden (nicht Teil dieser Phase).
 
 ---
 
