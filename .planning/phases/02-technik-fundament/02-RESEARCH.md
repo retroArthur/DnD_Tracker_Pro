@@ -704,27 +704,31 @@ function buildFullExport() {
 
 ---
 
-## Open Questions
+## Open Questions (RESOLVED)
 
 1. **GitHub Pages URL und start_url**
    - Was wir wissen: Pages-URL ist `user.github.io/repo/filename.html`; `start_url` muss auf diesen Pfad zeigen
    - Was unklar ist: Ob der Repo-Name `DnD_Tracker_Pro` (mit Unterstrichen) zu URL-Encoding-Problemen in `manifest.webmanifest` führt
    - Empfehlung: Beim ersten manuellen Test nach Deploy in Chrome DevTools → Application → Manifest prüfen
+   - **RESOLVED:** Verlagert in den Human-Verify-Checkpoint 02-02 Task 3 — nach dem Deploy wird in Chrome DevTools → Application → Manifest auf Validierungsfehler geprüft (manueller Deploy-Verify).
 
 2. **Spieltisch-Test: Strg+Shift+K im installierten PWA-Modus**
    - Was wir wissen: Im Standalone-Modus entfallen Browser-Shortcuts; Strg+Shift+K ist in Chrome im normalen Tab unbelegte (Devtools brauchen F12)
    - Was unklar ist: Verhalten in Edge (Strg+Shift+K = DevTools in Entwickler-Tab)
    - Empfehlung: Planer soll beide Shortcut-Kandidaten implementierbar machen; finaler Audit im Smoke-Test
+   - **RESOLVED:** Strg+Shift+K gemäß Empfehlung gewählt (Plan 02-05 Task 2); die Verifikation im installierten PWA-Modus ist als Manual-Only-Eintrag in 02-VALIDATION.md hinterlegt (im Standalone-Modus ohne Browser-Chrome irrelevant, siehe A5).
 
 3. **Google Fonts: welche Gewichtungen (Weights) sind benötigt?**
    - Was wir wissen: `index.html:15` lädt nur `Roboto:wght@400;700`; Editor-Fonts (Inter, Poppins, Source Sans Pro) werden in `EDITOR_FONTS` in `core/constants.js` referenziert
    - Was unklar ist: Welche Gewichtungen der Editor-Fonts tatsächlich in CSS-Regeln verwendet werden
    - Empfehlung: Grep nach `font-family: Inter|Poppins|Source Sans Pro` in CSS-Dateien vor dem Font-Download
+   - **RESOLVED:** Gewichtungen in PATTERNS.md (Font-Bundle) und 02-02 Task 1 festgelegt: Inter 400/500/600, Poppins 400/500/600, Roboto 400/700, Source Sans Pro 400/600.
 
 4. **PWA-Icon-SVG-Design**
    - Was wir wissen: D-04 legt fest: d20-Motiv, Gold `#d4af37` auf Dunkel `#0d0d0d`, Claude entwirft
    - Was unklar ist: Exaktes SVG-Design (Gemometrie des d20) und ob es als maskable (Safe-Zone 40% Radius) korrekt funktioniert
    - Empfehlung: SVG mit Realspace.io oder simplem Polygon-Ansatz; in Maskable.app.io testen
+   - **RESOLVED:** Verlagert in den Human-Verify-Checkpoint 02-02 Task 3 (maskable.app-Test Circle + Squircle sowie Chrome-DevTools-Manifest-Validierung).
 
 ---
 
