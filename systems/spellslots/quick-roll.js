@@ -20,23 +20,23 @@ function quickRoll(sides) {
     if (D.diceHistory.length > 50)
         D.diceHistory = D.diceHistory.slice(0, 50);
 }
-// (D-07) Zeige Konflikts-Dialog wenn LS-Schatten (ohne _ts) und neuere IDB-Daten existieren.
-// Feuert NICHT wenn Inhalt identisch ist (kein unnötiger Dialog am Spieltisch).
-function showStorageConflictDialog(lsData, idbData, onUseLS, onUseIDB) {
-    // Identischer Inhalt: kein Dialog nötig
+// (D-07) Speicher-Konflikt auflösen. Es gibt (noch) keinen externen UI-Dialog —
+// bei abweichendem Inhalt wird der neuere IDB-Stand bevorzugt (kein stiller Verlust).
+// WICHTIG: KEINE Selbstreferenz über window.<eigener Name> — das war CR-01 (Endlosrekursion).
+function resolveStorageConflict(lsData, idbData, onUseLS, onUseIDB) {
+    // Identischer Inhalt: kein Konflikt, LS-Stand still nutzen
     if (lsData === idbData) {
         if (typeof onUseLS === 'function') onUseLS();
         return;
     }
-    // Konflikts-Dialog anzeigen
-    if (typeof window.showStorageConflictDialog === 'function') {
-        window.showStorageConflictDialog(lsData, idbData, onUseLS, onUseIDB);
+    // Optionaler externer UI-Dialog (anders benannt als diese Funktion!)
+    if (typeof window.showStorageConflictDialogUI === 'function') {
+        window.showStorageConflictDialogUI(lsData, idbData, onUseLS, onUseIDB);
     } else {
-        // Fallback: IDB-Daten bevorzugen (neuere Quelle)
+        // Fallback: IDB-Daten bevorzugen (neuere Quelle) — kein stiller Sieg veralteter LS-Daten
         if (typeof onUseIDB === 'function') onUseIDB();
     }
 }
-window.showStorageConflictDialogInternal = showStorageConflictDialog;
 async function load() {
     const STORAGE_KEY = window.STORAGE_KEY;
     const key = window.STORAGE_KEY_OVERRIDE || STORAGE_KEY;
@@ -53,8 +53,8 @@ async function load() {
             try {
                 const idbRecord = await window.loadFromIndexedDBFallbackRaw(key);
                 if (idbRecord && idbRecord.data && idbRecord.data !== s) {
-                    // IDB hat andere (neuere) Daten — Konflikts-Dialog
-                    showStorageConflictDialog(
+                    // IDB hat andere (neuere) Daten — Konflikt auflösen
+                    resolveStorageConflict(
                         s,
                         idbRecord.data,
                         () => { /* LS-Daten nutzen — s bleibt unverändert */ },
