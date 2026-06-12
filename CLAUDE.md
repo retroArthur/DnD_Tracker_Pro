@@ -2,7 +2,7 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-**Version:** 2.6.0 | **Last Updated:** 2026-05-21
+**Version:** 2.6.1 | **Last Updated:** 2026-06-12
 
 ## Project Overview
 
@@ -149,7 +149,6 @@ function deleteEntity(id) {
 - `systems/undo.js` - Undo/redo implementation with state snapshots
 - `systems/entity-links.js` - Cross-entity linking system
 - `ui/editors/rich-text.js` - Rich text editor (floating toolbar)
-- `features/network/mindmap.js` - Network/relationship visualization
 - `features/encounter-calculator.js` - Encounter balance calculator with terrain/lair modifiers
 - `features/dice/dice-core.js` - Dice roller with floating panel
 - `systems/campaign-manager/campaign-manager.js` - Multi-campaign management
@@ -329,19 +328,9 @@ function deleteEntity(id) {
 - Multiple campaigns support with separate LocalStorage keys
 - Create, switch, delete campaigns
 - Standard campaign (default) + custom campaigns
-- Campaign index stored separately (`dnd-campaign-index`)
+- Campaign index stored separately (`dnd-tracker-campaigns`)
 - Data isolation between campaigns
 - File: `systems/campaign-manager/campaign-manager.js` → `createCampaign()`, `switchCampaign()`, `deleteCampaign()`
-
-### Mindmap/Network Visualization
-- Visual relationship mapping for characters, NPCs, locations
-- Node types: Player, NPC, Enemy, Location, Faction, Item, Quest, Event, Group, and location variants
-- Connection types: Ally (green), Enemy (red), Neutral, Family (pink), Business (gold), Quest (purple), Member (cyan)
-- Features: Drag nodes, zoom/pan, connect mode, auto-layout
-- Import entities from existing data (characters, NPCs, locations, quests, encounters)
-- Filter by search and node type
-- Data: `D.mindmap = { nodes: [], connections: [] }`
-- File: `features/network/mindmap.js` → `renderMindmap()`, `saveNodeFromModal()`
 
 ### HP Calculator Modal
 - Quick HP modification modal for any entity
@@ -424,7 +413,7 @@ function deleteEntity(id) {
 - **Language:** German (UI text, D&D terms, comments)
 - **Indentation:** 4 spaces
 - **Section markers:** `// [SECTION:MODULE_NAME]`
-- **No execCommand:** Use manual DOM manipulation for rich text editing
+- **execCommand (Tech-Debt):** `document.execCommand` wird aktuell an 21 Stellen in `ui/editors/rich-text.js` genutzt (API deprecated). Die Ablösung durch manuelle DOM-Manipulation ist als Tech-Debt vorgemerkt (eigene Phase). Bis dahin: execCommand-Aufrufe sind bewusst geduldet.
 - **Always call `saveUndoState()`** before delete/edit operations
 - **XSS prevention:** Use `esc()` for user content, validate input with whitelists
 
@@ -454,7 +443,7 @@ npx playwright test tests/e2e/features/wiki.spec.js
 | Priority | Task | Notes |
 |----------|------|-------|
 | ~~Done~~ | ~~**CSS aufteilen**~~ | Already split into 13 modular files in `assets/styles/` (see CSS Organization) |
-| Partial | **Inline Event-Handler migrieren** | Quick wins done (17 modal handlers migrated, March 2026). ~146 remain in templates/generated HTML |
+| ~~Done~~ | ~~**Inline Event-Handler migrieren**~~ | Migration abgeschlossen (641 data-action-Attribute, 0 inline-Handler verbleibend, Juni 2026) |
 | ~~Done~~ | ~~**Build-System konsolidieren**~~ | Webpack removed (March 2026), Python `build.py` is sole build system |
 | ~~Done~~ | ~~**CI/CD Pipeline**~~ | GitHub Actions workflow in `.github/workflows/ci.yml` (lint, typecheck, test, build) |
 | ~~Done~~ | ~~**.d.ts cleanup**~~ | 18 orphaned `.d.ts` removed (March 2026), 64 valid ones remain for `tsc --noEmit` type-checking |

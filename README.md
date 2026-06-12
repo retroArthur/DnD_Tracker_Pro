@@ -4,7 +4,7 @@
 
 **Ein vollwertiger D&D 5e Kampagnen-Manager - komplett offline im Browser**
 
-[![Version](https://img.shields.io/badge/version-2.6.0-blue.svg)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-2.6.1-blue.svg)](CHANGELOG.md)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![CI](https://github.com/retroArthur/DnD_Tracker_Pro/actions/workflows/ci.yml/badge.svg)](https://github.com/retroArthur/DnD_Tracker_Pro/actions)
 [![Size](https://img.shields.io/badge/size-1.72MB-orange.svg)]()
@@ -205,9 +205,15 @@ npm run typecheck   # TypeScript Validation
 
 ---
 
-## Lizenz
+## Lizenz & Attribution
 
-MIT License - siehe [LICENSE](LICENSE)
+**App-Code:** MIT License — siehe [LICENSE](LICENSE)
+
+**SRD-Inhalte:** Diese App enthält Regelinhalte (Zauberbeschreibungen) aus dem System Reference Document 5.1 ("SRD 5.1") von Wizards of the Coast LLC. Das SRD 5.1 steht unter der Creative Commons Attribution 4.0 International License (CC-BY-4.0).
+
+> This application includes content from the System Reference Document 5.1 ("SRD 5.1") by Wizards of the Coast LLC, available at https://dnd.wizards.com/resources/systems-reference-document. The SRD 5.1 is licensed under the Creative Commons Attribution 4.0 International License (CC-BY-4.0), available at https://creativecommons.org/licenses/by/4.0/.
+
+Weitere Details: [docs/srd-license.md](docs/srd-license.md)
 
 ---
 

@@ -42,7 +42,7 @@
 - **Problem:** Klick auf Liste-Button (☰) machte Text kleiner statt Aufzählung zu erstellen
 - **Ursache:** `document.execCommand('insertUnorderedList')` ist deprecated und funktioniert unzuverlässig
 - **Fix:** Manuelle Listen-Erstellung implementiert (createElement ul/li, extractContents, insertNode)
-- **Datei:** `features/shops/spell-editor.js` (applyFloatingFormat)
+- **Datei:** `ui/editors/rich-text.js` (applyFloatingFormat)
 
 ### Orte: Tag-Position und Lesbarkeit
 - **Änderung:** Tag (z.B. "Umland", "Phandalin") nach links vor den Ortsnamen verschoben
@@ -70,7 +70,7 @@
 - **Problem:** "Formatierung entfernen" (✕) entfernte gelbe Texthervorhebung nicht
 - **Ursache:** `execCommand('removeFormat')` entfernt `<mark>` Tags nicht
 - **Fix:** Manuelle Mark-Entfernung mit `selection.containsNode(mark, true)` und DOM-Manipulation
-- **Datei:** `features/shops/spell-editor.js` (applyFloatingFormat - removeFormat case)
+- **Datei:** `ui/editors/rich-text.js` (applyFloatingFormat - removeFormat case)
 
 ---
 
@@ -146,7 +146,7 @@
 ### Undo: Fehlende pushUndo() in Spell-CRUD
 - **Problem:** saveSpell() und deleteSpell() hatten keinen Undo-Support
 - **Fix:** `pushUndo()` vor Datenänderungen hinzugefügt
-- **Datei:** `features/shops/spell-editor.js`
+- **Datei:** `ui/editors/rich-text.js`
 
 ### Cleanup: Deprecated sanitizeHtml() Wrapper entfernt
 - **Problem:** sanitizeHtml() war nur ein Wrapper für sanitizeHTML()
@@ -157,7 +157,7 @@
 - **Problem:** Viele Delete-Dialoge zeigten nur "Löschen?" ohne Kontext
 - **Fix:** Entity-Name wird jetzt in Bestätigungsdialogen angezeigt (z.B. `NPC "Gundren" löschen?`)
 - **Bonus:** pushUndo() zu deleteEnc() hinzugefügt (fehlte vorher)
-- **Dateien:** spell-editor.js, encounters-crud.js, links.js, party-crud.js, locations-crud.js, quests-crud.js, npc-crud.js
+- **Dateien:** ui/editors/rich-text.js, encounters-crud.js, links.js, party-crud.js, locations-crud.js, quests-crud.js, npc-crud.js
 
 ### UX: Loading-Indikator während Modul-Laden
 - **Problem:** User sah nur leeren `#app-root` während 60+ Module sequentiell geladen wurden
@@ -297,7 +297,7 @@
   - `initContextToolbars()` für Tabellen- und Link-Kontext-Erkennung
   - Tabellen-Operationen: addRow, addCol, deleteRow, deleteCol, deleteTable
   - Link-Operationen: open, edit, remove
-- **Dateien:** `assets/styles.css`, `assets/body.html`, `features/shops/spell-editor.js`, `core/init.js`
+- **Dateien:** `assets/styles.css`, `assets/body.html`, `ui/editors/rich-text.js`, `core/init.js`
 
 ### Consistency: Editor-Toolbar onchange zu data-action migriert
 - **Problem:** 28 onchange-Handler in Editor-Toolbars statt Event-Delegation
@@ -314,7 +314,7 @@
 | `saveUndoState()` fehlt bei Delete/Edit | Bei jeder Lösch-/Bearbeitungsfunktion prüfen |
 | CSS-Klassen im HTML ohne Definition | HTML + CSS immer zusammen implementieren |
 | Selbstbezüge in hierarchischen Daten | Filter auf `parentId !== id` prüfen |
-| `document.execCommand()` deprecated | Manuelle DOM-Manipulation statt execCommand verwenden |
+| `document.execCommand()` deprecated (21 Call-Sites in ui/editors/rich-text.js) | Neue Editor-Funktionen mit Selection/Range API implementieren; vollständige Ablösung in eigener Phase geplant |
 | Dropdowns nur bei Init gefüllt | Beim Öffnen des Formulars Selects neu populieren |
 | Kategorie-übergreifende Parent-Refs | Prüfen ob Parent in gleicher Kategorie ist, sonst als Root behandeln |
 | `setInterval` ohne Cleanup | Immer prüfen ob Interval existiert und clearInterval vor neuem Start |
@@ -378,19 +378,19 @@
 - **Problem:** Font/Size Dropdowns schlossen sich beim Klick sofort wieder
 - **Ursache:** `mouseup` Event triggerte `handleSelectionChange()` die Toolbar versteckte
 - **Fix:** `floatingToolbarInteracting` Flag um Toolbar-Interaktionen zu schützen
-- **Datei:** `features/shops/spell-editor.js`
+- **Datei:** `ui/editors/rich-text.js`
 
 ---
 
 ## Known Technical Debt
 
-### spell-editor.js: 22x document.execCommand()
+### ui/editors/rich-text.js: document.execCommand() (21 Call-Sites)
 - **Status:** Bekanntes Tech Debt - nicht kritisch
-- **Details:** Rich-Text-Editor nutzt deprecated execCommand API für bold, italic, underline, insertHTML etc.
-- **Bereits gefixt:** insertUnorderedList wurde durch manuelle DOM-Manipulation ersetzt (Zeile 748+)
+- **Details:** Rich-Text-Editor nutzt deprecated execCommand API für bold, italic, underline, insertHTML etc. an 21 Stellen in `ui/editors/rich-text.js`.
+- **Bereits gefixt:** insertUnorderedList wurde durch manuelle DOM-Manipulation ersetzt
 - **Risiko:** Gering - API ist deprecated aber funktioniert in allen aktuellen Browsern
 - **Aufwand:** Hoch - Komplett-Ersatz durch Selection/Range API wäre umfangreich
-- **Empfehlung:** Bei Bedarf schrittweise migrieren, nicht in einem großen Refactoring
+- **Empfehlung:** Ablösung in eigener Phase; bei neuen Editor-Funktionen Selection/Range API bevorzugen
 
 ### testable-utils.js: Duplizierte Utility-Funktionen
 - **Status:** Absichtlich - KEIN Bug
@@ -399,9 +399,7 @@
 - **Empfehlung:** Bei Änderungen an Originalfunktionen auch testable-utils.js aktualisieren
 
 ### Inline Event-Handler (onchange, oninput)
-- **Status:** Bekanntes Tech Debt - geringes Risiko
-- **Details:** ~10 Stellen mit inline onchange/oninput statt data-on-change
-- **Betroffene Dateien:** shops-core.js, npc-dialogs.js, encounters-render.js, render-spells.js, render-loot.js
-- **Risiko:** Gering - Handler sind in generiertem HTML, nicht User-Input (kein XSS-Risiko)
-- **Grund für Beibehaltung:** Migration erfordert Refactoring aller betroffenen Handler-Funktionen
-- **Empfehlung:** Bei neuen Features data-on-change verwenden, Bestand schrittweise migrieren
+- **Status:** Abgeschlossen (Phase 1, Juni 2026) - Migration vollständig
+- **Details:** Inline Handler vollständig auf data-action-Delegation migriert; 641 data-action-Attribute, 0 inline Handler verbleibend
+- **Betroffene Dateien:** shops-core.js, npc-dialogs.js, encounters-render.js, render-spells.js, render-loot.js — alle migriert
+- **Risiko:** Keines mehr
