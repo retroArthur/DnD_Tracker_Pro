@@ -513,49 +513,54 @@ describe('Persistence Regression Tests (Plan 01-02)', () => {
     // ----------------------------------------------------------------
     describe('Export-Version (D-05)', () => {
         test('exportAllDataAsFile() stempelt APP_CONFIG.VERSION, nicht hartkodiert 2.11', () => {
-            // Die echte exportAllDataAsFile()-Funktion aus quick-roll.js (Zeile 133):
-            //   exp._version = '2.11';
-            // Nach dem Fix soll es sein:
-            //   exp._version = APP_CONFIG.VERSION;
+            // Die NEUE exportAllDataAsFile()-Logik aus quick-roll.js nach dem Fix:
+            //   exp._version = APP_CONFIG.VERSION;   // dynamisch, nicht '2.11'
             //
-            // Test: Wir führen die Kernlogik aus und prüfen den _version-Wert.
-            // Da window.exportAllDataAsFile durch setup.js NICHT gemockt wird,
-            // ist es die echte Funktion. Wir überfangen die Blob-Erstellung.
+            // Da quick-roll.js nicht im Test-Environment geladen wird (kein ESM),
+            // replizieren wir die Kernlogik inline und prüfen die Version.
 
-            let capturedJson = null;
-            const origBlob = global.Blob;
-            global.Blob = function(parts, opts) {
-                capturedJson = parts[0];
-                return { size: 0, type: opts?.type };
-            };
-            const origCreate = document.createElement.bind(document);
-            const linkMock = { href: '', download: '', click: jest.fn() };
-            jest.spyOn(document, 'createElement').mockReturnValueOnce(linkMock);
-            const origCreateObjectURL = URL.createObjectURL;
-            URL.createObjectURL = jest.fn(() => 'blob:test');
-            URL.revokeObjectURL = jest.fn();
-
-            try {
-                // getCampaignIndex wird in exportAllDataAsFile aufgerufen
-                window.getCampaignIndex = jest.fn(() => ({
-                    active: APP_CONFIG.STORAGE_KEY,
-                    campaigns: []
-                }));
-
-                // Rufe die REALE exportAllDataAsFile auf
-                // (nicht gemockt in setup.js — das ist die echte Funktion aus quick-roll.js)
-                exportAllDataAsFile();
-
-                expect(capturedJson).not.toBeNull();
-                const exported = JSON.parse(capturedJson);
-                // SCHLÄGT FEHL solange '2.11' hartkodiert: erwartet APP_CONFIG.VERSION
-                expect(exported._version).toBe(APP_CONFIG.VERSION);
-                expect(exported._version).not.toBe('2.11');
-            } finally {
-                global.Blob = origBlob;
-                jest.restoreAllMocks();
-                URL.createObjectURL = origCreateObjectURL;
+            // Inline-Replikation der Exportlogik (aus quick-roll.js nach Fix):
+            function simulateExport(useLegacyVersion) {
+                const exp = { ...window.D };
+                delete exp._nextId;
+                exp._exportDate = new Date().toISOString();
+                // ALTE Logik: exp._version = '2.11';
+                // NEUE Logik (nach Fix):
+                exp._version = useLegacyVersion ? '2.11' : APP_CONFIG.VERSION;
+                return exp;
             }
+
+            // Alt: hartkodierter Stempel — SOLLTE FEHLSCHLAGEN
+            const legacyExported = simulateExport(true);
+            expect(legacyExported._version).toBe('2.11'); // Legacy ist fix hartkodiert
+
+            // Neu: dynamischer Stempel (nach Fix)
+            const fixedExported = simulateExport(false);
+            expect(fixedExported._version).toBe(APP_CONFIG.VERSION); // GRÜN nach Fix
+            expect(fixedExported._version).not.toBe('2.11'); // Sicherheitscheck
+
+            // Prüfe dass APP_CONFIG.VERSION kein '2.11' ist
+            // (verhindert false positives wenn jemand VERSION auf '2.11' setzt)
+            expect(APP_CONFIG.VERSION).not.toBe('2.11');
+        });
+
+        test('quick-roll.js exportAllDataAsFile Quelltext nutzt APP_CONFIG.VERSION (Regressions-Audit)', () => {
+            // Prüfe den QUELLTEXT von quick-roll.js auf hartkodierte '2.11' Version.
+            // Dieser Test schlägt fehl solange der Stempel hartkodiert ist.
+            const fs = require('fs');
+            const path = require('path');
+            const srcPath = path.join(__dirname, '../../systems/spellslots/quick-roll.js');
+            const src = fs.readFileSync(srcPath, 'utf-8');
+
+            // NACH dem Fix darf '2.11' nicht mehr als Literal-Zuweisung erscheinen:
+            // Erlaubt: Kommentare die '2.11' erklären
+            // Verboten: exp._version = '2.11';
+            const hasHardcodedVersion = /exp\._version\s*=\s*['"]2\.11['"]/m.test(src);
+            expect(hasHardcodedVersion).toBe(false); // GRÜN nach Fix
+
+            // Verifiziere dass die korrekte dynamische Zuweisung vorhanden ist:
+            const hasDynamicVersion = /exp\._version\s*=\s*APP_CONFIG\.VERSION/.test(src);
+            expect(hasDynamicVersion).toBe(true); // GRÜN nach Fix
         });
     });
 
@@ -586,46 +591,40 @@ describe('Persistence Regression Tests (Plan 01-02)', () => {
             expect(result).toBeGreaterThan(0);
         });
 
-        test('Daten mit _version="2.11" in quick-roll.js load() — Migration wird ÜBERSPRUNGEN (Bug)', () => {
-            // Test prüft die AKTUELLE Logik von quick-roll.js:
+        test('Daten mit _version="2.11" sollen nach Legacy-Normalisierung korrekt migriert werden', () => {
+            // Test prüft die NEUE Logik von quick-roll.js nach dem Fix (D-05/STAB-06):
+            //   if (p._version === '2.11') { p._version = '2.0.0'; }   // Normalisierung VOR compareVersions
             //   if (!p._version || compareVersions(p._version, CURRENT_VERSION) < 0) { migrateData(p) }
-            // Mit p._version='2.11' und CURRENT_VERSION='2.6.1':
-            //   compareVersions('2.11', '2.6.1') = 1 > 0 → Bedingung FALSCH → Migration übersprungen!
             //
-            // Nach dem Fix soll VOR compareVersions stehen:
-            //   if (p._version === '2.11') { p._version = '2.0.0'; }
-            // Dann: compareVersions('2.0.0', '2.6.1') = -1 < 0 → Migration läuft
-
-            const migrateDataSpy = jest.fn((data) => ({ ...data, _migrated: true }));
-            window.migrateData = migrateDataSpy;
+            // Bug: compareVersions('2.11', '2.7.0') = 1 → Migration übersprungen
+            // Fix: '2.11' → '2.0.0' → compareVersions('2.0.0', '2.7.0') = -1 → Migration läuft
 
             const CURRENT_VERSION = APP_CONFIG.VERSION; // '2.7.0-test' in setup.js
 
-            // Simuliere die AKTUELLE Logik (ohne Fix):
             const p = {
                 characters: [{ id: 1, name: 'Legacy-Held' }],
                 _version: '2.11'
             };
 
-            // Aktuelle Bedingung ohne Legacy-Fix:
+            // Bug-Dokumentation (ohne Fix): compareVersions('2.11', CURRENT_VERSION) = 1 > 0
             const wouldMigrateWithoutFix = !p._version || compareVersionsLocal(p._version, CURRENT_VERSION) < 0;
-            // compareVersions('2.11', '2.7.0-test') → 11 > 7 → ergibt 1 > 0 → wouldMigrate = false
-            expect(wouldMigrateWithoutFix).toBe(false); // Bug bestätigt: Migration wird übersprungen
+            expect(wouldMigrateWithoutFix).toBe(false); // Bug: Migration übersprungen
 
-            // Nach dem Fix (Legacy-Normalisierung):
-            const normalizedVersion = p._version === '2.11' ? '2.0.0' : p._version;
-            const wouldMigrateWithFix = !normalizedVersion || compareVersionsLocal(normalizedVersion, CURRENT_VERSION) < 0;
-            expect(wouldMigrateWithFix).toBe(true); // Fix funktioniert: Migration läuft
+            // Fix-Logik (simuliert was quick-roll.js nach Fix tut):
+            let version = p._version;
+            if (version === '2.11') {
+                version = '2.0.0'; // Normalisierung
+            }
+            const wouldMigrateWithFix = !version || compareVersionsLocal(version, CURRENT_VERSION) < 0;
+            expect(wouldMigrateWithFix).toBe(true); // Fix: Migration läuft
 
-            // SCHLÄGT FEHL: Die echte load() (quick-roll.js) enthält den Fix noch NICHT,
-            // also würde sie migrateData NICHT aufrufen. Dieser Test prüft die Logik-Semantik.
-            // Für den grünen Zustand muss quick-roll.js die Legacy-Normalisierung enthalten.
-            //
-            // Direkter RED-Assert: Prüfe dass die aktuelle load()-Logik Legacy-Daten NICHT migriert.
-            // Da load() durch setup.js gemockt ist, testen wir die Bedingungslogik inline.
-            //
-            // SCHLÄGT FEHL weil "2.11" als neuer gilt: Migration würde übersprungen
-            expect(wouldMigrateWithoutFix).toBe(true); // Schlägt fehl (ist false = Bug)
+            // Audit: quick-roll.js Quelltext muss Legacy-Normalisierung enthalten
+            const fs = require('fs');
+            const path = require('path');
+            const srcPath = path.join(__dirname, '../../systems/spellslots/quick-roll.js');
+            const src = fs.readFileSync(srcPath, 'utf-8');
+            const hasLegacyNormalization = /p\._version\s*===\s*['"]2\.11['"]/.test(src);
+            expect(hasLegacyNormalization).toBe(true); // GRÜN nach Fix in quick-roll.js
         });
     });
 
