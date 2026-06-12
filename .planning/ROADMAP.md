@@ -62,7 +62,7 @@
 Plans:
 **Wave 1**
 
-- [ ] 02-01-PLAN.md — Integrations-Rückgrat & Wave-0-Test-Gerüst: Modul-/CSS-Registrierung, init.js-Verdrahtung, SW-Update-Erkennung (TECH-01–04)
+- [x] 02-01-PLAN.md — Integrations-Rückgrat & Wave-0-Test-Gerüst: Modul-/CSS-Registrierung, init.js-Verdrahtung, SW-Update-Erkennung (TECH-01–04)
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
@@ -143,7 +143,7 @@ Plans:
 | Phase                       | Plans Complete | Status      | Completed |
 | --------------------------- | -------------- | ----------- | --------- |
 | 1. Stabilisierung           | 9/9            | Complete    | 2026-06-12 |
-| 2. Technik-Fundament        | 0/5            | Not started | -         |
+| 2. Technik-Fundament        | 1/5 | In Progress|  |
 | 3. Bestiary                 | 0/?            | Not started | -         |
 | 4. Initiative-Erweiterungen | 0/?            | Not started | -         |
 | 5. Welt & Story             | 0/?            | Not started | -         |
