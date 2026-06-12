@@ -76,14 +76,25 @@ function showSWUpdateHint(newSW) {
         document.body.appendChild(banner);
     }
 
-    // Primär-Button: SKIP_WAITING senden + reload
+    // Primär-Button: SKIP_WAITING senden, Reload erst NACH Aktivierung des neuen SW
+    // (WR-06: sofortiger Reload kann noch vom alten Cache-First-SW bedient werden —
+    // controllerchange feuert, sobald der neue SW via clients.claim() übernommen hat)
     const reloadBtn = banner.querySelector('[data-action="pwa-reload"]');
     if (reloadBtn) {
         reloadBtn.addEventListener('click', () => {
-            if (newSW) {
+            if (newSW && navigator.serviceWorker) {
+                navigator.serviceWorker.addEventListener(
+                    'controllerchange',
+                    () => window.location.reload(),
+                    { once: true }
+                );
                 newSW.postMessage({ type: 'SKIP_WAITING' });
+                // Fallback: Falls controllerchange ausbleibt (Aktivierung hängt),
+                // trotzdem neu laden — kein Doppel-Reload möglich (Page-Unload killt Timer)
+                setTimeout(() => window.location.reload(), 3000);
+            } else {
+                window.location.reload();
             }
-            window.location.reload();
         });
     }
 
