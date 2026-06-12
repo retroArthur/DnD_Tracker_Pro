@@ -37,15 +37,18 @@ Die App muss am Spieltisch **zuverlässig offline laufen** — ein Spielleiter-B
 - ✓ Doku aktuell: CLAUDE.md, README, docs/bugfixes.md auditiert; Lizenz einheitlich MIT; SRD-Herkunft dokumentiert
 - ✓ Persistenz-Härtung: >5-MB-Stale-Shadow-Fix, Export-Versionsstempel, LS/IDB-Konfliktauflösung ohne Rekursion (`resolveStorageConflict`)
 
+**Validated in Phase 2: Technik-Fundament (2026-06-13):**
+
+- ✓ PWA installierbar: echtes `manifest.webmanifest`, Cache-First-Service-Worker mit Update-Hinweis statt Force-Reload, lokal gebündelte Fonts, d20-App-Icon (192/512, maskable), Header-Install-Button, GitHub-Pages-Deploy-Job in der CI (TECH-01)
+- ✓ Migration file:// → PWA: Voll-Export aller Kampagnen + Einstellungen + Würfel-Favoriten + DM-Profile, 4-Schritt-Wizard mit Divergenz-Schutz (TECH-02)
+- ✓ Automatisches Datei-Backup via File System Access API: laufende `-aktuell.json` je Kampagne + datierte Tages-Snapshots (max. 10), IDB-Handle-Persistenz, Restore-Browser mit Undo-Schutz, file://-Download-Fallback (TECH-03)
+- ✓ Command Palette (`Strg+Shift+K`): Aktions-Registry mit Fuzzy-Suche (Wiederverwendung `fuzzyMatch`), Tastaturnavigation (TECH-04)
+- ✓ Qualitätszyklus: Code-Review mit 23 behobenen Findings (11 Critical, u. a. TDZ-Bundle-Crash), 300/300 Unit-Tests, Smoke-E2E 7/7 gegen Production-Bundle
+- Offen als UAT (02-HUMAN-UAT.md): 6 manuelle Browser-Tests inkl. einmaliger GitHub-Pages-Aktivierung (Settings → Pages → Source: „GitHub Actions")
+
 ### Active
 
-**Milestone-Teil B — Technik-Fundament (erste Feature-Gruppe):**
-
-- [ ] PWA-Installation (installierbare App mit Icon — löst file://-Beschränkungen strukturell)
-- [ ] Datei-Backup-Sync (automatischer Export auf Festplatte über LocalStorage hinaus)
-- [ ] Command Palette (Strg+K: Aktionen ausführen, nicht nur suchen)
-
-**Milestone-Teil C — Spielleiter-Features (danach, Reihenfolge bei Roadmap-Erstellung):**
+**Milestone-Teil C — Spielleiter-Features (Reihenfolge laut Roadmap, Phasen 3–7):**
 
 - [ ] Monster-Kompendium / Bestiary-Tab (SRD-Statblocks offline + eigene Kreaturen, Ausbau von monster-templates.js)
 - [ ] Statblock-Popup in der Initiative (kompletter Statblock statt nur HP/AC)
@@ -77,6 +80,7 @@ Die App muss am Spieltisch **zuverlässig offline laufen** — ein Spielleiter-B
 - **Akuter Bruch (behoben in Phase 1):** Der `clearMindmap`-ReferenceError in tools/debug.js ist beseitigt, frische dev-/prod-Builds liegen in `dist/`, CI mit Playwright-Smoke-Test erkennt künftige Boot-Crashes. Offen aus Phase 1: 3 manuelle Browser-Tests (01-HUMAN-UAT.md) + Code-Review-Findings (1 vorbestehender Import-XSS, siehe 01-REVIEW.md).
 - **Bekannte Schwächen (aus CONCERNS.md):** doppelt gepflegte Modullisten (loader.js + build.py), build.py Pass-3 hinterlässt verwaiste Funktionskörper, Debug-Flag-Flip per String-Match, ~504 funktions-lokale `const X = window.X`-Imports, veraltete CLAUDE.md (widerspricht Code in mehreren Punkten), kaputte Dev-Tools (validate.py mit Linux-Pfaden, `python3` in npm-Scripts auf Windows), Lizenz-Widerspruch (package.json ISC vs. LICENSE MIT), deprecated `document.execCommand` im Rich-Text-Editor (21 Call-Sites).
 - **Nutzung:** Einzelnutzer (Entwickler = Spielleiter), Windows, Chromium-Browser, App wird als `file://` per Doppelklick geöffnet. Deutsche UI durchgängig.
+- **Phase 2 abgeschlossen (2026-06-13):** App ist PWA-fähig (Manifest, SW, Icon, Install-Button, Pages-Deploy-Job), Migrations-Wizard und Datei-Backup implementiert, Command Palette aktiv. Offen: 6 manuelle Browser-UAT-Punkte (02-HUMAN-UAT.md) und die einmalige GitHub-Pages-Repo-Einstellung; nach erstem Deploy `MIGRATION_PWA_URL` prüfen (IN-06).
 
 ## Constraints
 
@@ -118,4 +122,4 @@ This document evolves at phase transitions and milestone boundaries.
 
 ---
 
-_Last updated: 2026-06-12 after Phase 1 completion (Stabilisierung verifiziert, 11/11 STAB-Requirements)_
+_Last updated: 2026-06-13 after Phase 2 completion (Technik-Fundament verifiziert, TECH-01 bis TECH-04; 6 Browser-UAT-Punkte offen)_
