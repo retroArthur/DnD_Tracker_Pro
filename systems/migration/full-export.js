@@ -168,6 +168,15 @@ function importFullExport(parsedObj) {
         saveCampaignIndexFn(parsedObj.campaignIndex);
     }
 
+    // WR-04: Wuerfel-Favoriten wiederherstellen — sie liegen unter einem EIGENEN
+    // localStorage-Key (DICE_FAV_KEY) und sind NICHT Teil der Kampagnendaten.
+    // Der Export enthaelt sie bereits (buildFullExport); ohne diesen Schritt
+    // gingen sie beim Umzug verloren.
+    if (Array.isArray(parsedObj.diceFavorites) && parsedObj.diceFavorites.length > 0 &&
+            typeof APP_CONFIG !== 'undefined' && APP_CONFIG.DICE_FAV_KEY) {
+        StorageAPI.setJSON(APP_CONFIG.DICE_FAV_KEY, parsedObj.diceFavorites);
+    }
+
     return {
         campaignCount: campaignEntries.length,
         totalBytes: totalBytes
