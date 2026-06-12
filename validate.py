@@ -8,7 +8,7 @@ import os
 import re
 from pathlib import Path
 
-SOURCE_DIR = '/mnt/user-data/outputs/dnd-tracker-modular'
+SOURCE_DIR = str(Path(__file__).parent)
 
 def check_html_tags_in_js():
     """Überprüft, ob JavaScript-Module HTML-Tags enthalten"""
