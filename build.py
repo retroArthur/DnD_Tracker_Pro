@@ -35,6 +35,162 @@ from tools.logging_util import log
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 SOURCE_DIR = SCRIPT_DIR
 
+# Module in Ladereihenfolge (aus loader.js) — Modul-Level fuer Import-Barkeit in Tests
+# WICHTIG: Diese Liste muss mit loader.js synchron bleiben!
+MODULES = [
+    'core/config.js',
+    'core/data.js',
+    'core/constants.js',
+    'core/themes.js',
+    'utils/performance.js',
+    'utils/basic.js',
+    'utils/utilities.js',
+    'utils/crud-helpers.js',
+    'utils/validation.js',
+    'utils/form-helpers.js',
+    'utils/filter-engine.js',
+    'utils/game-rules.js',
+    'systems/undo.js',
+    # Spellslots-Module (ersetzt systems/spellslots.js)
+    'systems/spellslots/spell-slots-core.js',
+    'systems/spellslots/notes-templates.js',
+    'systems/spellslots/quick-reference.js',
+    'systems/spellslots/pwa-install.js',
+    'systems/spellslots/version-migration.js',
+    'systems/spellslots/virtual-list.js',
+    'systems/spellslots/keyboard-shortcuts.js',
+    'systems/spellslots/persistence.js',
+    'systems/spellslots/quick-roll.js',
+    'systems/spellslots/import-export.js',
+    'systems/spellslots/navigation.js',
+    'systems/conditions.js',
+    'systems/hp-calculator.js',
+    'systems/tags.js',
+    'systems/entity-links.js',
+    'systems/avatars.js',
+    'systems/backups.js',
+    'systems/tab-registry.js',
+    'systems/session-timer.js',
+    'systems/search/global-search.js',
+    'systems/campaign-manager/campaign-manager.js',
+    'render/helpers.js',
+    # Render-Feature-Module
+    'features/render-dashboard.js',
+    # Party-Module
+    'features/party/party-render.js',
+    'features/party/party-details.js',
+    'features/party/party-crud.js',
+    'features/render-spells.js',
+    # Locations-Module
+    'features/locations/locations-render.js',
+    'features/locations/locations-crud.js',
+    'features/render-loot.js',
+    # NPC-Module
+    'features/npcs/npc-render.js',
+    'features/npcs/npc-interactions.js',
+    'features/npcs/npc-dialogs.js',
+    'features/npcs/npc-crud.js',
+    'features/npcs/npc-popup.js',
+    # Quests-Module
+    'features/quests/quests-render.js',
+    'features/quests/quests-crud.js',
+    # Encounters-Module
+    'features/encounters/encounters-render.js',
+    'features/encounters/encounters-crud.js',
+    # Features
+    'features/encounter-calculator.js',
+    'features/initiative.js',
+    'features/rest-manager.js',
+    'features/quick-actions.js',
+    'features/random-tables.js',
+    'features/loot-distribution.js',
+    'features/sessions/sessions.js',
+    'features/wiki/wiki.js',
+    # Shops-Module
+    'features/shops/shops-core.js',
+    'features/shops/shop-export.js',
+    'features/shops/links.js',
+    # DM Screen Module
+    'features/dmscreen/dmscreen-render.js',
+    # Dice-Module
+    'features/dice/dice-core.js',
+    'features/dice/dice-favorites.js',
+    # Ehemals in dice/ — verschoben in passende Ordner
+    'features/timers/timers.js',
+    'systems/wiki-links.js',
+    'features/encounters/monster-templates.js',
+    'core/srd-spells.js',
+    'systems/spellslots/spellslots-ui.js',
+    'features/initiative-extras.js',
+    'ui/layout-profiles.js',
+    'utils/performance-extras.js',
+    'ui/dom-builder.js',
+    'ui/safe-render.js',
+    'ui/lazy-loading.js',
+    'ui/event-delegation.js',
+    'ui/editors/rich-text.js',
+    'ui/editors/markdown-shortcuts.js',
+    'ui/editors/markdown-converter.js',
+    'systems/markdown-import-export.js',
+    # Action-Module
+    'ui/actions/entity-actions.js',
+    'ui/actions/combat-actions.js',
+    'ui/actions/ui-actions.js',
+    'ui/actions/dice-actions.js',
+    'ui/actions/wiki-actions.js',
+    'ui/actions/shop-actions.js',
+    'ui/actions/system-actions.js',
+    'ui/virtual-scroll.js',
+    'tools/debug.js',
+    'core/init.js'
+]
+
+
+def check_duplicate_functions(source_dir, modules):
+    """Schlaegt fehl, wenn doppelte Top-Level-Funktionsnamen in gebuendelten Quelldateien existieren.
+
+    Prueft NUR die MODULES-Liste — utils/testable-utils.js und das tests/-Verzeichnis
+    sind nicht Teil von MODULES und damit korrekt ausgeschlossen.
+    """
+    func_pattern = re.compile(r'^function\s+(\w+)\s*\(', re.MULTILINE)
+    seen = {}
+    for module in modules:
+        path = os.path.join(source_dir, module)
+        if not os.path.exists(path):
+            continue
+        content = read_file(path)
+        for match in func_pattern.finditer(content):
+            name = match.group(1)
+            if name in seen:
+                print(f"[FEHLER] Doppelte Top-Level-Funktion '{name}': {seen[name]} und {module}")
+                sys.exit(1)
+            seen[name] = module
+
+
+def check_module_list_sync(loader_path, build_modules):
+    """Vergleicht das MODULES-Array aus loader.js mit der build.py-Liste.
+
+    Bricht den Build ab, wenn die Listen voneinander abweichen.
+    """
+    content = read_file(loader_path)
+    match = re.search(r'const MODULES\s*=\s*\[(.*?)\];', content, re.DOTALL)
+    if not match:
+        log.warning("Konnte MODULES-Array nicht aus loader.js parsen — Sync-Pruefung uebersprungen")
+        return
+    loader_modules = re.findall(r"'([^']+)'", match.group(1))
+    build_set, loader_set = set(build_modules), set(loader_modules)
+    only_in_build = build_set - loader_set
+    only_in_loader = loader_set - build_set
+    if only_in_build or only_in_loader:
+        print("[FEHLER] Modullisten-Abweichung zwischen loader.js und build.py!")
+        for m in sorted(only_in_build):
+            print(f"  Nur in build.py: {m}")
+        for m in sorted(only_in_loader):
+            print(f"  Nur in loader.js: {m}")
+        sys.exit(1)
+    log.success(f"Modullisten synchron: {len(build_set)} Module")
+
+
 def read_file(filepath):
     """Liest eine Datei"""
     with open(filepath, 'r', encoding='utf-8') as f:
@@ -244,116 +400,10 @@ def build(minify=False, production=False, verbose=False):
     log.info(f"Ziel: {output_file}")
     log.info(f"Modus: {mode}")
     log.info(f"Minifizierung: {'Aktiviert' if minify else 'Deaktiviert'}")
-    
-    # Module in Ladereihenfolge (aus loader.js)
-    modules = [
-        'core/config.js',
-        'core/data.js',
-        'core/constants.js',
-        'core/themes.js',
-        'utils/performance.js',
-        'utils/basic.js',
-        'utils/utilities.js',
-        'utils/crud-helpers.js',
-        'utils/validation.js',
-        'utils/form-helpers.js',
-        'utils/filter-engine.js',
-        'utils/game-rules.js',
-        'systems/undo.js',
-        # Spellslots-Module (ersetzt systems/spellslots.js)
-        'systems/spellslots/spell-slots-core.js',
-        'systems/spellslots/notes-templates.js',
-        'systems/spellslots/quick-reference.js',
-        'systems/spellslots/pwa-install.js',
-        'systems/spellslots/version-migration.js',
-        'systems/spellslots/virtual-list.js',
-        'systems/spellslots/keyboard-shortcuts.js',
-        'systems/spellslots/persistence.js',
-        'systems/spellslots/quick-roll.js',
-        'systems/spellslots/import-export.js',
-        'systems/spellslots/navigation.js',
-        'systems/conditions.js',
-        'systems/hp-calculator.js',
-        'systems/tags.js',
-        'systems/entity-links.js',
-        'systems/avatars.js',
-        'systems/backups.js',
-        'systems/tab-registry.js',
-        'systems/session-timer.js',
-        'systems/search/global-search.js',
-        'systems/campaign-manager/campaign-manager.js',
-        'render/helpers.js',
-        # Render-Feature-Module
-        'features/render-dashboard.js',
-        # Party-Module
-        'features/party/party-render.js',
-        'features/party/party-details.js',
-        'features/party/party-crud.js',
-        'features/render-spells.js',
-        # Locations-Module
-        'features/locations/locations-render.js',
-        'features/locations/locations-crud.js',
-        'features/render-loot.js',
-        # NPC-Module
-        'features/npcs/npc-render.js',
-        'features/npcs/npc-interactions.js',
-        'features/npcs/npc-dialogs.js',
-        'features/npcs/npc-crud.js',
-        'features/npcs/npc-popup.js',
-        # Quests-Module
-        'features/quests/quests-render.js',
-        'features/quests/quests-crud.js',
-        # Encounters-Module
-        'features/encounters/encounters-render.js',
-        'features/encounters/encounters-crud.js',
-        # Features
-        'features/encounter-calculator.js',
-        'features/initiative.js',
-        'features/rest-manager.js',
-        'features/quick-actions.js',
-        'features/random-tables.js',
-        'features/loot-distribution.js',
-        'features/sessions/sessions.js',
-        'features/wiki/wiki.js',
-        # Shops-Module
-        'features/shops/shops-core.js',
-        'features/shops/shop-export.js',
-        'features/shops/links.js',
-        # DM Screen Module
-        'features/dmscreen/dmscreen-render.js',
-        # Dice-Module
-        'features/dice/dice-core.js',
-        'features/dice/dice-favorites.js',
-        # Ehemals in dice/ — verschoben in passende Ordner
-        'features/timers/timers.js',
-        'systems/wiki-links.js',
-        'features/encounters/monster-templates.js',
-        'core/srd-spells.js',
-        'systems/spellslots/spellslots-ui.js',
-        'features/initiative-extras.js',
-        'ui/layout-profiles.js',
-        'utils/performance-extras.js',
-        'ui/dom-builder.js',
-        'ui/safe-render.js',
-        'ui/lazy-loading.js',
-        'ui/event-delegation.js',
-        'ui/editors/rich-text.js',
-        'ui/editors/markdown-shortcuts.js',
-        'ui/editors/markdown-converter.js',
-        'systems/markdown-import-export.js',
-        # Action-Module
-        'ui/actions/entity-actions.js',
-        'ui/actions/combat-actions.js',
-        'ui/actions/ui-actions.js',
-        'ui/actions/dice-actions.js',
-        'ui/actions/wiki-actions.js',
-        'ui/actions/shop-actions.js',
-        'ui/actions/system-actions.js',
-        'ui/virtual-scroll.js',
-        'tools/debug.js',
-        'core/init.js'
-    ]
-    
+
+    # Nutze die Modul-Level MODULES-Konstante (importierbar fuer Tests)
+    modules = MODULES
+
     # 1. Lade CSS (modulare Dateien aus assets/styles/)
     print("\n[BUILD] Lade CSS...")
     css_files = [
@@ -392,6 +442,13 @@ def build(minify=False, production=False, verbose=False):
     body_content = '\n'.join(html_parts)
     log.success(f"HTML Body geladen: {len(body_content):,} Zeichen ({len(html_templates)} Templates)")
     
+    # STAB-07: Vor dem Kombinieren — Modullisten-Sync und Duplikat-Check
+    print("\n[CHECK] Pruefe Modullisten-Sync und Duplikat-Funktionen...")
+    loader_js_path = os.path.join(SCRIPT_DIR, 'loader.js')
+    check_module_list_sync(loader_js_path, MODULES)
+    check_duplicate_functions(SOURCE_DIR, MODULES)
+    log.success("Pre-Build-Checks bestanden")
+
     # 3. Lade und kombiniere JavaScript
     print("\n[BUILD] Lade JavaScript-Module...")
     js_combined = ""
@@ -420,7 +477,11 @@ def build(minify=False, production=False, verbose=False):
         print("\n[PROD] Setze Debug-Flags fuer Production...")
         js_combined = js_combined.replace("DEBUG_MODE: true,", "DEBUG_MODE: false,", 1)
         js_combined = js_combined.replace("DEBUG_VALIDATE_ON_SAVE: true,", "DEBUG_VALIDATE_ON_SAVE: false,", 1)
-        log.info("DEBUG_MODE: false, DEBUG_VALIDATE_ON_SAVE: false")
+        # STAB-07: Abbruch, falls der Flip fehlschlug (z.B. nach Prettier-Reformatierung von core/config.js)
+        if "DEBUG_MODE: true" in js_combined:
+            print("[ABORTED] DEBUG_MODE ist noch true im Production-Build! core/config.js Formatierung pruefen.")
+            sys.exit(1)
+        log.success("DEBUG_MODE deaktiviert und verifiziert.")
 
     if minify:
         print("\n[MINIFY] Minifiziere JavaScript...")

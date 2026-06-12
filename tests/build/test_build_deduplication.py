@@ -16,7 +16,7 @@ from pathlib import Path
 # Add project root to path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-from build import deduplicate_window_assignments, build
+from build import deduplicate_window_assignments, build, check_duplicate_functions, check_module_list_sync, MODULES
 
 
 class TestBuildDeduplication:
@@ -220,3 +220,87 @@ var MAX_BACKUPS = window.MAX_BACKUPS;  // CONFLICT
 
             assert has_definition or has_window_export, \
                 f"Constant {const} is not defined or exported in build"
+
+    # STAB-07: Neue Tests fuer Build-Haertung
+
+    def test_production_build_has_debug_mode_false(self):
+        """
+        SECURITY: Production-Build muss DEBUG_MODE=false haben (STAB-07 T-04-01).
+        Verifiziert, dass der DEBUG_MODE-Flip in build.py korrekt funktioniert.
+        """
+        dist_file = Path(__file__).parent.parent.parent / 'dist' / 'dnd-tracker-optimized.html'
+        if not dist_file.exists():
+            pytest.skip("Production-Build nicht gefunden — zuerst 'python build.py --production' ausfuehren")
+
+        with open(dist_file, 'r', encoding='utf-8') as f:
+            content = f.read()
+
+        assert 'DEBUG_MODE: true' not in content, \
+            "DEBUG_MODE ist noch true im Production-Build! core/config.js Formatierung pruefen."
+        assert 'DEBUG_MODE: false' in content, \
+            "DEBUG_MODE: false nicht im Production-Build gefunden — Flip fehlgeschlagen?"
+
+    def test_module_lists_are_synchronized(self):
+        """
+        INTEGRITY: loader.js und build.py muessen identische Modullisten haben (STAB-07 T-04-03).
+        Bricht als pytest-Fehler ab, wenn Abweichung vorhanden ist.
+        """
+        loader_path = Path(__file__).parent.parent.parent / 'loader.js'
+        # check_module_list_sync loest SystemExit aus bei Abweichung
+        try:
+            check_module_list_sync(str(loader_path), MODULES)
+        except SystemExit:
+            pytest.fail("Modullisten-Abweichung zwischen loader.js und build.py!")
+
+    def test_duplicate_function_check_detects_duplicate(self, tmp_path):
+        """
+        DETECTION: check_duplicate_functions muss bei doppelten Top-Level-Funktionen SystemExit ausloesen (STAB-07 T-04-02).
+        Simuliert das 2026-01-10-Incident-Pattern (toggleNPCCard in zwei Modulen).
+        """
+        # Zwei Quelldateien mit demselben Top-Level-Funktionsnamen
+        file_a = tmp_path / 'module-a.js'
+        file_a.write_text('function duplicateFunction() {\n    return "a";\n}\n', encoding='utf-8')
+        file_b = tmp_path / 'module-b.js'
+        file_b.write_text('function duplicateFunction() {\n    return "b";\n}\n', encoding='utf-8')
+
+        fake_modules = ['module-a.js', 'module-b.js']
+
+        # Muss SystemExit ausloesen (kein stiller Fehler)
+        with pytest.raises(SystemExit):
+            check_duplicate_functions(str(tmp_path), fake_modules)
+
+    def test_no_orphaned_return_statements(self):
+        """
+        STABILITY: Nach Pass-3-Deduplizierung darf kein verwaister Funktionskoerper im Bundle stehen (STAB-07 T-04-02).
+        Deckt den 2026-01-10-Incident-Typ ab (Illegal return statement nach [DEDUP] Removed duplicate function).
+        Da der Pre-Build-Check Duplikate verhindert, sollte es keine [DEDUP]-Funktion-Kommentare geben —
+        der Test dokumentiert die Invariante und ist trivially gruen wenn der Check aktiv ist.
+        """
+        dist_file = Path(__file__).parent.parent.parent / 'dist' / 'dnd-tracker-bundled.html'
+        if not dist_file.exists():
+            pytest.skip("Dev-Build nicht gefunden — zuerst 'python build.py' ausfuehren")
+
+        with open(dist_file, 'r', encoding='utf-8') as f:
+            content = f.read()
+
+        lines = content.split('\n')
+        dedup_func_indices = [
+            i for i, line in enumerate(lines)
+            if '[DEDUP] Removed duplicate function' in line
+        ]
+
+        # Fuer jeden [DEDUP]-Funktion-Kommentar: pruefe die naechsten 20 Zeilen
+        # auf nicht-eingerueckte return-Ausdruecke (Heuristik fuer verwaiste Koerper)
+        orphaned = []
+        for idx in dedup_func_indices:
+            for offset in range(1, 21):
+                check_idx = idx + offset
+                if check_idx >= len(lines):
+                    break
+                check_line = lines[check_idx]
+                # Nicht-eingerueckter return auf Top-Level (kein fuehrendes Leerzeichen/Tab)
+                if re.match(r'^return\b', check_line.strip()) and not check_line.startswith(' ') and not check_line.startswith('\t'):
+                    orphaned.append(f"Zeile {check_idx + 1}: {check_line!r} (nach [DEDUP] auf Zeile {idx + 1})")
+
+        assert len(orphaned) == 0, \
+            f"Verwaiste return-Ausdruecke nach [DEDUP]-Kommentaren gefunden:\n" + "\n".join(orphaned)
