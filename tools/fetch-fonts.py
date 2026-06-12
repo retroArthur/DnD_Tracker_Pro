@@ -63,9 +63,23 @@ def fetch_url(url, headers=None):
 
 
 def extract_woff2_url(css_content):
-    """Extrahiert WOFF2-URL aus Google Fonts CSS-Antwort."""
+    """Extrahiert die WOFF2-URL des LATIN-Subsets aus der Google-Fonts-CSS-Antwort.
+
+    WR-12: Die CSS2-Antwort enthält mehrere @font-face-Blöcke mit unicode-range
+    (cyrillic/greek/... zuerst, latin zuletzt). Der erste Treffer wäre potenziell
+    das Cyrillic-Subset — da die lokale fonts.css KEINE unicode-range setzt, würde
+    diese eine Datei für ALLE Zeichen verwendet (fehlende Latin-Glyphen/Umlaute).
+    """
     import re
-    # Suche nach: src: url(https://...woff2) format('woff2')
+    # Bevorzugt: Block mit dem Kommentar /* latin */ (exakt, NICHT latin-ext)
+    match = re.search(
+        r"/\* latin \*/.*?url\((https://[^)]+\.woff2)\)\s+format\('woff2'\)",
+        css_content,
+        re.DOTALL,
+    )
+    if match:
+        return match.group(1)
+    # Fallback: erster WOFF2-Treffer (z.B. falls Google das Kommentarformat ändert)
     match = re.search(r"url\((https://[^)]+\.woff2)\)\s+format\('woff2'\)", css_content)
     if match:
         return match.group(1)
