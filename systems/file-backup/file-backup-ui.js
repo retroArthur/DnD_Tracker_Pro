@@ -35,7 +35,8 @@ async function showFileBackupSetup() {
             window.setBackupStatus('active');
         }
         renderBackupStatus();
-        window.showToast('✅ Backup-Ordner eingerichtet: ' + esc(dirHandle.name));
+        // WR-05: showToast escapet intern — esc() hier wäre Doppel-Escaping
+        window.showToast('✅ Backup-Ordner eingerichtet: ' + dirHandle.name);
 
         // Handle in IDB persistieren (separat behandelt: Fehler hier pausiert
         // NICHT das Sitzungs-Backup, nur die Wiederherstellung nach Reload)
@@ -52,7 +53,7 @@ async function showFileBackupSetup() {
     } catch (e) {
         // Nutzer hat Auswahl abgebrochen (AbortError) oder Fehler
         if (e?.name !== 'AbortError') {
-            window.showToast('Backup-Ordner konnte nicht gewählt werden: ' + esc(e.message || ''), 'error');
+            window.showToast('Backup-Ordner konnte nicht gewählt werden: ' + (e.message || ''), 'error');
         }
     }
 }
@@ -193,7 +194,8 @@ async function restoreFromFileBackup(filename) {
     const campaignDisplay = filename.replace(/-\d{4}-\d{2}-\d{2}\.json$/, '').replace(/-/g, ' ');
 
     // Bestaetigungsdialog (UI-SPEC: Strg+Z-Hinweis, rote Ueberschrift)
-    const confirmText = `${esc(campaignDisplay)} wird auf den Stand vom ${esc(dateStr)} zurückgesetzt.\n\nDieser Vorgang kann mit Strg+Z rückgängig gemacht werden.`;
+    // WR-05: confirm() zeigt Klartext — esc() würde sichtbare Entities erzeugen
+    const confirmText = `${campaignDisplay} wird auf den Stand vom ${dateStr} zurückgesetzt.\n\nDieser Vorgang kann mit Strg+Z rückgängig gemacht werden.`;
     if (!confirm(confirmText)) return;
 
     try {
@@ -243,7 +245,7 @@ async function restoreFromFileBackup(filename) {
         if (window.APP_CONFIG?.DEBUG_MODE) {
             window.ErrorHandler?.log('restoreFromFileBackup', e, 'Restore fehlgeschlagen');
         }
-        window.showToast('❌ Restore fehlgeschlagen: ' + esc(e.message || 'Unbekannter Fehler'), 'error');
+        window.showToast('❌ Restore fehlgeschlagen: ' + (e.message || 'Unbekannter Fehler'), 'error');
     }
 }
 
@@ -388,9 +390,9 @@ function downloadFileBackup() {
         a.download = filename;
         a.click();
         URL.revokeObjectURL(url);
-        window.showToast('✅ Backup heruntergeladen: ' + esc(filename));
+        window.showToast('✅ Backup heruntergeladen: ' + filename);
     } catch (e) {
-        window.showToast('Backup konnte nicht heruntergeladen werden: ' + esc(e.message || ''), 'error');
+        window.showToast('Backup konnte nicht heruntergeladen werden: ' + (e.message || ''), 'error');
     }
 }
 
@@ -415,7 +417,7 @@ async function reconnectFileBackup() {
         window._fileBackupDirHandle = handle;
         if (typeof window.setBackupStatus === 'function') window.setBackupStatus('active');
         renderBackupStatus();
-        window.showToast('✅ Backup-Ordner wieder verbunden: ' + esc(handle.name));
+        window.showToast('✅ Backup-Ordner wieder verbunden: ' + handle.name);
     } else {
         window.showToast('Backup-Ordner — Zugriff verweigert. Bitte neu einrichten.', 'warning');
         if (typeof window.setBackupStatus === 'function') window.setBackupStatus('paused');

@@ -230,8 +230,10 @@ function _processWizardFile(file, dropzone) {
     clearError();
 
     // Groessenlimit: 20MB
+    // WR-05: showError setzt textContent — hier echte UTF-8-Literale, KEINE
+    // HTML-Entities und KEIN esc() (würden wörtlich angezeigt)
     if (file.size > 20 * 1024 * 1024) {
-        showError('Die Datei konnte nicht gelesen werden — bitte eine g&#252;ltige Tracker-Exportdatei w&#228;hlen.');
+        showError('Die Datei konnte nicht gelesen werden — bitte eine gültige Tracker-Exportdatei wählen.');
         return;
     }
 
@@ -283,10 +285,11 @@ function _processWizardFile(file, dropzone) {
 
             const result = importFn(parsedObj);
 
-            // Dateiname in Dropzone anzeigen (T-02-10: esc() fuer XSS)
+            // Dateiname in Dropzone anzeigen — textContent ist XSS-sicher,
+            // esc() würde hier sichtbare Entities erzeugen (WR-05)
             dropzone.classList.add('file-ready');
             if (filenameEl) {
-                filenameEl.textContent = esc(file.name);
+                filenameEl.textContent = file.name;
                 filenameEl.style.display = '';
             }
 
@@ -303,11 +306,11 @@ function _processWizardFile(file, dropzone) {
 
         } catch (err) {
             const msg = err.message || 'Unbekannter Fehler';
-            showError('Import fehlgeschlagen: ' + esc(msg) + '. Bitte erneut versuchen oder &#220;berspringen w&#228;hlen.');
+            showError('Import fehlgeschlagen: ' + msg + '. Bitte erneut versuchen oder Überspringen wählen.');
         }
     };
     reader.onerror = () => {
-        showError('Die Datei konnte nicht gelesen werden — bitte eine g&#252;ltige Tracker-Exportdatei w&#228;hlen.');
+        showError('Die Datei konnte nicht gelesen werden — bitte eine gültige Tracker-Exportdatei wählen.');
     };
     reader.readAsText(file);
 }
@@ -479,7 +482,8 @@ function startMigrationFileSide() {
         const dateStr = divergenceSince.date
             ? new Date(divergenceSince.date).toLocaleDateString('de-DE')
             : divergenceSince.date || '';
-        showDivergenceBanner(esc(dateStr));
+        // KEIN esc() am Aufrufer — showDivergenceBanner escapet intern (IN-05: Doppel-Escaping)
+        showDivergenceBanner(dateStr);
     }
 
     // D-10: Einmaliger Umzugs-Hinweis (nur wenn noch nicht umgezogen)
