@@ -477,7 +477,11 @@ def build(minify=False, production=False, verbose=False):
         print("\n[PROD] Setze Debug-Flags fuer Production...")
         js_combined = js_combined.replace("DEBUG_MODE: true,", "DEBUG_MODE: false,", 1)
         js_combined = js_combined.replace("DEBUG_VALIDATE_ON_SAVE: true,", "DEBUG_VALIDATE_ON_SAVE: false,", 1)
-        log.info("DEBUG_MODE: false, DEBUG_VALIDATE_ON_SAVE: false")
+        # STAB-07: Abbruch, falls der Flip fehlschlug (z.B. nach Prettier-Reformatierung von core/config.js)
+        if "DEBUG_MODE: true" in js_combined:
+            print("[ABORTED] DEBUG_MODE ist noch true im Production-Build! core/config.js Formatierung pruefen.")
+            sys.exit(1)
+        log.success("DEBUG_MODE deaktiviert und verifiziert.")
 
     if minify:
         print("\n[MINIFY] Minifiziere JavaScript...")
