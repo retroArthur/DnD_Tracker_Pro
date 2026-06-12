@@ -5,7 +5,7 @@
 // ============================================================
 const APP_CONFIG = Object.freeze({
     // Version
-    VERSION: '2.6.0',
+    VERSION: '2.6.1',
     // Debug & Performance
     DEBUG_MODE: true, // Set false for production; enables validation warnings
     DEBUG_VALIDATE_ON_SAVE: true, // Validate data integrity before every save
