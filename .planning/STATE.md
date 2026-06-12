@@ -3,20 +3,20 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-last_updated: "2026-06-12T08:48:17.312Z"
+last_updated: "2026-06-12T09:09:16Z"
 progress:
   total_phases: 7
   completed_phases: 0
   total_plans: 9
-  completed_plans: 7
-  percent: 78
+  completed_plans: 8
+  percent: 89
 ---
 
 # Project State: D&D Kampagnen-Tracker Pro — Stabilisierung & Ausbau
 
-**Last Updated:** 2026-06-11
+**Last Updated:** 2026-06-12
 **Phase:** 1 — Stabilisierung
-**Status:** Ready to execute
+**Status:** Executing — Plan 01-08 complete, Plan 01-09 remaining
 
 ---
 
@@ -32,10 +32,10 @@ progress:
 
 ```
 Phase: 01 (stabilisierung) — EXECUTING
-Plan: 1 of 7
-Status: Ready to execute
+Plan: 8 of 9 complete
+Status: Executing — Plan 01-09 remaining
 
-Progress: [          ] 0%
+Progress: [========= ] 89%
 ```
 
 **Phases:**
@@ -71,6 +71,8 @@ Progress: [          ] 0%
 | Monster-Datengröße erst in Phase 3 klären | 3 | Spike nötig (pruned+minified messen): <200 KB inline, >=200 KB Index+IndexedDB lazy-load |
 | Mindmap bleibt entfernt | 1 | Bereits entschieden (Commit 7ef9bf5); nur Reste bereinigen |
 | Command-Palette-Shortcut final in Phase 2 festlegen | 2 | Ctrl+K belegt (Global Search + Browser-Adressleiste); Ctrl+Shift+K oder Ctrl+P nach Shortcut-Audit |
+| resolveStorageConflict statt showStorageConflictDialog | 1 (01-08) | Unterschiedlicher Name verhindert Selbstrekursion strukturell; window.showStorageConflictDialogUI als Andockpunkt für D-07-Dialog reserviert |
+| D-07-Auswahl-Dialog nicht in Gap-Plan 01-08 | 1 (01-08) | Nur CR-01-Bugfix-Scope; IDB-Vorrang als deterministischer Fallback erfüllt SC2/STAB-05 code-seitig |
 
 ### Known Blockers / Research Flags
 
@@ -95,8 +97,8 @@ Progress: [          ] 0%
 
 ## Session Continuity
 
-**Last action:** Phase 1 context gathered (2026-06-12) — 17 Entscheidungen in `.planning/phases/01-stabilisierung/01-CONTEXT.md`
-**Next action:** `/gsd-plan-phase 1` — Stabilisierungs-Phase planen
+**Last action:** Completed 01-08-PLAN.md (2026-06-12) — CR-01 Endlosrekursion behoben, vm-Tests hinzugefügt
+**Next action:** Plan 01-09 ausführen — STAB-04: npm run check grünhalten
 
 ---
 

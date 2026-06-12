@@ -39,7 +39,7 @@
 - [x] 01-05-PLAN.md — Repo-Hygiene & Config: Lizenz MIT, Version 2.6.1, python3->python, validate.py, tote Dateien (STAB-09, STAB-06)
 - [x] 01-06-PLAN.md — CI-Smoke-Integration & Quality-Gate: npm run check, frische Builds (STAB-08, STAB-04, STAB-03)
 - [x] 01-07-PLAN.md — Doku- & Lizenz-Audit: CLAUDE.md/README/bugfixes Faktenkorrektur, SRD-Attribution (STAB-10, STAB-11)
-- [ ] 01-08-PLAN.md — Gap-Closure: CR-01 Endlosrekursion in resolveStorageConflict beheben + echte vm-Regressionstests (STAB-05)
+- [x] 01-08-PLAN.md — Gap-Closure: CR-01 Endlosrekursion in resolveStorageConflict beheben + echte vm-Regressionstests (STAB-05)
 - [ ] 01-09-PLAN.md — Gap-Closure: npm run check grün — ESLint-Errors/Config + Prettier-Massenformatierung mit Build-Re-Verifikation (STAB-04)
 
 ### Phase 2: Technik-Fundament
@@ -115,7 +115,7 @@
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Stabilisierung | 0/7 | Not started | - |
+| 1. Stabilisierung | 8/9 | In Progress | - |
 | 2. Technik-Fundament | 0/? | Not started | - |
 | 3. Bestiary | 0/? | Not started | - |
 | 4. Initiative-Erweiterungen | 0/? | Not started | - |
