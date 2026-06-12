@@ -1,4 +1,191 @@
 /* ========================================
-   FILE-BACKUP - Backup-Browser und Warnindikator
-   Implementierung: Phase 2, Welle 2 (Plan 02-04)
+   FILE-BACKUP — Backup-Browser, Status, Warnindikator, Fallback
+   Phase 2, Welle 2 (Plan 02-04) — TECH-03
+   Naming-Convention: .backup-* Praefix (analog .dms-* fuer DM Screen)
    ======================================== */
+
+/* -----------------------------------------------
+   6. Backup-Status in Einstellungen (D-17)
+   ----------------------------------------------- */
+
+.backup-status-section {
+    margin-top: 16px;
+    padding: 12px 16px;
+    background: var(--bg-card);
+    border-radius: 8px;
+    border: 1px solid var(--border);
+}
+
+/* Zustandszeilen: Punkt + Text nebeneinander */
+.backup-status-active,
+.backup-status-paused,
+.backup-status-none {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 24px;
+}
+
+/* Farbpunkt fuer Backup-Zustand */
+.backup-status-dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.backup-dot-active {
+    background: var(--green);
+    box-shadow: 0 0 4px rgba(74, 222, 128, 0.4);
+}
+
+.backup-dot-paused {
+    background: var(--yellow);
+    box-shadow: 0 0 4px rgba(251, 191, 36, 0.4);
+}
+
+.backup-status-text {
+    font-size: 0.85em;
+    color: var(--text);
+    line-height: 1.4;
+}
+
+/* -----------------------------------------------
+   7. Header-Warnindikator (D-17)
+   ----------------------------------------------- */
+
+.backup-warning-indicator {
+    display: none; /* Standard: versteckt; via JS aktiviert bei Status 'paused' */
+    align-items: center;
+    gap: 2px;
+    cursor: pointer;
+    padding: 2px 6px;
+    border-radius: 4px;
+    color: var(--yellow);
+    font-size: 12px;
+    background: transparent;
+    transition: background 0.15s;
+}
+
+.backup-warning-indicator:hover {
+    background: rgba(251, 191, 36, 0.1);
+}
+
+/* -----------------------------------------------
+   8. file://-Fallback (D-18)
+   ----------------------------------------------- */
+
+.file-backup-fallback {
+    padding: 12px 0;
+}
+
+.file-backup-fallback .backup-status-label {
+    color: var(--text-dim);
+    font-size: 0.85em;
+    margin-bottom: 8px;
+    line-height: 1.4;
+}
+
+/* -----------------------------------------------
+   9. Backup-Browser-Modal (D-14)
+   ----------------------------------------------- */
+
+.backup-browser-modal {
+    /* Erbt von .modal-overlay */
+}
+
+/* Listen-Zeile: grid mit 4 Spalten (UI-SPEC Komp. 9) */
+.backup-entry {
+    display: grid;
+    grid-template-columns: 1fr 120px 80px 100px;
+    align-items: center;
+    gap: 8px;
+    min-height: 44px; /* Touch-Target */
+    padding: 0 4px;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg-card);
+    transition: background 0.12s;
+}
+
+.backup-entry:last-child {
+    border-bottom: none;
+}
+
+.backup-entry:hover {
+    background: var(--bg-hover, rgba(255,255,255,0.04));
+}
+
+/* Header-Zeile der Backup-Liste */
+.backup-entry-header {
+    min-height: 32px;
+    font-size: 0.8em;
+    color: var(--text-dim);
+    background: transparent;
+    border-bottom: 2px solid var(--border);
+}
+
+.backup-entry-header:hover {
+    background: transparent;
+}
+
+/* Kampagnenname */
+.backup-entry-name {
+    font-size: var(--font-size-base, 14px);
+    color: var(--text);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Datum */
+.backup-entry-date {
+    font-size: 0.85em;
+    color: var(--text-dim);
+}
+
+/* Dateigröße */
+.backup-entry-size {
+    font-size: 0.8em;
+    color: var(--text-dim);
+    text-align: right;
+}
+
+/* Restore-Button in Liste: roter Outline-Stil (destruktiv aber nicht solid) */
+.backup-entry-restore {
+    color: var(--red) !important;
+    border-color: var(--red) !important;
+    background: transparent !important;
+    font-size: 0.8em;
+    padding: 4px 8px;
+    border-radius: 4px;
+    border: 1px solid;
+    cursor: pointer;
+    transition: background 0.12s, color 0.12s;
+    min-height: 32px;
+}
+
+.backup-entry-restore:hover {
+    background: rgba(239, 68, 68, 0.12) !important;
+}
+
+/* Leerer Zustand */
+.backup-browser-empty {
+    padding: 32px;
+    text-align: center;
+    color: var(--text-dim);
+}
+
+/* Modale: max-width wird im JS gesetzt; nutzt Standard .modal / .modal-overlay */
+#file-backup-modal .modal {
+    max-width: 600px;
+}
+
+/* Responsive: auf schmalen Bildschirmen stacked Layout */
+@media (max-width: 480px) {
+    .backup-entry {
+        grid-template-columns: 1fr 80px 60px 90px;
+        gap: 4px;
+        font-size: 0.9em;
+    }
+}
