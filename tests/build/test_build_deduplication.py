@@ -16,9 +16,7 @@ from pathlib import Path
 # Add project root to path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-from build import deduplicate_window_assignments, build
-# STAB-07: Neue Importe fuer Build-Haertungs-Tests (Task 3 RED phase — werden in GREEN aktiviert)
-# check_duplicate_functions, check_module_list_sync, MODULES werden im naechsten Schritt importiert
+from build import deduplicate_window_assignments, build, check_duplicate_functions, check_module_list_sync, MODULES
 
 
 class TestBuildDeduplication:
