@@ -143,7 +143,7 @@ Plans:
 | Phase                       | Plans Complete | Status      | Completed |
 | --------------------------- | -------------- | ----------- | --------- |
 | 1. Stabilisierung           | 9/9            | Complete    | 2026-06-12 |
-| 2. Technik-Fundament        | 5/5 | Complete   | 2026-06-12 |
+| 2. Technik-Fundament        | 5/5 | Complete    | 2026-06-12 |
 | 3. Bestiary                 | 0/?            | Not started | -         |
 | 4. Initiative-Erweiterungen | 0/?            | Not started | -         |
 | 5. Welt & Story             | 0/?            | Not started | -         |

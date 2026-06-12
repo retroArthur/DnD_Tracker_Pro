@@ -23,10 +23,10 @@ Requirements für diesen Milestone. Jedes wird genau einer Roadmap-Phase zugeord
 
 ### Technik-Fundament (TECH)
 
-- [ ] **TECH-01**: Nutzer kann die App als PWA installieren (Manifest, Icons, Service Worker) und über ein Desktop-Icon starten statt per file://-Doppelklick
-- [ ] **TECH-02**: Beim ersten PWA-Start werden bestehende file://-Kampagnendaten per Migrations-Assistent übernommen (kein Datenverlust beim Origin-Wechsel)
-- [ ] **TECH-03**: Nutzer kann automatische Datei-Backups auf die Festplatte aktivieren (File System Access API; Fallback: manueller Download im file://-Modus)
-- [ ] **TECH-04**: Nutzer kann per Command Palette Aktionen ausführen (kollisionsfreier Shortcut, Fuzzy-Suche über Aktions-Registry, z.B. „Neuer NPC", „Würfle 8d6")
+- [x] **TECH-01**: Nutzer kann die App als PWA installieren (Manifest, Icons, Service Worker) und über ein Desktop-Icon starten statt per file://-Doppelklick
+- [x] **TECH-02**: Beim ersten PWA-Start werden bestehende file://-Kampagnendaten per Migrations-Assistent übernommen (kein Datenverlust beim Origin-Wechsel)
+- [x] **TECH-03**: Nutzer kann automatische Datei-Backups auf die Festplatte aktivieren (File System Access API; Fallback: manueller Download im file://-Modus)
+- [x] **TECH-04**: Nutzer kann per Command Palette Aktionen ausführen (kollisionsfreier Shortcut, Fuzzy-Suche über Aktions-Registry, z.B. „Neuer NPC", „Würfle 8d6")
 
 ### Monster-Kompendium (BEST)
 
@@ -107,10 +107,10 @@ Explizit ausgeschlossen. Dokumentiert, um Scope-Creep zu verhindern.
 | STAB-09     | Phase 1 | Complete|
 | STAB-10     | Phase 1 | Complete|
 | STAB-11     | Phase 1 | Complete|
-| TECH-01     | Phase 2 | Pending |
-| TECH-02     | Phase 2 | Pending |
-| TECH-03     | Phase 2 | Pending |
-| TECH-04     | Phase 2 | Pending |
+| TECH-01     | Phase 2 | Complete |
+| TECH-02     | Phase 2 | Complete |
+| TECH-03     | Phase 2 | Complete |
+| TECH-04     | Phase 2 | Complete |
 | BEST-01     | Phase 3 | Pending |
 | BEST-02     | Phase 3 | Pending |
 | BEST-03     | Phase 3 | Pending |
