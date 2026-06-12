@@ -24,7 +24,9 @@ test.describe('PWA Manifest und Service Worker (TECH-01)', () => {
         try {
             manifestResponse = await request.get(`${BASE_URL}/manifest.webmanifest`);
         } catch {
-            test.fail(true, 'manifest.webmanifest nicht erreichbar — Implementierung fehlt (Plan 02-02, Welle 2). Gehoste Umgebung (http/https) benoetigt.');
+            // WR-08: test.skip statt test.fail — test.fail(true) + return meldet
+            // "Expected to fail, but passed" und ist damit ein garantierter Failure
+            test.skip(true, 'manifest.webmanifest nicht erreichbar — gehostete Umgebung (http/https) benoetigt.');
             return;
         }
 
@@ -47,10 +49,9 @@ test.describe('PWA Manifest und Service Worker (TECH-01)', () => {
     test('Service Worker registriert sich auf https/localhost', async ({ page }) => {
         // Pruefe ob SMOKE_BASE_URL auf http/https zeigt
         const targetUrl = process.env.SMOKE_BASE_URL || process.env.PWA_BASE_URL;
-        if (!targetUrl || targetUrl.startsWith('file://')) {
-            test.fail(true, 'SW-Registrierung benoetigt https/localhost — kein file://-Support. Setze SMOKE_BASE_URL oder PWA_BASE_URL.');
-            return;
-        }
+        // WR-08: test.skip statt test.fail (siehe oben)
+        test.skip(!targetUrl || targetUrl.startsWith('file://'),
+            'SW-Registrierung benoetigt https/localhost — kein file://-Support. Setze SMOKE_BASE_URL oder PWA_BASE_URL.');
 
         const errors = [];
         page.on('pageerror', err => errors.push(err.message));
@@ -66,5 +67,8 @@ test.describe('PWA Manifest und Service Worker (TECH-01)', () => {
         });
 
         expect(swRegistered).toBe(true);
+
+        // IN-01: gesammelte pageerror tatsaechlich pruefen (wie smoke.spec.js)
+        expect(errors.filter(e => !e.includes('favicon'))).toHaveLength(0);
     });
 });

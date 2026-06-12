@@ -31,6 +31,9 @@ test.describe('Command Palette (TECH-04)', () => {
         // Erwartet: .cp-overlay erscheint (sichtbar, nicht display:none)
         const overlay = page.locator('.cp-overlay');
         await expect(overlay).toBeVisible({ timeout: 3000 });
+
+        // IN-01: gesammelte pageerror tatsaechlich pruefen (wie smoke.spec.js)
+        expect(errors.filter(e => !e.includes('favicon'))).toHaveLength(0);
     });
 
     test('Tippen von "NPC" zeigt mindestens ein Ergebnis', async ({ page }) => {
@@ -59,5 +62,8 @@ test.describe('Command Palette (TECH-04)', () => {
         // Erwartet: mindestens ein Ergebnis-Element erscheint
         const results = page.locator('.cp-result, .cp-overlay [class*="result"], [class*="command-palette"] [class*="result"]');
         await expect(results.first()).toBeVisible({ timeout: 3000 });
+
+        // IN-01: gesammelte pageerror tatsaechlich pruefen (wie smoke.spec.js)
+        expect(errors.filter(e => !e.includes('favicon'))).toHaveLength(0);
     });
 });
