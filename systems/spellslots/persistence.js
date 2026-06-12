@@ -24,17 +24,25 @@ async function saveImmediate() {
     const LS_LIMIT_MB = 5;
     const LS_WARNING_MB = 4;
     try {
-        // Warnung bei Größenannäherung
+        // (D-08) 4-MB-Warnung einmal pro Sitzung — kein Toast-Spam am Spieltisch
         if (dataSizeMB > LS_WARNING_MB && dataSizeMB <= LS_LIMIT_MB) {
-            console.warn(`[STORAGE] Datengröße nähert sich Limit: ${dataSizeMB.toFixed(2)}MB / ${LS_LIMIT_MB}MB`);
-            showToast(`⚠️ Kampagne wird groß (${dataSizeMB.toFixed(1)}MB). Backup empfohlen!`, 'warning', 5000);
+            if (!window._sizeWarningSeen) {
+                window._sizeWarningSeen = true;
+                showToast(`⚠️ Kampagne wird groß (${dataSizeMB.toFixed(1)}MB). Backup empfohlen!`, 'warning', 5000);
+            }
         }
-        // Automatischer Fallback zu IndexedDB bei Überschreitung
+        // (D-01 / STAB-05) IDB-only-Pfad bei >5MB: LS-Schatten entfernen nach bestätigtem IDB-Write
         if (dataSizeMB > LS_LIMIT_MB) {
-            console.warn(`[STORAGE] localStorage Limit überschritten (${dataSizeMB.toFixed(2)}MB). Fallback zu IndexedDB...`);
             await saveToIndexedDBFallback(key, dataString);
+            // Reihenfolge zwingend: erst await IDB-Write, DANN LS löschen (Pitfall 1)
+            StorageAPI.remove(key);
+            StorageAPI.remove(key + '_ts');
             updateSaveIndicator('saved');
-            showToast('💾 Große Kampagne in IndexedDB gespeichert', 'success');
+            // (D-02) Sitzungs-Hinweis einmal pro Sitzung, kein Per-Save-Toast
+            if (!window._idbModeSeen) {
+                window._idbModeSeen = true;
+                showToast('💾 Kampagne im IndexedDB-Modus (>5MB). Daten sicher gespeichert.', 'info', 4000);
+            }
             broadcastSave();
             return;
         }
@@ -44,26 +52,42 @@ async function saveImmediate() {
             // Fehler beim Speichern → werfe Error für catch-Block
             throw new Error(saveResult.error);
         }
+        // (D-01) Begleit-Timestamp für Konflikt-Erkennung beim Laden
+        StorageAPI.set(key + '_ts', String(Date.now()));
         updateSaveIndicator('saved');
         broadcastSave();
         // Zusätzliches IndexedDB-Backup bei großen Daten (>2MB)
         if (dataSizeMB > 2) {
-            saveToIndexedDBFallback(key, dataString).catch(e => console.log('[IDB Backup] Optional backup failed:', e));
+            saveToIndexedDBFallback(key, dataString).catch(e => {
+                if (window.APP_CONFIG && window.APP_CONFIG.DEBUG_MODE) {
+                    window.ErrorHandler && window.ErrorHandler.log('saveImmediate', e, '[IDB Backup] Optional backup failed');
+                }
+            });
         }
     }
     catch (e) {
-        console.error('[STORAGE] localStorage save failed:', e);
+        if (window.APP_CONFIG && window.APP_CONFIG.DEBUG_MODE) {
+            window.ErrorHandler && window.ErrorHandler.log('saveImmediate', e, 'localStorage save failed');
+        }
         // Fallback zu IndexedDB bei Fehler
         try {
             await saveToIndexedDBFallback(key, dataString);
+            // (D-01) Begleit-Timestamp für IDB-Fallback entfernen (IDB hat eigenen timestamp)
+            StorageAPI.remove(key + '_ts');
             updateSaveIndicator('saved');
             showToast('💾 In IndexedDB gespeichert (localStorage voll)', 'warning');
             broadcastSave();
         }
         catch (idbError) {
-            console.error('[STORAGE] IndexedDB fallback failed:', idbError);
+            if (window.APP_CONFIG && window.APP_CONFIG.DEBUG_MODE) {
+                window.ErrorHandler && window.ErrorHandler.log('saveImmediate', idbError, 'IndexedDB fallback failed');
+            }
+            // (D-03) Lauter Fehler-Toast + automatischer Export-Versuch
             updateSaveIndicator('error');
-            showToast('❌ Speichern fehlgeschlagen! Daten exportieren empfohlen!', 'error', 8000);
+            showToast('❌ Speichern fehlgeschlagen! Daten gehen sonst verloren — JETZT exportieren!', 'error', 10000);
+            if (typeof window.exportAllDataAsFile === 'function') {
+                window.exportAllDataAsFile();
+            }
         }
     }
 }
@@ -82,7 +106,7 @@ async function saveToIndexedDBFallback(key, dataString) {
         request.onerror = () => reject(request.error);
     });
 }
-// Load mit IndexedDB-Fallback
+// Load mit IndexedDB-Fallback (gibt nur .data zurück)
 async function loadFromIndexedDBFallback(key) {
     const initIndexedDB = window.initIndexedDB;
     let idb = window.idb;
@@ -101,6 +125,22 @@ async function loadFromIndexedDBFallback(key) {
                 reject(new Error('No data found'));
             }
         };
+        request.onerror = () => reject(request.error);
+    });
+}
+// (D-01/D-07) Raw-Read: gibt das vollständige {id, data, timestamp}-Record zurück.
+// Wird vom Load-Pfad in quick-roll.js für den Timestamp-Vergleich benötigt.
+async function loadFromIndexedDBFallbackRaw(key) {
+    const initIndexedDB = window.initIndexedDB;
+    let idb = window.idb;
+    if (!idb)
+        await initIndexedDB();
+    idb = window.idb;
+    return new Promise((resolve, reject) => {
+        const transaction = idb.transaction(['campaigns'], 'readonly');
+        const store = transaction.objectStore('campaigns');
+        const request = store.get(key);
+        request.onsuccess = () => resolve(request.result || null); // {id, data, timestamp} | null
         request.onerror = () => reject(request.error);
     });
 }
@@ -135,19 +175,26 @@ const save = function (showMessage = false) {
         const dataSizeMB = new Blob([dataString]).size / (1024 * 1024);
         const LS_LIMIT_MB = 5;
         try {
-            // Automatischer Fallback zu IndexedDB bei Überschreitung
+            // (D-01 / STAB-05) IDB-only-Pfad: LS-Schatten nach bestätigtem IDB-Write entfernen
             if (dataSizeMB > LS_LIMIT_MB) {
                 await saveToIndexedDBFallback(key, dataString);
+                StorageAPI.remove(key);
+                StorageAPI.remove(key + '_ts');
                 updateSaveIndicator('saved');
                 broadcastSave();
-                if (showMessage)
-                    showToast('💾 In IndexedDB gespeichert', 'success');
+                // (D-02) Sitzungs-Hinweis statt Per-Save-Toast
+                if (!window._idbModeSeen) {
+                    window._idbModeSeen = true;
+                    showToast('💾 Kampagne im IndexedDB-Modus (>5MB). Daten sicher gespeichert.', 'info', 4000);
+                }
                 return;
             }
             const saveResult = StorageAPI.set(key, dataString);
             if (!saveResult.success) {
                 throw new Error(saveResult.error);
             }
+            // (D-01) Begleit-Timestamp setzen
+            StorageAPI.set(key + '_ts', String(Date.now()));
             updateSaveIndicator('saved');
             broadcastSave();
             if (showMessage)
@@ -158,6 +205,7 @@ const save = function (showMessage = false) {
             // Fallback zu IndexedDB
             try {
                 await saveToIndexedDBFallback(key, dataString);
+                StorageAPI.remove(key + '_ts');
                 updateSaveIndicator('saved');
                 broadcastSave();
                 showToast('💾 In IndexedDB gespeichert (localStorage voll)', 'warning');
@@ -165,7 +213,11 @@ const save = function (showMessage = false) {
             catch (idbError) {
                 ErrorHandler.log('save', idbError, 'IndexedDB Fallback');
                 updateSaveIndicator('error');
-                ErrorHandler.showError('Speichern fehlgeschlagen!');
+                // (D-03) Laut bei IDB-Fehler
+                showToast('❌ Speichern fehlgeschlagen! Daten gehen sonst verloren — JETZT exportieren!', 'error', 10000);
+                if (typeof window.exportAllDataAsFile === 'function') {
+                    window.exportAllDataAsFile();
+                }
             }
         }
     }, 300);
@@ -174,4 +226,5 @@ const save = function (showMessage = false) {
 // Export to global scope
 window.save = save;
 window.saveImmediate = saveImmediate;
+window.loadFromIndexedDBFallbackRaw = loadFromIndexedDBFallbackRaw;
 // Note: load() and loadFromBackup() are defined in systems/backups.js
