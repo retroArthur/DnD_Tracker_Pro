@@ -9,7 +9,7 @@
 
 ## Phases
 
-- [ ] **Phase 1: Stabilisierung** — App startet, Daten sind sicher, CI erkennt Crashes, Doku ist aktuell
+- [x] **Phase 1: Stabilisierung** — App startet, Daten sind sicher, CI erkennt Crashes, Doku ist aktuell
 - [ ] **Phase 2: Technik-Fundament** — Installierbare PWA, Datei-Backup, Command Palette
 - [ ] **Phase 3: Bestiary** — SRD-Monster-Kompendium offline + eigene Kreaturen + Encounter-Import
 - [ ] **Phase 4: Initiative-Erweiterungen** — Statblock-Popup, Legendäre Aktionen & Resistenzen, Mob-Modus
@@ -43,7 +43,7 @@
 - [x] 01-06-PLAN.md — CI-Smoke-Integration & Quality-Gate: npm run check, frische Builds (STAB-08, STAB-04, STAB-03)
 - [x] 01-07-PLAN.md — Doku- & Lizenz-Audit: CLAUDE.md/README/bugfixes Faktenkorrektur, SRD-Attribution (STAB-10, STAB-11)
 - [x] 01-08-PLAN.md — Gap-Closure: CR-01 Endlosrekursion in resolveStorageConflict beheben + echte vm-Regressionstests (STAB-05)
-- [ ] 01-09-PLAN.md — Gap-Closure: npm run check grün — ESLint-Errors/Config + Prettier-Massenformatierung mit Build-Re-Verifikation (STAB-04)
+- [x] 01-09-PLAN.md — Gap-Closure: npm run check grün — ESLint-Errors/Config + Prettier-Massenformatierung mit Build-Re-Verifikation (STAB-04)
 
 ### Phase 2: Technik-Fundament
 
@@ -130,7 +130,7 @@
 
 | Phase                       | Plans Complete | Status      | Completed |
 | --------------------------- | -------------- | ----------- | --------- |
-| 1. Stabilisierung           | 8/9            | In Progress | -         |
+| 1. Stabilisierung           | 9/9            | Complete    | 2026-06-12 |
 | 2. Technik-Fundament        | 0/?            | Not started | -         |
 | 3. Bestiary                 | 0/?            | Not started | -         |
 | 4. Initiative-Erweiterungen | 0/?            | Not started | -         |

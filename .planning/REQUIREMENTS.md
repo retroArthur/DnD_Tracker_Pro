@@ -12,7 +12,7 @@ Requirements für diesen Milestone. Jedes wird genau einer Roadmap-Phase zugeord
 - [ ] **STAB-01**: App startet fehlerfrei per `file://`-Doppelklick — der `clearMindmap`-Boot-Crash (tools/debug.js:99) ist behoben
 - [ ] **STAB-02**: Alle Reste des entfernten Mindmap-Features sind bereinigt (debug.js, campaign-manager-Seed, types/\*.d.ts, styles-purged.css, tests/setup.js, tools/split-shops.py)
 - [ ] **STAB-03**: dev- und production-Builds sind frisch aus aktuellem Quellcode gebaut; Browser-Konsole bleibt in allen Tabs fehlerfrei
-- [ ] **STAB-04**: `npm run check` läuft grün (ESLint, TypeScript, Prettier)
+- [x] **STAB-04**: `npm run check` läuft grün (ESLint, TypeScript, Prettier)
 - [ ] **STAB-05**: Kampagnen über 5MB verlieren beim Neuladen keine Daten mehr (Stale-Shadow-Bug in der Persistenz behoben)
 - [ ] **STAB-06**: Exporte tragen die echte App-Version (`APP_CONFIG.VERSION`) statt hartkodiert `'2.11'`; Re-Import führt Migrationen korrekt aus
 - [ ] **STAB-07**: build.py ist gehärtet: Pass-3-Duplikatentfernung hinterlässt keine verwaisten Funktionskörper; Production-Build bricht ab, wenn DEBUG_MODE nicht deaktiviert wurde; Modullisten loader.js/build.py werden auf Sync geprüft
@@ -99,7 +99,7 @@ Explizit ausgeschlossen. Dokumentiert, um Scope-Creep zu verhindern.
 | STAB-01     | Phase 1 | Pending |
 | STAB-02     | Phase 1 | Pending |
 | STAB-03     | Phase 1 | Pending |
-| STAB-04     | Phase 1 | Pending |
+| STAB-04     | Phase 1 | Complete |
 | STAB-05     | Phase 1 | Pending |
 | STAB-06     | Phase 1 | Pending |
 | STAB-07     | Phase 1 | Pending |

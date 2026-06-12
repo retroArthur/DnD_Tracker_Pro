@@ -3,20 +3,20 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-last_updated: '2026-06-12T09:09:16Z'
+last_updated: '2026-06-12T09:17:05Z'
 progress:
     total_phases: 7
-    completed_phases: 0
+    completed_phases: 1
     total_plans: 9
-    completed_plans: 8
-    percent: 89
+    completed_plans: 9
+    percent: 100
 ---
 
 # Project State: D&D Kampagnen-Tracker Pro — Stabilisierung & Ausbau
 
 **Last Updated:** 2026-06-12
 **Phase:** 1 — Stabilisierung
-**Status:** Executing — Plan 01-08 complete, Plan 01-09 remaining
+**Status:** Complete — alle 9 Pläne ausgeführt
 
 ---
 
@@ -31,17 +31,17 @@ progress:
 ## Current Position
 
 ```
-Phase: 01 (stabilisierung) — EXECUTING
-Plan: 8 of 9 complete
-Status: Executing — Plan 01-09 remaining
+Phase: 01 (stabilisierung) — COMPLETE
+Plan: 9 of 9 complete
+Status: Phase 01 abgeschlossen — bereit für Phase 02
 
-Progress: [========= ] 89%
+Progress: [==========] 100%
 ```
 
 **Phases:**
 | # | Phase | Status |
 |---|-------|--------|
-| 1 | Stabilisierung | Not started |
+| 1 | Stabilisierung | Complete |
 | 2 | Technik-Fundament | Not started |
 | 3 | Bestiary | Not started |
 | 4 | Initiative-Erweiterungen | Not started |
@@ -73,6 +73,8 @@ Progress: [========= ] 89%
 | Command-Palette-Shortcut final in Phase 2 festlegen    | 2          | Ctrl+K belegt (Global Search + Browser-Adressleiste); Ctrl+Shift+K oder Ctrl+P nach Shortcut-Audit                                           |
 | resolveStorageConflict statt showStorageConflictDialog | 1 (01-08)  | Unterschiedlicher Name verhindert Selbstrekursion strukturell; window.showStorageConflictDialogUI als Andockpunkt für D-07-Dialog reserviert |
 | D-07-Auswahl-Dialog nicht in Gap-Plan 01-08            | 1 (01-08)  | Nur CR-01-Bugfix-Scope; IDB-Vorrang als deterministischer Fallback erfüllt SC2/STAB-05 code-seitig                                           |
+| no-misleading-character-class auf warn (Option d-1)    | 1 (01-09)  | Emoji-Regex in dice-core.js bleibt unverändert; kein u-Flag-Umbau in der Stabilisierungsphase (Surrogate/ZWJ-Risiko)                        |
+| lint ohne --max-warnings                               | 1 (01-09)  | 1215 legitime Non-ESM-Warnungen blockieren Gate nicht; echte Errors (Severity 2) weiterhin fatal; robuster als festes Limit                 |
 
 ### Known Blockers / Research Flags
 
@@ -97,8 +99,8 @@ Progress: [========= ] 89%
 
 ## Session Continuity
 
-**Last action:** Completed 01-08-PLAN.md (2026-06-12) — CR-01 Endlosrekursion behoben, vm-Tests hinzugefügt
-**Next action:** Plan 01-09 ausführen — STAB-04: npm run check grünhalten
+**Last action:** Completed 01-09-PLAN.md (2026-06-12) — npm run check grün, ESLint 0 Errors, Prettier mass-format bestätigt build-verträglich
+**Next action:** Phase 02 planen — `/gsd-plan-phase 2` (Technik-Fundament: PWA, Datei-Backup, Command Palette)
 
 ---
 
