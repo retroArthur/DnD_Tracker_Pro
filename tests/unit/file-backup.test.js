@@ -26,10 +26,18 @@ function createMockDirHandle() {
     const dirHandle = {
         kind: 'directory',
         name: 'dnd-backups',
-        getFileHandle: jest.fn(async (filename, opts) => ({
-            name: filename,
-            createWritable: jest.fn(async () => createMockWritable(filename))
-        })),
+        // WR-09: Reale File System Access API wirft NotFoundError, wenn die Datei
+        // fehlt und { create: true } NICHT gesetzt ist — sonst ist der
+        // Tages-Snapshot-Zweig (snapshotExists) nie erreichbar.
+        getFileHandle: jest.fn(async (filename, opts) => {
+            if (!opts?.create && !files.has(filename)) {
+                throw Object.assign(new Error('NotFound'), { name: 'NotFoundError' });
+            }
+            return {
+                name: filename,
+                createWritable: jest.fn(async () => createMockWritable(filename))
+            };
+        }),
         removeEntry: jest.fn(async (filename) => { files.delete(filename); }),
         entries: jest.fn(async function* () {
             for (const [name] of files) {
@@ -113,10 +121,30 @@ describe('writeBackupForCampaign — Datei-Backup nach save() (TECH-03)', () => 
         // Erwartet: getFileHandle wurde aufgerufen (= Datei anlegen / oeffnen)
         expect(mockDirHandle.getFileHandle).toHaveBeenCalled();
 
-        // Erwartet: Dateiname enthaelt Kampagnennamen oder Datum
-        const calledFilename = mockDirHandle.getFileHandle.mock.calls[0][0];
-        expect(typeof calledFilename).toBe('string');
-        expect(calledFilename.length).toBeGreaterThan(0);
+        // WR-09: konkrete Dateinamen pruefen — -aktuell.json (laufend) UND
+        // Tages-Snapshot ({safeName}-YYYY-MM-DD.json) muessen geschrieben sein
+        const today = new Date().toISOString().slice(0, 10);
+        expect(mockDirHandle._files.has('standard-kampagne-aktuell.json')).toBe(true);
+        expect(mockDirHandle._files.has(`standard-kampagne-${today}.json`)).toBe(true);
+    });
+
+    test('writeBackupForCampaign schreibt pro Tag nur EINEN Snapshot (A2)', async () => {
+        const campaignKey = 'dnd-tracker-data';
+        const campaignName = 'Standard-Kampagne';
+        const data = { characters: [], _version: '2.7.0' };
+        const today = new Date().toISOString().slice(0, 10);
+
+        // Snapshot fuer heute existiert bereits
+        mockDirHandle._files.set(`standard-kampagne-${today}.json`, true);
+        await writeBackupForCampaign(mockDirHandle, campaignKey, campaignName, data);
+
+        // -aktuell.json wurde geschrieben, aber kein zweiter Snapshot-Schreibvorgang:
+        // getFileHandle mit { create: true } darf fuer den Snapshot-Namen nicht
+        // erneut aufgerufen worden sein
+        const createCalls = mockDirHandle.getFileHandle.mock.calls
+            .filter(c => c[1]?.create === true)
+            .map(c => c[0]);
+        expect(createCalls).toEqual(['standard-kampagne-aktuell.json']);
     });
 });
 
@@ -147,5 +175,41 @@ describe('pruneOldSnapshots — Snapshot-Limit 10 pro Kampagne (D-12, TECH-03)',
 
         // Erwartet: 5 aelteste Dateien geloescht (15 - 10 = 5)
         expect(mockDirWithFiles.removeEntry).toHaveBeenCalledTimes(5);
+
+        // WR-09: und zwar exakt die 5 AELTESTEN
+        const removed = mockDirWithFiles.removeEntry.mock.calls.map(c => c[0]);
+        expect(removed).toEqual([
+            `${campaignKey}-2026-01-01.json`,
+            `${campaignKey}-2026-01-02.json`,
+            `${campaignKey}-2026-01-03.json`,
+            `${campaignKey}-2026-01-04.json`,
+            `${campaignKey}-2026-01-05.json`
+        ]);
+    });
+
+    test('pruneOldSnapshots ignoriert Snapshots fremder Kampagnen (Praefix-Kollision, CR-05)', async () => {
+        // Kampagne "kampagne" hat 11 Snapshots; Kampagne "kampagne-2" hat 2.
+        // Substring-Matching wuerde die kampagne-2-Dateien mitzaehlen und
+        // (wegen '-' < '0' in der Sortierung) ZUERST loeschen.
+        const ownFiles = Array.from({ length: 11 }, (_, i) =>
+            `kampagne-2026-01-${String(i + 1).padStart(2, '0')}.json`);
+        const foreignFiles = ['kampagne-2-2026-01-01.json', 'kampagne-2-2026-01-02.json'];
+        const allFiles = [...foreignFiles, ...ownFiles];
+
+        const mockDir = {
+            ...mockDirHandle,
+            entries: jest.fn(async function* () {
+                for (const name of allFiles) {
+                    yield [name, { kind: 'file', name }];
+                }
+            }),
+            removeEntry: jest.fn(async () => {})
+        };
+
+        await pruneOldSnapshots(mockDir, 'kampagne', 10);
+
+        // Nur der aelteste EIGENE Snapshot wird geloescht — keine fremden Dateien
+        const removed = mockDir.removeEntry.mock.calls.map(c => c[0]);
+        expect(removed).toEqual(['kampagne-2026-01-01.json']);
     });
 });

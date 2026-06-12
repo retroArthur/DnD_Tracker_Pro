@@ -15,12 +15,29 @@ const vm = require('vm');
 
 let buildFullExport;
 
+// Realistische Kampagnendaten INKLUSIVE SRD-Spells — damit der SRD-Strip-Test
+// den stripNonUserData-Codepfad tatsaechlich durchlaeuft (WR-09: vorher lieferte
+// der getJSON-Mock fuer alle Keys null und der Test bestand trivial).
+const CAMPAIGN_DATA = {
+    characters: [{ id: 1, name: 'Tester', class: 'Krieger' }],
+    npcs: [{ id: 2, name: 'Gastgeber', role: 'NPC' }],
+    locations: [],
+    quests: [],
+    settings: { theme: 'dark' },
+    spells: [
+        { id: 100, name: 'Feuerball', source: 'srd' },
+        { id: 101, name: 'Heilen', source: 'srd' }
+    ],
+    _version: '2.7.0'
+};
+
 beforeAll(() => {
     const context = {
         window: {
             APP_CONFIG: {
                 VERSION: '2.7.0',
                 STORAGE_KEY: 'dnd-tracker-data',
+                DICE_FAV_KEY: 'dnd-dice-favorites',
                 DEBUG_MODE: false
             },
             getCampaignIndex: jest.fn(() => ({
@@ -33,6 +50,7 @@ beforeAll(() => {
         APP_CONFIG: {
             VERSION: '2.7.0',
             STORAGE_KEY: 'dnd-tracker-data',
+            DICE_FAV_KEY: 'dnd-dice-favorites',
             DEBUG_MODE: false
         },
         D: {
@@ -54,7 +72,17 @@ beforeAll(() => {
             ]
         },
         StorageAPI: {
-            getJSON: jest.fn(() => null),
+            // WR-09: Mock per Key differenzieren — Kampagnen-Key liefert echte
+            // Daten (mit SRD-Spells), Dice-Favoriten eigener Key, Rest Fallback
+            getJSON: jest.fn((key, fallback) => {
+                if (key === 'dnd-tracker-data') {
+                    return JSON.parse(JSON.stringify(CAMPAIGN_DATA));
+                }
+                if (key === 'dnd-dice-favorites') {
+                    return [{ id: 1, name: 'Angriff', formula: '1d20+5' }];
+                }
+                return fallback !== undefined ? fallback : null;
+            }),
             setJSON: jest.fn(() => ({ success: true })),
             has: jest.fn(() => false)
         },
@@ -100,6 +128,14 @@ describe('buildFullExport — Voll-Export-Format (TECH-02)', () => {
         expect(typeof buildFullExport).toBe('function'); // Schlaegt fehl bis Plan 02-03 implementiert ist
 
         const result = buildFullExport();
+
+        // WR-09: Der Export muss die Kampagne tatsaechlich eingesammelt haben —
+        // sonst prueft der Strip-Test ein leeres Objekt (vakuumoes gruen)
+        expect(result.campaigns['dnd-tracker-data']).toBeDefined();
+        expect(result.campaigns['dnd-tracker-data'].data.characters).toHaveLength(1);
+
+        // stripNonUserData muss das spells-Feld der Kampagnendaten entfernt haben
+        expect(result.campaigns['dnd-tracker-data'].data.spells).toBeUndefined();
 
         // SRD-Spells duerfen niemals exportiert werden (Lizenz + Groesse)
         expect(result.spells).toBeUndefined();
