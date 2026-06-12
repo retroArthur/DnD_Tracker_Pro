@@ -62,7 +62,15 @@ function initKeyboardShortcuts() {
             return;
         }
         // Strg+Shift+K: Command Palette (TECH-04)
+        // WR-01: In Firefox öffnet Strg+Shift+K die Web-Konsole (nicht abfangbar) —
+        // Strg+Punkt ist die browserneutrale Alternative.
         if ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === 'K' || e.key === 'k')) {
+            e.preventDefault();
+            if (typeof window.toggleCommandPalette === 'function') window.toggleCommandPalette();
+            return;
+        }
+        // Strg+Punkt: Command Palette (Firefox-kompatible Alternative, WR-01)
+        if ((e.ctrlKey || e.metaKey) && !e.shiftKey && e.key === '.') {
             e.preventDefault();
             if (typeof window.toggleCommandPalette === 'function') window.toggleCommandPalette();
             return;
