@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
+  <!-- Background: full square for maskable (safe zone = inner 80%) -->
+  <rect width="100" height="100" fill="#0d0d0d"/>
+
+  <!-- d20: simplified icosahedron front view
+       Outer pentagon (top-pointing), centered at 50,50
+       Vertices at 12px from edge (safe zone: all elements within 10-90 range)
+       Pentagon points: top=50,15 then 4 others at 72° intervals
+  -->
+
+  <!-- Outer pentagon (icosahedron front face outline) -->
+  <polygon
+    points="50,14 83,36 71,74 29,74 17,36"
+    fill="none"
+    stroke="#d4af37"
+    stroke-width="2.5"
+    stroke-linejoin="round"
+  />
+
+  <!-- Top-left triangular edge line (top to left side) -->
+  <line x1="50" y1="14" x2="29" y2="74" stroke="#d4af37" stroke-width="1.8"/>
+  <!-- Top-right triangular edge line (top to right side) -->
+  <line x1="50" y1="14" x2="71" y2="74" stroke="#d4af37" stroke-width="1.8"/>
+  <!-- Center horizontal (left-bottom to right-bottom, the "equator") -->
+  <line x1="17" y1="36" x2="83" y2="36" stroke="#d4af37" stroke-width="1.8"/>
+  <!-- Left diagonal (left to center-bottom) -->
+  <line x1="17" y1="36" x2="50" y2="74" stroke="#d4af37" stroke-width="1.8"/>
+  <!-- Right diagonal (right to center-bottom) -->
+  <line x1="83" y1="36" x2="50" y2="74" stroke="#d4af37" stroke-width="1.8"/>
+
+  <!-- "20" on the center front face — centered in the middle triangle area -->
+  <text
+    x="50"
+    y="58"
+    text-anchor="middle"
+    dominant-baseline="middle"
+    font-family="'Courier New', Courier, monospace"
+    font-size="17"
+    font-weight="700"
+    fill="#d4af37"
+    letter-spacing="1"
+  >20</text>
+</svg>
