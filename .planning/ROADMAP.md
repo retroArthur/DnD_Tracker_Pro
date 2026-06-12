@@ -31,7 +31,7 @@
   3. Nutzer exportiert Kampagnendaten, importiert sie direkt wieder — keine Migrationen werden übersprungen, alle Felder sind korrekt
   4. `npm run check` (ESLint + TypeScript + Prettier) läuft durch ohne Fehler; CI-Pipeline ist grün und ein Playwright-Smoke-Test bestätigt erfolgreiche App-Initialisierung gegen den dist-Build
   5. Alle veralteten Dateien (main.js, tsconfig.json.backup, Mindmap-Reste) sind entfernt; CLAUDE.md, README und package.json-Lizenz sind konsistent mit dem tatsächlichen Code-Stand
-**Plans**: 7 plans (3 Wellen)
+**Plans**: 9 plans (5 Wellen — inkl. 2 Gap-Closure-Pläne aus der Verifikation)
 - [x] 01-01-PLAN.md — Boot-Crash-Fix (debug.js) + Smoke-Test-Harness (STAB-01, STAB-08)
 - [x] 01-02-PLAN.md — Persistenz-Stabilität: >5MB Stale-Shadow-Fix + Export-Versionsstempel (STAB-05, STAB-06)
 - [x] 01-03-PLAN.md — Mindmap-Reste bereinigen: Smart-Strip-Migration + tote Dateien/Typen (STAB-02)
@@ -39,6 +39,8 @@
 - [x] 01-05-PLAN.md — Repo-Hygiene & Config: Lizenz MIT, Version 2.6.1, python3->python, validate.py, tote Dateien (STAB-09, STAB-06)
 - [x] 01-06-PLAN.md — CI-Smoke-Integration & Quality-Gate: npm run check, frische Builds (STAB-08, STAB-04, STAB-03)
 - [x] 01-07-PLAN.md — Doku- & Lizenz-Audit: CLAUDE.md/README/bugfixes Faktenkorrektur, SRD-Attribution (STAB-10, STAB-11)
+- [ ] 01-08-PLAN.md — Gap-Closure: CR-01 Endlosrekursion in resolveStorageConflict beheben + echte vm-Regressionstests (STAB-05)
+- [ ] 01-09-PLAN.md — Gap-Closure: npm run check grün — ESLint-Errors/Config + Prettier-Massenformatierung mit Build-Re-Verifikation (STAB-04)
 
 ### Phase 2: Technik-Fundament
 **Goal**: Die App ist als PWA installierbar, schreibt automatische Datei-Backups auf die Festplatte und bietet eine Command Palette für schnelle Aktionen
