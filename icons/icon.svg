@@ -2,40 +2,77 @@
   <!-- Background: full square for maskable (safe zone = inner 80%) -->
   <rect width="100" height="100" fill="#0d0d0d"/>
 
-  <!-- d20: simplified icosahedron front view
-       Outer pentagon (top-pointing), centered at 50,50
-       Vertices at 12px from edge (safe zone: all elements within 10-90 range)
-       Pentagon points: top=50,15 then 4 others at 72° intervals
+  <!--
+    d20 canonical front view: regular hexagon (flat-top orientation would shift,
+    so we use pointy-top hexagon = spitze oben = klassische W20-Frontansicht).
+
+    Radius R=40 centered at (50,50), within maskable safe zone (80% diameter).
+    Hexagon vertices (pointy-top, clockwise from top):
+      H0 top      = (50.00, 10.00)
+      H1 top-right= (84.64, 30.00)
+      H2 bot-right= (84.64, 70.00)
+      H3 bottom   = (50.00, 90.00)
+      H4 bot-left = (15.36, 70.00)
+      H5 top-left = (15.36, 30.00)
+
+    Inner triangle on alternating vertices H0, H2, H4 (canonical d20 wireframe):
+      T0 = H0 = (50.00, 10.00)
+      T1 = H2 = (84.64, 70.00)
+      T2 = H4 = (15.36, 70.00)
+
+    The 6 hexagon sides + 3 triangle sides create the classic icosahedron front pattern.
+    The remaining vertices H1, H3, H5 each connect to two triangle vertices via the
+    hexagon sides, forming 6 triangular faces.
+
+    Line weights at 512px equivalent:
+      Outer hexagon: stroke-width 3.2 (≈16px at 512px canvas)
+      Inner triangle: stroke-width 1.6 (≈8px at 512px canvas)
+      Hex sides (H1/H3/H5 segments): stroke-width 1.6
   -->
 
-  <!-- Outer pentagon (icosahedron front face outline) -->
+  <!-- Outer hexagon -->
   <polygon
-    points="50,14 83,36 71,74 29,74 17,36"
+    points="50,10 84.64,30 84.64,70 50,90 15.36,70 15.36,30"
     fill="none"
     stroke="#d4af37"
-    stroke-width="2.5"
+    stroke-width="3.2"
     stroke-linejoin="round"
+    stroke-linecap="round"
   />
 
-  <!-- Top-left triangular edge line (top to left side) -->
-  <line x1="50" y1="14" x2="29" y2="74" stroke="#d4af37" stroke-width="1.8"/>
-  <!-- Top-right triangular edge line (top to right side) -->
-  <line x1="50" y1="14" x2="71" y2="74" stroke="#d4af37" stroke-width="1.8"/>
-  <!-- Center horizontal (left-bottom to right-bottom, the "equator") -->
-  <line x1="17" y1="36" x2="83" y2="36" stroke="#d4af37" stroke-width="1.8"/>
-  <!-- Left diagonal (left to center-bottom) -->
-  <line x1="17" y1="36" x2="50" y2="74" stroke="#d4af37" stroke-width="1.8"/>
-  <!-- Right diagonal (right to center-bottom) -->
-  <line x1="83" y1="36" x2="50" y2="74" stroke="#d4af37" stroke-width="1.8"/>
+  <!-- Inner triangle (H0 → H2 → H4) — drawn as lines to allow layering with text -->
+  <!-- Side T0-T1: top (50,10) to bot-right (84.64,70) -->
+  <line x1="50" y1="10" x2="84.64" y2="70" stroke="#d4af37" stroke-width="1.6" stroke-linecap="round"/>
+  <!-- Side T1-T2: bot-right (84.64,70) to bot-left (15.36,70) -->
+  <line x1="84.64" y1="70" x2="15.36" y2="70" stroke="#d4af37" stroke-width="1.6" stroke-linecap="round"/>
+  <!-- Side T2-T0: bot-left (15.36,70) to top (50,10) -->
+  <line x1="15.36" y1="70" x2="50" y2="10" stroke="#d4af37" stroke-width="1.6" stroke-linecap="round"/>
 
-  <!-- "20" on the center front face — centered in the middle triangle area -->
+  <!-- "20" centered in the inner triangle centroid
+       Triangle centroid: ((50+84.64+15.36)/3, (10+70+70)/3) = (50, 50)
+       Dark halo for legibility where text crosses inner lines -->
   <text
     x="50"
-    y="58"
+    y="50"
     text-anchor="middle"
     dominant-baseline="middle"
     font-family="'Courier New', Courier, monospace"
-    font-size="17"
+    font-size="18"
+    font-weight="700"
+    fill="#0d0d0d"
+    letter-spacing="1"
+    stroke="#0d0d0d"
+    stroke-width="4"
+    stroke-linejoin="round"
+    paint-order="stroke fill"
+  >20</text>
+  <text
+    x="50"
+    y="50"
+    text-anchor="middle"
+    dominant-baseline="middle"
+    font-family="'Courier New', Courier, monospace"
+    font-size="18"
     font-weight="700"
     fill="#d4af37"
     letter-spacing="1"
