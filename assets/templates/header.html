@@ -7,6 +7,8 @@
                 <div class="global-search-results" id="global-search-results"></div>
             </div>
             <div class="header-actions">
+                <!-- PWA Install Button (versteckt; Welle 2 aktiviert Sichtbarkeit) -->
+                <button class="pwa-install-btn" data-action="install-pwa" style="display:none" aria-label="App installieren">App installieren</button>
                 <!-- Info/Impressum Button -->
                 <button class="header-action-btn" data-action="show-about-modal" title="Über diese App" aria-label="Über diese App">ℹ️</button>
                 <div class="header-divider"></div>
@@ -26,6 +28,8 @@
                     <span class="save-indicator-dot"></span>
                     <span class="save-indicator-text">Gespeichert</span>
                 </div>
+                <!-- Backup-Warnindikator (versteckt; Welle 2 aktiviert Sichtbarkeit) -->
+                <div class="backup-warning-indicator" style="display:none" aria-hidden="true"></div>
                 <div class="header-divider"></div>
                 <button class="header-action-btn" data-action="undo" title="Rückgängig (Strg+Z)" aria-label="Letzte Aktion rückgängig machen">↩️</button>
                 <button class="header-action-btn" data-action="redo" title="Wiederholen (Strg+Y)" aria-label="Letzte Aktion wiederholen">↪️</button>

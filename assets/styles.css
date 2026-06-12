@@ -2,6 +2,7 @@
 /* Fuer Development: Browser laedt diese Datei, die alle Teile einbindet */
 /* Fuer Production: build.py --production liest die Einzel-Dateien direkt */
 
+@import url('styles/fonts.css');
 @import url('styles/variables.css');
 @import url('styles/core.css');
 @import url('styles/editors.css');
@@ -15,4 +16,8 @@
 @import url('styles/dmscreen.css');
 @import url('styles/dice.css');
 @import url('styles/tools.css');
+@import url('styles/pwa.css');
+@import url('styles/migration.css');
+@import url('styles/file-backup.css');
+@import url('styles/command-palette.css');
 

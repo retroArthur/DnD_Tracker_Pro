@@ -73,6 +73,12 @@ MODULES = [
     'systems/session-timer.js',
     'systems/search/global-search.js',
     'systems/campaign-manager/campaign-manager.js',
+    # Phase 2 Migrations- und Backup-Module (Welle 2 fuellt Implementierung)
+    'systems/migration/full-export.js',
+    'systems/migration/migration-wizard.js',
+    'systems/file-backup/file-backup-permissions.js',
+    'systems/file-backup/file-backup-manager.js',
+    'systems/file-backup/file-backup-ui.js',
     'render/helpers.js',
     # Render-Feature-Module
     'features/render-dashboard.js',
@@ -112,6 +118,9 @@ MODULES = [
     'features/shops/links.js',
     # DM Screen Module
     'features/dmscreen/dmscreen-render.js',
+    # Phase 2 Command-Palette-Module (Welle 2 fuellt Implementierung)
+    'features/command-palette/action-registry.js',
+    'features/command-palette/command-palette.js',
     # Dice-Module
     'features/dice/dice-core.js',
     'features/dice/dice-favorites.js',
@@ -407,11 +416,13 @@ def build(minify=False, production=False, verbose=False):
     # 1. Lade CSS (modulare Dateien aus assets/styles/)
     print("\n[BUILD] Lade CSS...")
     css_files = [
+        'fonts.css',
         'variables.css', 'core.css', 'editors.css',
         'npcs.css', 'encounters.css', 'initiative.css',
         'loot.css', 'spells.css', 'party.css',
         'dashboard.css', 'dmscreen.css', 'dice.css',
-        'tools.css'
+        'tools.css',
+        'pwa.css', 'migration.css', 'file-backup.css', 'command-palette.css'
     ]
     css_parts = []
     for css_file in css_files:
