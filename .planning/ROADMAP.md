@@ -60,7 +60,12 @@
    **UI hint**: yes
 
 Plans:
+**Wave 1**
+
 - [ ] 02-01-PLAN.md — Integrations-Rückgrat & Wave-0-Test-Gerüst: Modul-/CSS-Registrierung, init.js-Verdrahtung, SW-Update-Erkennung (TECH-01–04)
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
 - [ ] 02-02-PLAN.md — PWA-Deploy: Service Worker + manifest.webmanifest + Font-Bundle + d20-Icon + Install-Button + GitHub-Pages-CI (TECH-01)
 - [ ] 02-03-PLAN.md — Datenmigration: Voll-Export-Format + PWA-Erststart-Wizard + file://-Umzugs-Flow + Divergenz-Banner (TECH-02)
 - [ ] 02-04-PLAN.md — Datei-Backup: File System Access API, atomares Schreiben, Snapshots/Pruning, Restore-Browser, Status + file://-Fallback (TECH-03)
