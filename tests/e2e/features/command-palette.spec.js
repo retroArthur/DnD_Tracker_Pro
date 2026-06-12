@@ -20,6 +20,10 @@ test.describe('Command Palette (TECH-04)', () => {
         await page.goto(BASE_URL);
         await page.waitForSelector('.app-title', { timeout: 15000 });
 
+        // Klick auf den Body um Fokus zu sichern (Tastatur-Events benoetigen Browser-Fokus)
+        await page.click('body');
+        await page.waitForTimeout(100);
+
         // Shortcut Strg+Shift+K ausfuehren
         await page.keyboard.press('Control+Shift+K');
         await page.waitForTimeout(500);
@@ -35,6 +39,10 @@ test.describe('Command Palette (TECH-04)', () => {
 
         await page.goto(BASE_URL);
         await page.waitForSelector('.app-title', { timeout: 15000 });
+
+        // Klick auf den Body um Fokus zu sichern (Tastatur-Events benoetigen Browser-Fokus)
+        await page.click('body');
+        await page.waitForTimeout(100);
 
         // Command Palette oeffnen
         await page.keyboard.press('Control+Shift+K');

@@ -56,9 +56,15 @@ function initKeyboardShortcuts() {
             return;
         }
         // Strg+K oder Strg+F: Globale Suche
-        if ((e.ctrlKey || e.metaKey) && (e.key === 'f' || e.key === 'k')) {
+        if ((e.ctrlKey || e.metaKey) && (e.key === 'f' || e.key === 'k') && !e.shiftKey) {
             e.preventDefault();
             $('global-search')?.focus();
+            return;
+        }
+        // Strg+Shift+K: Command Palette (TECH-04)
+        if ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === 'K' || e.key === 'k')) {
+            e.preventDefault();
+            if (typeof window.toggleCommandPalette === 'function') window.toggleCommandPalette();
             return;
         }
         // Folgende nur wenn nicht am Tippen

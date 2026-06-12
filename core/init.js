@@ -100,6 +100,8 @@ async function init() {
     if (typeof initWikiSearchListener === 'function') initWikiSearchListener();
     if (typeof initDiceKeyboardListeners === 'function') initDiceKeyboardListeners();
     if (typeof initGlobalSearchListener === 'function') initGlobalSearchListener();
+    // Globale Tastaturkürzel (Strg+Z/Y/S/K/F, Tab-Wechsel, Strg+Shift+K etc.)
+    if (typeof initKeyboardShortcuts === 'function') initKeyboardShortcuts();
 
     // Sticky-Header-Höhe für Initiative-Controls berechnen
     updateStickyOffsets();
