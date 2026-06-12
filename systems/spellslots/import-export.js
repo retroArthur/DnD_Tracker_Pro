@@ -408,6 +408,52 @@ function updateIOCounts() {
 function exportSpells() {
     exportData('spells');
 }
+// STAB-02 / D-09: Hinweis-Dialog bei echten Mindmap-Inhalten vor dem Import
+// Modul-intern — kein window-Export (CLAUDE.md Export-Audit)
+function showMindmapExportDialog(mindmap, campaignName) {
+    return new Promise((resolve) => {
+        const safeName = (campaignName || 'kampagne')
+            .replace(/[^a-zA-Z0-9äöüÄÖÜß\s\-]/g, '').replace(/\s+/g, '-');
+        const nodeCount = String(mindmap.nodes ? mindmap.nodes.length : 0);
+        const connCount = String(mindmap.connections ? mindmap.connections.length : 0);
+        const overlay = document.createElement('div');
+        overlay.className = 'modal show';
+        overlay.innerHTML =
+            '<div class="modal-content" style="max-width:480px">' +
+            '<h3>Mindmap-Daten gefunden</h3>' +
+            '<p>Diese Kampagne enthält Mindmap-Inhalte (' + esc(nodeCount) + ' Knoten, ' +
+            esc(connCount) + ' Verbindungen). Das Mindmap-Feature wurde entfernt — die Daten werden ' +
+            'beim Import verworfen. Du kannst sie vorher als Datei sichern.</p>' +
+            '<div style="display:grid;gap:8px;margin:12px 0">' +
+            '<button data-act="save" class="btn btn-primary">Mindmap als JSON sichern</button>' +
+            '<button data-act="skip" class="btn">Fortfahren</button>' +
+            '</div></div>';
+        overlay.addEventListener('click', (ev) => {
+            const act = ev.target && ev.target.dataset ? ev.target.dataset.act : null;
+            if (act === 'save') {
+                // D-10: eigene JSON-Backup-Datei herunterladen
+                const json = JSON.stringify({
+                    nodes: mindmap.nodes || [],
+                    connections: mindmap.connections || []
+                }, null, 2);
+                const blob = new Blob([json], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'mindmap-backup-' + safeName + '.json';
+                a.click();
+                URL.revokeObjectURL(url);
+                showToast('Mindmap-Backup heruntergeladen', 'success');
+                return; // Dialog offen lassen, bis Nutzer "Fortfahren" waehlt
+            }
+            if (act === 'skip') {
+                document.body.removeChild(overlay);
+                resolve(true);
+            }
+        });
+        document.body.appendChild(overlay);
+    });
+}
 // Legacy: Globaler Import (alte Funktion umbenennen)
 function importDataGlobal() {
     const fileInput = $('import-file');
@@ -415,7 +461,7 @@ function importDataGlobal() {
     if (!file)
         return;
     const reader = new FileReader();
-    reader.onload = (e) => {
+    reader.onload = async (e) => {
         try {
             const result = e.target?.result;
             const imp = JSON.parse(result);
@@ -429,6 +475,15 @@ function importDataGlobal() {
             const choice = confirm(`Import: "${campaignName}"\n\n` +
                 `OK = Als neue Kampagne importieren\n` +
                 `Abbrechen = Aktuelle Kampagne überschreiben`);
+            // STAB-02 / D-09: Mindmap-Inhalt pruefen, bevor er beim Import verworfen wird
+            if (imp.mindmap) {
+                const hasRealContent = (imp.mindmap.nodes && imp.mindmap.nodes.length > 0) ||
+                    (imp.mindmap.connections && imp.mindmap.connections.length > 0);
+                if (hasRealContent) {
+                    await showMindmapExportDialog(imp.mindmap, campaignName); // bietet JSON-Backup an (D-10)
+                }
+                delete imp.mindmap; // danach immer entfernen (Feature ist abgeschafft)
+            }
             // Meta-Felder entfernen
             delete imp._campaignName;
             delete imp._exportDate;
@@ -483,7 +538,7 @@ function importDataGlobal() {
                     locations: [], npcs: [], quests: [], characters: [], sessionNotes: [], quickNotes: '',
                     initiative: { combatants: [], currentTurn: 0, round: 1 },
                     loot: [], items: [], encounters: [], spells: [], links: [],
-                    filters: [], mindmap: { nodes: [], connections: [] },
+                    filters: [],
                     calendar: { day: 1, month: 0, year: 1492, events: [] },
                     _nextId: {},
                     ...imp

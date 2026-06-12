@@ -32,7 +32,7 @@ function createCampaign() {
         locations: [], npcs: [], quests: [], characters: [], sessionNotes: [], storyArcs: [], quickNotes: '',
         initiative: { combatants: [], currentTurn: 0, round: 1 },
         loot: [], items: [], encounters: [], spells: [], links: [],
-        filters: [], mindmap: { nodes: [], connections: [] },
+        filters: [],
         calendar: { day: 1, month: 0, year: 1492, events: [] },
         _nextId: {}
     };
@@ -108,7 +108,7 @@ async function deleteCampaign() {
             locations: [], npcs: [], quests: [], characters: [], sessionNotes: [], storyArcs: [], quickNotes: '',
             initiative: { combatants: [], currentTurn: 0, round: 1 },
             loot: [], items: [], encounters: [], spells: [], links: [], wiki: [],
-            filters: [], mindmap: { nodes: [], connections: [] },
+            filters: [],
             calendar: { day: 1, month: 0, year: 1492, events: [] },
             tags: [],
             settings: { theme: 'dark', lastView: 'dashboard' },

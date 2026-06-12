@@ -48,6 +48,21 @@ const MIGRATIONS = {
             }
         });
         return data;
+    },
+    '2.6.1': (data) => {
+        // STAB-02 / D-09: Smart-Strip — leere mindmap-Seeds still entfernen
+        if (data.mindmap) {
+            const hasRealContent = (
+                (data.mindmap.nodes && data.mindmap.nodes.length > 0) ||
+                (data.mindmap.connections && data.mindmap.connections.length > 0)
+            );
+            if (!hasRealContent) {
+                delete data.mindmap; // leerer Seed -> still entfernen
+            }
+            // Echte Inhalte bleiben hier unangetastet — der Import-Pfad (import-export.js)
+            // loest VOR migrateData() den Hinweis-Dialog + Export aus (D-09/D-10).
+        }
+        return data;
     }
 };
 function migrateData(data) {

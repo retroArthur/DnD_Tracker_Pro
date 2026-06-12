@@ -331,32 +331,6 @@ export interface Link {
 }
 
 // ============================================================
-// MINDMAP
-// ============================================================
-
-export interface MindmapNode {
-  id: EntityId;
-  label: string;
-  type: EntityType | 'custom';
-  entityId?: EntityId;
-  x: number;
-  y: number;
-  color?: string;
-}
-
-export interface MindmapConnection {
-  id: EntityId;
-  from: EntityId;
-  to: EntityId;
-  label?: string;
-}
-
-export interface Mindmap {
-  nodes: MindmapNode[];
-  connections: MindmapConnection[];
-}
-
-// ============================================================
 // SHOPS
 // ============================================================
 
@@ -507,7 +481,6 @@ export interface AppData {
   wiki: WikiEntry[];
   links: Link[];
   shops?: Shop[];
-  mindmap: Mindmap;
   initiative: Initiative;
   calendar: Calendar;
   sessionNotes: SessionNote[];

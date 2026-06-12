@@ -125,9 +125,6 @@ declare global {
   /** Render initiative tracker */
   function renderInit(): void;
   
-  /** Render mindmap */
-  function renderMindmap(): void;
-  
   /** Render sessions */
   function renderSessions(): void;
   
@@ -386,25 +383,6 @@ declare global {
   
   /** Remove from cart */
   function removeFromCart(id: EntityId): void;
-  
-  // ============================================================
-  // MINDMAP FUNCTIONS
-  // ============================================================
-  
-  /** Add mindmap node */
-  function addNode(type: string, entityId?: EntityId): void;
-  
-  /** Delete mindmap node */
-  function deleteNodeById(id: EntityId): void;
-  
-  /** Edit mindmap node */
-  function editNode(id: EntityId): void;
-  
-  /** Connect mindmap nodes */
-  function connectNodes(fromId: EntityId, toId: EntityId): void;
-  
-  /** Filter mindmap nodes */
-  function filterMindmapNodes(query?: string): void;
   
   // ============================================================
   // SEARCH FUNCTIONS
