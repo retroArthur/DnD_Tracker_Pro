@@ -9,17 +9,17 @@ Requirements für diesen Milestone. Jedes wird genau einer Roadmap-Phase zugeord
 
 ### Stabilisierung (STAB)
 
-- [ ] **STAB-01**: App startet fehlerfrei per `file://`-Doppelklick — der `clearMindmap`-Boot-Crash (tools/debug.js:99) ist behoben
-- [ ] **STAB-02**: Alle Reste des entfernten Mindmap-Features sind bereinigt (debug.js, campaign-manager-Seed, types/\*.d.ts, styles-purged.css, tests/setup.js, tools/split-shops.py)
-- [ ] **STAB-03**: dev- und production-Builds sind frisch aus aktuellem Quellcode gebaut; Browser-Konsole bleibt in allen Tabs fehlerfrei
+- [x] **STAB-01**: App startet fehlerfrei per `file://`-Doppelklick — der `clearMindmap`-Boot-Crash (tools/debug.js:99) ist behoben
+- [x] **STAB-02**: Alle Reste des entfernten Mindmap-Features sind bereinigt (debug.js, campaign-manager-Seed, types/\*.d.ts, styles-purged.css, tests/setup.js, tools/split-shops.py)
+- [x] **STAB-03**: dev- und production-Builds sind frisch aus aktuellem Quellcode gebaut; Browser-Konsole bleibt in allen Tabs fehlerfrei
 - [x] **STAB-04**: `npm run check` läuft grün (ESLint, TypeScript, Prettier)
-- [ ] **STAB-05**: Kampagnen über 5MB verlieren beim Neuladen keine Daten mehr (Stale-Shadow-Bug in der Persistenz behoben)
-- [ ] **STAB-06**: Exporte tragen die echte App-Version (`APP_CONFIG.VERSION`) statt hartkodiert `'2.11'`; Re-Import führt Migrationen korrekt aus
-- [ ] **STAB-07**: build.py ist gehärtet: Pass-3-Duplikatentfernung hinterlässt keine verwaisten Funktionskörper; Production-Build bricht ab, wenn DEBUG_MODE nicht deaktiviert wurde; Modullisten loader.js/build.py werden auf Sync geprüft
-- [ ] **STAB-08**: CI erkennt Boot-Crashes: Playwright-Smoke-Test lädt den dist-Build und prüft erfolgreiche App-Initialisierung
-- [ ] **STAB-09**: Tote Dateien und kaputte Tools sind entfernt/repariert (main.js, tsconfig.json.backup, MIGRATION_REPORT.md, validate.py-Pfade, `python3`→`python` in npm-Scripts)
-- [ ] **STAB-10**: Doku spiegelt den echten Code-Stand: CLAUDE.md, README und docs/bugfixes.md auditiert; Lizenz einheitlich MIT (package.json korrigiert)
-- [ ] **STAB-11**: Herkunft der deutschen SRD-Zaubertexte ist geprüft und dokumentiert (Lizenz-Audit, Redistributionsrisiko geklärt)
+- [x] **STAB-05**: Kampagnen über 5MB verlieren beim Neuladen keine Daten mehr (Stale-Shadow-Bug in der Persistenz behoben)
+- [x] **STAB-06**: Exporte tragen die echte App-Version (`APP_CONFIG.VERSION`) statt hartkodiert `'2.11'`; Re-Import führt Migrationen korrekt aus
+- [x] **STAB-07**: build.py ist gehärtet: Pass-3-Duplikatentfernung hinterlässt keine verwaisten Funktionskörper; Production-Build bricht ab, wenn DEBUG_MODE nicht deaktiviert wurde; Modullisten loader.js/build.py werden auf Sync geprüft
+- [x] **STAB-08**: CI erkennt Boot-Crashes: Playwright-Smoke-Test lädt den dist-Build und prüft erfolgreiche App-Initialisierung
+- [x] **STAB-09**: Tote Dateien und kaputte Tools sind entfernt/repariert (main.js, tsconfig.json.backup, MIGRATION_REPORT.md, validate.py-Pfade, `python3`→`python` in npm-Scripts)
+- [x] **STAB-10**: Doku spiegelt den echten Code-Stand: CLAUDE.md, README und docs/bugfixes.md auditiert; Lizenz einheitlich MIT (package.json korrigiert)
+- [x] **STAB-11**: Herkunft der deutschen SRD-Zaubertexte ist geprüft und dokumentiert (Lizenz-Audit, Redistributionsrisiko geklärt)
 
 ### Technik-Fundament (TECH)
 
@@ -96,17 +96,17 @@ Explizit ausgeschlossen. Dokumentiert, um Scope-Creep zu verhindern.
 
 | Requirement | Phase   | Status  |
 | ----------- | ------- | ------- |
-| STAB-01     | Phase 1 | Pending |
-| STAB-02     | Phase 1 | Pending |
-| STAB-03     | Phase 1 | Pending |
+| STAB-01     | Phase 1 | Complete|
+| STAB-02     | Phase 1 | Complete|
+| STAB-03     | Phase 1 | Complete|
 | STAB-04     | Phase 1 | Complete |
-| STAB-05     | Phase 1 | Pending |
-| STAB-06     | Phase 1 | Pending |
-| STAB-07     | Phase 1 | Pending |
-| STAB-08     | Phase 1 | Pending |
-| STAB-09     | Phase 1 | Pending |
-| STAB-10     | Phase 1 | Pending |
-| STAB-11     | Phase 1 | Pending |
+| STAB-05     | Phase 1 | Complete|
+| STAB-06     | Phase 1 | Complete|
+| STAB-07     | Phase 1 | Complete|
+| STAB-08     | Phase 1 | Complete|
+| STAB-09     | Phase 1 | Complete|
+| STAB-10     | Phase 1 | Complete|
+| STAB-11     | Phase 1 | Complete|
 | TECH-01     | Phase 2 | Pending |
 | TECH-02     | Phase 2 | Pending |
 | TECH-03     | Phase 2 | Pending |
