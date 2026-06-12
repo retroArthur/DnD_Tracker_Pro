@@ -56,8 +56,15 @@
 2. Nutzer wechselt erstmalig von `file://` zur installierten PWA und ein Migrations-Assistent überträgt alle bestehenden Kampagnendaten ohne Datenverlust
 3. Nutzer aktiviert automatische Datei-Backups, wählt einen Ordner, und nach jedem Speichern liegt eine aktualisierte `.json`-Datei in diesem Ordner (im `file://`-Modus: manueller Download-Fallback ist sichtbar)
 4. Nutzer drückt die Command-Palette-Taste, tippt „Neuer NPC", wählt den Eintrag — die NPC-Erstellen-Ansicht öffnet sich; Fuzzy-Suche findet auch Aktionen wie „Würfle 8d6"
-   **Plans**: TBD
+   **Plans**: 5 plans (2 Wellen)
    **UI hint**: yes
+
+Plans:
+- [ ] 02-01-PLAN.md — Integrations-Rückgrat & Wave-0-Test-Gerüst: Modul-/CSS-Registrierung, init.js-Verdrahtung, SW-Update-Erkennung (TECH-01–04)
+- [ ] 02-02-PLAN.md — PWA-Deploy: Service Worker + manifest.webmanifest + Font-Bundle + d20-Icon + Install-Button + GitHub-Pages-CI (TECH-01)
+- [ ] 02-03-PLAN.md — Datenmigration: Voll-Export-Format + PWA-Erststart-Wizard + file://-Umzugs-Flow + Divergenz-Banner (TECH-02)
+- [ ] 02-04-PLAN.md — Datei-Backup: File System Access API, atomares Schreiben, Snapshots/Pruning, Restore-Browser, Status + file://-Fallback (TECH-03)
+- [ ] 02-05-PLAN.md — Command Palette: Aktions-Registry + Fuzzy-Suche (fuzzyMatch-Wiederverwendung) + Strg+Shift+K-Overlay (TECH-04)
 
 ### Phase 3: Bestiary
 
@@ -131,7 +138,7 @@
 | Phase                       | Plans Complete | Status      | Completed |
 | --------------------------- | -------------- | ----------- | --------- |
 | 1. Stabilisierung           | 9/9            | Complete    | 2026-06-12 |
-| 2. Technik-Fundament        | 0/?            | Not started | -         |
+| 2. Technik-Fundament        | 0/5            | Not started | -         |
 | 3. Bestiary                 | 0/?            | Not started | -         |
 | 4. Initiative-Erweiterungen | 0/?            | Not started | -         |
 | 5. Welt & Story             | 0/?            | Not started | -         |
