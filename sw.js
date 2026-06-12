@@ -2,10 +2,18 @@
 // Cache-First Strategie für Offline-Support (Single-File-Build)
 
 const CACHE_VERSION = 'dnd-tracker-v3'; // wird bei Production-Build via build.py gebumpt
-const CACHED_ASSETS = [
-    './',
+
+// Kern-Assets: MÜSSEN cachebar sein, sonst soll die Installation hart fehlschlagen.
+// KEIN './' — das Pages-Artefakt enthält kein index.html, GET /repo/ liefert 404
+// und ein einziger 404 lässt cache.addAll() komplett scheitern (CR-09).
+const CORE_ASSETS = [
     './dnd-tracker-optimized.html',
-    './manifest.webmanifest',
+    './manifest.webmanifest'
+];
+
+// Optionale Assets: einzeln cachen (Promise.allSettled) — ein 404 bei Icon/Font
+// darf die SW-Installation und damit die Offline-Fähigkeit nicht killen (CR-09).
+const OPTIONAL_ASSETS = [
     './icons/icon-192.png',
     './icons/icon-512.png',
     './assets/fonts/roboto-400.woff2',
@@ -20,12 +28,16 @@ const CACHED_ASSETS = [
     './assets/fonts/source-sans-pro-600.woff2'
 ];
 
-// Install: Cache alle statischen Assets (KEIN self.skipWaiting() — D-03)
+// Install: Cache statische Assets (KEIN self.skipWaiting() — D-03)
 self.addEventListener('install', event => {
     event.waitUntil(
         caches
             .open(CACHE_VERSION)
-            .then(cache => cache.addAll(CACHED_ASSETS))
+            .then(cache =>
+                cache
+                    .addAll(CORE_ASSETS)
+                    .then(() => Promise.allSettled(OPTIONAL_ASSETS.map(asset => cache.add(asset))))
+            )
     );
     // KEIN self.skipWaiting() hier — verhindert gleichzeitigen Betrieb
     // von altem und neuem Code (D-03 Anti-Pattern laut RESEARCH.md)

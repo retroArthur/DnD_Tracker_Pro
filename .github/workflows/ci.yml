@@ -100,11 +100,14 @@ jobs:
       - run: npm ci
       - run: python build.py --production
       - name: Bereite Pages-Artefakt vor
+        # CR-09: KEIN vorab existierendes Zielverzeichnis fuer cp -r — GNU cp
+        # kopiert sonst das Quellverzeichnis HINEIN (dist/assets/fonts/fonts/*)
+        # und die SW-Precache-Pfade ./assets/fonts/*.woff2 waeren 404.
         run: |
           cp manifest.webmanifest dist/manifest.webmanifest
-          cp -r icons/ dist/icons/
-          mkdir -p dist/assets/fonts
-          cp -r assets/fonts/ dist/assets/fonts/
+          cp -r icons dist/
+          mkdir -p dist/assets
+          cp -r assets/fonts dist/assets/
         shell: bash
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v4
