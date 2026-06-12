@@ -1,8 +1,7 @@
 /**
- * Action-Registry Tests — TECH-04 (Wave-0 RED-Phase)
+ * Action-Registry Tests — TECH-04 (Wave-0 RED-Phase, jetzt GREEN)
  * Testet searchActions() Fuzzy-Suche des Command-Palette Aktions-Registers.
- * RED-Phase: Implementierung fehlt (Plan 02-05, Welle 2). Tests werden nach
- * Implementierung gruen (jest-Framework sammelt sie jetzt bereits ein).
+ * GREEN-Phase: Implementierung aus Plan 02-05, Welle 2.
  */
 
 const fs = require('fs');
@@ -29,6 +28,10 @@ beforeAll(() => {
             showToast: jest.fn(),
             switchView: jest.fn(),
             rollDice: jest.fn(),
+            quickRoll: jest.fn(),
+            undo: jest.fn(),
+            redo: jest.fn(),
+            toggleCollapse: jest.fn(),
             D: {
                 characters: [],
                 npcs: [],
@@ -49,12 +52,55 @@ beforeAll(() => {
     };
     vm.createContext(context);
 
+    // fuzzyMatch aus global-search.js in den Kontext laden (Abhaengigkeit von action-registry.js)
+    const globalSearchPath = path.join(__dirname, '../../systems/search/global-search.js');
+    const globalSearchCode = fs.readFileSync(globalSearchPath, 'utf8');
+    // Nur die fuzzyMatch-Funktion extrahieren und in den Kontext einfuegen
+    // (global-search.js haengt von DOM-APIs ab — wir laden nur den Anfang bis zur ersten DOM-Nutzung)
+    try {
+        // fuzzyMatch direkt im Kontext definieren (analog zur Browser-Umgebung)
+        vm.runInContext(`
+            function fuzzyMatch(text, query) {
+                if (!text || !query) return { match: false, score: 0 };
+                text = text.toLowerCase();
+                query = query.toLowerCase();
+                if (text.includes(query)) {
+                    return { match: true, score: 100 - text.indexOf(query) };
+                }
+                var textIndex = 0;
+                var queryIndex = 0;
+                var score = 0;
+                var consecutiveBonus = 0;
+                while (textIndex < text.length && queryIndex < query.length) {
+                    if (text[textIndex] === query[queryIndex]) {
+                        score += 10 + consecutiveBonus;
+                        consecutiveBonus += 5;
+                        queryIndex++;
+                    } else {
+                        consecutiveBonus = 0;
+                    }
+                    textIndex++;
+                }
+                if (queryIndex === query.length) {
+                    if (text.startsWith(query[0])) score += 15;
+                    return { match: true, score: score };
+                }
+                return { match: false, score: 0 };
+            }
+        `, context);
+    } catch (e) {
+        // Ignoriere Fehler — fuzzyMatch wird direkt definiert
+    }
+
     const filePath = path.join(__dirname, '../../features/command-palette/action-registry.js');
     const code = fs.readFileSync(filePath, 'utf8');
     vm.runInContext(code, context);
 
-    searchActions = context.searchActions;
-    ACTION_REGISTRY = context.ACTION_REGISTRY;
+    // In der Browser-Umgebung sind window.X === X (globale Variablen).
+    // Im VM-Kontext setzt window.X = ... den Wert auf context.window.X,
+    // nicht auf context.X. Daher aus context.window lesen.
+    searchActions = context.window.searchActions || context.searchActions;
+    ACTION_REGISTRY = context.window.ACTION_REGISTRY || context.ACTION_REGISTRY;
 });
 
 // ============================================================
@@ -63,8 +109,7 @@ beforeAll(() => {
 
 describe('searchActions — Fuzzy-Suche Aktions-Register (TECH-04)', () => {
     test('searchActions("Neuer NPC") liefert die new-npc-Aktion als Top-Treffer', () => {
-        // RED-Phase: searchActions existiert noch nicht
-        expect(typeof searchActions).toBe('function'); // Schlaegt fehl bis Plan 02-05 implementiert ist
+        expect(typeof searchActions).toBe('function');
 
         const results = searchActions('Neuer NPC');
 
@@ -83,8 +128,7 @@ describe('searchActions — Fuzzy-Suche Aktions-Register (TECH-04)', () => {
     });
 
     test('searchActions("8d6") findet die Wuerfel-Formel-Aktion', () => {
-        // RED-Phase: searchActions existiert noch nicht
-        expect(typeof searchActions).toBe('function'); // Schlaegt fehl bis Plan 02-05 implementiert ist
+        expect(typeof searchActions).toBe('function');
 
         const results = searchActions('8d6');
 
@@ -101,8 +145,7 @@ describe('searchActions — Fuzzy-Suche Aktions-Register (TECH-04)', () => {
     });
 
     test('ACTION_REGISTRY ist definiert und enthaelt mindestens 5 Aktionen', () => {
-        // RED-Phase: ACTION_REGISTRY existiert noch nicht
-        expect(typeof ACTION_REGISTRY).not.toBe('undefined'); // Schlaegt fehl bis Plan 02-05 implementiert ist
+        expect(typeof ACTION_REGISTRY).not.toBe('undefined');
 
         const entries = Array.isArray(ACTION_REGISTRY)
             ? ACTION_REGISTRY
