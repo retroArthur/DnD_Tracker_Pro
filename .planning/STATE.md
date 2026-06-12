@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: phase_complete
-last_updated: "2026-06-12T15:30:00.000Z"
+status: Phase 2 Kontext erfasst (20 Entscheidungen in 02-CONTEXT.md) — bereit zum Planen
+last_updated: "2026-06-12T14:41:57.087Z"
 progress:
   total_phases: 7
   completed_phases: 1
   total_plans: 9
   completed_plans: 9
-  percent: 100
+  percent: 14
 ---
 
 # Project State: D&D Kampagnen-Tracker Pro — Stabilisierung & Ausbau

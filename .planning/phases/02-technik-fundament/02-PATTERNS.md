@@ -487,16 +487,31 @@ function isFreshInstall() {
 }
 ```
 
-**initMigrationWizardIfNeeded() — called from init.js:**
+**initMigrationWizardIfNeeded() — called from init.js (PROTOKOLL-VERZWEIGUNG):**
+
+> **Wichtig (D-10/D-11):** Der `file://`-Zweig ist KEIN stiller Skip. Er delegiert aktiv an
+> `startMigrationFileSide()` (Task 3), das den einmaligen Umzugs-Hinweis (D-10) und — falls bereits
+> umgezogen — das Divergenz-Banner (D-11) zeigt. Nur der PWA-Zweig (http/https) führt den Erststart-Wizard.
+
 ```javascript
 function initMigrationWizardIfNeeded() {
-    if (window.location.protocol === 'file:') return; // file://-Modus: kein Wizard
+    if (window.location.protocol === 'file:') {
+        // file://-Modus: KEIN Erststart-Wizard, aber aktiver Umzugs-Flow (D-10) + Divergenz-Banner (D-11)
+        startMigrationFileSide();
+        return;
+    }
+    // PWA (http/https): geführter Erststart-Wizard
     if (StorageAPI.has('migration-wizard-shown')) return; // bereits gesehen
     if (!isFreshInstall()) return; // Daten vorhanden: kein Wizard nötig
     // Kleiner Delay: App muss erst fertig laden
     setTimeout(showMigrationWizard, 500);
 }
 ```
+
+> **Hinweis für den Einstellungs-Wiederaufruf (D-09):** `initMigrationWizardIfNeeded()` ist NUR der
+> Auto-Start-Pfad und ist durch die `migration-wizard-shown`- und `isFreshInstall()`-Wächter geschützt.
+> Der manuelle Wiederaufruf über die Einstellungen ruft `window.showMigrationWizard()` DIREKT auf und
+> umgeht beide Wächter — der Wizard ist dadurch jederzeit erneut aufrufbar.
 
 ---
 
