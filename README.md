@@ -205,9 +205,15 @@ npm run typecheck   # TypeScript Validation
 
 ---
 
-## Lizenz
+## Lizenz & Attribution
 
-MIT License - siehe [LICENSE](LICENSE)
+**App-Code:** MIT License — siehe [LICENSE](LICENSE)
+
+**SRD-Inhalte:** Diese App enthält Regelinhalte (Zauberbeschreibungen) aus dem System Reference Document 5.1 ("SRD 5.1") von Wizards of the Coast LLC. Das SRD 5.1 steht unter der Creative Commons Attribution 4.0 International License (CC-BY-4.0).
+
+> This application includes content from the System Reference Document 5.1 ("SRD 5.1") by Wizards of the Coast LLC, available at https://dnd.wizards.com/resources/systems-reference-document. The SRD 5.1 is licensed under the Creative Commons Attribution 4.0 International License (CC-BY-4.0), available at https://creativecommons.org/licenses/by/4.0/.
+
+Weitere Details: [docs/srd-license.md](docs/srd-license.md)
 
 ---
 
