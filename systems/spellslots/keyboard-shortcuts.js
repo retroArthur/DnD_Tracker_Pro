@@ -12,19 +12,19 @@ function initKeyboardShortcuts() {
             ['INPUT', 'TEXTAREA', 'SELECT'].includes(activeEl?.tagName) ||
             activeEl?.isContentEditable;
         // Escape: Schließe Overlays und Modals (konsolidiert)
+        // WR-10: Direktaufrufe via window.X() — KEIN function-scoped
+        // `const X = window.X` (CLAUDE.md Dedup-Regel, Incident 2026-01-10)
         if (e.key === 'Escape') {
             // 1. Shortcuts-Overlay schließen
             const shortcutsOverlay = $('shortcuts-overlay');
             if (shortcutsOverlay?.classList.contains('show')) {
-                const hideShortcutsOverlay = window.hideShortcutsOverlay;
-                if (hideShortcutsOverlay) hideShortcutsOverlay();
+                if (typeof window.hideShortcutsOverlay === 'function') window.hideShortcutsOverlay();
                 return;
             }
             // 2. Quick-Ref schließen
             const quickRef = $('quick-ref-panel');
             if (quickRef?.classList.contains('open')) {
-                const toggleQuickRef = window.toggleQuickRef;
-                if (toggleQuickRef) toggleQuickRef();
+                if (typeof window.toggleQuickRef === 'function') window.toggleQuickRef();
                 return;
             }
             // 3. Offenes Modal schließen
@@ -37,15 +37,13 @@ function initKeyboardShortcuts() {
         // Strg+Z: Undo (immer aktiv)
         if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) {
             e.preventDefault();
-            const undo = window.undo;
-            if (undo) undo();
+            if (typeof window.undo === 'function') window.undo();
             return;
         }
         // Strg+Y oder Strg+Shift+Z: Redo (immer aktiv)
         if ((e.ctrlKey || e.metaKey) && (e.key === 'y' || (e.key === 'z' && e.shiftKey))) {
             e.preventDefault();
-            const redo = window.redo;
-            if (redo) redo();
+            if (typeof window.redo === 'function') window.redo();
             return;
         }
         // Strg+S: Speichern (immer aktiv)
@@ -80,8 +78,7 @@ function initKeyboardShortcuts() {
         // ?: Shortcuts-Overlay
         if (e.key === '?' || (e.shiftKey && e.key === '/')) {
             e.preventDefault();
-            const showShortcutsOverlay = window.showShortcutsOverlay;
-            if (showShortcutsOverlay) showShortcutsOverlay();
+            if (typeof window.showShortcutsOverlay === 'function') window.showShortcutsOverlay();
             return;
         }
         // /: Quick Reference öffnen und Suche fokussieren
@@ -89,8 +86,7 @@ function initKeyboardShortcuts() {
             e.preventDefault();
             const panel = $('quick-ref-panel');
             if (panel && !panel.classList.contains('active')) {
-                const toggleQuickRef = window.toggleQuickRef;
-                if (toggleQuickRef) toggleQuickRef();
+                if (typeof window.toggleQuickRef === 'function') window.toggleQuickRef();
             }
             setTimeout(() => $('qref-search-input')?.focus(), 100);
             return;
@@ -98,8 +94,7 @@ function initKeyboardShortcuts() {
         // T: Session Timer toggle
         if (e.key === 't' && !e.ctrlKey && !e.metaKey) {
             e.preventDefault();
-            const toggleSessionTimer = window.toggleSessionTimer;
-            if (toggleSessionTimer) toggleSessionTimer();
+            if (typeof window.toggleSessionTimer === 'function') window.toggleSessionTimer();
             return;
         }
         // Ziffern 1-9: Tab-Wechsel (entspricht der Standard-Tab-Reihenfolge)
@@ -134,8 +129,7 @@ function initKeyboardShortcuts() {
         // Space: Nächster Zug (nur im Initiative-Tab)
         if (e.key === ' ' && document.querySelector('#view-initiative.active')) {
             e.preventDefault();
-            const nextTurn = window.nextTurn;
-            if (nextTurn) nextTurn();
+            if (typeof window.nextTurn === 'function') window.nextTurn();
             return;
         }
         // Delete/Backspace: Node löschen (nur im Network-Tab)
@@ -144,29 +138,25 @@ function initKeyboardShortcuts() {
             document.querySelector('#view-network.active')
         ) {
             e.preventDefault();
-            const deleteSelectedNode = window.deleteSelectedNode;
-            if (deleteSelectedNode) deleteSelectedNode();
+            if (typeof window.deleteSelectedNode === 'function') window.deleteSelectedNode();
             return;
         }
         // N: Nächster Zug im Initiative
         if (e.key === 'n' && !e.shiftKey && document.querySelector('#view-initiative.active')) {
             e.preventDefault();
-            const nextTurn = window.nextTurn;
-            if (nextTurn) nextTurn();
+            if (typeof window.nextTurn === 'function') window.nextTurn();
             return;
         }
         // Shift+N: Neue Runde
         if (e.key === 'N' && e.shiftKey && document.querySelector('#view-initiative.active')) {
             e.preventDefault();
-            const nextEncounterRound = window.nextEncounterRound;
-            if (nextEncounterRound) nextEncounterRound();
+            if (typeof window.nextEncounterRound === 'function') window.nextEncounterRound();
             return;
         }
         // P: Vorheriger Zug
         if (e.key === 'p' && document.querySelector('#view-initiative.active')) {
             e.preventDefault();
-            const prevTurn = window.prevTurn;
-            if (prevTurn) prevTurn();
+            if (typeof window.prevTurn === 'function') window.prevTurn();
             return;
         }
         // R: Quick Roll d20
@@ -178,8 +168,7 @@ function initKeyboardShortcuts() {
         // L: Event Log toggle
         if (e.key === 'l' && !e.ctrlKey && !e.metaKey) {
             e.preventDefault();
-            const toggleEventLog = window.toggleEventLog;
-            if (toggleEventLog) toggleEventLog();
+            if (typeof window.toggleEventLog === 'function') window.toggleEventLog();
             return;
         }
         // N: Neues Element (kontextabhängig)
@@ -192,44 +181,8 @@ function initKeyboardShortcuts() {
             else if (activeView === 'view-encounter') toggleCollapse('enc-form');
             return;
         }
-        // ? : Hilfe anzeigen
-        if (e.key === '?') {
-            e.preventDefault();
-            showKeyboardHelp();
-            return;
-        }
+        // IN-02: Der frühere zweite '?'-Block (showKeyboardHelp) war unerreichbar —
+        // '?' wird bereits weiter oben vom Shortcuts-Overlay abgefangen. Entfernt.
     });
-}
-function showKeyboardHelp() {
-    const helpHtml = `
-        <div style="display: grid; gap: 8px;">
-            <div style="display: flex; justify-content: space-between;"><span>Speichern</span><kbd>Strg+S</kbd></div>
-            <div style="display: flex; justify-content: space-between;"><span>Rückgängig</span><kbd>Strg+Z</kbd></div>
-            <div style="display: flex; justify-content: space-between;"><span>Suche</span><kbd>Strg+F</kbd></div>
-            <div style="display: flex; justify-content: space-between;"><span>Schließen</span><kbd>Escape</kbd></div>
-            <div class="divider"></div>
-            <div style="display: flex; justify-content: space-between;"><span>Tab 1-9</span><kbd>1-9</kbd></div>
-            <div style="display: flex; justify-content: space-between;"><span>Neues Element</span><kbd>N</kbd></div>
-            <div style="display: flex; justify-content: space-between;"><span>Nächster Zug</span><kbd>Space</kbd></div>
-            <div style="display: flex; justify-content: space-between;"><span>Würfeln (d20)</span><kbd>R</kbd></div>
-            <div style="display: flex; justify-content: space-between;"><span>Event Log</span><kbd>L</kbd></div>
-        </div>
-    `;
-    // Einfaches Alert-Modal
-    const modal = document.createElement('div');
-    modal.className = 'modal-overlay show';
-    modal.innerHTML = `
-        <div class="modal" style="max-width: 350px;">
-            <div class="modal-header">
-                <span class="modal-title">⌨️ Tastenkürzel</span>
-                <button class="btn btn-sm" data-action="close-modal-overlay">✕</button>
-            </div>
-            ${helpHtml}
-        </div>
-    `;
-    modal.addEventListener('click', e => {
-        if (e.target === modal) modal.remove();
-    });
-    document.body.appendChild(modal);
 }
 // ============================================================
