@@ -33,7 +33,10 @@ function initializeData() {
             enableMarkdownImportExport: true,
             markdownOnboardingSeen: false
         },
-        _nextId: {}
+        _nextId: {},
+        // Phase 3: Bestiary
+        bestiary: [],            // Eigene Kreaturen (CRUD + Undo + Export)
+        bestiaryFavorites: []    // Nur ID-Keys (SRD: String-Key, Eigene: 'custom:123')
     };
 }
 

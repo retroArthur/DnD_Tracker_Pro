@@ -62,6 +62,12 @@ const MIGRATIONS = {
             // loest VOR migrateData() den Hinweis-Dialog + Export aus (D-09/D-10).
         }
         return data;
+    },
+    '3.0.0': data => {
+        // Phase 3: Bestiary — eigene Kreaturen und Favoriten initialisieren
+        if (!data.bestiary)          data.bestiary          = [];
+        if (!data.bestiaryFavorites) data.bestiaryFavorites = [];
+        return data;
     }
 };
 function migrateData(data) {
