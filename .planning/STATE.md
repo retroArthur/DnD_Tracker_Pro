@@ -3,7 +3,7 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: planning
-last_updated: "2026-06-13T10:27:12.966Z"
+last_updated: "2026-06-13T11:12:28.469Z"
 progress:
   total_phases: 7
   completed_phases: 2
@@ -31,9 +31,9 @@ progress:
 ## Current Position
 
 ```
-Phase: 03 (bestiary) — CONTEXT GATHERED
+Phase: 03 (bestiary) — UI-SPEC APPROVED
 Plan: Not started
-Status: Ready to plan Phase 03
+Status: Ready to plan Phase 03 (UI-Design-Vertrag gelockt)
 
 Progress: [===>......] 29% (2/7 Phasen abgeschlossen)
 ```
@@ -43,7 +43,7 @@ Progress: [===>......] 29% (2/7 Phasen abgeschlossen)
 |---|-------|--------|
 | 1 | Stabilisierung | Complete |
 | 2 | Technik-Fundament | Complete |
-| 3 | Bestiary | Context gathered |
+| 3 | Bestiary | UI-SPEC approved |
 | 4 | Initiative-Erweiterungen | Not started |
 | 5 | Welt & Story | Not started |
 | 6 | Spieler-Verwaltung | Not started |
@@ -103,8 +103,8 @@ Progress: [===>......] 29% (2/7 Phasen abgeschlossen)
 
 ## Session Continuity
 
-**Last action:** Phase 3 Kontext erfasst (2026-06-13) — 3 Bereiche diskutiert (SRD-Umfang & Sprache, Darstellung & Tab-Aufbau, Übernahme Encounter/Initiative), 17 Entscheidungen in 03-CONTEXT.md; Editor-Form/Encounter-Weg/Template-Schicksal als Claude's Discretion
-**Next action:** Phase 03 planen — `/gsd-plan-phase 3`
+**Last action:** Phase 3 UI-Design-Vertrag erstellt & verifiziert (2026-06-13) — `03-UI-SPEC.md` (6/6 Dimensionen bestanden nach 2 Revisionsrunden, 2 non-blocking FLAGs: einwort-CTAs „Bearbeiten/Löschen", enge 2px-Schriftgrößenstufen), Commit e9af23b. Lockt Layout (Liste+Detail wie NPC-Tab), Statblock-Pergament-Look, Such-/Filter-Chips, alle deutschen UI-Texte, 4px-Spacing-Grid, 2 Schriftgewichte (400/700), `var(--gold)`-Akzent auf 6 Elemente begrenzt.
+**Next action:** Phase 03 planen — `/gsd-plan-phase 3` (Planer nutzt 03-UI-SPEC.md als Design-Kontext)
 
 ---
 
