@@ -3,7 +3,7 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: planning
-last_updated: "2026-06-13T20:41:50.164Z"
+last_updated: "2026-06-13T21:57:03.951Z"
 progress:
   total_phases: 7
   completed_phases: 3
@@ -31,9 +31,9 @@ progress:
 ## Current Position
 
 ```
-Phase: 03 (bestiary) — COMPLETE ✓
-Next:  Phase 04 (Initiative-Erweiterungen) — bereit zum Planen
-Status: Phase 03 abgeschlossen & verifiziert (5/5 Pläne, Code-Review behoben)
+Phase: 04 (Initiative-Erweiterungen) — Design-Prep abgeschlossen (Context + Research + UI-SPEC ✓)
+Next:  Phase 04 planen (/gsd-plan-phase 4)
+Status: 04-UI-SPEC.md verifiziert (6/6 Dimensionen, 1 nutzer-bestätigte Typografie-Abweichung)
 
 Progress: [████░░░░░░] 43% (3/7 Phasen, 19/19 Pläne abgeschlossen)
 ```
@@ -111,8 +111,8 @@ Progress: [████░░░░░░] 43% (3/7 Phasen, 19/19 Pläne abgesch
 
 ## Session Continuity
 
-**Last action:** Phase 04 (Initiative-Erweiterungen) Kontext gesammelt (2026-06-13, `/gsd-discuss-phase 4`). Alle 4 Graubereiche besprochen → 14 Entscheidungen (D-01..D-14) in `04-CONTEXT.md` + `04-DISCUSSION-LOG.md`. Kern: INIT-01 Statblock-Popup als seitliches Panel via 📖-Button (renderBestiaryDetail wiederverwenden, Basis-Infos bei Kombattanten ohne statblockRef, klickbare Würfe); INIT-02 Legendäre Aktionen = Pip-Zähler, Auto-Anzeige bei legendaryActionsPerRound>0, Auto-Reset bei Init 20 — Legendäre Resistenzen = auto-geparst aus Trait-Text „(N/Tag)" + Override, **kein** Init-20-Reset (regelkonform /Tag, bewusste Abweichung vom Roadmap-SC2, vom Nutzer bestätigt); INIT-03 Mob via Toggle im Mengen-Dialog, Pool-HP + „X von N am Leben", beide Sammel-Angriffs-Modi (N-fach / DMG-Mob-Regel), Schaden auto-summiert. Legendary-/Mob-Combatant-Felder runtime-only (keine Migration). Research-Flag: Integration Mob-Sonderzeile ↔ Death Saves/Concentration/AoE-Modal. Commit 95a0de5. (Davor: Phase 03 Bestiary abgeschlossen & verifiziert, Commits f93733a → 1f16d49.)
-**Next action:** Phase 04 (Initiative-Erweiterungen) planen — `/gsd-plan-phase 4` (nach `/clear`)
+**Last action:** Phase 04 (Initiative-Erweiterungen) UI-Design-Contract erstellt & verifiziert (2026-06-13, `/gsd-ui-phase 4`). `04-UI-SPEC.md` deckt INIT-01 Statblock-Drawer (rechtes Panel, 📖-Button pro Zeile, Pergament-Statblock + klickbare Würfe, Basis-Infos-Fallback ohne statblockRef), INIT-02 Legendäre-Aktionen-/Resistenz-Pips (Death-Save-Optik; LA Auto-Reset @ Init 20, LR **kein** Auto-Reset + manueller ↺-Knopf) und INIT-03 Mob-Zeile (Pool-HP, „X von N am Leben" mit Farbcodierung, 2 Angriffsmodi N-fach/Mob-Regel, auto-summierter Schaden, Feature-Suppression-Tabelle) ab — inkl. deutscher UI-Texte, Data-Action-Registry und CSS-Specs (alle Tokens aus variables.css/initiative.css, neue Klassen in initiative.css). Checker: 6/6 Dimensionen bestanden; 1 nutzer-bestätigte Abweichung (3 Schriftgewichte 400/600/700, um per D-08 die bestehende Initiative-Optik exakt zu treffen); Mob-Control-Abstände auf 4px-Raster normalisiert. Commits b464460 (Researcher) + 58b9f47 (Revision). (Davor: 14 Entscheidungen D-01..D-14 in 04-CONTEXT.md via `/gsd-discuss-phase 4`, Commit 95a0de5; Phase 03 Bestiary abgeschlossen & verifiziert.)
+**Next action:** Phase 04 (Initiative-Erweiterungen) planen — `/gsd-plan-phase 4` (nach `/clear`). Der Planner nutzt `04-UI-SPEC.md` als Design-Kontext.
 
 ---
 
