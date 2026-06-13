@@ -3,7 +3,7 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: planning
-last_updated: "2026-06-13T16:29:46.812Z"
+last_updated: "2026-06-13T20:41:50.164Z"
 progress:
   total_phases: 7
   completed_phases: 3
@@ -111,8 +111,8 @@ Progress: [████░░░░░░] 43% (3/7 Phasen, 19/19 Pläne abgesch
 
 ## Session Continuity
 
-**Last action:** Phase 03 (Bestiary) komplett ausgeführt & abgeschlossen (2026-06-13) — alle 5 Pläne in 4 Wellen. 03-01 Fundament (D.bestiary[]+Migration 3.0.0+Tab/Modul/CSS/Template-Wiring in build.py & loader.js+Wave-0-Tests), 03-02 SRD-Datenbestand (112 deutsche Statblocks via tools/build-srd-monsters.cjs aus openrpg.de, getMonsterTemplates()-Alias), 03-03 Bestiary-Tab (Liste/Detail/Filter, Pergament-Statblock, Klick-Würfel), 03-04 Eigene-Kreaturen-CRUD (bst-*-Editor+Undo), 03-05 Übernahme (Mengen-Dialog→Initiative mit Auto-Wurf/HP-Variation/statblockRef, Zu Encounter, Favoriten). Verifikation **passed** (14/14 must-haves, Build + 308/308 Unit + 11/11 E2E grün). Code-Review fand 3 Critical (Encounter-Template-Loader-Regression durch SRD-Alias + ungeguardetes Migration-console.log) + 3 Warnings — alle behoben (Commits ee66bbf, 2fd11da, 1f16d49). Phase-Commits: f93733a → 1f16d49.
-**Next action:** Phase 04 (Initiative-Erweiterungen) — `/gsd-discuss-phase 4` oder `/gsd-plan-phase 4` (nach `/clear`)
+**Last action:** Phase 04 (Initiative-Erweiterungen) Kontext gesammelt (2026-06-13, `/gsd-discuss-phase 4`). Alle 4 Graubereiche besprochen → 14 Entscheidungen (D-01..D-14) in `04-CONTEXT.md` + `04-DISCUSSION-LOG.md`. Kern: INIT-01 Statblock-Popup als seitliches Panel via 📖-Button (renderBestiaryDetail wiederverwenden, Basis-Infos bei Kombattanten ohne statblockRef, klickbare Würfe); INIT-02 Legendäre Aktionen = Pip-Zähler, Auto-Anzeige bei legendaryActionsPerRound>0, Auto-Reset bei Init 20 — Legendäre Resistenzen = auto-geparst aus Trait-Text „(N/Tag)" + Override, **kein** Init-20-Reset (regelkonform /Tag, bewusste Abweichung vom Roadmap-SC2, vom Nutzer bestätigt); INIT-03 Mob via Toggle im Mengen-Dialog, Pool-HP + „X von N am Leben", beide Sammel-Angriffs-Modi (N-fach / DMG-Mob-Regel), Schaden auto-summiert. Legendary-/Mob-Combatant-Felder runtime-only (keine Migration). Research-Flag: Integration Mob-Sonderzeile ↔ Death Saves/Concentration/AoE-Modal. Commit 95a0de5. (Davor: Phase 03 Bestiary abgeschlossen & verifiziert, Commits f93733a → 1f16d49.)
+**Next action:** Phase 04 (Initiative-Erweiterungen) planen — `/gsd-plan-phase 4` (nach `/clear`)
 
 ---
 
