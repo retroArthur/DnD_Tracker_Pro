@@ -12,7 +12,7 @@
 - [x] **Phase 1: Stabilisierung** — App startet, Daten sind sicher, CI erkennt Crashes, Doku ist aktuell
 - [x] **Phase 2: Technik-Fundament** — Installierbare PWA, Datei-Backup, Command Palette (completed 2026-06-12)
 - [x] **Phase 3: Bestiary** — SRD-Monster-Kompendium offline + eigene Kreaturen + Encounter-Import (completed 2026-06-13)
-- [ ] **Phase 4: Initiative-Erweiterungen** — Statblock-Popup, Legendäre Aktionen & Resistenzen, Mob-Modus
+- [x] **Phase 4: Initiative-Erweiterungen** — Statblock-Popup, Legendäre Aktionen & Resistenzen, Mob-Modus (completed 2026-06-13)
 - [ ] **Phase 5: Welt & Story** — Session-Prep, NPC-Generator, Timeline, Reise-Simulator, Fraktionen
 - [ ] **Phase 6: Spieler-Verwaltung** — XP/Milestone-Tracker, Inspiration, Erweiterte Charakterwerte
 - [ ] **Phase 7: Komfort & Analyse** — Soundboard, Würfel-Statistiken
@@ -130,7 +130,7 @@ Plans:
 
 **Wave 3** *(blocked on Wave 2 — teilt sich initiative.js + combat-actions.js)*
 
-- [ ] 04-04-PLAN.md — INIT-03 Mob-Modus: Mob-Toggle im Mengen-Dialog, Mob-Zeile mit Pool-HP + "X von N am Leben", beide Angriffsmodi (N-fach/DMG-Mob-Regel) mit auto-summiertem Schaden, Feature-Hiding, Undo-sicheres Auflösen (INIT-03)
+- [x] 04-04-PLAN.md — INIT-03 Mob-Modus: Mob-Toggle im Mengen-Dialog, Mob-Zeile mit Pool-HP + "X von N am Leben", beide Angriffsmodi (N-fach/DMG-Mob-Regel) mit auto-summiertem Schaden, Feature-Hiding, Undo-sicheres Auflösen (INIT-03)
 
 ### Phase 5: Welt & Story
 
@@ -180,7 +180,7 @@ Plans:
 | 1. Stabilisierung           | 9/9            | Complete    | 2026-06-12 |
 | 2. Technik-Fundament        | 5/5 | Complete    | 2026-06-12 |
 | 3. Bestiary                 | 5/5 | Complete    | 2026-06-13 |
-| 4. Initiative-Erweiterungen | 3/4 | In Progress|  |
+| 4. Initiative-Erweiterungen | 4/4 | Complete   | 2026-06-13 |
 | 5. Welt & Story             | 0/?            | Not started | -         |
 | 6. Spieler-Verwaltung       | 0/?            | Not started | -         |
 | 7. Komfort & Analyse        | 0/?            | Not started | -         |

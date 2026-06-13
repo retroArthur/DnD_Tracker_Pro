@@ -31,12 +31,12 @@ progress:
 ## Current Position
 
 ```
-Phase: 04 (initiative-erweiterungen) — EXECUTING
-Plan: 4 of 4
-Next:  Phase 04 Plan 4 ausführen (04-04-PLAN.md)
-Status: Ready to execute
+Phase: 04 (initiative-erweiterungen) — COMPLETE
+Plan: 4 of 4 (alle abgeschlossen)
+Next:  Phase 05 (Welt & Story) starten
+Status: Phase 04 abgeschlossen
 
-Progress: [█████████░] 95% (22/23 Pläne abgeschlossen)
+Progress: [██████████] 100% Phase 4 (23/23 Pläne abgeschlossen)
 ```
 
 **Phases:**
@@ -45,7 +45,7 @@ Progress: [█████████░] 95% (22/23 Pläne abgeschlossen)
 | 1 | Stabilisierung | Complete |
 | 2 | Technik-Fundament | Complete |
 | 3 | Bestiary | Complete (5/5 Pläne) |
-| 4 | Initiative-Erweiterungen | In Progress (3/4 Pläne abgeschlossen) |
+| 4 | Initiative-Erweiterungen | Complete (4/4 Pläne abgeschlossen) |
 | 5 | Welt & Story | Not started |
 | 6 | Spieler-Verwaltung | Not started |
 | 7 | Komfort & Analyse | Not started |
@@ -113,8 +113,8 @@ Progress: [█████████░] 95% (22/23 Pläne abgeschlossen)
 
 ## Session Continuity
 
-**Last action:** Phase 04 Plan 03 (INIT-02 LA/LR Pips) ausgefuehrt (2026-06-14). LA/LR-Pip-System implementiert (renderLegendaryActionPips, renderLegendaryResistancePips, useLA, useLR, resetLR); nextTurn LA-Auto-Reset (D-10); LR kein Auto-Reset (D-07 deliberate); LA/LR-Feld-Init in addBestiaryToInitiative; 6 E2E-Tests gruen. Build sauber. Commits: cedf961, 658b818, dbc8fc9.
-**Next action:** Phase 04 Plan 04 ausfuehren (Wave 3 — Mob-Modus).
+**Last action:** Phase 04 Plan 04 (INIT-03 Mob-Modus) ausgefuehrt (2026-06-14). Mob-Toggle in Mengen-Dialog; renderMobRow mit Pool-HP/Farb-Alive-Count/Besiegt-Badge; rollMobAttack N-fach + DMG-Mob-Regel; applyMobDamage + setMobAttackMode + dissolveMob; Feature-Hiding fuer Concentration + Quick-Actions; 3 Mob-Handler in CombatActions; 4 Mob-E2E-Tests gruen. Build sauber. Commits: 7883498, a52e103, 8cf767c. Phase 04 vollstaendig abgeschlossen.
+**Next action:** Phase 05 (Welt & Story) diskutieren und planen.
 
 ---
 
@@ -125,3 +125,4 @@ _State initialized: 2026-06-11_
 - [Phase ?]: Quantity cap = 100 (BESTIARY_MAX_QUANTITY): clamp to 1-100 for DoS safety (T-03-10)
 - [Phase ?]: INIT-01: renderStatblockHTML DRY-Extraktion in bestiary-render.js, E2E via evaluate()-Injektion
 - [Phase 04-03]: D-07 LR kein Auto-Reset (manuell via lr-reset-btn); E2E via page.evaluate(nextTurn) statt UI-Button (data-action=call, nicht data-action=next-turn)
+- [Phase 04-04]: rollMobAttack N-fach = alive Schadenswuerfe summiert (kein Trefferroll-Gating, DM entscheidet Kontext); dissolveMob nutzt numerischen cbId-Filter direkt ohne parseEntityId
