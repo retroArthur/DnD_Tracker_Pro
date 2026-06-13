@@ -126,7 +126,7 @@ Plans:
 
 **Wave 2** *(blocked on Wave 1 — teilt sich initiative.js + combat-actions.js)*
 
-- [ ] 04-03-PLAN.md — INIT-02 Legendäre Aktionen & Resistenzen: LA/LR-Pips (Death-Save-Optik), LA-Reset bei Init 20, LR KEIN Auto-Reset + manueller Reset (D-07), Feld-Init beim Bestiary-Add (INIT-02)
+- [x] 04-03-PLAN.md — INIT-02 Legendäre Aktionen & Resistenzen: LA/LR-Pips (Death-Save-Optik), LA-Reset bei Init 20, LR KEIN Auto-Reset + manueller Reset (D-07), Feld-Init beim Bestiary-Add (INIT-02)
 
 **Wave 3** *(blocked on Wave 2 — teilt sich initiative.js + combat-actions.js)*
 
@@ -180,7 +180,7 @@ Plans:
 | 1. Stabilisierung           | 9/9            | Complete    | 2026-06-12 |
 | 2. Technik-Fundament        | 5/5 | Complete    | 2026-06-12 |
 | 3. Bestiary                 | 5/5 | Complete    | 2026-06-13 |
-| 4. Initiative-Erweiterungen | 2/4 | In Progress|  |
+| 4. Initiative-Erweiterungen | 3/4 | In Progress|  |
 | 5. Welt & Story             | 0/?            | Not started | -         |
 | 6. Spieler-Verwaltung       | 0/?            | Not started | -         |
 | 7. Komfort & Analyse        | 0/?            | Not started | -         |
