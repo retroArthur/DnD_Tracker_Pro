@@ -1,10 +1,11 @@
 ---
 phase: 4
 slug: initiative-erweiterungen
-status: draft
+status: approved
 shadcn_initialized: false
 preset: none
 created: 2026-06-13
+reviewed_at: 2026-06-13
 ---
 
 # Phase 4 — UI Design Contract: Initiative-Erweiterungen
@@ -59,6 +60,8 @@ All sizes are inherited from the existing design system. No new font sizes intro
 | Label | 12px (`var(--font-size-small)`) | 600 | 1.2 | Pip labels (`LA`, `LW`), mob type sub-label, drawer section headers |
 | Heading | ~1.1em of base (`var(--font-size-title)`) | 700 | 1.2 | Drawer panel header (combatant name), mob row name |
 | Display | Not used | — | — | — |
+
+> **Accepted deviation — 3 font weights (400 / 600 / 700).** This exceeds the generic "max 2 weights" UI guideline. It is intentional and required: decision **D-08** locks the new pip labels to the *exact* look of the existing Death-Save / Concentration elements, which use `font-weight: 600` (`initiative.css:277`), while combatant names use `700` (`initiative.css:146`) and the round badge `700` (`initiative.css:21`), and body text `400`. Forcing 2 weights would make Phase-4 labels visibly heavier or lighter than the adjacent existing initiative UI. See **## Accepted Deviations**. (User-approved 2026-06-13.)
 
 **Specific sizes used by new elements:**
 - `.la-label`, `.lr-label`: `font-size: 0.75em; font-weight: 600` — matches `.death-saves-label` (initiative.css:278).
@@ -143,7 +146,7 @@ All German. Consistent with project-wide German localization.
 | Mob attack mode toggle — N-fach | `N×-Wurf` |
 | Mob attack mode toggle — DMG-Regel | `Mob-Regel` |
 | Mob attack section label | `Sammel-Angriff` |
-| Mob attack roll button | `Würfeln` |
+| Mob attack roll button | `Angriff würfeln` |
 | Mob attack result prefix (N-fach mode) | `{N} Angriffe:` |
 | Mob attack result prefix (DMG mode) | `{hits} Treffer (von {alive}):` |
 | Mob damage result | `Schaden: {total}` |
@@ -166,6 +169,8 @@ All German. Consistent with project-wide German localization.
 ## Component Visual Contracts
 
 ### INIT-01: Statblock-Drawer
+
+**Focal point:** On open, the eye lands on the parchment statblock header — the creature name (heading, weight 700) above the rule divider — at the top of the panel. For combatants without a `statblockRef`, the focal point is the name + HP/AC block of the basic-info card.
 
 **Trigger:** `📖` button rendered inside each `.init-entry` row, right-aligned in the controls cluster.
 
@@ -372,6 +377,8 @@ border-radius: 12px 12px 0 0 (bottom-sheet)
 
 ### INIT-03: Mob-Zeile
 
+**Focal point:** The colour-coded "X von N am Leben" alive count is the primary draw on a mob row — it sits directly under the name and shifts green → yellow → red as the pool depletes, so the DM reads the mob's status at a glance.
+
 **Placement:** Mob combatants render inside the normal `#init-list` alongside individual combatants. They are visually distinguished by additional mob-specific sub-row content.
 
 **Mob row grid layout:** Inherits `.init-entry` grid (`30px 50px 40px 1fr auto auto`) unchanged. The mob-specific content is in the `.init-info` column (the `1fr` flex cell) and a new `.init-mob-controls` sub-row.
@@ -415,7 +422,7 @@ border-radius: 12px 12px 0 0 (bottom-sheet)
       </div>
       <button class="btn-sm init-mob-attack-btn"
               data-action="init-mob-attack-stop"
-              data-id="{cb.id}">🎲 Würfeln</button>
+              data-id="{cb.id}">🎲 Angriff würfeln</button>
     </div>
   </div>
 
@@ -448,7 +455,7 @@ alive = 0            →  defeated badge shown    (class: .defeated)
 ```css
 .init-mob-defeated-badge {
     display: inline-block;
-    padding: 2px 8px;
+    padding: 4px 8px;
     background: var(--red);
     color: var(--bg-dark);
     border-radius: 4px;
@@ -463,12 +470,12 @@ alive = 0            →  defeated badge shown    (class: .defeated)
 
 **CSS spec (new classes):**
 ```css
-.init-info--mob { display: flex; flex-direction: column; gap: 2px; }
+.init-info--mob { display: flex; flex-direction: column; gap: 4px; }
 
 .init-mob-alive {
     font-size: 0.85em;
     font-weight: 600;
-    margin-top: 2px;
+    margin-top: 4px;
     transition: color 0.2s;
 }
 .init-mob-alive.healthy  { color: var(--green); }
@@ -480,9 +487,9 @@ alive = 0            →  defeated badge shown    (class: .defeated)
     display: flex;
     align-items: center;
     flex-wrap: wrap;
-    gap: 6px;
+    gap: 8px;
     margin-top: 4px;
-    padding: 6px 8px;
+    padding: 8px;
     background: var(--bg-dark);
     border-radius: 4px;
 }
@@ -496,11 +503,11 @@ alive = 0            →  defeated badge shown    (class: .defeated)
 
 .init-mob-mode-toggle {
     display: flex;
-    gap: 3px;
+    gap: 4px;
 }
 
 .init-mob-mode-btn {
-    padding: 3px 8px;
+    padding: 4px 8px;
     font-size: 0.75em;
     background: var(--bg-card);
     border: 1px solid var(--border);
@@ -525,7 +532,7 @@ alive = 0            →  defeated badge shown    (class: .defeated)
 .init-mob-dmg-inputs.hidden { display: none; }
 .init-mob-dmg-inputs input {
     width: 48px;
-    padding: 3px 6px;
+    padding: 4px 8px;
     background: var(--bg-card);
     border: 1px solid var(--border);
     color: var(--text);
@@ -535,7 +542,7 @@ alive = 0            →  defeated badge shown    (class: .defeated)
 }
 
 .init-mob-attack-btn {
-    padding: 4px 10px;
+    padding: 4px 8px;
     font-size: 0.8em;
     background: var(--red);
     color: white;
@@ -645,13 +652,25 @@ No external registries. No new npm packages. No CDN resources. Fully offline.
 
 ---
 
+## Accepted Deviations
+
+These deviate from the generic GSD UI dimension rules but are **deliberate and user-approved (2026-06-13)**, because Phase 4 extends a mature in-house design system rather than a greenfield one. Consistency with the existing initiative module (locked decision **D-08** — "exakte Optik" of the existing Death-Save / Concentration elements) takes precedence over the generic defaults.
+
+| Dimension | Generic rule | This spec | Justification (code evidence) |
+|-----------|-------------|-----------|-------------------------------|
+| Typography | ≤ 2 font weights | 3 weights: **400 / 600 / 700** | The existing `initiative.css` already uses 500/600/700 throughout. New pip labels MUST match the Death-Save label `font-weight: 600` (`initiative.css:277`); headings / combatant names use `700` (`:21`, `:146`); body `400`. D-08 locks pip optik to these neighbours — collapsing to 2 weights would make the new labels visibly mismatched against the elements directly beside them. |
+
+**Spacing was NOT deviated.** Per the user's choice, all new mob-control spacing was normalised onto the 4px grid (`gap`/`padding`/`margin` values: 2px→4px, 3px→4px, 6px→8px, 10px→8px). The pip CSS (`.la-dot`/`.lr-dot`, 16px / `gap:4px` / `gap:8px` / `margin-top:4px`) was already grid-conformant. See **## Spacing Scale**.
+
+---
+
 ## Checker Sign-Off
 
-- [ ] Dimension 1 Copywriting: PASS
-- [ ] Dimension 2 Visuals: PASS
-- [ ] Dimension 3 Color: PASS
-- [ ] Dimension 4 Typography: PASS
-- [ ] Dimension 5 Spacing: PASS
-- [ ] Dimension 6 Registry Safety: PASS
+- [x] Dimension 1 Copywriting: PASS
+- [x] Dimension 2 Visuals: PASS (focal-point notes added for drawer + mob row)
+- [x] Dimension 3 Color: PASS
+- [x] Dimension 4 Typography: PASS — with 1 accepted deviation (3 weights 400/600/700; user-approved 2026-06-13, see ## Accepted Deviations)
+- [x] Dimension 5 Spacing: PASS (all values normalised to 4px grid)
+- [x] Dimension 6 Registry Safety: PASS (not applicable — vanilla JS/CSS, no registries)
 
-**Approval:** pending
+**Approval:** APPROVED — gsd-ui-checker, revision 1, 2026-06-13. 6/6 dimensions pass; 1 user-approved deviation (typography).
