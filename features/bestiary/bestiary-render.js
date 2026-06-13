@@ -475,6 +475,15 @@ var BestiaryRenderActions = {
         } else if (typeof window.showToast === 'function') {
             window.showToast('W\xfcrfel: ' + formula, 'info');
         }
+    },
+    // Delete custom creature — wired here so SC2 E2E works before plan 05 lands.
+    // plan 05 may re-register this; EventDelegation.registerAction last-write-wins is OK.
+    'bestiary-delete': function(ctx) {
+        var id = (ctx.target && ctx.target.dataset.id) || String(ctx.id || '');
+        if (!id) return;
+        if (typeof window.deleteBestiaryEntry === 'function') {
+            window.deleteBestiaryEntry(id);
+        }
     }
 };
 
