@@ -79,6 +79,7 @@ const MODULES = [
     'features/bestiary/bestiary-crud.js',
     'features/bestiary/bestiary-editor.js',
     'features/bestiary/bestiary-actions.js',
+    'features/initiative-statblock.js',
 
     // Features
     'features/encounter-calculator.js',
@@ -111,6 +112,7 @@ const MODULES = [
     'core/srd-monsters.js',
     'systems/spellslots/spellslots-ui.js',
     'features/initiative-extras.js',
+    'features/initiative-mob.js',
     'ui/layout-profiles.js',
     'utils/performance-extras.js',
 

@@ -894,3 +894,300 @@
             color: var(--text-dim);
         }
 
+/* ========================================
+   Statblock-Drawer (INIT-01)
+   ======================================== */
+
+.init-statblock-drawer {
+    position: fixed;
+    top: 0;
+    right: 0;
+    width: 420px;
+    height: 100%;
+    z-index: 1000;
+    display: none;
+    justify-content: flex-end;
+    background: rgba(0, 0, 0, 0.5);
+}
+
+.init-statblock-drawer.show {
+    display: flex;
+}
+
+.init-statblock-content {
+    background: var(--bg-dark);
+    width: 100%;
+    height: 100%;
+    overflow-y: auto;
+    padding: 16px;
+    box-shadow: -4px 0 24px rgba(0, 0, 0, 0.5);
+}
+
+.init-statblock-basic {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    background: var(--bg-card);
+    padding: 16px;
+    border-radius: 8px;
+}
+
+.init-statblock-name {
+    font-size: 1.1em;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 4px;
+}
+
+@media (max-width: 600px) {
+    .init-statblock-drawer {
+        width: 100vw;
+        height: 60vh;
+        top: auto;
+        bottom: 0;
+        right: 0;
+        justify-content: flex-end;
+        align-items: flex-end;
+    }
+
+    .init-statblock-content {
+        border-radius: 12px 12px 0 0;
+    }
+}
+
+/* ========================================
+   Legendaere Aktionen Pips (INIT-02 LA)
+   ======================================== */
+
+.la-pips {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 4px;
+}
+
+.la-label {
+    font-size: 0.75em;
+    font-weight: 600;
+    color: var(--gold);
+    min-width: 28px;
+}
+
+.la-dots {
+    display: flex;
+    gap: 4px;
+}
+
+.la-dot {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    border: 2px solid var(--gold);
+    background: var(--bg-dark);
+    cursor: pointer;
+    transition: background 0.15s, transform 0.15s;
+}
+
+.la-dot:hover {
+    transform: scale(1.15);
+}
+
+.la-dot.active {
+    background: var(--gold);
+}
+
+/* ========================================
+   Legendaere Widerstands-Pips (INIT-02 LR)
+   ======================================== */
+
+.lr-pips {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 4px;
+}
+
+.lr-label {
+    font-size: 0.75em;
+    font-weight: 600;
+    color: var(--purple);
+    min-width: 28px;
+}
+
+.lr-dots {
+    display: flex;
+    gap: 4px;
+}
+
+.lr-dot {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    border: 2px solid var(--purple);
+    background: var(--bg-dark);
+    cursor: pointer;
+    transition: background 0.15s, transform 0.15s;
+}
+
+.lr-dot:hover {
+    transform: scale(1.15);
+}
+
+.lr-dot.active {
+    background: var(--purple);
+}
+
+.lr-reset-btn {
+    width: 20px;
+    height: 20px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text-dim);
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.8em;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s;
+    margin-left: 4px;
+}
+
+.lr-reset-btn:hover {
+    border-color: var(--purple);
+    color: var(--purple);
+    background: rgba(167, 139, 250, 0.1);
+}
+
+/* ========================================
+   Mob-Zeile (INIT-03)
+   ======================================== */
+
+.init-info--mob {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.init-mob-alive {
+    font-size: 0.85em;
+    font-weight: 600;
+    margin-top: 4px;
+    transition: color 0.2s;
+}
+
+.init-mob-alive.healthy  { color: var(--green); }
+.init-mob-alive.bloodied { color: var(--yellow); }
+.init-mob-alive.critical { color: var(--red); }
+.init-mob-alive.defeated { color: var(--text-dim); }
+
+.init-mob-controls {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 4px;
+    padding: 8px;
+    background: var(--bg-dark);
+    border-radius: 4px;
+}
+
+.init-mob-label {
+    font-size: 0.7em;
+    color: var(--text-dim);
+    font-weight: 600;
+    min-width: 90px;
+}
+
+.init-mob-mode-toggle {
+    display: flex;
+    gap: 4px;
+}
+
+.init-mob-mode-btn {
+    padding: 4px 8px;
+    font-size: 0.75em;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+
+.init-mob-mode-btn.active {
+    background: var(--gold);
+    color: var(--bg-dark);
+    border-color: var(--gold);
+    font-weight: 600;
+}
+
+.init-mob-dmg-inputs {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    font-size: 0.75em;
+}
+
+.init-mob-dmg-inputs.hidden {
+    display: none;
+}
+
+.init-mob-dmg-inputs input {
+    width: 48px;
+    padding: 4px 8px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: 4px;
+    font-size: 0.9em;
+    text-align: center;
+}
+
+.init-mob-attack-btn {
+    padding: 4px 8px;
+    font-size: 0.8em;
+    background: var(--red);
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: background 0.15s;
+}
+
+.init-mob-attack-btn:hover {
+    background: #dc2626;
+}
+
+.init-mob-dissolve-btn {
+    width: 24px;
+    height: 24px;
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+    border-radius: 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.9em;
+    transition: all 0.15s;
+}
+
+.init-mob-dissolve-btn:hover {
+    border-color: var(--red);
+    color: var(--red);
+    background: rgba(239, 68, 68, 0.1);
+}
+
+.init-mob-defeated-badge {
+    display: inline-block;
+    padding: 4px 8px;
+    background: var(--red);
+    color: var(--bg-dark);
+    border-radius: 4px;
+    font-size: 0.75em;
+    font-weight: 700;
+}
+
