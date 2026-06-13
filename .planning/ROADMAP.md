@@ -81,8 +81,26 @@ Plans:
 1. Nutzer öffnet den Bestiary-Tab, sucht „Goblin", filtert nach CR und Typ — Ergebnisse erscheinen sofort ohne Netzwerkverbindung
 2. Nutzer legt eine eigene Kreatur an, bearbeitet ihre Stats und löscht sie wieder — alle CRUD-Operationen sind mit Undo rückgängig machbar
 3. Nutzer wählt im Bestiary ein Monster, klickt „Zu Encounter hinzufügen" — das Monster erscheint im gewählten Encounter mit korrekten HP/AC-Werten; „Zur Initiative" fügt es direkt als Kombattant hinzu
-   **Plans**: TBD
+   **Plans**: 5 plans (4 Wellen)
    **UI hint**: yes
+
+Plans:
+**Wave 1**
+
+- [ ] 03-01-PLAN.md — Fundament: D-Schema + Migration 3.0.0, Tab-/Modul-/CSS-/Template-Registrierung (build.py+loader.js), 5 Modul-Stubs, Wave-0-Tests (BEST-01/02/03)
+
+**Wave 2** *(blocked on Wave 1)*
+
+- [ ] 03-02-PLAN.md — SRD-Datenspeicher: ~150 deutsche SRD-5.1-Statblocks inline in core/srd-monsters.js + monster-templates.js-Alias (BEST-01)
+- [ ] 03-03-PLAN.md — Bestiary-Tab: Liste+Detail, Suche/Filter, 5e-Pergament-Statblock mit Klick-Würfen, Badges/Favoriten (BEST-01)
+
+**Wave 3** *(blocked on Wave 2)*
+
+- [ ] 03-04-PLAN.md — Eigene Kreaturen: voller bst-*-Editor + CRUD mit Undo + Portrait (BEST-02)
+
+**Wave 4** *(blocked on Wave 3 — teilt sich die E2E-Spec mit 03-04)*
+
+- [ ] 03-05-PLAN.md — Übernahme: Mengen-Dialog→Initiative (Auto-Wurf/HP-Variation/Nummerierung/statblockRef), Zu Encounter, Favoriten, Klick-Würfel-Handler (BEST-03)
 
 ### Phase 4: Initiative-Erweiterungen
 
@@ -144,7 +162,7 @@ Plans:
 | --------------------------- | -------------- | ----------- | --------- |
 | 1. Stabilisierung           | 9/9            | Complete    | 2026-06-12 |
 | 2. Technik-Fundament        | 5/5 | Complete    | 2026-06-12 |
-| 3. Bestiary                 | 0/?            | Not started | -         |
+| 3. Bestiary                 | 0/5            | Planned     | -         |
 | 4. Initiative-Erweiterungen | 0/?            | Not started | -         |
 | 5. Welt & Story             | 0/?            | Not started | -         |
 | 6. Spieler-Verwaltung       | 0/?            | Not started | -         |
