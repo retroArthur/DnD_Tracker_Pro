@@ -84,16 +84,17 @@ function refreshBstAvatarPreview() {
 // No id (or falsy): create-mode — clears all fields.
 // ============================================================
 function openBestiaryEditor(ctx) {
-    // Support both direct call openBestiaryEditor(id) and
-    // data-action="call" data-value="openBestiaryEditor" data-id="123" via ctx object
+    // The 'call' action in ui-actions.js dispatches: window[value](ctx.id)
+    // where ctx.id = parseEntityId(target.dataset.id) — a number or null.
+    // Also supports direct calls: openBestiaryEditor(id) or openBestiaryEditor().
     var id = null;
-    if (typeof ctx === 'object' && ctx !== null && !Array.isArray(ctx)) {
-        // Called via EventDelegation ctx object
-        id = ctx.target ? ctx.target.dataset.id : null;
-        if (!id) id = ctx.id || null;
-    } else if (ctx !== undefined && ctx !== null && ctx !== '') {
-        // Called directly with an id value
-        id = ctx;
+    if (ctx !== undefined && ctx !== null && ctx !== '' && ctx !== 0) {
+        if (typeof ctx === 'number') {
+            id = ctx; // numeric id from 'call' action dispatch
+        } else if (typeof ctx === 'string' && ctx.trim() !== '') {
+            id = ctx;
+        }
+        // null/0/undefined → create mode
     }
 
     var idInput = window.$('bst-edit-id');
@@ -292,19 +293,9 @@ function cleanupBestiaryEditor() {
     }
 }
 
-// ============================================================
-// ACTION WIRING (DOMContentLoaded — same TDZ-safe pattern as bestiary-render.js)
-// ============================================================
-window.addEventListener('DOMContentLoaded', function() {
-    if (typeof EventDelegation !== 'undefined' && EventDelegation &&
-            typeof EventDelegation.registerAction === 'function') {
-        EventDelegation.registerAction('call', function(ctx) {
-            // 'call' action is already registered globally (system-actions.js);
-            // individual functions are exposed on window and called by it.
-            // We just ensure openBestiaryEditor, saveBestiary, etc. are on window.
-        });
-    }
-});
+// NOTE: 'call' action is registered globally by ui-actions.js (calls window[ctx.value](ctx.id)).
+// openBestiaryEditor, saveBestiary, deleteBestiaryEntry are exported to window below,
+// so the 'call' dispatcher finds them automatically — no additional registration needed.
 
 // ============================================================
 // WINDOW EXPORTS
