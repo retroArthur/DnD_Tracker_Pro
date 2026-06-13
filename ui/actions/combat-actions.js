@@ -41,6 +41,20 @@ const CombatActions = {
         resetLR(ctx.id);
     },
 
+    // INIT-03: Mob-Modus (D-11, D-13, D-14)
+    'init-mob-set-mode-stop': ctx => {
+        ctx.event.stopPropagation();
+        setMobAttackMode(ctx.id, ctx.target.dataset.mode);
+    },
+    'init-mob-attack-stop': ctx => {
+        ctx.event.stopPropagation();
+        rollMobAttack(ctx.id);
+    },
+    'init-mob-dissolve-stop': ctx => {
+        ctx.event.stopPropagation();
+        dissolveMob(ctx.id);
+    },
+
     'show-aoe-damage-modal': () => showAoEDamageModal(),
     'set-concentration': ctx => setConcentration(ctx.id),
     'roll-aoe-damage': () => rollAoEDamage(),

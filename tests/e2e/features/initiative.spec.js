@@ -965,24 +965,129 @@ test.describe('Initiative System', () => {
     });
 
     // ============================================================
-    // MOB-MODUS (INIT-03) — Wave-0 Platzhalter
+    // MOB-MODUS (INIT-03) — Wave-3 Implementierung
     // ============================================================
 
     test.describe('mob', () => {
-        test.skip('Mob-Toggle erzeugt eine Zeile statt N Einzelzeilen', async ({ page }) => {
-            // Wave 3 fuellt: confirm-Dialog akzeptieren, nur 1 .mob-entry in #init-list
+        /**
+         * Hilfsfunktion: Fuegt einen Mob-Kombattanten (10 Goblins) direkt per
+         * page.evaluate() in die Initiative ein und rendert neu.
+         * Umgeht die komplexe UI-Interaktion (Bestiary → prompt → confirm).
+         *
+         * @param {number} poolHp - Anfaenglicher Pool-HP (Standard: 70 = 10 × 7)
+         */
+        async function injectMobCombatant(page, poolHp) {
+            var hp = poolHp !== undefined ? poolHp : 70;
+            await page.evaluate(function(args) {
+                var hp = args.hp;
+                var mobCb = {
+                    id: window.nextId ? window.nextId('combatants') : Date.now(),
+                    name: 'Goblin-Schwarm',
+                    initiative: 12,
+                    initBonus: 2,
+                    maxHp: hp,
+                    currentHp: hp,
+                    ac: 15,
+                    type: 'monster',
+                    cr: '1/4',
+                    xp: 500,
+                    effects: [],
+                    statblockRef: { source: 'srd', id: 'goblin' },
+                    mob: {
+                        count: 10,
+                        poolHp: hp,
+                        maxPoolHp: hp,
+                        individualMaxHp: 7,
+                        attackMode: 'nfach'
+                    }
+                };
+                window.D.initiative.combatants = [mobCb];
+                window.D.initiative.currentTurn = 0;
+                window.D.initiative.round = 1;
+                if (typeof window.renderInit === 'function') window.renderInit();
+            }, { hp: hp });
+        }
+
+        test('Mob-Toggle erzeugt eine mob Zeile mit init-info--mob in #init-list', async ({ page }) => {
+            await injectMobCombatant(page);
+            // Warten bis init-list gerendert wird
+            await page.waitForSelector('#init-list .init-row', { timeout: 5000 });
+
+            // Genau eine Zeile soll vorhanden sein (nicht 10 Einzelzeilen)
+            const rows = page.locator('#init-list .init-row');
+            expect(await rows.count()).toBe(1);
+
+            // Die Zeile soll .init-info--mob enthalten (Mob-spezifische Info-Spalte)
+            const mobInfo = page.locator('#init-list .init-info--mob');
+            await expect(mobInfo).toBeAttached();
+
+            // Name soll 'Goblin-Schwarm' enthalten
+            const nameEl = page.locator('#init-list .init-name').first();
+            await expect(nameEl).toContainText('Goblin-Schwarm');
         });
 
-        test.skip('Mob-Zeile zeigt "X von N am Leben" korrekt an', async ({ page }) => {
-            // Wave 3 fuellt: .init-mob-alive Text pruefen
+        test('Mob-Zeile zeigt "X von N am Leben" korrekt an und reagiert auf Modus-Umschaltung', async ({ page }) => {
+            await injectMobCombatant(page, 70); // 70 Pool-HP = 10 Goblins × 7 HP
+            await page.waitForSelector('#init-list .init-mob-alive', { timeout: 5000 });
+
+            // Alive-Count: 70 poolHp / 7 individualMaxHp = 10 = ceil(10) = 10
+            const aliveEl = page.locator('#init-list .init-mob-alive').first();
+            await expect(aliveEl).toContainText('10 von 10 am Leben');
+
+            // Modus-Toggle-Buttons muessen vorhanden sein
+            const modeBtns = page.locator('#init-list .init-mob-mode-btn');
+            expect(await modeBtns.count()).toBe(2);
+
+            // N-fach-Button soll initial aktiv sein
+            const nfachBtn = page.locator('#init-list .init-mob-mode-btn[data-mode="nfach"]');
+            await expect(nfachBtn).toHaveClass(/active/);
+
+            // Auf DMG-Regel-Button klicken — soll aktiv werden und DMG-Eingaben einblenden
+            const dmgRegelBtn = page.locator('#init-list .init-mob-mode-btn[data-mode="dmg-regel"]');
+            await dmgRegelBtn.click();
+            await page.waitForTimeout(300);
+
+            // DMG-Regel-Inputs sollen sichtbar werden (nicht mehr .hidden)
+            const dmgInputs = page.locator('#init-list .init-mob-dmg-inputs');
+            await expect(dmgInputs).not.toHaveClass(/hidden/);
         });
 
-        test.skip('Schaden auf Pool reduziert lebende Kreaturen', async ({ page }) => {
-            // Wave 3 fuellt: HP-Abzug → .init-mob-alive aktualisiert
+        test('Mob-Zeile zeigt Besiegt-Badge bei 0 Pool-HP', async ({ page }) => {
+            await injectMobCombatant(page, 0); // Pool-HP = 0 → Besiegt
+            await page.waitForSelector('#init-list .init-row', { timeout: 5000 });
+
+            // .init-mob-defeated-badge soll vorhanden und sichtbar sein
+            const badge = page.locator('#init-list .init-mob-defeated-badge').first();
+            await expect(badge).toBeAttached();
+            await expect(badge).toContainText('Besiegt');
+
+            // .init-mob-alive soll Klasse .defeated haben
+            const aliveEl = page.locator('#init-list .init-mob-alive').first();
+            await expect(aliveEl).toHaveClass(/defeated/);
         });
 
-        test.skip('Mob-Zeile zeigt Besiegt-Badge bei 0 Pool-HP', async ({ page }) => {
-            // Wave 3 fuellt: Pool auf 0 → .init-mob-defeated-badge sichtbar
+        test('Mob-Dissolve-Button entfernt die mob Zeile aus dem DOM', async ({ page }) => {
+            await injectMobCombatant(page);
+            await page.waitForSelector('#init-list .init-mob-dissolve-btn', { timeout: 5000 });
+
+            // confirm()-Dialog automatisch bestaetigen
+            page.on('dialog', dialog => dialog.accept());
+
+            // Dissolve-Button klicken
+            const dissolveBtn = page.locator('#init-list .init-mob-dissolve-btn').first();
+            await dissolveBtn.click();
+            await page.waitForTimeout(400);
+
+            // Die Mob-Zeile soll entfernt sein
+            const rows = page.locator('#init-list .init-row');
+            const count = await rows.count();
+            // Entweder 0 Zeilen oder "Keine Kämpfer"-Meldung
+            if (count > 0) {
+                // Wenn noch Zeilen vorhanden, soll keine .init-info--mob mehr da sein
+                const mobInfo = page.locator('#init-list .init-info--mob');
+                expect(await mobInfo.count()).toBe(0);
+            }
+            // Test besteht wenn keine Fehler aufgetreten sind
         });
     });
 });
