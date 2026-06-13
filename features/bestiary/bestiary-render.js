@@ -249,11 +249,17 @@ function renderBestiaryDetail(id, source) {
     }
 
     // Helper: render a list of trait/action objects
+    // IMPORTANT: sanitizeHTML strips data-* attributes, so we must apply
+    // sanitizeHTML FIRST (cleans dangerous content), then renderClickableDice
+    // (wraps dice formulas in <span data-action="bestiary-roll-dice">).
+    // This ensures data-action/data-value survive into the DOM.
     function renderTraitList(items) {
         if (!items || !items.length) return '';
         return items.map(function(item) {
-            // renderClickableDice runs before sanitizeHTML
-            var safeDesc = sanitizeHTML(renderClickableDice(item.desc || ''));
+            // Step 1: sanitize the raw text (removes scripts, dangerous attrs)
+            var cleanDesc = sanitizeHTML(item.desc || '');
+            // Step 2: wrap dice formulas with clickable spans (applied after sanitize)
+            var safeDesc = renderClickableDice(cleanDesc);
             var safeName = esc(item.name || '');
             return '<div class="bestiary-statblock-trait">' +
                 '<span class="bestiary-statblock-trait-name">' + safeName + '.</span> ' +
@@ -444,9 +450,10 @@ function cleanupBestiaryEditor() {
 // ============================================================
 var BestiaryRenderActions = {
     // Row click — select a monster and show detail
+    // Use raw dataset.id (NOT parseEntityId) because SRD IDs are strings like 'goblin'
     'bestiary-select': function(ctx) {
-        var id = ctx.id || (ctx.target && ctx.target.dataset.id);
-        var source = ctx.source || (ctx.target && ctx.target.dataset.source) || 'srd';
+        var id = (ctx.target && ctx.target.dataset.id) || String(ctx.id || '');
+        var source = (ctx.target && ctx.target.dataset.source) || 'srd';
         if (id) window.selectBestiary(id, source);
     },
     // Dice span click — roll via rollQrefDice (plan 01 wired it, plan 05 registers bestiary-roll-dice)
@@ -462,11 +469,16 @@ var BestiaryRenderActions = {
     }
 };
 
-if (typeof EventDelegation !== 'undefined') {
-    Object.entries(BestiaryRenderActions).forEach(function(entry) {
-        EventDelegation.registerAction(entry[0], entry[1]);
-    });
-}
+// Defer registration until after all modules (including EventDelegation) are loaded.
+// EventDelegation is a const defined later in load order; module-level typeof check
+// triggers TDZ ReferenceError in bundled mode. Use window.addEventListener instead.
+window.addEventListener('DOMContentLoaded', function() {
+    if (typeof EventDelegation !== 'undefined' && EventDelegation && typeof EventDelegation.registerAction === 'function') {
+        Object.entries(BestiaryRenderActions).forEach(function(entry) {
+            EventDelegation.registerAction(entry[0], entry[1]);
+        });
+    }
+});
 
 // ============================================================
 // WINDOW EXPORTS
