@@ -2,8 +2,8 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: verifying
-last_updated: "2026-06-13T16:05:31.809Z"
+status: planning
+last_updated: "2026-06-13T16:29:46.812Z"
 progress:
   total_phases: 7
   completed_phases: 3
@@ -15,8 +15,8 @@ progress:
 # Project State: D&D Kampagnen-Tracker Pro — Stabilisierung & Ausbau
 
 **Last Updated:** 2026-06-13
-**Phase:** 3
-**Status:** Phase complete — ready for verification
+**Phase:** 4
+**Status:** Ready to plan
 
 ---
 
@@ -24,18 +24,18 @@ progress:
 
 **Core Value:** Die App muss am Spieltisch zuverlässig offline laufen — ein Spielleiter-Begleiter, der nie im Weg steht und keine Daten verliert.
 
-**Current Focus:** Phase 03 — bestiary
+**Current Focus:** Phase 04 — Initiative-Erweiterungen (bereit zum Planen)
 
 ---
 
 ## Current Position
 
 ```
-Phase: 03 (bestiary) — EXECUTING
-Plan: 5 of 5
-Status: Phase complete — ready for verification
+Phase: 03 (bestiary) — COMPLETE ✓
+Next:  Phase 04 (Initiative-Erweiterungen) — bereit zum Planen
+Status: Phase 03 abgeschlossen & verifiziert (5/5 Pläne, Code-Review behoben)
 
-Progress: [██████████] 95% (18/19 Pläne abgeschlossen)
+Progress: [████░░░░░░] 43% (3/7 Phasen, 19/19 Pläne abgeschlossen)
 ```
 
 **Phases:**
@@ -43,8 +43,8 @@ Progress: [██████████] 95% (18/19 Pläne abgeschlossen)
 |---|-------|--------|
 | 1 | Stabilisierung | Complete |
 | 2 | Technik-Fundament | Complete |
-| 3 | Bestiary | Planned (5 Pläne) |
-| 4 | Initiative-Erweiterungen | Not started |
+| 3 | Bestiary | Complete (5/5 Pläne) |
+| 4 | Initiative-Erweiterungen | Next (bereit zum Planen) |
 | 5 | Welt & Story | Not started |
 | 6 | Spieler-Verwaltung | Not started |
 | 7 | Komfort & Analyse | Not started |
@@ -80,7 +80,7 @@ Progress: [██████████] 95% (18/19 Pläne abgeschlossen)
 | SRD string IDs: ctx.target.dataset.id statt parseEntityId | 3 (03-03) | parseEntityId('goblin') gibt null zurück; bestiary-select verwendet ctx.target.dataset.id direkt als String                                 |
 | Custom-Creatures speichern Rich-Text als HTML-Strings (03-04) | 3 (03-04) | SRD nutzt [{name,desc}]-Arrays; renderTraitList() erkennt Typ per typeof — keine Migration nötig |
 | bestiary-delete in plan-04 registriert (03-04) | 3 (03-04) | SC2 E2E braucht die Action in plan-04; plan-05 kann sie neu registrieren (EventDelegation last-write-wins) |
-| Phase 03-bestiary P03-05 | 45 | 3 tasks | 4 files |
+| getMonsterTemplates() → getSRDMonsters() Alias (03-02) | 3 (03-02) | Single source of truth; Code-Review fand Regression im Encounter-Template-Loader (deutsche _ids + Array-Shape) → behoben in ee66bbf |
 
 ### Known Blockers / Research Flags
 
@@ -104,13 +104,15 @@ Progress: [██████████] 95% (18/19 Pläne abgeschlossen)
 - [ ] Security-Audit nachziehen (SECURITY.md fehlt): `/gsd-secure-phase 1`
 - [x] Phase 2 diskutieren: `/gsd-discuss-phase 2` ✓ (2026-06-12, 02-CONTEXT.md)
 - [x] Phase 2 planen ✓ (Phase 2 Complete)
+- [ ] Phase 3 — 3 manuelle Browser-Checks (nicht-blockierend, aus 03-VERIFICATION): Offline-Modus zeigt alle 112 Monster, Pergament-Statblock-Optik, Klick-Würfel-Feel am Spieltisch
+- [ ] REQUIREMENTS.md Traceability: 4 REQ-IDs (WELT-06/07, CHAR-04, UX-03) aus späteren Phasen fehlen noch in der Traceability-Tabelle (von `phase complete` gemeldet)
 
 ---
 
 ## Session Continuity
 
-**Last action:** Plan 03-04 Bestiary CRUD + Editor abgeschlossen (2026-06-13) — #bestiary-editor-modal mit vollständigem bst-*-Formular (D-04-Schema), openBestiaryEditor (Edit/Create), saveBestiary (saveUndoState + sanitizeHTML + XSS-Mitigation), deleteBestiaryEntry (deleteWithConfirm), 4/4 E2E SC2 grün (Anlegen/Bearbeiten/Loeschen/Undo). 3 Auto-Fixes: renderTraitList dual-mode, bestiary-delete action vorgezogen, duplicate stub entfernt. Commits: 63b085d, b1b26d0.
-**Next action:** Plan 03-05 ausführen — Bestiary-Übernahme (Initiative + Encounter)
+**Last action:** Phase 03 (Bestiary) komplett ausgeführt & abgeschlossen (2026-06-13) — alle 5 Pläne in 4 Wellen. 03-01 Fundament (D.bestiary[]+Migration 3.0.0+Tab/Modul/CSS/Template-Wiring in build.py & loader.js+Wave-0-Tests), 03-02 SRD-Datenbestand (112 deutsche Statblocks via tools/build-srd-monsters.cjs aus openrpg.de, getMonsterTemplates()-Alias), 03-03 Bestiary-Tab (Liste/Detail/Filter, Pergament-Statblock, Klick-Würfel), 03-04 Eigene-Kreaturen-CRUD (bst-*-Editor+Undo), 03-05 Übernahme (Mengen-Dialog→Initiative mit Auto-Wurf/HP-Variation/statblockRef, Zu Encounter, Favoriten). Verifikation **passed** (14/14 must-haves, Build + 308/308 Unit + 11/11 E2E grün). Code-Review fand 3 Critical (Encounter-Template-Loader-Regression durch SRD-Alias + ungeguardetes Migration-console.log) + 3 Warnings — alle behoben (Commits ee66bbf, 2fd11da, 1f16d49). Phase-Commits: f93733a → 1f16d49.
+**Next action:** Phase 04 (Initiative-Erweiterungen) — `/gsd-discuss-phase 4` oder `/gsd-plan-phase 4` (nach `/clear`)
 
 ---
 
