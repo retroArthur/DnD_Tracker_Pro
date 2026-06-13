@@ -649,4 +649,75 @@ test.describe('Initiative System', () => {
             }
         });
     });
+
+    // ============================================================
+    // STATBLOCK-DRAWER (INIT-01) — Wave-0 Platzhalter (Wave 1 fuellt Implementierung)
+    // ============================================================
+
+    test.describe('statblock', () => {
+        test.skip('📖-Button öffnet Statblock-Panel', async ({ page }) => {
+            // Wave 1 fuellt: Bestiary-Monster per Knopf laden, Drawer pruefen
+            // Erwartung: .init-statblock-drawer.show sichtbar, Statblock-Inhalt vorhanden
+        });
+
+        test.skip('Statblock zeigt Basisinfos fuer Kombattanten ohne statblockRef', async ({ page }) => {
+            // Wave 1 fuellt: Manueller Kombattant → 📖 → .init-statblock-basic sichtbar
+        });
+
+        test.skip('Klick auf Overlay schliesst den Drawer', async ({ page }) => {
+            // Wave 1 fuellt: Overlay-Klick → .init-statblock-drawer.show entfernt
+        });
+    });
+
+    // ============================================================
+    // LEGENDAERE AKTIONEN + WIDERSTAENDE (INIT-02) — Wave-0 Platzhalter
+    // ============================================================
+
+    test.describe('legendary', () => {
+        test.skip('LA-Pips erscheinen bei Monster mit legendaryActionsPerRound > 0', async ({ page }) => {
+            // Wave 2 fuellt: Boss-Monster zur Initiative hinzufuegen, .la-pips pruefen
+        });
+
+        test.skip('Pip-Klick reduziert verbleibende LA um 1', async ({ page }) => {
+            // Wave 2 fuellt: .la-dot:first-child klicken, remaining--
+        });
+
+        test.skip('LA-Pips füllen sich bei Rundenübergang automatisch auf', async ({ page }) => {
+            // Wave 2 fuellt: nextTurn() bis Runde 2, LA-Reset pruefen (D-10)
+        });
+
+        test.skip('LR-Pips erscheinen bei Monster mit (N-mal täglich)-Trait', async ({ page }) => {
+            // Wave 2 fuellt: Monster mit LR-Trait → .lr-pips sichtbar
+        });
+
+        test.skip('LR resetten NICHT bei Rundenübergang (D-07)', async ({ page }) => {
+            // Wave 2 fuellt: nextTurn bis Runde 2, LR unveraendert pruefen
+        });
+
+        test.skip('Manueller LR-Reset-Knopf setzt LR zurueck', async ({ page }) => {
+            // Wave 2 fuellt: .lr-reset-btn klicken, remaining === max pruefen
+        });
+    });
+
+    // ============================================================
+    // MOB-MODUS (INIT-03) — Wave-0 Platzhalter
+    // ============================================================
+
+    test.describe('mob', () => {
+        test.skip('Mob-Toggle erzeugt eine Zeile statt N Einzelzeilen', async ({ page }) => {
+            // Wave 3 fuellt: confirm-Dialog akzeptieren, nur 1 .mob-entry in #init-list
+        });
+
+        test.skip('Mob-Zeile zeigt "X von N am Leben" korrekt an', async ({ page }) => {
+            // Wave 3 fuellt: .init-mob-alive Text pruefen
+        });
+
+        test.skip('Schaden auf Pool reduziert lebende Kreaturen', async ({ page }) => {
+            // Wave 3 fuellt: HP-Abzug → .init-mob-alive aktualisiert
+        });
+
+        test.skip('Mob-Zeile zeigt Besiegt-Badge bei 0 Pool-HP', async ({ page }) => {
+            // Wave 3 fuellt: Pool auf 0 → .init-mob-defeated-badge sichtbar
+        });
+    });
 });
