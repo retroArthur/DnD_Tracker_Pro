@@ -22,7 +22,8 @@ findings:
   warning: 3
   info: 2
   total: 8
-status: issues_found
+status: resolved
+resolved: 2026-06-13
 ---
 
 # Phase 03: Code Review Report
@@ -219,3 +220,20 @@ The implementation is correct (sanitize first, then add safe dice spans). Only t
 _Reviewed: 2026-06-13T16:18:20Z_
 _Reviewer: Claude (gsd-code-reviewer)_
 _Depth: deep_
+
+---
+
+## Resolution (2026-06-13)
+
+All blockers and warnings fixed during execute-phase, verified by rebuild + 308/308 unit + 11/11 bestiary E2E.
+
+| ID | Severity | Status | Commit |
+|----|----------|--------|--------|
+| CR-01 | Critical | Fixed — 6 encounter button keys → German SRD `_id`s | `ee66bbf` |
+| CR-02 | Critical | Fixed — `loadMonsterTemplate` derives init/perception from dex/wis; `_srdFieldToHTML()` converts `{name,desc}` arrays to HTML | `ee66bbf` |
+| CR-03 | Critical | Fixed — migration `console.log` guarded by `DEBUG_MODE` | `2fd11da` |
+| WR-01 | Warning | Fixed — removed dead duplicate action registration from `bestiary-render.js` | `1f16d49` |
+| WR-02 | Warning | Fixed — `esc(monster.source)` in list badge/attributes | `1f16d49` |
+| WR-03 | Warning | Fixed — re-sanitize stored HTML in `setBstRichEditor` | `1f16d49` |
+| IN-02 | Info | Fixed — corrected inverted `renderClickableDice` comment | `1f16d49` |
+| IN-01 | Info | Deferred — encounter attr-mod badge lags until field interaction (cosmetic, pre-existing pattern); form values are correct |
