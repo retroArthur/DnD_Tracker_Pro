@@ -25,15 +25,31 @@ var MONSTER_TEMPLATES = new Proxy(
         }
     }
 );
+// Konvertiert ein SRD-Statblock-Feld (Array [{name,desc}]) oder einen Legacy-HTML-String
+// in HTML fuer das Encounter-Formular. SRD-Statblocks liefern Arrays, keine Strings —
+// sanitizeHTML(array) wuerde sonst "[object Object]" erzeugen.
+function _srdFieldToHTML(field) {
+    if (!field) return '';
+    if (typeof field === 'string') return field;
+    if (Array.isArray(field)) {
+        return field
+            .map(e => '<p><strong>' + esc(e.name || '') + '.</strong> ' + esc(e.desc || '') + '</p>')
+            .join('');
+    }
+    return '';
+}
 function loadMonsterTemplate(key) {
     const templates = getMonsterTemplates();
     const t = templates[key];
     if (!t) return;
+    // SRD-Statblocks haben kein init-/perception-Feld -> aus Attributen ableiten.
+    const _dexMod = Math.floor((Number(t.dex) - 10) / 2);
+    const _wisMod = Math.floor((Number(t.wis) - 10) / 2);
     $('enc-name').value = t.name;
     $('enc-creature-type').value = t.creatureType;
     $('enc-cr').value = t.cr;
     $('enc-ac').value = String(t.ac);
-    $('enc-init').value = String(t.init);
+    $('enc-init').value = String(Number.isFinite(t.init) ? t.init : (Number.isFinite(_dexMod) ? _dexMod : 0));
     $('enc-hp').value = String(t.hp);
     // Load speed (support both old string format and new object format)
     if (typeof t.speed === 'object' && t.speed !== null) {
@@ -50,16 +66,16 @@ function loadMonsterTemplate(key) {
         $('enc-speed-fly').value = '';
         $('enc-speed-burrow').value = '';
     }
-    $('enc-perception').value = String(parseInt(String(t.perception)) || 0);
+    $('enc-perception').value = String(parseInt(String(t.perception), 10) || (Number.isFinite(_wisMod) ? 10 + _wisMod : 0));
     $('enc-str').value = t.str;
     $('enc-dex').value = t.dex;
     $('enc-con').value = t.con;
     $('enc-int').value = t.int;
     $('enc-wis').value = t.wis;
     $('enc-cha').value = t.cha;
-    $('enc-traits').innerHTML = sanitizeHTML(t.traits) || '';
-    $('enc-equipment').innerHTML = sanitizeHTML(t.equipment) || '';
-    $('enc-actions').innerHTML = sanitizeHTML(t.actions) || '';
+    $('enc-traits').innerHTML = sanitizeHTML(_srdFieldToHTML(t.traits)) || '';
+    $('enc-equipment').innerHTML = sanitizeHTML(_srdFieldToHTML(t.equipment)) || '';
+    $('enc-actions').innerHTML = sanitizeHTML(_srdFieldToHTML(t.actions)) || '';
     // Set languages
     const langSelect = $('enc-languages');
     Array.from(langSelect.options).forEach(o => (o.selected = false));
