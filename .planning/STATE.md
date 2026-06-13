@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-last_updated: "2026-06-13T12:00:17.319Z"
+last_updated: "2026-06-13T15:03:39.733Z"
 progress:
   total_phases: 7
   completed_phases: 2
   total_plans: 19
-  completed_plans: 15
+  completed_plans: 16
   percent: 29
 ---
 
@@ -32,7 +32,7 @@ progress:
 
 ```
 Phase: 03 (bestiary) — EXECUTING
-Plan: 2 of 5
+Plan: 3 of 5
 Status: Ready to execute
 
 Progress: [===>......] 29% (2/7 Phasen abgeschlossen)
