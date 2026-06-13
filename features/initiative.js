@@ -159,6 +159,11 @@ function renderInit() {
                 </div>
             </div>`;
             }
+            // INIT-03: Mob-Modus — eine Zeile fuer N Kreaturen (D-11)
+            // Concentration + Quick Actions sind fuer Mob-Zeilen versteckt (UI-SPEC Feature Hiding)
+            if (cb.mob) {
+                return typeof window.renderMobRow === 'function' ? window.renderMobRow(cb, i, init) : '';
+            }
             // Typ-Label ermitteln
             const typeLabels = {
                 enemy: 'Gegner',
@@ -176,8 +181,8 @@ function renderInit() {
                 <div class="init-type">${typeLabel}${cb.cr ? ` • CR ${cb.cr}` : ''}</div>
                 ${effects ? `<div class="init-effects">${effects}</div>` : ''}
                 ${dead && cb.type === 'player' ? renderDeathSaves(cb) : ''}
-                ${!dead ? renderConcentration(cb) : ''}
-                ${cb.concentration?.pendingCheck ? renderConcentrationCheck(cb, cb.concentration.pendingCheck) : ''}
+                ${!dead && !cb.mob ? renderConcentration(cb) : ''}
+                ${!cb.mob && cb.concentration?.pendingCheck ? renderConcentrationCheck(cb, cb.concentration.pendingCheck) : ''}
                 ${cb.legendaryActions && cb.legendaryActions.max > 0 ? renderLegendaryActionPips(cb) : ''}
                 ${cb.legendaryResistance && cb.legendaryResistance.max > 0 ? renderLegendaryResistancePips(cb) : ''}
             </div>
@@ -199,7 +204,9 @@ function renderInit() {
         })
         .join('');
     // Schnellaktionen-Leiste rendern
-    if (typeof window.renderQuickActionsBar === 'function') {
+    // Feature-Hiding: fuer Mob-Kombattanten keine Quick Actions (UI-SPEC INIT-03 Feature Hiding)
+    const activeCb = init.combatants[init.currentTurn];
+    if (typeof window.renderQuickActionsBar === 'function' && activeCb && !activeCb.mob) {
         window.renderQuickActionsBar();
     }
     // Clear EntityLookup cache after render to prevent stale data
