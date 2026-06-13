@@ -36,9 +36,9 @@ Requirements für diesen Milestone. Jedes wird genau einer Roadmap-Phase zugeord
 
 ### Initiative-Erweiterungen (INIT)
 
-- [ ] **INIT-01**: Nutzer kann per Klick auf einen Kombattanten den vollständigen Statblock als Popup sehen (Aktionen, Traits, Saves)
-- [ ] **INIT-02**: Nutzer kann Legendäre Aktionen und Legendäre Resistenzen pro Runde zählen und zurücksetzen
-- [ ] **INIT-03**: Nutzer kann Gegnergruppen als Mob führen (eine Initiative-Zeile, Pool-HP, Sammel-Angriffe)
+- [x] **INIT-01**: Nutzer kann per Klick auf einen Kombattanten den vollständigen Statblock als Popup sehen (Aktionen, Traits, Saves)
+- [x] **INIT-02**: Nutzer kann Legendäre Aktionen und Legendäre Resistenzen pro Runde zählen und zurücksetzen
+- [x] **INIT-03**: Nutzer kann Gegnergruppen als Mob führen (eine Initiative-Zeile, Pool-HP, Sammel-Angriffe)
 
 ### Welt & Story (WELT)
 
@@ -114,9 +114,9 @@ Explizit ausgeschlossen. Dokumentiert, um Scope-Creep zu verhindern.
 | BEST-01     | Phase 3 | Complete |
 | BEST-02     | Phase 3 | Complete |
 | BEST-03     | Phase 3 | Complete |
-| INIT-01     | Phase 4 | Pending |
-| INIT-02     | Phase 4 | Pending |
-| INIT-03     | Phase 4 | Pending |
+| INIT-01     | Phase 4 | Complete |
+| INIT-02     | Phase 4 | Complete |
+| INIT-03     | Phase 4 | Complete |
 | WELT-01     | Phase 5 | Pending |
 | WELT-02     | Phase 5 | Pending |
 | WELT-03     | Phase 5 | Pending |

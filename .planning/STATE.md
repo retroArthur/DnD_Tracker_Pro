@@ -3,20 +3,20 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-last_updated: "2026-06-13T22:31:27.487Z"
+last_updated: "2026-06-13T22:57:46.315Z"
 progress:
   total_phases: 7
   completed_phases: 3
   total_plans: 23
-  completed_plans: 19
+  completed_plans: 20
   percent: 43
 ---
 
 # Project State: D&D Kampagnen-Tracker Pro — Stabilisierung & Ausbau
 
-**Last Updated:** 2026-06-13
+**Last Updated:** 2026-06-14
 **Phase:** 4
-**Status:** Ready to execute
+**Status:** Executing Phase 04 — Plan 2 von 4
 
 ---
 
@@ -24,18 +24,19 @@ progress:
 
 **Core Value:** Die App muss am Spieltisch zuverlässig offline laufen — ein Spielleiter-Begleiter, der nie im Weg steht und keine Daten verliert.
 
-**Current Focus:** Phase 04 — Initiative-Erweiterungen (geplant: 4 Pläne in 4 Wellen, bereit zur Ausführung)
+**Current Focus:** Phase 04 — initiative-erweiterungen
 
 ---
 
 ## Current Position
 
 ```
-Phase: 04 (Initiative-Erweiterungen) — geplant (4 Pläne in 4 Wellen, INIT-01/02/03)
-Next:  Phase 04 ausführen (/gsd-execute-phase 4)
-Status: Ready to execute
+Phase: 04 (initiative-erweiterungen) — EXECUTING
+Plan: 2 of 4
+Next:  Phase 04 Plan 2 ausführen (04-02-PLAN.md)
+Status: Executing Phase 04 — Plan 2 von 4
 
-Progress: [████░░░░░░] 43% (3/7 Phasen abgeschlossen, 19/23 Pläne)
+Progress: [████░░░░░░] 43% (3/7 Phasen abgeschlossen, 20/23 Pläne)
 ```
 
 **Phases:**
@@ -44,7 +45,7 @@ Progress: [████░░░░░░] 43% (3/7 Phasen abgeschlossen, 19/23 
 | 1 | Stabilisierung | Complete |
 | 2 | Technik-Fundament | Complete |
 | 3 | Bestiary | Complete (5/5 Pläne) |
-| 4 | Initiative-Erweiterungen | Planned (4 Pläne, bereit zur Ausführung) |
+| 4 | Initiative-Erweiterungen | In Progress (1/4 Pläne abgeschlossen) |
 | 5 | Welt & Story | Not started |
 | 6 | Spieler-Verwaltung | Not started |
 | 7 | Komfort & Analyse | Not started |
@@ -111,8 +112,8 @@ Progress: [████░░░░░░] 43% (3/7 Phasen abgeschlossen, 19/23 
 
 ## Session Continuity
 
-**Last action:** Phase 04 (Initiative-Erweiterungen) UI-Design-Contract erstellt & verifiziert (2026-06-13, `/gsd-ui-phase 4`). `04-UI-SPEC.md` deckt INIT-01 Statblock-Drawer (rechtes Panel, 📖-Button pro Zeile, Pergament-Statblock + klickbare Würfe, Basis-Infos-Fallback ohne statblockRef), INIT-02 Legendäre-Aktionen-/Resistenz-Pips (Death-Save-Optik; LA Auto-Reset @ Init 20, LR **kein** Auto-Reset + manueller ↺-Knopf) und INIT-03 Mob-Zeile (Pool-HP, „X von N am Leben" mit Farbcodierung, 2 Angriffsmodi N-fach/Mob-Regel, auto-summierter Schaden, Feature-Suppression-Tabelle) ab — inkl. deutscher UI-Texte, Data-Action-Registry und CSS-Specs (alle Tokens aus variables.css/initiative.css, neue Klassen in initiative.css). Checker: 6/6 Dimensionen bestanden; 1 nutzer-bestätigte Abweichung (3 Schriftgewichte 400/600/700, um per D-08 die bestehende Initiative-Optik exakt zu treffen); Mob-Control-Abstände auf 4px-Raster normalisiert. Commits b464460 (Researcher) + 58b9f47 (Revision). (Davor: 14 Entscheidungen D-01..D-14 in 04-CONTEXT.md via `/gsd-discuss-phase 4`, Commit 95a0de5; Phase 03 Bestiary abgeschlossen & verifiziert.)
-**Next action:** Phase 04 (Initiative-Erweiterungen) planen — `/gsd-plan-phase 4` (nach `/clear`). Der Planner nutzt `04-UI-SPEC.md` als Design-Kontext.
+**Last action:** Phase 04 Plan 01 (Wave-0-Fundament) ausgefuehrt (2026-06-14). features/initiative-mob.js + features/initiative-statblock.js erstellt; build.py + loader.js registriert; 4 CSS-Sektionen in initiative.css angehaengt; 27 Unit-Tests (alle gruen, Anker-Case INIT-03/DMG-Mob-Regel); 3 E2E describe-Stubs. Build sauber (1.67 MB, keine Duplikat-Fehler). Commits: 3635437, 78511a9, 14d7c44.
+**Next action:** Phase 04 Plan 02 ausfuehren (Wave 1 — Statblock-Drawer Vollimplementierung).
 
 ---
 

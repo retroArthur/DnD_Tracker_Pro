@@ -118,7 +118,7 @@ Plans:
 Plans:
 **Wave 0**
 
-- [ ] 04-01-PLAN.md — Wave-0-Fundament: 2 Modul-Skelette (initiative-statblock.js + initiative-mob.js mit reinen Mob/LR-Funktionen), build.py+loader.js-Registrierung, CSS-Sektionen, Nyquist-Unit-Tests + E2E-Stubs (INIT-01/02/03)
+- [x] 04-01-PLAN.md — Wave-0-Fundament: 2 Modul-Skelette (initiative-statblock.js + initiative-mob.js mit reinen Mob/LR-Funktionen), build.py+loader.js-Registrierung, CSS-Sektionen, Nyquist-Unit-Tests + E2E-Stubs (INIT-01/02/03)
 
 **Wave 1** *(blocked on Wave 0)*
 
@@ -180,7 +180,7 @@ Plans:
 | 1. Stabilisierung           | 9/9            | Complete    | 2026-06-12 |
 | 2. Technik-Fundament        | 5/5 | Complete    | 2026-06-12 |
 | 3. Bestiary                 | 5/5 | Complete    | 2026-06-13 |
-| 4. Initiative-Erweiterungen | 0/4            | Planned     | -         |
+| 4. Initiative-Erweiterungen | 1/4 | In Progress|  |
 | 5. Welt & Story             | 0/?            | Not started | -         |
 | 6. Spieler-Verwaltung       | 0/?            | Not started | -         |
 | 7. Komfort & Analyse        | 0/?            | Not started | -         |
