@@ -1,5 +1,64 @@
 <!-- BESTIARY VIEW - Master-Detail Layout -->
-<!-- Inhalt wird durch Plan 03 gefuellt. -->
 <section id="view-bestiary" class="view bestiary-view">
-    <div class="bestiary-list" id="bestiary-list"></div>
+    <div class="section-toolbar">
+        <!-- Gruppe 1: Identitaet -->
+        <div class="section-toolbar-identity">
+            <span class="section-toolbar-title" style="color:var(--gold);font-weight:700;">&#x1F409; Bestiar</span>
+            <span class="section-toolbar-count" id="bestiary-count">0</span>
+        </div>
+        <!-- Gruppe 2: Suche -->
+        <div class="section-toolbar-search">
+            <div class="search-wrapper">
+                <input type="text" id="bestiary-search" class="toolbar-search"
+                       placeholder="Monster suchen..."
+                       data-action="search-input" data-render="renderBestiaryList">
+                <button class="search-clear-btn" data-action="clear-search"
+                        data-value="bestiary-search" title="Suche leeren">&#x2715;</button>
+            </div>
+        </div>
+        <!-- Gruppe 3: Filter -->
+        <div class="section-toolbar-filters bestiary-toolbar-filters">
+            <label class="bestiary-filter-label">HG</label>
+            <select id="bestiary-filter-cr" class="bestiary-filter-select"
+                    data-action="search-input" data-render="renderBestiaryList">
+                <option value="">Alle</option>
+            </select>
+            <label class="bestiary-filter-label">Typ</label>
+            <select id="bestiary-filter-type" class="bestiary-filter-select"
+                    data-action="search-input" data-render="renderBestiaryList">
+                <option value="">Alle</option>
+            </select>
+            <label class="bestiary-filter-chip">
+                <input type="checkbox" id="bestiary-filter-custom"
+                       data-action="search-input" data-render="renderBestiaryList">
+                Nur Eigene
+            </label>
+            <label class="bestiary-filter-chip">
+                <input type="checkbox" id="bestiary-filter-favs"
+                       data-action="search-input" data-render="renderBestiaryList">
+                Favoriten
+            </label>
+        </div>
+        <!-- Gruppe 4: Primaere Aktion -->
+        <div class="section-toolbar-actions">
+            <button class="btn btn-success bestiary-add-btn"
+                    data-action="call" data-value="openBestiaryEditor">+ Neue Kreatur</button>
+        </div>
+    </div>
+
+    <!-- Master-Detail Layout -->
+    <div class="bestiary-layout">
+        <!-- Liste (Master) -->
+        <div class="bestiary-master">
+            <div id="bestiary-list" class="bestiary-list"></div>
+        </div>
+
+        <!-- Detail-Sidebar -->
+        <div class="bestiary-detail" id="bestiary-detail-panel">
+            <div class="bestiary-detail-empty">
+                <div class="bestiary-detail-empty-icon">&#x1F409;</div>
+                <div class="bestiary-detail-empty-text">W&#228;hle ein Monster aus der Liste</div>
+            </div>
+        </div>
+    </div>
 </section>

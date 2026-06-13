@@ -1,4 +1,555 @@
 /* ========================================
    BESTIARY — LIST + DETAIL + STATBLOCK + EDITOR
-   Placeholder — Inhalt wird durch Plan 03 gefuellt.
+   Analog: assets/styles/npcs.css
+   Alle Farben via CSS-Variablen aus variables.css
    ======================================== */
+
+/* ============================================================
+   VIEW CONTAINER
+   ============================================================ */
+
+.bestiary-view.active {
+    display: flex;
+    flex-direction: column;
+    height: calc(100vh - 120px);
+    overflow: hidden;
+}
+
+/* ============================================================
+   TOOLBAR FILTER-AREA EXTRAS
+   ============================================================ */
+
+.bestiary-toolbar-filters {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.bestiary-filter-label {
+    font-size: 0.85em;
+    color: var(--text-dim);
+    white-space: nowrap;
+}
+
+.bestiary-filter-select {
+    padding: 6px 10px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-size: 0.85em;
+    cursor: pointer;
+}
+
+.bestiary-filter-select:focus {
+    border-color: var(--gold);
+    outline: none;
+}
+
+/* Filter-Chip (Checkbox-backed) */
+.bestiary-filter-chip {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 5px 10px;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    font-size: 0.82em;
+    color: var(--text-dim);
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+    user-select: none;
+}
+
+.bestiary-filter-chip:hover {
+    border-color: var(--gold-dim);
+    color: var(--text);
+}
+
+.bestiary-filter-chip input[type="checkbox"] {
+    display: none;
+}
+
+.bestiary-filter-chip:has(input:checked) {
+    background: var(--gold);
+    border-color: var(--gold);
+    color: var(--bg-dark);
+    font-weight: 700;
+}
+
+/* Count badge */
+#bestiary-count {
+    background: var(--bg-elevated);
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 0.8em;
+    color: var(--text-dim);
+}
+
+/* ============================================================
+   MASTER-DETAIL LAYOUT (1fr + 825px — spiegelt .npc-layout)
+   ============================================================ */
+
+.bestiary-layout {
+    display: grid;
+    grid-template-columns: 1fr 825px;
+    gap: 0;
+    flex: 1;
+    overflow: hidden;
+}
+
+/* ============================================================
+   MASTER (LIST PANEL)
+   ============================================================ */
+
+.bestiary-master {
+    overflow-y: auto;
+    padding: 16px;
+    background: var(--bg-dark);
+}
+
+.bestiary-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding-bottom: 48px;
+}
+
+/* ============================================================
+   LIST ITEM (analog .npc-item)
+   ============================================================ */
+
+.bestiary-list-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    background: var(--bg-card);
+    border-radius: 10px;
+    cursor: pointer;
+    border: 2px solid transparent;
+    transition: all 0.2s;
+    min-height: 52px;
+    box-sizing: border-box;
+}
+
+.bestiary-list-item:hover {
+    background: var(--bg-elevated);
+}
+
+.bestiary-list-item.selected {
+    border-color: var(--gold);
+    background: var(--bg-elevated);
+}
+
+/* Origin badge: SRD / Eigen */
+.bestiary-badge {
+    font-size: 0.65em;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-weight: 700;
+    flex-shrink: 0;
+    white-space: nowrap;
+}
+
+.bestiary-badge.srd {
+    background: var(--bg-elevated);
+    color: var(--text-dim);
+}
+
+.bestiary-badge.custom {
+    background: var(--gold-dim);
+    color: var(--bg-dark);
+}
+
+/* Monster name */
+.bestiary-name {
+    font-weight: 700;
+    color: var(--text);
+    flex: 1;
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* CR display */
+.bestiary-cr {
+    font-size: 0.8em;
+    color: var(--text-dim);
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+/* Creature type */
+.bestiary-type {
+    font-size: 0.8em;
+    color: var(--text-dim);
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+/* Favoriten-Stern */
+.bestiary-fav {
+    background: none;
+    border: none;
+    color: var(--text-dim);
+    font-size: 1.1em;
+    cursor: pointer;
+    padding: 4px;
+    flex-shrink: 0;
+    line-height: 1;
+    border-radius: 4px;
+    transition: color 0.15s;
+    /* Minimum tap zone: ~32x32px via padding */
+    min-width: 28px;
+    min-height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.bestiary-fav:hover {
+    color: var(--gold);
+}
+
+.bestiary-fav.active {
+    color: var(--gold);
+}
+
+/* Screen-reader-only helper */
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+/* Empty results message */
+.bestiary-empty-results {
+    text-align: center;
+    color: var(--text-dim);
+    padding: 32px 16px;
+    font-size: 0.95em;
+}
+
+/* ============================================================
+   DETAIL PANEL (analog .npc-detail)
+   ============================================================ */
+
+.bestiary-detail {
+    background: var(--bg-card);
+    border-left: 1px solid var(--border);
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    position: sticky;
+    top: 0;
+    height: calc(100vh - 120px);
+    align-self: start;
+}
+
+/* Empty state */
+.bestiary-detail-empty {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-dim);
+    padding: 32px;
+}
+
+.bestiary-detail-empty-icon {
+    font-size: 3em;
+    margin-bottom: 12px;
+    opacity: 0.3;
+}
+
+.bestiary-detail-empty-text {
+    font-size: 0.9em;
+}
+
+/* Detail content wrapper */
+.bestiary-detail-content {
+    padding: 20px;
+    flex: 1;
+}
+
+/* Monster name heading (above parchment) */
+.bestiary-detail-name {
+    font-size: 1.2em;
+    font-weight: 700;
+    color: var(--gold);
+    margin-bottom: 8px;
+}
+
+/* Portrait (custom creatures only) */
+.bestiary-detail-avatar {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid var(--gold-dim);
+    margin-bottom: 12px;
+}
+
+/* Action buttons row */
+.bestiary-detail-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 16px;
+}
+
+/* ============================================================
+   PARCHMENT STATBLOCK
+   The .read-aloud.parchment CSS from party.css provides the
+   warm-beige gradient + serif font. We add bestiary-specific
+   heading and dice styles.
+   ============================================================ */
+
+/* The block itself reuses .read-aloud.parchment from party.css */
+.bestiary-statblock {
+    margin: 0;
+    padding: 16px 20px;
+    border-radius: 4px;
+    font-style: normal; /* override italic from .read-aloud */
+}
+
+/* Monster name inside parchment (classic 5e red) */
+.bestiary-statblock-name {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--red);
+    font-family: Georgia, 'Times New Roman', serif;
+    margin: 0 0 2px 0;
+}
+
+/* Size/type/alignment subline */
+.bestiary-statblock-subline {
+    font-size: 12px;
+    font-style: italic;
+    color: rgba(44, 24, 16, 0.7);
+    margin: 0 0 8px 0;
+}
+
+/* Horizontal rule (parchment-tinted) */
+.bestiary-statblock hr {
+    border: none;
+    border-top: 1px solid #8b4513;
+    margin: 8px 0;
+}
+
+/* AC / HP / Speed row */
+.bestiary-statblock-basics {
+    font-size: 13px;
+    line-height: 1.6;
+    margin: 8px 0;
+}
+
+.bestiary-statblock-basics p {
+    margin: 2px 0;
+}
+
+/* Attribute 6-column grid */
+.bestiary-statblock-attrs {
+    display: grid;
+    grid-template-columns: repeat(6, 52px);
+    gap: 4px;
+    text-align: center;
+    margin: 8px 0;
+    font-size: 12px;
+}
+
+.bestiary-attr-cell {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background: rgba(139, 69, 19, 0.08);
+    border-radius: 4px;
+    padding: 4px 2px;
+}
+
+.bestiary-attr-label {
+    font-weight: 700;
+    font-size: 0.9em;
+    color: #5c2d0a;
+}
+
+.bestiary-attr-value {
+    font-size: 0.95em;
+    color: #2c1810;
+}
+
+/* Saves / Skills / Senses / Languages block */
+.bestiary-statblock-meta {
+    font-size: 12px;
+    line-height: 1.6;
+    margin: 6px 0;
+}
+
+.bestiary-statblock-meta p {
+    margin: 2px 0;
+}
+
+.bestiary-statblock-meta strong {
+    color: #5c2d0a;
+}
+
+/* Section headings (Eigenschaften, Aktionen, etc.) */
+.bestiary-statblock-section-heading {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--red);
+    font-family: Georgia, 'Times New Roman', serif;
+    border-bottom: 1px solid var(--red);
+    margin: 12px 0 6px 0;
+    padding-bottom: 2px;
+}
+
+/* Trait / Action items */
+.bestiary-statblock-trait {
+    font-size: 13px;
+    line-height: 1.65;
+    margin: 6px 0;
+}
+
+.bestiary-statblock-trait-name {
+    font-weight: 700;
+    font-style: italic;
+}
+
+/* Attribution footer */
+.bestiary-attribution {
+    font-size: 0.75em;
+    color: var(--text-dim);
+    margin-top: 16px;
+    padding-top: 8px;
+    border-top: 1px solid var(--border);
+    text-align: center;
+}
+
+/* ============================================================
+   CLICKABLE DICE (D-09)
+   color: var(--cyan); hover: var(--gold)
+   ============================================================ */
+
+.bestiary-dice {
+    color: var(--cyan);
+    cursor: pointer;
+    text-decoration: underline dotted;
+    transition: color 0.15s;
+}
+
+.bestiary-dice:hover {
+    color: var(--gold);
+}
+
+/* ============================================================
+   MOBILE: single-column layout at [data-layout="mobile"]
+   ============================================================ */
+
+[data-layout="mobile"] .bestiary-layout {
+    grid-template-columns: 1fr;
+    overflow: visible;
+}
+
+[data-layout="mobile"] .bestiary-detail {
+    position: static;
+    height: auto;
+    border-left: none;
+    border-top: 1px solid var(--border);
+}
+
+[data-layout="mobile"] .bestiary-master {
+    overflow-y: visible;
+}
+
+[data-layout="mobile"] .bestiary-statblock-attrs {
+    grid-template-columns: repeat(6, 1fr);
+}
+
+[data-layout="mobile"] .bestiary-toolbar-filters {
+    gap: 6px;
+}
+
+[data-layout="mobile"] .bestiary-view.active {
+    height: auto;
+    overflow: visible;
+}
+
+/* Mobile: hide list when monster is selected */
+[data-layout="mobile"] .bestiary-master.monster-selected {
+    display: none;
+}
+
+[data-layout="mobile"] .bestiary-detail.monster-selected {
+    display: flex;
+}
+
+/* Back button (mobile) */
+.bestiary-back-btn {
+    display: none;
+}
+
+[data-layout="mobile"] .bestiary-back-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    margin-bottom: 12px;
+    padding: 8px 12px;
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    cursor: pointer;
+    font-size: 0.9em;
+}
+
+/* ============================================================
+   RESPONSIVE: narrow screens (max-width 900px)
+   ============================================================ */
+
+@media (max-width: 900px) {
+    .bestiary-layout {
+        grid-template-columns: 1fr;
+        overflow: visible;
+    }
+
+    .bestiary-detail {
+        position: static;
+        height: auto;
+        border-left: none;
+        border-top: 1px solid var(--border);
+    }
+
+    .bestiary-master {
+        overflow-y: visible;
+    }
+
+    .bestiary-view.active {
+        height: auto;
+        overflow: visible;
+    }
+}
+
+@media (max-width: 480px) {
+    .bestiary-statblock-attrs {
+        grid-template-columns: repeat(6, 1fr);
+    }
+
+    .bestiary-list-item {
+        flex-wrap: wrap;
+        gap: 6px;
+        min-height: 44px;
+    }
+}
