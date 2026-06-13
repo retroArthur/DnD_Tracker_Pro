@@ -46,11 +46,19 @@ Die App muss am Spieltisch **zuverlässig offline laufen** — ein Spielleiter-B
 - ✓ Qualitätszyklus: Code-Review mit 23 behobenen Findings (11 Critical, u. a. TDZ-Bundle-Crash), 300/300 Unit-Tests, Smoke-E2E 7/7 gegen Production-Bundle
 - Offen als UAT (02-HUMAN-UAT.md): 6 manuelle Browser-Tests inkl. einmaliger GitHub-Pages-Aktivierung (Settings → Pages → Source: „GitHub Actions")
 
+**Validated in Phase 3: Bestiary (2026-06-13):**
+
+- ✓ Bestiary-Tab: 112 deutsche SRD-5.1-Statblocks offline (inline, `getSRDMonsters()` Lazy-Cache, nie in `D`), Liste mit Einzel-Pass-Filter/CR-Sortierung/Virtual-Scroll, klassischer 5e-Pergament-Statblock mit klickbaren Würfeln (BEST-01)
+- ✓ Eigene Kreaturen: `bst-*`-Editor (volles D-04-Schema), CRUD mit Undo, geteilter Render-/Würfel-Pfad mit SRD-Monstern (BEST-02)
+- ✓ Übernahme: „Zur Initiative" (Mengen-Dialog, DoS-Cap 100, Auto-Wurf, ±10% HP-Variation, Nummerierung, statblockRef) und „Zu Encounter" (korrekte HP/AC, Undo-bar) (BEST-03)
+- ✓ Qualitätszyklus: Verifikation 14/14 must-haves, Production-Build + 308/308 Unit + 11/11 Bestiary-E2E grün, Code-Review (3 Critical + 3 Warnings) vollständig behoben — inkl. Regression im Encounter-Template-Loader durch den `getMonsterTemplates()`-SRD-Alias
+- Offen als manuelle Checks (03-VERIFICATION, nicht-blockierend): Offline-Anzeige aller 112 Monster, Pergament-Optik, Klick-Würfel-Feel
+
 ### Active
 
 **Milestone-Teil C — Spielleiter-Features (Reihenfolge laut Roadmap, Phasen 3–7):**
 
-- [ ] Monster-Kompendium / Bestiary-Tab (SRD-Statblocks offline + eigene Kreaturen, Ausbau von monster-templates.js)
+- [x] Monster-Kompendium / Bestiary-Tab ✓ Phase 3 (SRD-Statblocks offline + eigene Kreaturen, monster-templates.js auf SRD-Store umgestellt)
 - [ ] Statblock-Popup in der Initiative (kompletter Statblock statt nur HP/AC)
 - [ ] Tracker für Legendäre Aktionen & Resistenzen in der Initiative
 - [ ] Mob-/Massenkampf-Modus (Gegnergruppen, Sammel-Würfe)
@@ -122,4 +130,4 @@ This document evolves at phase transitions and milestone boundaries.
 
 ---
 
-_Last updated: 2026-06-13 after Phase 2 completion (Technik-Fundament verifiziert, TECH-01 bis TECH-04; 6 Browser-UAT-Punkte offen)_
+_Last updated: 2026-06-13 after Phase 3 completion (Bestiary verifiziert, BEST-01 bis BEST-03; 112 SRD-Statblocks offline; Code-Review behoben; 3 nicht-blockierende Browser-Checks offen)_
