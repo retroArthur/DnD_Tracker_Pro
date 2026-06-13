@@ -6,7 +6,7 @@ import { test, expect } from '@playwright/test';
  *
  * SC1 (BEST-01): Suche, Filter, Wuerfelklick
  * SC2 (BEST-02): CRUD + Undo  (Plan 04 implementiert)
- * SC3 (BEST-03): Zur Initiative / Zu Encounter  (Plan 05 fuellung — bleiben fixme)
+ * SC3 (BEST-03): Zur Initiative / Zu Encounter  (Plan 05 implementiert)
  *
  * Contract-Testtitel sind unveraenderlich (grep-Kontrakt mit Plaenen 02-05).
  */
