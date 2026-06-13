@@ -2,12 +2,12 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: planning
-last_updated: "2026-06-13T11:12:28.469Z"
+status: executing
+last_updated: "2026-06-13T11:41:19.644Z"
 progress:
   total_phases: 7
   completed_phases: 2
-  total_plans: 14
+  total_plans: 19
   completed_plans: 14
   percent: 29
 ---
@@ -16,7 +16,7 @@ progress:
 
 **Last Updated:** 2026-06-13
 **Phase:** 3
-**Status:** Ready to plan
+**Status:** Ready to execute
 
 ---
 
@@ -31,9 +31,9 @@ progress:
 ## Current Position
 
 ```
-Phase: 03 (bestiary) — UI-SPEC APPROVED
-Plan: Not started
-Status: Ready to plan Phase 03 (UI-Design-Vertrag gelockt)
+Phase: 03 (bestiary) — GEPLANT (5 Pläne, 4 Wellen)
+Plan: Complete — 5 Pläne
+Status: Ready to execute
 
 Progress: [===>......] 29% (2/7 Phasen abgeschlossen)
 ```
@@ -43,7 +43,7 @@ Progress: [===>......] 29% (2/7 Phasen abgeschlossen)
 |---|-------|--------|
 | 1 | Stabilisierung | Complete |
 | 2 | Technik-Fundament | Complete |
-| 3 | Bestiary | UI-SPEC approved |
+| 3 | Bestiary | Planned (5 Pläne) |
 | 4 | Initiative-Erweiterungen | Not started |
 | 5 | Welt & Story | Not started |
 | 6 | Spieler-Verwaltung | Not started |
@@ -97,14 +97,14 @@ Progress: [===>......] 29% (2/7 Phasen abgeschlossen)
 - [ ] Code-Review-Findings fixen (1 Critical: vorbestehender Import-XSS; 3 Warnings): `/gsd-code-review-fix 1`
 - [ ] Security-Audit nachziehen (SECURITY.md fehlt): `/gsd-secure-phase 1`
 - [x] Phase 2 diskutieren: `/gsd-discuss-phase 2` ✓ (2026-06-12, 02-CONTEXT.md)
-- [ ] Phase 2 planen: `/gsd-plan-phase 2`
+- [x] Phase 2 planen ✓ (Phase 2 Complete)
 
 ---
 
 ## Session Continuity
 
-**Last action:** Phase 3 UI-Design-Vertrag erstellt & verifiziert (2026-06-13) — `03-UI-SPEC.md` (6/6 Dimensionen bestanden nach 2 Revisionsrunden, 2 non-blocking FLAGs: einwort-CTAs „Bearbeiten/Löschen", enge 2px-Schriftgrößenstufen), Commit e9af23b. Lockt Layout (Liste+Detail wie NPC-Tab), Statblock-Pergament-Look, Such-/Filter-Chips, alle deutschen UI-Texte, 4px-Spacing-Grid, 2 Schriftgewichte (400/700), `var(--gold)`-Akzent auf 6 Elemente begrenzt.
-**Next action:** Phase 03 planen — `/gsd-plan-phase 3` (Planer nutzt 03-UI-SPEC.md als Design-Kontext)
+**Last action:** Phase 3 geplant & verifiziert (2026-06-13) — 5 Pläne in 4 Wellen (03-01 Fundament: `D.bestiary[]`+Migration 3.0.0+Tab/Modul/CSS-Registrierung in build.py & loader.js → 03-02 SRD-Datenbestand ~150 Statblocks + 03-03 Bestiary-Tab Liste/Detail/Filter/Klick-Würfe → 03-04 Eigene Kreaturen CRUD+Editor → 03-05 Übernahme Encounter/Initiative + Favoriten). Pattern-Mapper (03-PATTERNS.md) + Planer (opus) + Plan-Checker (bestanden, 0 Blocker/0 Warnings) durchlaufen. Alle 3 Requirements (BEST-01/02/03) und 17 Entscheidungen (D-01..D-17) abgedeckt; Threat-Models (Stored-XSS/sanitizeHTML, DoS-Mengen-Cap D-14, SRD-Daten-Isolation) je Plan. Commits 0c5288d (Pläne).
+**Next action:** Phase 03 ausführen — `/gsd-execute-phase 3` (nach `/clear`)
 
 ---
 
