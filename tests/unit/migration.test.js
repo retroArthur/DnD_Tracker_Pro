@@ -89,3 +89,54 @@ describe('Mindmap Smart-Strip Migration 2.6.1', () => {
         expect(content).not.toMatch(/mindmap:\s*\{\s*nodes:/);
     });
 });
+
+// ============================================================
+// TESTS: Bestiary-Migration 3.0.0
+// ============================================================
+
+describe('Bestiary-Migration 3.0.0', () => {
+    // Test 1: Migration legt leere bestiary[] und bestiaryFavorites[] an
+    test('creates empty bestiary and bestiaryFavorites on legacy data without these fields', () => {
+        const data = {
+            characters: [],
+            npcs: [],
+            _version: '2.6.1'
+        };
+
+        const migrated = migrateData(data);
+
+        expect(Array.isArray(migrated.bestiary)).toBe(true);
+        expect(migrated.bestiary).toHaveLength(0);
+        expect(Array.isArray(migrated.bestiaryFavorites)).toBe(true);
+        expect(migrated.bestiaryFavorites).toHaveLength(0);
+    });
+
+    // Test 2: Migration ueberschreibt KEINE vorhandenen bestiary-Eintraege
+    test('preserves existing bestiary entries on migration', () => {
+        const existingCreature = { id: 1, name: 'Hausdrache', cr: '5', ac: 15, hp: 75 };
+        const data = {
+            characters: [],
+            bestiary: [existingCreature],
+            bestiaryFavorites: ['goblin', 'custom:1'],
+            _version: '2.6.1'
+        };
+
+        const migrated = migrateData(data);
+
+        // Vorhandene Eintraege bleiben unveraendert
+        expect(migrated.bestiary).toHaveLength(1);
+        expect(migrated.bestiary[0].name).toBe('Hausdrache');
+        expect(migrated.bestiaryFavorites).toHaveLength(2);
+        expect(migrated.bestiaryFavorites).toContain('goblin');
+        expect(migrated.bestiaryFavorites).toContain('custom:1');
+    });
+
+    // Test 3: Migration-Version 3.0.0 ist im MIGRATIONS-Objekt registriert
+    test('version 3.0.0 migration is registered in version-migration.js', () => {
+        const filePath = path.join(__dirname, '../../systems/spellslots/version-migration.js');
+        const content = fs.readFileSync(filePath, 'utf8');
+        expect(content).toMatch(/'3\.0\.0'/);
+        expect(content).toMatch(/data\.bestiary/);
+        expect(content).toMatch(/data\.bestiaryFavorites/);
+    });
+});
