@@ -651,21 +651,128 @@ test.describe('Initiative System', () => {
     });
 
     // ============================================================
-    // STATBLOCK-DRAWER (INIT-01) — Wave-0 Platzhalter (Wave 1 fuellt Implementierung)
+    // STATBLOCK-DRAWER (INIT-01) — Wave 1 Implementierung
     // ============================================================
 
     test.describe('statblock', () => {
-        test.skip('📖-Button öffnet Statblock-Panel', async ({ page }) => {
-            // Wave 1 fuellt: Bestiary-Monster per Knopf laden, Drawer pruefen
-            // Erwartung: .init-statblock-drawer.show sichtbar, Statblock-Inhalt vorhanden
+        /**
+         * Hilfsfunktion: Fuegt einen Bestiary-Monster-Kombattanten direkt per evaluate() in
+         * die Initiative ein und rendert neu. Umgeht die komplexe UI-Interaktion
+         * (Bestiary-Tab -> Auswahl -> prompt-Dialog) die in headless E2E fragil waere.
+         */
+        async function injectMonsterCombatant(page) {
+            await page.evaluate(() => {
+                // SRD-Monster 'goblin' hat _id = 'goblin', statblockRef korrekt setzen
+                var goblin = typeof getSRDMonsters === 'function'
+                    ? getSRDMonsters().find(function(m) { return m._id === 'goblin'; })
+                    : null;
+                var hp = goblin ? (goblin.hp || 7) : 7;
+                var cb = {
+                    id: window.nextId ? window.nextId('combatants') : Date.now(),
+                    name: 'Goblin',
+                    initiative: 12,
+                    initBonus: 2,
+                    maxHp: hp,
+                    currentHp: hp,
+                    ac: goblin ? (goblin.ac || 15) : 15,
+                    type: 'monster',
+                    cr: goblin ? (goblin.cr || '1/4') : '1/4',
+                    xp: goblin ? (goblin.xp || 50) : 50,
+                    effects: [],
+                    statblockRef: { source: 'srd', id: 'goblin' }
+                };
+                window.D.initiative.combatants.push(cb);
+                if (typeof window.renderInit === 'function') window.renderInit();
+            });
+        }
+
+        /**
+         * Hilfsfunktion: Fuegt einen manuellen Kombattanten ohne statblockRef ein.
+         */
+        async function injectManualCombatant(page) {
+            await page.evaluate(() => {
+                var cb = {
+                    id: window.nextId ? window.nextId('combatants') : Date.now() + 1,
+                    name: 'Manueller Kaempfer',
+                    initiative: 10,
+                    initBonus: 0,
+                    maxHp: 30,
+                    currentHp: 25,
+                    ac: 14,
+                    type: 'player',
+                    effects: []
+                    // kein statblockRef
+                };
+                window.D.initiative.combatants.push(cb);
+                if (typeof window.renderInit === 'function') window.renderInit();
+            });
+        }
+
+        test('📖-Button sichtbar in jeder statblock Initiative-Zeile', async ({ page }) => {
+            await injectMonsterCombatant(page);
+            // Warten bis init-list gerendert wird
+            await page.waitForSelector('#init-list .init-row', { timeout: 5000 });
+            // Jede nicht-lair Zeile soll einen Button mit data-action="show-init-statblock" haben
+            const btn = page.locator('#init-list [data-action="show-init-statblock"]').first();
+            await expect(btn).toBeVisible();
+            await expect(btn).toHaveClass(/init-statblock-btn/);
         });
 
-        test.skip('Statblock zeigt Basisinfos fuer Kombattanten ohne statblockRef', async ({ page }) => {
-            // Wave 1 fuellt: Manueller Kombattant → 📖 → .init-statblock-basic sichtbar
+        test('Klick auf 📖-Button oeffnet Statblock-Panel fuer Monster mit statblockRef', async ({ page }) => {
+            await injectMonsterCombatant(page);
+            await page.waitForSelector('#init-list .init-row', { timeout: 5000 });
+
+            // Auf den Buch-Button klicken
+            const btn = page.locator('#init-list [data-action="show-init-statblock"]').first();
+            await btn.click();
+            await page.waitForTimeout(300);
+
+            // Panel soll existieren und show-Klasse haben
+            const panel = page.locator('#init-statblock-panel');
+            await expect(panel).toBeAttached();
+            await expect(panel).toHaveClass(/show/);
+
+            // Content soll vorhanden sein
+            const content = page.locator('#init-statblock-panel .init-statblock-content');
+            await expect(content).toBeAttached();
+
+            // Fuer einen SRD-Monster soll der vollstaendige Statblock angezeigt werden
+            const statblock = page.locator('#init-statblock-panel .bestiary-statblock');
+            await expect(statblock).toBeAttached();
         });
 
-        test.skip('Klick auf Overlay schliesst den Drawer', async ({ page }) => {
-            // Wave 1 fuellt: Overlay-Klick → .init-statblock-drawer.show entfernt
+        test('Statblock-Panel zeigt Basisinfos fuer Kombattanten ohne statblockRef', async ({ page }) => {
+            await injectManualCombatant(page);
+            await page.waitForSelector('#init-list .init-row', { timeout: 5000 });
+
+            // Auf den Buch-Button des manuellen Kombattanten klicken
+            const btn = page.locator('#init-list [data-action="show-init-statblock"]').first();
+            await btn.click();
+            await page.waitForTimeout(300);
+
+            // Panel soll show-Klasse haben
+            const panel = page.locator('#init-statblock-panel');
+            await expect(panel).toHaveClass(/show/);
+
+            // Statt Parchment-Statblock soll .init-statblock-basic angezeigt werden
+            const basicCard = page.locator('#init-statblock-panel .init-statblock-basic');
+            await expect(basicCard).toBeAttached();
+        });
+
+        test('Statblock-Panel enthaelt klickbare Wuerfelformeln fuer Monster mit statblockRef', async ({ page }) => {
+            await injectMonsterCombatant(page);
+            await page.waitForSelector('#init-list .init-row', { timeout: 5000 });
+
+            // Drawer oeffnen
+            const btn = page.locator('#init-list [data-action="show-init-statblock"]').first();
+            await btn.click();
+            await page.waitForTimeout(300);
+
+            // Panel soll klickbare Wuerfel-Spans enthalten (SRD-Monster haben Aktionen mit Formeln)
+            const diceSpans = page.locator('#init-statblock-panel [data-action="bestiary-roll-dice"]');
+            const count = await diceSpans.count();
+            // Goblin hat Aktionen (Krummschwert), also mindestens 1 klickbare Formel
+            expect(count).toBeGreaterThan(0);
         });
     });
 
