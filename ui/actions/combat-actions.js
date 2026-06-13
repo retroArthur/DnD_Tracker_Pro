@@ -23,6 +23,10 @@ const CombatActions = {
         ctx.event.stopPropagation();
         rollConcentrationCheck(ctx.id, parseInt(ctx.target.dataset.dc));
     },
+    // INIT-01: Statblock-Drawer
+    'show-init-statblock': ctx => showInitStatblockPanel(ctx.id),
+    'close-init-statblock': () => closeInitStatblockPanel(),
+
     'show-aoe-damage-modal': () => showAoEDamageModal(),
     'set-concentration': ctx => setConcentration(ctx.id),
     'roll-aoe-damage': () => rollAoEDamage(),

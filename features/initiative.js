@@ -191,6 +191,7 @@ function renderInit() {
                 </div>
                 <button class="btn btn-sm" data-action="show-add-effect" data-id="${cb.id}">🔮</button>
                 <button class="btn btn-sm btn-danger" data-action="remove-combatant" data-id="${cb.id}">❌</button>
+                <button class="btn-icon init-statblock-btn" data-action="show-init-statblock" data-id="${cb.id}" title="${cb.statblockRef ? 'Statblock anzeigen' : 'Basisinfos anzeigen'}">📖</button>
             </div>
         </div>`;
         })
