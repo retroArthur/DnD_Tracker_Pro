@@ -248,13 +248,25 @@ function renderBestiaryDetail(id, source) {
         return (m >= 0 ? '+' : '') + m;
     }
 
-    // Helper: render a list of trait/action objects
-    // IMPORTANT: sanitizeHTML strips data-* attributes, so we must apply
+    // Helper: render traits/actions/reactions/legendaryActions.
+    // Supports BOTH formats:
+    //   - SRD format: array of {name, desc} objects
+    //   - Custom creature format: sanitized HTML string (from contenteditable editor)
+    // IMPORTANT: sanitizeHTML strips data-* attributes, so we apply
     // sanitizeHTML FIRST (cleans dangerous content), then renderClickableDice
     // (wraps dice formulas in <span data-action="bestiary-roll-dice">).
-    // This ensures data-action/data-value survive into the DOM.
     function renderTraitList(items) {
-        if (!items || !items.length) return '';
+        if (!items) return '';
+        // Custom creature: stored as an HTML string
+        if (typeof items === 'string') {
+            if (!items.trim()) return '';
+            // sanitizeHTML already applied at save time; apply renderClickableDice for dice spans
+            return '<div class="bestiary-statblock-trait">' +
+                renderClickableDice(sanitizeHTML(items)) +
+            '</div>';
+        }
+        // SRD format: array of {name, desc}
+        if (!items.length) return '';
         return items.map(function(item) {
             // Step 1: sanitize the raw text (removes scripts, dangerous attrs)
             var cleanDesc = sanitizeHTML(item.desc || '');
@@ -435,12 +447,9 @@ function selectBestiary(id, source) {
     renderBestiaryList();
 }
 
-// ============================================================
-// CLEANUP (called by tab-registry on tab leave)
-// ============================================================
-function cleanupBestiaryEditor() {
-    // Placeholder: closes open editor on tab leave (filled by Plan 04)
-}
+// cleanupBestiaryEditor is implemented in bestiary-editor.js (Plan 04).
+// The window export below is kept for the tab-registry hook; it will be
+// overwritten by bestiary-editor.js which loads after this module.
 
 // ============================================================
 // MINIMAL ACTION HANDLERS (select + roll-dice)
@@ -488,4 +497,4 @@ window.renderBestiaryDetail = renderBestiaryDetail;
 window.renderClickableDice = renderClickableDice;
 window.crToSortValue = crToSortValue;
 window.selectBestiary = selectBestiary;
-window.cleanupBestiaryEditor = cleanupBestiaryEditor;
+// cleanupBestiaryEditor: exported by bestiary-editor.js (loads after this module)

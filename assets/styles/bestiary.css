@@ -553,3 +553,178 @@
         min-height: 44px;
     }
 }
+
+/* ============================================================
+   BESTIARY EDITOR MODAL — bst-* fields
+   Modal reuses .modal-overlay / .modal from core.css.
+   ============================================================ */
+
+/* Wide modal for full statblock form */
+.bst-editor-modal {
+    max-width: 620px;
+    width: 95vw;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Scrollable form body */
+.bst-editor-body {
+    overflow-y: auto;
+    flex: 1;
+    padding: 16px 20px;
+}
+
+/* Footer with action buttons */
+.bst-editor-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    padding: 12px 20px;
+    border-top: 1px solid var(--border);
+    background: var(--bg-card);
+}
+
+/* Section headings inside the editor */
+.bst-section-title {
+    font-weight: 700;
+    font-size: 0.9em;
+    color: var(--gold);
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 4px;
+    margin: 16px 0 10px 0;
+}
+
+.bst-section-title:first-child {
+    margin-top: 0;
+}
+
+/* Validation error below name field */
+.bst-validation-error {
+    display: block;
+    color: var(--red);
+    font-size: 0.8em;
+    margin-top: 4px;
+}
+
+/* Speed inputs: 5 compact columns */
+.bst-speed-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+/* Attribute inputs: 6 compact columns */
+.bst-attrs-grid {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.bst-attr-col {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+}
+
+.bst-attr-col label {
+    font-size: 0.75em;
+    font-weight: 700;
+    color: var(--text-dim);
+    text-align: center;
+}
+
+.bst-attr-input {
+    width: 100%;
+    max-width: 56px;
+    text-align: center;
+    padding: 4px;
+}
+
+.bst-attr-mod {
+    font-size: 0.8em;
+    color: var(--text-dim);
+}
+
+/* Saving throw row: 6 items */
+.bst-saves-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+    margin-bottom: 8px;
+}
+
+.bst-save-item {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.85em;
+    cursor: pointer;
+}
+
+.bst-save-item span {
+    font-weight: 700;
+    color: var(--text-dim);
+    min-width: 28px;
+}
+
+.bst-save-val {
+    width: 44px;
+    padding: 3px 4px;
+    font-size: 0.85em;
+    text-align: center;
+}
+
+/* Rich-text editor fields (contenteditable) */
+.bst-rich-editor {
+    min-height: 80px;
+    padding: 8px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: var(--bg-dark);
+    color: var(--text);
+    font-size: 0.9em;
+    line-height: 1.5;
+    outline: none;
+    resize: vertical;
+    overflow-y: auto;
+}
+
+.bst-rich-editor:focus {
+    border-color: var(--gold);
+}
+
+.bst-rich-editor[placeholder]:empty::before {
+    content: attr(placeholder);
+    color: var(--text-dim);
+    pointer-events: none;
+}
+
+/* Avatar row */
+.bst-avatar-row {
+    align-items: flex-start;
+}
+
+/* Mobile: collapse speed/attr grids */
+@media (max-width: 480px) {
+    .bst-speed-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+
+    .bst-attrs-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+
+    .bst-saves-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .bst-editor-modal {
+        max-width: 100%;
+        width: 100%;
+        border-radius: 0;
+    }
+}

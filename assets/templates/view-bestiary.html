@@ -62,3 +62,279 @@
         </div>
     </div>
 </section>
+
+<!-- BESTIARY EDITOR MODAL — bst-* field IDs (avoid enc-* collision) -->
+<div class="modal-overlay" id="bestiary-editor-modal">
+    <div class="modal bst-editor-modal">
+        <div class="modal-header">
+            <span class="modal-title" id="bestiary-editor-title">Neue Kreatur</span>
+            <button class="btn btn-sm" data-action="hide-modal" data-value="bestiary-editor-modal">&#x2715;</button>
+        </div>
+
+        <!-- Scrollable form body -->
+        <div class="bst-editor-body">
+            <input type="hidden" id="bst-edit-id">
+
+            <!-- ===== SECTION: Grundinfos ===== -->
+            <div class="bst-section-title">&#x1F4CB; Grundinformationen</div>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>Name *</label>
+                    <input type="text" id="bst-name" placeholder="z.B. Mein Drache" maxlength="200">
+                    <span class="bst-validation-error" id="bst-name-error" style="display:none;">&#x26A0;&#xFE0F; Name erforderlich &#x2014; bitte einen Namen eingeben</span>
+                </div>
+                <div class="form-group">
+                    <label>Gr&#246;&#223;e</label>
+                    <select id="bst-size">
+                        <option value="Winzig">Winzig</option>
+                        <option value="Klein">Klein</option>
+                        <option value="Mittelgro&#223;" selected>Mittelgro&#223;</option>
+                        <option value="Gro&#223;">Gro&#223;</option>
+                        <option value="Riesig">Riesig</option>
+                        <option value="Gigantisch">Gigantisch</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>Kreaturtyp</label>
+                    <input type="text" id="bst-type" placeholder="z.B. Humanoide, Drache" value="Humanoid" maxlength="100">
+                </div>
+                <div class="form-group">
+                    <label>Gesinnung</label>
+                    <input type="text" id="bst-alignment" placeholder="z.B. Neutral B&#246;se" maxlength="100">
+                </div>
+            </div>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>HG (Herausforderungsgrad)</label>
+                    <input type="text" id="bst-cr" value="1" placeholder="z.B. 1, 1/4, 0" maxlength="10">
+                </div>
+                <div class="form-group">
+                    <label>EP (Erfahrungspunkte)</label>
+                    <input type="number" id="bst-xp" value="0" min="0" max="9999999">
+                </div>
+            </div>
+
+            <!-- Portrait (optional, custom only) -->
+            <div class="form-group bst-avatar-row" id="bst-avatar-section" style="display:none;">
+                <label>Portrait (URL)</label>
+                <div style="display:flex;align-items:center;gap:8px;">
+                    <img id="bst-avatar-preview" class="bestiary-detail-avatar" src="" alt="Portrait"
+                         style="display:none;width:48px;height:48px;object-fit:cover;border-radius:50%;border:2px solid var(--gold-dim);">
+                    <button class="btn btn-sm" type="button" id="bst-avatar-btn" data-action="call" data-value="openBstAvatarModal">&#x1F5BC;&#xFE0F; Bild setzen</button>
+                    <button class="btn btn-sm" type="button" id="bst-avatar-clear" data-action="call" data-value="clearBstAvatar" style="display:none;">Entfernen</button>
+                </div>
+            </div>
+
+            <!-- ===== SECTION: Kampfwerte ===== -->
+            <div class="bst-section-title">&#x2694;&#xFE0F; Kampfwerte</div>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>R&#252;stungsklasse (RK)</label>
+                    <input type="number" id="bst-ac" value="10" min="0" max="99">
+                </div>
+                <div class="form-group">
+                    <label>RK-Info (optional)</label>
+                    <input type="text" id="bst-ac-info" placeholder="z.B. nat&#252;rl. R&#252;stung" maxlength="100">
+                </div>
+            </div>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>Trefferpunkte (TP)</label>
+                    <input type="number" id="bst-hp" value="10" min="0" max="99999">
+                </div>
+                <div class="form-group">
+                    <label>TP-Formel (optional)</label>
+                    <input type="text" id="bst-hp-formula" placeholder="z.B. 2d8+2" maxlength="50">
+                </div>
+            </div>
+
+            <!-- Bewegungsrate -->
+            <div class="bst-section-title">&#x1F3C3; Bewegungsrate</div>
+            <div class="bst-speed-grid">
+                <div class="form-group">
+                    <label>Laufen</label>
+                    <input type="text" id="bst-speed-walk" placeholder="9 m" maxlength="20">
+                </div>
+                <div class="form-group">
+                    <label>Fliegen</label>
+                    <input type="text" id="bst-speed-fly" placeholder="—" maxlength="20">
+                </div>
+                <div class="form-group">
+                    <label>Schwimmen</label>
+                    <input type="text" id="bst-speed-swim" placeholder="—" maxlength="20">
+                </div>
+                <div class="form-group">
+                    <label>Klettern</label>
+                    <input type="text" id="bst-speed-climb" placeholder="—" maxlength="20">
+                </div>
+                <div class="form-group">
+                    <label>Graben</label>
+                    <input type="text" id="bst-speed-burrow" placeholder="—" maxlength="20">
+                </div>
+            </div>
+
+            <!-- ===== SECTION: Attribute ===== -->
+            <div class="bst-section-title">&#x1F4AA; Attribute</div>
+            <div class="bst-attrs-grid">
+                <div class="bst-attr-col">
+                    <label>STR</label>
+                    <input type="number" id="bst-str" value="10" min="1" max="30" class="bst-attr-input"
+                           data-action="call" data-value="updateBstAttrMod" data-attr="str">
+                    <span class="bst-attr-mod" id="bst-str-mod">+0</span>
+                </div>
+                <div class="bst-attr-col">
+                    <label>GE</label>
+                    <input type="number" id="bst-dex" value="10" min="1" max="30" class="bst-attr-input"
+                           data-action="call" data-value="updateBstAttrMod" data-attr="dex">
+                    <span class="bst-attr-mod" id="bst-dex-mod">+0</span>
+                </div>
+                <div class="bst-attr-col">
+                    <label>KO</label>
+                    <input type="number" id="bst-con" value="10" min="1" max="30" class="bst-attr-input"
+                           data-action="call" data-value="updateBstAttrMod" data-attr="con">
+                    <span class="bst-attr-mod" id="bst-con-mod">+0</span>
+                </div>
+                <div class="bst-attr-col">
+                    <label>INT</label>
+                    <input type="number" id="bst-int" value="10" min="1" max="30" class="bst-attr-input"
+                           data-action="call" data-value="updateBstAttrMod" data-attr="int">
+                    <span class="bst-attr-mod" id="bst-int-mod">+0</span>
+                </div>
+                <div class="bst-attr-col">
+                    <label>WE</label>
+                    <input type="number" id="bst-wis" value="10" min="1" max="30" class="bst-attr-input"
+                           data-action="call" data-value="updateBstAttrMod" data-attr="wis">
+                    <span class="bst-attr-mod" id="bst-wis-mod">+0</span>
+                </div>
+                <div class="bst-attr-col">
+                    <label>CH</label>
+                    <input type="number" id="bst-cha" value="10" min="1" max="30" class="bst-attr-input"
+                           data-action="call" data-value="updateBstAttrMod" data-attr="cha">
+                    <span class="bst-attr-mod" id="bst-cha-mod">+0</span>
+                </div>
+            </div>
+
+            <!-- ===== SECTION: Rettungswuerfe ===== -->
+            <div class="bst-section-title">&#x1F6E1;&#xFE0F; Rettungsw&#252;rfe (optional)</div>
+            <div class="bst-saves-grid">
+                <label class="bst-save-item">
+                    <input type="checkbox" id="bst-save-str">
+                    <span>STR</span>
+                    <input type="text" id="bst-save-val-str" class="bst-save-val" placeholder="+2" maxlength="6">
+                </label>
+                <label class="bst-save-item">
+                    <input type="checkbox" id="bst-save-dex">
+                    <span>GE</span>
+                    <input type="text" id="bst-save-val-dex" class="bst-save-val" placeholder="+2" maxlength="6">
+                </label>
+                <label class="bst-save-item">
+                    <input type="checkbox" id="bst-save-con">
+                    <span>KO</span>
+                    <input type="text" id="bst-save-val-con" class="bst-save-val" placeholder="+2" maxlength="6">
+                </label>
+                <label class="bst-save-item">
+                    <input type="checkbox" id="bst-save-int">
+                    <span>INT</span>
+                    <input type="text" id="bst-save-val-int" class="bst-save-val" placeholder="+2" maxlength="6">
+                </label>
+                <label class="bst-save-item">
+                    <input type="checkbox" id="bst-save-wis">
+                    <span>WE</span>
+                    <input type="text" id="bst-save-val-wis" class="bst-save-val" placeholder="+2" maxlength="6">
+                </label>
+                <label class="bst-save-item">
+                    <input type="checkbox" id="bst-save-cha">
+                    <span>CH</span>
+                    <input type="text" id="bst-save-val-cha" class="bst-save-val" placeholder="+2" maxlength="6">
+                </label>
+            </div>
+
+            <!-- ===== SECTION: Sinne & Sprachen ===== -->
+            <div class="bst-section-title">&#x1F441;&#xFE0F; Sinne &amp; Sprachen</div>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>Sinne (kommagetrennt)</label>
+                    <input type="text" id="bst-senses" placeholder="z.B. Dunkelsicht 18 m, Passive Wahrnehmung 9" maxlength="300">
+                </div>
+                <div class="form-group">
+                    <label>Sprachen (kommagetrennt)</label>
+                    <input type="text" id="bst-languages" placeholder="z.B. Gemein, Goblinisch" maxlength="300">
+                </div>
+            </div>
+
+            <!-- ===== SECTION: Eigenschaften / Aktionen ===== -->
+            <div class="bst-section-title">&#x1F4DC; Eigenschaften (Traits)</div>
+            <div class="form-group">
+                <div class="editor-toolbar editor-toolbar-minimal">
+                    <div class="toolbar-row">
+                        <button class="editor-btn" type="button" data-action="format-text" data-cmd="bst-traits" data-editor="bold" title="Fett"><b>B</b></button>
+                        <button class="editor-btn" type="button" data-action="format-text" data-cmd="bst-traits" data-editor="italic" title="Kursiv"><i>I</i></button>
+                        <button class="editor-btn" type="button" data-action="format-text" data-cmd="bst-traits" data-editor="underline" title="Unterstrichen"><u>U</u></button>
+                        <span class="toolbar-separator"></span>
+                        <button class="editor-btn" type="button" data-action="clear-formatting" data-value="bst-traits" title="Formatierung entfernen">&#x1F9F9;</button>
+                    </div>
+                </div>
+                <div id="bst-traits" class="rich-editor bst-rich-editor" contenteditable="true"
+                     placeholder="Besondere Eigenschaften eingeben..."></div>
+            </div>
+
+            <div class="bst-section-title">&#x2694;&#xFE0F; Aktionen</div>
+            <div class="form-group">
+                <div class="editor-toolbar editor-toolbar-minimal">
+                    <div class="toolbar-row">
+                        <button class="editor-btn" type="button" data-action="format-text" data-cmd="bst-actions" data-editor="bold" title="Fett"><b>B</b></button>
+                        <button class="editor-btn" type="button" data-action="format-text" data-cmd="bst-actions" data-editor="italic" title="Kursiv"><i>I</i></button>
+                        <button class="editor-btn" type="button" data-action="format-text" data-cmd="bst-actions" data-editor="underline" title="Unterstrichen"><u>U</u></button>
+                        <span class="toolbar-separator"></span>
+                        <button class="editor-btn" type="button" data-action="clear-formatting" data-value="bst-actions" title="Formatierung entfernen">&#x1F9F9;</button>
+                    </div>
+                </div>
+                <div id="bst-actions" class="rich-editor bst-rich-editor" contenteditable="true"
+                     placeholder="Aktionen eingeben (z.B. Angriff: +4, 1d6+2 Schaden)..."></div>
+            </div>
+
+            <div class="bst-section-title">&#x21A9;&#xFE0F; Reaktionen</div>
+            <div class="form-group">
+                <div class="editor-toolbar editor-toolbar-minimal">
+                    <div class="toolbar-row">
+                        <button class="editor-btn" type="button" data-action="format-text" data-cmd="bst-reactions" data-editor="bold" title="Fett"><b>B</b></button>
+                        <button class="editor-btn" type="button" data-action="format-text" data-cmd="bst-reactions" data-editor="italic" title="Kursiv"><i>I</i></button>
+                        <button class="editor-btn" type="button" data-action="format-text" data-cmd="bst-reactions" data-editor="underline" title="Unterstrichen"><u>U</u></button>
+                        <span class="toolbar-separator"></span>
+                        <button class="editor-btn" type="button" data-action="clear-formatting" data-value="bst-reactions" title="Formatierung entfernen">&#x1F9F9;</button>
+                    </div>
+                </div>
+                <div id="bst-reactions" class="rich-editor bst-rich-editor" contenteditable="true"
+                     placeholder="Reaktionen eingeben (optional)..."></div>
+            </div>
+
+            <div class="bst-section-title">&#x2605; Legend&#228;re Aktionen</div>
+            <div class="form-group">
+                <label>Anzahl legend&#228;rer Aktionen pro Runde</label>
+                <input type="number" id="bst-legendary-count" value="3" min="0" max="10">
+            </div>
+            <div class="form-group">
+                <div class="editor-toolbar editor-toolbar-minimal">
+                    <div class="toolbar-row">
+                        <button class="editor-btn" type="button" data-action="format-text" data-cmd="bst-legendary" data-editor="bold" title="Fett"><b>B</b></button>
+                        <button class="editor-btn" type="button" data-action="format-text" data-cmd="bst-legendary" data-editor="italic" title="Kursiv"><i>I</i></button>
+                        <button class="editor-btn" type="button" data-action="format-text" data-cmd="bst-legendary" data-editor="underline" title="Unterstrichen"><u>U</u></button>
+                        <span class="toolbar-separator"></span>
+                        <button class="editor-btn" type="button" data-action="clear-formatting" data-value="bst-legendary" title="Formatierung entfernen">&#x1F9F9;</button>
+                    </div>
+                </div>
+                <div id="bst-legendary" class="rich-editor bst-rich-editor" contenteditable="true"
+                     placeholder="Legend&#228;re Aktionen eingeben (optional)..."></div>
+            </div>
+
+        </div><!-- end bst-editor-body -->
+
+        <!-- Footer Buttons -->
+        <div class="bst-editor-footer">
+            <button class="btn" type="button" data-action="hide-modal" data-value="bestiary-editor-modal">Abbrechen</button>
+            <button class="btn btn-success" type="button" data-action="call" data-value="saveBestiary">Kreatur speichern</button>
+        </div>
+    </div>
+</div>
