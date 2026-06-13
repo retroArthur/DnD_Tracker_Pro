@@ -76,6 +76,16 @@ function addBestiaryToInitiative(id, source) {
     var parsed = parseInt(countStr, 10);
     var count = isNaN(parsed) ? 1 : Math.max(1, Math.min(parsed, BESTIARY_MAX_QUANTITY));
 
+    // Mob-Toggle (INIT-03, D-11): bei count > 1 fragen ob Mob-Modus
+    var isMob = false;
+    if (count > 1) {
+        isMob = confirm(
+            'Als Mob f\xfchren? (1 Zeile mit Pool-HP)\n\n' +
+            'JA = Mob-Modus (Pool-HP, Sammel-Angriff)\n' +
+            'NEIN = ' + count + ' Einzelzeilen'
+        );
+    }
+
     var D = window.D;
     if (!D) return;
     if (!D.initiative) D.initiative = { combatants: [], currentTurn: 0, round: 1 };
@@ -92,48 +102,68 @@ function addBestiaryToInitiative(id, source) {
 
     saveUndoState('Monster zur Initiative hinzugef\xfcgt');
 
-    for (var i = 0; i < count; i++) {
-        // Auto-Initiative-Wurf (D-15): 1d20 + DEX-Modifier
-        var initRoll = Math.floor(Math.random() * 20) + 1 + dexMod;
-
-        // HP-Variation +-10% (D-15) — exakt wie encounter-calculator.js Zeilen 892-893
-        var hpVariation = Math.round((monster.hp || 1) * (0.9 + Math.random() * 0.2));
-        var hp = Math.max(1, hpVariation);
-
-        // Nummerierung (D-16): "Goblin 1", "Goblin 2" (Leerzeichen, kein '#')
-        var name = count > 1 ? monster.name + ' ' + (i + 1) : monster.name;
-
-        // statblockRef (D-17): Runtime-Feld, nicht migriert
-        var statblockRef = {
-            source: source || 'srd',
-            id: source === 'custom' ? monster.id : monster._id
-        };
-
-        var combatant = {
-            id: nextId('combatants'),
-            name: name,
-            initiative: initRoll,
-            initBonus: dexMod,
-            maxHp: hp,
-            currentHp: hp,
-            ac: monster.ac || 10,
-            type: 'monster',
-            cr: monster.cr || '0',
-            xp: monster.xp || (window.CR_TO_XP && window.CR_TO_XP[monster.cr]) || 0,
-            effects: [],
-            statblockRef: statblockRef
-        };
-
-        // LA-Felder (INIT-02, D-09): nur wenn legendaryActionsPerRound > 0
+    if (isMob) {
+        // Mob-Modus: eine Zeile fuer alle N Kreaturen (D-11)
+        var mobCb = typeof window.createMobCombatant === 'function'
+            ? window.createMobCombatant(monster, count, source)
+            : null;
+        if (!mobCb) {
+            showToast('Mob-Funktion nicht verfuegbar', 'error');
+            return;
+        }
+        // LA/LR-Felder auf den Mob-Kombattanten uebertragen (analog Einzelzeile)
         if (laCount > 0) {
-            combatant.legendaryActions = { max: laCount, remaining: laCount };
+            mobCb.legendaryActions = { max: laCount, remaining: laCount };
         }
-        // LR-Felder (INIT-02, D-06): nur wenn LR-Trait erkannt
         if (lrCount > 0) {
-            combatant.legendaryResistance = { max: lrCount, remaining: lrCount };
+            mobCb.legendaryResistance = { max: lrCount, remaining: lrCount };
         }
+        D.initiative.combatants.push(mobCb);
+    } else {
+        // Einzelzeilen-Modus (unveraendert — alle N Kreaturen als separate Zeilen)
+        for (var i = 0; i < count; i++) {
+            // Auto-Initiative-Wurf (D-15): 1d20 + DEX-Modifier
+            var initRoll = Math.floor(Math.random() * 20) + 1 + dexMod;
 
-        D.initiative.combatants.push(combatant);
+            // HP-Variation +-10% (D-15) — exakt wie encounter-calculator.js Zeilen 892-893
+            var hpVariation = Math.round((monster.hp || 1) * (0.9 + Math.random() * 0.2));
+            var hp = Math.max(1, hpVariation);
+
+            // Nummerierung (D-16): "Goblin 1", "Goblin 2" (Leerzeichen, kein '#')
+            var name = count > 1 ? monster.name + ' ' + (i + 1) : monster.name;
+
+            // statblockRef (D-17): Runtime-Feld, nicht migriert
+            var statblockRef = {
+                source: source || 'srd',
+                id: source === 'custom' ? monster.id : monster._id
+            };
+
+            var combatant = {
+                id: nextId('combatants'),
+                name: name,
+                initiative: initRoll,
+                initBonus: dexMod,
+                maxHp: hp,
+                currentHp: hp,
+                ac: monster.ac || 10,
+                type: 'monster',
+                cr: monster.cr || '0',
+                xp: monster.xp || (window.CR_TO_XP && window.CR_TO_XP[monster.cr]) || 0,
+                effects: [],
+                statblockRef: statblockRef
+            };
+
+            // LA-Felder (INIT-02, D-09): nur wenn legendaryActionsPerRound > 0
+            if (laCount > 0) {
+                combatant.legendaryActions = { max: laCount, remaining: laCount };
+            }
+            // LR-Felder (INIT-02, D-06): nur wenn LR-Trait erkannt
+            if (lrCount > 0) {
+                combatant.legendaryResistance = { max: lrCount, remaining: lrCount };
+            }
+
+            D.initiative.combatants.push(combatant);
+        }
     }
 
     // Nach Initiative-Wert sortieren (absteigend) — analog encounter-calculator.js Zeile 929
