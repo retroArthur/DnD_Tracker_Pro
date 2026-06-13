@@ -178,6 +178,8 @@ function renderInit() {
                 ${dead && cb.type === 'player' ? renderDeathSaves(cb) : ''}
                 ${!dead ? renderConcentration(cb) : ''}
                 ${cb.concentration?.pendingCheck ? renderConcentrationCheck(cb, cb.concentration.pendingCheck) : ''}
+                ${cb.legendaryActions && cb.legendaryActions.max > 0 ? renderLegendaryActionPips(cb) : ''}
+                ${cb.legendaryResistance && cb.legendaryResistance.max > 0 ? renderLegendaryResistancePips(cb) : ''}
             </div>
             ${spellSlotsHtml}
             <div class="init-right">
@@ -385,6 +387,13 @@ function nextTurn() {
     if (init.currentTurn >= init.combatants.length) {
         init.currentTurn = 0;
         init.round++;
+        // D-10: LA-Reset bei Rundenübergang (jede Runde)
+        // D-07: LR KEIN Auto-Reset — LR sind /Tag, nur LA!
+        init.combatants.forEach(function(c) {
+            if (c.legendaryActions && c.legendaryActions.max > 0) {
+                c.legendaryActions.remaining = c.legendaryActions.max;
+            }
+        });
     }
     renderInit();
     window.save();
@@ -580,6 +589,91 @@ function resetDeathSaves(cb) {
     if (cb.deathSaves) {
         cb.deathSaves = { successes: 0, failures: 0 };
     }
+}
+// ============================================================
+// LEGENDAERE AKTIONEN + WIDERSAENDE PIPS (INIT-02)
+// Analog: renderDeathSaves() / toggleDeathSave() (D-08)
+// ============================================================
+function renderLegendaryActionPips(cb) {
+    var la = cb.legendaryActions;
+    if (!la || la.max <= 0) return '';
+    var dots = [];
+    for (var i = 0; i < la.max; i++) {
+        var active = i < la.remaining ? 'active' : '';
+        var titleText = i < la.remaining
+            ? 'Legendäre Aktion ' + (i + 1) + ' verwenden'
+            : 'Legendäre Aktion ' + (i + 1) + ' (verbraucht)';
+        dots.push(
+            '<span class="la-dot ' + active + '"' +
+            ' data-action="init-use-la-stop"' +
+            ' data-id="' + cb.id + '"' +
+            ' data-index="' + i + '"' +
+            ' title="' + titleText + '"></span>'
+        );
+    }
+    return '<div class="la-pips" title="Setzt sich bei Initiative 20 zurück">' +
+        '<span class="la-label">⭐ LA</span>' +
+        '<div class="la-dots">' + dots.join('') + '</div>' +
+        '</div>';
+}
+function renderLegendaryResistancePips(cb) {
+    var lr = cb.legendaryResistance;
+    if (!lr || lr.max <= 0) return '';
+    var dots = [];
+    for (var i = 0; i < lr.max; i++) {
+        var active = i < lr.remaining ? 'active' : '';
+        var titleText = i < lr.remaining
+            ? 'Legendären Widerstand ' + (i + 1) + ' einsetzen'
+            : 'Legendärer Widerstand ' + (i + 1) + ' (verbraucht)';
+        dots.push(
+            '<span class="lr-dot ' + active + '"' +
+            ' data-action="init-use-lr-stop"' +
+            ' data-id="' + cb.id + '"' +
+            ' data-index="' + i + '"' +
+            ' title="' + titleText + '"></span>'
+        );
+    }
+    return '<div class="lr-pips" title="Pro Tag — kein automatischer Reset">' +
+        '<span class="lr-label">🛡 LW</span>' +
+        '<div class="lr-dots">' + dots.join('') + '</div>' +
+        '<button class="lr-reset-btn btn-icon"' +
+        ' data-action="init-reset-lr-stop"' +
+        ' data-id="' + cb.id + '"' +
+        ' title="Legendären Widerstand zurücksetzen (Lange Rast)">↺</button>' +
+        '</div>';
+}
+function useLA(cbId, index) {
+    var cb = getCombatant(cbId);
+    if (!cb || !cb.legendaryActions) return;
+    var la = cb.legendaryActions;
+    // Toggle-Logik exakt wie toggleDeathSave() (D-08)
+    if (index < la.remaining) {
+        la.remaining = index;
+    } else {
+        la.remaining = index + 1;
+    }
+    renderInit();
+    window.save();
+}
+function useLR(cbId, index) {
+    var cb = getCombatant(cbId);
+    if (!cb || !cb.legendaryResistance) return;
+    var lr = cb.legendaryResistance;
+    // Toggle-Logik exakt wie toggleDeathSave() (D-08)
+    if (index < lr.remaining) {
+        lr.remaining = index;
+    } else {
+        lr.remaining = index + 1;
+    }
+    renderInit();
+    window.save();
+}
+function resetLR(cbId) {
+    var cb = getCombatant(cbId);
+    if (!cb || !cb.legendaryResistance) return;
+    cb.legendaryResistance.remaining = cb.legendaryResistance.max;
+    renderInit();
+    window.save();
 }
 // ============================================================
 // CONCENTRATION TRACKER
@@ -1385,6 +1479,9 @@ window.addEffectFromGrid = addEffectFromGrid;
 window.saveCustomEffect = saveCustomEffect;
 window.removeEffect = removeEffect;
 window.toggleDeathSave = toggleDeathSave;
+window.useLA = useLA;
+window.useLR = useLR;
+window.resetLR = resetLR;
 window.showConcentrationModal = showConcentrationModal;
 window.breakConcentration = breakConcentration;
 window.rollConcentrationCheck = rollConcentrationCheck;
