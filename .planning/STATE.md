@@ -2,12 +2,12 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: planning
-last_updated: "2026-06-13T21:57:03.951Z"
+status: executing
+last_updated: "2026-06-13T22:31:27.487Z"
 progress:
   total_phases: 7
   completed_phases: 3
-  total_plans: 19
+  total_plans: 23
   completed_plans: 19
   percent: 43
 ---
@@ -16,7 +16,7 @@ progress:
 
 **Last Updated:** 2026-06-13
 **Phase:** 4
-**Status:** Ready to plan
+**Status:** Ready to execute
 
 ---
 
@@ -24,18 +24,18 @@ progress:
 
 **Core Value:** Die App muss am Spieltisch zuverlässig offline laufen — ein Spielleiter-Begleiter, der nie im Weg steht und keine Daten verliert.
 
-**Current Focus:** Phase 04 — Initiative-Erweiterungen (bereit zum Planen)
+**Current Focus:** Phase 04 — Initiative-Erweiterungen (geplant: 4 Pläne in 4 Wellen, bereit zur Ausführung)
 
 ---
 
 ## Current Position
 
 ```
-Phase: 04 (Initiative-Erweiterungen) — Design-Prep abgeschlossen (Context + Research + UI-SPEC ✓)
-Next:  Phase 04 planen (/gsd-plan-phase 4)
-Status: 04-UI-SPEC.md verifiziert (6/6 Dimensionen, 1 nutzer-bestätigte Typografie-Abweichung)
+Phase: 04 (Initiative-Erweiterungen) — geplant (4 Pläne in 4 Wellen, INIT-01/02/03)
+Next:  Phase 04 ausführen (/gsd-execute-phase 4)
+Status: Ready to execute
 
-Progress: [████░░░░░░] 43% (3/7 Phasen, 19/19 Pläne abgeschlossen)
+Progress: [████░░░░░░] 43% (3/7 Phasen abgeschlossen, 19/23 Pläne)
 ```
 
 **Phases:**
@@ -44,7 +44,7 @@ Progress: [████░░░░░░] 43% (3/7 Phasen, 19/19 Pläne abgesch
 | 1 | Stabilisierung | Complete |
 | 2 | Technik-Fundament | Complete |
 | 3 | Bestiary | Complete (5/5 Pläne) |
-| 4 | Initiative-Erweiterungen | Next (bereit zum Planen) |
+| 4 | Initiative-Erweiterungen | Planned (4 Pläne, bereit zur Ausführung) |
 | 5 | Welt & Story | Not started |
 | 6 | Spieler-Verwaltung | Not started |
 | 7 | Komfort & Analyse | Not started |

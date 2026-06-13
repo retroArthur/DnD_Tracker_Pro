@@ -775,7 +775,7 @@ Die folgenden Testdateien müssen in Wave 0 angelegt werden:
 
 ---
 
-## Offene Fragen
+## Offene Fragen (RESOLVED)
 
 1. **Drawer-Breite auf Mobile (320 px)**
    - Was wir wissen: Die Initiative-Liste ist ein einspaltig scrollbares Layout. Ein 420 px breiter Drawer würde die Liste vollständig verdecken.
