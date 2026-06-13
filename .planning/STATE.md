@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-last_updated: "2026-06-13T15:03:39.733Z"
+last_updated: "2026-06-13T15:27:58.169Z"
 progress:
   total_phases: 7
   completed_phases: 2
   total_plans: 19
-  completed_plans: 16
+  completed_plans: 17
   percent: 29
 ---
 
@@ -32,10 +32,10 @@ progress:
 
 ```
 Phase: 03 (bestiary) — EXECUTING
-Plan: 3 of 5
+Plan: 4 of 5
 Status: Ready to execute
 
-Progress: [===>......] 29% (2/7 Phasen abgeschlossen)
+Progress: [█████████░] 89% (17/19 Pläne abgeschlossen)
 ```
 
 **Phases:**
@@ -75,6 +75,9 @@ Progress: [===>......] 29% (2/7 Phasen abgeschlossen)
 | D-07-Auswahl-Dialog nicht in Gap-Plan 01-08            | 1 (01-08)  | Nur CR-01-Bugfix-Scope; IDB-Vorrang als deterministischer Fallback erfüllt SC2/STAB-05 code-seitig                                           |
 | no-misleading-character-class auf warn (Option d-1)    | 1 (01-09)  | Emoji-Regex in dice-core.js bleibt unverändert; kein u-Flag-Umbau in der Stabilisierungsphase (Surrogate/ZWJ-Risiko)                        |
 | lint ohne --max-warnings                               | 1 (01-09)  | 1215 legitime Non-ESM-Warnungen blockieren Gate nicht; echte Errors (Severity 2) weiterhin fatal; robuster als festes Limit                 |
+| EventDelegation TDZ deferred (03-03)                   | 3 (03-03)  | bestiary-render.js lädt bei Build-Position ~107, event-delegation.js bei ~145; registerAction in DOMContentLoaded wrappen                   |
+| sanitize-then-dice order (03-03)                       | 3 (03-03)  | sanitizeHTML() strippt data-*-Attribute; Würfel-Spans NACH Sanitisierung injizieren                                                         |
+| SRD string IDs: ctx.target.dataset.id statt parseEntityId | 3 (03-03) | parseEntityId('goblin') gibt null zurück; bestiary-select verwendet ctx.target.dataset.id direkt als String                                 |
 
 ### Known Blockers / Research Flags
 
@@ -103,8 +106,8 @@ Progress: [===>......] 29% (2/7 Phasen abgeschlossen)
 
 ## Session Continuity
 
-**Last action:** Phase 3 geplant & verifiziert (2026-06-13) — 5 Pläne in 4 Wellen (03-01 Fundament: `D.bestiary[]`+Migration 3.0.0+Tab/Modul/CSS-Registrierung in build.py & loader.js → 03-02 SRD-Datenbestand ~150 Statblocks + 03-03 Bestiary-Tab Liste/Detail/Filter/Klick-Würfe → 03-04 Eigene Kreaturen CRUD+Editor → 03-05 Übernahme Encounter/Initiative + Favoriten). Pattern-Mapper (03-PATTERNS.md) + Planer (opus) + Plan-Checker (bestanden, 0 Blocker/0 Warnings) durchlaufen. Alle 3 Requirements (BEST-01/02/03) und 17 Entscheidungen (D-01..D-17) abgedeckt; Threat-Models (Stored-XSS/sanitizeHTML, DoS-Mengen-Cap D-14, SRD-Daten-Isolation) je Plan. Commits 0c5288d (Pläne).
-**Next action:** Phase 03 ausführen — `/gsd-execute-phase 3` (nach `/clear`)
+**Last action:** Plan 03-03 Bestiary Tab UI abgeschlossen (2026-06-13) — Toolbar+Master-Detail HTML, ~300 Zeilen bestiary.css, 460 Zeilen bestiary-render.js (renderBestiaryList+renderBestiaryDetail+renderClickableDice), 4/4 E2E SC1 grün. 3 Auto-Fixes: EventDelegation-TDZ (DOMContentLoaded-Wrapper), sanitize-then-dice-Order, SRD-String-IDs. Commits: 1adf9e4, f6df4ab, 2efde9a.
+**Next action:** Plan 03-04 ausführen — Bestiary-Editor (Eigene Kreaturen CRUD)
 
 ---
 

@@ -92,7 +92,7 @@ Plans:
 **Wave 2** *(blocked on Wave 1)*
 
 - [x] 03-02-PLAN.md — SRD-Datenspeicher: ~150 deutsche SRD-5.1-Statblocks inline in core/srd-monsters.js + monster-templates.js-Alias (BEST-01)
-- [ ] 03-03-PLAN.md — Bestiary-Tab: Liste+Detail, Suche/Filter, 5e-Pergament-Statblock mit Klick-Würfen, Badges/Favoriten (BEST-01)
+- [x] 03-03-PLAN.md — Bestiary-Tab: Liste+Detail, Suche/Filter, 5e-Pergament-Statblock mit Klick-Würfen, Badges/Favoriten (BEST-01)
 
 **Wave 3** *(blocked on Wave 2)*
 
@@ -162,7 +162,7 @@ Plans:
 | --------------------------- | -------------- | ----------- | --------- |
 | 1. Stabilisierung           | 9/9            | Complete    | 2026-06-12 |
 | 2. Technik-Fundament        | 5/5 | Complete    | 2026-06-12 |
-| 3. Bestiary                 | 2/5 | In Progress|  |
+| 3. Bestiary                 | 3/5 | In Progress|  |
 | 4. Initiative-Erweiterungen | 0/?            | Not started | -         |
 | 5. Welt & Story             | 0/?            | Not started | -         |
 | 6. Spieler-Verwaltung       | 0/?            | Not started | -         |
