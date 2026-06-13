@@ -3,20 +3,20 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-last_updated: "2026-06-13T15:27:58.169Z"
+last_updated: "2026-06-13T17:50:00.000Z"
 progress:
   total_phases: 7
   completed_phases: 2
   total_plans: 19
-  completed_plans: 17
-  percent: 29
+  completed_plans: 18
+  percent: 95
 ---
 
 # Project State: D&D Kampagnen-Tracker Pro — Stabilisierung & Ausbau
 
 **Last Updated:** 2026-06-13
 **Phase:** 3
-**Status:** Ready to execute
+**Status:** Executing (Plan 5 of 5)
 
 ---
 
@@ -32,10 +32,10 @@ progress:
 
 ```
 Phase: 03 (bestiary) — EXECUTING
-Plan: 4 of 5
+Plan: 5 of 5
 Status: Ready to execute
 
-Progress: [█████████░] 89% (17/19 Pläne abgeschlossen)
+Progress: [██████████] 95% (18/19 Pläne abgeschlossen)
 ```
 
 **Phases:**
@@ -78,6 +78,8 @@ Progress: [█████████░] 89% (17/19 Pläne abgeschlossen)
 | EventDelegation TDZ deferred (03-03)                   | 3 (03-03)  | bestiary-render.js lädt bei Build-Position ~107, event-delegation.js bei ~145; registerAction in DOMContentLoaded wrappen                   |
 | sanitize-then-dice order (03-03)                       | 3 (03-03)  | sanitizeHTML() strippt data-*-Attribute; Würfel-Spans NACH Sanitisierung injizieren                                                         |
 | SRD string IDs: ctx.target.dataset.id statt parseEntityId | 3 (03-03) | parseEntityId('goblin') gibt null zurück; bestiary-select verwendet ctx.target.dataset.id direkt als String                                 |
+| Custom-Creatures speichern Rich-Text als HTML-Strings (03-04) | 3 (03-04) | SRD nutzt [{name,desc}]-Arrays; renderTraitList() erkennt Typ per typeof — keine Migration nötig |
+| bestiary-delete in plan-04 registriert (03-04) | 3 (03-04) | SC2 E2E braucht die Action in plan-04; plan-05 kann sie neu registrieren (EventDelegation last-write-wins) |
 
 ### Known Blockers / Research Flags
 
@@ -106,8 +108,8 @@ Progress: [█████████░] 89% (17/19 Pläne abgeschlossen)
 
 ## Session Continuity
 
-**Last action:** Plan 03-03 Bestiary Tab UI abgeschlossen (2026-06-13) — Toolbar+Master-Detail HTML, ~300 Zeilen bestiary.css, 460 Zeilen bestiary-render.js (renderBestiaryList+renderBestiaryDetail+renderClickableDice), 4/4 E2E SC1 grün. 3 Auto-Fixes: EventDelegation-TDZ (DOMContentLoaded-Wrapper), sanitize-then-dice-Order, SRD-String-IDs. Commits: 1adf9e4, f6df4ab, 2efde9a.
-**Next action:** Plan 03-04 ausführen — Bestiary-Editor (Eigene Kreaturen CRUD)
+**Last action:** Plan 03-04 Bestiary CRUD + Editor abgeschlossen (2026-06-13) — #bestiary-editor-modal mit vollständigem bst-*-Formular (D-04-Schema), openBestiaryEditor (Edit/Create), saveBestiary (saveUndoState + sanitizeHTML + XSS-Mitigation), deleteBestiaryEntry (deleteWithConfirm), 4/4 E2E SC2 grün (Anlegen/Bearbeiten/Loeschen/Undo). 3 Auto-Fixes: renderTraitList dual-mode, bestiary-delete action vorgezogen, duplicate stub entfernt. Commits: 63b085d, b1b26d0.
+**Next action:** Plan 03-05 ausführen — Bestiary-Übernahme (Initiative + Encounter)
 
 ---
 

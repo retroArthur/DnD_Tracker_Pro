@@ -96,7 +96,7 @@ Plans:
 
 **Wave 3** *(blocked on Wave 2)*
 
-- [ ] 03-04-PLAN.md — Eigene Kreaturen: voller bst-*-Editor + CRUD mit Undo + Portrait (BEST-02)
+- [x] 03-04-PLAN.md — Eigene Kreaturen: voller bst-*-Editor + CRUD mit Undo + Portrait (BEST-02)
 
 **Wave 4** *(blocked on Wave 3 — teilt sich die E2E-Spec mit 03-04)*
 
@@ -162,7 +162,7 @@ Plans:
 | --------------------------- | -------------- | ----------- | --------- |
 | 1. Stabilisierung           | 9/9            | Complete    | 2026-06-12 |
 | 2. Technik-Fundament        | 5/5 | Complete    | 2026-06-12 |
-| 3. Bestiary                 | 3/5 | In Progress|  |
+| 3. Bestiary                 | 4/5 | In Progress|  |
 | 4. Initiative-Erweiterungen | 0/?            | Not started | -         |
 | 5. Welt & Story             | 0/?            | Not started | -         |
 | 6. Spieler-Verwaltung       | 0/?            | Not started | -         |
