@@ -4,42 +4,39 @@
 // Analog: showConcentrationModal() in features/initiative.js:622
 // Analog: renderBestiaryDetail() in features/bestiary/bestiary-render.js:218
 // Kein direkter Aufruf von renderBestiaryDetail() — tab-spezifisch (RESEARCH.md Falle 1)
-//   renderBestiaryDetail() sucht #bestiary-detail-panel (Bestiary-Tab) → stilles Scheitern
+//   renderBestiaryDetail() sucht #bestiary-detail-panel (Bestiary-Tab) -> stilles Scheitern
 // statblockRef.id ist String ('goblin') — KEIN parseEntityId() (RESEARCH.md Falle 2)
-// sanitizeHTML() ZUERST, dann renderClickableDice() (RESEARCH.md Falle 3)
+// sanitizeHTML() ZUERST, dann renderClickableDice() — in renderStatblockHTML() (RESEARCH.md Falle 3)
+// renderStatblockHTML() ist jetzt in bestiary-render.js (DRY, shared source of truth)
 // ============================================================
-
-// ============================================================
-// RENDERSTATBLOCKHTML — Reiner HTML-String-Renderer (D-04)
-// Analog: renderBestiaryDetail() Zeilen 349-423, aber ohne DOM-Zugriff
-// Wave 1 fuellt die vollstaendige Implementierung.
-// ============================================================
-
-/**
- * Gibt einen HTML-String fuer den vollstaendigen Statblock zurueck.
- * Kein DOM-Zugriff — Caller schreibt in panel.innerHTML.
- * Wave 1 fuellt: sanitizeHTML(text) -> renderClickableDice(sanitized) Reihenfolge beibehalten.
- * @returns {string} HTML-String fuer Statblock-Inhalt
- */
-function renderStatblockHTML(monster, source) {
-    // Wave 1 fills implementation (vollstaendige Statblock-Sektionen 1-20)
-    // WICHTIG: sanitizeHTML() ZUERST, dann renderClickableDice() — Reihenfolge bindend (RESEARCH.md Falle 3)
-    return '';
-}
 
 // ============================================================
 // RENDERBASICOMBATANTINFO — Basis-Infos fuer Kombattanten ohne statblockRef (D-03)
+// esc() fuer alle D-Werte (CLAUDE.md XSS-Regel)
 // ============================================================
 
 /**
- * Rendert Basis-Infos (HP/AC/Name) fuer Spieler- und manuelle Kombattanten.
- * esc() fuer alle D-Werte (CLAUDE.md XSS-Regel).
+ * Rendert Basis-Infos (HP/AC/Name/Effekte) fuer Spieler- und manuelle Kombattanten.
+ * Wird angezeigt wenn kein statblockRef vorhanden oder das Monster nicht gefunden wird.
+ * @param {object} cb - Kombattant-Objekt aus D.initiative.combatants
  * @returns {string} HTML-String fuer Basis-Info-Panel
  */
 function renderBasicCombatantInfo(cb) {
-    // Wave 1 fills implementation
-    // esc() fuer alle Felder die aus D kommen (CLAUDE.md XSS-Regel)
-    return '';
+    var effectsHtml = '';
+    if (typeof window.renderCombatantEffects === 'function') {
+        effectsHtml = window.renderCombatantEffects(cb) || '';
+    }
+    return '<div class="init-statblock-basic">' +
+        '<div class="init-statblock-name">' + esc(cb.name) + ' — Basisinfos</div>' +
+        '<div class="init-statblock-basic-body">' +
+            '<p><strong>TP:</strong> ' + esc(String(cb.currentHp || 0)) + '/' + esc(String(cb.maxHp || 0)) + '</p>' +
+            '<p><strong>RK:</strong> ' + esc(String(cb.ac || 10)) + '</p>' +
+            (effectsHtml ? '<div class="init-statblock-effects"><strong>Effekte:</strong> ' + effectsHtml + '</div>' : '') +
+        '</div>' +
+        '<div class="init-statblock-empty">' +
+            (effectsHtml ? '' : 'Keine weiteren Daten verf\xfcgbar.') +
+        '</div>' +
+    '</div>';
 }
 
 // ============================================================
@@ -51,8 +48,9 @@ function renderBasicCombatantInfo(cb) {
 /**
  * Oeffnet den Statblock-Drawer fuer einen Kombattanten.
  * Erstellt das Drawer-Element bei erstem Aufruf (dynamisch, wie concentration-modal).
- * Bei statblockRef: vollstaendiger Statblock via renderStatblockHTML().
- * Ohne statblockRef: Basis-Infos via renderBasicCombatantInfo() (D-03).
+ * Bei statblockRef: vollstaendiger Statblock via window.renderStatblockHTML() (DRY aus bestiary-render.js).
+ * Ohne statblockRef oder bei Fehler: Basis-Infos via renderBasicCombatantInfo() (D-03).
+ * @param {number|string} cbId - ID des Kombattanten
  */
 function showInitStatblockPanel(cbId) {
     var cb = window.getCombatant ? window.getCombatant(cbId) : null;
@@ -75,10 +73,14 @@ function showInitStatblockPanel(cbId) {
     if (content) {
         if (cb.statblockRef) {
             // statblockRef.id ist String ('goblin') — KEIN parseEntityId() verwenden! (RESEARCH.md Falle 2)
-            var monster = window.getBestiaryMonster ? window.getBestiaryMonster(cb.statblockRef.id, cb.statblockRef.source) : null;
-            if (monster) {
-                content.innerHTML = renderStatblockHTML(monster, cb.statblockRef.source);
+            // getBestiaryMonster(id, source) aus bestiary-actions.js vergleicht mit String-Gleichheit
+            var monster = window.getBestiaryMonster
+                ? window.getBestiaryMonster(cb.statblockRef.id, cb.statblockRef.source)
+                : null;
+            if (monster && typeof window.renderStatblockHTML === 'function') {
+                content.innerHTML = window.renderStatblockHTML(monster, cb.statblockRef.source);
             } else {
+                // Monster nicht gefunden: Fallback auf Basisinfos (UI-SPEC Fehlerfall)
                 content.innerHTML = renderBasicCombatantInfo(cb);
             }
         } else {
@@ -102,8 +104,9 @@ function closeInitStatblockPanel() {
 
 // ============================================================
 // WINDOW-EXPORTS (analog initiative.js Zeilen 1370-1379)
-// renderStatblockHTML wird intern genutzt (Wave 1 exportiert wenn noetig)
+// renderStatblockHTML: in bestiary-render.js exportiert (window.renderStatblockHTML)
 // ============================================================
 
 window.showInitStatblockPanel  = showInitStatblockPanel;
 window.closeInitStatblockPanel = closeInitStatblockPanel;
+window.renderBasicCombatantInfo = renderBasicCombatantInfo;

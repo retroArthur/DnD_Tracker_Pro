@@ -210,38 +210,13 @@ function renderBestiaryList() {
 }
 
 // ============================================================
-// RENDER BESTIARY DETAIL
-// Renders the full 5e parchment statblock for one monster
-// id: string (SRD _id or custom numeric id)
-// source: 'srd' | 'custom'
+// RENDERSTATBLOCKHTML — Reiner HTML-String-Renderer fuer Statblock (D-04)
+// Gibt die vollstaendige .bestiary-statblock-Struktur als String zurueck.
+// Kein DOM-Zugriff — Caller schreibt in panel.innerHTML.
+// Wird von renderBestiaryDetail() UND dem Initiative-Drawer (initiative-statblock.js) genutzt (DRY).
+// WICHTIG: sanitizeHTML() ZUERST, dann renderClickableDice() — Reihenfolge bindend (RESEARCH.md Falle 3)
 // ============================================================
-function renderBestiaryDetail(id, source) {
-    var panel = window.$('bestiary-detail-panel');
-    if (!panel) return;
-
-    // Look up monster
-    var monster = null;
-    if (source === 'srd') {
-        var srd = getSRDMonsters();
-        for (var i = 0; i < srd.length; i++) {
-            if (String(srd[i]._id) === String(id)) { monster = srd[i]; break; }
-        }
-    } else {
-        var custom = window.D && window.D.bestiary ? window.D.bestiary : [];
-        for (var j = 0; j < custom.length; j++) {
-            if (String(custom[j].id) === String(id)) { monster = custom[j]; break; }
-        }
-    }
-
-    if (!monster) {
-        panel.innerHTML =
-            '<div class="bestiary-detail-empty">' +
-                '<div class="bestiary-detail-empty-icon">🐉</div>' +
-                '<div class="bestiary-detail-empty-text">Monster nicht gefunden</div>' +
-            '</div>';
-        return;
-    }
-
+function renderStatblockHTML(monster, source) {
     // Helper: safe attribute modifier display
     function attrMod(score) {
         var m = Math.floor((score - 10) / 2);
@@ -312,31 +287,6 @@ function renderBestiaryDetail(id, source) {
     // XP
     var xp = monster.xp || 0;
 
-    // Portrait (custom only)
-    var portraitHtml = '';
-    if (source === 'custom' && monster.avatar) {
-        portraitHtml = '<img class="bestiary-detail-avatar" src="' + esc(monster.avatar) + '" alt="Portrait" onerror="this.style.display=\'none\'">';
-    }
-
-    // Action buttons
-    var actionButtons =
-        '<button class="btn btn-primary" data-action="bestiary-add-init"' +
-            ' data-id="' + esc(String(id)) + '" data-source="' + esc(source) + '">' +
-            'Zur Initiative' +
-        '</button>' +
-        '<button class="btn" data-action="bestiary-add-enc"' +
-            ' data-id="' + esc(String(id)) + '" data-source="' + esc(source) + '">' +
-            'Zu Encounter' +
-        '</button>';
-
-    if (source === 'custom') {
-        actionButtons +=
-            '<button class="btn" data-action="call" data-value="openBestiaryEditor"' +
-                ' data-id="' + esc(String(id)) + '">Bearbeiten</button>' +
-            '<button class="btn btn-danger" data-action="bestiary-delete"' +
-                ' data-id="' + esc(String(id)) + '">L\xf6schen</button>';
-    }
-
     // Legendary actions intro sentence
     var legendaryIntro = '';
     var legActionsPerRound = monster.legendaryActionsPerRound || 3;
@@ -347,8 +297,7 @@ function renderBestiaryDetail(id, source) {
     }
 
     // Build statblock HTML (UI-SPEC section order 1-20)
-    var statblockHtml =
-        '<div class="bestiary-statblock read-aloud parchment">' +
+    return '<div class="bestiary-statblock read-aloud parchment">' +
             // 1. Monster name (red)
             '<div class="bestiary-statblock-name">' + esc(monster.name) + '</div>' +
             // 2. Size/Type/Alignment italic
@@ -421,6 +370,65 @@ function renderBestiaryDetail(id, source) {
                 legendaryIntro +
                 renderTraitList(monster.legendaryActions) : '') +
         '</div>';
+}
+
+// ============================================================
+// RENDER BESTIARY DETAIL
+// Renders the full 5e parchment statblock for one monster
+// id: string (SRD _id or custom numeric id)
+// source: 'srd' | 'custom'
+// ============================================================
+function renderBestiaryDetail(id, source) {
+    var panel = window.$('bestiary-detail-panel');
+    if (!panel) return;
+
+    // Look up monster
+    var monster = null;
+    if (source === 'srd') {
+        var srd = getSRDMonsters();
+        for (var i = 0; i < srd.length; i++) {
+            if (String(srd[i]._id) === String(id)) { monster = srd[i]; break; }
+        }
+    } else {
+        var custom = window.D && window.D.bestiary ? window.D.bestiary : [];
+        for (var j = 0; j < custom.length; j++) {
+            if (String(custom[j].id) === String(id)) { monster = custom[j]; break; }
+        }
+    }
+
+    if (!monster) {
+        panel.innerHTML =
+            '<div class="bestiary-detail-empty">' +
+                '<div class="bestiary-detail-empty-icon">🐉</div>' +
+                '<div class="bestiary-detail-empty-text">Monster nicht gefunden</div>' +
+            '</div>';
+        return;
+    }
+
+    // Portrait (custom only)
+    var portraitHtml = '';
+    if (source === 'custom' && monster.avatar) {
+        portraitHtml = '<img class="bestiary-detail-avatar" src="' + esc(monster.avatar) + '" alt="Portrait" onerror="this.style.display=\'none\'">';
+    }
+
+    // Action buttons
+    var actionButtons =
+        '<button class="btn btn-primary" data-action="bestiary-add-init"' +
+            ' data-id="' + esc(String(id)) + '" data-source="' + esc(source) + '">' +
+            'Zur Initiative' +
+        '</button>' +
+        '<button class="btn" data-action="bestiary-add-enc"' +
+            ' data-id="' + esc(String(id)) + '" data-source="' + esc(source) + '">' +
+            'Zu Encounter' +
+        '</button>';
+
+    if (source === 'custom') {
+        actionButtons +=
+            '<button class="btn" data-action="call" data-value="openBestiaryEditor"' +
+                ' data-id="' + esc(String(id)) + '">Bearbeiten</button>' +
+            '<button class="btn btn-danger" data-action="bestiary-delete"' +
+                ' data-id="' + esc(String(id)) + '">L\xf6schen</button>';
+    }
 
     // Attribution footer
     var attributionHtml =
@@ -431,7 +439,7 @@ function renderBestiaryDetail(id, source) {
             portraitHtml +
             '<div class="bestiary-detail-name">' + esc(monster.name) + '</div>' +
             '<div class="bestiary-detail-actions">' + actionButtons + '</div>' +
-            statblockHtml +
+            renderStatblockHTML(monster, source) +
             attributionHtml +
         '</div>';
 }
@@ -465,6 +473,7 @@ function selectBestiary(id, source) {
 // ============================================================
 window.renderBestiaryList = renderBestiaryList;
 window.renderBestiaryDetail = renderBestiaryDetail;
+window.renderStatblockHTML = renderStatblockHTML;
 window.renderClickableDice = renderClickableDice;
 window.crToSortValue = crToSortValue;
 window.selectBestiary = selectBestiary;
