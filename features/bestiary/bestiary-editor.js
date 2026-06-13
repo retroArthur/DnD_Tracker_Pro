@@ -264,7 +264,8 @@ function setBstRichEditor(id, html) {
     var el = window.$(id);
     // For custom creatures: traits/actions/reactions/legendary are stored as HTML strings.
     // For SRD compatibility in edit (future): we only edit custom creatures, so always strings here.
-    if (el) el.innerHTML = typeof html === 'string' ? html : '';
+    // Re-sanitize on read (defense-in-depth vs. tampered LocalStorage) even though save sanitizes.
+    if (el) el.innerHTML = typeof html === 'string' ? sanitizeHTML(html) : '';
 }
 
 // ============================================================

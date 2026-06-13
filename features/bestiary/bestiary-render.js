@@ -36,7 +36,7 @@ function crToSortValue(cr) {
 // ============================================================
 // CLICKABLE DICE (D-09, Muster aus PATTERNS.md)
 // Wraps damage formulas and to-hit bonuses with data-action spans
-// renderClickableDice runs BEFORE sanitizeHTML (output still sanitized)
+// renderClickableDice runs AFTER sanitizeHTML — dice spans are added to already-sanitized HTML
 // ============================================================
 function renderClickableDice(text) {
     if (!text) return '';
@@ -122,8 +122,8 @@ function renderBestiaryListItem(monster) {
         (isSelected ? ' selected' : '') +
         '" data-action="bestiary-select"' +
         ' data-id="' + esc(String(mId)) + '"' +
-        ' data-source="' + monster.source + '">' +
-        '<span class="bestiary-badge ' + monster.source + '">' +
+        ' data-source="' + esc(monster.source) + '">' +
+        '<span class="bestiary-badge ' + esc(monster.source) + '">' +
             (monster.source === 'srd' ? 'SRD' : 'Eigen') +
         '</span>' +
         '<span class="bestiary-name">' + esc(monster.name) + '</span>' +
@@ -452,51 +452,13 @@ function selectBestiary(id, source) {
 // overwritten by bestiary-editor.js which loads after this module.
 
 // ============================================================
-// MINIMAL ACTION HANDLERS (select + roll-dice)
-// Full bestiary action suite lives in bestiary-actions.js (plan 05).
-// These two are wired here so the render + E2E works before plan 05 lands.
-// Rule 2 deviation: critical for correct tab operation.
+// ACTION HANDLERS
+// All bestiary data-actions (bestiary-select, bestiary-roll-dice, bestiary-delete,
+// bestiary-toggle-fav, bestiary-add-init, bestiary-add-enc) are registered
+// canonically in ui/actions/entity-actions.js (plan 05), which loads after this
+// module and is the single source of truth. No registration here (the former
+// pre-plan-05 fallback block was removed to avoid a dead duplicate registration).
 // ============================================================
-var BestiaryRenderActions = {
-    // Row click — select a monster and show detail
-    // Use raw dataset.id (NOT parseEntityId) because SRD IDs are strings like 'goblin'
-    'bestiary-select': function(ctx) {
-        var id = (ctx.target && ctx.target.dataset.id) || String(ctx.id || '');
-        var source = (ctx.target && ctx.target.dataset.source) || 'srd';
-        if (id) window.selectBestiary(id, source);
-    },
-    // Dice span click — roll via rollQrefDice (plan 01 wired it, plan 05 registers bestiary-roll-dice)
-    // Provided here as fallback so dice clicks work before plan 05
-    'bestiary-roll-dice': function(ctx) {
-        var formula = ctx.value || (ctx.target && ctx.target.dataset.value);
-        if (!formula) return;
-        if (typeof window.rollQrefDice === 'function') {
-            window.rollQrefDice(formula);
-        } else if (typeof window.showToast === 'function') {
-            window.showToast('W\xfcrfel: ' + formula, 'info');
-        }
-    },
-    // Delete custom creature — wired here so SC2 E2E works before plan 05 lands.
-    // plan 05 may re-register this; EventDelegation.registerAction last-write-wins is OK.
-    'bestiary-delete': function(ctx) {
-        var id = (ctx.target && ctx.target.dataset.id) || String(ctx.id || '');
-        if (!id) return;
-        if (typeof window.deleteBestiaryEntry === 'function') {
-            window.deleteBestiaryEntry(id);
-        }
-    }
-};
-
-// Defer registration until after all modules (including EventDelegation) are loaded.
-// EventDelegation is a const defined later in load order; module-level typeof check
-// triggers TDZ ReferenceError in bundled mode. Use window.addEventListener instead.
-window.addEventListener('DOMContentLoaded', function() {
-    if (typeof EventDelegation !== 'undefined' && EventDelegation && typeof EventDelegation.registerAction === 'function') {
-        Object.entries(BestiaryRenderActions).forEach(function(entry) {
-            EventDelegation.registerAction(entry[0], entry[1]);
-        });
-    }
-});
 
 // ============================================================
 // WINDOW EXPORTS
