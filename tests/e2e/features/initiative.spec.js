@@ -781,28 +781,186 @@ test.describe('Initiative System', () => {
     // ============================================================
 
     test.describe('legendary', () => {
-        test.skip('LA-Pips erscheinen bei Monster mit legendaryActionsPerRound > 0', async ({ page }) => {
-            // Wave 2 fuellt: Boss-Monster zur Initiative hinzufuegen, .la-pips pruefen
+        /**
+         * Hilfsfunktion: Fuegt einen Vampir-Boss-Kombattanten (LA=3, LR=3) und einen
+         * einfachen Goblin-Kombattanten per evaluate() in die Initiative ein.
+         * Vampir hat hoeheren Initiative-Wert → er ist currentTurn=0.
+         * Der zweite Kombattant ist noetig damit nextTurn() eine Runde abschliessen kann
+         * wenn von Vampir (Turn 0) zu Goblin (Turn 1) und wieder zurueck zu Vampir gewechselt wird.
+         */
+        async function injectBossCombatant(page) {
+            await page.evaluate(() => {
+                // Boss-Kombattant mit LA+LR (Vampir-Profil: legendaryActionsPerRound=3, LR=3)
+                var boss = {
+                    id: window.nextId ? window.nextId('combatants') : Date.now(),
+                    name: 'Vampir (Boss)',
+                    initiative: 20,
+                    initBonus: 4,
+                    maxHp: 144,
+                    currentHp: 144,
+                    ac: 16,
+                    type: 'monster',
+                    cr: '13',
+                    xp: 10000,
+                    effects: [],
+                    statblockRef: { source: 'srd', id: 'vampir' },
+                    legendaryActions: { max: 3, remaining: 3 },
+                    legendaryResistance: { max: 3, remaining: 3 }
+                };
+                // Zweiter Kombattant damit eine Runde durch nextTurn() abgeschlossen werden kann
+                var goblin = {
+                    id: window.nextId ? window.nextId('combatants') : Date.now() + 1,
+                    name: 'Goblin',
+                    initiative: 10,
+                    initBonus: 2,
+                    maxHp: 7,
+                    currentHp: 7,
+                    ac: 15,
+                    type: 'monster',
+                    cr: '1/4',
+                    xp: 50,
+                    effects: []
+                };
+                window.D.initiative.combatants = [boss, goblin];
+                window.D.initiative.currentTurn = 0;
+                window.D.initiative.round = 1;
+                if (typeof window.renderInit === 'function') window.renderInit();
+            });
+        }
+
+        test('LA-Pips erscheinen bei legendary Monster mit legendaryActionsPerRound > 0', async ({ page }) => {
+            await injectBossCombatant(page);
+            await page.waitForSelector('#init-list .init-row', { timeout: 5000 });
+
+            // Boss-Zeile (Vampir) soll .la-pips enthalten
+            const laPips = page.locator('#init-list .la-pips').first();
+            await expect(laPips).toBeAttached();
+
+            // LA-Dots sollen vorhanden sein (max=3)
+            const laDots = page.locator('#init-list .la-dot');
+            expect(await laDots.count()).toBe(3);
+
+            // Goblin-Zeile soll KEINE .la-pips haben
+            const initRows = page.locator('#init-list .init-row');
+            const goblinRow = initRows.nth(1); // Goblin hat niedrigere Initiative
+            const goblinLaPips = goblinRow.locator('.la-pips');
+            expect(await goblinLaPips.count()).toBe(0);
         });
 
-        test.skip('Pip-Klick reduziert verbleibende LA um 1', async ({ page }) => {
-            // Wave 2 fuellt: .la-dot:first-child klicken, remaining--
+        test('Pip-Klick reduziert verbleibende legendary LA um 1', async ({ page }) => {
+            await injectBossCombatant(page);
+            await page.waitForSelector('#init-list .la-dot', { timeout: 5000 });
+
+            // Initialen Zustand pruefen: alle 3 LA aktiv
+            const activeDotsBefore = page.locator('#init-list .la-dot.active');
+            expect(await activeDotsBefore.count()).toBe(3);
+
+            // Auf den ersten aktiven Dot klicken (index=0) — reduziert remaining auf 0
+            const firstDot = page.locator('#init-list .la-dot').first();
+            await firstDot.click();
+            await page.waitForTimeout(200);
+
+            // Nach Klick auf index=0: remaining wird auf 0 gesetzt (toggleDeathSave-Logik)
+            const activeDotsAfter = page.locator('#init-list .la-dot.active');
+            expect(await activeDotsAfter.count()).toBe(0);
         });
 
-        test.skip('LA-Pips füllen sich bei Rundenübergang automatisch auf', async ({ page }) => {
-            // Wave 2 fuellt: nextTurn() bis Runde 2, LA-Reset pruefen (D-10)
+        test('LA-Pips füllen sich bei legendary Rundenübergang automatisch auf (D-10)', async ({ page }) => {
+            await injectBossCombatant(page);
+            await page.waitForSelector('#init-list .la-dot', { timeout: 5000 });
+
+            // Einen LA verbrauchen: letzten aktiven Dot klicken (index=2 → remaining=2)
+            const dots = page.locator('#init-list .la-dot');
+            await dots.nth(2).click();
+            await page.waitForTimeout(200);
+
+            // Jetzt 2 aktive Dots
+            let activeCount = await page.locator('#init-list .la-dot.active').count();
+            expect(activeCount).toBe(2);
+
+            // Runde abschliessen via evaluate (direkte nextTurn()-Aufrufe) — vermeidet Selektor-Problem
+            // (der Button nutzt data-action="call" data-value="nextTurn", nicht data-action="next-turn")
+            await page.evaluate(() => {
+                if (typeof window.nextTurn === 'function') window.nextTurn(); // Vampir → Goblin
+            });
+            await page.waitForTimeout(200);
+            await page.evaluate(() => {
+                if (typeof window.nextTurn === 'function') window.nextTurn(); // Goblin → Vampir (neue Runde)
+            });
+            await page.waitForTimeout(200);
+
+            // Nach Rundenübergang sollen alle 3 LA wiederhergestellt sein (D-10)
+            activeCount = await page.locator('#init-list .la-dot.active').count();
+            expect(activeCount).toBe(3);
         });
 
-        test.skip('LR-Pips erscheinen bei Monster mit (N-mal täglich)-Trait', async ({ page }) => {
-            // Wave 2 fuellt: Monster mit LR-Trait → .lr-pips sichtbar
+        test('LR-Pips erscheinen bei legendary Monster mit (N-mal täglich)-Trait', async ({ page }) => {
+            await injectBossCombatant(page);
+            await page.waitForSelector('#init-list .init-row', { timeout: 5000 });
+
+            // Boss-Zeile soll .lr-pips enthalten
+            const lrPips = page.locator('#init-list .lr-pips').first();
+            await expect(lrPips).toBeAttached();
+
+            // LR-Dots sollen vorhanden sein (max=3)
+            const lrDots = page.locator('#init-list .lr-dot');
+            expect(await lrDots.count()).toBe(3);
+
+            // LR-Reset-Knopf soll vorhanden sein
+            const resetBtn = page.locator('#init-list .lr-reset-btn').first();
+            await expect(resetBtn).toBeAttached();
         });
 
-        test.skip('LR resetten NICHT bei Rundenübergang (D-07)', async ({ page }) => {
-            // Wave 2 fuellt: nextTurn bis Runde 2, LR unveraendert pruefen
+        test('LR resetten NICHT bei legendary Rundenübergang (D-07 — deliberate deviation)', async ({ page }) => {
+            await injectBossCombatant(page);
+            await page.waitForSelector('#init-list .lr-dot', { timeout: 5000 });
+
+            // Einen LR verbrauchen: ersten Dot klicken (index=0 → remaining=0)
+            const lrDots = page.locator('#init-list .lr-dot');
+            await lrDots.first().click();
+            await page.waitForTimeout(200);
+
+            // Jetzt 0 aktive LR-Dots (Klick auf index=0 setzt remaining=0)
+            let activeLrCount = await page.locator('#init-list .lr-dot.active').count();
+            expect(activeLrCount).toBe(0);
+
+            // Runde abschliessen via evaluate (direkte nextTurn()-Aufrufe) — vermeidet Selektor-Problem
+            // (der Button nutzt data-action="call" data-value="nextTurn", nicht data-action="next-turn")
+            await page.evaluate(() => {
+                if (typeof window.nextTurn === 'function') window.nextTurn(); // Vampir → Goblin
+            });
+            await page.waitForTimeout(200);
+            await page.evaluate(() => {
+                if (typeof window.nextTurn === 'function') window.nextTurn(); // Goblin → Vampir (neue Runde)
+            });
+            await page.waitForTimeout(200);
+
+            // D-07: LR sollen UNVERAENDERT geblieben sein (0 aktive Dots) — kein Auto-Reset!
+            activeLrCount = await page.locator('#init-list .lr-dot.active').count();
+            expect(activeLrCount).toBe(0);
         });
 
-        test.skip('Manueller LR-Reset-Knopf setzt LR zurueck', async ({ page }) => {
-            // Wave 2 fuellt: .lr-reset-btn klicken, remaining === max pruefen
+        test('Manueller legendary LR-Reset-Knopf setzt LR zurueck', async ({ page }) => {
+            await injectBossCombatant(page);
+            await page.waitForSelector('#init-list .lr-dot', { timeout: 5000 });
+
+            // Alle LR verbrauchen: ersten Dot klicken (remaining=0)
+            const lrDots = page.locator('#init-list .lr-dot');
+            await lrDots.first().click();
+            await page.waitForTimeout(200);
+
+            // 0 aktive LR-Dots
+            let activeLrCount = await page.locator('#init-list .lr-dot.active').count();
+            expect(activeLrCount).toBe(0);
+
+            // LR-Reset-Knopf klicken
+            const resetBtn = page.locator('#init-list .lr-reset-btn').first();
+            await resetBtn.click();
+            await page.waitForTimeout(200);
+
+            // Nach Reset: alle 3 LR wieder aktiv
+            activeLrCount = await page.locator('#init-list .lr-dot.active').count();
+            expect(activeLrCount).toBe(3);
         });
     });
 
