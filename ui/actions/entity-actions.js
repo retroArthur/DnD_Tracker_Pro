@@ -272,7 +272,38 @@ const EntityActions = {
     // Render actions
     'render-quests': () => renderQuests(),
     'render-spells': () => renderSpells(),
-    'populate-import-nodes': () => populateImportNodesList()
+    'populate-import-nodes': () => populateImportNodesList(),
+
+    // Bestiary actions (Plan 03-05)
+    // Note: bestiary-select reads raw dataset.id (string SRD keys must not go through parseEntityId)
+    'bestiary-select': ctx => {
+        var rawId = ctx.target ? ctx.target.dataset.id : ctx.id;
+        var src = ctx.target ? ctx.target.dataset.source : (ctx.source || 'srd');
+        if (typeof window.selectBestiary === 'function') window.selectBestiary(rawId, src);
+    },
+    'bestiary-toggle-fav': ctx => {
+        var rawId = ctx.target ? ctx.target.dataset.id : ctx.id;
+        var src = ctx.target ? ctx.target.dataset.source : (ctx.source || 'srd');
+        if (typeof window.toggleBestiaryFavorite === 'function') window.toggleBestiaryFavorite(rawId, src);
+    },
+    'bestiary-roll-dice': ctx => {
+        var val = ctx.target ? ctx.target.dataset.value : ctx.value;
+        if (typeof window.rollQrefDice === 'function') window.rollQrefDice(val);
+    },
+    'bestiary-add-init': ctx => {
+        var rawId = ctx.target ? ctx.target.dataset.id : ctx.id;
+        var src = ctx.target ? ctx.target.dataset.source : (ctx.source || 'srd');
+        if (typeof window.addBestiaryToInitiative === 'function') window.addBestiaryToInitiative(rawId, src);
+    },
+    'bestiary-add-enc': ctx => {
+        var rawId = ctx.target ? ctx.target.dataset.id : ctx.id;
+        var src = ctx.target ? ctx.target.dataset.source : (ctx.source || 'srd');
+        if (typeof window.addBestiaryToEncounter === 'function') window.addBestiaryToEncounter(rawId, src);
+    },
+    'bestiary-delete': ctx => {
+        var rawId = ctx.target ? ctx.target.dataset.id : ctx.id;
+        if (typeof window.deleteBestiaryEntry === 'function') window.deleteBestiaryEntry(rawId);
+    }
 };
 
 // Register all entity actions
