@@ -122,7 +122,7 @@ Plans:
 
 **Wave 1** *(blocked on Wave 0)*
 
-- [ ] 04-02-PLAN.md — INIT-01 Statblock-Drawer: renderStatblockHTML-Extraktion (DRY), 📖-Button je Zeile, Drawer mit Klick-Würfen, Basis-Infos-Fallback (INIT-01)
+- [x] 04-02-PLAN.md — INIT-01 Statblock-Drawer: renderStatblockHTML-Extraktion (DRY), 📖-Button je Zeile, Drawer mit Klick-Würfen, Basis-Infos-Fallback (INIT-01)
 
 **Wave 2** *(blocked on Wave 1 — teilt sich initiative.js + combat-actions.js)*
 
@@ -180,7 +180,7 @@ Plans:
 | 1. Stabilisierung           | 9/9            | Complete    | 2026-06-12 |
 | 2. Technik-Fundament        | 5/5 | Complete    | 2026-06-12 |
 | 3. Bestiary                 | 5/5 | Complete    | 2026-06-13 |
-| 4. Initiative-Erweiterungen | 1/4 | In Progress|  |
+| 4. Initiative-Erweiterungen | 2/4 | In Progress|  |
 | 5. Welt & Story             | 0/?            | Not started | -         |
 | 6. Spieler-Verwaltung       | 0/?            | Not started | -         |
 | 7. Komfort & Analyse        | 0/?            | Not started | -         |

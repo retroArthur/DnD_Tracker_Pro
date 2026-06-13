@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-last_updated: "2026-06-13T22:57:46.315Z"
+last_updated: "2026-06-13T23:07:38.119Z"
 progress:
   total_phases: 7
   completed_phases: 3
   total_plans: 23
-  completed_plans: 20
+  completed_plans: 21
   percent: 43
 ---
 
@@ -16,7 +16,7 @@ progress:
 
 **Last Updated:** 2026-06-14
 **Phase:** 4
-**Status:** Executing Phase 04 — Plan 2 von 4
+**Status:** Executing
 
 ---
 
@@ -32,11 +32,11 @@ progress:
 
 ```
 Phase: 04 (initiative-erweiterungen) — EXECUTING
-Plan: 2 of 4
-Next:  Phase 04 Plan 2 ausführen (04-02-PLAN.md)
-Status: Executing Phase 04 — Plan 2 von 4
+Plan: 3 of 4
+Next:  Phase 04 Plan 3 ausführen (04-03-PLAN.md)
+Status: Ready to execute
 
-Progress: [████░░░░░░] 43% (3/7 Phasen abgeschlossen, 20/23 Pläne)
+Progress: [█████████░] 91% (21/23 Pläne abgeschlossen)
 ```
 
 **Phases:**
@@ -45,7 +45,7 @@ Progress: [████░░░░░░] 43% (3/7 Phasen abgeschlossen, 20/23 
 | 1 | Stabilisierung | Complete |
 | 2 | Technik-Fundament | Complete |
 | 3 | Bestiary | Complete (5/5 Pläne) |
-| 4 | Initiative-Erweiterungen | In Progress (1/4 Pläne abgeschlossen) |
+| 4 | Initiative-Erweiterungen | In Progress (2/4 Pläne abgeschlossen) |
 | 5 | Welt & Story | Not started |
 | 6 | Spieler-Verwaltung | Not started |
 | 7 | Komfort & Analyse | Not started |
@@ -82,6 +82,7 @@ Progress: [████░░░░░░] 43% (3/7 Phasen abgeschlossen, 20/23 
 | Custom-Creatures speichern Rich-Text als HTML-Strings (03-04) | 3 (03-04) | SRD nutzt [{name,desc}]-Arrays; renderTraitList() erkennt Typ per typeof — keine Migration nötig |
 | bestiary-delete in plan-04 registriert (03-04) | 3 (03-04) | SC2 E2E braucht die Action in plan-04; plan-05 kann sie neu registrieren (EventDelegation last-write-wins) |
 | getMonsterTemplates() → getSRDMonsters() Alias (03-02) | 3 (03-02) | Single source of truth; Code-Review fand Regression im Encounter-Template-Loader (deutsche _ids + Array-Shape) → behoben in ee66bbf |
+| Phase 04 P04-02 | 20 | 3 tasks | 5 files |
 
 ### Known Blockers / Research Flags
 
@@ -112,8 +113,8 @@ Progress: [████░░░░░░] 43% (3/7 Phasen abgeschlossen, 20/23 
 
 ## Session Continuity
 
-**Last action:** Phase 04 Plan 01 (Wave-0-Fundament) ausgefuehrt (2026-06-14). features/initiative-mob.js + features/initiative-statblock.js erstellt; build.py + loader.js registriert; 4 CSS-Sektionen in initiative.css angehaengt; 27 Unit-Tests (alle gruen, Anker-Case INIT-03/DMG-Mob-Regel); 3 E2E describe-Stubs. Build sauber (1.67 MB, keine Duplikat-Fehler). Commits: 3635437, 78511a9, 14d7c44.
-**Next action:** Phase 04 Plan 02 ausfuehren (Wave 1 — Statblock-Drawer Vollimplementierung).
+**Last action:** Phase 04 Plan 02 (INIT-01 Statblock-Drawer) ausgefuehrt (2026-06-14). renderStatblockHTML als DRY-Funktion in bestiary-render.js extrahiert; vollstaendiger Drawer implementiert; Buch-Button in Init-Zeilen; 4 E2E-Tests gruen. Build sauber. Commits: 997e853, e1c2f26, 8efed44.
+**Next action:** Phase 04 Plan 03 ausfuehren (Wave 2 — LA/LR Pips).
 
 ---
 
@@ -122,3 +123,4 @@ _State initialized: 2026-06-11_
 ## Decisions
 
 - [Phase ?]: Quantity cap = 100 (BESTIARY_MAX_QUANTITY): clamp to 1-100 for DoS safety (T-03-10)
+- [Phase ?]: INIT-01: renderStatblockHTML DRY-Extraktion in bestiary-render.js, E2E via evaluate()-Injektion
