@@ -2,21 +2,21 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: executing
-last_updated: "2026-06-13T17:50:00.000Z"
+status: verifying
+last_updated: "2026-06-13T16:05:31.809Z"
 progress:
   total_phases: 7
-  completed_phases: 2
+  completed_phases: 3
   total_plans: 19
-  completed_plans: 18
-  percent: 95
+  completed_plans: 19
+  percent: 43
 ---
 
 # Project State: D&D Kampagnen-Tracker Pro — Stabilisierung & Ausbau
 
 **Last Updated:** 2026-06-13
 **Phase:** 3
-**Status:** Executing (Plan 5 of 5)
+**Status:** Phase complete — ready for verification
 
 ---
 
@@ -33,7 +33,7 @@ progress:
 ```
 Phase: 03 (bestiary) — EXECUTING
 Plan: 5 of 5
-Status: Ready to execute
+Status: Phase complete — ready for verification
 
 Progress: [██████████] 95% (18/19 Pläne abgeschlossen)
 ```
@@ -80,6 +80,7 @@ Progress: [██████████] 95% (18/19 Pläne abgeschlossen)
 | SRD string IDs: ctx.target.dataset.id statt parseEntityId | 3 (03-03) | parseEntityId('goblin') gibt null zurück; bestiary-select verwendet ctx.target.dataset.id direkt als String                                 |
 | Custom-Creatures speichern Rich-Text als HTML-Strings (03-04) | 3 (03-04) | SRD nutzt [{name,desc}]-Arrays; renderTraitList() erkennt Typ per typeof — keine Migration nötig |
 | bestiary-delete in plan-04 registriert (03-04) | 3 (03-04) | SC2 E2E braucht die Action in plan-04; plan-05 kann sie neu registrieren (EventDelegation last-write-wins) |
+| Phase 03-bestiary P03-05 | 45 | 3 tasks | 4 files |
 
 ### Known Blockers / Research Flags
 
@@ -114,3 +115,7 @@ Progress: [██████████] 95% (18/19 Pläne abgeschlossen)
 ---
 
 _State initialized: 2026-06-11_
+
+## Decisions
+
+- [Phase ?]: Quantity cap = 100 (BESTIARY_MAX_QUANTITY): clamp to 1-100 for DoS safety (T-03-10)

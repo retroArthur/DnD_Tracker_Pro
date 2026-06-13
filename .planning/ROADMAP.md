@@ -11,7 +11,7 @@
 
 - [x] **Phase 1: Stabilisierung** — App startet, Daten sind sicher, CI erkennt Crashes, Doku ist aktuell
 - [x] **Phase 2: Technik-Fundament** — Installierbare PWA, Datei-Backup, Command Palette (completed 2026-06-12)
-- [ ] **Phase 3: Bestiary** — SRD-Monster-Kompendium offline + eigene Kreaturen + Encounter-Import
+- [x] **Phase 3: Bestiary** — SRD-Monster-Kompendium offline + eigene Kreaturen + Encounter-Import (completed 2026-06-13)
 - [ ] **Phase 4: Initiative-Erweiterungen** — Statblock-Popup, Legendäre Aktionen & Resistenzen, Mob-Modus
 - [ ] **Phase 5: Welt & Story** — Session-Prep, NPC-Generator, Timeline, Reise-Simulator, Fraktionen
 - [ ] **Phase 6: Spieler-Verwaltung** — XP/Milestone-Tracker, Inspiration, Erweiterte Charakterwerte
@@ -100,7 +100,7 @@ Plans:
 
 **Wave 4** *(blocked on Wave 3 — teilt sich die E2E-Spec mit 03-04)*
 
-- [ ] 03-05-PLAN.md — Übernahme: Mengen-Dialog→Initiative (Auto-Wurf/HP-Variation/Nummerierung/statblockRef), Zu Encounter, Favoriten, Klick-Würfel-Handler (BEST-03)
+- [x] 03-05-PLAN.md — Übernahme: Mengen-Dialog→Initiative (Auto-Wurf/HP-Variation/Nummerierung/statblockRef), Zu Encounter, Favoriten, Klick-Würfel-Handler (BEST-03)
 
 ### Phase 4: Initiative-Erweiterungen
 
@@ -162,7 +162,7 @@ Plans:
 | --------------------------- | -------------- | ----------- | --------- |
 | 1. Stabilisierung           | 9/9            | Complete    | 2026-06-12 |
 | 2. Technik-Fundament        | 5/5 | Complete    | 2026-06-12 |
-| 3. Bestiary                 | 4/5 | In Progress|  |
+| 3. Bestiary                 | 5/5 | Complete   | 2026-06-13 |
 | 4. Initiative-Erweiterungen | 0/?            | Not started | -         |
 | 5. Welt & Story             | 0/?            | Not started | -         |
 | 6. Spieler-Verwaltung       | 0/?            | Not started | -         |
