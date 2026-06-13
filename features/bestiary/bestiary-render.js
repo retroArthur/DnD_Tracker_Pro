@@ -320,11 +320,11 @@ function renderBestiaryDetail(id, source) {
 
     // Action buttons
     var actionButtons =
-        '<button class="btn btn-primary" data-action="bestiary-add-to-initiative"' +
+        '<button class="btn btn-primary" data-action="bestiary-add-init"' +
             ' data-id="' + esc(String(id)) + '" data-source="' + esc(source) + '">' +
             'Zur Initiative' +
         '</button>' +
-        '<button class="btn" data-action="bestiary-add-to-encounter"' +
+        '<button class="btn" data-action="bestiary-add-enc"' +
             ' data-id="' + esc(String(id)) + '" data-source="' + esc(source) + '">' +
             'Zu Encounter' +
         '</button>';
