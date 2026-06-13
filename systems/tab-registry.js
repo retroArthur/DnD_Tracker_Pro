@@ -89,6 +89,11 @@ const TAB_RENDER_REGISTRY = {
         renders: ['renderDMScreen'],
         init: null,
         cleanup: null
+    },
+    bestiary: {
+        renders: ['renderBestiaryList'],
+        init: null,
+        cleanup: 'cleanupBestiaryEditor'
     }
 };
 /**

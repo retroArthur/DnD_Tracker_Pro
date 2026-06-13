@@ -103,6 +103,11 @@ MODULES = [
     # Encounters-Module
     'features/encounters/encounters-render.js',
     'features/encounters/encounters-crud.js',
+    # Bestiary-Module (Phase 3)
+    'features/bestiary/bestiary-render.js',
+    'features/bestiary/bestiary-crud.js',
+    'features/bestiary/bestiary-editor.js',
+    'features/bestiary/bestiary-actions.js',
     # Features
     'features/encounter-calculator.js',
     'features/initiative.js',
@@ -129,6 +134,7 @@ MODULES = [
     'systems/wiki-links.js',
     'features/encounters/monster-templates.js',
     'core/srd-spells.js',
+    'core/srd-monsters.js',
     'systems/spellslots/spellslots-ui.js',
     'features/initiative-extras.js',
     'ui/layout-profiles.js',
@@ -422,7 +428,8 @@ def build(minify=False, production=False, verbose=False):
         'loot.css', 'spells.css', 'party.css',
         'dashboard.css', 'dmscreen.css', 'dice.css',
         'tools.css',
-        'pwa.css', 'migration.css', 'file-backup.css', 'command-palette.css'
+        'pwa.css', 'migration.css', 'file-backup.css', 'command-palette.css',
+        'bestiary.css'
     ]
     css_parts = []
     for css_file in css_files:
@@ -448,7 +455,7 @@ def build(minify=False, production=False, verbose=False):
     print("\n[BUILD] Lade HTML Templates...")
     html_templates = [
         'header.html', 'view-party.html', 'view-content.html',
-        'view-encounters.html', 'view-resources.html', 'view-tools.html',
+        'view-encounters.html', 'view-bestiary.html', 'view-resources.html', 'view-tools.html',
         'modals-entity.html', 'modals-shops.html', 'modals-tools.html',
         'modals-editors.html'
     ]

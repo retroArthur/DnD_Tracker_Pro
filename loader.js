@@ -74,6 +74,12 @@ const MODULES = [
     'features/encounters/encounters-render.js',
     'features/encounters/encounters-crud.js',
 
+    // Bestiary-Module (Phase 3)
+    'features/bestiary/bestiary-render.js',
+    'features/bestiary/bestiary-crud.js',
+    'features/bestiary/bestiary-editor.js',
+    'features/bestiary/bestiary-actions.js',
+
     // Features
     'features/encounter-calculator.js',
     'features/initiative.js',
@@ -102,6 +108,7 @@ const MODULES = [
     'systems/wiki-links.js',
     'features/encounters/monster-templates.js',
     'core/srd-spells.js',
+    'core/srd-monsters.js',
     'systems/spellslots/spellslots-ui.js',
     'features/initiative-extras.js',
     'ui/layout-profiles.js',
