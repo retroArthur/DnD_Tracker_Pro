@@ -112,8 +112,25 @@ Plans:
 1. Nutzer klickt auf einen Kombattanten in der Initiative — ein Popup zeigt den vollständigen Statblock (Aktionen, Traits, Saves, Senses) des verknüpften Monsters aus dem Bestiary
 2. Nutzer führt einen Boss-Kampf durch — Legendäre Aktionen und Legendäre Resistenzen sind als klickbare Zähler sichtbar und setzen sich am Rundenanfang (Initiative 20) automatisch zurück
 3. Nutzer fügt zehn Goblins als Mob zur Initiative hinzu — sie erscheinen als eine Zeile mit Pool-HP und einem kombinierten Angriffswurf; beim Erreichen von 0 Pool-HP ist der Mob besiegt
-   **Plans**: TBD
+   **Plans**: 4 plans (4 Wellen)
    **UI hint**: yes
+
+Plans:
+**Wave 0**
+
+- [ ] 04-01-PLAN.md — Wave-0-Fundament: 2 Modul-Skelette (initiative-statblock.js + initiative-mob.js mit reinen Mob/LR-Funktionen), build.py+loader.js-Registrierung, CSS-Sektionen, Nyquist-Unit-Tests + E2E-Stubs (INIT-01/02/03)
+
+**Wave 1** *(blocked on Wave 0)*
+
+- [ ] 04-02-PLAN.md — INIT-01 Statblock-Drawer: renderStatblockHTML-Extraktion (DRY), 📖-Button je Zeile, Drawer mit Klick-Würfen, Basis-Infos-Fallback (INIT-01)
+
+**Wave 2** *(blocked on Wave 1 — teilt sich initiative.js + combat-actions.js)*
+
+- [ ] 04-03-PLAN.md — INIT-02 Legendäre Aktionen & Resistenzen: LA/LR-Pips (Death-Save-Optik), LA-Reset bei Init 20, LR KEIN Auto-Reset + manueller Reset (D-07), Feld-Init beim Bestiary-Add (INIT-02)
+
+**Wave 3** *(blocked on Wave 2 — teilt sich initiative.js + combat-actions.js)*
+
+- [ ] 04-04-PLAN.md — INIT-03 Mob-Modus: Mob-Toggle im Mengen-Dialog, Mob-Zeile mit Pool-HP + "X von N am Leben", beide Angriffsmodi (N-fach/DMG-Mob-Regel) mit auto-summiertem Schaden, Feature-Hiding, Undo-sicheres Auflösen (INIT-03)
 
 ### Phase 5: Welt & Story
 
@@ -163,7 +180,7 @@ Plans:
 | 1. Stabilisierung           | 9/9            | Complete    | 2026-06-12 |
 | 2. Technik-Fundament        | 5/5 | Complete    | 2026-06-12 |
 | 3. Bestiary                 | 5/5 | Complete    | 2026-06-13 |
-| 4. Initiative-Erweiterungen | 0/?            | Not started | -         |
+| 4. Initiative-Erweiterungen | 0/4            | Planned     | -         |
 | 5. Welt & Story             | 0/?            | Not started | -         |
 | 6. Spieler-Verwaltung       | 0/?            | Not started | -         |
 | 7. Komfort & Analyse        | 0/?            | Not started | -         |
