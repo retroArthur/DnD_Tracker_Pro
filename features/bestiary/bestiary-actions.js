@@ -84,6 +84,12 @@ function addBestiaryToInitiative(id, source) {
     // DEX-Modifier (analog encounter-calculator.js Zeile 887)
     var dexMod = Math.floor(((monster.dex || 10) - 10) / 2);
 
+    // LA/LR-Felder: runtime-only, keine Migration (INIT-02)
+    var laCount = monster.legendaryActionsPerRound || 0;
+    var lrCount = typeof window.parseLegendaryResistanceCount === 'function'
+        ? window.parseLegendaryResistanceCount(monster)
+        : 0;
+
     saveUndoState('Monster zur Initiative hinzugef\xfcgt');
 
     for (var i = 0; i < count; i++) {
@@ -103,7 +109,7 @@ function addBestiaryToInitiative(id, source) {
             id: source === 'custom' ? monster.id : monster._id
         };
 
-        D.initiative.combatants.push({
+        var combatant = {
             id: nextId('combatants'),
             name: name,
             initiative: initRoll,
@@ -116,7 +122,18 @@ function addBestiaryToInitiative(id, source) {
             xp: monster.xp || (window.CR_TO_XP && window.CR_TO_XP[monster.cr]) || 0,
             effects: [],
             statblockRef: statblockRef
-        });
+        };
+
+        // LA-Felder (INIT-02, D-09): nur wenn legendaryActionsPerRound > 0
+        if (laCount > 0) {
+            combatant.legendaryActions = { max: laCount, remaining: laCount };
+        }
+        // LR-Felder (INIT-02, D-06): nur wenn LR-Trait erkannt
+        if (lrCount > 0) {
+            combatant.legendaryResistance = { max: lrCount, remaining: lrCount };
+        }
+
+        D.initiative.combatants.push(combatant);
     }
 
     // Nach Initiative-Wert sortieren (absteigend) — analog encounter-calculator.js Zeile 929

@@ -27,6 +27,20 @@ const CombatActions = {
     'show-init-statblock': ctx => showInitStatblockPanel(ctx.id),
     'close-init-statblock': () => closeInitStatblockPanel(),
 
+    // INIT-02: Legendäre Aktionen / Widerstände Pips
+    'init-use-la-stop': ctx => {
+        ctx.event.stopPropagation();
+        useLA(ctx.id, parseInt(ctx.target.dataset.index));
+    },
+    'init-use-lr-stop': ctx => {
+        ctx.event.stopPropagation();
+        useLR(ctx.id, parseInt(ctx.target.dataset.index));
+    },
+    'init-reset-lr-stop': ctx => {
+        ctx.event.stopPropagation();
+        resetLR(ctx.id);
+    },
+
     'show-aoe-damage-modal': () => showAoEDamageModal(),
     'set-concentration': ctx => setConcentration(ctx.id),
     'roll-aoe-damage': () => rollAoEDamage(),
