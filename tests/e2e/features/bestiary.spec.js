@@ -547,13 +547,160 @@ test.describe('Bestiary — SC3: Uebernahme zu Initiative und Encounter', () => 
         await openBestiaryTab(page);
     });
 
-    // Contract-Test: Zur Initiative (Plan 05 fuellung)
-    test.fixme('Zur Initiative', async ({ page }) => {
-        await expect(page.locator('#view-bestiary')).toBeVisible();
+    // Contract-Test: Zur Initiative (Plan 05)
+    // Goblin auswaehlen, Mengen-Dialog mit 3 beantworten, Initiative pruefen
+    test('Zur Initiative', async ({ page }) => {
+        // Goblin suchen (bekanntes SRD-Monster mit definiertem HP/AC/DEX)
+        await performSearch(page, 'Goblin');
+        await page.waitForFunction(function() {
+            return document.querySelectorAll('.bestiary-list-item').length > 0;
+        }, { timeout: 5000 });
+
+        // Ersten Treffer auswaehlen
+        await page.evaluate(function() {
+            var item = document.querySelector('.bestiary-list-item');
+            if (item) item.click();
+        });
+        await page.waitForTimeout(500);
+        await page.waitForSelector('.bestiary-statblock', { timeout: 5000 });
+
+        // Goblin-Statblock-Werte aus dem DOM lesen (HP und AC fuer Verifikation)
+        var monsterData = await page.evaluate(function() {
+            var d = window.D;
+            var srd = typeof window.getSRDMonsters === 'function' ? window.getSRDMonsters() : [];
+            var goblin = srd.find(function(m) { return m._id === 'goblin'; });
+            return goblin ? { hp: goblin.hp, ac: goblin.ac } : null;
+        });
+        expect(monsterData).toBeTruthy();
+        var baseHp = monsterData.hp;
+        var expectedAc = monsterData.ac;
+
+        // Quantity-Dialog abfangen: antworte mit '3'
+        page.on('dialog', async function(dialog) {
+            if (dialog.type() === 'prompt') {
+                await dialog.accept('3');
+            } else {
+                await dialog.dismiss();
+            }
+        });
+
+        // "Zur Initiative"-Button klicken
+        await page.evaluate(function() {
+            var btn = document.querySelector('[data-action="bestiary-add-init"]');
+            if (btn) btn.click();
+        });
+
+        // Warten bis switchView('initiative') ausgefuehrt wurde
+        await page.waitForSelector('#view-initiative.active', { timeout: 8000 });
+        await page.waitForTimeout(500);
+
+        // Verify: 3 Goblin-Kämfer in D.initiative.combatants
+        var combatants = await page.evaluate(function() {
+            var D = window.D;
+            if (!D || !D.initiative || !D.initiative.combatants) return [];
+            return D.initiative.combatants
+                .filter(function(c) { return c.name && c.name.indexOf('Goblin') !== -1; });
+        });
+        expect(combatants.length).toBe(3);
+
+        // Verify: Nummerierung D-16 ("Goblin 1", "Goblin 2", "Goblin 3" — Leerzeichen, kein '#')
+        var names = combatants.map(function(c) { return c.name; }).sort();
+        expect(names).toContain('Goblin 1');
+        expect(names).toContain('Goblin 2');
+        expect(names).toContain('Goblin 3');
+
+        // Verify: AC = Statblock-AC
+        combatants.forEach(function(c) {
+            expect(c.ac).toBe(expectedAc);
+        });
+
+        // Verify: HP innerhalb +-10% des Basis-HP
+        var hpLow = Math.max(1, Math.round(baseHp * 0.9));
+        var hpHigh = Math.round(baseHp * 1.1);
+        combatants.forEach(function(c) {
+            expect(c.maxHp).toBeGreaterThanOrEqual(hpLow - 1); // 1 Einheit Toleranz fuer Rundung
+            expect(c.maxHp).toBeLessThanOrEqual(hpHigh + 1);
+        });
+
+        // Verify: statblockRef vorhanden (D-17)
+        combatants.forEach(function(c) {
+            expect(c.statblockRef).toBeTruthy();
+            expect(c.statblockRef.source).toBe('srd');
+            expect(c.statblockRef.id).toBe('goblin');
+        });
+
+        // Verify: Initiativewerte sind Zahlen (auto-gerollt)
+        combatants.forEach(function(c) {
+            expect(typeof c.initiative).toBe('number');
+        });
     });
 
-    // Contract-Test: Zu Encounter (Plan 05 fuellung)
-    test.fixme('Zu Encounter', async ({ page }) => {
-        await expect(page.locator('#view-bestiary')).toBeVisible();
+    // Contract-Test: Zu Encounter (Plan 05)
+    // Goblin auswaehlen und zu Encounter hinzufuegen
+    test('Zu Encounter', async ({ page }) => {
+        // Goblin suchen
+        await performSearch(page, 'Goblin');
+        await page.waitForFunction(function() {
+            return document.querySelectorAll('.bestiary-list-item').length > 0;
+        }, { timeout: 5000 });
+
+        // Ersten Treffer auswaehlen
+        await page.evaluate(function() {
+            var item = document.querySelector('.bestiary-list-item');
+            if (item) item.click();
+        });
+        await page.waitForTimeout(500);
+        await page.waitForSelector('.bestiary-statblock', { timeout: 5000 });
+
+        // Goblin-Statblock-Werte fuer Verifikation lesen
+        var monsterData = await page.evaluate(function() {
+            var srd = typeof window.getSRDMonsters === 'function' ? window.getSRDMonsters() : [];
+            var goblin = srd.find(function(m) { return m._id === 'goblin'; });
+            return goblin ? { hp: goblin.hp, ac: goblin.ac, name: goblin.name } : null;
+        });
+        expect(monsterData).toBeTruthy();
+
+        // Anzahl Encounters vorher messen
+        var countBefore = await page.evaluate(function() {
+            return (window.D && window.D.encounters ? window.D.encounters.length : 0);
+        });
+
+        // "Zu Encounter"-Button klicken
+        await page.evaluate(function() {
+            var btn = document.querySelector('[data-action="bestiary-add-enc"]');
+            if (btn) btn.click();
+        });
+        await page.waitForTimeout(800);
+
+        // Verify: D.encounters hat einen neuen Eintrag
+        var countAfter = await page.evaluate(function() {
+            return (window.D && window.D.encounters ? window.D.encounters.length : 0);
+        });
+        expect(countAfter).toBe(countBefore + 1);
+
+        // Neuen Encounter-Eintrag lesen
+        var newEncounter = await page.evaluate(function(name) {
+            var encs = window.D && window.D.encounters ? window.D.encounters : [];
+            // Suche nach dem zuletzt hinzugefuegten Eintrag mit dem Namen
+            for (var i = encs.length - 1; i >= 0; i--) {
+                if (encs[i].name === name) return encs[i];
+            }
+            return null;
+        }, monsterData.name);
+        expect(newEncounter).toBeTruthy();
+
+        // Verify: HP und AC korrekt aus Statblock
+        expect(newEncounter.hp).toBe(monsterData.hp);
+        expect(newEncounter.ac).toBe(monsterData.ac);
+        expect(newEncounter.name).toBe(monsterData.name);
+
+        // Verify: Undo-faehig — Ctrl+Z stellt Ausgangszustand wieder her
+        await page.keyboard.press('Control+z');
+        await page.waitForTimeout(500);
+
+        var countAfterUndo = await page.evaluate(function() {
+            return (window.D && window.D.encounters ? window.D.encounters.length : 0);
+        });
+        expect(countAfterUndo).toBe(countBefore);
     });
 });
