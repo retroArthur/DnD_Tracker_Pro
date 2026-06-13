@@ -87,7 +87,7 @@ Plans:
 Plans:
 **Wave 1**
 
-- [ ] 03-01-PLAN.md — Fundament: D-Schema + Migration 3.0.0, Tab-/Modul-/CSS-/Template-Registrierung (build.py+loader.js), 5 Modul-Stubs, Wave-0-Tests (BEST-01/02/03)
+- [x] 03-01-PLAN.md — Fundament: D-Schema + Migration 3.0.0, Tab-/Modul-/CSS-/Template-Registrierung (build.py+loader.js), 5 Modul-Stubs, Wave-0-Tests (BEST-01/02/03)
 
 **Wave 2** *(blocked on Wave 1)*
 
@@ -162,7 +162,7 @@ Plans:
 | --------------------------- | -------------- | ----------- | --------- |
 | 1. Stabilisierung           | 9/9            | Complete    | 2026-06-12 |
 | 2. Technik-Fundament        | 5/5 | Complete    | 2026-06-12 |
-| 3. Bestiary                 | 0/5            | Planned     | -         |
+| 3. Bestiary                 | 1/5 | In Progress|  |
 | 4. Initiative-Erweiterungen | 0/?            | Not started | -         |
 | 5. Welt & Story             | 0/?            | Not started | -         |
 | 6. Spieler-Verwaltung       | 0/?            | Not started | -         |

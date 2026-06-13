@@ -30,9 +30,9 @@ Requirements für diesen Milestone. Jedes wird genau einer Roadmap-Phase zugeord
 
 ### Monster-Kompendium (BEST)
 
-- [ ] **BEST-01**: Nutzer kann SRD-Monster offline durchsuchen und filtern (Name, CR, Typ) in einem eigenen Bestiary-Tab
-- [ ] **BEST-02**: Nutzer kann eigene Kreaturen anlegen, bearbeiten und löschen
-- [ ] **BEST-03**: Nutzer kann Monster direkt aus dem Bestiary in Encounter und Initiative übernehmen
+- [x] **BEST-01**: Nutzer kann SRD-Monster offline durchsuchen und filtern (Name, CR, Typ) in einem eigenen Bestiary-Tab
+- [x] **BEST-02**: Nutzer kann eigene Kreaturen anlegen, bearbeiten und löschen
+- [x] **BEST-03**: Nutzer kann Monster direkt aus dem Bestiary in Encounter und Initiative übernehmen
 
 ### Initiative-Erweiterungen (INIT)
 
@@ -111,9 +111,9 @@ Explizit ausgeschlossen. Dokumentiert, um Scope-Creep zu verhindern.
 | TECH-02     | Phase 2 | Complete |
 | TECH-03     | Phase 2 | Complete |
 | TECH-04     | Phase 2 | Complete |
-| BEST-01     | Phase 3 | Pending |
-| BEST-02     | Phase 3 | Pending |
-| BEST-03     | Phase 3 | Pending |
+| BEST-01     | Phase 3 | Complete |
+| BEST-02     | Phase 3 | Complete |
+| BEST-03     | Phase 3 | Complete |
 | INIT-01     | Phase 4 | Pending |
 | INIT-02     | Phase 4 | Pending |
 | INIT-03     | Phase 4 | Pending |
