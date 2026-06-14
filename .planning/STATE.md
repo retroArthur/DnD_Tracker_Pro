@@ -3,7 +3,7 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: planning
-last_updated: "2026-06-14T20:38:43.129Z"
+last_updated: "2026-06-14T21:50:20.711Z"
 progress:
   total_phases: 7
   completed_phases: 4
@@ -24,19 +24,19 @@ progress:
 
 **Core Value:** Die App muss am Spieltisch zuverlässig offline laufen — ein Spielleiter-Begleiter, der nie im Weg steht und keine Daten verliert.
 
-**Current Focus:** Phase 05 — welt-&-story (Phase 04 abgeschlossen + UAT approved 2026-06-14)
+**Current Focus:** Phase 05 — welt-&-story (Kontext erfasst 2026-06-14, bereit zum Planen)
 
 ---
 
 ## Current Position
 
 ```
-Phase: 04 (initiative-erweiterungen) — COMPLETE
+Phase: 05 (welt-story) — CONTEXT GATHERED
 Plan: Not started
-Next:  Phase 05 (Welt & Story) starten
-Status: Phase 04 abgeschlossen
+Next:  Phase 05 planen (/gsd-plan-phase 5)
+Status: Phase 05 Kontext erfasst (05-CONTEXT.md)
 
-Progress: [██████████] 100% Phase 4 (23/23 Pläne abgeschlossen)
+Progress: [██████████] 100% Phase 4 (23/23 Pläne) · Phase 5 Kontext erfasst
 ```
 
 **Phases:**
@@ -108,13 +108,14 @@ Progress: [██████████] 100% Phase 4 (23/23 Pläne abgeschlos
 - [x] Phase 2 planen ✓ (Phase 2 Complete)
 - [ ] Phase 3 — 3 manuelle Browser-Checks (nicht-blockierend, aus 03-VERIFICATION): Offline-Modus zeigt alle 112 Monster, Pergament-Statblock-Optik, Klick-Würfel-Feel am Spieltisch
 - [ ] REQUIREMENTS.md Traceability: 4 REQ-IDs (WELT-06/07, CHAR-04, UX-03) aus späteren Phasen fehlen noch in der Traceability-Tabelle (von `phase complete` gemeldet)
+- [x] Phase 5 diskutieren: `/gsd-discuss-phase 5` ✓ (2026-06-14, 05-CONTEXT.md)
 
 ---
 
 ## Session Continuity
 
-**Last action:** Phase 04 (Initiative-Erweiterungen) vollständig abgeschlossen (2026-06-14): 4 Pläne/4 Wellen ausgeführt (INIT-01 Statblock-Drawer, INIT-02 LA/LR-Pips, INIT-03 Mob-Modus), Code-Review + Verifikation (3/3 Wahrheiten). UAT vom Nutzer approved nach Drawer-Bugfix (Drawer dockte links statt rechts + nicht schließbar → 9107ec2). Zusätzlich Test-Infrastruktur gehärtet: 6 vorbestehend kaputte + 10 no-op Initiative-E2E-Tests mit echten Selektoren/Assertions repariert (Commits a613023, 9107ec2, 6906875) → 31/31 Initiative-E2E grün. Phase via `phase complete 04` markiert (next: Phase 05).
-**Next action:** Phase 05 (Welt & Story) diskutieren und planen.
+**Last action:** Phase 05 (Welt & Story) diskutiert (2026-06-14): 05-CONTEXT.md + 05-DISCUSSION-LOG.md erstellt (Commit b683996). Alle 5 Features (WELT-01..05) durchgesprochen — Session-Prep (eigener Tab `D.sessionPreps[]`, Lazy-DM-Vorlage, Fäden auto aus Quests/Story-Arcs, Entity-Links), NPC-Generator (Felder Name/Persönlichkeit/Marotte + Volk/Beruf/Aussehen, eingebaute DE-Tabellen + erweiterbar via `D.randomTables`, Vor-Filter Volk+Geschlecht, Vorschau→Speichern), Timeline (Harptos-Kalender 1492 DR, Ereignisse mit Datum+Typ, Auto-Vorschläge aus Reisen/Sessions), Reise/Wetter (5e-Tempo×Gelände, Wetter Klima+Jahreszeit, Gelände-Begegnungstabellen + Tageschance, Reise rückt Kalender vor), Fraktionen (Ruf-Stufen+Zahlenwert −50..+50, +/− mit Historie, eigener Tab `D.factions[]`, NPC-/Orts-Links + textuelle Rivalen/Verbündete). Visuelle Matrix (WELT-06) & Zoom-Timeline (WELT-07) bleiben v2.
+**Next action:** Phase 05 planen: `/gsd-plan-phase 5`.
 
 ---
 
