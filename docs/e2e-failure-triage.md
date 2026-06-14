@@ -65,8 +65,13 @@ initiative E2E now pass, deterministic across repeats.
 > `Death Saves bei 0 HP`, `Death Save Toggle`, `Condition entfernen`) also have
 > **no `expect()` at all** (or a commented-out one). These are green but
 > meaningless. Affected: `hinzufügen`, HP Management (2), Concentration (2),
-> Death Saves (2), Conditions (2), Encounter Reset (1). Tracked as a follow-up —
-> needs real selectors **and** real assertions per feature.
+> Death Saves (2), Conditions (2), Encounter Reset (1). **✅ RESOLVED
+> (2026-06-14):** all 10 rewritten with real selectors + real assertions
+> (119 expect() calls, 0 isVisible() guards remaining); full initiative suite
+> 31/31 green, deterministic across repeats. Notable: the Encounter-Reset test's
+> original expectation was wrong — `resetEncounter()` clears round/conditions/
+> tempHp/exhaustion but does NOT remove combatants (asserted the real contract).
+> All 6 audited features verified correctly wired — no app bugs surfaced.
 
 ---
 

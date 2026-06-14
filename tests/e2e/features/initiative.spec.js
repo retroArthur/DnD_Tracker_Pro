@@ -41,47 +41,23 @@ test.describe('Initiative System', () => {
 
     test.describe('Combatant Management', () => {
         test('sollte Combatant hinzufügen können', async ({ page }) => {
-            // Add-Button finden
-            const addBtn = page
-                .locator(
-                    '[data-action="add-combatant"], [data-action="call"][data-value="addCombatant"]'
-                )
-                .first();
+            // Seed über das reale Inline-Formular (Helper am Dateianfang)
+            await addCombatant(page, 'Goblin Krieger', 15, 7);
 
-            if (await addBtn.isVisible()) {
-                await addBtn.click();
+            // Die neue Zeile muss in der Initiative-Liste erscheinen
+            const entry = page
+                .locator('#init-list .init-entry')
+                .filter({ hasText: 'Goblin Krieger' });
+            await expect(entry).toHaveCount(1);
 
-                // Modal/Form ausfüllen
-                const nameInput = page.locator('#combatant-name, [name="combatant-name"]').first();
-                if (await nameInput.isVisible()) {
-                    await nameInput.fill('Goblin Krieger');
+            // Name wird im dedizierten .init-name-Element gerendert
+            await expect(entry.locator('.init-name')).toHaveText('Goblin Krieger');
 
-                    // Initiative eingeben
-                    const initInput = page
-                        .locator('#combatant-init, [name="combatant-init"]')
-                        .first();
-                    if (await initInput.isVisible()) {
-                        await initInput.fill('15');
-                    }
+            // HP aus dem Formular spiegelt sich als currentHp/maxHp in .init-hp-value
+            await expect(entry.locator('.init-hp-value')).toContainText('7/7');
 
-                    // HP eingeben
-                    const hpInput = page.locator('#combatant-hp, [name="combatant-hp"]').first();
-                    if (await hpInput.isVisible()) {
-                        await hpInput.fill('7');
-                    }
-
-                    // Speichern
-                    const saveBtn = page
-                        .locator('[data-action="save-combatant"], button:has-text("Hinzufügen")')
-                        .first();
-                    await saveBtn.click();
-
-                    // Combatant sollte in der Liste erscheinen
-                    await expect(page.locator('.initiative-list, .combatant-list')).toContainText(
-                        'Goblin'
-                    );
-                }
-            }
+            // Initiative-Wert (15) wird in .init-value gerendert
+            await expect(entry.locator('.init-value')).toContainText('15');
         });
 
         test('sollte mehrere Combatants sortiert nach Initiative anzeigen', async ({ page }) => {
@@ -190,81 +166,66 @@ test.describe('Initiative System', () => {
 
     test.describe('HP Management', () => {
         test('sollte Schaden anwenden können', async ({ page }) => {
-            // Combatant hinzufügen
-            const addBtn = page.locator('[data-action="add-combatant"]').first();
-            if (await addBtn.isVisible()) {
-                await addBtn.click();
-                await page.fill('#combatant-name', 'Tank');
-                await page.fill('#combatant-hp', '50');
-                await page.click('[data-action="save-combatant"], button:has-text("Hinzufügen")');
-                await page.waitForTimeout(300);
+            // Schaden via HP-Rechner-Modal (deterministisch, ganze Zahl)
+            await addCombatant(page, 'Tank', 10, 50);
 
-                // Damage-Button finden
-                const damageBtn = page
-                    .locator(
-                        '.combatant-row:has-text("Tank") [data-action="damage-combatant"], .combatant-row:has-text("Tank") button:has-text("-")'
-                    )
-                    .first();
+            const row = page.locator('#init-list .init-entry', { hasText: 'Tank' });
+            await expect(row).toHaveCount(1);
+            // Start-HP: addCombatant setzt currentHp = maxHp = 50
+            await expect(row.locator('.init-hp-value')).toHaveText('50/50');
 
-                if (await damageBtn.isVisible()) {
-                    await damageBtn.click();
+            // HP-Rechner aus DIESER Zeile öffnen (setzt #hp-calc-id auf die Combatant-ID)
+            await row.locator('[data-action="show-hp-calculator"]').click();
+            await page.waitForSelector('#hp-calc-modal', { state: 'visible' });
 
-                    // Damage-Modal ausfüllen
-                    const damageInput = page.locator('#damage-amount, [name="damage"]').first();
-                    if (await damageInput.isVisible()) {
-                        await damageInput.fill('10');
-                        await page.click(
-                            '[data-action="apply-damage"], button:has-text("Anwenden")'
-                        );
-                        await page.waitForTimeout(200);
+            // 10 Schaden anwenden — parseDiceFormula('10') === 10 (kein RNG)
+            await page.fill('#hp-calc-value', '10');
+            await page.click('[data-action="apply-hp-change"][data-value="damage"]');
+            await page.waitForTimeout(200);
 
-                        // HP sollte 40 sein
-                        await expect(page.locator('.combatant-row:has-text("Tank")')).toContainText(
-                            '40'
-                        );
-                    }
-                }
-            }
+            // applyHpChange: max(0, 50-10) = 40, Zeile (gleiche data-id) neu gerendert
+            await expect(row.locator('.init-hp-value')).toHaveText('40/50');
         });
 
         test('sollte Heilung anwenden können', async ({ page }) => {
-            // Combatant mit reduziertem HP
-            const addBtn = page.locator('[data-action="add-combatant"]').first();
-            if (await addBtn.isVisible()) {
-                await addBtn.click();
-                await page.fill('#combatant-name', 'Verwundeter');
-                await page.fill('#combatant-hp', '20');
-                await page.click('[data-action="save-combatant"]');
-                await page.waitForTimeout(300);
+            // Heilung via HP-Rechner-Modal: erst Schaden, dann Heilen
+            await addCombatant(page, 'Verwundeter', 10, 20);
 
-                // Erst Schaden
-                const damageBtn = page
-                    .locator(
-                        '.combatant-row:has-text("Verwundeter") [data-action="damage-combatant"]'
-                    )
-                    .first();
-                if (await damageBtn.isVisible()) {
-                    await damageBtn.click();
-                    await page.fill('#damage-amount', '15');
-                    await page.click('[data-action="apply-damage"]');
-                    await page.waitForTimeout(200);
-                }
+            const row = page.locator('#init-list .init-entry', { hasText: 'Verwundeter' });
+            await expect(row).toHaveCount(1);
+            await expect(row.locator('.init-hp-value')).toHaveText('20/20');
 
-                // Dann Heilung
-                const healBtn = page
-                    .locator(
-                        '.combatant-row:has-text("Verwundeter") [data-action="heal-combatant"], .combatant-row:has-text("Verwundeter") button:has-text("+")'
-                    )
-                    .first();
-                if (await healBtn.isVisible()) {
-                    await healBtn.click();
-                    const healInput = page.locator('#heal-amount, [name="heal"]').first();
-                    if (await healInput.isVisible()) {
-                        await healInput.fill('10');
-                        await page.click('[data-action="apply-heal"], button:has-text("Anwenden")');
-                    }
-                }
-            }
+            // 1) Schaden 15 → max(0, 20-15) = 5
+            await row.locator('[data-action="show-hp-calculator"]').click();
+            await page.waitForSelector('#hp-calc-modal', { state: 'visible' });
+            await page.fill('#hp-calc-value', '15');
+            await page.click('[data-action="apply-hp-change"][data-value="damage"]');
+            await page.waitForTimeout(200);
+            await expect(row.locator('.init-hp-value')).toHaveText('5/20');
+
+            const hpAfterDamage = parseInt(
+                (await row.locator('.init-hp-value').textContent()).split('/')[0],
+                10
+            );
+            expect(hpAfterDamage).toBe(5);
+
+            // 2) Heilung 10 → min(20, 5+10) = 15
+            // applyHpChange schliesst das Modal NICHT (bleibt 'modal-overlay show') →
+            // direkt im offenen Modal weiterarbeiten statt es neu zu öffnen (Re-Open-Klick
+            // würde sonst vom Overlay abgefangen).
+            await expect(page.locator('#hp-calc-modal')).toHaveClass(/show/);
+            await page.fill('#hp-calc-value', '10');
+            await page.click('[data-action="apply-hp-change"][data-value="heal"]');
+            await page.waitForTimeout(200);
+
+            // Heilung muss HP erhöhen (echtes numerisches expect) und exakt 15/20 ergeben
+            await expect(row.locator('.init-hp-value')).toHaveText('15/20');
+            const hpAfterHeal = parseInt(
+                (await row.locator('.init-hp-value').textContent()).split('/')[0],
+                10
+            );
+            expect(hpAfterHeal).toBeGreaterThan(hpAfterDamage);
+            expect(hpAfterHeal).toBe(15);
         });
     });
 
@@ -274,78 +235,74 @@ test.describe('Initiative System', () => {
 
     test.describe('Concentration Tracking', () => {
         test('sollte Concentration setzen können', async ({ page }) => {
-            // Combatant hinzufügen
-            const addBtn = page.locator('[data-action="add-combatant"]').first();
-            if (await addBtn.isVisible()) {
-                await addBtn.click();
-                await page.fill('#combatant-name', 'Zauberer');
-                await page.fill('#combatant-hp', '30');
-                await page.click('[data-action="save-combatant"]');
-                await page.waitForTimeout(300);
+            // Manuell als PLAYER hinzufügen — Konz-Button erscheint nur für player/ally
+            await page.fill('#init-name', 'Zauberer');
+            await page.fill('#init-hp', '30');
+            await page.selectOption('#init-type', 'player');
+            await page.click('[data-action="call"][data-value="addCombatant"]');
+            await page.waitForTimeout(200);
 
-                // Concentration-Button finden
-                const concBtn = page
-                    .locator(
-                        '.combatant-row:has-text("Zauberer") [data-action="set-concentration"], .concentration-btn'
-                    )
-                    .first();
+            const row = page.locator('#init-list .init-entry', { hasText: 'Zauberer' });
+            await expect(row).toHaveCount(1);
 
-                if (await concBtn.isVisible()) {
-                    await concBtn.click();
+            // Konzentration-Button (renderConcentration: nur player/ally)
+            const concBtn = row.locator('.concentration-add-btn');
+            await expect(concBtn).toBeVisible();
+            await concBtn.click();
 
-                    // Spell-Name eingeben im Modal
-                    const spellInput = page.locator('#concentration-spell, [name="spell"]').first();
-                    if (await spellInput.isVisible()) {
-                        await spellInput.fill('Haste');
-                        await page.click(
-                            '[data-action="save-concentration"], button:has-text("Setzen")'
-                        );
-                        await page.waitForTimeout(200);
+            // Modal-Eingabe: reale ID ist #conc-spell-input
+            await page.waitForSelector('#concentration-modal', { state: 'visible' });
+            await page.fill('#conc-spell-input', 'Haste');
+            await page.click('[data-action="set-concentration"]'); // Button "✓ Setzen"
+            await page.waitForTimeout(200);
 
-                        // Concentration sollte angezeigt werden
-                        await expect(
-                            page.locator('.combatant-row:has-text("Zauberer")')
-                        ).toContainText('Haste');
-                    }
-                }
-            }
+            // Badge muss nun sichtbar sein und den Zauber zeigen
+            const badge = row.locator('.concentration-badge');
+            await expect(badge).toBeVisible();
+            await expect(badge.locator('.conc-spell')).toHaveText('Haste');
+            // Add-Button ist durch Badge ersetzt
+            await expect(row.locator('.concentration-add-btn')).toHaveCount(0);
         });
 
         test('sollte Concentration-Check bei Schaden triggern', async ({ page }) => {
-            // Zauberer mit Concentration hinzufügen
-            const addBtn = page.locator('[data-action="add-combatant"]').first();
-            if (await addBtn.isVisible()) {
-                await addBtn.click();
-                await page.fill('#combatant-name', 'Konzentrierter Mage');
-                await page.fill('#combatant-hp', '30');
-                await page.click('[data-action="save-combatant"]');
-                await page.waitForTimeout(300);
+            // Kombattant MIT aktiver Konzentration direkt seeden (Banner ist typ-unabhängig)
+            await page.evaluate(() => {
+                window.D.initiative.combatants.push({
+                    id: window.nextId ? window.nextId('combatants') : Date.now(),
+                    name: 'Konzentrierter Mage',
+                    initiative: 14,
+                    initBonus: 0,
+                    maxHp: 30,
+                    currentHp: 30,
+                    ac: 13,
+                    type: 'player',
+                    effects: [],
+                    concentration: { active: true, spell: 'Fly', lastDC: 10 }
+                });
+                if (typeof window.renderInit === 'function') window.renderInit();
+            });
 
-                // Concentration setzen
-                const concBtn = page
-                    .locator('.combatant-row:has-text("Mage") [data-action="set-concentration"]')
-                    .first();
-                if (await concBtn.isVisible()) {
-                    await concBtn.click();
-                    await page.fill('#concentration-spell', 'Fly');
-                    await page.click('[data-action="save-concentration"]');
-                    await page.waitForTimeout(200);
+            const row = page.locator('#init-list .init-entry', { hasText: 'Konzentrierter Mage' });
+            await expect(row).toHaveCount(1);
+            // Aktive Konzentration → Badge sichtbar
+            await expect(row.locator('.concentration-badge .conc-spell')).toHaveText('Fly');
+            // Noch kein Check-Banner (kein Schaden)
+            await expect(row.locator('.concentration-check-banner')).toHaveCount(0);
 
-                    // Schaden anwenden
-                    const damageBtn = page
-                        .locator('.combatant-row:has-text("Mage") [data-action="damage-combatant"]')
-                        .first();
-                    if (await damageBtn.isVisible()) {
-                        await damageBtn.click();
-                        await page.fill('#damage-amount', '20');
-                        await page.click('[data-action="apply-damage"]');
-                        await page.waitForTimeout(200);
+            // Schaden über reale Zeilen-Schaltfläche ➖ (mod-hp -1) → modHp setzt pendingCheck
+            await row.locator('[data-action="mod-hp"][data-value="-1"]').click();
+            await page.waitForTimeout(200);
 
-                        // Concentration-Check sollte angezeigt werden (DC = max(10, 20/2) = 10)
-                        // Banner oder Hinweis auf DC 10 CON Save
-                    }
-                }
-            }
+            // Konzentrations-Check-Banner muss nun erscheinen
+            const banner = row.locator('.concentration-check-banner');
+            await expect(banner).toBeVisible();
+            await expect(banner).toContainText('Fly');
+            // DC = max(10, floor(1/2)) = 10
+            await expect(banner.locator('.conc-dc')).toHaveText('DC 10');
+            // CON-Save-Würfelknopf vorhanden
+            await expect(
+                banner.locator('.conc-roll-btn[data-action="roll-concentration-check-stop"]')
+            ).toBeVisible();
         });
     });
 
@@ -355,77 +312,88 @@ test.describe('Initiative System', () => {
 
     test.describe('Death Saves', () => {
         test('sollte Death Saves bei 0 HP anzeigen', async ({ page }) => {
-            // Player-Combatant hinzufügen
-            const addBtn = page.locator('[data-action="add-combatant"]').first();
-            if (await addBtn.isVisible()) {
-                await addBtn.click();
-                await page.fill('#combatant-name', 'Sterbender Held');
-                await page.fill('#combatant-hp', '5');
+            // Player-Kombattant bei 0 HP seeden (Death-Save-Gate: dead && type==='player')
+            await page.evaluate(() => {
+                window.D.initiative.combatants = [];
+                window.D.initiative.currentTurn = 0;
+                window.D.initiative.combatants.push({
+                    id: 9001,
+                    name: 'Sterbender Held',
+                    initiative: 10,
+                    initBonus: 10,
+                    maxHp: 20,
+                    currentHp: 0,
+                    ac: 10,
+                    type: 'player',
+                    effects: []
+                });
+                window.renderInit();
+            });
 
-                // Als Player markieren wenn möglich
-                const playerCheckbox = page
-                    .locator('#combatant-is-player, [name="isPlayer"]')
-                    .first();
-                if (await playerCheckbox.isVisible()) {
-                    await playerCheckbox.check();
-                }
+            const row = page.locator('.init-entry[data-id="9001"]');
+            await expect(row).toBeVisible();
+            // Gate ausgelöst: Zeile ist als "dead" markiert
+            await expect(row).toHaveClass(/dead/);
 
-                await page.click('[data-action="save-combatant"]');
-                await page.waitForTimeout(300);
+            // Death-Saves-Block wird in der Player-Zeile gerendert
+            const deathSaves = row.locator('.death-saves');
+            await expect(deathSaves).toBeVisible();
+            await expect(deathSaves.locator('.death-saves-label')).toHaveText(/Todeswürfe/);
 
-                // Auf 0 HP reduzieren
-                const damageBtn = page
-                    .locator(
-                        '.combatant-row:has-text("Sterbender") [data-action="damage-combatant"]'
-                    )
-                    .first();
-                if (await damageBtn.isVisible()) {
-                    await damageBtn.click();
-                    await page.fill('#damage-amount', '10');
-                    await page.click('[data-action="apply-damage"]');
-                    await page.waitForTimeout(300);
-
-                    // Death Saves UI sollte erscheinen
-                    const deathSavesUI = page.locator('.death-saves, .death-save-tracker');
-                    // await expect(deathSavesUI).toBeVisible();
-                }
-            }
+            // 3 Erfolg + 3 Fehlschlag Punkte, alle anfangs inaktiv
+            await expect(row.locator('.death-save-dot.success')).toHaveCount(3);
+            await expect(row.locator('.death-save-dot.failure')).toHaveCount(3);
+            await expect(row.locator('.death-save-dot.success.active')).toHaveCount(0);
+            await expect(row.locator('.death-save-dot.failure.active')).toHaveCount(0);
         });
 
         test('sollte Death Save Success/Failure togglen', async ({ page }) => {
-            // Setup: Combatant auf 0 HP bringen
-            const addBtn = page.locator('[data-action="add-combatant"]').first();
-            if (await addBtn.isVisible()) {
-                await addBtn.click();
-                await page.fill('#combatant-name', 'Am Sterben');
-                await page.fill('#combatant-hp', '1');
-                await page.click('[data-action="save-combatant"]');
-                await page.waitForTimeout(200);
+            // Player bei 0 HP seeden, dann den realen toggle-death-save-stop-Handler nutzen
+            await page.evaluate(() => {
+                window.D.initiative.combatants = [];
+                window.D.initiative.currentTurn = 0;
+                window.D.initiative.combatants.push({
+                    id: 9001,
+                    name: 'Am Sterben',
+                    initiative: 10,
+                    initBonus: 10,
+                    maxHp: 10,
+                    currentHp: 0,
+                    ac: 10,
+                    type: 'player',
+                    effects: []
+                });
+                window.renderInit();
+            });
 
-                // Auf 0 HP
-                const damageBtn = page
-                    .locator(
-                        '.combatant-row:has-text("Am Sterben") [data-action="damage-combatant"]'
-                    )
-                    .first();
-                if (await damageBtn.isVisible()) {
-                    await damageBtn.click();
-                    await page.fill('#damage-amount', '5');
-                    await page.click('[data-action="apply-damage"]');
-                    await page.waitForTimeout(300);
+            const rowSel = '.init-entry[data-id="9001"]';
+            await expect(page.locator(rowSel + ' .death-saves')).toBeVisible();
 
-                    // Success klicken
-                    const successDot = page
-                        .locator('.death-saves .success-dot, [data-action="death-save-success"]')
-                        .first();
-                    if (await successDot.isVisible()) {
-                        await successDot.click();
-                        await page.waitForTimeout(100);
+            // Erster Erfolgs-Punkt startet inaktiv
+            const successDot0 = page.locator(rowSel + ' .death-save-dot.success[data-index="0"]');
+            await expect(successDot0).toHaveCount(1);
+            await expect(successDot0).not.toHaveClass(/active/);
 
-                        // Sollte gefüllt sein
-                    }
-                }
-            }
+            // Klick → toggleDeathSave(9001,'success',0) setzt successes = 1, re-render
+            await successDot0.click();
+            await page.waitForTimeout(150);
+
+            // Nach Re-Render: genau ein aktiver Erfolgs-Punkt, Index 0
+            await expect(page.locator(rowSel + ' .death-save-dot.success.active')).toHaveCount(1);
+            await expect(
+                page.locator(rowSel + ' .death-save-dot.success[data-index="0"]')
+            ).toHaveClass(/active/);
+            await expect(page.locator(rowSel + ' .death-save-dot.failure.active')).toHaveCount(0);
+
+            // Fehlschlag-Punkt unabhängig togglen
+            await page.locator(rowSel + ' .death-save-dot.failure[data-index="0"]').click();
+            await page.waitForTimeout(150);
+            await expect(page.locator(rowSel + ' .death-save-dot.failure.active')).toHaveCount(1);
+
+            // Aktiven Erfolgs-Punkt 0 erneut klicken → successes zurück auf 0 (toggle-off)
+            await page.locator(rowSel + ' .death-save-dot.success[data-index="0"]').click();
+            await page.waitForTimeout(150);
+            await expect(page.locator(rowSel + ' .death-save-dot.success.active')).toHaveCount(0);
         });
     });
 
@@ -435,74 +403,86 @@ test.describe('Initiative System', () => {
 
     test.describe('Conditions', () => {
         test('sollte Condition hinzufügen können', async ({ page }) => {
-            // Combatant hinzufügen
-            const addBtn = page.locator('[data-action="add-combatant"]').first();
-            if (await addBtn.isVisible()) {
-                await addBtn.click();
-                await page.fill('#combatant-name', 'Vergifteter');
-                await page.fill('#combatant-hp', '25');
-                await page.click('[data-action="save-combatant"]');
-                await page.waitForTimeout(300);
+            // Seed über das reale Inline-Add-Formular
+            await addCombatant(page, 'Vergifteter', 15, 25);
 
-                // Condition-Button
-                const condBtn = page
-                    .locator(
-                        '.combatant-row:has-text("Vergifteter") [data-action="add-condition"], .condition-btn'
-                    )
-                    .first();
-                if (await condBtn.isVisible()) {
-                    await condBtn.click();
+            const row = page.locator('#init-list .init-entry', { hasText: 'Vergifteter' });
+            await expect(row).toHaveCount(1);
 
-                    // Condition auswählen
-                    const poisonedOption = page
-                        .locator('[data-condition="poisoned"], button:has-text("Vergiftet")')
-                        .first();
-                    if (await poisonedOption.isVisible()) {
-                        await poisonedOption.click();
-                        await page.waitForTimeout(200);
+            // Effekt-Modal für diesen Kombattanten öffnen (🔮-Button)
+            await row.locator('[data-action="show-add-effect"]').click();
 
-                        // Condition sollte angezeigt werden
-                        await expect(
-                            page.locator('.combatant-row:has-text("Vergifteter")')
-                        ).toContainText('Vergiftet');
-                    }
-                }
-            }
+            // Modal wird über .show-Klasse sichtbar
+            await expect(page.locator('#effect-modal')).toHaveClass(/show/);
+
+            // 'Vergiftet' (poisoned) aus dem Grid wählen
+            const poisonedBtn = page.locator(
+                '#effect-conditions-grid [data-action="add-effect-from-grid"][data-value="poisoned"]'
+            );
+            await expect(poisonedBtn).toBeVisible();
+            await poisonedBtn.click();
+            await page.waitForTimeout(150);
+
+            // Modal schließen, damit es die Zeile nicht überlagert
+            await page.click('[data-action="hide-modal"][data-value="effect-modal"]');
+            await page.waitForTimeout(100);
+
+            // Effekt-Badge muss nun in der Zeile gerendert sein (Klasse singular .init-effect)
+            const effectBadge = page
+                .locator('#init-list .init-entry', { hasText: 'Vergifteter' })
+                .locator('.init-effects .init-effect');
+            await expect(effectBadge).toHaveCount(1);
+            await expect(effectBadge).toContainText('Vergiftet');
         });
 
         test('sollte Condition entfernen können', async ({ page }) => {
-            // Setup: Combatant mit Condition
-            const addBtn = page.locator('[data-action="add-combatant"]').first();
-            if (await addBtn.isVisible()) {
-                await addBtn.click();
-                await page.fill('#combatant-name', 'Gelähmter');
-                await page.fill('#combatant-hp', '25');
-                await page.click('[data-action="save-combatant"]');
-                await page.waitForTimeout(200);
-
-                // Condition hinzufügen
-                const condBtn = page
-                    .locator('.combatant-row:has-text("Gelähmter") [data-action="add-condition"]')
-                    .first();
-                if (await condBtn.isVisible()) {
-                    await condBtn.click();
-                    const paraOption = page.locator('[data-condition="paralyzed"]').first();
-                    if (await paraOption.isVisible()) {
-                        await paraOption.click();
-                        await page.waitForTimeout(200);
-
-                        // Condition entfernen
-                        const conditionBadge = page
-                            .locator(
-                                '.combatant-row:has-text("Gelähmter") .condition-badge, .condition-tag'
-                            )
-                            .first();
-                        if (await conditionBadge.isVisible()) {
-                            await conditionBadge.click(); // Toggle off
+            // Kombattant seeden, der bereits den 'Gelähmt'-Effekt (paralyzed) trägt
+            await page.evaluate(() => {
+                const cb = {
+                    id: window.nextId ? window.nextId('combatants') : Date.now(),
+                    name: 'Testziel',
+                    initiative: 10,
+                    initBonus: 0,
+                    maxHp: 25,
+                    currentHp: 25,
+                    ac: 13,
+                    type: 'monster',
+                    effects: [
+                        {
+                            id: 999,
+                            name: 'Gelähmt',
+                            duration: 999,
+                            permanent: true,
+                            color: 'red',
+                            description: ''
                         }
-                    }
-                }
-            }
+                    ]
+                };
+                window.D.initiative.combatants.push(cb);
+                window.renderInit();
+            });
+
+            await page.waitForSelector('#init-list .init-entry');
+
+            const row = page.locator('#init-list .init-entry', { hasText: 'Testziel' });
+            await expect(row).toHaveCount(1);
+
+            // Badge vor dem Entfernen vorhanden (Klick auf Badge = Entfernen)
+            const effectBadge = row.locator('.init-effect[data-action="remove-effect"]');
+            await expect(effectBadge).toHaveCount(1);
+            await expect(effectBadge).toContainText('Gelähmt');
+
+            // Badge klicken entfernt den Effekt (removeEffect → renderInit)
+            await effectBadge.click();
+            await page.waitForTimeout(200);
+
+            // Effekt ist weg
+            await expect(
+                page
+                    .locator('#init-list .init-entry', { hasText: 'Testziel' })
+                    .locator('.init-effect')
+            ).toHaveCount(0);
+            await expect(page.locator('#init-list')).not.toContainText('Gelähmt');
         });
     });
 
@@ -544,31 +524,59 @@ test.describe('Initiative System', () => {
 
     test.describe('Encounter Reset', () => {
         test('sollte Encounter zurücksetzen können', async ({ page }) => {
-            // Combatants hinzufügen
-            const addBtn = page.locator('[data-action="add-combatant"]').first();
-            if (await addBtn.isVisible()) {
-                await addBtn.click();
-                await page.fill('#combatant-name', 'Reset-Test');
-                await page.click('[data-action="save-combatant"]');
-                await page.waitForTimeout(300);
+            // Einen Kombattanten über den realen Inline-Add-Flow seeden
+            await addCombatant(page, 'Goblin', 12, 7);
+            await expect(page.locator('#init-list .init-entry')).toHaveCount(1);
+            await expect(page.locator('#init-list .init-name').first()).toContainText('Goblin');
 
-                // Reset-Button
-                const resetBtn = page
-                    .locator(
-                        '[data-action="reset-initiative"], button:has-text("Zurücksetzen"), button:has-text("Reset")'
-                    )
-                    .first();
-                if (await resetBtn.isVisible()) {
-                    page.on('dialog', dialog => dialog.accept());
-                    await resetBtn.click();
-                    await page.waitForTimeout(500);
+            // Encounter "verschmutzen": Runde + transiente Zustände, die Reset löschen muss
+            await page.evaluate(() => {
+                const init = window.D.initiative;
+                init.round = 3;
+                init.currentTurn = 0;
+                const cb = init.combatants[0];
+                cb.conditions = ['poisoned'];
+                cb.tempHp = 5;
+                cb.exhaustion = 2;
+                window.renderInit();
+            });
+            expect(await page.evaluate(() => window.D.initiative.round)).toBe(3);
 
-                    // Liste sollte leer sein
-                    await expect(
-                        page.locator('.initiative-list, .combatant-list')
-                    ).not.toContainText('Reset-Test');
-                }
-            }
+            // resetEncounter() zeigt ein confirm() — VOR dem Klick bestätigen
+            page.on('dialog', d => d.accept());
+
+            // Realen Reset-Button klicken
+            await page.click('[data-action="call"][data-value="resetEncounter"]');
+            await page.waitForTimeout(200);
+
+            // REALES Reset-Verhalten: Runde/Turn zurückgesetzt, transiente Zustände gelöscht,
+            // Kombattant BLEIBT erhalten (Reset löscht keine Kombattanten).
+            const after = await page.evaluate(() => {
+                const init = window.D.initiative;
+                const cb = init.combatants[0];
+                return {
+                    round: init.round,
+                    currentTurn: init.currentTurn,
+                    combatantCount: init.combatants.length,
+                    name: cb ? cb.name : null,
+                    conditionsLen: cb ? (cb.conditions || []).length : -1,
+                    tempHp: cb ? cb.tempHp : -1,
+                    exhaustion: cb ? cb.exhaustion : -1
+                };
+            });
+            expect(after.round).toBe(1);
+            expect(after.currentTurn).toBe(0);
+            expect(after.combatantCount).toBe(1); // Kombattant NICHT entfernt
+            expect(after.name).toBe('Goblin');
+            expect(after.conditionsLen).toBe(0);
+            expect(after.tempHp).toBe(0);
+            expect(after.exhaustion).toBe(0);
+
+            // DOM zeigt den Kombattanten weiterhin (nie 'Keine Kämpfer')
+            await expect(page.locator('#init-list .init-entry')).toHaveCount(1);
+            await expect(page.locator('#init-list')).not.toContainText('Keine Kämpfer');
+            // Sichtbare Rundenanzeige auf 1 zurückgesetzt
+            await expect(page.locator('#encounter-round-num')).toHaveText('1');
         });
     });
 
