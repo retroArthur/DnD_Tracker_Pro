@@ -29,7 +29,7 @@ storage layer via the app's `StorageAPI`).
 
 ---
 
-### 2. Initiative (6 tests) — Stale selectors
+### 2. Initiative (6 tests) — Stale selectors — ✅ RESOLVED (2026-06-14)
 
 File: `tests/e2e/features/initiative.spec.js`
 
@@ -39,15 +39,34 @@ Sample test "sollte mehrere Combatants sortiert nach Initiative anzeigen":
 - Locator: `page.locator('#combatant-name, [name="combatant-name"]').first()`
 - **Neither `#combatant-name` nor any element with `name="combatant-name"` exists in the built HTML.**
 
-The test helper `addCombatant()` is built around an Add-Combatant modal/form
-that has either been redesigned or removed. The same helper underpins all
+The test helper `addCombatant()` was built around an Add-Combatant modal/form
+that never existed in the built HTML. The same broken helper underpinned all
 6 failing initiative tests.
 
-**Fix path:** Identify the current Add-Combatant flow (probably via Encounter
-Calculator → "Add to Initiative", or a different modal), and rewrite the
-helper to drive that flow.
+**Resolution (commit `a613023`):** The real Add-Combatant flow is an **inline
+form** in `#view-initiative` (`assets/templates/view-encounters.html`), not a
+modal: inputs `#init-name`, `#init-value` (initiative), `#init-hp`; submit
+`[data-action="call"][data-value="addCombatant"]`. Replaced the per-test broken
+helpers with one shared `addCombatant(page, name, init, hp)` and rewrote the 6
+tests with real row/action selectors (`#init-list .init-entry`, `.init-name`,
+`.init-entry.active`, `[data-action="remove-combatant"]`,
+`[data-action="call"][data-value="nextTurn"|"prevTurn"]`, `#encounter-round-num`,
+`[data-action="sort-initiative"]`, the `show-aoe-damage-modal` flow) and hard
+assertions, removing the `isVisible()` guards that masked failures. 30/30
+initiative E2E now pass, deterministic across repeats.
 
-**Severity:** Stale test infrastructure.
+**Severity:** Stale test infrastructure — fixed.
+
+> **Related finding (2026-06-14):** An adversarial audit of the rewrite found
+> **10 *other* initiative tests still pass trivially** (no-op) — their entire
+> bodies are wrapped in `if (await addBtn.isVisible())` guards on the same dead
+> `[data-action="add-combatant"]` selector, so every assertion is skipped.
+> Several (`sollte Schaden anwenden`, `Heilung`, `Concentration-Check`,
+> `Death Saves bei 0 HP`, `Death Save Toggle`, `Condition entfernen`) also have
+> **no `expect()` at all** (or a commented-out one). These are green but
+> meaningless. Affected: `hinzufügen`, HP Management (2), Concentration (2),
+> Death Saves (2), Conditions (2), Encounter Reset (1). Tracked as a follow-up —
+> needs real selectors **and** real assertions per feature.
 
 ---
 
