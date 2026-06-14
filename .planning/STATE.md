@@ -2,21 +2,21 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: planning
-last_updated: "2026-06-14T21:50:20.711Z"
+status: executing
+last_updated: "2026-06-14T23:21:35.056Z"
 progress:
   total_phases: 7
   completed_phases: 4
-  total_plans: 23
+  total_plans: 30
   completed_plans: 23
   percent: 57
 ---
 
 # Project State: D&D Kampagnen-Tracker Pro — Stabilisierung & Ausbau
 
-**Last Updated:** 2026-06-14
+**Last Updated:** 2026-06-15
 **Phase:** 5
-**Status:** Ready to plan
+**Status:** Ready to execute (7 Pläne geplant)
 
 ---
 
@@ -24,19 +24,19 @@ progress:
 
 **Core Value:** Die App muss am Spieltisch zuverlässig offline laufen — ein Spielleiter-Begleiter, der nie im Weg steht und keine Daten verliert.
 
-**Current Focus:** Phase 05 — welt-&-story (Kontext erfasst 2026-06-14, bereit zum Planen)
+**Current Focus:** Phase 05 — welt-&-story (geplant 2026-06-15: 7 Pläne / 7 Wellen, bereit zur Ausführung)
 
 ---
 
 ## Current Position
 
 ```
-Phase: 05 (welt-story) — CONTEXT GATHERED
-Plan: Not started
-Next:  Phase 05 planen (/gsd-plan-phase 5)
-Status: Phase 05 Kontext erfasst (05-CONTEXT.md)
+Phase: 05 (welt-story) — PLANNED
+Plan: 7 Pläne, 7 Wellen (05-01 … 05-07) — 0/7 ausgeführt
+Next:  Phase 05 ausführen (/gsd-execute-phase 5)
+Status: Ready to execute
 
-Progress: [██████████] 100% Phase 4 (23/23 Pläne) · Phase 5 Kontext erfasst
+Progress: [██████████] 100% Phase 4 (23/23 Pläne) · Phase 5 geplant (7 Pläne)
 ```
 
 **Phases:**
@@ -46,7 +46,7 @@ Progress: [██████████] 100% Phase 4 (23/23 Pläne) · Phase 
 | 2 | Technik-Fundament | Complete |
 | 3 | Bestiary | Complete (5/5 Pläne) |
 | 4 | Initiative-Erweiterungen | Complete (4/4 Pläne abgeschlossen) |
-| 5 | Welt & Story | Not started |
+| 5 | Welt & Story | Planned (0/7 Pläne) |
 | 6 | Spieler-Verwaltung | Not started |
 | 7 | Komfort & Analyse | Not started |
 
@@ -109,13 +109,14 @@ Progress: [██████████] 100% Phase 4 (23/23 Pläne) · Phase 
 - [ ] Phase 3 — 3 manuelle Browser-Checks (nicht-blockierend, aus 03-VERIFICATION): Offline-Modus zeigt alle 112 Monster, Pergament-Statblock-Optik, Klick-Würfel-Feel am Spieltisch
 - [ ] REQUIREMENTS.md Traceability: 4 REQ-IDs (WELT-06/07, CHAR-04, UX-03) aus späteren Phasen fehlen noch in der Traceability-Tabelle (von `phase complete` gemeldet)
 - [x] Phase 5 diskutieren: `/gsd-discuss-phase 5` ✓ (2026-06-14, 05-CONTEXT.md)
+- [x] Phase 5 planen: `/gsd-plan-phase 5` ✓ (2026-06-15, 7 Pläne / 7 Wellen, Checker PASSED)
 
 ---
 
 ## Session Continuity
 
-**Last action:** Phase 05 (Welt & Story) diskutiert (2026-06-14): 05-CONTEXT.md + 05-DISCUSSION-LOG.md erstellt (Commit b683996). Alle 5 Features (WELT-01..05) durchgesprochen — Session-Prep (eigener Tab `D.sessionPreps[]`, Lazy-DM-Vorlage, Fäden auto aus Quests/Story-Arcs, Entity-Links), NPC-Generator (Felder Name/Persönlichkeit/Marotte + Volk/Beruf/Aussehen, eingebaute DE-Tabellen + erweiterbar via `D.randomTables`, Vor-Filter Volk+Geschlecht, Vorschau→Speichern), Timeline (Harptos-Kalender 1492 DR, Ereignisse mit Datum+Typ, Auto-Vorschläge aus Reisen/Sessions), Reise/Wetter (5e-Tempo×Gelände, Wetter Klima+Jahreszeit, Gelände-Begegnungstabellen + Tageschance, Reise rückt Kalender vor), Fraktionen (Ruf-Stufen+Zahlenwert −50..+50, +/− mit Historie, eigener Tab `D.factions[]`, NPC-/Orts-Links + textuelle Rivalen/Verbündete). Visuelle Matrix (WELT-06) & Zoom-Timeline (WELT-07) bleiben v2.
-**Next action:** Phase 05 planen: `/gsd-plan-phase 5`.
+**Last action:** Phase 05 (Welt & Story) geplant (2026-06-15). Research → VALIDATION → Plan → Check durchlaufen: 05-RESEARCH.md (verifizierte Signaturen, Harptos-Kalender 1492 DR, 5e-Reise/Wetter, Build-Time-Tabellen-Strategie, Dedup-Fallstricke) + 05-VALIDATION.md (Nyquist, manuell erstellt wegen dt. „## Validierungs-Architektur"-Sektion — Commit 7f91adc). 7 Pläne in 7 Wellen (05-01 Fundament/Schema/Migration 4.0.0/Harptos-Konstanten/11 Modul-Skelette/4 Tabs · 05-02 Build-Time-Tabellen-Generatoren · 05-03 Session-Prep · 05-04 NPC-Generator · 05-05 Timeline/Kalender · 05-06 Reise/Wetter · 05-07 Fraktionen — Commit edc792d). gsd-plan-checker: VERIFICATION PASSED (alle 12 Dimensionen, 0 Blocker/0 Warnings; Context-Compliance deckt D-00a..D-19 = Decision-Coverage-Gate erfüllt). Entscheidungen: `--skip-ui` (UI per D-00d an bestehende Listen-/Tab-Muster gebunden, kein UI-SPEC), Pattern-Mapper übersprungen (Research deckt Analoga). Calendar-Substrat (05-05) vor Reise (05-06); Build-Time-Tabellen (05-02) vor Konsumenten (05-04/06); npc-crud-Ladereihenfolge vor NPC-Generator gewahrt.
+**Next action:** Phase 05 ausführen: `/gsd-execute-phase 5`.
 
 ---
 
