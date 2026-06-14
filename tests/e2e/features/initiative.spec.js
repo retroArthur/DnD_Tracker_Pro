@@ -6,6 +6,21 @@ import { test, expect } from '@playwright/test';
  * Tiefe Tests für Kampf-Management, Turns, Concentration, Death Saves
  */
 
+/**
+ * Reale Add-Combatant-Flow: Inline-Formular in #view-initiative (KEIN Modal).
+ * Felder: #init-name, #init-value (Initiative), #init-hp, #init-ac, #init-type.
+ * Absenden: [data-action="call"][data-value="addCombatant"] ("Hinzufügen").
+ * Ersetzt die veralteten #combatant-name / [data-action="save-combatant"] Selektoren,
+ * die nie im gebauten HTML existierten (siehe docs/e2e-failure-triage.md, Cluster 2).
+ */
+async function addCombatant(page, name, init, hp) {
+    await page.fill('#init-name', name);
+    if (init !== undefined && init !== null) await page.fill('#init-value', String(init));
+    if (hp !== undefined && hp !== null) await page.fill('#init-hp', String(hp));
+    await page.click('[data-action="call"][data-value="addCombatant"]');
+    await page.waitForTimeout(200);
+}
+
 test.describe('Initiative System', () => {
     test.beforeEach(async ({ page }) => {
         // Lokale HTML-Datei laden
@@ -70,86 +85,35 @@ test.describe('Initiative System', () => {
         });
 
         test('sollte mehrere Combatants sortiert nach Initiative anzeigen', async ({ page }) => {
-            // Hilfsfunktion zum Hinzufügen
-            async function addCombatant(name, init, hp) {
-                const addBtn = page
-                    .locator(
-                        '[data-action="add-combatant"], [data-action="call"][data-value="addCombatant"]'
-                    )
-                    .first();
-                if (await addBtn.isVisible()) {
-                    await addBtn.click();
-                    await page.waitForTimeout(200);
+            await addCombatant(page, 'Held', 18, 30);
+            await addCombatant(page, 'Ork', 12, 15);
+            await addCombatant(page, 'Magier', 20, 20);
 
-                    const nameInput = page
-                        .locator('#combatant-name, [name="combatant-name"]')
-                        .first();
-                    await nameInput.fill(name);
+            // Nach Initiative sortieren (absteigend, sortInit: b.initiative - a.initiative)
+            await page.click('[data-action="sort-initiative"]');
+            await page.waitForTimeout(200);
 
-                    const initInput = page
-                        .locator('#combatant-init, [name="combatant-init"]')
-                        .first();
-                    if (await initInput.isVisible()) {
-                        await initInput.fill(String(init));
-                    }
+            const rows = page.locator('#init-list .init-entry');
+            await expect(rows).toHaveCount(3);
 
-                    const hpInput = page.locator('#combatant-hp, [name="combatant-hp"]').first();
-                    if (await hpInput.isVisible()) {
-                        await hpInput.fill(String(hp));
-                    }
-
-                    const saveBtn = page
-                        .locator('[data-action="save-combatant"], button:has-text("Hinzufügen")')
-                        .first();
-                    await saveBtn.click();
-                    await page.waitForTimeout(300);
-                }
-            }
-
-            await addCombatant('Held (Init 18)', 18, 30);
-            await addCombatant('Ork (Init 12)', 12, 15);
-            await addCombatant('Magier (Init 20)', 20, 20);
-
-            // Reihenfolge prüfen (Magier sollte oben sein)
-            const combatants = page.locator('.combatant-row, .initiative-item');
-            const count = await combatants.count();
-
-            if (count >= 3) {
-                const firstCombatant = await combatants.first().textContent();
-                expect(firstCombatant).toContain('Magier');
-            }
+            // Magier (Init 20) muss oben stehen
+            await expect(rows.first().locator('.init-name')).toHaveText('Magier');
         });
 
         test('sollte Combatant entfernen können', async ({ page }) => {
             // Erst einen hinzufügen
-            const addBtn = page
-                .locator(
-                    '[data-action="add-combatant"], [data-action="call"][data-value="addCombatant"]'
-                )
-                .first();
-            if (await addBtn.isVisible()) {
-                await addBtn.click();
-                await page.fill('#combatant-name, [name="combatant-name"]', 'Zu löschender Gegner');
-                await page.click('[data-action="save-combatant"], button:has-text("Hinzufügen")');
-                await page.waitForTimeout(300);
+            await addCombatant(page, 'Zu löschender Gegner', 10, 12);
 
-                // Löschen-Button finden und klicken
-                const deleteBtn = page
-                    .locator(
-                        '.combatant-row:has-text("Zu löschender") [data-action="remove-combatant"], .initiative-item:has-text("Zu löschender") button.delete'
-                    )
-                    .first();
+            const row = page.locator('#init-list .init-entry', {
+                hasText: 'Zu löschender'
+            });
+            await expect(row).toHaveCount(1);
 
-                if (await deleteBtn.isVisible()) {
-                    page.on('dialog', dialog => dialog.accept());
-                    await deleteBtn.click();
-                    await page.waitForTimeout(300);
+            // Löschen (removeCombatant splices direkt, kein confirm-Dialog)
+            await row.locator('[data-action="remove-combatant"]').click();
+            await page.waitForTimeout(200);
 
-                    await expect(page.locator('.initiative-list')).not.toContainText(
-                        'Zu löschender'
-                    );
-                }
-            }
+            await expect(page.locator('#init-list')).not.toContainText('Zu löschender');
         });
     });
 
@@ -159,91 +123,64 @@ test.describe('Initiative System', () => {
 
     test.describe('Turn Management', () => {
         test.beforeEach(async ({ page }) => {
-            // Test-Combatants hinzufügen
-            async function quickAdd(name, init) {
-                const addBtn = page
-                    .locator(
-                        '[data-action="add-combatant"], [data-action="call"][data-value="addCombatant"]'
-                    )
-                    .first();
-                if (await addBtn.isVisible()) {
-                    await addBtn.click();
-                    await page.waitForTimeout(100);
-                    await page.fill('#combatant-name, [name="combatant-name"]', name);
-                    const initInput = page.locator('#combatant-init').first();
-                    if (await initInput.isVisible()) {
-                        await initInput.fill(String(init));
-                    }
-                    await page.click(
-                        '[data-action="save-combatant"], button:has-text("Hinzufügen")'
-                    );
-                    await page.waitForTimeout(200);
-                }
-            }
-
-            await quickAdd('Fighter', 15);
-            await quickAdd('Rogue', 18);
-            await quickAdd('Wizard', 12);
+            // Test-Combatants hinzufügen (Push-Reihenfolge = Render-Reihenfolge,
+            // currentTurn startet bei 0 → erste Zeile aktiv)
+            await addCombatant(page, 'Fighter', 15, 30);
+            await addCombatant(page, 'Rogue', 18, 25);
+            await addCombatant(page, 'Wizard', 12, 18);
         });
 
         test('sollte zum nächsten Turn wechseln können', async ({ page }) => {
-            const nextBtn = page
-                .locator(
-                    '[data-action="next-turn"], button:has-text("Weiter"), button:has-text("Next")'
-                )
-                .first();
+            const activeBefore = await page
+                .locator('#init-list .init-entry.active .init-name')
+                .textContent();
 
-            if (await nextBtn.isVisible()) {
-                // Aktuellen aktiven Combatant merken
-                const activeBefore = await page
-                    .locator('.combatant-row.active, .initiative-item.active')
-                    .first()
-                    .textContent();
+            await page.click('[data-action="call"][data-value="nextTurn"]');
+            await page.waitForTimeout(200);
 
-                await nextBtn.click();
-                await page.waitForTimeout(200);
+            // Aktiver Combatant muss sich geändert haben (3 Kämpfer → Fighter → Rogue)
+            const activeAfter = await page
+                .locator('#init-list .init-entry.active .init-name')
+                .textContent();
 
-                // Aktiver Combatant sollte sich geändert haben
-                const activeAfter = await page
-                    .locator('.combatant-row.active, .initiative-item.active')
-                    .first()
-                    .textContent();
-
-                // Bei nur einem Combatant bleibt es gleich, sonst sollte es wechseln
-            }
+            expect(activeAfter).not.toBe(activeBefore);
         });
 
         test('sollte zum vorherigen Turn wechseln können', async ({ page }) => {
-            // Erst next, dann prev
-            const nextBtn = page.locator('[data-action="next-turn"]').first();
-            const prevBtn = page
-                .locator('[data-action="prev-turn"], button:has-text("Zurück")')
-                .first();
+            const activeStart = await page
+                .locator('#init-list .init-entry.active .init-name')
+                .textContent();
 
-            if ((await nextBtn.isVisible()) && (await prevBtn.isVisible())) {
-                await nextBtn.click();
-                await page.waitForTimeout(200);
-                await prevBtn.click();
-                await page.waitForTimeout(200);
-            }
+            // Vorwärts: aktiver Kämpfer MUSS sich ändern (beweist die Bewegung)
+            await page.click('[data-action="call"][data-value="nextTurn"]');
+            await page.waitForTimeout(150);
+            const activeMid = await page
+                .locator('#init-list .init-entry.active .init-name')
+                .textContent();
+            expect(activeMid).not.toBe(activeStart);
+
+            // Zurück: aktiver Kämpfer MUSS wieder der Start sein (beweist, dass
+            // prevTurn — core/init.js — tatsächlich wirkt, nicht nur ein No-Op ist)
+            await page.click('[data-action="call"][data-value="prevTurn"]');
+            await page.waitForTimeout(150);
+            const activeEnd = await page
+                .locator('#init-list .init-entry.active .init-name')
+                .textContent();
+            expect(activeEnd).toBe(activeStart);
         });
 
         test('sollte Runde erhöhen wenn alle dran waren', async ({ page }) => {
-            const nextBtn = page.locator('[data-action="next-turn"]').first();
-            const roundDisplay = page.locator('.round-counter, [data-round]').first();
+            const roundDisplay = page.locator('#encounter-round-num');
+            const initialRound = parseInt(await roundDisplay.textContent());
 
-            if ((await nextBtn.isVisible()) && (await roundDisplay.isVisible())) {
-                const initialRound = await roundDisplay.textContent();
-
-                // Durch alle Combatants durchgehen (3x next für 3 Combatants)
-                for (let i = 0; i < 4; i++) {
-                    await nextBtn.click();
-                    await page.waitForTimeout(150);
-                }
-
-                // Runde sollte erhöht worden sein
-                const newRound = await roundDisplay.textContent();
+            // 3 Kämpfer → 3x Nächster wickelt currentTurn um → round++ (nextTurn)
+            for (let i = 0; i < 3; i++) {
+                await page.click('[data-action="call"][data-value="nextTurn"]');
+                await page.waitForTimeout(120);
             }
+
+            const newRound = parseInt(await roundDisplay.textContent());
+            expect(newRound).toBe(initialRound + 1);
         });
     });
 
@@ -575,44 +512,29 @@ test.describe('Initiative System', () => {
 
     test.describe('AoE Damage', () => {
         test('sollte AoE-Schaden auf mehrere Ziele anwenden', async ({ page }) => {
-            // Mehrere Combatants hinzufügen
-            async function addEnemy(name, hp) {
-                const addBtn = page.locator('[data-action="add-combatant"]').first();
-                await addBtn.click();
-                await page.fill('#combatant-name', name);
-                await page.fill('#combatant-hp', String(hp));
-                await page.click('[data-action="save-combatant"]');
-                await page.waitForTimeout(200);
-            }
+            // Mehrere Combatants hinzufügen (alle 7 HP)
+            await addCombatant(page, 'Goblin 1', 12, 7);
+            await addCombatant(page, 'Goblin 2', 11, 7);
+            await addCombatant(page, 'Goblin 3', 10, 7);
 
-            await addEnemy('Goblin 1', 7);
-            await addEnemy('Goblin 2', 7);
-            await addEnemy('Goblin 3', 7);
+            // AoE-Modal öffnen
+            await page.click('[data-action="show-aoe-damage-modal"]');
+            await page.waitForSelector('#aoe-targets-list', { state: 'visible' });
 
-            // AoE-Button
-            const aoeBtn = page
-                .locator('[data-action="show-aoe"], button:has-text("AoE"), button:has-text("💥")')
-                .first();
-            if (await aoeBtn.isVisible()) {
-                await aoeBtn.click();
+            // Formel würfeln, alle Ziele wählen, anwenden
+            await page.fill('#aoe-damage-formula', '8d6');
+            await page.click('[data-action="roll-aoe-damage"]');
+            await page.waitForTimeout(150);
+            await page.click('[data-action="aoe-select-all"]');
+            await page.waitForTimeout(150);
 
-                // AoE-Modal ausfüllen
-                const damageFormula = page.locator('#aoe-damage, [name="aoe-formula"]').first();
-                if (await damageFormula.isVisible()) {
-                    await damageFormula.fill('8d6');
+            const applyBtn = page.locator('#aoe-apply-btn');
+            await expect(applyBtn).toBeEnabled();
+            await applyBtn.click();
+            await page.waitForTimeout(300);
 
-                    // Alle Goblins auswählen
-                    const selectAllBtn = page
-                        .locator('button:has-text("Alle"), [data-action="select-all-targets"]')
-                        .first();
-                    if (await selectAllBtn.isVisible()) {
-                        await selectAllBtn.click();
-                    }
-
-                    // Anwenden
-                    await page.click('[data-action="apply-aoe"], button:has-text("Anwenden")');
-                }
-            }
+            // 8d6 (min. 8 Schaden) tötet jeden 7-HP-Goblin → keine 7/7-Zeile mehr
+            await expect(page.locator('#init-list')).not.toContainText('7/7');
         });
     });
 
