@@ -1,8 +1,9 @@
 ---
 phase: 04-initiative-erweiterungen
-verified: 2026-06-14T14:00:00Z
-status: human_needed
+verified: 2026-06-14T15:00:00Z
+status: passed
 score: 3/3 must-haves verified
+human_verification_result: approved (Nutzer bestätigte alle 3 Sichtprüfungen am Spieltisch, 2026-06-14; INIT-01-Drawer-Bug zuvor behoben in 9107ec2)
 overrides_applied: 0
 human_verification:
   - test: "Statblock-Panel Optik (Pergament-Look, Drawer rechts, Mobile-Bottom-Sheet)"

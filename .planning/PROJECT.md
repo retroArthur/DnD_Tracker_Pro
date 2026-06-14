@@ -54,14 +54,21 @@ Die App muss am Spieltisch **zuverlässig offline laufen** — ein Spielleiter-B
 - ✓ Qualitätszyklus: Verifikation 14/14 must-haves, Production-Build + 308/308 Unit + 11/11 Bestiary-E2E grün, Code-Review (3 Critical + 3 Warnings) vollständig behoben — inkl. Regression im Encounter-Template-Loader durch den `getMonsterTemplates()`-SRD-Alias
 - Offen als manuelle Checks (03-VERIFICATION, nicht-blockierend): Offline-Anzeige aller 112 Monster, Pergament-Optik, Klick-Würfel-Feel
 
+**Validated in Phase 4: Initiative-Erweiterungen (2026-06-14):**
+
+- ✓ Statblock-Drawer: 📖-Button je Initiative-Zeile öffnet einen rechts angedockten Drawer (mobil Bottom-Sheet) mit vollem Statblock (geteilte `renderStatblockHTML`, DRY) bzw. Basisinfos; klickbare Würfel, sanitize-then-dice (INIT-01)
+- ✓ Legendäre Aktionen & Resistenzen: klickbare Pips in Death-Save-Optik; LA-Auto-Reset bei Init 20 (D-10), LR KEIN Auto-Reset + manueller Reset (D-07, regelkonform); Feld-Init beim Bestiary-Add (INIT-02)
+- ✓ Mob-Modus: N>1 identische Monster als eine Pool-HP-Zeile mit „X von N am Leben", zwei Sammel-Angriffsmodi (N-fach + DMG-Mob-Regel), auto-summierter Schaden, Feature-Hiding, Undo-sicheres Auflösen (INIT-03)
+- ✓ Qualitätszyklus: Verifikation 3/3 Wahrheiten, Build sauber + 288/288 Unit + Initiative-E2E grün, Code-Review (keine Phase-4-eigenen Critical-Bugs); UAT vom Nutzer approved nach Drawer-Bugfix (links→rechts, schließbar). Test-Härtung: 16 vorbestehend kaputte/no-op Initiative-E2E-Tests repariert → 31/31 grün
+
 ### Active
 
 **Milestone-Teil C — Spielleiter-Features (Reihenfolge laut Roadmap, Phasen 3–7):**
 
 - [x] Monster-Kompendium / Bestiary-Tab ✓ Phase 3 (SRD-Statblocks offline + eigene Kreaturen, monster-templates.js auf SRD-Store umgestellt)
-- [ ] Statblock-Popup in der Initiative (kompletter Statblock statt nur HP/AC)
-- [ ] Tracker für Legendäre Aktionen & Resistenzen in der Initiative
-- [ ] Mob-/Massenkampf-Modus (Gegnergruppen, Sammel-Würfe)
+- [x] Statblock-Popup in der Initiative (kompletter Statblock statt nur HP/AC) ✓ Phase 4 (INIT-01, Drawer rechts/Bottom-Sheet)
+- [x] Tracker für Legendäre Aktionen & Resistenzen in der Initiative ✓ Phase 4 (INIT-02, LA-Reset/LR-manuell D-07)
+- [x] Mob-/Massenkampf-Modus (Gegnergruppen, Sammel-Würfe) ✓ Phase 4 (INIT-03, Pool-HP + 2 Angriffsmodi)
 - [ ] Soundboard (lokale Audio-Dateien als Ambience mit Schnelltasten)
 - [ ] Session-Prep-Assistent (Szenenkarten, Checkliste, offene Fäden)
 - [ ] Kampagnen-Timeline (chronologische Ereignisse, verknüpft mit Kalender)
@@ -130,4 +137,4 @@ This document evolves at phase transitions and milestone boundaries.
 
 ---
 
-_Last updated: 2026-06-13 after Phase 3 completion (Bestiary verifiziert, BEST-01 bis BEST-03; 112 SRD-Statblocks offline; Code-Review behoben; 3 nicht-blockierende Browser-Checks offen)_
+_Last updated: 2026-06-14 after Phase 4 completion (Initiative-Erweiterungen verifiziert + UAT approved, INIT-01 bis INIT-03; Statblock-Drawer/LA-LR-Pips/Mob-Modus; Drawer-Bugfix links→rechts; 16 Initiative-E2E-Tests repariert, 31/31 grün)_

@@ -2,21 +2,21 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: executing
-last_updated: "2026-06-13T23:07:38.119Z"
+status: planning
+last_updated: "2026-06-14T20:38:43.129Z"
 progress:
   total_phases: 7
-  completed_phases: 3
+  completed_phases: 4
   total_plans: 23
-  completed_plans: 21
-  percent: 43
+  completed_plans: 23
+  percent: 57
 ---
 
 # Project State: D&D Kampagnen-Tracker Pro — Stabilisierung & Ausbau
 
 **Last Updated:** 2026-06-14
-**Phase:** 4
-**Status:** Executing
+**Phase:** 5
+**Status:** Ready to plan
 
 ---
 
@@ -24,7 +24,7 @@ progress:
 
 **Core Value:** Die App muss am Spieltisch zuverlässig offline laufen — ein Spielleiter-Begleiter, der nie im Weg steht und keine Daten verliert.
 
-**Current Focus:** Phase 04 — initiative-erweiterungen
+**Current Focus:** Phase 05 — welt-&-story (Phase 04 abgeschlossen + UAT approved 2026-06-14)
 
 ---
 
@@ -32,7 +32,7 @@ progress:
 
 ```
 Phase: 04 (initiative-erweiterungen) — COMPLETE
-Plan: 4 of 4 (alle abgeschlossen)
+Plan: Not started
 Next:  Phase 05 (Welt & Story) starten
 Status: Phase 04 abgeschlossen
 
@@ -113,7 +113,7 @@ Progress: [██████████] 100% Phase 4 (23/23 Pläne abgeschlos
 
 ## Session Continuity
 
-**Last action:** Phase 04 Plan 04 (INIT-03 Mob-Modus) ausgefuehrt (2026-06-14). Mob-Toggle in Mengen-Dialog; renderMobRow mit Pool-HP/Farb-Alive-Count/Besiegt-Badge; rollMobAttack N-fach + DMG-Mob-Regel; applyMobDamage + setMobAttackMode + dissolveMob; Feature-Hiding fuer Concentration + Quick-Actions; 3 Mob-Handler in CombatActions; 4 Mob-E2E-Tests gruen. Build sauber. Commits: 7883498, a52e103, 8cf767c. Phase 04 vollstaendig abgeschlossen.
+**Last action:** Phase 04 (Initiative-Erweiterungen) vollständig abgeschlossen (2026-06-14): 4 Pläne/4 Wellen ausgeführt (INIT-01 Statblock-Drawer, INIT-02 LA/LR-Pips, INIT-03 Mob-Modus), Code-Review + Verifikation (3/3 Wahrheiten). UAT vom Nutzer approved nach Drawer-Bugfix (Drawer dockte links statt rechts + nicht schließbar → 9107ec2). Zusätzlich Test-Infrastruktur gehärtet: 6 vorbestehend kaputte + 10 no-op Initiative-E2E-Tests mit echten Selektoren/Assertions repariert (Commits a613023, 9107ec2, 6906875) → 31/31 Initiative-E2E grün. Phase via `phase complete 04` markiert (next: Phase 05).
 **Next action:** Phase 05 (Welt & Story) diskutieren und planen.
 
 ---

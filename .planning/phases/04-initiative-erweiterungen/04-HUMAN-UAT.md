@@ -1,9 +1,9 @@
 ---
-status: partial
+status: complete
 phase: 04-initiative-erweiterungen
 source: [04-VERIFICATION.md]
 started: 2026-06-14T14:00:00Z
-updated: 2026-06-14T14:00:00Z
+updated: 2026-06-14T15:00:00Z
 ---
 
 ## Current Test
@@ -18,18 +18,18 @@ result: passed — nach Bugfix (commit 9107ec2): Drawer dockte zunächst LINKS a
 
 ### 2. Pip-Feel am Tisch — LA/LR-Klick-Reaktion wie Death-Save-Dots
 expected: Boss-Monster (z.B. Vampir) zur Initiative → LA-Pips (⭐) und LR-Pips (🛡️) anklicken. Klick ist sofort reaktiv (scale(1.15) Hover, Gold/Lila Farbwechsel ohne Lag). Nach vollem Rundenübergang: LA-Pips wieder voll (auto-reset), LR-Pips unverändert (D-07); LR-Reset-Knopf stellt LR manuell wieder her.
-result: [pending]
+result: passed — vom Nutzer am Spieltisch bestätigt (approved, 2026-06-14)
 
 ### 3. Mob-Schaden-Workflow am Tisch — beide Angriffsmodi (N-fach und DMG-Mob-Regel)
 expected: 10 Goblins → Mob-Modus (JA im Confirm-Dialog) → Sammel-Angriff-Button in beiden Modi. N-fach: Toast mit auto-summiertem Gesamtschaden. DMG-Mob-Regel: RK + Angriffsbonus eingeben → Toast "X Treffer (von Y lebend, RK Z) | Schaden: W". Ein Klick = Gesamtschaden.
-result: [pending]
+result: passed — vom Nutzer am Spieltisch bestätigt (approved, 2026-06-14)
 
 ## Summary
 
 total: 3
-passed: 1
+passed: 3
 issues: 0
-pending: 2
+pending: 0
 skipped: 0
 blocked: 0
 
