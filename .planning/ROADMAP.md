@@ -144,8 +144,37 @@ Plans:
 3. Nutzer hält Kampagnenereignisse in der Timeline fest und verknüpft sie mit Kalender-Daten — Ereignisse erscheinen in chronologischer Reihenfolge
 4. Nutzer startet eine Reise, wählt Gelände und Tempo — die App berechnet Tagesmärsche, würfelt Zufallsbegegnungen aus den passenden Tabellen und zeigt das Wetter an
 5. Nutzer legt eine Fraktion an, vergibt einen Rufwert für die Gruppe und kann ihn nach jeder Session anpassen — alle Fraktionen sind in einer Übersicht mit aktuellem Rufstand sichtbar
-   **Plans**: TBD
+   **Plans**: 7 plans (7 Wellen)
    **UI hint**: yes
+
+Plans:
+**Wave 1**
+
+- [ ] 05-01-PLAN.md — Wave-0-Fundament: Schema (sessionPreps/factions) + Migration 4.0.0 + Harptos-Konstanten + 11 Modul-Skelette + 4 Tabs (3-fach) + view-welt.html + welt.css + Test-Stubs (WELT-01–05)
+
+**Wave 2** *(blocked on Wave 1)*
+
+- [ ] 05-02-PLAN.md — Tabellen-Generatoren: tools/generate_npc_tables.py + generate_reise_tables.py → npc-/reise-default-tables.js (WELT-02, WELT-04)
+
+**Wave 3** *(blocked on Wave 1)*
+
+- [ ] 05-03-PLAN.md — WELT-01 Session-Prep: Tab + Lazy-DM-Vorlage (5 Abschnitte) + offene Fäden aus Quests/Story-Arcs + Entity-Links + CRUD/Undo (WELT-01)
+
+**Wave 4** *(blocked on Wave 2+3)*
+
+- [ ] 05-04-PLAN.md — WELT-02 NPC-Generator: Vorschau-Karte + Vor-Filter Volk/Geschlecht + Re-Roll + „Als NPC speichern" + Command-Palette-Aktion (WELT-02)
+
+**Wave 5** *(blocked on Wave 4)*
+
+- [ ] 05-05-PLAN.md — WELT-03 Timeline + Kalender: Harptos-Anzeige + chronologische Events + geteilte Helfer advanceCalendarDate/addCalendarEvent (WELT-03)
+
+**Wave 6** *(blocked on Wave 2+5)*
+
+- [ ] 05-06-PLAN.md — WELT-04 Reise/Wetter: berechneTagesmarsch + rollWetter + rollBegegnung + Reise-Abschluss rückt Kalender vor (WELT-04)
+
+**Wave 7** *(blocked on Wave 6)*
+
+- [ ] 05-07-PLAN.md — WELT-05 Fraktionen: Tab + 5-Stufen-Ruf (−50…+50) + Ruf-Historie + npc.factionId-Mitglieder (WELT-05)
 
 ### Phase 6: Spieler-Verwaltung
 
@@ -181,7 +210,7 @@ Plans:
 | 2. Technik-Fundament        | 5/5 | Complete    | 2026-06-12 |
 | 3. Bestiary                 | 5/5 | Complete    | 2026-06-13 |
 | 4. Initiative-Erweiterungen | 4/4 | Complete    | 2026-06-14 |
-| 5. Welt & Story             | 0/?            | Not started | -         |
+| 5. Welt & Story             | 0/7            | Planned     | -         |
 | 6. Spieler-Verwaltung       | 0/?            | Not started | -         |
 | 7. Komfort & Analyse        | 0/?            | Not started | -         |
 
