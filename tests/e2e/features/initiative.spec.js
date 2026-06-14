@@ -696,6 +696,50 @@ test.describe('Initiative System', () => {
             // Goblin hat Aktionen (Krummschwert), also mindestens 1 klickbare Formel
             expect(count).toBeGreaterThan(0);
         });
+
+        test('statblock Drawer ist RECHTS angedockt und schliessbar (Regression: war links + nicht schliessbar)', async ({ page }) => {
+            await injectManualCombatant(page);
+            await page.waitForSelector('#init-list .init-row', { timeout: 5000 });
+
+            const btn = page.locator('#init-list [data-action="show-init-statblock"]').first();
+            await btn.click();
+            await page.waitForTimeout(300);
+
+            const panel = page.locator('#init-statblock-panel');
+            await expect(panel).toHaveClass(/show/);
+
+            const vp = page.viewportSize();
+            const content = page.locator('#init-statblock-panel .init-statblock-content');
+            const box = await content.boundingBox();
+            expect(box).not.toBeNull();
+
+            if (vp && vp.width > 600) {
+                // (1) Rechts angedockt: linke Kante des Panels rechts der Bildschirmmitte,
+                // rechte Kante (nahezu) am rechten Rand. (Der Bug zeigte das Panel LINKS.)
+                expect(box.x).toBeGreaterThan(vp.width / 2);
+                expect(box.x + box.width).toBeGreaterThan(vp.width - 5);
+                // (2) Vollflaechiger Backdrop: Panel ist breiter als das 420px-Content-Panel
+                const panelBox = await panel.boundingBox();
+                expect(panelBox.width).toBeGreaterThan(box.width + 50);
+            }
+
+            // (3) Sichtbarer Schliessen-Button schliesst den Drawer
+            const closeBtn = page.locator('#init-statblock-panel .init-statblock-close');
+            await expect(closeBtn).toBeVisible();
+            await closeBtn.click();
+            await page.waitForTimeout(200);
+            await expect(panel).not.toHaveClass(/show/);
+
+            // (4) Erneut oeffnen, dann ueber den abgedunkelten Backdrop (links) schliessen
+            await btn.click();
+            await page.waitForTimeout(200);
+            await expect(panel).toHaveClass(/show/);
+            if (vp && vp.width > 600) {
+                await page.mouse.click(60, Math.round(vp.height / 2));
+                await page.waitForTimeout(200);
+                await expect(panel).not.toHaveClass(/show/);
+            }
+        });
     });
 
     // ============================================================

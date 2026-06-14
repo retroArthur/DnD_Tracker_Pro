@@ -61,7 +61,12 @@ function showInitStatblockPanel(cbId) {
         panel = document.createElement('div');
         panel.id = 'init-statblock-panel';
         panel.className = 'modal-overlay init-statblock-drawer';
-        panel.innerHTML = '<div class="init-statblock-content"></div>';
+        // Schliessen-Button (data-action greift ueber Event-Delegation) + Inhalt.
+        // Der Button ist Panel-Kind (nicht in .init-statblock-content), damit er
+        // beim Neu-Setzen von content.innerHTML erhalten bleibt.
+        panel.innerHTML =
+            '<button class="init-statblock-close" data-action="close-init-statblock" title="Schlie\xdfen" aria-label="Schlie\xdfen">✕</button>' +
+            '<div class="init-statblock-content"></div>';
         // Overlay-Klick schliesst Drawer (analog concentration-modal Zeile 674)
         panel.addEventListener('click', function(e) {
             if (e.target === panel) closeInitStatblockPanel();
