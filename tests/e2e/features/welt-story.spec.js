@@ -10,14 +10,17 @@
  * Referenz-Tab-Namen: sessionprep, kalender, reise, fraktionen
  */
 
-const { test, expect } = require('@playwright/test');
+import { test, expect } from '@playwright/test';
+
+// App-URL über file:// (Projekt-Konvention, analog bestiary.spec.js) — kein Dev-Server nötig
+const APP_URL = `file:///${process.cwd().replace(/\\/g, '/')}/dist/dnd-tracker-bundled.html`;
 
 // ============================================================
 // WELT-01: Session-Prep-Assistent — Tab "sessionprep" (aktiviert Plan 05-03)
 // ============================================================
 test.describe('WELT-01: Session-Prep-Tab', () => {
     test('Tab sessionprep ist sichtbar und anklickbar', async ({ page }) => {
-        await page.goto('http://localhost:8000/dist/dnd-tracker-bundled.html');
+        await page.goto(APP_URL);
         // Tab-Button klicken
         await page.click('[data-view="sessionprep"]');
         // View-Container muss sichtbar sein
@@ -25,7 +28,7 @@ test.describe('WELT-01: Session-Prep-Tab', () => {
     });
 
     test('Neue Session-Prep-Modal enthält alle 5 Lazy-DM-Abschnitte', async ({ page }) => {
-        await page.goto('http://localhost:8000/dist/dnd-tracker-bundled.html');
+        await page.goto(APP_URL);
         await page.click('[data-view="sessionprep"]');
         // "Neue Session-Prep"-Button klicken
         await page.click('[data-action="show-session-prep-modal"]');
@@ -39,7 +42,7 @@ test.describe('WELT-01: Session-Prep-Tab', () => {
     });
 
     test('Offene Quests werden als offene Fäden vorgeschlagen', async ({ page }) => {
-        await page.goto('http://localhost:8000/dist/dnd-tracker-bundled.html');
+        await page.goto(APP_URL);
         // Offene Quest in D.quests injizieren
         await page.evaluate(() => {
             if (window.D) {
@@ -61,7 +64,7 @@ test.describe('WELT-01: Session-Prep-Tab', () => {
     });
 
     test('Entity-Link in Szene wird als .entity-link gerendert', async ({ page }) => {
-        await page.goto('http://localhost:8000/dist/dnd-tracker-bundled.html');
+        await page.goto(APP_URL);
         // Session-Prep mit Entity-Link in der Szene anlegen
         await page.evaluate(() => {
             if (window.D && Array.isArray(window.D.sessionPreps)) {
@@ -96,7 +99,7 @@ test.describe('WELT-01: Session-Prep-Tab', () => {
     });
 
     test('Undo nach Speichern ist über pushUndo vorbereitet', async ({ page }) => {
-        await page.goto('http://localhost:8000/dist/dnd-tracker-bundled.html');
+        await page.goto(APP_URL);
         // Prüfen dass sammleOffeneFaeden global verfügbar ist
         const hasFn = await page.evaluate(() => typeof window.sammleOffeneFaeden === 'function');
         expect(hasFn).toBe(true);
@@ -111,13 +114,13 @@ test.describe('WELT-01: Session-Prep-Tab', () => {
 // ============================================================
 test.describe('WELT-02: NPC-Generator', () => {
     test('Generator-Button ist im NPC-Tab sichtbar', async ({ page }) => {
-        await page.goto('http://localhost:8000/dist/dnd-tracker-bundled.html');
+        await page.goto(APP_URL);
         await page.click('[data-view="npcs"]');
         await expect(page.locator('[data-action="show-npc-generator"]')).toBeVisible();
     });
 
     test('Klick öffnet Modal mit Vorschau-Karte in <1s', async ({ page }) => {
-        await page.goto('http://localhost:8000/dist/dnd-tracker-bundled.html');
+        await page.goto(APP_URL);
         await page.click('[data-view="npcs"]');
 
         const t0 = Date.now();
@@ -133,7 +136,7 @@ test.describe('WELT-02: NPC-Generator', () => {
     });
 
     test('Volk-Select ändert Namens-Pool (Filter wirkt)', async ({ page }) => {
-        await page.goto('http://localhost:8000/dist/dnd-tracker-bundled.html');
+        await page.goto(APP_URL);
         await page.click('[data-view="npcs"]');
         await page.click('[data-action="show-npc-generator"]');
         // Filter auf Zwerg / Männlich setzen
@@ -153,7 +156,7 @@ test.describe('WELT-02: NPC-Generator', () => {
     });
 
     test('3× Re-Roll erzeugt keinen Eintrag in D.npcs', async ({ page }) => {
-        await page.goto('http://localhost:8000/dist/dnd-tracker-bundled.html');
+        await page.goto(APP_URL);
         await page.click('[data-view="npcs"]');
         await page.click('[data-action="show-npc-generator"]');
 
@@ -167,7 +170,7 @@ test.describe('WELT-02: NPC-Generator', () => {
     });
 
     test('"Als NPC speichern" legt genau 1 D.npcs-Eintrag an', async ({ page }) => {
-        await page.goto('http://localhost:8000/dist/dnd-tracker-bundled.html');
+        await page.goto(APP_URL);
         await page.click('[data-view="npcs"]');
         await page.click('[data-action="show-npc-generator"]');
 
@@ -180,7 +183,7 @@ test.describe('WELT-02: NPC-Generator', () => {
     });
 
     test('Gespeicherter NPC erscheint im NPC-Tab', async ({ page }) => {
-        await page.goto('http://localhost:8000/dist/dnd-tracker-bundled.html');
+        await page.goto(APP_URL);
         await page.click('[data-view="npcs"]');
         await page.click('[data-action="show-npc-generator"]');
 
@@ -203,13 +206,13 @@ test.describe('WELT-02: NPC-Generator', () => {
 // ============================================================
 test.describe('WELT-03: Kalender-Tab', () => {
     test('Tab kalender ist sichtbar und anklickbar', async ({ page }) => {
-        await page.goto('http://localhost:8000/dist/dnd-tracker-bundled.html');
+        await page.goto(APP_URL);
         await page.click('[data-view="kalender"]');
         await expect(page.locator('#view-kalender')).toBeVisible();
     });
 
     test('Kalender zeigt Harptos-Monatsnamen', async ({ page }) => {
-        await page.goto('http://localhost:8000/dist/dnd-tracker-bundled.html');
+        await page.goto(APP_URL);
         // Kalender auf Hammer setzen
         await page.evaluate(() => {
             if (window.D && window.D.calendar) {
@@ -227,7 +230,7 @@ test.describe('WELT-03: Kalender-Tab', () => {
     });
 
     test('Timeline-Eintrag kann via addCalendarEvent angelegt werden', async ({ page }) => {
-        await page.goto('http://localhost:8000/dist/dnd-tracker-bundled.html');
+        await page.goto(APP_URL);
         const evtCount = await page.evaluate(() => {
             if (!window.D || !window.D.calendar) return -1;
             // addCalendarEvent direkt aufrufen
@@ -245,7 +248,7 @@ test.describe('WELT-03: Kalender-Tab', () => {
     });
 
     test('Einträge erscheinen chronologisch sortiert (sortiereTimelineEvents)', async ({ page }) => {
-        await page.goto('http://localhost:8000/dist/dnd-tracker-bundled.html');
+        await page.goto(APP_URL);
         const sorted = await page.evaluate(() => {
             if (!window.sortiereTimelineEvents) return null;
             var events = [
@@ -264,13 +267,13 @@ test.describe('WELT-03: Kalender-Tab', () => {
 // ============================================================
 test.describe('WELT-04: Reise-Tab', () => {
     test('Tab reise ist sichtbar und anklickbar', async ({ page }) => {
-        await page.goto('http://localhost:8000/dist/dnd-tracker-bundled.html');
+        await page.goto(APP_URL);
         await page.click('[data-view="reise"]');
         await expect(page.locator('#view-reise')).toBeVisible();
     });
 
     test('Reise-Abschluss rückt D.calendar um korrekte Tage vor', async ({ page }) => {
-        await page.goto('http://localhost:8000/dist/dnd-tracker-bundled.html');
+        await page.goto(APP_URL);
         // Kalender auf Tag 1 setzen
         await page.evaluate(() => {
             if (window.D && window.D.calendar) {
@@ -296,7 +299,7 @@ test.describe('WELT-04: Reise-Tab', () => {
     });
 
     test('Wetter-Roll gibt Ergebnis basierend auf Jahreszeit', async ({ page }) => {
-        await page.goto('http://localhost:8000/dist/dnd-tracker-bundled.html');
+        await page.goto(APP_URL);
         const result = await page.evaluate(() => {
             if (typeof window.rollWetter !== 'function') return null;
             return window.rollWetter('gemässigt', 'winter');
@@ -308,7 +311,7 @@ test.describe('WELT-04: Reise-Tab', () => {
     });
 
     test('berechneTagesmarsch und jahreszeitAusDatum sind global verfügbar', async ({ page }) => {
-        await page.goto('http://localhost:8000/dist/dnd-tracker-bundled.html');
+        await page.goto(APP_URL);
         const checks = await page.evaluate(() => ({
             berechneTagesmarsch: typeof window.berechneTagesmarsch === 'function',
             rollWetter: typeof window.rollWetter === 'function',
@@ -334,13 +337,13 @@ test.describe('WELT-04: Reise-Tab', () => {
 // ============================================================
 test.describe('WELT-05: Fraktionen-Tab', () => {
     test('Tab fraktionen ist sichtbar und anklickbar', async ({ page }) => {
-        await page.goto('http://localhost:8000/dist/dnd-tracker-bundled.html');
+        await page.goto(APP_URL);
         await page.click('[data-view="fraktionen"]');
         await expect(page.locator('#view-fraktionen')).toBeVisible();
     });
 
     test('Fraktion anlegen erscheint in Übersichtsliste', async ({ page }) => {
-        await page.goto('http://localhost:8000/dist/dnd-tracker-bundled.html');
+        await page.goto(APP_URL);
         await page.click('[data-view="fraktionen"]');
 
         // Fraktion direkt via page.evaluate anlegen (kein DOM-Formular-Roundtrip)
@@ -371,7 +374,7 @@ test.describe('WELT-05: Fraktionen-Tab', () => {
     });
 
     test('Ruf-Anpassung schreibt Eintrag in rufHistorie', async ({ page }) => {
-        await page.goto('http://localhost:8000/dist/dnd-tracker-bundled.html');
+        await page.goto(APP_URL);
 
         // Fraktion anlegen und Ruf anpassen via page.evaluate
         const result = await page.evaluate(() => {
@@ -404,7 +407,7 @@ test.describe('WELT-05: Fraktionen-Tab', () => {
     });
 
     test('Undo nach Ruf-Änderung stellt alten Wert wieder her', async ({ page }) => {
-        await page.goto('http://localhost:8000/dist/dnd-tracker-bundled.html');
+        await page.goto(APP_URL);
 
         // Fraktion auf Ruf 0 setzen, dann +10 anpassen, dann Undo
         const result = await page.evaluate(() => {
@@ -434,7 +437,7 @@ test.describe('WELT-05: Fraktionen-Tab', () => {
     });
 
     test('NPC mit factionId erscheint in Fraktions-Mitgliederliste', async ({ page }) => {
-        await page.goto('http://localhost:8000/dist/dnd-tracker-bundled.html');
+        await page.goto(APP_URL);
         await page.click('[data-view="fraktionen"]');
 
         // Fraktion + NPC mit factionId anlegen
