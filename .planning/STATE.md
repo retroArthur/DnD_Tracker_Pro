@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-last_updated: "2026-06-15T20:59:38.476Z"
+last_updated: "2026-06-15T21:27:07.716Z"
 progress:
   total_phases: 7
   completed_phases: 5
   total_plans: 34
-  completed_plans: 31
+  completed_plans: 33
   percent: 71
 ---
 
@@ -32,7 +32,7 @@ progress:
 
 ```
 Phase: 06 (spieler-verwaltung) — EXECUTING
-Plan: 3 of 4
+Plan: 4 of 4
 Next:  Phase 06-03 ausführen (/gsd-execute-phase 6)
 Status: Ready to execute
 
@@ -85,6 +85,7 @@ Progress: [██████████] Phase 5 abgeschlossen (30/30 Pläne);
 | Phase 04 P04-02 | 20 | 3 tasks | 5 files |
 | Phase 05-welt-story P02 | 5 | 2 tasks | 4 files |
 | Phase 06 P01 | 45 | - tasks | - files |
+| Phase 06-spieler-verwaltung P03 | 45 | 2 tasks | 7 files |
 
 ### Known Blockers / Research Flags
 
@@ -119,14 +120,14 @@ Progress: [██████████] Phase 5 abgeschlossen (30/30 Pläne);
 - [x] Phase 6 planen: `/gsd-plan-phase 6` ✓ (2026-06-15, 4 Pläne / 4 Wellen, `--skip-ui`, Research + manuelle 06-VALIDATION.md, Plan-Checker VERIFICATION PASSED — 0 Blocker; Commits 61c538c/8dfbcbf)
 - [x] Phase 6 ausführen Plan 1 (06-01 Fundament): ✓ (2026-06-15, XP_LEVEL_THRESHOLDS + 4 helpers + migration 5.0.0 + Wave-0 tests; 49 unit tests grün, 2 E2E stubs runnable; Commits b79a1f4/21cf563/d268369/9fc7dd3)
 - [x] Phase 6 ausführen Plan 2 (06-02 Inspiration): ✓ (2026-06-15, always-visible ⭐ toggle + stop-propagation handler + CSS + 5 E2E tests grün; Commits 4e5be0b/b289349)
-- [ ] Phase 6 ausführen Plan 3 (06-03 Charakterwerte): `/gsd-execute-phase 6` Plan 3
+- [x] Phase 6 ausführen Plan 3 (06-03 Charakterwerte): ✓ (2026-06-15, 18 Skill/Expertise-Checkboxen + Angriffsliste im Editor; Skills/Saves/Attribute/Angriffe als klickbare W20-Würfe mit Adv/Disadv im Detail-Modal; 4 CHAR-03 E2E-Tests grün; 49 Unit-Tests grün; window.diceHistory exportiert; roll-char-*-stop Handler; Commits 88b7752/ea9a64c)
 
 ---
 
 ## Session Continuity
 
-**Last action:** Phase 06-02 (Inspiration) ausgeführt (2026-06-15). Always-visible Stern-Toggle-Button in renderCharacterCard; toggle-inspiration-stop-Handler in EntityActions (stopPropagation + ch.inspiration=!ch.inspiration + window.save() ohne saveUndoState per D-02 + renderParty + Toast); .char-inspiration-toggle CSS in party.css; alle 5 inspiration.spec.js E2E-Tests grün. 1 Deviation: Wave-0-Undo-Spy-Bug auto-fixed. Commits 4e5be0b/b289349.
-**Next action:** Phase 06-03 (Charakterwerte, CHAR-03): Skills, Saves, Angriffe im Detail-Modal + Formular-Felder. Dann 06-04 XP/Milestone.
+**Last action:** Phase 06-03 (CHAR-03: Erweiterte Charakterwerte) ausgeführt (2026-06-15). 18 Skill/Expertise-Checkboxen im Editor (cf-skills-panel); freie Angriffsliste (cf-attacks-panel, add-attack/delete-attack); saveCharacter liest skillProficiencies+skillExpertise+attacks mit DoS-Cap 20 + Damage-Whitelist; Detail-Modal mit klickbaren Attribut-Boxen (roll-char-attr-stop), Skills (roll-char-skill-stop, calcSkillModifier), Saves (roll-char-save-stop), Angriffs-Spans (roll-char-attack-stop); window.diceHistory exportiert; 4 CHAR-03 E2E-Tests von fixme auf aktiv umgestellt; 49 Unit-Tests grün. 2 Deviations auto-fixed. Commits 88b7752/ea9a64c.
+**Next action:** Phase 06-04 (XP/Milestone, CHAR-01 Wave-4): canLevelUp-UI, Milestone-Toggle, Level-Up-Hint; die 4 fixme CHAR-01 Tests aktivieren.
 
 ---
 
@@ -148,3 +149,5 @@ _State initialized: 2026-06-11_
 - [Phase 05-07]: FRAKTIONS_RUF_STUFEN in fraktionen-render.js (nicht crud.js) — rufStufe() von render + crud genutzt; setzeRuf() extra für direktes Setzen; Ruf-Buttons ±5 + ±10; npc.factionId parseInt()||null (0→null)
 - [Phase ?]: [Phase 06-01]: window.MIGRATIONS export added to version-migration.js for test access via vm context
 - [Phase ?]: [Phase 06-01]: XP_LEVEL_THRESHOLDS 0-based indexing (index[1]=300 for Level 2); canLevelUp uses XP_LEVEL_THRESHOLDS[nextLevel-1]
+- [Phase 06-03]: roll-char-attack-stop uses dedicated handler (not bestiary-roll-dice/rollQrefDice) — rollQrefDice skips addToDiceHistory
+- [Phase 06-03]: window.diceHistory exported from dice-core.js; E2E tests check (window.diceHistory||[]).length

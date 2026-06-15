@@ -200,7 +200,7 @@ Plans:
 
 **Wave 3** *(blocked on Wave 1+2 — teilt sich entity-actions.js + party.css)*
 
-- [ ] 06-03-PLAN.md — CHAR-03 Erweiterte Charakterwerte: 18 Skills + Expertise + Angriffe im Editor; Skills/Saves/Attribut-Checks/Angriffe klickbar im Detail-Modal (adv/disadv, sanitize-then-dice) (CHAR-03)
+- [x] 06-03-PLAN.md — CHAR-03 Erweiterte Charakterwerte: 18 Skills + Expertise + Angriffe im Editor; Skills/Saves/Attribut-Checks/Angriffe klickbar im Detail-Modal (adv/disadv, sanitize-then-dice) (CHAR-03)
 
 **Wave 4** *(blocked on Wave 1+3 — teilt sich party-details.js + entity-actions.js)*
 
@@ -228,7 +228,7 @@ Plans:
 | 3. Bestiary                 | 5/5 | Complete    | 2026-06-13 |
 | 4. Initiative-Erweiterungen | 4/4 | Complete    | 2026-06-14 |
 | 5. Welt & Story             | 7/7 | Complete    | 2026-06-15 |
-| 6. Spieler-Verwaltung       | 1/4 | In Progress|  |
+| 6. Spieler-Verwaltung       | 3/4 | In Progress|  |
 | 7. Komfort & Analyse        | 0/?            | Not started | -         |
 
 ---
