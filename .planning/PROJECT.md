@@ -61,6 +61,15 @@ Die App muss am Spieltisch **zuverlässig offline laufen** — ein Spielleiter-B
 - ✓ Mob-Modus: N>1 identische Monster als eine Pool-HP-Zeile mit „X von N am Leben", zwei Sammel-Angriffsmodi (N-fach + DMG-Mob-Regel), auto-summierter Schaden, Feature-Hiding, Undo-sicheres Auflösen (INIT-03)
 - ✓ Qualitätszyklus: Verifikation 3/3 Wahrheiten, Build sauber + 288/288 Unit + Initiative-E2E grün, Code-Review (keine Phase-4-eigenen Critical-Bugs); UAT vom Nutzer approved nach Drawer-Bugfix (links→rechts, schließbar). Test-Härtung: 16 vorbestehend kaputte/no-op Initiative-E2E-Tests repariert → 31/31 grün
 
+**Validated in Phase 6: Spieler-Verwaltung (2026-06-16):**
+
+- ✓ Fundament: `XP_LEVEL_THRESHOLDS` (20-wertige PHB-Tabelle, getrennt von `XP_THRESHOLDS`/Encounter), vier reine DOM-unabhängige Regel-Helfer (`calcSkillModifier`/`canLevelUp`/`getXPForCR`/`distributeXP`), Schema-Migration 5.0.0 (backfillt `xp`/`skillProficiencies`/`skillExpertise`/`attacks`, `settings.levelingMode`)
+- ✓ Inspiration (CHAR-02): immer sichtbarer klickbarer ☆/⭐-Stern-Toggle auf der Charakterkarte; `toggle-inspiration-stop` mit `stopPropagation` (öffnet nicht den Editor), plain `save()` ohne Undo
+- ✓ Erweiterte Charakterwerte (CHAR-03): 18 Skills (Namen aus `SKILL_INFO`) + Expertise + freie Angriffsliste (Cap 20, Schadensformel-Whitelist) im Editor; Detail-Modal mit nach Attribut gruppierten Skills, klickbaren Saves/Attribut-Checks/Angriffen (Vorteil/Nachteil) → landen in der Würfel-Historie
+- ✓ XP-/Milestone-Tracker (CHAR-01): „⭐ XP"-Trigger in der Initiative öffnet XP-Modal (CR-Auto-Summe via `getXPForCR` + immer verfügbare manuelle Korrektur), Gleichverteilung auf lebende Charaktere, Level-Aufstieg-HINWEIS ohne Auto-Bump (`pushUndo` vor Mutation), gruppenweiter `levelingMode`-Toggle (Milestone versteckt XP-UI, zeigt „+1 Level")
+- ✓ Qualitätszyklus: Verifikation 13/13 must-haves, Build sauber (2.70 MB) + 421/421 Unit (inkl. 49 neue Advancement-Tests) + 13/13 Phase-6-E2E grün, Code-Review (1 Critical ist ein vorbestehender Dice-Tab-Bug außerhalb Phase 6; 6 Warnings dokumentiert in 06-REVIEW.md)
+- Offen als UAT (06-HUMAN-UAT.md): 5 visuelle/UX-Checks (Stern-Styling, XP-Fortschrittsbalken, Skills-Gruppierung, Angriffs-Click-Affordance, XP-Modal-Live-Vorschau)
+
 ### Active
 
 **Milestone-Teil C — Spielleiter-Features (Reihenfolge laut Roadmap, Phasen 3–7):**
@@ -75,9 +84,9 @@ Die App muss am Spieltisch **zuverlässig offline laufen** — ein Spielleiter-B
 - [ ] NPC-Generator (Name, Persönlichkeit, Marotte auf Knopfdruck, nutzt Random Tables)
 - [ ] Reise- & Wetter-Simulator (Tagesreisen, Wetter, Zufallsbegegnungen je Gelände)
 - [ ] Fraktionen & Ruf-System (Fraktionsziele, Ruf-Tracker der Gruppe)
-- [ ] XP-/Milestone-Tracker (Levelfortschritt, XP aus Encountern)
-- [ ] Inspiration-Tracker (Inspiration-Punkte pro Spieler)
-- [ ] Erweiterte Charakterbögen (Skills, Saves, Angriffe für schnelle Checks)
+- [x] XP-/Milestone-Tracker (Levelfortschritt, XP aus Encountern) ✓ Phase 6 (CHAR-01, Initiative-XP-Modal + Milestone-Modus)
+- [x] Inspiration-Tracker (Inspiration-Punkte pro Spieler) ✓ Phase 6 (CHAR-02, klickbarer Stern-Toggle)
+- [x] Erweiterte Charakterbögen (Skills, Saves, Angriffe für schnelle Checks) ✓ Phase 6 (CHAR-03, klickbare Würfe mit Vorteil/Nachteil)
 - [ ] Würfel-Statistiken (Verteilungen, Crit-Quoten aus Roll-Historie)
 
 ### Out of Scope
@@ -137,4 +146,4 @@ This document evolves at phase transitions and milestone boundaries.
 
 ---
 
-_Last updated: 2026-06-14 after Phase 4 completion (Initiative-Erweiterungen verifiziert + UAT approved, INIT-01 bis INIT-03; Statblock-Drawer/LA-LR-Pips/Mob-Modus; Drawer-Bugfix links→rechts; 16 Initiative-E2E-Tests repariert, 31/31 grün)_
+_Last updated: 2026-06-16 after Phase 6 completion (Spieler-Verwaltung verifiziert 13/13 must-haves, CHAR-01/02/03; Inspiration-Toggle, erweiterte Charakterwerte mit klickbaren Würfen, XP-/Milestone-Tracker; 421/421 Unit + 13/13 Phase-6-E2E grün; 5 visuelle UAT-Checks offen in 06-HUMAN-UAT.md). Hinweis: „Validated in Phase 5"-Block fehlt noch (Drift aus dem Phase-5-Abschluss — Welt & Story / WELT-Requirements)._
