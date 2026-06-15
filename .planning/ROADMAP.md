@@ -192,7 +192,7 @@ Plans:
 Plans:
 **Wave 1**
 
-- [ ] 06-01-PLAN.md — Fundament: XP_LEVEL_THRESHOLDS + reine Helfer (calcSkillModifier/canLevelUp/getXPForCR/distributeXP) + Schema/Migration 5.0.0 + levelingMode + Wave-0-Tests/Fixture/E2E-Stubs (CHAR-01/02/03)
+- [x] 06-01-PLAN.md — Fundament: XP_LEVEL_THRESHOLDS + reine Helfer (calcSkillModifier/canLevelUp/getXPForCR/distributeXP) + Schema/Migration 5.0.0 + levelingMode + Wave-0-Tests/Fixture/E2E-Stubs (CHAR-01/02/03)
 
 **Wave 2** *(blocked on Wave 1)*
 
@@ -228,7 +228,7 @@ Plans:
 | 3. Bestiary                 | 5/5 | Complete    | 2026-06-13 |
 | 4. Initiative-Erweiterungen | 4/4 | Complete    | 2026-06-14 |
 | 5. Welt & Story             | 7/7 | Complete    | 2026-06-15 |
-| 6. Spieler-Verwaltung       | 0/4            | Planned     | -         |
+| 6. Spieler-Verwaltung       | 1/4 | In Progress|  |
 | 7. Komfort & Analyse        | 0/?            | Not started | -         |
 
 ---

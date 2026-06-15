@@ -50,9 +50,9 @@ Requirements für diesen Milestone. Jedes wird genau einer Roadmap-Phase zugeord
 
 ### Spieler-Verwaltung (CHAR)
 
-- [ ] **CHAR-01**: Nutzer kann XP/Milestones der Gruppe verfolgen und XP aus abgeschlossenen Encountern übernehmen
-- [ ] **CHAR-02**: Nutzer kann Inspiration je Spieler vergeben und einsehen
-- [ ] **CHAR-03**: Nutzer kann erweiterte Charakterwerte pflegen (Skill-Proficiencies, Saves, Angriffe) für schnelle Checks am Tisch
+- [x] **CHAR-01**: Nutzer kann XP/Milestones der Gruppe verfolgen und XP aus abgeschlossenen Encountern übernehmen
+- [x] **CHAR-02**: Nutzer kann Inspiration je Spieler vergeben und einsehen
+- [x] **CHAR-03**: Nutzer kann erweiterte Charakterwerte pflegen (Skill-Proficiencies, Saves, Angriffe) für schnelle Checks am Tisch
 
 ### Komfort & Analyse (UX)
 
@@ -122,9 +122,9 @@ Explizit ausgeschlossen. Dokumentiert, um Scope-Creep zu verhindern.
 | WELT-03     | Phase 5 | Complete |
 | WELT-04     | Phase 5 | Complete |
 | WELT-05     | Phase 5 | Complete |
-| CHAR-01     | Phase 6 | Pending |
-| CHAR-02     | Phase 6 | Pending |
-| CHAR-03     | Phase 6 | Pending |
+| CHAR-01     | Phase 6 | Complete |
+| CHAR-02     | Phase 6 | Complete |
+| CHAR-03     | Phase 6 | Complete |
 | UX-01       | Phase 7 | Pending |
 | UX-02       | Phase 7 | Pending |
 

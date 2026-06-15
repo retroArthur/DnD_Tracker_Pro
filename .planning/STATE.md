@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-last_updated: "2026-06-15T17:45:34.950Z"
+last_updated: "2026-06-15T20:59:38.476Z"
 progress:
   total_phases: 7
   completed_phases: 5
   total_plans: 34
-  completed_plans: 30
+  completed_plans: 31
   percent: 71
 ---
 
@@ -24,15 +24,15 @@ progress:
 
 **Core Value:** Die App muss am Spieltisch zuverlässig offline laufen — ein Spielleiter-Begleiter, der nie im Weg steht und keine Daten verliert.
 
-**Current Focus:** Phase 06 — Spieler-Verwaltung (geplant, bereit zur Ausführung)
+**Current Focus:** Phase 06 — spieler-verwaltung
 
 ---
 
 ## Current Position
 
 ```
-Phase: 06 (Spieler-Verwaltung) — PLANNED
-Plan: 4 Pläne / 4 Wellen (sequenziell auf main)
+Phase: 06 (spieler-verwaltung) — EXECUTING
+Plan: 2 of 4
 Next:  Phase 06 ausführen (/gsd-execute-phase 6)
 Status: Ready to execute
 
@@ -84,6 +84,7 @@ Progress: [██████████] Phase 5 abgeschlossen (30/30 Pläne);
 | getMonsterTemplates() → getSRDMonsters() Alias (03-02) | 3 (03-02) | Single source of truth; Code-Review fand Regression im Encounter-Template-Loader (deutsche _ids + Array-Shape) → behoben in ee66bbf |
 | Phase 04 P04-02 | 20 | 3 tasks | 5 files |
 | Phase 05-welt-story P02 | 5 | 2 tasks | 4 files |
+| Phase 06 P01 | 45 | - tasks | - files |
 
 ### Known Blockers / Research Flags
 
@@ -116,14 +117,15 @@ Progress: [██████████] Phase 5 abgeschlossen (30/30 Pläne);
 - [ ] Phase 5 (optional, benign): `D.calendar.month` 0→1-Basis in core/data.js angleichen (vom Verifier als nicht-user-sichtbar bestätigt)
 - [x] Phase 6 diskutieren: `/gsd-discuss-phase 6` ✓ (2026-06-15, 06-CONTEXT.md, Commit d10df5c)
 - [x] Phase 6 planen: `/gsd-plan-phase 6` ✓ (2026-06-15, 4 Pläne / 4 Wellen, `--skip-ui`, Research + manuelle 06-VALIDATION.md, Plan-Checker VERIFICATION PASSED — 0 Blocker; Commits 61c538c/8dfbcbf)
-- [ ] Phase 6 ausführen: `/gsd-execute-phase 6` (sequenziell auf main; Wave 1 Fundament zuerst, dann Inspiration → Charakterwerte → XP/Milestone)
+- [x] Phase 6 ausführen Plan 1 (06-01 Fundament): ✓ (2026-06-15, XP_LEVEL_THRESHOLDS + 4 helpers + migration 5.0.0 + Wave-0 tests; 49 unit tests grün, 2 E2E stubs runnable; Commits b79a1f4/21cf563/d268369/9fc7dd3)
+- [ ] Phase 6 ausführen Plan 2 (06-02 Inspiration): `/gsd-execute-phase 6` Plan 2
 
 ---
 
 ## Session Continuity
 
-**Last action:** Phase 06 (Spieler-Verwaltung) geplant (2026-06-15). Research (sonnet) verifizierte alle Reuse-Targets per Zeilennummern (HIGH) und fand zwei Fallen: `SKILL_INFO` (`core/constants.js:217`) vs. das separate `SKILLS`-Array (`dice-core.js:11`), und das `renderClickableDice`→`rollQrefDice`-Routing (Phase-6-Würfe nutzen eigene `roll-char-*-stop`-Handler). `06-RESEARCH.md` liefert die ready-to-paste `XP_LEVEL_THRESHOLDS`-Konstante (20 Werte, klar getrennt von `XP_THRESHOLDS`=Encounter-Schwierigkeit). `06-VALIDATION.md` manuell aus der dt. Sektion „Validierungs-Architektur" erstellt (Nyquist-Grep verfehlt dt. Überschrift — Quirk). Planner (opus) → 4 Pläne / 4 Wellen, sequenziell auf main: 06-01 Fundament (Konstanten + 4 Pure-Helper `calcSkillModifier`/`canLevelUp`/`getXPForCR`/`distributeXP` + Schema/Migration 5.0.0 + Wave-0-Tests), 06-02 Inspiration (CHAR-02, klickbarer ⭐ + `-stop`, plain save, kein Undo), 06-03 Erweiterte Charakterwerte (CHAR-03, 18 Skills+Expertise+Angriffe, klickbare Würfe mit Vorteil/Nachteil), 06-04 XP-/Milestone-Tracker (CHAR-01, Initiative-Abschluss-Trigger + Auto-Summe + Gleichverteilung + Level-Hinweis + Milestone-Modus). Plan-Checker (sonnet) VERIFICATION PASSED — alle 12 Dimensionen, 15/15 D-IDs abgedeckt, Dimension 8 erfüllt, 0 Blocker. Commits 61c538c (Research+Validation), 8dfbcbf (4 Pläne + ROADMAP-Annotation).
-**Next action:** Phase 06 ausführen: `/gsd-execute-phase 6` (ggf. `/clear` davor). Sequenziell auf main (keine Worktrees — Pläne fassen geteilte Party-Dateien an, vgl. Quirk #9); Wave 1 Fundament MUSS vor den Feature-Wellen landen. E2E wirklich laufen lassen (`file://`-Basis, ESM-Imports, NICHT den kaputten `addCombatant()`-Helper nutzen). Offene Annahmen aus Research: A2 `rollQrefDice`-Export (Fallback dokumentiert), A3 `combatants[*].cr` evtl. unset (manuelle XP-Korrektur immer verfügbar).
+**Last action:** Phase 06-01 (Fundament) ausgeführt (2026-06-15). XP_LEVEL_THRESHOLDS (20-Werte-PHB-Tabelle) in core/constants.js + DND_RULES-Namespace; 4 Pure-Helper `calcSkillModifier`/`canLevelUp`/`getXPForCR`/`distributeXP` in game-rules.js (window-Export) + CommonJS-Mirror in testable-utils.js; Migration 5.0.0 backfilled xp/skillProficiencies/skillExpertise/attacks + levelingMode='xp'; Wave-0: 49 Unit-Tests grün (TDD RED→GREEN), 2 E2E-Stubs (13 test.fixme, Exit 0). Deviation: window.MIGRATIONS Export für vm-Kontext-Zugriff in Tests. Commits b79a1f4/21cf563/d268369/9fc7dd3.
+**Next action:** Phase 06-02 (Inspiration, CHAR-02): `toggle-inspiration-stop`-Action auf Charakterkarte, always-visible ⭐, kein saveUndoState(). Dann 06-03 Charakterwerte, 06-04 XP/Milestone.
 
 ---
 
@@ -143,3 +145,5 @@ _State initialized: 2026-06-11_
 - [Phase 05-05]: advanceCalendarDate ohne pushUndo (Reise-Abschluss macht eigenes pushUndo vor Aufruf); Auto-Vorschlag-Dismissed in sessionStorage statt D (kein Undo-Bloat)
 - [Phase 05-06]: startReise ohne D.reisen-Array (reine Berechnungs-UI, kein persistenter Zustand); jahreszeitAusDatum mit Fallback-Dict (kein crash bei fehlendem HARPTOS_SEASONS)
 - [Phase 05-07]: FRAKTIONS_RUF_STUFEN in fraktionen-render.js (nicht crud.js) — rufStufe() von render + crud genutzt; setzeRuf() extra für direktes Setzen; Ruf-Buttons ±5 + ±10; npc.factionId parseInt()||null (0→null)
+- [Phase ?]: [Phase 06-01]: window.MIGRATIONS export added to version-migration.js for test access via vm context
+- [Phase ?]: [Phase 06-01]: XP_LEVEL_THRESHOLDS 0-based indexing (index[1]=300 for Level 2); canLevelUp uses XP_LEVEL_THRESHOLDS[nextLevel-1]
