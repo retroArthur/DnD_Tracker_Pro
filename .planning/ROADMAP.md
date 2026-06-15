@@ -170,7 +170,7 @@ Plans:
 
 **Wave 6** *(blocked on Wave 2+5)*
 
-- [ ] 05-06-PLAN.md — WELT-04 Reise/Wetter: berechneTagesmarsch + rollWetter + rollBegegnung + Reise-Abschluss rückt Kalender vor (WELT-04)
+- [x] 05-06-PLAN.md — WELT-04 Reise/Wetter: berechneTagesmarsch + rollWetter + rollBegegnung + Reise-Abschluss rückt Kalender vor (WELT-04)
 
 **Wave 7** *(blocked on Wave 6)*
 

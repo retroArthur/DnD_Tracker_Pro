@@ -3,20 +3,20 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-last_updated: "2026-06-15T14:27:06.785Z"
+last_updated: "2026-06-15T15:15:00.000Z"
 progress:
   total_phases: 7
   completed_phases: 4
   total_plans: 30
-  completed_plans: 26
-  percent: 57
+  completed_plans: 27
+  percent: 60
 ---
 
 # Project State: D&D Kampagnen-Tracker Pro — Stabilisierung & Ausbau
 
 **Last Updated:** 2026-06-15
 **Phase:** 5
-**Status:** Ready to execute
+**Status:** In Progress (6/7 Pläne abgeschlossen)
 
 ---
 
@@ -32,11 +32,11 @@ progress:
 
 ```
 Phase: 05 (Welt & Story) — EXECUTING
-Plan: 6 of 7
-Next:  Phase 05 ausführen (/gsd-execute-phase 5)
-Status: Ready to execute
+Plan: 7 of 7
+Next:  Plan 05-07 ausführen (WELT-05 Fraktionen)
+Status: In Progress (6/7 Pläne)
 
-Progress: [██████████] 100% Phase 4 (23/23 Pläne) · Phase 5 geplant (7 Pläne)
+Progress: [██████████] 100% Phase 4 (23/23 Pläne) · Phase 5: 6/7 Pläne
 ```
 
 **Phases:**
@@ -46,7 +46,7 @@ Progress: [██████████] 100% Phase 4 (23/23 Pläne) · Phase 
 | 2 | Technik-Fundament | Complete |
 | 3 | Bestiary | Complete (5/5 Pläne) |
 | 4 | Initiative-Erweiterungen | Complete (4/4 Pläne abgeschlossen) |
-| 5 | Welt & Story | In Progress (5/7 Pläne) |
+| 5 | Welt & Story | In Progress (6/7 Pläne) |
 | 6 | Spieler-Verwaltung | Not started |
 | 7 | Komfort & Analyse | Not started |
 
@@ -116,8 +116,8 @@ Progress: [██████████] 100% Phase 4 (23/23 Pläne) · Phase 
 
 ## Session Continuity
 
-**Last action:** Plan 05-05 (WELT-03 Kampagnen-Timeline) ausgeführt (2026-06-15). advanceCalendarDate (DoS-Cap 3600, 30-Tage-Monate, 12 Monate/Jahr), addCalendarEvent (pushUndo + nextId + sortiereTimelineEvents + save), sortiereTimelineEvents (chr. Sortierung), renderKalender (Harptos-Datum mit #kalender-monat-anzeige), renderTimeline (Events + Auto-Vorschläge aus D.sessionNotes), showTimelineModal (transient), 6 entity-actions-Handler, +130 Zeilen tl--CSS, 7 WELT-03 Unit-Tests + 4 E2E-Tests aktiviert. Build: python build.py grün (2.58 MB). advanceCalendarDate + addCalendarEvent auf window exportiert für Plan 05-06.
-**Next action:** Plan 05-06 ausführen (WELT-04 Reise-Simulator).
+**Last action:** Plan 05-06 (WELT-04 Reise-Simulator) ausgeführt (2026-06-15). berechneTagesmarsch (5e 18/24/30 × distanzFaktor), rollWetter (WETTER_TABELLEN[klima][jahreszeit] via rollWeightedEntry), rollBegegnung (diceType/threshold DoS-clamped), jahreszeitAusDatum (HARPTOS_SEASONS + Fallback), startReise (Form→Ergebnis-Render), abschliessenReise (pushUndo → advanceCalendarDate → Timeline-Vorschlag), renderReise (Konfigurationsformular), 4 entity-actions-Handler, +95 Zeilen rs--CSS, 11 WELT-04 Unit-Tests + 4 E2E-Tests aktiviert. Build: python build.py grün (2.60 MB).
+**Next action:** Plan 05-07 ausführen (WELT-05 Fraktionen & Ruf).
 
 ---
 
@@ -135,3 +135,4 @@ _State initialized: 2026-06-11_
 - [Phase 05-04]: NPC-Generator modal via insertAdjacentHTML (transient) statt showModal() — kein HTML-Skelett vorhanden; Modal wird nach Schließen via .remove() bereinigt
 - [Phase 05-04]: saveGeneratedNPC direkt D.npcs.push (Option A) statt saveNPC() aufrufen — dedup-sicher, kein Formular-Zyklus
 - [Phase 05-05]: advanceCalendarDate ohne pushUndo (Reise-Abschluss macht eigenes pushUndo vor Aufruf); Auto-Vorschlag-Dismissed in sessionStorage statt D (kein Undo-Bloat)
+- [Phase 05-06]: startReise ohne D.reisen-Array (reine Berechnungs-UI, kein persistenter Zustand); jahreszeitAusDatum mit Fallback-Dict (kein crash bei fehlendem HARPTOS_SEASONS)
