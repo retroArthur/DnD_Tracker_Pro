@@ -2112,6 +2112,58 @@
 .party-hp-fill.critical { background: var(--red); }
 
 /* ============================================================
+   LEVELING-MODE TOGGLE (D-07)
+   ============================================================ */
+
+.party-leveling-toggle {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 10px 8px;
+    background: var(--bg-dark);
+    border-radius: 8px;
+    border: 1px solid var(--border);
+}
+
+.party-leveling-toggle-label {
+    font-size: 0.7em;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.party-leveling-options {
+    display: flex;
+    gap: 4px;
+}
+
+.party-leveling-option {
+    padding: 4px 10px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: var(--bg-elevated);
+    color: var(--text-dim);
+    font-size: 0.8em;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+}
+
+.party-leveling-option:hover {
+    border-color: var(--gold);
+    color: var(--text);
+}
+
+.party-leveling-option.active {
+    background: var(--gold);
+    border-color: var(--gold);
+    color: #000;
+    font-weight: 700;
+}
+
+/* ============================================================
    REST MANAGER
    ============================================================ */
 .rest-modal-content {

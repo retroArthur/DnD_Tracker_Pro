@@ -26,6 +26,30 @@ const EntityActions = {
         showAssignItems(ctx.id);
     },
     'change-assign-qty': ctx => changeAssignItemQty(ctx.id, parseInt(ctx.value) || 0),
+    // CHAR-01 / D-07: Leveling-Modus umschalten (XP ↔ Meilenstein)
+    // Kein saveUndoState() — Settings-Änderung ist trivial reversibel (Inspiration-Precedent)
+    'set-leveling-mode': ctx => {
+        var mode = ctx.value;
+        // Whitelist: nur 'xp' oder 'milestone' akzeptiert (T-06-16)
+        if (mode !== 'xp' && mode !== 'milestone') return;
+        window.D.settings = window.D.settings || {};
+        window.D.settings.levelingMode = mode;
+        // Plain save() — KEIN saveUndoState()/pushUndo() (Settings-Änderung wie Inspiration)
+        window.save();
+        if (typeof window.renderParty === 'function') window.renderParty();
+        // Detail-Modal live aktualisieren falls geöffnet
+        var modal = document.getElementById('char-detail-modal');
+        if (modal && modal.classList.contains('active')) {
+            // Charakter-ID aus dem gerenderten Modal-DOM auslesen (jeder Button trägt data-id)
+            var idEl = modal.querySelector('[data-id]');
+            var charId = idEl ? idEl.dataset.id : null;
+            if (charId && typeof window.showCharacterDetails === 'function') {
+                window.showCharacterDetails(charId);
+            }
+        }
+        showToast(mode === 'milestone' ? '🎯 Meilenstein-Modus aktiv' : '⭐ XP-Modus aktiv');
+    },
+
     'toggle-inspiration-stop': ctx => {
         ctx.event.stopPropagation();
         const ch = EntityLookup.character(ctx.id);

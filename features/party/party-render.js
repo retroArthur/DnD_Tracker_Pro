@@ -366,6 +366,8 @@ function renderPartyOverview() {
         container.classList.remove('show');
         return;
     }
+    // Read current leveling mode (D-07)
+    const levelingMode = (D.settings && D.settings.levelingMode) || 'xp';
     // Calculate stats
     const passivePerceptions = chars.map(c => c.passivePerception || 10);
     const lowestPerception = Math.min(...passivePerceptions);
@@ -414,6 +416,13 @@ function renderPartyOverview() {
         `
                 : ''
         }
+        <div class="party-leveling-toggle">
+            <div class="party-leveling-toggle-label">Stufensystem</div>
+            <div class="party-leveling-options">
+                <button class="party-leveling-option${levelingMode === 'xp' ? ' active' : ''}" data-action="set-leveling-mode" data-value="xp">⭐ XP</button>
+                <button class="party-leveling-option${levelingMode === 'milestone' ? ' active' : ''}" data-action="set-leveling-mode" data-value="milestone">🎯 Meilenstein</button>
+            </div>
+        </div>
     `;
     container.classList.add('show');
 }

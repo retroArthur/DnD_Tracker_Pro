@@ -266,6 +266,62 @@ test.describe('CHAR-01 / D-07: Milestone-Modus', () => {
             await expect(page.locator('[data-action="milestone-level-up"]')).toBeVisible();
         }
     );
+
+    test(
+        'Toggle im Party-Overview schaltet auf Milestone — Detail-Modal flippt Branch (06-05)',
+        async ({ page }) => {
+            // 06-05 Gap-Closure: set-leveling-mode UI-Kontrolle (nicht page.evaluate)
+            // Statt D.settings.levelingMode direkt zu setzen, wird der neue Toggle geklickt.
+            await loadApp(page);
+            // Charakter injizieren WITHOUT setting levelingMode (bleibt Standard 'xp')
+            await page.evaluate(() => {
+                // @ts-ignore
+                window.D.settings = window.D.settings || {};
+                // levelingMode absichtlich NICHT gesetzt — bleibt 'xp' (Default)
+                // @ts-ignore
+                window.D.characters = [{
+                    id: 99905,
+                    name: 'Toggle-Char',
+                    level: 3,
+                    xp: 0,
+                    hpCurrent: 20,
+                    hpMax: 20,
+                    attributes: { str: 10, dex: 10, con: 10, int: 10, wis: 10, cha: 10 }
+                }];
+                if (typeof window.renderParty === 'function') window.renderParty();
+            });
+            await page.click('[data-view="party"]');
+            await page.waitForTimeout(300);
+            // Im Ausgangszustand (XP-Modus): XP-Toggle-Option ist aktiv
+            await expect(page.locator('[data-action="set-leveling-mode"][data-value="xp"]')).toHaveClass(/active/);
+            await expect(page.locator('[data-action="set-leveling-mode"][data-value="milestone"]')).not.toHaveClass(/active/);
+            // Auf Meilenstein-Modus wechseln via UI-Kontrolle (NICHT page.evaluate)
+            await page.click('[data-action="set-leveling-mode"][data-value="milestone"]');
+            await page.waitForTimeout(300);
+            // Toggle zeigt jetzt Meilenstein als aktiv
+            await expect(page.locator('[data-action="set-leveling-mode"][data-value="milestone"]')).toHaveClass(/active/);
+            // Detail-Modal öffnen
+            await page.click('[data-action="show-char-details"][data-id="99905"]');
+            await page.waitForTimeout(300);
+            // Im Meilenstein-Modus: XP-Feld versteckt, "+1 Level"-Button sichtbar
+            await expect(page.locator('.char-xp-section')).not.toBeVisible();
+            await expect(page.locator('[data-action="milestone-level-up"]')).toBeVisible();
+            // Modal schließen, bevor der Toggle erneut geklickt wird
+            await page.click('[data-action="hide-modal"][data-value="char-detail-modal"]');
+            await page.waitForTimeout(200);
+            // Zurück auf XP-Modus wechseln (Branch-Flip prüfen)
+            await page.click('[data-action="set-leveling-mode"][data-value="xp"]');
+            await page.waitForTimeout(300);
+            // Toggle zeigt XP als aktiv
+            await expect(page.locator('[data-action="set-leveling-mode"][data-value="xp"]')).toHaveClass(/active/);
+            // Detail-Modal erneut öffnen und XP-Branch prüfen
+            await page.click('[data-action="show-char-details"][data-id="99905"]');
+            await page.waitForTimeout(300);
+            // XP-Feld wieder sichtbar
+            await expect(page.locator('.char-xp-section')).toBeVisible();
+            await expect(page.locator('[data-action="milestone-level-up"]')).not.toBeVisible();
+        }
+    );
 });
 
 // ============================================================
