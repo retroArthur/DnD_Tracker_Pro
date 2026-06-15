@@ -13,7 +13,7 @@
 - [x] **Phase 2: Technik-Fundament** — Installierbare PWA, Datei-Backup, Command Palette (completed 2026-06-12)
 - [x] **Phase 3: Bestiary** — SRD-Monster-Kompendium offline + eigene Kreaturen + Encounter-Import (completed 2026-06-13)
 - [x] **Phase 4: Initiative-Erweiterungen** — Statblock-Popup, Legendäre Aktionen & Resistenzen, Mob-Modus (completed 2026-06-13)
-- [ ] **Phase 5: Welt & Story** — Session-Prep, NPC-Generator, Timeline, Reise-Simulator, Fraktionen
+- [x] **Phase 5: Welt & Story** — Session-Prep, NPC-Generator, Timeline, Reise-Simulator, Fraktionen
 - [ ] **Phase 6: Spieler-Verwaltung** — XP/Milestone-Tracker, Inspiration, Erweiterte Charakterwerte
 - [ ] **Phase 7: Komfort & Analyse** — Soundboard, Würfel-Statistiken
 
@@ -174,7 +174,7 @@ Plans:
 
 **Wave 7** *(blocked on Wave 6)*
 
-- [ ] 05-07-PLAN.md — WELT-05 Fraktionen: Tab + 5-Stufen-Ruf (−50…+50) + Ruf-Historie + npc.factionId-Mitglieder (WELT-05)
+- [x] 05-07-PLAN.md — WELT-05 Fraktionen: Tab + 5-Stufen-Ruf (−50…+50) + Ruf-Historie + npc.factionId-Mitglieder (WELT-05)
 
 ### Phase 6: Spieler-Verwaltung
 
@@ -210,7 +210,7 @@ Plans:
 | 2. Technik-Fundament        | 5/5 | Complete    | 2026-06-12 |
 | 3. Bestiary                 | 5/5 | Complete    | 2026-06-13 |
 | 4. Initiative-Erweiterungen | 4/4 | Complete    | 2026-06-14 |
-| 5. Welt & Story             | 5/7 | In Progress|  |
+| 5. Welt & Story             | 7/7 | Complete    | 2026-06-15 |
 | 6. Spieler-Verwaltung       | 0/?            | Not started | -         |
 | 7. Komfort & Analyse        | 0/?            | Not started | -         |
 

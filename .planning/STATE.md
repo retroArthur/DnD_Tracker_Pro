@@ -16,7 +16,7 @@ progress:
 
 **Last Updated:** 2026-06-15
 **Phase:** 5
-**Status:** In Progress (6/7 Pläne abgeschlossen)
+**Status:** Complete (7/7 Pläne abgeschlossen)
 
 ---
 
@@ -31,12 +31,12 @@ progress:
 ## Current Position
 
 ```
-Phase: 05 (Welt & Story) — EXECUTING
-Plan: 7 of 7
-Next:  Plan 05-07 ausführen (WELT-05 Fraktionen)
-Status: In Progress (6/7 Pläne)
+Phase: 05 (Welt & Story) — COMPLETE
+Plan: 7 of 7 — DONE
+Next:  Phase 06 starten (Spieler-Verwaltung)
+Status: Complete (7/7 Pläne)
 
-Progress: [██████████] 100% Phase 4 (23/23 Pläne) · Phase 5: 6/7 Pläne
+Progress: [██████████] 100% Phase 5 vollständig abgeschlossen (7/7 Pläne)
 ```
 
 **Phases:**
@@ -46,7 +46,7 @@ Progress: [██████████] 100% Phase 4 (23/23 Pläne) · Phase 
 | 2 | Technik-Fundament | Complete |
 | 3 | Bestiary | Complete (5/5 Pläne) |
 | 4 | Initiative-Erweiterungen | Complete (4/4 Pläne abgeschlossen) |
-| 5 | Welt & Story | In Progress (6/7 Pläne) |
+| 5 | Welt & Story | Complete (7/7 Pläne) |
 | 6 | Spieler-Verwaltung | Not started |
 | 7 | Komfort & Analyse | Not started |
 
@@ -116,8 +116,8 @@ Progress: [██████████] 100% Phase 4 (23/23 Pläne) · Phase 
 
 ## Session Continuity
 
-**Last action:** Plan 05-06 (WELT-04 Reise-Simulator) ausgeführt (2026-06-15). berechneTagesmarsch (5e 18/24/30 × distanzFaktor), rollWetter (WETTER_TABELLEN[klima][jahreszeit] via rollWeightedEntry), rollBegegnung (diceType/threshold DoS-clamped), jahreszeitAusDatum (HARPTOS_SEASONS + Fallback), startReise (Form→Ergebnis-Render), abschliessenReise (pushUndo → advanceCalendarDate → Timeline-Vorschlag), renderReise (Konfigurationsformular), 4 entity-actions-Handler, +95 Zeilen rs--CSS, 11 WELT-04 Unit-Tests + 4 E2E-Tests aktiviert. Build: python build.py grün (2.60 MB).
-**Next action:** Plan 05-07 ausführen (WELT-05 Fraktionen & Ruf).
+**Last action:** Plan 05-07 (WELT-05 Fraktionen & Ruf-System) ausgeführt (2026-06-15). FRAKTIONS_RUF_STUFEN (5 Stufen −50…+50), rufStufe(), anpassenRuf (pushUndo-first + clamp + rufHistorie), setzeRuf(), saveFraktion/deleteFraktion, renderFraktionen (Grid-Layout, selectFraktion, Detail-Panel mit Ruf-Kontrollen, Mitgliederliste, Historie), npc.factionId in saveNPC/editNPC, #npc-faction-Select im NPC-Modal, Fraktionen-Modal, +190 fr--CSS-Regeln, 10 entity-actions-Handler, 12 WELT-05 Unit-Tests + 5 E2E-Tests aktiviert. Build: python build.py grün (2.64 MB). Phase 5 vollständig abgeschlossen.
+**Next action:** Phase 06 starten (Spieler-Verwaltung).
 
 ---
 
@@ -136,3 +136,4 @@ _State initialized: 2026-06-11_
 - [Phase 05-04]: saveGeneratedNPC direkt D.npcs.push (Option A) statt saveNPC() aufrufen — dedup-sicher, kein Formular-Zyklus
 - [Phase 05-05]: advanceCalendarDate ohne pushUndo (Reise-Abschluss macht eigenes pushUndo vor Aufruf); Auto-Vorschlag-Dismissed in sessionStorage statt D (kein Undo-Bloat)
 - [Phase 05-06]: startReise ohne D.reisen-Array (reine Berechnungs-UI, kein persistenter Zustand); jahreszeitAusDatum mit Fallback-Dict (kein crash bei fehlendem HARPTOS_SEASONS)
+- [Phase 05-07]: FRAKTIONS_RUF_STUFEN in fraktionen-render.js (nicht crud.js) — rufStufe() von render + crud genutzt; setzeRuf() extra für direktes Setzen; Ruf-Buttons ±5 + ±10; npc.factionId parseInt()||null (0→null)
