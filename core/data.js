@@ -31,9 +31,21 @@ function initializeData() {
             lastView: 'dashboard',
             enableMarkdownShortcuts: true,
             enableMarkdownImportExport: true,
-            markdownOnboardingSeen: false
+            markdownOnboardingSeen: false,
+            // Phase 6: Spieler-Verwaltung
+            // 'xp' = XP-basierter Aufstieg | 'milestone' = manueller Level-Bump
+            levelingMode: 'xp'
         },
         _nextId: {},
+        // ============================================================
+        // CHARAKTER-SCHEMA — Feldübersicht (alle Felder in saveCharacter/editChar)
+        // ============================================================
+        // Jedes character-Objekt in D.characters[] enthält (Phase 6 Ergänzungen):
+        //   xp: Number (Standard 0) — kumulativer XP-Stand; Migration 5.0.0 backfills
+        //   skillProficiencies: {} — Schlüssel = SKILL_INFO-Keys, Wert = true/false
+        //   skillExpertise: {} — Schlüssel = SKILL_INFO-Keys, Wert = true (doppelter Übungsbonus)
+        //   attacks: [] — Array von { name: string, attackBonus: number|string, damage: string, damageType?: string }
+        // Bearbeitung und Lesen: party-crud.js (saveCharacter/editChar), Anzeige: party-details.js
         // Phase 3: Bestiary
         bestiary: [],            // Eigene Kreaturen (CRUD + Undo + Export)
         bestiaryFavorites: [],   // Nur ID-Keys (SRD: String-Key, Eigene: 'custom:123')

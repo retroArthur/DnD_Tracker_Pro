@@ -78,7 +78,9 @@ function makeCharAtLevelThreshold() {
 let MIGRATIONS_VM;
 
 beforeAll(() => {
-    // Lade version-migration.js in einem vm-Kontext (wie in migration.test.js)
+    // Lade version-migration.js in einem vm-Kontext (wie in migration.test.js).
+    // MIGRATIONS ist const in version-migration.js und daher nicht direkt im context-Objekt.
+    // version-migration.js exportiert es via window.MIGRATIONS — daher aus context.window lesen.
     const context = {
         window: {
             APP_CONFIG: global.APP_CONFIG,
@@ -94,7 +96,8 @@ beforeAll(() => {
     const code = fs.readFileSync(filePath, 'utf8');
     vm.runInContext(code, context);
 
-    MIGRATIONS_VM = context.MIGRATIONS;
+    // MIGRATIONS wird via window.MIGRATIONS = MIGRATIONS exportiert (version-migration.js Ende)
+    MIGRATIONS_VM = context.window.MIGRATIONS;
 });
 
 // ============================================================

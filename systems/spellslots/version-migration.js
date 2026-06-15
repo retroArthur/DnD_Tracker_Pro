@@ -82,6 +82,27 @@ const MIGRATIONS = {
             data.calendar.month = (data.calendar.month || 0) + 1;
         }
         return data;
+    },
+    '5.0.0': data => {
+        // Phase 6: Spieler-Verwaltung
+        // Neue Charakter-Felder: xp, skillProficiencies, skillExpertise, attacks[]
+        // T-06-01: Optional chaining schuetzt gegen fehlendes/kein-Array characters
+        data.characters?.forEach(ch => {
+            // xp: Number, Default 0 — NICHT überschreiben wenn bereits vorhanden
+            if (ch.xp === undefined) ch.xp = 0;
+            // skillProficiencies: {} keyed by SKILL_INFO keys
+            if (!ch.skillProficiencies) ch.skillProficiencies = {};
+            // skillExpertise: {} keyed by SKILL_INFO keys (Expertise = doppelter Übungsbonus)
+            if (!ch.skillExpertise) ch.skillExpertise = {};
+            // attacks: [] von {name, attackBonus, damage, damageType?}
+            if (!ch.attacks) ch.attacks = [];
+        });
+        // Aufstiegsart-Einstellung: 'xp' (Standard) oder 'milestone'
+        if (!data.settings) data.settings = {};
+        if (data.settings.levelingMode === undefined) {
+            data.settings.levelingMode = 'xp';
+        }
+        return data;
     }
 };
 function migrateData(data) {
@@ -112,4 +133,6 @@ function compareVersions(v1, v2) {
     }
     return 0;
 }
+// Export MIGRATIONS so tests can access individual migration functions via vm context
+window.MIGRATIONS = MIGRATIONS;
 // ============================================================
