@@ -166,7 +166,7 @@ Plans:
 
 **Wave 5** *(blocked on Wave 4)*
 
-- [ ] 05-05-PLAN.md — WELT-03 Timeline + Kalender: Harptos-Anzeige + chronologische Events + geteilte Helfer advanceCalendarDate/addCalendarEvent (WELT-03)
+- [x] 05-05-PLAN.md — WELT-03 Timeline + Kalender: Harptos-Anzeige + chronologische Events + geteilte Helfer advanceCalendarDate/addCalendarEvent (WELT-03)
 
 **Wave 6** *(blocked on Wave 2+5)*
 
@@ -210,7 +210,7 @@ Plans:
 | 2. Technik-Fundament        | 5/5 | Complete    | 2026-06-12 |
 | 3. Bestiary                 | 5/5 | Complete    | 2026-06-13 |
 | 4. Initiative-Erweiterungen | 4/4 | Complete    | 2026-06-14 |
-| 5. Welt & Story             | 2/7 | In Progress|  |
+| 5. Welt & Story             | 5/7 | In Progress|  |
 | 6. Spieler-Verwaltung       | 0/?            | Not started | -         |
 | 7. Komfort & Analyse        | 0/?            | Not started | -         |
 

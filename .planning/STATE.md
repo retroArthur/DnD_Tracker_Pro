@@ -8,7 +8,7 @@ progress:
   total_phases: 7
   completed_phases: 4
   total_plans: 30
-  completed_plans: 25
+  completed_plans: 26
   percent: 57
 ---
 
@@ -32,7 +32,7 @@ progress:
 
 ```
 Phase: 05 (Welt & Story) — EXECUTING
-Plan: 5 of 7
+Plan: 6 of 7
 Next:  Phase 05 ausführen (/gsd-execute-phase 5)
 Status: Ready to execute
 
@@ -46,7 +46,7 @@ Progress: [██████████] 100% Phase 4 (23/23 Pläne) · Phase 
 | 2 | Technik-Fundament | Complete |
 | 3 | Bestiary | Complete (5/5 Pläne) |
 | 4 | Initiative-Erweiterungen | Complete (4/4 Pläne abgeschlossen) |
-| 5 | Welt & Story | In Progress (4/7 Pläne) |
+| 5 | Welt & Story | In Progress (5/7 Pläne) |
 | 6 | Spieler-Verwaltung | Not started |
 | 7 | Komfort & Analyse | Not started |
 
@@ -116,8 +116,8 @@ Progress: [██████████] 100% Phase 4 (23/23 Pläne) · Phase 
 
 ## Session Continuity
 
-**Last action:** Plan 05-04 (WELT-02 NPC-Generator) ausgeführt (2026-06-15). generiereNPCName/generiereNPC Kernlogik, showNPCGeneratorModal (Vor-Filter Volk+Geschlecht, Vorschau-Karte, Re-Roll, Speichern), saveGeneratedNPC (pushUndo + D.npcs.push + renderNPCList), entity-actions (3 neue Handler), Command-Palette-Eintrag, npcg-CSS, 4 WELT-02 Unit-Tests + 5 E2E-Tests aktiviert. Build: python build.py grün (2.56 MB).
-**Next action:** Plan 05-05 ausführen (WELT-03 Kampagnen-Timeline).
+**Last action:** Plan 05-05 (WELT-03 Kampagnen-Timeline) ausgeführt (2026-06-15). advanceCalendarDate (DoS-Cap 3600, 30-Tage-Monate, 12 Monate/Jahr), addCalendarEvent (pushUndo + nextId + sortiereTimelineEvents + save), sortiereTimelineEvents (chr. Sortierung), renderKalender (Harptos-Datum mit #kalender-monat-anzeige), renderTimeline (Events + Auto-Vorschläge aus D.sessionNotes), showTimelineModal (transient), 6 entity-actions-Handler, +130 Zeilen tl--CSS, 7 WELT-03 Unit-Tests + 4 E2E-Tests aktiviert. Build: python build.py grün (2.58 MB). advanceCalendarDate + addCalendarEvent auf window exportiert für Plan 05-06.
+**Next action:** Plan 05-06 ausführen (WELT-04 Reise-Simulator).
 
 ---
 
@@ -134,3 +134,4 @@ _State initialized: 2026-06-11_
 - [Phase 05-03]: offeneFaeden quelleId display-only (T-05-11 accept — DM-eigene Daten, keine EntityLookup-Prüfung nötig)
 - [Phase 05-04]: NPC-Generator modal via insertAdjacentHTML (transient) statt showModal() — kein HTML-Skelett vorhanden; Modal wird nach Schließen via .remove() bereinigt
 - [Phase 05-04]: saveGeneratedNPC direkt D.npcs.push (Option A) statt saveNPC() aufrufen — dedup-sicher, kein Formular-Zyklus
+- [Phase 05-05]: advanceCalendarDate ohne pushUndo (Reise-Abschluss macht eigenes pushUndo vor Aufruf); Auto-Vorschlag-Dismissed in sessionStorage statt D (kein Undo-Bloat)
