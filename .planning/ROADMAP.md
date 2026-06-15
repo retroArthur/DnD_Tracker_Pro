@@ -186,8 +186,25 @@ Plans:
 1. Nutzer schließt einen Encounter ab und übernimmt die verdienten XP auf Knopfdruck auf alle aktiven Charaktere; ein Levelaufstieg-Hinweis erscheint, wenn ein Charakter die XP-Schwelle erreicht
 2. Nutzer vergibt Inspiration an einen Spieler per Klick — der Inspiration-Marker ist in der Party-Übersicht sofort sichtbar und kann mit einem weiteren Klick wieder entfernt werden
 3. Nutzer öffnet den Charakterbogen, sieht Skill-Proficiencies, Saving Throws und Angriffe auf einen Blick — ein Skill-Check für Stealth liefert sofort den korrekten Würfelwurf mit Proficiency-Bonus
-   **Plans**: TBD
+   **Plans**: 4 plans (4 Wellen)
    **UI hint**: yes
+
+Plans:
+**Wave 1**
+
+- [ ] 06-01-PLAN.md — Fundament: XP_LEVEL_THRESHOLDS + reine Helfer (calcSkillModifier/canLevelUp/getXPForCR/distributeXP) + Schema/Migration 5.0.0 + levelingMode + Wave-0-Tests/Fixture/E2E-Stubs (CHAR-01/02/03)
+
+**Wave 2** *(blocked on Wave 1)*
+
+- [ ] 06-02-PLAN.md — CHAR-02 Inspiration: immer sichtbarer klickbarer Stern-Toggle auf der Karte (-stop-Handler, plain save, kein Undo) + E2E (CHAR-02)
+
+**Wave 3** *(blocked on Wave 1+2 — teilt sich entity-actions.js + party.css)*
+
+- [ ] 06-03-PLAN.md — CHAR-03 Erweiterte Charakterwerte: 18 Skills + Expertise + Angriffe im Editor; Skills/Saves/Attribut-Checks/Angriffe klickbar im Detail-Modal (adv/disadv, sanitize-then-dice) (CHAR-03)
+
+**Wave 4** *(blocked on Wave 1+3 — teilt sich party-details.js + entity-actions.js)*
+
+- [ ] 06-04-PLAN.md — CHAR-01 XP-/Milestone-Tracker: Initiative-Abschluss-Trigger + XP-Modal (CR-Auto-Summe + manuelle Korrektur) + Gleichverteilung + Level-Hinweis (kein Auto-Bump) + Milestone-Modus (CHAR-01)
 
 ### Phase 7: Komfort & Analyse
 
@@ -211,7 +228,7 @@ Plans:
 | 3. Bestiary                 | 5/5 | Complete    | 2026-06-13 |
 | 4. Initiative-Erweiterungen | 4/4 | Complete    | 2026-06-14 |
 | 5. Welt & Story             | 7/7 | Complete    | 2026-06-15 |
-| 6. Spieler-Verwaltung       | 0/?            | Not started | -         |
+| 6. Spieler-Verwaltung       | 0/4            | Planned     | -         |
 | 7. Komfort & Analyse        | 0/?            | Not started | -         |
 
 ---
