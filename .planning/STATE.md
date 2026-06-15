@@ -2,21 +2,21 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: executing
-last_updated: "2026-06-15T23:00:00.000Z"
+status: planning
+last_updated: "2026-06-15T22:07:42.996Z"
 progress:
   total_phases: 7
   completed_phases: 6
   total_plans: 34
   completed_plans: 34
-  percent: 97
+  percent: 86
 ---
 
 # Project State: D&D Kampagnen-Tracker Pro — Stabilisierung & Ausbau
 
 **Last Updated:** 2026-06-15
-**Phase:** 6
-**Status:** Complete (alle 4 Pläne abgeschlossen)
+**Phase:** 7
+**Status:** Ready to plan
 
 ---
 
@@ -32,7 +32,7 @@ progress:
 
 ```
 Phase: 06 (spieler-verwaltung) — COMPLETE
-Plan: 4 of 4 (DONE)
+Plan: Not started
 Next:  Phase 07 — Komfort & Analyse
 Status: Complete
 
