@@ -162,7 +162,7 @@ Plans:
 
 **Wave 4** *(blocked on Wave 2+3)*
 
-- [ ] 05-04-PLAN.md — WELT-02 NPC-Generator: Vorschau-Karte + Vor-Filter Volk/Geschlecht + Re-Roll + „Als NPC speichern" + Command-Palette-Aktion (WELT-02)
+- [x] 05-04-PLAN.md — WELT-02 NPC-Generator: Vorschau-Karte + Vor-Filter Volk/Geschlecht + Re-Roll + „Als NPC speichern" + Command-Palette-Aktion (WELT-02)
 
 **Wave 5** *(blocked on Wave 4)*
 
