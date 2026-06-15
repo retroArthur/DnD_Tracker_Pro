@@ -36,7 +36,10 @@ function initializeData() {
         _nextId: {},
         // Phase 3: Bestiary
         bestiary: [],            // Eigene Kreaturen (CRUD + Undo + Export)
-        bestiaryFavorites: []    // Nur ID-Keys (SRD: String-Key, Eigene: 'custom:123')
+        bestiaryFavorites: [],   // Nur ID-Keys (SRD: String-Key, Eigene: 'custom:123')
+        // Phase 5: Welt & Story
+        sessionPreps: [],        // WELT-01 Session-Prep-Assistent
+        factions: []             // WELT-05 Fraktionen & Ruf
     };
 }
 

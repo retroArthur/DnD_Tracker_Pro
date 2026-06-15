@@ -438,6 +438,60 @@ const MARKDOWN_PATTERNS = {
 };
 
 // ============================================================
+// PHASE 5: HARPTOS/FAERÛN-KALENDER-KONSTANTEN
+// ============================================================
+/**
+ * Harptos-Kalender: 12 Monate à 30 Tage (Faerûn / Forgotten Realms)
+ * Hammer = Monat 1 (1-basiert)
+ * @type {Array<{nr: number, name: string, jahreszeit: string}>}
+ */
+const HARPTOS_MONTHS = [
+    { nr: 1,  name: 'Hammer',    jahreszeit: 'winter'    },
+    { nr: 2,  name: 'Alturiak',  jahreszeit: 'winter'    },
+    { nr: 3,  name: 'Ches',      jahreszeit: 'fruehling' },
+    { nr: 4,  name: 'Tarsakh',   jahreszeit: 'fruehling' },
+    { nr: 5,  name: 'Mirtul',    jahreszeit: 'fruehling' },
+    { nr: 6,  name: 'Kythorn',   jahreszeit: 'sommer'    },
+    { nr: 7,  name: 'Flamerule', jahreszeit: 'sommer'    },
+    { nr: 8,  name: 'Eleasis',   jahreszeit: 'sommer'    },
+    { nr: 9,  name: 'Eleint',    jahreszeit: 'herbst'    },
+    { nr: 10, name: 'Marpenoth', jahreszeit: 'herbst'    },
+    { nr: 11, name: 'Uktar',     jahreszeit: 'herbst'    },
+    { nr: 12, name: 'Nightal',   jahreszeit: 'winter'    }
+];
+/**
+ * Harptos-Festtage (5 reguläre Intercalary-Tage)
+ * Position: nach dem angegebenen Monat (nachMonat = 1-basierte Monatsnummer)
+ * @type {Array<{name: string, nachMonat: number}>}
+ */
+const HARPTOS_FESTIVALS = [
+    { name: 'Midwinter',          nachMonat: 1  },
+    { name: 'Greengrass',         nachMonat: 4  },
+    { name: 'Midsummer',          nachMonat: 7  },
+    { name: 'Highharvestide',     nachMonat: 9  },
+    { name: 'Feast of the Moon',  nachMonat: 11 }
+];
+/**
+ * Jahreszeiten-Mapping: Harptos-Monatsnummer (1–12) → Jahreszeit-String
+ * Festtage erben die Jahreszeit des Vormonats.
+ * @type {Object.<number, string>}
+ */
+const HARPTOS_SEASONS = {
+    1:  'winter',
+    2:  'winter',
+    3:  'fruehling',
+    4:  'fruehling',
+    5:  'fruehling',
+    6:  'sommer',
+    7:  'sommer',
+    8:  'sommer',
+    9:  'herbst',
+    10: 'herbst',
+    11: 'herbst',
+    12: 'winter'
+};
+
+// ============================================================
 // NAMESPACE EXPORTS (neue Struktur)
 // ============================================================
 // D&D Spielregel-Konstanten
@@ -458,7 +512,10 @@ window.DND_RULES = Object.freeze({
     LINK_CATS,
     ORIGIN_LABELS,
     LOOT_TAG_LABELS,
-    TAG_COLORS
+    TAG_COLORS,
+    HARPTOS_MONTHS,
+    HARPTOS_FESTIVALS,
+    HARPTOS_SEASONS
 });
 
 // UI/App-Konstanten
@@ -495,3 +552,6 @@ window.ENTITY_ICONS = ENTITY_ICONS;
 window.LINK_ICONS = LINK_ICONS;
 window.ENTITY_TYPE_NAMES = ENTITY_TYPE_NAMES;
 window.MARKDOWN_PATTERNS = MARKDOWN_PATTERNS;
+window.HARPTOS_MONTHS = HARPTOS_MONTHS;
+window.HARPTOS_FESTIVALS = HARPTOS_FESTIVALS;
+window.HARPTOS_SEASONS = HARPTOS_SEASONS;

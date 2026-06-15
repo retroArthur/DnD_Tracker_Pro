@@ -68,6 +68,20 @@ const MIGRATIONS = {
         if (!data.bestiary)          data.bestiary          = [];
         if (!data.bestiaryFavorites) data.bestiaryFavorites = [];
         return data;
+    },
+    '4.0.0': data => {
+        // Phase 5: Welt & Story
+        // Session-Prep-Container anlegen
+        if (!data.sessionPreps) data.sessionPreps = [];
+        // Fraktionen-Container anlegen
+        if (!data.factions) data.factions = [];
+        // Kalender-Monat: 0-basiert -> 1-basiert (Hammer = 1)
+        // T-05-01: Nur konvertieren wenn calendar existiert UND month < 1
+        // (data.calendar.month || 0) + 1 verhindert NaN/undefined; idempotent
+        if (data.calendar && data.calendar.month < 1) {
+            data.calendar.month = (data.calendar.month || 0) + 1;
+        }
+        return data;
     }
 };
 function migrateData(data) {
