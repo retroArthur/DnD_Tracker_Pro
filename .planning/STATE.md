@@ -32,7 +32,7 @@ progress:
 
 ```
 Phase: 05 (Welt & Story) — EXECUTING
-Plan: 3 of 7
+Plan: 4 of 7
 Next:  Phase 05 ausführen (/gsd-execute-phase 5)
 Status: Ready to execute
 
@@ -46,7 +46,7 @@ Progress: [██████████] 100% Phase 4 (23/23 Pläne) · Phase 
 | 2 | Technik-Fundament | Complete |
 | 3 | Bestiary | Complete (5/5 Pläne) |
 | 4 | Initiative-Erweiterungen | Complete (4/4 Pläne abgeschlossen) |
-| 5 | Welt & Story | In Progress (1/7 Pläne) |
+| 5 | Welt & Story | In Progress (3/7 Pläne) |
 | 6 | Spieler-Verwaltung | Not started |
 | 7 | Komfort & Analyse | Not started |
 
@@ -116,8 +116,8 @@ Progress: [██████████] 100% Phase 4 (23/23 Pläne) · Phase 
 
 ## Session Continuity
 
-**Last action:** Plan 05-01 (Wave-0-Fundament) ausgeführt (2026-06-15). Schema-Erweiterungen (sessionPreps, factions), Migration 4.0.0 (calendar.month 0→1-basiert), Harptos-Kalender-Konstanten (HARPTOS_MONTHS/FESTIVALS/SEASONS), 11 Modul-Skelette mit 3-fach-Registrierung, view-welt.html (4 Tabs), welt.css, Wave-0-Test-Stubs (16 skip, grün). Build: 117 Module synchron, Duplikat-Check bestanden.
-**Next action:** Plan 05-02 ausführen (Build-Time-Tabellen-Generatoren).
+**Last action:** Plan 05-03 (WELT-01 Session-Prep-Assistent) ausgeführt (2026-06-15). CRUD (saveSessionPrep/deleteSessionPrep/sammleOffeneFaeden), Render (renderSessionPrepList/showSessionPrepModal mit 5 Lazy-DM-Abschnitten), Entity-Links (sanitize-then-parse), data-action-Handler (9 Actions), welt.css-Erweiterung, WELT-01-Tests aktiviert (3 aktiv grün). Build: python build.py grün.
+**Next action:** Plan 05-04 ausführen (WELT-02 NPC-Generator).
 
 ---
 
@@ -130,3 +130,5 @@ _State initialized: 2026-06-11_
 - [Phase 04-03]: D-07 LR kein Auto-Reset (manuell via lr-reset-btn); E2E via page.evaluate(nextTurn) statt UI-Button (data-action=call, nicht data-action=next-turn)
 - [Phase 04-04]: rollMobAttack N-fach = alive Schadenswuerfe summiert (kein Trefferroll-Gating, DM entscheidet Kontext); dissolveMob nutzt numerischen cbId-Filter direkt ohne parseEntityId
 - [Phase ?]: Build-Time-Python-Generatoren für große Tabellen statt Hand-Tippen
+- [Phase 05-03]: sanitize-then-parse: sanitizeHTML() vor parseEntityLinks() (T-05-10 Mitigation, RESEARCH-Risikotabelle)
+- [Phase 05-03]: offeneFaeden quelleId display-only (T-05-11 accept — DM-eigene Daten, keine EntityLookup-Prüfung nötig)

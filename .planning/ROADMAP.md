@@ -158,7 +158,7 @@ Plans:
 
 **Wave 3** *(blocked on Wave 1)*
 
-- [ ] 05-03-PLAN.md — WELT-01 Session-Prep: Tab + Lazy-DM-Vorlage (5 Abschnitte) + offene Fäden aus Quests/Story-Arcs + Entity-Links + CRUD/Undo (WELT-01)
+- [x] 05-03-PLAN.md — WELT-01 Session-Prep: Tab + Lazy-DM-Vorlage (5 Abschnitte) + offene Fäden aus Quests/Story-Arcs + Entity-Links + CRUD/Undo (WELT-01)
 
 **Wave 4** *(blocked on Wave 2+3)*
 
