@@ -199,28 +199,63 @@ test.describe('WELT-02: NPC-Generator', () => {
 });
 
 // ============================================================
-// WELT-03: Timeline & Kalender — Tab "kalender"
+// WELT-03: Timeline & Kalender — Tab "kalender" (aktiviert Plan 05-05)
 // ============================================================
 test.describe('WELT-03: Kalender-Tab', () => {
-    test.skip('Tab kalender ist sichtbar und anklickbar', async ({ page }) => {
-        // aktiviert in 05-05
-        // await page.click('[data-view="kalender"]');
-        // await expect(page.locator('#view-kalender')).toBeVisible();
+    test('Tab kalender ist sichtbar und anklickbar', async ({ page }) => {
+        await page.goto('http://localhost:8000/dist/dnd-tracker-bundled.html');
+        await page.click('[data-view="kalender"]');
+        await expect(page.locator('#view-kalender')).toBeVisible();
     });
 
-    test.skip('Kalender zeigt Harptos-Monatsnamen', async ({ page }) => {
-        // aktiviert in 05-05
-        // Erwartet: #kalender-monat-anzeige enthält z.B. "Hammer 1492 DR"
+    test('Kalender zeigt Harptos-Monatsnamen', async ({ page }) => {
+        await page.goto('http://localhost:8000/dist/dnd-tracker-bundled.html');
+        // Kalender auf Hammer setzen
+        await page.evaluate(() => {
+            if (window.D && window.D.calendar) {
+                window.D.calendar.day = 1;
+                window.D.calendar.month = 1;
+                window.D.calendar.year = 1492;
+            }
+        });
+        await page.click('[data-view="kalender"]');
+        await page.waitForTimeout(200);
+        // #kalender-monat-anzeige muss Monatsnamen enthalten
+        const anzeigeText = await page.locator('#kalender-monat-anzeige').innerText();
+        expect(anzeigeText).toContain('Hammer');
+        expect(anzeigeText).toContain('1492 DR');
     });
 
-    test.skip('Timeline-Eintrag kann angelegt werden', async ({ page }) => {
-        // aktiviert in 05-05
-        // Erwartet: D.calendar.events.length === 1 nach Formular-Submit
+    test('Timeline-Eintrag kann via addCalendarEvent angelegt werden', async ({ page }) => {
+        await page.goto('http://localhost:8000/dist/dnd-tracker-bundled.html');
+        const evtCount = await page.evaluate(() => {
+            if (!window.D || !window.D.calendar) return -1;
+            // addCalendarEvent direkt aufrufen
+            if (typeof window.addCalendarEvent === 'function') {
+                window.addCalendarEvent(
+                    { tag: 5, monat: 3, jahr: 1492 },
+                    'Testevent',
+                    'manuell',
+                    null
+                );
+            }
+            return window.D.calendar.events.length;
+        });
+        expect(evtCount).toBeGreaterThanOrEqual(1);
     });
 
-    test.skip('Einträge erscheinen chronologisch sortiert', async ({ page }) => {
-        // aktiviert in 05-05
-        // Erwartet: 3 Einträge in korrekter zeitlicher Reihenfolge
+    test('Einträge erscheinen chronologisch sortiert (sortiereTimelineEvents)', async ({ page }) => {
+        await page.goto('http://localhost:8000/dist/dnd-tracker-bundled.html');
+        const sorted = await page.evaluate(() => {
+            if (!window.sortiereTimelineEvents) return null;
+            var events = [
+                { datum: { tag: 15, monat: 3, jahr: 1492 }, titel: 'C' },
+                { datum: { tag: 1,  monat: 1, jahr: 1492 }, titel: 'A' },
+                { datum: { tag: 5,  monat: 2, jahr: 1492 }, titel: 'B' }
+            ];
+            return window.sortiereTimelineEvents(events).map(function(e) { return e.titel; });
+        });
+        expect(sorted).toEqual(['A', 'B', 'C']);
     });
 });
 

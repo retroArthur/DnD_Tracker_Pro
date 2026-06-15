@@ -370,6 +370,54 @@ const EntityActions = {
     },
     'save-generated-npc': () => {
         if (typeof window.saveGeneratedNPC === 'function') window.saveGeneratedNPC();
+    },
+
+    // Timeline/Kalender-Aktionen (WELT-03)
+    'show-timeline-modal': () => {
+        if (typeof window.showTimelineModal === 'function') window.showTimelineModal();
+    },
+    'save-timeline-event': () => {
+        if (typeof window.saveTimelineEvent === 'function') window.saveTimelineEvent();
+    },
+    'delete-timeline-event': ctx => {
+        if (typeof window.deleteTimelineEvent === 'function') window.deleteTimelineEvent(ctx.id);
+    },
+    'close-timeline-modal': () => {
+        var modal = document.getElementById('tl-event-modal');
+        if (modal) modal.remove();
+    },
+    'confirm-auto-event': ctx => {
+        // Auto-Vorschlag übernehmen: Eintrag mit aktuellem Datum anlegen
+        var d = window.D;
+        if (!d) return;
+        var cal = d.calendar || { day: 1, month: 1, year: 1492 };
+        var datum = { tag: parseInt(cal.day, 10) || 1, monat: parseInt(cal.month, 10) || 1, jahr: parseInt(cal.year, 10) || 1492 };
+        var typ = ctx.value || 'session';
+        var quelleId = ctx.id ? parseInt(ctx.id, 10) || null : null;
+        // Titel aus Vorschlag-Karte lesen
+        var card = ctx.target ? ctx.target.closest('.tl-vorschlag-card') : null;
+        var titelEl = card ? card.querySelector('.tl-vorschlag-titel') : null;
+        var titel = titelEl ? titelEl.textContent.trim() : ('Ereignis ' + (quelleId || ''));
+        if (typeof window.addCalendarEvent === 'function') {
+            window.addCalendarEvent(datum, titel, typ, quelleId);
+        }
+        // Vorschlag als verworfen markieren (verhindert erneute Anzeige)
+        try {
+            var dismissed = JSON.parse(sessionStorage.getItem('tl-dismissed-vorschlaege') || '[]');
+            dismissed.push(typ + ':' + quelleId);
+            sessionStorage.setItem('tl-dismissed-vorschlaege', JSON.stringify(dismissed));
+        } catch(e) {}
+        if (typeof window.renderTimeline === 'function') window.renderTimeline();
+    },
+    'dismiss-auto-event': ctx => {
+        var typ = ctx.value || 'session';
+        var quelleId = ctx.id || '';
+        try {
+            var dismissed = JSON.parse(sessionStorage.getItem('tl-dismissed-vorschlaege') || '[]');
+            dismissed.push(typ + ':' + quelleId);
+            sessionStorage.setItem('tl-dismissed-vorschlaege', JSON.stringify(dismissed));
+        } catch(e) {}
+        if (typeof window.renderTimeline === 'function') window.renderTimeline();
     }
 };
 
