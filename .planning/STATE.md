@@ -32,11 +32,11 @@ progress:
 
 ```
 Phase: 06 (spieler-verwaltung) — EXECUTING
-Plan: 2 of 4
-Next:  Phase 06 ausführen (/gsd-execute-phase 6)
+Plan: 3 of 4
+Next:  Phase 06-03 ausführen (/gsd-execute-phase 6)
 Status: Ready to execute
 
-Progress: [██████████] Phase 5 abgeschlossen (30/30 Pläne); Phase 6 geplant (4 Pläne, Checker PASSED)
+Progress: [██████████] Phase 5 abgeschlossen (30/30 Pläne); Phase 6 Plan 2/4 abgeschlossen (06-02 Inspiration ✓)
 ```
 
 **Phases:**
@@ -118,14 +118,15 @@ Progress: [██████████] Phase 5 abgeschlossen (30/30 Pläne);
 - [x] Phase 6 diskutieren: `/gsd-discuss-phase 6` ✓ (2026-06-15, 06-CONTEXT.md, Commit d10df5c)
 - [x] Phase 6 planen: `/gsd-plan-phase 6` ✓ (2026-06-15, 4 Pläne / 4 Wellen, `--skip-ui`, Research + manuelle 06-VALIDATION.md, Plan-Checker VERIFICATION PASSED — 0 Blocker; Commits 61c538c/8dfbcbf)
 - [x] Phase 6 ausführen Plan 1 (06-01 Fundament): ✓ (2026-06-15, XP_LEVEL_THRESHOLDS + 4 helpers + migration 5.0.0 + Wave-0 tests; 49 unit tests grün, 2 E2E stubs runnable; Commits b79a1f4/21cf563/d268369/9fc7dd3)
-- [ ] Phase 6 ausführen Plan 2 (06-02 Inspiration): `/gsd-execute-phase 6` Plan 2
+- [x] Phase 6 ausführen Plan 2 (06-02 Inspiration): ✓ (2026-06-15, always-visible ⭐ toggle + stop-propagation handler + CSS + 5 E2E tests grün; Commits 4e5be0b/b289349)
+- [ ] Phase 6 ausführen Plan 3 (06-03 Charakterwerte): `/gsd-execute-phase 6` Plan 3
 
 ---
 
 ## Session Continuity
 
-**Last action:** Phase 06-01 (Fundament) ausgeführt (2026-06-15). XP_LEVEL_THRESHOLDS (20-Werte-PHB-Tabelle) in core/constants.js + DND_RULES-Namespace; 4 Pure-Helper `calcSkillModifier`/`canLevelUp`/`getXPForCR`/`distributeXP` in game-rules.js (window-Export) + CommonJS-Mirror in testable-utils.js; Migration 5.0.0 backfilled xp/skillProficiencies/skillExpertise/attacks + levelingMode='xp'; Wave-0: 49 Unit-Tests grün (TDD RED→GREEN), 2 E2E-Stubs (13 test.fixme, Exit 0). Deviation: window.MIGRATIONS Export für vm-Kontext-Zugriff in Tests. Commits b79a1f4/21cf563/d268369/9fc7dd3.
-**Next action:** Phase 06-02 (Inspiration, CHAR-02): `toggle-inspiration-stop`-Action auf Charakterkarte, always-visible ⭐, kein saveUndoState(). Dann 06-03 Charakterwerte, 06-04 XP/Milestone.
+**Last action:** Phase 06-02 (Inspiration) ausgeführt (2026-06-15). Always-visible Stern-Toggle-Button in renderCharacterCard; toggle-inspiration-stop-Handler in EntityActions (stopPropagation + ch.inspiration=!ch.inspiration + window.save() ohne saveUndoState per D-02 + renderParty + Toast); .char-inspiration-toggle CSS in party.css; alle 5 inspiration.spec.js E2E-Tests grün. 1 Deviation: Wave-0-Undo-Spy-Bug auto-fixed. Commits 4e5be0b/b289349.
+**Next action:** Phase 06-03 (Charakterwerte, CHAR-03): Skills, Saves, Angriffe im Detail-Modal + Formular-Felder. Dann 06-04 XP/Milestone.
 
 ---
 

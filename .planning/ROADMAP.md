@@ -196,7 +196,7 @@ Plans:
 
 **Wave 2** *(blocked on Wave 1)*
 
-- [ ] 06-02-PLAN.md — CHAR-02 Inspiration: immer sichtbarer klickbarer Stern-Toggle auf der Karte (-stop-Handler, plain save, kein Undo) + E2E (CHAR-02)
+- [x] 06-02-PLAN.md — CHAR-02 Inspiration: immer sichtbarer klickbarer Stern-Toggle auf der Karte (-stop-Handler, plain save, kein Undo) + E2E (CHAR-02)
 
 **Wave 3** *(blocked on Wave 1+2 — teilt sich entity-actions.js + party.css)*
 
