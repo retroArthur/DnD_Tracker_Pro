@@ -359,6 +359,17 @@ const EntityActions = {
         if (editorId && typeof window.showInsertEntityLinkModal === 'function') {
             window.showInsertEntityLinkModal(editorId);
         }
+    },
+
+    // NPC-Generator-Aktionen (WELT-02)
+    'show-npc-generator': () => {
+        if (typeof window.showNPCGeneratorModal === 'function') window.showNPCGeneratorModal();
+    },
+    'reroll-npc': () => {
+        if (typeof window.rerollNPC === 'function') window.rerollNPC();
+    },
+    'save-generated-npc': () => {
+        if (typeof window.saveGeneratedNPC === 'function') window.saveGeneratedNPC();
     }
 };
 

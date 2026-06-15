@@ -7,6 +7,12 @@
 const ACTION_REGISTRY = [
     // --- Entitaeten erstellen ---
     {
+        id: 'generate-npc',
+        label: 'NPC generieren',
+        keywords: ['npc', 'generator', 'generieren', 'zufaellig', 'wuerfeln', 'zufalls-npc', 'name', 'person'],
+        action: () => { if (typeof window.showNPCGeneratorModal === 'function') window.showNPCGeneratorModal(); }
+    },
+    {
         id: 'new-npc',
         label: 'Neuer NPC',
         keywords: ['npc', 'gegenspieler', 'person', 'erstellen', 'hinzufuegen'],

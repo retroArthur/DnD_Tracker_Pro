@@ -562,3 +562,140 @@
     padding: 0.2rem 0;
     border-top: 1px solid var(--border);
 }
+
+/* ========================================
+   NPC-GENERATOR (npcg-) — WELT-02
+   ======================================== */
+
+.npcg-modal-content {
+    max-width: 500px;
+    width: 95%;
+}
+
+.npcg-modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--space-sm, 0.5rem);
+}
+
+.npcg-filter-row {
+    display: flex;
+    gap: var(--space-sm, 0.5rem);
+    align-items: flex-end;
+    flex-wrap: wrap;
+    margin-bottom: var(--space-md, 1rem);
+}
+
+.npcg-filter-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    flex: 1;
+    min-width: 120px;
+}
+
+.npcg-filter-label {
+    font-size: 0.8rem;
+    color: var(--text-dim);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+
+.npcg-select {
+    min-width: 120px;
+}
+
+.npcg-reroll-btn {
+    white-space: nowrap;
+    align-self: flex-end;
+}
+
+.npcg-vorschau-container {
+    min-height: 140px;
+}
+
+.npcg-empty {
+    color: var(--text-dim);
+    text-align: center;
+    padding: var(--space-md, 1rem);
+}
+
+.npcg-preview-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: var(--space-md, 1rem);
+}
+
+.npcg-preview-name {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: var(--gold, #c9a84c);
+    margin-bottom: 0.4rem;
+    line-height: 1.2;
+}
+
+.npcg-preview-meta {
+    display: flex;
+    gap: 0.4rem;
+    flex-wrap: wrap;
+    margin-bottom: 0.75rem;
+}
+
+.npcg-meta-tag {
+    font-size: 0.75rem;
+    padding: 0.15rem 0.5rem;
+    border-radius: 99px;
+    background: var(--surface-alt, rgba(255,255,255,0.07));
+    color: var(--text-dim);
+    border: 1px solid var(--border);
+    text-transform: capitalize;
+}
+
+.npcg-preview-section {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    margin-bottom: 0.6rem;
+}
+
+.npcg-preview-section.npcg-secondary {
+    margin-top: 0.25rem;
+    padding-top: 0.5rem;
+    border-top: 1px solid var(--border);
+    opacity: 0.85;
+}
+
+.npcg-label {
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-dim);
+}
+
+.npcg-zug,
+.npcg-marotte,
+.npcg-aussehen {
+    font-size: 0.95rem;
+    color: var(--text);
+    line-height: 1.4;
+}
+
+/* NPC-Tab Generator-Einstieg */
+.npcg-trigger-btn {
+    margin-left: auto;
+}
+
+@media (max-width: 500px) {
+    .npcg-filter-row {
+        flex-direction: column;
+    }
+    .npcg-filter-group {
+        min-width: 100%;
+    }
+    .npcg-reroll-btn {
+        width: 100%;
+    }
+}
