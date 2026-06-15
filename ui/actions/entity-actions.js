@@ -37,6 +37,43 @@ const EntityActions = {
         showToast(ch.inspiration ? '⭐ Inspiration erhalten!' : '☆ Inspiration entfernt');
     },
 
+    // CHAR-01 / D-11: Manueller Levelaufstieg (NIEMALS Auto-Bump — DM bestätigt)
+    // confirm-level-up: XP-Modus "Stufe bestätigen"-Button (wenn canLevelUp === true)
+    // milestone-level-up: Milestone-Modus "+1 Level"-Button (immer verfügbar, DM-Entscheidung)
+    'confirm-level-up': ctx => {
+        var ch = EntityLookup.character(ctx.id);
+        if (!ch) return;
+        if ((ch.level || 1) >= 20) {
+            showToast('Charakter ist bereits auf Max-Level 20', 'warning');
+            return;
+        }
+        pushUndo('Stufe erhöht');
+        ch.level = (ch.level || 1) + 1;
+        // Proficiency-Bonus neu berechnen (mirror saveCharacter — nutzt getProfBonus aus utilities.js:412)
+        ch.proficiencyBonus = getProfBonus(ch.level);
+        window.save();
+        if (typeof window.renderParty === 'function') window.renderParty();
+        // Detail-Modal neu öffnen damit Änderungen sofort sichtbar sind
+        if (typeof window.showCharacterDetails === 'function') window.showCharacterDetails(ch.id);
+        showToast('⬆️ ' + esc(ch.name) + ' ist jetzt Level ' + ch.level + '!', 'success');
+    },
+    'milestone-level-up': ctx => {
+        // Identische Logik wie confirm-level-up — Milestone-Modus-Alias
+        var ch = EntityLookup.character(ctx.id);
+        if (!ch) return;
+        if ((ch.level || 1) >= 20) {
+            showToast('Charakter ist bereits auf Max-Level 20', 'warning');
+            return;
+        }
+        pushUndo('Stufe erhöht (Meilenstein)');
+        ch.level = (ch.level || 1) + 1;
+        ch.proficiencyBonus = getProfBonus(ch.level);
+        window.save();
+        if (typeof window.renderParty === 'function') window.renderParty();
+        if (typeof window.showCharacterDetails === 'function') window.showCharacterDetails(ch.id);
+        showToast('⬆️ ' + esc(ch.name) + ' ist jetzt Level ' + ch.level + '! (Meilenstein)', 'success');
+    },
+
     // Charakter-Angriffs-Editor: add-attack / delete-attack (D-05, CHAR-03)
     // Diese Handler mutieren NUR das transiente Formular-DOM — kein D, kein save()
     'add-attack': () => {

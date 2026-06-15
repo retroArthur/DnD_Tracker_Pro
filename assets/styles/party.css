@@ -2974,3 +2974,130 @@
     background: var(--bg-hover, rgba(255,255,255,0.07));
     transform: scale(1.04);
 }
+
+/* ============================================================
+   XP / LEVELAUFSTIEG — DETAIL-MODAL (CHAR-01 / D-07 / D-08 / D-11)
+   ============================================================ */
+
+.char-xp-section {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px 16px;
+    margin: 8px 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.char-xp-section-title {
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-dim);
+}
+
+.char-xp-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.char-xp-label {
+    font-weight: 600;
+    color: var(--text-dim);
+    font-size: 0.9rem;
+}
+
+.char-xp-value {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--gold);
+}
+
+.char-xp-threshold {
+    font-size: 0.85rem;
+    color: var(--text-dim);
+}
+
+.char-xp-bar-wrap {
+    height: 6px;
+    background: var(--bg-dark);
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.char-xp-bar {
+    height: 100%;
+    background: linear-gradient(90deg, var(--gold), #f0d060);
+    border-radius: 3px;
+    transition: width 0.3s;
+}
+
+/* Level-up hint badge (D-11: hint only, never auto-bump) */
+.char-level-up-badge,
+.level-up-hint {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    background: rgba(34, 197, 94, 0.12);
+    border: 1px solid #22c55e;
+    border-radius: 6px;
+    padding: 8px 12px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #22c55e;
+}
+
+.char-confirm-level-btn {
+    background: #22c55e;
+    color: #111;
+    border: none;
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    cursor: pointer;
+    font-weight: 700;
+}
+
+.char-confirm-level-btn:hover {
+    filter: brightness(1.15);
+}
+
+/* Milestone mode block — separate class (no .char-xp-section) so E2E can assert XP section absent */
+.char-xp-milestone-section {
+    background: var(--bg-card);
+    border: 1px solid #a855f7;
+    border-radius: 8px;
+    padding: 14px 16px;
+    margin: 8px 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.char-xp-milestone-info {
+    font-size: 0.85rem;
+    color: var(--text-dim);
+    font-style: italic;
+}
+
+.char-milestone-btn {
+    align-self: flex-start;
+    background: #a855f7;
+    color: #fff;
+    border: none;
+    padding: 6px 14px;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.char-milestone-btn:hover {
+    filter: brightness(1.15);
+}
+

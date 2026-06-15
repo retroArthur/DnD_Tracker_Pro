@@ -230,6 +230,60 @@ function showCharacterDetails(id) {
                 </div>
             </div>` : ''}
 
+            <!-- XP / Levelaufstieg-Sektion (CHAR-01 / D-07 / D-08 / D-11) -->
+            ${(function() {
+                var D = window.D;
+                var levelingMode = (D && D.settings && D.settings.levelingMode) || 'xp';
+                var currentLevel = ch.level || 1;
+                var currentXP = ch.xp || 0;
+                if (levelingMode === 'milestone') {
+                    // Milestone-Modus: XP-Felder versteckt, "+1 Level"-Button sichtbar (D-07)
+                    // Note: intentionally NOT using .char-xp-section so E2E can assert it's absent
+                    return '<div class="char-xp-milestone-section">' +
+                        '<div class="char-xp-section-title">🎯 Aufstieg (Meilenstein)</div>' +
+                        '<div class="char-xp-milestone-info">Meilenstein-Modus: Levelaufstieg durch DM-Entscheidung</div>' +
+                        '<button class="btn btn-warning char-milestone-btn" ' +
+                            'data-action="milestone-level-up" data-id="' + ch.id + '" ' +
+                            'title="+1 Level vergeben">' +
+                            '⬆️ +1 Level' +
+                        '</button>' +
+                    '</div>';
+                } else {
+                    // XP-Modus: XP-Stand + Schwelle + ggf. Levelaufstieg-Hinweis (D-08 / D-11)
+                    var nextLevel = currentLevel + 1;
+                    var nextThreshold = nextLevel <= 20 ? (XP_LEVEL_THRESHOLDS[nextLevel - 1] || 0) : null;
+                    var isMaxLevel = currentLevel >= 20;
+                    var levelUpReady = !isMaxLevel && canLevelUp(ch);
+                    var xpBar = '';
+                    if (!isMaxLevel && nextThreshold) {
+                        var prevThreshold = XP_LEVEL_THRESHOLDS[currentLevel - 1] || 0;
+                        var xpIntoLevel = Math.max(0, currentXP - prevThreshold);
+                        var xpNeeded = nextThreshold - prevThreshold;
+                        var pct = xpNeeded > 0 ? Math.min(100, Math.round(xpIntoLevel / xpNeeded * 100)) : 100;
+                        xpBar = '<div class="char-xp-bar-wrap"><div class="char-xp-bar" style="width:' + pct + '%"></div></div>';
+                    }
+                    var levelUpHint = levelUpReady
+                        ? '<div class="char-level-up-badge level-up-hint">⬆️ Kann aufsteigen!' +
+                          '<button class="btn btn-sm btn-success char-confirm-level-btn" ' +
+                              'data-action="confirm-level-up" data-id="' + ch.id + '">' +
+                              'Stufe bestätigen' +
+                          '</button></div>'
+                        : '';
+                    return '<div class="char-xp-section">' +
+                        '<div class="char-xp-section-title">⭐ XP / Aufstieg</div>' +
+                        '<div class="char-xp-row">' +
+                            '<span class="char-xp-label">XP:</span>' +
+                            '<span class="char-xp-value">' + currentXP.toLocaleString('de-DE') + '</span>' +
+                            (nextThreshold !== null && !isMaxLevel
+                                ? '<span class="char-xp-threshold">/ ' + nextThreshold.toLocaleString('de-DE') + ' (Lv.' + nextLevel + ')</span>'
+                                : '<span class="char-xp-threshold">Max Level</span>') +
+                        '</div>' +
+                        xpBar +
+                        levelUpHint +
+                    '</div>';
+                }
+            })()}
+
             <!-- Two Column Info -->
             <div class="char-info-grid">
                 <div class="char-info-section">

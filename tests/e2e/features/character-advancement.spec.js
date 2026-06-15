@@ -170,7 +170,7 @@ test.describe('CHAR-01 / D-09 / D-10: XP-Auto-Summe und -Verteilung', () => {
         await injectCharWithAdvancedFields(page);
     });
 
-    test.fixme(
+    test(
         '2 Wölfe (CR 1/4 = je 50 XP) → 100 XP vorberechnet im XP-Modal',
         async ({ page }) => {
             // Wave-4-Aktivierung: 06-04 Task "XP-Auto-Summe aus CR_TO_XP"
@@ -197,7 +197,7 @@ test.describe('CHAR-01 / D-09 / D-10: XP-Auto-Summe und -Verteilung', () => {
         }
     );
 
-    test.fixme(
+    test(
         '400 XP auf 4 lebende Charaktere → je 100 XP vergeben',
         async ({ page }) => {
             // Wave-4-Aktivierung: 06-04 Task "gleichmäßige XP-Verteilung (D-10)"
@@ -234,7 +234,7 @@ test.describe('CHAR-01 / D-09 / D-10: XP-Auto-Summe und -Verteilung', () => {
 // ============================================================
 
 test.describe('CHAR-01 / D-07: Milestone-Modus', () => {
-    test.fixme(
+    test(
         'D.settings.levelingMode="milestone" → XP-Felder versteckt, "+1 Level"-Button sichtbar',
         async ({ page }) => {
             // Wave-4-Aktivierung: 06-04 Task "Milestone-Modus im Detail-Modal"
@@ -274,7 +274,7 @@ test.describe('CHAR-01 / D-07: Milestone-Modus', () => {
 // ============================================================
 
 test.describe('CHAR-01 / D-11: Levelaufstieg-Hinweis', () => {
-    test.fixme(
+    test(
         'Charakter Level 1 mit xp=300 → Levelaufstieg-Hinweis sichtbar im Detail-Modal',
         async ({ page }) => {
             // Wave-4-Aktivierung: 06-04 Task "Levelaufstieg-Hinweis (D-11)"
