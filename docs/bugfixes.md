@@ -435,6 +435,21 @@
 - **Fix:** `floatingToolbarInteracting` Flag um Toolbar-Interaktionen zu schützen
 - **Datei:** `ui/editors/rich-text.js`
 
+### Bestiar komplett ungestylt: ganze CSS-Datei im Bundle verschluckt
+
+- **Problem:** Die Bestiar-Liste lief als unstilisierter Text zusammen, der Favoriten-Stern war ein nackter OS-Button. Ebenfalls betroffen (nur weniger sichtbar): PWA-Button, Command-Palette, Migration- und File-Backup-UI — alle ungestylt.
+- **Ursache:** Die Regel `.dmscreen-grid` war durch einen Fehl-Edit zerrissen — die öffnende `{` lag als loses Fragment am Ende von `tools.css` (unschließend), der Body + `}` verwaist in `dmscreen.css`. Beim Konkatenieren der CSS-Dateien in `build.py` verschluckte diese offene Klammer ALLE nachfolgend gebündelten CSS-Dateien (pwa, migration, file-backup, command-palette, bestiary) — deren Regeln fehlten komplett in der CSSOM, obwohl der Text im Bundle stand.
+- **Fix:** Regel wieder zusammengeführt (Öffnung zurück in `dmscreen.css`, Fragment aus `tools.css` entfernt). Anschließend den fehl-platzierten DM-Screen-Block ganz nach `dmscreen.css` verschoben (Feature-Organisation).
+- **Lektion:** Symptom „ganze CSS-Sektion fehlt im Browser, Text steht aber im Bundle" → unbalancierte Klammer in einer FRÜHEREN konkatenierten Datei prüfen (verschluckt alles bis Dateiende, da keine schließende `}` mehr folgt). Diagnose mit einem **kommentar-/string-bewussten** Klammer-Balance-Check pro Datei — roher `grep -o "{"`-Zähler ist unzuverlässig (zählt `{`/`}` in Kommentaren und `content:`-Strings mit). Per-Datei-Delta muss 0 sein.
+- **Dateien:** `assets/styles/tools.css`, `assets/styles/dmscreen.css`
+
+### Bestiar-Liste zeigte nur 1 Zeile (VirtualScroll-Viewport auf 48px)
+
+- **Problem:** Nach dem CSS-Fix zeigte die Bestiar-Liste nur ~1 Monster in einem winzigen 48px-Scrollfenster.
+- **Ursache:** `VirtualScroll.create()` las `container.clientHeight` des noch leeren `#bestiary-list`. Dessen Höhe war zu dem Zeitpunkt nur `padding-bottom: 48px` → Viewport wurde auf 48px eingefroren.
+- **Fix:** VirtualScroll leitet die Viewport-Höhe aus dem Content-Bereich des Eltern-Scroll-Containers ab, wenn die eigene `clientHeight` kleiner als 2 Zeilen ist; zusätzlich `box-sizing: border-box` am Container (gegen Überlauf durch padding). `VirtualScroll` wird ausschließlich vom Bestiar genutzt → kein Risiko für andere Tabs.
+- **Datei:** `ui/virtual-scroll.js`
+
 ---
 
 ## Known Technical Debt

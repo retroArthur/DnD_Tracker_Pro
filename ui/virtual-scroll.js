@@ -33,10 +33,26 @@ const VirtualScroll = {
         }
 
         const totalHeight = items.length * itemHeight;
-        const viewportHeight = container.clientHeight || 400;
+
+        // Viewport-Höhe bestimmen. Die eigene clientHeight des Containers kann
+        // inhaltsgetrieben und winzig sein, wenn er (noch) leer ist (z. B. nur
+        // padding-bottom) — das würde das virtuelle Fenster auf ~1 Zeile
+        // schrumpfen. In dem Fall die verfügbare Höhe aus dem Content-Bereich
+        // des Eltern-Elements (Scroll-Container) ableiten.
+        let viewportHeight = container.clientHeight;
+        if (!viewportHeight || viewportHeight < itemHeight * 2) {
+            const parent = container.parentElement;
+            if (parent) {
+                const pcs = getComputedStyle(parent);
+                const padY = (parseFloat(pcs.paddingTop) || 0) + (parseFloat(pcs.paddingBottom) || 0);
+                viewportHeight = parent.clientHeight - padY;
+            }
+            if (!viewportHeight || viewportHeight < itemHeight * 2) viewportHeight = 400;
+        }
         const bufferSize = this.config.bufferSize;
 
         // Scroll-Container Setup
+        container.style.boxSizing = 'border-box';
         container.style.height = viewportHeight + 'px';
         container.style.overflow = 'auto';
         container.style.position = 'relative';

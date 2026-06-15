@@ -1777,7 +1777,8 @@
             outline: none;
         }
 
-    /* Masonry-style column layout - no gaps */
+/* DM Screen grid — Masonry-style column layout */
+.dmscreen-grid {
     column-count: 4;
     column-gap: 16px;
     flex: 1;
@@ -3035,3 +3036,353 @@
    ROADMAP - KAMPAGNEN-TIMELINE
    ======================================== */
 
+/* ============================================================
+   DM SCREEN STYLES
+   ============================================================ */
+
+.dmscreen-view {
+    padding: 16px;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.dmscreen-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    background: var(--bg-card);
+    border-radius: 8px;
+    border: 1px solid var(--border);
+}
+
+.dmscreen-title {
+    font-size: 1.3em;
+    font-weight: 600;
+    color: var(--gold);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.dms-live-badge {
+    font-size: 0.55em;
+    font-weight: 500;
+    color: var(--green);
+    background: rgba(34, 197, 94, 0.15);
+    padding: 3px 8px;
+    border-radius: 10px;
+    animation: dms-live-pulse 2s ease-in-out infinite;
+}
+
+@keyframes dms-live-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.6; }
+}
+
+.dmscreen-actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+/* Config Dropdown */
+.dms-config-wrapper {
+    position: relative;
+}
+
+.dms-config-dropdown {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    margin-top: 8px;
+    width: 240px;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+    z-index: 100;
+    display: none;
+    overflow: hidden;
+}
+
+.dms-config-dropdown.show {
+    display: block;
+    animation: fadeIn 0.15s ease-out;
+}
+
+.dms-config-header {
+    padding: 12px 14px;
+    font-weight: 600;
+    font-size: 0.85em;
+    color: var(--text);
+    background: var(--bg-dark);
+    border-bottom: 1px solid var(--border);
+}
+
+.dms-config-list {
+    max-height: 320px;
+    overflow-y: auto;
+}
+
+.dms-config-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    cursor: pointer;
+    transition: background 0.15s;
+    border-bottom: 1px solid var(--border-light);
+}
+
+.dms-config-item:last-child {
+    border-bottom: none;
+}
+
+.dms-config-item:hover {
+    background: var(--bg-hover);
+}
+
+.dms-config-item.dragging {
+    opacity: 0.5;
+    background: var(--bg-dark);
+}
+
+.dms-config-item.drag-over {
+    background: var(--gold-dim);
+    border-top: 2px solid var(--gold);
+}
+
+.dms-config-drag {
+    cursor: grab;
+    color: var(--text-dim);
+    font-weight: bold;
+    letter-spacing: -2px;
+    user-select: none;
+}
+
+.dms-config-drag:active {
+    cursor: grabbing;
+}
+
+.dms-config-icon {
+    font-size: 1em;
+}
+
+.dms-config-name {
+    flex: 1;
+    font-size: 0.85em;
+    color: var(--text);
+}
+
+.dms-config-item input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+}
+
+.dms-config-footer {
+    padding: 10px 14px;
+    background: var(--bg-dark);
+    border-top: 1px solid var(--border);
+}
+
+.dms-config-hint {
+    font-size: 0.75em;
+    color: var(--text-dim);
+}
+
+/* Profile Dropdown */
+.dms-profile-dropdown {
+    width: 220px;
+}
+
+.dms-profile-list {
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.dms-profile-section {
+    padding: 8px 14px 4px;
+    font-size: 0.7em;
+    font-weight: 600;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    letter-spacing: 0.5px;
+}
+
+.dms-profile-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    cursor: pointer;
+    transition: background 0.15s;
+    border-left: 3px solid transparent;
+}
+
+.dms-profile-item:hover {
+    background: var(--bg-hover);
+}
+
+.dms-profile-item.active {
+    background: rgba(251, 191, 36, 0.1);
+    border-left-color: var(--gold);
+}
+
+.dms-profile-icon {
+    font-size: 1em;
+}
+
+.dms-profile-name {
+    flex: 1;
+    font-size: 0.85em;
+    color: var(--text);
+}
+
+.dms-profile-check {
+    color: var(--green);
+    font-size: 0.9em;
+}
+
+.dms-profile-delete {
+    background: none;
+    border: none;
+    color: var(--text-dim);
+    cursor: pointer;
+    padding: 2px 6px;
+    border-radius: 4px;
+    opacity: 0;
+    transition: all 0.15s;
+}
+
+.dms-profile-item:hover .dms-profile-delete {
+    opacity: 1;
+}
+
+.dms-profile-delete:hover {
+    background: var(--red);
+    color: white;
+}
+
+.dms-profile-save {
+    border-top: 1px solid var(--border);
+    color: var(--cyan);
+}
+
+.dms-profile-save .dms-profile-name {
+    color: var(--cyan);
+}
+
+/* Quick d20 button highlight */
+.dms-quick-d20 {
+    background: linear-gradient(135deg, var(--bg-elevated), rgba(239, 68, 68, 0.2));
+    border-color: rgba(239, 68, 68, 0.3);
+}
+
+.dms-quick-d20:hover {
+    border-color: var(--red);
+    background: linear-gradient(135deg, var(--bg-hover), rgba(239, 68, 68, 0.3));
+}
+
+/* Widget Drag Handle & Hide Button */
+.dmscreen-widget-drag {
+    cursor: grab;
+    color: var(--text-dim);
+    font-weight: bold;
+    letter-spacing: -2px;
+    user-select: none;
+    padding: 0 4px;
+    margin-left: -4px;
+}
+
+.dmscreen-widget-drag:active {
+    cursor: grabbing;
+}
+
+.dmscreen-widget-hide {
+    margin-left: auto;
+    background: none;
+    border: none;
+    color: var(--text-dim);
+    cursor: pointer;
+    padding: 2px 6px;
+    font-size: 0.85em;
+    border-radius: 4px;
+    opacity: 0;
+    transition: opacity 0.15s, background 0.15s, color 0.15s;
+}
+
+.dmscreen-widget:hover .dmscreen-widget-hide {
+    opacity: 1;
+}
+
+.dmscreen-widget-hide:hover {
+    background: var(--red);
+    color: white;
+}
+
+/* Widget Drag States */
+.dmscreen-widget.dragging {
+    opacity: 0.5;
+    transform: scale(0.98);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+}
+
+.dmscreen-widget.drag-over {
+    border: 2px dashed var(--gold);
+    background: var(--gold-dim);
+}
+
+.dmscreen-widget[draggable="true"] {
+    cursor: grab;
+}
+
+.dmscreen-widget[draggable="true"]:active {
+    cursor: grabbing;
+}
+
+/* Quick Actions Bar (in Header) */
+.dms-quick-bar {
+    display: flex;
+    gap: 8px;
+    flex: 1;
+    flex-wrap: wrap;
+    align-items: center;
+    margin: 0 16px;
+}
+
+.dms-quick-bar:empty {
+    display: none;
+    margin: 0;
+}
+
+.dms-quick-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+    color: var(--text);
+    font-size: 0.85em;
+}
+
+.dms-quick-btn:hover {
+    background: var(--bg-hover);
+    border-color: var(--gold);
+}
+
+.dms-quick-icon {
+    font-size: 1em;
+}
+
+.dms-quick-label {
+    font-size: 0.8em;
+    font-weight: 500;
+}
