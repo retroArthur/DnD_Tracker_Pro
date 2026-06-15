@@ -31,12 +31,12 @@ progress:
 ## Current Position
 
 ```
-Phase: 05 (Welt & Story) — COMPLETE
+Phase: 06 (Spieler-Verwaltung) — CONTEXT GATHERED
 Plan: Not started
-Next:  Phase 06 starten (Spieler-Verwaltung)
-Status: Complete (7/7 Pläne)
+Next:  Phase 06 planen (/gsd-plan-phase 6)
+Status: Ready to plan (06-CONTEXT.md geschrieben, Commit d10df5c)
 
-Progress: [██████████] 100% Phase 5 vollständig abgeschlossen (7/7 Pläne)
+Progress: [██████████] Phase 5 abgeschlossen (30/30 Pläne); Phase 6 Diskussion fertig
 ```
 
 **Phases:**
@@ -114,13 +114,15 @@ Progress: [██████████] 100% Phase 5 vollständig abgeschloss
 - [x] Phase 5 ausführen: `/gsd-execute-phase 5` ✓ (2026-06-15, 7/7 Pläne, 5/5 must-haves, 37 Unit + 24 E2E grün)
 - [ ] Phase 5 — 2 menschliche Sichtungen (05-HUMAN-UAT.md): NPC-Inhaltsqualität/Latenz, Harptos-Monatsnamen-Kanon
 - [ ] Phase 5 (optional, benign): `D.calendar.month` 0→1-Basis in core/data.js angleichen (vom Verifier als nicht-user-sichtbar bestätigt)
+- [x] Phase 6 diskutieren: `/gsd-discuss-phase 6` ✓ (2026-06-15, 06-CONTEXT.md, Commit d10df5c)
+- [ ] Phase 6 planen: `/gsd-plan-phase 6` (Reuse-Phase → ggf. `--skip-ui`)
 
 ---
 
 ## Session Continuity
 
-**Last action:** Phase 05 (Welt & Story) vollständig ausgeführt & abgeschlossen (2026-06-15). Alle 7 Pläne (05-01…07) sequenziell auf `main`: Fundament/Schema/Migration 4.0.0/Harptos-Konstanten, Build-Time-Tabellen (585 dt. Einträge), Session-Prep (WELT-01), NPC-Generator (WELT-02), Timeline/Kalender (WELT-03), Reise/Wetter (WELT-04), Fraktionen/Ruf (WELT-05). gsd-verifier: 5/5 must-haves verifiziert; Build grün (2.76 MB); 37 Unit- + 24 E2E-Tests grün; 4 Tabs rendern fehlerfrei. Während der Verifikation 2 Defekte in den Executor-E2E-Specs gefixt (CommonJS `require`→ESM `import`, `localhost:8000`→`file://`-Nav, Commit 687eb7d). VERIFICATION-Status `human_needed`: 2 subjektive Punkte (NPC-Inhaltsqualität, Harptos-Kanon) als `05-HUMAN-UAT.md` getrackt — nicht-blockierend. Phase via `phase complete 05` markiert (Fortschritt 30/30 Pläne, 71%).
-**Next action:** Phase 06 (Spieler-Verwaltung) planen: `/gsd-discuss-phase 6` (oder direkt `/gsd-plan-phase 6`).
+**Last action:** Phase 06 (Spieler-Verwaltung) diskutiert (2026-06-15). Graubereiche Inspiration + Skills/Saves/Angriffe besprochen; CHAR-01 (XP/Milestone) per bestätigtem Default-Vorschlag gelockt. `06-CONTEXT.md` + `06-DISCUSSION-LOG.md` geschrieben (Commit d10df5c). Kernentscheidungen: Inspiration = klickbarer ⭐ auf der Charakterkarte, binär (bleibt `inspiration`-Boolean, kein Undo); 18 Skills + Expertise (Struktur analog `saveProficiencies`, Mapping aus vorhandenem `SKILL_INFO` `core/constants.js:217`); klickbare Skill-/Save-/Attribut-Würfe mit Vorteil/Nachteil-Buttons über den vorhandenen Roller (`getAbilityModifier`/`getProficiencyBonus`, `renderClickableDice`); Angriffe als freie Liste {Name, Bonus, Schaden, Typ} mit klickbaren Würfen; Anzeige im Detail-Modal `showCharacterDetails`, Bearbeitung im bestehenden Charakter-Editor; CHAR-01: `xp`-Feld + Migration, Abschluss-Trigger in der Initiative mit Auto-Summe via `CR_TO_XP` + Gleichverteilung auf aktive Charaktere + Level-Hinweis (kein Auto-Bump; neue PHB-Level→XP-Tabelle nötig, da `XP_THRESHOLDS` = Encounter-Schwierigkeit). Brownfield-Erweiterung des Party-Systems, kein neuer Tab.
+**Next action:** Phase 06 planen: `/gsd-plan-phase 6` (ggf. `/clear` davor). UI-Gate: laut CONTEXT (D-00d/D-06) Reuse bestehender Muster (Detail-Modal + Charakter-Editor, kein neues Design) → `--skip-ui` ist der schlanke Pfad (vgl. Phase 5), `/gsd-ui-phase 6` nur bei pixelgenauer neuer Optik.
 
 ---
 
