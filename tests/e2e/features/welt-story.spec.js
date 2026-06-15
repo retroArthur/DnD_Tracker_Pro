@@ -330,31 +330,143 @@ test.describe('WELT-04: Reise-Tab', () => {
 
 // ============================================================
 // WELT-05: Fraktionen & Ruf — Tab "fraktionen"
+// aktiviert in Plan 05-07
 // ============================================================
 test.describe('WELT-05: Fraktionen-Tab', () => {
-    test.skip('Tab fraktionen ist sichtbar und anklickbar', async ({ page }) => {
-        // aktiviert in 05-07
-        // await page.click('[data-view="fraktionen"]');
-        // await expect(page.locator('#view-fraktionen')).toBeVisible();
+    test('Tab fraktionen ist sichtbar und anklickbar', async ({ page }) => {
+        await page.goto('http://localhost:8000/dist/dnd-tracker-bundled.html');
+        await page.click('[data-view="fraktionen"]');
+        await expect(page.locator('#view-fraktionen')).toBeVisible();
     });
 
-    test.skip('Fraktion anlegen erscheint in Übersichtsliste', async ({ page }) => {
-        // aktiviert in 05-07
-        // Erwartet: D.factions.length === 1; Tab zeigt Fraktion-Karte
+    test('Fraktion anlegen erscheint in Übersichtsliste', async ({ page }) => {
+        await page.goto('http://localhost:8000/dist/dnd-tracker-bundled.html');
+        await page.click('[data-view="fraktionen"]');
+
+        // Fraktion direkt via page.evaluate anlegen (kein DOM-Formular-Roundtrip)
+        await page.evaluate(() => {
+            window.D.factions = [];
+            window.pushUndo('Test-Fraktion');
+            window.D.factions.push({
+                id: 1,
+                name: 'Diebesgilde',
+                symbol: '🗡️',
+                agenda: '',
+                beschreibung: '',
+                ruf: 0,
+                rufHistorie: [],
+                mitgliederNpcIds: [],
+                sitzOrtId: null,
+                rivalen: '',
+                verbuendete: '',
+                links: []
+            });
+            window.renderFraktionen();
+        });
+
+        // Karte erscheint in der Liste
+        await expect(page.locator('.fr-faction-card')).toBeVisible();
+        const count = await page.evaluate(() => window.D.factions.length);
+        expect(count).toBe(1);
     });
 
-    test.skip('Ruf +10 wechselt Stufe korrekt', async ({ page }) => {
-        // aktiviert in 05-07
-        // Erwartet: Klick "+10" bei Ruf 15 → rufStufe-Badge zeigt "Freundlich"
+    test('Ruf-Anpassung schreibt Eintrag in rufHistorie', async ({ page }) => {
+        await page.goto('http://localhost:8000/dist/dnd-tracker-bundled.html');
+
+        // Fraktion anlegen und Ruf anpassen via page.evaluate
+        const result = await page.evaluate(() => {
+            window.D.factions = [{
+                id: 1,
+                name: 'Testgilde',
+                symbol: '⚔️',
+                agenda: '',
+                beschreibung: '',
+                ruf: 0,
+                rufHistorie: [],
+                mitgliederNpcIds: [],
+                sitzOrtId: null,
+                rivalen: '',
+                verbuendete: '',
+                links: []
+            }];
+            // anpassenRuf aufrufen
+            window.anpassenRuf(1, 10, 'Drachenschatz gerettet');
+            return {
+                ruf: window.D.factions[0].ruf,
+                historieLen: window.D.factions[0].rufHistorie.length,
+                grund: window.D.factions[0].rufHistorie[0].grund
+            };
+        });
+
+        expect(result.ruf).toBe(10);
+        expect(result.historieLen).toBe(1);
+        expect(result.grund).toBe('Drachenschatz gerettet');
     });
 
-    test.skip('Ruf-Anpassung schreibt Eintrag in rufHistorie', async ({ page }) => {
-        // aktiviert in 05-07
-        // Erwartet: faction.rufHistorie.length === 1 nach Klick "+10" mit Notiz
+    test('Undo nach Ruf-Änderung stellt alten Wert wieder her', async ({ page }) => {
+        await page.goto('http://localhost:8000/dist/dnd-tracker-bundled.html');
+
+        // Fraktion auf Ruf 0 setzen, dann +10 anpassen, dann Undo
+        const result = await page.evaluate(() => {
+            window.D.factions = [{
+                id: 1,
+                name: 'Testgilde',
+                symbol: '⚔️',
+                agenda: '',
+                beschreibung: '',
+                ruf: 0,
+                rufHistorie: [],
+                mitgliederNpcIds: [],
+                sitzOrtId: null,
+                rivalen: '',
+                verbuendete: '',
+                links: []
+            }];
+            // anpassenRuf ruft pushUndo VOR Mutation
+            window.anpassenRuf(1, 10, 'Test');
+            // Undo ausführen
+            if (typeof window.undo === 'function') window.undo();
+            return window.D.factions[0] ? window.D.factions[0].ruf : null;
+        });
+
+        // Nach Undo sollte ruf wieder 0 sein
+        expect(result).toBe(0);
     });
 
-    test.skip('Undo nach Ruf-Änderung stellt alten Wert wieder her', async ({ page }) => {
-        // aktiviert in 05-07
-        // Erwartet: Ruf 0 → +10 → Strg+Z → faction.ruf === 0
+    test('NPC mit factionId erscheint in Fraktions-Mitgliederliste', async ({ page }) => {
+        await page.goto('http://localhost:8000/dist/dnd-tracker-bundled.html');
+        await page.click('[data-view="fraktionen"]');
+
+        // Fraktion + NPC mit factionId anlegen
+        await page.evaluate(() => {
+            window.D.factions = [{
+                id: 42,
+                name: 'Magiergilde',
+                symbol: '🔮',
+                agenda: '',
+                beschreibung: '',
+                ruf: 15,
+                rufHistorie: [],
+                mitgliederNpcIds: [],
+                sitzOrtId: null,
+                rivalen: '',
+                verbuendete: '',
+                links: []
+            }];
+            // NPC mit factionId setzen
+            if (!window.D.npcs) window.D.npcs = [];
+            window.D.npcs.push({
+                id: 99,
+                name: 'Gandalf der Graue',
+                role: 'Zauberer',
+                factionId: 42
+            });
+            window.renderFraktionen();
+            // Fraktion auswählen um Detail zu sehen
+            window.selectFraktion(42);
+        });
+
+        // Mitglied soll im Detail-Panel erscheinen
+        await expect(page.locator('.fr-mitglied-name')).toContainText('Gandalf der Graue');
     });
 });

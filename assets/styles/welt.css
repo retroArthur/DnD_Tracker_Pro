@@ -987,3 +987,345 @@
         width: 100%;
     }
 }
+
+/* ========================================
+   fr- Fraktionen & Ruf-System (WELT-05)
+   ======================================== */
+
+.fr-view-content {
+    padding: var(--space-md, 1rem);
+}
+
+/* Layout: Liste links + Detail rechts */
+.fr-layout {
+    display: grid;
+    grid-template-columns: 320px 1fr;
+    gap: var(--space-md, 1rem);
+    align-items: start;
+}
+
+@media (max-width: 700px) {
+    .fr-layout {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Übersichtsliste */
+.fr-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+}
+
+.fr-faction-card {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 0.6rem 0.75rem;
+    cursor: pointer;
+    transition: border-color 0.15s, background 0.15s;
+}
+
+.fr-faction-card:hover {
+    border-color: var(--gold);
+    background: var(--surface-alt, rgba(255,255,255,0.04));
+}
+
+.fr-faction-card.fr-selected {
+    border-color: var(--gold);
+    background: var(--surface-alt, rgba(255,200,0,0.06));
+}
+
+.fr-card-symbol {
+    font-size: 1.5rem;
+    min-width: 2rem;
+    text-align: center;
+    flex-shrink: 0;
+}
+
+.fr-card-body {
+    flex: 1;
+    min-width: 0;
+}
+
+.fr-card-name {
+    font-weight: 600;
+    color: var(--text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.fr-card-ruf {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 0.15rem;
+    font-size: 0.85rem;
+}
+
+.fr-card-meta {
+    font-size: 0.78rem;
+    color: var(--text-dim);
+    margin-top: 0.1rem;
+}
+
+.fr-card-actions {
+    display: flex;
+    gap: 0.25rem;
+    flex-shrink: 0;
+}
+
+/* Ruf-Badge */
+.fr-ruf-badge {
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.fr-ruf-value {
+    font-size: 0.8rem;
+    color: var(--text-dim);
+}
+
+/* Detail-Panel */
+.fr-detail-panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: var(--space-md, 1rem);
+    min-height: 200px;
+}
+
+.fr-detail-placeholder {
+    color: var(--text-dim);
+    text-align: center;
+    padding: 2rem 1rem;
+}
+
+.fr-detail-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    margin-bottom: var(--space-md, 1rem);
+    padding-bottom: var(--space-sm, 0.5rem);
+    border-bottom: 1px solid var(--border);
+}
+
+.fr-detail-symbol {
+    font-size: 2rem;
+    flex-shrink: 0;
+}
+
+.fr-detail-title-block {
+    flex: 1;
+    min-width: 0;
+}
+
+.fr-detail-name {
+    margin: 0 0 0.25rem 0;
+    font-size: 1.1rem;
+    color: var(--text);
+}
+
+.fr-ruf-statusbar {
+    display: inline-block;
+    padding: 0.2rem 0.6rem;
+    border-radius: var(--radius);
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+/* Detail-Sektionen */
+.fr-detail-section {
+    margin-bottom: var(--space-md, 1rem);
+}
+
+.fr-section-title {
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-dim);
+    margin-bottom: 0.3rem;
+}
+
+.fr-section-body {
+    color: var(--text);
+    font-size: 0.95rem;
+    line-height: 1.5;
+}
+
+/* Ruf-Anpassung */
+.fr-ruf-controls {
+    margin-bottom: 0.4rem;
+}
+
+.fr-ruf-grund-input {
+    width: 100%;
+    padding: 0.3rem 0.5rem;
+    background: var(--bg-dark, var(--surface-alt));
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text);
+    font-size: 0.9rem;
+    box-sizing: border-box;
+}
+
+.fr-ruf-buttons {
+    display: flex;
+    gap: 0.35rem;
+    margin-bottom: 0.4rem;
+}
+
+.fr-ruf-btn-minus {
+    background: var(--red, #ef4444);
+    color: #fff;
+    border: none;
+}
+.fr-ruf-btn-minus:hover {
+    opacity: 0.85;
+}
+.fr-ruf-btn-plus {
+    background: var(--green, #22c55e);
+    color: #fff;
+    border: none;
+}
+.fr-ruf-btn-plus:hover {
+    opacity: 0.85;
+}
+
+.fr-ruf-set-row {
+    display: flex;
+    gap: 0.4rem;
+    align-items: center;
+}
+
+.fr-ruf-set-input {
+    flex: 1;
+    padding: 0.3rem 0.5rem;
+    background: var(--bg-dark, var(--surface-alt));
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text);
+    font-size: 0.9rem;
+}
+
+/* Ruf-Historie */
+.fr-historie-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.fr-historie-empty {
+    color: var(--text-dim);
+    font-size: 0.85rem;
+}
+
+.fr-historie-eintrag {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.85rem;
+    padding: 0.2rem 0.4rem;
+    border-radius: 4px;
+    background: var(--surface-alt, rgba(255,255,255,0.04));
+}
+
+.fr-hist-delta {
+    font-weight: 700;
+    min-width: 2.5rem;
+    text-align: right;
+    flex-shrink: 0;
+}
+
+.fr-hist-plus {
+    color: var(--green, #22c55e);
+}
+
+.fr-hist-minus {
+    color: var(--red, #ef4444);
+}
+
+.fr-hist-grund {
+    flex: 1;
+    color: var(--text);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.fr-hist-ts {
+    color: var(--text-dim);
+    font-size: 0.75rem;
+    flex-shrink: 0;
+}
+
+/* Mitglieder */
+.fr-mitglieder-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.fr-mitglieder-empty {
+    color: var(--text-dim);
+    font-size: 0.85rem;
+}
+
+.fr-mitglied-item {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.9rem;
+    padding: 0.2rem 0;
+}
+
+.fr-mitglied-icon {
+    flex-shrink: 0;
+}
+
+.fr-mitglied-name {
+    font-weight: 500;
+    color: var(--text);
+}
+
+.fr-mitglied-rolle {
+    color: var(--text-dim);
+    font-size: 0.8rem;
+}
+
+/* Sitz */
+.fr-sitz-name {
+    font-size: 0.95rem;
+    color: var(--text);
+}
+
+/* Freitext (Rivalen/Verbündete) */
+.fr-freitext {
+    font-size: 0.9rem;
+    color: var(--text);
+    white-space: pre-line;
+}
+
+/* Leer-Zustand */
+.fr-empty-state {
+    text-align: center;
+    color: var(--text-dim);
+    padding: 3rem 1rem;
+}
+
+@media (max-width: 500px) {
+    .fr-ruf-buttons {
+        flex-wrap: wrap;
+    }
+    .fr-ruf-set-row {
+        flex-direction: column;
+        align-items: stretch;
+    }
+}

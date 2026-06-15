@@ -60,7 +60,8 @@ function saveNPC() {
             .filter(Boolean),
         description: sanitizeHTML($('npc-desc').innerHTML),
         triggers,
-        dialogs
+        dialogs,
+        factionId: parseInt($('npc-faction') && $('npc-faction').value) || null
     };
     // Validate entity references and required fields
     if (!validateAndShowErrors(npc, 'npc')) return;
@@ -115,6 +116,20 @@ function editNPC(id) {
     }
     // Zuerst Selects füllen
     populateSelects();
+    // Fraktion-Select befüllen (WELT-05: npc.factionId)
+    const factionSelect = $('npc-faction');
+    if (factionSelect) {
+        factionSelect.innerHTML = '<option value="">— Keine Fraktion —</option>';
+        const D_ref = window.D;
+        if (D_ref && D_ref.factions) {
+            D_ref.factions.forEach(function(f) {
+                const opt = document.createElement('option');
+                opt.value = String(f.id);
+                opt.textContent = (f.symbol ? f.symbol + ' ' : '') + (f.name || 'Unbekannt');
+                factionSelect.appendChild(opt);
+            });
+        }
+    }
     // Dann Werte setzen
     $('edit-npc-id').value = String(numId);
     $('npc-name').value = n.name || '';
@@ -125,10 +140,15 @@ function editNPC(id) {
     $('npc-info').value = (n.info || []).join(', ');
     $('npc-relations').value = (n.relationships || []).join(', ');
     $('npc-desc').innerHTML = sanitizeHTML(n.description) || '';
-    // Location und Filter nach kleiner Verzögerung setzen (damit Optionen geladen sind)
+    // Location, Filter und Fraktion nach kleiner Verzögerung setzen (damit Optionen geladen sind)
     setTimeout(() => {
         if (n.locationId) $('npc-location').value = String(n.locationId);
         if (n.filterId) $('npc-filter').value = String(n.filterId);
+        // factionId (WELT-05): defensiv — Select existiert nur wenn Fraktionen-Feature geladen
+        if (n.factionId) {
+            const fSel = $('npc-faction');
+            if (fSel) fSel.value = String(n.factionId);
+        }
     }, 10);
     // Load triggers
     const triggersContainer = $('npc-triggers-container');
@@ -207,6 +227,7 @@ function clearNPCForm() {
             'npc-location',
             'npc-chapter',
             'npc-filter',
+            'npc-faction',
             'npc-quests',
             'npc-info',
             'npc-relations'

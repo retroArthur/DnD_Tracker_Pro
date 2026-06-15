@@ -97,6 +97,13 @@
                 
                 <!-- Tags -->
                 <div class="char-section-title">🏷️ Tags & Beziehungen</div>
+                <div class="form-group">
+                    <label>Fraktion (WELT-05)</label>
+                    <select id="npc-faction">
+                        <option value="">— Keine Fraktion —</option>
+                        <!-- Optionen werden dynamisch durch populateSelects() / editNPC() befüllt -->
+                    </select>
+                </div>
                 <div class="form-group"><label>Quests (Komma-getrennt)</label><input type="text" id="npc-quests" placeholder="z.B. Drachenjagd, Schatz finden"></div>
                 <div class="form-group"><label>Info (Komma-getrennt)</label><input type="text" id="npc-info" placeholder="z.B. Kennt Geheimgang, Hat Schlüssel"></div>
                 <div class="form-group"><label>Beziehungen</label><input type="text" id="npc-relations" placeholder="z.B. Bruder von X, Feind von Y"></div>
@@ -661,6 +668,89 @@
                 <div id="assign-item-list" style="max-height: 350px; overflow-y: auto; background: var(--bg-dark); border: 1px solid var(--border); border-radius: 5px; padding: 6px;"></div>
             </div>
             <button class="btn btn-success" data-action="call" data-value="assignItems">Zuweisen</button>
+        </div>
+    </div>
+
+    <!-- FRAKTIONEN MODAL (WELT-05) -->
+    <div class="modal-overlay" id="fraktionen-modal">
+        <div class="modal" style="max-width: 620px;">
+            <div class="modal-header">
+                <span class="modal-title">⚔️ Fraktion</span>
+                <button class="btn btn-sm" data-action="hide-modal" data-value="fraktionen-modal">✕</button>
+            </div>
+            <div style="max-height: 75vh; overflow-y: auto; padding-right: 5px;">
+                <input type="hidden" id="edit-fraktion-id">
+
+                <!-- Grunddaten -->
+                <div class="char-section-title" style="margin-top: 0;">⚔️ Grunddaten</div>
+                <div class="form-grid">
+                    <div class="form-group" style="flex: 3;">
+                        <label>Name *</label>
+                        <input type="text" id="fraktion-name" placeholder="z.B. Diebesgilde, Soldatenrat">
+                    </div>
+                    <div class="form-group" style="flex: 1;">
+                        <label>Symbol / Icon (max. 2 Zeichen)</label>
+                        <input type="text" id="fraktion-symbol" placeholder="⚔️" maxlength="2" style="text-align: center; font-size: 1.2rem;">
+                    </div>
+                </div>
+
+                <!-- Anfangs-Ruf (nur bei Neuanlage) -->
+                <div class="form-group" id="fraktion-ruf-init-group">
+                    <label>Anfangs-Ruf (−50 … +50, Standard 0)</label>
+                    <input type="number" id="fraktion-ruf-init" value="0" min="-50" max="50">
+                </div>
+
+                <!-- Agenda / Ziele -->
+                <div class="char-section-title">🎯 Ziele &amp; Agenda</div>
+                <div class="form-group">
+                    <div class="editor-toolbar editor-toolbar-minimal">
+                        <div class="toolbar-row">
+                            <button class="editor-btn" data-action="format-text" data-cmd="fraktion-agenda" data-editor="bold" title="Fett"><b>B</b></button>
+                            <button class="editor-btn" data-action="format-text" data-cmd="fraktion-agenda" data-editor="italic" title="Kursiv"><i>I</i></button>
+                            <button class="editor-btn" data-action="format-text" data-cmd="fraktion-agenda" data-editor="underline" title="Unterstrichen"><u>U</u></button>
+                        </div>
+                    </div>
+                    <div id="fraktion-agenda" class="rich-editor" contenteditable="true" style="min-height: 60px;" placeholder="Was will diese Fraktion erreichen?"></div>
+                </div>
+
+                <!-- Beschreibung -->
+                <div class="char-section-title">📝 Beschreibung</div>
+                <div class="form-group">
+                    <div class="editor-toolbar editor-toolbar-minimal">
+                        <div class="toolbar-row">
+                            <button class="editor-btn" data-action="format-text" data-cmd="fraktion-beschreibung" data-editor="bold" title="Fett"><b>B</b></button>
+                            <button class="editor-btn" data-action="format-text" data-cmd="fraktion-beschreibung" data-editor="italic" title="Kursiv"><i>I</i></button>
+                            <button class="editor-btn" data-action="format-text" data-cmd="fraktion-beschreibung" data-editor="underline" title="Unterstrichen"><u>U</u></button>
+                        </div>
+                    </div>
+                    <div id="fraktion-beschreibung" class="rich-editor" contenteditable="true" style="min-height: 60px;" placeholder="Hintergrund, Geschichte, Einfluss…"></div>
+                </div>
+
+                <!-- Sitz & Rivalen -->
+                <div class="char-section-title">🗺️ Einfluss &amp; Beziehungen</div>
+                <div class="form-group">
+                    <label>Sitz / Einflussgebiet (Ort)</label>
+                    <select id="fraktion-sitz-ort">
+                        <option value="">— Kein Sitz —</option>
+                        <!-- Optionen werden durch showFraktionModal() befüllt -->
+                    </select>
+                </div>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Rivalen (Freitext)</label>
+                        <input type="text" id="fraktion-rivalen" placeholder="z.B. Orden des Goldenen Schwertes">
+                    </div>
+                    <div class="form-group">
+                        <label>Verbündete (Freitext)</label>
+                        <input type="text" id="fraktion-verbuendete" placeholder="z.B. Stadtrat, Händlerallianz">
+                    </div>
+                </div>
+            </div>
+
+            <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; gap: 8px;">
+                <button class="btn btn-success" data-action="save-fraktion" type="button">💾 Speichern</button>
+                <button class="btn" data-action="hide-modal" data-value="fraktionen-modal" type="button">Abbrechen</button>
+            </div>
         </div>
     </div>
     

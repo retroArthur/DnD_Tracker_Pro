@@ -435,6 +435,57 @@ const EntityActions = {
     'schliessen-reise-timeline-modal': () => {
         var modal = document.getElementById('rs-timeline-modal');
         if (modal) modal.remove();
+    },
+
+    // Fraktionen-Aktionen (WELT-05)
+    'show-fraktion-modal': ctx => {
+        if (typeof window.showFraktionModal === 'function') window.showFraktionModal(ctx.value || null);
+    },
+    'edit-fraktion': ctx => {
+        if (typeof window.showFraktionModal === 'function') window.showFraktionModal(ctx.value || ctx.id);
+    },
+    'save-fraktion': () => {
+        if (typeof window.saveFraktion === 'function') window.saveFraktion();
+    },
+    'delete-fraktion': ctx => {
+        if (typeof window.deleteFraktion === 'function') window.deleteFraktion(ctx.value || ctx.id);
+    },
+    'select-fraktion': ctx => {
+        if (typeof window.selectFraktion === 'function') window.selectFraktion(ctx.value || ctx.id);
+    },
+    'ruf-plus': ctx => {
+        var fraktionId = ctx.value || ctx.id;
+        var grundEl = document.getElementById('fr-ruf-grund-' + fraktionId);
+        var grund = grundEl ? grundEl.value.trim() : '';
+        if (typeof window.anpassenRuf === 'function') window.anpassenRuf(fraktionId, 10, grund);
+    },
+    'ruf-plus5': ctx => {
+        var fraktionId = ctx.value || ctx.id;
+        var grundEl = document.getElementById('fr-ruf-grund-' + fraktionId);
+        var grund = grundEl ? grundEl.value.trim() : '';
+        if (typeof window.anpassenRuf === 'function') window.anpassenRuf(fraktionId, 5, grund);
+    },
+    'ruf-minus': ctx => {
+        var fraktionId = ctx.value || ctx.id;
+        var grundEl = document.getElementById('fr-ruf-grund-' + fraktionId);
+        var grund = grundEl ? grundEl.value.trim() : '';
+        if (typeof window.anpassenRuf === 'function') window.anpassenRuf(fraktionId, -10, grund);
+    },
+    'ruf-minus5': ctx => {
+        var fraktionId = ctx.value || ctx.id;
+        var grundEl = document.getElementById('fr-ruf-grund-' + fraktionId);
+        var grund = grundEl ? grundEl.value.trim() : '';
+        if (typeof window.anpassenRuf === 'function') window.anpassenRuf(fraktionId, -5, grund);
+    },
+    'ruf-set': ctx => {
+        var fraktionId = ctx.value || ctx.id;
+        var setEl = document.getElementById('fr-ruf-set-' + fraktionId);
+        var grundEl = document.getElementById('fr-ruf-grund-' + fraktionId);
+        if (!setEl) return;
+        var neuerWert = parseInt(setEl.value);
+        if (isNaN(neuerWert)) return;
+        var grund = grundEl ? grundEl.value.trim() : '';
+        if (typeof window.setzeRuf === 'function') window.setzeRuf(fraktionId, neuerWert, grund || 'Direktes Setzen');
     }
 };
 
