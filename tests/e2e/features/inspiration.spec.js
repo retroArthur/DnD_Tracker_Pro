@@ -60,7 +60,7 @@ test.describe('CHAR-02: Inspiration-Toggle', () => {
         await loadAndNavToParty(page);
     });
 
-    test.fixme(
+    test(
         'Klick auf ☆ schaltet zu ⭐ und .char-inspiration-toggle.active ist sichtbar',
         async ({ page }) => {
             // Wave-2-Aktivierung: 06-02 Task "Inspiration-Toggle auf Charakterkarte"
@@ -73,7 +73,7 @@ test.describe('CHAR-02: Inspiration-Toggle', () => {
         }
     );
 
-    test.fixme(
+    test(
         'Inspiration bleibt nach Reload erhalten (Persistenz-Check)',
         async ({ page }) => {
             // Wave-2-Aktivierung: 06-02 Task "Inspiration-Toggle + save()"
@@ -90,7 +90,7 @@ test.describe('CHAR-02: Inspiration-Toggle', () => {
         }
     );
 
-    test.fixme(
+    test(
         'Klick auf ⭐ öffnet NICHT das Charakter-Formular (-stop Handler)',
         async ({ page }) => {
             // Wave-2-Aktivierung: 06-02 Task "toggle-inspiration-stop Action-Handler"
@@ -104,7 +104,7 @@ test.describe('CHAR-02: Inspiration-Toggle', () => {
         }
     );
 
-    test.fixme(
+    test(
         'Inspiration-Stern ist IMMER sichtbar (auch wenn inspiration=false)',
         async ({ page }) => {
             // Wave-2-Aktivierung: 06-02 — immer sichtbarer Stern (D-01)
@@ -122,7 +122,7 @@ test.describe('CHAR-02: Inspiration-Toggle', () => {
 // ============================================================
 
 test.describe('CHAR-02 / D-02: Kein Undo-Stack-Eintrag', () => {
-    test.fixme(
+    test(
         'saveUndoState wird beim Inspiration-Toggle nicht aufgerufen',
         async ({ page }) => {
             // Wave-2-Aktivierung: 06-02 — dieser Test besser als Unit-Test
@@ -130,13 +130,15 @@ test.describe('CHAR-02 / D-02: Kein Undo-Stack-Eintrag', () => {
             // E2E-Variante via page.evaluate möglich
             await loadAndNavToParty(page);
             await injectTestCharacter(page, { inspiration: false });
-            const undoCallsBefore = await page.evaluate(() => {
+            await page.evaluate(() => {
                 // @ts-ignore
-                let calls = 0;
+                window.__undoSpyCalls = 0;
                 const original = window.saveUndoState;
-                window.saveUndoState = function() { calls++; return original?.apply(this, arguments); };
-                window.__undoSpyCalls = calls;
-                return 0;
+                window.saveUndoState = function() {
+                    // @ts-ignore
+                    window.__undoSpyCalls++;
+                    return original?.apply(this, arguments);
+                };
             });
             await page.click('.char-inspiration-toggle');
             await page.waitForTimeout(200);

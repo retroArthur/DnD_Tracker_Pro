@@ -26,6 +26,16 @@ const EntityActions = {
         showAssignItems(ctx.id);
     },
     'change-assign-qty': ctx => changeAssignItemQty(ctx.id, parseInt(ctx.value) || 0),
+    'toggle-inspiration-stop': ctx => {
+        ctx.event.stopPropagation();
+        const ch = EntityLookup.character(ctx.id);
+        if (!ch) return;
+        ch.inspiration = !ch.inspiration;
+        // KEIN saveUndoState() — Inspiration-Toggle ist trivial reversibel (D-02)
+        window.save();
+        window.renderParty();
+        showToast(ch.inspiration ? '⭐ Inspiration erhalten!' : '☆ Inspiration entfernt');
+    },
 
     // NPC actions
     'edit-npc': ctx => editNPC(ctx.id),
