@@ -2492,3 +2492,485 @@
     opacity: 1;
     color: var(--gold);
 }
+
+/* ============================================================
+   CHARACTER SKILLS / ATTACKS EDITOR (D-03, D-05, CHAR-03)
+   ============================================================ */
+
+/* Skills panel */
+.cf-skills-panel {
+    padding: 12px 0 8px;
+    border-top: 1px solid var(--border);
+}
+
+.cf-skills-title {
+    font-weight: 700;
+    font-size: 0.85em;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-dim);
+    display: block;
+    margin-bottom: 4px;
+}
+
+.cf-skills-hint {
+    font-size: 0.75em;
+    color: var(--text-dim);
+    opacity: 0.75;
+    margin-bottom: 10px;
+}
+
+/* Skills grid: 2 columns on wider layouts */
+.cf-skills-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px 16px;
+}
+
+@media (max-width: 600px) {
+    .cf-skills-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Skill group (one attribute) */
+.cf-skill-group {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.cf-skill-attr-label {
+    font-size: 0.7em;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    letter-spacing: 0.06em;
+    padding: 2px 0 1px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 2px;
+}
+
+/* One skill row: [prof checkbox] [exp checkbox] [name] [E label] */
+.cf-skill-row {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.82em;
+    cursor: pointer;
+    padding: 2px 3px;
+    border-radius: 3px;
+    transition: background 0.1s;
+    user-select: none;
+}
+
+.cf-skill-row:hover {
+    background: var(--bg-hover, rgba(255,255,255,0.05));
+}
+
+.cf-skill-row input[type="checkbox"] {
+    width: 13px;
+    height: 13px;
+    margin: 0;
+    flex-shrink: 0;
+    cursor: pointer;
+    accent-color: var(--gold);
+}
+
+.cf-skill-name {
+    flex: 1;
+    color: var(--text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* The expertise checkbox is visually small + distinct */
+.cf-skill-exp-check {
+    accent-color: var(--blue, #3b82f6) !important;
+}
+
+.cf-skill-exp-label {
+    font-size: 0.7em;
+    font-weight: 700;
+    color: var(--blue, #3b82f6);
+    opacity: 0.8;
+    flex-shrink: 0;
+}
+
+/* ============================================================
+   ATTACKS EDITOR (D-05)
+   ============================================================ */
+
+.cf-attacks-panel {
+    padding: 12px 0 8px;
+    border-top: 1px solid var(--border);
+}
+
+.cf-attacks-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 4px;
+}
+
+.cf-attacks-title {
+    font-weight: 700;
+    font-size: 0.85em;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-dim);
+}
+
+.cf-attacks-hint {
+    font-size: 0.75em;
+    color: var(--text-dim);
+    opacity: 0.75;
+    margin-bottom: 8px;
+}
+
+.cf-attacks-container {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+/* One attack row */
+.cf-attack-row {
+    display: grid;
+    grid-template-columns: 2fr 60px 90px 80px 30px;
+    gap: 4px;
+    align-items: center;
+}
+
+@media (max-width: 600px) {
+    .cf-attack-row {
+        grid-template-columns: 1fr 50px 70px 60px 28px;
+    }
+}
+
+.cf-attack-row input[type="text"],
+.cf-attack-row input[type="number"] {
+    width: 100%;
+    padding: 4px 6px;
+    font-size: 0.82em;
+    background: var(--bg-input, var(--bg));
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    color: var(--text);
+    box-sizing: border-box;
+}
+
+.cf-attack-remove {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2px 5px;
+    font-size: 0.85em;
+    line-height: 1;
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+    cursor: pointer;
+    border-radius: 3px;
+    transition: color 0.15s, border-color 0.15s;
+}
+
+.cf-attack-remove:hover {
+    color: var(--red);
+    border-color: var(--red);
+}
+
+/* ============================================================
+   CHAR DETAIL MODAL — Skills / Saves / Attacks Sections (D-04, D-05, D-06)
+   ============================================================ */
+
+/* Clickable roll elements */
+.char-roll-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: background 0.15s, transform 0.08s;
+    user-select: none;
+}
+
+.char-roll-btn:hover {
+    background: var(--bg-hover, rgba(255,255,255,0.08));
+    transform: scale(1.04);
+}
+
+.char-roll-btn:active {
+    transform: scale(0.97);
+}
+
+/* Advantage / Disadvantage mini-buttons */
+.char-adv-btns {
+    display: inline-flex;
+    gap: 2px;
+    vertical-align: middle;
+}
+
+.char-adv-btn {
+    font-size: 0.7em;
+    padding: 1px 4px;
+    border-radius: 3px;
+    cursor: pointer;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text-dim);
+    transition: background 0.12s, color 0.12s;
+    line-height: 1.4;
+}
+
+.char-adv-btn:hover {
+    background: var(--bg-hover, rgba(255,255,255,0.08));
+    color: var(--text);
+}
+
+.char-adv-btn.adv { color: var(--green); border-color: var(--green); }
+.char-adv-btn.dis { color: var(--red); border-color: var(--red); }
+
+/* Attribute boxes: make them clickable */
+.char-attr-box.clickable {
+    cursor: pointer;
+    transition: background 0.15s, transform 0.08s;
+}
+
+.char-attr-box.clickable:hover {
+    background: var(--bg-hover, rgba(255,255,255,0.08));
+    transform: scale(1.03);
+}
+
+/* Skills section in detail modal */
+.char-skills-section {
+    margin-top: 12px;
+}
+
+.char-skills-section-title {
+    font-size: 0.78em;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-dim);
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.char-skills-by-attr {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 8px 12px;
+}
+
+.char-skill-attr-group {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.char-skill-attr-head {
+    font-size: 0.7em;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    letter-spacing: 0.06em;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 2px;
+    margin-bottom: 2px;
+}
+
+.char-skill-item {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3px 5px;
+    border-radius: 4px;
+    font-size: 0.82em;
+    cursor: pointer;
+    transition: background 0.12s;
+    user-select: none;
+}
+
+.char-skill-item:hover {
+    background: var(--bg-hover, rgba(255,255,255,0.07));
+}
+
+.char-skill-item-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    border: 1.5px solid var(--border);
+    flex-shrink: 0;
+    background: transparent;
+    transition: background 0.1s, border-color 0.1s;
+}
+
+.char-skill-item.proficient .char-skill-item-dot {
+    background: var(--gold);
+    border-color: var(--gold);
+}
+
+.char-skill-item.expertise .char-skill-item-dot {
+    background: var(--blue, #3b82f6);
+    border-color: var(--blue, #3b82f6);
+}
+
+.char-skill-item-name {
+    flex: 1;
+    color: var(--text);
+}
+
+.char-skill-item.proficient .char-skill-item-name {
+    color: var(--gold);
+}
+
+.char-skill-item.expertise .char-skill-item-name {
+    color: var(--blue, #3b82f6);
+}
+
+.char-skill-item-mod {
+    font-weight: 700;
+    color: var(--text-dim);
+    font-size: 0.9em;
+    min-width: 28px;
+    text-align: right;
+}
+
+.char-skill-item.proficient .char-skill-item-mod,
+.char-skill-item.expertise .char-skill-item-mod {
+    color: var(--text);
+}
+
+/* Saves row — clickable save boxes in detail modal */
+.char-saves-section {
+    margin-top: 10px;
+}
+
+.char-saves-section-title {
+    font-size: 0.78em;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-dim);
+    margin-bottom: 6px;
+}
+
+.char-saves-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+}
+
+.char-save-box {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 8px;
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    font-size: 0.82em;
+    cursor: pointer;
+    transition: background 0.12s, border-color 0.12s;
+    user-select: none;
+    background: var(--bg-card, var(--bg));
+}
+
+.char-save-box:hover {
+    background: var(--bg-hover, rgba(255,255,255,0.07));
+}
+
+.char-save-box.proficient {
+    border-color: var(--gold);
+    color: var(--gold);
+}
+
+.char-save-box-name {
+    font-weight: 700;
+    font-size: 0.9em;
+    text-transform: uppercase;
+}
+
+.char-save-box-mod {
+    font-weight: 600;
+}
+
+/* Attacks section in detail modal */
+.char-attacks-section {
+    margin-top: 12px;
+}
+
+.char-attacks-section-title {
+    font-size: 0.78em;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-dim);
+    margin-bottom: 8px;
+}
+
+.char-attacks-list {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.char-attack-entry {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px;
+    padding: 6px 10px;
+    background: var(--bg-card, var(--bg));
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    font-size: 0.85em;
+}
+
+.char-attack-name {
+    font-weight: 600;
+    color: var(--text);
+    flex: 1;
+    min-width: 80px;
+}
+
+.char-attack-type-badge {
+    font-size: 0.75em;
+    color: var(--text-dim);
+    padding: 1px 5px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+}
+
+.char-attack-roll {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.char-attack-roll-label {
+    font-size: 0.75em;
+    color: var(--text-dim);
+    text-transform: uppercase;
+}
+
+/* bestiary-dice spans used for clickable attack rolls */
+.char-attack-entry .bestiary-dice {
+    cursor: pointer;
+    padding: 2px 6px;
+    border-radius: 4px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    color: var(--gold);
+    font-weight: 600;
+    transition: background 0.12s, transform 0.08s;
+}
+
+.char-attack-entry .bestiary-dice:hover {
+    background: var(--bg-hover, rgba(255,255,255,0.07));
+    transform: scale(1.04);
+}

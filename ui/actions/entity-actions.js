@@ -37,6 +37,26 @@ const EntityActions = {
         showToast(ch.inspiration ? '⭐ Inspiration erhalten!' : '☆ Inspiration entfernt');
     },
 
+    // Charakter-Angriffs-Editor: add-attack / delete-attack (D-05, CHAR-03)
+    // Diese Handler mutieren NUR das transiente Formular-DOM — kein D, kein save()
+    'add-attack': () => {
+        var container = document.getElementById('cf-attacks-container');
+        if (!container) return;
+        var MAX_ATK = 20; // DoS cap (T-06-09)
+        if (container.querySelectorAll('.cf-attack-row').length >= MAX_ATK) {
+            showToast('Maximum 20 Angriffe erreicht', 'warning');
+            return;
+        }
+        // buildAttackRowHTML ist in party-crud.js definiert und window-exportiert
+        if (typeof window.buildAttackRowHTML === 'function') {
+            container.insertAdjacentHTML('beforeend', window.buildAttackRowHTML({}));
+        }
+    },
+    'delete-attack': ctx => {
+        var row = ctx.target ? ctx.target.closest('.cf-attack-row') : null;
+        if (row) row.remove();
+    },
+
     // NPC actions
     'edit-npc': ctx => editNPC(ctx.id),
     'delete-npc': ctx => deleteNPC(ctx.id),

@@ -418,6 +418,154 @@
                 </div>
             </div>
 
+            <!-- FERTIGKEITEN (Skill Proficiencies + Expertise) -->
+            <div class="cf-skills-panel">
+                <span class="cf-skills-title">🎯 Fertigkeiten</span>
+                <div class="cf-skills-hint">Übung = Häkchen, Expertise = E (doppelter Übungsbonus)</div>
+                <div class="cf-skills-grid">
+                    <!-- STR -->
+                    <div class="cf-skill-group">
+                        <span class="cf-skill-attr-label">STR</span>
+                        <label class="cf-skill-row" title="Athletik (STR)">
+                            <input type="checkbox" id="char-skill-athletics">
+                            <input type="checkbox" id="char-skill-exp-athletics" class="cf-skill-exp-check" title="Expertise">
+                            <span class="cf-skill-name">Athletik</span>
+                            <span class="cf-skill-exp-label">E</span>
+                        </label>
+                    </div>
+                    <!-- DEX -->
+                    <div class="cf-skill-group">
+                        <span class="cf-skill-attr-label">DEX</span>
+                        <label class="cf-skill-row" title="Akrobatik (DEX)">
+                            <input type="checkbox" id="char-skill-acrobatics">
+                            <input type="checkbox" id="char-skill-exp-acrobatics" class="cf-skill-exp-check" title="Expertise">
+                            <span class="cf-skill-name">Akrobatik</span>
+                            <span class="cf-skill-exp-label">E</span>
+                        </label>
+                        <label class="cf-skill-row" title="Fingerfertigkeit (DEX)">
+                            <input type="checkbox" id="char-skill-sleightOfHand">
+                            <input type="checkbox" id="char-skill-exp-sleightOfHand" class="cf-skill-exp-check" title="Expertise">
+                            <span class="cf-skill-name">Fingerfertigkeit</span>
+                            <span class="cf-skill-exp-label">E</span>
+                        </label>
+                        <label class="cf-skill-row" title="Heimlichkeit (DEX)">
+                            <input type="checkbox" id="char-skill-stealth">
+                            <input type="checkbox" id="char-skill-exp-stealth" class="cf-skill-exp-check" title="Expertise">
+                            <span class="cf-skill-name">Heimlichkeit</span>
+                            <span class="cf-skill-exp-label">E</span>
+                        </label>
+                    </div>
+                    <!-- INT -->
+                    <div class="cf-skill-group">
+                        <span class="cf-skill-attr-label">INT</span>
+                        <label class="cf-skill-row" title="Arkane Kunde (INT)">
+                            <input type="checkbox" id="char-skill-arcana">
+                            <input type="checkbox" id="char-skill-exp-arcana" class="cf-skill-exp-check" title="Expertise">
+                            <span class="cf-skill-name">Arkane Kunde</span>
+                            <span class="cf-skill-exp-label">E</span>
+                        </label>
+                        <label class="cf-skill-row" title="Geschichte (INT)">
+                            <input type="checkbox" id="char-skill-history">
+                            <input type="checkbox" id="char-skill-exp-history" class="cf-skill-exp-check" title="Expertise">
+                            <span class="cf-skill-name">Geschichte</span>
+                            <span class="cf-skill-exp-label">E</span>
+                        </label>
+                        <label class="cf-skill-row" title="Nachforschungen (INT)">
+                            <input type="checkbox" id="char-skill-investigation">
+                            <input type="checkbox" id="char-skill-exp-investigation" class="cf-skill-exp-check" title="Expertise">
+                            <span class="cf-skill-name">Nachforschungen</span>
+                            <span class="cf-skill-exp-label">E</span>
+                        </label>
+                        <label class="cf-skill-row" title="Naturkunde (INT)">
+                            <input type="checkbox" id="char-skill-nature">
+                            <input type="checkbox" id="char-skill-exp-nature" class="cf-skill-exp-check" title="Expertise">
+                            <span class="cf-skill-name">Naturkunde</span>
+                            <span class="cf-skill-exp-label">E</span>
+                        </label>
+                        <label class="cf-skill-row" title="Religion (INT)">
+                            <input type="checkbox" id="char-skill-religion">
+                            <input type="checkbox" id="char-skill-exp-religion" class="cf-skill-exp-check" title="Expertise">
+                            <span class="cf-skill-name">Religion</span>
+                            <span class="cf-skill-exp-label">E</span>
+                        </label>
+                    </div>
+                    <!-- WIS -->
+                    <div class="cf-skill-group">
+                        <span class="cf-skill-attr-label">WIS</span>
+                        <label class="cf-skill-row" title="Tierkunde (WIS)">
+                            <input type="checkbox" id="char-skill-animalHandling">
+                            <input type="checkbox" id="char-skill-exp-animalHandling" class="cf-skill-exp-check" title="Expertise">
+                            <span class="cf-skill-name">Tierkunde</span>
+                            <span class="cf-skill-exp-label">E</span>
+                        </label>
+                        <label class="cf-skill-row" title="Heilkunde (WIS)">
+                            <input type="checkbox" id="char-skill-medicine">
+                            <input type="checkbox" id="char-skill-exp-medicine" class="cf-skill-exp-check" title="Expertise">
+                            <span class="cf-skill-name">Heilkunde</span>
+                            <span class="cf-skill-exp-label">E</span>
+                        </label>
+                        <label class="cf-skill-row" title="Motiv erkennen (WIS)">
+                            <input type="checkbox" id="char-skill-insight">
+                            <input type="checkbox" id="char-skill-exp-insight" class="cf-skill-exp-check" title="Expertise">
+                            <span class="cf-skill-name">Motiv erkennen</span>
+                            <span class="cf-skill-exp-label">E</span>
+                        </label>
+                        <label class="cf-skill-row" title="Überlebenskunst (WIS)">
+                            <input type="checkbox" id="char-skill-survival">
+                            <input type="checkbox" id="char-skill-exp-survival" class="cf-skill-exp-check" title="Expertise">
+                            <span class="cf-skill-name">Überlebenskunst</span>
+                            <span class="cf-skill-exp-label">E</span>
+                        </label>
+                        <label class="cf-skill-row" title="Wahrnehmung (WIS)">
+                            <input type="checkbox" id="char-skill-perception">
+                            <input type="checkbox" id="char-skill-exp-perception" class="cf-skill-exp-check" title="Expertise">
+                            <span class="cf-skill-name">Wahrnehmung</span>
+                            <span class="cf-skill-exp-label">E</span>
+                        </label>
+                    </div>
+                    <!-- CHA -->
+                    <div class="cf-skill-group">
+                        <span class="cf-skill-attr-label">CHA</span>
+                        <label class="cf-skill-row" title="Auftreten (CHA)">
+                            <input type="checkbox" id="char-skill-performance">
+                            <input type="checkbox" id="char-skill-exp-performance" class="cf-skill-exp-check" title="Expertise">
+                            <span class="cf-skill-name">Auftreten</span>
+                            <span class="cf-skill-exp-label">E</span>
+                        </label>
+                        <label class="cf-skill-row" title="Einschüchtern (CHA)">
+                            <input type="checkbox" id="char-skill-intimidation">
+                            <input type="checkbox" id="char-skill-exp-intimidation" class="cf-skill-exp-check" title="Expertise">
+                            <span class="cf-skill-name">Einschüchtern</span>
+                            <span class="cf-skill-exp-label">E</span>
+                        </label>
+                        <label class="cf-skill-row" title="Täuschung (CHA)">
+                            <input type="checkbox" id="char-skill-deception">
+                            <input type="checkbox" id="char-skill-exp-deception" class="cf-skill-exp-check" title="Expertise">
+                            <span class="cf-skill-name">Täuschung</span>
+                            <span class="cf-skill-exp-label">E</span>
+                        </label>
+                        <label class="cf-skill-row" title="Überzeugen (CHA)">
+                            <input type="checkbox" id="char-skill-persuasion">
+                            <input type="checkbox" id="char-skill-exp-persuasion" class="cf-skill-exp-check" title="Expertise">
+                            <span class="cf-skill-name">Überzeugen</span>
+                            <span class="cf-skill-exp-label">E</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ANGRIFFE -->
+            <div class="cf-attacks-panel">
+                <div class="cf-attacks-header">
+                    <span class="cf-attacks-title">⚔️ Angriffe</span>
+                    <button type="button" class="btn btn-sm" data-action="add-attack" title="Angriff hinzufügen">+ Angriff</button>
+                </div>
+                <div class="cf-attacks-hint">Name, Bonus (z.B. +5), Schaden (z.B. 1d8+3), Typ optional. Max 20 Angriffe.</div>
+                <div id="cf-attacks-container" class="cf-attacks-container">
+                    <!-- Angriffszweilen werden hier dynamisch hinzugefügt -->
+                </div>
+            </div>
+
             <!-- Notizen (volle Breite) -->
             <div class="cf-notes-panel">
                 <span class="cf-notes-title">📝 Notizen</span>

@@ -203,6 +203,49 @@ function saveCharacter() {
         wis: $('char-save-wis').checked,
         cha: $('char-save-cha').checked
     };
+    // Collect skill proficiencies and expertise (D-03, CHAR-03)
+    // Keys from SKILL_INFO (core/constants.js:217) — 18 skills
+    const SKILL_KEYS = [
+        'acrobatics', 'animalHandling', 'arcana', 'athletics', 'deception',
+        'history', 'insight', 'intimidation', 'investigation', 'medicine',
+        'nature', 'perception', 'performance', 'persuasion', 'religion',
+        'sleightOfHand', 'stealth', 'survival'
+    ];
+    const skillProficiencies = {};
+    const skillExpertise = {};
+    SKILL_KEYS.forEach(key => {
+        const profEl = $(`char-skill-${key}`);
+        const expEl = $(`char-skill-exp-${key}`);
+        if (profEl) skillProficiencies[key] = profEl.checked;
+        if (expEl) skillExpertise[key] = expEl.checked;
+    });
+    // Collect attacks[] from form rows (D-05, CHAR-03)
+    // Validate damage formula: /^\d+[dD]\d+([+-]\d+)?$/ — reject invalid before storage (T-06-08)
+    const DAMAGE_FORMULA_RE = /^\d+[dD]\d+([+-]\d+)?$/;
+    const MAX_ATTACKS = 20; // DoS cap (T-06-09)
+    const attackRows = Array.from(
+        document.querySelectorAll('#cf-attacks-container .cf-attack-row')
+    );
+    const attacks = attackRows
+        .slice(0, MAX_ATTACKS)
+        .map(row => {
+            const nameEl = row.querySelector('.cf-attack-name');
+            const bonusEl = row.querySelector('.cf-attack-bonus');
+            const damageEl = row.querySelector('.cf-attack-damage');
+            const typeEl = row.querySelector('.cf-attack-type');
+            const name = nameEl ? nameEl.value.trim() : '';
+            if (!name) return null; // Reject rows with empty name
+            const damageRaw = damageEl ? damageEl.value.trim() : '';
+            // Validate damage formula — invalid formulas stored as '' (no clickable dice later)
+            const damage = DAMAGE_FORMULA_RE.test(damageRaw) ? damageRaw : '';
+            return {
+                name: name,
+                attackBonus: parseInt(bonusEl ? bonusEl.value : '0') || 0,
+                damage: damage,
+                damageType: typeEl ? typeEl.value.trim() : ''
+            };
+        })
+        .filter(Boolean);
     // Collect resistances and immunities
     const resistances = Array.from(
         document.querySelectorAll('#char-resistances .cf-chip input:checked')
@@ -233,6 +276,9 @@ function saveCharacter() {
         hitDice: $('char-hitdice').value.trim(),
         passivePerception: parseInt($('char-perception').value) || 10,
         inspiration: $('char-inspiration').checked,
+        skillProficiencies: skillProficiencies,
+        skillExpertise: skillExpertise,
+        attacks: attacks,
         resistances: resistances,
         immunities: immunities,
         languages: selectedLanguages,
@@ -370,6 +416,29 @@ function editChar(id) {
     if (avatarInput) avatarInput.value = ch.avatar || '';
     const heightInput = $('char-height');
     if (heightInput) heightInput.value = String(ch.height || '');
+    // Skill proficiencies + expertise (D-03, CHAR-03)
+    const SKILL_KEYS_EDIT = [
+        'acrobatics', 'animalHandling', 'arcana', 'athletics', 'deception',
+        'history', 'insight', 'intimidation', 'investigation', 'medicine',
+        'nature', 'perception', 'performance', 'persuasion', 'religion',
+        'sleightOfHand', 'stealth', 'survival'
+    ];
+    const chSkillProf = ch.skillProficiencies || {};
+    const chSkillExp = ch.skillExpertise || {};
+    SKILL_KEYS_EDIT.forEach(key => {
+        const profEl = $(`char-skill-${key}`);
+        const expEl = $(`char-skill-exp-${key}`);
+        if (profEl) profEl.checked = chSkillProf[key] || false;
+        if (expEl) expEl.checked = chSkillExp[key] || false;
+    });
+    // Attacks (D-05, CHAR-03)
+    const attacksContainer = $('cf-attacks-container');
+    if (attacksContainer) {
+        attacksContainer.innerHTML = '';
+        (ch.attacks || []).forEach(atk => {
+            attacksContainer.insertAdjacentHTML('beforeend', buildAttackRowHTML(atk));
+        });
+    }
     $('char-form').classList.add('open');
     $('char-form-icon').textContent = '▲';
 }
@@ -431,6 +500,22 @@ function cancelCharEdit() {
             clearChipSelection('.cf-chip');
             resetAttributes(['str', 'dex', 'con', 'int', 'wis', 'cha'], 'char', 10, updateAttrMod);
             clearSpellSlots('char-slot', 9);
+            // Clear skill checkboxes (D-03)
+            const SKILL_KEYS_CLEAR = [
+                'acrobatics', 'animalHandling', 'arcana', 'athletics', 'deception',
+                'history', 'insight', 'intimidation', 'investigation', 'medicine',
+                'nature', 'perception', 'performance', 'persuasion', 'religion',
+                'sleightOfHand', 'stealth', 'survival'
+            ];
+            SKILL_KEYS_CLEAR.forEach(key => {
+                const profEl = $(`char-skill-${key}`);
+                const expEl = $(`char-skill-exp-${key}`);
+                if (profEl) profEl.checked = false;
+                if (expEl) expEl.checked = false;
+            });
+            // Clear attacks container (D-05)
+            const attacksContainer = $('cf-attacks-container');
+            if (attacksContainer) attacksContainer.innerHTML = '';
         }
     });
 
@@ -462,9 +547,31 @@ function deleteChar(id) {
         }
     });
 }
+/**
+ * Erstellt HTML für eine Angriffszeile im Charakter-Formular (D-05, CHAR-03)
+ * Wird von editChar() und add-attack-Handler genutzt.
+ * Keine XSS-Gefahr hier — Werte werden nur als .value in <input> gesetzt (DOM, kein innerHTML für Namen).
+ * @param {Object} atk - { name, attackBonus, damage, damageType }
+ * @returns {string} HTML-String für die Angriffszeile
+ */
+function buildAttackRowHTML(atk) {
+    const name = atk && atk.name ? atk.name : '';
+    const bonus = atk && atk.attackBonus !== undefined ? atk.attackBonus : 0;
+    const damage = atk && atk.damage ? atk.damage : '';
+    const dmgType = atk && atk.damageType ? atk.damageType : '';
+    return `<div class="cf-attack-row">
+        <input type="text" class="cf-attack-name" placeholder="Name (z.B. Langschwert)" value="${esc(name)}" maxlength="100">
+        <input type="number" class="cf-attack-bonus" placeholder="+0" value="${parseInt(bonus) || 0}" title="Angriffsbonus">
+        <input type="text" class="cf-attack-damage" placeholder="1d8+3" value="${esc(damage)}" maxlength="20" title="Schadenswürfel (z.B. 1d8+3)">
+        <input type="text" class="cf-attack-type" placeholder="Typ" value="${esc(dmgType)}" maxlength="30" title="Schadenstyp (optional)">
+        <button type="button" class="btn btn-sm cf-attack-remove" data-action="delete-attack" title="Angriff entfernen">✕</button>
+    </div>`;
+}
+
 // ============================================================
 // EXPORTS FOR GLOBAL ACCESS
 // ============================================================
+window.buildAttackRowHTML = buildAttackRowHTML;
 window.updateAttrMod = updateAttrMod;
 window.updateInitFromDex = updateInitFromDex;
 window.updateSpeedDisplay = updateSpeedDisplay;
