@@ -76,10 +76,10 @@ test.describe('CHAR-03 / D-04: Klickbare Würfe im Detail-Modal', () => {
         await injectCharWithAdvancedFields(page);
     });
 
-    test.fixme(
+    test(
         'Klick auf STR-Attribut-Box → Würfelergebnis erscheint in Dice-Historie',
         async ({ page }) => {
-            // Wave-3-Aktivierung: 06-03 Task "Attribut-Checks klickbar im Detail-Modal (D-04)"
+            // Wave-3: 06-03 — Attribut-Checks klickbar im Detail-Modal (D-04)
             // 06-VALIDATION.md: CHAR-03 / D-04 Attribut-Check klickbar
             // Detail-Modal öffnen
             await page.click('[data-action="show-char-details"][data-id="99902"]');
@@ -89,8 +89,8 @@ test.describe('CHAR-03 / D-04: Klickbare Würfe im Detail-Modal', () => {
                 // @ts-ignore
                 return (window.diceHistory || []).length;
             });
-            // STR-Attribut-Box klicken
-            await page.click('[data-action="roll-char-attr-stop"][data-attr="str"]');
+            // STR-Attribut-Box direkt klicken (die Box selbst, nicht die Adv-Buttons)
+            await page.locator('[data-action="roll-char-attr-stop"][data-attr="str"]:not([data-adv])').first().click();
             await page.waitForTimeout(300);
             const historyAfter = await page.evaluate(() => {
                 // @ts-ignore
@@ -100,15 +100,15 @@ test.describe('CHAR-03 / D-04: Klickbare Würfe im Detail-Modal', () => {
         }
     );
 
-    test.fixme(
+    test(
         'Klick auf Heimlichkeit-Skill → Würfelergebnis in Dice-Historie (Expertise)',
         async ({ page }) => {
-            // Wave-3-Aktivierung: 06-03 Task "Skills-Sektion im Detail-Modal"
+            // Wave-3: 06-03 — Skills-Sektion im Detail-Modal
             // Rhogar hat Expertise in stealth → modifier = DEX+4 + 2×Prof+3 = +10
             await page.click('[data-action="show-char-details"][data-id="99902"]');
             await page.waitForTimeout(300);
             const historyBefore = await page.evaluate(() => (window.diceHistory || []).length);
-            await page.click('[data-action="roll-char-skill-stop"][data-skill="stealth"]');
+            await page.locator('[data-action="roll-char-skill-stop"][data-skill="stealth"]:not([data-adv])').first().click();
             await page.waitForTimeout(300);
             const historyAfter = await page.evaluate(() => (window.diceHistory || []).length);
             expect(historyAfter).toBeGreaterThan(historyBefore);
@@ -129,28 +129,28 @@ test.describe('CHAR-03 / D-05: Klickbare Angriffe im Detail-Modal', () => {
         await injectCharWithAdvancedFields(page);
     });
 
-    test.fixme(
+    test(
         'Angriff +5 / 1d6+3 → Dice-Spans mit data-value="1d20+5" und data-value="1d6+3" im Modal',
         async ({ page }) => {
-            // Wave-3-Aktivierung: 06-03 Task "Angriffs-Sektion im Detail-Modal (D-05)"
+            // Wave-3: 06-03 — Angriffs-Sektion im Detail-Modal (D-05)
             // 06-VALIDATION.md: CHAR-03 / D-05 — Treffer- und Schadenswurf separat klickbar
             await page.click('[data-action="show-char-details"][data-id="99902"]');
             await page.waitForTimeout(300);
-            // Trefferwurf-Span
+            // Trefferwurf-Span (Kurzschwert +5)
             await expect(page.locator('[data-value="1d20+5"]').first()).toBeVisible();
-            // Schadenswurf-Span
+            // Schadenswurf-Span (Kurzschwert 1d6+3)
             await expect(page.locator('[data-value="1d6+3"]').first()).toBeVisible();
         }
     );
 
-    test.fixme(
+    test(
         'Klick auf Angriffs-Trefferwurf → Würfelergebnis in Dice-Historie',
         async ({ page }) => {
-            // Wave-3-Aktivierung: 06-03
+            // Wave-3: 06-03 — Angriffs-Trefferwurf klickbar via bestiary-roll-dice handler
             await page.click('[data-action="show-char-details"][data-id="99902"]');
             await page.waitForTimeout(300);
             const historyBefore = await page.evaluate(() => (window.diceHistory || []).length);
-            await page.click('[data-value="1d20+5"]');
+            await page.locator('[data-value="1d20+5"]').first().click();
             await page.waitForTimeout(300);
             const historyAfter = await page.evaluate(() => (window.diceHistory || []).length);
             expect(historyAfter).toBeGreaterThan(historyBefore);

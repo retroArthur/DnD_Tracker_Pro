@@ -797,3 +797,5 @@ window.rollFloatingAdvantage = rollFloatingAdvantage;
 window.rollFloatingDisadvantage = rollFloatingDisadvantage;
 window.rollFloatingCustom = rollFloatingCustom;
 window.rerollFloating = rerollFloating;
+// Export diceHistory array reference for E2E test access (phase 06-03)
+window.diceHistory = diceHistory;

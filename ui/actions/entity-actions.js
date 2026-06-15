@@ -57,6 +57,96 @@ const EntityActions = {
         if (row) row.remove();
     },
 
+    // ============================================================
+    // CHAR-03 / D-04: Clickable rolls in the detail modal
+    // All handlers: stopPropagation() first (-stop), then compute+display roll
+    // No function-local const X = window.X — access globals directly
+    // ============================================================
+
+    // Skill check roll (roll-char-skill-stop)
+    'roll-char-skill-stop': ctx => {
+        ctx.event.stopPropagation();
+        var ch = EntityLookup.character(ctx.id);
+        if (!ch) return;
+        var dataset = ctx.target ? ctx.target.dataset : {};
+        var skillKey = dataset.skill || '';
+        var adv = dataset.adv || '';
+        var skillInfo = SKILL_INFO ? SKILL_INFO[skillKey] : null;
+        if (!skillInfo) return;
+        var mod = calcSkillModifier(ch, skillKey);
+        var skillName = skillInfo.name;
+        var label = esc(ch.name) + ': ' + skillName;
+        var notation = adv === 'adv' ? '2d20kh1' : (adv === 'dis' ? '2d20kl1' : '1d20');
+        var parsed = parseDiceNotation(notation);
+        var roll = parsed ? parsed.total : Math.floor(Math.random() * 20) + 1;
+        var total = roll + mod;
+        var rolls = parsed ? parsed.rolls : [roll];
+        displayDiceResult(total, label + ' (' + notation + formatModifier(mod) + ')', rolls, roll === 20, roll === 1);
+        addToDiceHistory(label, total, rolls);
+    },
+
+    // Saving throw roll (roll-char-save-stop)
+    'roll-char-save-stop': ctx => {
+        ctx.event.stopPropagation();
+        var ch = EntityLookup.character(ctx.id);
+        if (!ch) return;
+        var dataset = ctx.target ? ctx.target.dataset : {};
+        var attr = dataset.attr || '';
+        var adv = dataset.adv || '';
+        var attrVal = (ch.attributes && ch.attributes[attr]) || 10;
+        var attrMod = Math.floor((attrVal - 10) / 2);
+        var saves = ch.saveProficiencies || {};
+        var profBonus = ch.proficiencyBonus || getProficiencyBonus(ch.level || 1);
+        var saveMod = attrMod + (saves[attr] ? profBonus : 0);
+        var label = esc(ch.name) + ': ' + attr.toUpperCase() + ' Rettungswurf';
+        var notation = adv === 'adv' ? '2d20kh1' : (adv === 'dis' ? '2d20kl1' : '1d20');
+        var parsed = parseDiceNotation(notation);
+        var roll = parsed ? parsed.total : Math.floor(Math.random() * 20) + 1;
+        var total = roll + saveMod;
+        var rolls = parsed ? parsed.rolls : [roll];
+        displayDiceResult(total, label + ' (' + notation + formatModifier(saveMod) + ')', rolls, roll === 20, roll === 1);
+        addToDiceHistory(label, total, rolls);
+    },
+
+    // Raw attribute check roll (roll-char-attr-stop)
+    'roll-char-attr-stop': ctx => {
+        ctx.event.stopPropagation();
+        var ch = EntityLookup.character(ctx.id);
+        if (!ch) return;
+        var dataset = ctx.target ? ctx.target.dataset : {};
+        var attr = dataset.attr || '';
+        var adv = dataset.adv || '';
+        var attrVal = (ch.attributes && ch.attributes[attr]) || 10;
+        var mod = Math.floor((attrVal - 10) / 2);
+        var label = esc(ch.name) + ': ' + attr.toUpperCase() + ' Attribut-Check';
+        var notation = adv === 'adv' ? '2d20kh1' : (adv === 'dis' ? '2d20kl1' : '1d20');
+        var parsed = parseDiceNotation(notation);
+        var roll = parsed ? parsed.total : Math.floor(Math.random() * 20) + 1;
+        var total = roll + mod;
+        var rolls = parsed ? parsed.rolls : [roll];
+        displayDiceResult(total, label + ' (' + notation + formatModifier(mod) + ')', rolls, roll === 20, roll === 1);
+        addToDiceHistory(label, total, rolls);
+    },
+
+    // Attack roll from detail modal (roll-char-attack-stop)
+    // data-formula contains the dice formula (e.g. "1d20+5" or "1d8+3")
+    // data-label contains descriptive name for the roll (e.g. "Kurzschwert Treffer")
+    'roll-char-attack-stop': ctx => {
+        ctx.event.stopPropagation();
+        var dataset = ctx.target ? ctx.target.dataset : {};
+        var formula = dataset.formula || dataset.value || '';
+        var label = dataset.label || 'Angriff';
+        if (!formula) return;
+        var parsed = parseDiceNotation(formula);
+        if (!parsed) return;
+        var total = parsed.total;
+        var rolls = parsed.rolls || [];
+        var isCrit = (parsed.keptRolls || rolls).some(function(r) { return r === 20; });
+        var isFail = (parsed.keptRolls || rolls).some(function(r) { return r === 1; });
+        displayDiceResult(total, label + ' (' + formula + ')', rolls, isCrit, isFail);
+        addToDiceHistory(label, total, rolls);
+    },
+
     // NPC actions
     'edit-npc': ctx => editNPC(ctx.id),
     'delete-npc': ctx => deleteNPC(ctx.id),

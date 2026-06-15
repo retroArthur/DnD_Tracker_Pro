@@ -44,6 +44,18 @@ function showCharacterDetails(id) {
     const profSaves = ['str', 'dex', 'con', 'int', 'wis', 'cha']
         .filter(s => saves[s])
         .map(s => s.toUpperCase());
+    // Skills (D-03/D-04, CHAR-03) — computed modifiers via calcSkillModifier from Wave 1
+    const skillProf = ch.skillProficiencies || {};
+    const skillExp = ch.skillExpertise || {};
+    // SKILL_INFO is in the global lexical scope (core/constants.js:217)
+    // Group skills by attribute for display
+    const SKILL_BY_ATTR = { str: [], dex: [], con: [], int: [], wis: [], cha: [] };
+    Object.keys(SKILL_INFO).forEach(key => {
+        const info = SKILL_INFO[key];
+        if (SKILL_BY_ATTR[info.attr]) {
+            SKILL_BY_ATTR[info.attr].push(key);
+        }
+    });
     // Class display
     const classDisplay = ch.subclass
         ? `${esc(ch.characterClass || '—')} (${esc(ch.subclass)})`
@@ -99,20 +111,124 @@ function showCharacterDetails(id) {
                 </div>
             </div>
 
-            <!-- Attribute Grid -->
+            <!-- Attribute Grid — clickable for raw attribute checks (D-04) -->
             <div class="char-attr-grid">
                 ${['str', 'dex', 'con', 'int', 'wis', 'cha']
                     .map(
                         attr => `
-                    <div class="char-attr-box ${saves[attr] ? 'proficient' : ''}">
+                    <div class="char-attr-box clickable ${saves[attr] ? 'proficient' : ''}"
+                         data-action="roll-char-attr-stop"
+                         data-id="${ch.id}"
+                         data-attr="${attr}"
+                         title="${attr.toUpperCase()} Attribut-Check würfeln (${attrMod(attrs[attr] || 10)})">
                         <div class="char-attr-name">${attr.toUpperCase()}</div>
                         <div class="char-attr-value">${attrs[attr] || 10}</div>
                         <div class="char-attr-mod">${attrMod(attrs[attr] || 10)}</div>
+                        <div class="char-adv-btns">
+                            <button class="char-adv-btn adv" data-action="roll-char-attr-stop" data-id="${ch.id}" data-attr="${attr}" data-adv="adv" title="Vorteil">V</button>
+                            <button class="char-adv-btn dis" data-action="roll-char-attr-stop" data-id="${ch.id}" data-attr="${attr}" data-adv="dis" title="Nachteil">N</button>
+                        </div>
                     </div>
                 `
                     )
                     .join('')}
             </div>
+
+            <!-- Skills Section (CHAR-03, D-03/D-04) -->
+            <div class="char-skills-section">
+                <div class="char-skills-section-title">🎯 Fertigkeiten</div>
+                <div class="char-skills-by-attr">
+                    ${['str', 'dex', 'int', 'wis', 'cha']
+                        .filter(attr => SKILL_BY_ATTR[attr] && SKILL_BY_ATTR[attr].length)
+                        .map(attr => `
+                        <div class="char-skill-attr-group">
+                            <div class="char-skill-attr-head">${attr.toUpperCase()}</div>
+                            ${SKILL_BY_ATTR[attr].map(key => {
+                                const info = SKILL_INFO[key];
+                                const isExp = skillExp[key];
+                                const isProf = skillProf[key];
+                                const skillMod = calcSkillModifier(ch, key);
+                                const modStr = formatModifier(skillMod);
+                                const cssClass = isExp ? 'expertise' : (isProf ? 'proficient' : '');
+                                return `<div class="char-skill-item ${cssClass} char-roll-btn"
+                                    data-action="roll-char-skill-stop"
+                                    data-id="${ch.id}"
+                                    data-skill="${key}"
+                                    title="${esc(info.name)} würfeln (${modStr})">
+                                    <span class="char-skill-item-dot"></span>
+                                    <span class="char-skill-item-name">${esc(info.name)}</span>
+                                    <span class="char-skill-item-mod">${modStr}</span>
+                                    <span class="char-adv-btns">
+                                        <button class="char-adv-btn adv" data-action="roll-char-skill-stop" data-id="${ch.id}" data-skill="${key}" data-adv="adv" title="Vorteil">V</button>
+                                        <button class="char-adv-btn dis" data-action="roll-char-skill-stop" data-id="${ch.id}" data-skill="${key}" data-adv="dis" title="Nachteil">N</button>
+                                    </span>
+                                </div>`;
+                            }).join('')}
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+
+            <!-- Saving Throws — clickable (D-04) -->
+            <div class="char-saves-section">
+                <div class="char-saves-section-title">🛡️ Rettungswürfe</div>
+                <div class="char-saves-row">
+                    ${['str', 'dex', 'con', 'int', 'wis', 'cha'].map(attr => {
+                        const attrVal = attrs[attr] || 10;
+                        const attrModVal = Math.floor((attrVal - 10) / 2);
+                        const profBonus = ch.proficiencyBonus || getProficiencyBonus(ch.level || 1);
+                        const saveMod = attrModVal + (saves[attr] ? profBonus : 0);
+                        const saveModStr = formatModifier(saveMod);
+                        const isProf = saves[attr];
+                        return `<div class="char-save-box ${isProf ? 'proficient' : ''} char-roll-btn"
+                            data-action="roll-char-save-stop"
+                            data-id="${ch.id}"
+                            data-attr="${attr}"
+                            title="${attr.toUpperCase()} Rettungswurf (${saveModStr})">
+                            <span class="char-save-box-name">${attr.toUpperCase()}</span>
+                            <span class="char-save-box-mod">${saveModStr}</span>
+                            <span class="char-adv-btns">
+                                <button class="char-adv-btn adv" data-action="roll-char-save-stop" data-id="${ch.id}" data-attr="${attr}" data-adv="adv" title="Vorteil">V</button>
+                                <button class="char-adv-btn dis" data-action="roll-char-save-stop" data-id="${ch.id}" data-attr="${attr}" data-adv="dis" title="Nachteil">N</button>
+                            </span>
+                        </div>`;
+                    }).join('')}
+                </div>
+            </div>
+
+            <!-- Attacks Section (CHAR-03, D-05) -->
+            ${(ch.attacks && ch.attacks.length) ? `
+            <div class="char-attacks-section">
+                <div class="char-attacks-section-title">⚔️ Angriffe</div>
+                <div class="char-attacks-list">
+                    ${ch.attacks.map((atk, atkIdx) => {
+                        // XSS safety: escape name + type FIRST (T-06-07)
+                        const safeName = esc(atk.name || '');
+                        const safeType = atk.damageType ? esc(atk.damageType) : '';
+                        // Attack bonus: synthesize hit formula (validated formula, no user content)
+                        const bonus = parseInt(atk.attackBonus) || 0;
+                        const hitFormula = bonus >= 0 ? `1d20+${bonus}` : `1d20${bonus}`;
+                        // damage: already validated at save time (whitelist ^\d+[dD]\d+([+-]\d+)?$)
+                        const damageFormula = atk.damage || '';
+                        // Use dedicated roll-char-attack-stop handler so rolls land in diceHistory (A2)
+                        // data-value kept for E2E assertion ([data-value="1d20+5"])
+                        const hitSpan = `<span class="bestiary-dice" data-action="roll-char-attack-stop" data-id="${ch.id}" data-value="${esc(hitFormula)}" data-formula="${esc(hitFormula)}" data-label="${safeName} Treffer" title="Trefferwurf (${esc(hitFormula)})">${esc(hitFormula)}</span>`;
+                        const dmgSpan = damageFormula ? `<span class="bestiary-dice" data-action="roll-char-attack-stop" data-id="${ch.id}" data-value="${esc(damageFormula)}" data-formula="${esc(damageFormula)}" data-label="${safeName} Schaden" title="Schadenswurf (${esc(damageFormula)})">${esc(damageFormula)}</span>` : '';
+                        return `<div class="char-attack-entry">
+                            <span class="char-attack-name">${safeName}</span>
+                            ${safeType ? `<span class="char-attack-type-badge">${safeType}</span>` : ''}
+                            <span class="char-attack-roll">
+                                <span class="char-attack-roll-label">Treffer:</span>
+                                ${hitSpan}
+                            </span>
+                            ${dmgSpan ? `<span class="char-attack-roll">
+                                <span class="char-attack-roll-label">Schaden:</span>
+                                ${dmgSpan}
+                            </span>` : ''}
+                        </div>`;
+                    }).join('')}
+                </div>
+            </div>` : ''}
 
             <!-- Two Column Info -->
             <div class="char-info-grid">
