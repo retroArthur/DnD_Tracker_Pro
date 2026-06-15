@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-last_updated: "2026-06-14T23:21:35.056Z"
+last_updated: "2026-06-15T14:16:39.843Z"
 progress:
   total_phases: 7
   completed_phases: 4
   total_plans: 30
-  completed_plans: 23
+  completed_plans: 24
   percent: 57
 ---
 
@@ -16,7 +16,7 @@ progress:
 
 **Last Updated:** 2026-06-15
 **Phase:** 5
-**Status:** Ready to execute (7 Pläne geplant)
+**Status:** Ready to execute
 
 ---
 
@@ -24,15 +24,15 @@ progress:
 
 **Core Value:** Die App muss am Spieltisch zuverlässig offline laufen — ein Spielleiter-Begleiter, der nie im Weg steht und keine Daten verliert.
 
-**Current Focus:** Phase 05 — welt-&-story (geplant 2026-06-15: 7 Pläne / 7 Wellen, bereit zur Ausführung)
+**Current Focus:** Phase 05 — Welt & Story
 
 ---
 
 ## Current Position
 
 ```
-Phase: 05 (welt-story) — PLANNED
-Plan: 7 Pläne, 7 Wellen (05-01 … 05-07) — 0/7 ausgeführt
+Phase: 05 (Welt & Story) — EXECUTING
+Plan: 2 of 7
 Next:  Phase 05 ausführen (/gsd-execute-phase 5)
 Status: Ready to execute
 
@@ -46,7 +46,7 @@ Progress: [██████████] 100% Phase 4 (23/23 Pläne) · Phase 
 | 2 | Technik-Fundament | Complete |
 | 3 | Bestiary | Complete (5/5 Pläne) |
 | 4 | Initiative-Erweiterungen | Complete (4/4 Pläne abgeschlossen) |
-| 5 | Welt & Story | Planned (0/7 Pläne) |
+| 5 | Welt & Story | In Progress (1/7 Pläne) |
 | 6 | Spieler-Verwaltung | Not started |
 | 7 | Komfort & Analyse | Not started |
 
@@ -115,8 +115,8 @@ Progress: [██████████] 100% Phase 4 (23/23 Pläne) · Phase 
 
 ## Session Continuity
 
-**Last action:** Phase 05 (Welt & Story) geplant (2026-06-15). Research → VALIDATION → Plan → Check durchlaufen: 05-RESEARCH.md (verifizierte Signaturen, Harptos-Kalender 1492 DR, 5e-Reise/Wetter, Build-Time-Tabellen-Strategie, Dedup-Fallstricke) + 05-VALIDATION.md (Nyquist, manuell erstellt wegen dt. „## Validierungs-Architektur"-Sektion — Commit 7f91adc). 7 Pläne in 7 Wellen (05-01 Fundament/Schema/Migration 4.0.0/Harptos-Konstanten/11 Modul-Skelette/4 Tabs · 05-02 Build-Time-Tabellen-Generatoren · 05-03 Session-Prep · 05-04 NPC-Generator · 05-05 Timeline/Kalender · 05-06 Reise/Wetter · 05-07 Fraktionen — Commit edc792d). gsd-plan-checker: VERIFICATION PASSED (alle 12 Dimensionen, 0 Blocker/0 Warnings; Context-Compliance deckt D-00a..D-19 = Decision-Coverage-Gate erfüllt). Entscheidungen: `--skip-ui` (UI per D-00d an bestehende Listen-/Tab-Muster gebunden, kein UI-SPEC), Pattern-Mapper übersprungen (Research deckt Analoga). Calendar-Substrat (05-05) vor Reise (05-06); Build-Time-Tabellen (05-02) vor Konsumenten (05-04/06); npc-crud-Ladereihenfolge vor NPC-Generator gewahrt.
-**Next action:** Phase 05 ausführen: `/gsd-execute-phase 5`.
+**Last action:** Plan 05-01 (Wave-0-Fundament) ausgeführt (2026-06-15). Schema-Erweiterungen (sessionPreps, factions), Migration 4.0.0 (calendar.month 0→1-basiert), Harptos-Kalender-Konstanten (HARPTOS_MONTHS/FESTIVALS/SEASONS), 11 Modul-Skelette mit 3-fach-Registrierung, view-welt.html (4 Tabs), welt.css, Wave-0-Test-Stubs (16 skip, grün). Build: 117 Module synchron, Duplikat-Check bestanden.
+**Next action:** Plan 05-02 ausführen (Build-Time-Tabellen-Generatoren).
 
 ---
 

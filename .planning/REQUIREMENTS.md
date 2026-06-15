@@ -42,11 +42,11 @@ Requirements für diesen Milestone. Jedes wird genau einer Roadmap-Phase zugeord
 
 ### Welt & Story (WELT)
 
-- [ ] **WELT-01**: Nutzer kann Sessions mit Szenenkarten vorbereiten (Strong Start, geplante Szenen, offene Fäden der letzten Session)
-- [ ] **WELT-02**: Nutzer kann NPCs per Knopfdruck generieren (deutscher Name, Persönlichkeit, Marotte)
-- [ ] **WELT-03**: Nutzer kann Kampagnen-Ereignisse chronologisch festhalten (Timeline, mit dem Kalender verknüpft)
-- [ ] **WELT-04**: Nutzer kann Reisen tageweise simulieren (Wetter, Zufallsbegegnungen je Gelände, Reisetempo)
-- [ ] **WELT-05**: Nutzer kann Fraktionen mit Zielen verwalten und den Ruf der Gruppe je Fraktion verfolgen
+- [x] **WELT-01**: Nutzer kann Sessions mit Szenenkarten vorbereiten (Strong Start, geplante Szenen, offene Fäden der letzten Session)
+- [x] **WELT-02**: Nutzer kann NPCs per Knopfdruck generieren (deutscher Name, Persönlichkeit, Marotte)
+- [x] **WELT-03**: Nutzer kann Kampagnen-Ereignisse chronologisch festhalten (Timeline, mit dem Kalender verknüpft)
+- [x] **WELT-04**: Nutzer kann Reisen tageweise simulieren (Wetter, Zufallsbegegnungen je Gelände, Reisetempo)
+- [x] **WELT-05**: Nutzer kann Fraktionen mit Zielen verwalten und den Ruf der Gruppe je Fraktion verfolgen
 
 ### Spieler-Verwaltung (CHAR)
 
@@ -117,11 +117,11 @@ Explizit ausgeschlossen. Dokumentiert, um Scope-Creep zu verhindern.
 | INIT-01     | Phase 4 | Complete |
 | INIT-02     | Phase 4 | Complete |
 | INIT-03     | Phase 4 | Complete |
-| WELT-01     | Phase 5 | Pending |
-| WELT-02     | Phase 5 | Pending |
-| WELT-03     | Phase 5 | Pending |
-| WELT-04     | Phase 5 | Pending |
-| WELT-05     | Phase 5 | Pending |
+| WELT-01     | Phase 5 | Complete |
+| WELT-02     | Phase 5 | Complete |
+| WELT-03     | Phase 5 | Complete |
+| WELT-04     | Phase 5 | Complete |
+| WELT-05     | Phase 5 | Complete |
 | CHAR-01     | Phase 6 | Pending |
 | CHAR-02     | Phase 6 | Pending |
 | CHAR-03     | Phase 6 | Pending |
