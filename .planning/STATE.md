@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-last_updated: "2026-06-15T14:16:39.843Z"
+last_updated: "2026-06-15T14:27:06.785Z"
 progress:
   total_phases: 7
   completed_phases: 4
   total_plans: 30
-  completed_plans: 24
+  completed_plans: 25
   percent: 57
 ---
 
@@ -32,7 +32,7 @@ progress:
 
 ```
 Phase: 05 (Welt & Story) — EXECUTING
-Plan: 2 of 7
+Plan: 3 of 7
 Next:  Phase 05 ausführen (/gsd-execute-phase 5)
 Status: Ready to execute
 
@@ -83,6 +83,7 @@ Progress: [██████████] 100% Phase 4 (23/23 Pläne) · Phase 
 | bestiary-delete in plan-04 registriert (03-04) | 3 (03-04) | SC2 E2E braucht die Action in plan-04; plan-05 kann sie neu registrieren (EventDelegation last-write-wins) |
 | getMonsterTemplates() → getSRDMonsters() Alias (03-02) | 3 (03-02) | Single source of truth; Code-Review fand Regression im Encounter-Template-Loader (deutsche _ids + Array-Shape) → behoben in ee66bbf |
 | Phase 04 P04-02 | 20 | 3 tasks | 5 files |
+| Phase 05-welt-story P02 | 5 | 2 tasks | 4 files |
 
 ### Known Blockers / Research Flags
 
@@ -128,3 +129,4 @@ _State initialized: 2026-06-11_
 - [Phase ?]: INIT-01: renderStatblockHTML DRY-Extraktion in bestiary-render.js, E2E via evaluate()-Injektion
 - [Phase 04-03]: D-07 LR kein Auto-Reset (manuell via lr-reset-btn); E2E via page.evaluate(nextTurn) statt UI-Button (data-action=call, nicht data-action=next-turn)
 - [Phase 04-04]: rollMobAttack N-fach = alive Schadenswuerfe summiert (kein Trefferroll-Gating, DM entscheidet Kontext); dissolveMob nutzt numerischen cbId-Filter direkt ohne parseEntityId
+- [Phase ?]: Build-Time-Python-Generatoren für große Tabellen statt Hand-Tippen

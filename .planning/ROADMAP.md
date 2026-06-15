@@ -154,7 +154,7 @@ Plans:
 
 **Wave 2** *(blocked on Wave 1)*
 
-- [ ] 05-02-PLAN.md — Tabellen-Generatoren: tools/generate_npc_tables.py + generate_reise_tables.py → npc-/reise-default-tables.js (WELT-02, WELT-04)
+- [x] 05-02-PLAN.md — Tabellen-Generatoren: tools/generate_npc_tables.py + generate_reise_tables.py → npc-/reise-default-tables.js (WELT-02, WELT-04)
 
 **Wave 3** *(blocked on Wave 1)*
 
@@ -210,7 +210,7 @@ Plans:
 | 2. Technik-Fundament        | 5/5 | Complete    | 2026-06-12 |
 | 3. Bestiary                 | 5/5 | Complete    | 2026-06-13 |
 | 4. Initiative-Erweiterungen | 4/4 | Complete    | 2026-06-14 |
-| 5. Welt & Story             | 1/7 | In Progress|  |
+| 5. Welt & Story             | 2/7 | In Progress|  |
 | 6. Spieler-Verwaltung       | 0/?            | Not started | -         |
 | 7. Komfort & Analyse        | 0/?            | Not started | -         |
 
