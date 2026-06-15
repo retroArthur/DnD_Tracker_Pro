@@ -117,6 +117,22 @@ MODULES = [
     'features/random-tables.js',
     'features/loot-distribution.js',
     'features/sessions/sessions.js',
+    # Phase 5: Welt & Story — Modul-Skelette (Wave 0)
+    'features/session-prep/session-prep-render.js',
+    'features/session-prep/session-prep-crud.js',
+    # NPC-Generator (nach npc-crud.js — Abhaengigkeit)
+    'features/npc-generator/npc-default-tables.js',
+    'features/npc-generator/npc-generator.js',
+    # Timeline/Kalender
+    'features/timeline/timeline-render.js',
+    'features/timeline/timeline-crud.js',
+    # Reise (default-tables zuerst)
+    'features/reise/reise-default-tables.js',
+    'features/reise/reise-render.js',
+    'features/reise/reise-crud.js',
+    # Fraktionen
+    'features/fraktionen/fraktionen-render.js',
+    'features/fraktionen/fraktionen-crud.js',
     'features/wiki/wiki.js',
     # Shops-Module
     'features/shops/shops-core.js',
@@ -431,7 +447,8 @@ def build(minify=False, production=False, verbose=False):
         'dashboard.css', 'dmscreen.css', 'dice.css',
         'tools.css',
         'pwa.css', 'migration.css', 'file-backup.css', 'command-palette.css',
-        'bestiary.css'
+        'bestiary.css',
+        'welt.css'
     ]
     css_parts = []
     for css_file in css_files:
@@ -458,6 +475,7 @@ def build(minify=False, production=False, verbose=False):
     html_templates = [
         'header.html', 'view-party.html', 'view-content.html',
         'view-encounters.html', 'view-bestiary.html', 'view-resources.html', 'view-tools.html',
+        'view-welt.html',
         'modals-entity.html', 'modals-shops.html', 'modals-tools.html',
         'modals-editors.html'
     ]

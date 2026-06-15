@@ -89,6 +89,22 @@ const MODULES = [
     'features/random-tables.js',
     'features/loot-distribution.js',
     'features/sessions/sessions.js',
+    // Phase 5: Welt & Story — Modul-Skelette (Wave 0)
+    'features/session-prep/session-prep-render.js',
+    'features/session-prep/session-prep-crud.js',
+    // NPC-Generator (nach npc-crud.js — Abhaengigkeit)
+    'features/npc-generator/npc-default-tables.js',
+    'features/npc-generator/npc-generator.js',
+    // Timeline/Kalender
+    'features/timeline/timeline-render.js',
+    'features/timeline/timeline-crud.js',
+    // Reise (default-tables zuerst)
+    'features/reise/reise-default-tables.js',
+    'features/reise/reise-render.js',
+    'features/reise/reise-crud.js',
+    // Fraktionen
+    'features/fraktionen/fraktionen-render.js',
+    'features/fraktionen/fraktionen-crud.js',
     'features/wiki/wiki.js',
     'features/shops/shops-core.js',
     'features/shops/shop-export.js',
@@ -199,6 +215,7 @@ async function loadModules() {
         'assets/templates/view-encounters.html',
         'assets/templates/view-resources.html',
         'assets/templates/view-tools.html',
+        'assets/templates/view-welt.html',
         'assets/templates/modals-entity.html',
         'assets/templates/modals-shops.html',
         'assets/templates/modals-tools.html',

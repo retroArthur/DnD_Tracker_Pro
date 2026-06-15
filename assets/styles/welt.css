@@ -1,0 +1,264 @@
+/* ========================================
+   WELT.CSS - Phase 5: Welt & Story
+   CSS-Grundgerüst für alle 5 Features
+   ======================================== */
+
+/* ========================================
+   wp- Session-Prep (WELT-01)
+   ======================================== */
+
+.wp-view-content {
+    padding: var(--space-md, 1rem);
+}
+
+.wp-empty-state {
+    text-align: center;
+    color: var(--text-dim);
+    padding: 3rem 1rem;
+}
+
+.wp-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm, 0.5rem);
+}
+
+.wp-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: var(--space-md, 1rem);
+}
+
+.wp-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--space-sm, 0.5rem);
+}
+
+.wp-card-title {
+    font-weight: 600;
+    color: var(--text);
+}
+
+/* ========================================
+   npcg- NPC-Generator (WELT-02)
+   ======================================== */
+
+.npcg-preview-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: var(--space-md, 1rem);
+    margin-bottom: var(--space-md, 1rem);
+}
+
+.npcg-field-label {
+    font-size: 0.8rem;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 0.25rem;
+}
+
+.npcg-field-value {
+    color: var(--text);
+    margin-bottom: var(--space-sm, 0.5rem);
+}
+
+.npcg-filter-row {
+    display: flex;
+    gap: var(--space-sm, 0.5rem);
+    flex-wrap: wrap;
+    margin-bottom: var(--space-md, 1rem);
+}
+
+/* ========================================
+   tl- Timeline & Harptos-Kalender (WELT-03)
+   ======================================== */
+
+.tl-kalender-header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: var(--space-sm, 0.5rem) var(--space-md, 1rem);
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--gold);
+}
+
+#kalender-monat-anzeige {
+    font-weight: 700;
+}
+
+.tl-view-content {
+    padding: var(--space-md, 1rem);
+}
+
+.tl-empty-state {
+    text-align: center;
+    color: var(--text-dim);
+    padding: 3rem 1rem;
+}
+
+.tl-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm, 0.5rem);
+}
+
+.tl-event-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: var(--space-md, 1rem);
+    border-left: 3px solid var(--gold);
+}
+
+.tl-event-datum {
+    font-size: 0.8rem;
+    color: var(--text-dim);
+    margin-bottom: 0.25rem;
+}
+
+.tl-event-titel {
+    font-weight: 600;
+    color: var(--text);
+}
+
+/* ========================================
+   rs- Reise-Simulator (WELT-04)
+   ======================================== */
+
+.rs-view-content {
+    padding: var(--space-md, 1rem);
+}
+
+.rs-empty-state {
+    text-align: center;
+    color: var(--text-dim);
+    padding: 3rem 1rem;
+}
+
+.rs-config-panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: var(--space-md, 1rem);
+    margin-bottom: var(--space-md, 1rem);
+}
+
+.rs-config-row {
+    display: flex;
+    gap: var(--space-md, 1rem);
+    align-items: center;
+    flex-wrap: wrap;
+    margin-bottom: var(--space-sm, 0.5rem);
+}
+
+.rs-result-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: var(--space-md, 1rem);
+    margin-top: var(--space-md, 1rem);
+}
+
+.rs-tagesmarsch {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: var(--gold);
+}
+
+.rs-wetter-badge {
+    display: inline-block;
+    padding: 0.2rem 0.6rem;
+    border-radius: 999px;
+    background: var(--surface-alt, var(--surface));
+    border: 1px solid var(--border);
+    font-size: 0.85rem;
+    margin-top: var(--space-sm, 0.5rem);
+}
+
+/* ========================================
+   fr- Fraktionen & Ruf (WELT-05)
+   ======================================== */
+
+.fr-view-content {
+    padding: var(--space-md, 1rem);
+}
+
+.fr-empty-state {
+    text-align: center;
+    color: var(--text-dim);
+    padding: 3rem 1rem;
+}
+
+.fr-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm, 0.5rem);
+}
+
+.fr-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: var(--space-md, 1rem);
+}
+
+.fr-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--space-sm, 0.5rem);
+}
+
+.fr-card-name {
+    font-weight: 700;
+    font-size: 1.05rem;
+}
+
+.fr-ruf-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.2rem 0.6rem;
+    border-radius: 999px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    border: 1px solid var(--border);
+}
+
+.fr-ruf-wert {
+    font-size: 0.85rem;
+    color: var(--text-dim);
+    margin-left: 0.4rem;
+}
+
+.fr-ruf-buttons {
+    display: flex;
+    gap: 0.3rem;
+    margin-top: var(--space-sm, 0.5rem);
+}
+
+.fr-ruf-btn {
+    padding: 0.2rem 0.6rem;
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    background: var(--surface);
+    cursor: pointer;
+    font-size: 0.85rem;
+    color: var(--text);
+}
+
+.fr-ruf-btn:hover {
+    background: var(--surface-hover, var(--border));
+}
+
+.fr-history-entry {
+    font-size: 0.8rem;
+    color: var(--text-dim);
+    padding: 0.2rem 0;
+    border-top: 1px solid var(--border);
+}

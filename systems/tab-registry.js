@@ -94,6 +94,27 @@ const TAB_RENDER_REGISTRY = {
         renders: ['renderBestiaryList'],
         init: null,
         cleanup: 'cleanupBestiaryEditor'
+    },
+    // Phase 5: Welt & Story
+    sessionprep: {
+        renders: ['renderSessionPrepList'],
+        init: null,
+        cleanup: null
+    },
+    kalender: {
+        renders: ['renderTimeline', 'renderKalender'],
+        init: null,
+        cleanup: null
+    },
+    reise: {
+        renders: ['renderReise'],
+        init: null,
+        cleanup: null
+    },
+    fraktionen: {
+        renders: ['renderFraktionen'],
+        init: null,
+        cleanup: null
     }
 };
 /**

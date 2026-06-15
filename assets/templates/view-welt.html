@@ -1,0 +1,69 @@
+<!-- WELT & STORY VIEWS - Phase 5 (WELT-01..05) -->
+<!-- Wave 0: Grundgerüst mit 4 leeren View-Containern -->
+<!-- Implementierung: Pläne 05-02 bis 05-07 füllen die Inhalte -->
+
+<!-- SESSION-PREP VIEW (WELT-01) -->
+<section id="view-sessionprep" class="view">
+    <div class="section-toolbar">
+        <div class="section-toolbar-identity">
+            <span class="section-toolbar-title">📋 Session-Vorbereitung</span>
+            <span class="section-toolbar-count" id="sessionprep-count">0</span>
+        </div>
+        <div class="section-toolbar-actions">
+            <button class="btn btn-primary" data-action="call" data-value="saveSessionPrep">+ Neue Session-Prep</button>
+        </div>
+    </div>
+    <div class="wp-view-content" id="sessionprep-content">
+        <!-- renderSessionPrepList() befüllt diesen Bereich -->
+    </div>
+</section>
+
+<!-- KALENDER / TIMELINE VIEW (WELT-03) -->
+<section id="view-kalender" class="view">
+    <div class="section-toolbar">
+        <div class="section-toolbar-identity">
+            <span class="section-toolbar-title">📅 Timeline &amp; Kalender</span>
+            <span class="section-toolbar-count" id="kalender-count">0</span>
+        </div>
+        <div class="section-toolbar-actions">
+            <button class="btn btn-primary" data-action="call" data-value="saveTimelineEvent">+ Ereignis</button>
+        </div>
+    </div>
+    <div class="tl-kalender-header" id="tl-kalender-header">
+        <!-- renderKalender() befüllt diese Zeile -->
+    </div>
+    <div class="tl-view-content" id="tl-events-list">
+        <!-- renderTimeline() befüllt diesen Bereich -->
+    </div>
+</section>
+
+<!-- REISE VIEW (WELT-04) -->
+<section id="view-reise" class="view">
+    <div class="section-toolbar">
+        <div class="section-toolbar-identity">
+            <span class="section-toolbar-title">🧭 Reise &amp; Wetter</span>
+        </div>
+        <div class="section-toolbar-actions">
+            <button class="btn btn-primary" data-action="call" data-value="startReise">+ Neue Reise</button>
+        </div>
+    </div>
+    <div class="rs-view-content" id="reise-content">
+        <!-- renderReise() befüllt diesen Bereich -->
+    </div>
+</section>
+
+<!-- FRAKTIONEN VIEW (WELT-05) -->
+<section id="view-fraktionen" class="view">
+    <div class="section-toolbar">
+        <div class="section-toolbar-identity">
+            <span class="section-toolbar-title">⚔️ Fraktionen &amp; Ruf</span>
+            <span class="section-toolbar-count" id="fraktionen-count">0</span>
+        </div>
+        <div class="section-toolbar-actions">
+            <button class="btn btn-primary" data-action="call" data-value="saveFraktion">+ Neue Fraktion</button>
+        </div>
+    </div>
+    <div class="fr-view-content" id="fraktionen-content">
+        <!-- renderFraktionen() befüllt diesen Bereich -->
+    </div>
+</section>
