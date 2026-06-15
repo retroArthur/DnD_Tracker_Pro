@@ -2,12 +2,12 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: planning
-last_updated: "2026-06-15T16:11:48.959Z"
+status: executing
+last_updated: "2026-06-15T17:45:34.950Z"
 progress:
   total_phases: 7
   completed_phases: 5
-  total_plans: 30
+  total_plans: 34
   completed_plans: 30
   percent: 71
 ---
@@ -16,7 +16,7 @@ progress:
 
 **Last Updated:** 2026-06-15
 **Phase:** 6
-**Status:** Ready to plan
+**Status:** Ready to execute
 
 ---
 
@@ -24,19 +24,19 @@ progress:
 
 **Core Value:** Die App muss am Spieltisch zuverlässig offline laufen — ein Spielleiter-Begleiter, der nie im Weg steht und keine Daten verliert.
 
-**Current Focus:** Phase 06 — Spieler-Verwaltung (bereit zum Planen)
+**Current Focus:** Phase 06 — Spieler-Verwaltung (geplant, bereit zur Ausführung)
 
 ---
 
 ## Current Position
 
 ```
-Phase: 06 (Spieler-Verwaltung) — CONTEXT GATHERED
-Plan: Not started
-Next:  Phase 06 planen (/gsd-plan-phase 6)
-Status: Ready to plan (06-CONTEXT.md geschrieben, Commit d10df5c)
+Phase: 06 (Spieler-Verwaltung) — PLANNED
+Plan: 4 Pläne / 4 Wellen (sequenziell auf main)
+Next:  Phase 06 ausführen (/gsd-execute-phase 6)
+Status: Ready to execute
 
-Progress: [██████████] Phase 5 abgeschlossen (30/30 Pläne); Phase 6 Diskussion fertig
+Progress: [██████████] Phase 5 abgeschlossen (30/30 Pläne); Phase 6 geplant (4 Pläne, Checker PASSED)
 ```
 
 **Phases:**
@@ -47,7 +47,7 @@ Progress: [██████████] Phase 5 abgeschlossen (30/30 Pläne);
 | 3 | Bestiary | Complete (5/5 Pläne) |
 | 4 | Initiative-Erweiterungen | Complete (4/4 Pläne abgeschlossen) |
 | 5 | Welt & Story | Complete (7/7 Pläne) |
-| 6 | Spieler-Verwaltung | Not started |
+| 6 | Spieler-Verwaltung | Planned (4 Pläne / 4 Wellen) |
 | 7 | Komfort & Analyse | Not started |
 
 ---
@@ -115,14 +115,15 @@ Progress: [██████████] Phase 5 abgeschlossen (30/30 Pläne);
 - [ ] Phase 5 — 2 menschliche Sichtungen (05-HUMAN-UAT.md): NPC-Inhaltsqualität/Latenz, Harptos-Monatsnamen-Kanon
 - [ ] Phase 5 (optional, benign): `D.calendar.month` 0→1-Basis in core/data.js angleichen (vom Verifier als nicht-user-sichtbar bestätigt)
 - [x] Phase 6 diskutieren: `/gsd-discuss-phase 6` ✓ (2026-06-15, 06-CONTEXT.md, Commit d10df5c)
-- [ ] Phase 6 planen: `/gsd-plan-phase 6` (Reuse-Phase → ggf. `--skip-ui`)
+- [x] Phase 6 planen: `/gsd-plan-phase 6` ✓ (2026-06-15, 4 Pläne / 4 Wellen, `--skip-ui`, Research + manuelle 06-VALIDATION.md, Plan-Checker VERIFICATION PASSED — 0 Blocker; Commits 61c538c/8dfbcbf)
+- [ ] Phase 6 ausführen: `/gsd-execute-phase 6` (sequenziell auf main; Wave 1 Fundament zuerst, dann Inspiration → Charakterwerte → XP/Milestone)
 
 ---
 
 ## Session Continuity
 
-**Last action:** Phase 06 (Spieler-Verwaltung) diskutiert (2026-06-15). Graubereiche Inspiration + Skills/Saves/Angriffe besprochen; CHAR-01 (XP/Milestone) per bestätigtem Default-Vorschlag gelockt. `06-CONTEXT.md` + `06-DISCUSSION-LOG.md` geschrieben (Commit d10df5c). Kernentscheidungen: Inspiration = klickbarer ⭐ auf der Charakterkarte, binär (bleibt `inspiration`-Boolean, kein Undo); 18 Skills + Expertise (Struktur analog `saveProficiencies`, Mapping aus vorhandenem `SKILL_INFO` `core/constants.js:217`); klickbare Skill-/Save-/Attribut-Würfe mit Vorteil/Nachteil-Buttons über den vorhandenen Roller (`getAbilityModifier`/`getProficiencyBonus`, `renderClickableDice`); Angriffe als freie Liste {Name, Bonus, Schaden, Typ} mit klickbaren Würfen; Anzeige im Detail-Modal `showCharacterDetails`, Bearbeitung im bestehenden Charakter-Editor; CHAR-01: `xp`-Feld + Migration, Abschluss-Trigger in der Initiative mit Auto-Summe via `CR_TO_XP` + Gleichverteilung auf aktive Charaktere + Level-Hinweis (kein Auto-Bump; neue PHB-Level→XP-Tabelle nötig, da `XP_THRESHOLDS` = Encounter-Schwierigkeit). Brownfield-Erweiterung des Party-Systems, kein neuer Tab.
-**Next action:** Phase 06 planen: `/gsd-plan-phase 6` (ggf. `/clear` davor). UI-Gate: laut CONTEXT (D-00d/D-06) Reuse bestehender Muster (Detail-Modal + Charakter-Editor, kein neues Design) → `--skip-ui` ist der schlanke Pfad (vgl. Phase 5), `/gsd-ui-phase 6` nur bei pixelgenauer neuer Optik.
+**Last action:** Phase 06 (Spieler-Verwaltung) geplant (2026-06-15). Research (sonnet) verifizierte alle Reuse-Targets per Zeilennummern (HIGH) und fand zwei Fallen: `SKILL_INFO` (`core/constants.js:217`) vs. das separate `SKILLS`-Array (`dice-core.js:11`), und das `renderClickableDice`→`rollQrefDice`-Routing (Phase-6-Würfe nutzen eigene `roll-char-*-stop`-Handler). `06-RESEARCH.md` liefert die ready-to-paste `XP_LEVEL_THRESHOLDS`-Konstante (20 Werte, klar getrennt von `XP_THRESHOLDS`=Encounter-Schwierigkeit). `06-VALIDATION.md` manuell aus der dt. Sektion „Validierungs-Architektur" erstellt (Nyquist-Grep verfehlt dt. Überschrift — Quirk). Planner (opus) → 4 Pläne / 4 Wellen, sequenziell auf main: 06-01 Fundament (Konstanten + 4 Pure-Helper `calcSkillModifier`/`canLevelUp`/`getXPForCR`/`distributeXP` + Schema/Migration 5.0.0 + Wave-0-Tests), 06-02 Inspiration (CHAR-02, klickbarer ⭐ + `-stop`, plain save, kein Undo), 06-03 Erweiterte Charakterwerte (CHAR-03, 18 Skills+Expertise+Angriffe, klickbare Würfe mit Vorteil/Nachteil), 06-04 XP-/Milestone-Tracker (CHAR-01, Initiative-Abschluss-Trigger + Auto-Summe + Gleichverteilung + Level-Hinweis + Milestone-Modus). Plan-Checker (sonnet) VERIFICATION PASSED — alle 12 Dimensionen, 15/15 D-IDs abgedeckt, Dimension 8 erfüllt, 0 Blocker. Commits 61c538c (Research+Validation), 8dfbcbf (4 Pläne + ROADMAP-Annotation).
+**Next action:** Phase 06 ausführen: `/gsd-execute-phase 6` (ggf. `/clear` davor). Sequenziell auf main (keine Worktrees — Pläne fassen geteilte Party-Dateien an, vgl. Quirk #9); Wave 1 Fundament MUSS vor den Feature-Wellen landen. E2E wirklich laufen lassen (`file://`-Basis, ESM-Imports, NICHT den kaputten `addCombatant()`-Helper nutzen). Offene Annahmen aus Research: A2 `rollQrefDice`-Export (Fallback dokumentiert), A3 `combatants[*].cr` evtl. unset (manuelle XP-Korrektur immer verfügbar).
 
 ---
 
