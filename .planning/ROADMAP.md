@@ -14,7 +14,7 @@
 - [x] **Phase 3: Bestiary** — SRD-Monster-Kompendium offline + eigene Kreaturen + Encounter-Import (completed 2026-06-13)
 - [x] **Phase 4: Initiative-Erweiterungen** — Statblock-Popup, Legendäre Aktionen & Resistenzen, Mob-Modus (completed 2026-06-13)
 - [x] **Phase 5: Welt & Story** — Session-Prep, NPC-Generator, Timeline, Reise-Simulator, Fraktionen
-- [ ] **Phase 6: Spieler-Verwaltung** — XP/Milestone-Tracker, Inspiration, Erweiterte Charakterwerte
+- [x] **Phase 6: Spieler-Verwaltung** — XP/Milestone-Tracker, Inspiration, Erweiterte Charakterwerte
 - [ ] **Phase 7: Komfort & Analyse** — Soundboard, Würfel-Statistiken
 
 ---
@@ -204,7 +204,7 @@ Plans:
 
 **Wave 4** *(blocked on Wave 1+3 — teilt sich party-details.js + entity-actions.js)*
 
-- [ ] 06-04-PLAN.md — CHAR-01 XP-/Milestone-Tracker: Initiative-Abschluss-Trigger + XP-Modal (CR-Auto-Summe + manuelle Korrektur) + Gleichverteilung + Level-Hinweis (kein Auto-Bump) + Milestone-Modus (CHAR-01)
+- [x] 06-04-PLAN.md — CHAR-01 XP-/Milestone-Tracker: Initiative-Abschluss-Trigger + XP-Modal (CR-Auto-Summe + manuelle Korrektur) + Gleichverteilung + Level-Hinweis (kein Auto-Bump) + Milestone-Modus (CHAR-01)
 
 ### Phase 7: Komfort & Analyse
 
@@ -228,7 +228,7 @@ Plans:
 | 3. Bestiary                 | 5/5 | Complete    | 2026-06-13 |
 | 4. Initiative-Erweiterungen | 4/4 | Complete    | 2026-06-14 |
 | 5. Welt & Story             | 7/7 | Complete    | 2026-06-15 |
-| 6. Spieler-Verwaltung       | 3/4 | In Progress|  |
+| 6. Spieler-Verwaltung       | 4/4 | Complete    | 2026-06-15 |
 | 7. Komfort & Analyse        | 0/?            | Not started | -         |
 
 ---

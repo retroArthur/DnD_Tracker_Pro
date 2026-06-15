@@ -3,20 +3,20 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-last_updated: "2026-06-15T21:27:07.716Z"
+last_updated: "2026-06-15T23:00:00.000Z"
 progress:
   total_phases: 7
-  completed_phases: 5
+  completed_phases: 6
   total_plans: 34
-  completed_plans: 33
-  percent: 71
+  completed_plans: 34
+  percent: 97
 ---
 
 # Project State: D&D Kampagnen-Tracker Pro — Stabilisierung & Ausbau
 
 **Last Updated:** 2026-06-15
 **Phase:** 6
-**Status:** Ready to execute
+**Status:** Complete (alle 4 Pläne abgeschlossen)
 
 ---
 
@@ -31,12 +31,12 @@ progress:
 ## Current Position
 
 ```
-Phase: 06 (spieler-verwaltung) — EXECUTING
-Plan: 4 of 4
-Next:  Phase 06-03 ausführen (/gsd-execute-phase 6)
-Status: Ready to execute
+Phase: 06 (spieler-verwaltung) — COMPLETE
+Plan: 4 of 4 (DONE)
+Next:  Phase 07 — Komfort & Analyse
+Status: Complete
 
-Progress: [██████████] Phase 5 abgeschlossen (30/30 Pläne); Phase 6 Plan 2/4 abgeschlossen (06-02 Inspiration ✓)
+Progress: [██████████████████████████████████] Phase 6 abgeschlossen (4/4 Pläne: CHAR-01/02/03 ✓)
 ```
 
 **Phases:**
@@ -47,7 +47,7 @@ Progress: [██████████] Phase 5 abgeschlossen (30/30 Pläne);
 | 3 | Bestiary | Complete (5/5 Pläne) |
 | 4 | Initiative-Erweiterungen | Complete (4/4 Pläne abgeschlossen) |
 | 5 | Welt & Story | Complete (7/7 Pläne) |
-| 6 | Spieler-Verwaltung | Planned (4 Pläne / 4 Wellen) |
+| 6 | Spieler-Verwaltung | Complete (4/4 Pläne) |
 | 7 | Komfort & Analyse | Not started |
 
 ---
@@ -121,13 +121,14 @@ Progress: [██████████] Phase 5 abgeschlossen (30/30 Pläne);
 - [x] Phase 6 ausführen Plan 1 (06-01 Fundament): ✓ (2026-06-15, XP_LEVEL_THRESHOLDS + 4 helpers + migration 5.0.0 + Wave-0 tests; 49 unit tests grün, 2 E2E stubs runnable; Commits b79a1f4/21cf563/d268369/9fc7dd3)
 - [x] Phase 6 ausführen Plan 2 (06-02 Inspiration): ✓ (2026-06-15, always-visible ⭐ toggle + stop-propagation handler + CSS + 5 E2E tests grün; Commits 4e5be0b/b289349)
 - [x] Phase 6 ausführen Plan 3 (06-03 Charakterwerte): ✓ (2026-06-15, 18 Skill/Expertise-Checkboxen + Angriffsliste im Editor; Skills/Saves/Attribute/Angriffe als klickbare W20-Würfe mit Adv/Disadv im Detail-Modal; 4 CHAR-03 E2E-Tests grün; 49 Unit-Tests grün; window.diceHistory exportiert; roll-char-*-stop Handler; Commits 88b7752/ea9a64c)
+- [x] Phase 6 ausführen Plan 4 (06-04 XP-/Milestone-Tracker, CHAR-01 Wave-4): ✓ (2026-06-15, finish-combat-xp Trigger + XP-Verteilungs-Modal + applyXpDistribution; Detail-Modal XP-Block + canLevelUp-Hint; confirm-level-up + milestone-level-up Handler; Milestone-Modus .char-xp-milestone-section; 4 CHAR-01 E2E-Tests aktiviert + grün; 421 Unit-Tests grün; Commits 2e18db8/6392d62)
 
 ---
 
 ## Session Continuity
 
-**Last action:** Phase 06-03 (CHAR-03: Erweiterte Charakterwerte) ausgeführt (2026-06-15). 18 Skill/Expertise-Checkboxen im Editor (cf-skills-panel); freie Angriffsliste (cf-attacks-panel, add-attack/delete-attack); saveCharacter liest skillProficiencies+skillExpertise+attacks mit DoS-Cap 20 + Damage-Whitelist; Detail-Modal mit klickbaren Attribut-Boxen (roll-char-attr-stop), Skills (roll-char-skill-stop, calcSkillModifier), Saves (roll-char-save-stop), Angriffs-Spans (roll-char-attack-stop); window.diceHistory exportiert; 4 CHAR-03 E2E-Tests von fixme auf aktiv umgestellt; 49 Unit-Tests grün. 2 Deviations auto-fixed. Commits 88b7752/ea9a64c.
-**Next action:** Phase 06-04 (XP/Milestone, CHAR-01 Wave-4): canLevelUp-UI, Milestone-Toggle, Level-Up-Hint; die 4 fixme CHAR-01 Tests aktivieren.
+**Last action:** Phase 06-04 (CHAR-01: XP-/Milestone-Tracker) ausgeführt (2026-06-15). finish-combat-xp Button in Initiative-Toolbar; XP-Verteilungs-Modal (#xp-distribution-modal) mit CR-Autosum (getXPForCR), manuellem Korrekturfeld, Living-Count-Anzeige, Live-Preview; applyXpDistribution() mit pushUndo('XP verteilt') vor Mutation + distributeXP + canLevelUp-Hints. Detail-Modal: .char-xp-section (xp + Schwelle + Fortschrittsbalken + canLevelUp-Badge), .char-xp-milestone-section (+1-Level-Button). confirm-level-up + milestone-level-up Handler (pushUndo + level cap 20 + getProfBonus). 4 CHAR-01 E2E-Tests von fixme auf aktiv; 8/8 grün; 421 Unit-Tests grün. 1 Auto-Deviation (Rule 1). Commits 2e18db8/6392d62.
+**Next action:** Phase 07 — Komfort & Analyse planen und ausführen.
 
 ---
 
@@ -151,3 +152,6 @@ _State initialized: 2026-06-11_
 - [Phase ?]: [Phase 06-01]: XP_LEVEL_THRESHOLDS 0-based indexing (index[1]=300 for Level 2); canLevelUp uses XP_LEVEL_THRESHOLDS[nextLevel-1]
 - [Phase 06-03]: roll-char-attack-stop uses dedicated handler (not bestiary-roll-dice/rollQrefDice) — rollQrefDice skips addToDiceHistory
 - [Phase 06-03]: window.diceHistory exported from dice-core.js; E2E tests check (window.diceHistory||[]).length
+- [Phase 06-04]: endCombat() unberührt — XP-Verteilung als separate finish-combat-xp Aktion (RESEARCH Muster 4 anti-overload)
+- [Phase 06-04]: Milestone-Modus nutzt .char-xp-milestone-section (ohne .char-xp-section) für korrekte E2E not.toBeVisible()-Assertion
+- [Phase 06-04]: pushUndo('XP verteilt') VOR distributeXP-Aufruf — distributeXP mutiert activeChars in-place sofort
