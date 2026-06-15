@@ -172,7 +172,7 @@ function renderCharacterCard(ch, renderConditionsBar, CATS) {
                 </div>
                 <div class="char-card-info">
                     <div class="char-card-name">
-                        ${ch.inspiration ? '⭐ ' : ''}${esc(ch.name)}
+                        <button class="char-inspiration-toggle${ch.inspiration ? ' active' : ''}" data-action="toggle-inspiration-stop" data-id="${ch.id}" title="${ch.inspiration ? 'Inspiration entfernen' : 'Inspiration vergeben'}">${ch.inspiration ? '⭐' : '☆'}</button>${esc(ch.name)}
                         <span class="drag-handle" title="Sortieren">⋮⋮</span>
                     </div>
                     <div class="char-card-meta">
