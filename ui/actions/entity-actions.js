@@ -303,6 +303,62 @@ const EntityActions = {
     'bestiary-delete': ctx => {
         var rawId = ctx.target ? ctx.target.dataset.id : ctx.id;
         if (typeof window.deleteBestiaryEntry === 'function') window.deleteBestiaryEntry(rawId);
+    },
+
+    // Session-Prep actions (WELT-01, Plan 05-03)
+    'show-session-prep-modal': ctx => {
+        if (typeof window.showSessionPrepModal === 'function') window.showSessionPrepModal(null);
+    },
+    'save-session-prep': ctx => {
+        if (typeof window.saveSessionPrep === 'function') window.saveSessionPrep();
+    },
+    'edit-session-prep': ctx => {
+        if (typeof window.editSessionPrep === 'function') window.editSessionPrep(ctx.id);
+    },
+    'delete-session-prep': ctx => {
+        if (typeof window.deleteSessionPrep === 'function') window.deleteSessionPrep(ctx.id);
+    },
+    'add-szene-card': ctx => {
+        var container = document.getElementById('prep-szenen-container');
+        if (!container) return;
+        var idx = container.querySelectorAll('.wp-szene-item').length;
+        if (typeof window.renderSzeneFormular === 'function') {
+            container.insertAdjacentHTML('beforeend', window.renderSzeneFormular({ id: idx + 1, titel: '', beschreibung: '', ort: '' }, idx));
+        }
+    },
+    'remove-szene': ctx => {
+        var idx = parseInt(ctx.value);
+        var container = document.getElementById('prep-szenen-container');
+        if (!container) return;
+        var items = container.querySelectorAll('.wp-szene-item');
+        if (items[idx]) items[idx].remove();
+    },
+    'add-faden-manual': ctx => {
+        var input = document.getElementById('prep-faeden-manuell');
+        if (!input || !input.value.trim()) return;
+        var container = document.getElementById('prep-faeden-container');
+        if (!container) return;
+        var text = input.value.trim();
+        var html = [
+            '<div class="wp-faden-item">',
+            '  <input type="hidden" class="wp-faden-quelle-id" value="">',
+            '  <input type="hidden" class="wp-faden-quelle-typ" value="manual">',
+            '  <input type="text" class="wp-faden-text form-control" value="' + (typeof esc === 'function' ? esc(text) : text) + '">',
+            '  <button type="button" class="btn btn-sm wp-faden-remove-btn" data-action="remove-faden" title="Entfernen">×</button>',
+            '</div>'
+        ].join('');
+        container.insertAdjacentHTML('beforeend', html);
+        input.value = '';
+    },
+    'remove-faden': ctx => {
+        var item = ctx.target.closest('.wp-faden-item');
+        if (item) item.remove();
+    },
+    'insert-entity-link': ctx => {
+        var editorId = ctx.value || (ctx.target && ctx.target.dataset.value);
+        if (editorId && typeof window.showInsertEntityLinkModal === 'function') {
+            window.showInsertEntityLinkModal(editorId);
+        }
     }
 };
 
