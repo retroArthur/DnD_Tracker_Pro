@@ -303,6 +303,146 @@ function formatMod(mod) {
 }
 
 // ============================================================
+// PHASE 6: SPIELER-VERWALTUNG — Pure Rules Helpers (CommonJS mirror)
+// keep in sync with utils/game-rules.js (browser runtime version)
+// ============================================================
+
+/**
+ * PHB Charakteraufstieg: Kumulativer XP-Bedarf pro Stufe (D&D 5e, PHB S.15)
+ * ACHTUNG: Nicht zu verwechseln mit XP_THRESHOLDS (Encounter-Schwierigkeit)
+ * @type {number[]}
+ */
+const XP_LEVEL_THRESHOLDS_TEST = [
+    0,       // Level 1
+    300,     // Level 2
+    900,     // Level 3
+    2700,    // Level 4
+    6500,    // Level 5
+    14000,   // Level 6
+    23000,   // Level 7
+    34000,   // Level 8
+    48000,   // Level 9
+    64000,   // Level 10
+    85000,   // Level 11
+    100000,  // Level 12
+    120000,  // Level 13
+    140000,  // Level 14
+    165000,  // Level 15
+    195000,  // Level 16
+    225000,  // Level 17
+    265000,  // Level 18
+    305000,  // Level 19
+    355000   // Level 20
+];
+
+/**
+ * Minimale SKILL_INFO-Kopie für Tests (alle 18 Fertigkeiten aus core/constants.js:217)
+ * keep in sync with SKILL_INFO in core/constants.js
+ * @type {Object.<string, {name: string, attr: string}>}
+ */
+const SKILL_INFO_TEST = {
+    acrobatics: { name: 'Akrobatik', attr: 'dex' },
+    animalHandling: { name: 'Tierkunde', attr: 'wis' },
+    arcana: { name: 'Arkane Kunde', attr: 'int' },
+    athletics: { name: 'Athletik', attr: 'str' },
+    deception: { name: 'Täuschung', attr: 'cha' },
+    history: { name: 'Geschichte', attr: 'int' },
+    insight: { name: 'Motiv erkennen', attr: 'wis' },
+    intimidation: { name: 'Einschüchtern', attr: 'cha' },
+    investigation: { name: 'Nachforschungen', attr: 'int' },
+    medicine: { name: 'Heilkunde', attr: 'wis' },
+    nature: { name: 'Naturkunde', attr: 'int' },
+    perception: { name: 'Wahrnehmung', attr: 'wis' },
+    performance: { name: 'Auftreten', attr: 'cha' },
+    persuasion: { name: 'Überzeugen', attr: 'cha' },
+    religion: { name: 'Religion', attr: 'int' },
+    sleightOfHand: { name: 'Fingerfertigkeit', attr: 'dex' },
+    stealth: { name: 'Heimlichkeit', attr: 'dex' },
+    survival: { name: 'Überlebenskunst', attr: 'wis' }
+};
+
+/**
+ * Minimale CR_TO_XP-Kopie für Tests (aus features/encounter-calculator.js:32)
+ * Enthält gemischte Schlüsseltypen: Number-Keys für ganze CRs, String-Keys für Brüche
+ * keep in sync with CR_TO_XP in features/encounter-calculator.js
+ * @type {Object}
+ */
+const CR_TO_XP_TEST = {
+    0: 10, '1/8': 25, '1/4': 50, '1/2': 100,
+    1: 200, 2: 450, 3: 700, 4: 1100, 5: 1800,
+    6: 2300, 7: 2900, 8: 3900, 9: 5000, 10: 5900,
+    11: 7200, 12: 8400, 13: 10000, 14: 11500, 15: 13000,
+    16: 15000, 17: 18000, 18: 20000, 19: 22000, 20: 25000,
+    21: 33000, 22: 41000, 23: 50000, 24: 62000, 25: 75000,
+    26: 90000, 27: 105000, 28: 120000, 29: 135000, 30: 155000
+};
+
+/**
+ * Berechnet den Fertigkeitsmodifikator (TestUtils-Version ohne browser globals)
+ * keep in sync with calcSkillModifier in utils/game-rules.js
+ *
+ * @param {Object} ch - Charakter-Objekt
+ * @param {string} skillKey - Skill-Key aus SKILL_INFO (z.B. 'stealth')
+ * @returns {number}
+ */
+function calcSkillModifier(ch, skillKey) {
+    const skillInfo = SKILL_INFO_TEST[skillKey];
+    if (!skillInfo) return 0;
+    const attrVal = ch.attributes?.[skillInfo.attr] || 10;
+    const attrMod = Math.floor((attrVal - 10) / 2); // getAbilityModifier inline
+    const profBonus = ch.proficiencyBonus || (Math.ceil((ch.level || 1) / 4) + 1);
+    const hasExpertise = !!ch.skillExpertise?.[skillKey];
+    const isProficient = !!ch.skillProficiencies?.[skillKey];
+    const profFactor = hasExpertise ? 2 : (isProficient ? 1 : 0);
+    return attrMod + profBonus * profFactor;
+}
+
+/**
+ * Prüft ob ein Charakter den nächsten Level aufsteigen kann (TestUtils-Version)
+ * keep in sync with canLevelUp in utils/game-rules.js
+ *
+ * @param {Object} ch - Charakter mit level und xp
+ * @returns {boolean}
+ */
+function canLevelUp(ch) {
+    const nextLevel = (ch.level || 1) + 1;
+    if (nextLevel > 20) return false;
+    return (ch.xp || 0) >= XP_LEVEL_THRESHOLDS_TEST[nextLevel - 1];
+}
+
+/**
+ * Gibt XP für einen CR zurück (TestUtils-Version ohne browser globals)
+ * Behandelt gemischte Schlüsseltypen (Number und String).
+ * keep in sync with getXPForCR in utils/game-rules.js
+ *
+ * @param {number|string} cr
+ * @returns {number}
+ */
+function getXPForCR(cr) {
+    return CR_TO_XP_TEST[cr] ?? CR_TO_XP_TEST[String(cr)] ?? 0;
+}
+
+/**
+ * Verteilt XP gleichmäßig auf aktive Charaktere (TestUtils-Version)
+ * keep in sync with distributeXP in utils/game-rules.js
+ *
+ * @param {number} totalXP
+ * @param {Array} activeChars
+ * @returns {{ share: number, remainder: number }}
+ */
+function distributeXP(totalXP, activeChars) {
+    if (!activeChars || activeChars.length === 0) {
+        return { share: 0, remainder: totalXP };
+    }
+    const share = Math.floor(totalXP / activeChars.length);
+    const remainder = totalXP - share * activeChars.length;
+    activeChars.forEach(ch => {
+        ch.xp = (ch.xp || 0) + share;
+    });
+    return { share, remainder };
+}
+
+// ============================================================
 // MODULE EXPORTS (for Jest tests)
 // ============================================================
 module.exports = {
@@ -317,5 +457,14 @@ module.exports = {
     isEmpty,
     clamp,
     deepClone,
-    formatMod
+    formatMod,
+    // Phase 6: Spieler-Verwaltung pure helpers
+    calcSkillModifier,
+    canLevelUp,
+    getXPForCR,
+    distributeXP,
+    // Test data accessible for test assertions
+    XP_LEVEL_THRESHOLDS: XP_LEVEL_THRESHOLDS_TEST,
+    SKILL_INFO: SKILL_INFO_TEST,
+    CR_TO_XP: CR_TO_XP_TEST
 };

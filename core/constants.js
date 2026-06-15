@@ -491,6 +491,37 @@ const HARPTOS_SEASONS = {
     12: 'winter'
 };
 
+/**
+ * PHB Charakteraufstieg: Kumulativer XP-Bedarf pro Stufe (D&D 5e, PHB S.15)
+ * ACHTUNG: NICHT zu verwechseln mit XP_THRESHOLDS (Encounter-Schwierigkeit in encounter-calculator.js)
+ * XP_THRESHOLDS = Begegnungsschwierigkeit (easy/medium/hard/deadly) — DMG S.82
+ * XP_LEVEL_THRESHOLDS = Charakteraufstieg (Level 1→20) — PHB S.15
+ * Index ist 0-basiert: XP_LEVEL_THRESHOLDS[0] = 0 (Level 1), XP_LEVEL_THRESHOLDS[1] = 300 (Level 2)
+ * @type {number[]}
+ */
+const XP_LEVEL_THRESHOLDS = [
+    0,       // Level 1  (Startpunkt)
+    300,     // Level 2
+    900,     // Level 3
+    2700,    // Level 4
+    6500,    // Level 5
+    14000,   // Level 6
+    23000,   // Level 7
+    34000,   // Level 8
+    48000,   // Level 9
+    64000,   // Level 10
+    85000,   // Level 11
+    100000,  // Level 12
+    120000,  // Level 13
+    140000,  // Level 14
+    165000,  // Level 15
+    195000,  // Level 16
+    225000,  // Level 17
+    265000,  // Level 18
+    305000,  // Level 19
+    355000   // Level 20
+];
+
 // ============================================================
 // NAMESPACE EXPORTS (neue Struktur)
 // ============================================================
@@ -515,7 +546,8 @@ window.DND_RULES = Object.freeze({
     TAG_COLORS,
     HARPTOS_MONTHS,
     HARPTOS_FESTIVALS,
-    HARPTOS_SEASONS
+    HARPTOS_SEASONS,
+    XP_LEVEL_THRESHOLDS
 });
 
 // UI/App-Konstanten
@@ -555,3 +587,4 @@ window.MARKDOWN_PATTERNS = MARKDOWN_PATTERNS;
 window.HARPTOS_MONTHS = HARPTOS_MONTHS;
 window.HARPTOS_FESTIVALS = HARPTOS_FESTIVALS;
 window.HARPTOS_SEASONS = HARPTOS_SEASONS;
+window.XP_LEVEL_THRESHOLDS = XP_LEVEL_THRESHOLDS;
