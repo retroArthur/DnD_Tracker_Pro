@@ -250,6 +250,113 @@ function endCombat() {
         showToast('⏹️ Kampf beendet - HP synchronisiert');
     }
 }
+// ============================================================
+// XP-VERTEILUNG (CHAR-01 / D-09 / D-10)
+// Separate from endCombat — DM triggers manually after fight
+// Wave-1 helpers (global lexical): getXPForCR, distributeXP, canLevelUp
+// ============================================================
+function finishCombatXp() {
+    var D = window.D;
+    if (!D.initiative.combatants.length) {
+        showToast('Kein aktiver Kampf', 'warning');
+        return;
+    }
+    showXpDistributionModal();
+}
+function showXpDistributionModal() {
+    var D = window.D;
+    // Auto-sum XP from enemy/monster combatants via CR_TO_XP (getXPForCR handles missing/unknown CR → 0)
+    var autoSum = 0;
+    D.initiative.combatants.forEach(function(cb) {
+        if (cb.type === 'enemy' || cb.type === 'monster') {
+            autoSum += getXPForCR(cb.cr);
+        }
+    });
+    // Count living party characters
+    var livingCount = D.characters.filter(function(c) { return (c.hpCurrent || 0) > 0; }).length;
+    // Fill modal elements
+    var autoSumEl = document.getElementById('xp-dist-autosum');
+    var totalInput = document.getElementById('xp-distribution-total');
+    var livingCountEl = document.getElementById('xp-dist-living-count');
+    var previewEl = document.getElementById('xp-dist-preview');
+    if (autoSumEl) autoSumEl.textContent = autoSum + ' XP';
+    if (totalInput) totalInput.value = String(autoSum);
+    if (livingCountEl) livingCountEl.textContent = livingCount + ' lebende Charakter' + (livingCount !== 1 ? 'e' : '') + ' erhalten XP';
+    if (previewEl) {
+        if (livingCount > 0 && autoSum > 0) {
+            var share = Math.floor(autoSum / livingCount);
+            var remainder = autoSum % livingCount;
+            previewEl.innerHTML = '<div class="xp-dist-preview-line">Je Charakter: <strong>+' + share + ' XP</strong>' + (remainder > 0 ? ' (Rest: ' + remainder + ' XP)' : '') + '</div>';
+        } else {
+            previewEl.innerHTML = '';
+        }
+    }
+    // Update preview when total changes
+    if (totalInput && !totalInput._xpDistListener) {
+        totalInput._xpDistListener = true;
+        totalInput.addEventListener('input', function() {
+            updateXpDistPreview();
+        });
+    }
+    showModal('xp-distribution-modal');
+}
+function updateXpDistPreview() {
+    var D = window.D;
+    var totalInput = document.getElementById('xp-distribution-total');
+    var previewEl = document.getElementById('xp-dist-preview');
+    if (!totalInput || !previewEl) return;
+    var total = Math.max(0, parseInt(totalInput.value, 10) || 0);
+    var livingCount = D.characters.filter(function(c) { return (c.hpCurrent || 0) > 0; }).length;
+    if (livingCount > 0 && total > 0) {
+        var share = Math.floor(total / livingCount);
+        var remainder = total % livingCount;
+        previewEl.innerHTML = '<div class="xp-dist-preview-line">Je Charakter: <strong>+' + share + ' XP</strong>' + (remainder > 0 ? ' (Rest: ' + remainder + ' XP)' : '') + '</div>';
+    } else {
+        previewEl.innerHTML = '';
+    }
+}
+function applyXpDistribution() {
+    var D = window.D;
+    var totalInput = document.getElementById('xp-distribution-total');
+    // T-06-11: Coerce total via parseInt with non-negative floor; ignore NaN
+    var totalXP = Math.max(0, parseInt(totalInput ? totalInput.value : '0', 10) || 0);
+    // T-06-12: Guard empty-party case
+    var activeChars = D.characters.filter(function(c) { return (c.hpCurrent || 0) > 0; });
+    if (!activeChars.length) {
+        showToast('Keine lebenden Charaktere — XP nicht verteilt', 'warning');
+        return;
+    }
+    // T-06-14: pushUndo BEFORE mutation so XP distribution is undoable
+    pushUndo('XP verteilt');
+    // distributeXP mutates each activeChar.xp (Wave-1 helper — pure w.r.t. globals, caller filters)
+    var result = distributeXP(totalXP, activeChars);
+    var share = result.share;
+    var remainder = result.remainder;
+    // Collect level-up hints (D-11: NEVER auto-bump level; hint only)
+    var levelUpHints = [];
+    activeChars.forEach(function(ch) {
+        if (canLevelUp(ch)) {
+            levelUpHints.push(esc(ch.name) + ' kann aufsteigen!');
+        }
+    });
+    window.save();
+    if (typeof window.renderParty === 'function') window.renderParty();
+    hideModal('xp-distribution-modal');
+    // German toast with summary
+    var msg = '+' + share + ' XP je Charakter';
+    if (remainder > 0) msg += ' (Rest: ' + remainder + ' XP)';
+    showToast(msg, 'success');
+    // Show individual level-up hints after brief delay
+    levelUpHints.forEach(function(hint, i) {
+        setTimeout(function() { showToast('⬆️ ' + hint, 'info'); }, 500 + i * 400);
+    });
+}
+window.finishCombatXp = finishCombatXp;
+window.showXpDistributionModal = showXpDistributionModal;
+window.applyXpDistribution = applyXpDistribution;
+// ============================================================
+// END XP-VERTEILUNG
+// ============================================================
 function editInitValue(id) {
     const cb = getCombatant(id);
     if (!cb) return;

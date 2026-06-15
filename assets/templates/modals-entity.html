@@ -753,4 +753,33 @@
             </div>
         </div>
     </div>
-    
+
+    <!-- XP-Verteilungs-Modal (CHAR-01 / D-09 / D-10) -->
+    <div class="modal-overlay" id="xp-distribution-modal">
+        <div class="modal" style="max-width: 500px;">
+            <div class="modal-header">
+                <span class="modal-title">⭐ XP verteilen</span>
+                <button class="btn btn-sm" data-action="hide-modal" data-value="xp-distribution-modal">✕</button>
+            </div>
+            <div class="xp-dist-body">
+                <div class="xp-dist-autosum">
+                    <div class="xp-dist-autosum-label">Automatische Summe (aus CR):</div>
+                    <div class="xp-dist-autosum-value" id="xp-dist-autosum">0 XP</div>
+                </div>
+                <div class="form-group">
+                    <label for="xp-distribution-total">Gesamt-XP (korrigierbar):</label>
+                    <input type="number" id="xp-distribution-total" min="0" value="0" class="xp-dist-total-input" placeholder="z.B. 450">
+                </div>
+                <div class="xp-dist-party-info" id="xp-dist-party-info">
+                    <span class="xp-dist-icon">👥</span>
+                    <span id="xp-dist-living-count">0 lebende Charaktere erhalten XP</span>
+                </div>
+                <div class="xp-dist-preview" id="xp-dist-preview"></div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn" data-action="hide-modal" data-value="xp-distribution-modal">Abbrechen</button>
+                <button class="btn btn-success" data-action="apply-xp-distribution">⭐ XP verteilen</button>
+            </div>
+        </div>
+    </div>
+

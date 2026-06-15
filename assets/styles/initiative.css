@@ -1219,3 +1219,81 @@
     font-weight: 700;
 }
 
+/* ============================================================
+   XP-VERTEILUNGS-MODAL (CHAR-01 / D-09 / D-10)
+   ============================================================ */
+
+.xp-distribute-btn {
+    font-weight: 700;
+}
+
+.xp-dist-body {
+    padding: 16px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.xp-dist-autosum {
+    background: var(--bg-dark);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.xp-dist-autosum-label {
+    font-size: 0.85rem;
+    color: var(--text-dim);
+}
+
+.xp-dist-autosum-value {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--gold);
+}
+
+.xp-dist-total-input {
+    width: 100%;
+    padding: 8px 12px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text);
+    font-size: 1rem;
+}
+
+.xp-dist-total-input:focus {
+    border-color: var(--gold);
+    outline: none;
+}
+
+.xp-dist-party-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    background: var(--bg-card);
+    border-radius: 6px;
+    font-size: 0.9rem;
+    color: var(--text-dim);
+}
+
+.xp-dist-icon {
+    font-size: 1.1rem;
+}
+
+.xp-dist-preview {
+    min-height: 24px;
+}
+
+.xp-dist-preview-line {
+    padding: 8px 12px;
+    background: rgba(var(--gold-rgb, 212,175,55), 0.1);
+    border-left: 3px solid var(--gold);
+    border-radius: 4px;
+    font-size: 0.9rem;
+}
+
