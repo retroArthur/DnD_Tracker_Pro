@@ -2,21 +2,21 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: executing
-last_updated: "2026-06-15T15:15:00.000Z"
+status: planning
+last_updated: "2026-06-15T16:11:48.959Z"
 progress:
   total_phases: 7
-  completed_phases: 4
+  completed_phases: 5
   total_plans: 30
-  completed_plans: 27
-  percent: 60
+  completed_plans: 30
+  percent: 71
 ---
 
 # Project State: D&D Kampagnen-Tracker Pro — Stabilisierung & Ausbau
 
 **Last Updated:** 2026-06-15
-**Phase:** 5
-**Status:** Complete (7/7 Pläne abgeschlossen)
+**Phase:** 6
+**Status:** Ready to plan
 
 ---
 
@@ -24,7 +24,7 @@ progress:
 
 **Core Value:** Die App muss am Spieltisch zuverlässig offline laufen — ein Spielleiter-Begleiter, der nie im Weg steht und keine Daten verliert.
 
-**Current Focus:** Phase 05 — Welt & Story
+**Current Focus:** Phase 06 — Spieler-Verwaltung (bereit zum Planen)
 
 ---
 
@@ -32,7 +32,7 @@ progress:
 
 ```
 Phase: 05 (Welt & Story) — COMPLETE
-Plan: 7 of 7 — DONE
+Plan: Not started
 Next:  Phase 06 starten (Spieler-Verwaltung)
 Status: Complete (7/7 Pläne)
 
@@ -111,13 +111,16 @@ Progress: [██████████] 100% Phase 5 vollständig abgeschloss
 - [ ] REQUIREMENTS.md Traceability: 4 REQ-IDs (WELT-06/07, CHAR-04, UX-03) aus späteren Phasen fehlen noch in der Traceability-Tabelle (von `phase complete` gemeldet)
 - [x] Phase 5 diskutieren: `/gsd-discuss-phase 5` ✓ (2026-06-14, 05-CONTEXT.md)
 - [x] Phase 5 planen: `/gsd-plan-phase 5` ✓ (2026-06-15, 7 Pläne / 7 Wellen, Checker PASSED)
+- [x] Phase 5 ausführen: `/gsd-execute-phase 5` ✓ (2026-06-15, 7/7 Pläne, 5/5 must-haves, 37 Unit + 24 E2E grün)
+- [ ] Phase 5 — 2 menschliche Sichtungen (05-HUMAN-UAT.md): NPC-Inhaltsqualität/Latenz, Harptos-Monatsnamen-Kanon
+- [ ] Phase 5 (optional, benign): `D.calendar.month` 0→1-Basis in core/data.js angleichen (vom Verifier als nicht-user-sichtbar bestätigt)
 
 ---
 
 ## Session Continuity
 
-**Last action:** Plan 05-07 (WELT-05 Fraktionen & Ruf-System) ausgeführt (2026-06-15). FRAKTIONS_RUF_STUFEN (5 Stufen −50…+50), rufStufe(), anpassenRuf (pushUndo-first + clamp + rufHistorie), setzeRuf(), saveFraktion/deleteFraktion, renderFraktionen (Grid-Layout, selectFraktion, Detail-Panel mit Ruf-Kontrollen, Mitgliederliste, Historie), npc.factionId in saveNPC/editNPC, #npc-faction-Select im NPC-Modal, Fraktionen-Modal, +190 fr--CSS-Regeln, 10 entity-actions-Handler, 12 WELT-05 Unit-Tests + 5 E2E-Tests aktiviert. Build: python build.py grün (2.64 MB). Phase 5 vollständig abgeschlossen.
-**Next action:** Phase 06 starten (Spieler-Verwaltung).
+**Last action:** Phase 05 (Welt & Story) vollständig ausgeführt & abgeschlossen (2026-06-15). Alle 7 Pläne (05-01…07) sequenziell auf `main`: Fundament/Schema/Migration 4.0.0/Harptos-Konstanten, Build-Time-Tabellen (585 dt. Einträge), Session-Prep (WELT-01), NPC-Generator (WELT-02), Timeline/Kalender (WELT-03), Reise/Wetter (WELT-04), Fraktionen/Ruf (WELT-05). gsd-verifier: 5/5 must-haves verifiziert; Build grün (2.76 MB); 37 Unit- + 24 E2E-Tests grün; 4 Tabs rendern fehlerfrei. Während der Verifikation 2 Defekte in den Executor-E2E-Specs gefixt (CommonJS `require`→ESM `import`, `localhost:8000`→`file://`-Nav, Commit 687eb7d). VERIFICATION-Status `human_needed`: 2 subjektive Punkte (NPC-Inhaltsqualität, Harptos-Kanon) als `05-HUMAN-UAT.md` getrackt — nicht-blockierend. Phase via `phase complete 05` markiert (Fortschritt 30/30 Pläne, 71%).
+**Next action:** Phase 06 (Spieler-Verwaltung) planen: `/gsd-discuss-phase 6` (oder direkt `/gsd-plan-phase 6`).
 
 ---
 
