@@ -418,6 +418,23 @@ const EntityActions = {
             sessionStorage.setItem('tl-dismissed-vorschlaege', JSON.stringify(dismissed));
         } catch(e) {}
         if (typeof window.renderTimeline === 'function') window.renderTimeline();
+    },
+
+    // Reise-Aktionen (WELT-04)
+    'start-reise': () => {
+        if (typeof window.startReise === 'function') window.startReise();
+    },
+    'abschliessen-reise': ctx => {
+        var tage = parseInt(ctx.value, 10) || 1;
+        if (typeof window.abschliessenReise === 'function') window.abschliessenReise(tage);
+    },
+    'bestaetigen-reise-timeline': ctx => {
+        var tage = parseInt(ctx.value, 10) || 1;
+        if (typeof window.bestaetigeReiseTimeline === 'function') window.bestaetigeReiseTimeline(tage);
+    },
+    'schliessen-reise-timeline-modal': () => {
+        var modal = document.getElementById('rs-timeline-modal');
+        if (modal) modal.remove();
     }
 };
 

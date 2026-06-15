@@ -634,14 +634,138 @@
     color: var(--gold);
 }
 
+.rs-config-title {
+    font-size: 1rem;
+    font-weight: 700;
+    margin: 0 0 var(--space-sm, 0.5rem) 0;
+    color: var(--text);
+}
+
+.rs-config-field {
+    flex: 1;
+    min-width: 140px;
+}
+
+.rs-config-field-sm {
+    flex: 0 0 120px;
+}
+
+.rs-label {
+    display: block;
+    font-size: 0.8rem;
+    color: var(--text-dim);
+    margin-bottom: 0.25rem;
+    font-weight: 500;
+}
+
+.rs-config-info {
+    font-size: 0.85rem;
+    color: var(--text-dim);
+    padding: 0.4rem 0;
+    margin-bottom: var(--space-sm, 0.5rem);
+}
+
+.rs-config-actions {
+    margin-top: var(--space-sm, 0.5rem);
+}
+
+.rs-result-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    margin-bottom: 0.5rem;
+}
+
+.rs-result-meta {
+    color: var(--text-dim);
+    font-size: 0.9rem;
+}
+
+.rs-result-gesamt {
+    font-size: 0.95rem;
+    margin-bottom: 0.25rem;
+}
+
+.rs-result-jahreszeit {
+    font-size: 0.85rem;
+    color: var(--text-dim);
+    margin-bottom: var(--space-sm, 0.5rem);
+}
+
+.rs-tages-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-top: var(--space-sm, 0.5rem);
+}
+
+.rs-tag-eintrag {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 0.6rem 0.75rem;
+}
+
+.rs-tag-header {
+    font-weight: 600;
+    font-size: 0.85rem;
+    color: var(--text-dim);
+    margin-bottom: 0.3rem;
+}
+
 .rs-wetter-badge {
-    display: inline-block;
+    display: block;
     padding: 0.2rem 0.6rem;
-    border-radius: 999px;
+    border-radius: var(--radius);
     background: var(--surface-alt, var(--surface));
     border: 1px solid var(--border);
     font-size: 0.85rem;
-    margin-top: var(--space-sm, 0.5rem);
+    margin-bottom: 0.25rem;
+    color: var(--text);
+}
+
+.rs-begegnung-badge {
+    display: block;
+    padding: 0.2rem 0.6rem;
+    border-radius: var(--radius);
+    background: var(--surface-alt, var(--surface));
+    border: 1px solid var(--border);
+    font-size: 0.85rem;
+    color: var(--text-dim);
+}
+
+.rs-begegnung-aktiv {
+    background: rgba(239, 68, 68, 0.12);
+    border-color: rgba(239, 68, 68, 0.3);
+    color: var(--red, #ef4444);
+    font-weight: 500;
+}
+
+.rs-abschluss-bereich {
+    margin-top: var(--space-md, 1rem);
+    padding-top: var(--space-sm, 0.5rem);
+    border-top: 1px solid var(--border);
+}
+
+.rs-abschluss-info {
+    background: rgba(34, 197, 94, 0.12);
+    border: 1px solid rgba(34, 197, 94, 0.3);
+    color: var(--green, #22c55e);
+    border-radius: var(--radius);
+    padding: 0.5rem 0.75rem;
+    font-size: 0.9rem;
+    margin-bottom: var(--space-sm, 0.5rem);
+}
+
+/* Mobile */
+@media (max-width: 500px) {
+    .rs-config-row {
+        flex-direction: column;
+    }
+    .rs-config-field-sm {
+        flex: 1;
+    }
 }
 
 /* ========================================

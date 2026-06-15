@@ -260,22 +260,71 @@ test.describe('WELT-03: Kalender-Tab', () => {
 });
 
 // ============================================================
-// WELT-04: Reise & Wetter — Tab "reise"
+// WELT-04: Reise & Wetter — Tab "reise" (aktiviert Plan 05-06)
 // ============================================================
 test.describe('WELT-04: Reise-Tab', () => {
-    test.skip('Tab reise ist sichtbar und anklickbar', async ({ page }) => {
-        // aktiviert in 05-06
-        // await page.click('[data-view="reise"]');
-        // await expect(page.locator('#view-reise')).toBeVisible();
+    test('Tab reise ist sichtbar und anklickbar', async ({ page }) => {
+        await page.goto('http://localhost:8000/dist/dnd-tracker-bundled.html');
+        await page.click('[data-view="reise"]');
+        await expect(page.locator('#view-reise')).toBeVisible();
     });
 
-    test.skip('Reise-Abschluss rückt D.calendar um korrekte Tage vor', async ({ page }) => {
-        // aktiviert in 05-06
-        // Erwartet: Start-Tag 1, 3 Tage Reise → D.calendar.day === 4
+    test('Reise-Abschluss rückt D.calendar um korrekte Tage vor', async ({ page }) => {
+        await page.goto('http://localhost:8000/dist/dnd-tracker-bundled.html');
+        // Kalender auf Tag 1 setzen
+        await page.evaluate(() => {
+            if (window.D && window.D.calendar) {
+                window.D.calendar.day = 1;
+                window.D.calendar.month = 1;
+                window.D.calendar.year = 1492;
+            }
+        });
+        // abschliessenReise(3) direkt aufrufen — pushUndo + advanceCalendarDate
+        await page.evaluate(() => {
+            if (typeof window.abschliessenReise === 'function') {
+                // Dialog nicht warten — close modal if it appears
+                window.abschliessenReise(3);
+            }
+        });
+        // Dialog (falls vorhanden) schließen
+        await page.evaluate(() => {
+            var modal = document.getElementById('rs-timeline-modal');
+            if (modal) modal.remove();
+        });
+        const day = await page.evaluate(() => window.D && window.D.calendar && window.D.calendar.day);
+        expect(day).toBe(4);
     });
 
-    test.skip('Wetter-Roll gibt Ergebnis basierend auf Jahreszeit', async ({ page }) => {
-        // aktiviert in 05-06 nach Tabellen-Befüllung
+    test('Wetter-Roll gibt Ergebnis basierend auf Jahreszeit', async ({ page }) => {
+        await page.goto('http://localhost:8000/dist/dnd-tracker-bundled.html');
+        const result = await page.evaluate(() => {
+            if (typeof window.rollWetter !== 'function') return null;
+            return window.rollWetter('gemässigt', 'winter');
+        });
+        expect(result).not.toBeNull();
+        expect(result.entry).toBeDefined();
+        expect(typeof result.entry.text).toBe('string');
+        expect(result.entry.text.length).toBeGreaterThan(0);
+    });
+
+    test('berechneTagesmarsch und jahreszeitAusDatum sind global verfügbar', async ({ page }) => {
+        await page.goto('http://localhost:8000/dist/dnd-tracker-bundled.html');
+        const checks = await page.evaluate(() => ({
+            berechneTagesmarsch: typeof window.berechneTagesmarsch === 'function',
+            rollWetter: typeof window.rollWetter === 'function',
+            rollBegegnung: typeof window.rollBegegnung === 'function',
+            abschliessenReise: typeof window.abschliessenReise === 'function',
+            jahreszeitAusDatum: typeof window.jahreszeitAusDatum === 'function',
+            tagesmarsch24: window.berechneTagesmarsch && window.berechneTagesmarsch('normal', 'normal') === 24,
+            tagesmarsch9: window.berechneTagesmarsch && window.berechneTagesmarsch('langsam', 'schwierig') === 9
+        }));
+        expect(checks.berechneTagesmarsch).toBe(true);
+        expect(checks.rollWetter).toBe(true);
+        expect(checks.rollBegegnung).toBe(true);
+        expect(checks.abschliessenReise).toBe(true);
+        expect(checks.jahreszeitAusDatum).toBe(true);
+        expect(checks.tagesmarsch24).toBe(true);
+        expect(checks.tagesmarsch9).toBe(true);
     });
 });
 
