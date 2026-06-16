@@ -14,9 +14,9 @@ progress:
 
 # Project State: D&D Kampagnen-Tracker Pro — Stabilisierung & Ausbau
 
-**Last Updated:** 2026-06-15
-**Phase:** 7
-**Status:** Ready to plan
+**Last Updated:** 2026-06-16
+**Phase:** 6
+**Status:** Gap-closure complete
 
 ---
 
@@ -128,7 +128,7 @@ Progress: [███████████████████████
 
 ## Session Continuity
 
-**Last action:** Phase 06-05 (Gap-Closure D-07: Leveling-Modus Toggle) ausgeführt (2026-06-16). .party-leveling-toggle Segmented-Control in renderPartyOverview() mit data-action=set-leveling-mode; set-leveling-mode Handler whitelisted 'xp'|'milestone', plain save() (kein Undo), renderParty(), Live-Refresh offenes Detail-Modal via showCharacterDetails(); party.css Styles; neuer E2E-Test kippt Modus per UI-Klick und assertiert Branch-Flip im Detail-Modal. 9/9 E2E grün; 421 Unit grün; Commit 52d973e.
+**Last action:** Phase 06-06 (Gap-Closure UAT detail-modal-clutter: V/N-Hover-Reveal) ausgeführt (2026-06-16). party.css: .char-adv-btns im DEFAULT sichtbar (Touch-Fallback T-06-19); @media (hover: hover) and (pointer: fine) versteckt .char-adv-btns im Ruhezustand (visibility:hidden+opacity:0+pointer-events:none) und zeigt sie per Hover der Elternzeile (.char-attr-box:hover/.char-skill-item:hover/.char-save-box:hover); Bonus-Tightening .char-attr-grid. Neuer E2E-Test (stealth-Zeile, .not.toBeVisible() → page.hover() → .toBeVisible()). 10/10 E2E grün; 421 Unit grün; Commit c74292f.
 **Next action:** Phase 07 — Komfort & Analyse planen und ausführen.
 
 ---

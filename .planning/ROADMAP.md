@@ -212,7 +212,7 @@ Plans:
 
 **Wave 6** *(Gap-Closure aus UAT — `gap_closure: true`)*
 
-- [ ] 06-06-PLAN.md — Gap-Closure `detail-modal-clutter`: V/N (Vorteil/Nachteil) im Detail-Modal nur bei Hover zeigen (`@media (hover: hover) and (pointer: fine)`), DEFAULT hält V/N sichtbar (Pflicht-Touch-Fallback); Attribut-Grid-Spacing entschärft; reines CSS in party.css + E2E-Hover-Case — schließt die UAT-Lücke „Detail-Modal sehr unaufgeräumt" (CHAR-03)
+- [x] 06-06-PLAN.md — Gap-Closure `detail-modal-clutter`: V/N (Vorteil/Nachteil) im Detail-Modal nur bei Hover zeigen (`@media (hover: hover) and (pointer: fine)`), DEFAULT hält V/N sichtbar (Pflicht-Touch-Fallback); Attribut-Grid-Spacing entschärft; reines CSS in party.css + E2E-Hover-Case — schließt die UAT-Lücke „Detail-Modal sehr unaufgeräumt" (CHAR-03)
 
 ### Phase 7: Komfort & Analyse
 
@@ -236,7 +236,7 @@ Plans:
 | 3. Bestiary                 | 5/5 | Complete    | 2026-06-13 |
 | 4. Initiative-Erweiterungen | 4/4 | Complete    | 2026-06-14 |
 | 5. Welt & Story             | 7/7 | Complete    | 2026-06-15 |
-| 6. Spieler-Verwaltung       | 5/6 | In Progress (Gap-Closure) | 2026-06-15 |
+| 6. Spieler-Verwaltung       | 6/6 | Complete    | 2026-06-16 |
 | 7. Komfort & Analyse        | 0/?            | Not started | -         |
 
 ---
