@@ -206,6 +206,10 @@ Plans:
 
 - [x] 06-04-PLAN.md — CHAR-01 XP-/Milestone-Tracker: Initiative-Abschluss-Trigger + XP-Modal (CR-Auto-Summe + manuelle Korrektur) + Gleichverteilung + Level-Hinweis (kein Auto-Bump) + Milestone-Modus (CHAR-01)
 
+**Wave 5** *(Gap-Closure aus UAT — `gap_closure: true`)*
+
+- [x] 06-05-PLAN.md — Gap-Closure D-07: UI-Toggle für Stufensystem (XP ↔ Meilenstein) in #party-overview; `set-leveling-mode`-Handler (Whitelist, plain save, Live-Modal-Refresh) + E2E via UI-Klick — schließt die UAT-Lücke „Milestone-Modus aus der UI nicht erreichbar" (CHAR-01)
+
 ### Phase 7: Komfort & Analyse
 
 **Goal**: Nutzer kann lokale Audio-Dateien als Soundboard für Ambience nutzen und Würfel-Statistiken aus der Roll-Historie einsehen
