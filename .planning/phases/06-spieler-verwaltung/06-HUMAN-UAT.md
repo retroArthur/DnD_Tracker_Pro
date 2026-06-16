@@ -62,9 +62,10 @@ blocked: 0
   missing: []
 
 - truth: "Das Charakter-Detail-Modal ist am Spieltisch übersichtlich/aufgeräumt lesbar (D-03/D-04 Skills/Saves/Attribut-Checks/Angriffe)"
-  status: failed
-  reason: "UAT-Beobachtung (2026-06-16, Screenshot): Das Detail-Modal wirkt 'sehr unaufgeräumt'. Ursache: jeder der ~30 würfelbaren Einträge (6 Attribut-Checks char-attr-grid:114, 18 Fertigkeiten char-skill-item:153, 6 Rettungswürfe char-save-box:183) trägt ein DAUERHAFT sichtbares inline V/N-Buttonpaar (.char-adv-btns, ~60 farbige Buttons) — obwohl der Container selbst bereits Klick-zum-Normalwurf ist (roll-char-*-stop). Zusätzlich ist die Attribut-Check-Zeile oben angeschnitten. Visuelle Dichte statt Funktionsfehler."
+  status: resolved
+  reason: "UAT-Beobachtung (2026-06-16, Screenshot): Das Detail-Modal wirkt 'sehr unaufgeräumt' — ~60 dauerhaft sichtbare inline V/N-Buttons (.char-adv-btns) auf jeder Zeile, obwohl die Zeile bereits Klick-zum-Normalwurf ist."
+  resolution: "Closed by gap-closure plan 06-06 (commit c74292f). V/N werden im Ruhezustand ausgeblendet (visibility:hidden, kein Layout-Sprung) und erst bei Hover der Zeile gezeigt — gekapselt in @media (hover: hover) and (pointer: fine). DEFAULT (Touch/coarse pointer) behält V/N sichtbar (T-06-19). Normalwurf-Klick unverändert. Attribut-Check-Zeile entdichtet (kein Anschnitt mehr). Neuer E2E-Hover-Test; build exit 0, jest 421/421, playwright 10/10. Nutzer-Sichtprüfung nach Reload noch offen (Test 3)."
   severity: cosmetic
   test: detail-modal-clutter
-  artifacts: ["features/party/party-details.js:114-135", "features/party/party-details.js:137-197", "assets/styles/party.css (.char-adv-btns/.char-skill-item/.char-save-box/.char-attr-box)"]
-  missing: ["Reduktion der Ruhezustand-Dichte: V/N erst bei Hover/aktiv zeigen (Zeile bleibt Klick-zum-Normalwurf)", "ggf. nicht-geübte Fertigkeiten einklappbar", "Spacing/Layout der Attribut-Check-Zeile"]
+  artifacts: ["assets/styles/party.css:3125-3158", "tests/e2e/features/character-advancement.spec.js"]
+  missing: []
