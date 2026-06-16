@@ -3119,6 +3119,58 @@
     filter: brightness(1.15);
 }
 
+/* ============================================================
+   V/N-BUTTONS: NUR BEI HOVER ANZEIGEN (UAT-Gap detail-modal-clutter, CHAR-03)
+   ============================================================
+   DEFAULT (außerhalb der Media-Query): .char-adv-btns bleibt sichtbar.
+   Touch- und Coarse-Pointer-Geräte (kein Hover-Konzept) behalten V/N dauerhaft —
+   Pflicht-Touch-Fallback: Vorteil/Nachteil bleibt ohne Hover erreichbar (T-06-19).
+
+   NUR auf hover-fähigen Präzisionszeigern (Maus/Trackpad) werden die Buttons
+   im Ruhezustand versteckt und per Hover der Eltern-Zeile wieder eingeblendet.
+   visibility:hidden statt display:none → kein Layout-Sprung; Playwright
+   .not.toBeVisible() greift zuverlässig (opacity:0 allein reicht Playwright nicht). */
+
+.char-adv-btns {
+    /* Touch-Fallback: im DEFAULT sichtbar */
+    visibility: visible;
+    opacity: 1;
+    pointer-events: auto;
+}
+
+@media (hover: hover) and (pointer: fine) {
+    /* Ruhezustand: V/N verstecken — kein Layout-Sprung dank visibility statt display:none */
+    .char-adv-btns {
+        visibility: hidden;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.12s, visibility 0.12s;
+    }
+
+    /* Hover der Attribut-Check-Zeile → V/N einblenden */
+    .char-attr-box:hover .char-adv-btns,
+    /* Hover der Skill-Zeile → V/N einblenden */
+    .char-skill-item:hover .char-adv-btns,
+    /* Hover der Rettungswurf-Box → V/N einblenden */
+    .char-save-box:hover .char-adv-btns {
+        visibility: visible;
+        opacity: 1;
+        pointer-events: auto;
+    }
+
+    /* Attribut-Grid: vertikales Spacing reduzieren, damit die oberste Zeile
+       nicht angeschnitten wird und das Modal kompakter ist (Bonus-Tightening) */
+    .char-attr-grid {
+        gap: 4px;
+        margin-bottom: 8px;
+    }
+
+    .char-attr-box.clickable {
+        padding-top: 4px;
+        padding-bottom: 4px;
+    }
+}
+
 /* Milestone mode block — separate class (no .char-xp-section) so E2E can assert XP section absent */
 .char-xp-milestone-section {
     background: var(--bg-card);

@@ -356,3 +356,43 @@ test.describe('CHAR-01 / D-11: Levelaufstieg-Hinweis', () => {
         }
     );
 });
+
+// ============================================================
+// CHAR-03: Detail-Modal aufgeräumt — V/N nur bei Hover (UAT-Gap detail-modal-clutter)
+// Gap-Closure: Plan 06-06 — "V/N-Buttons hover-only"
+// ============================================================
+
+test.describe('CHAR-03: Detail-Modal aufgeräumt — V/N nur bei Hover', () => {
+    test.beforeEach(async ({ page }) => {
+        await loadApp(page);
+        await page.click('[data-view="party"]');
+        await page.waitForTimeout(300);
+        await injectCharWithAdvancedFields(page);
+    });
+
+    test(
+        'V/N-Buttons sind im Ruhezustand versteckt und erscheinen beim Hover der Skill-Zeile',
+        async ({ page }) => {
+            // Gap-Closure: 06-06 — detail-modal-clutter (CHAR-03)
+            // @media (hover: hover) and (pointer: fine) greift in Default-Chromium (fine pointer).
+            // Im Ruhezustand: .char-adv-btns visibility:hidden → .not.toBeVisible()
+            // Nach page.hover() auf .char-skill-item: visibility:visible → .toBeVisible()
+            await page.click('[data-action="show-char-details"][data-id="99902"]');
+            await page.waitForTimeout(300);
+
+            // Stealth-Zeile (Rhogar hat stealth-Proficienz) + deren V/N-Buttons
+            const stealthRow = page.locator(
+                '[data-action="roll-char-skill-stop"][data-skill="stealth"]:not([data-adv])'
+            ).first();
+            const advBtns = stealthRow.locator('.char-adv-btns').first();
+
+            // Ruhezustand: V/N-Buttons NICHT sichtbar (visibility:hidden via @media hover)
+            await expect(advBtns).not.toBeVisible();
+
+            // Nach Hover der Skill-Zeile: V/N-Buttons erscheinen
+            await page.hover('[data-action="roll-char-skill-stop"][data-skill="stealth"]:not([data-adv])');
+            await page.waitForTimeout(150);
+            await expect(advBtns).toBeVisible();
+        }
+    );
+});
