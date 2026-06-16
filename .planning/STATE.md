@@ -122,12 +122,13 @@ Progress: [███████████████████████
 - [x] Phase 6 ausführen Plan 2 (06-02 Inspiration): ✓ (2026-06-15, always-visible ⭐ toggle + stop-propagation handler + CSS + 5 E2E tests grün; Commits 4e5be0b/b289349)
 - [x] Phase 6 ausführen Plan 3 (06-03 Charakterwerte): ✓ (2026-06-15, 18 Skill/Expertise-Checkboxen + Angriffsliste im Editor; Skills/Saves/Attribute/Angriffe als klickbare W20-Würfe mit Adv/Disadv im Detail-Modal; 4 CHAR-03 E2E-Tests grün; 49 Unit-Tests grün; window.diceHistory exportiert; roll-char-*-stop Handler; Commits 88b7752/ea9a64c)
 - [x] Phase 6 ausführen Plan 4 (06-04 XP-/Milestone-Tracker, CHAR-01 Wave-4): ✓ (2026-06-15, finish-combat-xp Trigger + XP-Verteilungs-Modal + applyXpDistribution; Detail-Modal XP-Block + canLevelUp-Hint; confirm-level-up + milestone-level-up Handler; Milestone-Modus .char-xp-milestone-section; 4 CHAR-01 E2E-Tests aktiviert + grün; 421 Unit-Tests grün; Commits 2e18db8/6392d62)
+- [x] Phase 6 ausführen Plan 5 (06-05 Gap-Closure D-07 Leveling-Toggle): ✓ (2026-06-16, .party-leveling-toggle Segmented-Control in #party-overview; set-leveling-mode Handler mit Whitelist ctx.value 'xp'|'milestone', plain save(), renderParty(), Live-Refresh offenes Detail-Modal; party.css Styles; neuer E2E-Test via UI-Klick (kein page.evaluate); 9/9 E2E grün; 421 Unit grün; Commit 52d973e)
 
 ---
 
 ## Session Continuity
 
-**Last action:** Phase 06-04 (CHAR-01: XP-/Milestone-Tracker) ausgeführt (2026-06-15). finish-combat-xp Button in Initiative-Toolbar; XP-Verteilungs-Modal (#xp-distribution-modal) mit CR-Autosum (getXPForCR), manuellem Korrekturfeld, Living-Count-Anzeige, Live-Preview; applyXpDistribution() mit pushUndo('XP verteilt') vor Mutation + distributeXP + canLevelUp-Hints. Detail-Modal: .char-xp-section (xp + Schwelle + Fortschrittsbalken + canLevelUp-Badge), .char-xp-milestone-section (+1-Level-Button). confirm-level-up + milestone-level-up Handler (pushUndo + level cap 20 + getProfBonus). 4 CHAR-01 E2E-Tests von fixme auf aktiv; 8/8 grün; 421 Unit-Tests grün. 1 Auto-Deviation (Rule 1). Commits 2e18db8/6392d62.
+**Last action:** Phase 06-05 (Gap-Closure D-07: Leveling-Modus Toggle) ausgeführt (2026-06-16). .party-leveling-toggle Segmented-Control in renderPartyOverview() mit data-action=set-leveling-mode; set-leveling-mode Handler whitelisted 'xp'|'milestone', plain save() (kein Undo), renderParty(), Live-Refresh offenes Detail-Modal via showCharacterDetails(); party.css Styles; neuer E2E-Test kippt Modus per UI-Klick und assertiert Branch-Flip im Detail-Modal. 9/9 E2E grün; 421 Unit grün; Commit 52d973e.
 **Next action:** Phase 07 — Komfort & Analyse planen und ausführen.
 
 ---
@@ -155,3 +156,5 @@ _State initialized: 2026-06-11_
 - [Phase 06-04]: endCombat() unberührt — XP-Verteilung als separate finish-combat-xp Aktion (RESEARCH Muster 4 anti-overload)
 - [Phase 06-04]: Milestone-Modus nutzt .char-xp-milestone-section (ohne .char-xp-section) für korrekte E2E not.toBeVisible()-Assertion
 - [Phase 06-04]: pushUndo('XP verteilt') VOR distributeXP-Aufruf — distributeXP mutiert activeChars in-place sofort
+- [Phase 06-05]: set-leveling-mode verwendet plain save() ohne saveUndoState() — Settings-Änderung ist trivial reversibel (Inspiration-Precedent)
+- [Phase 06-05]: Modal-Live-Refresh liest Charakter-ID aus erstem [data-id]-Element im #char-detail-modal; kein neues data-Attribut nötig

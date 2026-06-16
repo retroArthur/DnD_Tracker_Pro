@@ -228,7 +228,7 @@ Plans:
 | 3. Bestiary                 | 5/5 | Complete    | 2026-06-13 |
 | 4. Initiative-Erweiterungen | 4/4 | Complete    | 2026-06-14 |
 | 5. Welt & Story             | 7/7 | Complete    | 2026-06-15 |
-| 6. Spieler-Verwaltung       | 4/4 | Complete    | 2026-06-15 |
+| 6. Spieler-Verwaltung       | 5/5 | Complete   | 2026-06-15 |
 | 7. Komfort & Analyse        | 0/?            | Not started | -         |
 
 ---
