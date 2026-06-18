@@ -228,7 +228,7 @@ Plans:
 
 **Wave 9** *(Gap-Closure aus UAT — `gap_closure: true`)*
 
-- [ ] 06-09-PLAN.md — Gap-Closure `xp-exclude-players`: XP-Empfänger im XP-Verteilungs-Modal werden zu manueller Pro-Charakter-Auswahl (Checkbox-Liste #xp-dist-char-list, default alle angehakt, Info-only-HP-Badge) — unabhängig vom Lebend-/HP-Status; `livingCount`→`selectedCount` in show/updateXpDistPreview, `hpCurrent>0`-Filter in applyXpDistribution entfernt (angehakte ids via parseEntityId, 0-Guard mit Warn-Toast ohne pushUndo), distributeXP unverändert; initiative.js + modals-entity.html + initiative.css + E2E (4 Fälle) — schließt die UAT-Lücke „Spieler aus der XP-Verteilung ausschließen" (CHAR-01)
+- [x] 06-09-PLAN.md — Gap-Closure `xp-exclude-players`: XP-Empfänger im XP-Verteilungs-Modal werden zu manueller Pro-Charakter-Auswahl (Checkbox-Liste #xp-dist-char-list, default alle angehakt, Info-only-HP-Badge) — unabhängig vom Lebend-/HP-Status; `livingCount`→`selectedCount` in show/updateXpDistPreview, `hpCurrent>0`-Filter in applyXpDistribution entfernt (angehakte ids via parseEntityId, 0-Guard mit Warn-Toast ohne pushUndo), distributeXP unverändert; initiative.js + modals-entity.html + initiative.css + E2E (4 Fälle) — schließt die UAT-Lücke „Spieler aus der XP-Verteilung ausschließen" (CHAR-01)
 
 ### Phase 7: Komfort & Analyse
 
@@ -252,7 +252,7 @@ Plans:
 | 3. Bestiary                 | 5/5 | Complete    | 2026-06-13 |
 | 4. Initiative-Erweiterungen | 4/4 | Complete    | 2026-06-14 |
 | 5. Welt & Story             | 7/7 | Complete    | 2026-06-15 |
-| 6. Spieler-Verwaltung       | 8/9 | In Arbeit   | -         |
+| 6. Spieler-Verwaltung       | 9/9 | Complete   | 2026-06-18 |
 | 7. Komfort & Analyse        | 0/?            | Not started | -         |
 
 ---

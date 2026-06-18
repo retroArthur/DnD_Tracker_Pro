@@ -2,21 +2,21 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: planning
-last_updated: "2026-06-15T22:07:42.996Z"
+status: completed
+last_updated: "2026-06-18T09:06:29.823Z"
 progress:
   total_phases: 7
-  completed_phases: 6
-  total_plans: 34
-  completed_plans: 34
-  percent: 86
+  completed_phases: 5
+  total_plans: 40
+  completed_plans: 39
+  percent: 71
 ---
 
 # Project State: D&D Kampagnen-Tracker Pro — Stabilisierung & Ausbau
 
 **Last Updated:** 2026-06-18
 **Phase:** 6
-**Status:** Gap-closure complete
+**Status:** Gap-closure complete (06-09 xp-exclude-players abgeschlossen)
 
 ---
 
@@ -123,12 +123,13 @@ Progress: [███████████████████████
 - [x] Phase 6 ausführen Plan 3 (06-03 Charakterwerte): ✓ (2026-06-15, 18 Skill/Expertise-Checkboxen + Angriffsliste im Editor; Skills/Saves/Attribute/Angriffe als klickbare W20-Würfe mit Adv/Disadv im Detail-Modal; 4 CHAR-03 E2E-Tests grün; 49 Unit-Tests grün; window.diceHistory exportiert; roll-char-*-stop Handler; Commits 88b7752/ea9a64c)
 - [x] Phase 6 ausführen Plan 4 (06-04 XP-/Milestone-Tracker, CHAR-01 Wave-4): ✓ (2026-06-15, finish-combat-xp Trigger + XP-Verteilungs-Modal + applyXpDistribution; Detail-Modal XP-Block + canLevelUp-Hint; confirm-level-up + milestone-level-up Handler; Milestone-Modus .char-xp-milestone-section; 4 CHAR-01 E2E-Tests aktiviert + grün; 421 Unit-Tests grün; Commits 2e18db8/6392d62)
 - [x] Phase 6 ausführen Plan 5 (06-05 Gap-Closure D-07 Leveling-Toggle): ✓ (2026-06-16, .party-leveling-toggle Segmented-Control in #party-overview; set-leveling-mode Handler mit Whitelist ctx.value 'xp'|'milestone', plain save(), renderParty(), Live-Refresh offenes Detail-Modal; party.css Styles; neuer E2E-Test via UI-Klick (kein page.evaluate); 9/9 E2E grün; 421 Unit grün; Commit 52d973e)
+- [x] Phase 6 ausführen Plan 9 (06-09 Gap-Closure xp-exclude-players, CHAR-01): ✓ (2026-06-18, #xp-dist-char-list Checkbox-Auswahlliste + Alle/Keine Quick-Select; showXpDistributionModal rendert alle D.characters (esc, HP-Badge, default checked); updateXpDistPreview nutzt selectedCount; applyXpDistribution kein hpCurrent-Filter, 0-Guard Warn-Toast; xpDistSelectAll/None; 4 neue E2E-Tests + 15/15 E2E grün; 421 Unit grün; Commit 1ff49ac)
 
 ---
 
 ## Session Continuity
 
-**Last action:** Phase 06-08 (Gap-Closure UAT roll-feedback: Ergebnis-Toast über Detail-Modal) ausgeführt (2026-06-18). party.css: .event-log z-index 1000→1200 (über .modal-overlay 1100). entity-actions.js: _charRollToast() modul-interner Helfer; alle 4 Handler (skill/save/attr/attack-stop) rufen _charRollToast nach displayDiceResult+addToDiceHistory. Neuer E2E-Test (sichtbarer #event-log .event-log-entry mit 🎲 nach Modal-Wurf). 11/11 E2E grün; 421 Unit grün; Commit d0a35dc.
+**Last action:** Phase 06-09 (Gap-Closure xp-exclude-players: XP-Verteilung mit manueller Char-Auswahl) ausgeführt (2026-06-18). features/initiative.js: showXpDistributionModal rendert Checkbox-Zeilen (alle D.characters, esc, HP-Badge, default checked), scoped change-Listener, xpDistSelectAll/None. updateXpDistPreview: selectedCount statt livingCount. applyXpDistribution: parseEntityId-basierte Auflösung, kein hpCurrent-Filter, 0-Guard. modals-entity.html: #xp-dist-char-list + Alle/Keine. initiative.css: Char-Auswahl-Styles. 4 neue E2E-Tests + 15/15 E2E grün; 421 Unit grün; Commit 1ff49ac.
 **Next action:** Phase 07 — Komfort & Analyse planen und ausführen.
 
 ---
