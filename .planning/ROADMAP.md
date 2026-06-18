@@ -144,7 +144,7 @@ Plans:
 3. Nutzer hält Kampagnenereignisse in der Timeline fest und verknüpft sie mit Kalender-Daten — Ereignisse erscheinen in chronologischer Reihenfolge
 4. Nutzer startet eine Reise, wählt Gelände und Tempo — die App berechnet Tagesmärsche, würfelt Zufallsbegegnungen aus den passenden Tabellen und zeigt das Wetter an
 5. Nutzer legt eine Fraktion an, vergibt einen Rufwert für die Gruppe und kann ihn nach jeder Session anpassen — alle Fraktionen sind in einer Übersicht mit aktuellem Rufstand sichtbar
-   **Plans**: 7 plans (7 Wellen)
+   **Plans**: 8 plans (8 Wellen — inkl. 1 Gap-Closure-Plan aus UAT)
    **UI hint**: yes
 
 Plans:
@@ -175,6 +175,10 @@ Plans:
 **Wave 7** *(blocked on Wave 6)*
 
 - [x] 05-07-PLAN.md — WELT-05 Fraktionen: Tab + 5-Stufen-Ruf (−50…+50) + Ruf-Historie + npc.factionId-Mitglieder (WELT-05)
+
+**Wave 8** *(Gap-Closure aus UAT — `gap_closure: true`)*
+
+- [ ] 05-08-PLAN.md — Gap-Closure `npc-generator-modal-overlay`: NPC-Generator-Modal von loser `class="modal"`-Karte (inline display:flex am Seitenende) auf App-Standard `modal-overlay > modal` umgestellt + Anzeige via showModal; switchView entfernt das transiente Modal beim Tab-Wechsel; konsistente Schließ-Pfade (echte Handler statt totem close-modal) + 2 E2E-Cases — schließt die UAT-Lücke "Generator nicht als zentriertes Overlay / bleibt beim Tab-Wechsel sichtbar" (WELT-02)
 
 ### Phase 6: Spieler-Verwaltung
 
