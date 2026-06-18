@@ -13,7 +13,7 @@
 - [x] **Phase 2: Technik-Fundament** — Installierbare PWA, Datei-Backup, Command Palette (completed 2026-06-12)
 - [x] **Phase 3: Bestiary** — SRD-Monster-Kompendium offline + eigene Kreaturen + Encounter-Import (completed 2026-06-13)
 - [x] **Phase 4: Initiative-Erweiterungen** — Statblock-Popup, Legendäre Aktionen & Resistenzen, Mob-Modus (completed 2026-06-13)
-- [x] **Phase 5: Welt & Story** — Session-Prep, NPC-Generator, Timeline, Reise-Simulator, Fraktionen
+- [x] **Phase 5: Welt & Story** — Session-Prep, NPC-Generator, Timeline, Reise-Simulator, Fraktionen (completed 2026-06-18)
 - [x] **Phase 6: Spieler-Verwaltung** — XP/Milestone-Tracker, Inspiration, Erweiterte Charakterwerte
 - [ ] **Phase 7: Komfort & Analyse** — Soundboard, Würfel-Statistiken
 
@@ -178,7 +178,7 @@ Plans:
 
 **Wave 8** *(Gap-Closure aus UAT — `gap_closure: true`)*
 
-- [ ] 05-08-PLAN.md — Gap-Closure `npc-generator-modal-overlay`: NPC-Generator-Modal von loser `class="modal"`-Karte (inline display:flex am Seitenende) auf App-Standard `modal-overlay > modal` umgestellt + Anzeige via showModal; switchView entfernt das transiente Modal beim Tab-Wechsel; konsistente Schließ-Pfade (echte Handler statt totem close-modal) + 2 E2E-Cases — schließt die UAT-Lücke "Generator nicht als zentriertes Overlay / bleibt beim Tab-Wechsel sichtbar" (WELT-02)
+- [x] 05-08-PLAN.md — Gap-Closure `npc-generator-modal-overlay`: NPC-Generator-Modal von loser `class="modal"`-Karte (inline display:flex am Seitenende) auf App-Standard `modal-overlay > modal` umgestellt + Anzeige via showModal; switchView entfernt das transiente Modal beim Tab-Wechsel; konsistente Schließ-Pfade (echte Handler statt totem close-modal) + 2 E2E-Cases — schließt die UAT-Lücke "Generator nicht als zentriertes Overlay / bleibt beim Tab-Wechsel sichtbar" (WELT-02)
 
 ### Phase 6: Spieler-Verwaltung
 
@@ -251,7 +251,7 @@ Plans:
 | 2. Technik-Fundament        | 5/5 | Complete    | 2026-06-12 |
 | 3. Bestiary                 | 5/5 | Complete    | 2026-06-13 |
 | 4. Initiative-Erweiterungen | 4/4 | Complete    | 2026-06-14 |
-| 5. Welt & Story             | 7/7 | Complete    | 2026-06-15 |
+| 5. Welt & Story             | 8/8 | Complete    | 2026-06-18 |
 | 6. Spieler-Verwaltung       | 9/9 | Complete   | 2026-06-18 |
 | 7. Komfort & Analyse        | 0/?            | Not started | -         |
 

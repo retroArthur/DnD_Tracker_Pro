@@ -46,8 +46,8 @@ Progress: [███████████████████████
 | 2 | Technik-Fundament | Complete |
 | 3 | Bestiary | Complete (5/5 Pläne) |
 | 4 | Initiative-Erweiterungen | Complete (4/4 Pläne abgeschlossen) |
-| 5 | Welt & Story | Complete (7/7 Pläne) |
-| 6 | Spieler-Verwaltung | Complete (4/4 Pläne) |
+| 5 | Welt & Story | Complete (8/8 Pläne, inkl. Gap-Closure 05-08) |
+| 6 | Spieler-Verwaltung | Complete (9/9 Pläne) |
 | 7 | Komfort & Analyse | Not started |
 
 ---
@@ -129,7 +129,7 @@ Progress: [███████████████████████
 
 ## Session Continuity
 
-**Last action:** Phase 06-09 (Gap-Closure xp-exclude-players: XP-Verteilung mit manueller Char-Auswahl) ausgeführt (2026-06-18). features/initiative.js: showXpDistributionModal rendert Checkbox-Zeilen (alle D.characters, esc, HP-Badge, default checked), scoped change-Listener, xpDistSelectAll/None. updateXpDistPreview: selectedCount statt livingCount. applyXpDistribution: parseEntityId-basierte Auflösung, kein hpCurrent-Filter, 0-Guard. modals-entity.html: #xp-dist-char-list + Alle/Keine. initiative.css: Char-Auswahl-Styles. 4 neue E2E-Tests + 15/15 E2E grün; 421 Unit grün; Commit 1ff49ac.
+**Last action:** Phase 05-08 (Gap-Closure npc-generator-modal-overlay) ausgeführt (2026-06-18). features/npc-generator/npc-generator.js: showNPCGeneratorModal auf modal-overlay > modal umgestellt, Anzeige via window.showModal, close-modal-overlay-Handler für ×/Abbrechen. systems/spellslots/navigation.js: switchView Cleanup-Hook entfernt offenes #npc-generator-modal. 2 neue E2E-Cases (Overlay-Positionierung + Tab-Wechsel-Entfernung); 26/26 E2E grün; 421 Unit grün; Commit 4cb9a5b.
 **Next action:** Phase 07 — Komfort & Analyse planen und ausführen.
 
 ---
@@ -159,3 +159,4 @@ _State initialized: 2026-06-11_
 - [Phase 06-04]: pushUndo('XP verteilt') VOR distributeXP-Aufruf — distributeXP mutiert activeChars in-place sofort
 - [Phase 06-05]: set-leveling-mode verwendet plain save() ohne saveUndoState() — Settings-Änderung ist trivial reversibel (Inspiration-Precedent)
 - [Phase 06-05]: Modal-Live-Refresh liest Charakter-ID aus erstem [data-id]-Element im #char-detail-modal; kein neues data-Attribut nötig
+- [Phase 05-08]: close-modal-overlay für transiente Modals (insertAdjacentHTML): remove() ist korrekt, hide-modal würde nur .show entfernen (Zombie); E2E via page.evaluate(switchView) statt page.click bei Fullscreen-Overlay (Pointer-Interception)
