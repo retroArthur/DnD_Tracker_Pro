@@ -214,6 +214,10 @@ Plans:
 
 - [x] 06-06-PLAN.md — Gap-Closure `detail-modal-clutter`: V/N (Vorteil/Nachteil) im Detail-Modal nur bei Hover zeigen (`@media (hover: hover) and (pointer: fine)`), DEFAULT hält V/N sichtbar (Pflicht-Touch-Fallback); Attribut-Grid-Spacing entschärft; reines CSS in party.css + E2E-Hover-Case — schließt die UAT-Lücke „Detail-Modal sehr unaufgeräumt" (CHAR-03)
 
+**Wave 7** *(Gap-Closure aus UAT — `gap_closure: true`)*
+
+- [x] 06-07-PLAN.md — Gap-Closure `skills-layout`: Fertigkeiten-Sektion im Detail-Modal von gestrecktem Grid (auto-fit minmax) auf balancierten Mehrspalten-Fluss (column-width:215px + max-width:960px + break-inside:avoid) umgestellt — keine Waisen-Spalte, kompakte Zeilen; reines CSS — schließt die UAT-Lücke „Fertigkeiten zu verteilt/ungerade" (CHAR-03)
+
 ### Phase 7: Komfort & Analyse
 
 **Goal**: Nutzer kann lokale Audio-Dateien als Soundboard für Ambience nutzen und Würfel-Statistiken aus der Roll-Historie einsehen

@@ -69,3 +69,12 @@ blocked: 0
   test: detail-modal-clutter
   artifacts: ["assets/styles/party.css:3125-3158", "tests/e2e/features/character-advancement.spec.js"]
   missing: []
+
+- truth: "Die Fertigkeiten-Sektion im Detail-Modal ist gleichmäßig/aufgeräumt gelayoutet (nicht über die Modal-Breite zerfließend, keine Waisen-Spalte)"
+  status: resolved
+  reason: "UAT-Beobachtung (2026-06-16, Screenshot 'Conan'): 'die Fertigkeiten sind zu verteilt und ungerade'. Ursache: .char-skills-by-attr war ein display:grid (auto-fit minmax(150px,1fr)), das die 5 ungleich großen Attribut-Gruppen über die volle Modal-Breite streckte und zeilenweise platzierte → breite Name↔Modifier-Lücken + CHA als Waisen-Zeile."
+  resolution: "Closed by gap-closure 06-07. .char-skills-by-attr → balancierter Mehrspalten-Fluss (column-width:215px; column-gap:22px; max-width:960px) + break-inside:avoid auf .char-skill-attr-group. Gruppen packen sich dicht/balanciert, Zeilen kompakt. Per Playwright-Screenshot visuell geprüft; build exit 0, jest 421/421, playwright 10/10. Nutzer-Sichtprüfung nach Reload offen (Test 3)."
+  severity: cosmetic
+  test: skills-layout
+  artifacts: ["assets/styles/party.css:2815-2834"]
+  missing: []
