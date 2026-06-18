@@ -2813,15 +2813,23 @@
 }
 
 .char-skills-by-attr {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-    gap: 8px 12px;
+    /* Balanced masonry flow: die 5 ungleich großen Attribut-Gruppen (STR=1 … INT/WIS=5)
+       packen sich spaltenweise dicht statt als Grid-Zeilen mit Lücken/Waisen-Spalte.
+       max-width hält die Zeilen kompakt (Name <-> Modifier nah beieinander),
+       statt über das breite Detail-Modal zu zerfließen. */
+    column-width: 215px;
+    column-gap: 22px;
+    max-width: 960px;
 }
 
 .char-skill-attr-group {
     display: flex;
     flex-direction: column;
-    gap: 3px;
+    gap: 2px;
+    break-inside: avoid;
+    -webkit-column-break-inside: avoid;
+    page-break-inside: avoid;
+    margin-bottom: 12px;
 }
 
 .char-skill-attr-head {
