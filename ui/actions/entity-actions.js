@@ -3,6 +3,19 @@
 // ENTITY ACTIONS - @character @npc @location @quest @encounter
 // ============================================================
 
+// Modul-interner Helfer für Ergebnis-Toasts nach Modal-Würfen (CHAR-03 / UAT roll-feedback)
+// NICHT exportiert — kein window._charRollToast, kein neuer Globaler.
+// label ist bereits esc()'d (skill/save/attr via esc(ch.name); attack via escaptes dataset.label).
+// showToast escaped msg intern erneut — daher hier KEIN zusätzliches esc() (doppeltes Escaping
+// würde HTML-Entities sichtbar machen).
+function _charRollToast(label, total, rolls) {
+    var msg = '🎲 ' + label + ': ' + total;
+    if (rolls && rolls.length > 1) {
+        msg += ' [' + rolls.join(', ') + ']';
+    }
+    showToast(msg, 'info');
+}
+
 const EntityActions = {
     // Character actions
     'edit-char': ctx => editChar(ctx.id),
@@ -144,6 +157,7 @@ const EntityActions = {
         var rolls = parsed ? parsed.rolls : [roll];
         displayDiceResult(total, label + ' (' + notation + formatModifier(mod) + ')', rolls, roll === 20, roll === 1);
         addToDiceHistory(label, total, rolls);
+        _charRollToast(label, total, rolls);
     },
 
     // Saving throw roll (roll-char-save-stop)
@@ -167,6 +181,7 @@ const EntityActions = {
         var rolls = parsed ? parsed.rolls : [roll];
         displayDiceResult(total, label + ' (' + notation + formatModifier(saveMod) + ')', rolls, roll === 20, roll === 1);
         addToDiceHistory(label, total, rolls);
+        _charRollToast(label, total, rolls);
     },
 
     // Raw attribute check roll (roll-char-attr-stop)
@@ -187,6 +202,7 @@ const EntityActions = {
         var rolls = parsed ? parsed.rolls : [roll];
         displayDiceResult(total, label + ' (' + notation + formatModifier(mod) + ')', rolls, roll === 20, roll === 1);
         addToDiceHistory(label, total, rolls);
+        _charRollToast(label, total, rolls);
     },
 
     // Attack roll from detail modal (roll-char-attack-stop)
@@ -206,6 +222,7 @@ const EntityActions = {
         var isFail = (parsed.keptRolls || rolls).some(function(r) { return r === 1; });
         displayDiceResult(total, label + ' (' + formula + ')', rolls, isCrit, isFail);
         addToDiceHistory(label, total, rolls);
+        _charRollToast(label, total, rolls);
     },
 
     // NPC actions

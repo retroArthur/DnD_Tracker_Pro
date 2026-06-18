@@ -545,7 +545,7 @@
             width: 90%;
             max-height: 300px;
             overflow-y: auto;
-            z-index: 1000;
+            z-index: 1200; /* über .modal-overlay (1100, dashboard.css) — unter App-Top-Overlays (9999/10000) */
             pointer-events: none;
         }
 

@@ -114,6 +114,33 @@ test.describe('CHAR-03 / D-04: Klickbare Würfe im Detail-Modal', () => {
             expect(historyAfter).toBeGreaterThan(historyBefore);
         }
     );
+
+    test(
+        'Klick auf STR-Attribut-Wurf im Modal → sichtbarer Toast über dem Modal (UAT roll-feedback)',
+        async ({ page }) => {
+            // Gap-Closure 06-08 — roll-feedback: Toast erscheint über offenem Detail-Modal
+            // z-index-Fix: .event-log 1200 > .modal-overlay 1100 → Toast sichtbar
+            // 06-VALIDATION.md: CHAR-03 / UAT roll-feedback
+            await page.click('[data-action="show-char-details"][data-id="99902"]');
+            await page.waitForTimeout(300);
+
+            // Würfel-Historien-Länge vorher merken (diceHistory bleibt weiterhin grün)
+            const historyBefore = await page.evaluate(() => (window.diceHistory || []).length);
+
+            // STR-Attribut-Wurf klicken (Modal bleibt offen)
+            await page.locator('[data-action="roll-char-attr-stop"][data-attr="str"]:not([data-adv])').first().click();
+            await page.waitForTimeout(500);
+
+            // (a) Würfel-Historie gewachsen (bestehende Assertion bleibt grün)
+            const historyAfter = await page.evaluate(() => (window.diceHistory || []).length);
+            expect(historyAfter).toBeGreaterThan(historyBefore);
+
+            // (b) Sichtbarer #event-log-Eintrag mit 🎲 über dem Modal
+            await expect(
+                page.locator('#event-log .event-log-entry', { hasText: '🎲' }).first()
+            ).toBeVisible();
+        }
+    );
 });
 
 // ============================================================
