@@ -190,7 +190,7 @@ Plans:
 1. Nutzer schließt einen Encounter ab und übernimmt die verdienten XP auf Knopfdruck auf alle aktiven Charaktere; ein Levelaufstieg-Hinweis erscheint, wenn ein Charakter die XP-Schwelle erreicht
 2. Nutzer vergibt Inspiration an einen Spieler per Klick — der Inspiration-Marker ist in der Party-Übersicht sofort sichtbar und kann mit einem weiteren Klick wieder entfernt werden
 3. Nutzer öffnet den Charakterbogen, sieht Skill-Proficiencies, Saving Throws und Angriffe auf einen Blick — ein Skill-Check für Stealth liefert sofort den korrekten Würfelwurf mit Proficiency-Bonus
-   **Plans**: 6 plans (6 Wellen — inkl. 2 Gap-Closure-Pläne aus UAT)
+   **Plans**: 8 plans (8 Wellen — inkl. 4 Gap-Closure-Pläne aus UAT)
    **UI hint**: yes
 
 Plans:
@@ -221,6 +221,10 @@ Plans:
 **Wave 7** *(Gap-Closure aus UAT — `gap_closure: true`)*
 
 - [x] 06-07-PLAN.md — Gap-Closure `skills-layout`: Fertigkeiten-Sektion im Detail-Modal von gestrecktem Grid (auto-fit minmax) auf balancierten Mehrspalten-Fluss (column-width:215px + max-width:960px + break-inside:avoid) umgestellt — keine Waisen-Spalte, kompakte Zeilen; reines CSS — schließt die UAT-Lücke „Fertigkeiten zu verteilt/ungerade" (CHAR-03)
+
+**Wave 8** *(Gap-Closure aus UAT — `gap_closure: true`)*
+
+- [ ] 06-08-PLAN.md — Gap-Closure `roll-feedback`: Würfe im Detail-Modal (Attribut/Skill/Save/Angriff) zeigten kein Feedback über dem Modal (displayDiceResult schreibt in den verdeckten Würfel-Tab); Fix = Ergebnis-Toast in allen 4 -stop-Handlern (entity-actions.js, modul-interner _charRollToast nach unverändertem displayDiceResult+addToDiceHistory) + z-index-Bump .event-log 1000→1200 (über .modal-overlay 1100) in party.css + E2E-Toast-Assertion — schließt die UAT-Lücke „Wurf im Modal fühlt sich an, als passiere nichts" (CHAR-03)
 
 ### Phase 7: Komfort & Analyse
 
