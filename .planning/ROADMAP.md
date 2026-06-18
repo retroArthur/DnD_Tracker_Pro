@@ -190,7 +190,7 @@ Plans:
 1. Nutzer schließt einen Encounter ab und übernimmt die verdienten XP auf Knopfdruck auf alle aktiven Charaktere; ein Levelaufstieg-Hinweis erscheint, wenn ein Charakter die XP-Schwelle erreicht
 2. Nutzer vergibt Inspiration an einen Spieler per Klick — der Inspiration-Marker ist in der Party-Übersicht sofort sichtbar und kann mit einem weiteren Klick wieder entfernt werden
 3. Nutzer öffnet den Charakterbogen, sieht Skill-Proficiencies, Saving Throws und Angriffe auf einen Blick — ein Skill-Check für Stealth liefert sofort den korrekten Würfelwurf mit Proficiency-Bonus
-   **Plans**: 8 plans (8 Wellen — inkl. 4 Gap-Closure-Pläne aus UAT)
+   **Plans**: 9 plans (9 Wellen — inkl. 5 Gap-Closure-Pläne aus UAT)
    **UI hint**: yes
 
 Plans:
@@ -226,6 +226,10 @@ Plans:
 
 - [x] 06-08-PLAN.md — Gap-Closure `roll-feedback`: Würfe im Detail-Modal (Attribut/Skill/Save/Angriff) zeigten kein Feedback über dem Modal (displayDiceResult schreibt in den verdeckten Würfel-Tab); Fix = Ergebnis-Toast in allen 4 -stop-Handlern (entity-actions.js, modul-interner _charRollToast nach unverändertem displayDiceResult+addToDiceHistory) + z-index-Bump .event-log 1000→1200 (über .modal-overlay 1100) in party.css + E2E-Toast-Assertion — schließt die UAT-Lücke „Wurf im Modal fühlt sich an, als passiere nichts" (CHAR-03)
 
+**Wave 9** *(Gap-Closure aus UAT — `gap_closure: true`)*
+
+- [ ] 06-09-PLAN.md — Gap-Closure `xp-exclude-players`: XP-Empfänger im XP-Verteilungs-Modal werden zu manueller Pro-Charakter-Auswahl (Checkbox-Liste #xp-dist-char-list, default alle angehakt, Info-only-HP-Badge) — unabhängig vom Lebend-/HP-Status; `livingCount`→`selectedCount` in show/updateXpDistPreview, `hpCurrent>0`-Filter in applyXpDistribution entfernt (angehakte ids via parseEntityId, 0-Guard mit Warn-Toast ohne pushUndo), distributeXP unverändert; initiative.js + modals-entity.html + initiative.css + E2E (4 Fälle) — schließt die UAT-Lücke „Spieler aus der XP-Verteilung ausschließen" (CHAR-01)
+
 ### Phase 7: Komfort & Analyse
 
 **Goal**: Nutzer kann lokale Audio-Dateien als Soundboard für Ambience nutzen und Würfel-Statistiken aus der Roll-Historie einsehen
@@ -248,7 +252,7 @@ Plans:
 | 3. Bestiary                 | 5/5 | Complete    | 2026-06-13 |
 | 4. Initiative-Erweiterungen | 4/4 | Complete    | 2026-06-14 |
 | 5. Welt & Story             | 7/7 | Complete    | 2026-06-15 |
-| 6. Spieler-Verwaltung       | 6/6 | Complete    | 2026-06-16 |
+| 6. Spieler-Verwaltung       | 8/9 | In Arbeit   | -         |
 | 7. Komfort & Analyse        | 0/?            | Not started | -         |
 
 ---
