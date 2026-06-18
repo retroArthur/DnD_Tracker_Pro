@@ -167,11 +167,11 @@ function showNPCGeneratorModal() {
     }).join('');
 
     var modalHTML = [
-        '<div id="npc-generator-modal" class="modal" style="display:flex">',
-        '  <div class="modal-content npcg-modal-content">',
+        '<div id="npc-generator-modal" class="modal-overlay">',
+        '  <div class="modal npcg-modal-content">',
         '    <div class="modal-header">',
         '      <h3>🎲 NPC-Generator</h3>',
-        '      <button class="modal-close" data-action="close-modal" data-value="npc-generator-modal">×</button>',
+        '      <button class="modal-close" data-action="close-modal-overlay">×</button>',
         '    </div>',
         '    <div class="modal-body">',
         '      <div class="npcg-filter-row">',
@@ -196,7 +196,7 @@ function showNPCGeneratorModal() {
         '      </div>',
         '    </div>',
         '    <div class="modal-footer npcg-modal-footer">',
-        '      <button class="btn btn-secondary" data-action="close-modal" data-value="npc-generator-modal">Abbrechen</button>',
+        '      <button class="btn btn-secondary" data-action="close-modal-overlay">Abbrechen</button>',
         '      <button class="btn btn-primary npcg-save-btn" data-action="save-generated-npc">Als NPC speichern</button>',
         '    </div>',
         '  </div>',
@@ -209,7 +209,10 @@ function showNPCGeneratorModal() {
 
     document.body.insertAdjacentHTML('beforeend', modalHTML);
 
-    // Modal overlay schließen bei Klick außerhalb
+    // Modal via showModal anzeigen (setzt .show → position:fixed, backdrop, opacity:1)
+    if (typeof window.showModal === 'function') window.showModal('npc-generator-modal');
+
+    // Modal overlay schließen bei Klick außerhalb (Backdrop-Klick)
     var modal = document.getElementById('npc-generator-modal');
     if (modal) {
         modal.addEventListener('click', function(e) {

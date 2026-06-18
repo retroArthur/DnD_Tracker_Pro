@@ -5,6 +5,10 @@
 // NAVIGATION
 // ============================================================
 function switchView(name) {
+    // Cleanup: transientes NPC-Generator-Modal beim View-Wechsel entfernen
+    const _npcgModal = document.getElementById('npc-generator-modal');
+    if (_npcgModal) _npcgModal.remove();
+
     document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
     document.querySelectorAll('.nav-tab').forEach(t => {
         t.classList.remove('active');

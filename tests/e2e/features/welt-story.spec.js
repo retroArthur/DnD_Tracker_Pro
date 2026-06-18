@@ -199,6 +199,42 @@ test.describe('WELT-02: NPC-Generator', () => {
         const npcListText = await page.locator('#npc-list').innerText();
         expect(npcListText).toContain(npcName);
     });
+
+    test('Generator öffnet als zentriertes, fixiertes Modal-Overlay (UAT-Gap npc-generator-modal-overlay)', async ({ page }) => {
+        await page.goto(APP_URL);
+        await page.click('[data-view="npcs"]');
+        await page.click('[data-action="show-npc-generator"]');
+
+        // Modal ist sichtbar
+        await expect(page.locator('#npc-generator-modal')).toBeVisible();
+
+        // Äußeres Element hat Klasse modal-overlay
+        const cls = await page.locator('#npc-generator-modal').getAttribute('class');
+        expect(cls).toContain('modal-overlay');
+
+        // Computed position ist fixed (kein normaler Dokumentfluss)
+        const pos = await page.evaluate(() => {
+            const el = document.getElementById('npc-generator-modal');
+            return el ? getComputedStyle(el).position : '';
+        });
+        expect(pos).toBe('fixed');
+    });
+
+    test('Generator verschwindet beim Tab-Wechsel (View-Switch-Cleanup)', async ({ page }) => {
+        await page.goto(APP_URL);
+        await page.click('[data-view="npcs"]');
+        await page.click('[data-action="show-npc-generator"]');
+
+        // Modal ist offen
+        await expect(page.locator('#npc-generator-modal')).toBeVisible();
+
+        // Tab wechseln via switchView (Modal ist Fullscreen-Overlay und blockiert Pointer-Events
+        // auf darunter liegende Elemente — switchView direkt aufrufen testet den Cleanup-Hook exakt)
+        await page.evaluate(() => { if (typeof window.switchView === 'function') window.switchView('party'); });
+
+        // Modal muss vollständig aus dem DOM entfernt sein (count === 0 beweist Entfernung)
+        expect(await page.locator('#npc-generator-modal').count()).toBe(0);
+    });
 });
 
 // ============================================================
