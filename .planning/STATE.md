@@ -6,17 +6,17 @@ status: completed
 last_updated: "2026-06-18T09:06:29.823Z"
 progress:
   total_phases: 7
-  completed_phases: 5
+  completed_phases: 6
   total_plans: 40
-  completed_plans: 39
-  percent: 71
+  completed_plans: 40
+  percent: 86
 ---
 
 # Project State: D&D Kampagnen-Tracker Pro — Stabilisierung & Ausbau
 
 **Last Updated:** 2026-06-18
-**Phase:** 6
-**Status:** Gap-closure complete (06-09 xp-exclude-players abgeschlossen)
+**Phase:** 6 abgeschlossen — Phase 7 als Nächstes
+**Status:** Phasen 1–6 komplett (6/7, 86%). UAT-Gap-Closures erledigt: Phase 6 (06-05…06-09) + Phase 5 (05-08 NPC-Generator-Overlay). Offen: Phase-6-UAT Test 3 (Skills-Layout) Nutzer-Sichtbestätigung; Phase 7 (Komfort & Analyse) noch nicht begonnen.
 
 ---
 
