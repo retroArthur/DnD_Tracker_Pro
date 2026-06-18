@@ -8,11 +8,11 @@ updated: 2026-06-16T12:30:00Z
 
 ## Current Test
 
-number: 2
-name: XP-Fortschrittsbalken im Detail-Modal
+number: 5
+name: XP-Verteilungs-Modal — Live-Vorschau
 expected: |
-  Charakter anklicken → Detail-Modal (im XP-Modus): ein Fortschrittsbalken zeigt
-  den prozentualen XP-Fortschritt zur nächsten Stufe; kein Overflow, korrekte Breite.
+  Initiative → Encounter mit Monster starten → ⭐ XP → manuelle XP-Eingabe ändern:
+  die "Je Charakter: +N XP"-Zeile aktualisiert sich live ohne Neuladen.
 awaiting: user response
 
 ## Tests
@@ -35,7 +35,8 @@ note: Gruppierung/Namen/Modifier sind korrekt — ABER das Detail-Modal ist visu
 
 ### 4. Angriffs-Sektion im Detail-Modal: Treffer- und Schadenswürfel klar erkennbar
 expected: Angriffswürfel-Spans sind deutlich als klickbar erkennbar (Cursor, Hover), Schaden-Spans ebenfalls
-result: [pending]
+result: pass
+note: Angriffe rendern mit klickbaren Treffer-/Schaden-Spans (1d20+1 / 1d8+2). UAT deckte auf, dass der Klick zwar korrekt würfelt (landet in Würfel-Historie — per Headless-Repro verifiziert, diceHistory 0→1), aber KEIN sichtbares Feedback über dem Modal gab (displayDiceResult schreibt in die Würfel-Tab-Anzeige hinter dem Modal; .event-log z-index 1000 < Modal 1100). Behoben in Gap 06-08 (Toast über Modal + z-index 1200). Gilt für alle Modal-Würfe (Skills/Saves/Attribute/Angriffe).
 
 ### 5. XP-Verteilungs-Modal: Vorschau aktualisiert sich live bei manueller XP-Eingabe
 expected: Änderung des Inputs aktualisiert die "Je Charakter: +N XP"-Zeile ohne Neuladen
@@ -44,9 +45,9 @@ result: [pending]
 ## Summary
 
 total: 5
-passed: 2
+passed: 3
 issues: 1
-pending: 2
+pending: 1
 skipped: 0
 blocked: 0
 
@@ -77,4 +78,13 @@ blocked: 0
   severity: cosmetic
   test: skills-layout
   artifacts: ["assets/styles/party.css:2815-2834"]
+  missing: []
+
+- truth: "Ein Klick auf einen Wurf im Detail-Modal (Angriff/Skill/Save/Attribut) zeigt ein sofort sichtbares Ergebnis über dem Modal"
+  status: resolved
+  reason: "UAT (2026-06-16): Klick auf Schaden-Span '1d8+2' schien wirkungslos. Headless-Repro bewies: der Wurf funktioniert (diceHistory 0→1, kein Fehler) — aber displayDiceResult schreibt in die Würfel-Tab-Elemente (#dice-hero) HINTER dem offenen Modal, und der Toast-Container .event-log war z-index 1000 < .modal-overlay 1100. Kein Funktionsfehler, sondern fehlendes sichtbares Feedback; betrifft alle 4 Modal-Wurf-Typen."
+  resolution: "Closed by gap-closure 06-08 (commit d0a35dc). .event-log z-index 1000→1200 (über Modal); module-internes _charRollToast(label,total,rolls) in allen 4 Handlern (roll-char-attr/skill/save/attack-stop) NACH dem unveränderten displayDiceResult+addToDiceHistory → '🎲 {label}: {total}'-Toast über dem Modal. Roll-Mathematik/History unverändert; kein Doppel-Escaping. Neuer E2E-Toast-Test; build exit 0, jest 421/421, playwright 11/11."
+  severity: major
+  test: roll-feedback
+  artifacts: ["ui/actions/entity-actions.js (_charRollToast + 4 Handler)", "assets/styles/party.css:548 (.event-log z-index 1200)", "tests/e2e/features/character-advancement.spec.js"]
   missing: []
