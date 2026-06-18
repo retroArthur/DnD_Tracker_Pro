@@ -1297,3 +1297,90 @@
     font-size: 0.9rem;
 }
 
+.xp-dist-preview-hint {
+    background: var(--bg-card);
+    border-left-color: var(--text-dim);
+    color: var(--text-dim);
+}
+
+/* ============================================================
+   XP-VERTEILUNG CHAR-AUSWAHL (06-09 / CHAR-01 xp-exclude-players)
+   ============================================================ */
+
+.xp-dist-char-select-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.xp-dist-char-select-label {
+    font-size: 0.85rem;
+    color: var(--text-dim);
+}
+
+.xp-dist-quick-select {
+    display: flex;
+    gap: 6px;
+}
+
+.xp-dist-char-list {
+    max-height: 180px;
+    overflow-y: auto;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--bg-dark);
+}
+
+.xp-dist-char-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 6px 12px;
+    min-height: 32px;
+    cursor: pointer;
+    border-bottom: 1px solid var(--border);
+    transition: background 0.1s;
+}
+
+.xp-dist-char-row:last-child {
+    border-bottom: none;
+}
+
+.xp-dist-char-row:hover {
+    background: var(--bg-card);
+}
+
+.xp-dist-char-cb {
+    flex-shrink: 0;
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+    accent-color: var(--gold);
+}
+
+.xp-dist-char-name {
+    flex: 1;
+    font-size: 0.9rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.xp-dist-char-xp {
+    font-size: 0.8rem;
+    color: var(--text-dim);
+    white-space: nowrap;
+}
+
+.xp-dist-char-hp {
+    font-size: 0.78rem;
+    color: var(--text-dim);
+    white-space: nowrap;
+}
+
+.xp-dist-char-hp--down {
+    color: var(--text-dim);
+    opacity: 0.6;
+}
+

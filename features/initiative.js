@@ -272,23 +272,35 @@ function showXpDistributionModal() {
             autoSum += getXPForCR(cb.cr);
         }
     });
-    // Count living party characters
-    var livingCount = D.characters.filter(function(c) { return (c.hpCurrent || 0) > 0; }).length;
-    // Fill modal elements
+    // Fill autosum and total input
     var autoSumEl = document.getElementById('xp-dist-autosum');
     var totalInput = document.getElementById('xp-distribution-total');
-    var livingCountEl = document.getElementById('xp-dist-living-count');
-    var previewEl = document.getElementById('xp-dist-preview');
     if (autoSumEl) autoSumEl.textContent = autoSum + ' XP';
     if (totalInput) totalInput.value = String(autoSum);
-    if (livingCountEl) livingCountEl.textContent = livingCount + ' lebende Charakter' + (livingCount !== 1 ? 'e' : '') + ' erhalten XP';
-    if (previewEl) {
-        if (livingCount > 0 && autoSum > 0) {
-            var share = Math.floor(autoSum / livingCount);
-            var remainder = autoSum % livingCount;
-            previewEl.innerHTML = '<div class="xp-dist-preview-line">Je Charakter: <strong>+' + share + ' XP</strong>' + (remainder > 0 ? ' (Rest: ' + remainder + ' XP)' : '') + '</div>';
-        } else {
-            previewEl.innerHTML = '';
+    // Render all characters as checkbox rows into #xp-dist-char-list
+    var charList = document.getElementById('xp-dist-char-list');
+    if (charList) {
+        var rowsHtml = '';
+        D.characters.forEach(function(ch) {
+            var hpCur = ch.hpCurrent || 0;
+            var hpMax = ch.hpMax || 0;
+            var hpBadge = hpCur <= 0
+                ? '<span class="xp-dist-char-hp xp-dist-char-hp--down">\u{1F480} 0 HP</span>'
+                : '<span class="xp-dist-char-hp">❤️ ' + hpCur + '/' + hpMax + '</span>';
+            rowsHtml += '<label class="xp-dist-char-row">'
+                + '<input type="checkbox" class="xp-dist-char-cb" data-id="' + ch.id + '" value="' + ch.id + '" checked>'
+                + '<span class="xp-dist-char-name">' + esc(ch.name) + '</span>'
+                + '<span class="xp-dist-char-xp">' + (ch.xp || 0) + ' XP</span>'
+                + hpBadge
+                + '</label>';
+        });
+        charList.innerHTML = rowsHtml;
+        // Scoped change listener (flag prevents multiple bindings)
+        if (!charList._xpDistCbListener) {
+            charList._xpDistCbListener = true;
+            charList.addEventListener('change', function() {
+                updateXpDistPreview();
+            });
         }
     }
     // Update preview when total changes
@@ -298,18 +310,41 @@ function showXpDistributionModal() {
             updateXpDistPreview();
         });
     }
+    // Initial preview
+    updateXpDistPreview();
     showModal('xp-distribution-modal');
 }
+function xpDistSelectAll() {
+    document.querySelectorAll('#xp-dist-char-list .xp-dist-char-cb').forEach(function(cb) {
+        cb.checked = true;
+    });
+    updateXpDistPreview();
+}
+function xpDistSelectNone() {
+    document.querySelectorAll('#xp-dist-char-list .xp-dist-char-cb').forEach(function(cb) {
+        cb.checked = false;
+    });
+    updateXpDistPreview();
+}
+window.xpDistSelectAll = xpDistSelectAll;
+window.xpDistSelectNone = xpDistSelectNone;
 function updateXpDistPreview() {
     var D = window.D;
     var totalInput = document.getElementById('xp-distribution-total');
     var previewEl = document.getElementById('xp-dist-preview');
+    var livingCountEl = document.getElementById('xp-dist-living-count');
     if (!totalInput || !previewEl) return;
     var total = Math.max(0, parseInt(totalInput.value, 10) || 0);
-    var livingCount = D.characters.filter(function(c) { return (c.hpCurrent || 0) > 0; }).length;
-    if (livingCount > 0 && total > 0) {
-        var share = Math.floor(total / livingCount);
-        var remainder = total % livingCount;
+    var selectedCount = document.querySelectorAll('#xp-dist-char-list .xp-dist-char-cb:checked').length;
+    var totalCount = D.characters.length;
+    if (livingCountEl) {
+        livingCountEl.textContent = selectedCount + ' von ' + totalCount + ' ausgewählt';
+    }
+    if (selectedCount === 0) {
+        previewEl.innerHTML = '<div class="xp-dist-preview-line xp-dist-preview-hint">Keine Spieler ausgewählt</div>';
+    } else if (total > 0) {
+        var share = Math.floor(total / selectedCount);
+        var remainder = total % selectedCount;
         previewEl.innerHTML = '<div class="xp-dist-preview-line">Je Charakter: <strong>+' + share + ' XP</strong>' + (remainder > 0 ? ' (Rest: ' + remainder + ' XP)' : '') + '</div>';
     } else {
         previewEl.innerHTML = '';
@@ -320,21 +355,30 @@ function applyXpDistribution() {
     var totalInput = document.getElementById('xp-distribution-total');
     // T-06-11: Coerce total via parseInt with non-negative floor; ignore NaN
     var totalXP = Math.max(0, parseInt(totalInput ? totalInput.value : '0', 10) || 0);
-    // T-06-12: Guard empty-party case
-    var activeChars = D.characters.filter(function(c) { return (c.hpCurrent || 0) > 0; });
-    if (!activeChars.length) {
-        showToast('Keine lebenden Charaktere — XP nicht verteilt', 'warning');
+    // Collect checked character ids from #xp-dist-char-list (T-06-09-02: parseEntityId for safe resolution)
+    var checkedBoxes = Array.from(document.querySelectorAll('#xp-dist-char-list .xp-dist-char-cb:checked'));
+    var selectedChars = checkedBoxes.reduce(function(acc, cb) {
+        var id = parseEntityId(cb.dataset.id);
+        if (id !== null) {
+            var ch = D.characters.find(function(c) { return c.id === id; });
+            if (ch) acc.push(ch);
+        }
+        return acc;
+    }, []);
+    // T-06-09-03: Guard 0-selected — warn toast, NO pushUndo, NO mutation
+    if (!selectedChars.length) {
+        showToast('Keine Spieler ausgewählt — XP nicht verteilt', 'warning');
         return;
     }
     // T-06-14: pushUndo BEFORE mutation so XP distribution is undoable
     pushUndo('XP verteilt');
-    // distributeXP mutates each activeChar.xp (Wave-1 helper — pure w.r.t. globals, caller filters)
-    var result = distributeXP(totalXP, activeChars);
+    // distributeXP mutates each selectedChar.xp (Wave-1 helper — alive/dead does NOT gate selection)
+    var result = distributeXP(totalXP, selectedChars);
     var share = result.share;
     var remainder = result.remainder;
     // Collect level-up hints (D-11: NEVER auto-bump level; hint only)
     var levelUpHints = [];
-    activeChars.forEach(function(ch) {
+    selectedChars.forEach(function(ch) {
         if (canLevelUp(ch)) {
             levelUpHints.push(esc(ch.name) + ' kann aufsteigen!');
         }

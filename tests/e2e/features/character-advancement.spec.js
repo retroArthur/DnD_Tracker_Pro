@@ -423,3 +423,119 @@ test.describe('CHAR-03: Detail-Modal aufgeräumt — V/N nur bei Hover', () => {
         }
     );
 });
+
+// ============================================================
+// CHAR-01 / 06-09: XP-Verteilung mit manueller Char-Auswahl (xp-exclude-players)
+// Gap-Closure: Plan 06-09 — "XP-Auswahl Checkbox lebend/tot-unabhängig"
+// ============================================================
+
+test.describe('CHAR-01 / 06-09: XP-Verteilung mit Char-Auswahl', () => {
+    /** Öffnet das XP-Modal mit 3 injizierten Chars (einer mit hpCurrent:0) und setzt Total=100 */
+    async function openXpModalWith3Chars(page) {
+        await loadApp(page);
+        await page.evaluate(() => {
+            // @ts-ignore
+            window.D.characters = [
+                { id: 901, name: 'Lebender 1', hpCurrent: 20, hpMax: 20, xp: 0 },
+                { id: 902, name: 'Lebender 2', hpCurrent: 15, hpMax: 15, xp: 0 },
+                { id: 903, name: 'Gefallener', hpCurrent: 0,  hpMax: 12, xp: 0 }
+            ];
+            // @ts-ignore
+            window.D.initiative.combatants = [
+                { id: 1, name: 'Wolf', type: 'enemy', cr: '0', hpCurrent: 0, hpMax: 5 }
+            ];
+        });
+        await page.click('[data-view="initiative"]');
+        await page.waitForTimeout(300);
+        await page.click('[data-action="finish-combat-xp"]');
+        await page.waitForTimeout(300);
+        // Gesamt-XP manuell auf 100 setzen
+        await page.fill('#xp-distribution-total', '100');
+        await page.dispatchEvent('#xp-distribution-total', 'input');
+        await page.waitForTimeout(150);
+    }
+
+    test(
+        '(a) Alle 3 Chars sind im Modal gelistet und default angehakt',
+        async ({ page }) => {
+            // 06-09 / CHAR-01 xp-exclude-players
+            await openXpModalWith3Chars(page);
+            // Alle 3 Checkboxen vorhanden
+            await expect(page.locator('#xp-dist-char-list .xp-dist-char-cb')).toHaveCount(3);
+            // Alle standardmäßig angehakt
+            const unchecked = await page.locator('#xp-dist-char-list .xp-dist-char-cb:not(:checked)').count();
+            expect(unchecked).toBe(0);
+        }
+    );
+
+    test(
+        '(b) Checkbox abwählen aktualisiert "Je Charakter"-Vorschau (100 XP / 3→2 = 50)',
+        async ({ page }) => {
+            // 06-09 / CHAR-01 xp-exclude-players
+            await openXpModalWith3Chars(page);
+            // Initial: 3 Chars, 100 XP → 33 XP je Char (floor(100/3))
+            const previewBefore = await page.locator('#xp-dist-preview').textContent();
+            expect(previewBefore).toContain('33');
+            // Ersten lebenden Char abwählen
+            await page.locator('#xp-dist-char-list .xp-dist-char-cb').first().uncheck();
+            await page.waitForTimeout(150);
+            // Jetzt 2 Chars → 50 XP je Char
+            const previewAfter = await page.locator('#xp-dist-preview').textContent();
+            expect(previewAfter).toContain('50');
+        }
+    );
+
+    test(
+        '(c) Nur angehakte Chars erhalten XP — abgewählter bleibt unverändert, 0-HP-angehakter bekommt XP',
+        async ({ page }) => {
+            // 06-09 / CHAR-01 xp-exclude-players
+            await openXpModalWith3Chars(page);
+            // Ersten Char (id=901, lebend) abwählen
+            await page.locator('#xp-dist-char-list .xp-dist-char-cb[data-id="901"]').uncheck();
+            await page.waitForTimeout(150);
+            // XP verteilen (Chars 902 + 903 angehakt → je 50 XP)
+            await page.click('[data-action="apply-xp-distribution"]');
+            await page.waitForTimeout(300);
+            // D.characters auslesen
+            const chars = await page.evaluate(() => {
+                // @ts-ignore
+                return window.D.characters.map(c => ({ id: c.id, xp: c.xp }));
+            });
+            const char901 = chars.find(c => c.id === 901);
+            const char902 = chars.find(c => c.id === 902);
+            const char903 = chars.find(c => c.id === 903);
+            // Abgewählter Char 901: keine XP-Änderung
+            expect(char901.xp).toBe(0);
+            // Angehakter lebender Char 902: XP erhöht
+            expect(char902.xp).toBeGreaterThan(0);
+            // Angehakter 0-HP-Char 903: XP erhöht (alive/dead gatet nicht mehr)
+            expect(char903.xp).toBeGreaterThan(0);
+        }
+    );
+
+    test(
+        '(d) Alle abwählen → Guard-Toast "Keine Spieler ausgewählt", keine XP-Mutation',
+        async ({ page }) => {
+            // 06-09 / CHAR-01 xp-exclude-players
+            await openXpModalWith3Chars(page);
+            // Alle Chars abwählen via Quick-Select "Keine"
+            await page.click('[data-action="xp-dist-select-none"]');
+            await page.waitForTimeout(150);
+            // Alle Checkboxen abgehakt?
+            const checkedCount = await page.locator('#xp-dist-char-list .xp-dist-char-cb:checked').count();
+            expect(checkedCount).toBe(0);
+            // XP verteilen klicken
+            await page.click('[data-action="apply-xp-distribution"]');
+            await page.waitForTimeout(300);
+            // Guard-Toast im #event-log sichtbar
+            const toastText = await page.locator('#event-log').textContent();
+            expect(toastText).toContain('Keine Spieler');
+            // Keine XP-Mutation
+            const chars = await page.evaluate(() => {
+                // @ts-ignore
+                return window.D.characters.map(c => ({ id: c.id, xp: c.xp }));
+            });
+            chars.forEach(c => expect(c.xp).toBe(0));
+        }
+    );
+});

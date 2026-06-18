@@ -182,6 +182,13 @@ const CombatActions = {
     },
     'apply-xp-distribution': () => {
         if (typeof window.applyXpDistribution === 'function') window.applyXpDistribution();
+    },
+    // CHAR-01 / 06-09: XP-Auswahl Quick-Select (Alle/Keine)
+    'xp-dist-select-all': () => {
+        if (typeof window.xpDistSelectAll === 'function') window.xpDistSelectAll();
+    },
+    'xp-dist-select-none': () => {
+        if (typeof window.xpDistSelectNone === 'function') window.xpDistSelectNone();
     }
 };
 
