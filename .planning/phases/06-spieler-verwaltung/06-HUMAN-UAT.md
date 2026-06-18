@@ -40,7 +40,8 @@ note: Angriffe rendern mit klickbaren Treffer-/Schaden-Spans (1d20+1 / 1d8+2). U
 
 ### 5. XP-Verteilungs-Modal: Vorschau aktualisiert sich live bei manueller XP-Eingabe
 expected: Änderung des Inputs aktualisiert die "Je Charakter: +N XP"-Zeile ohne Neuladen
-result: [pending]
+result: pass
+note: Live-Vorschau funktioniert (updateXpDistPreview via input-Listener). Nutzer-Folgewunsch (Enhancement, NICHT Teil des UAT-Erwartungswerts): Spieler aus der XP-Verteilung ausschließen können → als Enhancement 06-09 erfasst.
 
 ## Summary
 
@@ -52,6 +53,14 @@ skipped: 0
 blocked: 0
 
 ## Gaps
+
+- truth: "Bei der XP-Verteilung kann der DM wählen, welche Spieler XP erhalten (alle oder nur einige) — unabhängig vom HP-/Lebend-Status (Enhancement aus UAT)"
+  status: failed
+  reason: "Nutzerwunsch (2026-06-16): Wenn ein Spieler fehlt oder nicht mehr Teil der Gruppe ist, soll sein Profil keine XP mehr bekommen. Aktuell verteilt applyXpDistribution() (features/initiative.js:318) FEST an alle LEBENDEN Charaktere (hpCurrent>0) ohne Auswahlmöglichkeit. Gewünscht: pro-Charakter wählbar (Checkbox), egal ob lebend oder nicht."
+  severity: enhancement
+  test: xp-exclude-players
+  artifacts: ["features/initiative.js:266-353 (showXpDistributionModal/updateXpDistPreview/applyXpDistribution)", "assets/templates/modals-entity.html (#xp-distribution-modal)"]
+  missing: ["Charakter-Auswahlliste (alle Party-Chars, Checkbox, default angehakt) im XP-Modal", "Live-Neuberechnung 'Je Charakter' anhand der angehakten", "Verteilung NUR an angehakte (living-only-Filter entfernen)", "Guard bei 0 ausgewählten", "E2E: Abwählen ändert Share + schließt Charakter aus"]
 
 - truth: "A per-group setting D.settings.levelingMode toggles XP vs Milestone (D-07); the DM can switch a group into Milestone mode from the UI and the XP UI hides / a '+1 Level' button appears"
   status: resolved
