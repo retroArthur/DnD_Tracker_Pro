@@ -14,7 +14,7 @@ progress:
 
 # Project State: D&D Kampagnen-Tracker Pro — Stabilisierung & Ausbau
 
-**Last Updated:** 2026-06-16
+**Last Updated:** 2026-06-18
 **Phase:** 6
 **Status:** Gap-closure complete
 
@@ -128,7 +128,7 @@ Progress: [███████████████████████
 
 ## Session Continuity
 
-**Last action:** Phase 06-06 (Gap-Closure UAT detail-modal-clutter: V/N-Hover-Reveal) ausgeführt (2026-06-16). party.css: .char-adv-btns im DEFAULT sichtbar (Touch-Fallback T-06-19); @media (hover: hover) and (pointer: fine) versteckt .char-adv-btns im Ruhezustand (visibility:hidden+opacity:0+pointer-events:none) und zeigt sie per Hover der Elternzeile (.char-attr-box:hover/.char-skill-item:hover/.char-save-box:hover); Bonus-Tightening .char-attr-grid. Neuer E2E-Test (stealth-Zeile, .not.toBeVisible() → page.hover() → .toBeVisible()). 10/10 E2E grün; 421 Unit grün; Commit c74292f.
+**Last action:** Phase 06-08 (Gap-Closure UAT roll-feedback: Ergebnis-Toast über Detail-Modal) ausgeführt (2026-06-18). party.css: .event-log z-index 1000→1200 (über .modal-overlay 1100). entity-actions.js: _charRollToast() modul-interner Helfer; alle 4 Handler (skill/save/attr/attack-stop) rufen _charRollToast nach displayDiceResult+addToDiceHistory. Neuer E2E-Test (sichtbarer #event-log .event-log-entry mit 🎲 nach Modal-Wurf). 11/11 E2E grün; 421 Unit grün; Commit d0a35dc.
 **Next action:** Phase 07 — Komfort & Analyse planen und ausführen.
 
 ---

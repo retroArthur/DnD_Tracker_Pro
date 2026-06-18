@@ -224,7 +224,7 @@ Plans:
 
 **Wave 8** *(Gap-Closure aus UAT — `gap_closure: true`)*
 
-- [ ] 06-08-PLAN.md — Gap-Closure `roll-feedback`: Würfe im Detail-Modal (Attribut/Skill/Save/Angriff) zeigten kein Feedback über dem Modal (displayDiceResult schreibt in den verdeckten Würfel-Tab); Fix = Ergebnis-Toast in allen 4 -stop-Handlern (entity-actions.js, modul-interner _charRollToast nach unverändertem displayDiceResult+addToDiceHistory) + z-index-Bump .event-log 1000→1200 (über .modal-overlay 1100) in party.css + E2E-Toast-Assertion — schließt die UAT-Lücke „Wurf im Modal fühlt sich an, als passiere nichts" (CHAR-03)
+- [x] 06-08-PLAN.md — Gap-Closure `roll-feedback`: Würfe im Detail-Modal (Attribut/Skill/Save/Angriff) zeigten kein Feedback über dem Modal (displayDiceResult schreibt in den verdeckten Würfel-Tab); Fix = Ergebnis-Toast in allen 4 -stop-Handlern (entity-actions.js, modul-interner _charRollToast nach unverändertem displayDiceResult+addToDiceHistory) + z-index-Bump .event-log 1000→1200 (über .modal-overlay 1100) in party.css + E2E-Toast-Assertion — schließt die UAT-Lücke „Wurf im Modal fühlt sich an, als passiere nichts" (CHAR-03)
 
 ### Phase 7: Komfort & Analyse
 
