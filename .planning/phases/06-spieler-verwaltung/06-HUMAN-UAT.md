@@ -55,12 +55,13 @@ blocked: 0
 ## Gaps
 
 - truth: "Bei der XP-Verteilung kann der DM wählen, welche Spieler XP erhalten (alle oder nur einige) — unabhängig vom HP-/Lebend-Status (Enhancement aus UAT)"
-  status: failed
-  reason: "Nutzerwunsch (2026-06-16): Wenn ein Spieler fehlt oder nicht mehr Teil der Gruppe ist, soll sein Profil keine XP mehr bekommen. Aktuell verteilt applyXpDistribution() (features/initiative.js:318) FEST an alle LEBENDEN Charaktere (hpCurrent>0) ohne Auswahlmöglichkeit. Gewünscht: pro-Charakter wählbar (Checkbox), egal ob lebend oder nicht."
+  status: resolved
+  reason: "Nutzerwunsch (2026-06-16): Wenn ein Spieler fehlt oder nicht mehr Teil der Gruppe ist, soll sein Profil keine XP mehr bekommen. Aktuell verteilte applyXpDistribution() FEST an alle LEBENDEN Charaktere ohne Auswahlmöglichkeit."
+  resolution: "Closed by enhancement 06-09 (commit 1ff49ac). XP-Modal listet jetzt ALLE Party-Chars als Checkbox-Liste (default angehakt, info-only HP-Badge inkl. 💀 0 HP), + Alle/Keine-Quick-Select. 'Je Charakter' rechnet live anhand der angehakten ('M von K ausgewählt'). applyXpDistribution verteilt NUR an angehakte (living-only-Filter entfernt) — ein angehakter 0-HP-Char bekommt XP, ein abgewählter (auch lebender) nicht; Guard bei 0 ausgewählten (Warn-Toast, keine Mutation). Visuell per Screenshot geprüft (150 XP / 3 = 50, korrektes Layout); build exit 0, jest 421/421, playwright 15/15 (4 neue Fälle)."
   severity: enhancement
   test: xp-exclude-players
-  artifacts: ["features/initiative.js:266-353 (showXpDistributionModal/updateXpDistPreview/applyXpDistribution)", "assets/templates/modals-entity.html (#xp-distribution-modal)"]
-  missing: ["Charakter-Auswahlliste (alle Party-Chars, Checkbox, default angehakt) im XP-Modal", "Live-Neuberechnung 'Je Charakter' anhand der angehakten", "Verteilung NUR an angehakte (living-only-Filter entfernen)", "Guard bei 0 ausgewählten", "E2E: Abwählen ändert Share + schließt Charakter aus"]
+  artifacts: ["features/initiative.js:266-395", "assets/templates/modals-entity.html (#xp-dist-char-list, Alle/Keine)", "assets/styles/initiative.css", "tests/e2e/features/character-advancement.spec.js"]
+  missing: []
 
 - truth: "A per-group setting D.settings.levelingMode toggles XP vs Milestone (D-07); the DM can switch a group into Milestone mode from the UI and the XP UI hides / a '+1 Level' button appears"
   status: resolved
