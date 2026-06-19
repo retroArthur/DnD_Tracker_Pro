@@ -2,8 +2,8 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: completed
-last_updated: "2026-06-18T09:06:29.823Z"
+status: planning
+last_updated: "2026-06-19T20:21:50.146Z"
 progress:
   total_phases: 7
   completed_phases: 6
@@ -14,9 +14,9 @@ progress:
 
 # Project State: D&D Kampagnen-Tracker Pro — Stabilisierung & Ausbau
 
-**Last Updated:** 2026-06-18
-**Phase:** 6 abgeschlossen — Phase 7 als Nächstes
-**Status:** Phasen 1–6 komplett (6/7, 86%). UAT-Gap-Closures erledigt: Phase 6 (06-05…06-09) + Phase 5 (05-08 NPC-Generator-Overlay). Offen: Phase-6-UAT Test 3 (Skills-Layout) Nutzer-Sichtbestätigung; Phase 7 (Komfort & Analyse) noch nicht begonnen.
+**Last Updated:** 2026-06-19
+**Phase:** 7 — Kontext erfasst, bereit zur Planung
+**Status:** Phasen 1–6 komplett (6/7, 86%). Phase-7-Kontext (07-CONTEXT.md) erfasst. Offen: Phase-6-UAT Test 3 (Skills-Layout) Nutzer-Sichtbestätigung.
 
 ---
 
@@ -24,19 +24,19 @@ progress:
 
 **Core Value:** Die App muss am Spieltisch zuverlässig offline laufen — ein Spielleiter-Begleiter, der nie im Weg steht und keine Daten verliert.
 
-**Current Focus:** Phase 06 — spieler-verwaltung
+**Current Focus:** Phase 07 — Komfort & Analyse (Kontext erfasst, bereit zur Planung)
 
 ---
 
 ## Current Position
 
 ```
-Phase: 06 (spieler-verwaltung) — COMPLETE
-Plan: Not started
-Next:  Phase 07 — Komfort & Analyse
-Status: Complete
+Phase: 07 (komfort-analyse) — KONTEXT ERFASST
+Plan: noch nicht erstellt
+Next:  /gsd-plan-phase 7
+Status: Bereit zur Planung
 
-Progress: [██████████████████████████████████] Phase 6 abgeschlossen (4/4 Pläne: CHAR-01/02/03 ✓)
+Progress: [██████████████████████████████░░░░] Phasen 1–6 komplett (6/7, 86%); Phase 7 Kontext erfasst
 ```
 
 **Phases:**
@@ -48,7 +48,7 @@ Progress: [███████████████████████
 | 4 | Initiative-Erweiterungen | Complete (4/4 Pläne abgeschlossen) |
 | 5 | Welt & Story | Complete (8/8 Pläne, inkl. Gap-Closure 05-08) |
 | 6 | Spieler-Verwaltung | Complete (9/9 Pläne) |
-| 7 | Komfort & Analyse | Not started |
+| 7 | Komfort & Analyse | Kontext erfasst (bereit zur Planung) |
 
 ---
 
@@ -129,8 +129,8 @@ Progress: [███████████████████████
 
 ## Session Continuity
 
-**Last action:** Phase 05-08 (Gap-Closure npc-generator-modal-overlay) ausgeführt (2026-06-18). features/npc-generator/npc-generator.js: showNPCGeneratorModal auf modal-overlay > modal umgestellt, Anzeige via window.showModal, close-modal-overlay-Handler für ×/Abbrechen. systems/spellslots/navigation.js: switchView Cleanup-Hook entfernt offenes #npc-generator-modal. 2 neue E2E-Cases (Overlay-Positionierung + Tab-Wechsel-Entfernung); 26/26 E2E grün; 421 Unit grün; Commit 4cb9a5b.
-**Next action:** Phase 07 — Komfort & Analyse planen und ausführen.
+**Last action:** Phase 07 (Komfort & Analyse) diskutiert (2026-06-19). 07-CONTEXT.md erfasst — 5 Entscheidungen: D-01 Soundboard-Audio in eigenem IndexedDB-Blob-Store (nie in D, file://-tauglich), D-02 geschichtete Szenen + Crossfade (D-02a MVP-Rückfallebene), D-03 Quick-Slot-Schnelltasten (Konflikte mit bestehenden Shortcuts meiden), D-04 persistenter IndexedDB-Roll-Store über Sessions via addToDiceHistory-Hook (alle Würfe, d20 primär), D-05 d20-Histogramm + Erwartungs-Overlay + Crit/Patzer-Quote + Pro-Charakter + Session/Gesamt-Filter. Deferred: Audio-Event-Trigger, Stats-Export. Commit der CONTEXT+LOG erfolgt.
+**Next action:** Phase 07 planen: `/gsd-plan-phase 7` (ggf. `/clear` davor). Offen daneben: Phase-6-UAT Test 3 (Skills-Layout) Sicht-Bestätigung.
 
 ---
 
