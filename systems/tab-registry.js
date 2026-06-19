@@ -115,6 +115,17 @@ const TAB_RENDER_REGISTRY = {
         renders: ['renderFraktionen'],
         init: null,
         cleanup: null
+    },
+    // Phase 7: Komfort & Analyse
+    soundboard: {
+        renders: ['renderSoundboard'],
+        init: null,
+        cleanup: null
+    },
+    dicestats: {
+        renders: ['renderDiceStats'],
+        init: null,
+        cleanup: null
     }
 };
 /**

@@ -51,7 +51,9 @@ function switchView(name) {
             dice: '🎲 Würfel',
             timers: '⏱️ Timer',
             data: '💾 Daten',
-            dmscreen: '🎮 DM Screen'
+            dmscreen: '🎮 DM Screen',
+            soundboard: '🔊 Soundboard',
+            dicestats: '📊 Statistiken'
         };
         toggleText.textContent = viewNames[name] || '📍 Navigation';
     }

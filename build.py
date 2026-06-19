@@ -146,6 +146,14 @@ MODULES = [
     # Dice-Module
     'features/dice/dice-core.js',
     'features/dice/dice-favorites.js',
+
+    # Phase 7: Komfort & Analyse — Soundboard + Wuerfel-Statistiken (Wave 0)
+    'features/soundboard/soundboard-idb.js',
+    'features/soundboard/soundboard-player.js',
+    'features/soundboard/soundboard-crud.js',
+    'features/soundboard/soundboard-render.js',
+    'features/dice-stats/dice-stats-idb.js',
+    'features/dice-stats/dice-stats-render.js',
     # Ehemals in dice/ — verschoben in passende Ordner
     'features/timers/timers.js',
     'systems/wiki-links.js',
