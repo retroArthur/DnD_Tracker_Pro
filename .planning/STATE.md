@@ -2,12 +2,12 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: planning
-last_updated: "2026-06-19T20:21:50.146Z"
+status: executing
+last_updated: "2026-06-19T21:24:25.876Z"
 progress:
   total_phases: 7
   completed_phases: 6
-  total_plans: 40
+  total_plans: 44
   completed_plans: 40
   percent: 86
 ---
@@ -15,8 +15,8 @@ progress:
 # Project State: D&D Kampagnen-Tracker Pro — Stabilisierung & Ausbau
 
 **Last Updated:** 2026-06-19
-**Phase:** 7 — Kontext erfasst, bereit zur Planung
-**Status:** Phasen 1–6 komplett (6/7, 86%). Phase-7-Kontext (07-CONTEXT.md) erfasst. Offen: Phase-6-UAT Test 3 (Skills-Layout) Nutzer-Sichtbestätigung.
+**Phase:** 7 — Geplant (4 Pläne / 3 Wellen), bereit zur Ausführung
+**Status:** Ready to execute
 
 ---
 
@@ -24,19 +24,19 @@ progress:
 
 **Core Value:** Die App muss am Spieltisch zuverlässig offline laufen — ein Spielleiter-Begleiter, der nie im Weg steht und keine Daten verliert.
 
-**Current Focus:** Phase 07 — Komfort & Analyse (Kontext erfasst, bereit zur Planung)
+**Current Focus:** Phase 07 — Komfort & Analyse (Geplant: 4 Pläne / 3 Wellen, bereit zur Ausführung)
 
 ---
 
 ## Current Position
 
 ```
-Phase: 07 (komfort-analyse) — KONTEXT ERFASST
-Plan: noch nicht erstellt
-Next:  /gsd-plan-phase 7
-Status: Bereit zur Planung
+Phase: 07 (komfort-analyse) — GEPLANT (4 Pläne / 3 Wellen)
+Plan: 07-01..07-04 erstellt — Plan-Checker ISSUES FOUND (0 Blocker / 3 Warnings, alle Doku-Konsistenz → behoben/akzeptiert)
+Next:  /gsd-execute-phase 7
+Status: Ready to execute
 
-Progress: [██████████████████████████████░░░░] Phasen 1–6 komplett (6/7, 86%); Phase 7 Kontext erfasst
+Progress: [██████████████████████████████░░░░] Phasen 1–6 komplett (6/7, 86%); Phase 7 geplant
 ```
 
 **Phases:**
@@ -48,7 +48,7 @@ Progress: [███████████████████████
 | 4 | Initiative-Erweiterungen | Complete (4/4 Pläne abgeschlossen) |
 | 5 | Welt & Story | Complete (8/8 Pläne, inkl. Gap-Closure 05-08) |
 | 6 | Spieler-Verwaltung | Complete (9/9 Pläne) |
-| 7 | Komfort & Analyse | Kontext erfasst (bereit zur Planung) |
+| 7 | Komfort & Analyse | Geplant (4 Pläne / 3 Wellen, bereit zur Ausführung) |
 
 ---
 
@@ -91,7 +91,7 @@ Progress: [███████████████████████
 
 - **Phase 3 (Bestiary):** Datengröße-Spike + Prüfung deutscher SRD-Quellen-Vollständigkeit
 - ~~**Phase 2 (PWA):** UX-Design für Cross-Origin-Datenmigration (file:// → PWA)~~ — geklärt in 02-CONTEXT.md (D-08 bis D-11: Voll-Export + geführter Wizard + Divergenz-Banner)
-- **Phase 7 (Soundboard):** Im `file://`-Modus müssen Audio-Dateien pro Session neu ausgewählt werden (kein File System API) — UX-Tradeoff mit Nutzer klären
+- ~~**Phase 7 (Soundboard):** Im `file://`-Modus müssen Audio-Dateien pro Session neu ausgewählt werden~~ — geklärt in 07-CONTEXT.md (D-01: dedizierter IndexedDB-Blob-Store persistiert Audio über Reload, voll `file://`-tauglich, kein File System Access API); RESEARCH bestätigt Blob-Persistenz unter `file://` (Annahme A3 → früher E2E-Check in Wave 1)
 
 ### Architecture Notes
 
@@ -124,13 +124,16 @@ Progress: [███████████████████████
 - [x] Phase 6 ausführen Plan 4 (06-04 XP-/Milestone-Tracker, CHAR-01 Wave-4): ✓ (2026-06-15, finish-combat-xp Trigger + XP-Verteilungs-Modal + applyXpDistribution; Detail-Modal XP-Block + canLevelUp-Hint; confirm-level-up + milestone-level-up Handler; Milestone-Modus .char-xp-milestone-section; 4 CHAR-01 E2E-Tests aktiviert + grün; 421 Unit-Tests grün; Commits 2e18db8/6392d62)
 - [x] Phase 6 ausführen Plan 5 (06-05 Gap-Closure D-07 Leveling-Toggle): ✓ (2026-06-16, .party-leveling-toggle Segmented-Control in #party-overview; set-leveling-mode Handler mit Whitelist ctx.value 'xp'|'milestone', plain save(), renderParty(), Live-Refresh offenes Detail-Modal; party.css Styles; neuer E2E-Test via UI-Klick (kein page.evaluate); 9/9 E2E grün; 421 Unit grün; Commit 52d973e)
 - [x] Phase 6 ausführen Plan 9 (06-09 Gap-Closure xp-exclude-players, CHAR-01): ✓ (2026-06-18, #xp-dist-char-list Checkbox-Auswahlliste + Alle/Keine Quick-Select; showXpDistributionModal rendert alle D.characters (esc, HP-Badge, default checked); updateXpDistPreview nutzt selectedCount; applyXpDistribution kein hpCurrent-Filter, 0-Guard Warn-Toast; xpDistSelectAll/None; 4 neue E2E-Tests + 15/15 E2E grün; 421 Unit grün; Commit 1ff49ac)
+- [x] Phase 7 diskutieren: `/gsd-discuss-phase 7` ✓ (2026-06-19, 07-CONTEXT.md, D-01..D-05)
+- [x] Phase 7 planen: `/gsd-plan-phase 7` ✓ (2026-06-19, 4 Pläne / 3 Wellen, `--skip-ui` lean, Research 595a445 + manuelle 07-VALIDATION.md, Plan-Checker 0 Blocker / 3 Doku-Warnings behoben/akzeptiert; Plan-Commit 34ad3db)
+- [ ] Phase 7 ausführen: `/gsd-execute-phase 7` (sequenziell auf `main`, kein Worktree)
 
 ---
 
 ## Session Continuity
 
-**Last action:** Phase 07 (Komfort & Analyse) diskutiert (2026-06-19). 07-CONTEXT.md erfasst — 5 Entscheidungen: D-01 Soundboard-Audio in eigenem IndexedDB-Blob-Store (nie in D, file://-tauglich), D-02 geschichtete Szenen + Crossfade (D-02a MVP-Rückfallebene), D-03 Quick-Slot-Schnelltasten (Konflikte mit bestehenden Shortcuts meiden), D-04 persistenter IndexedDB-Roll-Store über Sessions via addToDiceHistory-Hook (alle Würfe, d20 primär), D-05 d20-Histogramm + Erwartungs-Overlay + Crit/Patzer-Quote + Pro-Charakter + Session/Gesamt-Filter. Deferred: Audio-Event-Trigger, Stats-Export. Commit der CONTEXT+LOG erfolgt.
-**Next action:** Phase 07 planen: `/gsd-plan-phase 7` (ggf. `/clear` davor). Offen daneben: Phase-6-UAT Test 3 (Skills-Layout) Sicht-Bestätigung.
+**Last action:** Phase 07 (Komfort & Analyse) geplant (2026-06-19): 4 Pläne / 3 Wellen via `/gsd-plan-phase 7`. Research (Commit 595a445: Web Audio API statt `<audio>`, IDB v3→v4 mit `audioBlobs`+`diceStats`-Stores, Hook in `addToDiceHistory()` dice-core.js:434, Alt+Shift+1..5/0 Quick-Slots, inline-SVG-Histogramm); manuelle 07-VALIDATION.md (deutsche „Validierungs-Architektur"-Sektion, Commit 9767da6); UI-Gate via `--skip-ui` (lean, Nutzer-Wahl — Optik reused bestehende Muster, Histogramm-Technik an Planner). Plan-Checker: ISSUES FOUND, 0 Blocker / 3 Warnings (alle Doku-Konsistenz: RESEARCH Open-Questions→RESOLVED markiert, VALIDATION UX-01g-Zeile als N/A annotiert da D-02 voll gewählt, 07-01-Scope akzeptiert). Schlüssel-Entscheidungen: D-02 voll (Layering+Crossfade, D-02a verworfen), Session=Boot-ID `window._currentSessionId`. Plan-Commit 34ad3db.
+**Next action:** Phase 07 ausführen: `/gsd-execute-phase 7` (ggf. `/clear` davor). HINWEIS: sequenziell auf `main` ausführen (kein Worktree/Parallel — Windows-Stdio + geteilte Dateien), Executor-Prompt mit node-gsd-tools-Variante + `PYTHONIOENCODING=utf-8 python build.py` + absoluten Pfaden + ESM-`file://`-E2E-Muster. Offen daneben: Phase-6-UAT Test 3 (Skills-Layout) Sicht-Bestätigung.
 
 ---
 

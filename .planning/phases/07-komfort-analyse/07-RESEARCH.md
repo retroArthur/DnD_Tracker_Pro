@@ -758,19 +758,19 @@ function blobToArrayBuffer(blob) {
 
 ---
 
-## Open Questions
+## Open Questions (RESOLVED during planning — see 07-0x-PLAN.md)
 
-1. **D-02a MVP decision gate**
+1. **D-02a MVP decision gate** — **RESOLVED:** planner chose **D-02 (full layered crossfade)** in 07-02; D-02a hard-cut documented as considered-and-rejected fallback (user's "Regen + Taverne + Feuer" example is layered by definition; code delta over D-02a is modest).
    - What we know: D-02 (full layered crossfade) adds meaningful implementation complexity (one AudioContext with N source nodes per scene, plus crossfade scheduling). D-02a (one loop, hard cut) is simpler.
    - What's unclear: The planner needs to decide during wave planning whether to attempt full D-02 or default to D-02a with a note. The research supports both technically.
    - Recommendation: Plan for D-02 (layered tracks + crossfade) and document D-02a as an explicit risk fallback. The code difference is modest: D-02a is a subset of D-02 (just N=1 source and no ramp).
 
-2. **"Session" definition for dice stats filter (D-05)**
+2. **"Session" definition for dice stats filter (D-05)** — **RESOLVED:** boot-time `sessionId` (`Date.now()` string in module-level `window._currentSessionId`, not in `D`), set in 07-01.
    - What we know: `diceHistory` has no session concept today. D.sessionNotes exists but is about D&D narrative sessions, not play sessions.
    - What's unclear: Does "diese Session" mean "since the app was last opened" (boot-time ID) or "since the current D&D game session started" (linked to a session in D.sessionNotes)?
    - Recommendation: Use boot-time `sessionId` (a `Date.now()` string set at app init, stored in a module-level variable — not in `D`). This is the simplest, most reliable definition and avoids coupling stats to session management. If the user wants per-game-session tracking later, that is a v2 enhancement.
 
-3. **Audio file format support**
+3. **Audio file format support** — **RESOLVED:** `accept="audio/*"` on the file input + `decodeAudioData` try/catch → toast on unsupported format (07-03).
    - What we know: `decodeAudioData` in Chromium supports MP3, WAV, OGG/Vorbis, AAC, FLAC in most versions.
    - What's unclear: The `<input type="file">` accept filter and what to display in the UI.
    - Recommendation: `accept="audio/*"` on the file input; let the browser filter. Show a toast if `decodeAudioData` throws (unsupported format).

@@ -54,7 +54,7 @@ created: 2026-06-19
 | UX-01 | Playing a scene starts audio; stop scene stops audio | T-07-AUDIO-DECODE | `decodeAudioData` try/catch + toast | E2E (state-only) + manual | `audioContext.state==='running'` via `page.evaluate` | soundboard.spec.js | ⬜ |
 | UX-01 | Keyboard quick-slot (Alt+Shift+1) activates Scene 1 | — | conflict-free binding (D-03) | E2E | `npx playwright test -g "scene quickslot keyboard"` | soundboard.spec.js | ⬜ |
 | UX-01 | Per-file size warning shown when file > threshold (D-01a) | T-07-AUDIO-DOS | size check before store | unit | `npx jest tests/unit/soundboard.test.js -t "size warning"` | soundboard.test.js | ⬜ |
-| UX-01 | (If D-02a MVP chosen) scene switch hard-cuts old track | — | N/A | E2E | `npx playwright test -g "scene hard cut fallback"` | soundboard.spec.js | ⬜ |
+| ~~UX-01~~ | ~~(If D-02a MVP chosen) scene switch hard-cuts old track~~ | — | N/A | — | **N/A — D-02 full crossfade chosen in 07-02; D-02a fallback not used, so no hard-cut test** | — | ➖ |
 | UX-02 | Dice Stats tab renders after rolls | — | N/A | E2E smoke | `npx playwright test -g "dice stats tab renders"` | dice-stats.spec.js | ⬜ |
 | UX-02 | All rolls captured in IDB stats store via `addToDiceHistory()` | T-07-NOTATION-XSS | `esc(notation)` on label render | E2E | `npx playwright test -g "rolls captured in IDB"` (page.evaluate) | dice-stats.spec.js | ⬜ |
 | UX-02 | Histogram SVG renders 20 bars (faces 1–20) | — | N/A | unit | `npx jest tests/unit/dice-stats.test.js -t "histogram 20 bars"` | dice-stats.test.js | ⬜ |
