@@ -248,9 +248,3 @@ describe('Wuerfel-Statistiken — Character-Breakdown', function () {
         expect(b2.has('Bilbo')).toBe(false);
     });
 });
-
-describe('Soundboard — Dateigroessen-Guard', function () {
-    test.todo('size warning');
-    // UX-01f: checkAudioFileSize(file) gibt { warn: true } zurueck wenn file.size > 20 MB.
-    // Pure-JS-Logik, kein Audio-Playback.
-});

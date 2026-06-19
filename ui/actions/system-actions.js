@@ -249,8 +249,10 @@ const SystemActions = {
         }
     },
     'remove-audio': ctx => {
-        if (ctx.id && typeof window.removeAudioFile === 'function') {
-            window.removeAudioFile(ctx.id);
+        // String-IDs (audio_…) niemals über parseEntityId/ctx.id — direkt dataset.id lesen (Phase-03-03-Präzedenz, CR-01)
+        const audioId = ctx.target && ctx.target.dataset.id;
+        if (audioId && typeof window.removeAudioFile === 'function') {
+            window.removeAudioFile(audioId);
         }
     },
 
@@ -266,16 +268,20 @@ const SystemActions = {
         }
     },
     'delete-scene': ctx => {
-        if (!ctx.id) return;
+        // String-IDs (scene_…) direkt aus dataset.id, nicht über ctx.id (parseEntityId → null, CR-01)
+        const sceneId = ctx.target && ctx.target.dataset.id;
+        if (!sceneId) return;
         if (!confirm('Szene wirklich loeschen?')) return;
         if (typeof window.deleteScene === 'function') {
-            window.deleteScene(ctx.id);
+            window.deleteScene(sceneId);
             if (typeof window.renderSceneList === 'function') window.renderSceneList();
         }
     },
     'play-scene': ctx => {
-        if (ctx.id && typeof window.playSceneById === 'function') {
-            window.playSceneById(ctx.id);
+        // String-IDs (scene_…) direkt aus dataset.id, nicht über ctx.id (parseEntityId → null, CR-01)
+        const sceneId = ctx.target && ctx.target.dataset.id;
+        if (sceneId && typeof window.playSceneById === 'function') {
+            window.playSceneById(sceneId);
         }
     },
     'stop-all-audio': () => {

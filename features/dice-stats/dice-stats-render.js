@@ -264,7 +264,7 @@ function _renderDiceStatsContent(container, records) {
     // Histogram
     var histSvg = renderD20Histogram(counts);
     var noRollsNote = records.length === 0
-        ? '<p class="ds-no-data">Noch keine Wuerfelwuerfe in dieser Session. Wuerfel ein paar d20!</p>'
+        ? '<p class="ds-no-data">Noch keine Wuerfelwuerfe ' + (_statsScope === 'session' ? 'in dieser Session' : 'erfasst') + '. Wuerfel ein paar d20!</p>'
         : '';
 
     // Expected note

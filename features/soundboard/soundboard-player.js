@@ -16,6 +16,9 @@ const CROSSFADE_DURATION = 2;
 let _soundboardAudioContext = null;
 
 // AudioBuffer-Cache: blobId -> AudioBuffer (vermeidet re-decoding, Pitfall 4)
+// FIFO-Begrenzung: dekodierte PCM-Buffer belegen ein Vielfaches der komprimierten
+// Datei im RAM — Cache auf MAX_BUFFER_CACHE Einträge deckeln (WR-03).
+const MAX_BUFFER_CACHE = 10;
 const _bufferCache = new Map();
 
 // Aktuell spielende Szene
@@ -68,6 +71,11 @@ async function loadTrackBuffer(blobId) {
 
     try {
         const audioBuffer = await ctx.decodeAudioData(arrayBuffer);
+        // FIFO-Eviction: ältesten Eintrag entfernen, sobald die Grenze erreicht ist (WR-03)
+        if (_bufferCache.size >= MAX_BUFFER_CACHE) {
+            const oldestKey = _bufferCache.keys().next().value;
+            if (oldestKey !== undefined) _bufferCache.delete(oldestKey);
+        }
         _bufferCache.set(blobId, audioBuffer);
         return audioBuffer;
     } catch (err) {
