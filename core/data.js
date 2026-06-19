@@ -51,7 +51,11 @@ function initializeData() {
         bestiaryFavorites: [],   // Nur ID-Keys (SRD: String-Key, Eigene: 'custom:123')
         // Phase 5: Welt & Story
         sessionPreps: [],        // WELT-01 Session-Prep-Assistent
-        factions: []             // WELT-05 Fraktionen & Ruf
+        factions: [],            // WELT-05 Fraktionen & Ruf
+        // Phase 7: Soundboard — Szenen-Konfiguration (Blobs NICHT in D — nur IDB)
+        soundboard: {
+            scenes: []           // [{ id, name, slot, tracks:[{ blobId, volume }] }]
+        }
     };
 }
 

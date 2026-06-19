@@ -231,6 +231,87 @@ const SystemActions = {
         if (typeof window._setStatsScope === 'function') {
             window._setStatsScope(ctx.value);
         }
+    },
+
+    // ============================================================
+    // SOUNDBOARD ACTIONS (Phase 7 — UX-01, D-01a, D-02, D-03)
+    // ============================================================
+
+    // Audio-Bibliothek
+    'import-audio': ctx => {
+        // Delegiert an den versteckten <input type="file"> im Soundboard
+        const input = document.getElementById('soundboard-file-input');
+        if (input) input.click();
+    },
+    'soundboard-file-change': ctx => {
+        if (typeof window.importAudioFile === 'function') {
+            window.importAudioFile(ctx.target);
+        }
+    },
+    'remove-audio': ctx => {
+        if (ctx.id && typeof window.removeAudioFile === 'function') {
+            window.removeAudioFile(ctx.id);
+        }
+    },
+
+    // Scene CRUD
+    'create-scene': ctx => {
+        const name = prompt('Name der neuen Szene:');
+        if (!name || !name.trim()) return;
+        const slotStr = prompt('Quick-Slot (1–5, oder 0 fuer keinen Slot):', '0');
+        const slot = parseInt(slotStr) || 0;
+        if (typeof window.createScene === 'function') {
+            window.createScene(name.trim(), slot);
+            if (typeof window.renderSceneList === 'function') window.renderSceneList();
+        }
+    },
+    'delete-scene': ctx => {
+        if (!ctx.id) return;
+        if (!confirm('Szene wirklich loeschen?')) return;
+        if (typeof window.deleteScene === 'function') {
+            window.deleteScene(ctx.id);
+            if (typeof window.renderSceneList === 'function') window.renderSceneList();
+        }
+    },
+    'play-scene': ctx => {
+        if (ctx.id && typeof window.playSceneById === 'function') {
+            window.playSceneById(ctx.id);
+        }
+    },
+    'stop-all-audio': () => {
+        if (typeof window.stopAllTracks === 'function') window.stopAllTracks();
+    },
+    'toggle-soundboard-mute': () => {
+        if (typeof window.toggleSoundboardMute === 'function') window.toggleSoundboardMute();
+    },
+
+    // Track-Verwaltung
+    'add-track': ctx => {
+        const sceneId = ctx.target && ctx.target.dataset.sceneId;
+        const blobId = ctx.target && ctx.target.dataset.blobId;
+        if (!sceneId || !blobId) return;
+        if (typeof window.addTrackToScene === 'function') {
+            window.addTrackToScene(sceneId, blobId);
+            if (typeof window.renderSceneList === 'function') window.renderSceneList();
+        }
+    },
+    'remove-track': ctx => {
+        const sceneId = ctx.target && ctx.target.dataset.sceneId;
+        const blobId = ctx.target && ctx.target.dataset.blobId;
+        if (!sceneId || !blobId) return;
+        if (typeof window.removeTrackFromScene === 'function') {
+            window.removeTrackFromScene(sceneId, blobId);
+            if (typeof window.renderSceneList === 'function') window.renderSceneList();
+        }
+    },
+    'set-track-volume': ctx => {
+        const sceneId = ctx.target && ctx.target.dataset.sceneId;
+        const blobId = ctx.target && ctx.target.dataset.blobId;
+        const volume = ctx.target && parseFloat(ctx.target.value);
+        if (!sceneId || !blobId || isNaN(volume)) return;
+        if (typeof window.setTrackVolume === 'function') {
+            window.setTrackVolume(sceneId, blobId, volume);
+        }
     }
 };
 
