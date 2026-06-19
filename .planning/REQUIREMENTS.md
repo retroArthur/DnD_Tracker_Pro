@@ -56,8 +56,8 @@ Requirements für diesen Milestone. Jedes wird genau einer Roadmap-Phase zugeord
 
 ### Komfort & Analyse (UX)
 
-- [ ] **UX-01**: Nutzer kann lokale Audio-Dateien als Soundboard nutzen (Ambience-Szenen, Schnelltasten, Lautstärkeregelung)
-- [ ] **UX-02**: Nutzer kann Würfel-Statistiken einsehen (Verteilungen, Crit-Quoten aus der Roll-Historie)
+- [x] **UX-01**: Nutzer kann lokale Audio-Dateien als Soundboard nutzen (Ambience-Szenen, Schnelltasten, Lautstärkeregelung)
+- [x] **UX-02**: Nutzer kann Würfel-Statistiken einsehen (Verteilungen, Crit-Quoten aus der Roll-Historie)
 
 ## v2 Requirements
 
@@ -125,8 +125,8 @@ Explizit ausgeschlossen. Dokumentiert, um Scope-Creep zu verhindern.
 | CHAR-01     | Phase 6 | Complete |
 | CHAR-02     | Phase 6 | Complete |
 | CHAR-03     | Phase 6 | Complete |
-| UX-01       | Phase 7 | Pending |
-| UX-02       | Phase 7 | Pending |
+| UX-01       | Phase 7 | Complete |
+| UX-02       | Phase 7 | Complete |
 
 **Coverage:**
 
