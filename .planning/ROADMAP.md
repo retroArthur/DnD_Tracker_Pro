@@ -237,9 +237,24 @@ Plans:
 **Requirements**: UX-01, UX-02
 **Success Criteria** (what must be TRUE):
 
-1. Nutzer lädt lokale Audio-Dateien in das Soundboard, erstellt Ambience-Szenen und wechselt per Schnelltaste zwischen Szenen — Lautstärke ist pro Szene regelbar und läuft ohne Netzwerkverbindung (im `file://`-Modus: Dateien werden pro Session neu ausgewählt)
+1. Nutzer lädt lokale Audio-Dateien in das Soundboard, erstellt Ambience-Szenen und wechselt per Schnelltaste zwischen Szenen — Lautstärke ist pro Szene regelbar und läuft ohne Netzwerkverbindung (Audio bleibt in einem eigenen IndexedDB-Blob-Store erhalten und überlebt Reload — kein Pro-Session-Neuauswählen mehr, per D-01)
 2. Nutzer öffnet die Würfel-Statistiken, sieht ein Histogramm aller gewürfelten d20-Ergebnisse aus der aktuellen Session und vergleicht seine Trefferquote mit der Erwartungsverteilung — Crit-Quote ist explizit ausgewiesen
-   **Plans**: TBD
+   **Plans**: 4 plans (3 Wellen)
+   **UI hint**: yes (lean path — kein UI-SPEC; Histogramm als inline SVG, bestehende Tab/Card/Slider-CSS wiederverwendet)
+
+Plans:
+**Wave 1**
+
+- [ ] 07-01-PLAN.md — Fundament: IDB v3→v4 (audioBlobs + diceStats Stores) + addToDiceHistory-Stats-Tee (D-04) + 6 Modul-Skelette in build.py/loader.js + 2 Tabs (Soundboard/Statistiken) + Nav/CSS/Registry + 4 Wave-0-Test-Stubs (UX-01, UX-02)
+
+**Wave 2** *(blocked on Wave 1)*
+
+- [ ] 07-02-PLAN.md — UX-01 Soundboard-Engine: Audio-Blob-IDB-Store + Größen-Guard (D-01a, T-07-AUDIO-DOS) + Web-Audio-Engine (decode/loop/GainNode/Crossfade, D-02 voll) + AudioContext-Lifecycle + decode-try/catch (T-07-AUDIO-DECODE) (UX-01)
+- [ ] 07-04-PLAN.md — UX-02 Würfel-Statistiken: diceStats-Aggregation (d20-Counts/Erwartungs-Overlay/Crit-Patzer/Session-Filter/Pro-Charakter-„Allgemein") + inline-SVG-Histogramm (D-05) + Tab-Render + Filter-Toggle + Unit + E2E (UX-02)
+
+**Wave 3** *(blocked on Wave 2 — 07-03 baut auf 07-02-Engine)*
+
+- [ ] 07-03-PLAN.md — UX-01 Soundboard-UI: Audio-Import + Audio-Bibliothek (D-01a, esc(), T-07-AUDIO-NAME) + Szenen-CRUD mit Pro-Spur-Lautstärke (D-02) + Alt+Shift+1..5/0-Quick-Slots (D-03) + Play/Switch/Stop + E2E (UX-01)
 
 ---
 
@@ -253,7 +268,7 @@ Plans:
 | 4. Initiative-Erweiterungen | 4/4 | Complete    | 2026-06-14 |
 | 5. Welt & Story             | 8/8 | Complete    | 2026-06-18 |
 | 6. Spieler-Verwaltung       | 9/9 | Complete   | 2026-06-18 |
-| 7. Komfort & Analyse        | 0/?            | Not started | -         |
+| 7. Komfort & Analyse        | 0/4            | Planned     | -         |
 
 ---
 
