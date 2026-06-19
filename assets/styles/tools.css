@@ -1816,8 +1816,258 @@
 
 /* ============================================================
    SOUNDBOARD
-   Phase 7 — UX-01; echte Regeln folgen in 07-02
+   Phase 7 — UX-01 (07-03)
    ============================================================ */
+
+.sb-root {
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.sb-section {
+    background: var(--bg-elevated);
+    border-radius: 8px;
+    padding: 16px;
+    border: 1px solid var(--border-color);
+}
+
+.sb-section-title {
+    margin: 0 0 4px 0;
+    font-size: 1rem;
+    color: var(--gold);
+    font-weight: 600;
+}
+
+.sb-section-hint {
+    margin: 0 0 12px 0;
+    font-size: 0.8rem;
+    color: var(--text-dim);
+}
+
+/* Import-Zeile */
+.sb-import-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.sb-import-btn {
+    cursor: pointer;
+    display: inline-block;
+}
+
+/* Audio-Bibliothek Eintraege */
+.sb-library {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.sb-library-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 10px;
+    background: var(--bg-dark);
+    border-radius: 6px;
+    border: 1px solid var(--border-color);
+}
+
+.sb-library-row.sb-file-warn {
+    border-color: var(--gold);
+}
+
+.sb-library-name {
+    flex: 1;
+    font-size: 0.88rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: var(--text);
+}
+
+.sb-library-size {
+    font-size: 0.8rem;
+    color: var(--text-dim);
+    white-space: nowrap;
+}
+
+.sb-remove-btn {
+    opacity: 0.6;
+    font-size: 0.85rem;
+}
+
+.sb-remove-btn:hover {
+    opacity: 1;
+    color: var(--red);
+}
+
+/* Scene Toolbar */
+.sb-scene-toolbar {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+}
+
+/* Szenen-Cards */
+.sb-scenes {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.sb-scene-card {
+    background: var(--bg-dark);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 12px;
+}
+
+.sb-scene-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 10px;
+    flex-wrap: wrap;
+}
+
+.sb-scene-title {
+    flex: 1;
+    font-weight: 600;
+    font-size: 0.95rem;
+    color: var(--text);
+    min-width: 80px;
+}
+
+/* Quick-Slot Badge (D-03) */
+.sb-slot-badge {
+    display: inline-block;
+    padding: 2px 7px;
+    background: var(--bg-elevated);
+    border: 1px solid var(--gold);
+    border-radius: 4px;
+    font-size: 0.75rem;
+    color: var(--gold);
+    white-space: nowrap;
+}
+
+.sb-scene-actions {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+}
+
+.sb-play-btn {
+    min-width: 64px;
+}
+
+.sb-delete-scene-btn {
+    opacity: 0.6;
+}
+
+.sb-delete-scene-btn:hover {
+    opacity: 1;
+    color: var(--red);
+}
+
+/* Track-Reihen */
+.sb-tracks {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 10px;
+}
+
+.sb-track-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 8px;
+    background: var(--bg-elevated);
+    border-radius: 4px;
+}
+
+.sb-track-name {
+    flex: 1;
+    font-size: 0.83rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: var(--text);
+}
+
+.sb-volume-label {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.sb-volume-slider {
+    width: 90px;
+    height: 4px;
+    accent-color: var(--gold);
+    cursor: pointer;
+}
+
+.sb-volume-pct {
+    font-size: 0.75rem;
+    color: var(--text-dim);
+    min-width: 34px;
+    text-align: right;
+}
+
+.sb-remove-track-btn {
+    opacity: 0.5;
+    font-size: 0.8rem;
+}
+
+.sb-remove-track-btn:hover {
+    opacity: 1;
+    color: var(--red);
+}
+
+/* Add Track Zeile */
+.sb-add-track-row {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    margin-top: 6px;
+}
+
+.sb-add-track-select {
+    flex: 1;
+    font-size: 0.83rem;
+    padding: 4px 6px;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    color: var(--text);
+}
+
+/* Empty State */
+.sb-empty-hint {
+    margin: 8px 0;
+    color: var(--text-dim);
+    font-size: 0.85rem;
+    font-style: italic;
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+    .sb-scene-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    .sb-volume-slider {
+        width: 60px;
+    }
+}
 
 /* ============================================================
    DICE STATS

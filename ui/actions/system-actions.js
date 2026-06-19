@@ -288,8 +288,14 @@ const SystemActions = {
     // Track-Verwaltung
     'add-track': ctx => {
         const sceneId = ctx.target && ctx.target.dataset.sceneId;
-        const blobId = ctx.target && ctx.target.dataset.blobId;
-        if (!sceneId || !blobId) return;
+        if (!sceneId) return;
+        // Lese blobId aus dem zugehoerigen Select-Element (data-scene-id Selektor)
+        const select = document.querySelector(`.sb-add-track-select[id="sb-add-select-${sceneId}"]`);
+        const blobId = select ? select.value : '';
+        if (!blobId) {
+            showToast('Bitte Track aus Liste waehlen', 'warning');
+            return;
+        }
         if (typeof window.addTrackToScene === 'function') {
             window.addTrackToScene(sceneId, blobId);
             if (typeof window.renderSceneList === 'function') window.renderSceneList();
@@ -311,6 +317,11 @@ const SystemActions = {
         if (!sceneId || !blobId || isNaN(volume)) return;
         if (typeof window.setTrackVolume === 'function') {
             window.setTrackVolume(sceneId, blobId, volume);
+        }
+        // Live-Update der Prozent-Anzeige neben dem Slider
+        const pctLabel = ctx.target && ctx.target.nextElementSibling;
+        if (pctLabel && pctLabel.classList.contains('sb-volume-pct')) {
+            pctLabel.textContent = Math.round(volume * 100) + '%';
         }
     }
 };
