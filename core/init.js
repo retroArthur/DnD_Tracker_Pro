@@ -268,7 +268,7 @@ function initOfflineDetection() {
 // ============================================================
 // INDEXEDDB WRAPPER (für größere Datenmengen)
 // ============================================================
-const IDB_VERSION = 3; // v3: fileHandles-Store für Datei-Backup (Plan 02-04)
+const IDB_VERSION = 4; // v4: audioBlobs + diceStats Stores (Phase 7 — UX-01/UX-02)
 let idb = null;
 
 async function initIndexedDB() {
@@ -310,6 +310,16 @@ async function initIndexedDB() {
             // v3: Store für FileSystemDirectoryHandle-Persistenz (Datei-Backup, D-16)
             if (!db.objectStoreNames.contains('fileHandles')) {
                 db.createObjectStore('fileHandles', { keyPath: 'id' });
+            }
+            // v4: Audio-Blob-Store für Soundboard (Phase 7 — UX-01, D-01)
+            if (!db.objectStoreNames.contains('audioBlobs')) {
+                db.createObjectStore('audioBlobs', { keyPath: 'id' });
+            }
+            // v4: Würfel-Statistik-Store (Phase 7 — UX-02, D-04)
+            if (!db.objectStoreNames.contains('diceStats')) {
+                const statsStore = db.createObjectStore('diceStats', { keyPath: 'id', autoIncrement: true });
+                statsStore.createIndex('sessionId', 'sessionId', { unique: false });
+                statsStore.createIndex('notation', 'notation', { unique: false });
             }
         };
     });

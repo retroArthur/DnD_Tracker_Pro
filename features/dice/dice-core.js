@@ -436,6 +436,12 @@ function addToDiceHistory(notation, result, rolls) {
     diceHistory.unshift({ notation: notation + dmgType, result, rolls, time: new Date() });
     if (diceHistory.length > 30) diceHistory.pop();
     renderDiceHistory();
+    // D-04: Tee every roll into IDB stats store (additive — in-memory diceHistory unchanged, D-04a)
+    if (typeof window.statsIdbPut === 'function') {
+        window.statsIdbPut({ notation, result, rolls, timestamp: Date.now(),
+            sessionId: window._currentSessionId || 'default',
+            charId: null });
+    }
 }
 function addToFormulaHistory(formula) {
     if (!formula || formula.includes('×')) return;
