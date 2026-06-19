@@ -11,6 +11,35 @@ function initKeyboardShortcuts() {
         const isTyping =
             ['INPUT', 'TEXTAREA', 'SELECT'].includes(activeEl?.tagName) ||
             activeEl?.isContentEditable;
+
+        // ============================================================
+        // SOUNDBOARD QUICK-SLOTS (D-03) — Alt+Shift+0..5
+        // MUSS vor dem isTyping-Guard stehen, damit der Shortcut auch
+        // beim Tippen in Textfeldern funktioniert (Modifier-Combo).
+        // e.code als primaere Pruefrung (layout-unabhaengig, A4); e.key als Fallback.
+        // ============================================================
+        if (e.altKey && e.shiftKey) {
+            const codeMatch = e.code && e.code.match(/^Digit([0-5])$/);
+            const keyMatch = !codeMatch && e.key >= '0' && e.key <= '5';
+            const digit = codeMatch ? parseInt(codeMatch[1]) : (keyMatch ? parseInt(e.key) : -1);
+
+            if (digit >= 0) {
+                e.preventDefault();
+                if (digit === 0) {
+                    // Alt+Shift+0 — Mute toggle
+                    if (typeof window.toggleSoundboardMute === 'function') {
+                        window.toggleSoundboardMute();
+                    }
+                } else {
+                    // Alt+Shift+1..5 — Quick-Slot aktivieren (D-03)
+                    if (typeof window.activateSceneBySlot === 'function') {
+                        window.activateSceneBySlot(digit);
+                    }
+                }
+                return;
+            }
+        }
+
         // Escape: Schließe Overlays und Modals (konsolidiert)
         // WR-10: Direktaufrufe via window.X() — KEIN function-scoped
         // `const X = window.X` (CLAUDE.md Dedup-Regel, Incident 2026-01-10)

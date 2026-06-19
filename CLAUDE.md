@@ -442,6 +442,8 @@ function deleteEntity(id) {
 | `Shift+N`  | New round (Initiative)                         |
 | `Space`    | Next turn (Initiative)                         |
 | `Escape`   | Close overlays/modals                          |
+| `Alt+Shift+1..5` | Activate Soundboard scene in quick-slot 1–5 (D-03) |
+| `Alt+Shift+0`    | Toggle Soundboard mute (D-03)                  |
 
 ## Conventions
 

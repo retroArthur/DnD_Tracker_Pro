@@ -22,10 +22,14 @@
  * @returns {Promise<void>}
  */
 async function importAudioFile(fileOrEvent) {
-    // Hole File-Objekt aus Event oder direkt
+    // Hole File-Objekt aus Event, Input-Element oder direkt
     let file = fileOrEvent;
     if (fileOrEvent && fileOrEvent.target && fileOrEvent.target.files) {
+        // Wurde ein DOM-Event uebergeben (Event.target = <input>)
         file = fileOrEvent.target.files[0];
+    } else if (fileOrEvent && fileOrEvent.files) {
+        // Wurde direkt das Input-Element uebergeben (ctx.target = <input>)
+        file = fileOrEvent.files[0];
     }
     if (!file) return;
 
