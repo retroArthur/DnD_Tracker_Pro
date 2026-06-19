@@ -224,7 +224,14 @@ const SystemActions = {
     'convert-units-imperial': () => convertUnitsImperial(),
     'search-notes': () => searchNotes(),
     'preview-avatar': () => previewAvatar(),
-    'import-data-global': () => importDataGlobal()
+    'import-data-global': () => importDataGlobal(),
+
+    // Dice Stats — Session / Gesamt Filter (D-05 / UX-02)
+    'set-stats-scope': ctx => {
+        if (typeof window._setStatsScope === 'function') {
+            window._setStatsScope(ctx.value);
+        }
+    }
 };
 
 // Register all system actions

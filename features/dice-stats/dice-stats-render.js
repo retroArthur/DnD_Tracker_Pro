@@ -315,6 +315,18 @@ function _renderDiceStatsContent(container, records) {
         + '</div>';
 }
 
+/**
+ * _setStatsScope — setzt den Filter-Zustand und loest Re-Render aus.
+ * Wird von system-actions.js 'set-stats-scope' aufgerufen.
+ * @param {string} scope - 'session' | 'total'
+ */
+function _setStatsScope(scope) {
+    if (scope === 'session' || scope === 'total') {
+        _statsScope = scope;
+        renderDiceStats();
+    }
+}
+
 // ============================================================
 // EXPORTS
 // ============================================================
@@ -327,6 +339,9 @@ window.filterBySession = filterBySession;
 window.parseCharFromNotation = parseCharFromNotation;
 window.attributeRolls = attributeRolls;
 window.renderD20Histogram = renderD20Histogram;
+
+// Scope setter (called by system-actions 'set-stats-scope')
+window._setStatsScope = _setStatsScope;
 
 // Main render
 window.renderDiceStats = renderDiceStats;

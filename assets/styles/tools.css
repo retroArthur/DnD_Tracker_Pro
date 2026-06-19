@@ -1821,5 +1821,157 @@
 
 /* ============================================================
    DICE STATS
-   Phase 7 — UX-02; echte Regeln folgen in 07-04
+   Phase 7 — UX-02 (implementiert in 07-04)
    ============================================================ */
+
+.ds-root {
+    max-width: 680px;
+    margin: 0 auto;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+/* Segmented Toggle */
+.ds-toggle-bar {
+    display: flex;
+    gap: 4px;
+    background: var(--bg-elevated);
+    border-radius: 8px;
+    padding: 4px;
+    width: fit-content;
+}
+
+.ds-toggle-btn {
+    padding: 6px 16px;
+    border: none;
+    border-radius: 6px;
+    background: transparent;
+    color: var(--text-dim);
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: background 0.15s, color 0.15s;
+}
+
+.ds-toggle-btn--active {
+    background: var(--gold);
+    color: var(--bg-dark);
+    font-weight: 600;
+}
+
+.ds-toggle-btn:hover:not(.ds-toggle-btn--active) {
+    background: var(--bg-card);
+    color: var(--text-light);
+}
+
+/* Histogram */
+.ds-histogram-wrap {
+    background: var(--bg-elevated);
+    border-radius: 8px;
+    padding: 12px;
+}
+
+.ds-histogram-svg {
+    display: block;
+    width: 100%;
+}
+
+.ds-no-data {
+    text-align: center;
+    color: var(--text-dim);
+    font-style: italic;
+    margin: 8px 0 0;
+    font-size: 0.85rem;
+}
+
+.ds-expected-note {
+    font-size: 0.8rem;
+    color: var(--text-dim);
+    margin: 6px 0 0;
+    text-align: right;
+}
+
+.ds-legend-gold {
+    color: var(--gold);
+    font-weight: bold;
+}
+
+/* Crit / Fumble Rate Row */
+.ds-rates-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+}
+
+.ds-rate-chip {
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.ds-rate-chip.ds-crit {
+    background: rgba(var(--green-rgb, 34, 197, 94), 0.15);
+    color: var(--green);
+    border: 1px solid var(--green);
+}
+
+.ds-rate-chip.ds-fumble {
+    background: rgba(var(--red-rgb, 239, 68, 68), 0.15);
+    color: var(--red);
+    border: 1px solid var(--red);
+}
+
+.ds-rate-total {
+    color: var(--text-dim);
+    font-size: 0.82rem;
+    margin-left: auto;
+}
+
+/* Character Breakdown Table */
+.ds-breakdown {
+    background: var(--bg-elevated);
+    border-radius: 8px;
+    padding: 12px;
+}
+
+.ds-breakdown-title {
+    margin: 0 0 10px;
+    font-size: 0.9rem;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.ds-breakdown-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.88rem;
+}
+
+.ds-breakdown-table th {
+    text-align: left;
+    padding: 4px 8px;
+    color: var(--text-dim);
+    font-weight: 600;
+    border-bottom: 1px solid var(--border);
+    font-size: 0.8rem;
+}
+
+.ds-breakdown-table td {
+    padding: 5px 8px;
+    border-bottom: 1px solid var(--bg-card);
+    color: var(--text-light);
+}
+
+.ds-breakdown-table tr:last-child td {
+    border-bottom: none;
+}
+
+.ds-loading {
+    color: var(--text-dim);
+    text-align: center;
+    padding: 2rem;
+}
