@@ -271,6 +271,8 @@ async function restoreFromFileBackup(filename) {
         // Daten uebernehmen (analog restoreBackup aus systems/backups.js)
         const D = window.D;
         if (D) {
+            // Soundboard-Audio stoppen — Web Audio überlebt sonst den Daten-Reset
+            if (typeof window.stopAllTracks === 'function') window.stopAllTracks();
             for (const key in D) delete D[key];
             Object.assign(D, restored);
         }

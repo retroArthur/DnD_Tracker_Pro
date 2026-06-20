@@ -80,6 +80,8 @@ async function deleteCampaign() {
     ) {
         return;
     }
+    // Soundboard-Audio stoppen — Web Audio überlebt sonst den D-Reset und spielt im Hintergrund weiter
+    if (typeof window.stopAllTracks === 'function') window.stopAllTracks();
     try {
         log('[deleteCampaign] Lösche Kampagne:', key);
         // 1. LocalStorage löschen

@@ -568,6 +568,8 @@ function importDataGlobal() {
                 }
             } else {
                 // Aktuelle Kampagne überschreiben (D is const, use Object.assign)
+                // Soundboard-Audio stoppen — Web Audio überlebt sonst den Daten-Reset
+                if (typeof window.stopAllTracks === 'function') window.stopAllTracks();
                 Object.assign(D, imp);
                 if (!D._nextId) D._nextId = {};
                 renderAll();
