@@ -22,7 +22,18 @@ export async function loadApp(page) {
  * @param {string} tabName - z.B. 'party', 'npcs', 'locations', 'quests', 'encounter', 'dice'
  */
 export async function navigateToTab(page, tabName) {
-    await page.click(`.nav-tab[data-view="${tabName}"]`);
+    const tab = page.locator(`.nav-tab[data-view="${tabName}"]`);
+    // Gruppierte Nav: liegt der Tab in einem geschlossenen Dropdown, erst die Gruppe öffnen
+    if (!(await tab.isVisible())) {
+        const group = page.locator('.nav-group', {
+            has: page.locator(`.nav-tab[data-view="${tabName}"]`)
+        });
+        if ((await group.count()) > 0) {
+            await group.locator('.nav-group-btn').click();
+            await page.waitForTimeout(50);
+        }
+    }
+    await tab.click();
     await page.waitForTimeout(300);
 }
 

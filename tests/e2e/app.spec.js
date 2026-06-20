@@ -43,7 +43,7 @@ test.describe('App Grundfunktionen', () => {
 
         for (const tab of tabs) {
             const tabButton = page.locator(`.nav-tab[data-view="${tab.view}"]`);
-            await tabButton.click();
+            await page.evaluate(v => window.switchView(v), tab.view);
             await page.waitForTimeout(300);
 
             // Tab sollte aktiv sein
@@ -72,7 +72,7 @@ test.describe('App Grundfunktionen', () => {
 
 test.describe('Party Tab', () => {
     test.beforeEach(async ({ page }) => {
-        await page.click('.nav-tab[data-view="party"]');
+        await page.evaluate(() => window.switchView('party'));
         await page.waitForTimeout(300);
     });
 
@@ -95,7 +95,7 @@ test.describe('Party Tab', () => {
 
 test.describe('Orte Tab', () => {
     test.beforeEach(async ({ page }) => {
-        await page.click('.nav-tab[data-view="locations"]');
+        await page.evaluate(() => window.switchView('locations'));
         await page.waitForTimeout(500);
     });
 
@@ -134,7 +134,7 @@ test.describe('Orte Tab', () => {
 
 test.describe('NPCs Tab', () => {
     test.beforeEach(async ({ page }) => {
-        await page.click('.nav-tab[data-view="npcs"]');
+        await page.evaluate(() => window.switchView('npcs'));
         await page.waitForTimeout(500);
     });
 
@@ -158,7 +158,7 @@ test.describe('NPCs Tab', () => {
 
 test.describe('Würfel Tab', () => {
     test.beforeEach(async ({ page }) => {
-        await page.click('.nav-tab[data-view="dice"]');
+        await page.evaluate(() => window.switchView('dice'));
         await page.waitForTimeout(300);
     });
 

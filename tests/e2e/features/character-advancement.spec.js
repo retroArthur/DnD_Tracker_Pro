@@ -71,7 +71,7 @@ async function injectCharWithAdvancedFields(page) {
 test.describe('CHAR-03 / D-04: Klickbare Würfe im Detail-Modal', () => {
     test.beforeEach(async ({ page }) => {
         await loadApp(page);
-        await page.click('[data-view="party"]');
+        await page.evaluate(() => window.switchView('party'));
         await page.waitForTimeout(300);
         await injectCharWithAdvancedFields(page);
     });
@@ -151,7 +151,7 @@ test.describe('CHAR-03 / D-04: Klickbare Würfe im Detail-Modal', () => {
 test.describe('CHAR-03 / D-05: Klickbare Angriffe im Detail-Modal', () => {
     test.beforeEach(async ({ page }) => {
         await loadApp(page);
-        await page.click('[data-view="party"]');
+        await page.evaluate(() => window.switchView('party'));
         await page.waitForTimeout(300);
         await injectCharWithAdvancedFields(page);
     });
@@ -210,7 +210,7 @@ test.describe('CHAR-01 / D-09 / D-10: XP-Auto-Summe und -Verteilung', () => {
                     { id: 2, name: 'Wolf 2', type: 'enemy', cr: '1/4', hpCurrent: 0, hpMax: 11 }
                 ];
             });
-            await page.click('[data-view="initiative"]');
+            await page.evaluate(() => window.switchView('initiative'));
             await page.waitForTimeout(300);
             // XP-Modal öffnen (Button erscheint in Wave 4)
             await page.click('[data-action="finish-combat-xp"]');
@@ -282,7 +282,7 @@ test.describe('CHAR-01 / D-07: Milestone-Modus', () => {
                 }];
                 if (typeof window.renderParty === 'function') window.renderParty();
             });
-            await page.click('[data-view="party"]');
+            await page.evaluate(() => window.switchView('party'));
             await page.waitForTimeout(300);
             // Detail-Modal öffnen
             await page.click('[data-action="show-char-details"][data-id="99903"]');
@@ -317,7 +317,7 @@ test.describe('CHAR-01 / D-07: Milestone-Modus', () => {
                 }];
                 if (typeof window.renderParty === 'function') window.renderParty();
             });
-            await page.click('[data-view="party"]');
+            await page.evaluate(() => window.switchView('party'));
             await page.waitForTimeout(300);
             // Im Ausgangszustand (XP-Modus): XP-Toggle-Option ist aktiv
             await expect(page.locator('[data-action="set-leveling-mode"][data-value="xp"]')).toHaveClass(/active/);
@@ -374,7 +374,7 @@ test.describe('CHAR-01 / D-11: Levelaufstieg-Hinweis', () => {
                 }];
                 if (typeof window.renderParty === 'function') window.renderParty();
             });
-            await page.click('[data-view="party"]');
+            await page.evaluate(() => window.switchView('party'));
             await page.waitForTimeout(300);
             await page.click('[data-action="show-char-details"][data-id="99904"]');
             await page.waitForTimeout(300);
@@ -392,7 +392,7 @@ test.describe('CHAR-01 / D-11: Levelaufstieg-Hinweis', () => {
 test.describe('CHAR-03: Detail-Modal aufgeräumt — V/N nur bei Hover', () => {
     test.beforeEach(async ({ page }) => {
         await loadApp(page);
-        await page.click('[data-view="party"]');
+        await page.evaluate(() => window.switchView('party'));
         await page.waitForTimeout(300);
         await injectCharWithAdvancedFields(page);
     });
@@ -445,7 +445,7 @@ test.describe('CHAR-01 / 06-09: XP-Verteilung mit Char-Auswahl', () => {
                 { id: 1, name: 'Wolf', type: 'enemy', cr: '0', hpCurrent: 0, hpMax: 5 }
             ];
         });
-        await page.click('[data-view="initiative"]');
+        await page.evaluate(() => window.switchView('initiative'));
         await page.waitForTimeout(300);
         await page.click('[data-action="finish-combat-xp"]');
         await page.waitForTimeout(300);

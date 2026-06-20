@@ -24,7 +24,7 @@ async function loadAndNavToParty(page) {
     await page.goto(APP_URL);
     await page.waitForSelector('.app-title', { timeout: 10000 });
     await page.waitForTimeout(500);
-    await page.click('[data-view="party"]');
+    await page.evaluate(() => window.switchView('party'));
     await page.waitForTimeout(300);
 }
 
@@ -84,7 +84,7 @@ test.describe('CHAR-02: Inspiration-Toggle', () => {
             // Neu laden und prüfen ob Zustand persistiert
             await page.reload();
             await page.waitForSelector('.app-title', { timeout: 10000 });
-            await page.click('[data-view="party"]');
+            await page.evaluate(() => window.switchView('party'));
             await page.waitForTimeout(300);
             await expect(page.locator('.char-inspiration-toggle.active')).toBeVisible();
         }

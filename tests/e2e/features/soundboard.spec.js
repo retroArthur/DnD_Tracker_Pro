@@ -24,7 +24,14 @@ async function openSoundboardTab(page) {
     await page.goto(APP_URL);
     await page.waitForSelector('.app-title', { timeout: 10000 });
     await page.waitForTimeout(500);
-    await page.click('.nav-tab[data-view="soundboard"]');
+    // Soundboard liegt in der "Werkzeuge"-Gruppe -> Dropdown erst oeffnen
+    const tab = page.locator('.nav-tab[data-view="soundboard"]');
+    if (!(await tab.isVisible())) {
+        await page.locator('.nav-group', { has: page.locator('.nav-tab[data-view="soundboard"]') })
+            .locator('.nav-group-btn').click();
+        await page.waitForTimeout(50);
+    }
+    await tab.click();
     await page.waitForTimeout(400);
 }
 

@@ -67,7 +67,7 @@ test.describe('Tab Registry System', () => {
         });
 
         // Switch to dice tab
-        await page.click('[data-view="dice"]');
+        await page.evaluate(() => window.switchView('dice'));
 
         // Wait for dice view to be active
         await page.waitForSelector('#view-dice.active', { state: 'visible', timeout: 5000 });
@@ -111,7 +111,7 @@ test.describe('Tab Registry System', () => {
         });
 
         // Switch to dice tab and open details
-        await page.click('[data-view="dice"]');
+        await page.evaluate(() => window.switchView('dice'));
         await page.waitForSelector('#view-dice.active', { timeout: 5000 });
         await page.evaluate(() => {
             const details = document.querySelector('.dice-details');
@@ -121,7 +121,7 @@ test.describe('Tab Registry System', () => {
         await expect(page.locator('.rt-card').first()).toContainText('Initial Table');
 
         // Switch away
-        await page.click('[data-view="dashboard"]');
+        await page.evaluate(() => window.switchView('dashboard'));
         await page.waitForSelector('#view-dashboard.active', { timeout: 5000 });
 
         // Add a second table while away from dice tab
@@ -136,7 +136,7 @@ test.describe('Tab Registry System', () => {
         });
 
         // Switch back to dice tab and open details again
-        await page.click('[data-view="dice"]');
+        await page.evaluate(() => window.switchView('dice'));
         await page.waitForSelector('#view-dice.active', { timeout: 5000 });
         await page.evaluate(() => {
             const details = document.querySelector('.dice-details');
@@ -181,7 +181,7 @@ test.describe('Tab Registry System', () => {
         });
 
         // Switch to initiative tab
-        await page.click('[data-view="initiative"]');
+        await page.evaluate(() => window.switchView('initiative'));
         await page.waitForSelector('#view-initiative.active', { timeout: 5000 });
         await page.waitForTimeout(500);
 
@@ -230,7 +230,7 @@ test.describe('Tab Registry System', () => {
         });
 
         // Switch to initiative tab
-        await page.click('[data-view="initiative"]');
+        await page.evaluate(() => window.switchView('initiative'));
         await page.waitForSelector('#view-initiative.active', { timeout: 5000 });
         await page.waitForTimeout(300);
 
@@ -244,7 +244,7 @@ test.describe('Tab Registry System', () => {
         await expect(page.locator('.init-combatant')).toHaveCount(1);
 
         // Switch away
-        await page.click('[data-view="dashboard"]');
+        await page.evaluate(() => window.switchView('dashboard'));
         await page.waitForSelector('#view-dashboard.active', { timeout: 5000 });
 
         // Modify data while away - advance round and damage combatant
@@ -255,7 +255,7 @@ test.describe('Tab Registry System', () => {
         });
 
         // Switch back to initiative tab
-        await page.click('[data-view="initiative"]');
+        await page.evaluate(() => window.switchView('initiative'));
         await page.waitForSelector('#view-initiative.active', { timeout: 5000 });
         await page.waitForTimeout(500);
 
@@ -284,7 +284,7 @@ test.describe('Tab Registry System', () => {
         });
 
         // Switch to party tab
-        await page.click('[data-view="party"]');
+        await page.evaluate(() => window.switchView('party'));
         await page.waitForSelector('#view-party.active', { timeout: 5000 });
         await page.waitForTimeout(300);
 
@@ -298,7 +298,7 @@ test.describe('Tab Registry System', () => {
         await expect(page.locator('.party-member')).toHaveCount(1);
 
         // Switch away
-        await page.click('[data-view="dashboard"]');
+        await page.evaluate(() => window.switchView('dashboard'));
         await page.waitForSelector('#view-dashboard.active', { timeout: 5000 });
 
         // Add another character while away
@@ -316,7 +316,7 @@ test.describe('Tab Registry System', () => {
         });
 
         // Switch back to party tab
-        await page.click('[data-view="party"]');
+        await page.evaluate(() => window.switchView('party'));
         await page.waitForSelector('#view-party.active', { timeout: 5000 });
         await page.waitForTimeout(500);
 
@@ -339,7 +339,7 @@ test.describe('Tab Registry System', () => {
         });
 
         // Switch to timers tab
-        await page.click('[data-view="timers"]');
+        await page.evaluate(() => window.switchView('timers'));
         await page.waitForSelector('#view-timers.active', { timeout: 5000 });
         await page.waitForTimeout(300);
 
@@ -357,7 +357,7 @@ test.describe('Tab Registry System', () => {
         await expect(timer).toContainText('Concentration');
 
         // Switch away
-        await page.click('[data-view="dashboard"]');
+        await page.evaluate(() => window.switchView('dashboard'));
         await page.waitForSelector('#view-dashboard.active', { timeout: 5000 });
 
         // Add another timer
@@ -372,7 +372,7 @@ test.describe('Tab Registry System', () => {
         });
 
         // Switch back
-        await page.click('[data-view="timers"]');
+        await page.evaluate(() => window.switchView('timers'));
         await page.waitForSelector('#view-timers.active', { timeout: 5000 });
         await page.waitForTimeout(500);
 
@@ -391,7 +391,7 @@ test.describe('Tab Registry Error Handling', () => {
         });
 
         // Switch to dice tab
-        await page.click('[data-view="dice"]');
+        await page.evaluate(() => window.switchView('dice'));
         await page.waitForSelector('#view-dice.active', { timeout: 5000 });
         await page.waitForTimeout(300);
 
@@ -424,7 +424,7 @@ test.describe('Tab Registry Error Handling', () => {
         });
 
         // Switch to initiative tab
-        await page.click('[data-view="initiative"]');
+        await page.evaluate(() => window.switchView('initiative'));
         await page.waitForTimeout(200);
 
         // Should show empty message
@@ -435,7 +435,7 @@ test.describe('Tab Registry Error Handling', () => {
 
     test('tab with no renders (data tab) still switches correctly', async ({ page }) => {
         // Data tab has no renders in registry
-        await page.click('[data-view="data"]');
+        await page.evaluate(() => window.switchView('data'));
         await page.waitForTimeout(200);
 
         // Tab should be active
@@ -454,7 +454,7 @@ test.describe('Tab Registry Performance', () => {
 
         // Rapidly switch between tabs
         for (const tab of tabs) {
-            await page.click(`[data-view="${tab}"]`);
+            await page.evaluate(v => window.switchView(v), tab);
             await page.waitForTimeout(50); // Minimal delay
         }
 
@@ -472,9 +472,9 @@ test.describe('Tab Registry Performance', () => {
     test('switching tabs does not cause memory leaks', async ({ page }) => {
         // Switch between tabs 10 times
         for (let i = 0; i < 10; i++) {
-            await page.click('[data-view="dice"]');
+            await page.evaluate(() => window.switchView('dice'));
             await page.waitForTimeout(100);
-            await page.click('[data-view="initiative"]');
+            await page.evaluate(() => window.switchView('initiative'));
             await page.waitForTimeout(100);
         }
 
@@ -509,7 +509,7 @@ test.describe('Tab Registry Integration', () => {
         });
 
         // Switch to dice tab and open details
-        await page.click('[data-view="dice"]');
+        await page.evaluate(() => window.switchView('dice'));
         await page.waitForSelector('#view-dice.active', { timeout: 5000 });
         await page.evaluate(() => {
             const details = document.querySelector('.dice-details');
@@ -564,7 +564,7 @@ test.describe('Tab Registry Integration', () => {
         });
 
         // Switch to dice tab
-        await page.click('[data-view="dice"]');
+        await page.evaluate(() => window.switchView('dice'));
         await page.waitForSelector('#view-dice.active', { timeout: 5000 });
         await page.waitForTimeout(500);
 

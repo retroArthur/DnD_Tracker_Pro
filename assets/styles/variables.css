@@ -177,7 +177,12 @@
             background: var(--gold);
             color: var(--bg-dark);
         }
-        
+
+        /* Gruppierte Nav auf Mobile: Gruppen-Buttons aus, Eintraege flach ins Grid */
+        [data-layout="mobile"] .nav-group { display: contents; }
+        [data-layout="mobile"] .nav-group-btn { display: none; }
+        [data-layout="mobile"] .nav-group-menu { display: contents; }
+
         [data-layout="mobile"] .nav-tab-icon {
             font-size: 18px;
             display: block;

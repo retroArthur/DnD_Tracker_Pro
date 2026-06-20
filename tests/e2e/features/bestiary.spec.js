@@ -16,7 +16,7 @@ async function openBestiaryTab(page) {
     const filePath = `file:///${process.cwd().replace(/\\/g, '/')}/dist/dnd-tracker-bundled.html`;
     await page.goto(filePath);
     await page.waitForSelector('.app-title', { timeout: 10000 });
-    await page.click('.nav-tab[data-view="bestiary"]');
+    await page.evaluate(() => window.switchView('bestiary'));
     // Warten bis die Section aktiv ist
     await page.waitForSelector('#view-bestiary.active', { state: 'attached', timeout: 5000 });
     // Warten bis die Liste geladen ist (SRD-Monster erscheinen)

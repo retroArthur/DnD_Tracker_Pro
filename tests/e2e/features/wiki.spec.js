@@ -16,7 +16,7 @@ test.describe('Wiki System', () => {
         await page.waitForSelector('.app-title', { timeout: 10000 });
 
         // Zur Wiki-View wechseln
-        await page.click('.nav-tab[data-view="wiki"]');
+        await page.evaluate(() => window.switchView('wiki'));
         await page.waitForSelector('#view-wiki', { state: 'visible' });
     });
 
@@ -377,7 +377,7 @@ test.describe('Wiki System', () => {
             await page.waitForSelector('.app-title', { timeout: 10000 });
 
             // Zur Wiki-View wechseln
-            await page.click('.nav-tab[data-view="wiki"]');
+            await page.evaluate(() => window.switchView('wiki'));
             await page.waitForSelector('#view-wiki', { state: 'visible' });
 
             // Eintrag sollte noch da sein

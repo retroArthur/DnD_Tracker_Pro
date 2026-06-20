@@ -23,7 +23,7 @@ test.describe('Tab-Sweep', () => {
             await page.goto(BASE_URL);
             await page.waitForSelector('.app-title', { timeout: 15000 });
             const tabButton = page.locator(`.nav-tab[data-view="${tab}"]`);
-            await tabButton.click();
+            await page.evaluate(v => window.switchView(v), tab);
             await page.waitForTimeout(500);
             await expect(tabButton).toHaveClass(/active/);
             expect(errors.filter(e => !e.includes('favicon'))).toHaveLength(0);

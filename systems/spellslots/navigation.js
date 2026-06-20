@@ -5,6 +5,16 @@
 // NAVIGATION
 // ============================================================
 function switchView(name) {
+    // Nav-Gruppen-Dropdowns immer schließen (auch bei Action-Items wie Debug/Theme)
+    document.querySelectorAll('.nav-group.open').forEach(g => {
+        g.classList.remove('open');
+        const b = g.querySelector('.nav-group-btn');
+        if (b) b.setAttribute('aria-expanded', 'false');
+    });
+
+    // Kein gültiger View-Name (z.B. Action-Buttons ohne data-view) → nur Dropdowns schließen
+    if (!name) return;
+
     // Cleanup: transientes NPC-Generator-Modal beim View-Wechsel entfernen
     const _npcgModal = document.getElementById('npc-generator-modal');
     if (_npcgModal) _npcgModal.remove();
@@ -14,11 +24,18 @@ function switchView(name) {
         t.classList.remove('active');
         t.setAttribute('aria-selected', 'false');
     });
+    document.querySelectorAll('.nav-group-btn.has-active').forEach(b => b.classList.remove('has-active'));
     $('view-' + name)?.classList.add('active');
     const activeTab = document.querySelector(`[data-view="${name}"]`);
     if (activeTab) {
         activeTab.classList.add('active');
         activeTab.setAttribute('aria-selected', 'true');
+        // Eltern-Gruppe hervorheben (gruppierte Nav)
+        const parentGroup = activeTab.closest('.nav-group');
+        if (parentGroup) {
+            const gb = parentGroup.querySelector('.nav-group-btn');
+            if (gb) gb.classList.add('has-active');
+        }
     }
     // LEGACY SUPPORT: Keep existing special cases for backwards compatibility
     if (name === 'notes') {

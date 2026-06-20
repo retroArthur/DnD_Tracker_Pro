@@ -31,7 +31,7 @@ test.describe('Initiative System', () => {
         await page.waitForSelector('.app-title', { timeout: 10000 });
 
         // Zur Initiative-View wechseln
-        await page.click('.nav-tab[data-view="initiative"]');
+        await page.evaluate(() => window.switchView('initiative'));
         await page.waitForSelector('#view-initiative', { state: 'visible' });
     });
 

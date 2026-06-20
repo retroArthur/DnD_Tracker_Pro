@@ -345,6 +345,22 @@ const SystemActions = {
             window.setTrackLoop(sceneId, blobId);
             if (typeof window.renderSceneList === 'function') window.renderSceneList();
         }
+    },
+    'toggle-nav-group': ctx => {
+        const group = ctx.target && ctx.target.closest('.nav-group');
+        if (!group) return;
+        const willOpen = !group.classList.contains('open');
+        // Andere Gruppen schließen (nur eine offen)
+        document.querySelectorAll('.nav-group.open').forEach(g => {
+            if (g !== group) {
+                g.classList.remove('open');
+                const b = g.querySelector('.nav-group-btn');
+                if (b) b.setAttribute('aria-expanded', 'false');
+            }
+        });
+        group.classList.toggle('open', willOpen);
+        const btn = group.querySelector('.nav-group-btn');
+        if (btn) btn.setAttribute('aria-expanded', String(willOpen));
     }
 };
 

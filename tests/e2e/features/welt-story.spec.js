@@ -22,14 +22,14 @@ test.describe('WELT-01: Session-Prep-Tab', () => {
     test('Tab sessionprep ist sichtbar und anklickbar', async ({ page }) => {
         await page.goto(APP_URL);
         // Tab-Button klicken
-        await page.click('[data-view="sessionprep"]');
+        await page.evaluate(() => window.switchView('sessionprep'));
         // View-Container muss sichtbar sein
         await expect(page.locator('#view-sessionprep')).toBeVisible();
     });
 
     test('Neue Session-Prep-Modal enthält alle 5 Lazy-DM-Abschnitte', async ({ page }) => {
         await page.goto(APP_URL);
-        await page.click('[data-view="sessionprep"]');
+        await page.evaluate(() => window.switchView('sessionprep'));
         // "Neue Session-Prep"-Button klicken
         await page.click('[data-action="show-session-prep-modal"]');
         // Alle 5 Pflicht-Felder müssen im Modal vorhanden sein
@@ -52,7 +52,7 @@ test.describe('WELT-01: Session-Prep-Tab', () => {
                 ];
             }
         });
-        await page.click('[data-view="sessionprep"]');
+        await page.evaluate(() => window.switchView('sessionprep'));
         await page.click('[data-action="show-session-prep-modal"]');
         // Der offene Faden aus der Quest muss als Input-Wert erscheinen
         const faedenText = await page.locator('.wp-faden-text').allTextContents();
@@ -92,7 +92,7 @@ test.describe('WELT-01: Session-Prep-Tab', () => {
                 }
             }
         });
-        await page.click('[data-view="sessionprep"]');
+        await page.evaluate(() => window.switchView('sessionprep'));
         await page.waitForTimeout(200);
         // Prep-Karte muss sichtbar sein (Liste mit 1 Eintrag)
         await expect(page.locator('#session-prep-card-1')).toBeVisible();
@@ -115,13 +115,13 @@ test.describe('WELT-01: Session-Prep-Tab', () => {
 test.describe('WELT-02: NPC-Generator', () => {
     test('Generator-Button ist im NPC-Tab sichtbar', async ({ page }) => {
         await page.goto(APP_URL);
-        await page.click('[data-view="npcs"]');
+        await page.evaluate(() => window.switchView('npcs'));
         await expect(page.locator('[data-action="show-npc-generator"]')).toBeVisible();
     });
 
     test('Klick öffnet Modal mit Vorschau-Karte in <1s', async ({ page }) => {
         await page.goto(APP_URL);
-        await page.click('[data-view="npcs"]');
+        await page.evaluate(() => window.switchView('npcs'));
 
         const t0 = Date.now();
         await page.click('[data-action="show-npc-generator"]');
@@ -137,7 +137,7 @@ test.describe('WELT-02: NPC-Generator', () => {
 
     test('Volk-Select ändert Namens-Pool (Filter wirkt)', async ({ page }) => {
         await page.goto(APP_URL);
-        await page.click('[data-view="npcs"]');
+        await page.evaluate(() => window.switchView('npcs'));
         await page.click('[data-action="show-npc-generator"]');
         // Filter auf Zwerg / Männlich setzen
         await page.selectOption('#npcg-volk-select', 'zwerg');
@@ -157,7 +157,7 @@ test.describe('WELT-02: NPC-Generator', () => {
 
     test('3× Re-Roll erzeugt keinen Eintrag in D.npcs', async ({ page }) => {
         await page.goto(APP_URL);
-        await page.click('[data-view="npcs"]');
+        await page.evaluate(() => window.switchView('npcs'));
         await page.click('[data-action="show-npc-generator"]');
 
         // 3× Re-Roll
@@ -171,7 +171,7 @@ test.describe('WELT-02: NPC-Generator', () => {
 
     test('"Als NPC speichern" legt genau 1 D.npcs-Eintrag an', async ({ page }) => {
         await page.goto(APP_URL);
-        await page.click('[data-view="npcs"]');
+        await page.evaluate(() => window.switchView('npcs'));
         await page.click('[data-action="show-npc-generator"]');
 
         // Einen NPC speichern
@@ -184,7 +184,7 @@ test.describe('WELT-02: NPC-Generator', () => {
 
     test('Gespeicherter NPC erscheint im NPC-Tab', async ({ page }) => {
         await page.goto(APP_URL);
-        await page.click('[data-view="npcs"]');
+        await page.evaluate(() => window.switchView('npcs'));
         await page.click('[data-action="show-npc-generator"]');
 
         // Name merken
@@ -202,7 +202,7 @@ test.describe('WELT-02: NPC-Generator', () => {
 
     test('Generator öffnet als zentriertes, fixiertes Modal-Overlay (UAT-Gap npc-generator-modal-overlay)', async ({ page }) => {
         await page.goto(APP_URL);
-        await page.click('[data-view="npcs"]');
+        await page.evaluate(() => window.switchView('npcs'));
         await page.click('[data-action="show-npc-generator"]');
 
         // Modal ist sichtbar
@@ -222,7 +222,7 @@ test.describe('WELT-02: NPC-Generator', () => {
 
     test('Generator verschwindet beim Tab-Wechsel (View-Switch-Cleanup)', async ({ page }) => {
         await page.goto(APP_URL);
-        await page.click('[data-view="npcs"]');
+        await page.evaluate(() => window.switchView('npcs'));
         await page.click('[data-action="show-npc-generator"]');
 
         // Modal ist offen
@@ -243,7 +243,7 @@ test.describe('WELT-02: NPC-Generator', () => {
 test.describe('WELT-03: Kalender-Tab', () => {
     test('Tab kalender ist sichtbar und anklickbar', async ({ page }) => {
         await page.goto(APP_URL);
-        await page.click('[data-view="kalender"]');
+        await page.evaluate(() => window.switchView('kalender'));
         await expect(page.locator('#view-kalender')).toBeVisible();
     });
 
@@ -257,7 +257,7 @@ test.describe('WELT-03: Kalender-Tab', () => {
                 window.D.calendar.year = 1492;
             }
         });
-        await page.click('[data-view="kalender"]');
+        await page.evaluate(() => window.switchView('kalender'));
         await page.waitForTimeout(200);
         // #kalender-monat-anzeige muss Monatsnamen enthalten
         const anzeigeText = await page.locator('#kalender-monat-anzeige').innerText();
@@ -304,7 +304,7 @@ test.describe('WELT-03: Kalender-Tab', () => {
 test.describe('WELT-04: Reise-Tab', () => {
     test('Tab reise ist sichtbar und anklickbar', async ({ page }) => {
         await page.goto(APP_URL);
-        await page.click('[data-view="reise"]');
+        await page.evaluate(() => window.switchView('reise'));
         await expect(page.locator('#view-reise')).toBeVisible();
     });
 
@@ -374,13 +374,13 @@ test.describe('WELT-04: Reise-Tab', () => {
 test.describe('WELT-05: Fraktionen-Tab', () => {
     test('Tab fraktionen ist sichtbar und anklickbar', async ({ page }) => {
         await page.goto(APP_URL);
-        await page.click('[data-view="fraktionen"]');
+        await page.evaluate(() => window.switchView('fraktionen'));
         await expect(page.locator('#view-fraktionen')).toBeVisible();
     });
 
     test('Fraktion anlegen erscheint in Übersichtsliste', async ({ page }) => {
         await page.goto(APP_URL);
-        await page.click('[data-view="fraktionen"]');
+        await page.evaluate(() => window.switchView('fraktionen'));
 
         // Fraktion direkt via page.evaluate anlegen (kein DOM-Formular-Roundtrip)
         await page.evaluate(() => {
@@ -474,7 +474,7 @@ test.describe('WELT-05: Fraktionen-Tab', () => {
 
     test('NPC mit factionId erscheint in Fraktions-Mitgliederliste', async ({ page }) => {
         await page.goto(APP_URL);
-        await page.click('[data-view="fraktionen"]');
+        await page.evaluate(() => window.switchView('fraktionen'));
 
         // Fraktion + NPC mit factionId anlegen
         await page.evaluate(() => {

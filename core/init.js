@@ -53,6 +53,21 @@ async function init() {
         .querySelectorAll('.nav-tab')
         .forEach(tab => tab.addEventListener('click', () => switchView(tab.dataset.view)));
 
+    // Nav-Gruppen: Klick außerhalb schließt offene Dropdowns
+    const _closeNavGroups = () => {
+        document.querySelectorAll('.nav-group.open').forEach(g => {
+            g.classList.remove('open');
+            const b = g.querySelector('.nav-group-btn');
+            if (b) b.setAttribute('aria-expanded', 'false');
+        });
+    };
+    document.addEventListener('click', e => {
+        if (!e.target.closest('.nav-group')) _closeNavGroups();
+    });
+    document.addEventListener('keydown', e => {
+        if (e.key === 'Escape') _closeNavGroups();
+    });
+
     // Defensive render calls - check if functions exist
     if (typeof renderAll === 'function') renderAll();
     if (typeof window.renderDashboard === 'function') window.renderDashboard();

@@ -45,6 +45,8 @@ function makeLazyLoadable(imgElement) {
 function initNavDragDrop() {
     const container = document.getElementById('nav-tabs-container');
     if (!container) return;
+    // Gruppierte Nav: kein freies Drag-Reorder (Gruppierung ist die feste Ordnung)
+    if (container.querySelector('.nav-group')) return;
 
     let draggedTab = null;
 
@@ -115,6 +117,8 @@ function restoreNavOrder() {
 
     const container = document.getElementById('nav-tabs-container');
     if (!container) return;
+    // Gruppierte Nav: gespeicherte Flach-Reihenfolge nicht anwenden (würde Gruppen auflösen)
+    if (container.querySelector('.nav-group')) return;
 
     const tabs = [...container.querySelectorAll('.nav-tab')];
     const tabMap = new Map();

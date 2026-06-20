@@ -318,13 +318,11 @@
         
         .nav-tabs {
             display: flex;
-            gap: 4px;
-            overflow-x: auto;
+            flex-wrap: wrap;
+            gap: 6px;
             padding-bottom: 6px;
-            scrollbar-width: thin;
-            scrollbar-color: var(--border) transparent;
-            flex-wrap: nowrap;
-            -webkit-overflow-scrolling: touch;
+            align-items: center;
+            overflow: visible;
         }
 
         .nav-tabs::-webkit-scrollbar {
@@ -358,14 +356,60 @@
         .nav-tab:hover { background: rgba(255,255,255,0.1); color: var(--text); border-color: var(--border); }
         .nav-tab.active { background: var(--gold); color: var(--bg-dark); font-weight: 600; border-color: var(--gold); }
         
-        /* Nav Tab Drag & Drop */
+        /* Nav Tab Drag & Drop (Legacy — bei gruppierter Nav inaktiv) */
         .nav-tab[draggable="true"] { cursor: grab; }
         .nav-tab.dragging { opacity: 0.4; cursor: grabbing; }
-        .nav-tab.drag-over { 
-            border-left: 2px solid var(--gold); 
+        .nav-tab.drag-over {
+            border-left: 2px solid var(--gold);
             margin-left: -2px;
         }
-        
+
+        /* Nav Gruppen-Dropdowns */
+        .nav-group {
+            position: relative;
+            display: inline-flex;
+        }
+
+        .nav-group-btn {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid transparent;
+            color: var(--text-dim);
+            padding: 8px 12px;
+            cursor: pointer;
+            border-radius: 16px;
+            font-size: 12px;
+            font-weight: 500;
+            white-space: nowrap;
+            transition: all 0.2s;
+        }
+        .nav-group-btn:hover { background: rgba(255,255,255,0.1); color: var(--text); border-color: var(--border); }
+        .nav-group-btn.has-active { background: var(--gold); color: var(--bg-dark); font-weight: 600; border-color: var(--gold); }
+        .nav-group.open > .nav-group-btn { color: var(--text); border-color: var(--gold); }
+
+        .nav-group-menu {
+            display: none;
+            position: absolute;
+            top: calc(100% + 4px);
+            left: 0;
+            min-width: 190px;
+            flex-direction: column;
+            gap: 2px;
+            padding: 6px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.45);
+            z-index: 200;
+        }
+        .nav-group.open > .nav-group-menu { display: flex; }
+
+        .nav-group-menu .nav-tab {
+            width: 100%;
+            text-align: left;
+            border-radius: 8px;
+            flex-shrink: 0;
+        }
+
         /* Main Content */
         .main-content {
             padding: 16px;
