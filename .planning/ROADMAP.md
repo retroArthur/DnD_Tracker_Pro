@@ -15,7 +15,7 @@
 - [x] **Phase 4: Initiative-Erweiterungen** — Statblock-Popup, Legendäre Aktionen & Resistenzen, Mob-Modus (completed 2026-06-13)
 - [x] **Phase 5: Welt & Story** — Session-Prep, NPC-Generator, Timeline, Reise-Simulator, Fraktionen (completed 2026-06-18)
 - [x] **Phase 6: Spieler-Verwaltung** — XP/Milestone-Tracker, Inspiration, Erweiterte Charakterwerte
-- [x] **Phase 7: Komfort & Analyse** — Soundboard, Würfel-Statistiken (completed 2026-06-19)
+- [x] **Phase 7: Komfort & Analyse** — Soundboard, Würfel-Statistiken (completed 2026-06-20)
 
 ---
 
