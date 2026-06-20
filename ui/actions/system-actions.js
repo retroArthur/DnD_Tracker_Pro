@@ -244,9 +244,15 @@ const SystemActions = {
         if (input) input.click();
     },
     'soundboard-file-change': ctx => {
+        // <input type="file"> feuert bei EINER Auswahl BEIDE Events: 'input' UND 'change'.
+        // EventDelegation dispatcht die data-action auf beiden → ohne Guard doppelter Import
+        // (zwei IDB-Records, gleicher Name/Größe). Nur auf 'change' reagieren.
+        if (ctx.event && ctx.event.type !== 'change') return;
         if (typeof window.importAudioFile === 'function') {
             window.importAudioFile(ctx.target);
         }
+        // Input zurücksetzen, damit dieselbe Datei später erneut importiert werden kann
+        if (ctx.target) ctx.target.value = '';
     },
     'remove-audio': ctx => {
         // String-IDs (audio_…) niemals über parseEntityId/ctx.id — direkt dataset.id lesen (Phase-03-03-Präzedenz, CR-01)

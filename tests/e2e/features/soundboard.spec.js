@@ -91,13 +91,13 @@ test.describe('Soundboard', function () {
             ])
         });
 
-        // change-Event ausloesen (Playwright's setInputFiles loest change aus, aber manuell sichern)
-        await page.dispatchEvent('#soundboard-file-input', 'change');
+        // setInputFiles feuert nativ 'input' + 'change'. NICHT zusaetzlich manuell 'change'
+        // dispatchen — das verdeckte den Doppel-Import-Bug (Regression-Guard fuer UX-01b).
 
         // Warten bis IDB-Write und Re-Render abgeschlossen
         await page.waitForTimeout(800);
 
-        // Pruefe IDB-Eintrag via listSoundBlobs()
+        // Pruefe IDB-Eintrag via listSoundBlobs() — GENAU EIN Eintrag pro Import (kein Doppel-Import)
         const blobCount = await page.evaluate(async function() {
             if (typeof window.listSoundBlobs !== 'function') return -1;
             try {
@@ -107,7 +107,7 @@ test.describe('Soundboard', function () {
                 return -2;
             }
         });
-        expect(blobCount).toBeGreaterThan(0);
+        expect(blobCount).toBe(1);
 
         // Pruefe DOM: Dateiname in Bibliothek sichtbar
         const libraryContainer = page.locator('#soundboard-library-container');
@@ -143,16 +143,16 @@ test.describe('Soundboard', function () {
                 0x00, 0x00, 0x00, 0x00
             ])
         });
-        await page.dispatchEvent('#soundboard-file-input', 'change');
+        // setInputFiles feuert nativ 'input' + 'change' — kein manuelles 'change' (sonst Doppel-Import)
         await page.waitForTimeout(800);
 
-        // Vor dem Reload pruefen: Blob in IDB
+        // Vor dem Reload pruefen: GENAU EIN Blob in IDB (kein Doppel-Import)
         const beforeCount = await page.evaluate(async function() {
             if (typeof window.listSoundBlobs !== 'function') return 0;
             const blobs = await window.listSoundBlobs();
             return blobs.length;
         });
-        expect(beforeCount).toBeGreaterThan(0);
+        expect(beforeCount).toBe(1);
 
         // Seite neu laden (gleiche IDB-Daten unter file://)
         await page.reload();
@@ -169,7 +169,7 @@ test.describe('Soundboard', function () {
                 return -2;
             }
         });
-        expect(afterCount).toBeGreaterThan(0);
+        expect(afterCount).toBe(1);
 
         // Dateiname immer noch auffindbar
         const names = await page.evaluate(async function() {

@@ -72,3 +72,59 @@ describe('Soundboard — Dateigroessen-Guard', function () {
         });
     });
 });
+
+/**
+ * UX-01b Regression — Doppel-Import-Schutz.
+ *
+ * Bug (UAT Phase 7): Eine einzelne Datei-Auswahl erzeugte ZWEI IDB-Records.
+ * Ursache: <input type="file"> feuert bei einer Auswahl BEIDE Events 'input' UND 'change';
+ * EventDelegation dispatcht die data-action auf beiden → importAudioFile lief zweimal.
+ * Fix: Handler 'soundboard-file-change' reagiert nur auf das 'change'-Event.
+ *
+ * Dieser Test laedt das ECHTE SystemActions-Objekt via Mock-EventDelegation und prueft,
+ * dass eine Auswahl (input + change) genau EINEN Import ausloest.
+ */
+describe('Soundboard — Doppel-Import-Schutz (UX-01b)', function () {
+    function loadFileChangeHandler() {
+        const src = fs.readFileSync(
+            path.resolve(__dirname, '../../ui/actions/system-actions.js'),
+            'utf8'
+        );
+        const collected = {};
+        // system-actions.js ruft am Dateiende EventDelegation.registerAction(name, handler)
+        // fuer jeden Eintrag. Handler-Bodies werden bei der Definition NICHT ausgefuehrt.
+        global.EventDelegation = {
+            registerAction: function(name, handler) { collected[name] = handler; }
+        };
+        eval(src); // eslint-disable-line no-eval
+        return collected['soundboard-file-change'];
+    }
+
+    test('eine Auswahl (input + change) loest genau EINEN Import aus', function () {
+        const handler = loadFileChangeHandler();
+        expect(typeof handler).toBe('function');
+
+        const importSpy = jest.fn();
+        global.window.importAudioFile = importSpy;
+        const target = { value: 'C:\\fakepath\\ambient.mp3' };
+
+        // Reihenfolge wie im Browser: erst 'input', dann 'change'
+        handler({ target: target, event: { type: 'input' } });
+        handler({ target: target, event: { type: 'change' } });
+
+        expect(importSpy).toHaveBeenCalledTimes(1);
+        expect(importSpy).toHaveBeenCalledWith(target);
+        // nach erfolgreichem Import wird der Input zurueckgesetzt (gleiche Datei spaeter erneut importierbar)
+        expect(target.value).toBe('');
+    });
+
+    test('reines input-Event (ohne change) loest KEINEN Import aus', function () {
+        const handler = loadFileChangeHandler();
+        const importSpy = jest.fn();
+        global.window.importAudioFile = importSpy;
+
+        handler({ target: { value: 'x' }, event: { type: 'input' } });
+
+        expect(importSpy).not.toHaveBeenCalled();
+    });
+});
