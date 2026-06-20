@@ -2,21 +2,22 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: executing
-last_updated: "2026-06-19T21:24:25.876Z"
+status: milestone_complete
+last_updated: 2026-06-20T07:43:45.549Z
 progress:
   total_phases: 7
-  completed_phases: 6
+  completed_phases: 7
   total_plans: 44
-  completed_plans: 40
-  percent: 86
+  completed_plans: 44
+  percent: 100
+stopped_at: Milestone complete (Phase 07 was final phase)
 ---
 
 # Project State: D&D Kampagnen-Tracker Pro — Stabilisierung & Ausbau
 
-**Last Updated:** 2026-06-19
-**Phase:** 7 — Geplant (4 Pläne / 3 Wellen), bereit zur Ausführung
-**Status:** Ready to execute
+**Last Updated:** 2026-06-20
+**Phase:** 07 — Komfort & Analyse (Complete)
+**Status:** Milestone v1.0 complete (7/7 Phasen)
 
 ---
 
@@ -24,19 +25,19 @@ progress:
 
 **Core Value:** Die App muss am Spieltisch zuverlässig offline laufen — ein Spielleiter-Begleiter, der nie im Weg steht und keine Daten verliert.
 
-**Current Focus:** Phase 07 — Komfort & Analyse (Geplant: 4 Pläne / 3 Wellen, bereit zur Ausführung)
+**Current Focus:** Milestone complete
 
 ---
 
 ## Current Position
 
 ```
-Phase: 07 (komfort-analyse) — GEPLANT (4 Pläne / 3 Wellen)
-Plan: 07-01..07-04 erstellt — Plan-Checker ISSUES FOUND (0 Blocker / 3 Warnings, alle Doku-Konsistenz → behoben/akzeptiert)
-Next:  /gsd-execute-phase 7
-Status: Ready to execute
+Phase: 07 (komfort-analyse) — COMPLETE (4/4 Pläne, 3 Wellen)
+Plan: 07-01..07-04 ausgeführt + Code-Review-Fix (CR-01/WR-01/WR-03, Commit 40a9009)
+Next:  Milestone v1.0 abschließen (/gsd-complete-milestone) oder /gsd-new-milestone
+Status: Milestone v1.0 complete (7/7 Phasen)
 
-Progress: [██████████████████████████████░░░░] Phasen 1–6 komplett (6/7, 86%); Phase 7 geplant
+Progress: [██████████████████████████████████] Phasen 1–7 komplett (7/7, 100%) — Milestone v1.0 fertig
 ```
 
 **Phases:**
@@ -48,15 +49,15 @@ Progress: [███████████████████████
 | 4 | Initiative-Erweiterungen | Complete (4/4 Pläne abgeschlossen) |
 | 5 | Welt & Story | Complete (8/8 Pläne, inkl. Gap-Closure 05-08) |
 | 6 | Spieler-Verwaltung | Complete (9/9 Pläne) |
-| 7 | Komfort & Analyse | Geplant (4 Pläne / 3 Wellen, bereit zur Ausführung) |
+| 7 | Komfort & Analyse | Complete (4/4 Pläne, 3 Wellen; 4 Audio-UAT offen, nicht-blockierend) |
 
 ---
 
 ## Performance Metrics
 
-- Plans completed: 9 (Phase 1)
-- Plans total: 9 (Phase 1) + TBD (Phasen 2-7 nach Planung)
-- Requirements delivered: 11 / 31 (STAB-01 bis STAB-11)
+- Plans completed: 44 / 44 (Phasen 1–7, Milestone v1.0)
+- Phases completed: 7 / 7 (100%)
+- Requirements delivered: 31 / 31 (STAB, INIT, BESTIARY, WELT, CHAR, UX — Milestone v1.0 vollständig)
 
 ---
 
@@ -126,14 +127,16 @@ Progress: [███████████████████████
 - [x] Phase 6 ausführen Plan 9 (06-09 Gap-Closure xp-exclude-players, CHAR-01): ✓ (2026-06-18, #xp-dist-char-list Checkbox-Auswahlliste + Alle/Keine Quick-Select; showXpDistributionModal rendert alle D.characters (esc, HP-Badge, default checked); updateXpDistPreview nutzt selectedCount; applyXpDistribution kein hpCurrent-Filter, 0-Guard Warn-Toast; xpDistSelectAll/None; 4 neue E2E-Tests + 15/15 E2E grün; 421 Unit grün; Commit 1ff49ac)
 - [x] Phase 7 diskutieren: `/gsd-discuss-phase 7` ✓ (2026-06-19, 07-CONTEXT.md, D-01..D-05)
 - [x] Phase 7 planen: `/gsd-plan-phase 7` ✓ (2026-06-19, 4 Pläne / 3 Wellen, `--skip-ui` lean, Research 595a445 + manuelle 07-VALIDATION.md, Plan-Checker 0 Blocker / 3 Doku-Warnings behoben/akzeptiert; Plan-Commit 34ad3db)
-- [ ] Phase 7 ausführen: `/gsd-execute-phase 7` (sequenziell auf `main`, kein Worktree)
+- [x] Phase 7 ausführen: `/gsd-execute-phase 7` ✓ (2026-06-20, 4/4 Pläne sequenziell auf `main`; Wave1 07-01 Foundation, Wave2 07-02 Soundboard-Engine + 07-04 Würfel-Statistiken, Wave3 07-03 Soundboard-UI; Verifier 14/14 must-haves; Code-Review CR-01 (kritisch: Soundboard-Klick-Aktionen tot via parseEntityId) + WR-01/WR-03 gefixt in Commit 40a9009; Build exit 0, 432 Unit-Tests grün)
+- [ ] Phase 7 — 4 hörbare Audio-UAT (07-HUMAN-UAT.md): Audio-Ausgabe, Crossfade-Glätte, Volume-Slider-Persistenz, AudioContext-resume — via `/gsd-verify-work 7`
+- [ ] Milestone v1.0 abschließen: `/gsd-complete-milestone` (alle 7 Phasen complete)
 
 ---
 
 ## Session Continuity
 
-**Last action:** Phase 07 (Komfort & Analyse) geplant (2026-06-19): 4 Pläne / 3 Wellen via `/gsd-plan-phase 7`. Research (Commit 595a445: Web Audio API statt `<audio>`, IDB v3→v4 mit `audioBlobs`+`diceStats`-Stores, Hook in `addToDiceHistory()` dice-core.js:434, Alt+Shift+1..5/0 Quick-Slots, inline-SVG-Histogramm); manuelle 07-VALIDATION.md (deutsche „Validierungs-Architektur"-Sektion, Commit 9767da6); UI-Gate via `--skip-ui` (lean, Nutzer-Wahl — Optik reused bestehende Muster, Histogramm-Technik an Planner). Plan-Checker: ISSUES FOUND, 0 Blocker / 3 Warnings (alle Doku-Konsistenz: RESEARCH Open-Questions→RESOLVED markiert, VALIDATION UX-01g-Zeile als N/A annotiert da D-02 voll gewählt, 07-01-Scope akzeptiert). Schlüssel-Entscheidungen: D-02 voll (Layering+Crossfade, D-02a verworfen), Session=Boot-ID `window._currentSessionId`. Plan-Commit 34ad3db.
-**Next action:** Phase 07 ausführen: `/gsd-execute-phase 7` (ggf. `/clear` davor). HINWEIS: sequenziell auf `main` ausführen (kein Worktree/Parallel — Windows-Stdio + geteilte Dateien), Executor-Prompt mit node-gsd-tools-Variante + `PYTHONIOENCODING=utf-8 python build.py` + absoluten Pfaden + ESM-`file://`-E2E-Muster. Offen daneben: Phase-6-UAT Test 3 (Skills-Layout) Sicht-Bestätigung.
+**Last action:** Phase 07 (Komfort & Analyse) ausgeführt (2026-06-20): 4/4 Pläne sequenziell auf `main` (kein Worktree). Wave 1: 07-01 Foundation (IDB v4 mit `audioBlobs`+`diceStats`-Stores, `addToDiceHistory()`-Stats-Tee D-04, 6 Modul-Skelette, 2 Tabs, 4 Wave-0-Stubs). Wave 2: 07-02 Soundboard-Engine (Blob-Persistenz + Größen-Guard 20/100 MB, Web Audio Decode/Loop/Gain/2s-Crossfade D-02 voll) + 07-04 Würfel-Statistiken (inline-SVG d20-Histogramm + Erwartungs-Overlay, Crit/Fumble, Per-Character-Breakdown, Session/Gesamt-Filter). Wave 3: 07-03 Soundboard-UI (Audio-Bibliothek, Szenen-Builder, Alt+Shift+0..5 Quick-Slots D-03). Verifier: 14/14 must-haves, status human_needed (4 hörbare UAT). Code-Review: 1 Critical (CR-01: Soundboard-Klick-Aktionen play/delete/remove tot, weil `parseEntityId` String-IDs `scene_`/`audio_` → null wandelt) + WR-01/WR-03 — alle gefixt (ctx.target.dataset.id, FIFO-Buffer-Cap, scope-aware Leerstate; Commit 40a9009). Build exit 0, 432/432 Unit-Tests grün, Phase-7-E2E grün. Plan-Commits: 65e93a6/ba78ef9/94f124d/10c8f27 + Fix 40a9009.
+**Next action:** Milestone v1.0 abschließen — `/gsd-complete-milestone` (alle 7 Phasen complete). Offen, nicht-blockierend: 4 hörbare Audio-UAT (07-HUMAN-UAT.md) via `/gsd-verify-work 7`; sowie Phase-6-UAT Test 3 (Skills-Layout) Sicht-Bestätigung. Optionale Altlasten aus früheren Phasen (Phase-1-Security-Audit, Code-Review-Findings Phase 1) weiterhin offen.
 
 ---
 
