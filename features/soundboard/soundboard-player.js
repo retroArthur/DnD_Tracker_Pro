@@ -357,11 +357,32 @@ function stopAllTracksIfScene(sceneId) {
     }
 }
 
+/**
+ * setLiveTrackVolume(sceneId, blobId, volume) — Lautstärke eines GERADE spielenden Tracks
+ * live ändern (kurze Glättung), ohne Stop/Neustart. No-op, wenn die Szene/der Track nicht aktiv ist.
+ * @param {string} sceneId
+ * @param {string} blobId
+ * @param {number} volume  0..1
+ */
+function setLiveTrackVolume(sceneId, blobId, volume) {
+    if (!_activeScene || _activeScene.sceneId !== sceneId) return;
+    const ctx = _soundboardAudioContext;
+    if (!ctx) return;
+    const track = _activeScene.tracks.find(function(t) { return t.blobId === blobId; });
+    if (!track || !track.trackGain) return;
+    track.targetVolume = volume; // für Mute-Restore merken
+    if (_muteActive) return;      // stumm bleibt stumm, neuer Wert ist gemerkt
+    const now = ctx.currentTime;
+    track.trackGain.gain.setValueAtTime(track.trackGain.gain.value, now);
+    track.trackGain.gain.linearRampToValueAtTime(volume, now + 0.05);
+}
+
 // Exports (07-03 Keyboard-Slots + UI rufen diese auf)
 window.activateSoundScene = activateSoundScene;
 window.stopAllTracks = stopAllTracks;
 window.stopAllTracksIfScene = stopAllTracksIfScene;
 window.getActiveSceneId = getActiveSceneId;
+window.setLiveTrackVolume = setLiveTrackVolume;
 window.toggleSoundboardMute = toggleSoundboardMute;
 window.getAudioContext = getAudioContext;
 // Reine Helfer fuer Unit-Tests

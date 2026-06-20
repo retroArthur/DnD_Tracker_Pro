@@ -240,6 +240,8 @@ function setTrackVolume(sceneId, blobId, volume) {
     if (!track) return;
     const vol = Math.max(0, Math.min(1, parseFloat(volume) || 0));
     track.volume = vol;
+    // Live an den laufenden Track durchreichen (kein Stop/Neustart nötig)
+    if (typeof window.setLiveTrackVolume === 'function') window.setLiveTrackVolume(sceneId, blobId, vol);
     if (typeof window.save === 'function') window.save();
 }
 

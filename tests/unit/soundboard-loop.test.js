@@ -124,4 +124,15 @@ describe('Szenen-Mutation stoppt laufendes Audio (UAT 07)', function() {
         expect(global.window.getActiveSceneId()).toBeNull();
         expect(function() { global.window.stopAllTracksIfScene('scene_x'); }).not.toThrow();
     });
+
+    test('setTrackVolume reicht die Lautstärke live an setLiveTrackVolume durch', function() {
+        const scene = global.window.createScene('Test', 0);
+        global.window.addTrackToScene(scene.id, 'audio_1', 0.5);
+        const spy = jest.fn();
+        global.window.setLiveTrackVolume = spy;
+        global.window.setTrackVolume(scene.id, 'audio_1', 0.3);
+        expect(spy).toHaveBeenCalledWith(scene.id, 'audio_1', 0.3);
+        // und persistiert
+        expect(global.window.D.soundboard.scenes[0].tracks[0].volume).toBeCloseTo(0.3, 5);
+    });
 });
