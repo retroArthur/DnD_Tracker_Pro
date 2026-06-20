@@ -1993,13 +1993,47 @@
     border-radius: 4px;
 }
 
-.sb-track-name {
+.sb-track-main {
     flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.sb-track-name {
+    max-width: 100%;
     font-size: 0.83rem;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
     color: var(--text);
+}
+
+.sb-loop-btn {
+    flex-shrink: 0;
+    font-size: 0.8rem;
+    opacity: 0.4;
+    cursor: pointer;
+}
+
+.sb-loop-btn.active {
+    opacity: 1;
+    color: var(--gold);
+}
+
+.sb-progress {
+    height: 4px;
+    background: rgba(127, 127, 127, 0.25);
+    border-radius: 999px;
+    overflow: hidden;
+}
+
+.sb-progress-fill {
+    height: 100%;
+    width: 0;
+    background: var(--gold);
+    border-radius: 999px;
 }
 
 .sb-volume-label {

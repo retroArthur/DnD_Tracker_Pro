@@ -100,8 +100,18 @@ async function renderSceneList() {
             const meta = blobMeta[track.blobId];
             const trackName = meta ? meta.name : track.blobId;
             const vol = typeof track.volume === 'number' ? track.volume : 0.8;
-            return `<div class="sb-track-row">
-                <span class="sb-track-name" title="${esc(trackName)}">${esc(trackName)}</span>
+            const isLoop = track.loop !== false; // Default true (abwaertskompatibel)
+            return `<div class="sb-track-row" data-blob-id="${esc(track.blobId)}">
+                <button class="btn-icon sb-loop-btn${isLoop ? ' active' : ''}"
+                    data-action="toggle-track-loop"
+                    data-scene-id="${esc(scene.id)}"
+                    data-blob-id="${esc(track.blobId)}"
+                    title="${isLoop ? 'Wiederholung an (nahtloser Crossfade)' : 'Wiederholung aus (spielt einmal)'}"
+                    aria-label="Wiederholung umschalten" aria-pressed="${isLoop}">${isLoop ? '🔁' : '➡️'}</button>
+                <div class="sb-track-main">
+                    <span class="sb-track-name" title="${esc(trackName)}">${esc(trackName)}</span>
+                    <div class="sb-progress" aria-hidden="true"><div class="sb-progress-fill"></div></div>
+                </div>
                 <label class="sb-volume-label" aria-label="Lautstaerke">
                     <input type="range" class="sb-volume-slider"
                         min="0" max="1" step="0.05" value="${vol}"

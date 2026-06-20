@@ -1,16 +1,23 @@
 // [SECTION:SOUNDBOARD_PLAYER]
 // Web Audio API Engine fuer Soundboard (Phase 7 — UX-01, D-02)
-// Layered looping tracks, per-track GainNode, Crossfade bei Szenen-Wechsel.
+// Layered tracks, per-track GainNode, Crossfade bei Szenen-Wechsel + Crossfade-Loop.
 //
 // DESIGN:
 //   - `_soundboardAudioContext` (einmaliger, lazy initialisierter AudioContext, RESEARCH Pitfall 5)
 //   - `_bufferCache` (Map<blobId, AudioBuffer>) — decodierte Buffer gecacht, nie in IDB (Pitfall 4)
-//   - Jeder Track = eigener AudioBufferSourceNode (loop=true) + GainNode (Pitfall 2)
-//   - Crossfade per linearRampToValueAtTime (D-02 full, nicht D-02a hard-cut)
+//   - Gain-Graph pro Track: iterationSource -> iterationGain (Loop-Crossfade) -> trackGain (Volume/Mute/Szenen-Fade) -> destination
+//   - Crossfade-Loop: statt source.loop=true plant ein Scheduler pro Durchlauf eine neue One-Shot-Quelle,
+//     die C Sekunden vor Ende der laufenden startet (Ueberlappung -> nahtlos, Design 2026-06-20)
 //   - getSoundBlob() aufgerufen per blobId — kein const-Alias von window (CLAUDE.md Dedup-Regel)
 
-// Crossfade-Dauer in Sekunden (D-02, Planner-Ermessen)
+// Szenen-Crossfade-Dauer in Sekunden (D-02, Planner-Ermessen)
 const CROSSFADE_DURATION = 2;
+// Max. Crossfade pro Loop-Durchlauf (bei kurzen Clips auf Dauer*0.5 gekappt)
+const LOOP_CROSSFADE_MAX = 1.5;
+// Fade-out beim Stoppen (statt Hartschnitt)
+const STOP_FADE = 0.5;
+// Fade beim Stummschalten
+const MUTE_FADE = 0.3;
 
 // Einziger AudioContext (uniquely named, RESEARCH Pitfall 5)
 let _soundboardAudioContext = null;
@@ -21,12 +28,41 @@ let _soundboardAudioContext = null;
 const MAX_BUFFER_CACHE = 10;
 const _bufferCache = new Map();
 
-// Aktuell spielende Szene
-let _activeScene = { sources: [], gains: [], muted: false };
+// Aktuell spielende Szene.
+// tracks: [{ blobId, trackGain, targetVolume, loop, buffer, duration, iterStart, sources:[], schedulerId, _active }]
+let _activeScene = { sceneId: null, tracks: [], muted: false };
 
-// Master-Mute-Status und Lautstärke vor Stummschaltung
+// Master-Mute-Status
 let _muteActive = false;
-let _premuteVolumes = [];
+
+// requestAnimationFrame-Handle fuer die Fortschrittsanzeige
+let _progressRafId = null;
+
+/**
+ * computeCrossfade(duration) — Crossfade-Dauer fuer einen Loop-Durchlauf.
+ * Reine Funktion (unit-getestet). Kappt auf Dauer*0.5 bei kurzen Clips.
+ * @param {number} duration  Pufferdauer in Sekunden
+ * @returns {number} Crossfade in Sekunden (0 bei ungueltiger Dauer)
+ */
+function computeCrossfade(duration) {
+    if (!duration || duration <= 0) return 0;
+    return Math.min(LOOP_CROSSFADE_MAX, duration * 0.5);
+}
+
+/**
+ * computeProgress(elapsed, duration) — Position 0..1 innerhalb des aktuellen Durchlaufs.
+ * Reine Funktion (unit-getestet). Clamped auf [0,1], 0 bei ungueltiger Dauer.
+ * @param {number} elapsed   Sekunden seit Iterations-Start
+ * @param {number} duration  Pufferdauer in Sekunden
+ * @returns {number} 0..1
+ */
+function computeProgress(elapsed, duration) {
+    if (!duration || duration <= 0) return 0;
+    let p = elapsed / duration;
+    if (p < 0) p = 0;
+    if (p > 1) p = 1;
+    return p;
+}
 
 /**
  * getAudioContext() — Lazy-Init des AudioContext.
@@ -90,136 +126,217 @@ async function loadTrackBuffer(blobId) {
 }
 
 /**
- * playTrack(audioBuffer, volume) — Neuen BufferSource + GainNode erzeugen und starten.
- * Ein neuer Source-Node wird pro Aufruf erstellt (one-shot semantics, Pitfall 2).
- * @param {AudioBuffer} audioBuffer
- * @param {number} volume  - Ziel-Lautstaerke (0–1)
- * @returns {{ source: AudioBufferSourceNode, gain: GainNode }}
+ * scheduleIteration(track, startTime) — Einen Wiedergabe-Durchlauf eines Tracks planen.
+ * Erzeugt eine One-Shot-Quelle mit Fade-Huellkurve und planт — falls track.loop —
+ * den naechsten Durchlauf C Sekunden vor Ende (Crossfade-Ueberlappung).
+ * @param {Object} track  Track-State aus _activeScene.tracks
+ * @param {number} startTime  AudioContext-Zeit fuer den Start
  */
-function playTrack(audioBuffer, volume) {
+function scheduleIteration(track, startTime) {
     const ctx = getAudioContext();
-    const source = ctx.createBufferSource();
-    source.buffer = audioBuffer;
-    source.loop = true;
+    const src = ctx.createBufferSource();
+    src.buffer = track.buffer;
+    src.loop = false;
 
-    const gain = ctx.createGain();
-    gain.gain.value = 0; // Start bei 0 — Crossfade regelt auf Ziel hoch
-    gain.targetVolume = volume; // Custom-Property fuer Crossfade-Zugriff
+    const iterGain = ctx.createGain();
+    src.connect(iterGain);
+    iterGain.connect(track.trackGain);
 
-    source.connect(gain);
-    gain.connect(ctx.destination);
-    source.start(0);
+    const D = track.duration;
+    const C = computeCrossfade(D);
 
-    return { source, gain };
+    // Fade-in
+    iterGain.gain.setValueAtTime(0, startTime);
+    if (C > 0) {
+        iterGain.gain.linearRampToValueAtTime(1, startTime + C);
+    } else {
+        iterGain.gain.setValueAtTime(1, startTime);
+    }
+    // Fade-out am Ende nur beim Loopen (One-Shot soll ausklingen, z.B. Gong)
+    if (track.loop && C > 0) {
+        iterGain.gain.setValueAtTime(1, startTime + Math.max(0, D - C));
+        iterGain.gain.linearRampToValueAtTime(0, startTime + D);
+    }
+
+    src.start(startTime);
+    if (D > 0) {
+        src.stop(startTime + D + 0.05);
+    }
+    track.sources.push(src);
+    track.iterStart = startTime;
+
+    src.onended = function() {
+        track.sources = track.sources.filter(function(s) { return s !== src; });
+        try { src.disconnect(); } catch (e) { /* schon getrennt */ }
+        try { iterGain.disconnect(); } catch (e) { /* schon getrennt */ }
+    };
+
+    // Naechsten Durchlauf planen (nur bei Loop und sinnvoller Dauer)
+    if (track.loop && D > 0) {
+        const period = Math.max(0.05, D - C);
+        const nextStart = startTime + period;
+        const delayMs = Math.max(0, (nextStart - ctx.currentTime) * 1000 - 50); // 50ms Lookahead
+        track.schedulerId = setTimeout(function() {
+            if (!track._active) return;
+            const ctx2 = getAudioContext();
+            const preciseStart = Math.max(ctx2.currentTime, nextStart);
+            scheduleIteration(track, preciseStart);
+        }, delayMs);
+    }
 }
 
 /**
  * activateSoundScene(scene) — Neue Szene mit Crossfade aktivieren.
- * Setzt alte Tracks ueber linearRampToValueAtTime auf 0, neue von 0 auf Ziel-Lautstaerke.
+ * Alte Tracks blenden ueber CROSSFADE_DURATION aus (Scheduler abgebrochen),
+ * neue blenden ein und starten ihren Crossfade-Loop bzw. spielen einmal.
  *
- * @param {Object} scene  - { tracks: [{ blobId: string, volume: number }] }
- *                          Wird auch mit `slotIndex` (number) aus D-03 Keyboard-Slots aufgerufen
- *                          (07-03 verarbeitet Slot → Scene-Objekt; player akzeptiert nur Object hier)
+ * @param {Object} scene  - { sceneId?: string, tracks: [{ blobId, volume, loop }] }
  * @returns {Promise<void>}
  */
 async function activateSoundScene(scene) {
-    // Schutz: slotIndex (number) kommt aus Keyboard-Handler (D-03, 07-03 verdrahtet es)
-    // Wenn ein numerischer Slot uebergeben wird, ohne dass eine Scene-Definition vorliegt,
-    // nichts tun — 07-03 wird activateSoundScene mit dem fertigen scene-Objekt aufrufen.
     if (!scene || typeof scene !== 'object' || !Array.isArray(scene.tracks)) {
         return;
     }
 
-    // Alte Szene merken (fuer Crossfade)
-    const oldSources = _activeScene.sources.slice();
-    const oldGains = _activeScene.gains.slice();
+    const ctx = getAudioContext();
+    const fadeOutAt = ctx.currentTime;
 
-    // Neue Tracks laden (parallel)
-    const loadedTracks = await Promise.all(
-        scene.tracks.map(async function(track) {
-            const buf = await loadTrackBuffer(track.blobId);
-            return buf ? { buf, volume: track.volume || 1 } : null;
+    // Alte Szene ausblenden + Scheduler abbrechen (sofort, vor dem await)
+    const oldTracks = _activeScene.tracks.slice();
+    oldTracks.forEach(function(t) {
+        t._active = false;
+        if (t.schedulerId) { clearTimeout(t.schedulerId); t.schedulerId = null; }
+        if (t.trackGain) {
+            t.trackGain.gain.setValueAtTime(t.trackGain.gain.value, fadeOutAt);
+            t.trackGain.gain.linearRampToValueAtTime(0, fadeOutAt + CROSSFADE_DURATION);
+        }
+        t.sources.forEach(function(src) {
+            try { src.stop(fadeOutAt + CROSSFADE_DURATION + 0.1); } catch (e) { /* schon gestoppt */ }
+        });
+    });
+
+    // Neue Buffers laden (parallel)
+    const loaded = await Promise.all(
+        scene.tracks.map(async function(tr) {
+            const buf = await loadTrackBuffer(tr.blobId);
+            return buf ? {
+                blobId: tr.blobId,
+                buffer: buf,
+                volume: typeof tr.volume === 'number' ? tr.volume : 1,
+                loop: tr.loop !== false // Default true (abwaertskompatibel)
+            } : null;
         })
     );
+    const valid = loaded.filter(Boolean);
 
-    const validTracks = loadedTracks.filter(Boolean);
+    const ctx2 = getAudioContext();
+    const start = ctx2.currentTime;
 
-    // Neue Tracks starten (gain startet bei 0)
-    const newSources = [];
-    const newGains = [];
-    validTracks.forEach(function(t) {
-        const pair = playTrack(t.buf, t.volume);
-        newSources.push(pair.source);
-        newGains.push(pair.gain);
+    const newTracks = valid.map(function(t) {
+        const trackGain = ctx2.createGain();
+        trackGain.gain.setValueAtTime(0, start);
+        trackGain.gain.linearRampToValueAtTime(_muteActive ? 0 : t.volume, start + CROSSFADE_DURATION);
+        trackGain.connect(ctx2.destination);
+
+        const track = {
+            blobId: t.blobId,
+            trackGain: trackGain,
+            targetVolume: t.volume,
+            loop: t.loop,
+            buffer: t.buffer,
+            duration: t.buffer.duration,
+            iterStart: start,
+            sources: [],
+            schedulerId: null,
+            _active: true
+        };
+        scheduleIteration(track, start);
+        return track;
     });
 
-    // Crossfade
-    const ctx = getAudioContext();
-    const now = ctx.currentTime;
-
-    // Alte Tracks ausblenden
-    oldGains.forEach(function(g) {
-        g.gain.setValueAtTime(g.gain.value, now);
-        g.gain.linearRampToValueAtTime(0, now + CROSSFADE_DURATION);
-    });
-    oldSources.forEach(function(src) {
-        try { src.stop(now + CROSSFADE_DURATION + 0.1); } catch (e) { /* bereits gestoppt */ }
-    });
-
-    // Neue Tracks einblenden
-    newGains.forEach(function(g) {
-        g.gain.setValueAtTime(0, now);
-        g.gain.linearRampToValueAtTime(
-            _muteActive ? 0 : (g.targetVolume || 1),
-            now + CROSSFADE_DURATION
-        );
-    });
-
-    // Aktive Szene ersetzen
-    _activeScene = { sources: newSources, gains: newGains, muted: _muteActive };
+    _activeScene = { sceneId: scene.sceneId || null, tracks: newTracks, muted: _muteActive };
+    _startProgress();
 }
 
 /**
- * stopAllTracks() — Alle aktiven Tracks sofort stoppen und Szene leeren.
+ * stopAllTracks() — Alle aktiven Tracks mit kurzem Fade-out stoppen und Szene leeren.
  */
 function stopAllTracks() {
     const ctx = _soundboardAudioContext;
     const now = ctx ? ctx.currentTime : 0;
-    _activeScene.sources.forEach(function(src) {
-        try { src.stop(now); } catch (e) { /* bereits gestoppt */ }
+    _activeScene.tracks.forEach(function(t) {
+        t._active = false;
+        if (t.schedulerId) { clearTimeout(t.schedulerId); t.schedulerId = null; }
+        if (ctx && t.trackGain) {
+            t.trackGain.gain.setValueAtTime(t.trackGain.gain.value, now);
+            t.trackGain.gain.linearRampToValueAtTime(0, now + STOP_FADE);
+        }
+        t.sources.forEach(function(src) {
+            try { src.stop(now + STOP_FADE + 0.05); } catch (e) { /* schon gestoppt */ }
+        });
     });
-    _activeScene = { sources: [], gains: [], muted: false };
+    _activeScene = { sceneId: null, tracks: [], muted: false };
     _muteActive = false;
+    _stopProgress();
 }
 
 /**
  * toggleSoundboardMute() — Alle aktiven Tracks stummschalten / wieder einschalten.
- * Nutzt linearRampToValueAtTime fuer einen weichen Fade (0.3s).
+ * Nutzt linearRampToValueAtTime fuer einen weichen Fade (MUTE_FADE).
  */
 function toggleSoundboardMute() {
     if (!_soundboardAudioContext) return;
     const ctx = _soundboardAudioContext;
     const now = ctx.currentTime;
-    const MUTE_FADE = 0.3;
 
     if (!_muteActive) {
-        // Stummschalten: Lautstaerken speichern, auf 0 rampen
-        _premuteVolumes = _activeScene.gains.map(function(g) { return g.gain.value; });
-        _activeScene.gains.forEach(function(g) {
-            g.gain.setValueAtTime(g.gain.value, now);
-            g.gain.linearRampToValueAtTime(0, now + MUTE_FADE);
+        _activeScene.tracks.forEach(function(t) {
+            t.trackGain.gain.setValueAtTime(t.trackGain.gain.value, now);
+            t.trackGain.gain.linearRampToValueAtTime(0, now + MUTE_FADE);
         });
         _muteActive = true;
     } else {
-        // Lautstaerke wiederherstellen
-        _activeScene.gains.forEach(function(g, i) {
-            const targetVol = (_premuteVolumes[i] !== undefined) ? _premuteVolumes[i] : (g.targetVolume || 1);
-            g.gain.setValueAtTime(0, now);
-            g.gain.linearRampToValueAtTime(targetVol, now + MUTE_FADE);
+        _activeScene.tracks.forEach(function(t) {
+            t.trackGain.gain.setValueAtTime(t.trackGain.gain.value, now);
+            t.trackGain.gain.linearRampToValueAtTime(t.targetVolume, now + MUTE_FADE);
         });
         _muteActive = false;
-        _premuteVolumes = [];
     }
+    _activeScene.muted = _muteActive;
+}
+
+/**
+ * _progressTick() — RAF-Schleife: aktualisiert die Fortschrittsbalken der aktiven Szene.
+ * Nur die DOM-Zeilen der aktiven Szene werden angefasst.
+ */
+function _progressTick() {
+    if (!_activeScene.sceneId || _activeScene.tracks.length === 0 || !_soundboardAudioContext) {
+        _progressRafId = null;
+        return;
+    }
+    const ctx = _soundboardAudioContext;
+    const sceneSel = '.sb-scene-card[data-scene-id="' + _activeScene.sceneId + '"]';
+    _activeScene.tracks.forEach(function(t) {
+        const pct = computeProgress(ctx.currentTime - t.iterStart, t.duration) * 100;
+        const fill = document.querySelector(
+            sceneSel + ' .sb-track-row[data-blob-id="' + t.blobId + '"] .sb-progress-fill'
+        );
+        if (fill) fill.style.width = pct.toFixed(1) + '%';
+    });
+    _progressRafId = requestAnimationFrame(_progressTick);
+}
+
+function _startProgress() {
+    if (_progressRafId != null) return;
+    if (typeof requestAnimationFrame !== 'function') return;
+    _progressRafId = requestAnimationFrame(_progressTick);
+}
+
+function _stopProgress() {
+    if (_progressRafId != null && typeof cancelAnimationFrame === 'function') {
+        cancelAnimationFrame(_progressRafId);
+    }
+    _progressRafId = null;
 }
 
 // Exports (07-03 Keyboard-Slots + UI rufen diese auf)
@@ -227,3 +344,6 @@ window.activateSoundScene = activateSoundScene;
 window.stopAllTracks = stopAllTracks;
 window.toggleSoundboardMute = toggleSoundboardMute;
 window.getAudioContext = getAudioContext;
+// Reine Helfer fuer Unit-Tests
+window.computeCrossfade = computeCrossfade;
+window.computeProgress = computeProgress;

@@ -176,8 +176,34 @@ function addTrackToScene(sceneId, blobId, volume) {
         return;
     }
     const vol = (typeof volume === 'number' && volume >= 0 && volume <= 1) ? volume : 0.8;
-    scene.tracks.push({ blobId, volume: vol });
+    scene.tracks.push({ blobId, volume: vol, loop: true });
     if (typeof window.save === 'function') window.save();
+}
+
+/**
+ * setTrackLoop(sceneId, blobId, loop) — Loop-Flag eines Tracks setzen oder umschalten.
+ * Ohne `loop`-Argument wird umgeschaltet (Default-Zustand ist Loop an).
+ * Wirkt beim naechsten Play der Szene (kein Live-Umschalten im laufenden Loop).
+ *
+ * @param {string} sceneId
+ * @param {string} blobId
+ * @param {boolean} [loop]  explizit setzen; weggelassen => umschalten
+ * @returns {boolean|undefined} der neue Loop-Zustand
+ */
+function setTrackLoop(sceneId, blobId, loop) {
+    ensureSoundboardData();
+    const scene = window.D.soundboard.scenes.find(function(s) { return s.id === sceneId; });
+    if (!scene || !Array.isArray(scene.tracks)) return;
+    const track = scene.tracks.find(function(t) { return t.blobId === blobId; });
+    if (!track) return;
+    if (typeof loop === 'boolean') {
+        track.loop = loop;
+    } else {
+        // Default-Zustand ist Loop an (undefined === true) -> Umschalten
+        track.loop = track.loop === false ? true : false;
+    }
+    if (typeof window.save === 'function') window.save();
+    return track.loop;
 }
 
 /**
@@ -226,7 +252,7 @@ async function playSceneById(sceneId) {
         return;
     }
     if (typeof window.activateSoundScene === 'function') {
-        await window.activateSoundScene({ tracks: scene.tracks });
+        await window.activateSoundScene({ sceneId: scene.id, tracks: scene.tracks });
     } else {
         showToast('Audio-Engine nicht verfuegbar', 'error');
     }
@@ -259,6 +285,7 @@ window.deleteScene = deleteScene;
 window.addTrackToScene = addTrackToScene;
 window.removeTrackFromScene = removeTrackFromScene;
 window.setTrackVolume = setTrackVolume;
+window.setTrackLoop = setTrackLoop;
 window.playSceneById = playSceneById;
 window.activateSceneBySlot = activateSceneBySlot;
 window.ensureSoundboardData = ensureSoundboardData;

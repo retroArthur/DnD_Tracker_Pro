@@ -228,4 +228,62 @@ test.describe('Soundboard', function () {
         expect(result.slotCalled === 1 || result.sceneCalled === true).toBe(true);
     });
 
+    /**
+     * Erweiterung (Design 2026-06-20) — Per-Track-Loop-Toggle + Fortschrittsbalken.
+     * Loop-Button rendert (Default aktiv), Umschalten persistiert ueber Reload,
+     * Fortschrittsbalken-Element ist vorhanden.
+     */
+    test('track loop toggle and progress bar', async ({ page }) => {
+        await openSoundboardTab(page);
+
+        // Datei importieren (setInputFiles feuert input+change -> genau ein Eintrag)
+        await page.locator('#soundboard-file-input').setInputFiles({
+            name: 'loop-test.wav',
+            mimeType: 'audio/wav',
+            buffer: Buffer.from([
+                0x52, 0x49, 0x46, 0x46, 0x24, 0x00, 0x00, 0x00,
+                0x57, 0x41, 0x56, 0x45, 0x66, 0x6d, 0x74, 0x20,
+                0x10, 0x00, 0x00, 0x00, 0x01, 0x00, 0x01, 0x00,
+                0x44, 0xac, 0x00, 0x00, 0x88, 0x58, 0x01, 0x00,
+                0x02, 0x00, 0x10, 0x00, 0x64, 0x61, 0x74, 0x61,
+                0x00, 0x00, 0x00, 0x00
+            ])
+        });
+        await page.waitForTimeout(600);
+
+        // Szene mit dem Track anlegen + Szenenliste rendern
+        await page.evaluate(async function() {
+            const blobs = await window.listSoundBlobs();
+            const scene = window.createScene('Loop-Test', 0);
+            window.addTrackToScene(scene.id, blobs[0].id, 0.8);
+            window.renderSceneList();
+        });
+        await page.waitForTimeout(200);
+
+        // Loop-Button vorhanden und per Default aktiv
+        const loopBtn = page.locator('.sb-loop-btn').first();
+        await expect(loopBtn).toHaveClass(/active/);
+
+        // Fortschrittsbalken-Element vorhanden
+        await expect(page.locator('.sb-track-row .sb-progress-fill')).toHaveCount(1);
+
+        // Umschalten -> loop=false (per Klick, echte EventDelegation)
+        await loopBtn.click();
+        await page.waitForTimeout(150);
+        const loopAfter = await page.evaluate(function() {
+            return window.D.soundboard.scenes[0].tracks[0].loop;
+        });
+        expect(loopAfter).toBe(false);
+
+        // Persistenz ueber Reload (D.soundboard.scenes[].loop in localStorage)
+        await page.reload();
+        await page.waitForSelector('.app-title', { timeout: 10000 });
+        await page.waitForTimeout(300);
+        const loopPersist = await page.evaluate(function() {
+            const s = (window.D.soundboard.scenes || []).find(function(x) { return x.name === 'Loop-Test'; });
+            return s ? s.tracks[0].loop : null;
+        });
+        expect(loopPersist).toBe(false);
+    });
+
 });

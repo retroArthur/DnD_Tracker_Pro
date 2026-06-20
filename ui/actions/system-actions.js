@@ -335,6 +335,16 @@ const SystemActions = {
         if (pctLabel && pctLabel.classList.contains('sb-volume-pct')) {
             pctLabel.textContent = Math.round(volume * 100) + '%';
         }
+    },
+    'toggle-track-loop': ctx => {
+        // String-IDs (scene_/audio_) direkt aus dataset, nicht ctx.id (parseEntityId → null, CR-01)
+        const sceneId = ctx.target && ctx.target.dataset.sceneId;
+        const blobId = ctx.target && ctx.target.dataset.blobId;
+        if (!sceneId || !blobId) return;
+        if (typeof window.setTrackLoop === 'function') {
+            window.setTrackLoop(sceneId, blobId);
+            if (typeof window.renderSceneList === 'function') window.renderSceneList();
+        }
     }
 };
 
