@@ -90,3 +90,38 @@ describe('setTrackLoop / addTrackToScene Default', function() {
         expect(global.window.setTrackLoop('fehlt', 'fehlt')).toBeUndefined();
     });
 });
+
+/**
+ * UAT-07-Regression — Szenen-Mutation stoppt laufendes Audio.
+ * Bug: Szene löschen entfernte sie aus D, stoppte aber das Web-Audio nicht → Loop lief weiter.
+ * Fix: deleteScene/removeTrackFromScene rufen stopAllTracksIfScene(sceneId).
+ */
+describe('Szenen-Mutation stoppt laufendes Audio (UAT 07)', function() {
+    beforeEach(function() {
+        global.window.D = { soundboard: { scenes: [] } };
+    });
+
+    test('deleteScene ruft stopAllTracksIfScene mit der Szenen-ID + entfernt die Szene', function() {
+        const scene = global.window.createScene('Test', 0);
+        const spy = jest.fn();
+        global.window.stopAllTracksIfScene = spy;
+        global.window.deleteScene(scene.id);
+        expect(spy).toHaveBeenCalledWith(scene.id);
+        expect(global.window.D.soundboard.scenes.length).toBe(0);
+    });
+
+    test('removeTrackFromScene ruft stopAllTracksIfScene mit der Szenen-ID', function() {
+        const scene = global.window.createScene('Test', 0);
+        global.window.addTrackToScene(scene.id, 'audio_1', 0.5);
+        const spy = jest.fn();
+        global.window.stopAllTracksIfScene = spy;
+        global.window.removeTrackFromScene(scene.id, 'audio_1');
+        expect(spy).toHaveBeenCalledWith(scene.id);
+    });
+
+    test('stopAllTracksIfScene stoppt NICHT, wenn keine/andere Szene spielt (kein aktives _activeScene)', function() {
+        // Frisch geladen ist keine Szene aktiv → getActiveSceneId() null, kein stopAllTracks-Effekt/Fehler
+        expect(global.window.getActiveSceneId()).toBeNull();
+        expect(function() { global.window.stopAllTracksIfScene('scene_x'); }).not.toThrow();
+    });
+});

@@ -74,13 +74,20 @@ async function removeAudioFile(id) {
 
         // Aus allen Szenen-Tracks entfernen (Referenz-Bereinigung)
         if (window.D && window.D.soundboard && Array.isArray(window.D.soundboard.scenes)) {
+            const activeId = (typeof window.getActiveSceneId === 'function') ? window.getActiveSceneId() : null;
             let changed = false;
+            let activeChanged = false;
             window.D.soundboard.scenes.forEach(function(scene) {
                 if (!Array.isArray(scene.tracks)) return;
                 const before = scene.tracks.length;
                 scene.tracks = scene.tracks.filter(function(t) { return t.blobId !== id; });
-                if (scene.tracks.length !== before) changed = true;
+                if (scene.tracks.length !== before) {
+                    changed = true;
+                    if (activeId && scene.id === activeId) activeChanged = true;
+                }
             });
+            // Spielt eine Szene, die diese Datei nutzte → Audio stoppen (Quelle ist weg)
+            if (activeChanged && typeof window.stopAllTracks === 'function') window.stopAllTracks();
             if (changed) {
                 if (typeof window.save === 'function') window.save();
             }
@@ -155,6 +162,8 @@ function renameScene(sceneId, newName) {
  */
 function deleteScene(sceneId) {
     ensureSoundboardData();
+    // Laufendes Audio dieser Szene stoppen — sonst spielt der Loop nach dem Löschen weiter
+    if (typeof window.stopAllTracksIfScene === 'function') window.stopAllTracksIfScene(sceneId);
     window.D.soundboard.scenes = window.D.soundboard.scenes.filter(function(s) {
         return s.id !== sceneId;
     });
@@ -214,6 +223,8 @@ function removeTrackFromScene(sceneId, blobId) {
     const scene = window.D.soundboard.scenes.find(function(s) { return s.id === sceneId; });
     if (!scene || !Array.isArray(scene.tracks)) return;
     scene.tracks = scene.tracks.filter(function(t) { return t.blobId !== blobId; });
+    // Spielt diese Szene gerade, würde der entfernte Track weiterlaufen → Audio stoppen
+    if (typeof window.stopAllTracksIfScene === 'function') window.stopAllTracksIfScene(sceneId);
     if (typeof window.save === 'function') window.save();
 }
 

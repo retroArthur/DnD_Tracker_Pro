@@ -339,9 +339,29 @@ function _stopProgress() {
     _progressRafId = null;
 }
 
+/**
+ * getActiveSceneId() — ID der aktuell spielenden Szene, oder null.
+ */
+function getActiveSceneId() {
+    return _activeScene ? _activeScene.sceneId : null;
+}
+
+/**
+ * stopAllTracksIfScene(sceneId) — Audio NUR stoppen, wenn genau diese Szene gerade spielt.
+ * Wird beim Löschen/Ändern einer Szene aufgerufen, damit kein verwaistes Audio weiterläuft
+ * (Web Audio überlebt sonst das Entfernen der Szene aus D).
+ */
+function stopAllTracksIfScene(sceneId) {
+    if (sceneId && _activeScene && _activeScene.sceneId === sceneId) {
+        stopAllTracks();
+    }
+}
+
 // Exports (07-03 Keyboard-Slots + UI rufen diese auf)
 window.activateSoundScene = activateSoundScene;
 window.stopAllTracks = stopAllTracks;
+window.stopAllTracksIfScene = stopAllTracksIfScene;
+window.getActiveSceneId = getActiveSceneId;
 window.toggleSoundboardMute = toggleSoundboardMute;
 window.getAudioContext = getAudioContext;
 // Reine Helfer fuer Unit-Tests
