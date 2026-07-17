@@ -1,19 +1,14 @@
 ---
-status: testing
+status: complete
 phase: 07-komfort-analyse
 source: [07-VERIFICATION.md]
 started: 2026-06-20T09:40:00Z
-updated: 2026-06-20T10:05:00Z
+updated: 2026-06-20T13:30:00Z
 ---
 
 ## Current Test
 
-number: 2
-name: Crossfade beim Szenenwechsel
-expected: |
-  Während eine Szene läuft, per Alt+Shift+N (oder Play einer anderen Slot-Szene) wechseln —
-  der alte Loop blendet über ~2 s aus, der neue ein, hörbar smooth.
-awaiting: user response
+[testing complete]
 
 ## Tests
 
@@ -24,22 +19,22 @@ note: "Bestätigt vom Nutzer (2026-06-20). Beim Testen 3 Bugs gefunden+gefixt: D
 
 ### 2. Crossfade beim Szenenwechsel
 expected: Während eine Szene läuft, per Alt+Shift+2 (oder Klick) auf eine andere Slot-Szene wechseln — der alte Loop blendet über ~2 Sekunden aus, der neue ein, hörbar smooth (linearRampToValueAtTime).
-result: [pending]
+result: pass
 
 ### 3. Lautstärkeregler-Persistenz
 expected: Track-Volume-Slider im Soundboard-Tab bewegen, Seite neu laden — der Slider-Wert ist in `D.soundboard.scenes` persistiert und wird nach Reload korrekt angezeigt.
-result: [pending]
+result: pass
 
 ### 4. AudioContext resume nach Suspend
 expected: App längere Zeit offen lassen (AudioContext geht in `suspended`), dann eine Szene abspielen — `getAudioContext()` ruft `.resume()` auf, kein still-stummer Kontext.
-result: [pending]
+result: pass
 
 ## Summary
 
 total: 4
-passed: 1
+passed: 4
 issues: 0
-pending: 3
+pending: 0
 skipped: 0
 blocked: 0
 
