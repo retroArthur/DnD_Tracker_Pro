@@ -594,7 +594,8 @@ def build(minify=False, production=False, verbose=False):
     <meta name="apple-mobile-web-app-title" content="D&D Tracker">
     <meta name="description" content="D&D Kampagnen-Tracker Pro - Modulare Version (Gebündelt)">
     <title>D&D Kampagnen-Tracker Pro</title>
-    <link rel="manifest" href="./manifest.webmanifest">
+    <!-- PWA-Manifest wird zur Laufzeit nur unter http/https injiziert (core/init.js registerServiceWorker) —
+         als statischer <link> würde es unter file:// per CORS (origin 'null') rote Konsolenfehler werfen. -->
     <!-- Fonts lokal gebündelt via assets/styles/fonts.css (D-07) — kein Google-Fonts-CDN mehr -->
     <style>
 {css_content}

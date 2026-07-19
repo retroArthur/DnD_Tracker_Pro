@@ -43,7 +43,9 @@ async function init() {
 
     // Hinweis: #autosave-toggle existiert aktuell nicht im UI. Falls es zurückkommt,
     // wird es hier auf "checked" gesetzt; sonst no-op (Save defaultet auf aktiv, siehe persistence.js).
-    if ($('autosave-toggle')) $('autosave-toggle').checked = true;
+    // getElementById statt $() — vermeidet die "[DOM] Element not found"-Warnung im DEBUG-Boot.
+    const _autosaveToggle = document.getElementById('autosave-toggle');
+    if (_autosaveToggle) _autosaveToggle.checked = true;
     if ($('quick-notes')) $('quick-notes').value = D.quickNotes || '';
 
     // Navigation Drag-and-Drop initialisieren (vor Click-Listenern)
@@ -200,6 +202,19 @@ function initSortableLists() {
 function registerServiceWorker() {
     // Service Worker funktioniert nur mit http/https, nicht mit file://
     const protocol = window.location.protocol;
+
+    // PWA-Manifest nur unter http/https injizieren. Als statischer <link> im HTML würde
+    // der Browser manifest.webmanifest unter file:// per CORS (origin 'null') blockieren
+    // und rote Konsolenfehler werfen — die App ist aber file://-first.
+    if (
+        (protocol === 'http:' || protocol === 'https:') &&
+        !document.querySelector('link[rel="manifest"]')
+    ) {
+        const mfLink = document.createElement('link');
+        mfLink.rel = 'manifest';
+        mfLink.href = './manifest.webmanifest';
+        document.head.appendChild(mfLink);
+    }
 
     if (protocol === 'file:') {
         log(
