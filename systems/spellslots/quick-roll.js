@@ -77,15 +77,16 @@ async function load() {
                 const loadFromIndexedDBFallback = window.loadFromIndexedDBFallback;
                 s = await loadFromIndexedDBFallback(key);
                 if (s) {
-                    if (APP_CONFIG.DEBUG_MODE) {
-                        ErrorHandler &&
-                            ErrorHandler.log('load', null, '[LOAD] Daten aus IndexedDB geladen');
+                    if (APP_CONFIG.DEBUG_MODE && typeof log === 'function') {
+                        // Erfolgsmeldung, kein Fehler — nicht rot via ErrorHandler.log (UAT 01)
+                        log('[LOAD] Daten aus IndexedDB geladen');
                     }
                     showToast('💾 Kampagne aus IndexedDB geladen', 'info', 3000);
                 }
             } catch (e) {
-                if (APP_CONFIG.DEBUG_MODE) {
-                    ErrorHandler && ErrorHandler.log('load', e, '[LOAD] Keine Daten in IndexedDB');
+                if (APP_CONFIG.DEBUG_MODE && typeof log === 'function') {
+                    // Erwarteter Pfad bei frischem Boot (keine IDB-Daten) — kein roter Fehler
+                    log('[LOAD] Keine Daten in IndexedDB:', e && e.message);
                 }
             }
         }
@@ -109,24 +110,14 @@ async function load() {
             // Normalisierung auf '2.0.0' stellt sicher, dass Migration korrekt ausgeführt wird.
             if (p._version === '2.11') {
                 p._version = '2.0.0';
-                if (APP_CONFIG.DEBUG_MODE) {
-                    ErrorHandler &&
-                        ErrorHandler.log(
-                            'load',
-                            null,
-                            '[LOAD] Legacy-Stempel 2.11 auf 2.0.0 normalisiert'
-                        );
+                if (APP_CONFIG.DEBUG_MODE && typeof log === 'function') {
+                    log('[LOAD] Legacy-Stempel 2.11 auf 2.0.0 normalisiert');
                 }
             }
             // Versionierung und Migration
             if (!p._version || compareVersions(p._version, CURRENT_VERSION) < 0) {
-                if (APP_CONFIG.DEBUG_MODE) {
-                    ErrorHandler &&
-                        ErrorHandler.log(
-                            'load',
-                            null,
-                            `[LOAD] Migriere von ${p._version || 'unbekannt'} auf ${CURRENT_VERSION}`
-                        );
+                if (APP_CONFIG.DEBUG_MODE && typeof log === 'function') {
+                    log(`[LOAD] Migriere von ${p._version || 'unbekannt'} auf ${CURRENT_VERSION}`);
                 }
                 try {
                     p = migrateData(p);
@@ -150,11 +141,9 @@ async function load() {
             const validation = validateDataIntegrity();
             if (!validation.valid) {
                 if (APP_CONFIG.DEBUG_MODE) {
-                    ErrorHandler.log(
-                        'load',
-                        new Error('Data repairs performed'),
-                        validation.repairs.join('; ')
-                    );
+                    // Selbstheilung ist Normalverhalten — als Warnung, nicht rot (UAT 01);
+                    // validateDataIntegrity loggt die Reparaturliste bereits separat gelb.
+                    console.warn('[load] Daten-Reparaturen durchgeführt:', validation.repairs.join('; '));
                 }
                 // Speichere reparierte Daten
                 const save = window.save;

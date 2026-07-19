@@ -228,11 +228,9 @@ function validateAndRepairNextId() {
         }
     });
     if (repairs.length > 0 && window.APP_CONFIG?.DEBUG_MODE) {
-        window.ErrorHandler?.log(
-            'validateAndRepairNextId',
-            new Error('ID repairs performed'),
-            repairs.join('; ')
-        );
+        // Reparatur ist Normalverhalten (Selbstheilung), kein Fehler — als Warnung loggen,
+        // nicht rot über ErrorHandler.log (UAT 01: Konsolen-Hygiene beim Boot)
+        console.warn('[validateAndRepairNextId] ID-Reparaturen:', repairs.join('; '));
     }
     return { valid: repairs.length === 0, repairs };
 }
@@ -315,7 +313,8 @@ function showToast(
         }, duration);
     }
     // Backward compatibility: Update legacy #toast element for E2E tests
-    let toast = $('toast');
+    // getElementById statt $() — Element wird absichtlich bei Bedarf erzeugt, keine DEBUG-Warnung
+    let toast = document.getElementById('toast');
     if (!toast) {
         toast = document.createElement('div');
         toast.id = 'toast';

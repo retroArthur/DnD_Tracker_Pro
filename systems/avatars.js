@@ -169,8 +169,8 @@ function initOfflineMode() {
     // Fallback: Speichere kritische Daten zusätzlich
     window.addEventListener('beforeunload', () => {
         // Toggle ist optional: existiert er und ist ungecheckt → Save überspringen.
-        // Fehlt das Toggle → speichere (Default = aktiv).
-        const autoSaveToggle = $('autosave-toggle');
+        // Fehlt das Toggle → speichere (Default = aktiv). getElementById: keine DEBUG-Warnung.
+        const autoSaveToggle = document.getElementById('autosave-toggle');
         if (autoSaveToggle && !autoSaveToggle.checked) return;
         const STORAGE_KEY = window.STORAGE_KEY;
         const D = window.D;
