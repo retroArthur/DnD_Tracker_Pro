@@ -1,19 +1,14 @@
 ---
-status: partial
+status: complete
 phase: 06-spieler-verwaltung
 source: [06-VERIFICATION.md]
 started: 2026-06-16T00:00:00Z
-updated: 2026-06-16T12:30:00Z
+updated: 2026-06-20T13:45:00Z
 ---
 
 ## Current Test
 
-number: 5
-name: XP-Verteilungs-Modal — Live-Vorschau
-expected: |
-  Initiative → Encounter mit Monster starten → ⭐ XP → manuelle XP-Eingabe ändern:
-  die "Je Charakter: +N XP"-Zeile aktualisiert sich live ohne Neuladen.
-awaiting: user response
+[testing complete]
 
 ## Tests
 
@@ -28,10 +23,10 @@ note: Bar rendert im Detail-Modal (🔍). Bei xp=0 ist der Balken korrekt 0% bre
 
 ### 3. Skills-Sektion im Detail-Modal: nach Attributen gruppiert, lesbar
 expected: 18 Skills korrekt nach STR/DEX/CON/INT/WIS/CHA gruppiert, deutsche Namen aus SKILL_INFO, Modifier korrekt formatiert
-result: issue
+result: pass
 reported: "XP Bar ist zu sehen, noch dazu ist es sehr unaufgeräumt in dieser Ansicht."
 severity: cosmetic
-note: Gruppierung/Namen/Modifier sind korrekt — ABER das Detail-Modal ist visuell überladen: jede Fertigkeit, jeder Rettungswurf und jeder Attribut-Check trägt ein eigenes inline V/N-Buttonpaar (~60 farbige Buttons), obwohl die Zeile selbst bereits Klick-zum-Würfeln (roll-char-*-stop) ist. Siehe Gap unten.
+note: Ursprünglich issue (überladenes Modal, ~60 V/N-Buttons, verstreute Skills). Behoben via Gap-Closure 06-06 (V/N nur bei Hover), 06-07 (balanciertes Skills-Spalten-Layout), 06-08 (Wurf-Toast über Modal). Vom Nutzer nach Reload sicht-bestätigt (2026-06-20) → pass.
 
 ### 4. Angriffs-Sektion im Detail-Modal: Treffer- und Schadenswürfel klar erkennbar
 expected: Angriffswürfel-Spans sind deutlich als klickbar erkennbar (Cursor, Hover), Schaden-Spans ebenfalls
@@ -46,9 +41,9 @@ note: Live-Vorschau funktioniert (updateXpDistPreview via input-Listener). Nutze
 ## Summary
 
 total: 5
-passed: 3
-issues: 1
-pending: 1
+passed: 5
+issues: 0
+pending: 0
 skipped: 0
 blocked: 0
 
