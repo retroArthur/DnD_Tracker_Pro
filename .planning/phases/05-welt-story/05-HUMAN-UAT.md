@@ -1,9 +1,9 @@
 ---
-status: partial
+status: complete
 phase: 05-welt-story
 source: [05-VERIFICATION.md]
 started: 2026-06-15
-updated: 2026-06-16
+updated: 2026-06-20
 ---
 
 # Phase 5 — Human Verification (UAT)
@@ -12,24 +12,26 @@ updated: 2026-06-16
 
 ## Current Test
 
-[awaiting human testing]
+[testing complete]
 
 ## Tests
 
 ### 1. NPC-Generator: Inhaltsqualität & gefühlte Latenz
 expected: 10× „NPC generieren" liefert jeweils in unter ~1 Sekunde einen NPC mit deutschem Namen + Persönlichkeitszug + Marotte (+ Volk/Beruf/Aussehen); die Inhalte lesen sich plausibel und setting-passend, ohne offensichtliche Wiederholungen/Platzhalter.
-result: [pending]
+result: pass
+note: Vom Nutzer bestätigt (2026-06-20) — Qualität und Latenz passen.
 
 ### 2. Harptos-Kalender: Kanon-Korrektheit
 expected: Die 12 Monatsnamen (Hammer, Alturiak, Ches, Tarsakh, Mirtul, Kythorn, Flamerule, Eleasis, Eleint, Marpenoth, Uktar, Nightal) und die 5 Festtage (Midwinter, Greengrass, Midsummer, Highharvestide, Feast of the Moon) entsprechen dem Forgotten-Realms-/Harptos-Kanon; das Startdatum 1492 DR ist korrekt.
-result: [pending]
+result: pass
+note: Faktisch gegengeprüft + vom Nutzer bestätigt (2026-06-20). 12 Monate + 5 Festtage kanon-konform, 1492 DR = FR-5e-Gegenwart. (Shieldmeet als Schaltjahr-Festtag fehlt bewusst — Normaljahr-Set, korrekt.)
 
 ## Summary
 
 total: 2
-passed: 0
+passed: 2
 issues: 0
-pending: 2
+pending: 0
 skipped: 0
 blocked: 0
 
