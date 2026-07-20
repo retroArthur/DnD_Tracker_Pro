@@ -367,6 +367,7 @@ function renderBackupStatus() {
             </div>
             <div style="margin-top: 8px;">
                 <button class="btn btn-sm" data-action="open-file-backup-browser">Backup-Verlauf anzeigen</button>
+                <button class="btn btn-sm" style="margin-left:8px;" data-action="setup-file-backup">Anderen Ordner wählen</button>
             </div>
         `;
     } else if (status === 'active') {
@@ -377,6 +378,7 @@ function renderBackupStatus() {
             </div>
             <div style="margin-top: 8px;">
                 <button class="btn btn-sm" data-action="open-file-backup-browser">Backup-Verlauf anzeigen</button>
+                <button class="btn btn-sm" style="margin-left:8px;" data-action="setup-file-backup">Anderen Ordner wählen</button>
             </div>
         `;
     } else if (status === 'paused') {
