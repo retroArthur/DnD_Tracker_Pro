@@ -145,17 +145,15 @@ function renderDMScreenWidgetsOnly() {
         });
 }
 /**
- * Hook: Wird bei jedem window.save() aufgerufen
- * Registriert sich beim globalen Save-System
+ * Hook: Wird nach jedem erfolgreichen Save aufgerufen.
+ * Registriert sich am generischen Post-Save-Hook der Persistenz (registerPostSaveHook).
+ * KEIN window.save-Monkey-Patch mehr: bare save()-Aufrufe (fast alle Entity-CRUDs)
+ * binden an die globale const-Deklaration und umgehen jeden window.save-Wrapper —
+ * der alte Wrapper feuerte daher nie bei normalem Arbeiten (UAT 02, Struktur-Bug).
  */
 function setupDMScreenLiveSync() {
-    // Überschreibe die globale save-Funktion um Live-Sync zu triggern
-    if (typeof window._originalSave === 'undefined' && typeof window.save === 'function') {
-        window._originalSave = window.save;
-        window.save = function () {
-            window._originalSave.apply(this, arguments);
-            refreshDMScreenIfVisible();
-        };
+    if (typeof window.registerPostSaveHook === 'function') {
+        window.registerPostSaveHook(refreshDMScreenIfVisible);
     }
 }
 // Live-Sync beim Laden aktivieren

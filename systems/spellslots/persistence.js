@@ -5,12 +5,30 @@
 // PERSISTENCE
 // ============================================================
 let saveTimeout = null;
-// Datei-Backup-Hook (TECH-03): expliziter Aufruf an jedem Persist-Erfolgspunkt.
-// WICHTIG: Kein window.save-Monkey-Patch — bare save()-Aufrufe binden an die globale
-// const und umgehen jeden window.save-Wrapper (UAT 02: Backup schrieb nie bei Entity-CRUD).
-// Bonus: Hook feuert NACH dem tatsächlichen Write → _doBackup liest frische Daten.
-function _notifyFileBackup() {
-    if (typeof window.onFileBackupAfterSave === 'function') window.onFileBackupAfterSave();
+// Generische Post-Save-Hooks: explizite Registrierung statt window.save-Monkey-Patch.
+// WICHTIG: Bare save()-Aufrufe binden an die globale const-Deklaration und umgehen
+// jeden window.save-Wrapper dauerhaft (UAT 02: Datei-Backup schrieb nie bei Entity-CRUD;
+// DM-Screen-Live-Sync war identisch betroffen). Konsumenten registrieren sich via
+// registerPostSaveHook(fn) — die Hooks feuern NACH dem tatsächlichen Write an jedem
+// Persist-Erfolgspunkt (frische Daten lesbar, kein Stale-Read).
+function registerPostSaveHook(fn) {
+    if (typeof fn !== 'function') return;
+    if (!Array.isArray(window._postSaveHooks)) window._postSaveHooks = [];
+    if (!window._postSaveHooks.includes(fn)) window._postSaveHooks.push(fn);
+}
+function _notifyPostSaveHooks() {
+    const hooks = window._postSaveHooks;
+    if (!Array.isArray(hooks)) return;
+    for (const fn of hooks) {
+        try {
+            fn();
+        } catch (e) {
+            // Ein defekter Hook darf weder das Speichern noch andere Hooks brechen
+            if (window.APP_CONFIG && window.APP_CONFIG.DEBUG_MODE) {
+                window.ErrorHandler && window.ErrorHandler.log('postSaveHook', e, 'Hook fehlgeschlagen');
+            }
+        }
+    }
 }
 // Sofortiges Speichern (für kritische Aktionen)
 async function saveImmediate() {
@@ -59,7 +77,7 @@ async function saveImmediate() {
                 );
             }
             broadcastSave();
-            _notifyFileBackup();
+            _notifyPostSaveHooks();
             return;
         }
         // Normaler localStorage-Save
@@ -72,7 +90,7 @@ async function saveImmediate() {
         StorageAPI.set(key + '_ts', String(Date.now()));
         updateSaveIndicator('saved');
         broadcastSave();
-        _notifyFileBackup();
+        _notifyPostSaveHooks();
         // Zusätzliches IndexedDB-Backup bei großen Daten (>2MB)
         if (dataSizeMB > 2) {
             saveToIndexedDBFallback(key, dataString).catch(e => {
@@ -99,7 +117,7 @@ async function saveImmediate() {
             updateSaveIndicator('saved');
             showToast('💾 In IndexedDB gespeichert (localStorage voll)', 'warning');
             broadcastSave();
-            _notifyFileBackup();
+            _notifyPostSaveHooks();
         } catch (idbError) {
             if (window.APP_CONFIG && window.APP_CONFIG.DEBUG_MODE) {
                 window.ErrorHandler &&
@@ -202,7 +220,7 @@ const save = function (showMessage = false) {
                 StorageAPI.remove(key + '_ts');
                 updateSaveIndicator('saved');
                 broadcastSave();
-                _notifyFileBackup();
+                _notifyPostSaveHooks();
                 // (D-02) Sitzungs-Hinweis statt Per-Save-Toast
                 if (!window._idbModeSeen) {
                     window._idbModeSeen = true;
@@ -222,7 +240,7 @@ const save = function (showMessage = false) {
             StorageAPI.set(key + '_ts', String(Date.now()));
             updateSaveIndicator('saved');
             broadcastSave();
-            _notifyFileBackup();
+            _notifyPostSaveHooks();
             if (showMessage) showToast('💾 Gespeichert', 'success');
         } catch (e) {
             ErrorHandler.log('save', e, 'localStorage');
@@ -232,7 +250,7 @@ const save = function (showMessage = false) {
                 StorageAPI.remove(key + '_ts');
                 updateSaveIndicator('saved');
                 broadcastSave();
-                _notifyFileBackup();
+                _notifyPostSaveHooks();
                 showToast('💾 In IndexedDB gespeichert (localStorage voll)', 'warning');
             } catch (idbError) {
                 ErrorHandler.log('save', idbError, 'IndexedDB Fallback');
@@ -254,5 +272,6 @@ const save = function (showMessage = false) {
 // Export to global scope
 window.save = save;
 window.saveImmediate = saveImmediate;
+window.registerPostSaveHook = registerPostSaveHook;
 window.loadFromIndexedDBFallbackRaw = loadFromIndexedDBFallbackRaw;
 // Note: load() and loadFromBackup() are defined in systems/backups.js

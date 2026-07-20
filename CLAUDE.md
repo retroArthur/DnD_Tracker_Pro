@@ -628,26 +628,24 @@ See `tests/e2e/tab-navigation.spec.js` for examples.
 
 ---
 
-### Live-Sync Pattern
+### Live-Sync Pattern (Post-Save-Hooks)
 
 **Problem Solved:** Widgets showing stale data when user makes changes in other tabs.
 
-**Why This Approach:**
+**⚠️ NEVER wrap `window.save`!** The previously documented pattern (`window._originalSave = save; window.save = function(){...}`) is structurally broken: `save` is a global `const` in `systems/spellslots/persistence.js`, and bare `save()` calls (nearly all entity CRUDs) bind to that lexical declaration — they permanently bypass any `window.save` wrapper. Such a hook silently never fires during normal work (found in UAT Phase 2: file backups were never written; DM-Screen live-sync was equally affected).
 
-- **Hook into save():** Override global save function to trigger refresh
-- **Debouncing:** 150ms delay prevents excessive re-renders during rapid changes
+**Correct approach — register an explicit post-save hook:**
+
+- **`registerPostSaveHook(fn)`** (exported by `systems/spellslots/persistence.js`): registers `fn` in `window._postSaveHooks`. The persistence layer runs all hooks at **every persist success point** (localStorage, IndexedDB >5MB path, fallbacks) — **after** the actual write, so hooks read fresh data. Hooks are isolated: a throwing hook breaks neither saving nor other hooks.
+- **Debouncing:** do it inside your hook (e.g. 150ms) to prevent excessive re-renders
 - **Partial Update:** `renderDMScreenWidgetsOnly()` updates content without rebuilding layout
 
 **Pattern to Follow:**
 
 ```javascript
-// Hook into existing function without breaking it
-if (typeof window._originalSave === 'undefined') {
-    window._originalSave = save;
-    window.save = function () {
-        window._originalSave.apply(this, arguments);
-        refreshIfVisible();
-    };
+// Registration (e.g. in your init/setup function):
+if (typeof window.registerPostSaveHook === 'function') {
+    window.registerPostSaveHook(refreshIfVisible);
 }
 
 // Debounced refresh
@@ -664,6 +662,7 @@ function refreshIfVisible() {
 
 **Mistakes to Avoid:**
 
+- **Don't wrap/override `window.save`** — bare `save()` calls bypass it permanently (see above)
 - Don't do full re-render on every save - too slow
 - Don't forget visibility check - wastes cycles on hidden views
 - Don't use intervals - debounced events are more efficient
