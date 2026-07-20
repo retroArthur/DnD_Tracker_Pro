@@ -1008,3 +1008,26 @@
             color: var(--text-dim);
         }
 
+
+/* ========================================
+   LOOT - Toolbar-Layout-Fix
+   Verhindert Ueberlaufen, wenn viele Filter-Chips
+   (Alle/Waffen/Ruestung/Traenke/Schriftrollen/Edelsteine/
+   Ringe/Amulette/Wundersame Gegenstaende/Sonstiges)
+   nicht in eine Zeile passen.
+   ======================================== */
+.loot-view .section-toolbar {
+    height: auto;
+    min-height: 74px;
+    flex-wrap: wrap;
+}
+
+.loot-view .section-toolbar-filters {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.loot-view .loot-filter-chips {
+    align-items: center;
+    row-gap: 6px;
+}
