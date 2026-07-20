@@ -338,20 +338,11 @@ function _getActiveCampaignName(campaignKey) {
  *   if (typeof window.initFileBackup === 'function') window.initFileBackup();
  */
 function initFileBackup() {
-    // Live-Sync-Hook einmalig setzen — mit EIGENEM Guard und Verkettung.
-    // WICHTIG: NICHT den globalen _originalSave-Guard verwenden! Der trägt nur
-    // EINEN Hook und ist bereits von setupDMScreenLiveSync (dmscreen-render.js)
-    // belegt — beide Hooks müssen als Kette auf dem jeweils aktuellen window.save
-    // aufsetzen, sonst wird einer der beiden still übersprungen (CR-02).
-    if (typeof window !== 'undefined' && typeof window.save === 'function' &&
-            !window._fileBackupSaveHooked) {
-        window._fileBackupSaveHooked = true;
-        const prevSave = window.save;
-        window.save = function () {
-            prevSave.apply(this, arguments);
-            onAfterSave();
-        };
-    }
+    // KEIN window.save-Monkey-Patch mehr (UAT 02): bare save()-Aufrufe binden im
+    // Bundle an die globale const-Deklaration und umgehen jeden window.save-Wrapper —
+    // der Hook feuerte daher nie bei Entity-CRUD (Party/NPC/Quest ...). Stattdessen
+    // ruft persistence.js an jedem Persist-Erfolgspunkt explizit
+    // window.onFileBackupAfterSave() auf (siehe _notifyFileBackup).
 
     // Zuvor gewaehlten Backup-Ordner aus IDB laden (falls verfuegbar)
     if (typeof window !== 'undefined' && typeof window.restoreBackupFolder === 'function') {
@@ -372,6 +363,7 @@ function initFileBackup() {
 // Exports
 // ============================================================
 window.initFileBackup = initFileBackup;
+window.onFileBackupAfterSave = onAfterSave;
 window.writeBackupForCampaign = writeBackupForCampaign;
 window.getBackupFilenames = getBackupFilenames;
 window.getActiveBackupFilenames = getActiveBackupFilenames;

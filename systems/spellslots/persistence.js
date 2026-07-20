@@ -5,6 +5,13 @@
 // PERSISTENCE
 // ============================================================
 let saveTimeout = null;
+// Datei-Backup-Hook (TECH-03): expliziter Aufruf an jedem Persist-Erfolgspunkt.
+// WICHTIG: Kein window.save-Monkey-Patch — bare save()-Aufrufe binden an die globale
+// const und umgehen jeden window.save-Wrapper (UAT 02: Backup schrieb nie bei Entity-CRUD).
+// Bonus: Hook feuert NACH dem tatsächlichen Write → _doBackup liest frische Daten.
+function _notifyFileBackup() {
+    if (typeof window.onFileBackupAfterSave === 'function') window.onFileBackupAfterSave();
+}
 // Sofortiges Speichern (für kritische Aktionen)
 async function saveImmediate() {
     // Toggle ist optional: existiert er und ist ungecheckt → Save überspringen.
@@ -52,6 +59,7 @@ async function saveImmediate() {
                 );
             }
             broadcastSave();
+            _notifyFileBackup();
             return;
         }
         // Normaler localStorage-Save
@@ -64,6 +72,7 @@ async function saveImmediate() {
         StorageAPI.set(key + '_ts', String(Date.now()));
         updateSaveIndicator('saved');
         broadcastSave();
+        _notifyFileBackup();
         // Zusätzliches IndexedDB-Backup bei großen Daten (>2MB)
         if (dataSizeMB > 2) {
             saveToIndexedDBFallback(key, dataString).catch(e => {
@@ -90,6 +99,7 @@ async function saveImmediate() {
             updateSaveIndicator('saved');
             showToast('💾 In IndexedDB gespeichert (localStorage voll)', 'warning');
             broadcastSave();
+            _notifyFileBackup();
         } catch (idbError) {
             if (window.APP_CONFIG && window.APP_CONFIG.DEBUG_MODE) {
                 window.ErrorHandler &&
@@ -192,6 +202,7 @@ const save = function (showMessage = false) {
                 StorageAPI.remove(key + '_ts');
                 updateSaveIndicator('saved');
                 broadcastSave();
+                _notifyFileBackup();
                 // (D-02) Sitzungs-Hinweis statt Per-Save-Toast
                 if (!window._idbModeSeen) {
                     window._idbModeSeen = true;
@@ -211,6 +222,7 @@ const save = function (showMessage = false) {
             StorageAPI.set(key + '_ts', String(Date.now()));
             updateSaveIndicator('saved');
             broadcastSave();
+            _notifyFileBackup();
             if (showMessage) showToast('💾 Gespeichert', 'success');
         } catch (e) {
             ErrorHandler.log('save', e, 'localStorage');
@@ -220,6 +232,7 @@ const save = function (showMessage = false) {
                 StorageAPI.remove(key + '_ts');
                 updateSaveIndicator('saved');
                 broadcastSave();
+                _notifyFileBackup();
                 showToast('💾 In IndexedDB gespeichert (localStorage voll)', 'warning');
             } catch (idbError) {
                 ErrorHandler.log('save', idbError, 'IndexedDB Fallback');
