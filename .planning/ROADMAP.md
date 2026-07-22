@@ -43,7 +43,11 @@ Details, Success Criteria und Coverage: [milestones/v1.0-ROADMAP.md](milestones/
   3. Zähl-Assertions in der Suite nutzen exakte Werte (`toBe(N)`) statt `toBeGreaterThan(0)`, wo ein exakter Wert erwartbar ist
   4. Keine maskierenden manuellen Event-Dispatches verstecken mehr echte Interaktionsfehler in Test-Helpers
   5. Die E2E-Suite läuft vollständig durch und ist als CI-tauglicher Gate nutzbar
-**Plans**: TBD
+**Plans**: 4 plans (4 waves, sequential)
+- [ ] 08-01-PLAN.md — App-Bug-Fixes (attr-mod-Kollision, Banner-Overlap, renderAll-Lücke) + D-02-Regressionstests (Wave 1)
+- [ ] 08-02-PLAN.md — E2E-Test-Bug-Fixes: reale Selektoren + Timer-API + Toast-Race-Seeding (Wave 2)
+- [ ] 08-03-PLAN.md — Suite-weite Assertion-Härtung: toBe(N), Masking-Audit, waitForTimeout (Wave 3)
+- [ ] 08-04-PLAN.md — Blockierender e2e-CI-Gate (D-03) + Triage-Dokumentation (D-07) (Wave 4)
 
 ### Phase 9: Editor-Regressionsnetz & execCommand-Ablösung
 **Goal**: Der Rich-Text-Editor ist von 21 deprecated `document.execCommand`-Aufrufen auf moderne Selection/Range-DOM-APIs migriert — abgesichert durch ein neues E2E-Regressionsnetz, das VOR der Migration existiert und Verhaltensgleichheit beweist.
@@ -86,7 +90,7 @@ Details, Success Criteria und Coverage: [milestones/v1.0-ROADMAP.md](milestones/
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | v1.0 (Phasen 1–7) | 44/44 | ✅ Shipped | 2026-07-22 |
-| 8. Test-Fundament grün | 0/TBD | Not started | - |
+| 8. Test-Fundament grün | 0/4 | Not started | - |
 | 9. Editor-Regressionsnetz & execCommand-Ablösung | 0/TBD | Not started | - |
 | 10. Security-Härtung | 0/TBD | Not started | - |
 | 11. Architektur- & Build-Hygiene | 0/TBD | Not started | - |
