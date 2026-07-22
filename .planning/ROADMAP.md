@@ -46,14 +46,14 @@ Details, Success Criteria und Coverage: [milestones/v1.0-ROADMAP.md](milestones/
   4. Keine maskierenden manuellen Event-Dispatches verstecken mehr echte Interaktionsfehler in Test-Helpers
   5. Die E2E-Suite läuft vollständig durch und ist als CI-tauglicher Gate nutzbar
 
-**Plans**: 1/4 plans executed
+**Plans**: 2/4 plans executed
 **Wave 1**
 
 - [x] 08-01-PLAN.md — App-Bug-Fixes (attr-mod-Kollision, Banner-Overlap, renderAll-Lücke) + D-02-Regressionstests (Wave 1)
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
-- [ ] 08-02-PLAN.md — E2E-Test-Bug-Fixes: reale Selektoren + Timer-API + Toast-Race-Seeding (Wave 2)
+- [x] 08-02-PLAN.md — E2E-Test-Bug-Fixes: reale Selektoren + Timer-API + Toast-Race-Seeding (Wave 2)
 
 **Wave 3** *(blocked on Wave 2 completion)*
 
@@ -113,7 +113,7 @@ Details, Success Criteria und Coverage: [milestones/v1.0-ROADMAP.md](milestones/
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | v1.0 (Phasen 1–7) | 44/44 | ✅ Shipped | 2026-07-22 |
-| 8. Test-Fundament grün | 1/4 | In Progress|  |
+| 8. Test-Fundament grün | 2/4 | In Progress|  |
 | 9. Editor-Regressionsnetz & execCommand-Ablösung | 0/TBD | Not started | - |
 | 10. Security-Härtung | 0/TBD | Not started | - |
 | 11. Architektur- & Build-Hygiene | 0/TBD | Not started | - |

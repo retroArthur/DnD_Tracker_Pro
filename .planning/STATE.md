@@ -5,23 +5,23 @@ milestone_name: Tech-Debt & Härtung
 current_phase: 08
 current_phase_name: geplant, bereit zur Ausführung
 status: executing
-stopped_at: Phase 08 Plan 01 abgeschlossen (3/3 Tasks, App-Bugs Attribut-Modifikator/Migration-Banner/renderAll gefixt)
-last_updated: "2026-07-22T21:50:48.842Z"
+stopped_at: Phase 08 Plan 02 abgeschlossen (2/2 Tasks, tab-navigation-Selektoren + Toast-Race in CRUD-Specs behoben, volle Suite 0 Fails)
+last_updated: "2026-07-22T22:35:39.305Z"
 last_activity: 2026-07-22
-last_activity_desc: Phase 08 execution started
+last_activity_desc: Phase 08 Plan 01 abgeschlossen
 progress:
   total_phases: 4
   completed_phases: 0
   total_plans: 4
-  completed_plans: 1
-  percent: 25
+  completed_plans: 2
+  percent: 0
 ---
 
 # Project State: D&D Kampagnen-Tracker Pro — Stabilisierung & Ausbau
 
 **Last Updated:** 2026-07-22
 **Phase:** 08 — Test-Fundament grün (Plan 1/4 abgeschlossen)
-**Status:** Executing Phase 08
+**Status:** Ready to execute
 
 ---
 
@@ -36,8 +36,8 @@ progress:
 ## Current Position
 
 Phase: 08 (test-fundament-gr-n) — EXECUTING
-Plan: 2 of 4
-Status: Executing Phase 08 (Plan 1 abgeschlossen: 3/3 Tasks, App-Bugs Attribut-Modifikator/Migration-Banner/renderAll gefixt)
+Plan: 3 of 4
+Status: Ready to execute
 Last activity: 2026-07-22 — Phase 08 Plan 01 abgeschlossen
 
 ## Performance Metrics
@@ -52,6 +52,7 @@ Last activity: 2026-07-22 — Phase 08 Plan 01 abgeschlossen
 | Plan | Duration | Tasks | Files |
 |------|----------|-------|-------|
 | Phase 08 P01 | 9min | 3 tasks | 7 files |
+| Phase 08 P02 | 50min | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -127,8 +128,8 @@ Last activity: 2026-07-22 — Phase 08 Plan 01 abgeschlossen
 
 ## Session Continuity
 
-**Last session:** 2026-07-22T21:50:48.834Z
-**Stopped at:** Phase 08 Plan 01 abgeschlossen (3/3 Tasks, App-Bugs Attribut-Modifikator/Migration-Banner/renderAll gefixt)
+**Last session:** 2026-07-22T22:35:39.297Z
+**Stopped at:** Phase 08 Plan 02 abgeschlossen (2/2 Tasks, tab-navigation-Selektoren + Toast-Race in CRUD-Specs behoben, volle Suite 0 Fails)
 **Resume file:** None
 
 **Last action:** Komplette Milestone-UAT abgeschlossen (2026-06-20 → 2026-07-20): alle 5 offenen Human-UAT-Sessions via `/gsd-verify-work` durchgetestet — 07 (4/4), 06 (5/5), 05 (2/2), 01 (3/3), 02 (6/6). Alle 7 VERIFICATION.md jetzt `status: passed`. Dabei gefundene+gefixte Bugs: Soundboard-Doppel-Import (75aadfe), Audio-läuft-nach-Szene-Löschen (b85dbe1), Volume nicht live (801ed48), Manifest-CORS unter file:// (cd75093), Konsolen-Hygiene (c029f11), Datei-Backup schrieb nie bei Entity-CRUD — window.save-Wrapper strukturell wirkungslos für bare save() (1430e8c), generischer registerPostSaveHook + DM-Screen-Live-Sync-Umstellung + CLAUDE.md-Pattern-Korrektur (6ea8309), „Anderen Ordner wählen"-Button (cc2af9e). Nebenbei: Repo mit origin gemergt (7 Mai-Commits, alter pages.yml-Deploy entfernt 7f4858a), 348 Commits gepusht, GitHub-Pages-Deploy live verifiziert (PWA installierbar, SW-Update-Flow, Datei-Backup, Migrations-Wizard file://→PWA). Zusätzlich in der Session: Soundboard-Erweiterungen (Loop-Toggle/Crossfade-Loop/Fortschritt 6636297, Per-Track-Play noch offen als Design), gruppierte Navigation (3d77ec0).
@@ -163,6 +164,8 @@ _State initialized: 2026-06-11_
 - [Phase 06-05]: Modal-Live-Refresh liest Charakter-ID aus erstem [data-id]-Element im #char-detail-modal; kein neues data-Attribut nötig
 - [Phase 05-08]: close-modal-overlay für transiente Modals (insertAdjacentHTML): remove() ist korrekt, hide-modal würde nur .show entfernen (Zombie); E2E via page.evaluate(switchView) statt page.click bei Fullscreen-Overlay (Pointer-Interception)
 - [Phase ?]: Migration-Banner-Offset nutzt gemessene CSS-Custom-Property (--migration-hint-height) statt fixem 48px-Wert, da Bannerhoehe bei schmalen Viewports durch Textumbruch waechst
+- [Phase ?]: Seed-Payload erweitert um randomTables/timers/shops/campaign/_nextId — zweite unabhaengige Boot-Zeit-Toast-Race (initRandomTables/validateDataIntegrity) via Stack-Trace-Analyse gefunden
+- [Phase ?]: quests.spec.js Titel-Assertion auf title korrigiert (Validierungs-Schema nutzt englischen Feldnamen, Mismatch war durch Toast-Race maskiert)
 
 ## Operator Next Steps
 
