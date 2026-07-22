@@ -12,7 +12,8 @@ Die App muss am Spieltisch **zuverlässig offline laufen** — ein Spielleiter-B
 
 - **Version:** v2.6.1, Milestone **v1.0 „Stabilisierung & Ausbau"** geshippt (7 Phasen, 44 Pläne, 31/31 Requirements, UAT 20/20)
 - **Codebase:** ~123 Module, ~81.000 Zeilen Quellcode, non-ESM Single-Bundle via `build.py`
-- **Qualität:** 453 Unit-Tests grün, Phasen-E2E grün, CI mit Pages-Deploy; alle 7 Phasen-VERIFICATIONs `passed`
+- **Qualität:** 457 Unit-Tests grün, volle E2E-Suite grün (231 passed / 2 skipped / 0 failed), CI mit Pages-Deploy und blockierendem E2E-Gate; alle 8 Phasen-VERIFICATIONs `passed`
+- **v1.1-Fortschritt:** Phase 8 „Test-Fundament grün" abgeschlossen (2026-07-23) — TEST-01/TEST-02 validiert, E2E-Job blockiert seitdem die Deploy-Kette (`docs/e2e-failure-triage.md` dokumentiert alle Ex-Fails)
 - **Live:** https://retroarthur.github.io/DnD_Tracker_Pro/dnd-tracker-optimized.html (PWA installierbar, SW-Updates, Datei-Backup, Migrations-Wizard)
 
 ## Current Milestone: v1.1 Tech-Debt & Härtung
@@ -105,9 +106,19 @@ Die App muss am Spieltisch **zuverlässig offline laufen** — ein Spielleiter-B
 
 **Shipped als Milestone v1.0 (2026-07-22)** — alle 31 v1-Requirements validiert, Archiv: `milestones/v1.0-REQUIREMENTS.md`.
 
+**Validated in Phase 8: Test-Fundament grün (2026-07-23):**
+
+- ✓ TEST-01: Alle 11 vorbestehenden E2E-Fails auf 0 — 3 App-Bugs gefixt (Action-Registry-Kollision `update-attr-mod`, renderAll()-Dispatch-Lücke, Migration-Banner-Überdeckung) + 7 Test-Bug-Cluster korrigiert (stale Selektoren, `D.timers`-Phantompfad, Onboarding-Toast-Race + zweite Boot-Zeit-`save()`-Race); jede Ursache in `docs/e2e-failure-triage.md` mit Fix-Commit dokumentiert
+- ✓ TEST-02: Assertions gehärtet — 6 deterministische Zähl-Assertions auf `toBe(N)`, 17 begründete Ausnahmen kommentiert, 15 maskierende `isVisible()`-Guards konvertiert (dabei 2 weitere Test-Bugs gefunden+gefixt), 13 `waitForTimeout` durch Wait-Conditions ersetzt; neuer blockierender `e2e`-CI-Job in der Deploy-Kette
+- ✓ Qualitätszyklus: Verifier 5/5 (Gap-Fix c4f6f6e: Tautologie-Assertion im Encounter-Undo-Test), Jest 457/457, Playwright 231 passed / 2 skipped / 0 failed, Code-Review 0 Critical (3 Warnings advisory in 08-REVIEW.md)
+
 ### Active
 
-_(leer — nächster Milestone via `/gsd-new-milestone`; Kandidaten siehe „Next Milestone Goals")_
+_(Milestone v1.1 — Details in `.planning/REQUIREMENTS.md`)_
+
+- [ ] EDIT-01..03 — execCommand-Ablösung + Editor-Regressionsnetz (Phase 9)
+- [ ] SEC-01..02 — Import-XSS + Security-Audit (Phase 10)
+- [ ] ARCH-01..04 — Build-/Repo-Hygiene (Phase 11)
 
 ### Out of Scope
 
@@ -167,4 +178,4 @@ This document evolves at phase transitions and milestone boundaries.
 
 ---
 
-_Last updated: 2026-07-22 after v1.0 milestone (Stabilisierung & Ausbau shipped: 7 Phasen, 44 Pläne, 31/31 Requirements, UAT 20/20, alle VERIFICATIONs passed; Phase-5- und Phase-7-Validated-Blöcke nachgetragen)._
+_Last updated: 2026-07-23 after Phase 8 completion (v1.1: Test-Fundament grün — TEST-01/TEST-02 validiert, Suite komplett grün, blockierender E2E-CI-Gate; Active-Sektion auf v1.1-Requirements aktualisiert)._
