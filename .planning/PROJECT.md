@@ -1,12 +1,23 @@
-# D&D Kampagnen-Tracker Pro — Stabilisierung & Ausbau
+# D&D Kampagnen-Tracker Pro
 
 ## What This Is
 
-Ein offline-first Single-Page D&D 5e Kampagnen-Manager (pures JavaScript/HTML/CSS, deutsche UI, v2.6.0), den der Entwickler selbst als Spielleiter am Tisch nutzt — per Doppelklick auf die gebaute HTML-Datei (`file://`). Dieses Projekt bringt die aktuell **nicht startende App** zurück in einen sauberen, gepflegten Zustand und baut sie danach gezielt zum mächtigeren Spielleiter-Werkzeug aus.
+Ein offline-first Single-Page D&D 5e Kampagnen-Manager (pures JavaScript/HTML/CSS, deutsche UI, v2.6.1), den der Entwickler selbst als Spielleiter am Tisch nutzt — wahlweise per Doppelklick auf die gebaute HTML-Datei (`file://`) oder als **installierbare PWA** (GitHub Pages). Mit v1.0 „Stabilisierung & Ausbau" ist die einst nicht startende App ein vollständiges, getestetes Spielleiter-Werkzeug: Bestiary, Kampf-Tiefe, Weltwerkzeuge, Spieler-Verwaltung, Soundboard und Würfel-Statistiken.
 
 ## Core Value
 
 Die App muss am Spieltisch **zuverlässig offline laufen** — ein Spielleiter-Begleiter, der nie im Weg steht und keine Daten verliert.
+
+## Current State (v1.0 shipped 2026-07-22)
+
+- **Version:** v2.6.1, Milestone **v1.0 „Stabilisierung & Ausbau"** geshippt (7 Phasen, 44 Pläne, 31/31 Requirements, UAT 20/20)
+- **Codebase:** ~123 Module, ~81.000 Zeilen Quellcode, non-ESM Single-Bundle via `build.py`
+- **Qualität:** 453 Unit-Tests grün, Phasen-E2E grün, CI mit Pages-Deploy; alle 7 Phasen-VERIFICATIONs `passed`
+- **Live:** https://retroarthur.github.io/DnD_Tracker_Pro/dnd-tracker-optimized.html (PWA installierbar, SW-Updates, Datei-Backup, Migrations-Wizard)
+
+## Next Milestone Goals
+
+Noch nicht definiert — via `/gsd-new-milestone`. Bekannte Kandidaten: Soundboard Per-Track-Play (Layering, Design bereits diskutiert), execCommand-Ablösung (Tech-Debt-Phase), Phase-1-Altlasten (Security-Audit, Import-XSS-Finding), 11 vorbestehende E2E-Fails.
 
 ## Requirements
 
@@ -70,24 +81,25 @@ Die App muss am Spieltisch **zuverlässig offline laufen** — ein Spielleiter-B
 - ✓ Qualitätszyklus: Verifikation 13/13 must-haves, Build sauber (2.70 MB) + 421/421 Unit (inkl. 49 neue Advancement-Tests) + 13/13 Phase-6-E2E grün, Code-Review (1 Critical ist ein vorbestehender Dice-Tab-Bug außerhalb Phase 6; 6 Warnings dokumentiert in 06-REVIEW.md)
 - Offen als UAT (06-HUMAN-UAT.md): 5 visuelle/UX-Checks (Stern-Styling, XP-Fortschrittsbalken, Skills-Gruppierung, Angriffs-Click-Affordance, XP-Modal-Live-Vorschau)
 
+**Validated in Phase 5: Welt & Story (2026-06-18):**
+
+- ✓ Session-Prep-Assistent: Szenenkarten, Checkliste, offene Fäden (WELT-Requirements, 8/8 Pläne inkl. Gap-Closure 05-08 NPC-Generator-Modal-Overlay)
+- ✓ NPC-Generator: deutscher Name + Persönlichkeit + Marotte auf Knopfdruck, zentriertes Modal (UAT: Qualität + <1s-Latenz bestätigt)
+- ✓ Harptos-Kalender: 12 Monate + 5 Festtage kanon-konform (UAT-geprüft), 1492 DR, Timeline-Verknüpfung
+- ✓ Reise-Simulator: Tagesreisen, Jahreszeiten, Gelände; Fraktionen & Ruf-System (Ruf-Stufen, ±5/±10)
+- ✓ Qualitätszyklus: 5/5 must-haves, 37 Unit + 24 E2E grün (E2E-Modulformat-Fix 687eb7d)
+
+**Validated in Phase 7: Komfort & Analyse (2026-06-20):**
+
+- ✓ Soundboard (UX-01): Audio-Bibliothek mit IDB-Blob-Persistenz (20/100-MB-Guards), Web-Audio-Szenen mit Layering + 2s-Crossfade, Alt+Shift+1..5-Quick-Slots; Session-Erweiterungen: Per-Track-Loop-Toggle mit Crossfade-Loop, Fortschrittsbalken, Live-Volume
+- ✓ Würfel-Statistiken (UX-02): d20-Histogramm (inline-SVG) mit Erwartungs-Overlay, Crit-/Fumble-Quoten, Per-Character-Breakdown, Session/Gesamt-Filter; Roll-Capture via addToDiceHistory-Tee in eigenem IDB-Store
+- ✓ Qualitätszyklus: Verifier 14/14, Audio-UAT 4/4 (dabei 3 Bugs gefunden+gefixt), Code-Review-Critical CR-01 behoben
+
+**Shipped als Milestone v1.0 (2026-07-22)** — alle 31 v1-Requirements validiert, Archiv: `milestones/v1.0-REQUIREMENTS.md`.
+
 ### Active
 
-**Milestone-Teil C — Spielleiter-Features (Reihenfolge laut Roadmap, Phasen 3–7):**
-
-- [x] Monster-Kompendium / Bestiary-Tab ✓ Phase 3 (SRD-Statblocks offline + eigene Kreaturen, monster-templates.js auf SRD-Store umgestellt)
-- [x] Statblock-Popup in der Initiative (kompletter Statblock statt nur HP/AC) ✓ Phase 4 (INIT-01, Drawer rechts/Bottom-Sheet)
-- [x] Tracker für Legendäre Aktionen & Resistenzen in der Initiative ✓ Phase 4 (INIT-02, LA-Reset/LR-manuell D-07)
-- [x] Mob-/Massenkampf-Modus (Gegnergruppen, Sammel-Würfe) ✓ Phase 4 (INIT-03, Pool-HP + 2 Angriffsmodi)
-- [ ] Soundboard (lokale Audio-Dateien als Ambience mit Schnelltasten)
-- [ ] Session-Prep-Assistent (Szenenkarten, Checkliste, offene Fäden)
-- [ ] Kampagnen-Timeline (chronologische Ereignisse, verknüpft mit Kalender)
-- [ ] NPC-Generator (Name, Persönlichkeit, Marotte auf Knopfdruck, nutzt Random Tables)
-- [ ] Reise- & Wetter-Simulator (Tagesreisen, Wetter, Zufallsbegegnungen je Gelände)
-- [ ] Fraktionen & Ruf-System (Fraktionsziele, Ruf-Tracker der Gruppe)
-- [x] XP-/Milestone-Tracker (Levelfortschritt, XP aus Encountern) ✓ Phase 6 (CHAR-01, Initiative-XP-Modal + Milestone-Modus)
-- [x] Inspiration-Tracker (Inspiration-Punkte pro Spieler) ✓ Phase 6 (CHAR-02, klickbarer Stern-Toggle)
-- [x] Erweiterte Charakterbögen (Skills, Saves, Angriffe für schnelle Checks) ✓ Phase 6 (CHAR-03, klickbare Würfe mit Vorteil/Nachteil)
-- [ ] Würfel-Statistiken (Verteilungen, Crit-Quoten aus Roll-Historie)
+_(leer — nächster Milestone via `/gsd-new-milestone`; Kandidaten siehe „Next Milestone Goals")_
 
 ### Out of Scope
 
@@ -100,11 +112,10 @@ Die App muss am Spieltisch **zuverlässig offline laufen** — ein Spielleiter-B
 
 ## Context
 
-- **Brownfield:** v2.6.0, 92 JS-Module (~29k Zeilen), non-ESM Global-Scope-Architektur, `build.py` bündelt alles in eine standalone HTML-Datei. Codebase-Map liegt in `.planning/codebase/` (7 Dokumente, Stand 2026-06-11).
-- **Akuter Bruch (behoben in Phase 1):** Der `clearMindmap`-ReferenceError in tools/debug.js ist beseitigt, frische dev-/prod-Builds liegen in `dist/`, CI mit Playwright-Smoke-Test erkennt künftige Boot-Crashes. Offen aus Phase 1: 3 manuelle Browser-Tests (01-HUMAN-UAT.md) + Code-Review-Findings (1 vorbestehender Import-XSS, siehe 01-REVIEW.md).
-- **Bekannte Schwächen (aus CONCERNS.md):** doppelt gepflegte Modullisten (loader.js + build.py), build.py Pass-3 hinterlässt verwaiste Funktionskörper, Debug-Flag-Flip per String-Match, ~504 funktions-lokale `const X = window.X`-Imports, veraltete CLAUDE.md (widerspricht Code in mehreren Punkten), kaputte Dev-Tools (validate.py mit Linux-Pfaden, `python3` in npm-Scripts auf Windows), Lizenz-Widerspruch (package.json ISC vs. LICENSE MIT), deprecated `document.execCommand` im Rich-Text-Editor (21 Call-Sites).
-- **Nutzung:** Einzelnutzer (Entwickler = Spielleiter), Windows, Chromium-Browser, App wird als `file://` per Doppelklick geöffnet. Deutsche UI durchgängig.
-- **Phase 2 abgeschlossen (2026-06-13):** App ist PWA-fähig (Manifest, SW, Icon, Install-Button, Pages-Deploy-Job), Migrations-Wizard und Datei-Backup implementiert, Command Palette aktiv. Offen: 6 manuelle Browser-UAT-Punkte (02-HUMAN-UAT.md) und die einmalige GitHub-Pages-Repo-Einstellung; nach erstem Deploy `MIGRATION_PWA_URL` prüfen (IN-06).
+- **Stand nach v1.0 (2026-07-22):** ~123 JS-Module (~81k Zeilen Quellcode), non-ESM Global-Scope-Architektur, `build.py` bündelt alles in eine standalone HTML-Datei (dev + `--production`). GitHub-Pages-Deploy via ci.yml (voll verifiziert: PWA-Install, SW-Update, Datei-Backup, Migrations-Wizard). Codebase-Map in `.planning/codebase/` (Stand 2026-06-11, vor Phasen 3–7 — bei Bedarf via `/gsd-map-codebase` auffrischen).
+- **Nutzung:** Einzelnutzer (Entwickler = Spielleiter), Windows, Chromium-Browser; `file://`-Doppelklick UND installierte PWA. Deutsche UI durchgängig.
+- **Wichtige Architektur-Lektion aus v1.0-UAT:** `window.save`-Monkey-Patches sind wirkungslos (globale `const`-Bindung überdeckt die window-Property) → expliziter `registerPostSaveHook`-Mechanismus in persistence.js (siehe CLAUDE.md „Live-Sync Pattern").
+- **Offene Altlasten (nicht-blockierend, Kandidaten für v1.1):** Phase-1-Code-Review-Findings (1 vorbestehender Import-XSS), Phase-1-Security-Audit (SECURITY.md fehlt), 11 vorbestehende E2E-Fails (Task-Chip existiert), deprecated `document.execCommand` (21 Call-Sites, eigene Tech-Debt-Phase), Phase-3-Browser-Sichtchecks, `D.calendar.month` 0→1-Basis (benign).
 
 ## Constraints
 
@@ -119,11 +130,13 @@ Die App muss am Spieltisch **zuverlässig offline laufen** — ein Spielleiter-B
 
 | Decision                                                                        | Rationale                                                                                                                      | Outcome   |
 | ------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ | --------- |
-| Stabilisierung vor allen Features                                               | App startet aktuell nicht; Fundament zuerst                                                                                    | — Pending |
-| Technik-Fundament als erste Feature-Gruppe (PWA, Datei-Backup, Command Palette) | Löst file://-Probleme strukturell und schützt Daten, bevor große Features kommen                                               | — Pending |
-| Spieler-Ansicht/Handouts/Druck-Exporte ausgeklammert                            | Vom Nutzer im Brainstorming bewusst abgewählt                                                                                  | — Pending |
-| Mindmap bleibt entfernt                                                         | Bereits entschieden (Commit 7ef9bf5, 2026-05-24); nur Reste bereinigen                                                         | — Pending |
-| Tests grün ist kein hartes Stabilisierungs-Kriterium                            | Nutzer definiert „sauber" als: Konsole fehlerfrei, Build aktuell, Lint/Typecheck grün — Tests laufen mit, sind aber nicht Gate | — Pending |
+| Stabilisierung vor allen Features                                               | App startet aktuell nicht; Fundament zuerst                                                                                    | ✓ Good — stabile Basis trug alle 6 Folgephasen |
+| Technik-Fundament als erste Feature-Gruppe (PWA, Datei-Backup, Command Palette) | Löst file://-Probleme strukturell und schützt Daten, bevor große Features kommen                                               | ✓ Good — PWA + Backup + Migration in UAT end-to-end bestätigt |
+| Spieler-Ansicht/Handouts/Druck-Exporte ausgeklammert                            | Vom Nutzer im Brainstorming bewusst abgewählt                                                                                  | ✓ Good — nie vermisst, Fokus blieb scharf |
+| Mindmap bleibt entfernt                                                         | Bereits entschieden (Commit 7ef9bf5, 2026-05-24); nur Reste bereinigen                                                         | ✓ Good |
+| Tests grün ist kein hartes Stabilisierungs-Kriterium                            | Nutzer definiert „sauber" als: Konsole fehlerfrei, Build aktuell, Lint/Typecheck grün — Tests laufen mit, sind aber nicht Gate | ✓ Good — Suite wuchs organisch auf 453 grüne Tests |
+| Sequenzielle Executor auf `main` statt Worktrees (ab Phase 5)                   | Windows-Stdio-Hänger + geteilte Dateien (view-html, CSS, actions) in fast jedem Plan                                            | ✓ Good — 0 Merge-Konflikte, stabile Läufe |
+| Human-UAT als eigener Gate nach jeder Phase                                      | Automatisierte Checks decken Hörbares/Visuelles/Browser-only nicht ab                                                          | ✓ Good — UAT fand 8+ echte Bugs, die alle Test-Suiten verpassten |
 
 ## Evolution
 
@@ -146,4 +159,4 @@ This document evolves at phase transitions and milestone boundaries.
 
 ---
 
-_Last updated: 2026-06-16 after Phase 6 completion (Spieler-Verwaltung verifiziert 13/13 must-haves, CHAR-01/02/03; Inspiration-Toggle, erweiterte Charakterwerte mit klickbaren Würfen, XP-/Milestone-Tracker; 421/421 Unit + 13/13 Phase-6-E2E grün; 5 visuelle UAT-Checks offen in 06-HUMAN-UAT.md). Hinweis: „Validated in Phase 5"-Block fehlt noch (Drift aus dem Phase-5-Abschluss — Welt & Story / WELT-Requirements)._
+_Last updated: 2026-07-22 after v1.0 milestone (Stabilisierung & Ausbau shipped: 7 Phasen, 44 Pläne, 31/31 Requirements, UAT 20/20, alle VERIFICATIONs passed; Phase-5- und Phase-7-Validated-Blöcke nachgetragen)._

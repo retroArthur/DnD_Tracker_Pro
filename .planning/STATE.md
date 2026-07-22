@@ -2,22 +2,22 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: milestone_complete
-last_updated: 2026-06-20T07:43:45.549Z
+status: completed
+last_updated: "2026-07-22T19:50:04.184Z"
+last_activity: 2026-07-22 — Milestone v1.0 completed and archived
 progress:
   total_phases: 7
   completed_phases: 7
   total_plans: 44
   completed_plans: 44
   percent: 100
-stopped_at: Milestone complete (Phase 07 was final phase)
 ---
 
 # Project State: D&D Kampagnen-Tracker Pro — Stabilisierung & Ausbau
 
 **Last Updated:** 2026-06-20
 **Phase:** 07 — Komfort & Analyse (Complete)
-**Status:** Milestone v1.0 complete (7/7 Phasen)
+**Status:** v1.0 milestone complete
 
 ---
 
@@ -31,27 +31,10 @@ stopped_at: Milestone complete (Phase 07 was final phase)
 
 ## Current Position
 
-```
-Phase: 07 (komfort-analyse) — COMPLETE (4/4 Pläne, 3 Wellen)
-Plan: 07-01..07-04 ausgeführt + Code-Review-Fix (CR-01/WR-01/WR-03, Commit 40a9009)
-Next:  Milestone v1.0 abschließen (/gsd-complete-milestone) oder /gsd-new-milestone
-Status: Milestone v1.0 complete (7/7 Phasen)
-
-Progress: [██████████████████████████████████] Phasen 1–7 komplett (7/7, 100%) — Milestone v1.0 fertig
-```
-
-**Phases:**
-| # | Phase | Status |
-|---|-------|--------|
-| 1 | Stabilisierung | Complete |
-| 2 | Technik-Fundament | Complete |
-| 3 | Bestiary | Complete (5/5 Pläne) |
-| 4 | Initiative-Erweiterungen | Complete (4/4 Pläne abgeschlossen) |
-| 5 | Welt & Story | Complete (8/8 Pläne, inkl. Gap-Closure 05-08) |
-| 6 | Spieler-Verwaltung | Complete (9/9 Pläne) |
-| 7 | Komfort & Analyse | Complete (4/4 Pläne, 3 Wellen; Audio-UAT 4/4 ✓) |
-
----
+Phase: Milestone v1.0 complete
+Plan: —
+Status: Awaiting next milestone
+Last activity: 2026-07-22 — Milestone v1.0 completed and archived
 
 ## Performance Metrics
 
@@ -166,3 +149,7 @@ _State initialized: 2026-06-11_
 - [Phase 06-05]: set-leveling-mode verwendet plain save() ohne saveUndoState() — Settings-Änderung ist trivial reversibel (Inspiration-Precedent)
 - [Phase 06-05]: Modal-Live-Refresh liest Charakter-ID aus erstem [data-id]-Element im #char-detail-modal; kein neues data-Attribut nötig
 - [Phase 05-08]: close-modal-overlay für transiente Modals (insertAdjacentHTML): remove() ist korrekt, hide-modal würde nur .show entfernen (Zombie); E2E via page.evaluate(switchView) statt page.click bei Fullscreen-Overlay (Pointer-Interception)
+
+## Operator Next Steps
+
+- Start the next milestone with /gsd-new-milestone
