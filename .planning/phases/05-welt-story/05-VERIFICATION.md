@@ -1,7 +1,8 @@
 ---
 phase: 05-welt-story
 verified: 2026-06-15T00:00:00Z
-status: human_needed
+status: passed
+human_verified: 2026-07-20 (alle Human-UAT-Szenarien via /gsd-verify-work bestanden — siehe *-HUMAN-UAT.md)
 score: 5/5 must-haves verified
 overrides_applied: 0
 human_verification:

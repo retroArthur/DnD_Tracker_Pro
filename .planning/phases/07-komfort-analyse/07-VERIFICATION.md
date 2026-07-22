@@ -1,7 +1,8 @@
 ---
 phase: 07-komfort-analyse
 verified: 2026-06-20T09:30:00Z
-status: human_needed
+status: passed
+human_verified: 2026-07-20 (alle Human-UAT-Szenarien via /gsd-verify-work bestanden — siehe *-HUMAN-UAT.md)
 score: 14/14 must-haves verified
 overrides_applied: 0
 human_verification:

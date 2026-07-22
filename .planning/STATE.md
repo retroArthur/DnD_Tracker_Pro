@@ -49,7 +49,7 @@ Progress: [███████████████████████
 | 4 | Initiative-Erweiterungen | Complete (4/4 Pläne abgeschlossen) |
 | 5 | Welt & Story | Complete (8/8 Pläne, inkl. Gap-Closure 05-08) |
 | 6 | Spieler-Verwaltung | Complete (9/9 Pläne) |
-| 7 | Komfort & Analyse | Complete (4/4 Pläne, 3 Wellen; 4 Audio-UAT offen, nicht-blockierend) |
+| 7 | Komfort & Analyse | Complete (4/4 Pläne, 3 Wellen; Audio-UAT 4/4 ✓) |
 
 ---
 
@@ -105,7 +105,7 @@ Progress: [███████████████████████
 
 ### Open TODOs
 
-- [ ] 3 manuelle Browser-Tests aus `01-HUMAN-UAT.md` durchführen (file://-Boot, >5-MB-Persistenz, Konfliktpfad) — via `/gsd-verify-work 1`
+- [x] 3 manuelle Browser-Tests aus `01-HUMAN-UAT.md` ✓ (2026-07-20, 3/3 via /gsd-verify-work 1; Fixes: Manifest nur http/https cd75093, Konsolen-Hygiene c029f11)
 - [ ] Code-Review-Findings fixen (1 Critical: vorbestehender Import-XSS; 3 Warnings): `/gsd-code-review-fix 1`
 - [ ] Security-Audit nachziehen (SECURITY.md fehlt): `/gsd-secure-phase 1`
 - [x] Phase 2 diskutieren: `/gsd-discuss-phase 2` ✓ (2026-06-12, 02-CONTEXT.md)
@@ -115,7 +115,7 @@ Progress: [███████████████████████
 - [x] Phase 5 diskutieren: `/gsd-discuss-phase 5` ✓ (2026-06-14, 05-CONTEXT.md)
 - [x] Phase 5 planen: `/gsd-plan-phase 5` ✓ (2026-06-15, 7 Pläne / 7 Wellen, Checker PASSED)
 - [x] Phase 5 ausführen: `/gsd-execute-phase 5` ✓ (2026-06-15, 7/7 Pläne, 5/5 must-haves, 37 Unit + 24 E2E grün)
-- [ ] Phase 5 — 2 menschliche Sichtungen (05-HUMAN-UAT.md): NPC-Inhaltsqualität/Latenz, Harptos-Monatsnamen-Kanon
+- [x] Phase 5 — 2 menschliche Sichtungen ✓ (2026-06-20, 2/2: NPC-Qualität bestätigt, Harptos kanon-geprüft)
 - [ ] Phase 5 (optional, benign): `D.calendar.month` 0→1-Basis in core/data.js angleichen (vom Verifier als nicht-user-sichtbar bestätigt)
 - [x] Phase 6 diskutieren: `/gsd-discuss-phase 6` ✓ (2026-06-15, 06-CONTEXT.md, Commit d10df5c)
 - [x] Phase 6 planen: `/gsd-plan-phase 6` ✓ (2026-06-15, 4 Pläne / 4 Wellen, `--skip-ui`, Research + manuelle 06-VALIDATION.md, Plan-Checker VERIFICATION PASSED — 0 Blocker; Commits 61c538c/8dfbcbf)
@@ -128,15 +128,15 @@ Progress: [███████████████████████
 - [x] Phase 7 diskutieren: `/gsd-discuss-phase 7` ✓ (2026-06-19, 07-CONTEXT.md, D-01..D-05)
 - [x] Phase 7 planen: `/gsd-plan-phase 7` ✓ (2026-06-19, 4 Pläne / 3 Wellen, `--skip-ui` lean, Research 595a445 + manuelle 07-VALIDATION.md, Plan-Checker 0 Blocker / 3 Doku-Warnings behoben/akzeptiert; Plan-Commit 34ad3db)
 - [x] Phase 7 ausführen: `/gsd-execute-phase 7` ✓ (2026-06-20, 4/4 Pläne sequenziell auf `main`; Wave1 07-01 Foundation, Wave2 07-02 Soundboard-Engine + 07-04 Würfel-Statistiken, Wave3 07-03 Soundboard-UI; Verifier 14/14 must-haves; Code-Review CR-01 (kritisch: Soundboard-Klick-Aktionen tot via parseEntityId) + WR-01/WR-03 gefixt in Commit 40a9009; Build exit 0, 432 Unit-Tests grün)
-- [ ] Phase 7 — 4 hörbare Audio-UAT (07-HUMAN-UAT.md): Audio-Ausgabe, Crossfade-Glätte, Volume-Slider-Persistenz, AudioContext-resume — via `/gsd-verify-work 7`
+- [x] Phase 7 — 4 hörbare Audio-UAT ✓ (2026-06-20, 4/4; dabei 3 Bugs gefunden+gefixt: Doppel-Import 75aadfe, Audio-läuft-weiter b85dbe1, Live-Volume 801ed48)
 - [ ] Milestone v1.0 abschließen: `/gsd-complete-milestone` (alle 7 Phasen complete)
 
 ---
 
 ## Session Continuity
 
-**Last action:** Phase 07 (Komfort & Analyse) ausgeführt (2026-06-20): 4/4 Pläne sequenziell auf `main` (kein Worktree). Wave 1: 07-01 Foundation (IDB v4 mit `audioBlobs`+`diceStats`-Stores, `addToDiceHistory()`-Stats-Tee D-04, 6 Modul-Skelette, 2 Tabs, 4 Wave-0-Stubs). Wave 2: 07-02 Soundboard-Engine (Blob-Persistenz + Größen-Guard 20/100 MB, Web Audio Decode/Loop/Gain/2s-Crossfade D-02 voll) + 07-04 Würfel-Statistiken (inline-SVG d20-Histogramm + Erwartungs-Overlay, Crit/Fumble, Per-Character-Breakdown, Session/Gesamt-Filter). Wave 3: 07-03 Soundboard-UI (Audio-Bibliothek, Szenen-Builder, Alt+Shift+0..5 Quick-Slots D-03). Verifier: 14/14 must-haves, status human_needed (4 hörbare UAT). Code-Review: 1 Critical (CR-01: Soundboard-Klick-Aktionen play/delete/remove tot, weil `parseEntityId` String-IDs `scene_`/`audio_` → null wandelt) + WR-01/WR-03 — alle gefixt (ctx.target.dataset.id, FIFO-Buffer-Cap, scope-aware Leerstate; Commit 40a9009). Build exit 0, 432/432 Unit-Tests grün, Phase-7-E2E grün. Plan-Commits: 65e93a6/ba78ef9/94f124d/10c8f27 + Fix 40a9009.
-**Next action:** Milestone v1.0 abschließen — `/gsd-complete-milestone` (alle 7 Phasen complete). Offen, nicht-blockierend: 4 hörbare Audio-UAT (07-HUMAN-UAT.md) via `/gsd-verify-work 7`; sowie Phase-6-UAT Test 3 (Skills-Layout) Sicht-Bestätigung. Optionale Altlasten aus früheren Phasen (Phase-1-Security-Audit, Code-Review-Findings Phase 1) weiterhin offen.
+**Last action:** Komplette Milestone-UAT abgeschlossen (2026-06-20 → 2026-07-20): alle 5 offenen Human-UAT-Sessions via `/gsd-verify-work` durchgetestet — 07 (4/4), 06 (5/5), 05 (2/2), 01 (3/3), 02 (6/6). Alle 7 VERIFICATION.md jetzt `status: passed`. Dabei gefundene+gefixte Bugs: Soundboard-Doppel-Import (75aadfe), Audio-läuft-nach-Szene-Löschen (b85dbe1), Volume nicht live (801ed48), Manifest-CORS unter file:// (cd75093), Konsolen-Hygiene (c029f11), Datei-Backup schrieb nie bei Entity-CRUD — window.save-Wrapper strukturell wirkungslos für bare save() (1430e8c), generischer registerPostSaveHook + DM-Screen-Live-Sync-Umstellung + CLAUDE.md-Pattern-Korrektur (6ea8309), „Anderen Ordner wählen"-Button (cc2af9e). Nebenbei: Repo mit origin gemergt (7 Mai-Commits, alter pages.yml-Deploy entfernt 7f4858a), 348 Commits gepusht, GitHub-Pages-Deploy live verifiziert (PWA installierbar, SW-Update-Flow, Datei-Backup, Migrations-Wizard file://→PWA). Zusätzlich in der Session: Soundboard-Erweiterungen (Loop-Toggle/Crossfade-Loop/Fortschritt 6636297, Per-Track-Play noch offen als Design), gruppierte Navigation (3d77ec0).
+**Next action:** Milestone v1.0 abschließen — `/gsd-complete-milestone` (alle 7 Phasen complete, UAT vollständig, VERIFICATIONs passed). Offene Design-Entscheidung Soundboard Per-Track-Play (Layering gewählt, Szenen-Play-Variante unbestätigt). Optionale Altlasten: Phase-1-Security-Audit (`/gsd-secure-phase 1`), Phase-1-Code-Review-Findings, 11 vorbestehende E2E-Fails (Task-Chip), Phase-3 Browser-Checks (nicht-blockierend).
 
 ---
 

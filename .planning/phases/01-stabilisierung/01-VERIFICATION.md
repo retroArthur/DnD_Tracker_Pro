@@ -1,7 +1,8 @@
 ---
 phase: 01-stabilisierung
 verified: 2026-06-12T14:00:00Z
-status: human_needed
+status: passed
+human_verified: 2026-07-20 (alle Human-UAT-Szenarien via /gsd-verify-work bestanden — siehe *-HUMAN-UAT.md)
 score: 5/5 must-haves verified
 overrides_applied: 0
 re_verification:

@@ -1,7 +1,8 @@
 ---
 phase: 02-technik-fundament
 verified: 2026-06-13T00:00:00Z
-status: human_needed
+status: passed
+human_verified: 2026-07-20 (alle Human-UAT-Szenarien via /gsd-verify-work bestanden — siehe *-HUMAN-UAT.md)
 score: 12/12 must-haves verified
 overrides_applied: 0
 re_verification: false
