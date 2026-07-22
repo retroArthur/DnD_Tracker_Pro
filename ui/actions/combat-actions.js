@@ -173,9 +173,6 @@ const CombatActions = {
         const skillName = ctx.target.dataset.name || '';
         rollSkillCheck(ctx.value, mod, skillName);
     },
-    'update-attr-mod': ctx => updateAttrMod(ctx.value, ctx.target.id),
-    'update-enc-attr-mod': ctx => updateEncAttrMod(ctx.value, ctx.target.id),
-
     // CHAR-01 / D-09 / D-10: XP-Verteilung aus Initiative-Toolbar
     'finish-combat-xp': () => {
         if (typeof window.finishCombatXp === 'function') window.finishCombatXp();
