@@ -4,24 +4,24 @@ milestone: v1.1
 milestone_name: Tech-Debt & Härtung
 current_phase: 08
 current_phase_name: geplant, bereit zur Ausführung
-status: executing
-stopped_at: Phase 08 Plan 03 abgeschlossen (2/2 Tasks, Assertion-Haertung D-04/D-05/D-06, volle Suite 233 Tests zweimal in Folge 0 Fails)
-last_updated: "2026-07-22T23:06:17.288Z"
+status: verifying
+stopped_at: Phase 08 Plan 04 abgeschlossen (2/2 Tasks, blockierender e2e-CI-Job D-03 + Triage-Doku D-07, Phase 8 bereit fuer Verifikation)
+last_updated: "2026-07-22T23:13:41.495Z"
 last_activity: 2026-07-22
 last_activity_desc: Phase 08 Plan 01 abgeschlossen
 progress:
   total_phases: 4
-  completed_phases: 0
+  completed_phases: 1
   total_plans: 4
-  completed_plans: 3
-  percent: 0
+  completed_plans: 4
+  percent: 25
 ---
 
 # Project State: D&D Kampagnen-Tracker Pro — Stabilisierung & Ausbau
 
-**Last Updated:** 2026-07-22
-**Phase:** 08 — Test-Fundament grün (Plan 1/4 abgeschlossen)
-**Status:** Ready to execute
+**Last Updated:** 2026-07-23
+**Phase:** 08 — Test-Fundament grün (Plan 4/4 abgeschlossen)
+**Status:** Phase complete — ready for verification
 
 ---
 
@@ -35,10 +35,10 @@ progress:
 
 ## Current Position
 
-Phase: 08 (test-fundament-gr-n) — EXECUTING
-Plan: 4 of 4
-Status: Ready to execute
-Last activity: 2026-07-22 — Phase 08 Plan 01 abgeschlossen
+Phase: 08 (test-fundament-gr-n) — Phase complete, ready for /gsd-verify-work
+Plan: 4 of 4 (alle Pläne abgeschlossen)
+Status: Phase complete — ready for verification
+Last activity: 2026-07-23 — Phase 08 Plan 04 abgeschlossen
 
 ## Performance Metrics
 
@@ -54,6 +54,7 @@ Last activity: 2026-07-22 — Phase 08 Plan 01 abgeschlossen
 | Phase 08 P01 | 9min | 3 tasks | 7 files |
 | Phase 08 P02 | 50min | 2 tasks | 4 files |
 | Phase 08 P03 | 28min | 2 tasks | 16 files |
+| Phase 08 P04 | 25min | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -129,8 +130,8 @@ Last activity: 2026-07-22 — Phase 08 Plan 01 abgeschlossen
 
 ## Session Continuity
 
-**Last session:** 2026-07-22T23:06:17.281Z
-**Stopped at:** Phase 08 Plan 03 abgeschlossen (2/2 Tasks, Assertion-Haertung D-04/D-05/D-06, volle Suite 233 Tests zweimal in Folge 0 Fails)
+**Last session:** 2026-07-22T23:13:35.359Z
+**Stopped at:** Phase 08 Plan 04 abgeschlossen (2/2 Tasks, blockierender e2e-CI-Job D-03 + Triage-Doku D-07, Phase 8 bereit fuer Verifikation)
 **Resume file:** None
 
 **Last action:** Komplette Milestone-UAT abgeschlossen (2026-06-20 → 2026-07-20): alle 5 offenen Human-UAT-Sessions via `/gsd-verify-work` durchgetestet — 07 (4/4), 06 (5/5), 05 (2/2), 01 (3/3), 02 (6/6). Alle 7 VERIFICATION.md jetzt `status: passed`. Dabei gefundene+gefixte Bugs: Soundboard-Doppel-Import (75aadfe), Audio-läuft-nach-Szene-Löschen (b85dbe1), Volume nicht live (801ed48), Manifest-CORS unter file:// (cd75093), Konsolen-Hygiene (c029f11), Datei-Backup schrieb nie bei Entity-CRUD — window.save-Wrapper strukturell wirkungslos für bare save() (1430e8c), generischer registerPostSaveHook + DM-Screen-Live-Sync-Umstellung + CLAUDE.md-Pattern-Korrektur (6ea8309), „Anderen Ordner wählen"-Button (cc2af9e). Nebenbei: Repo mit origin gemergt (7 Mai-Commits, alter pages.yml-Deploy entfernt 7f4858a), 348 Commits gepusht, GitHub-Pages-Deploy live verifiziert (PWA installierbar, SW-Update-Flow, Datei-Backup, Migrations-Wizard file://→PWA). Zusätzlich in der Session: Soundboard-Erweiterungen (Loop-Toggle/Crossfade-Loop/Fortschritt 6636297, Per-Track-Play noch offen als Design), gruppierte Navigation (3d77ec0).
@@ -169,6 +170,7 @@ _State initialized: 2026-06-11_
 - [Phase ?]: quests.spec.js Titel-Assertion auf title korrigiert (Validierungs-Schema nutzt englischen Feldnamen, Mismatch war durch Toast-Race maskiert)
 - [Phase ?]: Phase 08-03: SRD-Monsterdatensatz-Counts, Fuzzy-Suche 'mindestens N', Zufalls-Wettertext, Random-HP-Variation und echte Date.now()-Timestamps bleiben bewusst loose (D-04) — nur deterministisch aus Fixtures ableitbare Counts wurden auf toBe(N) gehaertet
 - [Phase ?]: Phase 08-03: quests.spec.js Root-Cause gefunden — .quest-details (edit/delete-quest) ist bis zum Klick auf .quest-header per CSS eingeklappt; vorherige isVisible()-Guards maskierten dieses fehlende Aufklappen als stillen Pass
+- [Phase ?]: Phase 08-04: build-Jobs needs-Array um e2e erweitert (nicht nur smoke-test) — blockiert D-03-konform bereits den Production-Build bei rotem E2E-Lauf
 
 ## Operator Next Steps
 
