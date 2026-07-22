@@ -266,12 +266,6 @@ test.describe('Encounters - CRUD Operationen', () => {
             await page.click('[data-action="call"][data-value="saveEncounter"]');
             await page.waitForTimeout(500);
 
-            // Zähle vorher
-            const countBefore = await page.evaluate(() => {
-                // @ts-ignore
-                return D.encounters ? D.encounters.length : 0;
-            });
-
             page.on('dialog', dialog => dialog.accept());
 
             // delete-encounter wird im Detail-Panel des automatisch ausgewaehlten Encounters immer
@@ -289,16 +283,17 @@ test.describe('Encounters - CRUD Operationen', () => {
             await performUndo(page);
             await page.waitForTimeout(500);
 
-            // Monster könnte wieder da sein oder Undo nicht implementiert
-            const countAfter = await page.evaluate(() => {
+            // Undo muss den geloeschten Encounter wiederherstellen — analog party/npcs/quests
+            // (Phase 8 Gap-Fix: vorherige Assertion `countAfter >= 0` war eine Tautologie
+            // und konnte unabhaengig vom Undo-Verhalten nie fehlschlagen).
+            const encData = await page.evaluate(name => {
                 // @ts-ignore
-                return D.encounters ? D.encounters.length : 0;
-            });
+                return D.encounters
+                    ? D.encounters.find(e => e.name && e.name.includes(name))
+                    : null;
+            }, encName);
 
-            // Test ist erfolgreich wenn entweder:
-            // 1. Undo funktioniert hat (countAfter >= countBefore)
-            // 2. Oder das Monster wurde zumindest gelöscht (Löschfunktion funktioniert)
-            expect(countAfter >= 0).toBe(true);
+            expect(encData).toBeTruthy();
         });
     });
 });
