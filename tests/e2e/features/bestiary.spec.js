@@ -136,12 +136,16 @@ test.describe('Bestiary — SC1: Suche und Filter', () => {
         const items = page.locator('.bestiary-list-item');
         await expect(items.first()).toBeVisible();
         const count = await items.count();
+        // Anzahl = Groesse des build-zeit-generierten SRD-Monsterdatensatzes (tools/build-srd-monsters.cjs)
+        // + evtl. eigene Kreaturen — Inhaltsaenderung dort wuerde einen exakten Count brechen.
+        // Phase 8 / D-04 (08-03): bleibt loose (pre-seeded SRD-Monster-Datensatz).
         expect(count).toBeGreaterThan(0);
     });
 
     // Contract-Test: Goblin suchen
     test('Goblin suchen', async ({ page }) => {
         const totalBefore = await page.locator('.bestiary-list-item').count();
+        // SRD-Monster-Datensatzgroesse — Phase 8 / D-04 (08-03): bleibt loose (siehe Kommentar oben).
         expect(totalBefore).toBeGreaterThan(0);
 
         await performSearch(page, 'Goblin');
@@ -153,6 +157,8 @@ test.describe('Bestiary — SC1: Suche und Filter', () => {
 
         const items = page.locator('.bestiary-list-item');
         const count = await items.count();
+        // Anzahl Goblin-Treffer haengt vom SRD-Datensatzinhalt ab (Goblin, Goblin-Boss, ...).
+        // Phase 8 / D-04 (08-03): bleibt loose (pre-seeded SRD-Monster-Datensatz).
         expect(count).toBeGreaterThan(0);
 
         for (let i = 0; i < count; i++) {
@@ -177,6 +183,8 @@ test.describe('Bestiary — SC1: Suche und Filter', () => {
             var sel = document.getElementById('bestiary-filter-cr');
             return Array.from(sel.options).map(function(o) { return o.value; }).filter(function(v) { return v !== ''; });
         });
+        // Anzahl verfuegbarer CR-Filteroptionen haengt vom SRD-Datensatzinhalt ab.
+        // Phase 8 / D-04 (08-03): bleibt loose (pre-seeded SRD-Monster-Datensatz).
         expect(crValues.length).toBeGreaterThan(0);
 
         const targetCr = crValues.includes('1/4') ? '1/4' : crValues[0];
@@ -201,6 +209,8 @@ test.describe('Bestiary — SC1: Suche und Filter', () => {
 
         const crLabels = page.locator('.bestiary-list-item .bestiary-cr');
         const count = await crLabels.count();
+        // Anzahl Monster mit dem gewaehlten CR haengt vom SRD-Datensatzinhalt ab.
+        // Phase 8 / D-04 (08-03): bleibt loose (pre-seeded SRD-Monster-Datensatz).
         expect(count).toBeGreaterThan(0);
 
         for (let i = 0; i < count; i++) {
@@ -220,6 +230,8 @@ test.describe('Bestiary — SC1: Suche und Filter', () => {
             var sel = document.getElementById('bestiary-filter-type');
             return Array.from(sel.options).map(function(o) { return o.value; }).filter(function(v) { return v !== ''; });
         });
+        // Anzahl verfuegbarer Typ-Filteroptionen haengt vom SRD-Datensatzinhalt ab.
+        // Phase 8 / D-04 (08-03): bleibt loose (pre-seeded SRD-Monster-Datensatz).
         expect(availableTypes.length).toBeGreaterThan(0);
 
         const targetType = availableTypes[0];
@@ -244,6 +256,8 @@ test.describe('Bestiary — SC1: Suche und Filter', () => {
 
         const typeLabels = page.locator('.bestiary-list-item .bestiary-type');
         const count = await typeLabels.count();
+        // Anzahl Monster mit dem gewaehlten Typ haengt vom SRD-Datensatzinhalt ab.
+        // Phase 8 / D-04 (08-03): bleibt loose (pre-seeded SRD-Monster-Datensatz).
         expect(count).toBeGreaterThan(0);
 
         for (let i = 0; i < count; i++) {
@@ -270,6 +284,9 @@ test.describe('Bestiary — SC1: Suche und Filter', () => {
 
         const diceSpans = page.locator('.bestiary-dice');
         const diceCount = await diceSpans.count();
+        // Anzahl klickbarer Wuerfel-Spans haengt von den Aktionen/Attacken des getroffenen
+        // SRD-Monsters ab (Suchtext 'Goblin', nicht auf ein einzelnes Monster fixiert).
+        // Phase 8 / D-04 (08-03): bleibt loose (pre-seeded SRD-Monster-Datensatz).
         expect(diceCount).toBeGreaterThan(0);
 
         const diceSpan = diceSpans.first();

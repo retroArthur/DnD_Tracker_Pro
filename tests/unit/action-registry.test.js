@@ -114,6 +114,9 @@ describe('searchActions — Fuzzy-Suche Aktions-Register (TECH-04)', () => {
         const results = searchActions('Neuer NPC');
 
         expect(Array.isArray(results)).toBe(true);
+        // Fuzzy-Suche: Trefferanzahl haengt vom Scoring-Threshold und der Registry-Groesse ab,
+        // beide koennen sich mit neuen Aktionen aendern — "mindestens 1 Treffer" ist der stabile Kontrakt.
+        // Phase 8 / D-04 (08-03): bleibt loose (Fuzzy-Suche "at least N").
         expect(results.length).toBeGreaterThan(0);
 
         // Der erste Treffer sollte die NPC-Erstell-Aktion sein
@@ -133,6 +136,8 @@ describe('searchActions — Fuzzy-Suche Aktions-Register (TECH-04)', () => {
         const results = searchActions('8d6');
 
         expect(Array.isArray(results)).toBe(true);
+        // Fuzzy-Suche: Trefferanzahl haengt vom Scoring-Threshold und der Registry-Groesse ab.
+        // Phase 8 / D-04 (08-03): bleibt loose (Fuzzy-Suche "at least N").
         expect(results.length).toBeGreaterThan(0);
 
         // Erwartet: mindestens ein Ergebnis das Wuerfelformeln matcht

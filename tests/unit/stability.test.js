@@ -600,7 +600,9 @@ describe('Persistence Regression Tests (Plan 01-02)', () => {
             const result = compareVersionsLocal('2.11', '2.6.1');
             // BUG: Gibt 1 zurück (Migration wird übersprungen)
             // Dieser Test BESTEHT (dokumentiert dass der Bug existiert — 11 > 6 in semver-Vergleich)
-            expect(result).toBeGreaterThan(0);
+            // compareVersionsLocal gibt nur -1/0/1 zurück; Index 1 (11 vs 6) entscheidet -> exakt 1.
+            // Phase 8 / D-04 (08-03): toBeGreaterThan(0) -> toBe(1), deterministisch aus der Vergleichslogik.
+            expect(result).toBe(1);
         });
 
         test('Daten mit _version="2.11" sollen nach Legacy-Normalisierung korrekt migriert werden', () => {
@@ -712,6 +714,8 @@ describe('Persistence Regression Tests (Plan 01-02)', () => {
             const record = await realLoadFromIDBRaw(STORAGE_KEY);
             expect(record).not.toBeNull();
             expect(record.data).toBe(testData);
+            // record.timestamp ist ein echter Date.now()-Wert zur Laufzeit des Tests — kein
+            // exakter Wert erwartbar, nur "ist gesetzt/positiv". Phase 8 / D-04 (08-03): bleibt loose.
             expect(record.timestamp).toBeGreaterThan(0);
             expect(record.id).toBe(STORAGE_KEY);
 
@@ -889,6 +893,8 @@ describe('Persistence Regression Tests (Plan 01-02)', () => {
             // Nach dem Fix: _ts-Key ist vorhanden
             expect(localStorage.getItem(STORAGE_KEY + '_ts')).not.toBeNull();
             const ts = parseInt(localStorage.getItem(STORAGE_KEY + '_ts'), 10);
+            // ts ist ein echter Date.now()-Wert zur Laufzeit des Tests — kein exakter Wert
+            // erwartbar, nur "ist gesetzt/positiv". Phase 8 / D-04 (08-03): bleibt loose.
             expect(ts).toBeGreaterThan(0);
         });
 

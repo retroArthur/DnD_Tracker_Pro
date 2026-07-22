@@ -264,8 +264,10 @@ describe('Encounter Builder Integration', () => {
             // Für 4 Level-5 Charaktere, medium = 2000 XP
             const count = suggestMonsterCount(2000, '1', 4);
 
-            // CR 1 = 200 XP, brauchen etwa 2000/200 = 10 mit Multiplikator
-            expect(count).toBeGreaterThan(0);
+            // CR 1 = 200 XP, partySize=4 (kein Adjust) — Multiplikator-Stufen: 1x@1, 1.5x@2, 2x@3-6.
+            // Deterministisch: count=5 ist die erste Stufe mit 200*count*mult >= 2000 (200*5*2=2000).
+            // Phase 8 / D-04 (08-03): toBeGreaterThan(0) -> toBe(5), exakter Wert aus der Formel oben ableitbar.
+            expect(count).toBe(5);
             expect(count).toBeLessThan(20);
         });
 

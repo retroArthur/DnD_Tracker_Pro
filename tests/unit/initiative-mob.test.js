@@ -194,6 +194,9 @@ describe('createMobCombatant()', () => {
     test('mob.poolHp ist positiv', () => {
         const monster = { name: 'Goblin', hp: 7, dex: 14, ac: 13, cr: '1/4', _id: 'goblin' };
         const cb = createMobCombatant(monster, 10, 'srd');
+        // poolHp summiert 10 Individual-HP mit echter Math.random()-basierter ±10%-Variation
+        // (createMobCombatant, initiative-mob.js) — kein exakter Wert erwartbar.
+        // Phase 8 / D-04 (08-03): bleibt loose (Randomisierung, nicht deterministisch).
         expect(cb.mob.poolHp).toBeGreaterThan(0);
     });
 

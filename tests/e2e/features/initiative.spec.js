@@ -701,7 +701,10 @@ test.describe('Initiative System', () => {
             // Panel soll klickbare Wuerfel-Spans enthalten (SRD-Monster haben Aktionen mit Formeln)
             const diceSpans = page.locator('#init-statblock-panel [data-action="bestiary-roll-dice"]');
             const count = await diceSpans.count();
-            // Goblin hat Aktionen (Krummschwert), also mindestens 1 klickbare Formel
+            // Goblin hat Aktionen (Krummschwert), also mindestens 1 klickbare Formel.
+            // Anzahl haengt an den build-zeit-generierten SRD-Monsterdaten (tools/build-srd-monsters.cjs)
+            // — Inhaltsaenderung dort wuerde einen exakten Count brechen.
+            // Phase 8 / D-04 (08-03): bleibt loose (pre-seeded SRD-Monster-Datensatz).
             expect(count).toBeGreaterThan(0);
         });
 

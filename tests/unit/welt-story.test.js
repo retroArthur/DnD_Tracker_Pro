@@ -437,6 +437,9 @@ describe('WELT-04: Reise- & Wetter-Simulator', () => {
         expect(result).toHaveProperty('entry');
         expect(result.entry).toHaveProperty('text');
         expect(typeof result.entry.text).toBe('string');
+        // rollWetter waehlt zufaellig einen Eintrag aus einer Wetter-Text-Tabelle mit variabler
+        // Textlaenge — kein exakter Wert erwartbar, nur "ist nicht leer".
+        // Phase 8 / D-04 (08-03): bleibt loose (zufaelliger Tabelleneintrag).
         expect(result.entry.text.length).toBeGreaterThan(0);
     });
 
@@ -444,6 +447,8 @@ describe('WELT-04: Reise- & Wetter-Simulator', () => {
         ['winter', 'fruehling', 'sommer', 'herbst'].forEach(function(jz) {
             var r = rollWetterInline('gemässigt', jz);
             expect(r).not.toBeNull();
+            // Gleicher Grund wie oben: zufaelliger Tabelleneintrag, variable Textlaenge.
+            // Phase 8 / D-04 (08-03): bleibt loose.
             expect(r.entry.text.length).toBeGreaterThan(0);
         });
     });

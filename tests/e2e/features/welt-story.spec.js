@@ -343,6 +343,9 @@ test.describe('WELT-04: Reise-Tab', () => {
         expect(result).not.toBeNull();
         expect(result.entry).toBeDefined();
         expect(typeof result.entry.text).toBe('string');
+        // rollWetter waehlt zufaellig einen Eintrag aus einer Wetter-Text-Tabelle mit variabler
+        // Textlaenge — kein exakter Wert erwartbar, nur "ist nicht leer".
+        // Phase 8 / D-04 (08-03): bleibt loose (zufaelliger Tabelleneintrag).
         expect(result.entry.text.length).toBeGreaterThan(0);
     });
 

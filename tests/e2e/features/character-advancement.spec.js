@@ -506,10 +506,13 @@ test.describe('CHAR-01 / 06-09: XP-Verteilung mit Char-Auswahl', () => {
             const char903 = chars.find(c => c.id === 903);
             // Abgewählter Char 901: keine XP-Änderung
             expect(char901.xp).toBe(0);
+            // Deterministisch: openXpModalWith3Chars setzt total=100, 901 ist abgewaehlt →
+            // distributeXP(100, [902,903]) via Math.floor(100/2) = 50 je Charakter (game-rules.js).
+            // Phase 8 / D-04 (08-03): toBeGreaterThan(0) -> toBe(50), exakt aus Fixture ableitbar.
             // Angehakter lebender Char 902: XP erhöht
-            expect(char902.xp).toBeGreaterThan(0);
+            expect(char902.xp).toBe(50);
             // Angehakter 0-HP-Char 903: XP erhöht (alive/dead gatet nicht mehr)
-            expect(char903.xp).toBeGreaterThan(0);
+            expect(char903.xp).toBe(50);
         }
     );
 

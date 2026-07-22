@@ -93,8 +93,12 @@ test.describe('Wuerfel-Statistiken', function () {
             });
         });
 
-        // Mindestens die 2 soeben abgesetzten Wuerfe
-        expect(count).toBeGreaterThan(0);
+        // Deterministisch: jeder Playwright-Test startet mit frischem Browser-Context (eigene
+        // IndexedDB-Partition, kein Storage-State-Reuse, siehe playwright.config.js), und
+        // addToDiceHistory() schreibt pro Aufruf genau 1 Record fire-and-forget (dice-core.js) —
+        // hier exakt die 2 oben abgesetzten Wuerfe, kein Batching/Dedup.
+        // Phase 8 / D-04 (08-03): toBeGreaterThan(0) -> toBe(2).
+        expect(count).toBe(2);
 
         // Via window.getAllStats() pruefen (07-01 API)
         const records = await page.evaluate(function() {
@@ -102,7 +106,7 @@ test.describe('Wuerfel-Statistiken', function () {
             return window.getAllStats();
         });
         expect(Array.isArray(records)).toBe(true);
-        expect(records.length).toBeGreaterThan(0);
+        expect(records.length).toBe(2);
 
         // Erster Record hat notation + rolls
         var rec = records[0];
