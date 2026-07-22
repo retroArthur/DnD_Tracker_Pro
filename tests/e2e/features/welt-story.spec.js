@@ -229,7 +229,13 @@ test.describe('WELT-02: NPC-Generator', () => {
         await expect(page.locator('#npc-generator-modal')).toBeVisible();
 
         // Tab wechseln via switchView (Modal ist Fullscreen-Overlay und blockiert Pointer-Events
-        // auf darunter liegende Elemente — switchView direkt aufrufen testet den Cleanup-Hook exakt)
+        // auf darunter liegende Elemente — switchView direkt aufrufen testet den Cleanup-Hook exakt).
+        // D-06-Bestandsausnahme (Phase 8 / 08-03 Task 2a, geprueft und BEIBEHALTEN): dieses evaluate()
+        // ersetzt NICHT die Interaktion, die der Test eigentlich prueft — das Test-Subjekt ist der
+        // View-Switch-Cleanup-Hook (entfernt das NPC-Generator-Modal aus dem DOM), nicht der
+        // Tab-Klick-Mechanismus selbst (ein echter Klick auf den Nav-Tab wuerde intern denselben
+        // switchView() aufrufen, waere aber durch das Fullscreen-Modal-Overlay pointer-intercepted).
+        // Dokumentiertes Navigations-Vehikel, kein Maskieren.
         await page.evaluate(() => { if (typeof window.switchView === 'function') window.switchView('party'); });
 
         // Modal muss vollständig aus dem DOM entfernt sein (count === 0 beweist Entfernung)

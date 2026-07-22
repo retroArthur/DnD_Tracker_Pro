@@ -101,18 +101,20 @@ test.describe('Party Tab', () => {
 
     test('Charakter-Formular ist zugänglich', async ({ page }) => {
         // Formular öffnen über toggle-collapse
+        // formToggle ist statisches UI-Markup (assets/templates/view-party.html), unabhaengig
+        // von D.characters — kein isVisible()-Guard noetig (Phase 8 / D-05/D-06, 08-03 Task 2b:
+        // vorheriger Guard umschloss die einzige Assertion des Tests und maskierte ein fehlendes
+        // Element als stillen Pass).
         const formToggle = page
             .locator('[data-action="toggle-collapse"][data-value="char-form"]')
             .first();
+        await expect(formToggle).toBeVisible();
+        await formToggle.click();
+        await page.waitForTimeout(300);
 
-        if (await formToggle.isVisible()) {
-            await formToggle.click();
-            await page.waitForTimeout(300);
-
-            // Formular-Container sollte open-Klasse haben
-            const form = page.locator('#char-form');
-            await expect(form).toHaveClass(/open/);
-        }
+        // Formular-Container sollte open-Klasse haben
+        const form = page.locator('#char-form');
+        await expect(form).toHaveClass(/open/);
     });
 });
 
@@ -129,29 +131,42 @@ test.describe('Orte Tab', () => {
     });
 
     test('Ort kann ausgewählt werden', async ({ page }) => {
-        // Ersten Ort klicken (falls vorhanden)
+        // Seed: mind. 1 Ort noetig, da .loc-item bei leerem D.locations gar nicht existiert
+        // (dokumentiertes Setup, D-06 — der Klick selbst bleibt eine echte Playwright-Interaktion).
+        // Phase 8 / D-05/D-06, 08-03 Task 2b: vorheriger isVisible()-Guard umschloss die einzige
+        // Assertion und maskierte den (bei frischer App immer leeren) Zustand als stillen Pass.
+        await page.evaluate(() => {
+            window.D.locations.push({ id: 90101, name: 'Testort', description: '', filterId: null });
+            window.renderLocations();
+        });
+
         const firstLocation = page.locator('.loc-item').first();
+        await expect(firstLocation).toBeVisible();
+        await firstLocation.click();
+        await page.waitForTimeout(300);
 
-        if (await firstLocation.isVisible()) {
-            await firstLocation.click();
-            await page.waitForTimeout(300);
-
-            // Detail-Panel sollte Inhalt zeigen
-            await expect(page.locator('.loc-detail-content')).toBeVisible();
-        }
+        // Detail-Panel sollte Inhalt zeigen
+        await expect(page.locator('.loc-detail-content')).toBeVisible();
     });
 
     test('NPC-Chip öffnet Popup', async ({ page }) => {
-        // Ersten NPC-Chip finden und klicken
+        // Seed: Ort + zugeordneter NPC noetig, da .loc-npc-chip nur bei D.npcs mit passender
+        // locationId gerendert wird (dokumentiertes Setup, D-06 — der Klick bleibt real).
+        // Phase 8 / D-05/D-06, 08-03 Task 2b: vorheriger isVisible()-Guard umschloss die einzige
+        // Assertion und maskierte den (bei frischer App immer leeren) Zustand als stillen Pass.
+        await page.evaluate(() => {
+            window.D.locations.push({ id: 90102, name: 'Testort NPC', description: '', filterId: null });
+            window.D.npcs.push({ id: 90102, name: 'Test-NPC', role: 'Händler', locationId: 90102 });
+            window.renderLocations();
+        });
+
         const npcChip = page.locator('.loc-npc-chip').first();
+        await expect(npcChip).toBeVisible();
+        await npcChip.click();
+        await page.waitForTimeout(500);
 
-        if (await npcChip.isVisible()) {
-            await npcChip.click();
-            await page.waitForTimeout(500);
-
-            // NPC-Popup sollte erscheinen
-            await expect(page.locator('.npc-popup, .npc-quick-popup')).toBeVisible();
-        }
+        // NPC-Popup sollte erscheinen
+        await expect(page.locator('.npc-popup, .npc-quick-popup')).toBeVisible();
     });
 });
 
@@ -167,15 +182,23 @@ test.describe('NPCs Tab', () => {
     });
 
     test('NPC kann ausgewählt werden', async ({ page }) => {
+        // Seed: mind. 1 NPC noetig, da .npc-item bei leerem D.npcs gar nicht existiert
+        // (dokumentiertes Setup, D-06 — der Klick selbst bleibt eine echte Playwright-Interaktion).
+        // Phase 8 / D-05/D-06, 08-03 Task 2b: vorheriger isVisible()-Guard umschloss die einzige
+        // Assertion und maskierte den (bei frischer App immer leeren) Zustand als stillen Pass.
+        await page.evaluate(() => {
+            window.D.npcs.push({ id: 90103, name: 'Test-NPC-Auswahl', role: 'Wache' });
+            window.renderNPCList();
+        });
+
         const firstNpc = page.locator('.npc-item, .npc-card').first();
+        await expect(firstNpc).toBeVisible();
+        await firstNpc.click();
+        await page.waitForTimeout(300);
 
-        if (await firstNpc.isVisible()) {
-            await firstNpc.click();
-            await page.waitForTimeout(300);
-
-            // Detail sollte angezeigt werden
-            await expect(page.locator('.npc-detail, .npc-detail-content')).toBeVisible();
-        }
+        // Detail sollte angezeigt werden (.npc-detail ist der Panel-Wrapper, .npc-detail-content
+        // das innere Content-Div — beide matchen, daher .first() gegen strict-mode violation)
+        await expect(page.locator('.npc-detail, .npc-detail-content').first()).toBeVisible();
     });
 });
 
@@ -194,17 +217,18 @@ test.describe('Würfel Tab', () => {
     });
 
     test('D20 Würfel kann geworfen werden', async ({ page }) => {
-        const d20Button = page.locator(
-            '[data-action="roll-dice"][data-value="d20"], .dice-btn[data-dice="d20"]'
-        );
+        // Stale Selektor korrigiert: die reale Produktions-Markup ist
+        // `.dice-die.d20[data-action="roll-dice"][data-value="20"]` (assets/templates/view-tools.html) —
+        // weder `[data-value="d20"]` noch `.dice-btn[data-dice="d20"]` haben je gematcht, wodurch
+        // isVisible() immer false war und der Guard die einzige Assertion permanent maskierte.
+        // Phase 8 / D-05/D-06, 08-03 Task 2b.
+        const d20Button = page.locator('.dice-die.d20[data-action="roll-dice"][data-value="20"]');
+        await expect(d20Button).toBeVisible();
+        await d20Button.click();
+        await page.waitForTimeout(500);
 
-        if (await d20Button.isVisible()) {
-            await d20Button.click();
-            await page.waitForTimeout(500);
-
-            // Ergebnis sollte angezeigt werden
-            await expect(page.locator('.dice-result, #dice-hero-result')).toBeVisible();
-        }
+        // Ergebnis sollte angezeigt werden
+        await expect(page.locator('.dice-result, #dice-hero-result')).toBeVisible();
     });
 });
 

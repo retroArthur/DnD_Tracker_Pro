@@ -213,13 +213,16 @@ test.describe('Quests - CRUD Operationen', () => {
             await page.waitForTimeout(500);
 
             // Filter auf "Aktiv" prüfen
+            // #quest-filter-active ist statisches Modal-Markup (assets/templates/view-content.html) —
+            // kein isVisible()-Guard noetig (Phase 8 / D-05/D-06, 08-03 Task 2b: vorheriger Guard
+            // umschloss die einzige Assertion des Tests und maskierte ein fehlendes Element als
+            // stillen Pass).
             const activeFilter = page.locator(
                 '#quest-filter-active, [data-action="filter-quests"][data-value="active"]'
             );
-            if (await activeFilter.isVisible()) {
-                // Quest sollte als aktiv erscheinen
-                await expect(page.locator('#quests-list, .quest-list')).toContainText(activeQuest);
-            }
+            await expect(activeFilter).toBeVisible();
+            // Quest sollte als aktiv erscheinen
+            await expect(page.locator('#quests-list, .quest-list')).toContainText(activeQuest);
         });
     });
 
@@ -235,28 +238,33 @@ test.describe('Quests - CRUD Operationen', () => {
             await page.waitForTimeout(500);
 
             // Bearbeiten und als abgeschlossen markieren
+            // .quest-details (und damit edit-quest) ist bis zum Aufklappen des Quest-Headers
+            // per CSS versteckt (assets/styles/core.css: .quest-item.expanded .quest-details) —
+            // der vorherige isVisible()-Guard maskierte dieses fehlende Aufklappen als stillen
+            // Pass statt es zu erzwingen (Phase 8 / D-05/D-06, 08-03 Task 2b).
+            await page.click('.quest-header');
+            await page.waitForTimeout(200);
             const editBtn = page.locator(`[data-action="edit-quest"]`).first();
-            if (await editBtn.isVisible()) {
-                await editBtn.click();
-                await page.waitForTimeout(300);
+            await expect(editBtn).toBeVisible();
+            await editBtn.click();
+            await page.waitForTimeout(300);
 
-                // Completed Checkbox
-                const completedCheckbox = page.locator('#quest-completed');
-                if (await completedCheckbox.isVisible()) {
-                    await completedCheckbox.check();
-                }
-
-                await page.click('[data-action="call"][data-value="saveQuest"]');
-                await page.waitForTimeout(500);
-
-                // Prüfen
-                const questData = await page.evaluate(title => {
-                    // @ts-ignore
-                    return D.quests.find(q => q.title.includes(title));
-                }, questTitle);
-
-                expect(questData.completed).toBe(true);
+            // Completed Checkbox
+            const completedCheckbox = page.locator('#quest-completed');
+            if (await completedCheckbox.isVisible()) {
+                await completedCheckbox.check();
             }
+
+            await page.click('[data-action="call"][data-value="saveQuest"]');
+            await page.waitForTimeout(500);
+
+            // Prüfen
+            const questData = await page.evaluate(title => {
+                // @ts-ignore
+                return D.quests.find(q => q.title.includes(title));
+            }, questTitle);
+
+            expect(questData.completed).toBe(true);
         });
 
         test('Quest-Belohnung kann geändert werden', async ({ page }) => {
@@ -271,23 +279,27 @@ test.describe('Quests - CRUD Operationen', () => {
             await page.waitForTimeout(500);
 
             // Bearbeiten
+            // .quest-details (und damit edit-quest) ist bis zum Aufklappen des Quest-Headers
+            // per CSS versteckt — der vorherige isVisible()-Guard maskierte dieses fehlende
+            // Aufklappen als stillen Pass statt es zu erzwingen (Phase 8 / D-05/D-06, 08-03 Task 2b).
+            await page.click('.quest-header');
+            await page.waitForTimeout(200);
             const editBtn = page.locator(`[data-action="edit-quest"]`).first();
-            if (await editBtn.isVisible()) {
-                await editBtn.click();
-                await page.waitForTimeout(300);
+            await expect(editBtn).toBeVisible();
+            await editBtn.click();
+            await page.waitForTimeout(300);
 
-                await fillField(page, 'quest-reward-gold', '1000');
-                await page.click('[data-action="call"][data-value="saveQuest"]');
-                await page.waitForTimeout(500);
+            await fillField(page, 'quest-reward-gold', '1000');
+            await page.click('[data-action="call"][data-value="saveQuest"]');
+            await page.waitForTimeout(500);
 
-                // Prüfen
-                const questData = await page.evaluate(title => {
-                    // @ts-ignore
-                    return D.quests.find(q => q.title.includes(title));
-                }, questTitle);
+            // Prüfen
+            const questData = await page.evaluate(title => {
+                // @ts-ignore
+                return D.quests.find(q => q.title.includes(title));
+            }, questTitle);
 
-                expect(questData.rewardGold).toBe(1000);
-            }
+            expect(questData.rewardGold).toBe(1000);
         });
     });
 
@@ -306,16 +318,18 @@ test.describe('Quests - CRUD Operationen', () => {
             page.on('dialog', dialog => dialog.accept());
 
             // Löschen
+            // .quest-details (und damit delete-quest) ist bis zum Aufklappen des Quest-Headers
+            // per CSS versteckt — der vorherige isVisible()-Guard maskierte dieses fehlende
+            // Aufklappen als stillen Pass statt es zu erzwingen (Phase 8 / D-05/D-06, 08-03 Task 2b).
+            await page.click('.quest-header');
+            await page.waitForTimeout(200);
             const deleteBtn = page.locator(`[data-action="delete-quest"]`).first();
-            if (await deleteBtn.isVisible()) {
-                await deleteBtn.click();
-                await page.waitForTimeout(500);
+            await expect(deleteBtn).toBeVisible();
+            await deleteBtn.click();
+            await page.waitForTimeout(500);
 
-                // Prüfen
-                await expect(page.locator('#quests-list, .quest-list')).not.toContainText(
-                    questTitle
-                );
-            }
+            // Prüfen
+            await expect(page.locator('#quests-list, .quest-list')).not.toContainText(questTitle);
         });
 
         test('Löschen kann rückgängig gemacht werden', async ({ page }) => {
@@ -332,18 +346,22 @@ test.describe('Quests - CRUD Operationen', () => {
             page.on('dialog', dialog => dialog.accept());
 
             // Löschen
+            // .quest-details (und damit delete-quest) ist bis zum Aufklappen des Quest-Headers
+            // per CSS versteckt — der vorherige isVisible()-Guard maskierte dieses fehlende
+            // Aufklappen als stillen Pass statt es zu erzwingen (Phase 8 / D-05/D-06, 08-03 Task 2b).
+            await page.click('.quest-header');
+            await page.waitForTimeout(200);
             const deleteBtn = page.locator(`[data-action="delete-quest"]`).first();
-            if (await deleteBtn.isVisible()) {
-                await deleteBtn.click();
-                await page.waitForTimeout(500);
+            await expect(deleteBtn).toBeVisible();
+            await deleteBtn.click();
+            await page.waitForTimeout(500);
 
-                // Undo
-                await performUndo(page);
-                await page.waitForTimeout(500);
+            // Undo
+            await performUndo(page);
+            await page.waitForTimeout(500);
 
-                // Quest wieder da
-                await expect(page.locator('#quests-list, .quest-list')).toContainText(questTitle);
-            }
+            // Quest wieder da
+            await expect(page.locator('#quests-list, .quest-list')).toContainText(questTitle);
         });
     });
 });

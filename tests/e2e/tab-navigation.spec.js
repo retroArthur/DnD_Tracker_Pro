@@ -87,7 +87,10 @@ test.describe('Tab Registry System', () => {
                 window.renderRandomTables();
             }
         });
-        await page.waitForTimeout(300);
+        // D-05 (Phase 8 / 08-03 Task 2c): fixer waitForTimeout(300) durch waitForSelector auf die
+        // konkrete Bedingung ersetzt (Pitfall-6-Selektor-Fix — .rt-card wird synchron durch den
+        // renderRandomTables()-Aufruf oben erzeugt, kein Timing-Puffer noetig).
+        await page.waitForSelector('.rt-card');
 
         // Verify random tables container is visible
         const container = page.locator('#random-tables-list');
@@ -120,7 +123,9 @@ test.describe('Tab Registry System', () => {
             const details = document.getElementById('random-tables-list')?.closest('details');
             if (details) details.open = true;
         });
-        await page.waitForTimeout(300);
+        // D-05 (Phase 8 / 08-03 Task 2c): fixer waitForTimeout(300) durch waitForSelector auf die
+        // konkrete Bedingung ersetzt (Pitfall-6-Selektor-Fix).
+        await page.waitForSelector('.rt-card');
         await expect(page.locator('.rt-card').first()).toContainText('Initial Table');
 
         // Switch away
@@ -145,7 +150,9 @@ test.describe('Tab Registry System', () => {
             const details = document.getElementById('random-tables-list')?.closest('details');
             if (details) details.open = true;
         });
-        await page.waitForTimeout(500);
+        // D-05 (Phase 8 / 08-03 Task 2c): fixer waitForTimeout(500) durch waitForFunction auf die
+        // konkrete Bedingung ersetzt (beide .rt-card-Eintraege gerendert, Pitfall-6/-7-Fix).
+        await page.waitForFunction(() => document.querySelectorAll('.rt-card').length === 2);
 
         // Both tables should be visible (re-render happened)
         const tableCards = page.locator('.rt-card');
@@ -194,7 +201,9 @@ test.describe('Tab Registry System', () => {
                 window.renderInit();
             }
         });
-        await page.waitForTimeout(300);
+        // D-05 (Phase 8 / 08-03 Task 2c): fixer waitForTimeout(300) durch waitForSelector auf die
+        // konkrete Bedingung ersetzt (Pitfall-5-Fix — .init-entry wird synchron gerendert).
+        await page.waitForSelector('.init-entry');
 
         // Verify initiative list exists
         const initList = page.locator('#init-list');
@@ -246,7 +255,8 @@ test.describe('Tab Registry System', () => {
                 window.renderInit();
             }
         });
-        await page.waitForTimeout(200);
+        // D-05 (Phase 8 / 08-03 Task 2c): fixer waitForTimeout(200) durch waitForSelector ersetzt.
+        await page.waitForSelector('.init-entry');
         await expect(page.locator('.init-entry')).toHaveCount(1);
 
         // Switch away
@@ -265,7 +275,11 @@ test.describe('Tab Registry System', () => {
         // Switch back to initiative tab
         await page.evaluate(() => window.switchView('initiative'));
         await page.waitForSelector('#view-initiative.active', { timeout: 5000 });
-        await page.waitForTimeout(500);
+        // D-05 (Phase 8 / 08-03 Task 2c): fixer waitForTimeout(500) durch waitForFunction auf die
+        // konkrete Bedingung ersetzt (Rundenzahl im DOM aktualisiert, Pitfall-5/-7-Fix).
+        await page.waitForFunction(
+            () => document.getElementById('encounter-round-num')?.textContent?.includes('3')
+        );
 
         // Verify re-render happened - round and HP should be updated
         const roundNum = page.locator('#encounter-round-num');
@@ -302,7 +316,8 @@ test.describe('Tab Registry System', () => {
                 window.renderParty();
             }
         });
-        await page.waitForTimeout(200);
+        // D-05 (Phase 8 / 08-03 Task 2c): fixer waitForTimeout(200) durch waitForSelector ersetzt.
+        await page.waitForSelector('.char-card');
         // (Pitfall 5: real class from renderParty() is .char-card, never .party-member)
         await expect(page.locator('.char-card')).toHaveCount(1);
 
@@ -327,7 +342,8 @@ test.describe('Tab Registry System', () => {
         // Switch back to party tab
         await page.evaluate(() => window.switchView('party'));
         await page.waitForSelector('#view-party.active', { timeout: 5000 });
-        await page.waitForTimeout(500);
+        // D-05 (Phase 8 / 08-03 Task 2c): fixer waitForTimeout(500) durch waitForFunction ersetzt.
+        await page.waitForFunction(() => document.querySelectorAll('.char-card').length === 2);
 
         // Both characters should be visible
         const members = page.locator('.char-card');
@@ -351,7 +367,9 @@ test.describe('Tab Registry System', () => {
                 window.renderTimers();
             }
         });
-        await page.waitForTimeout(200);
+        // D-05 (Phase 8 / 08-03 Task 2c): fixer waitForTimeout(200) durch waitForSelector ersetzt
+        // (Pitfall-8-Fix — .timer-card statt .timer-item).
+        await page.waitForSelector('.timer-card');
 
         // Verify timer is rendered (real class is .timer-card, not .timer-item)
         const timer = page.locator('.timer-card');
@@ -368,7 +386,8 @@ test.describe('Tab Registry System', () => {
         // Switch back
         await page.evaluate(() => window.switchView('timers'));
         await page.waitForSelector('#view-timers.active', { timeout: 5000 });
-        await page.waitForTimeout(500);
+        // D-05 (Phase 8 / 08-03 Task 2c): fixer waitForTimeout(500) durch waitForFunction ersetzt.
+        await page.waitForFunction(() => document.querySelectorAll('.timer-card').length === 2);
 
         // Both timers should be visible
         const timers = page.locator('.timer-card');
@@ -398,7 +417,11 @@ test.describe('Tab Registry Error Handling', () => {
                 window.renderRandomTables();
             }
         });
-        await page.waitForTimeout(300);
+        // D-05 (Phase 8 / 08-03 Task 2c): fixer waitForTimeout(300) durch waitForFunction auf die
+        // konkrete Bedingung ersetzt (Pitfall-6-Fix — Empty-State-Text im Container).
+        await page.waitForFunction(() =>
+            document.getElementById('random-tables-list')?.textContent?.includes('Keine Tabellen')
+        );
 
         // Container should exist but show empty message
         const container = page.locator('#random-tables-list');
@@ -509,7 +532,8 @@ test.describe('Tab Registry Integration', () => {
             const details = document.getElementById('random-tables-list')?.closest('details');
             if (details) details.open = true;
         });
-        await page.waitForTimeout(300);
+        // D-05 (Phase 8 / 08-03 Task 2c): fixer waitForTimeout(300) durch waitForSelector ersetzt.
+        await page.waitForSelector('.rt-card');
         await expect(page.locator('.rt-card').first()).toContainText('Original Table');
 
         // Make a change (add another table)
@@ -526,12 +550,14 @@ test.describe('Tab Registry Integration', () => {
                 window.renderRandomTables();
             }
         });
-        await page.waitForTimeout(300);
+        // D-05 (Phase 8 / 08-03 Task 2c): fixer waitForTimeout(300) durch waitForFunction ersetzt.
+        await page.waitForFunction(() => document.querySelectorAll('.rt-card').length === 2);
 
         // Should show 2 tables
         await expect(page.locator('.rt-card')).toHaveCount(2);
 
-        // Undo (if undo function is accessible)
+        // Undo (if undo function is accessible) — regressionsrelevant fuer den renderAll()-Dispatch-
+        // Fix aus 08-01 (Pitfall 7: renderRandomTables/renderTimers fehlten in renderAll()).
         const undoResult = await page.evaluate(() => {
             if (typeof window.undo === 'function') {
                 window.undo();
@@ -541,7 +567,8 @@ test.describe('Tab Registry Integration', () => {
         });
 
         if (undoResult) {
-            await page.waitForTimeout(300);
+            // D-05 (Phase 8 / 08-03 Task 2c): fixer waitForTimeout(300) durch waitForFunction ersetzt.
+            await page.waitForFunction(() => document.querySelectorAll('.rt-card').length === 1);
             // Should be back to 1 table
             await expect(page.locator('.rt-card')).toHaveCount(1);
         }

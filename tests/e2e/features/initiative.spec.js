@@ -856,7 +856,14 @@ test.describe('Initiative System', () => {
             expect(activeCount).toBe(2);
 
             // Runde abschliessen via evaluate (direkte nextTurn()-Aufrufe) — vermeidet Selektor-Problem
-            // (der Button nutzt data-action="call" data-value="nextTurn", nicht data-action="next-turn")
+            // (der Button nutzt data-action="call" data-value="nextTurn", nicht data-action="next-turn").
+            // D-06-Bestandsausnahme (Phase 8 / 08-03 Task 2a, geprueft und BEIBEHALTEN): dieses
+            // evaluate() ersetzt NICHT die Interaktion, die der Test eigentlich prueft — das
+            // Test-Subjekt ist die LA/LR-Pip-Wiederherstellung nach Rundenuebergang, nicht der
+            // "Naechster Zug"-Klick selbst (der wird separat ueber echte UI-Klicks getestet, siehe
+            // Zeilen 114/131/154 in dieser Datei). Der Pointer-Klick auf den echten Button wuerde
+            // von der Statblock-Drawer-Ueberlagerung abgefangen (Pointer-Interception) — evaluate()
+            // ist hier dokumentiertes, klar begruendetes Setup/Navigations-Vehikel, kein Maskieren.
             await page.evaluate(() => {
                 if (typeof window.nextTurn === 'function') window.nextTurn(); // Vampir → Goblin
             });
@@ -902,7 +909,14 @@ test.describe('Initiative System', () => {
             expect(activeLrCount).toBe(0);
 
             // Runde abschliessen via evaluate (direkte nextTurn()-Aufrufe) — vermeidet Selektor-Problem
-            // (der Button nutzt data-action="call" data-value="nextTurn", nicht data-action="next-turn")
+            // (der Button nutzt data-action="call" data-value="nextTurn", nicht data-action="next-turn").
+            // D-06-Bestandsausnahme (Phase 8 / 08-03 Task 2a, geprueft und BEIBEHALTEN): dieses
+            // evaluate() ersetzt NICHT die Interaktion, die der Test eigentlich prueft — das
+            // Test-Subjekt ist die LA/LR-Pip-Wiederherstellung nach Rundenuebergang, nicht der
+            // "Naechster Zug"-Klick selbst (der wird separat ueber echte UI-Klicks getestet, siehe
+            // Zeilen 114/131/154 in dieser Datei). Der Pointer-Klick auf den echten Button wuerde
+            // von der Statblock-Drawer-Ueberlagerung abgefangen (Pointer-Interception) — evaluate()
+            // ist hier dokumentiertes, klar begruendetes Setup/Navigations-Vehikel, kein Maskieren.
             await page.evaluate(() => {
                 if (typeof window.nextTurn === 'function') window.nextTurn(); // Vampir → Goblin
             });

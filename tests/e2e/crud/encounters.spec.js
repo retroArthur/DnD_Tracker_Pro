@@ -109,10 +109,13 @@ test.describe('Encounters - CRUD Operationen', () => {
             await page.locator('#enc-str').blur();
             await page.waitForTimeout(100);
 
+            // #enc-str-mod ist statisches Form-Markup (assets/templates/view-encounters.html) —
+            // kein isVisible()-Guard noetig (Phase 8 / D-05/D-06, 08-03 Task 2b: vorheriger Guard
+            // umschloss die einzige Assertion des Tests und maskierte ein fehlendes Element als
+            // stillen Pass).
             const modEl = page.locator('#enc-str-mod');
-            if (await modEl.isVisible()) {
-                await expect(modEl).toHaveText('+4');
-            }
+            await expect(modEl).toBeVisible();
+            await expect(modEl).toHaveText('+4');
         });
 
         test('Monster ohne Namen zeigt Fehlermeldung', async ({ page }) => {
@@ -163,16 +166,19 @@ test.describe('Encounters - CRUD Operationen', () => {
             await page.waitForTimeout(500);
 
             // Suche
+            // #enc-search ist statisches Toolbar-Markup (assets/templates/view-encounters.html) —
+            // kein isVisible()-Guard noetig (Phase 8 / D-05/D-06, 08-03 Task 2b: vorheriger Guard
+            // umschloss die einzige Assertion des Tests und maskierte ein fehlendes Element als
+            // stillen Pass).
             const searchField = page.locator('#enc-search');
-            if (await searchField.isVisible()) {
-                await searchField.fill('Wolf');
-                await page.waitForTimeout(300);
+            await expect(searchField).toBeVisible();
+            await searchField.fill('Wolf');
+            await page.waitForTimeout(300);
 
-                const listContent = await page
-                    .locator('#encounters-list, .encounter-list, #view-encounter')
-                    .textContent();
-                expect(listContent).toContain('Wolf');
-            }
+            const listContent = await page
+                .locator('#encounters-list, .encounter-list, #view-encounter')
+                .textContent();
+            expect(listContent).toContain('Wolf');
         });
     });
 
@@ -188,26 +194,30 @@ test.describe('Encounters - CRUD Operationen', () => {
             await page.waitForTimeout(500);
 
             // Edit Button finden und klicken
+            // edit-encounter wird im Detail-Panel des (nach dem Anlegen automatisch ausgewaehlten)
+            // Encounters immer gerendert (features/encounters/encounters-render.js) — kein
+            // isVisible()-Guard noetig (Phase 8 / D-05/D-06, 08-03 Task 2b: vorheriger Guard
+            // umschloss die einzige Assertion des Tests und maskierte ein fehlendes Element als
+            // stillen Pass).
             const editBtn = page
                 .locator('[data-action="edit-enc"], [data-action="edit-encounter"]')
                 .first();
-            if (await editBtn.isVisible()) {
-                await editBtn.click();
-                await page.waitForTimeout(300);
+            await expect(editBtn).toBeVisible();
+            await editBtn.click();
+            await page.waitForTimeout(300);
 
-                await fillField(page, 'enc-hp', '50');
-                await page.click('[data-action="call"][data-value="saveEncounter"]');
-                await page.waitForTimeout(500);
+            await fillField(page, 'enc-hp', '50');
+            await page.click('[data-action="call"][data-value="saveEncounter"]');
+            await page.waitForTimeout(500);
 
-                const encData = await page.evaluate(name => {
-                    // @ts-ignore
-                    return D.encounters
-                        ? D.encounters.find(e => e.name && e.name.includes(name))
-                        : null;
-                }, encName);
+            const encData = await page.evaluate(name => {
+                // @ts-ignore
+                return D.encounters
+                    ? D.encounters.find(e => e.name && e.name.includes(name))
+                    : null;
+            }, encName);
 
-                expect(encData.hp).toBe(50);
-            }
+            expect(encData.hp).toBe(50);
         });
     });
 
@@ -229,20 +239,23 @@ test.describe('Encounters - CRUD Operationen', () => {
             // Dialog akzeptieren
             page.on('dialog', dialog => dialog.accept());
 
+            // delete-encounter wird im Detail-Panel des automatisch ausgewaehlten Encounters immer
+            // gerendert — kein isVisible()-Guard noetig (Phase 8 / D-05/D-06, 08-03 Task 2b:
+            // vorheriger Guard umschloss die einzige Assertion des Tests und maskierte ein
+            // fehlendes Element als stillen Pass).
             const deleteBtn = page
                 .locator('[data-action="delete-enc"], [data-action="delete-encounter"]')
                 .first();
-            if (await deleteBtn.isVisible()) {
-                await deleteBtn.click();
-                await page.waitForTimeout(500);
+            await expect(deleteBtn).toBeVisible();
+            await deleteBtn.click();
+            await page.waitForTimeout(500);
 
-                const countAfter = await page.evaluate(() => {
-                    // @ts-ignore
-                    return D.encounters ? D.encounters.length : 0;
-                });
+            const countAfter = await page.evaluate(() => {
+                // @ts-ignore
+                return D.encounters ? D.encounters.length : 0;
+            });
 
-                expect(countAfter).toBeLessThan(countBefore);
-            }
+            expect(countAfter).toBeLessThan(countBefore);
         });
 
         test('Löschen kann rückgängig gemacht werden', async ({ page }) => {
@@ -261,28 +274,31 @@ test.describe('Encounters - CRUD Operationen', () => {
 
             page.on('dialog', dialog => dialog.accept());
 
+            // delete-encounter wird im Detail-Panel des automatisch ausgewaehlten Encounters immer
+            // gerendert — kein isVisible()-Guard noetig (Phase 8 / D-05/D-06, 08-03 Task 2b:
+            // vorheriger Guard umschloss die einzige Assertion des Tests und maskierte ein
+            // fehlendes Element als stillen Pass).
             const deleteBtn = page
                 .locator('[data-action="delete-enc"], [data-action="delete-encounter"]')
                 .first();
-            if (await deleteBtn.isVisible()) {
-                await deleteBtn.click();
-                await page.waitForTimeout(500);
+            await expect(deleteBtn).toBeVisible();
+            await deleteBtn.click();
+            await page.waitForTimeout(500);
 
-                // Undo
-                await performUndo(page);
-                await page.waitForTimeout(500);
+            // Undo
+            await performUndo(page);
+            await page.waitForTimeout(500);
 
-                // Monster könnte wieder da sein oder Undo nicht implementiert
-                const countAfter = await page.evaluate(() => {
-                    // @ts-ignore
-                    return D.encounters ? D.encounters.length : 0;
-                });
+            // Monster könnte wieder da sein oder Undo nicht implementiert
+            const countAfter = await page.evaluate(() => {
+                // @ts-ignore
+                return D.encounters ? D.encounters.length : 0;
+            });
 
-                // Test ist erfolgreich wenn entweder:
-                // 1. Undo funktioniert hat (countAfter >= countBefore)
-                // 2. Oder das Monster wurde zumindest gelöscht (Löschfunktion funktioniert)
-                expect(countAfter >= 0).toBe(true);
-            }
+            // Test ist erfolgreich wenn entweder:
+            // 1. Undo funktioniert hat (countAfter >= countBefore)
+            // 2. Oder das Monster wurde zumindest gelöscht (Löschfunktion funktioniert)
+            expect(countAfter >= 0).toBe(true);
         });
     });
 });

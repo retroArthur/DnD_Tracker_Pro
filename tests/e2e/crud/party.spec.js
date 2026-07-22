@@ -186,27 +186,30 @@ test.describe('Party - Charakter CRUD', () => {
         test('Übungsbonus wird nach Level berechnet', async ({ page }) => {
             await openCharForm(page);
 
+            // #char-proficiency ist statisches Form-Markup (assets/templates/view-party.html) —
+            // kein isVisible()-Guard noetig (Phase 8 / D-05/D-06, 08-03 Task 2b: vorheriger Guard
+            // umschloss die einzige Assertion des Tests und maskierte ein fehlendes Element als
+            // stillen Pass).
             const profField = page.locator('#char-proficiency');
-            if (await profField.isVisible()) {
-                // Setze Level 1 und merke den Wert
-                await page.locator('#char-level').fill('');
-                await fillField(page, 'char-level', '1');
-                await page.locator('#char-level').blur();
-                await page.waitForTimeout(200);
-                const val1 = await profField.inputValue();
+            await expect(profField).toBeVisible();
+            // Setze Level 1 und merke den Wert
+            await page.locator('#char-level').fill('');
+            await fillField(page, 'char-level', '1');
+            await page.locator('#char-level').blur();
+            await page.waitForTimeout(200);
+            const val1 = await profField.inputValue();
 
-                // Setze Level 17 (sollte höheren Proficiency haben)
-                await page.locator('#char-level').fill('');
-                await fillField(page, 'char-level', '17');
-                await page.locator('#char-level').blur();
-                await page.waitForTimeout(200);
-                const val2 = await profField.inputValue();
+            // Setze Level 17 (sollte höheren Proficiency haben)
+            await page.locator('#char-level').fill('');
+            await fillField(page, 'char-level', '17');
+            await page.locator('#char-level').blur();
+            await page.waitForTimeout(200);
+            const val2 = await profField.inputValue();
 
-                // Proficiency bei Level 17 (+6) sollte höher sein als bei Level 1 (+2)
-                const prof1 = parseInt(val1.replace(/[^0-9-]/g, '')) || 2;
-                const prof2 = parseInt(val2.replace(/[^0-9-]/g, '')) || 6;
-                expect(prof2).toBeGreaterThan(prof1);
-            }
+            // Proficiency bei Level 17 (+6) sollte höher sein als bei Level 1 (+2)
+            const prof1 = parseInt(val1.replace(/[^0-9-]/g, '')) || 2;
+            const prof2 = parseInt(val2.replace(/[^0-9-]/g, '')) || 6;
+            expect(prof2).toBeGreaterThan(prof1);
         });
 
         test('Charakter ohne Namen zeigt Fehlermeldung', async ({ page }) => {
@@ -214,7 +217,11 @@ test.describe('Party - Charakter CRUD', () => {
 
             await fillField(page, 'char-player', 'Spieler');
             await page.click('[data-action="call"][data-value="saveCharacter"]');
-            await page.waitForTimeout(300);
+            // D-05 (Phase 8 / 08-03 Task 2c): fixer waitForTimeout(300) durch waitForSelector auf
+            // die konkrete Bedingung ersetzt (#toast.error — showToast(msg,'error',...) aus
+            // utils/validation.js setzt className `toast error`) — diese Race wurde in 08-02 gefixt
+            // (Onboarding-/Backup-Toast stach zuvor die Validierungsfehler-Meldung).
+            await page.waitForSelector('#toast.error', { timeout: 3000 });
 
             const toast = page.locator('#toast');
             await expect(toast).toBeVisible();
@@ -276,24 +283,27 @@ test.describe('Party - Charakter CRUD', () => {
             await page.waitForTimeout(500);
 
             // Edit Button finden
+            // edit-char wird pro Charakter-Karte immer gerendert (features/party/party-render.js) —
+            // kein isVisible()-Guard noetig (Phase 8 / D-05/D-06, 08-03 Task 2b: vorheriger Guard
+            // umschloss die einzige Assertion des Tests und maskierte ein fehlendes Element als
+            // stillen Pass).
             const editBtn = page.locator('[data-action="edit-char"]').first();
-            if (await editBtn.isVisible()) {
-                await editBtn.click();
-                await page.waitForTimeout(300);
+            await expect(editBtn).toBeVisible();
+            await editBtn.click();
+            await page.waitForTimeout(300);
 
-                await fillField(page, 'char-level', '10');
-                await page.click('[data-action="call"][data-value="saveCharacter"]');
-                await page.waitForTimeout(500);
+            await fillField(page, 'char-level', '10');
+            await page.click('[data-action="call"][data-value="saveCharacter"]');
+            await page.waitForTimeout(500);
 
-                const charData = await page.evaluate(name => {
-                    // @ts-ignore
-                    return D.characters
-                        ? D.characters.find(c => c.name && c.name.includes(name))
-                        : null;
-                }, charName);
+            const charData = await page.evaluate(name => {
+                // @ts-ignore
+                return D.characters
+                    ? D.characters.find(c => c.name && c.name.includes(name))
+                    : null;
+            }, charName);
 
-                expect(charData.level).toBe(10);
-            }
+            expect(charData.level).toBe(10);
         });
 
         test('HP können geändert werden', async ({ page }) => {
@@ -333,18 +343,20 @@ test.describe('Party - Charakter CRUD', () => {
 
             page.on('dialog', dialog => dialog.accept());
 
+            // delete-char wird pro Charakter-Karte immer gerendert — kein isVisible()-Guard noetig
+            // (Phase 8 / D-05/D-06, 08-03 Task 2b: vorheriger Guard umschloss die einzige Assertion
+            // des Tests und maskierte ein fehlendes Element als stillen Pass).
             const deleteBtn = page.locator('[data-action="delete-char"]').first();
-            if (await deleteBtn.isVisible()) {
-                await deleteBtn.click();
-                await page.waitForTimeout(500);
+            await expect(deleteBtn).toBeVisible();
+            await deleteBtn.click();
+            await page.waitForTimeout(500);
 
-                const countAfter = await page.evaluate(() => {
-                    // @ts-ignore
-                    return D.characters ? D.characters.length : 0;
-                });
+            const countAfter = await page.evaluate(() => {
+                // @ts-ignore
+                return D.characters ? D.characters.length : 0;
+            });
 
-                expect(countAfter).toBeLessThan(countBefore);
-            }
+            expect(countAfter).toBeLessThan(countBefore);
         });
 
         test('Löschen kann rückgängig gemacht werden', async ({ page }) => {
@@ -357,23 +369,25 @@ test.describe('Party - Charakter CRUD', () => {
 
             page.on('dialog', dialog => dialog.accept());
 
+            // delete-char wird pro Charakter-Karte immer gerendert — kein isVisible()-Guard noetig
+            // (Phase 8 / D-05/D-06, 08-03 Task 2b: vorheriger Guard umschloss die einzige Assertion
+            // des Tests und maskierte ein fehlendes Element als stillen Pass).
             const deleteBtn = page.locator('[data-action="delete-char"]').first();
-            if (await deleteBtn.isVisible()) {
-                await deleteBtn.click();
-                await page.waitForTimeout(500);
+            await expect(deleteBtn).toBeVisible();
+            await deleteBtn.click();
+            await page.waitForTimeout(500);
 
-                await performUndo(page);
-                await page.waitForTimeout(500);
+            await performUndo(page);
+            await page.waitForTimeout(500);
 
-                const charData = await page.evaluate(name => {
-                    // @ts-ignore
-                    return D.characters
-                        ? D.characters.find(c => c.name && c.name.includes(name))
-                        : null;
-                }, charName);
+            const charData = await page.evaluate(name => {
+                // @ts-ignore
+                return D.characters
+                    ? D.characters.find(c => c.name && c.name.includes(name))
+                    : null;
+            }, charName);
 
-                expect(charData).toBeTruthy();
-            }
+            expect(charData).toBeTruthy();
         });
     });
 

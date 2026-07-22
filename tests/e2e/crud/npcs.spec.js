@@ -143,7 +143,11 @@ test.describe('NPCs - CRUD Operationen', () => {
 
             await fillField(page, 'npc-role', 'Wirt');
             await page.click('[data-action="call"][data-value="saveNPC"]');
-            await page.waitForTimeout(300);
+            // D-05 (Phase 8 / 08-03 Task 2c): fixer waitForTimeout(300) durch waitForSelector auf
+            // die konkrete Bedingung ersetzt (#toast.error — showToast(msg,'error',...) aus
+            // utils/validation.js setzt className `toast error`) — diese Race wurde in 08-02 gefixt
+            // (Onboarding-/Backup-Toast stach zuvor die Validierungsfehler-Meldung).
+            await page.waitForSelector('#toast.error', { timeout: 3000 });
 
             const toast = page.locator('#toast');
             await expect(toast).toBeVisible();
@@ -278,22 +282,25 @@ test.describe('NPCs - CRUD Operationen', () => {
             await page.waitForTimeout(500);
 
             // Edit
+            // edit-npc wird im Detail-Panel des automatisch ausgewaehlten NPCs immer gerendert
+            // (features/npcs/npc-render.js) — kein isVisible()-Guard noetig (Phase 8 / D-05/D-06,
+            // 08-03 Task 2b: vorheriger Guard umschloss die einzige Assertion des Tests und
+            // maskierte ein fehlendes Element als stillen Pass).
             const editBtn = page.locator('[data-action="edit-npc"]').first();
-            if (await editBtn.isVisible()) {
-                await editBtn.click();
-                await page.waitForTimeout(300);
+            await expect(editBtn).toBeVisible();
+            await editBtn.click();
+            await page.waitForTimeout(300);
 
-                await fillField(page, 'npc-role', 'Erzmagier');
-                await page.click('[data-action="call"][data-value="saveNPC"]');
-                await page.waitForTimeout(500);
+            await fillField(page, 'npc-role', 'Erzmagier');
+            await page.click('[data-action="call"][data-value="saveNPC"]');
+            await page.waitForTimeout(500);
 
-                const npcData = await page.evaluate(name => {
-                    // @ts-ignore
-                    return D.npcs ? D.npcs.find(n => n.name && n.name.includes(name)) : null;
-                }, npcName);
+            const npcData = await page.evaluate(name => {
+                // @ts-ignore
+                return D.npcs ? D.npcs.find(n => n.name && n.name.includes(name)) : null;
+            }, npcName);
 
-                expect(npcData.role).toBe('Erzmagier');
-            }
+            expect(npcData.role).toBe('Erzmagier');
         });
 
         test('NPC-Chapter kann aktualisiert werden', async ({ page }) => {
@@ -314,22 +321,24 @@ test.describe('NPCs - CRUD Operationen', () => {
             expect(npcData.chapter).toBe('1');
 
             // Edit
+            // edit-npc wird im Detail-Panel des automatisch ausgewaehlten NPCs immer gerendert —
+            // kein isVisible()-Guard noetig (Phase 8 / D-05/D-06, 08-03 Task 2b: vorheriger Guard
+            // maskierte ein fehlendes Element als stillen Pass).
             const editBtn = page.locator('[data-action="edit-npc"]').first();
-            if (await editBtn.isVisible()) {
-                await editBtn.click();
-                await page.waitForTimeout(300);
+            await expect(editBtn).toBeVisible();
+            await editBtn.click();
+            await page.waitForTimeout(300);
 
-                await fillField(page, 'npc-chapter', '3');
-                await page.click('[data-action="call"][data-value="saveNPC"]');
-                await page.waitForTimeout(500);
+            await fillField(page, 'npc-chapter', '3');
+            await page.click('[data-action="call"][data-value="saveNPC"]');
+            await page.waitForTimeout(500);
 
-                npcData = await page.evaluate(name => {
-                    // @ts-ignore
-                    return D.npcs ? D.npcs.find(n => n.name && n.name.includes(name)) : null;
-                }, npcName);
+            npcData = await page.evaluate(name => {
+                // @ts-ignore
+                return D.npcs ? D.npcs.find(n => n.name && n.name.includes(name)) : null;
+            }, npcName);
 
-                expect(npcData.chapter).toBe('3');
-            }
+            expect(npcData.chapter).toBe('3');
         });
     });
 
@@ -350,18 +359,21 @@ test.describe('NPCs - CRUD Operationen', () => {
 
             page.on('dialog', dialog => dialog.accept());
 
+            // delete-npc wird im Detail-Panel des automatisch ausgewaehlten NPCs immer gerendert —
+            // kein isVisible()-Guard noetig (Phase 8 / D-05/D-06, 08-03 Task 2b: vorheriger Guard
+            // umschloss die einzige Assertion des Tests und maskierte ein fehlendes Element als
+            // stillen Pass).
             const deleteBtn = page.locator('[data-action="delete-npc"]').first();
-            if (await deleteBtn.isVisible()) {
-                await deleteBtn.click();
-                await page.waitForTimeout(500);
+            await expect(deleteBtn).toBeVisible();
+            await deleteBtn.click();
+            await page.waitForTimeout(500);
 
-                const countAfter = await page.evaluate(() => {
-                    // @ts-ignore
-                    return D.npcs ? D.npcs.length : 0;
-                });
+            const countAfter = await page.evaluate(() => {
+                // @ts-ignore
+                return D.npcs ? D.npcs.length : 0;
+            });
 
-                expect(countAfter).toBeLessThan(countBefore);
-            }
+            expect(countAfter).toBeLessThan(countBefore);
         });
 
         test('Löschen kann rückgängig gemacht werden', async ({ page }) => {
@@ -375,21 +387,24 @@ test.describe('NPCs - CRUD Operationen', () => {
 
             page.on('dialog', dialog => dialog.accept());
 
+            // delete-npc wird im Detail-Panel des automatisch ausgewaehlten NPCs immer gerendert —
+            // kein isVisible()-Guard noetig (Phase 8 / D-05/D-06, 08-03 Task 2b: vorheriger Guard
+            // umschloss die einzige Assertion des Tests und maskierte ein fehlendes Element als
+            // stillen Pass).
             const deleteBtn = page.locator('[data-action="delete-npc"]').first();
-            if (await deleteBtn.isVisible()) {
-                await deleteBtn.click();
-                await page.waitForTimeout(500);
+            await expect(deleteBtn).toBeVisible();
+            await deleteBtn.click();
+            await page.waitForTimeout(500);
 
-                await performUndo(page);
-                await page.waitForTimeout(500);
+            await performUndo(page);
+            await page.waitForTimeout(500);
 
-                const npcData = await page.evaluate(name => {
-                    // @ts-ignore
-                    return D.npcs ? D.npcs.find(n => n.name && n.name.includes(name)) : null;
-                }, npcName);
+            const npcData = await page.evaluate(name => {
+                // @ts-ignore
+                return D.npcs ? D.npcs.find(n => n.name && n.name.includes(name)) : null;
+            }, npcName);
 
-                expect(npcData).toBeTruthy();
-            }
+            expect(npcData).toBeTruthy();
         });
     });
 });
