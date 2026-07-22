@@ -2,11 +2,14 @@
 gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Tech-Debt & Härtung
+current_phase: 07
 status: planning
-last_updated: "2026-07-22T20:03:47.466Z"
+stopped_at: Phase 8 context gathered
+last_updated: "2026-07-22T20:41:43.823Z"
 last_activity: 2026-07-22
+last_activity_desc: Milestone v1.1 started
 progress:
-  total_phases: 0
+  total_phases: 4
   completed_phases: 0
   total_plans: 0
   completed_plans: 0
@@ -117,6 +120,10 @@ Last activity: 2026-07-22 — Milestone v1.1 started
 ---
 
 ## Session Continuity
+
+**Last session:** 2026-07-22T20:41:43.816Z
+**Stopped at:** Phase 8 context gathered
+**Resume file:** .planning/phases/08-test-fundament-gr-n/08-CONTEXT.md
 
 **Last action:** Komplette Milestone-UAT abgeschlossen (2026-06-20 → 2026-07-20): alle 5 offenen Human-UAT-Sessions via `/gsd-verify-work` durchgetestet — 07 (4/4), 06 (5/5), 05 (2/2), 01 (3/3), 02 (6/6). Alle 7 VERIFICATION.md jetzt `status: passed`. Dabei gefundene+gefixte Bugs: Soundboard-Doppel-Import (75aadfe), Audio-läuft-nach-Szene-Löschen (b85dbe1), Volume nicht live (801ed48), Manifest-CORS unter file:// (cd75093), Konsolen-Hygiene (c029f11), Datei-Backup schrieb nie bei Entity-CRUD — window.save-Wrapper strukturell wirkungslos für bare save() (1430e8c), generischer registerPostSaveHook + DM-Screen-Live-Sync-Umstellung + CLAUDE.md-Pattern-Korrektur (6ea8309), „Anderen Ordner wählen"-Button (cc2af9e). Nebenbei: Repo mit origin gemergt (7 Mai-Commits, alter pages.yml-Deploy entfernt 7f4858a), 348 Commits gepusht, GitHub-Pages-Deploy live verifiziert (PWA installierbar, SW-Update-Flow, Datei-Backup, Migrations-Wizard file://→PWA). Zusätzlich in der Session: Soundboard-Erweiterungen (Loop-Toggle/Crossfade-Loop/Fortschritt 6636297, Per-Track-Play noch offen als Design), gruppierte Navigation (3d77ec0).
 **Next action:** Milestone v1.0 abschließen — `/gsd-complete-milestone` (alle 7 Phasen complete, UAT vollständig, VERIFICATIONs passed). Offene Design-Entscheidung Soundboard Per-Track-Play (Layering gewählt, Szenen-Play-Variante unbestätigt). Optionale Altlasten: Phase-1-Security-Audit (`/gsd-secure-phase 1`), Phase-1-Code-Review-Findings, 11 vorbestehende E2E-Fails (Task-Chip), Phase-3 Browser-Checks (nicht-blockierend).
