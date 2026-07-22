@@ -15,9 +15,17 @@ Die App muss am Spieltisch **zuverlässig offline laufen** — ein Spielleiter-B
 - **Qualität:** 453 Unit-Tests grün, Phasen-E2E grün, CI mit Pages-Deploy; alle 7 Phasen-VERIFICATIONs `passed`
 - **Live:** https://retroarthur.github.io/DnD_Tracker_Pro/dnd-tracker-optimized.html (PWA installierbar, SW-Updates, Datei-Backup, Migrations-Wizard)
 
-## Next Milestone Goals
+## Current Milestone: v1.1 Tech-Debt & Härtung
 
-Noch nicht definiert — via `/gsd-new-milestone`. Bekannte Kandidaten: Soundboard Per-Track-Play (Layering, Design bereits diskutiert), execCommand-Ablösung (Tech-Debt-Phase), Phase-1-Altlasten (Security-Audit, Import-XSS-Finding), 11 vorbestehende E2E-Fails.
+**Goal:** Die Codebasis schuldenfrei und dauerhaft wartbar machen — deprecated APIs ablösen, Test-Suite vollständig grün, Sicherheits-Altlasten schließen, Build-/Architektur-Hygiene — ohne Verhaltensänderungen am Spieltisch.
+
+**Target features:**
+- execCommand-Ablösung: Rich-Text-Editor von 21 deprecated `document.execCommand`-Stellen auf moderne Selection/Range-DOM-APIs, verhaltensgleich
+- Test-Suite grün + gehärtet: die 11 vorbestehenden E2E-Fails auf 0, brüchige Assertions gehärtet
+- Security nachgezogen: vorbestehender Import-XSS, Security-Audits (SECURITY.md) für offene Phasen
+- Architektur-Hygiene: Modullisten-Sync robust, build.py-Dedup-Schwächen, CI-Deprecations (Node 20), Codebase-Map-Refresh, CONCERNS.md-Restposten
+
+**Zurückgestellt auf später:** Soundboard Per-Track-Play (Layering — Design aus v1.0-Session liegt bereit)
 
 ## Requirements
 
