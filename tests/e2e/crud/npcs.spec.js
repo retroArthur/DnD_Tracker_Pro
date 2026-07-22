@@ -16,6 +16,67 @@ import {
 
 test.describe('NPCs - CRUD Operationen', () => {
     test.beforeEach(async ({ page }) => {
+        // 08-RESEARCH Pitfall 4 / D-06: seed markdownOnboardingSeen BEFORE loadApp()
+        // so the 2000ms onboarding setTimeout (ui/editors/markdown-shortcuts.js) never
+        // schedules and can't overwrite a validation-error toast in the shared legacy
+        // #toast node during the assertion window. Documented setup, not masking —
+        // these tests verify validation-error display, not the onboarding flow.
+        //
+        // Also seed the collections that are NOT part of initializeData()'s default
+        // schema (randomTables, timers, shops, campaign) plus a fully-populated
+        // _nextId map. Root-cause investigation (traced via stack-trace instrumentation)
+        // found a SECOND, independent early-boot race with the exact same shape:
+        // features/random-tables.js:initRandomTables() calls save() unconditionally
+        // whenever D.randomTables is missing (fires ~150ms after boot, every fresh
+        // session — real users hit this too, not just tests), and
+        // render/helpers.js:validateDataIntegrity() schedules a repair save() 1s after
+        // load() whenever D.timers/D.shops/D.campaign or any _nextId entry is missing.
+        // Either save() triggers systems/file-backup/file-backup-manager.js:onAfterSave()'s
+        // once-per-session "Ungesicherte Aenderungen - Backup herunterladen?" info toast,
+        // which stomps the shared #toast node exactly like the onboarding toast did.
+        // Seeding a fully "already valid" shape prevents both triggers so no early
+        // save()-driven toast can fire during the assertion window.
+        await page.addInitScript(() => {
+            try {
+                localStorage.setItem(
+                    'dnd-tracker-v4',
+                    JSON.stringify({
+                        // Far-future _version so load() skips migrateData() entirely —
+                        // the seed is a minimal settings-only payload, not a full export.
+                        _version: '99.0.0',
+                        settings: {
+                            theme: 'dark',
+                            lastView: 'dashboard',
+                            enableMarkdownShortcuts: true,
+                            enableMarkdownImportExport: true,
+                            markdownOnboardingSeen: true,
+                            levelingMode: 'xp'
+                        },
+                        randomTables: [],
+                        timers: [],
+                        shops: [],
+                        campaign: {},
+                        _nextId: {
+                            characters: 1,
+                            npcs: 1,
+                            locations: 1,
+                            quests: 1,
+                            encounters: 1,
+                            spells: 1,
+                            loot: 1,
+                            items: 1,
+                            wiki: 1,
+                            sessionNotes: 1,
+                            randomTables: 1
+                        }
+                    })
+                );
+            } catch {
+                // file:// localStorage restrictions vary by browser build; if the seed
+                // silently fails, the app falls back to its own default (the pre-fix
+                // race may return) — no crash either way.
+            }
+        });
         await loadApp(page);
         await navigateToTab(page, 'npcs');
         await page.waitForTimeout(300);
