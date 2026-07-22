@@ -3,24 +3,25 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Tech-Debt & Härtung
 current_phase: 08
-status: ready_to_execute
-stopped_at: Phase 8 planned (4 Pläne, Checker PASSED)
-last_updated: "2026-07-22T21:33:47.637Z"
+current_phase_name: geplant, bereit zur Ausführung
+status: executing
+stopped_at: Phase 08 Plan 01 abgeschlossen (3/3 Tasks, App-Bugs Attribut-Modifikator/Migration-Banner/renderAll gefixt)
+last_updated: "2026-07-22T21:50:48.842Z"
 last_activity: 2026-07-22
-last_activity_desc: Phase 8 planned (4 plans, 4 waves)
+last_activity_desc: Phase 08 execution started
 progress:
   total_phases: 4
   completed_phases: 0
   total_plans: 4
-  completed_plans: 0
-  percent: 0
+  completed_plans: 1
+  percent: 25
 ---
 
 # Project State: D&D Kampagnen-Tracker Pro — Stabilisierung & Ausbau
 
 **Last Updated:** 2026-07-22
-**Phase:** 08 — Test-Fundament grün (geplant, bereit zur Ausführung)
-**Status:** Milestone v1.1 — Phase 8 geplant (4 Pläne / 4 Wellen)
+**Phase:** 08 — Test-Fundament grün (Plan 1/4 abgeschlossen)
+**Status:** Executing Phase 08
 
 ---
 
@@ -28,16 +29,16 @@ progress:
 
 **Core Value:** Die App muss am Spieltisch zuverlässig offline laufen — ein Spielleiter-Begleiter, der nie im Weg steht und keine Daten verliert.
 
-**Current Focus:** Phase 8 — Test-Fundament grün: 11 vorbestehende E2E-Fails auf 0, Assertions härten, E2E als CI-Gate
+**Current Focus:** Phase 08 — test-fundament-gr-n
 
 ---
 
 ## Current Position
 
-Phase: 08 — Test-Fundament grün (geplant)
-Plan: 4 Pläne / 4 Wellen (08-01 App-Fixes → 08-02 Test-Fixes → 08-03 Härtung → 08-04 CI-Gate + Triage-Doku)
-Status: Ready to execute
-Last activity: 2026-07-22 — Phase 8 geplant (Research 08-RESEARCH.md, 4 Pläne, Plan-Checker VERIFICATION PASSED, 0 Blocker)
+Phase: 08 (test-fundament-gr-n) — EXECUTING
+Plan: 2 of 4
+Status: Executing Phase 08 (Plan 1 abgeschlossen: 3/3 Tasks, App-Bugs Attribut-Modifikator/Migration-Banner/renderAll gefixt)
+Last activity: 2026-07-22 — Phase 08 Plan 01 abgeschlossen
 
 ## Performance Metrics
 
@@ -46,6 +47,11 @@ Last activity: 2026-07-22 — Phase 8 geplant (Research 08-RESEARCH.md, 4 Pläne
 - Requirements delivered: 31 / 31 (STAB, INIT, BESTIARY, WELT, CHAR, UX — Milestone v1.0 vollständig)
 
 ---
+**Per-Plan Metrics:**
+
+| Plan | Duration | Tasks | Files |
+|------|----------|-------|-------|
+| Phase 08 P01 | 9min | 3 tasks | 7 files |
 
 ## Accumulated Context
 
@@ -121,9 +127,9 @@ Last activity: 2026-07-22 — Phase 8 geplant (Research 08-RESEARCH.md, 4 Pläne
 
 ## Session Continuity
 
-**Last session:** 2026-07-22T21:33:47.637Z
-**Stopped at:** Phase 8 geplant — bereit zur Ausführung
-**Resume file:** .planning/phases/08-test-fundament-gr-n/ (08-01..08-04-PLAN.md)
+**Last session:** 2026-07-22T21:50:48.834Z
+**Stopped at:** Phase 08 Plan 01 abgeschlossen (3/3 Tasks, App-Bugs Attribut-Modifikator/Migration-Banner/renderAll gefixt)
+**Resume file:** None
 
 **Last action:** Komplette Milestone-UAT abgeschlossen (2026-06-20 → 2026-07-20): alle 5 offenen Human-UAT-Sessions via `/gsd-verify-work` durchgetestet — 07 (4/4), 06 (5/5), 05 (2/2), 01 (3/3), 02 (6/6). Alle 7 VERIFICATION.md jetzt `status: passed`. Dabei gefundene+gefixte Bugs: Soundboard-Doppel-Import (75aadfe), Audio-läuft-nach-Szene-Löschen (b85dbe1), Volume nicht live (801ed48), Manifest-CORS unter file:// (cd75093), Konsolen-Hygiene (c029f11), Datei-Backup schrieb nie bei Entity-CRUD — window.save-Wrapper strukturell wirkungslos für bare save() (1430e8c), generischer registerPostSaveHook + DM-Screen-Live-Sync-Umstellung + CLAUDE.md-Pattern-Korrektur (6ea8309), „Anderen Ordner wählen"-Button (cc2af9e). Nebenbei: Repo mit origin gemergt (7 Mai-Commits, alter pages.yml-Deploy entfernt 7f4858a), 348 Commits gepusht, GitHub-Pages-Deploy live verifiziert (PWA installierbar, SW-Update-Flow, Datei-Backup, Migrations-Wizard file://→PWA). Zusätzlich in der Session: Soundboard-Erweiterungen (Loop-Toggle/Crossfade-Loop/Fortschritt 6636297, Per-Track-Play noch offen als Design), gruppierte Navigation (3d77ec0).
 **Next action:** Phase 8 ausführen — `/gsd-execute-phase 8` (Wave 1 → 08-01 zuerst; Sampling gemäß 08-VALIDATION.md: volle Suite zweimal in Folge grün vor `/gsd-verify-work`). Offene Design-Entscheidung Soundboard Per-Track-Play (Layering gewählt, Szenen-Play-Variante unbestätigt). Optionale Altlasten: Phase-1-Security-Audit (`/gsd-secure-phase 1`), Phase-1-Code-Review-Findings, Phase-3 Browser-Checks (nicht-blockierend).
@@ -156,6 +162,7 @@ _State initialized: 2026-06-11_
 - [Phase 06-05]: set-leveling-mode verwendet plain save() ohne saveUndoState() — Settings-Änderung ist trivial reversibel (Inspiration-Precedent)
 - [Phase 06-05]: Modal-Live-Refresh liest Charakter-ID aus erstem [data-id]-Element im #char-detail-modal; kein neues data-Attribut nötig
 - [Phase 05-08]: close-modal-overlay für transiente Modals (insertAdjacentHTML): remove() ist korrekt, hide-modal würde nur .show entfernen (Zombie); E2E via page.evaluate(switchView) statt page.click bei Fullscreen-Overlay (Pointer-Interception)
+- [Phase ?]: Migration-Banner-Offset nutzt gemessene CSS-Custom-Property (--migration-hint-height) statt fixem 48px-Wert, da Bannerhoehe bei schmalen Viewports durch Textumbruch waechst
 
 ## Operator Next Steps
 

@@ -15,7 +15,7 @@
 
 ### Tests (Suite grün + gehärtet)
 
-- [ ] **TEST-01**: Die 11 vorbestehenden E2E-Fails sind auf 0 — tab-navigation (7: Registry-Re-Render mit injizierten Daten), crud-Modifier-Berechnung (2), Quest-Titel-Validierung (1), Global-Search-Ergebnisse (1); Ursache je Fall geklärt (Test-Bug vs. App-Bug)
+- [x] **TEST-01**: Die 11 vorbestehenden E2E-Fails sind auf 0 — tab-navigation (7: Registry-Re-Render mit injizierten Daten), crud-Modifier-Berechnung (2), Quest-Titel-Validierung (1), Global-Search-Ergebnisse (1); Ursache je Fall geklärt (Test-Bug vs. App-Bug)
 - [ ] **TEST-02**: Brüchige Test-Muster gehärtet: exakte Zähl-Assertions (`toBe(N)` statt `toBeGreaterThan(0)`), keine maskierenden manuellen Event-Dispatches, `npx playwright test` läuft vollständig grün als CI-tauglicher Gate
 
 ### Security (Altlasten schließen)
@@ -56,7 +56,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | EDIT-01 | Phase 9 | Pending |
 | EDIT-02 | Phase 9 | Pending |
 | EDIT-03 | Phase 9 | Pending |
-| TEST-01 | Phase 8 | Pending |
+| TEST-01 | Phase 8 | Complete |
 | TEST-02 | Phase 8 | Pending |
 | SEC-01 | Phase 10 | Pending |
 | SEC-02 | Phase 10 | Pending |
