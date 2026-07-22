@@ -26,7 +26,7 @@ Details, Success Criteria und Coverage: [milestones/v1.0-ROADMAP.md](milestones/
 
 **Milestone-Ziel:** Codebasis schuldenfrei und dauerhaft wartbar machen — deprecated APIs ablösen, Test-Suite vollständig grün, Sicherheits-Altlasten schließen, Build-/Architektur-Hygiene. Verhaltensneutral: keine Feature-Änderung aus Nutzersicht.
 
-- [ ] **Phase 8: Test-Fundament grün** - Alle 11 vorbestehenden E2E-Fails behoben, brüchige Assertions gehärtet
+- [x] **Phase 8: Test-Fundament grün** - Alle 11 vorbestehenden E2E-Fails behoben, brüchige Assertions gehärtet (completed 2026-07-23)
 - [ ] **Phase 9: Editor-Regressionsnetz & execCommand-Ablösung** - Rich-Text-Editor auf Selection/Range-APIs migriert, abgesichert durch neues E2E-Netz das VOR der Migration steht
 - [ ] **Phase 10: Security-Härtung** - Vorbestehender Import-XSS behoben, aktueller Security-Audit ohne offene Findings
 - [ ] **Phase 11: Architektur- & Build-Hygiene** - Modullisten-Drift strukturell unmöglich, Dedup-Pass-3 gehärtet, CI-Deprecations weg, Codebase-Map + CONCERNS.md aufgefrischt
@@ -113,7 +113,7 @@ Details, Success Criteria und Coverage: [milestones/v1.0-ROADMAP.md](milestones/
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | v1.0 (Phasen 1–7) | 44/44 | ✅ Shipped | 2026-07-22 |
-| 8. Test-Fundament grün | 4/4 | In Progress|  |
+| 8. Test-Fundament grün | 4/4 | Complete    | 2026-07-23 |
 | 9. Editor-Regressionsnetz & execCommand-Ablösung | 0/TBD | Not started | - |
 | 10. Security-Härtung | 0/TBD | Not started | - |
 | 11. Architektur- & Build-Hygiene | 0/TBD | Not started | - |
