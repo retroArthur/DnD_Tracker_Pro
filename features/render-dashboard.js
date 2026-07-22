@@ -44,6 +44,8 @@ function renderAll() {
         const renderWiki = window.renderWiki;
         const renderFilterList = window.renderFilterList;
         const initQuickRefCustom = window.initQuickRefCustom;
+        const renderRandomTables = window.renderRandomTables;
+        const renderTimers = window.renderTimers;
         const updateIOCounts = window.updateIOCounts;
         renderSafe(renderParty, 'renderParty', 'party-list');
         renderSafe(renderNPCList, 'renderNPCList', 'npc-list');
@@ -59,6 +61,12 @@ function renderAll() {
         renderSafe(renderWiki, 'renderWiki');
         renderSafe(renderFilterList, 'renderFilterList');
         renderSafe(initQuickRefCustom, 'initQuickRefCustom');
+        // Phase 8 (Pitfall 7): renderAll() ist ein zweiter, unabhaengiger Dispatch-Pfad
+        // neben TAB_RENDER_REGISTRY (switchView) — undo()/redo()/import gehen NUR ueber
+        // renderAll(). Ohne diese beiden Eintraege blieben die Dice-/Timer-Panels nach
+        // einem Undo/Redo veraltet, waehrend ihr Tab aktiv ist.
+        renderSafe(renderRandomTables, 'renderRandomTables', 'random-tables-list');
+        renderSafe(renderTimers, 'renderTimers');
         // Update IO-Counter
         try {
             updateIOCounts();
