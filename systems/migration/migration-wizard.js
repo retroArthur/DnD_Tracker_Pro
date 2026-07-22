@@ -396,6 +396,13 @@ function showMigrationHintBanner() {
     `;
 
     document.body.insertBefore(banner, document.body.firstChild);
+    // Tatsaechliche Hoehe messen (kann durch Zeilenumbruch bei schmalen Viewports
+    // groesser als das CSS min-height:48px sein) statt einen festen Wert anzunehmen.
+    document.documentElement.style.setProperty(
+        '--migration-hint-height',
+        banner.offsetHeight + 'px'
+    );
+    document.body.classList.add('has-migration-hint');
 
     // Sitzungs-Flag setzen
     if (typeof sessionStorage !== 'undefined') {
@@ -557,6 +564,7 @@ function initMigrationActions() {
     EventDelegation.registerAction('close-migration-hint', function() {
         const banner = document.getElementById('migration-hint-banner');
         if (banner) banner.remove();
+        document.body.classList.remove('has-migration-hint');
     });
     EventDelegation.registerAction('dismiss-divergence-banner', function() {
         StorageAPI.setJSON('migration-divergence-dismissed', { dismissed: true });

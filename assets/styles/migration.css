@@ -301,6 +301,14 @@
     color: var(--text, #e0e0e0);
 }
 
+/* Phase 8 (D-02, Pitfall 3): Layout-Offset, solange der Hinweis sichtbar ist —
+   verhindert, dass die fixierte 48px-Leiste den stickyen Header (inkl.
+   #global-search) ueberdeckt. Klasse wird von showMigrationHintBanner()
+   gesetzt und vom close-migration-hint-Handler wieder entfernt. */
+body.has-migration-hint {
+    padding-top: var(--migration-hint-height, 48px);
+}
+
 /* ========================================
    Komponente 5 — Divergenz-Banner (D-11)
    .divergence-banner

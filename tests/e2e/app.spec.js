@@ -68,6 +68,29 @@ test.describe('App Grundfunktionen', () => {
         // Search Results Container sollte erscheinen
         await expect(page.locator('#global-search-results')).toBeVisible();
     });
+
+    test('Migration-Hinweis-Banner ueberdeckt #global-search nicht (Phase 8, D-02, Pitfall 3)', async ({
+        page
+    }) => {
+        // Der Umzugs-Hinweis wird bei jeder frischen Sitzung angezeigt (sessionStorage-Guard)
+        const banner = page.locator('#migration-hint-banner');
+        await expect(banner).toBeVisible();
+
+        // Layout-Offset-Regressionsschutz: der Header (inkl. #global-search) darf nicht
+        // unter der fixierten Banner-Leiste liegen — geometrischer Beweis statt reinem Klick-Erfolg
+        const bannerBox = await banner.boundingBox();
+        const searchInput = page.locator('#global-search');
+        await expect(searchInput).toBeVisible();
+        const searchBox = await searchInput.boundingBox();
+
+        expect(bannerBox).not.toBeNull();
+        expect(searchBox).not.toBeNull();
+        expect(searchBox.y).toBeGreaterThanOrEqual(bannerBox.y + bannerBox.height);
+
+        // Natuerlicher Klick (kein {force:true}) muss trotz sichtbarer Banner funktionieren
+        await searchInput.click();
+        await expect(searchInput).toBeFocused();
+    });
 });
 
 test.describe('Party Tab', () => {
