@@ -74,8 +74,11 @@ test.describe('Tab Registry System', () => {
         await page.waitForTimeout(500);
 
         // Open the collapsed details element and trigger render
+        // (Pitfall 6: 4 <details class="dice-details"> blocks exist in view-tools.html;
+        // querySelector('.dice-details') always returns the FIRST one, never the
+        // random-tables one — scope via the container we actually care about.)
         await page.evaluate(() => {
-            const details = document.querySelector('.dice-details');
+            const details = document.getElementById('random-tables-list')?.closest('details');
             if (details && !details.open) {
                 details.open = true;
             }
@@ -114,7 +117,7 @@ test.describe('Tab Registry System', () => {
         await page.evaluate(() => window.switchView('dice'));
         await page.waitForSelector('#view-dice.active', { timeout: 5000 });
         await page.evaluate(() => {
-            const details = document.querySelector('.dice-details');
+            const details = document.getElementById('random-tables-list')?.closest('details');
             if (details) details.open = true;
         });
         await page.waitForTimeout(300);
@@ -139,7 +142,7 @@ test.describe('Tab Registry System', () => {
         await page.evaluate(() => window.switchView('dice'));
         await page.waitForSelector('#view-dice.active', { timeout: 5000 });
         await page.evaluate(() => {
-            const details = document.querySelector('.dice-details');
+            const details = document.getElementById('random-tables-list')?.closest('details');
             if (details) details.open = true;
         });
         await page.waitForTimeout(500);
@@ -161,7 +164,7 @@ test.describe('Tab Registry System', () => {
                         id: 1,
                         name: 'Fighter',
                         init: 20,
-                        hp: 50,
+                        currentHp: 50,
                         maxHp: 50,
                         ac: 18,
                         type: 'player'
@@ -170,7 +173,7 @@ test.describe('Tab Registry System', () => {
                         id: 2,
                         name: 'Goblin',
                         init: 15,
-                        hp: 7,
+                        currentHp: 7,
                         maxHp: 7,
                         ac: 13,
                         type: 'enemy'
@@ -198,13 +201,16 @@ test.describe('Tab Registry System', () => {
         await expect(initList).toBeVisible();
 
         // Check if combatants are rendered
-        const combatants = page.locator('.init-combatant');
+        // (Pitfall 5: real class from renderInit() is .init-entry, never .init-combatant)
+        const combatants = page.locator('.init-entry');
         await expect(combatants).toHaveCount(2);
-        await expect(page.locator('.init-combatant').first()).toContainText('Fighter');
-        await expect(page.locator('.init-combatant').nth(1)).toContainText('Goblin');
+        await expect(page.locator('.init-entry').first()).toContainText('Fighter');
+        await expect(page.locator('.init-entry').nth(1)).toContainText('Goblin');
 
         // Check round number is displayed
-        const roundNum = page.locator('#round-num');
+        // (Pitfall 5-pattern: real id from renderInit()/$('encounter-round-num') is
+        // #encounter-round-num — #round-num never existed in production markup)
+        const roundNum = page.locator('#encounter-round-num');
         await expect(roundNum).toContainText('1');
     });
 
@@ -219,7 +225,7 @@ test.describe('Tab Registry System', () => {
                         id: 1,
                         name: 'Wizard',
                         init: 18,
-                        hp: 30,
+                        currentHp: 30,
                         maxHp: 30,
                         ac: 12,
                         type: 'player'
@@ -241,16 +247,18 @@ test.describe('Tab Registry System', () => {
             }
         });
         await page.waitForTimeout(200);
-        await expect(page.locator('.init-combatant')).toHaveCount(1);
+        await expect(page.locator('.init-entry')).toHaveCount(1);
 
         // Switch away
         await page.evaluate(() => window.switchView('dashboard'));
         await page.waitForSelector('#view-dashboard.active', { timeout: 5000 });
 
         // Modify data while away - advance round and damage combatant
+        // (real combatant field is currentHp, not hp — features/initiative.js:renderInit()
+        // reads cb.currentHp/cb.maxHp; a test that writes .hp never reaches the render)
         await page.evaluate(() => {
             window.D.initiative.round = 3;
-            window.D.initiative.combatants[0].hp = 15; // Half HP
+            window.D.initiative.combatants[0].currentHp = 15; // Half HP
             window.save();
         });
 
@@ -260,10 +268,10 @@ test.describe('Tab Registry System', () => {
         await page.waitForTimeout(500);
 
         // Verify re-render happened - round and HP should be updated
-        const roundNum = page.locator('#round-num');
+        const roundNum = page.locator('#encounter-round-num');
         await expect(roundNum).toContainText('3');
 
-        const combatant = page.locator('.init-combatant').first();
+        const combatant = page.locator('.init-entry').first();
         await expect(combatant).toContainText('15'); // Current HP
     });
 
@@ -295,7 +303,8 @@ test.describe('Tab Registry System', () => {
             }
         });
         await page.waitForTimeout(200);
-        await expect(page.locator('.party-member')).toHaveCount(1);
+        // (Pitfall 5: real class from renderParty() is .char-card, never .party-member)
+        await expect(page.locator('.char-card')).toHaveCount(1);
 
         // Switch away
         await page.evaluate(() => window.switchView('dashboard'));
@@ -321,22 +330,15 @@ test.describe('Tab Registry System', () => {
         await page.waitForTimeout(500);
 
         // Both characters should be visible
-        const members = page.locator('.party-member');
+        const members = page.locator('.char-card');
         await expect(members).toHaveCount(2);
     });
 
     test('timers tab re-renders when switching back', async ({ page }) => {
-        // Add a timer
-        await page.evaluate(() => {
-            if (!window.D.timers) window.D.timers = [];
-            window.D.timers.push({
-                id: 1,
-                name: 'Concentration',
-                seconds: 300,
-                active: false
-            });
-            window.save();
-        });
+        // Add a timer via the real API (Pitfall 8: D.timers is not a real data key —
+        // timers.js:timers is a module-local closure array; addTimerWithSeconds() is
+        // the documented setup vehicle, per D-06, for a test that verifies tab re-render)
+        await page.evaluate(() => window.addTimerWithSeconds('Concentration', 300));
 
         // Switch to timers tab
         await page.evaluate(() => window.switchView('timers'));
@@ -351,8 +353,8 @@ test.describe('Tab Registry System', () => {
         });
         await page.waitForTimeout(200);
 
-        // Verify timer is rendered
-        const timer = page.locator('.timer-item');
+        // Verify timer is rendered (real class is .timer-card, not .timer-item)
+        const timer = page.locator('.timer-card');
         await expect(timer).toBeVisible();
         await expect(timer).toContainText('Concentration');
 
@@ -360,16 +362,8 @@ test.describe('Tab Registry System', () => {
         await page.evaluate(() => window.switchView('dashboard'));
         await page.waitForSelector('#view-dashboard.active', { timeout: 5000 });
 
-        // Add another timer
-        await page.evaluate(() => {
-            window.D.timers.push({
-                id: 2,
-                name: 'Short Rest',
-                seconds: 3600,
-                active: false
-            });
-            window.save();
-        });
+        // Add another timer via the real API
+        await page.evaluate(() => window.addTimerWithSeconds('Short Rest', 3600));
 
         // Switch back
         await page.evaluate(() => window.switchView('timers'));
@@ -377,7 +371,7 @@ test.describe('Tab Registry System', () => {
         await page.waitForTimeout(500);
 
         // Both timers should be visible
-        const timers = page.locator('.timer-item');
+        const timers = page.locator('.timer-card');
         await expect(timers).toHaveCount(2);
     });
 });
@@ -397,7 +391,7 @@ test.describe('Tab Registry Error Handling', () => {
 
         // Open details element and trigger render AFTER tab is active
         await page.evaluate(() => {
-            const details = document.querySelector('.dice-details');
+            const details = document.getElementById('random-tables-list')?.closest('details');
             if (details) details.open = true;
             // Trigger re-render to show empty state
             if (typeof window.renderRandomTables === 'function') {
@@ -512,7 +506,7 @@ test.describe('Tab Registry Integration', () => {
         await page.evaluate(() => window.switchView('dice'));
         await page.waitForSelector('#view-dice.active', { timeout: 5000 });
         await page.evaluate(() => {
-            const details = document.querySelector('.dice-details');
+            const details = document.getElementById('random-tables-list')?.closest('details');
             if (details) details.open = true;
         });
         await page.waitForTimeout(300);
