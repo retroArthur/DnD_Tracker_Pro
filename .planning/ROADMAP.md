@@ -34,53 +34,76 @@ Details, Success Criteria und Coverage: [milestones/v1.0-ROADMAP.md](milestones/
 ## Phase Details
 
 ### Phase 8: Test-Fundament grün
+
 **Goal**: Die komplette Test-Suite (Unit + E2E) läuft vollständig grün und ist als CI-Gate vertrauenswürdig — jeder vorbestehende Fail ist geklärt (Test-Bug behoben oder App-Bug gefixt), brüchige Assertion-Muster sind gehärtet.
 **Depends on**: Nichts (erste Phase von v1.1; baut auf dem abgeschlossenen v1.0-Codebase auf)
 **Requirements**: TEST-01, TEST-02
 **Success Criteria** (what must be TRUE):
+
   1. `npx playwright test` läuft mit 0 Fails (vorher 11: 7 tab-navigation, 2 crud-Modifier-Berechnung, 1 Quest-Titel-Validierung, 1 Global-Search)
   2. Für jeden ehemaligen Fail ist dokumentiert, ob es ein Test-Bug oder ein App-Bug war und wie er behoben wurde
   3. Zähl-Assertions in der Suite nutzen exakte Werte (`toBe(N)`) statt `toBeGreaterThan(0)`, wo ein exakter Wert erwartbar ist
   4. Keine maskierenden manuellen Event-Dispatches verstecken mehr echte Interaktionsfehler in Test-Helpers
   5. Die E2E-Suite läuft vollständig durch und ist als CI-tauglicher Gate nutzbar
+
 **Plans**: 4 plans (4 waves, sequential)
+**Wave 1**
+
 - [ ] 08-01-PLAN.md — App-Bug-Fixes (attr-mod-Kollision, Banner-Overlap, renderAll-Lücke) + D-02-Regressionstests (Wave 1)
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
 - [ ] 08-02-PLAN.md — E2E-Test-Bug-Fixes: reale Selektoren + Timer-API + Toast-Race-Seeding (Wave 2)
+
+**Wave 3** *(blocked on Wave 2 completion)*
+
 - [ ] 08-03-PLAN.md — Suite-weite Assertion-Härtung: toBe(N), Masking-Audit, waitForTimeout (Wave 3)
+
+**Wave 4** *(blocked on Wave 3 completion)*
+
 - [ ] 08-04-PLAN.md — Blockierender e2e-CI-Gate (D-03) + Triage-Dokumentation (D-07) (Wave 4)
 
 ### Phase 9: Editor-Regressionsnetz & execCommand-Ablösung
+
 **Goal**: Der Rich-Text-Editor ist von 21 deprecated `document.execCommand`-Aufrufen auf moderne Selection/Range-DOM-APIs migriert — abgesichert durch ein neues E2E-Regressionsnetz, das VOR der Migration existiert und Verhaltensgleichheit beweist.
 **Depends on**: Phase 8 (braucht eine vertrauenswürdige grüne Suite als verlässliche Baseline für die riskanteste Änderung des Milestones)
 **Requirements**: EDIT-01, EDIT-02, EDIT-03
 **Success Criteria** (what must be TRUE):
+
   1. Ein E2E-Regressionsnetz für Kern-Formatierungen (Bold/Italic/Underline/Strikethrough, Listen, Links, Tabellen, Border, Read-Aloud-Stile, Fonts/Größen, Highlight-Farben) existiert und ist grün gegen den bestehenden execCommand-Code (Baseline vor der Migration)
   2. Alle 21 execCommand-Aufrufe in `ui/editors/rich-text.js` sind durch Selection/Range-DOM-APIs ersetzt
   3. Das Regressionsnetz bleibt nach der Migration grün — belegt Verhaltensgleichheit
   4. Alle Entity-Editoren (Wiki, NPCs, Orte, Quests, Sessions, Quick-Ref) und beide Toolbar-Varianten (statisch, floating) funktionieren unverändert inkl. Markdown-Live-Shortcuts
+
 **Plans**: TBD
 
 ### Phase 10: Security-Härtung
+
 **Goal**: Der vorbestehende Import-XSS ist geschlossen und die kritischen Angriffsflächen der App sind mit einem aktuellen Security-Audit ohne offene Findings dokumentiert.
 **Depends on**: Phase 9 (Audit soll den finalen Editor-/innerHTML-Code abdecken, nicht den bald ersetzten execCommand-Stand)
 **Requirements**: SEC-01, SEC-02
 **Success Criteria** (what must be TRUE):
+
   1. Der vorbestehende Import-XSS (Critical aus 01-REVIEW.md) ist behoben
   2. Ein Regressionstest belegt: eine bösartige Import-Datei wird sanitisiert, kein Skript wird ausgeführt
   3. SECURITY.md dokumentiert einen Audit über Import/Export, Storage/IDB, Datei-Backup und Rich-Text/innerHTML mit `threats_open: 0`
   4. Der Audit ist via `/gsd-secure-phase` gegen die relevanten Phasen durchgeführt (inkl. der neuen Editor-Implementierung aus Phase 9)
+
 **Plans**: TBD
 
 ### Phase 11: Architektur- & Build-Hygiene
+
 **Goal**: Modullisten-Drift zwischen loader.js und build.py ist strukturell unmöglich, der build.py-Dedup bricht bei verwaisten Funktionskörpern statt still ein kaputtes Bundle zu bauen, CI läuft ohne Deprecation-Warnungen, und Codebase-Map + CONCERNS.md spiegeln den finalen Stand nach v1.1 wider.
 **Depends on**: Phase 10 (letzte Phase — Codebase-Map-Refresh und CONCERNS.md-Triage sollen den finalen Stand nach allen v1.1-Phasen abbilden)
 **Requirements**: ARCH-01, ARCH-02, ARCH-03, ARCH-04
 **Success Criteria** (what must be TRUE):
+
   1. Ein divergierender Modul-Eintrag zwischen loader.js und build.py lässt den Build hart fehlschlagen (nicht nur eine Warnung), abgesichert durch Tests
   2. Ein verwaister Funktionskörper aus Dedup-Pass-3 erzeugt einen Build-Fehler statt eines still kaputten Bundles, mit Testabdeckung in tests/build/
   3. Die GitHub-Actions-Workflows laufen ohne Node-Deprecation-Warnungen (Node-24-kompatible Action-Versionen)
   4. favicon-404 und die `apple-mobile-web-app-capable`-Deprecation-Warnung sind aus der Konsole verschwunden
   5. `.planning/codebase/` ist aufgefrischt (Stand nach allen v1.1-Phasen) und jeder CONCERNS.md-Eintrag ist erledigt, obsolet-markiert oder als Requirement übernommen
+
 **Plans**: TBD
 
 ## Progress

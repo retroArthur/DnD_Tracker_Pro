@@ -401,14 +401,16 @@ Not applicable in the traditional sense (no external ecosystem shift to track) �
 | A2 | Adding `renderRandomTables`/`renderTimers` to `renderAll()` has no negative side effects when called while a different tab is active (relies on their existing "container missing → early return" guards being complete) | Pitfall 7 | Low risk — both guards were read directly and confirmed present; if any hidden side-effect exists (e.g., a timer function that resets a running interval even without a container), it would need to be found in `features/timers/timers.js`'s cleanup logic (`cleanupTimers`) during implementation |
 | A3 | The CI job's `needs`/gating relationship with the existing `build`/`smoke-test`/`deploy` chain (whether `deploy` should also transitively require `e2e` green) is a planner/human decision, not something this research can resolve unilaterally | Code Examples (CI job) | If left ungated, a red e2e run wouldn't block `deploy` even though D-03 says "blockierend" — recommend the plan explicitly decides and states this, see Open Questions |
 
-## Open Questions
+## Open Questions (RESOLVED)
 
 1. **Should the new `e2e` CI job block `deploy` (not just `build`), given D-03 says "blockierend"?**
+   - RESOLVED: Von 08-04-PLAN.md Task 1 umgesetzt — `build`-Job erhält `e2e` im `needs:`-Array; ein roter e2e-Lauf blockiert `deploy` damit transitiv. Branch-Protection-Empfehlung separat dokumentiert.
    - What we know: The existing chain is `lint-and-typecheck`/`test` → `build` → `smoke-test` → `deploy` (production-build smoke test only, not the full suite).
    - What's unclear: Whether "blockierend" means "must pass before merge is allowed" (a branch-protection-rule concern, outside `ci.yml`) or "must pass before `deploy` runs" (a `needs:` array change within `ci.yml`).
    - Recommendation: Add `e2e` to `build`'s (or `smoke-test`'s) `needs:` array so a red e2e run blocks the `deploy` job transitively, matching the spirit of "blockierend" as tightly as `ci.yml` alone can express it; separately, recommend (but can't enforce from here) that the repo's branch-protection settings require the `e2e` check to pass before merge.
 
 2. **Exact timers-tab container id for the `renderSafe(renderTimers, 'renderTimers', ???)` 3rd argument (Pitfall 7 fix).**
+   - RESOLVED: Von 08-01-PLAN.md Task 3 umgesetzt — 3. Argument wird bewusst weggelassen (`renderSafe(renderTimers, 'renderTimers')`), analog zu den 3 bestehenden `renderSafe()`-Aufrufen ohne 3. Argument.
    - What we know: `TAB_RENDER_REGISTRY.timers.renders = ['renderTimers', 'renderTimerPresets']`; the error-fallback container id is optional (only used to show an inline error message on render failure).
    - What's unclear: The exact container id `renderTimers()` targets internally (not required reading for this research since the fix doesn't strictly need it — `renderSafe(renderTimers, 'renderTimers')` without a 3rd arg is a valid, safe call per the existing pattern used for `renderWiki`, `renderFilterList`, `initQuickRefCustom`).
    - Recommendation: Omit the 3rd argument (matches 3 other existing `renderSafe()` calls that also omit it) unless the implementer wants the nicer inline-error-message behavior, in which case grep `features/timers/timers.js`'s `$('...')` call for the top-level container id during implementation.

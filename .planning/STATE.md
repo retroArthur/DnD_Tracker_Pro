@@ -2,25 +2,25 @@
 gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Tech-Debt & Härtung
-current_phase: 07
-status: planning
-stopped_at: Phase 8 context gathered
-last_updated: "2026-07-22T20:41:43.823Z"
+current_phase: 08
+status: ready_to_execute
+stopped_at: Phase 8 planned (4 Pläne, Checker PASSED)
+last_updated: "2026-07-22T21:33:47.637Z"
 last_activity: 2026-07-22
-last_activity_desc: Milestone v1.1 started
+last_activity_desc: Phase 8 planned (4 plans, 4 waves)
 progress:
   total_phases: 4
   completed_phases: 0
-  total_plans: 0
+  total_plans: 4
   completed_plans: 0
   percent: 0
 ---
 
 # Project State: D&D Kampagnen-Tracker Pro — Stabilisierung & Ausbau
 
-**Last Updated:** 2026-06-20
-**Phase:** 07 — Komfort & Analyse (Complete)
-**Status:** v1.0 milestone complete
+**Last Updated:** 2026-07-22
+**Phase:** 08 — Test-Fundament grün (geplant, bereit zur Ausführung)
+**Status:** Milestone v1.1 — Phase 8 geplant (4 Pläne / 4 Wellen)
 
 ---
 
@@ -28,16 +28,16 @@ progress:
 
 **Core Value:** Die App muss am Spieltisch zuverlässig offline laufen — ein Spielleiter-Begleiter, der nie im Weg steht und keine Daten verliert.
 
-**Current Focus:** Milestone complete
+**Current Focus:** Phase 8 — Test-Fundament grün: 11 vorbestehende E2E-Fails auf 0, Assertions härten, E2E als CI-Gate
 
 ---
 
 ## Current Position
 
-Phase: Not started (defining requirements)
-Plan: —
-Status: Defining requirements
-Last activity: 2026-07-22 — Milestone v1.1 started
+Phase: 08 — Test-Fundament grün (geplant)
+Plan: 4 Pläne / 4 Wellen (08-01 App-Fixes → 08-02 Test-Fixes → 08-03 Härtung → 08-04 CI-Gate + Triage-Doku)
+Status: Ready to execute
+Last activity: 2026-07-22 — Phase 8 geplant (Research 08-RESEARCH.md, 4 Pläne, Plan-Checker VERIFICATION PASSED, 0 Blocker)
 
 ## Performance Metrics
 
@@ -121,12 +121,12 @@ Last activity: 2026-07-22 — Milestone v1.1 started
 
 ## Session Continuity
 
-**Last session:** 2026-07-22T20:41:43.816Z
-**Stopped at:** Phase 8 context gathered
-**Resume file:** .planning/phases/08-test-fundament-gr-n/08-CONTEXT.md
+**Last session:** 2026-07-22T21:33:47.637Z
+**Stopped at:** Phase 8 geplant — bereit zur Ausführung
+**Resume file:** .planning/phases/08-test-fundament-gr-n/ (08-01..08-04-PLAN.md)
 
 **Last action:** Komplette Milestone-UAT abgeschlossen (2026-06-20 → 2026-07-20): alle 5 offenen Human-UAT-Sessions via `/gsd-verify-work` durchgetestet — 07 (4/4), 06 (5/5), 05 (2/2), 01 (3/3), 02 (6/6). Alle 7 VERIFICATION.md jetzt `status: passed`. Dabei gefundene+gefixte Bugs: Soundboard-Doppel-Import (75aadfe), Audio-läuft-nach-Szene-Löschen (b85dbe1), Volume nicht live (801ed48), Manifest-CORS unter file:// (cd75093), Konsolen-Hygiene (c029f11), Datei-Backup schrieb nie bei Entity-CRUD — window.save-Wrapper strukturell wirkungslos für bare save() (1430e8c), generischer registerPostSaveHook + DM-Screen-Live-Sync-Umstellung + CLAUDE.md-Pattern-Korrektur (6ea8309), „Anderen Ordner wählen"-Button (cc2af9e). Nebenbei: Repo mit origin gemergt (7 Mai-Commits, alter pages.yml-Deploy entfernt 7f4858a), 348 Commits gepusht, GitHub-Pages-Deploy live verifiziert (PWA installierbar, SW-Update-Flow, Datei-Backup, Migrations-Wizard file://→PWA). Zusätzlich in der Session: Soundboard-Erweiterungen (Loop-Toggle/Crossfade-Loop/Fortschritt 6636297, Per-Track-Play noch offen als Design), gruppierte Navigation (3d77ec0).
-**Next action:** Milestone v1.0 abschließen — `/gsd-complete-milestone` (alle 7 Phasen complete, UAT vollständig, VERIFICATIONs passed). Offene Design-Entscheidung Soundboard Per-Track-Play (Layering gewählt, Szenen-Play-Variante unbestätigt). Optionale Altlasten: Phase-1-Security-Audit (`/gsd-secure-phase 1`), Phase-1-Code-Review-Findings, 11 vorbestehende E2E-Fails (Task-Chip), Phase-3 Browser-Checks (nicht-blockierend).
+**Next action:** Phase 8 ausführen — `/gsd-execute-phase 8` (Wave 1 → 08-01 zuerst; Sampling gemäß 08-VALIDATION.md: volle Suite zweimal in Folge grün vor `/gsd-verify-work`). Offene Design-Entscheidung Soundboard Per-Track-Play (Layering gewählt, Szenen-Play-Variante unbestätigt). Optionale Altlasten: Phase-1-Security-Audit (`/gsd-secure-phase 1`), Phase-1-Code-Review-Findings, Phase-3 Browser-Checks (nicht-blockierend).
 
 ---
 
