@@ -5,8 +5,8 @@ milestone_name: Tech-Debt & Härtung
 current_phase: 9
 current_phase_name: Editor-Regressionsnetz & execCommand-Ablösung
 status: planning
-stopped_at: Phase 08 Plan 04 abgeschlossen (2/2 Tasks, blockierender e2e-CI-Job D-03 + Triage-Doku D-07, Phase 8 bereit fuer Verifikation)
-last_updated: "2026-07-22T23:34:44.303Z"
+stopped_at: Phase 9 context gathered
+last_updated: "2026-07-23T19:05:10.418Z"
 last_activity: 2026-07-23
 last_activity_desc: Phase 08 complete, transitioned to Phase 9
 progress:
@@ -130,9 +130,9 @@ Last activity: 2026-07-23 — Phase 08 complete, transitioned to Phase 9
 
 ## Session Continuity
 
-**Last session:** 2026-07-22T23:13:35.359Z
-**Stopped at:** Phase 08 Plan 04 abgeschlossen (2/2 Tasks, blockierender e2e-CI-Job D-03 + Triage-Doku D-07, Phase 8 bereit fuer Verifikation)
-**Resume file:** None
+**Last session:** 2026-07-23T19:05:10.410Z
+**Stopped at:** Phase 9 context gathered
+**Resume file:** .planning/phases/09-editor-regressionsnetz-execcommand-abl-sung/09-CONTEXT.md
 
 **Last action:** Komplette Milestone-UAT abgeschlossen (2026-06-20 → 2026-07-20): alle 5 offenen Human-UAT-Sessions via `/gsd-verify-work` durchgetestet — 07 (4/4), 06 (5/5), 05 (2/2), 01 (3/3), 02 (6/6). Alle 7 VERIFICATION.md jetzt `status: passed`. Dabei gefundene+gefixte Bugs: Soundboard-Doppel-Import (75aadfe), Audio-läuft-nach-Szene-Löschen (b85dbe1), Volume nicht live (801ed48), Manifest-CORS unter file:// (cd75093), Konsolen-Hygiene (c029f11), Datei-Backup schrieb nie bei Entity-CRUD — window.save-Wrapper strukturell wirkungslos für bare save() (1430e8c), generischer registerPostSaveHook + DM-Screen-Live-Sync-Umstellung + CLAUDE.md-Pattern-Korrektur (6ea8309), „Anderen Ordner wählen"-Button (cc2af9e). Nebenbei: Repo mit origin gemergt (7 Mai-Commits, alter pages.yml-Deploy entfernt 7f4858a), 348 Commits gepusht, GitHub-Pages-Deploy live verifiziert (PWA installierbar, SW-Update-Flow, Datei-Backup, Migrations-Wizard file://→PWA). Zusätzlich in der Session: Soundboard-Erweiterungen (Loop-Toggle/Crossfade-Loop/Fortschritt 6636297, Per-Track-Play noch offen als Design), gruppierte Navigation (3d77ec0).
 **Next action:** Phase 8 ausführen — `/gsd-execute-phase 8` (Wave 1 → 08-01 zuerst; Sampling gemäß 08-VALIDATION.md: volle Suite zweimal in Folge grün vor `/gsd-verify-work`). Offene Design-Entscheidung Soundboard Per-Track-Play (Layering gewählt, Szenen-Play-Variante unbestätigt). Optionale Altlasten: Phase-1-Security-Audit (`/gsd-secure-phase 1`), Phase-1-Code-Review-Findings, Phase-3 Browser-Checks (nicht-blockierend).
