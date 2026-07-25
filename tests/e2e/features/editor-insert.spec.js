@@ -548,6 +548,107 @@ test.describe('Editor-Regressionsnetz — Insert-Call-Sites (Wiki)', () => {
                 delete window.__cr01OriginalSanitize;
             });
         });
+
+        /**
+         * Sicherheits-Regression (T-10-30, D-13, Plan 10-07): CSS-basierter
+         * Ausgangs-Beacon. Eine Stil-Deklaration mit fremder
+         * Ressourcen-Referenz überlebt bislang die gesamte Einfüge- und
+         * Speicherkette und löst bei JEDEM Rendern eine ausgehende Anfrage
+         * an die fremde Herkunft aus — Informationsabfluss (Herkunfts-IP,
+         * Zeitpunkt, Browserkennung), keine Code-Ausführung. Angreifer-
+         * Herkunft ist bewusst eine garantiert tote lokale Gegenstelle
+         * (Port 9, "Verwerf"-Port): offline-deterministisch, keine echte
+         * Fremd-Adresse wird kontaktiert. Eine Anfrage an eine tote
+         * Gegenstelle erzeugt NIEMALS eine Antwort — nur ein
+         * Fehlschlag-Ereignis. Ein Beobachter, der nur 'response' zählt,
+         * wäre deshalb vakuum-grün; hier werden 'request' UND
+         * 'requestfailed' beobachtet, damit der rote Lauf zugleich die
+         * Positivkontrolle für den Beobachter selbst ist.
+         *
+         * Die drei Zellen variieren die NOTATIONSFORM DES STIL-ATTRIBUTS
+         * selbst (doppelt/einfach/unquotiert) — nicht die Notation des
+         * url()-Werts (das prüft der Unit-Vektorblock). Grund: die
+         * kosmetische Attribut-Entfernungskette in handleEditorPaste()
+         * greift NUR bei doppelt quotierten Attributwerten (D-01,
+         * Quote-Asymmetrie, T-10-39) und entfernt style="..." bereits VOR
+         * dem Sanitizer — aus einem strukturellen, nicht
+         * sicherheitsrelevanten Grund. Zelle 1 (doppelt quotiert) beweist
+         * deshalb nichts über die Wertprüfung; Zellen 2 und 3 (einfach
+         * quotiert / unquotiert) erreichen den Sanitizer unverändert und
+         * sind die eigentlichen Beweisträger für Ursache 1.
+         */
+        const BEACON_ORIGIN = 'http://127.0.0.1:9';
+        const CSS_BEACON_TABELLEN_PAYLOAD =
+            '<table><tr>' +
+            `<td style="background:url('${BEACON_ORIGIN}/LEAK-DQ')">Zelle1</td>` +
+            `<td style='background:url("${BEACON_ORIGIN}/LEAK-SQ")'>Zelle2</td>` +
+            `<td style=background:url(${BEACON_ORIGIN}/LEAK-UQ)>Zelle3</td>` +
+            '<td>ZellText4</td>' +
+            '</tr></table>';
+
+        test('Sicherheits-Regression: Stilwert mit fremder Ressourcen-Referenz erzeugt keine ausgehende Anfrage — auch nicht nach Speichern und Neuladen', async ({
+            page
+        }) => {
+            const errors = [];
+            page.on('pageerror', e => errors.push(String(e)));
+
+            const observedRequests = [];
+            const markBeaconRequest = req => {
+                if (req.url().includes('127.0.0.1:9')) observedRequests.push(req.url());
+            };
+            page.on('request', markBeaconRequest);
+            page.on('requestfailed', markBeaconRequest);
+
+            await openFreshWikiForm(page, 'Insert Security CSS Beacon');
+            const editor = page.locator('#wiki-content');
+
+            await pasteInto(page, '#wiki-content', {
+                html: CSS_BEACON_TABELLEN_PAYLOAD,
+                text: 'Zelle1\tZelle2\tZelle3\tZellText4'
+            });
+
+            // Strukturell zuerst, sofort entscheidbar: kein Stil-Attribut im
+            // Editor trägt den Marker, keine beobachtete Anfrage.
+            const hasMarkerInStyleAfterPaste = await editor.evaluate(el => {
+                const nodes = el.querySelectorAll('[style]');
+                for (const node of nodes) {
+                    if (node.getAttribute('style').includes('LEAK')) return true;
+                }
+                return false;
+            });
+            expect(hasMarkerInStyleAfterPaste).toBe(false);
+            expect(observedRequests).toEqual([]);
+
+            // Erhaltungs-Gegenprobe: die vierte, gutartige Zelle bleibt.
+            const tableCountAfterPaste = await editor.evaluate(
+                el => el.querySelectorAll('table').length
+            );
+            expect(tableCountAfterPaste).toBeGreaterThan(0);
+            await expect(editor.evaluate(el => el.textContent)).resolves.toContain('ZellText4');
+
+            // Nach Speichern, Neuladen und Wiederöffnen gilt dieselbe
+            // Prüfung — das ist der Nachweis gegen das Wiederauslösen bei
+            // jedem Rendern über den gesamten Neulade-Zyklus hinweg.
+            const reopened = await saveAndReopenWikiEntry(page, 'Insert Security CSS Beacon');
+            const persistedHtml = await reopened.evaluate(el => el.innerHTML);
+            expect(persistedHtml).not.toContain('LEAK');
+            const hasMarkerInStyleAfterReload = await reopened.evaluate(el => {
+                const nodes = el.querySelectorAll('[style]');
+                for (const node of nodes) {
+                    if (node.getAttribute('style').includes('LEAK')) return true;
+                }
+                return false;
+            });
+            expect(hasMarkerInStyleAfterReload).toBe(false);
+            expect(observedRequests).toEqual([]);
+            expect(errors).toEqual([]);
+
+            const tableCountAfterReload = await reopened.evaluate(
+                el => el.querySelectorAll('table').length
+            );
+            expect(tableCountAfterReload).toBeGreaterThan(0);
+            await expect(reopened.evaluate(el => el.textContent)).resolves.toContain('ZellText4');
+        });
     });
 });
 

