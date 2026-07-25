@@ -344,6 +344,10 @@ function unwrapEditorElement(element) {
         parent.removeChild(element);
     }
 }
+// Alle contenteditable-Hosts mit eigener Editor-Toolbar. .cf-notes-editor
+// (Charakter-Notizen) gehoert dazu — ohne ihn nisten Formate dort endlos
+// statt zu togglen.
+const EDITOR_HOST_SELECTOR = '.rich-editor, .spell-editor, .dialog-text, .cf-notes-editor';
 function closestEditorAncestor(container, selector) {
     // container kann ein Text- ODER ein Element-Knoten sein (z.B. wenn die
     // Selektion per range.selectNodeContents(element) statt per
@@ -360,7 +364,7 @@ function applyInlineFormat(editor, tagName) {
     const selectedText = range.toString();
     if (!selectedText) return;
     const parentTag = closestEditorAncestor(range.commonAncestorContainer, tagName);
-    if (parentTag && parentTag.closest('.rich-editor, .spell-editor, .dialog-text')) {
+    if (parentTag && parentTag.closest(EDITOR_HOST_SELECTOR)) {
         unwrapEditorElement(parentTag);
     } else {
         const wrapper = document.createElement(tagName);
@@ -378,7 +382,7 @@ function toggleUnorderedListAtSelection(editor) {
     const selectedText = range.toString();
     if (!selectedText) return;
     const parentList = closestEditorAncestor(range.commonAncestorContainer, 'ul, ol');
-    if (parentList && parentList.closest('.rich-editor, .spell-editor, .dialog-text')) {
+    if (parentList && parentList.closest(EDITOR_HOST_SELECTOR)) {
         const listItems = parentList.querySelectorAll('li');
         const fragment = document.createDocumentFragment();
         listItems.forEach((li, index) => {
@@ -516,7 +520,7 @@ function applyFontFamilyToSelection(editor, familyValue) {
     // Baseline bleibt.
     const faceValue = familyValue.replace(/["']/g, '');
     const existingFont = closestEditorAncestor(range.commonAncestorContainer, 'font');
-    if (existingFont && existingFont.closest('.rich-editor, .spell-editor, .dialog-text')) {
+    if (existingFont && existingFont.closest(EDITOR_HOST_SELECTOR)) {
         existingFont.setAttribute('face', faceValue);
         return;
     }
@@ -536,7 +540,7 @@ function applyFontSizeToSelection(editor, sizeValue) {
     const range = selection.getRangeAt(0);
     if (!range.toString()) return;
     const existingFont = closestEditorAncestor(range.commonAncestorContainer, 'font');
-    if (existingFont && existingFont.closest('.rich-editor, .spell-editor, .dialog-text')) {
+    if (existingFont && existingFont.closest(EDITOR_HOST_SELECTOR)) {
         existingFont.style.fontSize = sizeValue;
         return;
     }
