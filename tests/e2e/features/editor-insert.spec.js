@@ -374,6 +374,168 @@ test.describe('Editor-Regressionsnetz — Insert-Call-Sites (Wiki)', () => {
             expect(xssFlagAfterReload).toBeUndefined();
             expect(errors).toEqual([]);
         });
+
+        /**
+         * Sicherheits-Regression (SC3, CR-01, Plan 10-06): Mehrfach-Vektor-
+         * Nutzlast fuer den Tabellen-Einfuegepfad. Ein reines <script>-Element
+         * allein reproduziert CR-01 NICHT — Range.createContextualFragment()
+         * markiert parser-erzeugte Skript-Elemente laut Spezifikation als
+         * inert (09-RESEARCH.md Pattern 3+4), ein solcher Testfall liefe
+         * vakuum-gruen. Der tatsaechlich funktionierende Vektor ist ein
+         * eingebettetes Rahmen-Element mit Inline-Dokument-Attribut
+         * (<iframe srcdoc>): dessen Inhalt wird vom Parser des eigenen,
+         * aber origin-erbenden Browsing-Kontexts geparst und sofort
+         * ausgefuehrt — kein Klick, kein Speichern, kein Neuladen noetig
+         * (10-REVIEW.md CR-01, empirisch 3/3 gegen das Produktions-Bundle
+         * reproduziert). Jede Tabellenzelle traegt genau einen unabhaengigen
+         * Vektor bzw. die Erhaltungs-Gegenprobe:
+         *   1: iframe srcdoc mit Skript (Marker-Flag + Titel-Ueberschreibung)
+         *   2: svg mit Lade-Ereignis-Attribut (onload)
+         *   3: Link mit Skript-Protokoll in Klarschrift
+         *   4: Link mit entitaets-kodiertem Skript-Protokoll (Randfall Kodierung)
+         *   5: Bild mit Fehler-Ereignis-Attribut OHNE trennendes Leerzeichen
+         *      (der dokumentierte Umgehungsfall der Plan-10-04-Regexe)
+         *   6: reiner Text als Erhaltungs-Gegenprobe
+         */
+        const CR01_TABELLEN_PAYLOAD =
+            '<table><tr>' +
+            '<td><iframe srcdoc="&lt;script&gt;window.__cr01Iframe=true;document.title=&#39;PWNED&#39;;&lt;/script&gt;"></iframe></td>' +
+            '<td><svg onload="window.__cr01Svg=true"></svg></td>' +
+            '<td><a href="javascript:window.__cr01Link=true">Link1</a></td>' +
+            '<td><a href="&#106;avascript:window.__cr01Entity=true">Link2</a></td>' +
+            '<td><img src="x"onerror="window.__cr01NoSpace=true"></td>' +
+            '<td>ZellText6</td>' +
+            '</tr></table>';
+
+        test('Sicherheits-Regression: Tabellen-Paste mit eingebettetem Rahmen, Vektorgrafik und Skript-Protokoll landet weder ausführbar noch als verbotenes Element im DOM (SC3, CR-01)', async ({
+            page
+        }) => {
+            // Nur echte Seitenfehler zaehlen als Sicherheitssignal (10-04-
+            // Praezedenz, siehe Kommentar oben am 10-04-Testfall).
+            const errors = [];
+            page.on('pageerror', e => errors.push(String(e)));
+
+            await openFreshWikiForm(page, 'Insert Security CR01');
+            const editor = page.locator('#wiki-content');
+            const titleBefore = await page.evaluate(() => document.title);
+
+            await pasteInto(page, '#wiki-content', {
+                html: CR01_TABELLEN_PAYLOAD,
+                text: 'Boesartig\tZellText6'
+            });
+            await page.waitForTimeout(300);
+
+            // Strukturelle Element-Zaehlung ZUERST: sofort entscheidbar, ohne
+            // dass die Kernassertion von einer festen Wartezeit abhaengt
+            // (Prohibition: keine Sicherheitsaussage darf an Timing haengen —
+            // die Wartezeit oben dient nur dem Settle der Iframe-/SVG-Ladeereignisse,
+            // nicht der Assertion selbst).
+            const forbiddenCount = await editor.evaluate(
+                el => el.querySelectorAll('iframe, object, embed, svg, form, script, img').length
+            );
+            expect(forbiddenCount).toBe(0);
+
+            const hasOnAttr = await editor.evaluate(el => {
+                const nodes = el.querySelectorAll('*');
+                for (const node of nodes) {
+                    for (const attr of node.attributes) {
+                        if (attr.name.toLowerCase().startsWith('on')) return true;
+                    }
+                }
+                return false;
+            });
+            expect(hasOnAttr).toBe(false);
+
+            const hasDangerousAttrValue = await editor.evaluate(el => {
+                const nodes = el.querySelectorAll('*');
+                for (const node of nodes) {
+                    for (const attr of node.attributes) {
+                        const value = attr.value.toLowerCase();
+                        if (value.includes('javascript:') || value.includes('data:text/html')) {
+                            return true;
+                        }
+                    }
+                }
+                return false;
+            });
+            expect(hasDangerousAttrValue).toBe(false);
+
+            const titleAfter = await page.evaluate(() => document.title);
+            expect(titleAfter).toBe(titleBefore);
+
+            const flags = await page.evaluate(() => ({
+                iframe: window.__cr01Iframe,
+                svg: window.__cr01Svg,
+                link: window.__cr01Link,
+                entity: window.__cr01Entity,
+                noSpace: window.__cr01NoSpace
+            }));
+            expect(flags.iframe).toBeUndefined();
+            expect(flags.svg).toBeUndefined();
+            expect(flags.link).toBeUndefined();
+            expect(flags.entity).toBeUndefined();
+            expect(flags.noSpace).toBeUndefined();
+
+            expect(errors).toEqual([]);
+
+            // Erhaltungs-Gegenprobe: die Tabelle selbst und der Text der
+            // sechsten (gutartigen) Zelle bleiben erhalten.
+            const tableCount = await editor.evaluate(el => el.querySelectorAll('table').length);
+            expect(tableCount).toBeGreaterThan(0);
+            await expect(editor.evaluate(el => el.textContent)).resolves.toContain('ZellText6');
+        });
+
+        /**
+         * Randfall (fail-closed, Task 1 Schritt 2d, must_haves-Truth 4): Ist
+         * der Sanitizer zur Laufzeit nicht erreichbar ODER ergibt seine
+         * Bereinigung des Tabellen-Abschnitts keinen Inhalt, fuegt der
+         * Handler ausschliesslich den Klartext-Anteil der Zwischenablage
+         * ein — es bleibt kein leeres Tabellengeruest zurueck. Beide
+         * Teil-Bedingungen des "ODER" haengen im Produktionscode am selben
+         * safeTable-Check; sie werden hier ueber gezieltes Stubben von
+         * window.sanitizeHTML() geprueft — dasselbe dokumentierte
+         * Setup-Vehikel wie D-06 (direktes Dispatch statt echter
+         * Zwischenablage), das eigentliche Pruefziel bleibt der Handler.
+         */
+        test('Randfall: Sanitizer nicht erreichbar oder ohne Ergebnis — nur Klartext wird eingefügt, kein leeres Tabellengerüst', async ({
+            page
+        }) => {
+            await openFreshWikiForm(page, 'Insert Security CR01 Randfall');
+            const editor = page.locator('#wiki-content');
+
+            // (a) Sanitizer nicht erreichbar — die typeof-Pruefung schlaegt fehl.
+            await page.evaluate(() => {
+                window.__cr01OriginalSanitize = window.sanitizeHTML;
+                window.sanitizeHTML = undefined;
+            });
+            await pasteInto(page, '#wiki-content', {
+                html: '<table><tr><td>A</td><td>B</td></tr></table>',
+                text: 'A\tB'
+            });
+            await page.waitForTimeout(300);
+            expect(await editor.evaluate(el => el.querySelectorAll('table').length)).toBe(0);
+            await expect(editor.evaluate(el => el.textContent)).resolves.toContain('A\tB');
+
+            // (b) Sanitizer erreichbar, liefert aber keinen Inhalt (nur Leerraum).
+            await editor.evaluate(el => {
+                el.innerHTML = '';
+            });
+            await page.evaluate(() => {
+                window.sanitizeHTML = () => '   ';
+            });
+            await pasteInto(page, '#wiki-content', {
+                html: '<table><tr><td>C</td><td>D</td></tr></table>',
+                text: 'C\tD'
+            });
+            await page.waitForTimeout(300);
+            expect(await editor.evaluate(el => el.querySelectorAll('table').length)).toBe(0);
+            await expect(editor.evaluate(el => el.textContent)).resolves.toContain('C\tD');
+
+            await page.evaluate(() => {
+                window.sanitizeHTML = window.__cr01OriginalSanitize;
+                delete window.__cr01OriginalSanitize;
+            });
+        });
     });
 });
 
