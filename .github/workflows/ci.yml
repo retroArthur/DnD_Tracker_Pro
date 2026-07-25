@@ -27,8 +27,14 @@ jobs:
         with:
           node-version: '20'
           cache: 'npm'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
       - run: npm ci
       - run: npm test
+      - run: pip install -r requirements-dev.txt
+      - run: python build.py
+      - run: python -m pytest tests/build/ -v
 
   # Phase 8 (D-03): voller Playwright-E2E-Lauf gegen den DEV-Bundle (file://,
   # kein HTTP-Server, kein SMOKE_BASE_URL — das ist der bereits vorhandene

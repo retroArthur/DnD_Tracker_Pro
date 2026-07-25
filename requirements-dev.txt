@@ -1,0 +1,4 @@
+# Python-Testabhaengigkeiten fuer tests/build/ (Build-Gate-Tests).
+# Verwendet vom CI-`test`-Job in .github/workflows/ci.yml (D-03) sowie fuer
+# lokale Laeufe: `pip install -r requirements-dev.txt && python -m pytest tests/build/`.
+pytest==9.0.3
