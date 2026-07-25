@@ -28,7 +28,7 @@ Details, Success Criteria und Coverage: [milestones/v1.0-ROADMAP.md](milestones/
 
 - [x] **Phase 8: Test-Fundament grün** - Alle 11 vorbestehenden E2E-Fails behoben, brüchige Assertions gehärtet (completed 2026-07-23)
 - [x] **Phase 9: Editor-Regressionsnetz & execCommand-Ablösung** - Rich-Text-Editor auf Selection/Range-APIs migriert, abgesichert durch neues E2E-Netz das VOR der Migration steht (completed 2026-07-25)
-- [ ] **Phase 10: Security-Härtung** - Vorbestehender Import-XSS behoben, aktueller Security-Audit ohne offene Findings (7/7 Pläne ausgeführt inkl. zweier Gap-Closure-Runden — SC3 und der unabhängig gefundene CSS-Beacon geschlossen, threats_open: 0 in SECURITY.md + 10-SECURITY.md wieder wahr; bereit für abschließende Phasen-Verifikation)
+- [x] **Phase 10: Security-Härtung** - Vorbestehender Import-XSS behoben, aktueller Security-Audit ohne offene Findings (7/7 Pläne inkl. zweier Gap-Closure-Runden; SC3 und der dabei gefundene CSS-Beacon geschlossen, threats_open: 0 in SECURITY.md + 10-SECURITY.md belegt; Verifikation 4/4) (completed 2026-07-25)
 - [ ] **Phase 11: Architektur- & Build-Hygiene** - Modullisten-Drift strukturell unmöglich, Dedup-Pass-3 gehärtet, CI-Deprecations weg, Codebase-Map + CONCERNS.md aufgefrischt
 
 ## Phase Details
@@ -178,5 +178,5 @@ Details, Success Criteria und Coverage: [milestones/v1.0-ROADMAP.md](milestones/
 | v1.0 (Phasen 1–7) | 44/44 | ✅ Shipped | 2026-07-22 |
 | 8. Test-Fundament grün | 4/4 | Complete    | 2026-07-23 |
 | 9. Editor-Regressionsnetz & execCommand-Ablösung | 9/9 | Complete    | 2026-07-25 |
-| 10. Security-Härtung | 6/7 | In Progress|  |
+| 10. Security-Härtung | 7/7 | Complete    | 2026-07-25 |
 | 11. Architektur- & Build-Hygiene | 0/TBD | Not started | - |

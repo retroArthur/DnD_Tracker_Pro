@@ -183,4 +183,4 @@ This document evolves at phase transitions and milestone boundaries.
 
 ---
 
-_Last updated: 2026-07-25 after Phase 9 completion (v1.1: Editor-Regressionsnetz & execCommand-Ablösung — EDIT-01/02/03 validiert, Editor execCommand-frei, 80-Tests-Netz mit D-04a-Beweis, E2E-Suite 308 passed)._
+_Last updated: 2026-07-25 after Phase 10 completion (v1.1: Security-Härtung — SEC-01/SEC-02 validiert. Import-XSS-Kette geschlossen (Anzeige- und Import-Grenze sanitisiert, neun HTML-tragende Felder an beiden Eintrittspunkten), Sanitizer-Vektor-Katalog + Paritätstest gegen den echten Produktionsquelltext, `<strike>`-Whitelist. Zwei Gap-Runden nach adversarialer Gegenprüfung: der Editor-Einfügepfad endet jetzt mit dem Allowlist-Sanitizer als letzter Stufe (Tabellen-Paste-XSS — 59 Umgehungsvektoren gegengeprüft und blockiert), und eine Stil-Wertprüfung schließt einen CSS-basierten Ausgangs-Beacon. SECURITY.md plus vier Per-Phasen-Register mit `threats_open: 0`, jede Zeile dispositioniert. Suiten: Jest 621/621, Playwright 318 passed/2 skipped)._

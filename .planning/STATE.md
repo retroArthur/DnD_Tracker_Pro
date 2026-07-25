@@ -2,26 +2,26 @@
 gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Tech-Debt & Härtung
-current_phase: 10
-current_phase_name: Security-Härtung
-status: executing
+current_phase: 11
+current_phase_name: Architektur- & Build-Hygiene
+status: planning
 stopped_at: Completed 10-07-PLAN.md (Gap-Closure Runde 2 — CSS-Beacon geschlossen, Threat-Register vollstaendig dispositioniert)
-last_updated: "2026-07-25T17:52:00.000Z"
+last_updated: "2026-07-25T18:03:06.442Z"
 last_activity: 2026-07-25
-last_activity_desc: Phase 10 Gap-Closure Runde 2 abgeschlossen
+last_activity_desc: Phase 10 complete, transitioned to Phase 11
 progress:
   total_phases: 4
   completed_phases: 3
-  total_plans: 21
-  completed_plans: 21
+  total_plans: 20
+  completed_plans: 20
   percent: 75
 ---
 
 # Project State: D&D Kampagnen-Tracker Pro — Stabilisierung & Ausbau
 
 **Last Updated:** 2026-07-25
-**Phase:** 10 — Security-Härtung
-**Status:** Ready to execute
+**Phase:** 11 — Architektur- & Build-Hygiene
+**Status:** Ready to plan
 
 ---
 
@@ -36,9 +36,9 @@ progress:
 ## Current Position
 
 Phase: 10 (Security-Härtung) — Gap-Closure Runde 2 abgeschlossen (7/7 Pläne inkl. beider Gap-Closure-Runden)
-Plan: 7 of 7
+Plan: Not started
 Status: Bereit für abschließende Phasen-Verifikation
-Last activity: 2026-07-25 — Plan 10-07 (CSS-Beacon-Fix + Threat-Register vollständig dispositioniert) abgeschlossen
+Last activity: 2026-07-25 — Phase 10 complete, transitioned to Phase 11
 
 ## Performance Metrics
 
@@ -149,6 +149,8 @@ Last activity: 2026-07-25 — Plan 10-07 (CSS-Beacon-Fix + Threat-Register volls
 - [x] **Phase 10 Lücke SC3 schließen** ✓ (2026-07-25, 10-06-PLAN.md: Tabellenzweig in `ui/editors/rich-text.js` endet mit `window.sanitizeHTML()` als LETZTER Stufe, Mehrfach-Vektor-Regressionstest, T-10-15/T-10-17 korrigiert). **Zweiter, unabhängig gefundener Befund auf derselben Fläche geschlossen** ✓ (2026-07-25, 10-07-PLAN.md, Gap-Closure Runde 2: CSS-basierter Ausgangs-Beacon — Stil-Attribut-Filter prüfte nur den Eigenschaftsnamen, nie den Wert; Fix: Wertprüfung pro Deklaration gegen Erlaubnisliste `allowedStyleFunctions`/`isSafeStyleValue()` in beiden Sanitizer-Zwillingen; zusätzlich WR-01/WR-02/WR-03/IN-01 aus `10-REVIEW-GAP.md` behoben; `threats_open: 0` in `SECURITY.md` + `10-SECURITY.md` wieder wahr — Phase 10 SEC-01/SEC-02 vollständig erfüllt, bereit für `/gsd-verify-work 10`).
 - [ ] Phase 10 Zusatzbefund IN-01 (nicht blockierend, echter Anzeigebug): `hasHtmlTags` in `ui/editors/markdown-converter.js:264` ist die nie verdrahtete Wächtervariable einer Guard — Markdown-Konvertierung läuft dadurch unbedingt über bereits-HTML; URLs mit ≥2 Unterstrichen werden korrumpiert (`Der_Hobbit_Buch` → `Der<i>Hobbit</i>Buch`, Link kaputt). Nur Anzeige, gespeicherte Daten unberührt.
 - [ ] Phase 10 Zusatzbefunde (kosmetisch/fragil, unbestätigt dringlich): WR-02 doppeltes `data-id` in `features/wiki/wiki.js:391-392` (Parser verwirft das zweite, folgenlos); IN-02 un-escapte Regex-Capture in `parseWikiLinks()` (aktuell nicht ausnutzbar). WR-03 und WR-01 wurden gegengeprüft und sind KEINE Befunde.
+- [x] Phase 10 abgeschlossen ✓ (2026-07-25, 7/7 Pläne, Verifikation 4/4 Must-Haves; SEC-01/SEC-02 Complete; Jest 621/621, Playwright 318 passed/2 skipped)
+- [ ] **Latente Toast-Race in zwei Test-Dateien (Phase-8-Nachzug fehlt)**: `tests/e2e/crud/locations.spec.js` und `tests/e2e/crud/encounters.spec.js` haben das Seed aus Plan 08-02 NIE bekommen. 08-02 fand die Ursache (Boot-Zeit-`save()` aus `initRandomTables()` und `validateDataIntegrity()` löst den Backup-Hinweis-Toast aus, der den geteilten `#toast`-Knoten überschreibt, den Validierungstests auslesen) und behob sie per vollständigem `D`-Seed vor `loadApp()` — aber nur in `quests`/`npcs`/`party`. Symptom: `locations.spec.js:61` „Ort ohne Namen zeigt Fehlermeldung" fällt unter Volllast sporadisch mit Timeout aus (`fullyParallel: true`, lokal unbegrenzte Worker); isoliert 3/3 grün, Volllauf-Wiederholung grün. Fix: Seed-Payload aus `08-02-SUMMARY.md` in beide Dateien übernehmen.
 - [ ] Codebase-Map veraltet (Drift-Gate-Hinweis, nicht blockierend): `/gsd-map-codebase`
 
 ---
