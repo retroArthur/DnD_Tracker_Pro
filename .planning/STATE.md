@@ -5,15 +5,15 @@ milestone_name: Tech-Debt & Härtung
 current_phase: 9
 current_phase_name: Editor-Regressionsnetz & execCommand-Ablösung
 status: executing
-stopped_at: Completed 09-07-PLAN.md
-last_updated: "2026-07-25T04:12:24.539Z"
+stopped_at: Completed 09-08-PLAN.md
+last_updated: "2026-07-25T04:52:05.292Z"
 last_activity: 2026-07-25
-last_activity_desc: "09-06-PLAN.md abgeschlossen (formatText() vollstaendig auf Selection/Range migriert: Gruppe A bold/italic/underline/strikethrough/list, Gruppe B heading/font/highlight; Modul-Zaehlstand 21 -> 12)"
+last_activity_desc: "09-08-PLAN.md abgeschlossen (Einfuege-Operationen migriert: Gruppe E Zwischenablage-Einfuegungen, Gruppe F Tabelleneinfuegen + Zeilenumbruch; Modul-Zaehlstand 6 -> 1, nur noch defaultParagraphSeparator-Setup-Aufruf)"
 progress:
   total_phases: 4
   completed_phases: 1
   total_plans: 13
-  completed_plans: 11
+  completed_plans: 12
   percent: 25
 ---
 
@@ -36,9 +36,9 @@ progress:
 ## Current Position
 
 Phase: 09 (editor-regressionsnetz-execcommand-abl-sung) — EXECUTING
-Plan: 8 of 9
+Plan: 9 of 9
 Status: Ready to execute
-Last activity: 2026-07-25 — 09-06-PLAN.md abgeschlossen (formatText() vollstaendig auf Selection/Range migriert: Gruppe A bold/italic/underline/strikethrough/list, Gruppe B heading/font/highlight; Modul-Zaehlstand 21 -> 12)
+Last activity: 2026-07-25 — 09-08-PLAN.md abgeschlossen (Einfuege-Operationen migriert: Gruppe E Zwischenablage-Einfuegungen, Gruppe F Tabelleneinfuegen + Zeilenumbruch; Modul-Zaehlstand 6 -> 1, nur noch defaultParagraphSeparator-Setup-Aufruf)
 
 ## Performance Metrics
 
@@ -62,6 +62,7 @@ Last activity: 2026-07-25 — 09-06-PLAN.md abgeschlossen (formatText() vollstae
 | Phase 09 P05 | 8min | 2 tasks | 2 files |
 | Phase 9 P06 | 45min | 2 tasks | 3 files |
 | Phase 09 P07 | 55min | 2 tasks | 3 files |
+| Phase 09 P08 | 37min | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -138,8 +139,8 @@ Last activity: 2026-07-25 — 09-06-PLAN.md abgeschlossen (formatText() vollstae
 
 ## Session Continuity
 
-**Last session:** 2026-07-25T04:12:14.762Z
-**Stopped at:** Completed 09-07-PLAN.md
+**Last session:** 2026-07-25T04:52:05.281Z
+**Stopped at:** Completed 09-08-PLAN.md
 **Resume file:** None
 
 **Last action:** Komplette Milestone-UAT abgeschlossen (2026-06-20 → 2026-07-20): alle 5 offenen Human-UAT-Sessions via `/gsd-verify-work` durchgetestet — 07 (4/4), 06 (5/5), 05 (2/2), 01 (3/3), 02 (6/6). Alle 7 VERIFICATION.md jetzt `status: passed`. Dabei gefundene+gefixte Bugs: Soundboard-Doppel-Import (75aadfe), Audio-läuft-nach-Szene-Löschen (b85dbe1), Volume nicht live (801ed48), Manifest-CORS unter file:// (cd75093), Konsolen-Hygiene (c029f11), Datei-Backup schrieb nie bei Entity-CRUD — window.save-Wrapper strukturell wirkungslos für bare save() (1430e8c), generischer registerPostSaveHook + DM-Screen-Live-Sync-Umstellung + CLAUDE.md-Pattern-Korrektur (6ea8309), „Anderen Ordner wählen"-Button (cc2af9e). Nebenbei: Repo mit origin gemergt (7 Mai-Commits, alter pages.yml-Deploy entfernt 7f4858a), 348 Commits gepusht, GitHub-Pages-Deploy live verifiziert (PWA installierbar, SW-Update-Flow, Datei-Backup, Migrations-Wizard file://→PWA). Zusätzlich in der Session: Soundboard-Erweiterungen (Loop-Toggle/Crossfade-Loop/Fortschritt 6636297, Per-Track-Play noch offen als Design), gruppierte Navigation (3d77ec0).
@@ -192,6 +193,8 @@ _State initialized: 2026-06-11_
 - [Phase ?]: Zaehlnachweis-Test-Ausnahme zweimal angewandt statt nur final in 09-09 (Phase 9, 09-06): 21->16 nach Gruppe A, 16->12 nach Gruppe B, dokumentiert in 09-BASELINE.md
 - [Phase 09]: Doppel-Dispatch-Guard (_lastFontCallKey) in rich-text.js statt Fix in event-delegation.js (Plan 09-07) — EventDelegation._handleChange UND _handleInput feuern beide fuer select data-action Elemente; Fix im Datei-Scope des Plans gehalten
 - [Phase 09]: clearInlineFormattingAtSelection() um Tag-Unwrap (b/i/u/s/strike) erweitert statt Duplikat (Plan 09-07) — Repliziert empirisch verifizierte removeFormat-Eigenheit; Verhalten fuer bestehenden Aufrufer (highlight none) unveraendert
+- [Phase ?]: sanitizeInsertedInlineStyle() als deterministische String-Transformation statt CSSOM-Touch (Plan 09-08) - reproduziert die execCommand-eigene background/color-Eigenheit bei Mehrfach-Deklarationen exakt
+- [Phase ?]: Zero-Width-Space-Platzhalter + deleteData()-Cleanup fuer insertLineBreakAtSelection() (Plan 09-08) - Cursor hinter trailing br ist ohne Anker in Chromium nicht stabil
 
 ## Operator Next Steps
 
