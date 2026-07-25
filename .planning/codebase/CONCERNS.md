@@ -61,12 +61,19 @@
 - Impact: AI-assisted and human development follows wrong guidance; effort gets wasted re-verifying or re-doing completed migrations.
 - Fix approach: Audit pass over `CLAUDE.md` and `docs/bugfixes.md` tech-debt section against current code; mark completed roadmap items.
 
-**Deprecated `document.execCommand` powers the rich-text editor:**
+**RESOLVED (Phase 9, 09-editor-regressionsnetz-execcommand-abl-sung, 2026-07-25): `document.execCommand` fully removed from the rich-text editor module:**
 
-- Issue: Core formatting (bold, italic, underline, strikethrough, lists, fonts, insertHTML, createLink) uses the deprecated `execCommand` API — 21 call sites in `ui/editors/rich-text.js` (lines 297-861), plus `systems/entity-links.js:108`, `features/wiki/wiki.js:819`, `ui/actions/system-actions.js:79`.
-- Files: `ui/editors/rich-text.js`, `systems/entity-links.js`, `features/wiki/wiki.js`, `ui/actions/system-actions.js`
-- Impact: API works in all current browsers but is formally deprecated; behavior already varies cross-browser (`<font>` tag output is sanitized specially in `utils/basic.js:67-68`). A browser removal would break all rich-text editing.
-- Fix approach: Acknowledged in `docs/bugfixes.md` as low-risk/high-effort. Migrate incrementally to Selection/Range API, starting with simple inline formats; keep `sanitizeHTML` allowances in sync.
+- Original issue: Core formatting (bold, italic, underline, strikethrough, lists, fonts, insertHTML, createLink) used the deprecated `execCommand` API — 21 call sites in `ui/editors/rich-text.js` (lines 297-861).
+- Resolution: All 21 call sites replaced with Selection/Range-DOM operations across seven migration groups (Pläne 09-06 bis 09-09), backed by a four-file, 80-test regression net that was double-green against the unmigrated code before the first migration commit (D-04a) and stayed green after every group. Zero `document.execCommand` occurrences remain in `ui/editors/rich-text.js` (machine-verified count, comment lines excluded). See `.planning/phases/09-editor-regressionsnetz-execcommand-abl-sung/09-BASELINE.md` (Abschluss-Protokoll) for the full count-chain and commit list.
+- Files: `ui/editors/rich-text.js` (resolved)
+- Follow-up: The three call sites outside this module (`systems/entity-links.js`, `features/wiki/wiki.js`, `ui/actions/system-actions.js`) were deliberately out of Phase 9's scope — see the new entry below.
+
+**Three `document.execCommand` call sites remain outside the editor module (deliberately out of Phase 9 scope):**
+
+- Issue: `systems/entity-links.js:108`, `features/wiki/wiki.js:819`, and `ui/actions/system-actions.js:79` each contain one `document.execCommand` call. Phase 9 (`09-editor-regressionsnetz-execcommand-abl-sung`) scoped its migration to `ui/editors/rich-text.js` only — these three call sites were identified in `09-01-PLAN.md`/`09-BASELINE.md` but intentionally not migrated in this phase.
+- Files: `systems/entity-links.js`, `features/wiki/wiki.js`, `ui/actions/system-actions.js`
+- Impact: Same class of risk as the resolved editor-module entry (deprecated API, cross-browser variance), but limited surface (3 call sites, no shared regression net covering them yet).
+- Fix approach: Candidate for a future phase — apply the same Selection/Range-migration pattern established in `ui/editors/rich-text.js` (Plan 09-06..09-09), with a dedicated regression net for the three call sites before migrating.
 
 **Stale/broken developer tooling:**
 
@@ -269,11 +276,11 @@
 
 ## Dependencies at Risk
 
-**`document.execCommand` (browser API, deprecated):**
+**`document.execCommand` (browser API, deprecated) — 3 remaining call sites outside the editor module:**
 
-- Risk: Formally deprecated; the entire rich-text feature depends on it (21 calls in `ui/editors/rich-text.js`).
-- Impact: Rich-text formatting in wiki, notes, NPC descriptions, session logs breaks if browsers remove it.
-- Migration plan: Selection/Range-API replacement, incrementally (one already done: `insertUnorderedList` per `docs/bugfixes.md`).
+- Risk: Formally deprecated. `ui/editors/rich-text.js` no longer depends on it (fully migrated, Phase 9, 2026-07-25 — see Tech Debt section above). Three call sites remain: `systems/entity-links.js:108`, `features/wiki/wiki.js:819`, `ui/actions/system-actions.js:79`.
+- Impact: Limited surface — these three sites are outside the editor's rich-text formatting flows covered by the Phase-9 regression net.
+- Migration plan: Same Selection/Range-API pattern used for the editor module (Pläne 09-06..09-09); candidate for a future phase with its own dedicated regression coverage.
 
 **Python build toolchain invoked as `python3` from npm:**
 

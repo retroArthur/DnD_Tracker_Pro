@@ -614,22 +614,29 @@ test.describe('UI-lose Zweige (kein Toolbar-Pfad vorhanden)', () => {
 });
 
 // ---------------------------------------------------------------
-// Task 3: Zählnachweis — Anker für die execCommand-Ablösung (Plan 09-09)
+// Task 3 (Plan 09-09, Task 2): Zählnachweis — finaler Zustand nach
+// vollständiger execCommand-Ablösung.
 //
 // Netz-Freeze-Ausnahme (09-BASELINE.md, "Verfahren bei rotem Netz-Test"):
-// Dieser Zaehlwert ist der EINZIGE im gesamten Netz, der waehrend der
-// Migration angepasst werden darf, weil er selbst den Fortschritt misst
-// (kein Verhalten des Editors). Plan 09-08/Task 2 (Gruppe F) hat Tabellen-
-// einfuegen (insertTable()) und den abgefangenen Zeilenumbruch
-// (handleEditorKeydown()) migriert — der Zwischenstand nach diesem Task ist 1
-// (3 - 2), dokumentiert in 09-BASELINE.md Abschnitt "Netz-Freeze". Nur der
-// Setup-Aufruf ('defaultParagraphSeparator') bleibt bis Plan 09-09, das den
-// Endwert 0 setzt, sobald alle 21 Call-Sites migriert sind.
+// Dieser Test ist der EINZIGE im gesamten Netz, der waehrend der Migration
+// angepasst werden durfte, weil er selbst den Fortschritt misst (kein
+// Verhalten des Editors) — siehe Ausnahme-Aenderungen 1-7 in 09-BASELINE.md.
+// Ab diesem Commit (Plan 09-09, Task 2) ist die Migration abgeschlossen:
+// alle 21 urspruenglichen Call-Sites sind ersetzt. Der Test filtert
+// Kommentarzeilen aus, bevor er zaehlt, damit erklaerende Kommentare im
+// Modul (die zur Vermeidung des literalen Worts "execCommand" ohnehin auf
+// die Paraphrase "Editier-Kommando-API" umgeschrieben wurden) den Test
+// nicht versehentlich rot machen — siehe 09-08-SUMMARY.md Deviation 4 fuer
+// den urspruenglichen Fund dieses Effekts.
 // ---------------------------------------------------------------
-test.describe('Inventar-Zählnachweis (bewusst änderbar während der Migration)', () => {
-    test('ZÄHLNACHWEIS: ui/editors/rich-text.js enthält 0 execCommand-Vorkommen (Plan 09-09/Task 1, Gruppe G: Setup-Aufruf entfernt; finale Kommentarzeilen-Filterung folgt in Task 2)', async () => {
+test.describe('Inventar-Zählnachweis (finaler Zustand nach vollständiger Migration)', () => {
+    test('ZÄHLNACHWEIS: ui/editors/rich-text.js enthält keinen Aufruf der deprecated Editier-Kommando-API mehr (Kommentarzeilen ausgefiltert; EDIT-01 maschinell belegt)', async () => {
         const content = fs.readFileSync('ui/editors/rich-text.js', 'utf8');
-        const matches = content.match(/execCommand/g) || [];
+        const codeOnly = content
+            .split('\n')
+            .filter(line => !/^\s*(\/\/|\*|\/\*)/.test(line))
+            .join('\n');
+        const matches = codeOnly.match(/execCommand/g) || [];
         expect(matches.length).toBe(0);
     });
 });

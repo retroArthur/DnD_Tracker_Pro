@@ -308,7 +308,75 @@ Beide Läufe fanden **gegen den unveränderten Editor-Code** statt: `ui/editors/
 - Der nachgelagerte `build`-Job (Zeile 65–83) hat `needs: [lint-and-typecheck, test, e2e]` — ein roter `e2e`-Job blockiert also sowohl den Production-Build als auch (transitiv über `smoke-test` → `deploy`) das Deployment. Diese Blockier-Eigenschaft stammt aus Phase 8 (D-03, `08-CONTEXT.md`) und wird vom neuen Netz ohne zusätzliche CI-Arbeit geerbt.
 - Trockenlauf-Nachweis: `npx playwright test --list` beendet mit Exit-Code 0 und listet **310 Tests** insgesamt (die 80 Netz-Tests sind darin enthalten — siehe „Volle Suite" oben, 308 passed + 2 skipped = 310), davon 32 aus `editor-formatting.spec.js`, 27 aus `editor-floating.spec.js`, 9 aus `editor-insert.spec.js`, 12 aus `editor-smoke.spec.js` — alle vier Dateien werden vom Standard-Testmuster erfasst.
 
+## Abschluss-Protokoll (Plan 09-09, Task 2)
+
+**Zweck:** Abschluss der execCommand-Migration. Diese Sektion bündelt den vollständigen Zählstands-Nachweis, alle Commit-Kennungen der sieben Migrationsgruppen, die Ergebnisse der vollen Suiten nach der letzten Gruppe, die Liste bewusster Implementierungsabweichungen sowie die Liste der bewusst nicht behobenen Funde.
+
+### Zählstands-Kette
+
+| Migrationsgruppe | Plan/Task | Umfang | Zählstand vorher → nachher |
+|---|---|---|---|
+| A | 09-06, Task 1 | `formatText()`: bold/italic/underline/strikethrough/list | 21 → 16 |
+| B | 09-06, Task 2 | `formatText()`: heading/font/highlight-setzen/-entfernen | 16 → 12 |
+| C | 09-07, Task 1 | Statische Toolbar: `setEditorFont()`/`setEditorFontSize()` | 12 → 10 |
+| D | 09-07, Task 2 | Floating Toolbar: font/fontSize/removeFormat/backColor | 10 → 6 |
+| E | 09-08, Task 1 | `handleEditorPaste()`: Tabellen-HTML/Tab-Text/Plaintext | 6 → 3 |
+| F | 09-08, Task 2 | `insertTable()` + abgefangener Zeilenumbruch | 3 → 1 |
+| G | 09-09, Task 1 | Setup-Aufruf `defaultParagraphSeparator` (ersatzlos entfernt) | 1 → 0 |
+
+**Endstand:** 0 Aufrufe der deprecated Editier-Kommando-API in `ui/editors/rich-text.js` (Kommentarzeilen ausgefiltert, `tests/e2e/features/editor-floating.spec.js`, Test „ZÄHLNACHWEIS: ... enthält keinen Aufruf ... mehr"). EDIT-01 damit maschinell belegt erfüllt.
+
+**Zählstands-Kette je Plan (Start-/Endwert des jeweiligen Plans):** 21 (vor Plan 09-06) → 12 (nach Plan 09-06 / vor 09-07) → 6 (nach Plan 09-07 / vor 09-08) → 1 (nach Plan 09-08 / vor 09-09) → 0 (nach Plan 09-09, dieser Plan).
+
+### Commit-Kennungen der sieben Gruppen-Commits
+
+| Gruppe | Commit |
+|---|---|
+| A | `413222e` |
+| B | `dbdaac1` |
+| C | `8488634` |
+| D | `a72609e` |
+| E | `b83addf` |
+| F | `2a8542d` |
+| G | `7bee469` |
+
+### Ergebnis der vollen Suiten (nach Gruppe G + Zählnachweis-Umstellung, Plan 09-09, Task 2)
+
+| Prüfung | Befehl | Ergebnis |
+|---|---|---|
+| Dev-Build | `npm run build:dev` (`PYTHONIOENCODING=utf-8`) | Exit-Code 0, „Alle Validierungen bestanden" |
+| Playwright, volle Suite | `npx playwright test` | **308 passed, 2 skipped**, 0 failed (1.8m) — identisch zum D-04a-Doppel-Grün-Nachweis |
+| Jest, volle Unit-Suite | `npx jest` | **457 passed, 24 Test-Suiten**, 0 failed |
+| Typecheck | `npm run typecheck` | Exit-Code 0, keine Ausgabe |
+| Lint | `npm run lint` | Exit-Code 0 (1 vorbestehende, plan-fremde Fehlermeldung in einer untracked Debug-Datei außerhalb des Projekts gefunden und entfernt — siehe „Bewusste Abweichungen" unten) |
+| Production-Build | `npm run build` (`PYTHONIOENCODING=utf-8`) | Exit-Code 0, „Alle Validierungen bestanden", DEBUG_MODE deaktiviert und verifiziert |
+
+### Bewusste Implementierungsabweichungen vom naiven Vorbild (über die gesamte Migration)
+
+Diese Abweichungen wurden in den jeweiligen Plan-Summaries dokumentiert und hier zur Vollständigkeit gebündelt:
+
+1. **Cursor-Platzierung nach Fragment-Einfügung** (Gruppe E, Plan 09-08): steigt zum tiefsten letzten Nachfahren des zuletzt eingefügten Knotens ab statt zum Geschwister-Knoten danach — reproduziert die execCommand-eigene Cursor-Platzierung.
+2. **`sanitizeInsertedInlineStyle()`** (Gruppe E, Plan 09-08): repliziert die execCommand-eigene Stil-Nachbereinigung bei `insertHTML` (Layout-Eigenschaften entfernt; `background`/`color`-Sonderfall bei Mehrfach-Deklarationen).
+3. **Zero-Width-Space-Platzhalter** (Gruppe F, Plan 09-08): `insertLineBreakAtSelection()` nutzt einen unsichtbaren Textanker + `deleteData()`-Cleanup, weil eine Cursor-Position unmittelbar hinter einem trailing `<br>` in Chromium ohne Anker nicht stabil ist.
+4. **`_lastFontCallKey`-Doppel-Dispatch-Guard** (Gruppe C, Plan 09-07): unterdrückt den zweiten von zwei synchronen `EventDelegation`-Aufrufen pro Select-Änderung (vorbestehender, plan-fremder Doppel-Dispatch in `ui/event-delegation.js`, nicht behoben — Fix im Datei-Scope des Editor-Moduls gehalten).
+5. **`clearInlineFormattingAtSelection()` um Tag-Unwrap erweitert** (Gruppe D, Plan 09-07): repliziert, dass die alte `removeFormat`-API Standard-Auszeichnungstags entpackt, Custom-Elemente (`<mark>`/`<span>`) aber stehen lässt.
+6. **`toBe(1)` → `toBe(0)` bereits in Task 1 statt erst in Task 2** (Gruppe G, Plan 09-09): siehe Ausnahme-Änderung 7 oben — Task 1s eigenes Hard-Gate verlangte ein komplett grünes Netz nach der letzten Migrationsgruppe.
+
+### Bewusst NICHT behobene Funde (Verweis auf Plan 09-01)
+
+Diese Funde wurden in Plan 09-01 (Baseline-Erhebung) identifiziert und bewusst nicht in dieser Phase repariert:
+
+- **Fund 3 — Doppel-Paste-Listener** (`09-BASELINE.md`, Abschnitt „Zusätzliche Funde"): `initEditorPasteHandlers()` registriert zwei `paste`-Listener auf `#wiki-content`, wodurch jeder echte Paste-Vorgang doppelt verarbeitet wird (Tabellen-Verschachtelung, Text-Verdopplung). Bewusst repliziert (nicht behoben), byte-gleiches Markup zur Baseline ist das Ziel dieser Phase, nicht Bugfixing.
+- **A4 — Strikethrough-Persistenz** (`09-BASELINE.md`, Abschnitt „Annahmen A1–A4"): `<strike>` übersteht Speichern/Reload nicht (`sanitizeHTML()`-Whitelist kennt `s` aber nicht `strike`). Eingefroren wie gemessen, als Datenintegritäts-Item für Phase 10 vorgemerkt.
+- **Sicherheits-Payload in Tabellen-Zweig** (siehe STATE.md-Decision-Log): Ein Einfüge-Fragment mit `<table>`-Wrapper durchläuft nicht denselben Sicherheits-Check wie der reine `insertText()`-Fallback — als WINDOWS.md-Fund vorgemerkt, kein Produktionscode in dieser Phase geändert.
+- **Drei execCommand-Aufrufe außerhalb des Editor-Moduls**: `systems/entity-links.js:108`, `features/wiki/wiki.js:819`, `ui/actions/system-actions.js:79` — außerhalb des Phasen-Scopes (nur `ui/editors/rich-text.js` war Gegenstand dieser Phase), dokumentiert in `.planning/codebase/CONCERNS.md` als eigener offener Eintrag.
+
+### Bewusste Abweichungen (Plan 09-09, Task 2 — Ausführung)
+
+- **Entfernung einer plan-fremden, untracked Debug-Datei (`_smoke_welt.cjs`) am Repo-Root:** Diese Datei war nicht Teil des Git-Verlaufs (untracked), gehörte zu keiner Phase und blockierte `npm run lint` mit einem echten `no-unused-vars`-Fehler (Severity 2, laut CLAUDE.md/`01-09`-Konvention „echte Errors weiterhin fatal"). Entfernt, damit das Task-2-Hard-Gate (`npm run lint` Exit-Code 0) erfüllbar ist. Keine Produktionsdatei, kein Git-Verlust (nie committet).
+
 ---
 *Phase: 09-editor-regressionsnetz-execcommand-abl-sung*
 *Plan: 09-01, Task 2*
 *Erhoben: 2026-07-25*
+*Abschluss-Protokoll ergänzt: Plan 09-09, Task 2, 2026-07-25*
