@@ -113,7 +113,22 @@ Da ein Listener auf dem Zielelement selbst unabhängig von Capture/Bubble-Konfig
 
 ## Offene Baseline-Entscheidung
 
-**Status: ENTSCHIEDEN (2026-07-25, Task 3, `checkpoint:decision` — vom Entwickler getroffen).**
+**Status: ENTSCHIEDEN + UMGESETZT (2026-07-25, Plan 09-02/Task 1, Commit `19a355e`).**
+
+Die Reparatur ist im Code umgesetzt und das Netz (Plan 09-02, Task 2/3) prueft ab
+hier gegen den reparierten Zustand: `EDITOR_FONTS`/`TOOLBAR_DIMENSIONS` sind in
+`core/constants.js` definiert und exportiert (namespaced ueber `UI_CONSTANTS` +
+Legacy-`window.*`), die vier funktions-lokalen `const … = window.…`-Zugriffe in
+`ui/editors/rich-text.js` sind entfernt (direkter `window.*`-Zugriff an den
+Verwendungsstellen), und der Argument-Mismatch in `setEditorFont()`/
+`setEditorFontSize()` ist behoben (beide Funktionen akzeptieren jetzt sowohl ein
+`<select>`-Element als auch einen reinen String-Wert als zweites Argument).
+Smoke-verifiziert: Serif-Auswahl liefert `<font face="Georgia, ...">` (kein
+Arial-Fallback), `#floating-toolbar` erhaelt nach Textselektion die Klasse
+`visible`, keine Konsolen-/Page-Errors.
+
+**Status der urspruenglichen Entwickler-Entscheidung (2026-07-25, Task 3,
+`checkpoint:decision`):**
 
 ### Entwickler-Entscheidung (wörtlich)
 
