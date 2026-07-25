@@ -5,15 +5,15 @@ milestone_name: Tech-Debt & Härtung
 current_phase: 10
 current_phase_name: Security-Härtung
 status: executing
-stopped_at: Completed 10-06-PLAN.md (Gap-Closure SC3 — Tabellen-Einfuegepfad ueber Allowlist-Sanitizer)
-last_updated: "2026-07-25T14:04:02.366Z"
+stopped_at: Completed 10-07-PLAN.md (Gap-Closure Runde 2 — CSS-Beacon geschlossen, Threat-Register vollstaendig dispositioniert)
+last_updated: "2026-07-25T17:52:00.000Z"
 last_activity: 2026-07-25
-last_activity_desc: Phase 10 execution started
+last_activity_desc: Phase 10 Gap-Closure Runde 2 abgeschlossen
 progress:
   total_phases: 4
   completed_phases: 3
-  total_plans: 19
-  completed_plans: 19
+  total_plans: 21
+  completed_plans: 21
   percent: 75
 ---
 
@@ -35,10 +35,10 @@ progress:
 
 ## Current Position
 
-Phase: 10 (Security-Härtung) — EXECUTING
-Plan: 2 of 6
-Status: Ready to execute
-Last activity: 2026-07-25 — Phase 10 execution started
+Phase: 10 (Security-Härtung) — Gap-Closure Runde 2 abgeschlossen (7/7 Pläne inkl. beider Gap-Closure-Runden)
+Plan: 7 of 7
+Status: Bereit für abschließende Phasen-Verifikation
+Last activity: 2026-07-25 — Plan 10-07 (CSS-Beacon-Fix + Threat-Register vollständig dispositioniert) abgeschlossen
 
 ## Performance Metrics
 
@@ -70,6 +70,7 @@ Last activity: 2026-07-25 — Phase 10 execution started
 | Phase 10 P04 | 35min | 2 tasks | 3 files |
 | Phase 10 P05 | ~50min | 2 tasks | 7 files |
 | Phase 10 P06 | ~40min | 3 tasks | 4 files |
+| Phase 10 P07 | ~55min | 3 tasks | 8 files |
 
 ## Accumulated Context
 
@@ -145,7 +146,7 @@ Last activity: 2026-07-25 — Phase 10 execution started
 - [x] Phase 9 ausführen: `/gsd-execute-phase 9` ✓ (2026-07-25, 9/9 Pläne; execCommand-Migration 21→0 Call-Sites über sieben Migrationsgruppen A–G; komplettes Netz + volle Suiten grün nach jeder Gruppe; Handcheck im Browser freigegeben; EDIT-01/EDIT-02/EDIT-03 vollständig erfüllt — Phase 9 komplett)
 - [x] Phase 10 ausführen: `/gsd-execute-phase 10` ✓ (2026-07-25, 5/5 Pläne in 5 Wellen; Anzeige-Grenze + Import-Grenze geschlossen, Sanitizer-Beweisnetz + Paritätstest, `<strike>`-Whitelist, Tabellenzweig-`on*`-Fix, Abschluss-Audit; alle Wave-Gates grün)
 - [x] Phase 10 Gap-Plan erstellt: `/gsd-plan-phase 10 --gaps` ✓ (2026-07-25, 10-06-PLAN.md, Welle 6, 3 Tasks, Plan-Checker VERIFICATION PASSED im 1. Durchlauf, Requirements 2/2 + Decision-Coverage 16/16; Commits b8b2877/b48f9ba)
-- [ ] **Phase 10 Lücke SC3 schließen** (blockiert Phasen-Abschluss + SEC-02): `/gsd-execute-phase 10 --gaps-only`. Plan 10-06 setzt um: Tabellenzweig in `ui/editors/rich-text.js` endet künftig mit `window.sanitizeHTML()` als LETZTER Stufe (die zwei umgehbaren `on*`-Regexe entfallen, `on*`-Block wird DOM-seitig), Mehrfach-Vektor-Regressionstest (`<iframe srcdoc>` / `<svg onload>` / `javascript:` plain + entity-kodiert / `onerror` ohne Leerzeichen), Korrektur von T-10-15/T-10-17 in 10-SECURITY.md und Abschnitt 4 in SECURITY.md. Details: `10-VERIFICATION.md`, Beleg: `10-REVIEW.md` CR-01.
+- [x] **Phase 10 Lücke SC3 schließen** ✓ (2026-07-25, 10-06-PLAN.md: Tabellenzweig in `ui/editors/rich-text.js` endet mit `window.sanitizeHTML()` als LETZTER Stufe, Mehrfach-Vektor-Regressionstest, T-10-15/T-10-17 korrigiert). **Zweiter, unabhängig gefundener Befund auf derselben Fläche geschlossen** ✓ (2026-07-25, 10-07-PLAN.md, Gap-Closure Runde 2: CSS-basierter Ausgangs-Beacon — Stil-Attribut-Filter prüfte nur den Eigenschaftsnamen, nie den Wert; Fix: Wertprüfung pro Deklaration gegen Erlaubnisliste `allowedStyleFunctions`/`isSafeStyleValue()` in beiden Sanitizer-Zwillingen; zusätzlich WR-01/WR-02/WR-03/IN-01 aus `10-REVIEW-GAP.md` behoben; `threats_open: 0` in `SECURITY.md` + `10-SECURITY.md` wieder wahr — Phase 10 SEC-01/SEC-02 vollständig erfüllt, bereit für `/gsd-verify-work 10`).
 - [ ] Phase 10 Zusatzbefund IN-01 (nicht blockierend, echter Anzeigebug): `hasHtmlTags` in `ui/editors/markdown-converter.js:264` ist die nie verdrahtete Wächtervariable einer Guard — Markdown-Konvertierung läuft dadurch unbedingt über bereits-HTML; URLs mit ≥2 Unterstrichen werden korrumpiert (`Der_Hobbit_Buch` → `Der<i>Hobbit</i>Buch`, Link kaputt). Nur Anzeige, gespeicherte Daten unberührt.
 - [ ] Phase 10 Zusatzbefunde (kosmetisch/fragil, unbestätigt dringlich): WR-02 doppeltes `data-id` in `features/wiki/wiki.js:391-392` (Parser verwirft das zweite, folgenlos); IN-02 un-escapte Regex-Capture in `parseWikiLinks()` (aktuell nicht ausnutzbar). WR-03 und WR-01 wurden gegengeprüft und sind KEINE Befunde.
 - [ ] Codebase-Map veraltet (Drift-Gate-Hinweis, nicht blockierend): `/gsd-map-codebase`
@@ -154,8 +155,8 @@ Last activity: 2026-07-25 — Phase 10 execution started
 
 ## Session Continuity
 
-**Last session:** 2026-07-25T14:04:02.355Z
-**Stopped at:** Completed 10-06-PLAN.md (Gap-Closure SC3 — Tabellen-Einfuegepfad ueber Allowlist-Sanitizer)
+**Last session:** 2026-07-25T17:52:00.000Z
+**Stopped at:** Completed 10-07-PLAN.md (Gap-Closure Runde 2 — CSS-Beacon geschlossen, Threat-Register vollstaendig dispositioniert)
 **Resume file:** None
 
 **Last action:** Komplette Milestone-UAT abgeschlossen (2026-06-20 → 2026-07-20): alle 5 offenen Human-UAT-Sessions via `/gsd-verify-work` durchgetestet — 07 (4/4), 06 (5/5), 05 (2/2), 01 (3/3), 02 (6/6). Alle 7 VERIFICATION.md jetzt `status: passed`. Dabei gefundene+gefixte Bugs: Soundboard-Doppel-Import (75aadfe), Audio-läuft-nach-Szene-Löschen (b85dbe1), Volume nicht live (801ed48), Manifest-CORS unter file:// (cd75093), Konsolen-Hygiene (c029f11), Datei-Backup schrieb nie bei Entity-CRUD — window.save-Wrapper strukturell wirkungslos für bare save() (1430e8c), generischer registerPostSaveHook + DM-Screen-Live-Sync-Umstellung + CLAUDE.md-Pattern-Korrektur (6ea8309), „Anderen Ordner wählen"-Button (cc2af9e). Nebenbei: Repo mit origin gemergt (7 Mai-Commits, alter pages.yml-Deploy entfernt 7f4858a), 348 Commits gepusht, GitHub-Pages-Deploy live verifiziert (PWA installierbar, SW-Update-Flow, Datei-Backup, Migrations-Wizard file://→PWA). Zusätzlich in der Session: Soundboard-Erweiterungen (Loop-Toggle/Crossfade-Loop/Fortschritt 6636297, Per-Track-Play noch offen als Design), gruppierte Navigation (3d77ec0).
@@ -225,6 +226,8 @@ _State initialized: 2026-06-11_
 - [Phase 10, 10-05]: Zwei bewusst akzeptierte Risiken dokumentiert (D-08) statt behoben: keine Content-Security-Policy (Single-User-Offline-App ohne Server, 'unsafe-inline' architekturbedingt ohnehin nötig) und die Breite der class/style-Erlaubnis im Sanitizer (kein Multi-Tenant-Szenario) — dritter akzeptierter Punkt (regexbasierte Paste-Zeit-Bereinigung, T-10-17) in SECURITY.md ergänzt, da sanitizeHTML() als maßgebliche Speichern-Grenze diese Schwäche nicht teilt
 - [Phase ?]: [Phase 10, 10-06]: Tabellenzweig ueber Allowlist-Sanitizer (window.sanitizeHTML) als letzte Einfuege-Stufe statt weiterem Denylist-Regex (SC3, CR-01) - Mehrfach-Vektor-Test nutzt iframe-srcdoc statt reinem script-Element (createContextualFragment markiert parser-erzeugte scripts als inert)
 - [Phase ?]: [Phase 10, 10-06]: T-10-15 auf critical korrigiert, T-10-17/AR-10-02 im Geltungsbereich auf die verbleibende Darstellungs-Kosmetik-Kette verengt, T-10-23..T-10-29/AR-10-05 neu - threats_open: 0 ist in SECURITY.md und 10-SECURITY.md wieder wahr
+- [Phase 10, 10-07]: CSS-basierter Ausgangs-Beacon (zweiter, unabhaengig von zwei Pruefern waehrend der 10-06-Verifikation gefundener Vektor auf derselben Flaeche) geschlossen ueber Wertpruefung pro Stil-Deklaration (allowedStyleFunctions/isSafeStyleValue, Erlaubnisliste statt Verbotsliste) identisch in utils/basic.js UND utils/testable-utils.js - Angriffsvektoren nutzen die Eigenschaft 'background' (bereits erlaubt), nicht 'background-image' (nie erlaubt, waere kein Beweis)
+- [Phase 10, 10-07]: T-10-30..T-10-40/AR-10-06..AR-10-12 neu, WR-01 (Zeilenverweise), WR-02 (Datumsangaben 2026-07-26->2026-07-25), WR-03 (3 feste Wartezeiten entfernt), IN-01 (Protokollliste vollstaendig) aus 10-REVIEW-GAP.md behoben - threats_open: 0 in SECURITY.md und 10-SECURITY.md wieder wahr, jeder bekannte Restrisiko-Punkt hat Disposition (D-12)
 
 ## Operator Next Steps
 

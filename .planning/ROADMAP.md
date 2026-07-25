@@ -28,7 +28,7 @@ Details, Success Criteria und Coverage: [milestones/v1.0-ROADMAP.md](milestones/
 
 - [x] **Phase 8: Test-Fundament grün** - Alle 11 vorbestehenden E2E-Fails behoben, brüchige Assertions gehärtet (completed 2026-07-23)
 - [x] **Phase 9: Editor-Regressionsnetz & execCommand-Ablösung** - Rich-Text-Editor auf Selection/Range-APIs migriert, abgesichert durch neues E2E-Netz das VOR der Migration steht (completed 2026-07-25)
-- [ ] **Phase 10: Security-Härtung** - Vorbestehender Import-XSS behoben, aktueller Security-Audit ohne offene Findings (5/6 Pläne ausgeführt, Verifikation 3/4 — Lücke SC3: Paste-Tabellenzweig, Gap-Closure-Plan 10-06 geplant, siehe 10-VERIFICATION.md)
+- [ ] **Phase 10: Security-Härtung** - Vorbestehender Import-XSS behoben, aktueller Security-Audit ohne offene Findings (7/7 Pläne ausgeführt inkl. zweier Gap-Closure-Runden — SC3 und der unabhängig gefundene CSS-Beacon geschlossen, threats_open: 0 in SECURITY.md + 10-SECURITY.md wieder wahr; bereit für abschließende Phasen-Verifikation)
 - [ ] **Phase 11: Architektur- & Build-Hygiene** - Modullisten-Drift strukturell unmöglich, Dedup-Pass-3 gehärtet, CI-Deprecations weg, Codebase-Map + CONCERNS.md aufgefrischt
 
 ## Phase Details
@@ -122,7 +122,7 @@ Details, Success Criteria und Coverage: [milestones/v1.0-ROADMAP.md](milestones/
   3. SECURITY.md dokumentiert einen Audit über Import/Export, Storage/IDB, Datei-Backup und Rich-Text/innerHTML mit `threats_open: 0`
   4. Der Audit ist via `/gsd-secure-phase` gegen die relevanten Phasen durchgeführt (inkl. der neuen Editor-Implementierung aus Phase 9)
 
-**Plans**: 7 plans (6/7 executed)
+**Plans**: 7 plans (7/7 executed)
 
 **Wave 1**
 
@@ -150,7 +150,7 @@ Details, Success Criteria und Coverage: [milestones/v1.0-ROADMAP.md](milestones/
 
 **Wave 7** *(Gap-Closure Runde 2, blockiert auf Wave 6)*
 
-- [ ] 10-07-PLAN.md — CSS-Beacon (Stilwert mit fremder Ressourcen-Referenz) in beiden Sanitizer-Zwillingen schließen, Review-Funde WR-01/WR-02/WR-03/IN-01 beheben, Threat-Register vollständig dispositionieren
+- [x] 10-07-PLAN.md — CSS-Beacon (Stilwert mit fremder Ressourcen-Referenz) in beiden Sanitizer-Zwillingen schließen, Review-Funde WR-01/WR-02/WR-03/IN-01 beheben, Threat-Register vollständig dispositionieren
 
 *Sequenzielle Wellen: alle Pläne ab Welle 2 bauen `dist/dnd-tracker-bundled.html` und fahren die E2E-Suite gegen dasselbe Artefakt — paralleles Ausführen würde auf dem gemeinsamen Bundle kollidieren.*
 
