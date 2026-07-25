@@ -113,11 +113,26 @@ Da ein Listener auf dem Zielelement selbst unabhängig von Capture/Bubble-Konfig
 
 ## Offene Baseline-Entscheidung
 
-**Status: Noch nicht entschieden — wird in Task 3 (`checkpoint:decision`) vom Entwickler getroffen und hier wörtlich protokolliert.**
+**Status: ENTSCHIEDEN (2026-07-25, Task 3, `checkpoint:decision` — vom Entwickler getroffen).**
 
-Die drei oben beschriebenen Funde (insbesondere Fund 1 und Fund 2) sind die empirische Grundlage für die Entscheidung in Task 3: Wird "verhaltensgleich" (D-02) gegen den heutigen, kaputten Ist-Zustand der floating Toolbar / des Font-Pickers geprüft (Option B — Ist-Zustand einfrieren), oder wird `EDITOR_FONTS`/`TOOLBAR_DIMENSIONS` vor der Baseline-Festlegung wiederhergestellt und der reparierte Zustand als Referenz gesetzt (Option A), oder wird die Reparatur in eine eigene Phase ausgelagert (Option C)? Die A4-Teilentscheidung (Strikethrough-Persistenz-Bug: einfrieren oder für Phase 10 vormerken) ist ebenfalls hier zu protokollieren.
+### Entwickler-Entscheidung (wörtlich)
 
-<!-- Wird von Task 3 mit der wörtlichen Entwickler-Antwort ausgefüllt. -->
+> 1. **Hauptentscheidung: `option-a` — Konstanten wiederherstellen, reparierten Zustand als Baseline setzen.** Begründung des Entwicklers: Beide Toolbars müssen testbar sein, EDIT-02 („beide Toolbars funktionieren unverändert") muss beweisbar sein; die Wiederherstellung ist das Rückgängigmachen einer Fremd-Regression, kein neues Feature. Die einmalige Verschiebung des Ist-Zustands vor dem Einfrieren ist als bewusste, protokollierte Ausnahme zur Milestone-Leitplanke (v1.1 verhaltensneutral) zu dokumentieren. Das gilt für BEIDE Befunde: (a) fehlende Konstanten EDITOR_FONTS/TOOLBAR_DIMENSIONS, (b) Signatur-Mismatch im setEditorFont()/setEditorFontSize()-Wiring der statischen Toolbar.
+> 2. **A4-Teilentscheidung: Einfrieren + Phase 10 vormerken.** Das heutige Verhalten (Durchstreichen überlebt Speichern/Reload nicht, sanitizeHTML erlaubt `<s>` aber nicht `<strike>`) wird als vorbestehender Zustand in der Baseline eingefroren; zusätzlich wird der Fund als Datenintegritäts-Item für Phase 10 vorgemerkt.
+
+### Konsequenzen für die weiteren Pläne dieser Phase
+
+- **Option A (Hauptentscheidung):** Bevor das Regressionsnetz (Pläne 09-02..09-04) gegen den Font-/Toolbar-Pfad Assertions schreibt, muss Plan 09-02 (siehe Artefakt-Liste oben, "Bedingt (nur bei Entscheidung `option-a`)") die Reparatur umsetzen — konkret die drei in Task 3 beschriebenen mechanischen Teilschritte:
+  1. `EDITOR_FONTS` und `TOOLBAR_DIMENSIONS` in `core/constants.js` definieren und exportieren (namespaced + Legacy-`window.*`, konsistent mit dem bestehenden Muster).
+  2. Die funktions-lokalen `const … = window.…`-Zugriffe in `ui/editors/rich-text.js` durch direkten `window.*`-Zugriff ersetzen (Build-Dedup-Pass-Konflikt vermeiden, CLAUDE.md „Duplicate Declaration Debugging Pattern").
+  3. Den Argument-Mismatch in `ui/actions/system-actions.js:43–52` (`setEditorFont(editorId, font)`/`setEditorFontSize(editorId, size)` übergeben Strings, die Funktionen erwarten ein `<select>`-Element) auflösen.
+  - Erst NACH dieser Reparatur gilt der reparierte Zustand als eingefrorene Baseline (D-04a-Doppel-Grün-Gate in 09-05 läuft gegen den reparierten Zustand).
+  - Diese Reparatur ist eine bewusste, protokollierte Ausnahme zur Milestone-v1.1-Leitplanke „verhaltensneutral" — sie behebt eine Fremd-Regression (nie funktionsfähiger Font-Picker + nie erreichbare floating Toolbar), kein neues Feature. Nutzer-sichtbares Verhalten wird dadurch tatsächlich SICHTBAR verändert (Font-Picker + floating Toolbar werden erstmals bedienbar) — dies ist gewollt und hier ausdrücklich autorisiert.
+- **Fund 1 (floating Toolbar per Mausklick komplett unbedienbar)** ist eine direkte Folge derselben `TOOLBAR_DIMENSIONS`-Lücke (siehe „Zusätzliche Funde" oben) und wird durch dieselbe Reparatur mitbehoben.
+- **Fund 3 (Doppel-Paste-Listener)** ist von dieser Entscheidung NICHT betroffen — bleibt als vorbestehender Bug dokumentiert, keine Reparatur in dieser Phase vorgesehen (außerhalb des Task-3-Entscheidungsrahmens; ggf. eigener Fund für Phase 10/11).
+- **A4 (Strikethrough-Persistenz):** Bleibt eingefroren wie gemessen (`<strike>` überlebt Speichern/Reload nicht, `sanitizeHTML()`-Whitelist kennt `s` aber nicht `strike`). Kein Code-Fix in Phase 9. Als Datenintegritäts-Item für Phase 10 vorgemerkt (SEC-01/SEC-02-Nachbarschaft, analog zum bereits vorgemerkten `saveSpell()`-sanitizeHTML-Fund).
+
+<!-- Entschieden in Task 3 (Plan 09-01), 2026-07-25. Umsetzung der Reparatur erfolgt in Plan 09-02 ("Setze die in 09-01 getroffene Baseline-Entscheidung im Code um"). -->
 
 ---
 *Phase: 09-editor-regressionsnetz-execcommand-abl-sung*
