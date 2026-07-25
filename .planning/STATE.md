@@ -5,15 +5,15 @@ milestone_name: Tech-Debt & Härtung
 current_phase: 9
 current_phase_name: Editor-Regressionsnetz & execCommand-Ablösung
 status: executing
-stopped_at: Phase 9 planned (9 Pläne, 8 Wellen) — bereit für execute-phase
-last_updated: "2026-07-25T01:04:25.909Z"
+stopped_at: Completed 09-01-PLAN.md
+last_updated: "2026-07-25T02:08:25.240Z"
 last_activity: 2026-07-25
-last_activity_desc: Phase 9 planned (9 plans, 8 waves, checker passed)
+last_activity_desc: Phase 09 execution started
 progress:
   total_phases: 4
   completed_phases: 1
   total_plans: 13
-  completed_plans: 4
+  completed_plans: 5
   percent: 25
 ---
 
@@ -29,16 +29,16 @@ progress:
 
 **Core Value:** Die App muss am Spieltisch zuverlässig offline laufen — ein Spielleiter-Begleiter, der nie im Weg steht und keine Daten verliert.
 
-**Current Focus:** Phase 9 — Editor-Regressionsnetz & execCommand-Ablösung
+**Current Focus:** Phase 09 — editor-regressionsnetz-execcommand-abl-sung
 
 ---
 
 ## Current Position
 
-Phase: 09 (editor-regressionsnetz-execcommand-abl-sung) — Planned (9 Pläne, 8 Wellen), ready for /gsd-execute-phase 9
-Plan: Not started
+Phase: 09 (editor-regressionsnetz-execcommand-abl-sung) — EXECUTING
+Plan: 2 of 9
 Status: Ready to execute
-Last activity: 2026-07-23 — Phase 08 complete, transitioned to Phase 9
+Last activity: 2026-07-25 — Phase 09 execution started
 
 ## Performance Metrics
 
@@ -55,6 +55,7 @@ Last activity: 2026-07-23 — Phase 08 complete, transitioned to Phase 9
 | Phase 08 P02 | 50min | 2 tasks | 4 files |
 | Phase 08 P03 | 28min | 2 tasks | 16 files |
 | Phase 08 P04 | 25min | 2 tasks | 2 files |
+| Phase 09 P01 | 51min | 3 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -130,9 +131,9 @@ Last activity: 2026-07-23 — Phase 08 complete, transitioned to Phase 9
 
 ## Session Continuity
 
-**Last session:** 2026-07-23T19:05:10.410Z
-**Stopped at:** Phase 9 context gathered
-**Resume file:** .planning/phases/09-editor-regressionsnetz-execcommand-abl-sung/09-CONTEXT.md
+**Last session:** 2026-07-25T02:08:25.229Z
+**Stopped at:** Completed 09-01-PLAN.md
+**Resume file:** None
 
 **Last action:** Komplette Milestone-UAT abgeschlossen (2026-06-20 → 2026-07-20): alle 5 offenen Human-UAT-Sessions via `/gsd-verify-work` durchgetestet — 07 (4/4), 06 (5/5), 05 (2/2), 01 (3/3), 02 (6/6). Alle 7 VERIFICATION.md jetzt `status: passed`. Dabei gefundene+gefixte Bugs: Soundboard-Doppel-Import (75aadfe), Audio-läuft-nach-Szene-Löschen (b85dbe1), Volume nicht live (801ed48), Manifest-CORS unter file:// (cd75093), Konsolen-Hygiene (c029f11), Datei-Backup schrieb nie bei Entity-CRUD — window.save-Wrapper strukturell wirkungslos für bare save() (1430e8c), generischer registerPostSaveHook + DM-Screen-Live-Sync-Umstellung + CLAUDE.md-Pattern-Korrektur (6ea8309), „Anderen Ordner wählen"-Button (cc2af9e). Nebenbei: Repo mit origin gemergt (7 Mai-Commits, alter pages.yml-Deploy entfernt 7f4858a), 348 Commits gepusht, GitHub-Pages-Deploy live verifiziert (PWA installierbar, SW-Update-Flow, Datei-Backup, Migrations-Wizard file://→PWA). Zusätzlich in der Session: Soundboard-Erweiterungen (Loop-Toggle/Crossfade-Loop/Fortschritt 6636297, Per-Track-Play noch offen als Design), gruppierte Navigation (3d77ec0).
 **Next action:** Phase 8 ausführen — `/gsd-execute-phase 8` (Wave 1 → 08-01 zuerst; Sampling gemäß 08-VALIDATION.md: volle Suite zweimal in Folge grün vor `/gsd-verify-work`). Offene Design-Entscheidung Soundboard Per-Track-Play (Layering gewählt, Szenen-Play-Variante unbestätigt). Optionale Altlasten: Phase-1-Security-Audit (`/gsd-secure-phase 1`), Phase-1-Code-Review-Findings, Phase-3 Browser-Checks (nicht-blockierend).
@@ -171,6 +172,8 @@ _State initialized: 2026-06-11_
 - [Phase ?]: Phase 08-03: SRD-Monsterdatensatz-Counts, Fuzzy-Suche 'mindestens N', Zufalls-Wettertext, Random-HP-Variation und echte Date.now()-Timestamps bleiben bewusst loose (D-04) — nur deterministisch aus Fixtures ableitbare Counts wurden auf toBe(N) gehaertet
 - [Phase ?]: Phase 08-03: quests.spec.js Root-Cause gefunden — .quest-details (edit/delete-quest) ist bis zum Klick auf .quest-header per CSS eingeklappt; vorherige isVisible()-Guards maskierten dieses fehlende Aufklappen als stillen Pass
 - [Phase ?]: Phase 08-04: build-Jobs needs-Array um e2e erweitert (nicht nur smoke-test) — blockiert D-03-konform bereits den Production-Build bei rotem E2E-Lauf
+- [Phase ?]: Baseline-Definition (Phase 9, 09-01): option-a — EDITOR_FONTS/TOOLBAR_DIMENSIONS werden in Plan 09-02 wiederhergestellt, reparierter Zustand gilt als eingefrorene Baseline (bewusste Ausnahme zur v1.1-Leitplanke, kein neues Feature, sondern Rueckgaengigmachen einer Fremd-Regression)
+- [Phase ?]: A4-Teilentscheidung (Phase 9, 09-01): Strikethrough-Persistenz-Bug (sanitizeHTML kennt <s> aber nicht <strike>) wird eingefroren, nicht repariert; als Datenintegritaets-Item fuer Phase 10 vorgemerkt
 
 ## Operator Next Steps
 

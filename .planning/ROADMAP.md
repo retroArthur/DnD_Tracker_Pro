@@ -75,11 +75,11 @@ Details, Success Criteria und Coverage: [milestones/v1.0-ROADMAP.md](milestones/
   3. Das Regressionsnetz bleibt nach der Migration grün — belegt Verhaltensgleichheit
   4. Alle Entity-Editoren (Wiki, NPCs, Orte, Quests, Sessions, Quick-Ref) und beide Toolbar-Varianten (statisch, floating) funktionieren unverändert inkl. Markdown-Live-Shortcuts
 
-**Plans**: 9 plans
+**Plans**: 1/9 plans executed
 
 **Wave 1**
 
-- [ ] 09-01-PLAN.md — Tracer (Bold end-to-end), empirisches Markup-Inventar aller 21 Call-Sites, Baseline-Entscheidung (Checkpoint)
+- [x] 09-01-PLAN.md — Tracer (Bold end-to-end), empirisches Markup-Inventar aller 21 Call-Sites, Baseline-Entscheidung (Checkpoint)
 
 **Wave 2** *(blocked on Wave 1)*
 
@@ -147,6 +147,6 @@ Details, Success Criteria und Coverage: [milestones/v1.0-ROADMAP.md](milestones/
 |-------|----------------|--------|-----------|
 | v1.0 (Phasen 1–7) | 44/44 | ✅ Shipped | 2026-07-22 |
 | 8. Test-Fundament grün | 4/4 | Complete    | 2026-07-23 |
-| 9. Editor-Regressionsnetz & execCommand-Ablösung | 0/9 | Planned | - |
+| 9. Editor-Regressionsnetz & execCommand-Ablösung | 1/9 | In Progress|  |
 | 10. Security-Härtung | 0/TBD | Not started | - |
 | 11. Architektur- & Build-Hygiene | 0/TBD | Not started | - |
