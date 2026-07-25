@@ -2,13 +2,10 @@
 gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Tech-Debt & Härtung
-current_phase: 11
-current_phase_name: Architektur- & Build-Hygiene
 status: planning
-stopped_at: Completed 10-07-PLAN.md (Gap-Closure Runde 2 — CSS-Beacon geschlossen, Threat-Register vollstaendig dispositioniert)
-last_updated: "2026-07-25T18:03:06.442Z"
-last_activity: 2026-07-25
-last_activity_desc: Phase 10 complete, transitioned to Phase 11
+stopped_at: Phase 11 context gathered
+last_updated: "2026-07-25T18:58:42.559Z"
+last_activity: 2026-07-25 — Phase 10 complete, transitioned to Phase 11
 progress:
   total_phases: 4
   completed_phases: 3
@@ -157,9 +154,9 @@ Last activity: 2026-07-25 — Phase 10 complete, transitioned to Phase 11
 
 ## Session Continuity
 
-**Last session:** 2026-07-25T17:52:00.000Z
-**Stopped at:** Completed 10-07-PLAN.md (Gap-Closure Runde 2 — CSS-Beacon geschlossen, Threat-Register vollstaendig dispositioniert)
-**Resume file:** None
+**Last session:** 2026-07-25T18:58:42.552Z
+**Stopped at:** Phase 11 context gathered
+**Resume file:** .planning/phases/11-architektur-build-hygiene/11-CONTEXT.md
 
 **Last action:** Komplette Milestone-UAT abgeschlossen (2026-06-20 → 2026-07-20): alle 5 offenen Human-UAT-Sessions via `/gsd-verify-work` durchgetestet — 07 (4/4), 06 (5/5), 05 (2/2), 01 (3/3), 02 (6/6). Alle 7 VERIFICATION.md jetzt `status: passed`. Dabei gefundene+gefixte Bugs: Soundboard-Doppel-Import (75aadfe), Audio-läuft-nach-Szene-Löschen (b85dbe1), Volume nicht live (801ed48), Manifest-CORS unter file:// (cd75093), Konsolen-Hygiene (c029f11), Datei-Backup schrieb nie bei Entity-CRUD — window.save-Wrapper strukturell wirkungslos für bare save() (1430e8c), generischer registerPostSaveHook + DM-Screen-Live-Sync-Umstellung + CLAUDE.md-Pattern-Korrektur (6ea8309), „Anderen Ordner wählen"-Button (cc2af9e). Nebenbei: Repo mit origin gemergt (7 Mai-Commits, alter pages.yml-Deploy entfernt 7f4858a), 348 Commits gepusht, GitHub-Pages-Deploy live verifiziert (PWA installierbar, SW-Update-Flow, Datei-Backup, Migrations-Wizard file://→PWA). Zusätzlich in der Session: Soundboard-Erweiterungen (Loop-Toggle/Crossfade-Loop/Fortschritt 6636297, Per-Track-Play noch offen als Design), gruppierte Navigation (3d77ec0).
 **Next action:** Phase 8 ausführen — `/gsd-execute-phase 8` (Wave 1 → 08-01 zuerst; Sampling gemäß 08-VALIDATION.md: volle Suite zweimal in Folge grün vor `/gsd-verify-work`). Offene Design-Entscheidung Soundboard Per-Track-Play (Layering gewählt, Szenen-Play-Variante unbestätigt). Optionale Altlasten: Phase-1-Security-Audit (`/gsd-secure-phase 1`), Phase-1-Code-Review-Findings, Phase-3 Browser-Checks (nicht-blockierend).
