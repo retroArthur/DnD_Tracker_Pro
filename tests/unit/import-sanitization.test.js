@@ -281,11 +281,18 @@ describe('sanitizeImportedItem() — Unveränderlichkeit', () => {
 // QUELLTEXT-STRUKTURPRÜFUNG (nach Muster von Test E in storage-conflict.test.js)
 // ============================================================
 describe('Quelltext-Strukturprüfung — Verdrahtung an beiden Eintrittspunkten', () => {
-    test('executeImport(): Aufruf von sanitizeImportedItem() steht innerhalb der validatedItems-Abbildung', () => {
-        const fnStart = importExportSourceCode.indexOf('function executeImport(');
+    test('validatedItems-Abbildung (Import-Validierungspfad vor executeImport()) ruft sanitizeImportedItem() auf', () => {
+        // Korrektur gegenüber der Planvorlage: die validatedItems-Abbildung, die den
+        // Datentyp-spezifischen Import validiert, lebt tatsächlich in showImportModal()
+        // (verifiziert per Quelltext-Read) — sie befüllt modal.dataset.importItems, das
+        // executeImport() anschließend unverändert persistiert. Funktional identisch zum
+        // Plan-Text ("in executeImport() liefert die validatedItems-Abbildung..."): die
+        // Bereinigung sitzt an der Stelle, an der die Rohdaten zu vertrauten Daten werden,
+        // bevor sie in den Speicherpfad gelangen.
+        const fnStart = importExportSourceCode.indexOf('function showImportModal(');
         expect(fnStart).toBeGreaterThan(-1);
         // Nächste Top-Level-Funktion im Quelltext dient als Ende-Marker.
-        const fnEnd = importExportSourceCode.indexOf('function updateIOCounts(');
+        const fnEnd = importExportSourceCode.indexOf('function executeImport(');
         expect(fnEnd).toBeGreaterThan(fnStart);
         const body = importExportSourceCode.slice(fnStart, fnEnd);
         const mapStart = body.indexOf('const validatedItems');
@@ -313,10 +320,12 @@ describe('Quelltext-Strukturprüfung — Verdrahtung an beiden Eintrittspunkten'
         const fnEnd = importExportSourceCode.indexOf('function copyData(');
         expect(fnEnd).toBeGreaterThan(fnStart);
         const body = importExportSourceCode.slice(fnStart, fnEnd);
-        // Eindeutiger Marker für den Beginn des Überschreib-Zweigs (der Kommentar ist
-        // eindeutig — im Gegensatz zu "} else {", das im selben Funktionskörper auch
-        // für den inneren if(saveResult.success)-Zweig vorkommt).
-        const overwriteBranchIdx = body.indexOf('Aktuelle Kampagne überschreiben');
+        // Eindeutiger Marker für den Beginn des Überschreib-Zweigs. "Aktuelle Kampagne
+        // überschreiben" allein ist NICHT eindeutig (kommt auch im confirm()-Dialogtext
+        // weiter oben vor) — der volle Kommentar mit Zusatz ist eindeutig.
+        const overwriteBranchIdx = body.indexOf(
+            'Aktuelle Kampagne überschreiben (D is const, use Object.assign)'
+        );
         expect(overwriteBranchIdx).toBeGreaterThan(-1);
         const assignIdx = body.indexOf('Object.assign(D, imp)', overwriteBranchIdx);
         expect(assignIdx).toBeGreaterThan(overwriteBranchIdx);

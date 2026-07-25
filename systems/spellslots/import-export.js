@@ -140,6 +140,40 @@ const IO_SCHEMA = {
         description: { type: 'string', required: false, default: '' }
     }
 };
+// Import-Sicherheitsgrenze (SEC-01/D-02): Feldliste der HTML-tragenden Felder je
+// Entity-Typ, per Render-Pfad-Audit ermittelt (10-RESEARCH.md). Rein textuelle und
+// kategoriale Felder (name, title, tags, category, …) bleiben bewusst außen vor —
+// der Sanitizer würde dort legitime spitze Klammern (Würfelformeln, Vergleiche)
+// zerstören. KEINE weiteren Typen/Felder ohne erneuten Render-Pfad-Audit ergänzen.
+const HTML_FIELDS_BY_TYPE = {
+    characters: ['notes'],
+    npcs: ['description'],
+    locations: ['description'],
+    quests: ['description'],
+    encounters: ['traits', 'actions', 'skills'],
+    spells: ['description'],
+    sessionNotes: ['content'],
+    wiki: ['content'],
+    links: ['description']
+};
+// Bereinigt die HTML-tragenden Felder eines importierten Items über den
+// projektweiten Sanitizer (utils/basic.js: sanitizeHTML()). Modul-intern
+// (kein window-Export, CLAUDE.md „Export Audit Rule") — total definiert:
+// unbekannter Typ, fehlendes/nicht-String-Feld führen zu unverändertem Item,
+// nie zu einem Fehler. Meldet nichts (D-04: still säubern).
+function sanitizeImportedItem(type, item) {
+    const fields = HTML_FIELDS_BY_TYPE[type];
+    if (!fields) return item;
+    const sanitizeHTML = window.sanitizeHTML;
+    if (typeof sanitizeHTML !== 'function') return item;
+    const result = { ...item };
+    fields.forEach(field => {
+        if (typeof result[field] === 'string') {
+            result[field] = sanitizeHTML(result[field]);
+        }
+    });
+    return result;
+}
 // EXPORT FUNCTIONS
 // ============================================================
 function exportData(dataType) {
@@ -297,7 +331,8 @@ function showImportModal(dataType) {
                         }
                         validated[key] = item[key] !== undefined ? item[key] : field.default;
                     }
-                    return validated;
+                    // SEC-01/D-01: HTML-tragende Felder vor der Anzeige bereinigen (Import-Grenze)
+                    return sanitizeImportedItem(dataType, validated);
                 });
                 // Import-Modal anzeigen
                 const modal = $('import-modal');
@@ -527,6 +562,15 @@ function importDataGlobal() {
                     };
                 });
             }
+            // SEC-01/D-01/Pitfall 2: HTML-tragende Felder VOR der choice-Verzweigung bereinigen.
+            // Beide Zweige persistieren imp direkt (StorageAPI.setJSON bei "neue Kampagne",
+            // Object.assign(D, imp) beim Überschreiben) — ohne diese Vorschaltung wäre der
+            // "neue Kampagne"-Zweig genauso ungeschützt wie der Überschreib-Zweig.
+            Object.keys(HTML_FIELDS_BY_TYPE).forEach(type => {
+                if (Array.isArray(imp[type])) {
+                    imp[type] = imp[type].map(item => sanitizeImportedItem(type, item));
+                }
+            });
             if (choice) {
                 // Als neue Kampagne importieren
                 const index = getCampaignIndex();
@@ -568,6 +612,16 @@ function importDataGlobal() {
                 }
             } else {
                 // Aktuelle Kampagne überschreiben (D is const, use Object.assign)
+                // WR-03/D-07: Undo-Punkt + Sicherungskopie VOR dem Datenwechsel, nach dem
+                // Muster von executeImport() (Zeilen ~386/389) — ein überschreibender Import
+                // war zuvor ohne Rückgängig-Punkt und ohne Backup endgültig.
+                saveUndoState('Kampagne überschrieben (Import)');
+                try {
+                    createAutoBackup();
+                    showToast('💾 Sicherheitskopie erstellt', 'info', 1000);
+                } catch (err) {
+                    console.warn('[Import] Backup failed:', err);
+                }
                 // Soundboard-Audio stoppen — Web Audio überlebt sonst den Daten-Reset
                 if (typeof window.stopAllTracks === 'function') window.stopAllTracks();
                 Object.assign(D, imp);
