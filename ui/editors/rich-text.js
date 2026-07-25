@@ -347,16 +347,20 @@ function formatText(elementId, format, value) {
         }
     }
 }
-function setEditorFont(elementIdOrSelect, selectEl) {
-    const EDITOR_FONTS = window.EDITOR_FONTS;
+function setEditorFont(elementIdOrSelect, selectElOrValue) {
+    // Zwei Aufrufer mit unterschiedlicher Signatur (09-BASELINE.md Fund 2):
+    // - ui/actions/system-actions.js 'set-editor-font' übergibt (editorId: string, fontValue: string)
+    // - ein <select>-Element als erstes Argument wird ebenfalls unterstützt (Alt-Aufrufpfad)
     let editorId;
-    let select;
-    if (typeof elementIdOrSelect === 'object' && elementIdOrSelect.tagName === 'SELECT') {
-        select = elementIdOrSelect;
+    let fontKey;
+    if (typeof elementIdOrSelect === 'object' && elementIdOrSelect && elementIdOrSelect.tagName === 'SELECT') {
+        const select = elementIdOrSelect;
         editorId = select.dataset.editorId || '';
+        fontKey = select.value;
     } else {
         editorId = elementIdOrSelect;
-        select = selectEl;
+        fontKey =
+            typeof selectElOrValue === 'string' ? selectElOrValue : selectElOrValue?.value;
     }
     const editor = $(editorId);
     if (!editor) return;
@@ -368,17 +372,21 @@ function setEditorFont(elementIdOrSelect, selectEl) {
             selection.addRange(editorSelectSavedRange.cloneRange());
         }
     }
-    document.execCommand('fontName', false, EDITOR_FONTS[select.value] || EDITOR_FONTS['arial']);
+    const fonts = window.EDITOR_FONTS || {};
+    document.execCommand('fontName', false, fonts[fontKey] || fonts['arial']);
 }
-function setEditorFontSize(elementIdOrSelect, selectEl) {
+function setEditorFontSize(elementIdOrSelect, selectElOrValue) {
+    // Gleiche Zwei-Aufrufer-Signatur wie setEditorFont() (09-BASELINE.md Fund 2)
     let editorId;
-    let select;
-    if (typeof elementIdOrSelect === 'object' && elementIdOrSelect.tagName === 'SELECT') {
-        select = elementIdOrSelect;
+    let sizeValue;
+    if (typeof elementIdOrSelect === 'object' && elementIdOrSelect && elementIdOrSelect.tagName === 'SELECT') {
+        const select = elementIdOrSelect;
         editorId = select.dataset.editorId || '';
+        sizeValue = select.value;
     } else {
         editorId = elementIdOrSelect;
-        select = selectEl;
+        sizeValue =
+            typeof selectElOrValue === 'string' ? selectElOrValue : selectElOrValue?.value;
     }
     const editor = $(editorId);
     if (!editor) return;
@@ -394,7 +402,7 @@ function setEditorFontSize(elementIdOrSelect, selectEl) {
     const fontElements = editor.querySelectorAll('font[size="7"]');
     fontElements.forEach(el => {
         el.removeAttribute('size');
-        el.style.fontSize = select.value;
+        el.style.fontSize = sizeValue;
     });
 }
 function clearEditorFormatting(elementId) {
@@ -696,8 +704,10 @@ function updateStickyOffsets() {
 function initFloatingToolbar() {
     if (floatingToolbarInitialized) return;
     floatingToolbarInitialized = true;
-    const EDITOR_FONTS = window.EDITOR_FONTS;
-    const TOOLBAR_DIMENSIONS = window.TOOLBAR_DIMENSIONS;
+    // EDITOR_FONTS/TOOLBAR_DIMENSIONS werden NICHT hier als lokale const gebunden:
+    // Build-Dedup-Pass entfernt die zweite Deklaration desselben Bezeichners
+    // (CLAUDE.md "Duplicate Declaration Debugging Pattern") — direkter window.*-Zugriff
+    // an den Verwendungsstellen unten vermeidet den Bundle-Laufzeitfehler.
     const toolbar = $('floating-toolbar');
     if (!toolbar) return;
     document.querySelectorAll('.editor-toolbar').forEach(editorToolbar => {
@@ -779,11 +789,8 @@ function initFloatingToolbar() {
             selection.removeAllRanges();
             selection.addRange(floatingToolbarRange.cloneRange());
             if (action === 'font') {
-                document.execCommand(
-                    'fontName',
-                    false,
-                    EDITOR_FONTS[value] || EDITOR_FONTS['arial']
-                );
+                const fonts = window.EDITOR_FONTS || {};
+                document.execCommand('fontName', false, fonts[value] || fonts['arial']);
             } else if (action === 'fontSize') {
                 document.execCommand('fontSize', false, '7');
                 const fontElements = floatingToolbarTarget.querySelectorAll('font[size="7"]');
@@ -935,7 +942,9 @@ function initFloatingToolbar() {
     }
 }
 function handleSelectionChange() {
-    const TOOLBAR_DIMENSIONS = window.TOOLBAR_DIMENSIONS;
+    // Keine funktions-lokale Bindung von TOOLBAR_DIMENSIONS hier — Build-Dedup-Pass-Konflikt
+    // vermeiden (CLAUDE.md "Duplicate Declaration Debugging Pattern"), direkt an der
+    // Destrukturierungsstelle unten mit Guard auf window.TOOLBAR_DIMENSIONS zugreifen.
     const selection = window.getSelection();
     const toolbar = $('floating-toolbar');
     if (!toolbar || !selection) return;
@@ -967,7 +976,12 @@ function handleSelectionChange() {
     const range = selection.getRangeAt(0);
     floatingToolbarRange = range.cloneRange();
     const rect = range.getBoundingClientRect();
-    const { width: toolbarWidth, height: toolbarHeight, padding } = TOOLBAR_DIMENSIONS;
+    const toolbarDimensions = window.TOOLBAR_DIMENSIONS;
+    if (!toolbarDimensions) {
+        hideFloatingToolbar(false);
+        return;
+    }
+    const { width: toolbarWidth, height: toolbarHeight, padding } = toolbarDimensions;
     let left = rect.left + rect.width / 2 - toolbarWidth / 2;
     let top = rect.top - toolbarHeight - padding;
     const viewportWidth = window.innerWidth;

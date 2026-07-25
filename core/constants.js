@@ -438,6 +438,36 @@ const MARKDOWN_PATTERNS = {
 };
 
 // ============================================================
+// EDITOR: SCHRIFTARTEN & FLOATING-TOOLBAR-MASSE (Phase 9, 09-02)
+// ============================================================
+/**
+ * Font-Family-Stacks für den Schriftart-Picker der Rich-Text-Editoren.
+ * Schlüssel entsprechen exakt den option-Werten in assets/templates/*.html
+ * (data-action="set-editor-font"). Web-Fonts (Roboto/Inter/Poppins/Source Sans Pro)
+ * sind lokal über assets/styles/fonts.css gebündelt (D-07, kein CDN).
+ * @type {Object.<string, string>}
+ */
+const EDITOR_FONTS = {
+    arial: 'Arial, Helvetica, sans-serif',
+    serif: 'Georgia, "Times New Roman", serif',
+    mono: '"Courier New", Courier, monospace',
+    roboto: "'Roboto', Arial, sans-serif",
+    inter: "'Inter', Arial, sans-serif",
+    poppins: "'Poppins', Arial, sans-serif",
+    'source-sans': "'Source Sans Pro', Arial, sans-serif"
+};
+/**
+ * Geschätzte Maße der floating Toolbar (.floating-toolbar in assets/styles/spells.css)
+ * für die Positionsberechnung in handleSelectionChange(). Werte in Pixeln.
+ * @type {{width: number, height: number, padding: number}}
+ */
+const TOOLBAR_DIMENSIONS = {
+    width: 280,
+    height: 40,
+    padding: 10
+};
+
+// ============================================================
 // PHASE 5: HARPTOS/FAERÛN-KALENDER-KONSTANTEN
 // ============================================================
 /**
@@ -556,7 +586,9 @@ window.UI_CONSTANTS = Object.freeze({
     ENTITY_ICONS,
     LINK_ICONS,
     ENTITY_TYPE_NAMES,
-    MARKDOWN_PATTERNS
+    MARKDOWN_PATTERNS,
+    EDITOR_FONTS,
+    TOOLBAR_DIMENSIONS
 });
 
 // ============================================================
@@ -584,6 +616,8 @@ window.ENTITY_ICONS = ENTITY_ICONS;
 window.LINK_ICONS = LINK_ICONS;
 window.ENTITY_TYPE_NAMES = ENTITY_TYPE_NAMES;
 window.MARKDOWN_PATTERNS = MARKDOWN_PATTERNS;
+window.EDITOR_FONTS = EDITOR_FONTS;
+window.TOOLBAR_DIMENSIONS = TOOLBAR_DIMENSIONS;
 window.HARPTOS_MONTHS = HARPTOS_MONTHS;
 window.HARPTOS_FESTIVALS = HARPTOS_FESTIVALS;
 window.HARPTOS_SEASONS = HARPTOS_SEASONS;
