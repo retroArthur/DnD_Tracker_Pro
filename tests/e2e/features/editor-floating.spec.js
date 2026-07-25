@@ -627,9 +627,9 @@ test.describe('UI-lose Zweige (kein Toolbar-Pfad vorhanden)', () => {
 // Endwert 0 setzt, sobald alle 21 Call-Sites migriert sind.
 // ---------------------------------------------------------------
 test.describe('Inventar-Zählnachweis (bewusst änderbar während der Migration)', () => {
-    test('ZÄHLNACHWEIS: ui/editors/rich-text.js enthält 1 execCommand-Vorkommen (Zwischenstand nach Plan 09-08/Task 2, nur noch der defaultParagraphSeparator-Setup-Aufruf; Referenz: 09-BASELINE.md, endgültig 0 in Plan 09-09)', async () => {
+    test('ZÄHLNACHWEIS: ui/editors/rich-text.js enthält 0 execCommand-Vorkommen (Plan 09-09/Task 1, Gruppe G: Setup-Aufruf entfernt; finale Kommentarzeilen-Filterung folgt in Task 2)', async () => {
         const content = fs.readFileSync('ui/editors/rich-text.js', 'utf8');
         const matches = content.match(/execCommand/g) || [];
-        expect(matches.length).toBe(1);
+        expect(matches.length).toBe(0);
     });
 });

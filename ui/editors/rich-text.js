@@ -709,11 +709,16 @@ function initEditorPasteHandlers() {
         'wiki-content',
         'quick-ref-entry-content'
     ];
-    try {
-        document.execCommand('defaultParagraphSeparator', false, 'div');
-    } catch (e) {
-        // Ignore
-    }
+    // Migrationsgruppe G (Plan 09-09, letzte Call-Site): Der Setup-Aufruf der
+    // deprecated Editier-Kommando-API entfällt ersatzlos. Empirisch belegt
+    // (09-BASELINE.md, Abschnitt A1): reguläres Enter wird von
+    // handleEditorKeydown() immer abgefangen (insertLineBreakAtSelection()),
+    // native Absatztrennung greift hier nie; Shift+Enter fällt zwar zur
+    // nativen Browser-Behandlung durch, ist aber browserübergreifend als
+    // weicher Zeilenumbruch (<br>) spezifiziert — der Browser verwendet hier
+    // bereits den in A1 protokollierten Absatztrenner als Vorgabe, unabhängig
+    // vom Setup-Aufruf. Der A1-Referenztest (editor-insert.spec.js) bleibt
+    // unverändert und beweist das messbar.
     editorIds.forEach(id => {
         const editor = $(id);
         if (editor && editor.getAttribute('contenteditable') === 'true') {
