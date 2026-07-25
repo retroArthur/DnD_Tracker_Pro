@@ -85,6 +85,24 @@ def load_template_list(loader_path):
     return templates
 
 
+def load_css_import_order(styles_css_path):
+    """Liest die CSS-Kaskadenreihenfolge zur Build-Zeit ausschliesslich aus dem
+    @import-Hub assets/styles.css (D-01/D-04, SSoT).
+
+    assets/styles.css fuehrt genau ein @import pro Zeile und keine Kommentare
+    zwischen den Imports — deshalb ist keine Kommentar-Vorbehandlung noetig, anders
+    als bei parse_js_string_array(). Ein leeres Ergebnis ist immer ein Fehler (D-01),
+    nie eine stille leere Liste.
+    """
+    content = read_file(styles_css_path)
+    css_files = re.findall(r"@import url\('styles/([^']+)'\);", content)
+    if not css_files:
+        print(f"[FEHLER] Konnte keine @import-Eintraege aus {styles_css_path} parsen oder die Liste ist leer")
+        sys.exit(1)
+    log.success(f"CSS-Reihenfolge geladen: {len(css_files)} Dateien aus {styles_css_path}")
+    return css_files
+
+
 def require_files_exist(base_dir, rel_paths, label):
     """Bricht den Build ab, wenn eine gelistete Datei fehlt (D-02).
 
@@ -342,27 +360,21 @@ def build(minify=False, production=False, verbose=False):
     templates = load_template_list(loader_js_path)
     require_files_exist(SOURCE_DIR, templates, 'HTML-Template')
 
+    # SSoT (D-01/D-04): CSS-Kaskadenreihenfolge ausschliesslich aus dem @import-Hub
+    # assets/styles.css beziehen, dann sofort gegen das Dateisystem verifizieren
+    # (D-02) — das ist dieselbe Datei, die der Dev-Modus im Browser laedt.
+    styles_css_path = os.path.join(SOURCE_DIR, 'assets', 'styles.css')
+    css_files = load_css_import_order(styles_css_path)
+    css_styles_dir = os.path.join(SOURCE_DIR, 'assets', 'styles')
+    require_files_exist(css_styles_dir, css_files, 'CSS-Datei')
+
     # 1. Lade CSS (modulare Dateien aus assets/styles/)
     print("\n[BUILD] Lade CSS...")
-    css_files = [
-        'fonts.css',
-        'variables.css', 'core.css', 'editors.css',
-        'npcs.css', 'encounters.css', 'initiative.css',
-        'loot.css', 'spells.css', 'party.css',
-        'dashboard.css', 'dmscreen.css', 'dice.css',
-        'tools.css',
-        'pwa.css', 'migration.css', 'file-backup.css', 'command-palette.css',
-        'bestiary.css',
-        'welt.css'
-    ]
     css_parts = []
     for css_file in css_files:
         css_path = f"{SOURCE_DIR}/assets/styles/{css_file}"
-        if os.path.exists(css_path):
-            css_parts.append(read_file(css_path))
-            log.info(f"  {css_file}")
-        else:
-            log.warning(f"  {css_file} NICHT GEFUNDEN")
+        css_parts.append(read_file(css_path))
+        log.info(f"  {css_file}")
     css_content = '\n'.join(css_parts)
     # CR-08: Relative url()-Pfade aus assets/styles/fonts.css fuer das Inlining
     # umschreiben. Inline-<style> loest gegen die DOKUMENT-URL auf, nicht mehr
