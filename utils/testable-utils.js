@@ -101,8 +101,36 @@ function sanitizeHTML(html) {
         face: true,
         size: true
     };
+    // Erlaubnisliste zulässiger CSS-Funktionsnamen für Stilwerte (T-10-30):
+    // die Prüfung erfolgt PRO DEKLARATION gegen genau diese Liste, nicht als
+    // Zeichenketten-Suche über den gesamten Rohwert — eine Verschleierung des
+    // Funktionsnamens (eingeschobener Kommentar, CSS-Escape-Sequenz) zerstört
+    // die Bezeichnerfolge vor der öffnenden Klammer und macht die Prüfung
+    // dadurch automatisch zum Fehlschlag, statt sie zu umgehen. var(...) ist
+    // zwingend enthalten: der Tabellen-Einfügepfad injiziert Deklarationen
+    // mit CSS-Custom-Property-Referenzen (border/background), die diese
+    // Prüfung überleben müssen.
+    const allowedStyleFunctions = ['var', 'rgb', 'rgba', 'hsl', 'hsla', 'calc'];
     // Gefährliche Protokolle (case-insensitive)
     const dangerousProtocols = ['javascript:', 'vbscript:', 'data:', 'file:', 'blob:'];
+    // Prüft, ob ein Stilwert ausschließlich erlaubte CSS-Funktionsnamen
+    // verwendet (siehe allowedStyleFunctions oben). Eine At-Regel-Einleitung
+    // im Wert macht ihn unabhängig davon unsicher.
+    function isSafeStyleValue(value) {
+        const lower = value.toLowerCase();
+        if (lower.includes('@')) return false;
+        for (let i = 0; i < lower.length; i++) {
+            if (lower[i] !== '(') continue;
+            let j = i - 1;
+            let ident = '';
+            while (j >= 0 && /[a-z0-9_-]/.test(lower[j])) {
+                ident = lower[j] + ident;
+                j--;
+            }
+            if (!allowedStyleFunctions.includes(ident)) return false;
+        }
+        return true;
+    }
     // Rekursive Funktion zum Bereinigen der Nodes
     function cleanNode(node) {
         if (node.nodeType === Node.TEXT_NODE) {
@@ -123,8 +151,14 @@ function sanitizeHTML(html) {
                     const styles = attr.value
                         .split(';')
                         .filter(s => {
-                            const prop = s.split(':')[0]?.trim().toLowerCase();
-                            return styleList.includes(prop);
+                            const colonIdx = s.indexOf(':');
+                            const prop = (colonIdx === -1 ? s : s.slice(0, colonIdx))
+                                .trim()
+                                .toLowerCase();
+                            if (!styleList.includes(prop)) return false;
+                            if (colonIdx === -1) return true;
+                            const value = s.slice(colonIdx + 1).trim();
+                            return isSafeStyleValue(value);
                         })
                         .join(';');
                     if (styles) cleanElement.setAttribute('style', styles);
