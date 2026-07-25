@@ -38,6 +38,28 @@ Deferred — nicht in diesem Milestone.
 
 - **SOUND-PT-01**: Soundboard Per-Track-Play (▶/⏹ je Track, Layering — Design aus v1.0-Session liegt bereit)
 
+### Technische Schulden (aus Phase-11-Triage)
+
+Diese Posten wurden in Phase 11 (Plan 11-06, ARCH-04) trianguliert und bewusst NICHT gefixt — die
+Milestone-Leitplanke v1.1 bleibt verhaltensneutral (D-16). Jeder Eintrag verweist auf seinen
+Ursprung und die Live-Code-Belege in `.planning/phases/11-architektur-build-hygiene/11-CONCERNS-TRIAGE.md`.
+
+- **DEBT-01**: Schwache Lint-/Typecheck-/Coverage-Gates — `no-undef` als Warning statt Error (`eslint.config.js:102`), `tsconfig.json:11,21` mit `strict: false`/`checkJs: false`, Jest-`coverageThreshold` nur für `utils/testable-utils.js` (`jest.config.cjs:65-72`) — Ursprung: CONCERNS.md §Tech Debt/§Fragile Areas/§Test Coverage Gaps, triagiert in 11-CONCERNS-TRIAGE.md (Einträge 4, 29, 43)
+- **DEBT-02**: `CLAUDE.md`/`docs/bugfixes.md` dokumentieren noch das entfernte Drei-Pass-Dedup-System und das inzwischen strukturell unmögliche Modullisten-Sync-Erfordernis — wird planmäßig in Plan 11-07 (D-08) dieser Phase behoben — Ursprung: CONCERNS.md §Tech Debt, triagiert in 11-CONCERNS-TRIAGE.md (Eintrag 6)
+- **DEBT-03**: 3 verbleibende `document.execCommand`-Aufrufe außerhalb des Editor-Moduls (`systems/entity-links.js:87`, `features/wiki/wiki.js:831`, `ui/actions/system-actions.js:82`) — Ursprung: CONCERNS.md §Tech Debt/§Dependencies at Risk, triagiert in 11-CONCERNS-TRIAGE.md (Einträge 8, 36)
+- **DEBT-04**: Oversized modules (`features/dmscreen/dmscreen-render.js` 1576, `ui/editors/rich-text.js` 1932, `features/initiative.js` 1655, `features/wiki/wiki.js` 1217, `features/encounter-calculator.js` 1292, `features/shops/shops-core.js` 1073 Zeilen) — Ursprung: CONCERNS.md §Tech Debt, triagiert in 11-CONCERNS-TRIAGE.md (Eintrag 12)
+- **DEBT-05**: Undo/redo-Stack-Asymmetrie bei Parse-Fehler — `redoStack`/`undoStack` werden vor der `safeJSONParse`-Prüfung mutiert (`systems/undo.js`, `undo()`/`redo()`) — Ursprung: CONCERNS.md §Known Bugs, triagiert in 11-CONCERNS-TRIAGE.md (Eintrag 18)
+- **DEBT-06**: Undo-Snapshot-Performance — voller `JSON.stringify(window.D)` vor jeder destruktiven Operation (`systems/undo.js:9-20`, `UNDO_LIMIT` 30) — Ursprung: CONCERNS.md §Performance Bottlenecks/§Scaling Limits, triagiert in 11-CONCERNS-TRIAGE.md (Einträge 23, 34)
+- **DEBT-07**: Jeder Save serialisiert die volle Kampagne (`systems/spellslots/persistence.js`, `JSON.stringify(D)` + Blob-Messung bei jedem `save()`/`saveImmediate()`) — Ursprung: CONCERNS.md §Performance Bottlenecks, triagiert in 11-CONCERNS-TRIAGE.md (Eintrag 24)
+- **DEBT-08**: `saveImmediate()` kann durch ein optionales, aktuell nicht im UI vorhandenes `autosave-toggle`-Element ohne Ausnahme für kritische Saves deaktiviert werden (`systems/spellslots/persistence.js:38-39`) — Ursprung: CONCERNS.md §Fragile Areas, triagiert in 11-CONCERNS-TRIAGE.md (Eintrag 28)
+- **DEBT-09**: Tab-Registry-Renderfunktionen per String-Name referenziert (`systems/tab-registry.js`) — bricht bei Umbenennung nur mit `DEBUG_MODE`-Warnung — Ursprung: CONCERNS.md §Fragile Areas, triagiert in 11-CONCERNS-TRIAGE.md (Eintrag 30)
+- **DEBT-10**: Ungeschütztes `setInterval` in `initPerformanceMonitoring()` (`systems/backups.js:325`), kein Guard wie bei `startAutoBackup()` — Ursprung: CONCERNS.md §Fragile Areas, triagiert in 11-CONCERNS-TRIAGE.md (Eintrag 31)
+- **DEBT-11**: Persistence-Edge-Cases ungetestet (>5MB-IDB-only-Save+Reload, localStorage-Quota-Fallback, Export/Import-Versions-Rundlauf) — Ursprung: CONCERNS.md §Test Coverage Gaps, triagiert in 11-CONCERNS-TRIAGE.md (Eintrag 44)
+- **DEBT-12**: `hasHtmlTags`-Wächter in `ui/editors/markdown-converter.js:264` nie verdrahtet — Markdown-Konvertierung läuft unbedingt über bereits-HTML, URLs mit ≥2 Unterstrichen werden korrumpiert (Anzeigebug, gespeicherte Daten unberührt) — Ursprung: STATE.md „Open TODOs" (Phase 10 IN-01), triagiert in 11-CONCERNS-TRIAGE.md (Ergänzung S1)
+- **DEBT-13**: Doppeltes `data-id`-Attribut in `features/wiki/wiki.js:391-392` (Parser verwirft das zweite, folgenlos) — Ursprung: STATE.md „Open TODOs" (Phase 10 WR-02), triagiert in 11-CONCERNS-TRIAGE.md (Ergänzung S2)
+- **DEBT-14**: Un-escapte Regex-Capture in `parseWikiLinks()` (`features/wiki/wiki.js:653`) — aktuell nicht ausnutzbar — Ursprung: STATE.md „Open TODOs" (Phase 10 IN-02), triagiert in 11-CONCERNS-TRIAGE.md (Ergänzung S3)
+- **DEBT-15**: Latente Toast-Race in `tests/e2e/crud/locations.spec.js` und `encounters.spec.js` — fehlender Seed-Nachzug aus Plan 08-02 — Ursprung: STATE.md „Open TODOs", triagiert in 11-CONCERNS-TRIAGE.md (Ergänzung S4)
+
 ## Out of Scope
 
 | Feature | Reason |
