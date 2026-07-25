@@ -4,24 +4,24 @@ milestone: v1.1
 milestone_name: Tech-Debt & Härtung
 current_phase: 10
 current_phase_name: Security-Härtung
-status: ready_to_execute
-stopped_at: Gap-Closure-Plan 10-06 geplant (Checker PASSED) — bereit für /gsd-execute-phase 10 --gaps-only
-last_updated: "2026-07-25T13:05:00.000Z"
+status: executing
+stopped_at: Completed 10-06-PLAN.md (Gap-Closure SC3 — Tabellen-Einfuegepfad ueber Allowlist-Sanitizer)
+last_updated: "2026-07-25T14:04:02.366Z"
 last_activity: 2026-07-25
-last_activity_desc: "Phase 10 ausgeführt (5/5 Pläne, 5 Wellen, sequenziell auf main): Anzeige-Grenze (10-01) und Import-Grenze inkl. WR-03-Undo/Backup (10-02) geschlossen, Sanitizer-Vektor-Katalog + Paritätstest + <strike>-Whitelist (10-03), Tabellenzweig-on*-Bereinigung + saveSpell-Angleichung + Broken-Windows-Ledger auf 0 (10-04), Abschluss-Audit mit SECURITY.md (10-05). Alle Wave-Gates grün: Build ✓, Jest 554/554, Playwright 315 passed/2 skipped, Drift-/UI-Gates ohne Block, Regressions-Gate grün. Code-Review (63dcfb1) + adversariale Gegenprüfung aller sechs Befunde → Verifier gaps_found 3/4: SC3 gescheitert, weil der Paste-Tabellenzweig weder Tag-Whitelist noch URL-Schema-Filter hat und die SECURITY.md-Aussage threats_open: 0 damit für die Angriffsfläche Rich-Text/innerHTML widerlegt ist. SEC-01/SEC-02 auf Gaps Found zurückgesetzt, ROADMAP-/STATE-Abschlussmarkierungen des Plans 10-05 zurückgenommen."
+last_activity_desc: Phase 10 execution started
 progress:
   total_phases: 4
-  completed_phases: 2
-  total_plans: 18
-  completed_plans: 18
-  percent: 50
+  completed_phases: 3
+  total_plans: 19
+  completed_plans: 19
+  percent: 75
 ---
 
 # Project State: D&D Kampagnen-Tracker Pro — Stabilisierung & Ausbau
 
 **Last Updated:** 2026-07-25
 **Phase:** 10 — Security-Härtung
-**Status:** Gap-Closure geplant — 5/6 Pläne ausgeführt, 10-06 bereit zur Ausführung
+**Status:** Ready to execute
 
 ---
 
@@ -35,10 +35,10 @@ progress:
 
 ## Current Position
 
-Phase: 10 (Security-Härtung) — GAP-CLOSURE GEPLANT (nicht abgeschlossen)
-Plan: 5 of 6 ausgeführt — 10-06 (Welle 6, `gap_closure: true`) geplant und bereit
-Status: Verifier 3/4 Must-Haves. SC1 (Import-XSS behoben) und SC2 (Regressionstest) sauber erfüllt, SC4 prozessseitig erfüllt. SC3 GESCHEITERT: SECURITY.md behauptet `threats_open: 0`, aber der Paste-Tabellenzweig in `ui/editors/rich-text.js:958-995` hat weder Tag-Whitelist noch URL-Schema-Filter — `<table><td><iframe srcdoc=…>` führt Skript im App-Origin aus (3/3 unabhängige Prüfer bestätigt, u. a. per echtem Strg+V gegen den Produktions-Bundle). Kein Stored-XSS: Speichergrenze `sanitizeHTML()` hält (0/10 Payloads erreichen `D`), Schaden bleibt im offenen Editor-Tab bis zum Neuladen. SEC-01/SEC-02 auf "Gaps Found" zurückgesetzt (#2388-Regel).
-Last activity: 2026-07-25 — Phase 10 vollständig ausgeführt (5/5 Pläne, alle Wave-Gates grün: Build ✓, Jest 554/554, Playwright 315/2 skipped, Drift-/UI-Gates ohne Block, Regressions-Gate grün). Anschließend Code-Review (10-REVIEW.md, Commit 63dcfb1: 1 Critical, 3 Warnings, 2 Infos) plus adversariale Gegenprüfung aller sechs Befunde durch sechs unabhängige Prüfer: CR-01 bestätigt (kritisch/warning je nach Bedrohungsmodell), IN-01 als echter Anzeigebug bestätigt (nie verdrahtete `hasHtmlTags`-Wächtervariable korrumpiert URLs mit ≥2 Unterstrichen), WR-03 widerlegt, WR-01 auf Info herabgestuft (loot bewusst außerhalb Scope, alle Render-Senken sanitisieren), WR-02 kosmetisch, IN-02 wie beschrieben (fragil, nicht ausnutzbar).
+Phase: 10 (Security-Härtung) — EXECUTING
+Plan: 2 of 6
+Status: Ready to execute
+Last activity: 2026-07-25 — Phase 10 execution started
 
 ## Performance Metrics
 
@@ -69,6 +69,7 @@ Last activity: 2026-07-25 — Phase 10 vollständig ausgeführt (5/5 Pläne, all
 | Phase 10 P03 | 30min | 3 tasks | 6 files |
 | Phase 10 P04 | 35min | 2 tasks | 3 files |
 | Phase 10 P05 | ~50min | 2 tasks | 7 files |
+| Phase 10 P06 | ~40min | 3 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -153,8 +154,8 @@ Last activity: 2026-07-25 — Phase 10 vollständig ausgeführt (5/5 Pläne, all
 
 ## Session Continuity
 
-**Last session:** 2026-07-25T11:34:15.350Z
-**Stopped at:** Completed 10-05-PLAN.md
+**Last session:** 2026-07-25T14:04:02.355Z
+**Stopped at:** Completed 10-06-PLAN.md (Gap-Closure SC3 — Tabellen-Einfuegepfad ueber Allowlist-Sanitizer)
 **Resume file:** None
 
 **Last action:** Komplette Milestone-UAT abgeschlossen (2026-06-20 → 2026-07-20): alle 5 offenen Human-UAT-Sessions via `/gsd-verify-work` durchgetestet — 07 (4/4), 06 (5/5), 05 (2/2), 01 (3/3), 02 (6/6). Alle 7 VERIFICATION.md jetzt `status: passed`. Dabei gefundene+gefixte Bugs: Soundboard-Doppel-Import (75aadfe), Audio-läuft-nach-Szene-Löschen (b85dbe1), Volume nicht live (801ed48), Manifest-CORS unter file:// (cd75093), Konsolen-Hygiene (c029f11), Datei-Backup schrieb nie bei Entity-CRUD — window.save-Wrapper strukturell wirkungslos für bare save() (1430e8c), generischer registerPostSaveHook + DM-Screen-Live-Sync-Umstellung + CLAUDE.md-Pattern-Korrektur (6ea8309), „Anderen Ordner wählen"-Button (cc2af9e). Nebenbei: Repo mit origin gemergt (7 Mai-Commits, alter pages.yml-Deploy entfernt 7f4858a), 348 Commits gepusht, GitHub-Pages-Deploy live verifiziert (PWA installierbar, SW-Update-Flow, Datei-Backup, Migrations-Wizard file://→PWA). Zusätzlich in der Session: Soundboard-Erweiterungen (Loop-Toggle/Crossfade-Loop/Fortschritt 6636297, Per-Track-Play noch offen als Design), gruppierte Navigation (3d77ec0).
@@ -222,6 +223,8 @@ _State initialized: 2026-06-11_
 - [Phase 10, 10-05]: HTML_FIELDS_BY_TYPE-Feldliste (neun Entity-Typen) als Ergebnis des Render-Pfad-Audits (D-02) — bewusst kein rekursives Sanitisieren aller String-Felder, um Nicht-HTML-Text (Namen, Würfelformeln mit spitzen Klammern) nicht zu beschädigen; künftige Import-Felder müssen die Liste explizit erweitern
 - [Phase 10, 10-05]: <strike> additiv in die sanitizeHTML-Erlaubnisliste aufgenommen (D-06) — Reversibility costly: einmal in der Whitelist, erzeugen Nutzer-Daten <strike>-Markup, das eine spätere Verengung wieder zerstören würde; Paritätstest (61 Tests) verhindert künftige Drift zwischen utils/basic.js und utils/testable-utils.js
 - [Phase 10, 10-05]: Zwei bewusst akzeptierte Risiken dokumentiert (D-08) statt behoben: keine Content-Security-Policy (Single-User-Offline-App ohne Server, 'unsafe-inline' architekturbedingt ohnehin nötig) und die Breite der class/style-Erlaubnis im Sanitizer (kein Multi-Tenant-Szenario) — dritter akzeptierter Punkt (regexbasierte Paste-Zeit-Bereinigung, T-10-17) in SECURITY.md ergänzt, da sanitizeHTML() als maßgebliche Speichern-Grenze diese Schwäche nicht teilt
+- [Phase ?]: [Phase 10, 10-06]: Tabellenzweig ueber Allowlist-Sanitizer (window.sanitizeHTML) als letzte Einfuege-Stufe statt weiterem Denylist-Regex (SC3, CR-01) - Mehrfach-Vektor-Test nutzt iframe-srcdoc statt reinem script-Element (createContextualFragment markiert parser-erzeugte scripts als inert)
+- [Phase ?]: [Phase 10, 10-06]: T-10-15 auf critical korrigiert, T-10-17/AR-10-02 im Geltungsbereich auf die verbleibende Darstellungs-Kosmetik-Kette verengt, T-10-23..T-10-29/AR-10-05 neu - threats_open: 0 ist in SECURITY.md und 10-SECURITY.md wieder wahr
 
 ## Operator Next Steps
 
