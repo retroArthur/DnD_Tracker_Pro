@@ -335,3 +335,196 @@ test.describe('Floating Toolbar — Teilselektion', () => {
         expect(errors).toEqual([]);
     });
 });
+
+// ---------------------------------------------------------------
+// Task 2: Selects (Vorlese-Stil, Schriftart, Größe), Highlight-Farbfelder,
+// „Format entfernen"
+// ---------------------------------------------------------------
+test.describe('Selects und Farbfelder', () => {
+    test.beforeEach(async ({ page }) => {
+        await gotoBundleFresh(page);
+    });
+
+    test('Vorlese-Stil (Karmesin) über die floating Toolbar — Select springt danach auf den ersten Eintrag zurück', async ({
+        page
+    }) => {
+        await openFreshWikiForm(page, 'Floating ReadAloud');
+        const editor = page.locator('#wiki-content');
+        await typeAndSelectAll(editor, TESTTEXT);
+        await waitForFloatingVisible(page);
+        const select = page.locator('#floating-toolbar [data-floating-action="readAloud"]');
+        await page.selectOption(
+            '#floating-toolbar [data-floating-action="readAloud"]',
+            'crimson'
+        );
+        await expect(editor).toHaveJSProperty(
+            'innerHTML',
+            '<div class="read-aloud crimson">Probetext</div>'
+        );
+        await expect(select.evaluate(el => el.selectedIndex)).resolves.toBe(0);
+        await expect(editor.evaluate(el => el.textContent)).resolves.toContain(TESTTEXT);
+    });
+
+    test('Schriftart (Serif) über die floating Toolbar — kein Fallback auf Arial', async ({
+        page
+    }) => {
+        await openFreshWikiForm(page, 'Floating Font');
+        const editor = page.locator('#wiki-content');
+        await typeAndSelectAll(editor, TESTTEXT);
+        await waitForFloatingVisible(page);
+        await page.selectOption('#floating-toolbar [data-floating-action="font"]', 'serif');
+        const expected = '<font face="Georgia, Times New Roman, serif">Probetext</font>';
+        await expect(editor).toHaveJSProperty('innerHTML', expected);
+        expect(expected).toContain('Georgia');
+        expect(expected).not.toContain('face="Arial');
+        await expect(editor.evaluate(el => el.textContent)).resolves.toContain(TESTTEXT);
+    });
+
+    test('Schriftgröße (1.5em) über die floating Toolbar', async ({ page }) => {
+        await openFreshWikiForm(page, 'Floating FontSize');
+        const editor = page.locator('#wiki-content');
+        await typeAndSelectAll(editor, TESTTEXT);
+        await waitForFloatingVisible(page);
+        await page.selectOption('#floating-toolbar [data-floating-action="fontSize"]', '1.5em');
+        await expect(editor).toHaveJSProperty(
+            'innerHTML',
+            '<font style="font-size: 1.5em;">Probetext</font>'
+        );
+        await expect(editor.evaluate(el => el.textContent)).resolves.toContain(TESTTEXT);
+    });
+
+    test('Highlight setzen (Gold-Farbfeld) über die floating Toolbar', async ({ page }) => {
+        await openFreshWikiForm(page, 'Floating Highlight Set');
+        const editor = page.locator('#wiki-content');
+        await typeAndSelectAll(editor, TESTTEXT);
+        await waitForFloatingVisible(page);
+        await page.locator('#floating-toolbar .color-swatch[data-color="#fbbf24"]').click();
+        await expect(editor).toHaveJSProperty(
+            'innerHTML',
+            '<mark style="background-color: rgba(251, 191, 36, 0.4); color: inherit; border-radius: 2px; padding: 0px 2px;">Probetext</mark>'
+        );
+        await expect(editor.evaluate(el => el.textContent)).resolves.toContain(TESTTEXT);
+    });
+
+    test('Highlight entfernen (transparentes Farbfeld) über die floating Toolbar', async ({
+        page
+    }) => {
+        await openFreshWikiForm(page, 'Floating Highlight Remove');
+        const editor = page.locator('#wiki-content');
+        await typeAndSelectAll(editor, TESTTEXT);
+        await waitForFloatingVisible(page);
+        await page.locator('#floating-toolbar .color-swatch[data-color="#fbbf24"]').click();
+        await editor.click();
+        await editor.selectText();
+        await waitForFloatingVisible(page);
+        await page.locator('#floating-toolbar .color-swatch[data-color="transparent"]').click();
+        await expect(editor).toHaveJSProperty('innerHTML', TESTTEXT);
+        await expect(editor.evaluate(el => el.textContent)).resolves.toBe(TESTTEXT);
+    });
+
+    test('Format entfernen über die floating Toolbar löst Fett + Highlight + Rahmen komplett auf, ohne Inhaltsverlust', async ({
+        page
+    }) => {
+        await openFreshWikiForm(page, 'Floating RemoveFormat');
+        const editor = page.locator('#wiki-content');
+        await typeAndSelectAll(editor, TESTTEXT);
+        await waitForFloatingVisible(page);
+        await page.locator('#floating-toolbar [data-floating-action="bold"]').click();
+        await expect(editor).toHaveJSProperty('innerHTML', NETZ.bold);
+
+        await editor.selectText();
+        await waitForFloatingVisible(page);
+        await page.locator('#floating-toolbar .color-swatch[data-color="#fbbf24"]').click();
+        await expect(editor).toHaveJSProperty(
+            'innerHTML',
+            '<mark style="background-color: rgba(251, 191, 36, 0.4); color: inherit; border-radius: 2px; padding: 0px 2px;"><b>Probetext</b></mark>'
+        );
+
+        await editor.selectText();
+        await waitForFloatingVisible(page);
+        await page.locator('#floating-toolbar [data-floating-action="border"]').click();
+        await expect(editor).toHaveJSProperty(
+            'innerHTML',
+            '<span class="editor-border" style="border: 1px solid var(--gold); padding: 2px 6px; border-radius: 4px; display: inline-block;"><mark style="background-color: rgba(251, 191, 36, 0.4); color: inherit; border-radius: 2px; padding: 0px 2px;"><b>Probetext</b></mark></span>'
+        );
+
+        await editor.selectText();
+        await waitForFloatingVisible(page);
+        await page.locator('#floating-toolbar [data-floating-action="removeFormat"]').click();
+        await expect(editor).toHaveJSProperty('innerHTML', TESTTEXT);
+        await expect(editor.evaluate(el => el.textContent)).resolves.toBe(TESTTEXT);
+    });
+});
+
+// ---------------------------------------------------------------
+// Task 2: Persistenz-Roundtrip (floating) — mind. Fett, Schriftart,
+// Schriftgröße, Highlight
+// ---------------------------------------------------------------
+test.describe('Persistenz-Roundtrip (floating)', () => {
+    test.beforeEach(async ({ page }) => {
+        await gotoBundleFresh(page);
+    });
+
+    test('Fett über die floating Toolbar übersteht Speichern/Reload', async ({ page }) => {
+        await openFreshWikiForm(page, 'Floating RT Bold');
+        const editor = page.locator('#wiki-content');
+        await typeAndSelectAll(editor, TESTTEXT);
+        await waitForFloatingVisible(page);
+        await page.locator('#floating-toolbar [data-floating-action="bold"]').click();
+        const reopened = await saveAndReopenWikiEntry(page, 'Floating RT Bold');
+        await expect(reopened).toHaveJSProperty('innerHTML', NETZ.bold);
+        await expect(reopened.evaluate(el => el.textContent)).resolves.toContain(TESTTEXT);
+    });
+
+    test('Schriftart (Serif) über die floating Toolbar übersteht Speichern/Reload', async ({
+        page
+    }) => {
+        await openFreshWikiForm(page, 'Floating RT Font');
+        const editor = page.locator('#wiki-content');
+        await typeAndSelectAll(editor, TESTTEXT);
+        await waitForFloatingVisible(page);
+        await page.selectOption('#floating-toolbar [data-floating-action="font"]', 'serif');
+        const reopened = await saveAndReopenWikiEntry(page, 'Floating RT Font');
+        await expect(reopened).toHaveJSProperty(
+            'innerHTML',
+            '<font face="Georgia, Times New Roman, serif">Probetext</font>'
+        );
+        await expect(reopened.evaluate(el => el.textContent)).resolves.toContain(TESTTEXT);
+    });
+
+    test('Schriftgröße (1.5em) über die floating Toolbar übersteht Speichern/Reload', async ({
+        page
+    }) => {
+        await openFreshWikiForm(page, 'Floating RT FontSize');
+        const editor = page.locator('#wiki-content');
+        await typeAndSelectAll(editor, TESTTEXT);
+        await waitForFloatingVisible(page);
+        await page.selectOption('#floating-toolbar [data-floating-action="fontSize"]', '1.5em');
+        const reopened = await saveAndReopenWikiEntry(page, 'Floating RT FontSize');
+        // sanitizeHTML() serialisiert das style-Attribut neu (kein trailing ';'),
+        // analog zum statischen-Toolbar-Befund aus 09-02.
+        await expect(reopened).toHaveJSProperty(
+            'innerHTML',
+            '<font style="font-size: 1.5em">Probetext</font>'
+        );
+        await expect(reopened.evaluate(el => el.textContent)).resolves.toContain(TESTTEXT);
+    });
+
+    test('Highlight setzen über die floating Toolbar übersteht Speichern/Reload', async ({
+        page
+    }) => {
+        await openFreshWikiForm(page, 'Floating RT Highlight');
+        const editor = page.locator('#wiki-content');
+        await typeAndSelectAll(editor, TESTTEXT);
+        await waitForFloatingVisible(page);
+        await page.locator('#floating-toolbar .color-swatch[data-color="#fbbf24"]').click();
+        const reopened = await saveAndReopenWikiEntry(page, 'Floating RT Highlight');
+        // border-radius ist nicht im style-Whitelist von sanitizeHTML() (utils/basic.js)
+        // — fällt beim Roundtrip weg, analog zum statischen-Toolbar-Befund aus 09-02.
+        await expect(reopened).toHaveJSProperty(
+            'innerHTML',
+            '<mark style="background-color: rgba(251, 191, 36, 0.4); color: inherit; padding: 0px 2px">Probetext</mark>'
+        );
+        await expect(reopened.evaluate(el => el.textContent)).resolves.toContain(TESTTEXT);
+    });
+});
