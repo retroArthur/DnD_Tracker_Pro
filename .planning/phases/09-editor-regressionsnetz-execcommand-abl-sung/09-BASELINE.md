@@ -375,8 +375,15 @@ Diese Funde wurden in Plan 09-01 (Baseline-Erhebung) identifiziert und bewusst n
 
 - **Entfernung einer plan-fremden, untracked Debug-Datei (`_smoke_welt.cjs`) am Repo-Root:** Diese Datei war nicht Teil des Git-Verlaufs (untracked), gehörte zu keiner Phase und blockierte `npm run lint` mit einem echten `no-unused-vars`-Fehler (Severity 2, laut CLAUDE.md/`01-09`-Konvention „echte Errors weiterhin fatal"). Entfernt, damit das Task-2-Hard-Gate (`npm run lint` Exit-Code 0) erfüllbar ist. Keine Produktionsdatei, kein Git-Verlust (nie committet).
 
+### Handcheck im Browser (Plan 09-09, Task 3 — menschliche Sichtprüfung)
+
+**Ergebnis:** Freigegeben (2026-07-25). Der Entwickler hat `dist/dnd-tracker-bundled.html` im Chrome/Edge per `file://`-Doppelklick geöffnet und alle neun Prüfschritte aus der Checkpoint-Anleitung durchgeführt (statische Toolbar aller 13 Werkzeuge, floating Toolbar nach Textselektion, Einfügen aus echter Word-/Excel-Zwischenablage, Einfügen aus einer formatierten Webseite, Enter/Umschalt+Enter, Markdown-Kurzschreibweisen, Speichern/Reload/Wiedereröffnen, Kurz-Check in einem zweiten Editor). Antwort: „Freigegeben" — keine Abweichung im Aussehen, im Einfüge-Verhalten oder im Tippgefühl gegenüber dem Stand vor der Migration festgestellt.
+
+Damit ist EDIT-02 („beide Toolbars, alle sechs Entity-Editoren und die Markdown-Live-Shortcuts funktionieren unverändert") zusätzlich zum automatisierten Regressionsnetz auch von Hand bestätigt. Die Phase ist mit diesem Freigabe-Eintrag inhaltlich abgeschlossen.
+
 ---
 *Phase: 09-editor-regressionsnetz-execcommand-abl-sung*
 *Plan: 09-01, Task 2*
 *Erhoben: 2026-07-25*
 *Abschluss-Protokoll ergänzt: Plan 09-09, Task 2, 2026-07-25*
+*Handcheck-Freigabe ergänzt: Plan 09-09, Task 3, 2026-07-25*
