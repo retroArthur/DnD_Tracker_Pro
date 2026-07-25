@@ -66,6 +66,25 @@ def load_module_list(loader_path):
     return modules
 
 
+def load_template_list(loader_path):
+    """Liest die HTML-Template-Liste zur Build-Zeit ausschliesslich aus loader.js's
+    funktionslokalem TEMPLATES-Array (D-01/D-04, SSoT).
+
+    parse_js_string_array() arbeitet textbasiert (Regex), nicht auf JS-Scope-Ebene —
+    deshalb findet der Anker das Array trotz seiner Deklaration innerhalb von
+    loadModules() zuverlaessig. Ein spaeterer Umbau auf einen strengeren Tokenizer
+    sollte diese Annahme kennen.
+
+    TEMPLATES fuehrt vollstaendige Pfade (Praefix 'assets/templates/'), anders als
+    die zuvor hartkodierte html_templates-Liste in build.py, die nur Dateinamen
+    fuehrte.
+    """
+    content = read_file(loader_path)
+    templates = parse_js_string_array(content, 'TEMPLATES', loader_path)
+    log.success(f"Template-Liste geladen: {len(templates)} Templates aus {loader_path}")
+    return templates
+
+
 def require_files_exist(base_dir, rel_paths, label):
     """Bricht den Build ab, wenn eine gelistete Datei fehlt (D-02).
 
@@ -318,6 +337,11 @@ def build(minify=False, production=False, verbose=False):
     modules = load_module_list(loader_js_path)
     require_files_exist(SOURCE_DIR, modules, 'JS-Modul')
 
+    # SSoT (D-01/D-04): Template-Liste ausschliesslich aus loader.js's TEMPLATES-
+    # Array beziehen, dann sofort gegen das Dateisystem verifizieren (D-02).
+    templates = load_template_list(loader_js_path)
+    require_files_exist(SOURCE_DIR, templates, 'HTML-Template')
+
     # 1. Lade CSS (modulare Dateien aus assets/styles/)
     print("\n[BUILD] Lade CSS...")
     css_files = [
@@ -351,21 +375,15 @@ def build(minify=False, production=False, verbose=False):
         css_content = minify_css(css_content)
     log.success(f"CSS geladen: {len(css_content):,} Zeichen ({len(css_files)} Dateien)")
     
-    # 2. Lade HTML Body (aus Template-Dateien)
+    # 2. Lade HTML Body (aus Template-Dateien; Liste + Existenz bereits SSoT-
+    # beschafft/geprueft ueber load_template_list()/require_files_exist() oben)
     print("\n[BUILD] Lade HTML Templates...")
-    html_templates = [
-        'header.html', 'view-party.html', 'view-content.html',
-        'view-encounters.html', 'view-bestiary.html', 'view-resources.html', 'view-tools.html',
-        'view-welt.html',
-        'modals-entity.html', 'modals-shops.html', 'modals-tools.html',
-        'modals-editors.html'
-    ]
     html_parts = []
-    for tf in html_templates:
-        tpl_path = f"{SOURCE_DIR}/assets/templates/{tf}"
+    for template in templates:
+        tpl_path = os.path.join(SOURCE_DIR, template)
         html_parts.append(read_file(tpl_path))
     body_content = '\n'.join(html_parts)
-    log.success(f"HTML Body geladen: {len(body_content):,} Zeichen ({len(html_templates)} Templates)")
+    log.success(f"HTML Body geladen: {len(body_content):,} Zeichen ({len(templates)} Templates)")
     
     # STAB-07: Vor dem Kombinieren — Duplikat-Check (Modullisten-Sync entfaellt,
     # SSoT-Parser oben garantiert bereits Existenz und Einzigartigkeit der Liste)
