@@ -23,6 +23,7 @@ npm-debug.log*
 .env
 .env.local
 tests/e2e/test-results/
+tests/e2e/test-results-smoke/
 tests/e2e/reports/
 tmpclaude-*
 __pycache__/
