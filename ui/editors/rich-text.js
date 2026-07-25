@@ -761,6 +761,119 @@ function initEditorPasteHandlers() {
         true
     );
 }
+// Migrationsstufe 3 (Plan 09-08, Gruppe E): Ersatz fuer die deprecated
+// Editier-Kommando-API ('insertHTML'|'insertText') ueber eine Range-eigene
+// Parse-Funktion (Range.createContextualFragment()), die Skript-Inhalte laut
+// Spezifikation nicht ausfuehrt (09-RESEARCH.md Pattern 3+4). Modul-intern,
+// kein window-Export (CLAUDE.md "Export Audit Rule"). Die vorgeschaltete
+// Attribut-Bereinigung in handleEditorPaste() UND die Whitelist beim
+// Speichern (utils/basic.js) bleiben unveraendert vorgeschaltet bzw.
+// nachgeschaltet — diese Funktionen fuegen NUR ein, sie bereinigen nicht.
+//
+// Stil-Nachbereinigung (D-02, byte-gleiches Markup): die alte
+// 'insertHTML'-Editier-Kommando-API wendet auf eingefuegte Inline-Styles
+// empirisch eine feste Bereinigung an (per Probe-Skripten gegen das gebaute
+// Bundle verifiziert, Chromium 143.0.7499.4, siehe 09-08-SUMMARY.md): Die
+// Layout-Eigenschaften padding/margin/width/border-collapse werden IMMER
+// entfernt. Bleiben danach mehr als eine Deklaration uebrig, wird eine darin
+// enthaltene 'background'-Kurzform in acht LEERE Langform-Eigenschaften
+// aufgesplittet und eine enthaltene 'color'-Deklaration ersatzlos entfernt —
+// ein reproduzierbarer Chromium-Effekt bei Mehrfach-Deklarationen mit
+// CSS-Custom-Property-Werten, der 'border' NICHT betrifft.
+// Range.createContextualFragment() durchlaeuft diese Editier-Kommando-eigene
+// Bereinigung nicht (reines DOM-Parsing) — die Funktion unten repliziert sie
+// bewusst, ausschliesslich fuer neu eingefuegte Elemente, damit das erzeugte
+// Markup byte-gleich zur Baseline bleibt.
+const STRIP_STYLE_PROPS = new Set(['padding', 'margin', 'width', 'border-collapse']);
+const EMPTY_BACKGROUND_LONGHANDS = [
+    'background-image',
+    'background-position-x',
+    'background-position-y',
+    'background-size',
+    'background-repeat',
+    'background-attachment',
+    'background-origin',
+    'background-clip'
+];
+function sanitizeInsertedInlineStyle(el) {
+    const raw = el.getAttribute('style');
+    if (!raw) return;
+    const declarations = raw
+        .split(';')
+        .map(d => d.trim())
+        .filter(Boolean)
+        .map(d => {
+            const idx = d.indexOf(':');
+            return idx === -1 ? null : [d.slice(0, idx).trim().toLowerCase(), d.slice(idx + 1).trim()];
+        })
+        .filter(Boolean);
+    const kept = declarations.filter(([name]) => !STRIP_STYLE_PROPS.has(name));
+    const stripped = kept.length !== declarations.length;
+    if (kept.length === 0) {
+        el.removeAttribute('style');
+        return;
+    }
+    if (kept.length === 1 && !stripped) {
+        return;
+    }
+    if (kept.length === 1) {
+        el.setAttribute('style', `${kept[0][0]}: ${kept[0][1]};`);
+        return;
+    }
+    const expanded = [];
+    kept.forEach(([name, value]) => {
+        if (name === 'background') {
+            EMPTY_BACKGROUND_LONGHANDS.forEach(longhand => expanded.push(`${longhand}: ;`));
+        } else if (name !== 'color') {
+            expanded.push(`${name}: ${value};`);
+        }
+    });
+    el.setAttribute('style', expanded.join(' '));
+}
+// Cursor-Position nach dem Einfuegen: die alte 'insertHTML'-Editier-Kommando-
+// API platziert den Cursor empirisch NICHT als Geschwister-Knoten hinter dem
+// zuletzt eingefuegten Top-Level-Knoten, sondern am tiefsten letzten
+// Nachfahren (z.B. innerhalb der letzten Tabellenzelle, direkt hinter deren
+// Textinhalt) — reproduzierbar am doppelt feuernden Paste-Listener (Fund 3,
+// 09-BASELINE.md): die zweite Einfuegung landet dort verschachtelt statt als
+// Geschwister-Tabelle. Der Abstieg unten repliziert das bewusst, damit das
+// erzeugte Markup byte-gleich zur Baseline bleibt.
+function insertHtmlAtSelection(htmlString) {
+    const selection = window.getSelection();
+    if (!selection || !selection.rangeCount) return;
+    const range = selection.getRangeAt(0);
+    range.deleteContents();
+    const fragment = range.createContextualFragment(htmlString);
+    fragment.querySelectorAll('[style]').forEach(sanitizeInsertedInlineStyle);
+    const lastNode = fragment.lastChild;
+    range.insertNode(fragment);
+    if (lastNode) {
+        let deepest = lastNode;
+        while (deepest.lastChild) {
+            deepest = deepest.lastChild;
+        }
+        if (deepest.nodeType === Node.TEXT_NODE) {
+            range.setStart(deepest, deepest.length);
+        } else {
+            range.setStartAfter(deepest);
+        }
+        range.collapse(true);
+        selection.removeAllRanges();
+        selection.addRange(range);
+    }
+}
+function insertTextAtSelection(text) {
+    const selection = window.getSelection();
+    if (!selection || !selection.rangeCount) return;
+    const range = selection.getRangeAt(0);
+    range.deleteContents();
+    const textNode = document.createTextNode(text);
+    range.insertNode(textNode);
+    range.setStartAfter(textNode);
+    range.collapse(true);
+    selection.removeAllRanges();
+    selection.addRange(range);
+}
 function handleEditorKeydown(e) {
     if (e.key === 'T' && e.ctrlKey && e.shiftKey) {
         e.preventDefault();
@@ -812,7 +925,7 @@ function handleEditorPaste(e) {
                     /<td>/gi,
                     '<td style="border:1px solid var(--border); padding:6px 10px;">'
                 );
-            document.execCommand('insertHTML', false, cleanTable);
+            insertHtmlAtSelection(cleanTable);
             showToast('📊 Tabelle eingefügt');
             return;
         }
@@ -834,12 +947,12 @@ function handleEditorPaste(e) {
                 tableHtml += '</tr>';
             });
             tableHtml += '</table>';
-            document.execCommand('insertHTML', false, tableHtml);
+            insertHtmlAtSelection(tableHtml);
             showToast('📊 Tabelle eingefügt (' + lines.length + ' Zeilen)');
             return;
         }
     }
-    document.execCommand('insertText', false, text);
+    insertTextAtSelection(text);
 }
 function escapeHtml(text) {
     const div = document.createElement('div');
