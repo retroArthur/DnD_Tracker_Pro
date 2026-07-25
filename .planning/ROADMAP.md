@@ -167,7 +167,39 @@ Details, Success Criteria und Coverage: [milestones/v1.0-ROADMAP.md](milestones/
   4. favicon-404 und die `apple-mobile-web-app-capable`-Deprecation-Warnung sind aus der Konsole verschwunden
   5. `.planning/codebase/` ist aufgefrischt (Stand nach allen v1.1-Phasen) und jeder CONCERNS.md-Eintrag ist erledigt, obsolet-markiert oder als Requirement übernommen
 
-**Plans**: TBD
+**Plans**: 7 plans
+
+**Wave 1**
+
+- [ ] 11-01-PLAN.md — Tracer: SSoT-Kette für MODULES end-to-end (Parser → build() → Hard-Fail → Test grün)
+
+**Wave 2** *(blocked on Wave 1)*
+
+- [ ] 11-02-PLAN.md — SSoT-Ausweitung auf Template-Liste und CSS-`@import`-Reihenfolge + Live-Drift-Fix (view-bestiary.html in loader.js)
+
+**Wave 3** *(blocked on Wave 2)*
+
+- [ ] 11-03-PLAN.md — Dedup-Härtung: Pass 3 ersatzlos entfernt, Quell-Pre-Check auf const/let/class, Verhaltensgarantien statt Interna
+
+**Wave 4** *(blocked on Wave 3)*
+
+- [ ] 11-04-PLAN.md — `tests/build/` als echtes CI-Gate (`requirements-dev.txt` + pytest-Schritt) + Node 22 und aktuelle Action-Majors
+
+**Wave 5** *(blocked on Wave 4)*
+
+- [ ] 11-05-PLAN.md — Konsolen-Hygiene: Smoke-Assertions (404/Deprecation), Favicon-Data-URI, `mobile-web-app-capable` mit empirischem D-11-Zweig
+
+**Wave 6** *(blocked on Wave 5)*
+
+- [ ] 11-06-PLAN.md — CONCERNS-Triage mit Live-Code-Belegen (`11-CONCERNS-TRIAGE.md`) + Backlog-Requirements `DEBT-*`
+
+**Wave 7** *(blocked on Wave 6)*
+
+- [ ] 11-07-PLAN.md — Build-Doku nachziehen (D-08) + Codebase-Map-Refresh aller sieben Dateien (Checkpoint) + Abgleich gegen die Triage
+
+*Sequenzielle Wellen: die Pläne 11-01 bis 11-05 fassen alle `build.py` an bzw. bauen `dist/` und fahren Suiten gegen dasselbe Artefakt — paralleles Ausführen würde auf der gemeinsamen Datei und dem gemeinsamen Bundle kollidieren (Präzedenz aus Phase 10). 11-06 braucht den finalen Build-/CI-Stand für seine Belege, 11-07 muss den Stand **nach** allen Phase-11-Änderungen abbilden (Erfolgskriterium 5).*
+
+**Auslegungshinweis zu Erfolgskriterium 2 (für die Verifikation):** D-05 entfernt Dedup-Pass 3 ersatzlos, statt ihn werfen zu lassen. Ein Test „Pass 3 wirft einen Fehler" existiert nach dieser Phase nicht und ist **keine Lücke**. Zu beweisen ist: ein Quell-Duplikat wird VOR dem Bündeln abgefangen (Exit ≠ 0, keine Ausgabedatei), und es existiert kein Pfad mehr, der ein Bundle mit stillem verwaistem Funktionsrumpf erzeugt.
 
 ## Progress
 
@@ -179,4 +211,4 @@ Details, Success Criteria und Coverage: [milestones/v1.0-ROADMAP.md](milestones/
 | 8. Test-Fundament grün | 4/4 | Complete    | 2026-07-23 |
 | 9. Editor-Regressionsnetz & execCommand-Ablösung | 9/9 | Complete    | 2026-07-25 |
 | 10. Security-Härtung | 7/7 | Complete    | 2026-07-25 |
-| 11. Architektur- & Build-Hygiene | 0/TBD | Not started | - |
+| 11. Architektur- & Build-Hygiene | 0/7 | Planned | - |
