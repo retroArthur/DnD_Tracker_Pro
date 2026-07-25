@@ -16,7 +16,7 @@ from pathlib import Path
 # Add project root to path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-from build import deduplicate_window_assignments, build, check_duplicate_functions, check_module_list_sync, MODULES
+from build import deduplicate_window_assignments, build, check_duplicate_functions, load_module_list
 
 
 class TestBuildDeduplication:
@@ -240,17 +240,47 @@ var MAX_BACKUPS = window.MAX_BACKUPS;  // CONFLICT
         assert 'DEBUG_MODE: false' in content, \
             "DEBUG_MODE: false nicht im Production-Build gefunden — Flip fehlgeschlagen?"
 
-    def test_module_lists_are_synchronized(self):
+    def test_ssot_module_list_parses_from_loader(self):
         """
-        INTEGRITY: loader.js und build.py muessen identische Modullisten haben (STAB-07 T-04-03).
-        Bricht als pytest-Fehler ab, wenn Abweichung vorhanden ist.
+        SSOT (ARCH-01/D-01): load_module_list() liefert die vollstaendige, geordnete
+        Modulliste ausschliesslich aus loader.js — build.py hat keine zweite Liste mehr.
         """
         loader_path = Path(__file__).parent.parent.parent / 'loader.js'
-        # check_module_list_sync loest SystemExit aus bei Abweichung
-        try:
-            check_module_list_sync(str(loader_path), MODULES)
-        except SystemExit:
-            pytest.fail("Modullisten-Abweichung zwischen loader.js und build.py!")
+        project_root = Path(__file__).parent.parent.parent
+
+        modules = load_module_list(str(loader_path))
+
+        assert len(modules) == 123, f"Erwartet 123 Module, gefunden {len(modules)}"
+
+        # Reihenfolge muss der Reihenfolge im Datei-Text entsprechen
+        loader_content = loader_path.read_text(encoding='utf-8')
+        positions = [loader_content.index(f"'{m}'") for m in modules]
+        assert positions == sorted(positions), "Modulreihenfolge weicht von der loader.js-Textreihenfolge ab"
+
+        # Jeder Pfad muss relativ zum Projektwurzel-Verzeichnis existieren
+        missing = [m for m in modules if not (project_root / m).exists()]
+        assert missing == [], f"Fehlende Moduldateien: {missing}"
+
+    def test_ssot_parse_failure_aborts_build(self, tmp_path):
+        """
+        D-01: Ein Loader ohne MODULES-Array bricht load_module_list() mit SystemExit ab —
+        kein stiller Rueckgabewert, keine leere Liste.
+        """
+        fake_loader = tmp_path / 'loader-no-modules.js'
+        fake_loader.write_text("const OTHER_ARRAY = ['a.js', 'b.js'];\n", encoding='utf-8')
+
+        with pytest.raises(SystemExit):
+            load_module_list(str(fake_loader))
+
+    def test_ssot_empty_array_aborts_build(self, tmp_path):
+        """
+        D-01: Ein leeres MODULES-Array bricht load_module_list() mit SystemExit ab.
+        """
+        fake_loader = tmp_path / 'loader-empty-modules.js'
+        fake_loader.write_text("const MODULES = [\n];\n", encoding='utf-8')
+
+        with pytest.raises(SystemExit):
+            load_module_list(str(fake_loader))
 
     def test_duplicate_function_check_detects_duplicate(self, tmp_path):
         """
