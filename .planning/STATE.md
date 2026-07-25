@@ -4,24 +4,24 @@ milestone: v1.1
 milestone_name: Tech-Debt & Härtung
 current_phase: 10
 current_phase_name: Security-Härtung
-status: executing
-stopped_at: Completed 10-04-PLAN.md
-last_updated: "2026-07-25T11:13:33.424Z"
+status: verifying
+stopped_at: Completed 10-05-PLAN.md
+last_updated: "2026-07-25T11:34:15.361Z"
 last_activity: 2026-07-25
 last_activity_desc: "Phase 10 Plan 04 (Tabellenzweig-Fix + Zauber-Speicherpfad-Angleichung) ausgeführt: handleEditorPaste()s Tabellenzweig entfernt jetzt Ereignis-Attribute (dasselbe Regex-Paar wie sanitizeHTML()) — Broken-Windows-Ledger-Eintrag 1 geschlossen (open_count: 0); saveSpell()s Beschreibungsfeld an das Notizfeld angeglichen (sanitizeHTML()); neuer E2E-Sicherheitstest rot vor dem Fix (Commit 59a7f61), grün danach (Commit cef33f2); SEC-01 vollständig erfüllt (Shared-ID-Gate, letzte deklarierende Plan-SUMMARY); volles Editor-Netz (90 Tests), 554/554 Jest, 315 passed/2 skipped Playwright"
 progress:
   total_phases: 4
-  completed_phases: 2
+  completed_phases: 3
   total_plans: 18
-  completed_plans: 17
-  percent: 50
+  completed_plans: 18
+  percent: 75
 ---
 
 # Project State: D&D Kampagnen-Tracker Pro — Stabilisierung & Ausbau
 
 **Last Updated:** 2026-07-25
 **Phase:** 10 — Security-Härtung
-**Status:** Executing Phase 10 (Plan 4/5 abgeschlossen)
+**Status:** Phase complete — ready for verification
 
 ---
 
@@ -68,6 +68,7 @@ Last activity: 2026-07-25 — Phase 10 Plan 04 (Tabellenzweig-Fix + Zauber-Speic
 | Phase 10 P02 | 50min | 3 tasks | 3 files |
 | Phase 10 P03 | 30min | 3 tasks | 6 files |
 | Phase 10 P04 | 35min | 2 tasks | 3 files |
+| Phase 10 P05 | ~50min | 2 tasks | 7 files |
 
 ## Accumulated Context
 
@@ -146,8 +147,8 @@ Last activity: 2026-07-25 — Phase 10 Plan 04 (Tabellenzweig-Fix + Zauber-Speic
 
 ## Session Continuity
 
-**Last session:** 2026-07-25T11:13:33.409Z
-**Stopped at:** Completed 10-04-PLAN.md
+**Last session:** 2026-07-25T11:34:15.350Z
+**Stopped at:** Completed 10-05-PLAN.md
 **Resume file:** None
 
 **Last action:** Komplette Milestone-UAT abgeschlossen (2026-06-20 → 2026-07-20): alle 5 offenen Human-UAT-Sessions via `/gsd-verify-work` durchgetestet — 07 (4/4), 06 (5/5), 05 (2/2), 01 (3/3), 02 (6/6). Alle 7 VERIFICATION.md jetzt `status: passed`. Dabei gefundene+gefixte Bugs: Soundboard-Doppel-Import (75aadfe), Audio-läuft-nach-Szene-Löschen (b85dbe1), Volume nicht live (801ed48), Manifest-CORS unter file:// (cd75093), Konsolen-Hygiene (c029f11), Datei-Backup schrieb nie bei Entity-CRUD — window.save-Wrapper strukturell wirkungslos für bare save() (1430e8c), generischer registerPostSaveHook + DM-Screen-Live-Sync-Umstellung + CLAUDE.md-Pattern-Korrektur (6ea8309), „Anderen Ordner wählen"-Button (cc2af9e). Nebenbei: Repo mit origin gemergt (7 Mai-Commits, alter pages.yml-Deploy entfernt 7f4858a), 348 Commits gepusht, GitHub-Pages-Deploy live verifiziert (PWA installierbar, SW-Update-Flow, Datei-Backup, Migrations-Wizard file://→PWA). Zusätzlich in der Session: Soundboard-Erweiterungen (Loop-Toggle/Crossfade-Loop/Fortschritt 6636297, Per-Track-Play noch offen als Design), gruppierte Navigation (3d77ec0).
