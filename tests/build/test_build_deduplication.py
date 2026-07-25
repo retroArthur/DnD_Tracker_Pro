@@ -16,7 +16,7 @@ from pathlib import Path
 # Add project root to path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-from build import deduplicate_window_assignments, build, check_duplicate_functions, load_module_list, require_files_exist, load_template_list
+from build import deduplicate_window_assignments, build, check_duplicate_functions, load_module_list, require_files_exist, load_template_list, load_css_import_order
 
 
 class TestBuildDeduplication:
@@ -369,6 +369,59 @@ var MAX_BACKUPS = window.MAX_BACKUPS;  // CONFLICT
             return templates + ['assets/templates/__does-not-exist__.html']
 
         monkeypatch.setattr(build_module, 'load_template_list', fake_load_template_list)
+
+        with pytest.raises(SystemExit):
+            build_module.build()
+
+        if existed_before:
+            assert dist_file.read_bytes() == content_before, \
+                "Vorhandene Ausgabedatei wurde trotz Abbruch veraendert"
+        else:
+            assert not dist_file.exists(), \
+                "Es wurde eine neue Ausgabedatei geschrieben, obwohl der Build abgebrochen ist"
+
+    def test_ssot_css_order_matches_styles_hub(self):
+        """
+        SSOT (ARCH-01/D-01/D-04): load_css_import_order() liefert die vollstaendige,
+        geordnete CSS-Dateiliste ausschliesslich aus dem @import-Hub assets/styles.css.
+        """
+        styles_css_path = Path(__file__).parent.parent.parent / 'assets' / 'styles.css'
+        styles_dir = Path(__file__).parent.parent.parent / 'assets' / 'styles'
+
+        css_files = load_css_import_order(str(styles_css_path))
+
+        assert len(css_files) == 20, f"Erwartet 20 CSS-Dateien, gefunden {len(css_files)}"
+        assert css_files[0] == 'fonts.css'
+        assert css_files[-1] == 'welt.css'
+
+        # Reihenfolge muss der Reihenfolge im Datei-Text entsprechen
+        styles_css_content = styles_css_path.read_text(encoding='utf-8')
+        positions = [styles_css_content.index(f"styles/{c}") for c in css_files]
+        assert positions == sorted(positions), "CSS-Reihenfolge weicht von der styles.css-Textreihenfolge ab"
+
+        # Jede Datei muss unter assets/styles/ existieren
+        missing = [c for c in css_files if not (styles_dir / c).exists()]
+        assert missing == [], f"Fehlende CSS-Dateien: {missing}"
+
+    def test_missing_css_file_aborts_build(self, monkeypatch):
+        """
+        D-02: Ein Build-Lauf, dessen CSS-Liste einen nicht existierenden Dateinamen
+        enthaelt, endet mit Exit-Code != 0 UND laesst eine vorher vorhandene
+        Ausgabedatei unveraendert bzw. erzeugt keine neue.
+        """
+        import build as build_module
+
+        dist_file = Path(__file__).parent.parent.parent / 'dist' / 'dnd-tracker-bundled.html'
+        existed_before = dist_file.exists()
+        content_before = dist_file.read_bytes() if existed_before else None
+
+        real_load_css_import_order = build_module.load_css_import_order
+
+        def fake_load_css_import_order(styles_css_path):
+            css_files = real_load_css_import_order(styles_css_path)
+            return css_files + ['__does-not-exist__.css']
+
+        monkeypatch.setattr(build_module, 'load_css_import_order', fake_load_css_import_order)
 
         with pytest.raises(SystemExit):
             build_module.build()
