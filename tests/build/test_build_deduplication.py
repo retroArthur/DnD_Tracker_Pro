@@ -18,6 +18,10 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 from build import deduplicate_window_assignments, build, check_duplicate_functions, load_module_list, require_files_exist, load_template_list, load_css_import_order
 
+# D-07: der von Pass 3 (entfernt in D-05) erzeugte Markertext. Als Modulkonstante
+# gefuehrt, damit der Literal-String genau einmal in dieser Datei steht.
+DEDUP_FUNCTION_MARKER = "[DEDUP] Removed duplicate function"
+
 
 class TestBuildDeduplication:
     """Tests für die Build-Deduplizierungs-Funktionalität"""
@@ -450,12 +454,17 @@ var MAX_BACKUPS = window.MAX_BACKUPS;  // CONFLICT
         with pytest.raises(SystemExit):
             check_duplicate_functions(str(tmp_path), fake_modules)
 
-    def test_no_orphaned_return_statements(self):
+    def test_no_dedup_function_marker_in_bundle(self):
         """
-        STABILITY: Nach Pass-3-Deduplizierung darf kein verwaister Funktionskoerper im Bundle stehen (STAB-07 T-04-02).
-        Deckt den 2026-01-10-Incident-Typ ab (Illegal return statement nach [DEDUP] Removed duplicate function).
-        Da der Pre-Build-Check Duplikate verhindert, sollte es keine [DEDUP]-Funktion-Kommentare geben —
-        der Test dokumentiert die Invariante und ist trivially gruen wenn der Check aktiv ist.
+        D-05/D-07 Regressionstest: Der dritte Dedup-Pass (der einen Funktionskopf
+        auskommentierte und dessen Rumpf verwaist im Bundle stehen liess, siehe der
+        2026-01-10-Incident) existiert nicht mehr. Dieser Test verankert das —
+        er verhindert eine spaetere Wiederbelebung, indem er belegt, dass der von
+        Pass 3 erzeugte Markerkommentar in keinem erzeugten Bundle mehr vorkommt.
+
+        Ersetzt test_no_orphaned_return_statements (das den jetzt unmoeglichen
+        Orphan-Zustand pruefte); dies ist die erste Haelfte der D-07-Verhaltens-
+        garantie (die zweite ist test_source_duplicate_aborts_build_without_writing_output).
         """
         dist_file = Path(__file__).parent.parent.parent / 'dist' / 'dnd-tracker-bundled.html'
         if not dist_file.exists():
@@ -464,24 +473,5 @@ var MAX_BACKUPS = window.MAX_BACKUPS;  // CONFLICT
         with open(dist_file, 'r', encoding='utf-8') as f:
             content = f.read()
 
-        lines = content.split('\n')
-        dedup_func_indices = [
-            i for i, line in enumerate(lines)
-            if '[DEDUP] Removed duplicate function' in line
-        ]
-
-        # Fuer jeden [DEDUP]-Funktion-Kommentar: pruefe die naechsten 20 Zeilen
-        # auf nicht-eingerueckte return-Ausdruecke (Heuristik fuer verwaiste Koerper)
-        orphaned = []
-        for idx in dedup_func_indices:
-            for offset in range(1, 21):
-                check_idx = idx + offset
-                if check_idx >= len(lines):
-                    break
-                check_line = lines[check_idx]
-                # Nicht-eingerueckter return auf Top-Level (kein fuehrendes Leerzeichen/Tab)
-                if re.match(r'^return\b', check_line.strip()) and not check_line.startswith(' ') and not check_line.startswith('\t'):
-                    orphaned.append(f"Zeile {check_idx + 1}: {check_line!r} (nach [DEDUP] auf Zeile {idx + 1})")
-
-        assert len(orphaned) == 0, \
-            f"Verwaiste return-Ausdruecke nach [DEDUP]-Kommentaren gefunden:\n" + "\n".join(orphaned)
+        assert DEDUP_FUNCTION_MARKER not in content, \
+            f"Bundle enthaelt den Pass-3-Marker '{DEDUP_FUNCTION_MARKER}' — Pass 3 sollte entfernt sein (D-05)"

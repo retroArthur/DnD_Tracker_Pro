@@ -7,7 +7,8 @@ Combines all modular JavaScript files into a single standalone HTML file.
 Supports both development and production builds.
 
 Features:
-- Three-pass deduplication system to resolve variable conflicts
+- Two-pass deduplication system to resolve window-assignment variable conflicts
+  (source-level duplicate declarations are caught earlier by a pre-build check, D-05)
 - Optional CSS/JS/HTML minification
 - Production mode: debug flags off, full minification
 - Preserves module comments and structure for debugging (dev mode)
@@ -200,10 +201,12 @@ def deduplicate_window_assignments(js_code):
     """
     Entfernt duplizierte Variablen-Deklarationen.
 
-    Three-pass approach:
+    Two-pass approach (D-05: der ehemalige dritte Pass, der Funktionsdeklarationen
+    auskommentierte und dabei verwaiste Funktionsrumpf-Fragmente im Bundle stehen
+    liess, entfaellt ersatzlos — Kollisionen werden stattdessen vor dem Buendeln
+    durch check_duplicate_functions() abgefangen):
     1. Find all non-window-assignment declarations (real definitions)
     2. Remove window assignments that conflict with definitions
-    3. Remove duplicate function declarations
     """
     lines = js_code.split('\n')
 
@@ -269,64 +272,6 @@ def deduplicate_window_assignments(js_code):
             filtered_lines.append(line)
 
     log.info(f"Pass 2: {removed_count} window assignment conflicts removed")
-
-    # PASS 3: Remove duplicate function declarations
-    js_after_pass2 = '\n'.join(filtered_lines)
-    js_final = remove_duplicate_functions(js_after_pass2)
-
-    return js_final
-
-def remove_duplicate_functions(js_code):
-    """
-    Removes duplicate function declarations.
-    Keeps first occurrence, comments out duplicates.
-    """
-    lines = js_code.split('\n')
-    function_pattern = r'^function\s+(\w+)\s*\('
-
-    seen_functions = {}
-    filtered_lines = []
-    removed_count = 0
-
-    for line_num, line in enumerate(lines):
-        stripped = line.strip()
-
-        if stripped.startswith('//'):
-            filtered_lines.append(line)
-            continue
-
-        match = re.match(function_pattern, stripped)
-        if match:
-            func_name = match.group(1)
-
-            if func_name in seen_functions:
-                # Duplicate function - comment it out
-                removed_count += 1
-                filtered_lines.append(f"// [DEDUP] Removed duplicate function: {func_name}")
-
-                # Find function body and comment it out too
-                brace_count = 0
-                in_function = False
-                for i in range(line_num, len(lines)):
-                    current_line = lines[i]
-                    if '{' in current_line:
-                        in_function = True
-                        brace_count += current_line.count('{')
-                    if '}' in current_line:
-                        brace_count -= current_line.count('}')
-
-                    if in_function and brace_count == 0:
-                        # Found end of function
-                        break
-                continue
-            else:
-                seen_functions[func_name] = line_num
-                filtered_lines.append(line)
-        else:
-            filtered_lines.append(line)
-
-    if removed_count > 0:
-        log.info(f"Pass 3: {removed_count} duplicate functions removed")
 
     return '\n'.join(filtered_lines)
 
