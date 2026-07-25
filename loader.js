@@ -221,6 +221,7 @@ async function loadModules() {
         'assets/templates/view-party.html',
         'assets/templates/view-content.html',
         'assets/templates/view-encounters.html',
+        'assets/templates/view-bestiary.html',
         'assets/templates/view-resources.html',
         'assets/templates/view-tools.html',
         'assets/templates/view-welt.html',
