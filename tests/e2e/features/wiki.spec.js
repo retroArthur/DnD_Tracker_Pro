@@ -6,6 +6,21 @@ import { test, expect } from '@playwright/test';
  * Tiefe Tests für Wiki-Einträge, Hierarchie, Links und Suche
  */
 
+/**
+ * Setzt HTML-Rohinhalt direkt in den Wiki-Rich-Text-Editor (dokumentiertes
+ * Setup-Vehikel, analog dem pasteInto()-Muster in editor-insert.spec.js —
+ * kein maskierender Ersatz für einen geprüften Pfad: geprüft wird hier die
+ * ANZEIGE nach dem Speichern, nicht der Eingabemechanismus selbst).
+ * @param {import('@playwright/test').Page} page
+ * @param {string} html
+ */
+async function setWikiEditorHtml(page, html) {
+    await page.evaluate(html => {
+        const el = document.querySelector('#wiki-content');
+        if (el) el.innerHTML = html;
+    }, html);
+}
+
 test.describe('Wiki System', () => {
     test.beforeEach(async ({ page }) => {
         // Lokale HTML-Datei laden
@@ -332,6 +347,85 @@ test.describe('Wiki System', () => {
 
             // Eintrag sollte noch da sein
             await expect(page.locator('.wiki-tree')).toContainText('Persistenter Eintrag');
+        });
+    });
+
+    // ============================================================
+    // SEC-01 Regressionsnetz — Nebenwirkungen der Anzeige-Sanitisierung
+    // (Plan 10-01, Task 2): sichert die zwei Nebenwirkungen der in Task 1
+    // gedrehten Aufrufreihenfolge (addTOCAnchors NACH renderMarkdownInContent)
+    // automatisiert ab, statt sie nur zu behaupten.
+    // ============================================================
+
+    test.describe('SEC-01: TOC-Sprungmarken und Textererhalt', () => {
+        test('Inhaltsverzeichnis-Sprungmarken funktionieren nach der Sanitisierungs-Reihenfolge weiterhin', async ({
+            page
+        }) => {
+            await page.click('[data-action="call"][data-value="showWikiForm"]');
+            await page.fill('#wiki-title', 'TOC Sprungmarken Test');
+            await page.selectOption('#wiki-category', 'locations');
+
+            await setWikiEditorHtml(
+                page,
+                '<h2>Erste Überschrift</h2><p>Text eins.</p>' +
+                    '<h2>Zweite Überschrift</h2><p>Text zwei.</p>' +
+                    '<h2>Dritte Überschrift</h2><p>Text drei.</p>'
+            );
+
+            await page.click('[data-action="call"][data-value="saveWikiEntry"]');
+
+            // TOC-Block ist sichtbar und enthält genau drei Einträge
+            const toc = page.locator('.wiki-toc');
+            await expect(toc).toBeVisible();
+            const tocItems = toc.locator('.toc-item');
+            await expect(tocItems).toHaveCount(3);
+
+            // Drei Überschriftselemente mit den codegenerierten Kennungen toc-0..toc-2
+            const detailBody = page.locator('.wiki-detail-body');
+            await expect(detailBody.locator('#toc-0')).toBeVisible();
+            await expect(detailBody.locator('#toc-1')).toBeVisible();
+            const thirdHeading = detailBody.locator('#toc-2');
+            await expect(thirdHeading).toBeVisible();
+            await expect(thirdHeading).toHaveText('Dritte Überschrift');
+
+            // Klick auf den dritten TOC-Eintrag springt zur zugehörigen Überschrift —
+            // scrollToTOCHeading() setzt beim Sprung kurzzeitig eine Hintergrundfarbe
+            // auf dem Zielelement; das ist in einem kurzen Viewport stabiler zu prüfen
+            // als die Scrollposition. Kein fester Timeout: auf den Style-Wechsel warten.
+            await tocItems.nth(2).click();
+            await expect(thirdHeading).toHaveCSS('background-color', 'rgba(255, 215, 0, 0.3)');
+        });
+
+        test('sichtbarer Text bleibt bei der Anzeige-Sanitisierung vollständig erhalten (Leitplanke: nur Markup entfernen, niemals Text)', async ({
+            page
+        }) => {
+            await page.click('[data-action="call"][data-value="showWikiForm"]');
+            await page.fill('#wiki-title', 'Textererhalt Test');
+            await page.selectOption('#wiki-category', 'locations');
+
+            // Erlaubtes Markup (fett, kursiv, Liste) als echtes HTML + eine
+            // Backtick-Schreibweise als Klartext-Markdown-Syntax (wird erst bei der
+            // Anzeige zu <code> konvertiert, siehe renderMarkdownInContent()).
+            await setWikiEditorHtml(
+                page,
+                '<p><b>FettText</b> und <i>KursivText</i></p>' +
+                    '<ul><li>ListenpunktEins</li></ul>' +
+                    '<p>Ein Codeabschnitt: `BacktickText` mittendrin.</p>'
+            );
+
+            await page.click('[data-action="call"][data-value="saveWikiEntry"]');
+
+            const detailBody = page.locator('.wiki-detail-body');
+            await expect(detailBody).toContainText('FettText');
+            await expect(detailBody).toContainText('KursivText');
+            await expect(detailBody).toContainText('ListenpunktEins');
+            // Die Backtick-Auszeichnung wird bei der Anzeige zu <code> konvertiert und
+            // von der neuen Sanitisierung wieder entfernt (utils/basic.js allowedTags
+            // kennt kein "code") — dokumentierte Anzeige-Konsequenz (SUMMARY), NICHT
+            // Textverlust: der Text selbst bleibt vollständig erhalten.
+            await expect(detailBody).toContainText('BacktickText');
+            const codeCount = await detailBody.locator('code').count();
+            expect(codeCount).toBe(0);
         });
     });
 });
