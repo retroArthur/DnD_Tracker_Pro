@@ -16,7 +16,7 @@ from pathlib import Path
 # Add project root to path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-from build import deduplicate_window_assignments, build, check_duplicate_functions, load_module_list
+from build import deduplicate_window_assignments, build, check_duplicate_functions, load_module_list, require_files_exist
 
 
 class TestBuildDeduplication:
@@ -260,6 +260,53 @@ var MAX_BACKUPS = window.MAX_BACKUPS;  // CONFLICT
         # Jeder Pfad muss relativ zum Projektwurzel-Verzeichnis existieren
         missing = [m for m in modules if not (project_root / m).exists()]
         assert missing == [], f"Fehlende Moduldateien: {missing}"
+
+    def test_missing_module_file_aborts_build(self, tmp_path):
+        """
+        D-02: require_files_exist() bricht mit SystemExit ab, wenn eine gelistete
+        Datei fehlt; sind alle gelisteten Dateien vorhanden, laeuft der Aufruf durch.
+        """
+        file_a = tmp_path / 'module-a.js'
+        file_a.write_text('// exists\n', encoding='utf-8')
+        # module-b.js wird absichtlich NICHT angelegt
+
+        with pytest.raises(SystemExit):
+            require_files_exist(str(tmp_path), ['module-a.js', 'module-b.js'], 'JS-Modul')
+
+        # Positiv-Gegenprobe: legt module-b.js nachtraeglich an, jetzt ohne Exception
+        file_b = tmp_path / 'module-b.js'
+        file_b.write_text('// exists too\n', encoding='utf-8')
+        require_files_exist(str(tmp_path), ['module-a.js', 'module-b.js'], 'JS-Modul')
+
+    def test_build_aborts_without_writing_output_on_missing_module(self, monkeypatch):
+        """
+        D-02: Ein Build-Lauf, dessen Modulliste einen nicht existierenden Pfad enthaelt,
+        endet mit Exit-Code != 0 UND laesst eine vorher vorhandene Ausgabedatei
+        unveraendert bzw. erzeugt keine neue.
+        """
+        import build as build_module
+
+        dist_file = Path(__file__).parent.parent.parent / 'dist' / 'dnd-tracker-bundled.html'
+        existed_before = dist_file.exists()
+        content_before = dist_file.read_bytes() if existed_before else None
+
+        real_load_module_list = build_module.load_module_list
+
+        def fake_load_module_list(loader_path):
+            modules = real_load_module_list(loader_path)
+            return modules + ['core/__does-not-exist__.js']
+
+        monkeypatch.setattr(build_module, 'load_module_list', fake_load_module_list)
+
+        with pytest.raises(SystemExit):
+            build_module.build()
+
+        if existed_before:
+            assert dist_file.read_bytes() == content_before, \
+                "Vorhandene Ausgabedatei wurde trotz Abbruch veraendert"
+        else:
+            assert not dist_file.exists(), \
+                "Es wurde eine neue Ausgabedatei geschrieben, obwohl der Build abgebrochen ist"
 
     def test_ssot_parse_failure_aborts_build(self, tmp_path):
         """
