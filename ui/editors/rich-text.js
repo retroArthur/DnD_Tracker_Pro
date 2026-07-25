@@ -409,6 +409,27 @@ function toggleUnorderedListAtSelection(editor) {
         selection.addRange(newRange);
     }
 }
+// Migrationsstufe 1 (Plan 09-06, Gruppe B): die vier UI-losen Zweige von
+// formatText() (heading/font/highlight) sind ueber KEIN Template in der App
+// erreichbar (09-BASELINE.md Abschnitt A2) — sie werden trotzdem
+// funktionserhaltend migriert, nicht entfernt (D-06).
+function clearInlineFormattingAtSelection(editor) {
+    // Repliziert das vorbestehende Verhalten des alten 'removeFormat'-
+    // Kommandos: nur die Farb-bezogenen Style-Eigenschaften (background-
+    // color, color) werden entfernt, das umschliessende Element (z.B.
+    // <mark>) selbst bleibt bestehen — die alte Editier-Kommando-API
+    // entpackt keine Custom-Elemente (09-BASELINE.md Zeile 344, empirisch
+    // bestaetigt in editor-floating.spec.js "UI-lose Zweige").
+    const selection = window.getSelection();
+    if (!selection || !selection.rangeCount) return;
+    const styledElements = editor.querySelectorAll('[style]');
+    styledElements.forEach(el => {
+        if (selection.containsNode(el, true)) {
+            el.style.backgroundColor = '';
+            el.style.color = '';
+        }
+    });
+}
 function formatText(elementId, format, value) {
     const editor = $(elementId);
     if (!editor) return;
@@ -424,14 +445,27 @@ function formatText(elementId, format, value) {
     } else if (format === 'list') {
         toggleUnorderedListAtSelection(editor);
     } else if (format === 'heading') {
-        document.execCommand('formatBlock', false, '<h4>');
+        const selection = window.getSelection();
+        if (selection && selection.rangeCount && selection.toString()) {
+            wrapRangeWithElement(selection.getRangeAt(0), document.createElement('h4'));
+        }
     } else if (format === 'font' && value) {
-        document.execCommand('fontName', false, value);
+        const selection = window.getSelection();
+        if (selection && selection.rangeCount && selection.toString()) {
+            const fontEl = document.createElement('font');
+            fontEl.setAttribute('face', value);
+            wrapRangeWithElement(selection.getRangeAt(0), fontEl);
+        }
     } else if (format === 'highlight') {
         if (value === 'none') {
-            document.execCommand('removeFormat', false, undefined);
+            clearInlineFormattingAtSelection(editor);
         } else if (value) {
-            document.execCommand('backColor', false, value);
+            const selection = window.getSelection();
+            if (selection && selection.rangeCount && selection.toString()) {
+                const span = document.createElement('span');
+                span.style.backgroundColor = value;
+                wrapRangeWithElement(selection.getRangeAt(0), span);
+            }
         }
     }
 }
