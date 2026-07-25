@@ -874,6 +874,59 @@ function insertTextAtSelection(text) {
     selection.removeAllRanges();
     selection.addRange(range);
 }
+// Migrationsstufe 3 (Plan 09-08, Gruppe F): Ersatz fuer die deprecated
+// 'insertLineBreak'-Editier-Kommando-API (09-RESEARCH.md Pattern 4). Fuegt
+// einen <br>-Knoten an der Selektion ein, sodass unmittelbar weitergetippter
+// Text hinter dem Umbruch landet — byte-gleich zur 09-BASELINE.md-Referenz
+// ('ZeileEins<br>ZeileZwei', kein zusaetzlicher Knoten im Endergebnis).
+//
+// Platzhalter-Knoten noetig (empirisch verifiziert, siehe Task-Vorgabe):
+// Chromium platziert eine Selektion, die per Range/Selection-API auf die
+// Position UNMITTELBAR HINTER einem abschliessenden <br> ohne nachfolgenden
+// Inhalt zeigt (egal ob per Container-Kindindex oder per leerem
+// Rest-Textknoten adressiert), beim naechsten Tippen NICHT stabil dort —
+// der neue Text landet stattdessen kommentarlos VOR dem <br>, der Umbruch
+// selbst wandert ans Ende. Ein Textknoten mit sichtbarem (wenn auch
+// unsichtbarem Zero-Width-Space-)Inhalt nach dem <br> gibt der Selektion
+// einen stabilen Text-Anker, an dem Chromium die Cursor-Position korrekt
+// haelt. Der Platzhalter wird beim naechsten echten Tastatur-Input (oder
+// beim Verlassen des Editors, falls nie weitergetippt wird) automatisch per
+// deleteData() entfernt — deleteData() an der exakten Zeichen-Position laesst
+// eine Selektion, die GENAU an der Loeschgrenze steht, unangetastet (im
+// Gegensatz zu einer kompletten .data-Neuzuweisung, die eine solche
+// Selektion auf den Anfang zurueckwirft), sodass unmittelbar weitergetippter
+// Text nicht verspringt und das Endergebnis keinen Zero-Width-Space enthaelt.
+function insertLineBreakAtSelection() {
+    const selection = window.getSelection();
+    if (!selection || !selection.rangeCount) return;
+    const range = selection.getRangeAt(0);
+    range.deleteContents();
+    const br = document.createElement('br');
+    range.insertNode(br);
+    const editor = br.parentNode;
+    let placeholder = br.nextSibling;
+    if (!placeholder || placeholder.nodeType !== Node.TEXT_NODE) {
+        placeholder = document.createTextNode('');
+        br.after(placeholder);
+    }
+    const ZERO_WIDTH_SPACE = String.fromCharCode(0x200b);
+    placeholder.data = ZERO_WIDTH_SPACE;
+    const newRange = document.createRange();
+    newRange.setStart(placeholder, 0);
+    newRange.collapse(true);
+    selection.removeAllRanges();
+    selection.addRange(newRange);
+    const cleanupPlaceholder = () => {
+        if (placeholder.isConnected) {
+            const zwspIndex = placeholder.data.indexOf(ZERO_WIDTH_SPACE);
+            if (zwspIndex !== -1) placeholder.deleteData(zwspIndex, 1);
+        }
+        editor.removeEventListener('input', cleanupPlaceholder);
+        editor.removeEventListener('blur', cleanupPlaceholder);
+    };
+    editor.addEventListener('input', cleanupPlaceholder, { once: true });
+    editor.addEventListener('blur', cleanupPlaceholder, { once: true });
+}
 function handleEditorKeydown(e) {
     if (e.key === 'T' && e.ctrlKey && e.shiftKey) {
         e.preventDefault();
@@ -884,7 +937,7 @@ function handleEditorKeydown(e) {
     if (e.key === 'Enter' && !e.shiftKey) {
         e.preventDefault();
         e.stopImmediatePropagation();
-        document.execCommand('insertLineBreak', false, undefined);
+        insertLineBreakAtSelection();
     }
 }
 function handleEditorPaste(e) {
@@ -984,7 +1037,7 @@ function insertTable(rows = 3, cols = 3) {
         tableHtml += '</tr>';
     }
     tableHtml += '</table><p></p>';
-    document.execCommand('insertHTML', false, tableHtml);
+    insertHtmlAtSelection(tableHtml);
     showToast('📊 Tabelle eingefügt (3×3) - Strg+Shift+T');
     hideFloatingToolbar();
 }

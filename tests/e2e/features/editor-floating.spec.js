@@ -619,17 +619,17 @@ test.describe('UI-lose Zweige (kein Toolbar-Pfad vorhanden)', () => {
 // Netz-Freeze-Ausnahme (09-BASELINE.md, "Verfahren bei rotem Netz-Test"):
 // Dieser Zaehlwert ist der EINZIGE im gesamten Netz, der waehrend der
 // Migration angepasst werden darf, weil er selbst den Fortschritt misst
-// (kein Verhalten des Editors). Plan 09-08/Task 1 (Gruppe E) hat die drei
-// Zwischenablage-Einfuegungen (Tabellen-HTML, tabulatorgetrennt, reiner Text)
-// in handleEditorPaste() migriert — der Zwischenstand nach diesem Task ist 3
-// (6 - 3), dokumentiert in 09-BASELINE.md Abschnitt "Netz-Freeze". Der
-// Endwert 0 wird in Plan 09-09 gesetzt, sobald alle 21 Call-Sites migriert
-// sind.
+// (kein Verhalten des Editors). Plan 09-08/Task 2 (Gruppe F) hat Tabellen-
+// einfuegen (insertTable()) und den abgefangenen Zeilenumbruch
+// (handleEditorKeydown()) migriert — der Zwischenstand nach diesem Task ist 1
+// (3 - 2), dokumentiert in 09-BASELINE.md Abschnitt "Netz-Freeze". Nur der
+// Setup-Aufruf ('defaultParagraphSeparator') bleibt bis Plan 09-09, das den
+// Endwert 0 setzt, sobald alle 21 Call-Sites migriert sind.
 // ---------------------------------------------------------------
 test.describe('Inventar-Zählnachweis (bewusst änderbar während der Migration)', () => {
-    test('ZÄHLNACHWEIS: ui/editors/rich-text.js enthält 3 execCommand-Vorkommen (Zwischenstand nach Plan 09-08/Task 1, Zwischenablage-Einfuegungen migriert; Referenz: 09-BASELINE.md, endgültig 0 in Plan 09-09)', async () => {
+    test('ZÄHLNACHWEIS: ui/editors/rich-text.js enthält 1 execCommand-Vorkommen (Zwischenstand nach Plan 09-08/Task 2, nur noch der defaultParagraphSeparator-Setup-Aufruf; Referenz: 09-BASELINE.md, endgültig 0 in Plan 09-09)', async () => {
         const content = fs.readFileSync('ui/editors/rich-text.js', 'utf8');
         const matches = content.match(/execCommand/g) || [];
-        expect(matches.length).toBe(3);
+        expect(matches.length).toBe(1);
     });
 });
