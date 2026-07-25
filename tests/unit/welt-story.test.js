@@ -403,7 +403,9 @@ describe('WELT-04: Reise- & Wetter-Simulator', () => {
     function rollBegegnungInline(gelaendeId, diceType, threshold) {
         // DoS-Klemmen
         var dt = Math.max(2, Math.min(100, parseInt(diceType, 10) || 20));
-        var th = Math.max(0, Math.min(dt, parseInt(threshold, 10) || 1));
+        // threshold 0 ist gültig (nie Begegnung) — || würde 0 zu 1 verfälschen
+        var thParsed = parseInt(threshold, 10);
+        var th = Math.max(0, Math.min(dt, isNaN(thParsed) ? 1 : thParsed));
         var wurf = Math.floor(Math.random() * dt) + 1;
         var begegnung = wurf <= th;
         var ergebnis = null;

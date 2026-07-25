@@ -100,7 +100,9 @@ function rollWetter(klima, jahreszeit) {
 function rollBegegnung(gelaendeId, diceType, threshold) {
     // DoS: diceType und threshold klemmen (T-05-19 Mitigation)
     var dt = Math.max(BEGEGNUNG_MIN_DICE, Math.min(BEGEGNUNG_MAX_DICE, parseInt(diceType, 10) || 20));
-    var th = Math.max(0, Math.min(dt, parseInt(threshold, 10) || 1));
+    // threshold 0 ist gültig (nie Begegnung) — || würde 0 zu 1 verfälschen
+    var thParsed = parseInt(threshold, 10);
+    var th = Math.max(0, Math.min(dt, isNaN(thParsed) ? 1 : thParsed));
     var wurf = Math.floor(Math.random() * dt) + 1;
     var begegnung = wurf <= th;
     var ergebnis = null;
