@@ -170,6 +170,94 @@ Wiki-Toolbar, Chromium `143.0.7499.4`. Referenz für `tests/e2e/features/editor-
 
 Keine Page-Errors während der gesamten Erhebung (`page.on('pageerror')`-Sammlung blieb leer).
 
+## D-04a Doppel-Grün-Nachweis
+
+**Zweck:** Beweis, dass das komplette Regressionsnetz (vier Spec-Dateien) zweimal in Folge — ohne Wiederholungsversuch, ohne selektives Ausführen — gegen den unveränderten Editor-Code grün läuft, bevor die erste Zeile Migrationscode entsteht (D-04a, 09-CONTEXT.md). Ab diesem Protokoll ist das Netz eingefroren (siehe Abschnitt „Netz-Freeze" unten).
+
+**Ausgangslage (verifiziert vor beiden Läufen):**
+- Commit-Kennung: `c8239d7` (unverändert während beider Läufe — `git diff --name-only` zeigte vor, zwischen und nach den Läufen nur `.claude/launch.json`, eine phasenfremde IDE-Konfigurationsdatei, keine Produktions- oder Test-Datei)
+- `grep -c execCommand ui/editors/rich-text.js` → **21** — der Editor-Code enthält zum Nachweiszeitpunkt exakt die 21 deprecated Editier-Kommando-Aufrufe aus dem Markup-Inventar oben, unverändert seit der Baseline-Reparatur (Plan 09-02, Commit `19a355e`)
+- Bundle frisch gebaut: `PYTHONIOENCODING=utf-8 npm run build:dev` (Python `build.py`) — Build-Log meldet „Alle Validierungen bestanden", 1.960.334 Zeichen JavaScript, keine Deduplizierungs-Konflikte über die erwarteten hinaus
+
+**Werkzeugversionen (für beide Läufe identisch):**
+
+| Werkzeug | Version |
+|----------|---------|
+| Playwright | `1.57.0` |
+| Chromium (Playwright-gebündelt) | `143.0.7499.4` (identisch zur Erhebung in Kopf oben) |
+| Node | `v24.14.0` |
+
+**Verwendete Playwright-Konfiguration (lokal, nicht CI — `playwright.config.js`):** `retries: 0` (da `process.env.CI` lokal nicht gesetzt), `workers: undefined` (Playwright-Default = Anzahl CPU-Kerne), `fullyParallel: true`. Diese lokalen Werte weichen bewusst von den CI-Werten (`retries: 2`, `workers: 1`) ab — für den Doppel-Grün-Nachweis zählt ausschließlich ein Lauf **ohne jeden Wiederholungsversuch** als grün; da lokal `retries: 0` gilt, ist "kein Fehlschlag" hier gleichbedeutend mit "keine Wiederholung nötig".
+
+### Lauf 1
+
+| Feld | Wert |
+|------|------|
+| Zeitstempel (Start, UTC) | 2026-07-25T03:18:44Z |
+| Befehl | `npx playwright test tests/e2e/features/editor-formatting.spec.js tests/e2e/features/editor-floating.spec.js tests/e2e/features/editor-insert.spec.js tests/e2e/features/editor-smoke.spec.js` |
+| Commit | `c8239d7` |
+| Ergebnis | **80 passed (27.9s)**, 0 failed, 0 flaky, 0 retries |
+
+Testzahl je Spec-Datei (per `npx playwright test <datei> --list`, deckungsgleich mit den tatsächlich ausgeführten Tests):
+
+| Spec-Datei | Testzahl |
+|------------|----------|
+| `editor-formatting.spec.js` | 32 |
+| `editor-floating.spec.js` | 27 (davon 1 der Zählnachweis-Test) |
+| `editor-insert.spec.js` | 9 |
+| `editor-smoke.spec.js` | 12 |
+| **Summe** | **80** |
+
+Zählnachweis-Test (`editor-floating.spec.js:577`, „ZÄHLNACHWEIS: ui/editors/rich-text.js enthält exakt 21 execCommand-Vorkommen"): **grün** — bestätigt im selben Lauf, dass der Editor-Code zu diesem Zeitpunkt unverändert 21 execCommand-Aufrufe enthält.
+
+### Lauf 2
+
+| Feld | Wert |
+|------|------|
+| Zeitstempel (Start, UTC) | 2026-07-25T03:19:20Z (unmittelbar nach Lauf 1, kein Codewechsel dazwischen) |
+| Befehl | identisch zu Lauf 1 |
+| Commit | `c8239d7` (unverändert) |
+| Ergebnis | **80 passed (27.5s)**, 0 failed, 0 flaky, 0 retries, Exit-Code 0 (`EXIT_STATUS_PIPE=0` verifiziert) |
+
+Testzahl je Spec-Datei identisch zu Lauf 1 (80 gesamt, Zählnachweis-Test wieder grün, wieder 21).
+
+**Kein Test war in einem der beiden Läufe instabil** — daher entfällt der im Plan vorgesehene Reparatur-und-Neustart-Zyklus.
+
+### Volle Suite und Unit-Suite (im Anschluss an beide Netzläufe)
+
+| Suite | Befehl | Ergebnis |
+|-------|--------|----------|
+| Playwright, volle Suite (kein Dateifilter) | `npx playwright test` | **308 passed, 2 skipped** (1.9m), 0 failed — das Netz (80 der 310 gelisteten Tests) läuft im selben Aufruf wie die restliche E2E-Suite ohne Beeinflussung |
+| Jest, volle Unit-Suite | `npx jest` | **457 passed, 24 Test-Suiten**, 0 failed (1.777s) |
+
+Beide Läufe fanden **gegen den unveränderten Editor-Code** statt: `ui/editors/rich-text.js` und `core/constants.js` wurden zwischen Baseline-Reparatur (Commit `19a355e`, Plan 09-02) und diesem Doppel-Grün-Nachweis nicht verändert (`git log --oneline ui/editors/rich-text.js core/constants.js` zeigt keinen neuen Commit seit `19a355e`); der Commit-Stand während beider Netzläufe und beider Suiten war durchgehend `c8239d7`.
+
+## Netz-Freeze (gültig ab Doppel-Grün-Nachweis)
+
+**Eingefrorene Spec-Dateien (alle vier Netz-Dateien):**
+
+1. `tests/e2e/features/editor-formatting.spec.js` (32 Tests)
+2. `tests/e2e/features/editor-floating.spec.js` (27 Tests)
+3. `tests/e2e/features/editor-insert.spec.js` (9 Tests)
+4. `tests/e2e/features/editor-smoke.spec.js` (12 Tests)
+
+**Änderungsregel:** Ab dem Zeitpunkt dieses Doppel-Grün-Nachweises (2026-07-25, Commit `c8239d7`) bis zum Ende der Migrationsphase darf **keine Assertion, kein Erwartungswert und kein Testname** dieser vier Dateien geändert werden.
+
+**Einzige zulässige Ausnahme:** Der in Plan 09-03 ausdrücklich gekennzeichnete Zählnachweis-Test (`editor-floating.spec.js:577`, „ZÄHLNACHWEIS: ui/editors/rich-text.js enthält exakt 21 execCommand-Vorkommen"). Dieser Test wird in Plan 09-09 bewusst von `toBe(21)` auf `toBe(0)` umgestellt, sobald alle 21 Call-Sites migriert sind — das ist der einzige Punkt, an dem sich der erwartete Wert im Netz während der Migration ändern darf, weil der Test genau diese Zahl misst, nicht ein Verhalten des Editors.
+
+**Verfahren bei rotem Netz-Test während der Migration:**
+
+1. **Erste Annahme: Der Migrationscode ist fehlerhaft, nicht der Test.** Ein roter Netz-Test während eines Migrations-Commits gilt als Beweis, dass die neue Selection/Range-Implementierung nicht das gleiche Markup erzeugt wie zuvor (Verstoß gegen D-02, Markup-Kompatibilität) — der Migrationscode ist zu korrigieren, nicht der Test.
+2. **Nur wenn nachweisbar der Test selbst falsch ist** (z. B. ein Tippfehler in der Assertion, eine falsche Selektor-Referenz, die nie das gemessene Verhalten aus `09-BASELINE.md` korrekt abbildete), darf er geändert werden.
+3. In diesem Ausnahmefall ist die Änderung **schriftlich in genau diesem Abschnitt** zu dokumentieren, mit: Migrationsgruppe (aus D-05), altem Erwartungswert, neuem Erwartungswert, und einer Begründung, warum das kein Beweis-Leck ist (d. h. warum der alte Wert nachweisbar nie das reale execCommand-Verhalten aus dem Markup-Inventar oben widerspiegelte).
+4. Bislang wurden **keine** Ausnahme-Änderungen vorgenommen — dieser Abschnitt enthält noch keine Einträge unterhalb dieser Regel.
+
+**CI-Nachweis (blockierender Mitlauf ohne Konfigurationsänderung):**
+
+- `.github/workflows/ci.yml`, Job `e2e` (Zeile 40–63): `needs: [lint-and-typecheck, test]`, Schritt `npx playwright test` (Zeile 55) — **ohne Dateifilter**, identisch zum lokalen Befehl der vollen Suite oben. Die vier neuen Spec-Dateien liegen unter `tests/e2e/features/`, dem von `playwright.config.js`s `testDir: './tests/e2e'` (Standard-`testMatch`, kein Dateifilter) erfassten Verzeichnis — sie werden **automatisch** mitgeführt, ohne dass diese oder eine andere Phase die CI-Konfiguration ändern musste.
+- Der nachgelagerte `build`-Job (Zeile 65–83) hat `needs: [lint-and-typecheck, test, e2e]` — ein roter `e2e`-Job blockiert also sowohl den Production-Build als auch (transitiv über `smoke-test` → `deploy`) das Deployment. Diese Blockier-Eigenschaft stammt aus Phase 8 (D-03, `08-CONTEXT.md`) und wird vom neuen Netz ohne zusätzliche CI-Arbeit geerbt.
+- Trockenlauf-Nachweis: `npx playwright test --list` beendet mit Exit-Code 0 und listet **310 Tests** insgesamt (die 80 Netz-Tests sind darin enthalten — siehe „Volle Suite" oben, 308 passed + 2 skipped = 310), davon 32 aus `editor-formatting.spec.js`, 27 aus `editor-floating.spec.js`, 9 aus `editor-insert.spec.js`, 12 aus `editor-smoke.spec.js` — alle vier Dateien werden vom Standard-Testmuster erfasst.
+
 ---
 *Phase: 09-editor-regressionsnetz-execcommand-abl-sung*
 *Plan: 09-01, Task 2*
