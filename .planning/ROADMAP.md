@@ -122,7 +122,29 @@ Details, Success Criteria und Coverage: [milestones/v1.0-ROADMAP.md](milestones/
   3. SECURITY.md dokumentiert einen Audit über Import/Export, Storage/IDB, Datei-Backup und Rich-Text/innerHTML mit `threats_open: 0`
   4. Der Audit ist via `/gsd-secure-phase` gegen die relevanten Phasen durchgeführt (inkl. der neuen Editor-Implementierung aus Phase 9)
 
-**Plans**: TBD
+**Plans**: 5 plans
+
+**Wave 1**
+
+- [ ] 10-01-PLAN.md — Tracer: Anzeige-Grenze schließen (sanitizeHTML in renderMarkdownInContent + TOC-Reihenfolge) und CR-01-Kette end-to-end beweisen
+
+**Wave 2** *(blocked on Wave 1)*
+
+- [ ] 10-02-PLAN.md — Import-Grenze: Feldliste + sanitizeImportedItem an beiden Eintrittspunkten und beiden Zweigen, Undo/Backup (WR-03)
+
+**Wave 3** *(blocked on Wave 2)*
+
+- [ ] 10-03-PLAN.md — Sanitizer-Beweisnetz (Vektor-Katalog gegen echten Quelltext + Paritätstest) und `<strike>`-Whitelist
+
+**Wave 4** *(blocked on Wave 3)*
+
+- [ ] 10-04-PLAN.md — Paste-Tabellen-XSS (Broken-Windows #1) + saveSpell-Konsistenz + Ledger schließen
+
+**Wave 5** *(blocked on Wave 4)*
+
+- [ ] 10-05-PLAN.md — Abschluss-Audit über Phasen 1/2/9/10 + konsolidierte SECURITY.md mit `threats_open: 0`
+
+*Sequenzielle Wellen: alle Pläne ab Welle 2 bauen `dist/dnd-tracker-bundled.html` und fahren die E2E-Suite gegen dasselbe Artefakt — paralleles Ausführen würde auf dem gemeinsamen Bundle kollidieren.*
 
 ### Phase 11: Architektur- & Build-Hygiene
 
@@ -148,5 +170,5 @@ Details, Success Criteria und Coverage: [milestones/v1.0-ROADMAP.md](milestones/
 | v1.0 (Phasen 1–7) | 44/44 | ✅ Shipped | 2026-07-22 |
 | 8. Test-Fundament grün | 4/4 | Complete    | 2026-07-23 |
 | 9. Editor-Regressionsnetz & execCommand-Ablösung | 9/9 | Complete    | 2026-07-25 |
-| 10. Security-Härtung | 0/TBD | Not started | - |
+| 10. Security-Härtung | 0/5 | Planned | - |
 | 11. Architektur- & Build-Hygiene | 0/TBD | Not started | - |
