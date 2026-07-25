@@ -167,11 +167,11 @@ Details, Success Criteria und Coverage: [milestones/v1.0-ROADMAP.md](milestones/
   4. favicon-404 und die `apple-mobile-web-app-capable`-Deprecation-Warnung sind aus der Konsole verschwunden
   5. `.planning/codebase/` ist aufgefrischt (Stand nach allen v1.1-Phasen) und jeder CONCERNS.md-Eintrag ist erledigt, obsolet-markiert oder als Requirement übernommen
 
-**Plans**: 7 plans
+**Plans**: 1/7 plans executed
 
 **Wave 1**
 
-- [ ] 11-01-PLAN.md — Tracer: SSoT-Kette für MODULES end-to-end (Parser → build() → Hard-Fail → Test grün)
+- [x] 11-01-PLAN.md — Tracer: SSoT-Kette für MODULES end-to-end (Parser → build() → Hard-Fail → Test grün)
 
 **Wave 2** *(blocked on Wave 1)*
 
@@ -211,4 +211,4 @@ Details, Success Criteria und Coverage: [milestones/v1.0-ROADMAP.md](milestones/
 | 8. Test-Fundament grün | 4/4 | Complete    | 2026-07-23 |
 | 9. Editor-Regressionsnetz & execCommand-Ablösung | 9/9 | Complete    | 2026-07-25 |
 | 10. Security-Härtung | 7/7 | Complete    | 2026-07-25 |
-| 11. Architektur- & Build-Hygiene | 0/7 | Planned | - |
+| 11. Architektur- & Build-Hygiene | 1/7 | In Progress|  |
