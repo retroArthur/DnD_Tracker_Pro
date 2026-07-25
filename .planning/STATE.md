@@ -5,15 +5,15 @@ milestone_name: Tech-Debt & Härtung
 current_phase: 11
 current_phase_name: Architektur- & Build-Hygiene
 status: executing
-stopped_at: Completed 11-04-PLAN.md
-last_updated: "2026-07-25T21:22:08.345Z"
+stopped_at: Completed 11-05-PLAN.md
+last_updated: "2026-07-25T21:52:50.077Z"
 last_activity: 2026-07-25
 last_activity_desc: Phase 11 execution started
 progress:
   total_phases: 4
   completed_phases: 3
   total_plans: 27
-  completed_plans: 24
+  completed_plans: 25
   percent: 75
 ---
 
@@ -36,7 +36,7 @@ progress:
 ## Current Position
 
 Phase: 11 (architektur-build-hygiene) — EXECUTING
-Plan: 5 of 7
+Plan: 6 of 7
 Status: Ready to execute
 Last activity: 2026-07-25 — Phase 11 execution started
 
@@ -75,6 +75,7 @@ Last activity: 2026-07-25 — Phase 11 execution started
 | Phase 11 P02 | 4min | 3 tasks | 3 files |
 | Phase 11 P03 | 11min | 3 tasks | 3 files |
 | Phase 11 P04 | 25min | 2 tasks | 5 files |
+| Phase 11 P05 | ~40min | 3 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -161,8 +162,8 @@ Last activity: 2026-07-25 — Phase 11 execution started
 
 ## Session Continuity
 
-**Last session:** 2026-07-25T21:22:08.328Z
-**Stopped at:** Completed 11-04-PLAN.md
+**Last session:** 2026-07-25T21:52:50.060Z
+**Stopped at:** Completed 11-05-PLAN.md
 **Resume file:** None
 
 **Last action:** Komplette Milestone-UAT abgeschlossen (2026-06-20 → 2026-07-20): alle 5 offenen Human-UAT-Sessions via `/gsd-verify-work` durchgetestet — 07 (4/4), 06 (5/5), 05 (2/2), 01 (3/3), 02 (6/6). Alle 7 VERIFICATION.md jetzt `status: passed`. Dabei gefundene+gefixte Bugs: Soundboard-Doppel-Import (75aadfe), Audio-läuft-nach-Szene-Löschen (b85dbe1), Volume nicht live (801ed48), Manifest-CORS unter file:// (cd75093), Konsolen-Hygiene (c029f11), Datei-Backup schrieb nie bei Entity-CRUD — window.save-Wrapper strukturell wirkungslos für bare save() (1430e8c), generischer registerPostSaveHook + DM-Screen-Live-Sync-Umstellung + CLAUDE.md-Pattern-Korrektur (6ea8309), „Anderen Ordner wählen"-Button (cc2af9e). Nebenbei: Repo mit origin gemergt (7 Mai-Commits, alter pages.yml-Deploy entfernt 7f4858a), 348 Commits gepusht, GitHub-Pages-Deploy live verifiziert (PWA installierbar, SW-Update-Flow, Datei-Backup, Migrations-Wizard file://→PWA). Zusätzlich in der Session: Soundboard-Erweiterungen (Loop-Toggle/Crossfade-Loop/Fortschritt 6636297, Per-Track-Play noch offen als Design), gruppierte Navigation (3d77ec0).
@@ -241,7 +242,13 @@ _State initialized: 2026-06-11_
 - [Phase ?]: [Phase 11, 11-03]: Pass 3 (remove_duplicate_functions) ersatzlos entfernt statt repariert (D-05) — check_duplicate_functions() auf function/const/let/class per Klammertiefen-Tracking erweitert (D-06); test_build_generates_valid_javascript-Vorbefund bleibt explizit ausserhalb des Scopes, WINDOWS-Eintrag 2 offen
 - [Phase ?]: [Phase 11, 11-04]: Blocking-precondition test_build_generates_valid_javascript false positive fixed via brace-depth tracking (mirrors check_duplicate_functions()) before wiring pytest tests/build/ into CI (D-03) - WINDOWS.md entry 2 closed
 - [Phase ?]: [Phase 11, 11-04]: Action-Version-Bumps auf Major-Tags (@vN, kein SHA) verifiziert via gh api zur Ausfuehrungszeit (D-09) - checkout/setup-node/setup-python/upload-artifact v7, download-artifact v8, configure-pages v6, upload-pages-artifact/deploy-pages v5
+- [Phase ?]: [Phase 11, 11-05]: D-10 Favicon-Data-URI verifiziert per Raw-CDP-Probe (nicht nur ueber den committed Smoke-Test) - headless Chromium fuehrt den impliziten favicon.ico-Fetch nie aus, headed-Modus feuert real mit 404 aber Playwright-Page-Events sehen ihn nie; Fix bestaetigt via manuelle CDP-Gegenprobe
+- [Phase ?]: [Phase 11, 11-05]: D-11-Zweig apple-Tag bleibt (additiv, nicht ersetzt) - Konsolen-Sammlung leer vor und nach dem Ergaenzen von mobile-web-app-capable auf Chromium 143.0.7499.4, dreifach unabhaengig gegengeprueft (console/CDP-Log/CDP-Audits)
 
 ## Operator Next Steps
 
 - Start the next milestone with /gsd-new-milestone
+
+### Blockers
+
+- [Phase 11, 11-05] WINDOWS.md Eintrag 3 (open): D-12-Smoke-Test kann Favicon-404 strukturell nicht falsifizieren (headless fetcht ihn nie; headed-Playwright-Page-Events sehen ihn nie) - Fix ist manuell per Raw-CDP verifiziert, aber der automatisierte Nachweis bleibt eine Luecke
