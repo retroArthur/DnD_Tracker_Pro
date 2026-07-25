@@ -256,6 +256,7 @@ function markdownToHtml(markdown) {
  * @returns {string} HTML with markdown converted
  */
 function renderMarkdownInContent(html) {
+    const sanitizeHTML = window.sanitizeHTML;
     if (!html || typeof html !== 'string') return html;
 
     // Check if content already contains HTML tags (already converted)
@@ -295,6 +296,11 @@ function renderMarkdownInContent(html) {
         /\[([^\]]+)\]\(([^\)]+)\)/g,
         '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>'
     );
+
+    // Defense-in-Depth: identisch zu markdownToHtml() am Ende sanitisieren (SEC-01)
+    if (typeof sanitizeHTML === 'function') {
+        result = sanitizeHTML(result);
+    }
 
     return result;
 }

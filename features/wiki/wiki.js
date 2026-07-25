@@ -420,16 +420,30 @@ function renderWikiDetail() {
     }
     const cat = WIKI_CATEGORIES[entry.category] || { icon: '📄', name: 'Sonstiges' };
     const tags = entry.tags || [];
-    const contentWithAnchors = addTOCAnchors(entry.content || '');
-    // Convert Markdown syntax to HTML for display
+    // SEC-01: Sanitisierung MUSS vor der Anker-Injektion laufen — sanitizeHTML()s
+    // allowedAttributes kennt kein "id", addTOCAnchors() danach auf bereits
+    // bereinigtem Markup würde sonst sofort wieder entfernt (10-RESEARCH.md Pitfall 1).
+    // Convert Markdown syntax to HTML for display (inkl. Sanitisierung, SEC-01)
     const renderMarkdownInContent = window.renderMarkdownInContent;
-    const contentWithMarkdown = renderMarkdownInContent
-        ? renderMarkdownInContent(contentWithAnchors)
-        : contentWithAnchors;
-    const parsedContent = parseWikiLinks(contentWithMarkdown);
+    const markdownRendered = renderMarkdownInContent
+        ? renderMarkdownInContent(entry.content || '')
+        : entry.content || '';
+    const contentWithAnchors = addTOCAnchors(markdownRendered);
+    // Reihenfolge sicherheitskritisch: parseWikiLinks() setzt Linktext unescaped
+    // ein und ist nur deshalb ungefährlich, weil sanitizeHTML() (in
+    // renderMarkdownInContent()) vorher bereits global bereinigt hat — NICHT ändern.
+    const parsedContent = parseWikiLinks(contentWithAnchors);
     const backlinks = findBacklinks(entry.title);
     const outlinks = extractWikiLinks(entry.content || '');
     const breadcrumb = renderWikiBreadcrumb(entry.id);
+    // renderWikiTOC() bleibt bewusst auf dem Rohinhalt (entry.content), NICHT auf
+    // markdownRendered/contentWithAnchors: die Inhaltsliste erscheint erst ab drei
+    // <h2>-<h4>-Tags, und solche Tags speichert der Editor bereits als HTML — für
+    // solche Einträge liefern extractWikiTOC() auf dem Rohinhalt und addTOCAnchors()
+    // auf dem gerenderten Inhalt dieselbe Trefferreihenfolge und damit dieselben
+    // toc-N-Kennungen. Restbedingung: enthält ein Eintrag GLEICHZEITIG HTML- UND
+    // Markdown-Überschriften (Rautenschreibweise), können die Indizes auseinanderlaufen
+    // — bekannte, dokumentierte Einschränkung (SEC-01, 10-RESEARCH.md).
     const toc = renderWikiTOC(entry.content || '');
     const plainText = (entry.content || '').replace(/<[^>]+>/g, ' ');
     const wordCount = plainText.split(/\s+/).filter(w => w.length > 0).length;
