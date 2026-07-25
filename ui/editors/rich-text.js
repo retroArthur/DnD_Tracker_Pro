@@ -415,13 +415,24 @@ function toggleUnorderedListAtSelection(editor) {
 // funktionserhaltend migriert, nicht entfernt (D-06).
 function clearInlineFormattingAtSelection(editor) {
     // Repliziert das vorbestehende Verhalten des alten 'removeFormat'-
-    // Kommandos: nur die Farb-bezogenen Style-Eigenschaften (background-
-    // color, color) werden entfernt, das umschliessende Element (z.B.
-    // <mark>) selbst bleibt bestehen — die alte Editier-Kommando-API
-    // entpackt keine Custom-Elemente (09-BASELINE.md Zeile 344, empirisch
-    // bestaetigt in editor-floating.spec.js "UI-lose Zweige").
+    // Kommandos (empirisch verifiziert am gebauten Bundle mit b/mark/span-
+    // Verschachtelung, Plan 09-07/Task 2):
+    // - Standard-Auszeichnungstags (bold/italic/underline/strikethrough)
+    //   werden ENTPACKT (unwrap), genau wie die alte Editier-Kommando-API es
+    //   fuer diese Tags tat.
+    // - Custom-Elemente (z.B. <mark>) werden NICHT entpackt — nur ihre
+    //   Farb-bezogenen Style-Eigenschaften (background-color, color) werden
+    //   entfernt, das Element selbst bleibt bestehen (09-BASELINE.md Zeile
+    //   344, empirisch bestaetigt in editor-floating.spec.js "UI-lose Zweige").
     const selection = window.getSelection();
     if (!selection || !selection.rangeCount) return;
+    ['b', 'i', 'u', 's', 'strike'].forEach(tag => {
+        editor.querySelectorAll(tag).forEach(el => {
+            if (selection.containsNode(el, true)) {
+                unwrapEditorElement(el);
+            }
+        });
+    });
     const styledElements = editor.querySelectorAll('[style]');
     styledElements.forEach(el => {
         if (selection.containsNode(el, true)) {
@@ -971,14 +982,9 @@ function initFloatingToolbar() {
             selection.addRange(floatingToolbarRange.cloneRange());
             if (action === 'font') {
                 const fonts = window.EDITOR_FONTS || {};
-                document.execCommand('fontName', false, fonts[value] || fonts['arial']);
+                applyFontFamilyToSelection(floatingToolbarTarget, fonts[value] || fonts['arial']);
             } else if (action === 'fontSize') {
-                document.execCommand('fontSize', false, '7');
-                const fontElements = floatingToolbarTarget.querySelectorAll('font[size="7"]');
-                fontElements.forEach(el => {
-                    el.removeAttribute('size');
-                    el.style.fontSize = value;
-                });
+                applyFontSizeToSelection(floatingToolbarTarget, value);
             } else if (action === 'readAloud' && value) {
                 setReadAloudFormat(floatingToolbarTarget.id, value);
                 select.selectedIndex = 0;
@@ -1100,8 +1106,7 @@ function initFloatingToolbar() {
         } else if (action === 'table') {
             insertTable();
         } else if (action === 'removeFormat') {
-            document.execCommand('removeFormat', false, undefined);
-            document.execCommand('backColor', false, 'transparent');
+            clearInlineFormattingAtSelection(editor);
             const editorEl = editor;
             if (editorEl) {
                 const marks = editorEl.querySelectorAll('mark');
