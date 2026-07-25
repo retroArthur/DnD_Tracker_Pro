@@ -2,7 +2,7 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-**Version:** 2.6.1 | **Last Updated:** 2026-06-12
+**Version:** 2.6.1 | **Last Updated:** 2026-07-26
 
 ## Project Overview
 
@@ -757,7 +757,7 @@ assets/styles/
 
 ### Gotchas & Common Pitfalls
 
-1. **Build Order Matters:** New modules must be added to `build.py` modules list in correct order
+1. **Single Source of Truth for Modules/Templates/CSS (Phase 11, ARCH-01):** New JS modules, HTML templates, and CSS files are registered ONLY in `loader.js` (its `MODULES`/`TEMPLATES` arrays) or the `assets/styles.css` `@import` hub — never in `build.py`. `build.py` reads all three lists from those files at build time and hard-aborts if a listed file is missing on disk. There is exactly one list per asset type now; the old requirement to keep two hand-synced lists in sync no longer applies. Insert new JS modules in dependency order within `loader.js`'s `MODULES` array.
 2. **Global Namespace:** Functions are global - use unique prefixes to avoid collisions. Constants are grouped in `DND_RULES` and `UI_CONSTANTS` namespaces (see `core/constants.js`)
 3. **No ES Modules:** Can't use import/export - everything must be in global scope
 4. **const/var Conflict:** Never use `var X = window.X;` to "import" a variable declared with `const`/`let` in another module - this causes SyntaxError in loader mode. The `const` is already in the global lexical scope and accessible directly
@@ -1357,7 +1357,9 @@ Common error patterns and fixes:
 
 **Critical Architecture Constraint:**
 
-The non-ESM architecture (global scope, `<script>` tags) requires all modules to be concatenated into a single file. This creates variable declaration conflicts that must be resolved through **three-pass deduplication**.
+The non-ESM architecture (global scope, `<script>` tags) requires all modules to be concatenated into a single file. This creates variable declaration conflicts, resolved by a **two-pass deduplication system** plus a source-level pre-build check that runs before any module is combined (Phase 11, ARCH-02).
+
+**Single Source of Truth for Module/Template/CSS Lists (Phase 11, ARCH-01/D-01/D-04):** `build.py` no longer carries its own hand-copied list of JS modules, HTML templates, or CSS files. It reads all three at build time — the JS module list and the HTML template list from `loader.js`'s `MODULES`/`TEMPLATES` arrays, the CSS cascade order from the `@import` hub in `assets/styles.css` — and hard-aborts (`sys.exit(1)`) before any content is read if a parse fails or a listed file doesn't exist on disk. See the Gotchas entry above for where to register a new file.
 
 **Problem Solved:**
 
@@ -1372,7 +1374,7 @@ window.UI_TIMING = UI_TIMING;
 var UI_TIMING = window.UI_TIMING; // ❌ CONFLICT with const above!
 ```
 
-**Three-Pass Deduplication Solution:**
+**Two-Pass Deduplication Solution (`deduplicate_window_assignments()`):**
 
 ```python
 # Pass 1: Find Real Definitions (NOT window assignments)
@@ -1395,16 +1397,9 @@ for line in lines:
             # First occurrence - keep
             seen_window_assigns.add(var_name)
             output_line(line)
-
-# Pass 3: Remove Duplicate Function Declarations
-seen_functions = {}
-for line in lines:
-    if matches_function(line):
-        if func_name in seen_functions:
-            comment_out_function_and_body()
-        else:
-            seen_functions[func_name] = line_num
 ```
+
+**Duplicate top-level declarations (`function`/`const`/`let`/`class`) are NOT handled by this pass.** A former third pass tried to fix this by commenting out a duplicate function declaration inside the already-combined bundle — but only commented out the `function` line itself, leaving the body's closing braces and any `return` statement orphaned in the output (the 2026-01-10 incident documented below in "Duplicate Declaration Debugging Pattern"). That pass was removed outright in Phase 11 (ARCH-02/D-05), not repaired. Instead, `check_duplicate_functions(source_dir, modules)` runs BEFORE any module is combined, scanning each source file's top-level (brace-depth-0) declarations across all four kinds and hard-aborting the build (`sys.exit(1)`) with a `[FEHLER]` message naming both colliding source files if two modules declare the same name. The identical brace-depth technique also still runs as an independent backstop against the fully-assembled bundle inside `build()`'s post-build validation step — two layers, same technique, no orphaned-body failure mode possible anymore.
 
 **Why This Approach:**
 
@@ -1412,7 +1407,7 @@ for line in lines:
 2. **Pass 2 Handles Two Conflict Types**:
     - **Duplicate imports**: `var X = window.X` appears twice
     - **Definition vs Import**: `const X = ...` exists, later `var X = window.X` conflicts
-3. **Pass 3 Catches Functions**: Regex-based detection missed by variable patterns
+3. **Source Pre-Check Catches Declaration Collisions Before Bundling**: `check_duplicate_functions()` scans source files directly, not the combined bundle via regex — nothing is ever commented out after the fact, so there is no bundle text left to orphan
 
 **Pattern to Follow:**
 
@@ -1511,14 +1506,13 @@ Build deduplication tests must verify:
 
 **Performance Characteristics:**
 
-| Operation                | Complexity | Time (1.29 MB) |
-| ------------------------ | ---------- | -------------- |
-| Pass 1: Scan definitions | O(n)       | ~70ms          |
-| Pass 2: Filter conflicts | O(n)       | ~60ms          |
-| Pass 3: Remove functions | O(n)       | ~20ms          |
-| **Total**                | **O(n)**   | **~150ms**     |
+| Operation                       | Complexity | Time (1.29 MB) |
+| -------------------------------- | ---------- | -------------- |
+| Pass 1: Scan definitions         | O(n)       | ~70ms          |
+| Pass 2: Filter conflicts         | O(n)       | ~60ms          |
+| **Total (deduplication passes)** | **O(n)**   | **~130ms**     |
 
-Where n = number of lines (~59,000)
+Where n = number of lines (~59,000). `check_duplicate_functions()`'s source-level pre-check runs separately, once per module before combining, and is not part of this deduplication-pass timing (the former "Pass 3: Remove functions" row is gone — that pass no longer exists, Phase 11 D-05).
 
 **Results:**
 
@@ -1536,7 +1530,7 @@ Where n = number of lines (~59,000)
 **Common Pitfalls:**
 
 ❌ **Removing real definitions** - Pass 1 must correctly identify them
-❌ **Missing function body** - Pass 3 must track braces to comment entire function
+❌ **Assuming the source pre-check is optional** - `check_duplicate_functions()` must run before modules are combined; skipping it reopens the orphaned-body failure mode the removed third pass used to have
 ❌ **Regex too greedy** - Must not match comments or string literals
 ❌ **Module order wrong** - Dependencies must load before dependents
 
@@ -1636,9 +1630,9 @@ function myFunction() {
 
 ---
 
-**Problem #2: Duplicate Function Definitions Across Modules**
+**Problem #2 (Historical — structurally fixed in Phase 11, ARCH-02/D-05): Duplicate Function Definitions Across Modules**
 
-**What Happened:**
+**What Used To Happen (pre-Phase-11):**
 
 ```javascript
 // npc-render.js:381
@@ -1652,7 +1646,7 @@ function toggleNPCCard(cardOrId) {
 }
 ```
 
-**Build Output:**
+**What The Old Build Used To Produce:**
 
 ```javascript
 // Line 36000: First definition (from npc-render.js)
@@ -1660,7 +1654,7 @@ function toggleNPCCard(id) {
     selectNPC(id);
 }
 
-// Line 37273: Deduplication tries to remove second
+// Line 37273: A former "Pass 3" tried to remove the second
 // [DEDUP] Removed duplicate function: toggleNPCCard
     const id = parseEntityId(cardOrId);  // ❌ Orphaned function body!
     if (id === null)
@@ -1669,32 +1663,21 @@ function toggleNPCCard(id) {
 }
 ```
 
-**Why It Failed:**
+**Why It Failed (historical — this code path no longer exists):**
 
-- **Deduplication Pass 3** correctly detects duplicate function name
-- Comments out function declaration: `// [DEDUP] Removed duplicate function: toggleNPCCard`
-- **BUT fails to comment out entire function body** - only the `function` line
-- Orphaned `return` statements cause `SyntaxError: Illegal return statement`
+- The old third dedup pass detected the duplicate function name
+- It commented out the function declaration line, but **failed to comment out the entire function body** — only the `function` line
+- Orphaned `return` statements caused `SyntaxError: Illegal return statement`
 
-**Root Cause Analysis:**
+**Current Behavior (Phase 11, D-05/D-06):** the third pass was deleted outright, not repaired. `check_duplicate_functions(source_dir, modules)` now scans SOURCE files — before any module is combined into the bundle — and hard-aborts with:
 
-```python
-# build.py:171-187 - remove_duplicate_functions()
-match = re.match(r'^function\s+(\w+)\s*\(', stripped)
-if match:
-    func_name = match.group(1)
-    if func_name in seen_functions:
-        filtered_lines.append(f"// [DEDUP] Removed duplicate function: {func_name}")
-        continue  # ❌ Only skips function declaration line, not body!
+```
+[FEHLER] Doppelte Top-Level-Deklaration 'toggleNPCCard': npc-render.js und npc-interactions.js
 ```
 
-**Why This Approach Over Alternatives:**
+naming both colliding files, so the collision must be fixed in source before a build can even be produced — there is no bundle-level "comment out the second one" step left to get wrong. The identical brace-depth check also runs a second time as an independent backstop against the fully-assembled bundle inside `build()`'s own post-build validation.
 
-- ✅ **Chosen**: Remove simpler duplicate from source code before build
-- ❌ **Rejected**: Fix deduplication to track braces → Complex, fragile with nested functions
-- ❌ **Rejected**: Rename one function → Breaks existing references
-
-**Pattern to Follow:**
+**Pattern to Follow (unchanged — still the correct fix for a real collision):**
 
 ```javascript
 // ❌ NEVER: Same function name in multiple files
@@ -1758,30 +1741,26 @@ When encountering `SyntaxError: Identifier 'X' has already been declared`:
     grep "\[DEDUP\]" dist/dnd-tracker-bundled.html | grep "X"
     ```
 
-When encountering `SyntaxError: Illegal return statement`:
+**This class of error (`SyntaxError: Illegal return statement` from an orphaned duplicate-function body) can no longer occur.** The build-time pass that used to produce it was removed outright in Phase 11 (ARCH-02/D-05). A duplicate top-level `function`/`const`/`let`/`class` declaration across source files now aborts the build BEFORE bundling, with a message naming both colliding files:
 
-1. **Search for orphaned function bodies:**
+1. **The build itself tells you where the collision is:**
 
-    ```bash
-    grep -B2 "^\s*return;" dist/dnd-tracker-bundled.html | grep "\[DEDUP\]"
+    ```
+    [FEHLER] Doppelte Top-Level-Deklaration 'FUNC_NAME': features/a.js und features/b.js
     ```
 
-2. **Find which function was commented out:**
+2. **Confirm both declarations in source:**
 
     ```bash
-    grep "\[DEDUP\] Removed duplicate function:" dist/dnd-tracker-bundled.html
+    grep -rn "^function FUNC_NAME\|^const FUNC_NAME\|^let FUNC_NAME\|^class FUNC_NAME" features/ systems/ ui/
     ```
 
-3. **Locate duplicate in source:**
-
-    ```bash
-    grep -rn "^function FUNC_NAME" features/ systems/ ui/
-    ```
-
-4. **Choose canonical version:**
+3. **Choose canonical version:**
     - Keep most comprehensive implementation
     - Remove simple wrappers
     - Ensure all callers use global `window.FUNC_NAME()` if needed
+
+4. **If a bundle somehow contained a collision anyway** (should not happen — this is the second, independent backstop), `build()`'s own post-build validator catches it before `dist/` is written: `FEHLER: Doppelte Deklaration '<name>' auf Zeile <a> und <b>`, followed by `[ABORTED] Build NICHT geschrieben!`.
 
 ---
 
@@ -1818,19 +1797,18 @@ def test_no_function_scoped_window_imports(self):
     # Check all source files for pattern inside functions
     # Fail if found
 
-def test_no_orphaned_return_statements(self):
-    """Ensure deduplication doesn't leave orphaned function bodies"""
-    dist_file = Path('dist/dnd-tracker-bundled.html')
-    with open(dist_file) as f:
-        content = f.read()
-
-    # Find all [DEDUP] comments
-    dedup_lines = [i for i, line in enumerate(content.split('\n'))
-                   if '[DEDUP]' in line]
-
-    # Check next 20 lines for orphaned returns
-    for line_num in dedup_lines:
-        # Verify no uncontained return statements
+def test_no_dedup_function_marker_in_bundle(self):
+    """Regression test (Phase 11, D-05): the removed third-pass marker
+    string (DEDUP_FUNCTION_MARKER, '[DEDUP] Removed duplicate function')
+    must never appear in either generated bundle — proves the orphaned-
+    body failure mode cannot resurface, since nothing comments out a
+    duplicate function inside the bundle anymore."""
+    for dist_path in ['dist/dnd-tracker-bundled.html', 'dist/dnd-tracker-optimized.html']:
+        dist_file = Path(dist_path)
+        if not dist_file.exists():
+            continue
+        content = dist_file.read_text(encoding='utf-8')
+        assert DEDUP_FUNCTION_MARKER not in content
 ```
 
 ---

@@ -118,7 +118,7 @@ Last activity: 2026-07-25 — Phase 11 execution started
 - SRD-Monsterdaten: NIEMALS in `D` speichern, niemals in Undo-Snapshots oder Exporten
 - Combatant-Felder für Legendary Actions + Mob Mode: Runtime-only (keine Migration nötig)
 - Würfel-Statistiken: Eigener IndexedDB-Store — niemals in `D`
-- Alle neuen Module in `build.py` UND `loader.js` eintragen (Modullisten müssen synchron bleiben)
+- Neue Module, Templates und Stylesheets ausschliesslich in `loader.js` (`MODULES`/`TEMPLATES`) bzw. im `@import`-Hub `assets/styles.css` eintragen — `build.py` liest beide Listen zur Build-Zeit (SSoT, Phase 11 D-01/D-04); eine gelistete, aber fehlende Datei bricht den Build sofort ab (D-02). Es gibt nur noch eine Liste je Asset-Typ, kein Synchronhalte-Zwang mehr.
 
 ### Open TODOs
 

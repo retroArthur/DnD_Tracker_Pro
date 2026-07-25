@@ -2,7 +2,7 @@
 
 ## Purpose
 
-The build system combines all modular JavaScript files into a single standalone HTML file (`dnd-tracker-bundled.html`). It includes a sophisticated **three-pass deduplication system** that resolves variable declaration conflicts arising from the non-ESM architecture, where all modules share global scope. This prevents `SyntaxError: Identifier has already been declared` errors and ensures the app runs correctly in browsers.
+The build system combines all modular JavaScript files into a single standalone HTML file (`dnd-tracker-bundled.html`). It includes a **two-pass deduplication system** that resolves window-assignment variable declaration conflicts arising from the non-ESM architecture, where all modules share global scope — backed by a source-level pre-build check (`check_duplicate_functions()`) that hard-aborts the build before any module is combined if two source files declare the same top-level `function`/`const`/`let`/`class` name (Phase 11, ARCH-02). This prevents `SyntaxError: Identifier has already been declared` errors and ensures the app runs correctly in browsers.
 
 ## Architecture
 
@@ -11,11 +11,12 @@ The build system combines all modular JavaScript files into a single standalone 
 ```
 Source Files (93 modules)
     ↓
+[PRE-CHECK: check_duplicate_functions() — aborts before any file is combined
+ if two source modules declare the same top-level function/const/let/class]
+    ↓
 [PASS 1: Find Real Definitions]
     ↓
 [PASS 2: Remove Window Assignment Conflicts]
-    ↓
-[PASS 3: Remove Duplicate Functions]
     ↓
 Combined JavaScript (1.28 MB)
     ↓
@@ -70,7 +71,7 @@ build(minify=True, verbose=True)
 
 ### 2. `deduplicate_window_assignments(js_code)`
 
-**Purpose**: Three-pass deduplication to eliminate declaration conflicts
+**Purpose**: Two-pass deduplication to eliminate window-assignment declaration conflicts (duplicate top-level source declarations are caught earlier by `check_duplicate_functions()`, before any module is combined)
 
 **Architecture**:
 
@@ -86,15 +87,10 @@ Pass 2: Remove Window Assignment Conflicts
     - Remove duplicate window assignments
     - Result: 523 conflicts removed
     ↓
-Pass 3: Remove Duplicate Functions
-    - Detect duplicate function declarations
-    - Comment out duplicates, keep first occurrence
-    - Result: 1 duplicate function removed
-    ↓
 Output: Deduplicated JS (1.28 MB, ~11KB saved)
 ```
 
-**Why Three Passes Are Needed**:
+**Why Two Passes Are Needed**:
 
 1. **Pass 1** prevents false positives - must distinguish:
 
@@ -117,10 +113,12 @@ Output: Deduplicated JS (1.28 MB, ~11KB saved)
         var BACKUP_INTERVAL = window.BACKUP_INTERVAL; // Conflict - remove
         ```
 
-3. **Pass 3** catches function duplicates missed by regex:
+3. **Duplicate top-level declarations are caught before bundling, not by a third pass.** A former "Pass 3" tried to fix this by commenting out a duplicate function declaration inside the already-combined bundle — but only commented out the `function` line, leaving the body's closing braces and any `return` statement orphaned in the output. That pass was removed outright in Phase 11 (ARCH-02/D-05), not repaired. Instead, `check_duplicate_functions()` (see below) scans every source file's top-level declarations — `function`, `const`, `let`, and `class` — before any module is combined, and hard-aborts the build if two files declare the same name:
     ```javascript
-    function cleanChild(node) { ... }  // First - keep
-    function cleanChild(node) { ... }  // Duplicate - remove
+    // features/a.js
+    function cleanChild(node) { ... }  // First declaration
+    // features/b.js
+    function cleanChild(node) { ... }  // Build aborts here (D-06) — never reaches the bundle
     ```
 
 **Performance**:
@@ -129,28 +127,37 @@ Output: Deduplicated JS (1.28 MB, ~11KB saved)
 - Linear time complexity: O(n) where n = number of lines
 - Memory efficient: Single pass per operation
 
-### 3. `remove_duplicate_functions(js_code)`
+### 3. `check_duplicate_functions(source_dir, modules)`
 
-**Purpose**: Removes duplicate function declarations
+**Purpose**: Source-level pre-build check (Phase 11, D-05/D-06) — aborts the build BEFORE any module is combined if two source files declare the same top-level `function`, `const`, `let`, or `class` name. Replaces the former third deduplication pass, which used to comment out a duplicate function declaration inside the already-combined bundle and could leave its body orphaned (see the historical incident and its removal, documented under the Changelog entry below and in `CLAUDE.md`'s "Duplicate Declaration Debugging Pattern").
 
-**Algorithm**:
+**Algorithm** (brace-depth tracking, same technique as the post-build validator described below):
 
 ```python
-seen_functions = {}
-
-for each line:
-    if line matches 'function name(':
-        if name in seen_functions:
-            comment_out_function_and_body()
-        else:
-            seen_functions[name] = line_number
+decl_pattern = re.compile(r'^\s*(function|const|let|class)\s+(\w+)')
+seen = {}
+for module in modules:
+    content = read_file(os.path.join(source_dir, module))
+    depth = 0
+    for line in content.split('\n'):
+        match = decl_pattern.match(line) if depth == 0 else None
+        for ch in line:
+            if ch == '{': depth += 1
+            elif ch == '}': depth -= 1
+        if match:
+            name = match.group(2)
+            if name in seen:
+                print(f"[FEHLER] Doppelte Top-Level-Deklaration '{name}': {seen[name]} und {module}")
+                sys.exit(1)
+            seen[name] = module
 ```
 
 **Edge Cases Handled**:
 
-- **Nested functions**: Only top-level functions are tracked
-- **Function bodies**: Entire function body is commented out, not just declaration
-- **Brace counting**: Tracks `{` and `}` to find function end
+- **Nested/function-local declarations**: only declarations at brace-depth 0 are checked; a `const`/`let`/`function` inside another function is correctly ignored, not flagged
+- **Four declaration kinds**: `function`, `const`, `let`, and `class` are all checked (extended from function-only detection in Phase 11, D-06)
+- **Abort-before-write**: `sys.exit(1)` fires here, before any module is read into the combined bundle — no partial or corrupted `dist/` output is ever written
+- **Independent backstop**: `build()`'s post-build validation step (the same brace-depth technique, run against the fully-assembled bundle) remains as a second, independent layer and is unaffected by this check
 
 ## Usage Examples
 
@@ -168,7 +175,6 @@ python build.py
 # [BUILD] Dedupliziere window-Zuweisungen...
 #   📝 Pass 1: 1773 real definitions found
 #   📝 Pass 2: 523 window assignment conflicts removed
-#   📝 Pass 3: 1 duplicate functions removed
 # [SUCCESS] Build abgeschlossen!
 #   📁 Datei: dist/dnd-tracker-bundled.html
 #   📏 Größe: 2,163,632 Zeichen (2.06 MB)
@@ -285,9 +291,10 @@ function renderMindmap() {
 - Load modules: ~50ms
 - Pass 1 (scan): ~70ms
 - Pass 2 (filter): ~60ms
-- Pass 3 (functions): ~20ms
 - Write file: ~30ms
-- **Total**: ~230ms
+- **Total**: ~210ms
+
+(The former "Pass 3 (functions): ~20ms" row is gone — that pass no longer exists, per Phase 11 D-05. `check_duplicate_functions()`'s source-level pre-check runs separately, once per module before combining, and is not part of this deduplication-pass timing.)
 
 **Scaling**:
 
@@ -407,7 +414,7 @@ After build changes:
 | ----------------------------- | ------------------------------------------------ | ----------------------------- | ------------------------------------------------ |
 | Duplicate const declarations  | `SyntaxError: UI_TIMING already declared`        | Pass 2 conflict removal       | test_deduplicate_removes_conflicting_definitions |
 | Missing BACKUP_INTERVAL       | `ReferenceError: BACKUP_INTERVAL is not defined` | Added constant to backups.js  | test_constants_are_available_in_build            |
-| cleanChild duplicate function | 2 identical functions                            | Pass 3 function deduplication | test_build_generates_valid_javascript            |
+| cleanChild duplicate function | 2 identical functions                            | Source pre-check (`check_duplicate_functions`, Phase 11 D-06) aborts the build before bundling — previously "Pass 3 function deduplication" inside the bundle, removed in Phase 11 D-05 | test_build_generates_valid_javascript            |
 
 **Verify these don't regress** after build.py changes:
 
@@ -641,12 +648,13 @@ def build(minify=False):
 
 | Version | Date       | Changes                               |
 | ------- | ---------- | ------------------------------------- |
-| 2.7.0   | 2026-01-10 | Added three-pass deduplication system |
+| 2.8.0   | 2026-07-26 | Phase 11 (ARCH-02, D-05/D-06): third dedup pass (`remove_duplicate_functions`) removed outright; duplicate top-level `function`/`const`/`let`/`class` declarations across source modules now caught by a source-level pre-build check (`check_duplicate_functions`) that hard-aborts before any file is combined — see CLAUDE.md "Build System & Deduplication Pattern" |
+| 2.7.0   | 2026-01-10 | Added three-pass deduplication system (historical — superseded by 2.8.0 above; this row records what was true at the time, not the current build) |
 | 2.6.0   | 2026-01-07 | TypeScript migration completed        |
 | 2.5.0   | 2025-12-15 | Initial build system documentation    |
 
 ---
 
-**Last Updated**: 2026-01-10
+**Last Updated**: 2026-07-26
 **Maintainer**: Claude Code
 **Status**: ✅ Production Ready
