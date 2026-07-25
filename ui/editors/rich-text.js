@@ -772,12 +772,20 @@ function initEditorPasteHandlers() {
 }
 // Migrationsstufe 3 (Plan 09-08, Gruppe E): Ersatz fuer die deprecated
 // Editier-Kommando-API ('insertHTML'|'insertText') ueber eine Range-eigene
-// Parse-Funktion (Range.createContextualFragment()), die Skript-Inhalte laut
-// Spezifikation nicht ausfuehrt (09-RESEARCH.md Pattern 3+4). Modul-intern,
-// kein window-Export (CLAUDE.md "Export Audit Rule"). Die vorgeschaltete
-// Attribut-Bereinigung in handleEditorPaste() UND die Whitelist beim
-// Speichern (utils/basic.js) bleiben unveraendert vorgeschaltet bzw.
-// nachgeschaltet — diese Funktionen fuegen NUR ein, sie bereinigen nicht.
+// Parse-Funktion (Range.createContextualFragment()). Korrektur (Plan 10-06,
+// CR-01): die urspruengliche Behauptung, diese Parse-Funktion fuehre
+// Skript-Inhalte laut Spezifikation grundsaetzlich nicht aus, war unpraezise
+// und gilt NUR fuer parser-erzeugte <script>-Elemente (die sind laut Spec
+// inert). Sie gilt NICHT fuer ein eingebettetes Rahmen-Element mit
+// Inline-Dokument-Attribut (<iframe srcdoc>) — dessen Inhalt laeuft im
+// eigenen, aber origin-erbenden Browsing-Kontext und wird beim Einfuegen
+// sofort ausgefuehrt (empirisch bestaetigt, 10-REVIEW.md CR-01). Diese
+// Funktion fuegt AUSSCHLIESSLICH ein, sie bereinigt nicht — die Bereinigung
+// liegt vollstaendig beim Aufrufer: handleEditorPaste()s Tabellenzweig fuehrt
+// sein Markup seit Plan 10-06 durch den projektweiten Allowlist-Sanitizer
+// window.sanitizeHTML() (utils/basic.js) als LETZTE Stufe vor diesem Aufruf;
+// die Whitelist beim Speichern bleibt zusaetzlich unveraendert nachgeschaltet.
+// Modul-intern, kein window-Export (CLAUDE.md "Export Audit Rule").
 //
 // Stil-Nachbereinigung (D-02, byte-gleiches Markup): die alte
 // 'insertHTML'-Editier-Kommando-API wendet auf eingefuegte Inline-Styles
@@ -959,12 +967,20 @@ function handleEditorPaste(e) {
         const tableMatch = html.match(/<table[\s\S]*?<\/table>/i);
         if (tableMatch) {
             const cleanTable = tableMatch[0]
-                // D-05 / Broken-Windows-Ledger-Eintrag 1: dasselbe Ereignis-Attribut-
-                // Regex-Paar wie sanitizeHTML() (utils/basic.js), mit fuehrendem
-                // Leerraum im Muster, damit das Attribut samt trennendem Leerzeichen
-                // verschwindet — muss VOR der Attributlisten-Bereinigung greifen.
-                .replace(/\s+on\w+\s*=\s*["'][^"']*["']/gi, '')
-                .replace(/\s+on\w+\s*=\s*[^\s>]*/gi, '')
+                // Kosmetik-Kette (D-01, Plan 10-06): entfernt und normalisiert nur
+                // noch Darstellungs-Rauschen (Google-Sheets-Wrapper, Kommentare,
+                // Meta-/Style-Bloecke, Layout-Attribute) und injiziert die
+                // Default-Tabellenoptik. Sie ist ausdruecklich KEINE
+                // Sicherheitskontrolle mehr — die fruehere, leerraum-abhaengige
+                // und damit umgehbare Ereignis-Attribut-Ersetzung an dieser
+                // Stelle (Plan 10-04) wurde entfernt (10-VERIFICATION.md
+                // Anti-Pattern-Tabelle, 10-REVIEW.md CR-01: beide Muster
+                // verlangten ein fuehrendes Leerzeichen und liessen sich durch
+                // ein direkt anschliessendes Attribut umgehen). Die Sperre
+                // nicht erlaubter Elemente und Ereignis-Attribute erfolgt
+                // jetzt ausschliesslich DOM-basiert im Allowlist-Sanitizer
+                // weiter unten und ist dort nicht an Leerraum vor dem
+                // Attributnamen gebunden.
                 .replace(
                     /\s+(class|style|width|height|border|cellpadding|cellspacing|align|valign|bgcolor|xmlns|x:|data-[\w-]+)="[^"]*"/gi,
                     ''
@@ -993,7 +1009,35 @@ function handleEditorPaste(e) {
                     /<td>/gi,
                     '<td style="border:1px solid var(--border); padding:6px 10px;">'
                 );
-            insertHtmlAtSelection(cleanTable);
+            // Sanitisierungsstufe (D-01, Plan 10-06, CR-01): der projektweite
+            // DOM-basierte Allowlist-Sanitizer laeuft NACH der obigen
+            // Kosmetik-Kette, nicht davor — er ist damit die LETZTE
+            // Transformation vor dem Einfuegen; nach ihm kann keine
+            // Zeichenketten-Ersetzung mehr ein nicht erlaubtes Element
+            // (iframe/object/embed/svg/form/img) oder ein gefaehrliches
+            // Protokoll (javascript:/vbscript:/data:) wieder einfuehren, auch
+            // nicht entitaets-kodiert (der DOM-Parser dekodiert Attributwerte
+            // vor der Protokollpruefung). Die von der Kette injizierten
+            // Stil-Eigenschaften (border, padding, width, margin,
+            // border-collapse, background, color) ueberleben die
+            // Stil-Filterung, weil sie saemtlich in sanitizeHTML()s
+            // allowedAttributes.style stehen (utils/basic.js) — gegen den
+            // dortigen Quelltext geprueft, nicht angenommen. Aufruf ueber die
+            // Fenster-Eigenschaft, NICHT ueber eine gleichnamige lokale
+            // Konstante (CLAUDE.md, Muster fuer doppelte Deklarationen).
+            const sanitizerReachable = typeof window.sanitizeHTML === 'function';
+            const safeTable = sanitizerReachable ? window.sanitizeHTML(cleanTable) : '';
+            // Fail-closed (T-10-26): ist der Sanitizer zur Laufzeit nicht
+            // erreichbar ODER ergibt seine Bereinigung keinen Inhalt (nur
+            // Leerraum), wird ausschliesslich der Klartext-Anteil der
+            // Zwischenablage eingefuegt — es existiert kein Pfad, auf dem
+            // ungeprueftes Markup eingefuegt wird, und es bleibt kein leeres
+            // Tabellengeruest zurueck.
+            if (!safeTable.trim()) {
+                insertTextAtSelection(text);
+                return;
+            }
+            insertHtmlAtSelection(safeTable);
             showToast('📊 Tabelle eingefügt');
             return;
         }
