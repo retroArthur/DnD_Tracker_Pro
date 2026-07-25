@@ -5,23 +5,23 @@ milestone_name: Tech-Debt & Härtung
 current_phase: 10
 current_phase_name: Security-Härtung
 status: executing
-stopped_at: Phase 10 planned (5 Pläne)
-last_updated: "2026-07-25T08:37:42.619Z"
+stopped_at: Completed 10-01-PLAN.md
+last_updated: "2026-07-25T10:24:19.247Z"
 last_activity: 2026-07-25
-last_activity_desc: Phase 10 planned (5 Pläne, Checker PASSED)
+last_activity_desc: "Phase 10 Plan 01 (Import-XSS-Anzeigegrenze) ausgeführt: renderMarkdownInContent() sanitisiert, wiki.js-Aufrufreihenfolge gedreht, E2E-Beweis (import-security.spec.js) + TOC/Text-Regressionsnetz (wiki.spec.js) grün, 312 passed/2 skipped Playwright, 457/457 Jest"
 progress:
   total_phases: 4
   completed_phases: 2
   total_plans: 18
-  completed_plans: 13
-  percent: 50
+  completed_plans: 14
+  percent: 78
 ---
 
 # Project State: D&D Kampagnen-Tracker Pro — Stabilisierung & Ausbau
 
 **Last Updated:** 2026-07-25
 **Phase:** 10 — Security-Härtung
-**Status:** Ready to execute
+**Status:** Executing Phase 10 (Plan 1/5 abgeschlossen)
 
 ---
 
@@ -29,16 +29,16 @@ progress:
 
 **Core Value:** Die App muss am Spieltisch zuverlässig offline laufen — ein Spielleiter-Begleiter, der nie im Weg steht und keine Daten verliert.
 
-**Current Focus:** Phase 10 — Security-Härtung (geplant, 5 Pläne in 5 sequenziellen Wellen — bereit zur Ausführung)
+**Current Focus:** Phase 10 — Security-Härtung
 
 ---
 
 ## Current Position
 
-Phase: 10 (security-h-rtung) — geplant (5 Pläne, 5 Wellen)
-Plan: Not started
-Status: Ready to execute
-Last activity: 2026-07-25 — Phase 10 geplant (Research HIGH-Confidence, Plan-Checker PASSED, 16/16 Decisions abgedeckt)
+Phase: 10 (Security-Härtung) — EXECUTING
+Plan: 2 of 5
+Status: Plan 01 abgeschlossen (SEC-01 Anzeige-Grenze geschlossen), Plan 02 bereit
+Last activity: 2026-07-25 — Phase 10 Plan 01 (Import-XSS-Anzeigegrenze) ausgeführt: renderMarkdownInContent() sanitisiert, wiki.js-Aufrufreihenfolge gedreht, E2E-Beweis (import-security.spec.js) + TOC/Text-Regressionsnetz (wiki.spec.js) grün, 312 passed/2 skipped Playwright, 457/457 Jest
 
 ## Performance Metrics
 
@@ -64,6 +64,7 @@ Last activity: 2026-07-25 — Phase 10 geplant (Research HIGH-Confidence, Plan-C
 | Phase 09 P07 | 55min | 2 tasks | 3 files |
 | Phase 09 P08 | 37min | 2 tasks | 3 files |
 | Phase 09 P09 | 21min | 3 tasks | 5 files |
+| Phase 10 P01 | 55min | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -141,9 +142,9 @@ Last activity: 2026-07-25 — Phase 10 geplant (Research HIGH-Confidence, Plan-C
 
 ## Session Continuity
 
-**Last session:** 2026-07-25T07:44:13.667Z
-**Stopped at:** Phase 10 context gathered
-**Resume file:** .planning/phases/10-security-h-rtung/10-CONTEXT.md
+**Last session:** 2026-07-25T10:24:02.155Z
+**Stopped at:** Completed 10-01-PLAN.md
+**Resume file:** None
 
 **Last action:** Komplette Milestone-UAT abgeschlossen (2026-06-20 → 2026-07-20): alle 5 offenen Human-UAT-Sessions via `/gsd-verify-work` durchgetestet — 07 (4/4), 06 (5/5), 05 (2/2), 01 (3/3), 02 (6/6). Alle 7 VERIFICATION.md jetzt `status: passed`. Dabei gefundene+gefixte Bugs: Soundboard-Doppel-Import (75aadfe), Audio-läuft-nach-Szene-Löschen (b85dbe1), Volume nicht live (801ed48), Manifest-CORS unter file:// (cd75093), Konsolen-Hygiene (c029f11), Datei-Backup schrieb nie bei Entity-CRUD — window.save-Wrapper strukturell wirkungslos für bare save() (1430e8c), generischer registerPostSaveHook + DM-Screen-Live-Sync-Umstellung + CLAUDE.md-Pattern-Korrektur (6ea8309), „Anderen Ordner wählen"-Button (cc2af9e). Nebenbei: Repo mit origin gemergt (7 Mai-Commits, alter pages.yml-Deploy entfernt 7f4858a), 348 Commits gepusht, GitHub-Pages-Deploy live verifiziert (PWA installierbar, SW-Update-Flow, Datei-Backup, Migrations-Wizard file://→PWA). Zusätzlich in der Session: Soundboard-Erweiterungen (Loop-Toggle/Crossfade-Loop/Fortschritt 6636297, Per-Track-Play noch offen als Design), gruppierte Navigation (3d77ec0).
 **Next action:** Phase 8 ausführen — `/gsd-execute-phase 8` (Wave 1 → 08-01 zuerst; Sampling gemäß 08-VALIDATION.md: volle Suite zweimal in Folge grün vor `/gsd-verify-work`). Offene Design-Entscheidung Soundboard Per-Track-Play (Layering gewählt, Szenen-Play-Variante unbestätigt). Optionale Altlasten: Phase-1-Security-Audit (`/gsd-secure-phase 1`), Phase-1-Code-Review-Findings, Phase-3 Browser-Checks (nicht-blockierend).
@@ -199,6 +200,7 @@ _State initialized: 2026-06-11_
 - [Phase ?]: Zero-Width-Space-Platzhalter + deleteData()-Cleanup fuer insertLineBreakAtSelection() (Plan 09-08) - Cursor hinter trailing br ist ohne Anker in Chromium nicht stabil
 - [Phase ?]: [Phase 09, 09-09]: defaultParagraphSeparator-Setup-Aufruf ersatzlos entfernt statt kompensiert (A1-Referenztest belegt Wirkungslosigkeit) - toBe(1)->toBe(0) bereits in Task 1 gesetzt
 - [Phase ?]: [Phase 09]: Phase 9 abgeschlossen - EDIT-01/EDIT-02/EDIT-03 vollstaendig erfuellt (21->0 execCommand-Call-Sites, Regressionsnetz gruen, Handcheck freigegeben)
+- [Phase ?]: [Phase 10, 10-01]: renderWikiTOC(entry.content) bleibt bewusst auf dem Rohinhalt statt auf dem sanitisierten/verankerten Markup — extractWikiTOC()/addTOCAnchors() liefern bei reinen HTML-Ueberschriften dieselbe Trefferreihenfolge; Restbedingung bei gemischtem HTML+Markdown-Content dokumentiert
 
 ## Operator Next Steps
 
