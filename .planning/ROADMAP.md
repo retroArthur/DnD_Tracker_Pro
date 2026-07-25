@@ -122,7 +122,7 @@ Details, Success Criteria und Coverage: [milestones/v1.0-ROADMAP.md](milestones/
   3. SECURITY.md dokumentiert einen Audit über Import/Export, Storage/IDB, Datei-Backup und Rich-Text/innerHTML mit `threats_open: 0`
   4. Der Audit ist via `/gsd-secure-phase` gegen die relevanten Phasen durchgeführt (inkl. der neuen Editor-Implementierung aus Phase 9)
 
-**Plans**: 1/5 plans executed
+**Plans**: 2/5 plans executed
 
 **Wave 1**
 
@@ -130,7 +130,7 @@ Details, Success Criteria und Coverage: [milestones/v1.0-ROADMAP.md](milestones/
 
 **Wave 2** *(blocked on Wave 1)*
 
-- [ ] 10-02-PLAN.md — Import-Grenze: Feldliste + sanitizeImportedItem an beiden Eintrittspunkten und beiden Zweigen, Undo/Backup (WR-03)
+- [x] 10-02-PLAN.md — Import-Grenze: Feldliste + sanitizeImportedItem an beiden Eintrittspunkten und beiden Zweigen, Undo/Backup (WR-03)
 
 **Wave 3** *(blocked on Wave 2)*
 
@@ -170,5 +170,5 @@ Details, Success Criteria und Coverage: [milestones/v1.0-ROADMAP.md](milestones/
 | v1.0 (Phasen 1–7) | 44/44 | ✅ Shipped | 2026-07-22 |
 | 8. Test-Fundament grün | 4/4 | Complete    | 2026-07-23 |
 | 9. Editor-Regressionsnetz & execCommand-Ablösung | 9/9 | Complete    | 2026-07-25 |
-| 10. Security-Härtung | 1/5 | In Progress|  |
+| 10. Security-Härtung | 2/5 | In Progress|  |
 | 11. Architektur- & Build-Hygiene | 0/TBD | Not started | - |

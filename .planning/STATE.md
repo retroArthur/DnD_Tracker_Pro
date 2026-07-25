@@ -5,23 +5,23 @@ milestone_name: Tech-Debt & Härtung
 current_phase: 10
 current_phase_name: Security-Härtung
 status: executing
-stopped_at: Completed 10-01-PLAN.md
-last_updated: "2026-07-25T10:24:19.247Z"
+stopped_at: Completed 10-02-PLAN.md
+last_updated: "2026-07-25T10:43:58.182Z"
 last_activity: 2026-07-25
-last_activity_desc: "Phase 10 Plan 01 (Import-XSS-Anzeigegrenze) ausgeführt: renderMarkdownInContent() sanitisiert, wiki.js-Aufrufreihenfolge gedreht, E2E-Beweis (import-security.spec.js) + TOC/Text-Regressionsnetz (wiki.spec.js) grün, 312 passed/2 skipped Playwright, 457/457 Jest"
+last_activity_desc: "Phase 10 Plan 02 (Import-Grenze) ausgeführt: HTML_FIELDS_BY_TYPE + sanitizeImportedItem() an beiden Import-Eintrittspunkten (showImportModal()/executeImport() und importDataGlobal(), beide Zweige) verdrahtet; WR-03/D-07 (Undo+Backup im Überschreib-Zweig von importDataGlobal()) geschlossen; 24 neue Unit-Tests (vm.runInContext gegen echten Quelltext) + 2 neue E2E-Tests am gespeicherten Zustand; 481/481 Jest, 314 passed/2 skipped Playwright"
 progress:
   total_phases: 4
   completed_phases: 2
   total_plans: 18
-  completed_plans: 14
-  percent: 78
+  completed_plans: 16
+  percent: 89
 ---
 
 # Project State: D&D Kampagnen-Tracker Pro — Stabilisierung & Ausbau
 
 **Last Updated:** 2026-07-25
 **Phase:** 10 — Security-Härtung
-**Status:** Executing Phase 10 (Plan 1/5 abgeschlossen)
+**Status:** Executing Phase 10 (Plan 2/5 abgeschlossen)
 
 ---
 
@@ -36,9 +36,9 @@ progress:
 ## Current Position
 
 Phase: 10 (Security-Härtung) — EXECUTING
-Plan: 2 of 5
-Status: Plan 01 abgeschlossen (SEC-01 Anzeige-Grenze geschlossen), Plan 02 bereit
-Last activity: 2026-07-25 — Phase 10 Plan 01 (Import-XSS-Anzeigegrenze) ausgeführt: renderMarkdownInContent() sanitisiert, wiki.js-Aufrufreihenfolge gedreht, E2E-Beweis (import-security.spec.js) + TOC/Text-Regressionsnetz (wiki.spec.js) grün, 312 passed/2 skipped Playwright, 457/457 Jest
+Plan: 3 of 5
+Status: Plan 01 + Plan 02 abgeschlossen (SEC-01 Anzeige-Grenze UND Import-Grenze geschlossen, WR-03 gefixt), Plan 03 bereit
+Last activity: 2026-07-25 — Phase 10 Plan 02 (Import-Grenze) ausgeführt: HTML_FIELDS_BY_TYPE + sanitizeImportedItem() an beiden Import-Eintrittspunkten (showImportModal()/executeImport() und importDataGlobal(), beide Zweige) verdrahtet; WR-03/D-07 (Undo+Backup im Überschreib-Zweig von importDataGlobal()) geschlossen; 24 neue Unit-Tests (vm.runInContext gegen echten Quelltext) + 2 neue E2E-Tests am gespeicherten Zustand; 481/481 Jest, 314 passed/2 skipped Playwright
 
 ## Performance Metrics
 
@@ -65,6 +65,7 @@ Last activity: 2026-07-25 — Phase 10 Plan 01 (Import-XSS-Anzeigegrenze) ausgef
 | Phase 09 P08 | 37min | 2 tasks | 3 files |
 | Phase 09 P09 | 21min | 3 tasks | 5 files |
 | Phase 10 P01 | 55min | 2 tasks | 4 files |
+| Phase 10 P02 | 50min | 3 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -142,8 +143,8 @@ Last activity: 2026-07-25 — Phase 10 Plan 01 (Import-XSS-Anzeigegrenze) ausgef
 
 ## Session Continuity
 
-**Last session:** 2026-07-25T10:24:02.155Z
-**Stopped at:** Completed 10-01-PLAN.md
+**Last session:** 2026-07-25T10:43:58.172Z
+**Stopped at:** Completed 10-02-PLAN.md
 **Resume file:** None
 
 **Last action:** Komplette Milestone-UAT abgeschlossen (2026-06-20 → 2026-07-20): alle 5 offenen Human-UAT-Sessions via `/gsd-verify-work` durchgetestet — 07 (4/4), 06 (5/5), 05 (2/2), 01 (3/3), 02 (6/6). Alle 7 VERIFICATION.md jetzt `status: passed`. Dabei gefundene+gefixte Bugs: Soundboard-Doppel-Import (75aadfe), Audio-läuft-nach-Szene-Löschen (b85dbe1), Volume nicht live (801ed48), Manifest-CORS unter file:// (cd75093), Konsolen-Hygiene (c029f11), Datei-Backup schrieb nie bei Entity-CRUD — window.save-Wrapper strukturell wirkungslos für bare save() (1430e8c), generischer registerPostSaveHook + DM-Screen-Live-Sync-Umstellung + CLAUDE.md-Pattern-Korrektur (6ea8309), „Anderen Ordner wählen"-Button (cc2af9e). Nebenbei: Repo mit origin gemergt (7 Mai-Commits, alter pages.yml-Deploy entfernt 7f4858a), 348 Commits gepusht, GitHub-Pages-Deploy live verifiziert (PWA installierbar, SW-Update-Flow, Datei-Backup, Migrations-Wizard file://→PWA). Zusätzlich in der Session: Soundboard-Erweiterungen (Loop-Toggle/Crossfade-Loop/Fortschritt 6636297, Per-Track-Play noch offen als Design), gruppierte Navigation (3d77ec0).
@@ -201,6 +202,8 @@ _State initialized: 2026-06-11_
 - [Phase ?]: [Phase 09, 09-09]: defaultParagraphSeparator-Setup-Aufruf ersatzlos entfernt statt kompensiert (A1-Referenztest belegt Wirkungslosigkeit) - toBe(1)->toBe(0) bereits in Task 1 gesetzt
 - [Phase ?]: [Phase 09]: Phase 9 abgeschlossen - EDIT-01/EDIT-02/EDIT-03 vollstaendig erfuellt (21->0 execCommand-Call-Sites, Regressionsnetz gruen, Handcheck freigegeben)
 - [Phase ?]: [Phase 10, 10-01]: renderWikiTOC(entry.content) bleibt bewusst auf dem Rohinhalt statt auf dem sanitisierten/verankerten Markup — extractWikiTOC()/addTOCAnchors() liefern bei reinen HTML-Ueberschriften dieselbe Trefferreihenfolge; Restbedingung bei gemischtem HTML+Markdown-Content dokumentiert
+- [Phase ?]: [Phase 10, 10-02]: D-07/WR-03-Fix (Undo+Backup im Überschreib-Zweig von importDataGlobal()) in Task 2 statt Task 3 umgesetzt, weil Task 2s eigenes Verify-Gate die Task-1-Strukturprüfung dafür einschließt
+- [Phase ?]: [Phase 10, 10-02]: validatedItems-Abbildung liegt tatsächlich in showImportModal(), nicht in executeImport() wie im Plan-Text notiert — Sanitisierung an der realen Stelle verdrahtet, Struktur-Test entsprechend korrigiert
 
 ## Operator Next Steps
 
