@@ -209,16 +209,16 @@ test.describe('Editor-Regressionsnetz — Insert-Call-Sites (Wiki)', () => {
          * Text ohne jedes Markup — kein Skript-Element, kein on*-Attribut kann
          * dadurch je im Editor-DOM landen.
          *
-         * Hinweis (dokumentierter Fund, NICHT Teil dieses Tests, NICHT behoben):
+         * Hinweis (Phase 10, Plan 04 — behoben, Broken-Windows-Ledger-Eintrag 1):
          * Wird dasselbe Ereignis-Attribut stattdessen INNERHALB eines <table>-Tags
-         * eingefügt, greift der Tabellen-insertHTML-Zweig (Zeile 615/637) — dessen
-         * Attribut-Bereinigungs-Regex entfernt nur eine feste Liste harmloser
-         * Attribute (class/style/width/...), NICHT on*-Attribute. Ein
-         * on*-Attribut überlebt dort empirisch bis in den Editor-DOM und feuert
-         * (Bild-Fehler-Event). Dies ist ein vorbestehender, von dieser Migration
-         * unabhängiger Fund (kein Produktionscode-Fix in diesem Plan — "Kein
-         * Produktionscode geändert" ist Plan-Verifikationskriterium) und wird als
-         * Deviation in der SUMMARY sowie im WINDOWS.md-Ledger festgehalten.
+         * eingefügt, griff bis Phase 10 der Tabellen-insertHTML-Zweig (Zeile
+         * 958ff.) — dessen Attribut-Bereinigungs-Regex entfernte damals nur eine
+         * feste Liste harmloser Attribute (class/style/width/...), NICHT
+         * on*-Attribute. Ein on*-Attribut überlebte dort empirisch bis in den
+         * Editor-DOM und feuerte (Bild-Fehler-Event). Dieser vorbestehende, von
+         * dieser Migration unabhängige Fund ist jetzt behoben — siehe den neuen
+         * Testfall unten ("Sicherheits-Regression: Ereignis-Attribut in
+         * eingefügtem Tabellen-Markup ...") für den Tabellenzweig-Beweis.
          */
         test('Sicherheits-Regression: Einfüge-Fragment mit Ereignis-Attribut und Skript-Element landet nicht ausführbar im DOM', async ({
             page
@@ -282,6 +282,94 @@ test.describe('Editor-Regressionsnetz — Insert-Call-Sites (Wiki)', () => {
             }));
             expect(xssFlags.xss).toBeUndefined();
             expect(xssFlags.xssScript).toBeUndefined();
+        });
+
+        /**
+         * Sicherheits-Regression (Tabellenzweig, Broken-Windows-Ledger-Eintrag
+         * 1, Phase 10 Plan 04): Spiegelt den Sicherheitstest oben, aber mit
+         * einer Nutzlast MIT Tabellen-Wrapper — genau die Konstellation, die
+         * laut Ledger-Eintrag 1 den Tabellenzweig von handleEditorPaste()
+         * trifft. Vor dem Fix in dieser Phase überlebte ein Ereignis-Attribut
+         * aus eingefügtem Tabellen-HTML unverändert bis in den Editor-DOM und
+         * feuerte (empirisch bestätigt, siehe .planning/WINDOWS.md Eintrag 1
+         * und den Hinweis-Absatz oben).
+         *
+         * Hinweis zum <img>-Element: Der Fix dieser Phase entfernt gezielt nur
+         * das Ereignis-Attribut (D-05, minimalinvasiver Auftrag — der Handler
+         * wird NICHT auf einen DOMParser-Ansatz umgebaut, siehe Plan-Prohibitions).
+         * Das <img>-Element selbst bleibt danach als inertes, nicht
+         * ausführendes Markup im DOM bestehen (kein Handler mehr angehängt).
+         * Geprüft wird deshalb, dass KEIN Element im Editor (auch nicht das
+         * <img> selbst) noch ein Attribut trägt, dessen Name mit "on" beginnt
+         * — das ist die vollständige, scope-konforme Fassung von "kein
+         * ausführbares Bild-Element" für einen minimalinvasiven Attribut-Fix.
+         */
+        test('Sicherheits-Regression: Ereignis-Attribut in eingefügtem Tabellen-Markup landet nicht ausführbar im DOM (Tabellenzweig, Broken-Windows #1)', async ({
+            page
+        }) => {
+            const errors = [];
+            page.on('pageerror', e => errors.push(String(e)));
+            page.on('console', msg => {
+                if (msg.type() === 'error') errors.push(msg.text());
+            });
+
+            await openFreshWikiForm(page, 'Insert Security Table');
+            const editor = page.locator('#wiki-content');
+            const maliciousTableHtml =
+                '<table><tr><td><img src="x" onerror="window.__xssInsertTableSpec=true"></td><td>ZellText</td></tr></table>';
+            await pasteInto(page, '#wiki-content', {
+                html: maliciousTableHtml,
+                text: 'Boesartig\tZellText'
+            });
+            await page.waitForTimeout(300);
+
+            // (a) Editor-DOM direkt nach dem Einfügen: kein Element trägt ein
+            // Attribut, dessen Name mit "on" beginnt; das Marker-Flag am
+            // Fenster ist undefiniert; keine gesammelten Seitenfehler.
+            const hasOnAttrAfterPaste = await editor.evaluate(el => {
+                const nodes = el.querySelectorAll('*');
+                for (const node of nodes) {
+                    for (const attr of node.attributes) {
+                        if (attr.name.toLowerCase().startsWith('on')) return true;
+                    }
+                }
+                return false;
+            });
+            expect(hasOnAttrAfterPaste).toBe(false);
+            const xssFlagAfterPaste = await page.evaluate(() => window.__xssInsertTableSpec);
+            expect(xssFlagAfterPaste).toBeUndefined();
+            expect(errors).toEqual([]);
+
+            // (b) Erhaltungs-Gegenprobe: Tabelle und Zelltext kommen
+            // unverändert an — der Fix entfernt ausschließlich das
+            // Ereignis-Attribut, nicht die Tabelle.
+            const tableCountAfterPaste = await editor.evaluate(
+                el => el.querySelectorAll('table').length
+            );
+            expect(tableCountAfterPaste).toBeGreaterThan(0);
+            await expect(editor.evaluate(el => el.textContent)).resolves.toContain('ZellText');
+
+            // (c) Nach Speichern, Neuladen und Wiederöffnen gelten dieselben
+            // Prüfungen für den geladenen Eintrag.
+            const reopened = await saveAndReopenWikiEntry(page, 'Insert Security Table');
+            const hasOnAttrAfterReload = await reopened.evaluate(el => {
+                const nodes = el.querySelectorAll('*');
+                for (const node of nodes) {
+                    for (const attr of node.attributes) {
+                        if (attr.name.toLowerCase().startsWith('on')) return true;
+                    }
+                }
+                return false;
+            });
+            expect(hasOnAttrAfterReload).toBe(false);
+            const tableCountAfterReload = await reopened.evaluate(
+                el => el.querySelectorAll('table').length
+            );
+            expect(tableCountAfterReload).toBeGreaterThan(0);
+            await expect(reopened.evaluate(el => el.textContent)).resolves.toContain('ZellText');
+            const xssFlagAfterReload = await page.evaluate(() => window.__xssInsertTableSpec);
+            expect(xssFlagAfterReload).toBeUndefined();
+            expect(errors).toEqual([]);
         });
     });
 });
