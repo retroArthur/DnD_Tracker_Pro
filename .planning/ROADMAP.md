@@ -167,7 +167,7 @@ Details, Success Criteria und Coverage: [milestones/v1.0-ROADMAP.md](milestones/
   4. favicon-404 und die `apple-mobile-web-app-capable`-Deprecation-Warnung sind aus der Konsole verschwunden
   5. `.planning/codebase/` ist aufgefrischt (Stand nach allen v1.1-Phasen) und jeder CONCERNS.md-Eintrag ist erledigt, obsolet-markiert oder als Requirement übernommen
 
-**Plans**: 3/7 plans executed
+**Plans**: 4/7 plans executed
 
 **Wave 1**
 
@@ -183,7 +183,7 @@ Details, Success Criteria und Coverage: [milestones/v1.0-ROADMAP.md](milestones/
 
 **Wave 4** *(blocked on Wave 3)*
 
-- [ ] 11-04-PLAN.md — `tests/build/` als echtes CI-Gate (`requirements-dev.txt` + pytest-Schritt) + Node 22 und aktuelle Action-Majors
+- [x] 11-04-PLAN.md — `tests/build/` als echtes CI-Gate (`requirements-dev.txt` + pytest-Schritt) + Node 22 und aktuelle Action-Majors
 
 **Wave 5** *(blocked on Wave 4)*
 
@@ -211,4 +211,4 @@ Details, Success Criteria und Coverage: [milestones/v1.0-ROADMAP.md](milestones/
 | 8. Test-Fundament grün | 4/4 | Complete    | 2026-07-23 |
 | 9. Editor-Regressionsnetz & execCommand-Ablösung | 9/9 | Complete    | 2026-07-25 |
 | 10. Security-Härtung | 7/7 | Complete    | 2026-07-25 |
-| 11. Architektur- & Build-Hygiene | 3/7 | In Progress|  |
+| 11. Architektur- & Build-Hygiene | 4/7 | In Progress|  |
