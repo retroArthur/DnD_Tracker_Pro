@@ -481,3 +481,134 @@ describe('Security: esc() HTML Escaping', () => {
         expect(esc(esc(text))).toBe(text);
     });
 });
+
+// ============================================================
+// SEC-01/D-14: VEKTOR-KATALOG GEGEN DEN ECHTEN PRODUKTIONS-SANITIZER
+// ============================================================
+// Die Testblöcke oben laufen gegen utils/testable-utils.js (Test-Zwilling).
+// Dieser Block lädt utils/basic.js — den ECHTEN Produktionsquelltext, den die
+// Anwendung tatsächlich ausführt — per vm.runInContext (Präzedenz:
+// tests/unit/storage-conflict.test.js). Ein Vorab-Test stellt sicher, dass die
+// geladene Funktion tatsächlich definiert ist, damit ein späterer Ladefehler
+// nicht stillschweigend als bestandener Test durchgeht (RESEARCH Pitfall 4).
+const fs = require('fs');
+const path = require('path');
+const vm = require('vm');
+
+describe('Security: sanitizeHTML() gegen den ECHTEN Produktions-Sanitizer (utils/basic.js, vm.runInContext)', () => {
+    let realSanitizeHTML;
+
+    beforeAll(() => {
+        const context = {
+            window: { APP_CONFIG: global.APP_CONFIG },
+            document: global.document,
+            DOMParser: global.DOMParser,
+            Node: global.Node,
+            console
+        };
+        vm.createContext(context);
+        const filePath = path.join(__dirname, '../../utils/basic.js');
+        const sourceCode = fs.readFileSync(filePath, 'utf8');
+        vm.runInContext(sourceCode, context);
+        realSanitizeHTML = context.sanitizeHTML;
+    });
+
+    test('Vorab-Test: sanitizeHTML wurde aus dem echten Produktionsquelltext geladen und ist definiert', () => {
+        expect(realSanitizeHTML).toBeDefined();
+        expect(typeof realSanitizeHTML).toBe('function');
+    });
+
+    // --------------------------------------------------------
+    // PFLICHT-VEKTOREN (D-15, 10-CONTEXT.md)
+    // --------------------------------------------------------
+    describe('Pflicht-Vektoren (D-15)', () => {
+        test('Review-Exploit: Bild mit Fehler-Ereignis-Attribut — Ereignis weg, img-Element weg (nicht in Whitelist)', () => {
+            const dirty = '<img src="x" onerror="alert(1)">';
+            const clean = realSanitizeHTML(dirty);
+            expect(clean).not.toContain('onerror');
+            expect(clean).not.toContain('<img');
+        });
+
+        test('Ereignis-Attribut ohne Anführungszeichen wird entfernt (zweite Vorbereinigungs-Regex)', () => {
+            const dirty = '<div onclick=alert(1)>Klick</div>';
+            const clean = realSanitizeHTML(dirty);
+            expect(clean).not.toContain('onclick');
+            expect(clean).toContain('Klick');
+        });
+
+        test('Skript-Element mit Inhalt wird vollständig entfernt', () => {
+            const dirty = '<script>alert("XSS");document.cookie;</script>';
+            const clean = realSanitizeHTML(dirty);
+            expect(clean).not.toContain('<script');
+            expect(clean).not.toContain('alert');
+        });
+
+        test('Skript-Element in gemischter Groß-/Kleinschreibung wird entfernt', () => {
+            const dirty = '<ScRiPt>alert(1)</ScRiPt>';
+            const clean = realSanitizeHTML(dirty);
+            expect(clean.toLowerCase()).not.toContain('<script');
+        });
+
+        test('Adresse mit Skript-Protokoll in einem Verweis-Element: Adresse enthält Protokoll nicht mehr', () => {
+            const dirty = '<a href="javascript:alert(1)">Link</a>';
+            const clean = realSanitizeHTML(dirty);
+            expect(clean).not.toContain('javascript:');
+        });
+
+        test('SVG-Element mit Lade-Ereignis-Attribut wird entfernt', () => {
+            const dirty = '<svg onload="alert(1)"><circle r="10"></circle></svg>';
+            const clean = realSanitizeHTML(dirty);
+            expect(clean).not.toContain('<svg');
+            expect(clean).not.toContain('onload');
+        });
+
+        test('Tabellen-Nutzlast (T-09-01-Stil): Tabelle/Zellen bleiben erhalten, Ereignis-Attribut nicht', () => {
+            const dirty =
+                '<table><tr><td><img src="x" onerror="alert(1)">Zelleninhalt</td></tr></table>';
+            const clean = realSanitizeHTML(dirty);
+            expect(clean).toContain('<table');
+            expect(clean).toContain('<td');
+            expect(clean).not.toContain('onerror');
+            expect(clean).not.toContain('<img');
+            expect(clean).toContain('Zelleninhalt');
+        });
+    });
+
+    // --------------------------------------------------------
+    // ERHALTUNGS-GEGENPROBE (D-15)
+    // --------------------------------------------------------
+    describe('Erhaltungs-Gegenprobe', () => {
+        test('erlaubte Auszeichnung übersteht den Sanitizer unverändert, Textinhalt bleibt vollständig erhalten', () => {
+            const dirty =
+                '<b>Fett</b><i>Kursiv</i><ul><li>Listenpunkt</li></ul><table><tr><td>Zelle</td></tr></table><mark>Markiert</mark>';
+            const clean = realSanitizeHTML(dirty);
+            expect(clean).toContain('<b>Fett</b>');
+            expect(clean).toContain('<i>Kursiv</i>');
+            expect(clean).toContain('<ul>');
+            expect(clean).toContain('<li>Listenpunkt</li>');
+            expect(clean).toContain('<table');
+            expect(clean).toContain('<td>Zelle</td>');
+            expect(clean).toContain('<mark>Markiert</mark>');
+        });
+    });
+
+    // --------------------------------------------------------
+    // RANDFÄLLE FÜR LEERE EINGABEN
+    // --------------------------------------------------------
+    describe('Randfälle für leere Eingaben', () => {
+        test('leere Zeichenkette liefert leere Zeichenkette statt eines Fehlers', () => {
+            expect(() => realSanitizeHTML('')).not.toThrow();
+            expect(realSanitizeHTML('')).toBe('');
+        });
+
+        test('null liefert leere Zeichenkette statt eines Fehlers', () => {
+            expect(() => realSanitizeHTML(null)).not.toThrow();
+            expect(realSanitizeHTML(null)).toBe('');
+        });
+
+        test('undefined liefert leere Zeichenkette statt eines Fehlers', () => {
+            expect(() => realSanitizeHTML(undefined)).not.toThrow();
+            expect(realSanitizeHTML(undefined)).toBe('');
+        });
+    });
+});
