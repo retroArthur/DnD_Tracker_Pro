@@ -321,20 +321,108 @@ function toggleMaterialField() {
 // ============================================================
 // EDITOR FORMATTING
 // ============================================================
+// Migrationsstufe 1 (Plan 09-06, Gruppe A): Selection/Range-Hilfsfunktionen
+// fuer formatText(). Muster uebernommen aus applyFloatingFormat() (siehe
+// initFloatingToolbar() unten), die bereits produktiv ohne die deprecated
+// Editier-Kommando-API laeuft. Modul-intern, kein window-Export (CLAUDE.md
+// "Export Audit Rule").
+function wrapRangeWithElement(range, wrapper) {
+    try {
+        range.surroundContents(wrapper);
+    } catch (e) {
+        const fragment = range.extractContents();
+        wrapper.appendChild(fragment);
+        range.insertNode(wrapper);
+    }
+}
+function unwrapEditorElement(element) {
+    const parent = element.parentNode;
+    if (parent) {
+        while (element.firstChild) {
+            parent.insertBefore(element.firstChild, element);
+        }
+        parent.removeChild(element);
+    }
+}
+function closestEditorAncestor(container, selector) {
+    // container kann ein Text- ODER ein Element-Knoten sein (z.B. wenn die
+    // Selektion per range.selectNodeContents(element) statt per
+    // Zeichen-Offset auf einem Textknoten gesetzt wurde — in diesem Fall IST
+    // der commonAncestorContainer bereits das Element selbst, ein zusaetzliches
+    // .parentElement wuerde eine Ebene zu weit nach oben springen).
+    const el = container.nodeType === Node.TEXT_NODE ? container.parentElement : container;
+    return el?.closest?.(selector) || null;
+}
+function applyInlineFormat(editor, tagName) {
+    const selection = window.getSelection();
+    if (!selection || !selection.rangeCount) return;
+    const range = selection.getRangeAt(0);
+    const selectedText = range.toString();
+    if (!selectedText) return;
+    const parentTag = closestEditorAncestor(range.commonAncestorContainer, tagName);
+    if (parentTag && parentTag.closest('.rich-editor, .spell-editor, .dialog-text')) {
+        unwrapEditorElement(parentTag);
+    } else {
+        const wrapper = document.createElement(tagName);
+        wrapRangeWithElement(range, wrapper);
+        selection.removeAllRanges();
+        const newRange = document.createRange();
+        newRange.selectNodeContents(wrapper);
+        selection.addRange(newRange);
+    }
+}
+function toggleUnorderedListAtSelection(editor) {
+    const selection = window.getSelection();
+    if (!selection || !selection.rangeCount) return;
+    const range = selection.getRangeAt(0);
+    const selectedText = range.toString();
+    if (!selectedText) return;
+    const parentList = closestEditorAncestor(range.commonAncestorContainer, 'ul, ol');
+    if (parentList && parentList.closest('.rich-editor, .spell-editor, .dialog-text')) {
+        const listItems = parentList.querySelectorAll('li');
+        const fragment = document.createDocumentFragment();
+        listItems.forEach((li, index) => {
+            while (li.firstChild) {
+                fragment.appendChild(li.firstChild);
+            }
+            if (index < listItems.length - 1) {
+                fragment.appendChild(document.createElement('br'));
+            }
+        });
+        parentList.parentNode?.replaceChild(fragment, parentList);
+    } else {
+        const ul = document.createElement('ul');
+        const li = document.createElement('li');
+        try {
+            const contents = range.extractContents();
+            li.appendChild(contents);
+        } catch (e) {
+            li.textContent = selectedText;
+            range.deleteContents();
+        }
+        ul.appendChild(li);
+        range.insertNode(ul);
+        selection.removeAllRanges();
+        const newRange = document.createRange();
+        newRange.selectNodeContents(li);
+        newRange.collapse(false);
+        selection.addRange(newRange);
+    }
+}
 function formatText(elementId, format, value) {
     const editor = $(elementId);
     if (!editor) return;
     editor.focus();
     if (format === 'bold') {
-        document.execCommand('bold', false, undefined);
+        applyInlineFormat(editor, 'b');
     } else if (format === 'italic') {
-        document.execCommand('italic', false, undefined);
+        applyInlineFormat(editor, 'i');
     } else if (format === 'underline') {
-        document.execCommand('underline', false, undefined);
+        applyInlineFormat(editor, 'u');
     } else if (format === 'strikethrough') {
-        document.execCommand('strikeThrough', false, undefined);
+        applyInlineFormat(editor, 'strike');
     } else if (format === 'list') {
-        document.execCommand('insertUnorderedList', false, undefined);
+        toggleUnorderedListAtSelection(editor);
     } else if (format === 'heading') {
         document.execCommand('formatBlock', false, '<h4>');
     } else if (format === 'font' && value) {

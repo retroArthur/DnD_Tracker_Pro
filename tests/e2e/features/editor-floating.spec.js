@@ -615,11 +615,20 @@ test.describe('UI-lose Zweige (kein Toolbar-Pfad vorhanden)', () => {
 
 // ---------------------------------------------------------------
 // Task 3: Zählnachweis — Anker für die execCommand-Ablösung (Plan 09-09)
+//
+// Netz-Freeze-Ausnahme (09-BASELINE.md, "Verfahren bei rotem Netz-Test"):
+// Dieser Zaehlwert ist der EINZIGE im gesamten Netz, der waehrend der
+// Migration angepasst werden darf, weil er selbst den Fortschritt misst
+// (kein Verhalten des Editors). Plan 09-06/Gruppe A hat 5 Call-Sites in
+// formatText() migriert (bold/italic/underline/strikethrough/list) — der
+// Zwischenstand nach diesem Schritt ist 16 (21 - 5), dokumentiert in
+// 09-BASELINE.md Abschnitt "Netz-Freeze". Der Endwert 0 wird in Plan 09-09
+// gesetzt, sobald alle 21 Call-Sites migriert sind.
 // ---------------------------------------------------------------
-test.describe('Inventar-Zählnachweis (bewusst änderbar in Plan 09-09)', () => {
-    test('ZÄHLNACHWEIS: ui/editors/rich-text.js enthält exakt 21 execCommand-Vorkommen (Referenz: 09-BASELINE.md Markup-Inventar; wird in Plan 09-09 auf 0 umgestellt)', async () => {
+test.describe('Inventar-Zählnachweis (bewusst änderbar während der Migration)', () => {
+    test('ZÄHLNACHWEIS: ui/editors/rich-text.js enthält 16 execCommand-Vorkommen (Zwischenstand nach Plan 09-06/Gruppe A; Referenz: 09-BASELINE.md, endgültig 0 in Plan 09-09)', async () => {
         const content = fs.readFileSync('ui/editors/rich-text.js', 'utf8');
         const matches = content.match(/execCommand/g) || [];
-        expect(matches.length).toBe(21);
+        expect(matches.length).toBe(16);
     });
 });
