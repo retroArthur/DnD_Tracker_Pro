@@ -530,6 +530,50 @@ var MAX_BACKUPS = window.MAX_BACKUPS;  // CONFLICT
         # Darf NICHT abbrechen — beide Deklarationen sind funktionslokal (Tiefe > 0)
         check_duplicate_functions(str(tmp_path), fake_modules)
 
+    def test_source_duplicate_aborts_build_without_writing_output(self, tmp_path, monkeypatch):
+        """
+        D-07 (zweite Haelfte der Verhaltensgarantie, ergaenzt den Marker-Regressions-
+        test aus test_no_dedup_function_marker_in_bundle): ein Build-Lauf, dessen
+        Modulliste zwei Quelldateien mit derselben Top-Level-const-Deklaration
+        enthaelt, endet mit SystemExit UND laesst eine vorher vorhandene Ausgabedatei
+        byte-identisch (bzw. erzeugt keine neue, wenn keine vorhanden war).
+
+        Nutzt absolute tmp_path-Dateipfade als zusaetzliche Modulliste-Eintraege —
+        os.path.join(SOURCE_DIR, module) verwirft SOURCE_DIR fuer einen bereits
+        absoluten zweiten Pfad (Windows-Laufwerksbuchstabe), require_files_exist()
+        und check_duplicate_functions() finden die Kollisionsdateien damit unabhaengig
+        vom echten SOURCE_DIR. check_duplicate_functions() laeuft in build() VOR der
+        JS-Ladeschleife, die absolute Pfade sonst falsch verketten wuerde.
+        """
+        import build as build_module
+
+        file_a = tmp_path / 'dup-a.js'
+        file_a.write_text("const SOURCE_DUPLICATE_CONST = 1;\n", encoding='utf-8')
+        file_b = tmp_path / 'dup-b.js'
+        file_b.write_text("const SOURCE_DUPLICATE_CONST = 2;\n", encoding='utf-8')
+
+        dist_file = Path(__file__).parent.parent.parent / 'dist' / 'dnd-tracker-bundled.html'
+        existed_before = dist_file.exists()
+        content_before = dist_file.read_bytes() if existed_before else None
+
+        real_load_module_list = build_module.load_module_list
+
+        def fake_load_module_list(loader_path):
+            modules = real_load_module_list(loader_path)
+            return modules + [str(file_a), str(file_b)]
+
+        monkeypatch.setattr(build_module, 'load_module_list', fake_load_module_list)
+
+        with pytest.raises(SystemExit):
+            build_module.build()
+
+        if existed_before:
+            assert dist_file.read_bytes() == content_before, \
+                "Vorhandene Ausgabedatei wurde trotz Quell-Duplikat-Abbruch veraendert"
+        else:
+            assert not dist_file.exists(), \
+                "Es wurde eine neue Ausgabedatei geschrieben, obwohl der Build wegen eines Quell-Duplikats abgebrochen ist"
+
     def test_no_dedup_function_marker_in_bundle(self):
         """
         D-05/D-07 Regressionstest: Der dritte Dedup-Pass (der einen Funktionskopf
