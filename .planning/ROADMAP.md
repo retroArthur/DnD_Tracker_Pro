@@ -100,7 +100,7 @@ Details, Success Criteria und Coverage: [milestones/v1.0-ROADMAP.md](milestones/
 
 **Wave 6** *(blocked on Wave 5)*
 
-- [ ] 09-07-PLAN.md — Migration Gruppen C+D: Schriftart/Größe (beide Toolbars) + Format entfernen (6 Call-Sites)
+- [x] 09-07-PLAN.md — Migration Gruppen C+D: Schriftart/Größe (beide Toolbars) + Format entfernen (6 Call-Sites)
 
 **Wave 7** *(blocked on Wave 6)*
 
