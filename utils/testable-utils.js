@@ -50,6 +50,7 @@ function sanitizeHTML(html) {
         'i',
         'u',
         's',
+        'strike',
         'strong',
         'em',
         'ul',

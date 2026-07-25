@@ -142,10 +142,13 @@ const TESTTEXT = 'Probetext';
 const NETZ = {
     italic: { after: '<i>Probetext</i>', roundtrip: '<i>Probetext</i>' },
     underline: { after: '<u>Probetext</u>', roundtrip: '<u>Probetext</u>' },
-    // A4 (09-BASELINE.md): <strike> ist nicht in sanitizeHTML()s allowedTags
-    // (nur 's' ist erlaubt) — die Auszeichnung überlebt den Roundtrip NICHT.
-    // Vorbestehender Bug, eingefroren, nicht Teil dieser Migration (Phase-10-Vormerkung).
-    strikethrough: { after: '<strike>Probetext</strike>', roundtrip: 'Probetext' },
+    // A4 (09-BASELINE.md) war: <strike> fehlte in sanitizeHTML()s allowedTags (nur 's'
+    // war erlaubt) — die Auszeichnung überlebte den Roundtrip NICHT. Phase 10 (D-06,
+    // 10-03-PLAN.md Task 3) hat 'strike' synchron in utils/basic.js UND
+    // utils/testable-utils.js ergänzt (Paritätstest als Zaun) — der Roundtrip-Wert
+    // ist jetzt identisch zum Wert direkt nach der Formatierung. Netz-Freeze-Begründung
+    // siehe 09-BASELINE.md Abschnitt "Netz-Freeze", Ausnahme-Änderung 8.
+    strikethrough: { after: '<strike>Probetext</strike>', roundtrip: '<strike>Probetext</strike>' },
     list: { after: '<ul><li>Probetext</li></ul>', roundtrip: '<ul><li>Probetext</li></ul>' },
     font: {
         after: '<font face="Georgia, Times New Roman, serif">Probetext</font>',
@@ -400,7 +403,7 @@ test.describe('Persistenz-Roundtrip', () => {
         await expect(reopened.evaluate(el => el.textContent)).resolves.toContain(TESTTEXT);
     });
 
-    test('Durchgestrichen übersteht Speichern/Reload NICHT — vorbestehender Bug (A4, eingefroren)', async ({
+    test('Durchgestrichen übersteht Speichern/Reload (D-06, ehemals A4-Datenintegritäts-Bug — in Phase 10 behoben)', async ({
         page
     }) => {
         await openFreshWikiForm(page, 'RT Strike');
@@ -411,7 +414,7 @@ test.describe('Persistenz-Roundtrip', () => {
         );
         const reopened = await saveAndReopenWikiEntry(page, 'RT Strike');
         await expect(reopened).toHaveJSProperty('innerHTML', NETZ.strikethrough.roundtrip);
-        // Text selbst bleibt trotz verlorener Auszeichnung erhalten (kein Datenverlust)
+        // Text selbst bleibt erhalten UND die Auszeichnung übersteht den Zyklus jetzt (kein Datenverlust)
         await expect(reopened.evaluate(el => el.textContent)).resolves.toContain(TESTTEXT);
     });
 
