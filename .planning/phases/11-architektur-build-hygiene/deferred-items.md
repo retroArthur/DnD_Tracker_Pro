@@ -49,3 +49,19 @@ fix (rewriting this specific test's own heuristic to reuse the depth-tracking te
 "Recommended fix" above) remains unclaimed within Phase 11 and should be picked up opportunistically
 by whichever future change next touches `tests/build/test_build_deduplication.py`, or via a
 dedicated gap-closure plan. `.planning/WINDOWS.md` entry id 2 stays `open`.
+
+## 11-04 — Fixed: `test_build_generates_valid_javascript` false positive closed
+
+The orchestrator flagged this as a hard blocking precondition for 11-04's CI-gate deliverable (D-03):
+wiring `pytest tests/build/` into CI as a real gate is not meaningful if that gate is red on green
+code. `test_build_generates_valid_javascript`'s duplicate-declaration scan was rewritten to reuse the
+same brace-depth-tracking technique already proven in `build.py`'s `check_duplicate_functions()` and
+the post-build validator inside `build()` — declarations are now only matched at brace-depth 0
+*within the `<script>` block*, so `features/bestiary/bestiary-editor.js`'s two independently-scoped
+`var el` declarations (in an anonymous `forEach` callback and the `setBstInput` helper, both at
+depth > 0) are correctly no longer flagged as top-level duplicates.
+
+Verified: `python -m pytest tests/build/ -v` now shows `23 passed` (was `22 passed, 1 failed`).
+Regression-checked with two synthetic snippets: a genuine top-level `var X` redeclared twice is
+still caught (unchanged behavior), and two function-scoped `var el` declarations are correctly
+ignored (the fix). `.planning/WINDOWS.md` entry id 2 is now `fixed`.

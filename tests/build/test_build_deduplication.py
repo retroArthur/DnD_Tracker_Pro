@@ -166,16 +166,34 @@ var MAX_BACKUPS = window.MAX_BACKUPS;  // CONFLICT
         assert 'function init(' in content or 'async function init(' in content
 
         # Darf keine offensichtlichen Syntax-Fehler haben
-        # (zwei aufeinanderfolgende const/var/let mit gleichem Namen)
-        lines = content.split('\n')
+        # (zwei aufeinanderfolgende const/var/let mit gleichem Namen auf Klammertiefe 0)
+        #
+        # D-06-Nachzug (WINDOWS.md Eintrag 2, 11-04): dieselbe Klammertiefen-Technik
+        # wie check_duplicate_functions() (build.py) und die Post-Build-Validierung
+        # in build() — eine reine Text-Heuristik ohne Tiefen-Tracking erkennt
+        # funktionslokale Deklarationen (z.B. zwei unabhaengige `var el` in
+        # getrennten Closures von features/bestiary/bestiary-editor.js) faelschlich
+        # als Top-Level-Duplikate. Nur der <script>-Block wird gescannt, damit CSS-
+        # Klammern aus dem HTML-Kopf die Tiefenzaehlung nicht verfaelschen.
+        js_match = re.search(r'<script>(.*?)</script>', content, re.DOTALL)
+        assert js_match, "Kein <script>-Block gefunden"
+        lines = js_match.group(1).split('\n')
         prev_declarations = {}
+        depth = 0
 
         for i, line in enumerate(lines):
             stripped = line.strip()
             if stripped.startswith('//'):
                 continue
 
-            match = re.match(r'^(var|const|let)\s+(\w+)\s*=', stripped)
+            match = re.match(r'^(var|const|let)\s+(\w+)\s*=', stripped) if depth == 0 else None
+
+            for ch in line:
+                if ch == '{':
+                    depth += 1
+                elif ch == '}':
+                    depth -= 1
+
             if match:
                 var_type = match.group(1)
                 var_name = match.group(2)
