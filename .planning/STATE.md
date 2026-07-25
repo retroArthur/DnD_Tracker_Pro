@@ -129,6 +129,7 @@ Last activity: 2026-07-25 — 09-03-PLAN.md abgeschlossen (floating-Toolbar-Regr
 - [x] Phase 7 ausführen: `/gsd-execute-phase 7` ✓ (2026-06-20, 4/4 Pläne sequenziell auf `main`; Wave1 07-01 Foundation, Wave2 07-02 Soundboard-Engine + 07-04 Würfel-Statistiken, Wave3 07-03 Soundboard-UI; Verifier 14/14 must-haves; Code-Review CR-01 (kritisch: Soundboard-Klick-Aktionen tot via parseEntityId) + WR-01/WR-03 gefixt in Commit 40a9009; Build exit 0, 432 Unit-Tests grün)
 - [x] Phase 7 — 4 hörbare Audio-UAT ✓ (2026-06-20, 4/4; dabei 3 Bugs gefunden+gefixt: Doppel-Import 75aadfe, Audio-läuft-weiter b85dbe1, Live-Volume 801ed48)
 - [ ] Milestone v1.0 abschließen: `/gsd-complete-milestone` (alle 7 Phasen complete)
+- [x] Phase 9 — Regressionsnetz steht, D-04a Doppel-Grün geführt und protokolliert (09-BASELINE.md, Commit `c8239d7`) ✓ (2026-07-25, 09-05-PLAN.md; Netz eingefroren — Migration darf ab hier beginnen)
 
 ---
 
