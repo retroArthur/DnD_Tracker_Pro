@@ -5,15 +5,15 @@ milestone_name: Tech-Debt & Härtung
 current_phase: 9
 current_phase_name: Editor-Regressionsnetz & execCommand-Ablösung
 status: executing
-stopped_at: Completed 09-04-PLAN.md
-last_updated: "2026-07-25T03:16:05.512Z"
+stopped_at: Completed 09-05-PLAN.md
+last_updated: "2026-07-25T03:25:51.759Z"
 last_activity: 2026-07-25
 last_activity_desc: "09-03-PLAN.md abgeschlossen (floating-Toolbar-Regressionsnetz: Sichtbarkeit, 8 Buttons, Toggle, Teilselektion, Selects/Farbfelder, Roundtrips, UI-lose Zweige, Zählnachweis 21 execCommand)"
 progress:
   total_phases: 4
   completed_phases: 1
   total_plans: 13
-  completed_plans: 8
+  completed_plans: 9
   percent: 25
 ---
 
@@ -36,7 +36,7 @@ progress:
 ## Current Position
 
 Phase: 09 (editor-regressionsnetz-execcommand-abl-sung) — EXECUTING
-Plan: 5 of 9
+Plan: 6 of 9
 Status: Ready to execute
 Last activity: 2026-07-25 — 09-03-PLAN.md abgeschlossen (floating-Toolbar-Regressionsnetz: Sichtbarkeit, 8 Buttons, Toggle, Teilselektion, Selects/Farbfelder, Roundtrips, UI-lose Zweige, Zählnachweis 21 execCommand)
 
@@ -59,6 +59,7 @@ Last activity: 2026-07-25 — 09-03-PLAN.md abgeschlossen (floating-Toolbar-Regr
 | Phase 09 P02 | 21min | 3 tasks | 5 files |
 | Phase 09 P03 | 21min | 3 tasks | 1 files |
 | Phase 09 P04 | 18min | 3 tasks | 2 files |
+| Phase 09 P05 | 8min | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -135,8 +136,8 @@ Last activity: 2026-07-25 — 09-03-PLAN.md abgeschlossen (floating-Toolbar-Regr
 
 ## Session Continuity
 
-**Last session:** 2026-07-25T03:16:05.502Z
-**Stopped at:** Completed 09-04-PLAN.md
+**Last session:** 2026-07-25T03:25:51.747Z
+**Stopped at:** Completed 09-05-PLAN.md
 **Resume file:** None
 
 **Last action:** Komplette Milestone-UAT abgeschlossen (2026-06-20 → 2026-07-20): alle 5 offenen Human-UAT-Sessions via `/gsd-verify-work` durchgetestet — 07 (4/4), 06 (5/5), 05 (2/2), 01 (3/3), 02 (6/6). Alle 7 VERIFICATION.md jetzt `status: passed`. Dabei gefundene+gefixte Bugs: Soundboard-Doppel-Import (75aadfe), Audio-läuft-nach-Szene-Löschen (b85dbe1), Volume nicht live (801ed48), Manifest-CORS unter file:// (cd75093), Konsolen-Hygiene (c029f11), Datei-Backup schrieb nie bei Entity-CRUD — window.save-Wrapper strukturell wirkungslos für bare save() (1430e8c), generischer registerPostSaveHook + DM-Screen-Live-Sync-Umstellung + CLAUDE.md-Pattern-Korrektur (6ea8309), „Anderen Ordner wählen"-Button (cc2af9e). Nebenbei: Repo mit origin gemergt (7 Mai-Commits, alter pages.yml-Deploy entfernt 7f4858a), 348 Commits gepusht, GitHub-Pages-Deploy live verifiziert (PWA installierbar, SW-Update-Flow, Datei-Backup, Migrations-Wizard file://→PWA). Zusätzlich in der Session: Soundboard-Erweiterungen (Loop-Toggle/Crossfade-Loop/Fortschritt 6636297, Per-Track-Play noch offen als Design), gruppierte Navigation (3d77ec0).
@@ -184,6 +185,7 @@ _State initialized: 2026-06-11_
 - [Phase 9, 09-03]: highlight('none')-UI-lose-Test reproduziert exakt die 09-BASELINE.md-Messmethode (mark-basiertes set-highlight-color der statischen Toolbar zuerst, dann direkter window.formatText()-Aufruf) statt des eigenen span-basierten highlight-Zweigs — sonst waere das gemessene Markup nicht Baseline-konform
 - [Phase ?]: Sicherheits-Regressionstest (T-09-01) nutzt bewusst ein Einfuege-Fragment ohne <table>-Wrapper (faellt sicher auf insertText() zurueck); der gleiche Payload IN einer Tabelle ueberlebt empirisch bis in den Editor-DOM (Tabellen-Zweig entfernt keine on*-Attribute) - als WINDOWS.md-Fund vorgemerkt, nicht in Plan 09-04 behoben (Plan-Kriterium: kein Produktionscode geaendert)
 - [Phase ?]: dismissFloatingToolbar() ruft window.hideFloatingToolbar() direkt statt Escape - Escape wuerde in Modal-Editoren zusaetzlich das Modal schliessen und den Testfluss maskieren
+- [Phase ?]: D-04a Doppel-Grün-Nachweis: Netz zweimal ohne Retry gegen unveränderten Editor-Code (c8239d7) grün; Netz ab jetzt eingefroren
 
 ## Operator Next Steps
 
