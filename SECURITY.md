@@ -1,6 +1,6 @@
 ---
 threats_open: 0
-audit_date: 2026-07-25
+audit_date: 2026-07-26
 audited_phases: [1, 2, 9, 10]
 audit_level: L1 (ASVS Level 1, grep+source-verification depth)
 milestone: v1.1 Tech-Debt & Härtung
@@ -12,10 +12,20 @@ milestone: v1.1 Tech-Debt & Härtung
 > **Import/Export**, **Storage & IndexedDB**, **Datei-Backup** und **Rich-Text & innerHTML**.
 >
 > Dieser Audit läuft gegen den Code-Stand **nach** allen Sicherheits-Fixes des
-> Meilensteins v1.1 (Phase 10, abgeschlossen 2026-07-25). Vor dem Audit wurde die
-> volle Test-Suite grün gestellt: **554/554 Jest-Tests**, **315 passed / 2 skipped
-> Playwright-E2E-Tests** (die beiden Skips sind PWA-Tests, die HTTPS/localhost
-> voraussetzen und unabhängig vom Ergebnis dieses Audits sind).
+> Meilensteins v1.1 (Phase 10, abgeschlossen 2026-07-25; Gap-Closure-Runde Plan 10-06
+> korrigiert am 2026-07-26). Vor dem Audit wurde die volle Test-Suite grün gestellt:
+> **554/554 Jest-Tests**, **317 passed / 2 skipped Playwright-E2E-Tests** (die beiden
+> Skips sind PWA-Tests, die HTTPS/localhost voraussetzen und unabhängig vom Ergebnis
+> dieses Audits sind; die zwei zusätzlichen `passed`-Fälle gegenüber dem ursprünglichen
+> Stand von 315 stammen aus Plan 10-06s Mehrfach-Vektor- und Randfall-Regressionstest).
+>
+> **Korrektur (Plan 10-06, 2026-07-26):** dieser Abschnitt behauptete zuvor "Status: 0
+> offen" für den Tabellen-Einfügepfad, obwohl der Code-Review (`10-REVIEW.md` CR-01)
+> und die Phasen-Verifikation (`10-VERIFICATION.md`, Erfolgskriterium SC3) einen
+> reproduzierbaren, gleichen-Origin-Skriptausführungspfad ohne begründete
+> Annahme-Disposition fanden. Der Fund ist jetzt strukturell behoben (DOM-basierter
+> Allowlist-Sanitizer als letzte Stufe vor dem Einfügen) — Abschnitt 4, Befund 4 und
+> akzeptiertes Restrisiko 3 unten spiegeln den bewiesenen Endstand.
 >
 > **`threats_open: 0`** bedeutet: jeder in den vier Angriffsflächen erfasste Threat
 > ist entweder behoben (`mitigate`, verifiziert gegen den aktuellen Quelltext) oder
@@ -27,7 +37,7 @@ milestone: v1.1 Tech-Debt & Härtung
 > - [`01-stabilisierung/01-SECURITY.md`](.planning/phases/01-stabilisierung/01-SECURITY.md) — Import/Export, Storage & IndexedDB (retroaktives STRIDE-Register, 7 Threats)
 > - [`02-technik-fundament/02-SECURITY.md`](.planning/phases/02-technik-fundament/02-SECURITY.md) — Datei-Backup (retroaktives STRIDE-Register, 5 Threats)
 > - [`09-editor-regressionsnetz-execcommand-abl-sung/09-SECURITY.md`](.planning/phases/09-editor-regressionsnetz-execcommand-abl-sung/09-SECURITY.md) — Rich-Text & innerHTML, neue Editor-Implementierung (5 konsolidierte Threats aus ~24 Plan-Einträgen)
-> - [`10-security-h-rtung/10-SECURITY.md`](.planning/phases/10-security-h-rtung/10-SECURITY.md) — die Fixes selbst (22 Threats + Lieferketten-Eintrag)
+> - [`10-security-h-rtung/10-SECURITY.md`](.planning/phases/10-security-h-rtung/10-SECURITY.md) — die Fixes selbst (22 Threats + Lieferketten-Eintrag; plus 7 Gap-Closure-Zeilen T-10-23..T-10-29 aus Plan 10-06)
 
 ---
 
@@ -73,10 +83,11 @@ milestone: v1.1 Tech-Debt & Härtung
 ## 4. Rich-Text & innerHTML
 
 **Geprüfte Dateien und Codepfade:**
-- `ui/editors/rich-text.js` — `handleEditorPaste()` (Zeile 952) mit dem Tabellenzweig (Zeilen ~960-989, inkl. der in Phase 10 ergänzten Ereignis-Attribut-Bereinigung); `insertHtmlAtSelection()` (Zeile 850, alle drei aktuellen Aufrufstellen geprüft); die Selection/Range-Formatierungshilfsfunktionen aus der execCommand-Ablösung (`wrapRangeWithElement`, `closestEditorAncestor`, `clearInlineFormattingAtSelection`, `applyFontFamilyToSelection`/`applyFontSizeToSelection`); Link-Einfügen (Zeile 1240, `prompt()` → `link.href`); `saveSpell()` (Zeile 1632, `sanitizeHTML(descHtml)` an Zeile 1684)
-- `utils/basic.js` — `sanitizeHTML()` (Zeile 40): die maßgebliche Speichern-Grenze. `allowedTags` (Zeile 46) enthält bewusst KEIN `img`, `script`, `iframe`, `object`, `embed`, `form`, `input`, `style`, `link`, `meta`, `base`, `svg`, `math` — nicht erlaubte Tags werden auf ihren Textinhalt reduziert, nie als lebendes Element belassen. `href` wird protokoll- UND formgeprüft (Zeile 167: nur `http://`/`https://`/`/`/`#`/`./`). Ereignis-Attribute (`on*`) werden bedingungslos blockiert (Zeile 149). `src` steht nie auf der Attribut-Erlaubnisliste (Kommentar Zeile 205).
+- `ui/editors/rich-text.js` — `handleEditorPaste()` (Zeile 952) mit dem Tabellenzweig: die Kosmetik-Kette (Rausch-Tags, Layout-Attribute, Default-Stil-Injektion — Zeilen ~968-994, ausdrücklich KEINE Sicherheitskontrolle mehr seit Plan 10-06) mündet jetzt in `window.sanitizeHTML()` als LETZTE Transformation vor `insertHtmlAtSelection()` — **derselbe Sanitizer, der auch die Speichern-Grenze bildet** (nicht länger eine separate, schwächere Bereinigung). Fail-closed-Rückfall auf `insertTextAtSelection()`, falls der Sanitizer nicht erreichbar ist oder nur Leerraum liefert. Die in Plan 10-04 ergänzten, leerraum-abhängigen Ereignis-Attribut-Regexe wurden entfernt (waren umgehbar, siehe Befund 4). `insertHtmlAtSelection()` (Zeile 850, alle drei aktuellen Aufrufstellen geprüft; Kommentar zur Nicht-Ausführung von Skript-Inhalten korrigiert — gilt nur für parser-erzeugte `<script>`-Elemente, NICHT für `<iframe srcdoc>`); die Selection/Range-Formatierungshilfsfunktionen aus der execCommand-Ablösung (`wrapRangeWithElement`, `closestEditorAncestor`, `clearInlineFormattingAtSelection`, `applyFontFamilyToSelection`/`applyFontSizeToSelection`); Link-Einfügen (Zeile 1240, `prompt()` → `link.href`); `saveSpell()` (Zeile 1632, `sanitizeHTML(descHtml)` an Zeile 1684)
+- `utils/basic.js` — `sanitizeHTML()` (Zeile 58): die maßgebliche Speichern-Grenze UND (seit Plan 10-06) die maßgebliche Grenze des Tabellen-Einfügepfads. `allowedTags` (Zeile 72) enthält bewusst KEIN `img`, `script`, `iframe`, `object`, `embed`, `form`, `input`, `style`, `link`, `meta`, `base`, `svg`, `math` — nicht erlaubte Tags werden auf ihren Textinhalt reduziert, nie als lebendes Element belassen. `href` wird protokoll- UND formgeprüft (Zeile 168ff.: nur `http://`/`https://`/`/`/`#`/`./`), entitäts-kodierte Protokollwerte eingeschlossen (der DOM-Parser dekodiert Attributwerte vor der Prüfung). Ereignis-Attribute (`on*`) werden bedingungslos blockiert (Zeile 150). `src` steht nie auf der Attribut-Erlaubnisliste.
+- Beleg für den Tabellen-Einfügepfad: `tests/e2e/features/editor-insert.spec.js` — "Sicherheits-Regression: Tabellen-Paste mit eingebettetem Rahmen, Vektorgrafik und Skript-Protokoll landet weder ausführbar noch als verbotenes Element im DOM (SC3, CR-01)" (rot vor dem Fix, grün danach) sowie der begleitende Randfall-Test für den Fail-closed-Zweig.
 
-**Erfasste Threats:** 27 (5 aus dem konsolidierten Phase-9-Register, 22 aus dem Phase-10-Register) — 20 `mitigate` (behoben), 6 `accept`, 1 `mitigate`/Prozess (Ledger-Status).
+**Erfasste Threats:** 34 (5 aus dem konsolidierten Phase-9-Register, 22 aus dem ursprünglichen Phase-10-Register, 7 aus der Gap-Closure-Runde Plan 10-06: T-10-23..T-10-29) — 26 `mitigate` (behoben), 7 `accept`, 1 `mitigate`/Prozess (Ledger-Status).
 
 **Status:** 0 offen.
 
@@ -89,7 +100,7 @@ Alle folgenden Befunde sind mit rot-vor-dem-Fix / grün-danach-Beweisen (E2E und
 1. **Import-Ausführungspfad über die Wiki-Anzeige** (CR-01 aus `01-REVIEW.md`, kritisch): `renderMarkdownInContent()` gab HTML ungesäubert zurück; der Wiki-Anzeigepfad rief kein `sanitizeHTML()` auf. Ein `<img src=x onerror=…>` im importierten Wiki-Inhalt führte beim Öffnen des Eintrags ohne Klick aus. **Fix:** `renderMarkdownInContent()` sanitisiert jetzt identisch zu ihrem Zwilling `markdownToHtml()`; `renderWikiDetail()`s Aufrufreihenfolge wurde gedreht (Sanitisierung vor Anker-Injektion). Plan 10-01.
 2. **Import-Feldbereinigung an beiden Eintrittspunkten und in beiden Zweigen:** Weder `executeImport()` noch `importDataGlobal()` sanitisierten importierte HTML-tragende Felder vor der Persistenz — Rohdaten-at-Rest blieben unsauber, auch nachdem die Anzeige-Grenze geschlossen war (mehrere Render-Pfade vertrauen auf saubere Speicherinhalte). **Fix:** `HTML_FIELDS_BY_TYPE` + `sanitizeImportedItem()` an beiden Eintrittspunkten verdrahtet, für BEIDE Zweige des globalen Imports (neue Kampagne UND Überschreiben). Plan 10-02.
 3. **Fehlender Rückgängig-Punkt beim überschreibenden Import (WR-03):** `importDataGlobal()`s Überschreib-Zweig führte die destruktivste mögliche Operation (Komplett-Überschreibung aller Kampagnendaten) ohne `saveUndoState()` und ohne Sicherungskopie aus — nicht per Strg+Z rückgängig zu machen. **Fix:** `saveUndoState()` + `createAutoBackup()` vor `Object.assign(D, imp)`, nach dem Muster von `executeImport()`. Plan 10-02.
-4. **Einfügepfad für Tabellen-Markup (Broken-Windows-Ledger-Eintrag 1):** Der Tabellenzweig von `handleEditorPaste()` entfernte eine feste Liste von Attributen (`class`/`style`/`width`/…), aber NICHT Ereignis-Attribute (`on*`) — ein `onerror`-Attribut in eingefügtem Tabellen-HTML überlebte bis in den Editor-DOM und feuerte. **Fix:** dasselbe Ereignis-Attribut-Regex-Paar wie `sanitizeHTML()` an den Anfang der Bereinigungskette gesetzt. Plan 10-04, Ledger-Eintrag geschlossen (`open_count: 0`).
+4. **Einfügepfad für Tabellen-Markup (Broken-Windows-Ledger-Eintrag 1):** Der Tabellenzweig von `handleEditorPaste()` entfernte eine feste Liste von Attributen (`class`/`style`/`width`/…), aber NICHT Ereignis-Attribute (`on*`) — ein `onerror`-Attribut in eingefügtem Tabellen-HTML überlebte bis in den Editor-DOM und feuerte. **Ursprünglicher Fix (Plan 10-04, unvollständig):** dasselbe Ereignis-Attribut-Regex-Paar wie `sanitizeHTML()` an den Anfang der Bereinigungskette gesetzt, Ledger-Eintrag als geschlossen geführt (`open_count: 0`). Dieser Fix war **nicht vollständig**: beide Muster verlangten ein führendes Leerzeichen vor dem Attribut und ließen sich durch ein direkt anschließendes Attribut umgehen; darüber hinaus gab es weder eine Tag-Erlaubnisliste noch eine Protokollprüfung im Tabellenzweig. Ein eingebettetes Rahmen-Element mit Inline-Dokument-Attribut (`<iframe srcdoc>`) in eingefügtem Tabellen-Markup führte dadurch fremden Code im Origin der App aus — sofort beim Einfügen, ohne Klick, ohne Speichern, ohne Neuladen. Der Code-Review (`10-REVIEW.md` CR-01) und die Phasen-Verifikation (`10-VERIFICATION.md`, Kriterium SC3) deckten das nach dem ursprünglichen Audit auf; drei unabhängige Prüfer reproduzierten den Vektor empirisch gegen das Produktions-Bundle, unter anderem per echtem Zwischenablage-Einfügen (Strg+V). **Vollständiger Fix (Plan 10-06, Gap-Closure):** der Tabellenzweig führt sein bereinigtes Markup jetzt durch den projektweiten, DOM-basierten Allowlist-Sanitizer `window.sanitizeHTML()` (`utils/basic.js`) als LETZTE Transformation vor dem Einfügen — dieselbe Kontrolle, die bereits die Speichern-Grenze bildet. Die umgehbaren Ereignis-Attribut-Regexe wurden entfernt; ein Fail-closed-Rückfall auf reinen Klartext greift, falls der Sanitizer nicht erreichbar ist oder keinen Inhalt liefert. Beleg: neuer Mehrfach-Vektor-Regressionstest in `tests/e2e/features/editor-insert.spec.js` (rot vor dem Fix, grün danach) plus begleitender Randfall-Test.
 5. **Zauber-Speicherpfad:** `saveSpell()`s Beschreibungsfeld wurde ungesäubert gespeichert, inkonsistent zum unmittelbar benachbarten Notizfeld. **Fix:** `sanitizeHTML(descHtml)` vor der Zuweisung, identisches Muster zum Notizfeld. Plan 10-04.
 6. **Datenintegritätsfehler bei durchgestrichenem Text:** `<strike>` fehlte in der `sanitizeHTML`-Erlaubnisliste — Strikethrough-Formatierung ging beim Speichern-/Reload-Zyklus verloren (in Phase 9 als Datenintegritäts-Bug eingefroren, für Phase 10 vorgemerkt). **Fix:** `<strike>` synchron in `utils/basic.js` UND `utils/testable-utils.js` ergänzt, abgesichert durch einen neuen Paritätstest (61 Tests), der künftige Whitelist-Drift zwischen den beiden Sanitizer-Kopien strukturell verhindert. Plan 10-03.
 
@@ -103,8 +114,8 @@ Weder `index.html` noch der `build.py`-HTML-Template emittieren einen CSP-Meta-T
 **2. Breite der Klassen- und Stil-Erlaubnis im Sanitizer.**
 `sanitizeHTML()` (`utils/basic.js:59-69`) erlaubt beliebige `class`-Attribute auf sanitisiertem Rich-Text-Content sowie eine Reihe von Layout-relevanten `style`-Eigenschaften (`width`, `margin`, `padding`, u.a.). Nutzer-Content könnte damit theoretisch App-eigene CSS-Klassen (z. B. Modal-/Overlay-Klassen) für UI-Redressing übernehmen oder das Layout brechen. **Begründung:** Einzelnutzer-Anwendung — der einzige, der Rich-Text-Inhalte erzeugt, ist der Spielleiter selbst, für seine eigene Kampagne. Es gibt kein Multi-Tenant-Szenario, in dem ein böswilliger Mitspieler Inhalte einschleusen könnte, die der DM ungeprüft übernimmt. Tags bleiben allowlisted, Ereignis-Handler und gefährliche Protokolle bleiben entfernt — keine Skript-Ausführung ist möglich, nur Layout-Beeinträchtigung im schlimmsten Fall.
 
-**3. Verbleibende Sprödigkeit der regexbasierten Bereinigung im Einfüge-Handler.**
-Der Tabellenzweig von `handleEditorPaste()` (`ui/editors/rich-text.js`) bereinigt eingefügtes HTML weiterhin über eine Kette regulärer Ausdrücke (nicht über den DOMParser-basierten `sanitizeHTML()`) — anfällig für Grenzfälle wie verschachtelte Anführungszeichen oder entitäts-kodierte Attributwerte in exotischen Paste-Quellen (T-10-17). **Begründung:** Der Phase-10-Auftrag (D-05) war bewusst minimalinvasiv — nur das fehlende Ereignis-Attribut-Paar ergänzen, kein Umbau des Handlers auf einen DOMParser-Ansatz (das hätte das Risiko einer Verhaltensänderung im eingefrorenen 90-Test-Editor-Netz getragen). Das Restrisiko ist strukturell begrenzt: `sanitizeHTML()` bleibt die maßgebliche Grenze beim Speichern (DOMParser-basiert, teilt diese Schwäche nicht) — ein Umgehen der Paste-Zeit-Bereinigung kann höchstens bis in den TRANSIENTEN Editor-DOM vor dem Speichern gelangen, nicht in die persistierten Kampagnendaten.
+**3. Verbleibende Sprödigkeit der regexbasierten Kosmetik-Kette vor dem Sanitizer (T-10-29, korrigiert 2026-07-26, Plan 10-06).**
+Diese Begründung beschrieb bis zur Gap-Closure-Runde eine bewusst beibehaltene regexbasierte SICHERHEITSKONTROLLE im Einfüge-Handler — das war der Fund, den Plan 10-06 behebt (siehe Befund 4 oben). Der Tabellenzweig von `handleEditorPaste()` (`ui/editors/rich-text.js`) durchläuft eine Kette regulärer Ausdrücke weiterhin, aber ausschließlich zur DARSTELLUNGS-Kosmetik (Rausch-Tags entfernen, Default-Tabellenoptik injizieren) — NICHT mehr zur Sicherheitsentscheidung. Diese trifft seit Plan 10-06 ausschließlich der nachgelagerte, DOM-basierte Allowlist-Sanitizer `window.sanitizeHTML()`, der als letzte Stufe vor dem Einfügen läuft. **Verbleibendes, echtes Restrisiko:** die Kosmetik-Kette kann in Grenzfällen (verschachtelte Anführungszeichen, exotische Paste-Quellen) die DARSTELLUNG eingefügter Tabellen beeinträchtigen — verlorene Auszeichnung, unerwartete Zellstruktur. **Begründung, warum das akzeptabel bleibt:** die Kette kann kein verbotenes Element (`iframe`/`object`/`embed`/`svg`/`form`/`img`) und kein gefährliches Protokoll mehr einführen, weil der Allowlist-Sanitizer nach ihr läuft und diese Schwäche nicht teilt (DOMParser-basiert, entitäts-kodierte Attributwerte werden vor der Protokollprüfung dekodiert). Ein Umbau der Kosmetik-Kette selbst auf einen DOMParser-Ansatz würde keinen Sicherheitsgewinn mehr bringen (die Sicherheitsentscheidung liegt bereits beim Sanitizer) und nur das Risiko einer Verhaltensänderung im eingefrorenen Editor-Netz tragen — deshalb bewusst nicht angegangen. Dokumentiert als T-10-29/AR-10-05 in `10-SECURITY.md`.
 
 ### Dokumentierte Folgen (kein Stub, kein offener Fehler)
 
@@ -129,4 +140,4 @@ Sicherheitsrelevante Funde bitte über ein GitHub-Issue im Repository melden (La
 
 ---
 
-*Konsolidiert aus den vier Per-Phasen-Audit-Artefakten am 2026-07-25. Nächster Audit fällig bei substanzieller Änderung einer der vier Angriffsflächen oder auf Anfrage.*
+*Konsolidiert aus den vier Per-Phasen-Audit-Artefakten am 2026-07-25; Abschnitt 4, Befund 4 und akzeptiertes Restrisiko 3 korrigiert am 2026-07-26 (Plan 10-06 Gap-Closure, schließt SC3 aus `10-VERIFICATION.md`). Nächster Audit fällig bei substanzieller Änderung einer der vier Angriffsflächen oder auf Anfrage.*
