@@ -469,6 +469,70 @@ function formatText(elementId, format, value) {
         }
     }
 }
+// Migrationsstufe 2 (Plan 09-07, Gruppe C): Schriftart/-groesse der statischen
+// Toolbar werden direkt am Selektionsziel erzeugt statt ueber die deprecated
+// Editier-Kommando-API + Nachbearbeitungs-Umweg (09-BASELINE.md Zeile 371/393).
+// Wiederverwendet von der floating Toolbar (Plan 09-07, Gruppe D).
+//
+// Doppel-Dispatch-Schutz: EventDelegation._handleChange UND _handleInput
+// feuern BEIDE fuer <select data-action="...">-Elemente (ui/event-delegation.js,
+// ausserhalb des Scopes dieses Plans/Datei) — bei jeder Auswahl ruft die
+// statische Toolbar diese Funktionen also zweimal synchron hintereinander auf.
+// Die alte deprecated Editier-Kommando-API war dagegen zufaellig immun, weil
+// sie auf bereits identisch formatiertem Text ein No-Op ist. Die reine
+// Selection/Range-Ersetzung erzeugt ohne Schutz bei jedem Aufruf einen NEUEN
+// <font>-Wrapper und verschachtelt sich bei doppeltem Dispatch — der
+// `_lastFontCallKey`-Guard unten unterdrueckt den zweiten, redundanten Aufruf
+// mit identischen Parametern innerhalb desselben synchronen Tasks
+// (Microtask-Reset), damit das erzeugte Markup byte-gleich zur Baseline bleibt.
+let _lastFontCallKey = null;
+function applyFontFamilyToSelection(editor, familyValue) {
+    const callKey = 'family|' + editor.id + '|' + familyValue;
+    if (_lastFontCallKey === callKey) return;
+    _lastFontCallKey = callKey;
+    Promise.resolve().then(() => {
+        if (_lastFontCallKey === callKey) _lastFontCallKey = null;
+    });
+    const selection = window.getSelection();
+    if (!selection || !selection.rangeCount) return;
+    const range = selection.getRangeAt(0);
+    if (!range.toString()) return;
+    // Die alte deprecated 'fontName'-Kommando-API strippt Anfuehrungszeichen
+    // aus mehrteiligen Font-Stacks (empirisch verifiziert am gebauten Bundle:
+    // 'Georgia, "Times New Roman", serif' -> 'Georgia, Times New Roman, serif',
+    // "'Roboto', Arial, sans-serif" -> 'Roboto, Arial, sans-serif') —
+    // reproduziert hier bewusst, damit das erzeugte Markup byte-gleich zur
+    // Baseline bleibt.
+    const faceValue = familyValue.replace(/["']/g, '');
+    const existingFont = closestEditorAncestor(range.commonAncestorContainer, 'font');
+    if (existingFont && existingFont.closest('.rich-editor, .spell-editor, .dialog-text')) {
+        existingFont.setAttribute('face', faceValue);
+        return;
+    }
+    const fontEl = document.createElement('font');
+    fontEl.setAttribute('face', faceValue);
+    wrapRangeWithElement(range, fontEl);
+}
+function applyFontSizeToSelection(editor, sizeValue) {
+    const callKey = 'size|' + editor.id + '|' + sizeValue;
+    if (_lastFontCallKey === callKey) return;
+    _lastFontCallKey = callKey;
+    Promise.resolve().then(() => {
+        if (_lastFontCallKey === callKey) _lastFontCallKey = null;
+    });
+    const selection = window.getSelection();
+    if (!selection || !selection.rangeCount) return;
+    const range = selection.getRangeAt(0);
+    if (!range.toString()) return;
+    const existingFont = closestEditorAncestor(range.commonAncestorContainer, 'font');
+    if (existingFont && existingFont.closest('.rich-editor, .spell-editor, .dialog-text')) {
+        existingFont.style.fontSize = sizeValue;
+        return;
+    }
+    const fontEl = document.createElement('font');
+    fontEl.style.fontSize = sizeValue;
+    wrapRangeWithElement(range, fontEl);
+}
 function setEditorFont(elementIdOrSelect, selectElOrValue) {
     // Zwei Aufrufer mit unterschiedlicher Signatur (09-BASELINE.md Fund 2):
     // - ui/actions/system-actions.js 'set-editor-font' übergibt (editorId: string, fontValue: string)
@@ -495,7 +559,7 @@ function setEditorFont(elementIdOrSelect, selectElOrValue) {
         }
     }
     const fonts = window.EDITOR_FONTS || {};
-    document.execCommand('fontName', false, fonts[fontKey] || fonts['arial']);
+    applyFontFamilyToSelection(editor, fonts[fontKey] || fonts['arial']);
 }
 function setEditorFontSize(elementIdOrSelect, selectElOrValue) {
     // Gleiche Zwei-Aufrufer-Signatur wie setEditorFont() (09-BASELINE.md Fund 2)
@@ -520,12 +584,7 @@ function setEditorFontSize(elementIdOrSelect, selectElOrValue) {
             selection.addRange(editorSelectSavedRange.cloneRange());
         }
     }
-    document.execCommand('fontSize', false, '7');
-    const fontElements = editor.querySelectorAll('font[size="7"]');
-    fontElements.forEach(el => {
-        el.removeAttribute('size');
-        el.style.fontSize = sizeValue;
-    });
+    applyFontSizeToSelection(editor, sizeValue);
 }
 function clearEditorFormatting(elementId) {
     const editor = $(elementId);
