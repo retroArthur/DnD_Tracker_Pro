@@ -209,16 +209,25 @@ test.describe('Editor-Regressionsnetz — Insert-Call-Sites (Wiki)', () => {
          * Text ohne jedes Markup — kein Skript-Element, kein on*-Attribut kann
          * dadurch je im Editor-DOM landen.
          *
-         * Hinweis (Phase 10, Plan 04 — behoben, Broken-Windows-Ledger-Eintrag 1):
-         * Wird dasselbe Ereignis-Attribut stattdessen INNERHALB eines <table>-Tags
+         * Hinweis (Endstand, Plan 10-06 — Tabellenzweig): Wird dasselbe
+         * Ereignis-Attribut stattdessen INNERHALB eines <table>-Tags
          * eingefügt, griff bis Phase 10 der Tabellen-insertHTML-Zweig (Zeile
-         * 958ff.) — dessen Attribut-Bereinigungs-Regex entfernte damals nur eine
-         * feste Liste harmloser Attribute (class/style/width/...), NICHT
+         * 958ff.) — dessen Attribut-Bereinigungs-Regex entfernte damals nur
+         * eine feste Liste harmloser Attribute (class/style/width/...), NICHT
          * on*-Attribute. Ein on*-Attribut überlebte dort empirisch bis in den
-         * Editor-DOM und feuerte (Bild-Fehler-Event). Dieser vorbestehende, von
-         * dieser Migration unabhängige Fund ist jetzt behoben — siehe den neuen
-         * Testfall unten ("Sicherheits-Regression: Ereignis-Attribut in
-         * eingefügtem Tabellen-Markup ...") für den Tabellenzweig-Beweis.
+         * Editor-DOM und feuerte (Bild-Fehler-Event). Der in Plan 10-04
+         * ergänzte, leerraum-abhängige Ereignis-Attribut-Regex-Fix erwies
+         * sich seinerseits als umgehbar (10-REVIEW.md CR-01: kein
+         * trennendes Leerzeichen vor dem Attribut, dazu ein komplett
+         * fehlender Tag-Allowlist- und Protokollfilter — ein eingebettetes
+         * Rahmen-Element mit Inline-Dokument-Attribut führte dadurch fremden
+         * Code im App-Origin aus). Seit Plan 10-06 führt der Tabellenzweig
+         * sein Markup stattdessen durch den projektweiten DOM-basierten
+         * Allowlist-Sanitizer (window.sanitizeHTML(), utils/basic.js) als
+         * LETZTE Stufe vor dem Einfügen — siehe den Mehrfach-Vektor-Testfall
+         * unten ("Sicherheits-Regression: Tabellen-Paste mit eingebettetem
+         * Rahmen, Vektorgrafik und Skript-Protokoll ... (SC3, CR-01)") für
+         * den maßgeblichen Beweis.
          */
         test('Sicherheits-Regression: Einfüge-Fragment mit Ereignis-Attribut und Skript-Element landet nicht ausführbar im DOM', async ({
             page
@@ -286,23 +295,26 @@ test.describe('Editor-Regressionsnetz — Insert-Call-Sites (Wiki)', () => {
 
         /**
          * Sicherheits-Regression (Tabellenzweig, Broken-Windows-Ledger-Eintrag
-         * 1, Phase 10 Plan 04): Spiegelt den Sicherheitstest oben, aber mit
-         * einer Nutzlast MIT Tabellen-Wrapper — genau die Konstellation, die
-         * laut Ledger-Eintrag 1 den Tabellenzweig von handleEditorPaste()
-         * trifft. Vor dem Fix in dieser Phase überlebte ein Ereignis-Attribut
-         * aus eingefügtem Tabellen-HTML unverändert bis in den Editor-DOM und
-         * feuerte (empirisch bestätigt, siehe .planning/WINDOWS.md Eintrag 1
-         * und den Hinweis-Absatz oben).
+         * 1, ursprünglich Phase 10 Plan 04): Spiegelt den Sicherheitstest
+         * oben, aber mit einer Nutzlast MIT Tabellen-Wrapper — genau die
+         * Konstellation, die laut Ledger-Eintrag 1 den Tabellenzweig von
+         * handleEditorPaste() trifft. Vor dem ursprünglichen Fix überlebte
+         * ein Ereignis-Attribut aus eingefügtem Tabellen-HTML unverändert bis
+         * in den Editor-DOM und feuerte (empirisch bestätigt, siehe
+         * .planning/WINDOWS.md Eintrag 1 und den Hinweis-Absatz oben).
          *
-         * Hinweis zum <img>-Element: Der Fix dieser Phase entfernt gezielt nur
-         * das Ereignis-Attribut (D-05, minimalinvasiver Auftrag — der Handler
-         * wird NICHT auf einen DOMParser-Ansatz umgebaut, siehe Plan-Prohibitions).
-         * Das <img>-Element selbst bleibt danach als inertes, nicht
-         * ausführendes Markup im DOM bestehen (kein Handler mehr angehängt).
-         * Geprüft wird deshalb, dass KEIN Element im Editor (auch nicht das
-         * <img> selbst) noch ein Attribut trägt, dessen Name mit "on" beginnt
-         * — das ist die vollständige, scope-konforme Fassung von "kein
-         * ausführbares Bild-Element" für einen minimalinvasiven Attribut-Fix.
+         * Stand nach Plan 10-06: der Tabellenzweig führt sein Markup jetzt
+         * durch den projektweiten DOM-basierten Allowlist-Sanitizer
+         * (window.sanitizeHTML(), utils/basic.js) als letzte Stufe vor dem
+         * Einfügen. Der frühere Hinweis, dass das <img>-Element selbst als
+         * inertes Markup im DOM bestehen bleibt (Plan-10-04-Minimal-Fix-Scope,
+         * kein DOMParser-Umbau), ist gegenstandslos: der Allowlist-Sanitizer
+         * reduziert nicht erlaubte Elemente wie <img> auf ihren Textinhalt —
+         * das Bild-Element existiert nach dem Einfügen gar nicht mehr. Die
+         * Assertion unten (kein Element trägt ein Attribut, dessen Name mit
+         * "on" beginnt) gilt unter der neuen Kontrolle weiterhin und ist
+         * dadurch strenger erfüllt, nicht schwächer — sie war zeichengleich
+         * bereits vor dieser Kommentar-Korrektur vorhanden (D-04a, D-16).
          */
         test('Sicherheits-Regression: Ereignis-Attribut in eingefügtem Tabellen-Markup landet nicht ausführbar im DOM (Tabellenzweig, Broken-Windows #1)', async ({
             page
