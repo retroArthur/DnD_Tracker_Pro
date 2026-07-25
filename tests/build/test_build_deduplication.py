@@ -16,7 +16,7 @@ from pathlib import Path
 # Add project root to path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-from build import deduplicate_window_assignments, build, check_duplicate_functions, load_module_list, require_files_exist
+from build import deduplicate_window_assignments, build, check_duplicate_functions, load_module_list, require_files_exist, load_template_list
 
 
 class TestBuildDeduplication:
@@ -328,6 +328,57 @@ var MAX_BACKUPS = window.MAX_BACKUPS;  // CONFLICT
 
         with pytest.raises(SystemExit):
             load_module_list(str(fake_loader))
+
+    def test_ssot_template_list_parses_from_loader(self):
+        """
+        SSOT (ARCH-01/D-01/D-04): load_template_list() liefert die vollstaendige,
+        geordnete Template-Liste ausschliesslich aus loader.js's TEMPLATES-Array.
+        """
+        loader_path = Path(__file__).parent.parent.parent / 'loader.js'
+        project_root = Path(__file__).parent.parent.parent
+
+        templates = load_template_list(str(loader_path))
+
+        assert len(templates) == 12, f"Erwartet 12 Templates, gefunden {len(templates)}"
+
+        # Reihenfolge muss der Reihenfolge im Datei-Text entsprechen
+        loader_content = loader_path.read_text(encoding='utf-8')
+        positions = [loader_content.index(f"'{t}'") for t in templates]
+        assert positions == sorted(positions), "Template-Reihenfolge weicht von der loader.js-Textreihenfolge ab"
+
+        # Jeder Pfad muss relativ zum Projektwurzel-Verzeichnis existieren
+        missing = [t for t in templates if not (project_root / t).exists()]
+        assert missing == [], f"Fehlende Template-Dateien: {missing}"
+
+    def test_missing_template_file_aborts_build(self, monkeypatch):
+        """
+        D-02: Ein Build-Lauf, dessen Template-Liste einen nicht existierenden Pfad
+        enthaelt, endet mit Exit-Code != 0 UND laesst eine vorher vorhandene
+        Ausgabedatei unveraendert bzw. erzeugt keine neue.
+        """
+        import build as build_module
+
+        dist_file = Path(__file__).parent.parent.parent / 'dist' / 'dnd-tracker-bundled.html'
+        existed_before = dist_file.exists()
+        content_before = dist_file.read_bytes() if existed_before else None
+
+        real_load_template_list = build_module.load_template_list
+
+        def fake_load_template_list(loader_path):
+            templates = real_load_template_list(loader_path)
+            return templates + ['assets/templates/__does-not-exist__.html']
+
+        monkeypatch.setattr(build_module, 'load_template_list', fake_load_template_list)
+
+        with pytest.raises(SystemExit):
+            build_module.build()
+
+        if existed_before:
+            assert dist_file.read_bytes() == content_before, \
+                "Vorhandene Ausgabedatei wurde trotz Abbruch veraendert"
+        else:
+            assert not dist_file.exists(), \
+                "Es wurde eine neue Ausgabedatei geschrieben, obwohl der Build abgebrochen ist"
 
     def test_duplicate_function_check_detects_duplicate(self, tmp_path):
         """
