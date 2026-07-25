@@ -199,3 +199,115 @@ test.describe('Smoke — floating Toolbar', () => {
         });
     }
 });
+
+/**
+ * Markdown-Live-Shortcuts (Nachbarschaft, muss unverändert bleiben)
+ *
+ * Die Markdown-Kette (ui/editors/markdown-shortcuts.js) selbst ist KEIN
+ * Migrationsgegenstand dieser Phase — sie nutzt die deprecated
+ * execCommand-API nicht (processMarkdownShortcuts() ersetzt Textknoten direkt
+ * über DOM-Manipulation, kein document.execCommand-Aufruf). Sie wird hier als
+ * Nachbarschaft abgesichert: Success Criterion 4 der Phase verlangt, dass sie
+ * nach der execCommand-Migration (Pläne 09-06..09-09) unverändert funktioniert.
+ */
+test.describe('Markdown-Live-Shortcuts (Nachbarschaft, muss unverändert bleiben)', () => {
+    async function ensureMarkdownShortcutsEnabled(page) {
+        // Dokumentiertes Setup-Vehikel (D-06): der geprüfte Pfad ist die
+        // Tastatureingabe, nicht das Setzen der Einstellung selbst.
+        await page.evaluate(() => {
+            if (!window.D.settings) window.D.settings = {};
+            window.D.settings.enableMarkdownShortcuts = true;
+        });
+    }
+
+    test('Fett-Muster (**text**) im Wiki-Editor', async ({ page }) => {
+        await gotoBundleFresh(page);
+        await ensureMarkdownShortcutsEnabled(page);
+        await page.evaluate(() => window.switchView('wiki'));
+        await page.waitForSelector('#view-wiki', { state: 'visible' });
+        await page.click('[data-action="call"][data-value="showWikiForm"]');
+        const editor = page.locator('#wiki-content');
+        await editor.click();
+        await editor.pressSequentially('**fett** ');
+        await page.waitForFunction(() => document.getElementById('wiki-content')?.querySelector('b'));
+        await expect(editor).toHaveJSProperty('innerHTML', '<b>fett</b>&nbsp;');
+    });
+
+    test('Kursiv-Muster (*text*) im Wiki-Editor', async ({ page }) => {
+        await gotoBundleFresh(page);
+        await ensureMarkdownShortcutsEnabled(page);
+        await page.evaluate(() => window.switchView('wiki'));
+        await page.waitForSelector('#view-wiki', { state: 'visible' });
+        await page.click('[data-action="call"][data-value="showWikiForm"]');
+        const editor = page.locator('#wiki-content');
+        await editor.click();
+        await editor.pressSequentially('*kursiv* ');
+        await page.waitForFunction(() => document.getElementById('wiki-content')?.querySelector('i'));
+        await expect(editor).toHaveJSProperty('innerHTML', '<i>kursiv</i>&nbsp;');
+    });
+
+    test('Durchgestrichen-Muster (~~text~~) im Wiki-Editor', async ({ page }) => {
+        await gotoBundleFresh(page);
+        await ensureMarkdownShortcutsEnabled(page);
+        await page.evaluate(() => window.switchView('wiki'));
+        await page.waitForSelector('#view-wiki', { state: 'visible' });
+        await page.click('[data-action="call"][data-value="showWikiForm"]');
+        const editor = page.locator('#wiki-content');
+        await editor.click();
+        await editor.pressSequentially('~~streich~~ ');
+        await page.waitForFunction(() => document.getElementById('wiki-content')?.querySelector('s'));
+        await expect(editor).toHaveJSProperty('innerHTML', '<s>streich</s>&nbsp;');
+    });
+
+    test('Fett-Muster im zweiten Entity-Editor (NPCs) — Beweis, dass die Verdrahtung nicht nur im Referenz-Editor greift', async ({
+        page
+    }) => {
+        await gotoBundleFresh(page);
+        await ensureMarkdownShortcutsEnabled(page);
+        await openTabInGroup(page, 'npcs');
+        await page.click('[data-action="show-modal"][data-value="npc-modal"]');
+        const editor = page.locator('#npc-desc');
+        await expect(editor).toBeVisible();
+        await editor.click();
+        await editor.pressSequentially('**fett** ');
+        await page.waitForFunction(() => document.getElementById('npc-desc')?.querySelector('b'));
+        await expect(editor).toHaveJSProperty('innerHTML', '<b>fett</b>&nbsp;');
+    });
+
+    test('Fett-Muster im Wiki-Editor übersteht Speichern/Reload', async ({ page }) => {
+        await gotoBundleFresh(page);
+        await ensureMarkdownShortcutsEnabled(page);
+        await page.evaluate(() => window.switchView('wiki'));
+        await page.waitForSelector('#view-wiki', { state: 'visible' });
+        await page.click('[data-action="call"][data-value="showWikiForm"]');
+        await page.fill('#wiki-title', 'MD Roundtrip Fett');
+        await page.selectOption('#wiki-category', 'locations');
+        const editor = page.locator('#wiki-content');
+        await editor.click();
+        await editor.pressSequentially('**fett** ');
+        await page.waitForFunction(() => document.getElementById('wiki-content')?.querySelector('b'));
+
+        await page.click('[data-action="call"][data-value="saveWikiEntry"]');
+        await page.reload();
+        await page.waitForSelector('.app-title', { timeout: 10000 });
+        await page.evaluate(() => window.switchView('wiki'));
+        await page.waitForSelector('#view-wiki', { state: 'visible' });
+        const catToggle = page.locator(
+            '[data-action="toggle-wiki-category"][data-value="locations"]'
+        );
+        const isOpen = await page.evaluate(() => {
+            const list = document.querySelector('[data-wiki-category="locations"]');
+            return list ? getComputedStyle(list).display !== 'none' : false;
+        });
+        if (!isOpen) await catToggle.first().click();
+        await page
+            .locator('.wiki-tree-item[data-action="select-wiki-entry"]', {
+                hasText: 'MD Roundtrip Fett'
+            })
+            .click();
+        await page.click('[data-action="edit-wiki"]');
+        const reopened = page.locator('#wiki-content');
+        await expect(reopened).toBeVisible();
+        await expect(reopened).toHaveJSProperty('innerHTML', '<b>fett</b>&nbsp;');
+    });
+});
