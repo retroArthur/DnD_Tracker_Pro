@@ -5,8 +5,8 @@ milestone_name: Tech-Debt & Härtung
 current_phase: 10
 current_phase_name: Security-Härtung
 status: planning
-stopped_at: Completed 09-09-PLAN.md (Phase 9 abgeschlossen)
-last_updated: "2026-07-25T05:50:57.547Z"
+stopped_at: Phase 10 context gathered
+last_updated: "2026-07-25T07:44:13.676Z"
 last_activity: 2026-07-25
 last_activity_desc: Phase 09 complete, transitioned to Phase 10
 progress:
@@ -141,9 +141,9 @@ Last activity: 2026-07-25 — Phase 09 complete, transitioned to Phase 10
 
 ## Session Continuity
 
-**Last session:** 2026-07-25T05:16:12.184Z
-**Stopped at:** Completed 09-09-PLAN.md (Phase 9 abgeschlossen)
-**Resume file:** None
+**Last session:** 2026-07-25T07:44:13.667Z
+**Stopped at:** Phase 10 context gathered
+**Resume file:** .planning/phases/10-security-h-rtung/10-CONTEXT.md
 
 **Last action:** Komplette Milestone-UAT abgeschlossen (2026-06-20 → 2026-07-20): alle 5 offenen Human-UAT-Sessions via `/gsd-verify-work` durchgetestet — 07 (4/4), 06 (5/5), 05 (2/2), 01 (3/3), 02 (6/6). Alle 7 VERIFICATION.md jetzt `status: passed`. Dabei gefundene+gefixte Bugs: Soundboard-Doppel-Import (75aadfe), Audio-läuft-nach-Szene-Löschen (b85dbe1), Volume nicht live (801ed48), Manifest-CORS unter file:// (cd75093), Konsolen-Hygiene (c029f11), Datei-Backup schrieb nie bei Entity-CRUD — window.save-Wrapper strukturell wirkungslos für bare save() (1430e8c), generischer registerPostSaveHook + DM-Screen-Live-Sync-Umstellung + CLAUDE.md-Pattern-Korrektur (6ea8309), „Anderen Ordner wählen"-Button (cc2af9e). Nebenbei: Repo mit origin gemergt (7 Mai-Commits, alter pages.yml-Deploy entfernt 7f4858a), 348 Commits gepusht, GitHub-Pages-Deploy live verifiziert (PWA installierbar, SW-Update-Flow, Datei-Backup, Migrations-Wizard file://→PWA). Zusätzlich in der Session: Soundboard-Erweiterungen (Loop-Toggle/Crossfade-Loop/Fortschritt 6636297, Per-Track-Play noch offen als Design), gruppierte Navigation (3d77ec0).
 **Next action:** Phase 8 ausführen — `/gsd-execute-phase 8` (Wave 1 → 08-01 zuerst; Sampling gemäß 08-VALIDATION.md: volle Suite zweimal in Folge grün vor `/gsd-verify-work`). Offene Design-Entscheidung Soundboard Per-Track-Play (Layering gewählt, Szenen-Play-Variante unbestätigt). Optionale Altlasten: Phase-1-Security-Audit (`/gsd-secure-phase 1`), Phase-1-Code-Review-Findings, Phase-3 Browser-Checks (nicht-blockierend).
