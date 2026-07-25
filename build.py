@@ -119,24 +119,41 @@ def require_files_exist(base_dir, rel_paths, label):
 
 
 def check_duplicate_functions(source_dir, modules):
-    """Schlaegt fehl, wenn doppelte Top-Level-Funktionsnamen in gebuendelten Quelldateien existieren.
+    """Schlaegt fehl, wenn doppelte Top-Level-Deklarationen (function/const/let/class)
+    in gebuendelten Quelldateien existieren (D-06).
 
     Prueft NUR die MODULES-Liste — utils/testable-utils.js und das tests/-Verzeichnis
     sind nicht Teil von MODULES und damit korrekt ausgeschlossen.
+
+    Klammertiefen-Tracking statt Texteinrueckungs-Heuristik (dieselbe, bereits in der
+    Post-Build-Validierung produktiv laufende Technik, siehe build() weiter unten):
+    pro Datei wird die Klammertiefe zeilenweise mitgefuehrt und NUR auf Tiefe 0
+    gegen das Deklarations-Pattern geprueft. Die Tiefe wird VOR der Aktualisierung
+    ausgewertet, damit die Deklarationszeile selbst noch auf Tiefe 0 zaehlt. Das ist
+    robuster gegen Formatierungsabweichungen als eine reine Einrueckungs-Heuristik,
+    weil echte Verschachtelung gemessen wird statt Text-Whitespace (T-11-07).
     """
-    func_pattern = re.compile(r'^function\s+(\w+)\s*\(', re.MULTILINE)
+    decl_pattern = re.compile(r'^\s*(function|const|let|class)\s+(\w+)')
     seen = {}
     for module in modules:
         path = os.path.join(source_dir, module)
         if not os.path.exists(path):
             continue
         content = read_file(path)
-        for match in func_pattern.finditer(content):
-            name = match.group(1)
-            if name in seen:
-                print(f"[FEHLER] Doppelte Top-Level-Funktion '{name}': {seen[name]} und {module}")
-                sys.exit(1)
-            seen[name] = module
+        depth = 0
+        for line in content.split('\n'):
+            match = decl_pattern.match(line) if depth == 0 else None
+            for ch in line:
+                if ch == '{':
+                    depth += 1
+                elif ch == '}':
+                    depth -= 1
+            if match:
+                name = match.group(2)
+                if name in seen:
+                    print(f"[FEHLER] Doppelte Top-Level-Deklaration '{name}': {seen[name]} und {module}")
+                    sys.exit(1)
+                seen[name] = module
 
 
 def read_file(filepath):
