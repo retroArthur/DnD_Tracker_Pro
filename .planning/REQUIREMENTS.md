@@ -21,7 +21,7 @@
 ### Security (Altlasten schließen)
 
 - [x] **SEC-01**: Der vorbestehende Import-XSS (Critical aus 01-REVIEW.md) ist behoben, mit Regressionstest (bösartige Import-Datei wird sanitisiert, kein Script-Execute)
-- [ ] **SEC-02**: Security-Audit nachgezogen: SECURITY.md mit `threats_open: 0` für die kritischen Angriffsflächen (Import/Export, Storage/IDB, Datei-Backup, Rich-Text/innerHTML) — via `/gsd-secure-phase` über die relevanten Phasen
+- [x] **SEC-02**: Security-Audit nachgezogen: SECURITY.md mit `threats_open: 0` für die kritischen Angriffsflächen (Import/Export, Storage/IDB, Datei-Backup, Rich-Text/innerHTML) — via `/gsd-secure-phase` über die relevanten Phasen
 
 ### Architektur (Build-/Repo-Hygiene)
 
@@ -59,7 +59,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | TEST-01 | Phase 8 | Complete |
 | TEST-02 | Phase 8 | Complete |
 | SEC-01 | Phase 10 | Complete |
-| SEC-02 | Phase 10 | Pending |
+| SEC-02 | Phase 10 | Complete |
 | ARCH-01 | Phase 11 | Pending |
 | ARCH-02 | Phase 11 | Pending |
 | ARCH-03 | Phase 11 | Pending |

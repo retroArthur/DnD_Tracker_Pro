@@ -114,8 +114,9 @@ Last activity: 2026-07-25 — Phase 10 Plan 04 (Tabellenzweig-Fix + Zauber-Speic
 ### Open TODOs
 
 - [x] 3 manuelle Browser-Tests aus `01-HUMAN-UAT.md` ✓ (2026-07-20, 3/3 via /gsd-verify-work 1; Fixes: Manifest nur http/https cd75093, Konsolen-Hygiene c029f11)
-- [ ] Code-Review-Findings fixen (1 Critical: vorbestehender Import-XSS; 3 Warnings): `/gsd-code-review-fix 1`
-- [ ] Security-Audit nachziehen (SECURITY.md fehlt): `/gsd-secure-phase 1`
+- [x] Code-Review-Findings fixen (1 Critical: vorbestehender Import-XSS; 3 Warnings): `/gsd-code-review-fix 1` ✓ (2026-07-25, Phase 10: CR-01 kritisch behoben Plan 10-01/10-02, WR-03 behoben Plan 10-02; WR-01 lexikografische Versions-Sortierung und WR-02 irreführender Stale-Shadow-Test bleiben offen — kein Security-Threat, Kandidat für Phase 11)
+- [x] Security-Audit nachziehen (SECURITY.md fehlt): `/gsd-secure-phase 1` ✓ (2026-07-25, Phase 10 Plan 05: 01-SECURITY.md erstellt, konsolidierte SECURITY.md im Repo-Root mit threats_open: 0)
+- [x] Phase 10 abgeschlossen (Security-Härtung): `/gsd-execute-phase 10` ✓ (2026-07-25, 5/5 Pläne; SEC-01+SEC-02 vollständig erfüllt; vier Per-Phasen-SECURITY.md + konsolidierte SECURITY.md im Repo-Root mit threats_open: 0; volle Suiten grün: 554/554 Jest, 315 passed/2 skipped Playwright)
 - [x] Phase 2 diskutieren: `/gsd-discuss-phase 2` ✓ (2026-06-12, 02-CONTEXT.md)
 - [x] Phase 2 planen ✓ (Phase 2 Complete)
 - [ ] Phase 3 — 3 manuelle Browser-Checks (nicht-blockierend, aus 03-VERIFICATION): Offline-Modus zeigt alle 112 Monster, Pergament-Statblock-Optik, Klick-Würfel-Feel am Spieltisch
@@ -210,6 +211,10 @@ _State initialized: 2026-06-11_
 - [Phase ?]: [Phase 10, 10-03]: esc(0)-Drift zwischen utils/basic.js und utils/testable-utils.js bewusst nur dokumentiert (eigener Testfall), nicht behoben - ausserhalb des Plan-Scopes (nur <strike>-Whitelist-Fix)
 - [Phase ?]: [Phase 10, 10-04]: Kein-Bild-Element-Kriterium als scope-konforme Fassung interpretiert (kein on*-Attribut statt vollstaendiger Tag-Entfernung) - explizite Plan-Prohibition schliesst DOMParser-Umbau/weitere Attribut-Entfernung aus
 - [Phase ?]: [Phase 10, 10-04]: Fehlersammlung im neuen Sicherheitstest auf pageerror verengt (nicht generische console-Fehler) - beibehaltenes inertes img src=x erzeugt harmlosen Ressourcen-404-Konsoleneintrag ohne Sicherheitsrelevanz
+- [Phase 10, 10-05]: Sanitisierung an beiden Grenzen (Anzeige UND Import-Rohdaten) als dauerhaftes Muster (D-01) — eine Schicht allein lässt Lücken, da mehrere Render-Pfade auf saubere Speicherinhalte vertrauen
+- [Phase 10, 10-05]: HTML_FIELDS_BY_TYPE-Feldliste (neun Entity-Typen) als Ergebnis des Render-Pfad-Audits (D-02) — bewusst kein rekursives Sanitisieren aller String-Felder, um Nicht-HTML-Text (Namen, Würfelformeln mit spitzen Klammern) nicht zu beschädigen; künftige Import-Felder müssen die Liste explizit erweitern
+- [Phase 10, 10-05]: <strike> additiv in die sanitizeHTML-Erlaubnisliste aufgenommen (D-06) — Reversibility costly: einmal in der Whitelist, erzeugen Nutzer-Daten <strike>-Markup, das eine spätere Verengung wieder zerstören würde; Paritätstest (61 Tests) verhindert künftige Drift zwischen utils/basic.js und utils/testable-utils.js
+- [Phase 10, 10-05]: Zwei bewusst akzeptierte Risiken dokumentiert (D-08) statt behoben: keine Content-Security-Policy (Single-User-Offline-App ohne Server, 'unsafe-inline' architekturbedingt ohnehin nötig) und die Breite der class/style-Erlaubnis im Sanitizer (kein Multi-Tenant-Szenario) — dritter akzeptierter Punkt (regexbasierte Paste-Zeit-Bereinigung, T-10-17) in SECURITY.md ergänzt, da sanitizeHTML() als maßgebliche Speichern-Grenze diese Schwäche nicht teilt
 
 ## Operator Next Steps
 
