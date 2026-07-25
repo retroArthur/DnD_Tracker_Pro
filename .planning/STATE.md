@@ -4,24 +4,24 @@ milestone: v1.1
 milestone_name: Tech-Debt & Härtung
 current_phase: 9
 current_phase_name: Editor-Regressionsnetz & execCommand-Ablösung
-status: executing
-stopped_at: Completed 09-08-PLAN.md
-last_updated: "2026-07-25T04:52:05.292Z"
+status: verifying
+stopped_at: Completed 09-09-PLAN.md (Phase 9 abgeschlossen)
+last_updated: "2026-07-25T05:16:20.752Z"
 last_activity: 2026-07-25
-last_activity_desc: "09-08-PLAN.md abgeschlossen (Einfuege-Operationen migriert: Gruppe E Zwischenablage-Einfuegungen, Gruppe F Tabelleneinfuegen + Zeilenumbruch; Modul-Zaehlstand 6 -> 1, nur noch defaultParagraphSeparator-Setup-Aufruf)"
+last_activity_desc: "09-09-PLAN.md abgeschlossen (letzte Migrationsgruppe G: defaultParagraphSeparator-Setup-Aufruf entfernt, Modul-Zaehlstand 1 -> 0; Abschluss-Gate volle Suiten gruen; Handcheck freigegeben — Phase 9 komplett, EDIT-01/EDIT-02/EDIT-03 erfuellt)"
 progress:
   total_phases: 4
-  completed_phases: 1
+  completed_phases: 2
   total_plans: 13
-  completed_plans: 12
-  percent: 25
+  completed_plans: 13
+  percent: 50
 ---
 
 # Project State: D&D Kampagnen-Tracker Pro — Stabilisierung & Ausbau
 
 **Last Updated:** 2026-07-25
 **Phase:** 9 — Editor-Regressionsnetz & execCommand-Ablösung
-**Status:** Ready to execute
+**Status:** Phase complete — ready for verification
 
 ---
 
@@ -29,16 +29,16 @@ progress:
 
 **Core Value:** Die App muss am Spieltisch zuverlässig offline laufen — ein Spielleiter-Begleiter, der nie im Weg steht und keine Daten verliert.
 
-**Current Focus:** Phase 09 — editor-regressionsnetz-execcommand-abl-sung
+**Current Focus:** Phase 09 — editor-regressionsnetz-execcommand-abl-sung (abgeschlossen, 9/9 Pläne)
 
 ---
 
 ## Current Position
 
-Phase: 09 (editor-regressionsnetz-execcommand-abl-sung) — EXECUTING
+Phase: 09 (editor-regressionsnetz-execcommand-abl-sung) — COMPLETE (9/9 Pläne)
 Plan: 9 of 9
-Status: Ready to execute
-Last activity: 2026-07-25 — 09-08-PLAN.md abgeschlossen (Einfuege-Operationen migriert: Gruppe E Zwischenablage-Einfuegungen, Gruppe F Tabelleneinfuegen + Zeilenumbruch; Modul-Zaehlstand 6 -> 1, nur noch defaultParagraphSeparator-Setup-Aufruf)
+Status: Phase complete — ready for verification
+Last activity: 2026-07-25 — 09-09-PLAN.md abgeschlossen (letzte Migrationsgruppe G: defaultParagraphSeparator-Setup-Aufruf entfernt, Modul-Zaehlstand 1 -> 0; Abschluss-Gate: volle Suiten gruen (Playwright 308/2, Jest 457, typecheck, lint, production build), CLAUDE.md + CONCERNS.md + 09-BASELINE.md Abschluss-Protokoll aktualisiert; Handcheck im Browser freigegeben — EDIT-01/EDIT-02/EDIT-03 vollstaendig erfuellt)
 
 ## Performance Metrics
 
@@ -63,6 +63,7 @@ Last activity: 2026-07-25 — 09-08-PLAN.md abgeschlossen (Einfuege-Operationen 
 | Phase 9 P06 | 45min | 2 tasks | 3 files |
 | Phase 09 P07 | 55min | 2 tasks | 3 files |
 | Phase 09 P08 | 37min | 2 tasks | 3 files |
+| Phase 09 P09 | 21min | 3 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -134,13 +135,14 @@ Last activity: 2026-07-25 — 09-08-PLAN.md abgeschlossen (Einfuege-Operationen 
 - [x] Phase 7 — 4 hörbare Audio-UAT ✓ (2026-06-20, 4/4; dabei 3 Bugs gefunden+gefixt: Doppel-Import 75aadfe, Audio-läuft-weiter b85dbe1, Live-Volume 801ed48)
 - [ ] Milestone v1.0 abschließen: `/gsd-complete-milestone` (alle 7 Phasen complete)
 - [x] Phase 9 — Regressionsnetz steht, D-04a Doppel-Grün geführt und protokolliert (09-BASELINE.md, Commit `c8239d7`) ✓ (2026-07-25, 09-05-PLAN.md; Netz eingefroren — Migration darf ab hier beginnen)
+- [x] Phase 9 ausführen: `/gsd-execute-phase 9` ✓ (2026-07-25, 9/9 Pläne; execCommand-Migration 21→0 Call-Sites über sieben Migrationsgruppen A–G; komplettes Netz + volle Suiten grün nach jeder Gruppe; Handcheck im Browser freigegeben; EDIT-01/EDIT-02/EDIT-03 vollständig erfüllt — Phase 9 komplett)
 
 ---
 
 ## Session Continuity
 
-**Last session:** 2026-07-25T04:52:05.281Z
-**Stopped at:** Completed 09-08-PLAN.md
+**Last session:** 2026-07-25T05:16:12.184Z
+**Stopped at:** Completed 09-09-PLAN.md (Phase 9 abgeschlossen)
 **Resume file:** None
 
 **Last action:** Komplette Milestone-UAT abgeschlossen (2026-06-20 → 2026-07-20): alle 5 offenen Human-UAT-Sessions via `/gsd-verify-work` durchgetestet — 07 (4/4), 06 (5/5), 05 (2/2), 01 (3/3), 02 (6/6). Alle 7 VERIFICATION.md jetzt `status: passed`. Dabei gefundene+gefixte Bugs: Soundboard-Doppel-Import (75aadfe), Audio-läuft-nach-Szene-Löschen (b85dbe1), Volume nicht live (801ed48), Manifest-CORS unter file:// (cd75093), Konsolen-Hygiene (c029f11), Datei-Backup schrieb nie bei Entity-CRUD — window.save-Wrapper strukturell wirkungslos für bare save() (1430e8c), generischer registerPostSaveHook + DM-Screen-Live-Sync-Umstellung + CLAUDE.md-Pattern-Korrektur (6ea8309), „Anderen Ordner wählen"-Button (cc2af9e). Nebenbei: Repo mit origin gemergt (7 Mai-Commits, alter pages.yml-Deploy entfernt 7f4858a), 348 Commits gepusht, GitHub-Pages-Deploy live verifiziert (PWA installierbar, SW-Update-Flow, Datei-Backup, Migrations-Wizard file://→PWA). Zusätzlich in der Session: Soundboard-Erweiterungen (Loop-Toggle/Crossfade-Loop/Fortschritt 6636297, Per-Track-Play noch offen als Design), gruppierte Navigation (3d77ec0).
@@ -195,6 +197,8 @@ _State initialized: 2026-06-11_
 - [Phase 09]: clearInlineFormattingAtSelection() um Tag-Unwrap (b/i/u/s/strike) erweitert statt Duplikat (Plan 09-07) — Repliziert empirisch verifizierte removeFormat-Eigenheit; Verhalten fuer bestehenden Aufrufer (highlight none) unveraendert
 - [Phase ?]: sanitizeInsertedInlineStyle() als deterministische String-Transformation statt CSSOM-Touch (Plan 09-08) - reproduziert die execCommand-eigene background/color-Eigenheit bei Mehrfach-Deklarationen exakt
 - [Phase ?]: Zero-Width-Space-Platzhalter + deleteData()-Cleanup fuer insertLineBreakAtSelection() (Plan 09-08) - Cursor hinter trailing br ist ohne Anker in Chromium nicht stabil
+- [Phase ?]: [Phase 09, 09-09]: defaultParagraphSeparator-Setup-Aufruf ersatzlos entfernt statt kompensiert (A1-Referenztest belegt Wirkungslosigkeit) - toBe(1)->toBe(0) bereits in Task 1 gesetzt
+- [Phase ?]: [Phase 09]: Phase 9 abgeschlossen - EDIT-01/EDIT-02/EDIT-03 vollstaendig erfuellt (21->0 execCommand-Call-Sites, Regressionsnetz gruen, Handcheck freigegeben)
 
 ## Operator Next Steps
 

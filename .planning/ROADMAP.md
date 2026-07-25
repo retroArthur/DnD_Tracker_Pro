@@ -27,7 +27,7 @@ Details, Success Criteria und Coverage: [milestones/v1.0-ROADMAP.md](milestones/
 **Milestone-Ziel:** Codebasis schuldenfrei und dauerhaft wartbar machen — deprecated APIs ablösen, Test-Suite vollständig grün, Sicherheits-Altlasten schließen, Build-/Architektur-Hygiene. Verhaltensneutral: keine Feature-Änderung aus Nutzersicht.
 
 - [x] **Phase 8: Test-Fundament grün** - Alle 11 vorbestehenden E2E-Fails behoben, brüchige Assertions gehärtet (completed 2026-07-23)
-- [ ] **Phase 9: Editor-Regressionsnetz & execCommand-Ablösung** - Rich-Text-Editor auf Selection/Range-APIs migriert, abgesichert durch neues E2E-Netz das VOR der Migration steht
+- [x] **Phase 9: Editor-Regressionsnetz & execCommand-Ablösung** - Rich-Text-Editor auf Selection/Range-APIs migriert, abgesichert durch neues E2E-Netz das VOR der Migration steht (completed 2026-07-25)
 - [ ] **Phase 10: Security-Härtung** - Vorbestehender Import-XSS behoben, aktueller Security-Audit ohne offene Findings
 - [ ] **Phase 11: Architektur- & Build-Hygiene** - Modullisten-Drift strukturell unmöglich, Dedup-Pass-3 gehärtet, CI-Deprecations weg, Codebase-Map + CONCERNS.md aufgefrischt
 
@@ -75,7 +75,7 @@ Details, Success Criteria und Coverage: [milestones/v1.0-ROADMAP.md](milestones/
   3. Das Regressionsnetz bleibt nach der Migration grün — belegt Verhaltensgleichheit
   4. Alle Entity-Editoren (Wiki, NPCs, Orte, Quests, Sessions, Quick-Ref) und beide Toolbar-Varianten (statisch, floating) funktionieren unverändert inkl. Markdown-Live-Shortcuts
 
-**Plans**: 8/9 plans executed
+**Plans**: 9/9 plans executed
 
 **Wave 1**
 
@@ -108,7 +108,7 @@ Details, Success Criteria und Coverage: [milestones/v1.0-ROADMAP.md](milestones/
 
 **Wave 8** *(blocked on Wave 7)*
 
-- [ ] 09-09-PLAN.md — Migration Gruppe G (Absatztrenner-Setup) + Abschluss-Gate + Doku + Handcheck (1 Call-Site)
+- [x] 09-09-PLAN.md — Migration Gruppe G (Absatztrenner-Setup) + Abschluss-Gate + Doku + Handcheck (1 Call-Site)
 
 ### Phase 10: Security-Härtung
 
@@ -147,6 +147,6 @@ Details, Success Criteria und Coverage: [milestones/v1.0-ROADMAP.md](milestones/
 |-------|----------------|--------|-----------|
 | v1.0 (Phasen 1–7) | 44/44 | ✅ Shipped | 2026-07-22 |
 | 8. Test-Fundament grün | 4/4 | Complete    | 2026-07-23 |
-| 9. Editor-Regressionsnetz & execCommand-Ablösung | 8/9 | In Progress|  |
+| 9. Editor-Regressionsnetz & execCommand-Ablösung | 9/9 | Complete    | 2026-07-25 |
 | 10. Security-Härtung | 0/TBD | Not started | - |
 | 11. Architektur- & Build-Hygiene | 0/TBD | Not started | - |
