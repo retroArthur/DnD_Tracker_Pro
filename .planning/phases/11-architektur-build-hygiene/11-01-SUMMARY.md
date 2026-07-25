@@ -175,3 +175,7 @@ None - no external service configuration required.
 ---
 *Phase: 11-architektur-build-hygiene*
 *Completed: 2026-07-25*
+
+## Self-Check: PASSED
+
+All created/modified files verified present on disk; all 5 task/docs commits (bc9e315, cd3d3d6, 139777b, 974ffa1, 2ad7983) verified present in git log.
