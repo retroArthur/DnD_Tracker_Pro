@@ -45,6 +45,27 @@ async function importCampaignFile(page, payload) {
 }
 
 /**
+ * Spielt eine Kampagnen-JSON-Datei über den echten Import-Eintrittspunkt ein und
+ * bestätigt den confirm()-Dialog ("OK" = als neue Kampagne importieren). Dieser
+ * Zweig ruft importDataGlobal() zufolge anschließend location.reload() auf — die
+ * Wartefunktion horcht auf das 'load'-Event, BEVOR die Datei gesetzt wird, damit
+ * der Reload nicht verpasst wird (er folgt synchron auf den Import-Toast).
+ * @param {import('@playwright/test').Page} page
+ * @param {object} payload
+ */
+async function importCampaignFileAsNewCampaign(page, payload) {
+    page.on('dialog', dialog => dialog.accept());
+    const reloadPromise = page.waitForEvent('load', { timeout: 15000 });
+    await page.setInputFiles('#import-file', {
+        name: 'boese-kampagne-neu.json',
+        mimeType: 'application/json',
+        buffer: Buffer.from(JSON.stringify(payload))
+    });
+    await reloadPromise;
+    await page.waitForSelector('.app-title', { timeout: 10000 });
+}
+
+/**
  * Öffnet einen Wiki-Eintrag in der Kategorie "locations" über die Baumansicht
  * (Muster analog saveAndReopenWikiEntry() in editor-insert.spec.js).
  * @param {import('@playwright/test').Page} page
@@ -181,5 +202,95 @@ test.describe('Import-Sicherheit — Exploit-Kette Datei → Wiki-Anzeige (SEC-0
         expect(xssFlag).toBeUndefined();
         expect(errors).toEqual([]);
         expect(detailText).toContain('HarmloserText');
+    });
+});
+
+test.describe('Import-Sicherheit — Import-Grenze am gespeicherten Zustand (SEC-01, Phase 10 Plan 02)', () => {
+    test.beforeEach(async ({ page }) => {
+        await gotoBundleFresh(page);
+    });
+
+    test('Überschreib-Zweig: der GESPEICHERTE Zustand (D.wiki) ist bereinigt, und ein Rückgängig-Schritt ist verfügbar (D-01/D-07/WR-03)', async ({
+        page
+    }) => {
+        const errors = [];
+        page.on('pageerror', e => errors.push(String(e)));
+        page.on('console', msg => {
+            if (msg.type() === 'error') errors.push(msg.text());
+        });
+
+        const payload = {
+            _campaignName: 'Böse Kampagne (Rohdaten)',
+            _exportDate: new Date().toISOString(),
+            wiki: [
+                {
+                    id: 1,
+                    title: 'Roher Datenzustand',
+                    category: 'locations',
+                    content: '<img src=x onerror="window.__xssImport10Raw = true">HarmloserText'
+                }
+            ]
+        };
+
+        const undoLengthBefore = await page.evaluate(() =>
+            typeof undoStack !== 'undefined' ? undoStack.length : -1
+        );
+
+        await importCampaignFile(page, payload);
+
+        // Gespeicherter Zustand prüfen (nicht die Anzeige) — D.wiki[0].content direkt auslesen.
+        const savedContent = await page.evaluate(() => window.D?.wiki?.[0]?.content ?? null);
+        expect(savedContent).not.toBeNull();
+        expect(savedContent).not.toMatch(/onerror/i);
+        expect(savedContent).not.toMatch(/<img/i);
+        expect(savedContent).toContain('HarmloserText');
+
+        // WR-03/D-07: Ein überschreibender Import darf nicht mehr endgültig sein — der
+        // Undo-Stapel muss mindestens einen Eintrag mehr enthalten als vor dem Import.
+        const undoLengthAfter = await page.evaluate(() =>
+            typeof undoStack !== 'undefined' ? undoStack.length : -1
+        );
+        expect(undoLengthAfter).toBeGreaterThan(undoLengthBefore);
+
+        const xssFlag = await page.evaluate(() => window.__xssImport10Raw);
+        expect(xssFlag).toBeUndefined();
+        expect(errors).toEqual([]);
+    });
+
+    test('Zweig „als neue Kampagne importieren": nach dem Neustart ist der geladene Wiki-Inhalt bereinigt (Pitfall 2)', async ({
+        page
+    }) => {
+        const errors = [];
+        page.on('pageerror', e => errors.push(String(e)));
+        page.on('console', msg => {
+            if (msg.type() === 'error') errors.push(msg.text());
+        });
+
+        const payload = {
+            _campaignName: 'Böse Kampagne (Neue Kampagne)',
+            _exportDate: new Date().toISOString(),
+            wiki: [
+                {
+                    id: 1,
+                    title: 'Neue Kampagne Eintrag',
+                    category: 'locations',
+                    content: '<img src=x onerror="window.__xssImport10New = true">HarmloserText'
+                }
+            ]
+        };
+
+        await importCampaignFileAsNewCampaign(page, payload);
+
+        // Nach dem Neustart wurde die neu importierte Kampagne aktiviert (core/init.js liest
+        // getCampaignIndex().active) — der geladene D.wiki-Inhalt muss bereinigt sein.
+        const savedContent = await page.evaluate(() => window.D?.wiki?.[0]?.content ?? null);
+        expect(savedContent).not.toBeNull();
+        expect(savedContent).not.toMatch(/onerror/i);
+        expect(savedContent).not.toMatch(/<img/i);
+        expect(savedContent).toContain('HarmloserText');
+
+        const xssFlag = await page.evaluate(() => window.__xssImport10New);
+        expect(xssFlag).toBeUndefined();
+        expect(errors).toEqual([]);
     });
 });
