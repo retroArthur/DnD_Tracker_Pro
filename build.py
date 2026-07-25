@@ -35,156 +35,49 @@ from tools.logging_util import log
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 SOURCE_DIR = SCRIPT_DIR
 
-# Module in Ladereihenfolge (aus loader.js) — Modul-Level fuer Import-Barkeit in Tests
-# WICHTIG: Diese Liste muss mit loader.js synchron bleiben!
-MODULES = [
-    'core/config.js',
-    'core/data.js',
-    'core/constants.js',
-    'core/themes.js',
-    'utils/performance.js',
-    'utils/basic.js',
-    'utils/utilities.js',
-    'utils/crud-helpers.js',
-    'utils/validation.js',
-    'utils/form-helpers.js',
-    'utils/filter-engine.js',
-    'utils/game-rules.js',
-    'systems/undo.js',
-    # Spellslots-Module (ersetzt systems/spellslots.js)
-    'systems/spellslots/spell-slots-core.js',
-    'systems/spellslots/notes-templates.js',
-    'systems/spellslots/quick-reference.js',
-    'systems/spellslots/pwa-install.js',
-    'systems/spellslots/version-migration.js',
-    'systems/spellslots/virtual-list.js',
-    'systems/spellslots/keyboard-shortcuts.js',
-    'systems/spellslots/persistence.js',
-    'systems/spellslots/quick-roll.js',
-    'systems/spellslots/import-export.js',
-    'systems/spellslots/navigation.js',
-    'systems/conditions.js',
-    'systems/hp-calculator.js',
-    'systems/tags.js',
-    'systems/entity-links.js',
-    'systems/avatars.js',
-    'systems/backups.js',
-    'systems/tab-registry.js',
-    'systems/session-timer.js',
-    'systems/search/global-search.js',
-    'systems/campaign-manager/campaign-manager.js',
-    # Phase 2 Migrations- und Backup-Module (Welle 2 fuellt Implementierung)
-    'systems/migration/full-export.js',
-    'systems/migration/migration-wizard.js',
-    'systems/file-backup/file-backup-permissions.js',
-    'systems/file-backup/file-backup-manager.js',
-    'systems/file-backup/file-backup-ui.js',
-    'render/helpers.js',
-    # Render-Feature-Module
-    'features/render-dashboard.js',
-    # Party-Module
-    'features/party/party-render.js',
-    'features/party/party-details.js',
-    'features/party/party-crud.js',
-    'features/render-spells.js',
-    # Locations-Module
-    'features/locations/locations-render.js',
-    'features/locations/locations-crud.js',
-    'features/render-loot.js',
-    # NPC-Module
-    'features/npcs/npc-render.js',
-    'features/npcs/npc-interactions.js',
-    'features/npcs/npc-dialogs.js',
-    'features/npcs/npc-crud.js',
-    'features/npcs/npc-popup.js',
-    # Quests-Module
-    'features/quests/quests-render.js',
-    'features/quests/quests-crud.js',
-    # Encounters-Module
-    'features/encounters/encounters-render.js',
-    'features/encounters/encounters-crud.js',
-    # Bestiary-Module (Phase 3)
-    'features/bestiary/bestiary-render.js',
-    'features/bestiary/bestiary-crud.js',
-    'features/bestiary/bestiary-editor.js',
-    'features/bestiary/bestiary-actions.js',
-    'features/initiative-statblock.js',
-    # Features
-    'features/encounter-calculator.js',
-    'features/initiative.js',
-    'features/rest-manager.js',
-    'features/quick-actions.js',
-    'features/random-tables.js',
-    'features/loot-distribution.js',
-    'features/sessions/sessions.js',
-    # Phase 5: Welt & Story — Modul-Skelette (Wave 0)
-    'features/session-prep/session-prep-render.js',
-    'features/session-prep/session-prep-crud.js',
-    # NPC-Generator (nach npc-crud.js — Abhaengigkeit)
-    'features/npc-generator/npc-default-tables.js',
-    'features/npc-generator/npc-generator.js',
-    # Timeline/Kalender
-    'features/timeline/timeline-render.js',
-    'features/timeline/timeline-crud.js',
-    # Reise (default-tables zuerst)
-    'features/reise/reise-default-tables.js',
-    'features/reise/reise-render.js',
-    'features/reise/reise-crud.js',
-    # Fraktionen
-    'features/fraktionen/fraktionen-render.js',
-    'features/fraktionen/fraktionen-crud.js',
-    'features/wiki/wiki.js',
-    # Shops-Module
-    'features/shops/shops-core.js',
-    'features/shops/shop-export.js',
-    'features/shops/links.js',
-    # DM Screen Module
-    'features/dmscreen/dmscreen-render.js',
-    # Phase 2 Command-Palette-Module (Welle 2 fuellt Implementierung)
-    'features/command-palette/action-registry.js',
-    'features/command-palette/command-palette.js',
-    # Dice-Module
-    'features/dice/dice-core.js',
-    'features/dice/dice-favorites.js',
+def parse_js_string_array(source_text, array_name, source_label):
+    """Extrahiert die einfach quotierten String-Literale eines JS-Array-Literals.
 
-    # Phase 7: Komfort & Analyse — Soundboard + Wuerfel-Statistiken (Wave 0)
-    'features/soundboard/soundboard-idb.js',
-    'features/soundboard/soundboard-player.js',
-    'features/soundboard/soundboard-crud.js',
-    'features/soundboard/soundboard-render.js',
-    'features/dice-stats/dice-stats-idb.js',
-    'features/dice-stats/dice-stats-render.js',
-    # Ehemals in dice/ — verschoben in passende Ordner
-    'features/timers/timers.js',
-    'systems/wiki-links.js',
-    'features/encounters/monster-templates.js',
-    'core/srd-spells.js',
-    'core/srd-monsters.js',
-    'systems/spellslots/spellslots-ui.js',
-    'features/initiative-extras.js',
-    'features/initiative-mob.js',
-    'ui/layout-profiles.js',
-    'utils/performance-extras.js',
-    'ui/dom-builder.js',
-    'ui/safe-render.js',
-    'ui/lazy-loading.js',
-    'ui/event-delegation.js',
-    'ui/editors/rich-text.js',
-    'ui/editors/markdown-shortcuts.js',
-    'ui/editors/markdown-converter.js',
-    'systems/markdown-import-export.js',
-    # Action-Module
-    'ui/actions/entity-actions.js',
-    'ui/actions/combat-actions.js',
-    'ui/actions/ui-actions.js',
-    'ui/actions/dice-actions.js',
-    'ui/actions/wiki-actions.js',
-    'ui/actions/shop-actions.js',
-    'ui/actions/system-actions.js',
-    'ui/virtual-scroll.js',
-    'tools/debug.js',
-    'core/init.js'
-]
+    Strippt zeilenweise '//'-Kommentare VOR der Literal-Extraktion, damit ein
+    Apostroph in einem Gruppierungskommentar den Parser nicht verfaelscht
+    (Tokenizer-Robustheitsrisiko, 11-RESEARCH.md Option 2).
+
+    Bricht mit sys.exit(1) ab, wenn das Array nicht gefunden wird oder keine
+    Literale enthaelt (D-01) — statt still eine leere Liste zurueckzugeben.
+    """
+    stripped_text = re.sub(r'//.*$', '', source_text, flags=re.MULTILINE)
+    match = re.search(rf'const {array_name}\s*=\s*\[(.*?)\];', stripped_text, re.DOTALL)
+    literals = re.findall(r"'([^']+)'", match.group(1)) if match else []
+    if not match or not literals:
+        print(f"[FEHLER] Konnte '{array_name}'-Array nicht aus {source_label} parsen oder es ist leer")
+        sys.exit(1)
+    return literals
+
+
+def load_module_list(loader_path):
+    """Liest die Modulliste zur Build-Zeit ausschliesslich aus loader.js (D-01, SSoT).
+
+    Es gibt ab jetzt keine zweite Liste mehr in build.py — Divergenz ist damit
+    strukturell unmoeglich statt nur erkennbar.
+    """
+    content = read_file(loader_path)
+    modules = parse_js_string_array(content, 'MODULES', loader_path)
+    log.success(f"Modulliste geladen: {len(modules)} Module aus {loader_path}")
+    return modules
+
+
+def require_files_exist(base_dir, rel_paths, label):
+    """Bricht den Build ab, wenn eine gelistete Datei fehlt (D-02).
+
+    Es gibt im Repo keine optionalen gelisteten Dateien — ein fehlender Pfad
+    ist immer ein Fehler, nie ein stiller Skip.
+    """
+    missing = [p for p in rel_paths if not os.path.exists(os.path.join(base_dir, p))]
+    if missing:
+        print(f"[FEHLER] {len(missing)} fehlende {label}-Datei(en):")
+        for p in missing:
+            print(f"  {label}: {p}")
+        sys.exit(1)
 
 
 def check_duplicate_functions(source_dir, modules):
@@ -206,30 +99,6 @@ def check_duplicate_functions(source_dir, modules):
                 print(f"[FEHLER] Doppelte Top-Level-Funktion '{name}': {seen[name]} und {module}")
                 sys.exit(1)
             seen[name] = module
-
-
-def check_module_list_sync(loader_path, build_modules):
-    """Vergleicht das MODULES-Array aus loader.js mit der build.py-Liste.
-
-    Bricht den Build ab, wenn die Listen voneinander abweichen.
-    """
-    content = read_file(loader_path)
-    match = re.search(r'const MODULES\s*=\s*\[(.*?)\];', content, re.DOTALL)
-    if not match:
-        log.warning("Konnte MODULES-Array nicht aus loader.js parsen — Sync-Pruefung uebersprungen")
-        return
-    loader_modules = re.findall(r"'([^']+)'", match.group(1))
-    build_set, loader_set = set(build_modules), set(loader_modules)
-    only_in_build = build_set - loader_set
-    only_in_loader = loader_set - build_set
-    if only_in_build or only_in_loader:
-        print("[FEHLER] Modullisten-Abweichung zwischen loader.js und build.py!")
-        for m in sorted(only_in_build):
-            print(f"  Nur in build.py: {m}")
-        for m in sorted(only_in_loader):
-            print(f"  Nur in loader.js: {m}")
-        sys.exit(1)
-    log.success(f"Modullisten synchron: {len(build_set)} Module")
 
 
 def read_file(filepath):
@@ -442,8 +311,12 @@ def build(minify=False, production=False, verbose=False):
     log.info(f"Modus: {mode}")
     log.info(f"Minifizierung: {'Aktiviert' if minify else 'Deaktiviert'}")
 
-    # Nutze die Modul-Level MODULES-Konstante (importierbar fuer Tests)
-    modules = MODULES
+    # SSoT (D-01): Modulliste ausschliesslich aus loader.js beziehen, dann
+    # sofort gegen das Dateisystem verifizieren (D-02) — vor jedem weiteren
+    # Beschaffungsschritt, damit ein fehlender Pfad so frueh wie moeglich abbricht.
+    loader_js_path = os.path.join(SCRIPT_DIR, 'loader.js')
+    modules = load_module_list(loader_js_path)
+    require_files_exist(SOURCE_DIR, modules, 'JS-Modul')
 
     # 1. Lade CSS (modulare Dateien aus assets/styles/)
     print("\n[BUILD] Lade CSS...")
@@ -494,28 +367,24 @@ def build(minify=False, production=False, verbose=False):
     body_content = '\n'.join(html_parts)
     log.success(f"HTML Body geladen: {len(body_content):,} Zeichen ({len(html_templates)} Templates)")
     
-    # STAB-07: Vor dem Kombinieren — Modullisten-Sync und Duplikat-Check
-    print("\n[CHECK] Pruefe Modullisten-Sync und Duplikat-Funktionen...")
-    loader_js_path = os.path.join(SCRIPT_DIR, 'loader.js')
-    check_module_list_sync(loader_js_path, MODULES)
-    check_duplicate_functions(SOURCE_DIR, MODULES)
+    # STAB-07: Vor dem Kombinieren — Duplikat-Check (Modullisten-Sync entfaellt,
+    # SSoT-Parser oben garantiert bereits Existenz und Einzigartigkeit der Liste)
+    print("\n[CHECK] Pruefe Duplikat-Funktionen...")
+    check_duplicate_functions(SOURCE_DIR, modules)
     log.success("Pre-Build-Checks bestanden")
 
     # 3. Lade und kombiniere JavaScript
     print("\n[BUILD] Lade JavaScript-Module...")
     js_combined = ""
     total_js_size = 0
-    
+
     for i, module in enumerate(modules, 1):
         module_path = f"{SOURCE_DIR}/{module}"
-        if os.path.exists(module_path):
-            module_content = read_file(module_path)
-            js_combined += f"\n// ========== {module} ==========\n"
-            js_combined += module_content + "\n"
-            total_js_size += len(module_content)
-            log.info(f"[{i}/{len(modules)}] {module}: {len(module_content):,} Zeichen")
-        else:
-            log.warning(f"[{i}/{len(modules)}] {module} NICHT GEFUNDEN")
+        module_content = read_file(module_path)
+        js_combined += f"\n// ========== {module} ==========\n"
+        js_combined += module_content + "\n"
+        total_js_size += len(module_content)
+        log.info(f"[{i}/{len(modules)}] {module}: {len(module_content):,} Zeichen")
 
     # CRITICAL: Dedupliziere window-Zuweisungen BEFORE minification
     print("\n[BUILD] Dedupliziere window-Zuweisungen...")
