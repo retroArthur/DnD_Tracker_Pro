@@ -9,7 +9,7 @@
 
 ### Editor (execCommand-Ablösung)
 
-- [ ] **EDIT-01**: Alle 21 `document.execCommand`-Aufrufe in `ui/editors/rich-text.js` sind durch moderne Selection/Range-DOM-APIs ersetzt — verhaltensgleich für Bold/Italic/Underline/Strikethrough, Listen, Links, Tabellen, Border, Read-Aloud-Stile, Fonts/Größen und Highlight-Farben
+- [x] **EDIT-01**: Alle 21 `document.execCommand`-Aufrufe in `ui/editors/rich-text.js` sind durch moderne Selection/Range-DOM-APIs ersetzt — verhaltensgleich für Bold/Italic/Underline/Strikethrough, Listen, Links, Tabellen, Border, Read-Aloud-Stile, Fonts/Größen und Highlight-Farben
 - [x] **EDIT-02**: Alle Editor-Toolbars (3-Tier-System, statisch + floating) und Markdown-Shortcuts funktionieren nach der Ablösung unverändert in allen Entity-Editoren (Wiki, NPCs, Orte, Quests, Sessions, Quick-Ref …)
 - [x] **EDIT-03**: Editor-Regressionsnetz existiert: E2E-Tests decken die Kern-Formatierungen ab (vorher ungetesteter Bereich), damit die Ablösung beweisbar verhaltensgleich ist
 
@@ -53,7 +53,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| EDIT-01 | Phase 9 | Pending |
+| EDIT-01 | Phase 9 | Complete |
 | EDIT-02 | Phase 9 | Complete |
 | EDIT-03 | Phase 9 | Complete |
 | TEST-01 | Phase 8 | Complete |
