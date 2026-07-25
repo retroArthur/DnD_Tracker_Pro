@@ -454,6 +454,82 @@ var MAX_BACKUPS = window.MAX_BACKUPS;  // CONFLICT
         with pytest.raises(SystemExit):
             check_duplicate_functions(str(tmp_path), fake_modules)
 
+    def test_duplicate_const_check_detects_duplicate(self, tmp_path):
+        """
+        D-06: check_duplicate_functions muss bei doppelten Top-Level-const-
+        Deklarationen in zwei Quellmodulen SystemExit ausloesen.
+        """
+        file_a = tmp_path / 'module-a.js'
+        file_a.write_text("const DUPLICATE_CONST = 1;\n", encoding='utf-8')
+        file_b = tmp_path / 'module-b.js'
+        file_b.write_text("const DUPLICATE_CONST = 2;\n", encoding='utf-8')
+
+        fake_modules = ['module-a.js', 'module-b.js']
+
+        with pytest.raises(SystemExit):
+            check_duplicate_functions(str(tmp_path), fake_modules)
+
+    def test_duplicate_class_check_detects_duplicate(self, tmp_path):
+        """
+        D-06: check_duplicate_functions muss bei doppelten Top-Level-class-
+        Deklarationen in zwei Quellmodulen SystemExit ausloesen (real existierender
+        Fall im Bestandscode: VirtualList, DOMVirtualList, SafeRender, BatchUpdater).
+        """
+        file_a = tmp_path / 'module-a.js'
+        file_a.write_text("class DuplicateClass {\n    constructor() {}\n}\n", encoding='utf-8')
+        file_b = tmp_path / 'module-b.js'
+        file_b.write_text("class DuplicateClass {\n    constructor() {}\n}\n", encoding='utf-8')
+
+        fake_modules = ['module-a.js', 'module-b.js']
+
+        with pytest.raises(SystemExit):
+            check_duplicate_functions(str(tmp_path), fake_modules)
+
+    def test_duplicate_let_check_detects_duplicate(self, tmp_path):
+        """
+        D-06: check_duplicate_functions muss bei doppelten Top-Level-let-
+        Deklarationen in zwei Quellmodulen SystemExit ausloesen.
+        """
+        file_a = tmp_path / 'module-a.js'
+        file_a.write_text("let duplicateLet = 1;\n", encoding='utf-8')
+        file_b = tmp_path / 'module-b.js'
+        file_b.write_text("let duplicateLet = 2;\n", encoding='utf-8')
+
+        fake_modules = ['module-a.js', 'module-b.js']
+
+        with pytest.raises(SystemExit):
+            check_duplicate_functions(str(tmp_path), fake_modules)
+
+    def test_nested_declaration_is_not_a_duplicate(self, tmp_path):
+        """
+        D-06/T-11-07: Deklarationen INNERHALB einer Funktion (Klammertiefe > 0)
+        duerfen den Pre-Check nicht als Kollision melden, auch wenn derselbe Name
+        in zwei Modulen jeweils funktionslokal verwendet wird — Klammertiefen-
+        Tracking statt Texteinruckungs-Heuristik ist robuster gegen genau diesen
+        Fall (mirrort den 2026-01-10 bestiary-editor.js var-el-Befund).
+        """
+        file_a = tmp_path / 'module-a.js'
+        file_a.write_text(
+            "function helperA() {\n"
+            "    const nestedName = 1;\n"
+            "    return nestedName;\n"
+            "}\n",
+            encoding='utf-8'
+        )
+        file_b = tmp_path / 'module-b.js'
+        file_b.write_text(
+            "function helperB() {\n"
+            "    const nestedName = 2;\n"
+            "    return nestedName;\n"
+            "}\n",
+            encoding='utf-8'
+        )
+
+        fake_modules = ['module-a.js', 'module-b.js']
+
+        # Darf NICHT abbrechen — beide Deklarationen sind funktionslokal (Tiefe > 0)
+        check_duplicate_functions(str(tmp_path), fake_modules)
+
     def test_no_dedup_function_marker_in_bundle(self):
         """
         D-05/D-07 Regressionstest: Der dritte Dedup-Pass (der einen Funktionskopf
