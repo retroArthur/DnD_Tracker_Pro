@@ -122,7 +122,7 @@ Details, Success Criteria und Coverage: [milestones/v1.0-ROADMAP.md](milestones/
   3. SECURITY.md dokumentiert einen Audit über Import/Export, Storage/IDB, Datei-Backup und Rich-Text/innerHTML mit `threats_open: 0`
   4. Der Audit ist via `/gsd-secure-phase` gegen die relevanten Phasen durchgeführt (inkl. der neuen Editor-Implementierung aus Phase 9)
 
-**Plans**: 6/6 plans executed
+**Plans**: 7 plans (6/7 executed)
 
 **Wave 1**
 
@@ -147,6 +147,10 @@ Details, Success Criteria und Coverage: [milestones/v1.0-ROADMAP.md](milestones/
 **Wave 6** *(Gap-Closure, blockiert auf Wave 5)*
 
 - [x] 10-06-PLAN.md — SC3-Lücke: Tabellen-Einfügepfad über den Allowlist-Sanitizer, Mehrfach-Vektor-Regressionstest, korrigierte Threat-Register + SECURITY.md
+
+**Wave 7** *(Gap-Closure Runde 2, blockiert auf Wave 6)*
+
+- [ ] 10-07-PLAN.md — CSS-Beacon (Stilwert mit fremder Ressourcen-Referenz) in beiden Sanitizer-Zwillingen schließen, Review-Funde WR-01/WR-02/WR-03/IN-01 beheben, Threat-Register vollständig dispositionieren
 
 *Sequenzielle Wellen: alle Pläne ab Welle 2 bauen `dist/dnd-tracker-bundled.html` und fahren die E2E-Suite gegen dasselbe Artefakt — paralleles Ausführen würde auf dem gemeinsamen Bundle kollidieren.*
 
@@ -174,5 +178,5 @@ Details, Success Criteria und Coverage: [milestones/v1.0-ROADMAP.md](milestones/
 | v1.0 (Phasen 1–7) | 44/44 | ✅ Shipped | 2026-07-22 |
 | 8. Test-Fundament grün | 4/4 | Complete    | 2026-07-23 |
 | 9. Editor-Regressionsnetz & execCommand-Ablösung | 9/9 | Complete    | 2026-07-25 |
-| 10. Security-Härtung | 6/6 | In Progress|  |
+| 10. Security-Härtung | 6/7 | In Progress|  |
 | 11. Architektur- & Build-Hygiene | 0/TBD | Not started | - |
