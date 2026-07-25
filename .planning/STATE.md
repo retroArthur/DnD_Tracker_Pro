@@ -5,8 +5,8 @@ milestone_name: Tech-Debt & Härtung
 current_phase: 11
 current_phase_name: Architektur- & Build-Hygiene
 status: executing
-stopped_at: Completed 11-05-PLAN.md
-last_updated: "2026-07-25T21:52:50.077Z"
+stopped_at: Completed 11-06-PLAN.md
+last_updated: "2026-07-25T22:11:41.806Z"
 last_activity: 2026-07-25
 last_activity_desc: Phase 11 execution started
 progress:
@@ -36,7 +36,7 @@ progress:
 ## Current Position
 
 Phase: 11 (architektur-build-hygiene) — EXECUTING
-Plan: 6 of 7
+Plan: 7 of 7
 Status: Ready to execute
 Last activity: 2026-07-25 — Phase 11 execution started
 
@@ -76,6 +76,7 @@ Last activity: 2026-07-25 — Phase 11 execution started
 | Phase 11 P03 | 11min | 3 tasks | 3 files |
 | Phase 11 P04 | 25min | 2 tasks | 5 files |
 | Phase 11 P05 | ~40min | 3 tasks | 4 files |
+| Phase 11 P06 | ~35min | 3 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -162,8 +163,8 @@ Last activity: 2026-07-25 — Phase 11 execution started
 
 ## Session Continuity
 
-**Last session:** 2026-07-25T21:52:50.060Z
-**Stopped at:** Completed 11-05-PLAN.md
+**Last session:** 2026-07-25T22:11:41.786Z
+**Stopped at:** Completed 11-06-PLAN.md
 **Resume file:** None
 
 **Last action:** Komplette Milestone-UAT abgeschlossen (2026-06-20 → 2026-07-20): alle 5 offenen Human-UAT-Sessions via `/gsd-verify-work` durchgetestet — 07 (4/4), 06 (5/5), 05 (2/2), 01 (3/3), 02 (6/6). Alle 7 VERIFICATION.md jetzt `status: passed`. Dabei gefundene+gefixte Bugs: Soundboard-Doppel-Import (75aadfe), Audio-läuft-nach-Szene-Löschen (b85dbe1), Volume nicht live (801ed48), Manifest-CORS unter file:// (cd75093), Konsolen-Hygiene (c029f11), Datei-Backup schrieb nie bei Entity-CRUD — window.save-Wrapper strukturell wirkungslos für bare save() (1430e8c), generischer registerPostSaveHook + DM-Screen-Live-Sync-Umstellung + CLAUDE.md-Pattern-Korrektur (6ea8309), „Anderen Ordner wählen"-Button (cc2af9e). Nebenbei: Repo mit origin gemergt (7 Mai-Commits, alter pages.yml-Deploy entfernt 7f4858a), 348 Commits gepusht, GitHub-Pages-Deploy live verifiziert (PWA installierbar, SW-Update-Flow, Datei-Backup, Migrations-Wizard file://→PWA). Zusätzlich in der Session: Soundboard-Erweiterungen (Loop-Toggle/Crossfade-Loop/Fortschritt 6636297, Per-Track-Play noch offen als Design), gruppierte Navigation (3d77ec0).
@@ -244,6 +245,8 @@ _State initialized: 2026-06-11_
 - [Phase ?]: [Phase 11, 11-04]: Action-Version-Bumps auf Major-Tags (@vN, kein SHA) verifiziert via gh api zur Ausfuehrungszeit (D-09) - checkout/setup-node/setup-python/upload-artifact v7, download-artifact v8, configure-pages v6, upload-pages-artifact/deploy-pages v5
 - [Phase ?]: [Phase 11, 11-05]: D-10 Favicon-Data-URI verifiziert per Raw-CDP-Probe (nicht nur ueber den committed Smoke-Test) - headless Chromium fuehrt den impliziten favicon.ico-Fetch nie aus, headed-Modus feuert real mit 404 aber Playwright-Page-Events sehen ihn nie; Fix bestaetigt via manuelle CDP-Gegenprobe
 - [Phase ?]: [Phase 11, 11-05]: D-11-Zweig apple-Tag bleibt (additiv, nicht ersetzt) - Konsolen-Sammlung leer vor und nach dem Ergaenzen von mobile-web-app-capable auf Chromium 143.0.7499.4, dreifach unabhaengig gegengeprueft (console/CDP-Log/CDP-Audits)
+- [Phase ?]: [Phase 11, 11-06]: 22/46 CONCERNS.md-Eintraege waren bereits durch Phasen 1/8-10/11-01..05 erledigt, ohne dass CONCERNS.md es wusste; Triage belegt jede Disposition gegen Live-Code statt gegen die CONCERNS-Beschreibung (D-15)
+- [Phase ?]: [Phase 11, 11-06]: 15 Restposten als DEBT-01..15 in REQUIREMENTS.md uebernommen (D-16), inkl. 4 aus STATE.md Open TODOs (IN-01/WR-02/IN-02/Toast-Race); ARCH-04 bewusst NICHT als komplett markiert - nur die Triage-Haelfte ist erledigt, Map-Refresh folgt in Plan 11-07
 
 ## Operator Next Steps
 
