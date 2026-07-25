@@ -138,7 +138,7 @@ Details, Success Criteria und Coverage: [milestones/v1.0-ROADMAP.md](milestones/
 
 **Wave 4** *(blocked on Wave 3)*
 
-- [ ] 10-04-PLAN.md — Paste-Tabellen-XSS (Broken-Windows #1) + saveSpell-Konsistenz + Ledger schließen
+- [x] 10-04-PLAN.md — Paste-Tabellen-XSS (Broken-Windows #1) + saveSpell-Konsistenz + Ledger schließen
 
 **Wave 5** *(blocked on Wave 4)*
 

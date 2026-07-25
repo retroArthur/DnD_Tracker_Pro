@@ -5,23 +5,23 @@ milestone_name: Tech-Debt & Härtung
 current_phase: 10
 current_phase_name: Security-Härtung
 status: executing
-stopped_at: Completed 10-03-PLAN.md
-last_updated: "2026-07-25T10:57:18.436Z"
+stopped_at: Completed 10-04-PLAN.md
+last_updated: "2026-07-25T11:13:33.424Z"
 last_activity: 2026-07-25
-last_activity_desc: "Phase 10 Plan 02 (Import-Grenze) ausgeführt: HTML_FIELDS_BY_TYPE + sanitizeImportedItem() an beiden Import-Eintrittspunkten (showImportModal()/executeImport() und importDataGlobal(), beide Zweige) verdrahtet; WR-03/D-07 (Undo+Backup im Überschreib-Zweig von importDataGlobal()) geschlossen; 24 neue Unit-Tests (vm.runInContext gegen echten Quelltext) + 2 neue E2E-Tests am gespeicherten Zustand; 481/481 Jest, 314 passed/2 skipped Playwright"
+last_activity_desc: "Phase 10 Plan 04 (Tabellenzweig-Fix + Zauber-Speicherpfad-Angleichung) ausgeführt: handleEditorPaste()s Tabellenzweig entfernt jetzt Ereignis-Attribute (dasselbe Regex-Paar wie sanitizeHTML()) — Broken-Windows-Ledger-Eintrag 1 geschlossen (open_count: 0); saveSpell()s Beschreibungsfeld an das Notizfeld angeglichen (sanitizeHTML()); neuer E2E-Sicherheitstest rot vor dem Fix (Commit 59a7f61), grün danach (Commit cef33f2); SEC-01 vollständig erfüllt (Shared-ID-Gate, letzte deklarierende Plan-SUMMARY); volles Editor-Netz (90 Tests), 554/554 Jest, 315 passed/2 skipped Playwright"
 progress:
   total_phases: 4
   completed_phases: 2
   total_plans: 18
   completed_plans: 17
-  percent: 94
+  percent: 50
 ---
 
 # Project State: D&D Kampagnen-Tracker Pro — Stabilisierung & Ausbau
 
 **Last Updated:** 2026-07-25
 **Phase:** 10 — Security-Härtung
-**Status:** Executing Phase 10 (Plan 3/5 abgeschlossen)
+**Status:** Executing Phase 10 (Plan 4/5 abgeschlossen)
 
 ---
 
@@ -36,9 +36,9 @@ progress:
 ## Current Position
 
 Phase: 10 (Security-Härtung) — EXECUTING
-Plan: 4 of 5
-Status: Plan 01 + Plan 02 + Plan 03 abgeschlossen (SEC-01 Anzeige-Grenze, Import-Grenze UND Sanitizer-Beweisnetz/Strikethrough-Fix geschlossen, WR-03 gefixt, D-06 behoben), Plan 04 bereit
-Last activity: 2026-07-25 — Phase 10 Plan 03 (Sanitizer-Beweisnetz) ausgeführt: vm-basierter Vektor-Katalog gegen den echten utils/basic.js, Paritätstest tests/unit/sanitizer-parity.test.js als Zaun zwischen utils/basic.js und utils/testable-utils.js, 'strike' synchron in beide Whitelists ergänzt (D-06) — Strikethrough übersteht Speichern/Reload jetzt; genau eine begründete Netz-Anpassung in editor-formatting.spec.js (09-BASELINE.md Ausnahme-Änderung 8); 554/554 Jest, 314 passed/2 skipped Playwright
+Plan: 5 of 5
+Status: Plan 01 + Plan 02 + Plan 03 + Plan 04 abgeschlossen (SEC-01 Anzeige-Grenze, Import-Grenze, Sanitizer-Beweisnetz/Strikethrough-Fix UND Tabellenzweig-Fix/Zauber-Speicherpfad geschlossen, WR-03 gefixt, D-06 behoben, SEC-01 vollständig erfüllt), Plan 05 (abschließender Security-Audit, SEC-02) bereit
+Last activity: 2026-07-25 — Phase 10 Plan 04 (Tabellenzweig-Fix + Zauber-Speicherpfad-Angleichung) ausgeführt: handleEditorPaste()s Tabellenzweig entfernt jetzt Ereignis-Attribute (dasselbe Regex-Paar wie sanitizeHTML()) — Broken-Windows-Ledger-Eintrag 1 geschlossen (open_count: 0); saveSpell()s Beschreibungsfeld an das Notizfeld angeglichen (sanitizeHTML()); neuer E2E-Sicherheitstest rot vor dem Fix (Commit 59a7f61), grün danach (Commit cef33f2); SEC-01 vollständig erfüllt (Shared-ID-Gate, letzte deklarierende Plan-SUMMARY); volles Editor-Netz (90 Tests), 554/554 Jest, 315 passed/2 skipped Playwright
 
 ## Performance Metrics
 
@@ -67,6 +67,7 @@ Last activity: 2026-07-25 — Phase 10 Plan 03 (Sanitizer-Beweisnetz) ausgeführ
 | Phase 10 P01 | 55min | 2 tasks | 4 files |
 | Phase 10 P02 | 50min | 3 tasks | 3 files |
 | Phase 10 P03 | 30min | 3 tasks | 6 files |
+| Phase 10 P04 | 35min | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -144,8 +145,8 @@ Last activity: 2026-07-25 — Phase 10 Plan 03 (Sanitizer-Beweisnetz) ausgeführ
 
 ## Session Continuity
 
-**Last session:** 2026-07-25T10:57:00.719Z
-**Stopped at:** Completed 10-03-PLAN.md
+**Last session:** 2026-07-25T11:13:33.409Z
+**Stopped at:** Completed 10-04-PLAN.md
 **Resume file:** None
 
 **Last action:** Komplette Milestone-UAT abgeschlossen (2026-06-20 → 2026-07-20): alle 5 offenen Human-UAT-Sessions via `/gsd-verify-work` durchgetestet — 07 (4/4), 06 (5/5), 05 (2/2), 01 (3/3), 02 (6/6). Alle 7 VERIFICATION.md jetzt `status: passed`. Dabei gefundene+gefixte Bugs: Soundboard-Doppel-Import (75aadfe), Audio-läuft-nach-Szene-Löschen (b85dbe1), Volume nicht live (801ed48), Manifest-CORS unter file:// (cd75093), Konsolen-Hygiene (c029f11), Datei-Backup schrieb nie bei Entity-CRUD — window.save-Wrapper strukturell wirkungslos für bare save() (1430e8c), generischer registerPostSaveHook + DM-Screen-Live-Sync-Umstellung + CLAUDE.md-Pattern-Korrektur (6ea8309), „Anderen Ordner wählen"-Button (cc2af9e). Nebenbei: Repo mit origin gemergt (7 Mai-Commits, alter pages.yml-Deploy entfernt 7f4858a), 348 Commits gepusht, GitHub-Pages-Deploy live verifiziert (PWA installierbar, SW-Update-Flow, Datei-Backup, Migrations-Wizard file://→PWA). Zusätzlich in der Session: Soundboard-Erweiterungen (Loop-Toggle/Crossfade-Loop/Fortschritt 6636297, Per-Track-Play noch offen als Design), gruppierte Navigation (3d77ec0).
@@ -207,6 +208,8 @@ _State initialized: 2026-06-11_
 - [Phase ?]: [Phase 10, 10-02]: validatedItems-Abbildung liegt tatsächlich in showImportModal(), nicht in executeImport() wie im Plan-Text notiert — Sanitisierung an der realen Stelle verdrahtet, Struktur-Test entsprechend korrigiert
 - [Phase ?]: [Phase 10, 10-03]: Paritätstest-Strukturprüfung (a) nutzt Tag-Namen-Liste statt direktem allowedTags-Zugriff — allowedTags ist function-scoped const, ueber vm.runInContext(expr) nicht erreichbar
 - [Phase ?]: [Phase 10, 10-03]: esc(0)-Drift zwischen utils/basic.js und utils/testable-utils.js bewusst nur dokumentiert (eigener Testfall), nicht behoben - ausserhalb des Plan-Scopes (nur <strike>-Whitelist-Fix)
+- [Phase ?]: [Phase 10, 10-04]: Kein-Bild-Element-Kriterium als scope-konforme Fassung interpretiert (kein on*-Attribut statt vollstaendiger Tag-Entfernung) - explizite Plan-Prohibition schliesst DOMParser-Umbau/weitere Attribut-Entfernung aus
+- [Phase ?]: [Phase 10, 10-04]: Fehlersammlung im neuen Sicherheitstest auf pageerror verengt (nicht generische console-Fehler) - beibehaltenes inertes img src=x erzeugt harmlosen Ressourcen-404-Konsoleneintrag ohne Sicherheitsrelevanz
 
 ## Operator Next Steps
 
