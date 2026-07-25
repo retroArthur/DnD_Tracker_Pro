@@ -26,7 +26,7 @@
 ### Architektur (Build-/Repo-Hygiene)
 
 - [x] **ARCH-01**: Modullisten-Drift ist strukturell unmöglich: loader.js↔build.py haben eine Single Source of Truth ODER einen harten Gate (Build bricht bei Drift ab — nicht nur Warnung), abgesichert durch Tests
-- [ ] **ARCH-02**: build.py-Dedup Pass 3 ist gehärtet: verwaiste Funktionskörper können nicht mehr still im Bundle landen (Fehler statt kaputtem Build), mit Testabdeckung im bestehenden TDD-Suite-Muster (tests/build/)
+- [x] **ARCH-02**: build.py-Dedup Pass 3 ist gehärtet: verwaiste Funktionskörper können nicht mehr still im Bundle landen (Fehler statt kaputtem Build), mit Testabdeckung im bestehenden TDD-Suite-Muster (tests/build/)
 - [ ] **ARCH-03**: CI-/Konsolen-Hygiene: GitHub-Actions auf Node-24-kompatible Versionen gehoben (Deprecation-Warnungen weg), favicon-404 und `apple-mobile-web-app-capable`-Deprecation im Bundle behoben
 - [ ] **ARCH-04**: Codebase-Map aufgefrischt (`.planning/codebase/` via `/gsd-map-codebase`, Stand nach Phasen 3–7) und CONCERNS.md-Restposten trianguliert: jeder Eintrag ist erledigt, obsolet-markiert oder als Requirement übernommen
 
@@ -61,6 +61,6 @@ Which phases cover which requirements. Updated during roadmap creation.
 | SEC-01 | Phase 10 | Complete |
 | SEC-02 | Phase 10 | Complete |
 | ARCH-01 | Phase 11 | Complete |
-| ARCH-02 | Phase 11 | Pending |
+| ARCH-02 | Phase 11 | Complete |
 | ARCH-03 | Phase 11 | Pending |
 | ARCH-04 | Phase 11 | Pending |

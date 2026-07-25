@@ -5,15 +5,15 @@ milestone_name: Tech-Debt & Härtung
 current_phase: 11
 current_phase_name: Architektur- & Build-Hygiene
 status: executing
-stopped_at: Completed 11-02-PLAN.md
-last_updated: "2026-07-25T20:51:04.100Z"
+stopped_at: Completed 11-03-PLAN.md
+last_updated: "2026-07-25T21:05:13.511Z"
 last_activity: 2026-07-25
 last_activity_desc: Phase 11 execution started
 progress:
   total_phases: 4
   completed_phases: 3
   total_plans: 27
-  completed_plans: 22
+  completed_plans: 23
   percent: 75
 ---
 
@@ -36,7 +36,7 @@ progress:
 ## Current Position
 
 Phase: 11 (architektur-build-hygiene) — EXECUTING
-Plan: 3 of 7
+Plan: 4 of 7
 Status: Ready to execute
 Last activity: 2026-07-25 — Phase 11 execution started
 
@@ -73,6 +73,7 @@ Last activity: 2026-07-25 — Phase 11 execution started
 | Phase 10 P07 | ~55min | 3 tasks | 8 files |
 | Phase 11 P01 | 11min | 2 tasks | 2 files |
 | Phase 11 P02 | 4min | 3 tasks | 3 files |
+| Phase 11 P03 | 11min | 3 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -159,8 +160,8 @@ Last activity: 2026-07-25 — Phase 11 execution started
 
 ## Session Continuity
 
-**Last session:** 2026-07-25T20:51:03.460Z
-**Stopped at:** Completed 11-02-PLAN.md
+**Last session:** 2026-07-25T21:05:13.494Z
+**Stopped at:** Completed 11-03-PLAN.md
 **Resume file:** None
 
 **Last action:** Komplette Milestone-UAT abgeschlossen (2026-06-20 → 2026-07-20): alle 5 offenen Human-UAT-Sessions via `/gsd-verify-work` durchgetestet — 07 (4/4), 06 (5/5), 05 (2/2), 01 (3/3), 02 (6/6). Alle 7 VERIFICATION.md jetzt `status: passed`. Dabei gefundene+gefixte Bugs: Soundboard-Doppel-Import (75aadfe), Audio-läuft-nach-Szene-Löschen (b85dbe1), Volume nicht live (801ed48), Manifest-CORS unter file:// (cd75093), Konsolen-Hygiene (c029f11), Datei-Backup schrieb nie bei Entity-CRUD — window.save-Wrapper strukturell wirkungslos für bare save() (1430e8c), generischer registerPostSaveHook + DM-Screen-Live-Sync-Umstellung + CLAUDE.md-Pattern-Korrektur (6ea8309), „Anderen Ordner wählen"-Button (cc2af9e). Nebenbei: Repo mit origin gemergt (7 Mai-Commits, alter pages.yml-Deploy entfernt 7f4858a), 348 Commits gepusht, GitHub-Pages-Deploy live verifiziert (PWA installierbar, SW-Update-Flow, Datei-Backup, Migrations-Wizard file://→PWA). Zusätzlich in der Session: Soundboard-Erweiterungen (Loop-Toggle/Crossfade-Loop/Fortschritt 6636297, Per-Track-Play noch offen als Design), gruppierte Navigation (3d77ec0).
@@ -236,6 +237,7 @@ _State initialized: 2026-06-11_
 - [Phase ?]: [Phase 11, 11-01]: check_module_list_sync() deleted outright (not kept as no-op) — its sole job, comparing two lists, is structurally impossible once there is only one list (D-01 SSoT)
 - [Phase ?]: [Phase 11, 11-02]: load_template_list() reuses parse_js_string_array() unchanged despite TEMPLATES being function-local in loader.js — text-based regex parser is scope-agnostic
 - [Phase ?]: [Phase 11, 11-02]: load_css_import_order() uses a dedicated regex instead of parse_js_string_array() — assets/styles.css has no comments between @import lines, so comment-stripping is unneeded
+- [Phase ?]: [Phase 11, 11-03]: Pass 3 (remove_duplicate_functions) ersatzlos entfernt statt repariert (D-05) — check_duplicate_functions() auf function/const/let/class per Klammertiefen-Tracking erweitert (D-06); test_build_generates_valid_javascript-Vorbefund bleibt explizit ausserhalb des Scopes, WINDOWS-Eintrag 2 offen
 
 ## Operator Next Steps
 
