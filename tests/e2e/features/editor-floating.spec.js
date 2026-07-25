@@ -528,3 +528,98 @@ test.describe('Persistenz-Roundtrip (floating)', () => {
         await expect(reopened.evaluate(el => el.textContent)).resolves.toContain(TESTTEXT);
     });
 });
+
+// ---------------------------------------------------------------
+// Task 3: UI-lose Zweige von formatText (kein Toolbar-Pfad vorhanden)
+//
+// Der Grep aus 09-BASELINE.md/A2 belegt: KEIN Template in der gesamten App
+// löst data-editor="heading"|"font"|"highlight" aus (09-RESEARCH.md Pitfall 3).
+// Diese vier Call-Sites (Zeilen 339/341/344/346 in ui/editors/rich-text.js)
+// werden in Plan 09-06 migriert und brauchen dennoch einen Vorher-Beweis —
+// deshalb hier per direktem window.formatText()-Aufruf statt UI-Klick
+// ---------------------------------------------------------------
+test.describe('UI-lose Zweige (kein Toolbar-Pfad vorhanden)', () => {
+    test.beforeEach(async ({ page }) => {
+        await gotoBundleFresh(page);
+    });
+
+    test('heading: window.formatText direkt aufgerufen (kein Template referenziert data-editor="heading")', async ({
+        page
+    }) => {
+        await openFreshWikiForm(page, 'Floating UILos Heading');
+        const editor = page.locator('#wiki-content');
+        await typeAndSelectAll(editor, TESTTEXT);
+        const html = await page.evaluate(() => {
+            window.formatText('wiki-content', 'heading');
+            return document.getElementById('wiki-content').innerHTML;
+        });
+        expect(html).toBe('<h4>Probetext</h4>');
+        await expect(editor.evaluate(el => el.textContent)).resolves.toContain(TESTTEXT);
+    });
+
+    test('font: window.formatText direkt aufgerufen (kein Template referenziert data-editor="font")', async ({
+        page
+    }) => {
+        await openFreshWikiForm(page, 'Floating UILos Font');
+        const editor = page.locator('#wiki-content');
+        await typeAndSelectAll(editor, TESTTEXT);
+        const html = await page.evaluate(() => {
+            window.formatText('wiki-content', 'font', 'Arial');
+            return document.getElementById('wiki-content').innerHTML;
+        });
+        expect(html).toBe('<font face="Arial">Probetext</font>');
+        await expect(editor.evaluate(el => el.textContent)).resolves.toContain(TESTTEXT);
+    });
+
+    test('highlight (Farbwert): window.formatText direkt aufgerufen (kein Template referenziert data-editor="highlight")', async ({
+        page
+    }) => {
+        await openFreshWikiForm(page, 'Floating UILos Highlight Farbe');
+        const editor = page.locator('#wiki-content');
+        await typeAndSelectAll(editor, TESTTEXT);
+        const html = await page.evaluate(() => {
+            window.formatText('wiki-content', 'highlight', '#fbbf24');
+            return document.getElementById('wiki-content').innerHTML;
+        });
+        expect(html).toBe('<span style="background-color: rgb(251, 191, 36);">Probetext</span>');
+        await expect(editor.evaluate(el => el.textContent)).resolves.toContain(TESTTEXT);
+    });
+
+    test('highlight (Wert "none"): window.formatText direkt aufgerufen nach vorherigem mark-basiertem set-highlight-color (09-BASELINE.md Zeile 344)', async ({
+        page
+    }) => {
+        await openFreshWikiForm(page, 'Floating UILos Highlight None');
+        const editor = page.locator('#wiki-content');
+        await typeAndSelectAll(editor, TESTTEXT);
+        await page.selectOption(
+            '[data-action="set-highlight-color"][data-editor="wiki-content"]',
+            '#fbbf24'
+        );
+        await expect(editor).toHaveJSProperty(
+            'innerHTML',
+            '<mark style="background-color: rgba(251, 191, 36, 0.4); color: inherit; border-radius: 2px; padding: 0px 3px;">Probetext</mark>'
+        );
+        await editor.click();
+        await editor.selectText();
+        const html = await page.evaluate(() => {
+            window.formatText('wiki-content', 'highlight', 'none');
+            return document.getElementById('wiki-content').innerHTML;
+        });
+        // removeFormat() entfernt nur die background-color-Style-Eigenschaft —
+        // das <mark>-Element selbst bleibt (execCommand entpackt keine
+        // Custom-Elemente). 09-BASELINE.md Zeile 344 empirisch bestätigt.
+        expect(html).toBe('<mark style="border-radius: 2px; padding: 0px 3px;">Probetext</mark>');
+        await expect(editor.evaluate(el => el.textContent)).resolves.toContain(TESTTEXT);
+    });
+});
+
+// ---------------------------------------------------------------
+// Task 3: Zählnachweis — Anker für die execCommand-Ablösung (Plan 09-09)
+// ---------------------------------------------------------------
+test.describe('Inventar-Zählnachweis (bewusst änderbar in Plan 09-09)', () => {
+    test('ZÄHLNACHWEIS: ui/editors/rich-text.js enthält exakt 21 execCommand-Vorkommen (Referenz: 09-BASELINE.md Markup-Inventar; wird in Plan 09-09 auf 0 umgestellt)', async () => {
+        const content = fs.readFileSync('ui/editors/rich-text.js', 'utf8');
+        const matches = content.match(/execCommand/g) || [];
+        expect(matches.length).toBe(21);
+    });
+});
