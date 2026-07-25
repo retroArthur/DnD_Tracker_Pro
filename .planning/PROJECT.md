@@ -13,7 +13,7 @@ Die App muss am Spieltisch **zuverlässig offline laufen** — ein Spielleiter-B
 - **Version:** v2.6.1, Milestone **v1.0 „Stabilisierung & Ausbau"** geshippt (7 Phasen, 44 Pläne, 31/31 Requirements, UAT 20/20)
 - **Codebase:** ~123 Module, ~81.000 Zeilen Quellcode, non-ESM Single-Bundle via `build.py`
 - **Qualität:** 457 Unit-Tests grün, volle E2E-Suite grün (231 passed / 2 skipped / 0 failed), CI mit Pages-Deploy und blockierendem E2E-Gate; alle 8 Phasen-VERIFICATIONs `passed`
-- **v1.1-Fortschritt:** Phase 8 „Test-Fundament grün" abgeschlossen (2026-07-23) — TEST-01/TEST-02 validiert, E2E-Job blockiert seitdem die Deploy-Kette (`docs/e2e-failure-triage.md` dokumentiert alle Ex-Fails)
+- **v1.1-Fortschritt:** Phase 8 „Test-Fundament grün" abgeschlossen (2026-07-23) — TEST-01/TEST-02 validiert, E2E-Job blockiert seitdem die Deploy-Kette (`docs/e2e-failure-triage.md` dokumentiert alle Ex-Fails); Phase 9 „Editor-Regressionsnetz & execCommand-Ablösung" abgeschlossen (2026-07-25) — EDIT-01/EDIT-02/EDIT-03 validiert, Rich-Text-Editor execCommand-frei (21→0 via Selection/Range), abgesichert durch 80-Tests-Regressionsnetz mit D-04a-Doppel-Grün-Beweis (E2E-Suite jetzt 308 passed / 2 skipped)
 - **Live:** https://retroarthur.github.io/DnD_Tracker_Pro/dnd-tracker-optimized.html (PWA installierbar, SW-Updates, Datei-Backup, Migrations-Wizard)
 
 ## Current Milestone: v1.1 Tech-Debt & Härtung
@@ -112,11 +112,16 @@ Die App muss am Spieltisch **zuverlässig offline laufen** — ein Spielleiter-B
 - ✓ TEST-02: Assertions gehärtet — 6 deterministische Zähl-Assertions auf `toBe(N)`, 17 begründete Ausnahmen kommentiert, 15 maskierende `isVisible()`-Guards konvertiert (dabei 2 weitere Test-Bugs gefunden+gefixt), 13 `waitForTimeout` durch Wait-Conditions ersetzt; neuer blockierender `e2e`-CI-Job in der Deploy-Kette
 - ✓ Qualitätszyklus: Verifier 5/5 (Gap-Fix c4f6f6e: Tautologie-Assertion im Encounter-Undo-Test), Jest 457/457, Playwright 231 passed / 2 skipped / 0 failed, Code-Review 0 Critical (3 Warnings advisory in 08-REVIEW.md)
 
+**Validated in Phase 9: Editor-Regressionsnetz & execCommand-Ablösung (2026-07-25):**
+
+- ✓ EDIT-01: Alle 21 `document.execCommand`-Call-Sites in `ui/editors/rich-text.js` durch Selection/Range-DOM-Operationen ersetzt (7 Gruppen A–G über Pläne 09-06..09-09), Zählnachweis-Test verankert 0 Vorkommen
+- ✓ EDIT-02: Beide Toolbars (statisch + floating) funktionieren unverändert — bewiesen durch 80-Tests-Regressionsnetz (4 Spec-Dateien) mit exakten Markup-Assertionen und Persistenz-Roundtrips; Baseline-Reparatur Option A (EDITOR_FONTS/TOOLBAR_DIMENSIONS + Font-Setter-Wiring) machte die floating Toolbar überhaupt erst wieder klickbar; Entwickler-Handcheck im Browser freigegeben
+- ✓ EDIT-03: Regressionsnetz existierte VOR der Migration (D-04a-Doppel-Grün-Beweis in `09-BASELINE.md`, Netz-Freeze mit protokollierten Ausnahmen); Qualitätszyklus: Verifier 4/4, Playwright 308 passed / 2 skipped, Jest 457/457, Code-Review 2 Critical → CR-02 gefixt (`468bea1`), CR-01 als verhaltensneutrale Scope-Entscheidung dokumentiert
+
 ### Active
 
 _(Milestone v1.1 — Details in `.planning/REQUIREMENTS.md`)_
 
-- [ ] EDIT-01..03 — execCommand-Ablösung + Editor-Regressionsnetz (Phase 9)
 - [ ] SEC-01..02 — Import-XSS + Security-Audit (Phase 10)
 - [ ] ARCH-01..04 — Build-/Repo-Hygiene (Phase 11)
 
@@ -178,4 +183,4 @@ This document evolves at phase transitions and milestone boundaries.
 
 ---
 
-_Last updated: 2026-07-23 after Phase 8 completion (v1.1: Test-Fundament grün — TEST-01/TEST-02 validiert, Suite komplett grün, blockierender E2E-CI-Gate; Active-Sektion auf v1.1-Requirements aktualisiert)._
+_Last updated: 2026-07-25 after Phase 9 completion (v1.1: Editor-Regressionsnetz & execCommand-Ablösung — EDIT-01/02/03 validiert, Editor execCommand-frei, 80-Tests-Netz mit D-04a-Beweis, E2E-Suite 308 passed)._
