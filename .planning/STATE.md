@@ -4,24 +4,24 @@ milestone: v1.1
 milestone_name: Tech-Debt & Härtung
 current_phase: 10
 current_phase_name: Security-Härtung
-status: verifying
-stopped_at: Completed 10-05-PLAN.md
-last_updated: "2026-07-25T11:34:15.361Z"
+status: gaps_found
+stopped_at: Phase 10 verifiziert — 3/4 Must-Haves, Lücke SC3 (Paste-Tabellenzweig)
+last_updated: "2026-07-25T12:15:00.000Z"
 last_activity: 2026-07-25
 last_activity_desc: "Phase 10 Plan 04 (Tabellenzweig-Fix + Zauber-Speicherpfad-Angleichung) ausgeführt: handleEditorPaste()s Tabellenzweig entfernt jetzt Ereignis-Attribute (dasselbe Regex-Paar wie sanitizeHTML()) — Broken-Windows-Ledger-Eintrag 1 geschlossen (open_count: 0); saveSpell()s Beschreibungsfeld an das Notizfeld angeglichen (sanitizeHTML()); neuer E2E-Sicherheitstest rot vor dem Fix (Commit 59a7f61), grün danach (Commit cef33f2); SEC-01 vollständig erfüllt (Shared-ID-Gate, letzte deklarierende Plan-SUMMARY); volles Editor-Netz (90 Tests), 554/554 Jest, 315 passed/2 skipped Playwright"
 progress:
   total_phases: 4
-  completed_phases: 3
+  completed_phases: 2
   total_plans: 18
   completed_plans: 18
-  percent: 75
+  percent: 50
 ---
 
 # Project State: D&D Kampagnen-Tracker Pro — Stabilisierung & Ausbau
 
 **Last Updated:** 2026-07-25
 **Phase:** 10 — Security-Härtung
-**Status:** Phase complete — ready for verification
+**Status:** Verifiziert mit Lücke — 5/5 Pläne ausgeführt, 3/4 Must-Haves (SC3 offen)
 
 ---
 
@@ -35,10 +35,10 @@ progress:
 
 ## Current Position
 
-Phase: 10 (Security-Härtung) — EXECUTING
-Plan: 5 of 5
-Status: Plan 01 + Plan 02 + Plan 03 + Plan 04 abgeschlossen (SEC-01 Anzeige-Grenze, Import-Grenze, Sanitizer-Beweisnetz/Strikethrough-Fix UND Tabellenzweig-Fix/Zauber-Speicherpfad geschlossen, WR-03 gefixt, D-06 behoben, SEC-01 vollständig erfüllt), Plan 05 (abschließender Security-Audit, SEC-02) bereit
-Last activity: 2026-07-25 — Phase 10 Plan 04 (Tabellenzweig-Fix + Zauber-Speicherpfad-Angleichung) ausgeführt: handleEditorPaste()s Tabellenzweig entfernt jetzt Ereignis-Attribute (dasselbe Regex-Paar wie sanitizeHTML()) — Broken-Windows-Ledger-Eintrag 1 geschlossen (open_count: 0); saveSpell()s Beschreibungsfeld an das Notizfeld angeglichen (sanitizeHTML()); neuer E2E-Sicherheitstest rot vor dem Fix (Commit 59a7f61), grün danach (Commit cef33f2); SEC-01 vollständig erfüllt (Shared-ID-Gate, letzte deklarierende Plan-SUMMARY); volles Editor-Netz (90 Tests), 554/554 Jest, 315 passed/2 skipped Playwright
+Phase: 10 (Security-Härtung) — VERIFIED WITH GAPS (nicht abgeschlossen)
+Plan: 5 of 5 ausgeführt
+Status: Verifier 3/4 Must-Haves. SC1 (Import-XSS behoben) und SC2 (Regressionstest) sauber erfüllt, SC4 prozessseitig erfüllt. SC3 GESCHEITERT: SECURITY.md behauptet `threats_open: 0`, aber der Paste-Tabellenzweig in `ui/editors/rich-text.js:958-995` hat weder Tag-Whitelist noch URL-Schema-Filter — `<table><td><iframe srcdoc=…>` führt Skript im App-Origin aus (3/3 unabhängige Prüfer bestätigt, u. a. per echtem Strg+V gegen den Produktions-Bundle). Kein Stored-XSS: Speichergrenze `sanitizeHTML()` hält (0/10 Payloads erreichen `D`), Schaden bleibt im offenen Editor-Tab bis zum Neuladen. SEC-01/SEC-02 auf "Gaps Found" zurückgesetzt (#2388-Regel).
+Last activity: 2026-07-25 — Phase 10 vollständig ausgeführt (5/5 Pläne, alle Wave-Gates grün: Build ✓, Jest 554/554, Playwright 315/2 skipped, Drift-/UI-Gates ohne Block, Regressions-Gate grün). Anschließend Code-Review (10-REVIEW.md, Commit 63dcfb1: 1 Critical, 3 Warnings, 2 Infos) plus adversariale Gegenprüfung aller sechs Befunde durch sechs unabhängige Prüfer: CR-01 bestätigt (kritisch/warning je nach Bedrohungsmodell), IN-01 als echter Anzeigebug bestätigt (nie verdrahtete `hasHtmlTags`-Wächtervariable korrumpiert URLs mit ≥2 Unterstrichen), WR-03 widerlegt, WR-01 auf Info herabgestuft (loot bewusst außerhalb Scope, alle Render-Senken sanitisieren), WR-02 kosmetisch, IN-02 wie beschrieben (fragil, nicht ausnutzbar).
 
 ## Performance Metrics
 
@@ -142,6 +142,11 @@ Last activity: 2026-07-25 — Phase 10 Plan 04 (Tabellenzweig-Fix + Zauber-Speic
 - [ ] Milestone v1.0 abschließen: `/gsd-complete-milestone` (alle 7 Phasen complete)
 - [x] Phase 9 — Regressionsnetz steht, D-04a Doppel-Grün geführt und protokolliert (09-BASELINE.md, Commit `c8239d7`) ✓ (2026-07-25, 09-05-PLAN.md; Netz eingefroren — Migration darf ab hier beginnen)
 - [x] Phase 9 ausführen: `/gsd-execute-phase 9` ✓ (2026-07-25, 9/9 Pläne; execCommand-Migration 21→0 Call-Sites über sieben Migrationsgruppen A–G; komplettes Netz + volle Suiten grün nach jeder Gruppe; Handcheck im Browser freigegeben; EDIT-01/EDIT-02/EDIT-03 vollständig erfüllt — Phase 9 komplett)
+- [x] Phase 10 ausführen: `/gsd-execute-phase 10` ✓ (2026-07-25, 5/5 Pläne in 5 Wellen; Anzeige-Grenze + Import-Grenze geschlossen, Sanitizer-Beweisnetz + Paritätstest, `<strike>`-Whitelist, Tabellenzweig-`on*`-Fix, Abschluss-Audit; alle Wave-Gates grün)
+- [ ] **Phase 10 Lücke SC3 schließen** (blockiert Phasen-Abschluss + SEC-02): `/gsd-plan-phase 10 --gaps` → `/gsd-execute-phase 10 --gaps-only`. Der Tabellenzweig in `ui/editors/rich-text.js:958-995` braucht Tag-Whitelist + URL-Schema-Filter (Route über `window.sanitizeHTML()` vor `insertHtmlAtSelection()`), einen Regressionstest für `<iframe srcdoc>` / `<svg onload>` / `javascript:` in eingefügten Tabellen, und die Korrektur der `threats_open: 0`-Aussage in SECURITY.md + T-10-15 in 10-SECURITY.md. Details: `10-VERIFICATION.md`, Beleg: `10-REVIEW.md` CR-01.
+- [ ] Phase 10 Zusatzbefund IN-01 (nicht blockierend, echter Anzeigebug): `hasHtmlTags` in `ui/editors/markdown-converter.js:264` ist die nie verdrahtete Wächtervariable einer Guard — Markdown-Konvertierung läuft dadurch unbedingt über bereits-HTML; URLs mit ≥2 Unterstrichen werden korrumpiert (`Der_Hobbit_Buch` → `Der<i>Hobbit</i>Buch`, Link kaputt). Nur Anzeige, gespeicherte Daten unberührt.
+- [ ] Phase 10 Zusatzbefunde (kosmetisch/fragil, unbestätigt dringlich): WR-02 doppeltes `data-id` in `features/wiki/wiki.js:391-392` (Parser verwirft das zweite, folgenlos); IN-02 un-escapte Regex-Capture in `parseWikiLinks()` (aktuell nicht ausnutzbar). WR-03 und WR-01 wurden gegengeprüft und sind KEINE Befunde.
+- [ ] Codebase-Map veraltet (Drift-Gate-Hinweis, nicht blockierend): `/gsd-map-codebase`
 
 ---
 
