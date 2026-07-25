@@ -149,6 +149,27 @@ Arial-Fallback), `#floating-toolbar` erhaelt nach Textselektion die Klasse
 
 <!-- Entschieden in Task 3 (Plan 09-01), 2026-07-25. Umsetzung der Reparatur erfolgt in Plan 09-02 ("Setze die in 09-01 getroffene Baseline-Entscheidung im Code um"). -->
 
+## Randfälle (Adjazenz, Leer/Einzelelement, Kodierung, Ordnung) — empirisch erhoben (Plan 09-02, Task 3)
+
+Erhoben am reparierten Zustand (nach Plan 09-02/Task 1, Commit `19a355e`), statische
+Wiki-Toolbar, Chromium `143.0.7499.4`. Referenz für `tests/e2e/features/editor-formatting.spec.js`
+(`test.describe('Randfälle', ...)`).
+
+| Fall | Aktion | Erhobenes Markup |
+|------|--------|-------------------|
+| Adjazenz, 1. Wort fett | `WortEins WortZwei` → 1. Wort selektiert+fett | `<b>WortEins</b> WortZwei` |
+| Adjazenz, 2. Wort fett (direkt danach) | 2. Wort selektiert+fett | `<b>WortEins</b> <b>WortZwei</b>` — **kein Zusammenführen**, zwei getrennte `<b>`-Tags (das Leerzeichen dazwischen bleibt als eigener Textknoten außerhalb beider Tags) |
+| Adjazenz, Toggle auf 1. Wort | Selektion auf Inhalt von `<b>WortEins</b>`, erneut fett | `WortEins <b>WortZwei</b>` — Toggle entfernt nur das erneut angewandte Tag |
+| Leerer Editor, Bold-Klick | Kein Text eingegeben, Bold-Button geklickt | `` (leerer String) — kein Crash, kein Page-Error |
+| Kollabierter Cursor (kein Selektion), Bold-Klick | Text „Cursortext" eingegeben, Cursor am Ende (kein Select), Bold-Button geklickt | `Cursortext` — unverändert, keine Formatierung ohne Selektion |
+| Ein-Zeichen-Selektion, Bold-Klick | Text „X", volltextselektiert, Bold-Button geklickt | `<b>X</b>` — funktioniert wie bei längerem Text |
+| Kodierung: Bold auf Umlaut/Emoji-Text | „Größenwahn ⚔️ Straße" volltextselektiert, Bold-Klick | `<b>Größenwahn ⚔️ Straße</b>` |
+| Kodierung: danach Schriftgröße 20px | Selektion bleibt auf dem `<b>`-Inhalt, Fontgröße-Select auf `20px` | `<b><font style="font-size: 20px;">Größenwahn ⚔️ Straße</font></b>` — `<font>` verschachtelt sich INNERHALB des bestehenden `<b>` |
+| Kodierung: nach Speichern/Reload/Wiedereröffnen | — | `<b><font style="font-size: 20px">Größenwahn ⚔️ Straße</font></b>` (nur Trailing-Semikolon durch sanitizeHTML()-Style-Serialisierung entfernt), `textContent` zeichengleich `Größenwahn ⚔️ Straße` |
+| Ordnung: zweimal identische Aktion (Fontgröße 18px) auf zwei frische, gleichartige Editorinhalte | „Ordnungstext" volltextselektiert, Fontgröße-Select auf `18px`, zweimal auf unabhängigen Editoren wiederholt | Beide Läufe liefern byte-gleich `<font style="font-size: 18px;">Ordnungstext</font>` |
+
+Keine Page-Errors während der gesamten Erhebung (`page.on('pageerror')`-Sammlung blieb leer).
+
 ---
 *Phase: 09-editor-regressionsnetz-execcommand-abl-sung*
 *Plan: 09-01, Task 2*

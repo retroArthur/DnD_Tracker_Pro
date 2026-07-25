@@ -293,67 +293,17 @@ test.describe('Wiki System', () => {
     });
 
     // ============================================================
-    // WIKI EDITOR FORMATIERUNG
-    // ============================================================
-
-    test.describe('Wiki Editor Formatierung', () => {
-        test('sollte Text fett formatieren können', async ({ page }) => {
-            await page.click('[data-action="call"][data-value="showWikiForm"]');
-
-            const editor = page.locator('#wiki-content');
-            await editor.click();
-            await editor.type('Normaler Text');
-
-            // Text markieren
-            await editor.selectText();
-
-            // Bold-Button klicken
-            const boldBtn = page
-                .locator(
-                    '.editor-toolbar [data-editor="bold"], .editor-toolbar button:has-text("B")'
-                )
-                .first();
-            if (await boldBtn.isVisible()) {
-                await boldBtn.click();
-            }
-        });
-
-        test('sollte Read-Aloud Formatierung anwenden können', async ({ page }) => {
-            await page.click('[data-action="call"][data-value="showWikiForm"]');
-
-            const editor = page.locator('#wiki-content');
-            await editor.click();
-            await editor.type('Vorlesetext für den DM');
-
-            // Text markieren
-            await editor.selectText();
-
-            // Read-Aloud Dropdown
-            const readAloudSelect = page
-                .locator('.editor-select[data-action="set-read-aloud-style"]')
-                .first();
-            if (await readAloudSelect.isVisible()) {
-                await readAloudSelect.selectOption('parchment');
-            }
-        });
-
-        test('sollte Tabelle einfügen können', async ({ page }) => {
-            await page.click('[data-action="call"][data-value="showWikiForm"]');
-
-            const editor = page.locator('#wiki-content');
-            await editor.click();
-
-            // Tabellen-Button
-            const tableBtn = page.locator('.editor-toolbar [data-action="insert-table"]').first();
-            if (await tableBtn.isVisible()) {
-                await tableBtn.click();
-
-                // Prüfen ob Tabelle eingefügt wurde
-                const hasTable = await editor.locator('table').isVisible();
-                // Oder Modal für Tabellengrößte erscheint
-            }
-        });
-    });
+    // Hinweis (Plan 09-02, Task 3): Der frühere, assertionsfreie
+    // Editor-Formatierungs-Block (Bold/Vorlese-Text/Tabelle) an dieser Stelle
+    // ist ersatzlos entfernt. Er klickte per
+    // `if (await btn.isVisible()) { await btn.click(); }` und prüfte danach
+    // NICHTS — ein Test, der grün wird, ohne etwas zu beweisen
+    // (09-RESEARCH.md Pitfall 2). Die vollständige, hart geprüfte Abdeckung
+    // aller Formatgruppen der statischen Wiki-Toolbar (inkl. Bold, Vorlese-Text,
+    // Tabelle) lebt jetzt ausschließlich in
+    // tests/e2e/features/editor-formatting.spec.js — dort mit exakten
+    // innerHTML-Assertionen direkt nach der Aktion UND nach dem
+    // Speichern/Reload-Zyklus. Eine Quelle der Wahrheit statt zwei.
 
     // ============================================================
     // WIKI DATEN PERSISTENZ

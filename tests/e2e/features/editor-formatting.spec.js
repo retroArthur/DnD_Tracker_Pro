@@ -568,3 +568,182 @@ test.describe('Persistenz-Roundtrip', () => {
         await expect(reopened.evaluate(el => el.textContent)).resolves.toContain(TESTTEXT);
     });
 });
+
+/**
+ * Randfälle der statischen Wiki-Toolbar (Plan 09-02, Task 3)
+ *
+ * Vier Randfall-Klassen: Adjazenz, Leer/Einzelelement, Kodierung, Ordnung.
+ * Alle Erwartungswerte empirisch erhoben (temporäre Probe-Spec, danach gelöscht)
+ * und in 09-BASELINE.md protokolliert (Abschnitt "Randfälle … — empirisch erhoben").
+ */
+async function selectExactTextRange(page, matchText) {
+    // Selektiert den ersten Textknoten in #wiki-content, dessen Inhalt matchText
+    // exakt enthält, auf genau diesen Teilbereich — Playwrights selectText()
+    // kann keine Teilselektion innerhalb eines gemischten Editor-Inhalts abbilden.
+    await page.evaluate(text => {
+        const el = document.getElementById('wiki-content');
+        let target = null;
+        el.childNodes.forEach(n => {
+            if (n.nodeType === Node.TEXT_NODE && n.textContent.includes(text)) target = n;
+        });
+        if (!target) return;
+        const idx = target.textContent.indexOf(text);
+        const range = document.createRange();
+        range.setStart(target, idx);
+        range.setEnd(target, idx + text.length);
+        const sel = window.getSelection();
+        sel.removeAllRanges();
+        sel.addRange(range);
+    }, matchText);
+}
+
+async function selectElementContents(page, selector) {
+    await page.evaluate(sel => {
+        const el = document.querySelector(sel);
+        if (!el) return;
+        const range = document.createRange();
+        range.selectNodeContents(el);
+        const selection = window.getSelection();
+        selection.removeAllRanges();
+        selection.addRange(range);
+    }, selector);
+}
+
+test.describe('Randfälle', () => {
+    test.beforeEach(async ({ page }) => {
+        await gotoBundleFresh(page);
+    });
+
+    test('Adjazenz: zwei unmittelbar benachbarte Wortbereiche nacheinander fett formatiert bleiben getrennte Tags + Toggle entfernt nur die erneut angewandte Selektion', async ({
+        page
+    }) => {
+        await openFreshWikiForm(page, 'Randfall Adjazenz');
+        const editor = page.locator('#wiki-content');
+        await editor.click();
+        await editor.pressSequentially('WortEins WortZwei');
+
+        await selectExactTextRange(page, 'WortEins');
+        await page.click(
+            '[data-action="format-text"][data-cmd="wiki-content"][data-editor="bold"]'
+        );
+        await expect(editor).toHaveJSProperty('innerHTML', '<b>WortEins</b> WortZwei');
+
+        await selectExactTextRange(page, 'WortZwei');
+        await page.click(
+            '[data-action="format-text"][data-cmd="wiki-content"][data-editor="bold"]'
+        );
+        // Baseline (09-BASELINE.md, Randfälle): kein Zusammenführen zweier
+        // benachbarter gleicher Formate — zwei getrennte <b>-Tags bleiben bestehen.
+        await expect(editor).toHaveJSProperty(
+            'innerHTML',
+            '<b>WortEins</b> <b>WortZwei</b>'
+        );
+
+        // Toggle-Fall: erneutes Anwenden auf eine bereits formatierte Selektion
+        await selectElementContents(page, '#wiki-content b');
+        await page.click(
+            '[data-action="format-text"][data-cmd="wiki-content"][data-editor="bold"]'
+        );
+        await expect(editor).toHaveJSProperty('innerHTML', 'WortEins <b>WortZwei</b>');
+    });
+
+    test('Leer/Einzelelement: leerer Editor, kollabierter Cursor und Ein-Zeichen-Selektion erzeugen keinen Page-/Konsolenfehler', async ({
+        page
+    }) => {
+        const errors = [];
+        page.on('pageerror', e => errors.push(String(e)));
+        page.on('console', msg => {
+            if (msg.type() === 'error') errors.push(msg.text());
+        });
+
+        // (a) Leerer Editor
+        await openFreshWikiForm(page, 'Randfall Leer A');
+        let editor = page.locator('#wiki-content');
+        await editor.click();
+        await page.click(
+            '[data-action="format-text"][data-cmd="wiki-content"][data-editor="bold"]'
+        );
+        await expect(editor).toHaveJSProperty('innerHTML', '');
+        await page.click('[data-action="call"][data-value="hideWikiForm"]');
+
+        // (b) Kollabierter Cursor (kein Selektion) auf gefülltem Editor
+        await openFreshWikiForm(page, 'Randfall Leer B');
+        editor = page.locator('#wiki-content');
+        await editor.click();
+        await editor.pressSequentially('Cursortext');
+        await page.click(
+            '[data-action="format-text"][data-cmd="wiki-content"][data-editor="bold"]'
+        );
+        await expect(editor).toHaveJSProperty('innerHTML', 'Cursortext');
+        await page.click('[data-action="call"][data-value="hideWikiForm"]');
+
+        // (c) Ein-Zeichen-Selektion
+        await openFreshWikiForm(page, 'Randfall Leer C');
+        editor = page.locator('#wiki-content');
+        await typeAndSelectAll(editor, 'X');
+        await page.click(
+            '[data-action="format-text"][data-cmd="wiki-content"][data-editor="bold"]'
+        );
+        await expect(editor).toHaveJSProperty('innerHTML', '<b>X</b>');
+        await page.click('[data-action="call"][data-value="hideWikiForm"]');
+
+        expect(errors).toEqual([]);
+    });
+
+    test('Kodierung: Umlaute/Emoji überstehen Fett + Schriftgröße + Speichern/Reload zeichengleich', async ({
+        page
+    }) => {
+        const KODIERUNGSTEXT = 'Größenwahn ⚔️ Straße';
+        await openFreshWikiForm(page, 'Randfall Kodierung');
+        const editor = page.locator('#wiki-content');
+        await typeAndSelectAll(editor, KODIERUNGSTEXT);
+        await page.click(
+            '[data-action="format-text"][data-cmd="wiki-content"][data-editor="bold"]'
+        );
+        await expect(editor).toHaveJSProperty(
+            'innerHTML',
+            `<b>${KODIERUNGSTEXT}</b>`
+        );
+        await page.selectOption(
+            '[data-action="set-editor-font-size"][data-editor="wiki-content"]',
+            '20px'
+        );
+        await expect(editor).toHaveJSProperty(
+            'innerHTML',
+            `<b><font style="font-size: 20px;">${KODIERUNGSTEXT}</font></b>`
+        );
+
+        const reopened = await saveAndReopenWikiEntry(page, 'Randfall Kodierung');
+        await expect(reopened).toHaveJSProperty(
+            'innerHTML',
+            `<b><font style="font-size: 20px">${KODIERUNGSTEXT}</font></b>`
+        );
+        await expect(reopened.evaluate(el => el.textContent)).resolves.toBe(KODIERUNGSTEXT);
+    });
+
+    test('Ordnung: dieselbe Aktion zweimal auf frische, gleichartige Editorinhalte liefert byte-gleiches innerHTML', async ({
+        page
+    }) => {
+        await openFreshWikiForm(page, 'Randfall Ordnung A');
+        let editor = page.locator('#wiki-content');
+        await typeAndSelectAll(editor, 'Ordnungstext');
+        await page.selectOption(
+            '[data-action="set-editor-font-size"][data-editor="wiki-content"]',
+            '18px'
+        );
+        const lauf1 = await editor.evaluate(el => el.innerHTML);
+        await page.click('[data-action="call"][data-value="hideWikiForm"]');
+
+        await openFreshWikiForm(page, 'Randfall Ordnung B');
+        editor = page.locator('#wiki-content');
+        await typeAndSelectAll(editor, 'Ordnungstext');
+        await page.selectOption(
+            '[data-action="set-editor-font-size"][data-editor="wiki-content"]',
+            '18px'
+        );
+        const lauf2 = await editor.evaluate(el => el.innerHTML);
+
+        expect(lauf1).toBe(lauf2);
+        expect(lauf1).toBe('<font style="font-size: 18px;">Ordnungstext</font>');
+    });
+});
