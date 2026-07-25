@@ -8,7 +8,7 @@ status: gaps_found
 stopped_at: Phase 10 verifiziert — 3/4 Must-Haves, Lücke SC3 (Paste-Tabellenzweig)
 last_updated: "2026-07-25T12:15:00.000Z"
 last_activity: 2026-07-25
-last_activity_desc: "Phase 10 Plan 04 (Tabellenzweig-Fix + Zauber-Speicherpfad-Angleichung) ausgeführt: handleEditorPaste()s Tabellenzweig entfernt jetzt Ereignis-Attribute (dasselbe Regex-Paar wie sanitizeHTML()) — Broken-Windows-Ledger-Eintrag 1 geschlossen (open_count: 0); saveSpell()s Beschreibungsfeld an das Notizfeld angeglichen (sanitizeHTML()); neuer E2E-Sicherheitstest rot vor dem Fix (Commit 59a7f61), grün danach (Commit cef33f2); SEC-01 vollständig erfüllt (Shared-ID-Gate, letzte deklarierende Plan-SUMMARY); volles Editor-Netz (90 Tests), 554/554 Jest, 315 passed/2 skipped Playwright"
+last_activity_desc: "Phase 10 ausgeführt (5/5 Pläne, 5 Wellen, sequenziell auf main): Anzeige-Grenze (10-01) und Import-Grenze inkl. WR-03-Undo/Backup (10-02) geschlossen, Sanitizer-Vektor-Katalog + Paritätstest + <strike>-Whitelist (10-03), Tabellenzweig-on*-Bereinigung + saveSpell-Angleichung + Broken-Windows-Ledger auf 0 (10-04), Abschluss-Audit mit SECURITY.md (10-05). Alle Wave-Gates grün: Build ✓, Jest 554/554, Playwright 315 passed/2 skipped, Drift-/UI-Gates ohne Block, Regressions-Gate grün. Code-Review (63dcfb1) + adversariale Gegenprüfung aller sechs Befunde → Verifier gaps_found 3/4: SC3 gescheitert, weil der Paste-Tabellenzweig weder Tag-Whitelist noch URL-Schema-Filter hat und die SECURITY.md-Aussage threats_open: 0 damit für die Angriffsfläche Rich-Text/innerHTML widerlegt ist. SEC-01/SEC-02 auf Gaps Found zurückgesetzt, ROADMAP-/STATE-Abschlussmarkierungen des Plans 10-05 zurückgenommen."
 progress:
   total_phases: 4
   completed_phases: 2
