@@ -118,6 +118,45 @@ def require_files_exist(base_dir, rel_paths, label):
         sys.exit(1)
 
 
+def build_favicon_data_uri(svg_path):
+    """Erzeugt einen 'data:image/svg+xml,...'-URI aus der Icon-Quelle icons/icon.svg
+    zur Build-Zeit (D-10) — das Icon wird nicht dupliziert, sondern aus der
+    bestehenden SVG inline gebuendelt (SSoT-Linie wie D-01/D-04).
+
+    file://-Doppelklick auf die gebaute Einzeldatei ist der primaere Nutzungsmodus
+    (PROJECT.md-Constraint) — ein relativer Datei-Link waere dort genau der 404,
+    den dieser Fix schliesst. Deshalb ein Data-URI statt eines Datei-Pfads.
+
+    Fehlt die Icon-Quelle, gilt dieselbe Linie wie D-02: [FEHLER]-Meldung und
+    sys.exit(1) statt eines stillen Fallbacks.
+
+    Encoding-Reihenfolge ist korrektheitsrelevant: '%' MUSS zuerst kodiert werden,
+    sonst kodieren die nachfolgenden Ersetzungen ihre eigenen erzeugten '%xx'-Folgen
+    ein zweites Mal (Doppelkodierung). Die Raute ist kein theoretischer Fall — die
+    Icon-Quelle nutzt mehrfach Hex-Farbwerte (#0d0d0d, #d4af37); ohne deren Kodierung
+    interpretiert der Browser sie als URI-Fragment-Identifier und der Data-URI bricht.
+    """
+    if not os.path.exists(svg_path):
+        print(f"[FEHLER] Icon-Quelle nicht gefunden: {svg_path}")
+        sys.exit(1)
+    svg = read_file(svg_path)
+    # HTML-Kommentarbloecke entfernen (icon.svg traegt einen mehrzeiligen
+    # Erklaerkommentar, der im Data-URI nur Ballast waere)
+    svg = re.sub(r'<!--.*?-->', '', svg, flags=re.DOTALL)
+    # Whitespace zwischen Tags und Mehrfach-Whitespace kollabieren
+    svg = re.sub(r'>\s+<', '><', svg.strip())
+    svg = re.sub(r'\s+', ' ', svg)
+    # Minimale Ersetzungsliste, Reihenfolge wie oben begruendet
+    svg = svg.replace('"', "'")
+    svg = svg.replace('%', '%25')
+    svg = svg.replace('#', '%23')
+    svg = svg.replace('{', '%7B')
+    svg = svg.replace('}', '%7D')
+    svg = svg.replace('<', '%3C')
+    svg = svg.replace('>', '%3E')
+    return f'data:image/svg+xml,{svg}'
+
+
 def check_duplicate_functions(source_dir, modules):
     """Schlaegt fehl, wenn doppelte Top-Level-Deklarationen (function/const/let/class)
     in gebuendelten Quelldateien existieren (D-06).
@@ -443,7 +482,15 @@ def build(minify=False, production=False, verbose=False):
     
     # 4. Erstelle finale HTML-Datei
     print("\n[BUILD] Erstelle finale HTML-Datei...")
-    
+
+    # D-10: Favicon-Data-URI zur Build-Zeit aus icons/icon.svg erzeugen. Data-URI
+    # statt Datei-Link, weil file://-Doppelklick auf die gebaute Einzeldatei der
+    # primaere Nutzungsmodus ist (PROJECT.md) — ein relativer Pfad waere dort
+    # genau der 404, den dieser Fix schliesst.
+    icon_svg_path = os.path.join(SOURCE_DIR, 'icons', 'icon.svg')
+    favicon_data_uri = build_favicon_data_uri(icon_svg_path)
+    log.success(f"Favicon-Data-URI erzeugt: {len(favicon_data_uri):,} Zeichen aus {icon_svg_path}")
+
     html_template = f"""<!DOCTYPE html>
 <html lang="de" data-theme="dark">
 <head>
@@ -455,6 +502,9 @@ def build(minify=False, production=False, verbose=False):
     <meta name="apple-mobile-web-app-title" content="D&D Tracker">
     <meta name="description" content="D&D Kampagnen-Tracker Pro - Modulare Version (Gebündelt)">
     <title>D&D Kampagnen-Tracker Pro</title>
+    <!-- D-10: Data-URI statt Datei-Link — file://-Doppelklick auf diese Einzeldatei
+         ist der primaere Nutzungsmodus, ein relativer Pfad waere hier ein 404. -->
+    <link rel="icon" href="{favicon_data_uri}">
     <!-- PWA-Manifest wird zur Laufzeit nur unter http/https injiziert (core/init.js registerServiceWorker) —
          als statischer <link> würde es unter file:// per CORS (origin 'null') rote Konsolenfehler werfen. -->
     <!-- Fonts lokal gebündelt via assets/styles/fonts.css (D-07) — kein Google-Fonts-CDN mehr -->
