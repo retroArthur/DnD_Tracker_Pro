@@ -435,13 +435,20 @@ test.describe('Editor-Regressionsnetz — Insert-Call-Sites (Wiki)', () => {
                 html: CR01_TABELLEN_PAYLOAD,
                 text: 'Boesartig\tZellText6'
             });
-            await page.waitForTimeout(300);
 
-            // Strukturelle Element-Zaehlung ZUERST: sofort entscheidbar, ohne
-            // dass die Kernassertion von einer festen Wartezeit abhaengt
-            // (Prohibition: keine Sicherheitsaussage darf an Timing haengen —
-            // die Wartezeit oben dient nur dem Settle der Iframe-/SVG-Ladeereignisse,
-            // nicht der Assertion selbst).
+            // WR-03 (10-REVIEW-GAP.md, Plan 10-07): keine feste Wartezeit
+            // mehr — sanitizeHTML() und insertHtmlAtSelection() laufen
+            // vollstaendig synchron innerhalb des paste-Event-Handlers, der
+            // seinerseits synchron im Seitenkontext ausgeloest wird
+            // (pasteInto() dispatcht das Event ueber el.dispatchEvent(evt)
+            // in page.evaluate); der Editor-Zustand ist final, sobald der
+            // Aufruf oben zurueckkehrt. Die urspruengliche Begruendung
+            // (Abwarten von Iframe-/SVG-Ladeereignissen) ist unter der
+            // Wertpruefung aus Plan 10-07 gegenstandslos: iframe/svg werden
+            // von sanitizeHTML() vor dem Einfuegen auf Textinhalt reduziert,
+            // existieren danach also gar nicht mehr im DOM. Strukturelle
+            // Element-Zaehlung ist ohnehin sofort entscheidbar, ohne dass
+            // die Kernassertion von Timing abhaengt.
             const forbiddenCount = await editor.evaluate(
                 el => el.querySelectorAll('iframe, object, embed, svg, form, script, img').length
             );
@@ -524,7 +531,6 @@ test.describe('Editor-Regressionsnetz — Insert-Call-Sites (Wiki)', () => {
                 html: '<table><tr><td>A</td><td>B</td></tr></table>',
                 text: 'A\tB'
             });
-            await page.waitForTimeout(300);
             expect(await editor.evaluate(el => el.querySelectorAll('table').length)).toBe(0);
             await expect(editor.evaluate(el => el.textContent)).resolves.toContain('A\tB');
 
@@ -539,7 +545,6 @@ test.describe('Editor-Regressionsnetz — Insert-Call-Sites (Wiki)', () => {
                 html: '<table><tr><td>C</td><td>D</td></tr></table>',
                 text: 'C\tD'
             });
-            await page.waitForTimeout(300);
             expect(await editor.evaluate(el => el.querySelectorAll('table').length)).toBe(0);
             await expect(editor.evaluate(el => el.textContent)).resolves.toContain('C\tD');
 

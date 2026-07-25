@@ -715,4 +715,67 @@ describe('Security: sanitizeHTML() gegen den ECHTEN Produktions-Sanitizer (utils
             expect(clean).not.toContain('LEAK-MIXED');
         });
     });
+
+    // --------------------------------------------------------
+    // ERLAUBNISLISTEN-WAECHTER (Restrisiko d, T-10-36, Plan 10-07 Task 2)
+    // --------------------------------------------------------
+    // Struktur-Zaun gegen ein spaeteres, stilles Aufweichen der Tag- bzw.
+    // Stil-Eigenschafts-Erlaubnisliste. Dieser Test ist die EINZIGE
+    // unabhaengige Schicht: die Speichern-Grenze ruft denselben Sanitizer
+    // auf und ist damit KEINE zweite Verteidigungslinie. Eine spaetere
+    // Erweiterung der Erlaubnisliste fuer ein unverwandtes Feature wuerde
+    // die Sicherheitsgarantie sonst still oeffnen, ohne dass irgendein
+    // anderer Test es bemerkt. Der Test ist bewusst BEHAUPTEND, nicht
+    // ableitend: er wiederholt die Liste als eigenes Testdatum (liest sie
+    // nicht aus der Produktionsliste selbst — die ist function-scoped und
+    // ohnehin nicht direkt erreichbar), damit eine Aenderung an der
+    // Produktionsliste sichtbar rot wird statt sich selbst zu bestaetigen.
+    describe('ERLAUBNISLISTEN-WAECHTER: Struktur-Zaun gegen spaeteres, stilles Aufweichen der Erlaubnislisten', () => {
+        const MUST_BE_ALLOWED_TAGS = [
+            'b', 'i', 'u', 's', 'strike', 'strong', 'em', 'ul', 'ol', 'li', 'p',
+            'br', 'div', 'span', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'table',
+            'thead', 'tbody', 'tr', 'th', 'td', 'mark', 'a', 'font'
+        ];
+        const MUST_NOT_BE_ALLOWED_TAGS = [
+            'img', 'script', 'iframe', 'object', 'embed', 'form', 'input',
+            'style', 'link', 'meta', 'base', 'svg'
+        ];
+        const MUST_NOT_BE_ALLOWED_STYLE_PROPS = ['background-image', 'position', 'behavior'];
+
+        // Tabellen-Kindelemente (thead/tbody/tr/th/td) verlangen einen
+        // gueltigen Tabellenkontext — der HTML5-Parser verwirft ein
+        // freistehendes <td> außerhalb von <table><tr> als eigenständiges
+        // Element (Foster-Parenting-Regel) und sein Textinhalt landet als
+        // Rohtext im body, unabhängig vom Sanitizer.
+        function wrapInTableContextIfNeeded(tag) {
+            if (tag === 'thead' || tag === 'tbody') {
+                return `<table><${tag}><tr><td>Inhalt</td></tr></${tag}></table>`;
+            }
+            if (tag === 'tr') {
+                return `<table><tr><td>Inhalt</td></tr></table>`;
+            }
+            if (tag === 'th' || tag === 'td') {
+                return `<table><tr><${tag}>Inhalt</${tag}></tr></table>`;
+            }
+            return `<${tag}>Inhalt</${tag}>`;
+        }
+
+        test.each(MUST_BE_ALLOWED_TAGS)('Element "%s" MUSS erhalten bleiben', tag => {
+            const clean = realSanitizeHTML(wrapInTableContextIfNeeded(tag));
+            expect(clean.toLowerCase()).toContain(`<${tag}`);
+        });
+
+        test.each(MUST_NOT_BE_ALLOWED_TAGS)('Element "%s" DARF NICHT erhalten bleiben', tag => {
+            const clean = realSanitizeHTML(`<${tag}>Inhalt</${tag}>`);
+            expect(clean.toLowerCase()).not.toContain(`<${tag}`);
+        });
+
+        test.each(MUST_NOT_BE_ALLOWED_STYLE_PROPS)(
+            'Stil-Eigenschaft "%s" DARF NICHT auf der Erlaubnisliste stehen (Deklaration wird verworfen)',
+            prop => {
+                const clean = realSanitizeHTML(`<div style="${prop}:test-value">Inhalt</div>`);
+                expect(clean).not.toContain(prop);
+            }
+        );
+    });
 });

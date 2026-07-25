@@ -1015,9 +1015,11 @@ function handleEditorPaste(e) {
             // Transformation vor dem Einfuegen; nach ihm kann keine
             // Zeichenketten-Ersetzung mehr ein nicht erlaubtes Element
             // (iframe/object/embed/svg/form/img) oder ein gefaehrliches
-            // Protokoll (javascript:/vbscript:/data:) wieder einfuehren, auch
-            // nicht entitaets-kodiert (der DOM-Parser dekodiert Attributwerte
-            // vor der Protokollpruefung). Die von der Kette injizierten
+            // Protokoll (javascript:/vbscript:/data:/file:/blob:, die
+            // vollstaendige dangerousProtocols-Liste aus utils/basic.js)
+            // wieder einfuehren, auch nicht entitaets-kodiert (der
+            // DOM-Parser dekodiert Attributwerte vor der Protokollpruefung).
+            // Die von der Kette injizierten
             // Stil-Eigenschaften (border, padding, width, margin,
             // border-collapse, background, color) ueberleben die
             // Stil-Filterung, weil sie saemtlich in sanitizeHTML()s
