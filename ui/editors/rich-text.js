@@ -959,6 +959,12 @@ function handleEditorPaste(e) {
         const tableMatch = html.match(/<table[\s\S]*?<\/table>/i);
         if (tableMatch) {
             const cleanTable = tableMatch[0]
+                // D-05 / Broken-Windows-Ledger-Eintrag 1: dasselbe Ereignis-Attribut-
+                // Regex-Paar wie sanitizeHTML() (utils/basic.js), mit fuehrendem
+                // Leerraum im Muster, damit das Attribut samt trennendem Leerzeichen
+                // verschwindet — muss VOR der Attributlisten-Bereinigung greifen.
+                .replace(/\s+on\w+\s*=\s*["'][^"']*["']/gi, '')
+                .replace(/\s+on\w+\s*=\s*[^\s>]*/gi, '')
                 .replace(
                     /\s+(class|style|width|height|border|cellpadding|cellspacing|align|valign|bgcolor|xmlns|x:|data-[\w-]+)="[^"]*"/gi,
                     ''
@@ -1675,7 +1681,7 @@ function saveSpell() {
         g: gInput?.checked || false,
         m: mInput?.checked || false,
         material: materialInput?.value.trim() || '',
-        description: descHtml,
+        description: sanitizeHTML(descHtml),
         note: noteEl ? sanitizeHTML(noteEl.innerHTML.trim()) : ''
     };
     if (!s.name) {

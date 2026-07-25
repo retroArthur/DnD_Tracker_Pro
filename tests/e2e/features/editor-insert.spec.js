@@ -307,11 +307,14 @@ test.describe('Editor-Regressionsnetz — Insert-Call-Sites (Wiki)', () => {
         test('Sicherheits-Regression: Ereignis-Attribut in eingefügtem Tabellen-Markup landet nicht ausführbar im DOM (Tabellenzweig, Broken-Windows #1)', async ({
             page
         }) => {
+            // Nur echte Seitenfehler (uncaught exceptions) werden gesammelt,
+            // nicht generische Konsolenmeldungen: das absichtlich kaputte
+            // <img src="x"> (siehe Hinweis oben) erzeugt einen erwarteten,
+            // harmlosen Ressourcen-404-Konsoleneintrag ("Failed to load
+            // resource"), der kein Sicherheitssignal ist. "Seitenfehler" im
+            // Sinne dieses Tests sind ausschließlich pageerror-Ereignisse.
             const errors = [];
             page.on('pageerror', e => errors.push(String(e)));
-            page.on('console', msg => {
-                if (msg.type() === 'error') errors.push(msg.text());
-            });
 
             await openFreshWikiForm(page, 'Insert Security Table');
             const editor = page.locator('#wiki-content');
