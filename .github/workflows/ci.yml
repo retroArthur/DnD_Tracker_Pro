@@ -90,10 +90,24 @@ jobs:
           python-version: '3.x'
       - run: npm ci
       - run: python build.py --production
+      - name: Bereite vollstaendiges Artefakt vor
+        # build.py erzeugt nur dnd-tracker-optimized.html und sw.js. Manifest,
+        # Icons und Fonts kommen aus dem Repo dazu — dieselben Schritte wie im
+        # deploy-Job, damit smoke-test genau das prueft, was veroeffentlicht wird.
+        # Ohne das fehlt sw.js im Artefakt (404) und der SW-Precache von
+        # ./manifest.webmanifest liesse cache.addAll() scheitern (CR-09).
+        # CR-09: KEIN vorab existierendes dist/assets fuer cp -r — GNU cp kopiert
+        # das Quellverzeichnis sonst HINEIN (dist/assets/fonts/fonts/*).
+        run: |
+          cp manifest.webmanifest dist/manifest.webmanifest
+          cp -r icons dist/
+          mkdir -p dist/assets
+          cp -r assets/fonts dist/assets/
+        shell: bash
       - uses: actions/upload-artifact@v7
         with:
           name: production-build
-          path: dist/dnd-tracker-optimized.html
+          path: dist/
           retention-days: 7
 
   smoke-test:
