@@ -11,12 +11,14 @@ Diese Tests prüfen:
 import pytest
 import re
 import sys
+import urllib.parse
+import xml.etree.ElementTree as ET
 from pathlib import Path
 
 # Add project root to path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-from build import deduplicate_window_assignments, build, check_duplicate_functions, load_module_list, require_files_exist, load_template_list, load_css_import_order
+from build import deduplicate_window_assignments, build, check_duplicate_functions, load_module_list, require_files_exist, load_template_list, load_css_import_order, build_favicon_data_uri
 
 # D-07: der von Pass 3 (entfernt in D-05) erzeugte Markertext. Als Modulkonstante
 # gefuehrt, damit der Literal-String genau einmal in dieser Datei steht.
@@ -613,3 +615,69 @@ var MAX_BACKUPS = window.MAX_BACKUPS;  // CONFLICT
 
         assert DEDUP_FUNCTION_MARKER not in content, \
             f"Bundle enthaelt den Pass-3-Marker '{DEDUP_FUNCTION_MARKER}' — Pass 3 sollte entfernt sein (D-05)"
+
+
+class TestFaviconDataUri:
+    """Tests fuer den zur Build-Zeit erzeugten Favicon-Data-URI (D-10)"""
+
+    def test_favicon_data_uri_payload_is_wellformed_svg(self):
+        """
+        Regressionstest: Der Data-URI-Payload MUSS nach dem Prozentdekodieren
+        wohlgeformtes XML sein — sonst zeigt der Browser-Tab das leere
+        Default-Icon, obwohl der <link rel="icon"> den 404 unterdrueckt.
+        Das ist unter file:// (Primaer-Nutzungsmodus) der einzige Weg, ein
+        Icon zu bekommen.
+
+        Der Defekt, den dieser Test verankert: ein pauschales
+        svg.replace('"', "'") plattete alle doppelten Anfuehrungszeichen ab,
+        obwohl icons/icon.svg zweimal font-family="'Courier New', Courier,
+        monospace" enthaelt — einfache Anfuehrungszeichen INNERHALB eines
+        doppelt gequoteten Attributs. Das Abplatten ergab
+        font-family=''Courier New', Courier, monospace' und damit kaputtes XML.
+
+        Geprueft werden vier voneinander unabhaengige Eigenschaften:
+        1. Der dekodierte Payload parst als XML.
+        2. Der verschachtelte font-family-Wert ist unverfaelscht erhalten.
+        3. Der ROHE Payload enthaelt kein unkodiertes '#', '<', '>' oder '"'
+           ('#' wuerde den URI am Fragment abschneiden — die Icon-Quelle nutzt
+           Hex-Farben; '"' wuerde das umschliessende HTML-Attribut beenden).
+        4. Es gibt keine Doppelkodierung (Ordering-Falle: ein '"' -> '%22'
+           VOR einem '%' -> '%25' wuerde zu '%2522' verstuempelt). Ein einmal
+           dekodierter Payload ist bereits vollstaendig dekodiert.
+        """
+        icon_path = Path(__file__).parent.parent.parent / 'icons' / 'icon.svg'
+        assert icon_path.exists(), f"Icon-Quelle fehlt: {icon_path}"
+
+        data_uri = build_favicon_data_uri(str(icon_path))
+        assert data_uri.startswith('data:image/svg+xml,'), \
+            f"Unerwarteter Data-URI-Praefix: {data_uri[:40]!r}"
+
+        raw_payload = data_uri.split(',', 1)[1]
+        decoded = urllib.parse.unquote(raw_payload)
+
+        # 1. Wohlgeformtheit — der eigentliche Kern des Defekts
+        try:
+            ET.fromstring(decoded)
+        except ET.ParseError as exc:
+            pytest.fail(
+                f"Favicon-Data-URI-Payload ist kein wohlgeformtes XML: {exc}\n"
+                f"Kontext: {decoded[max(0, exc.position[1] - 120):exc.position[1] + 40]!r}"
+            )
+
+        # 2. Verschachtelte Anfuehrungszeichen unverfaelscht
+        assert "font-family=\"'Courier New', Courier, monospace\"" in decoded, \
+            "Der verschachtelte font-family-Wert wurde beim Kodieren veraendert"
+
+        # 3. Keine rohen URI-/HTML-kritischen Zeichen im Payload
+        for char, why in (
+            ('#', 'schneidet den Data-URI am Fragment-Identifier ab'),
+            ('<', 'HTML-kritisch im Attributwert'),
+            ('>', 'HTML-kritisch im Attributwert'),
+            ('"', 'beendet das umschliessende href="..."-Attribut'),
+        ):
+            assert char not in raw_payload, \
+                f"Rohes {char!r} im Data-URI-Payload — {why}"
+
+        # 4. Keine Doppelkodierung
+        assert urllib.parse.unquote(decoded) == decoded, \
+            "Payload ist doppelt prozentkodiert (Reihenfolge der Ersetzungen falsch)"
