@@ -137,9 +137,29 @@ None — no external service configuration required.
 - Recommendation for future work touching `tests/e2e/smoke.spec.js`: if a stronger, non-vacuous favicon-404 guard is ever desired, it would need to run in **headed** mode with a raw CDP `Network` domain probe (not `page.on('response')`) — and even then, CI's headless execution would still never reproduce the underlying browser behavior this guards against, since headless Chromium does not perform the implicit favicon fetch at all. This is a structural limitation of automated headless testing for this specific class of browser-chrome behavior, not something a differently-written test could close within CI.
 
 ---
+
+## Nachtrag 2026-07-26: das ausgelieferte Data-URI war kein dekodierbares Bild
+
+Ein nachgelagertes Audit dieser Phase fand einen Defekt in genau dem Deliverable, das oben als erledigt protokolliert ist. Er wird hier festgehalten, damit das Protokoll nicht vollstaendiger aussieht, als es war.
+
+**Was falsch war:** `build_favicon_data_uri()` machte ein unbedingtes `svg.replace('"', "'")`. `icons/icon.svg:59` und `:74` tragen `font-family="'Courier New', Courier, monospace"` — einfache Anfuehrungszeichen innerhalb eines doppelt gequoteten Attributs. Das Ergebnis war `font-family=''Courier New', Courier, monospace'`, also kein wohlgeformtes XML: `ET.fromstring(unquote(payload))` schlug mit `not well-formed (invalid token): line 1, column 685` fehl, waehrend `icons/icon.svg` selbst einwandfrei parst. Beide Bundles haben das ausgeliefert; im `file://`-Doppelklick-Modus zeigte der Tab das leere Default-Icon.
+
+**Warum keine der oben protokollierten Pruefungen es sehen konnte** — das ist der eigentliche Lehrsatz, nicht der Tippfehler:
+- Die CDP-Probe oben (`zero favicon-related CDP events`) ist **korrekt und bleibt gueltig**. Sie belegt aber ausschliesslich, dass die implizite `/favicon.ico`-Anfrage entfaellt — und dafuer genuegt die blosse Existenz des `<link rel="icon">`-Elements, unabhaengig davon, ob sein `href` dekodierbar ist. Die 404-Haelfte von D-10 war also echt bewiesen, die *Icon*-Haelfte gar nicht geprueft.
+- Die Acceptance-Kriterien von Task 2 pruefen Praesenz von `rel="icon"`, `data:image/svg+xml,` und `%23` sowie Abwesenheit roher `<`/`>`/`#` — alle vier waren erfuellt. Ein Decode-Fehler des Favicons erzeugt keinen Page-Console-Error, faellt also auch durch `page.on('console')` nicht auf.
+
+**Behoben in** `be026c1` (RED-Test) und `5009240` (Fix). Die Ersetzungskette ist ersatzlos durch einen einzigen `urllib.parse.quote(svg, safe=FAVICON_DATA_URI_SAFE)`-Durchgang ersetzt — damit ist auch die Reihenfolgen-Falle strukturell weg (ein `"` → `%22` an der alten Stelle waere vom nachfolgenden `%` → `%25` zu `%2522` verstuemmelt worden). Der Regressionstest parst das dekodierte Payload und schliesst Doppelkodierung per `unquote(decoded) == decoded` aus; `tests/build/` steht damit bei 24 statt 23 Tests. Verifiziert per Browser-Render (`naturalWidth: 100`, `decode()` resolved) gegen beide Bundles ueber `file://`, mit Kontrolllauf gegen den Vor-Fix-Stand (`naturalWidth: 0`, `decode()` rejected) — die Pruefung diskriminiert also.
+
+**Weiterhin offen:** der Render-Nachweis lief als Ad-hoc-Skript, nicht als committeter Test. Dauerhaft abgesichert sind nur Wohlgeformtheit, Roh-Zeichen und Nicht-Doppelkodierung. Ein committeter Playwright-Spec, der `naturalWidth > 0` gegen das gebaute Bundle assertiert, wuerde die letzte Luecke schliessen. Das ist unabhaengig von der in `.planning/WINDOWS.md` id 3 protokollierten Playwright-Blindstelle fuer die implizite Favicon-Anfrage.
+
+**Nicht geaendert:** `icons/icon.svg`. Die Datei ist valides XML und `font-family="'Courier New', ..."` ist idiomatisches SVG/CSS — der Defekt lag vollstaendig im Encoder. Die Quelldatei anzupassen haette einen Encoder kaschiert, der die naechste eingefuegte SVG genauso beschaedigt.
+
+---
 *Phase: 11-architektur-build-hygiene*
-*Completed: 2026-07-25*
+*Completed: 2026-07-25 (Favicon-Encoder nachgebessert 2026-07-26, siehe Nachtrag)*
 
 ## Self-Check: PASSED
 
 All modified files verified present on disk (`tests/e2e/smoke.spec.js`, `build.py`, `index.html`, `.gitignore`); all 3 task commits (`8636155`, `9a7d8d8`, `80ab16a`) verified present in `git log`. `.planning/WINDOWS.md` entry id 3 confirmed recorded (open_count: 1).
+
+**Einschraenkung dieses Self-Checks (2026-07-26 ergaenzt):** er prueft Dateipraesenz und Commit-Praesenz, nicht die inhaltliche Korrektheit des erzeugten Data-URIs — siehe Nachtrag oben. „PASSED" bezieht sich auf die Task-Abwicklung, nicht auf die Fehlerfreiheit des Artefakts.
