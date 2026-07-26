@@ -26,6 +26,7 @@ Output:
 import os
 import re
 import sys
+import urllib.parse
 from pathlib import Path
 
 # Logging importieren
@@ -118,6 +119,18 @@ def require_files_exist(base_dir, rel_paths, label):
         sys.exit(1)
 
 
+# Zeichen, die im Favicon-Data-URI unkodiert stehen bleiben duerfen. Alles, was
+# NICHT hier (oder in urllib's immer-sicherer Menge A-Z a-z 0-9 _ . - ~) steht,
+# wird prozentkodiert — insbesondere '"' '#' '<' '>' '%' '&' und Leerzeichen.
+# Bewusst NICHT sicher:
+#   '"'  wuerde das umschliessende href="..."-Attribut beenden
+#   '#'  wuerde den Data-URI am Fragment-Identifier abschneiden (die Icon-Quelle
+#        nutzt mehrfach Hex-Farbwerte: #0d0d0d, #d4af37)
+#   '<'/'>' HTML-kritisch im Attributwert
+#   '&'  startet im HTML-Attributwert eine Zeichenreferenz
+FAVICON_DATA_URI_SAFE = "'/:=,"
+
+
 def build_favicon_data_uri(svg_path):
     """Erzeugt einen 'data:image/svg+xml,...'-URI aus der Icon-Quelle icons/icon.svg
     zur Build-Zeit (D-10) — das Icon wird nicht dupliziert, sondern aus der
@@ -130,11 +143,17 @@ def build_favicon_data_uri(svg_path):
     Fehlt die Icon-Quelle, gilt dieselbe Linie wie D-02: [FEHLER]-Meldung und
     sys.exit(1) statt eines stillen Fallbacks.
 
-    Encoding-Reihenfolge ist korrektheitsrelevant: '%' MUSS zuerst kodiert werden,
-    sonst kodieren die nachfolgenden Ersetzungen ihre eigenen erzeugten '%xx'-Folgen
-    ein zweites Mal (Doppelkodierung). Die Raute ist kein theoretischer Fall — die
-    Icon-Quelle nutzt mehrfach Hex-Farbwerte (#0d0d0d, #d4af37); ohne deren Kodierung
-    interpretiert der Browser sie als URI-Fragment-Identifier und der Data-URI bricht.
+    Kodierung laeuft in EINEM Durchgang (urllib.parse.quote mit expliziter
+    safe-Menge) und ist damit reihenfolge-unabhaengig. Das ist Absicht: die
+    Vorgaengerimplementierung war eine geordnete Kette von str.replace()-Aufrufen,
+    bei der (a) das erste Glied svg.replace('"', "'") die einfachen Anfuehrungs-
+    zeichen INNERHALB von font-family="'Courier New', Courier, monospace"
+    abplattete und so kaputtes XML erzeugte (der Tab zeigte das leere
+    Default-Icon), und (b) jedes spaeter eingefuegte '%xx'-Glied vor dem
+    '%' -> '%25'-Glied zu Doppelkodierung ('%2522') verstuempelt worden waere.
+    Ein Einzeldurchgang kann durch Umsortieren nicht mehr kaputtgehen — es gibt
+    keine Liste mehr, die man umsortieren koennte. Welche Zeichen unkodiert
+    bleiben, steht in FAVICON_DATA_URI_SAFE (mit Begruendung).
     """
     if not os.path.exists(svg_path):
         print(f"[FEHLER] Icon-Quelle nicht gefunden: {svg_path}")
@@ -146,15 +165,9 @@ def build_favicon_data_uri(svg_path):
     # Whitespace zwischen Tags und Mehrfach-Whitespace kollabieren
     svg = re.sub(r'>\s+<', '><', svg.strip())
     svg = re.sub(r'\s+', ' ', svg)
-    # Minimale Ersetzungsliste, Reihenfolge wie oben begruendet
-    svg = svg.replace('"', "'")
-    svg = svg.replace('%', '%25')
-    svg = svg.replace('#', '%23')
-    svg = svg.replace('{', '%7B')
-    svg = svg.replace('}', '%7D')
-    svg = svg.replace('<', '%3C')
-    svg = svg.replace('>', '%3E')
-    return f'data:image/svg+xml,{svg}'
+    # Ein Durchgang, keine Kette: die doppelten Anfuehrungszeichen der SVG
+    # bleiben inhaltlich erhalten und werden als %22 transportiert.
+    return f'data:image/svg+xml,{urllib.parse.quote(svg, safe=FAVICON_DATA_URI_SAFE)}'
 
 
 def check_duplicate_functions(source_dir, modules):
