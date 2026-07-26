@@ -5,10 +5,10 @@ milestone_name: Tech-Debt & Härtung
 current_phase: 11
 current_phase_name: Architektur- & Build-Hygiene
 status: executing
-stopped_at: Completed 11-06-PLAN.md
-last_updated: "2026-07-25T22:11:41.806Z"
-last_activity: 2026-07-25
-last_activity_desc: Phase 11 execution started
+stopped_at: 11-07 Task 1/3 done (4eb2dbf) — paused at blocking human-action checkpoint (Task 2: /gsd-map-codebase, answer Refresh)
+last_updated: "2026-07-26T00:40:00.000Z"
+last_activity: 2026-07-26
+last_activity_desc: Phase 11 waves 1-6 complete, 11-07 paused at map-refresh checkpoint
 progress:
   total_phases: 4
   completed_phases: 3
@@ -36,9 +36,23 @@ progress:
 ## Current Position
 
 Phase: 11 (architektur-build-hygiene) — EXECUTING
-Plan: 7 of 7
-Status: Ready to execute
-Last activity: 2026-07-25 — Phase 11 execution started
+Plan: 7 of 7 (11-01 bis 11-06 abgeschlossen; 11-07 Task 1/3 committet)
+Status: PAUSIERT an blockierendem human-action Checkpoint in Plan 11-07
+
+**Wiederaufnahme:**
+1. `/gsd-map-codebase` ausführen, beim Prompt zum vorhandenen `.planning/codebase/` **Refresh** wählen
+   (nicht Update, nicht Skip — das Überschreiben von CONCERNS.md ist gewollt, die Triage-Historie
+   liegt committet in `.planning/phases/11-architektur-build-hygiene/11-CONCERNS-TRIAGE.md`, D-13).
+2. Prüfen: alle sieben Dateien in `.planning/codebase/` tragen ein Phase-11-Datum, keine mehr vom 2026-06-11.
+3. `/gsd-execute-phase 11` — nimmt Plan 11-07 bei Task 3 wieder auf (Abgleich der neuen CONCERNS.md
+   gegen die Triage, volle Verifikationskette, ARCH-04 auf Complete), danach Phasen-Verifikation.
+
+Offener Posten, der beim Map-Refresh NICHT stillschweigend geschlossen werden darf:
+`.planning/WINDOWS.md` Eintrag 3 (`open_count: 1`) — Playwrights Page-Events feuern nicht für die
+implizite `/favicon.ico`-Anfrage, headless Chromium stellt sie gar nicht; der D-12-Smoke-Test ist
+daher grün unabhängig vom D-10-Fix. Offengelegte Lücke bei Roadmap-Kriterium 4, keine Regression.
+
+Last activity: 2026-07-26 — Wellen 1–6 abgeschlossen, 11-07 am Map-Refresh-Checkpoint pausiert
 
 ## Performance Metrics
 
