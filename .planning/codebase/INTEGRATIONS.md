@@ -1,115 +1,280 @@
 # External Integrations
 
-**Analysis Date:** 2026-06-11
+**Analysis Date:** 2026-07-26
 
 ## APIs & External Services
 
-**Runtime external services: NONE.** The app is deliberately offline-first. No REST APIs, no SDKs, no analytics, no third-party JS. The only network requests at runtime are:
+**No Runtime External API Calls**
 
-**Web Fonts (only external dependency):**
+The application is deliberately offline-first with zero external API dependencies at runtime.
 
-- Google Fonts - loaded via `<link>` tags
-    - Dev shell: `index.html:13-15` (Roboto)
-    - Built bundle: `build.py:449-451` (Inter, Poppins, Roboto, Source Sans Pro) - used by the rich-text editor font picker (`EDITOR_FONTS` in `core/constants.js`)
-    - Auth: none. Graceful degradation: the Service Worker returns an empty 503 response for external origins when offline (`sw.js:47-57`), so missing fonts never break the app.
+**Google Fonts (Build-Time Only):**
+- Service: Google Fonts CSS2 API
+- Purpose: Download WOFF2 font files during build phase
+- Tool: `tools/fetch-fonts.py` (Python script)
+- Implementation Details:
+  - Fetches font CSS from `https://fonts.googleapis.com/css2?family=*`
+  - Extracts WOFF2 URLs from CSS response
+  - Downloads binary font files to `assets/fonts/`
+  - Stores locally as: roboto-400.woff2, roboto-700.woff2, inter-400.woff2, inter-500.woff2, inter-600.woff2, poppins-400.woff2, poppins-500.woff2, poppins-600.woff2, source-sans-pro-400.woff2, source-sans-pro-600.woff2
+- Workflow: Build-time only, fonts bundled into dist/ for offline use
+- No runtime CDN dependency (D-07: offline fonts)
+- Run manually: `python tools/fetch-fonts.py`
 
-**Self-fetches (same-origin only):**
-
-- `loader.js:193` - fetches the 10 HTML templates from `assets/templates/` in dev mode
-- `core/init.js:191` - HEAD request to `./sw.js` to detect hosted mode before SW registration
+**No Other External Integrations:**
+- Stripe: Not used
+- Supabase: Not used
+- Firebase: Not used
+- AWS/Azure/GCP: Not used
+- Authentication providers: Not used
+- Analytics services: Not used
+- Error tracking (Sentry, Rollbar): Not used
+- CDN services: Not used (fonts are local)
+- Map services: Not used
+- Payment processors: Not used
 
 ## Data Storage
 
-**Databases (all browser-local):**
+**Browser Storage (Client-Side Only):**
 
-- **localStorage** (primary persistence)
-    - Wrapper: `StorageAPI` in `utils/basic.js:158` (quota/SecurityError handling, JSON helpers)
-    - Keys (defined in `core/config.js`): `dnd-tracker-v4` (default campaign data), `dnd-campaign-<timestamp>` (additional campaigns), `dnd-tracker-campaigns` (campaign index), `dnd-tracker-backups`, `dnd-tracker-theme`, `dnd-tracker-layout`, `dnd-dice-favorites`, `dnd-timer-presets`
-    - Active campaign key resolution: `window.STORAGE_KEY_OVERRIDE` set in `core/init.js:28-30` from the campaign index (`systems/campaign-manager/campaign-manager.js:11-16`)
-- **IndexedDB** `dnd-tracker-db` (version 2)
-    - Wrapper: `initIndexedDB()` / `saveToIndexedDB()` in `core/init.js:230-277`
-    - Object stores: `campaigns` (keyPath `id`), `backups` (keyPath `id`, indexes `date` + `campaign`), `images`
-    - Used as: automatic fallback when campaign data exceeds ~5MB localStorage limit (`systems/spellslots/persistence.js:33-40`), redundant backup target for data >2MB (`persistence.js:50-52`), primary store for auto-backups (`systems/backups.js`), and load fallback when localStorage is empty (`systems/spellslots/quick-roll.js:33-45`)
+**localStorage:**
+- Primary persistence mechanism
+- Key: `dnd-tracker-v4` (APP_CONFIG.STORAGE_KEY)
+- Capacity: 5-10MB (browser-dependent)
+- Stores: All campaign data (characters, NPCs, locations, quests, encounters, loot, wiki, session notes, etc.)
+- Wrapper: `StorageAPI` in `utils/basic.js` (error handling, JSON helpers)
+- Fallback: Automatic switch to IndexedDB when data exceeds size limit
+- Multi-tab sync: BroadcastChannel `dnd-tracker-sync` keeps tabs synchronized
+
+**Additional localStorage Keys:**
+- `dnd-tracker-backups` - Local backup history (auto-created backups)
+- `dnd-tracker-campaigns` - Campaign index and metadata
+- `dnd-tracker-theme` - User theme preference (dark/light)
+- `dnd-tracker-layout` - UI layout and preferences
+- `dnd-dice-favorites` - Saved dice roll templates
+- `dnd-timer-presets` - Combat/session timer configurations
+- Campaign-specific keys: `dnd-campaign-<timestamp>` for additional campaigns
+
+**IndexedDB:**
+- Database: `dnd-tracker-db` (version 2)
+- Purpose: Large campaign storage (>5MB fallback)
+- Object Stores:
+  - `campaigns` - Campaign data (keyPath: `id`)
+  - `backups` - Backup history (keyPath: `id`, indexes: `date`, `campaign`)
+  - `images` - User-uploaded images (as Blobs, not embedded in HTML)
+- Usage: Automatic fallback when localStorage exceeds ~5MB
+- Implementation: `systems/spellslots/persistence.js` → `saveToIndexedDBFallback()`
+- Redundant backup: Data >2MB stored in both localStorage and IndexedDB
 
 **File Storage:**
+- No cloud storage integration
+- Manual user-triggered export/import:
+  - JSON export/import: `systems/spellslots/import-export.js`
+  - Markdown export/import: Inline in entity editors
+  - Shop handout HTML export: `features/shops/shop-export.js`
+- Avatar images: URL-based (http/https or base64 data: URLs, validated in `systems/avatars.js`)
 
-- Local filesystem only, via manual user-triggered download/upload:
-    - JSON export/import of campaign data: `systems/spellslots/import-export.js`
-    - Markdown import/export: `systems/markdown-import-export.js`
-    - Shop handout HTML export: `features/shops/shop-export.js`
-- Avatars/images are URL-based (http(s) or base64 `data:` URLs validated in `systems/avatars.js:6`); no upload service.
+## Caching Strategy
 
-**Caching:**
+**Service Worker (sw.js):**
+- Cache Name: `dnd-tracker-v3`
+- Strategy: Cache-first for same-origin, network-only for external
+- Core Assets (must cache successfully):
+  - `./dnd-tracker-optimized.html` - Main app bundle
+  - `./manifest.webmanifest` - PWA manifest
+- Optional Assets (individual failure tolerance):
+  - Icons: `./icons/icon-192.png`, `./icons/icon-512.png`
+  - Fonts: 10 WOFF2 files in `./assets/fonts/`
+- External Requests: Blocked (return error) to prevent dependency on unreliable external services
+- Offline Fallback: Serves bundled HTML for failed HTML requests
 
-- Service Worker cache `dnd-tracker-v2` (`sw.js:4`) - cache-first with stale-while-revalidate for same-origin assets, network-only for external origins. Caches `./`, `./index.html`, `./loader.js`, `./assets/styles.css`, `./assets/body.html` (note: `assets/body.html` is a legacy reference; templates now live in `assets/templates/`).
+**Browser Cache Behavior:**
+- GET requests: Cache-first (check cache before network)
+- POST/PUT/DELETE: Pass through without caching
+- Stale-while-revalidate: Not used (cache-first is simpler and more reliable)
+
+## Fonts & Typography
+
+**Font Loading (D-07: Offline Local Fonts):**
+- No Google Fonts CDN at runtime
+- All fonts downloaded at build-time via `tools/fetch-fonts.py`
+- Stored locally in `assets/fonts/` directory
+- Bundled into `dist/` during production deployment
+- CSS URL rewriting at build: `url('../fonts/` → `url('./assets/fonts/`
+- Fonts cached by Service Worker as optional assets
+- Fallback: System fonts if WOFF2 unavailable
+
+**Font Families and Weights:**
+- Roboto: 400 (regular), 700 (bold)
+- Inter: 400 (regular), 500 (medium), 600 (semibold)
+- Poppins: 400 (regular), 500 (medium), 600 (semibold)
+- Source Sans 3: 400 (regular), 600 (semibold)
+
+**Font Delivery:**
+- HTML: Inline CSS with @font-face rules
+- Format: WOFF2 only (modern browsers)
+- Encoding: Binary files in `assets/fonts/`
+- Critical: Fonts are OPTIONAL assets in SW cache; missing fonts don't break functionality
 
 ## Authentication & Identity
 
-**Auth Provider:**
+**Auth Provider:** None
+- Application has no user authentication system
+- Single-user, local-only design
+- No login required, no user accounts
+- Data tied to browser profile only
+- Can be shared between users (same device, same localStorage)
 
-- None. Single-user, local-only application. No accounts, no login, no session handling.
+**Data Isolation:**
+- Per-browser isolation via localStorage keys
+- Per-campaign isolation via campaign index
+- No cross-device synchronization
+- Campaign switching: `systems/campaign-manager/campaign-manager.js` → `switchCampaign()`
+- Multiple campaigns: Each stored separately in localStorage/IndexedDB
 
 ## Monitoring & Observability
 
-**Error Tracking:**
+**Error Tracking:** None (no external service)
+- Internal ring buffer: `ErrorHandler` in `render/helpers.js` (last 50 errors)
+- Debounced error toasts on critical failures
+- Global error handlers: `window.onerror` and `onunhandledrejection` in `core/init.js`
 
-- No external service. Internal only:
-    - `ErrorHandler` ring buffer (last 50 errors) in `render/helpers.js:9-74`, with debounced error toasts
-    - Global `window.onerror` / `onunhandledrejection` hooks installed in `core/init.js:7-19`
-    - Debug log panel: `tools/debug.js` (`debugLogAdd`)
+**Logging:**
+- Framework: Custom `ErrorHandler.log()` wrapper
+- Output: Browser console (development mode only)
+- Control: `APP_CONFIG.DEBUG_MODE` flag (enabled in dev, disabled in production)
+- Patterns: `ErrorHandler.log(contextName, error, additionalInfo)`
+- Production behavior: All logs suppressed (no console pollution)
 
-**Logs:**
+**Performance Monitoring:** None (no external APM service)
+- Local measurement via `window.performance` API
+- Debounced renders/saves to minimize CPU usage
+- Timing constants in APP_CONFIG (debounce 300ms, throttle 100ms)
 
-- `log()` in `utils/performance.js:9` - console logging gated by `APP_CONFIG.DEBUG_MODE` (stripped to no-op in production builds)
+## Offline Capabilities
 
-## CI/CD & Deployment
+**Service Worker Offline Support:**
+- Automatic detection via SW fetch event handling
+- Cache-first strategy ensures assets load from cache
+- Fallback: Serves bundled HTML for offline requests
+- No explicit "offline mode" indicator (app works transparently offline)
 
-**Hosting:**
+**Data Persistence:**
+- Data saved to localStorage immediately (synchronous)
+- No sync on reconnection (changes persist locally)
+- Manual export/import for cross-device sharing
 
-- No platform configured in-repo. Output is a standalone HTML file (`dist/dnd-tracker-optimized.html`) usable from any static host or directly via `file://`.
+**PWA Installation:**
+- Web app manifest: `manifest.webmanifest`
+- Installable on Android and some iOS browsers
+- App icons: 192x192 and 512x512 PNG
+- Display mode: `standalone` (full screen, no address bar)
+- Backdrop color: Dark (#0d0d0d)
+- Theme color: Gold (#d4af37)
 
-**CI Pipeline:**
+## Import/Export & Data Exchange
 
-- GitHub Actions: `.github/workflows/ci.yml`
-    - Job `lint-and-typecheck`: Node 20, `npm run typecheck` + `npm run lint`
-    - Job `test`: `npm test` (Jest)
-    - Job `build` (needs both): Node 20 + Python 3.x, `python build.py --production`, uploads `dist/dnd-tracker-optimized.html` as artifact (7-day retention)
-    - Note: Playwright E2E tests are NOT run in CI (local only via `npm run test:e2e`)
+**Campaign Export:**
+- Formats: JSON, Markdown (optional)
+- Implementation: `systems/spellslots/import-export.js`
+- Scope: All entities (characters, NPCs, locations, quests, encounters, loot, wiki)
+- User-triggered: Download button in UI
+- File type: `.json`, `.md`, or `.html` depending on format
 
-## Environment Configuration
+**Campaign Import:**
+- Supported formats: JSON, CSV (per-entity), Markdown
+- Implementation: `systems/spellslots/import-export.js`
+- Validation: Data schema checks before import
+- Error handling: User feedback for invalid/conflicting imports
+- Merge options: Append or replace existing data
 
-**Required env vars:**
+**Markdown Support:**
+- Bidirectional: Export to markdown, import from markdown
+- Patterns: Shortcut syntax in text editors (e.g., `**bold**`, `*italic*`)
+- Rendering: Markdown converted to HTML on display, raw when editing
 
-- None at runtime.
-- Dev-only: `PYTHONIOENCODING=utf-8` recommended on Windows for `build.py` console output.
-- CI-only: `process.env.CI` toggles Playwright retries/workers (`playwright.config.js:24-30`).
-
-**Secrets location:**
-
-- No secrets exist in this project (no API keys, no tokens, no `.env` files).
+**No API Integration:**
+- No REST API to import from
+- No third-party data sources
+- Manual user data entry or file upload only
 
 ## Webhooks & Callbacks
 
-**Incoming:**
+**Incoming Webhooks:** None (no server)
 
-- None (no server).
+**Outgoing Webhooks:** None (no external services)
 
-**Outgoing:**
+**Internal Event System:**
+- Post-save hooks: `registerPostSaveHook(fn)` for live-sync
+  - Debounced (150ms) to prevent excessive re-renders
+  - Executes after successful persist (localStorage/IndexedDB)
+  - Used for DM Screen widget updates, tab content refresh
+  
+- Tab registry: Auto-render on tab switch
+  - Defined in `systems/tab-registry.js`
+  - TAB_RENDER_REGISTRY maps tabs to render functions
+  - Called automatically by `switchView()`
+  
+- Event delegation: `data-action` attributes
+  - User interactions captured by event delegation
+  - Handlers defined in `ui/actions/` modules
+  - Decouples HTML from JS for testability
 
-- None.
+## Cross-Tab Synchronization
 
-## Browser Platform Integrations
+**BroadcastChannel API:**
+- Channel name: `dnd-tracker-sync` (APP_CONFIG.BROADCAST_CHANNEL)
+- Purpose: Keep multiple browser tabs synchronized
+- Implementation: `systems/spellslots/persistence.js`
+- Trigger: After every `saveImmediate()` call
+- Behavior: All open tabs receive data update, re-render affected components
 
-**PWA:**
+**Broadcast Message Format:**
+```javascript
+{
+  type: 'dataSync',
+  data: D,  // Current global data object
+  source: 'tab-id'
+}
+```
 
-- Inline web app manifest (data: URL) in `index.html:12` and `build.py:448`
-- Install prompt handling (`beforeinstallprompt`, 30s-delayed banner, dismissal stored in localStorage): `systems/spellslots/pwa-install.js`
-- Offline indicator via `online`/`offline` events: `core/init.js:207-222`
+**Conflict Resolution:**
+- Last-write-wins (simple, sufficient for single-user app)
+- No complex merge logic (not needed for offline-first)
 
-**Multi-Tab Sync:**
+## Build-Time Data Processing
 
-- `BroadcastChannel('dnd-tracker-sync')` for cross-tab save conflict detection: `initConflictDetection()` / `broadcastSave()` in `systems/undo.js:137-163`, channel name from `APP_CONFIG.BROADCAST_CHANNEL`
+**SRD Monster Data (Optional):**
+- Tool: `tools/build-srd-monsters.cjs` (Node.js script)
+- Source: D&D 5e SRD API (fetched at build time)
+- Purpose: Generate bestiary database for embedded reference
+- Format: JSON bundled into app (if used)
+- Usage: Manual run, not part of default CI build
+
+**Large Dataset Simulation:**
+- Build script can inject test data for performance testing
+- Used to test with 100+ characters, encounters, etc.
+- Not included in production builds
+
+## Network Behavior Summary
+
+**Runtime: Zero External Network Calls**
+- Service Worker blocks external requests
+- All data local-only
+- file:// protocol fully supported
+- http://localhost:8000 (dev server) supported
+- https://example.com/app (deployed) supported
+
+**Build-Time Network:**
+- `tools/fetch-fonts.py` → Google Fonts (only during build)
+- `tools/build-srd-monsters.cjs` → D&D SRD (optional, manual)
+- Both are development tools, not production dependencies
+
+**CI/CD Network:**
+- GitHub Actions runner downloads npm packages
+- Downloads Playwright browser binaries
+- Deploys built HTML to GitHub Pages
 
 ---
 
-_Integration audit: 2026-06-11_
+*Integration audit: 2026-07-26*

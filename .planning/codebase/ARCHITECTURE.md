@@ -1,189 +1,393 @@
+<!-- refreshed: 2026-07-26 -->
 # Architecture
 
-**Analysis Date:** 2026-06-11
+**Analysis Date:** 2026-07-26
+
+## System Overview
+
+```text
+┌────────────────────────────────────────────────────────────────┐
+│              Browser Load: index.html / loader.js               │
+│  Single entry point, loads HTML5 shell and loader script       │
+└──────────────────┬─────────────────────────────────────────────┘
+                   │
+                   ▼
+┌────────────────────────────────────────────────────────────────┐
+│         MODULE LOADING (loader.js)                              │
+│  • Sequential: 123 JS modules (dependency order)               │
+│  • Parallel: 12 HTML templates from assets/templates/          │
+│  • Source of truth: MODULES array in loader.js               │
+│  • Module order: core → utils → systems → features → UI → init │
+└──────────────────┬─────────────────────────────────────────────┘
+                   │
+                   ▼
+┌────────────────────────────────────────────────────────────────┐
+│  CORE INITIALIZATION (core/init.js)                            │
+│  • Global error handlers (window.onerror, unhandledRejection)  │
+│  • Load campaign/storage (await load())                        │
+│  • Theme & layout loading                                      │
+│  • Tab registry validation                                     │
+│  • Event delegation init, navigation listeners                 │
+│  • Subsystem inits: backups, timers, search, keyboards         │
+│  • Service Worker, PWA, offline detection                      │
+└──────────────────┬─────────────────────────────────────────────┘
+                   │
+                   ▼
+┌────────────────────────────────────────────────────────────────┐
+│         APPLICATION RUNTIME                                    │
+│  ┌──────────────────────────────────────────────────────────┐  │
+│  │ Global State: window.D                                   │  │
+│  │ • Persistent JSON: characters[], npcs[], locations[]    │  │
+│  │ • Combat state: initiative {combatants[], round}        │  │
+│  │ • Features: spells[], wiki[], loot[], shops[]           │  │
+│  │ • Subsystems: bestiary[], soundboard{}, factions[]      │  │
+│  │ • UI state: settings {}, dmScreenLayout, calendar[]     │  │
+│  │ • Undo stacks: (snapshots, max 30)                      │  │
+│  └──────────────────────────────────────────────────────────┘  │
+│                         │                                      │
+│  ┌──────────────────────▼──────────────────────────────────┐  │
+│  │ User Interaction (Event Delegation)                     │  │
+│  │ • Click on [data-action="delete-char"]                 │  │
+│  │ • Captured at document level (capture phase)           │  │
+│  │ • Routed through EventDelegation registry              │  │
+│  │ • No inline onclick handlers                           │  │
+│  └──────────────────────┬──────────────────────────────────┘  │
+│                         │                                      │
+│  ┌──────────────────────▼──────────────────────────────────┐  │
+│  │ Action Handlers (ui/actions/*.js)                       │  │
+│  │ • 7 domains: entity, combat, ui, dice, wiki, shop,     │  │
+│  │   system                                               │  │
+│  │ • 433 handlers total                                   │  │
+│  │ • Mutate D, call save/saveImmediate                    │  │
+│  └──────────────────────┬──────────────────────────────────┘  │
+│                         │                                      │
+│  ┌──────────────────────▼──────────────────────────────────┐  │
+│  │ Persistence Layer                                       │  │
+│  │ • save(): debounced (1500ms default)                   │  │
+│  │ • saveImmediate(): synchronous                         │  │
+│  │ • localStorage: primary (<5MB)                         │  │
+│  │ • IndexedDB: fallback (>5MB or full)                   │  │
+│  │ • registerPostSaveHook() callbacks                     │  │
+│  └──────────────────────┬──────────────────────────────────┘  │
+│                         │                                      │
+│  ┌──────────────────────▼──────────────────────────────────┐  │
+│  │ Render Functions (features/*/[*-render.js])             │  │
+│  │ • Read from D, generate HTML                           │  │
+│  │ • Update DOM via innerHTML                             │  │
+│  │ • Called via actions or tab registry                   │  │
+│  │ • 25+ render functions across features                 │  │
+│  └──────────────────────┬──────────────────────────────────┘  │
+│                         │                                      │
+│  ┌──────────────────────▼──────────────────────────────────┐  │
+│  │ DOM Display (CSS + Event Delegation Reattach)           │  │
+│  │ • Browser renders HTML + CSS                           │  │
+│  │ • data-action attributes re-active                     │  │
+│  │ • Loop: user action → handler → update → render        │  │
+│  └──────────────────────────────────────────────────────────┘  │
+└────────────────────────────────────────────────────────────────┘
+```
+
+## Component Responsibilities
+
+| Component | Responsibility | File(s) |
+|-----------|----------------|---------|
+| **Loader** | Sequential module injection, template fetch | `loader.js` (MODULES array = source of truth) |
+| **App Config** | Frozen settings, versions, constants | `core/config.js` (APP_CONFIG object) |
+| **Data Schema** | Global state initialization | `core/data.js` (window.D) |
+| **Core Constants** | D&D rules, UI timing, icon maps | `core/constants.js` (DND_RULES, UI_CONSTANTS) |
+| **Themes** | Dark/light CSS injection | `core/themes.js` |
+| **Initialization** | Bootstrap sequence, subsystem setup | `core/init.js` (init() function) |
+| **Undo/Redo** | State snapshots, restore logic | `systems/undo.js` (saveUndoState, undo, redo) |
+| **Persistence** | Save/load D, storage fallback chain | `systems/spellslots/persistence.js` (save, saveImmediate, post-save-hooks) |
+| **Tab Navigation** | Central render registry & lifecycle | `systems/tab-registry.js` (TAB_RENDER_REGISTRY) |
+| **Entity Links** | Cross-entity [[type:id:name]] references | `systems/entity-links.js` |
+| **Event Delegation** | Central action dispatch (data-action) | `ui/event-delegation.js` (EventDelegation object) |
+| **Action Handlers** | Feature-specific mutations & renders | `ui/actions/*.js` (7 domain modules) |
+| **Render Helpers** | Error boundaries, entity lookup, caching | `render/helpers.js` |
+| **Feature Renders** | Domain HTML generation | `features/*/[*-render.js]` (25+ functions) |
+| **Feature CRUDs** | Create/Read/Update/Delete operations | `features/*/[*-crud.js]` (16+ modules) |
+| **DM Screen** | Widget-based dashboard, 21+ widget types | `features/dmscreen/dmscreen-render.js` |
+| **Rich Editor** | Markdown formatting, floating toolbar | `ui/editors/rich-text.js` |
+| **Virtual Scroll** | Efficient rendering of large lists | `ui/virtual-scroll.js` |
 
 ## Pattern Overview
 
-**Overall:** Offline-first single-page application built as a **non-ESM, global-scope modular monolith**. 92 JavaScript modules share one global namespace, loaded in strict dependency order, with all state in a single global object (`window.D`) persisted to localStorage/IndexedDB.
+**Overall:** Non-ESM global monolith with centralized state, event delegation, and snapshot-based undo.
 
 **Key Characteristics:**
 
-- **No ES modules.** No `import`/`export` anywhere in runtime code. Cross-module calls use globals directly (const/let declarations are in global lexical scope) or `window.fn()`. Functions are exposed via explicit `window.X = X` assignments at the bottom of modules (see `features/initiative.js` tail).
-- **Two delivery modes from one codebase:** dev mode (`index.html` + `loader.js` injects scripts/templates at runtime) and bundled mode (`build.py` concatenates everything into one HTML file with a three-pass deduplication step).
-- **Single mutable state tree** (`D`), mutated directly by feature code, with snapshot-based undo and debounced persistence.
-- **Declarative UI wiring**: `data-action` attributes + capture-phase event delegation instead of inline handlers (migration ongoing - ~146 inline handlers remain in templates/generated HTML).
-- German-localized UI strings throughout; code comments mixed German/English.
+- **Global Namespace Only:** 123 modules in single global scope via `<script>` tags; no ES6 import/export; cross-module calls via `window.fn()` or direct const/let access (both in global lexical scope)
+- **Single Source of Truth for Module Lists:** `loader.js:MODULES` array and `loader.js:TEMPLATES` array are the ONLY places module/template lists live. `build.py` READS these at build time (not duplicating), hard-aborts if file missing on disk.
+- **Single Mutable Global State:** `window.D` object, mutated in-place, persisted to localStorage (primary) or IndexedDB (fallback >5MB)
+- **Event Delegation:** All user interaction routed via `data-action` attributes and `EventDelegation` registry; no inline `onclick` handlers
+- **Snapshot Undo:** Full `D` state captured via JSON.stringify before mutations; restore via Object.assign
+- **Tab Registry Pattern:** TAB_RENDER_REGISTRY maps tab names to render functions declaratively; on tab switch, registry determines which renders execute
+- **German Localization:** UI strings in German; code comments mixed German/English
 
 ## Layers
 
-Load order defined identically in `loader.js:10-124` (MODULES array) and `build.py:249-355` - these two lists MUST stay in sync.
+**Core Layer** (`core/`):
+- **Purpose:** Application configuration and initialization
+- **Location:** `core/config.js`, `core/data.js`, `core/constants.js`, `core/themes.js`, `core/init.js`
+- **Contains:** APP_CONFIG (frozen), D (global data), D&D rules constants, theme loader, bootstrap sequence
+- **Depends on:** None (loaded first)
+- **Used by:** All other modules
 
-**1. Core (`core/`):**
+**Utilities Layer** (`utils/`):
+- **Purpose:** Pure helper functions, utilities, validation
+- **Location:** `utils/basic.js`, `utils/utilities.js`, `utils/crud-helpers.js`, `utils/validation.js`, `utils/filter-engine.js`, `utils/game-rules.js`, `utils/performance.js`
+- **Contains:** DOM helpers ($, $$, esc), debounce/throttle, parseEntityId, entity lookups, CRUD patterns, validation schemas, XP calculations
+- **Depends on:** core/
+- **Used by:** systems, features, UI
 
-- Purpose: Configuration, state schema, constants, themes, bootstrap
-- Contains: `config.js` (frozen `APP_CONFIG`), `data.js` (`initializeData()` → `window.D`), `constants.js` (`DND_RULES`, `UI_CONSTANTS` namespaces + legacy direct names), `themes.js`, `srd-spells.js` (lazy-cached German SRD spell data), `init.js` (the `init()` bootstrap + IndexedDB wrapper + Service Worker registration)
-- Depends on: nothing (loaded first); `init.js` is loaded LAST and depends on everything
-- Used by: all layers
+**Systems Layer** (`systems/`):
+- **Purpose:** Cross-cutting infrastructure and subsystems
+- **Location:** `systems/undo.js`, `systems/spellslots/*` (9 modules), `systems/entity-links.js`, `systems/tab-registry.js`, `systems/campaign-manager/`, `systems/search/`, `systems/migration/`, `systems/file-backup/`, etc.
+- **Contains:** Undo/redo stacks, persistence (save/load/hooks), spell slots management, tab rendering, entity linking, campaign switching, global search, file backup, migrations
+- **Depends on:** core/, utils/
+- **Used by:** features, UI, init
 
-**2. Utils (`utils/`):**
+**Render Helpers** (`render/`):
+- **Purpose:** Rendering infrastructure and utilities
+- **Location:** `render/helpers.js`
+- **Contains:** ErrorHandler (error ring buffer), safeRender (error boundaries), EntityLookup (with optional cache), HTML building helpers
+- **Depends on:** core/, utils/
+- **Used by:** All feature renders
 
-- Purpose: Pure-ish helpers and infrastructure primitives
-- Contains: `basic.js` (`$`, `$$`, `esc`, `stripHtml`, `sanitizeHTML`, `StorageAPI`), `utilities.js` (`$c` cached DOM lookup, `debounce`, `throttle`, `parseEntityId`, `nextId`, `showToast`/event log), `performance.js` (`log`/`warn`/`error`, `PerformanceManager`), `crud-helpers.js`, `validation.js` (`VALIDATION_SCHEMAS` with `entityRef` foreign-key checks), `form-helpers.js`, `filter-engine.js`, `game-rules.js`, `performance-extras.js` (drag-and-drop, debounced renders), `testable-utils.js` (Jest-importable copies of core helpers - NOT in the build)
-- Depends on: `core/config.js`
-- Used by: systems, features, ui
+**Feature Modules** (`features/`):
+- **Purpose:** Domain-specific functionality (Party, NPCs, Encounters, etc.)
+- **Organization:** One subdirectory per feature with `*-render.js`, `*-crud.js`, optional `*-dialogs.js`
+- **Features:** party, npcs, locations, quests, encounters, loot, spells, wiki, shops, sessions, timers, initiative, dice, soundboard, dice-stats, dmscreen, bestiary, npc-generator, timeline, reise, fraktionen, session-prep, command-palette
+- **Depends on:** core/, utils/, systems/, render/
+- **Used by:** UI actions, event delegation
 
-**3. Systems (`systems/`):**
-
-- Purpose: Cross-cutting subsystems independent of any one feature
-- Contains: `undo.js` (snapshot undo/redo + BroadcastChannel conflict detection), `backups.js` (auto-backup to IndexedDB, localStorage fallback), `tags.js`, `entity-links.js` (cross-entity linking), `conditions.js`, `hp-calculator.js`, `avatars.js`, `tab-registry.js`, `session-timer.js`, `wiki-links.js`, `markdown-import-export.js`, `search/global-search.js` (fuzzy search), `campaign-manager/campaign-manager.js` (multi-campaign via separate localStorage keys + reload), `spellslots/` subsystem (11 modules: persistence, navigation/`switchView`, version migration, quick reference, PWA install, virtual list, keyboard shortcuts, import/export, quick roll + **the global `load()` function** in `quick-roll.js:23`)
-- Depends on: core, utils
-- Used by: features, ui
-
-**4. Render helpers (`render/`):**
-
-- Purpose: Shared rendering infrastructure
-- Contains: `helpers.js` only - defines `ErrorHandler` (`render/helpers.js:9`), `safeExecute`/`safeRender` wrappers (`:78`, `:103`), `EntityLookup` with optional per-render-cycle cache (`:440`), `getEntityForCombat()` (`:528`), select-population helpers
-- Depends on: utils
-- Used by: every feature render module
-
-**5. Features (`features/`):**
-
-- Purpose: Domain functionality, one folder (or file) per domain
-- Contains: entity folders split by concern - `party/` (`party-render.js`, `party-details.js`, `party-crud.js`), `npcs/` (render, interactions, dialogs, crud, popup), `locations/`, `quests/`, `encounters/` (+ `monster-templates.js`), `shops/` (`shops-core.js`, `shop-export.js`, `links.js`), `sessions/`, `wiki/`, `dice/` (`dice-core.js` floating panel, `dice-favorites.js`), `dmscreen/` (`dmscreen-render.js` widget registry, 21 widget types), `timers/`; plus single-file features: `initiative.js`, `initiative-extras.js`, `encounter-calculator.js`, `rest-manager.js`, `quick-actions.js`, `random-tables.js`, `loot-distribution.js`, `render-dashboard.js` (defines `renderAll()` at `:7`), `render-spells.js`, `render-loot.js`
-- Depends on: core, utils, systems, render
-- Used by: ui/actions (action handlers call feature functions)
-
-**6. UI (`ui/`):**
-
-- Purpose: Event wiring, editors, rendering infrastructure
-- Contains: `event-delegation.js` (the `EventDelegation` registry), `actions/` (7 domain modules that register handlers: `entity-actions.js`, `combat-actions.js`, `ui-actions.js`, `dice-actions.js`, `wiki-actions.js`, `shop-actions.js`, `system-actions.js`), `editors/` (`rich-text.js` floating toolbar - manual DOM, no execCommand; `markdown-shortcuts.js`, `markdown-converter.js`), `virtual-scroll.js` (also calls `EventDelegation.init()` at `:101-105`), `dom-builder.js`, `safe-render.js`, `lazy-loading.js`, `layout-profiles.js`
-- Depends on: everything above
-- Used by: DOM events at runtime
+**UI Layer** (`ui/`):
+- **Purpose:** User interaction, event handling, input management
+- **Location:** `ui/event-delegation.js`, `ui/actions/*.js`, `ui/editors/rich-text.js`, `ui/virtual-scroll.js`, `ui/dom-builder.js`, `ui/safe-render.js`
+- **Contains:** EventDelegation registry, 7 action handler domains (433 total handlers), rich editor, markdown support, virtual scrolling, lazy loading, safe rendering
+- **Depends on:** All layers above
+- **Used by:** Browser event system at runtime
 
 ## Data Flow
 
-**Startup (dev mode):**
+### Primary Request Path (User Action)
 
-1. `index.html` loads `assets/styles.css` (@import hub) and `loader.js`
-2. `loader.js` shows a loading screen, fetches 10 HTML templates from `assets/templates/` in parallel, then sequentially injects 92 `<script>` tags (`loader.js:169-228`)
-3. Template HTML is inserted into `#app-root`, then `init()` (`core/init.js:5`) runs: resolves active campaign key → `await load()` → theme/layout → event listeners → `renderAll()` → subsystem inits (timers, backups, SW, PWA)
+1. **Event Capture** — User clicks `<button data-action="delete-char" data-id="42">`
+2. **Delegation Dispatch** (`ui/event-delegation.js:_handleClick`) — Intercepts in capture phase, extracts action + context
+3. **Handler Lookup** — Finds `EventDelegation._handlers.get('delete-char')`
+4. **Action Execution** (`ui/actions/entity-actions.js`) — Calls `deleteChar(ctx.id)`
+5. **State Mutation** — Calls `saveUndoState()`, mutates D, calls `save()` or `saveImmediate()`
+6. **Persistence** (`systems/spellslots/persistence.js`) — Serializes D to JSON, saves to localStorage or IndexedDB, fires post-save hooks
+7. **Render Update** — Action handler calls `renderParty()` (or equiv)
+8. **DOM Update** — Render function reads D, generates HTML, updates DOM
+9. **Display** — Browser displays result, event delegation reattached automatically
 
-**Startup (bundled mode):** Single HTML file contains CSS in `<style>`, templates in `<body>`, all JS in one `<script>`; `init()` is invoked by an inline DOMContentLoaded handler appended by `build.py:461-472`.
+### Tab Navigation Path
 
-**Mutation flow (the canonical CRUD pattern):**
+1. User clicks `.nav-tab[data-view="initiative"]`
+2. Calls `switchView('initiative')`
+3. `renderTabContent('initiative')` via `TAB_RENDER_REGISTRY`
+4. Executes `config.init()` if first visit (once per session)
+5. Executes all render functions in `config.renders` array
+6. On tab exit, executes `config.cleanup()` if defined
+7. Previous tab's `cleanup` clears intervals/listeners
 
-1. User clicks element with `data-action="delete-npc" data-id="42"`
-2. Capture-phase document listener in `EventDelegation._handleClick` (`ui/event-delegation.js:69`) resolves the handler from its `_handlers` Map and builds `ctx = { id, type, value, target, event }`
-3. Handler (registered in `ui/actions/*.js`) calls the feature function, e.g. `deleteNPC(id)`
-4. Feature function calls `saveUndoState(label)` BEFORE mutating, mutates `D`, then `save()` (debounced 1500ms) or `saveImmediate()`, then re-renders - often via `deleteWithConfirm()`/`afterCrudOperation()` from `utils/crud-helpers.js`
-5. `save()` (`systems/spellslots/persistence.js:109`) serializes `D` to JSON → `StorageAPI.set(key, ...)`; auto-falls back to IndexedDB above ~5MB or on quota errors; calls `broadcastSave()` for other tabs
+### Undo/Redo Flow
 
-**Tab switching:**
-
-1. Nav click → `switchView(name)` (`systems/spellslots/navigation.js:7`)
-2. Toggles `.view.active` / `.nav-tab.active` classes, then delegates to `renderTabContent(name)` (`systems/tab-registry.js:100`)
-3. `TAB_RENDER_REGISTRY` (`systems/tab-registry.js:7`) maps 17 tabs to `renders[]` (every switch), `init` (once), `cleanup` (on leave). New tabs MUST be registered here, never special-cased in `switchView`.
+1. **Before mutation:** `saveUndoState('Action label')` pushes full D snapshot to undoStack (max 30)
+2. **User Ctrl+Z:** `undo()` pops undoStack, pushes current D to redoStack, restores D, calls renderAll()
+3. **User Ctrl+Y:** `redo()` pops redoStack, pushes current D to undoStack, restores D, calls renderAll()
 
 **State Management:**
-
-- `window.D` is the single source of truth (schema in `core/data.js`: characters, npcs, locations, quests, encounters, initiative, spells, loot, wiki, sessionNotes, storyArcs, links, filters, calendar, tags, settings, `_nextId`)
-- Optional collections are lazily initialized by their features: `D.randomTables` (`features/random-tables.js:21`), `D.shops` (`features/shops/shops-core.js:344`), `D.dmScreenLayout` (`features/dmscreen/dmscreen-render.js:174`), `D.quickRefCustom`, `D.diceHistory`, `D.partyGold`
-- Undo/redo: full-state JSON snapshots on stacks capped at 30 (`systems/undo.js:5-20`); restore clears and `Object.assign`s into the same `D` object (it is `const`)
-- Versioned migrations on load: `MIGRATIONS` map keyed by version in `systems/spellslots/version-migration.js:9`, applied by `migrateData()` when `D._version` < `APP_CONFIG.VERSION`
-- DM Screen live-sync: wraps `window.save` once (`window._originalSave` pattern) and refreshes widgets debounced 150ms
+- D is `const` (reference immutable), contents mutated directly
+- Snapshots via JSON.stringify (full deep copy, no diffing)
+- No partial updates
+- Large campaigns (>2MB) use IndexedDB backup automatically
 
 ## Key Abstractions
 
-**`EventDelegation`** (`ui/event-delegation.js:36`):
+**Tab Abstraction** (`systems/tab-registry.js`):
+- Purpose: Declarative mapping of tab names to render functions
+- Pattern: `TAB_RENDER_REGISTRY = { tabName: { renders: [], init, cleanup } }`
+- Benefits: No hardcoded renders in switchView(), easy to add tabs
 
-- Purpose: Central action dispatch replacing inline onclick handlers
-- Pattern: `Map<actionName, handler>`; action modules self-register at load via `EventDelegation.registerAction(name, handler)` loops (e.g. `ui/actions/entity-actions.js:181-185`). Legacy `data-on-change`/`data-on-input` handler names are whitelist-validated (`ALLOWED_CHANGE_HANDLERS`, `:9`).
+**Entity Lookup** (`render/helpers.js`):
+- Purpose: Centralized entity access by type/id with optional per-render caching
+- Pattern: `EntityLookup.enableCache()` at start of heavy render, `clearCache()` at end
+- Benefits: Reduced redundant array iterations, improved performance
 
-**`TAB_RENDER_REGISTRY`** (`systems/tab-registry.js:7`):
+**Widget Abstraction** (DM Screen):
+- Purpose: Modular, toggleable dashboard panels
+- Pattern: Registry of `{ name, icon, render: () => HTML, compact: bool }`
+- 21+ widget types: data widgets (party-stats, initiative, dice) + reference widgets (conditions, damage-types, terrain, etc.)
+- Benefits: Users toggle/reorder widgets, profiles save layouts
 
-- Purpose: Declarative tab → render-function mapping with lifecycle hooks and DEBUG-mode validation (`validateTabRegistry()`)
+**Action Handler Abstraction** (`ui/event-delegation.js`):
+- Purpose: Dispatch user actions via data-action attributes
+- Pattern: `EventDelegation.registerAction('action-name', handlerFn)`
+- Benefits: No inline onclick, centralized event handling, action registry self-documenting
 
-**`EntityLookup`** (`render/helpers.js:440`):
-
-- Purpose: Centralized entity access by type+id with optional caching
-- Pattern: `EntityLookup.enableCache()` at start of heavy renders, `clearCache()` at end; convenience methods `EntityLookup.npc(id)`, `.character(id)`, etc.; `findByName()` for combat lookups
-
-**`StorageAPI`** (`utils/basic.js:158`):
-
-- Purpose: Exception-safe localStorage wrapper returning `{ success, error }` results; JSON helpers; quota/private-browsing detection
-
-**`ErrorHandler` + `safeRender`** (`render/helpers.js:9`, `:103`):
-
-- Purpose: Error ring buffer (50 entries), debounced error toasts, render error boundaries with optional fallback render
-
-**CRUD helpers** (`utils/crud-helpers.js`):
-
-- `deleteWithConfirm({ entityType, id, onSuccess })`, `afterCrudOperation(renderFn, message)`, `saveEntityWithUndo({...})` - standard flows wrapping confirm + undo + mutate + save + toast
-
-**Widget registry (DM Screen)** (`features/dmscreen/dmscreen-render.js`):
-
-- `getDMScreenWidgets()` returns `{ type: { name, icon, render, compact } }`; layouts stored as `{ id, type, visible }[]` in `D.dmScreenLayout`; profiles in `D.dmScreenProfiles`
-
-**Build deduplication** (`build.py:96-228`):
-
-- Pass 1 collects real declarations, Pass 2 strips conflicting/duplicate `var X = window.X` import-aliases, Pass 3 comments out duplicate `function` declarations. Constrains coding style: never `const X = window.X` inside functions; never duplicate top-level function names across modules.
+**Filter Abstraction** (`utils/filter-engine.js`):
+- Purpose: Composable, chainable filtering of lists
+- Pattern: Conditions can be AND/OR combined, evaluated efficiently
+- Benefits: Consistent filter UI across features, reusable logic
 
 ## Entry Points
 
-**`index.html`:**
+**HTML Entry** — `dist/dnd-tracker-bundled.html` (dev) or `dist/dnd-tracker-optimized.html` (prod)
+- Triggers: Browser navigation or file:// open
+- Loads: loader.js via `<script src="loader.js">`
 
-- Location: project root
-- Triggers: browser navigation (dev mode)
-- Responsibilities: shell with `#app-root` placeholder, Google Fonts links, loads `assets/styles.css` + `loader.js`
+**loader.js** — Module loader and template injector
+- Triggers: When DOM ready
+- Loads: 123 modules sequentially, 12 templates in parallel
+- Calls: `init()` from `core/init.js` when complete
+- Source of Truth: MODULES array (lines 10-166) and TEMPLATES array (lines 219-232)
 
-**`loader.js` → `init()`:**
+**core/init.js** — Application bootstrap
+- Triggers: Called by loader.js after all modules loaded
+- Setup: Error handlers, storage loading, theme/layout, event listeners, tab renders, subsystem inits, Service Worker, PWA
+- Validations: Tab registry validation (DEBUG mode)
+- Inits: Timers, backups, search, keyboard shortcuts, offline detection
 
-- Location: `loader.js`, `core/init.js:5`
-- Triggers: DOMContentLoaded
-- Responsibilities: load modules/templates, then bootstrap (campaign resolution, `load()`, listener setup, `renderAll()`, auto-backup, SW/PWA init)
+## Architectural Constraints
 
-**`dist/dnd-tracker-bundled.html` / `dist/dnd-tracker-optimized.html`:**
+- **Global Namespace:** All functions/variables in window.* or global lexical scope; no module scoping
+- **No Circular Dependencies:** Sequential module loading ensures dependencies load before dependents
+- **Mutable Global State:** D mutated in-place; patterns recommend saveUndoState() before mutations
+- **Synchronous Rendering:** All renders execute immediately, no async/concurrent rendering
+- **Single-Threaded:** All operations on main thread; heavy ops (backups, imports) may block
+- **Concatenated Bundle:** 123 modules concatenated; no tree-shaking, all code loaded
+- **localStorage Limit:** ~5-10MB per browser; >5MB uses IndexedDB fallback
+- **Module List Synchronization:** MODULES and TEMPLATES arrays in loader.js are single source of truth; build.py reads them
+- **Build Deduplication:** Two-pass system removes duplicate window import-aliases (Pass 1: scan declarations, Pass 2: filter conflicts). No function-scoped `const X = window.X` allowed.
 
-- Generated by `build.py`; self-contained; inline bootstrap calls `init()` directly. Playwright E2E runs against the bundled dev file.
+## Anti-Patterns
 
-**`sw.js`:**
+### Don't Add Inline Event Handlers
 
-- Triggers: registered by `registerServiceWorker()` (`core/init.js:170`) only when served over http(s)
-- Responsibilities: cache-first offline support for same-origin assets
+**Pattern:** `onclick="deleteChar(id)"` in HTML
 
-**`main.js`:**
+**Why Wrong:** Defeats event delegation, mixes markup/logic, hard to track, security whitelist bypasses possible
 
-- Placeholder from an abandoned TypeScript-migration entry point; merely injects `loader.js`. NOT referenced by `index.html` or the build - effectively dead code.
+**Do Instead:** Use data-action + register in ui/actions/*.js
+
+```javascript
+// ❌ Don't
+<button onclick="deleteChar(${id})">Delete</button>
+
+// ✅ Do
+<button data-action="delete-char" data-id="${id}">Delete</button>
+// In ui/actions/entity-actions.js:
+'delete-char': ctx => deleteChar(ctx.id)
+```
+
+### Don't Call render*() from Other render*() Functions
+
+**Pattern:** renderParty() calls renderDashboard() internally
+
+**Why Wrong:** Creates tight coupling, hidden dependencies, race conditions
+
+**Do Instead:** Call render from action handlers after mutation; use post-save hooks for cross-feature updates
+
+```javascript
+// ❌ Don't
+function renderParty() {
+    // ... render party
+    renderDashboard();  // Hidden dependency
+}
+
+// ✅ Do
+function deleteChar(id) {
+    saveUndoState('Charakter gelöscht');
+    D.characters = D.characters.filter(c => c.id !== id);
+    save();
+    renderParty();  // Only render affected view
+}
+```
+
+### Don't Wrap window.save()
+
+**Pattern:** `window.save = function() { window._originalSave(); myHook(); }`
+
+**Why Wrong:** Bare save() calls bind to const declaration, bypass wrapper permanently, post-save hooks never fire
+
+**Do Instead:** Register post-save hooks via registerPostSaveHook(fn)
+
+```javascript
+// ❌ Don't
+window._originalSave = save;
+window.save = function() {
+    window._originalSave();
+    myHook();  // Never runs for bare save()
+};
+
+// ✅ Do
+registerPostSaveHook(() => {
+    myHook();  // Runs after every save
+});
+```
+
+### Don't Use var X = window.X for const-Declared Variables
+
+**Pattern:** `var APP_CONFIG = window.APP_CONFIG`
+
+**Why Wrong:** SyntaxError in bundle (const + var redeclaration conflict)
+
+**Do Instead:** Access const-declared globals directly
+
+```javascript
+// ❌ Don't
+var APP_CONFIG = window.APP_CONFIG;  // SyntaxError if const exists
+var save = window.save;
+
+// ✅ Do
+const BACKUP_INTERVAL = APP_CONFIG?.BACKUP_INTERVAL || 300000;  // Direct access
+if (typeof save === 'function') save();  // Direct access
+```
+
+### Don't Use innerHTML with User Content Without Sanitization
+
+**Pattern:** `container.innerHTML = `<p>${npc.description}</p>`
+
+**Why Wrong:** User content can execute JavaScript (XSS)
+
+**Do Instead:** Sanitize with esc() or sanitizeHTML()
+
+```javascript
+// ❌ Don't
+container.innerHTML = `<p>${npc.description}</p>`;  // XSS risk
+
+// ✅ Do
+container.innerHTML = `<p>${esc(npc.description)}</p>`;  // Safe
+```
 
 ## Error Handling
 
-**Strategy:** Defensive, never-crash. Errors are logged, surfaced as toasts, and rendering degrades gracefully instead of white-screening.
+**Strategy:** Graceful degradation with defensive checks and error logging.
 
 **Patterns:**
 
-- Global hooks: `window.onerror` / `window.onunhandledrejection` (`core/init.js:7-19`)
-- Render boundaries: `safeRender(fn, fnName, containerId, options)` with optional fallback render and error toast
-- Per-action try/catch inside `EventDelegation` dispatch (`ui/event-delegation.js:101-109`)
-- Defensive existence checks before cross-module calls: `if (typeof window.fn === 'function') window.fn()` - pervasive because load-order/optional modules
-- Storage failures cascade: localStorage → IndexedDB fallback → error toast advising export (`systems/spellslots/persistence.js:54-68`)
-- Logging gated by `APP_CONFIG.DEBUG_MODE`; `ErrorHandler.log(fnName, error, context)` is the sanctioned channel (raw `console.log` is banned in production paths)
+- **Error Boundaries:** safeRender() wraps critical renders, catches errors, shows fallback
+- **Defensive Checks:** `if (typeof window.fn === 'function')` before calling
+- **Logging:** ErrorHandler.log() for errors (ring buffer, debounced toasts); log() for debug (DEBUG_MODE gated)
+- **User Feedback:** showToast() for errors/warnings; event log panel for persistent view
+- **Graceful Cascade:** localStorage → IndexedDB → export auto-attempt on save failure
 
 ## Cross-Cutting Concerns
 
-**Logging:** `log()` (`utils/performance.js:9`) - debug-gated console; `ErrorHandler` for errors; in-app event log panel via `showToast()` (`utils/utilities.js:258`)
+**Logging:** Wrapped in APP_CONFIG.DEBUG_MODE checks; ErrorHandler for error ring buffer; log() for debug output
 
-**Validation:** `VALIDATION_SCHEMAS` + `validateAndShowErrors()` in `utils/validation.js` (type, required, maxLength, `entityRef` foreign keys); `validateDataIntegrity()` repairs data on load; `parseEntityId()` for all string/number ID normalization
+**Validation:** validateAndShowErrors() before saves, validateTabRegistry() on boot (DEBUG), data integrity repairs on undo/redo
 
-**XSS prevention:** `esc()` for text interpolation, `sanitizeHTML()` (DOMParser-based allowlist, `utils/basic.js:44`) for rich-text content - mandatory for anything from `D`
+**Authentication:** None (local single-user app), campaign switching via separate localStorage keys + reload
 
-**Authentication:** none (local single-user app)
+**Accessibility:** Semantic HTML, ARIA labels, keyboard shortcuts (Ctrl+Z, Ctrl+K, /, etc.), focus management in modals
 
-**Persistence triggers:** every mutation path ends in `save()` (debounced) or `saveImmediate()`; `startAutoBackup()` snapshots to IndexedDB every 5 min (`APP_CONFIG.BACKUP_INTERVAL`); session timer auto-save every 300s
+**Persistence:** Every mutation path ends in save() (debounced) or saveImmediate(); auto-backup every 5 min; session timer auto-save every 5 min
 
-**Multi-campaign isolation:** each campaign is a separate localStorage key; switching writes the index and `location.reload()`s (`systems/campaign-manager/campaign-manager.js:48-53`)
-
-**Note on removed feature:** The Mindmap/Network visualization (`features/network/mindmap.js`, `D.mindmap`) was removed entirely (git commit `7ef9bf5`). Residual references remain in `systems/campaign-manager/campaign-manager.js:35` (empty-campaign template still seeds `mindmap: { nodes: [], connections: [] }`), `systems/backups.js`, and `systems/spellslots/import-export.js` (backward-compat for old exports). CLAUDE.md still documents the feature - treat those sections as stale.
+**Multi-Campaign:** Each campaign = separate localStorage key; switching saves campaign index and reloads page
 
 ---
 
-_Architecture analysis: 2026-06-11_
+*Architecture analysis: 2026-07-26*
