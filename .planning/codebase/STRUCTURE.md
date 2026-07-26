@@ -32,6 +32,7 @@ dnd-tracker-modular/
 │   ├── form-helpers.js          # Form manipulation utilities
 │   ├── filter-engine.js         # Composable filtering logic
 │   ├── game-rules.js            # D&D rule calculations (XP, proficiency bonus, etc.)
+│   ├── testable-utils.js        # Pure-function mirror for Jest (only file with 80% coverage gate)
 │   └── performance-extras.js    # Drag-drop, debounced renders
 │
 ├── systems/                     # [3] Cross-cutting subsystems
@@ -74,7 +75,7 @@ dnd-tracker-modular/
 ├── render/                      # [4] Render infrastructure (1 file)
 │   └── helpers.js               # ErrorHandler, safeRender, EntityLookup (w/ optional cache)
 │
-├── features/                    # [5] Domain features (35+ modules, 59 files total)
+├── features/                    # [5] Domain features (59 .js files: 20 subdirectories + 12 root-level)
 │   ├── party/                   # Character management
 │   │   ├── party-render.js      # Party roster render
 │   │   ├── party-details.js     # Character detail modal
@@ -95,8 +96,6 @@ dnd-tracker-modular/
 │   │   ├── encounters-render.js
 │   │   ├── encounters-crud.js
 │   │   └── monster-templates.js
-│   ├── loot/                    # Loot distribution (root-level file)
-│   ├── spells/                  # Spell management (root-level file)
 │   ├── wiki/                    # Custom wiki
 │   │   └── wiki.js
 │   ├── shops/                   # Shop management
@@ -180,7 +179,8 @@ dnd-tracker-modular/
 │
 ├── assets/                      # Static resources
 │   ├── styles.css               # @import hub (25 lines) — orders 20 CSS modules
-│   ├── styles/                  # Modular CSS (20 files, ~27k lines total)
+│   ├── styles/                  # Modular CSS (20 files, ~27k lines) — listed in @import cascade order
+│   │   ├── fonts.css            # @font-face for local WOFF2 fonts (D-07)
 │   │   ├── variables.css        # CSS custom properties (use var(--gold), etc.)
 │   │   ├── core.css             # Global layout, utilities
 │   │   ├── editors.css          # Editor styling
@@ -193,7 +193,13 @@ dnd-tracker-modular/
 │   │   ├── dashboard.css        # Dashboard (3,400+ lines, largest)
 │   │   ├── dmscreen.css         # DM screen widgets
 │   │   ├── dice.css             # Dice roller UI
-│   │   └── tools.css            # Tools & reference UI
+│   │   ├── tools.css            # Tools & reference UI
+│   │   ├── pwa.css              # PWA install prompts
+│   │   ├── migration.css        # Migration wizard & hint banner
+│   │   ├── file-backup.css      # File-backup UI
+│   │   ├── command-palette.css  # Command palette (Phase 2)
+│   │   ├── bestiary.css         # Bestiary (Phase 3)
+│   │   └── welt.css             # World tabs: timeline, reise, fraktionen (Phase 5)
 │   ├── templates/               # HTML templates (12 files)
 │   │   ├── header.html          # Navigation header
 │   │   ├── view-party.html      # Party tab
@@ -218,20 +224,23 @@ dnd-tracker-modular/
 │
 ├── tests/                       # Test suites
 │   ├── setup.js                 # Jest configuration
-│   ├── unit/                    # Jest unit tests (7 files)
-│   │   ├── encounter-calculator.test.js
-│   │   ├── entities.test.js
-│   │   ├── markdown-converter.test.js
-│   │   ├── markdown-shortcuts.test.js
-│   │   ├── security.test.js
-│   │   ├── stability.test.js
-│   │   └── utilities.test.js
+│   ├── unit/                    # Jest unit tests (23 files)
+│   │   ├── utilities.test.js, entities.test.js, security.test.js, stability.test.js
+│   │   ├── encounter-calculator.test.js, character-advancement.test.js
+│   │   ├── markdown-converter.test.js, markdown-shortcuts.test.js
+│   │   ├── action-registry.test.js, action-registry-collisions.test.js
+│   │   ├── file-backup.test.js, file-backup-hook.test.js
+│   │   ├── soundboard.test.js, soundboard-loop.test.js, dice-stats.test.js
+│   │   ├── migration.test.js, full-export.test.js, storage-conflict.test.js
+│   │   ├── import-sanitization.test.js, sanitizer-parity.test.js
+│   │   └── srd-monsters.test.js, initiative-mob.test.js, welt-story.test.js
 │   ├── integration/             # Jest integration tests (3 files)
 │   │   ├── character-management.test.js
 │   │   ├── combat-system.test.js
 │   │   └── encounter-builder.test.js
-│   ├── e2e/                     # Playwright E2E tests
+│   ├── e2e/                     # Playwright E2E tests (27 spec files)
 │   │   ├── app.spec.js          # App loading & basic functionality
+│   │   ├── smoke.spec.js        # Smoke suite
 │   │   ├── tab-navigation.spec.js # Tab switching
 │   │   ├── crud/                # CRUD tests per entity (5 files)
 │   │   │   ├── party.spec.js
@@ -239,16 +248,18 @@ dnd-tracker-modular/
 │   │   │   ├── locations.spec.js
 │   │   │   ├── quests.spec.js
 │   │   │   └── encounters.spec.js
-│   │   ├── features/            # Feature-specific tests (5 files)
-│   │   │   ├── dice.spec.js
-│   │   │   ├── initiative.spec.js
-│   │   │   ├── persistence.spec.js
-│   │   │   ├── wiki.spec.js
-│   │   │   └── editor-formatting.spec.js
+│   │   ├── features/            # Feature-specific tests (18 files)
+│   │   │   ├── editor-formatting.spec.js, editor-floating.spec.js
+│   │   │   ├── editor-insert.spec.js, editor-smoke.spec.js  # Phase-9 execCommand net
+│   │   │   ├── dice.spec.js, dice-stats.spec.js, initiative.spec.js
+│   │   │   ├── persistence.spec.js, wiki.spec.js, bestiary.spec.js
+│   │   │   ├── soundboard.spec.js, command-palette.spec.js, pwa.spec.js
+│   │   │   ├── character-advancement.spec.js, inspiration.spec.js
+│   │   │   └── nav-groups.spec.js, welt-story.spec.js, import-security.spec.js
 │   │   ├── integration/
 │   │   │   └── workflows.spec.js # Multi-step workflows
 │   │   ├── helpers/             # E2E test utilities
-│   │   │   └── common.js
+│   │   │   └── test-utils.js    # loadApp, navigateToTab, clickAction, waitForToast, ...
 │   │   └── reports/             # Test run reports (generated)
 │   └── build/                   # Python build system tests
 │       └── test_build_deduplication.py # TDD for build.py dedup
@@ -300,7 +311,7 @@ dnd-tracker-modular/
 - `srd-spells.js`, `srd-monsters.js`: German SRD data
 - `init.js`: Bootstrap (loads campaign, themes, layout, inits subsystems, renders dashboard, registers Service Worker). Loaded LAST.
 
-**`utils/` (9 modules) — Infrastructure Helpers:**
+**`utils/` (10 modules) — Infrastructure Helpers:**
 
 - Pure functions used by all layers
 - `basic.js`: DOM helpers ($, $$, esc, sanitizeHTML), StorageAPI (exception-safe localStorage wrapper)
@@ -326,7 +337,8 @@ dnd-tracker-modular/
 
 - Each feature in own subdirectory (or file) with `*-render.js`, `*-crud.js`, optional `*-dialogs.js`
 - Entities: party (3 files), npcs (5), locations (2), quests (2), encounters (3), wiki (1)
-- Systems: spells (1), loot (1), shops (3), sessions (1), dice (2), timers (1), initiative (4), dmscreen (1)
+- Systems: shops (3), sessions (1), dice (2), timers (1), dmscreen (1)
+- **No `features/spells/` or `features/loot/` directory exists** — spell and loot rendering live in the root-level files `features/render-spells.js`, `features/render-loot.js`, `features/loot-distribution.js`
 - Modern features: bestiary (4, Phase 3), npc-generator (2, Phase 6), timeline (2, Phase 5), reise (3, Phase 5), fraktionen (2, Phase 5), soundboard (4, Phase 7), dice-stats (2, Phase 7), session-prep (2, Phase 5), command-palette (2, Phase 2)
 - Root-level: render-dashboard, render-spells, render-loot, encounter-calculator (largest feature), rest-manager, quick-actions, random-tables, loot-distribution, initiative-extras, initiative-mob, initiative-statblock
 
