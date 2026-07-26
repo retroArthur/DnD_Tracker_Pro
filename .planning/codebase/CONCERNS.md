@@ -1,351 +1,345 @@
 # Codebase Concerns
 
-**Analysis Date:** 2026-06-11
-
-## Tech Debt
-
-**Dual-maintained module load order (loader.js + build.py):**
-
-- Issue: The 92-module load order exists twice — `loader.js:10-124` (`MODULES` array, dev mode) and `build.py:249-355` (`modules` list, bundled builds). `loader.js:9` explicitly warns "Diese Liste muss mit build.py synchron bleiben!"
-- Files: `loader.js`, `build.py`
-- Impact: Currently in sync (verified 92/92, identical order), but any module added to only one list silently diverges dev from prod. `build.py:409` only logs a warning (`NICHT GEFUNDEN`) for missing files and continues — a typo'd path produces a build missing a module with no failure.
-- Fix approach: Make `build.py` parse the `MODULES` array out of `loader.js` (single source of truth), and turn missing-module warnings into hard build errors.
-
-**build.py Pass-3 duplicate-function removal leaves orphaned bodies:**
-
-- Issue: `remove_duplicate_functions()` (`build.py:176-228`) comments out only the duplicate `function X(` declaration line. The inner loop (`build.py:205-217`) computes where the function body ends via brace counting but never skips those lines — the body is emitted as orphaned top-level statements, producing `SyntaxError: Illegal return statement` at runtime. This exact failure is documented in `CLAUDE.md` ("Duplicate Declaration Debugging Pattern", 2026-01-10 incident).
-- Files: `build.py:176-228`
-- Impact: Any future duplicate top-level function name across two bundled modules breaks the production build at runtime. The post-build validation (`build.py:508-525`) catches duplicate declarations but NOT orphaned bodies, because the duplicate declaration line is already commented out by then.
-- Fix approach: Either fix Pass 3 to actually skip body lines using the computed brace range, or replace it with a pre-build check that fails the build when duplicate top-level function names are detected in source.
-
-**Production debug-flag flip relies on exact string match:**
-
-- Issue: `build.py:421-422` flips debug flags via `js_combined.replace("DEBUG_MODE: true,", "DEBUG_MODE: false,", 1)`. This depends on the exact formatting in `core/config.js:10-11` (spacing, trailing comma).
-- Files: `build.py:421-422`, `core/config.js:10-12`
-- Impact: Reformatting `core/config.js` (e.g., Prettier changing spacing) would silently ship production builds with `DEBUG_MODE: true` and `DEBUG_VALIDATE_ON_SAVE: true` — validation overhead and console warnings in prod.
-- Fix approach: Add a post-replace assertion in `build.py` that `DEBUG_MODE: true` no longer appears in the production bundle; abort otherwise.
-
-**Abandoned TypeScript migration leftovers:**
-
-- Issue: The Jan 2026 TS migration was compiled back to plain JS and abandoned, leaving artifacts:
-    - `main.js` — dead entry-point placeholder (dynamically loads `loader.js`); not referenced by `index.html` or any live file
-    - `tsconfig.json.backup` — committed backup file
-    - `MIGRATION_REPORT.md` — one-time migration report at repo root
-    - `tsconfig.json` has `"strict": false` and `"checkJs": false` — `npm run typecheck` validates only the `.d.ts` files in `types/`, not the actual JS source
-    - ~504 function-scoped `const X = window.X;` imports remain throughout `core/`, `utils/`, `systems/`, `features/`, `ui/` (e.g., `systems/spellslots/quick-roll.js:24-29`) — the exact pattern `CLAUDE.md`'s prevention checklist says should "return empty"
-- Files: `main.js`, `tsconfig.json.backup`, `MIGRATION_REPORT.md`, `tsconfig.json:21`
-- Impact: Dead files confuse navigation; weak typecheck gives false confidence in CI; the pervasive function-scoped window-import pattern is technically legal (shadowing) but is the documented precursor of the 2026-01-10 build incident when names collide with module-level declarations.
-- Fix approach: Delete `main.js`, `tsconfig.json.backup`; move `MIGRATION_REPORT.md` to `docs/` or delete. Decide whether the `CLAUDE.md` prohibition is real — if yes, add the documented pre-build grep to CI; if no, update `CLAUDE.md`.
-
-**Removed Mindmap/Network feature residue:**
-
-- Issue: Mindmap was removed entirely (commit `7ef9bf5`, 2026-05-24) but references remain:
-    - `systems/campaign-manager/campaign-manager.js:35` — empty-campaign template still seeds `mindmap: { nodes: [], connections: [] }`
-    - `systems/backups.js`, `systems/spellslots/import-export.js` — backward-compat reads of `D.mindmap` (intentional for old exports, but undocumented as such)
-    - `types/globals.d.ts`, `types/entities.d.ts` — still declare mindmap types
-    - `assets/styles-purged.css` — git-tracked generated file (output of `tools/purge-css.py:231`) containing 300+ lines of orphaned `.mindmap-*` CSS
-    - `tests/setup.js`, `tests/unit/stability.test.js`, `tools/debug.js`, `tools/split-shops.py` — stale references
-    - `CLAUDE.md:81,129,152,336-344` — documents the feature as current
-- Files: see above
-- Impact: New campaigns carry a dead `mindmap` key forever; type declarations lie; stale CSS artifact bloats the repo; documentation misleads future work.
-- Fix approach: Remove the seed key from `campaign-manager.js:35` (keep import-side compat in `import-export.js`), regenerate or delete `assets/styles-purged.css`, prune type declarations and test references, update `CLAUDE.md`.
-
-**CLAUDE.md significantly stale (multiple claims contradict code):**
-
-- Issue: Beyond Mindmap, verified divergences:
-    - Roadmap says "~146 inline event handlers remain in templates" — actual count is **0** (migration completed May 2026; templates now use 641 `data-action` attributes)
-    - "No execCommand: Use manual DOM manipulation" convention — `ui/editors/rich-text.js` contains **21** `document.execCommand` calls, plus `systems/entity-links.js:108`, `features/wiki/wiki.js:819`, `ui/actions/system-actions.js:79`
-    - References `features/shops/spell-editor.js` and `features/network/mindmap.js` — neither file exists
-    - Says campaign index key is `dnd-campaign-index` — actual key is `dnd-tracker-campaigns` (`core/config.js:17`)
-- Files: `CLAUDE.md`, `docs/bugfixes.md` ("Known Technical Debt" section also references the deleted `spell-editor.js` and ~10 inline handlers that no longer exist)
-- Impact: AI-assisted and human development follows wrong guidance; effort gets wasted re-verifying or re-doing completed migrations.
-- Fix approach: Audit pass over `CLAUDE.md` and `docs/bugfixes.md` tech-debt section against current code; mark completed roadmap items.
-
-**RESOLVED (Phase 9, 09-editor-regressionsnetz-execcommand-abl-sung, 2026-07-25): `document.execCommand` fully removed from the rich-text editor module:**
-
-- Original issue: Core formatting (bold, italic, underline, strikethrough, lists, fonts, insertHTML, createLink) used the deprecated `execCommand` API — 21 call sites in `ui/editors/rich-text.js` (lines 297-861).
-- Resolution: All 21 call sites replaced with Selection/Range-DOM operations across seven migration groups (Pläne 09-06 bis 09-09), backed by a four-file, 80-test regression net that was double-green against the unmigrated code before the first migration commit (D-04a) and stayed green after every group. Zero `document.execCommand` occurrences remain in `ui/editors/rich-text.js` (machine-verified count, comment lines excluded). See `.planning/phases/09-editor-regressionsnetz-execcommand-abl-sung/09-BASELINE.md` (Abschluss-Protokoll) for the full count-chain and commit list.
-- Files: `ui/editors/rich-text.js` (resolved)
-- Follow-up: The three call sites outside this module (`systems/entity-links.js`, `features/wiki/wiki.js`, `ui/actions/system-actions.js`) were deliberately out of Phase 9's scope — see the new entry below.
-
-**Three `document.execCommand` call sites remain outside the editor module (deliberately out of Phase 9 scope):**
-
-- Issue: `systems/entity-links.js:108`, `features/wiki/wiki.js:819`, and `ui/actions/system-actions.js:79` each contain one `document.execCommand` call. Phase 9 (`09-editor-regressionsnetz-execcommand-abl-sung`) scoped its migration to `ui/editors/rich-text.js` only — these three call sites were identified in `09-01-PLAN.md`/`09-BASELINE.md` but intentionally not migrated in this phase.
-- Files: `systems/entity-links.js`, `features/wiki/wiki.js`, `ui/actions/system-actions.js`
-- Impact: Same class of risk as the resolved editor-module entry (deprecated API, cross-browser variance), but limited surface (3 call sites, no shared regression net covering them yet).
-- Fix approach: Candidate for a future phase — apply the same Selection/Range-migration pattern established in `ui/editors/rich-text.js` (Plan 09-06..09-09), with a dedicated regression net for the three call sites before migrating.
-
-**Stale/broken developer tooling:**
-
-- Issue:
-    - `validate.py:11` hardcodes `SOURCE_DIR = '/mnt/user-data/outputs/dnd-tracker-modular'` (a Linux path from a previous environment) — `npm run validate` is broken on this Windows machine
-    - `tools/analyze-render.py:11` hardcodes the same `/mnt/...` path; targets `render/main.js`, which was split apart in v2.0
-    - `tools/migrate-event-handlers.py` targets the now-completed inline-handler migration
-    - `package.json` scripts invoke `python3`, which typically does not resolve on Windows (project's primary dev OS per `CLAUDE.md` Windows notes)
-- Files: `validate.py`, `tools/analyze-render.py`, `tools/migrate-event-handlers.py`, `package.json:scripts`
-- Impact: `npm run validate`, `npm run analyze:render`, `npm run build` (via npm) fail or mislead on Windows; dead tools add noise.
-- Fix approach: Fix `validate.py` to use script-relative paths (pattern already used in `tools/purge-css.py:12`); delete completed-migration tools; use `python` or `py -3` in npm scripts (or document `python3` alias requirement).
-
-**License metadata mismatch:**
-
-- Issue: `package.json:46` declares `"license": "ISC"`; `LICENSE` file and `README.md:8,210` say MIT.
-- Files: `package.json:46`, `LICENSE`, `README.md`
-- Impact: Legal ambiguity for any distribution; trivial to fix.
-- Fix approach: Set `"license": "MIT"` in `package.json`.
-
-**Hardcoded export data version `'2.11'`:**
-
-- Issue: `systems/spellslots/quick-roll.js:133` stamps exports with `exp._version = '2.11'` while `APP_CONFIG.VERSION` is `'2.6.0'`. Since `compareVersions('2.11', '2.6.0')` evaluates 11 > 6, re-imported exports skip `migrateData()` entirely (`quick-roll.js:63-72`).
-- Files: `systems/spellslots/quick-roll.js:133`, `systems/spellslots/version-migration.js`
-- Impact: Version semantics are confused (looks like an old internal data-format version); future migrations will not run on round-tripped export files.
-- Fix approach: Stamp exports with `APP_CONFIG.VERSION` and add a migration test for export/import round-trips.
-
-**Oversized modules:**
-
-- Issue: Several modules exceed 1,000 lines: `features/dmscreen/dmscreen-render.js` (1,570), `ui/editors/rich-text.js` (1,488), `features/initiative.js` (1,384), `features/wiki/wiki.js` (1,227), `features/encounter-calculator.js` (1,199), `features/shops/shops-core.js` (1,053).
-- Files: see above
-- Impact: High cognitive load; initiative and DM Screen are the most-touched feature areas.
-- Fix approach: Follow the existing split pattern (`features/npcs/*`, `features/party/*`) — separate render/CRUD/interactions when next doing major work in these files.
-
-**Service Worker cache list duplication and stale entry:**
-
-- Issue: `sw.js:4` hardcodes `CACHE_NAME = 'dnd-tracker-v2'`, duplicating `APP_CONFIG.SW_CACHE_NAME` (`core/config.js:24`) — the SW cannot read APP_CONFIG, so the two must be bumped manually together. `sw.js:10` pre-caches `./assets/body.html`, which is a "no longer used" notice file (`assets/body.html:1-2`); the 10 real template files in `assets/templates/` are only runtime-cached on first fetch.
-- Files: `sw.js:4-11`, `core/config.js:24`, `assets/body.html`
-- Impact: First offline use before all templates were fetched once could miss templates; dead file wastes a cache slot; cache-version drift risk between config and SW.
-- Fix approach: Replace `assets/body.html` in `STATIC_ASSETS` with the `assets/templates/*.html` list (mirroring `loader.js:177-188`); add a comment in both files pointing at each other for the cache name.
-
-## Known Bugs
-
-**Stale-data shadowing for campaigns over 5MB (data-loss path):**
-
-- Symptoms: After a campaign grows past 5MB, edits silently stop persisting across reloads — the app reverts to the last sub-5MB state.
-- Files: `systems/spellslots/persistence.js:33-40,139-146` (save), `systems/spellslots/quick-roll.js:31-45` (load)
-- Trigger: `saveImmediate()`/`save()` switch to IndexedDB-only when serialized `D` exceeds `LS_LIMIT_MB = 5`, but never remove/overwrite the old localStorage entry. `load()` reads localStorage FIRST and only falls back to IndexedDB `if (!s)` — so the stale localStorage snapshot shadows all newer IndexedDB saves on every reload.
-- Workaround: The 4MB warning toast (`persistence.js:28-31`) prompts a backup; users can export/import. Real fix: on IDB-only save, delete the localStorage key (or store a pointer marker), or compare timestamps from both stores at load.
-
-**Undo may not restore deleted entities (possible regression):**
-
-- Symptoms: E2E tests "Löschen kann rückgängig gemacht werden" fail for NPCs, locations, and party — after delete + undo, the entity is absent from `D.characters`.
-- Files: `tests/e2e/crud/{npcs,locations,party}.spec.js`, `systems/undo.js:24-63`, triaged in `docs/e2e-failure-triage.md` (Cluster 4)
-- Trigger: Delete an entity, press Ctrl+Z.
-- Workaround: None known; the triage doc explicitly flags this as "possible app regression — worth manual verification." Highest-priority item from the E2E triage. Manual browser verification needed before trusting undo for deletes.
-
-**Duplicate `#random-tables-list` DOM instances at runtime:**
-
-- Symptoms: Playwright locator for `#random-tables-list` matches 9 elements after tab switching (`docs/e2e-failure-triage.md` Cluster 3). IDs are unique in source templates (verified: only `assets/templates/view-tools.html:223`), so duplication arises at runtime.
-- Files: `assets/templates/view-tools.html:223`, `features/random-tables.js:155`, `tests/e2e/tab-navigation.spec.js`
-- Trigger: Tab switching in the built HTML under Playwright.
-- Workaround: None; flagged in triage as "a yellow flag worth understanding regardless of test outcome" — investigate render duplication (DM Screen widget or repeated template injection).
-
-**26 pre-existing Playwright E2E failures (140 total, 114 pass):**
-
-- Symptoms: Stable failure set documented in `docs/e2e-failure-triage.md`: persistence specs assert on localStorage while `file://` mode forces the IndexedDB path (5 tests); initiative helper `addCombatant()` targets a removed `#combatant-name` form (6 tests); tab-navigation visibility (8); undo (3); validation (3); workflows (2).
-- Files: `tests/e2e/features/persistence.spec.js`, `tests/e2e/features/initiative.spec.js`, `tests/e2e/tab-navigation.spec.js`, `tests/e2e/crud/*.spec.js`, `tests/e2e/integration/workflows.spec.js`
-- Trigger: `npm run test:e2e`
-- Workaround: Triage doc classifies most as test-spec bugs, not app bugs. Until fixed, E2E is not a reliable regression gate, and entire feature areas (initiative combat flow) have zero working E2E coverage.
-
-**Undo/redo stack asymmetry on parse failure:**
-
-- Symptoms: If a stored undo snapshot fails `safeJSONParse`, `undo()` has already pushed the current state to `redoStack` (`systems/undo.js:31-38`) and popped the undo entry (`undo.js:39`) — stacks end up inconsistent (a redo entry exists for an undo that never happened).
-- Files: `systems/undo.js:24-63` (same pattern in `redo()`, lines 64-100)
-- Trigger: Corrupted snapshot (rare; snapshots are in-memory strings).
-- Workaround: Low impact in practice. Fix: validate the popped state before mutating either stack.
-
-## Security Considerations
-
-**XSS via `innerHTML` is the dominant risk class (historically recurring):**
-
-- Risk: ~64 `innerHTML = \`...\``template-literal assignments across`features/`, `systems/`, `ui/`interpolate campaign data (names, descriptions, notes).`docs/bugfixes.md` documents 12+ past XSS fixes in this class.
-- Files: highest concentrations in `features/random-tables.js`, `features/wiki/wiki.js`, `features/encounter-calculator.js`, `features/initiative.js`, `features/sessions/sessions.js`
-- Current mitigation: `esc()` (`utils/basic.js:19-21`) and `sanitizeHTML()` (`utils/basic.js:44-156` — DOMParser-based tag/attribute allowlist, protocol filtering) are used widely (e.g., 19 `esc()` calls in `random-tables.js`); spot checks found no obvious unescaped interpolations.
-- Recommendations: Keep treating every new `innerHTML` with user data as a review hotspot (per `CLAUDE.md` checklist). Consider an ESLint rule or grep-based CI check for `innerHTML` assignments lacking `esc(`/`sanitizeHTML(` in the same expression.
-
-**Security-critical sanitizers are unit-tested only via drifted copies:**
-
-- Risk: `tests/unit/*.test.js` require `utils/testable-utils.js` — a 280-line file of COPIES of `esc()`, `sanitizeHTML()`, `debounce()`, etc. (11 duplicated functions, verified). The copies have already drifted: testable `esc()` handles `s === 0` explicitly; production `esc()` (`utils/basic.js:19-21`) returns `''` for `0`. A regression in the production `sanitizeHTML` would pass the security test suite.
-- Files: `utils/testable-utils.js`, `utils/basic.js`, `tests/unit/security.test.js`, `tests/unit/utilities.test.js`
-- Current mitigation: `docs/bugfixes.md` documents the duplication as intentional (CommonJS exports for Jest) with a "keep in sync" note.
-- Recommendations: Load the real `utils/basic.js` into jsdom in test setup (it attaches globals), or generate `testable-utils.js` from source at test time. At minimum, add a test asserting the two implementations produce identical output for a shared vector set.
-
-**`sanitizeHTML` allows arbitrary `class` and broad inline styles:**
-
-- Risk: `utils/basic.js:62` allows any `class` attribute on sanitized rich-text content — user content can adopt app CSS classes (e.g., modal/overlay classes) for UI redressing; allowed `style` properties include `width`, `margin`, `padding` (`utils/basic.js:61`) enabling layout breakage.
-- Files: `utils/basic.js:59-69`
-- Current mitigation: Tags are allowlisted; event handlers and dangerous protocols stripped; no script execution possible.
-- Recommendations: Low severity (single-user offline app, content is the DM's own). If hardening: prefix-allowlist classes (e.g., only `read-aloud*`, highlight classes the editor emits).
-
-**No Content-Security-Policy:**
-
-- Risk: Neither `index.html` nor the `build.py` HTML template emits a CSP meta tag; combined with the innerHTML-heavy architecture, any XSS slip has full DOM/localStorage access (campaign data).
-- Files: `index.html`, `build.py:437-475`
-- Current mitigation: Offline single-user trust model; only external requests are Google Fonts (`build.py:449-451`).
-- Recommendations: A meta CSP limited to `font-src`/`style-src` for Google Fonts plus `script-src 'unsafe-inline'` (required by the single-file architecture) would still block remote exfiltration targets. Low priority.
-
-## Performance Bottlenecks
-
-**Full-state JSON snapshot on every undoable operation:**
-
-- Problem: `pushUndo()` runs `JSON.stringify(window.D)` synchronously before EVERY destructive operation (`systems/undo.js:9-20`), retaining up to 30 snapshots (`UNDO_LIMIT`, `core/config.js:28`); `undo()`/`redo()` stringify again for the opposite stack.
-- Files: `systems/undo.js:9-20,31-38,71-75`
-- Cause: Snapshot-based undo with no structural sharing or diffing.
-- Improvement path: For multi-MB campaigns each delete/edit serializes the entire world (visible input lag) and undo memory can reach 30x campaign size. Consider per-entity snapshots for CRUD operations (the dominant case) and full snapshots only for bulk operations; or cap snapshot size and degrade gracefully.
-
-**Every save serializes the full campaign (plus extra IDB writes >2MB):**
-
-- Problem: `save()` (debounced 300ms) and `saveImmediate()` both `JSON.stringify(D)` and construct a `Blob` to measure size (`systems/spellslots/persistence.js:21-22,127-135`); campaigns over 2MB additionally write the full string to IndexedDB on every save (`persistence.js:50-52`).
-- Files: `systems/spellslots/persistence.js`
-- Cause: Single-key whole-campaign persistence model.
-- Improvement path: Acceptable below ~2MB. For large campaigns, raise the optional-IDB-backup threshold or debounce the IDB mirror separately (e.g., every 30s instead of every save).
-
-**Debug validation always on outside `--production` builds:**
-
-- Problem: `DEBUG_MODE: true` and `DEBUG_VALIDATE_ON_SAVE: true` (`core/config.js:10-11`) mean dev-mode (`index.html` + `loader.js`) and `npm run build:dev` bundles run data-integrity validation on every save plus stack-trace generation on every missed `$()` lookup (`utils/basic.js:10`).
-- Files: `core/config.js:10-11`, `utils/basic.js:7-13`
-- Cause: Flags flipped only by the production build string-replace.
-- Improvement path: By design for development; just be aware perf measurements in dev mode are pessimistic. Verify production artifacts actually have the flags off (see build fragility above).
-
-**Sequential script loading in dev mode (92 modules):**
-
-- Problem: `loader.js:204-228` loads all 92 modules strictly sequentially (await per script) plus 10 template fetches; dev startup is dozens of round-trips.
-- Files: `loader.js:169-248`
-- Cause: Global-scope architecture requires ordered execution.
-- Improvement path: Dev-only concern (bundled builds are one file). Could pre-fetch all module texts in parallel and inject in order if dev startup becomes painful.
-
-## Fragile Areas
-
-**Global namespace + regex-based build deduplication:**
-
-- Files: `build.py:96-228`, all of `core/`, `utils/`, `systems/`, `features/`, `ui/`, `render/`
-- Why fragile: ~93 files share one global scope; correctness after bundling depends on three regex passes (`deduplicate_window_assignments`, `remove_duplicate_functions`) plus a brace-counting post-validation (`build.py:508-525`). The documented prevention greps from `CLAUDE.md` (no duplicate function names, no function-scoped window imports) are NOT enforced anywhere — 504 function-scoped `const X = window.X` instances exist today, and 11 duplicate function names exist (all currently harmless because the second copy lives in `utils/testable-utils.js`, which is excluded from the bundle).
-- Safe modification: Never reuse a top-level function name; never add `const X = window.X` at module top level for `const`-declared globals; after any module change run `python build.py` AND open the bundle in a browser (syntax errors surface only at runtime).
-- Test coverage: `tests/build/` and `tests/unit/test_build_deduplication.py` cover dedup behavior; no test covers the orphaned-function-body case.
-
-**`saveImmediate()` can be silently disabled by an optional checkbox:**
-
-- Files: `systems/spellslots/persistence.js:10-14,110-113`, `core/init.js:43-45`
-- Why fragile: Both save paths begin with `if (autosaveToggle && !autosaveToggle.checked) return;` — if any element with id `autosave-toggle` exists unchecked, ALL saves (including "immediate" saves after deletes) silently no-op. The element is currently absent from the UI (note at `core/init.js:43-44`), and commit `2af81e9` already fixed one regression in this exact gate.
-- Safe modification: If reintroducing an autosave toggle, exempt `saveImmediate()` (critical-action saves) from the gate; add an E2E test that data persists with the toggle present and off.
-- Test coverage: None for the toggle-absent/present matrix.
-
-**Lint and typecheck gates are too soft to catch global-scope errors:**
-
-- Files: `eslint.config.js:95-105` (`no-undef: 'warn'`, `no-unused-vars: 'warn'`), `package.json` (`lint` uses `--max-warnings 50`), `tsconfig.json` (`strict: false`, `checkJs: false`)
-- Why fragile: In a no-imports architecture, `no-undef` is the primary defense against typo'd globals and load-order mistakes — as a warning inside a 50-warning budget, real errors can hide. `npm run typecheck` passes without checking JS bodies at all.
-- Safe modification: Treat `no-undef` as error with a curated globals list; ratchet the warning budget down; consider `checkJs: true` incrementally per directory.
-- Test coverage: CI (`.github/workflows/ci.yml`) runs lint/typecheck/jest/build but NOT Playwright — UI regressions reach `main` undetected.
-
-**Tab registry render functions referenced by string name:**
-
-- Files: `systems/tab-registry.js`, `systems/spellslots/navigation.js`
-- Why fragile: `TAB_RENDER_REGISTRY` maps tab names to function-name strings resolved on `window` at switch time; renames break silently (warning only in `DEBUG_MODE`). Past incident documented in `CLAUDE.md` (test mocks referenced nonexistent `renderInitiative` vs actual `renderInit`).
-- Safe modification: When renaming any `render*` function, grep `systems/tab-registry.js` first; keep `tests/e2e/tab-navigation.spec.js` green (currently 8 of its tests fail — see Known Bugs).
-- Test coverage: E2E tab-navigation suite exists but is failing; unit tests mock rather than verify registry-name validity.
-
-**Unguarded interval in performance monitoring:**
-
-- Files: `systems/backups.js:318-327`
-- Why fragile: `initPerformanceMonitoring()` starts a bare 30s `setInterval` with no guard or handle — calling it twice leaks intervals. This is the exact leak class documented in `docs/bugfixes.md` ("Timer: Memory Leak durch nicht aufgeräumte Intervals"). Currently safe because `core/init.js:121` calls it exactly once.
-- Safe modification: Mirror the guard pattern used 15 lines above in `startAutoBackup()` (`backups.js:302-308`).
-- Test coverage: None.
-
-**Loader continues after module load failures:**
-
-- Files: `loader.js:224-227`
-- Why fragile: A failed module logs an error and loading continues ("Fortfahren trotz Fehler"), so one broken file produces cascading `X is not a function` errors far from the root cause in dev mode.
-- Safe modification: Acceptable as a debugging aid, but check the FIRST console error when diagnosing dev-mode breakage, not the last.
-
-## Scaling Limits
-
-**localStorage single-key campaign storage:**
-
-- Current capacity: ~5MB per campaign (one JSON string under one key, `core/config.js:15`); warning toast at 4MB (`persistence.js:28-31`)
-- Limit: At >5MB, persistence switches to IndexedDB-only — which currently triggers the stale-shadowing bug (see Known Bugs). IndexedDB fallback capacity is effectively unbounded for this use case.
-- Scaling path: Fix the load-precedence bug first; long term, store entities in IndexedDB natively and keep localStorage for settings only.
-
-**Undo history memory:**
-
-- Current capacity: 30 full-state snapshots (`UNDO_LIMIT`, `core/config.js:28`) + up to 30 redo snapshots
-- Limit: ~60x serialized campaign size in memory worst case; a 4MB campaign can hold ~240MB of snapshot strings.
-- Scaling path: Per-operation diffs or entity-scoped snapshots; reduce limit dynamically based on snapshot size.
-
-**Render performance with large lists:**
-
-- Current capacity: Virtual scroll engages above 50 items (`VIRTUAL_SCROLL_THRESHOLD`, `core/config.js:46`); `CLAUDE.md` advises pagination beyond 500 entries; EntityLookup render-cycle caching exists (`features/initiative.js` pattern).
-- Limit: Untested beyond ~500 spells / ~20 combatants (the documented test targets).
-- Scaling path: Existing virtual-scroll + cache patterns; profile before optimizing further.
-
-## Dependencies at Risk
-
-**`document.execCommand` (browser API, deprecated) — 3 remaining call sites outside the editor module:**
-
-- Risk: Formally deprecated. `ui/editors/rich-text.js` no longer depends on it (fully migrated, Phase 9, 2026-07-25 — see Tech Debt section above). Three call sites remain: `systems/entity-links.js:108`, `features/wiki/wiki.js:819`, `ui/actions/system-actions.js:79`.
-- Impact: Limited surface — these three sites are outside the editor's rich-text formatting flows covered by the Phase-9 regression net.
-- Migration plan: Same Selection/Range-API pattern used for the editor module (Pläne 09-06..09-09); candidate for a future phase with its own dedicated regression coverage.
-
-**Python build toolchain invoked as `python3` from npm:**
-
-- Risk: `package.json` scripts call `python3`, which is typically absent on Windows; `build.py` also needs `PYTHONIOENCODING=utf-8` on Windows (documented in `CLAUDE.md`).
-- Impact: `npm run build`/`validate`/`analyze:*` fail on the project's own primary dev OS; CI (Ubuntu) is unaffected.
-- Migration plan: Use `python` with the Windows launcher, or a small cross-platform wrapper (note `build_wrapper.py` exists at root — verify and standardize on it).
-
-**Zero runtime dependencies (positive):**
-
-- Risk: None — the app has no runtime npm dependencies; only devDependencies (jest, playwright, eslint, prettier, typescript). Supply-chain surface is build-time only.
-
-## Missing Critical Features
-
-**E2E suite absent from CI:**
-
-- Problem: `.github/workflows/ci.yml` runs lint, typecheck, jest, and build — but not Playwright (blocked by the 26 known failures).
-- Blocks: Automated detection of UI regressions; the tab-registry/initiative/undo regressions this app has historically suffered are exactly the class E2E would catch.
-
-**No enforcement of documented build-safety invariants:**
-
-- Problem: `CLAUDE.md` prescribes pre-build greps (no duplicate function names, no function-scoped window imports) and a `test_no_orphaned_return_statements` test — none are wired into CI or `build.py`.
-- Blocks: Confidence that the known dedup failure modes cannot recur; currently relies on developer discipline.
-
-**No automated dist smoke test:**
-
-- Problem: Build validation (`build.py:486-534`) is static (regex/brace checks); nothing executes the bundled JS. Runtime `SyntaxError`s (the historical failure mode) are only caught by manually opening the bundle.
-- Blocks: Safe unattended builds. A minimal Playwright "bundle boots, init() completes, no console errors" check against `dist/dnd-tracker-bundled.html` would close this gap.
-
-## Test Coverage Gaps
-
-**Unit tests exercise copies, not production code:**
-
-- What's not tested: The real `esc()`, `sanitizeHTML()`, `debounce()`, `nextId()`, `parseDiceNotation()` etc. — `tests/unit/*.test.js` require `utils/testable-utils.js` (verified sole require target), whose `esc()` has already diverged from `utils/basic.js`.
-- Files: `utils/testable-utils.js`, `tests/unit/security.test.js`, `tests/unit/utilities.test.js`
-- Risk: Security/correctness regressions in production utilities ship while tests stay green.
-- Priority: High
-
-**Coverage thresholds apply to one file only:**
-
-- What's not tested: `jest.config.cjs` sets `coverageThreshold` solely for `utils/testable-utils.js` (80%); 7 unit test files exist against ~93 source modules. Core systems — `systems/undo.js`, `systems/spellslots/persistence.js`, `systems/campaign-manager/campaign-manager.js`, `features/initiative.js` — have no direct unit tests.
-- Files: `jest.config.cjs:60-70`, `tests/unit/`
-- Risk: The most data-critical code paths (save/load/undo/campaign-switch) rely entirely on the partially-failing E2E suite.
-- Priority: High
-
-**Persistence edge cases untested:**
-
-- What's not tested: >5MB IDB-only save followed by reload (the stale-shadowing bug); localStorage quota failure fallback; campaign switch + delete flows (`switchCampaign` does a raw `location.reload()`, `campaign-manager.js:48-53`); export/import version round-trip (`_version: '2.11'`).
-- Files: `systems/spellslots/persistence.js`, `systems/spellslots/quick-roll.js`, `systems/campaign-manager/campaign-manager.js`
-- Risk: Data loss paths discovered by users, not tests.
-- Priority: High
-
-**Initiative/combat flow has zero working E2E coverage:**
-
-- What's not tested: All 6 initiative E2E tests fail on a stale `addCombatant()` helper (`docs/e2e-failure-triage.md` Cluster 2); death saves, concentration, AoE damage, quick actions have no automated coverage at all.
-- Files: `tests/e2e/features/initiative.spec.js`, `features/initiative.js`, `features/quick-actions.js`
-- Risk: The app's most complex interactive feature regresses invisibly.
-- Priority: Medium (fix the shared helper first — one fix unblocks 6 tests)
-
-**Build system orphaned-body case untested:**
-
-- What's not tested: `remove_duplicate_functions` leaving orphaned function bodies (the documented 2026-01-10 incident); `tests/unit/test_build_deduplication.py` and `tests/build/` cover window-assignment dedup but not Pass 3's body handling.
-- Files: `build.py:176-228`, `tests/build/`, `tests/unit/test_build_deduplication.py`
-- Risk: The known-worst build failure mode can recur undetected.
-- Priority: Medium
+**Analysis Date:** 2026-07-26
+
+Unabhängige Neubewertung. Jede Aussage unten ist an eine Datei:Zeile oder ein wörtlich gelesenes
+Code-Fragment gebunden. Nicht verifizierte Vermutungen sind ausdrücklich als **[VERMUTUNG]**
+markiert. Zählungen stammen ausschließlich aus in dieser Sitzung ausgeführten Kommandos.
 
 ---
 
-_Concerns audit: 2026-06-11_
+## Datenintegrität & Persistenz
+
+### Datei-Backup schreibt eine LEERE Kampagne, sobald der IndexedDB-Modus (>5 MB) greift
+
+- **Was:** Im >5-MB-Pfad entfernt `saveImmediate()` den localStorage-Schatten der Kampagne und
+  feuert danach die Post-Save-Hooks:
+  `systems/spellslots/persistence.js:64-79` — `await saveToIndexedDBFallback(key, dataString);`
+  → `StorageAPI.remove(key); StorageAPI.remove(key + '_ts');` → … → `_notifyPostSaveHooks();`.
+  Der registrierte Backup-Hook (`systems/file-backup/file-backup-manager.js:355-357`,
+  `registerPostSaveHook(onAfterSave)`) liest die Daten aber ausschließlich aus localStorage:
+  `file-backup-manager.js:262-264` — `StorageAPI.getJSON(campaignKey, {})`.
+  `StorageAPI.getJSON` liefert bei fehlendem Key den Fallback zurück (`utils/basic.js:349-352`),
+  hier also `{}`.
+- **Fehlerszenario:** Eine große Kampagne kippt in den IDB-Modus. Der nächste Save überschreibt
+  `<kampagne>-aktuell.json` mit `{}`. Ist es der erste Save des Tages, wird zusätzlich der
+  Tages-Snapshot als `{}` geschrieben (`file-backup-manager.js:103-118`) und anschließend
+  `pruneOldSnapshots()` aufgerufen, das den ältesten echten Snapshot löscht
+  (`file-backup-manager.js:151-173`). Über 10 Spieltage sind sämtliche Datei-Backups leer.
+  `setBackupStatus('active')` (`file-backup-manager.js:274`) meldet dabei durchgehend Erfolg —
+  der Nutzer bekommt keinerlei Warnung.
+- **Schwere:** **Kritisch.** Stiller, kumulativer Totalverlust der einzigen Off-Browser-Sicherung,
+  und zwar genau bei den größten (= wertvollsten) Kampagnen. Kein Fehlerpfad, keine Anzeige.
+- **Fix-Richtung:** In `_doBackup()` denselben Lade-Weg verwenden wie der App-Start (IDB-Fallback
+  berücksichtigen), oder mindestens auf leeres/`{}`-Ergebnis prüfen und dann NICHT schreiben.
+
+### Umzugs-Export enthält keine IndexedDB-Inhalte — Audio und Würfelstatistik gehen beim Umzug verloren
+
+- **Was:** `FULL_EXPORT_SCHEMA` (`systems/migration/full-export.js:9-18`) kennt nur
+  `campaigns`, `settings`, `diceFavorites`, `dmScreenProfiles`, `campaignIndex`.
+  `buildFullExport()` (`full-export.js:39-79`) liest ausschließlich localStorage
+  (`StorageAPI.getJSON`). Die Audio-Blobs des Soundboards liegen aber im IDB-Store `audioBlobs`
+  (`features/soundboard/soundboard-idb.js:64-69`), die Würfelstatistik im Store `diceStats`
+  (`features/dice-stats/dice-stats-idb.js:20-22`); beide Stores werden in
+  `core/init.js:345-350` angelegt.
+- **Fehlerszenario:** Der Nutzer macht den dokumentierten Umzug `file://` → PWA. Die
+  Szenen-Definitionen reisen mit (sie liegen als `D.soundboard.scenes` in den Kampagnendaten,
+  `features/soundboard/soundboard-crud.js:9`), die referenzierten Blobs nicht. Nach dem Import
+  zeigt jede Szene beim Start `Audio-Datei nicht gefunden (ID: …)`
+  (`features/soundboard/soundboard-player.js:99-101`). Die gesamte Würfelhistorie ist weg.
+- **Schwere:** **Hoch.** Der Umzug ist ein einmaliger, angeleiteter Vorgang, nach dem der Nutzer
+  die alte Umgebung typischerweise nicht wiederherstellt. Verlust ist irreversibel.
+- **Fix-Richtung:** Entweder Blobs als Base64 in den Export aufnehmen (Größe beachten) oder den
+  Wizard explizit warnen lassen, dass Audio manuell neu importiert werden muss.
+
+### Löschen einer Audiodatei ist nicht rückgängig zu machen und hinterlässt nach Undo tote Referenzen
+
+- **Was:** `removeAudioFile()` (`features/soundboard/soundboard-crud.js:69-101`) löscht zuerst
+  den Blob (`await window.deleteSoundBlob(id)`), mutiert dann `D.soundboard.scenes` und ruft
+  `window.save()` — **ohne** vorheriges `pushUndo`/`saveUndoState`. Verifiziert: ein Grep über
+  `features/soundboard` nach `saveUndoState|deleteWithConfirm|pushUndo` liefert keinen Treffer.
+  Zum Vergleich rufen die übrigen neuen Feature-CRUDs korrekt `pushUndo` (z. B.
+  `features/timeline/timeline-crud.js:223`, `features/fraktionen/fraktionen-crud.js:131`,
+  `features/session-prep/session-prep-crud.js:144`, `features/npc-generator/npc-generator.js:265`).
+- **Fehlerszenario:** Strg+Z nach dem Löschen stellt aus dem Undo-Snapshot Szenen wieder her, die
+  auf einen nicht mehr existierenden `blobId` zeigen — die Szene bleibt dauerhaft defekt. Der
+  Blob selbst ist auch ohne Undo unwiederbringlich weg (kein Papierkorb).
+- **Schwere:** **Mittel.** Betrifft nur das Soundboard, ist aber ein Bruch der projektweit
+  zugesicherten Undo-Garantie (CLAUDE.md „Always call `saveUndoState()`").
+
+### `isFreshInstall()` sieht nur einen einzigen localStorage-Key
+
+- **Was:** `systems/migration/migration-wizard.js:31-36` prüft ausschließlich
+  `StorageAPI.getJSON(APP_CONFIG.STORAGE_KEY, null)` — weder `window.STORAGE_KEY_OVERRIDE`
+  (die aktive benannte Kampagne, vgl. `systems/spellslots/persistence.js:39`) noch den
+  IDB-only-Pfad, in dem dieser Key bewusst gelöscht wird (`persistence.js:66-67`).
+- **Fehlerszenario:** Ein PWA-Nutzer, dessen Daten in einer benannten Kampagne
+  (`dnd-campaign-*`) liegen oder dessen Kampagne >5 MB groß ist, bekommt beim Start den
+  Erststart-Umzugs-Wizard angeboten (`migration-wizard.js:534-536`), obwohl volle Daten
+  vorhanden sind. Ein dort ausgeführter Import überschreibt Kampagnen-Keys per
+  `StorageAPI.setJSON` (`full-export.js:156`).
+- **Schwere:** **Mittel.** Der Wizard allein löscht nichts; der Schaden entsteht erst, wenn der
+  irregeführte Nutzer eine alte Exportdatei importiert. Aber genau dazu lädt der Dialog ein.
+
+### Datei-Backup sichert immer nur die AKTIVE Kampagne — der Kommentar behauptet das Gegenteil
+
+- **Was:** `_doBackup()` ermittelt genau einen `campaignKey`
+  (`file-backup-manager.js:255-258`) und schreibt genau eine Kampagne
+  (`file-backup-manager.js:266`). Der danebenstehende Kommentar lautet
+  `// Kampagnendaten aus StorageAPI laden (D-13: je Kampagne einzeln)`
+  (`file-backup-manager.js:261`).
+- **Fehlerszenario:** Nutzer mit mehreren Kampagnen glaubt, alle seien gesichert. Die
+  `-aktuell.json` der nicht-aktiven Kampagnen altert beliebig; wechselt der Nutzer die Kampagne
+  selten, ist deren Backup Monate alt.
+- **Schwere:** **Mittel.** Kein Datenverlust im Ist-Zustand, aber ein falsches Sicherheitsversprechen.
+
+### Backup-Dateinamen können zwischen Kampagnen kollidieren
+
+- **Was:** `getBackupFilenames()` (`file-backup-manager.js:46-64`) reduziert den Kampagnennamen
+  über `.replace(/[^a-z0-9-]/gi, '-')` + Kollaps von Bindestrichen + Trimmen auf `safeName`.
+- **Fehlerszenario:** „Feywild!" und „Feywild?" ergeben beide `feywild`, ihre `-aktuell.json`
+  und Tages-Snapshots überschreiben sich gegenseitig. Ein rein nicht-lateinischer Name (z. B.
+  kyrillisch) kollabiert auf den Leerstring → Datei heißt `-aktuell.json`; jede weitere solche
+  Kampagne teilt sich diese Datei.
+- **Schwere:** **Mittel.** Braucht einen speziellen Namen, führt dann aber zu stillem
+  Überschreiben inklusive falschem Pruning (der Snapshot-Regex `getSnapshotRegex`,
+  `file-backup-manager.js:143-146`, matcht dann Snapshots beider Kampagnen).
+
+---
+
+## Sicherheit
+
+### Generische `call`-Aktion ruft eine beliebige globale Funktion aus einem DOM-Attribut auf
+
+- **Was:** `ui/actions/ui-actions.js:186-190`:
+  ```js
+  call: ctx => {
+      const fn = window[ctx.value];
+      if (typeof fn === 'function') fn(ctx.id);
+      else console.error('[EventDelegation] Function not found:', ctx.value);
+  },
+  ```
+  Keine Whitelist. Genutzt u. a. in `features/bestiary/bestiary-render.js:427`,
+  `features/npcs/npc-popup.js:77`, `ui/editors/rich-text.js:228`.
+- **Bewertung:** Der naheliegende Eskalationspfad (importiertes/eingefügtes Rich-Text-HTML mit
+  `data-action="call"`) ist **derzeit blockiert**: `sanitizeHTML()` baut jedes erlaubte Element
+  neu auf und kopiert nur explizit gelistete Attribute (`utils/basic.js:176-186` ff.);
+  `data-*` steht nicht in `allowedAttributes` (`utils/basic.js:105-118`), wird also verworfen.
+- **Fehlerszenario:** Sobald irgendein Renderpfad Nutzerinhalt ohne `sanitizeHTML` als HTML
+  ausgibt, wird aus einer XSS-artigen Lücke sofort ein Ein-Klick-Aufruf beliebiger App-Funktionen
+  (z. B. Lösch-/Import-Funktionen). Die Verteidigung hängt an einer einzigen Attribut-Whitelist.
+- **Schwere:** **Mittel** (latent, defense-in-depth). Eine Whitelist erlaubter `call`-Ziele wäre
+  billig und würde die Kopplung auflösen.
+
+### `class`-Attribut wird ungefiltert durchgereicht
+
+- **Was:** `utils/basic.js:198-200` — `else if (attrName === 'class' && allowedAttributes.class)
+  { cleanElement.setAttribute('class', attr.value); }`, `allowedAttributes.class: true`
+  (`utils/basic.js:113`).
+- **Fehlerszenario:** Gespeicherter Nutzerinhalt kann jede App-CSS-Klasse annehmen, z. B.
+  `modal-overlay` oder `sb-scene-card` — reines UI-Spoofing/Overlay im eigenen Dokument,
+  kein Code-Ausführungspfad.
+- **Schwere:** **Niedrig.** Offline-Single-User-App; ein bewusster Tradeoff ist plausibel (der
+  Editor braucht Klassen wie `read-aloud`). Erwähnt für Vollständigkeit.
+
+### Avatar-URLs werden nur HTML-escaped, nicht protokollgeprüft
+
+- **Was:** `features/bestiary/bestiary-render.js:412` —
+  `'<img class="bestiary-detail-avatar" src="' + esc(monster.avatar) + '" …>'`.
+  `esc()` (`utils/basic.js:19-28`) maskiert nur `& < > " '`, prüft kein Schema.
+- **Fehlerszenario:** Attributausbruch ist ausgeschlossen (Quotes maskiert), und `javascript:`
+  in `img src` ist in aktuellen Browsern wirkungslos. Verbleibt: eine externe `http(s)`-URL
+  erzeugt einen ungewollten Netzwerk-Request in einer als offline beworbenen App.
+- **Schwere:** **Niedrig.** Datenschutz-/Offline-Bruch, keine Codeausführung.
+
+---
+
+## Performance & Skalierung
+
+### `pushUndo()` serialisiert bei JEDER Mutation den kompletten Zustand
+
+- **Was:** `systems/undo.js:9-20` — `state: JSON.stringify(window.D)`, Stack bis
+  `UNDO_LIMIT` (`systems/undo.js:7`, Wert `30` aus `core/config.js:28`).
+- **Fehlerszenario:** `D` enthält u. a. `bestiary`, `wiki`, `npcs`, `locations`, Session-Notizen.
+  Bei einer Kampagne nahe der 5-MB-Grenze (die Warnschwelle liegt laut
+  `systems/spellslots/persistence.js:49-50` bei 4 MB) kostet jede einzelne Änderung eine
+  Voll-Serialisierung, und der Undo-Stack hält bis zu 30 vollständige Kopien im RAM.
+  Zusätzlich serialisiert jeder `save()` denselben Zustand erneut (`persistence.js:44`).
+- **Schwere:** **Mittel.** Trifft genau die Vielspieler-Kampagne; äußert sich als zunehmend
+  träge UI ohne erkennbare Ursache.
+
+### `JSON.stringify`-Undo verliert Typen
+
+- **Was:** derselbe Anker, `systems/undo.js:12`. CLAUDE.md schreibt für Deep-Clones
+  `structuredClone()` vor; das Undo-System nutzt weiterhin JSON.
+- **Fehlerszenario:** Alle `Date`-Instanzen in `D` würden nach einem Undo zu Strings.
+  **[VERMUTUNG]** — ich habe kein konkretes `Date`-Feld innerhalb von `D` verifiziert
+  (die Würfelhistorie mit `time: new Date()` liegt außerhalb von `D`,
+  `features/dice/dice-core.js:436`). Der Typverlust ist strukturell vorhanden, der konkrete
+  Schaden unbestätigt.
+- **Schwere:** **Niedrig** bis unbekannt, bis ein betroffenes Feld nachgewiesen ist.
+
+### Würfelstatistik wächst unbegrenzt und wird komplett in den Speicher geladen
+
+- **Was:** Jeder Wurf schreibt einen Datensatz: `features/dice/dice-core.js:440-444` →
+  `statsIdbPut(...)` (`features/dice-stats/dice-stats-idb.js:16-26`, `store.add`, autoIncrement).
+  Ein Grep über `features/dice-stats/` nach `clear()`/`deleteRecord`/`diceStats` zeigt **keine**
+  Lösch- oder Prune-Funktion. `getAllStats()` (`dice-stats-idb.js:32-47`) lädt per `store.getAll()`
+  alle Datensätze auf einmal.
+- **Fehlerszenario:** Nach längerem Spielbetrieb (jede AoE-Runde erzeugt Würfe) enthält der Store
+  sehr viele Einträge; das Öffnen des Statistik-Tabs zieht sie alle in den JS-Heap.
+  Im Gegensatz zur In-Memory-Historie, die bei 30 gedeckelt ist (`dice-core.js:437`), gibt es
+  hier keinerlei Grenze und keine Nutzeraktion zum Leeren.
+- **Schwere:** **Mittel.** Kein Datenverlust, aber monoton wachsende Ladezeit und Speicherbedarf.
+
+### Alte Szenen-GainNodes werden beim Szenenwechsel nicht getrennt
+
+- **Was:** `activateSoundScene()` blendet alte Tracks aus (`soundboard-player.js:206-216`) und
+  ersetzt `_activeScene` (`:257`). Die pro Track erzeugten `trackGain`-Knoten
+  (`:236-239`, `trackGain.connect(ctx2.destination)`) werden nie `disconnect()`-et; nur die
+  Iterations-Quellen räumen sich in `src.onended` auf (`:168-172`).
+- **Fehlerszenario:** Jeder Szenenwechsel lässt einen stummgeregelten GainNode dauerhaft am
+  Ziel hängen. Über eine lange Sitzung mit vielen Wechseln wächst der Audiograph monoton.
+- **Schwere:** **Niedrig.** GainNodes sind billig; erst bei sehr vielen Wechseln messbar.
+
+---
+
+## Fragile Bereiche & Wartungsrisiko
+
+### `const D` überschattet das globale Datenobjekt an mehreren Stellen
+
+- **Was:** verifizierte Vorkommen: `systems/migration/full-export.js:66` (`const D = window.D;`
+  in `buildFullExport`), `utils/crud-helpers.js:44` und `:107`, `utils/utilities.js:185` und
+  `:200`, `systems/avatars.js:116` und `:176`, `systems/backups.js:17`,
+  `systems/spellslots/persistence.js:41`. Zusätzlich überschattet
+  `features/soundboard/soundboard-player.js:145` (`const D = track.duration;`) `D` mit einer
+  **Zahl**.
+- **Fehlerszenario:** Wer in `scheduleIteration()` künftig auf Kampagnendaten zugreifen will,
+  liest stillschweigend eine Sekundenzahl. Allgemeiner: jede dieser Funktionen bricht die
+  projektweite Annahme „`D` ist das Datenobjekt", was Refactorings und Codelesen unzuverlässig macht.
+- **Schwere:** **Mittel** (Wartbarkeit). Ein SyntaxError im Bundle entsteht dadurch nicht —
+  funktionsskopierte `const` sind blockskopiert; die in CLAUDE.md dokumentierte Begründung
+  („Will conflict when concatenated") trifft für diese Fälle nicht zu. Das eigentliche Problem
+  ist Shadowing/Lesbarkeit, nicht der Build.
+
+### `sanitizeHTML` existiert zweimal — bewusst, aber wartungsintensiv
+
+- **Was:** `utils/basic.js:58` und `utils/testable-utils.js:34`. Ein Zeilenbereichs-Diff der
+  beiden Implementierungen zeigt aktuell **nur** Kommentar- und Formatierungsunterschiede,
+  keine funktionale Abweichung. `utils/testable-utils.js` ist als einzige JS-Datei unter
+  `core/ utils/ systems/ features/ ui/ render/` **nicht** in `loader.js` registriert
+  (verifiziert per Schleife über alle gefundenen `.js`-Dateien), und `build.py:177` dokumentiert
+  diese Ausnahme ausdrücklich.
+- **Bewertung:** Ein **dokumentierter Tradeoff**, zusätzlich abgesichert durch
+  `tests/unit/sanitizer-parity.test.js`. Kein Defekt — aber die Sicherheitslogik der App hängt
+  daran, dass dieser Paritätstest gepflegt bleibt.
+- **Schwere:** **Niedrig**, mit der Auflage, den Paritätstest nie zu deaktivieren.
+
+### Command-Palette-Register ist eine handgepflegte Parallelwelt zur Event-Delegation
+
+- **Was:** `features/command-palette/action-registry.js` enthält 22 Einträge (gezählt über
+  `grep -c "^\s*id: '"`), die App-Funktionen über `window.<name>`-Aufrufe erreichen, z. B.
+  `action-registry.js:14`, `:19`, `:57`. Die reguläre UI läuft dagegen über `data-action`-Attribute
+  und die Handler in `ui/actions/`.
+- **Fehlerszenario:** Wird eine Funktion umbenannt oder eine Modal-ID geändert, schlägt der
+  Palette-Eintrag still fehl (die `typeof … === 'function'`-Guards schlucken alles), während die
+  normale UI weiterfunktioniert. Der Nutzer erlebt eine Palette-Aktion, die einfach nichts tut.
+- **Schwere:** **Niedrig–Mittel.** Es existieren `tests/unit/action-registry.test.js` und
+  `tests/unit/action-registry-collisions.test.js`; ob sie die Existenz der Zielfunktionen prüfen,
+  habe ich nicht verifiziert **[VERMUTUNG]**.
+
+### Veralteter Header-Kommentar im Datei-Backup beschreibt ein explizit verbotenes Muster
+
+- **Was:** `systems/file-backup/file-backup-manager.js:5-6` behauptet
+  „`initFileBackup()`: Haengt sich per Live-Sync-Muster in `window.save()` ein". Der Code tut
+  das Gegenteil und begründet es auch
+  (`file-backup-manager.js:348-357`: „KEIN window.save-Monkey-Patch (UAT 02) …
+  `registerPostSaveHook(onAfterSave)`"). Auch `:213` trägt noch die Überschrift
+  „After-Save-Hook" und `:340` „Live-Sync-Hook (CLAUDE.md-Muster)".
+- **Fehlerszenario:** Ein späterer Entwickler kopiert das im Kommentar beschriebene Muster in ein
+  neues Modul und baut damit exakt den Fehler nach, der laut CLAUDE.md dazu führte, dass
+  Datei-Backups nie geschrieben wurden.
+- **Schwere:** **Niedrig** (Dokumentation), aber die Fehlerklasse ist teuer und in diesem Projekt
+  bereits einmal produktiv aufgetreten.
+
+### `console.*` außerhalb von DEBUG_MODE-Guards
+
+- **Was:** verifizierte Stellen ohne `DEBUG_MODE`-Bedingung in derselben Zeile:
+  `core/init.js:163`, `utils/basic.js:10`, `:271`, `:286`, `:312`, `:356`, `:366`, `:376`, `:387`,
+  `utils/utilities.js:233`, `systems/backups.js:415-416`,
+  `systems/campaign-manager/campaign-manager.js:106`, `:114`, `:152`,
+  `systems/spellslots/import-export.js:227`, `:272`, `:362`, `:393`, `:623`, `:660`, `:664`,
+  `ui/actions/ui-actions.js:189`. (`utils/performance.js:10-11` bindet `console.warn/error`
+  bewusst als Modul-Alias.)
+- **Bewertung:** CLAUDE.md behauptet „Zero console.log in production builds ✅". Für den
+  Quellstand trifft das nicht zu; ob `build.py --production` sie entfernt, habe ich nicht
+  geprüft **[VERMUTUNG]**.
+- **Schwere:** **Niedrig.** Kosmetik plus eine falsche Zusicherung in der Projektdoku.
+
+---
+
+## Test-Lücken
+
+### Keine dedizierten Tests für Timeline / Reise / Fraktionen / Session-Prep / NPC-Generator
+
+- **Was:** Verifiziert über `grep -rl <begriff> tests/unit tests/e2e -i`: für `timeline`, `reise`,
+  `fraktion`, `session-prep` und `npc-generator` gibt es jeweils **genau zwei** Treffer, und in
+  beiden Fällen dieselben Sammel-Dateien: `tests/unit/welt-story.test.js` und
+  `tests/e2e/features/welt-story.spec.js`. Zeilenumfang dieser fünf Bereiche laut `wc -l` dieser
+  Sitzung: `features/timeline/` 519, `features/reise/` 638, `features/fraktionen/` 555,
+  `features/session-prep/` 623, `features/npc-generator/` 877.
+- **Fehlerszenario:** Regressionen in der Kalender-Fortschreibung
+  (`features/timeline/timeline-crud.js:58` `advanceCalendarDate`) oder der Ruf-Berechnung
+  (`features/fraktionen/fraktionen-crud.js:117` `anpassenRuf`) fallen durch, weil eine
+  Sammel-Spec für fünf Features nur Grundpfade abdecken kann.
+- **Schwere:** **Mittel.** Genau diese Module mutieren `D` direkt und persistieren sofort.
+
+### Keine Testdatei adressiert das Zusammenspiel Persistenz-IDB-Modus ↔ Datei-Backup
+
+- **Was:** `tests/unit/file-backup-hook.test.js` und `tests/unit/file-backup.test.js` existieren,
+  ebenso `tests/unit/storage-conflict.test.js`. Der oben beschriebene Kritikalfehler
+  (>5-MB-Pfad ⇒ leeres Backup) ist trotzdem im Code vorhanden — die Interaktion beider Systeme
+  ist folglich nicht abgedeckt.
+- **Schwere:** **Hoch**, weil sie den schwersten Befund dieses Dokuments durchgelassen hat.
+
+### `charId` der Würfelstatistik ist tot
+
+- **Was:** `features/dice/dice-core.js:443` schreibt konstant `charId: null`. Ein Grep nach
+  `charId` in `features/dice-stats/dice-stats-render.js` liefert **keinen** Treffer.
+- **Fehlerszenario:** Kein Laufzeitfehler; das Feld belegt Platz in jedem IDB-Datensatz und
+  suggeriert eine nicht existierende Auswertung pro Charakter.
+- **Schwere:** **Niedrig.**
+
+---
+
+## Build & Architektur
+
+### Session-ID der Würfelstatistik ist nicht kollisionssicher
+
+- **Was:** `features/dice-stats/dice-stats-idb.js:8` — `const _sbSessionId = Date.now().toString();`
+- **Fehlerszenario:** Zwei in derselben Millisekunde gestartete Tabs (oder ein Zurückspringen der
+  Systemuhr) teilen sich eine Session-ID; der Session-Filter
+  (`getStatsForSession`, `dice-stats-idb.js:54-70`) mischt dann die Würfe.
+- **Schwere:** **Niedrig.** Unwahrscheinlich, Auswirkung kosmetisch.
+
+### Service Worker cacht nur das Produktions-Artefakt
+
+- **Was:** `sw.js:9-12` listet als Pflicht-Asset ausschließlich `./dnd-tracker-optimized.html`;
+  der Offline-Fallback greift auf dieselbe Datei (`sw.js:99-101`). Der Entwicklungs-Build heißt
+  `dnd-tracker-bundled.html` (im `dist/`-Verzeichnis dieser Sitzung vorhanden, 3.050.267 Bytes
+  gegenüber 2.662.752 Bytes für die optimierte Variante).
+- **Fehlerszenario:** Wer den Dev-Build über HTTP ausliefert und den SW aktiv hat, erhält offline
+  die *Produktions*-Version statt der gerade getesteten. Bewusster Tradeoff für die
+  Single-File-Auslieferung, aber eine Debugging-Falle.
+- **Schwere:** **Niedrig.**
+
+### Testartefakte im `dist/`-Verzeichnis
+
+- **Was:** `dist/_smoke_fraktionen.png`, `_smoke_kalender.png`, `_smoke_reise.png`,
+  `_smoke_sessionprep.png` (Zeitstempel 15. Juni) liegen neben den Build-Artefakten.
+- **Schwere:** **Niedrig.** Aufräumarbeit; `git log -- dist` liefert keine Commits, das
+  Verzeichnis ist offenbar ignoriert.
+
+---
+
+*Concerns audit: 2026-07-26*
