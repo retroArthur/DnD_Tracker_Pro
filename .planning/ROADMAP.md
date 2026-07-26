@@ -195,7 +195,7 @@ Details, Success Criteria und Coverage: [milestones/v1.0-ROADMAP.md](milestones/
 
 **Wave 7** *(blocked on Wave 6)*
 
-- [ ] 11-07-PLAN.md — Build-Doku nachziehen (D-08) + Codebase-Map-Refresh aller sieben Dateien (Checkpoint) + Abgleich gegen die Triage
+- [x] 11-07-PLAN.md — Build-Doku nachziehen (D-08) + Codebase-Map-Refresh aller sieben Dateien (Checkpoint) + Abgleich gegen die Triage
 
 *Sequenzielle Wellen: die Pläne 11-01 bis 11-05 fassen alle `build.py` an bzw. bauen `dist/` und fahren Suiten gegen dasselbe Artefakt — paralleles Ausführen würde auf der gemeinsamen Datei und dem gemeinsamen Bundle kollidieren (Präzedenz aus Phase 10). 11-06 braucht den finalen Build-/CI-Stand für seine Belege, 11-07 muss den Stand **nach** allen Phase-11-Änderungen abbilden (Erfolgskriterium 5).*
 
@@ -211,4 +211,4 @@ Details, Success Criteria und Coverage: [milestones/v1.0-ROADMAP.md](milestones/
 | 8. Test-Fundament grün | 4/4 | Complete    | 2026-07-23 |
 | 9. Editor-Regressionsnetz & execCommand-Ablösung | 9/9 | Complete    | 2026-07-25 |
 | 10. Security-Härtung | 7/7 | Complete    | 2026-07-25 |
-| 11. Architektur- & Build-Hygiene | 6/7 | In Progress|  |
+| 11. Architektur- & Build-Hygiene | 7/7 | Pläne abgeschlossen — Push+CI-Nachweis (Kriterium 3) ausstehend |  |

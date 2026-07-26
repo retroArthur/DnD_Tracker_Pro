@@ -4,24 +4,24 @@ milestone: v1.1
 milestone_name: Tech-Debt & Härtung
 current_phase: 11
 current_phase_name: Architektur- & Build-Hygiene
-status: executing
-stopped_at: 11-07 Task 1/3 done (4eb2dbf) — paused at blocking human-action checkpoint (Task 2: /gsd-map-codebase, answer Refresh)
-last_updated: "2026-07-26T00:40:00.000Z"
+status: verifying
+stopped_at: Completed 11-07-PLAN.md (3b4bc92) — alle 7 Pläne der Phase ausgeführt, Phasen-Verifikation und Push noch offen
+last_updated: "2026-07-26T18:55:00.000Z"
 last_activity: 2026-07-26
-last_activity_desc: Phase 11 waves 1-6 complete, 11-07 paused at map-refresh checkpoint
+last_activity_desc: 11-07 Task 3 abgeschlossen (CONCERNS-Refresh gegen Triage abgeglichen, DEBT-17..DEBT-29, Testkette grün) — Phase 11 plan-seitig vollständig, Roadmap-Checkbox und Push/CI-Nachweis stehen noch aus
 progress:
   total_phases: 4
   completed_phases: 3
   total_plans: 27
-  completed_plans: 25
-  percent: 75
+  completed_plans: 27
+  percent: 100
 ---
 
 # Project State: D&D Kampagnen-Tracker Pro — Stabilisierung & Ausbau
 
-**Last Updated:** 2026-07-25
+**Last Updated:** 2026-07-26
 **Phase:** 11 — Architektur- & Build-Hygiene
-**Status:** Ready to execute
+**Status:** Alle 7 Pläne ausgeführt — bereit für Phasen-Verifikation
 
 ---
 
@@ -35,26 +35,40 @@ progress:
 
 ## Current Position
 
-Phase: 11 (architektur-build-hygiene) — EXECUTING
-Plan: 7 of 7 (11-01 bis 11-06 abgeschlossen; 11-07 Task 1/3 committet)
-Status: PAUSIERT an blockierendem human-action Checkpoint in Plan 11-07
+Phase: 11 (architektur-build-hygiene) — Alle 7 Pläne ausgeführt
+Plan: 7 of 7 (11-01 bis 11-07 abgeschlossen, 11-07 Task 3 in `3b4bc92`)
+Status: Plan-Ebene vollständig — Phasen-Verifikation und der Push+CI-Nachweis (Roadmap-Kriterium 3) stehen noch aus
 
-**Wiederaufnahme:**
-1. `/gsd-map-codebase` ausführen, beim Prompt zum vorhandenen `.planning/codebase/` **Refresh** wählen
-   (nicht Update, nicht Skip — das Überschreiben von CONCERNS.md ist gewollt, die Triage-Historie
-   liegt committet in `.planning/phases/11-architektur-build-hygiene/11-CONCERNS-TRIAGE.md`, D-13).
-2. Prüfen: alle sieben Dateien in `.planning/codebase/` tragen ein Phase-11-Datum, keine mehr vom 2026-06-11.
-3. `/gsd-execute-phase 11` — nimmt Plan 11-07 bei Task 3 wieder auf (Abgleich der neuen CONCERNS.md
-   gegen die Triage, volle Verifikationskette, ARCH-04 auf Complete), danach Phasen-Verifikation.
+**11-07 Task 3 Ergebnis (2026-07-26, `3b4bc92`):** die regenerierte `.planning/codebase/CONCERNS.md`
+(24 Befunde, mechanisch gezählt) wurde gegen `11-CONCERNS-TRIAGE.md` abgeglichen. 3 Befunde decken
+sich konsistent mit bereits dispositionierten Alt-Einträgen, 21 sind neu (überwiegend Datei-Backup/
+Migration/Soundboard/Würfelstatistik-Subsysteme), davon 13 als `DEBT-17`..`DEBT-29` in den Backlog
+übernommen (`.planning/REQUIREMENTS.md`, IDs mit der Triage identisch). Kritischster neuer Fund:
+DEBT-17 — Datei-Backup schreibt eine leere Kampagne, sobald der IndexedDB-Modus (>5MB) greift, und
+prunt darüber echte Snapshots weg. Zusätzlich zwei falsche Aussagen im Codebase-Map-Refresh selbst
+korrigiert: `TESTING.md` behauptete fälschlich, E2E laufe nicht in CI (der `e2e`-Job ist seit Phase 8
+blockierend); die genannte Playwright-Zahl (318) wich vom tatsächlichen Lauf (319 passed / 2 skipped)
+ab. Volle lokale Kette grün: Dev-/Prod-Build, `pytest tests/build/` (24), `npm test` (621),
+`npx playwright test` (319/2 skipped), Smoke-Test gegen HTTP-Server (8). Details in
+`.planning/phases/11-architektur-build-hygiene/11-07-SUMMARY.md`.
+
+**Nächster Schritt:** Phasen-Verifikation für Phase 11 (`/gsd-execute-phase 11` erkennt alle Pläne
+als fertig und läuft die Phasen-Verifikation), danach — als bewusst ausstehender, manueller Schritt —
+`git push` und Prüfung des GitHub-Actions-Tabs (sechs Jobs grün, keine Node-Deprecation-Annotation).
+Dieser Push wurde in Plan 11-07 Task 3 absichtlich NICHT ausgeführt (Push-Entscheidungen liegen beim
+Nutzer).
 
 **Advisory-Audit vor der Pause (2026-07-26):** 174/181 Kriterien der Pläne 11-01..11-06 unabhängig
-verifiziert. Vier Funde wurden noch geschlossen, bevor Task 2 läuft:
+verifiziert. Vier Funde wurden noch geschlossen, bevor Task 2 lief:
+
 - `be026c1`/`5009240` — das Favicon-Data-URI war malformed (`build.py` flachte `"` zu `'`, kollidierte
   mit `font-family="'Courier New', …"` in `icons/icon.svg:59/74`). Encoder auf einen einzigen
   `urllib.parse.quote`-Durchgang umgestellt, Regressionstest ergänzt (`tests/build/` 23 → 24).
+
 - `ef3789a`/`a40f42d` — drei Belege in `11-CONCERNS-TRIAGE.md` (Zeilen 5/18/32) gegen Live-Code
   korrigiert, DEBT-16 in die Dispositions-Spalte gehoben (sonst für Task 3 nicht auffindbar).
   Dispositions-Verteilung unverändert 22/1/8/15 = 46.
+
 - `cecbace` — Nachtrag in `11-05-SUMMARY.md`, warum die Task-2-Prüfungen den Defekt nicht sehen konnten.
 
 Nicht geschlossen (bewusst): kein CI-Lauf der neuen `ci.yml` existiert (`main` ist >160 Commits vor
@@ -66,7 +80,7 @@ Offener Posten, der beim Map-Refresh NICHT stillschweigend geschlossen werden da
 implizite `/favicon.ico`-Anfrage, headless Chromium stellt sie gar nicht; der D-12-Smoke-Test ist
 daher grün unabhängig vom D-10-Fix. Offengelegte Lücke bei Roadmap-Kriterium 4, keine Regression.
 
-Last activity: 2026-07-26 — Wellen 1–6 abgeschlossen, 11-07 am Map-Refresh-Checkpoint pausiert
+Last activity: 2026-07-26
 
 ## Performance Metrics
 
@@ -105,6 +119,7 @@ Last activity: 2026-07-26 — Wellen 1–6 abgeschlossen, 11-07 am Map-Refresh-C
 | Phase 11 P04 | 25min | 2 tasks | 5 files |
 | Phase 11 P05 | ~40min | 3 tasks | 4 files |
 | Phase 11 P06 | ~35min | 3 tasks | 2 files |
+| Phase 11 P07 | N/A | 1 tasks | 4 files |
 
 ## Accumulated Context
 
