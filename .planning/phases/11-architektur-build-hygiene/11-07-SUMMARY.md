@@ -145,13 +145,57 @@ Task durchgeführt hat.
 Alle sechs Schritte grün, keine Abweichung von der erwarteten Baseline im Sinne einer echten
 Regression gefunden.
 
-## Ausstehend — bewusst NICHT ausgeführt
+## Nachtrag (2026-07-26): Push und CI-Nachweis erbracht — Kriterium 3 erfüllt
 
-Das letzte Akzeptanzkriterium des Plans verlangt einen `git push` und die Prüfung des GitHub-
-Actions-Tabs (sechs grüne Jobs, keine Node-Deprecation-Annotation). **Dieser Schritt wurde
-absichtlich nicht ausgeführt** — Push-Entscheidungen liegen beim Nutzer. Alles andere in Task 3 ist
-abgeschlossen; der Push und die anschließende CI-Prüfung sind der einzige verbleibende Schritt, um
-Roadmap-Kriterium 3 vollständig nachzuweisen.
+Der Executor hatte den Push bewusst ausgelassen (Push-Entscheidungen liegen beim Nutzer). Der Nutzer
+hat ihn anschließend ausdrücklich freigegeben; er wurde danach ausgeführt und die CI ausgewertet.
+
+**Erster Lauf `f3dcd23` — [30215615433](https://github.com/retroArthur/DnD_Tracker_Pro/actions/runs/30215615433): ROT.**
+`smoke-test` scheiterte mit `404-Antworten: ["http://localhost:8000/sw.js"]` (7 passed / 1 failed,
+auch im Retry), `deploy` übersprungen. Die vier übrigen Jobs grün.
+
+Damit hat der Push genau das geleistet, wofür Kriterium 3 existiert: er deckte einen Mangel auf, den
+kein lokaler Lauf finden konnte.
+
+**Ursache — CI-Paketierung, kein Produktfehler.** `ci.yml:96` lud als Artefakt `production-build` nur
+`dist/dnd-tracker-optimized.html` hoch. `build.py --production` schreibt aber zusätzlich `dist/sw.js`
+(build.py:474-485), und Manifest, Icons und Fonts kommen überhaupt erst im `deploy`-Job aus dem Repo
+dazu. Der `smoke-test` entpackt dieses Artefakt nach `dist/` und prüfte damit etwas, das dem
+veröffentlichten Stand nicht entsprach. Der `deploy`-Job ruft `build.py --production` selbst auf und
+war nie betroffen — die veröffentlichte App hatte ihren Service Worker.
+
+**Warum der Ein-Zeilen-Fix nicht gereicht hätte:** der SW precacht `./manifest.webmanifest` über
+`cache.addAll()`, das bei einem einzigen 404 vollständig scheitert (`sw.js:9-12`, CR-09). Nur `sw.js`
+zu ergänzen hätte einen 404 gegen mehrere getauscht.
+
+**Fix `bfd6447`:** der `build`-Job schnürt das Artefakt jetzt mit denselben Schritten wie `deploy`
+(Manifest, Icons, `assets/fonts` — inkl. der CR-09-Vorsichtsmaßnahme gegen `dist/assets/fonts/fonts/*`)
+und lädt `dist/` komplett hoch. Der `deploy`-Job blieb unangetastet, um den Veröffentlichungspfad
+nicht zu berühren. Vorab lokal gegen ein exakt nachgebautes Artefakt in einem sauberen Verzeichnis
+verifiziert: **8/8 grün**, darunter der zuvor rote Test. Dass derselbe Smoke-Test lokal schon vorher
+grün lief, war ein Trugschluss: das lokale `dist/` enthielt Manifest, Icons und Fonts noch als
+Altbestand vom 19.07., die das CI-Artefakt nicht mitbrachte.
+
+**Zweiter Lauf `bfd6447` — [30216452989](https://github.com/retroArthur/DnD_Tracker_Pro/actions/runs/30216452989): GRÜN.**
+
+| Job | Ergebnis |
+| --- | --- |
+| `lint-and-typecheck` | success |
+| `test` | success |
+| `e2e` | success |
+| `build` | success |
+| `smoke-test` | success |
+| `deploy` | success |
+
+`conclusion=success`, unabhängig bestätigt über `gh run watch --exit-status` (Exit 0).
+
+**Annotationen: keine Node-Deprecation-Meldung.** Der Lauf trägt zehn Annotationen, alle
+`warning`-Level aus `lint-and-typecheck`: sieben nicht definierte Globals (`initDragDrop`,
+`initNavDragDrop`, `initOfflineMode`, `loadLayout`, `loadTheme`, `load`, `APP_CONFIG`), zwei
+ungenutzte Bezeichner (`init`, `STORAGE_KEY`) und ein überflüssiges Escape-Zeichen. Sie liegen weit
+unter dem konfigurierten Gate von 50 Warnungen und betreffen Kriterium 3 nicht.
+
+**Damit ist Roadmap-Kriterium 3 vollständig nachgewiesen.**
 
 ## Deviations from Plan
 

@@ -211,4 +211,4 @@ Details, Success Criteria und Coverage: [milestones/v1.0-ROADMAP.md](milestones/
 | 8. Test-Fundament grün | 4/4 | Complete    | 2026-07-23 |
 | 9. Editor-Regressionsnetz & execCommand-Ablösung | 9/9 | Complete    | 2026-07-25 |
 | 10. Security-Härtung | 7/7 | Complete    | 2026-07-25 |
-| 11. Architektur- & Build-Hygiene | 7/7 | Pläne abgeschlossen — Push+CI-Nachweis (Kriterium 3) ausstehend |  |
+| 11. Architektur- & Build-Hygiene | 7/7 | Complete    | 2026-07-26 |

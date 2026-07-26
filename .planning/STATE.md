@@ -52,11 +52,32 @@ ab. Volle lokale Kette grün: Dev-/Prod-Build, `pytest tests/build/` (24), `npm 
 `npx playwright test` (319/2 skipped), Smoke-Test gegen HTTP-Server (8). Details in
 `.planning/phases/11-architektur-build-hygiene/11-07-SUMMARY.md`.
 
-**Nächster Schritt:** Phasen-Verifikation für Phase 11 (`/gsd-execute-phase 11` erkennt alle Pläne
-als fertig und läuft die Phasen-Verifikation), danach — als bewusst ausstehender, manueller Schritt —
-`git push` und Prüfung des GitHub-Actions-Tabs (sechs Jobs grün, keine Node-Deprecation-Annotation).
-Dieser Push wurde in Plan 11-07 Task 3 absichtlich NICHT ausgeführt (Push-Entscheidungen liegen beim
-Nutzer).
+**Roadmap-Kriterium 3 erfüllt (2026-07-26, nach ausdrücklicher Nutzerfreigabe gepusht):**
+`f3dcd23` → `origin/main` (171 Commits, Fast-Forward). Der erste CI-Lauf
+([30215615433](https://github.com/retroArthur/DnD_Tracker_Pro/actions/runs/30215615433)) war ROT:
+`smoke-test` meldete `404-Antworten: ["http://localhost:8000/sw.js"]`, `deploy` wurde übersprungen.
+
+Ursache war eine Lücke in der CI-Paketierung, kein Produktfehler: der `build`-Job lud nur
+`dist/dnd-tracker-optimized.html` als Artefakt `production-build` hoch, während
+`build.py --production` zusätzlich `dist/sw.js` schreibt und Manifest/Icons/Fonts erst im
+`deploy`-Job aus dem Repo dazukommen. Der `smoke-test` prüfte damit ein Artefakt, das dem
+veröffentlichten Stand nicht entsprach. Der `deploy`-Job baut selbst und war nie betroffen —
+die veröffentlichte App hatte ihren Service Worker.
+
+Nur `sw.js` zu ergänzen hätte nicht gereicht: der SW precacht `./manifest.webmanifest` über
+`cache.addAll()`, das bei einem einzigen 404 vollständig scheitert (CR-09, `sw.js:9-12`).
+Fix in `bfd6447`: der `build`-Job schnürt das Artefakt mit denselben Schritten wie `deploy` und
+lädt `dist/` komplett hoch; `deploy` blieb unangetastet. Lokal gegen ein exakt nachgebautes
+Artefakt verifiziert (8/8 grün) — der lokale Grünlauf zuvor war ein Artefakt-Altbestand in
+`dist/` vom 19.07.
+
+Zweiter Lauf ([30216452989](https://github.com/retroArthur/DnD_Tracker_Pro/actions/runs/30216452989),
+`bfd6447`): **alle sechs Jobs grün** (`lint-and-typecheck`, `test`, `e2e`, `build`, `smoke-test`,
+`deploy`), `conclusion=success`. Annotationen: **keine Node-Deprecation-Meldung**; die zehn
+vorhandenen sind ESLint-Warnungen aus `lint-and-typecheck` (undefinierte/ungenutzte Globals, ein
+überflüssiges Escape) und liegen weit unter dem 50-Warnungen-Gate.
+
+**Nächster Schritt:** Phasen-Verifikation für Phase 11.
 
 **Advisory-Audit vor der Pause (2026-07-26):** 174/181 Kriterien der Pläne 11-01..11-06 unabhängig
 verifiziert. Vier Funde wurden noch geschlossen, bevor Task 2 lief:
@@ -71,9 +92,9 @@ verifiziert. Vier Funde wurden noch geschlossen, bevor Task 2 lief:
 
 - `cecbace` — Nachtrag in `11-05-SUMMARY.md`, warum die Task-2-Prüfungen den Defekt nicht sehen konnten.
 
-Nicht geschlossen (bewusst): kein CI-Lauf der neuen `ci.yml` existiert (`main` ist >160 Commits vor
-`origin/main`) — die D-09-Annotation ist erst nach einem Push prüfbar. Und der Favicon-Render-Nachweis
-lief als Ad-hoc-Skript, nicht als committeter Playwright-Spec.
+Nicht geschlossen (bewusst): ~~kein CI-Lauf der neuen `ci.yml` existiert~~ — **inzwischen erledigt,
+siehe Roadmap-Kriterium 3 oben (Lauf 30216452989 grün, keine Deprecation-Annotation).** Offen bleibt:
+der Favicon-Render-Nachweis lief als Ad-hoc-Skript, nicht als committeter Playwright-Spec.
 
 Offener Posten, der beim Map-Refresh NICHT stillschweigend geschlossen werden darf:
 `.planning/WINDOWS.md` Eintrag 3 (`open_count: 1`) — Playwrights Page-Events feuern nicht für die
