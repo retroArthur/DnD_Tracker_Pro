@@ -47,6 +47,20 @@ Status: PAUSIERT an blockierendem human-action Checkpoint in Plan 11-07
 3. `/gsd-execute-phase 11` — nimmt Plan 11-07 bei Task 3 wieder auf (Abgleich der neuen CONCERNS.md
    gegen die Triage, volle Verifikationskette, ARCH-04 auf Complete), danach Phasen-Verifikation.
 
+**Advisory-Audit vor der Pause (2026-07-26):** 174/181 Kriterien der Pläne 11-01..11-06 unabhängig
+verifiziert. Vier Funde wurden noch geschlossen, bevor Task 2 läuft:
+- `be026c1`/`5009240` — das Favicon-Data-URI war malformed (`build.py` flachte `"` zu `'`, kollidierte
+  mit `font-family="'Courier New', …"` in `icons/icon.svg:59/74`). Encoder auf einen einzigen
+  `urllib.parse.quote`-Durchgang umgestellt, Regressionstest ergänzt (`tests/build/` 23 → 24).
+- `ef3789a`/`a40f42d` — drei Belege in `11-CONCERNS-TRIAGE.md` (Zeilen 5/18/32) gegen Live-Code
+  korrigiert, DEBT-16 in die Dispositions-Spalte gehoben (sonst für Task 3 nicht auffindbar).
+  Dispositions-Verteilung unverändert 22/1/8/15 = 46.
+- `cecbace` — Nachtrag in `11-05-SUMMARY.md`, warum die Task-2-Prüfungen den Defekt nicht sehen konnten.
+
+Nicht geschlossen (bewusst): kein CI-Lauf der neuen `ci.yml` existiert (`main` ist >160 Commits vor
+`origin/main`) — die D-09-Annotation ist erst nach einem Push prüfbar. Und der Favicon-Render-Nachweis
+lief als Ad-hoc-Skript, nicht als committeter Playwright-Spec.
+
 Offener Posten, der beim Map-Refresh NICHT stillschweigend geschlossen werden darf:
 `.planning/WINDOWS.md` Eintrag 3 (`open_count: 1`) — Playwrights Page-Events feuern nicht für die
 implizite `/favicon.ico`-Anfrage, headless Chromium stellt sie gar nicht; der D-12-Smoke-Test ist
