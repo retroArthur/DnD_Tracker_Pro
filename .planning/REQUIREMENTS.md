@@ -59,6 +59,7 @@ Ursprung und die Live-Code-Belege in `.planning/phases/11-architektur-build-hygi
 - **DEBT-13**: Doppeltes `data-id`-Attribut in `features/wiki/wiki.js:391-392` (Parser verwirft das zweite, folgenlos) — Ursprung: STATE.md „Open TODOs" (Phase 10 WR-02), triagiert in 11-CONCERNS-TRIAGE.md (Ergänzung S2)
 - **DEBT-14**: Un-escapte Regex-Capture in `parseWikiLinks()` (`features/wiki/wiki.js:653`) — aktuell nicht ausnutzbar — Ursprung: STATE.md „Open TODOs" (Phase 10 IN-02), triagiert in 11-CONCERNS-TRIAGE.md (Ergänzung S3)
 - **DEBT-15**: Latente Toast-Race in `tests/e2e/crud/locations.spec.js` und `encounters.spec.js` — fehlender Seed-Nachzug aus Plan 08-02 — Ursprung: STATE.md „Open TODOs", triagiert in 11-CONCERNS-TRIAGE.md (Ergänzung S4)
+- **DEBT-16**: Totgelegter `mindmap`-Schreib-Seed an zwei Stellen — `systems/backups.js:232` (`mindmap: { nodes: [], edges: [] }` im `defaultD`-Literal, per `sanitizeBackupData()` bei jedem Restore neu injiziert, `edges` statt des überall sonst verwendeten `connections`) und `tools/debug.js:917` (`mindmap: { nodes: [], connections: [] }` in `completeReset()`, im Bundle via `loader.js:162`) — das Mindmap-Feature selbst ist entfernt, nur diese zwei Seeds schreiben den toten Key noch neu — Ursprung: CONCERNS.md §Tech Debt, triagiert in 11-CONCERNS-TRIAGE.md (Eintrag 5, Beleg-Korrektur 2026-07-26)
 
 ## Out of Scope
 
