@@ -218,7 +218,7 @@
 
 **Test Coverage:**
 - Unit tests: 621 tests passing (Jest)
-- E2E tests: 318 tests passing (Playwright)
+- E2E tests: 319 tests passing / 2 skipped (Playwright)
 - Build system: pytest for deduplication validation
 
 ---

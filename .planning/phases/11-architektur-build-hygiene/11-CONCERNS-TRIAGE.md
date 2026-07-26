@@ -166,3 +166,101 @@ Die folgenden vier Posten stammen NICHT aus `.planning/codebase/CONCERNS.md` (St
 - DEBT-16 — Totgelegter `mindmap`-Schreib-Seed in `systems/backups.js:232` (`edges`-Variante, per `sanitizeBackupData()` bei jedem Restore neu injiziert) und `tools/debug.js:917` (`connections`-Variante in `completeReset()`) — Herkunft: Eintrag 5 (Beleg-Korrektur 2026-07-26)
 
 **Kein Restposten wurde in dieser Phase aktiv gefixt** (D-16) — alle 16 `DEBT-`-IDs werden in `.planning/REQUIREMENTS.md` §v2 als benannte Requirements gefuehrt (Task 3 dieses Plans), mit Rueckverweis auf diese Triage. DEBT-02 ist die einzige Ausnahme, die planmaeßig innerhalb dieser Phase (Plan 11-07) statt in einem spaeteren Milestone behoben wird — dennoch als Requirement gefuehrt, bis 11-07 abgeschlossen ist.
+
+---
+
+## Nach dem Map-Refresh hinzugekommen (Plan 11-07 Task 3, D-13/D-14/D-15)
+
+**Kontext:** `/gsd-map-codebase` hat am 2026-07-26 alle sieben `.planning/codebase/`-Dateien
+regeneriert, unabhaengig von dieser Triage erstellt (bewusst ohne vorherige Lektuere, damit eine
+falsch dispositionierte Wiederkehr auffaellt). Die neue `CONCERNS.md` ist strukturell komplett
+anders aufgebaut als die alte, 2026-06-11 datierte Fassung (6 Themenbloecke statt 9, andere
+Ueberschriften) und behandelt ueberwiegend Subsysteme, die zum Zeitpunkt der alten Erhebung noch
+nicht existierten: Datei-Backup, Migration/Umzugs-Wizard, Soundboard, Wuerfelstatistik (IDB),
+Bestiary, Command-Palette.
+
+**Zaehlung (maschinell, diese Sitzung):** `grep -c "^### " .planning/codebase/CONCERNS.md` liefert
+**24** diskrete Eintraege (6 in „Datenintegritaet & Persistenz", 3 in „Sicherheit", 4 in
+„Performance & Skalierung", 5 in „Fragile Bereiche & Wartungsrisiko", 3 in „Test-Luecken", 3 in
+„Build & Architektur"). Das weicht von einer im Auftragskontext dieses Laufs kursierenden Erwartung
+von 26 ab — diese Zahl wurde nicht durch ein in dieser Sitzung ausgefuehrtes Kommando bestaetigt und
+wird hier verworfen; **24** ist der belastbare Wert.
+
+**Abgleich-Ergebnis:** Von den 24 neuen Eintraegen decken sich **3** inhaltlich mit bereits in
+diesem Dokument dispositionierten Alt-Eintraegen — bei allen dreien stimmt die neue Beschreibung mit
+der bestehenden Disposition ueberein, kein Widerspruch:
+
+- „`class`-Attribut wird ungefiltert durchgereicht" (neue `CONCERNS.md:134-143`) = Alt-Eintrag 21
+  („`sanitizeHTML` allows arbitrary `class` and broad inline styles", `akzeptiert`, Phase 10 D-08).
+  Identischer Code-Anker (`utils/basic.js:198-200` vs. dort zitiert `:198-199`), identische
+  Bewertung als bewusst getragenes Risiko.
+- „`pushUndo()` serialisiert bei JEDER Mutation den kompletten Zustand" (neu `CONCERNS.md:159-169`)
+  = Alt-Eintraege 23/34 (`uebernommen`, DEBT-06). Identischer Anker `systems/undo.js:9-20` bzw.
+  `:9-20`, `UNDO_LIMIT` 30 aus `core/config.js:28` — bereits im Backlog.
+- „`sanitizeHTML` existiert zweimal" (neu `CONCERNS.md:225-236`) = Alt-Eintraege 20/42 (`erledigt`,
+  Phase 10, `tests/unit/sanitizer-parity.test.js`). Die neue Fassung bestaetigt selbst „Kein Defekt"
+  — deckt sich mit der alten `erledigt`-Disposition, kein Widerspruch aufzuloesen.
+
+Kein Alt-Eintrag, der hier als `erledigt` dispositioniert wurde, taucht in der neuen `CONCERNS.md`
+als tatsaechlich noch offener Zustand wieder auf — insbesondere die urspruenglich befuerchtete
+Ueberschneidung mit Alt-Eintrag 27 („Global namespace + regex-based build deduplication", `erledigt`,
+Plan 11-03) besteht nicht: der neue Befund „`const D` überschattet das globale Datenobjekt"
+(`CONCERNS.md:209-223`) grenzt sich selbst explizit ab („Ein SyntaxError im Bundle entsteht dadurch
+nicht … Das eigentliche Problem ist Shadowing/Lesbarkeit, nicht der Build") und ist damit ein
+eigenstaendiger, neuer Befund, kein Wiederauftauchen des alten Build-Konflikts.
+
+**Die verbleibenden 21 Eintraege sind neu** — sie betreffen ueberwiegend Subsysteme, die im alten
+(2026-06-11) `CONCERNS.md` nicht vorkamen (per Grep gegen dieses Dokument bestaetigt: keine Treffer
+fuer „file-backup", „soundboard", „migration-wizard", „full-export", „isFreshInstall",
+„command-palette", „dice-stats", „GainNode"). Davon werden **13** als `uebernommen` mit neuer
+`DEBT-`-ID in den Backlog aufgenommen (Code- oder Testaenderung noetig); die restlichen **8** sind
+`akzeptiert` (niedriges, bewusst tragbares Risiko oder zu trivial fuer einen eigenen Backlog-Posten,
+gleiche Konvention wie z. B. Alt-Eintrag 13 „SW_CACHE_NAME" oder Alt-Eintrag 38). Jeder Beleg ist
+gegen den heutigen Live-Code verifiziert (Datei existiert, Zeilenzitat stimmt, in dieser Sitzung per
+`sed`/`grep` nachvollzogen).
+
+| # | Eintrag (Kurztitel) | CONCERNS-Abschnitt (neu) | Disposition | Beleg (Live-Code) |
+|---|---|---|---|---|
+| N1 | Datei-Backup schreibt leere Kampagne sobald IDB-Modus (>5MB) greift | Datenintegritaet & Persistenz | uebernommen (DEBT-17) | `systems/spellslots/persistence.js:64-68`: `saveToIndexedDBFallback()` gefolgt von `StorageAPI.remove(key)`/`StorageAPI.remove(key + '_ts')` entfernt den localStorage-Schatten. `systems/file-backup/file-backup-manager.js:261-264`: `_doBackup()` liest ausschliesslich `StorageAPI.getJSON(campaignKey, {})` — im IDB-Modus also `{}`. `writeBackupForCampaign()` (`:100-118`) schreibt dieses `{}` sowohl in `-aktuell.json` als auch (beim ersten Save des Tages) als Tages-Snapshot und ruft danach `pruneOldSnapshots()` (`:151-173`, Limit `FILE_BACKUP_MAX_SNAPSHOTS`), das den aeltesten echten Snapshot loescht. `setBackupStatus('active')` (`:274`) meldet dabei durchgehend Erfolg. Alle Zeilenzitate in dieser Sitzung gegen den Live-Code verifiziert. Kritischste Neuentdeckung dieses Abgleichs — stiller, kumulativer Totalverlust der Datei-Backups grosser (>5MB) Kampagnen |
+| N2 | Umzugs-Export (`file://`→PWA) enthaelt keine IndexedDB-Inhalte — Soundboard-Audio und Wuerfelstatistik gehen verloren | Datenintegritaet & Persistenz | uebernommen (DEBT-18) | `systems/migration/full-export.js:9-18`: `FULL_EXPORT_SCHEMA` listet nur `campaigns`/`settings`/`diceFavorites`/`dmScreenProfiles`/`campaignIndex`, keinen IDB-Store. `features/soundboard/soundboard-idb.js:64-69` und `features/dice-stats/dice-stats-idb.js:20-22` bestaetigen die IDB-Stores `audioBlobs`/`diceStats`, angelegt in `core/init.js:345-350`. Nach dem Import fehlt referenziertes Audio (`features/soundboard/soundboard-player.js:99-101`) |
+| N3 | `removeAudioFile()` im Soundboard loescht ohne `saveUndoState`/`pushUndo` — Bruch der projektweiten Undo-Garantie | Datenintegritaet & Persistenz | uebernommen (DEBT-19) | `features/soundboard/soundboard-crud.js:69-101`: `deleteSoundBlob()` + Mutation von `D.soundboard.scenes` + `window.save()` ohne vorherigen Undo-Push, verifiziert per `grep -rn "saveUndoState\|pushUndo" features/soundboard` (kein Treffer in `soundboard-crud.js`). Andere neue Feature-CRUDs (Timeline, Fraktionen, Session-Prep, NPC-Generator) rufen an vergleichbarer Stelle korrekt `pushUndo` |
+| N4 | `isFreshInstall()` prueft nur `APP_CONFIG.STORAGE_KEY`, ignoriert benannte Kampagnen und den IDB-only-Pfad | Datenintegritaet & Persistenz | uebernommen (DEBT-20) | `systems/migration/migration-wizard.js:31-36`: `StorageAPI.getJSON(APP_CONFIG.STORAGE_KEY, null)`, kein Zugriff auf `window.STORAGE_KEY_OVERRIDE` (`systems/spellslots/persistence.js:39`) oder Beruecksichtigung des IDB-only-Loeschpfads (`persistence.js:66-67`, derselbe Code-Pfad wie DEBT-17) |
+| N5 | Datei-Backup sichert nur die aktive Kampagne — begleitender Kommentar behauptet „je Kampagne einzeln" | Datenintegritaet & Persistenz | uebernommen (DEBT-21) | `file-backup-manager.js:255-266`: genau ein `campaignKey` wird ermittelt und genau eine Kampagne geschrieben; Kommentar in Zeile 261 „(D-13: je Kampagne einzeln)" widerspricht dem Code |
+| N6 | Backup-Dateinamen koennen zwischen Kampagnen kollidieren (Sonderzeichen-Normalisierung) | Datenintegritaet & Persistenz | uebernommen (DEBT-22) | `getBackupFilenames()` (`file-backup-manager.js:46-64`): `.replace(/[^a-z0-9-]/gi, '-')` reduziert z. B. „Feywild!" und „Feywild?" auf denselben `safeName`; ein rein nicht-lateinischer Name kollabiert auf den Leerstring |
+| N7 | Generische `call`-Aktion ruft `window[ctx.value]` ohne Whitelist auf | Sicherheit | uebernommen (DEBT-23) | `ui/actions/ui-actions.js:186-190` (Zeilenzitat in dieser Sitzung bestaetigt), genutzt u. a. in `features/bestiary/bestiary-render.js:427`. Aktuell defense-in-depth-relevant statt akut ausnutzbar: `sanitizeHTML()` verwirft `data-*`-Attribute (`utils/basic.js:105-118`), daher ist der naheliegende Eskalationspfad ueber importiertes Rich-Text-HTML derzeit blockiert |
+| N8 | Avatar-URLs werden nur HTML-escaped, nicht protokollgeprueft | Sicherheit | akzeptiert | `features/bestiary/bestiary-render.js:412`: `esc(monster.avatar)` maskiert Anfuehrungszeichen, prueft aber kein Schema. Kein Codeausfuehrungspfad (Attributausbruch ausgeschlossen, `javascript:` in `img src` in aktuellen Browsern wirkungslos) — verbleibt ein Offline-/Datenschutz-Bruch bei externer `http(s)`-URL. Zu geringe Schwere fuer einen eigenen Backlog-Posten |
+| N9 | `JSON.stringify`-Undo verliert Typinformation (z. B. `Date`) | Performance & Skalierung | akzeptiert | Gleicher Code-Anker wie DEBT-06 (`systems/undo.js:9-20`, `JSON.stringify(window.D)`); ein konkret betroffenes `Date`-Feld innerhalb von `D` ist nicht nachgewiesen (die Wuerfelhistorie mit `time: new Date()` liegt ausserhalb von `D`, `features/dice/dice-core.js:436`). Wuerde durch eine DEBT-06-Loesung (structuredClone/Diff-basiertes Undo) automatisch mitbehoben — kein eigener Backlog-Posten, im Fix-Umfang von DEBT-06 vermerkt |
+| N10 | Wuerfelstatistik (IDB-Store `diceStats`) waechst unbegrenzt, keine Prune-Funktion, `getAllStats()` laedt alles auf einmal | Performance & Skalierung | uebernommen (DEBT-24) | `features/dice/dice-core.js:440-444`: jeder Wurf schreibt `statsIdbPut()` (`features/dice-stats/dice-stats-idb.js:16-26`, `store.add`, autoIncrement); `grep -rn "clear()\|deleteRecord" features/dice-stats/` liefert keinen Treffer. Im Gegensatz zur in-memory-Historie (bei 30 gedeckelt, `dice-core.js:437`) existiert hier keine Grenze |
+| N11 | Alte Szenen-`GainNode`s werden beim Szenenwechsel im Soundboard nicht `disconnect()`-et | Performance & Skalierung | akzeptiert | `features/soundboard/soundboard-player.js` (Bereich um `activateSoundScene()`): pro Track erzeugte `trackGain`-Knoten werden nie explizit getrennt, nur die Iterations-Quellen raeumen sich in `src.onended` auf. GainNodes sind billig, erst bei sehr vielen Wechseln messbar — zu trivial fuer einen eigenen Backlog-Posten |
+| N12 | `const D` ueberschattet das globale Datenobjekt an mehreren Stellen (u. a. mit einer Zahl in `soundboard-player.js:145`) | Fragile Bereiche & Wartungsrisiko | uebernommen (DEBT-25) | Verifizierte Vorkommen: `systems/migration/full-export.js:66`, `utils/crud-helpers.js:44,107`, `utils/utilities.js:185,200`, `systems/avatars.js:116,176`, `systems/backups.js:17`, `systems/spellslots/persistence.js:41`, dazu `features/soundboard/soundboard-player.js:145` (`const D = track.duration` — ueberschattet mit einer Zahl). Kein Build-Konflikt (blockskopierte `const`), reines Lesbarkeits-/Wartbarkeitsrisiko — bewusst getrennt von Alt-Eintrag 27 (Build-Deduplizierung, `erledigt`) und vom pauschal ausgeschlossenen 499-Imports-Posten (`.planning/REQUIREMENTS.md` §Out of Scope), da hier konkrete, benennbare Stellen mit Umbenennungsaufwand nahe Null vorliegen |
+| N13 | Command-Palette-Aktionsregister (`action-registry.js`, 22 Eintraege) ist eine handgepflegte Parallelwelt zur regulaeren `data-action`-Delegation | Fragile Bereiche & Wartungsrisiko | akzeptiert | `features/command-palette/action-registry.js` (`grep -c "^\s*id: '"` = 22, in dieser Sitzung bestaetigt) ruft Funktionen ueber `window.<name>` auf; `typeof … === 'function'`-Guards schlucken Fehlschlaege still. Vorhandene Absicherung: `tests/unit/action-registry.test.js`, `tests/unit/action-registry-collisions.test.js` — kein akuter Defekt, kein Backlog-Posten |
+| N14 | Veralteter Header-Kommentar in `file-backup-manager.js` beschreibt das explizit verbotene `window.save`-Monkey-Patch-Muster | Fragile Bereiche & Wartungsrisiko | uebernommen (DEBT-26) | `file-backup-manager.js:5-6` behauptet „Haengt sich per Live-Sync-Muster in `window.save()` ein"; der Code tut das Gegenteil und begruendet es (`:348-357`: „KEIN window.save-Monkey-Patch (UAT 02) … registerPostSaveHook"). Auch `:213`/`:340` tragen noch irrefuehrende Ueberschriften. Billige Doku-Korrektur, aber die beschriebene Fehlerklasse ist in diesem Projekt bereits einmal produktiv aufgetreten (CLAUDE.md „⚠️ NEVER wrap `window.save`!") |
+| N15 | `console.*`-Aufrufe ausserhalb von `DEBUG_MODE`-Guards widersprechen der CLAUDE.md-Zusicherung „Zero console.log in production" | Fragile Bereiche & Wartungsrisiko | uebernommen (DEBT-27) | Verifizierte Fundstellen ohne `DEBUG_MODE`-Bedingung in derselben Zeile: `core/init.js:163`, `utils/basic.js:10,271,286,312,356,366,376,387`, `utils/utilities.js:233`, `systems/backups.js:415-416`, `systems/campaign-manager/campaign-manager.js:106,114,152`, `systems/spellslots/import-export.js:227,272,362,393,623,660,664`, `ui/actions/ui-actions.js:189`. Ob `build.py --production` sie aus dem Bundle entfernt, ist nicht Teil dieses Belegs — die Quellcode-Aussage in CLAUDE.md trifft so, wie sie formuliert ist, auf den Quellstand nicht zu |
+| N16 | Keine dedizierten Testdateien fuer Timeline / Reise / Fraktionen / Session-Prep / NPC-Generator — nur Sammel-Specs | Test-Luecken | uebernommen (DEBT-28) | `grep -rl <begriff> tests/unit tests/e2e -i` liefert fuer alle fuenf Begriffe je genau zwei Treffer, beide Male dieselben Sammeldateien `tests/unit/welt-story.test.js`/`tests/e2e/features/welt-story.spec.js`. Feature-Umfang laut `wc -l`: `features/timeline/` 519, `features/reise/` 638, `features/fraktionen/` 555, `features/session-prep/` 623, `features/npc-generator/` 877 Zeilen |
+| N17 | Kein Test deckt das Zusammenspiel Persistenz-IDB-Modus ↔ Datei-Backup ab | Test-Luecken | uebernommen (DEBT-29) | `tests/unit/file-backup-hook.test.js`, `tests/unit/file-backup.test.js` und `tests/unit/storage-conflict.test.js` existieren, decken aber nicht den IDB-Fallback-Pfad von `_doBackup()` ab — exakt die Testluecke, die DEBT-17 (Kritisch) unentdeckt liess. Eigener Backlog-Posten, weil die Testluecke unabhaengig vom Bugfix geschlossen werden muss (Regressionsschutz) |
+| N18 | `charId` in jedem Wuerfelstatistik-Datensatz ist konstant `null`, nirgends ausgewertet | Test-Luecken | akzeptiert | `features/dice/dice-core.js:443`: `charId: null` fest verdrahtet; `grep -n charId features/dice-stats/dice-stats-render.js` liefert keinen Treffer. Kein Laufzeitfehler, nur unbenutzter Platz im IDB-Datensatz — zu trivial fuer einen eigenen Backlog-Posten |
+| N19 | Session-ID der Wuerfelstatistik (`Date.now().toString()`) ist nicht kollisionssicher | Build & Architektur | akzeptiert | `features/dice-stats/dice-stats-idb.js:8`: `const _sbSessionId = Date.now().toString();`. Zwei in derselben Millisekunde gestartete Tabs teilen sich eine Session-ID — unwahrscheinlich, Auswirkung rein kosmetisch (Session-Filter mischt Wuerfe) |
+| N20 | Service Worker cacht ausschliesslich `dnd-tracker-optimized.html`, nicht den Dev-Bundle | Build & Architektur | akzeptiert | `sw.js:9-12` (`CORE_ASSETS`) listet nur `./dnd-tracker-optimized.html`; Offline-Fallback (`sw.js:99-101`) nutzt dieselbe Datei. Bewusster Tradeoff fuer die Single-File-Auslieferung; betrifft nur, wer den Dev-Build per HTTP mit aktivem SW testet — Debugging-Falle, kein Produktionsrisiko |
+| N21 | Testartefakte (`_smoke_*.png`) liegen im `dist/`-Verzeichnis | Build & Architektur | akzeptiert | `dist/_smoke_fraktionen.png` u. a. (Zeitstempel 15. Juni); `dist/` ist nicht versioniert (`git log -- dist` liefert keine Commits) — reine Aufraeumarbeit ohne funktionalen Impact |
+
+**Neue `DEBT-`-IDs aus diesem Abgleich (13, DEBT-17 bis DEBT-29):**
+
+- DEBT-17 — Datei-Backup schreibt leere Kampagne im IDB-Modus (>5MB), kumulativer Totalverlust ueber `pruneOldSnapshots()` — Herkunft: N1 (Kritisch)
+- DEBT-18 — Umzugs-Export enthaelt keine IndexedDB-Inhalte (Soundboard-Audio, Wuerfelstatistik) — Herkunft: N2 (Hoch)
+- DEBT-19 — `removeAudioFile()` im Soundboard ohne `saveUndoState`/`pushUndo` — Herkunft: N3
+- DEBT-20 — `isFreshInstall()` prueft nur einen von mehreren moeglichen Storage-Zustaenden — Herkunft: N4
+- DEBT-21 — Datei-Backup sichert nur die aktive Kampagne, Kommentar behauptet das Gegenteil — Herkunft: N5
+- DEBT-22 — Backup-Dateinamen koennen zwischen Kampagnen kollidieren — Herkunft: N6
+- DEBT-23 — Generische `call`-Aktion ohne Ziel-Whitelist (defense-in-depth) — Herkunft: N7
+- DEBT-24 — Wuerfelstatistik-IDB-Store waechst unbegrenzt, keine Prune-Funktion — Herkunft: N10
+- DEBT-25 — `const D` ueberschattet das globale Datenobjekt an mehreren konkreten Stellen — Herkunft: N12
+- DEBT-26 — Veralteter, irrefuehrender Header-Kommentar in `file-backup-manager.js` — Herkunft: N14
+- DEBT-27 — `console.*` ausserhalb `DEBUG_MODE`-Guards widerspricht CLAUDE.md-Zusicherung — Herkunft: N15
+- DEBT-28 — Keine dedizierten Tests fuer Timeline/Reise/Fraktionen/Session-Prep/NPC-Generator — Herkunft: N16
+- DEBT-29 — Kein Test fuer Persistenz-IDB-Modus ↔ Datei-Backup-Zusammenspiel — Herkunft: N17
+
+**Gesamtbild nach diesem Abgleich:** 46 Alt-Eintraege (16 `DEBT`-IDs) + 24 neue Eintraege (13 weitere
+`DEBT`-IDs) = 70 dispositionierte Eintraege insgesamt, 29 `DEBT`-IDs im Backlog. Kein Widerspruch
+zwischen einer bestehenden `erledigt`-Disposition und dem neuen Refresh gefunden; kein Restposten
+wurde im Rahmen dieses Abgleichs aktiv im Code gefixt (D-16 gilt weiterhin), ausschliesslich
+Dokumentation dieses Triage-Dokuments und Spiegelung nach `.planning/REQUIREMENTS.md`.

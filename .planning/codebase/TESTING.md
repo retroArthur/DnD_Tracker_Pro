@@ -42,7 +42,7 @@ npx playwright test tests/e2e/features/wiki.spec.js   # Single spec
 python -m pytest tests/build/ -v   # Build deduplication tests
 ```
 
-**Current status:** 54 test files total. Jest: 26 files (23 unit + 3 integration), 621 tests passing. Playwright: 27 E2E .spec.js files with 318 tests passing / 2 skipped (313 static `test()` calls; parameterized tests expand at runtime) across smoke/CRUD/features/integration suites. Python build tests: 1 file (`test_build_deduplication.py`). CI (`.github/workflows/ci.yml`) runs typecheck + lint + Jest + Python build tests — E2E is NOT run in CI (separate gate before deploy). E2E test infrastructure improvements tracked in memory (`preexisting-e2e-failures.md`).
+**Current status:** 54 test files total. Jest: 26 files (23 unit + 3 integration), 621 tests passing. Playwright: 27 E2E .spec.js files with 319 tests passing / 2 skipped (311 static `test()` calls; parameterized tests expand at runtime) across smoke/CRUD/features/integration suites. Python build tests: 1 file (`test_build_deduplication.py`). CI (`.github/workflows/ci.yml`) has six jobs: `lint-and-typecheck`, `test` (Jest + Python build tests), `e2e` (full Playwright run against the dev bundle, blocking — `build` depends on it, Phase 8 D-03), `build` (production bundle), `smoke-test` (Playwright smoke run against the production bundle over HTTP), and `deploy` (GitHub Pages, main branch only). E2E test infrastructure improvements tracked in memory (`preexisting-e2e-failures.md`).
 
 ## Test File Organization
 
@@ -324,7 +324,7 @@ npm run test:coverage      # text + text-summary + lcov + html reporters
 
 **E2E Tests:**
 
-- Playwright, `tests/e2e/` (27 spec files, 318 tests): 
+- Playwright, `tests/e2e/` (27 spec files, 319 passing / 2 skipped): 
     - Smoke tests (`app.spec.js`, `tab-navigation.spec.js`, `smoke.spec.js`)
     - Per-entity CRUD (`crud/*.spec.js` — create minimal/full, validation error, edit, delete, undo, search filter)
     - Feature flows (`features/*.spec.js` — dice, initiative with death saves/concentration, wiki, editors)
