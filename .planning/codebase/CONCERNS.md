@@ -10,9 +10,17 @@ markiert. Zählungen stammen ausschließlich aus in dieser Sitzung ausgeführten
 
 ## Datenintegrität & Persistenz
 
-### Datei-Backup schreibt eine LEERE Kampagne, sobald der IndexedDB-Modus (>5 MB) greift
+### ✅ BEHOBEN — Datei-Backup schrieb eine LEERE Kampagne, sobald der IndexedDB-Modus (>5 MB) griff
 
-- **Was:** Im >5-MB-Pfad entfernt `saveImmediate()` den localStorage-Schatten der Kampagne und
+> **Erledigt am 2026-07-26 (`71fb6ef`, DEBT-17).** `_doBackup()` nutzt jetzt
+> `readCampaignDataForBackup()` mit der Reihenfolge localStorage → IndexedDB
+> (`loadFromIndexedDBFallbackRaw`) → laufendes `D`; ein leeres Objekt gilt in keiner Stufe als
+> gültige Kampagne. Liefert keine Quelle Daten, wird **gar nichts** geschrieben und der Status geht
+> auf `paused` — damit kann auch ein künftiger Ausfall beider Lesepfade die guten Snapshots nicht
+> mehr verdrängen. Abgesichert durch `tests/unit/file-backup-idb.test.js` (7 Tests, TDD: 5 zuvor
+> rot). Die Beschreibung unten bleibt als Beleg stehen, warum der Defekt so lange unsichtbar war.
+
+- **Was (historisch):** Im >5-MB-Pfad entfernt `saveImmediate()` den localStorage-Schatten der Kampagne und
   feuert danach die Post-Save-Hooks:
   `systems/spellslots/persistence.js:64-79` — `await saveToIndexedDBFallback(key, dataString);`
   → `StorageAPI.remove(key); StorageAPI.remove(key + '_ts');` → … → `_notifyPostSaveHooks();`.
