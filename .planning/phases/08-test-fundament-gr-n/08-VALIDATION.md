@@ -3,10 +3,11 @@ phase: 8
 slug: test-fundament-gr-n
 # status lifecycle: draft (seeded by plan-phase) → validated (set by validate-phase §6)
 # audit-milestone §5.5 distinguishes NOT-VALIDATED (draft) from PARTIAL (validated + nyquist_compliant: false) (#2117)
-status: draft
-nyquist_compliant: false
-wave_0_complete: false
+status: validated
+nyquist_compliant: true
+wave_0_complete: true
 created: 2026-07-22
+validated: 2026-07-26
 ---
 
 # Phase 8 — Validation Strategy
@@ -38,11 +39,26 @@ created: 2026-07-22
 
 ## Per-Task Verification Map
 
-| Task ID | Plan | Wave | Requirement | Threat Ref | Secure Behavior | Test Type | Automated Command | File Exists | Status |
-|---------|------|------|-------------|------------|-----------------|-----------|-------------------|-------------|--------|
-| _wird vom Planner befüllt_ | — | — | TEST-01, TEST-02 | — | — | — | — | — | ⬜ pending |
+Retroaktiv abgeglichen am 2026-07-26 (validate-phase §6, State A). Der Draft war seit dem
+22.07. nie nachgezogen worden, obwohl die Arbeit vollständig erledigt ist — jeder Eintrag unten
+wurde gegen den Live-Code geprüft, nicht aus den SUMMARYs übernommen.
+
+| Task ID | Plan | Wave | Requirement | Test Type | Automated Command | File Exists | Status |
+|---------|------|------|-------------|-----------|-------------------|-------------|--------|
+| 08-01 T1 | 08-01 | 1 | TEST-01 | unit | `npx jest tests/unit/action-registry-collisions.test.js` | ✅ 4 Tests | ✅ green |
+| 08-01 T2 | 08-01 | 1 | TEST-01 | e2e | `npx playwright test tests/e2e/app.spec.js` | ✅ `app.spec.js:72` | ✅ green |
+| 08-01 T3 | 08-01 | 1 | TEST-01 | e2e | `npx playwright test tests/e2e/tab-navigation.spec.js` | ✅ | ✅ green |
+| 08-02 T1 | 08-02 | 2 | TEST-01 | e2e | `npx playwright test tests/e2e/tab-navigation.spec.js` | ✅ | ✅ green |
+| 08-02 T2 | 08-02 | 2 | TEST-01, TEST-02 | e2e | `npx playwright test tests/e2e/crud/` | ✅ 5 Specs | ✅ green |
+| 08-03 T1 | 08-03 | 3 | TEST-02 | unit + e2e | `npm test && npx playwright test` | N/A (Härtung bestehender Assertions) | ✅ green |
+| 08-03 T2 | 08-03 | 3 | TEST-02 | unit + e2e | `npm test && npx playwright test` | N/A (Review-Task) | ✅ green |
+| 08-04 T1 | 08-04 | 4 | TEST-02 | e2e (CI) | `.github/workflows/ci.yml` Job `e2e` (Zeile 54), blockierend über `build` → `smoke-test` → `deploy` | ✅ | ✅ green |
+| 08-04 T2 | 08-04 | 4 | TEST-02 | doc | `docs/e2e-failure-triage.md` | ✅ | ✅ green |
 
 *Status: ⬜ pending · ✅ green · ❌ red · ⚠️ flaky*
+
+**Belegender Lauf (2026-07-26):** `npm test` → 628 passed / 27 Suiten; `npx playwright test` →
+319 passed / 2 skipped. Beide Suiten enthalten sämtliche oben genannten Dateien.
 
 Vorab bekannte Requirement→Test-Zuordnung (aus RESEARCH.md `## Validation Architecture`):
 
@@ -59,9 +75,9 @@ Vorab bekannte Requirement→Test-Zuordnung (aus RESEARCH.md `## Validation Arch
 
 ## Wave 0 Requirements
 
-- [ ] `tests/unit/action-registry-collisions.test.js` (o. ä.) — Unit-Test für Duplicate-`data-action`-Key-Detection (Pitfall 1, D-02)
-- [ ] Regressionstest für Migration-Hint-Banner-Layout-Offset-Fix (Pitfall 3, D-02) — e2e vs. DOM-Geometrie-Unit-Test entscheidet der Planner
-- [ ] `.github/workflows/ci.yml` — neuer `e2e`-Job (D-03) existiert noch nicht
+- [x] `tests/unit/action-registry-collisions.test.js` — Unit-Test für Duplicate-`data-action`-Key-Detection (Pitfall 1, D-02). **Vorhanden, 4 Tests.**
+- [x] Regressionstest für Migration-Hint-Banner-Layout-Offset-Fix (Pitfall 3, D-02). **Vorhanden als E2E:** `tests/e2e/app.spec.js:72` „Migration-Hinweis-Banner ueberdeckt #global-search nicht" — führt den geometrischen Beweis über `boundingBox()` (`searchBox.y >= bannerBox.y + bannerBox.height`) statt sich auf einen erfolgreichen Klick zu verlassen, und klickt anschließend ohne `{force:true}`.
+- [x] `.github/workflows/ci.yml` — `e2e`-Job (D-03). **Vorhanden, Zeile 54**, blockierend über die Kette `build` → `smoke-test` → `deploy`.
 
 ---
 
@@ -75,11 +91,31 @@ Vorab bekannte Requirement→Test-Zuordnung (aus RESEARCH.md `## Validation Arch
 
 ## Validation Sign-Off
 
-- [ ] All tasks have `<automated>` verify or Wave 0 dependencies
-- [ ] Sampling continuity: no 3 consecutive tasks without automated verify
-- [ ] Wave 0 covers all MISSING references
-- [ ] No watch-mode flags
-- [ ] Feedback latency < 30s
-- [ ] `nyquist_compliant: true` set in frontmatter
+- [x] All tasks have `<automated>` verify or Wave 0 dependencies
+- [x] Sampling continuity: no 3 consecutive tasks without automated verify
+- [x] Wave 0 covers all MISSING references — alle drei Posten existieren, siehe oben
+- [x] No watch-mode flags
+- [x] Feedback latency < 30s (Einzel-Spec ~15 s, Jest ~2 s)
+- [x] `nyquist_compliant: true` set in frontmatter
 
-**Approval:** pending
+**Approval:** validated 2026-07-26
+
+---
+
+## Validation Audit 2026-07-26
+
+| Metric | Count |
+|--------|-------|
+| Gaps found | 0 |
+| Resolved | 0 |
+| Escalated | 0 |
+
+Kein `gsd-nyquist-auditor` nötig: die Gap-Analyse ergab keine offenen Posten, deshalb greift der
+Kurzschluss aus Schritt 3 des Workflows („No gaps → skip to Step 6, set `nyquist_compliant: true`").
+
+**Was tatsächlich fehlte, war nur der Abgleich.** Die Datei stand seit dem 22.07. auf `draft`, weil
+`plan-phase` sie angelegt und `validate-phase` sie nie nachgezogen hat. Alle drei Wave-0-Posten waren
+zu diesem Zeitpunkt längst umgesetzt — der Draft beschrieb einen Zustand, den die Phase bereits
+hinter sich gelassen hatte. Genau diese Konstellation meint `audit-milestone` §5.5 mit
+NOT-VALIDATED statt PARTIAL: `nyquist_compliant: false` war hier nie ein Befund, sondern nur ein
+nicht gepflegter Zähler.
