@@ -109,4 +109,4 @@ Which phases cover which requirements. Updated during roadmap creation.
 | ARCH-01 | Phase 11 | Complete |
 | ARCH-02 | Phase 11 | Complete |
 | ARCH-03 | Phase 11 | Complete |
-| ARCH-04 | Phase 11 | Pläne 11-06/11-07 vollständig ausgeführt — Push+CI-Nachweis (Roadmap-Kriterium 3) ausstehend |
+| ARCH-04 | Phase 11 | Complete — CI-Nachweis erbracht (Lauf 30216452989, sechs Jobs grün, keine Deprecation-Annotation) |
