@@ -257,6 +257,52 @@ function onAfterSave() {
  * Fuehrt das eigentliche Backup durch (Fehlerbehandlung D-16).
  * @param {FileSystemDirectoryHandle} dirHandle
  */
+/**
+ * Ermittelt die zu sichernden Kampagnendaten (DEBT-17).
+ *
+ * localStorage ist der Normalfall und die schnelle Quelle. Ab >5MB wechselt
+ * `saveImmediate()` aber in den IndexedDB-Modus und LOESCHT den localStorage-Key
+ * nach bestaetigtem IDB-Write (`systems/spellslots/persistence.js:64-68`).
+ * Wer dann weiter nur aus localStorage liest, sichert eine leere Kampagne —
+ * und `pruneOldSnapshots()` raeumt darueber die letzten echten Snapshots weg.
+ *
+ * Reihenfolge: localStorage -> IndexedDB -> laufendes D-Objekt.
+ * Ein leeres Objekt gilt in keiner Stufe als gueltige Kampagne.
+ *
+ * @param {string} campaignKey
+ * @returns {Promise<Object|null>} Daten, oder null wenn keine Quelle etwas liefert
+ */
+async function readCampaignDataForBackup(campaignKey) {
+    const istBefuellt = obj => obj && typeof obj === 'object' && Object.keys(obj).length > 0;
+
+    // 1. localStorage (Normalfall <5MB)
+    if (typeof StorageAPI !== 'undefined') {
+        const ausLs = StorageAPI.getJSON(campaignKey, null);
+        if (istBefuellt(ausLs)) return ausLs;
+    }
+
+    // 2. IndexedDB (IDB-Modus: der LS-Key wurde nach dem Write geloescht)
+    const idbRead = typeof window !== 'undefined' ? window.loadFromIndexedDBFallbackRaw : null;
+    if (typeof idbRead === 'function') {
+        try {
+            const record = await idbRead(campaignKey);
+            if (record && record.data) {
+                const geparst = JSON.parse(record.data);
+                if (istBefuellt(geparst)) return geparst;
+            }
+        } catch (e) {
+            if (window.APP_CONFIG?.DEBUG_MODE) {
+                window.ErrorHandler?.log('readCampaignDataForBackup', e, 'IDB-Lesen fehlgeschlagen');
+            }
+        }
+    }
+
+    // 3. Letzter Ausweg: der laufende Zustand im Speicher
+    if (typeof window !== 'undefined' && istBefuellt(window.D)) return window.D;
+
+    return null;
+}
+
 async function _doBackup(dirHandle) {
     try {
         // Aktive Kampagne ermitteln
@@ -265,10 +311,17 @@ async function _doBackup(dirHandle) {
             : 'dnd-tracker-data';
         const campaignName = _getActiveCampaignName(campaignKey);
 
-        // Kampagnendaten aus StorageAPI laden (D-13: je Kampagne einzeln)
-        const data = typeof StorageAPI !== 'undefined'
-            ? StorageAPI.getJSON(campaignKey, {})
-            : (typeof window !== 'undefined' ? window.D || {} : {});
+        // Kampagnendaten laden (D-13: je Kampagne einzeln; DEBT-17: inkl. IDB-Modus)
+        const data = await readCampaignDataForBackup(campaignKey);
+
+        // DEBT-17: NIEMALS eine leere Kampagne schreiben. writeBackupForCampaign
+        // wuerde -aktuell.json leeren und den Tages-Snapshot ueberschreiben,
+        // woraufhin pruneOldSnapshots() die letzten echten Snapshots entfernt —
+        // bei weiterhin gruener Statusanzeige. Lieber gar kein Backup als ein
+        // leeres, das die guten verdraengt.
+        if (!data) {
+            throw new Error('Keine Kampagnendaten lesbar — Backup uebersprungen (DEBT-17)');
+        }
 
         await writeBackupForCampaign(dirHandle, campaignKey, campaignName, data);
         _fileBackupLastTime = new Date();
@@ -370,6 +423,7 @@ window.getBackupFilenames = getBackupFilenames;
 window.getActiveBackupFilenames = getActiveBackupFilenames;
 window.getSnapshotRegex = getSnapshotRegex;
 window.pruneOldSnapshots = pruneOldSnapshots;
+window.readCampaignDataForBackup = readCampaignDataForBackup;
 window.setBackupStatus = setBackupStatus;
 window.getBackupStatus = getBackupStatus;
 window.getLastBackupTime = getLastBackupTime;
