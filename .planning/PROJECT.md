@@ -8,7 +8,49 @@ Ein offline-first Single-Page D&D 5e Kampagnen-Manager (pures JavaScript/HTML/CS
 
 Die App muss am Spieltisch **zuverlässig offline laufen** — ein Spielleiter-Begleiter, der nie im Weg steht und keine Daten verliert.
 
-## Current State (v1.0 shipped 2026-07-22)
+## Current State (v1.1 shipped 2026-07-27)
+
+- **Version:** v2.6.1, Milestones **v1.0 „Stabilisierung & Ausbau"** und **v1.1 „Tech-Debt & Härtung"** geshippt (11 Phasen, 71 Pläne)
+- **Codebase:** 123 Module, non-ESM Single-Bundle via `build.py` (eine Modulliste in `loader.js` als Single Source of Truth, Hard-Abort bei fehlender Datei)
+- **Qualität:** **628 Jest-Tests**, **319 Playwright-Tests** (2 skipped), **24 pytest-Build-Tests** — alle grün. Sechs CI-Jobs, davon `e2e` und `smoke-test` blockierend vor dem Pages-Deploy. Alle Phasen-VERIFICATIONs `passed`, Nyquist 4/4 `validated`
+- **Live:** https://retroarthur.github.io/DnD_Tracker_Pro/dnd-tracker-optimized.html (PWA installierbar, SW-Updates, Datei-Backup, Migrations-Wizard)
+
+**Was v1.1 gebracht hat:** `document.execCommand` vollständig abgelöst (21 → 0 im Editor, drei
+dokumentierte Ausnahmen ausserhalb), abgesichert durch ein 79-Test-Netz, das *vor* der Migration
+gegen eine gemessene Markup-Baseline stand. Import-XSS geschlossen, Sanitizer-Tests laufen gegen den
+Produktionsquelltext statt gegen eine Kopie. Build-Dedup-Pass 3 ersatzlos entfernt und durch einen
+Quell-Pre-Check *vor* dem Bündeln ersetzt. CI auf Node 22, deprecation-frei — durch einen echten
+Lauf belegt.
+
+**Zwei Funde, die erst das Bestehen auf echten Nachweisen sichtbar machte:** eine unvollständige
+CI-Artefakt-Paketierung (der `smoke-test` prüfte ein Artefakt ohne Service Worker) und ein stiller
+Datenverlust im Datei-Backup ab 5 MB Kampagnengröße, bei dem `pruneOldSnapshots()` binnen zehn
+Spieltagen alle echten Snapshots wegräumte — bei grüner Statusanzeige. Beide behoben.
+
+## Next Milestone Goals (v1.2 — noch nicht aufgesetzt)
+
+**Der Ausgangspunkt steht bereits fest:** 27 offene, dispositionierte `DEBT`-Posten mit
+Live-Code-Belegen in
+[`milestones/v1.1-REQUIREMENTS.md`](milestones/v1.1-REQUIREMENTS.md) und
+[`11-CONCERNS-TRIAGE.md`](phases/11-architektur-build-hygiene/11-CONCERNS-TRIAGE.md).
+Diese Liste beim Aufsetzen von v1.2 übernehmen — sie ist das Produkt der v1.1-Triage, nicht deren
+Versäumnis.
+
+Schwerste offene Posten: **DEBT-18** (Umzugs-Export `file://`→PWA verliert Soundboard-Audio und
+Würfelstatistik aus IndexedDB), **DEBT-19** (Audio-Löschen ohne Undo), **DEBT-21/22** (Datei-Backup
+sichert nur die aktive Kampagne; Dateinamen können zwischen Kampagnen kollidieren).
+
+**Lohnende Richtung darüber hinaus:** die Fehlerklasse hinter `DEBT-17` systematisch verfolgen —
+zwei Subsysteme, die sich nur implizit auf einen Vertrag verlassen, plus ein Prüfaufbau, der die
+Naht nie durchläuft. Der Integration-Check fand im v1.1-Scope keinen zweiten Fall, hat aber nur
+gezielt und nicht erschöpfend gesucht.
+
+**Zurückgestellt:** Soundboard Per-Track-Play (Layering — Design aus der v1.0-Session liegt bereit).
+
+<details>
+<summary>Frühere Milestone-Stände</summary>
+
+### Stand bei v1.0 (shipped 2026-07-22)
 
 - **Version:** v2.6.1, Milestone **v1.0 „Stabilisierung & Ausbau"** geshippt (7 Phasen, 44 Pläne, 31/31 Requirements, UAT 20/20)
 - **Codebase:** ~123 Module, ~81.000 Zeilen Quellcode, non-ESM Single-Bundle via `build.py`
@@ -16,7 +58,7 @@ Die App muss am Spieltisch **zuverlässig offline laufen** — ein Spielleiter-B
 - **v1.1-Fortschritt:** Phase 8 „Test-Fundament grün" abgeschlossen (2026-07-23) — TEST-01/TEST-02 validiert, E2E-Job blockiert seitdem die Deploy-Kette (`docs/e2e-failure-triage.md` dokumentiert alle Ex-Fails); Phase 9 „Editor-Regressionsnetz & execCommand-Ablösung" abgeschlossen (2026-07-25) — EDIT-01/EDIT-02/EDIT-03 validiert, Rich-Text-Editor execCommand-frei (21→0 via Selection/Range), abgesichert durch 80-Tests-Regressionsnetz mit D-04a-Doppel-Grün-Beweis (E2E-Suite jetzt 308 passed / 2 skipped)
 - **Live:** https://retroarthur.github.io/DnD_Tracker_Pro/dnd-tracker-optimized.html (PWA installierbar, SW-Updates, Datei-Backup, Migrations-Wizard)
 
-## Current Milestone: v1.1 Tech-Debt & Härtung
+### Zielsetzung v1.1 (bei Milestone-Start)
 
 **Goal:** Die Codebasis schuldenfrei und dauerhaft wartbar machen — deprecated APIs ablösen, Test-Suite vollständig grün, Sicherheits-Altlasten schließen, Build-/Architektur-Hygiene — ohne Verhaltensänderungen am Spieltisch.
 
@@ -27,6 +69,9 @@ Die App muss am Spieltisch **zuverlässig offline laufen** — ein Spielleiter-B
 - Architektur-Hygiene: Modullisten-Sync robust, build.py-Dedup-Schwächen, CI-Deprecations (Node 20), Codebase-Map-Refresh, CONCERNS.md-Restposten
 
 **Zurückgestellt auf später:** Soundboard Per-Track-Play (Layering — Design aus v1.0-Session liegt bereit)
+
+
+</details>
 
 ## Requirements
 

@@ -4,14 +4,14 @@ milestone: v1.1
 milestone_name: Tech-Debt & Härtung
 current_phase: 11
 current_phase_name: Architektur- & Build-Hygiene
-status: verifying
-stopped_at: Completed 11-07-PLAN.md (3b4bc92) — alle 7 Pläne der Phase ausgeführt, Phasen-Verifikation und Push noch offen
-last_updated: "2026-07-26T18:55:00.000Z"
-last_activity: 2026-07-26
-last_activity_desc: 11-07 Task 3 abgeschlossen (CONCERNS-Refresh gegen Triage abgeglichen, DEBT-17..DEBT-29, Testkette grün) — Phase 11 plan-seitig vollständig, Roadmap-Checkbox und Push/CI-Nachweis stehen noch aus
+status: milestone_complete
+stopped_at: Milestone v1.1 archiviert (milestones/v1.1-ROADMAP.md, milestones/v1.1-REQUIREMENTS.md)
+last_updated: "2026-07-27T20:15:00.000Z"
+last_activity: 2026-07-27
+last_activity_desc: "Milestone v1.1 abgeschlossen — 4/4 Phasen verifiziert, Nyquist 4/4 validated, Audit 11/11 Requirements, DEBT-17/DEBT-29 behoben. Nächster Schritt: /gsd-new-milestone (27 offene DEBT-Posten aus milestones/v1.1-REQUIREMENTS.md übernehmen)"
 progress:
   total_phases: 4
-  completed_phases: 3
+  completed_phases: 4
   total_plans: 27
   completed_plans: 27
   percent: 100
@@ -19,9 +19,9 @@ progress:
 
 # Project State: D&D Kampagnen-Tracker Pro — Stabilisierung & Ausbau
 
-**Last Updated:** 2026-07-26
-**Phase:** 11 — Architektur- & Build-Hygiene
-**Status:** Alle 7 Pläne ausgeführt — bereit für Phasen-Verifikation
+**Last Updated:** 2026-07-27
+**Milestone:** v1.1 „Tech-Debt & Härtung" — ✅ ABGESCHLOSSEN
+**Status:** Archiviert. Nächster Schritt: `/gsd-new-milestone` für v1.2
 
 ---
 
@@ -29,15 +29,19 @@ progress:
 
 **Core Value:** Die App muss am Spieltisch zuverlässig offline laufen — ein Spielleiter-Begleiter, der nie im Weg steht und keine Daten verliert.
 
-**Current Focus:** Phase 11 — architektur-build-hygiene
+**Current Focus:** Kein aktiver Milestone. v1.2 ist aufzusetzen — die 27 offenen `DEBT`-Posten aus `milestones/v1.1-REQUIREMENTS.md` sind dabei zu übernehmen.
 
 ---
 
 ## Current Position
 
-Phase: 11 (architektur-build-hygiene) — Alle 7 Pläne ausgeführt
-Plan: 7 of 7 (11-01 bis 11-07 abgeschlossen, 11-07 Task 3 in `3b4bc92`)
-Status: Plan-Ebene vollständig — Phasen-Verifikation und der Push+CI-Nachweis (Roadmap-Kriterium 3) stehen noch aus
+Milestone v1.1 abgeschlossen und archiviert (2026-07-27).
+
+- 4/4 Phasen, 27/27 Pläne, 69 Tasks · 11/11 Requirements erfüllt
+- Alle Phasen-VERIFICATIONs `passed`, Nyquist 4/4 `validated` (je 0 Gaps)
+- Audit: `v1.1-MILESTONE-AUDIT.md` — Status `tech_debt` (keine Blocker, 27 DEBT-Posten im Backlog)
+- Archive: `milestones/v1.1-ROADMAP.md`, `milestones/v1.1-REQUIREMENTS.md`
+- Tests: Jest 628 · Playwright 319 (2 skipped) · pytest 24 — alle grün
 
 **11-07 Task 3 Ergebnis (2026-07-26, `3b4bc92`):** die regenerierte `.planning/codebase/CONCERNS.md`
 (24 Befunde, mechanisch gezählt) wurde gegen `11-CONCERNS-TRIAGE.md` abgeglichen. 3 Befunde decken
@@ -77,7 +81,7 @@ Zweiter Lauf ([30216452989](https://github.com/retroArthur/DnD_Tracker_Pro/actio
 vorhandenen sind ESLint-Warnungen aus `lint-and-typecheck` (undefinierte/ungenutzte Globals, ein
 überflüssiges Escape) und liegen weit unter dem 50-Warnungen-Gate.
 
-**Nächster Schritt:** Phasen-Verifikation für Phase 11.
+**Phasen-Verifikation abgeschlossen:** 5/5 Kriterien, `11-VERIFICATION.md` auf `passed`. SC4 wurde per Human-Verifikation im echten Browser geschlossen (Konsole sauber; auf Netzwerkebene besteht die `/favicon.ico`-404-Sondierung fort, erreicht die Konsole aber nicht).
 
 **Advisory-Audit vor der Pause (2026-07-26):** 174/181 Kriterien der Pläne 11-01..11-06 unabhängig
 verifiziert. Vier Funde wurden noch geschlossen, bevor Task 2 lief:
@@ -101,13 +105,14 @@ Offener Posten, der beim Map-Refresh NICHT stillschweigend geschlossen werden da
 implizite `/favicon.ico`-Anfrage, headless Chromium stellt sie gar nicht; der D-12-Smoke-Test ist
 daher grün unabhängig vom D-10-Fix. Offengelegte Lücke bei Roadmap-Kriterium 4, keine Regression.
 
-Last activity: 2026-07-26
+Last activity: 2026-07-27
 
 ## Performance Metrics
 
-- Plans completed: 44 / 44 (Phasen 1–7, Milestone v1.0)
-- Phases completed: 7 / 7 (100%)
-- Requirements delivered: 31 / 31 (STAB, INIT, BESTIARY, WELT, CHAR, UX — Milestone v1.0 vollständig)
+- Plans completed: 71 / 71 (44 in v1.0 + 27 in v1.1)
+- Phases completed: 11 / 11 (100%)
+- Requirements delivered: 42 / 42 (31 in v1.0 + 11 in v1.1)
+- Offener Backlog: 27 `DEBT`-Posten (Übertrag nach v1.2)
 
 ---
 **Per-Plan Metrics:**
