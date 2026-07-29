@@ -282,7 +282,8 @@ dnd-tracker-modular/
 ├── dist/                        # BUILD OUTPUT (gitignored, required for E2E)
 │   ├── dnd-tracker-bundled.html # Dev build (readable, E2E target)
 │   ├── dnd-tracker-optimized.html # Production build (minified)
-│   └── test-script.html         # Test harness
+│   ├── sw.js                    # Service Worker (von build.py hineinkopiert, CACHE_VERSION gepatcht)
+│   ├── manifest.webmanifest, icons/, assets/fonts/  # nur im Deploy-Artefakt bzw. lokal für file://
 │
 ├── .github/workflows/
 │   └── ci.yml                   # GitHub Actions CI (lint, typecheck, test, build)
@@ -458,7 +459,8 @@ dnd-tracker-modular/
 - Purpose: Build outputs
 - Generated: Yes (python build.py)
 - Committed: No (gitignored, but required locally for Playwright E2E)
-- Files: dnd-tracker-bundled.html (dev), dnd-tracker-optimized.html (prod), test-script.html
+- Files: `dnd-tracker-bundled.html` (dev, der `file://`-Doppelklick-Pfad), `dnd-tracker-optimized.html` (prod), `sw.js`. Manifest, Icons und `assets/fonts/` kommen im CI-Artefakt bzw. im Deploy dazu — `build.py` selbst schreibt nur die HTML-Dateien und `sw.js`.
+- Aufgeräumt am 2026-07-29: vier `_smoke_*.png` (15.06.) und ein `test-script.html` (18.03., trug noch Version 2.6.0) entfernt — Wegwerf-Artefakte ohne jeden Verweis im Repo, entsprach Triage-Eintrag N21.
 
 **`types/` + co-located `.d.ts`:**
 
