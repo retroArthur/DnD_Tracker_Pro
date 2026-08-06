@@ -1,27 +1,23 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.1
-milestone_name: Tech-Debt & Härtung
-current_phase: 11
-current_phase_name: Architektur- & Build-Hygiene
-status: milestone_complete
-stopped_at: Milestone v1.1 archiviert (milestones/v1.1-ROADMAP.md, milestones/v1.1-REQUIREMENTS.md)
-last_updated: "2026-07-27T20:15:00.000Z"
-last_activity: 2026-07-27
-last_activity_desc: "Milestone v1.1 abgeschlossen — 4/4 Phasen verifiziert, Nyquist 4/4 validated, Audit 11/11 Requirements, DEBT-17/DEBT-29 behoben. Nächster Schritt: /gsd-new-milestone (27 offene DEBT-Posten aus milestones/v1.1-REQUIREMENTS.md übernehmen)"
+milestone: v1.2
+milestone_name: Schulden-Abbau
+status: planning
+last_updated: "2026-08-06T07:32:10.929Z"
+last_activity: 2026-08-06
 progress:
-  total_phases: 4
-  completed_phases: 4
-  total_plans: 27
-  completed_plans: 27
-  percent: 100
+  total_phases: 0
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
+  percent: 0
 ---
 
-# Project State: D&D Kampagnen-Tracker Pro — Stabilisierung & Ausbau
+# Project State: D&D Kampagnen-Tracker Pro — Schulden-Abbau
 
-**Last Updated:** 2026-07-27
-**Milestone:** v1.1 „Tech-Debt & Härtung" — ✅ ABGESCHLOSSEN
-**Status:** Archiviert. Nächster Schritt: `/gsd-new-milestone` für v1.2
+**Last Updated:** 2026-08-06
+**Milestone:** v1.2 „Schulden-Abbau" — Requirements werden definiert
+**Status:** planning. Nächster Schritt: Requirements + Roadmap, danach `/gsd-plan-phase 12`
 
 ---
 
@@ -29,90 +25,23 @@ progress:
 
 **Core Value:** Die App muss am Spieltisch zuverlässig offline laufen — ein Spielleiter-Begleiter, der nie im Weg steht und keine Daten verliert.
 
-**Current Focus:** Kein aktiver Milestone. v1.2 ist aufzusetzen — die 27 offenen `DEBT`-Posten aus `milestones/v1.1-REQUIREMENTS.md` sind dabei zu übernehmen.
+**Current Focus:** v1.2 „Schulden-Abbau" — die 26 offenen `DEBT`-Posten aus der v1.1-Triage abarbeiten, Datensicherheit zuerst. Belege je Posten in [`11-CONCERNS-TRIAGE.md`](milestones/v1.1-phases/11-architektur-build-hygiene/11-CONCERNS-TRIAGE.md), vollständige Beschreibungen in [`milestones/v1.1-REQUIREMENTS.md`](milestones/v1.1-REQUIREMENTS.md).
 
 ---
 
 ## Current Position
 
-Milestone v1.1 abgeschlossen und archiviert (2026-07-27).
-
-- 4/4 Phasen, 27/27 Pläne, 69 Tasks · 11/11 Requirements erfüllt
-- Alle Phasen-VERIFICATIONs `passed`, Nyquist 4/4 `validated` (je 0 Gaps)
-- Audit: `v1.1-MILESTONE-AUDIT.md` — Status `tech_debt` (keine Blocker, 27 DEBT-Posten im Backlog)
-- Archive: `milestones/v1.1-ROADMAP.md`, `milestones/v1.1-REQUIREMENTS.md`
-- Tests: Jest 628 · Playwright 319 (2 skipped) · pytest 24 — alle grün
-
-**11-07 Task 3 Ergebnis (2026-07-26, `3b4bc92`):** die regenerierte `.planning/codebase/CONCERNS.md`
-(24 Befunde, mechanisch gezählt) wurde gegen `11-CONCERNS-TRIAGE.md` abgeglichen. 3 Befunde decken
-sich konsistent mit bereits dispositionierten Alt-Einträgen, 21 sind neu (überwiegend Datei-Backup/
-Migration/Soundboard/Würfelstatistik-Subsysteme), davon 13 als `DEBT-17`..`DEBT-29` in den Backlog
-übernommen (`.planning/REQUIREMENTS.md`, IDs mit der Triage identisch). Kritischster neuer Fund:
-DEBT-17 — Datei-Backup schreibt eine leere Kampagne, sobald der IndexedDB-Modus (>5MB) greift, und
-prunt darüber echte Snapshots weg. Zusätzlich zwei falsche Aussagen im Codebase-Map-Refresh selbst
-korrigiert: `TESTING.md` behauptete fälschlich, E2E laufe nicht in CI (der `e2e`-Job ist seit Phase 8
-blockierend); die genannte Playwright-Zahl (318) wich vom tatsächlichen Lauf (319 passed / 2 skipped)
-ab. Volle lokale Kette grün: Dev-/Prod-Build, `pytest tests/build/` (24), `npm test` (621),
-`npx playwright test` (319/2 skipped), Smoke-Test gegen HTTP-Server (8). Details in
-`.planning/phases/11-architektur-build-hygiene/11-07-SUMMARY.md`.
-
-**Roadmap-Kriterium 3 erfüllt (2026-07-26, nach ausdrücklicher Nutzerfreigabe gepusht):**
-`f3dcd23` → `origin/main` (171 Commits, Fast-Forward). Der erste CI-Lauf
-([30215615433](https://github.com/retroArthur/DnD_Tracker_Pro/actions/runs/30215615433)) war ROT:
-`smoke-test` meldete `404-Antworten: ["http://localhost:8000/sw.js"]`, `deploy` wurde übersprungen.
-
-Ursache war eine Lücke in der CI-Paketierung, kein Produktfehler: der `build`-Job lud nur
-`dist/dnd-tracker-optimized.html` als Artefakt `production-build` hoch, während
-`build.py --production` zusätzlich `dist/sw.js` schreibt und Manifest/Icons/Fonts erst im
-`deploy`-Job aus dem Repo dazukommen. Der `smoke-test` prüfte damit ein Artefakt, das dem
-veröffentlichten Stand nicht entsprach. Der `deploy`-Job baut selbst und war nie betroffen —
-die veröffentlichte App hatte ihren Service Worker.
-
-Nur `sw.js` zu ergänzen hätte nicht gereicht: der SW precacht `./manifest.webmanifest` über
-`cache.addAll()`, das bei einem einzigen 404 vollständig scheitert (CR-09, `sw.js:9-12`).
-Fix in `bfd6447`: der `build`-Job schnürt das Artefakt mit denselben Schritten wie `deploy` und
-lädt `dist/` komplett hoch; `deploy` blieb unangetastet. Lokal gegen ein exakt nachgebautes
-Artefakt verifiziert (8/8 grün) — der lokale Grünlauf zuvor war ein Artefakt-Altbestand in
-`dist/` vom 19.07.
-
-Zweiter Lauf ([30216452989](https://github.com/retroArthur/DnD_Tracker_Pro/actions/runs/30216452989),
-`bfd6447`): **alle sechs Jobs grün** (`lint-and-typecheck`, `test`, `e2e`, `build`, `smoke-test`,
-`deploy`), `conclusion=success`. Annotationen: **keine Node-Deprecation-Meldung**; die zehn
-vorhandenen sind ESLint-Warnungen aus `lint-and-typecheck` (undefinierte/ungenutzte Globals, ein
-überflüssiges Escape) und liegen weit unter dem 50-Warnungen-Gate.
-
-**Phasen-Verifikation abgeschlossen:** 5/5 Kriterien, `11-VERIFICATION.md` auf `passed`. SC4 wurde per Human-Verifikation im echten Browser geschlossen (Konsole sauber; auf Netzwerkebene besteht die `/favicon.ico`-404-Sondierung fort, erreicht die Konsole aber nicht).
-
-**Advisory-Audit vor der Pause (2026-07-26):** 174/181 Kriterien der Pläne 11-01..11-06 unabhängig
-verifiziert. Vier Funde wurden noch geschlossen, bevor Task 2 lief:
-
-- `be026c1`/`5009240` — das Favicon-Data-URI war malformed (`build.py` flachte `"` zu `'`, kollidierte
-  mit `font-family="'Courier New', …"` in `icons/icon.svg:59/74`). Encoder auf einen einzigen
-  `urllib.parse.quote`-Durchgang umgestellt, Regressionstest ergänzt (`tests/build/` 23 → 24).
-
-- `ef3789a`/`a40f42d` — drei Belege in `11-CONCERNS-TRIAGE.md` (Zeilen 5/18/32) gegen Live-Code
-  korrigiert, DEBT-16 in die Dispositions-Spalte gehoben (sonst für Task 3 nicht auffindbar).
-  Dispositions-Verteilung unverändert 22/1/8/15 = 46.
-
-- `cecbace` — Nachtrag in `11-05-SUMMARY.md`, warum die Task-2-Prüfungen den Defekt nicht sehen konnten.
-
-Nicht geschlossen (bewusst): ~~kein CI-Lauf der neuen `ci.yml` existiert~~ — **inzwischen erledigt,
-siehe Roadmap-Kriterium 3 oben (Lauf 30216452989 grün, keine Deprecation-Annotation).** Offen bleibt:
-der Favicon-Render-Nachweis lief als Ad-hoc-Skript, nicht als committeter Playwright-Spec.
-
-Offener Posten, der beim Map-Refresh NICHT stillschweigend geschlossen werden darf:
-`.planning/WINDOWS.md` Eintrag 3 (`open_count: 1`) — Playwrights Page-Events feuern nicht für die
-implizite `/favicon.ico`-Anfrage, headless Chromium stellt sie gar nicht; der D-12-Smoke-Test ist
-daher grün unabhängig vom D-10-Fix. Offengelegte Lücke bei Roadmap-Kriterium 4, keine Regression.
-
-Last activity: 2026-07-27
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-08-06 — Milestone v1.2 started
 
 ## Performance Metrics
 
 - Plans completed: 71 / 71 (44 in v1.0 + 27 in v1.1)
 - Phases completed: 11 / 11 (100%)
 - Requirements delivered: 42 / 42 (31 in v1.0 + 11 in v1.1)
-- Offener Backlog: 27 `DEBT`-Posten (Übertrag nach v1.2)
+- Offener Backlog: **26** `DEBT`-Posten — der Scope von v1.2. (`DEBT-02` beim Aufsetzen als bereits erledigt erkannt, Plan 11-07 hatte es mit abgeräumt; `DEBT-17`/`DEBT-29` wurden in v1.1 behoben.)
 
 ---
 **Per-Plan Metrics:**

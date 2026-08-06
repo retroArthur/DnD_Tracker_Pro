@@ -202,7 +202,7 @@ that shared the same root cause as fail 7 below. All 13 are now fixed; the
 full Playwright suite (233 tests) ran green twice in a row (231 passed / 2
 skipped / 0 failed) before this document was written, and again after the
 CI-gate work in this same plan. Root-cause analysis and every fix is detailed
-in `.planning/phases/08-test-fundament-gr-n/08-RESEARCH.md`; this section is
+in `.planning/milestones/v1.1-phases/08-test-fundament-gr-n/08-RESEARCH.md`; this section is
 the durable per-fail record required by D-07.
 
 ### 1. (App-Bug) Charakter-/Encounter-Attribut-Modifikator-Badge bleibt bei "+0"
@@ -333,7 +333,7 @@ maskierende `isVisible()`-Guards (inkl. eines echten Root-Cause-Bugs in
 harte Assertions umgestellt, beide `page.evaluate()`-Bestandsausnahmen
 D-06-geprüft dokumentiert, und `waitForTimeout` in den direkt betroffenen
 Specs durch `waitForSelector`/`waitForFunction` ersetzt. Details:
-`.planning/phases/08-test-fundament-gr-n/08-03-SUMMARY.md`. Commits: `4a25d98`
+`.planning/milestones/v1.1-phases/08-test-fundament-gr-n/08-03-SUMMARY.md`. Commits: `4a25d98`
 (Zähl-Assertionen), `4238250` (Masking-Audit).
 
 ### CI-Gate (D-03, TEST-02)

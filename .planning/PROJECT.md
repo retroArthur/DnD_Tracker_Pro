@@ -27,23 +27,47 @@ CI-Artefakt-Paketierung (der `smoke-test` prüfte ein Artefakt ohne Service Work
 Datenverlust im Datei-Backup ab 5 MB Kampagnengröße, bei dem `pruneOldSnapshots()` binnen zehn
 Spieltagen alle echten Snapshots wegräumte — bei grüner Statusanzeige. Beide behoben.
 
-## Next Milestone Goals (v1.2 — noch nicht aufgesetzt)
+## Current Milestone: v1.2 Schulden-Abbau
 
-**Der Ausgangspunkt steht bereits fest:** 27 offene, dispositionierte `DEBT`-Posten mit
-Live-Code-Belegen in
-[`milestones/v1.1-REQUIREMENTS.md`](milestones/v1.1-REQUIREMENTS.md) und
-[`11-CONCERNS-TRIAGE.md`](phases/11-architektur-build-hygiene/11-CONCERNS-TRIAGE.md).
-Diese Liste beim Aufsetzen von v1.2 übernehmen — sie ist das Produkt der v1.1-Triage, nicht deren
-Versäumnis.
+**Goal:** Die 26 in der v1.1-Triage erfassten `DEBT`-Posten abarbeiten — allen voran die
+Datenverlust-Risiken in Backup, Export und Migration — damit der Backlog leer ist und v1.3 wieder
+Features bringen kann.
 
-Schwerste offene Posten: **DEBT-18** (Umzugs-Export `file://`→PWA verliert Soundboard-Audio und
-Würfelstatistik aus IndexedDB), **DEBT-19** (Audio-Löschen ohne Undo), **DEBT-21/22** (Datei-Backup
-sichert nur die aktive Kampagne; Dateinamen können zwischen Kampagnen kollidieren).
+**Target features:**
 
-**Lohnende Richtung darüber hinaus:** die Fehlerklasse hinter `DEBT-17` systematisch verfolgen —
-zwei Subsysteme, die sich nur implizit auf einen Vertrag verlassen, plus ein Prüfaufbau, der die
-Naht nie durchläuft. Der Integration-Check fand im v1.1-Scope keinen zweiten Fall, hat aber nur
-gezielt und nicht erschöpfend gesucht.
+- **Datensicherheit** (`DEBT-18, 19, 20, 21, 22, 05, 08, 11`) — Umzugs-Export erfasst
+  IndexedDB-Inhalte; Datei-Backup deckt alle Kampagnen ab und kollidiert nicht bei Namen;
+  Audio-Löschen ist rückgängig zu machen; Undo-Stack bleibt bei Parse-Fehlern konsistent;
+  Persistenz-Randfälle sind getestet
+- **Sicherheit** (`DEBT-23, 14`) — `call`-Aktion mit Ziel-Whitelist, Regex-Capture in
+  `parseWikiLinks()` escapt
+- **Performance** (`DEBT-06, 07, 24`) — Undo-Snapshots und Save-Serialisierung entlasten,
+  Würfelstatistik-Store begrenzen
+- **Wartbarkeit** (`DEBT-04, 25, 27, 09, 10, 16, 12, 13, 03`) — vier Module mit 1500–1900 Zeilen
+  aufteilen, `const D`-Überschattung beseitigen, tote Seeds und die letzten drei
+  `execCommand`-Reste entfernen
+- **Tests & Gates** (`DEBT-15, 28, 01`) — Toast-Race schließen, die fünf ungetesteten Welt-Features
+  abdecken, Lint-/Typecheck-/Coverage-Gates schärfen
+- **Doku** (`DEBT-26`) — veraltete Kopfkommentare im Datei-Backup
+
+**Key context:**
+
+- Jeder Posten trägt bereits einen **Live-Code-Beleg** aus der Phase-11-Triage
+  ([`11-CONCERNS-TRIAGE.md`](milestones/v1.1-phases/11-architektur-build-hygiene/11-CONCERNS-TRIAGE.md)) — die
+  Recherche ist zu großen Teilen erledigt.
+- **Reihenfolge ist nicht beliebig:** Datensicherheit zuerst, weil `DEBT-18` einen *irreversiblen*
+  Verlust beim einmaligen, angeleiteten Umzug `file://` → PWA bedeutet.
+- **`DEBT-01` (schwache Gates) gehört ans Ende**, nicht an den Anfang — schärfere Coverage-Gates auf
+  einer Codebasis, die gerade in vier Modulen aufgeteilt wird, arbeiten gegen sich selbst.
+- **Anders als v1.1 ist dieser Milestone NICHT verhaltensneutral.** `DEBT-18/19/21/22` ändern
+  spürbar, was gesichert und wiederherstellbar ist.
+- `DEBT-02` wurde beim Aufsetzen als bereits erledigt erkannt (Plan 11-07 hat es mit abgeräumt) und
+  ist deshalb nicht Teil dieses Milestones — 26 statt 27 Posten.
+
+**Lohnende Richtung über die Liste hinaus:** die Fehlerklasse hinter `DEBT-17` systematisch
+verfolgen — zwei Subsysteme, die sich nur implizit auf einen Vertrag verlassen, plus ein Prüfaufbau,
+der die Naht nie durchläuft. Der Integration-Check fand im v1.1-Scope keinen zweiten Fall, hat aber
+nur gezielt und nicht erschöpfend gesucht.
 
 **Zurückgestellt:** Soundboard Per-Track-Play (Layering — Design aus der v1.0-Session liegt bereit).
 
