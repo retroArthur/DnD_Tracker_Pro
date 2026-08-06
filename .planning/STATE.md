@@ -31,19 +31,25 @@ progress:
 
 ## Current Position
 
-Phase: 12 (datensicherheit) — Kontext erfasst, bereit zur Planung
-Plan: —
-Status: `12-CONTEXT.md` liegt vor (8 Entscheidungen, alle vier Graubereiche besprochen)
-Last activity: 2026-08-06 — `/gsd-discuss-phase 12` abgeschlossen
+Phase: 12 (datensicherheit) — **geplant und verifiziert, bereit zur Ausführung**
+Plan: 0 von 7 ausgeführt
+Status: 7 Pläne über 5 Wellen; `gsd-plan-checker` VERIFICATION PASSED (0 Blocker, 0 Warnungen)
+Last activity: 2026-08-06 — `/gsd-plan-phase 12` abgeschlossen
 
-**Nächster Schritt:** `/gsd-plan-phase 12` — findet jetzt die CONTEXT.md und läuft durch
-(Recherche → Planung → Plan-Checker).
+**Nächster Schritt:** `/gsd-execute-phase 12`
 
-**Drei offene Fragen aus der Diskussion, die die Recherche beantworten soll:**
-1. Base64-Praxisgrenze — ab welcher Audio-Bibliotheksgröße scheitert auch die separate Datei?
-2. Liefert `getCampaignIndex()` unter `file://` zuverlässig alle Kampagnen, auch im IDB-Modus?
-3. `diceStats`-Volumen: vollständig exportieren oder greift schon eine Begrenzung? (Berührung mit
-   `PERF-02` in Phase 13)
+**Die drei offenen Fragen aus der Diskussion sind beantwortet:**
+1. **Base64-Grenze:** V8s String-Limit `0x1fffffe8` (512 MiB) ÷ 4/3 → Kodierung scheitert bei
+   **384 MiB Rohaudio**. Warnschwelle 300 MiB, geprüft über `listSoundBlobs()`-Metadaten **vor** dem
+   Kodieren — danach wäre der `RangeError` bereits geworfen.
+2. **`getCampaignIndex()` ist verlässlich:** `saveCampaignIndex()` (`campaign-manager.js:17-19`) ruft
+   `StorageAPI.setJSON()` direkt auf und umgeht `save()`/`saveImmediate()` — der Index überlebt den
+   IDB-Umschaltpfad, der `DEBT-17` verursachte.
+3. **`diceStats` braucht hier kein Cap** (~15 MB Worst Case). Begrenzung ist `PERF-02` in Phase 13 —
+   die Pläne verbieten ausdrücklich, sie hier mitzubauen (sonst zwei konkurrierende Mechanismen).
+
+**Zwei blockierende Human-Checkpoints in der Phase:** Wizard-UX mit zwei Dateien (12-02) und das
+Browser-Verhalten an der Base64-Grenze (12-07).
 
 ## Performance Metrics
 
