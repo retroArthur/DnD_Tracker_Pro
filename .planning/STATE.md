@@ -31,10 +31,19 @@ progress:
 
 ## Current Position
 
-Phase: Not started (defining requirements)
+Phase: 12 (datensicherheit) — Kontext erfasst, bereit zur Planung
 Plan: —
-Status: Defining requirements
-Last activity: 2026-08-06 — Milestone v1.2 started
+Status: `12-CONTEXT.md` liegt vor (8 Entscheidungen, alle vier Graubereiche besprochen)
+Last activity: 2026-08-06 — `/gsd-discuss-phase 12` abgeschlossen
+
+**Nächster Schritt:** `/gsd-plan-phase 12` — findet jetzt die CONTEXT.md und läuft durch
+(Recherche → Planung → Plan-Checker).
+
+**Drei offene Fragen aus der Diskussion, die die Recherche beantworten soll:**
+1. Base64-Praxisgrenze — ab welcher Audio-Bibliotheksgröße scheitert auch die separate Datei?
+2. Liefert `getCampaignIndex()` unter `file://` zuverlässig alle Kampagnen, auch im IDB-Modus?
+3. `diceStats`-Volumen: vollständig exportieren oder greift schon eine Begrenzung? (Berührung mit
+   `PERF-02` in Phase 13)
 
 ## Performance Metrics
 
