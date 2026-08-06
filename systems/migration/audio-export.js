@@ -183,10 +183,31 @@ async function buildAudioExport() {
 
 // ============================================================
 // DOWNLOAD — Blob + Anchor-Download (Muster: downloadFullExport in full-export.js)
+// Plan 12-02, Task 1: Hinweis-Toast vor dem Bauen + Sonderfall "leere Bibliothek".
 // ============================================================
 async function downloadAudioExport() {
+    // Hinweis-Toast VOR dem Bauen: FileReader, JSON.stringify und die
+    // Blob-Konstruktion blockieren den Hauptthread fuer ihre Dauer — bei 100 MB
+    // Rohdaten sind allein fuer JSON.stringify ~79ms gemessen, mit Kodierung und
+    // Blob-Bau kommen leicht Sekunden zusammen. Ohne Hinweis wirkt das am
+    // Spieltisch wie ein Absturz.
+    if (typeof window.showToast === 'function') {
+        window.showToast('Audio-Export wird erstellt — bei großen Bibliotheken dauert das einen Moment');
+    }
+
     try {
         const exportObj = await buildAudioExport();
+
+        // Sonderfall "leere Bibliothek": weder Audiodateien noch Wuerfelstatistik
+        // vorhanden -> KEIN Download, KEIN weiterer Toast (still bleiben). Eine
+        // leere zweite Datei wuerde beim einmaligen Umzug nur die Frage aufwerfen,
+        // ob etwas schiefging.
+        const hasAudio = Array.isArray(exportObj.audioFiles) && exportObj.audioFiles.length > 0;
+        const hasDiceStats = Array.isArray(exportObj.diceStats) && exportObj.diceStats.length > 0;
+        if (!hasAudio && !hasDiceStats) {
+            return;
+        }
+
         const json = JSON.stringify(exportObj, null, 2);
         const blob = new Blob([json], { type: 'application/json' });
         const url = URL.createObjectURL(blob);
@@ -200,6 +221,10 @@ async function downloadAudioExport() {
             window.showToast('Audio-Export heruntergeladen');
         }
     } catch (err) {
+        // Bei feasible:false wirft buildAudioExport() bereits mit Groesse/Dateizahl/
+        // Namen in der Message (computeFeasibility) — hier NUR benannt, NIE
+        // weitergeworfen: der Haupt-Export darf unter keinen Umstaenden an der
+        // zweiten Datei scheitern (D-02-Prinzip).
         if (typeof APP_CONFIG !== 'undefined' && APP_CONFIG.DEBUG_MODE && window.ErrorHandler) {
             window.ErrorHandler.log('downloadAudioExport', err, 'Audio-Export fehlgeschlagen');
         }

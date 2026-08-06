@@ -10,6 +10,10 @@
  * "checkAudioExportFeasible / Härtung" (weiter unten) beschreibt den Kontrakt aus Task 3
  * und wird erst nach dessen Implementierung grün — bis dahin bleibt er bewusst rot
  * (Präzedenz: full-export.test.js, TECH-02 Wave-0-Muster).
+ *
+ * Plan 12-02, Task 1: "downloadAudioExport — Zwei-Datei-Download (SAFE-01)" und der
+ * Quelltext-Beleg für den Aufruf in startMigrationFlow() (migration-wizard.js) sind
+ * ab hier ergänzt. Plan 12-02, Task 2: "findMissingSceneAudio" folgt weiter unten.
  */
 
 const fs = require('fs');
@@ -25,6 +29,8 @@ let importAudioExport;
 let blobToBase64;
 let base64ToBlob;
 let checkAudioExportFeasible; // erst ab Task 3 vorhanden
+let downloadAudioExport; // Plan 12-02, Task 1
+let findMissingSceneAudio; // Plan 12-02, Task 2
 
 let mockListSoundBlobs;
 let mockGetSoundBlob;
@@ -32,6 +38,10 @@ let mockSaveSoundBlob;
 let mockGetAllStats;
 let mockShowToast;
 let mockErrorLog;
+let mockCreateElement;
+let mockCreateObjectURL;
+let mockRevokeObjectURL;
+let createdAnchors;
 
 beforeAll(() => {
     mockListSoundBlobs = jest.fn();
@@ -40,6 +50,15 @@ beforeAll(() => {
     mockGetAllStats = jest.fn();
     mockShowToast = jest.fn();
     mockErrorLog = jest.fn();
+
+    createdAnchors = [];
+    mockCreateElement = jest.fn(tag => {
+        const el = { tagName: tag, href: '', download: '', click: jest.fn() };
+        if (tag === 'a') createdAnchors.push(el);
+        return el;
+    });
+    mockCreateObjectURL = jest.fn(() => 'blob:mock-url');
+    mockRevokeObjectURL = jest.fn();
 
     const APP_CONFIG_MOCK = { VERSION: '2.7.0', DEBUG_MODE: false };
 
@@ -55,6 +74,11 @@ beforeAll(() => {
         },
         APP_CONFIG: APP_CONFIG_MOCK,
         console: console,
+        // Plan 12-02, Task 1: downloadAudioExport() referenziert document/URL als
+        // Globals (Browser-Muster: window === globalThis) — im vm-Kontext MUESSEN
+        // sie deshalb direkt auf dem Context-Objekt liegen, nicht unter window.*.
+        document: { createElement: mockCreateElement },
+        URL: { createObjectURL: mockCreateObjectURL, revokeObjectURL: mockRevokeObjectURL },
         // jsdom (testEnvironment: 'jsdom') stellt diese bereits im Node-Global-Scope
         // bereit — hier in den vm-Kontext durchreichen, analog full-export.test.js.
         Blob: global.Blob,
@@ -74,6 +98,8 @@ beforeAll(() => {
     blobToBase64 = context.blobToBase64;
     base64ToBlob = context.base64ToBlob;
     checkAudioExportFeasible = context.checkAudioExportFeasible;
+    downloadAudioExport = context.downloadAudioExport;
+    findMissingSceneAudio = context.findMissingSceneAudio;
 });
 
 beforeEach(() => {
@@ -83,6 +109,10 @@ beforeEach(() => {
     mockGetAllStats.mockReset();
     mockShowToast.mockReset();
     mockErrorLog.mockReset();
+    mockCreateElement.mockClear();
+    mockCreateObjectURL.mockClear();
+    mockRevokeObjectURL.mockClear();
+    createdAnchors = [];
 });
 
 // Deterministische Byte-Fixtures (klein, exakt vergleichbar nach dem Base64-Rundlauf)
@@ -223,6 +253,74 @@ describe('importAudioExport — Rundlauf (SAFE-01)', () => {
 });
 
 // ============================================================
+// PLAN 12-02, TASK 1 — downloadAudioExport() / Zwei-Datei-Download
+// Bleibt rot, bis Task 1 die leere-Bibliothek-Sonderfall-Pruefung ergaenzt und
+// den startMigrationFlow()-Aufruf in migration-wizard.js verdrahtet.
+// ============================================================
+
+describe('downloadAudioExport — Zwei-Datei-Download (SAFE-01)', () => {
+    test('gefuellte Bibliothek loest genau einen Anchor-Download aus', async () => {
+        expect(typeof downloadAudioExport).toBe('function'); // rot bis Task 1 implementiert
+
+        mockListSoundBlobs.mockResolvedValue([
+            { id: 'audio_1_1', name: 'a.mp3', size: 5, type: 'audio/mpeg', savedAt: 111 }
+        ]);
+        mockGetSoundBlob.mockResolvedValue(new Blob([bytesA()], { type: 'audio/mpeg' }));
+        mockGetAllStats.mockResolvedValue([]);
+
+        await downloadAudioExport();
+
+        expect(createdAnchors).toHaveLength(1);
+        expect(createdAnchors[0].click).toHaveBeenCalledTimes(1);
+        expect(createdAnchors[0].download).toMatch(/^dnd-tracker-audio-.*\.json$/);
+        expect(mockCreateObjectURL).toHaveBeenCalledTimes(1);
+        expect(mockRevokeObjectURL).toHaveBeenCalledTimes(1);
+    });
+
+    test('leere Bibliothek (weder audioFiles noch diceStats) loest KEINEN Download aus', async () => {
+        mockListSoundBlobs.mockResolvedValue([]);
+        mockGetAllStats.mockResolvedValue([]);
+
+        await downloadAudioExport();
+
+        expect(createdAnchors).toHaveLength(0);
+        expect(mockCreateObjectURL).not.toHaveBeenCalled();
+    });
+
+    test('feasible:false loest KEINEN Download aus, Toast nennt Groesse/Dateizahl/Namen', async () => {
+        const overLimitByte = 300 * 1024 * 1024 + 1;
+        mockListSoundBlobs.mockResolvedValue([
+            { id: 'audio_1_1', name: 'riesig.wav', size: overLimitByte, type: 'audio/wav', savedAt: 1 }
+        ]);
+
+        await downloadAudioExport();
+
+        expect(createdAnchors).toHaveLength(0);
+        expect(mockGetSoundBlob).not.toHaveBeenCalled();
+        const errorToastCalls = mockShowToast.mock.calls.filter(call =>
+            typeof call[0] === 'string' && call[0].includes('riesig.wav'));
+        expect(errorToastCalls.length).toBeGreaterThan(0);
+        expect(errorToastCalls[0][0]).toMatch(/MB/);
+        expect(errorToastCalls[0][0]).toMatch(/1 Datei/);
+    });
+
+    test('Quelltext-Beleg: startMigrationFlow() ruft downloadAudioExport() NACH downloadFullExport() auf', () => {
+        const wizardSrc = fs.readFileSync(
+            path.join(__dirname, '../../systems/migration/migration-wizard.js'), 'utf-8'
+        );
+        const fnMatch = wizardSrc.match(/function startMigrationFlow\(\)\s*\{[\s\S]*?\n\}/);
+        expect(fnMatch).not.toBeNull();
+        const fnBody = fnMatch[0];
+
+        const downloadFullIdx = fnBody.indexOf('downloadFn(');
+        const downloadAudioIdx = fnBody.indexOf('downloadAudioExport');
+        expect(downloadFullIdx).toBeGreaterThan(-1);
+        expect(downloadAudioIdx).toBeGreaterThan(-1);
+        expect(downloadAudioIdx).toBeGreaterThan(downloadFullIdx);
+    });
+});
+
+// ============================================================
 // TASK 3 — checkAudioExportFeasible / Härtung des Import-Pfads
 // Bleibt rot, bis Task 3 checkAudioExportFeasible/AUDIO_EXPORT_SAFE_RAW_BYTES/
 // MAX_IMPORT_AUDIO_FILES/ALLOWED_BLOB_ID_RE implementiert.
@@ -325,5 +423,77 @@ describe('importAudioExport — Härtung (SAFE-01/T-12-01/T-12-02/T-12-03)', () 
         expect(result.imported).toBe(1);
         expect(result.skipped).toHaveLength(1);
         expect(result.skipped[0].id).toBe('audio_1_1');
+    });
+});
+
+// ============================================================
+// PLAN 12-02, TASK 2 — findMissingSceneAudio() + Wizard-Quelltext-Belege
+// Bleibt rot, bis Task 2 findMissingSceneAudio() in audio-export.js sowie den
+// zweiten Dropzone-Bereich und die _exportType-Weiche in migration-wizard.js ergaenzt.
+// ============================================================
+
+describe('findMissingSceneAudio — benennt Szenen mit unaufloesbaren blobIds (SAFE-01)', () => {
+    test('liefert je Szene mit Luecken { sceneName, blobIds }; vollstaendig aufloesbare Szenen fehlen', () => {
+        expect(typeof findMissingSceneAudio).toBe('function'); // rot bis Task 2 implementiert
+
+        const D = {
+            soundboard: {
+                scenes: [
+                    { id: 's1', name: 'Taverne', tracks: [{ blobId: 'audio_1_1' }, { blobId: 'audio_2_2' }] },
+                    { id: 's2', name: 'Kampf', tracks: [{ blobId: 'audio_9_9' }] },
+                    { id: 's3', name: 'Stille', tracks: [] }
+                ]
+            }
+        };
+        const vorhandeneIds = ['audio_1_1', 'audio_2_2'];
+
+        const result = findMissingSceneAudio(D, vorhandeneIds);
+
+        expect(result).toEqual([{ sceneName: 'Kampf', blobIds: ['audio_9_9'] }]);
+    });
+
+    test('sind alle blobIds aufloesbar, ist das Ergebnis ein leeres Array', () => {
+        const D = {
+            soundboard: {
+                scenes: [
+                    { id: 's1', name: 'Taverne', tracks: [{ blobId: 'audio_1_1' }] }
+                ]
+            }
+        };
+
+        const result = findMissingSceneAudio(D, ['audio_1_1']);
+
+        expect(result).toEqual([]);
+    });
+
+    test('fehlendes D.soundboard oder leere scenes liefert leeres Array, kein Crash', () => {
+        expect(findMissingSceneAudio({}, [])).toEqual([]);
+        expect(findMissingSceneAudio(null, [])).toEqual([]);
+        expect(findMissingSceneAudio({ soundboard: { scenes: [] } }, ['x'])).toEqual([]);
+    });
+});
+
+describe('migration-wizard.js — Quelltext-Belege fuer den zweiten Dropzone-Bereich (SAFE-01)', () => {
+    let wizardSrc;
+    beforeAll(() => {
+        wizardSrc = fs.readFileSync(
+            path.join(__dirname, '../../systems/migration/migration-wizard.js'), 'utf-8'
+        );
+    });
+
+    test('Schritt 3 enthaelt die drei Audio-Dropzone-Element-ids', () => {
+        expect(wizardSrc).toMatch(/migration-wizard-audio-dropzone/);
+        expect(wizardSrc).toMatch(/migration-wizard-audio-input/);
+        expect(wizardSrc).toMatch(/migration-wizard-audio-status/);
+    });
+
+    test('_processWizardFile() verzweigt auf audio-export-v1 VOR der full-v1-Pruefung', () => {
+        const fnMatch = wizardSrc.match(/function _processWizardFile\([\s\S]*?\n\}/);
+        expect(fnMatch).not.toBeNull();
+        const audioBranchIdx = fnMatch[0].indexOf('audio-export-v1');
+        const fullV1CheckIdx = fnMatch[0].indexOf("!== 'full-v1'");
+        expect(audioBranchIdx).toBeGreaterThan(-1);
+        expect(fullV1CheckIdx).toBeGreaterThan(-1);
+        expect(audioBranchIdx).toBeLessThan(fullV1CheckIdx);
     });
 });

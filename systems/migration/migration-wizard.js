@@ -102,8 +102,10 @@ function showMigrationWizard() {
                 <h3 class="migration-step-heading">Schritt 2: Umzugs-Export erstellen</h3>
                 <p class="migration-step-body">
                     Klicke in der ge&#246;ffneten Tracker-Datei auf
-                    <strong>Einstellungen &rarr; Zur installierbaren App umziehen</strong>,
-                    um einen Umzugs-Export zu erstellen und herunterzuladen.
+                    <strong>Einstellungen &rarr; Zur installierbaren App umziehen</strong>.
+                    Dabei werden <strong>zwei Dateien</strong> heruntergeladen &#8212; beide
+                    werden hier gebraucht. Falls dein Browser fragt, ob mehrere Dateien
+                    heruntergeladen werden d&#252;rfen, best&#228;tige das.
                 </p>
                 <div class="migration-step-actions">
                     <button class="btn btn-primary migration-btn-next" data-action="wizard-next-step">Umzugs-Export erstellen</button>
@@ -446,6 +448,22 @@ function startMigrationFlow() {
             : window.downloadFullExport;
         if (typeof downloadFn === 'function') {
             downloadFn();
+        }
+
+        // Plan 12-02, Task 1 (D-01): zweite Datei fuer IndexedDB-Inhalte
+        // (Audio + Wuerfelstatistik) im SELBEN Ausführungskontext des Klick-Handlers
+        // anstossen — NICHT per setTimeout verzoegert, das verschlechtert die
+        // Zuordnung zur Nutzergeste. downloadAudioExport() ist async und faengt
+        // ihre eigenen Fehler bereits intern ab (Toast statt throw); das .catch()
+        // hier ist nur ein zusaetzliches Sicherheitsnetz, damit ein unerwarteter
+        // Fehler weder den bereits erfolgten Haupt-Export noch den Rest des Flows
+        // (Divergenz-Merker, PWA-Fenster, Banner) verhindert.
+        if (typeof window.downloadAudioExport === 'function') {
+            window.downloadAudioExport().catch(err => {
+                if (APP_CONFIG.DEBUG_MODE) {
+                    ErrorHandler.log('startMigrationFlow', err, 'Audio-Export fehlgeschlagen');
+                }
+            });
         }
     } catch (err) {
         if (APP_CONFIG.DEBUG_MODE) {
