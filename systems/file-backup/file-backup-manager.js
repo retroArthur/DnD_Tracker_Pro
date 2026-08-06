@@ -427,3 +427,4 @@ window.readCampaignDataForBackup = readCampaignDataForBackup;
 window.setBackupStatus = setBackupStatus;
 window.getBackupStatus = getBackupStatus;
 window.getLastBackupTime = getLastBackupTime;
+window._doBackup = _doBackup;

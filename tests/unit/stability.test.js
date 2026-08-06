@@ -921,6 +921,91 @@ describe('Persistence Regression Tests (Plan 01-02)', () => {
             expect(localStorage.getItem(STORAGE_KEY + '_ts')).toBeNull();
         });
     });
+
+    // ----------------------------------------------------------------
+    // describe: "localStorage-Quota-Fallback (SAFE-06)"
+    // Prüft: Wirft StorageAPI.set() einen QuotaExceededError, fällt persistence.js
+    // auf IndexedDB zurück (saveToIndexedDBFallback) und entfernt den Begleit-
+    // Timestamp — dieselbe catch-Zweig-Logik wie in saveImmediate()/save()
+    // (persistence.js:107-137 bzw. :245-267).
+    // Zwei Beweisarten (Hausstil dieser Datei): Verhaltenssimulation + Quelltext-Audit.
+    // ----------------------------------------------------------------
+    describe('localStorage-Quota-Fallback (SAFE-06)', () => {
+        beforeEach(() => {
+            setupMockIDB();
+        });
+
+        test('Verhaltenssimulation: QuotaExceededError → Daten landen in IDB, _ts-Key wird entfernt', async () => {
+            // Begleit-Timestamp existiert vor dem fehlgeschlagenen LS-Save (wie nach einem
+            // vorherigen erfolgreichen Save).
+            localStorage.setItem(STORAGE_KEY, JSON.stringify({ characters: [] }));
+            localStorage.setItem(STORAGE_KEY + '_ts', '12345');
+
+            // StorageAPI.set()-Mock, der einen echten QuotaExceededError wirft — genau der
+            // Fehlertyp, den echte Browser bei vollem localStorage werfen (name-Property,
+            // kein DOMException-Polyfill nötig für den Test).
+            const quotaApi = {
+                set: () => {
+                    const err = new Error('Quota exceeded');
+                    err.name = 'QuotaExceededError';
+                    throw err;
+                },
+                remove: key => localStorage.removeItem(key)
+            };
+
+            const dataString = JSON.stringify(D);
+
+            // Inline-Nachbau der catch-Zweig-Logik aus saveImmediate() (persistence.js:107-121)
+            // bzw. save() (persistence.js:245-256): StorageAPI.set() wirft, dann IDB-Write,
+            // dann Begleit-Timestamp entfernen.
+            let idbSucceeded = false;
+            try {
+                quotaApi.set(STORAGE_KEY, dataString); // wirft QuotaExceededError
+            } catch (e) {
+                expect(e.name).toBe('QuotaExceededError');
+                // Fallback: IDB-Write (echte realSaveToIndexedDB-Logik dieser Testdatei)
+                await realSaveToIndexedDB(STORAGE_KEY, dataString);
+                idbSucceeded = true;
+                // (D-01) Begleit-Timestamp entfernen — IDB hat einen eigenen timestamp
+                quotaApi.remove(STORAGE_KEY + '_ts');
+            }
+
+            expect(idbSucceeded).toBe(true);
+            // Die Daten liegen jetzt im gemockten IDB-Store
+            expect(mockIDBStore[STORAGE_KEY]).toBeDefined();
+            expect(mockIDBStore[STORAGE_KEY].data).toBe(dataString);
+            // Der Begleit-Timestamp ist entfernt
+            expect(localStorage.getItem(STORAGE_KEY + '_ts')).toBeNull();
+        });
+
+        test('Quelltext-Audit: saveImmediate() UND save() rufen im catch-Zweig saveToIndexedDBFallback() auf', () => {
+            // Analog zum bestehenden Quelltext-Audit-Muster in dieser Datei (Zeile 559-576):
+            // Eine reine Verhaltenssimulation beweist nur, dass die SIMULATION funktioniert —
+            // ohne diesen Audit würde der Test bestehen, selbst wenn persistence.js den
+            // Fallback nie aufrufen würde.
+            const fs = require('fs');
+            const path = require('path');
+            const srcPath = path.join(__dirname, '../../systems/spellslots/persistence.js');
+            const src = fs.readFileSync(srcPath, 'utf-8');
+
+            // saveImmediate(): Funktionskörper isolieren, um sicherzugehen, dass der
+            // catch-Zweig DIESER Funktion (nicht z. B. der von save()) geprüft wird.
+            const saveImmediateMatch = src.match(
+                /async function saveImmediate\(\)\s*{[\s\S]*?\n}\n/
+            );
+            expect(saveImmediateMatch).not.toBeNull();
+            const saveImmediateBody = saveImmediateMatch[0];
+            const saveImmediateCatch = saveImmediateBody.slice(saveImmediateBody.indexOf('} catch (e) {'));
+            expect(saveImmediateCatch).toMatch(/saveToIndexedDBFallback\(/);
+
+            // save(): dasselbe Muster im setTimeout-Callback-Körper.
+            const saveMatch = src.match(/const save = function[\s\S]*?\n};\n/);
+            expect(saveMatch).not.toBeNull();
+            const saveBody = saveMatch[0];
+            const saveCatch = saveBody.slice(saveBody.lastIndexOf('} catch (e) {'));
+            expect(saveCatch).toMatch(/saveToIndexedDBFallback\(/);
+        });
+    });
 });
 
 // ============================================================

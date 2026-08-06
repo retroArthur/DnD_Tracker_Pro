@@ -1,0 +1,323 @@
+/**
+ * Audio-Export Tests — SAFE-01 (Wave-0 RED-Phase)
+ * Testet buildAudioExport()/importAudioExport()/blobToBase64()/base64ToBlob() aus
+ * systems/migration/audio-export.js sowie (Task 3) checkAudioExportFeasible() und die
+ * Härtung des Import-Pfads.
+ *
+ * RED-Phase: systems/migration/audio-export.js existiert noch nicht (Plan 12-01, Task 1).
+ * Der Block "buildAudioExport / importAudioExport / Base64-Rundlauf" beschreibt den
+ * Kontrakt aus Task 2 und wird nach dessen Implementierung grün. Der Block
+ * "checkAudioExportFeasible / Härtung" (weiter unten) beschreibt den Kontrakt aus Task 3
+ * und wird erst nach dessen Implementierung grün — bis dahin bleibt er bewusst rot
+ * (Präzedenz: full-export.test.js, TECH-02 Wave-0-Muster).
+ */
+
+const fs = require('fs');
+const path = require('path');
+const vm = require('vm');
+
+// ============================================================
+// SETUP: audio-export.js in vm-Kontext laden (non-ESM-Muster)
+// ============================================================
+
+let buildAudioExport;
+let importAudioExport;
+let blobToBase64;
+let base64ToBlob;
+let checkAudioExportFeasible; // erst ab Task 3 vorhanden
+
+let mockListSoundBlobs;
+let mockGetSoundBlob;
+let mockSaveSoundBlob;
+let mockGetAllStats;
+let mockShowToast;
+let mockErrorLog;
+
+beforeAll(() => {
+    mockListSoundBlobs = jest.fn();
+    mockGetSoundBlob = jest.fn();
+    mockSaveSoundBlob = jest.fn();
+    mockGetAllStats = jest.fn();
+    mockShowToast = jest.fn();
+    mockErrorLog = jest.fn();
+
+    const APP_CONFIG_MOCK = { VERSION: '2.7.0', DEBUG_MODE: false };
+
+    const context = {
+        window: {
+            APP_CONFIG: APP_CONFIG_MOCK,
+            listSoundBlobs: mockListSoundBlobs,
+            getSoundBlob: mockGetSoundBlob,
+            saveSoundBlob: mockSaveSoundBlob,
+            getAllStats: mockGetAllStats,
+            showToast: mockShowToast,
+            ErrorHandler: { log: mockErrorLog }
+        },
+        APP_CONFIG: APP_CONFIG_MOCK,
+        console: console,
+        // jsdom (testEnvironment: 'jsdom') stellt diese bereits im Node-Global-Scope
+        // bereit — hier in den vm-Kontext durchreichen, analog full-export.test.js.
+        Blob: global.Blob,
+        File: global.File,
+        FileReader: global.FileReader,
+        atob: global.atob,
+        btoa: global.btoa
+    };
+    vm.createContext(context);
+
+    const filePath = path.join(__dirname, '../../systems/migration/audio-export.js');
+    const code = fs.readFileSync(filePath, 'utf8');
+    vm.runInContext(code, context);
+
+    buildAudioExport = context.buildAudioExport;
+    importAudioExport = context.importAudioExport;
+    blobToBase64 = context.blobToBase64;
+    base64ToBlob = context.base64ToBlob;
+    checkAudioExportFeasible = context.checkAudioExportFeasible;
+});
+
+beforeEach(() => {
+    mockListSoundBlobs.mockReset();
+    mockGetSoundBlob.mockReset();
+    mockSaveSoundBlob.mockReset();
+    mockGetAllStats.mockReset();
+    mockShowToast.mockReset();
+    mockErrorLog.mockReset();
+});
+
+// Deterministische Byte-Fixtures (klein, exakt vergleichbar nach dem Base64-Rundlauf)
+function bytesA() {
+    return new Uint8Array([1, 2, 3, 4, 5]);
+}
+function bytesB() {
+    return new Uint8Array([9, 8, 7, 6, 5, 4, 3, 2, 1]);
+}
+
+async function blobBytes(blob) {
+    const buf = await blob.arrayBuffer();
+    return Array.from(new Uint8Array(buf));
+}
+
+// ============================================================
+// TASK 2 — buildAudioExport / importAudioExport / Base64-Rundlauf
+// ============================================================
+
+describe('buildAudioExport — Struktur und Metadaten (SAFE-01)', () => {
+    test('liefert _exportType, _appVersion, _exportDate und ein audioFiles-Element je IDB-Eintrag', async () => {
+        expect(typeof buildAudioExport).toBe('function'); // rot bis Task 2 implementiert
+
+        mockListSoundBlobs.mockResolvedValue([
+            { id: 'audio_1_1', name: 'a.mp3', size: 5, type: 'audio/mpeg', savedAt: 111 },
+            { id: 'audio_2_2', name: 'b.ogg', size: 9, type: 'audio/ogg', savedAt: 222 }
+        ]);
+        mockGetSoundBlob.mockImplementation(id => {
+            if (id === 'audio_1_1') return Promise.resolve(new Blob([bytesA()], { type: 'audio/mpeg' }));
+            if (id === 'audio_2_2') return Promise.resolve(new Blob([bytesB()], { type: 'audio/ogg' }));
+            return Promise.resolve(null);
+        });
+        mockGetAllStats.mockResolvedValue([]);
+
+        const result = await buildAudioExport();
+
+        expect(result._exportType).toBe('audio-export-v1');
+        expect(result._appVersion).toBe('2.7.0');
+        expect(typeof result._exportDate).toBe('string');
+        expect(new Date(result._exportDate).toString()).not.toBe('Invalid Date');
+
+        expect(Array.isArray(result.audioFiles)).toBe(true);
+        expect(result.audioFiles).toHaveLength(2);
+
+        const first = result.audioFiles.find(f => f.id === 'audio_1_1');
+        expect(first).toBeDefined();
+        expect(first.name).toBe('a.mp3');
+        expect(first.type).toBe('audio/mpeg');
+        expect(first.size).toBe(5);
+        expect(typeof first.data).toBe('string');
+    });
+
+    test('Metadaten-Eintrag ohne Blob (getSoundBlob liefert null) wird übersprungen, übrige werden trotzdem exportiert', async () => {
+        mockListSoundBlobs.mockResolvedValue([
+            { id: 'audio_1_1', name: 'fehlt.mp3', size: 5, type: 'audio/mpeg', savedAt: 111 },
+            { id: 'audio_2_2', name: 'da.ogg', size: 9, type: 'audio/ogg', savedAt: 222 }
+        ]);
+        mockGetSoundBlob.mockImplementation(id => {
+            if (id === 'audio_1_1') return Promise.resolve(null); // Blob fehlt (defensiv)
+            return Promise.resolve(new Blob([bytesB()], { type: 'audio/ogg' }));
+        });
+        mockGetAllStats.mockResolvedValue([]);
+
+        const result = await buildAudioExport();
+
+        expect(result.audioFiles).toHaveLength(1);
+        expect(result.audioFiles[0].id).toBe('audio_2_2');
+    });
+
+    test('diceStats enthält alle Datensätze aus getAllStats() vollständig und unverändert (kein Cap)', async () => {
+        mockListSoundBlobs.mockResolvedValue([]);
+        const stats = [
+            { notation: '1d20', result: 15, rolls: [15], timestamp: 1, sessionId: 's1', charId: 1 },
+            { notation: '2d6', result: 7, rolls: [3, 4], timestamp: 2, sessionId: 's1', charId: 1 }
+        ];
+        mockGetAllStats.mockResolvedValue(stats);
+
+        const result = await buildAudioExport();
+
+        expect(result.diceStats).toEqual(stats);
+    });
+});
+
+describe('Base64-Rundlauf (SAFE-01)', () => {
+    test('base64ToBlob(blobToBase64(b), type) liefert dieselben Bytes zurück', async () => {
+        const original = bytesA();
+        const blob = new Blob([original], { type: 'audio/mpeg' });
+
+        const base64 = await blobToBase64(blob);
+        expect(typeof base64).toBe('string');
+        // Data-URL-Praefix ('data:...;base64,') darf NICHT im Ergebnis stehen
+        expect(base64.startsWith('data:')).toBe(false);
+
+        const roundtripBlob = base64ToBlob(base64, 'audio/mpeg');
+        const roundtripBytes = await blobBytes(roundtripBlob);
+
+        expect(roundtripBytes).toEqual(Array.from(original));
+        expect(roundtripBlob.type).toBe('audio/mpeg');
+    });
+});
+
+describe('importAudioExport — Rundlauf (SAFE-01)', () => {
+    test('ruft saveSoundBlob() genau einmal pro Datei mit derselben id und demselben Namen auf', async () => {
+        const exportObj = {
+            _exportType: 'audio-export-v1',
+            _appVersion: '2.7.0',
+            _exportDate: new Date().toISOString(),
+            audioFiles: [
+                { id: 'audio_1_1', name: 'a.mp3', type: 'audio/mpeg', size: 5, data: await blobToBase64(new Blob([bytesA()])) },
+                { id: 'audio_2_2', name: 'b.ogg', type: 'audio/ogg', size: 9, data: await blobToBase64(new Blob([bytesB()])) }
+            ],
+            diceStats: []
+        };
+        mockSaveSoundBlob.mockResolvedValue(undefined);
+
+        const result = await importAudioExport(exportObj);
+
+        expect(mockSaveSoundBlob).toHaveBeenCalledTimes(2);
+        const calledIds = mockSaveSoundBlob.mock.calls.map(call => call[0]);
+        expect(calledIds).toEqual(['audio_1_1', 'audio_2_2']);
+        const calledNames = mockSaveSoundBlob.mock.calls.map(call => call[1].name);
+        expect(calledNames).toEqual(['a.mp3', 'b.ogg']);
+
+        expect(result.imported).toBe(2);
+        expect(result.skipped).toEqual([]);
+    });
+
+    test('importAudioExport({ _exportType: "full-v1" }) wirft — keine stillschweigende Halbverarbeitung', async () => {
+        await expect(importAudioExport({ _exportType: 'full-v1' })).rejects.toThrow();
+        expect(mockSaveSoundBlob).not.toHaveBeenCalled();
+    });
+});
+
+// ============================================================
+// TASK 3 — checkAudioExportFeasible / Härtung des Import-Pfads
+// Bleibt rot, bis Task 3 checkAudioExportFeasible/AUDIO_EXPORT_SAFE_RAW_BYTES/
+// MAX_IMPORT_AUDIO_FILES/ALLOWED_BLOB_ID_RE implementiert.
+// ============================================================
+
+describe('checkAudioExportFeasible — Größenprüfung vor dem Kodieren (SAFE-01/T-12-04)', () => {
+    test('summiert nur Metadaten und lädt keinen einzigen Blob', async () => {
+        expect(typeof checkAudioExportFeasible).toBe('function'); // rot bis Task 3 implementiert
+
+        mockListSoundBlobs.mockResolvedValue([
+            { id: 'audio_1_1', name: 'a.mp3', size: 1024, type: 'audio/mpeg', savedAt: 1 }
+        ]);
+
+        const result = await checkAudioExportFeasible();
+
+        expect(mockGetSoundBlob).not.toHaveBeenCalled();
+        expect(result.feasible).toBe(true);
+        expect(result.totalBytes).toBe(1024);
+        expect(result.fileCount).toBe(1);
+    });
+
+    test('Summe über 300 MiB → feasible:false mit totalBytes/fileCount/names', async () => {
+        const overLimitByte = 300 * 1024 * 1024 + 1;
+        mockListSoundBlobs.mockResolvedValue([
+            { id: 'audio_1_1', name: 'riesig.wav', size: overLimitByte, type: 'audio/wav', savedAt: 1 }
+        ]);
+
+        const result = await checkAudioExportFeasible();
+
+        expect(result.feasible).toBe(false);
+        expect(result.totalBytes).toBe(overLimitByte);
+        expect(result.fileCount).toBe(1);
+        expect(result.names).toContain('riesig.wav');
+    });
+
+    test('buildAudioExport() bricht bei Überschreitung ab, OHNE JSON.stringify/Kodieren zu versuchen', async () => {
+        const overLimitByte = 300 * 1024 * 1024 + 1;
+        mockListSoundBlobs.mockResolvedValue([
+            { id: 'audio_1_1', name: 'riesig.wav', size: overLimitByte, type: 'audio/wav', savedAt: 1 }
+        ]);
+
+        await expect(buildAudioExport()).rejects.toThrow();
+        // Kein Blob wurde geladen — der Abbruch geschah rein anhand der Metadaten
+        expect(mockGetSoundBlob).not.toHaveBeenCalled();
+    });
+});
+
+describe('importAudioExport — Härtung (SAFE-01/T-12-01/T-12-02/T-12-03)', () => {
+    test('Import-Datei mit mehr als 500 audioFiles wird abgelehnt, bevor irgendetwas geschrieben wird', async () => {
+        const audioFiles = [];
+        for (let i = 0; i < 501; i++) {
+            audioFiles.push({ id: `audio_${i}_1`, name: `f${i}.mp3`, type: 'audio/mpeg', size: 1, data: 'AQ==' });
+        }
+        const exportObj = { _exportType: 'audio-export-v1', audioFiles, diceStats: [] };
+
+        await expect(importAudioExport(exportObj)).rejects.toThrow();
+        expect(mockSaveSoundBlob).not.toHaveBeenCalled();
+    });
+
+    test('audioFiles-Eintrag mit fremdformatiger id wird übersprungen und in skipped benannt, nicht geschrieben', async () => {
+        const validB64 = await blobToBase64(new Blob([bytesA()]));
+        const exportObj = {
+            _exportType: 'audio-export-v1',
+            audioFiles: [
+                { id: '../../evil', name: 'boese.mp3', type: 'audio/mpeg', size: 5, data: validB64 },
+                { id: 'dnd-tracker-v4', name: 'auchboese.mp3', type: 'audio/mpeg', size: 5, data: validB64 },
+                { id: 'audio_1_1', name: 'gut.mp3', type: 'audio/mpeg', size: 5, data: validB64 }
+            ],
+            diceStats: []
+        };
+        mockSaveSoundBlob.mockResolvedValue(undefined);
+
+        const result = await importAudioExport(exportObj);
+
+        expect(mockSaveSoundBlob).toHaveBeenCalledTimes(1);
+        expect(mockSaveSoundBlob.mock.calls[0][0]).toBe('audio_1_1');
+        expect(result.imported).toBe(1);
+        expect(result.skipped).toHaveLength(2);
+        const skippedIds = result.skipped.map(s => s.id);
+        expect(skippedIds).toContain('../../evil');
+        expect(skippedIds).toContain('dnd-tracker-v4');
+    });
+
+    test('kaputtes Base64 kostet nur den einen Eintrag — übrige Dateien werden importiert', async () => {
+        const validB64 = await blobToBase64(new Blob([bytesA()]));
+        const exportObj = {
+            _exportType: 'audio-export-v1',
+            audioFiles: [
+                { id: 'audio_1_1', name: 'kaputt.mp3', type: 'audio/mpeg', size: 5, data: '!!!nicht-base64!!!' },
+                { id: 'audio_2_2', name: 'gut.mp3', type: 'audio/mpeg', size: 5, data: validB64 }
+            ],
+            diceStats: []
+        };
+        mockSaveSoundBlob.mockResolvedValue(undefined);
+
+        const result = await importAudioExport(exportObj);
+
+        expect(mockSaveSoundBlob).toHaveBeenCalledTimes(1);
+        expect(mockSaveSoundBlob.mock.calls[0][0]).toBe('audio_2_2');
+        expect(result.imported).toBe(1);
+        expect(result.skipped).toHaveLength(1);
+        expect(result.skipped[0].id).toBe('audio_1_1');
+    });
+});
