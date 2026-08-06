@@ -2,14 +2,18 @@
 gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: Schulden-Abbau
-status: planning
-last_updated: "2026-08-06T07:32:10.929Z"
+current_phase: 12
+current_phase_name: Datensicherheit
+status: executing
+stopped_at: Completed 12-01-PLAN.md
+last_updated: "2026-08-06T09:37:41.804Z"
 last_activity: 2026-08-06
+last_activity_desc: Phase 12 execution started
 progress:
-  total_phases: 0
+  total_phases: 3
   completed_phases: 0
-  total_plans: 0
-  completed_plans: 0
+  total_plans: 7
+  completed_plans: 1
   percent: 0
 ---
 
@@ -17,7 +21,7 @@ progress:
 
 **Last Updated:** 2026-08-06
 **Milestone:** v1.2 „Schulden-Abbau" — Requirements werden definiert
-**Status:** planning. Nächster Schritt: Requirements + Roadmap, danach `/gsd-plan-phase 12`
+**Status:** Ready to execute
 
 ---
 
@@ -25,26 +29,29 @@ progress:
 
 **Core Value:** Die App muss am Spieltisch zuverlässig offline laufen — ein Spielleiter-Begleiter, der nie im Weg steht und keine Daten verliert.
 
-**Current Focus:** v1.2 „Schulden-Abbau" — die 26 offenen `DEBT`-Posten aus der v1.1-Triage abarbeiten, Datensicherheit zuerst. Belege je Posten in [`11-CONCERNS-TRIAGE.md`](milestones/v1.1-phases/11-architektur-build-hygiene/11-CONCERNS-TRIAGE.md), vollständige Beschreibungen in [`milestones/v1.1-REQUIREMENTS.md`](milestones/v1.1-REQUIREMENTS.md).
+**Current Focus:** Phase 12 — Datensicherheit
 
 ---
 
 ## Current Position
 
-Phase: 12 (datensicherheit) — **geplant und verifiziert, bereit zur Ausführung**
-Plan: 0 von 7 ausgeführt
-Status: 7 Pläne über 5 Wellen; `gsd-plan-checker` VERIFICATION PASSED (0 Blocker, 0 Warnungen)
-Last activity: 2026-08-06 — `/gsd-plan-phase 12` abgeschlossen
+Phase: 12 (Datensicherheit) — EXECUTING
+Plan: 2 of 7
+Status: Ready to execute
+Last activity: 2026-08-06 — Phase 12 execution started
 
 **Nächster Schritt:** `/gsd-execute-phase 12`
 
 **Die drei offenen Fragen aus der Diskussion sind beantwortet:**
+
 1. **Base64-Grenze:** V8s String-Limit `0x1fffffe8` (512 MiB) ÷ 4/3 → Kodierung scheitert bei
    **384 MiB Rohaudio**. Warnschwelle 300 MiB, geprüft über `listSoundBlobs()`-Metadaten **vor** dem
    Kodieren — danach wäre der `RangeError` bereits geworfen.
+
 2. **`getCampaignIndex()` ist verlässlich:** `saveCampaignIndex()` (`campaign-manager.js:17-19`) ruft
    `StorageAPI.setJSON()` direkt auf und umgeht `save()`/`saveImmediate()` — der Index überlebt den
    IDB-Umschaltpfad, der `DEBT-17` verursachte.
+
 3. **`diceStats` braucht hier kein Cap** (~15 MB Worst Case). Begrenzung ist `PERF-02` in Phase 13 —
    die Pläne verbieten ausdrücklich, sie hier mitzubauen (sonst zwei konkurrierende Mechanismen).
 
@@ -90,6 +97,7 @@ Browser-Verhalten an der Base64-Grenze (12-07).
 | Phase 11 P05 | ~40min | 3 tasks | 4 files |
 | Phase 11 P06 | ~35min | 3 tasks | 2 files |
 | Phase 11 P07 | N/A | 1 tasks | 4 files |
+| Phase 12 P01 | 35min | 3 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -176,8 +184,8 @@ Browser-Verhalten an der Base64-Grenze (12-07).
 
 ## Session Continuity
 
-**Last session:** 2026-07-25T22:11:41.786Z
-**Stopped at:** Completed 11-06-PLAN.md
+**Last session:** 2026-08-06T09:37:41.792Z
+**Stopped at:** Completed 12-01-PLAN.md
 **Resume file:** None
 
 **Last action:** Komplette Milestone-UAT abgeschlossen (2026-06-20 → 2026-07-20): alle 5 offenen Human-UAT-Sessions via `/gsd-verify-work` durchgetestet — 07 (4/4), 06 (5/5), 05 (2/2), 01 (3/3), 02 (6/6). Alle 7 VERIFICATION.md jetzt `status: passed`. Dabei gefundene+gefixte Bugs: Soundboard-Doppel-Import (75aadfe), Audio-läuft-nach-Szene-Löschen (b85dbe1), Volume nicht live (801ed48), Manifest-CORS unter file:// (cd75093), Konsolen-Hygiene (c029f11), Datei-Backup schrieb nie bei Entity-CRUD — window.save-Wrapper strukturell wirkungslos für bare save() (1430e8c), generischer registerPostSaveHook + DM-Screen-Live-Sync-Umstellung + CLAUDE.md-Pattern-Korrektur (6ea8309), „Anderen Ordner wählen"-Button (cc2af9e). Nebenbei: Repo mit origin gemergt (7 Mai-Commits, alter pages.yml-Deploy entfernt 7f4858a), 348 Commits gepusht, GitHub-Pages-Deploy live verifiziert (PWA installierbar, SW-Update-Flow, Datei-Backup, Migrations-Wizard file://→PWA). Zusätzlich in der Session: Soundboard-Erweiterungen (Loop-Toggle/Crossfade-Loop/Fortschritt 6636297, Per-Track-Play noch offen als Design), gruppierte Navigation (3d77ec0).
@@ -260,6 +268,8 @@ _State initialized: 2026-06-11_
 - [Phase ?]: [Phase 11, 11-05]: D-11-Zweig apple-Tag bleibt (additiv, nicht ersetzt) - Konsolen-Sammlung leer vor und nach dem Ergaenzen von mobile-web-app-capable auf Chromium 143.0.7499.4, dreifach unabhaengig gegengeprueft (console/CDP-Log/CDP-Audits)
 - [Phase ?]: [Phase 11, 11-06]: 22/46 CONCERNS.md-Eintraege waren bereits durch Phasen 1/8-10/11-01..05 erledigt, ohne dass CONCERNS.md es wusste; Triage belegt jede Disposition gegen Live-Code statt gegen die CONCERNS-Beschreibung (D-15)
 - [Phase ?]: [Phase 11, 11-06]: 15 Restposten als DEBT-01..15 in REQUIREMENTS.md uebernommen (D-16), inkl. 4 aus STATE.md Open TODOs (IN-01/WR-02/IN-02/Toast-Race); ARCH-04 bewusst NICHT als komplett markiert - nur die Triage-Haelfte ist erledigt, Map-Refresh folgt in Plan 11-07
+- [Phase ?]: Audio-Export als zweite Datei (audio-export-v1), strikt getrennt von full-v1; Groessenpruefung ueber listSoundBlobs()-Metadaten VOR jedem Base64-Encode (300 MiB Sicherheitsabstand zur gemessenen 384-MiB-V8-Grenze)
+- [Phase ?]: SAFE-01/SAFE-02/SAFE-06 nicht als requirements-completed markiert in Plan 12-01 — jede Requirement-ID ist auf mehrere Plaene dieser Phase verteilt, vollstaendig erst im jeweils letzten Plan (12-02/12-03/12-07)
 
 ## Operator Next Steps
 
