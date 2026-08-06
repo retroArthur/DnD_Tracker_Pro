@@ -93,9 +93,15 @@ function bytesB() {
     return new Uint8Array([9, 8, 7, 6, 5, 4, 3, 2, 1]);
 }
 
-async function blobBytes(blob) {
-    const buf = await blob.arrayBuffer();
-    return Array.from(new Uint8Array(buf));
+function blobBytes(blob) {
+    // jsdoms Blob-Implementierung im Jest-Testlauf kennt kein Blob.prototype.arrayBuffer()
+    // (verifiziert in dieser Sitzung) — FileReader.readAsArrayBuffer() ist der portable Weg.
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(Array.from(new Uint8Array(reader.result)));
+        reader.onerror = () => reject(reader.error);
+        reader.readAsArrayBuffer(blob);
+    });
 }
 
 // ============================================================

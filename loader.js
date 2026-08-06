@@ -128,6 +128,9 @@ const MODULES = [
     'features/dice-stats/dice-stats-idb.js',
     'features/dice-stats/dice-stats-render.js',
 
+    // Phase 12: Datensicherheit — Audio-Export/-Import (SAFE-01, D-01)
+    'systems/migration/audio-export.js',
+
     // Verschoben aus dice/ in passende Ordner
     'features/timers/timers.js',
     'systems/wiki-links.js',
