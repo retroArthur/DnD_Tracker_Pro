@@ -312,6 +312,43 @@ async function importAudioExport(parsedObj) {
 }
 
 // ============================================================
+// findMissingSceneAudio — Szenen mit unaufloesbaren blobIds benennen (D-02, D-08)
+// Plan 12-02, Task 2: reine Funktion, keine Seiteneffekte, deshalb ohne IDB-Mock
+// testbar. Der Aufrufer (migration-wizard.js) holt die vorhandenen IDs ueber
+// window.listSoundBlobs() und uebergibt nur die ID-Menge.
+// ============================================================
+
+/**
+ * findMissingSceneAudio(D, vorhandeneIds) — sammelt alle blobIds aus
+ * D.soundboard.scenes[].tracks[], gleicht sie gegen die uebergebene Menge
+ * vorhandener IDs ab und liefert je Szene mit Luecken einen Eintrag.
+ * Szenen ohne Tracks und vollstaendig aufloesbare Szenen erscheinen NICHT im
+ * Ergebnis. Sind alle blobIds aufloesbar, ist das Ergebnis ein leeres Array.
+ * @param {Object} D - Datenobjekt mit D.soundboard.scenes (oder Kampagnendaten
+ *   im gleichen Format, z.B. aus einem geparsten full-v1-Export)
+ * @param {Array<string>|Set<string>} vorhandeneIds - IDs aus window.listSoundBlobs()
+ * @returns {Array<{ sceneName: string, blobIds: string[] }>}
+ */
+function findMissingSceneAudio(D, vorhandeneIds) {
+    const idSet = vorhandeneIds instanceof Set ? vorhandeneIds : new Set(vorhandeneIds || []);
+    const scenes = (D && D.soundboard && Array.isArray(D.soundboard.scenes))
+        ? D.soundboard.scenes
+        : [];
+
+    const result = [];
+    for (const scene of scenes) {
+        const tracks = Array.isArray(scene && scene.tracks) ? scene.tracks : [];
+        const missingBlobIds = tracks
+            .map(t => t && t.blobId)
+            .filter(id => id && !idSet.has(id));
+        if (missingBlobIds.length > 0) {
+            result.push({ sceneName: scene.name, blobIds: missingBlobIds });
+        }
+    }
+    return result;
+}
+
+// ============================================================
 // EXPORTS
 // ============================================================
 window.AUDIO_EXPORT_SCHEMA = AUDIO_EXPORT_SCHEMA;
@@ -322,3 +359,4 @@ window.checkAudioExportFeasible = checkAudioExportFeasible;
 window.buildAudioExport = buildAudioExport;
 window.downloadAudioExport = downloadAudioExport;
 window.importAudioExport = importAudioExport;
+window.findMissingSceneAudio = findMissingSceneAudio;

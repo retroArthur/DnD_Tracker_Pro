@@ -49,6 +49,14 @@ function showWizardStep(n) {
         el.style.display = el.dataset.step === String(n) ? '' : 'none';
     });
 
+    // Plan 12-02, Task 2b: Audio-Bereich ab Schritt 3 sichtbar und bleibt es auch
+    // in Schritt 4 — die Audio-Datei kann laut D-02 auch nach dem Hauptimport noch
+    // nachgereicht werden.
+    const audioSection = modal.querySelector('#migration-wizard-audio-section');
+    if (audioSection) {
+        audioSection.style.display = (n >= 3) ? '' : 'none';
+    }
+
     // Schritte-Indikator aktualisieren
     modal.querySelectorAll('.wizard-step').forEach((dot, idx) => {
         const stepNum = idx + 1;
@@ -139,6 +147,29 @@ function showMigrationWizard() {
                 </div>
             </div>
 
+            <!-- Plan 12-02, Task 2: zweiter, ausdruecklich optionaler Bereich fuer die
+                 Audio-Datei. Bewusst AUSSERHALB der .migration-step-Container (siehe
+                 showWizardStep(): sichtbar ab Schritt 3 UND bleibt es in Schritt 4 —
+                 die Audio-Datei kann laut D-02 auch nach dem bereits erfolgreichen
+                 Hauptimport noch nachgereicht werden, ohne dass der Wizard zurueckspringt). -->
+            <div class="migration-audio-section" id="migration-wizard-audio-section" style="display:none; margin-top:20px;">
+                <h4 class="migration-step-heading">Optional: Audio-Datei (die zweite Datei aus dem Umzugs-Export)</h4>
+                <p class="migration-step-body">
+                    Enth&#228;lt deine Soundboard-Dateien und W&#252;rfelstatistik. Der
+                    Hauptimport funktioniert auch ohne sie &#8212; fehlende Audiodateien
+                    werden danach namentlich angezeigt.
+                </p>
+                <div class="wizard-dropzone" id="migration-wizard-audio-dropzone" role="button" tabindex="0"
+                     aria-label="Optionale Audio-Datei hier ablegen oder klicken zum Ausw&#228;hlen">
+                    <div class="wizard-dropzone-hint">
+                        <span class="wizard-dropzone-icon">&#127925;</span>
+                        <span class="wizard-dropzone-text">Audio-Datei hier ablegen oder klicken zum Ausw&#228;hlen</span>
+                    </div>
+                </div>
+                <input type="file" id="migration-wizard-audio-input" accept=".json" style="display:none;" aria-label="Audio-Datei ausw&#228;hlen">
+                <div class="migration-step-body" id="migration-wizard-audio-status" style="display:none;" aria-live="polite"></div>
+            </div>
+
             <div class="migration-wizard-footer">
                 <button class="btn btn-text migration-skip-btn" data-action="wizard-skip">
                     &#220;berspringen &#8212; ich starte neu
@@ -177,37 +208,70 @@ function showMigrationWizard() {
 function _setupWizardDragDrop(modal) {
     const dropzone = document.getElementById('migration-wizard-dropzone');
     const fileInput = document.getElementById('migration-wizard-file-input');
-    if (!dropzone || !fileInput) return;
+    if (dropzone && fileInput) {
+        // Klick auf Dropzone: file input triggern
+        dropzone.addEventListener('click', () => fileInput.click());
+        dropzone.addEventListener('keydown', e => {
+            if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); fileInput.click(); }
+        });
 
-    // Klick auf Dropzone: file input triggern
-    dropzone.addEventListener('click', () => fileInput.click());
-    dropzone.addEventListener('keydown', e => {
-        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); fileInput.click(); }
-    });
+        // Drag&Drop Events
+        dropzone.addEventListener('dragover', e => {
+            e.preventDefault();
+            e.stopPropagation();
+            dropzone.classList.add('dragover');
+        });
+        dropzone.addEventListener('dragleave', e => {
+            e.preventDefault();
+            dropzone.classList.remove('dragover');
+        });
+        dropzone.addEventListener('drop', e => {
+            e.preventDefault();
+            e.stopPropagation();
+            dropzone.classList.remove('dragover');
+            const file = e.dataTransfer?.files?.[0];
+            if (file) _processWizardFile(file, dropzone);
+        });
 
-    // Drag&Drop Events
-    dropzone.addEventListener('dragover', e => {
-        e.preventDefault();
-        e.stopPropagation();
-        dropzone.classList.add('dragover');
-    });
-    dropzone.addEventListener('dragleave', e => {
-        e.preventDefault();
-        dropzone.classList.remove('dragover');
-    });
-    dropzone.addEventListener('drop', e => {
-        e.preventDefault();
-        e.stopPropagation();
-        dropzone.classList.remove('dragover');
-        const file = e.dataTransfer?.files?.[0];
-        if (file) _processWizardFile(file, dropzone);
-    });
+        // Datei-Input change (Alternativ-Button)
+        fileInput.addEventListener('change', e => {
+            const file = e.target?.files?.[0];
+            if (file) _processWizardFile(file, dropzone);
+        });
+    }
 
-    // Datei-Input change (Alternativ-Button)
-    fileInput.addEventListener('change', e => {
-        const file = e.target?.files?.[0];
-        if (file) _processWizardFile(file, dropzone);
-    });
+    // Plan 12-02, Task 2c: zweite Zone fuer die optionale Audio-Datei, analog zur
+    // ersten (dragover/dragleave/drop/click/keydown, gleiche .dragover-Klasse).
+    const audioDropzone = document.getElementById('migration-wizard-audio-dropzone');
+    const audioFileInput = document.getElementById('migration-wizard-audio-input');
+    if (audioDropzone && audioFileInput) {
+        audioDropzone.addEventListener('click', () => audioFileInput.click());
+        audioDropzone.addEventListener('keydown', e => {
+            if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); audioFileInput.click(); }
+        });
+
+        audioDropzone.addEventListener('dragover', e => {
+            e.preventDefault();
+            e.stopPropagation();
+            audioDropzone.classList.add('dragover');
+        });
+        audioDropzone.addEventListener('dragleave', e => {
+            e.preventDefault();
+            audioDropzone.classList.remove('dragover');
+        });
+        audioDropzone.addEventListener('drop', e => {
+            e.preventDefault();
+            e.stopPropagation();
+            audioDropzone.classList.remove('dragover');
+            const file = e.dataTransfer?.files?.[0];
+            if (file) _processWizardAudioFile(file, audioDropzone);
+        });
+
+        audioFileInput.addEventListener('change', e => {
+            const file = e.target?.files?.[0];
+            if (file) _processWizardAudioFile(file, audioDropzone);
+        });
+    }
 }
 
 /**
@@ -240,9 +304,18 @@ function _processWizardFile(file, dropzone) {
     }
 
     const reader = new FileReader();
-    reader.onload = evt => {
+    reader.onload = async evt => {
         try {
             const parsedObj = JSON.parse(evt.target?.result);
+
+            // Plan 12-02, Task 2e: Weiche auf Audio-Export-Verarbeitung — VOR der
+            // full-v1-Pruefung. Wer die zweite Datei versehentlich in die erste
+            // Zone zieht, soll nicht mit "kein full-v1-Export" abgelehnt werden.
+            if (parsedObj && parsedObj._exportType === 'audio-export-v1') {
+                clearError();
+                _processWizardAudioFile(file, dropzone);
+                return;
+            }
 
             // Vorpruefung fuer den Bestaetigungsdialog (Vollvalidierung in importFullExport)
             if (!parsedObj || parsedObj._exportType !== 'full-v1') {
@@ -299,10 +372,39 @@ function _processWizardFile(file, dropzone) {
             const resultEl = document.getElementById('migration-wizard-result');
             if (resultEl) {
                 const sizeKB = (result.totalBytes / 1024).toFixed(1);
-                resultEl.innerHTML = `
+                let html = `
                     <div class="migration-success-line">Kampagnen importiert: <strong>${result.campaignCount}</strong></div>
                     <div class="migration-success-line">Gesamtgr&#246;&#223;e: <strong>${esc(sizeKB)} KB</strong></div>
                 `;
+
+                // D-02/D-08: fehlende Audio-Dateien NAMENTLICH benennen, statt still
+                // zu uebergehen — der Hauptimport hat gerade schon erfolgreich
+                // abgeschlossen und wird durch dieses Ergebnis in keinem Fall
+                // beeinflusst. window.D ist an dieser Stelle noch die STALE
+                // Vor-Import-Instanz (Reload passiert erst bei wizard-close/
+                // wizard-setup-backup, CR-04) — deshalb gegen die frisch geparste
+                // aktive Kampagne aus parsedObj pruefen, nicht gegen window.D.
+                if (typeof window.findMissingSceneAudio === 'function') {
+                    const activeKey = parsedObj._activeCampaignKey;
+                    const activeCampaignData = activeKey && parsedObj.campaigns && parsedObj.campaigns[activeKey]
+                        ? parsedObj.campaigns[activeKey].data
+                        : null;
+                    if (activeCampaignData) {
+                        const existingIds = (typeof window.listSoundBlobs === 'function')
+                            ? (await window.listSoundBlobs()).map(m => m.id)
+                            : [];
+                        const missing = window.findMissingSceneAudio(activeCampaignData, existingIds);
+                        if (missing.length > 0) {
+                            html += `
+                                <div class="migration-success-line migration-audio-missing">
+                                    F&#252;r diese Szenen fehlt Audio: <strong>${esc(missing.map(m => m.sceneName).join(', '))}</strong>
+                                </div>
+                            `;
+                        }
+                    }
+                }
+
+                resultEl.innerHTML = html;
             }
             showWizardStep(4);
 
@@ -313,6 +415,85 @@ function _processWizardFile(file, dropzone) {
     };
     reader.onerror = () => {
         showError('Die Datei konnte nicht gelesen werden — bitte eine gültige Tracker-Exportdatei wählen.');
+    };
+    reader.readAsText(file);
+}
+
+/**
+ * Plan 12-02, Task 2d: Audio-Export-Datei lesen, validieren und importieren.
+ * D-02: rein optional, blockiert den Hauptimport zu KEINEM Zeitpunkt — Fehler
+ * werden benannt, nie geworfen. Eigenes Groessenlimit (T-12-05), unabhaengig vom
+ * 20-MB-Limit der Haupt-Datei.
+ */
+function _processWizardAudioFile(file, dropzone) {
+    const statusEl = document.getElementById('migration-wizard-audio-status');
+
+    function showStatus(msg, isError) {
+        if (statusEl) {
+            statusEl.textContent = msg;
+            statusEl.style.display = '';
+            statusEl.classList.toggle('migration-step-error', !!isError);
+        }
+        if (isError) dropzone.classList.remove('file-ready');
+    }
+
+    // T-12-05: Groessenpruefung VOR FileReader.readAsText() — oberhalb der V8-
+    // Zeichengrenze scheitert bereits das Einlesen, ein abgebrochener Lesevorgang
+    // liefert keine brauchbare Fehlermeldung mehr. Das 20-MB-Limit der Haupt-Datei
+    // bleibt unveraendert und gilt weiterhin nur fuer sie.
+    const AUDIO_IMPORT_MAX_BYTES = 350 * 1024 * 1024;
+    if (file.size > AUDIO_IMPORT_MAX_BYTES) {
+        showStatus('Die Audio-Datei ist zu groß und konnte nicht gelesen werden.', true);
+        return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = async evt => {
+        let parsedObj;
+        try {
+            parsedObj = JSON.parse(evt.target?.result);
+        } catch (err) {
+            showStatus('Audio-Datei konnte nicht gelesen werden: ungültiges Format.', true);
+            return;
+        }
+
+        try {
+            const importFn = typeof importAudioExport === 'function'
+                ? importAudioExport
+                : window.importAudioExport;
+            if (typeof importFn !== 'function') {
+                throw new Error('Audio-Import-Funktion nicht verfügbar');
+            }
+
+            const result = await importFn(parsedObj);
+            dropzone.classList.add('file-ready');
+
+            // WR-05: textContent statt innerHTML/esc() — hier echte UTF-8-Literale
+            let msg = 'Audio importiert: ' + result.imported + ' Datei(en).';
+            if (result.skipped && result.skipped.length > 0) {
+                msg += ' Übersprungen: ' + result.skipped.length + ' (' +
+                    result.skipped.map(s => (s.name || s.id) + ': ' + s.grund).join('; ') + ').';
+            }
+
+            // D-02/D-08: verbleibende Luecken NACH diesem Import namentlich anzeigen.
+            if (typeof window.findMissingSceneAudio === 'function' &&
+                    typeof window.listSoundBlobs === 'function') {
+                const metas = await window.listSoundBlobs();
+                const existingIds = metas.map(m => m.id);
+                const missing = window.findMissingSceneAudio(window.D, existingIds);
+                if (missing.length > 0) {
+                    msg += ' Für diese Szenen fehlt weiterhin Audio: ' +
+                        missing.map(m => m.sceneName).join(', ') + '.';
+                }
+            }
+
+            showStatus(msg, false);
+        } catch (err) {
+            showStatus('Audio-Import fehlgeschlagen: ' + (err.message || 'Unbekannter Fehler'), true);
+        }
+    };
+    reader.onerror = () => {
+        showStatus('Die Audio-Datei konnte nicht gelesen werden.', true);
     };
     reader.readAsText(file);
 }
