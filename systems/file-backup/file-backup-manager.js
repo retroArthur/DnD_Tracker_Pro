@@ -5,10 +5,16 @@
 // Verhaltensuebersicht:
 //   - initFileBackup(): Haengt sich per Live-Sync-Muster in window.save() ein;
 //     stellt zuvor gewaehlten Backup-Ordner aus IDB wieder her (D-16).
-//   - Nach jedem save(): schreibt je Kampagne eine -aktuell.json (atomar);
-//     erstellt pro Spieltag genau einen Snapshot; behalt max FILE_BACKUP_MAX_SNAPSHOTS.
+//   - Nach jedem save(): iteriert ueber ALLE Kampagnen des Index (Standard-Kampagne
+//     + getCampaignIndex(), D-03) und schreibt je Kampagne eine -aktuell.json (atomar);
+//     erstellt pro Spieltag genau einen Snapshot; behaelt max FILE_BACKUP_MAX_SNAPSHOTS
+//     PRO KAMPAGNE. Ein Fehler oder eine unlesbare Kampagne kostet nur diese eine
+//     Kampagne — die uebrigen werden trotzdem gesichert (kein throw in der Schleife).
+//   - Namenskollisionen zweier Kampagnen bekommen ein Kollisions-Suffix (D-04);
+//     ohne Kollision bleibt der Dateiname unveraendert wie bisher.
 //   - Stoerungsfall (D-16): einmalig "Ordner wieder verbinden?"-Toast, danach
-//     stiller Pausiert-Status; weitere Fehler nur ins Event-Log.
+//     stiller Pausiert-Status (nur wenn KEINE einzige Kampagne geschrieben werden
+//     konnte); weitere Fehler nur ins Event-Log.
 //   - file://-Modus (D-18): kein Ordner-Handle; einmalig Erinnerungs-Toast.
 
 // ============================================================
@@ -190,10 +196,16 @@ async function writeBackupFile(dirHandle, filename, data) {
  * @param {string} campaignKey
  * @param {string} campaignName
  * @param {object} data
+ * @param {{ current: string, snapshot: string, safeName: string }} [filenames]
+ *   Vorberechnete Dateinamen (aus resolveBackupTargets()); ersetzt die interne
+ *   getBackupFilenames()-Berechnung, wenn gesetzt. Notwendig, damit ein
+ *   Kollisions-Suffix (D-04) konsistent in current/snapshot/safeName landet —
+ *   sonst wuerde pruneOldSnapshots() mit dem falschen, unsuffixierten safeName
+ *   die Snapshots der kollidierenden Nachbarkampagne mitzaehlen (D-03).
  * @returns {Promise<void>}
  */
-async function writeBackupForCampaign(dirHandle, campaignKey, campaignName, data) {
-    const { current, snapshot, safeName } = getBackupFilenames(campaignKey, campaignName);
+async function writeBackupForCampaign(dirHandle, campaignKey, campaignName, data, filenames) {
+    const { current, snapshot, safeName } = filenames || getBackupFilenames(campaignKey, campaignName);
 
     // Immer: aktuelle Datei ueberschreiben (atomar)
     await writeBackupFile(dirHandle, current, data);
@@ -399,45 +411,77 @@ async function readCampaignDataForBackup(campaignKey) {
 }
 
 async function _doBackup(dirHandle) {
-    try {
-        // Aktive Kampagne ermitteln
-        const campaignKey = (typeof window !== 'undefined' && window.APP_CONFIG?.STORAGE_KEY)
-            ? (window.STORAGE_KEY_OVERRIDE || window.APP_CONFIG.STORAGE_KEY)
-            : 'dnd-tracker-data';
-        const campaignName = _getActiveCampaignName(campaignKey);
+    // Speicher-Key der Standard-Kampagne (wie bisher: Override hat Vorrang)
+    const storageKey = (typeof window !== 'undefined' && window.APP_CONFIG?.STORAGE_KEY)
+        ? (window.STORAGE_KEY_OVERRIDE || window.APP_CONFIG.STORAGE_KEY)
+        : 'dnd-tracker-data';
 
-        // Kampagnendaten laden (D-13: je Kampagne einzeln; DEBT-17: inkl. IDB-Modus)
-        const data = await readCampaignDataForBackup(campaignKey);
+    // D-03: alle Kampagnen sichern, nicht nur die aktive. Dem Index darf hier
+    // uneingeschraenkt vertraut werden — saveCampaignIndex() (campaign-manager.js:17-19)
+    // ruft StorageAPI.setJSON() direkt auf und umgeht save()/saveImmediate() vollstaendig,
+    // durchlaeuft also nie die 5-MB-Pruefung, die DEBT-17 verursacht hat.
+    const campaignIndex = (typeof window !== 'undefined' && typeof window.getCampaignIndex === 'function')
+        ? window.getCampaignIndex()
+        : null;
+    const targets = resolveBackupTargets(campaignIndex, storageKey);
 
-        // DEBT-17: NIEMALS eine leere Kampagne schreiben. writeBackupForCampaign
-        // wuerde -aktuell.json leeren und den Tages-Snapshot ueberschreiben,
-        // woraufhin pruneOldSnapshots() die letzten echten Snapshots entfernt —
-        // bei weiterhin gruener Statusanzeige. Lieber gar kein Backup als ein
-        // leeres, das die guten verdraengt.
-        if (!data) {
-            throw new Error('Keine Kampagnendaten lesbar — Backup uebersprungen (DEBT-17)');
+    let anySucceeded = false;
+
+    for (const target of targets) {
+        try {
+            // Kampagnendaten laden — DEBT-17-Schutz gilt jetzt JE KAMPAGNE
+            // (frueher nur einmal fuer die aktive Kampagne).
+            const data = await readCampaignDataForBackup(target.key);
+
+            // DEBT-17: NIEMALS eine leere Kampagne schreiben. writeBackupForCampaign
+            // wuerde -aktuell.json leeren und den Tages-Snapshot ueberschreiben,
+            // woraufhin pruneOldSnapshots() die letzten echten Snapshots DIESER
+            // Kampagne entfernt — bei weiterhin gruener Statusanzeige. Lieber diese
+            // eine Kampagne ueberspringen als ein leeres Backup, das die guten verdraengt.
+            if (!data) {
+                if (typeof window !== 'undefined' && window.APP_CONFIG?.DEBUG_MODE) {
+                    window.ErrorHandler?.log('file-backup', null,
+                        `Keine Daten fuer Kampagne "${target.name}" (${target.key}) lesbar — uebersprungen (DEBT-17)`);
+                }
+                continue;
+            }
+
+            await writeBackupForCampaign(dirHandle, target.key, target.name, data, target.filenames);
+            anySucceeded = true;
+        } catch (e) {
+            // T-12-10: ein Fehler bei EINER Kampagne darf die uebrigen nicht verhindern —
+            // sonst waere das derselbe Fehler wie DEBT-17, nur eine Ebene hoeher. Kein
+            // Toast pro Kampagne (Toast-Spam am Spieltisch); nur ins Event-Log.
+            if (typeof window !== 'undefined' && window.APP_CONFIG?.DEBUG_MODE) {
+                window.ErrorHandler?.log('file-backup', e,
+                    `Backup fuer Kampagne "${target.name}" (${target.key}) fehlgeschlagen`);
+            }
         }
+    }
 
-        await writeBackupForCampaign(dirHandle, campaignKey, campaignName, data);
+    if (anySucceeded) {
         _fileBackupLastTime = new Date();
         setBackupStatus('active');
-    } catch (e) {
-        setBackupStatus('paused');
+        return;
+    }
 
-        // D-16: Einmalig "Ordner wieder verbinden?"-Toast pro Sitzung
-        if (!_fileBackupPausedNotified) {
-            _fileBackupPausedNotified = true;
-            if (typeof window !== 'undefined' && typeof window.showToast === 'function') {
-                window.showToast(
-                    '⚠️ Datei-Backup pausiert — Ordner wieder verbinden?',
-                    'warning'
-                );
-            }
-        } else {
-            // Weitere Fehler nur ins Event-Log, kein Toast (D-16)
-            if (typeof window !== 'undefined' && window.APP_CONFIG?.DEBUG_MODE) {
-                window.ErrorHandler?.log('file-backup', e, 'Backup fehlgeschlagen (Fehler unterdrückt)');
-            }
+    // Keine einzige Kampagne konnte gesichert werden (oder der Ordner-Handle
+    // selbst versagt hat) -> Gesamtstatus pausiert.
+    setBackupStatus('paused');
+
+    // D-16: Einmalig "Ordner wieder verbinden?"-Toast pro Sitzung
+    if (!_fileBackupPausedNotified) {
+        _fileBackupPausedNotified = true;
+        if (typeof window !== 'undefined' && typeof window.showToast === 'function') {
+            window.showToast(
+                '⚠️ Datei-Backup pausiert — Ordner wieder verbinden?',
+                'warning'
+            );
+        }
+    } else {
+        // Weitere Fehler nur ins Event-Log, kein Toast (D-16)
+        if (typeof window !== 'undefined' && window.APP_CONFIG?.DEBUG_MODE) {
+            window.ErrorHandler?.log('file-backup', null, 'Backup fehlgeschlagen (Fehler unterdrückt)');
         }
     }
 }
