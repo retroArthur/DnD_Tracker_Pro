@@ -293,4 +293,96 @@ test.describe('Soundboard', function () {
         expect(loopPersist).toBe(false);
     });
 
+    /**
+     * SAFE-03 (Plan 12-06) — Strg+Z nach dem Entfernen einer Audiodatei stellt Blob UND
+     * Szenen-Referenz wieder her.
+     * Reihenfolge: Import -> Szene mit Track anlegen -> ueber den echten Remove-Button
+     * entfernen (Grabstein) -> pruefen dass beides sofort verschwunden ist -> Strg+Z ->
+     * pruefen dass beides zurueck ist -> Seiten-Reload (echte IDB/localStorage-Persistenz
+     * statt nur In-Memory-Optimismus, gleiche Vorsicht wie "audio blob persists after
+     * reload") -> nochmal pruefen, dass beides den Reload ueberlebt hat.
+     * Wir testen die Datenebene (listSoundBlobs()/D.soundboard.scenes), nicht die
+     * tatsaechliche Audio-Wiedergabe — wie die uebrigen Tests dieser Datei (UX-01d ist
+     * manuell; die synthetische WAV-Datei hat 0 Samples und laesst sich nicht dekodieren).
+     */
+    test('undo after removing audio file restores blob and scene reference', async ({ page }) => {
+        await openSoundboardTab(page);
+
+        await page.locator('#soundboard-file-input').setInputFiles({
+            name: 'undo-test.wav',
+            mimeType: 'audio/wav',
+            buffer: Buffer.from([
+                0x52, 0x49, 0x46, 0x46, 0x24, 0x00, 0x00, 0x00,
+                0x57, 0x41, 0x56, 0x45, 0x66, 0x6d, 0x74, 0x20,
+                0x10, 0x00, 0x00, 0x00, 0x01, 0x00, 0x01, 0x00,
+                0x44, 0xac, 0x00, 0x00, 0x88, 0x58, 0x01, 0x00,
+                0x02, 0x00, 0x10, 0x00, 0x64, 0x61, 0x74, 0x61,
+                0x00, 0x00, 0x00, 0x00
+            ])
+        });
+        await page.waitForTimeout(600);
+
+        // Szene mit dem importierten Track anlegen
+        const blobId = await page.evaluate(async function() {
+            const blobs = await window.listSoundBlobs();
+            const scene = window.createScene('Undo-Test', 0);
+            window.addTrackToScene(scene.id, blobs[0].id, 0.8);
+            window.renderSceneList();
+            window.renderAudioLibrary();
+            return blobs[0].id;
+        });
+        await page.waitForTimeout(200);
+
+        // Ueber den echten UI-Button entfernen (data-action="remove-audio", EventDelegation)
+        const removeBtn = page.locator(`.sb-remove-btn[data-id="${blobId}"]`);
+        await expect(removeBtn).toBeVisible({ timeout: 3000 });
+        await removeBtn.click();
+        await page.waitForTimeout(300);
+
+        // Sofort verschwunden: Bibliothek UND Szenen-Referenz
+        const afterRemove = await page.evaluate(async function(id) {
+            const blobs = await window.listSoundBlobs();
+            const scene = window.D.soundboard.scenes.find(function(s) { return s.name === 'Undo-Test'; });
+            return {
+                inLibrary: blobs.some(function(b) { return b.id === id; }),
+                inScene: scene ? scene.tracks.some(function(t) { return t.blobId === id; }) : null
+            };
+        }, blobId);
+        expect(afterRemove.inLibrary).toBe(false);
+        expect(afterRemove.inScene).toBe(false);
+
+        // Strg+Z — Undo-System (systems/undo.js) + Undo-Hook (soundboard-crud.js, Plan 12-06)
+        await page.keyboard.press('Control+z');
+        await page.waitForTimeout(400);
+
+        const afterUndo = await page.evaluate(async function(id) {
+            const blobs = await window.listSoundBlobs();
+            const scene = window.D.soundboard.scenes.find(function(s) { return s.name === 'Undo-Test'; });
+            return {
+                inLibrary: blobs.some(function(b) { return b.id === id; }),
+                inScene: scene ? scene.tracks.some(function(t) { return t.blobId === id; }) : null
+            };
+        }, blobId);
+        expect(afterUndo.inLibrary).toBe(true);
+        expect(afterUndo.inScene).toBe(true);
+
+        // Reload — echte IDB/localStorage-Persistenz statt In-Memory-Zustand pruefen
+        // (Vorsicht: JS-Modul-Caches wie soundboard-player.js:_bufferCache koennten sonst
+        // einen kaputten Restore als funktionierend erscheinen lassen)
+        await page.reload();
+        await page.waitForSelector('.app-title', { timeout: 10000 });
+        await page.waitForTimeout(600);
+
+        const afterReload = await page.evaluate(async function(id) {
+            const blobs = await window.listSoundBlobs();
+            const scene = window.D.soundboard.scenes.find(function(s) { return s.name === 'Undo-Test'; });
+            return {
+                inLibrary: blobs.some(function(b) { return b.id === id; }),
+                inScene: scene ? scene.tracks.some(function(t) { return t.blobId === id; }) : null
+            };
+        }, blobId);
+        expect(afterReload.inLibrary).toBe(true);
+        expect(afterReload.inScene).toBe(true);
+    });
+
 });

@@ -281,3 +281,119 @@ describe('Soundboard — Grabstein-Loeschung (SAFE-03, Plan 12-06)', function ()
         expect(await global.window.getSoundBlob('a3')).toBeNull();
     });
 });
+
+/**
+ * removeAudioFile() + Undo-Hook — Reihenfolge, Wiederherstellung, Redo, fremdes Aktionslabel
+ * (SAFE-03, Plan 12-06, T-12-19).
+ *
+ * Laedt soundboard-crud.js frisch (eval-Muster wie loadFileChangeHandler() oben) in eine
+ * lokale Funktions-Closure — jeder loadCrudModule()-Aufruf bekommt sein eigenes
+ * Modul-Journal (_audioDeleteJournal) und seinen eigenen registrierten Undo-Hook, damit
+ * Tests sich nicht gegenseitig beeinflussen. window.saveUndoState, window.softDeleteSoundBlob,
+ * window.restoreSoundBlob, window.save, window.renderAudioLibrary und window.registerUndoHook
+ * werden VOR dem eval() als Spies gestellt.
+ */
+describe('Soundboard — removeAudioFile() Undo/Redo (SAFE-03, Plan 12-06)', function () {
+    function loadCrudModule() {
+        const src = fs.readFileSync(
+            path.resolve(__dirname, '../../features/soundboard/soundboard-crud.js'),
+            'utf8'
+        );
+        const registerUndoHookSpy = jest.fn();
+        global.window.registerUndoHook = registerUndoHookSpy;
+        global.window.saveUndoState = jest.fn();
+        global.window.softDeleteSoundBlob = jest.fn(function () { return Promise.resolve(); });
+        global.window.restoreSoundBlob = jest.fn(function () { return Promise.resolve(true); });
+        global.window.deleteSoundBlob = jest.fn();
+        global.window.save = jest.fn();
+        global.window.renderAudioLibrary = jest.fn();
+        global.window.getActiveSceneId = undefined;
+        global.window.stopAllTracks = jest.fn();
+        global.window.D = { soundboard: { scenes: [] } };
+        global.showToast = jest.fn();
+
+        eval(src); // eslint-disable-line no-eval
+
+        // removeAudioFile() registriert seinen Undo-Hook einmalig beim Modul-Load.
+        expect(registerUndoHookSpy).toHaveBeenCalledTimes(1);
+        const hook = registerUndoHookSpy.mock.calls[0][0];
+        return { hook: hook, removeAudioFile: global.window.removeAudioFile };
+    }
+
+    test('removeAudioFile(): saveUndoState laeuft VOR softDeleteSoundBlob und vor der Szenen-Mutation (save())', async function () {
+        const { removeAudioFile } = loadCrudModule();
+        global.window.D.soundboard.scenes = [{ id: 's1', tracks: [{ blobId: 'audio_1' }] }];
+
+        const order = [];
+        global.window.saveUndoState.mockImplementation(function () { order.push('saveUndoState'); });
+        global.window.softDeleteSoundBlob.mockImplementation(function () {
+            order.push('softDeleteSoundBlob');
+            return Promise.resolve();
+        });
+        global.window.save.mockImplementation(function () { order.push('save'); });
+
+        await removeAudioFile('audio_1');
+
+        expect(order).toEqual(['saveUndoState', 'softDeleteSoundBlob', 'save']);
+    });
+
+    test('removeAudioFile(): verwendet softDeleteSoundBlob, nicht deleteSoundBlob', async function () {
+        const { removeAudioFile } = loadCrudModule();
+
+        await removeAudioFile('audio_2');
+
+        expect(global.window.softDeleteSoundBlob).toHaveBeenCalledWith('audio_2');
+        expect(global.window.deleteSoundBlob).not.toHaveBeenCalled();
+    });
+
+    test('Undo-Hook stellt bei { action: "Audio entfernt", direction: "undo" } genau die zuletzt entfernte Datei wieder her', async function () {
+        const { hook, removeAudioFile } = loadCrudModule();
+        await removeAudioFile('audio_a');
+        await removeAudioFile('audio_b');
+
+        global.window.restoreSoundBlob.mockClear();
+        await hook({ action: 'Audio entfernt', direction: 'undo' });
+
+        expect(global.window.restoreSoundBlob).toHaveBeenCalledTimes(1);
+        expect(global.window.restoreSoundBlob).toHaveBeenCalledWith('audio_b');
+        expect(global.window.renderAudioLibrary).toHaveBeenCalled();
+    });
+
+    test('Zwei aufeinanderfolgende Entfernungen werden in umgekehrter Reihenfolge wiederhergestellt', async function () {
+        const { hook, removeAudioFile } = loadCrudModule();
+        await removeAudioFile('audio_a');
+        await removeAudioFile('audio_b');
+
+        await hook({ action: 'Audio entfernt', direction: 'undo' });
+        await hook({ action: 'Audio entfernt', direction: 'undo' });
+
+        const calls = global.window.restoreSoundBlob.mock.calls.map(function (c) { return c[0]; });
+        expect(calls).toEqual(['audio_b', 'audio_a']);
+    });
+
+    test('Redo versieht dieselbe Datei wieder mit einem Grabstein (softDeleteSoundBlob)', async function () {
+        const { hook, removeAudioFile } = loadCrudModule();
+        await removeAudioFile('audio_c');
+        await hook({ action: 'Audio entfernt', direction: 'undo' });
+
+        global.window.softDeleteSoundBlob.mockClear();
+        await hook({ action: 'Audio entfernt', direction: 'redo' });
+
+        expect(global.window.softDeleteSoundBlob).toHaveBeenCalledWith('audio_c');
+    });
+
+    test('Ein Hook-Aufruf mit einem anderen Aktionslabel laesst die Datenbank unberuehrt', async function () {
+        const { hook, removeAudioFile } = loadCrudModule();
+        await removeAudioFile('audio_d');
+
+        global.window.restoreSoundBlob.mockClear();
+        global.window.softDeleteSoundBlob.mockClear();
+        global.window.renderAudioLibrary.mockClear();
+
+        await hook({ action: 'Charakter geloescht', direction: 'undo' });
+
+        expect(global.window.restoreSoundBlob).not.toHaveBeenCalled();
+        expect(global.window.softDeleteSoundBlob).not.toHaveBeenCalled();
+        expect(global.window.renderAudioLibrary).not.toHaveBeenCalled();
+    });
+});

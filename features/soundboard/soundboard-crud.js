@@ -60,7 +60,13 @@ async function importAudioFile(fileOrEvent) {
 }
 
 /**
- * removeAudioFile(id) — Blob aus IDB loeschen.
+ * removeAudioFile(id) — Blob per Grabstein aufgeschoben "loeschen" (SAFE-03).
+ * saveUndoState() sichert ausschliesslich window.D, niemals den IDB-Inhalt — deshalb
+ * loescht diese Funktion den Blob nicht sofort, sondern versieht ihn ueber
+ * softDeleteSoundBlob() nur mit einem Grabstein. Ohne diesen Umweg wuerde Strg+Z nur die
+ * Szenen-Referenz zurueckholen, waehrend die Datei selbst unwiederbringlich weg waere —
+ * genau die "defekten Szenen", die SAFE-03 verhindern soll. Der registrierte Undo-Hook
+ * _onUndoAudioDelete() holt die Datei bei Strg+Z ueber restoreSoundBlob() zurueck.
  * Entfernt den blobId ausserdem aus allen Szenen-Tracks die darauf verweisen.
  *
  * @param {string} id — Blob-ID
@@ -69,8 +75,19 @@ async function importAudioFile(fileOrEvent) {
 async function removeAudioFile(id) {
     if (!id) return;
 
+    // saveUndoState() MUSS vor jeder Mutation laufen — sonst enthaelt die Momentaufnahme
+    // von window.D bereits die folgende Scene-Track-Bereinigung (CLAUDE.md: immer
+    // saveUndoState() vor destruktiven Operationen).
+    if (typeof window.saveUndoState === 'function') {
+        window.saveUndoState('Audio entfernt');
+    }
+
     try {
-        await window.deleteSoundBlob(id);
+        await window.softDeleteSoundBlob(id);
+        _audioDeleteJournal.push({ id: id, undone: false });
+        if (_audioDeleteJournal.length > _AUDIO_JOURNAL_LIMIT) {
+            _audioDeleteJournal.shift();
+        }
 
         // Aus allen Szenen-Tracks entfernen (Referenz-Bereinigung)
         if (window.D && window.D.soundboard && Array.isArray(window.D.soundboard.scenes)) {
@@ -100,6 +117,66 @@ async function removeAudioFile(id) {
     } catch (err) {
         showToast('Fehler beim Entfernen', 'error');
     }
+}
+
+// ============================================================
+// Undo-Journal fuer removeAudioFile() (Plan 12-06, SAFE-03)
+// ============================================================
+// Grabstein-Design (siehe removeAudioFile() oben): das Journal merkt sich, welche
+// zuletzt entfernten Dateien noch "undone: false" (also weiterhin per Grabstein entfernt)
+// sind. Der Undo-Hook _onUndoAudioDelete() läuft rückwärts durch dieses Journal (LIFO —
+// zuletzt entfernt wird zuerst wiederhergestellt), Redo vorwärts (FIFO unter den bereits
+// wiederhergestellten Einträgen). Länge auf UNDO_LIMIT begrenzt — ältere Einträge fallen
+// vorne heraus; deren Grabsteine räumt das Sitzungs-Aufräumen in soundboard-idb.js beim
+// nächsten App-Start ab.
+const _audioDeleteJournal = [];
+const _AUDIO_JOURNAL_LIMIT = window.APP_CONFIG?.UNDO_LIMIT || 30;
+
+/**
+ * _onUndoAudioDelete(info) — Undo-Hook-Konsument (registriert via window.registerUndoHook,
+ * systems/undo.js, Plan 12-05). Reagiert ausschliesslich auf das Aktionslabel
+ * 'Audio entfernt' — jedes andere Label laesst die Datenbank unberuehrt.
+ *
+ * @param {{action: string, direction: 'undo'|'redo'}} info
+ */
+async function _onUndoAudioDelete(info) {
+    if (!info || info.action !== 'Audio entfernt') return;
+
+    try {
+        if (info.direction === 'undo') {
+            // Rückwärts durch das Journal — zuletzt entfernte Datei zuerst zurückholen.
+            for (let i = _audioDeleteJournal.length - 1; i >= 0; i--) {
+                const entry = _audioDeleteJournal[i];
+                if (!entry.undone) {
+                    await window.restoreSoundBlob(entry.id);
+                    entry.undone = true;
+                    break;
+                }
+            }
+        } else if (info.direction === 'redo') {
+            // Vorwärts durch das Journal — entgegengesetztes Ende von undo() (siehe oben).
+            for (let i = 0; i < _audioDeleteJournal.length; i++) {
+                const entry = _audioDeleteJournal[i];
+                if (entry.undone) {
+                    await window.softDeleteSoundBlob(entry.id);
+                    entry.undone = false;
+                    break;
+                }
+            }
+        }
+    } catch (err) {
+        if (window.APP_CONFIG?.DEBUG_MODE && window.ErrorHandler) {
+            window.ErrorHandler.log('_onUndoAudioDelete', err, info && info.direction);
+        }
+    }
+
+    // Bibliothek unabhaengig vom Ausgang neu rendern, damit sie den aktuellen Stand zeigt.
+    if (typeof window.renderAudioLibrary === 'function') {
+        window.renderAudioLibrary();
+    }
+}
+if (typeof window.registerUndoHook === 'function') {
+    window.registerUndoHook(_onUndoAudioDelete);
 }
 
 // ============================================================
