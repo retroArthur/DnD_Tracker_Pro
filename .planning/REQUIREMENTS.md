@@ -23,7 +23,8 @@ wiederherstellbar ist (`SAFE-01`, `SAFE-02`, `SAFE-04`).
 
 ### Datensicherheit — Verlust verhindern
 
-- **SAFE-01** (`DEBT-18`): Der Umzugs-Export `file://` → PWA erfasst die IndexedDB-Inhalte. Heute
+- **SAFE-01** ✓ (`DEBT-18`, Phase 12: 12-01 + 12-02 komplett): Der Umzugs-Export `file://` → PWA
+  erfasst die IndexedDB-Inhalte. Heute
   deckt `FULL_EXPORT_SCHEMA` (`systems/migration/full-export.js:9-18`) nur fünf
   localStorage-Felder ab — Soundboard-Audio (`audioBlobs`) und Würfelstatistik (`diceStats`) gehen
   beim einmaligen, angeleiteten Umzug **irreversibel** verloren, und Szenen bleiben mit toten
@@ -122,7 +123,7 @@ wiederherstellbar ist (`SAFE-01`, `SAFE-02`, `SAFE-04`).
 
 | Requirement | DEBT-Posten | Phase |
 | --- | --- | --- |
-| SAFE-01 | DEBT-18 | Pending |
+| SAFE-01 | DEBT-18 | Phase 12 — Complete (12-01, 12-02) |
 | SAFE-02 | DEBT-21, DEBT-22 | Pending |
 | SAFE-03 | DEBT-19 | Pending |
 | SAFE-04 | DEBT-20 | Pending |

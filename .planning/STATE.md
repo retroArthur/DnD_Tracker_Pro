@@ -5,15 +5,15 @@ milestone_name: Schulden-Abbau
 current_phase: 12
 current_phase_name: Datensicherheit
 status: executing
-stopped_at: Completed 12-01-PLAN.md
-last_updated: "2026-08-06T09:37:41.804Z"
+stopped_at: Completed 12-02-PLAN.md
+last_updated: "2026-08-18T21:09:23.612Z"
 last_activity: 2026-08-06
 last_activity_desc: Phase 12 execution started
 progress:
   total_phases: 3
   completed_phases: 0
   total_plans: 7
-  completed_plans: 1
+  completed_plans: 2
   percent: 0
 ---
 
@@ -36,7 +36,7 @@ progress:
 ## Current Position
 
 Phase: 12 (Datensicherheit) — EXECUTING
-Plan: 2 of 7
+Plan: 3 of 7
 Status: Ready to execute
 Last activity: 2026-08-06 — Phase 12 execution started
 
@@ -98,6 +98,7 @@ Browser-Verhalten an der Base64-Grenze (12-07).
 | Phase 11 P06 | ~35min | 3 tasks | 2 files |
 | Phase 11 P07 | N/A | 1 tasks | 4 files |
 | Phase 12 P01 | 35min | 3 tasks | 6 files |
+| Phase 12 P02 | ~2h | 3 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -184,8 +185,8 @@ Browser-Verhalten an der Base64-Grenze (12-07).
 
 ## Session Continuity
 
-**Last session:** 2026-08-06T09:37:41.792Z
-**Stopped at:** Completed 12-01-PLAN.md
+**Last session:** 2026-08-18T21:09:23.598Z
+**Stopped at:** Completed 12-02-PLAN.md
 **Resume file:** None
 
 **Last action:** Komplette Milestone-UAT abgeschlossen (2026-06-20 → 2026-07-20): alle 5 offenen Human-UAT-Sessions via `/gsd-verify-work` durchgetestet — 07 (4/4), 06 (5/5), 05 (2/2), 01 (3/3), 02 (6/6). Alle 7 VERIFICATION.md jetzt `status: passed`. Dabei gefundene+gefixte Bugs: Soundboard-Doppel-Import (75aadfe), Audio-läuft-nach-Szene-Löschen (b85dbe1), Volume nicht live (801ed48), Manifest-CORS unter file:// (cd75093), Konsolen-Hygiene (c029f11), Datei-Backup schrieb nie bei Entity-CRUD — window.save-Wrapper strukturell wirkungslos für bare save() (1430e8c), generischer registerPostSaveHook + DM-Screen-Live-Sync-Umstellung + CLAUDE.md-Pattern-Korrektur (6ea8309), „Anderen Ordner wählen"-Button (cc2af9e). Nebenbei: Repo mit origin gemergt (7 Mai-Commits, alter pages.yml-Deploy entfernt 7f4858a), 348 Commits gepusht, GitHub-Pages-Deploy live verifiziert (PWA installierbar, SW-Update-Flow, Datei-Backup, Migrations-Wizard file://→PWA). Zusätzlich in der Session: Soundboard-Erweiterungen (Loop-Toggle/Crossfade-Loop/Fortschritt 6636297, Per-Track-Play noch offen als Design), gruppierte Navigation (3d77ec0).
@@ -270,6 +271,7 @@ _State initialized: 2026-06-11_
 - [Phase ?]: [Phase 11, 11-06]: 15 Restposten als DEBT-01..15 in REQUIREMENTS.md uebernommen (D-16), inkl. 4 aus STATE.md Open TODOs (IN-01/WR-02/IN-02/Toast-Race); ARCH-04 bewusst NICHT als komplett markiert - nur die Triage-Haelfte ist erledigt, Map-Refresh folgt in Plan 11-07
 - [Phase ?]: Audio-Export als zweite Datei (audio-export-v1), strikt getrennt von full-v1; Groessenpruefung ueber listSoundBlobs()-Metadaten VOR jedem Base64-Encode (300 MiB Sicherheitsabstand zur gemessenen 384-MiB-V8-Grenze)
 - [Phase ?]: SAFE-01/SAFE-02/SAFE-06 nicht als requirements-completed markiert in Plan 12-01 — jede Requirement-ID ist auf mehrere Plaene dieser Phase verteilt, vollstaendig erst im jeweils letzten Plan (12-02/12-03/12-07)
+- [Phase ?]: [Phase 12, 12-02] Weg B (Checkpoint-Fix): startMigrationFlow() loest downloadAudioExport() nicht mehr automatisch aus — Chrome gated den zweiten automatischen Download einer Nutzergeste hinter der Automatische-Downloads-Berechtigung (file://). Expliziter Button im Divergenz-Banner mit Datei-/Groessenvorschau (getAudioExportSummary()) liefert stattdessen eine eigene Nutzergeste.
 
 ## Operator Next Steps
 
