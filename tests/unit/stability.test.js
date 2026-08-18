@@ -1006,6 +1006,42 @@ describe('Persistence Regression Tests (Plan 01-02)', () => {
             expect(saveCatch).toMatch(/saveToIndexedDBFallback\(/);
         });
     });
+
+    // ----------------------------------------------------------------
+    // describe: "Toter autosave-toggle-Codepfad entfernt (12-05 / D-05)"
+    // Prüft: Die Kennung des nie im UI vorhandenen Schalters kommt in keiner der drei
+    // betroffenen Quelldateien mehr vor. Ein Verhaltenstest kann das nicht leisten — das
+    // Element fehlt im UI ohnehin, der Codepfad wäre also auch VOR dem Entfernen scheinbar
+    // grün. Nur der Quelltext-Beleg fängt eine spätere Wiedereinführung (Muster analog
+    // Zeile 559-576 dieser Datei).
+    // ----------------------------------------------------------------
+    describe('Toter autosave-toggle-Codepfad entfernt (12-05 / D-05)', () => {
+        test('Quelltext-Audit: "autosave-toggle" kommt in persistence.js, avatars.js, init.js nicht mehr vor', () => {
+            const fs = require('fs');
+            const path = require('path');
+
+            const files = [
+                '../../systems/spellslots/persistence.js',
+                '../../systems/avatars.js',
+                '../../core/init.js'
+            ];
+
+            files.forEach(relPath => {
+                const srcPath = path.join(__dirname, relPath);
+                const src = fs.readFileSync(srcPath, 'utf-8');
+                expect(src).not.toMatch(/autosave-toggle/);
+            });
+        });
+
+        test('saveImmediate() und save() beginnen ohne vorgelagerte DOM-Abfrage auf den Schalter', () => {
+            const fs = require('fs');
+            const path = require('path');
+            const srcPath = path.join(__dirname, '../../systems/spellslots/persistence.js');
+            const src = fs.readFileSync(srcPath, 'utf-8');
+
+            expect(src).not.toMatch(/getElementById\(['"]autosave-toggle['"]\)/);
+        });
+    });
 });
 
 // ============================================================
@@ -1040,6 +1076,210 @@ describe('Data Integrity', () => {
 
         test('redo should handle empty redo stack', () => {
             expect(() => redo()).not.toThrow();
+        });
+    });
+
+    // ----------------------------------------------------------------
+    // describe: "Undo/Redo — Peek-Parse-Pop, Push-Validierung, Hooks (12-05 / D-06 / SAFE-05)"
+    // Die obige Sektion "Undo/Redo system" testet die vereinfachten globalen Mocks aus
+    // tests/setup.js (global.undo/redo/saveUndoState) — die dortige Implementierung ruft
+    // gar kein safeJSONParse auf und beweist damit NICHT den Peek→Parse→Pop-Fix. Hier wird
+    // der ECHTE Quelltext von systems/undo.js via vm.runInContext geladen (Präzedenzmuster:
+    // storage-conflict.test.js, migration.test.js) und direkt gegen die Produktionslogik
+    // getestet — isoliert vom Rest der Datei, damit die globalen Mocks unangetastet bleiben.
+    // ----------------------------------------------------------------
+    describe('Undo/Redo — Peek-Parse-Pop, Push-Validierung, Hooks (12-05 / D-06 / SAFE-05)', () => {
+        const fs = require('fs');
+        const path = require('path');
+        const vm = require('vm');
+
+        let context;
+        let realUndo, realRedo, realPushUndo, realSaveUndoState;
+        let getDebug, pushRawUndo, pushRawRedo;
+
+        beforeEach(() => {
+            context = {
+                window: {
+                    D: {
+                        characters: [],
+                        npcs: [],
+                        locations: [],
+                        initiative: { combatants: [], currentTurn: 0, round: 1 },
+                        _nextId: {}
+                    },
+                    APP_CONFIG: { UNDO_LIMIT: 30, DEBUG_MODE: false },
+                    // Echtes safeJSONParse-Verhalten nachgebaut (render/helpers.js:362-372),
+                    // ohne die ErrorHandler-Abhängigkeit dieser Datei mitzuziehen.
+                    safeJSONParse: (str, fallback = null) => {
+                        if (!str || typeof str !== 'string') return fallback;
+                        try {
+                            return JSON.parse(str);
+                        } catch (e) {
+                            return fallback;
+                        }
+                    },
+                    renderAll: jest.fn(),
+                    saveImmediate: jest.fn(),
+                    ErrorHandler: { log: jest.fn() }
+                },
+                showToast: jest.fn(),
+                validateAndRepairNextId: jest.fn(() => ({ valid: true, repairs: [] })),
+                console
+            };
+            vm.createContext(context);
+
+            const filePath = path.join(__dirname, '../../systems/undo.js');
+            const source = fs.readFileSync(filePath, 'utf8');
+            // undoStack/redoStack sind top-level const-Deklarationen — in einem vm-Skript
+            // (wie im Browser bei <script>) werden const/let NICHT zu Eigenschaften des
+            // globalen Objekts. Debug-/Test-Helfer als function-Deklarationen im selben
+            // Skript-Scope anhängen: die werden zu globalen Eigenschaften, ihr Closure sieht
+            // undoStack/redoStack trotzdem (gleiche lexikalische Umgebung, ein Compile-Lauf).
+            const combined =
+                source +
+                '\nfunction __undoDebug() { return { undoLength: undoStack.length, redoLength: redoStack.length }; }' +
+                '\nfunction __pushRawUndo(entry) { undoStack.push(entry); }' +
+                '\nfunction __pushRawRedo(entry) { redoStack.push(entry); }\n';
+            vm.runInContext(combined, context);
+
+            realUndo = context.undo;
+            realRedo = context.redo;
+            realPushUndo = context.pushUndo;
+            realSaveUndoState = context.saveUndoState;
+            getDebug = context.__undoDebug;
+            pushRawUndo = context.__pushRawUndo;
+            pushRawRedo = context.__pushRawRedo;
+        });
+
+        test('Parse-Fehler beim Undo lässt Undo- UND Redo-Stack unverändert', () => {
+            // Kaputter Eintrag direkt in den Stack geschrieben — dieselbe Technik wie in der
+            // bestehenden Sektion (Zeile ~1063).
+            pushRawUndo({ action: 'Kaputt', state: '{invalid', timestamp: Date.now() });
+
+            expect(() => realUndo()).not.toThrow();
+            expect(getDebug()).toEqual({ undoLength: 1, redoLength: 0 });
+            expect(context.showToast).toHaveBeenCalledWith('❌ Undo fehlgeschlagen', 'error');
+        });
+
+        test('Parse-Fehler beim Redo lässt Redo- UND Undo-Stack unverändert', () => {
+            pushRawRedo({ action: 'Kaputt', state: '{invalid', timestamp: Date.now() });
+
+            expect(() => realRedo()).not.toThrow();
+            expect(getDebug()).toEqual({ undoLength: 0, redoLength: 1 });
+            expect(context.showToast).toHaveBeenCalledWith('❌ Redo fehlgeschlagen', 'error');
+        });
+
+        test('Ein erfolgreicher Undo-Vorgang verschiebt genau einen Eintrag vom Undo- auf den Redo-Stack', () => {
+            context.window.D.characters.push({ id: 1, name: 'Vorher' });
+            realSaveUndoState('Charakter geändert');
+            context.window.D.characters[0].name = 'Nachher';
+
+            expect(getDebug()).toEqual({ undoLength: 1, redoLength: 0 });
+
+            realUndo();
+
+            expect(getDebug()).toEqual({ undoLength: 0, redoLength: 1 });
+            expect(context.window.D.characters[0].name).toBe('Vorher');
+        });
+
+        test('Ein zirkuläres window.D beim Push legt keinen Eintrag an, wirft nicht, Aufrufer läuft weiter', () => {
+            context.window.D.self = context.window.D; // zirkulär
+
+            let ranAfterPush = false;
+            expect(() => {
+                realPushUndo('Zirkulär');
+                ranAfterPush = true; // beweist: der Aufrufer wird NICHT abgebrochen
+            }).not.toThrow();
+
+            expect(ranAfterPush).toBe(true);
+            expect(getDebug()).toEqual({ undoLength: 0, redoLength: 0 });
+            expect(context.showToast).toHaveBeenCalledWith(
+                expect.stringContaining('Undo-Schutz'),
+                'warning'
+            );
+        });
+
+        test('Ein bereits vorhandener kaputter Eintrag bleibt liegen, bis clearUndoHistory() läuft', () => {
+            pushRawUndo({ action: 'Kaputt', state: '{invalid', timestamp: Date.now() });
+
+            realUndo();
+            realUndo(); // zweiter Versuch: derselbe kaputte Eintrag liegt immer noch oben
+
+            expect(getDebug().undoLength).toBe(1);
+            expect(context.showToast).toHaveBeenCalledTimes(2);
+        });
+
+        describe('registerUndoHook() (Task 2 — Konsument: Plan 12-06)', () => {
+            test('Hook feuert nach erfolgreichem Undo genau einmal mit { action, direction: "undo" }', () => {
+                context.window.D.characters.push({ id: 1, name: 'X' });
+                realSaveUndoState('Meine Aktion');
+                context.window.D.characters[0].name = 'Y';
+
+                const hook = jest.fn();
+                context.window.registerUndoHook(hook);
+
+                realUndo();
+
+                expect(hook).toHaveBeenCalledTimes(1);
+                expect(hook).toHaveBeenCalledWith({ action: 'Meine Aktion', direction: 'undo' });
+            });
+
+            test('Hook feuert nach erfolgreichem Redo mit direction: "redo" und dem ursprünglichen Label', () => {
+                context.window.D.characters.push({ id: 1, name: 'X' });
+                realSaveUndoState('Meine Aktion');
+                context.window.D.characters[0].name = 'Y';
+                realUndo();
+
+                const hook = jest.fn();
+                context.window.registerUndoHook(hook);
+
+                realRedo();
+
+                expect(hook).toHaveBeenCalledTimes(1);
+                expect(hook).toHaveBeenCalledWith({ action: 'Meine Aktion', direction: 'redo' });
+            });
+
+            test('Bei gescheitertem Parse wird kein Hook aufgerufen', () => {
+                pushRawUndo({ action: 'Kaputt', state: '{invalid', timestamp: Date.now() });
+                const hook = jest.fn();
+                context.window.registerUndoHook(hook);
+
+                realUndo();
+
+                expect(hook).not.toHaveBeenCalled();
+            });
+
+            test('Ein werfender Hook bricht weder den Undo-Vorgang noch die übrigen Hooks ab', () => {
+                context.window.D.characters.push({ id: 1, name: 'X' });
+                realSaveUndoState('Aktion');
+                context.window.D.characters[0].name = 'Y';
+
+                const badHook = jest.fn(() => {
+                    throw new Error('kaputt');
+                });
+                const goodHook = jest.fn();
+                context.window.registerUndoHook(badHook);
+                context.window.registerUndoHook(goodHook);
+
+                expect(() => realUndo()).not.toThrow();
+                expect(context.window.D.characters[0].name).toBe('X'); // Undo lief trotzdem durch
+                expect(badHook).toHaveBeenCalledTimes(1);
+                expect(goodHook).toHaveBeenCalledTimes(1);
+            });
+
+            test('Dieselbe Funktion zweimal registriert wird nur einmal aufgerufen', () => {
+                context.window.D.characters.push({ id: 1, name: 'X' });
+                realSaveUndoState('Aktion');
+                context.window.D.characters[0].name = 'Y';
+
+                const hook = jest.fn();
+                context.window.registerUndoHook(hook);
+                context.window.registerUndoHook(hook);
+
+                realUndo();
+
+                expect(hook).toHaveBeenCalledTimes(1);
+            });
         });
     });
 

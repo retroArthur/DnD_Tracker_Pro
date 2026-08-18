@@ -7,9 +7,24 @@ const redoStack = [];
 // Alias für Rückwärtskompatibilität
 const UNDO_LIMIT = window.APP_CONFIG?.UNDO_LIMIT || 30;
 function pushUndo(action) {
+    // Serialisierbarkeit VOR dem Push prüfen (D-06): ein zirkuläres oder sonst nicht
+    // serialisierbares window.D darf keinen kaputten Eintrag auf den Stack legen. Der
+    // Aufrufer (die destruktive Operation) läuft trotzdem weiter — "am Spieltisch nie
+    // blockieren" gilt hier genauso wie bei D-02; der Warn-Toast macht sichtbar, dass
+    // dieser eine Schritt ohne Undo-Schutz lief.
+    let stateJSON;
+    try {
+        stateJSON = JSON.stringify(window.D);
+    } catch (e) {
+        if (window.APP_CONFIG?.DEBUG_MODE && window.ErrorHandler) {
+            window.ErrorHandler.log('pushUndo', e, action);
+        }
+        showToast('⚠️ Undo-Schutz für diese Aktion nicht verfügbar', 'warning');
+        return;
+    }
     undoStack.push({
         action,
-        state: JSON.stringify(window.D),
+        state: stateJSON,
         timestamp: Date.now()
     });
     if (undoStack.length > UNDO_LIMIT) {
@@ -27,35 +42,47 @@ function undo() {
         return;
     }
     const D = window.D;
-    // Aktuellen State für Redo sichern
+    // Erst ansehen (nicht entfernen) und parsen, bevor irgendein Stack angefasst wird.
+    // Vorher: pop() lief VOR der Parse-Prüfung — bei einem Parse-Fehler war der Eintrag
+    // unwiderruflich weg (D-06).
+    const last = undoStack[undoStack.length - 1];
+    const safeJSONParse = window.safeJSONParse;
+    const parsed = safeJSONParse(last.state);
+    if (!parsed) {
+        // Beide Stacks bleiben unverändert. Bekannte Nebenwirkung: ein bereits vorhandener,
+        // unparsbarer Eintrag bleibt liegen und lässt jeden weiteren Versuch scheitern, bis
+        // clearUndoHistory() läuft — das kleinere Übel gegenüber stillem Verschwinden. Die
+        // Push-Validierung in pushUndo() verhindert, dass solche Einträge neu entstehen.
+        showToast('❌ Undo fehlgeschlagen', 'error');
+        return;
+    }
+    // Aktuellen State für Redo sichern — NACH erfolgreichem Parse, sonst wächst der
+    // Redo-Stack bei jedem gescheiterten Undo-Versuch um einen sinnlosen Eintrag.
+    // Das Aktionslabel wandert mit (last.action statt fest 'Redo'), damit es über beide
+    // Stacks hinweg erhalten bleibt (Plan 12-06 braucht es für den Undo-Hook).
     redoStack.push({
-        action: 'Redo',
+        action: last.action,
         state: JSON.stringify(D),
         timestamp: Date.now()
     });
     if (redoStack.length > UNDO_LIMIT) {
         redoStack.shift();
     }
-    const last = undoStack.pop();
-    const safeJSONParse = window.safeJSONParse;
-    const parsed = safeJSONParse(last.state);
-    if (parsed) {
-        // Update window.D by clearing and reassigning properties (D is now const)
-        for (const key in D) delete D[key];
-        Object.assign(D, parsed);
-        // Validate and repair _nextId after restore
-        const validation = validateAndRepairNextId();
-        if (!validation.valid) {
-            console.warn('[undo] Repaired _nextId inconsistencies:', validation.repairs);
-        }
-        const renderAll = window.renderAll;
-        const saveImmediate = window.saveImmediate;
-        if (renderAll) renderAll();
-        if (saveImmediate) saveImmediate();
-        showToast(`↩️ Rückgängig: ${last.action}`);
-    } else {
-        showToast('❌ Undo fehlgeschlagen', 'error');
+    undoStack.pop();
+    // Update window.D by clearing and reassigning properties (D is now const)
+    for (const key in D) delete D[key];
+    Object.assign(D, parsed);
+    // Validate and repair _nextId after restore
+    const validation = validateAndRepairNextId();
+    if (!validation.valid) {
+        console.warn('[undo] Repaired _nextId inconsistencies:', validation.repairs);
     }
+    const renderAll = window.renderAll;
+    const saveImmediate = window.saveImmediate;
+    if (renderAll) renderAll();
+    if (saveImmediate) saveImmediate();
+    showToast(`↩️ Rückgängig: ${last.action}`);
+    _notifyUndoHooks({ action: last.action, direction: 'undo' });
 }
 function redo() {
     if (redoStack.length === 0) {
@@ -63,38 +90,71 @@ function redo() {
         return;
     }
     const D = window.D;
-    // Aktuellen State für Undo sichern
+    // Erst ansehen (nicht entfernen) und parsen — siehe undo() für die Begründung.
+    const last = redoStack[redoStack.length - 1];
+    const safeJSONParse = window.safeJSONParse;
+    const parsed = safeJSONParse(last.state);
+    if (!parsed) {
+        showToast('❌ Redo fehlgeschlagen', 'error');
+        return;
+    }
+    // Aktuellen State für Undo sichern — NACH erfolgreichem Parse.
     undoStack.push({
-        action: 'Undo',
+        action: last.action,
         state: JSON.stringify(D),
         timestamp: Date.now()
     });
-    const last = redoStack.pop();
-    const safeJSONParse = window.safeJSONParse;
-    const parsed = safeJSONParse(last.state);
-    if (parsed) {
-        // Update window.D by clearing and reassigning properties (D is now const)
-        for (const key in D) delete D[key];
-        Object.assign(D, parsed);
-        // Validate and repair _nextId after restore
-        const validation = validateAndRepairNextId();
-        if (!validation.valid) {
-            console.warn('[redo] Repaired _nextId inconsistencies:', validation.repairs);
-        }
-        const renderAll = window.renderAll;
-        const saveImmediate = window.saveImmediate;
-        if (renderAll) renderAll();
-        if (saveImmediate) saveImmediate();
-        showToast('↪️ Wiederhergestellt');
-    } else {
-        showToast('❌ Redo fehlgeschlagen', 'error');
+    if (undoStack.length > UNDO_LIMIT) {
+        undoStack.shift();
     }
+    redoStack.pop();
+    // Update window.D by clearing and reassigning properties (D is now const)
+    for (const key in D) delete D[key];
+    Object.assign(D, parsed);
+    // Validate and repair _nextId after restore
+    const validation = validateAndRepairNextId();
+    if (!validation.valid) {
+        console.warn('[redo] Repaired _nextId inconsistencies:', validation.repairs);
+    }
+    const renderAll = window.renderAll;
+    const saveImmediate = window.saveImmediate;
+    if (renderAll) renderAll();
+    if (saveImmediate) saveImmediate();
+    showToast('↪️ Wiederhergestellt');
+    _notifyUndoHooks({ action: last.action, direction: 'redo' });
 }
 function clearUndoHistory() {
     undoStack.length = 0;
     redoStack.length = 0;
     showToast('🗑️ Undo-Historie geleert');
 }
+// ============================================================
+// UNDO-HOOKS - @undo-hooks
+// ============================================================
+// Gleiche Bauart wie registerPostSaveHook()/_notifyPostSaveHooks()
+// (systems/spellslots/persistence.js) — explizite Registrierung statt eines
+// Wrappers um undo()/redo(). Konsument: Plan 12-06 (Wiederherstellen gelöschter
+// Audiodateien nach Undo/Redo).
+function registerUndoHook(fn) {
+    if (typeof fn !== 'function') return;
+    if (!Array.isArray(window._undoHooks)) window._undoHooks = [];
+    if (!window._undoHooks.includes(fn)) window._undoHooks.push(fn);
+}
+function _notifyUndoHooks(info) {
+    const hooks = window._undoHooks;
+    if (!Array.isArray(hooks)) return;
+    for (const fn of hooks) {
+        try {
+            fn(info);
+        } catch (e) {
+            // Ein defekter Hook darf weder das Rückgängigmachen noch andere Hooks brechen
+            if (window.APP_CONFIG && window.APP_CONFIG.DEBUG_MODE && window.ErrorHandler) {
+                window.ErrorHandler.log('undoHook', e, 'Hook fehlgeschlagen');
+            }
+        }
+    }
+}
+window.registerUndoHook = registerUndoHook;
 // ============================================================
 // AUTO-SAVE INDIKATOR
 // ============================================================
