@@ -109,11 +109,11 @@ function showMigrationWizard() {
             <div class="migration-step" data-step="2" style="display:none;">
                 <h3 class="migration-step-heading">Schritt 2: Umzugs-Export erstellen</h3>
                 <p class="migration-step-body">
-                    Klicke in der ge&#246;ffneten Tracker-Datei auf
-                    <strong>Einstellungen &rarr; Zur installierbaren App umziehen</strong>.
-                    Dabei werden <strong>zwei Dateien</strong> heruntergeladen &#8212; beide
-                    werden hier gebraucht. Falls dein Browser fragt, ob mehrere Dateien
-                    heruntergeladen werden d&#252;rfen, best&#228;tige das.
+                    Klicke in der ge&#246;ffneten Tracker-Datei auf <strong>Zum App-Umzug</strong>.
+                    Der Haupt-Export wird sofort heruntergeladen. Enth&#228;lt deine Bibliothek
+                    Soundboard-Dateien oder W&#252;rfelstatistik, erscheint dort anschlie&#223;end
+                    ein eigener Button f&#252;r die <strong>zweite, separate Audio-Datei</strong>
+                    &#8212; klicke ihn zus&#228;tzlich an, sonst wird sie nicht mit umgezogen.
                 </p>
                 <div class="migration-step-actions">
                     <button class="btn btn-primary migration-btn-next" data-action="wizard-next-step">Umzugs-Export erstellen</button>
@@ -612,10 +612,58 @@ function showDivergenceBanner(dateStr) {
             Diese Daten wurden am <strong>${esc(dateStr)}</strong> in die App umgezogen
             &#8212; &#196;nderungen hier kommen dort nicht an.
         </span>
+        <span class="divergence-banner-audio-slot" id="migration-divergence-audio-slot"></span>
         <button class="btn btn-text divergence-banner-dismiss" data-action="dismiss-divergence-banner">Nicht mehr anzeigen</button>
     `;
 
     document.body.insertBefore(banner, document.body.firstChild);
+
+    // Checkpoint-Fix (Weg B): startMigrationFlow() loest den Audio-Download NICHT
+    // mehr automatisch aus (Chrome gated den zweiten automatischen Download einer
+    // Nutzergeste hinter der "Automatische Downloads"-Berechtigung, besonders
+    // restriktiv unter file://) — stattdessen wird hier asynchron ein Button mit
+    // einer Vorschau nachgeladen, dessen Klick seine EIGENE Nutzergeste liefert.
+    _renderAudioDownloadButton();
+}
+
+/**
+ * Laedt asynchron die Audio-Bibliotheks-Vorschau (getAudioExportSummary()) und
+ * fuellt damit den leeren Slot im Divergenz-Banner mit einem Download-Button.
+ * Leere Bibliothek (kein Audio, keine Wuerfelstatistik) -> kein Button (D-01/
+ * Task-1-Verhalten aus 12-01: eine leere zweite Datei wuerde nur verwirren).
+ * Ein Fehler beim Ermitteln der Vorschau darf den Banner nicht kaputt machen
+ * (D-02-Prinzip) — der Slot bleibt dann einfach leer.
+ */
+async function _renderAudioDownloadButton() {
+    const slot = document.getElementById('migration-divergence-audio-slot');
+    if (!slot) return;
+
+    try {
+        const summary = (typeof window.getAudioExportSummary === 'function')
+            ? await window.getAudioExportSummary()
+            : { hasContent: false };
+        if (!summary.hasContent) return;
+
+        const teile = [];
+        if (summary.fileCount > 0) {
+            const mb = (summary.totalBytes / (1024 * 1024)).toFixed(1);
+            teile.push(summary.fileCount + (summary.fileCount === 1 ? ' Audiodatei' : ' Audiodateien') + ' (' + mb + ' MB)');
+        }
+        if (summary.diceStatsCount > 0) {
+            teile.push(summary.diceStatsCount + (summary.diceStatsCount === 1 ? ' Würfelwurf' : ' Würfelwürfe'));
+        }
+        const beschreibung = teile.join(', ');
+
+        slot.innerHTML = `
+            <button class="btn btn-text divergence-banner-audio" data-action="download-audio-export">
+                Audio-Datei herunterladen (${esc(beschreibung)})
+            </button>
+        `;
+    } catch (err) {
+        if (typeof APP_CONFIG !== 'undefined' && APP_CONFIG.DEBUG_MODE && window.ErrorHandler) {
+            window.ErrorHandler.log('_renderAudioDownloadButton', err, 'Audio-Vorschau fehlgeschlagen');
+        }
+    }
 }
 
 /**
@@ -631,21 +679,16 @@ function startMigrationFlow() {
             downloadFn();
         }
 
-        // Plan 12-02, Task 1 (D-01): zweite Datei fuer IndexedDB-Inhalte
-        // (Audio + Wuerfelstatistik) im SELBEN Ausführungskontext des Klick-Handlers
-        // anstossen — NICHT per setTimeout verzoegert, das verschlechtert die
-        // Zuordnung zur Nutzergeste. downloadAudioExport() ist async und faengt
-        // ihre eigenen Fehler bereits intern ab (Toast statt throw); das .catch()
-        // hier ist nur ein zusaetzliches Sicherheitsnetz, damit ein unerwarteter
-        // Fehler weder den bereits erfolgten Haupt-Export noch den Rest des Flows
-        // (Divergenz-Merker, PWA-Fenster, Banner) verhindert.
-        if (typeof window.downloadAudioExport === 'function') {
-            window.downloadAudioExport().catch(err => {
-                if (APP_CONFIG.DEBUG_MODE) {
-                    ErrorHandler.log('startMigrationFlow', err, 'Audio-Export fehlgeschlagen');
-                }
-            });
-        }
+        // Checkpoint-Fix (Weg B, ersetzt den urspruenglichen Plan 12-02-Task-1-
+        // Ansatz): KEIN automatischer zweiter Download mehr. Manuell gemessen
+        // (Chrome, file://): der erste Download aus einer Nutzergeste geht durch,
+        // jeder weitere aus DERSELBEN Geste wird von Chromes "Automatische
+        // Downloads"-Berechtigung stillschweigend verworfen — a.click() wirft
+        // dabei NICHT, der Erfolgs-Toast wuerde also luegen. Das ist Browser-
+        // Richtlinie, kein Code-Defekt, und laesst sich nicht per setTimeout o.ae.
+        // umgehen. Die Audio-Datei bekommt stattdessen einen eigenen Button im
+        // Divergenz-Banner (showDivergenceBanner() -> _renderAudioDownloadButton()),
+        // dessen Klick seine EIGENE Nutzergeste liefert.
     } catch (err) {
         if (APP_CONFIG.DEBUG_MODE) {
             ErrorHandler.log('startMigrationFlow', err, 'Export fehlgeschlagen');
@@ -769,6 +812,14 @@ function initMigrationActions() {
         StorageAPI.setJSON('migration-divergence-dismissed', { dismissed: true });
         const banner = document.getElementById('migration-divergence-banner');
         if (banner) banner.remove();
+    });
+    // Checkpoint-Fix (Weg B): expliziter Button im Divergenz-Banner statt
+    // automatischem zweitem Download — ein echter Klick liefert die eigene
+    // Nutzergeste, die Chrome fuer jeden Download nach dem ersten verlangt.
+    EventDelegation.registerAction('download-audio-export', function() {
+        if (typeof window.downloadAudioExport === 'function') {
+            window.downloadAudioExport();
+        }
     });
 }
 

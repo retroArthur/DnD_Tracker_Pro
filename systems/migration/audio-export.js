@@ -182,8 +182,45 @@ async function buildAudioExport() {
 }
 
 // ============================================================
+// getAudioExportSummary — Vorschau fuer den expliziten Download-Button (Weg B)
+// Checkpoint-Fix (12-02, Task 3-Nachbesserung): Chrome gated den ZWEITEN
+// automatischen Download einer Nutzergeste hinter der "Automatische Downloads"-
+// Berechtigung, besonders restriktiv unter file://. downloadAudioExport() darf
+// deshalb nicht mehr automatisch aus startMigrationFlow() heraus laufen —
+// stattdessen zeigt der Wizard einen eigenen Button mit einer Vorschau (Anzahl
+// Dateien / Groesse / Wuerfelwuerfe), damit ein echter Klick die eigene
+// Nutzergeste liefert. Reine Lesefunktion, keine Seiteneffekte.
+// @returns {Promise<{ feasible: boolean, totalBytes: number, fileCount: number,
+//   diceStatsCount: number, hasContent: boolean }>}
+// ============================================================
+async function getAudioExportSummary() {
+    const feasibility = await checkAudioExportFeasible();
+    const diceStats = (typeof window.getAllStats === 'function')
+        ? await window.getAllStats()
+        : [];
+    const diceStatsCount = Array.isArray(diceStats) ? diceStats.length : 0;
+    return {
+        feasible: feasibility.feasible,
+        totalBytes: feasibility.totalBytes,
+        fileCount: feasibility.fileCount,
+        diceStatsCount: diceStatsCount,
+        hasContent: feasibility.fileCount > 0 || diceStatsCount > 0
+    };
+}
+
+// ============================================================
 // DOWNLOAD — Blob + Anchor-Download (Muster: downloadFullExport in full-export.js)
 // Plan 12-02, Task 1: Hinweis-Toast vor dem Bauen + Sonderfall "leere Bibliothek".
+//
+// Checkpoint-Fix (Weg B): der Anchor wird VOR dem Klick an document.body
+// angehaengt und danach wieder entfernt — Chrome toleriert einen detached
+// Anchor meist, aber es ist bruechig (full-export.js hat dieselbe Schwaeche,
+// bleibt aber ausserhalb dieses Plans unveraendert, siehe SUMMARY).
+//
+// Ehrliche Rueckmeldung: a.click() wirft NICHT, wenn der Browser den Download
+// verwirft (z.B. "Automatische Downloads"-Sperre) — der Erfolgs-Toast darf
+// deshalb nur behaupten, was tatsaechlich bekannt ist: die Datei wurde
+// ANGEBOTEN, nicht garantiert zugestellt.
 // ============================================================
 async function downloadAudioExport() {
     // Hinweis-Toast VOR dem Bauen: FileReader, JSON.stringify und die
@@ -215,10 +252,18 @@ async function downloadAudioExport() {
         a.href = url;
         const datum = new Date().toISOString().split('T')[0];
         a.download = 'dnd-tracker-audio-umzug-' + datum + '.json';
+        // Checkpoint-Fix: angehaengt VOR dem Klick, entfernt danach — ein
+        // detached Anchor ist bruechig, auch wenn Chrome ihn meist toleriert.
+        document.body.appendChild(a);
         a.click();
+        document.body.removeChild(a);
         URL.revokeObjectURL(url);
         if (typeof window.showToast === 'function') {
-            window.showToast('Audio-Export heruntergeladen');
+            // Ehrliche Formulierung: a.click() wirft nicht, wenn der Browser
+            // den Download verwirft (z.B. Automatische-Downloads-Sperre bei
+            // mehreren Downloads aus einer Geste) — "heruntergeladen" waere
+            // eine Behauptung, die diese Funktion nicht pruefen kann.
+            window.showToast('Audio-Datei zum Download angeboten — bitte im Download-Ordner prüfen, ob sie angekommen ist.');
         }
     } catch (err) {
         // Bei feasible:false wirft buildAudioExport() bereits mit Groesse/Dateizahl/
@@ -356,6 +401,7 @@ window.AUDIO_EXPORT_SAFE_RAW_BYTES = AUDIO_EXPORT_SAFE_RAW_BYTES;
 window.blobToBase64 = blobToBase64;
 window.base64ToBlob = base64ToBlob;
 window.checkAudioExportFeasible = checkAudioExportFeasible;
+window.getAudioExportSummary = getAudioExportSummary;
 window.buildAudioExport = buildAudioExport;
 window.downloadAudioExport = downloadAudioExport;
 window.importAudioExport = importAudioExport;

@@ -41,7 +41,10 @@ let mockErrorLog;
 let mockCreateElement;
 let mockCreateObjectURL;
 let mockRevokeObjectURL;
+let mockBodyAppendChild;
+let mockBodyRemoveChild;
 let createdAnchors;
+let getAudioExportSummary; // Checkpoint-Fix (Weg B)
 
 beforeAll(() => {
     mockListSoundBlobs = jest.fn();
@@ -59,6 +62,10 @@ beforeAll(() => {
     });
     mockCreateObjectURL = jest.fn(() => 'blob:mock-url');
     mockRevokeObjectURL = jest.fn();
+    // Checkpoint-Fix: downloadAudioExport() haengt den Anchor jetzt VOR dem
+    // Klick an document.body an und entfernt ihn danach wieder.
+    mockBodyAppendChild = jest.fn();
+    mockBodyRemoveChild = jest.fn();
 
     const APP_CONFIG_MOCK = { VERSION: '2.7.0', DEBUG_MODE: false };
 
@@ -77,7 +84,10 @@ beforeAll(() => {
         // Plan 12-02, Task 1: downloadAudioExport() referenziert document/URL als
         // Globals (Browser-Muster: window === globalThis) — im vm-Kontext MUESSEN
         // sie deshalb direkt auf dem Context-Objekt liegen, nicht unter window.*.
-        document: { createElement: mockCreateElement },
+        document: {
+            createElement: mockCreateElement,
+            body: { appendChild: mockBodyAppendChild, removeChild: mockBodyRemoveChild }
+        },
         URL: { createObjectURL: mockCreateObjectURL, revokeObjectURL: mockRevokeObjectURL },
         // jsdom (testEnvironment: 'jsdom') stellt diese bereits im Node-Global-Scope
         // bereit — hier in den vm-Kontext durchreichen, analog full-export.test.js.
@@ -100,6 +110,7 @@ beforeAll(() => {
     checkAudioExportFeasible = context.checkAudioExportFeasible;
     downloadAudioExport = context.downloadAudioExport;
     findMissingSceneAudio = context.findMissingSceneAudio;
+    getAudioExportSummary = context.getAudioExportSummary;
 });
 
 beforeEach(() => {
@@ -112,6 +123,8 @@ beforeEach(() => {
     mockCreateElement.mockClear();
     mockCreateObjectURL.mockClear();
     mockRevokeObjectURL.mockClear();
+    mockBodyAppendChild.mockClear();
+    mockBodyRemoveChild.mockClear();
     createdAnchors = [];
 });
 
@@ -277,6 +290,41 @@ describe('downloadAudioExport — Zwei-Datei-Download (SAFE-01)', () => {
         expect(mockRevokeObjectURL).toHaveBeenCalledTimes(1);
     });
 
+    test('Checkpoint-Fix: der Anchor wird VOR dem Klick an document.body angehaengt und danach entfernt', async () => {
+        mockListSoundBlobs.mockResolvedValue([
+            { id: 'audio_1_1', name: 'a.mp3', size: 5, type: 'audio/mpeg', savedAt: 111 }
+        ]);
+        mockGetSoundBlob.mockResolvedValue(new Blob([bytesA()], { type: 'audio/mpeg' }));
+        mockGetAllStats.mockResolvedValue([]);
+
+        await downloadAudioExport();
+
+        expect(mockBodyAppendChild).toHaveBeenCalledTimes(1);
+        expect(mockBodyRemoveChild).toHaveBeenCalledTimes(1);
+        const appendOrder = mockBodyAppendChild.mock.invocationCallOrder[0];
+        const clickOrder = createdAnchors[0].click.mock.invocationCallOrder[0];
+        const removeOrder = mockBodyRemoveChild.mock.invocationCallOrder[0];
+        expect(appendOrder).toBeLessThan(clickOrder);
+        expect(clickOrder).toBeLessThan(removeOrder);
+    });
+
+    test('Checkpoint-Fix (ehrliche Rueckmeldung): Erfolgs-Toast behauptet "angeboten", nicht "heruntergeladen" — a.click() wirft nicht, wenn der Browser den Download verwirft', async () => {
+        mockListSoundBlobs.mockResolvedValue([
+            { id: 'audio_1_1', name: 'a.mp3', size: 5, type: 'audio/mpeg', savedAt: 111 }
+        ]);
+        mockGetSoundBlob.mockResolvedValue(new Blob([bytesA()], { type: 'audio/mpeg' }));
+        mockGetAllStats.mockResolvedValue([]);
+
+        await downloadAudioExport();
+
+        const successToastCalls = mockShowToast.mock.calls.filter(call =>
+            typeof call[0] === 'string' && call[0].includes('angeboten'));
+        expect(successToastCalls.length).toBeGreaterThan(0);
+        const heruntergeladenCalls = mockShowToast.mock.calls.filter(call =>
+            typeof call[0] === 'string' && call[0] === 'Audio-Export heruntergeladen');
+        expect(heruntergeladenCalls).toHaveLength(0);
+    });
+
     test('leere Bibliothek (weder audioFiles noch diceStats) loest KEINEN Download aus', async () => {
         mockListSoundBlobs.mockResolvedValue([]);
         mockGetAllStats.mockResolvedValue([]);
@@ -304,7 +352,16 @@ describe('downloadAudioExport — Zwei-Datei-Download (SAFE-01)', () => {
         expect(errorToastCalls[0][0]).toMatch(/1 Datei/);
     });
 
-    test('Quelltext-Beleg: startMigrationFlow() ruft downloadAudioExport() NACH downloadFullExport() auf', () => {
+    test('Checkpoint-Fix (Weg B): startMigrationFlow() ruft downloadAudioExport() NICHT mehr automatisch auf', () => {
+        // Manuell verifiziert (Chrome, file://, Instrumentierung von
+        // HTMLAnchorElement.prototype.click): der ZWEITE automatische Download
+        // aus derselben Nutzergeste wird von Chromes "Automatische Downloads"-
+        // Berechtigung stillschweigend verworfen — a.click() wirft dabei nicht,
+        // buildAudioExport()/der Anchor-Klick selbst sind unauffaellig. Ein
+        // Einzel-Download ohne vorausgehenden Download kommt zuverlaessig an.
+        // startMigrationFlow() darf downloadAudioExport() deshalb nicht mehr
+        // selbst aufrufen — das geschieht jetzt ausschliesslich ueber einen
+        // separaten Button-Klick (download-audio-export-Action).
         const wizardSrc = fs.readFileSync(
             path.join(__dirname, '../../systems/migration/migration-wizard.js'), 'utf-8'
         );
@@ -313,10 +370,73 @@ describe('downloadAudioExport — Zwei-Datei-Download (SAFE-01)', () => {
         const fnBody = fnMatch[0];
 
         const downloadFullIdx = fnBody.indexOf('downloadFn(');
-        const downloadAudioIdx = fnBody.indexOf('downloadAudioExport');
         expect(downloadFullIdx).toBeGreaterThan(-1);
-        expect(downloadAudioIdx).toBeGreaterThan(-1);
-        expect(downloadAudioIdx).toBeGreaterThan(downloadFullIdx);
+        expect(fnBody).not.toMatch(/downloadAudioExport\s*\(/);
+    });
+
+    test('Checkpoint-Fix (Weg B): die download-audio-export-Action ruft downloadAudioExport() aus einem echten Klick auf', () => {
+        const wizardSrc = fs.readFileSync(
+            path.join(__dirname, '../../systems/migration/migration-wizard.js'), 'utf-8'
+        );
+        const actionMatch = wizardSrc.match(
+            /registerAction\('download-audio-export',\s*function\s*\([\s\S]*?\n\s{4}\}\);/
+        );
+        expect(actionMatch).not.toBeNull();
+        expect(actionMatch[0]).toMatch(/window\.downloadAudioExport\s*\(\s*\)/);
+    });
+
+    test('Checkpoint-Fix (Weg B): showDivergenceBanner() laedt eine Audio-Vorschau nach, die den Button nur bei hasContent zeigt', () => {
+        const wizardSrc = fs.readFileSync(
+            path.join(__dirname, '../../systems/migration/migration-wizard.js'), 'utf-8'
+        );
+        expect(wizardSrc).toMatch(/_renderAudioDownloadButton/);
+        expect(wizardSrc).toMatch(/getAudioExportSummary/);
+        expect(wizardSrc).toMatch(/if \(!summary\.hasContent\) return;/);
+    });
+});
+
+describe('getAudioExportSummary — Vorschau fuer den expliziten Download-Button (SAFE-01, Weg B)', () => {
+    test('leere Bibliothek (weder Audio noch Wuerfelstatistik) liefert hasContent:false', async () => {
+        expect(typeof getAudioExportSummary).toBe('function');
+
+        mockListSoundBlobs.mockResolvedValue([]);
+        mockGetAllStats.mockResolvedValue([]);
+
+        const result = await getAudioExportSummary();
+
+        expect(result.hasContent).toBe(false);
+        expect(result.fileCount).toBe(0);
+        expect(result.diceStatsCount).toBe(0);
+    });
+
+    test('gefuellte Bibliothek liefert hasContent:true mit fileCount/totalBytes/diceStatsCount, ohne einen Blob zu laden', async () => {
+        mockListSoundBlobs.mockResolvedValue([
+            { id: 'audio_1_1', name: 'a.mp3', size: 2048, type: 'audio/mpeg', savedAt: 1 }
+        ]);
+        mockGetAllStats.mockResolvedValue([
+            { notation: '1d20', result: 15, rolls: [15], timestamp: 1, sessionId: 's1', charId: 1 }
+        ]);
+
+        const result = await getAudioExportSummary();
+
+        expect(result.hasContent).toBe(true);
+        expect(result.fileCount).toBe(1);
+        expect(result.totalBytes).toBe(2048);
+        expect(result.diceStatsCount).toBe(1);
+        expect(mockGetSoundBlob).not.toHaveBeenCalled();
+    });
+
+    test('nur Wuerfelstatistik ohne Audiodateien liefert ebenfalls hasContent:true', async () => {
+        mockListSoundBlobs.mockResolvedValue([]);
+        mockGetAllStats.mockResolvedValue([
+            { notation: '2d6', result: 7, rolls: [3, 4], timestamp: 2, sessionId: 's1', charId: 1 }
+        ]);
+
+        const result = await getAudioExportSummary();
+
+        expect(result.hasContent).toBe(true);
+        expect(result.fileCount).toBe(0);
+        expect(result.diceStatsCount).toBe(1);
     });
 });
 
