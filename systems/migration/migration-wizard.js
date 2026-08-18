@@ -27,9 +27,32 @@ let _wizardStep = 1;
 /**
  * Prueft ob der Speicher leer ist (Erststart-Erkennung).
  * Analog: PATTERNS.md isFreshInstall-Muster
+ *
+ * D-07 (Phase 12, Plan 04): konsultiert dieselbe Quellenkette wie
+ * readCampaignDataForBackup() (file-backup-manager.js) — localStorage unter dem
+ * TATSAECHLICH aktiven Key (STORAGE_KEY_OVERRIDE hat Vorrang), dann IndexedDB,
+ * dann das laufende D-Objekt. Die alte Version pruefte NUR APP_CONFIG.STORAGE_KEY
+ * und uebersah damit benannte Kampagnen (Override) sowie den IDB-only-Loeschpfad
+ * (persistence.js:64-68) — denselben Codepfad, der DEBT-17 verursacht hat.
+ *
+ * NIEMALS `const readCampaignDataForBackup = window.readCampaignDataForBackup`
+ * schreiben (CLAUDE.md, Dedup-Regel) — direkt ueber window.* aufrufen. Der Zugriff
+ * ist bewusst laufzeitgebunden: file-backup-manager.js steht in loader.js hinter
+ * migration-wizard.js, aber isFreshInstall() laeuft erst zur Init-Zeit, wenn alle
+ * Module bereits geladen sind.
+ *
+ * Die Inhaltspruefung (characters+npcs+quests === 0) bleibt zwingend erhalten:
+ * readCampaignDataForBackup() faellt als dritte Stufe auf das laufende window.D
+ * zurueck, und ein frisch initialisiertes D hat bereits Schluessel — ohne diese
+ * Pruefung waere jede Installation "nicht frisch" und der Wizard erschiene nie.
+ *
+ * @returns {Promise<boolean>}
  */
-function isFreshInstall() {
-    const data = StorageAPI.getJSON(APP_CONFIG.STORAGE_KEY, null);
+async function isFreshInstall() {
+    const key = window.STORAGE_KEY_OVERRIDE || APP_CONFIG.STORAGE_KEY;
+    const data = (typeof window.readCampaignDataForBackup === 'function')
+        ? await window.readCampaignDataForBackup(key)
+        : StorageAPI.getJSON(key, null);
     if (!data) return true;
     const hasContent = (data.characters?.length || 0) + (data.npcs?.length || 0) + (data.quests?.length || 0);
     return hasContent === 0;
@@ -328,7 +351,7 @@ function _processWizardFile(file, dropzone) {
             const indexCampaigns = typeof window.getCampaignIndex === 'function'
                 ? (window.getCampaignIndex()?.campaigns || [])
                 : [];
-            const hasExistingData = !isFreshInstall() || indexCampaigns.length > 0;
+            const hasExistingData = !(await isFreshInstall()) || indexCampaigns.length > 0;
             if (hasExistingData) {
                 const importCount = parsedObj.campaigns && typeof parsedObj.campaigns === 'object'
                     ? Object.keys(parsedObj.campaigns).length
@@ -748,8 +771,12 @@ function startMigrationFileSide() {
 /**
  * Einstiegspunkt aus core/init.js (defensiver Aufruf).
  * Verzweigt: file:// -> startMigrationFileSide(); http/https -> PWA-Erststart-Wizard.
+ *
+ * D-07 (Phase 12, Plan 04): async wegen await isFreshInstall(). core/init.js:149 ruft
+ * diese Funktion per typeof-Guard OHNE Ergebnisauswertung auf ("fire and forget") —
+ * das bleibt unveraendert korrekt, da hier kein Rueckgabewert erwartet wird.
  */
-function initMigrationWizardIfNeeded() {
+async function initMigrationWizardIfNeeded() {
     if (window.location.protocol === 'file:') {
         // file://-Modus: KEIN Erststart-Wizard, aber aktiver Umzugs-Flow (D-10) + Divergenz-Banner (D-11)
         startMigrationFileSide();
@@ -772,7 +799,7 @@ function initMigrationWizardIfNeeded() {
     }
     // PWA (http/https): gefuehrter Erststart-Wizard
     if (StorageAPI.has('migration-wizard-shown')) return; // bereits gesehen
-    if (!isFreshInstall()) return; // Daten vorhanden: kein Wizard noetig
+    if (!(await isFreshInstall())) return; // Daten vorhanden: kein Wizard noetig
     // Kleiner Delay: App muss erst fertig laden
     setTimeout(showMigrationWizard, 500);
 }
