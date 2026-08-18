@@ -33,18 +33,17 @@ let _fileBackupDebounceTimer = null;
 // ============================================================
 
 /**
- * Erzeugt sichere Dateinamen fuer Backup-Dateien einer Kampagne.
- * Path-Traversal-Schutz: Bereinigt Kampagnennamen auf Whitelist
- * [a-z0-9aeoeuess-] (lowercase). Kein '../', kein Slash, keine
- * Sonderzeichen ausser Umlauten und Bindestrich.
+ * Whitelist-Bereinigung fuer Dateinamensbestandteile: nur a-z, 0-9,
+ * Umlaute (ae, oe, ue, ss), Bindestrich. Kein '../', kein Slash, keine
+ * sonstigen Sonderzeichen. Wird sowohl fuer Kampagnennamen als auch fuer
+ * das Kollisions-Suffix (T-12-08) benutzt — beide sind Dateinamensbestandteile
+ * und muessen denselben Path-Traversal-Schutz durchlaufen.
  *
- * @param {string} campaignKey  - Storage-Key der Kampagne
- * @param {string} campaignName - Anzeigename der Kampagne
- * @returns {{ current: string, snapshot: string }}
+ * @param {string} str
+ * @returns {string}
  */
-function getBackupFilenames(campaignKey, campaignName) {
-    // Whitelist-Bereinigung: nur a-z, 0-9, Umlaute (ae, oe, ue, ss), Bindestrich
-    const safeName = (campaignName || campaignKey || 'kampagne')
+function _sanitizeForFilename(str) {
+    return String(str || '')
         .replace(/ä/g, 'ae').replace(/ö/g, 'oe').replace(/ü/g, 'ue')
         .replace(/Ä/g, 'ae').replace(/Ö/g, 'oe').replace(/Ü/g, 'ue')
         .replace(/ß/g, 'ss')
@@ -52,6 +51,29 @@ function getBackupFilenames(campaignKey, campaignName) {
         .toLowerCase()
         .replace(/-+/g, '-')  // Mehrfache Bindestriche zusammenfassen
         .replace(/^-+|-+$/g, ''); // Fuehrende/nachfolgende Bindestriche entfernen
+}
+
+/**
+ * Erzeugt sichere Dateinamen fuer Backup-Dateien einer Kampagne.
+ * Path-Traversal-Schutz: siehe _sanitizeForFilename().
+ *
+ * @param {string} campaignKey  - Storage-Key der Kampagne
+ * @param {string} campaignName - Anzeigename der Kampagne
+ * @param {string} [suffix]     - Optionales Kollisions-Suffix (D-04); nur gesetzt,
+ *                                wenn resolveBackupTargets() eine echte Namenskollision
+ *                                erkannt hat. Ohne Suffix bleibt das Verhalten exakt wie
+ *                                bisher — vorhandene Backup-Dateien laufen nahtlos weiter.
+ * @returns {{ current: string, snapshot: string, safeName: string }}
+ */
+function getBackupFilenames(campaignKey, campaignName, suffix) {
+    let safeName = _sanitizeForFilename(campaignName || campaignKey || 'kampagne');
+
+    if (suffix) {
+        const safeSuffix = _sanitizeForFilename(suffix);
+        if (safeSuffix) {
+            safeName = safeName ? `${safeName}-${safeSuffix}` : safeSuffix;
+        }
+    }
 
     const today = new Date().toISOString().slice(0, 10); // 'YYYY-MM-DD'
     return {
@@ -59,6 +81,79 @@ function getBackupFilenames(campaignKey, campaignName) {
         snapshot: `${safeName}-${today}.json`,
         safeName
     };
+}
+
+/**
+ * Leitet aus einem Kampagnen-Key ein kurzes, dateinamentaugliches
+ * Kollisions-Suffix ab (D-04): die Epoch-Ziffernfolge aus
+ * `dnd-campaign-<epoch>`, oder das Wort "standard" aus einem
+ * `dnd-tracker`-Key. Das Ergebnis durchlaeuft danach dieselbe
+ * Whitelist wie der Kampagnenname (T-12-08).
+ *
+ * @param {string} campaignKey
+ * @returns {string}
+ */
+function _sanitizeKeySuffix(campaignKey) {
+    let raw = campaignKey || '';
+    const campaignMatch = /^dnd-campaign-(\d+)$/.exec(raw);
+    if (campaignMatch) {
+        raw = campaignMatch[1];
+    } else if (/^dnd-tracker/.test(raw)) {
+        raw = 'standard';
+    }
+    return _sanitizeForFilename(raw);
+}
+
+/**
+ * Ermittelt alle zu sichernden Kampagnen (Standard-Kampagne + Index) und
+ * berechnet je Kampagne die endgueltigen Backup-Dateinamen (D-03/D-04).
+ *
+ * Der Kampagnen-Key wird dem Dateinamen NUR bei einer echten Kollision des
+ * bereinigten Namens (safeName) angehaengt — ohne Kollision bleibt der
+ * Dateiname exakt wie bisher, damit vorhandene Snapshot-Historien nicht
+ * abreissen. Ein leerer safeName (rein nicht-lateinischer Name) kollidiert
+ * per Definition mit jedem anderen leeren und bekommt das Suffix deshalb
+ * immer, auch als einzige Kampagne (D-04).
+ *
+ * @param {{ campaigns?: Array<{key: string, name: string}> }|null} campaignIndex
+ * @param {string} storageKey - Storage-Key der Standard-Kampagne
+ * @returns {Array<{ key: string, name: string, filenames: { current: string, snapshot: string, safeName: string } }>}
+ */
+function resolveBackupTargets(campaignIndex, storageKey) {
+    const seen = new Set();
+    const targets = [];
+
+    // Standard-Kampagne immer einschliessen (dieselbe Vorsichtsmassnahme wie
+    // buildFullExport(), full-export.js:57-64) — sie kann zusaetzlich im Index stehen.
+    targets.push({ key: storageKey, name: 'Standard-Kampagne' });
+    seen.add(storageKey);
+
+    const campaigns = (campaignIndex && Array.isArray(campaignIndex.campaigns))
+        ? campaignIndex.campaigns : [];
+    for (const c of campaigns) {
+        if (!c || !c.key || seen.has(c.key)) continue;
+        seen.add(c.key);
+        targets.push({ key: c.key, name: c.name || c.key });
+    }
+
+    // Map<safeName, key[]> zur Kollisionserkennung
+    const bySafeName = new Map();
+    for (const t of targets) {
+        const { safeName } = getBackupFilenames(t.key, t.name);
+        t._safeName = safeName;
+        if (!bySafeName.has(safeName)) bySafeName.set(safeName, []);
+        bySafeName.get(safeName).push(t.key);
+    }
+
+    return targets.map(t => {
+        const collides = bySafeName.get(t._safeName).length > 1 || t._safeName === '';
+        const suffix = collides ? _sanitizeKeySuffix(t.key) : '';
+        return {
+            key: t.key,
+            name: t.name,
+            filenames: getBackupFilenames(t.key, t.name, suffix)
+        };
+    });
 }
 
 // ============================================================
@@ -420,6 +515,7 @@ function initFileBackup() {
 window.initFileBackup = initFileBackup;
 window.writeBackupForCampaign = writeBackupForCampaign;
 window.getBackupFilenames = getBackupFilenames;
+window.resolveBackupTargets = resolveBackupTargets;
 window.getActiveBackupFilenames = getActiveBackupFilenames;
 window.getSnapshotRegex = getSnapshotRegex;
 window.pruneOldSnapshots = pruneOldSnapshots;
