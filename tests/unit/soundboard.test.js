@@ -128,3 +128,156 @@ describe('Soundboard — Doppel-Import-Schutz (UX-01b)', function () {
         expect(importSpy).not.toHaveBeenCalled();
     });
 });
+
+/**
+ * Grabstein-Loeschung — softDeleteSoundBlob/restoreSoundBlob/listSoundBlobs (SAFE-03, Plan 12-06)
+ *
+ * Testet die bereits am Dateianfang via eval() geladenen Funktionen aus soundboard-idb.js
+ * gegen einen In-Memory-IDB-Mock. Vorlage: setupMockIDB() in
+ * tests/unit/stability.test.js:447-481 — hier um getAll()/delete() und eine
+ * tx.oncomplete-Sequenzierung erweitert, da softDeleteSoundBlob()/restoreSoundBlob() einen
+ * get() gefolgt von einem put() INNERHALB derselben Transaktion brauchen (die Vorlage
+ * kennt nur put()/get() unabhaengig voneinander).
+ *
+ * WICHTIG zur Testreihenfolge: _sbSessionCleanupDone (soundboard-idb.js) ist ein
+ * Modul-Flag, das beim ALLERERSTEN listSoundBlobs()-Aufruf dieser Datei kippt und danach
+ * dauerhaft true bleibt (die Modulquelle wurde nur EINMAL fuer die ganze Testdatei
+ * evaluiert, siehe Dateianfang). Der Sitzungs-Aufraeum-Test steht deshalb bewusst ZUERST
+ * in diesem describe-Block — er ist der erste Aufruf von listSoundBlobs() in der gesamten
+ * Datei und damit der einzige, der das Aufraeumen ueberhaupt beobachten kann.
+ */
+describe('Soundboard — Grabstein-Loeschung (SAFE-03, Plan 12-06)', function () {
+    function createMockIDB(seedRecords) {
+        const mockStore = {};
+        (seedRecords || []).forEach(function (r) {
+            mockStore[r.id] = Object.assign({}, r);
+        });
+
+        function transaction() {
+            const txObj = { oncomplete: null, onerror: null };
+            let pendingOps = 0;
+            let bodyDone = false;
+            function checkComplete() {
+                if (bodyDone && pendingOps === 0 && txObj.oncomplete) {
+                    txObj.oncomplete();
+                }
+            }
+            txObj.objectStore = function () {
+                return {
+                    get(key) {
+                        pendingOps++;
+                        const req = { onsuccess: null, onerror: null, result: mockStore[key] || null };
+                        Promise.resolve().then(function () {
+                            if (req.onsuccess) req.onsuccess();
+                            pendingOps--;
+                            checkComplete();
+                        });
+                        return req;
+                    },
+                    getAll() {
+                        pendingOps++;
+                        const records = Object.keys(mockStore).map(function (k) { return mockStore[k]; });
+                        const req = { onsuccess: null, onerror: null, result: records };
+                        Promise.resolve().then(function () {
+                            if (req.onsuccess) req.onsuccess();
+                            pendingOps--;
+                            checkComplete();
+                        });
+                        return req;
+                    },
+                    put(record) {
+                        mockStore[record.id] = Object.assign({}, record);
+                        return { onsuccess: null, onerror: null };
+                    },
+                    delete(key) {
+                        delete mockStore[key];
+                        return { onsuccess: null, onerror: null };
+                    }
+                };
+            };
+            // Simuliert, dass alle synchron im Aufrufer angehaengten Requests bereits
+            // registriert sind, bevor die Transaktion "abschliessen" kann.
+            Promise.resolve().then(function () {
+                bodyDone = true;
+                checkComplete();
+            });
+            return txObj;
+        }
+
+        return { idbInstance: { transaction: transaction }, mockStore: mockStore };
+    }
+
+    function installMockIDB(seedRecords) {
+        const mock = createMockIDB(seedRecords);
+        global.window.idb = mock.idbInstance;
+        global.window.initIndexedDB = function () {
+            global.window.idb = mock.idbInstance;
+            return Promise.resolve();
+        };
+        return mock;
+    }
+
+    test('Sitzungs-Aufraeumen: Grabstein vor Sitzungsstart wird beim ersten listSoundBlobs() endgueltig entfernt, Grabstein der laufenden Sitzung bleibt', async function () {
+        // _sbSessionStart wurde beim eval() der Modulquelle am Dateianfang gesetzt
+        // (simuliert App-Boot). deletedAt: 1 (1.1.1970) liegt garantiert davor.
+        installMockIDB([
+            { id: 'stale', name: 'old.mp3', size: 1, type: 'audio/mp3', blob: { fake: 1 }, savedAt: 1, deletedAt: 1 },
+            { id: 'fresh', name: 'new.mp3', size: 1, type: 'audio/mp3', blob: { fake: 2 }, savedAt: 1, deletedAt: Date.now() },
+            { id: 'active', name: 'live.mp3', size: 1, type: 'audio/mp3', blob: { fake: 3 }, savedAt: 1 }
+        ]);
+
+        const list = await global.window.listSoundBlobs();
+        expect(list.map(function (r) { return r.id; })).toEqual(['active']);
+
+        // stale wurde hart geloescht — auch getSoundBlob() liefert nichts mehr
+        expect(await global.window.getSoundBlob('stale')).toBeNull();
+        // fresh ist ein Grabstein der laufenden Sitzung — bleibt liegen und ladbar
+        expect(await global.window.getSoundBlob('fresh')).toEqual({ fake: 2 });
+    });
+
+    test('softDeleteSoundBlob(): Eintrag verschwindet aus listSoundBlobs(), bleibt aber via getSoundBlob() ladbar', async function () {
+        installMockIDB([
+            { id: 'a1', name: 'ambient.mp3', size: 100, type: 'audio/mp3', blob: { fake: true }, savedAt: Date.now() }
+        ]);
+
+        await global.window.softDeleteSoundBlob('a1');
+
+        const list = await global.window.listSoundBlobs();
+        expect(list.find(function (r) { return r.id === 'a1'; })).toBeUndefined();
+
+        const blob = await global.window.getSoundBlob('a1');
+        expect(blob).toEqual({ fake: true });
+    });
+
+    test('restoreSoundBlob(): Eintrag erscheint wieder in listSoundBlobs(), Name/Typ/Groesse unveraendert', async function () {
+        installMockIDB([
+            {
+                id: 'a2', name: 'battle.mp3', size: 555, type: 'audio/mp3',
+                blob: { fake: true }, savedAt: 12345, deletedAt: Date.now()
+            }
+        ]);
+
+        const ok = await global.window.restoreSoundBlob('a2');
+        expect(ok).toBe(true);
+
+        const list = await global.window.listSoundBlobs();
+        const restored = list.find(function (r) { return r.id === 'a2'; });
+        expect(restored).toBeDefined();
+        expect(restored.name).toBe('battle.mp3');
+        expect(restored.size).toBe(555);
+        expect(restored.type).toBe('audio/mp3');
+    });
+
+    test('restoreSoundBlob() auf eine unbekannte id liefert false und wirft nicht', async function () {
+        installMockIDB([]);
+        await expect(global.window.restoreSoundBlob('does-not-exist')).resolves.toBe(false);
+    });
+
+    test('deleteSoundBlob() loescht weiterhin sofort und endgueltig (unveraendert)', async function () {
+        installMockIDB([
+            { id: 'a3', name: 'x.mp3', size: 1, type: 'audio/mp3', blob: {}, savedAt: 1 }
+        ]);
+        await global.window.deleteSoundBlob('a3');
+        expect(await global.window.getSoundBlob('a3')).toBeNull();
+    });
+});
