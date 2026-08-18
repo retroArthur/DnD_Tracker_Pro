@@ -18,6 +18,43 @@ import { test, expect } from '@playwright/test';
 const APP_URL = `file:///${process.cwd().replace(/\\/g, '/')}/dist/dnd-tracker-bundled.html`;
 
 /**
+ * makeWavBuffer(sampleCount) — gueltiges PCM-WAV mit echten (stillen) Samples.
+ *
+ * Die uebrigen Tests dieser Datei nutzen ein 44-Byte-WAV OHNE Samples — damit laesst
+ * sich nichts dekodieren, und genau deshalb pruefte bisher niemand, ob eine Audiodatei
+ * den Base64-Rundlauf als ABSPIELBARE Datei uebersteht (SAFE-06 / D-08).
+ * 4410 Samples bei 44100 Hz = 0,1 Sekunden: klein genug fuer IDB und Base64,
+ * gross genug fuer decodeAudioData.
+ *
+ * @param {number} sampleCount  Anzahl 16-Bit-Mono-Samples
+ * @returns {Buffer}
+ */
+function makeWavBuffer(sampleCount) {
+    const sampleRate = 44100;
+    const bitsPerSample = 16;
+    const numChannels = 1;
+    const blockAlign = (numChannels * bitsPerSample) / 8; // 2
+    const byteRate = sampleRate * blockAlign; // 88200
+    const dataSize = sampleCount * blockAlign;
+
+    const buffer = Buffer.alloc(44 + dataSize); // Samples bleiben 0 = Stille
+    buffer.write('RIFF', 0, 'ascii');
+    buffer.writeUInt32LE(36 + dataSize, 4); // ChunkSize
+    buffer.write('WAVE', 8, 'ascii');
+    buffer.write('fmt ', 12, 'ascii');
+    buffer.writeUInt32LE(16, 16); // Subchunk1Size
+    buffer.writeUInt16LE(1, 20); // AudioFormat = PCM
+    buffer.writeUInt16LE(numChannels, 22);
+    buffer.writeUInt32LE(sampleRate, 24);
+    buffer.writeUInt32LE(byteRate, 28);
+    buffer.writeUInt16LE(blockAlign, 32);
+    buffer.writeUInt16LE(bitsPerSample, 34);
+    buffer.write('data', 36, 'ascii');
+    buffer.writeUInt32LE(dataSize, 40); // Subchunk2Size
+    return buffer;
+}
+
+/**
  * Laedt die App und navigiert zum Soundboard-Tab.
  */
 async function openSoundboardTab(page) {
@@ -383,6 +420,160 @@ test.describe('Soundboard', function () {
         }, blobId);
         expect(afterReload.inLibrary).toBe(true);
         expect(afterReload.inScene).toBe(true);
+    });
+
+    /**
+     * SAFE-06 / D-08 (Plan 12-07) — Audio-Rundlauf: Export -> harte Loeschung -> Neustart
+     * -> Import -> nachweislich ABSPIELBARE Datei in der Szene.
+     *
+     * Diese Naht war bisher ungeprueft: buildAudioExport() und importAudioExport() haben
+     * je eigene Tests, aber niemand lief den Weg von einer Datei ueber Base64 zurueck zu
+     * einer dekodierbaren Datei. Genau an so einer Naht entstand DEBT-18.
+     *
+     * Warum der Neustart in der Mitte nicht schmueckendes Beiwerk ist (T-12-23):
+     * soundboard-player.js haelt dekodierte AudioBuffer in `_bufferCache`. Ohne Reload
+     * lieferte der Cache den ALTEN Puffer zurueck und der Test waere gruen, selbst wenn
+     * der Base64-Rundlauf die Bytes zerstoert haette.
+     *
+     * Die hoerbare Wiedergabe bleibt bewusst aussen vor (Autoplay-Regel; im Projekt seit
+     * Phase 7 als menschliche Pruefung gefuehrt). Der belastbare automatisierte Nachweis
+     * ist decodeAudioData: er beweist, dass die Bytes den Rundlauf unbeschaedigt
+     * ueberstanden haben und weiterhin abspielbares Audio sind.
+     */
+    test('audio export roundtrip survives restart and stays decodable', async ({ page }) => {
+        await openSoundboardTab(page);
+
+        const fileName = 'roundtrip-test.wav';
+        await page.locator('#soundboard-file-input').setInputFiles({
+            name: fileName,
+            mimeType: 'audio/wav',
+            // 4410 Samples = 0,1 s echtes (stilles) PCM — dekodierbar, anders als das
+            // 44-Byte-WAV der uebrigen Tests
+            buffer: makeWavBuffer(4410)
+        });
+        // setInputFiles feuert nativ 'input' + 'change' — kein manuelles 'change'
+        // nachschieben (das verdeckte den Doppel-Import-Fehler)
+        await page.waitForTimeout(800);
+
+        // Szene anlegen und den importierten Track zuordnen
+        const ids = await page.evaluate(async function() {
+            const blobs = await window.listSoundBlobs();
+            const scene = window.createScene('Rundlauf-Test', 0);
+            window.addTrackToScene(scene.id, blobs[0].id, 0.8);
+            return { blobId: blobs[0].id, sceneId: scene.id, name: blobs[0].name };
+        });
+        expect(ids.name).toBe(fileName);
+        await page.waitForTimeout(200);
+
+        // Die zweite Umzugs-Datei bauen — im Testprozess statt als Download
+        const exportJson = await page.evaluate(async function() {
+            return JSON.stringify(await window.buildAudioExport());
+        });
+        const exportObj = JSON.parse(exportJson);
+        expect(exportObj._exportType).toBe('audio-export-v1');
+        expect(exportObj.audioFiles).toHaveLength(1);
+        expect(exportObj.audioFiles[0].id).toBe(ids.blobId);
+        expect(typeof exportObj.audioFiles[0].data).toBe('string');
+        expect(exportObj.audioFiles[0].data.length).toBeGreaterThan(0);
+
+        // Datei ENDGUELTIG aus der Datenbank entfernen (harte Loeschung, kein Grabstein)
+        const afterDelete = await page.evaluate(async function(id) {
+            await window.deleteSoundBlob(id);
+            const blobs = await window.listSoundBlobs();
+            return blobs.some(function(b) { return b.id === id; });
+        }, ids.blobId);
+        expect(afterDelete).toBe(false); // sonst pruefte der Import nur Ueberreste
+
+        // Neustart — leert den AudioBuffer-Cache in soundboard-player.js (T-12-23)
+        await page.reload();
+        await page.waitForSelector('.app-title', { timeout: 10000 });
+        await page.waitForTimeout(800);
+
+        // Vorbedingung nach dem Neustart: die Datei ist wirklich weg
+        const beforeImport = await page.evaluate(async function(id) {
+            const blobs = await window.listSoundBlobs();
+            return blobs.some(function(b) { return b.id === id; });
+        }, ids.blobId);
+        expect(beforeImport).toBe(false);
+
+        // Import aus der Umzugs-Datei
+        const importResult = await page.evaluate(async function(json) {
+            return await window.importAudioExport(JSON.parse(json));
+        }, exportJson);
+        expect(importResult.imported).toBe(1);
+        expect(importResult.skipped).toHaveLength(0);
+
+        // 1. Die Datei ist wieder da — gleiche id, gleicher Name
+        const nachImport = await page.evaluate(async function(id) {
+            const blobs = await window.listSoundBlobs();
+            const treffer = blobs.find(function(b) { return b.id === id; });
+            const scene = (window.D.soundboard.scenes || []).find(function(s) {
+                return s.name === 'Rundlauf-Test';
+            });
+            return {
+                gefunden: !!treffer,
+                name: treffer ? treffer.name : null,
+                sceneTrackBlobId: scene && scene.tracks[0] ? scene.tracks[0].blobId : null
+            };
+        }, ids.blobId);
+        expect(nachImport.gefunden).toBe(true);
+        expect(nachImport.name).toBe(fileName);
+        // 2. Die Szene zeigt unveraendert auf dieselbe blobId
+        expect(nachImport.sceneTrackBlobId).toBe(ids.blobId);
+
+        // 3. Der zurueckgeholte Blob ist ABSPIELBAR — der eigentliche Beweis,
+        //    dass die Bytes den Base64-Rundlauf unbeschaedigt ueberstanden haben
+        const decoded = await page.evaluate(async function(id) {
+            const blob = await window.getSoundBlob(id);
+            if (!blob) return { ok: false, grund: 'kein Blob in IDB' };
+            const arrayBuffer = await blob.arrayBuffer();
+            const ctx = window.getAudioContext();
+            try {
+                const audioBuffer = await ctx.decodeAudioData(arrayBuffer);
+                return {
+                    ok: true,
+                    duration: audioBuffer.duration,
+                    sampleRate: audioBuffer.sampleRate,
+                    length: audioBuffer.length
+                };
+            } catch (e) {
+                return { ok: false, grund: (e && e.message) || String(e) };
+            }
+        }, ids.blobId);
+        expect(decoded.grund || null).toBeNull();
+        expect(decoded.ok).toBe(true);
+        expect(decoded.duration).toBeGreaterThan(0);
+        // 4410 Samples bei 44100 Hz = 0,1 s. NICHT auf sampleRate/length pruefen:
+        // decodeAudioData resampelt auf die Rate des AudioContext (hier 48000) —
+        // die Dauer ist die resampling-unabhaengige Groesse. Eine abgeschnittene
+        // oder beschaedigte Base64-Nutzlast ergaebe eine andere Dauer.
+        expect(decoded.duration).toBeGreaterThan(0.09);
+        expect(decoded.duration).toBeLessThan(0.12);
+
+        // 4. Die Szene laesst sich damit aktivieren. Der Spy belegt, dass
+        //    activateSoundScene den Track wirklich aus der IDB nachgeladen hat
+        //    (der Buffer-Cache ist nach dem Neustart leer) — ohne ihn wuerde
+        //    getActiveSceneId() die Szene auch dann melden, wenn kein einziger
+        //    Track dekodiert werden konnte.
+        const aktiv = await page.evaluate(async function(args) {
+            const geladen = [];
+            const orig = window.getSoundBlob;
+            window.getSoundBlob = async function(id) {
+                geladen.push(id);
+                return orig(id);
+            };
+            try {
+                await window.activateSoundScene({
+                    sceneId: args.sceneId,
+                    tracks: [{ blobId: args.blobId, volume: 0.5, loop: false }]
+                });
+            } finally {
+                window.getSoundBlob = orig;
+            }
+            return { activeSceneId: window.getActiveSceneId(), geladen: geladen };
+        }, ids);
+        expect(aktiv.activeSceneId).toBe(ids.sceneId);
+        expect(aktiv.geladen).toContain(ids.blobId);
     });
 
 });
