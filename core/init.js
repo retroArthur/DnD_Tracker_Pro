@@ -41,11 +41,6 @@ async function init() {
     // Offline-Modus initialisieren
     initOfflineMode();
 
-    // Hinweis: #autosave-toggle existiert aktuell nicht im UI. Falls es zurückkommt,
-    // wird es hier auf "checked" gesetzt; sonst no-op (Save defaultet auf aktiv, siehe persistence.js).
-    // getElementById statt $() — vermeidet die "[DOM] Element not found"-Warnung im DEBUG-Boot.
-    const _autosaveToggle = document.getElementById('autosave-toggle');
-    if (_autosaveToggle) _autosaveToggle.checked = true;
     if ($('quick-notes')) $('quick-notes').value = D.quickNotes || '';
 
     // Navigation Drag-and-Drop initialisieren (vor Click-Listenern)
