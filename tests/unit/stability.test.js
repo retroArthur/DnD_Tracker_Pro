@@ -502,6 +502,43 @@ describe('Persistence Regression Tests (Plan 01-02)', () => {
         });
     }
 
+    // loadFromIndexedDBFallback — data-only Variante, 1:1 aus persistence.js:149-168.
+    // Genau dieser Zweig wird von load() (quick-roll.js) gerufen, wenn localStorage
+    // leer ist: der IDB-only-Neustart-Pfad (STAB-05 / SAFE-06).
+    function realLoadFromIDBFallback(key) {
+        return new Promise((resolve, reject) => {
+            const transaction = idbInstance.transaction(['campaigns'], 'readonly');
+            const store = transaction.objectStore('campaigns');
+            const request = store.get(key);
+            request.onsuccess = () => {
+                if (request.result) {
+                    resolve(request.result.data);
+                } else {
+                    reject(new Error('No data found'));
+                }
+            };
+            request.onerror = () => reject(request.error);
+        });
+    }
+
+    // Holt die ECHTE resolveStorageConflict-Funktion aus quick-roll.js in den Test —
+    // kein Nachbau. Ein nachgebauter Konfliktlöser prüfte nur den Testcode selbst
+    // (T-12-22: "Grüne Suite ohne Beweiskraft").
+    function loadRealResolveStorageConflict(fakeWindow) {
+        const fs = require('fs');
+        const path = require('path');
+        const quellText = fs.readFileSync(
+            path.join(__dirname, '../../systems/spellslots/quick-roll.js'),
+            'utf-8'
+        );
+        const match = quellText.match(/function resolveStorageConflict\([\s\S]*?\n}/);
+        if (!match) {
+            throw new Error('resolveStorageConflict nicht in quick-roll.js gefunden');
+        }
+        // eslint-disable-next-line no-new-func
+        return new Function('window', match[0] + '\nreturn resolveStorageConflict;')(fakeWindow);
+    }
+
     // StorageAPI-Implementierung für Tests (greift auf globalem localStorage-Mock)
     function makeStorageAPI() {
         return {
@@ -731,6 +768,151 @@ describe('Persistence Regression Tests (Plan 01-02)', () => {
             const rawRecord = await window.loadFromIndexedDBFallbackRaw(STORAGE_KEY);
             expect(rawRecord).toHaveProperty('data');
             expect(rawRecord).toHaveProperty('timestamp');
+        });
+
+        // ------------------------------------------------------------
+        // SAFE-06 / Plan 12-07, Task 1: die NEUSTART-Seite des IDB-only-Pfads.
+        // Bis hierher prüfte die Sektion nur das Schreiben (IDB-Write plus
+        // Entfernen des LS-Schattens). Ob nach einem Neustart überhaupt jemand
+        // die Daten von dort zurückholt, prüfte niemand — genau diese fehlende
+        // Hälfte hat DEBT-17 (leere Snapshots bei grüner Anzeige) verdeckt.
+        // ------------------------------------------------------------
+        test('Neustart: leerer localStorage → Kampagne kommt byte-gleich aus IndexedDB zurück', async () => {
+            // Zustand herstellen, wie ihn der IDB-Zweig von saveImmediate()
+            // hinterlässt (persistence.js:59-63): IDB-Write, danach LS-Schatten
+            // UND _ts entfernt.
+            const written = JSON.stringify({
+                characters: [
+                    { id: 1, name: 'Neustart-Held', level: 7 },
+                    { id: 2, name: 'Zweite Heldin', level: 3 }
+                ],
+                _version: APP_CONFIG.VERSION
+            });
+            await realSaveToIndexedDB(STORAGE_KEY, written);
+
+            const api = makeStorageAPI();
+            api.remove(STORAGE_KEY);
+            api.remove(STORAGE_KEY + '_ts');
+
+            // Vorbedingung des Neustarts — ohne sie prüfte der Test nichts
+            expect(localStorage.getItem(STORAGE_KEY)).toBeNull();
+            expect(localStorage.getItem(STORAGE_KEY + '_ts')).toBeNull();
+
+            // Ladepfad aus quick-roll.js nachvollziehen (dort der !s-Zweig in load())
+            let s = api.get(STORAGE_KEY, null);
+            expect(s).toBeNull(); // → der Fallback-Zweig greift, sonst wäre der Test wertlos
+            if (!s) {
+                s = await realLoadFromIDBFallback(STORAGE_KEY);
+            }
+
+            // Byte-gleich zurück und als Objekt mit denselben Charakteren parsebar
+            expect(s).toBe(written);
+            const parsed = JSON.parse(s);
+            expect(parsed.characters).toHaveLength(2);
+            expect(parsed.characters.map(c => c.name)).toEqual(['Neustart-Held', 'Zweite Heldin']);
+            expect(parsed._version).toBe(APP_CONFIG.VERSION);
+        });
+
+        test('Quelltext-Beleg: load() ruft bei leerem localStorage den IDB-Fallback (T-12-22)', () => {
+            // Ohne diesen Beleg prüfte die Simulation oben nur den Testcode,
+            // nicht die ausgelieferte Quelle.
+            const fs = require('fs');
+            const path = require('path');
+            const quickRollSrc = fs.readFileSync(
+                path.join(__dirname, '../../systems/spellslots/quick-roll.js'),
+                'utf-8'
+            );
+
+            // 1. Der !s-Zweig in load() existiert und ruft darin den IDB-Fallback
+            const branchIdx = quickRollSrc.indexOf('if (!s) {');
+            expect(branchIdx).toBeGreaterThan(-1);
+            const branch = quickRollSrc.slice(branchIdx, branchIdx + 600);
+            expect(branch).toMatch(
+                /const\s+loadFromIndexedDBFallback\s*=\s*window\.loadFromIndexedDBFallback/
+            );
+            expect(branch).toMatch(/s\s*=\s*await\s+loadFromIndexedDBFallback\(\s*key\s*\)/);
+
+            // 2. Gegenseite in persistence.js: der Fallback liefert .data aus dem
+            //    Record. Die Deklaration muss auf oberster Ebene stehen (Spalte 0) —
+            //    nur dann ist sie im gebündelten Classic-Script als
+            //    window.loadFromIndexedDBFallback sichtbar, wie quick-roll.js sie
+            //    nachschlägt (es gibt keine explizite window.-Zuweisung dafür).
+            const persistSrc = fs.readFileSync(
+                path.join(__dirname, '../../systems/spellslots/persistence.js'),
+                'utf-8'
+            );
+            expect(persistSrc).toMatch(/^async function loadFromIndexedDBFallback\(key\)/m);
+            expect(persistSrc).toMatch(/resolve\(request\.result\.data\)/);
+
+            // 3. Der Schreibzweig entfernt den LS-Schatten NACH dem bestätigten
+            //    IDB-Write — diese Reihenfolge ist der Kern von D-01/STAB-05.
+            const writeIdx = persistSrc.indexOf('if (dataSizeMB > LS_LIMIT_MB) {');
+            expect(writeIdx).toBeGreaterThan(-1);
+            const writeBranch = persistSrc.slice(writeIdx, writeIdx + 400);
+            const awaitIdx = writeBranch.indexOf('await saveToIndexedDBFallback(key, dataString)');
+            const removeIdx = writeBranch.indexOf('StorageAPI.remove(key)');
+            expect(awaitIdx).toBeGreaterThan(-1);
+            expect(removeIdx).toBeGreaterThan(awaitIdx);
+            expect(writeBranch).toMatch(/StorageAPI\.remove\(key \+ '_ts'\)/);
+        });
+
+        test('Stale-Shadow ohne _ts: abweichender IDB-Stand gewinnt als Rückfallebene', async () => {
+            // Abgrenzung zum Neustart-Fall: hier IST ein LS-Schatten da, aber ohne
+            // _ts-Begleiteintrag (der Zustand vor dem D-01-Fix). Der veraltete
+            // LS-Stand darf nicht stillschweigend gewinnen.
+            const staleLS = JSON.stringify({ characters: [{ id: 1, name: 'Alter Stand' }] });
+            const freshIDB = JSON.stringify({
+                characters: [
+                    { id: 1, name: 'Alter Stand' },
+                    { id: 2, name: 'Neuer Held' }
+                ]
+            });
+
+            const api = makeStorageAPI();
+            api.set(STORAGE_KEY, staleLS); // Schatten ohne _ts
+            await realSaveToIndexedDB(STORAGE_KEY, freshIDB);
+
+            let s = api.get(STORAGE_KEY, null);
+            const lsTimestamp = api.get(STORAGE_KEY + '_ts', null);
+            expect(s).toBe(staleLS);
+            expect(lsTimestamp).toBeNull();
+
+            // ECHTE Konfliktlogik aus quick-roll.js, kein Nachbau (T-12-22).
+            // fakeWindow ohne showStorageConflictDialogUI → die Rückfallebene greift.
+            const resolveStorageConflict = loadRealResolveStorageConflict({});
+
+            if (s && !lsTimestamp) {
+                const idbRecord = await realLoadFromIDBRaw(STORAGE_KEY);
+                if (idbRecord && idbRecord.data && idbRecord.data !== s) {
+                    resolveStorageConflict(
+                        s,
+                        idbRecord.data,
+                        () => {
+                            /* LS-Daten behalten */
+                        },
+                        () => {
+                            s = idbRecord.data;
+                        }
+                    );
+                }
+            }
+
+            expect(s).toBe(freshIDB);
+            expect(JSON.parse(s).characters).toHaveLength(2);
+
+            // Gegenprobe: identischer Inhalt ist kein Konflikt — kein Umschalten
+            let switchedToIDB = false;
+            resolveStorageConflict(
+                freshIDB,
+                freshIDB,
+                () => {
+                    /* erwarteter Zweig */
+                },
+                () => {
+                    switchedToIDB = true;
+                }
+            );
+            expect(switchedToIDB).toBe(false);
         });
     });
 
