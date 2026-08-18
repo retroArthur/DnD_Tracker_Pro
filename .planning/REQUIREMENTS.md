@@ -41,7 +41,7 @@ wiederherstellbar ist (`SAFE-01`, `SAFE-02`, `SAFE-04`).
 - **SAFE-04** ✓ (`DEBT-20`, Phase 12: 12-04 komplett): Der Umzugs-Wizard bietet sich nicht mehr Nutzern mit vollen Daten an.
   `isFreshInstall()` prüft nur `APP_CONFIG.STORAGE_KEY` und ignoriert `window.STORAGE_KEY_OVERRIDE`
   sowie den IDB-only-Löschpfad — denselben Codepfad, der `DEBT-17` verursacht hat.
-- **SAFE-05** (`DEBT-05`, `DEBT-08`): Die Persistenz verhält sich bei Fehlern und Sonderfällen
+- **SAFE-05** ✓ (`DEBT-05`, `DEBT-08`, Phase 12: 12-05 komplett): Die Persistenz verhält sich bei Fehlern und Sonderfällen
   vorhersagbar. `undo()`/`redo()` mutieren die Stacks **vor** der `safeJSONParse`-Prüfung (Asymmetrie
   bei Parse-Fehlern); `saveImmediate()` lässt sich über ein optionales, im UI gar nicht vorhandenes
   `autosave-toggle` deaktivieren — ohne Ausnahme für kritische Saves.
@@ -128,7 +128,7 @@ wiederherstellbar ist (`SAFE-01`, `SAFE-02`, `SAFE-04`).
 | SAFE-02 | DEBT-21, DEBT-22 | Phase 12 — Complete (12-03) |
 | SAFE-03 | DEBT-19 | Pending |
 | SAFE-04 | DEBT-20 | Phase 12 — Complete (12-04) |
-| SAFE-05 | DEBT-05, DEBT-08 | Pending |
+| SAFE-05 | DEBT-05, DEBT-08 | Phase 12 — Complete (12-05) |
 | SAFE-06 | DEBT-11 | Pending |
 | SEC-03 | DEBT-23 | Pending |
 | SEC-04 | DEBT-14 | Pending |
