@@ -56,7 +56,7 @@ sich spürbar.
 **Goal**: Kein Pfad in Backup, Export oder Migration verliert oder überschreibt mehr stillschweigend Daten, und die Randfälle, die solche Verluste bisher verdeckt haben, sind getestet.
 **Depends on**: Nothing (erste Phase des Milestones)
 **Requirements**: SAFE-01, SAFE-02, SAFE-03, SAFE-04, SAFE-05, SAFE-06
-**Plans:** 2/7 plans executed
+**Plans:** 3/7 plans executed
 **Success Criteria** (what must be TRUE):
 
   1. Ein Umzugs-Export `file://` → PWA enthält Soundboard-Audio und Würfelstatistik; nach dem Import spielen Szenen ihre Tracks, keine toten `blobId`s bleiben zurück
@@ -70,7 +70,7 @@ Plans:
 
 - [x] 12-01-PLAN.md — Testfundament (Wave 0) + Audio-Export-Tracer: IndexedDB → Base64 → JSON → IndexedDB (Welle 1)
 - [x] 12-02-PLAN.md — Umzugs-Flow mit zwei Dateien: zweite Datei erzeugen, optional importieren, fehlende Szenen benennen (Welle 2)
-- [ ] 12-03-PLAN.md — Datei-Backup über alle Kampagnen, Kollisions-Suffix nur bei echtem Namenskonflikt (Welle 2)
+- [x] 12-03-PLAN.md — Datei-Backup über alle Kampagnen, Kollisions-Suffix nur bei echtem Namenskonflikt (Welle 2)
 - [ ] 12-04-PLAN.md — Frischinstallations-Erkennung mit Override und IndexedDB-Modus (Welle 3)
 - [ ] 12-05-PLAN.md — Undo-Kern: erst parsen dann poppen, Push-Validierung, Undo-Hooks, toter Autosave-Schalter entfernt (Welle 3)
 - [ ] 12-06-PLAN.md — Audio-Löschen rückgängig: aufgeschobenes Löschen plus Wiederherstellung über den Undo-Hook (Welle 4)
