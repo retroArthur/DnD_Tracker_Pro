@@ -29,11 +29,12 @@ wiederherstellbar ist (`SAFE-01`, `SAFE-02`, `SAFE-04`).
   localStorage-Felder ab — Soundboard-Audio (`audioBlobs`) und Würfelstatistik (`diceStats`) gehen
   beim einmaligen, angeleiteten Umzug **irreversibel** verloren, und Szenen bleiben mit toten
   `blobId`s zurück. **Höchste Priorität des Milestones.**
-- **SAFE-02** (`DEBT-21`, `DEBT-22`): Das Datei-Backup deckt alle Kampagnen ab und kann sie nicht
-  gegenseitig überschreiben. Heute sichert `_doBackup()` nur die aktive Kampagne, während der
-  Kommentar „je Kampagne einzeln" das Gegenteil behauptet; zusätzlich normalisiert
-  `getBackupFilenames()` unterschiedliche Kampagnennamen auf denselben `safeName` (Sonderzeichen,
-  nicht-lateinische Namen kollabieren sogar auf den Leerstring).
+- **SAFE-02** ✓ (`DEBT-21`, `DEBT-22`, Phase 12: 12-03 komplett): Das Datei-Backup deckt alle
+  Kampagnen ab und kann sie nicht gegenseitig überschreiben. `_doBackup()` iteriert jetzt über
+  `resolveBackupTargets()` (Standard-Kampagne + Index) statt nur die aktive Kampagne zu sichern;
+  `getBackupFilenames()` hängt den Kampagnen-Key nur bei einer echten `safeName`-Kollision an
+  (inkl. des Leerstring-Falls bei rein nicht-lateinischen Namen), sonst bleibt der Dateiname
+  unverändert.
 - **SAFE-03** (`DEBT-19`): Das Löschen einer Audiodatei ist rückgängig zu machen.
   `removeAudioFile()` löscht den Blob und mutiert `D.soundboard.scenes` ohne vorherigen Undo-Push —
   ein Bruch der projektweiten Undo-Garantie, der nach `Strg+Z` defekte Szenen hinterlässt.
@@ -124,7 +125,7 @@ wiederherstellbar ist (`SAFE-01`, `SAFE-02`, `SAFE-04`).
 | Requirement | DEBT-Posten | Phase |
 | --- | --- | --- |
 | SAFE-01 | DEBT-18 | Phase 12 — Complete (12-01, 12-02) |
-| SAFE-02 | DEBT-21, DEBT-22 | Pending |
+| SAFE-02 | DEBT-21, DEBT-22 | Phase 12 — Complete (12-03) |
 | SAFE-03 | DEBT-19 | Pending |
 | SAFE-04 | DEBT-20 | Pending |
 | SAFE-05 | DEBT-05, DEBT-08 | Pending |
