@@ -35,9 +35,11 @@ wiederherstellbar ist (`SAFE-01`, `SAFE-02`, `SAFE-04`).
   `getBackupFilenames()` hängt den Kampagnen-Key nur bei einer echten `safeName`-Kollision an
   (inkl. des Leerstring-Falls bei rein nicht-lateinischen Namen), sonst bleibt der Dateiname
   unverändert.
-- **SAFE-03** (`DEBT-19`): Das Löschen einer Audiodatei ist rückgängig zu machen.
-  `removeAudioFile()` löscht den Blob und mutiert `D.soundboard.scenes` ohne vorherigen Undo-Push —
-  ein Bruch der projektweiten Undo-Garantie, der nach `Strg+Z` defekte Szenen hinterlässt.
+- **SAFE-03** ✓ (`DEBT-19`, Phase 12: 12-06 komplett): Das Löschen einer Audiodatei ist rückgängig
+  zu machen. `removeAudioFile()` ruft jetzt `saveUndoState()` vor jeder Mutation und löscht den Blob
+  aufgeschoben (Grabstein statt Sofortlöschung); ein Undo-Hook stellt bei `Strg+Z` sowohl die
+  Szenen-Referenz als auch die Datei selbst wieder her — bewiesen bis in eine echte Browser-Session
+  inklusive Reload.
 - **SAFE-04** ✓ (`DEBT-20`, Phase 12: 12-04 komplett): Der Umzugs-Wizard bietet sich nicht mehr Nutzern mit vollen Daten an.
   `isFreshInstall()` prüft nur `APP_CONFIG.STORAGE_KEY` und ignoriert `window.STORAGE_KEY_OVERRIDE`
   sowie den IDB-only-Löschpfad — denselben Codepfad, der `DEBT-17` verursacht hat.
@@ -126,7 +128,7 @@ wiederherstellbar ist (`SAFE-01`, `SAFE-02`, `SAFE-04`).
 | --- | --- | --- |
 | SAFE-01 | DEBT-18 | Phase 12 — Complete (12-01, 12-02) |
 | SAFE-02 | DEBT-21, DEBT-22 | Phase 12 — Complete (12-03) |
-| SAFE-03 | DEBT-19 | Pending |
+| SAFE-03 | DEBT-19 | Phase 12 — Complete (12-06) |
 | SAFE-04 | DEBT-20 | Phase 12 — Complete (12-04) |
 | SAFE-05 | DEBT-05, DEBT-08 | Phase 12 — Complete (12-05) |
 | SAFE-06 | DEBT-11 | Pending |

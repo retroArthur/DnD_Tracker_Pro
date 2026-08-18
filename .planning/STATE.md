@@ -5,10 +5,10 @@ milestone_name: Schulden-Abbau
 current_phase: 12
 current_phase_name: Datensicherheit
 status: executing
-stopped_at: Completed 12-05-PLAN.md
-last_updated: "2026-08-18T21:44:29.434Z"
-last_activity: 2026-08-18
-last_activity_desc: 12-05 abgeschlossen (Undo/Redo Peek-Parse-Pop, Push-Validierung, registerUndoHook, autosave-toggle entfernt)
+stopped_at: Completed 12-06-PLAN.md
+last_updated: "2026-08-18T22:02:58.837Z"
+last_activity: 2026-08-19
+last_activity_desc: 12-06 abgeschlossen (Grabstein-Loeschung fuers Soundboard — SAFE-03 vollstaendig erfuellt, Strg+Z stellt Blob UND Szenen-Referenz wieder her)
 progress:
   total_phases: 3
   completed_phases: 0
@@ -36,9 +36,9 @@ progress:
 ## Current Position
 
 Phase: 12 (Datensicherheit) — EXECUTING
-Plan: 6 of 7
+Plan: 7 of 7
 Status: Ready to execute
-Last activity: 2026-08-18 — 12-05 abgeschlossen (Undo/Redo Peek-Parse-Pop, Push-Validierung, registerUndoHook, autosave-toggle entfernt)
+Last activity: 2026-08-19 — 12-06 abgeschlossen (Grabstein-Loeschung fuers Soundboard — SAFE-03 vollstaendig erfuellt, Strg+Z stellt Blob UND Szenen-Referenz wieder her)
 
 **Nächster Schritt:** `/gsd-execute-phase 12`
 
@@ -102,6 +102,7 @@ Browser-Verhalten an der Base64-Grenze (12-07).
 | Phase 12 P03 | 35min | 2 tasks | 2 files |
 | Phase 12 P04 | ~25min | 2 tasks | 2 files |
 | Phase 12 P05 | 15min | 3 tasks | 5 files |
+| Phase 12 P06 | 35min | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -188,8 +189,8 @@ Browser-Verhalten an der Base64-Grenze (12-07).
 
 ## Session Continuity
 
-**Last session:** 2026-08-18T21:44:06.679Z
-**Stopped at:** Completed 12-05-PLAN.md
+**Last session:** 2026-08-18T22:02:58.824Z
+**Stopped at:** Completed 12-06-PLAN.md
 **Resume file:** None
 
 **Last action:** Komplette Milestone-UAT abgeschlossen (2026-06-20 → 2026-07-20): alle 5 offenen Human-UAT-Sessions via `/gsd-verify-work` durchgetestet — 07 (4/4), 06 (5/5), 05 (2/2), 01 (3/3), 02 (6/6). Alle 7 VERIFICATION.md jetzt `status: passed`. Dabei gefundene+gefixte Bugs: Soundboard-Doppel-Import (75aadfe), Audio-läuft-nach-Szene-Löschen (b85dbe1), Volume nicht live (801ed48), Manifest-CORS unter file:// (cd75093), Konsolen-Hygiene (c029f11), Datei-Backup schrieb nie bei Entity-CRUD — window.save-Wrapper strukturell wirkungslos für bare save() (1430e8c), generischer registerPostSaveHook + DM-Screen-Live-Sync-Umstellung + CLAUDE.md-Pattern-Korrektur (6ea8309), „Anderen Ordner wählen"-Button (cc2af9e). Nebenbei: Repo mit origin gemergt (7 Mai-Commits, alter pages.yml-Deploy entfernt 7f4858a), 348 Commits gepusht, GitHub-Pages-Deploy live verifiziert (PWA installierbar, SW-Update-Flow, Datei-Backup, Migrations-Wizard file://→PWA). Zusätzlich in der Session: Soundboard-Erweiterungen (Loop-Toggle/Crossfade-Loop/Fortschritt 6636297, Per-Track-Play noch offen als Design), gruppierte Navigation (3d77ec0).
@@ -279,6 +280,7 @@ _State initialized: 2026-06-11_
 - [Phase ?]: [Phase 12, 12-04] isFreshInstall() async, delegiert an readCampaignDataForBackup() (D-07); beide Aufrufer auf await; ein Commit statt zwei Task-Commits, da ein Zwischenzustand mit async isFreshInstall() aber synchronen Aufrufern die Promise-Wahrheitswert-Falle T-12-13 selbst erzeugt haette
 - [Phase ?]: [Phase 12, 12-05] pushUndo() warnt und laesst Aufrufer weiterlaufen bei nicht serialisierbarem D (folgt D-02-Prinzip 'nie am Spieltisch blockieren')
 - [Phase ?]: [Phase 12, 12-05] Aktionslabel wandert beim Undo/Redo-Umschichten mit (last.action statt fester 'Undo'/'Redo'-Strings) fuer Plan 12-06s Hook-Konsumenten
+- [Phase ?]: [Phase 12, 12-06] removeAudioFile() nutzt aufgeschobenes Loeschen (Grabstein/deletedAt) statt Sofortloeschung, damit Strg+Z sowohl Szenen-Referenz als auch Audiodatei zurueckholt (SAFE-03) — Sitzungs-Aufraeumen entfernt Grabsteine frueherer Sitzungen beim ersten listSoundBlobs()
 
 ## Operator Next Steps
 
