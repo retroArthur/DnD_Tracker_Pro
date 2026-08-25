@@ -542,8 +542,8 @@ For a soundboard (local audio files as ambient tracks), a secondary concern is m
 
 ## Sources
 
-- `D:\AI_CLI\Claude\DnD_Tracker_App_Pro\dnd-tracker-modular\.planning\codebase\CONCERNS.md` — primary source for Part A (direct code evidence, HIGH confidence)
-- `D:\AI_CLI\Claude\DnD_Tracker_App_Pro\dnd-tracker-modular\.planning\PROJECT.md` — project constraints and requirements
+- `D:\Claude_Code\Projekte\DnD_Tracker_App_Pro\.planning\codebase\CONCERNS.md` — primary source for Part A (direct code evidence, HIGH confidence)
+- `D:\Claude_Code\Projekte\DnD_Tracker_App_Pro\.planning\PROJECT.md` — project constraints and requirements
 - [MDN: Using Service Workers](https://developer.mozilla.org/en-US/docs/Web/API/Service_Worker_API/Using_Service_Workers) — SW security context requirements (HIGH confidence)
 - [Chromium dev group: file:// and service workers](https://groups.google.com/a/chromium.org/g/chromium-dev/c/Ylfh8kjOdec) — file:// restriction confirmed
 - [Chrome Developers: Persistent permissions for FSAA](https://developer.chrome.com/blog/persistent-permissions-for-the-file-system-access-api) — permission lifecycle (HIGH confidence)

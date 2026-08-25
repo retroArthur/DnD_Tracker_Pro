@@ -29,3 +29,6 @@ tmpclaude-*
 __pycache__/
 .pytest_cache/
 *.backup
+
+# Lokale Kampagnendaten (beim Umzug 2026-08-25 mitgenommen, nicht versioniert)
+Daten/
