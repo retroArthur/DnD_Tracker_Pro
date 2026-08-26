@@ -352,6 +352,63 @@ describe('downloadAudioExport — Zwei-Datei-Download (SAFE-01)', () => {
         expect(errorToastCalls[0][0]).toMatch(/1 Datei/);
     });
 
+    // ------------------------------------------------------------
+    // Plan 12-07, Checkpoint Task 4 — der Wartehinweis darf keine Arbeit
+    // versprechen, die nie beginnt.
+    //
+    // Bei der menschlichen Sichtung fielen beide Toasts in derselben Sekunde:
+    // "Audio-Export wird erstellt ..." lief VOR der Machbarkeitspruefung, die
+    // unmittelbar danach in buildAudioExport() abbrach. Der Nutzer sah erst ein
+    // Versprechen, dann einen Fehler.
+    //
+    // Bewusst VERHALTENSTESTS mit showToast-Spy, kein Quelltext-Grep: die
+    // Toast-Zeile existiert weiterhin, nur ihre Position und Bedingung aendern
+    // sich — ein Grep auf ihren Text wuerde vor UND nach dem Fix bestehen und
+    // damit nichts beweisen (T-12-22).
+    // ------------------------------------------------------------
+    const WARTE_HINWEIS = 'Audio-Export wird erstellt';
+
+    function toastIndex(teilText) {
+        return mockShowToast.mock.calls.findIndex(
+            call => typeof call[0] === 'string' && call[0].includes(teilText)
+        );
+    }
+
+    test('zu grosse Bibliothek: der Wartehinweis erscheint NICHT — nur die Fehlermeldung', async () => {
+        const overLimitByte = 300 * 1024 * 1024 + 1;
+        mockListSoundBlobs.mockResolvedValue([
+            { id: 'audio_1_1', name: 'riesig.wav', size: overLimitByte, type: 'audio/wav', savedAt: 1 }
+        ]);
+        mockGetAllStats.mockResolvedValue([]);
+
+        await downloadAudioExport();
+
+        // Kein Versprechen auf Arbeit, die nie beginnt
+        expect(toastIndex(WARTE_HINWEIS)).toBe(-1);
+        // Die benannte Absage kommt weiterhin — und bleibt die einzige Meldung
+        expect(toastIndex('riesig.wav')).toBeGreaterThan(-1);
+        expect(createdAnchors).toHaveLength(0);
+    });
+
+    test('machbare Bibliothek: der Wartehinweis erscheint und steht VOR der Erfolgsmeldung', async () => {
+        mockListSoundBlobs.mockResolvedValue([
+            { id: 'audio_1_1', name: 'a.mp3', size: 5, type: 'audio/mpeg', savedAt: 111 }
+        ]);
+        mockGetSoundBlob.mockResolvedValue(new Blob([bytesA()], { type: 'audio/mpeg' }));
+        mockGetAllStats.mockResolvedValue([]);
+
+        await downloadAudioExport();
+
+        const hinweisIdx = toastIndex(WARTE_HINWEIS);
+        const erfolgIdx = toastIndex('angeboten');
+        expect(hinweisIdx).toBeGreaterThan(-1);
+        expect(erfolgIdx).toBeGreaterThan(-1);
+        // Reihenfolge: der Hinweis muss VOR der Erfolgsmeldung stehen, sonst
+        // kuendigt er nichts an
+        expect(hinweisIdx).toBeLessThan(erfolgIdx);
+        expect(createdAnchors).toHaveLength(1);
+    });
+
     test('Checkpoint-Fix (Weg B): startMigrationFlow() ruft downloadAudioExport() NICHT mehr automatisch auf', () => {
         // Manuell verifiziert (Chrome, file://, Instrumentierung von
         // HTMLAnchorElement.prototype.click): der ZWEITE automatische Download

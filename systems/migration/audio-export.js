@@ -223,16 +223,28 @@ async function getAudioExportSummary() {
 // ANGEBOTEN, nicht garantiert zugestellt.
 // ============================================================
 async function downloadAudioExport() {
-    // Hinweis-Toast VOR dem Bauen: FileReader, JSON.stringify und die
-    // Blob-Konstruktion blockieren den Hauptthread fuer ihre Dauer — bei 100 MB
-    // Rohdaten sind allein fuer JSON.stringify ~79ms gemessen, mit Kodierung und
-    // Blob-Bau kommen leicht Sekunden zusammen. Ohne Hinweis wirkt das am
-    // Spieltisch wie ein Absturz.
-    if (typeof window.showToast === 'function') {
-        window.showToast('Audio-Export wird erstellt — bei großen Bibliotheken dauert das einen Moment');
-    }
-
     try {
+        // (12-07, Checkpoint Task 4) ERST die Machbarkeit pruefen, DANN den
+        // Wartehinweis zeigen. Vorher lief der Hinweis unbedingt voraus und die
+        // Groessenpruefung schlug unmittelbar danach in buildAudioExport() zu —
+        // beide Toasts fielen in dieselbe Sekunde, die App versprach also Arbeit,
+        // die nie begann. Die Vorschau ist reine Metadaten-Arbeit
+        // (listSoundBlobs() liefert size OHNE Blob-Bytes) und laedt keinen
+        // einzigen Blob — praktisch kostenlos.
+        const summary = await getAudioExportSummary();
+
+        // Hinweis-Toast NUR, wenn tatsaechlich kodiert wird: FileReader,
+        // JSON.stringify und die Blob-Konstruktion blockieren den Hauptthread
+        // fuer ihre Dauer — bei 100 MB Rohdaten sind allein fuer JSON.stringify
+        // ~79ms gemessen, mit Kodierung und Blob-Bau kommen leicht Sekunden
+        // zusammen. Ohne Hinweis wirkt das am Spieltisch wie ein Absturz.
+        if (summary.feasible && typeof window.showToast === 'function') {
+            window.showToast('Audio-Export wird erstellt — bei großen Bibliotheken dauert das einen Moment');
+        }
+
+        // Der Abbruch bei feasible:false bleibt bewusst in buildAudioExport():
+        // die Fehlermeldung (Groesse, Dateizahl, betroffene Namen) hat damit
+        // genau EINE Quelle und wird hier NICHT nachgebaut.
         const exportObj = await buildAudioExport();
 
         // Sonderfall "leere Bibliothek": weder Audiodateien noch Wuerfelstatistik
