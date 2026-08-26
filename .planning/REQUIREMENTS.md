@@ -47,7 +47,7 @@ wiederherstellbar ist (`SAFE-01`, `SAFE-02`, `SAFE-04`).
   vorhersagbar. `undo()`/`redo()` mutieren die Stacks **vor** der `safeJSONParse`-Prüfung (Asymmetrie
   bei Parse-Fehlern); `saveImmediate()` lässt sich über ein optionales, im UI gar nicht vorhandenes
   `autosave-toggle` deaktivieren — ohne Ausnahme für kritische Saves.
-- **SAFE-06** (`DEBT-11`): Die Persistenz-Randfälle sind getestet — >5-MB-IDB-only-Save mit Reload,
+- **SAFE-06** ✓ (`DEBT-11`, Phase 12: 12-07 komplett): Die Persistenz-Randfälle sind getestet — >5-MB-IDB-only-Save mit Reload,
   localStorage-Quota-Fallback, Export/Import-Versions-Rundlauf. Es ist dieselbe Testlücken-Klasse,
   die `DEBT-17` verdeckt hat.
 
@@ -131,7 +131,7 @@ wiederherstellbar ist (`SAFE-01`, `SAFE-02`, `SAFE-04`).
 | SAFE-03 | DEBT-19 | Phase 12 — Complete (12-06) |
 | SAFE-04 | DEBT-20 | Phase 12 — Complete (12-04) |
 | SAFE-05 | DEBT-05, DEBT-08 | Phase 12 — Complete (12-05) |
-| SAFE-06 | DEBT-11 | Pending |
+| SAFE-06 | DEBT-11 | Phase 12 — Complete (12-07) |
 | SEC-03 | DEBT-23 | Pending |
 | SEC-04 | DEBT-14 | Pending |
 | PERF-01 | DEBT-06, DEBT-07 | Pending |

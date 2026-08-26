@@ -4,16 +4,17 @@ milestone: v1.2
 milestone_name: Schulden-Abbau
 current_phase: 12
 current_phase_name: Datensicherheit
-status: executing
-stopped_at: Completed 12-06-PLAN.md
-last_updated: "2026-08-18T22:02:58.837Z"
+status: verifying
+stopped_at: Completed 12-07-PLAN.md — Phase 12 abgeschlossen (7/7)
+last_updated: "2026-08-26T15:06:08.577Z"
 last_activity: 2026-08-19
-last_activity_desc: 12-06 abgeschlossen (Grabstein-Loeschung fuers Soundboard — SAFE-03 vollstaendig erfuellt, Strg+Z stellt Blob UND Szenen-Referenz wieder her)
+last_activity_desc: "12-07 abgeschlossen (SAFE-06: drei Testluecken geschlossen — IDB-Neustart, Import-Gegenseite, Audio-Rundlauf; Phase 12 damit 7/7)"
+state_head: 19c760f1f931c351f0abee1d215d394e776494bf
 progress:
   total_phases: 3
   completed_phases: 0
   total_plans: 7
-  completed_plans: 6
+  completed_plans: 7
   percent: 0
 ---
 
@@ -21,7 +22,7 @@ progress:
 
 **Last Updated:** 2026-08-06
 **Milestone:** v1.2 „Schulden-Abbau" — Requirements werden definiert
-**Status:** Ready to execute
+**Status:** Phase complete — ready for verification
 
 ---
 
@@ -37,10 +38,10 @@ progress:
 
 Phase: 12 (Datensicherheit) — EXECUTING
 Plan: 7 of 7
-Status: Ready to execute
-Last activity: 2026-08-19 — 12-06 abgeschlossen (Grabstein-Loeschung fuers Soundboard — SAFE-03 vollstaendig erfuellt, Strg+Z stellt Blob UND Szenen-Referenz wieder her)
+Status: Phase complete — ready for verification
+Last activity: 2026-08-19 — 12-07 abgeschlossen (SAFE-06: drei Testluecken geschlossen — IDB-Neustart, Import-Gegenseite, Audio-Rundlauf; Phase 12 damit 7/7)
 
-**Nächster Schritt:** `/gsd-execute-phase 12`
+**Nächster Schritt:** `/gsd-verify-work` — Phase 12 ist vollstaendig ausgefuehrt (7/7 Plaene)
 
 **Die drei offenen Fragen aus der Diskussion sind beantwortet:**
 
@@ -103,6 +104,7 @@ Browser-Verhalten an der Base64-Grenze (12-07).
 | Phase 12 P04 | ~25min | 2 tasks | 2 files |
 | Phase 12 P05 | 15min | 3 tasks | 5 files |
 | Phase 12 P06 | 35min | 2 tasks | 4 files |
+| Phase 12 P07 | ~3h | 5 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -189,8 +191,8 @@ Browser-Verhalten an der Base64-Grenze (12-07).
 
 ## Session Continuity
 
-**Last session:** 2026-08-18T22:02:58.824Z
-**Stopped at:** Completed 12-06-PLAN.md
+**Last session:** 2026-08-26T15:05:14.222Z
+**Stopped at:** Completed 12-07-PLAN.md — Phase 12 abgeschlossen (7/7)
 **Resume file:** None
 
 **Last action:** Komplette Milestone-UAT abgeschlossen (2026-06-20 → 2026-07-20): alle 5 offenen Human-UAT-Sessions via `/gsd-verify-work` durchgetestet — 07 (4/4), 06 (5/5), 05 (2/2), 01 (3/3), 02 (6/6). Alle 7 VERIFICATION.md jetzt `status: passed`. Dabei gefundene+gefixte Bugs: Soundboard-Doppel-Import (75aadfe), Audio-läuft-nach-Szene-Löschen (b85dbe1), Volume nicht live (801ed48), Manifest-CORS unter file:// (cd75093), Konsolen-Hygiene (c029f11), Datei-Backup schrieb nie bei Entity-CRUD — window.save-Wrapper strukturell wirkungslos für bare save() (1430e8c), generischer registerPostSaveHook + DM-Screen-Live-Sync-Umstellung + CLAUDE.md-Pattern-Korrektur (6ea8309), „Anderen Ordner wählen"-Button (cc2af9e). Nebenbei: Repo mit origin gemergt (7 Mai-Commits, alter pages.yml-Deploy entfernt 7f4858a), 348 Commits gepusht, GitHub-Pages-Deploy live verifiziert (PWA installierbar, SW-Update-Flow, Datei-Backup, Migrations-Wizard file://→PWA). Zusätzlich in der Session: Soundboard-Erweiterungen (Loop-Toggle/Crossfade-Loop/Fortschritt 6636297, Per-Track-Play noch offen als Design), gruppierte Navigation (3d77ec0).
@@ -281,6 +283,8 @@ _State initialized: 2026-06-11_
 - [Phase ?]: [Phase 12, 12-05] pushUndo() warnt und laesst Aufrufer weiterlaufen bei nicht serialisierbarem D (folgt D-02-Prinzip 'nie am Spieltisch blockieren')
 - [Phase ?]: [Phase 12, 12-05] Aktionslabel wandert beim Undo/Redo-Umschichten mit (last.action statt fester 'Undo'/'Redo'-Strings) fuer Plan 12-06s Hook-Konsumenten
 - [Phase ?]: [Phase 12, 12-06] removeAudioFile() nutzt aufgeschobenes Loeschen (Grabstein/deletedAt) statt Sofortloeschung, damit Strg+Z sowohl Szenen-Referenz als auch Audiodatei zurueckholt (SAFE-03) — Sitzungs-Aufraeumen entfernt Grabsteine frueherer Sitzungen beim ersten listSoundBlobs()
+- [Phase 12]: 12-07: Manuelle Base64-Grenzpruefung nur zur Haelfte abgenommen — (a) Warnschwelle im Browser verifiziert, (b) Tab-Gesundheit unter 300 MiB offen; Recherche-Annahme A1 bleibt unverifiziert
+- [Phase 12]: 12-07: Wartehinweis im Audio-Export laeuft erst nach bestandener Machbarkeitspruefung — Abbruch bleibt in buildAudioExport(), Fehlermeldung behaelt genau eine Quelle
 
 ## Operator Next Steps
 
@@ -289,3 +293,4 @@ _State initialized: 2026-06-11_
 ### Blockers
 
 - [Phase 11, 11-05] WINDOWS.md Eintrag 3 (open): D-12-Smoke-Test kann Favicon-404 strukturell nicht falsifizieren (headless fetcht ihn nie; headed-Playwright-Page-Events sehen ihn nie) - Fix ist manuell per Raw-CDP verifiziert, aber der automatisierte Nachweis bleibt eine Luecke
+- Offen aus 12-07 (Task 4b): Recherche-Annahme A1 unverifiziert — ein echtes Browser-Tab wurde unterhalb der 300-MiB-Warnschwelle nicht auf Speicherdruck geprueft (braucht ~4 grosse Audiodateien). Anleitung: 12-07-SUMMARY.md, Abschnitt 'Offene manuelle Pruefung'.

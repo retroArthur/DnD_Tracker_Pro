@@ -90,6 +90,37 @@ created: 2026-08-06
 | Wizard-UX für zwei Dateien (Haupt + optional Audio) | SAFE-01 | Sichtbare UI-Änderung; von der Recherche als offene Frage 2 markiert | Umzugs-Wizard öffnen, beide Dateien nacheinander wählen; prüfen, dass der Hauptimport auch ohne die zweite durchläuft und die betroffenen Szenen benennt |
 | Verhalten oberhalb der Base64-Grenze im echten Browser | SAFE-01 | Recherche-Annahme A1: die Node/V8-Grenze (384 MiB roh) ist gemessen, das Browser-Tab-OOM-Verhalten *unterhalb* der harten Grenze aber nicht live verifiziert | Mit einer künstlich großen Audio-Bibliothek exportieren und beobachten, ob die Warnschwelle greift, bevor der Tab kippt |
 
+### Stand nach Plan 12-07, Checkpoint Task 4 (2026-08-19)
+
+Der Punkt „Verhalten oberhalb der Base64-Grenze" zerfällt in zwei getrennt prüfbare Hälften. Nur
+eine davon ist abgenommen — der Eintrag oben bleibt deshalb **offen**, nicht erledigt:
+
+| Hälfte | Stand | Beleg / offener Rest |
+|--------|-------|----------------------|
+| **(a) Die Warnschwelle greift oberhalb von 300 MiB** | ✅ **verifiziert** (Nutzer, echter Browser, `dist/dnd-tracker-bundled.html`) | Beobachtet: Toast „Audio-Export fehlgeschlagen: Audio-Bibliothek zu groß für Export: 400.0 MB von 2 Dateien — Export übersprungen, betroffen: gross-1.wav, gross-2.wav", passender Konsolenfehler aus `buildAudioExport()`, **keine** Datei erzeugt. Quellenseitig bestätigt: der `throw` steht in `buildAudioExport()`, der Anchor wird erst danach in `downloadAudioExport()` erzeugt und geklickt — auf diesem Pfad *kann* keine Datei entstehen. Die Machbarkeitsprüfung läuft vor dem ersten Kodierschritt (`listSoundBlobs()` → `computeFeasibility()` → `throw`, vor `blobToBase64()`). |
+| **(b) Ein echtes Tab bleibt *unterhalb* von 300 MiB gesund** | ❌ **nicht verifiziert — bewusst offen gelassen** | Braucht eine echte Bibliothek von ~4 großen Audiodateien; geprüft wird Speicherdruck im Renderer-Prozess, und genau das ist Annahme A1, die unter Node nicht messbar ist. Kein Konsolen-Trick ersetzt das. Der Nutzer hat sich entschieden, die Dateien heute nicht zusammenzutragen. **Annahme A1 bleibt unverifiziert.** |
+
+**Wie (a) geprüft wurde (wiederholbar).** Die naheliegende Abkürzung „Schwellwert-Konstante in der
+Konsole senken" funktioniert **nicht**: `AUDIO_EXPORT_SAFE_RAW_BYTES` ist ein Top-Level-`const`, das
+`computeFeasibility()` lexikalisch liest; die exportierte Eigenschaft
+`window.AUDIO_EXPORT_SAFE_RAW_BYTES` ist eine separate Kopie. Stattdessen `window.listSoundBlobs`
+überschreiben — sowohl `checkAudioExportFeasible()` als auch `buildAudioExport()` holen ihre
+Metadaten darüber:
+
+```js
+window.listSoundBlobs = async () => ([
+  { id: 'audio_1_1', name: 'gross-1.wav', size: 200 * 1024 * 1024, type: 'audio/wav' },
+  { id: 'audio_1_2', name: 'gross-2.wav', size: 200 * 1024 * 1024, type: 'audio/wav' }
+]);
+await window.getAudioExportSummary();   // feasible:false
+await window.downloadAudioExport();     // Fehler-Toast, KEINE Datei
+```
+
+**(b) bleibt re-runnable.** Vollständige Anleitung inklusive der Rücksetz-Schritte für einen zweiten
+Durchgang (`sessionStorage.removeItem('migration-hint-shown')` **und**
+`localStorage.removeItem('migration-divergence-since')` — der Hinweis-Banner erscheint sonst nicht
+wieder, `migration-wizard.js:765`) steht in `12-07-SUMMARY.md` § „Offene manuelle Prüfung".
+
 ---
 
 ## Validierungs-Nuancen (für Verifier und Plan-Checker)
