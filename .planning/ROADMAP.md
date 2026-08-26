@@ -120,6 +120,6 @@ Plans:
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 12. Datensicherheit | 0/7 | Planned | |
+| 12. Datensicherheit | 7/7 | Ausgeführt — Verifikation ausstehend | |
 | 13. Härtung & Wartbarkeit | TBD | Not started | |
 | 14. Tests & Gates | TBD | Not started | |
