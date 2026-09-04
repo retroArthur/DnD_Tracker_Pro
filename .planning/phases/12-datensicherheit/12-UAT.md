@@ -1,9 +1,9 @@
 ---
-status: diagnosed
+status: resolved
 phase: 12-datensicherheit
 source: 12-01-SUMMARY.md, 12-02-SUMMARY.md, 12-03-SUMMARY.md, 12-04-SUMMARY.md, 12-05-SUMMARY.md, 12-06-SUMMARY.md, 12-07-SUMMARY.md
 started: 2026-08-26T17:40:00Z
-updated: 2026-08-26T17:56:00Z
+updated: 2026-09-04T00:00:00Z
 ---
 
 ## Current Test
@@ -203,7 +203,7 @@ blocked: 0
 
 - gap_id: G-12-3
   truth: "Der Umzugs-Wizard bietet sich einem Nutzer mit vorhandenen Daten nicht an (Erfolgskriterium 4, SAFE-04)"
-  status: failed
+  status: resolved
   reason: "Beim Testen von Test 3 entdeckt. Der Nutzer merkte an, dass die Hinweisleiste auch nach einem reinen SRD-Zauber-Import ausbleibt. Die Nachprüfung im Code zeigte: isFreshInstall() zählt als Inhalt ausschließlich characters, npcs und quests. Wer eine SRD-Zauberbibliothek, Orte, Begegnungen, Beute, Wiki-Einträge, Sessions oder Zufallstabellen besitzt, aber keinen Charakter angelegt hat, gilt als Frischinstallation und bekommt den Umzugs-Wizard angeboten."
   severity: major
   test: 3
