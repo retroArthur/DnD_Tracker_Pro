@@ -536,4 +536,70 @@ describe('_doBackup() — alle Kampagnen des Index, fehlerisoliert je Kampagne (
         const inhalt = dirHandle._files.get('standard-kampagne-aktuell.json');
         expect(inhalt).toContain('marke-nur-im-speicher');
     });
+
+    // ========================================================
+    // CR-02 (Plan 12-10), Task 3 — Invariante ueber ALLE Ziele eines
+    // _doBackup()-Laufs: jede geschriebene Datei traegt die Kennmarke des
+    // eigenen Keys, nie die eines anderen. Haelt die promote-Entscheidung aus
+    // <assumption_delta_decision> als Regressionstest fest, nicht nur als
+    // Einzelfall. Die Zuordnung Dateiname -> Key kommt aus dem echten
+    // ctx.resolveBackupTargets(), nicht aus einer abgetippten Liste.
+    // ========================================================
+    test('CR-02 Invariante: jede geschriebene Backup-Datei traegt die Kennmarke des eigenen Ziel-Keys — ueber alle Ziele eines Laufs', async () => {
+        const dirHandle = createMockDirHandle();
+        const campaigns = [
+            { key: 'dnd-campaign-1', name: 'Kampagne A' }, // aktiv, eigene Daten
+            { key: 'dnd-campaign-2', name: 'Kampagne B' }, // nicht aktiv, eigene Daten
+            { key: 'dnd-campaign-3', name: 'Kampagne C' }  // nicht aktiv, NIE gespeichert
+        ];
+        const dataByKey = {
+            'dnd-campaign-1': { characters: [{ id: 'marke-a-100' }] },
+            'dnd-campaign-2': { characters: [{ id: 'marke-b-200' }] }
+            // dnd-campaign-3 absichtlich ohne Daten
+        };
+        const ctx = createDoBackupContext({
+            campaigns,
+            storageKey: 'dnd-tracker-data',
+            dataByKey,
+            dImSpeicher: { characters: [{ id: 'marke-a-100' }] }, // window.D = Kampagne As Daten
+            aktiverKey: 'dnd-campaign-1' // Kampagne A ist aktiv
+        });
+
+        await ctx._doBackup(dirHandle);
+
+        // Zuordnung Dateiname -> Key aus dem ECHTEN resolveBackupTargets() beziehen,
+        // nicht abtippen (dasselbe Prinzip wie 12-08s Strukturpruefung gegen
+        // das echte initializeData()).
+        const aktiverStorageKey = ctx.window.STORAGE_KEY_OVERRIDE || ctx.window.APP_CONFIG.STORAGE_KEY;
+        const targets = ctx.resolveBackupTargets({ campaigns, active: aktiverStorageKey }, aktiverStorageKey);
+
+        // Erwartete Kennmarke je Key — nur Kampagnen mit eigenen Daten haben eine.
+        const kennmarkeByKey = {
+            'dnd-campaign-1': 'marke-a-100',
+            'dnd-campaign-2': 'marke-b-200'
+            // dnd-campaign-3 bewusst ohne Eintrag: darf keine Datei erzeugen
+        };
+
+        const verstoesse = [];
+        for (const target of targets) {
+            const filename = target.filenames.current;
+            const geschrieben = dirHandle._files.get(filename);
+            const erwarteteKennmarke = kennmarkeByKey[target.key];
+
+            if (erwarteteKennmarke === undefined) {
+                if (geschrieben !== undefined) {
+                    verstoesse.push(`${filename} (Key ${target.key}) wurde geschrieben, obwohl keine eigenen Daten existieren`);
+                }
+                continue;
+            }
+
+            if (geschrieben === undefined) {
+                verstoesse.push(`${filename} (Key ${target.key}) fehlt, obwohl eigene Daten existieren`);
+            } else if (!geschrieben.includes(erwarteteKennmarke)) {
+                verstoesse.push(`${filename} (Key ${target.key}) traegt nicht die eigene Kennmarke ${erwarteteKennmarke}`);
+            }
+        }
+
+        expect(verstoesse).toEqual([]);
+    });
 });
