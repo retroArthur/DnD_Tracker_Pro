@@ -24,10 +24,10 @@ files_reviewed_list:
   - tests/unit/soundboard.test.js
   - tests/unit/stability.test.js
 findings:
-  critical: 2
-  warning: 2
-  info: 0
-  total: 4
+  critical: 0
+  warning: 1
+  info: 1
+  total: 2
 status: issues_found
 ---
 
@@ -40,262 +40,119 @@ status: issues_found
 
 ## Summary
 
-Phase 12 ("Datensicherheit") baut ein durchdachtes, ungewöhnlich gut dokumentiertes und
-gut getestetes System aus Grabstein-Löschung (Soundboard-Audio), Undo-Hooks,
-Mehr-Kampagnen-Datei-Backup und einem zweistufigen Migrations-Wizard (Haupt-Export +
-separate Audio-Export-Datei). Der überwiegende Teil der bewussten Design-Entscheidungen
-(Peek-Parse-Pop beim Undo, atomare Backup-Writes, Whitelist-Sanitizing von Dateinamen,
-verankerte Snapshot-Regex gegen Präfix-Kollisionen, Größenlimits vor Base64-Encode,
-blobId-Whitelist beim Audio-Import) ist korrekt umgesetzt und durch gezielte Unit-/E2E-Tests
-abgesichert — die Testsuiten sind selbst überdurchschnittlich kritisch (Quelltext-Audits
-gegen "grüne Suite ohne Beweiskraft", siehe T-12-22-Kommentare).
+Dies ist die erneute Prüfung nach den Lückenschluss-Plänen 12-09/12-10/12-11, die die vier
+Befunde des vorherigen `12-REVIEW.md` (CR-01, CR-02, WR-01, WR-02) adressiert haben. Alle
+vier wurden verifiziert und sind **korrekt behoben**, inklusive dediziertem
+Regressionstest je Fund:
 
-Trotzdem wurden zwei BLOCKER gefunden, die beide direkt gegen das Phasenziel verstoßen
-("kein Pfad in Backup, Export oder Migration verliert oder überschreibt mehr
-stillschweigend Daten"): ein Bedienpfad im Migrations-Wizard, der frisch importierte
-Kampagnendaten durch einen stillen Autosave überschreiben lässt, und ein Fallback in
-`readCampaignDataForBackup()`, der beim Mehr-Kampagnen-Backup (D-03) unter realistischen
-Bedingungen die Daten der FALSCHEN Kampagne in die Backup-Datei einer ANDEREN Kampagne
-schreibt. Beide Lücken sind durch keinen bestehenden Test abgedeckt.
+- **CR-01** (`wizard-skip` überschreibt frisch importierte Daten): `migration-wizard.js`
+  löst `wizard-skip` ab Schritt 4 jetzt über denselben `window.location.reload()`-Pfad wie
+  `wizard-close` aus (Zeile 650-653), und der Footer wird ab Schritt 4 zusätzlich per
+  `showWizardStep()` ausgeblendet (Zeile 173-176). Regressionstests: `migration-wizard.test.js`
+  „CR-01 Test A/B/C".
+- **CR-02** (`readCampaignDataForBackup()` liefert bei fehlenden Daten die falsche aktive
+  Kampagne): Stufe 3 prüft jetzt `campaignKey === aktiverBackupKey`, bevor `window.D`
+  zurückgegeben wird (`file-backup-manager.js:412-421`). Fünf gezielte Regressionstests in
+  `file-backup.test.js` (u. a. die Invariante „jede geschriebene Datei trägt nur die eigene
+  Kennmarke") decken sowohl den Fehlerfall als auch die Gegenprobe „aktive Kampagne bekommt
+  ihr Backup weiterhin" ab.
+- **WR-01** (Audio-Datei in Haupt-Dropzone markiert falsches Element): `_processWizardFile()`
+  löst jetzt explizit `#migration-wizard-audio-dropzone` auf, mit Fallback auf die
+  übergebene Dropzone (`migration-wizard.js:434-441`). Regressionstests: „WR-01 Test D/E".
+- **WR-02** (`pushUndo()` leert den Redo-Stack bei Serialisierungsfehler nicht):
+  `redoStack.length = 0;` läuft jetzt auch im `catch`-Zweig vor dem `return`
+  (`undo.js:23-28`). Regressionstests: „WR-02 Test J/K" in `stability.test.js`.
 
-## Critical Issues
-
-### CR-01: "Überspringen"-Button im Migrations-Wizard überschreibt frisch importierte Daten nach erfolgreichem Import
-
-**File:** `systems/migration/migration-wizard.js:283-286` (Button), `systems/migration/migration-wizard.js:627-632` (Handler), `systems/migration/migration-wizard.js:655-658` (`_closeWizard`)
-
-**Issue:**
-Der Footer-Button "Überspringen — ich starte neu" (`data-action="wizard-skip"`) wird
-**außerhalb** der `.migration-step`-Container gerendert (Zeile 283-288) und ist damit auf
-**jedem** Wizard-Schritt sichtbar und klickbar — auch auf Schritt 4, der
-Erfolgsbestätigung nach einem bereits abgeschlossenen `full-v1`-Import
-(`_processWizardFile()`, Zeile ~464-519). `showWizardStep()` (Zeile 152-177) toggelt nur
-`.migration-step`-Elemente, den Audio-Bereich und die Fortschritts-Punkte — der Footer
-bleibt unangetastet.
-
-Die beiden Schritt-4-Buttons "App jetzt nutzen" (`wizard-close`) und "Automatische Backups
-einrichten" (`wizard-setup-backup`) rufen beide bewusst `window.location.reload()` auf, mit
-explizitem Kommentar:
-```js
-// KEIN renderAll()/save() auf dem stale In-Memory-D — save() würde
-// die frisch importierte Aktiv-Kampagne mit dem leeren D überschreiben (CR-04).
-window.location.reload();
-```
-Der `wizard-skip`-Handler (Zeile 629-632) macht genau das NICHT:
-```js
-} else if (action === 'wizard-skip') {
-    StorageAPI.setJSON('migration-wizard-shown', { shown: true, skipped: true });
-    _closeWizard();
-}
-```
-`_closeWizard()` blendet das Modal nur aus (`modal.style.display = 'none'`) — kein Reload.
-Klickt der Nutzer nach einem erfolgreichen Import auf Schritt 4 versehentlich (oder in dem
-Glauben, es schließe nur den Dialog) auf "Überspringen", bleibt `window.D` auf dem
-STALEN Vor-Import-Zustand (bei einer Frischinstallation: nahezu leer, da
-`initMigrationWizardIfNeeded()` den Wizard nur zeigt, wenn `isFreshInstall()` true ist).
-
-Der Import selbst hat aber bereits über `importFullExport()` die localStorage-Keys der
-importierten Kampagne(n) **direkt** überschrieben. Jede nachfolgende Aktion, die
-`save()`/`saveImmediate()` auslöst — oder, garantiert, das Schließen/Neuladen des Tabs —
-schreibt das stale, fast leere `window.D` zurück in denselben localStorage-Key und macht
-den Import damit **rückstandslos rückgängig**. `systems/avatars.js:170-176`
-(`initOfflineMode()`) registriert dafür einen bedingungslosen `beforeunload`-Handler:
-```js
-window.addEventListener('beforeunload', () => {
-    const key = window.STORAGE_KEY_OVERRIDE || STORAGE_KEY;
-    StorageAPI.setJSON(key, D); // Bereits mit try-catch geschützt
-});
-```
-Dieser feuert bei jedem Tab-Wechsel/Schließen — der Datenverlust ist damit nicht nur
-theoretisch möglich, sondern beim nächsten Tab-Close praktisch garantiert. Zusätzlich
-setzt `wizard-skip` `migration-wizard-shown: {skipped:true}`, sodass der Wizard beim
-nächsten Start NICHT erneut automatisch erscheint (`initMigrationWizardIfNeeded()` prüft
-`StorageAPI.has('migration-wizard-shown')` zuerst) — der Nutzer bekommt keine zweite
-Chance, den Import zu wiederholen, ohne selbst zu wissen, dass er über
-`reopen-migration-wizard` erneut startbar ist.
-
-Kein Test in `tests/unit/migration-wizard.test.js` deckt den Fall "Klick auf `wizard-skip`
-NACH erfolgreichem Import (Schritt 4)" ab — alle bestehenden Tests für `_processWizardFile`
-enden mit der Prüfung des Erfolgs-States, nie mit einem nachfolgenden `wizard-skip`-Klick.
-
-**Fix:**
-Den Skip-Button entweder ab Schritt 4 ausblenden, oder `wizard-skip` nach einem
-erfolgreichen Import denselben Reload-Pfad wie `wizard-close` nehmen lassen:
-```js
-} else if (action === 'wizard-skip') {
-    StorageAPI.setJSON('migration-wizard-shown', { shown: true, skipped: true });
-    if (_wizardStep >= 4) {
-        // Import bereits gelaufen — stale D darf nicht per Autosave/beforeunload
-        // die frisch importierten Daten überschreiben (gleicher Grund wie wizard-close).
-        window.location.reload();
-        return;
-    }
-    _closeWizard();
-}
-```
-Zusätzlich: den Footer per `showWizardStep()` ab Schritt 4 ausblenden (`display:none`),
-damit ein Nutzer, der wirklich abbrechen will, das gar nicht erst versucht, nachdem der
-Import längst gelaufen ist.
-
----
-
-### CR-02: `readCampaignDataForBackup()` liefert bei fehlenden Kampagnendaten die FALSCHE (aktive) Kampagne zurück — Mehr-Kampagnen-Backup kann Kampagnen gegenseitig überschreiben
-
-**File:** `systems/file-backup/file-backup-manager.js:382-411` (Funktion), `systems/file-backup/file-backup-manager.js:413-460` (`_doBackup()`-Aufrufschleife)
-
-**Issue:**
-`readCampaignDataForBackup(campaignKey)` liest in drei Stufen: localStorage unter
-`campaignKey` → IndexedDB unter `campaignKey` → **als letzter Ausweg `window.D`**:
-```js
-// 3. Letzter Ausweg: der laufende Zustand im Speicher
-if (typeof window !== 'undefined' && istBefuellt(window.D)) return window.D;
-```
-Diese dritte Stufe ignoriert `campaignKey` vollständig und gibt **immer** die aktuell im
-Speicher geladene (aktive) Kampagne zurück — unabhängig davon, für welche Kampagne die
-Funktion aufgerufen wurde. Das war für den ursprünglichen Anwendungsfall (Backup NUR der
-aktiven Kampagne) korrekt, weil `campaignKey` dort zwangsläufig der aktive Key war.
-
-Mit D-03 (`_doBackup()`, Zeile 413-460) ruft dieselbe Funktion die Daten für **jede**
-Kampagne im Index einzeln ab, inklusive der Standard-Kampagne, die
-`resolveBackupTargets()` (Zeile 128-163) **immer** als erstes Ziel einträgt — auch wenn
-sie nie gespeichert wurde:
-```js
-targets.push({ key: storageKey, name: 'Standard-Kampagne' });
-```
-Ein sehr realistisches Szenario: Ein Nutzer legt beim ersten Start sofort eine benannte
-Kampagne an und spielt ausschließlich darin — die literale "Standard-Kampagne"
-(`APP_CONFIG.STORAGE_KEY`, z. B. `dnd-tracker-data`) wird nie gespeichert, weder in
-localStorage noch in IndexedDB. Bei jedem Datei-Backup-Lauf (`onAfterSave()` →
-`_doBackup()`) liefert `readCampaignDataForBackup('dnd-tracker-data')` für dieses
-Ziel Stufe 1 und 2 `null`, fällt auf Stufe 3 zurück und gibt **die Daten der aktuell
-aktiven, benannten Kampagne** zurück. `writeBackupForCampaign()` schreibt diese Daten
-anschließend anstandslos nach `standard-kampagne-aktuell.json` — der `if (!data) continue;`
-DEBT-17-Schutz (Zeile 441-447) greift NICHT, weil `data` nicht leer, sondern nur falsch
-zugeordnet ist. Bei jedem weiteren Save-Zyklus passiert dasselbe erneut, inklusive der
-Tages-Snapshot-Logik, die `standard-kampagne-YYYY-MM-DD.json` mit fremden Kampagnendaten
-anlegt und dabei einen der zehn Snapshot-Plätze belegt. Sollte der Nutzer später
-tatsächlich die echte Standard-Kampagne nutzen, wären deren "Backups" bereits mit
-Fremddaten verunreinigt bzw. überschrieben — der exakte stille Datenverlust/-verfälschung,
-den Phase 12 verhindern soll. Der Fehler ist nicht auf die Standard-Kampagne beschränkt:
-jede Kampagne im Index, deren localStorage-/IDB-Eintrag aus irgendeinem Grund (noch) fehlt,
-bekommt bei diesem Backup-Lauf fälschlich den Inhalt der aktiven Kampagne zugeschrieben.
-
-Die bestehenden Tests in `tests/unit/file-backup.test.js`
-(`describe('_doBackup() — alle Kampagnen des Index...')`) decken diesen Fall nicht auf, weil
-`createDoBackupContext()` in keinem der Tests ein `window.D` setzt — `istBefuellt(window.D)`
-ist dort immer `false` und Stufe 3 greift nie. Der Test "eine nicht lesbare Kampagne wird
-uebersprungen" prüft dadurch nur den (korrekten) Fall "wirklich keine Daten irgendwo", nicht
-den (fehlerhaften) Fall "keine Daten unter DIESEM Key, aber eine andere, befüllte Kampagne
-aktiv im Speicher".
-
-**Fix:**
-Stufe 3 darf nur greifen, wenn `campaignKey` tatsächlich der aktuell aktive Key ist:
-```js
-async function readCampaignDataForBackup(campaignKey) {
-    const istBefuellt = obj => obj && typeof obj === 'object' && Object.keys(obj).length > 0;
-
-    if (typeof StorageAPI !== 'undefined') {
-        const ausLs = StorageAPI.getJSON(campaignKey, null);
-        if (istBefuellt(ausLs)) return ausLs;
-    }
-
-    const idbRead = typeof window !== 'undefined' ? window.loadFromIndexedDBFallbackRaw : null;
-    if (typeof idbRead === 'function') {
-        try {
-            const record = await idbRead(campaignKey);
-            if (record && record.data) {
-                const geparst = JSON.parse(record.data);
-                if (istBefuellt(geparst)) return geparst;
-            }
-        } catch (e) { /* ... unveraendert ... */ }
-    }
-
-    // Nur die AKTIVE Kampagne darf aus dem laufenden Speicher kommen — sonst
-    // bekommt eine andere (z. B. nie gespeicherte) Kampagne fälschlich fremde Daten (CR-02).
-    const activeKey = typeof window !== 'undefined'
-        ? (window.STORAGE_KEY_OVERRIDE || window.APP_CONFIG?.STORAGE_KEY)
-        : null;
-    if (activeKey && campaignKey === activeKey &&
-            typeof window !== 'undefined' && istBefuellt(window.D)) {
-        return window.D;
-    }
-
-    return null;
-}
-```
-Ergänzend einen Regressionstest in `file-backup.test.js` hinzufügen, der `ctx.D` mit einer
-befüllten, ANDEREN Kampagne belegt und prüft, dass eine nicht-existente Nachbarkampagne
-weiterhin übersprungen wird (kein `standard-kampagne-aktuell.json` mit Fremddaten).
+Der bereits in der Vorprüfung gelobte Gesamtzustand (durchdachtes Grabstein-Löschsystem,
+atomare Mehr-Kampagnen-Backups, Whitelist-Sanitizing, verankerte Snapshot-Regex,
+Peek-Parse-Pop bei Undo/Redo) bleibt unverändert solide. Bei dieser Prüfung wurde
+zusätzlich der Größen-Rundlauf zwischen Audio-Export und -Import genauer nachgerechnet;
+dabei kam ein bisher unentdecktes Inkonsistenz-Problem zutage (WR-03 unten), das den
+Phasenanspruch „kein Pfad verliert Daten" für den Audio-Umzug bei großen Bibliotheken
+punktuell unterläuft. Keine neuen Blocker gefunden.
 
 ## Warnings
 
-### WR-01: Audio-Export-Datei in der Haupt-Dropzone abgelegt zeigt Rückmeldung am falschen Element
+### WR-03: Audio-Export-Größenlimit (300 MiB roh) und Audio-Import-Größenlimit (350 MiB Datei) sind inkonsistent — ein maximal großer, erfolgreich erstellter Export kann beim Reimport abgelehnt werden
 
-**File:** `systems/migration/migration-wizard.js:421-428` (Weiche), `systems/migration/migration-wizard.js:538-547` (`_processWizardAudioFile`)
+**File:** `systems/migration/audio-export.js:30` (`AUDIO_EXPORT_SAFE_RAW_BYTES`),
+`systems/migration/migration-wizard.js:568` (`AUDIO_IMPORT_MAX_BYTES`)
 
 **Issue:**
-`_processWizardFile()` erkennt eine versehentlich in die Haupt-Dropzone gezogene
-`audio-export-v1`-Datei und leitet korrekt an `_processWizardAudioFile(file, dropzone)`
-weiter — übergibt dabei aber die **Haupt**-Dropzone (`migration-wizard-dropzone`) als
-Parameter. `_processWizardAudioFile()` schreibt Erfolg/Fehler jedoch immer in
-`#migration-wizard-audio-status` (per `getElementById`, unabhängig vom übergebenen
-Parameter) und setzt `.file-ready`/`.dragover`-Klassen nur auf dem übergebenen (falschen)
-Dropzone-Element. Ergebnis: die Haupt-Dropzone wird optisch als "fertig" markiert, während
-die eigentliche Text-Rückmeldung ("Audio importiert: N Datei(en)…") im separaten,
-möglicherweise nicht im Blickfeld befindlichen Audio-Bereich erscheint. Kein Datenverlust,
-aber verwirrende UI-Rückmeldung nach einem an sich korrekt verarbeiteten Import.
+`buildAudioExport()` erlaubt Audio-Bibliotheken bis `AUDIO_EXPORT_SAFE_RAW_BYTES = 300 *
+1024 * 1024` (300 MiB **Rohbytes**, vor Base64-Kodierung) — begründet im Kommentar direkt
+über der Konstante mit der V8-String-Obergrenze (~512 MiB) und dem Base64-Aufblähfaktor
+4/3. Genau dieser Aufblähfaktor wird aber beim Import nicht gegengerechnet:
+`_processWizardAudioFile()` prüft die tatsächliche **Datei**-Größe der (bereits
+Base64-kodierten) JSON-Exportdatei gegen ein eigenes, unabhängig hartkodiertes Limit:
 
-**Fix:** Beim Weiterleiten die tatsächliche Audio-Dropzone referenzieren statt der
-Haupt-Dropzone:
 ```js
-if (parsedObj && parsedObj._exportType === 'audio-export-v1') {
-    clearError();
-    const audioDropzone = document.getElementById('migration-wizard-audio-dropzone') || dropzone;
-    _processWizardAudioFile(file, audioDropzone);
+// migration-wizard.js:568
+const AUDIO_IMPORT_MAX_BYTES = 350 * 1024 * 1024;
+if (file.size > AUDIO_IMPORT_MAX_BYTES) {
+    showStatus('Die Audio-Datei ist zu groß und konnte nicht gelesen werden.', true);
     return;
 }
 ```
+
+Rechnung: 300 MiB Rohdaten = 314.572.800 Bytes. Base64 kodiert das auf
+`ceil(314572800/3)*4 = 419.430.400` Bytes ≈ **400 MiB** (zzgl. minimalem JSON-Overhead für
+Feldnamen/Struktur). Eine Audio-Bibliothek, die genau an der vom Export selbst als „sicher“
+deklarierten Obergrenze liegt (z. B. drei bis vier Dateien nahe dem 100-MiB-Pro-Datei-Limit
+aus `checkAudioFileSize()`), erzeugt damit eine Exportdatei von ~400 MiB — oberhalb des
+350-MiB-Importlimits (367.001.600 Bytes). Der Nutzer bekommt beim Reimport exakt dieser
+selbst erzeugten, gültigen Datei die Fehlermeldung „Die Audio-Datei ist zu groß und konnte
+nicht gelesen werden“, obwohl `downloadAudioExport()` sie anstandslos erstellt und
+angeboten hat.
+
+Das ist kein *stiller* Datenverlust (der Fehler wird angezeigt), aber es unterläuft den
+eigentlichen Zweck von Phase 12 für genau den Fall, für den die Größenprüfungen ersichtlich
+mit Absicht so präzise kalibriert wurden: Bei einer großen, aber laut Exportlogik
+„machbaren“ Audio-Bibliothek liefert der Umzugsweg eine Datei, die auf der Zielseite
+grundlos abgelehnt wird — es gibt keinen alternativen Weg, diese Audiodateien zurück in die
+App zu bekommen. Kein bestehender Test in `audio-export.test.js` oder
+`migration-wizard.test.js` prüft den Rundlauf `downloadAudioExport()` →
+`_processWizardAudioFile()` für eine Bibliothek nahe der 300-MiB-Grenze; alle
+Größentests behandeln Export und Import unabhängig voneinander.
+
+Zusätzlich: `AUDIO_IMPORT_MAX_BYTES` ist ein lokal in `_processWizardAudioFile()`
+hartkodierter Magic-Number-Duplikat von `window.AUDIO_EXPORT_SAFE_RAW_BYTES` (das bereits
+exportiert wird, siehe `audio-export.js:412`), statt daraus mit dem bekannten
+Base64-Faktor abgeleitet zu werden — genau diese Duplizierung hat die Inkonsistenz
+ermöglicht.
+
+**Fix:** Das Importlimit aus der Export-Konstante ableiten statt unabhängig zu
+duplizieren, mit Puffer für JSON-Struktur-Overhead:
+
+```js
+// migration-wizard.js — AUDIO_IMPORT_MAX_BYTES ableiten statt neu hartkodieren
+const AUDIO_IMPORT_MAX_BYTES = Math.ceil(
+    (window.AUDIO_EXPORT_SAFE_RAW_BYTES || 300 * 1024 * 1024) * 4 / 3
+) + 10 * 1024 * 1024; // Base64-Aufblähfaktor + 10 MiB Puffer für JSON-Struktur
+```
+
+Ergänzend einen Regressionstest, der `buildAudioExport()` mit einer Bibliothek nahe
+`AUDIO_EXPORT_SAFE_RAW_BYTES` aufruft, die resultierende (simulierte) Dateigröße gegen
+`AUDIO_IMPORT_MAX_BYTES` prüft und so das Reimport-Versprechen für den worst case belegt.
 
 ---
 
-### WR-02: `pushUndo()` räumt den Redo-Stack bei Serialisierungsfehler nicht — nachfolgendes Redo kann auf inkonsistentem State landen
+## Info
 
-**File:** `systems/undo.js:9-24`
+### IN-01: `wizard-skip`-Kommentar zitiert nicht mehr existierenden alten Codepfad, kein funktionaler Mangel
 
-**Issue:**
-Der erfolgreiche Pfad von `pushUndo()` leert am Ende `redoStack.length = 0` (neue Aktion
-macht alte Redo-Historie ungültig — Standard-Undo-Semantik). Schlägt
-`JSON.stringify(window.D)` fehl (z. B. durch eine versehentlich zirkuläre Referenz oder
-einen nicht serialisierbaren Wert, der an anderer Stelle in `D` gelandet ist), bricht die
-Funktion vorzeitig ab, BEVOR der Redo-Stack geleert wird:
-```js
-try {
-    stateJSON = JSON.stringify(window.D);
-} catch (e) {
-    // ... Toast ...
-    return; // redoStack bleibt unveraendert!
-}
-```
-Szenario: Nutzer macht Aktion A (Undo-Eintrag gesichert, Redo geleert), macht Undo
-(A landet im Redo-Stack), macht danach Aktion B, während `D` gerade nicht serialisierbar
-ist (pushUndo bricht ab, B läuft aber laut Kommentar "am Spieltisch nie blockieren" trotzdem
-durch und verändert `D`). Der alte Redo-Eintrag für A bleibt bestehen. Klickt der Nutzer
-jetzt "Redo", wird A auf den durch B bereits veränderten `D`-Stand angewendet — B's
-Änderungen werden dabei stillschweigend überschrieben, ohne dass der Nutzer das erwartet
-oder bestätigt hat.
+**File:** `systems/migration/migration-wizard.js:643-654`
 
-**Fix:** Redo-Stack auch im Fehlerfall leeren, da die destruktive Aktion laut Design
-trotzdem durchläuft:
-```js
-} catch (e) {
-    if (window.APP_CONFIG?.DEBUG_MODE && window.ErrorHandler) {
-        window.ErrorHandler.log('pushUndo', e, action);
-    }
-    showToast('⚠️ Undo-Schutz für diese Aktion nicht verfügbar', 'warning');
-    redoStack.length = 0; // Aktion läuft trotzdem durch — alte Redo-Historie waere sonst inkonsistent
-    return;
-}
-```
+**Issue:** Kleinigkeit, keine Funktionsauswirkung: Der Fix-Kommentar über dem
+`wizard-skip`-Handler erklärt ausführlich, warum ab Schritt 4 reload’t werden muss, verweist
+aber nicht mehr explizit auf den (jetzt behobenen) alten Zustand aus CR-01 des vorherigen
+Reviews, was das Nachvollziehen für zukünftige Leser ohne Zugriff auf `12-REVIEW.md`
+(diese Datei wird überschrieben) leicht erschwert, sobald die Historie aus dem Blick fällt.
+Rein dokumentarisch, keine Handlung erforderlich außer bei Gelegenheit.
+
+**Fix:** Optional: kurzer Verweis auf den Git-Commit/Plan (`Plan 12-09`) ergänzen, falls
+`12-REVIEW.md` künftig durch neuere Prüfungen ersetzt wird und der Kontext sonst verloren
+ginge. Kein Blocker für den Merge.
 
 ---
 
