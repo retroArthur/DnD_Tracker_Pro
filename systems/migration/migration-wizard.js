@@ -431,7 +431,13 @@ function _processWizardFile(file, dropzone) {
             // Zone zieht, soll nicht mit "kein full-v1-Export" abgelehnt werden.
             if (parsedObj && parsedObj._exportType === 'audio-export-v1') {
                 clearError();
-                _processWizardAudioFile(file, dropzone);
+                // Gap-Closure 12-09 (WR-01): die tatsaechliche Audio-Dropzone auflösen,
+                // statt die Haupt-Dropzone weiterzureichen — sonst markiert
+                // _processWizardAudioFile() das falsche Element als file-ready, waehrend
+                // seine Text-Rueckmeldung im Audio-Bereich erscheint. Rueckfall auf die
+                // uebergebene dropzone, falls das Element (noch) nicht existiert.
+                const audioDropzone = document.getElementById('migration-wizard-audio-dropzone') || dropzone;
+                _processWizardAudioFile(file, audioDropzone);
                 return;
             }
 
