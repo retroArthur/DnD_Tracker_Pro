@@ -56,7 +56,7 @@ sich spürbar.
 **Goal**: Kein Pfad in Backup, Export oder Migration verliert oder überschreibt mehr stillschweigend Daten, und die Randfälle, die solche Verluste bisher verdeckt haben, sind getestet.
 **Depends on**: Nothing (erste Phase des Milestones)
 **Requirements**: SAFE-01, SAFE-02, SAFE-03, SAFE-04, SAFE-05, SAFE-06
-**Plans:** 7/7 plans executed
+**Plans:** 7/8 plans executed
 **Success Criteria** (what must be TRUE):
 
   1. Ein Umzugs-Export `file://` → PWA enthält Soundboard-Audio und Würfelstatistik; nach dem Import spielen Szenen ihre Tracks, keine toten `blobId`s bleiben zurück
@@ -75,6 +75,7 @@ Plans:
 - [x] 12-05-PLAN.md — Undo-Kern: erst parsen dann poppen, Push-Validierung, Undo-Hooks, toter Autosave-Schalter entfernt (Welle 3)
 - [x] 12-06-PLAN.md — Audio-Löschen rückgängig: aufgeschobenes Löschen plus Wiederherstellung über den Undo-Hook (Welle 4)
 - [x] 12-07-PLAN.md — Persistenz-Randfälle getestet: IDB-Neustart, Export/Import-Rundlauf, Audio-Rundlauf (Welle 5)
+- [ ] 12-08-PLAN.md — Lücken-Plan G-12-3: Inhalts-Prüfung der Frischinstallation zählt alle Nutzer-Sammlungen statt drei (Welle 6)
 
 **Auslegungshinweis:** Erfolgskriterium 6 schließt dieselbe Testlücken-Klasse, die `DEBT-17` in v1.1 verdeckt hat — die Tests gehören in dieselbe Phase wie die Fixes, nicht ans Ende des Milestones.
 
