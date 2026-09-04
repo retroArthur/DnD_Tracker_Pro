@@ -56,7 +56,7 @@ sich spürbar.
 **Goal**: Kein Pfad in Backup, Export oder Migration verliert oder überschreibt mehr stillschweigend Daten, und die Randfälle, die solche Verluste bisher verdeckt haben, sind getestet.
 **Depends on**: Nothing (erste Phase des Milestones)
 **Requirements**: SAFE-01, SAFE-02, SAFE-03, SAFE-04, SAFE-05, SAFE-06
-**Plans:** 11/11 plans executed (8/8 der Erstplanung ausgeführt; 3 Lückenpläne aus Code-Review und Re-Verifikation vom 2026-09-04 offen)
+**Plans:** 11/11 plans executed (8/8 der Erstplanung plus 3 Lückenpläne aus Code-Review und Re-Verifikation, alle am 2026-09-04 ausgeführt)
 **Success Criteria** (what must be TRUE):
 
   1. Ein Umzugs-Export `file://` → PWA enthält Soundboard-Audio und Würfelstatistik; nach dem Import spielen Szenen ihre Tracks, keine toten `blobId`s bleiben zurück
@@ -146,6 +146,6 @@ Plans:
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 12. Datensicherheit | 7/7 | Ausgeführt — Verifikation ausstehend | |
+| 12. Datensicherheit | 11/11 | Ausgeführt — 1 menschlicher Prüfpunkt offen (12-UAT.md #28) | |
 | 13. Härtung & Wartbarkeit | TBD | Not started | |
 | 14. Tests & Gates | TBD | Not started | |
