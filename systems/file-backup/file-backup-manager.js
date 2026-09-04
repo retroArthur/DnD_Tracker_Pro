@@ -373,8 +373,13 @@ function onAfterSave() {
  * Wer dann weiter nur aus localStorage liest, sichert eine leere Kampagne —
  * und `pruneOldSnapshots()` raeumt darueber die letzten echten Snapshots weg.
  *
- * Reihenfolge: localStorage -> IndexedDB -> laufendes D-Objekt.
- * Ein leeres Objekt gilt in keiner Stufe als gueltige Kampagne.
+ * Reihenfolge: localStorage -> IndexedDB -> laufendes D-Objekt NUR fuer die
+ * AKTIVE Kampagne (CR-02, Plan 12-10). Seit D-03 (Plan 12-03) ruft _doBackup()
+ * diese Funktion fuer JEDE Kampagne des Index einzeln auf — ein Rueckfall, der
+ * seinen eigenen campaignKey-Parameter ignoriert, wuerde die Daten der aktiven
+ * Kampagne faelschlich in die Backup-Datei einer anderen, nie gespeicherten
+ * Kampagne schreiben. Ein leeres Objekt gilt in keiner Stufe als gueltige
+ * Kampagne.
  *
  * @param {string} campaignKey
  * @returns {Promise<Object|null>} Daten, oder null wenn keine Quelle etwas liefert
@@ -404,8 +409,16 @@ async function readCampaignDataForBackup(campaignKey) {
         }
     }
 
-    // 3. Letzter Ausweg: der laufende Zustand im Speicher
-    if (typeof window !== 'undefined' && istBefuellt(window.D)) return window.D;
+    // 3. Letzter Ausweg: der laufende Zustand im Speicher — NUR fuer die
+    // AKTIVE Kampagne (CR-02). Dieselbe Aufloesung wie in _doBackup() (:415-417);
+    // kein ermittelbarer aktiver Key (kein window, kein APP_CONFIG) -> Stufe 3
+    // greift nicht — lieber kein Backup als eines mit fremden Daten.
+    const aktiverBackupKey = (typeof window !== 'undefined' && window.APP_CONFIG?.STORAGE_KEY)
+        ? (window.STORAGE_KEY_OVERRIDE || window.APP_CONFIG.STORAGE_KEY)
+        : null;
+    if (aktiverBackupKey && campaignKey === aktiverBackupKey && istBefuellt(window.D)) {
+        return window.D;
+    }
 
     return null;
 }

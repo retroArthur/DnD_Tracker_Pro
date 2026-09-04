@@ -508,4 +508,32 @@ describe('_doBackup() — alle Kampagnen des Index, fehlerisoliert je Kampagne (
         const inhalt = dirHandle._files.get('kampagne-a-aktuell.json') || '';
         expect(inhalt).not.toContain('marke-aktive-kampagne');
     });
+
+    // ========================================================
+    // CR-02 (Plan 12-10), Task 2 — Gegenprobe: der Fix darf Stufe 3 nicht
+    // abschalten, sondern nur eingrenzen. Kampagne A ist hier per aktiverKey
+    // ausdruecklich die AKTIVE Kampagne; weder localStorage noch IndexedDB
+    // haben Daten fuer sie — ihre einzige Quelle ist window.D.
+    // ========================================================
+    test('CR-02: die aktive Kampagne bekommt ihr Backup auch dann, wenn sie nur im laufenden Speicher steht', async () => {
+        const dirHandle = createMockDirHandle();
+        const ctx = createDoBackupContext({
+            campaigns: [{ key: 'dnd-campaign-1', name: 'Kampagne A' }],
+            storageKey: 'dnd-tracker-data',
+            dataByKey: {}, // weder localStorage noch IndexedDB haben Daten fuer irgendeine Kampagne
+            dImSpeicher: { characters: [{ id: 'marke-nur-im-speicher' }] },
+            aktiverKey: 'dnd-campaign-1' // Kampagne A ist die aktive Kampagne
+        });
+
+        await ctx._doBackup(dirHandle);
+
+        // resolveBackupTargets() schliesst den aktiven Key immer als
+        // "Standard-Kampagne" ein (D-03/D-04, ausserhalb des Scopes dieses
+        // Plans) — deshalb landet Kampagne As Backup unter diesem Dateinamen.
+        // Entscheidend ist NICHT das Label, sondern dass die Datei ueberhaupt
+        // entsteht: der Fix hat Stufe 3 eingegrenzt, nicht abgeschaltet.
+        expect(dirHandle._files.has('standard-kampagne-aktuell.json')).toBe(true);
+        const inhalt = dirHandle._files.get('standard-kampagne-aktuell.json');
+        expect(inhalt).toContain('marke-nur-im-speicher');
+    });
 });
