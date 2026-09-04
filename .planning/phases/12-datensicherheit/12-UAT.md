@@ -1,20 +1,28 @@
 ---
-status: resolved
+status: testing
 phase: 12-datensicherheit
-source: 12-01-SUMMARY.md, 12-02-SUMMARY.md, 12-03-SUMMARY.md, 12-04-SUMMARY.md, 12-05-SUMMARY.md, 12-06-SUMMARY.md, 12-07-SUMMARY.md
+source: 12-01-SUMMARY.md, 12-02-SUMMARY.md, 12-03-SUMMARY.md, 12-04-SUMMARY.md, 12-05-SUMMARY.md, 12-06-SUMMARY.md, 12-07-SUMMARY.md, 12-VERIFICATION.md (2. Re-Verifikation, 2026-09-04)
 started: 2026-08-26T17:40:00Z
+reopened: 2026-09-04T00:00:00Z
 updated: 2026-09-04T00:00:00Z
 ---
 
 ## Current Test
 <!-- OVERWRITE each test - shows where we are -->
 
-[testing complete]
+number: 28
+name: Echte Audio-Bibliothek knapp UNTER 300 MiB — Export blockiert den Browser-Tab nicht
+expected: |
+  Wartehinweis erscheint, die Datei wird angeboten, der Tab bleibt bedienbar und
+  stuerzt nicht ab. Wird der Tab schon deutlich unter 300 MiB unruhig, ist die
+  Warnschwelle zu hoch angesetzt und gehoert gesenkt.
+awaiting: user response
 
-Alle 4 menschlichen Prüfpunkte bestanden, 23 Punkte deterministisch über
-Coverage-Blöcke abgedeckt. Ein Gap (G-12-3) wurde beim Testen von Test 3
-entdeckt — der Test selbst bestand, die Lücke liegt daneben und wird auf
-Nutzerentscheidung noch in Phase 12 geschlossen.
+**Wiedereroeffnet am 2026-09-04.** Die Runde 12-01..12-07 war mit 27/27 bestanden
+abgeschlossen (Status `resolved`, Eintraege unten unveraendert erhalten). Die
+2. Re-Verifikation (`12-VERIFICATION.md`, Status `human_needed`, 8/8 must-haves)
+macht genau einen menschlichen Pruefpunkt erneut faellig — Punkt 28. Er ist der
+einzige Grund, warum die Phase nicht auf `passed` steht.
 
 ## Vorbedingungen dieser Sitzung
 
@@ -189,13 +197,32 @@ result: pass
 source: automated
 coverage_id: D6
 
+### 28. Echte Audio-Bibliothek knapp UNTER 300 MiB — Export blockiert den Browser-Tab nicht
+expected: |
+  Echte Audio-Bibliothek knapp UNTER 300 MiB zusammenstellen (mind. 4 grosse Dateien,
+  Einzeldatei-Obergrenze 100 MB), `dist/dnd-tracker-bundled.html` per Doppelklick oeffnen,
+  Banner-Button "Zum App-Umzug" klicken, dann im Divergenz-Banner
+  "Audio-Datei herunterladen (…)" klicken. Erwartet: Wartehinweis erscheint, die Datei
+  wird angeboten, der Tab bleibt bedienbar und stuerzt nicht ab. Wird der Tab schon
+  deutlich unter 300 MiB unruhig, ist die Warnschwelle zu hoch angesetzt und gehoert gesenkt.
+why_human: |
+  Geprueft wird Speicherdruck im Renderer-Prozess eines echten Browsers
+  (Recherche-Annahme A1). Unter Node/jsdom nicht messbar; kein Konsolen-Trick ersetzt
+  echte Dateien.
+result: [pending]
+source: 12-VERIFICATION.md human_verification[0]
+note: |
+  Uebernommen aus Erstverifikation und 1. Re-Verifikation. Der Nutzer hat sich am
+  2026-08-19 bewusst entschieden, die Dateien nicht zusammenzutragen; durch die
+  2. Re-Verifikation erneut faellig.
+
 ## Summary
 
-total: 27
+total: 28
 passed: 27
 issues: 0
-pending: 0
-open_gaps: 1
+pending: 1
+open_gaps: 0
 skipped: 0
 blocked: 0
 
