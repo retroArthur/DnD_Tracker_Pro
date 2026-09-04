@@ -500,6 +500,75 @@ describe('_setupWizardActions() — wizard-skip nach Schritt 4 (CR-01, SAFE-01)'
 });
 
 // ============================================================
+// GAP-CLOSURE 12-09 — WR-01: eine versehentlich in die Haupt-Dropzone gezogene
+// audio-export-v1-Datei muss die AUDIO-Dropzone als file-ready markieren (dort,
+// wo auch die Text-Rueckmeldung erscheint), nicht die Haupt-Dropzone
+// (12-REVIEW.md WR-01).
+// ============================================================
+describe('_processWizardFile() — Audio-Export-Datei in der Haupt-Dropzone (WR-01, SAFE-01)', () => {
+    let statusEl, errorEl;
+
+    beforeEach(() => {
+        statusEl = { textContent: '', style: { display: 'none' }, classList: { toggle: jest.fn() } };
+        errorEl = { textContent: '', style: { display: 'none' } };
+    });
+
+    test('WR-01 Test D: Audio-Datei in der Haupt-Dropzone markiert die AUDIO-Dropzone als file-ready, nicht die Haupt-Dropzone', async () => {
+        const hauptDropzone = { classList: { add: jest.fn(), remove: jest.fn() } };
+        const audioDropzone = { classList: { add: jest.fn(), remove: jest.fn() } };
+
+        context.document = {
+            getElementById: id => {
+                if (id === 'migration-wizard-audio-status') return statusEl;
+                if (id === 'migration-wizard-audio-dropzone') return audioDropzone;
+                if (id === 'migration-wizard-error') return errorEl;
+                return null;
+            },
+            querySelectorAll: () => []
+        };
+        context.window.importAudioExport = jest.fn(async () => ({ imported: 2, skipped: [] }));
+
+        const file = new global.File(
+            [JSON.stringify({ _exportType: 'audio-export-v1', sounds: {} })],
+            'audio-export.json',
+            { type: 'application/json' }
+        );
+
+        context._processWizardFile(file, hauptDropzone);
+        await waitFor(() => statusEl.textContent !== '');
+
+        expect(audioDropzone.classList.add).toHaveBeenCalledWith('file-ready');
+        expect(hauptDropzone.classList.add).not.toHaveBeenCalledWith('file-ready');
+    });
+
+    test('WR-01 Test E (der Rueckfall): fehlende Audio-Dropzone -> kein Wurf, Haupt-Dropzone wird wie bisher benutzt', async () => {
+        const hauptDropzone = { classList: { add: jest.fn(), remove: jest.fn() } };
+
+        context.document = {
+            getElementById: id => {
+                if (id === 'migration-wizard-audio-status') return statusEl;
+                if (id === 'migration-wizard-audio-dropzone') return null;
+                if (id === 'migration-wizard-error') return errorEl;
+                return null;
+            },
+            querySelectorAll: () => []
+        };
+        context.window.importAudioExport = jest.fn(async () => ({ imported: 1, skipped: [] }));
+
+        const file = new global.File(
+            [JSON.stringify({ _exportType: 'audio-export-v1', sounds: {} })],
+            'audio-export.json',
+            { type: 'application/json' }
+        );
+
+        expect(() => context._processWizardFile(file, hauptDropzone)).not.toThrow();
+        await waitFor(() => statusEl.textContent !== '');
+
+        expect(hauptDropzone.classList.add).toHaveBeenCalledWith('file-ready');
+    });
+});
+
+// ============================================================
 // TASK 2 (Plan 12-08, Gap-Closure G-12-3) — Gegenprobe im realistischen
 // Startzustand, Einzelnachweis je Sammlung/Textfeld/Pfad, Strukturpruefung
 // gegen die echte initializeData() aus core/data.js.
