@@ -382,6 +382,124 @@ describe('_processWizardFile() — Bestandsschutz-Dialog bleibt erhalten, Reihen
 });
 
 // ============================================================
+// GAP-CLOSURE 12-09 — CR-01: wizard-skip nach abgeschlossenem Import muss
+// denselben Reload-Pfad nehmen wie wizard-close (12-VERIFICATION.md gaps[0],
+// Truth 7 FAILED; 12-REVIEW.md CR-01). Vor dem Fix (Task 2) rot: Test A und
+// Test C fallen um, Test B (die Gegenprobe) besteht bereits vorher.
+// ============================================================
+describe('_setupWizardActions() — wizard-skip nach Schritt 4 (CR-01, SAFE-01)', () => {
+    let errorEl, filenameEl, resultEl;
+
+    function buildDocumentForModal(modal) {
+        return {
+            getElementById: id => {
+                if (id === 'migration-wizard-error') return errorEl;
+                if (id === 'migration-wizard-filename') return filenameEl;
+                if (id === 'migration-wizard-result') return resultEl;
+                if (id === 'migration-wizard-modal') return modal;
+                return null;
+            },
+            querySelectorAll: () => []
+        };
+    }
+
+    // Je Test ein FRISCHES Attrappen-Modal: modal.dataset.actionsBound ist der
+    // Guard gegen Mehrfachregistrierung in _setupWizardActions() — ein
+    // wiederverwendetes Modal liefe in diesen Guard und der Klick-Handler bliebe
+    // leer (grueber Test ohne Gegenstand, T-12-31).
+    function createModalStub() {
+        const footerEl = { style: { display: '' } };
+        const audioSectionEl = { style: { display: 'none' } };
+        let clickHandler = null;
+        const modal = {
+            dataset: {},
+            // style noetig, da _closeWizard() modal.style.display = 'none' setzt —
+            // der Vor-Fix-Pfad ("nur Modal ausblenden") muss ohne Wurf laufen
+            // koennen, sonst pruefen Test A/B einen TypeError statt des Befunds.
+            style: {},
+            addEventListener: jest.fn((type, fn) => {
+                if (type === 'click') clickHandler = fn;
+            }),
+            querySelectorAll: jest.fn(() => []),
+            querySelector: jest.fn(sel => {
+                if (sel === '#migration-wizard-footer') return footerEl;
+                if (sel === '#migration-wizard-audio-section') return audioSectionEl;
+                return null;
+            })
+        };
+        return { modal, footerEl, audioSectionEl, getClickHandler: () => clickHandler };
+    }
+
+    beforeEach(() => {
+        errorEl = { textContent: '', style: { display: 'none' } };
+        filenameEl = { textContent: '', style: { display: 'none' } };
+        resultEl = { innerHTML: '' };
+        // Schritt 2 der Task-1-Anleitung: reload() beobachtbar machen. Der aeussere
+        // beforeEach() (Zeile 132) setzt window.location bereits ohne reload —
+        // dieser innere Hook laeuft danach und ueberschreibt es MIT reload.
+        context.window.location = { protocol: 'https:', reload: jest.fn() };
+    });
+
+    test('CR-01 Test A: Skip-Klick NACH abgeschlossenem _processWizardFile()-Import loest window.location.reload() aus', async () => {
+        const { modal, getClickHandler } = createModalStub();
+        context.document = buildDocumentForModal(modal);
+        context._setupWizardActions(modal);
+
+        mockReadCampaignDataForBackup.mockResolvedValue({ characters: [{ id: 1 }], npcs: [], quests: [] });
+        mockGetCampaignIndex.mockReturnValue({ campaigns: [] });
+        mockConfirm.mockReturnValue(true);
+        context.window.saveUndoState = jest.fn();
+        context.window.importFullExport = jest.fn(() => ({ totalBytes: 4096, campaignCount: 1 }));
+
+        const file = new global.File(
+            [JSON.stringify({ _exportType: 'full-v1', campaigns: { c1: {} } })],
+            'export.json',
+            { type: 'application/json' }
+        );
+        const dropzone = { classList: { add: jest.fn(), remove: jest.fn() } };
+
+        context._processWizardFile(file, dropzone);
+        // Echter, abgeschlossener Import — nicht showWizardStep(4) von Hand gesetzt.
+        await waitFor(() => resultEl.innerHTML !== '');
+
+        const clickHandler = getClickHandler();
+        expect(typeof clickHandler).toBe('function');
+        clickHandler({ target: { dataset: { action: 'wizard-skip' } } });
+
+        expect(context.window.location.reload).toHaveBeenCalledTimes(1);
+    });
+
+    test('CR-01 Test B (Gegenprobe vor dem Import): Skip-Klick auf Schritt 2 loest KEINEN Reload aus und setzt weiterhin skipped: true', () => {
+        const { modal, getClickHandler } = createModalStub();
+        context.document = buildDocumentForModal(modal);
+        context._setupWizardActions(modal);
+
+        context.showWizardStep(2);
+
+        const clickHandler = getClickHandler();
+        expect(typeof clickHandler).toBe('function');
+        clickHandler({ target: { dataset: { action: 'wizard-skip' } } });
+
+        expect(context.window.location.reload).not.toHaveBeenCalled();
+        expect(mockStorageAPI.setJSON).toHaveBeenCalledWith(
+            'migration-wizard-shown',
+            expect.objectContaining({ skipped: true })
+        );
+    });
+
+    test('CR-01 Test C: Wizard-Footer ist auf Schritt 3 sichtbar und ab Schritt 4 ausgeblendet', () => {
+        const { modal, footerEl } = createModalStub();
+        context.document = buildDocumentForModal(modal);
+
+        context.showWizardStep(3);
+        expect(footerEl.style.display).toBe('');
+
+        context.showWizardStep(4);
+        expect(footerEl.style.display).toBe('none');
+    });
+});
+
+// ============================================================
 // TASK 2 (Plan 12-08, Gap-Closure G-12-3) — Gegenprobe im realistischen
 // Startzustand, Einzelnachweis je Sammlung/Textfeld/Pfad, Strukturpruefung
 // gegen die echte initializeData() aus core/data.js.
