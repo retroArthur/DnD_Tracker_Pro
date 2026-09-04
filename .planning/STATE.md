@@ -3,26 +3,26 @@ gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: Schulden-Abbau
 current_phase: 12
-current_phase_name: datensicherheit
+current_phase_name: Datensicherheit
 status: executing
-stopped_at: Lueckenplaene 12-09..12-11 geplant (CR-01/WR-01, CR-02, WR-02) — bereit zur Ausfuehrung
-last_updated: "2026-09-04T12:44:56.786Z"
+stopped_at: Completed 12-09-PLAN.md (CR-01+WR-01 geschlossen)
+last_updated: "2026-09-04T13:14:46.447Z"
 last_activity: 2026-09-04
-last_activity_desc: Phase 12 Gap-Closure geplant — 3 Plaene, Plan-Checker VERIFICATION PASSED
-state_head: df4ea543a219cc16163ab860949cbd09c45d3049
+last_activity_desc: Phase 12 execution started
+state_head: 4b3a66d1353c576bc8b7882c8d5632c3b86569f0
 progress:
   total_phases: 3
   completed_phases: 0
   total_plans: 11
-  completed_plans: 8
+  completed_plans: 9
   percent: 0
 ---
 
 # Project State: D&D Kampagnen-Tracker Pro — Schulden-Abbau
 
 **Last Updated:** 2026-09-04
-**Milestone:** v1.2 „Schulden-Abbau" — Phase 12 in Ausfuehrung (8/11 Plaene fertig)
-**Status:** Ready to execute — Lueckenplaene 12-09..12-11 (Wellen 7+8)
+**Milestone:** v1.2 „Schulden-Abbau" — Phase 12 in Ausfuehrung (9/11 Plaene fertig)
+**Status:** Executing Phase 12
 
 ---
 
@@ -36,12 +36,12 @@ progress:
 
 ## Current Position
 
-Phase: 12 (datensicherheit) — GAP CLOSURE READY
-Plan: 8 of 11 ausgefuehrt — 12-09, 12-10 (Welle 7), 12-11 (Welle 8) offen
-Status: Ready to execute
-Last activity: 2026-09-04 — Lueckenplaene fuer CR-01/CR-02/WR-01/WR-02 erstellt und geprueft
+Phase: 12 (Datensicherheit) — EXECUTING
+Plan: 9 of 11 (12-09 abgeschlossen — Gap-Closure CR-01/WR-01)
+Status: Executing Phase 12
+Last activity: 2026-09-04 — Plan 12-09 ausgefuehrt (CR-01 + WR-01 geschlossen)
 
-**Nächster Schritt:** `/gsd-execute-phase 12 --gaps-only` — schliesst die zwei Blocker aus 12-VERIFICATION.md (Truth 7 + 8, `gaps_found` 6/8) plus die zwei per Nutzerentscheidung mitgenommenen Warnungen. Danach erneut `/gsd-verify-work`.
+**Nächster Schritt:** Plan 12-10 (CR-02, Welle 7, unabhaengig von 12-09) ausfuehren, danach Plan 12-11 (WR-02 + Rebuild beider `dist/`-Bundles, Welle 8). Danach erneut `/gsd-verify-work`.
 
 **Die drei offenen Fragen aus der Diskussion sind beantwortet:**
 
@@ -106,6 +106,7 @@ Browser-Verhalten an der Base64-Grenze (12-07).
 | Phase 12 P06 | 35min | 2 tasks | 4 files |
 | Phase 12 P07 | ~3h | 5 tasks | 6 files |
 | Phase 12 P08 | ~50min | 3 tasks | 2 files |
+| Phase 12 P09 | ~20min | 3 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -192,8 +193,8 @@ Browser-Verhalten an der Base64-Grenze (12-07).
 
 ## Session Continuity
 
-**Last session:** 2026-09-04
-**Stopped at:** Lueckenplaene 12-09..12-11 geplant und geprueft — noch nicht ausgefuehrt
+**Last session:** 2026-09-04T13:14:46.424Z
+**Stopped at:** Completed 12-09-PLAN.md (CR-01+WR-01 geschlossen)
 **Resume file:** None
 
 **Last action:** `/gsd-plan-phase 12 --gaps`. Ausgangslage: die Re-Verifikation vom 2026-09-04 steht auf `gaps_found` (6/8 Truths) — G-12-3 ist durch 12-08 sauber geschlossen, aber der Code-Review (`12-REVIEW.md`) hat zwei neue Blocker aufgedeckt, die der Verifier unabhaengig gegen den Quelltext bestaetigt hat: **CR-01** (der „Ueberspringen"-Button des Migrations-Wizards bleibt nach erfolgreichem Import sichtbar, ruft nur `_closeWizard()` statt `window.location.reload()` — der unbedingte `beforeunload`-Autosave in `avatars.js:170-176` schreibt danach das stale `window.D` ueber die frisch importierten Daten) und **CR-02** (`readCampaignDataForBackup()` Stufe 3 gibt `window.D` zurueck, ohne `campaignKey` gegen den aktiven Key zu pruefen — jede indizierte, nie gespeicherte Kampagne bekommt die Daten der aktiven Kampagne in ihre Backup-Datei). Auf Nachfrage hat der Nutzer die zwei nicht-blockierenden Warnungen **WR-01** (Audio-Rueckmeldung am falschen DOM-Element) und **WR-02** (`pushUndo()` leert den Redo-Stack im `catch` nicht) mit aufgenommen. Ergebnis: 3 Plaene — 12-09 (CR-01+WR-01, Welle 7), 12-10 (CR-02, Welle 7, disjunkte Dateien), 12-11 (WR-02 + Rebuild beider Bundles, Welle 8, weil ein Rebuild in derselben Welle die Commits seiner Geschwister nicht saehe = genau W-1). Plan-Checker: **VERIFICATION PASSED im ersten Durchlauf**, 0 Blocker/0 Warnungen, Baselines live nachgemessen (41+17+73=131). Zusaetzlich `COVERAGE.md` geschrieben (`No external API integration: …`) — das entschaerft den wiederkehrenden `api-coverage`-Fehlalarm bei `verify:pre` dauerhaft, der nur auf dem Substring „API" in „File System Access API" feuert. Commit `df4ea54`.
@@ -285,6 +286,8 @@ Browser-Verhalten an der Base64-Grenze (12-07).
 - [Phase 12]: 12-07: Wartehinweis im Audio-Export laeuft erst nach bestandener Machbarkeitspruefung — Abbruch bleibt in buildAudioExport(), Fehlermeldung behaelt genau eine Quelle
 - [Phase 12]: [Phase 12, 12-08] Gap-Closure G-12-3: hasCampaignContent() prueft 22 Stellen (17 Arrays, 2 Textfelder, 3 verschachtelte Pfade) statt nur characters/npcs/quests; Strukturpruefung haengt am echten initializeData() aus core/data.js
 - [Phase 12]: [Phase 12, 12-08] Beobachtung T-12-27 bestaetigt: spells zaehlt jetzt als Kampagneninhalt, wird aber weiterhin ueber SRD_FIELDS aus dem Umzugs-Export entfernt (full-export.js:21) — bewusst akzeptiertes Restrisiko (T-02-09), kein neuer Befund
+- [Phase 12]: [Phase 12, 12-09] wizard-skip reload-Schwelle _wizardStep >= 4 (nicht === 4) fuer Reload-Zweig UND Footer-Ausblendung, damit ein kuenftiger Schritt 5 den Skip-Schutz nicht versehentlich verliert
+- [Phase 12]: [Phase 12, 12-09] T-12-34 (Skip stellt den Wizard nach Import dauerhaft stumm) bewusst offen gelassen — deskriptorloses Verbot in must_haves.prohibitions statt stillschweigend als erledigt geltend
 
 ## Operator Next Steps
 
