@@ -1,22 +1,15 @@
 ---
-status: testing
+status: complete
 phase: 12-datensicherheit
 source: 12-01-SUMMARY.md, 12-02-SUMMARY.md, 12-03-SUMMARY.md, 12-04-SUMMARY.md, 12-05-SUMMARY.md, 12-06-SUMMARY.md, 12-07-SUMMARY.md, 12-VERIFICATION.md (2. Re-Verifikation, 2026-09-04)
 started: 2026-08-26T17:40:00Z
 reopened: 2026-09-04T00:00:00Z
-updated: 2026-09-04T00:00:00Z
+updated: 2026-09-04T16:10:00Z
 ---
 
 ## Current Test
-<!-- OVERWRITE each test - shows where we are -->
 
-number: 28
-name: Echte Audio-Bibliothek knapp UNTER 300 MiB — Export blockiert den Browser-Tab nicht
-expected: |
-  Wartehinweis erscheint, die Datei wird angeboten, der Tab bleibt bedienbar und
-  stuerzt nicht ab. Wird der Tab schon deutlich unter 300 MiB unruhig, ist die
-  Warnschwelle zu hoch angesetzt und gehoert gesenkt.
-awaiting: user response
+[testing complete]
 
 **Wiedereroeffnet am 2026-09-04.** Die Runde 12-01..12-07 war mit 27/27 bestanden
 abgeschlossen (Status `resolved`, Eintraege unten unveraendert erhalten). Die
@@ -209,8 +202,9 @@ why_human: |
   Geprueft wird Speicherdruck im Renderer-Prozess eines echten Browsers
   (Recherche-Annahme A1). Unter Node/jsdom nicht messbar; kein Konsolen-Trick ersetzt
   echte Dateien.
-result: [pending]
+result: pass
 source: 12-VERIFICATION.md human_verification[0]
+verified: 2026-09-04
 note: |
   Uebernommen aus Erstverifikation und 1. Re-Verifikation. Der Nutzer hat sich am
   2026-08-19 bewusst entschieden, die Dateien nicht zusammenzutragen; durch die
@@ -219,9 +213,9 @@ note: |
 ## Summary
 
 total: 28
-passed: 27
+passed: 28
 issues: 0
-pending: 1
+pending: 0
 open_gaps: 0
 skipped: 0
 blocked: 0
