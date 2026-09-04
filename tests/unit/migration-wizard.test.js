@@ -19,6 +19,19 @@ const path = require('path');
 const vm = require('vm');
 
 const WIZARD_PATH = path.join(__dirname, '../../systems/migration/migration-wizard.js');
+const DATA_PATH = path.join(__dirname, '../../core/data.js');
+
+// Gap-Closure G-12-3 (Plan 12-08): die drei Inhaltslisten synchron aus der echten
+// Quelle laden (nicht abtippen) — test.each()/describe.each() unten brauchen die
+// Liste zur Sammelzeit (Modulausfuehrung), bevor die beforeAll()-Hooks der
+// eigentlichen Test-Suite laufen. Eigener, minimaler Wegwerf-Kontext (nur
+// window.*-Export noetig), unabhaengig vom geteilten `context` weiter unten.
+const _listExtractionContext = { window: {} };
+vm.createContext(_listExtractionContext);
+vm.runInContext(fs.readFileSync(WIZARD_PATH, 'utf8'), _listExtractionContext);
+const REAL_CAMPAIGN_CONTENT_ARRAYS = _listExtractionContext.window.CAMPAIGN_CONTENT_ARRAYS;
+const REAL_CAMPAIGN_CONTENT_TEXT_FIELDS = _listExtractionContext.window.CAMPAIGN_CONTENT_TEXT_FIELDS;
+const REAL_CAMPAIGN_CONTENT_PATHS = _listExtractionContext.window.CAMPAIGN_CONTENT_PATHS;
 
 let context;
 let APP_CONFIG_MOCK;
@@ -365,5 +378,116 @@ describe('_processWizardFile() — Bestandsschutz-Dialog bleibt erhalten, Reihen
 
         expect(callOrder).toEqual(['saveUndoState', 'importFullExport']);
         expect(dropzone.classList.add).toHaveBeenCalledWith('file-ready');
+    });
+});
+
+// ============================================================
+// TASK 2 (Plan 12-08, Gap-Closure G-12-3) — Gegenprobe im realistischen
+// Startzustand, Einzelnachweis je Sammlung/Textfeld/Pfad, Strukturpruefung
+// gegen die echte initializeData() aus core/data.js.
+// ============================================================
+describe('hasCampaignContent() — Gegenprobe + Strukturpruefung gegen core/data.js (Gap-Closure G-12-3)', () => {
+    let initializeData;
+
+    beforeAll(() => {
+        // core/data.js schreibt beim Laden window.D und deklariert `const
+        // STORAGE_KEY` — im geteilten Wizard-Kontext geladen wuerde es dessen
+        // Zustand ueberschreiben. Eigener, isolierter vm-Kontext.
+        const dataContext = { window: { APP_CONFIG: { STORAGE_KEY: 'x' } } };
+        vm.createContext(dataContext);
+        vm.runInContext(fs.readFileSync(DATA_PATH, 'utf8'), dataContext);
+        initializeData = dataContext.initializeData;
+    });
+
+    // Gegenfehler-Schutz (T-12-25): eine zu weite Inhaltsdefinition wuerde JEDE
+    // Installation dauerhaft als nicht-frisch einstufen und den Wizard genau den
+    // Nutzern entziehen, fuer die er existiert — dieser Test ist der einzige
+    // Schutz dagegen.
+    test('Gegenprobe: realistischer Startzustand bleibt frisch (initializeData() + Standard-Zufallstabellen + Standard-DM-Screen-Layout + befuelltes _nextId)', async () => {
+        const fresh = initializeData();
+        // initRandomTables() legt beim ersten Start drei Standardtabellen an
+        // (features/random-tables.js:20-23).
+        fresh.randomTables = [
+            { id: 1, name: 'Zufällige Begegnung - Wald', icon: '🌲', entries: [] },
+            { id: 2, name: 'Tavernen-Gerüchte', icon: '🍺', entries: [] },
+            { id: 3, name: 'Wetter', icon: '🌦️', entries: [] }
+        ];
+        // initDMScreenLayout() kopiert DEFAULT_DMSCREEN_LAYOUT hinein
+        // (features/dmscreen/dmscreen-render.js:170-172).
+        fresh.dmScreenLayout = { widgets: [{ id: 'party-stats', type: 'party', visible: true }] };
+        fresh._nextId = { characters: 3, npcs: 2, quests: 1 };
+
+        mockReadCampaignDataForBackup.mockResolvedValue(fresh);
+
+        expect(await context.isFreshInstall()).toBe(true);
+    });
+
+    describe.each(REAL_CAMPAIGN_CONTENT_ARRAYS)('Sammlung "%s" kippt das Urteil einzeln (CAMPAIGN_CONTENT_ARRAYS)', name => {
+        test(`${name}: [{ id: 1 }] -> hasCampaignContent() true`, () => {
+            expect(context.hasCampaignContent({ [name]: [{ id: 1 }] })).toBe(true);
+        });
+    });
+
+    describe.each(REAL_CAMPAIGN_CONTENT_TEXT_FIELDS)('Textfeld "%s" kippt das Urteil einzeln (CAMPAIGN_CONTENT_TEXT_FIELDS)', name => {
+        test(`${name}: 'irgendetwas' -> hasCampaignContent() true`, () => {
+            expect(context.hasCampaignContent({ [name]: 'irgendetwas' })).toBe(true);
+        });
+        test(`${name}: nur Leerzeichen -> hasCampaignContent() bleibt false`, () => {
+            expect(context.hasCampaignContent({ [name]: '   ' })).toBe(false);
+        });
+    });
+
+    // .map(p => [p]): describe.each() spreadet jede Zeile eines Arrays von Arrays
+    // als Einzelparameter — ohne diese Verpackung wuerden die zwei Segmente eines
+    // Pfads (z. B. ['soundboard','scenes']) als zwei separate Testparameter
+    // ankommen statt als ein Pfad-Array.
+    describe.each(REAL_CAMPAIGN_CONTENT_PATHS.map(p => [p]))('Pfad "%s" kippt das Urteil einzeln (CAMPAIGN_CONTENT_PATHS)', contentPath => {
+        test(`${contentPath.join('.')}: verschachtelter Eintrag -> hasCampaignContent() true`, () => {
+            let nested = [{ id: 1 }];
+            for (let i = contentPath.length - 1; i >= 0; i--) {
+                nested = { [contentPath[i]]: nested };
+            }
+            expect(context.hasCampaignContent(nested)).toBe(true);
+        });
+    });
+
+    test('Strukturpruefung: jeder Eintrag aus CAMPAIGN_CONTENT_ARRAYS/_TEXT_FIELDS/_PATHS ist im Rueckgabewert von initializeData() nicht vorhanden oder leer', () => {
+        const fresh = initializeData();
+        const verstoesse = [];
+
+        for (const name of REAL_CAMPAIGN_CONTENT_ARRAYS) {
+            const v = fresh[name];
+            if (v !== undefined && !(Array.isArray(v) && v.length === 0)) {
+                verstoesse.push(`CAMPAIGN_CONTENT_ARRAYS: '${name}' ist in initializeData() nicht leer: ${JSON.stringify(v)}`);
+            }
+        }
+        for (const name of REAL_CAMPAIGN_CONTENT_TEXT_FIELDS) {
+            const v = fresh[name];
+            if (v !== undefined && v !== '') {
+                verstoesse.push(`CAMPAIGN_CONTENT_TEXT_FIELDS: '${name}' ist in initializeData() nicht leer: ${JSON.stringify(v)}`);
+            }
+        }
+        for (const contentPath of REAL_CAMPAIGN_CONTENT_PATHS) {
+            let cursor = fresh;
+            let reachable = true;
+            for (const segment of contentPath) {
+                if (!cursor || typeof cursor !== 'object' || !(segment in cursor)) { reachable = false; break; }
+                cursor = cursor[segment];
+            }
+            if (reachable && !(Array.isArray(cursor) && cursor.length === 0)) {
+                verstoesse.push(`CAMPAIGN_CONTENT_PATHS: '${contentPath.join('.')}' ist in initializeData() nicht leer: ${JSON.stringify(cursor)}`);
+            }
+        }
+
+        expect(verstoesse).toEqual([]);
+    });
+
+    test('Umkehrprobe: settings/randomTables/dmScreenLayout/_nextId stehen in keiner der drei Listen (T-12-25)', () => {
+        const excluded = ['settings', 'randomTables', 'dmScreenLayout', '_nextId'];
+        for (const name of excluded) {
+            expect(REAL_CAMPAIGN_CONTENT_ARRAYS).not.toContain(name);
+            expect(REAL_CAMPAIGN_CONTENT_TEXT_FIELDS).not.toContain(name);
+            expect(REAL_CAMPAIGN_CONTENT_PATHS.some(p => p[0] === name)).toBe(false);
+        }
     });
 });
