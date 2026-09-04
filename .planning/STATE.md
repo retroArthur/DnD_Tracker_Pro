@@ -5,16 +5,16 @@ milestone_name: Schulden-Abbau
 current_phase: 12
 current_phase_name: Datensicherheit
 status: executing
-stopped_at: Completed 12-10-PLAN.md (CR-02 geschlossen)
-last_updated: "2026-09-04T13:32:00.766Z"
+stopped_at: Completed 12-11-PLAN.md (WR-02 geschlossen, beide dist-Bundles neu gebaut)
+last_updated: "2026-09-04T13:40:26.709Z"
 last_activity: 2026-09-04
 last_activity_desc: Phase 12 execution started
-state_head: c96fb65e4e328ae197b2e7ef49763ea2e9e80fca
+state_head: 5ed2f388b0f649a14d788ce9f8080f835e6ac760
 progress:
   total_phases: 3
   completed_phases: 0
   total_plans: 11
-  completed_plans: 10
+  completed_plans: 11
   percent: 0
 ---
 
@@ -37,7 +37,7 @@ progress:
 ## Current Position
 
 Phase: 12 (Datensicherheit) — EXECUTING
-Plan: 10 of 11 (12-09 abgeschlossen — Gap-Closure CR-01/WR-01)
+Plan: 11 of 11 (12-09 abgeschlossen — Gap-Closure CR-01/WR-01)
 Status: Ready to execute
 Last activity: 2026-09-04 — Plan 12-09 ausgefuehrt (CR-01 + WR-01 geschlossen)
 
@@ -108,6 +108,7 @@ Browser-Verhalten an der Base64-Grenze (12-07).
 | Phase 12 P08 | ~50min | 3 tasks | 2 files |
 | Phase 12 P09 | ~20min | 3 tasks | 2 files |
 | Phase 12 P10 | ~20min | 3 tasks | 2 files |
+| Phase 12 P11 | ~15min | 3 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -194,8 +195,8 @@ Browser-Verhalten an der Base64-Grenze (12-07).
 
 ## Session Continuity
 
-**Last session:** 2026-09-04T13:32:00.745Z
-**Stopped at:** Completed 12-10-PLAN.md (CR-02 geschlossen)
+**Last session:** 2026-09-04T13:40:26.687Z
+**Stopped at:** Completed 12-11-PLAN.md (WR-02 geschlossen, beide dist-Bundles neu gebaut)
 **Resume file:** None
 
 **Last action:** `/gsd-plan-phase 12 --gaps`. Ausgangslage: die Re-Verifikation vom 2026-09-04 steht auf `gaps_found` (6/8 Truths) — G-12-3 ist durch 12-08 sauber geschlossen, aber der Code-Review (`12-REVIEW.md`) hat zwei neue Blocker aufgedeckt, die der Verifier unabhaengig gegen den Quelltext bestaetigt hat: **CR-01** (der „Ueberspringen"-Button des Migrations-Wizards bleibt nach erfolgreichem Import sichtbar, ruft nur `_closeWizard()` statt `window.location.reload()` — der unbedingte `beforeunload`-Autosave in `avatars.js:170-176` schreibt danach das stale `window.D` ueber die frisch importierten Daten) und **CR-02** (`readCampaignDataForBackup()` Stufe 3 gibt `window.D` zurueck, ohne `campaignKey` gegen den aktiven Key zu pruefen — jede indizierte, nie gespeicherte Kampagne bekommt die Daten der aktiven Kampagne in ihre Backup-Datei). Auf Nachfrage hat der Nutzer die zwei nicht-blockierenden Warnungen **WR-01** (Audio-Rueckmeldung am falschen DOM-Element) und **WR-02** (`pushUndo()` leert den Redo-Stack im `catch` nicht) mit aufgenommen. Ergebnis: 3 Plaene — 12-09 (CR-01+WR-01, Welle 7), 12-10 (CR-02, Welle 7, disjunkte Dateien), 12-11 (WR-02 + Rebuild beider Bundles, Welle 8, weil ein Rebuild in derselben Welle die Commits seiner Geschwister nicht saehe = genau W-1). Plan-Checker: **VERIFICATION PASSED im ersten Durchlauf**, 0 Blocker/0 Warnungen, Baselines live nachgemessen (41+17+73=131). Zusaetzlich `COVERAGE.md` geschrieben (`No external API integration: …`) — das entschaerft den wiederkehrenden `api-coverage`-Fehlalarm bei `verify:pre` dauerhaft, der nur auf dem Substring „API" in „File System Access API" feuert. Commit `df4ea54`.

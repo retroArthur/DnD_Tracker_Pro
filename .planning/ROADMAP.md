@@ -56,7 +56,7 @@ sich spürbar.
 **Goal**: Kein Pfad in Backup, Export oder Migration verliert oder überschreibt mehr stillschweigend Daten, und die Randfälle, die solche Verluste bisher verdeckt haben, sind getestet.
 **Depends on**: Nothing (erste Phase des Milestones)
 **Requirements**: SAFE-01, SAFE-02, SAFE-03, SAFE-04, SAFE-05, SAFE-06
-**Plans:** 10/11 plans executed (8/8 der Erstplanung ausgeführt; 3 Lückenpläne aus Code-Review und Re-Verifikation vom 2026-09-04 offen)
+**Plans:** 11/11 plans executed (8/8 der Erstplanung ausgeführt; 3 Lückenpläne aus Code-Review und Re-Verifikation vom 2026-09-04 offen)
 **Success Criteria** (what must be TRUE):
 
   1. Ein Umzugs-Export `file://` → PWA enthält Soundboard-Audio und Würfelstatistik; nach dem Import spielen Szenen ihre Tracks, keine toten `blobId`s bleiben zurück
@@ -100,7 +100,7 @@ Plans:
 
 **Wave 8** *(blocked on Wave 7 completion)*
 
-- [ ] 12-11-PLAN.md — Lücken-Plan WR-02: Redo-Stack auch im Serialisierungsfehler leeren; volle Suiten und beide dist-Bundles aus dem Stand aller drei Lückenpläne (Welle 8)
+- [x] 12-11-PLAN.md — Lücken-Plan WR-02: Redo-Stack auch im Serialisierungsfehler leeren; volle Suiten und beide dist-Bundles aus dem Stand aller drei Lückenpläne (Welle 8)
 
 **Auslegungshinweis:** Erfolgskriterium 6 schließt dieselbe Testlücken-Klasse, die `DEBT-17` in v1.1 verdeckt hat — die Tests gehören in dieselbe Phase wie die Fixes, nicht ans Ende des Milestones.
 
