@@ -195,6 +195,42 @@ describe('isFreshInstall() — Quellenkette wie readCampaignDataForBackup() (D-0
 
         context.window.readCampaignDataForBackup = mockReadCampaignDataForBackup;
     });
+
+    // ------------------------------------------------------------
+    // Gap-Closure G-12-3 (Plan 12-08): der Durchstich-Test. Bis Task 1 fertig ist,
+    // zaehlt isFreshInstall() nur characters/npcs/quests als Inhalt — eine reine
+    // Zauberbibliothek faellt faelschlich als "frisch" durch (der Fehler, den G-12-3
+    // meldet). Dieser Test MUSS rot sein, solange hasCampaignContent() noch nicht
+    // existiert bzw. noch nicht verdrahtet ist.
+    // ------------------------------------------------------------
+    test('nur Zauber gefuellt (characters/npcs/quests leer) -> false (Durchstich G-12-3)', async () => {
+        mockReadCampaignDataForBackup.mockResolvedValue({
+            characters: [],
+            npcs: [],
+            quests: [],
+            spells: [{ id: 1, name: 'Feuerball' }, { id: 2, name: 'Bannfluch' }]
+        });
+
+        const result = await context.isFreshInstall();
+
+        expect(result).toBe(false);
+    });
+
+    test('hasCampaignContent(null)/(undefined) -> false ohne Wurf; isFreshInstall() bei fehlender Quelle weiterhin true', async () => {
+        expect(context.hasCampaignContent(null)).toBe(false);
+        expect(context.hasCampaignContent(undefined)).toBe(false);
+
+        mockReadCampaignDataForBackup.mockResolvedValue(null);
+        const result = await context.isFreshInstall();
+        expect(result).toBe(true);
+    });
+
+    test('hasCampaignContent() liefert echte Wahrheitswerte bei fehlenden/falsch typisierten Sammlungen, wirft nie', () => {
+        expect(context.hasCampaignContent({})).toBe(false);
+        expect(typeof context.hasCampaignContent({})).toBe('boolean');
+        expect(() => context.hasCampaignContent({ wiki: 'kaputt' })).not.toThrow();
+        expect(context.hasCampaignContent({ wiki: 'kaputt' })).toBe(false);
+    });
 });
 
 // ============================================================

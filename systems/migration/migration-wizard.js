@@ -25,6 +25,90 @@ let _wizardStep = 1;
 // ============================================================
 
 /**
+ * Gap-Closure G-12-3 (Phase 12, Plan 08): Aufnahmeregel fuer "Inhalt".
+ *
+ * Eine Sammlung zaehlt genau dann als Inhalt, wenn sie in einer frisch
+ * initialisierten Installation leer ist UND nur durch eine bewusste
+ * Nutzerhandlung gefuellt wird.
+ *
+ * Der erste Halbsatz ist der wichtige. "Alles zaehlen" oder "jeden Schluessel
+ * von D zaehlen" wuerde JEDE Installation dauerhaft als nicht-frisch einstufen
+ * und den Wizard genau den Nutzern entziehen, fuer die er existiert — ein
+ * schlimmerer Fehler als der behobene (T-12-25).
+ *
+ * Bewusst AUSGESCHLOSSEN, je mit Grund:
+ * - settings: im Startzustand befuellt (theme, lastView, levelingMode, core/data.js:29-38).
+ * - randomTables: initRandomTables() legt beim ersten Start drei Standardtabellen
+ *   an (features/random-tables.js:20-23). Zaehlen hiesse: jede Installation
+ *   dauerhaft nicht-frisch.
+ * - dmScreenLayout: initDMScreenLayout() kopiert DEFAULT_DMSCREEN_LAYOUT hinein
+ *   (features/dmscreen/dmscreen-render.js:170-172). Gleicher Fall.
+ * - initiative, calendar, soundboard als Objekte: tragen im Startzustand
+ *   Schluessel; nur die drei benannten Unterlisten zaehlen.
+ * - _nextId, _version, campaign: Buchhaltung. _nextId bleibt befuellt, NACHDEM
+ *   alles geloescht wurde — eine wirklich leergeraeumte Installation waere sonst
+ *   nie wieder frisch.
+ * - dmScreenProfiles, dmScreenActiveProfile: Oberflaechen-Einrichtung, kein
+ *   Kampagneninhalt.
+ * - bestiaryFavorites, monsterFavorites: reine ID-Verweise auf SRD-Eintraege;
+ *   sie tragen nichts Eigenes des Nutzers.
+ * - wikiRecentlyViewed: Navigationsverlauf.
+ * - diceHistory: gekappter Wurf-Verlauf (50 Eintraege,
+ *   systems/spellslots/quick-roll.js:16-18). Ein einziger Probewurf wuerde den
+ *   Wizard sonst dauerhaft unterdruecken.
+ * - sessionHistory: Nebenprodukt der Sitzungsuhr, nicht vom Nutzer verfasst.
+ * - partyGold: Zahl, Startwert 0; Gold ohne jede Gruppe ist keine Kampagne.
+ * - timers: toter Schluessel — nur validateDataIntegrity() legt ihn an,
+ *   geschrieben wird er nirgends.
+ */
+const CAMPAIGN_CONTENT_ARRAYS = [
+    'characters', 'npcs', 'quests', 'locations', 'encounters', 'loot', 'spells',
+    'wiki', 'sessionNotes', 'storyArcs', 'bestiary', 'sessionPreps', 'factions',
+    'shops', 'links', 'filters', 'tags'
+];
+const CAMPAIGN_CONTENT_TEXT_FIELDS = ['quickNotes', 'dmScreenNotes'];
+const CAMPAIGN_CONTENT_PATHS = [
+    ['soundboard', 'scenes'],
+    ['calendar', 'events'],
+    ['initiative', 'combatants']
+];
+
+/**
+ * Prueft, ob ein Kampagnendatensatz Nutzerinhalt traegt (Gap-Closure G-12-3).
+ * Wirft NIE — isFreshInstall() laeuft im Init-Pfad (core/init.js), ein Wurf hier
+ * wuerde den App-Start mitreissen (T-12-28). Ein falscher Typ an einer gelisteten
+ * Stelle (z. B. wiki: "kaputt" statt eines Arrays) zaehlt einfach als "kein Inhalt".
+ *
+ * @param {*} data - Rueckgabewert von readCampaignDataForBackup() bzw. StorageAPI.getJSON()
+ * @returns {boolean}
+ */
+function hasCampaignContent(data) {
+    if (!data || typeof data !== 'object') return false;
+
+    for (const key of CAMPAIGN_CONTENT_ARRAYS) {
+        const v = data[key];
+        if (Array.isArray(v) && v.length > 0) return true;
+    }
+    for (const key of CAMPAIGN_CONTENT_TEXT_FIELDS) {
+        const v = data[key];
+        if (typeof v === 'string' && v.trim() !== '') return true;
+    }
+    for (const path of CAMPAIGN_CONTENT_PATHS) {
+        let cursor = data;
+        let reachable = true;
+        for (const segment of path) {
+            if (!cursor || typeof cursor !== 'object' || !(segment in cursor)) {
+                reachable = false;
+                break;
+            }
+            cursor = cursor[segment];
+        }
+        if (reachable && Array.isArray(cursor) && cursor.length > 0) return true;
+    }
+    return false;
+}
+
+/**
  * Prueft ob der Speicher leer ist (Erststart-Erkennung).
  * Analog: PATTERNS.md isFreshInstall-Muster
  *
@@ -41,10 +125,14 @@ let _wizardStep = 1;
  * migration-wizard.js, aber isFreshInstall() laeuft erst zur Init-Zeit, wenn alle
  * Module bereits geladen sind.
  *
- * Die Inhaltspruefung (characters+npcs+quests === 0) bleibt zwingend erhalten:
- * readCampaignDataForBackup() faellt als dritte Stufe auf das laufende window.D
- * zurueck, und ein frisch initialisiertes D hat bereits Schluessel — ohne diese
- * Pruefung waere jede Installation "nicht frisch" und der Wizard erschiene nie.
+ * Gap-Closure G-12-3 (Phase 12, Plan 08): die Inhaltspruefung delegiert an
+ * hasCampaignContent() statt nur characters/npcs/quests zu zaehlen — eine
+ * Kampagne, die ausschliesslich z. B. eine Zauberbibliothek enthaelt, galt vorher
+ * faelschlich als Frischinstallation. readCampaignDataForBackup() faellt als
+ * dritte Stufe auf das laufende window.D zurueck, und ein frisch initialisiertes
+ * D hat bereits Schluessel — hasCampaignContent() haelt genau deshalb die
+ * bewusst ausgeschlossene Liste (siehe Kommentar oben) fern, sonst waere jede
+ * Installation "nicht frisch" und der Wizard erschiene nie.
  *
  * @returns {Promise<boolean>}
  */
@@ -54,8 +142,7 @@ async function isFreshInstall() {
         ? await window.readCampaignDataForBackup(key)
         : StorageAPI.getJSON(key, null);
     if (!data) return true;
-    const hasContent = (data.characters?.length || 0) + (data.npcs?.length || 0) + (data.quests?.length || 0);
-    return hasContent === 0;
+    return !hasCampaignContent(data);
 }
 
 /**
@@ -854,6 +941,10 @@ function initMigrationActions() {
 // EXPORTS
 // ============================================================
 window.isFreshInstall = isFreshInstall;
+window.hasCampaignContent = hasCampaignContent;
+window.CAMPAIGN_CONTENT_ARRAYS = CAMPAIGN_CONTENT_ARRAYS;
+window.CAMPAIGN_CONTENT_TEXT_FIELDS = CAMPAIGN_CONTENT_TEXT_FIELDS;
+window.CAMPAIGN_CONTENT_PATHS = CAMPAIGN_CONTENT_PATHS;
 window.initMigrationActions = initMigrationActions;
 window.showMigrationWizard = showMigrationWizard;
 window.showWizardStep = showWizardStep;
