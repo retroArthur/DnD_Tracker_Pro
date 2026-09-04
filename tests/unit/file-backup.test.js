@@ -16,12 +16,20 @@ const vm = require('vm');
 
 // Erstelle realistische Mock-Struktur fuer FileSystemDirectoryHandle
 function createMockDirHandle() {
-    const files = new Map(); // Simuliert gespeicherte Dateien
+    const files = new Map(); // Simuliert gespeicherte Dateien: Dateiname -> geschriebener Inhalt (String)
 
-    const createMockWritable = (filename) => ({
-        write: jest.fn(async () => {}),
-        close: jest.fn(async () => { files.set(filename, true); })
-    });
+    // CR-02 (Plan 12-10): write() faengt den geschriebenen Inhalt jetzt ab,
+    // statt ihn zu verwerfen — noetig, damit Tests G/I (Kennmarken-Pruefung)
+    // den tatsaechlich geschriebenen Inhalt einsehen koennen. Bestehende Tests
+    // pruefen nur .has()/.size/Schluessel ueber entries() — bleiben unveraendert
+    // gruen, weil kein Test bisher den Map-WERT abgefragt hat.
+    const createMockWritable = (filename) => {
+        let inhalt = '';
+        return {
+            write: jest.fn(async (data) => { inhalt = data; }),
+            close: jest.fn(async () => { files.set(filename, inhalt); })
+        };
+    };
 
     const dirHandle = {
         kind: 'directory',
@@ -320,7 +328,19 @@ describe('_doBackup() — alle Kampagnen des Index, fehlerisoliert je Kampagne (
     // Eigener, frisch geladener vm-Kontext je Test: _doBackup() haelt Modul-Zustand
     // (_fileBackupPausedNotified, _fileBackupStatus) auf Modulebene — geteilte
     // Kontexte wuerden Tests ueber den Toast-Once-Guard hinweg gegenseitig stoeren.
-    function createDoBackupContext({ campaigns = [], storageKey = 'dnd-tracker-data', dataByKey = {} } = {}) {
+    // CR-02 (Plan 12-10): zwei neue optionale, benannte Parameter.
+    // dImSpeicher setzt ctx.window.D (Stufe 3 von readCampaignDataForBackup() war
+    // in ALLEN bisherigen Tests toter Code, weil kein Test je ein ctx.D setzte).
+    // aktiverKey setzt ctx.window.STORAGE_KEY_OVERRIDE (der aktive Key, den der
+    // Fix in Stufe 3 gegen campaignKey prueft). Bleiben beide weg, verhaelt sich
+    // der Helfer exakt wie bisher — Bedingung, nicht Wunsch (Task 1, Schritt 1).
+    function createDoBackupContext({
+        campaigns = [],
+        storageKey = 'dnd-tracker-data',
+        dataByKey = {},
+        dImSpeicher,
+        aktiverKey
+    } = {}) {
         const ctx = {
             window: {
                 APP_CONFIG: { VERSION: '2.7.0', STORAGE_KEY: storageKey, DEBUG_MODE: false },
@@ -334,6 +354,12 @@ describe('_doBackup() — alle Kampagnen des Index, fehlerisoliert je Kampagne (
             },
             console
         };
+        if (dImSpeicher !== undefined) {
+            ctx.window.D = dImSpeicher;
+        }
+        if (aktiverKey !== undefined) {
+            ctx.window.STORAGE_KEY_OVERRIDE = aktiverKey;
+        }
         vm.createContext(ctx);
         const filePath = path.join(__dirname, '../../systems/file-backup/file-backup-manager.js');
         const code = fs.readFileSync(filePath, 'utf8');
@@ -432,5 +458,54 @@ describe('_doBackup() — alle Kampagnen des Index, fehlerisoliert je Kampagne (
         // Kampagne B: die beiden alten Snapshots muessen noch da sein
         expect(dirHandle._files.has('kampagne-b-2026-01-01.json')).toBe(true);
         expect(dirHandle._files.has('kampagne-b-2026-01-02.json')).toBe(true);
+    });
+
+    // ========================================================
+    // CR-02 (Plan 12-10): roter Durchstich — Stufe 3 von
+    // readCampaignDataForBackup() ignoriert campaignKey und liefert immer
+    // window.D. Die "Standard-Kampagne" ist hier bewusst die AKTIVE Kampagne
+    // (kein aktiverKey gesetzt -> aktiver Key = APP_CONFIG.STORAGE_KEY =
+    // 'dnd-tracker-data'); ihre einzige Datenquelle ist window.D. Kampagne A
+    // ist im Index eingetragen, aber nie gespeichert (weder localStorage noch
+    // IndexedDB) und NICHT aktiv — sie darf die Daten der aktiven Kampagne
+    // nicht bekommen.
+    // ========================================================
+
+    test('CR-02: eine im Index eingetragene, nie gespeicherte Kampagne bekommt kein Backup, obwohl eine andere Kampagne befuellt im Speicher aktiv ist', async () => {
+        const dirHandle = createMockDirHandle();
+        const ctx = createDoBackupContext({
+            campaigns: [{ key: 'dnd-campaign-1', name: 'Kampagne A' }],
+            storageKey: 'dnd-tracker-data',
+            dataByKey: {}, // weder Standard-Kampagne noch Kampagne A haben eigene Daten in LS/IDB
+            dImSpeicher: { characters: [{ id: 'marke-aktive-kampagne' }] }
+            // aktiverKey bewusst NICHT gesetzt -> aktiver Key bleibt APP_CONFIG.STORAGE_KEY
+            // ('dnd-tracker-data'), die Standard-Kampagne ist also die aktive Kampagne.
+        });
+
+        await ctx._doBackup(dirHandle);
+
+        // Standard-Kampagne (aktiv) darf legitim ihr Backup ueber Stufe 3 bekommen.
+        expect(dirHandle._files.has('standard-kampagne-aktuell.json')).toBe(true);
+        // Kampagne A (im Index, aber nicht aktiv und nie gespeichert) darf KEIN
+        // Backup bekommen — vor dem Fix entsteht die Datei mit den Daten der
+        // aktiven Kampagne (Fremdzuordnung).
+        expect(dirHandle._files.has('kampagne-a-aktuell.json')).toBe(false);
+    });
+
+    test('CR-02: entstuende die Backup-Datei einer nie gespeicherten Kampagne doch, truege sie nicht die Kennmarke der aktiven Kampagne', async () => {
+        const dirHandle = createMockDirHandle();
+        const ctx = createDoBackupContext({
+            campaigns: [{ key: 'dnd-campaign-1', name: 'Kampagne A' }],
+            storageKey: 'dnd-tracker-data',
+            dataByKey: {},
+            dImSpeicher: { characters: [{ id: 'marke-aktive-kampagne' }] }
+        });
+
+        await ctx._doBackup(dirHandle);
+
+        // Egal ob die Datei entstanden ist oder nicht: ihr Inhalt darf niemals
+        // die Kennmarke der (fremden) aktiven Kampagne tragen.
+        const inhalt = dirHandle._files.get('kampagne-a-aktuell.json') || '';
+        expect(inhalt).not.toContain('marke-aktive-kampagne');
     });
 });
