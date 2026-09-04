@@ -167,6 +167,14 @@ function showWizardStep(n) {
         audioSection.style.display = (n >= 3) ? '' : 'none';
     }
 
+    // Gap-Closure 12-09 (CR-01): Footer mit dem "Ueberspringen"-Button ab Schritt 4
+    // (Erfolgsbestaetigung nach abgeschlossenem Import) ausblenden — >=, nicht ===,
+    // damit ein kuenftiger Schritt 5 den Button nicht versehentlich wieder einblendet.
+    const footer = modal.querySelector('#migration-wizard-footer');
+    if (footer) {
+        footer.style.display = (n >= 4) ? 'none' : '';
+    }
+
     // Schritte-Indikator aktualisieren
     modal.querySelectorAll('.wizard-step').forEach((dot, idx) => {
         const stepNum = idx + 1;
@@ -280,7 +288,7 @@ function showMigrationWizard() {
                 <div class="migration-step-body" id="migration-wizard-audio-status" style="display:none;" aria-live="polite"></div>
             </div>
 
-            <div class="migration-wizard-footer">
+            <div class="migration-wizard-footer" id="migration-wizard-footer">
                 <button class="btn btn-text migration-skip-btn" data-action="wizard-skip">
                     &#220;berspringen &#8212; ich starte neu
                 </button>
@@ -627,8 +635,16 @@ function _setupWizardActions(modal) {
         if (action === 'wizard-next-step') {
             showWizardStep(_wizardStep + 1);
         } else if (action === 'wizard-skip') {
-            // shown-Flag setzen, Wizard schliessen
+            // shown-Flag setzen (immer, unabhaengig vom Schritt)
             StorageAPI.setJSON('migration-wizard-shown', { shown: true, skipped: true });
+            // Gap-Closure 12-09 (CR-01): ab Schritt 4 ist der Import bereits gelaufen —
+            // window.D steht noch auf dem Vor-Import-Stand, und der unbedingte
+            // beforeunload-Autosave in systems/avatars.js wuerde ihn ohne Neuladen in
+            // denselben Storage-Key zurueckschreiben (derselbe Grund wie wizard-close).
+            if (_wizardStep >= 4) {
+                window.location.reload();
+                return;
+            }
             _closeWizard();
         } else if (action === 'wizard-close') {
             // shown-Flag setzen (erfolgreich abgeschlossen)
