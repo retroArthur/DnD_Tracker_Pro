@@ -1,8 +1,28 @@
 ---
 phase: 12-datensicherheit
-verified: 2026-09-04T00:00:00Z
-status: human_needed
-score: 8/8 must-haves verified
+verified: 2026-09-04T16:45:00Z
+status: gaps_found
+score: 8/8 must-haves verified (Erstumfang) — 3 neue Blocker aus verify:post
+re_opened_by: "/gsd-verify-work 12 verify:post — Hooks nyquist + security"
+post_verify_findings:
+  - "SEC-01 (= IMPL-01, SAFE-01/D-02, high): migration-wizard.js:511-533 — der Audio-Benennungsblock steht im selben try wie importFn(parsedObj) (:485). Wirft listSoundBlobs(), sind die Daten geschrieben, der Wizard meldet aber 'Import fehlgeschlagen' und erreicht Schritt 4 nie. Zweite Fundstelle derselben Form auf dem Audio-Pfad (:584-617). Verankert als test.failing in tests/unit/audio-import-resilience.test.js:295."
+  - "SEC-02 (= IMPL-02, SAFE-05/R11, high): undo.js:69 und :108 rufen JSON.stringify(D) ohne try/catch. pushUndo() laesst laut D-06 bewusst ein nicht serialisierbares window.D zurueck — das naechste Strg+Z wirft einen ungefangenen TypeError. Isoliert reproduziert. Verankert als test.failing in tests/unit/stability.test.js."
+  - "SEC-03 (SAFE-02, high, NEU): bei aktiver nicht-Standard-Kampagne traegt resolveBackupTargets() den Override-Key bedingungslos als name 'Standard-Kampagne' ein (file-backup-manager.js:134 + :428, core/init.js:28-30). Der echte Kampagnenname verschwindet aus allen Backup-Dateinamen, die vorherige Dateiserie verwaist still. Kein Datenverlust (D-04-Kollisionssuffix greift). Reproduziert gegen den echten Quelltext."
+human_verification_resolved:
+  - "human_verification[0] (Audio-Bibliothek knapp unter 300 MiB) wurde am 2026-09-04 im UAT als Punkt 28 vom Nutzer mit 'pass' abgenommen. Recherche-Annahme A1 gilt damit als verifiziert. Dieser Punkt ist NICHT mehr der Grund fuer den offenen Status."
+nyquist_audit:
+  gaps_found: 14
+  gaps_closed: 14
+  tests_added_lines: 1221
+  jest: "760 -> 842 gruen"
+  playwright: "321 passed / 2 skipped"
+  detail: ".planning/phases/12-datensicherheit/12-VALIDATION.md § Validation Audit 2026-09-04"
+security_audit:
+  threats_total: 44
+  closed: 21
+  open_counted: 3
+  open_untriaged: 19
+  detail: ".planning/phases/12-datensicherheit/12-SECURITY.md"
 behavior_unverified: 0
 overrides_applied: 0
 re_verification:
