@@ -20,6 +20,11 @@ function pushUndo(action) {
             window.ErrorHandler.log('pushUndo', e, action);
         }
         showToast('⚠️ Undo-Schutz für diese Aktion nicht verfügbar', 'warning');
+        // Die destruktive Aktion des Aufrufers läuft laut D-06 trotz des gescheiterten
+        // Pushs weiter und verändert D — ein noch vorhandener Redo-Eintrag wäre ab diesem
+        // Moment inkonsistent und würde diese Zwischenaktion bei einem späteren Redo
+        // stillschweigend überschreiben (WR-02).
+        redoStack.length = 0;
         return;
     }
     undoStack.push({
