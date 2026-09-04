@@ -317,3 +317,184 @@ describe('Export/Import-Rundlauf (SAFE-06)', () => {
         );
     });
 });
+
+// ============================================================
+// SAFE-06 — Der Versions-Rundlauf mit der ECHTEN Migration
+// ------------------------------------------------------------
+// Befund (Nyquist-Refutation R15): `_appVersion` wird zwar von
+// buildFullExport() geschrieben (full-export.js:70), aber repo-weit NIRGENDS
+// gelesen — importFullExport() verzweigt nicht darauf. Ein Test, der den
+// Stempel mutiert, kann daher gar nicht rot werden. Die Kompatibilitaets-
+// Entscheidung faellt in Wahrheit ueber das PRO KAMPAGNE mitgereiste
+// `data._version`, das die echte migrateData() (systems/spellslots/
+// version-migration.js) auswertet. Genau diese Naht wird hier gepinnt:
+// beide echten Module in EINEM vm-Kontext, keine Identitaets-Stubs.
+// Grenze (bewusst dokumentiert): alle realen MIGRATIONS mutieren ihr Argument
+// in-place und geben dasselbe Objekt zurueck. Ein Mutant, der NUR den
+// Rueckgabewert von migrateData() verwirft, ist damit verhaltensgleich und
+// nicht toetbar; toetbar ist dagegen das Ueberspringen des Aufrufs selbst
+// (mutationsgeprueft) sowie jede Aenderung an der Migration.
+// ============================================================
+
+describe('Versions-Rundlauf mit echter migrateData (SAFE-06)', () => {
+    const ECHTE_VERSION = '9.9.9'; // bewusst != core/config.js, damit ein
+    // hartkodierter Stempel im Export auffliegt
+    let echtImport;
+    let echtBuild;
+    let echtGeschrieben;
+    let echtIndexCalls;
+
+    function altKampagne(name) {
+        return {
+            _version: '2.5.0', // aelter als 2.6.1/3.0.0/4.0.0/5.0.0
+            characters: [{ id: 1, name: name }],
+            npcs: [],
+            quests: [],
+            settings: {},
+            spells: [{ id: 100, name: 'Feuerball', source: 'srd' }]
+        };
+    }
+
+    beforeEach(() => {
+        echtGeschrieben = {};
+        echtIndexCalls = [];
+
+        const appConfig = {
+            VERSION: ECHTE_VERSION,
+            STORAGE_KEY: 'dnd-tracker-data',
+            DICE_FAV_KEY: 'dnd-dice-favorites',
+            DEBUG_MODE: false
+        };
+        const index = {
+            campaigns: [
+                { key: 'dnd-tracker-data', name: 'Standard-Kampagne' },
+                { key: 'dnd-campaign-2', name: 'Zweite Kampagne' }
+            ],
+            active: 'dnd-tracker-data'
+        };
+        const quellen = {
+            'dnd-tracker-data': altKampagne('Erste'),
+            'dnd-campaign-2': altKampagne('Zweite'),
+            'dnd-dice-favorites': [{ id: 1, name: 'Angriff', formula: '1d20+5' }]
+        };
+
+        const context = {
+            window: {
+                APP_CONFIG: appConfig,
+                getCampaignIndex: () => JSON.parse(JSON.stringify(index)),
+                showToast: jest.fn(),
+                ErrorHandler: { log: jest.fn() },
+                D: { settings: {}, dmScreenProfiles: {} }
+            },
+            APP_CONFIG: appConfig,
+            StorageAPI: {
+                getJSON: (key, fallback) =>
+                    quellen[key] !== undefined
+                        ? JSON.parse(JSON.stringify(quellen[key]))
+                        : fallback !== undefined
+                          ? fallback
+                          : null,
+                setJSON: (key, value) => {
+                    echtGeschrieben[key] = value;
+                    return { success: true };
+                },
+                has: () => false
+            },
+            saveCampaignIndex: idx => {
+                echtIndexCalls.push(idx);
+            },
+            console: console
+        };
+        vm.createContext(context);
+
+        // ECHTE Migration zuerst — full-export.js schlaegt `migrateData` als
+        // globale Funktion nach (full-export.js:149).
+        vm.runInContext(
+            fs.readFileSync(
+                path.join(__dirname, '../../systems/spellslots/version-migration.js'),
+                'utf8'
+            ),
+            context
+        );
+        vm.runInContext(
+            fs.readFileSync(
+                path.join(__dirname, '../../systems/migration/full-export.js'),
+                'utf8'
+            ),
+            context
+        );
+
+        echtBuild = context.buildFullExport;
+        echtImport = context.importFullExport;
+    });
+
+    test('Vorbedingung: der Kontext benutzt die ECHTE migrateData, keinen Identitaets-Stub', () => {
+        const exportObj = echtBuild();
+        const roh = exportObj.campaigns['dnd-tracker-data'].data;
+        expect(roh._version).toBe('2.5.0');
+        expect(roh.bestiary).toBeUndefined();
+    });
+
+    test('Import in neuerer Version: was gespeichert wird, ist das MIGRIERTE Ergebnis (nicht die Rohdaten)', () => {
+        const exportObj = echtBuild();
+        // Kopie ziehen: migrateData mutiert das Original in-place
+        const rohVersion = exportObj.campaigns['dnd-tracker-data'].data._version;
+
+        echtImport(exportObj);
+
+        const gespeichert = echtGeschrieben['dnd-tracker-data'];
+        expect(gespeichert).toBeDefined();
+        // Der Rueckgabewert von migrateData MUSS der geschriebene Wert sein —
+        // ein Aufruf, dessen Ergebnis verworfen wird, faellt hier auf.
+        expect(gespeichert._version).toBe(ECHTE_VERSION);
+        expect(rohVersion).toBe('2.5.0');
+        expect(gespeichert._version).not.toBe(rohVersion);
+        // Von den Migrationen 3.0.0 / 4.0.0 / 5.0.0 angelegte Container
+        expect(gespeichert.bestiary).toEqual([]);
+        expect(gespeichert.bestiaryFavorites).toEqual([]);
+        expect(gespeichert.sessionPreps).toEqual([]);
+        expect(gespeichert.factions).toEqual([]);
+        expect(gespeichert.settings.levelingMode).toBe('xp');
+        expect(gespeichert.characters[0].xp).toBe(0);
+        // Nutzdaten bleiben erhalten
+        expect(gespeichert.characters[0].name).toBe('Erste');
+        // SRD bleibt auch nach der echten Migration draussen
+        expect(gespeichert.spells).toBeUndefined();
+    });
+
+    test('Mehrere Kampagnen: JEDE Kampagne wird geschrieben und einzeln migriert', () => {
+        const exportObj = echtBuild();
+        expect(Object.keys(exportObj.campaigns)).toHaveLength(2);
+
+        const result = echtImport(exportObj);
+
+        expect(result.campaignCount).toBe(2);
+        // campaignCount stammt aus der EINGABE — die Schreibseite separat pruefen
+        const kampagnenKeys = Object.keys(echtGeschrieben)
+            .filter(k => k !== 'dnd-dice-favorites')
+            .sort();
+        expect(kampagnenKeys).toEqual(['dnd-campaign-2', 'dnd-tracker-data']);
+        expect(echtGeschrieben['dnd-campaign-2'].characters[0].name).toBe('Zweite');
+        // ... und auch die nicht-aktive Kampagne ist migriert angekommen
+        expect(echtGeschrieben['dnd-campaign-2']._version).toBe(ECHTE_VERSION);
+        expect(echtGeschrieben['dnd-campaign-2'].bestiary).toEqual([]);
+        expect(echtIndexCalls).toHaveLength(1);
+    });
+
+    test('_appVersion stammt aus APP_CONFIG.VERSION (kein hartkodierter Stempel)', () => {
+        const exportObj = echtBuild();
+        expect(exportObj._appVersion).toBe(ECHTE_VERSION);
+        expect(exportObj._appVersion).not.toBe('2.7.0');
+    });
+
+    test('Ablehnung schreibt GAR NICHTS — auch keine Wuerfel-Favoriten (WR-04 vor der Pruefung)', () => {
+        const bad = echtBuild();
+        bad._exportType = 'irgendwas';
+        expect(bad.diceFavorites.length).toBeGreaterThan(0);
+
+        expect(() => echtImport(bad)).toThrow(/full-v1/);
+
+        expect(Object.keys(echtGeschrieben)).toEqual([]);
+        expect(echtIndexCalls).toHaveLength(0);
+    });
+});

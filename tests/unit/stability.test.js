@@ -1553,3 +1553,417 @@ describe('Data Integrity', () => {
         });
     });
 });
+
+// ============================================================
+// 5. NYQUIST-NACHZUG PHASE 12 — R11 / R12 / R13 / R14
+//
+// Die vorhandenen Tests dieser Datei belegen die betroffenen Verhalten
+// ueberwiegend per Simulation im Testcode oder per Quelltext-Grep. Die
+// folgenden Bloecke fahren stattdessen die ECHTEN Module (systems/undo.js,
+// systems/spellslots/persistence.js, systems/spellslots/quick-roll.js,
+// utils/basic.js) und pinnen die Verhalten so, dass jede hier benannte
+// Regression rot wird.
+// ============================================================
+
+describe('Nachzug R12 — kein Autosave-Schalter-Guard in den Save-Funktionen', () => {
+    const fs = require('fs');
+    const path = require('path');
+    const wurzel = path.join(__dirname, '../..');
+
+    function quelle(rel) {
+        return fs.readFileSync(path.join(wurzel, rel), 'utf-8');
+    }
+
+    test('saveImmediate()- und save()-Koerper enthalten ueberhaupt keine DOM-Abfrage als Vorab-Guard', () => {
+        const src = quelle('systems/spellslots/persistence.js');
+
+        const saveImmediateMatch = src.match(/async function saveImmediate\(\)\s*{[\s\S]*?\n}\n/);
+        expect(saveImmediateMatch).not.toBeNull();
+        const saveMatch = src.match(/const save = function[\s\S]*?\n};\n/);
+        expect(saveMatch).not.toBeNull();
+
+        // Der geloeschte Codepfad war ein Vorab-Guard, der bei nicht gesetztem
+        // Schalter still zurueckkehrte. Ein Ersatz unter anderem Element-Namen
+        // (z. B. 'autosave-switch') stellt denselben Defekt wieder her und wuerde
+        // vom reinen Literal-Grep auf "autosave-toggle" NICHT gefangen. Deshalb
+        // hier: in beiden Funktionskoerpern darf gar keine DOM-Abfrage stehen.
+        [saveImmediateMatch[0], saveMatch[0]].forEach(koerper => {
+            expect(koerper).not.toMatch(/getElementById\(/);
+            expect(koerper).not.toMatch(/querySelector\(/);
+            expect(koerper).not.toMatch(/\$c?\(['"][a-z-]+['"]\)/);
+        });
+    });
+
+    test('"autosave-toggle" kommt im gesamten ausgelieferten Quellbaum nicht mehr vor (auch nicht in Templates)', () => {
+        // Ersatz fuer die 3-Pfad-Whitelist: der realistischste Rueckweg ist die
+        // Checkbox in assets/templates/ plus ein Guard in einem beliebigen Modul.
+        const ordner = [
+            'core',
+            'utils',
+            'systems',
+            'features',
+            'ui',
+            'render',
+            'assets/templates',
+            'assets/styles'
+        ];
+        const treffer = [];
+        let dateienGesehen = 0;
+
+        function gehe(abs, rel) {
+            for (const eintrag of fs.readdirSync(abs, { withFileTypes: true })) {
+                const kindAbs = path.join(abs, eintrag.name);
+                const kindRel = rel + '/' + eintrag.name;
+                if (eintrag.isDirectory()) {
+                    gehe(kindAbs, kindRel);
+                } else if (/\.(js|html|css)$/.test(eintrag.name)) {
+                    dateienGesehen++;
+                    if (fs.readFileSync(kindAbs, 'utf-8').includes('autosave-toggle')) {
+                        treffer.push(kindRel);
+                    }
+                }
+            }
+        }
+
+        ordner.forEach(o => {
+            const abs = path.join(wurzel, o);
+            if (!fs.existsSync(abs)) return;
+            gehe(abs, o);
+        });
+
+        // Nicht-Vakuitaet: der Lauf muss ueberhaupt Dateien gelesen haben.
+        expect(dateienGesehen).toBeGreaterThan(50);
+        expect(treffer).toEqual([]);
+    });
+});
+
+describe('Nachzug R11 — pushUndo()-Schutz haelt auch in den Randlagen von APP_CONFIG', () => {
+    const fs = require('fs');
+    const path = require('path');
+    const vm = require('vm');
+
+    function ladeUndo(appConfig) {
+        const context = {
+            window: {
+                D: { characters: [], _nextId: {} },
+                APP_CONFIG: appConfig,
+                safeJSONParse: str => {
+                    try {
+                        return JSON.parse(str);
+                    } catch (e) {
+                        return null;
+                    }
+                },
+                renderAll: jest.fn(),
+                saveImmediate: jest.fn(),
+                ErrorHandler: { log: jest.fn() }
+            },
+            showToast: jest.fn(),
+            validateAndRepairNextId: jest.fn(() => ({ valid: true, repairs: [] })),
+            console
+        };
+        vm.createContext(context);
+        const source = fs.readFileSync(path.join(__dirname, '../../systems/undo.js'), 'utf8');
+        vm.runInContext(
+            source +
+                '\nfunction __undoDebug() { return { undoLength: undoStack.length, redoLength: redoStack.length }; }\n',
+            context
+        );
+        return context;
+    }
+
+    test('DEBUG_MODE=true: der Fehler wird an ErrorHandler.log("pushUndo", fehler, aktion) gemeldet, gepusht wird trotzdem nichts', () => {
+        const ctx = ladeUndo({ UNDO_LIMIT: 30, DEBUG_MODE: true });
+        ctx.window.D.self = ctx.window.D; // nicht serialisierbar
+
+        expect(() => ctx.pushUndo('Zirkulaer im Debug')).not.toThrow();
+
+        expect(ctx.window.ErrorHandler.log).toHaveBeenCalledTimes(1);
+        const args = ctx.window.ErrorHandler.log.mock.calls[0];
+        expect(args[0]).toBe('pushUndo');
+        // vm-Realm: der Fehler ist ein TypeError des Kontexts, nicht der Host-Klasse
+        expect(String(args[1])).toMatch(/TypeError/);
+        expect(args[2]).toBe('Zirkulaer im Debug');
+        expect(ctx.__undoDebug()).toEqual({ undoLength: 0, redoLength: 0 });
+    });
+
+    test('Fehlendes window.APP_CONFIG: der Schutz selbst wirft nicht und legt keinen Eintrag an', () => {
+        // Sichert die Optional-Chaining-Abfrage window.APP_CONFIG?.DEBUG_MODE:
+        // ohne sie wuerde der catch-Block selbst mit einem TypeError abbrechen —
+        // "crasht nicht" waere dann falsch.
+        const ctx = ladeUndo(undefined);
+        ctx.window.D.self = ctx.window.D;
+
+        let liefWeiter = false;
+        expect(() => {
+            ctx.pushUndo('Ohne Config');
+            liefWeiter = true;
+        }).not.toThrow();
+
+        expect(liefWeiter).toBe(true);
+        expect(ctx.__undoDebug()).toEqual({ undoLength: 0, redoLength: 0 });
+        expect(ctx.showToast).toHaveBeenCalledWith(
+            expect.stringContaining('Undo-Schutz'),
+            'warning'
+        );
+    });
+
+    // R11, zweite Haelfte ("wird NICHT gepusht UND crasht nicht"): D-06 laesst die
+    // destruktive Aktion bei nicht serialisierbarem window.D bewusst weiterlaufen
+    // (pushUndo() faengt ab, systems/undo.js:16-24). Genau dieser Zustand trifft in
+    // undo() Zeile 69 und redo() Zeile 108 auf ein UNGESCHUETZTES JSON.stringify(D) —
+    // der naechste Strg+Z wirft dort einen ungefangenen TypeError, ohne Warn-Toast.
+    // Als test.failing verankert: heute ROT (der Body wirft), nach dem Fix meldet Jest
+    // den Test als unerwartet bestanden und erzwingt das Umstellen auf test().
+    test.failing('R11-Rest: nach gescheitertem Push kippt das naechste undo() nicht in einen ungefangenen TypeError', () => {
+        const ctx = ladeUndo({ UNDO_LIMIT: 30 });
+
+        // 1. Ein regulaerer, serialisierbarer Eintrag landet auf dem Undo-Stack.
+        ctx.pushUndo('Erste Aktion');
+        expect(ctx.__undoDebug()).toEqual({ undoLength: 1, redoLength: 0 });
+
+        // 2. Eine spaetere Aktion macht D unserialisierbar. pushUndo() faengt das laut
+        //    D-06 ab und laesst die Aktion trotzdem laufen — D bleibt zirkulaer.
+        ctx.window.D.self = ctx.window.D;
+        expect(() => ctx.pushUndo('Zweite Aktion')).not.toThrow();
+        expect(ctx.__undoDebug()).toEqual({ undoLength: 1, redoLength: 0 });
+
+        // 3. Der Nutzer drueckt Strg+Z. undo() sichert den aktuellen State fuer Redo
+        //    per JSON.stringify(D) — ohne try/catch. HIER kippt es heute.
+        expect(() => ctx.undo()).not.toThrow();
+    });
+});
+
+// ----------------------------------------------------------------
+// Gemeinsame Werkbank fuer R13/R14: die ECHTEN Module persistence.js und
+// quick-roll.js laufen in einem eigenen vm-Kontext (die globalen save/load
+// dieser Testdatei sind Mocks aus tests/setup.js und bleiben unangetastet).
+// ----------------------------------------------------------------
+function _erzeugePersistenzKontext(optionen = {}) {
+    const fs = require('fs');
+    const path = require('path');
+    const vm = require('vm');
+
+    const idbStore = {};
+    const idbInstance = {
+        transaction() {
+            return {
+                objectStore() {
+                    return {
+                        put(record) {
+                            const req = { onsuccess: null, onerror: null, result: record.id };
+                            idbStore[record.id] = Object.assign({}, record);
+                            Promise.resolve().then(() => req.onsuccess && req.onsuccess());
+                            return req;
+                        },
+                        get(key) {
+                            const req = {
+                                onsuccess: null,
+                                onerror: null,
+                                result: idbStore[key] || null
+                            };
+                            Promise.resolve().then(() => req.onsuccess && req.onsuccess());
+                            return req;
+                        }
+                    };
+                }
+            };
+        }
+    };
+
+    const lsStore = Object.assign({}, optionen.lsStart || {});
+    const fakeLocalStorage = {
+        getItem: k => (k in lsStore ? lsStore[k] : null),
+        setItem: (k, v) => {
+            if (optionen.setItemWirft) throw optionen.setItemWirft();
+            lsStore[k] = String(v);
+        },
+        removeItem: k => {
+            delete lsStore[k];
+        }
+    };
+
+    const toasts = [];
+
+    // Wie im gebuendelten Classic-Script: window IST das globale Objekt. Nur so
+    // findet quick-roll.js die in persistence.js top-level deklarierte
+    // loadFromIndexedDBFallback() ueber window.loadFromIndexedDBFallback.
+    const context = {
+        STORAGE_KEY: 'nachzug-key',
+        D: optionen.D || { characters: [] },
+        APP_CONFIG: { DEBUG_MODE: false, VERSION: '9.9.9', STORAGE_KEY: 'nachzug-key' },
+        updateSaveIndicator: jest.fn(),
+        broadcastSave: jest.fn(),
+        ErrorHandler: { log: jest.fn(), showError: jest.fn() },
+        idb: idbInstance,
+        initIndexedDB: null,
+        validateDataIntegrity: () => ({ valid: true, repairs: [] }),
+        localStorage: fakeLocalStorage,
+        showToast: (...a) => toasts.push(a),
+        console,
+        Blob,
+        setTimeout,
+        clearTimeout,
+        migrateData: p => p,
+        compareVersions: () => 0,
+        log: () => {}
+    };
+    context.initIndexedDB = jest.fn(async () => {
+        context.idb = idbInstance;
+    });
+    vm.createContext(context);
+    context.window = context;
+    context.self = context;
+
+    const wurzel = path.join(__dirname, '../..');
+    const basicSrc = fs.readFileSync(path.join(wurzel, 'utils/basic.js'), 'utf-8');
+    const start = basicSrc.indexOf('const StorageAPI = {');
+    if (start < 0) throw new Error('StorageAPI nicht in utils/basic.js gefunden');
+    const ende = basicSrc.indexOf('\n};', start);
+    if (ende < 0) throw new Error('StorageAPI-Blockende nicht gefunden');
+    // ECHTE StorageAPI aus utils/basic.js — kein Mock. Damit laeuft die
+    // Quota-Klassifizierung (basic.js) im selben Lauf wie der Fallback
+    // (persistence.js), also die reale Kette. var-Alias, weil const im
+    // vm-Skript keine Eigenschaft des Kontextobjekts wird.
+    vm.runInContext(
+        basicSrc.slice(start, ende + 3) + '\nvar __StorageAPI = StorageAPI;\n',
+        context
+    );
+
+    vm.runInContext(
+        fs.readFileSync(path.join(wurzel, 'systems/spellslots/persistence.js'), 'utf-8'),
+        context
+    );
+    if (optionen.mitLoad) {
+        vm.runInContext(
+            fs.readFileSync(path.join(wurzel, 'systems/spellslots/quick-roll.js'), 'utf-8'),
+            context
+        );
+    }
+
+    return { context, idbStore, lsStore, toasts, idbInstance };
+}
+
+describe('Nachzug R13 — echter >5-MB-IDB-only-Save plus echter Neustart-Lesepfad (SAFE-06)', () => {
+    function grosseKampagne() {
+        // >5 MB als JSON: 6 x 1 MB Notizen
+        return {
+            characters: Array.from({ length: 6 }, (_, i) => ({
+                id: i,
+                name: `Held ${i}`,
+                notes: 'A'.repeat(1024 * 1024)
+            }))
+        };
+    }
+
+    test('Ueber 5 MB: die echte saveImmediate() schreibt NUR nach IndexedDB und raeumt LS-Key und _ts weg', async () => {
+        const D = grosseKampagne();
+        const { context, idbStore, lsStore } = _erzeugePersistenzKontext({
+            D,
+            lsStart: { 'nachzug-key': 'alter-schatten', 'nachzug-key_ts': '999' }
+        });
+
+        await context.window.saveImmediate();
+
+        const erwartet = JSON.stringify(D);
+        expect(idbStore['nachzug-key']).toBeDefined();
+        expect(idbStore['nachzug-key'].data).toBe(erwartet);
+        // Der LS-Schatten UND sein Begleit-Timestamp sind weg — sonst gewinnt beim
+        // Neustart der veraltete Stand (D-01).
+        expect(lsStore['nachzug-key']).toBeUndefined();
+        expect(lsStore['nachzug-key_ts']).toBeUndefined();
+    });
+
+    test('Unterhalb der Grenze bleibt es beim localStorage-Save mit Begleit-Timestamp', async () => {
+        const D = { characters: [{ id: 1, name: 'Klein' }] };
+        const { context, idbStore, lsStore } = _erzeugePersistenzKontext({ D });
+
+        await context.window.saveImmediate();
+
+        // Pinnt die Groessenmessung selbst: waere sie in Bytes statt MB, liefe
+        // schon diese winzige Kampagne in den IDB-only-Zweig.
+        expect(lsStore['nachzug-key']).toBe(JSON.stringify(D));
+        expect(lsStore['nachzug-key_ts']).toBeDefined();
+        expect(idbStore['nachzug-key']).toBeUndefined();
+    });
+
+    test('Neustart mit kaltem window.idb: die echte load() holt die Kampagne byte-gleich aus IndexedDB zurueck', async () => {
+        const D = grosseKampagne();
+        const werkbank = _erzeugePersistenzKontext({ D, mitLoad: true });
+        await werkbank.context.window.saveImmediate();
+        const geschrieben = JSON.stringify(D);
+
+        // Neustart nachstellen: leerer localStorage (der IDB-only-Save hat ihn
+        // geraeumt) UND kaltes window.idb, wie beim frischen Boot.
+        expect(werkbank.lsStore['nachzug-key']).toBeUndefined();
+        werkbank.context.window.idb = null;
+        werkbank.context.window.initIndexedDB.mockClear();
+        const frischesD = {};
+        werkbank.context.window.D = frischesD;
+
+        await werkbank.context.load();
+
+        expect(werkbank.context.window.initIndexedDB).toHaveBeenCalled();
+        expect(frischesD.characters).toHaveLength(6);
+        expect(frischesD.characters[0].name).toBe('Held 0');
+        expect(frischesD.characters[5].notes.length).toBe(1024 * 1024);
+        // byte-gleich: dieselben Daten, die geschrieben wurden
+        expect(JSON.parse(geschrieben).characters[3].name).toBe(frischesD.characters[3].name);
+    });
+});
+
+describe('Nachzug R14 — echte Quota-Kette localStorage -> StorageAPI -> persistence -> IndexedDB', () => {
+    function quotaFehler() {
+        const err = new Error('Quota exceeded');
+        err.name = 'QuotaExceededError';
+        return err;
+    }
+
+    test('Die ECHTE StorageAPI.set() klassifiziert einen QuotaExceededError als {success:false, error:"QUOTA_EXCEEDED"}', () => {
+        const { context } = _erzeugePersistenzKontext({ setItemWirft: quotaFehler });
+
+        const ergebnis = context.__StorageAPI.set('irgendein-key', 'daten');
+
+        expect(ergebnis.success).toBe(false);
+        expect(ergebnis.error).toBe('QUOTA_EXCEEDED');
+        expect(ergebnis.original).toBeInstanceOf(Error);
+    });
+
+    test('Volles localStorage: die echte saveImmediate() legt die Kampagne in IndexedDB ab und entfernt den _ts-Key', async () => {
+        const D = { characters: [{ id: 1, name: 'Quota-Held' }] };
+        const { context, idbStore, lsStore, toasts } = _erzeugePersistenzKontext({
+            D,
+            setItemWirft: quotaFehler,
+            lsStart: { 'nachzug-key_ts': '12345' }
+        });
+
+        await context.window.saveImmediate();
+
+        // Kette vollstaendig durchlaufen: setItem wirft -> StorageAPI liefert
+        // {success:false} -> persistence.js wandelt das in einen throw -> catch
+        // schreibt nach IndexedDB.
+        expect(idbStore['nachzug-key']).toBeDefined();
+        expect(idbStore['nachzug-key'].data).toBe(JSON.stringify(D));
+        expect(lsStore['nachzug-key_ts']).toBeUndefined();
+        expect(context.window.updateSaveIndicator).toHaveBeenCalledWith('saved');
+        expect(toasts.some(t => String(t[0]).includes('IndexedDB'))).toBe(true);
+    });
+
+    test('Scheitert auch IndexedDB, meldet saveImmediate() laut und speichert nichts still weg', async () => {
+        const D = { characters: [{ id: 1, name: 'Doppelt verloren' }] };
+        const { context, idbStore, toasts } = _erzeugePersistenzKontext({
+            D,
+            setItemWirft: quotaFehler
+        });
+        context.window.idb = null;
+        context.window.initIndexedDB = jest.fn(async () => {
+            /* idb bleibt null -> Fallback scheitert */
+        });
+
+        await context.window.saveImmediate();
+
+        expect(idbStore['nachzug-key']).toBeUndefined();
+        expect(context.window.updateSaveIndicator).toHaveBeenCalledWith('error');
+        expect(toasts.some(t => String(t[0]).includes('Speichern fehlgeschlagen'))).toBe(true);
+    });
+});

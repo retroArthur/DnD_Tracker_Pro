@@ -603,3 +603,177 @@ describe('_doBackup() — alle Kampagnen des Index, fehlerisoliert je Kampagne (
         expect(verstoesse).toEqual([]);
     });
 });
+
+// ============================================================
+// Nyquist-Nachhaerten Phase 12 (R04/R05/R06):
+// Die bestehenden Bloecke oben pinnen jeweils die "positive" Haelfte ihrer
+// Anforderung. Die folgenden Tests schliessen die Luecken, in denen
+// plausible Ein-Zeilen-Regressionen bisher gruen blieben:
+//   R04 — Fehler-Isolation je Kampagne (throw e im catch ueberlebte)
+//   R04 — IndexedDB als Quelle fuer eine NICHT aktive Kampagne
+//   R05 — Suffix nur bei ECHTER Kollision (gemischter Index als Unterscheider)
+//   R06 — Kollisions-Suffix bis in die Writes und ins Pruning durchgereicht
+// ============================================================
+
+describe('Nyquist-Nachhaerten — Fehler-Isolation, Datenquelle und Kollisions-Suffix (R04/R05/R06)', () => {
+    // Eigener vm-Kontext je Test (gleiche Begruendung wie im _doBackup()-Block
+    // oben: _fileBackupStatus/_fileBackupPausedNotified sind Modul-Zustand).
+    function ladeKontext({ campaigns = [], storageKey = 'dnd-tracker-data', dataByKey = {} } = {}) {
+        const ctx = {
+            window: {
+                APP_CONFIG: { VERSION: '2.7.0', STORAGE_KEY: storageKey, DEBUG_MODE: false },
+                getCampaignIndex: () => ({ campaigns, active: storageKey }),
+                showToast: jest.fn(),
+                ErrorHandler: { log: jest.fn() }
+            },
+            APP_CONFIG: { VERSION: '2.7.0', STORAGE_KEY: storageKey, DEBUG_MODE: false },
+            StorageAPI: {
+                getJSON: jest.fn(key => (Object.prototype.hasOwnProperty.call(dataByKey, key) ? dataByKey[key] : null))
+            },
+            console
+        };
+        vm.createContext(ctx);
+        const filePath = path.join(__dirname, '../../systems/file-backup/file-backup-manager.js');
+        vm.runInContext(fs.readFileSync(filePath, 'utf8'), ctx);
+        return ctx;
+    }
+
+    // --- R04: Fehler-Isolation je Kampagne --------------------------------
+    test('R04: ein Schreibfehler bei EINER Kampagne stoppt den Lauf nicht — spaetere Kampagnen werden trotzdem gesichert', async () => {
+        const dirHandle = createMockDirHandle();
+        const echtesGetFileHandle = dirHandle.getFileHandle;
+        // Nur Kampagne A schlaegt beim Schreiben fehl (gesperrte Datei, entzogene
+        // Berechtigung, Quota) — nicht der Ordner-Handle als Ganzes.
+        dirHandle.getFileHandle = jest.fn(async (filename, opts) => {
+            if (filename.indexOf('kampagne-a-') === 0 && opts && opts.create) {
+                throw Object.assign(new Error('write denied'), { name: 'NotAllowedError' });
+            }
+            return echtesGetFileHandle(filename, opts);
+        });
+
+        const ctx = ladeKontext({
+            campaigns: [
+                { key: 'dnd-campaign-1', name: 'Kampagne A' },
+                { key: 'dnd-campaign-2', name: 'Kampagne B' }
+            ],
+            dataByKey: {
+                'dnd-campaign-1': { characters: [{ id: 'marke-a' }] },
+                'dnd-campaign-2': { characters: [{ id: 'marke-b' }] }
+            }
+        });
+
+        // Der Lauf selbst darf NICHT rejecten — er laeuft aus onAfterSave()s
+        // setTimeout-Callback, eine Rejection dort ist unbeobachtbar.
+        await expect(ctx._doBackup(dirHandle)).resolves.toBeUndefined();
+
+        // Kampagne A (Fehler) hat keine Datei ...
+        expect(dirHandle._files.has('kampagne-a-aktuell.json')).toBe(false);
+        // ... die NACH ihr verarbeitete Kampagne B aber sehr wohl.
+        expect(dirHandle._files.has('kampagne-b-aktuell.json')).toBe(true);
+        expect(dirHandle._files.get('kampagne-b-aktuell.json')).toContain('marke-b');
+        // Mindestens eine Kampagne war erfolgreich -> Status bleibt aktiv,
+        // kein "pausiert"-Toast.
+        expect(ctx.getBackupStatus()).toBe('active');
+        expect(ctx.window.showToast).not.toHaveBeenCalled();
+    });
+
+    // --- R04: IndexedDB-Quelle fuer eine NICHT aktive Kampagne ------------
+    test('R04: eine nicht aktive Kampagne, die nur in IndexedDB liegt, wird gesichert (IDB-Modus >5MB)', async () => {
+        const dirHandle = createMockDirHandle();
+        const ctx = ladeKontext({
+            campaigns: [{ key: 'dnd-campaign-1', name: 'Kampagne A' }],
+            storageKey: 'dnd-tracker-data',
+            dataByKey: { 'dnd-tracker-data': { characters: [{ id: 'marke-standard' }] } }
+            // Kampagne A hat KEINEN localStorage-Eintrag — im IDB-Modus loescht
+            // saveImmediate() den LS-Key nach dem IDB-Write.
+        });
+        ctx.window.loadFromIndexedDBFallbackRaw = jest.fn(async key =>
+            (key === 'dnd-campaign-1'
+                ? { data: JSON.stringify({ characters: [{ id: 'marke-a-idb' }] }) }
+                : null)
+        );
+
+        await ctx._doBackup(dirHandle);
+
+        expect(dirHandle._files.has('kampagne-a-aktuell.json')).toBe(true);
+        expect(dirHandle._files.get('kampagne-a-aktuell.json')).toContain('marke-a-idb');
+    });
+
+    // --- R05: Suffix nur bei ECHTER Kollision (gemischter Index) ----------
+    test('R05: im gemischten Index behaelt die NICHT kollidierende Kampagne ihren unsuffixierten Dateinamen exakt', () => {
+        const index = {
+            campaigns: [
+                { key: 'dnd-campaign-100', name: 'Kampagne #1' },  // kollidiert mit ...
+                { key: 'dnd-campaign-200', name: 'Kampagne/1' },   // ... dieser (beide -> "kampagne-1")
+                { key: 'dnd-campaign-300', name: 'Unschuldig' }    // kollidiert mit niemandem
+            ],
+            active: 'dnd-tracker-data'
+        };
+        const targets = resolveBackupTargets(index, 'dnd-tracker-data');
+
+        const unschuldig = targets.find(x => x.key === 'dnd-campaign-300');
+        const standard = targets.find(x => x.key === 'dnd-tracker-data');
+        const a = targets.find(x => x.key === 'dnd-campaign-100');
+        const b = targets.find(x => x.key === 'dnd-campaign-200');
+
+        // Kern der Anforderung: eine Kollision ZWEIER ANDERER Kampagnen darf den
+        // Dateinamen dieser Kampagne nicht veraendern — sonst verwaist ihre
+        // bisherige -aktuell.json und ihre Snapshot-Historie reisst ab (D-04).
+        expect(unschuldig.filenames.current).toBe('unschuldig-aktuell.json');
+        expect(unschuldig.filenames.safeName).toBe('unschuldig');
+        expect(standard.filenames.current).toBe('standard-kampagne-aktuell.json');
+
+        // Gegenprobe im selben Aufruf: das kollidierende Paar bekommt sehr wohl Suffixe.
+        expect(a.filenames.current).toBe('kampagne-1-100-aktuell.json');
+        expect(b.filenames.current).toBe('kampagne-1-200-aktuell.json');
+    });
+
+    // --- R06: Suffix bis in Writes und Pruning durchgereicht --------------
+    test('R06: kollidierende Kampagnen fuehren getrennte Snapshot-Serien — das 10er-Limit gilt je Kampagne, nicht je safeName', async () => {
+        const dirHandle = createMockDirHandle();
+        // 11 bestehende Snapshots der SUFFIXIERTEN Serie von Kampagne #1
+        for (let i = 1; i <= 11; i++) {
+            dirHandle._files.set('kampagne-1-100-2026-01-' + String(i).padStart(2, '0') + '.json', 'alt');
+        }
+
+        const ctx = ladeKontext({
+            campaigns: [
+                { key: 'dnd-campaign-100', name: 'Kampagne #1' },
+                { key: 'dnd-campaign-200', name: 'Kampagne/1' }
+            ],
+            dataByKey: {
+                'dnd-campaign-100': { characters: [{ id: 'marke-100' }] },
+                'dnd-campaign-200': { characters: [{ id: 'marke-200' }] }
+                // Standard-Kampagne bewusst ohne Daten -> uebersprungen
+            }
+        });
+
+        await ctx._doBackup(dirHandle);
+
+        const heute = new Date().toISOString().slice(0, 10);
+
+        // 1. Die Writes verwenden die suffixierten Namen aus resolveBackupTargets(),
+        //    nicht intern neu berechnete unsuffixierte.
+        expect(dirHandle._files.get('kampagne-1-100-aktuell.json')).toContain('marke-100');
+        expect(dirHandle._files.get('kampagne-1-200-aktuell.json')).toContain('marke-200');
+        // Keine gemeinsame, unsuffixierte Datei — sonst haetten sich beide
+        // Kampagnen gegenseitig ueberschrieben.
+        expect(dirHandle._files.has('kampagne-1-aktuell.json')).toBe(false);
+        expect(dirHandle._files.has('kampagne-1-' + heute + '.json')).toBe(false);
+
+        // 2. Das Pruning laeuft auf der eigenen, suffixierten Serie:
+        //    11 alte + 1 neuer Tages-Snapshot -> auf 10 gekappt.
+        const serie100 = [...dirHandle._files.keys()]
+            .filter(f => /^kampagne-1-100-\d{4}-\d{2}-\d{2}\.json$/.test(f));
+        expect(serie100.length).toBe(10);
+        expect(serie100).toContain('kampagne-1-100-' + heute + '.json');
+        // Die aeltesten wurden zuerst entfernt.
+        expect(dirHandle._files.has('kampagne-1-100-2026-01-01.json')).toBe(false);
+        expect(dirHandle._files.has('kampagne-1-100-2026-01-02.json')).toBe(false);
+
+        // 3. Die Nachbarkampagne hat ihr eigenes, unberuehrtes Budget.
+        const serie200 = [...dirHandle._files.keys()]
+            .filter(f => /^kampagne-1-200-\d{4}-\d{2}-\d{2}\.json$/.test(f));
+        expect(serie200).toEqual(['kampagne-1-200-' + heute + '.json']);
+    });
+});

@@ -674,3 +674,134 @@ describe('migration-wizard.js — Quelltext-Belege fuer den zweiten Dropzone-Ber
         expect(audioBranchIdx).toBeLessThan(fullV1CheckIdx);
     });
 });
+
+// ============================================================
+// NYQUIST R01 — Nachgezogene Pins fuer SAFE-01
+// Diese Tests schliessen drei Luecken, die zuvor mutationsfest UEBERLEBTEN:
+//  (1) MUT-1: pro Eintrag wurde nie geprueft, dass die Base64-Daten AUCH ZU
+//      DIESEM Eintrag gehoeren (id/name/type/size stammen alle aus der Meta).
+//  (2) MUT-2: der diceStats-"kein Cap"-Test nutzte nur 2 Datensaetze — jeder
+//      Cap >= 2 blieb unsichtbar.
+//  (3) Der INHALT der heruntergeladenen zweiten Datei wurde nie gelesen:
+//      URL.createObjectURL ist gemockt, mock.calls[0][0] wurde nie inspiziert.
+// ============================================================
+
+function blobText(blob) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = () => reject(reader.error);
+        reader.readAsText(blob);
+    });
+}
+
+describe('buildAudioExport — Byte-Zuordnung je Eintrag (SAFE-01, R01)', () => {
+    test('jeder audioFiles-Eintrag traegt die Bytes SEINES eigenen Blobs, nicht die der ersten Datei', async () => {
+        mockListSoundBlobs.mockResolvedValue([
+            { id: 'audio_1_1', name: 'a.mp3', size: 5, type: 'audio/mpeg', savedAt: 111 },
+            { id: 'audio_2_2', name: 'b.ogg', size: 9, type: 'audio/ogg', savedAt: 222 }
+        ]);
+        mockGetSoundBlob.mockImplementation(id => {
+            if (id === 'audio_1_1') return Promise.resolve(new Blob([bytesA()], { type: 'audio/mpeg' }));
+            if (id === 'audio_2_2') return Promise.resolve(new Blob([bytesB()], { type: 'audio/ogg' }));
+            return Promise.resolve(null);
+        });
+        mockGetAllStats.mockResolvedValue([]);
+
+        const result = await buildAudioExport();
+        expect(result.audioFiles).toHaveLength(2);
+
+        const erster = result.audioFiles.find(f => f.id === 'audio_1_1');
+        const zweiter = result.audioFiles.find(f => f.id === 'audio_2_2');
+
+        const bytesErster = await blobBytes(base64ToBlob(erster.data, erster.type));
+        const bytesZweiter = await blobBytes(base64ToBlob(zweiter.data, zweiter.type));
+
+        expect(bytesErster).toEqual(Array.from(bytesA()));
+        expect(bytesZweiter).toEqual(Array.from(bytesB()));
+        expect(zweiter.data).not.toBe(erster.data);
+    });
+
+    test('getSoundBlob wird genau einmal je Meta-id aufgerufen — in der Reihenfolge der Metadaten', async () => {
+        mockListSoundBlobs.mockResolvedValue([
+            { id: 'audio_1_1', name: 'a.mp3', size: 5, type: 'audio/mpeg', savedAt: 111 },
+            { id: 'audio_2_2', name: 'b.ogg', size: 9, type: 'audio/ogg', savedAt: 222 }
+        ]);
+        mockGetSoundBlob.mockImplementation(id =>
+            Promise.resolve(new Blob([id === 'audio_1_1' ? bytesA() : bytesB()], { type: 'audio/mpeg' }))
+        );
+        mockGetAllStats.mockResolvedValue([]);
+
+        await buildAudioExport();
+
+        expect(mockGetSoundBlob.mock.calls.map(c => c[0])).toEqual(['audio_1_1', 'audio_2_2']);
+    });
+});
+
+describe('buildAudioExport — diceStats ohne jeden Cap (SAFE-01, R01)', () => {
+    test('1500 Wuerfel-Datensaetze werden VOLLSTAENDIG exportiert (kein 1000er-Cap)', async () => {
+        mockListSoundBlobs.mockResolvedValue([]);
+        const stats = [];
+        for (let i = 0; i < 1500; i++) {
+            stats.push({ notation: '1d20', result: (i % 20) + 1, rolls: [i], timestamp: i, sessionId: 's1', charId: 1 });
+        }
+        mockGetAllStats.mockResolvedValue(stats);
+
+        const result = await buildAudioExport();
+
+        expect(result.diceStats).toHaveLength(1500);
+        expect(result.diceStats[0]).toEqual(stats[0]);
+        expect(result.diceStats[999]).toEqual(stats[999]);
+        expect(result.diceStats[1499]).toEqual(stats[1499]);
+    });
+});
+
+describe('downloadAudioExport — INHALT der zweiten Datei (SAFE-01, R01)', () => {
+    async function ladeHeruntergeladenesObjekt() {
+        expect(mockCreateObjectURL).toHaveBeenCalledTimes(1);
+        const blob = mockCreateObjectURL.mock.calls[0][0];
+        expect(blob).toBeInstanceOf(Blob);
+        expect(blob.type).toBe('application/json');
+        return JSON.parse(await blobText(blob));
+    }
+
+    test('die an URL.createObjectURL uebergebene Datei enthaelt beide Audiodateien mit ihren eigenen Bytes', async () => {
+        mockListSoundBlobs.mockResolvedValue([
+            { id: 'audio_1_1', name: 'a.mp3', size: 5, type: 'audio/mpeg', savedAt: 111 },
+            { id: 'audio_2_2', name: 'b.ogg', size: 9, type: 'audio/ogg', savedAt: 222 }
+        ]);
+        mockGetSoundBlob.mockImplementation(id => {
+            if (id === 'audio_1_1') return Promise.resolve(new Blob([bytesA()], { type: 'audio/mpeg' }));
+            return Promise.resolve(new Blob([bytesB()], { type: 'audio/ogg' }));
+        });
+        mockGetAllStats.mockResolvedValue([]);
+
+        await downloadAudioExport();
+        const datei = await ladeHeruntergeladenesObjekt();
+
+        expect(datei._exportType).toBe('audio-export-v1');
+        expect(datei.audioFiles).toHaveLength(2);
+
+        const a = datei.audioFiles.find(f => f.id === 'audio_1_1');
+        const b = datei.audioFiles.find(f => f.id === 'audio_2_2');
+        expect(a.name).toBe('a.mp3');
+        expect(b.name).toBe('b.ogg');
+        expect(await blobBytes(base64ToBlob(a.data, a.type))).toEqual(Array.from(bytesA()));
+        expect(await blobBytes(base64ToBlob(b.data, b.type))).toEqual(Array.from(bytesB()));
+    });
+
+    test('die heruntergeladene Datei enthaelt die Wuerfelstatistik vollstaendig (Serialisierung verliert diceStats nicht)', async () => {
+        mockListSoundBlobs.mockResolvedValue([]);
+        const stats = [];
+        for (let i = 0; i < 1200; i++) {
+            stats.push({ notation: '2d6', result: 7, rolls: [3, 4], timestamp: i, sessionId: 's1', charId: 1 });
+        }
+        mockGetAllStats.mockResolvedValue(stats);
+
+        await downloadAudioExport();
+        const datei = await ladeHeruntergeladenesObjekt();
+
+        expect(datei.diceStats).toHaveLength(1200);
+        expect(datei.diceStats[1199]).toEqual(stats[1199]);
+    });
+});

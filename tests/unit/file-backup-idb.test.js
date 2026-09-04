@@ -236,3 +236,35 @@ describe('Datei-Backup im IndexedDB-Modus (DEBT-17)', () => {
         );
     });
 });
+
+// ============================================================
+// GAP-CLOSURE R09 — die IDB-Stufe muss den UEBERGEBENEN Kampagnen-Key lesen
+//
+// Der Mock oben ignoriert sein Argument und sieht ohnehin nur den Standard-Key.
+// Ein Rueckfall auf `idbRead(APP_CONFIG.STORAGE_KEY)` bliebe damit unentdeckt —
+// und wuerde seit D-03 (Backup je Kampagne) die Daten der aktiven Kampagne in
+// die Backup-Datei einer anderen schreiben.
+// ============================================================
+describe('readCampaignDataForBackup() — Kampagnen-Key wird an die IDB-Stufe durchgereicht (R09)', () => {
+    test('liest IndexedDB unter dem uebergebenen Key, nicht unter APP_CONFIG.STORAGE_KEY', async () => {
+        const { context, loadFromIndexedDBFallbackRaw } = loadModule({
+            lsData: null,
+            idbData: ECHTE_KAMPAGNE,
+            memoryD: null
+        });
+
+        const daten = await context.readCampaignDataForBackup('dnd-campaign-123');
+
+        expect(loadFromIndexedDBFallbackRaw).toHaveBeenCalledWith('dnd-campaign-123');
+        expect(loadFromIndexedDBFallbackRaw).not.toHaveBeenCalledWith('dnd-tracker-data');
+        expect(daten).toEqual(ECHTE_KAMPAGNE);
+    });
+
+    test('fragt localStorage ebenfalls unter dem uebergebenen Key ab', async () => {
+        const { context } = loadModule({ lsData: null, idbData: null, memoryD: null });
+
+        await context.readCampaignDataForBackup('dnd-campaign-456');
+
+        expect(context.StorageAPI.getJSON).toHaveBeenCalledWith('dnd-campaign-456', null);
+    });
+});

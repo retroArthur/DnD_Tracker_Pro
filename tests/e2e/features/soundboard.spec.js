@@ -550,30 +550,100 @@ test.describe('Soundboard', function () {
         expect(decoded.duration).toBeGreaterThan(0.09);
         expect(decoded.duration).toBeLessThan(0.12);
 
-        // 4. Die Szene laesst sich damit aktivieren. Der Spy belegt, dass
-        //    activateSoundScene den Track wirklich aus der IDB nachgeladen hat
-        //    (der Buffer-Cache ist nach dem Neustart leer) — ohne ihn wuerde
-        //    getActiveSceneId() die Szene auch dann melden, wenn kein einziger
-        //    Track dekodiert werden konnte.
+        // 4. Die Szene SPIELT den zurueckgeholten Track wirklich ab (D-08, dritte Etappe).
+        //    Bewusst ueber die Produktionsnaht playSceneById() — nicht ueber handgebaute
+        //    tracks —, damit die Szenen-Suche und die tracks-Uebergabe aus
+        //    soundboard-crud.js mit im Netz haengen.
+        //
+        //    getActiveSceneId() allein beweist NICHTS: activateSoundScene setzt
+        //    _activeScene.sceneId bedingungslos, auch wenn newTracks leer ist, und
+        //    loadTrackBuffer schluckt Decode-Fehler (null -> von filter(Boolean)
+        //    verworfen). Ebenso ist der getSoundBlob-Spy nur ein Beleg fuer den
+        //    BEGINN des Ladens (er feuert vor decodeAudioData). Deshalb werden hier
+        //    die Artefakte beobachtet, die es ohne echte Wiedergabe nicht gibt:
+        //    eine gestartete BufferSource mit dem dekodierten Puffer, die Verbindung
+        //    des Track-Gains zur Ausgabe und die Lautstaerke-Rampe auf den in der
+        //    Szene gespeicherten Wert (0,8) statt auf 0.
         const aktiv = await page.evaluate(async function(args) {
             const geladen = [];
-            const orig = window.getSoundBlob;
+            const starts = [];
+            const zielVerbindungen = [];
+            const rampenZiele = [];
+
+            const origGetSoundBlob = window.getSoundBlob;
+            const ctx = window.getAudioContext();
+            const ziel = ctx.destination;
+            const AudioCtxProto = Object.getPrototypeOf(ctx);
+            const origCreateBufferSource = AudioCtxProto.createBufferSource;
+            const GainProto = Object.getPrototypeOf(ctx.createGain());
+            const origConnect = GainProto.connect;
+            const ParamProto = Object.getPrototypeOf(ctx.createGain().gain);
+            const origRamp = ParamProto.linearRampToValueAtTime;
+
             window.getSoundBlob = async function(id) {
                 geladen.push(id);
-                return orig(id);
+                return origGetSoundBlob(id);
             };
+            AudioCtxProto.createBufferSource = function() {
+                const src = origCreateBufferSource.apply(this, arguments);
+                const origStart = src.start;
+                src.start = function() {
+                    starts.push({
+                        hatPuffer: !!src.buffer,
+                        dauer: src.buffer ? src.buffer.duration : null
+                    });
+                    return origStart.apply(src, arguments);
+                };
+                return src;
+            };
+            GainProto.connect = function(dest) {
+                if (dest === ziel) zielVerbindungen.push(true);
+                return origConnect.apply(this, arguments);
+            };
+            ParamProto.linearRampToValueAtTime = function(wert) {
+                rampenZiele.push(wert);
+                return origRamp.apply(this, arguments);
+            };
+
+            let zweiterLauf = [];
             try {
-                await window.activateSoundScene({
-                    sceneId: args.sceneId,
-                    tracks: [{ blobId: args.blobId, volume: 0.5, loop: false }]
-                });
+                await window.playSceneById(args.sceneId);
+                // Zweite Aktivierung: der Puffer-Cache ist nur dann warm, wenn
+                // loadTrackBuffer im ersten Lauf wirklich DEKODIERT hat. Ein
+                // stillschweigend fehlgeschlagener Decode wuerde erneut aus der
+                // IDB laden (soundboard-player.js: Cache-Set erst nach decodeAudioData).
+                geladen.length = 0;
+                await window.playSceneById(args.sceneId);
+                zweiterLauf = geladen.slice();
             } finally {
-                window.getSoundBlob = orig;
+                window.getSoundBlob = origGetSoundBlob;
+                AudioCtxProto.createBufferSource = origCreateBufferSource;
+                GainProto.connect = origConnect;
+                ParamProto.linearRampToValueAtTime = origRamp;
             }
-            return { activeSceneId: window.getActiveSceneId(), geladen: geladen };
+
+            return {
+                activeSceneId: window.getActiveSceneId(),
+                starts: starts,
+                zielVerbindungen: zielVerbindungen.length,
+                rampenZiele: rampenZiele,
+                zweiterLauf: zweiterLauf
+            };
         }, ids);
+
         expect(aktiv.activeSceneId).toBe(ids.sceneId);
-        expect(aktiv.geladen).toContain(ids.blobId);
+        // Mindestens eine Quelle wurde gestartet — pro Aktivierung eine (zwei Laeufe)
+        expect(aktiv.starts.length).toBeGreaterThanOrEqual(2);
+        // ... und zwar mit dem vom PLAYER dekodierten Puffer des Rundlauf-Tracks
+        expect(aktiv.starts[0].hatPuffer).toBe(true);
+        expect(aktiv.starts[0].dauer).toBeGreaterThan(0.09);
+        expect(aktiv.starts[0].dauer).toBeLessThan(0.12);
+        // Der Track-Gain haengt an der Ausgabe — ohne das bleibt es stumm
+        expect(aktiv.zielVerbindungen).toBeGreaterThanOrEqual(2);
+        // Die Rampe zielt auf die in der Szene gespeicherte Lautstaerke, nicht auf 0
+        expect(aktiv.rampenZiele).toContain(0.8);
+        // Der Decode ist wirklich geglueckt: zweite Aktivierung trifft den Cache
+        expect(aktiv.zweiterLauf).toEqual([]);
     });
 
 });

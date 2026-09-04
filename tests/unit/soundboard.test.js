@@ -396,4 +396,56 @@ describe('Soundboard — removeAudioFile() Undo/Redo (SAFE-03, Plan 12-06)', fun
         expect(global.window.softDeleteSoundBlob).not.toHaveBeenCalled();
         expect(global.window.renderAudioLibrary).not.toHaveBeenCalled();
     });
+
+    /**
+     * SAFE-03, load-bearing Haelfte: die Reihenfolge, die Daten wirklich schuetzt, ist
+     * "Momentaufnahme VOR der Mutation von window.D" — nicht "Aufruf A vor Aufruf B".
+     * saveUndoState() sichert ausschliesslich window.D (systems/undo.js -> JSON.stringify(D)),
+     * softDeleteSoundBlob() fasst nur IndexedDB an. Deshalb friert der Spy hier den echten
+     * D-Zustand im Moment des Aufrufs ein und der Test prueft den INHALT der Momentaufnahme.
+     */
+    test('removeAudioFile(): die Momentaufnahme von window.D enthaelt den Track noch — Snapshot VOR der Szenen-Mutation', async function () {
+        const { removeAudioFile } = loadCrudModule();
+        global.window.D.soundboard.scenes = [
+            { id: 's1', tracks: [{ blobId: 'audio_1' }, { blobId: 'audio_keep' }] }
+        ];
+
+        let snapshot = null;
+        global.window.saveUndoState.mockImplementation(function () {
+            // exakt das, was systems/undo.js in den Undo-Stack legt
+            snapshot = JSON.stringify(global.window.D);
+        });
+
+        await removeAudioFile('audio_1');
+
+        expect(snapshot).not.toBeNull();
+        const restored = JSON.parse(snapshot);
+        // Die Momentaufnahme muss den geloeschten Track NOCH enthalten, sonst kann Strg+Z
+        // die Szenen-Referenz niemals zurueckholen (Ursprungsfehler DEBT-19).
+        expect(restored.soundboard.scenes[0].tracks.map(function (t) { return t.blobId; }))
+            .toEqual(['audio_1', 'audio_keep']);
+        // Gegenprobe: die Mutation ist danach tatsaechlich passiert (der Test ist nicht vakuum-gruen).
+        expect(global.window.D.soundboard.scenes[0].tracks.map(function (t) { return t.blobId; }))
+            .toEqual(['audio_keep']);
+    });
+
+    /**
+     * Produzent/Konsument-Kopplung: removeAudioFile() sendet ein Aktionslabel, der Undo-Hook
+     * filtert darauf. Aendert sich nur eine der beiden Seiten, stellt Strg+Z die Datei still
+     * nicht mehr her. Der Test nimmt deshalb das ECHTE Label aus dem Produzenten und
+     * verfuettert es an den ECHTEN Hook, statt es haendisch zu wiederholen.
+     */
+    test('removeAudioFile(): sendet das Label "Audio entfernt", auf das der Undo-Hook filtert', async function () {
+        const { hook, removeAudioFile } = loadCrudModule();
+
+        await removeAudioFile('audio_label');
+
+        expect(global.window.saveUndoState).toHaveBeenCalledWith('Audio entfernt');
+
+        const gesendetesLabel = global.window.saveUndoState.mock.calls[0][0];
+        global.window.restoreSoundBlob.mockClear();
+        await hook({ action: gesendetesLabel, direction: 'undo' });
+
+        expect(global.window.restoreSoundBlob).toHaveBeenCalledWith('audio_label');
+    });
 });

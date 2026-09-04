@@ -678,3 +678,181 @@ describe('hasCampaignContent() — Gegenprobe + Strukturpruefung gegen core/data
         }
     });
 });
+
+// ============================================================
+// GAP-CLOSURE R16 — UNABHAENGIGE Erwartungstabelle
+//
+// Die describe.each()-Tabellen weiter oben werden aus den Exporten der
+// Implementierung selbst gespeist (REAL_CAMPAIGN_CONTENT_*). Das ist zirkulaer:
+// wer einen Eintrag aus der Implementierung entfernt, entfernt damit auch den
+// Testfall, der das melden wuerde — ein Refuter hat 13 von 17 Sammlungen
+// gestrichen und die Suite blieb gruen. Die folgenden Listen sind deshalb
+// bewusst VON HAND abgetippt und leiten sich aus der Anforderung ab
+// (SAFE-04 / G-12-3), nicht aus dem Pruefling. Sie duerfen nur geaendert werden,
+// wenn die Anforderung sich aendert.
+// ============================================================
+const ERWARTETE_CONTENT_ARRAYS = [
+    'characters', 'npcs', 'quests', 'locations', 'encounters', 'loot', 'spells',
+    'wiki', 'sessionNotes', 'storyArcs', 'bestiary', 'sessionPreps', 'factions',
+    'shops', 'links', 'filters', 'tags'
+];
+const ERWARTETE_CONTENT_TEXT_FIELDS = ['quickNotes', 'dmScreenNotes'];
+const ERWARTETE_CONTENT_PATHS = [
+    ['soundboard', 'scenes'],
+    ['calendar', 'events'],
+    ['initiative', 'combatants']
+];
+
+describe('hasCampaignContent() — Mindestumfang gegen handgeschriebene Erwartung (R16, SAFE-04)', () => {
+    test('CAMPAIGN_CONTENT_ARRAYS enthaelt exakt die erwarteten 17 Sammlungen', () => {
+        expect([...REAL_CAMPAIGN_CONTENT_ARRAYS].sort()).toEqual([...ERWARTETE_CONTENT_ARRAYS].sort());
+    });
+
+    test('CAMPAIGN_CONTENT_TEXT_FIELDS enthaelt exakt quickNotes und dmScreenNotes', () => {
+        expect([...REAL_CAMPAIGN_CONTENT_TEXT_FIELDS].sort()).toEqual([...ERWARTETE_CONTENT_TEXT_FIELDS].sort());
+    });
+
+    test('CAMPAIGN_CONTENT_PATHS enthaelt exakt die drei erwarteten Pfade', () => {
+        const alsText = liste => liste.map(p => p.join('.')).sort();
+        expect(alsText(REAL_CAMPAIGN_CONTENT_PATHS)).toEqual(alsText(ERWARTETE_CONTENT_PATHS));
+    });
+
+    // Verhaltensnachweis je Sammlung — Tabelle aus der HANDGESCHRIEBENEN Liste,
+    // nicht aus dem Pruefling: das Streichen eines Eintrags in der
+    // Implementierung laesst den Testfall bestehen und macht ihn rot.
+    test.each(ERWARTETE_CONTENT_ARRAYS)(
+        'Sammlung "%s" allein gefuellt -> hasCampaignContent() true (unabhaengige Tabelle)',
+        name => {
+            expect(context.hasCampaignContent({ [name]: [{ id: 1 }] })).toBe(true);
+        }
+    );
+
+    test.each(ERWARTETE_CONTENT_TEXT_FIELDS)(
+        'Textfeld "%s" allein gefuellt -> hasCampaignContent() true (unabhaengige Tabelle)',
+        name => {
+            expect(context.hasCampaignContent({ [name]: 'Notiz des Spielleiters' })).toBe(true);
+            expect(context.hasCampaignContent({ [name]: '   ' })).toBe(false);
+        }
+    );
+
+    test.each(ERWARTETE_CONTENT_PATHS.map(p => [p]))(
+        'Pfad "%s" allein gefuellt -> hasCampaignContent() true (unabhaengige Tabelle)',
+        contentPath => {
+            let nested = [{ id: 1 }];
+            for (let i = contentPath.length - 1; i >= 0; i--) {
+                nested = { [contentPath[i]]: nested };
+            }
+            expect(context.hasCampaignContent(nested)).toBe(true);
+        }
+    );
+
+    // Durchstich: jede einzelne Sammlung muss das Urteil auch ueber die echte
+    // isFreshInstall()-Verdrahtung kippen, nicht nur ueber hasCampaignContent().
+    test.each(ERWARTETE_CONTENT_ARRAYS)(
+        'Kampagne mit ausschliesslich "%s" -> isFreshInstall() false',
+        async name => {
+            mockReadCampaignDataForBackup.mockResolvedValue({
+                characters: [], npcs: [], quests: [], [name]: [{ id: 1 }]
+            });
+            expect(await context.isFreshInstall()).toBe(false);
+        }
+    );
+});
+
+// ============================================================
+// GAP-CLOSURE R09 — isFreshInstall() ueber die ECHTE IDB-Stufe
+//
+// Die Tests oben stubben window.readCampaignDataForBackup pauschal; sie waeren
+// fuer eine reine localStorage-Kampagne identisch gruen und belegen nichts
+// ueber IndexedDB. Hier laufen migration-wizard.js UND file-backup-manager.js im
+// SELBEN vm-Kontext: der Wizard ruft die echte readCampaignDataForBackup(), die
+// echte IDB-Stufe liest ueber window.loadFromIndexedDBFallbackRaw.
+// ============================================================
+const BACKUP_MANAGER_PATH = path.join(__dirname, '../../systems/file-backup/file-backup-manager.js');
+
+/**
+ * Baut einen Kontext, in dem beide Module gemeinsam laufen.
+ * @param {Object} opts
+ * @param {Object|null} opts.lsData   Inhalt unter dem aktiven localStorage-Key
+ * @param {Object|null} opts.idbData  Inhalt in IndexedDB (null = kein Datensatz)
+ * @param {string|undefined} opts.override STORAGE_KEY_OVERRIDE
+ */
+function ladeVerbund({ lsData = null, idbData = null, override = undefined } = {}) {
+    const idbRead = jest.fn(async key => {
+        if (idbData === null) return null;
+        return { id: key, data: JSON.stringify(idbData), timestamp: 1 };
+    });
+    const APP_CONFIG_VERBUND = { STORAGE_KEY: 'dnd-tracker-data', DEBUG_MODE: false, VERSION: '2.7.0' };
+    const StorageAPI_VERBUND = {
+        getJSON: jest.fn((key, def) => (lsData === null ? def : lsData)),
+        setJSON: jest.fn(),
+        has: jest.fn(() => lsData !== null)
+    };
+    const verbund = {
+        window: {
+            APP_CONFIG: APP_CONFIG_VERBUND,
+            STORAGE_KEY_OVERRIDE: override,
+            loadFromIndexedDBFallbackRaw: idbRead,
+            showToast: jest.fn(),
+            ErrorHandler: { log: jest.fn() },
+            getCampaignIndex: jest.fn(() => ({ campaigns: [] })),
+            location: { protocol: 'https:' },
+            D: null
+        },
+        APP_CONFIG: APP_CONFIG_VERBUND,
+        D: null,
+        StorageAPI: StorageAPI_VERBUND,
+        sessionStorage: { getItem: jest.fn(() => null), setItem: jest.fn(), removeItem: jest.fn() },
+        setTimeout: jest.fn(),
+        confirm: jest.fn(() => true),
+        esc: s => String(s),
+        document: { getElementById: () => null, querySelectorAll: () => [] },
+        console
+    };
+    vm.createContext(verbund);
+    vm.runInContext(fs.readFileSync(BACKUP_MANAGER_PATH, 'utf8'), verbund);
+    // Verdrahtung wie in loader.js: der Wizard greift zur Laufzeit ueber window.*
+    verbund.window.readCampaignDataForBackup = verbund.readCampaignDataForBackup;
+    vm.runInContext(fs.readFileSync(WIZARD_PATH, 'utf8'), verbund);
+    return { verbund, idbRead, StorageAPI_VERBUND };
+}
+
+describe('isFreshInstall() ueber die echte IDB-Stufe von readCampaignDataForBackup() (R09, SAFE-04)', () => {
+    test('localStorage-Key fehlt, Kampagne liegt NUR in IndexedDB -> false, IDB wurde wirklich gelesen', async () => {
+        const { verbund, idbRead } = ladeVerbund({
+            lsData: null,
+            idbData: { characters: [{ id: 1, name: 'Thorin' }], npcs: [], quests: [] }
+        });
+
+        expect(await verbund.isFreshInstall()).toBe(false);
+        expect(idbRead).toHaveBeenCalledWith('dnd-tracker-data');
+    });
+
+    test('IDB-only-Kampagne unter STORAGE_KEY_OVERRIDE -> false, und der Override-Key wird an die IDB-Stufe durchgereicht', async () => {
+        const { verbund, idbRead } = ladeVerbund({
+            lsData: null,
+            idbData: { characters: [], npcs: [], quests: [], spells: [{ id: 1, name: 'Feuerball' }] },
+            override: 'dnd-campaign-123'
+        });
+
+        expect(await verbund.isFreshInstall()).toBe(false);
+        expect(idbRead).toHaveBeenCalledWith('dnd-campaign-123');
+        expect(idbRead).not.toHaveBeenCalledWith('dnd-tracker-data');
+    });
+
+    test('weder localStorage noch IndexedDB liefern etwas -> true (echte Frischinstallation)', async () => {
+        const { verbund, idbRead } = ladeVerbund({ lsData: null, idbData: null });
+
+        expect(await verbund.isFreshInstall()).toBe(true);
+        expect(idbRead).toHaveBeenCalledWith('dnd-tracker-data');
+    });
+
+    test('IDB traegt nur eine leere Kampagne -> true (kein Inhalt trotz Datensatz)', async () => {
+        const { verbund } = ladeVerbund({
+            lsData: null,
+            idbData: { characters: [], npcs: [], quests: [], settings: { theme: 'dark' } }
+        });
+
+        expect(await verbund.isFreshInstall()).toBe(true);
+    });
+});
