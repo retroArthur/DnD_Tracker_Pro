@@ -56,7 +56,7 @@ sich spürbar.
 **Goal**: Kein Pfad in Backup, Export oder Migration verliert oder überschreibt mehr stillschweigend Daten, und die Randfälle, die solche Verluste bisher verdeckt haben, sind getestet.
 **Depends on**: Nothing (erste Phase des Milestones)
 **Requirements**: SAFE-01, SAFE-02, SAFE-03, SAFE-04, SAFE-05, SAFE-06
-**Plans:** 8/8 plans executed
+**Plans:** 11 plans (8/8 der Erstplanung ausgeführt; 3 Lückenpläne aus Code-Review und Re-Verifikation vom 2026-09-04 offen)
 **Success Criteria** (what must be TRUE):
 
   1. Ein Umzugs-Export `file://` → PWA enthält Soundboard-Audio und Würfelstatistik; nach dem Import spielen Szenen ihre Tracks, keine toten `blobId`s bleiben zurück
@@ -76,6 +76,9 @@ Plans:
 - [x] 12-06-PLAN.md — Audio-Löschen rückgängig: aufgeschobenes Löschen plus Wiederherstellung über den Undo-Hook (Welle 4)
 - [x] 12-07-PLAN.md — Persistenz-Randfälle getestet: IDB-Neustart, Export/Import-Rundlauf, Audio-Rundlauf (Welle 5)
 - [x] 12-08-PLAN.md — Lücken-Plan G-12-3: Inhalts-Prüfung der Frischinstallation zählt alle Nutzer-Sammlungen statt drei (Welle 6)
+- [ ] 12-09-PLAN.md — Lücken-Plan CR-01/WR-01: „Überspringen" nach abgeschlossenem Import lädt neu statt das stale D zurückschreiben zu lassen; Footer ab Schritt 4 aus; Audio-Rückmeldung am richtigen Element (Welle 7)
+- [ ] 12-10-PLAN.md — Lücken-Plan CR-02: Backup-Rückfall auf `window.D` greift nur noch für die tatsächlich angefragte, aktive Kampagne (Welle 7)
+- [ ] 12-11-PLAN.md — Lücken-Plan WR-02: Redo-Stack auch im Serialisierungsfehler leeren; volle Suiten und beide dist-Bundles aus dem Stand aller drei Lückenpläne (Welle 8)
 
 **Auslegungshinweis:** Erfolgskriterium 6 schließt dieselbe Testlücken-Klasse, die `DEBT-17` in v1.1 verdeckt hat — die Tests gehören in dieselbe Phase wie die Fixes, nicht ans Ende des Milestones.
 
