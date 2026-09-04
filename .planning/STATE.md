@@ -3,26 +3,26 @@ gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: Schulden-Abbau
 current_phase: 12
-current_phase_name: Datensicherheit
+current_phase_name: datensicherheit
 status: executing
-stopped_at: Completed 12-08-PLAN.md — Gap-Closure G-12-3 (SAFE-04) geschlossen
-last_updated: "2026-09-04T11:46:21.502Z"
+stopped_at: Lueckenplaene 12-09..12-11 geplant (CR-01/WR-01, CR-02, WR-02) — bereit zur Ausfuehrung
+last_updated: "2026-09-04T12:44:56.786Z"
 last_activity: 2026-09-04
-last_activity_desc: Phase 12 execution started
-state_head: 07d151c5a27b634cea7e1f3f63e01b3f3acf079f
+last_activity_desc: Phase 12 Gap-Closure geplant — 3 Plaene, Plan-Checker VERIFICATION PASSED
+state_head: df4ea543a219cc16163ab860949cbd09c45d3049
 progress:
   total_phases: 3
   completed_phases: 0
-  total_plans: 8
+  total_plans: 11
   completed_plans: 8
   percent: 0
 ---
 
 # Project State: D&D Kampagnen-Tracker Pro — Schulden-Abbau
 
-**Last Updated:** 2026-08-06
-**Milestone:** v1.2 „Schulden-Abbau" — Requirements werden definiert
-**Status:** Ready to execute
+**Last Updated:** 2026-09-04
+**Milestone:** v1.2 „Schulden-Abbau" — Phase 12 in Ausfuehrung (8/11 Plaene fertig)
+**Status:** Ready to execute — Lueckenplaene 12-09..12-11 (Wellen 7+8)
 
 ---
 
@@ -36,12 +36,12 @@ progress:
 
 ## Current Position
 
-Phase: 12 (Datensicherheit) — EXECUTING
-Plan: 2 of 8
+Phase: 12 (datensicherheit) — GAP CLOSURE READY
+Plan: 8 of 11 ausgefuehrt — 12-09, 12-10 (Welle 7), 12-11 (Welle 8) offen
 Status: Ready to execute
-Last activity: 2026-09-04 — Phase 12 execution started
+Last activity: 2026-09-04 — Lueckenplaene fuer CR-01/CR-02/WR-01/WR-02 erstellt und geprueft
 
-**Nächster Schritt:** `/gsd-verify-work` — Phase 12 ist vollstaendig ausgefuehrt (7/7 Plaene)
+**Nächster Schritt:** `/gsd-execute-phase 12 --gaps-only` — schliesst die zwei Blocker aus 12-VERIFICATION.md (Truth 7 + 8, `gaps_found` 6/8) plus die zwei per Nutzerentscheidung mitgenommenen Warnungen. Danach erneut `/gsd-verify-work`.
 
 **Die drei offenen Fragen aus der Diskussion sind beantwortet:**
 
@@ -192,16 +192,13 @@ Browser-Verhalten an der Base64-Grenze (12-07).
 
 ## Session Continuity
 
-**Last session:** 2026-09-04T11:46:21.413Z
-**Stopped at:** Completed 12-08-PLAN.md — Gap-Closure G-12-3 (SAFE-04) geschlossen
+**Last session:** 2026-09-04
+**Stopped at:** Lueckenplaene 12-09..12-11 geplant und geprueft — noch nicht ausgefuehrt
 **Resume file:** None
 
-**Last action:** Komplette Milestone-UAT abgeschlossen (2026-06-20 → 2026-07-20): alle 5 offenen Human-UAT-Sessions via `/gsd-verify-work` durchgetestet — 07 (4/4), 06 (5/5), 05 (2/2), 01 (3/3), 02 (6/6). Alle 7 VERIFICATION.md jetzt `status: passed`. Dabei gefundene+gefixte Bugs: Soundboard-Doppel-Import (75aadfe), Audio-läuft-nach-Szene-Löschen (b85dbe1), Volume nicht live (801ed48), Manifest-CORS unter file:// (cd75093), Konsolen-Hygiene (c029f11), Datei-Backup schrieb nie bei Entity-CRUD — window.save-Wrapper strukturell wirkungslos für bare save() (1430e8c), generischer registerPostSaveHook + DM-Screen-Live-Sync-Umstellung + CLAUDE.md-Pattern-Korrektur (6ea8309), „Anderen Ordner wählen"-Button (cc2af9e). Nebenbei: Repo mit origin gemergt (7 Mai-Commits, alter pages.yml-Deploy entfernt 7f4858a), 348 Commits gepusht, GitHub-Pages-Deploy live verifiziert (PWA installierbar, SW-Update-Flow, Datei-Backup, Migrations-Wizard file://→PWA). Zusätzlich in der Session: Soundboard-Erweiterungen (Loop-Toggle/Crossfade-Loop/Fortschritt 6636297, Per-Track-Play noch offen als Design), gruppierte Navigation (3d77ec0).
-**Next action:** Phase 8 ausführen — `/gsd-execute-phase 8` (Wave 1 → 08-01 zuerst; Sampling gemäß 08-VALIDATION.md: volle Suite zweimal in Folge grün vor `/gsd-verify-work`). Offene Design-Entscheidung Soundboard Per-Track-Play (Layering gewählt, Szenen-Play-Variante unbestätigt). Optionale Altlasten: Phase-1-Security-Audit (`/gsd-secure-phase 1`), Phase-1-Code-Review-Findings, Phase-3 Browser-Checks (nicht-blockierend).
+**Last action:** `/gsd-plan-phase 12 --gaps`. Ausgangslage: die Re-Verifikation vom 2026-09-04 steht auf `gaps_found` (6/8 Truths) — G-12-3 ist durch 12-08 sauber geschlossen, aber der Code-Review (`12-REVIEW.md`) hat zwei neue Blocker aufgedeckt, die der Verifier unabhaengig gegen den Quelltext bestaetigt hat: **CR-01** (der „Ueberspringen"-Button des Migrations-Wizards bleibt nach erfolgreichem Import sichtbar, ruft nur `_closeWizard()` statt `window.location.reload()` — der unbedingte `beforeunload`-Autosave in `avatars.js:170-176` schreibt danach das stale `window.D` ueber die frisch importierten Daten) und **CR-02** (`readCampaignDataForBackup()` Stufe 3 gibt `window.D` zurueck, ohne `campaignKey` gegen den aktiven Key zu pruefen — jede indizierte, nie gespeicherte Kampagne bekommt die Daten der aktiven Kampagne in ihre Backup-Datei). Auf Nachfrage hat der Nutzer die zwei nicht-blockierenden Warnungen **WR-01** (Audio-Rueckmeldung am falschen DOM-Element) und **WR-02** (`pushUndo()` leert den Redo-Stack im `catch` nicht) mit aufgenommen. Ergebnis: 3 Plaene — 12-09 (CR-01+WR-01, Welle 7), 12-10 (CR-02, Welle 7, disjunkte Dateien), 12-11 (WR-02 + Rebuild beider Bundles, Welle 8, weil ein Rebuild in derselben Welle die Commits seiner Geschwister nicht saehe = genau W-1). Plan-Checker: **VERIFICATION PASSED im ersten Durchlauf**, 0 Blocker/0 Warnungen, Baselines live nachgemessen (41+17+73=131). Zusaetzlich `COVERAGE.md` geschrieben (`No external API integration: …`) — das entschaerft den wiederkehrenden `api-coverage`-Fehlalarm bei `verify:pre` dauerhaft, der nur auf dem Substring „API" in „File System Access API" feuert. Commit `df4ea54`.
 
----
-
-_State initialized: 2026-06-11_
+**Next action:** `/gsd-execute-phase 12 --gaps-only` — nur die drei `gap_closure: true`-Plaene, sequenziell auf main (Windows-Praxis). Reihenfolge: 12-09 und 12-10 (Welle 7, unabhaengig), dann 12-11 (Welle 8, haengt an beiden und baut beide `dist/`-Bundles neu). Jeder Plan faengt mit einem ROTEN Test an — der rote Lauf ist Beweispflicht, nicht Formsache, denn beide Blocker existieren gerade deshalb, weil kein Test ihren Pfad erreichte. Danach `/gsd-verify-work` bzw. Re-Verifikation. **Weiterhin offen und durch diesen Lauf NICHT erledigt:** der menschliche Pruefpunkt „Audio-Bibliothek knapp unter 300 MiB, Tab-Gesundheit im echten Browser" (Recherche-Annahme A1) — der Nutzer hat am 2026-08-19 bewusst darauf verzichtet, die Dateien zusammenzutragen; er wird nach diesen Fixes erneut faellig.
 
 ## Decisions
 

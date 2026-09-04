@@ -67,17 +67,39 @@ sich spürbar.
   6. Tests decken den >5-MB-IDB-only-Save mit Reload, den localStorage-Quota-Fallback und den Export/Import-Versions-Rundlauf ab
 
 Plans:
+**Wave 1**
 
 - [x] 12-01-PLAN.md — Testfundament (Wave 0) + Audio-Export-Tracer: IndexedDB → Base64 → JSON → IndexedDB (Welle 1)
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
 - [x] 12-02-PLAN.md — Umzugs-Flow mit zwei Dateien: zweite Datei erzeugen, optional importieren, fehlende Szenen benennen (Welle 2)
 - [x] 12-03-PLAN.md — Datei-Backup über alle Kampagnen, Kollisions-Suffix nur bei echtem Namenskonflikt (Welle 2)
+
+**Wave 3** *(blocked on Wave 2 completion)*
+
 - [x] 12-04-PLAN.md — Frischinstallations-Erkennung mit Override und IndexedDB-Modus (Welle 3)
 - [x] 12-05-PLAN.md — Undo-Kern: erst parsen dann poppen, Push-Validierung, Undo-Hooks, toter Autosave-Schalter entfernt (Welle 3)
+
+**Wave 4** *(blocked on Wave 3 completion)*
+
 - [x] 12-06-PLAN.md — Audio-Löschen rückgängig: aufgeschobenes Löschen plus Wiederherstellung über den Undo-Hook (Welle 4)
+
+**Wave 5** *(blocked on Wave 4 completion)*
+
 - [x] 12-07-PLAN.md — Persistenz-Randfälle getestet: IDB-Neustart, Export/Import-Rundlauf, Audio-Rundlauf (Welle 5)
+
+**Wave 6** *(blocked on Wave 5 completion)*
+
 - [x] 12-08-PLAN.md — Lücken-Plan G-12-3: Inhalts-Prüfung der Frischinstallation zählt alle Nutzer-Sammlungen statt drei (Welle 6)
+
+**Wave 7** *(blocked on Wave 6 completion)*
+
 - [ ] 12-09-PLAN.md — Lücken-Plan CR-01/WR-01: „Überspringen" nach abgeschlossenem Import lädt neu statt das stale D zurückschreiben zu lassen; Footer ab Schritt 4 aus; Audio-Rückmeldung am richtigen Element (Welle 7)
 - [ ] 12-10-PLAN.md — Lücken-Plan CR-02: Backup-Rückfall auf `window.D` greift nur noch für die tatsächlich angefragte, aktive Kampagne (Welle 7)
+
+**Wave 8** *(blocked on Wave 7 completion)*
+
 - [ ] 12-11-PLAN.md — Lücken-Plan WR-02: Redo-Stack auch im Serialisierungsfehler leeren; volle Suiten und beide dist-Bundles aus dem Stand aller drei Lückenpläne (Welle 8)
 
 **Auslegungshinweis:** Erfolgskriterium 6 schließt dieselbe Testlücken-Klasse, die `DEBT-17` in v1.1 verdeckt hat — die Tests gehören in dieselbe Phase wie die Fixes, nicht ans Ende des Milestones.
