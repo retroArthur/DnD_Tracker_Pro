@@ -1391,6 +1391,55 @@ describe('Data Integrity', () => {
             expect(context.showToast).toHaveBeenCalledTimes(2);
         });
 
+        test('WR-02 Test J: Redo nach gescheitertem Push (nicht serialisierbares D) ist geleert, nicht der veraltete Eintrag', () => {
+            // Aktion A ausführen und sichern
+            context.window.D.characters.push({ id: 1, name: 'Aktion A' });
+            realSaveUndoState('Aktion A');
+            // D weiter verändern (die Zwischenaktion, die ein Redo NICHT überschreiben darf)
+            context.window.D.characters[0].name = 'Aktion A geändert';
+
+            // Undo — der Redo-Eintrag muss aus einem ECHTEN realUndo()-Lauf stammen,
+            // nicht per __pushRawRedo() von Hand hingelegt (Plan-Vorgabe Schritt 2).
+            realUndo();
+            expect(getDebug()).toEqual({ undoLength: 0, redoLength: 1 });
+
+            // D unserialisierbar machen (zirkuläre Referenz, wie im bestehenden Zirkulär-Test)
+            context.window.D.self = context.window.D;
+
+            // Aktion B versuchen zu sichern — der Push scheitert an JSON.stringify
+            realPushUndo('Aktion B');
+
+            // Nach dem Fix: der veraltete Redo-Eintrag für Aktion A ist weg. Vor dem Fix
+            // bliebe er stehen (redoLength === 1) und ein späteres Redo würde Aktion B
+            // stillschweigend überschreiben.
+            expect(getDebug().redoLength).toBe(0);
+        });
+
+        test('WR-02 Test K: pushUndo() wirft bei nicht serialisierbarem D weiterhin nicht, der Aufrufer läuft weiter, der Warn-Toast erscheint', () => {
+            context.window.D.characters.push({ id: 1, name: 'Aktion A' });
+            realSaveUndoState('Aktion A');
+            context.window.D.characters[0].name = 'Aktion A geändert';
+
+            realUndo();
+            expect(getDebug()).toEqual({ undoLength: 0, redoLength: 1 });
+
+            context.window.D.self = context.window.D; // zirkulär
+
+            let ranAfterPush = false;
+            expect(() => {
+                realPushUndo('Aktion B');
+                ranAfterPush = true; // beweist: der Aufrufer wird NICHT abgebrochen
+            }).not.toThrow();
+
+            expect(ranAfterPush).toBe(true);
+            // Kein kaputter Eintrag wurde auf den Undo-Stack gelegt
+            expect(getDebug().undoLength).toBe(0);
+            expect(context.showToast).toHaveBeenCalledWith(
+                expect.stringContaining('Undo-Schutz'),
+                'warning'
+            );
+        });
+
         describe('registerUndoHook() (Task 2 — Konsument: Plan 12-06)', () => {
             test('Hook feuert nach erfolgreichem Undo genau einmal mit { action, direction: "undo" }', () => {
                 context.window.D.characters.push({ id: 1, name: 'X' });
