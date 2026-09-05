@@ -31,6 +31,7 @@ let base64ToBlob;
 let checkAudioExportFeasible; // erst ab Task 3 vorhanden
 let downloadAudioExport; // Plan 12-02, Task 1
 let findMissingSceneAudio; // Plan 12-02, Task 2
+let schaetzeAudioRohbytes; // Plan 12-15, Task 1 (SEC-07) — vm-Kontext-Direktzugriff, kein window.*-Export
 
 let mockListSoundBlobs;
 let mockGetSoundBlob;
@@ -111,6 +112,7 @@ beforeAll(() => {
     downloadAudioExport = context.downloadAudioExport;
     findMissingSceneAudio = context.findMissingSceneAudio;
     getAudioExportSummary = context.getAudioExportSummary;
+    schaetzeAudioRohbytes = context.schaetzeAudioRohbytes;
 });
 
 beforeEach(() => {
@@ -600,6 +602,83 @@ describe('importAudioExport — Härtung (SAFE-01/T-12-01/T-12-02/T-12-03)', () 
         expect(result.imported).toBe(1);
         expect(result.skipped).toHaveLength(1);
         expect(result.skipped[0].id).toBe('audio_1_1');
+    });
+
+    // ============================================================
+    // Plan 12-15, Task 1 (SEC-07) — Einzelgrenze: kein Dekodieren vor der
+    // Groessenpruefung. Test A + Test B (D-02-Konformitaet).
+    // ============================================================
+    test('SEC-07: Eintrag mit angegebener Groesse ueber der Einzelgrenze wird uebersprungen und benannt, base64ToBlob()/saveSoundBlob() laufen fuer ihn nicht', async () => {
+        const validB64 = await blobToBase64(new Blob([bytesA()]));
+        const exportObj = {
+            _exportType: 'audio-export-v1',
+            audioFiles: [
+                { id: 'audio_1_1', name: 'riesig.mp3', type: 'audio/mpeg', size: 150 * 1024 * 1024, data: validB64 }
+            ],
+            diceStats: []
+        };
+        mockSaveSoundBlob.mockResolvedValue(undefined);
+
+        const result = await importAudioExport(exportObj);
+
+        expect(result.imported).toBe(0);
+        expect(mockSaveSoundBlob).not.toHaveBeenCalled();
+        expect(result.skipped).toHaveLength(1);
+        expect(result.skipped[0].id).toBe('audio_1_1');
+        expect(result.skipped[0].name).toBe('riesig.mp3');
+        expect(result.skipped[0].grund).toMatch(/[Gg]r[oö0]ß|[Gg]r[oö0]ss|MB|100/);
+    });
+
+    test('SEC-07/D-02: ein einzelner uebergrosser Eintrag kostet nur sich selbst — die uebrigen werden importiert, kein Wurf', async () => {
+        const validB64 = await blobToBase64(new Blob([bytesA()]));
+        const exportObj = {
+            _exportType: 'audio-export-v1',
+            audioFiles: [
+                { id: 'audio_1_1', name: 'gut1.mp3', type: 'audio/mpeg', size: 5, data: validB64 },
+                { id: 'audio_2_2', name: 'riesig.mp3', type: 'audio/mpeg', size: 150 * 1024 * 1024, data: validB64 },
+                { id: 'audio_3_3', name: 'gut2.mp3', type: 'audio/mpeg', size: 9, data: validB64 }
+            ],
+            diceStats: []
+        };
+        mockSaveSoundBlob.mockResolvedValue(undefined);
+
+        // Kein Wurf ist hier der eigentliche Nachweis (D-02): ein rejectetes Promise
+        // liesse `await` unten scheitern, statt still zu bleiben.
+        const result = await importAudioExport(exportObj);
+
+        expect(result.imported).toBe(2);
+        expect(mockSaveSoundBlob).toHaveBeenCalledTimes(2);
+        const calledIds = mockSaveSoundBlob.mock.calls.map(call => call[0]);
+        expect(calledIds).toContain('audio_1_1');
+        expect(calledIds).toContain('audio_3_3');
+        expect(calledIds).not.toContain('audio_2_2');
+        expect(result.skipped).toHaveLength(1);
+        expect(result.skipped[0].id).toBe('audio_2_2');
+    });
+
+    // ============================================================
+    // Plan 12-15, Task 1 (SEC-07) — Test C: die Schaetzregel
+    // ============================================================
+    test('SEC-07: schaetzeAudioRohbytes() liefert das Maximum aus Groessenangabe und Base64-Schaetzung, wirft nie', () => {
+        expect(typeof schaetzeAudioRohbytes).toBe('function');
+
+        // Base64-Zeichenkette der Laenge 4000 => Schaetzung 4000 * 3 / 4 = 3000.
+        const base64Len4000 = 'A'.repeat(4000);
+
+        // Unterschlagene/zu kleine Groessenangabe hilft nicht — die Schaetzung aus der
+        // Base64-Laenge gilt zusaetzlich, es zaehlt der groessere Wert.
+        expect(schaetzeAudioRohbytes({ size: 1, data: base64Len4000 })).toBe(3000);
+
+        // Groessenangabe ueber der Schaetzung gewinnt.
+        expect(schaetzeAudioRohbytes({ size: 5000, data: base64Len4000 })).toBe(5000);
+
+        // Fehlt `data` oder ist es keine Zeichenkette: Groessenangabe bzw. 0, kein Wurf.
+        expect(schaetzeAudioRohbytes({ size: 5 })).toBe(5);
+        expect(schaetzeAudioRohbytes({ size: 5, data: null })).toBe(5);
+        expect(schaetzeAudioRohbytes({ size: 5, data: 12345 })).toBe(5);
+        expect(schaetzeAudioRohbytes({})).toBe(0);
+        expect(schaetzeAudioRohbytes(null)).toBe(0);
+        expect(schaetzeAudioRohbytes(undefined)).toBe(0);
     });
 });
 

@@ -38,6 +38,30 @@ const MAX_IMPORT_AUDIO_FILES = 500;
 // IDB-Key verwendet.
 const ALLOWED_BLOB_ID_RE = /^audio_\d+_\d+$/;
 
+// T-12-60/SEC-07: Einzelgrenze fuer einen Import-Eintrag — gespiegelt aus
+// features/soundboard/soundboard-idb.js MAX_AUDIO_BYTES_HARD (dort Zeile 8, 100 MB).
+// Diese Zahl ist NICHT nach window exportiert (nur MAX_AUDIO_BYTES ist es, Zeile 252
+// dort), deshalb wird sie hier gespiegelt statt importiert. Der Abgleichtest in
+// tests/unit/audio-export.test.js ("Abgleich") liest soundboard-idb.js als Text und
+// haelt beide Zahlen gegeneinander fest — faellt er um, ist DIESE Zahl nachzuziehen,
+// nicht der Test zu lockern.
+const AUDIO_IMPORT_MAX_ENTRY_BYTES = 100 * 1024 * 1024;
+
+// T-12-62/SEC-07: Schaetzt die Rohbyte-Groesse eines Import-Eintrags VOR dem
+// Dekodieren. Die Datei ist nicht vertrauenswuerdig — entry.size ist eine Angabe
+// DARIN, kein gemessener Wert. Eine zu klein angegebene Groesse (Manipulation) waere
+// mit einer reinen size-Pruefung wirkungslos, deshalb zaehlt zusaetzlich die Schaetzung
+// aus der Laenge der Base64-Zeichenkette (3 Rohbytes je 4 Zeichen) — es gilt das
+// Maximum aus beiden Werten. Wirft nie; fehlen Groesse und Daten, liefert sie 0.
+function schaetzeAudioRohbytes(entry) {
+    const angegebeneGroesse = entry && typeof entry.size === 'number' && isFinite(entry.size) && entry.size > 0
+        ? entry.size
+        : 0;
+    const base64Laenge = entry && typeof entry.data === 'string' ? entry.data.length : 0;
+    const geschaetzteRohgroesse = Math.floor(base64Laenge * 3 / 4);
+    return Math.max(angegebeneGroesse, geschaetzteRohgroesse);
+}
+
 // ============================================================
 // Blob <-> Base64 (kein Runtime-Dependency, D-01)
 // ============================================================
@@ -306,6 +330,9 @@ async function downloadAudioExport() {
  *   benannt, NIE als IDB-Key verwendet (T-12-02).
  * - Base64-Dekodierung laeuft PRO Datei in try/catch, nicht in einem globalen
  *   try/catch — eine kaputte Datei darf nicht zum Totalausfall werden (T-12-03, D-02).
+ * - SEC-07/T-12-60: Einzelgrenze AUDIO_IMPORT_MAX_ENTRY_BYTES prueft VOR
+ *   base64ToBlob() — die 100-MB-Sperre von saveSoundBlob() greift erst NACH der
+ *   Dekodierung und kann die Speicherbelegung deshalb nicht verhindern.
  *
  * @param {Object} parsedObj
  * @returns {Promise<{ imported: number, skipped: Array<{id, name, grund}> }>}
@@ -337,6 +364,20 @@ async function importAudioExport(parsedObj) {
                 id: id,
                 name: entry && entry.name,
                 grund: 'Unerwartetes ID-Format'
+            });
+            continue;
+        }
+
+        // SEC-07/T-12-60: Einzelgrenze VOR base64ToBlob() — kein Dekodieren eines
+        // uebergrossen Eintrags. Ein einzelner Eintrag kostet nur sich selbst (D-02),
+        // deshalb kein Wurf, sondern uebersprungen und benannt.
+        const geschaetzteBytes = schaetzeAudioRohbytes(entry);
+        if (geschaetzteBytes > AUDIO_IMPORT_MAX_ENTRY_BYTES) {
+            skipped.push({
+                id: id,
+                name: entry && entry.name,
+                grund: 'Datei zu groß (' + (geschaetzteBytes / (1024 * 1024)).toFixed(1) +
+                    ' MB, Grenze ' + (AUDIO_IMPORT_MAX_ENTRY_BYTES / (1024 * 1024)).toFixed(0) + ' MB)'
             });
             continue;
         }
