@@ -1708,14 +1708,17 @@ describe('Nachzug R11 — pushUndo()-Schutz haelt auch in den Randlagen von APP_
         );
     });
 
-    // R11, zweite Haelfte ("wird NICHT gepusht UND crasht nicht"): D-06 laesst die
-    // destruktive Aktion bei nicht serialisierbarem window.D bewusst weiterlaufen
-    // (pushUndo() faengt ab, systems/undo.js:16-24). Genau dieser Zustand trifft in
-    // undo() Zeile 69 und redo() Zeile 108 auf ein UNGESCHUETZTES JSON.stringify(D) —
-    // der naechste Strg+Z wirft dort einen ungefangenen TypeError, ohne Warn-Toast.
-    // Als test.failing verankert: heute ROT (der Body wirft), nach dem Fix meldet Jest
-    // den Test als unerwartet bestanden und erzwingt das Umstellen auf test().
-    test.failing('R11-Rest: nach gescheitertem Push kippt das naechste undo() nicht in einen ungefangenen TypeError', () => {
+    // R11, zweite Haelfte ("wird NICHT gepusht UND crasht nicht"), geschlossen durch
+    // SEC-02 (Plan 12-13): D-06 laesst die destruktive Aktion bei nicht serialisierbarem
+    // window.D bewusst weiterlaufen (pushUndo() faengt ab, systems/undo.js:16-24). Genau
+    // diesen Zustand trifft undo() beim Ziehen: der aktuelle Stand wird VOR dem Redo-Push
+    // jetzt genauso geschuetzt serialisiert wie beim urspruenglichen Push. Vormals stand
+    // dieser Test als test.failing verankert — heute GRUEN, WEIL die Implementierung noch
+    // kaputt war (der Body warf, test.failing erwartet genau das). Mit dem Fix wirft
+    // undo() nicht mehr, Jest haette den Test als "unerwartet bestanden" gemeldet und die
+    // Suite waere rot gegangen — das Umstellen auf test() ist deshalb Teil des Fixes,
+    // nicht Nacharbeit an einer reparierten Implementierung.
+    test('R11-Rest: nach gescheitertem Push kippt das naechste undo() nicht in einen ungefangenen TypeError', () => {
         const ctx = ladeUndo({ UNDO_LIMIT: 30 });
 
         // 1. Ein regulaerer, serialisierbarer Eintrag landet auf dem Undo-Stack.
@@ -1729,8 +1732,11 @@ describe('Nachzug R11 — pushUndo()-Schutz haelt auch in den Randlagen von APP_
         expect(ctx.__undoDebug()).toEqual({ undoLength: 1, redoLength: 0 });
 
         // 3. Der Nutzer drueckt Strg+Z. undo() sichert den aktuellen State fuer Redo
-        //    per JSON.stringify(D) — ohne try/catch. HIER kippt es heute.
+        //    per JSON.stringify(D) — jetzt geschuetzt. Kein Wurf, kein Stack veraendert,
+        //    dafuer ein Warn-Toast statt einer stillen Ausnahme.
         expect(() => ctx.undo()).not.toThrow();
+        expect(ctx.__undoDebug()).toEqual({ undoLength: 1, redoLength: 0 });
+        expect(ctx.showToast).toHaveBeenCalledWith(expect.any(String), 'warning');
     });
 });
 

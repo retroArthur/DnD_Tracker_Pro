@@ -65,9 +65,25 @@ function undo() {
     // Redo-Stack bei jedem gescheiterten Undo-Versuch um einen sinnlosen Eintrag.
     // Das Aktionslabel wandert mit (last.action statt fest 'Redo'), damit es über beide
     // Stacks hinweg erhalten bleibt (Plan 12-06 braucht es für den Undo-Hook).
+    // SEC-02 (Plan 12-13): pushUndo() prüft die Serialisierbarkeit VOR dem Push (D-06) und
+    // lässt die destruktive Aktion des Aufrufers bewusst weiterlaufen — window.D bleibt
+    // dabei nicht serialisierbar. Genau diesen Zustand trifft das nächste Strg+Z hier beim
+    // Ziehen: dieselbe Absicherung wie in pushUndo(), spiegelbildlich beim Pop statt beim
+    // Push. Abbruch statt teilweiser Ausführung, weil ein Undo ohne Redo-Eintrag den
+    // aktuellen Stand unwiederbringlich verlöre — schlimmer als ein verweigertes Undo.
+    let redoStateJSON;
+    try {
+        redoStateJSON = JSON.stringify(D);
+    } catch (e) {
+        if (window.APP_CONFIG?.DEBUG_MODE && window.ErrorHandler) {
+            window.ErrorHandler.log('undo', e, last.action);
+        }
+        showToast('⚠️ Rückgängigmachen nicht möglich — aktueller Stand lässt sich nicht sichern', 'warning');
+        return;
+    }
     redoStack.push({
         action: last.action,
-        state: JSON.stringify(D),
+        state: redoStateJSON,
         timestamp: Date.now()
     });
     if (redoStack.length > UNDO_LIMIT) {
