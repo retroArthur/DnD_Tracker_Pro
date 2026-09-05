@@ -161,6 +161,6 @@ Plans:
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 12. Datensicherheit | 11/17 | Gap-Closure geplant — 7 reproduzierte Befunde (SEC-01…SEC-07) in den Wellen 9–11; 1 menschlicher Prüfpunkt offen (12-UAT.md #28) | |
+| 12. Datensicherheit | 11/17 | Gap-Closure geplant — 7 reproduzierte Befunde (SEC-01…SEC-07) in den Wellen 9–11. UAT vollständig bestanden (28/28, Punkt 28 am 2026-09-04 abgenommen); Verifikation steht auf `gaps_found` wegen SEC-01…SEC-07 | |
 | 13. Härtung & Wartbarkeit | TBD | Not started | |
 | 14. Tests & Gates | TBD | Not started | |
