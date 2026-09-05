@@ -8,10 +8,18 @@ function validateAvatarURL(url) {
     const trimmed = url.trim();
     // Block dangerous protocols
     const dangerousProtocols = ['javascript:', 'file:', 'vbscript:', 'data:text/html'];
-    const lowerUrl = trimmed.toLowerCase();
-    if (dangerousProtocols.some(proto => lowerUrl.startsWith(proto))) {
+    // WR-01 (Phase 12, Review-Fix): Browser entfernen Steuerzeichen (ASCII C0
+    // U+0000-U+001F, DEL U+007F) und Leerzeichen aus der GESAMTEN URL — nicht
+    // nur am Rand — bevor sie das Schema bestimmen (WHATWG-URL-Spezifikation).
+    // Ein reines trim()+startsWith()-Praefixfilter laesst sich damit umgehen,
+    // z. B. "java\tscript:alert(1)" oder "jav\nascript:alert(1)" bestehen die
+    // Pruefung, werden vom Browser aber als "javascript:"-URL interpretiert.
+    const strippedForProtocolCheck = trimmed.replace(/[\x00-\x20\x7F\s]/g, '');
+    const lowerStrippedForProtocolCheck = strippedForProtocolCheck.toLowerCase();
+    if (dangerousProtocols.some(proto => lowerStrippedForProtocolCheck.startsWith(proto))) {
         return false;
     }
+    const lowerUrl = trimmed.toLowerCase();
     // Allow relative paths
     if (trimmed.startsWith('/') || trimmed.startsWith('.')) {
         return true;
