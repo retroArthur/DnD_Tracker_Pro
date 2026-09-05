@@ -187,12 +187,48 @@ nur gezielt und nicht erschöpfend gesucht.
 - ✓ EDIT-02: Beide Toolbars (statisch + floating) funktionieren unverändert — bewiesen durch 80-Tests-Regressionsnetz (4 Spec-Dateien) mit exakten Markup-Assertionen und Persistenz-Roundtrips; Baseline-Reparatur Option A (EDITOR_FONTS/TOOLBAR_DIMENSIONS + Font-Setter-Wiring) machte die floating Toolbar überhaupt erst wieder klickbar; Entwickler-Handcheck im Browser freigegeben
 - ✓ EDIT-03: Regressionsnetz existierte VOR der Migration (D-04a-Doppel-Grün-Beweis in `09-BASELINE.md`, Netz-Freeze mit protokollierten Ausnahmen); Qualitätszyklus: Verifier 4/4, Playwright 308 passed / 2 skipped, Jest 457/457, Code-Review 2 Critical → CR-02 gefixt (`468bea1`), CR-01 als verhaltensneutrale Scope-Entscheidung dokumentiert
 
+**Validated in v1.1 (Phasen 10–11, abgeschlossen 2026-07-27):**
+
+- ✓ SEC-01/SEC-02 — Import-XSS geschlossen, Security-Audit (Phase 10)
+- ✓ ARCH-01…ARCH-04 — Build-/Repo-Hygiene (Phase 11)
+- Details im archivierten Milestone: `.planning/milestones/v1.1-REQUIREMENTS.md`
+
+**Validated in Phase 12: Datensicherheit (2026-09-05):**
+
+- ✓ SAFE-01: Der Umzugs-Export `file://` → PWA erfasst IndexedDB-Inhalte — Soundboard-Audio und
+  Würfelstatistik reisen mit, Szenen spielen nach dem Import ihre Tracks, keine toten `blobId`s.
+  Import- und Exportseite sind volumenbegrenzt (Einzelgrenze 100 MB, Gesamtbudget aus der
+  Exportgrenze abgeleitet), und ein bereits geschriebener Import wird nie mehr als Fehlschlag
+  gemeldet.
+- ✓ SAFE-02: Das Datei-Backup deckt alle Kampagnen ab, kollidiert nicht bei Namen — und kann seine
+  eigene gute Sicherung nicht mehr durch ein leeres Schema überschreiben (Inhaltsprüfung statt
+  Schlüsselzahl); der aktive Zielname wird ehrlich aus dem Kampagnenindex aufgelöst.
+- ✓ SAFE-03: Das Löschen einer Audiodatei ist rückgängig zu machen — Grabstein statt
+  Sofortlöschung, Undo-Hook stellt Datei und Szenen-Referenz wieder her, bewiesen bis in eine echte
+  Browser-Sitzung inklusive Reload.
+- ✓ SAFE-04: Der Umzugs-Wizard bietet sich Nutzern mit Daten nicht mehr an — `isFreshInstall()`
+  berücksichtigt `STORAGE_KEY_OVERRIDE`, den IDB-Pfad und alle Inhaltssammlungen; die
+  Ausschlussliste ist als exportierte Konstante prüfbarer Quelltext mit Vollständigkeitstest.
+- ✓ SAFE-05: Die Persistenz verhält sich bei Fehlern vorhersagbar — `undo()`/`redo()` serialisieren
+  geschützt vor jeder Stack-Mutation, ein Fehlschlag lässt beide Stacks unberührt und meldet sich;
+  der tote `autosave-toggle`-Pfad ist entfernt.
+- ✓ SAFE-06: Die Persistenz-Randfälle sind getestet — >5-MB-IDB-only-Save mit Reload,
+  localStorage-Quota-Fallback und Versions-Rundlauf laufen gegen den **echten** Produktivcode, nicht
+  gegen Testnachbildungen.
+- ✓ Qualitätszyklus: Verifikation `passed` 9/9 · UAT 28/28 · `12-SECURITY.md` `threats_open: 0`
+  (72 Threats aus 17 Plan-Registern) · `12-VALIDATION.md` `nyquist_compliant: true` · Jest 908/908
+  (31 Suites) · Playwright 321 passed / 2 skipped · `pytest tests/build` 24/24 · Code-Review
+  CR-01/WR-01 behoben, IN-01 advisory offen
+
 ### Active
 
-_(Milestone v1.1 — Details in `.planning/REQUIREMENTS.md`)_
+_(Milestone v1.2 — Details in `.planning/REQUIREMENTS.md`)_
 
-- [ ] SEC-01..02 — Import-XSS + Security-Audit (Phase 10)
-- [ ] ARCH-01..04 — Build-/Repo-Hygiene (Phase 11)
+- [ ] SEC-03, SEC-04 — `call`-Whitelist, Regex-Capture in `parseWikiLinks()` escapt (Phase 13)
+- [ ] PERF-01, PERF-02 — Serialisierungslast senken, Würfelstatistik-Store begrenzen (Phase 13)
+- [ ] MAINT-01…MAINT-06 — vier übergroße Module aufteilen, tote und irreführende Codestellen
+      beseitigen (Phase 13)
+- [ ] TEST-03…TEST-05 — Toast-Race schließen, fünf Welt-Features abdecken, Gates schärfen (Phase 14)
 
 ### Out of Scope
 
@@ -252,4 +288,4 @@ This document evolves at phase transitions and milestone boundaries.
 
 ---
 
-_Last updated: 2026-07-25 after Phase 10 completion (v1.1: Security-Härtung — SEC-01/SEC-02 validiert. Import-XSS-Kette geschlossen (Anzeige- und Import-Grenze sanitisiert, neun HTML-tragende Felder an beiden Eintrittspunkten), Sanitizer-Vektor-Katalog + Paritätstest gegen den echten Produktionsquelltext, `<strike>`-Whitelist. Zwei Gap-Runden nach adversarialer Gegenprüfung: der Editor-Einfügepfad endet jetzt mit dem Allowlist-Sanitizer als letzter Stufe (Tabellen-Paste-XSS — 59 Umgehungsvektoren gegengeprüft und blockiert), und eine Stil-Wertprüfung schließt einen CSS-basierten Ausgangs-Beacon. SECURITY.md plus vier Per-Phasen-Register mit `threats_open: 0`, jede Zeile dispositioniert. Suiten: Jest 621/621, Playwright 318 passed/2 skipped)._
+_Last updated: 2026-09-05 after Phase 12 completion (v1.2: Datensicherheit — SAFE-01…SAFE-06 validiert. 17 Pläne: 11 aus der Erstplanung plus sechs Gap-Pläne für die sieben reproduzierten Befunde SEC-01…SEC-07, dazu zwei Code-Review-Fixes (CR-01 Teilschreibung beim Umzugs-Import, WR-01 Protokollfilter). Zwei per `test.failing` verankerte Defekte (IMPL-01 Wizard-Fehlmeldung, IMPL-02 Undo/Redo-Crash) sind aufgelöst — der Anker-Mechanismus hat funktioniert. `threats_open: 0` über 72 Threats aus 17 Plan-Registern; `nyquist_compliant: true`. Ein Security-Befund kam aus dem Werkzeug selbst: T-12-70 zeigte, dass `npm run build` nur den Production-Bundle schreibt und die E2E-Suite deshalb Vor-Fix-Code geprüft hatte. Suiten: Jest 908/908 (31 Suites), Playwright 321 passed / 2 skipped, pytest tests/build 24/24)._
