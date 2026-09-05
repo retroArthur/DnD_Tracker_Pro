@@ -611,10 +611,51 @@ function _processWizardFile(file, dropzone) {
 }
 
 /**
+ * WR-03 (Phase 12, Plan 16): die Import-Groessengrenze zur AUFRUFZEIT aus dem
+ * Rohbyte-Rahmen des Exports ableiten, statt einer unabhaengig gewaehlten Zahl.
+ *
+ * Herkunft: AUDIO_EXPORT_SAFE_RAW_BYTES (systems/migration/audio-export.js:29,
+ * 300 MiB Rohbytes — der dort gewaehlte Sicherheitsabstand zur 384-MiB-
+ * V8-Kodiergrenze). Ein Export knapp unter dieser Grenze kodiert auf
+ * Rohbytes * 4/3 Zeichen (Base64-Aufblaehung); dazu kommt ein Aufschlag fuer
+ * die umschliessende JSON-Huelle (Feldnamen, Anfuehrungszeichen, Metadaten je
+ * Datei). Ohne diese Ableitung waeren AUDIO_EXPORT_SAFE_RAW_BYTES und die
+ * hiesige Importgrenze zwei unabhaengig gewaehlte Zahlen fuer dieselbe Grenze
+ * (WR-03) — ein selbst erzeugter, gueltiger Export waere beim Reimport
+ * grundlos abgelehnt worden. Obergrenze: V8s String-Laengenlimit
+ * (0x1fffffe8 Zeichen, ~512 MiB, dieselbe Herleitung wie audio-export.js)
+ * darf auch mit Aufschlag nie ueberschritten werden — sonst waere die
+ * "Grenze" nur eine hoehere Zahl fuer denselben Fehler.
+ *
+ * Ist window.AUDIO_EXPORT_SAFE_RAW_BYTES nicht verfuegbar (audio-export.js
+ * nicht geladen), gilt derselbe Wert als Rueckfall, den die Exportseite selbst
+ * benutzt.
+ *
+ * @returns {number} Import-Groessengrenze in Bytes
+ */
+function getAudioImportMaxBytes() {
+    // Identisch zu audio-export.js:29 (AUDIO_EXPORT_SAFE_RAW_BYTES) — bewusst
+    // gespiegelt statt importiert, analog zur Spiegelung von
+    // AUDIO_IMPORT_MAX_ENTRY_BYTES (audio-export.js:41-48, SEC-07/Plan 12-15).
+    const FALLBACK_SAFE_RAW_BYTES = 300 * 1024 * 1024;
+    const safeRawBytes = (typeof window !== 'undefined' &&
+            typeof window.AUDIO_EXPORT_SAFE_RAW_BYTES === 'number')
+        ? window.AUDIO_EXPORT_SAFE_RAW_BYTES
+        : FALLBACK_SAFE_RAW_BYTES;
+    // V8s String-Obergrenze: 0x1fffffe8 = 536.870.888 Zeichen (2^29-24, ~512 MiB).
+    const V8_MAX_STRING_LENGTH = 0x1fffffe8;
+    // Aufschlag fuer die JSON-Huelle (Feldnamen, Metadaten je Audiodatei) —
+    // grosszuegig bemessen, damit die Grenze nicht knapp am realen Dateiformat vorbeischrammt.
+    const JSON_ENVELOPE_OVERHEAD_BYTES = 10 * 1024 * 1024;
+    const derived = Math.ceil((safeRawBytes * 4) / 3) + JSON_ENVELOPE_OVERHEAD_BYTES;
+    return Math.min(derived, V8_MAX_STRING_LENGTH);
+}
+
+/**
  * Plan 12-02, Task 2d: Audio-Export-Datei lesen, validieren und importieren.
  * D-02: rein optional, blockiert den Hauptimport zu KEINEM Zeitpunkt — Fehler
- * werden benannt, nie geworfen. Eigenes Groessenlimit (T-12-05), unabhaengig vom
- * 20-MB-Limit der Haupt-Datei.
+ * werden benannt, nie geworfen. Eigenes Groessenlimit (T-12-05, WR-03),
+ * unabhaengig vom 20-MB-Limit der Haupt-Datei.
  */
 function _processWizardAudioFile(file, dropzone) {
     const statusEl = document.getElementById('migration-wizard-audio-status');
@@ -632,8 +673,9 @@ function _processWizardAudioFile(file, dropzone) {
     // Zeichengrenze scheitert bereits das Einlesen, ein abgebrochener Lesevorgang
     // liefert keine brauchbare Fehlermeldung mehr. Das 20-MB-Limit der Haupt-Datei
     // bleibt unveraendert und gilt weiterhin nur fuer sie.
-    const AUDIO_IMPORT_MAX_BYTES = 350 * 1024 * 1024;
-    if (file.size > AUDIO_IMPORT_MAX_BYTES) {
+    // WR-03: die Grenze wird nicht mehr unabhaengig gewaehlt, sondern aus dem
+    // Rohbyte-Rahmen des Exports abgeleitet (getAudioImportMaxBytes()).
+    if (file.size > getAudioImportMaxBytes()) {
         showStatus('Die Audio-Datei ist zu groß und konnte nicht gelesen werden.', true);
         return;
     }

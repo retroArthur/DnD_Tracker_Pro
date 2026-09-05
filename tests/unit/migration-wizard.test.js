@@ -951,3 +951,90 @@ describe('isFreshInstall() ueber die echte IDB-Stufe von readCampaignDataForBack
         expect(await verbund.isFreshInstall()).toBe(true);
     });
 });
+
+// ============================================================
+// WR-03 (Plan 12-16) — die Audio-Importgrenze folgt aus der Exportgrenze
+// (AUDIO_EXPORT_SAFE_RAW_BYTES) statt einer unabhaengig gewaehlten Zahl.
+// ============================================================
+describe('getAudioImportMaxBytes() / _processWizardAudioFile() — Importgrenze aus der Exportgrenze (WR-03)', () => {
+    let audioStatusEl;
+    let fakeFileReaderCalls;
+
+    // Attrappe: protokolliert nur, OB gelesen wurde — loest bewusst KEIN
+    // Ereignis aus, damit der Test billig bleibt und keine echten Datenmengen
+    // braucht (Plan-Vorgabe Schritt 3).
+    class FakeFileReader {
+        constructor() {
+            this.onload = null;
+            this.onerror = null;
+        }
+        readAsText(file) {
+            fakeFileReaderCalls.push(file);
+        }
+    }
+
+    beforeEach(() => {
+        audioStatusEl = { textContent: '', style: { display: 'none' }, classList: { toggle: jest.fn() } };
+        fakeFileReaderCalls = [];
+        context.document = {
+            getElementById: id => (id === 'migration-wizard-audio-status' ? audioStatusEl : null),
+            querySelectorAll: () => []
+        };
+        delete context.window.AUDIO_EXPORT_SAFE_RAW_BYTES;
+    });
+
+    afterEach(() => {
+        delete context.window.AUDIO_EXPORT_SAFE_RAW_BYTES;
+    });
+
+    test('WR-03 Test A: die Ableitung liefert fuer 300 MiB Rohbytes mindestens 400 MiB und bleibt unter der V8-Zeichengrenze (512 MiB)', () => {
+        context.window.AUDIO_EXPORT_SAFE_RAW_BYTES = 300 * 1024 * 1024;
+
+        const grenze = context.getAudioImportMaxBytes();
+
+        expect(grenze).toBeGreaterThanOrEqual(400 * 1024 * 1024);
+        expect(grenze).toBeLessThan(0x1fffffe8);
+    });
+
+    test('WR-03 Test B: ohne window.AUDIO_EXPORT_SAFE_RAW_BYTES liefert die Ableitung denselben Wert (Rueckfall)', () => {
+        context.window.AUDIO_EXPORT_SAFE_RAW_BYTES = 300 * 1024 * 1024;
+        const mitWert = context.getAudioImportMaxBytes();
+
+        delete context.window.AUDIO_EXPORT_SAFE_RAW_BYTES;
+        const ohneWert = context.getAudioImportMaxBytes();
+
+        expect(ohneWert).toBe(mitWert);
+    });
+
+    test('WR-03 Test C: eine Datei knapp ueber 400 MiB wird NICHT sofort abgelehnt — der Lesevorgang beginnt', () => {
+        context.window.AUDIO_EXPORT_SAFE_RAW_BYTES = 300 * 1024 * 1024;
+        const originalFileReader = context.FileReader;
+        context.FileReader = FakeFileReader;
+
+        const file = { size: 405 * 1024 * 1024, name: 'audio-export.json' };
+        const dropzone = { classList: { add: jest.fn(), remove: jest.fn() } };
+
+        context._processWizardAudioFile(file, dropzone);
+
+        expect(fakeFileReaderCalls).toHaveLength(1);
+        expect(audioStatusEl.textContent).toBe('');
+
+        context.FileReader = originalFileReader;
+    });
+
+    test('WR-03 Test C (Gegenprobe): eine Datei deutlich ueber der Grenze wird abgelehnt, Statuszeile traegt den Groessenhinweis', () => {
+        context.window.AUDIO_EXPORT_SAFE_RAW_BYTES = 300 * 1024 * 1024;
+        const originalFileReader = context.FileReader;
+        context.FileReader = FakeFileReader;
+
+        const file = { size: 600 * 1024 * 1024, name: 'audio-export.json' };
+        const dropzone = { classList: { add: jest.fn(), remove: jest.fn() } };
+
+        context._processWizardAudioFile(file, dropzone);
+
+        expect(fakeFileReaderCalls).toHaveLength(0);
+        expect(audioStatusEl.textContent).toMatch(/zu groß/);
+
+        context.FileReader = originalFileReader;
+    });
+});
