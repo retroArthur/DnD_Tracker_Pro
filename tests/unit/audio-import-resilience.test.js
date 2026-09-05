@@ -406,3 +406,60 @@ describe('_processWizardAudioFile() — scheiternde Lueckenpruefung darf Zahl/Gr
     });
 });
 
+// ============================================================
+// SEC-01 (Plan 12-14, Task 3) — Invariante ueber mehrere Wurfstellen: nach dem
+// Ruecksprung aus importFn() fuehrt kein Weg mehr in den Fehlschlag
+// ============================================================
+describe('_processWizardFile() — SEC-01 Invariante: nach dem Ruecksprung aus importFn() fuehrt kein Weg mehr in den Fehlschlag', () => {
+    const buildInvarianceExport = () => buildFullExport('camp-a', [
+        { id: 's1', name: 'Kampf', tracks: [{ blobId: 'audio_9_9' }] }
+    ]);
+
+    const faelle = [
+        {
+            name: 'SEC-01 Invariante: listSoundBlobs() lehnt ab (Promise-Rejection)',
+            praeparieren: () => { mockListSoundBlobs.mockRejectedValue(new Error('IndexedDB nicht verfuegbar')); },
+            erwarteterSchritt: 4,
+            erwarteteFehlermeldung: false
+        },
+        {
+            name: 'SEC-01 Invariante: listSoundBlobs() wirft synchron',
+            praeparieren: () => { mockListSoundBlobs.mockImplementation(() => { throw new Error('Sync-Fehler'); }); },
+            erwarteterSchritt: 4,
+            erwarteteFehlermeldung: false
+        },
+        {
+            name: 'SEC-01 Invariante: findMissingSceneAudio() wirft',
+            praeparieren: () => {
+                mockListSoundBlobs.mockResolvedValue([]);
+                context.window.findMissingSceneAudio = jest.fn(() => { throw new Error('kaputt'); });
+            },
+            erwarteterSchritt: 4,
+            erwarteteFehlermeldung: false
+        },
+        {
+            name: 'SEC-01 Invariante Gegen-Eintrag: wirft importFullExport() SELBST, bleibt es beim Fehlschlag',
+            praeparieren: () => { mockImportFullExport.mockImplementation(() => { throw new Error('Import kaputt'); }); },
+            erwarteterSchritt: null,
+            erwarteteFehlermeldung: true
+        }
+    ];
+
+    test.each(faelle)('$name', async ({ praeparieren, erwarteterSchritt, erwarteteFehlermeldung }) => {
+        praeparieren();
+        const file = makeFile(buildInvarianceExport());
+
+        context._processWizardFile(file, dropzone);
+        await waitFor(() => resultEl.innerHTML !== '' || errorEl.textContent !== '');
+
+        if (erwarteteFehlermeldung) {
+            expect(errorEl.textContent).toMatch(/Import fehlgeschlagen/);
+            expect(sichtbarerSchritt()).not.toBe(4);
+        } else {
+            expect(mockImportFullExport).toHaveBeenCalledTimes(1);
+            expect(errorEl.textContent).toBe('');
+            expect(sichtbarerSchritt()).toBe(erwarteterSchritt);
+            expect(resultEl.innerHTML).toContain('Kampagnen importiert:');
+        }
+    });
+});
