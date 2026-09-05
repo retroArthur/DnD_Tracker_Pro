@@ -605,6 +605,184 @@ describe('_doBackup() — alle Kampagnen des Index, fehlerisoliert je Kampagne (
 });
 
 // ============================================================
+// Plan 12-12: SEC-04 (Leerprüfung prüft Inhalt statt Schlüssel zu zählen) +
+// SEC-03 (Backup-Dateien tragen wieder den Namen ihrer eigenen Kampagne) +
+// Invarianten (D-07-Implikation, kein Leerschreiben, kein Fremdname).
+//
+// Gemeinsame Hilfsfunktionen: eigener, frisch geladener vm-Kontext je Test
+// (wie im _doBackup()-Block und im Nyquist-Block oben) — Modulzustand
+// (_fileBackupStatus, _fileBackupPausedNotified) darf sich nicht ueber Tests
+// hinweg vermischen.
+// ============================================================
+
+const DATA_PATH_1212 = path.join(__dirname, '../../core/data.js');
+const FILE_BACKUP_PATH_1212 = path.join(__dirname, '../../systems/file-backup/file-backup-manager.js');
+const WIZARD_PATH_1212 = path.join(__dirname, '../../systems/migration/migration-wizard.js');
+
+/**
+ * Laedt das ECHTE initializeData() aus core/data.js in einem Wegwerf-vm-Kontext
+ * (Muster: tests/unit/migration-wizard.test.js:20-34). Jeder Aufruf fuehrt das
+ * Skript erneut aus und liefert ein frisches, unabhaengiges Objekt — kein
+ * abgetipptes Leerschema, das bei einem neuen Schluessel in core/data.js nicht
+ * mitwaechst.
+ * @returns {object}
+ */
+function ladeEchteInitializeData() {
+    const ctx = { window: { APP_CONFIG: { STORAGE_KEY: 'dnd-tracker-data' } } };
+    vm.createContext(ctx);
+    vm.runInContext(fs.readFileSync(DATA_PATH_1212, 'utf8'), ctx);
+    return ctx.window.initializeData();
+}
+
+/**
+ * Frischer vm-Kontext fuer direkte readCampaignDataForBackup()-Aufrufe (Task 1).
+ * @param {{storageKey?: string, lsData?: *, idbData?: *, dImSpeicher?: *, aktiverKey?: string}} opts
+ */
+function ladeLeseKontext1212({ storageKey = 'dnd-tracker-data', lsData = null, idbData, dImSpeicher, aktiverKey } = {}) {
+    const ctx = {
+        window: {
+            APP_CONFIG: { VERSION: '2.7.0', STORAGE_KEY: storageKey, DEBUG_MODE: false },
+            ErrorHandler: { log: jest.fn() }
+        },
+        StorageAPI: {
+            getJSON: jest.fn(() => lsData)
+        },
+        console
+    };
+    if (idbData !== undefined) {
+        ctx.window.loadFromIndexedDBFallbackRaw = jest.fn(async () => idbData);
+    }
+    if (dImSpeicher !== undefined) ctx.window.D = dImSpeicher;
+    if (aktiverKey !== undefined) ctx.window.STORAGE_KEY_OVERRIDE = aktiverKey;
+    vm.createContext(ctx);
+    vm.runInContext(fs.readFileSync(FILE_BACKUP_PATH_1212, 'utf8'), ctx);
+    return ctx;
+}
+
+/**
+ * Frischer vm-Kontext fuer vollstaendige _doBackup()-Laeufe (Task 1 Tests C/D/E,
+ * Task 3 Invarianten). Analog createDoBackupContext() im _doBackup()-Block oben.
+ * @param {{campaigns?: Array, storageKey?: string, dataByKey?: object, dImSpeicher?: *, aktiverKey?: string}} opts
+ */
+function ladeDoBackupKontext1212({ campaigns = [], storageKey = 'dnd-tracker-data', dataByKey = {}, dImSpeicher, aktiverKey } = {}) {
+    const ctx = {
+        window: {
+            APP_CONFIG: { VERSION: '2.7.0', STORAGE_KEY: storageKey, DEBUG_MODE: false },
+            getCampaignIndex: () => ({ campaigns, active: storageKey }),
+            showToast: jest.fn(),
+            ErrorHandler: { log: jest.fn() }
+        },
+        APP_CONFIG: { VERSION: '2.7.0', STORAGE_KEY: storageKey, DEBUG_MODE: false },
+        StorageAPI: {
+            getJSON: jest.fn(key => (Object.prototype.hasOwnProperty.call(dataByKey, key) ? dataByKey[key] : null))
+        },
+        console
+    };
+    if (dImSpeicher !== undefined) ctx.window.D = dImSpeicher;
+    if (aktiverKey !== undefined) ctx.window.STORAGE_KEY_OVERRIDE = aktiverKey;
+    vm.createContext(ctx);
+    vm.runInContext(fs.readFileSync(FILE_BACKUP_PATH_1212, 'utf8'), ctx);
+    return ctx;
+}
+
+// ------------------------------------------------------------
+// Task 1 — SEC-04: die Leerpruefung prueft Inhalt statt Schluessel zu zaehlen
+// ------------------------------------------------------------
+describe('SEC-04 — readCampaignDataForBackup()/_doBackup() erkennen ein Leerschema als leer (Plan 12-12)', () => {
+    test('SEC-04 Test A: das echte initializeData() gilt in Stufe 3 (window.D) nicht als sicherungswuerdige Kampagne', async () => {
+        const leer = ladeEchteInitializeData();
+        const ctx = ladeLeseKontext1212({
+            storageKey: 'dnd-tracker-data',
+            lsData: null,
+            dImSpeicher: leer
+            // aktiverKey bewusst nicht gesetzt -> aktiver Key = APP_CONFIG.STORAGE_KEY
+        });
+
+        const ergebnis = await ctx.readCampaignDataForBackup('dnd-tracker-data');
+
+        expect(ergebnis).toBeNull();
+    });
+
+    test('SEC-04 Test B: das createCampaign()-Leerobjekt (16 Schluessel, campaign-manager.js:31-49) gilt in Stufe 1 (localStorage) ebenfalls nicht als sicherungswuerdig', async () => {
+        // Abgetippt aus systems/campaign-manager/campaign-manager.js:31-49 — bewusst ein
+        // ZWEITES, anderes Leerschema als initializeData() (u.a. "items", das
+        // initializeData() nicht kennt) - der Fix darf sich nicht auf einen
+        // Vergleich gegen initializeData() stuetzen.
+        const createCampaignLeerobjekt = {
+            locations: [], npcs: [], quests: [], characters: [], sessionNotes: [],
+            storyArcs: [], quickNotes: '',
+            initiative: { combatants: [], currentTurn: 0, round: 1 },
+            loot: [], items: [], encounters: [], spells: [], links: [], filters: [],
+            calendar: { day: 1, month: 0, year: 1492, events: [] },
+            _nextId: {}
+        };
+        const ctx = ladeLeseKontext1212({
+            storageKey: 'dnd-campaign-1234',
+            lsData: createCampaignLeerobjekt
+        });
+
+        const ergebnis = await ctx.readCampaignDataForBackup('dnd-campaign-1234');
+
+        expect(ergebnis).toBeNull();
+    });
+
+    test('SEC-04 Test C: ein Lauf ueber ausschliesslich leere Quellen laesst -aktuell.json und Snapshots unangetastet, kein removeEntry()', async () => {
+        const dirHandle = createMockDirHandle();
+        // Vorhandene GUTE Sicherung + maximal erlaubte Zahl guter Tages-Snapshots
+        dirHandle._files.set('standard-kampagne-aktuell.json', 'GUTER-INHALT-AKTUELL');
+        for (let i = 1; i <= 10; i++) {
+            dirHandle._files.set(`standard-kampagne-2026-01-${String(i).padStart(2, '0')}.json`, `GUTER-SNAPSHOT-${i}`);
+        }
+        const dateienVorher = new Map(dirHandle._files);
+
+        const ctx = ladeDoBackupKontext1212({
+            campaigns: [],
+            storageKey: 'dnd-tracker-data',
+            dataByKey: { 'dnd-tracker-data': ladeEchteInitializeData() }
+        });
+
+        await ctx._doBackup(dirHandle);
+
+        expect(dirHandle._files.size).toBe(dateienVorher.size);
+        for (const [name, inhalt] of dateienVorher) {
+            expect(dirHandle._files.get(name)).toBe(inhalt);
+        }
+        expect(dirHandle.removeEntry).not.toHaveBeenCalled();
+    });
+
+    test('SEC-04 Test D: derselbe Lauf ohne einen einzigen Erfolg endet sichtbar in "paused" mit Warn-Toast statt still in "active"', async () => {
+        const dirHandle = createMockDirHandle();
+        const ctx = ladeDoBackupKontext1212({
+            campaigns: [],
+            storageKey: 'dnd-tracker-data',
+            dataByKey: { 'dnd-tracker-data': ladeEchteInitializeData() }
+        });
+
+        await ctx._doBackup(dirHandle);
+
+        expect(ctx.getBackupStatus()).not.toBe('active');
+        expect(ctx.getBackupStatus()).toBe('paused');
+        expect(ctx.window.showToast).toHaveBeenCalledTimes(1);
+    });
+
+    test('SEC-04 Test E (Gegenprobe): eine Kampagne mit nur einer gefuellten Sammlung ausserhalb der Kern-Trias (spells) bekommt weiterhin ihr Backup', async () => {
+        const dirHandle = createMockDirHandle();
+        const nurSpells = ladeEchteInitializeData();
+        nurSpells.spells = [{ name: 'Feuerball' }];
+        const ctx = ladeDoBackupKontext1212({
+            campaigns: [],
+            storageKey: 'dnd-tracker-data',
+            dataByKey: { 'dnd-tracker-data': nurSpells }
+        });
+
+        await ctx._doBackup(dirHandle);
+
+        expect(dirHandle._files.has('standard-kampagne-aktuell.json')).toBe(true);
+        expect(ctx.getBackupStatus()).toBe('active');
+    });
+});
+
+// ============================================================
 // Nyquist-Nachhaerten Phase 12 (R04/R05/R06):
 // Die bestehenden Bloecke oben pinnen jeweils die "positive" Haelfte ihrer
 // Anforderung. Die folgenden Tests schliessen die Luecken, in denen
