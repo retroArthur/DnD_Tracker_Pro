@@ -160,26 +160,78 @@ function importFullExport(parsedObj) {
         totalBytes += JSON.stringify(migratedData).length;
     }
 
-    // Kampagnen-Index wiederherstellen
+    // Kampagnen-Index wiederherstellen — SEC-05 (Plan 12-16): ZUSAMMENFUEHREN statt
+    // zu ersetzen. Ein lokaler Index-Eintrag, dessen Key im Import nicht vorkommt,
+    // wuerde sonst unerreichbar: die Kampagnendaten selbst bleiben unter ihrem Key
+    // in localStorage liegen, nur der Verweis im Index verschwindet (T-12-65).
+    // Regel (siehe <design_note> im Plan): der Import gewinnt, wo beide dasselbe
+    // meinen (ueberschneidende Keys) — erhalten bleibt nur, was der Import gar
+    // nicht kennt. `active` stammt immer aus dem Import.
     const saveCampaignIndexFn = typeof saveCampaignIndex === 'function'
         ? saveCampaignIndex
         : window.saveCampaignIndex;
+    const getCampaignIndexFn = typeof getCampaignIndex === 'function'
+        ? getCampaignIndex
+        : window.getCampaignIndex;
+    let preservedIndexEntriesCount = 0;
     if (typeof saveCampaignIndexFn === 'function') {
-        saveCampaignIndexFn(parsedObj.campaignIndex);
+        const importedIndex = parsedObj.campaignIndex;
+        if (importedIndex && typeof importedIndex === 'object') {
+            const importedCampaigns = Array.isArray(importedIndex.campaigns) ? importedIndex.campaigns : [];
+            let localCampaigns = [];
+            if (typeof getCampaignIndexFn === 'function') {
+                const localIndex = getCampaignIndexFn();
+                if (localIndex && Array.isArray(localIndex.campaigns)) {
+                    localCampaigns = localIndex.campaigns;
+                }
+            }
+            const importedKeys = new Set(importedCampaigns.map(c => c && c.key));
+            const keptLocalCampaigns = localCampaigns.filter(c => c && !importedKeys.has(c.key));
+            preservedIndexEntriesCount = keptLocalCampaigns.length;
+            const mergedIndex = Object.assign({}, importedIndex, {
+                campaigns: importedCampaigns.concat(keptLocalCampaigns),
+                active: importedIndex.active
+            });
+            saveCampaignIndexFn(mergedIndex);
+        } else {
+            saveCampaignIndexFn(importedIndex);
+        }
     }
 
-    // WR-04: Wuerfel-Favoriten wiederherstellen — sie liegen unter einem EIGENEN
-    // localStorage-Key (DICE_FAV_KEY) und sind NICHT Teil der Kampagnendaten.
-    // Der Export enthaelt sie bereits (buildFullExport); ohne diesen Schritt
-    // gingen sie beim Umzug verloren.
+    // WR-04 / SEC-05 (Plan 12-16): Wuerfel-Favoriten wiederherstellen — sie liegen
+    // unter einem EIGENEN localStorage-Key (DICE_FAV_KEY) und sind NICHT Teil der
+    // Kampagnendaten. Der Export enthaelt sie bereits (buildFullExport); ohne diesen
+    // Schritt gingen sie beim Umzug verloren (WR-04).
+    // SEC-05: ZUSAMMENFUEHREN statt zu ersetzen — ein einmaliger, unumkehrbarer
+    // Import darf lokal angelegte Favoriten nicht kommentarlos loeschen (T-12-64).
+    // Gleichheit heisst gleicher Name UND gleiche Notation (Form { name, notation },
+    // KEIN id-Feld — features/dice/dice-favorites.js:9-14); fehlt einem Eintrag eines
+    // der beiden Felder, entscheidet ein Vergleich der serialisierten Form, nie ein
+    // Verwerfen im Zweifel. Reihenfolge: lokaler Bestand zuerst, dann importierte
+    // Eintraege, die darin noch nicht vorkommen.
+    let preservedFavoritesCount = 0;
     if (Array.isArray(parsedObj.diceFavorites) && parsedObj.diceFavorites.length > 0 &&
             typeof APP_CONFIG !== 'undefined' && APP_CONFIG.DICE_FAV_KEY) {
-        StorageAPI.setJSON(APP_CONFIG.DICE_FAV_KEY, parsedObj.diceFavorites);
+        const existingFavorites = StorageAPI.getJSON(APP_CONFIG.DICE_FAV_KEY, []);
+        const localFavorites = Array.isArray(existingFavorites) ? existingFavorites : [];
+        const favoriteKey = fav => {
+            if (fav && typeof fav === 'object' &&
+                    typeof fav.name === 'string' && typeof fav.notation === 'string') {
+                return fav.name + ' ' + fav.notation;
+            }
+            return JSON.stringify(fav);
+        };
+        const localKeys = new Set(localFavorites.map(favoriteKey));
+        const newFavorites = parsedObj.diceFavorites.filter(fav => !localKeys.has(favoriteKey(fav)));
+        preservedFavoritesCount = localFavorites.length;
+        StorageAPI.setJSON(APP_CONFIG.DICE_FAV_KEY, localFavorites.concat(newFavorites));
     }
 
     return {
         campaignCount: campaignEntries.length,
-        totalBytes: totalBytes
+        totalBytes: totalBytes,
+        preservedFavoritesCount: preservedFavoritesCount,
+        preservedIndexEntriesCount: preservedIndexEntriesCount
     };
 }
 
