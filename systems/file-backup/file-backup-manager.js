@@ -226,6 +226,93 @@ async function writeBackupForCampaign(dirHandle, campaignKey, campaignName, data
 }
 
 // ============================================================
+// Inhaltspruefung (SEC-04, Plan 12-12)
+// ============================================================
+
+/**
+ * Sperrliste (kein Zulassungsliste!): Schluessel, die bewusst NICHT als Inhalt
+ * zaehlen, weil sie in einer frisch initialisierten Installation bereits
+ * befuellt sind oder reine Buchhaltung/Oberflaechen-Einrichtung sind. Alles,
+ * was hier NICHT steht, zaehlt als Inhalt — SEC-04 ist ein Verfuegbarkeits-
+ * problem (eine gute Sicherung wird ueberschrieben), deshalb ist eine
+ * Sperrliste hier sicherer als eine Zulassungsliste (siehe <design_note> in
+ * Plan 12-12): eine zu enge Pruefung waere der schlimmere Gegenfehler
+ * (stiller Totalausfall statt Ueberschreiben, T-12-48).
+ *
+ * - _nextId: Buchhaltung, bleibt nach vollstaendigem Leeren befuellt
+ * - _version: Buchhaltung, Versionskennung, kein Nutzerinhalt
+ * - campaign: Buchhaltung, interne Kampagnen-Metadaten
+ * - settings: im Startzustand bereits befuellt (core/data.js initializeData())
+ * - randomTables: Oberflaechen-Einrichtung, initRandomTables() legt beim
+ *   ersten Start drei Standardtabellen an
+ * - dmScreenLayout: Oberflaechen-Einrichtung, initDMScreenLayout() befuellt
+ *   beim ersten Start
+ * - dmScreenProfiles, dmScreenActiveProfile: Oberflaechen-Einrichtung
+ */
+const _KAMPAGNEN_INHALT_SPERRLISTE = new Set([
+    '_nextId', '_version', 'campaign', 'settings', 'randomTables',
+    'dmScreenLayout', 'dmScreenProfiles', 'dmScreenActiveProfile'
+]);
+
+/**
+ * Prueft, ob ein Kampagnendatensatz ECHTEN Inhalt traegt (SEC-04). Ersetzt die
+ * reine Schluesselzahl (`Object.keys(obj).length > 0`), die ein komplett
+ * leeres Schema (initializeData(), 23 Schluessel, ODER das abweichende
+ * 16-Schluessel-Leerobjekt aus createCampaign()) faelschlich als "befuellt"
+ * durchgehen liess.
+ *
+ * Als Inhalt zaehlt: ein nicht leeres Array; eine Zeichenkette, die nach
+ * trim() nicht leer ist; eine Zahl ungleich 0; der Wert `true`; oder ein
+ * Objekt, das SELBST (eine Ebene tief, OHNE Rekursion ueber die ganze
+ * Struktur) ein nicht leeres Array oder eine nicht leere Zeichenkette
+ * enthaelt. Die Ein-Ebene-Grenze erwischt soundboard.scenes, calendar.events
+ * und initiative.combatants, ohne an calendar.day/year (Zahlen im
+ * Startzustand) haengenzubleiben — Zahlen zaehlen deshalb nur auf der
+ * obersten Ebene, NICHT in der zweiten.
+ *
+ * Wirft NIE: _doBackup() laeuft im Post-Save-Hook, ein Wurf hier wuerde das
+ * Speichern mitreissen. Ein kaputter Typ an einer beliebigen Stelle zaehlt
+ * einfach als "kein Inhalt an dieser Stelle".
+ *
+ * @param {*} obj
+ * @returns {boolean}
+ */
+function _hatKampagnenInhalt(obj) {
+    if (!obj || typeof obj !== 'object') return false;
+    try {
+        for (const key of Object.keys(obj)) {
+            if (_KAMPAGNEN_INHALT_SPERRLISTE.has(key)) continue;
+            const wert = obj[key];
+
+            if (Array.isArray(wert)) {
+                if (wert.length > 0) return true;
+                continue;
+            }
+            if (typeof wert === 'string') {
+                if (wert.trim() !== '') return true;
+                continue;
+            }
+            if (typeof wert === 'number') {
+                if (wert !== 0) return true;
+                continue;
+            }
+            if (wert === true) return true;
+
+            if (wert && typeof wert === 'object') {
+                for (const nestedKey of Object.keys(wert)) {
+                    const nestedVal = wert[nestedKey];
+                    if (Array.isArray(nestedVal) && nestedVal.length > 0) return true;
+                    if (typeof nestedVal === 'string' && nestedVal.trim() !== '') return true;
+                }
+            }
+        }
+    } catch {
+        return false;
+    }
+    return false;
+}
+
+// ============================================================
 // Snapshot-Pruning
 // ============================================================
 
@@ -379,18 +466,20 @@ function onAfterSave() {
  * seinen eigenen campaignKey-Parameter ignoriert, wuerde die Daten der aktiven
  * Kampagne faelschlich in die Backup-Datei einer anderen, nie gespeicherten
  * Kampagne schreiben. Ein leeres Objekt gilt in keiner Stufe als gueltige
- * Kampagne.
+ * Kampagne — geprueft ueber _hatKampagnenInhalt() (SEC-04, Plan 12-12), NICHT
+ * ueber die Schluesselzahl: initializeData() (core/data.js) liefert 23 leere
+ * Schluessel, createCampaign() (campaign-manager.js) ein zweites, anderes
+ * 16-Schluessel-Leerobjekt — eine reine Schluesselzahl
+ * (`Object.keys(obj).length > 0`) haelt BEIDE faelschlich fuer "befuellt".
  *
  * @param {string} campaignKey
  * @returns {Promise<Object|null>} Daten, oder null wenn keine Quelle etwas liefert
  */
 async function readCampaignDataForBackup(campaignKey) {
-    const istBefuellt = obj => obj && typeof obj === 'object' && Object.keys(obj).length > 0;
-
     // 1. localStorage (Normalfall <5MB)
     if (typeof StorageAPI !== 'undefined') {
         const ausLs = StorageAPI.getJSON(campaignKey, null);
-        if (istBefuellt(ausLs)) return ausLs;
+        if (_hatKampagnenInhalt(ausLs)) return ausLs;
     }
 
     // 2. IndexedDB (IDB-Modus: der LS-Key wurde nach dem Write geloescht)
@@ -400,7 +489,7 @@ async function readCampaignDataForBackup(campaignKey) {
             const record = await idbRead(campaignKey);
             if (record && record.data) {
                 const geparst = JSON.parse(record.data);
-                if (istBefuellt(geparst)) return geparst;
+                if (_hatKampagnenInhalt(geparst)) return geparst;
             }
         } catch (e) {
             if (window.APP_CONFIG?.DEBUG_MODE) {
@@ -416,7 +505,7 @@ async function readCampaignDataForBackup(campaignKey) {
     const aktiverBackupKey = (typeof window !== 'undefined' && window.APP_CONFIG?.STORAGE_KEY)
         ? (window.STORAGE_KEY_OVERRIDE || window.APP_CONFIG.STORAGE_KEY)
         : null;
-    if (aktiverBackupKey && campaignKey === aktiverBackupKey && istBefuellt(window.D)) {
+    if (aktiverBackupKey && campaignKey === aktiverBackupKey && _hatKampagnenInhalt(window.D)) {
         return window.D;
     }
 
