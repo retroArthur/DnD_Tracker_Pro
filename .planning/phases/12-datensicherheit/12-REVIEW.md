@@ -1,8 +1,8 @@
 ---
 phase: 12-datensicherheit
-reviewed: 2026-09-04T00:00:00Z
+reviewed: 2026-09-05T00:00:00Z
 depth: standard
-files_reviewed: 18
+files_reviewed: 22
 files_reviewed_list:
   - .gitignore
   - core/init.js
@@ -12,150 +12,220 @@ files_reviewed_list:
   - systems/avatars.js
   - systems/file-backup/file-backup-manager.js
   - systems/migration/audio-export.js
+  - systems/migration/full-export.js
   - systems/migration/migration-wizard.js
   - systems/spellslots/persistence.js
   - systems/undo.js
   - tests/build/test_build_deduplication.py
   - tests/e2e/features/soundboard.spec.js
   - tests/unit/audio-export.test.js
+  - tests/unit/audio-import-resilience.test.js
+  - tests/unit/file-backup-idb.test.js
   - tests/unit/file-backup.test.js
   - tests/unit/full-export.test.js
   - tests/unit/migration-wizard.test.js
   - tests/unit/soundboard.test.js
   - tests/unit/stability.test.js
 findings:
-  critical: 0
+  critical: 1
   warning: 1
   info: 1
-  total: 2
+  total: 3
 status: issues_found
 ---
 
 # Phase 12: Code Review Report
 
-**Reviewed:** 2026-09-04
+**Reviewed:** 2026-09-05
 **Depth:** standard
-**Files Reviewed:** 18
+**Files Reviewed:** 22
 **Status:** issues_found
 
 ## Summary
 
-Dies ist die erneute Prüfung nach den Lückenschluss-Plänen 12-09/12-10/12-11, die die vier
-Befunde des vorherigen `12-REVIEW.md` (CR-01, CR-02, WR-01, WR-02) adressiert haben. Alle
-vier wurden verifiziert und sind **korrekt behoben**, inklusive dediziertem
-Regressionstest je Fund:
+Dies ist eine erneute Prüfung nach der zweiten Lückenschluss-Runde (Pläne 12-12 bis
+12-17, SEC-01 bis SEC-07), zusätzlich zu den bereits im vorherigen `12-REVIEW.md`
+verifiziert behobenen Befunden (CR-01, CR-02, WR-01, WR-02, WR-03 — letzterer, die
+Inkonsistenz zwischen `AUDIO_EXPORT_SAFE_RAW_BYTES` und dem Audio-Importlimit, ist
+inzwischen über `getAudioImportMaxBytes()` in `migration-wizard.js` korrekt aus der
+Export-Konstante abgeleitet, siehe Kommentar "WR-03 (Phase 12, Plan 16)" dort).
 
-- **CR-01** (`wizard-skip` überschreibt frisch importierte Daten): `migration-wizard.js`
-  löst `wizard-skip` ab Schritt 4 jetzt über denselben `window.location.reload()`-Pfad wie
-  `wizard-close` aus (Zeile 650-653), und der Footer wird ab Schritt 4 zusätzlich per
-  `showWizardStep()` ausgeblendet (Zeile 173-176). Regressionstests: `migration-wizard.test.js`
-  „CR-01 Test A/B/C".
-- **CR-02** (`readCampaignDataForBackup()` liefert bei fehlenden Daten die falsche aktive
-  Kampagne): Stufe 3 prüft jetzt `campaignKey === aktiverBackupKey`, bevor `window.D`
-  zurückgegeben wird (`file-backup-manager.js:412-421`). Fünf gezielte Regressionstests in
-  `file-backup.test.js` (u. a. die Invariante „jede geschriebene Datei trägt nur die eigene
-  Kennmarke") decken sowohl den Fehlerfall als auch die Gegenprobe „aktive Kampagne bekommt
-  ihr Backup weiterhin" ab.
-- **WR-01** (Audio-Datei in Haupt-Dropzone markiert falsches Element): `_processWizardFile()`
-  löst jetzt explizit `#migration-wizard-audio-dropzone` auf, mit Fallback auf die
-  übergebene Dropzone (`migration-wizard.js:434-441`). Regressionstests: „WR-01 Test D/E".
-- **WR-02** (`pushUndo()` leert den Redo-Stack bei Serialisierungsfehler nicht):
-  `redoStack.length = 0;` läuft jetzt auch im `catch`-Zweig vor dem `return`
-  (`undo.js:23-28`). Regressionstests: „WR-02 Test J/K" in `stability.test.js`.
+Der Gesamtzustand ist weiterhin außergewöhnlich gründlich abgesichert: Datei-Backup
+(`file-backup-manager.js`), Undo/Redo-Serialisierung (`undo.js`), der Migrations-Wizard
+(`migration-wizard.js`, `full-export.js`, `audio-export.js`) und der Soundboard-IDB-Layer
+(`soundboard-idb.js`, `soundboard-crud.js`) tragen sichtbare Spuren vieler
+Gap-Closure-Runden — die meisten naheliegenden Bugs (Race Conditions beim Speichern,
+Pfad-Traversal in Backup-Dateinamen, XSS in Wizard-HTML, DoS durch unbegrenzte
+Import-Größen, stille Datenverluste durch verfrühtes IDB→LS-Umschalten, Größen-
+Inkonsistenz Export/Import) sind bereits identifiziert und mit dediziertem
+Testcode/Quelltext-Audit abgedeckt. Die Testsuiten lesen an vielen Stellen sogar den
+Quelltext selbst mit, um "grüne Suite ohne Beweiskraft" zu vermeiden.
 
-Der bereits in der Vorprüfung gelobte Gesamtzustand (durchdachtes Grabstein-Löschsystem,
-atomare Mehr-Kampagnen-Backups, Whitelist-Sanitizing, verankerte Snapshot-Regex,
-Peek-Parse-Pop bei Undo/Redo) bleibt unverändert solide. Bei dieser Prüfung wurde
-zusätzlich der Größen-Rundlauf zwischen Audio-Export und -Import genauer nachgerechnet;
-dabei kam ein bisher unentdecktes Inkonsistenz-Problem zutage (WR-03 unten), das den
-Phasenanspruch „kein Pfad verliert Daten" für den Audio-Umzug bei großen Bibliotheken
-punktuell unterläuft. Keine neuen Blocker gefunden.
+Trotzdem wurde eine neue Lücke gefunden, die genau die Garantie verletzt, die dieser
+Phase ihren Namen gibt: `importFullExport()` validiert die Formkorrektheit einzelner
+Kampagnen-Einträge erst INNERHALB der Schreibschleife, nicht davor — ein Import mit
+einem fehlerhaften Eintrag nach bereits gültigen Einträgen hinterlässt teilweise
+geschriebene, aus dem Kampagnen-Index nicht mehr erreichbare Kampagnendaten in
+localStorage, obwohl der Wizard dem Nutzer "Import fehlgeschlagen" meldet. Der eigene
+Testblock der Datei heißt "Ablehnungen — es wird nichts geschrieben, bevor geworfen
+wird" — dieser Anspruch stimmt nachweislich nur für die VOR der Schreibschleife
+laufenden Prüfungen (Typ, Kampagnenzahl, Key-Whitelist), nicht für die Prüfung von
+`campaign.data` selbst.
 
-## Warnings
+Daneben zwei kleinere Befunde: eine theoretische (aktuell nicht ausnutzbare, da
+`entity.avatar` reihum nur in `<img src>` mit `esc()` gerendert wird) Lücke im
+URL-Filter von `validateAvatarURL()`, und ein veralteter Kommentar in `loader.js`, der
+der in CLAUDE.md dokumentierten SSOT-Architektur (Phase 11, ARCH-01) widerspricht.
 
-### WR-03: Audio-Export-Größenlimit (300 MiB roh) und Audio-Import-Größenlimit (350 MiB Datei) sind inkonsistent — ein maximal großer, erfolgreich erstellter Export kann beim Reimport abgelehnt werden
+## Critical Issues
 
-**File:** `systems/migration/audio-export.js:30` (`AUDIO_EXPORT_SAFE_RAW_BYTES`),
-`systems/migration/migration-wizard.js:568` (`AUDIO_IMPORT_MAX_BYTES`)
+### CR-01: importFullExport() schreibt Kampagnen teilweise, bevor ein späterer Formfehler den gesamten Import als fehlgeschlagen meldet
 
+**File:** `systems/migration/full-export.js:142-161`
 **Issue:**
-`buildAudioExport()` erlaubt Audio-Bibliotheken bis `AUDIO_EXPORT_SAFE_RAW_BYTES = 300 *
-1024 * 1024` (300 MiB **Rohbytes**, vor Base64-Kodierung) — begründet im Kommentar direkt
-über der Konstante mit der V8-String-Obergrenze (~512 MiB) und dem Base64-Aufblähfaktor
-4/3. Genau dieser Aufblähfaktor wird aber beim Import nicht gegengerechnet:
-`_processWizardAudioFile()` prüft die tatsächliche **Datei**-Größe der (bereits
-Base64-kodierten) JSON-Exportdatei gegen ein eigenes, unabhängig hartkodiertes Limit:
+Die Schreibschleife prüft `campaign.data` erst, NACHDEM bereits vorherige Einträge
+derselben Schleife per `StorageAPI.setJSON(key, migratedData)` geschrieben wurden:
 
-```js
-// migration-wizard.js:568
-const AUDIO_IMPORT_MAX_BYTES = 350 * 1024 * 1024;
-if (file.size > AUDIO_IMPORT_MAX_BYTES) {
-    showStatus('Die Audio-Datei ist zu groß und konnte nicht gelesen werden.', true);
-    return;
+```javascript
+for (const [key, campaign] of campaignEntries) {
+    if (!campaign.data || typeof campaign.data !== 'object') {
+        throw new Error('Kampagne "' + key + '" hat keine gueltigen Daten');
+    }
+    ...
+    const saveResult = StorageAPI.setJSON(key, migratedData);
+    ...
 }
 ```
 
-Rechnung: 300 MiB Rohdaten = 314.572.800 Bytes. Base64 kodiert das auf
-`ceil(314572800/3)*4 = 419.430.400` Bytes ≈ **400 MiB** (zzgl. minimalem JSON-Overhead für
-Feldnamen/Struktur). Eine Audio-Bibliothek, die genau an der vom Export selbst als „sicher“
-deklarierten Obergrenze liegt (z. B. drei bis vier Dateien nahe dem 100-MiB-Pro-Datei-Limit
-aus `checkAudioFileSize()`), erzeugt damit eine Exportdatei von ~400 MiB — oberhalb des
-350-MiB-Importlimits (367.001.600 Bytes). Der Nutzer bekommt beim Reimport exakt dieser
-selbst erzeugten, gültigen Datei die Fehlermeldung „Die Audio-Datei ist zu groß und konnte
-nicht gelesen werden“, obwohl `downloadAudioExport()` sie anstandslos erstellt und
-angeboten hat.
+`campaignEntries` ist `Object.entries(parsedObj.campaigns)` und behält damit die
+Einfügereihenfolge der Datei bei. Enthält eine Export-/Umzugsdatei z. B. drei gültige
+Kampagnen gefolgt von einer vierten mit fehlendem oder falsch typisiertem `data`-Feld
+(kaputte Datei, abgebrochener Export, manipulierte Datei), werden die ersten drei
+Kampagnen bereits vollständig nach `localStorage` geschrieben, bevor die vierte den
+`throw` auslöst. Der Kampagnen-Index-Merge und die Würfel-Favoriten-Wiederherstellung
+(Zeilen 163 ff.) laufen dann NIE, weil der `throw` aus `importFullExport()`
+herauspropagiert.
 
-Das ist kein *stiller* Datenverlust (der Fehler wird angezeigt), aber es unterläuft den
-eigentlichen Zweck von Phase 12 für genau den Fall, für den die Größenprüfungen ersichtlich
-mit Absicht so präzise kalibriert wurden: Bei einer großen, aber laut Exportlogik
-„machbaren“ Audio-Bibliothek liefert der Umzugsweg eine Datei, die auf der Zielseite
-grundlos abgelehnt wird — es gibt keinen alternativen Weg, diese Audiodateien zurück in die
-App zu bekommen. Kein bestehender Test in `audio-export.test.js` oder
-`migration-wizard.test.js` prüft den Rundlauf `downloadAudioExport()` →
-`_processWizardAudioFile()` für eine Bibliothek nahe der 300-MiB-Grenze; alle
-Größentests behandeln Export und Import unabhängig voneinander.
+In `migration-wizard.js` (`_processWizardFile()`) führt das dazu, dass
+`showError('Import fehlgeschlagen: ...')` angezeigt wird — der Nutzer geht davon aus,
+dass NICHTS passiert ist ("Import abgebrochen — es wurden keine Daten geändert", die
+Formulierung des `confirm()`-Abbruchpfads wenige Zeilen darüber legt genau diese
+Erwartung nahe). Tatsächlich liegen die ersten drei Kampagnen aber bereits unter ihrem
+`dnd-campaign-*`/`dnd-tracker-*`-Key in `localStorage`, ohne jeden Eintrag im
+Kampagnen-Index — für die App unsichtbare, verwaiste Datensätze, die bei einer künftigen
+`createCampaign()` mit kollidierendem Key sogar überschrieben oder mit fremden Daten
+vermischt werden könnten.
 
-Zusätzlich: `AUDIO_IMPORT_MAX_BYTES` ist ein lokal in `_processWizardAudioFile()`
-hartkodierter Magic-Number-Duplikat von `window.AUDIO_EXPORT_SAFE_RAW_BYTES` (das bereits
-exportiert wird, siehe `audio-export.js:412`), statt daraus mit dem bekannten
-Base64-Faktor abgeleitet zu werden — genau diese Duplizierung hat die Inkonsistenz
-ermöglicht.
+Der eigene Testblock in `tests/unit/full-export.test.js`
+(`describe('Ablehnungen — es wird nichts geschrieben, bevor geworfen wird', ...)`,
+Zeilen 257-312) deckt genau diesen Anspruch — aber nur für die VOR der Schreibschleife
+laufenden Prüfungen (`_exportType`, `campaigns`, `campaignIndex`, `MAX_IMPORT_CAMPAIGNS`,
+`ALLOWED_KEY_RE`). Es gibt keinen Test, der eine gültige Kampagne gefolgt von einer
+Kampagne mit ungültigem `data`-Feld prüft — die Lücke ist damit auch nicht durch
+grüne Tests kaschiert, sondern schlicht ungetestet.
 
-**Fix:** Das Importlimit aus der Export-Konstante ableiten statt unabhängig zu
-duplizieren, mit Puffer für JSON-Struktur-Overhead:
+**Fix:** Formprüfung von `campaign.data` für ALLE Einträge VOR der Schreibschleife
+durchführen (analog zur bereits existierenden Key-Whitelist-Schleife), sodass ein
+Formfehler in einem beliebigen Eintrag den Import vollständig verhindert, bevor
+irgendein `StorageAPI.setJSON()`-Aufruf stattfindet:
 
-```js
-// migration-wizard.js — AUDIO_IMPORT_MAX_BYTES ableiten statt neu hartkodieren
-const AUDIO_IMPORT_MAX_BYTES = Math.ceil(
-    (window.AUDIO_EXPORT_SAFE_RAW_BYTES || 300 * 1024 * 1024) * 4 / 3
-) + 10 * 1024 * 1024; // Base64-Aufblähfaktor + 10 MiB Puffer für JSON-Struktur
+```javascript
+// Formkorrektheit ALLER Einträge prüfen, bevor irgendetwas geschrieben wird
+for (const [key, campaign] of campaignEntries) {
+    if (!campaign.data || typeof campaign.data !== 'object') {
+        throw new Error('Kampagne "' + key + '" hat keine gueltigen Daten');
+    }
+}
+
+// Jede Kampagne migrieren und speichern
+for (const [key, campaign] of campaignEntries) {
+    let migratedData = campaign.data;
+    ...
+}
 ```
 
-Ergänzend einen Regressionstest, der `buildAudioExport()` mit einer Bibliothek nahe
-`AUDIO_EXPORT_SAFE_RAW_BYTES` aufruft, die resultierende (simulierte) Dateigröße gegen
-`AUDIO_IMPORT_MAX_BYTES` prüft und so das Reimport-Versprechen für den worst case belegt.
+(Der verbleibende Fall — `StorageAPI.setJSON()` scheitert selbst zur Laufzeit, z. B.
+durch Quota — lässt sich nicht vorab prüfen; zumindest sollte dieser Fall dokumentiert
+oder im D-02-Stil "benannt statt geworfen" behandelt werden, damit bereits erfolgreich
+geschriebene Kampagnen nicht durch den Fehler EINER weiteren Kampagne als
+Gesamt-Fehlschlag gemeldet werden.)
 
----
+## Warnings
+
+### WR-01: validateAvatarURL() lässt sich durch eingebettete Steuerzeichen umgehen
+
+**File:** `systems/avatars.js:6-31`
+**Issue:**
+```javascript
+function validateAvatarURL(url) {
+    if (!url || url.trim() === '') return true;
+    const trimmed = url.trim();
+    const dangerousProtocols = ['javascript:', 'file:', 'vbscript:', 'data:text/html'];
+    const lowerUrl = trimmed.toLowerCase();
+    if (dangerousProtocols.some(proto => lowerUrl.startsWith(proto))) {
+        return false;
+    }
+    ...
+}
+```
+
+`trim()` entfernt nur führende/nachfolgende Leerzeichen, keine eingebetteten
+Steuerzeichen. Browser entfernen jedoch Tab-, Zeilenumbruch- und Carriage-Return-
+Zeichen aus der GESAMTEN URL (nicht nur am Rand), bevor sie das Schema bestimmen
+(WHATWG-URL-Spezifikation). Ein String wie `"java\tscript:alert(1)"` oder
+`"jav\nascript:alert(1)"` besteht die `startsWith('javascript:')`-Prüfung, wird vom
+Browser nach dem internen Entfernen der Steuerzeichen aber als `javascript:`-URL
+interpretiert — ein klassischer, bekannter Bypass für genau diese Art von
+Präfix-Filtern.
+
+Aktuelle Ausnutzbarkeit ist gering: `entity.avatar` wird im gesamten Repo
+ausschließlich als `<img src="${esc(ch.avatar)}">` gerendert (siehe
+`features/party/party-render.js:110/171`, ebenso in NPC-/Bestiary-/Location-Views).
+`javascript:` wird von modernen Browsern für `<img src>` nicht ausgeführt (kein
+Navigations-Kontext), daher ist dies aktuell kein direkt auslösbarer XSS-Pfad. Die
+Funktion behauptet aber, "dangerous protocols" zu blockieren — dieses Versprechen
+stimmt nicht, sobald der Wert jemals in einem anderen Kontext verwendet wird (z. B.
+Download-Link, `window.open(entity.avatar)`, CSS `background-image`).
+
+**Fix:** Steuerzeichen vor der Protokollprüfung entfernen (analog zur
+Browser-Normalisierung), bevor `startsWith()` geprüft wird:
+
+```javascript
+const stripped = trimmed.replace(/[\t\n\r]/g, '');
+const lowerUrl = stripped.toLowerCase();
+if (dangerousProtocols.some(proto => lowerUrl.startsWith(proto))) {
+    return false;
+}
+```
 
 ## Info
 
-### IN-01: `wizard-skip`-Kommentar zitiert nicht mehr existierenden alten Codepfad, kein funktionaler Mangel
+### IN-01: loader.js-Kommentar widerspricht der dokumentierten SSOT-Architektur
 
-**File:** `systems/migration/migration-wizard.js:643-654`
+**File:** `loader.js:9`
+**Issue:**
+```javascript
+// WICHTIG: Diese Liste muss mit build.py synchron bleiben!
+const MODULES = [
+```
 
-**Issue:** Kleinigkeit, keine Funktionsauswirkung: Der Fix-Kommentar über dem
-`wizard-skip`-Handler erklärt ausführlich, warum ab Schritt 4 reload’t werden muss, verweist
-aber nicht mehr explizit auf den (jetzt behobenen) alten Zustand aus CR-01 des vorherigen
-Reviews, was das Nachvollziehen für zukünftige Leser ohne Zugriff auf `12-REVIEW.md`
-(diese Datei wird überschrieben) leicht erschwert, sobald die Historie aus dem Blick fällt.
-Rein dokumentarisch, keine Handlung erforderlich außer bei Gelegenheit.
+Laut CLAUDE.md (Abschnitt "Single Source of Truth for Modules/Templates/CSS",
+Phase 11/ARCH-01) liest `build.py` die Modulliste ausschließlich aus `loader.js`
+und führt keine eigene, separat zu pflegende Liste mehr (bestätigt durch
+`tests/build/test_build_deduplication.py::test_ssot_module_list_parses_from_loader`).
+Der Kommentar behauptet das Gegenteil (zwei Listen, die synchron gehalten werden
+müssen) und könnte Entwickler dazu verleiten, fälschlich eine zweite Liste in
+`build.py` zu suchen oder pflegen zu wollen.
 
-**Fix:** Optional: kurzer Verweis auf den Git-Commit/Plan (`Plan 12-09`) ergänzen, falls
-`12-REVIEW.md` künftig durch neuere Prüfungen ersetzt wird und der Kontext sonst verloren
-ginge. Kein Blocker für den Merge.
+**Fix:** Kommentar aktualisieren, z. B.:
+```javascript
+// SSOT (Phase 11, ARCH-01): build.py liest diese Liste direkt aus loader.js —
+// es gibt keine zweite, separat zu pflegende Modulliste mehr.
+const MODULES = [
+```
 
 ---
 
-_Reviewed: 2026-09-04_
+_Reviewed: 2026-09-05_
 _Reviewer: Claude (gsd-code-reviewer)_
 _Depth: standard_
