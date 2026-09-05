@@ -120,9 +120,23 @@ function redo() {
         return;
     }
     // Aktuellen State für Undo sichern — NACH erfolgreichem Parse.
+    // SEC-02 (Plan 12-13): dieselbe Absicherung wie in undo() spiegelbildlich vor dem
+    // Undo-Push — siehe dort für die ausführliche Begründung (D-06 lässt window.D bewusst
+    // nicht serialisierbar zurück; ein Abbruch ohne Stack-Mutation ist hier wie dort dem
+    // stillen Verlust des aktuellen Stands vorzuziehen).
+    let undoStateJSON;
+    try {
+        undoStateJSON = JSON.stringify(D);
+    } catch (e) {
+        if (window.APP_CONFIG?.DEBUG_MODE && window.ErrorHandler) {
+            window.ErrorHandler.log('redo', e, last.action);
+        }
+        showToast('⚠️ Wiederholen nicht möglich — aktueller Stand lässt sich nicht sichern', 'warning');
+        return;
+    }
     undoStack.push({
         action: last.action,
-        state: JSON.stringify(D),
+        state: undoStateJSON,
         timestamp: Date.now()
     });
     if (undoStack.length > UNDO_LIMIT) {

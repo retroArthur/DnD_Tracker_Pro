@@ -1738,6 +1738,37 @@ describe('Nachzug R11 — pushUndo()-Schutz haelt auch in den Randlagen von APP_
         expect(ctx.__undoDebug()).toEqual({ undoLength: 1, redoLength: 0 });
         expect(ctx.showToast).toHaveBeenCalledWith(expect.any(String), 'warning');
     });
+
+    // Spiegeltest zu "R11-Rest" (SEC-02, Plan 12-13): redo() traegt an derselben Stelle
+    // (systems/undo.js, vormals Zeile 108) dieselbe ungeschuetzte Serialisierung wie
+    // undo() vor dem Fix. Getrennt gefuehrt, weil ein Fix, der nur eine Richtung haertet,
+    // genau die Ursache dieses Befundes wiederholen wuerde.
+    test('SEC-02: nach gescheitertem Push kippt das naechste redo() nicht in einen ungefangenen TypeError', () => {
+        const ctx = ladeUndo({ UNDO_LIMIT: 30 });
+
+        // 1. Ein regulaerer Push, dann ein undo() — damit der Redo-Stack einen gueltigen
+        //    Eintrag traegt und redo() etwas zum Wiederholen hat.
+        ctx.pushUndo('Erste Aktion');
+        expect(() => ctx.undo()).not.toThrow();
+        expect(ctx.__undoDebug()).toEqual({ undoLength: 0, redoLength: 1 });
+
+        // 2. window.D erst NACH dem undo() zirkulaer machen und ueber ctx.window.D
+        //    zugreifen — nicht ueber eine vorher festgehaltene Referenz. undo() tauscht
+        //    die Eigenschaften des bestehenden D-Objekts aus (for..in delete + Object.assign),
+        //    behaelt aber dessen Objektidentitaet; eine alte Referenz wuerde trotzdem auf
+        //    dasselbe (jetzt wiederhergestellte) Objekt zeigen, aber der Zustand danach
+        //    zaehlt fuer den Test, nicht die Referenzidentitaet an sich.
+        ctx.window.D.self = ctx.window.D;
+
+        const vorherUndo = ctx.__undoDebug().undoLength;
+        const vorherRedo = ctx.__undoDebug().redoLength;
+
+        // 3. Der Nutzer drueckt Strg+Y. redo() sichert den aktuellen State fuer Undo per
+        //    JSON.stringify(D) — muss geschuetzt sein, sonst kippt es hier ungefangen.
+        expect(() => ctx.redo()).not.toThrow();
+        expect(ctx.__undoDebug()).toEqual({ undoLength: vorherUndo, redoLength: vorherRedo });
+        expect(ctx.showToast).toHaveBeenCalledWith(expect.any(String), 'warning');
+    });
 });
 
 // ----------------------------------------------------------------
