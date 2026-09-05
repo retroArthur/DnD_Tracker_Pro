@@ -17,6 +17,17 @@ nyquist_audit:
   jest: "760 -> 842 gruen"
   playwright: "321 passed / 2 skipped"
   detail: ".planning/phases/12-datensicherheit/12-VALIDATION.md § Validation Audit 2026-09-04"
+triage_2026_09_05:
+  scope: "4 plausible Threat-Einwaende aus 12-SECURITY.md § Triage-Liste, je 1 Reproduzent + 1 unabhaengiger Nachsteller"
+  method: "Reproduktion gefordert, nicht Argument. Symmetrische Vorgabe (keine 'im Zweifel offen'-Verzerrung wie im Security-Lauf)."
+  result: "4/4 REPRODUCED, beide Pruefer in allen vier Faellen einig — aber drei Schwere-Herabstufungen"
+  findings:
+    - "SEC-04 (= T-12-11, SAFE-02, CRITICAL, hochgestuft zum schwersten Befund der Runde): istBefuellt() in file-backup-manager.js:388 ist eine reine Schluesselzahl (Object.keys(obj).length > 0). initializeData() (core/data.js) liefert 23 semantisch leere Schluessel — istBefuellt() gibt darauf true. Alle drei Stufen von readCampaignDataForBackup() reichen das Leerschema durch statt null, _doBackup() schreibt es: <name>-aktuell.json wird bedingungslos ueberschrieben UND ein leerer Tages-Snapshot angelegt, woraufhin pruneOldSnapshots() den aeltesten GUTEN Snapshot per removeEntry() endgueltig loescht. Erreichbar ohne Zutun: ein beschaedigter localStorage-Payload laesst load() frueh zurueckkehren, window.D bleibt bares initializeData(); der Ordner-Handle liegt in einem anderen IDB-Store und ueberlebt, der Status bleibt gruen. Die Backup-Funktion zerstoert also ihre eigene Sicherung genau dann, wenn der Primaerspeicher ausgefallen ist. Orchestrator-Gegenprobe: istBefuellt(initializeData()) === true, 23 Schluessel, alle Sammlungen leer. Bestehende Decke sieht es nicht (39/39 gruen; die naechstliegenden Tests pruefen den null-Fall, nie den bekeytet-leeren)."
+    - "SEC-05 (= T-12-12, SAFE-04, low — von critical herabgestuft): importFullExport() ueberschreibt APP_CONFIG.DICE_FAV_KEY (full-export.js:177) und ersetzt den Kampagnenindex (:168), waehrend isFreshInstall() nur EINEN Kampagnen-Key prueft. Wer in der neuen PWA nur Wuerfel-Favoriten angelegt hat, verliert sie beim Umzug still — ohne Rueckfrage, ohne Toast, ohne Undo."
+    - "SEC-06 (= T-12-24, SAFE-04, low — von critical herabgestuft): eine Installation, deren einziger Nutzerinhalt selbst verfasste Schnellreferenz-Eintraege (quickRefCustom) sind, gilt weiterhin als Frischinstallation. G-12-3 in neuer Auspraegung — Plan 12-08 erweiterte die Liste, aber nicht vollstaendig. Betrifft nur den PWA-Pfad (http/https), nicht file://."
+    - "SEC-07 (= T-12-01, SAFE-01, low — von high herabgestuft): importAudioExport() begrenzt die ANZAHL (MAX_IMPORT_AUDIO_FILES=500), nie das Volumen; base64ToBlob() laeuft vor der 100-MB-Sperre von saveSoundBlob(). Ein einzelner uebergrosser Eintrag friert den Tab ein. Nachweislich OHNE Datenverlust — deshalb low, nicht der deklarierte DoS."
+  unfounded: []
+  note: "Die uebrigen 15 Einwaende aus der Triage-Liste bleiben ungeprueft (Nutzerentscheidung 2026-09-05: Scope = 3 Blocker + diese 4)."
 security_audit:
   threats_total: 44
   closed: 21
