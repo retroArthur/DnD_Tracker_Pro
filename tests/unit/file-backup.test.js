@@ -782,6 +782,80 @@ describe('SEC-04 — readCampaignDataForBackup()/_doBackup() erkennen ein Leersc
     });
 });
 
+// ------------------------------------------------------------
+// Task 2 — SEC-03: Backup-Dateien tragen wieder den Namen ihrer eigenen Kampagne
+// Nutzt den modulweiten `resolveBackupTargets` aus dem beforeAll()-Kontext oben
+// (window.APP_CONFIG.STORAGE_KEY dort fest 'dnd-tracker-data') fuer Tests F-I;
+// Test J braucht einen Kontext OHNE window.APP_CONFIG und bekommt deshalb einen
+// eigenen frischen vm-Kontext.
+// ------------------------------------------------------------
+describe('SEC-03 — resolveBackupTargets() loest den Namen des aktiven Ziels ehrlich auf (Plan 12-12)', () => {
+    test('SEC-03 Test F: die aktive BENANNTE Kampagne traegt ihren echten Namen im Dateinamen', () => {
+        const index = {
+            campaigns: [
+                { key: 'dnd-campaign-1234', name: 'Die Tiefen von Phandalin' },
+                { key: 'dnd-tracker-data', name: 'Standard-Kampagne' }
+            ],
+            active: 'dnd-campaign-1234'
+        };
+        const targets = resolveBackupTargets(index, 'dnd-campaign-1234');
+        const aktiv = targets.find(t => t.key === 'dnd-campaign-1234');
+
+        expect(aktiv.name).toBe('Die Tiefen von Phandalin');
+        expect(aktiv.filenames.current).toContain('die-tiefen-von-phandalin');
+    });
+
+    test('SEC-03 Test G: die kuenstliche Namenskollision verschwindet — das Standard-Ziel bleibt suffixfrei', () => {
+        const index = {
+            campaigns: [
+                { key: 'dnd-campaign-1234', name: 'Die Tiefen von Phandalin' },
+                { key: 'dnd-tracker-data', name: 'Standard-Kampagne' }
+            ],
+            active: 'dnd-campaign-1234'
+        };
+        const targets = resolveBackupTargets(index, 'dnd-campaign-1234');
+        const standard = targets.find(t => t.key === 'dnd-tracker-data');
+
+        expect(standard.filenames.current).toBe('standard-kampagne-aktuell.json');
+    });
+
+    test('SEC-03 Test H: die literale Standard-Kampagne bleibt Ziel, auch wenn sie NICHT im Index steht', () => {
+        const index = {
+            campaigns: [{ key: 'dnd-campaign-1234', name: 'Die Tiefen von Phandalin' }],
+            active: 'dnd-campaign-1234'
+        };
+        const targets = resolveBackupTargets(index, 'dnd-campaign-1234');
+        const standard = targets.find(t => t.key === 'dnd-tracker-data');
+
+        expect(standard).toBeDefined();
+        expect(standard.name).toBe('Standard-Kampagne');
+    });
+
+    test('SEC-03 Test I: ein im Index umbenannter Standard-Eintrag aendert den Dateinamen der Standard-Kampagne NICHT', () => {
+        const index = {
+            campaigns: [{ key: 'dnd-tracker-data', name: 'Meine umbenannte Kampagne' }],
+            active: 'dnd-tracker-data'
+        };
+        const targets = resolveBackupTargets(index, 'dnd-tracker-data');
+        const standard = targets.find(t => t.key === 'dnd-tracker-data');
+
+        expect(standard.name).toBe('Standard-Kampagne');
+        expect(standard.filenames.current).toBe('standard-kampagne-aktuell.json');
+    });
+
+    test('SEC-03 Test J: ohne window.APP_CONFIG bleibt das Bestandsverhalten unveraendert (Ruckfall ueber dieselbe dnd-tracker-Erkennung wie _sanitizeKeySuffix())', () => {
+        const ctx = { window: {}, console };
+        vm.createContext(ctx);
+        vm.runInContext(fs.readFileSync(FILE_BACKUP_PATH_1212, 'utf8'), ctx);
+
+        const index = { campaigns: [], active: 'dnd-tracker-data' };
+        const targets = ctx.resolveBackupTargets(index, 'dnd-tracker-data');
+
+        expect(targets.length).toBe(1);
+        expect(targets[0].name).toBe('Standard-Kampagne');
+    });
+});
+
 // ============================================================
 // Nyquist-Nachhaerten Phase 12 (R04/R05/R06):
 // Die bestehenden Bloecke oben pinnen jeweils die "positive" Haelfte ihrer
