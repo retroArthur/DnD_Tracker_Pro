@@ -743,6 +743,93 @@ describe('importAudioExport — Härtung (SAFE-01/T-12-01/T-12-02/T-12-03)', () 
 });
 
 // ============================================================
+// Plan 12-15, Task 3 (SEC-07) — Abgleich gegen Drift + Reihenfolge-Invariante
+// ============================================================
+describe('importAudioExport — Abgleich und Reihenfolge-Invariante (SEC-07)', () => {
+    test('SEC-07 Abgleich: Einzelgrenze stimmt mit MAX_AUDIO_BYTES_HARD aus soundboard-idb.js überein', () => {
+        // Enge Auswertung an beiden Quellen: nur Ziffern, '*' und Leerzeichen
+        // zulassen — kein ungeprueftes Auswerten fremden Textes, auch nicht im
+        // Test. `const`-Deklarationen sind im vm-Kontext NICHT als Eigenschaften
+        // des Kontextobjekts erreichbar (nur function-Deklarationen sind es) —
+        // deshalb wird auch die Einzelgrenze per Regex aus dem Quelltext gezogen,
+        // exakt wie bei MAX_AUDIO_BYTES_HARD.
+        const auswerten = (dateiPfad, konstantenName) => {
+            const src = fs.readFileSync(path.join(__dirname, dateiPfad), 'utf-8');
+            const re = new RegExp(konstantenName + '\\s*=\\s*([0-9*\\s]+?);');
+            const match = src.match(re);
+            expect(match).not.toBeNull();
+            const expr = match[1];
+            expect(/^[0-9*\s]+$/.test(expr)).toBe(true);
+            return expr.split('*').map(s => Number(s.trim())).reduce((a, b) => a * b, 1);
+        };
+
+        const einzelgrenze = auswerten('../../systems/migration/audio-export.js', 'AUDIO_IMPORT_MAX_ENTRY_BYTES');
+        const quellwert = auswerten('../../features/soundboard/soundboard-idb.js', 'MAX_AUDIO_BYTES_HARD');
+
+        if (quellwert !== einzelgrenze) {
+            throw new Error(
+                'Einzelgrenze driftet: AUDIO_IMPORT_MAX_ENTRY_BYTES (audio-export.js) = ' +
+                einzelgrenze + ', MAX_AUDIO_BYTES_HARD (soundboard-idb.js) = ' +
+                quellwert + ' — die gespiegelte Zahl in audio-export.js nachziehen, NICHT diesen Test lockern.'
+            );
+        }
+        expect(quellwert).toBe(einzelgrenze);
+    });
+
+    test.each([
+        ['fremdes ID-Format', () => Promise.resolve({
+            audioFiles: [{ id: '../../evil', name: 'boese.mp3', type: 'audio/mpeg', size: 5, data: 'AQ==' }],
+            rejectedId: '../../evil',
+            rejectedName: 'boese.mp3'
+        })],
+        ['Einzelgrenze überschritten', async () => ({
+            audioFiles: [{ id: 'audio_1_1', name: 'riesig.mp3', type: 'audio/mpeg', size: 150 * 1024 * 1024, data: await blobToBase64(new Blob([bytesA()])) }],
+            rejectedId: 'audio_1_1',
+            rejectedName: 'riesig.mp3'
+        })],
+        ['Gesamtbudget erschöpft', async () => {
+            const validB64 = await blobToBase64(new Blob([bytesA()]));
+            const audioFiles = [];
+            for (let i = 1; i <= 4; i++) {
+                audioFiles.push({ id: `audio_${i}_${i}`, name: `f${i}.mp3`, type: 'audio/mpeg', size: 90 * 1024 * 1024, data: validB64 });
+            }
+            return { audioFiles, rejectedId: 'audio_4_4', rejectedName: 'f4.mp3' };
+        }]
+    ])('SEC-07 Invariante: Ablehnungsgrund "%s" — benannt, nicht geschrieben, kein Wurf', async (_label, buildCase) => {
+        const { audioFiles, rejectedId, rejectedName } = await buildCase();
+        const exportObj = { _exportType: 'audio-export-v1', audioFiles, diceStats: [] };
+        mockSaveSoundBlob.mockResolvedValue(undefined);
+
+        const result = await importAudioExport(exportObj);
+
+        const rejected = result.skipped.find(s => s.id === rejectedId);
+        expect(rejected).toBeDefined();
+        expect(rejected.name).toBe(rejectedName);
+        const calledIds = mockSaveSoundBlob.mock.calls.map(call => call[0]);
+        expect(calledIds).not.toContain(rejectedId);
+    });
+
+    test('SEC-07 Invariante: ein Eintrag mit fremdem ID-Format UND Übergröße wird mit dem ID-Grund abgelehnt (billigste Prüfung zuerst)', async () => {
+        const validB64 = await blobToBase64(new Blob([bytesA()]));
+        const exportObj = {
+            _exportType: 'audio-export-v1',
+            audioFiles: [
+                { id: '../../evil-und-riesig', name: 'boese-riesig.mp3', type: 'audio/mpeg', size: 150 * 1024 * 1024, data: validB64 }
+            ],
+            diceStats: []
+        };
+        mockSaveSoundBlob.mockResolvedValue(undefined);
+
+        const result = await importAudioExport(exportObj);
+
+        expect(result.skipped).toHaveLength(1);
+        expect(result.skipped[0].id).toBe('../../evil-und-riesig');
+        expect(result.skipped[0].grund).toBe('Unerwartetes ID-Format');
+        expect(mockSaveSoundBlob).not.toHaveBeenCalled();
+    });
+});
+
+// ============================================================
 // PLAN 12-02, TASK 2 — findMissingSceneAudio() + Wizard-Quelltext-Belege
 // Bleibt rot, bis Task 2 findMissingSceneAudio() in audio-export.js sowie den
 // zweiten Dropzone-Bereich und die _exportType-Weiche in migration-wizard.js ergaenzt.
