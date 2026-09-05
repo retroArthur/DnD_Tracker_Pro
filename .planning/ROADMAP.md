@@ -111,7 +111,7 @@ Plans:
 
 **Wave 10** *(blocked on Wave 9 completion — teilt sich `migration-wizard.js` mit 12-14)*
 
-- [ ] 12-16-PLAN.md — Lücken-Plan SEC-05/SEC-06 (+WR-03): Import führt Würfel-Favoriten und Kampagnen-Index zusammen; Inhaltslisten vollständig; Audio-Importgrenze aus der Exportgrenze abgeleitet (Welle 10)
+- [x] 12-16-PLAN.md — Lücken-Plan SEC-05/SEC-06 (+WR-03): Import führt Würfel-Favoriten und Kampagnen-Index zusammen; Inhaltslisten vollständig; Audio-Importgrenze aus der Exportgrenze abgeleitet (Welle 10)
 
 **Wave 11** *(blocked on Wave 10 completion)*
 
