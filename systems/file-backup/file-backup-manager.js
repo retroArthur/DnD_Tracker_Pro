@@ -111,8 +111,26 @@ function _sanitizeKeySuffix(campaignKey) {
 }
 
 /**
- * Ermittelt alle zu sichernden Kampagnen (Standard-Kampagne + Index) und
- * berechnet je Kampagne die endgueltigen Backup-Dateinamen (D-03/D-04).
+ * Ermittelt alle zu sichernden Kampagnen (aktives Ziel + Standard-Kampagne +
+ * Index) und berechnet je Kampagne die endgueltigen Backup-Dateinamen
+ * (D-03/D-04).
+ *
+ * Namensauflösung des ERSTEN Ziels (SEC-03, Plan 12-12): `storageKey` ist NICHT
+ * immer die Standard-Kampagne — seit core/init.js:28-30 kann er der Key einer
+ * BENANNTEN Kampagne sein (STORAGE_KEY_OVERRIDE). "Immer Standard-Kampagne" war
+ * eine Annahme aus der Zeit, als das nicht vorkommen konnte. Der Name wird
+ * deshalb jetzt ehrlich aufgeloest: ist `storageKey` der ECHTE Standard-Key
+ * (window.APP_CONFIG.STORAGE_KEY, mit demselben `dnd-tracker`-Ruckfall wie
+ * _sanitizeKeySuffix(), wenn APP_CONFIG fehlt), bleibt der Name unveraendert
+ * "Standard-Kampagne" — auch wenn der Index fuer diesen Key einen anderen Namen
+ * fuehrt, sonst braeche eine vorhandene Snapshot-Historie ab (D-04). Andernfalls
+ * kommt der Name aus dem Index-Eintrag zu `storageKey`; fehlt er dort, dient der
+ * Key selbst als Name.
+ *
+ * Die literale Standard-Kampagne bleibt danach UNBEDINGT ein zusaetzliches Ziel
+ * (sofern der echte Standard-Key ermittelbar ist und nicht bereits das erste
+ * Ziel ist) — sonst verwaist ihre Dateiserie beim Wechsel zu einer benannten
+ * Kampagne still, weil sie dann in keinem Ziel mehr vorkommt.
  *
  * Der Kampagnen-Key wird dem Dateinamen NUR bei einer echten Kollision des
  * bereinigten Namens (safeName) angehaengt — ohne Kollision bleibt der
@@ -122,20 +140,48 @@ function _sanitizeKeySuffix(campaignKey) {
  * immer, auch als einzige Kampagne (D-04).
  *
  * @param {{ campaigns?: Array<{key: string, name: string}> }|null} campaignIndex
- * @param {string} storageKey - Storage-Key der Standard-Kampagne
+ * @param {string} storageKey - Der AKTIVE Backup-Key (Standard-Kampagne ODER,
+ *   bei STORAGE_KEY_OVERRIDE, der Key einer benannten Kampagne)
  * @returns {Array<{ key: string, name: string, filenames: { current: string, snapshot: string, safeName: string } }>}
  */
 function resolveBackupTargets(campaignIndex, storageKey) {
     const seen = new Set();
     const targets = [];
 
-    // Standard-Kampagne immer einschliessen (dieselbe Vorsichtsmassnahme wie
-    // buildFullExport(), full-export.js:57-64) — sie kann zusaetzlich im Index stehen.
-    targets.push({ key: storageKey, name: 'Standard-Kampagne' });
-    seen.add(storageKey);
-
     const campaigns = (campaignIndex && Array.isArray(campaignIndex.campaigns))
         ? campaignIndex.campaigns : [];
+
+    // Echten Standard-Key ermitteln: primaer APP_CONFIG.STORAGE_KEY; ohne
+    // ermittelbares APP_CONFIG derselbe Ruckfall wie _sanitizeKeySuffix()
+    // (:107-109) — zwei verschiedene Antworten auf dieselbe Frage in derselben
+    // Datei waeren die Bauart von Widerspruch, die DEBT-17 verursacht hat.
+    let echterStandardKey = null;
+    if (typeof window !== 'undefined' && window.APP_CONFIG?.STORAGE_KEY) {
+        echterStandardKey = window.APP_CONFIG.STORAGE_KEY;
+    } else if (/^dnd-tracker/.test(storageKey || '')) {
+        echterStandardKey = storageKey;
+    }
+
+    // Erstes Ziel: der AKTIVE Key. Name ehrlich aufloesen (SEC-03) statt
+    // bedingungslos "Standard-Kampagne" zu vergeben.
+    let ersterName;
+    if (echterStandardKey && storageKey === echterStandardKey) {
+        ersterName = 'Standard-Kampagne';
+    } else {
+        const eintrag = campaigns.find(c => c && c.key === storageKey);
+        ersterName = (eintrag && eintrag.name) || storageKey;
+    }
+    targets.push({ key: storageKey, name: ersterName });
+    seen.add(storageKey);
+
+    // Die literale Standard-Kampagne bleibt IMMER ein Backup-Ziel (SEC-03),
+    // auch wenn gerade eine andere (benannte) Kampagne aktiv ist — sonst
+    // verwaist ihre Dateiserie beim Kampagnenwechsel still.
+    if (echterStandardKey && !seen.has(echterStandardKey)) {
+        targets.push({ key: echterStandardKey, name: 'Standard-Kampagne' });
+        seen.add(echterStandardKey);
+    }
+
     for (const c of campaigns) {
         if (!c || !c.key || seen.has(c.key)) continue;
         seen.add(c.key);

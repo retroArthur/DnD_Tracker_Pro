@@ -527,13 +527,15 @@ describe('_doBackup() — alle Kampagnen des Index, fehlerisoliert je Kampagne (
 
         await ctx._doBackup(dirHandle);
 
-        // resolveBackupTargets() schliesst den aktiven Key immer als
-        // "Standard-Kampagne" ein (D-03/D-04, ausserhalb des Scopes dieses
-        // Plans) — deshalb landet Kampagne As Backup unter diesem Dateinamen.
-        // Entscheidend ist NICHT das Label, sondern dass die Datei ueberhaupt
-        // entsteht: der Fix hat Stufe 3 eingegrenzt, nicht abgeschaltet.
-        expect(dirHandle._files.has('standard-kampagne-aktuell.json')).toBe(true);
-        const inhalt = dirHandle._files.get('standard-kampagne-aktuell.json');
+        // Bis Plan 12-10 trug das Ziel hier bedingungslos den Namen
+        // "Standard-Kampagne" (D-03/D-04, damals ausserhalb des Scopes jenes
+        // Plans) — SEC-03 (Plan 12-12) loest den Namen des aktiven Ziels jetzt
+        // ehrlich aus dem Index auf ('Kampagne A'), deshalb traegt die Datei
+        // jetzt den EIGENEN Namen der Kampagne. Entscheidend bleibt wie zuvor:
+        // die Datei entsteht ueberhaupt — der CR-02-Fix grenzt Stufe 3 ein,
+        // schaltet sie nicht ab.
+        expect(dirHandle._files.has('kampagne-a-aktuell.json')).toBe(true);
+        const inhalt = dirHandle._files.get('kampagne-a-aktuell.json');
         expect(inhalt).toContain('marke-nur-im-speicher');
     });
 
