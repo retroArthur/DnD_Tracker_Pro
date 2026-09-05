@@ -423,8 +423,16 @@ function _processWizardFile(file, dropzone) {
 
     const reader = new FileReader();
     reader.onload = async evt => {
+        // SEC-01 (Plan 12-14): die Grenze "ab hier sind die Daten geschrieben" steht
+        // ab jetzt im Code selbst, nicht nur im Kommentar. Der Import-try endet
+        // UNMITTELBAR nach dem Ruecksprung aus importFn() — `parsedObj` und `result`
+        // werden davor deklariert, damit sie im Nachbereich noch erreichbar sind.
+        // Der `catch` hier ist ab jetzt AUSSCHLIESSLICH fuer echte Importfehler
+        // zustaendig (kaputte Datei, falscher Typ, importFn() selbst wirft).
+        let parsedObj;
+        let result;
         try {
-            const parsedObj = JSON.parse(evt.target?.result);
+            parsedObj = JSON.parse(evt.target?.result);
 
             // Plan 12-02, Task 2e: Weiche auf Audio-Export-Verarbeitung — VOR der
             // full-v1-Pruefung. Wer die zweite Datei versehentlich in die erste
@@ -482,32 +490,47 @@ function _processWizardFile(file, dropzone) {
                 throw new Error('Import-Funktion nicht verfuegbar');
             }
 
-            const result = importFn(parsedObj);
+            result = importFn(parsedObj);
+            // ---- Grenze: ab hier sind die Kampagnendaten in localStorage geschrieben.
+        } catch (err) {
+            const msg = err.message || 'Unbekannter Fehler';
+            showError('Import fehlgeschlagen: ' + msg + '. Bitte erneut versuchen oder Überspringen wählen.');
+            return;
+        }
 
-            // Dateiname in Dropzone anzeigen — textContent ist XSS-sicher,
-            // esc() würde hier sichtbare Entities erzeugen (WR-05)
-            dropzone.classList.add('file-ready');
-            if (filenameEl) {
-                filenameEl.textContent = file.name;
-                filenameEl.style.display = '';
-            }
+        // SEC-01: alles ab hier ist Nachlauf NACH dem geschriebenen Import — Dropzone-
+        // Zustand, Dateiname, Ergebnisflaeche, D-02-Audio-Benennung. Der Umzug laeuft
+        // nur einmal; ein Fehler in diesem Bereich darf einen bereits gelungenen
+        // Import NIEMALS in "Import fehlgeschlagen" umdeuten (T-12-55/T-12-56). Deshalb
+        // steht dieser Bereich ausserhalb des Import-try/catch, und die D-02-Benennung
+        // bekommt darin noch ihr EIGENES try/catch (siehe unten) — ein Ausfall der
+        // Benennung darf nicht einmal die bereits geschriebenen Erfolgszeilen mitreissen.
+        // Dateiname in Dropzone anzeigen — textContent ist XSS-sicher,
+        // esc() würde hier sichtbare Entities erzeugen (WR-05)
+        dropzone.classList.add('file-ready');
+        if (filenameEl) {
+            filenameEl.textContent = file.name;
+            filenameEl.style.display = '';
+        }
 
-            // Schritt 4: Erfolgsbestaetigung
-            const resultEl = document.getElementById('migration-wizard-result');
-            if (resultEl) {
-                const sizeKB = (result.totalBytes / 1024).toFixed(1);
-                let html = `
-                    <div class="migration-success-line">Kampagnen importiert: <strong>${result.campaignCount}</strong></div>
-                    <div class="migration-success-line">Gesamtgr&#246;&#223;e: <strong>${esc(sizeKB)} KB</strong></div>
-                `;
+        // Schritt 4: Erfolgsbestaetigung
+        const resultEl = document.getElementById('migration-wizard-result');
+        if (resultEl) {
+            const sizeKB = (result.totalBytes / 1024).toFixed(1);
+            let html = `
+                <div class="migration-success-line">Kampagnen importiert: <strong>${result.campaignCount}</strong></div>
+                <div class="migration-success-line">Gesamtgr&#246;&#223;e: <strong>${esc(sizeKB)} KB</strong></div>
+            `;
 
-                // D-02/D-08: fehlende Audio-Dateien NAMENTLICH benennen, statt still
-                // zu uebergehen — der Hauptimport hat gerade schon erfolgreich
-                // abgeschlossen und wird durch dieses Ergebnis in keinem Fall
-                // beeinflusst. window.D ist an dieser Stelle noch die STALE
-                // Vor-Import-Instanz (Reload passiert erst bei wizard-close/
-                // wizard-setup-backup, CR-04) — deshalb gegen die frisch geparste
-                // aktive Kampagne aus parsedObj pruefen, nicht gegen window.D.
+            // D-02/D-08: fehlende Audio-Dateien NAMENTLICH benennen, statt still zu
+            // uebergehen. Der Hauptimport steht bereits — diese Benennung ist reine
+            // Zusatzauskunft. Eigenes try/catch: eine werfende listSoundBlobs()- oder
+            // findMissingSceneAudio()-Abfrage (z. B. IndexedDB nicht verfuegbar) darf
+            // weder die Erfolgszeilen oben noch Schritt 4 gefaehrden (SEC-01). window.D
+            // ist an dieser Stelle noch die STALE Vor-Import-Instanz (Reload passiert
+            // erst bei wizard-close/wizard-setup-backup, CR-04) — deshalb gegen die
+            // frisch geparste aktive Kampagne aus parsedObj pruefen, nicht gegen window.D.
+            try {
                 if (typeof window.findMissingSceneAudio === 'function') {
                     const activeKey = parsedObj._activeCampaignKey;
                     const activeCampaignData = activeKey && parsedObj.campaigns && parsedObj.campaigns[activeKey]
@@ -527,15 +550,15 @@ function _processWizardFile(file, dropzone) {
                         }
                     }
                 }
-
-                resultEl.innerHTML = html;
+            } catch (err) {
+                if (typeof APP_CONFIG !== 'undefined' && APP_CONFIG.DEBUG_MODE && window.ErrorHandler) {
+                    window.ErrorHandler.log('_processWizardFile-Benennung', err, 'Audio-Luecken-Benennung fehlgeschlagen');
+                }
             }
-            showWizardStep(4);
 
-        } catch (err) {
-            const msg = err.message || 'Unbekannter Fehler';
-            showError('Import fehlgeschlagen: ' + msg + '. Bitte erneut versuchen oder Überspringen wählen.');
+            resultEl.innerHTML = html;
         }
+        showWizardStep(4);
     };
     reader.onerror = () => {
         showError('Die Datei konnte nicht gelesen werden — bitte eine gültige Tracker-Exportdatei wählen.');

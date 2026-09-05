@@ -34,6 +34,7 @@ let mockGetCampaignIndex;
 let mockConfirm;
 let modal, resultEl, errorEl, filenameEl, dropzone;
 let stepEls, footerEl;
+let realFindMissingSceneAudio;
 
 /** Wartet, bis condition() wahr wird (fuer den async reader.onload-Zweig). */
 async function waitFor(conditionFn, { timeout = 3000, interval = 5 } = {}) {
@@ -141,6 +142,7 @@ beforeAll(() => {
     vm.runInContext(fs.readFileSync(AUDIO_EXPORT_PATH, 'utf8'), audioCtx);
     context.window.findMissingSceneAudio = audioCtx.window.findMissingSceneAudio;
     expect(typeof context.window.findMissingSceneAudio).toBe('function');
+    realFindMissingSceneAudio = context.window.findMissingSceneAudio;
 });
 
 beforeEach(() => {
@@ -178,6 +180,9 @@ beforeEach(() => {
     context.window.readCampaignDataForBackup = mockReadCampaignDataForBackup;
     context.window.getCampaignIndex = mockGetCampaignIndex;
     context.window.D = { soundboard: { scenes: [] } };
+    // Reset auf die ECHTE findMissingSceneAudio() vor jedem Test — einzelne
+    // SEC-01-Tests ersetzen sie gezielt durch eine werfende Attrappe.
+    context.window.findMissingSceneAudio = realFindMissingSceneAudio;
 });
 
 // ============================================================
@@ -282,17 +287,19 @@ describe('_processWizardFile() — unaufloesbares Szenen-Audio (SAFE-01, D-02)',
         expect(mockImportFullExport).toHaveBeenCalledTimes(1);
     });
 
-    // BEKANNTER BEFUND (Implementierungsfehler, nicht Testfehler):
-    // Der D-02-Block steht INNERHALB des try des Hauptimports
-    // (migration-wizard.js:511-533, nach `const result = importFn(parsedObj)` und
-    // VOR `showWizardStep(4)`). Eine ablehnende listSoundBlobs()-Zusage leitet
-    // einen BEREITS ERFOLGREICHEN Import in
-    // showError('Import fehlgeschlagen: ...') um; Schritt 4 wird nie erreicht und
-    // der Nutzer sieht seinen gelungenen Umzug als Fehlschlag — genau der Fall,
-    // den D-02 verbietet. Der Test ist als test.failing markiert: heute ROT
-    // (deshalb gruen gemeldet), und er schlaegt automatisch um, sobald die
-    // Audio-Abfrage in ein eigenes try/catch gezogen wird.
-    test.failing('D-02-Kern: eine scheiternde listSoundBlobs()-Abfrage darf den bereits erfolgreichen Hauptimport NICHT in einen Fehler kippen', async () => {
+    // BEHOBENER BEFUND (SEC-01, Plan 12-14): der D-02-Block stand vormals INNERHALB
+    // des try des Hauptimports (migration-wizard.js, nach
+    // `const result = importFn(parsedObj)` und VOR `showWizardStep(4)`). Eine
+    // ablehnende listSoundBlobs()-Zusage leitete einen BEREITS ERFOLGREICHEN Import
+    // in showError('Import fehlgeschlagen: ...') um; Schritt 4 wurde nie erreicht
+    // und der Nutzer sah seinen gelungenen Umzug als Fehlschlag — genau der Fall,
+    // den D-02 verbietet. Der Import-try endet jetzt unmittelbar nach dem Ruecksprung
+    // aus importFn(); der Nachlauf (Dropzone, Ergebnisflaeche, D-02-Benennung) liegt
+    // ausserhalb und hat fuer die Benennung ein eigenes try/catch. Dieser Test war
+    // als test.failing verankert (heute ROT, deshalb gruen gemeldet) und ist mit dem
+    // Fix auf test() umgestellt — er faellt jetzt genau dann, wenn die Grenze wieder
+    // in den Import-try zurückwandert (siehe Mutationsnachweis in 12-14-SUMMARY.md).
+    test('D-02-Kern: eine scheiternde listSoundBlobs()-Abfrage darf den bereits erfolgreichen Hauptimport NICHT in einen Fehler kippen', async () => {
         mockListSoundBlobs.mockRejectedValue(new Error('IndexedDB nicht verfuegbar'));
         const file = makeFile(buildFullExport('camp-a', [
             { id: 's1', name: 'Kampf', tracks: [{ blobId: 'audio_9_9' }] }
@@ -303,5 +310,40 @@ describe('_processWizardFile() — unaufloesbares Szenen-Audio (SAFE-01, D-02)',
 
         expect(errorEl.textContent).not.toMatch(/Import fehlgeschlagen/);
         expect(sichtbarerSchritt()).toBe(4);
+    });
+
+    test('SEC-01: wirft listSoundBlobs(), bleiben die Erfolgszeilen inhaltlich erhalten (nicht nur "kein Fehler")', async () => {
+        mockListSoundBlobs.mockRejectedValue(new Error('IndexedDB nicht verfuegbar'));
+        const file = makeFile(buildFullExport('camp-a', [
+            { id: 's1', name: 'Kampf', tracks: [{ blobId: 'audio_9_9' }] }
+        ]));
+
+        context._processWizardFile(file, dropzone);
+        await waitFor(() => resultEl.innerHTML !== '' || errorEl.textContent !== '');
+
+        expect(errorEl.textContent).toBe('');
+        expect(sichtbarerSchritt()).toBe(4);
+        expect(mockImportFullExport).toHaveBeenCalledTimes(1);
+        expect(resultEl.innerHTML).toContain('Kampagnen importiert:');
+        expect(resultEl.innerHTML).toContain('<strong>2</strong>');
+        expect(resultEl.innerHTML).toContain('Gesamtgr');
+        expect(dropzone.classList.add).toHaveBeenCalledWith('file-ready');
+    });
+
+    test('SEC-01: wirft findMissingSceneAudio(), bleiben die Erfolgszeilen inhaltlich erhalten', async () => {
+        mockListSoundBlobs.mockResolvedValue([]);
+        context.window.findMissingSceneAudio = jest.fn(() => { throw new Error('kaputt'); });
+        const file = makeFile(buildFullExport('camp-a', [
+            { id: 's1', name: 'Kampf', tracks: [{ blobId: 'audio_9_9' }] }
+        ]));
+
+        context._processWizardFile(file, dropzone);
+        await waitFor(() => resultEl.innerHTML !== '' || errorEl.textContent !== '');
+
+        expect(errorEl.textContent).toBe('');
+        expect(sichtbarerSchritt()).toBe(4);
+        expect(mockImportFullExport).toHaveBeenCalledTimes(1);
+        expect(resultEl.innerHTML).toContain('Kampagnen importiert:');
+        expect(resultEl.innerHTML).toContain('<strong>2</strong>');
     });
 });
