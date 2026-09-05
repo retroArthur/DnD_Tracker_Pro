@@ -56,7 +56,7 @@ sich spürbar.
 **Goal**: Kein Pfad in Backup, Export oder Migration verliert oder überschreibt mehr stillschweigend Daten, und die Randfälle, die solche Verluste bisher verdeckt haben, sind getestet.
 **Depends on**: Nothing (erste Phase des Milestones)
 **Requirements**: SAFE-01, SAFE-02, SAFE-03, SAFE-04, SAFE-05, SAFE-06
-**Plans:** 13/17 plans executed (8/8 der Erstplanung plus 3 Lückenpläne aus Code-Review und Re-Verifikation, alle am 2026-09-04 ausgeführt; dazu 6 Lückenpläne vom 2026-09-05 für die sieben reproduzierten Befunde SEC-01…SEC-07 aus `verify:post` und der Triage — Wellen 9–11, noch offen)
+**Plans:** 14/17 plans executed (8/8 der Erstplanung plus 3 Lückenpläne aus Code-Review und Re-Verifikation, alle am 2026-09-04 ausgeführt; dazu 6 Lückenpläne vom 2026-09-05 für die sieben reproduzierten Befunde SEC-01…SEC-07 aus `verify:post` und der Triage — Wellen 9–11, noch offen)
 **Success Criteria** (what must be TRUE):
 
   1. Ein Umzugs-Export `file://` → PWA enthält Soundboard-Audio und Würfelstatistik; nach dem Import spielen Szenen ihre Tracks, keine toten `blobId`s bleiben zurück
@@ -106,7 +106,7 @@ Plans:
 
 - [x] 12-12-PLAN.md — Lücken-Plan SEC-04/SEC-03: Leerprüfung des Backups zählt Inhalt statt Schlüssel; Backup-Dateien tragen wieder den Namen ihrer eigenen Kampagne (Welle 9)
 - [ ] 12-13-PLAN.md — Lücken-Plan SEC-02: `undo()`/`redo()` serialisieren geschützt und brechen ohne Stack-Mutation ab statt ungefangen zu werfen (Welle 9)
-- [ ] 12-14-PLAN.md — Lücken-Plan SEC-01: nach dem Rücksprung aus dem Import führt kein Weg mehr in „Import fehlgeschlagen" — beide Fundstellen (Welle 9)
+- [x] 12-14-PLAN.md — Lücken-Plan SEC-01: nach dem Rücksprung aus dem Import führt kein Weg mehr in „Import fehlgeschlagen" — beide Fundstellen (Welle 9)
 - [x] 12-15-PLAN.md — Lücken-Plan SEC-07: Audio-Import begrenzt auch das Volumen, geprüft vor dem Dekodieren (Welle 9)
 
 **Wave 10** *(blocked on Wave 9 completion — teilt sich `migration-wizard.js` mit 12-14)*

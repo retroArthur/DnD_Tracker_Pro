@@ -5,23 +5,23 @@ milestone_name: Schulden-Abbau
 current_phase: 12
 current_phase_name: Datensicherheit
 status: executing
-stopped_at: Completed 12-12-PLAN.md (SEC-04+SEC-03 geschlossen, Welle 9)
-last_updated: "2026-09-05T10:10:50.014Z"
+stopped_at: Completed 12-14-PLAN.md (SEC-01 geschlossen, Welle 9)
+last_updated: "2026-09-05T10:28:50.125Z"
 last_activity: 2026-09-05
-last_activity_desc: Plan 12-12 ausgefuehrt (SEC-04+SEC-03 geschlossen, Welle 9)
-state_head: 060e47c502a7cec44afaa9071bd067565f840356
+last_activity_desc: Plan 12-14 ausgefuehrt (SEC-01 geschlossen, Welle 9)
+state_head: a5372e10e1818d7d7f153e994ba25594e066a607
 progress:
   total_phases: 3
   completed_phases: 0
   total_plans: 17
-  completed_plans: 13
+  completed_plans: 14
   percent: 0
 ---
 
 # Project State: D&D Kampagnen-Tracker Pro — Schulden-Abbau
 
 **Last Updated:** 2026-09-05
-**Milestone:** v1.2 „Schulden-Abbau" — Phase 12 in Ausfuehrung (13/17 Plaene fertig)
+**Milestone:** v1.2 „Schulden-Abbau" — Phase 12 in Ausfuehrung (14/17 Plaene fertig)
 **Status:** Executing Phase 12
 
 ---
@@ -37,11 +37,11 @@ progress:
 ## Current Position
 
 Phase: 12 (Datensicherheit) — EXECUTING
-Plan: 13 of 17 (12-12 abgeschlossen — SEC-04+SEC-03, Welle 9)
+Plan: 14 of 17 (12-14 abgeschlossen — SEC-01, Welle 9)
 Status: Executing Phase 12
-Last activity: 2026-09-05 — Plan 12-12 ausgefuehrt (SEC-04+SEC-03 geschlossen: inhaltsbasierte Leerpruefung + ehrliche Namensausloesung in file-backup-manager.js, Welle 9)
+Last activity: 2026-09-05 — Plan 12-14 ausgefuehrt (SEC-01 geschlossen: Import-try in _processWizardFile()/_processWizardAudioFile() endet nach dem Ruecksprung aus der Importfunktion, Nachlauf ausserhalb mit eigenem protokollierendem try/catch; test.each-Invariante ueber drei Wurfstellen + Gegen-Eintrag; Welle 9)
 
-**Nächster Schritt:** Welle 9 hat vier parallele Pläne (12-12, 12-13, 12-14, 12-15) — 12-12 und 12-15 sind fertig, 12-13/12-14 sind noch offen (keine SUMMARY vorhanden). Erst wenn alle vier abgeschlossen sind, ist Welle 10 (Plan 12-16, WR-03 + SEC-05/SEC-06) entsperrt, danach Welle 11 (Plan 12-17, Gesamtlauf/dist-Rebuild). Danach erneut `/gsd-verify-work`.
+**Nächster Schritt:** Welle 9 hat vier parallele Pläne (12-12, 12-13, 12-14, 12-15) — 12-12, 12-14 und 12-15 sind fertig, nur 12-13 (SEC-02) ist noch offen (keine SUMMARY vorhanden). Erst wenn 12-13 ebenfalls abgeschlossen ist, ist Welle 10 (Plan 12-16, WR-03 + SEC-05/SEC-06) entsperrt, danach Welle 11 (Plan 12-17, Gesamtlauf/dist-Rebuild). Danach erneut `/gsd-verify-work`.
 
 **Die drei offenen Fragen aus der Diskussion sind beantwortet:**
 
@@ -111,6 +111,7 @@ Browser-Verhalten an der Base64-Grenze (12-07).
 | Phase 12 P11 | ~15min | 3 tasks | 2 files |
 | Phase 12 P15 | ~15min | 3 tasks | 2 files |
 | Phase 12 P12 | 45min | 3 tasks | 2 files |
+| Phase 12 P14 | ~30min | 3 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -197,13 +198,13 @@ Browser-Verhalten an der Base64-Grenze (12-07).
 
 ## Session Continuity
 
-**Last session:** 2026-09-05T10:10:49.989Z
-**Stopped at:** Completed 12-12-PLAN.md (SEC-04+SEC-03 geschlossen, Welle 9)
+**Last session:** 2026-09-05T10:28:50.100Z
+**Stopped at:** Completed 12-14-PLAN.md (SEC-01 geschlossen, Welle 9)
 **Resume file:** None
 
 **Last action:** `/gsd-plan-phase 12 --gaps`. Ausgangslage: die Re-Verifikation vom 2026-09-04 steht auf `gaps_found` (6/8 Truths) — G-12-3 ist durch 12-08 sauber geschlossen, aber der Code-Review (`12-REVIEW.md`) hat zwei neue Blocker aufgedeckt, die der Verifier unabhaengig gegen den Quelltext bestaetigt hat: **CR-01** (der „Ueberspringen"-Button des Migrations-Wizards bleibt nach erfolgreichem Import sichtbar, ruft nur `_closeWizard()` statt `window.location.reload()` — der unbedingte `beforeunload`-Autosave in `avatars.js:170-176` schreibt danach das stale `window.D` ueber die frisch importierten Daten) und **CR-02** (`readCampaignDataForBackup()` Stufe 3 gibt `window.D` zurueck, ohne `campaignKey` gegen den aktiven Key zu pruefen — jede indizierte, nie gespeicherte Kampagne bekommt die Daten der aktiven Kampagne in ihre Backup-Datei). Auf Nachfrage hat der Nutzer die zwei nicht-blockierenden Warnungen **WR-01** (Audio-Rueckmeldung am falschen DOM-Element) und **WR-02** (`pushUndo()` leert den Redo-Stack im `catch` nicht) mit aufgenommen. Ergebnis: 3 Plaene — 12-09 (CR-01+WR-01, Welle 7), 12-10 (CR-02, Welle 7, disjunkte Dateien), 12-11 (WR-02 + Rebuild beider Bundles, Welle 8, weil ein Rebuild in derselben Welle die Commits seiner Geschwister nicht saehe = genau W-1). Plan-Checker: **VERIFICATION PASSED im ersten Durchlauf**, 0 Blocker/0 Warnungen, Baselines live nachgemessen (41+17+73=131). Zusaetzlich `COVERAGE.md` geschrieben (`No external API integration: …`) — das entschaerft den wiederkehrenden `api-coverage`-Fehlalarm bei `verify:pre` dauerhaft, der nur auf dem Substring „API" in „File System Access API" feuert. Commit `df4ea54`.
 
-**Next action (Stand 2026-09-05, nach 12-15):** Welle 9 (Wave 9) hat vier parallele Lückenpläne: 12-12 (SEC-04/SEC-03), 12-13 (SEC-02), 12-14 (SEC-01), 12-15 (SEC-07, **jetzt fertig**). 12-12/12-13/12-14 haben noch keine SUMMARY — erst wenn alle vier Wave-9-Pläne abgeschlossen sind, ist Welle 10 (Plan 12-16, SEC-05/SEC-06+WR-03, teilt sich `migration-wizard.js` mit 12-14) entsperrt, danach Welle 11 (Plan 12-17, Gesamtlauf aller fünf Fix-Pläne + Rebuild beider `dist/`-Bundles). Danach `/gsd-verify-work` bzw. Re-Verifikation. **Weiterhin offen und durch diesen Lauf NICHT erledigt:** der menschliche Pruefpunkt „Audio-Bibliothek knapp unter 300 MiB, Tab-Gesundheit im echten Browser" (Recherche-Annahme A1) — der Nutzer hat am 2026-08-19 bewusst darauf verzichtet, die Dateien zusammenzutragen; er wird nach diesen Fixes erneut faellig.
+**Next action (Stand 2026-09-05, nach 12-14):** Welle 9 (Wave 9) hat vier parallele Lückenpläne: 12-12 (SEC-04/SEC-03, fertig), 12-13 (SEC-02, **noch offen**), 12-14 (SEC-01, **jetzt fertig** — Import-try in `_processWizardFile()`/`_processWizardAudioFile()` endet nach dem Ruecksprung aus der Importfunktion, `test.each`-Invariante ueber drei Wurfstellen + Gegen-Eintrag, 16/16 Tests gruen, Mutationsnachweis protokolliert), 12-15 (SEC-07, fertig). Nur 12-13 hat noch keine SUMMARY — erst danach ist Welle 10 (Plan 12-16, SEC-05/SEC-06+WR-03, teilt sich `migration-wizard.js` mit 12-14) entsperrt, danach Welle 11 (Plan 12-17, Gesamtlauf aller fünf Fix-Pläne + Rebuild beider `dist/`-Bundles). Danach `/gsd-verify-work` bzw. Re-Verifikation. **Weiterhin offen und durch diesen Lauf NICHT erledigt:** der menschliche Pruefpunkt „Audio-Bibliothek knapp unter 300 MiB, Tab-Gesundheit im echten Browser" (Recherche-Annahme A1) — der Nutzer hat am 2026-08-19 bewusst darauf verzichtet, die Dateien zusammenzutragen; er wird nach diesen Fixes erneut faellig.
 
 **Vorheriger Stand (2026-09-04, vor der Wave-9-Planung):** `/gsd-execute-phase 12 --gaps-only` — nur die drei `gap_closure: true`-Plaene, sequenziell auf main (Windows-Praxis). Reihenfolge: 12-09 und 12-10 (Welle 7, unabhaengig), dann 12-11 (Welle 8, haengt an beiden und baut beide `dist/`-Bundles neu). Jeder Plan faengt mit einem ROTEN Test an — der rote Lauf ist Beweispflicht, nicht Formsache, denn beide Blocker existieren gerade deshalb, weil kein Test ihren Pfad erreichte.
 
@@ -298,6 +299,8 @@ Browser-Verhalten an der Base64-Grenze (12-07).
 - [Phase 12, 12-15]: SEC-07 geschlossen — schaetzeAudioRohbytes() (Maximum aus entry.size und Base64-Laenge) plus zwei neue Grenzen (Einzelgrenze 100 MB gespiegelt aus soundboard-idb.js MAX_AUDIO_BYTES_HARD, Gesamtbudget abgeleitet aus AUDIO_EXPORT_SAFE_RAW_BYTES) pruefen importAudioExport() VOR base64ToBlob(); const-Deklarationen sind im vm-Testkontext keine Kontextobjekt-Eigenschaften (nur function-Deklarationen sind es) — Abgleichtest liest beide Grenzwerte per Regex direkt aus dem Quelltext statt aus dem vm-Kontext
 - [Phase 12]: [Phase 12, 12-12] _hatKampagnenInhalt() als begruendete Sperrliste (nicht Zulassungsliste) statt Schluesselzahl in readCampaignDataForBackup() (SEC-04) — Risikoprofil beim Backup ist spiegelverkehrt zum Wizard, ein falsches 'leer' ist hier der teurere Fehler
 - [Phase 12]: [Phase 12, 12-12] resolveBackupTargets() loest den Namen des aktiven Ziels ehrlich aus dem Index auf statt bedingungslos 'Standard-Kampagne' zu vergeben (SEC-03); echter Standard-Key bleibt unbedingt zusaetzliches Ziel, damit seine Dateiserie beim Kampagnenwechsel nicht verwaist
+- [Phase 12, 12-14]: SEC-01 geschlossen — Blockgrenze statt Merker: der Import-try in _processWizardFile()/_processWizardAudioFile() endet strukturell nach dem Ruecksprung aus der Importfunktion, statt eines Flags, das der aeussere catch abfragt (ein Merker waere nach der Umstellung nie wahr geworden, also totes Beiwerk); die Rueckfallabsicherung uebernimmt stattdessen eine test.each-Invariante ueber drei Wurfstellen plus Gegen-Eintrag
+- [Phase 12, 12-14]: test.failing-Verankerung (Zeile 295 in audio-import-resilience.test.js) auf test() umgestellt — vorgesehener Zuendmechanismus des Nyquist-Nachzugs, kein Zurechtbiegen eines Tests
 
 ## Operator Next Steps
 
