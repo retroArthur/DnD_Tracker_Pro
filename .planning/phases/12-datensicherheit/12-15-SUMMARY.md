@@ -190,3 +190,13 @@ None - keine externe Service-Konfiguration nötig.
 ---
 *Phase: 12-datensicherheit*
 *Completed: 2026-09-05*
+
+## Self-Check: PASSED
+
+- FOUND: systems/migration/audio-export.js
+- FOUND: tests/unit/audio-export.test.js
+- FOUND: .planning/phases/12-datensicherheit/12-15-SUMMARY.md
+- FOUND commit: 7d3499a
+- FOUND commit: 84adf12
+- FOUND commit: 37cbceb
+- FOUND commit: c953d78
