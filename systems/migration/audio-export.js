@@ -47,6 +47,12 @@ const ALLOWED_BLOB_ID_RE = /^audio_\d+_\d+$/;
 // nicht der Test zu lockern.
 const AUDIO_IMPORT_MAX_ENTRY_BYTES = 100 * 1024 * 1024;
 
+// T-12-61/SEC-07: Gesamtbudget fuer die Summe aller dekodierten Eintraege — abgeleitet
+// aus AUDIO_EXPORT_SAFE_RAW_BYTES (derselbe Rohbyte-Rahmen, den der Export bereits fuer
+// sich selbst zieht). Zwei unabhaengig gewaehlte Zahlen fuer denselben Zweck waeren die
+// Bauart von Fehlkalibrierung, die als WR-03 bereits einmal aufgefallen ist.
+const AUDIO_IMPORT_MAX_TOTAL_BYTES = AUDIO_EXPORT_SAFE_RAW_BYTES;
+
 // T-12-62/SEC-07: Schaetzt die Rohbyte-Groesse eines Import-Eintrags VOR dem
 // Dekodieren. Die Datei ist nicht vertrauenswuerdig — entry.size ist eine Angabe
 // DARIN, kein gemessener Wert. Eine zu klein angegebene Groesse (Manipulation) waere
@@ -333,6 +339,9 @@ async function downloadAudioExport() {
  * - SEC-07/T-12-60: Einzelgrenze AUDIO_IMPORT_MAX_ENTRY_BYTES prueft VOR
  *   base64ToBlob() — die 100-MB-Sperre von saveSoundBlob() greift erst NACH der
  *   Dekodierung und kann die Speicherbelegung deshalb nicht verhindern.
+ * - SEC-07/T-12-61: Gesamtbudget AUDIO_IMPORT_MAX_TOTAL_BYTES begrenzt zusaetzlich die
+ *   Summe aller dekodierten Eintraege — sonst liesse die Einzelgrenze allein
+ *   500 x 99 MB zu.
  *
  * @param {Object} parsedObj
  * @returns {Promise<{ imported: number, skipped: Array<{id, name, grund}> }>}
@@ -352,6 +361,7 @@ async function importAudioExport(parsedObj) {
 
     let imported = 0;
     const skipped = [];
+    let geplanteRohbytesSumme = 0; // SEC-07/T-12-61: nur fuer tatsaechlich dekodierte Eintraege erhoeht
 
     for (const entry of audioFiles) {
         const id = entry && entry.id;
@@ -381,6 +391,20 @@ async function importAudioExport(parsedObj) {
             });
             continue;
         }
+
+        // SEC-07/T-12-61: Gesamtbudget — auch die Summe vieler Eintraege unterhalb der
+        // Einzelgrenze ist begrenzt. Nicht abbrechen: jeder betroffene Eintrag wird
+        // einzeln benannt (D-02), die Schleife geht weiter.
+        if (geplanteRohbytesSumme + geschaetzteBytes > AUDIO_IMPORT_MAX_TOTAL_BYTES) {
+            skipped.push({
+                id: id,
+                name: entry && entry.name,
+                grund: 'Gesamtbudget für den Audio-Import erschöpft (' +
+                    (AUDIO_IMPORT_MAX_TOTAL_BYTES / (1024 * 1024)).toFixed(0) + ' MB)'
+            });
+            continue;
+        }
+        geplanteRohbytesSumme += geschaetzteBytes;
 
         try {
             const blob = base64ToBlob(entry.data, entry.type); // T-12-03: atob() wirft PRO Datei

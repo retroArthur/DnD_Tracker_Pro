@@ -680,6 +680,66 @@ describe('importAudioExport — Härtung (SAFE-01/T-12-01/T-12-02/T-12-03)', () 
         expect(schaetzeAudioRohbytes(null)).toBe(0);
         expect(schaetzeAudioRohbytes(undefined)).toBe(0);
     });
+
+    // ============================================================
+    // Plan 12-15, Task 2 (SEC-07) — Gesamtbudget: auch die Summe vieler
+    // mittelgrosser Eintraege unterhalb der Einzelgrenze ist begrenzt.
+    // ============================================================
+    test('SEC-07: Gesamtbudget — der vierte von vier 90-MiB-Eintraegen wird uebersprungen, obwohl jeder einzeln unter der Einzelgrenze liegt (Test D)', async () => {
+        const validB64 = await blobToBase64(new Blob([bytesA()]));
+        const audioFiles = [];
+        for (let i = 1; i <= 4; i++) {
+            audioFiles.push({ id: `audio_${i}_${i}`, name: `f${i}.mp3`, type: 'audio/mpeg', size: 90 * 1024 * 1024, data: validB64 });
+        }
+        const exportObj = { _exportType: 'audio-export-v1', audioFiles, diceStats: [] };
+        mockSaveSoundBlob.mockResolvedValue(undefined);
+
+        const result = await importAudioExport(exportObj);
+
+        expect(result.imported).toBe(3);
+        expect(mockSaveSoundBlob).toHaveBeenCalledTimes(3);
+        expect(result.skipped).toHaveLength(1);
+        expect(result.skipped[0].id).toBe('audio_4_4');
+        expect(result.skipped[0].grund).toMatch(/[Bb]udget/);
+    });
+
+    test('SEC-07: Gesamtbudget — bei fuenf 90-MiB-Eintraegen werden die letzten zwei einzeln benannt, kein stiller Abbruch (Test E)', async () => {
+        const validB64 = await blobToBase64(new Blob([bytesA()]));
+        const audioFiles = [];
+        for (let i = 1; i <= 5; i++) {
+            audioFiles.push({ id: `audio_${i}_${i}`, name: `f${i}.mp3`, type: 'audio/mpeg', size: 90 * 1024 * 1024, data: validB64 });
+        }
+        const exportObj = { _exportType: 'audio-export-v1', audioFiles, diceStats: [] };
+        mockSaveSoundBlob.mockResolvedValue(undefined);
+
+        const result = await importAudioExport(exportObj);
+
+        expect(result.imported).toBe(3);
+        expect(mockSaveSoundBlob).toHaveBeenCalledTimes(3);
+        expect(result.skipped).toHaveLength(2);
+        const skippedIds = result.skipped.map(s => s.id);
+        expect(skippedIds).toContain('audio_4_4');
+        expect(skippedIds).toContain('audio_5_5');
+    });
+
+    test('SEC-07: ein Lauf innerhalb des Gesamtbudgets bleibt unveraendert (Test F)', async () => {
+        const validB64 = await blobToBase64(new Blob([bytesA()]));
+        const exportObj = {
+            _exportType: 'audio-export-v1',
+            audioFiles: [
+                { id: 'audio_1_1', name: 'a.mp3', type: 'audio/mpeg', size: 5, data: validB64 },
+                { id: 'audio_2_2', name: 'b.mp3', type: 'audio/mpeg', size: 9, data: validB64 },
+                { id: 'audio_3_3', name: 'c.mp3', type: 'audio/mpeg', size: 7, data: validB64 }
+            ],
+            diceStats: []
+        };
+        mockSaveSoundBlob.mockResolvedValue(undefined);
+
+        const result = await importAudioExport(exportObj);
+
+        expect(result.imported).toBe(3);
+        expect(result.skipped).toHaveLength(0);
+    });
 });
 
 // ============================================================
