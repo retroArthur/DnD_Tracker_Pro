@@ -58,19 +58,63 @@ let _wizardStep = 1;
  *   Wizard sonst dauerhaft unterdruecken.
  * - sessionHistory: Nebenprodukt der Sitzungsuhr, nicht vom Nutzer verfasst.
  * - partyGold: Zahl, Startwert 0; Gold ohne jede Gruppe ist keine Kampagne.
- * - timers: toter Schluessel — nur validateDataIntegrity() legt ihn an,
- *   geschrieben wird er nirgends.
+ * - timers: toter Schluessel — nur validateDataIntegrity() legt ihn an
+ *   (render/helpers.js requiredArrays), geschrieben wird er nirgends.
+ * - campaign: Buchhaltung — validateDataIntegrity() (render/helpers.js
+ *   requiredObjects) initialisiert ihn als leeres Objekt, kein Nutzerinhalt.
+ * - lastSessionDuration: Nebenprodukt der Sitzungsuhr (Zahl), nicht vom Nutzer
+ *   verfasst — derselbe Grund wie sessionHistory.
+ * - notes: toter Schluessel — nur defensiv gelesen in systems/backups.js:340
+ *   (D.notes?.length), nirgends geschrieben.
+ * - items: Altlast aus dem Leerschema von createCampaign()
+ *   (campaign-manager.js:43), im Code nie gelesen.
+ *
+ * SEC-06 (Phase 12, Plan 16): die drei Listen oben beantworten "was zaehlt als
+ * Inhalt", aber nicht "was zaehlt bewusst NICHT als Inhalt". G-12-3 (12-08)
+ * ergaenzte die Listen bereits einmal — dieselbe Luecke tauchte danach an einem
+ * anderen Schluessel (quickRefCustom) wieder auf, weil die Ausschlussliste nur
+ * als Kommentarprosa existierte, nicht als pruefbarer Quelltext. Die folgende
+ * Konstante macht sie ausdruecklich UND vollstaendigkeitspruefbar (Test in
+ * tests/unit/migration-wizard.test.js): jeder D-Schluessel des Repos muss
+ * entweder hier oder in einer der drei Inhaltslisten (bzw. als Kopfsegment
+ * eines CAMPAIGN_CONTENT_PATHS-Eintrags) vorkommen, sonst schlaegt der Test an.
  */
 const CAMPAIGN_CONTENT_ARRAYS = [
     'characters', 'npcs', 'quests', 'locations', 'encounters', 'loot', 'spells',
     'wiki', 'sessionNotes', 'storyArcs', 'bestiary', 'sessionPreps', 'factions',
-    'shops', 'links', 'filters', 'tags'
+    'shops', 'links', 'filters', 'tags',
+    // SEC-06 (Plan 12-16): selbst verfasste Schnellreferenz-Eintraege sind
+    // Nutzerinhalt wie jeder andere. Der Schluessel existiert im Startzustand
+    // gar nicht (core/data.js initializeData() legt ihn nicht an) und entsteht
+    // ausschliesslich ueber saveQuickRefEntry() (systems/spellslots/
+    // quick-reference.js:408-414) — eine bewusste Nutzerhandlung, exakt die
+    // Aufnahmeregel oben.
+    'quickRefCustom'
 ];
 const CAMPAIGN_CONTENT_TEXT_FIELDS = ['quickNotes', 'dmScreenNotes'];
 const CAMPAIGN_CONTENT_PATHS = [
     ['soundboard', 'scenes'],
     ['calendar', 'events'],
     ['initiative', 'combatants']
+];
+
+/**
+ * SEC-06 (Phase 12, Plan 16): ausdrueckliche, begruendete Ausschlussliste —
+ * jeder Schluessel hier hat seinen Grund im grossen Kommentarblock oberhalb
+ * dieser Konstante. Der Vollstaendigkeitstest in tests/unit/migration-wizard.test.js
+ * haelt jeden im Repo verwendeten D-Schluessel gegen die Vereinigung aus dieser
+ * Liste, den drei Inhaltslisten und den Kopfsegmenten von CAMPAIGN_CONTENT_PATHS
+ * ('soundboard', 'calendar', 'initiative' selbst zaehlen als Objekt-Container,
+ * nicht als Inhalt — nur ihre benannten Unterlisten tun das). Ein Schluessel,
+ * der in KEINER der beiden Kategorien vorkommt, laesst den Test bewusst rot
+ * werden statt still durchzurutschen.
+ */
+const CAMPAIGN_CONTENT_EXCLUDED = [
+    'settings', 'randomTables', 'dmScreenLayout', 'dmScreenProfiles',
+    'dmScreenActiveProfile', 'bestiaryFavorites', 'monsterFavorites',
+    'wikiRecentlyViewed', 'diceHistory', 'sessionHistory', 'partyGold',
+    '_nextId', '_version', 'timers', 'campaign',
+    'lastSessionDuration', 'notes', 'items'
 ];
 
 /**
@@ -1008,6 +1052,7 @@ window.hasCampaignContent = hasCampaignContent;
 window.CAMPAIGN_CONTENT_ARRAYS = CAMPAIGN_CONTENT_ARRAYS;
 window.CAMPAIGN_CONTENT_TEXT_FIELDS = CAMPAIGN_CONTENT_TEXT_FIELDS;
 window.CAMPAIGN_CONTENT_PATHS = CAMPAIGN_CONTENT_PATHS;
+window.CAMPAIGN_CONTENT_EXCLUDED = CAMPAIGN_CONTENT_EXCLUDED;
 window.initMigrationActions = initMigrationActions;
 window.showMigrationWizard = showMigrationWizard;
 window.showWizardStep = showWizardStep;

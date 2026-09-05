@@ -32,6 +32,9 @@ vm.runInContext(fs.readFileSync(WIZARD_PATH, 'utf8'), _listExtractionContext);
 const REAL_CAMPAIGN_CONTENT_ARRAYS = _listExtractionContext.window.CAMPAIGN_CONTENT_ARRAYS;
 const REAL_CAMPAIGN_CONTENT_TEXT_FIELDS = _listExtractionContext.window.CAMPAIGN_CONTENT_TEXT_FIELDS;
 const REAL_CAMPAIGN_CONTENT_PATHS = _listExtractionContext.window.CAMPAIGN_CONTENT_PATHS;
+// SEC-06 (Plan 12-16): die ausdrueckliche Ausschlussliste, synchron aus der
+// echten Quelle geladen (nicht abgetippt) — Grundlage des Vollstaendigkeitstests.
+const REAL_CAMPAIGN_CONTENT_EXCLUDED = _listExtractionContext.window.CAMPAIGN_CONTENT_EXCLUDED;
 
 let context;
 let APP_CONFIG_MOCK;
@@ -690,11 +693,19 @@ describe('hasCampaignContent() — Gegenprobe + Strukturpruefung gegen core/data
 // bewusst VON HAND abgetippt und leiten sich aus der Anforderung ab
 // (SAFE-04 / G-12-3), nicht aus dem Pruefling. Sie duerfen nur geaendert werden,
 // wenn die Anforderung sich aendert.
+//
+// SEC-06 (Plan 12-16): 17 -> 18 Sammlungen (quickRefCustom ergaenzt). Diese
+// Aenderung ist KEIN Nachziehen an die Implementierung — SEC-06 stellt fest,
+// dass die Anforderung (SAFE-04: "jeder Nutzerinhalt zaehlt") selbst verfasste
+// Schnellreferenz-Eintraege von Anfang an mit umfasste, nur wurde das bei der
+// letzten Erweiterung (12-08) uebersehen. Die Liste wird also aus der
+// Anforderung heraus KORRIGIERT, nicht an den Pruefling angepasst — exakt die
+// Unterscheidung, die den Kommentar oben ueberhaupt noetig macht.
 // ============================================================
 const ERWARTETE_CONTENT_ARRAYS = [
     'characters', 'npcs', 'quests', 'locations', 'encounters', 'loot', 'spells',
     'wiki', 'sessionNotes', 'storyArcs', 'bestiary', 'sessionPreps', 'factions',
-    'shops', 'links', 'filters', 'tags'
+    'shops', 'links', 'filters', 'tags', 'quickRefCustom'
 ];
 const ERWARTETE_CONTENT_TEXT_FIELDS = ['quickNotes', 'dmScreenNotes'];
 const ERWARTETE_CONTENT_PATHS = [
@@ -704,7 +715,7 @@ const ERWARTETE_CONTENT_PATHS = [
 ];
 
 describe('hasCampaignContent() — Mindestumfang gegen handgeschriebene Erwartung (R16, SAFE-04)', () => {
-    test('CAMPAIGN_CONTENT_ARRAYS enthaelt exakt die erwarteten 17 Sammlungen', () => {
+    test('CAMPAIGN_CONTENT_ARRAYS enthaelt exakt die erwarteten 18 Sammlungen', () => {
         expect([...REAL_CAMPAIGN_CONTENT_ARRAYS].sort()).toEqual([...ERWARTETE_CONTENT_ARRAYS].sort());
     });
 
@@ -757,6 +768,90 @@ describe('hasCampaignContent() — Mindestumfang gegen handgeschriebene Erwartun
             expect(await context.isFreshInstall()).toBe(false);
         }
     );
+
+    // Explizit benannter Durchstich (SEC-06, Plan 12-16) — derselbe Fall wie
+    // oben in test.each() (ueber ERWARTETE_CONTENT_ARRAYS abgedeckt, seit
+    // 'quickRefCustom' dort aufgenommen wurde), zusaetzlich mit eigener,
+    // durchsuchbarer Kennung: eine Kampagne, deren einziger Inhalt ein
+    // quickRefCustom-Eintrag ist, gilt ueber die ECHTE isFreshInstall()-
+    // Verdrahtung nicht mehr als Frischinstallation.
+    test('SEC-06 Durchstich: Kampagne mit ausschliesslich quickRefCustom -> isFreshInstall() false', async () => {
+        mockReadCampaignDataForBackup.mockResolvedValue({
+            characters: [], npcs: [], quests: [],
+            quickRefCustom: [{ id: 1, title: 'Eigene Notiz', content: 'Hausregel' }]
+        });
+
+        expect(await context.isFreshInstall()).toBe(false);
+    });
+});
+
+// ============================================================
+// SEC-06 (Plan 12-16) — Vollstaendigkeitstest: jeder im Repo verwendete
+// D-Schluessel ist entweder Inhalt (eine der drei Listen bzw. Kopfsegment eines
+// CAMPAIGN_CONTENT_PATHS-Eintrags) oder ausdruecklich per CAMPAIGN_CONTENT_EXCLUDED
+// ausgeschlossen. G-12-3 (12-08) hat die Inhaltslisten einmal erweitert, aber
+// nicht erschoepfend — SEC-06 schliesst die Luecke als KLASSE statt nur den
+// einen Schluessel (quickRefCustom) nachzutragen: ein kuenftig neuer Schluessel
+// erzwingt eine Entscheidung, statt ein viertes Mal durchzurutschen.
+// ============================================================
+describe('CAMPAIGN_CONTENT_EXCLUDED — Vollstaendigkeitstest ueber alle D-Schluessel des Repos (SEC-06)', () => {
+    const REPO_ROOT = path.join(__dirname, '../..');
+    // NICHT tests/ oder dist/ — nur die Quellverzeichnisse, in denen produktiver
+    // Code tatsaechlich auf D zugreift.
+    const SOURCE_DIRS = ['core', 'systems', 'features', 'ui', 'utils', 'render'];
+
+    function sammleJsDateien(dir) {
+        let ergebnis = [];
+        let eintraege;
+        try {
+            eintraege = fs.readdirSync(dir, { withFileTypes: true });
+        } catch (err) {
+            return ergebnis;
+        }
+        for (const eintrag of eintraege) {
+            const vollpfad = path.join(dir, eintrag.name);
+            if (eintrag.isDirectory()) {
+                ergebnis = ergebnis.concat(sammleJsDateien(vollpfad));
+            } else if (eintrag.isFile() && eintrag.name.endsWith('.js')) {
+                ergebnis.push(vollpfad);
+            }
+        }
+        return ergebnis;
+    }
+
+    test('SEC-06 Vollstaendigkeit: jeder verwendete D-Schluessel ist als Inhalt gelistet oder begruendet ausgeschlossen', () => {
+        const gefundeneSchluessel = new Set();
+        // Bekannte Unschaerfe: der Ausdruck trifft auch Vorkommen in Kommentaren
+        // und Zeichenketten (z. B. ein Kommentar, der "D.foo" erwaehnt). Das ist
+        // hinnehmbar — es fuehrt hoechstens dazu, dass ein Schluessel eingeordnet
+        // werden muss, der es nicht muesste, und NIE dazu, dass einer durchrutscht.
+        const MUSTER = /\bD\.([a-zA-Z_$][\w$]*)/g;
+
+        for (const dirName of SOURCE_DIRS) {
+            const dateien = sammleJsDateien(path.join(REPO_ROOT, dirName));
+            for (const datei of dateien) {
+                const inhalt = fs.readFileSync(datei, 'utf8');
+                let match;
+                while ((match = MUSTER.exec(inhalt)) !== null) {
+                    gefundeneSchluessel.add(match[1]);
+                }
+            }
+        }
+
+        const pfadKopfsegmente = new Set(REAL_CAMPAIGN_CONTENT_PATHS.map(p => p[0]));
+        const eingeordnet = new Set([
+            ...REAL_CAMPAIGN_CONTENT_ARRAYS,
+            ...REAL_CAMPAIGN_CONTENT_TEXT_FIELDS,
+            ...pfadKopfsegmente,
+            ...REAL_CAMPAIGN_CONTENT_EXCLUDED
+        ]);
+
+        // Nicht eingeordnete Schluessel gemeinsam melden: einordnen (Inhalt oder
+        // Ausschlussliste mit Begruendung), NICHT den Test lockern.
+        const nichtEingeordnet = [...gefundeneSchluessel].filter(k => !eingeordnet.has(k)).sort();
+
+        expect(nichtEingeordnet).toEqual([]);
+    });
 });
 
 // ============================================================
