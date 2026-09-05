@@ -309,6 +309,29 @@ describe('Export/Import-Rundlauf (SAFE-06)', () => {
             expect(geschriebeneKampagnenKeys()).toHaveLength(0);
             expect(savedIndexCalls).toHaveLength(0);
         });
+
+        test('gueltige Kampagne gefolgt von Kampagne mit ungueltigem campaign.data wird VOLLSTAENDIG abgelehnt (CR-01)', () => {
+            const bad = buildFullExport();
+            // Insertions-Reihenfolge ist entscheidend: die gueltige Kampagne
+            // ('dnd-tracker-data') steht ZUERST in campaigns, die kaputte DANACH —
+            // das reproduziert exakt das CR-01-Szenario (Umzugsdatei mit gueltigen
+            // Eintraegen gefolgt von einem fehlerhaften). Object.entries() erhaelt
+            // die Einfuegereihenfolge der Datei.
+            bad.campaigns = Object.assign({}, bad.campaigns, {
+                'dnd-campaign-kaputt': {
+                    meta: { key: 'dnd-campaign-kaputt', name: 'Kaputt' },
+                    data: null
+                }
+            });
+            expect(() => importFullExport(bad)).toThrow(/hat keine gueltigen Daten/);
+            // CR-01: Die VOR der kaputten Kampagne stehende, fuer sich genommen
+            // gueltige Kampagne ('dnd-tracker-data') darf NICHT geschrieben worden
+            // sein — sonst blieben verwaiste, aus dem Kampagnen-Index nicht mehr
+            // erreichbare Daten in localStorage zurueck, obwohl der Wizard
+            // "Import fehlgeschlagen" meldet (siehe describe-Block-Titel).
+            expect(geschriebeneKampagnenKeys()).toHaveLength(0);
+            expect(savedIndexCalls).toHaveLength(0);
+        });
     });
 
     test('Quelltext-Beleg: Pruefungen stehen vor dem ersten Schreibzugriff (T-12-22)', () => {

@@ -139,11 +139,21 @@ function importFullExport(parsedObj) {
         }
     }
 
-    // Jede Kampagne migrieren und speichern
+    // CR-01 (Phase 12, Review-Fix): Formkorrektheit ALLER Kampagnen-Eintraege
+    // VOR der Schreibschleife pruefen — sonst wuerden bereits gueltige, frueher
+    // in campaignEntries stehende Kampagnen per StorageAPI.setJSON() geschrieben,
+    // bevor ein spaeterer Formfehler den throw ausloest. Das hinterliesse
+    // teilweise geschriebene, aus dem Kampagnen-Index nicht mehr erreichbare
+    // Kampagnendaten in localStorage, obwohl der Wizard "Import fehlgeschlagen"
+    // meldet (analog zur bereits bestehenden Key-Whitelist-Vorschleife oben).
     for (const [key, campaign] of campaignEntries) {
         if (!campaign.data || typeof campaign.data !== 'object') {
             throw new Error('Kampagne "' + key + '" hat keine gueltigen Daten');
         }
+    }
+
+    // Jede Kampagne migrieren und speichern
+    for (const [key, campaign] of campaignEntries) {
         // T-02-08: migrateData pro Kampagne (Sanitierung + Versions-Migration)
         let migratedData = campaign.data;
         if (typeof migrateData === 'function') {
