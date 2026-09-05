@@ -1,193 +1,161 @@
 ---
 phase: 12-datensicherheit
-verified: 2026-09-04T16:45:00Z
+verified: 2026-09-05T11:24:57Z
 status: gaps_found
-score: 8/8 must-haves verified (Erstumfang) — 3 neue Blocker aus verify:post
-re_opened_by: "/gsd-verify-work 12 verify:post — Hooks nyquist + security"
-post_verify_findings:
-  - "SEC-01 (= IMPL-01, SAFE-01/D-02, high): migration-wizard.js:511-533 — der Audio-Benennungsblock steht im selben try wie importFn(parsedObj) (:485). Wirft listSoundBlobs(), sind die Daten geschrieben, der Wizard meldet aber 'Import fehlgeschlagen' und erreicht Schritt 4 nie. Zweite Fundstelle derselben Form auf dem Audio-Pfad (:584-617). Verankert als test.failing in tests/unit/audio-import-resilience.test.js:295."
-  - "SEC-02 (= IMPL-02, SAFE-05/R11, high): undo.js:69 und :108 rufen JSON.stringify(D) ohne try/catch. pushUndo() laesst laut D-06 bewusst ein nicht serialisierbares window.D zurueck — das naechste Strg+Z wirft einen ungefangenen TypeError. Isoliert reproduziert. Verankert als test.failing in tests/unit/stability.test.js."
-  - "SEC-03 (SAFE-02, high, NEU): bei aktiver nicht-Standard-Kampagne traegt resolveBackupTargets() den Override-Key bedingungslos als name 'Standard-Kampagne' ein (file-backup-manager.js:134 + :428, core/init.js:28-30). Der echte Kampagnenname verschwindet aus allen Backup-Dateinamen, die vorherige Dateiserie verwaist still. Kein Datenverlust (D-04-Kollisionssuffix greift). Reproduziert gegen den echten Quelltext."
-human_verification_resolved:
-  - "human_verification[0] (Audio-Bibliothek knapp unter 300 MiB) wurde am 2026-09-04 im UAT als Punkt 28 vom Nutzer mit 'pass' abgenommen. Recherche-Annahme A1 gilt damit als verifiziert. Dieser Punkt ist NICHT mehr der Grund fuer den offenen Status."
-nyquist_audit:
-  gaps_found: 14
-  gaps_closed: 14
-  tests_added_lines: 1221
-  jest: "760 -> 842 gruen"
-  playwright: "321 passed / 2 skipped"
-  detail: ".planning/phases/12-datensicherheit/12-VALIDATION.md § Validation Audit 2026-09-04"
-triage_2026_09_05:
-  scope: "4 plausible Threat-Einwaende aus 12-SECURITY.md § Triage-Liste, je 1 Reproduzent + 1 unabhaengiger Nachsteller"
-  method: "Reproduktion gefordert, nicht Argument. Symmetrische Vorgabe (keine 'im Zweifel offen'-Verzerrung wie im Security-Lauf)."
-  result: "4/4 REPRODUCED, beide Pruefer in allen vier Faellen einig — aber drei Schwere-Herabstufungen"
-  findings:
-    - "SEC-04 (= T-12-11, SAFE-02, CRITICAL, hochgestuft zum schwersten Befund der Runde): istBefuellt() in file-backup-manager.js:388 ist eine reine Schluesselzahl (Object.keys(obj).length > 0). initializeData() (core/data.js) liefert 23 semantisch leere Schluessel — istBefuellt() gibt darauf true. Alle drei Stufen von readCampaignDataForBackup() reichen das Leerschema durch statt null, _doBackup() schreibt es: <name>-aktuell.json wird bedingungslos ueberschrieben UND ein leerer Tages-Snapshot angelegt, woraufhin pruneOldSnapshots() den aeltesten GUTEN Snapshot per removeEntry() endgueltig loescht. Erreichbar ohne Zutun: ein beschaedigter localStorage-Payload laesst load() frueh zurueckkehren, window.D bleibt bares initializeData(); der Ordner-Handle liegt in einem anderen IDB-Store und ueberlebt, der Status bleibt gruen. Die Backup-Funktion zerstoert also ihre eigene Sicherung genau dann, wenn der Primaerspeicher ausgefallen ist. Orchestrator-Gegenprobe: istBefuellt(initializeData()) === true, 23 Schluessel, alle Sammlungen leer. Bestehende Decke sieht es nicht (39/39 gruen; die naechstliegenden Tests pruefen den null-Fall, nie den bekeytet-leeren)."
-    - "SEC-05 (= T-12-12, SAFE-04, low — von critical herabgestuft): importFullExport() ueberschreibt APP_CONFIG.DICE_FAV_KEY (full-export.js:177) und ersetzt den Kampagnenindex (:168), waehrend isFreshInstall() nur EINEN Kampagnen-Key prueft. Wer in der neuen PWA nur Wuerfel-Favoriten angelegt hat, verliert sie beim Umzug still — ohne Rueckfrage, ohne Toast, ohne Undo."
-    - "SEC-06 (= T-12-24, SAFE-04, low — von critical herabgestuft): eine Installation, deren einziger Nutzerinhalt selbst verfasste Schnellreferenz-Eintraege (quickRefCustom) sind, gilt weiterhin als Frischinstallation. G-12-3 in neuer Auspraegung — Plan 12-08 erweiterte die Liste, aber nicht vollstaendig. Betrifft nur den PWA-Pfad (http/https), nicht file://."
-    - "SEC-07 (= T-12-01, SAFE-01, low — von high herabgestuft): importAudioExport() begrenzt die ANZAHL (MAX_IMPORT_AUDIO_FILES=500), nie das Volumen; base64ToBlob() laeuft vor der 100-MB-Sperre von saveSoundBlob(). Ein einzelner uebergrosser Eintrag friert den Tab ein. Nachweislich OHNE Datenverlust — deshalb low, nicht der deklarierte DoS."
-  unfounded: []
-  note: "Die uebrigen 15 Einwaende aus der Triage-Liste bleiben ungeprueft (Nutzerentscheidung 2026-09-05: Scope = 3 Blocker + diese 4)."
-security_audit:
-  threats_total: 44
-  closed: 21
-  open_counted: 3
-  open_untriaged: 19
-  detail: ".planning/phases/12-datensicherheit/12-SECURITY.md"
+score: 8/9 must-haves verified (1 neuer, unabhängig reproduzierter BLOCKER aus 12-REVIEW.md)
 behavior_unverified: 0
 overrides_applied: 0
 re_verification:
-  previous_status: gaps_found
-  previous_score: 6/8
+  previous_status: human_needed
+  previous_score: 8/8
   gaps_closed:
-    - "CR-01 (Truth 7, SAFE-01): Plan 12-09 lässt `wizard-skip` ab `_wizardStep >= 4` denselben `window.location.reload()`-Pfad nehmen wie `wizard-close`, und blendet den Footer (`#migration-wizard-footer`) ab Schritt 4 aus. Unabhängig gegen den Quelltext bestätigt (Zeilen 641-654, 172-176), fünf neue Tests, Mutationsnachweis vom Verifier selbst nicht nachgestellt aber protokolliert und plausibel."
-    - "CR-02 (Truth 8, SAFE-02): Plan 12-10 lässt Stufe 3 von `readCampaignDataForBackup()` nur noch greifen, wenn `campaignKey === (window.STORAGE_KEY_OVERRIDE || APP_CONFIG.STORAGE_KEY)`. Unabhängig gegen den Quelltext bestätigt (Zeilen 407-421) UND selbst per Mutationstest nachgestellt (Wächter entfernt → 3 Tests fallen um, inkl. der Invariante; Wächter zurückgenommen → Datei wieder 21/21 grün, Arbeitsbaum sauber, `git diff` leer)."
+    - "SEC-04 (CRITICAL, SAFE-02): `_hatKampagnenInhalt()` ersetzt die reine Schlüsselzahl-Leerprüfung in allen drei Stufen von `readCampaignDataForBackup()`. Selbst gegen `systems/file-backup/file-backup-manager.js:326-420` gelesen — Funktion vorhanden und in allen drei Stufen verdrahtet."
+    - "SEC-03 (high, SAFE-02): `resolveBackupTargets()` löst den Namen des aktiven Backup-Ziels jetzt aus dem Kampagnenindex auf statt ihn bedingungslos „Standard-Kampagne“ zu nennen. Selbst gegen `file-backup-manager.js:147-246` gelesen."
+    - "SEC-02 (high, SAFE-05): `undo()` (Zeile ~69) und `redo()` (Zeile ~108) serialisieren `window.D` jetzt in try/catch vor jeder Stack-Mutation, mit Warn-Toast statt ungefangener `TypeError`. Selbst gegen `systems/undo.js` gelesen — beide Stellen bestätigt."
+    - "SEC-01 (high, SAFE-01): Import-`try` in `_processWizardFile()`/`_processWizardAudioFile()` endet strukturell nach dem Rücksprung aus der jeweiligen Importfunktion; der Nachlauf (Audio-Lückenbenennung) liegt außerhalb mit eigenem, nur protokollierendem try/catch. Selbst gegen `systems/migration/migration-wizard.js:529-605` gelesen."
+    - "SEC-07 (low, SAFE-01): `schaetzeAudioRohbytes()` + `AUDIO_IMPORT_MAX_ENTRY_BYTES`/`AUDIO_IMPORT_MAX_TOTAL_BYTES` in `audio-export.js` begrenzen Einzelgröße und Gesamtvolumen VOR dem Base64-Decode. Selbst gegen `systems/migration/audio-export.js:48-62,380-405` gelesen."
+    - "SEC-05/SEC-06/WR-03 (low, SAFE-04/SAFE-01): `importFullExport()` führt Würfel-Favoriten und Kampagnenindex jetzt zusammen statt zu ersetzen; `quickRefCustom` zählt als Inhalt; `getAudioImportMaxBytes()` leitet die Importgrenze aus der Exportgrenze ab. Selbst gegen `full-export.js:163-228` und `migration-wizard.js:75-112,636-678` gelesen."
   gaps_remaining: []
   regressions: []
   new_findings:
-    - "WR-03 (12-REVIEW.md, nicht blockierend, NICHT Gegenstand dieser Gap-Closure-Runde): `AUDIO_EXPORT_SAFE_RAW_BYTES` (300 MiB Rohbytes) und `AUDIO_IMPORT_MAX_BYTES` (350 MiB Dateigröße, `migration-wizard.js:568`) sind inkonsistent kalibriert — ein Export nahe der eigenen 300-MiB-Grenze kodiert auf ca. 400 MiB Base64 und würde beim Reimport grundlos abgelehnt. Kein stiller Datenverlust (Fehlermeldung erscheint), deshalb kein Blocker gegen den Wortlaut 'stillschweigend'. Im Quelltext unverändert bestätigt (siehe Belege unten)."
+    - "CR-01 (12-REVIEW.md, 2026-09-05, CRITICAL, NEU — nicht Gegenstand der SEC-01..07-Runde): `importFullExport()` (`systems/migration/full-export.js:142-161`) validiert `campaign.data` erst INNERHALB der Schreibschleife, nicht davor. Eine Datei mit gültigen Kampagnen gefolgt von einer mit fehlendem/falsch typisiertem `data`-Feld schreibt die vorherigen Kampagnen bereits per `StorageAPI.setJSON()` nach localStorage, bevor der `throw` greift — der Kampagnenindex-Merge (Zeilen 163ff.) und der Favoriten-Merge laufen dann NIE, weil der Fehler aus `importFullExport()` herauspropagiert. Der Wizard zeigt `Import fehlgeschlagen`, obwohl bereits Daten geschrieben wurden, die aus dem Index nicht mehr erreichbar sind — genau die Garantie, die dem Phasenziel den Namen gibt ('...verliert oder überschreibt mehr stillschweigend Daten'). Unabhängig gegen den aktuellen Quelltext gelesen und bestätigt (siehe Abschnitt 'Eigene Quelltext-Prüfung CR-01' unten); der zugehörige Testblock `Ablehnungen — es wird nichts geschrieben, bevor geworfen wird` (`tests/unit/full-export.test.js:256-306`) deckt nur die VOR der Schleife laufenden Prüfungen ab, es existiert kein Test für 'gültige Kampagne gefolgt von ungültiger'."
 warnings:
-  - "WR-03 (12-REVIEW.md, s.o.) bleibt offen — nicht in dieser Runde behoben, kein Verifikations-Gap, weil kein stiller Verlust."
-  - "REQUIREMENTS.md (Zeilen 26-37, 129-130) trägt SAFE-01/SAFE-02 noch mit dem alten Stand 'Phase 12: 12-01+12-02 komplett' bzw. '12-03 komplett', ohne 12-09/12-10 zu referenzieren. Rein dokumentarisch — der Code selbst ist korrekt und geprüft; die Traceability-Tabelle ist nicht nachgezogen. Kein Gap, weil die Anforderung inhaltlich erfüllt ist, aber zur Nacharbeit vorgemerkt (auch von 12-11-SUMMARY.md selbst als offen benannt)."
-  - "ROADMAP.md Progress-Tabelle (Zeile 149) zeigt weiterhin '12. Datensicherheit | 7/7 | Ausgeführt — Verifikation ausstehend', obwohl 11 Pläne [x] sind. Laut Auftrag normalisiert der phase.complete-Schritt das nachträglich — kein Gap."
-human_verification:
-  - test: "Echte Audio-Bibliothek knapp UNTER 300 MiB zusammenstellen (mind. 4 große Dateien, Einzeldatei-Obergrenze 100 MB), dist/dnd-tracker-bundled.html per Doppelklick öffnen, Banner-Button „Zum App-Umzug\" klicken, dann im Divergenz-Banner „Audio-Datei herunterladen (…)\" klicken"
-    expected: "Wartehinweis erscheint, die Datei wird angeboten, der Tab bleibt bedienbar und stürzt nicht ab. Wird der Tab schon deutlich unter 300 MiB unruhig, ist die Warnschwelle zu hoch angesetzt und gehört gesenkt."
-    why_human: "Geprüft wird Speicherdruck im Renderer-Prozess eines echten Browsers (Recherche-Annahme A1). Unter Node/jsdom nicht messbar; kein Konsolen-Trick ersetzt echte Dateien. Der Nutzer hat sich am 2026-08-19 bewusst entschieden, die Dateien nicht zusammenzutragen — unverändert offen, aus der Erstverifikation und der ersten Re-Verifikation übernommen, durch diese Runde erneut fällig."
-    status: "offen — bewusst nicht abgenommen (12-VALIDATION.md § Manual-Only Verifications, 12-07-SUMMARY.md § Offene manuelle Prüfung, 12-11-SUMMARY.md § Next Phase Readiness). Einziger Grund, warum der Status nicht `passed` lautet."
+  - "12-SECURITY.md (`threats_open: 3`, Stand 2026-09-04) ist stale — SEC-01, SEC-02 und SEC-03 sind in den Plänen 12-13/12-14/12-12 geschlossen und hier unabhängig bestätigt. Der Frontmatter-Wert wurde in dieser Runde NICHT aktualisiert (außerhalb des Scopes dieses Verify-Laufs, rein dokumentarisch — der Code selbst ist korrekt)."
+  - "ROADMAP.md § Phase 12 'Plans:' zeigt weiterhin '15/17 plans executed', obwohl alle 17 Pläne [x] sind und SUMMARY haben. Rein dokumentarisch, kein inhaltlicher Gap."
+  - "WR-01 (12-REVIEW.md, `systems/avatars.js:6-31`, Warning): `validateAvatarURL()` blockt `javascript:`-Präfixe nur nach `trim()`, nicht nach Entfernen eingebetteter Steuerzeichen (`java\\tscript:`-Bypass). Aktuell nicht ausnutzbar (`entity.avatar` wird repoweit nur über `<img src>` mit `esc()` gerendert), liegt aber außerhalb des Anforderungsbereichs SAFE-01..06 (kein Daten-Verlust/-Überschreiben in Backup/Export/Migration) — kein Phase-12-Gap, zur Kenntnis genommen."
+  - "IN-01 (12-REVIEW.md, `loader.js:9`, Info): Kommentar behauptet eine zweite, mit build.py synchron zu haltende Modulliste — widerspricht der in CLAUDE.md dokumentierten SSOT-Architektur aus Phase 11. Rein kosmetisch, kein Phase-12-Gap."
+  - "REQUIREMENTS.md (Zeilen 26-52) trägt SAFE-01..06 weiterhin mit dem Stand 'Phase 12: 12-0X komplett' ohne die Gap-Closure-Pläne 12-09..12-17 zu referenzieren. Rein dokumentarisch."
+gaps:
+  - truth: "Kein Migrations-Bedienpfad überschreibt oder verwaist bereits geschriebene Kampagnendaten stillschweigend, wenn ein späterer Eintrag in derselben Importdatei ungültig ist"
+    status: failed
+    reason: "importFullExport() prüft campaign.data erst innerhalb der Schreibschleife (nach vorherigen erfolgreichen StorageAPI.setJSON()-Aufrufen in derselben Schleife), nicht davor. Ein Formfehler in einem späteren Kampagnen-Eintrag lässt frühere, bereits geschriebene Kampagnen als index-unerreichbare Datensätze zurück, während der Wizard 'Import fehlgeschlagen' meldet."
+    artifacts:
+      - path: "systems/migration/full-export.js"
+        issue: "Zeilen 142-161: Formprüfung von campaign.data steht in derselben for-Schleife wie StorageAPI.setJSON(), nicht in einer vorgelagerten, vollständigen Prüfschleife wie bei der bereits existierenden Key-Whitelist (Zeilen 135-140)."
+    missing:
+      - "Eine vorgelagerte Schleife, die campaign.data für ALLE Einträge validiert, BEVOR irgendein StorageAPI.setJSON()-Aufruf stattfindet (Fix-Vorschlag bereits in 12-REVIEW.md § CR-01 enthalten)."
+      - "Ein Regressionstest in tests/unit/full-export.test.js, der eine gültige Kampagne gefolgt von einer Kampagne mit ungültigem data-Feld importiert und beweist, dass NICHTS geschrieben wurde (analog zum bestehenden describe-Block 'Ablehnungen — es wird nichts geschrieben, bevor geworfen wird')."
+      - "Optional (vom Review als nicht-blockierender Zusatz genannt): Dokumentation/Benennung des verbleibenden Laufzeitfalls, in dem StorageAPI.setJSON() selbst zur Laufzeit scheitert (z. B. Quota), nachdem frühere Kampagnen bereits geschrieben wurden."
+human_verification: []
 ---
 
-# Phase 12: Datensicherheit — Verification Report (2. Re-Verifikation)
+# Phase 12: Datensicherheit — Verification Report (3. Re-Verifikation, nach Gap-Closure SEC-01..SEC-07)
 
 **Phase Goal:** Kein Pfad in Backup, Export oder Migration verliert oder überschreibt mehr stillschweigend Daten, und die Randfälle, die solche Verluste bisher verdeckt haben, sind getestet.
-**Verified:** 2026-09-04
-**Status:** human_needed
-**Re-verification:** Ja — nach Gap-Schließung CR-01 (Plan 12-09), CR-02 (Plan 12-10), WR-01 (Plan 12-09), WR-02 (Plan 12-11) und einem erneuten Code-Review (`12-REVIEW.md`, 0 kritisch, 1 Warnung WR-03, 1 Info)
+**Verified:** 2026-09-05
+**Status:** gaps_found
+**Re-verification:** Ja — nach der Gap-Closure-Runde SEC-01..SEC-07 (Pläne 12-12 bis 12-17) und einem anschließenden Code-Review (`12-REVIEW.md`, Status `issues_found`, 1 Critical/CR-01, 1 Warning, 1 Info)
 
 ---
 
 ## Vorbemerkung zur Methode
 
-Dies ist die **zweite Re-Verifikation** der Phase. Die vorherige Runde (`gaps_found`, 6/8) hatte
-zwei BLOCKER gefunden: CR-01 (Migrations-Skip überschreibt frisch importierte Daten stillschweigend)
-und CR-02 (Datei-Backup schreibt Daten der falschen Kampagne). Drei Pläne haben diese Runde
-geschlossen:
+Diese Runde prüft zwei Dinge unabhängig gegen den aktuellen Quelltext, nicht gegen SUMMARY-Behauptungen:
 
-- **Plan 12-09** (Welle 7): CR-01 + WR-01 (Audio-Feedback-Element), Datei `migration-wizard.js`
-- **Plan 12-10** (Welle 7, disjunkte Datei): CR-02, Datei `file-backup-manager.js`
-- **Plan 12-11** (Welle 8, nach 12-09/12-10): WR-02 (Redo-Stack-Leerung), Datei `undo.js`, plus
-  Rebuild beider `dist/`-Bundles aus dem vollständigen Quellstand
+1. **Sind SEC-01 bis SEC-07 (aus der vorherigen `12-VERIFICATION.md`/`12-SECURITY.md`) tatsächlich geschlossen?** — Ja, alle sieben wurden selbst gegen den Quelltext gelesen (Zitate unten) und die zugehörige, vom Orchestrator gemeldete Jest-Zahl (893/893) wurde selbst nachvollzogen (`npx jest` lokal ausgeführt: 893 passed / 893 total, 30 Suiten, 1,66 s).
+2. **Ist der von `12-REVIEW.md` unmittelbar vor dieser Verifikation gemeldete BLOCKER (CR-01, `importFullExport()`) real und ungelöst?** — Ja, siehe unten. Dieser Fund sitzt direkt auf dem wörtlichen Phasenziel ('...oder Migration ... überschreibt mehr stillschweigend Daten') und ist damit kein Randfund, sondern eine Kernverletzung der Phase-12-Garantie.
 
-Ein anschließendes Code-Review (`12-REVIEW.md`, 2026-09-04) hat alle vier Fixes unabhängig geprüft
-und als korrekt behoben bestätigt, dabei aber einen bisher unentdeckten, **nicht blockierenden**
-Randfall (WR-03: Export-/Import-Größenlimit-Inkonsistenz bei Audio) gefunden.
+**Selbst ausgeführte Kommandos dieser Runde:**
 
-**Methodik dieser Runde:** Jede der drei Fix-Behauptungen wurde vom Verifier **selbst gegen den
-aktuellen Quelltext gelesen** (nicht aus SUMMARY/REVIEW übernommen), die benannten Regressionstests
-wurden **selbst ausgeführt** (`-t`-Filter je Fund), und für CR-02 wurde zusätzlich **ein eigener
-Mutationstest** gefahren (Wächter testweise entfernt, Testausfall beobachtet, Wächter zurückgenommen,
-Arbeitsbaum als sauber bestätigt) — nicht nur die im SUMMARY protokollierte Mutation übernommen.
-
-**Testevidenz dieser Runde** (vom Orchestrator unabhängig gemessen, hier als Faktum übernommen,
-plus eigene Stichproben unten):
-
-| Suite | Ergebnis |
-| ----- | -------- |
-| `npm run build` (Produktion) | exit 0, alle Validierungen bestanden |
-| `npx jest` | 760 passed / 760 total, 29 Suiten, exit 0 |
+| Kommando | Ergebnis |
+|---|---|
+| `npx jest` | 893 passed / 893 total, 30 Suiten, 1,66 s, exit 0 |
 | `python -m pytest tests/build -q` | 24 passed, exit 0 |
-| `npx playwright test` | 321 passed, 2 skipped, exit 0 |
-| beide `dist/`-Bundles | um 15:36 aus einem Quellstand von 15:35 gebaut — W-1 (veraltetes Bundle) bleibt behoben |
+| `grep -nE "TBD\|FIXME\|XXX"` über alle 6 geänderten Quelldateien + 6 Testdateien dieser Gap-Closure-Runde | 0 Treffer |
+| `grep -n "test\.failing("` über alle `tests/unit/*.test.js` | 0 Treffer (beide zuvor verankerten Zeitbomben sind auf `test()` umgestellt) |
+| Selbst gelesen: `systems/migration/full-export.js` (vollständig, 246 Zeilen) | CR-01 bestätigt real (siehe unten) |
+| Selbst gelesen: `systems/undo.js:1-140`, `systems/file-backup/file-backup-manager.js` (Funktionssignaturen), `systems/migration/migration-wizard.js:480-610`, `systems/migration/audio-export.js:40-65,380-410` | SEC-01..07 bestätigt geschlossen |
+
+`npm run build` und die volle Playwright-Suite wurden **nicht** erneut selbst ausgeführt (bereits vom Orchestrator unabhängig gemessen: exit 0 bzw. 321 passed/2 skipped; die beiden hier selbst nachvollzogenen Suiten — Jest und pytest — bestätigen dieselbe Größenordnung wie vom Orchestrator gemeldet, was die übernommenen Werte plausibilisiert).
+
+---
+
+## Eigene Quelltext-Prüfung CR-01
+
+`systems/migration/full-export.js:142-161` (aktueller Stand, wörtlich):
+
+```javascript
+// Jede Kampagne migrieren und speichern
+for (const [key, campaign] of campaignEntries) {
+    if (!campaign.data || typeof campaign.data !== 'object') {
+        throw new Error('Kampagne "' + key + '" hat keine gueltigen Daten');
+    }
+    // T-02-08: migrateData pro Kampagne (Sanitierung + Versions-Migration)
+    let migratedData = campaign.data;
+    if (typeof migrateData === 'function') {
+        migratedData = migrateData(campaign.data);
+    } else if (typeof window.migrateData === 'function') {
+        migratedData = window.migrateData(campaign.data);
+    }
+
+    // Kampagnendaten speichern — mit {success, error}-Pruefung (StorageAPI-Muster)
+    const saveResult = StorageAPI.setJSON(key, migratedData);
+    if (!saveResult.success) {
+        throw new Error('Speichern fehlgeschlagen: ' + (saveResult.error || 'Unbekannter Fehler'));
+    }
+    totalBytes += JSON.stringify(migratedData).length;
+}
+```
+
+Die Formprüfung von `campaign.data` (Zeile 144) steht **in derselben Schleife** wie der Schreibzugriff
+(Zeile 156) — anders als die bereits existierende Key-Whitelist-Prüfung (Zeilen 135-140), die
+bewusst in einer **eigenen, vorgelagerten** Schleife läuft, bevor irgendetwas geschrieben wird. Bei
+drei gültigen Kampagnen gefolgt von einer vierten mit fehlendem `data`-Feld werden die ersten drei
+bereits vollständig geschrieben, bevor der `throw` bei der vierten greift. Der Kampagnenindex-Merge
+(Zeilen 163-199) und der Favoriten-Merge (Zeilen 201-228) laufen danach **nie**, weil der Fehler aus
+`importFullExport()` herauspropagiert — in `migration-wizard.js` führt das zu `showError('Import
+fehlgeschlagen: ...')`, während die ersten drei Kampagnen bereits unter ihrem Key in `localStorage`
+liegen, ohne jeden Eintrag im Kampagnenindex.
+
+Gegenprobe im Testfile bestätigt die Lücke: `tests/unit/full-export.test.js:256-306`
+(`describe('Ablehnungen — es wird nichts geschrieben, bevor geworfen wird', ...)`) deckt ausschließlich
+die VOR der Schreibschleife laufenden Prüfungen ab (`_exportType`, `campaigns`, `campaignIndex`,
+`MAX_IMPORT_CAMPAIGNS`, `ALLOWED_KEY_RE`) — kein Testfall mit einer gültigen Kampagne gefolgt von einer
+Kampagne mit ungültigem `data`-Feld existiert. Das ist keine durch grüne Tests kaschierte Lücke,
+sondern eine schlicht ungetestete.
+
+**Warum dies ein Phase-12-Gap ist, kein Nebenbefund:** Der Phasenname und der wörtliche Ziel-Satz
+lauten „Kein Pfad in Backup, Export oder **Migration** verliert oder überschreibt mehr **stillschweigend**
+Daten". `importFullExport()` ist der zentrale Migrations-Importpfad (`SAFE-01`). Genau dieser Pfad
+hinterlässt bei einer teilweise fehlerhaften Importdatei stillschweigend index-unerreichbare, aber
+physisch vorhandene Kampagnendaten, während der Nutzer eine vollständige Fehlermeldung sieht, die
+exakt das Gegenteil suggeriert (analog zur bereits in einer früheren Runde geschlossenen CR-01 zu
+`wizard-skip`, nur an anderer Stelle desselben Imports).
 
 ---
 
 ## Goal Achievement
 
-### Observable Truths (ROADMAP Success Criteria + aus dem Phasenziel abgeleitete Truths 7/8)
+### Observable Truths (ROADMAP Success Criteria + aus dem Phasenziel abgeleitete Truths)
 
 | # | Truth | Status | Evidence |
 |---|-------|--------|----------|
-| 1 | Umzugs-Export `file://` → PWA enthält Soundboard-Audio und Würfelstatistik; nach dem Import spielen Szenen ihre Tracks, keine toten `blobId`s | ✓ VERIFIED (Regressionstiefe, unverändert seit Erstverifikation) | `audio-export.js`/`full-export.js` von keinem der drei Pläne dieser Runde berührt (`files_modified` aller drei Pläne disjunkt: `migration-wizard.js`, `file-backup-manager.js`, `undo.js`). WR-03 (neu gefunden) betrifft eine Randbedingung (Größenlimit), nicht diese Kern-Truth — siehe eigener Abschnitt unten. |
-| 2 | Datei-Backup umfasst alle Kampagnen; zwei Kampagnen mit demselben `safeName` überschreiben sich nicht (Kollisions-Suffix-Logik) | ✓ VERIFIED (Regressionstiefe, Kollisions-Fall unverändert) | `resolveBackupTargets()`/`_sanitizeKeySuffix()` von Plan 12-10 nicht angefasst (Scope Fence bestätigt das explizit); die 6 Kollisions-Tests dieses `describe`-Blocks liefen unverändert mit (`file-backup.test.js`, 21/21 grün inkl. dieser). |
-| 3 | `Strg+Z` nach dem Löschen einer Audiodatei stellt Blob UND Szenen-Referenz wieder her | ✓ VERIFIED (Regressionstiefe) | `soundboard-crud.js`/`soundboard-idb.js` von keinem der drei Pläne berührt. |
-| 4 | Umzugs-Wizard bietet sich einem Nutzer mit vorhandenen Daten nicht an — auch nicht bei `STORAGE_KEY_OVERRIDE` oder im IndexedDB-Modus | ✓ VERIFIED (voll geprüft in der vorherigen Runde, G-12-3, unverändert seit) | `hasCampaignContent()`/`isFreshInstall()` von Plan 12-09 laut Scope Fence explizit NICHT angefasst; Grep bestätigt weiterhin `return !hasCampaignContent(data);` bei `migration-wizard.js:145`. |
-| 5 | Parse-Fehler in `undo()`/`redo()` lässt die Stacks unverändert; kritische Saves laufen unabhängig vom `autosave-toggle`; **zusätzlich seit dieser Runde:** ein gescheiterter `pushUndo()`-Push (nicht serialisierbares `D`) leert den Redo-Stack, statt einen veralteten Eintrag stehen zu lassen | ✓ VERIFIED (Kernverhalten unverändert, Randlücke WR-02 jetzt geschlossen) | Selbst gelesen: `systems/undo.js:9-35`, `catch`-Zweig endet jetzt mit `redoStack.length = 0;` vor dem `return` (Zeile ~28). Selbst ausgeführt: `npx jest tests/unit/stability.test.js -t "WR-02"` → `WR-02 Test J`/`WR-02 Test K` beide grün. |
-| 6 | Tests decken den >5-MB-IDB-only-Save mit Reload, den localStorage-Quota-Fallback und den Export/Import-Versions-Rundlauf ab | ✓ VERIFIED (Regressionstiefe) | `stability.test.js`/`full-export.test.js`-Kernblöcke von dieser Runde nicht berührt; 760 statt 749 bestandene Tests (11 neue: 5+4+2), keine Regression laut Orchestrator-Lauf. |
-| 7 *(aus dem Phasenziel abgeleitet: „...oder Migration ... überschreibt mehr stillschweigend Daten")* | Nach einem abgeschlossenen Migrations-Import überschreibt kein Wizard-Bedienpfad die frisch importierten Daten stillschweigend | ✓ VERIFIED — **CR-01 geschlossen** | Selbst gelesen (`migration-wizard.js:643-654`): `wizard-skip` prüft jetzt `_wizardStep >= 4` und ruft `window.location.reload()` auf statt nur `_closeWizard()`; Footer trägt `id="migration-wizard-footer"` (Zeile 291) und wird in `showWizardStep()` (Zeile 172-176) ab Schritt 4 per `style.display='none'` ausgeblendet. CSS-Klasse `.migration-wizard-footer` (Zeile 291, `assets/styles/migration.css:208`) bleibt erhalten. Selbst ausgeführt: `npx jest tests/unit/migration-wizard.test.js -t "CR-01|WR-01"` → 5/5 grün (41 skipped, 5 passed, 46 total). Behavior-dependent (Zustandsübergang „reload statt still schließen"), durch benannten Test bewiesen, nicht nur Symbolpräsenz. |
-| 8 *(aus dem Phasenziel abgeleitet: „...oder Backup ... überschreibt mehr stillschweigend Daten")* | Ein Datei-Backup schreibt niemals die Daten einer anderen (aktiven) Kampagne in die Backup-Datei einer Kampagne, deren eigene Daten fehlen | ✓ VERIFIED — **CR-02 geschlossen** | Selbst gelesen (`file-backup-manager.js:407-421`): Stufe 3 gibt `window.D` nur noch zurück, wenn `campaignKey === aktiverBackupKey`; JSDoc (Zeilen 375-386) beschreibt die neue Bedingung. Selbst ausgeführt: `npx jest tests/unit/file-backup.test.js -t "CR-02"` → 4/4 grün (Test F, G, H, Invariante). **Zusätzlich selbst per Mutationstest bestätigt:** Wächter-Bedingung testweise durch die alte, ungeschützte Zeile ersetzt (`sed`) → 3 der 4 CR-02-Tests fallen um (`Tests: 3 failed, 1 passed`); Mutation per `git checkout` zurückgenommen, `git diff` danach leer, volle Datei erneut 21/21 grün. Behavior-dependent (Datenisolation zwischen Kampagnen), durch benannten Test UND eigene Mutation bewiesen. |
+| 1 | Umzugs-Export `file://` → PWA enthält Soundboard-Audio und Würfelstatistik; nach dem Import spielen Szenen ihre Tracks, keine toten `blobId`s | ✓ VERIFIED (Regressionstiefe, `audio-export.js`/`full-export.js` Kernpfad dieser Runde nur um SEC-05/SEC-07 gehärtet, nicht funktional verändert) | Jest 893/893 grün inkl. `audio-export.test.js`, `full-export.test.js`; SEC-07-Härtung selbst gelesen (`audio-export.js:48-62,380-405`) |
+| 2 | Datei-Backup umfasst alle Kampagnen; zwei Kampagnen mit demselben `safeName` überschreiben sich nicht; keine Kampagne wird fälschlich als „leer" übersprungen; keine Kampagne verliert ihre Namens-Identität im Dateinamen | ✓ VERIFIED — **SEC-04 und SEC-03 geschlossen** | Selbst gelesen: `_hatKampagnenInhalt()` (`file-backup-manager.js:326-420`) ersetzt die Schlüsselzahl-Prüfung in allen drei Stufen von `readCampaignDataForBackup()`; `resolveBackupTargets()` (Zeilen 147-246) löst den Namen des aktiven Ziels aus dem Index auf. `file-backup.test.js` enthält benannte SEC-04/SEC-03-Tests mit Mutationsnachweis laut SUMMARY, Suite läuft grün mit. |
+| 3 | `Strg+Z` nach dem Löschen einer Audiodatei stellt Blob und Szenen-Referenz wieder her | ✓ VERIFIED (Regressionstiefe, unverändert seit Erstverifikation — `soundboard-crud.js`/`soundboard-idb.js` von keinem Plan dieser Runde berührt) | `soundboard.test.js` unverändert grün, kein Diff an den betroffenen Dateien |
+| 4 | Umzugs-Wizard bietet sich einem Nutzer mit vorhandenen Daten nicht an — auch nicht bei gesetztem `STORAGE_KEY_OVERRIDE`, im IndexedDB-Modus, oder wenn ausschließlich `quickRefCustom` befüllt ist | ✓ VERIFIED — **SEC-06 zusätzlich geschlossen** | Selbst gelesen: `CAMPAIGN_CONTENT_ARRAYS` enthält jetzt `quickRefCustom` (`migration-wizard.js:92`), `CAMPAIGN_CONTENT_EXCLUDED` (Zeile 112ff.) macht die Ausschlussregel prüfbar. `migration-wizard.test.js` mit SEC-06-Vollständigkeitstest läuft grün mit. |
+| 5 | Parse-Fehler in `undo()`/`redo()` lässt die Stacks unverändert; kritische Saves laufen unabhängig vom `autosave-toggle`; ein gescheiterter Push/Pop bei nicht-serialisierbarem `D` bricht ohne Stack-Mutation ab statt ungefangen zu werfen | ✓ VERIFIED — **SEC-02 geschlossen** | Selbst gelesen: `systems/undo.js` — `undo()` (Zeile ~69) und `redo()` (Zeile ~108) serialisieren jetzt in try/catch mit Warn-Toast, vor jeder Stack-Mutation. `stability.test.js` mit benannten SEC-02-Tests + Invariante läuft grün mit. |
+| 6 | Tests decken den >5-MB-IDB-only-Save mit Reload, den localStorage-Quota-Fallback und den Export/Import-Versions-Rundlauf ab | ✓ VERIFIED (Regressionstiefe, unverändert seit Nyquist-Nachzug 2026-09-04) | `stability.test.js`/`full-export.test.js`-Kernblöcke dieser Runde nicht am Kernverhalten geändert; alle zugehörigen Tests laufen in den 893 grün mit |
+| 7 *(abgeleitet, bereits in vorheriger Runde geschlossen)* | Nach einem abgeschlossenen Migrations-Import überschreibt kein Wizard-Bedienpfad (`wizard-skip`/`wizard-close`) die frisch importierten Daten stillschweigend | ✓ VERIFIED (Regressionstiefe — `_wizardStep`-Reload-Pfad von dieser Runde nicht berührt) | Kein Diff an den betroffenen Zeilen (`migration-wizard.js:641-654` laut `git diff`/Scope-Fence-Aussagen der Pläne 12-12..12-17) |
+| 8 *(abgeleitet, bereits in vorheriger Runde geschlossen)* | Ein Datei-Backup schreibt niemals die Daten einer anderen (aktiven) Kampagne in die Backup-Datei einer Kampagne, deren eigene Daten fehlen | ✓ VERIFIED (Regressionstiefe, CR-02-Wächter von SEC-03 nicht zurückgenommen, nur präzisiert) | `readCampaignDataForBackup()` Stufe 3 (Zeile 554) prüft weiterhin `campaignKey === aktiverBackupKey` UND jetzt zusätzlich `_hatKampagnenInhalt(window.D)` |
+| 9 *(neu abgeleitet aus dem Phasenziel, diese Runde)* | Kein Migrations-Bedienpfad überschreibt oder verwaist bereits geschriebene Kampagnendaten stillschweigend, wenn ein späterer Eintrag in derselben Importdatei ungültig ist | ✗ **FAILED — CR-01 (12-REVIEW.md)** | Selbst gelesen und bestätigt: `systems/migration/full-export.js:142-161` — siehe Abschnitt „Eigene Quelltext-Prüfung CR-01" oben. Kein Regressionstest vorhanden (`full-export.test.js:256-306` deckt nur die vorgelagerten Prüfungen ab). |
 
-**Score:** 8/8 truths verified (0 present-but-behavior-unverified, 0 FAILED)
-
----
-
-### Zitierte Quelltext-Belege (vom Verifier selbst gelesen)
-
-**CR-01 — `systems/migration/migration-wizard.js:641-654`:**
-```js
-} else if (action === 'wizard-skip') {
-    // shown-Flag setzen (immer, unabhaengig vom Schritt)
-    StorageAPI.setJSON('migration-wizard-shown', { shown: true, skipped: true });
-    // Gap-Closure 12-09 (CR-01): ab Schritt 4 ist der Import bereits gelaufen —
-    // window.D steht noch auf dem Vor-Import-Stand, und der unbedingte
-    // beforeunload-Autosave in systems/avatars.js wuerde ihn ohne Neuladen in
-    // denselben Storage-Key zurueckschreiben (derselbe Grund wie wizard-close).
-    if (_wizardStep >= 4) {
-        window.location.reload();
-        return;
-    }
-    _closeWizard();
-```
-
-**Footer-Ausblendung — `showWizardStep()`, Zeilen 172-176:**
-```js
-const footer = modal.querySelector('#migration-wizard-footer');
-if (footer) {
-    footer.style.display = (n >= 4) ? 'none' : '';
-}
-```
-
-**CR-02 — `systems/file-backup/file-backup-manager.js:407-421`:**
-```js
-const aktiverBackupKey = (typeof window !== 'undefined' && window.APP_CONFIG?.STORAGE_KEY)
-    ? (window.STORAGE_KEY_OVERRIDE || window.APP_CONFIG.STORAGE_KEY)
-    : null;
-if (aktiverBackupKey && campaignKey === aktiverBackupKey && istBefuellt(window.D)) {
-    return window.D;
-}
-```
-
-**WR-02 — `systems/undo.js`, `catch`-Zweig von `pushUndo()`:**
-```js
-showToast('⚠️ Undo-Schutz für diese Aktion nicht verfügbar', 'warning');
-// ... Kommentar ...
-redoStack.length = 0;
-return;
-```
-
-**Eigener Mutationsnachweis (nicht nur aus SUMMARY übernommen), CR-02:**
-```
-$ sed -i "s/if (aktiverBackupKey ...) {/if (typeof window !== 'undefined' && istBefuellt(window.D)) {/" file-backup-manager.js
-$ npx jest tests/unit/file-backup.test.js -t "CR-02"
-Tests: 3 failed, 17 skipped, 1 passed, 21 total
-$ git checkout -- systems/file-backup/file-backup-manager.js
-$ git diff systems/file-backup/file-backup-manager.js   # leer
-$ npx jest tests/unit/file-backup.test.js
-Tests: 21 passed, 21 total
-```
+**Score:** 8/9 truths verified (0 present-but-behavior-unverified, 1 FAILED)
 
 ---
 
-## Required Artifacts (Delta zur vorherigen Re-Verifikation)
+## Required Artifacts (Delta zur vorherigen Verifikation — Pläne 12-12 bis 12-17)
 
 | Artifact | Expected | Exists | Substantive | Wired | Status |
 |----------|----------|--------|-------------|-------|--------|
-| `systems/migration/migration-wizard.js` — `wizard-skip`-Handler | Reload-Zweig ab Schritt 4, Footer ausblendbar | ✓ | ✓ Reload + Footer-Ausblendung vorhanden | ✓ `_wizardStep`-Vergleich korrekt verdrahtet, Test bindet an Produktionscode (selbst per `-t` bestätigt) | ✓ VERIFIED |
-| `tests/unit/migration-wizard.test.js` | CR-01 Test A/B/C, WR-01 Test D/E | ✓ 46 Tests (vorher 41) | ✓ 5 neue Tests mit Kennung im Namen | ✓ läuft in Suite, selbst mit `-t` bestätigt (5/5 grün) | ✓ VERIFIED |
-| `systems/file-backup/file-backup-manager.js` — `readCampaignDataForBackup()` Stufe 3 | `campaignKey`-Wächter | ✓ | ✓ Wächter vorhanden, JSDoc nachgezogen | ✓ per eigenem Mutationstest bestätigt gebunden | ✓ VERIFIED |
-| `tests/unit/file-backup.test.js` | CR-02 Test F/G/H/Invariante | ✓ 21 Tests (vorher 17) | ✓ 4 neue Tests, Invariante bezieht Zuordnung aus echtem `resolveBackupTargets()` | ✓ läuft in Suite, selbst bestätigt (4/4 grün + Mutationstest) | ✓ VERIFIED |
-| `systems/undo.js` — `pushUndo()` `catch`-Zweig | `redoStack.length = 0` vor `return` | ✓ | ✓ Zeile vorhanden mit begründendem Kommentar | ✓ Erfolgspfad unverändert (`grep -c "redoStack.length = 0"` würde 3 Treffer liefern: Erfolgspfad, catch-Zweig, `clearUndoHistory()`) | ✓ VERIFIED |
-| `tests/unit/stability.test.js` | WR-02 Test J/K | ✓ 75 Tests (vorher 73) | ✓ 2 neue Tests, Test J nutzt echten `realUndo()`-Lauf statt `__pushRawRedo()` | ✓ läuft in Suite, selbst bestätigt (2/2 grün) | ✓ VERIFIED |
-| `dist/dnd-tracker-bundled.html` + `dist/dnd-tracker-optimized.html` | Beide jünger als alle drei geänderten Quelldateien | ✓ beide vorhanden | ✓ 15:36/15:41 Uhr, aus 15:11-15:35-Quellstand gebaut | ✓ Orchestrator-Build bestätigt exit 0 | ✓ VERIFIED |
+| `systems/file-backup/file-backup-manager.js` — `_hatKampagnenInhalt()` | Inhaltsbasierte Leerprüfung statt Schlüsselzahl, in allen 3 Stufen von `readCampaignDataForBackup()` | ✓ | ✓ Funktion vorhanden (Zeile 326) | ✓ In allen 3 Stufen verdrahtet (Zeilen 528, 538, 554) | ✓ VERIFIED |
+| `systems/file-backup/file-backup-manager.js` — `resolveBackupTargets()` | Namensauflösung des aktiven Ziels aus dem Index | ✓ | ✓ | ✓ | ✓ VERIFIED |
+| `systems/undo.js` — `undo()`/`redo()` | Geschützte Serialisierung vor Stack-Mutation | ✓ | ✓ try/catch mit Warn-Toast an beiden Stellen | ✓ | ✓ VERIFIED |
+| `systems/migration/migration-wizard.js` — `_processWizardFile()`/`_processWizardAudioFile()` | Import-try endet nach Rücksprung aus Importfunktion | ✓ | ✓ (Zeilen 537-543, 605-606) | ✓ | ✓ VERIFIED |
+| `systems/migration/audio-export.js` — `schaetzeAudioRohbytes()`/Größengrenzen | Einzel- und Gesamtgrenze vor `base64ToBlob()` | ✓ | ✓ (Zeilen 48-62, 380-405) | ✓ | ✓ VERIFIED |
+| `systems/migration/full-export.js` — Favoriten-/Index-Merge | Zusammenführen statt Ersetzen | ✓ | ✓ (Zeilen 163-228) | ✓ | ✓ VERIFIED |
+| `systems/migration/full-export.js` — `importFullExport()` Schreibschleife | Formprüfung ALLER Einträge VOR jedem Schreibzugriff | ✓ existiert | ✗ **Prüfung steht in derselben Schleife wie der Schreibzugriff, nicht davor** | — | ✗ **STUB-artiger Lückenschluss — CR-01** |
+| `dist/dnd-tracker-bundled.html` + `dist/dnd-tracker-optimized.html` | Beide jünger als alle fünf geänderten Quelldateien dieser Runde | ✓ (laut 12-17-SUMMARY, `dist/` gitignored, nicht selbst nachprüfbar ohne eigenen Build) | — | — | Übernommen als Orchestrator-Faktum (12-17-SUMMARY Zeitstempel-Tabelle) |
 
 ---
 
@@ -195,18 +163,21 @@ Tests: 21 passed, 21 total
 
 | Requirement | Source Plan | Beschreibung | Status | Evidence |
 |-------------|-------------|--------------|--------|----------|
-| SAFE-01 | 12-01, 12-02, **12-09** | Umzugs-Export enthält Audio + Würfelstatistik; kein Bedienpfad überschreibt den Import stillschweigend | ✓ **SATISFIED** | Truth 1 unverändert VERIFIED; Truth 7 (CR-01) jetzt VERIFIED statt FAILED. WR-03 (Größenlimit-Inkonsistenz) bleibt als nicht-blockierende Warnung offen — kein stiller Verlust, da Fehlermeldung angezeigt wird. |
-| SAFE-02 | 12-01, 12-03, **12-10** | Datei-Backup deckt alle Kampagnen kollisionsfrei ab und ohne Fremdzuordnung | ✓ **SATISFIED** | Truth 2 unverändert VERIFIED; Truth 8 (CR-02) jetzt VERIFIED statt FAILED, inkl. eigenem Mutationsnachweis. |
+| SAFE-01 | 12-01, 12-02, 12-09, 12-14, 12-15, 12-16 | Umzugs-Export enthält Audio + Würfelstatistik; kein Bedienpfad überschreibt den Import stillschweigend | ⚠️ **TEILWEISE — CR-01 offen** | Truth 1/7 VERIFIED; SEC-01/SEC-07 VERIFIED; **Truth 9 (CR-01, `importFullExport()`-Schreibschleife) FAILED** — derselbe Requirement-Bereich, andere Fundstelle als das bereits geschlossene SEC-01. |
+| SAFE-02 | 12-01, 12-03, 12-10, 12-12 | Datei-Backup deckt alle Kampagnen kollisionsfrei ab, ohne Fremdzuordnung, ohne fälschliches Leer-Überschreiben | ✓ SATISFIED | Truth 2/8 VERIFIED; SEC-04/SEC-03 zusätzlich geschlossen. |
 | SAFE-03 | 12-06 | Audio-Löschen rückgängig (Blob + Referenz) | ✓ SATISFIED | Unverändert seit Erstverifikation, von dieser Runde nicht berührt. |
-| SAFE-04 | 12-04, 12-08 | Wizard bietet sich Nutzern mit Daten nicht an | ✓ SATISFIED | G-12-3 in der ersten Re-Verifikation geschlossen, von dieser Runde laut Scope Fence explizit nicht angefasst; Grep bestätigt Code unverändert. |
-| SAFE-05 | 12-05, **12-11** | Persistenz bei Fehlern/Sonderfällen vorhersagbar | ✓ SATISFIED | Kernverhalten unverändert VERIFIED; WR-02-Randlücke (Redo-Stack nach gescheitertem Push) jetzt geschlossen und selbst nachgewiesen. |
+| SAFE-04 | 12-04, 12-08, 12-16 | Wizard bietet sich Nutzern mit Daten nicht an | ✓ SATISFIED | Truth 4 VERIFIED; SEC-06 zusätzlich geschlossen. |
+| SAFE-05 | 12-05, 12-11, 12-13 | Persistenz bei Fehlern/Sonderfällen vorhersagbar | ✓ SATISFIED | Truth 5 VERIFIED; SEC-02 zusätzlich geschlossen. |
 | SAFE-06 | 12-01, 12-07 | Persistenz-Randfälle getestet | ✓ SATISFIED | Unverändert seit Erstverifikation. |
 
-**Orphaned requirements:** keine. `.planning/REQUIREMENTS.md:26-52` und `:127-136` mappen genau
-SAFE-01…SAFE-06 auf Phase 12; alle sechs sind hier bewertet (sechs von sechs bestanden). Die
-Traceability-Notiz je SAFE-01/SAFE-02 in `REQUIREMENTS.md` referenziert noch nicht die Pläne
-12-09/12-10 (siehe `warnings` im Frontmatter) — rein dokumentarisch, ändert nichts an der
-inhaltlichen Bewertung.
+**Orphaned requirements:** keine. `.planning/REQUIREMENTS.md:26-52` mappt genau SAFE-01…SAFE-06 auf
+Phase 12; alle sechs sind hier bewertet. Die Traceability-Notiz je Requirement referenziert die
+Gap-Closure-Pläne 12-09..12-17 noch nicht (siehe `warnings`), rein dokumentarisch.
+
+**Warum SAFE-01 nicht vollständig `SATISFIED` ist:** SAFE-01 deckt laut REQUIREMENTS.md ausdrücklich
+den gesamten Migrations-Importpfad ab ("kein Bedienpfad überschreibt den Import stillschweigend" ist
+die wörtliche Phasenziel-Formulierung, auf SAFE-01 gemappt). CR-01 sitzt in genau diesem Pfad
+(`importFullExport()`), ist unabhängig reproduziert und nicht Teil der SEC-01..07-Fix-Runde.
 
 ---
 
@@ -214,11 +185,11 @@ inhaltlichen Bewertung.
 
 | File | Line | Pattern | Severity | Impact |
 |------|------|---------|----------|--------|
-| — | — | `TBD`/`FIXME`/`XXX` in `migration-wizard.js`, `file-backup-manager.js`, `undo.js` und deren Testdateien | — | **0 Treffer** (selbst per `grep -nE` bestätigt) — keine unaufgelöste Schuldenmarke |
-| `systems/migration/audio-export.js:30`, `systems/migration/migration-wizard.js:568` | — | WR-03: unabhängig kalibrierte, inkonsistente Größenlimits (Export-Rohbytes vs. Import-Dateigröße nach Base64) | ⚠️ Warning | Kein stiller Datenverlust (Fehlermeldung erscheint), aber ein selbst erzeugter, gültiger Export kann grundlos beim Reimport abgelehnt werden. Nicht Gegenstand dieser Runde (Nutzerentscheidung: nur CR-01/CR-02/WR-01/WR-02 in Scope). |
-
-Alle vier ursprünglich vom Review gefundenen Befunde (CR-01, CR-02, WR-01, WR-02) sind laut
-`12-REVIEW.md` und den obigen eigenen Nachprüfungen behoben; keiner davon taucht hier erneut auf.
+| `systems/migration/full-export.js` | 142-161 | Formprüfung innerhalb statt vor der Schreibschleife (CR-01) | 🛑 Blocker | Siehe oben — Kern-Gap dieser Runde. |
+| — | — | `TBD`/`FIXME`/`XXX` in allen 6 geänderten Produktionsdateien + 6 Testdateien der Gap-Closure-Runde | — | **0 Treffer** (selbst per `grep -nE` bestätigt) |
+| — | — | `test.failing(` (echte Aufrufe) über alle `tests/unit/*.test.js` | — | **0 Treffer** — beide zuvor verankerten Zeitbomben (IMPL-01/SEC-01, IMPL-02/SEC-02) sind entschärft und auf `test()` umgestellt, wie von 12-VALIDATION.md gefordert |
+| `systems/avatars.js:6-31` | — | WR-01 (12-REVIEW.md): `validateAvatarURL()` blockt `javascript:` nur nach `trim()`, nicht nach Entfernen eingebetteter Steuerzeichen | ⚠️ Warning (außerhalb Phase-12-Scope) | Aktuell nicht ausnutzbar (`esc()` + `<img src>`), kein Backup/Export/Migration-Datenverlust — kein Phase-12-Gap |
+| `loader.js:9` | — | IN-01 (12-REVIEW.md): Kommentar widerspricht der SSOT-Architektur (Phase 11) | ℹ️ Info | Rein kosmetisch |
 
 ---
 
@@ -226,55 +197,45 @@ Alle vier ursprünglich vom Review gefundenen Befunde (CR-01, CR-02, WR-01, WR-0
 
 | Behavior | Command | Result | Status |
 |----------|---------|--------|--------|
-| Volle Jest-Suite (Orchestrator-Lauf) | `npx jest` | 760 passed / 29 Suiten / 0 skipped | ✓ PASS (als Faktum übernommen) |
-| Build-Tests (Orchestrator-Lauf) | `python -m pytest tests/build -q` | 24 passed | ✓ PASS (als Faktum übernommen) |
-| Volle E2E-Suite (Orchestrator-Lauf) | `npx playwright test` | 321 passed / 2 skipped, exit 0 | ✓ PASS (als Faktum übernommen) |
-| CR-01/WR-01 benannte Tests | `npx jest tests/unit/migration-wizard.test.js -t "CR-01\|WR-01"` | 5 passed, 46 total | ✓ PASS (selbst ausgeführt) |
-| CR-02 benannte Tests | `npx jest tests/unit/file-backup.test.js -t "CR-02"` | 4 passed, 21 total | ✓ PASS (selbst ausgeführt) |
-| CR-02 Mutationstest | Wächter entfernt (`sed`), Suite erneut gelaufen | 3 failed, 21 total → nach `git checkout` wieder 21 passed, `git diff` leer | ✓ PASS (selbst ausgeführt, eigener Nachweis, nicht nur SUMMARY übernommen) |
-| Volle file-backup-Suite nach Wiederherstellung | `npx jest tests/unit/file-backup.test.js` | 21 passed, 21 total | ✓ PASS (selbst ausgeführt, bestätigt sauberen Zustand) |
-| WR-02 benannte Tests | `npx jest tests/unit/stability.test.js -t "WR-02"` | 2 passed, 75 total | ✓ PASS (selbst ausgeführt) |
-| Debt-Marker in geänderten Dateien | `grep -nE "TBD\|FIXME\|XXX"` über alle sechs Dateien dieser Runde | 0 Treffer | ✓ PASS (selbst ausgeführt) |
-| Footer-CSS-Klasse erhalten | `grep -n "migration-wizard-footer" assets/styles/migration.css` | Zeile 208 unverändert vorhanden | ✓ PASS (selbst ausgeführt) |
-| Bundle-Zeitstempel vs. Quelldateien | `ls -la --time-style=full-iso` | beide Bundles (15:36/15:41) jünger als migration-wizard.js (15:11) und undo.js (15:35) zum Build-Zeitpunkt | ✓ PASS (Orchestrator-Messung übernommen; eigener Nachlauf zeigt file-backup-manager.js jetzt jünger, weil der Verifier selbst per Mutationstest den mtime berührt hat — Inhalt laut `git diff` unverändert, kein neuer Gap) |
-
-Kein Full-Suite-Rerun durch den Verifier für Jest/pytest/Playwright — bereits vom Orchestrator
-unabhängig gemessen (Aufgabenstellung). Stattdessen gezielte, selbst ausgeführte Stichproben je Fund
-plus ein eigener Mutationstest für den risikoreichsten Fund (CR-02, Datenvermischung zwischen
-Kampagnen).
+| Volle Jest-Suite | `npx jest` (selbst ausgeführt) | 893 passed / 893 total, 30 Suiten, exit 0 | ✓ PASS (selbst nachvollzogen, deckt sich mit Orchestrator-Angabe) |
+| Build-Tests | `python -m pytest tests/build -q` (selbst ausgeführt) | 24 passed, exit 0 | ✓ PASS (selbst nachvollzogen) |
+| Debt-Marker in allen 6 Produktions- + 6 Testdateien dieser Runde | `grep -nE "TBD\|FIXME\|XXX"` (selbst ausgeführt) | 0 Treffer | ✓ PASS |
+| `test.failing(`-Zeitbomben entschärft | `grep -rn "test\.failing("` (selbst ausgeführt) | 0 Treffer in allen `tests/unit/*.test.js` | ✓ PASS |
+| SEC-01..07 Quelltext-Belege | Direktes Lesen der 5 geänderten Produktionsdateien | Alle 7 Befunde strukturell im aktuellen Quelltext bestätigt | ✓ PASS |
+| CR-01 Quelltext-Beleg | Direktes Lesen von `full-export.js` (vollständig) | Formprüfung bestätigt innerhalb der Schreibschleife, kein vorgelagerter Check | ✗ **FAIL — bestätigter Gap** |
+| Volle Playwright-Suite (Orchestrator-Lauf, zweimal bestätigt laut 12-17-SUMMARY) | `npx playwright test` | 321 passed / 2 skipped, exit 0 | ✓ PASS (als Faktum übernommen, nicht selbst erneut ausgeführt) |
+| `npm run build` (Orchestrator-Lauf) | `python build.py --production` | exit 0, alle Validierungen bestanden | ✓ PASS (als Faktum übernommen) |
 
 ---
 
 ## Gaps Summary
 
-**Keine offenen Gaps.** Beide BLOCKER aus der vorherigen Runde (CR-01, CR-02) sind geschlossen und
-vom Verifier unabhängig — durch eigenes Lesen des Quelltextes, eigene Testläufe und (bei CR-02)
-einen eigenen Mutationstest — bestätigt. Die beiden Warnungen aus dem Code-Review (WR-01, WR-02) sind
-ebenfalls geschlossen.
+**Ein Gap blockiert den Phasenabschluss:** CR-01 aus `12-REVIEW.md` (`systems/migration/full-export.js:142-161`)
+ist unabhängig gegen den aktuellen Quelltext reproduziert. `importFullExport()` prüft die Formkorrektheit
+von `campaign.data` erst innerhalb der Schreibschleife statt davor — bei einer Importdatei mit gültigen
+Kampagnen gefolgt von einer ungültigen werden die vorherigen Kampagnen bereits nach `localStorage`
+geschrieben, bevor der Fehler geworfen wird, während der Kampagnenindex-Merge und der Favoriten-Merge
+nie laufen. Der Nutzer sieht „Import fehlgeschlagen" über einem tatsächlich teilweise erfolgreichen,
+index-unerreichbaren Schreibvorgang. Das ist exakt die Klasse von stillschweigendem Datenverlust/
+-verwaisung, die dem Phasenziel den Namen gibt — kein Rand- oder Kosmetikbefund.
 
-**Ein neuer, nicht-blockierender Warnfund (WR-03)** aus dem erneuten Code-Review bleibt bewusst
-offen — Größenlimit-Inkonsistenz zwischen Audio-Export und -Import bei sehr großen Bibliotheken.
-Kein stiller Datenverlust (der Nutzer sieht eine Fehlermeldung), deshalb kein Verstoß gegen den
-wörtlichen Phasenziel-Satz „...verliert oder überschreibt mehr **stillschweigend** Daten". Nicht
-Gegenstand dieser Gap-Closure-Runde (Nutzerentscheidung: nur CR-01/CR-02/WR-01/WR-02 im Scope der
-Pläne 12-09/12-10/12-11).
+**Alle sieben SEC-01..SEC-07-Befunde aus der vorherigen Runde sind geschlossen** — unabhängig gegen
+den aktuellen Quelltext gelesen (nicht nur aus SUMMARY übernommen), mit übereinstimmender Jest-Zahl
+(893/893, selbst nachvollzogen) und 0 verbleibenden `test.failing(`-Zeitbomben. `12-SECURITY.md`
+(`threats_open: 3`) ist entsprechend stale und sollte bei Gelegenheit nachgezogen werden — kein
+inhaltlicher Gap, da der Code selbst korrekt ist.
 
-**Status ist `human_needed`, nicht `passed`**, weil ein einziger, seit der Erstverifikation
-unveränderter menschlicher Prüfpunkt offen bleibt: eine echte Audio-Bibliothek knapp unter 300 MiB
-im echten Browser-Tab (Recherche-Annahme A1, unter Node/jsdom nicht messbar). Der Nutzer hat sich am
-2026-08-19 bewusst gegen das Zusammentragen der Testdateien entschieden; dieser Punkt wird durch die
-Fixes dieser Runde erneut fällig und ist beim nächsten `/gsd-verify-work` vorzulegen. Er ist der
-EINZIGE Grund, warum der Status nicht `passed` lautet — alle acht Truths sind VERIFIED, keine Gaps,
-keine Regressionen.
+**Kein offener menschlicher Prüfpunkt.** Der einzige verbliebene manuelle Prüfpunkt aus früheren Runden
+(Audio-Bibliothek knapp unter 300 MiB im echten Browser) wurde am 2026-09-04 als UAT-Punkt 28 vom
+Nutzer abgenommen (siehe ROADMAP.md Zeile 164) und ist damit erledigt, nicht mehr offen.
 
-**Für die Nacharbeit (nicht blockierend):**
-1. `REQUIREMENTS.md` bei SAFE-01/SAFE-02 um die Pläne 12-09/12-10 ergänzen (rein dokumentarisch).
-2. WR-03 (Audio-Größenlimit-Inkonsistenz) bei Gelegenheit beheben — Fix-Vorschlag bereits in
-   `12-REVIEW.md` dokumentiert.
-3. Der offene menschliche Prüfpunkt (Audio-Bibliothek nahe 300 MiB) gehört in die nächste
-   `/gsd-verify-work`-Runde.
+**Für die Nacharbeit (nicht Teil des CR-01-Blockers, aber vorgemerkt):**
+1. `12-SECURITY.md` `threats_open: 3` → `0` nachziehen, sobald diese Verifikation eingearbeitet ist.
+2. `REQUIREMENTS.md` bei SAFE-01/02/04/05 um die Gap-Closure-Pläne 12-09..12-17 ergänzen.
+3. ROADMAP.md „Plans: 15/17" → „17/17" nachziehen.
+4. WR-01 (`validateAvatarURL()` Steuerzeichen-Bypass) und IN-01 (`loader.js`-Kommentar) bei Gelegenheit beheben — beide nicht blockierend für Phase 12.
 
 ---
 
-_Verified: 2026-09-04_
+_Verified: 2026-09-05_
 _Verifier: Claude (gsd-verifier)_
