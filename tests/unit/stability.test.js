@@ -1769,6 +1769,51 @@ describe('Nachzug R11 — pushUndo()-Schutz haelt auch in den Randlagen von APP_
         expect(ctx.__undoDebug()).toEqual({ undoLength: vorherUndo, redoLength: vorherRedo });
         expect(ctx.showToast).toHaveBeenCalledWith(expect.any(String), 'warning');
     });
+
+    // SEC-02 Invariante: dieselbe Regel — "bei nicht serialisierbarem D wird gewarnt und
+    // nichts veraendert" — gilt fuer BEIDE Richtungen. Als Tabelle gefuehrt (Daten statt
+    // zweier abgeschriebener Testkoerper), sonst driften die Haelften beim naechsten
+    // Umbau auseinander — genau das war die Ursache von SEC-02: pushUndo() wurde
+    // gehaertet, undo() und redo() zunaechst nicht.
+    test.each([
+        {
+            richtung: 'undo',
+            vorbereiten: ctx => {
+                ctx.pushUndo('Aktion A');
+            },
+            aufrufen: ctx => ctx.undo()
+        },
+        {
+            richtung: 'redo',
+            vorbereiten: ctx => {
+                ctx.pushUndo('Aktion A');
+                ctx.undo();
+            },
+            aufrufen: ctx => ctx.redo()
+        }
+    ])(
+        'SEC-02 Invariante ($richtung): nicht serialisierbares D -> kein Wurf, Stacks und D-Schluessel unveraendert, Warn-Toast',
+        ({ vorbereiten, aufrufen }) => {
+            const ctx = ladeUndo({ UNDO_LIMIT: 30 });
+            vorbereiten(ctx);
+
+            // window.D erst NACH der Vorbereitung zirkulaer machen und ueber ctx.window.D
+            // zugreifen (siehe Spiegeltest oben zur Objektidentitaet nach undo()).
+            ctx.window.D.self = ctx.window.D;
+
+            const vorherStacks = ctx.__undoDebug();
+            // Schluesselvergleich statt Tiefenvergleich: D traegt nach dem Zirkulaer-
+            // machen einen Schluessel, der auf sich selbst zeigt — ein Tiefenvergleich
+            // wuerde an der Zirkularitaet selbst scheitern. Die sortierte Schluesselliste
+            // genuegt, um "kein halber Austausch" nachzuweisen.
+            const vorherSchluessel = Object.keys(ctx.window.D).sort();
+
+            expect(() => aufrufen(ctx)).not.toThrow();
+            expect(ctx.__undoDebug()).toEqual(vorherStacks);
+            expect(Object.keys(ctx.window.D).sort()).toEqual(vorherSchluessel);
+            expect(ctx.showToast).toHaveBeenCalledWith(expect.any(String), 'warning');
+        }
+    );
 });
 
 // ----------------------------------------------------------------
