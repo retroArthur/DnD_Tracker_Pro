@@ -858,6 +858,161 @@ describe('SEC-03 — resolveBackupTargets() loest den Namen des aktiven Ziels eh
     });
 });
 
+// ------------------------------------------------------------
+// Task 3 — Invarianten: kein Leerschreiben, kein Fremdname, kein Widerspruch zu D-07
+// ------------------------------------------------------------
+describe('Invarianten SEC-03/SEC-04 — kein Leerschreiben, kein Fremdname, kein Widerspruch zu D-07 (Plan 12-12)', () => {
+    // Wegwerf-Kontext auf systems/migration/migration-wizard.js (Muster:
+    // migration-wizard.test.js:20-34) — GELESEN, nicht veraendert (gehoert in
+    // dieser Runde den Plaenen 12-14/12-16).
+    const _wizardListenKontext1212 = { window: {} };
+    vm.createContext(_wizardListenKontext1212);
+    vm.runInContext(fs.readFileSync(WIZARD_PATH_1212, 'utf8'), _wizardListenKontext1212);
+    const echtesHasCampaignContent = _wizardListenKontext1212.window.hasCampaignContent;
+    const ECHTE_CAMPAIGN_CONTENT_ARRAYS = _wizardListenKontext1212.window.CAMPAIGN_CONTENT_ARRAYS;
+    const ECHTE_CAMPAIGN_CONTENT_TEXT_FIELDS = _wizardListenKontext1212.window.CAMPAIGN_CONTENT_TEXT_FIELDS;
+    const ECHTE_CAMPAIGN_CONTENT_PATHS = _wizardListenKontext1212.window.CAMPAIGN_CONTENT_PATHS;
+
+    function setzePfad(obj, pfad, wert) {
+        let cursor = obj;
+        for (let i = 0; i < pfad.length - 1; i++) {
+            if (!cursor[pfad[i]] || typeof cursor[pfad[i]] !== 'object') cursor[pfad[i]] = {};
+            cursor = cursor[pfad[i]];
+        }
+        cursor[pfad[pfad.length - 1]] = wert;
+    }
+
+    function baueD07Testdatensaetze() {
+        const faelle = [];
+        faelle.push({ label: 'leeres initializeData()', daten: ladeEchteInitializeData() });
+        faelle.push({
+            label: 'createCampaign()-Leerobjekt',
+            daten: {
+                locations: [], npcs: [], quests: [], characters: [], sessionNotes: [],
+                storyArcs: [], quickNotes: '',
+                initiative: { combatants: [], currentTurn: 0, round: 1 },
+                loot: [], items: [], encounters: [], spells: [], links: [], filters: [],
+                calendar: { day: 1, month: 0, year: 1492, events: [] },
+                _nextId: {}
+            }
+        });
+        for (const key of ECHTE_CAMPAIGN_CONTENT_ARRAYS) {
+            const d = ladeEchteInitializeData();
+            d[key] = [{ marke: 'inhalt' }];
+            faelle.push({ label: `Array "${key}" gefuellt`, daten: d });
+        }
+        for (const key of ECHTE_CAMPAIGN_CONTENT_TEXT_FIELDS) {
+            const d = ladeEchteInitializeData();
+            d[key] = 'Text vorhanden';
+            faelle.push({ label: `Textfeld "${key}" gefuellt`, daten: d });
+        }
+        for (const pfad of ECHTE_CAMPAIGN_CONTENT_PATHS) {
+            const d = ladeEchteInitializeData();
+            setzePfad(d, pfad, [{ marke: 'inhalt' }]);
+            faelle.push({ label: `Pfad "${pfad.join('.')}" gefuellt`, daten: d });
+        }
+        return faelle;
+    }
+
+    test('Invariante 1 (D-07): hasCampaignContent(d) === true impliziert, dass das Backup d fuer sicherungswuerdig haelt', async () => {
+        const faelle = baueD07Testdatensaetze();
+        const verstoesse = [];
+
+        for (const fall of faelle) {
+            // Nur die EINE Implikationsrichtung pruefen (design_note des Plans):
+            // ein Datensatz, den hasCampaignContent() ablehnt, das Backup aber
+            // sichert, ist KEIN Verstoss — das ist die beabsichtigte Weitung.
+            if (!echtesHasCampaignContent(fall.daten)) continue;
+
+            const ctx = ladeLeseKontext1212({ storageKey: 'dnd-tracker-data', lsData: fall.daten });
+            const ergebnis = await ctx.readCampaignDataForBackup('dnd-tracker-data');
+            if (ergebnis === null) {
+                verstoesse.push(fall.label);
+            }
+        }
+
+        expect(verstoesse).toEqual([]);
+    });
+
+    test('Invariante 2 (SEC-04): kein Ziel ohne Inhalt erzeugt eine Datei — ueber alle Ziele eines Laufs', async () => {
+        const campaigns = [
+            { key: 'dnd-campaign-1', name: 'Kampagne A' },
+            { key: 'dnd-campaign-2', name: 'Kampagne B' }
+        ];
+        const gefuellteA = ladeEchteInitializeData();
+        gefuellteA.characters = [{ id: 'marke-a' }];
+        const dataByKey = {
+            'dnd-tracker-data': ladeEchteInitializeData(), // leer
+            'dnd-campaign-1': gefuellteA,                  // Inhalt
+            'dnd-campaign-2': ladeEchteInitializeData()    // leer
+        };
+        const erwartetInhalt = {
+            'dnd-tracker-data': false,
+            'dnd-campaign-1': true,
+            'dnd-campaign-2': false
+        };
+        const dirHandle = createMockDirHandle();
+        const ctx = ladeDoBackupKontext1212({ campaigns, storageKey: 'dnd-tracker-data', dataByKey });
+
+        await ctx._doBackup(dirHandle);
+
+        const targets = ctx.resolveBackupTargets({ campaigns, active: 'dnd-tracker-data' }, 'dnd-tracker-data');
+        const verstoesse = [];
+        for (const target of targets) {
+            const sollInhalt = erwartetInhalt[target.key];
+            const existiert = dirHandle._files.has(target.filenames.current);
+            if (sollInhalt && !existiert) verstoesse.push(`${target.key}: erwartete Datei fehlt`);
+            if (!sollInhalt && existiert) verstoesse.push(`${target.key}: unerwartete Datei vorhanden`);
+        }
+
+        expect(verstoesse).toEqual([]);
+    });
+
+    test('Invariante 3 (SEC-03): jede geschriebene Datei traegt den safeName ihres eigenen Index-Namens — ueber alle Ziele eines Laufs', async () => {
+        const campaigns = [
+            { key: 'dnd-campaign-1234', name: 'Die Tiefen von Phandalin' },
+            { key: 'dnd-campaign-5678', name: 'Sturmkoenigs Zorn' }
+        ];
+        const gefuellt1234 = ladeEchteInitializeData();
+        gefuellt1234.characters = [{ id: 'a' }];
+        const gefuellt5678 = ladeEchteInitializeData();
+        gefuellt5678.characters = [{ id: 'b' }];
+        const dataByKey = {
+            'dnd-campaign-1234': gefuellt1234,
+            'dnd-campaign-5678': gefuellt5678
+        };
+        const dirHandle = createMockDirHandle();
+        const ctx = ladeDoBackupKontext1212({
+            campaigns, storageKey: 'dnd-tracker-data', dataByKey, aktiverKey: 'dnd-campaign-1234'
+        });
+
+        await ctx._doBackup(dirHandle);
+
+        const targets = ctx.resolveBackupTargets({ campaigns, active: 'dnd-campaign-1234' }, 'dnd-campaign-1234');
+
+        // Erwarteter Name je Key kommt aus einer von resolveBackupTargets() UNABHAENGIGEN
+        // Quelle (dem Index selbst + der Kenntnis, welcher Key der echte Standard-Key
+        // ist) — nicht aus target.name. Wuerde man gegen target.name selbst pruefen,
+        // koennte der Test die SEC-03-Namensverwechslung nie erkennen: ein falsch
+        // zugewiesener Name wuerde dann auch seinen eigenen "erwarteten" Kern liefern.
+        const erwarteterNameByKey = {
+            'dnd-tracker-data': 'Standard-Kampagne',
+            'dnd-campaign-1234': 'Die Tiefen von Phandalin',
+            'dnd-campaign-5678': 'Sturmkoenigs Zorn'
+        };
+        const verstoesse = [];
+        for (const target of targets) {
+            const erwarteterName = erwarteterNameByKey[target.key];
+            const erwarteterKern = ctx.getBackupFilenames(target.key, erwarteterName).safeName;
+            if (!target.filenames.safeName.startsWith(erwarteterKern)) {
+                verstoesse.push(`${target.key}: safeName "${target.filenames.safeName}" leitet sich nicht vom eigenen Namen "${erwarteterName}" ab`);
+            }
+        }
+
+        expect(verstoesse).toEqual([]);
+    });
+});
+
 // ============================================================
 // Nyquist-Nachhaerten Phase 12 (R04/R05/R06):
 // Die bestehenden Bloecke oben pinnen jeweils die "positive" Haelfte ihrer
