@@ -124,6 +124,7 @@ Plans:
 **Goal**: Die verbliebenen Sicherheits- und Skalierungsrisiken sind geschlossen, und die Codebasis trägt keine übergroßen, toten oder irreführenden Stellen mehr, die künftige Arbeit verteuern.
 **Depends on**: Phase 12 (`PERF-01` fasst dieselben Persistenz-Dateien an wie `SAFE-05`)
 **Requirements**: SEC-03, SEC-04, PERF-01, PERF-02, MAINT-01, MAINT-02, MAINT-03, MAINT-04, MAINT-05, MAINT-06
+**Plans:** 12 plans
 **Success Criteria** (what must be TRUE):
 
   1. Die `call`-Aktion ruft nur noch Ziele aus einer Whitelist auf; die Regex-Capture in `parseWikiLinks()` ist escapt
@@ -134,6 +135,40 @@ Plans:
   6. `grep execCommand` liefert außerhalb von Kommentaren keinen Treffer mehr im gesamten Quellbaum
   7. Tab-Registry und `initPerformanceMonitoring()` sind gegen Umbenennung bzw. Mehrfachstart abgesichert; tote `mindmap`-Seeds, `const D`-Überschattung und das doppelte `data-id` sind weg
   8. Produktionspfade schreiben nichts mehr ungefiltert auf die Konsole; die Kopfkommentare im Datei-Backup beschreiben `registerPostSaveHook()` statt des verbotenen `window.save`-Musters
+
+Plans:
+**Wave 1** *(sechs Pläne mit überschneidungsfreien Dateien, parallel)*
+
+- [ ] 13-01-PLAN.md — SEC-03: `call`-Aktion gegen eine explizite Ziel-Whitelist, Fehlerpfad hinter `DEBUG_MODE` (Welle 1)
+- [ ] 13-02-PLAN.md — SEC-04 + MAINT-04 + MAINT-02: Wiki-Link-Escaping, letzte drei execCommand-Aufrufe abgelöst, doppeltes `data-id` weg (Welle 1)
+- [ ] 13-03-PLAN.md — MAINT-03: toter `hasHtmlTags`-Wächter entfernt, Unterstrich-Wortgrenzen nach CommonMark (Welle 1)
+- [ ] 13-04-PLAN.md — MAINT-05 + MAINT-02: Interval-Guard, Tab-Registry auf Funktionsreferenzen, tote `mindmap`-Seeds und `const D`-Überschattung weg (Welle 1)
+- [ ] 13-05-PLAN.md — MAINT-01/D-04: Charakterisierungs-Snapshot für `dmscreen-render.js` gegen das UNGETEILTE Modul, vor jeder Verschiebung (Welle 1)
+- [ ] 13-06-PLAN.md — PERF-01: Save-Pfad ohne zweite Vollkopie, Undo-Dedupe und Byte-Budget, Messprotokoll zu Erfolgskriterium 2 (Welle 1)
+
+**Wave 2** *(blocked on Wave 1 — teilt `core/config.js` mit 13-06 und `system-actions.js` mit 13-02)*
+
+- [ ] 13-07-PLAN.md — PERF-02: Deckel und Löschfunktion für den Würfelstatistik-Store, cursor-basierter Aggregatpfad (Welle 2, Entscheidungs-Checkpoint)
+
+**Wave 3** *(blocked on Wave 2 — fasst 28 Module an, die in den Wellen 1–2 geändert wurden)*
+
+- [ ] 13-08-PLAN.md — MAINT-06: Konsolen-Hygiene über alle gebündelten Module, Kopfkommentare im Datei-Backup nachgezogen (Welle 3)
+
+**Wave 4** *(blocked on Wave 3 — MAINT-01, Reihenfolge D-05 nach steigendem Risiko)*
+
+- [ ] 13-09-PLAN.md — MAINT-01: `features/wiki/wiki.js` aufgeteilt, volles Suiten-Gate vor dem Commit (Welle 4)
+
+**Wave 5** *(blocked on Wave 4 — teilt `loader.js`)*
+
+- [ ] 13-10-PLAN.md — MAINT-01: `features/initiative.js` in Kern, Kampf-Widgets und Beute-System aufgeteilt (Welle 5)
+
+**Wave 6** *(blocked on Wave 5 — teilt `loader.js`)*
+
+- [ ] 13-11-PLAN.md — MAINT-01: `ui/editors/rich-text.js` entflochten und aufgeteilt, Zauberverwaltung zieht aus (Welle 6, Bedienprobe)
+
+**Wave 7** *(blocked on Wave 6 — teilt `loader.js`; braucht zusätzlich den Snapshot aus 13-05)*
+
+- [ ] 13-12-PLAN.md — MAINT-01: `features/dmscreen/dmscreen-render.js` in fünf Module aufgeteilt, Snapshot beweist Neutralität (Welle 7, Bedienprobe)
 
 **Auslegungshinweis zum Zuschnitt:** `MAINT-01` (Aufteilung von `ui/editors/rich-text.js` 1932, `features/initiative.js` 1655, `features/dmscreen/dmscreen-render.js` 1576 und `features/wiki/wiki.js`) ist der riskanteste Posten des Milestones und liegt hier **ohne eigenes Phasen-Gate**. Die Planung muss das ausgleichen: eigener Plan je Datei, jeweils mit vollem Suiten-Lauf als Hard-Gate vor dem Commit. `rich-text.js` trägt das eingefrorene 79-Test-Netz aus Phase 9 — jede Änderung daran ist begründungspflichtig.
 
@@ -162,5 +197,5 @@ Plans:
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 12. Datensicherheit | 17/17 | Complete (2026-09-05) — Verifikation `passed` (9/9), UAT 28/28, `threats_open: 0`, `nyquist_compliant: true`. Gap-Closure SEC-01…SEC-07 in den Wellen 9–11 geschlossen, dazu CR-01/WR-01 aus dem Code-Review | 2026-09-05 |
-| 13. Härtung & Wartbarkeit | TBD | Not started | |
+| 13. Härtung & Wartbarkeit | 0/12 | Planned (12 Pläne, 7 Wellen; Welle 1 mit sechs parallelen Plänen). Drei Pläne nicht autonom: Entscheidungs-Checkpoint zur Würfelstatistik-Obergrenze (13-07), Bedienproben nach den Aufteilungen von `rich-text.js` (13-11) und `dmscreen-render.js` (13-12) | |
 | 14. Tests & Gates | TBD | Not started | |
