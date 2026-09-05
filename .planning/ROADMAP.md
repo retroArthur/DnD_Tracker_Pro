@@ -45,7 +45,7 @@ Datenverlust-Risiken in Backup, Export und Migration — damit der Backlog leer 
 Features bringen kann. **Nicht verhaltensneutral:** was gesichert und wiederherstellbar ist, ändert
 sich spürbar.
 
-- [ ] **Phase 12: Datensicherheit** — Umzugs-Export erfasst IndexedDB, Datei-Backup deckt alle Kampagnen ab, Audio-Löschen rückgängig machbar, Persistenz-Randfälle getestet
+- [x] **Phase 12: Datensicherheit** — Umzugs-Export erfasst IndexedDB, Datei-Backup deckt alle Kampagnen ab, Audio-Löschen rückgängig machbar, Persistenz-Randfälle getestet (completed 2026-09-05)
 - [ ] **Phase 13: Härtung & Wartbarkeit** — `call`-Whitelist, Serialisierungslast senken, vier übergroße Module aufteilen, tote und irreführende Codestellen beseitigen
 - [ ] **Phase 14: Tests & Gates** — Toast-Race schließen, fünf Welt-Features abdecken, Lint-/Typecheck-/Coverage-Gates schärfen
 
@@ -56,7 +56,7 @@ sich spürbar.
 **Goal**: Kein Pfad in Backup, Export oder Migration verliert oder überschreibt mehr stillschweigend Daten, und die Randfälle, die solche Verluste bisher verdeckt haben, sind getestet.
 **Depends on**: Nothing (erste Phase des Milestones)
 **Requirements**: SAFE-01, SAFE-02, SAFE-03, SAFE-04, SAFE-05, SAFE-06
-**Plans:** 15/17 plans executed (8/8 der Erstplanung plus 3 Lückenpläne aus Code-Review und Re-Verifikation, alle am 2026-09-04 ausgeführt; dazu 6 Lückenpläne vom 2026-09-05 für die sieben reproduzierten Befunde SEC-01…SEC-07 aus `verify:post` und der Triage — Wellen 9–11, noch offen)
+**Plans:** 17/17 plans complete
 **Success Criteria** (what must be TRUE):
 
   1. Ein Umzugs-Export `file://` → PWA enthält Soundboard-Audio und Würfelstatistik; nach dem Import spielen Szenen ihre Tracks, keine toten `blobId`s bleiben zurück
@@ -161,6 +161,6 @@ Plans:
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 12. Datensicherheit | 11/17 | Gap-Closure geplant — 7 reproduzierte Befunde (SEC-01…SEC-07) in den Wellen 9–11. UAT vollständig bestanden (28/28, Punkt 28 am 2026-09-04 abgenommen); Verifikation steht auf `gaps_found` wegen SEC-01…SEC-07 | |
+| 12. Datensicherheit | 17/17 | Complete (2026-09-05) — Verifikation `passed` (9/9), UAT 28/28, `threats_open: 0`, `nyquist_compliant: true`. Gap-Closure SEC-01…SEC-07 in den Wellen 9–11 geschlossen, dazu CR-01/WR-01 aus dem Code-Review | 2026-09-05 |
 | 13. Härtung & Wartbarkeit | TBD | Not started | |
 | 14. Tests & Gates | TBD | Not started | |
