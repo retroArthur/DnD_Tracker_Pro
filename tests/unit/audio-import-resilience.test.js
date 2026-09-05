@@ -35,6 +35,7 @@ let mockConfirm;
 let modal, resultEl, errorEl, filenameEl, dropzone;
 let stepEls, footerEl;
 let realFindMissingSceneAudio;
+let audioStatusEl;
 
 /** Wartet, bis condition() wahr wird (fuer den async reader.onload-Zweig). */
 async function waitFor(conditionFn, { timeout = 3000, interval = 5 } = {}) {
@@ -151,6 +152,9 @@ beforeEach(() => {
     filenameEl = { textContent: '', style: { display: 'none' } };
     dropzone = { classList: { add: jest.fn(), remove: jest.fn() } };
     modal = createModalStub();
+    // Task 2 (SEC-01, Audio-Pfad): Attrappe fuer die Audio-Statuszeile, die
+    // _processWizardAudioFile() befuellt.
+    audioStatusEl = { textContent: '', style: { display: 'none' }, classList: { toggle: jest.fn() } };
 
     context.document = {
         getElementById: id => {
@@ -158,6 +162,7 @@ beforeEach(() => {
             if (id === 'migration-wizard-error') return errorEl;
             if (id === 'migration-wizard-filename') return filenameEl;
             if (id === 'migration-wizard-modal') return modal;
+            if (id === 'migration-wizard-audio-status') return audioStatusEl;
             return null;
         },
         querySelectorAll: () => []
@@ -183,6 +188,8 @@ beforeEach(() => {
     // Reset auf die ECHTE findMissingSceneAudio() vor jedem Test — einzelne
     // SEC-01-Tests ersetzen sie gezielt durch eine werfende Attrappe.
     context.window.findMissingSceneAudio = realFindMissingSceneAudio;
+    // Task 2: Standard-Erfolgsantwort; einzelne Tests ueberschreiben gezielt.
+    context.window.importAudioExport = jest.fn(async () => ({ imported: 0, skipped: [] }));
 });
 
 // ============================================================
@@ -347,3 +354,55 @@ describe('_processWizardFile() — unaufloesbares Szenen-Audio (SAFE-01, D-02)',
         expect(resultEl.innerHTML).toContain('<strong>2</strong>');
     });
 });
+
+// ============================================================
+// SEC-01 (Plan 12-14) — Audio-Pfad: Uebersprungen-Liste ueberlebt eine
+// scheiternde Lueckenpruefung
+// ============================================================
+describe('_processWizardAudioFile() — scheiternde Lueckenpruefung darf Zahl/Gruende nicht unterdruecken (SAFE-01, SEC-01)', () => {
+    test('SEC-01: eine scheiternde Lueckenpruefung nach dem Audio-Import unterdrueckt weder Zahl noch Gruende bereits importierter/uebersprungener Dateien', async () => {
+        context.window.importAudioExport = jest.fn(async () => ({
+            imported: 3,
+            skipped: [{ id: 'a1', name: 'clip.mp3', grund: 'zu gross' }]
+        }));
+        mockListSoundBlobs.mockRejectedValue(new Error('IndexedDB nicht verfuegbar'));
+        const file = makeFile({ _exportType: 'audio-export-v1' });
+
+        context._processWizardAudioFile(file, dropzone);
+        await waitFor(() => audioStatusEl.textContent !== '');
+
+        expect(audioStatusEl.textContent).toContain('Audio importiert: 3 Datei(en).');
+        expect(audioStatusEl.textContent).toContain('clip.mp3: zu gross');
+        expect(audioStatusEl.classList.toggle).toHaveBeenCalledWith('migration-step-error', false);
+        expect(dropzone.classList.add).toHaveBeenCalledWith('file-ready');
+    });
+
+    test('SEC-01 Gegenprobe: wirft importAudioExport() selbst, bleibt es bei der Fehlermeldung mit Fehlermarkierung', async () => {
+        context.window.importAudioExport = jest.fn(async () => { throw new Error('Datei kaputt'); });
+        const file = makeFile({ _exportType: 'audio-export-v1' });
+
+        context._processWizardAudioFile(file, dropzone);
+        await waitFor(() => audioStatusEl.textContent !== '');
+
+        expect(audioStatusEl.textContent).toContain('Audio-Import fehlgeschlagen');
+        expect(audioStatusEl.classList.toggle).toHaveBeenCalledWith('migration-step-error', true);
+        expect(dropzone.classList.add).not.toHaveBeenCalledWith('file-ready');
+    });
+
+    test('Erfolgsfall unveraendert: ohne jeden Wurf zeigt die Statuszeile weiterhin fehlende Szenen namentlich', async () => {
+        context.window.importAudioExport = jest.fn(async () => ({ imported: 2, skipped: [] }));
+        mockListSoundBlobs.mockResolvedValue([]); // kein Blob vorhanden -> Szene bleibt offen
+        context.window.D = {
+            soundboard: { scenes: [{ id: 's1', name: 'Kerker', tracks: [{ blobId: 'audio_3_3' }] }] }
+        };
+        const file = makeFile({ _exportType: 'audio-export-v1' });
+
+        context._processWizardAudioFile(file, dropzone);
+        await waitFor(() => audioStatusEl.textContent !== '');
+
+        expect(audioStatusEl.textContent).toContain('Audio importiert: 2 Datei(en).');
+        expect(audioStatusEl.textContent).toContain('fehlt weiterhin Audio: Kerker');
+        expect(audioStatusEl.classList.toggle).toHaveBeenCalledWith('migration-step-error', false);
+    });
+});
+

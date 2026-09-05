@@ -604,6 +604,11 @@ function _processWizardAudioFile(file, dropzone) {
             return;
         }
 
+        // SEC-01 (Plan 12-14): dieselbe Grenze wie in _processWizardFile() —
+        // der Import-try umschliesst NUR noch die Ermittlung der Importfunktion und
+        // den Ruecksprung aus importFn(). Der catch bleibt ab jetzt ausschliesslich
+        // fuer echte Importfehler zustaendig (Datei kaputt, importFn() selbst wirft).
+        let result;
         try {
             const importFn = typeof importAudioExport === 'function'
                 ? importAudioExport
@@ -612,17 +617,28 @@ function _processWizardAudioFile(file, dropzone) {
                 throw new Error('Audio-Import-Funktion nicht verfügbar');
             }
 
-            const result = await importFn(parsedObj);
-            dropzone.classList.add('file-ready');
+            result = await importFn(parsedObj);
+            // ---- Grenze: ab hier sind die Audio-Blobs in IndexedDB geschrieben.
+        } catch (err) {
+            showStatus('Audio-Import fehlgeschlagen: ' + (err.message || 'Unbekannter Fehler'), true);
+            return;
+        }
 
-            // WR-05: textContent statt innerHTML/esc() — hier echte UTF-8-Literale
-            let msg = 'Audio importiert: ' + result.imported + ' Datei(en).';
-            if (result.skipped && result.skipped.length > 0) {
-                msg += ' Übersprungen: ' + result.skipped.length + ' (' +
-                    result.skipped.map(s => (s.name || s.id) + ': ' + s.grund).join('; ') + ').';
-            }
+        // SEC-01: der Nachlauf liegt ausserhalb — eine scheiternde Lueckenpruefung
+        // darf weder die Erfolgsmarkierung der Dropzone noch die bereits ermittelte
+        // Zahl importierter/uebersprungener Dateien unterdruecken. Die Lueckenpruefung
+        // ist reine Zusatzauskunft und bekommt deshalb ihr eigenes try/catch.
+        dropzone.classList.add('file-ready');
 
-            // D-02/D-08: verbleibende Luecken NACH diesem Import namentlich anzeigen.
+        // WR-05: textContent statt innerHTML/esc() — hier echte UTF-8-Literale
+        let msg = 'Audio importiert: ' + result.imported + ' Datei(en).';
+        if (result.skipped && result.skipped.length > 0) {
+            msg += ' Übersprungen: ' + result.skipped.length + ' (' +
+                result.skipped.map(s => (s.name || s.id) + ': ' + s.grund).join('; ') + ').';
+        }
+
+        // D-02/D-08: verbleibende Luecken NACH diesem Import namentlich anzeigen.
+        try {
             if (typeof window.findMissingSceneAudio === 'function' &&
                     typeof window.listSoundBlobs === 'function') {
                 const metas = await window.listSoundBlobs();
@@ -633,11 +649,13 @@ function _processWizardAudioFile(file, dropzone) {
                         missing.map(m => m.sceneName).join(', ') + '.';
                 }
             }
-
-            showStatus(msg, false);
         } catch (err) {
-            showStatus('Audio-Import fehlgeschlagen: ' + (err.message || 'Unbekannter Fehler'), true);
+            if (typeof APP_CONFIG !== 'undefined' && APP_CONFIG.DEBUG_MODE && window.ErrorHandler) {
+                window.ErrorHandler.log('_processWizardAudioFile-Luecken', err, 'Luecken-Anzeige fehlgeschlagen');
+            }
         }
+
+        showStatus(msg, false);
     };
     reader.onerror = () => {
         showStatus('Die Audio-Datei konnte nicht gelesen werden.', true);
