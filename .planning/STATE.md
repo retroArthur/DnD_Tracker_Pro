@@ -4,15 +4,16 @@ milestone: v1.2
 milestone_name: Schulden-Abbau
 current_phase: 13
 current_phase_name: Härtung & Wartbarkeit
-status: planning
-stopped_at: Phase 13 context gathered
-last_updated: "2026-09-05T21:56:34.710Z"
-last_activity: 2026-09-05
-state_head: fb7f375f8db76d1777a44f8a56864b3a2b31a6a3
+status: executing
+stopped_at: Phase 13 planned
+last_updated: "2026-09-05T23:22:09.233Z"
+last_activity: 2026-09-06
+last_activity_desc: Phase 13 planning complete
+state_head: 0b4362611811c282cf0ea12ce07e70d37e333e9a
 progress:
   total_phases: 3
   completed_phases: 1
-  total_plans: 17
+  total_plans: 29
   completed_plans: 17
   percent: 33
 ---
@@ -20,10 +21,10 @@ progress:
 # Project State: D&D Kampagnen-Tracker Pro — Schulden-Abbau
 
 **Last Updated:** 2026-09-05
-**Milestone:** v1.2 „Schulden-Abbau" — Phase 12 abgeschlossen (17/17 Pläne), Phase 13 bereit zur Planung
-**Status:** Ready to plan
+**Milestone:** v1.2 „Schulden-Abbau" — Phase 12 abgeschlossen (17/17 Pläne), Phase 13 geplant (12 Pläne, 7 Wellen)
+**Status:** Ready to execute
 
-**Progress:** [████████████████████] 17/17 plans (100%) · 1/3 Phasen des Milestones
+**Progress:** [████████████░░░░░░░░] 17/29 plans (59%) · 1/3 Phasen des Milestones
 
 ---
 
@@ -39,12 +40,12 @@ See: `.planning/PROJECT.md` (Stand 2026-09-05)
 
 ## Current Position
 
-Phase: 13 — Härtung & Wartbarkeit
+Phase: 13 (Härtung & Wartbarkeit) — READY TO EXECUTE
 Plan: Not started
-Status: Ready to plan
-Last activity: 2026-09-05
+Status: Ready to execute
+Last activity: 2026-09-06 — Phase 13 planning complete
 
-**Nächster Schritt:** `/gsd-plan-phase 13`. Phase 12 ist vollständig abgeschlossen — Verifikation `passed` (9/9), UAT 28/28, `12-SECURITY.md` `threats_open: 0`, `12-VALIDATION.md` `nyquist_compliant: true`. Suiten: Jest 908/908 (31 Suites), Playwright 321 passed / 2 skipped, `pytest tests/build` 24/24.
+**Nächster Schritt:** `/gsd-execute-phase 13`. Phase 13 ist geplant — 12 Pläne in 7 Wellen, Plan-Checker `VERIFICATION PASSED`, Requirements 10/10 und Decisions 13/13 gedeckt. Phase 12 ist vollständig abgeschlossen — Verifikation `passed` (9/9), UAT 28/28, `12-SECURITY.md` `threats_open: 0`, `12-VALIDATION.md` `nyquist_compliant: true`. Suiten: Jest 908/908 (31 Suites), Playwright 321 passed / 2 skipped, `pytest tests/build` 24/24.
 
 **Aus Phase 12 mitzunehmen:** Playwright läuft gegen `dist/dnd-tracker-bundled.html`, `npm run build` schreibt aber nur den Production-Bundle — vor jedem E2E-Lauf `python build.py` fahren (Befund T-12-70, `12-SECURITY.md`). Offen und bewusst ausgeklammert: vier Nebenbefunde aus `12-VALIDATION.md` (`full-export.js:70` und `:181`, `soundboard-player.js:257`, `file-backup-manager.js:273`), IN-01 aus `12-REVIEW.md` (veralteter Kommentar in `loader.js:9`), sowie 14 unbestätigte Threat-Einwände in der Triage-Liste von `12-SECURITY.md`.
 

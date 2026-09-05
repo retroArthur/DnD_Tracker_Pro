@@ -61,8 +61,7 @@ Toast-Race-Fix und die schärferen Lint-/Typecheck-/Coverage-Gates (alle Phase 1
   — **Reversibility:** costly — die Zauber-Funktionen wandern in ein anderes Verzeichnis; ein
   Rückbau müsste `loader.js`, die Exporte und die Testpfade erneut anfassen.
 
-- **D-04: Kein Split ohne ein Netz, das eine Verhaltensänderung fängt — und `dmscreen-render.js`
-  bekommt dieses Netz zuerst.**
+- **D-04: Kein Split ohne ein Netz, das eine Verhaltensänderung fängt — und `dmscreen-render.js` bekommt dieses Netz zuerst.**
   Die Abdeckung der vier ist grob ungleich: `wiki.js` wird in 14 Testdateien erwähnt,
   `initiative.js` in 12, der Editor trägt das eingefrorene 80-Test-Netz aus Phase 9 —
   `dmscreen-render.js` dagegen kommt in **genau zwei** Testdateien vor
@@ -77,8 +76,7 @@ Toast-Race-Fix und die schärferen Lint-/Typecheck-/Coverage-Gates (alle Phase 1
   vier. Der riskante ist `dmscreen-render.js` — 1576 Zeilen, 58 Funktionen, 21 Widget-Typen, kein
   Netz. Das Vorsichtsbudget gehört dorthin.
 
-- **D-05: Reihenfolge nach steigendem Risiko — `wiki.js` → `initiative.js` → `rich-text.js` →
-  `dmscreen-render.js`.**
+- **D-05: Reihenfolge nach steigendem Risiko — `wiki.js` → `initiative.js` → `rich-text.js` → `dmscreen-render.js`.**
   Je ein eigener Plan, je mit vollem Suiten-Lauf als Hard-Gate vor dem Commit (Roadmap-Vorgabe).
   `dmscreen-render.js` steht zuletzt, weil sein Plan die zusätzliche Test-Vorstufe aus D-04 trägt
   und das Aufteilungsverfahren bis dahin dreimal geübt ist.
@@ -92,8 +90,7 @@ Toast-Race-Fix und die schärferen Lint-/Typecheck-/Coverage-Gates (alle Phase 1
 
 ### Undo- und Save-Last (PERF-01)
 
-- **D-07: Der Save-Pfad wird zuerst entlastet, nicht der Undo-Pfad — die Requirement-Reihenfolge ist
-  invertiert zur tatsächlichen Frequenz.**
+- **D-07: Der Save-Pfad wird zuerst entlastet, nicht der Undo-Pfad — die Requirement-Reihenfolge ist invertiert zur tatsächlichen Frequenz.**
   Belegt: Von 76 `saveUndoState()`/`pushUndo()`-Aufrufstellen liegt **keine einzige** in einem heißen
   Pfad. Die Verteilung ist reine CRUD (`entity-actions.js` 5, `initiative-mob.js` 4,
   `fraktionen-crud.js` 4, `bestiary-actions.js` 4 …); `features/initiative.js` ruft es **gar nicht**,
@@ -108,10 +105,10 @@ Toast-Race-Fix und die schärferen Lint-/Typecheck-/Coverage-Gates (alle Phase 1
   notwendig, nicht redundant.
   — **Reversibility:** reversible — lokale Änderung an zwei Stellen.
 
-- **D-09: Die Undo-Semantik bleibt „ein Schritt stellt die volle Kampagne her". Entlastet wird über
-  zwei Hebel, die nichts an dieser Zusage ändern:** (a) **Dedupe** — ein Snapshot, der mit dem
-  Stack-Kopf identisch ist, wird nicht gepusht; (b) **Byte-Budget** über den Stack zusätzlich zum
-  `UNDO_LIMIT` (30), das älteste Einträge verdrängt, bevor der Speicher davonläuft.
+- **D-09: Die Undo-Semantik bleibt „ein Schritt stellt die volle Kampagne her" — entlastet wird über zwei Hebel, die nichts an dieser Zusage ändern.**
+  (a) **Dedupe** — ein Snapshot, der mit dem Stack-Kopf identisch ist, wird nicht gepusht;
+  (b) **Byte-Budget** über den Stack zusätzlich zum `UNDO_LIMIT` (30), das älteste Einträge
+  verdrängt, bevor der Speicher davonläuft.
 
 - **D-10: Kein Scoping einzelner Aufrufstellen, keine Delta-/Patch-Snapshots.**
   Beides würde eine Zusicherung ins Implizite verlagern — „diese Aufrufstelle fasst nur `D.npcs` an".
@@ -133,8 +130,7 @@ Toast-Race-Fix und die schärferen Lint-/Typecheck-/Coverage-Gates (alle Phase 1
 
 ### Würfelstatistik (PERF-02)
 
-- **D-11: Deckel auf die Datensatzzahl plus manueller Löschen-Knopf. Kein automatisches Pruning nach
-  Alter oder Session.**
+- **D-11: Deckel auf die Datensatzzahl plus manueller Löschen-Knopf. Kein automatisches Pruning nach Alter oder Session.**
   Der Store hat heute weder Prune noch Löschen (`dice-stats-idb.js` kennt nur `statsIdbPut`,
   `getAllStats`, `getStatsForSession`). Ein Deckel begrenzt ihn strukturell — Erfolgskriterium 3 ist
   damit erfüllt — ohne dass an einer Kalendergrenze still etwas verschwindet. „Meine Würfel hassen
@@ -144,8 +140,7 @@ Toast-Race-Fix und die schärferen Lint-/Typecheck-/Coverage-Gates (alle Phase 1
   — **Reversibility:** one-way — verdrängte Würfe sind weg. Deshalb der großzügige Deckel und kein
   zeitbasiertes Kriterium. Der Löschen-Knopf braucht eine Rückfrage.
 
-- **D-12: `getAllStats()` bleibt für den Export erhalten; die Auswertung bekommt einen eigenen,
-  cursor-basierten Aggregat-Pfad.**
+- **D-12: `getAllStats()` bleibt für den Export erhalten; die Auswertung bekommt einen eigenen, cursor-basierten Aggregat-Pfad.**
   Die Funktion hat zwei sehr verschiedene Konsumenten: `dice-stats-render.js:233` (heiß — läuft bei
   jedem Öffnen der Auswertung, braucht aber nur Aggregate) und `systems/migration/audio-export.js:202,229`
   (einmalig — braucht die vollständigen Datensätze). Nur der erste wird umgebaut: Aggregation per
@@ -156,8 +151,7 @@ Toast-Race-Fix und die schärferen Lint-/Typecheck-/Coverage-Gates (alle Phase 1
 
 ### Markdown-Wächter (MAINT-03)
 
-- **D-13: `hasHtmlTags` wird entfernt, und die Unterstrich-Regeln werden auf die
-  CommonMark-Intraword-Regel gebracht.**
+- **D-13: `hasHtmlTags` wird entfernt, und die Unterstrich-Regeln werden auf die CommonMark-Intraword-Regel gebracht.**
   Der Wächter wird bei `markdown-converter.js:264` berechnet und **nie gelesen**. Ihn zu verdrahten
   wäre der falsche Fix: Der Rich-Text-Editor speichert HTML, also enthielte praktisch **jeder**
   Wiki-Eintrag HTML-Tags — die Markdown-Darstellung auf Anzeige (Feature seit v2.6.0) fiele damit
