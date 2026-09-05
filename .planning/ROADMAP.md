@@ -115,7 +115,7 @@ Plans:
 
 **Wave 11** *(blocked on Wave 10 completion)*
 
-- [ ] 12-17-PLAN.md — Integrationsstufe: volle Suiten, Build-Tests und beide dist-Bundles aus dem Stand aller fünf Fix-Pläne dieser Runde (Welle 11)
+- [x] 12-17-PLAN.md — Integrationsstufe: volle Suiten, Build-Tests und beide dist-Bundles aus dem Stand aller fünf Fix-Pläne dieser Runde (Welle 11)
 
 **Auslegungshinweis:** Erfolgskriterium 6 schließt dieselbe Testlücken-Klasse, die `DEBT-17` in v1.1 verdeckt hat — die Tests gehören in dieselbe Phase wie die Fixes, nicht ans Ende des Milestones.
 

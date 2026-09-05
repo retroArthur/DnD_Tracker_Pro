@@ -4,17 +4,17 @@ milestone: v1.2
 milestone_name: Schulden-Abbau
 current_phase: 12
 current_phase_name: Datensicherheit
-status: executing
-stopped_at: Completed 12-16-PLAN.md (SEC-05/SEC-06/WR-03 geschlossen, Welle 10 komplett)
-last_updated: "2026-09-05T11:01:28.221Z"
+status: verifying
+stopped_at: "Completed 12-17-PLAN.md (Integrationswelle: volle Suiten gruen, beide dist-Bundles neu gebaut, Phase 12 komplett — 17/17 Plaene)"
+last_updated: "2026-09-05T11:10:47.744Z"
 last_activity: 2026-09-05
 last_activity_desc: Plan 12-13 ausgefuehrt (SEC-02 geschlossen, Welle 9 komplett)
-state_head: aaf19a257783c7653ffc529174babc12abddcd63
+state_head: ae8c5bee18a763f55cd470e5564b79ac17ad8eca
 progress:
   total_phases: 3
   completed_phases: 0
   total_plans: 17
-  completed_plans: 16
+  completed_plans: 17
   percent: 0
 ---
 
@@ -22,7 +22,7 @@ progress:
 
 **Last Updated:** 2026-09-05
 **Milestone:** v1.2 „Schulden-Abbau" — Phase 12 in Ausfuehrung (15/17 Plaene fertig)
-**Status:** Ready to execute
+**Status:** Phase complete — ready for verification
 
 ---
 
@@ -38,7 +38,7 @@ progress:
 
 Phase: 12 (Datensicherheit) — EXECUTING
 Plan: 17 of 17 (12-13 abgeschlossen — SEC-02, Welle 9 komplett)
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-09-05 — Plan 12-13 ausgefuehrt (SEC-02 geschlossen: undo() und redo() serialisieren den aktuellen Stand jetzt geschuetzt vor jeder Stack-Mutation, wie pushUndo(); test.failing-Verankerung "R11-Rest" auf test() umgestellt; Spiegeltest fuer redo() + tabellengetriebene Invariante ueber beide Richtungen; Welle 9 damit komplett)
 
 **Nächster Schritt:** Welle 9 hatte vier parallele Pläne (12-12, 12-13, 12-14, 12-15) — alle vier sind jetzt fertig. Welle 10 (Plan 12-16, WR-03 + SEC-05/SEC-06) ist entsperrt, danach Welle 11 (Plan 12-17, Gesamtlauf/dist-Rebuild). Danach erneut `/gsd-verify-work`.
@@ -114,6 +114,7 @@ Browser-Verhalten an der Base64-Grenze (12-07).
 | Phase 12 P14 | ~30min | 3 tasks | 2 files |
 | Phase 12 P13 | ~20min | 3 tasks | 2 files |
 | Phase 12 P16 | ~50min | 3 tasks | 4 files |
+| Phase 12-datensicherheit P17 | ~8min | 3 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -200,8 +201,8 @@ Browser-Verhalten an der Base64-Grenze (12-07).
 
 ## Session Continuity
 
-**Last session:** 2026-09-05T11:01:28.195Z
-**Stopped at:** Completed 12-16-PLAN.md (SEC-05/SEC-06/WR-03 geschlossen, Welle 10 komplett)
+**Last session:** 2026-09-05T11:10:47.718Z
+**Stopped at:** Completed 12-17-PLAN.md (Integrationswelle: volle Suiten gruen, beide dist-Bundles neu gebaut, Phase 12 komplett — 17/17 Plaene)
 **Resume file:** None
 
 **Last action:** `/gsd-plan-phase 12 --gaps`. Ausgangslage: die Re-Verifikation vom 2026-09-04 steht auf `gaps_found` (6/8 Truths) — G-12-3 ist durch 12-08 sauber geschlossen, aber der Code-Review (`12-REVIEW.md`) hat zwei neue Blocker aufgedeckt, die der Verifier unabhaengig gegen den Quelltext bestaetigt hat: **CR-01** (der „Ueberspringen"-Button des Migrations-Wizards bleibt nach erfolgreichem Import sichtbar, ruft nur `_closeWizard()` statt `window.location.reload()` — der unbedingte `beforeunload`-Autosave in `avatars.js:170-176` schreibt danach das stale `window.D` ueber die frisch importierten Daten) und **CR-02** (`readCampaignDataForBackup()` Stufe 3 gibt `window.D` zurueck, ohne `campaignKey` gegen den aktiven Key zu pruefen — jede indizierte, nie gespeicherte Kampagne bekommt die Daten der aktiven Kampagne in ihre Backup-Datei). Auf Nachfrage hat der Nutzer die zwei nicht-blockierenden Warnungen **WR-01** (Audio-Rueckmeldung am falschen DOM-Element) und **WR-02** (`pushUndo()` leert den Redo-Stack im `catch` nicht) mit aufgenommen. Ergebnis: 3 Plaene — 12-09 (CR-01+WR-01, Welle 7), 12-10 (CR-02, Welle 7, disjunkte Dateien), 12-11 (WR-02 + Rebuild beider Bundles, Welle 8, weil ein Rebuild in derselben Welle die Commits seiner Geschwister nicht saehe = genau W-1). Plan-Checker: **VERIFICATION PASSED im ersten Durchlauf**, 0 Blocker/0 Warnungen, Baselines live nachgemessen (41+17+73=131). Zusaetzlich `COVERAGE.md` geschrieben (`No external API integration: …`) — das entschaerft den wiederkehrenden `api-coverage`-Fehlalarm bei `verify:pre` dauerhaft, der nur auf dem Substring „API" in „File System Access API" feuert. Commit `df4ea54`.
@@ -308,6 +309,7 @@ Browser-Verhalten an der Base64-Grenze (12-07).
 - [Phase 12]: SEC-05: importFullExport() fuehrt Wuerfel-Favoriten und Kampagnen-Index zusammen statt sie zu ersetzen (Import gewinnt bei Ueberschneidung, erhalten bleibt nur Unbekanntes)
 - [Phase 12]: SEC-06: CAMPAIGN_CONTENT_EXCLUDED als pruefbare Ausschlussliste + Vollstaendigkeitstest ueber alle 38 im Repo verwendeten D-Schluessel; quickRefCustom zaehlt jetzt als Inhalt
 - [Phase 12]: WR-03: getAudioImportMaxBytes() leitet die Audio-Importgrenze aus AUDIO_EXPORT_SAFE_RAW_BYTES ab statt einer unabhaengig gewaehlten Zahl
+- [Phase 12]: [Phase 12, 12-17]: Integrationswelle bestaetigt: Jest 893/893, pytest tests/build 24/24, Playwright 321 passed/2 skipped gegen den vollstaendigen Quellstand aller fuenf Fix-Plaene; beide dist-Bundles neu gebaut (124/124 Module), nachweislich juenger als jede geaenderte Quelldatei
 
 ## Operator Next Steps
 
