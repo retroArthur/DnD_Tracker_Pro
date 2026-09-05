@@ -56,7 +56,7 @@ sich spürbar.
 **Goal**: Kein Pfad in Backup, Export oder Migration verliert oder überschreibt mehr stillschweigend Daten, und die Randfälle, die solche Verluste bisher verdeckt haben, sind getestet.
 **Depends on**: Nothing (erste Phase des Milestones)
 **Requirements**: SAFE-01, SAFE-02, SAFE-03, SAFE-04, SAFE-05, SAFE-06
-**Plans:** 11/11 plans executed (8/8 der Erstplanung plus 3 Lückenpläne aus Code-Review und Re-Verifikation, alle am 2026-09-04 ausgeführt)
+**Plans:** 11/17 plans executed (8/8 der Erstplanung plus 3 Lückenpläne aus Code-Review und Re-Verifikation, alle am 2026-09-04 ausgeführt; dazu 6 Lückenpläne vom 2026-09-05 für die sieben reproduzierten Befunde SEC-01…SEC-07 aus `verify:post` und der Triage — Wellen 9–11, noch offen)
 **Success Criteria** (what must be TRUE):
 
   1. Ein Umzugs-Export `file://` → PWA enthält Soundboard-Audio und Würfelstatistik; nach dem Import spielen Szenen ihre Tracks, keine toten `blobId`s bleiben zurück
@@ -102,6 +102,21 @@ Plans:
 
 - [x] 12-11-PLAN.md — Lücken-Plan WR-02: Redo-Stack auch im Serialisierungsfehler leeren; volle Suiten und beide dist-Bundles aus dem Stand aller drei Lückenpläne (Welle 8)
 
+**Wave 9** *(blocked on Wave 8 completion — vier Pläne mit überschneidungsfreien Dateien, parallel)*
+
+- [ ] 12-12-PLAN.md — Lücken-Plan SEC-04/SEC-03: Leerprüfung des Backups zählt Inhalt statt Schlüssel; Backup-Dateien tragen wieder den Namen ihrer eigenen Kampagne (Welle 9)
+- [ ] 12-13-PLAN.md — Lücken-Plan SEC-02: `undo()`/`redo()` serialisieren geschützt und brechen ohne Stack-Mutation ab statt ungefangen zu werfen (Welle 9)
+- [ ] 12-14-PLAN.md — Lücken-Plan SEC-01: nach dem Rücksprung aus dem Import führt kein Weg mehr in „Import fehlgeschlagen" — beide Fundstellen (Welle 9)
+- [ ] 12-15-PLAN.md — Lücken-Plan SEC-07: Audio-Import begrenzt auch das Volumen, geprüft vor dem Dekodieren (Welle 9)
+
+**Wave 10** *(blocked on Wave 9 completion — teilt sich `migration-wizard.js` mit 12-14)*
+
+- [ ] 12-16-PLAN.md — Lücken-Plan SEC-05/SEC-06 (+WR-03): Import führt Würfel-Favoriten und Kampagnen-Index zusammen; Inhaltslisten vollständig; Audio-Importgrenze aus der Exportgrenze abgeleitet (Welle 10)
+
+**Wave 11** *(blocked on Wave 10 completion)*
+
+- [ ] 12-17-PLAN.md — Integrationsstufe: volle Suiten, Build-Tests und beide dist-Bundles aus dem Stand aller fünf Fix-Pläne dieser Runde (Welle 11)
+
 **Auslegungshinweis:** Erfolgskriterium 6 schließt dieselbe Testlücken-Klasse, die `DEBT-17` in v1.1 verdeckt hat — die Tests gehören in dieselbe Phase wie die Fixes, nicht ans Ende des Milestones.
 
 ### Phase 13: Härtung & Wartbarkeit
@@ -146,6 +161,6 @@ Plans:
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 12. Datensicherheit | 11/11 | Ausgeführt — 1 menschlicher Prüfpunkt offen (12-UAT.md #28) | |
+| 12. Datensicherheit | 11/17 | Gap-Closure geplant — 7 reproduzierte Befunde (SEC-01…SEC-07) in den Wellen 9–11; 1 menschlicher Prüfpunkt offen (12-UAT.md #28) | |
 | 13. Härtung & Wartbarkeit | TBD | Not started | |
 | 14. Tests & Gates | TBD | Not started | |
