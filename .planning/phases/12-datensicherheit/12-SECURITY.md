@@ -2,22 +2,27 @@
 phase: "12"
 slug: "datensicherheit"
 status: audited
-# threats_open zählt NUR die drei persönlich reproduzierten Blocker (SEC-01..03).
-# Die 19 weiteren von der Challenge-Stufe heruntergestuften Threats sind NICHT
-# mitgezählt — siehe § Methodenkritik. Sie sind Triage-Liste, nicht Befund.
-threats_open: 3
+# threats_open zählt Threats auf oder über der Sperrschwelle `high`, die weder geschlossen
+# noch als Risiko akzeptiert sind. Die drei am 2026-09-04 reproduzierten Blocker (SEC-01..03)
+# sind seit der Gap-Closure-Runde geschlossen und am 2026-09-05 zweimal unabhängig am
+# Quelltext bestätigt. Die verbleibenden 14 unbestätigten Einwände der Challenge-Stufe
+# bleiben Triage-Liste, nicht Befund — siehe § Methodenkritik (5 der ursprünglich 19
+# wurden zu SEC-04…SEC-07/WR-03 hochgestuft und sind geschlossen).
+threats_open: 0
 asvs_level: 1
 security_block_on: high
 created: "2026-09-04"
-audited: "2026-09-04"
+audited: "2026-09-05"
 ---
 
 # Phase 12 — Security
 
 Nachträglich erstellt durch den `verify:post`-Hook `security` beim Abschluss von
-`/gsd-verify-work 12`. Register-Herkunft: **alle 11 Pläne** dieser Phase tragen einen
+`/gsd-verify-work 12`, fortgeschrieben am 2026-09-05 durch `/gsd-secure-phase 12` nach der
+Gap-Closure-Runde. Register-Herkunft: **alle 17 Pläne** dieser Phase tragen einen
 `<threat_model>`-Block (`register_authored_at_plan_time: true`) — also Verifikation der
-Mitigationen, kein retroaktives STRIDE.
+Mitigationen, kein retroaktives STRIDE. Insgesamt 72 Threats: 44 aus den Plänen 12-01…12-11
+(Register vom 2026-09-04) und 28 aus den Gap-Plänen 12-12…12-17 (Nachtrag unten).
 
 ---
 
@@ -88,12 +93,86 @@ adversarialen Refuter (nur Critical/High).
 | T-12-33 | 12-09 | low | mitigate | closed | — |
 | T-12-34 | 12-09 | low | accept | open — unterhalb `high`, nicht blockierend | — |
 
+### Nachtrag 2026-09-05 — Threats der Gap-Closure-Runde (Pläne 12-12…12-17)
+
+28 Threats, verifiziert am 2026-09-05 durch `/gsd-secure-phase 12` (ein Auditor, ASVS L1,
+`block_on: high`). Ausdrückliche Vorgabe an den Auditor: **keine** Im-Zweifel-offen-Voreinstellung
+— der Aufbaufehler der Vorrunde (§ Methodenkritik) sollte sich nicht wiederholen. Jeder
+CLOSED-Befund trägt Datei- und Zeilenbeleg aus dem gelesenen Quelltext, nicht aus der
+SUMMARY-Behauptung.
+
+| Threat ID | Plan | Severity | Disposition | Status | Beleg (Kurzform) |
+|-----------|------|----------|-------------|--------|------------------|
+| T-12-45 | 12-12 | critical | mitigate | closed | `_hatKampagnenInhalt()` ersetzt Schlüsselzahl-Prüfung, in allen 3 Stufen verdrahtet |
+| T-12-46 | 12-12 | critical | mitigate | closed | Leerschema liefert `null` → DEBT-17-Wächter greift vor `pruneOldSnapshots()` |
+| T-12-47 | 12-12 | high | mitigate | closed | `setBackupStatus('paused')` erreichbar, wenn kein Ziel Inhalt hat |
+| T-12-48 | 12-12 | high | mitigate | closed | Sperrlisten-Entwurf + Gegenprobe: Kampagne mit nur `spells` wird weiterhin gesichert |
+| T-12-49 | 12-12 | high | mitigate | closed | Name des aktiven Ziels aus dem Kampagnenindex statt hartkodiert |
+| T-12-50 | 12-12 | medium | mitigate | closed | Standard-Key wird bedingungslos als zusätzliches Ziel geführt |
+| T-12-51 | 12-13 | high | mitigate | closed | `JSON.stringify(D)` in `undo()` in try/catch vor `redoStack.push` |
+| T-12-52 | 12-13 | high | mitigate | closed | Spiegelbildlicher Wächter in `redo()` vor `undoStack.push` |
+| T-12-53 | 12-13 | high | mitigate | closed | Beide Wächter strikt vor jeder Stack-Mutation; Invarianten-Tests prüfen Stacklängen |
+| T-12-54 | 12-13 | medium | mitigate | closed | Warn-Toast an beiden Stellen, testseitig belegt |
+| T-12-55 | 12-14 | high | mitigate | closed | Import-`try` endet nach `importFn()`; `showWizardStep(4)` unbedingt |
+| T-12-56 | 12-14 | high | mitigate | closed | Direkte Folge von T-12-55; Invarianten-Tabelle über 3 Wurfstellen |
+| T-12-57 | 12-14 | medium | mitigate | closed | Statusmeldung wird vor der Lückenprüfung gebaut, `showStatus()` unbedingt |
+| T-12-58 | 12-14 | high | mitigate | closed | Zwei Gegenproben grün: echte Importfehler melden weiterhin Fehlschlag |
+| T-12-59 | 12-14 | low | mitigate | closed | Irreführender Kommentar entfernt (grep: 0 Treffer) |
+| T-12-60 | 12-15 | low | mitigate | closed | Einzelgrößen-Prüfung vor `base64ToBlob()` |
+| T-12-61 | 12-15 | low | mitigate | closed | Kumuliertes Budget, Einträge namentlich übersprungen statt Abbruch |
+| T-12-62 | 12-15 | low | mitigate | closed | `Math.max(angegebeneGroesse, geschaetzteRohgroesse)` |
+| T-12-63 | 12-15 | medium | mitigate | closed | Drift-Test liest `soundboard-idb.js` im Quelltext und vergleicht |
+| T-12-64 | 12-16 | low | mitigate | closed | Würfel-Favoriten werden zusammengeführt statt überschrieben |
+| T-12-65 | 12-16 | low | mitigate | closed | Kampagnenindex wird zusammengeführt statt ersetzt |
+| T-12-66 | 12-16 | medium | mitigate | closed | Import gewinnt bei Schlüsselkollision; Gegenprobe grün |
+| T-12-67 | 12-16 | low | mitigate | closed | `quickRefCustom` in `CAMPAIGN_CONTENT_ARRAYS` |
+| T-12-68 | 12-16 | high | mitigate | closed | `CAMPAIGN_CONTENT_EXCLUDED` + Vollständigkeitstest über alle `D.xxx`-Zugriffe |
+| T-12-69 | 12-16 | low | mitigate | closed | `getAudioImportMaxBytes()` leitet die Grenze aus der Exportgrenze ab |
+| T-12-70 | 12-17 | high | mitigate | closed | **War offen** — siehe § Befund 2026-09-05; nach Dev-Build und E2E-Neulauf geschlossen |
+| T-12-71 | 12-17 | medium | mitigate | closed | `pytest tests/build` 24/24 grün — keine doppelte Top-Level-Deklaration |
+| T-12-72 | 12-17 | medium | mitigate | closed | `grep "test.failing("` → 0 Treffer; kein Unexpectedly-passed im Suitenlauf |
+
+---
+
+## Befund 2026-09-05 — T-12-70: Dev-Bundle war veraltet
+
+Der Auditor meldete T-12-70 (`high`) als **offen** — zu Recht, und der Fehler lag im Vorgehen des
+Orchestrators, nicht in Plan 12-17.
+
+`npm run build` ist in diesem Projekt auf `python build.py --production` gemappt und schreibt
+ausschließlich `dist/dnd-tracker-optimized.html`. Als Post-Merge-Gate wurde nach jeder Welle genau
+dieser Befehl ausgeführt; der Dev-Bundle `dist/dnd-tracker-bundled.html` entstand zuletzt am
+2026-09-05 um 13:04 durch Plan 12-17. Die beiden Review-Fix-Commits `905168e` (CR-01,
+`full-export.js`) und `d2a521c` (WR-01, `avatars.js`) landeten um 16:10/16:11 — danach hat niemand
+den Dev-Build erneut angestoßen.
+
+Beleg des Auditors, nachgeprüft: `dnd-tracker-bundled.html` enthielt weder den CR-01-Kommentar noch
+`strippedForProtocolCheck` (je 0 Treffer), `dnd-tracker-optimized.html` beide (1 bzw. 2 Treffer).
+Die Playwright-Suite läuft gegen den Dev-Bundle — der Lauf mit 321 bestandenen Tests aus Plan 12-17
+hat für diese zwei Pfade also **Vor-Fix-Code** geprüft.
+
+**Behebung:** `python build.py` (Dev-Build) am 2026-09-05 ausgeführt; beide Marker jetzt in beiden
+Bundles vorhanden, beide Dateien jünger als die letzte Quelländerung (16:11). Anschließend
+`npx playwright test` neu gefahren: **321 bestanden / 2 übersprungen, Exit 0** — die
+E2E-Nachweislage deckt damit den aktuellen Stand ab. T-12-70 geschlossen.
+
+**Lehre für künftige Runden:** Ein Post-Merge-Gate, das nur `npm run build` fährt, hält den
+Dev-Bundle nicht aktuell. Wer sich auf Playwright als Nachweis beruft, muss vorher
+`python build.py` (oder `npm run build:dev`) laufen lassen.
+
 ---
 
 ## Bestätigte Blocker (persönlich reproduziert)
 
 Diese drei stammen **nicht** aus der Agenten-Klassifikation, sondern wurden vom Orchestrator selbst
 gegen den unveränderten Quelltext reproduziert.
+
+> **Stand 2026-09-05: alle drei geschlossen.** SEC-01 durch Plan 12-14 (`95dd60a`, `403244c`,
+> `a5372e1`), SEC-02 durch Plan 12-13 (`03b3426`, `01e96e4`, `81e004e`), SEC-03 durch Plan 12-12
+> (`c674a42`, `f027fbc`). Zwei aufeinanderfolgende Verifikationen (`12-VERIFICATION.md`, zuletzt
+> `status: passed`, 9/9) haben die Behebung unabhängig am Quelltext gelesen statt aus den SUMMARYs
+> zu übernehmen; der Audit vom 2026-09-05 hat sie als T-12-55/56, T-12-51/52/53 und T-12-49 erneut
+> mit Zeilenbeleg bestätigt. Die Beschreibungen unten bleiben als Fundstellen-Dokumentation stehen.
 
 ### SEC-01 — Audio-Benennung kippt den bereits erfolgreichen Import in einen Fehler
 
@@ -188,13 +267,17 @@ Wiederkehrendes Argumentationsmuster der Refuter: „die Mitigation ist vorhande
 angrenzende Dimension der Bedrohung nicht ab". Ob das ein echter Fund oder eine Ausweitung über den
 Wortlaut des Threats hinaus ist, muss je Eintrag entschieden werden.
 
-| Threat | Kern des Einwands | Ersteinschätzung |
+**Stand 2026-09-05:** von den 19 Einträgen sind fünf inzwischen erledigt — die Triage vom
+2026-09-05 stufte sie zu SEC-04…SEC-07 bzw. WR-03 hoch, und die Gap-Pläne 12-12…12-16 haben sie
+geschlossen (siehe Nachtragstabelle oben). Die übrigen 14 bleiben unbestätigt und ungezählt.
+
+| Threat | Kern des Einwands | Stand |
 |--------|-------------------|------------------|
-| T-12-11 | „leer" ist als Schlüsselzahl definiert, nicht als Inhalt — eine schema-initialisierte Leerkampagne gilt als befüllt | plausibel, prüfen |
-| T-12-12 | `isFreshInstall()` fragt einen Key ab, `importFullExport()` überschreibt aber zusätzlich Kampagnenindex und `DICE_FAV_KEY` | plausibel, prüfen |
-| T-12-24 | Kampagne mit ausschließlich `quickRefCustom` gilt weiterhin als Frischinstallation — G-12-3 in neuer Ausprägung | plausibel, prüfen |
-| T-12-01 | Importseite hat keine Größengrenze; ein Eintrag dekodiert vor der 100-MB-Sperre von `saveSoundBlob()` | plausibel, prüfen |
-| T-12-05 | 300 MiB Export- vs. 350 MiB Import-Grenze inkonsistent kalibriert | **bereits bekannt als WR-03** (`12-VERIFICATION.md`) |
+| T-12-11 | „leer" ist als Schlüsselzahl definiert, nicht als Inhalt — eine schema-initialisierte Leerkampagne gilt als befüllt | **erledigt** → SEC-04, geschlossen durch Plan 12-12 (vgl. T-12-45) |
+| T-12-12 | `isFreshInstall()` fragt einen Key ab, `importFullExport()` überschreibt aber zusätzlich Kampagnenindex und `DICE_FAV_KEY` | **erledigt** → SEC-05, geschlossen durch Plan 12-16 (vgl. T-12-64/65) |
+| T-12-24 | Kampagne mit ausschließlich `quickRefCustom` gilt weiterhin als Frischinstallation — G-12-3 in neuer Ausprägung | **erledigt** → SEC-06, geschlossen durch Plan 12-16 (vgl. T-12-67/68) |
+| T-12-01 | Importseite hat keine Größengrenze; ein Eintrag dekodiert vor der 100-MB-Sperre von `saveSoundBlob()` | **erledigt** → SEC-07, geschlossen durch Plan 12-15 (vgl. T-12-60…62) |
+| T-12-05 | 300 MiB Export- vs. 350 MiB Import-Grenze inkonsistent kalibriert | **erledigt** → WR-03, geschlossen durch Plan 12-16 (vgl. T-12-69) |
 | T-12-04, T-12-09, T-12-10, T-12-13, T-12-14, T-12-15, T-12-16, T-12-19, T-12-25, T-12-29, T-12-30, T-12-37, T-12-39, T-12-41, T-12-43 | je ein Randfall neben der belegten Mitigation | ungeprüft |
 
 ---
@@ -215,13 +298,23 @@ Wortlaut des Threats hinaus ist, muss je Eintrag entschieden werden.
 | Audit Date | Threats Total | Closed | Open (gezählt) | Zur Triage | Run By |
 |------------|---------------|--------|----------------|------------|--------|
 | 2026-09-04 | 44 | 21 | 3 (SEC-01..03) | 19 | `/gsd-verify-work 12` → `verify:post` Hook `security`, 22 Agenten |
+| 2026-09-05 | 72 (+28) | 49 (+28) | 0 | 14 (5 der 19 erledigt) | `/gsd-secure-phase 12`, ein Auditor, Umfang T-12-45…T-12-72 (Nutzerentscheidung) |
+
+**Zum Umfang des Laufs vom 2026-09-05:** Auditiert wurden ausschließlich die 28 Threats der
+Gap-Pläne. Die 22 als `open` geführten Zeilen des Registers von 2026-09-04 wurden auf ausdrückliche
+Nutzerentscheidung **nicht** erneut klassifiziert — sie sind laut § Methodenkritik Triage-Liste und
+nicht Befund, und eine Wiederholung hätte dieselbe verzerrte Vorrunde reproduziert. Sie zählen daher
+weiterhin nicht in `threats_open`, stehen aber unverändert als offene Triage im Register.
 
 ---
 
 ## Sign-Off
 
-- [x] Alle Threats haben eine Disposition (41 mitigate, 3 accept)
+- [x] Alle Threats haben eine Disposition (69 mitigate, 3 accept)
 - [x] Akzeptierte Risiken im Log dokumentiert
-- [ ] `threats_open: 0` — **nicht erfüllt.** SEC-01, SEC-02 und SEC-03 sind reproduzierte Blocker
-      auf Stufe `high`. Der Phasenabschluss bleibt bis zu ihrer Behebung gesperrt.
-- [ ] Triage der 19 unbestätigten Einwände ausstehend
+- [x] `threats_open: 0` — **erfüllt (2026-09-05).** SEC-01/02/03 sind durch die Pläne 12-14, 12-13
+      und 12-12 geschlossen und zweifach am Quelltext bestätigt; die 28 Threats der Gap-Runde sind
+      auditiert und geschlossen, einschließlich des zunächst offenen T-12-70 (veralteter Dev-Bundle,
+      behoben durch Dev-Build + E2E-Neulauf).
+- [ ] Triage der verbleibenden 14 unbestätigten Einwände ausstehend — unterhalb der Sperrschwelle
+      geführt, blockiert den Phasenabschluss nicht (5 der ursprünglich 19 sind erledigt)
