@@ -3,14 +3,14 @@ phase: 12
 slug: datensicherheit
 # status lifecycle: draft (seeded by plan-phase) → validated (set by validate-phase §6)
 status: validated
-nyquist_compliant: false
-# nyquist_compliant bleibt false, obwohl die Abdeckung vollstaendig ist: zwei von der Phase
-# geforderte Verhalten sind per test.failing als NACHWEISLICH VERLETZT verankert (D-02-Kern in
-# SAFE-01, Crash-Haelfte von R11 in SAFE-05). Es gibt automatisierte Verifikation fuer beide —
-# sie sagt nur "Anforderung nicht erfuellt". Siehe § Validation Audit 2026-09-04.
+nyquist_compliant: true
+# Seit 2026-09-05 true: die beiden als test.failing verankerten Defekte IMPL-01 (D-02-Kern in
+# SAFE-01) und IMPL-02 (Crash-Haelfte von R11 in SAFE-05) sind durch die Gap-Pläne 12-14 bzw.
+# 12-13 behoben, beide Anker auf test() umgestellt. `grep -rn "test.failing(" tests/` liefert
+# 0 Treffer. Siehe § Validation Audit 2026-09-05.
 wave_0_complete: true
 created: 2026-08-06
-validated: 2026-09-04
+validated: 2026-09-05
 ---
 
 # Phase 12 — Validation Strategy
@@ -46,9 +46,14 @@ validated: 2026-09-04
 - **Nach jedem Task-Commit:** `npx jest tests/unit/<betroffene-datei>.test.js` — gezielt, < 5 s
 - **Nach jeder Welle:** `npm test` (volle Unit-Suite) plus gezielte E2E-Teilmenge
   (`npx playwright test tests/e2e/features/soundboard.spec.js tests/e2e/features/persistence.spec.js`)
-- **Vor `/gsd-verify-work`:** volle Suite grün. **Basislinie: Jest 842 (30 Suites), Playwright 321
-  passed / 2 skipped** (Stand 2026-09-04 nach dem Nyquist-Nachzug; davor 760/321, bei Planung 628/319 —
-  die Recherche nannte die noch ältere 621/318)
+- **Vor `/gsd-verify-work`:** volle Suite grün. **Basislinie: Jest 908 (31 Suites), Playwright 321
+  passed / 2 skipped** (Stand 2026-09-05 nach der Gap-Closure-Runde 12-12…12-17 und den beiden
+  Review-Fixes; davor 842/30 am 2026-09-04, 760/321, bei Planung 628/319 — die Recherche nannte die
+  noch ältere 621/318)
+- **E2E-Vorbedingung (2026-09-05 gelernt):** Playwright läuft gegen `dist/dnd-tracker-bundled.html`.
+  `npm run build` schreibt nur den Production-Bundle — vor jedem E2E-Lauf `python build.py`
+  (bzw. `npm run build:dev`) fahren, sonst prüft die Suite Vor-Fix-Code (siehe `12-SECURITY.md`
+  § Befund 2026-09-05 / T-12-70).
 - **Max feedback latency:** < 5 s (Quick-Run)
 
 ---
@@ -59,7 +64,7 @@ validated: 2026-09-04
 |---|--------|----------|-----------|-------------------|--------|
 | R01 | SAFE-01 | `buildAudioExport()` sammelt `audioBlobs` + `diceStats`, Base64, 2. Datei | unit | `npx jest tests/unit/audio-export.test.js` | ✅ grün |
 | R02 | SAFE-01 | Audio-Rundlauf: Export → Import → Szene **spielt** Track (D-08) | e2e | `npx playwright test tests/e2e/features/soundboard.spec.js` | ✅ grün |
-| R03 | SAFE-01 | Fehlende Audio-Datei blockiert Hauptimport nicht, benennt Szenen (D-02) | unit | `npx jest tests/unit/audio-import-resilience.test.js` | ⚠️ **6 grün, D-02-Kern `test.failing`** |
+| R03 | SAFE-01 | Fehlende Audio-Datei blockiert Hauptimport nicht, benennt Szenen (D-02) | unit | `npx jest tests/unit/audio-import-resilience.test.js` | ✅ grün — 16/16 (IMPL-01 durch Plan 12-14 behoben, Anker auf `test()`) |
 | R04 | SAFE-02 | `_doBackup()` sichert ALLE Kampagnen aus `getCampaignIndex()` | unit | `npx jest tests/unit/file-backup.test.js tests/unit/file-backup-idb.test.js` | ✅ grün |
 | R05 | SAFE-02 | Key nur bei echter `safeName`-Kollision (D-04) | unit | `npx jest tests/unit/file-backup.test.js` | ✅ grün |
 | R06 | SAFE-02 | `FILE_BACKUP_MAX_SNAPSHOTS` gilt **pro Kampagne** | unit | `npx jest tests/unit/file-backup.test.js` | ✅ grün |
@@ -67,7 +72,7 @@ validated: 2026-09-04
 | R08 | SAFE-04 | `isFreshInstall()` berücksichtigt `STORAGE_KEY_OVERRIDE` | unit | `npx jest tests/unit/migration.test.js` | ✅ grün |
 | R09 | SAFE-04 | `isFreshInstall()` erkennt IDB-only-Kampagnen als „nicht frisch" | unit | `npx jest tests/unit/migration-wizard.test.js tests/unit/file-backup-idb.test.js` | ✅ grün |
 | R10 | SAFE-05 | Parse-Fehler in `undo()`/`redo()` poppt NICHT vom Stack | unit | `npx jest tests/unit/stability.test.js` | ✅ grün |
-| R11 | SAFE-05 | Nicht-serialisierbarer Snapshot wird NICHT gepusht **und crasht nicht** | unit | `npx jest tests/unit/stability.test.js` | ⚠️ **Push-Hälfte grün, Crash-Hälfte `test.failing`** |
+| R11 | SAFE-05 | Nicht-serialisierbarer Snapshot wird NICHT gepusht **und crasht nicht** | unit | `npx jest tests/unit/stability.test.js` | ✅ grün — 89/89 (IMPL-02 durch Plan 12-13 behoben, Anker auf `test()`) |
 | R12 | SAFE-05 | Kein `autosave-toggle`-String mehr im Quelltext (Grep-Test) | unit | `npx jest tests/unit/stability.test.js` | ✅ grün |
 | R13 | SAFE-06 | >5-MB-IDB-only-Save **plus Reload** liest korrekt aus IDB | unit | `npx jest tests/unit/stability.test.js` | ✅ grün |
 | R14 | SAFE-06 | localStorage-Quota-Fallback (`QuotaExceededError`) → IDB greift | unit | `npx jest tests/unit/stability.test.js` | ✅ grün |
@@ -153,11 +158,12 @@ entstehen zwei konkurrierende Capping-Mechanismen.
 - [x] Wave 0 covers all MISSING references — alle drei MISSING-Zeilen geschlossen
 - [x] No watch-mode flags
 - [x] Feedback latency < 5s — volle Unit-Suite läuft in 1,7 s
-- [ ] `nyquist_compliant: true` — **bewusst NICHT gesetzt.** Die Abdeckung ist vollständig, aber
-      IMPL-01 und IMPL-02 sind automatisiert verifiziert als *nicht erfüllt*. Sobald beide behoben
-      sind, schlagen die beiden `test.failing`-Anker an und dieser Haken kann gesetzt werden.
+- [x] `nyquist_compliant: true` — **gesetzt am 2026-09-05.** Die am 2026-09-04 formulierte Bedingung
+      ist eingetreten: IMPL-01 und IMPL-02 sind behoben (Pläne 12-14 und 12-13), beide `test.failing`-
+      Anker stehen auf `test()`, `grep -rn "test.failing(" tests/` liefert 0 Treffer. Alle 16 Zeilen
+      der Karte sind grün.
 
-**Approval:** validiert am 2026-09-04 · Abdeckung vollständig · 2 Anforderungen nachweislich verletzt (IMPL-01, IMPL-02)
+**Approval:** validiert am 2026-09-05 · Abdeckung vollständig · 0 Anforderungen verletzt
 
 
 ---
@@ -225,3 +231,46 @@ still wieder in Vergessenheit geraten.
 - `file-backup-manager.js:273` — das Entfernen von `snapshots.sort()` lässt die Suite grün, weil
   alle Fixtures bereits sortiert einspeisen. Eigenschaft von `pruneOldSnapshots`, nicht von R06 —
   bewusst außerhalb des Schnitts gelassen.
+
+---
+
+## Validation Audit 2026-09-05
+
+Ausgelöst durch den `verify:post`-Hook `nyquist` beim erneuten Abschluss von `/gsd-verify-work 12`,
+nach der Gap-Closure-Runde 12-12…12-17 und den beiden Code-Review-Fixes.
+
+| Metrik | Anzahl |
+|--------|--------|
+| Zeilen geprüft | 16 |
+| COVERED | 16 |
+| PARTIAL | 0 |
+| MISSING | 0 |
+| Lücken gefunden | 0 |
+| Aufgelöste `test.failing`-Anker | 2 (IMPL-01, IMPL-02) |
+| Jest-Testfälle | 842 → 908 (30 → 31 Suites) |
+| Nyquist-Auditor nötig | nein (keine Lücken — Workflow Schritt 3) |
+
+**Was sich geändert hat.** Die Karte stand am 2026-09-04 auf `nyquist_compliant: false`, nicht wegen
+fehlender Abdeckung, sondern weil zwei Anforderungen automatisiert als *nicht erfüllt* verifiziert
+waren — als `test.failing` verankert, damit sie nicht still in Vergessenheit geraten. Genau dieser
+Mechanismus hat funktioniert:
+
+- **IMPL-01** (`migration-wizard.js`, SAFE-01/D-02) — geschlossen durch Plan **12-14** (SEC-01,
+  Commits `95dd60a`/`403244c`/`a5372e1`). Der Import-`try` endet jetzt nach dem Rücksprung aus
+  `importFn()`; die Nachbearbeitung liegt außerhalb mit eigenem, nur protokollierendem try/catch.
+  Der Anker wurde auf `test()` umgestellt, die Suite wächst von 7 auf 16 Tests.
+- **IMPL-02** (`undo.js`, SAFE-05/R11) — geschlossen durch Plan **12-13** (SEC-02, Commits
+  `03b3426`/`01e96e4`/`81e004e`). `undo()` und `redo()` serialisieren geschützt vor jeder
+  Stack-Mutation; bei Fehlschlag bleiben beide Stacks unverändert und ein Warn-Toast erscheint.
+  Anker auf `test()`, Richtungs-Invariante als Tabelle ergänzt.
+
+Belegt am 2026-09-05: `grep -rn "test.failing(" tests/` → 0 Treffer; `npx jest
+tests/unit/audio-import-resilience.test.js` → 16/16; `npx jest tests/unit/stability.test.js`
+→ 89/89; volle Suite 908/908 über 31 Suites; `python -m pytest tests/build` → 24/24;
+`npx playwright test` → 321 bestanden / 2 übersprungen (gegen einen frisch gebauten Dev-Bundle).
+
+**Die Nebenbefunde des Audits von 2026-09-04 sind teilweise erledigt.** `full-export.js:181`
+(`campaignCount` aus der Eingabe statt aus erfolgreichen Schreibvorgängen) berührt dieselbe Funktion,
+die der CR-01-Fix umgebaut hat, ist aber selbst **nicht** behoben und bleibt offen. `_appVersion`
+(`full-export.js:70`), `soundboard-player.js:257` und `file-backup-manager.js:273` sind unverändert
+offen — alle vier bewusst außerhalb des Schnitts dieser Phase.
