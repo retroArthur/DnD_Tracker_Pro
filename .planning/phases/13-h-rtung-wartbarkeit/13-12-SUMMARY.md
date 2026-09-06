@@ -108,9 +108,10 @@ coverage:
     description: "Bedienprobe (Task 4, checkpoint:human-verify, gate=blocking) — zehn manuelle Punkte zum Masonry-Layout, zur Quick-Bar/Grid-Zuordnung, zu Profilen, Drag & Drop und Live-Sync nach der Aufteilung"
     requirement: "MAINT-01"
     verification:
-      - kind: manual
+      - kind: manual_procedural
         ref: "Durchgefuehrt und freigegeben durch den Entwickler (zugleich Endnutzer/DM) an dist/dnd-tracker-bundled.html: Rueckmeldung 'Alles passt soweit'. Einzige Beobachtung war keine Regression — siehe 'Bedienprobe-Befund' unten."
         status: pass
+    rationale: "Das Masonry-Layout des DM-Screens ist CSS-Umbruchverhalten: Spaltenbrueche, Header-vs-Grid-Zuordnung und Drag-Reihenfolge bei 320/768/voller Breite sind visuell zu beurteilen und werden vom Charakterisierungs-Snapshot nicht erfasst."
     human_judgment: true
 
 duration: ~50min

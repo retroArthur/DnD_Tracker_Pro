@@ -108,9 +108,10 @@ coverage:
     description: "Bedienprobe (Task 4, checkpoint:human-verify) — zehn manuelle Punkte zum Bediengefuehl des Editors nach der Aufteilung, ausserhalb des Automatisierungsbereichs (13-VALIDATION.md 'Manual-Only Verifications')"
     requirement: "MAINT-01"
     verification:
-      - kind: manual
+      - kind: manual_procedural
         ref: "Durchgefuehrt und freigegeben am 2026-09-06 durch den Entwickler (zugleich Endnutzer/DM) an dist/dnd-tracker-bundled.html: alle zehn Punkte verhalten sich wie vor der Aufteilung — Floating-Toolbar an der Selektion, Zeichenformatierung, Schriftart/-groesse, Read-Aloud-Stile, Tabelle, Zeilenumbruch-Cursor, Einfuegen, Formatierung entfernen, Link, sowie die herausgeloeste Zauberverwaltung"
         status: pass
+    rationale: "Automatisierte Tests belegen, dass der Editor nach der Aufteilung funktioniert - nicht, dass er sich unveraendert BEDIENT. Die Chromium-Cursor-Stabilitaet war in Phase 9 der teuerste Befund ueberhaupt und faellt in keinem automatisierten Lauf auf."
     human_judgment: true
 
 duration: ~55min
