@@ -81,10 +81,10 @@ wiederherstellbar ist (`SAFE-01`, `SAFE-02`, `SAFE-04`).
   `features/soundboard/soundboard-player.js:145` mit einer Zahl), der tote `mindmap`-Schreib-Seed an
   zwei Stellen (`systems/backups.js:232`, `tools/debug.js:917`) und das doppelte `data-id`-Attribut
   in `features/wiki/wiki.js:391-392` (✓ entfernt in 13-02 — die zwei restlichen Punkte sind noch offen).
-- **MAINT-03** (`DEBT-12`): Der nie verdrahtete `hasHtmlTags`-Wächter
-  (`ui/editors/markdown-converter.js:264`) ist angeschlossen oder entfernt. Aktuell läuft die
-  Markdown-Konvertierung unbedingt über bereits-HTML und korrumpiert URLs mit ≥2 Unterstrichen —
-  ein echter Anzeigebug, kein toter Code.
+- **MAINT-03** ✓ (`DEBT-12`, Phase 13: 13-03 komplett): Der nie verdrahtete `hasHtmlTags`-Wächter
+  (`ui/editors/markdown-converter.js:264`) ist entfernt. Die Unterstrich-Emphase-Regeln in
+  `renderMarkdownInContent()` folgen jetzt der CommonMark-Wortgrenzenregel — URLs und Bezeichner mit
+  ≥2 Unterstrichen werden nicht mehr korrumpiert.
 - **MAINT-04** ✓ (`DEBT-03`, Phase 13: 13-02 komplett): Die letzten drei `document.execCommand`-Aufrufe
   außerhalb des Editor-Moduls sind abgelöst (`systems/entity-links.js:87`, `features/wiki/wiki.js:831`,
   `ui/actions/system-actions.js:82`) — das Verfahren dafür liegt aus Phase 9 vor.
@@ -138,7 +138,7 @@ wiederherstellbar ist (`SAFE-01`, `SAFE-02`, `SAFE-04`).
 | PERF-02 | DEBT-24 | Pending |
 | MAINT-01 | DEBT-04 | Pending |
 | MAINT-02 | DEBT-25, DEBT-16, DEBT-13 | Pending (Teil 1/2 in 13-02: data-id entfernt) |
-| MAINT-03 | DEBT-12 | Pending |
+| MAINT-03 | DEBT-12 | Phase 13 — Complete (13-03) |
 | MAINT-04 | DEBT-03 | Phase 13 — Complete (13-02) |
 | MAINT-05 | DEBT-09, DEBT-10 | Pending |
 | MAINT-06 | DEBT-27, DEBT-26 | Pending |
