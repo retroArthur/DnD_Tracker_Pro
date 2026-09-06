@@ -57,8 +57,8 @@ wiederherstellbar ist (`SAFE-01`, `SAFE-02`, `SAFE-04`).
   (`ui/actions/ui-actions.js`) ruft `window[ctx.value]` nur noch auf, wenn `ctx.value` in der
   neuen `CALL_ACTION_WHITELIST` (130 Namen, `core/constants.js`) steht. Fehlerpfad läuft über
   `ErrorHandler.log()` hinter `DEBUG_MODE` statt roher Konsolenausgabe.
-- **SEC-04** (`DEBT-14`): Die Regex-Capture in `parseWikiLinks()` (`features/wiki/wiki.js:653`) ist
-  escapt.
+- **SEC-04** ✓ (`DEBT-14`, Phase 13: 13-02 komplett): Die Regex-Capture in `parseWikiLinks()`
+  (`features/wiki/wiki.js`) ist escapt — Attributwert UND sichtbarer Textknoten laufen durch `esc()`.
 
 ### Performance & Skalierung
 
@@ -76,17 +76,17 @@ wiederherstellbar ist (`SAFE-01`, `SAFE-02`, `SAFE-04`).
   `ui/editors/rich-text.js` (1932), `features/initiative.js` (1655),
   `features/dmscreen/dmscreen-render.js` (1576) und `features/wiki/wiki.js`. Aufteilung entlang
   bestehender Verantwortlichkeiten, ohne Verhaltensänderung.
-- **MAINT-02** (`DEBT-25`, `DEBT-16`, `DEBT-13`): Irreführende und tote Codestellen sind beseitigt —
-  `const D`-Überschattung des globalen Datenobjekts (u. a.
+- **MAINT-02** (`DEBT-25`, `DEBT-16`, `DEBT-13`, Phase 13: 13-02 Teil 1/2): Irreführende und tote
+  Codestellen sind beseitigt — `const D`-Überschattung des globalen Datenobjekts (u. a.
   `features/soundboard/soundboard-player.js:145` mit einer Zahl), der tote `mindmap`-Schreib-Seed an
   zwei Stellen (`systems/backups.js:232`, `tools/debug.js:917`) und das doppelte `data-id`-Attribut
-  in `features/wiki/wiki.js:391-392`.
+  in `features/wiki/wiki.js:391-392` (✓ entfernt in 13-02 — die zwei restlichen Punkte sind noch offen).
 - **MAINT-03** (`DEBT-12`): Der nie verdrahtete `hasHtmlTags`-Wächter
   (`ui/editors/markdown-converter.js:264`) ist angeschlossen oder entfernt. Aktuell läuft die
   Markdown-Konvertierung unbedingt über bereits-HTML und korrumpiert URLs mit ≥2 Unterstrichen —
   ein echter Anzeigebug, kein toter Code.
-- **MAINT-04** (`DEBT-03`): Die letzten drei `document.execCommand`-Aufrufe außerhalb des
-  Editor-Moduls sind abgelöst (`systems/entity-links.js:87`, `features/wiki/wiki.js:831`,
+- **MAINT-04** ✓ (`DEBT-03`, Phase 13: 13-02 komplett): Die letzten drei `document.execCommand`-Aufrufe
+  außerhalb des Editor-Moduls sind abgelöst (`systems/entity-links.js:87`, `features/wiki/wiki.js:831`,
   `ui/actions/system-actions.js:82`) — das Verfahren dafür liegt aus Phase 9 vor.
 - **MAINT-05** (`DEBT-09`, `DEBT-10`): Fragile Stellen sind abgesichert — Tab-Registry-Renderfunktionen
   werden nicht mehr allein per String-Name referenziert (bricht heute bei Umbenennung nur mit einer
@@ -133,13 +133,13 @@ wiederherstellbar ist (`SAFE-01`, `SAFE-02`, `SAFE-04`).
 | SAFE-05 | DEBT-05, DEBT-08 | Phase 12 — Complete (12-05) |
 | SAFE-06 | DEBT-11 | Phase 12 — Complete (12-07) |
 | SEC-03 | DEBT-23 | Phase 13 — Complete (13-01) |
-| SEC-04 | DEBT-14 | Pending |
+| SEC-04 | DEBT-14 | Phase 13 — Complete (13-02) |
 | PERF-01 | DEBT-06, DEBT-07 | Pending |
 | PERF-02 | DEBT-24 | Pending |
 | MAINT-01 | DEBT-04 | Pending |
-| MAINT-02 | DEBT-25, DEBT-16, DEBT-13 | Pending |
+| MAINT-02 | DEBT-25, DEBT-16, DEBT-13 | Pending (Teil 1/2 in 13-02: data-id entfernt) |
 | MAINT-03 | DEBT-12 | Pending |
-| MAINT-04 | DEBT-03 | Pending |
+| MAINT-04 | DEBT-03 | Phase 13 — Complete (13-02) |
 | MAINT-05 | DEBT-09, DEBT-10 | Pending |
 | MAINT-06 | DEBT-27, DEBT-26 | Pending |
 | TEST-03 | DEBT-15 | Pending |

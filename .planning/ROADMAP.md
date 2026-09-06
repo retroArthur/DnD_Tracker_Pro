@@ -124,7 +124,7 @@ Plans:
 **Goal**: Die verbliebenen Sicherheits- und Skalierungsrisiken sind geschlossen, und die Codebasis trägt keine übergroßen, toten oder irreführenden Stellen mehr, die künftige Arbeit verteuern.
 **Depends on**: Phase 12 (`PERF-01` fasst dieselben Persistenz-Dateien an wie `SAFE-05`)
 **Requirements**: SEC-03, SEC-04, PERF-01, PERF-02, MAINT-01, MAINT-02, MAINT-03, MAINT-04, MAINT-05, MAINT-06
-**Plans:** 1/12 plans executed
+**Plans:** 2/12 plans executed
 **Success Criteria** (what must be TRUE):
 
   1. Die `call`-Aktion ruft nur noch Ziele aus einer Whitelist auf; die Regex-Capture in `parseWikiLinks()` ist escapt
@@ -140,7 +140,7 @@ Plans:
 **Wave 1** *(sechs Pläne mit überschneidungsfreien Dateien, parallel)*
 
 - [x] 13-01-PLAN.md — SEC-03: `call`-Aktion gegen eine explizite Ziel-Whitelist, Fehlerpfad hinter `DEBUG_MODE` (Welle 1)
-- [ ] 13-02-PLAN.md — SEC-04 + MAINT-04 + MAINT-02: Wiki-Link-Escaping, letzte drei execCommand-Aufrufe abgelöst, doppeltes `data-id` weg (Welle 1)
+- [x] 13-02-PLAN.md — SEC-04 + MAINT-04 + MAINT-02: Wiki-Link-Escaping, letzte drei execCommand-Aufrufe abgelöst, doppeltes `data-id` weg (Welle 1)
 - [ ] 13-03-PLAN.md — MAINT-03: toter `hasHtmlTags`-Wächter entfernt, Unterstrich-Wortgrenzen nach CommonMark (Welle 1)
 - [ ] 13-04-PLAN.md — MAINT-05 + MAINT-02: Interval-Guard, Tab-Registry auf Funktionsreferenzen, tote `mindmap`-Seeds und `const D`-Überschattung weg (Welle 1)
 - [ ] 13-05-PLAN.md — MAINT-01/D-04: Charakterisierungs-Snapshot für `dmscreen-render.js` gegen das UNGETEILTE Modul, vor jeder Verschiebung (Welle 1)
