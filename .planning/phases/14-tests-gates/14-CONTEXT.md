@@ -79,7 +79,7 @@ Alle Zahlen gegen den Live-Code nach Phase 13 erhoben, nicht aus `.planning/code
   identisch — hier benannt, damit die Verifikation es nicht als Lücke liest.
   — **Reversibility:** reversible — der Helfer ließe sich jederzeit wieder ausrollen.
 
-- **D-02: Der Nachweis „auch unter Volllast nicht mehr reproduzierbar" läuft über einen protokollierten Wiederholungslauf mit abgeschalteten Retries — und über eine Falsifikationsprobe gegen den *ungefixten* Stand.**
+- **D-02: Der Nachweis „auch unter Volllast nicht mehr reproduzierbar" läuft über einen protokollierten Wiederholungslauf mit abgeschalteten Retries — und über eine Falsifikationsprobe gegen den ungefixten Stand.**
   `npx playwright test tests/e2e/crud/locations.spec.js tests/e2e/crud/encounters.spec.js
   --repeat-each=N --workers=<hoch> --retries=0`. Die `--retries=0` sind nicht optional: mit den
   CI-üblichen zwei Wiederholungen kann ein Flake den Lauf nicht mehr rot machen, und der Beweis
@@ -91,7 +91,7 @@ Alle Zahlen gegen den Live-Code nach Phase 13 erhoben, nicht aus `.planning/code
   `11-LEARNINGS.md`) und folgt dem Muster von `13-PERF-MEASUREMENT.md`: Messprotokoll als Artefakt,
   nicht als Behauptung im Summary.
 
-- **D-03: `retries: 2` in `playwright.config.js` bleibt unverändert.**
+- **D-03 — `retries: 2` in `playwright.config.js` bleibt unverändert.**
   Der Reflex, Retries abzuschalten, damit Flakes sichtbar werden, geht hier fehl: die Retries sind
   nicht der Defekt, der fehlende Seed ist es. Sie auf 0 zu setzen macht jede
   Infrastruktur-Schluckauf-Minute auf `main` rot, ohne eine einzige echte Race zu schließen.
@@ -145,7 +145,7 @@ Alle Zahlen gegen den Live-Code nach Phase 13 erhoben, nicht aus `.planning/code
   `needs:` daran. Jede andere Gate-Arbeit dieser Phase läuft in einer Pipeline, die vorher nicht
   durchläuft.
 
-- **D-08: `no-undef` wird auf `error` gehoben — aber erst, nachdem die Globals-Liste aus dem Quellbaum *generiert* statt handgepflegt wird.**
+- **D-08: `no-undef` wird auf `error` gehoben — aber erst, nachdem die Globals-Liste aus dem Quellbaum generiert statt handgepflegt wird.**
   Die Triage zeigt, dass die 1829 Warnungen keine 1829 Probleme sind: 516 davon sind fehlende
   Node-Globals in `tests/**`/`tools/**`, 15 fehlende Browser-Globals, 1259 die projekteigenen
   Cross-Modul-Globals der Non-ESM-Architektur — die sind kein Defekt, sondern das Zugriffsmuster.
@@ -186,7 +186,7 @@ Alle Zahlen gegen den Live-Code nach Phase 13 erhoben, nicht aus `.planning/code
   **Ohne D-09 ist D-08 nicht erreichbar:** solange diese Namen offen sind, kann `no-undef` nicht auf
   `error`.
 
-- **D-10: `--max-warnings` wird als Ratsche auf den gemessenen Reststand gesetzt, nicht auf 0. `lint:all` mit `--max-warnings 100` entfällt.**
+- **D-10 — `--max-warnings` wird als Ratsche auf den gemessenen Reststand gesetzt, nicht auf 0. `lint:all` mit `--max-warnings 100` entfällt.**
   Nach D-07/D-08 bleiben im Wesentlichen 336 `no-unused-vars` plus ~31 kleinere Treffer. Diese 336
   auf 0 zu drücken hieße, am `const X = window.X`-Importmuster zu arbeiten — dem Muster, das Phase
   13 D-14 ausdrücklich als Projektstandard schützt (169 Vorkommen allein für `const D = window.D`)
@@ -275,9 +275,9 @@ Empfehlungsentscheidungen, nach Projektkonvention und gegen den gemessenen Live-
 hier festgehalten, damit der Planer sie nicht neu wählt.
 
 **Drei Empfehlungen weichen von der Roadmap-Erwartung ab und sind oben mit Beleg begründet:**
-- **D-01** — Erfolgskriterium 1 legt einen Seed-*Nachzug* nahe; empfohlen ist die Extraktion.
-- **D-04** — Erfolgskriterium 2 spricht von *einer* Sammel-Spec; es sind zwei.
-- **D-11** — Erfolgskriterium 3 verlangt drei geschärfte, grüne Gates; für Typecheck wird das
+- D-01 — Erfolgskriterium 1 legt einen Seed-*Nachzug* nahe; empfohlen ist die Extraktion.
+- D-04 — Erfolgskriterium 2 spricht von *einer* Sammel-Spec; es sind zwei.
+- D-11 — Erfolgskriterium 3 verlangt drei geschärfte, grüne Gates; für Typecheck wird das
   nur für eine Zulassungsliste erreicht, mit benanntem Restposten statt stiller Abnahme.
 
 **Ein Befund, der so nicht erwartet war:** `npm run lint` ist seit dem 2026-09-05 rot. Das ist

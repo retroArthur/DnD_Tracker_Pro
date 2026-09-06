@@ -2,17 +2,18 @@
 gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: Schulden-Abbau
-current_phase: 13
-current_phase_name: Härtung & Wartbarkeit
-status: complete
+current_phase: 14
+current_phase_name: Tests & Gates
+status: executing
 stopped_at: Phase 14 context gathered
-last_updated: "2026-09-06T21:13:40.318Z"
-last_activity: 2026-09-06
-state_head: 94db4bde9103a3620f2879566509a16ca1b6448d
+last_updated: "2026-09-06T23:04:53.050Z"
+last_activity: 2026-09-07
+last_activity_desc: Phase 14 planning complete
+state_head: ec586b78a3a1ac47059359d3b25aeaa9bc98afa7
 progress:
   total_phases: 3
   completed_phases: 1
-  total_plans: 29
+  total_plans: 38
   completed_plans: 29
   percent: 33
 ---
@@ -21,7 +22,7 @@ progress:
 
 **Last Updated:** 2026-09-06
 **Milestone:** v1.2 „Schulden-Abbau" — Phase 12 abgeschlossen (17/17 Pläne), Phase 13 abgeschlossen (12/12 Pläne)
-**Status:** Phase 13 complete — bereit für Phase 14
+**Status:** Ready to execute
 
 **Progress:** [██████████████████████] 29/29 plans ([██████████] 100%) · 2/3 Phasen des Milestones
 
@@ -39,10 +40,10 @@ See: `.planning/PROJECT.md` (Stand 2026-09-05)
 
 ## Current Position
 
-Phase: 13 (Härtung & Wartbarkeit) — COMPLETE
+Phase: 14 (Tests & Gates) — READY TO EXECUTE
 Plan: 12 of 12
 Status: Alle 12 Pläne abgeschlossen, Bedienprobe 13-12 freigegeben — Phase 13 komplett
-Last activity: 2026-09-06
+Last activity: 2026-09-07 — Phase 14 planning complete
 
 **Nächster Schritt:** `/gsd-discuss-phase 14`. Phase 13 ist abgeschlossen — 12/12 Pläne, Verifikation `passed` (7/8 Must-Haves belegt, Erfolgskriterium 2 als vorab benannte, gemessene Abweichung freigegeben: D-09/D-10 halten den Undo-Snapshot bewusst vollständig, gemessen 0,922 ms Median). Code-Review `issues_found` → beide Warnungen behoben (WR-01 insert-link-Guards, WR-02 Konsolen-Notausgang + unbedingte Whitelist-Protokollierung). Suiten: Jest 1089/1089 (41 Suites), Playwright 321 passed / 2 skipped, `pytest tests/build` 24/24, ESLint 1 vorbestehender Fehler (`systems/avatars.js:17`). Offen für Phase 14: der Toast-Race aus der bekannten Vorbelastung sowie IN-01 aus `13-REVIEW.md` (vorbestehendes Doppel-Feuern der DM-Screen-Widget-Checkbox).
 
