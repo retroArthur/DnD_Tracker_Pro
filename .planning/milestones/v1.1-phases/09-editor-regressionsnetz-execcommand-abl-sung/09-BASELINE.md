@@ -407,7 +407,7 @@ Damit ist EDIT-02 („beide Toolbars, alle sechs Entity-Editoren und die Markdow
 
 **Verifikation:** `npx jest` (1093/1093, 42 Suiten, 50/50 Snapshots), `PYTHONIOENCODING=utf-8 python build.py` + `--production` (beide „Alle Validierungen bestanden"), `pytest tests/build` (24/24), `npx playwright test` (321 passed, 2 skipped — identisch zur dokumentierten Baseline), `npx eslint .` (1 vorbestehender Fehler in `systems/avatars.js:17`, unverändert).
 
-**Commit:** siehe Commit-Nachricht dieser Änderung (benennt Fund 3, `09-BASELINE.md` und den Phase-13-UAT-Fund explizit).
+**Commit:** `e6cd20d` (benennt Fund 3, `09-BASELINE.md` und den Phase-13-UAT-Fund explizit in der Commit-Nachricht).
 
 ---
 *Phase: 09-editor-regressionsnetz-execcommand-abl-sung*
