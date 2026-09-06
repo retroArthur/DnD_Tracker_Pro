@@ -106,6 +106,7 @@ const MODULES = [
     'features/fraktionen/fraktionen-render.js',
     'features/fraktionen/fraktionen-crud.js',
     'features/wiki/wiki.js',
+    'features/wiki/wiki-crud.js',
     'features/shops/shops-core.js',
     'features/shops/shop-export.js',
     'features/shops/links.js',
