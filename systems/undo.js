@@ -6,6 +6,27 @@ const undoStack = [];
 const redoStack = [];
 // Alias für Rückwärtskompatibilität
 const UNDO_LIMIT = window.APP_CONFIG?.UNDO_LIMIT || 30;
+// Byte-Budget zusätzlich zu UNDO_LIMIT (PERF-01/D-09b) — siehe core/config.js für die Wahl
+// der Zahlen. Untergrenze verhindert, dass die Undo-Tiefe bei einer sehr großen Kampagne auf
+// einen einzigen Schritt zusammenfällt.
+const UNDO_BYTE_BUDGET_MB = window.APP_CONFIG?.UNDO_BYTE_BUDGET_MB || 64;
+const UNDO_BYTE_BUDGET = UNDO_BYTE_BUDGET_MB * 1024 * 1024;
+const UNDO_MIN_STACK = window.APP_CONFIG?.UNDO_MIN_ENTRIES || 5;
+// Verdrängt die ältesten Einträge von undoStack, solange dessen Gesamtgröße
+// UNDO_BYTE_BUDGET überschreitet UND mehr als UNDO_MIN_STACK Einträge vorhanden sind
+// (D-09b). Gilt nur für undoStack — redoStack ist davon bewusst ausgenommen (13-06-PLAN.md).
+// Ohne aufgelöste Zählfunktion wird nicht verdrängt: ein fehlendes utf8ByteLength darf keinen
+// Undo-Schritt kosten.
+function enforceUndoByteBudget() {
+    const utf8ByteLength = window.utf8ByteLength;
+    if (typeof utf8ByteLength !== 'function') return;
+    while (undoStack.length > UNDO_MIN_STACK) {
+        let total = 0;
+        for (const entry of undoStack) total += utf8ByteLength(entry.state);
+        if (total <= UNDO_BYTE_BUDGET) break;
+        undoStack.shift();
+    }
+}
 function pushUndo(action) {
     // Serialisierbarkeit VOR dem Push prüfen (D-06): ein zirkuläres oder sonst nicht
     // serialisierbares window.D darf keinen kaputten Eintrag auf den Stack legen. Der
@@ -27,13 +48,21 @@ function pushUndo(action) {
         redoStack.length = 0;
         return;
     }
-    undoStack.push({
-        action,
-        state: stateJSON,
-        timestamp: Date.now()
-    });
-    if (undoStack.length > UNDO_LIMIT) {
-        undoStack.shift();
+    // Dedupe (D-09a): ein Snapshot, der zeichengleich zum aktuellen Stack-Kopf ist, wird
+    // NICHT erneut gepusht — die Serialisierung oben lief trotzdem, weil sie der einzige
+    // Weg ist, das ueberhaupt festzustellen. Der Redo-Stack wird unten unabhaengig davon
+    // geleert, weil der Aufrufer eine neue Aktion signalisiert hat (T-13-23).
+    const currentTop = undoStack[undoStack.length - 1];
+    if (!currentTop || currentTop.state !== stateJSON) {
+        undoStack.push({
+            action,
+            state: stateJSON,
+            timestamp: Date.now()
+        });
+        if (undoStack.length > UNDO_LIMIT) {
+            undoStack.shift();
+        }
+        enforceUndoByteBudget();
     }
     // Redo-Stack leeren wenn neue Aktion
     redoStack.length = 0;
@@ -142,6 +171,7 @@ function redo() {
     if (undoStack.length > UNDO_LIMIT) {
         undoStack.shift();
     }
+    enforceUndoByteBudget();
     redoStack.pop();
     // Update window.D by clearing and reassigning properties (D is now const)
     for (const key in D) delete D[key];

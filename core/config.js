@@ -26,6 +26,13 @@ const APP_CONFIG = Object.freeze({
     SESSION_AUTO_SAVE_INTERVAL: 300, // 5 Minuten in Sekunden
     // Limits
     UNDO_LIMIT: 30,
+    // Byte-Budget ueber den GESAMTEN Undo-Stack, zusaetzlich zu UNDO_LIMIT (PERF-01/D-09b).
+    // 64 MB liegt bewusst ueber dem Alltag: eine Kampagne unterhalb der localStorage-Schwelle
+    // von 5 MB belegt bei 30 Snapshots real 15-60 MB — der Deckel faengt nur den Ausreisser.
+    UNDO_BYTE_BUDGET_MB: 64,
+    // Untergrenze: die Undo-Tiefe darf bei einer sehr grossen Kampagne nie unter diese Anzahl
+    // Eintraege fallen, sonst verliert der Spielleiter die Ruecknahme still (PERF-01/D-09b).
+    UNDO_MIN_ENTRIES: 5,
     MAX_BACKUPS: 5,
     MAX_BACKUP_SIZE_MB: 2,
     // Timing (in Millisekunden)

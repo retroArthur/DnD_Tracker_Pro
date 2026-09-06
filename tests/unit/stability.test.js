@@ -1369,7 +1369,19 @@ describe('Data Integrity', () => {
                         initiative: { combatants: [], currentTurn: 0, round: 1 },
                         _nextId: {}
                     },
-                    APP_CONFIG: { UNDO_LIMIT: 30, DEBUG_MODE: false },
+                    APP_CONFIG: {
+                        UNDO_LIMIT: 30,
+                        DEBUG_MODE: false,
+                        // PERF-01/D-09b (Task 2 — 13-06): Produktionswerte, greifen bei den
+                        // winzigen D-Objekten dieses Blocks nicht — siehe die dedizierte
+                        // Byte-Budget-Testgruppe weiter unten fuer die Verdraengungslogik.
+                        UNDO_BYTE_BUDGET_MB: 64,
+                        UNDO_MIN_ENTRIES: 5
+                    },
+                    // Echtes utf8ByteLength() aus utils/basic.js (PERF-01/D-08), damit die
+                    // Byte-Budget-Verdraengung in pushUndo()/redo() hier real mitlaeuft statt
+                    // No-op zu bleiben.
+                    utf8ByteLength: _ladeUtf8ByteLength(),
                     // Echtes safeJSONParse-Verhalten nachgebaut (render/helpers.js:362-372),
                     // ohne die ErrorHandler-Abhängigkeit dieser Datei mitzuziehen.
                     safeJSONParse: (str, fallback = null) => {
@@ -1518,6 +1530,34 @@ describe('Data Integrity', () => {
                 expect.stringContaining('Undo-Schutz'),
                 'warning'
             );
+        });
+
+        // PERF-01/D-09a (Task 2 von 13-06): Dedupe — ein Snapshot, der zeichengleich zum
+        // aktuellen Stack-Kopf ist, wird nicht erneut gepusht.
+        test('Zweimaliges pushUndo() bei unveraendertem window.D erzeugt genau einen Stack-Eintrag (Dedupe, D-09a, Randfall idempotency)', () => {
+            context.window.D.characters.push({ id: 1, name: 'Unveraendert' });
+
+            realPushUndo('a');
+            realPushUndo('b'); // D hat sich zwischen den beiden Pushes nicht veraendert
+
+            expect(getDebug()).toEqual({ undoLength: 1, redoLength: 0 });
+        });
+
+        test('Dedupe leert dennoch den Redo-Stack, weil der Aufrufer eine neue Aktion signalisiert hat (T-13-23)', () => {
+            // Ein vorhandener Redo-Eintrag simuliert den Zustand nach einem Undo. Der
+            // Undo-Stack-Kopf ist zeichengleich zum aktuellen D — der naechste Push muss also
+            // dedupliziert werden, DENNOCH den Redo-Stack leeren.
+            pushRawUndo({
+                action: 'Vorher',
+                state: JSON.stringify(context.window.D),
+                timestamp: Date.now()
+            });
+            pushRawRedo({ action: 'Redo-Kandidat', state: '{}', timestamp: Date.now() });
+            expect(getDebug()).toEqual({ undoLength: 1, redoLength: 1 });
+
+            realPushUndo('Keine Aenderung an D');
+
+            expect(getDebug()).toEqual({ undoLength: 1, redoLength: 0 });
         });
 
         describe('registerUndoHook() (Task 2 — Konsument: Plan 12-06)', () => {
@@ -1897,6 +1937,130 @@ describe('Nachzug R11 — pushUndo()-Schutz haelt auch in den Randlagen von APP_
 });
 
 // ----------------------------------------------------------------
+// PERF-01/D-09b (Task 2 von 13-06): Byte-Budget zusaetzlich zu UNDO_LIMIT. Eigene, in sich
+// geschlossene Werkbank statt Wiederverwendung von ladeUndo()/beforeEach oben — die dortigen
+// Tests pruefen mit toEqual({ undoLength, redoLength }) exakte Objektformen; ein Anhaengen
+// weiterer Debug-Felder dort haette diese Assertions gebrochen.
+// ----------------------------------------------------------------
+describe('pushUndo()/redo() — Byte-Budget mit Untergrenze (PERF-01/D-09b)', () => {
+    const fs = require('fs');
+    const path = require('path');
+    const vm = require('vm');
+
+    function ladeUndoMitByteBudget(appConfig) {
+        const context = {
+            window: {
+                D: { characters: [], _nextId: {} },
+                APP_CONFIG: appConfig,
+                utf8ByteLength: _ladeUtf8ByteLength(),
+                safeJSONParse: str => {
+                    try {
+                        return JSON.parse(str);
+                    } catch (e) {
+                        return null;
+                    }
+                },
+                renderAll: jest.fn(),
+                saveImmediate: jest.fn(),
+                ErrorHandler: { log: jest.fn() }
+            },
+            showToast: jest.fn(),
+            validateAndRepairNextId: jest.fn(() => ({ valid: true, repairs: [] })),
+            console
+        };
+        vm.createContext(context);
+        const source = fs.readFileSync(path.join(__dirname, '../../systems/undo.js'), 'utf8');
+        vm.runInContext(
+            source +
+                '\nfunction __undoDebug() { return { undoLength: undoStack.length, redoLength: redoStack.length }; }' +
+                '\nfunction __undoActions() { return undoStack.map(function(e) { return e.action; }); }\n',
+            context
+        );
+        return context;
+    }
+
+    test('Ueberschreitet der Gesamtstack UNDO_BYTE_BUDGET_MB, verdraengt pushUndo() die AELTESTEN Eintraege zuerst', () => {
+        // Kuenstlich winziges Budget statt der Produktionszahl 64 MB — deterministisch und
+        // schnell, ohne echte Megabyte an Testdaten aufzubauen.
+        const ctx = ladeUndoMitByteBudget({
+            UNDO_LIMIT: 30,
+            UNDO_BYTE_BUDGET_MB: 0.001, // ~1048 Bytes
+            UNDO_MIN_ENTRIES: 5
+        });
+
+        // Acht Pushes, jeder mit einer Aenderung an D (kein Dedupe), je ~500+ Bytes Payload.
+        for (let i = 0; i < 8; i++) {
+            ctx.window.D.characters = [{ id: i, name: 'X'.repeat(500) }];
+            ctx.pushUndo(`Aktion ${i}`);
+        }
+
+        // Ohne Untergrenze wuerde das winzige Budget den Stack auf 1 Eintrag zusammendruecken.
+        // Mit UNDO_MIN_ENTRIES: 5 bleibt er bei 5 stehen — UND es sind die JUENGSTEN 5
+        // (3..7), die aeltesten (0..2) wurden verdraengt.
+        expect(ctx.__undoDebug().undoLength).toBe(5);
+        expect(ctx.__undoActions()).toEqual([
+            'Aktion 3',
+            'Aktion 4',
+            'Aktion 5',
+            'Aktion 6',
+            'Aktion 7'
+        ]);
+    });
+
+    test('Die Untergrenze UNDO_MIN_ENTRIES wird auch bei extremem Budget-Druck nie unterschritten', () => {
+        const ctx = ladeUndoMitByteBudget({
+            UNDO_LIMIT: 30,
+            UNDO_BYTE_BUDGET_MB: 0.0001, // ~105 Bytes — kleiner als ein einzelner Eintrag
+            UNDO_MIN_ENTRIES: 5
+        });
+
+        for (let i = 0; i < 12; i++) {
+            ctx.window.D.characters = [{ id: i, name: `Held ${i}` }];
+            ctx.pushUndo(`Aktion ${i}`);
+        }
+
+        expect(ctx.__undoDebug().undoLength).toBe(5);
+    });
+
+    test('Bleibt der Stack unter dem Budget, verdraengt pushUndo() ueberhaupt nichts', () => {
+        const ctx = ladeUndoMitByteBudget({
+            UNDO_LIMIT: 30,
+            UNDO_BYTE_BUDGET_MB: 64,
+            UNDO_MIN_ENTRIES: 5
+        });
+
+        for (let i = 0; i < 6; i++) {
+            ctx.window.D.characters = [{ id: i, name: `Held ${i}` }];
+            ctx.pushUndo(`Aktion ${i}`);
+        }
+
+        expect(ctx.__undoDebug().undoLength).toBe(6);
+    });
+
+    // Ein Verhaltens-Test fuer "redo() evict genauso wie pushUndo()" ist mit fixem Budget pro
+    // Kontext nicht konstruierbar: bei einem Budget, das ueberhaupt Verdraengung ausloest,
+    // deckelt dieselbe Logik den Undo-Stack schon waehrend des Aufbaus auf die Untergrenze —
+    // der Redo-Stack kann dann strukturell nie mehr Eintraege tragen, als die Untergrenze
+    // erlaubt, und ein anschliessendes redo() haette nichts mehr zu verdraengen. Der Beweis,
+    // dass BEIDE Push-Stellen abgedeckt sind, ist deshalb ein Quelltext-Beleg (Praezedenz:
+    // R13 "Quelltext-Beleg"-Tests), keine Stack-Simulation.
+    test('Quelltext-Beleg: redo() ruft enforceUndoByteBudget() an derselben Stelle wie pushUndo() (D-09b deckt beide Push-Stellen ab)', () => {
+        const source = fs.readFileSync(path.join(__dirname, '../../systems/undo.js'), 'utf8');
+
+        const redoStart = source.indexOf('function redo()');
+        expect(redoStart).toBeGreaterThan(-1);
+        const redoEnd = source.indexOf('function clearUndoHistory', redoStart);
+        expect(redoEnd).toBeGreaterThan(redoStart);
+        const redoBody = source.slice(redoStart, redoEnd);
+
+        const pushIdx = redoBody.indexOf('undoStack.push({');
+        const enforceIdx = redoBody.indexOf('enforceUndoByteBudget()');
+        expect(pushIdx).toBeGreaterThan(-1);
+        expect(enforceIdx).toBeGreaterThan(pushIdx);
+    });
+});
+
+// ----------------------------------------------------------------
 // Gemeinsame Werkbank fuer R13/R14: die ECHTEN Module persistence.js und
 // quick-roll.js laufen in einem eigenen vm-Kontext (die globalen save/load
 // dieser Testdatei sind Mocks aus tests/setup.js und bleiben unangetastet).
@@ -2137,4 +2301,50 @@ describe('Nachzug R14 — echte Quota-Kette localStorage -> StorageAPI -> persis
         expect(context.window.updateSaveIndicator).toHaveBeenCalledWith('error');
         expect(toasts.some(t => String(t[0]).includes('Speichern fehlgeschlagen'))).toBe(true);
     });
+});
+
+// ----------------------------------------------------------------
+// PERF-01, Randfall "concurrency" (Task 2 von 13-06): zwei save()-Aufrufe innerhalb des
+// 300-ms-Debounce-Fensters duerfen nur EINEN Schreibvorgang und EINEN
+// _notifyPostSaveHooks()-Durchlauf ausloesen; ein saveImmediate() dazwischen bleibt ein
+// eigener, sofortiger Schreibvorgang. Echte Timer statt jest.useFakeTimers(), weil
+// _erzeugePersistenzKontext() die setTimeout/clearTimeout-Referenz beim Kontextaufbau
+// einfriert (siehe context.setTimeout dort) — ein spaeteres Faelschen der globalen Timer
+// wuerde diese bereits eingefrorene Referenz nicht mehr treffen.
+// ----------------------------------------------------------------
+describe('Nachzug R15 — save()-Debounce: genau ein Schreibvorgang pro Fenster (PERF-01, Randfall concurrency)', () => {
+    function warte(ms) {
+        return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+    test('Zwei save()-Aufrufe im selben Debounce-Fenster fuehren zu genau einem Schreibvorgang und einem Hook-Durchlauf', async () => {
+        const D = { characters: [{ id: 1, name: 'Debounce-Test' }] };
+        const { context, lsStore } = _erzeugePersistenzKontext({ D });
+        const hookSpy = jest.fn();
+        context.window.registerPostSaveHook(hookSpy);
+
+        context.window.save();
+        context.window.save(); // zweiter Aufruf im selben Fenster loescht+ersetzt den ersten Timer
+
+        await warte(400); // > 300ms Debounce-Delay
+
+        expect(hookSpy).toHaveBeenCalledTimes(1);
+        expect(lsStore['nachzug-key']).toBe(JSON.stringify(D));
+    }, 10000);
+
+    test('Ein saveImmediate() zwischen zwei save()-Aufrufen bleibt ein eigener, sofortiger Schreibvorgang', async () => {
+        const D1 = { characters: [{ id: 1, name: 'Erst' }] };
+        const { context, lsStore } = _erzeugePersistenzKontext({ D: D1 });
+        const hookSpy = jest.fn();
+        context.window.registerPostSaveHook(hookSpy);
+
+        context.window.save(); // startet den debounced Timer
+        await context.window.saveImmediate(); // sofortiger, unabhaengiger Schreibvorgang
+
+        expect(hookSpy).toHaveBeenCalledTimes(1); // saveImmediate() hat bereits einmal benachrichtigt
+        expect(lsStore['nachzug-key']).toBe(JSON.stringify(D1));
+
+        await warte(400); // der debounced save() feuert danach zusaetzlich noch einmal
+        expect(hookSpy).toHaveBeenCalledTimes(2);
+    }, 10000);
 });

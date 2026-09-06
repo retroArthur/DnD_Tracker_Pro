@@ -210,7 +210,7 @@ const save = function (showMessage = false) {
             ErrorHandler.showError('Daten konnten nicht serialisiert werden');
             return;
         }
-        const dataSizeMB = new Blob([dataString]).size / (1024 * 1024);
+        const dataSizeMB = _measureDataByteLength(dataString) / (1024 * 1024);
         const LS_LIMIT_MB = 5;
         try {
             // (D-01 / STAB-05) IDB-only-Pfad: LS-Schatten nach bestätigtem IDB-Write entfernen
