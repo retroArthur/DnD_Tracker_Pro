@@ -142,8 +142,8 @@ function scheduleIteration(track, startTime) {
     src.connect(iterGain);
     iterGain.connect(track.trackGain);
 
-    const D = track.duration;
-    const C = computeCrossfade(D);
+    const trackDuration = track.duration;
+    const C = computeCrossfade(trackDuration);
 
     // Fade-in
     iterGain.gain.setValueAtTime(0, startTime);
@@ -154,13 +154,13 @@ function scheduleIteration(track, startTime) {
     }
     // Fade-out am Ende nur beim Loopen (One-Shot soll ausklingen, z.B. Gong)
     if (track.loop && C > 0) {
-        iterGain.gain.setValueAtTime(1, startTime + Math.max(0, D - C));
-        iterGain.gain.linearRampToValueAtTime(0, startTime + D);
+        iterGain.gain.setValueAtTime(1, startTime + Math.max(0, trackDuration - C));
+        iterGain.gain.linearRampToValueAtTime(0, startTime + trackDuration);
     }
 
     src.start(startTime);
-    if (D > 0) {
-        src.stop(startTime + D + 0.05);
+    if (trackDuration > 0) {
+        src.stop(startTime + trackDuration + 0.05);
     }
     track.sources.push(src);
     track.iterStart = startTime;
@@ -172,8 +172,8 @@ function scheduleIteration(track, startTime) {
     };
 
     // Naechsten Durchlauf planen (nur bei Loop und sinnvoller Dauer)
-    if (track.loop && D > 0) {
-        const period = Math.max(0.05, D - C);
+    if (track.loop && trackDuration > 0) {
+        const period = Math.max(0.05, trackDuration - C);
         const nextStart = startTime + period;
         const delayMs = Math.max(0, (nextStart - ctx.currentTime) * 1000 - 50); // 50ms Lookahead
         track.schedulerId = setTimeout(function() {

@@ -38,8 +38,10 @@ const structuredCloneImpl =
  * Laedt systems/backups.js in eine frische Sandbox.
  * @param {Object} opts
  * @param {Object} [opts.D] - Das laufende window.D-Objekt (Default: leeres Objekt)
+ * @param {Array}  [opts.storedBackups] - Was StorageAPI.getJSON(BACKUP_KEY, []) liefert
+ * @param {boolean} [opts.confirmResult] - Rueckgabewert von confirm(...)
  */
-function loadBackupsModule({ D = {} } = {}) {
+function loadBackupsModule({ D = {}, storedBackups = [], confirmResult = true } = {}) {
     let nextHandle = 1;
     const activeHandles = new Set();
     const setIntervalCalls = [];
@@ -61,7 +63,7 @@ function loadBackupsModule({ D = {} } = {}) {
     const ErrorHandler = { log: jest.fn() };
     const APP_CONFIG = { DEBUG_MODE: false };
     const StorageAPI = {
-        getJSON: jest.fn((key, def) => def),
+        getJSON: jest.fn((key, def) => (storedBackups.length ? storedBackups : def)),
         setJSON: jest.fn(() => ({ success: true })),
         remove: jest.fn(),
         has: jest.fn(() => false)
@@ -79,6 +81,9 @@ function loadBackupsModule({ D = {} } = {}) {
         renderEmptyState: jest.fn(),
         showModal: jest.fn(),
         stopAllTracks: jest.fn(),
+        // idb bleibt null — getBackups() faengt den daraus resultierenden
+        // Zugriffsfehler ab und faellt auf die localStorage-Liste zurueck,
+        // genau wie im echten "kein IndexedDB verfuegbar"-Fall.
         initIndexedDB: jest.fn(async () => {}),
         idb: null,
         performanceWarningShown: false
@@ -91,7 +96,7 @@ function loadBackupsModule({ D = {} } = {}) {
         StorageAPI,
         showToast,
         ErrorHandler,
-        confirm: jest.fn(() => true),
+        confirm: jest.fn(() => confirmResult),
         structuredClone: structuredCloneImpl,
         STORAGE_KEY: 'dnd-tracker-test',
         setInterval: setIntervalMock,
@@ -108,7 +113,8 @@ function loadBackupsModule({ D = {} } = {}) {
         setIntervalMock,
         clearIntervalMock,
         setTimeoutMock,
-        showToast
+        showToast,
+        windowObj
     };
 }
 
@@ -152,12 +158,13 @@ describe('initPerformanceMonitoring() — Mehrfachstart-Guard (T-13-12)', () => 
     });
 });
 
-describe('sanitizeBackupData() — toter mindmap-Seed (Vorbereitung Task 3)', () => {
-    test('ein Backup mit dem alten mindmap-Schluessel laeuft fehlerfrei durch und traegt ihn danach nicht mehr, wenn das Schema ihn nicht mehr kennt', () => {
+describe('restoreBackup() / sanitizeBackupData() — toter mindmap-Seed entfernt (Task 3)', () => {
+    test('sanitizeBackupData() laeuft mit einem alten mindmap-Schluessel fehlerfrei durch, wenn das Schema ihn nicht mehr kennt', () => {
         const { context } = loadBackupsModule();
 
-        // Simuliert das defaultSchema NACH Entfernen des mindmap-Seeds (Task 3):
-        // kein mindmap-Eintrag mehr im Schema.
+        // Das Schema OHNE mindmap-Eintrag — der reale Zustand nach Task 3
+        // (systems/backups.js:232 hatte `mindmap: { nodes: [], edges: [] }`,
+        // ersatzlos entfernt).
         const defaultSchemaOhneMindmap = {
             characters: [],
             npcs: [],
@@ -165,7 +172,8 @@ describe('sanitizeBackupData() — toter mindmap-Seed (Vorbereitung Task 3)', ()
             locations: [],
             loot: []
         };
-        // Ein Backup, das den alten (toten) Schluessel noch enthaelt.
+        // Ein Backup, das den alten (toten) Schluessel noch enthaelt —
+        // simuliert ein vor Task 3 erstelltes Backup.
         const backupMitAltemMindmap = {
             characters: [{ id: 1, name: 'Thorin' }],
             npcs: [],
@@ -182,5 +190,37 @@ describe('sanitizeBackupData() — toter mindmap-Seed (Vorbereitung Task 3)', ()
 
         expect(sanitized).not.toHaveProperty('mindmap');
         expect(sanitized.characters).toEqual([{ id: 1, name: 'Thorin' }]);
+    });
+
+    test('restoreBackup() (voller Pfad): ein Backup mit dem alten mindmap-Schluessel wird fehlerfrei wiederhergestellt und traegt ihn danach nicht mehr', async () => {
+        // Ein reales, vor Task 3 erstelltes Backup — der abgeschaffte
+        // Schluessel ist noch drin, in der Form, die kein Konsument je las
+        // (`edges` statt `connections`).
+        const altesBackupPayload = {
+            characters: [{ id: 1, name: 'Thorin Eisenfaust' }],
+            npcs: [],
+            quests: [],
+            locations: [],
+            loot: [],
+            mindmap: { nodes: [], edges: [] }
+        };
+        const storedBackups = [
+            { timestamp: 1700000000000, campaignKey: 'test', data: JSON.stringify(altesBackupPayload) }
+        ];
+        const laufendesD = {};
+        const { context, windowObj, showToast } = loadBackupsModule({ D: laufendesD, storedBackups });
+
+        await expect(context.restoreBackup(0)).resolves.not.toThrow();
+
+        // restoreBackup() faengt eigene Fehler intern ab (zeigt einen Toast
+        // statt zu werfen) — der eigentliche Nachweis ist der Erfolgs-Toast,
+        // nicht das Ausbleiben eines rejects.
+        expect(showToast).toHaveBeenCalledWith('✅ Backup wiederhergestellt');
+        expect(showToast).not.toHaveBeenCalledWith(expect.stringContaining('fehlerhaft'));
+
+        // Der Restore-Pfad ersetzt window.D komplett (delete + Object.assign) —
+        // dieselbe Referenz wie laufendesD, da beide auf denselben Zeiger zeigen.
+        expect(windowObj.D).not.toHaveProperty('mindmap');
+        expect(windowObj.D.characters).toEqual([{ id: 1, name: 'Thorin Eisenfaust' }]);
     });
 });

@@ -229,7 +229,6 @@ async function restoreBackup(index) {
             wiki: [],
             links: [],
             storyArcs: [],
-            mindmap: { nodes: [], edges: [] },
             initiative: { entries: [], round: 1 },
             lastSync: 0
         };
