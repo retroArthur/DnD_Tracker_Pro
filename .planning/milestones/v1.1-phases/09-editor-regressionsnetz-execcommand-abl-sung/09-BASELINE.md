@@ -376,7 +376,7 @@ Diese Abweichungen wurden in den jeweiligen Plan-Summaries dokumentiert und hier
 
 Diese Funde wurden in Plan 09-01 (Baseline-Erhebung) identifiziert und bewusst nicht in dieser Phase repariert:
 
-- **Fund 3 — Doppel-Paste-Listener** (`09-BASELINE.md`, Abschnitt „Zusätzliche Funde"): `initEditorPasteHandlers()` registriert zwei `paste`-Listener auf `#wiki-content`, wodurch jeder echte Paste-Vorgang doppelt verarbeitet wird (Tabellen-Verschachtelung, Text-Verdopplung). Bewusst repliziert (nicht behoben), byte-gleiches Markup zur Baseline ist das Ziel dieser Phase, nicht Bugfixing.
+- **Fund 3 — Doppel-Paste-Listener** (`09-BASELINE.md`, Abschnitt „Zusätzliche Funde"): `initEditorPasteHandlers()` registriert zwei `paste`-Listener auf `#wiki-content`, wodurch jeder echte Paste-Vorgang doppelt verarbeitet wird (Tabellen-Verschachtelung, Text-Verdopplung). Bewusst repliziert (nicht behoben), byte-gleiches Markup zur Baseline ist das Ziel dieser Phase, nicht Bugfixing. **Behoben am 2026-09-06 — siehe Abschnitt „Fund 3 — Resolution (2026-09-06)" unten.**
 - **A4 — Strikethrough-Persistenz** (`09-BASELINE.md`, Abschnitt „Annahmen A1–A4"): `<strike>` übersteht Speichern/Reload nicht (`sanitizeHTML()`-Whitelist kennt `s` aber nicht `strike`). Eingefroren wie gemessen, als Datenintegritäts-Item für Phase 10 vorgemerkt.
 - **Sicherheits-Payload in Tabellen-Zweig** (siehe STATE.md-Decision-Log): Ein Einfüge-Fragment mit `<table>`-Wrapper durchläuft nicht denselben Sicherheits-Check wie der reine `insertText()`-Fallback — als WINDOWS.md-Fund vorgemerkt, kein Produktionscode in dieser Phase geändert.
 - **Drei execCommand-Aufrufe außerhalb des Editor-Moduls**: `systems/entity-links.js:108`, `features/wiki/wiki.js:819`, `ui/actions/system-actions.js:79` — außerhalb des Phasen-Scopes (nur `ui/editors/rich-text.js` war Gegenstand dieser Phase), dokumentiert in `.planning/codebase/CONCERNS.md` als eigener offener Eintrag.
@@ -391,9 +391,28 @@ Diese Funde wurden in Plan 09-01 (Baseline-Erhebung) identifiziert und bewusst n
 
 Damit ist EDIT-02 („beide Toolbars, alle sechs Entity-Editoren und die Markdown-Live-Shortcuts funktionieren unverändert") zusätzlich zum automatisierten Regressionsnetz auch von Hand bestätigt. Die Phase ist mit diesem Freigabe-Eintrag inhaltlich abgeschlossen.
 
+## Fund 3 — Resolution (2026-09-06)
+
+**Status: BEHOBEN.** Gefunden erneut über eine Phase-13-UAT-Sichtung (Nutzer meldete sichtbar doppelt eingefügten Paste-Inhalt in mehreren Editoren), nachdem Fund 3 seit der Erhebung hier (2026-07-25) über die Phasen 10, 11, 12 und 13 hinweg unrepariert als vorbestehender Bug dokumentiert geblieben war (siehe „Offene Baseline-Entscheidung" und „Bewusst NICHT behobene Funde" oben — keine dieser vier Phasen hatte Fund 3 im eigenen Scope).
+
+**Root Cause (bestätigt, um eine dritte Registrierungsstelle erweitert):** `initEditorPasteHandlers()` (`ui/editors/rich-text-insert.js`, byte-identisch zur hier erhobenen Baseline in `ui/editors/rich-text.js` vor der 09-08-Migration) registriert für die 16 Editoren aus der `editorIds`-Liste einen direkten Element-Listener UND einen document-weiten Capture-Listener für jedes Element mit Klasse `.rich-editor`/`.dialog-text-area` — 15 der 16 Editoren tragen beide Klassen und sind damit doppelt registriert (alle außer `char-notes`, das nur `.cf-notes-editor` trägt). Zusätzlich registriert `features/npcs/npc-dialogs.js:51` (`addDialogField()`) einen dritten, unabhängigen Listener für dynamisch erzeugte NPC-Dialogfelder (`dialog-text-N`), die ebenfalls die Klasse `.rich-editor` tragen und damit vom document-weiten Capture-Listener zusätzlich erfasst werden. Da ein Listener auf dem Zielelement selbst unabhängig von Capture/Bubble-Konfiguration in der At-Target-Phase feuert, liefen bei jedem betroffenen Editor zwei (NPC-Dialogfelder: ebenfalls zwei) unabhängige `handleEditorPaste()`-Aufrufe pro echtem Paste-Vorgang.
+
+**Fix:** Guard direkt am Event-Objekt statt an einer der drei Registrierungsstellen — `handleEditorPaste(e)` prüft als ersten Schritt ein Marker-Flag (`e.__dndEditorPasteHandled`) auf dem übergebenen Event und kehrt sofort zurück, wenn das Flag bereits gesetzt ist; andernfalls setzt es das Flag und fährt fort. Da alle Listener, die auf denselben physischen Paste-Vorgang reagieren, dasselbe Event-Objekt erhalten, hält dieser Guard die Garantie „genau einmal einfügen" unabhängig davon, ob 1, 2 oder 3 Registrierungen denselben Editor treffen — robust auch gegenüber künftigen weiteren Registrierungsstellen, ohne dass jede einzelne Registrierung korrekt gehalten werden müsste. `ui/editors/rich-text-insert.js` trägt einen ausführlichen Kommentar direkt über `handleEditorPaste()`, der diese Entscheidung dokumentiert.
+
+**Test-Änderungen:**
+- `tests/e2e/features/editor-insert.spec.js`: Die drei vormals eingefrorenen Fund-3-Testfälle (Tabellen-HTML-Paste, Tab-getrennter Text, reiner Text — Zeilen 615/637/642 im Markup-Inventar oben) sowie die zwei Persistenz-Roundtrip-Tests (reiner Text, Tabellen-HTML) wurden von den doppelt eingefügten/verschachtelten Erwartungswerten auf die empirisch am reparierten Build erhobenen Einfach-Einfüge-Werte umgestellt; Testnamen und Kommentare wurden entsprechend umbenannt (`„... — Fund 3 eingefroren"` → `„... — Fund 3 behoben 2026-09-06"`). Alle 13 Tests dieser Spec-Datei sind grün, keine andere Assertion der vier Netz-Dateien wurde verändert.
+- `tests/unit/rich-text-insert-paste-dedup.test.js` (neu): Unit-Regressionsnetz, das `ui/editors/rich-text-insert.js` per `vm` in eine Sandbox lädt (Muster: `tests/unit/system-actions-insert-link.test.js`) und beweist, dass zwei Aufrufe von `handleEditorPaste()` mit demselben Event-Objekt (reiner Text, Tabellen-HTML) nur EIN Einfügeergebnis erzeugen, dass zwei unabhängige Event-Objekte weiterhin unabhängig voneinander einfügen (der Guard blockiert keine echten Folge-Pastes), und dass ein Editor mit nur einer Registrierung (`char-notes`) unverändert bleibt.
+
+**Diese Phase (09) selbst bleibt inhaltlich unverändert** — nur die referenzierten Erwartungswerte in `editor-insert.spec.js` und dieser Resolution-Eintrag wurden nachträglich ergänzt; der ursprüngliche Fund-3-Text oben (Abschnitt „Fund 3 — Paste-Handler...") und alle Abschluss-Protokoll-Einträge von Plan 09-09 bleiben unverändert als historisches Protokoll stehen.
+
+**Verifikation:** `npx jest` (1093/1093, 42 Suiten, 50/50 Snapshots), `PYTHONIOENCODING=utf-8 python build.py` + `--production` (beide „Alle Validierungen bestanden"), `pytest tests/build` (24/24), `npx playwright test` (321 passed, 2 skipped — identisch zur dokumentierten Baseline), `npx eslint .` (1 vorbestehender Fehler in `systems/avatars.js:17`, unverändert).
+
+**Commit:** siehe Commit-Nachricht dieser Änderung (benennt Fund 3, `09-BASELINE.md` und den Phase-13-UAT-Fund explizit).
+
 ---
 *Phase: 09-editor-regressionsnetz-execcommand-abl-sung*
 *Plan: 09-01, Task 2*
 *Erhoben: 2026-07-25*
 *Abschluss-Protokoll ergänzt: Plan 09-09, Task 2, 2026-07-25*
+*Fund 3 behoben und Resolution ergänzt: 2026-09-06 (Phase-13-UAT-Nacharbeit, kein GSD-Plan)*
 *Handcheck-Freigabe ergänzt: Plan 09-09, Task 3, 2026-07-25*

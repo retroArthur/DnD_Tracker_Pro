@@ -164,10 +164,14 @@ function sanitizeInsertedInlineStyle(el) {
 // API platziert den Cursor empirisch NICHT als Geschwister-Knoten hinter dem
 // zuletzt eingefuegten Top-Level-Knoten, sondern am tiefsten letzten
 // Nachfahren (z.B. innerhalb der letzten Tabellenzelle, direkt hinter deren
-// Textinhalt) — reproduzierbar am doppelt feuernden Paste-Listener (Fund 3,
-// 09-BASELINE.md): die zweite Einfuegung landet dort verschachtelt statt als
-// Geschwister-Tabelle. Der Abstieg unten repliziert das bewusst, damit das
-// erzeugte Markup byte-gleich zur Baseline bleibt.
+// Textinhalt). Der Abstieg unten repliziert das bewusst, damit das erzeugte
+// Markup byte-gleich zur Baseline bleibt (unabhaengig von Fund 3 — dieses
+// Verhalten gilt fuer jeden einzelnen insertHtmlAtSelection()-Aufruf, auch
+// nach dessen Behebung am 2026-09-06. Vor der Behebung war diese Ablage genau
+// der Grund, warum ein doppelt feuernder Paste-Listener eine VERSCHACHTELTE
+// statt einer Geschwister-Tabelle erzeugte: die zweite Einfuegung landete am
+// hier beschriebenen tiefsten Nachfahren des ersten Einfuegeergebnisses,
+// siehe 09-BASELINE.md, Fund 3, Abschnitt „Resolution").
 function insertHtmlAtSelection(htmlString) {
     const selection = window.getSelection();
     if (!selection || !selection.rangeCount) return;
@@ -270,7 +274,34 @@ function handleEditorKeydown(e) {
         insertLineBreakAtSelection();
     }
 }
+// Fund 3 (09-BASELINE.md, behoben 2026-09-06, erneut gefunden via Phase-13-UAT):
+// handleEditorPaste() wurde fuer denselben physischen Paste-Vorgang aus bis zu
+// DREI unabhaengigen Registrierungsstellen aufgerufen: (1) ein direkter
+// Element-Listener fuer jede ID in initEditorPasteHandlers()s editorIds-Liste,
+// (2) ein document-weiter Capture-Listener in derselben Funktion fuer jedes
+// Element mit Klasse .rich-editor oder .dialog-text-area, (3) ein weiterer
+// direkter Listener in features/npcs/npc-dialogs.js fuer dynamisch erzeugte
+// NPC-Dialogfelder. Ein Listener auf dem Zielelement selbst feuert immer in
+// der At-Target-Phase, unabhaengig von der Capture/Bubble-Konfiguration der
+// uebrigen Listener — bei jedem betroffenen Editor liefen dadurch zwei (teils
+// drei) Aufrufe pro echtem Paste, mit sichtbar verdoppeltem/verschachteltem
+// Ergebnis. e.preventDefault() unterdrueckt nur das Standardverhalten des
+// Browsers, nicht den zweiten Listener-Aufruf.
+//
+// Fix am Event, nicht an der Registrierung: alle Listener, die auf ein und
+// denselben physischen Paste-Vorgang reagieren, erhalten dasselbe
+// Event-Objekt (das ist unabhaengig davon, ob es 1, 2 oder 3 Registrierungen
+// sind — ein registrierungsseitiger Fix muesste jede aktuelle UND kuenftige
+// Registrierungsstelle einzeln korrekt halten). Ein Guard direkt am
+// Event-Objekt haelt die Garantie "genau einmal einfuegen" unabhaengig von der
+// Anzahl der Registrierungen: nur der zuerst ausgefuehrte Aufruf fuegt ein,
+// jeder weitere Aufruf fuer denselben Event kehrt sofort zurueck. Editoren mit
+// nur einer Registrierung (z. B. char-notes) sind unveraendert — der Guard
+// greift dort beim ersten (einzigen) Aufruf und hat keinen zweiten Aufruf zu
+// unterdruecken.
 function handleEditorPaste(e) {
+    if (e.__dndEditorPasteHandled) return;
+    e.__dndEditorPasteHandled = true;
     e.preventDefault();
     const clipboardData = e.clipboardData;
     if (!clipboardData) return;

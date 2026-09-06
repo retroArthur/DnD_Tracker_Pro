@@ -145,18 +145,25 @@ test.describe('Editor-Regressionsnetz — Insert-Call-Sites (Wiki)', () => {
             );
         }
 
-        // Baseline-Zeile 615: Tabellen-HTML wird doppelt verschachtelt eingefügt
-        // (Fund 3, 09-BASELINE.md: Doppel-Registrierung des paste-Listeners auf
-        // #wiki-content — vorbestehender Bug, hier bewusst als Ist-Zustand
-        // festgenagelt, NICHT behoben).
+        // Baseline-Zeile 615 (Fund 3, 09-BASELINE.md — behoben 2026-09-06, erneut
+        // gefunden via Phase-13-UAT): Tabellen-HTML wurde vor der Behebung doppelt
+        // verschachtelt eingefügt, weil handleEditorPaste() für denselben
+        // physischen Paste-Vorgang aus zwei unabhängigen Registrierungsstellen
+        // aufgerufen wurde (direkter Element-Listener + document-weiter
+        // Capture-Listener auf #wiki-content, siehe ui/editors/rich-text-insert.js).
+        // Der Guard am Event-Objekt (`e.__dndEditorPasteHandled`) lässt jetzt nur
+        // den ersten der beiden Aufrufe tatsächlich einfügen — die Werte unten
+        // sind das empirisch erhobene Ergebnis EINES einzelnen Einfüge-Vorgangs
+        // gegen den reparierten Build (`dist/dnd-tracker-bundled.html`,
+        // Chromium 143.0.7499.4), nicht mehr das doppelt verschachtelte Artefakt.
         const TABELLEN_HTML =
             '<table style="width:300px" border="1"><tr><td>A</td><td>B</td></tr></table>';
         const TABELLEN_ERWARTET =
-            '<table><tbody><tr><td style="border: 1px solid var(--border);">A</td><td style="border: 1px solid var(--border);">B<table><tbody><tr><td style="border: 1px solid var(--border);">A</td><td style="border: 1px solid var(--border);">B</td></tr></tbody></table></td></tr></tbody></table>';
+            '<table><tbody><tr><td style="border: 1px solid var(--border);">A</td><td style="border: 1px solid var(--border);">B</td></tr></tbody></table>';
         const TABELLEN_ROUNDTRIP =
-            '<table><tbody><tr><td style="border: 1px solid var(--border)">A</td><td style="border: 1px solid var(--border)">B<table><tbody><tr><td style="border: 1px solid var(--border)">A</td><td style="border: 1px solid var(--border)">B</td></tr></tbody></table></td></tr></tbody></table>';
+            '<table><tbody><tr><td style="border: 1px solid var(--border)">A</td><td style="border: 1px solid var(--border)">B</td></tr></tbody></table>';
 
-        test('Tabellen-HTML einfügen (Zeile 615, doppelt verschachtelt — Fund 3 eingefroren)', async ({
+        test('Tabellen-HTML einfügen (Zeile 615, einfach — Fund 3 behoben 2026-09-06)', async ({
             page
         }) => {
             await openFreshWikiForm(page, 'Insert PasteTable');
@@ -164,10 +171,10 @@ test.describe('Editor-Regressionsnetz — Insert-Call-Sites (Wiki)', () => {
             await pasteInto(page, '#wiki-content', { html: TABELLEN_HTML, text: 'A\tB' });
             await expect(editor).toHaveJSProperty('innerHTML', TABELLEN_ERWARTET);
             const tdCount = await editor.locator('td').count();
-            expect(tdCount).toBe(4);
+            expect(tdCount).toBe(2);
         });
 
-        test('Tabulatorgetrennter Text wird als Tabelle eingefügt (Zeile 637, doppelt verschachtelt — Fund 3 eingefroren)', async ({
+        test('Tabulatorgetrennter Text wird als Tabelle eingefügt (Zeile 637, einfach — Fund 3 behoben 2026-09-06)', async ({
             page
         }) => {
             await openFreshWikiForm(page, 'Insert PasteTab');
@@ -176,19 +183,22 @@ test.describe('Editor-Regressionsnetz — Insert-Call-Sites (Wiki)', () => {
             await pasteInto(page, '#wiki-content', { html: '', text });
             await expect(editor).toHaveJSProperty(
                 'innerHTML',
-                '<table><tbody><tr><th style="border: 1px solid var(--border); background-image: ; background-position-x: ; background-position-y: ; background-size: ; background-repeat: ; background-attachment: ; background-origin: ; background-clip: ;">Kopf1</th><th style="border: 1px solid var(--border); background-image: ; background-position-x: ; background-position-y: ; background-size: ; background-repeat: ; background-attachment: ; background-origin: ; background-clip: ;">Kopf2</th></tr><tr><td style="border: 1px solid var(--border);">Wert1</td><td style="border: 1px solid var(--border);">Wert2<table><tbody><tr><th style="border: 1px solid var(--border); background-image: ; background-position-x: ; background-position-y: ; background-size: ; background-repeat: ; background-attachment: ; background-origin: ; background-clip: ;">Kopf1</th><th style="border: 1px solid var(--border); background-image: ; background-position-x: ; background-position-y: ; background-size: ; background-repeat: ; background-attachment: ; background-origin: ; background-clip: ;">Kopf2</th></tr><tr><td style="border: 1px solid var(--border);">Wert1</td><td style="border: 1px solid var(--border);">Wert2</td></tr></tbody></table></td></tr></tbody></table>'
+                '<table><tbody><tr><th style="border: 1px solid var(--border); background-image: ; background-position-x: ; background-position-y: ; background-size: ; background-repeat: ; background-attachment: ; background-origin: ; background-clip: ;">Kopf1</th><th style="border: 1px solid var(--border); background-image: ; background-position-x: ; background-position-y: ; background-size: ; background-repeat: ; background-attachment: ; background-origin: ; background-clip: ;">Kopf2</th></tr><tr><td style="border: 1px solid var(--border);">Wert1</td><td style="border: 1px solid var(--border);">Wert2</td></tr></tbody></table>'
             );
             const thCount = await editor.locator('th').count();
             const tdCount = await editor.locator('td').count();
-            expect(thCount).toBe(4);
-            expect(tdCount).toBe(4);
+            expect(thCount).toBe(2);
+            expect(tdCount).toBe(2);
         });
 
-        // Baseline-Zeile 642: Reiner Text ohne Tab wird doppelt eingefügt (derselbe
-        // Fund-3-Root-Cause wie 615/637 — hier trifft es insertText statt insertHTML).
-        const PLAIN_ERWARTET = 'Reiner Text ohne TabReiner Text ohne Tab';
+        // Baseline-Zeile 642 (Fund 3, 09-BASELINE.md — behoben 2026-09-06, erneut
+        // gefunden via Phase-13-UAT): Reiner Text ohne Tab wurde vor der Behebung
+        // doppelt eingefügt (derselbe Doppel-Registrierungs-Root-Cause wie 615/637
+        // — hier trifft es insertText statt insertHTML). Nach dem Guard am
+        // Event-Objekt landet der Klartext genau einmal im Editor.
+        const PLAIN_ERWARTET = 'Reiner Text ohne Tab';
 
-        test('Reiner Text ohne Tab wird doppelt eingefügt (Zeile 642 — Fund 3 eingefroren)', async ({
+        test('Reiner Text ohne Tab wird einmal eingefügt (Zeile 642 — Fund 3 behoben 2026-09-06)', async ({
             page
         }) => {
             await openFreshWikiForm(page, 'Insert PastePlain');
@@ -681,14 +691,16 @@ test.describe('Persistenz-Roundtrip (Insert-Call-Sites)', () => {
         );
     }
 
+    // Fund 3 (09-BASELINE.md — behoben 2026-09-06, erneut gefunden via
+    // Phase-13-UAT): beide Roundtrip-Tests unten erwarteten vor der Behebung den
+    // doppelt eingefügten Paste-Vorgang, weil sie auf demselben Doppel-Registrierungs-
+    // Bug in initEditorPasteHandlers()/handleEditorPaste() beruhten wie die
+    // Zwischenablage-Tests oben. Werte empirisch gegen den reparierten Build erhoben.
     test('Reiner Text (Paste) übersteht Speichern/Reload', async ({ page }) => {
         await openFreshWikiForm(page, 'RT Insert Plain');
         await pasteInto(page, '#wiki-content', { html: '', text: 'Reiner Text ohne Tab' });
         const reopened = await saveAndReopenWikiEntry(page, 'RT Insert Plain');
-        await expect(reopened).toHaveJSProperty(
-            'innerHTML',
-            'Reiner Text ohne TabReiner Text ohne Tab'
-        );
+        await expect(reopened).toHaveJSProperty('innerHTML', 'Reiner Text ohne Tab');
     });
 
     test('Tabellen-HTML (Paste) übersteht Speichern/Reload', async ({ page }) => {
@@ -699,9 +711,9 @@ test.describe('Persistenz-Roundtrip (Insert-Call-Sites)', () => {
         const reopened = await saveAndReopenWikiEntry(page, 'RT Insert Table');
         await expect(reopened).toHaveJSProperty(
             'innerHTML',
-            '<table><tbody><tr><td style="border: 1px solid var(--border)">A</td><td style="border: 1px solid var(--border)">B<table><tbody><tr><td style="border: 1px solid var(--border)">A</td><td style="border: 1px solid var(--border)">B</td></tr></tbody></table></td></tr></tbody></table>'
+            '<table><tbody><tr><td style="border: 1px solid var(--border)">A</td><td style="border: 1px solid var(--border)">B</td></tr></tbody></table>'
         );
         const tdCount = await reopened.locator('td').count();
-        expect(tdCount).toBe(4);
+        expect(tdCount).toBe(2);
     });
 });
