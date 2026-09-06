@@ -135,9 +135,62 @@ async function getStatsForSession(sessionId) {
     });
 }
 
+/**
+ * getStatsCount — Gesamtzahl aller Datensaetze im diceStats-Store, ueber store.count()
+ * (kein Cursor, kein Array). Wird vom Loeschen-Knopf gebraucht, um den Verlust vor der
+ * Rueckfrage zu beziffern (D-11) — ohne dafuer den Store voll zu laden (D-12-Geist).
+ * @returns {Promise<number>}
+ */
+async function getStatsCount() {
+    if (!window.initIndexedDB) return 0;
+    await window.initIndexedDB();
+    return new Promise(function(resolve) {
+        if (!window.idb) { resolve(0); return; }
+        try {
+            var tx = window.idb.transaction(['diceStats'], 'readonly');
+            var store = tx.objectStore('diceStats');
+            var req = store.count();
+            req.onsuccess = function() { resolve(req.result || 0); };
+            req.onerror = function() { resolve(0); };
+        } catch (e) {
+            resolve(0);
+        }
+    });
+}
+
+/**
+ * clearAllStats — loescht den GESAMTEN diceStats-Store (Nutzer-ausgeloest, mit Rueckfrage in
+ * system-actions.js 'clear-dice-stats'). Liefert true bei Erfolg, false in JEDEM Fehler-/
+ * Abbruchfall — dieselbe defensive Form wie getAllStats()/getStatsForSession() (D-11: Loeschen
+ * ist endgueltig und unabhaengig von der Deckel-Verdraengung, darf aber niemals werfen).
+ * @returns {Promise<boolean>}
+ */
+async function clearAllStats() {
+    if (!window.initIndexedDB) return false;
+    await window.initIndexedDB();
+    return new Promise(function(resolve) {
+        if (!window.idb) { resolve(false); return; }
+        try {
+            var tx = window.idb.transaction(['diceStats'], 'readwrite');
+            var store = tx.objectStore('diceStats');
+            var req = store.clear();
+            if (req) {
+                req.onsuccess = function() { resolve(true); };
+                req.onerror = function() { resolve(false); };
+            } else {
+                resolve(true);
+            }
+        } catch (e) {
+            resolve(false);
+        }
+    });
+}
+
 window.statsIdbPut = statsIdbPut;
 window.getAllStats = getAllStats;
 window.getStatsForSession = getStatsForSession;
+window.getStatsCount = getStatsCount;
+window.clearAllStats = clearAllStats;
 // enforceStatsCap ist intern (statsIdbPut ruft sie gedrosselt auf) — Export existiert nur,
 // damit tests/unit/dice-stats-idb.test.js sie deterministisch einzeln aufrufen kann, ohne
 // erst STATS_CAP_CHECK_INTERVAL Schreibvorgaenge zu simulieren.

@@ -266,3 +266,32 @@ describe('enforceStatsCap — Deckel und Verdraengung (PERF-02/D-11)', function 
         expect(function () { statsIdbPut(makeRecord(1)); }).not.toThrow();
     });
 });
+
+describe('clearAllStats / getStatsCount — Loeschfunktion mit Rueckfrage (PERF-02/D-11)', function () {
+    test('erfolgreiches Leeren: clearAllStats() liefert true, Store ist danach leer', async function () {
+        installMockIDB([makeRecord(1), makeRecord(2), makeRecord(3)]);
+        const ok = await clearAllStats();
+        expect(ok).toBe(true);
+        const count = await getStatsCount();
+        expect(count).toBe(0);
+    });
+
+    test('Fehlerfall: wirft die Loesch-Transaktion, liefert clearAllStats() false statt zu werfen', async function () {
+        installMockIDB([makeRecord(1), makeRecord(2)], { throwOnClear: true });
+        await expect(clearAllStats()).resolves.toBe(false);
+    });
+
+    test('fehlt window.idb, liefert clearAllStats() false und getStatsCount() 0', async function () {
+        global.window.idb = null;
+        await expect(clearAllStats()).resolves.toBe(false);
+        await expect(getStatsCount()).resolves.toBe(0);
+    });
+
+    test('getStatsCount() liefert die exakte Datensatzzahl ohne den Store zu laden', async function () {
+        const seeds = [];
+        for (let i = 1; i <= 12; i++) seeds.push(makeRecord(i));
+        installMockIDB(seeds);
+        const count = await getStatsCount();
+        expect(count).toBe(12);
+    });
+});

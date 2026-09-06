@@ -241,6 +241,28 @@ const SystemActions = {
         }
     },
 
+    // Dice Stats — Store vollstaendig leeren, mit beziffertem Rueckfrage-Dialog (PERF-02/D-11).
+    // Eigene Aktion statt der generischen 'call'-Aktion — haengt bewusst NICHT an der
+    // Ziel-Whitelist aus Plan 13-01 (13-07-PLAN.md). Verdraengte/geloeschte Wuerfe sind
+    // unwiederbringlich (IndexedDB kennt keinen Undo), deshalb die Zahl in der Frage selbst.
+    'clear-dice-stats': async () => {
+        const count = (typeof window.getStatsCount === 'function') ? await window.getStatsCount() : 0;
+        if (count <= 0) return;
+        const confirmed = confirm(
+            `${count} Würfelwurf-Datensätze unwiderruflich löschen? Dieser Vorgang kann NICHT rückgängig gemacht werden.`
+        );
+        if (!confirmed) return;
+        const ok = (typeof window.clearAllStats === 'function') ? await window.clearAllStats() : false;
+        if (ok) {
+            if (typeof window.renderDiceStats === 'function') window.renderDiceStats();
+            if (typeof window.showToast === 'function') {
+                window.showToast(`Würfelstatistik gelöscht (${count} Datensätze)`);
+            }
+        } else if (typeof window.showToast === 'function') {
+            window.showToast('Löschen fehlgeschlagen', 'error');
+        }
+    },
+
     // ============================================================
     // SOUNDBOARD ACTIONS (Phase 7 — UX-01, D-01a, D-02, D-03)
     // ============================================================

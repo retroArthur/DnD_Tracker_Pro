@@ -233,10 +233,17 @@ function renderDiceStats() {
             ? window.getAllStats()
             : Promise.resolve([]));
 
-    Promise.resolve(queryFn).then(function(records) {
-        _renderDiceStatsContent(c, records || []);
+    // Gesamtzahl im STORE (nicht nur im aktuellen Scope) — bestimmt, ob der Loeschen-Knopf
+    // ueberhaupt gerendert wird (PERF-02/D-11). Eigener leichter store.count()-Aufruf, laedt
+    // dafuer kein Array.
+    var countFn = (typeof window.getStatsCount === 'function')
+        ? window.getStatsCount()
+        : Promise.resolve(0);
+
+    Promise.all([queryFn, countFn]).then(function(results) {
+        _renderDiceStatsContent(c, results[0] || [], results[1] || 0);
     }).catch(function() {
-        _renderDiceStatsContent(c, []);
+        _renderDiceStatsContent(c, [], 0);
     });
 }
 
@@ -244,8 +251,10 @@ function renderDiceStats() {
  * _renderDiceStatsContent — baut das vollstaendige HTML nach IDB-Abfrage.
  * @param {HTMLElement} container
  * @param {Array} records
+ * @param {number} [totalStoreCount] - Gesamtzahl im GESAMTEN Store (nicht nur im aktuellen
+ *   Scope) — steuert, ob der Loeschen-Knopf gerendert wird (PERF-02/D-11).
  */
-function _renderDiceStatsContent(container, records) {
+function _renderDiceStatsContent(container, records, totalStoreCount) {
     var counts = computeD20Counts(records);
     var rates = critFumbleRates(counts);
     var chars = (window.D && Array.isArray(window.D.characters)) ? window.D.characters : [];
@@ -254,11 +263,19 @@ function _renderDiceStatsContent(container, records) {
     var sessionActive = _statsScope === 'session' ? ' ds-toggle-btn--active' : '';
     var totalActive = _statsScope === 'total' ? ' ds-toggle-btn--active' : '';
 
+    // Loeschen-Knopf: nur wenn ueberhaupt Datensaetze im Store liegen (egal in welchem Scope).
+    // Eigene Aktion 'clear-dice-stats' (system-actions.js) — fragt dort mit beziffertem confirm()
+    // zurueck, bevor geloescht wird (D-11).
+    var clearBtnHtml = (totalStoreCount || 0) > 0
+        ? '<button class="ds-toggle-btn" data-action="clear-dice-stats">Statistik löschen</button>'
+        : '';
+
     var toggleHtml = '<div class="ds-toggle-bar">'
         + '<button class="ds-toggle-btn' + sessionActive + '"'
         + ' data-action="set-stats-scope" data-value="session">Diese Session</button>'
         + '<button class="ds-toggle-btn' + totalActive + '"'
         + ' data-action="set-stats-scope" data-value="total">Gesamt</button>'
+        + clearBtnHtml
         + '</div>';
 
     // Histogram
