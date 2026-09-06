@@ -103,11 +103,15 @@ wiederherstellbar ist (`SAFE-01`, `SAFE-02`, `SAFE-04`).
   jetzt einen Jest-Test statt nur mit einer `DEBUG_MODE`-Warnung zu warnen), und das ungeschützte
   `setInterval` in `initPerformanceMonitoring()` (`systems/backups.js:325`) hat denselben Guard wie
   `startAutoBackup()`.
-- **MAINT-06** (`DEBT-27`, `DEBT-26`): Die Konsole bleibt in Produktionspfaden still, und die
-  Kopfkommentare beschreiben den Code, der dasteht. Heute widersprechen `console.*`-Aufrufe außerhalb
-  von `DEBUG_MODE`-Guards der CLAUDE.md-Zusicherung „Zero console.log in production", und
-  `file-backup-manager.js:6,387` behauptet weiterhin das explizit verbotene
-  `window.save`-Monkey-Patch-Muster, obwohl der Code korrekt `registerPostSaveHook()` nutzt.
+- **MAINT-06** ✓ (`DEBT-27`, `DEBT-26`, Phase 13: 13-08 komplett): Die Konsole bleibt in
+  Produktionspfaden still, und die Kopfkommentare beschreiben den Code, der dasteht. Genau ein
+  sanktionierter Konsolen-Ausgang (`render/helpers.js` `ErrorHandler.log()`, markiert
+  `gsd:konsolen-senke`) bleibt bestehen; alle 81 vormals ungefilterten `console.*`-Aufrufe in 31
+  gebündelten Modulen laufen jetzt entweder darüber (echte Fehler) oder über das bestehende
+  `window.debugLogAdd()` in-App-Debug-Log (Selbstheilung/Info, um falsche Konsolenfehler-Alarme zu
+  vermeiden) — test-erzwungen über `tests/unit/console-hygiene.test.js`.
+  `file-backup-manager.js:6,674` (Korrektur gegenüber der ursprünglich zitierten Zeile 387) beschreibt
+  jetzt korrekt `registerPostSaveHook()` statt des verbotenen `window.save`-Monkey-Patch-Musters.
 
 ### Tests & Gates
 
@@ -152,7 +156,7 @@ wiederherstellbar ist (`SAFE-01`, `SAFE-02`, `SAFE-04`).
 | MAINT-03 | DEBT-12 | Phase 13 — Complete (13-03) |
 | MAINT-04 | DEBT-03 | Phase 13 — Complete (13-02) |
 | MAINT-05 | DEBT-09, DEBT-10 | Phase 13 — Complete (13-04) |
-| MAINT-06 | DEBT-27, DEBT-26 | Pending |
+| MAINT-06 | DEBT-27, DEBT-26 | Phase 13 — Complete (13-08) |
 | TEST-03 | DEBT-15 | Pending |
 | TEST-04 | DEBT-28 | Pending |
 | TEST-05 | DEBT-01 | Pending |

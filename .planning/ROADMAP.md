@@ -124,7 +124,7 @@ Plans:
 **Goal**: Die verbliebenen Sicherheits- und Skalierungsrisiken sind geschlossen, und die Codebasis trägt keine übergroßen, toten oder irreführenden Stellen mehr, die künftige Arbeit verteuern.
 **Depends on**: Phase 12 (`PERF-01` fasst dieselben Persistenz-Dateien an wie `SAFE-05`)
 **Requirements**: SEC-03, SEC-04, PERF-01, PERF-02, MAINT-01, MAINT-02, MAINT-03, MAINT-04, MAINT-05, MAINT-06
-**Plans:** 7/12 plans executed
+**Plans:** 8/12 plans executed
 **Success Criteria** (what must be TRUE):
 
   1. Die `call`-Aktion ruft nur noch Ziele aus einer Whitelist auf; die Regex-Capture in `parseWikiLinks()` ist escapt
@@ -152,7 +152,7 @@ Plans:
 
 **Wave 3** *(blocked on Wave 2 — fasst 28 Module an, die in den Wellen 1–2 geändert wurden)*
 
-- [ ] 13-08-PLAN.md — MAINT-06: Konsolen-Hygiene über alle gebündelten Module, Kopfkommentare im Datei-Backup nachgezogen (Welle 3)
+- [x] 13-08-PLAN.md — MAINT-06: Konsolen-Hygiene über alle gebündelten Module, Kopfkommentare im Datei-Backup nachgezogen (Welle 3)
 
 **Wave 4** *(blocked on Wave 3 — MAINT-01, Reihenfolge D-05 nach steigendem Risiko)*
 

@@ -5,26 +5,26 @@ milestone_name: Schulden-Abbau
 current_phase: 13
 current_phase_name: Härtung & Wartbarkeit
 status: executing
-stopped_at: Completed 13-07-PLAN.md
-last_updated: "2026-09-06T08:14:36.668Z"
+stopped_at: Completed 13-08-PLAN.md
+last_updated: "2026-09-06T08:46:07.000Z"
 last_activity: 2026-09-06
-last_activity_desc: Phase 13 execution started
-state_head: a036565551bc8f8bbc56c40fcaac4bd598fc7f94
+last_activity_desc: Phase 13 Plan 08 (MAINT-06 console hygiene + file-backup header comments) complete
+state_head: 36d8ad3
 progress:
   total_phases: 3
   completed_phases: 1
   total_plans: 29
-  completed_plans: 24
-  percent: 33
+  completed_plans: 25
+  percent: 34
 ---
 
 # Project State: D&D Kampagnen-Tracker Pro — Schulden-Abbau
 
-**Last Updated:** 2026-09-05
-**Milestone:** v1.2 „Schulden-Abbau" — Phase 12 abgeschlossen (17/17 Pläne), Phase 13 geplant (12 Pläne, 7 Wellen)
-**Status:** Ready to execute
+**Last Updated:** 2026-09-06
+**Milestone:** v1.2 „Schulden-Abbau" — Phase 12 abgeschlossen (17/17 Pläne), Phase 13 in Ausführung (8/12 Pläne)
+**Status:** Executing
 
-**Progress:** [████████████░░░░░░░░] 17/29 plans ([███░░░░░░░] 33%) · 1/3 Phasen des Milestones
+**Progress:** [█████████████████░░░] 25/29 plans ([███████░░░] 34%) · 1/3 Phasen des Milestones
 
 ---
 
@@ -41,9 +41,9 @@ See: `.planning/PROJECT.md` (Stand 2026-09-05)
 ## Current Position
 
 Phase: 13 (Härtung & Wartbarkeit) — EXECUTING
-Plan: 8 of 12
-Status: Ready to execute
-Last activity: 2026-09-06 — Phase 13 execution started
+Plan: 9 of 12
+Status: Plan 08 complete (MAINT-06), ready for next plan
+Last activity: 2026-09-06 — Plan 13-08 complete (console hygiene sweep + file-backup header comment fix)
 
 **Nächster Schritt:** `/gsd-execute-phase 13`. Phase 13 ist geplant — 12 Pläne in 7 Wellen, Plan-Checker `VERIFICATION PASSED`, Requirements 10/10 und Decisions 13/13 gedeckt. Phase 12 ist vollständig abgeschlossen — Verifikation `passed` (9/9), UAT 28/28, `12-SECURITY.md` `threats_open: 0`, `12-VALIDATION.md` `nyquist_compliant: true`. Suiten: Jest 908/908 (31 Suites), Playwright 321 passed / 2 skipped, `pytest tests/build` 24/24.
 
@@ -130,6 +130,7 @@ Browser-Verhalten an der Base64-Grenze (12-07).
 | Phase 13 P05 | ~15min | 2 tasks | 2 files |
 | Phase 13 P06 | 45m | 3 tasks | 6 files |
 | Phase 13 P07 | 55min | 4 tasks | 5 files |
+| Phase 13 P08 | 40min | 3 tasks | 34 files |
 
 ## Accumulated Context
 
@@ -216,9 +217,11 @@ Browser-Verhalten an der Base64-Grenze (12-07).
 
 ## Session Continuity
 
-**Last session:** 2026-09-06T08:14:36.559Z
-**Stopped at:** Completed 13-07-PLAN.md
+**Last session:** 2026-09-06T08:46:07.000Z
+**Stopped at:** Completed 13-08-PLAN.md
 **Resume file:** None
+
+**Last action:** `/gsd-execute-phase 13` (Plan 13-08, MAINT-06). Converted all 81 originally-counted unfiltered `console.*` calls across 31 `loader.js` MODULES files to the one sanctioned `ErrorHandler.log()` outlet in `render/helpers.js` (marked `gsd:konsolen-senke`), built `tests/unit/console-hygiene.test.js` as a permanent regression guard, and corrected two stale `file-backup-manager.js` header comments that wrongly described the forbidden `window.save` monkey-patch pattern (code has used `registerPostSaveHook()` correctly since Phase 12). Mid-execution finding: converting routine/self-healing diagnostics (data repairs, migration progress, per-tab render guards) to the single outlet elevated them to `console.error` and broke 5 Playwright tests (`editor-formatting.spec.js`, `editor-insert.spec.js`, `import-security.spec.js`) that assert zero console errors — fixed by routing those specific sites through the existing `window.debugLogAdd()` in-app debug panel instead, preserving the single-outlet invariant for genuine faults while not misclassifying normal operation as an error. Full suites green: `npx jest` 1066/1066, `npx playwright test` 321 passed/2 skipped (STATE.md baseline exactly matched), `python build.py` + `--production` + `pytest tests/build` 24/24 all green.
 
 **Last action:** `/gsd-plan-phase 12 --gaps`. Ausgangslage: die Re-Verifikation vom 2026-09-04 steht auf `gaps_found` (6/8 Truths) — G-12-3 ist durch 12-08 sauber geschlossen, aber der Code-Review (`12-REVIEW.md`) hat zwei neue Blocker aufgedeckt, die der Verifier unabhaengig gegen den Quelltext bestaetigt hat: **CR-01** (der „Ueberspringen"-Button des Migrations-Wizards bleibt nach erfolgreichem Import sichtbar, ruft nur `_closeWizard()` statt `window.location.reload()` — der unbedingte `beforeunload`-Autosave in `avatars.js:170-176` schreibt danach das stale `window.D` ueber die frisch importierten Daten) und **CR-02** (`readCampaignDataForBackup()` Stufe 3 gibt `window.D` zurueck, ohne `campaignKey` gegen den aktiven Key zu pruefen — jede indizierte, nie gespeicherte Kampagne bekommt die Daten der aktiven Kampagne in ihre Backup-Datei). Auf Nachfrage hat der Nutzer die zwei nicht-blockierenden Warnungen **WR-01** (Audio-Rueckmeldung am falschen DOM-Element) und **WR-02** (`pushUndo()` leert den Redo-Stack im `catch` nicht) mit aufgenommen. Ergebnis: 3 Plaene — 12-09 (CR-01+WR-01, Welle 7), 12-10 (CR-02, Welle 7, disjunkte Dateien), 12-11 (WR-02 + Rebuild beider Bundles, Welle 8, weil ein Rebuild in derselben Welle die Commits seiner Geschwister nicht saehe = genau W-1). Plan-Checker: **VERIFICATION PASSED im ersten Durchlauf**, 0 Blocker/0 Warnungen, Baselines live nachgemessen (41+17+73=131). Zusaetzlich `COVERAGE.md` geschrieben (`No external API integration: …`) — das entschaerft den wiederkehrenden `api-coverage`-Fehlalarm bei `verify:pre` dauerhaft, der nur auf dem Substring „API" in „File System Access API" feuert. Commit `df4ea54`.
 
@@ -340,6 +343,9 @@ Browser-Verhalten an der Base64-Grenze (12-07).
 - [Phase 13]: D-09a/b (Undo-Dedupe + Byte-Budget mit Untergrenze 5) umgesetzt in pushUndo()/redo(); Undo-Semantik (ein Schritt = volle Kampagne) unveraendert
 - [Phase 13]: Erfolgskriterium 2 fuer Undo-Pfad per Messung (13-PERF-MEASUREMENT.md) abgenommen: JSON.stringify(D) bei realistischer Kampagnengroesse ~1ms, D-10 bleibt bestehen
 - [Phase 13]: PERF-02: DICE_STATS_MAX_RECORDS=50000 (user-decided cap, D-11), oldest-first eviction throttled every 50th write; cursor-based getStatsAggregate() replaces full-array evaluation while getAllStats() stays exclusive to the migration export (D-12)
+- [Phase 13]: [Phase 13, 13-08]: MAINT-06 — genau ein sanktionierter Konsolen-Ausgang (render/helpers.js ErrorHandler.log(), markiert gsd:konsolen-senke), test-erzwungen ueber tests/unit/console-hygiene.test.js, das seinen Dateisatz aus loader.js MODULES ableitet
+- [Phase 13]: [Phase 13, 13-08]: Selbstheilungs-/Info-Diagnosen (reparierte _nextId, Migrationsfortschritt, "nicht auf diesem Tab"-Render-Guards) routen ueber window.debugLogAdd() statt ErrorHandler.log() — sonst waeren sie als console.error sichtbar und haetten faelschlich 5 Playwright-Tests gebrochen, die auf null Konsolenfehler pruefen (DEBUG_MODE bleibt im Dev-Build true, gegen den Playwright laeuft)
+- [Phase 13]: [Phase 13, 13-08]: file-backup-manager.js Kopfkommentare (Zeile 6, Zeile 674 — RESEARCH-Korrektur gegenueber 13-CONTEXT.md, das faelschlich 387 nennt) beschreiben jetzt registerPostSaveHook() statt des verbotenen window.save-Monkey-Patch-Musters; Testfall in file-backup.test.js verhindert Drift
 
 ## Operator Next Steps
 
