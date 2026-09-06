@@ -124,7 +124,7 @@ Plans:
 **Goal**: Die verbliebenen Sicherheits- und Skalierungsrisiken sind geschlossen, und die Codebasis trägt keine übergroßen, toten oder irreführenden Stellen mehr, die künftige Arbeit verteuern.
 **Depends on**: Phase 12 (`PERF-01` fasst dieselben Persistenz-Dateien an wie `SAFE-05`)
 **Requirements**: SEC-03, SEC-04, PERF-01, PERF-02, MAINT-01, MAINT-02, MAINT-03, MAINT-04, MAINT-05, MAINT-06
-**Plans:** 8/12 plans executed
+**Plans:** 9/12 plans executed
 **Success Criteria** (what must be TRUE):
 
   1. Die `call`-Aktion ruft nur noch Ziele aus einer Whitelist auf; die Regex-Capture in `parseWikiLinks()` ist escapt
@@ -156,7 +156,7 @@ Plans:
 
 **Wave 4** *(blocked on Wave 3 — MAINT-01, Reihenfolge D-05 nach steigendem Risiko)*
 
-- [ ] 13-09-PLAN.md — MAINT-01: `features/wiki/wiki.js` aufgeteilt, volles Suiten-Gate vor dem Commit (Welle 4)
+- [x] 13-09-PLAN.md — MAINT-01: `features/wiki/wiki.js` aufgeteilt, volles Suiten-Gate vor dem Commit (Welle 4)
 
 **Wave 5** *(blocked on Wave 4 — teilt `loader.js`)*
 
