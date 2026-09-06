@@ -268,11 +268,15 @@ function renderMarkdownInContent(html) {
     // Convert markdown patterns to HTML
     // Bold: **text** or __text__
     result = result.replace(/\*\*([^*]+)\*\*/g, '<b>$1</b>');
-    result = result.replace(/__([^_]+)__/g, '<b>$1</b>');
+    // CommonMark-Wortgrenzen-Regel (MAINT-03): Unterstrich-Betonung darf nicht öffnen/schließen,
+    // wenn unmittelbar ein alphanumerisches Zeichen angrenzt — sonst korrumpiert z.B.
+    // "https://example.com/foo_bar_baz" zu "foo<i>bar</i>baz". Die *-Varianten kennen diese
+    // Einschränkung laut CommonMark-Spezifikation nicht und bleiben unverändert (siehe unten).
+    result = result.replace(/(?<!\w)__([^_]+)__(?!\w)/g, '<b>$1</b>');
 
     // Italic: *text* or _text_ (but not if already inside ** or __)
     result = result.replace(/(?<!\*)\*([^*]+)\*(?!\*)/g, '<i>$1</i>');
-    result = result.replace(/(?<!_)_([^_]+)_(?!_)/g, '<i>$1</i>');
+    result = result.replace(/(?<!\w)_([^_]+)_(?!\w)/g, '<i>$1</i>');
 
     // Strikethrough: ~~text~~
     result = result.replace(/~~([^~]+)~~/g, '<s>$1</s>');

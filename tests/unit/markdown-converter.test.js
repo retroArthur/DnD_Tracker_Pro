@@ -190,3 +190,71 @@ describe('Markdown Converter', () => {
         });
     });
 });
+
+// ============================================================
+// MAINT-03: Wortgrenzen-Regel für Unterstrich-Emphase in renderMarkdownInContent()
+// ============================================================
+// Lädt das ECHTE Modul (nicht die Platzhalter-Assertions oben) per vm in eine Sandbox,
+// analog zum Muster in tests/unit/file-backup-idb.test.js.
+const fs = require('fs');
+const path = require('path');
+const vm = require('vm');
+
+const MARKDOWN_CONVERTER_PATH = path.join(__dirname, '../../ui/editors/markdown-converter.js');
+
+function loadRenderMarkdownInContent() {
+    const context = {
+        window: {
+            // Identitätsfunktion: die Testfälle sollen die Betonungsregeln isolieren,
+            // nicht die Sanitisierung mitmessen (siehe Plan 13-03, Task 1).
+            sanitizeHTML: html => html
+        },
+        console
+    };
+    vm.createContext(context);
+    vm.runInContext(fs.readFileSync(MARKDOWN_CONVERTER_PATH, 'utf8'), context, {
+        filename: MARKDOWN_CONVERTER_PATH
+    });
+    return context.renderMarkdownInContent;
+}
+
+describe('MAINT-03: Wortgrenzen-Regel für Unterstrich-Emphase (renderMarkdownInContent, echtes Modul)', () => {
+    const renderMarkdownInContent = loadRenderMarkdownInContent();
+
+    test('URL mit zwei Unterstrichen bleibt zeichengleich erhalten (Kernfall des Bugs)', () => {
+        const input = 'https://example.com/foo_bar_baz';
+        const result = renderMarkdownInContent(input);
+        expect(result).toContain('foo_bar_baz');
+        expect(result).not.toContain('<i>');
+    });
+
+    test('Der_Hobbit_Buch bleibt zeichengleich erhalten', () => {
+        const input = 'Der_Hobbit_Buch';
+        expect(renderMarkdownInContent(input)).toBe('Der_Hobbit_Buch');
+    });
+
+    test('snake_case_name bleibt zeichengleich erhalten', () => {
+        const input = 'snake_case_name';
+        expect(renderMarkdownInContent(input)).toBe('snake_case_name');
+    });
+
+    test('_kursiv_ am Satzanfang wird zu einem i-Element (Schutz gegen Überkorrektur)', () => {
+        const input = '_kursiv_ am Satzanfang';
+        expect(renderMarkdownInContent(input)).toContain('<i>kursiv</i>');
+    });
+
+    test('Ein _kursives_ Wort wird zu einem i-Element (Schutz gegen Überkorrektur)', () => {
+        const input = 'Ein _kursives_ Wort';
+        expect(renderMarkdownInContent(input)).toContain('<i>kursives</i>');
+    });
+
+    test('__fett__ an Wortgrenzen wird zu einem b-Element (Schutz gegen Überkorrektur)', () => {
+        const input = '__fett__ an Wortgrenzen';
+        expect(renderMarkdownInContent(input)).toContain('<b>fett</b>');
+    });
+
+    test('*kursiv* und **fett** bleiben unverändert im Verhalten (Sternchen-Regeln nicht angefasst)', () => {
+        expect(renderMarkdownInContent('*kursiv*')).toBe('<i>kursiv</i>');
+        expect(renderMarkdownInContent('**fett**')).toBe('<b>fett</b>');
+    });
+});
