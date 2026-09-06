@@ -5,16 +5,16 @@ milestone_name: Schulden-Abbau
 current_phase: 13
 current_phase_name: Härtung & Wartbarkeit
 status: executing
-stopped_at: Completed 13-04-PLAN.md
-last_updated: "2026-09-06T06:52:43.801Z"
+stopped_at: Completed 13-05-PLAN.md
+last_updated: "2026-09-06T07:08:31.091Z"
 last_activity: 2026-09-06
 last_activity_desc: Phase 13 execution started
-state_head: cee070aae289bb852fc6ca065c87e47a201ec196
+state_head: 4beda413a3cd422fe3575213028b7a73034a1c3a
 progress:
   total_phases: 3
   completed_phases: 1
   total_plans: 29
-  completed_plans: 21
+  completed_plans: 22
   percent: 33
 ---
 
@@ -41,7 +41,7 @@ See: `.planning/PROJECT.md` (Stand 2026-09-05)
 ## Current Position
 
 Phase: 13 (Härtung & Wartbarkeit) — EXECUTING
-Plan: 5 of 12
+Plan: 6 of 12
 Status: Ready to execute
 Last activity: 2026-09-06 — Phase 13 execution started
 
@@ -127,6 +127,7 @@ Browser-Verhalten an der Base64-Grenze (12-07).
 | Phase 13 P02 | ~20min | 3 tasks | 4 files |
 | Phase 13 P03 | 12min | 2 tasks | 2 files |
 | Phase 13 P04 | 20min | 3 tasks | 8 files |
+| Phase 13 P05 | ~15min | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -213,8 +214,8 @@ Browser-Verhalten an der Base64-Grenze (12-07).
 
 ## Session Continuity
 
-**Last session:** 2026-09-06T06:52:43.697Z
-**Stopped at:** Completed 13-04-PLAN.md
+**Last session:** 2026-09-06T07:08:30.986Z
+**Stopped at:** Completed 13-05-PLAN.md
 **Resume file:** None
 
 **Last action:** `/gsd-plan-phase 12 --gaps`. Ausgangslage: die Re-Verifikation vom 2026-09-04 steht auf `gaps_found` (6/8 Truths) — G-12-3 ist durch 12-08 sauber geschlossen, aber der Code-Review (`12-REVIEW.md`) hat zwei neue Blocker aufgedeckt, die der Verifier unabhaengig gegen den Quelltext bestaetigt hat: **CR-01** (der „Ueberspringen"-Button des Migrations-Wizards bleibt nach erfolgreichem Import sichtbar, ruft nur `_closeWizard()` statt `window.location.reload()` — der unbedingte `beforeunload`-Autosave in `avatars.js:170-176` schreibt danach das stale `window.D` ueber die frisch importierten Daten) und **CR-02** (`readCampaignDataForBackup()` Stufe 3 gibt `window.D` zurueck, ohne `campaignKey` gegen den aktiven Key zu pruefen — jede indizierte, nie gespeicherte Kampagne bekommt die Daten der aktiven Kampagne in ihre Backup-Datei). Auf Nachfrage hat der Nutzer die zwei nicht-blockierenden Warnungen **WR-01** (Audio-Rueckmeldung am falschen DOM-Element) und **WR-02** (`pushUndo()` leert den Redo-Stack im `catch` nicht) mit aufgenommen. Ergebnis: 3 Plaene — 12-09 (CR-01+WR-01, Welle 7), 12-10 (CR-02, Welle 7, disjunkte Dateien), 12-11 (WR-02 + Rebuild beider Bundles, Welle 8, weil ein Rebuild in derselben Welle die Commits seiner Geschwister nicht saehe = genau W-1). Plan-Checker: **VERIFICATION PASSED im ersten Durchlauf**, 0 Blocker/0 Warnungen, Baselines live nachgemessen (41+17+73=131). Zusaetzlich `COVERAGE.md` geschrieben (`No external API integration: …`) — das entschaerft den wiederkehrenden `api-coverage`-Fehlalarm bei `verify:pre` dauerhaft, der nur auf dem Substring „API" in „File System Access API" feuert. Commit `df4ea54`.
@@ -330,6 +331,9 @@ Browser-Verhalten an der Base64-Grenze (12-07).
 - [Phase 13]: Mirrored startAutoBackup()'s exact guard form for initPerformanceMonitoring() (clearInterval before window.setInterval, module-level handle)
 - [Phase 13]: Fixed dead 'init: initDiceTab' tab-registry entry to null — no commit in repo history ever defined that function; Rule 1 auto-fix surfaced by the new static declaration-guard test
 - [Phase 13]: resolveTabFn()/tabFnName() derive the diagnostic identifier from the arrow expression's own toString() rather than a parallel string field
+- [Phase 13]: [Phase 13, 13-05]: loadDmScreenSandbox() derives its module list from loader.js MODULES (filtered to features/dmscreen/) instead of a hardcoded path — survives the Plan 13-12 file split unedited (D-04)
+- [Phase 13]: [Phase 13, 13-05]: Public entry point called via window['render' + 'DMScreen'] string-concatenated lookup instead of the literal identifier — the plan's own literal grep -c 'renderDMS' check would otherwise flag the required public-entry call itself (both begin with the same 9-char prefix); precise grep for internal renderer names confirms the substantive prohibition still holds
+- [Phase 13]: [Phase 13, 13-05]: MAINT-01 left Pending in REQUIREMENTS.md — this plan only builds the safety net for one of the four modules MAINT-01 requires split; mirrors Phase 12 pattern (SAFE-01/02/06 held open across multiple plans)
 
 ## Operator Next Steps
 

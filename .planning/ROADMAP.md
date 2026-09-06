@@ -124,7 +124,7 @@ Plans:
 **Goal**: Die verbliebenen Sicherheits- und Skalierungsrisiken sind geschlossen, und die Codebasis trägt keine übergroßen, toten oder irreführenden Stellen mehr, die künftige Arbeit verteuern.
 **Depends on**: Phase 12 (`PERF-01` fasst dieselben Persistenz-Dateien an wie `SAFE-05`)
 **Requirements**: SEC-03, SEC-04, PERF-01, PERF-02, MAINT-01, MAINT-02, MAINT-03, MAINT-04, MAINT-05, MAINT-06
-**Plans:** 4/12 plans executed
+**Plans:** 5/12 plans executed
 **Success Criteria** (what must be TRUE):
 
   1. Die `call`-Aktion ruft nur noch Ziele aus einer Whitelist auf; die Regex-Capture in `parseWikiLinks()` ist escapt
@@ -143,7 +143,7 @@ Plans:
 - [x] 13-02-PLAN.md — SEC-04 + MAINT-04 + MAINT-02: Wiki-Link-Escaping, letzte drei execCommand-Aufrufe abgelöst, doppeltes `data-id` weg (Welle 1)
 - [x] 13-03-PLAN.md — MAINT-03: toter `hasHtmlTags`-Wächter entfernt, Unterstrich-Wortgrenzen nach CommonMark (Welle 1)
 - [x] 13-04-PLAN.md — MAINT-05 + MAINT-02: Interval-Guard, Tab-Registry auf Funktionsreferenzen, tote `mindmap`-Seeds und `const D`-Überschattung weg (Welle 1)
-- [ ] 13-05-PLAN.md — MAINT-01/D-04: Charakterisierungs-Snapshot für `dmscreen-render.js` gegen das UNGETEILTE Modul, vor jeder Verschiebung (Welle 1)
+- [x] 13-05-PLAN.md — MAINT-01/D-04: Charakterisierungs-Snapshot für `dmscreen-render.js` gegen das UNGETEILTE Modul, vor jeder Verschiebung (Welle 1)
 - [ ] 13-06-PLAN.md — PERF-01: Save-Pfad ohne zweite Vollkopie, Undo-Dedupe und Byte-Budget, Messprotokoll zu Erfolgskriterium 2 (Welle 1)
 
 **Wave 2** *(blocked on Wave 1 — teilt `core/config.js` mit 13-06 und `system-actions.js` mit 13-02)*
