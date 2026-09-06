@@ -153,6 +153,8 @@ const MODULES = [
     'ui/lazy-loading.js',
     'ui/event-delegation.js',
     'ui/editors/rich-text.js',
+    'ui/editors/rich-text-insert.js',
+    'ui/editors/rich-text-toolbars.js',
     'ui/editors/markdown-shortcuts.js',
     'ui/editors/markdown-converter.js',
     'systems/markdown-import-export.js',
