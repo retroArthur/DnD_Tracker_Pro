@@ -182,8 +182,12 @@ const UIActions = {
         if (el) el.click();
     },
 
-    // Dynamic function call
+    // Dynamic function call (SEC-03: nur Ziele aus CALL_ACTION_WHITELIST erlaubt)
     call: ctx => {
+        if (!window.CALL_ACTION_WHITELIST?.has(ctx.value)) {
+            console.error('[EventDelegation] Function not found:', ctx.value);
+            return;
+        }
         const fn = window[ctx.value];
         if (typeof fn === 'function') fn(ctx.id);
         else console.error('[EventDelegation] Function not found:', ctx.value);

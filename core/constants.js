@@ -552,6 +552,18 @@ const XP_LEVEL_THRESHOLDS = [
     355000   // Level 20
 ];
 
+/**
+ * Erlaubte Ziele der generischen `call`-Aktion (data-action="call" data-value="<name>").
+ * SEC-03: explizite Allowlist statt Namenspräfix-Konvention — ein nicht gelisteter Name
+ * führt zu keinem Aufruf von window[name]. Wird aus den `data-action="call"`-Attributen
+ * im Quellbaum abgeleitet (siehe tests/unit/event-delegation.test.js, Abgleichs-Testfall);
+ * ein neuer `call`-Knopf ohne Eintrag hier funktioniert bewusst nicht.
+ * @type {Set<string>}
+ */
+const CALL_ACTION_WHITELIST = new Set([
+    'flipCoin'
+]);
+
 // ============================================================
 // NAMESPACE EXPORTS (neue Struktur)
 // ============================================================
@@ -588,7 +600,8 @@ window.UI_CONSTANTS = Object.freeze({
     ENTITY_TYPE_NAMES,
     MARKDOWN_PATTERNS,
     EDITOR_FONTS,
-    TOOLBAR_DIMENSIONS
+    TOOLBAR_DIMENSIONS,
+    CALL_ACTION_WHITELIST
 });
 
 // ============================================================
@@ -622,3 +635,4 @@ window.HARPTOS_MONTHS = HARPTOS_MONTHS;
 window.HARPTOS_FESTIVALS = HARPTOS_FESTIVALS;
 window.HARPTOS_SEASONS = HARPTOS_SEASONS;
 window.XP_LEVEL_THRESHOLDS = XP_LEVEL_THRESHOLDS;
+window.CALL_ACTION_WHITELIST = CALL_ACTION_WHITELIST;
