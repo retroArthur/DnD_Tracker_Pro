@@ -318,11 +318,13 @@ const performanceMetrics = {
     entityCounts: {},
     lastCheck: Date.now()
 };
+let perfMonitoringInterval = null;
 function initPerformanceMonitoring() {
     // Überwache Entity-Größen
     updateEntityCounts();
     // Performance-Check alle 30 Sekunden
-    setInterval(() => {
+    if (perfMonitoringInterval) clearInterval(perfMonitoringInterval);
+    perfMonitoringInterval = window.setInterval(() => {
         checkPerformance();
     }, 30000);
     // Initial Check
