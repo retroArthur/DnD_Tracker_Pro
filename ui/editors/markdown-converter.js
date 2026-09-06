@@ -259,10 +259,6 @@ function renderMarkdownInContent(html) {
     const sanitizeHTML = window.sanitizeHTML;
     if (!html || typeof html !== 'string') return html;
 
-    // Check if content already contains HTML tags (already converted)
-    // If it's pure markdown, convert it
-    const hasHtmlTags = /<[^>]+>/.test(html);
-
     let result = html;
 
     // Convert markdown patterns to HTML

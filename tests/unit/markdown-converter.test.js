@@ -257,4 +257,21 @@ describe('MAINT-03: Wortgrenzen-Regel für Unterstrich-Emphase (renderMarkdownIn
         expect(renderMarkdownInContent('*kursiv*')).toBe('<i>kursiv</i>');
         expect(renderMarkdownInContent('**fett**')).toBe('<b>fett</b>');
     });
+
+    // Regressionsfall (Task 2): das Entfernen des toten hasHtmlTags-Wächters darf die
+    // Erkennung/Darstellung von bereits gespeichertem HTML (Tabellen, Read-Aloud-Blöcke)
+    // nicht verändern — der Wächter wurde nie gelesen, hat also nie verzweigt, aber dieser
+    // Fall belegt es empirisch statt nur per Codelesen.
+    test('gespeichertes HTML mit Tabelle und Read-Aloud-Block wird nach Entfernen des hasHtmlTags-Wächters unverändert dargestellt', () => {
+        const input =
+            '<table><tr><th>Gegenstand</th></tr><tr><td>Schwert</td></tr></table>' +
+            '<div class="read-aloud">Ihr betretet die verrauchte Taverne.</div>';
+        const result = renderMarkdownInContent(input);
+        expect(result).toContain('<table>');
+        expect(result).toContain('<tr>');
+        expect(result).toContain('<th>Gegenstand</th>');
+        expect(result).toContain('<td>Schwert</td>');
+        expect(result).toContain('class="read-aloud"');
+        expect(result).toContain('Ihr betretet die verrauchte Taverne.');
+    });
 });
