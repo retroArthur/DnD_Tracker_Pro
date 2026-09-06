@@ -259,6 +259,23 @@ function sanitizeHTML(html) {
     }
     return result.innerHTML;
 }
+// UTF-8-Bytezahl ohne Zwischenobjekt (PERF-01/D-08): ein Durchlauf pro Codepoint, exakt
+// gleich zu new Blob([s]).size — bewiesen gegen ASCII, Umlaute, Emoji (Surrogatpaar) und
+// unpaarige Surrogate in tests/unit/stability.test.js. Bewusst KEIN TextEncoder: der legt
+// intern ebenfalls eine komplette Kopie an und löst das eigentliche Problem nicht.
+function utf8ByteLength(str) {
+    let bytes = 0;
+    for (let i = 0; i < str.length; i++) {
+        const code = str.codePointAt(i);
+        if (code > 0xffff) i++; // Surrogatpaar: zweiten Index überspringen
+        if (code < 0x80) bytes += 1;
+        else if (code < 0x800) bytes += 2;
+        else if (code < 0x10000) bytes += 3;
+        else bytes += 4;
+    }
+    return bytes;
+}
+window.utf8ByteLength = utf8ByteLength;
 // Sichere localStorage-Wrapper-Funktionen
 const StorageAPI = {
     // Sicheres Lesen aus localStorage

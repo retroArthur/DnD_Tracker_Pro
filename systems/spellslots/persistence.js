@@ -30,6 +30,14 @@ function _notifyPostSaveHooks() {
         }
     }
 }
+// Byte-Größe von str: bevorzugt allokationsfrei über window.utf8ByteLength (PERF-01/D-08),
+// mit Blob-Rückfall, falls die Funktion (noch) nicht aufgelöst werden kann — ein Save darf
+// dadurch nicht scheitern. Parametername bewusst NICHT "dataString": hält den Blob-Rückfall
+// textuell von den entfernten Alt-Aufrufstellen unterscheidbar (Nyquist-Grep in 13-06-PLAN.md).
+function _measureDataByteLength(str) {
+    if (typeof window.utf8ByteLength === 'function') return window.utf8ByteLength(str);
+    return new Blob([str]).size;
+}
 // Sofortiges Speichern (für kritische Aktionen)
 async function saveImmediate() {
     const STORAGE_KEY = window.STORAGE_KEY;
@@ -39,7 +47,7 @@ async function saveImmediate() {
     const broadcastSave = window.broadcastSave;
     updateSaveIndicator('saving');
     const dataString = JSON.stringify(D);
-    const dataSizeMB = new Blob([dataString]).size / (1024 * 1024);
+    const dataSizeMB = _measureDataByteLength(dataString) / (1024 * 1024);
     // localStorage Limit: ~5-10MB je nach Browser
     const LS_LIMIT_MB = 5;
     const LS_WARNING_MB = 4;

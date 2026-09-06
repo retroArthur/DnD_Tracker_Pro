@@ -164,6 +164,86 @@ describe('Data Persistence', () => {
             const stored = JSON.parse(localStorage.getItem(APP_CONFIG.STORAGE_KEY));
             expect(stored.characters[0].name).toBe('Immediate Save');
         });
+
+        // PERF-01/D-08, Tracer (Task 1 von 13-06): die globalen save/saveImmediate-Mocks aus
+        // tests/setup.js rufen niemals new Blob() oder utf8ByteLength() auf — sie beweisen
+        // also NICHT, dass die echte saveImmediate() umgestellt wurde. Dieser Test laedt die
+        // ECHTE persistence.js ueber die Werkbank _erzeugePersistenzKontext() (siehe unten,
+        // hoisted) und weist die tatsaechliche Aufrufstelle nach.
+        test('saveImmediate() nutzt window.utf8ByteLength() statt new Blob() im Normalpfad (PERF-01/D-08, Tracer)', async () => {
+            const { context } = _erzeugePersistenzKontext({
+                D: { characters: [{ id: 1, name: 'Tracer-Held' }] }
+            });
+            const spy = jest.fn(str => new Blob([str]).size);
+            context.window.utf8ByteLength = spy;
+
+            await context.window.saveImmediate();
+
+            expect(spy).toHaveBeenCalledTimes(1);
+            expect(spy).toHaveBeenCalledWith(JSON.stringify(context.window.D));
+        });
+    });
+});
+
+// ----------------------------------------------------------------
+// utf8ByteLength() gegen die Blob-Referenz (PERF-01/D-08, Beweispflicht A1 aus 13-RESEARCH.md):
+// die Blob-Messung ist die REFERENZ, nicht der Ersatz — dieser Block beweist, dass die neue
+// allokationsfreie Zaehlung fuer ASCII, deutsche Umlaute, Emoji (Surrogatpaar), ein einzelnes
+// unpaariges Surrogat und einen realistischen JSON.stringify-Ausschnitt exakt denselben Wert
+// liefert wie new Blob([s]).size, BEVOR sie an einer Save-Aufrufstelle produktiv wird.
+// ----------------------------------------------------------------
+function _ladeUtf8ByteLength() {
+    const fs = require('fs');
+    const path = require('path');
+    const vm = require('vm');
+    const source = fs.readFileSync(path.join(__dirname, '../../utils/basic.js'), 'utf-8');
+    const start = source.indexOf('function utf8ByteLength(');
+    if (start < 0) throw new Error('utf8ByteLength nicht in utils/basic.js gefunden');
+    // Gleiche Extraktionstechnik wie fuer StorageAPI in _erzeugePersistenzKontext: die
+    // schliessende Klammer der Funktion steht auf Spalte 0, direkt nach einem Zeilenumbruch.
+    const ende = source.indexOf('\n}', start);
+    if (ende < 0) throw new Error('utf8ByteLength-Blockende nicht gefunden');
+    const context = {};
+    vm.createContext(context);
+    vm.runInContext(
+        source.slice(start, ende + 2) + '\nvar __utf8ByteLength = utf8ByteLength;\n',
+        context
+    );
+    return context.__utf8ByteLength;
+}
+
+describe('utf8ByteLength() gegen Blob-Referenz (PERF-01/D-08, Beweispflicht A1)', () => {
+    const utf8ByteLength = _ladeUtf8ByteLength();
+
+    test.each([
+        ['leerer String', ''],
+        ['reines ASCII', 'Hello World 123 - Kampagne'],
+        ['deutsche Umlaute', 'äöüß ÄÖÜ Kämpfer Übermütig'],
+        ['Emoji ausserhalb der BMP (Surrogatpaar)', '🎲🐉⚔️🗡️'],
+        ['unpaariges Surrogat', 'vor\uD800nach'],
+        [
+            'realistischer JSON.stringify-Ausschnitt mit gemischtem Inhalt',
+            JSON.stringify({
+                name: 'Éowyn äöü',
+                notes: 'Kämpft mit 🗡️ gegen den Nazgûl — "Kein Mann bin ich!"',
+                hp: 44,
+                tags: ['Held', 'Rohan', '🐴']
+            })
+        ]
+    ])('%s: utf8ByteLength() liefert denselben Wert wie new Blob([s]).size', (_label, input) => {
+        expect(utf8ByteLength(input)).toBe(new Blob([input]).size);
+    });
+
+    test("utf8ByteLength('äöüß') liefert 8", () => {
+        expect(utf8ByteLength('äöüß')).toBe(8);
+    });
+
+    test("utf8ByteLength('🎲') liefert 4", () => {
+        expect(utf8ByteLength('🎲')).toBe(4);
+    });
+
+    test("utf8ByteLength('') liefert 0", () => {
+        expect(utf8ByteLength('')).toBe(0);
     });
 });
 
@@ -1911,6 +1991,15 @@ function _erzeugePersistenzKontext(optionen = {}) {
         basicSrc.slice(start, ende + 3) + '\nvar __StorageAPI = StorageAPI;\n',
         context
     );
+
+    // ECHTE utf8ByteLength aus utils/basic.js (PERF-01/D-08) — die Save-Aufrufstellen in
+    // persistence.js loesen sie ueber window.utf8ByteLength auf; context.window === context,
+    // die Funktionsdeklaration wird also automatisch als window.utf8ByteLength sichtbar.
+    const utf8Start = basicSrc.indexOf('function utf8ByteLength(');
+    if (utf8Start < 0) throw new Error('utf8ByteLength nicht in utils/basic.js gefunden');
+    const utf8Ende = basicSrc.indexOf('\n}', utf8Start);
+    if (utf8Ende < 0) throw new Error('utf8ByteLength-Blockende nicht gefunden');
+    vm.runInContext(basicSrc.slice(utf8Start, utf8Ende + 2), context);
 
     vm.runInContext(
         fs.readFileSync(path.join(wurzel, 'systems/spellslots/persistence.js'), 'utf-8'),
