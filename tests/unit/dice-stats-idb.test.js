@@ -295,3 +295,149 @@ describe('clearAllStats / getStatsCount — Loeschfunktion mit Rueckfrage (PERF-
         expect(count).toBe(12);
     });
 });
+
+// ============================================================
+// getStatsAggregate — cursor-basiertes Aggregat vs. bisheriger Array-Weg (PERF-02/D-12)
+// ============================================================
+//
+// getStatsAggregate() ruft window._classifyD20Roll()/window.parseCharFromNotation() auf
+// (echte Implementierung in dice-stats-render.js, hier NICHT mit-eval't — analog zu
+// tests/unit/dice-stats.test.js, das dieselben reinen Helfer bereits als eigene Kopie fuer
+// DOM-freie Tests haelt). Die Testdoubles unten sind bitgenau dieselbe Regel, damit der
+// Vergleich mit dem "alten Weg" (computeD20CountsRef + attributeRollsRef) aussagekraeftig bleibt.
+
+function computeD20CountsRef(records) {
+    var counts = new Array(20).fill(0);
+    if (!Array.isArray(records)) return counts;
+    records.forEach(function (r) {
+        if (!r.rolls || !Array.isArray(r.rolls)) return;
+        var notation = (r.notation || '').toString();
+        var isD20 = notation.includes('d20') || notation.includes('D20')
+            || notation === 'Vorteil' || notation === 'Nachteil';
+        if (!isD20) return;
+        r.rolls.forEach(function (face) {
+            if (typeof face === 'number' && face >= 1 && face <= 20) counts[face - 1]++;
+        });
+    });
+    return counts;
+}
+
+function parseCharFromNotationRef(notation, characters) {
+    if (!notation || typeof notation !== 'string') return 'Allgemein';
+    var chars = Array.isArray(characters) ? characters : [];
+    var colonIdx = notation.indexOf(': ');
+    if (colonIdx > 0) {
+        var prefix = notation.substring(0, colonIdx);
+        for (var i = 0; i < chars.length; i++) {
+            if (chars[i].name && chars[i].name === prefix) return chars[i].name;
+        }
+    }
+    if (notation.endsWith(' Init')) {
+        var namePart = notation.slice(0, -5);
+        for (var j = 0; j < chars.length; j++) {
+            if (chars[j].name && chars[j].name === namePart) return chars[j].name;
+        }
+    }
+    return 'Allgemein';
+}
+
+function attributeRollsRef(records, characters) {
+    var result = new Map();
+    if (!Array.isArray(records)) return result;
+    records.forEach(function (r) {
+        var name = parseCharFromNotationRef(r.notation, characters);
+        if (!result.has(name)) result.set(name, []);
+        result.get(name).push(r);
+    });
+    return result;
+}
+
+function installClassifierStubs(characters) {
+    global.window.D = { characters: characters || [] };
+    global.window._classifyD20Roll = function (record, counts) {
+        if (!record || !record.rolls || !Array.isArray(record.rolls)) return;
+        var notation = (record.notation || '').toString();
+        var isD20 = notation.includes('d20') || notation.includes('D20')
+            || notation === 'Vorteil' || notation === 'Nachteil';
+        if (!isD20) return;
+        record.rolls.forEach(function (face) {
+            if (typeof face === 'number' && face >= 1 && face <= 20) counts[face - 1]++;
+        });
+    };
+    global.window.parseCharFromNotation = parseCharFromNotationRef;
+}
+
+function makeCharRecord(notation, rolls, sessionId) {
+    return { notation: notation, result: rolls[0], rolls: rolls, timestamp: 1, sessionId: sessionId || 's', charId: null };
+}
+
+describe('getStatsAggregate — Cursor-Aggregat identisch zum bisherigen Array-Weg (PERF-02/D-12)', function () {
+    afterEach(function () {
+        delete global.window._classifyD20Roll;
+        delete global.window.parseCharFromNotation;
+    });
+
+    test('gleiche Eingangsdaten: counts und byChar identisch zu computeD20Counts()/attributeRolls() ueber getAllStats()', async function () {
+        const chars = [{ id: 1, name: 'Thorin' }, { id: 2, name: 'Gandalf' }];
+        installClassifierStubs(chars);
+        const seeds = [
+            makeCharRecord('Thorin: STR', [12]),
+            makeCharRecord('Thorin: STR Save', [8]),
+            makeCharRecord('Gandalf: WIS', [17]),
+            makeCharRecord('1d20', [20]),
+            makeCharRecord('Vorteil', [14, 19]),
+            makeCharRecord('Stats', ['irrelevant-non-d20'])
+        ];
+        installMockIDB(seeds);
+
+        const aggregate = await getStatsAggregate();
+
+        // "Alter Weg": getAllStats() (volles Array) + computeD20Counts()/attributeRolls()
+        const oldCounts = computeD20CountsRef(seeds);
+        const oldBreakdown = attributeRollsRef(seeds, chars);
+
+        expect(aggregate.total).toBe(seeds.length);
+        expect(aggregate.counts).toEqual(oldCounts);
+        expect(Object.keys(aggregate.byChar).sort()).toEqual(Array.from(oldBreakdown.keys()).sort());
+        oldBreakdown.forEach(function (recs, name) {
+            expect(aggregate.byChar[name]).toEqual(computeD20CountsRef(recs));
+        });
+    });
+
+    test('leerer Store: total 0, Nullen-Array (kein NaN)', async function () {
+        installClassifierStubs([]);
+        installMockIDB([]);
+        const aggregate = await getStatsAggregate();
+        expect(aggregate.total).toBe(0);
+        expect(aggregate.counts).toEqual(new Array(20).fill(0));
+        expect(Object.keys(aggregate.byChar)).toEqual([]);
+        expect(Number.isNaN(aggregate.counts[0])).toBe(false);
+    });
+
+    test('Session-Filter: liefert dieselbe Menge wie getStatsForSession() + computeD20Counts()', async function () {
+        installClassifierStubs([]);
+        const seeds = [
+            makeCharRecord('1d20', [15], 'A'),
+            makeCharRecord('1d20', [3], 'A'),
+            makeCharRecord('1d20', [18], 'A'),
+            makeCharRecord('1d20', [7], 'B'),
+            makeCharRecord('1d20', [12], 'B')
+        ];
+        installMockIDB(seeds);
+
+        const aggregateA = await getStatsAggregate('A');
+        const oldWay = seeds.filter(function (r) { return r.sessionId === 'A'; });
+        expect(aggregateA.total).toBe(oldWay.length);
+        expect(aggregateA.counts).toEqual(computeD20CountsRef(oldWay));
+
+        const aggregateUnknown = await getStatsAggregate('X');
+        expect(aggregateUnknown.total).toBe(0);
+    });
+
+    test('fehlt window.idb, liefert getStatsAggregate() das leere Aggregat statt zu werfen', async function () {
+        installClassifierStubs([]);
+        global.window.idb = null;
+        const aggregate = await getStatsAggregate();
+        expect(aggregate).toEqual({ total: 0, counts: new Array(20).fill(0), byChar: {} });
+    });
+});

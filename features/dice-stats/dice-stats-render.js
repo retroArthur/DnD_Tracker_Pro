@@ -14,6 +14,32 @@ var _statsScope = 'session';
 // ============================================================
 
 /**
+ * _classifyD20Roll — klassifiziert EINEN Datensatz in ein bestehendes counts-Array(20)
+ * (in-place). Beruecksichtigt nur Records, deren notation auf d20 hinweist.
+ * RESEARCH § "Computing d20 Histogram Counts"
+ *
+ * Extrahiert aus computeD20Counts(), damit der cursor-basierte Aggregatpfad
+ * (dice-stats-idb.js getStatsAggregate(), PERF-02/D-12) dieselbe Regel per Datensatz
+ * aufrufen kann, statt sie zu kopieren — zwei Kopien derselben Klassifikationsregel sind
+ * genau die Fehlerklasse, die dieses Projekt zweimal getroffen hat (DEBT-17/DEBT-18).
+ *
+ * @param {Object} record  - ein einzelner diceStats-Record
+ * @param {number[]} counts - Array der Laenge 20, wird IN-PLACE veraendert
+ */
+function _classifyD20Roll(record, counts) {
+    if (!record || !record.rolls || !Array.isArray(record.rolls)) return;
+    var notation = (record.notation || '').toString();
+    var isD20 = notation.includes('d20') || notation.includes('D20')
+        || notation === 'Vorteil' || notation === 'Nachteil';
+    if (!isD20) return;
+    record.rolls.forEach(function(face) {
+        if (typeof face === 'number' && face >= 1 && face <= 20) {
+            counts[face - 1]++;
+        }
+    });
+}
+
+/**
  * computeD20Counts — baut Array(20) mit Trefferhaeufigkeiten fuer Faces 1–20.
  * Beruecksichtigt nur Records, deren notation auf d20 hinweist.
  * RESEARCH § "Computing d20 Histogram Counts"
@@ -24,18 +50,7 @@ var _statsScope = 'session';
 function computeD20Counts(records) {
     var counts = new Array(20).fill(0);
     if (!Array.isArray(records)) return counts;
-    records.forEach(function(r) {
-        if (!r.rolls || !Array.isArray(r.rolls)) return;
-        var notation = (r.notation || '').toString();
-        var isD20 = notation.includes('d20') || notation.includes('D20')
-            || notation === 'Vorteil' || notation === 'Nachteil';
-        if (!isD20) return;
-        r.rolls.forEach(function(face) {
-            if (typeof face === 'number' && face >= 1 && face <= 20) {
-                counts[face - 1]++;
-            }
-        });
-    });
+    records.forEach(function(r) { _classifyD20Roll(r, counts); });
     return counts;
 }
 
@@ -226,12 +241,12 @@ function renderDiceStats() {
     // Lade-State sofort anzeigen (async query folgt)
     c.innerHTML = '<p class="ds-loading" style="color:var(--text-dim);text-align:center;padding:2rem;">Lade Statistiken…</p>';
 
-    // Async IDB-Abfrage
-    var queryFn = (_statsScope === 'session' && typeof window.getStatsForSession === 'function')
-        ? window.getStatsForSession(window._currentSessionId || 'default')
-        : (typeof window.getAllStats === 'function'
-            ? window.getAllStats()
-            : Promise.resolve([]));
+    // Cursor-basiertes Aggregat statt Vollladen (PERF-02/D-12) — der volle Array-Zugriff
+    // bleibt ausschliesslich fuer den einmaligen Umzugs-Export reserviert
+    // (systems/migration/audio-export.js, unveraendert).
+    var aggregateFn = (typeof window.getStatsAggregate === 'function')
+        ? window.getStatsAggregate(_statsScope === 'session' ? (window._currentSessionId || 'default') : undefined)
+        : Promise.resolve({ total: 0, counts: new Array(20).fill(0), byChar: {} });
 
     // Gesamtzahl im STORE (nicht nur im aktuellen Scope) — bestimmt, ob der Loeschen-Knopf
     // ueberhaupt gerendert wird (PERF-02/D-11). Eigener leichter store.count()-Aufruf, laedt
@@ -240,24 +255,25 @@ function renderDiceStats() {
         ? window.getStatsCount()
         : Promise.resolve(0);
 
-    Promise.all([queryFn, countFn]).then(function(results) {
-        _renderDiceStatsContent(c, results[0] || [], results[1] || 0);
+    Promise.all([aggregateFn, countFn]).then(function(results) {
+        _renderDiceStatsContent(c, results[0] || { total: 0, counts: new Array(20).fill(0), byChar: {} }, results[1] || 0);
     }).catch(function() {
-        _renderDiceStatsContent(c, [], 0);
+        _renderDiceStatsContent(c, { total: 0, counts: new Array(20).fill(0), byChar: {} }, 0);
     });
 }
 
 /**
- * _renderDiceStatsContent — baut das vollstaendige HTML nach IDB-Abfrage.
+ * _renderDiceStatsContent — baut das vollstaendige HTML aus dem cursor-basierten Aggregat.
  * @param {HTMLElement} container
- * @param {Array} records
+ * @param {{ total: number, counts: number[], byChar: Object<string, number[]> }} aggregate
  * @param {number} [totalStoreCount] - Gesamtzahl im GESAMTEN Store (nicht nur im aktuellen
  *   Scope) — steuert, ob der Loeschen-Knopf gerendert wird (PERF-02/D-11).
  */
-function _renderDiceStatsContent(container, records, totalStoreCount) {
-    var counts = computeD20Counts(records);
+function _renderDiceStatsContent(container, aggregate, totalStoreCount) {
+    var counts = (aggregate && Array.isArray(aggregate.counts)) ? aggregate.counts : new Array(20).fill(0);
+    var total = (aggregate && typeof aggregate.total === 'number') ? aggregate.total : 0;
+    var byChar = (aggregate && aggregate.byChar) ? aggregate.byChar : {};
     var rates = critFumbleRates(counts);
-    var chars = (window.D && Array.isArray(window.D.characters)) ? window.D.characters : [];
 
     // Segmented Toggle
     var sessionActive = _statsScope === 'session' ? ' ds-toggle-btn--active' : '';
@@ -280,7 +296,7 @@ function _renderDiceStatsContent(container, records, totalStoreCount) {
 
     // Histogram
     var histSvg = renderD20Histogram(counts);
-    var noRollsNote = records.length === 0
+    var noRollsNote = total === 0
         ? '<p class="ds-no-data">Noch keine Wuerfelwuerfe ' + (_statsScope === 'session' ? 'in dieser Session' : 'erfasst') + '. Wuerfel ein paar d20!</p>'
         : '';
 
@@ -300,17 +316,18 @@ function _renderDiceStatsContent(container, records, totalStoreCount) {
         + '<span class="ds-rate-total">Gesamt d20-Wuerfe: ' + rates.total + '</span>'
         + '</div>';
 
-    // Per-Character Breakdown
+    // Per-Character Breakdown — aus aggregate.byChar (bereits vom Cursor-Pfad klassifiziert,
+    // dieselbe Regel wie computeD20Counts()/parseCharFromNotation(), siehe getStatsAggregate())
     var breakdownHtml = '';
-    var breakdown = attributeRolls(records, chars);
-    if (breakdown.size > 0) {
+    var byCharNames = Object.keys(byChar);
+    if (byCharNames.length > 0) {
         breakdownHtml = '<div class="ds-breakdown">'
             + '<h4 class="ds-breakdown-title">Aufschluesslung nach Charakter</h4>'
             + '<table class="ds-breakdown-table">'
             + '<thead><tr><th>Charakter</th><th>d20-Wuerfe</th><th>Crit</th><th>Fumble</th></tr></thead>'
             + '<tbody>';
-        breakdown.forEach(function(recs, name) {
-            var bCounts = computeD20Counts(recs);
+        byCharNames.forEach(function(name) {
+            var bCounts = byChar[name];
             var bRates = critFumbleRates(bCounts);
             // esc() auf Character-Namen (T-07-NOTATION-XSS)
             var safeName = typeof esc === 'function' ? esc(name) : name;
@@ -349,6 +366,7 @@ function _setStatsScope(scope) {
 // ============================================================
 
 // Pure helpers — exported so unit tests can access them directly
+window._classifyD20Roll = _classifyD20Roll;
 window.computeD20Counts = computeD20Counts;
 window.expectedPerFace = expectedPerFace;
 window.critFumbleRates = critFumbleRates;

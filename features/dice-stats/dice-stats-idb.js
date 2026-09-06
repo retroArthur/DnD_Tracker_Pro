@@ -136,6 +136,68 @@ async function getStatsForSession(sessionId) {
 }
 
 /**
+ * getStatsAggregate — cursor-basiertes Aggregat ueber den diceStats-Store, OHNE das
+ * Datensatz-Array je zu materialisieren (PERF-02/D-12). Ersetzt fuer den heissen Konsumenten
+ * dice-stats-render.js:233 den bisherigen Weg ueber getAllStats()/getStatsForSession() +
+ * computeD20Counts(). getAllStats() selbst bleibt UNVERAENDERT fuer den einmaligen
+ * Umzugs-Export (systems/migration/audio-export.js) erhalten — das ist die D-12-Grenze.
+ *
+ * Ruft window._classifyD20Roll()/window.parseCharFromNotation() (dice-stats-render.js) auf,
+ * statt die Klassifikationsregel zu kopieren (DEBT-17/18-Vermeidung, siehe dortiger Kommentar).
+ *
+ * @param {string} [sessionId] - wenn gesetzt: nur Datensaetze dieser Session, ueber den
+ *   bestehenden sessionId-Index (Formvorlage: getStatsForSession() oben). Sonst der gesamte Store.
+ * @returns {Promise<{ total: number, counts: number[], byChar: Object<string, number[]> }>}
+ */
+async function getStatsAggregate(sessionId) {
+    function emptyAggregate() { return { total: 0, counts: new Array(20).fill(0), byChar: {} }; }
+    if (!window.initIndexedDB) return emptyAggregate();
+    await window.initIndexedDB();
+    return new Promise(function(resolve) {
+        if (!window.idb) { resolve(emptyAggregate()); return; }
+        try {
+            var tx = window.idb.transaction(['diceStats'], 'readonly');
+            var store = tx.objectStore('diceStats');
+            var chars = (window.D && Array.isArray(window.D.characters)) ? window.D.characters : [];
+            var total = 0;
+            var counts = new Array(20).fill(0);
+            var byChar = {};
+
+            function classify(record) {
+                total++;
+                var name = (typeof window.parseCharFromNotation === 'function')
+                    ? window.parseCharFromNotation(record.notation, chars)
+                    : 'Allgemein';
+                if (!byChar[name]) byChar[name] = new Array(20).fill(0);
+                if (typeof window._classifyD20Roll === 'function') {
+                    window._classifyD20Roll(record, counts);
+                    window._classifyD20Roll(record, byChar[name]);
+                }
+            }
+
+            var cursorReq = sessionId
+                ? store.index('sessionId').openCursor(sessionId)
+                : store.openCursor();
+
+            cursorReq.onsuccess = function(e) {
+                var cursor = e.target.result;
+                if (!cursor) {
+                    resolve({ total: total, counts: counts, byChar: byChar });
+                    return;
+                }
+                classify(cursor.value);
+                cursor.continue();
+            };
+            cursorReq.onerror = function() {
+                resolve({ total: total, counts: counts, byChar: byChar });
+            };
+        } catch (e) {
+            resolve(emptyAggregate());
+        }
+    });
+}
+
+/**
  * getStatsCount — Gesamtzahl aller Datensaetze im diceStats-Store, ueber store.count()
  * (kein Cursor, kein Array). Wird vom Loeschen-Knopf gebraucht, um den Verlust vor der
  * Rueckfrage zu beziffern (D-11) — ohne dafuer den Store voll zu laden (D-12-Geist).
@@ -191,6 +253,7 @@ window.getAllStats = getAllStats;
 window.getStatsForSession = getStatsForSession;
 window.getStatsCount = getStatsCount;
 window.clearAllStats = clearAllStats;
+window.getStatsAggregate = getStatsAggregate;
 // enforceStatsCap ist intern (statsIdbPut ruft sie gedrosselt auf) — Export existiert nur,
 // damit tests/unit/dice-stats-idb.test.js sie deterministisch einzeln aufrufen kann, ohne
 // erst STATS_CAP_CHECK_INTERVAL Schreibvorgaenge zu simulieren.
