@@ -62,10 +62,15 @@ wiederherstellbar ist (`SAFE-01`, `SAFE-02`, `SAFE-04`).
 
 ### Performance & Skalierung
 
-- **PERF-01** (`DEBT-06`, `DEBT-07`): Undo-Snapshots und Speichervorgänge serialisieren nicht mehr
-  bei jeder Operation die vollständige Kampagne. Heute läuft ein voller `JSON.stringify(window.D)`
-  vor **jeder** destruktiven Operation (`UNDO_LIMIT` 30) und erneut samt Blob-Messung bei **jedem**
-  `save()`/`saveImmediate()`.
+- **PERF-01** ✓ (`DEBT-06`, `DEBT-07`, Phase 13: 13-06 komplett): Beide Save-Aufrufstellen
+  (`saveImmediate()`, `save()`) messen die Kampagnengröße jetzt über die allokationsfreie
+  `utf8ByteLength()` statt einer zweiten `new Blob([...])`-Vollkopie (D-08, byte-gleich gegen die
+  Blob-Referenz bewiesen). `pushUndo()`/`redo()` deduplizieren zeichengleiche Snapshots und
+  verdrängen bei Überschreiten eines Byte-Budgets die ältesten Einträge, mit einer Untergrenze
+  von 5 Einträgen (D-09a/b) — die Ein-Schritt-Undo-Semantik bleibt unverändert. Die verbleibende
+  `JSON.stringify(window.D)`-Serialisierung vor jeder destruktiven Operation ist per Messung
+  (`13-PERF-MEASUREMENT.md`) als am Spieltisch unkritisch (~1 ms bei realistischer
+  Kampagnengröße) abgenommen, nicht eliminiert (D-10).
 - **PERF-02** (`DEBT-24`): Der Würfelstatistik-Store wächst nicht unbegrenzt und wird nicht komplett
   in den Speicher geladen — Prune- bzw. Löschfunktion vorhanden, `getAllStats()` arbeitet
   abschnittsweise.
@@ -136,7 +141,7 @@ wiederherstellbar ist (`SAFE-01`, `SAFE-02`, `SAFE-04`).
 | SAFE-06 | DEBT-11 | Phase 12 — Complete (12-07) |
 | SEC-03 | DEBT-23 | Phase 13 — Complete (13-01) |
 | SEC-04 | DEBT-14 | Phase 13 — Complete (13-02) |
-| PERF-01 | DEBT-06, DEBT-07 | Pending |
+| PERF-01 | DEBT-06, DEBT-07 | Phase 13 — Complete (13-06) |
 | PERF-02 | DEBT-24 | Pending |
 | MAINT-01 | DEBT-04 | Pending |
 | MAINT-02 | DEBT-25, DEBT-16, DEBT-13 | Phase 13 — Complete (13-02 + 13-04) |
