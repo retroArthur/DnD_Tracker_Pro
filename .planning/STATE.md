@@ -5,16 +5,16 @@ milestone_name: Schulden-Abbau
 current_phase: 13
 current_phase_name: Härtung & Wartbarkeit
 status: executing
-stopped_at: Completed 13-06-PLAN.md
-last_updated: "2026-09-06T07:33:42.607Z"
+stopped_at: Completed 13-07-PLAN.md
+last_updated: "2026-09-06T08:14:36.668Z"
 last_activity: 2026-09-06
 last_activity_desc: Phase 13 execution started
-state_head: dfe7d73cc9a1e8450d12b58162860870d6ba3e3f
+state_head: a036565551bc8f8bbc56c40fcaac4bd598fc7f94
 progress:
   total_phases: 3
   completed_phases: 1
   total_plans: 29
-  completed_plans: 22
+  completed_plans: 24
   percent: 33
 ---
 
@@ -41,7 +41,7 @@ See: `.planning/PROJECT.md` (Stand 2026-09-05)
 ## Current Position
 
 Phase: 13 (Härtung & Wartbarkeit) — EXECUTING
-Plan: 7 of 12
+Plan: 8 of 12
 Status: Ready to execute
 Last activity: 2026-09-06 — Phase 13 execution started
 
@@ -129,6 +129,7 @@ Browser-Verhalten an der Base64-Grenze (12-07).
 | Phase 13 P04 | 20min | 3 tasks | 8 files |
 | Phase 13 P05 | ~15min | 2 tasks | 2 files |
 | Phase 13 P06 | 45m | 3 tasks | 6 files |
+| Phase 13 P07 | 55min | 4 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -215,8 +216,8 @@ Browser-Verhalten an der Base64-Grenze (12-07).
 
 ## Session Continuity
 
-**Last session:** 2026-09-06T07:33:42.502Z
-**Stopped at:** Completed 13-06-PLAN.md
+**Last session:** 2026-09-06T08:14:36.559Z
+**Stopped at:** Completed 13-07-PLAN.md
 **Resume file:** None
 
 **Last action:** `/gsd-plan-phase 12 --gaps`. Ausgangslage: die Re-Verifikation vom 2026-09-04 steht auf `gaps_found` (6/8 Truths) — G-12-3 ist durch 12-08 sauber geschlossen, aber der Code-Review (`12-REVIEW.md`) hat zwei neue Blocker aufgedeckt, die der Verifier unabhaengig gegen den Quelltext bestaetigt hat: **CR-01** (der „Ueberspringen"-Button des Migrations-Wizards bleibt nach erfolgreichem Import sichtbar, ruft nur `_closeWizard()` statt `window.location.reload()` — der unbedingte `beforeunload`-Autosave in `avatars.js:170-176` schreibt danach das stale `window.D` ueber die frisch importierten Daten) und **CR-02** (`readCampaignDataForBackup()` Stufe 3 gibt `window.D` zurueck, ohne `campaignKey` gegen den aktiven Key zu pruefen — jede indizierte, nie gespeicherte Kampagne bekommt die Daten der aktiven Kampagne in ihre Backup-Datei). Auf Nachfrage hat der Nutzer die zwei nicht-blockierenden Warnungen **WR-01** (Audio-Rueckmeldung am falschen DOM-Element) und **WR-02** (`pushUndo()` leert den Redo-Stack im `catch` nicht) mit aufgenommen. Ergebnis: 3 Plaene — 12-09 (CR-01+WR-01, Welle 7), 12-10 (CR-02, Welle 7, disjunkte Dateien), 12-11 (WR-02 + Rebuild beider Bundles, Welle 8, weil ein Rebuild in derselben Welle die Commits seiner Geschwister nicht saehe = genau W-1). Plan-Checker: **VERIFICATION PASSED im ersten Durchlauf**, 0 Blocker/0 Warnungen, Baselines live nachgemessen (41+17+73=131). Zusaetzlich `COVERAGE.md` geschrieben (`No external API integration: …`) — das entschaerft den wiederkehrenden `api-coverage`-Fehlalarm bei `verify:pre` dauerhaft, der nur auf dem Substring „API" in „File System Access API" feuert. Commit `df4ea54`.
@@ -338,6 +339,7 @@ Browser-Verhalten an der Base64-Grenze (12-07).
 - [Phase 13]: D-08 (utf8ByteLength statt Blob) bewiesen: byte-gleich zur Blob-Referenz fuer ASCII/Umlaute/Emoji/unpaarige Surrogate; an beiden Save-Aufrufstellen produktiv
 - [Phase 13]: D-09a/b (Undo-Dedupe + Byte-Budget mit Untergrenze 5) umgesetzt in pushUndo()/redo(); Undo-Semantik (ein Schritt = volle Kampagne) unveraendert
 - [Phase 13]: Erfolgskriterium 2 fuer Undo-Pfad per Messung (13-PERF-MEASUREMENT.md) abgenommen: JSON.stringify(D) bei realistischer Kampagnengroesse ~1ms, D-10 bleibt bestehen
+- [Phase 13]: PERF-02: DICE_STATS_MAX_RECORDS=50000 (user-decided cap, D-11), oldest-first eviction throttled every 50th write; cursor-based getStatsAggregate() replaces full-array evaluation while getAllStats() stays exclusive to the migration export (D-12)
 
 ## Operator Next Steps
 

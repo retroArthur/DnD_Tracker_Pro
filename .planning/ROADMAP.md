@@ -124,7 +124,7 @@ Plans:
 **Goal**: Die verbliebenen Sicherheits- und Skalierungsrisiken sind geschlossen, und die Codebasis trägt keine übergroßen, toten oder irreführenden Stellen mehr, die künftige Arbeit verteuern.
 **Depends on**: Phase 12 (`PERF-01` fasst dieselben Persistenz-Dateien an wie `SAFE-05`)
 **Requirements**: SEC-03, SEC-04, PERF-01, PERF-02, MAINT-01, MAINT-02, MAINT-03, MAINT-04, MAINT-05, MAINT-06
-**Plans:** 6/12 plans executed
+**Plans:** 7/12 plans executed
 **Success Criteria** (what must be TRUE):
 
   1. Die `call`-Aktion ruft nur noch Ziele aus einer Whitelist auf; die Regex-Capture in `parseWikiLinks()` ist escapt
@@ -148,7 +148,7 @@ Plans:
 
 **Wave 2** *(blocked on Wave 1 — teilt `core/config.js` mit 13-06 und `system-actions.js` mit 13-02)*
 
-- [ ] 13-07-PLAN.md — PERF-02: Deckel und Löschfunktion für den Würfelstatistik-Store, cursor-basierter Aggregatpfad (Welle 2, Entscheidungs-Checkpoint)
+- [x] 13-07-PLAN.md — PERF-02: Deckel und Löschfunktion für den Würfelstatistik-Store, cursor-basierter Aggregatpfad (Welle 2, Entscheidungs-Checkpoint)
 
 **Wave 3** *(blocked on Wave 2 — fasst 28 Module an, die in den Wellen 1–2 geändert wurden)*
 

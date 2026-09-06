@@ -71,9 +71,13 @@ wiederherstellbar ist (`SAFE-01`, `SAFE-02`, `SAFE-04`).
   `JSON.stringify(window.D)`-Serialisierung vor jeder destruktiven Operation ist per Messung
   (`13-PERF-MEASUREMENT.md`) als am Spieltisch unkritisch (~1 ms bei realistischer
   Kampagnengröße) abgenommen, nicht eliminiert (D-10).
-- **PERF-02** (`DEBT-24`): Der Würfelstatistik-Store wächst nicht unbegrenzt und wird nicht komplett
-  in den Speicher geladen — Prune- bzw. Löschfunktion vorhanden, `getAllStats()` arbeitet
-  abschnittsweise.
+- **PERF-02** ✓ (`DEBT-24`, Phase 13: 13-07 komplett): Der Würfelstatistik-Store hat einen harten,
+  vom Nutzer entschiedenen Deckel (`DICE_STATS_MAX_RECORDS: 50000`, D-11) — beim Überschreiten
+  werden die ältesten Datensätze über einen aufsteigenden `openCursor()` verdrängt, gedrosselt und
+  niemals zeit-/sitzungsbasiert. Eine mit Rückfrage abgesicherte Löschfunktion (`clearAllStats()`)
+  ergänzt den Deckel. Die Auswertung lädt den Store nicht mehr vollständig: `getStatsAggregate()`
+  aggregiert per Cursor (D-12); `getAllStats()` bleibt unverändert dem einmaligen Umzugs-Export
+  vorbehalten.
 
 ### Wartbarkeit
 
@@ -142,7 +146,7 @@ wiederherstellbar ist (`SAFE-01`, `SAFE-02`, `SAFE-04`).
 | SEC-03 | DEBT-23 | Phase 13 — Complete (13-01) |
 | SEC-04 | DEBT-14 | Phase 13 — Complete (13-02) |
 | PERF-01 | DEBT-06, DEBT-07 | Phase 13 — Complete (13-06) |
-| PERF-02 | DEBT-24 | Pending |
+| PERF-02 | DEBT-24 | Phase 13 — Complete (13-07) |
 | MAINT-01 | DEBT-04 | Pending |
 | MAINT-02 | DEBT-25, DEBT-16, DEBT-13 | Phase 13 — Complete (13-02 + 13-04) |
 | MAINT-03 | DEBT-12 | Phase 13 — Complete (13-03) |
