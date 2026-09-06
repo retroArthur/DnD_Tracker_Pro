@@ -1,0 +1,23 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`DM Screen Charakterisierung (D-04, Plan 13-05) Widget "party" rendert deterministisches HTML gegen die volle Fixture (Tracer-Snapshot, Task 1) 1`] = `
+"
+        <div class="dms-party-stats">
+            <div class="dms-stat-row">
+                <span class="dms-stat-label">Party HP</span>
+                <div class="dms-hp-bar-container">
+                    <div class="dms-hp-bar healthy" style="width: 88%"></div>
+                    <span class="dms-hp-text">88%</span>
+                </div>
+            </div>
+            <div class="dms-stat-row">
+                <span class="dms-stat-label">Höchste Pass. Wahrn.</span>
+                <span class="dms-stat-value">17 <span class="dms-stat-char">(Elara Mondschein)</span></span>
+            </div>
+            <div class="dms-stat-row">
+                <span class="dms-stat-label">Spieler</span>
+                <span class="dms-stat-value">2</span>
+            </div>
+        </div>
+    "
+`;
