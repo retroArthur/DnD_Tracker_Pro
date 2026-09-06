@@ -281,7 +281,11 @@ var MAX_BACKUPS = window.MAX_BACKUPS;  // CONFLICT
         # Phase 13 / Plan 11 (MAINT-01): 'features/spells/spell-manager.js',
         # 'ui/editors/rich-text-insert.js' und 'ui/editors/rich-text-toolbars.js'
         # neu registriert (rich-text.js entflochten und aufgeteilt, D-03/D-02)
-        assert len(modules) == 130, f"Erwartet 130 Module, gefunden {len(modules)}"
+        # Phase 13 / Plan 12 (MAINT-01, letzter Split): 'features/dmscreen/dmscreen-config.js',
+        # 'features/dmscreen/dmscreen-widgets-base.js', 'features/dmscreen/dmscreen-widgets-combat.js'
+        # und 'features/dmscreen/dmscreen-widgets-reference.js' neu registriert
+        # (dmscreen-render.js aufgeteilt, D-02/D-04)
+        assert len(modules) == 134, f"Erwartet 134 Module, gefunden {len(modules)}"
 
         # Reihenfolge muss der Reihenfolge im Datei-Text entsprechen
         loader_content = loader_path.read_text(encoding='utf-8')
