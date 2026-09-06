@@ -887,12 +887,17 @@ async function completeReset() {
                     const deleteRequest = indexedDB.deleteDatabase(dbName);
                     deleteRequest.onsuccess = () =>
                         log('[completeReset] IndexedDB gelöscht:', dbName);
-                    deleteRequest.onerror = () =>
-                        console.warn('[completeReset] IndexedDB Fehler:', dbName);
+                    deleteRequest.onerror = () => {
+                        if (window.ErrorHandler) {
+                            window.ErrorHandler.log('completeReset', new Error('IndexedDB Fehler'), dbName);
+                        }
+                    };
                 }
                 log('[completeReset] IndexedDB Löschung initiiert');
             } catch (idbError) {
-                console.warn('[completeReset] IndexedDB Fehler:', idbError);
+                if (window.ErrorHandler) {
+                    window.ErrorHandler.log('completeReset', idbError, 'IndexedDB Fehler');
+                }
             }
         }
         // 3. Globales D-Objekt zurücksetzen
@@ -927,7 +932,9 @@ async function completeReset() {
             window.location.href = window.location.pathname + '?reset=' + Date.now();
         }, 500);
     } catch (error) {
-        console.error('[completeReset] Fehler:', error);
+        if (window.ErrorHandler) {
+            window.ErrorHandler.log('completeReset', error);
+        }
         alert('❌ Fehler beim Reset:\n\n' + error.message);
     }
 }

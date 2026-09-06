@@ -1159,7 +1159,9 @@ function insertWikiLinkSuggestion(title) {
             }
             contentEl.focus();
         } catch (e) {
-            console.warn('Link insertion failed:', e);
+            if (window.APP_CONFIG?.DEBUG_MODE && window.ErrorHandler) {
+                window.ErrorHandler.log('Link insertion', e);
+            }
         }
     }
     WikiState.linkSuggesterState = null;

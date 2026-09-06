@@ -187,8 +187,8 @@ function tabFnName(entry) {
 function renderTabContent(tabName) {
     const tabConfig = TAB_RENDER_REGISTRY[tabName];
     if (!tabConfig) {
-        if (window.APP_CONFIG?.DEBUG_MODE) {
-            console.warn(`[TabRegistry] No config for tab: ${tabName}`);
+        if (window.APP_CONFIG?.DEBUG_MODE && window.ErrorHandler) {
+            window.ErrorHandler.log('TabRegistry', new Error(`No config for tab: ${tabName}`));
         }
         return;
     }
@@ -199,11 +199,14 @@ function renderTabContent(tabName) {
             try {
                 initFn();
                 tabConfig._initialized = true;
-                if (window.APP_CONFIG?.DEBUG_MODE) {
-                    console.log(`[TabRegistry] Init ${tabFnName(tabConfig.init)}() for tab ${tabName}`);
+                // Erfolgreicher Init ist Normalverhalten, kein Fehler — nur ins in-App-Debug-Log
+                if (window.APP_CONFIG?.DEBUG_MODE && typeof window.debugLogAdd === 'function') {
+                    window.debugLogAdd(`[TabRegistry] Init ${tabFnName(tabConfig.init)}() for tab ${tabName}`);
                 }
             } catch (err) {
-                console.error(`[TabRegistry] Init failed for ${tabName}:`, err);
+                if (window.APP_CONFIG?.DEBUG_MODE && window.ErrorHandler) {
+                    window.ErrorHandler.log('TabRegistry', err, `Init failed for ${tabName}`);
+                }
             }
         }
     }
@@ -213,17 +216,24 @@ function renderTabContent(tabName) {
         if (renderFn) {
             try {
                 renderFn();
-                if (window.APP_CONFIG?.DEBUG_MODE) {
-                    console.log(`[TabRegistry] Rendered ${tabFnName(renderEntry)}() for tab ${tabName}`);
+                // Erfolgreiches Rendern ist Normalverhalten, kein Fehler — nur ins in-App-Debug-Log
+                if (window.APP_CONFIG?.DEBUG_MODE && typeof window.debugLogAdd === 'function') {
+                    window.debugLogAdd(`[TabRegistry] Rendered ${tabFnName(renderEntry)}() for tab ${tabName}`);
                 }
             } catch (err) {
-                console.error(
-                    `[TabRegistry] Render ${tabFnName(renderEntry)}() failed for tab ${tabName}:`,
-                    err
-                );
+                if (window.APP_CONFIG?.DEBUG_MODE && window.ErrorHandler) {
+                    window.ErrorHandler.log(
+                        'TabRegistry',
+                        err,
+                        `Render ${tabFnName(renderEntry)}() failed for tab ${tabName}`
+                    );
+                }
             }
-        } else {
-            console.warn(`[TabRegistry] Function ${tabFnName(renderEntry)} not found for tab ${tabName}`);
+        } else if (window.APP_CONFIG?.DEBUG_MODE && window.ErrorHandler) {
+            window.ErrorHandler.log(
+                'TabRegistry',
+                new Error(`Function ${tabFnName(renderEntry)} not found for tab ${tabName}`)
+            );
         }
     });
 }
@@ -233,38 +243,51 @@ function renderTabContent(tabName) {
  */
 function validateTabRegistry() {
     if (!window.APP_CONFIG?.DEBUG_MODE) return;
-    console.log('[TabRegistry] Validating registry...');
+    if (typeof window.debugLogAdd === 'function') {
+        window.debugLogAdd('[TabRegistry] Validating registry...');
+    }
     let errors = 0;
     let warnings = 0;
     Object.entries(TAB_RENDER_REGISTRY).forEach(([tabName, config]) => {
         // Check if render functions exist
         config.renders.forEach(renderEntry => {
             if (!resolveTabFn(renderEntry)) {
-                console.error(
-                    `[TabRegistry] Missing render function: ${tabFnName(renderEntry)} for tab ${tabName}`
-                );
+                if (window.ErrorHandler) {
+                    window.ErrorHandler.log(
+                        'TabRegistry',
+                        new Error(`Missing render function: ${tabFnName(renderEntry)} for tab ${tabName}`)
+                    );
+                }
                 errors++;
             }
         });
         // Check if init functions exist
         if (config.init && !resolveTabFn(config.init)) {
-            console.warn(
-                `[TabRegistry] Missing init function: ${tabFnName(config.init)} for tab ${tabName}`
-            );
+            if (window.ErrorHandler) {
+                window.ErrorHandler.log(
+                    'TabRegistry',
+                    new Error(`Missing init function: ${tabFnName(config.init)} for tab ${tabName}`)
+                );
+            }
             warnings++;
         }
         // Check if cleanup functions exist
         if (config.cleanup && !resolveTabFn(config.cleanup)) {
-            console.warn(
-                `[TabRegistry] Missing cleanup function: ${tabFnName(config.cleanup)} for tab ${tabName}`
-            );
+            if (window.ErrorHandler) {
+                window.ErrorHandler.log(
+                    'TabRegistry',
+                    new Error(`Missing cleanup function: ${tabFnName(config.cleanup)} for tab ${tabName}`)
+                );
+            }
             warnings++;
         }
     });
-    if (errors > 0 || warnings > 0) {
-        console.warn(`[TabRegistry] Validation complete: ${errors} errors, ${warnings} warnings`);
-    } else {
-        console.log('[TabRegistry] Validation complete: No issues found ✓');
+    if (typeof window.debugLogAdd === 'function') {
+        if (errors > 0 || warnings > 0) {
+            window.debugLogAdd(`[TabRegistry] Validation complete: ${errors} errors, ${warnings} warnings`);
+        } else {
+            window.debugLogAdd('[TabRegistry] Validation complete: No issues found');
+        }
     }
 }
 // ============================================================

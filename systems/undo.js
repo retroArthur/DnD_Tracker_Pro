@@ -125,7 +125,10 @@ function undo() {
     // Validate and repair _nextId after restore
     const validation = validateAndRepairNextId();
     if (!validation.valid) {
-        console.warn('[undo] Repaired _nextId inconsistencies:', validation.repairs);
+        // Selbstheilung ist Normalverhalten, kein Fehler — nur ins in-App-Debug-Log (UAT 01)
+        if (window.APP_CONFIG?.DEBUG_MODE && typeof window.debugLogAdd === 'function') {
+            window.debugLogAdd(`[undo] Repaired _nextId inconsistencies: ${validation.repairs.join('; ')}`);
+        }
     }
     const renderAll = window.renderAll;
     const saveImmediate = window.saveImmediate;
@@ -179,7 +182,10 @@ function redo() {
     // Validate and repair _nextId after restore
     const validation = validateAndRepairNextId();
     if (!validation.valid) {
-        console.warn('[redo] Repaired _nextId inconsistencies:', validation.repairs);
+        // Selbstheilung ist Normalverhalten, kein Fehler — nur ins in-App-Debug-Log (UAT 01)
+        if (window.APP_CONFIG?.DEBUG_MODE && typeof window.debugLogAdd === 'function') {
+            window.debugLogAdd(`[redo] Repaired _nextId inconsistencies: ${validation.repairs.join('; ')}`);
+        }
     }
     const renderAll = window.renderAll;
     const saveImmediate = window.saveImmediate;

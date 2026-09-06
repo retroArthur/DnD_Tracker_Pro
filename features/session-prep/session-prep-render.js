@@ -49,8 +49,8 @@ function formatPrepDatum(datum) {
 function renderSessionPrepList() {
     var container = $('sessionprep-content');
     if (!container) {
-        if (window.APP_CONFIG && window.APP_CONFIG.DEBUG_MODE) {
-            console.warn('[renderSessionPrepList] Container #sessionprep-content fehlt — nicht auf sessionprep-Tab');
+        if (window.APP_CONFIG && window.APP_CONFIG.DEBUG_MODE && typeof window.debugLogAdd === 'function') {
+            window.debugLogAdd('[renderSessionPrepList] Container #sessionprep-content fehlt — nicht auf sessionprep-Tab');
         }
         return;
     }

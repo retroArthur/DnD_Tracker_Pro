@@ -6,8 +6,8 @@
 // DOM-Selektor mit Debug-Warnung
 function $(id) {
     const el = document.getElementById(id);
-    if (!el && window.APP_CONFIG?.DEBUG_MODE) {
-        console.warn(`[DOM] Element not found: #${id}`, new Error().stack);
+    if (!el && window.APP_CONFIG?.DEBUG_MODE && window.ErrorHandler) {
+        window.ErrorHandler.log('$', new Error(`Element not found: #${id}`));
     }
     return el;
 }
@@ -285,7 +285,10 @@ const StorageAPI = {
             return value !== null ? value : fallback;
         } catch (e) {
             const error = e;
-            console.warn(`[Storage] Fehler beim Lesen von '${key}':`, error.message);
+            // Speicherfehler koennten stillen Datenverlust verdecken - Ausnahme (c), kein Guard
+            if (window.ErrorHandler) {
+                window.ErrorHandler.log('StorageAPI.get', error, key);
+            }
             // Private Browsing, SecurityError, etc.
             if (error.name === 'SecurityError') {
                 window.showToast?.('⚠️ Speicher nicht verfügbar (Private Browsing?)', 'warning');
@@ -300,7 +303,9 @@ const StorageAPI = {
             return { success: true };
         } catch (e) {
             const error = e;
-            console.error(`[Storage] Fehler beim Schreiben von '${key}':`, error.message);
+            if (window.ErrorHandler) {
+                window.ErrorHandler.log('StorageAPI.set', error, key);
+            }
             if (error.name === 'QuotaExceededError') {
                 // Speicher voll
                 window.showToast?.(
@@ -326,7 +331,9 @@ const StorageAPI = {
             return { success: true };
         } catch (e) {
             const error = e;
-            console.warn(`[Storage] Fehler beim Löschen von '${key}':`, error.message);
+            if (window.ErrorHandler) {
+                window.ErrorHandler.log('StorageAPI.remove', error, key);
+            }
             return { success: false, error: error.message };
         }
     },
@@ -370,7 +377,9 @@ const StorageAPI = {
             return JSON.parse(value);
         } catch (e) {
             const error = e;
-            console.warn(`[Storage] JSON Parse Fehler für '${key}':`, error.message);
+            if (window.ErrorHandler) {
+                window.ErrorHandler.log('StorageAPI.getJSON', error, key);
+            }
             return fallback;
         }
     },
@@ -380,7 +389,9 @@ const StorageAPI = {
             return this.set(key, jsonString);
         } catch (e) {
             const error = e;
-            console.error(`[Storage] JSON Stringify Fehler für '${key}':`, error.message);
+            if (window.ErrorHandler) {
+                window.ErrorHandler.log('StorageAPI.setJSON', error, key);
+            }
             return { success: false, error: 'JSON_ERROR', original: error };
         }
     },
@@ -390,7 +401,9 @@ const StorageAPI = {
             return localStorage.getItem(key) !== null;
         } catch (e) {
             const error = e;
-            console.warn(`[Storage] Fehler bei has('${key}'):`, error.message);
+            if (window.ErrorHandler) {
+                window.ErrorHandler.log('StorageAPI.has', error, key);
+            }
             return false;
         }
     },
@@ -401,7 +414,9 @@ const StorageAPI = {
             return { success: true };
         } catch (e) {
             const error = e;
-            console.error('[Storage] Fehler beim Löschen aller Daten:', error.message);
+            if (window.ErrorHandler) {
+                window.ErrorHandler.log('StorageAPI.clear', error);
+            }
             return { success: false, error: error.message };
         }
     }

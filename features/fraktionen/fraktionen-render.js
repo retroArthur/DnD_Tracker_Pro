@@ -48,8 +48,8 @@ function _renderRufBadge(rufwert) {
 function renderFraktionen() {
     var container = $('view-fraktionen');
     if (!container) {
-        if (window.APP_CONFIG && window.APP_CONFIG.DEBUG_MODE) {
-            console.warn('[renderFraktionen] Container #view-fraktionen fehlt — nicht auf fraktionen-Tab');
+        if (window.APP_CONFIG && window.APP_CONFIG.DEBUG_MODE && typeof window.debugLogAdd === 'function') {
+            window.debugLogAdd('[renderFraktionen] Container #view-fraktionen fehlt — nicht auf fraktionen-Tab');
         }
         return;
     }

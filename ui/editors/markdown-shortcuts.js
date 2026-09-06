@@ -188,13 +188,13 @@ function applyMarkdownFormat(editor, textNode, match) {
             }
         }
 
-        // Debug log in DEBUG_MODE
-        if (window.APP_CONFIG?.DEBUG_MODE) {
-            console.log('[Markdown] Applied', match.type, 'formatting:', match.content);
+        // Debug log in DEBUG_MODE — Erfolgsfall, kein Fehler, nur ins in-App-Debug-Log
+        if (window.APP_CONFIG?.DEBUG_MODE && typeof window.debugLogAdd === 'function') {
+            window.debugLogAdd(`[Markdown] Applied ${match.type} formatting: ${match.content}`);
         }
     } catch (err) {
-        if (window.APP_CONFIG?.DEBUG_MODE) {
-            console.warn('[Markdown] Format failed:', err);
+        if (window.APP_CONFIG?.DEBUG_MODE && window.ErrorHandler) {
+            window.ErrorHandler.log('Markdown', err, 'Format failed');
         }
     }
 }

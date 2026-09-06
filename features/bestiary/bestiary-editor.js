@@ -113,8 +113,8 @@ function openBestiaryEditor(ctx) {
             if (bestiary[i].id === numId) { creature = bestiary[i]; break; }
         }
         if (!creature) {
-            if (window.APP_CONFIG && window.APP_CONFIG.DEBUG_MODE) {
-                console.warn('[openBestiaryEditor] Kreatur nicht gefunden id=' + id);
+            if (window.APP_CONFIG && window.APP_CONFIG.DEBUG_MODE && window.ErrorHandler) {
+                window.ErrorHandler.log('openBestiaryEditor', new Error('Kreatur nicht gefunden id=' + id));
             }
             return;
         }

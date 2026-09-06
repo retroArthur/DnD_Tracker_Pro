@@ -112,7 +112,10 @@ function migrateData(data) {
     const ErrorHandler = window.ErrorHandler;
     for (const version of versions) {
         if (compareVersions(dataVersion, version) < 0) {
-            if (window.APP_CONFIG?.DEBUG_MODE) console.log(`[MIGRATION] Migriere von ${dataVersion} auf ${version}`);
+            if (window.APP_CONFIG?.DEBUG_MODE && typeof window.debugLogAdd === 'function') {
+                // Migrationsfortschritt ist Normalverhalten, kein Fehler — nur ins in-App-Debug-Log
+                window.debugLogAdd(`[MIGRATION] Migriere von ${dataVersion} auf ${version}`);
+            }
             try {
                 currentData = MIGRATIONS[version](currentData);
                 currentData._version = version;

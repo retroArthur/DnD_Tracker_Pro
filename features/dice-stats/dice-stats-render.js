@@ -232,8 +232,8 @@ function renderD20Histogram(counts) {
 function renderDiceStats() {
     var c = $('dicestats-container');
     if (!c) {
-        if (window.APP_CONFIG && window.APP_CONFIG.DEBUG_MODE) {
-            console.warn('[renderDiceStats] Container #dicestats-container nicht gefunden — nicht auf Statistiken-Tab?');
+        if (window.APP_CONFIG && window.APP_CONFIG.DEBUG_MODE && typeof window.debugLogAdd === 'function') {
+            window.debugLogAdd('[renderDiceStats] Container #dicestats-container nicht gefunden — nicht auf Statistiken-Tab?');
         }
         return;
     }

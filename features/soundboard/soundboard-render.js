@@ -179,8 +179,8 @@ async function renderSceneList() {
 function renderSoundboard() {
     var c = $('soundboard-container');
     if (!c) {
-        if (window.APP_CONFIG && window.APP_CONFIG.DEBUG_MODE) {
-            console.warn('[renderSoundboard] Container #soundboard-container nicht gefunden — nicht auf Soundboard-Tab?');
+        if (window.APP_CONFIG && window.APP_CONFIG.DEBUG_MODE && typeof window.debugLogAdd === 'function') {
+            window.debugLogAdd('[renderSoundboard] Container #soundboard-container nicht gefunden — nicht auf Soundboard-Tab?');
         }
         return;
     }

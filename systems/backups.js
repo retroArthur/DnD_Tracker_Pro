@@ -413,8 +413,13 @@ function getPerformanceReport() {
             .slice(0, 5)
     };
     console.table(report.entities);
-    console.log('Durchschnittliche Render-Zeit:', report.avgRenderTime.toFixed(2), 'ms');
-    console.log('Langsamste Renders:', report.slowestRenders);
+    if (window.APP_CONFIG?.DEBUG_MODE && window.ErrorHandler) {
+        window.ErrorHandler.log(
+            'getPerformanceReport',
+            new Error(`Durchschnittliche Render-Zeit: ${report.avgRenderTime.toFixed(2)}ms`),
+            JSON.stringify(report.slowestRenders)
+        );
+    }
     return report;
 }
 // Export für Auto-Backup vor destruktiven Operationen

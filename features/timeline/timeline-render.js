@@ -12,8 +12,8 @@
 function renderKalender() {
     var container = document.getElementById('tl-kalender-header');
     if (!container) {
-        if (window.APP_CONFIG && window.APP_CONFIG.DEBUG_MODE) {
-            console.warn('[renderKalender] Container #tl-kalender-header fehlt — nicht auf kalender-Tab');
+        if (window.APP_CONFIG && window.APP_CONFIG.DEBUG_MODE && typeof window.debugLogAdd === 'function') {
+            window.debugLogAdd('[renderKalender] Container #tl-kalender-header fehlt — nicht auf kalender-Tab');
         }
         return;
     }
@@ -59,8 +59,8 @@ function renderKalender() {
 function renderTimeline() {
     var container = document.getElementById('tl-events-list');
     if (!container) {
-        if (window.APP_CONFIG && window.APP_CONFIG.DEBUG_MODE) {
-            console.warn('[renderTimeline] Container #tl-events-list fehlt — nicht auf kalender-Tab');
+        if (window.APP_CONFIG && window.APP_CONFIG.DEBUG_MODE && typeof window.debugLogAdd === 'function') {
+            window.debugLogAdd('[renderTimeline] Container #tl-events-list fehlt — nicht auf kalender-Tab');
         }
         return;
     }

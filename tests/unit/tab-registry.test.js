@@ -101,9 +101,13 @@ describe('Tab-Registry — Laufzeit (renderTabContent löst verzögerte Referenz
         const consoleWarn = jest.fn();
         const consoleError = jest.fn();
         const consoleLog = jest.fn();
+        const errorHandlerLog = jest.fn();
 
         const context = {
-            window: { APP_CONFIG: { DEBUG_MODE: false } },
+            window: {
+                APP_CONFIG: { DEBUG_MODE: false },
+                ErrorHandler: { log: errorHandlerLog }
+            },
             console: { warn: consoleWarn, error: consoleError, log: consoleLog }
         };
         // Jede referenzierte Funktion als jest.fn() ins globale Scope der
@@ -119,7 +123,7 @@ describe('Tab-Registry — Laufzeit (renderTabContent löst verzögerte Referenz
 
         vm.createContext(context);
         vm.runInContext(SOURCE, context);
-        return { context, consoleWarn, consoleError, consoleLog };
+        return { context, consoleWarn, consoleError, consoleLog, errorHandlerLog };
     }
 
     test('renderTabContent("dashboard") ruft genau renderDashboard auf', () => {
@@ -158,14 +162,18 @@ describe('Tab-Registry — Laufzeit (renderTabContent löst verzögerte Referenz
         // umbenannte/entfernte Funktion.
         const withoutOne = new Set(registryIdentifiers);
         withoutOne.delete('renderBattlefieldBanner');
-        const { context, consoleWarn } = loadSandbox(withoutOne);
+        const { context, errorHandlerLog } = loadSandbox(withoutOne);
+        // Diagnose läuft seit MAINT-06 (13-08) über ErrorHandler.log() hinter DEBUG_MODE,
+        // nicht mehr über ein ungeguardetes console.warn.
+        context.window.APP_CONFIG.DEBUG_MODE = true;
 
         expect(() => context.renderTabContent('initiative')).not.toThrow();
 
         expect(context.renderInit).toHaveBeenCalledTimes(1);
         expect(context.renderQuickActionsBar).toHaveBeenCalledTimes(1);
-        expect(consoleWarn).toHaveBeenCalledWith(
-            expect.stringContaining('renderBattlefieldBanner')
+        expect(errorHandlerLog).toHaveBeenCalledWith(
+            'TabRegistry',
+            expect.objectContaining({ message: expect.stringContaining('renderBattlefieldBanner') })
         );
     });
 

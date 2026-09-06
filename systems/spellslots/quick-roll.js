@@ -140,10 +140,11 @@ async function load() {
             const validateDataIntegrity = window.validateDataIntegrity;
             const validation = validateDataIntegrity();
             if (!validation.valid) {
-                if (APP_CONFIG.DEBUG_MODE) {
-                    // Selbstheilung ist Normalverhalten — als Warnung, nicht rot (UAT 01);
-                    // validateDataIntegrity loggt die Reparaturliste bereits separat gelb.
-                    console.warn('[load] Daten-Reparaturen durchgeführt:', validation.repairs.join('; '));
+                if (APP_CONFIG.DEBUG_MODE && typeof window.debugLogAdd === 'function') {
+                    // Selbstheilung ist Normalverhalten, kein Fehler — nur ins in-App-Debug-Log
+                    // (validateDataIntegrity loggt die Reparaturliste bereits separat dort;
+                    // console.error waere hier ein falscher Alarm, UAT 01).
+                    window.debugLogAdd(`[load] Daten-Reparaturen durchgeführt: ${validation.repairs.join('; ')}`);
                 }
                 // Speichere reparierte Daten
                 const save = window.save;
@@ -195,7 +196,10 @@ function exportAllDataAsFile() {
         showToast('📁 Daten exportiert');
     } catch (err) {
         showToast('❌ Export fehlgeschlagen: ' + err.message, 'error');
-        console.error('[Export] Error:', err);
+        // Ausnahme (c): Export-Fehler koennten stillen Datenverlust verdecken, kein Guard
+        if (window.ErrorHandler) {
+            window.ErrorHandler.log('Export', err);
+        }
     }
 }
 // ============================================================

@@ -465,13 +465,17 @@ function renderShops() {
                     </div>
                 `;
                 } catch (shopErr) {
-                    console.error('Fehler beim Rendern eines Shops:', shopErr, shop);
+                    if (window.APP_CONFIG?.DEBUG_MODE && window.ErrorHandler) {
+                        window.ErrorHandler.log('renderShops', shopErr, `Fehler beim Rendern eines Shops (${shop?.id})`);
+                    }
                     return `<div class="shop-card" style="color: var(--red);">Fehler beim Laden des Shops</div>`;
                 }
             })
             .join('');
     } catch (err) {
-        console.error('renderShops Fehler:', err);
+        if (window.APP_CONFIG?.DEBUG_MODE && window.ErrorHandler) {
+            window.ErrorHandler.log('renderShops', err);
+        }
         container.innerHTML = renderEmptyState({
             icon: '⚠️',
             titleEmpty: 'Fehler beim Laden',
@@ -619,14 +623,18 @@ function renderShopItems(shopId, items) {
                         </div>
                     </div>`;
                     } catch (itemErr) {
-                        console.error('Fehler beim Rendern eines Shop-Items:', itemErr, item);
+                        if (window.APP_CONFIG?.DEBUG_MODE && window.ErrorHandler) {
+                            window.ErrorHandler.log('renderShopItems', itemErr, `Fehler beim Rendern eines Shop-Items (${item?.id})`);
+                        }
                         return '';
                     }
                 })
                 .join('')}
         </div>`;
     } catch (err) {
-        console.error('renderShopItems Fehler:', err);
+        if (window.APP_CONFIG?.DEBUG_MODE && window.ErrorHandler) {
+            window.ErrorHandler.log('renderShopItems', err);
+        }
         return '<div class="shop-items-empty">Fehler beim Laden der Artikel</div>';
     }
 }

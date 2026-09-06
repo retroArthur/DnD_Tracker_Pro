@@ -104,8 +104,8 @@ function renderCombatantSpellSlots(combatant, character) {
 function renderInit() {
     const c = $('init-list');
     if (!c) {
-        if (window.APP_CONFIG?.DEBUG_MODE) {
-            console.warn('[renderInit] Container missing - likely not on initiative tab');
+        if (window.APP_CONFIG?.DEBUG_MODE && typeof window.debugLogAdd === 'function') {
+            window.debugLogAdd('[renderInit] Container missing - likely not on initiative tab');
         }
         return;
     }

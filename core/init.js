@@ -154,8 +154,8 @@ async function init() {
 function initSortableLists() {
     // Check if drag-and-drop functions are available (loaded from performance-extras.js)
     if (typeof handleDragStart !== 'function') {
-        if (APP_CONFIG.DEBUG_MODE) {
-            console.log('[init] Drag-and-drop functions not yet loaded, skipping sortable lists');
+        if (APP_CONFIG.DEBUG_MODE && typeof window.debugLogAdd === 'function') {
+            window.debugLogAdd('[initSortableLists] Drag-and-drop functions not yet loaded, skipping sortable lists');
         }
         return;
     }

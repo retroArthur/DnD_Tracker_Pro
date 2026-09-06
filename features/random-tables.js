@@ -152,8 +152,8 @@ function parseRange(rangeStr, maxValue = MAX_RANGE_SIZE) {
 function renderRandomTables() {
     const container = $('random-tables-list');
     if (!container) {
-        if (window.APP_CONFIG?.DEBUG_MODE) {
-            console.warn('[renderRandomTables] Container missing - likely not on dice tab');
+        if (window.APP_CONFIG?.DEBUG_MODE && typeof window.debugLogAdd === 'function') {
+            window.debugLogAdd('[renderRandomTables] Container missing - likely not on dice tab');
         }
         return;
     }

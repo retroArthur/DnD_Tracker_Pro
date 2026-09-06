@@ -324,8 +324,11 @@ function validateDataIntegrity() {
         }
     }
     if (repairs.length > 0) {
-        if (window.APP_CONFIG?.DEBUG_MODE) {
-            ErrorHandler.log('validateDataIntegrity', new Error('Daten-Reparaturen durchgeführt'), repairs.join('; '));
+        // Selbstheilung ist Normalverhalten, kein Fehler — nur ins in-App-Debug-Log,
+        // nicht ueber den console.error-Kanal des einen sanktionierten Ausgangs
+        // (sonst faelschlich als Konsolenfehler sichtbar, UAT 01: Konsolen-Hygiene beim Boot).
+        if (window.APP_CONFIG?.DEBUG_MODE && typeof window.debugLogAdd === 'function') {
+            window.debugLogAdd(`[validateDataIntegrity] Daten-Reparaturen durchgeführt: ${repairs.join('; ')}`);
         }
     }
     return { valid: repairs.length === 0, repairs };

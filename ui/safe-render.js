@@ -444,7 +444,9 @@ class BatchUpdater {
             try {
                 fn();
             } catch (e) {
-                console.error('[BatchUpdater] Update failed:', e);
+                if (window.APP_CONFIG?.DEBUG_MODE && window.ErrorHandler) {
+                    window.ErrorHandler.log('BatchUpdater', e, 'Update failed');
+                }
             }
         });
     }

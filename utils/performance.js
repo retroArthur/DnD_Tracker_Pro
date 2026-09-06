@@ -59,8 +59,8 @@ const PerformanceManager = {
         if (!start) return 0;
         const duration = performance.now() - start;
         this._metrics.delete(label);
-        if (DEBUG_MODE && duration > 50) {
-            console.warn(`[Perf] ${label}: ${duration.toFixed(2)}ms`);
+        if (DEBUG_MODE && duration > 50 && window.ErrorHandler) {
+            window.ErrorHandler.log('Perf', new Error(`${label}: ${duration.toFixed(2)}ms`));
         }
         return duration;
     },

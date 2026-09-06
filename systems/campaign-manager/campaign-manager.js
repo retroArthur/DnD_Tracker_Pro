@@ -103,15 +103,20 @@ async function deleteCampaign() {
                         resolve();
                     };
                     request.onerror = () => {
-                        console.warn(
-                            '[deleteCampaign] IndexedDB Löschung fehlgeschlagen:',
-                            request.error
-                        );
+                        if (window.ErrorHandler) {
+                            window.ErrorHandler.log(
+                                'deleteCampaign',
+                                request.error,
+                                'IndexedDB Löschung fehlgeschlagen'
+                            );
+                        }
                         resolve(); // Trotzdem weitermachen
                     };
                 });
             } catch (idbError) {
-                console.warn('[deleteCampaign] IndexedDB Fehler:', idbError);
+                if (window.ErrorHandler) {
+                    window.ErrorHandler.log('deleteCampaign', idbError, 'IndexedDB Fehler');
+                }
             }
         }
         // 3. Wenn nicht Standard-Kampagne, aus Index entfernen
@@ -149,7 +154,9 @@ async function deleteCampaign() {
         // 5. Seite mit Cache-Bypass neu laden
         window.location.href = window.location.pathname + '?cleared=' + Date.now();
     } catch (error) {
-        console.error('[deleteCampaign] Fehler:', error);
+        if (window.ErrorHandler) {
+            window.ErrorHandler.log('deleteCampaign', error);
+        }
         alert('❌ Fehler beim Löschen:\n\n' + error.message);
     }
 }

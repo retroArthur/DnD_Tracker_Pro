@@ -224,7 +224,10 @@ function exportData(dataType) {
         showToast(`📁 ${data.length} ${dataType} exportiert`);
     } catch (err) {
         showToast('❌ Export fehlgeschlagen: ' + err.message, 'error');
-        console.error('[Export] Error:', err);
+        // Ausnahme (c): Export-Fehler koennten stillen Datenverlust verdecken, kein Guard
+        if (window.ErrorHandler) {
+            window.ErrorHandler.log('Export', err);
+        }
     }
 }
 function exportToCSV(dataType) {
@@ -269,7 +272,9 @@ function exportToCSV(dataType) {
         showToast(`📊 CSV exportiert (${data.length} Einträge)`);
     } catch (err) {
         showToast('❌ CSV-Export fehlgeschlagen', 'error');
-        console.error('[CSV Export] Error:', err);
+        if (window.ErrorHandler) {
+            window.ErrorHandler.log('CSV Export', err);
+        }
     }
 }
 // IMPORT FUNCTIONS
@@ -359,7 +364,9 @@ function showImportModal(dataType) {
                 showToast(`✅ Datei validiert: ${validatedItems.length} Einträge bereit`);
             } catch (err) {
                 showToast('❌ Import-Fehler: ' + err.message, 'error');
-                console.error('[Import] Parse error:', err);
+                if (window.ErrorHandler) {
+                    window.ErrorHandler.log('Import', err, 'Parse error');
+                }
             }
             document.body.removeChild(fileInput);
         };
@@ -390,7 +397,10 @@ function executeImport(dataType) {
             createAutoBackup();
             showToast('💾 Sicherheitskopie erstellt', 'info', 1000);
         } catch (err) {
-            console.warn('[Import] Backup failed:', err);
+            // Ausnahme (c): fehlgeschlagenes Backup vor Datenverlust verdient sichtbare Diagnose
+            if (window.ErrorHandler) {
+                window.ErrorHandler.log('Import', err, 'Backup failed');
+            }
         }
         D[type] = items;
     } else {
@@ -620,7 +630,9 @@ function importDataGlobal() {
                     createAutoBackup();
                     showToast('💾 Sicherheitskopie erstellt', 'info', 1000);
                 } catch (err) {
-                    console.warn('[Import] Backup failed:', err);
+                    if (window.ErrorHandler) {
+                        window.ErrorHandler.log('Import', err, 'Backup failed');
+                    }
                 }
                 // Soundboard-Audio stoppen — Web Audio überlebt sonst den Daten-Reset
                 if (typeof window.stopAllTracks === 'function') window.stopAllTracks();
@@ -657,11 +669,15 @@ function copyData() {
                     '⚠️ Automatisches Kopieren fehlgeschlagen. Bitte manuell kopieren.',
                     'warning'
                 );
-                console.warn('[Copy] Clipboard failed:', err);
+                if (window.ErrorHandler) {
+                    window.ErrorHandler.log('Copy', err, 'Clipboard failed');
+                }
             });
     } catch (err) {
         showToast('❌ Kopieren fehlgeschlagen: ' + err.message, 'error');
-        console.error('[Copy] Error:', err);
+        if (window.ErrorHandler) {
+            window.ErrorHandler.log('Copy', err);
+        }
     }
 }
 function clearStorage() {
@@ -685,7 +701,9 @@ function clearStorage() {
         createAutoBackup();
         showToast('💾 Sicherheitskopie erstellt', 'info', 1500);
     } catch (err) {
-        console.warn('[Clear] Backup failed:', err);
+        if (window.ErrorHandler) {
+            window.ErrorHandler.log('Clear', err, 'Backup failed');
+        }
     }
     // Step 4: Execute deletion
     const STORAGE_KEY = window.STORAGE_KEY;
@@ -696,7 +714,9 @@ function clearStorage() {
         setTimeout(() => location.reload(), 1000);
     } else {
         showToast('❌ Fehler beim Löschen', 'error');
-        console.error('Clear storage failed:', result.error);
+        if (window.ErrorHandler) {
+            window.ErrorHandler.log('Clear storage', result.error);
+        }
     }
 }
 // ============================================================

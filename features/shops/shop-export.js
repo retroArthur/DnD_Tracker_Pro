@@ -568,7 +568,10 @@ function downloadHandoutAsHTML(filename, html) {
             URL.revokeObjectURL(url);
         }, 100);
     } catch (error) {
-        console.error('Download-Fehler:', error);
+        // Ausnahme (c): Export-Fehler koennten stillen Datenverlust verdecken, kein Guard
+        if (window.ErrorHandler) {
+            window.ErrorHandler.log('shop-export', error, 'Download-Fehler');
+        }
         showToast('❌ Download fehlgeschlagen', 'error');
     }
 }

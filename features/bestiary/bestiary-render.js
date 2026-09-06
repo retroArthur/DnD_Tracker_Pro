@@ -146,8 +146,9 @@ function renderBestiaryListItem(monster) {
 function renderBestiaryList() {
     var container = window.$('bestiary-list');
     if (!container) {
-        if (window.APP_CONFIG && window.APP_CONFIG.DEBUG_MODE) {
-            console.warn('[renderBestiaryList] Container #bestiary-list fehlt — vermutlich nicht auf Bestiary-Tab');
+        if (window.APP_CONFIG && window.APP_CONFIG.DEBUG_MODE && typeof window.debugLogAdd === 'function') {
+            // Erwartetes Randverhalten (nicht auf Bestiary-Tab), kein Fehler — in-App-Debug-Log
+            window.debugLogAdd('[renderBestiaryList] Container #bestiary-list fehlt — vermutlich nicht auf Bestiary-Tab');
         }
         return;
     }

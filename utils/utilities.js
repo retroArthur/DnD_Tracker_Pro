@@ -227,10 +227,10 @@ function validateAndRepairNextId() {
             D._nextId[type] = correctNextId;
         }
     });
-    if (repairs.length > 0 && window.APP_CONFIG?.DEBUG_MODE) {
-        // Reparatur ist Normalverhalten (Selbstheilung), kein Fehler — als Warnung loggen,
-        // nicht rot über ErrorHandler.log (UAT 01: Konsolen-Hygiene beim Boot)
-        console.warn('[validateAndRepairNextId] ID-Reparaturen:', repairs.join('; '));
+    if (repairs.length > 0 && window.APP_CONFIG?.DEBUG_MODE && typeof window.debugLogAdd === 'function') {
+        // Reparatur ist Normalverhalten (Selbstheilung), kein Fehler — nur ins in-App-Debug-Log,
+        // nicht ueber den Browser-Konsolenkanal (UAT 01: Konsolen-Hygiene beim Boot)
+        window.debugLogAdd(`[validateAndRepairNextId] ID-Reparaturen: ${repairs.join('; ')}`);
     }
     return { valid: repairs.length === 0, repairs };
 }

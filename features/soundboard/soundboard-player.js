@@ -118,8 +118,8 @@ async function loadTrackBuffer(blobId) {
         if (typeof showToast === 'function') {
             showToast('Audio konnte nicht gelesen werden', 'error');
         }
-        if (window.APP_CONFIG && window.APP_CONFIG.DEBUG_MODE) {
-            console.warn('[Soundboard] decodeAudioData fehlgeschlagen fuer ' + blobId, err);
+        if (window.APP_CONFIG && window.APP_CONFIG.DEBUG_MODE && window.ErrorHandler) {
+            window.ErrorHandler.log('Soundboard', err, 'decodeAudioData fehlgeschlagen fuer ' + blobId);
         }
         return null;
     }

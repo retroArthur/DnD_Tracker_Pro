@@ -11,8 +11,8 @@
 function renderReise() {
     var section = document.getElementById('view-reise');
     if (!section) {
-        if (window.APP_CONFIG && window.APP_CONFIG.DEBUG_MODE) {
-            console.warn('[renderReise] #view-reise fehlt — nicht auf reise-Tab');
+        if (window.APP_CONFIG && window.APP_CONFIG.DEBUG_MODE && typeof window.debugLogAdd === 'function') {
+            window.debugLogAdd('[renderReise] #view-reise fehlt — nicht auf reise-Tab');
         }
         return;
     }
