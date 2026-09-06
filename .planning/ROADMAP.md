@@ -124,7 +124,7 @@ Plans:
 **Goal**: Die verbliebenen Sicherheits- und Skalierungsrisiken sind geschlossen, und die Codebasis trägt keine übergroßen, toten oder irreführenden Stellen mehr, die künftige Arbeit verteuern.
 **Depends on**: Phase 12 (`PERF-01` fasst dieselben Persistenz-Dateien an wie `SAFE-05`)
 **Requirements**: SEC-03, SEC-04, PERF-01, PERF-02, MAINT-01, MAINT-02, MAINT-03, MAINT-04, MAINT-05, MAINT-06
-**Plans:** 9/12 plans executed
+**Plans:** 10/12 plans executed
 **Success Criteria** (what must be TRUE):
 
   1. Die `call`-Aktion ruft nur noch Ziele aus einer Whitelist auf; die Regex-Capture in `parseWikiLinks()` ist escapt
@@ -160,7 +160,7 @@ Plans:
 
 **Wave 5** *(blocked on Wave 4 — teilt `loader.js`)*
 
-- [ ] 13-10-PLAN.md — MAINT-01: `features/initiative.js` in Kern, Kampf-Widgets und Beute-System aufgeteilt (Welle 5)
+- [x] 13-10-PLAN.md — MAINT-01: `features/initiative.js` in Kern, Kampf-Widgets und Beute-System aufgeteilt (Welle 5)
 
 **Wave 6** *(blocked on Wave 5 — teilt `loader.js`)*
 
