@@ -46,7 +46,7 @@ Features bringen kann. **Nicht verhaltensneutral:** was gesichert und wiederhers
 sich spürbar.
 
 - [x] **Phase 12: Datensicherheit** — Umzugs-Export erfasst IndexedDB, Datei-Backup deckt alle Kampagnen ab, Audio-Löschen rückgängig machbar, Persistenz-Randfälle getestet (completed 2026-09-05)
-- [ ] **Phase 13: Härtung & Wartbarkeit** — `call`-Whitelist, Serialisierungslast senken, vier übergroße Module aufteilen, tote und irreführende Codestellen beseitigen
+- [x] **Phase 13: Härtung & Wartbarkeit** — `call`-Whitelist (130 Ziele), Save-Pfad ohne Blob-Allokation, Würfelstatistik gedeckelt, vier übergroße Module in 14 Dateien aufgeteilt (alle ≤ 800 Zeilen), execCommand-Treffer auf 0, Konsole in Produktionspfaden still (completed 2026-09-06)
 - [ ] **Phase 14: Tests & Gates** — Toast-Race schließen, fünf Welt-Features abdecken, Lint-/Typecheck-/Coverage-Gates schärfen
 
 ## Phase Details
@@ -124,7 +124,7 @@ Plans:
 **Goal**: Die verbliebenen Sicherheits- und Skalierungsrisiken sind geschlossen, und die Codebasis trägt keine übergroßen, toten oder irreführenden Stellen mehr, die künftige Arbeit verteuern.
 **Depends on**: Phase 12 (`PERF-01` fasst dieselben Persistenz-Dateien an wie `SAFE-05`)
 **Requirements**: SEC-03, SEC-04, PERF-01, PERF-02, MAINT-01, MAINT-02, MAINT-03, MAINT-04, MAINT-05, MAINT-06
-**Plans:** 11/12 plans executed
+**Plans:** 12/12 plans complete
 **Success Criteria** (what must be TRUE):
 
   1. Die `call`-Aktion ruft nur noch Ziele aus einer Whitelist auf; die Regex-Capture in `parseWikiLinks()` ist escapt
@@ -168,7 +168,7 @@ Plans:
 
 **Wave 7** *(blocked on Wave 6 — teilt `loader.js`; braucht zusätzlich den Snapshot aus 13-05)*
 
-- [ ] 13-12-PLAN.md — MAINT-01: `features/dmscreen/dmscreen-render.js` in fünf Module aufgeteilt, Snapshot beweist Neutralität (Welle 7, Bedienprobe)
+- [x] 13-12-PLAN.md — MAINT-01: `features/dmscreen/dmscreen-render.js` in fünf Module aufgeteilt, Snapshot beweist Neutralität (Welle 7, Bedienprobe)
 
 **Auslegungshinweis zum Zuschnitt:** `MAINT-01` (Aufteilung von `ui/editors/rich-text.js` 1932, `features/initiative.js` 1655, `features/dmscreen/dmscreen-render.js` 1576 und `features/wiki/wiki.js`) ist der riskanteste Posten des Milestones und liegt hier **ohne eigenes Phasen-Gate**. Die Planung muss das ausgleichen: eigener Plan je Datei, jeweils mit vollem Suiten-Lauf als Hard-Gate vor dem Commit. `rich-text.js` trägt das eingefrorene 79-Test-Netz aus Phase 9 — jede Änderung daran ist begründungspflichtig.
 

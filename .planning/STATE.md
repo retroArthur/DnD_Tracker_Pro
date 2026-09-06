@@ -8,11 +8,11 @@ status: complete
 stopped_at: "13-12: Alle 4 Tasks abgeschlossen — Bedienprobe (Task 4) durchgeführt und freigegeben ('Alles passt soweit'); MAINT-01 vollständig erfüllt (13-09 bis 13-12); Phase 13 komplett (12/12 Pläne). Nutzerwunsch aus der Bedienprobe (alle 21 Widget-Typen ohne Profilwechsel erreichbar) als separates Feature nach diesem Abschluss-Commit umgesetzt."
 last_updated: "2026-09-06T12:00:00.000Z"
 last_activity: 2026-09-06
-last_activity_desc: Phase 13 Plan 12 (MAINT-01 dmscreen-render.js Aufteilung, 4/4) abgeschlossen — Phase 13 komplett
+last_activity_desc: Phase 13 abgeschlossen — Verifikation passed (7/8 + unterschriebene Abweichung zu Erfolgskriterium 2), Code-Review-Warnungen WR-01/WR-02 behoben
 state_head: 6d24d3f60cdd77659bdeb11ae883d5a6c13fb598
 progress:
   total_phases: 3
-  completed_phases: 1
+  completed_phases: 2
   total_plans: 29
   completed_plans: 29
   percent: 100
@@ -45,7 +45,7 @@ Plan: 12 of 12
 Status: Alle 12 Pläne abgeschlossen, Bedienprobe 13-12 freigegeben — Phase 13 komplett
 Last activity: 2026-09-06 — Plan 13-12 abgeschlossen (MAINT-01 dmscreen-render.js Aufteilung, 4/4 — MAINT-01 vollständig erfüllt)
 
-**Nächster Schritt:** `/gsd-execute-phase 13`. Phase 13 ist geplant — 12 Pläne in 7 Wellen, Plan-Checker `VERIFICATION PASSED`, Requirements 10/10 und Decisions 13/13 gedeckt. Phase 12 ist vollständig abgeschlossen — Verifikation `passed` (9/9), UAT 28/28, `12-SECURITY.md` `threats_open: 0`, `12-VALIDATION.md` `nyquist_compliant: true`. Suiten: Jest 908/908 (31 Suites), Playwright 321 passed / 2 skipped, `pytest tests/build` 24/24.
+**Nächster Schritt:** `/gsd-discuss-phase 14`. Phase 13 ist abgeschlossen — 12/12 Pläne, Verifikation `passed` (7/8 Must-Haves belegt, Erfolgskriterium 2 als vorab benannte, gemessene Abweichung freigegeben: D-09/D-10 halten den Undo-Snapshot bewusst vollständig, gemessen 0,922 ms Median). Code-Review `issues_found` → beide Warnungen behoben (WR-01 insert-link-Guards, WR-02 Konsolen-Notausgang + unbedingte Whitelist-Protokollierung). Suiten: Jest 1089/1089 (41 Suites), Playwright 321 passed / 2 skipped, `pytest tests/build` 24/24, ESLint 1 vorbestehender Fehler (`systems/avatars.js:17`). Offen für Phase 14: der Toast-Race aus der bekannten Vorbelastung sowie IN-01 aus `13-REVIEW.md` (vorbestehendes Doppel-Feuern der DM-Screen-Widget-Checkbox).
 
 **Aus Phase 12 mitzunehmen:** Playwright läuft gegen `dist/dnd-tracker-bundled.html`, `npm run build` schreibt aber nur den Production-Bundle — vor jedem E2E-Lauf `python build.py` fahren (Befund T-12-70, `12-SECURITY.md`). Offen und bewusst ausgeklammert: vier Nebenbefunde aus `12-VALIDATION.md` (`full-export.js:70` und `:181`, `soundboard-player.js:257`, `file-backup-manager.js:273`), IN-01 aus `12-REVIEW.md` (veralteter Kommentar in `loader.js:9`), sowie 14 unbestätigte Threat-Einwände in der Triage-Liste von `12-SECURITY.md`.
 
