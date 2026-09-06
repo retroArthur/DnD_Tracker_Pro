@@ -278,7 +278,10 @@ var MAX_BACKUPS = window.MAX_BACKUPS;  // CONFLICT
         # Phase 13 / Plan 09 (MAINT-01): 'features/wiki/wiki-crud.js' neu registriert
         # Phase 13 / Plan 10 (MAINT-01): 'features/initiative-loot.js' und
         # 'features/initiative-combat-widgets.js' neu registriert
-        assert len(modules) == 127, f"Erwartet 127 Module, gefunden {len(modules)}"
+        # Phase 13 / Plan 11 (MAINT-01): 'features/spells/spell-manager.js',
+        # 'ui/editors/rich-text-insert.js' und 'ui/editors/rich-text-toolbars.js'
+        # neu registriert (rich-text.js entflochten und aufgeteilt, D-03/D-02)
+        assert len(modules) == 130, f"Erwartet 130 Module, gefunden {len(modules)}"
 
         # Reihenfolge muss der Reihenfolge im Datei-Text entsprechen
         loader_content = loader_path.read_text(encoding='utf-8')
