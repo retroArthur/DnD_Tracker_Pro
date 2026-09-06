@@ -75,21 +75,32 @@ const SystemActions = {
     'insert-link': ctx => {
         const editorId = ctx.target.dataset.editor;
         const editor = $(editorId);
-        if (editor) {
-            editor.focus();
-            const url = prompt('Link URL eingeben:');
-            if (url) {
-                const selection = window.getSelection();
-                if (selection && selection.rangeCount > 0) {
-                    const range = selection.getRangeAt(0);
-                    const anchor = document.createElement('a');
-                    anchor.href = url;
-                    if (typeof window.wrapRangeWithElement === 'function') {
-                        window.wrapRangeWithElement(range, anchor);
-                        showToast('🔗 Link eingefügt');
-                    }
-                }
-            }
+        if (!editor) return;
+        editor.focus();
+        const url = prompt('Link URL eingeben:');
+        if (!url) return;
+        const selection = window.getSelection();
+        // Leere Selektion: ohne markierten Text würde surroundContents() auf einer
+        // kollabierten Range trivial "gelingen" und einen unsichtbaren, leeren <a>
+        // einfügen (WR-01, 13-REVIEW.md) — spiegelt den Guard von applyFloatingFormat()
+        // in ui/editors/rich-text-toolbars.js.
+        if (!selection || !selection.rangeCount || !selection.toString()) {
+            showToast('⚠️ Bitte erst Text markieren', 'warning');
+            return;
+        }
+        const range = selection.getRangeAt(0);
+        // Schutz gegen eine veraltete Selektion außerhalb des Ziel-Editors — ohne diesen
+        // Check würde eine Selektion in einem unbeteiligten Element in einen Anchor
+        // gewrappt statt im Ziel-Editor (WR-01, 13-REVIEW.md).
+        const container = range.commonAncestorContainer;
+        const containerEl =
+            container.nodeType === Node.TEXT_NODE ? container.parentElement : container;
+        if (!containerEl?.closest?.('#' + editorId)) return;
+        const anchor = document.createElement('a');
+        anchor.href = url;
+        if (typeof window.wrapRangeWithElement === 'function') {
+            window.wrapRangeWithElement(range, anchor);
+            showToast('🔗 Link eingefügt');
         }
     },
     'insert-table': ctx => {
