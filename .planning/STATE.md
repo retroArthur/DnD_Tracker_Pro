@@ -6,10 +6,9 @@ current_phase: 13
 current_phase_name: Härtung & Wartbarkeit
 status: complete
 stopped_at: "13-12: Alle 4 Tasks abgeschlossen — Bedienprobe (Task 4) durchgeführt und freigegeben ('Alles passt soweit'); MAINT-01 vollständig erfüllt (13-09 bis 13-12); Phase 13 komplett (12/12 Pläne). Nutzerwunsch aus der Bedienprobe (alle 21 Widget-Typen ohne Profilwechsel erreichbar) als separates Feature nach diesem Abschluss-Commit umgesetzt."
-last_updated: "2026-09-06T12:00:00.000Z"
+last_updated: "2026-09-06T20:24:36.044Z"
 last_activity: 2026-09-06
-last_activity_desc: Phase 13 abgeschlossen — Verifikation passed (7/8 + unterschriebene Abweichung zu Erfolgskriterium 2), Code-Review-Warnungen WR-01/WR-02 behoben
-state_head: 6d24d3f60cdd77659bdeb11ae883d5a6c13fb598
+state_head: edc225f7383efadf27cefb3631fbb2102212890e
 progress:
   total_phases: 3
   completed_phases: 2
@@ -43,7 +42,7 @@ See: `.planning/PROJECT.md` (Stand 2026-09-05)
 Phase: 13 (Härtung & Wartbarkeit) — COMPLETE
 Plan: 12 of 12
 Status: Alle 12 Pläne abgeschlossen, Bedienprobe 13-12 freigegeben — Phase 13 komplett
-Last activity: 2026-09-06 — Plan 13-12 abgeschlossen (MAINT-01 dmscreen-render.js Aufteilung, 4/4 — MAINT-01 vollständig erfüllt)
+Last activity: 2026-09-06
 
 **Nächster Schritt:** `/gsd-discuss-phase 14`. Phase 13 ist abgeschlossen — 12/12 Pläne, Verifikation `passed` (7/8 Must-Haves belegt, Erfolgskriterium 2 als vorab benannte, gemessene Abweichung freigegeben: D-09/D-10 halten den Undo-Snapshot bewusst vollständig, gemessen 0,922 ms Median). Code-Review `issues_found` → beide Warnungen behoben (WR-01 insert-link-Guards, WR-02 Konsolen-Notausgang + unbedingte Whitelist-Protokollierung). Suiten: Jest 1089/1089 (41 Suites), Playwright 321 passed / 2 skipped, `pytest tests/build` 24/24, ESLint 1 vorbestehender Fehler (`systems/avatars.js:17`). Offen für Phase 14: der Toast-Race aus der bekannten Vorbelastung sowie IN-01 aus `13-REVIEW.md` (vorbestehendes Doppel-Feuern der DM-Screen-Widget-Checkbox).
 
