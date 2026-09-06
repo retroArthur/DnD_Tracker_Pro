@@ -1,5 +1,5 @@
 ---
-status: diagnosed
+status: complete
 phase: 13-h-rtung-wartbarkeit
 source: [13-01-SUMMARY.md, 13-02-SUMMARY.md, 13-03-SUMMARY.md, 13-04-SUMMARY.md, 13-05-SUMMARY.md, 13-06-SUMMARY.md, 13-07-SUMMARY.md, 13-08-SUMMARY.md, 13-09-SUMMARY.md, 13-10-SUMMARY.md, 13-11-SUMMARY.md, 13-12-SUMMARY.md]
 started: 2026-09-06T14:00:00Z
@@ -66,7 +66,7 @@ note: >
 
 total: 6
 passed: 6
-issues: 1
+issues: 0
 pending: 0
 skipped: 0
 blocked: 0
@@ -138,7 +138,8 @@ eigene Bedienprobe (13-09 wiki.js, 13-10 initiative.js).
   vorgeschichte: "09-BASELINE.md Fund 3 (2026-07-25), Entscheidung Zeile 147: bewusst nicht repariert, auf Phase 10/11 vertagt"
 
 - truth: "URLs mit >=2 Unterstrichen werden nicht mehr korrumpiert (Erfolgskriterium 5)"
-  status: failed
+  status: fixed
+  fixed_in: "2b39757 (2026-09-06) — beide Unterstrich-Muster in gemeinsame Konstanten gezogen (MARKDOWN_EMPHASIS_BOLD/ITALIC_UNDERSCORE_SRC), von markdownToHtml() UND renderMarkdownInContent() genutzt; Divergenz strukturell geschlossen statt zweite Kopie geflickt. Plus Uebereinstimmungstest ueber beide Konverter. Sternchen-Regeln unangetastet (CommonMark-Asymmetrie erhalten, gegengeprueft mit ein*wort*betont)."
   reason: >
     Nur der ANZEIGE-Pfad ist repariert. renderMarkdownInContent() bekam in 13-03 die
     CommonMark-Wortgrenzen-Lookarounds; markdownToHtml() (ui/editors/markdown-converter.js,
