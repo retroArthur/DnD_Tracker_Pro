@@ -53,10 +53,10 @@ wiederherstellbar ist (`SAFE-01`, `SAFE-02`, `SAFE-04`).
 
 ### Sicherheit
 
-- **SEC-03** (`DEBT-23`): Die generische `call`-Aktion (`ui/actions/ui-actions.js:186-190`) ruft
-  `window[ctx.value]` nur noch gegen eine Ziel-Whitelist auf. Aktuell durch den `data-*`-Filter in
-  `sanitizeHTML()` defense-in-depth abgesichert, aber jeder künftige ungefilterte Renderpfad öffnet
-  sie.
+- **SEC-03** ✓ (`DEBT-23`, Phase 13: 13-01 komplett): Die generische `call`-Aktion
+  (`ui/actions/ui-actions.js`) ruft `window[ctx.value]` nur noch auf, wenn `ctx.value` in der
+  neuen `CALL_ACTION_WHITELIST` (130 Namen, `core/constants.js`) steht. Fehlerpfad läuft über
+  `ErrorHandler.log()` hinter `DEBUG_MODE` statt roher Konsolenausgabe.
 - **SEC-04** (`DEBT-14`): Die Regex-Capture in `parseWikiLinks()` (`features/wiki/wiki.js:653`) ist
   escapt.
 
@@ -132,7 +132,7 @@ wiederherstellbar ist (`SAFE-01`, `SAFE-02`, `SAFE-04`).
 | SAFE-04 | DEBT-20 | Phase 12 — Complete (12-04) |
 | SAFE-05 | DEBT-05, DEBT-08 | Phase 12 — Complete (12-05) |
 | SAFE-06 | DEBT-11 | Phase 12 — Complete (12-07) |
-| SEC-03 | DEBT-23 | Pending |
+| SEC-03 | DEBT-23 | Phase 13 — Complete (13-01) |
 | SEC-04 | DEBT-14 | Pending |
 | PERF-01 | DEBT-06, DEBT-07 | Pending |
 | PERF-02 | DEBT-24 | Pending |

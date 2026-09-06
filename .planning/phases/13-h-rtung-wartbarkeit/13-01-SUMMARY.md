@@ -159,3 +159,7 @@ None - no external service configuration required.
 ---
 *Phase: 13-h-rtung-wartbarkeit*
 *Completed: 2026-09-06*
+
+## Self-Check: PASSED
+
+All created/modified files verified present on disk; all 3 task commits (`529af68`, `fbb1864`, `ad2020d`) plus the summary commit (`f124d8c`) verified present in `git log --oneline --all`.

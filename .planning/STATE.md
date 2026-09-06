@@ -5,16 +5,16 @@ milestone_name: Schulden-Abbau
 current_phase: 13
 current_phase_name: Härtung & Wartbarkeit
 status: executing
-stopped_at: Phase 13 planned
-last_updated: "2026-09-05T23:22:09.233Z"
+stopped_at: Completed 13-01-PLAN.md
+last_updated: "2026-09-06T06:15:50.820Z"
 last_activity: 2026-09-06
-last_activity_desc: Phase 13 planning complete
-state_head: 0b4362611811c282cf0ea12ce07e70d37e333e9a
+last_activity_desc: Phase 13 execution started
+state_head: f124d8cf6967d8c8ea5fbccc79fe3c3ddcc728f9
 progress:
   total_phases: 3
   completed_phases: 1
   total_plans: 29
-  completed_plans: 17
+  completed_plans: 18
   percent: 33
 ---
 
@@ -24,7 +24,7 @@ progress:
 **Milestone:** v1.2 „Schulden-Abbau" — Phase 12 abgeschlossen (17/17 Pläne), Phase 13 geplant (12 Pläne, 7 Wellen)
 **Status:** Ready to execute
 
-**Progress:** [████████████░░░░░░░░] 17/29 plans (59%) · 1/3 Phasen des Milestones
+**Progress:** [████████████░░░░░░░░] 17/29 plans ([███░░░░░░░] 33%) · 1/3 Phasen des Milestones
 
 ---
 
@@ -40,10 +40,10 @@ See: `.planning/PROJECT.md` (Stand 2026-09-05)
 
 ## Current Position
 
-Phase: 13 (Härtung & Wartbarkeit) — READY TO EXECUTE
-Plan: Not started
+Phase: 13 (Härtung & Wartbarkeit) — EXECUTING
+Plan: 2 of 12
 Status: Ready to execute
-Last activity: 2026-09-06 — Phase 13 planning complete
+Last activity: 2026-09-06 — Phase 13 execution started
 
 **Nächster Schritt:** `/gsd-execute-phase 13`. Phase 13 ist geplant — 12 Pläne in 7 Wellen, Plan-Checker `VERIFICATION PASSED`, Requirements 10/10 und Decisions 13/13 gedeckt. Phase 12 ist vollständig abgeschlossen — Verifikation `passed` (9/9), UAT 28/28, `12-SECURITY.md` `threats_open: 0`, `12-VALIDATION.md` `nyquist_compliant: true`. Suiten: Jest 908/908 (31 Suites), Playwright 321 passed / 2 skipped, `pytest tests/build` 24/24.
 
@@ -123,6 +123,7 @@ Browser-Verhalten an der Base64-Grenze (12-07).
 | Phase 12 P13 | ~20min | 3 tasks | 2 files |
 | Phase 12 P16 | ~50min | 3 tasks | 4 files |
 | Phase 12-datensicherheit P17 | ~8min | 3 tasks | 2 files |
+| Phase 13 P01 | ~15min | 3 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -209,9 +210,9 @@ Browser-Verhalten an der Base64-Grenze (12-07).
 
 ## Session Continuity
 
-**Last session:** 2026-09-05T21:56:34.610Z
-**Stopped at:** Phase 13 context gathered
-**Resume file:** .planning/phases/13-h-rtung-wartbarkeit/13-CONTEXT.md
+**Last session:** 2026-09-06T06:15:50.712Z
+**Stopped at:** Completed 13-01-PLAN.md
+**Resume file:** None
 
 **Last action:** `/gsd-plan-phase 12 --gaps`. Ausgangslage: die Re-Verifikation vom 2026-09-04 steht auf `gaps_found` (6/8 Truths) — G-12-3 ist durch 12-08 sauber geschlossen, aber der Code-Review (`12-REVIEW.md`) hat zwei neue Blocker aufgedeckt, die der Verifier unabhaengig gegen den Quelltext bestaetigt hat: **CR-01** (der „Ueberspringen"-Button des Migrations-Wizards bleibt nach erfolgreichem Import sichtbar, ruft nur `_closeWizard()` statt `window.location.reload()` — der unbedingte `beforeunload`-Autosave in `avatars.js:170-176` schreibt danach das stale `window.D` ueber die frisch importierten Daten) und **CR-02** (`readCampaignDataForBackup()` Stufe 3 gibt `window.D` zurueck, ohne `campaignKey` gegen den aktiven Key zu pruefen — jede indizierte, nie gespeicherte Kampagne bekommt die Daten der aktiven Kampagne in ihre Backup-Datei). Auf Nachfrage hat der Nutzer die zwei nicht-blockierenden Warnungen **WR-01** (Audio-Rueckmeldung am falschen DOM-Element) und **WR-02** (`pushUndo()` leert den Redo-Stack im `catch` nicht) mit aufgenommen. Ergebnis: 3 Plaene — 12-09 (CR-01+WR-01, Welle 7), 12-10 (CR-02, Welle 7, disjunkte Dateien), 12-11 (WR-02 + Rebuild beider Bundles, Welle 8, weil ein Rebuild in derselben Welle die Commits seiner Geschwister nicht saehe = genau W-1). Plan-Checker: **VERIFICATION PASSED im ersten Durchlauf**, 0 Blocker/0 Warnungen, Baselines live nachgemessen (41+17+73=131). Zusaetzlich `COVERAGE.md` geschrieben (`No external API integration: …`) — das entschaerft den wiederkehrenden `api-coverage`-Fehlalarm bei `verify:pre` dauerhaft, der nur auf dem Substring „API" in „File System Access API" feuert. Commit `df4ea54`.
 
@@ -318,6 +319,8 @@ Browser-Verhalten an der Base64-Grenze (12-07).
 - [Phase 12]: SEC-06: CAMPAIGN_CONTENT_EXCLUDED als pruefbare Ausschlussliste + Vollstaendigkeitstest ueber alle 38 im Repo verwendeten D-Schluessel; quickRefCustom zaehlt jetzt als Inhalt
 - [Phase 12]: WR-03: getAudioImportMaxBytes() leitet die Audio-Importgrenze aus AUDIO_EXPORT_SAFE_RAW_BYTES ab statt einer unabhaengig gewaehlten Zahl
 - [Phase 12]: [Phase 12, 12-17]: Integrationswelle bestaetigt: Jest 893/893, pytest tests/build 24/24, Playwright 321 passed/2 skipped gegen den vollstaendigen Quellstand aller fuenf Fix-Plaene; beide dist-Bundles neu gebaut (124/124 Module), nachweislich juenger als jede geaenderte Quelldatei
+- [Phase 13]: [Phase 13, 13-01]: CALL_ACTION_WHITELIST-Zugriff ausschließlich als window.CALL_ACTION_WHITELIST?.has(...) an der Verwendungsstelle statt lokalem const X = window.X (CLAUDE.md Duplicate-Declaration-Pattern)
+- [Phase 13]: [Phase 13, 13-01]: Whitelist zur Ausführungszeit frisch aus dem Quellbaum abgeleitet (139 Vorkommen, 130 eindeutige Namen) statt Recherchezahl übernommen; Doc-Kommentar-Selbstverunreinigung des Scans in Task 2 gefunden und behoben (Rule 1)
 
 ## Operator Next Steps
 
