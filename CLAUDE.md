@@ -550,15 +550,29 @@ function renderMyWidget() {
 - **Error Visibility:** Debug mode warnings for missing DOM elements and functions
 - **Lifecycle Hooks:** Supports one-time `init` and `cleanup` per tab
 
+**MAINT-02 (Plan 13-04, Phase 13):** Entries no longer reference functions by
+string name (`'renderMyTab'`), resolved via `window[name]`. Each entry is a
+**deferred function reference** — a parameterless arrow expression naming and
+returning the identifier, never calling it: `() => renderMyTab`. This keeps
+the identifier statically visible in source (grep/ESLint/IDE search find it)
+while resolution happens only when the registry is used, i.e. after all
+modules have loaded — required because `systems/tab-registry.js` runs as its
+own `<script>` BEFORE the feature modules in loader mode; a direct reference
+in the literal would throw a `ReferenceError` at load time.
+`resolveTabFn(entry)` evaluates the reference in a `try`/`catch` and returns
+either the function or `null`; a renamed/removed identifier now fails
+`tests/unit/tab-registry.test.js` instead of only warning at runtime. Full
+detail: `systems/tab-registry.md`.
+
 **Pattern to Follow:**
 
 ```javascript
 // 1. Register tab in systems/tab-registry.js
 const TAB_RENDER_REGISTRY = {
     mytab: {
-        renders: ['renderMyTab', 'renderMyTabStats'], // Called on every switch
-        init: 'initMyTab', // Called once on first view
-        cleanup: 'cleanupMyTab' // Called when leaving tab
+        renders: [() => renderMyTab, () => renderMyTabStats], // Called on every switch
+        init: () => initMyTab, // Called once on first view
+        cleanup: () => cleanupMyTab // Called when leaving tab
     }
 };
 
@@ -606,7 +620,7 @@ function switchView(name) {
 
 // GOOD - registry handles it
 const TAB_RENDER_REGISTRY = {
-    mytab: { renders: ['renderMyTab'], init: null, cleanup: null }
+    mytab: { renders: [() => renderMyTab], init: null, cleanup: null }
 };
 ```
 

@@ -1,7 +1,7 @@
 # Tab Navigation System - Developer Guide
 
-**Version:** 1.0.0
-**Last Updated:** 2026-01-07
+**Version:** 1.1.0
+**Last Updated:** 2026-09-06
 **Module:** `systems/tab-registry.js`
 
 ## Overview
@@ -42,8 +42,8 @@ The Tab Registry System uses a centralized mapping:
 // NEW APPROACH - Declarative, centralized
 const TAB_RENDER_REGISTRY = {
     dice: {
-        renders: ['renderRandomTables', 'renderDiceHistory', 'renderDiceFavorites'],
-        init: 'initDiceTab',
+        renders: [() => renderRandomTables, () => renderDiceHistory, () => renderDiceFavorites],
+        init: null,
         cleanup: null
     }
     // ... 18 more tabs
@@ -54,6 +54,17 @@ function switchView(name) {
     renderTabContent(name); // ✓ Uses registry
 }
 ```
+
+**MAINT-02 (Plan 13-04):** Entries no longer reference functions by string name
+(`'renderDashboard'`), resolved via `window[name]`. Each entry is now a
+**deferred function reference** — a parameterless arrow expression whose body
+names and returns the identifier (not calls it): `() => renderDashboard`.
+This keeps the identifier statically visible in source (grep/ESLint/IDE
+search find it), while resolution happens only when the registry is used —
+i.e. after all modules have loaded. This is required in loader mode
+(`index.html` + `loader.js`): `systems/tab-registry.js` runs as its own
+`<script>` BEFORE all feature modules; a direct reference in the literal
+would throw a `ReferenceError` at load time. See `resolveTabFn()` below.
 
 **Benefits:**
 
@@ -73,11 +84,16 @@ Each tab in `TAB_RENDER_REGISTRY` has the following structure:
 
 ```typescript
 type TabConfig = {
-    renders: string[]; // Array of render function names
-    init: string | null; // One-time initialization function
-    cleanup: string | null; // Cleanup function (called on tab exit)
+    renders: Array<() => Function>; // Deferred references to render functions
+    init: (() => Function) | null; // Deferred reference to one-time init function
+    cleanup: (() => Function) | null; // Deferred reference to cleanup function (called on tab exit)
 };
 ```
+
+Each deferred reference is a parameterless arrow expression that names and
+returns the target function — `() => renderMyTab`, never `() => renderMyTab()`.
+`resolveTabFn(entry)` evaluates it in a `try`/`catch` and returns either the
+resolved function or `null` (identifier doesn't exist yet/anymore).
 
 ### Example Entries
 
@@ -85,7 +101,7 @@ type TabConfig = {
 
 ```javascript
 'party': {
-    renders: ['renderParty'],
+    renders: [() => renderParty],
     init: null,
     cleanup: null
 }
@@ -96,9 +112,9 @@ type TabConfig = {
 ```javascript
 'initiative': {
     renders: [
-        'renderInit',              // Main combat tracker
-        'renderBattlefieldBanner', // Terrain/lair display
-        'renderQuickActionsBar'    // Combat action shortcuts
+        () => renderInit,              // Main combat tracker
+        () => renderBattlefieldBanner, // Terrain/lair display
+        () => renderQuickActionsBar    // Combat action shortcuts
     ],
     init: null,
     cleanup: null
@@ -109,8 +125,8 @@ type TabConfig = {
 
 ```javascript
 'dice': {
-    renders: ['renderRandomTables', 'renderDiceHistory', 'renderDiceFavorites'],
-    init: 'initDiceTab',  // Called once on first view
+    renders: [() => renderRandomTables, () => renderDiceHistory, () => renderDiceFavorites],
+    init: () => initMyTab,  // Called once on first view
     cleanup: null
 }
 ```
@@ -184,7 +200,7 @@ const TAB_RENDER_REGISTRY = {
     // ... existing tabs ...
 
     mytab: {
-        renders: ['renderMyTab'],
+        renders: [() => renderMyTab],
         init: null, // Add initialization function if needed
         cleanup: null
     }
@@ -216,8 +232,8 @@ Called **once** when the tab is first shown. Use for expensive setup operations:
 
 ```javascript
 'maps': {
-    renders: ['displayMap'],
-    init: 'initMapPanning',  // Initialize pan/zoom controls once
+    renders: [() => displayMap],
+    init: () => initMapPanning,  // Initialize pan/zoom controls once
     cleanup: null
 }
 
@@ -246,9 +262,9 @@ Called when **leaving** the tab. Use for cleanup operations:
 
 ```javascript
 'mytab': {
-    renders: ['renderMyTab'],
-    init: 'initMyTab',
-    cleanup: 'cleanupMyTab'  // Clean up when leaving
+    renders: [() => renderMyTab],
+    init: () => initMyTab,
+    cleanup: () => cleanupMyTab  // Clean up when leaving
 }
 
 function cleanupMyTab() {
@@ -334,7 +350,7 @@ With `DEBUG_MODE` enabled, you'll see:
 **On Tab Switch:**
 
 ```
-[TabRegistry] Init initDiceTab() for tab dice
+[TabRegistry] Init initMyTab() for tab mytab
 [TabRegistry] Rendered renderRandomTables() for tab dice
 [TabRegistry] Rendered renderDiceHistory() for tab dice
 [TabRegistry] Rendered renderDiceFavorites() for tab dice
@@ -405,7 +421,7 @@ function switchView(name) {
 ```javascript
 // GOOD - centralized, maintainable
 const TAB_RENDER_REGISTRY = {
-    mytab: { renders: ['renderMyTab'], init: null, cleanup: null }
+    mytab: { renders: [() => renderMyTab], init: null, cleanup: null }
 };
 ```
 
@@ -440,7 +456,7 @@ function renderMyTab() {
 // BAD - init runs once, content won't refresh
 'mytab': {
     renders: [],
-    init: 'renderMyTab',  // ❌ Wrong place
+    init: () => renderMyTab,  // ❌ Wrong place
     cleanup: null
 }
 ```
@@ -450,8 +466,8 @@ function renderMyTab() {
 ```javascript
 // GOOD - renders on every tab switch
 'mytab': {
-    renders: ['renderMyTab'],  // ✓ Correct
-    init: 'initMyTab',         // One-time setup only
+    renders: [() => renderMyTab],  // ✓ Correct
+    init: () => initMyTab,         // One-time setup only
     cleanup: null
 }
 ```
@@ -533,8 +549,8 @@ function initMap() {
 }
 
 'maps': {
-    renders: ['displayMap'],
-    init: 'initMap',  // Only creates map instance once
+    renders: [() => displayMap],
+    init: () => initMap,  // Only creates map instance once
     cleanup: null
 }
 ```
@@ -562,9 +578,9 @@ function stopAnimation() {
 }
 
 'animation': {
-    renders: ['renderAnimation'],
-    init: 'startAnimation',
-    cleanup: 'stopAnimation'  // Stop animation when leaving
+    renders: [() => renderAnimation],
+    init: () => startAnimation,
+    cleanup: () => stopAnimation  // Stop animation when leaving
 }
 ```
 
@@ -603,7 +619,7 @@ Delete the manual `if` statement (the registry handles it now).
 ```javascript
 const TAB_RENDER_REGISTRY = {
     mytab: {
-        renders: ['renderMyTab'],
+        renders: [() => renderMyTab],
         init: null,
         cleanup: null
     }
@@ -670,14 +686,14 @@ Switch to the tab multiple times and verify content renders correctly.
 ```javascript
 // WRONG
 'mytab': {
-    renders: ['initMyTab', 'renderMyTab'],  // ❌ init runs every time
+    renders: [() => initMyTab, () => renderMyTab],  // ❌ init runs every time
     init: null
 }
 
 // CORRECT
 'mytab': {
-    renders: ['renderMyTab'],
-    init: 'initMyTab',  // ✓ init runs once
+    renders: [() => renderMyTab],
+    init: () => initMyTab,  // ✓ init runs once
     cleanup: null
 }
 ```
@@ -710,6 +726,22 @@ renderTabContent('dice');
 // Renders: renderRandomTables(), renderDiceHistory(), renderDiceFavorites()
 ```
 
+### `resolveTabFn(entry: (() => Function) | null): Function | null`
+
+Resolves a deferred registry reference. `entry` is either `null` (no hook
+configured) or a parameterless arrow expression naming a function identifier,
+e.g. `() => renderMyTab`. Evaluates it in a `try`/`catch`; an identifier that
+no longer exists (renamed/removed) throws a `ReferenceError` that is caught
+here and turned into `null` — the same silent-per-entry-failure behavior the
+old string form had, just without `window[name]`.
+
+**Parameters:**
+
+- `entry` - A deferred function reference or `null`
+
+**Returns:** The resolved function, or `null` if `entry` is `null`/not a
+function/resolves to something other than a function/throws.
+
 ### `validateTabRegistry(): void`
 
 Validates the tab registry on app startup (DEBUG_MODE only).
@@ -738,6 +770,7 @@ if (APP_CONFIG?.DEBUG_MODE) {
 - **Registry Definition:** `systems/tab-registry.js`
 - **Navigation Integration:** `systems/spellslots/navigation.js`
 - **Test Mocks:** `tests/setup.js`
+- **Unit Tests:** `tests/unit/tab-registry.test.js`
 - **E2E Tests:** `tests/e2e/tab-navigation.spec.js`
 - **HTML Structure:** `assets/body.html`
 - **Build Configuration:** `build.py`
@@ -746,6 +779,13 @@ if (APP_CONFIG?.DEBUG_MODE) {
 
 ## Version History
 
+- **1.1.0** (2026-09-06, Plan 13-04 / MAINT-02) - Deferred function references
+    - Replaced string-name entries (`'renderX'`) with deferred function
+      references (`() => renderX`), resolved via `resolveTabFn()`
+    - A renamed/removed function identifier now fails a Jest test
+      (`tests/unit/tab-registry.test.js`) instead of only warning at runtime
+    - Removed the dead `init: 'initDiceTab'` entry (the function never
+      existed in this codebase's history)
 - **1.0.0** (2026-01-07) - Initial implementation
     - Created centralized tab registry
     - Added lifecycle hooks (init/cleanup)

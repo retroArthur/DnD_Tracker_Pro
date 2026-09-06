@@ -1,133 +1,183 @@
 // [SECTION:TAB_REGISTRY]
 // Tab Navigation Registry
 // Centralized mapping of tabs to their render functions
+//
+// MAINT-02 (Plan 13-04): Jeder Eintrag referenziert seine Funktion nicht mehr
+// als Zeichenkette (`'renderDashboard'`), sondern als verzögerte Funktions-
+// referenz — ein parameterloser Pfeilausdruck, dessen Rumpf den Bezeichner
+// nennt und zurückgibt (nicht aufruft): `() => renderDashboard`. Das macht
+// den Bezeichner im Quelltext statisch sichtbar (Grep/ESLint/IDE-Suche
+// finden ihn), löst ihn aber erst auf, wenn die Registry benutzt wird — also
+// NACHDEM alle Module geladen sind. Das ist zwingend im Loader-Modus
+// (index.html + loader.js): systems/tab-registry.js läuft als eigenes
+// <script> VOR allen Feature-Modulen; eine direkte Referenz im Literal würde
+// dort beim Laden einen ReferenceError werfen. Siehe resolveTabFn() unten.
 /**
  * Tab-Render Registry - Maps tab names to their associated render functions
  */
 const TAB_RENDER_REGISTRY = {
     dashboard: {
-        renders: ['renderDashboard'],
+        renders: [() => renderDashboard],
         init: null,
         cleanup: null
     },
     party: {
-        renders: ['renderParty'],
+        renders: [() => renderParty],
         init: null,
         cleanup: null
     },
     npcs: {
-        renders: ['renderNPCList'],
+        renders: [() => renderNPCList],
         init: null,
         cleanup: null
     },
     locations: {
-        renders: ['renderLocations'],
+        renders: [() => renderLocations],
         init: null,
         cleanup: null
     },
     quests: {
-        renders: ['renderQuests'],
+        renders: [() => renderQuests],
         init: null,
         cleanup: null
     },
     encounter: {
-        renders: ['renderEncounters'],
+        renders: [() => renderEncounters],
         init: null,
         cleanup: null
     },
     initiative: {
-        renders: ['renderInit', 'renderBattlefieldBanner', 'renderQuickActionsBar'],
+        renders: [() => renderInit, () => renderBattlefieldBanner, () => renderQuickActionsBar],
         init: null,
         cleanup: null
     },
     loot: {
-        renders: ['renderLoot'],
+        renders: [() => renderLoot],
         init: null,
         cleanup: null
     },
     shops: {
-        renders: ['renderShops'],
+        renders: [() => renderShops],
         init: null,
         cleanup: null
     },
     spells: {
-        renders: ['renderSpells'],
+        renders: [() => renderSpells],
         init: null,
         cleanup: null
     },
     notes: {
-        renders: ['renderSessions'],
+        renders: [() => renderSessions],
         init: null,
         cleanup: null
     },
     wiki: {
-        renders: ['renderWiki'],
+        renders: [() => renderWiki],
         init: null,
         cleanup: null
     },
     links: {
-        renders: ['renderLinks'],
+        renders: [() => renderLinks],
         init: null,
         cleanup: null
     },
     dice: {
-        renders: ['renderRandomTables', 'renderDiceHistory', 'renderDiceFavorites'],
-        init: 'initDiceTab', // Called once when first shown
+        renders: [() => renderRandomTables, () => renderDiceHistory, () => renderDiceFavorites],
+        // MAINT-02: `initDiceTab` referenzierte nie eine existierende Funktion
+        // (kein Commit in der Historie hat sie je definiert) — die
+        // String-Form liess das bisher stillschweigend durchgehen, weil
+        // renderTabContent() fehlende init-Funktionen nicht meldet. Auf
+        // `null` korrigiert: identisches Laufzeitverhalten (init lief noch
+        // nie), aber die Registry behauptet jetzt nicht mehr faelschlich,
+        // es gaebe eine Initialisierung.
+        init: null,
         cleanup: null
     },
     timers: {
-        renders: ['renderTimers', 'renderTimerPresets'],
+        renders: [() => renderTimers, () => renderTimerPresets],
         init: null,
-        cleanup: 'cleanupTimers' // Clear interval when leaving tab
+        cleanup: () => cleanupTimers // Clear interval when leaving tab
     },
     data: {
-        renders: ['renderBackupStatus'], // Datei-Backup-Status (D-17) — Rest sind Formulare
+        renders: [() => renderBackupStatus], // Datei-Backup-Status (D-17) — Rest sind Formulare
         init: null,
         cleanup: null
     },
     dmscreen: {
-        renders: ['renderDMScreen'],
+        renders: [() => renderDMScreen],
         init: null,
         cleanup: null
     },
     bestiary: {
-        renders: ['renderBestiaryList'],
+        renders: [() => renderBestiaryList],
         init: null,
-        cleanup: 'cleanupBestiaryEditor'
+        cleanup: () => cleanupBestiaryEditor
     },
     // Phase 5: Welt & Story
     sessionprep: {
-        renders: ['renderSessionPrepList'],
+        renders: [() => renderSessionPrepList],
         init: null,
         cleanup: null
     },
     kalender: {
-        renders: ['renderTimeline', 'renderKalender'],
+        renders: [() => renderTimeline, () => renderKalender],
         init: null,
         cleanup: null
     },
     reise: {
-        renders: ['renderReise'],
+        renders: [() => renderReise],
         init: null,
         cleanup: null
     },
     fraktionen: {
-        renders: ['renderFraktionen'],
+        renders: [() => renderFraktionen],
         init: null,
         cleanup: null
     },
     // Phase 7: Komfort & Analyse
     soundboard: {
-        renders: ['renderSoundboard'],
+        renders: [() => renderSoundboard],
         init: null,
         cleanup: null
     },
     dicestats: {
-        renders: ['renderDiceStats'],
+        renders: [() => renderDiceStats],
         init: null,
         cleanup: null
     }
 };
+/**
+ * Löst eine verzögerte Registry-Referenz auf.
+ * `entry` ist entweder `null` (kein Hook konfiguriert) oder ein
+ * parameterloser Pfeilausdruck, dessen Rumpf einen Funktionsbezeichner nennt
+ * und zurückgibt, z. B. `() => renderDashboard`. Ein Bezeichner, der (noch)
+ * nicht existiert, wirft beim Auswerten einen ReferenceError — der wird hier
+ * gefangen, damit ein fehlender/umbenannter Eintrag die App nicht zum
+ * Absturz bringt (Laufzeitverhalten bleibt wie bei der alten String-Form:
+ * stiller Ausfall dieses einen Eintrags).
+ * @param {(() => Function)|null} entry
+ * @returns {Function|null}
+ */
+function resolveTabFn(entry) {
+    if (typeof entry !== 'function') return null;
+    try {
+        const resolved = entry();
+        return typeof resolved === 'function' ? resolved : null;
+    } catch (err) {
+        return null;
+    }
+}
+/**
+ * Extrahiert den Bezeichner aus einer verzögerten Registry-Referenz für
+ * Diagnosemeldungen — z. B. `() => renderDashboard` -> `'renderDashboard'`.
+ * @param {(() => Function)|null} entry
+ * @returns {string}
+ */
+function tabFnName(entry) {
+    if (typeof entry !== 'function') return '(kein Eintrag)';
+    const match = entry.toString().match(/=>\s*([A-Za-z_$][\w$]*)/);
+    return match ? match[1] : '(unbekannt)';
+}
 /**
  * Execute all render functions for a given tab
  * Provides error handling and validation
@@ -143,13 +193,14 @@ function renderTabContent(tabName) {
         return;
     }
     // Call init function if it exists and hasn't been called yet
-    if (tabConfig.init && typeof window[tabConfig.init] === 'function') {
-        if (!tabConfig._initialized) {
+    if (tabConfig.init && !tabConfig._initialized) {
+        const initFn = resolveTabFn(tabConfig.init);
+        if (initFn) {
             try {
-                window[tabConfig.init]();
+                initFn();
                 tabConfig._initialized = true;
                 if (window.APP_CONFIG?.DEBUG_MODE) {
-                    console.log(`[TabRegistry] Init ${tabConfig.init}() for tab ${tabName}`);
+                    console.log(`[TabRegistry] Init ${tabFnName(tabConfig.init)}() for tab ${tabName}`);
                 }
             } catch (err) {
                 console.error(`[TabRegistry] Init failed for ${tabName}:`, err);
@@ -157,18 +208,22 @@ function renderTabContent(tabName) {
         }
     }
     // Call all render functions
-    tabConfig.renders.forEach(renderFn => {
-        if (typeof window[renderFn] === 'function') {
+    tabConfig.renders.forEach(renderEntry => {
+        const renderFn = resolveTabFn(renderEntry);
+        if (renderFn) {
             try {
-                window[renderFn]();
+                renderFn();
                 if (window.APP_CONFIG?.DEBUG_MODE) {
-                    console.log(`[TabRegistry] Rendered ${renderFn}() for tab ${tabName}`);
+                    console.log(`[TabRegistry] Rendered ${tabFnName(renderEntry)}() for tab ${tabName}`);
                 }
             } catch (err) {
-                console.error(`[TabRegistry] Render ${renderFn}() failed for tab ${tabName}:`, err);
+                console.error(
+                    `[TabRegistry] Render ${tabFnName(renderEntry)}() failed for tab ${tabName}:`,
+                    err
+                );
             }
         } else {
-            console.warn(`[TabRegistry] Function ${renderFn} not found for tab ${tabName}`);
+            console.warn(`[TabRegistry] Function ${tabFnName(renderEntry)} not found for tab ${tabName}`);
         }
     });
 }
@@ -183,23 +238,25 @@ function validateTabRegistry() {
     let warnings = 0;
     Object.entries(TAB_RENDER_REGISTRY).forEach(([tabName, config]) => {
         // Check if render functions exist
-        config.renders.forEach(renderFn => {
-            if (typeof window[renderFn] !== 'function') {
+        config.renders.forEach(renderEntry => {
+            if (!resolveTabFn(renderEntry)) {
                 console.error(
-                    `[TabRegistry] Missing render function: ${renderFn} for tab ${tabName}`
+                    `[TabRegistry] Missing render function: ${tabFnName(renderEntry)} for tab ${tabName}`
                 );
                 errors++;
             }
         });
         // Check if init functions exist
-        if (config.init && typeof window[config.init] !== 'function') {
-            console.warn(`[TabRegistry] Missing init function: ${config.init} for tab ${tabName}`);
+        if (config.init && !resolveTabFn(config.init)) {
+            console.warn(
+                `[TabRegistry] Missing init function: ${tabFnName(config.init)} for tab ${tabName}`
+            );
             warnings++;
         }
         // Check if cleanup functions exist
-        if (config.cleanup && typeof window[config.cleanup] !== 'function') {
+        if (config.cleanup && !resolveTabFn(config.cleanup)) {
             console.warn(
-                `[TabRegistry] Missing cleanup function: ${config.cleanup} for tab ${tabName}`
+                `[TabRegistry] Missing cleanup function: ${tabFnName(config.cleanup)} for tab ${tabName}`
             );
             warnings++;
         }
