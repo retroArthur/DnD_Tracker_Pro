@@ -5,16 +5,16 @@ milestone_name: Schulden-Abbau
 current_phase: 13
 current_phase_name: Härtung & Wartbarkeit
 status: complete
-stopped_at: "13-12: Alle 4 Tasks abgeschlossen — Bedienprobe (Task 4) durchgeführt und freigegeben ('Alles passt soweit'); MAINT-01 vollständig erfüllt (13-09 bis 13-12); Phase 13 komplett (12/12 Pläne). Nutzerwunsch aus der Bedienprobe (alle 21 Widget-Typen ohne Profilwechsel erreichbar) als separates Feature nach diesem Abschluss-Commit umgesetzt."
-last_updated: "2026-09-06T20:24:36.044Z"
+stopped_at: Phase 14 context gathered
+last_updated: "2026-09-06T21:13:40.318Z"
 last_activity: 2026-09-06
-state_head: edc225f7383efadf27cefb3631fbb2102212890e
+state_head: 94db4bde9103a3620f2879566509a16ca1b6448d
 progress:
   total_phases: 3
-  completed_phases: 2
+  completed_phases: 1
   total_plans: 29
   completed_plans: 29
-  percent: 100
+  percent: 33
 ---
 
 # Project State: D&D Kampagnen-Tracker Pro — Schulden-Abbau
@@ -220,9 +220,9 @@ Browser-Verhalten an der Base64-Grenze (12-07).
 
 ## Session Continuity
 
-**Last session:** 2026-09-06T12:00:00.000Z
-**Stopped at:** 13-12: Alle 4 Tasks abgeschlossen — Bedienprobe (Task 4) durchgeführt und freigegeben ("Alles passt soweit"). MAINT-01 vollständig erfüllt über alle vier Aufteilungen (13-09 wiki.js, 13-10 initiative.js, 13-11 rich-text.js, 13-12 dmscreen-render.js) — alle 14 Ergebnisdateien unter der 800-Zeilen-Grenze. Phase 13 (Härtung & Wartbarkeit) ist damit komplett (12/12 Pläne). Bedienprobe-Beobachtung (Konfigurationsliste zeigt nur Widgets des aktiven Profils) war keine Regression — `renderDMSConfigList()` bytegleich zum ungeteilten Original — sondern ein Nutzerwunsch, als eigenständiges Feature nach diesem Abschluss-Commit umgesetzt.
-**Resume file:** None
+**Last session:** 2026-09-06T21:13:40.137Z
+**Stopped at:** Phase 14 context gathered
+**Resume file:** .planning/phases/14-tests-gates/14-CONTEXT.md
 
 **Last action:** `/gsd-execute-phase 13` (Plan 13-08, MAINT-06). Converted all 81 originally-counted unfiltered `console.*` calls across 31 `loader.js` MODULES files to the one sanctioned `ErrorHandler.log()` outlet in `render/helpers.js` (marked `gsd:konsolen-senke`), built `tests/unit/console-hygiene.test.js` as a permanent regression guard, and corrected two stale `file-backup-manager.js` header comments that wrongly described the forbidden `window.save` monkey-patch pattern (code has used `registerPostSaveHook()` correctly since Phase 12). Mid-execution finding: converting routine/self-healing diagnostics (data repairs, migration progress, per-tab render guards) to the single outlet elevated them to `console.error` and broke 5 Playwright tests (`editor-formatting.spec.js`, `editor-insert.spec.js`, `import-security.spec.js`) that assert zero console errors — fixed by routing those specific sites through the existing `window.debugLogAdd()` in-app debug panel instead, preserving the single-outlet invariant for genuine faults while not misclassifying normal operation as an error. Full suites green: `npx jest` 1066/1066, `npx playwright test` 321 passed/2 skipped (STATE.md baseline exactly matched), `python build.py` + `--production` + `pytest tests/build` 24/24 all green.
 
