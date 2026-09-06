@@ -84,7 +84,9 @@ function insertEntityLinkToEditor() {
     const editor = $(insertEntityLinkTargetEditor);
     if (editor) {
         editor.focus();
-        document.execCommand('insertText', false, linkCode);
+        if (typeof window.insertTextAtSelection === 'function') {
+            window.insertTextAtSelection(linkCode);
+        }
     }
     const hideModal = window.hideModal;
     if (hideModal) hideModal('insert-entity-link-modal');
