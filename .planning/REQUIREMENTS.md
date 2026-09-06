@@ -76,11 +76,12 @@ wiederherstellbar ist (`SAFE-01`, `SAFE-02`, `SAFE-04`).
   `ui/editors/rich-text.js` (1932), `features/initiative.js` (1655),
   `features/dmscreen/dmscreen-render.js` (1576) und `features/wiki/wiki.js`. Aufteilung entlang
   bestehender Verantwortlichkeiten, ohne Verhaltensänderung.
-- **MAINT-02** (`DEBT-25`, `DEBT-16`, `DEBT-13`, Phase 13: 13-02 Teil 1/2): Irreführende und tote
-  Codestellen sind beseitigt — `const D`-Überschattung des globalen Datenobjekts (u. a.
-  `features/soundboard/soundboard-player.js:145` mit einer Zahl), der tote `mindmap`-Schreib-Seed an
-  zwei Stellen (`systems/backups.js:232`, `tools/debug.js:917`) und das doppelte `data-id`-Attribut
-  in `features/wiki/wiki.js:391-392` (✓ entfernt in 13-02 — die zwei restlichen Punkte sind noch offen).
+- **MAINT-02** ✓ (`DEBT-25`, `DEBT-16`, `DEBT-13`, Phase 13: 13-02 + 13-04 komplett): Irreführende und
+  tote Codestellen sind beseitigt — `const D`-Überschattung des globalen Datenobjekts
+  (`features/soundboard/soundboard-player.js:145` mit einer Zahl, umbenannt zu `trackDuration` in 13-04),
+  der tote `mindmap`-Schreib-Seed an zwei Stellen (`systems/backups.js:232`, `tools/debug.js:917`,
+  entfernt in 13-04) und das doppelte `data-id`-Attribut in `features/wiki/wiki.js:391-392`
+  (entfernt in 13-02).
 - **MAINT-03** ✓ (`DEBT-12`, Phase 13: 13-03 komplett): Der nie verdrahtete `hasHtmlTags`-Wächter
   (`ui/editors/markdown-converter.js:264`) ist entfernt. Die Unterstrich-Emphase-Regeln in
   `renderMarkdownInContent()` folgen jetzt der CommonMark-Wortgrenzenregel — URLs und Bezeichner mit
@@ -88,10 +89,11 @@ wiederherstellbar ist (`SAFE-01`, `SAFE-02`, `SAFE-04`).
 - **MAINT-04** ✓ (`DEBT-03`, Phase 13: 13-02 komplett): Die letzten drei `document.execCommand`-Aufrufe
   außerhalb des Editor-Moduls sind abgelöst (`systems/entity-links.js:87`, `features/wiki/wiki.js:831`,
   `ui/actions/system-actions.js:82`) — das Verfahren dafür liegt aus Phase 9 vor.
-- **MAINT-05** (`DEBT-09`, `DEBT-10`): Fragile Stellen sind abgesichert — Tab-Registry-Renderfunktionen
-  werden nicht mehr allein per String-Name referenziert (bricht heute bei Umbenennung nur mit einer
-  `DEBUG_MODE`-Warnung), und das ungeschützte `setInterval` in `initPerformanceMonitoring()`
-  (`systems/backups.js:325`) bekommt denselben Guard wie `startAutoBackup()`.
+- **MAINT-05** ✓ (`DEBT-09`, `DEBT-10`, Phase 13: 13-04 komplett): Fragile Stellen sind abgesichert —
+  Tab-Registry-Renderfunktionen werden nicht mehr per String-Name referenziert (bricht bei Umbenennung
+  jetzt einen Jest-Test statt nur mit einer `DEBUG_MODE`-Warnung zu warnen), und das ungeschützte
+  `setInterval` in `initPerformanceMonitoring()` (`systems/backups.js:325`) hat denselben Guard wie
+  `startAutoBackup()`.
 - **MAINT-06** (`DEBT-27`, `DEBT-26`): Die Konsole bleibt in Produktionspfaden still, und die
   Kopfkommentare beschreiben den Code, der dasteht. Heute widersprechen `console.*`-Aufrufe außerhalb
   von `DEBUG_MODE`-Guards der CLAUDE.md-Zusicherung „Zero console.log in production", und
@@ -137,10 +139,10 @@ wiederherstellbar ist (`SAFE-01`, `SAFE-02`, `SAFE-04`).
 | PERF-01 | DEBT-06, DEBT-07 | Pending |
 | PERF-02 | DEBT-24 | Pending |
 | MAINT-01 | DEBT-04 | Pending |
-| MAINT-02 | DEBT-25, DEBT-16, DEBT-13 | Pending (Teil 1/2 in 13-02: data-id entfernt) |
+| MAINT-02 | DEBT-25, DEBT-16, DEBT-13 | Phase 13 — Complete (13-02 + 13-04) |
 | MAINT-03 | DEBT-12 | Phase 13 — Complete (13-03) |
 | MAINT-04 | DEBT-03 | Phase 13 — Complete (13-02) |
-| MAINT-05 | DEBT-09, DEBT-10 | Pending |
+| MAINT-05 | DEBT-09, DEBT-10 | Phase 13 — Complete (13-04) |
 | MAINT-06 | DEBT-27, DEBT-26 | Pending |
 | TEST-03 | DEBT-15 | Pending |
 | TEST-04 | DEBT-28 | Pending |
