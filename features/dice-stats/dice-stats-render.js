@@ -286,11 +286,22 @@ function _renderDiceStatsContent(container, aggregate, totalStoreCount) {
         ? '<button class="ds-toggle-btn" data-action="clear-dice-stats">Statistik löschen</button>'
         : '';
 
+    // Aktualisieren-Knopf: statsIdbPut() (dice-stats-idb.js) schreibt fire-and-forget direkt in
+    // die IndexedDB, ohne ueber save()/D zu gehen — registerPostSaveHook() feuert dafuer NIE
+    // (siehe Kommentar dort). Ohne manuellen Refresh sieht der Nutzer neu erwuerfelte Wuerfe im
+    // bereits offenen Tab erst nach einem Tab-Wechsel. Anders als der Loeschen-Knopf ABSICHTLICH
+    // auch bei leerem Store sichtbar — genau der Fall, den ein Nutzer trifft, wenn er den leer
+    // gerenderten Tab offen laesst und dann wuerfelt (UAT phase-13). Eigene Aktion
+    // 'refresh-dice-stats' (system-actions.js) statt der generischen 'call'-Aktion, damit
+    // CALL_ACTION_WHITELIST (SEC-03) unangetastet bleibt.
+    var refreshBtnHtml = '<button class="ds-toggle-btn" data-action="refresh-dice-stats">Aktualisieren</button>';
+
     var toggleHtml = '<div class="ds-toggle-bar">'
         + '<button class="ds-toggle-btn' + sessionActive + '"'
         + ' data-action="set-stats-scope" data-value="session">Diese Session</button>'
         + '<button class="ds-toggle-btn' + totalActive + '"'
         + ' data-action="set-stats-scope" data-value="total">Gesamt</button>'
+        + refreshBtnHtml
         + clearBtnHtml
         + '</div>';
 

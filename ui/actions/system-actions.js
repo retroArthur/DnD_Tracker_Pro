@@ -252,6 +252,17 @@ const SystemActions = {
         }
     },
 
+    // Dice Stats — manueller Refresh (User-Wunsch aus phase-13-UAT). statsIdbPut()
+    // (dice-stats-idb.js) schreibt fire-and-forget direkt in IndexedDB, ohne ueber save()/D zu
+    // gehen — registerPostSaveHook() feuert dafuer nie. Auto-Refresh aus dem Schreibpfad heraus
+    // wurde vom Nutzer bewusst abgelehnt (Histogramm soll nicht "unter der Hand" umspringen,
+    // waehrend er es liest); stattdessen dieser Knopf. Named action statt der generischen
+    // 'call'-Aktion, damit CALL_ACTION_WHITELIST (SEC-03) unangetastet bleibt.
+    'refresh-dice-stats': () => {
+        if (typeof window.renderDiceStats === 'function') window.renderDiceStats();
+        if (typeof window.showToast === 'function') window.showToast('Statistik aktualisiert');
+    },
+
     // Dice Stats — Store vollstaendig leeren, mit beziffertem Rueckfrage-Dialog (PERF-02/D-11).
     // Eigene Aktion statt der generischen 'call'-Aktion — haengt bewusst NICHT an der
     // Ziel-Whitelist aus Plan 13-01 (13-07-PLAN.md). Verdraengte/geloeschte Wuerfe sind
