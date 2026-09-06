@@ -126,6 +126,22 @@ declare function toggleDMSWidget(widgetId: string): void;
  */
 declare function hideDMSWidget(widgetId: string): void;
 /**
+ * Generiert eine stabile, eindeutige Widget-Id fuer einen neu hinzugefuegten Typ
+ */
+declare function generateDMSWidgetId(type: string): string;
+/**
+ * Fuegt einen im Layout fehlenden Widget-Typ hinzu (bzw. blendet ihn wieder ein)
+ */
+declare function addDMSWidgetType(type: string): void;
+/**
+ * Fuegt alle registrierten Widget-Typen hinzu / blendet sie ein ("Alle auswählen")
+ */
+declare function selectAllDMSWidgets(): void;
+/**
+ * Blendet alle Widgets im aktuellen Layout aus ("Alle abwählen")
+ */
+declare function deselectAllDMSWidgets(): void;
+/**
  * Speichert das DM Screen Layout
  */
 declare function saveDMScreenLayout(): void;

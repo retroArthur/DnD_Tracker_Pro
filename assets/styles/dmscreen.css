@@ -3114,6 +3114,10 @@
 }
 
 .dms-config-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
     padding: 12px 14px;
     font-weight: 600;
     font-size: 0.85em;
@@ -3122,9 +3126,43 @@
     border-bottom: 1px solid var(--border);
 }
 
+.dms-config-bulk-actions {
+    display: flex;
+    gap: 6px;
+}
+
+.dms-config-bulk-btn {
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text-dim);
+    font-size: 0.72em;
+    font-weight: 500;
+    padding: 3px 6px;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+}
+
+.dms-config-bulk-btn:hover {
+    background: var(--bg-hover);
+    color: var(--text);
+}
+
 .dms-config-list {
     max-height: 320px;
     overflow-y: auto;
+}
+
+.dms-config-item-unadded {
+    opacity: 0.6;
+}
+
+.dms-config-item-unadded:hover {
+    opacity: 0.9;
+}
+
+.dms-config-drag-disabled {
+    visibility: hidden;
 }
 
 .dms-config-item {

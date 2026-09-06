@@ -9,9 +9,17 @@
 // bleiben in dmscreen-render.js; von dort werden switchDMSProfile,
 // saveDMSProfileAs, deleteDMSProfile, toggleDMSProfileDropdown,
 // renderDMSConfigList, toggleDMSWidget, hideDMSWidget,
-// toggleDMSConfigDropdown und initDMSWidgetDragDrop als bare Bezeichner
+// toggleDMSConfigDropdown, initDMSWidgetDragDrop, addDMSWidgetType,
+// selectAllDMSWidgets und deselectAllDMSWidgets als bare Bezeichner
 // aufgerufen (EVENT HANDLERS bzw. renderDMScreen()) -- deshalb der
 // EXPORTS-Block am Dateiende.
+//
+// Nutzer-Feature (nach Plan 13-12, außerhalb des MAINT-01-Vertrags dieser
+// Phase): renderDMSConfigList() listet seit dieser Erweiterung alle 21
+// registrierten Widget-Typen, nicht nur die im aktuellen Layout — Typen ohne
+// Layout-Eintrag lassen sich per Checkbox neu hinzufuegen
+// (addDMSWidgetType()); selectAllDMSWidgets()/deselectAllDMSWidgets()
+// bedienen die "Alle auswählen"/"Alle abwählen"-Kurzwahl.
 // ============================================================
 
 // ============================================================
@@ -136,14 +144,24 @@ function renderDMSProfileList() {
 // WIDGET CONFIGURATION
 // ============================================================
 /**
- * Rendert die Widget-Konfigurations-Liste
+ * Rendert die Widget-Konfigurations-Liste.
+ *
+ * Zeigt zuerst alle Widgets, die bereits im aktuellen Layout stehen (in ihrer
+ * bestehenden Reihenfolge, mit ihrem bestehenden Sichtbarkeits-Toggle),
+ * danach alle registrierten Typen, die im aktuellen Layout noch fehlen — die
+ * dortige Checkbox fuegt den Typ bei Aktivierung neu hinzu statt ihn nur zu
+ * toggeln. Vor dieser Erweiterung waren die 13 nicht im Standard-Profil
+ * enthaltenen Typen nur ueber einen Profilwechsel (z. B. "Referenz")
+ * erreichbar — Nutzeranfrage aus der 13-12-Bedienprobe.
  */
 function renderDMSConfigList() {
     const list = $('dms-config-list');
     if (!list) return;
     const widgetDefs = getDMScreenWidgets();
-    const allWidgets = D.dmScreenLayout.widgets;
-    list.innerHTML = allWidgets
+    const layoutWidgets = D.dmScreenLayout.widgets;
+    const presentTypes = new Set(layoutWidgets.map(w => w.type));
+
+    const presentHtml = layoutWidgets
         .map(widget => {
             const def = widgetDefs[widget.type];
             if (!def) return '';
@@ -158,7 +176,27 @@ function renderDMSConfigList() {
         `;
         })
         .join('');
-    // Initialize drag & drop for config list
+
+    const absentHtml = Object.keys(widgetDefs)
+        .filter(type => !presentTypes.has(type))
+        .map(type => {
+            const def = widgetDefs[type];
+            return `
+            <label class="dms-config-item dms-config-item-unadded" data-widget-type="${type}">
+                <span class="dms-config-drag dms-config-drag-disabled" aria-hidden="true"></span>
+                <input type="checkbox"
+                       data-action="dms-add-widget-type" data-widget-type="${type}">
+                <span class="dms-config-icon">${def.icon}</span>
+                <span class="dms-config-name">${def.name}</span>
+            </label>
+        `;
+        })
+        .join('');
+
+    list.innerHTML = presentHtml + absentHtml;
+    // Initialize drag & drop for config list (nur bereits vorhandene Widgets
+    // sind sortierbar — noch nicht hinzugefuegte Typen haben keinen Platz im
+    // Layout-Array, an den reorderDMSWidgets() andocken koennte)
     initDMSConfigDragDrop();
 }
 /**
@@ -171,6 +209,77 @@ function toggleDMSWidget(widgetId) {
         saveDMScreenLayout();
         renderDMScreen();
     }
+}
+/**
+ * Generiert eine stabile, eindeutige Widget-Id fuer einen neu hinzugefuegten
+ * Typ. Folgt der Konvention der 13 Referenz-Widgets in
+ * DEFAULT_DMSCREEN_PROFILES.referenz (`${type}-ref`, siehe
+ * dmscreen-render.js) — verliert ihre Bedeutung ohnehin beim naechsten
+ * Profilwechsel, da switchDMSProfile() D.dmScreenLayout.widgets vollstaendig
+ * ersetzt.
+ */
+function generateDMSWidgetId(type) {
+    const base = `${type}-ref`;
+    const existingIds = new Set(D.dmScreenLayout.widgets.map(w => w.id));
+    if (!existingIds.has(base)) return base;
+    let suffix = 2;
+    while (existingIds.has(`${base}-${suffix}`)) suffix++;
+    return `${base}-${suffix}`;
+}
+/**
+ * Fuegt einen Widget-Typ, der im aktuellen Layout noch fehlt, neu hinzu
+ * (bzw. blendet ihn wieder ein, falls er bereits vorhanden, aber ausgeblendet
+ * ist). Nutzeranfrage aus der 13-12-Bedienprobe: alle 21 registrierten Typen
+ * sollen ohne Profilwechsel erreichbar sein.
+ */
+function addDMSWidgetType(type) {
+    const widgetDefs = getDMScreenWidgets();
+    const def = widgetDefs[type];
+    if (!def) return;
+    pushUndo('DM Screen Widget hinzugefügt');
+    const existing = D.dmScreenLayout.widgets.find(w => w.type === type);
+    if (existing) {
+        existing.visible = true;
+    } else {
+        D.dmScreenLayout.widgets.push({ id: generateDMSWidgetId(type), type, visible: true });
+    }
+    saveDMScreenLayout();
+    renderDMScreen();
+    showToast(`Widget "${def.name}" hinzugefügt`);
+}
+/**
+ * Fuegt alle registrierten Widget-Typen hinzu, die im aktuellen Layout noch
+ * fehlen, und blendet alle bereits vorhandenen wieder ein ("Alle auswählen"
+ * in der Konfigurationsliste).
+ */
+function selectAllDMSWidgets() {
+    const widgetDefs = getDMScreenWidgets();
+    pushUndo('Alle DM-Screen-Widgets ausgewählt');
+    Object.keys(widgetDefs).forEach(type => {
+        const existing = D.dmScreenLayout.widgets.find(w => w.type === type);
+        if (existing) {
+            existing.visible = true;
+        } else {
+            D.dmScreenLayout.widgets.push({ id: generateDMSWidgetId(type), type, visible: true });
+        }
+    });
+    saveDMScreenLayout();
+    renderDMScreen();
+    showToast('Alle Widgets ausgewählt');
+}
+/**
+ * Blendet alle Widgets im aktuellen Layout aus (versteckt, loescht sie NICHT
+ * aus dem Layout — Reihenfolge und eigene Ids bleiben erhalten). Gegenstueck
+ * zu selectAllDMSWidgets(), "Alle abwählen" in der Konfigurationsliste.
+ */
+function deselectAllDMSWidgets() {
+    pushUndo('Alle DM-Screen-Widgets abgewählt');
+    D.dmScreenLayout.widgets.forEach(w => {
+        w.visible = false;
+    });
+    saveDMScreenLayout();
+    renderDMScreen();
+    showToast('Alle Widgets abgewählt');
 }
 /**
  * Versteckt ein Widget (vom X-Button)
@@ -290,7 +399,11 @@ let dmsConfigDraggedItem = null;
 function initDMSConfigDragDrop() {
     const list = $('dms-config-list');
     if (!list) return;
-    const items = list.querySelectorAll('.dms-config-item');
+    // Nur bereits vorhandene Widgets sind sortierbar (haben ein data-widget-id
+    // aus dem Layout-Array, an das reorderDMSWidgets() andocken kann). Noch
+    // nicht hinzugefuegte Typen (dms-config-item-unadded) haben keinen Platz
+    // im Layout und bleiben deshalb nicht draggable.
+    const items = list.querySelectorAll('.dms-config-item[data-widget-id]');
     items.forEach(item => {
         item.draggable = true;
         item.addEventListener('dragstart', handleDMSConfigDragStart);
@@ -356,3 +469,6 @@ window.toggleDMSWidget = toggleDMSWidget;
 window.hideDMSWidget = hideDMSWidget;
 window.toggleDMSConfigDropdown = toggleDMSConfigDropdown;
 window.initDMSWidgetDragDrop = initDMSWidgetDragDrop;
+window.addDMSWidgetType = addDMSWidgetType;
+window.selectAllDMSWidgets = selectAllDMSWidgets;
+window.deselectAllDMSWidgets = deselectAllDMSWidgets;

@@ -390,7 +390,13 @@
                     <div class="dms-config-wrapper">
                         <button class="btn btn-sm" id="dms-config-btn" data-action="dms-toggle-config" title="Widgets konfigurieren">⚙️ Widgets</button>
                         <div class="dms-config-dropdown" id="dms-config-dropdown">
-                            <div class="dms-config-header">Widgets anzeigen</div>
+                            <div class="dms-config-header">
+                                <span>Widgets anzeigen</span>
+                                <span class="dms-config-bulk-actions">
+                                    <button type="button" class="dms-config-bulk-btn" data-action="dms-select-all-widgets">Alle auswählen</button>
+                                    <button type="button" class="dms-config-bulk-btn" data-action="dms-clear-all-widgets">Alle abwählen</button>
+                                </span>
+                            </div>
                             <div class="dms-config-list" id="dms-config-list">
                                 <!-- Widget toggles dynamisch -->
                             </div>

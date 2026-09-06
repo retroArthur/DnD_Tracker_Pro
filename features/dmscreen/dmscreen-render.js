@@ -474,6 +474,15 @@ document.addEventListener('click', function (e) {
             e.stopPropagation();
             if (target.dataset.widget) hideDMSWidget(target.dataset.widget);
             break;
+        case 'dms-add-widget-type':
+            if (target.dataset.widgetType) addDMSWidgetType(target.dataset.widgetType);
+            break;
+        case 'dms-select-all-widgets':
+            selectAllDMSWidgets();
+            break;
+        case 'dms-clear-all-widgets':
+            deselectAllDMSWidgets();
+            break;
         // Profile actions
         case 'dms-toggle-profiles':
             toggleDMSProfileDropdown();
