@@ -85,6 +85,7 @@ const MODULES = [
     'features/encounter-calculator.js',
     'features/initiative.js',
     'features/initiative-loot.js',
+    'features/initiative-combat-widgets.js',
     'features/rest-manager.js',
     'features/quick-actions.js',
     'features/random-tables.js',
