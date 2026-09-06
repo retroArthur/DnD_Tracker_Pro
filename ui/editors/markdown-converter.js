@@ -179,6 +179,19 @@ function convertTableToMarkdown(table) {
 }
 
 // ============================================================
+// SHARED EMPHASIS PATTERNS (Unterstrich-Wortgrenzen)
+// ============================================================
+// CommonMark verlangt fuer _-Emphase Wortgrenzen (kein direkt angrenzendes \w),
+// waehrend *-Emphase das ausdruecklich NICHT verlangt (intra-word erlaubt bleibt
+// erlaubt, z.B. "sn*ake*case") — siehe Kommentar bei renderMarkdownInContent().
+// markdownToHtml() (Import-Pfad) und renderMarkdownInContent() (Anzeige-Pfad)
+// teilen sich dieselben Unterstrich-Muster als eine Quelle, damit importierter
+// und angezeigter Markdown fuer denselben Text nicht mehr auseinanderlaufen
+// koennen (siehe 13-UAT.md Gap "URLs mit >=2 Unterstrichen").
+const MARKDOWN_EMPHASIS_BOLD_UNDERSCORE_SRC = '(?<!\\w)__([^_]+)__(?!\\w)';
+const MARKDOWN_EMPHASIS_ITALIC_UNDERSCORE_SRC = '(?<!\\w)_([^_]+)_(?!\\w)';
+
+// ============================================================
 // MARKDOWN TO HTML
 // ============================================================
 /**
@@ -207,11 +220,11 @@ function markdownToHtml(markdown) {
 
     // Bold (**text** or __text__)
     html = html.replace(/\*\*(.+?)\*\*/g, '<b>$1</b>');
-    html = html.replace(/__(.+?)__/g, '<b>$1</b>');
+    html = html.replace(new RegExp(MARKDOWN_EMPHASIS_BOLD_UNDERSCORE_SRC, 'g'), '<b>$1</b>');
 
     // Italic (*text* or _text_)
     html = html.replace(/\*(.+?)\*/g, '<i>$1</i>');
-    html = html.replace(/_(.+?)_/g, '<i>$1</i>');
+    html = html.replace(new RegExp(MARKDOWN_EMPHASIS_ITALIC_UNDERSCORE_SRC, 'g'), '<i>$1</i>');
 
     // Strikethrough (~~text~~)
     html = html.replace(/~~(.+?)~~/g, '<s>$1</s>');
@@ -268,11 +281,13 @@ function renderMarkdownInContent(html) {
     // wenn unmittelbar ein alphanumerisches Zeichen angrenzt — sonst korrumpiert z.B.
     // "https://example.com/foo_bar_baz" zu "foo<i>bar</i>baz". Die *-Varianten kennen diese
     // Einschränkung laut CommonMark-Spezifikation nicht und bleiben unverändert (siehe unten).
-    result = result.replace(/(?<!\w)__([^_]+)__(?!\w)/g, '<b>$1</b>');
+    // Muster gemeinsam mit markdownToHtml() (Import-Pfad) aus MARKDOWN_EMPHASIS_*_SRC bezogen,
+    // damit Anzeige- und Import-Pfad nicht erneut auseinanderlaufen koennen.
+    result = result.replace(new RegExp(MARKDOWN_EMPHASIS_BOLD_UNDERSCORE_SRC, 'g'), '<b>$1</b>');
 
     // Italic: *text* or _text_ (but not if already inside ** or __)
     result = result.replace(/(?<!\*)\*([^*]+)\*(?!\*)/g, '<i>$1</i>');
-    result = result.replace(/(?<!\w)_([^_]+)_(?!\w)/g, '<i>$1</i>');
+    result = result.replace(new RegExp(MARKDOWN_EMPHASIS_ITALIC_UNDERSCORE_SRC, 'g'), '<i>$1</i>');
 
     // Strikethrough: ~~text~~
     result = result.replace(/~~([^~]+)~~/g, '<s>$1</s>');

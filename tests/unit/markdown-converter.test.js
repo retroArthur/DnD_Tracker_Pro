@@ -202,7 +202,7 @@ const vm = require('vm');
 
 const MARKDOWN_CONVERTER_PATH = path.join(__dirname, '../../ui/editors/markdown-converter.js');
 
-function loadRenderMarkdownInContent() {
+function loadMarkdownConverterModule() {
     const context = {
         window: {
             // Identitätsfunktion: die Testfälle sollen die Betonungsregeln isolieren,
@@ -215,7 +215,11 @@ function loadRenderMarkdownInContent() {
     vm.runInContext(fs.readFileSync(MARKDOWN_CONVERTER_PATH, 'utf8'), context, {
         filename: MARKDOWN_CONVERTER_PATH
     });
-    return context.renderMarkdownInContent;
+    return context;
+}
+
+function loadRenderMarkdownInContent() {
+    return loadMarkdownConverterModule().renderMarkdownInContent;
 }
 
 describe('MAINT-03: Wortgrenzen-Regel für Unterstrich-Emphase (renderMarkdownInContent, echtes Modul)', () => {
@@ -273,5 +277,67 @@ describe('MAINT-03: Wortgrenzen-Regel für Unterstrich-Emphase (renderMarkdownIn
         expect(result).toContain('<td>Schwert</td>');
         expect(result).toContain('class="read-aloud"');
         expect(result).toContain('Ihr betretet die verrauchte Taverne.');
+    });
+});
+
+// ============================================================
+// Folgearbeit zu MAINT-03: Wortgrenzen-Regel auch im IMPORT-Pfad (markdownToHtml)
+// ============================================================
+// 13-UAT.md dokumentierte MAINT-03 als nur auf renderMarkdownInContent() (Anzeigepfad)
+// begrenzt; markdownToHtml() (Import-Pfad, ui/editors/markdown-converter.js ab Zeile 189)
+// blieb mit den ungeschützten Regeln _(.+?)_ / __(.+?)__ zurück. Dieser Block spiegelt
+// den MAINT-03-Block oben, aber gegen das echte markdownToHtml().
+describe('Folgearbeit MAINT-03: Wortgrenzen-Regel für Unterstrich-Emphase (markdownToHtml, echtes Modul)', () => {
+    const markdownToHtml = loadMarkdownConverterModule().markdownToHtml;
+
+    test('URL mit zwei Unterstrichen bleibt zeichengleich erhalten (Kernfall des Bugs)', () => {
+        const input = 'https://example.com/foo_bar_baz';
+        const result = markdownToHtml(input);
+        expect(result).toContain('foo_bar_baz');
+        expect(result).not.toContain('<i>');
+    });
+
+    test('snake_case_name bleibt zeichengleich erhalten', () => {
+        const input = 'snake_case_name';
+        expect(markdownToHtml(input)).toBe('snake_case_name');
+    });
+
+    test('_kursiv_ am Satzanfang wird zu einem i-Element (Schutz gegen Überkorrektur)', () => {
+        const input = '_kursiv_ am Satzanfang';
+        expect(markdownToHtml(input)).toContain('<i>kursiv</i>');
+    });
+
+    test('__fett__ an Wortgrenzen wird zu einem b-Element (Schutz gegen Überkorrektur)', () => {
+        const input = '__fett__ an Wortgrenzen';
+        expect(markdownToHtml(input)).toContain('<b>fett</b>');
+    });
+
+    test('*kursiv* und **fett** bleiben unverändert im Verhalten (Sternchen-Regeln nicht angefasst)', () => {
+        expect(markdownToHtml('*kursiv*')).toBe('<i>kursiv</i>');
+        expect(markdownToHtml('**fett**')).toBe('<b>fett</b>');
+    });
+});
+
+// ============================================================
+// Übereinstimmungstest: Anzeige- und Import-Pfad dürfen für Emphase-Syntax
+// nicht mehr auseinanderlaufen (die eigentliche Lehre aus dem UAT-Gap).
+// ============================================================
+describe('Übereinstimmung: renderMarkdownInContent() und markdownToHtml() verhalten sich bei Emphase gleich', () => {
+    const converterModule = loadMarkdownConverterModule();
+    const { renderMarkdownInContent, markdownToHtml } = converterModule;
+
+    // Nur Emphase-relevante Eingaben — beide Funktionen unterscheiden sich bewusst
+    // in anderen Aspekten (z.B. Absatz-/Zeilenumbruch-Behandlung), das ist kein Ziel
+    // dieses Tests.
+    test.each([
+        ['https://example.com/foo_bar_baz', 'URL mit zwei Unterstrichen'],
+        ['snake_case_name', 'snake_case Bezeichner'],
+        ['_kursiv_', 'einfacher Unterstrich am Wortanfang/-ende'],
+        ['__fett__', 'doppelter Unterstrich am Wortanfang/-ende'],
+        ['Ein _kursives_ Wort', 'Unterstrich-Kursiv mitten im Satz'],
+        ['*kursiv*', 'einfaches Sternchen (intra-word erlaubt, unverändert)'],
+        ['**fett**', 'doppeltes Sternchen (intra-word erlaubt, unverändert)']
+    ])('%s (%s) ergibt in beiden Konvertern dasselbe Emphase-Ergebnis', input => {
+        expect(markdownToHtml(input)).toBe(renderMarkdownInContent(input));
     });
 });
