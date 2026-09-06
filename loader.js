@@ -61,6 +61,7 @@ const MODULES = [
     'features/party/party-details.js',
     'features/party/party-crud.js',
     'features/render-spells.js',
+    'features/spells/spell-manager.js',
     'features/locations/locations-render.js',
     'features/locations/locations-crud.js',
     'features/render-loot.js',
