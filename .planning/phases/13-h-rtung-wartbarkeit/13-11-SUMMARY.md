@@ -109,8 +109,8 @@ coverage:
     requirement: "MAINT-01"
     verification:
       - kind: manual
-        ref: "Noch nicht durchgefuehrt — Checkpoint wird nach diesem SUMMARY zurueckgegeben; automatisierte Vorarbeit (Build, alle Suiten) ist abgeschlossen"
-        status: pending
+        ref: "Durchgefuehrt und freigegeben am 2026-09-06 durch den Entwickler (zugleich Endnutzer/DM) an dist/dnd-tracker-bundled.html: alle zehn Punkte verhalten sich wie vor der Aufteilung — Floating-Toolbar an der Selektion, Zeichenformatierung, Schriftart/-groesse, Read-Aloud-Stile, Tabelle, Zeilenumbruch-Cursor, Einfuegen, Formatierung entfernen, Link, sowie die herausgeloeste Zauberverwaltung"
+        status: pass
     human_judgment: true
 
 duration: ~55min
@@ -211,7 +211,7 @@ None - keine externe Dienstkonfiguration nötig.
 ## Next Phase Readiness
 - Das MAINT-01-Verfahren ist ein drittes Mal bestätigt (Banner-Schnitt nach D-02, ausschließliche `loader.js`-Registrierung nach ARCH-01, `python build.py` nach jeder Verschiebung, volles Suiten-Gate mit vorgelegter Ausgabe vor dem Commit) und bereit für den letzten, laut D-04 riskantesten Fall: 13-12 (`dmscreen-render.js`, ohne eigenes Testnetz, braucht zuerst einen Charakterisierungs-Snapshot).
 - Dieser Plan liefert einen zusätzlichen, direkten Beleg für D-04: Der einzige gefundene Fehler wurde ausschließlich durch das E2E-Netz sichtbar, nicht durch den Build — für `dmscreen-render.js` ohne Netz wäre ein äquivalenter Fehler beim Bauen unsichtbar geblieben.
-- Task 4 (Bedienprobe, `checkpoint:human-verify`) steht noch aus — die automatisierte Vorarbeit (Build, alle Suiten) ist abgeschlossen; der Checkpoint wird nach diesem SUMMARY an den Orchestrator zurückgegeben.
+- Task 4 (Bedienprobe, `checkpoint:human-verify`) ist am 2026-09-06 durchgeführt und **freigegeben**: alle zehn Punkte verhalten sich wie vor der Aufteilung, einschließlich der beiden verwundbarsten (Zeilenumbruch-Cursorposition aus Phase-9-Territorium und die frisch herausgelöste Zauberverwaltung). Damit ist 13-11 vollständig abgeschlossen.
 - `MAINT-01` bleibt in `REQUIREMENTS.md` als „Pending" stehen (nicht mit ✓ markiert) — die Anforderung deckt alle vier Aufteilungen ab und wird erst nach 13-12 als erfüllt markiert.
 
 ---
