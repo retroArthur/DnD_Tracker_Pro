@@ -28,12 +28,12 @@ folgerichtig nicht in diese Messung ein.
 
 | Messgroesse | Wert |
 |---|---|
-| Median `JSON.stringify(D)`-Dauer (20 Laeufe) | 0.946 ms |
+| Median `JSON.stringify(D)`-Dauer (20 Laeufe) | 0.801 ms |
 | Stringlaenge (Zeichen) | 836.419 Zeichen |
 | Stringgroesse (UTF-8-Bytes, `utf8ByteLength()`) | 838.213 Bytes (0.80 MB) |
 | Undo-Stack-Gesamtgroesse bei 30 Eintraegen (kein Dedupe zwischen den Eintraegen) | 25.146.390 Bytes (23.98 MB) |
-| Median `new Blob([s]).size`-Dauer (20 Laeufe, Referenz) | 14.544 ms |
-| Median `utf8ByteLength(s)`-Dauer (20 Laeufe) | 1.127 ms |
+| Median `new Blob([s]).size`-Dauer (20 Laeufe, Referenz) | 14.558 ms |
+| Median `utf8ByteLength(s)`-Dauer (20 Laeufe) | 1.128 ms |
 
 *Hinweis zur Blob-Zeile:* gemessen in Jest/jsdom (Node v24.14.0), dessen `Blob`-Implementierung
 eine reine JS-Nachbildung ist, kein natives Browser-`Blob`. Der absolute Faktor zwischen den
@@ -44,14 +44,14 @@ Blob", sondern "keine zweite Kopie mehr" — das gilt umgebungsunabhaengig.
 ## Abnahme Erfolgskriterium 2
 
 Erfolgskriterium 2 verlangt, dass keine Kampagnen-Serialisierung im laufenden Betrieb spuerbar
-Zeit kostet. Die gemessene Median-Dauer von `JSON.stringify(D)` liegt bei 0.946 ms
+Zeit kostet. Die gemessene Median-Dauer von `JSON.stringify(D)` liegt bei 0.801 ms
 und damit im geforderten einstelligen Millisekundenbereich.
 
 **Entscheidung: Erfolgskriterium 2 wird fuer den Save-Pfad als erfuellt, fuer den Undo-Pfad
 als nachweislich unkritisch abgenommen.** Die in Task 1/2 entlastete Byte-Zaehlung entfernt die
 zweite Vollkopie an beiden Save-Aufrufstellen; die verbleibende Redundanz (`JSON.stringify(D)`
 laeuft bei jedem Undo-Push zusaetzlich zum naechsten Save erneut) bleibt bestehen, weil D-10 sie
-bewusst nicht durch Scoping oder Delta-Snapshots aufloest — bei 0.946 ms pro Lauf
+bewusst nicht durch Scoping oder Delta-Snapshots aufloest — bei 0.801 ms pro Lauf
 ist das am Spieltisch nicht wahrnehmbar, auch nicht bei mehreren Aktionen pro Sekunde. Die
 Abweichung von der urspruenglichen Formulierung des Kriteriums ist damit gemessen statt vermutet
 und bewusst benannt akzeptiert.
