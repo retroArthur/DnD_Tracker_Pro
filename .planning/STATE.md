@@ -4,27 +4,27 @@ milestone: v1.2
 milestone_name: Schulden-Abbau
 current_phase: 13
 current_phase_name: Härtung & Wartbarkeit
-status: executing
-stopped_at: "13-11: Tasks 1-3 committed, hard gate green (Jest 1066/1066, tsc clean, both bundles, pytest 24/24, Playwright 321/2 skipped); Task 4 (Bedienprobe checkpoint) awaiting human verification"
-last_updated: "2026-09-06T09:36:08.633Z"
+status: complete
+stopped_at: "13-12: Alle 4 Tasks abgeschlossen — Bedienprobe (Task 4) durchgeführt und freigegeben ('Alles passt soweit'); MAINT-01 vollständig erfüllt (13-09 bis 13-12); Phase 13 komplett (12/12 Pläne). Nutzerwunsch aus der Bedienprobe (alle 21 Widget-Typen ohne Profilwechsel erreichbar) als separates Feature nach diesem Abschluss-Commit umgesetzt."
+last_updated: "2026-09-06T12:00:00.000Z"
 last_activity: 2026-09-06
-last_activity_desc: Phase 13 Plan 08 (MAINT-06 console hygiene + file-backup header comments) complete
-state_head: fe12069c8d55f11b8445104470e7bd00c7bf4400
+last_activity_desc: Phase 13 Plan 12 (MAINT-01 dmscreen-render.js Aufteilung, 4/4) abgeschlossen — Phase 13 komplett
+state_head: 6d24d3f60cdd77659bdeb11ae883d5a6c13fb598
 progress:
   total_phases: 3
   completed_phases: 1
   total_plans: 29
-  completed_plans: 28
-  percent: 33
+  completed_plans: 29
+  percent: 100
 ---
 
 # Project State: D&D Kampagnen-Tracker Pro — Schulden-Abbau
 
 **Last Updated:** 2026-09-06
-**Milestone:** v1.2 „Schulden-Abbau" — Phase 12 abgeschlossen (17/17 Pläne), Phase 13 in Ausführung (8/12 Pläne)
-**Status:** Ready to execute
+**Milestone:** v1.2 „Schulden-Abbau" — Phase 12 abgeschlossen (17/17 Pläne), Phase 13 abgeschlossen (12/12 Pläne)
+**Status:** Phase 13 complete — bereit für Phase 14
 
-**Progress:** [█████████████████░░░] 25/29 plans ([███░░░░░░░] 33%) · 1/3 Phasen des Milestones
+**Progress:** [██████████████████████] 29/29 plans ([██████████] 100%) · 2/3 Phasen des Milestones
 
 ---
 
@@ -40,10 +40,10 @@ See: `.planning/PROJECT.md` (Stand 2026-09-05)
 
 ## Current Position
 
-Phase: 13 (Härtung & Wartbarkeit) — EXECUTING
+Phase: 13 (Härtung & Wartbarkeit) — COMPLETE
 Plan: 12 of 12
-Status: Plan 08 complete (MAINT-06), ready for next plan
-Last activity: 2026-09-06 — Plan 13-08 complete (console hygiene sweep + file-backup header comment fix)
+Status: Alle 12 Pläne abgeschlossen, Bedienprobe 13-12 freigegeben — Phase 13 komplett
+Last activity: 2026-09-06 — Plan 13-12 abgeschlossen (MAINT-01 dmscreen-render.js Aufteilung, 4/4 — MAINT-01 vollständig erfüllt)
 
 **Nächster Schritt:** `/gsd-execute-phase 13`. Phase 13 ist geplant — 12 Pläne in 7 Wellen, Plan-Checker `VERIFICATION PASSED`, Requirements 10/10 und Decisions 13/13 gedeckt. Phase 12 ist vollständig abgeschlossen — Verifikation `passed` (9/9), UAT 28/28, `12-SECURITY.md` `threats_open: 0`, `12-VALIDATION.md` `nyquist_compliant: true`. Suiten: Jest 908/908 (31 Suites), Playwright 321 passed / 2 skipped, `pytest tests/build` 24/24.
 
@@ -134,6 +134,7 @@ Browser-Verhalten an der Base64-Grenze (12-07).
 | Phase 13 P09 | 45min | 3 tasks | 5 files |
 | Phase 13 P10 | 40min | 3 tasks | 5 files |
 | Phase 13 P11 | 55min | 3 tasks | 6 files |
+| Phase 13 P12 | ~50min | 3 tasks | 8 files |
 
 ## Accumulated Context
 
@@ -220,8 +221,8 @@ Browser-Verhalten an der Base64-Grenze (12-07).
 
 ## Session Continuity
 
-**Last session:** 2026-09-06T09:36:08.528Z
-**Stopped at:** 13-11: Tasks 1-3 committed, hard gate green (Jest 1066/1066, tsc clean, both bundles, pytest 24/24, Playwright 321/2 skipped); Task 4 (Bedienprobe checkpoint) awaiting human verification
+**Last session:** 2026-09-06T12:00:00.000Z
+**Stopped at:** 13-12: Alle 4 Tasks abgeschlossen — Bedienprobe (Task 4) durchgeführt und freigegeben ("Alles passt soweit"). MAINT-01 vollständig erfüllt über alle vier Aufteilungen (13-09 wiki.js, 13-10 initiative.js, 13-11 rich-text.js, 13-12 dmscreen-render.js) — alle 14 Ergebnisdateien unter der 800-Zeilen-Grenze. Phase 13 (Härtung & Wartbarkeit) ist damit komplett (12/12 Pläne). Bedienprobe-Beobachtung (Konfigurationsliste zeigt nur Widgets des aktiven Profils) war keine Regression — `renderDMSConfigList()` bytegleich zum ungeteilten Original — sondern ein Nutzerwunsch, als eigenständiges Feature nach diesem Abschluss-Commit umgesetzt.
 **Resume file:** None
 
 **Last action:** `/gsd-execute-phase 13` (Plan 13-08, MAINT-06). Converted all 81 originally-counted unfiltered `console.*` calls across 31 `loader.js` MODULES files to the one sanctioned `ErrorHandler.log()` outlet in `render/helpers.js` (marked `gsd:konsolen-senke`), built `tests/unit/console-hygiene.test.js` as a permanent regression guard, and corrected two stale `file-backup-manager.js` header comments that wrongly described the forbidden `window.save` monkey-patch pattern (code has used `registerPostSaveHook()` correctly since Phase 12). Mid-execution finding: converting routine/self-healing diagnostics (data repairs, migration progress, per-tab render guards) to the single outlet elevated them to `console.error` and broke 5 Playwright tests (`editor-formatting.spec.js`, `editor-insert.spec.js`, `import-security.spec.js`) that assert zero console errors — fixed by routing those specific sites through the existing `window.debugLogAdd()` in-app debug panel instead, preserving the single-outlet invariant for genuine faults while not misclassifying normal operation as an error. Full suites green: `npx jest` 1066/1066, `npx playwright test` 321 passed/2 skipped (STATE.md baseline exactly matched), `python build.py` + `--production` + `pytest tests/build` 24/24 all green.

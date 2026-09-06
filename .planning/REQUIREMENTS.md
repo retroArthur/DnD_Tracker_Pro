@@ -81,10 +81,17 @@ wiederherstellbar ist (`SAFE-01`, `SAFE-02`, `SAFE-04`).
 
 ### Wartbarkeit
 
-- **MAINT-01** (`DEBT-04`): Die vier übergroßen Module sind aufgeteilt —
-  `ui/editors/rich-text.js` (1932), `features/initiative.js` (1655),
-  `features/dmscreen/dmscreen-render.js` (1576) und `features/wiki/wiki.js`. Aufteilung entlang
-  bestehender Verantwortlichkeiten, ohne Verhaltensänderung.
+- **MAINT-01** ✓ (`DEBT-04`, Phase 13: 13-09 bis 13-12 komplett): Die vier übergroßen Module sind
+  aufgeteilt — `features/wiki/wiki.js` (1932 → `wiki.js` 554 + `wiki-crud.js` 673, 13-09),
+  `features/initiative.js` (1655 → `initiative.js` 616 + `initiative-loot.js` 392 +
+  `initiative-combat-widgets.js` 670, 13-10), `ui/editors/rich-text.js` (1932 → entflochten nach
+  D-03 in `features/spells/spell-manager.js` 607 + `rich-text.js` 401 + `rich-text-insert.js` 438 +
+  `rich-text-toolbars.js` 513, 13-11) und `features/dmscreen/dmscreen-render.js` (1576 →
+  `dmscreen-render.js` 564 + `dmscreen-config.js` 358 + `dmscreen-widgets-base.js` 280 +
+  `dmscreen-widgets-combat.js` 170 + `dmscreen-widgets-reference.js` 276, 13-12, mit
+  Charakterisierungs-Snapshot aus 13-05 als Verhaltensneutralitätsbeweis, D-04). Alle 14
+  Ergebnisdateien liegen unter der 800-Zeilen-Grenze (D-01); Aufteilung entlang bestehender
+  Sektionsbanner (D-02), ohne Verhaltensänderung.
 - **MAINT-02** ✓ (`DEBT-25`, `DEBT-16`, `DEBT-13`, Phase 13: 13-02 + 13-04 komplett): Irreführende und
   tote Codestellen sind beseitigt — `const D`-Überschattung des globalen Datenobjekts
   (`features/soundboard/soundboard-player.js:145` mit einer Zahl, umbenannt zu `trackDuration` in 13-04),
@@ -151,7 +158,7 @@ wiederherstellbar ist (`SAFE-01`, `SAFE-02`, `SAFE-04`).
 | SEC-04 | DEBT-14 | Phase 13 — Complete (13-02) |
 | PERF-01 | DEBT-06, DEBT-07 | Phase 13 — Complete (13-06) |
 | PERF-02 | DEBT-24 | Phase 13 — Complete (13-07) |
-| MAINT-01 | DEBT-04 | Pending |
+| MAINT-01 | DEBT-04 | Phase 13 — Complete (13-09, 13-10, 13-11, 13-12) |
 | MAINT-02 | DEBT-25, DEBT-16, DEBT-13 | Phase 13 — Complete (13-02 + 13-04) |
 | MAINT-03 | DEBT-12 | Phase 13 — Complete (13-03) |
 | MAINT-04 | DEBT-03 | Phase 13 — Complete (13-02) |
