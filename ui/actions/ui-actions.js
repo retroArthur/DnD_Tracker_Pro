@@ -185,24 +185,34 @@ const UIActions = {
     // Dynamic function call (SEC-03: nur Ziele aus CALL_ACTION_WHITELIST erlaubt)
     call: ctx => {
         if (!window.CALL_ACTION_WHITELIST?.has(ctx.value)) {
-            if (window.APP_CONFIG?.DEBUG_MODE && window.ErrorHandler) {
+            // Unconditional (nicht mehr DEBUG_MODE-gated): ein geblockter Call ist
+            // sicherheitsrelevant und muss auch im Produktions-Build sichtbar sein —
+            // ErrorHandler.log() routet ohnehin unconditional nach console.error
+            // (render/helpers.js), der DEBUG_MODE-Guard war redundant und strenger
+            // zugleich (WR-02b, 13-REVIEW.md).
+            if (window.ErrorHandler) {
                 window.ErrorHandler.log(
                     'EventDelegation',
                     new Error('Call-Ziel nicht in Whitelist'),
                     ctx.value
                 );
+            } else {
+                // Letzter Ausweg falls ErrorHandler fehlt (WR-02a-Prinzip).
+                console.error('[EventDelegation] Call-Ziel nicht in Whitelist:', ctx.value); // gsd:konsolen-senke-fallback
             }
             return;
         }
         const fn = window[ctx.value];
         if (typeof fn === 'function') {
             fn(ctx.id);
-        } else if (window.APP_CONFIG?.DEBUG_MODE && window.ErrorHandler) {
+        } else if (window.ErrorHandler) {
             window.ErrorHandler.log(
                 'EventDelegation',
                 new Error('Call-Ziel ist keine Funktion'),
                 ctx.value
             );
+        } else {
+            console.error('[EventDelegation] Call-Ziel ist keine Funktion:', ctx.value); // gsd:konsolen-senke-fallback
         }
     },
 

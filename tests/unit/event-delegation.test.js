@@ -184,7 +184,9 @@ describe('UIActions.call Whitelist-Wächter (SEC-03)', () => {
         expect(notInWhitelistMessage).not.toBe(notAFunctionMessage);
     });
 
-    test('protokolliert nicht, wenn DEBUG_MODE aus ist (nicht gelistetes Ziel)', () => {
+    test('protokolliert auch bei DEBUG_MODE aus (nicht gelistetes Ziel) — WR-02b, 13-REVIEW.md', () => {
+        // Ein geblockter Call ist sicherheitsrelevant (SEC-03) und muss auch im
+        // Produktions-Build (DEBUG_MODE=false) sichtbar bleiben.
         const errorHandlerLog = jest.fn();
         const { handlers } = loadUIActions({
             whitelist: new Set(['flipCoin']),
@@ -194,7 +196,9 @@ describe('UIActions.call Whitelist-Wächter (SEC-03)', () => {
 
         handlers.get('call')({ value: 'nichtGelistet', id: 1 });
 
-        expect(errorHandlerLog).not.toHaveBeenCalled();
+        expect(errorHandlerLog).toHaveBeenCalledTimes(1);
+        expect(errorHandlerLog.mock.calls[0][0]).toBe('EventDelegation');
+        expect(errorHandlerLog.mock.calls[0][2]).toBe('nichtGelistet');
     });
 
     test('protokolliert ein gelistetes, aber nicht aufrufbares Ziel bei aktivem DEBUG_MODE genau einmal über ErrorHandler', () => {
@@ -213,7 +217,7 @@ describe('UIActions.call Whitelist-Wächter (SEC-03)', () => {
         expect(errorHandlerLog.mock.calls[0][2]).toBe('nichtAufrufbar');
     });
 
-    test('protokolliert nicht, wenn DEBUG_MODE aus ist (gelistetes, nicht aufrufbares Ziel)', () => {
+    test('protokolliert auch bei DEBUG_MODE aus (gelistetes, nicht aufrufbares Ziel) — WR-02b, 13-REVIEW.md', () => {
         const errorHandlerLog = jest.fn();
         const { handlers, windowStub } = loadUIActions({
             whitelist: new Set(['nichtAufrufbar']),
@@ -224,6 +228,20 @@ describe('UIActions.call Whitelist-Wächter (SEC-03)', () => {
 
         handlers.get('call')({ value: 'nichtAufrufbar', id: 1 });
 
-        expect(errorHandlerLog).not.toHaveBeenCalled();
+        expect(errorHandlerLog).toHaveBeenCalledTimes(1);
+        expect(errorHandlerLog.mock.calls[0][0]).toBe('EventDelegation');
+        expect(errorHandlerLog.mock.calls[0][2]).toBe('nichtAufrufbar');
+    });
+
+    test('nutzt console.error als letzten Ausweg, wenn window.ErrorHandler selbst fehlt (WR-02a-Prinzip)', () => {
+        const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+        const { handlers, windowStub } = loadUIActions({ whitelist: new Set(['flipCoin']) });
+        delete windowStub.ErrorHandler;
+
+        handlers.get('call')({ value: 'nichtGelistet', id: 1 });
+
+        expect(consoleErrorSpy).toHaveBeenCalledTimes(1);
+        expect(consoleErrorSpy.mock.calls[0][0]).toMatch(/Call-Ziel nicht in Whitelist/);
+        consoleErrorSpy.mockRestore();
     });
 });

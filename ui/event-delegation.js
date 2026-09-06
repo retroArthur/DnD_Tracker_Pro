@@ -110,6 +110,10 @@ const EventDelegation = {
             } catch (actionError) {
                 if (typeof ErrorHandler !== 'undefined') {
                     ErrorHandler.log('EventDelegation', actionError, `Action: ${action}`);
+                } else {
+                    // Letzter Ausweg falls ErrorHandler fehlt (z.B. Ladereihenfolge-Bruch) —
+                    // ohne diesen Zweig verschwindet der Fehler spurlos (WR-02a, 13-REVIEW.md).
+                    console.error(`[EventDelegation] Fehler in Action "${action}":`, actionError); // gsd:konsolen-senke-fallback
                 }
             }
         }
@@ -131,6 +135,9 @@ const EventDelegation = {
             } catch (actionError) {
                 if (typeof ErrorHandler !== 'undefined') {
                     ErrorHandler.log('EventDelegation', actionError, `Action (change): ${action}`);
+                } else {
+                    // Letzter Ausweg falls ErrorHandler fehlt — siehe _handleClick (WR-02a).
+                    console.error(`[EventDelegation] Fehler in Action "${action}":`, actionError); // gsd:konsolen-senke-fallback
                 }
             }
             return;
@@ -142,11 +149,18 @@ const EventDelegation = {
 
         // Whitelist-Validierung für Sicherheit
         if (!ALLOWED_CHANGE_HANDLERS.has(handlerName)) {
-            if (window.APP_CONFIG?.DEBUG_MODE && window.ErrorHandler) {
-                window.ErrorHandler.log(
+            // Unconditional (nicht mehr DEBUG_MODE-gated): ein geblockter, nicht
+            // gelisteter Handler ist sicherheitsrelevant und muss auch im
+            // Produktions-Build sichtbar sein — ErrorHandler.log() routet ohnehin
+            // unconditional in die Konsole (siehe render/helpers.js), der zusätzliche
+            // DEBUG_MODE-Guard war redundant und strenger zugleich (WR-02b, 13-REVIEW.md).
+            if (typeof ErrorHandler !== 'undefined') {
+                ErrorHandler.log(
                     'EventDelegation',
                     new Error(`Blocked unauthorized onChange handler: ${handlerName}`)
                 );
+            } else {
+                console.error(`[EventDelegation] Blocked unauthorized onChange handler: ${handlerName}`); // gsd:konsolen-senke-fallback
             }
             return;
         }
@@ -158,6 +172,8 @@ const EventDelegation = {
             } catch (changeError) {
                 if (typeof ErrorHandler !== 'undefined') {
                     ErrorHandler.log('EventDelegation', changeError, `onChange: ${handlerName}`);
+                } else {
+                    console.error('[EventDelegation] onChange Fehler:', changeError); // gsd:konsolen-senke-fallback
                 }
             }
         }
@@ -179,6 +195,9 @@ const EventDelegation = {
             } catch (actionError) {
                 if (typeof ErrorHandler !== 'undefined') {
                     ErrorHandler.log('EventDelegation', actionError, `Action (input): ${action}`);
+                } else {
+                    // Letzter Ausweg falls ErrorHandler fehlt — siehe _handleClick (WR-02a).
+                    console.error(`[EventDelegation] Fehler in Action "${action}":`, actionError); // gsd:konsolen-senke-fallback
                 }
             }
             return;
@@ -190,11 +209,14 @@ const EventDelegation = {
 
         // Whitelist-Validierung für Sicherheit
         if (!ALLOWED_CHANGE_HANDLERS.has(handlerName)) {
-            if (window.APP_CONFIG?.DEBUG_MODE && window.ErrorHandler) {
-                window.ErrorHandler.log(
+            // Unconditional — siehe onChange-Zweig oben (WR-02b, 13-REVIEW.md).
+            if (typeof ErrorHandler !== 'undefined') {
+                ErrorHandler.log(
                     'EventDelegation',
                     new Error(`Blocked unauthorized onInput handler: ${handlerName}`)
                 );
+            } else {
+                console.error(`[EventDelegation] Blocked unauthorized onInput handler: ${handlerName}`); // gsd:konsolen-senke-fallback
             }
             return;
         }
@@ -206,6 +228,8 @@ const EventDelegation = {
             } catch (inputError) {
                 if (typeof ErrorHandler !== 'undefined') {
                     ErrorHandler.log('EventDelegation', inputError, `onInput: ${handlerName}`);
+                } else {
+                    console.error('[EventDelegation] onInput Fehler:', inputError); // gsd:konsolen-senke-fallback
                 }
             }
         }
