@@ -5,16 +5,16 @@ milestone_name: Schulden-Abbau
 current_phase: 13
 current_phase_name: Härtung & Wartbarkeit
 status: executing
-stopped_at: Completed 13-10-PLAN.md
-last_updated: "2026-09-06T09:15:39.604Z"
+stopped_at: "13-11: Tasks 1-3 committed, hard gate green (Jest 1066/1066, tsc clean, both bundles, pytest 24/24, Playwright 321/2 skipped); Task 4 (Bedienprobe checkpoint) awaiting human verification"
+last_updated: "2026-09-06T09:36:08.633Z"
 last_activity: 2026-09-06
 last_activity_desc: Phase 13 Plan 08 (MAINT-06 console hygiene + file-backup header comments) complete
-state_head: 28bc6c2c55bd4eee8f8657482a32be61d09c8fd7
+state_head: fe12069c8d55f11b8445104470e7bd00c7bf4400
 progress:
   total_phases: 3
   completed_phases: 1
   total_plans: 29
-  completed_plans: 27
+  completed_plans: 28
   percent: 33
 ---
 
@@ -41,7 +41,7 @@ See: `.planning/PROJECT.md` (Stand 2026-09-05)
 ## Current Position
 
 Phase: 13 (Härtung & Wartbarkeit) — EXECUTING
-Plan: 11 of 12
+Plan: 12 of 12
 Status: Plan 08 complete (MAINT-06), ready for next plan
 Last activity: 2026-09-06 — Plan 13-08 complete (console hygiene sweep + file-backup header comment fix)
 
@@ -133,6 +133,7 @@ Browser-Verhalten an der Base64-Grenze (12-07).
 | Phase 13 P08 | 40min | 3 tasks | 34 files |
 | Phase 13 P09 | 45min | 3 tasks | 5 files |
 | Phase 13 P10 | 40min | 3 tasks | 5 files |
+| Phase 13 P11 | 55min | 3 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -219,8 +220,8 @@ Browser-Verhalten an der Base64-Grenze (12-07).
 
 ## Session Continuity
 
-**Last session:** 2026-09-06T09:15:39.506Z
-**Stopped at:** Completed 13-10-PLAN.md
+**Last session:** 2026-09-06T09:36:08.528Z
+**Stopped at:** 13-11: Tasks 1-3 committed, hard gate green (Jest 1066/1066, tsc clean, both bundles, pytest 24/24, Playwright 321/2 skipped); Task 4 (Bedienprobe checkpoint) awaiting human verification
 **Resume file:** None
 
 **Last action:** `/gsd-execute-phase 13` (Plan 13-08, MAINT-06). Converted all 81 originally-counted unfiltered `console.*` calls across 31 `loader.js` MODULES files to the one sanctioned `ErrorHandler.log()` outlet in `render/helpers.js` (marked `gsd:konsolen-senke`), built `tests/unit/console-hygiene.test.js` as a permanent regression guard, and corrected two stale `file-backup-manager.js` header comments that wrongly described the forbidden `window.save` monkey-patch pattern (code has used `registerPostSaveHook()` correctly since Phase 12). Mid-execution finding: converting routine/self-healing diagnostics (data repairs, migration progress, per-tab render guards) to the single outlet elevated them to `console.error` and broke 5 Playwright tests (`editor-formatting.spec.js`, `editor-insert.spec.js`, `import-security.spec.js`) that assert zero console errors — fixed by routing those specific sites through the existing `window.debugLogAdd()` in-app debug panel instead, preserving the single-outlet invariant for genuine faults while not misclassifying normal operation as an error. Full suites green: `npx jest` 1066/1066, `npx playwright test` 321 passed/2 skipped (STATE.md baseline exactly matched), `python build.py` + `--production` + `pytest tests/build` 24/24 all green.
@@ -350,6 +351,7 @@ Browser-Verhalten an der Base64-Grenze (12-07).
 - [Phase 13]: [Phase 13, 13-08]: file-backup-manager.js Kopfkommentare (Zeile 6, Zeile 674 — RESEARCH-Korrektur gegenueber 13-CONTEXT.md, das faelschlich 387 nennt) beschreiben jetzt registerPostSaveHook() statt des verbotenen window.save-Monkey-Patch-Musters; Testfall in file-backup.test.js verhindert Drift
 - [Phase 13]: MAINT-01 1/4: wiki.js entlang Sektionsbannern in wiki.js (554) + wiki-crud.js (673) aufgeteilt, loader.js-only registriert, Export-Union 28 (nicht 30, Plan-Zahl war stale)
 - [Phase 13]: 13-10: initiative.js split 616/392/670 lines, export union 38 (not plan-stated 34, same stale-count pattern as 13-09), undo-call sum 2 unchanged
+- [Phase 13]: 13-11: rich-text.js entflochten (D-03, Zauberverwaltung -> features/spells/spell-manager.js) und geteilt (D-02) in rich-text.js/rich-text-insert.js/rich-text-toolbars.js (401/438/513 Zeilen), Exportsumme 26 (nicht plan-stated 30, gleiches Stale-Count-Muster), ein waehrend Task 1 selbstverursachter Fehler (falsche Zeilenspanne, 12 Deklarationen fehlend) nur durch E2E-Netz gefangen, nicht durch Build
 
 ## Operator Next Steps
 
