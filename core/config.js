@@ -33,6 +33,18 @@ const APP_CONFIG = Object.freeze({
     // Untergrenze: die Undo-Tiefe darf bei einer sehr grossen Kampagne nie unter diese Anzahl
     // Eintraege fallen, sonst verliert der Spielleiter die Ruecknahme still (PERF-01/D-09b).
     UNDO_MIN_ENTRIES: 5,
+    // Harter Deckel auf die Datensatzzahl im "diceStats"-IndexedDB-Store (PERF-02/D-11).
+    // Beim Ueberschreiten werden die AELTESTEN Datensaetze verdraengt (kleinste autoIncrement-
+    // Keys zuerst) — NIEMALS zeit- oder sitzungsbasiert, das wuerde unbemerkt genau die
+    // Langzeitauswertung zerstoeren, fuer die der Store existiert ("meine Wuerfel hassen mich
+    // seit drei Jahren"). Vom Nutzer entschieden (Task-1-Checkpoint, 13-07-PLAN.md): 50.000
+    // Datensaetze ≈ 10 MB bei ~200 Byte/Datensatz — bleibt innerhalb des in Phase 12 bewerteten
+    // ~15-MB-Rahmens (12-CONTEXT.md, offene Frage 3) und entspricht bei 300 Wuerfen/Sitzung und
+    // 50 Sitzungen/Jahr gut drei Jahren durchgehend woechentlichen Spiels — greift fuer einen
+    // realen Spielleiter praktisch nie. Verdraengte Wuerfe sind unwiederbringlich (IndexedDB
+    // liegt ausserhalb von window.D und damit ausserhalb des Undo-Stacks), deshalb die
+    // grosszuegige Wahl statt einer knappen.
+    DICE_STATS_MAX_RECORDS: 50000,
     MAX_BACKUPS: 5,
     MAX_BACKUP_SIZE_MB: 2,
     // Timing (in Millisekunden)
