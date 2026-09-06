@@ -116,6 +116,7 @@ const MODULES = [
 
     // DM Screen
     'features/dmscreen/dmscreen-render.js',
+    'features/dmscreen/dmscreen-widgets-reference.js',
     // Phase 2 Command-Palette-Module (Welle 2 fuellt Implementierung)
     'features/command-palette/action-registry.js',
     'features/command-palette/command-palette.js',
