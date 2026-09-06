@@ -12,10 +12,17 @@
  *    Rohtitel (Vergleich gegen `D.wiki[].title`).
  *  - Das `wiki-tree-item`-Element trägt genau EIN `data-id`-Attribut.
  *
- * Lädt `features/wiki/wiki.js` UND `utils/basic.js` per `vm` in denselben
- * Kontext (Muster: tests/unit/file-backup-idb.test.js). `esc()` wird NICHT
- * gestubbt — es muss die echte Projektfunktion aus utils/basic.js sein, sonst
- * prüft der Test das Escaping nicht wirklich.
+ * Lädt `features/wiki/wiki.js`, `features/wiki/wiki-crud.js` UND `utils/basic.js`
+ * per `vm` in denselben Kontext (Muster: tests/unit/file-backup-idb.test.js).
+ * `esc()` wird NICHT gestubbt — es muss die echte Projektfunktion aus
+ * utils/basic.js sein, sonst prüft der Test das Escaping nicht wirklich.
+ *
+ * MAINT-01 (Plan 13-09): `parseWikiLinks()` und `renderWikiTreeItem()` sind
+ * unverändert, aber `parseWikiLinks()` wohnt seit der Aufteilung in
+ * `wiki-crud.js`, nicht mehr in `wiki.js`. Ladereihenfolge muss der
+ * `loader.js` `MODULES`-Reihenfolge entsprechen: `wiki.js` VOR `wiki-crud.js`,
+ * weil `wiki-crud.js` bare Bezeichner (`WikiState`, `WIKI_CATEGORIES`) aus
+ * `wiki.js` referenziert.
  */
 
 const fs = require('fs');
@@ -23,6 +30,7 @@ const path = require('path');
 const vm = require('vm');
 
 const WIKI_MODULE_PATH = path.join(__dirname, '../../features/wiki/wiki.js');
+const WIKI_CRUD_MODULE_PATH = path.join(__dirname, '../../features/wiki/wiki-crud.js');
 const BASIC_UTILS_PATH = path.join(__dirname, '../../utils/basic.js');
 
 function loadWikiModule({ wikiEntries = [] } = {}) {
@@ -41,8 +49,11 @@ function loadWikiModule({ wikiEntries = [] } = {}) {
     vm.createContext(context);
     // Reihenfolge wichtig: esc() muss vor wiki.js im selben Kontext existieren,
     // damit wiki.js' bare esc(...)-Aufrufe die echte Projektfunktion treffen.
+    // wiki-crud.js muss NACH wiki.js laufen (loader.js MODULES-Reihenfolge) —
+    // es referenziert WikiState/WIKI_CATEGORIES als bare Bezeichner aus wiki.js.
     vm.runInContext(fs.readFileSync(BASIC_UTILS_PATH, 'utf8'), context);
     vm.runInContext(fs.readFileSync(WIKI_MODULE_PATH, 'utf8'), context);
+    vm.runInContext(fs.readFileSync(WIKI_CRUD_MODULE_PATH, 'utf8'), context);
     return context;
 }
 

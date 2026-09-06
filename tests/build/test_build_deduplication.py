@@ -275,7 +275,8 @@ var MAX_BACKUPS = window.MAX_BACKUPS;  // CONFLICT
         modules = load_module_list(str(loader_path))
 
         # Phase 12 / Plan 01 (SAFE-01): 'systems/migration/audio-export.js' neu registriert
-        assert len(modules) == 124, f"Erwartet 124 Module, gefunden {len(modules)}"
+        # Phase 13 / Plan 09 (MAINT-01): 'features/wiki/wiki-crud.js' neu registriert
+        assert len(modules) == 125, f"Erwartet 125 Module, gefunden {len(modules)}"
 
         # Reihenfolge muss der Reihenfolge im Datei-Text entsprechen
         loader_content = loader_path.read_text(encoding='utf-8')
