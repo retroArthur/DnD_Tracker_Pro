@@ -1,5 +1,1360 @@
 // Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
 
+exports[`DM Screen Charakterisierung (D-04, Plan 13-05) Der oeffentliche Gesamt-Einstieg rendert Quick-Bar und Grid gegen die volle Fixture (Snapshot): gesamt-einstieg-grid 1`] = `
+"
+                <div class="dmscreen-widget" data-widget-id="party-widget" data-widget-type="party" draggable="true">
+                    <div class="dmscreen-widget-header">
+                        <span class="dmscreen-widget-drag" title="Ziehen zum Sortieren">⋮⋮</span>
+                        <span class="dmscreen-widget-icon">👥</span>
+                        <span class="dmscreen-widget-title">Party Stats</span>
+                        <button class="dmscreen-widget-hide" data-action="dms-hide-widget" data-widget="party-widget" title="Widget ausblenden">✕</button>
+                    </div>
+                    <div class="dmscreen-widget-body">
+                        
+        <div class="dms-party-stats">
+            <div class="dms-stat-row">
+                <span class="dms-stat-label">Party HP</span>
+                <div class="dms-hp-bar-container">
+                    <div class="dms-hp-bar healthy" style="width: 88%"></div>
+                    <span class="dms-hp-text">88%</span>
+                </div>
+            </div>
+            <div class="dms-stat-row">
+                <span class="dms-stat-label">Höchste Pass. Wahrn.</span>
+                <span class="dms-stat-value">17 <span class="dms-stat-char">(Elara Mondschein)</span></span>
+            </div>
+            <div class="dms-stat-row">
+                <span class="dms-stat-label">Spieler</span>
+                <span class="dms-stat-value">2</span>
+            </div>
+        </div>
+    
+                    </div>
+                </div>
+            
+                <div class="dmscreen-widget" data-widget-id="initiative-widget" data-widget-type="initiative" draggable="true">
+                    <div class="dmscreen-widget-header">
+                        <span class="dmscreen-widget-drag" title="Ziehen zum Sortieren">⋮⋮</span>
+                        <span class="dmscreen-widget-icon">⚔️</span>
+                        <span class="dmscreen-widget-title">Initiative</span>
+                        <button class="dmscreen-widget-hide" data-action="dms-hide-widget" data-widget="initiative-widget" title="Widget ausblenden">✕</button>
+                    </div>
+                    <div class="dmscreen-widget-body">
+                        
+        <div class="dms-initiative">
+            <div class="dms-init-header">Runde 1 <span class="dms-init-count">(2)</span></div>
+            <div class="dms-init-list">
+                
+                        <div class="dms-init-entry active healthy">
+                            <span class="dms-init-marker">▶</span>
+                            <span class="dms-init-name">Thorin Eisenfaust</span>
+                            <span class="dms-init-value">18</span>
+                        </div>
+                    
+                        <div class="dms-init-entry  healthy">
+                            <span class="dms-init-marker"></span>
+                            <span class="dms-init-name">Goblin-Kundschafter</span>
+                            <span class="dms-init-value">12</span>
+                        </div>
+                    
+            </div>
+        </div>
+    
+                    </div>
+                </div>
+            
+                <div class="dmscreen-widget" data-widget-id="dice-widget" data-widget-type="dice" draggable="true">
+                    <div class="dmscreen-widget-header">
+                        <span class="dmscreen-widget-drag" title="Ziehen zum Sortieren">⋮⋮</span>
+                        <span class="dmscreen-widget-icon">🎲</span>
+                        <span class="dmscreen-widget-title">Würfel</span>
+                        <button class="dmscreen-widget-hide" data-action="dms-hide-widget" data-widget="dice-widget" title="Widget ausblenden">✕</button>
+                    </div>
+                    <div class="dmscreen-widget-body">
+                        
+        <div class="dms-dice">
+            <div class="dms-dice-buttons">
+                <button class="dms-dice-btn" data-action="dms-roll" data-dice="1d4">d4</button>
+                <button class="dms-dice-btn" data-action="dms-roll" data-dice="1d6">d6</button>
+                <button class="dms-dice-btn" data-action="dms-roll" data-dice="1d8">d8</button>
+                <button class="dms-dice-btn" data-action="dms-roll" data-dice="1d10">d10</button>
+                <button class="dms-dice-btn" data-action="dms-roll" data-dice="1d12">d12</button>
+                <button class="dms-dice-btn dms-dice-d20" data-action="dms-roll" data-dice="1d20">d20</button>
+                <button class="dms-dice-btn" data-action="dms-roll" data-dice="1d100">d100</button>
+            </div>
+            <div class="dms-dice-result" id="dms-dice-result">—</div>
+            <div class="dms-dice-custom">
+                <input type="text" id="dms-dice-formula" placeholder="z.B. 2d6+3" class="dms-dice-input">
+                <button class="btn btn-sm" data-action="dms-roll-custom">🎲</button>
+            </div>
+        </div>
+    
+                    </div>
+                </div>
+            
+                <div class="dmscreen-widget" data-widget-id="dc-widget" data-widget-type="dc" draggable="true">
+                    <div class="dmscreen-widget-header">
+                        <span class="dmscreen-widget-drag" title="Ziehen zum Sortieren">⋮⋮</span>
+                        <span class="dmscreen-widget-icon">🎯</span>
+                        <span class="dmscreen-widget-title">DC Referenz</span>
+                        <button class="dmscreen-widget-hide" data-action="dms-hide-widget" data-widget="dc-widget" title="Widget ausblenden">✕</button>
+                    </div>
+                    <div class="dmscreen-widget-body">
+                        
+        <div class="dms-dc-list">
+            
+                <div class="dms-dc-entry" style="border-left: 3px solid var(--green)">
+                    <span class="dms-dc-value">5</span>
+                    <span class="dms-dc-desc">Trivial</span>
+                </div>
+            
+                <div class="dms-dc-entry" style="border-left: 3px solid var(--cyan)">
+                    <span class="dms-dc-value">10</span>
+                    <span class="dms-dc-desc">Leicht</span>
+                </div>
+            
+                <div class="dms-dc-entry" style="border-left: 3px solid var(--gold)">
+                    <span class="dms-dc-value">15</span>
+                    <span class="dms-dc-desc">Mittel</span>
+                </div>
+            
+                <div class="dms-dc-entry" style="border-left: 3px solid var(--orange)">
+                    <span class="dms-dc-value">20</span>
+                    <span class="dms-dc-desc">Schwer</span>
+                </div>
+            
+                <div class="dms-dc-entry" style="border-left: 3px solid var(--red)">
+                    <span class="dms-dc-value">25</span>
+                    <span class="dms-dc-desc">Sehr schwer</span>
+                </div>
+            
+                <div class="dms-dc-entry" style="border-left: 3px solid var(--purple)">
+                    <span class="dms-dc-value">30</span>
+                    <span class="dms-dc-desc">Fast unmöglich</span>
+                </div>
+            
+        </div>
+    
+                    </div>
+                </div>
+            
+                <div class="dmscreen-widget" data-widget-id="tables-widget" data-widget-type="tables" draggable="true">
+                    <div class="dmscreen-widget-header">
+                        <span class="dmscreen-widget-drag" title="Ziehen zum Sortieren">⋮⋮</span>
+                        <span class="dmscreen-widget-icon">🎰</span>
+                        <span class="dmscreen-widget-title">Tabellen</span>
+                        <button class="dmscreen-widget-hide" data-action="dms-hide-widget" data-widget="tables-widget" title="Widget ausblenden">✕</button>
+                    </div>
+                    <div class="dmscreen-widget-body">
+                        
+        <div class="dms-tables">
+            
+                <div class="dms-table-entry">
+                    <span class="dms-table-icon">🌲</span>
+                    <span class="dms-table-name">Waldbegegnungen</span>
+                    <button class="btn btn-sm" data-action="dms-roll-table" data-table="1">Roll</button>
+                </div>
+            
+                <div class="dms-table-entry">
+                    <span class="dms-table-icon">🍺</span>
+                    <span class="dms-table-name">Tavernengeruechte</span>
+                    <button class="btn btn-sm" data-action="dms-roll-table" data-table="2">Roll</button>
+                </div>
+            
+            <div class="dms-table-result" id="dms-table-result"></div>
+        </div>
+    
+                    </div>
+                </div>
+            
+                <div class="dmscreen-widget" data-widget-id="rules-widget" data-widget-type="rules" draggable="true">
+                    <div class="dmscreen-widget-header">
+                        <span class="dmscreen-widget-drag" title="Ziehen zum Sortieren">⋮⋮</span>
+                        <span class="dmscreen-widget-icon">📏</span>
+                        <span class="dmscreen-widget-title">Regeln</span>
+                        <button class="dmscreen-widget-hide" data-action="dms-hide-widget" data-widget="rules-widget" title="Widget ausblenden">✕</button>
+                    </div>
+                    <div class="dmscreen-widget-body">
+                        
+        <div class="dms-rules">
+            <div class="dms-rule-section">
+                <div class="dms-rule-title">🛡️ Deckung</div>
+                <div class="dms-rule-items">
+                    <div class="dms-rule-item"><span>Halbe</span><span>+2 AC, +2 DEX-Rettung</span></div>
+                    <div class="dms-rule-item"><span>3/4</span><span>+5 AC, +5 DEX-Rettung</span></div>
+                    <div class="dms-rule-item"><span>Volle</span><span>Nicht anvisierbar</span></div>
+                </div>
+            </div>
+            <div class="dms-rule-section">
+                <div class="dms-rule-title">💡 Licht &amp; Sicht</div>
+                <div class="dms-rule-items">
+                    <div class="dms-rule-item"><span>Hell</span><span>Normal sehen</span></div>
+                    <div class="dms-rule-item"><span>Dämmrig</span><span>Nachteil Wahrn.</span></div>
+                    <div class="dms-rule-item"><span>Dunkel</span><span>Effektiv blind</span></div>
+                </div>
+            </div>
+            <div class="dms-rule-section">
+                <div class="dms-rule-title">🏃 Bewegung</div>
+                <div class="dms-rule-items">
+                    <div class="dms-rule-item"><span>Schwierig</span><span>2× Bewegung</span></div>
+                    <div class="dms-rule-item"><span>Springen</span><span>STR (weit) / 3+STR (hoch)</span></div>
+                </div>
+            </div>
+        </div>
+    
+                    </div>
+                </div>
+            
+                <div class="dmscreen-widget" data-widget-id="notes-widget" data-widget-type="notes" draggable="true">
+                    <div class="dmscreen-widget-header">
+                        <span class="dmscreen-widget-drag" title="Ziehen zum Sortieren">⋮⋮</span>
+                        <span class="dmscreen-widget-icon">📝</span>
+                        <span class="dmscreen-widget-title">Notizen</span>
+                        <button class="dmscreen-widget-hide" data-action="dms-hide-widget" data-widget="notes-widget" title="Widget ausblenden">✕</button>
+                    </div>
+                    <div class="dmscreen-widget-body">
+                        
+        <div class="dms-notes">
+            <textarea class="dms-notes-input" id="dms-notes-input" placeholder="Session-Notizen hier eingeben..." data-on-input="saveDMSNotes">Session-Notizen: Die Gruppe naehert sich der Mine.</textarea>
+        </div>
+    
+                    </div>
+                </div>
+            
+                <div class="dmscreen-widget" data-widget-id="actions-widget" data-widget-type="actions" draggable="true">
+                    <div class="dmscreen-widget-header">
+                        <span class="dmscreen-widget-drag" title="Ziehen zum Sortieren">⋮⋮</span>
+                        <span class="dmscreen-widget-icon">⚡</span>
+                        <span class="dmscreen-widget-title">Aktionen</span>
+                        <button class="dmscreen-widget-hide" data-action="dms-hide-widget" data-widget="actions-widget" title="Widget ausblenden">✕</button>
+                    </div>
+                    <div class="dmscreen-widget-body">
+                        
+        <div class="dms-ref-widget">
+            <div class="dms-ref-section">
+                <div class="dms-ref-title">⚡ Aktion</div>
+                <div class="dms-ref-list">
+                    <span class="dms-ref-tag">Angriff</span>
+                    <span class="dms-ref-tag">Ausweichen</span>
+                    <span class="dms-ref-tag">Rennen</span>
+                    <span class="dms-ref-tag">Helfen</span>
+                    <span class="dms-ref-tag">Verstecken</span>
+                    <span class="dms-ref-tag">Bereit</span>
+                    <span class="dms-ref-tag">Suchen</span>
+                    <span class="dms-ref-tag">Zaubern</span>
+                    <span class="dms-ref-tag">Greifen</span>
+                    <span class="dms-ref-tag">Schieben</span>
+                </div>
+            </div>
+            <div class="dms-ref-section">
+                <div class="dms-ref-title">⭐ Bonusaktion</div>
+                <div class="dms-ref-note">Nur wenn Fähigkeit/Zauber es erlaubt</div>
+            </div>
+            <div class="dms-ref-section">
+                <div class="dms-ref-title">↩️ Reaktion</div>
+                <div class="dms-ref-list">
+                    <span class="dms-ref-tag">Gelegenheitsangriff</span>
+                    <span class="dms-ref-tag">Bereit auslösen</span>
+                </div>
+            </div>
+            <div class="dms-ref-section">
+                <div class="dms-ref-title">🔄 Freie Interaktion</div>
+                <div class="dms-ref-list">
+                    <span class="dms-ref-tag">Tür öffnen</span>
+                    <span class="dms-ref-tag">Waffe ziehen</span>
+                    <span class="dms-ref-tag">Gegenstand aufheben</span>
+                </div>
+            </div>
+        </div>
+    
+                    </div>
+                </div>
+            
+                <div class="dmscreen-widget" data-widget-id="attributes-widget" data-widget-type="attributes" draggable="true">
+                    <div class="dmscreen-widget-header">
+                        <span class="dmscreen-widget-drag" title="Ziehen zum Sortieren">⋮⋮</span>
+                        <span class="dmscreen-widget-icon">💪</span>
+                        <span class="dmscreen-widget-title">Attribute</span>
+                        <button class="dmscreen-widget-hide" data-action="dms-hide-widget" data-widget="attributes-widget" title="Widget ausblenden">✕</button>
+                    </div>
+                    <div class="dmscreen-widget-body">
+                        
+        <div class="dms-ref-widget">
+            <div class="dms-attr-grid">
+                <div class="dms-attr-item str"><span class="dms-attr-abbr">STR</span><span class="dms-attr-name">Stärke</span></div>
+                <div class="dms-attr-item dex"><span class="dms-attr-abbr">DEX</span><span class="dms-attr-name">Geschick</span></div>
+                <div class="dms-attr-item con"><span class="dms-attr-abbr">KON</span><span class="dms-attr-name">Konstitution</span></div>
+                <div class="dms-attr-item int"><span class="dms-attr-abbr">INT</span><span class="dms-attr-name">Intelligenz</span></div>
+                <div class="dms-attr-item wis"><span class="dms-attr-abbr">WIS</span><span class="dms-attr-name">Weisheit</span></div>
+                <div class="dms-attr-item cha"><span class="dms-attr-abbr">CHA</span><span class="dms-attr-name">Charisma</span></div>
+            </div>
+            <div class="dms-ref-section">
+                <div class="dms-ref-title">Modifikator-Tabelle</div>
+                <div class="dms-mod-table">
+                    <div class="dms-mod-row"><span>1</span><span>-5</span></div>
+                    <div class="dms-mod-row"><span>2-3</span><span>-4</span></div>
+                    <div class="dms-mod-row"><span>4-5</span><span>-3</span></div>
+                    <div class="dms-mod-row"><span>6-7</span><span>-2</span></div>
+                    <div class="dms-mod-row"><span>8-9</span><span>-1</span></div>
+                    <div class="dms-mod-row"><span>10-11</span><span>±0</span></div>
+                    <div class="dms-mod-row"><span>12-13</span><span>+1</span></div>
+                    <div class="dms-mod-row"><span>14-15</span><span>+2</span></div>
+                    <div class="dms-mod-row"><span>16-17</span><span>+3</span></div>
+                    <div class="dms-mod-row"><span>18-19</span><span>+4</span></div>
+                    <div class="dms-mod-row"><span>20-21</span><span>+5</span></div>
+                    <div class="dms-mod-row"><span>22+</span><span>+6</span></div>
+                </div>
+            </div>
+        </div>
+    
+                    </div>
+                </div>
+            
+                <div class="dmscreen-widget" data-widget-id="saves-widget" data-widget-type="saves" draggable="true">
+                    <div class="dmscreen-widget-header">
+                        <span class="dmscreen-widget-drag" title="Ziehen zum Sortieren">⋮⋮</span>
+                        <span class="dmscreen-widget-icon">🛡️</span>
+                        <span class="dmscreen-widget-title">Rettungswürfe</span>
+                        <button class="dmscreen-widget-hide" data-action="dms-hide-widget" data-widget="saves-widget" title="Widget ausblenden">✕</button>
+                    </div>
+                    <div class="dmscreen-widget-body">
+                        
+        <div class="dms-ref-widget">
+            <div class="dms-save-list">
+                <div class="dms-save-item str">
+                    <span class="dms-save-attr">STR</span>
+                    <span class="dms-save-desc">Festhalten, Schieben, Fallen widerstehen</span>
+                </div>
+                <div class="dms-save-item dex">
+                    <span class="dms-save-attr">DEX</span>
+                    <span class="dms-save-desc">Flächenzauber, Fallen, Reflexe</span>
+                </div>
+                <div class="dms-save-item con">
+                    <span class="dms-save-attr">KON</span>
+                    <span class="dms-save-desc">Gift, Krankheit, Konzentration</span>
+                </div>
+                <div class="dms-save-item int">
+                    <span class="dms-save-attr">INT</span>
+                    <span class="dms-save-desc">Illusionen, Psi-Angriffe</span>
+                </div>
+                <div class="dms-save-item wis">
+                    <span class="dms-save-attr">WIS</span>
+                    <span class="dms-save-desc">Bezauberung, Furcht, mental</span>
+                </div>
+                <div class="dms-save-item cha">
+                    <span class="dms-save-attr">CHA</span>
+                    <span class="dms-save-desc">Verbannung, Besitzergreifung</span>
+                </div>
+            </div>
+            <div class="dms-ref-note">Häufigkeit: DEX › KON › WIS › CHA › INT › STR</div>
+        </div>
+    
+                    </div>
+                </div>
+            
+                <div class="dmscreen-widget" data-widget-id="skills-widget" data-widget-type="skills" draggable="true">
+                    <div class="dmscreen-widget-header">
+                        <span class="dmscreen-widget-drag" title="Ziehen zum Sortieren">⋮⋮</span>
+                        <span class="dmscreen-widget-icon">📚</span>
+                        <span class="dmscreen-widget-title">Fertigkeiten</span>
+                        <button class="dmscreen-widget-hide" data-action="dms-hide-widget" data-widget="skills-widget" title="Widget ausblenden">✕</button>
+                    </div>
+                    <div class="dmscreen-widget-body">
+                        
+        <div class="dms-ref-widget dms-skills-widget">
+            <div class="dms-skill-group">
+                <div class="dms-skill-header str">STR</div>
+                <div class="dms-skill-item">Athletik</div>
+            </div>
+            <div class="dms-skill-group">
+                <div class="dms-skill-header dex">DEX</div>
+                <div class="dms-skill-item">Akrobatik</div>
+                <div class="dms-skill-item">Fingerfertigkeit</div>
+                <div class="dms-skill-item">Heimlichkeit</div>
+            </div>
+            <div class="dms-skill-group">
+                <div class="dms-skill-header int">INT</div>
+                <div class="dms-skill-item">Arkane Kunde</div>
+                <div class="dms-skill-item">Geschichte</div>
+                <div class="dms-skill-item">Nachforschung</div>
+                <div class="dms-skill-item">Naturkunde</div>
+                <div class="dms-skill-item">Religion</div>
+            </div>
+            <div class="dms-skill-group">
+                <div class="dms-skill-header wis">WIS</div>
+                <div class="dms-skill-item">Wahrnehmung</div>
+                <div class="dms-skill-item">Einsicht</div>
+                <div class="dms-skill-item">Medizin</div>
+                <div class="dms-skill-item">Überleben</div>
+                <div class="dms-skill-item">Tierkunde</div>
+            </div>
+            <div class="dms-skill-group">
+                <div class="dms-skill-header cha">CHA</div>
+                <div class="dms-skill-item">Täuschung</div>
+                <div class="dms-skill-item">Einschüchtern</div>
+                <div class="dms-skill-item">Auftreten</div>
+                <div class="dms-skill-item">Überzeugen</div>
+            </div>
+        </div>
+    
+                    </div>
+                </div>
+            
+                <div class="dmscreen-widget" data-widget-id="economy-widget" data-widget-type="economy" draggable="true">
+                    <div class="dmscreen-widget-header">
+                        <span class="dmscreen-widget-drag" title="Ziehen zum Sortieren">⋮⋮</span>
+                        <span class="dmscreen-widget-icon">⏱️</span>
+                        <span class="dmscreen-widget-title">Kampfökonomie</span>
+                        <button class="dmscreen-widget-hide" data-action="dms-hide-widget" data-widget="economy-widget" title="Widget ausblenden">✕</button>
+                    </div>
+                    <div class="dmscreen-widget-body">
+                        
+        <div class="dms-ref-widget dms-economy-widget">
+            <div class="dms-economy-section">
+                <div class="dms-economy-header">Dein Zug</div>
+                <div class="dms-economy-item"><span class="dms-econ-icon">🏃</span><span>Bewegung</span><span class="dms-econ-val">bis zu Geschw.</span></div>
+                <div class="dms-economy-item"><span class="dms-econ-icon">⚡</span><span>1× Aktion</span><span class="dms-econ-val">immer</span></div>
+                <div class="dms-economy-item"><span class="dms-econ-icon">⭐</span><span>1× Bonusaktion</span><span class="dms-econ-val">wenn vorhanden</span></div>
+                <div class="dms-economy-item"><span class="dms-econ-icon">🔄</span><span>1× Freie Interaktion</span><span class="dms-econ-val">immer</span></div>
+            </div>
+            <div class="dms-economy-section">
+                <div class="dms-economy-header">Jederzeit</div>
+                <div class="dms-economy-item"><span class="dms-econ-icon">↩️</span><span>1× Reaktion</span><span class="dms-econ-val">bis nächster Zug</span></div>
+            </div>
+            <div class="dms-ref-note">Bewegung kann aufgeteilt werden</div>
+        </div>
+    
+                    </div>
+                </div>
+            
+                <div class="dmscreen-widget" data-widget-id="sizes-widget" data-widget-type="sizes" draggable="true">
+                    <div class="dmscreen-widget-header">
+                        <span class="dmscreen-widget-drag" title="Ziehen zum Sortieren">⋮⋮</span>
+                        <span class="dmscreen-widget-icon">📏</span>
+                        <span class="dmscreen-widget-title">Größen</span>
+                        <button class="dmscreen-widget-hide" data-action="dms-hide-widget" data-widget="sizes-widget" title="Widget ausblenden">✕</button>
+                    </div>
+                    <div class="dmscreen-widget-body">
+                        
+        <div class="dms-ref-widget">
+            <div class="dms-size-table">
+                <div class="dms-size-row header">
+                    <span>Größe</span><span>Bereich</span><span>Feld</span>
+                </div>
+                <div class="dms-size-row"><span>Winzig</span><span>&lt; 0,75m</span><span>½×½</span></div>
+                <div class="dms-size-row"><span>Klein</span><span>0,75-1,5m</span><span>1×1</span></div>
+                <div class="dms-size-row"><span>Mittel</span><span>1,5-2,4m</span><span>1×1</span></div>
+                <div class="dms-size-row"><span>Groß</span><span>2,4-4,5m</span><span>2×2</span></div>
+                <div class="dms-size-row"><span>Riesig</span><span>4,5-7,5m</span><span>3×3</span></div>
+                <div class="dms-size-row"><span>Gigantisch</span><span>7,5m+</span><span>4×4+</span></div>
+            </div>
+            <div class="dms-ref-section">
+                <div class="dms-ref-note">• Greifen: Ziel max. 1 Größe größer</div>
+                <div class="dms-ref-note">• Reiten: Reittier min. 1 Größe größer</div>
+                <div class="dms-ref-note">• Durch Feind: 2 Größen Unterschied</div>
+            </div>
+        </div>
+    
+                    </div>
+                </div>
+            
+                <div class="dmscreen-widget" data-widget-id="objects-widget" data-widget-type="objects" draggable="true">
+                    <div class="dmscreen-widget-header">
+                        <span class="dmscreen-widget-drag" title="Ziehen zum Sortieren">⋮⋮</span>
+                        <span class="dmscreen-widget-icon">🪑</span>
+                        <span class="dmscreen-widget-title">Objekte</span>
+                        <button class="dmscreen-widget-hide" data-action="dms-hide-widget" data-widget="objects-widget" title="Widget ausblenden">✕</button>
+                    </div>
+                    <div class="dmscreen-widget-body">
+                        
+        <div class="dms-ref-widget">
+            <div class="dms-ref-section">
+                <div class="dms-ref-title">RK nach Material</div>
+                <div class="dms-obj-table">
+                    <div class="dms-obj-row"><span>Stoff, Papier</span><span>11</span></div>
+                    <div class="dms-obj-row"><span>Kristall, Glas</span><span>13</span></div>
+                    <div class="dms-obj-row"><span>Holz, Knochen</span><span>15</span></div>
+                    <div class="dms-obj-row"><span>Stein</span><span>17</span></div>
+                    <div class="dms-obj-row"><span>Eisen, Stahl</span><span>19</span></div>
+                    <div class="dms-obj-row"><span>Mithral</span><span>21</span></div>
+                    <div class="dms-obj-row"><span>Adamantin</span><span>23</span></div>
+                </div>
+            </div>
+            <div class="dms-ref-section">
+                <div class="dms-ref-title">TP nach Größe</div>
+                <div class="dms-obj-table">
+                    <div class="dms-obj-row header"><span>Größe</span><span>Zerbrech.</span><span>Robust</span></div>
+                    <div class="dms-obj-row"><span>Winzig</span><span>2</span><span>5</span></div>
+                    <div class="dms-obj-row"><span>Klein</span><span>3</span><span>10</span></div>
+                    <div class="dms-obj-row"><span>Mittel</span><span>4</span><span>18</span></div>
+                    <div class="dms-obj-row"><span>Groß</span><span>5</span><span>27</span></div>
+                </div>
+            </div>
+            <div class="dms-ref-note">Immun: Gift, Psychisch</div>
+        </div>
+    
+                    </div>
+                </div>
+            
+                <div class="dmscreen-widget" data-widget-id="improvised-widget" data-widget-type="improvised" draggable="true">
+                    <div class="dmscreen-widget-header">
+                        <span class="dmscreen-widget-drag" title="Ziehen zum Sortieren">⋮⋮</span>
+                        <span class="dmscreen-widget-icon">🍺</span>
+                        <span class="dmscreen-widget-title">Improv. Waffen</span>
+                        <button class="dmscreen-widget-hide" data-action="dms-hide-widget" data-widget="improvised-widget" title="Widget ausblenden">✕</button>
+                    </div>
+                    <div class="dmscreen-widget-body">
+                        
+        <div class="dms-ref-widget">
+            <div class="dms-ref-section">
+                <div class="dms-ref-title">Grundregeln</div>
+                <div class="dms-obj-table">
+                    <div class="dms-obj-row"><span>Unähnlich</span><span>1d4</span></div>
+                    <div class="dms-obj-row"><span>Ähnlich (z.B. Tischbein)</span><span>Wie Original</span></div>
+                    <div class="dms-obj-row"><span>Geworfen</span><span>1d4, 20/60 ft</span></div>
+                </div>
+            </div>
+            <div class="dms-ref-section">
+                <div class="dms-ref-title">Beispiele</div>
+                <div class="dms-ref-list">
+                    <span class="dms-ref-tag">Flasche → 1d4 Stich</span>
+                    <span class="dms-ref-tag">Stuhl → 1d4 Wucht</span>
+                    <span class="dms-ref-tag">Pfanne → 1d4 Wucht</span>
+                    <span class="dms-ref-tag">Glasscherbe → 1d4 Hieb</span>
+                </div>
+            </div>
+            <div class="dms-ref-note">Keine Übung (außer Kneipenschläger-Talent)</div>
+        </div>
+    
+                    </div>
+                </div>
+            
+                <div class="dmscreen-widget" data-widget-id="ritual-widget" data-widget-type="ritual" draggable="true">
+                    <div class="dmscreen-widget-header">
+                        <span class="dmscreen-widget-drag" title="Ziehen zum Sortieren">⋮⋮</span>
+                        <span class="dmscreen-widget-icon">🔮</span>
+                        <span class="dmscreen-widget-title">Ritual &amp; Konz.</span>
+                        <button class="dmscreen-widget-hide" data-action="dms-hide-widget" data-widget="ritual-widget" title="Widget ausblenden">✕</button>
+                    </div>
+                    <div class="dmscreen-widget-body">
+                        
+        <div class="dms-ref-widget">
+            <div class="dms-ref-section">
+                <div class="dms-ref-title">🔮 Ritual</div>
+                <div class="dms-ritual-list">
+                    <div class="dms-ritual-item">• Zauberzeit: +10 Minuten</div>
+                    <div class="dms-ritual-item">• Kein Zauberplatz verbraucht</div>
+                    <div class="dms-ritual-item">• Konzentration während Ritual</div>
+                    <div class="dms-ritual-item">• Unterbrechung = Neustart</div>
+                </div>
+            </div>
+            <div class="dms-ref-section">
+                <div class="dms-ref-title">🎯 Konzentration</div>
+                <div class="dms-ritual-list">
+                    <div class="dms-ritual-item">• Max. 1 Konz.-Zauber aktiv</div>
+                    <div class="dms-ritual-item">• Endet: Neuer Zauber, bewusstlos, Tod</div>
+                    <div class="dms-ritual-item highlight">• Bei Schaden: KON DC = max(10, Schaden÷2)</div>
+                    <div class="dms-ritual-item">• Freiwillig beendbar (keine Aktion)</div>
+                </div>
+            </div>
+        </div>
+    
+                    </div>
+                </div>
+            
+                <div class="dmscreen-widget" data-widget-id="damage-widget" data-widget-type="damage" draggable="true">
+                    <div class="dmscreen-widget-header">
+                        <span class="dmscreen-widget-drag" title="Ziehen zum Sortieren">⋮⋮</span>
+                        <span class="dmscreen-widget-icon">💥</span>
+                        <span class="dmscreen-widget-title">Schadensarten</span>
+                        <button class="dmscreen-widget-hide" data-action="dms-hide-widget" data-widget="damage-widget" title="Widget ausblenden">✕</button>
+                    </div>
+                    <div class="dmscreen-widget-body">
+                        
+        <div class="dms-ref-widget">
+            <div class="dms-damage-grid">
+                <div class="dms-dmg-item physical"><span class="dms-dmg-icon">🔨</span><span>Wucht</span></div>
+                <div class="dms-dmg-item physical"><span class="dms-dmg-icon">🗡️</span><span>Stich</span></div>
+                <div class="dms-dmg-item physical"><span class="dms-dmg-icon">⚔️</span><span>Hieb</span></div>
+                <div class="dms-dmg-item fire"><span class="dms-dmg-icon">🔥</span><span>Feuer</span></div>
+                <div class="dms-dmg-item cold"><span class="dms-dmg-icon">❄️</span><span>Kälte</span></div>
+                <div class="dms-dmg-item lightning"><span class="dms-dmg-icon">⚡</span><span>Blitz</span></div>
+                <div class="dms-dmg-item acid"><span class="dms-dmg-icon">🧪</span><span>Säure</span></div>
+                <div class="dms-dmg-item poison"><span class="dms-dmg-icon">☠️</span><span>Gift</span></div>
+                <div class="dms-dmg-item necrotic"><span class="dms-dmg-icon">💀</span><span>Nekrotisch</span></div>
+                <div class="dms-dmg-item radiant"><span class="dms-dmg-icon">✨</span><span>Strahlend</span></div>
+                <div class="dms-dmg-item force"><span class="dms-dmg-icon">💫</span><span>Energie</span></div>
+                <div class="dms-dmg-item psychic"><span class="dms-dmg-icon">🧠</span><span>Psychisch</span></div>
+                <div class="dms-dmg-item thunder"><span class="dms-dmg-icon">🔊</span><span>Donner</span></div>
+            </div>
+            <div class="dms-ref-note">Häufige Resistenzen: Gift, Feuer | Selten: Energie, Strahlend</div>
+        </div>
+    
+                    </div>
+                </div>
+            
+                <div class="dmscreen-widget" data-widget-id="terrain-widget" data-widget-type="terrain" draggable="true">
+                    <div class="dmscreen-widget-header">
+                        <span class="dmscreen-widget-drag" title="Ziehen zum Sortieren">⋮⋮</span>
+                        <span class="dmscreen-widget-icon">🏔️</span>
+                        <span class="dmscreen-widget-title">Gelände</span>
+                        <button class="dmscreen-widget-hide" data-action="dms-hide-widget" data-widget="terrain-widget" title="Widget ausblenden">✕</button>
+                    </div>
+                    <div class="dmscreen-widget-body">
+                        
+        <div class="dms-ref-widget">
+            <div class="dms-terrain-list">
+                <div class="dms-terrain-item normal">
+                    <span class="dms-terrain-type">Normal</span>
+                    <span class="dms-terrain-effect">Keine Einschränkung</span>
+                </div>
+                <div class="dms-terrain-item difficult">
+                    <span class="dms-terrain-type">Schwierig</span>
+                    <span class="dms-terrain-effect">2× Bewegungskosten</span>
+                </div>
+                <div class="dms-terrain-item hazard">
+                    <span class="dms-terrain-type">Gefährlich</span>
+                    <span class="dms-terrain-effect">Schaden bei Betreten</span>
+                </div>
+            </div>
+            <div class="dms-ref-section">
+                <div class="dms-ref-title">Beispiele schwierig</div>
+                <div class="dms-ref-list">
+                    <span class="dms-ref-tag">Geröll</span>
+                    <span class="dms-ref-tag">Unterholz</span>
+                    <span class="dms-ref-tag">Schnee</span>
+                    <span class="dms-ref-tag">Schlamm</span>
+                    <span class="dms-ref-tag">Möbel</span>
+                </div>
+            </div>
+            <div class="dms-ref-section">
+                <div class="dms-ref-title">Gefährlich</div>
+                <div class="dms-ref-list">
+                    <span class="dms-ref-tag">Lava 10d10🔥</span>
+                    <span class="dms-ref-tag">Dornen 1d4</span>
+                    <span class="dms-ref-tag">Fall 1d6/3m</span>
+                </div>
+            </div>
+        </div>
+    
+                    </div>
+                </div>
+            
+                <div class="dmscreen-widget" data-widget-id="knowledge-widget" data-widget-type="knowledge" draggable="true">
+                    <div class="dmscreen-widget-header">
+                        <span class="dmscreen-widget-drag" title="Ziehen zum Sortieren">⋮⋮</span>
+                        <span class="dmscreen-widget-icon">🎓</span>
+                        <span class="dmscreen-widget-title">Wissensgebiete</span>
+                        <button class="dmscreen-widget-hide" data-action="dms-hide-widget" data-widget="knowledge-widget" title="Widget ausblenden">✕</button>
+                    </div>
+                    <div class="dmscreen-widget-body">
+                        
+        <div class="dms-ref-widget">
+            <div class="dms-knowledge-list">
+                <div class="dms-knowledge-item">
+                    <span class="dms-know-skill">Arkane Kunde</span>
+                    <span class="dms-know-types">Aberrationen, Konstrukte, Elementare</span>
+                </div>
+                <div class="dms-knowledge-item">
+                    <span class="dms-know-skill">Religion</span>
+                    <span class="dms-know-types">Himmlische, Teuflische, Untote</span>
+                </div>
+                <div class="dms-knowledge-item">
+                    <span class="dms-know-skill">Geschichte</span>
+                    <span class="dms-know-types">Riesen, Humanoide</span>
+                </div>
+                <div class="dms-knowledge-item">
+                    <span class="dms-know-skill">Naturkunde</span>
+                    <span class="dms-know-types">Biester, Drachen, Feen, Pflanzen</span>
+                </div>
+                <div class="dms-knowledge-item">
+                    <span class="dms-know-skill">Nachforschung</span>
+                    <span class="dms-know-types">Hinweise, Rätsel, Schwachstellen</span>
+                </div>
+            </div>
+            <div class="dms-ref-section">
+                <div class="dms-ref-title">DC-Richtwerte</div>
+                <div class="dms-dc-mini">
+                    <span>10 Trivial</span>
+                    <span>15 Mittel</span>
+                    <span>20 Schwer</span>
+                    <span>25 Sehr schwer</span>
+                </div>
+            </div>
+        </div>
+    
+                    </div>
+                </div>
+            
+                <div class="dmscreen-widget" data-widget-id="travel-widget" data-widget-type="travel" draggable="true">
+                    <div class="dmscreen-widget-header">
+                        <span class="dmscreen-widget-drag" title="Ziehen zum Sortieren">⋮⋮</span>
+                        <span class="dmscreen-widget-icon">🎒</span>
+                        <span class="dmscreen-widget-title">Reisen &amp; Traglast</span>
+                        <button class="dmscreen-widget-hide" data-action="dms-hide-widget" data-widget="travel-widget" title="Widget ausblenden">✕</button>
+                    </div>
+                    <div class="dmscreen-widget-body">
+                        
+        <div class="dms-ref-widget">
+            <div class="dms-ref-section">
+                <div class="dms-ref-title">Reisegeschwindigkeit (8h/Tag)</div>
+                <div class="dms-travel-table">
+                    <div class="dms-travel-row header"><span>Tempo</span><span>/h</span><span>/Tag</span><span>Effekt</span></div>
+                    <div class="dms-travel-row"><span>Langsam</span><span>3km</span><span>24km</span><span>Heimlichkeit</span></div>
+                    <div class="dms-travel-row"><span>Normal</span><span>4,5km</span><span>36km</span><span>—</span></div>
+                    <div class="dms-travel-row"><span>Schnell</span><span>6km</span><span>48km</span><span>-5 Wahrn.</span></div>
+                </div>
+            </div>
+            <div class="dms-ref-section">
+                <div class="dms-ref-title">Traglast (STR-basiert)</div>
+                <div class="dms-carry-table">
+                    <div class="dms-carry-row"><span>Tragen</span><span>STR × 7,5 kg</span></div>
+                    <div class="dms-carry-row"><span>Belastet (–3m)</span><span>&gt; STR × 2,5 kg</span></div>
+                    <div class="dms-carry-row"><span>Schwer (–6m, Nachteil)</span><span>&gt; STR × 5 kg</span></div>
+                </div>
+            </div>
+            <div class="dms-ref-note">Gewaltmarsch: KON DC 10+1/h nach 8h</div>
+        </div>
+    
+                    </div>
+                </div>
+            "
+`;
+
+exports[`DM Screen Charakterisierung (D-04, Plan 13-05) Der oeffentliche Gesamt-Einstieg rendert Quick-Bar und Grid gegen die volle Fixture (Snapshot): gesamt-einstieg-quickbar 1`] = `
+"
+        <button class="dms-quick-btn" data-action="dms-show-condition" title="Zustände-Übersicht">
+            <span class="dms-quick-icon">📋</span>
+            <span class="dms-quick-label">Zustände</span>
+        </button>
+    "
+`;
+
+exports[`DM Screen Charakterisierung (D-04, Plan 13-05) Registry-Schluesselliste bleibt stabil (Snapshot ueber Object.keys(getDMScreenWidgets())) 1`] = `
+[
+  "party",
+  "initiative",
+  "dice",
+  "conditions",
+  "dc",
+  "tables",
+  "rules",
+  "notes",
+  "actions",
+  "attributes",
+  "saves",
+  "skills",
+  "economy",
+  "sizes",
+  "objects",
+  "improvised",
+  "ritual",
+  "damage",
+  "terrain",
+  "knowledge",
+  "travel",
+]
+`;
+
+exports[`DM Screen Charakterisierung (D-04, Plan 13-05) Widget "actions" rendert deterministisch gegen die LEERE Kampagne (Snapshot): widget-actions-leere-fixture 1`] = `
+"
+        <div class="dms-ref-widget">
+            <div class="dms-ref-section">
+                <div class="dms-ref-title">⚡ Aktion</div>
+                <div class="dms-ref-list">
+                    <span class="dms-ref-tag">Angriff</span>
+                    <span class="dms-ref-tag">Ausweichen</span>
+                    <span class="dms-ref-tag">Rennen</span>
+                    <span class="dms-ref-tag">Helfen</span>
+                    <span class="dms-ref-tag">Verstecken</span>
+                    <span class="dms-ref-tag">Bereit</span>
+                    <span class="dms-ref-tag">Suchen</span>
+                    <span class="dms-ref-tag">Zaubern</span>
+                    <span class="dms-ref-tag">Greifen</span>
+                    <span class="dms-ref-tag">Schieben</span>
+                </div>
+            </div>
+            <div class="dms-ref-section">
+                <div class="dms-ref-title">⭐ Bonusaktion</div>
+                <div class="dms-ref-note">Nur wenn Fähigkeit/Zauber es erlaubt</div>
+            </div>
+            <div class="dms-ref-section">
+                <div class="dms-ref-title">↩️ Reaktion</div>
+                <div class="dms-ref-list">
+                    <span class="dms-ref-tag">Gelegenheitsangriff</span>
+                    <span class="dms-ref-tag">Bereit auslösen</span>
+                </div>
+            </div>
+            <div class="dms-ref-section">
+                <div class="dms-ref-title">🔄 Freie Interaktion</div>
+                <div class="dms-ref-list">
+                    <span class="dms-ref-tag">Tür öffnen</span>
+                    <span class="dms-ref-tag">Waffe ziehen</span>
+                    <span class="dms-ref-tag">Gegenstand aufheben</span>
+                </div>
+            </div>
+        </div>
+    "
+`;
+
+exports[`DM Screen Charakterisierung (D-04, Plan 13-05) Widget "actions" rendert deterministisches, nicht-leeres HTML gegen die volle Fixture (Snapshot): widget-actions-volle-fixture 1`] = `
+"
+        <div class="dms-ref-widget">
+            <div class="dms-ref-section">
+                <div class="dms-ref-title">⚡ Aktion</div>
+                <div class="dms-ref-list">
+                    <span class="dms-ref-tag">Angriff</span>
+                    <span class="dms-ref-tag">Ausweichen</span>
+                    <span class="dms-ref-tag">Rennen</span>
+                    <span class="dms-ref-tag">Helfen</span>
+                    <span class="dms-ref-tag">Verstecken</span>
+                    <span class="dms-ref-tag">Bereit</span>
+                    <span class="dms-ref-tag">Suchen</span>
+                    <span class="dms-ref-tag">Zaubern</span>
+                    <span class="dms-ref-tag">Greifen</span>
+                    <span class="dms-ref-tag">Schieben</span>
+                </div>
+            </div>
+            <div class="dms-ref-section">
+                <div class="dms-ref-title">⭐ Bonusaktion</div>
+                <div class="dms-ref-note">Nur wenn Fähigkeit/Zauber es erlaubt</div>
+            </div>
+            <div class="dms-ref-section">
+                <div class="dms-ref-title">↩️ Reaktion</div>
+                <div class="dms-ref-list">
+                    <span class="dms-ref-tag">Gelegenheitsangriff</span>
+                    <span class="dms-ref-tag">Bereit auslösen</span>
+                </div>
+            </div>
+            <div class="dms-ref-section">
+                <div class="dms-ref-title">🔄 Freie Interaktion</div>
+                <div class="dms-ref-list">
+                    <span class="dms-ref-tag">Tür öffnen</span>
+                    <span class="dms-ref-tag">Waffe ziehen</span>
+                    <span class="dms-ref-tag">Gegenstand aufheben</span>
+                </div>
+            </div>
+        </div>
+    "
+`;
+
+exports[`DM Screen Charakterisierung (D-04, Plan 13-05) Widget "attributes" rendert deterministisch gegen die LEERE Kampagne (Snapshot): widget-attributes-leere-fixture 1`] = `
+"
+        <div class="dms-ref-widget">
+            <div class="dms-attr-grid">
+                <div class="dms-attr-item str"><span class="dms-attr-abbr">STR</span><span class="dms-attr-name">Stärke</span></div>
+                <div class="dms-attr-item dex"><span class="dms-attr-abbr">DEX</span><span class="dms-attr-name">Geschick</span></div>
+                <div class="dms-attr-item con"><span class="dms-attr-abbr">KON</span><span class="dms-attr-name">Konstitution</span></div>
+                <div class="dms-attr-item int"><span class="dms-attr-abbr">INT</span><span class="dms-attr-name">Intelligenz</span></div>
+                <div class="dms-attr-item wis"><span class="dms-attr-abbr">WIS</span><span class="dms-attr-name">Weisheit</span></div>
+                <div class="dms-attr-item cha"><span class="dms-attr-abbr">CHA</span><span class="dms-attr-name">Charisma</span></div>
+            </div>
+            <div class="dms-ref-section">
+                <div class="dms-ref-title">Modifikator-Tabelle</div>
+                <div class="dms-mod-table">
+                    <div class="dms-mod-row"><span>1</span><span>-5</span></div>
+                    <div class="dms-mod-row"><span>2-3</span><span>-4</span></div>
+                    <div class="dms-mod-row"><span>4-5</span><span>-3</span></div>
+                    <div class="dms-mod-row"><span>6-7</span><span>-2</span></div>
+                    <div class="dms-mod-row"><span>8-9</span><span>-1</span></div>
+                    <div class="dms-mod-row"><span>10-11</span><span>±0</span></div>
+                    <div class="dms-mod-row"><span>12-13</span><span>+1</span></div>
+                    <div class="dms-mod-row"><span>14-15</span><span>+2</span></div>
+                    <div class="dms-mod-row"><span>16-17</span><span>+3</span></div>
+                    <div class="dms-mod-row"><span>18-19</span><span>+4</span></div>
+                    <div class="dms-mod-row"><span>20-21</span><span>+5</span></div>
+                    <div class="dms-mod-row"><span>22+</span><span>+6</span></div>
+                </div>
+            </div>
+        </div>
+    "
+`;
+
+exports[`DM Screen Charakterisierung (D-04, Plan 13-05) Widget "attributes" rendert deterministisches, nicht-leeres HTML gegen die volle Fixture (Snapshot): widget-attributes-volle-fixture 1`] = `
+"
+        <div class="dms-ref-widget">
+            <div class="dms-attr-grid">
+                <div class="dms-attr-item str"><span class="dms-attr-abbr">STR</span><span class="dms-attr-name">Stärke</span></div>
+                <div class="dms-attr-item dex"><span class="dms-attr-abbr">DEX</span><span class="dms-attr-name">Geschick</span></div>
+                <div class="dms-attr-item con"><span class="dms-attr-abbr">KON</span><span class="dms-attr-name">Konstitution</span></div>
+                <div class="dms-attr-item int"><span class="dms-attr-abbr">INT</span><span class="dms-attr-name">Intelligenz</span></div>
+                <div class="dms-attr-item wis"><span class="dms-attr-abbr">WIS</span><span class="dms-attr-name">Weisheit</span></div>
+                <div class="dms-attr-item cha"><span class="dms-attr-abbr">CHA</span><span class="dms-attr-name">Charisma</span></div>
+            </div>
+            <div class="dms-ref-section">
+                <div class="dms-ref-title">Modifikator-Tabelle</div>
+                <div class="dms-mod-table">
+                    <div class="dms-mod-row"><span>1</span><span>-5</span></div>
+                    <div class="dms-mod-row"><span>2-3</span><span>-4</span></div>
+                    <div class="dms-mod-row"><span>4-5</span><span>-3</span></div>
+                    <div class="dms-mod-row"><span>6-7</span><span>-2</span></div>
+                    <div class="dms-mod-row"><span>8-9</span><span>-1</span></div>
+                    <div class="dms-mod-row"><span>10-11</span><span>±0</span></div>
+                    <div class="dms-mod-row"><span>12-13</span><span>+1</span></div>
+                    <div class="dms-mod-row"><span>14-15</span><span>+2</span></div>
+                    <div class="dms-mod-row"><span>16-17</span><span>+3</span></div>
+                    <div class="dms-mod-row"><span>18-19</span><span>+4</span></div>
+                    <div class="dms-mod-row"><span>20-21</span><span>+5</span></div>
+                    <div class="dms-mod-row"><span>22+</span><span>+6</span></div>
+                </div>
+            </div>
+        </div>
+    "
+`;
+
+exports[`DM Screen Charakterisierung (D-04, Plan 13-05) Widget "conditions" rendert deterministisch gegen die LEERE Kampagne (Snapshot): widget-conditions-leere-fixture 1`] = `
+"
+        <button class="dms-quick-btn" data-action="dms-show-condition" title="Zustände-Übersicht">
+            <span class="dms-quick-icon">📋</span>
+            <span class="dms-quick-label">Zustände</span>
+        </button>
+    "
+`;
+
+exports[`DM Screen Charakterisierung (D-04, Plan 13-05) Widget "conditions" rendert deterministisches, nicht-leeres HTML gegen die volle Fixture (Snapshot): widget-conditions-volle-fixture 1`] = `
+"
+        <button class="dms-quick-btn" data-action="dms-show-condition" title="Zustände-Übersicht">
+            <span class="dms-quick-icon">📋</span>
+            <span class="dms-quick-label">Zustände</span>
+        </button>
+    "
+`;
+
+exports[`DM Screen Charakterisierung (D-04, Plan 13-05) Widget "damage" rendert deterministisch gegen die LEERE Kampagne (Snapshot): widget-damage-leere-fixture 1`] = `
+"
+        <div class="dms-ref-widget">
+            <div class="dms-damage-grid">
+                <div class="dms-dmg-item physical"><span class="dms-dmg-icon">🔨</span><span>Wucht</span></div>
+                <div class="dms-dmg-item physical"><span class="dms-dmg-icon">🗡️</span><span>Stich</span></div>
+                <div class="dms-dmg-item physical"><span class="dms-dmg-icon">⚔️</span><span>Hieb</span></div>
+                <div class="dms-dmg-item fire"><span class="dms-dmg-icon">🔥</span><span>Feuer</span></div>
+                <div class="dms-dmg-item cold"><span class="dms-dmg-icon">❄️</span><span>Kälte</span></div>
+                <div class="dms-dmg-item lightning"><span class="dms-dmg-icon">⚡</span><span>Blitz</span></div>
+                <div class="dms-dmg-item acid"><span class="dms-dmg-icon">🧪</span><span>Säure</span></div>
+                <div class="dms-dmg-item poison"><span class="dms-dmg-icon">☠️</span><span>Gift</span></div>
+                <div class="dms-dmg-item necrotic"><span class="dms-dmg-icon">💀</span><span>Nekrotisch</span></div>
+                <div class="dms-dmg-item radiant"><span class="dms-dmg-icon">✨</span><span>Strahlend</span></div>
+                <div class="dms-dmg-item force"><span class="dms-dmg-icon">💫</span><span>Energie</span></div>
+                <div class="dms-dmg-item psychic"><span class="dms-dmg-icon">🧠</span><span>Psychisch</span></div>
+                <div class="dms-dmg-item thunder"><span class="dms-dmg-icon">🔊</span><span>Donner</span></div>
+            </div>
+            <div class="dms-ref-note">Häufige Resistenzen: Gift, Feuer | Selten: Energie, Strahlend</div>
+        </div>
+    "
+`;
+
+exports[`DM Screen Charakterisierung (D-04, Plan 13-05) Widget "damage" rendert deterministisches, nicht-leeres HTML gegen die volle Fixture (Snapshot): widget-damage-volle-fixture 1`] = `
+"
+        <div class="dms-ref-widget">
+            <div class="dms-damage-grid">
+                <div class="dms-dmg-item physical"><span class="dms-dmg-icon">🔨</span><span>Wucht</span></div>
+                <div class="dms-dmg-item physical"><span class="dms-dmg-icon">🗡️</span><span>Stich</span></div>
+                <div class="dms-dmg-item physical"><span class="dms-dmg-icon">⚔️</span><span>Hieb</span></div>
+                <div class="dms-dmg-item fire"><span class="dms-dmg-icon">🔥</span><span>Feuer</span></div>
+                <div class="dms-dmg-item cold"><span class="dms-dmg-icon">❄️</span><span>Kälte</span></div>
+                <div class="dms-dmg-item lightning"><span class="dms-dmg-icon">⚡</span><span>Blitz</span></div>
+                <div class="dms-dmg-item acid"><span class="dms-dmg-icon">🧪</span><span>Säure</span></div>
+                <div class="dms-dmg-item poison"><span class="dms-dmg-icon">☠️</span><span>Gift</span></div>
+                <div class="dms-dmg-item necrotic"><span class="dms-dmg-icon">💀</span><span>Nekrotisch</span></div>
+                <div class="dms-dmg-item radiant"><span class="dms-dmg-icon">✨</span><span>Strahlend</span></div>
+                <div class="dms-dmg-item force"><span class="dms-dmg-icon">💫</span><span>Energie</span></div>
+                <div class="dms-dmg-item psychic"><span class="dms-dmg-icon">🧠</span><span>Psychisch</span></div>
+                <div class="dms-dmg-item thunder"><span class="dms-dmg-icon">🔊</span><span>Donner</span></div>
+            </div>
+            <div class="dms-ref-note">Häufige Resistenzen: Gift, Feuer | Selten: Energie, Strahlend</div>
+        </div>
+    "
+`;
+
+exports[`DM Screen Charakterisierung (D-04, Plan 13-05) Widget "dc" rendert deterministisch gegen die LEERE Kampagne (Snapshot): widget-dc-leere-fixture 1`] = `
+"
+        <div class="dms-dc-list">
+            
+                <div class="dms-dc-entry" style="border-left: 3px solid var(--green)">
+                    <span class="dms-dc-value">5</span>
+                    <span class="dms-dc-desc">Trivial</span>
+                </div>
+            
+                <div class="dms-dc-entry" style="border-left: 3px solid var(--cyan)">
+                    <span class="dms-dc-value">10</span>
+                    <span class="dms-dc-desc">Leicht</span>
+                </div>
+            
+                <div class="dms-dc-entry" style="border-left: 3px solid var(--gold)">
+                    <span class="dms-dc-value">15</span>
+                    <span class="dms-dc-desc">Mittel</span>
+                </div>
+            
+                <div class="dms-dc-entry" style="border-left: 3px solid var(--orange)">
+                    <span class="dms-dc-value">20</span>
+                    <span class="dms-dc-desc">Schwer</span>
+                </div>
+            
+                <div class="dms-dc-entry" style="border-left: 3px solid var(--red)">
+                    <span class="dms-dc-value">25</span>
+                    <span class="dms-dc-desc">Sehr schwer</span>
+                </div>
+            
+                <div class="dms-dc-entry" style="border-left: 3px solid var(--purple)">
+                    <span class="dms-dc-value">30</span>
+                    <span class="dms-dc-desc">Fast unmöglich</span>
+                </div>
+            
+        </div>
+    "
+`;
+
+exports[`DM Screen Charakterisierung (D-04, Plan 13-05) Widget "dc" rendert deterministisches, nicht-leeres HTML gegen die volle Fixture (Snapshot): widget-dc-volle-fixture 1`] = `
+"
+        <div class="dms-dc-list">
+            
+                <div class="dms-dc-entry" style="border-left: 3px solid var(--green)">
+                    <span class="dms-dc-value">5</span>
+                    <span class="dms-dc-desc">Trivial</span>
+                </div>
+            
+                <div class="dms-dc-entry" style="border-left: 3px solid var(--cyan)">
+                    <span class="dms-dc-value">10</span>
+                    <span class="dms-dc-desc">Leicht</span>
+                </div>
+            
+                <div class="dms-dc-entry" style="border-left: 3px solid var(--gold)">
+                    <span class="dms-dc-value">15</span>
+                    <span class="dms-dc-desc">Mittel</span>
+                </div>
+            
+                <div class="dms-dc-entry" style="border-left: 3px solid var(--orange)">
+                    <span class="dms-dc-value">20</span>
+                    <span class="dms-dc-desc">Schwer</span>
+                </div>
+            
+                <div class="dms-dc-entry" style="border-left: 3px solid var(--red)">
+                    <span class="dms-dc-value">25</span>
+                    <span class="dms-dc-desc">Sehr schwer</span>
+                </div>
+            
+                <div class="dms-dc-entry" style="border-left: 3px solid var(--purple)">
+                    <span class="dms-dc-value">30</span>
+                    <span class="dms-dc-desc">Fast unmöglich</span>
+                </div>
+            
+        </div>
+    "
+`;
+
+exports[`DM Screen Charakterisierung (D-04, Plan 13-05) Widget "dice" rendert deterministisch gegen die LEERE Kampagne (Snapshot): widget-dice-leere-fixture 1`] = `
+"
+        <div class="dms-dice">
+            <div class="dms-dice-buttons">
+                <button class="dms-dice-btn" data-action="dms-roll" data-dice="1d4">d4</button>
+                <button class="dms-dice-btn" data-action="dms-roll" data-dice="1d6">d6</button>
+                <button class="dms-dice-btn" data-action="dms-roll" data-dice="1d8">d8</button>
+                <button class="dms-dice-btn" data-action="dms-roll" data-dice="1d10">d10</button>
+                <button class="dms-dice-btn" data-action="dms-roll" data-dice="1d12">d12</button>
+                <button class="dms-dice-btn dms-dice-d20" data-action="dms-roll" data-dice="1d20">d20</button>
+                <button class="dms-dice-btn" data-action="dms-roll" data-dice="1d100">d100</button>
+            </div>
+            <div class="dms-dice-result" id="dms-dice-result">—</div>
+            <div class="dms-dice-custom">
+                <input type="text" id="dms-dice-formula" placeholder="z.B. 2d6+3" class="dms-dice-input">
+                <button class="btn btn-sm" data-action="dms-roll-custom">🎲</button>
+            </div>
+        </div>
+    "
+`;
+
+exports[`DM Screen Charakterisierung (D-04, Plan 13-05) Widget "dice" rendert deterministisches, nicht-leeres HTML gegen die volle Fixture (Snapshot): widget-dice-volle-fixture 1`] = `
+"
+        <div class="dms-dice">
+            <div class="dms-dice-buttons">
+                <button class="dms-dice-btn" data-action="dms-roll" data-dice="1d4">d4</button>
+                <button class="dms-dice-btn" data-action="dms-roll" data-dice="1d6">d6</button>
+                <button class="dms-dice-btn" data-action="dms-roll" data-dice="1d8">d8</button>
+                <button class="dms-dice-btn" data-action="dms-roll" data-dice="1d10">d10</button>
+                <button class="dms-dice-btn" data-action="dms-roll" data-dice="1d12">d12</button>
+                <button class="dms-dice-btn dms-dice-d20" data-action="dms-roll" data-dice="1d20">d20</button>
+                <button class="dms-dice-btn" data-action="dms-roll" data-dice="1d100">d100</button>
+            </div>
+            <div class="dms-dice-result" id="dms-dice-result">—</div>
+            <div class="dms-dice-custom">
+                <input type="text" id="dms-dice-formula" placeholder="z.B. 2d6+3" class="dms-dice-input">
+                <button class="btn btn-sm" data-action="dms-roll-custom">🎲</button>
+            </div>
+        </div>
+    "
+`;
+
+exports[`DM Screen Charakterisierung (D-04, Plan 13-05) Widget "economy" rendert deterministisch gegen die LEERE Kampagne (Snapshot): widget-economy-leere-fixture 1`] = `
+"
+        <div class="dms-ref-widget dms-economy-widget">
+            <div class="dms-economy-section">
+                <div class="dms-economy-header">Dein Zug</div>
+                <div class="dms-economy-item"><span class="dms-econ-icon">🏃</span><span>Bewegung</span><span class="dms-econ-val">bis zu Geschw.</span></div>
+                <div class="dms-economy-item"><span class="dms-econ-icon">⚡</span><span>1× Aktion</span><span class="dms-econ-val">immer</span></div>
+                <div class="dms-economy-item"><span class="dms-econ-icon">⭐</span><span>1× Bonusaktion</span><span class="dms-econ-val">wenn vorhanden</span></div>
+                <div class="dms-economy-item"><span class="dms-econ-icon">🔄</span><span>1× Freie Interaktion</span><span class="dms-econ-val">immer</span></div>
+            </div>
+            <div class="dms-economy-section">
+                <div class="dms-economy-header">Jederzeit</div>
+                <div class="dms-economy-item"><span class="dms-econ-icon">↩️</span><span>1× Reaktion</span><span class="dms-econ-val">bis nächster Zug</span></div>
+            </div>
+            <div class="dms-ref-note">Bewegung kann aufgeteilt werden</div>
+        </div>
+    "
+`;
+
+exports[`DM Screen Charakterisierung (D-04, Plan 13-05) Widget "economy" rendert deterministisches, nicht-leeres HTML gegen die volle Fixture (Snapshot): widget-economy-volle-fixture 1`] = `
+"
+        <div class="dms-ref-widget dms-economy-widget">
+            <div class="dms-economy-section">
+                <div class="dms-economy-header">Dein Zug</div>
+                <div class="dms-economy-item"><span class="dms-econ-icon">🏃</span><span>Bewegung</span><span class="dms-econ-val">bis zu Geschw.</span></div>
+                <div class="dms-economy-item"><span class="dms-econ-icon">⚡</span><span>1× Aktion</span><span class="dms-econ-val">immer</span></div>
+                <div class="dms-economy-item"><span class="dms-econ-icon">⭐</span><span>1× Bonusaktion</span><span class="dms-econ-val">wenn vorhanden</span></div>
+                <div class="dms-economy-item"><span class="dms-econ-icon">🔄</span><span>1× Freie Interaktion</span><span class="dms-econ-val">immer</span></div>
+            </div>
+            <div class="dms-economy-section">
+                <div class="dms-economy-header">Jederzeit</div>
+                <div class="dms-economy-item"><span class="dms-econ-icon">↩️</span><span>1× Reaktion</span><span class="dms-econ-val">bis nächster Zug</span></div>
+            </div>
+            <div class="dms-ref-note">Bewegung kann aufgeteilt werden</div>
+        </div>
+    "
+`;
+
+exports[`DM Screen Charakterisierung (D-04, Plan 13-05) Widget "improvised" rendert deterministisch gegen die LEERE Kampagne (Snapshot): widget-improvised-leere-fixture 1`] = `
+"
+        <div class="dms-ref-widget">
+            <div class="dms-ref-section">
+                <div class="dms-ref-title">Grundregeln</div>
+                <div class="dms-obj-table">
+                    <div class="dms-obj-row"><span>Unähnlich</span><span>1d4</span></div>
+                    <div class="dms-obj-row"><span>Ähnlich (z.B. Tischbein)</span><span>Wie Original</span></div>
+                    <div class="dms-obj-row"><span>Geworfen</span><span>1d4, 20/60 ft</span></div>
+                </div>
+            </div>
+            <div class="dms-ref-section">
+                <div class="dms-ref-title">Beispiele</div>
+                <div class="dms-ref-list">
+                    <span class="dms-ref-tag">Flasche → 1d4 Stich</span>
+                    <span class="dms-ref-tag">Stuhl → 1d4 Wucht</span>
+                    <span class="dms-ref-tag">Pfanne → 1d4 Wucht</span>
+                    <span class="dms-ref-tag">Glasscherbe → 1d4 Hieb</span>
+                </div>
+            </div>
+            <div class="dms-ref-note">Keine Übung (außer Kneipenschläger-Talent)</div>
+        </div>
+    "
+`;
+
+exports[`DM Screen Charakterisierung (D-04, Plan 13-05) Widget "improvised" rendert deterministisches, nicht-leeres HTML gegen die volle Fixture (Snapshot): widget-improvised-volle-fixture 1`] = `
+"
+        <div class="dms-ref-widget">
+            <div class="dms-ref-section">
+                <div class="dms-ref-title">Grundregeln</div>
+                <div class="dms-obj-table">
+                    <div class="dms-obj-row"><span>Unähnlich</span><span>1d4</span></div>
+                    <div class="dms-obj-row"><span>Ähnlich (z.B. Tischbein)</span><span>Wie Original</span></div>
+                    <div class="dms-obj-row"><span>Geworfen</span><span>1d4, 20/60 ft</span></div>
+                </div>
+            </div>
+            <div class="dms-ref-section">
+                <div class="dms-ref-title">Beispiele</div>
+                <div class="dms-ref-list">
+                    <span class="dms-ref-tag">Flasche → 1d4 Stich</span>
+                    <span class="dms-ref-tag">Stuhl → 1d4 Wucht</span>
+                    <span class="dms-ref-tag">Pfanne → 1d4 Wucht</span>
+                    <span class="dms-ref-tag">Glasscherbe → 1d4 Hieb</span>
+                </div>
+            </div>
+            <div class="dms-ref-note">Keine Übung (außer Kneipenschläger-Talent)</div>
+        </div>
+    "
+`;
+
+exports[`DM Screen Charakterisierung (D-04, Plan 13-05) Widget "initiative" rendert deterministisch gegen die LEERE Kampagne (Snapshot): widget-initiative-leere-fixture 1`] = `"<div class="dms-widget-empty">Kein aktiver Kampf</div>"`;
+
+exports[`DM Screen Charakterisierung (D-04, Plan 13-05) Widget "initiative" rendert deterministisches, nicht-leeres HTML gegen die volle Fixture (Snapshot): widget-initiative-volle-fixture 1`] = `
+"
+        <div class="dms-initiative">
+            <div class="dms-init-header">Runde 1 <span class="dms-init-count">(2)</span></div>
+            <div class="dms-init-list">
+                
+                        <div class="dms-init-entry active healthy">
+                            <span class="dms-init-marker">▶</span>
+                            <span class="dms-init-name">Thorin Eisenfaust</span>
+                            <span class="dms-init-value">18</span>
+                        </div>
+                    
+                        <div class="dms-init-entry  healthy">
+                            <span class="dms-init-marker"></span>
+                            <span class="dms-init-name">Goblin-Kundschafter</span>
+                            <span class="dms-init-value">12</span>
+                        </div>
+                    
+            </div>
+        </div>
+    "
+`;
+
+exports[`DM Screen Charakterisierung (D-04, Plan 13-05) Widget "knowledge" rendert deterministisch gegen die LEERE Kampagne (Snapshot): widget-knowledge-leere-fixture 1`] = `
+"
+        <div class="dms-ref-widget">
+            <div class="dms-knowledge-list">
+                <div class="dms-knowledge-item">
+                    <span class="dms-know-skill">Arkane Kunde</span>
+                    <span class="dms-know-types">Aberrationen, Konstrukte, Elementare</span>
+                </div>
+                <div class="dms-knowledge-item">
+                    <span class="dms-know-skill">Religion</span>
+                    <span class="dms-know-types">Himmlische, Teuflische, Untote</span>
+                </div>
+                <div class="dms-knowledge-item">
+                    <span class="dms-know-skill">Geschichte</span>
+                    <span class="dms-know-types">Riesen, Humanoide</span>
+                </div>
+                <div class="dms-knowledge-item">
+                    <span class="dms-know-skill">Naturkunde</span>
+                    <span class="dms-know-types">Biester, Drachen, Feen, Pflanzen</span>
+                </div>
+                <div class="dms-knowledge-item">
+                    <span class="dms-know-skill">Nachforschung</span>
+                    <span class="dms-know-types">Hinweise, Rätsel, Schwachstellen</span>
+                </div>
+            </div>
+            <div class="dms-ref-section">
+                <div class="dms-ref-title">DC-Richtwerte</div>
+                <div class="dms-dc-mini">
+                    <span>10 Trivial</span>
+                    <span>15 Mittel</span>
+                    <span>20 Schwer</span>
+                    <span>25 Sehr schwer</span>
+                </div>
+            </div>
+        </div>
+    "
+`;
+
+exports[`DM Screen Charakterisierung (D-04, Plan 13-05) Widget "knowledge" rendert deterministisches, nicht-leeres HTML gegen die volle Fixture (Snapshot): widget-knowledge-volle-fixture 1`] = `
+"
+        <div class="dms-ref-widget">
+            <div class="dms-knowledge-list">
+                <div class="dms-knowledge-item">
+                    <span class="dms-know-skill">Arkane Kunde</span>
+                    <span class="dms-know-types">Aberrationen, Konstrukte, Elementare</span>
+                </div>
+                <div class="dms-knowledge-item">
+                    <span class="dms-know-skill">Religion</span>
+                    <span class="dms-know-types">Himmlische, Teuflische, Untote</span>
+                </div>
+                <div class="dms-knowledge-item">
+                    <span class="dms-know-skill">Geschichte</span>
+                    <span class="dms-know-types">Riesen, Humanoide</span>
+                </div>
+                <div class="dms-knowledge-item">
+                    <span class="dms-know-skill">Naturkunde</span>
+                    <span class="dms-know-types">Biester, Drachen, Feen, Pflanzen</span>
+                </div>
+                <div class="dms-knowledge-item">
+                    <span class="dms-know-skill">Nachforschung</span>
+                    <span class="dms-know-types">Hinweise, Rätsel, Schwachstellen</span>
+                </div>
+            </div>
+            <div class="dms-ref-section">
+                <div class="dms-ref-title">DC-Richtwerte</div>
+                <div class="dms-dc-mini">
+                    <span>10 Trivial</span>
+                    <span>15 Mittel</span>
+                    <span>20 Schwer</span>
+                    <span>25 Sehr schwer</span>
+                </div>
+            </div>
+        </div>
+    "
+`;
+
+exports[`DM Screen Charakterisierung (D-04, Plan 13-05) Widget "notes" rendert deterministisch gegen die LEERE Kampagne (Snapshot): widget-notes-leere-fixture 1`] = `
+"
+        <div class="dms-notes">
+            <textarea class="dms-notes-input" id="dms-notes-input"
+                placeholder="Session-Notizen hier eingeben..."
+                data-on-input="saveDMSNotes"></textarea>
+        </div>
+    "
+`;
+
+exports[`DM Screen Charakterisierung (D-04, Plan 13-05) Widget "notes" rendert deterministisches, nicht-leeres HTML gegen die volle Fixture (Snapshot): widget-notes-volle-fixture 1`] = `
+"
+        <div class="dms-notes">
+            <textarea class="dms-notes-input" id="dms-notes-input"
+                placeholder="Session-Notizen hier eingeben..."
+                data-on-input="saveDMSNotes">Session-Notizen: Die Gruppe naehert sich der Mine.</textarea>
+        </div>
+    "
+`;
+
+exports[`DM Screen Charakterisierung (D-04, Plan 13-05) Widget "objects" rendert deterministisch gegen die LEERE Kampagne (Snapshot): widget-objects-leere-fixture 1`] = `
+"
+        <div class="dms-ref-widget">
+            <div class="dms-ref-section">
+                <div class="dms-ref-title">RK nach Material</div>
+                <div class="dms-obj-table">
+                    <div class="dms-obj-row"><span>Stoff, Papier</span><span>11</span></div>
+                    <div class="dms-obj-row"><span>Kristall, Glas</span><span>13</span></div>
+                    <div class="dms-obj-row"><span>Holz, Knochen</span><span>15</span></div>
+                    <div class="dms-obj-row"><span>Stein</span><span>17</span></div>
+                    <div class="dms-obj-row"><span>Eisen, Stahl</span><span>19</span></div>
+                    <div class="dms-obj-row"><span>Mithral</span><span>21</span></div>
+                    <div class="dms-obj-row"><span>Adamantin</span><span>23</span></div>
+                </div>
+            </div>
+            <div class="dms-ref-section">
+                <div class="dms-ref-title">TP nach Größe</div>
+                <div class="dms-obj-table">
+                    <div class="dms-obj-row header"><span>Größe</span><span>Zerbrech.</span><span>Robust</span></div>
+                    <div class="dms-obj-row"><span>Winzig</span><span>2</span><span>5</span></div>
+                    <div class="dms-obj-row"><span>Klein</span><span>3</span><span>10</span></div>
+                    <div class="dms-obj-row"><span>Mittel</span><span>4</span><span>18</span></div>
+                    <div class="dms-obj-row"><span>Groß</span><span>5</span><span>27</span></div>
+                </div>
+            </div>
+            <div class="dms-ref-note">Immun: Gift, Psychisch</div>
+        </div>
+    "
+`;
+
+exports[`DM Screen Charakterisierung (D-04, Plan 13-05) Widget "objects" rendert deterministisches, nicht-leeres HTML gegen die volle Fixture (Snapshot): widget-objects-volle-fixture 1`] = `
+"
+        <div class="dms-ref-widget">
+            <div class="dms-ref-section">
+                <div class="dms-ref-title">RK nach Material</div>
+                <div class="dms-obj-table">
+                    <div class="dms-obj-row"><span>Stoff, Papier</span><span>11</span></div>
+                    <div class="dms-obj-row"><span>Kristall, Glas</span><span>13</span></div>
+                    <div class="dms-obj-row"><span>Holz, Knochen</span><span>15</span></div>
+                    <div class="dms-obj-row"><span>Stein</span><span>17</span></div>
+                    <div class="dms-obj-row"><span>Eisen, Stahl</span><span>19</span></div>
+                    <div class="dms-obj-row"><span>Mithral</span><span>21</span></div>
+                    <div class="dms-obj-row"><span>Adamantin</span><span>23</span></div>
+                </div>
+            </div>
+            <div class="dms-ref-section">
+                <div class="dms-ref-title">TP nach Größe</div>
+                <div class="dms-obj-table">
+                    <div class="dms-obj-row header"><span>Größe</span><span>Zerbrech.</span><span>Robust</span></div>
+                    <div class="dms-obj-row"><span>Winzig</span><span>2</span><span>5</span></div>
+                    <div class="dms-obj-row"><span>Klein</span><span>3</span><span>10</span></div>
+                    <div class="dms-obj-row"><span>Mittel</span><span>4</span><span>18</span></div>
+                    <div class="dms-obj-row"><span>Groß</span><span>5</span><span>27</span></div>
+                </div>
+            </div>
+            <div class="dms-ref-note">Immun: Gift, Psychisch</div>
+        </div>
+    "
+`;
+
+exports[`DM Screen Charakterisierung (D-04, Plan 13-05) Widget "party" rendert deterministisch gegen die LEERE Kampagne (Snapshot): widget-party-leere-fixture 1`] = `"<div class="dms-widget-empty">Keine Charaktere</div>"`;
+
 exports[`DM Screen Charakterisierung (D-04, Plan 13-05) Widget "party" rendert deterministisches HTML gegen die volle Fixture (Tracer-Snapshot, Task 1) 1`] = `
 "
         <div class="dms-party-stats">
@@ -20,4 +1375,709 @@ exports[`DM Screen Charakterisierung (D-04, Plan 13-05) Widget "party" rendert d
             </div>
         </div>
     "
+`;
+
+exports[`DM Screen Charakterisierung (D-04, Plan 13-05) Widget "party" rendert deterministisches, nicht-leeres HTML gegen die volle Fixture (Snapshot): widget-party-volle-fixture 1`] = `
+"
+        <div class="dms-party-stats">
+            <div class="dms-stat-row">
+                <span class="dms-stat-label">Party HP</span>
+                <div class="dms-hp-bar-container">
+                    <div class="dms-hp-bar healthy" style="width: 88%"></div>
+                    <span class="dms-hp-text">88%</span>
+                </div>
+            </div>
+            <div class="dms-stat-row">
+                <span class="dms-stat-label">Höchste Pass. Wahrn.</span>
+                <span class="dms-stat-value">17 <span class="dms-stat-char">(Elara Mondschein)</span></span>
+            </div>
+            <div class="dms-stat-row">
+                <span class="dms-stat-label">Spieler</span>
+                <span class="dms-stat-value">2</span>
+            </div>
+        </div>
+    "
+`;
+
+exports[`DM Screen Charakterisierung (D-04, Plan 13-05) Widget "ritual" rendert deterministisch gegen die LEERE Kampagne (Snapshot): widget-ritual-leere-fixture 1`] = `
+"
+        <div class="dms-ref-widget">
+            <div class="dms-ref-section">
+                <div class="dms-ref-title">🔮 Ritual</div>
+                <div class="dms-ritual-list">
+                    <div class="dms-ritual-item">• Zauberzeit: +10 Minuten</div>
+                    <div class="dms-ritual-item">• Kein Zauberplatz verbraucht</div>
+                    <div class="dms-ritual-item">• Konzentration während Ritual</div>
+                    <div class="dms-ritual-item">• Unterbrechung = Neustart</div>
+                </div>
+            </div>
+            <div class="dms-ref-section">
+                <div class="dms-ref-title">🎯 Konzentration</div>
+                <div class="dms-ritual-list">
+                    <div class="dms-ritual-item">• Max. 1 Konz.-Zauber aktiv</div>
+                    <div class="dms-ritual-item">• Endet: Neuer Zauber, bewusstlos, Tod</div>
+                    <div class="dms-ritual-item highlight">• Bei Schaden: KON DC = max(10, Schaden÷2)</div>
+                    <div class="dms-ritual-item">• Freiwillig beendbar (keine Aktion)</div>
+                </div>
+            </div>
+        </div>
+    "
+`;
+
+exports[`DM Screen Charakterisierung (D-04, Plan 13-05) Widget "ritual" rendert deterministisches, nicht-leeres HTML gegen die volle Fixture (Snapshot): widget-ritual-volle-fixture 1`] = `
+"
+        <div class="dms-ref-widget">
+            <div class="dms-ref-section">
+                <div class="dms-ref-title">🔮 Ritual</div>
+                <div class="dms-ritual-list">
+                    <div class="dms-ritual-item">• Zauberzeit: +10 Minuten</div>
+                    <div class="dms-ritual-item">• Kein Zauberplatz verbraucht</div>
+                    <div class="dms-ritual-item">• Konzentration während Ritual</div>
+                    <div class="dms-ritual-item">• Unterbrechung = Neustart</div>
+                </div>
+            </div>
+            <div class="dms-ref-section">
+                <div class="dms-ref-title">🎯 Konzentration</div>
+                <div class="dms-ritual-list">
+                    <div class="dms-ritual-item">• Max. 1 Konz.-Zauber aktiv</div>
+                    <div class="dms-ritual-item">• Endet: Neuer Zauber, bewusstlos, Tod</div>
+                    <div class="dms-ritual-item highlight">• Bei Schaden: KON DC = max(10, Schaden÷2)</div>
+                    <div class="dms-ritual-item">• Freiwillig beendbar (keine Aktion)</div>
+                </div>
+            </div>
+        </div>
+    "
+`;
+
+exports[`DM Screen Charakterisierung (D-04, Plan 13-05) Widget "rules" rendert deterministisch gegen die LEERE Kampagne (Snapshot): widget-rules-leere-fixture 1`] = `
+"
+        <div class="dms-rules">
+            <div class="dms-rule-section">
+                <div class="dms-rule-title">🛡️ Deckung</div>
+                <div class="dms-rule-items">
+                    <div class="dms-rule-item"><span>Halbe</span><span>+2 AC, +2 DEX-Rettung</span></div>
+                    <div class="dms-rule-item"><span>3/4</span><span>+5 AC, +5 DEX-Rettung</span></div>
+                    <div class="dms-rule-item"><span>Volle</span><span>Nicht anvisierbar</span></div>
+                </div>
+            </div>
+            <div class="dms-rule-section">
+                <div class="dms-rule-title">💡 Licht & Sicht</div>
+                <div class="dms-rule-items">
+                    <div class="dms-rule-item"><span>Hell</span><span>Normal sehen</span></div>
+                    <div class="dms-rule-item"><span>Dämmrig</span><span>Nachteil Wahrn.</span></div>
+                    <div class="dms-rule-item"><span>Dunkel</span><span>Effektiv blind</span></div>
+                </div>
+            </div>
+            <div class="dms-rule-section">
+                <div class="dms-rule-title">🏃 Bewegung</div>
+                <div class="dms-rule-items">
+                    <div class="dms-rule-item"><span>Schwierig</span><span>2× Bewegung</span></div>
+                    <div class="dms-rule-item"><span>Springen</span><span>STR (weit) / 3+STR (hoch)</span></div>
+                </div>
+            </div>
+        </div>
+    "
+`;
+
+exports[`DM Screen Charakterisierung (D-04, Plan 13-05) Widget "rules" rendert deterministisches, nicht-leeres HTML gegen die volle Fixture (Snapshot): widget-rules-volle-fixture 1`] = `
+"
+        <div class="dms-rules">
+            <div class="dms-rule-section">
+                <div class="dms-rule-title">🛡️ Deckung</div>
+                <div class="dms-rule-items">
+                    <div class="dms-rule-item"><span>Halbe</span><span>+2 AC, +2 DEX-Rettung</span></div>
+                    <div class="dms-rule-item"><span>3/4</span><span>+5 AC, +5 DEX-Rettung</span></div>
+                    <div class="dms-rule-item"><span>Volle</span><span>Nicht anvisierbar</span></div>
+                </div>
+            </div>
+            <div class="dms-rule-section">
+                <div class="dms-rule-title">💡 Licht & Sicht</div>
+                <div class="dms-rule-items">
+                    <div class="dms-rule-item"><span>Hell</span><span>Normal sehen</span></div>
+                    <div class="dms-rule-item"><span>Dämmrig</span><span>Nachteil Wahrn.</span></div>
+                    <div class="dms-rule-item"><span>Dunkel</span><span>Effektiv blind</span></div>
+                </div>
+            </div>
+            <div class="dms-rule-section">
+                <div class="dms-rule-title">🏃 Bewegung</div>
+                <div class="dms-rule-items">
+                    <div class="dms-rule-item"><span>Schwierig</span><span>2× Bewegung</span></div>
+                    <div class="dms-rule-item"><span>Springen</span><span>STR (weit) / 3+STR (hoch)</span></div>
+                </div>
+            </div>
+        </div>
+    "
+`;
+
+exports[`DM Screen Charakterisierung (D-04, Plan 13-05) Widget "saves" rendert deterministisch gegen die LEERE Kampagne (Snapshot): widget-saves-leere-fixture 1`] = `
+"
+        <div class="dms-ref-widget">
+            <div class="dms-save-list">
+                <div class="dms-save-item str">
+                    <span class="dms-save-attr">STR</span>
+                    <span class="dms-save-desc">Festhalten, Schieben, Fallen widerstehen</span>
+                </div>
+                <div class="dms-save-item dex">
+                    <span class="dms-save-attr">DEX</span>
+                    <span class="dms-save-desc">Flächenzauber, Fallen, Reflexe</span>
+                </div>
+                <div class="dms-save-item con">
+                    <span class="dms-save-attr">KON</span>
+                    <span class="dms-save-desc">Gift, Krankheit, Konzentration</span>
+                </div>
+                <div class="dms-save-item int">
+                    <span class="dms-save-attr">INT</span>
+                    <span class="dms-save-desc">Illusionen, Psi-Angriffe</span>
+                </div>
+                <div class="dms-save-item wis">
+                    <span class="dms-save-attr">WIS</span>
+                    <span class="dms-save-desc">Bezauberung, Furcht, mental</span>
+                </div>
+                <div class="dms-save-item cha">
+                    <span class="dms-save-attr">CHA</span>
+                    <span class="dms-save-desc">Verbannung, Besitzergreifung</span>
+                </div>
+            </div>
+            <div class="dms-ref-note">Häufigkeit: DEX › KON › WIS › CHA › INT › STR</div>
+        </div>
+    "
+`;
+
+exports[`DM Screen Charakterisierung (D-04, Plan 13-05) Widget "saves" rendert deterministisches, nicht-leeres HTML gegen die volle Fixture (Snapshot): widget-saves-volle-fixture 1`] = `
+"
+        <div class="dms-ref-widget">
+            <div class="dms-save-list">
+                <div class="dms-save-item str">
+                    <span class="dms-save-attr">STR</span>
+                    <span class="dms-save-desc">Festhalten, Schieben, Fallen widerstehen</span>
+                </div>
+                <div class="dms-save-item dex">
+                    <span class="dms-save-attr">DEX</span>
+                    <span class="dms-save-desc">Flächenzauber, Fallen, Reflexe</span>
+                </div>
+                <div class="dms-save-item con">
+                    <span class="dms-save-attr">KON</span>
+                    <span class="dms-save-desc">Gift, Krankheit, Konzentration</span>
+                </div>
+                <div class="dms-save-item int">
+                    <span class="dms-save-attr">INT</span>
+                    <span class="dms-save-desc">Illusionen, Psi-Angriffe</span>
+                </div>
+                <div class="dms-save-item wis">
+                    <span class="dms-save-attr">WIS</span>
+                    <span class="dms-save-desc">Bezauberung, Furcht, mental</span>
+                </div>
+                <div class="dms-save-item cha">
+                    <span class="dms-save-attr">CHA</span>
+                    <span class="dms-save-desc">Verbannung, Besitzergreifung</span>
+                </div>
+            </div>
+            <div class="dms-ref-note">Häufigkeit: DEX › KON › WIS › CHA › INT › STR</div>
+        </div>
+    "
+`;
+
+exports[`DM Screen Charakterisierung (D-04, Plan 13-05) Widget "sizes" rendert deterministisch gegen die LEERE Kampagne (Snapshot): widget-sizes-leere-fixture 1`] = `
+"
+        <div class="dms-ref-widget">
+            <div class="dms-size-table">
+                <div class="dms-size-row header">
+                    <span>Größe</span><span>Bereich</span><span>Feld</span>
+                </div>
+                <div class="dms-size-row"><span>Winzig</span><span>< 0,75m</span><span>½×½</span></div>
+                <div class="dms-size-row"><span>Klein</span><span>0,75-1,5m</span><span>1×1</span></div>
+                <div class="dms-size-row"><span>Mittel</span><span>1,5-2,4m</span><span>1×1</span></div>
+                <div class="dms-size-row"><span>Groß</span><span>2,4-4,5m</span><span>2×2</span></div>
+                <div class="dms-size-row"><span>Riesig</span><span>4,5-7,5m</span><span>3×3</span></div>
+                <div class="dms-size-row"><span>Gigantisch</span><span>7,5m+</span><span>4×4+</span></div>
+            </div>
+            <div class="dms-ref-section">
+                <div class="dms-ref-note">• Greifen: Ziel max. 1 Größe größer</div>
+                <div class="dms-ref-note">• Reiten: Reittier min. 1 Größe größer</div>
+                <div class="dms-ref-note">• Durch Feind: 2 Größen Unterschied</div>
+            </div>
+        </div>
+    "
+`;
+
+exports[`DM Screen Charakterisierung (D-04, Plan 13-05) Widget "sizes" rendert deterministisches, nicht-leeres HTML gegen die volle Fixture (Snapshot): widget-sizes-volle-fixture 1`] = `
+"
+        <div class="dms-ref-widget">
+            <div class="dms-size-table">
+                <div class="dms-size-row header">
+                    <span>Größe</span><span>Bereich</span><span>Feld</span>
+                </div>
+                <div class="dms-size-row"><span>Winzig</span><span>< 0,75m</span><span>½×½</span></div>
+                <div class="dms-size-row"><span>Klein</span><span>0,75-1,5m</span><span>1×1</span></div>
+                <div class="dms-size-row"><span>Mittel</span><span>1,5-2,4m</span><span>1×1</span></div>
+                <div class="dms-size-row"><span>Groß</span><span>2,4-4,5m</span><span>2×2</span></div>
+                <div class="dms-size-row"><span>Riesig</span><span>4,5-7,5m</span><span>3×3</span></div>
+                <div class="dms-size-row"><span>Gigantisch</span><span>7,5m+</span><span>4×4+</span></div>
+            </div>
+            <div class="dms-ref-section">
+                <div class="dms-ref-note">• Greifen: Ziel max. 1 Größe größer</div>
+                <div class="dms-ref-note">• Reiten: Reittier min. 1 Größe größer</div>
+                <div class="dms-ref-note">• Durch Feind: 2 Größen Unterschied</div>
+            </div>
+        </div>
+    "
+`;
+
+exports[`DM Screen Charakterisierung (D-04, Plan 13-05) Widget "skills" rendert deterministisch gegen die LEERE Kampagne (Snapshot): widget-skills-leere-fixture 1`] = `
+"
+        <div class="dms-ref-widget dms-skills-widget">
+            <div class="dms-skill-group">
+                <div class="dms-skill-header str">STR</div>
+                <div class="dms-skill-item">Athletik</div>
+            </div>
+            <div class="dms-skill-group">
+                <div class="dms-skill-header dex">DEX</div>
+                <div class="dms-skill-item">Akrobatik</div>
+                <div class="dms-skill-item">Fingerfertigkeit</div>
+                <div class="dms-skill-item">Heimlichkeit</div>
+            </div>
+            <div class="dms-skill-group">
+                <div class="dms-skill-header int">INT</div>
+                <div class="dms-skill-item">Arkane Kunde</div>
+                <div class="dms-skill-item">Geschichte</div>
+                <div class="dms-skill-item">Nachforschung</div>
+                <div class="dms-skill-item">Naturkunde</div>
+                <div class="dms-skill-item">Religion</div>
+            </div>
+            <div class="dms-skill-group">
+                <div class="dms-skill-header wis">WIS</div>
+                <div class="dms-skill-item">Wahrnehmung</div>
+                <div class="dms-skill-item">Einsicht</div>
+                <div class="dms-skill-item">Medizin</div>
+                <div class="dms-skill-item">Überleben</div>
+                <div class="dms-skill-item">Tierkunde</div>
+            </div>
+            <div class="dms-skill-group">
+                <div class="dms-skill-header cha">CHA</div>
+                <div class="dms-skill-item">Täuschung</div>
+                <div class="dms-skill-item">Einschüchtern</div>
+                <div class="dms-skill-item">Auftreten</div>
+                <div class="dms-skill-item">Überzeugen</div>
+            </div>
+        </div>
+    "
+`;
+
+exports[`DM Screen Charakterisierung (D-04, Plan 13-05) Widget "skills" rendert deterministisches, nicht-leeres HTML gegen die volle Fixture (Snapshot): widget-skills-volle-fixture 1`] = `
+"
+        <div class="dms-ref-widget dms-skills-widget">
+            <div class="dms-skill-group">
+                <div class="dms-skill-header str">STR</div>
+                <div class="dms-skill-item">Athletik</div>
+            </div>
+            <div class="dms-skill-group">
+                <div class="dms-skill-header dex">DEX</div>
+                <div class="dms-skill-item">Akrobatik</div>
+                <div class="dms-skill-item">Fingerfertigkeit</div>
+                <div class="dms-skill-item">Heimlichkeit</div>
+            </div>
+            <div class="dms-skill-group">
+                <div class="dms-skill-header int">INT</div>
+                <div class="dms-skill-item">Arkane Kunde</div>
+                <div class="dms-skill-item">Geschichte</div>
+                <div class="dms-skill-item">Nachforschung</div>
+                <div class="dms-skill-item">Naturkunde</div>
+                <div class="dms-skill-item">Religion</div>
+            </div>
+            <div class="dms-skill-group">
+                <div class="dms-skill-header wis">WIS</div>
+                <div class="dms-skill-item">Wahrnehmung</div>
+                <div class="dms-skill-item">Einsicht</div>
+                <div class="dms-skill-item">Medizin</div>
+                <div class="dms-skill-item">Überleben</div>
+                <div class="dms-skill-item">Tierkunde</div>
+            </div>
+            <div class="dms-skill-group">
+                <div class="dms-skill-header cha">CHA</div>
+                <div class="dms-skill-item">Täuschung</div>
+                <div class="dms-skill-item">Einschüchtern</div>
+                <div class="dms-skill-item">Auftreten</div>
+                <div class="dms-skill-item">Überzeugen</div>
+            </div>
+        </div>
+    "
+`;
+
+exports[`DM Screen Charakterisierung (D-04, Plan 13-05) Widget "tables" rendert deterministisch gegen die LEERE Kampagne (Snapshot): widget-tables-leere-fixture 1`] = `"<div class="dms-widget-empty">Keine Tabellen</div>"`;
+
+exports[`DM Screen Charakterisierung (D-04, Plan 13-05) Widget "tables" rendert deterministisches, nicht-leeres HTML gegen die volle Fixture (Snapshot): widget-tables-volle-fixture 1`] = `
+"
+        <div class="dms-tables">
+            
+                <div class="dms-table-entry">
+                    <span class="dms-table-icon">🌲</span>
+                    <span class="dms-table-name">Waldbegegnungen</span>
+                    <button class="btn btn-sm" data-action="dms-roll-table" data-table="1">Roll</button>
+                </div>
+            
+                <div class="dms-table-entry">
+                    <span class="dms-table-icon">🍺</span>
+                    <span class="dms-table-name">Tavernengeruechte</span>
+                    <button class="btn btn-sm" data-action="dms-roll-table" data-table="2">Roll</button>
+                </div>
+            
+            <div class="dms-table-result" id="dms-table-result"></div>
+        </div>
+    "
+`;
+
+exports[`DM Screen Charakterisierung (D-04, Plan 13-05) Widget "terrain" rendert deterministisch gegen die LEERE Kampagne (Snapshot): widget-terrain-leere-fixture 1`] = `
+"
+        <div class="dms-ref-widget">
+            <div class="dms-terrain-list">
+                <div class="dms-terrain-item normal">
+                    <span class="dms-terrain-type">Normal</span>
+                    <span class="dms-terrain-effect">Keine Einschränkung</span>
+                </div>
+                <div class="dms-terrain-item difficult">
+                    <span class="dms-terrain-type">Schwierig</span>
+                    <span class="dms-terrain-effect">2× Bewegungskosten</span>
+                </div>
+                <div class="dms-terrain-item hazard">
+                    <span class="dms-terrain-type">Gefährlich</span>
+                    <span class="dms-terrain-effect">Schaden bei Betreten</span>
+                </div>
+            </div>
+            <div class="dms-ref-section">
+                <div class="dms-ref-title">Beispiele schwierig</div>
+                <div class="dms-ref-list">
+                    <span class="dms-ref-tag">Geröll</span>
+                    <span class="dms-ref-tag">Unterholz</span>
+                    <span class="dms-ref-tag">Schnee</span>
+                    <span class="dms-ref-tag">Schlamm</span>
+                    <span class="dms-ref-tag">Möbel</span>
+                </div>
+            </div>
+            <div class="dms-ref-section">
+                <div class="dms-ref-title">Gefährlich</div>
+                <div class="dms-ref-list">
+                    <span class="dms-ref-tag">Lava 10d10🔥</span>
+                    <span class="dms-ref-tag">Dornen 1d4</span>
+                    <span class="dms-ref-tag">Fall 1d6/3m</span>
+                </div>
+            </div>
+        </div>
+    "
+`;
+
+exports[`DM Screen Charakterisierung (D-04, Plan 13-05) Widget "terrain" rendert deterministisches, nicht-leeres HTML gegen die volle Fixture (Snapshot): widget-terrain-volle-fixture 1`] = `
+"
+        <div class="dms-ref-widget">
+            <div class="dms-terrain-list">
+                <div class="dms-terrain-item normal">
+                    <span class="dms-terrain-type">Normal</span>
+                    <span class="dms-terrain-effect">Keine Einschränkung</span>
+                </div>
+                <div class="dms-terrain-item difficult">
+                    <span class="dms-terrain-type">Schwierig</span>
+                    <span class="dms-terrain-effect">2× Bewegungskosten</span>
+                </div>
+                <div class="dms-terrain-item hazard">
+                    <span class="dms-terrain-type">Gefährlich</span>
+                    <span class="dms-terrain-effect">Schaden bei Betreten</span>
+                </div>
+            </div>
+            <div class="dms-ref-section">
+                <div class="dms-ref-title">Beispiele schwierig</div>
+                <div class="dms-ref-list">
+                    <span class="dms-ref-tag">Geröll</span>
+                    <span class="dms-ref-tag">Unterholz</span>
+                    <span class="dms-ref-tag">Schnee</span>
+                    <span class="dms-ref-tag">Schlamm</span>
+                    <span class="dms-ref-tag">Möbel</span>
+                </div>
+            </div>
+            <div class="dms-ref-section">
+                <div class="dms-ref-title">Gefährlich</div>
+                <div class="dms-ref-list">
+                    <span class="dms-ref-tag">Lava 10d10🔥</span>
+                    <span class="dms-ref-tag">Dornen 1d4</span>
+                    <span class="dms-ref-tag">Fall 1d6/3m</span>
+                </div>
+            </div>
+        </div>
+    "
+`;
+
+exports[`DM Screen Charakterisierung (D-04, Plan 13-05) Widget "travel" rendert deterministisch gegen die LEERE Kampagne (Snapshot): widget-travel-leere-fixture 1`] = `
+"
+        <div class="dms-ref-widget">
+            <div class="dms-ref-section">
+                <div class="dms-ref-title">Reisegeschwindigkeit (8h/Tag)</div>
+                <div class="dms-travel-table">
+                    <div class="dms-travel-row header"><span>Tempo</span><span>/h</span><span>/Tag</span><span>Effekt</span></div>
+                    <div class="dms-travel-row"><span>Langsam</span><span>3km</span><span>24km</span><span>Heimlichkeit</span></div>
+                    <div class="dms-travel-row"><span>Normal</span><span>4,5km</span><span>36km</span><span>—</span></div>
+                    <div class="dms-travel-row"><span>Schnell</span><span>6km</span><span>48km</span><span>-5 Wahrn.</span></div>
+                </div>
+            </div>
+            <div class="dms-ref-section">
+                <div class="dms-ref-title">Traglast (STR-basiert)</div>
+                <div class="dms-carry-table">
+                    <div class="dms-carry-row"><span>Tragen</span><span>STR × 7,5 kg</span></div>
+                    <div class="dms-carry-row"><span>Belastet (–3m)</span><span>> STR × 2,5 kg</span></div>
+                    <div class="dms-carry-row"><span>Schwer (–6m, Nachteil)</span><span>> STR × 5 kg</span></div>
+                </div>
+            </div>
+            <div class="dms-ref-note">Gewaltmarsch: KON DC 10+1/h nach 8h</div>
+        </div>
+    "
+`;
+
+exports[`DM Screen Charakterisierung (D-04, Plan 13-05) Widget "travel" rendert deterministisches, nicht-leeres HTML gegen die volle Fixture (Snapshot): widget-travel-volle-fixture 1`] = `
+"
+        <div class="dms-ref-widget">
+            <div class="dms-ref-section">
+                <div class="dms-ref-title">Reisegeschwindigkeit (8h/Tag)</div>
+                <div class="dms-travel-table">
+                    <div class="dms-travel-row header"><span>Tempo</span><span>/h</span><span>/Tag</span><span>Effekt</span></div>
+                    <div class="dms-travel-row"><span>Langsam</span><span>3km</span><span>24km</span><span>Heimlichkeit</span></div>
+                    <div class="dms-travel-row"><span>Normal</span><span>4,5km</span><span>36km</span><span>—</span></div>
+                    <div class="dms-travel-row"><span>Schnell</span><span>6km</span><span>48km</span><span>-5 Wahrn.</span></div>
+                </div>
+            </div>
+            <div class="dms-ref-section">
+                <div class="dms-ref-title">Traglast (STR-basiert)</div>
+                <div class="dms-carry-table">
+                    <div class="dms-carry-row"><span>Tragen</span><span>STR × 7,5 kg</span></div>
+                    <div class="dms-carry-row"><span>Belastet (–3m)</span><span>> STR × 2,5 kg</span></div>
+                    <div class="dms-carry-row"><span>Schwer (–6m, Nachteil)</span><span>> STR × 5 kg</span></div>
+                </div>
+            </div>
+            <div class="dms-ref-note">Gewaltmarsch: KON DC 10+1/h nach 8h</div>
+        </div>
+    "
+`;
+
+exports[`DM Screen Charakterisierung (D-04, Plan 13-05) switchDMSProfile("kampf") ergibt ein deterministisches dmScreenLayout (Snapshot): profil-kampf 1`] = `
+{
+  "widgets": [
+    {
+      "id": "mini-initiative",
+      "type": "initiative",
+      "visible": true,
+    },
+    {
+      "id": "party-stats",
+      "type": "party",
+      "visible": true,
+    },
+    {
+      "id": "quick-dice",
+      "type": "dice",
+      "visible": true,
+    },
+    {
+      "id": "conditions-ref",
+      "type": "conditions",
+      "visible": true,
+    },
+    {
+      "id": "actions-ref",
+      "type": "actions",
+      "visible": true,
+    },
+    {
+      "id": "economy-ref",
+      "type": "economy",
+      "visible": true,
+    },
+    {
+      "id": "damage-ref",
+      "type": "damage",
+      "visible": true,
+    },
+    {
+      "id": "dc-reference",
+      "type": "dc",
+      "visible": true,
+    },
+    {
+      "id": "quick-rules",
+      "type": "rules",
+      "visible": false,
+    },
+    {
+      "id": "random-tables",
+      "type": "tables",
+      "visible": false,
+    },
+    {
+      "id": "session-notes",
+      "type": "notes",
+      "visible": false,
+    },
+  ],
+}
+`;
+
+exports[`DM Screen Charakterisierung (D-04, Plan 13-05) switchDMSProfile("minimal") ergibt ein deterministisches dmScreenLayout (Snapshot): profil-minimal 1`] = `
+{
+  "widgets": [
+    {
+      "id": "party-stats",
+      "type": "party",
+      "visible": true,
+    },
+    {
+      "id": "quick-dice",
+      "type": "dice",
+      "visible": true,
+    },
+    {
+      "id": "conditions-ref",
+      "type": "conditions",
+      "visible": true,
+    },
+    {
+      "id": "mini-initiative",
+      "type": "initiative",
+      "visible": false,
+    },
+    {
+      "id": "dc-reference",
+      "type": "dc",
+      "visible": false,
+    },
+    {
+      "id": "random-tables",
+      "type": "tables",
+      "visible": false,
+    },
+    {
+      "id": "quick-rules",
+      "type": "rules",
+      "visible": false,
+    },
+    {
+      "id": "session-notes",
+      "type": "notes",
+      "visible": false,
+    },
+  ],
+}
+`;
+
+exports[`DM Screen Charakterisierung (D-04, Plan 13-05) switchDMSProfile("referenz") ergibt ein deterministisches dmScreenLayout (Snapshot): profil-referenz 1`] = `
+{
+  "widgets": [
+    {
+      "id": "actions-ref",
+      "type": "actions",
+      "visible": true,
+    },
+    {
+      "id": "economy-ref",
+      "type": "economy",
+      "visible": true,
+    },
+    {
+      "id": "saves-ref",
+      "type": "saves",
+      "visible": true,
+    },
+    {
+      "id": "damage-ref",
+      "type": "damage",
+      "visible": true,
+    },
+    {
+      "id": "attributes-ref",
+      "type": "attributes",
+      "visible": true,
+    },
+    {
+      "id": "skills-ref",
+      "type": "skills",
+      "visible": true,
+    },
+    {
+      "id": "sizes-ref",
+      "type": "sizes",
+      "visible": true,
+    },
+    {
+      "id": "knowledge-ref",
+      "type": "knowledge",
+      "visible": true,
+    },
+    {
+      "id": "objects-ref",
+      "type": "objects",
+      "visible": true,
+    },
+    {
+      "id": "improvised-ref",
+      "type": "improvised",
+      "visible": true,
+    },
+    {
+      "id": "ritual-ref",
+      "type": "ritual",
+      "visible": true,
+    },
+    {
+      "id": "terrain-ref",
+      "type": "terrain",
+      "visible": true,
+    },
+    {
+      "id": "travel-ref",
+      "type": "travel",
+      "visible": true,
+    },
+  ],
+}
+`;
+
+exports[`DM Screen Charakterisierung (D-04, Plan 13-05) switchDMSProfile("standard") ergibt ein deterministisches dmScreenLayout (Snapshot): profil-standard 1`] = `
+{
+  "widgets": [
+    {
+      "id": "party-stats",
+      "type": "party",
+      "visible": true,
+    },
+    {
+      "id": "mini-initiative",
+      "type": "initiative",
+      "visible": true,
+    },
+    {
+      "id": "quick-dice",
+      "type": "dice",
+      "visible": true,
+    },
+    {
+      "id": "conditions-ref",
+      "type": "conditions",
+      "visible": true,
+    },
+    {
+      "id": "dc-reference",
+      "type": "dc",
+      "visible": true,
+    },
+    {
+      "id": "random-tables",
+      "type": "tables",
+      "visible": true,
+    },
+    {
+      "id": "quick-rules",
+      "type": "rules",
+      "visible": true,
+    },
+    {
+      "id": "session-notes",
+      "type": "notes",
+      "visible": true,
+    },
+  ],
+}
 `;

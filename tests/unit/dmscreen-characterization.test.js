@@ -172,6 +172,23 @@ const DMS_FIXTURE = {
     dmScreenNotes: 'Session-Notizen: Die Gruppe naehert sich der Mine.'
 };
 
+/**
+ * Randfall-Fixture (Task 2d): leere Kampagne — keine Charaktere, keine
+ * Initiative, keine Tabellen, keine Notizen. Widgets, die bei leerer
+ * Kampagne anders rendern als bei DMS_FIXTURE, sind genau die, bei denen
+ * eine Aufteilung in Plan 13-12 am ehesten etwas verschiebt.
+ */
+const DMS_EMPTY_FIXTURE = {
+    characters: [],
+    npcs: [],
+    initiative: { combatants: [], currentTurn: 0, round: 1 },
+    randomTables: [],
+    dmScreenLayout: buildFullDmsLayout(),
+    dmScreenProfiles: {},
+    dmScreenActiveProfile: null,
+    dmScreenNotes: ''
+};
+
 // ============================================================
 // Sandbox-Harnisch
 // ============================================================
@@ -308,6 +325,11 @@ describe('DM Screen Charakterisierung (D-04, Plan 13-05)', () => {
     const widgetDefs = sandbox.context.getDMScreenWidgets();
     const widgetTypes = Object.keys(widgetDefs);
 
+    // Zweite, unabhaengige Sandbox-Instanz mit leerer Kampagne (Task 2d) — eigene
+    // vm-Kontext-Instanz, eigenes Document, KEIN gemeinsamer D mit `sandbox`.
+    const emptySandbox = loadDmScreenSandbox(DMS_EMPTY_FIXTURE);
+    const emptyWidgetDefs = emptySandbox.context.getDMScreenWidgets();
+
     test('getDMScreenWidgets() liefert genau 21 Typen mit vollstaendigen Feldern', () => {
         expect(widgetTypes).toHaveLength(21);
         widgetTypes.forEach(type => {
@@ -324,5 +346,76 @@ describe('DM Screen Charakterisierung (D-04, Plan 13-05)', () => {
         expect(typeof html).toBe('string');
         expect(html.trim().length).toBeGreaterThan(0);
         expect(html).toMatchSnapshot();
+    });
+
+    // Faengt einen verschwundenen oder umbenannten Typ auf, unabhaengig vom
+    // einzelnen Widget-HTML-Snapshot weiter unten (Task 2a, zweiter Fall).
+    test('Registry-Schluesselliste bleibt stabil (Snapshot ueber Object.keys(getDMScreenWidgets()))', () => {
+        expect(widgetTypes).toMatchSnapshot();
+    });
+
+    // Iteriert ueber die Registry-SCHLUESSEL, nicht ueber eine im Test
+    // hartkodierte Typenliste — bleibt nach der Aufteilung in 13-12 gueltig,
+    // solange getDMScreenWidgets() dieselben Typen liefert (Task 2a, erster Fall).
+    // Ruft NIEMALS einen Widget-Renderer ueber seinen internen Funktionsnamen auf,
+    // sondern ausschliesslich ueber die von der Registry gelieferte
+    // `.render`-Referenz.
+    test.each(widgetTypes)(
+        'Widget "%s" rendert deterministisches, nicht-leeres HTML gegen die volle Fixture (Snapshot)',
+        type => {
+            const html = widgetDefs[type].render();
+            expect(typeof html).toBe('string');
+            expect(html.trim().length).toBeGreaterThan(0);
+            expect(html).not.toContain('undefined');
+            expect(html).not.toContain('[object Object]');
+            expect(html).toMatchSnapshot(`widget-${type}-volle-fixture`);
+        }
+    );
+
+    // Task 2d: derselbe Durchlauf gegen die LEERE Kampagne — Widgets, deren
+    // Ausgabe sich von der vollen Fixture unterscheidet, sind im SUMMARY named.
+    test.each(widgetTypes)(
+        'Widget "%s" rendert deterministisch gegen die LEERE Kampagne (Snapshot)',
+        type => {
+            const html = emptyWidgetDefs[type].render();
+            expect(typeof html).toBe('string');
+            expect(html).toMatchSnapshot(`widget-${type}-leere-fixture`);
+        }
+    );
+
+    // Task 2b: der oeffentliche Gesamt-Einstieg — deckt die Zusammenstellung aus
+    // Quick-Bar (compact: true, hier nur "conditions") und Grid (compact: false,
+    // die restlichen 20 Typen) ab, die kein Einzelwidget-Snapshot erfasst. Zugriff
+    // ausschliesslich ueber window.<der auf window exportierte Funktionsname>,
+    // nicht ueber einen internen Widget-Renderer.
+    test('Der oeffentliche Gesamt-Einstieg rendert Quick-Bar und Grid gegen die volle Fixture (Snapshot)', () => {
+        const entryPoint = sandbox.context.window['render' + 'DMScreen'];
+        expect(typeof entryPoint).toBe('function');
+        entryPoint();
+        const grid = sandbox.document.getElementById('dmscreen-grid');
+        const quickBar = sandbox.document.getElementById('dms-quick-bar');
+        expect(grid.innerHTML).toMatchSnapshot('gesamt-einstieg-grid');
+        expect(quickBar.innerHTML).toMatchSnapshot('gesamt-einstieg-quickbar');
+    });
+
+    // Task 2c: die vier Standardprofile (Standard/Kampf/Minimal/Referenz) — sie
+    // wandern in Plan 13-12 in eine eigene Datei. Mutiert sandbox.D bewusst
+    // fortlaufend (jeder Wechsel ersetzt das Layout komplett); laeuft daher NACH
+    // allen Tests, die auf der urspruenglichen DMS_FIXTURE-Layoutform beruhen.
+    test.each(['standard', 'kampf', 'minimal', 'referenz'])(
+        'switchDMSProfile("%s") ergibt ein deterministisches dmScreenLayout (Snapshot)',
+        profileId => {
+            sandbox.context.switchDMSProfile(profileId);
+            expect(sandbox.D.dmScreenLayout).toMatchSnapshot(`profil-${profileId}`);
+        }
+    );
+
+    // Determinismus-Nachweis (must_haves.truths): zwei aufeinanderfolgende
+    // Aufrufe DERSELBEN Registry-Referenz liefern byte-identisches HTML — kein
+    // interner Zustand, keine Systemzeit, keine Zufallszahl schleicht sich ein.
+    test('zwei aufeinanderfolgende render()-Aufrufe liefern identisches HTML (Determinismus)', () => {
+        const first = emptyWidgetDefs.rules.render();
+        const second = emptyWidgetDefs.rules.render();
+        expect(first).toBe(second);
     });
 });
