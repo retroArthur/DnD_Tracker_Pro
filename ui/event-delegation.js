@@ -110,8 +110,6 @@ const EventDelegation = {
             } catch (actionError) {
                 if (typeof ErrorHandler !== 'undefined') {
                     ErrorHandler.log('EventDelegation', actionError, `Action: ${action}`);
-                } else {
-                    console.error(`[EventDelegation] Fehler in Action "${action}":`, actionError);
                 }
             }
         }
@@ -133,8 +131,6 @@ const EventDelegation = {
             } catch (actionError) {
                 if (typeof ErrorHandler !== 'undefined') {
                     ErrorHandler.log('EventDelegation', actionError, `Action (change): ${action}`);
-                } else {
-                    console.error(`[EventDelegation] Fehler in Action "${action}":`, actionError);
                 }
             }
             return;
@@ -146,7 +142,12 @@ const EventDelegation = {
 
         // Whitelist-Validierung für Sicherheit
         if (!ALLOWED_CHANGE_HANDLERS.has(handlerName)) {
-            console.warn(`[EventDelegation] Blocked unauthorized onChange handler: ${handlerName}`);
+            if (window.APP_CONFIG?.DEBUG_MODE && window.ErrorHandler) {
+                window.ErrorHandler.log(
+                    'EventDelegation',
+                    new Error(`Blocked unauthorized onChange handler: ${handlerName}`)
+                );
+            }
             return;
         }
 
@@ -157,8 +158,6 @@ const EventDelegation = {
             } catch (changeError) {
                 if (typeof ErrorHandler !== 'undefined') {
                     ErrorHandler.log('EventDelegation', changeError, `onChange: ${handlerName}`);
-                } else {
-                    console.error('[EventDelegation] onChange Fehler:', changeError);
                 }
             }
         }
@@ -180,8 +179,6 @@ const EventDelegation = {
             } catch (actionError) {
                 if (typeof ErrorHandler !== 'undefined') {
                     ErrorHandler.log('EventDelegation', actionError, `Action (input): ${action}`);
-                } else {
-                    console.error(`[EventDelegation] Fehler in Action "${action}":`, actionError);
                 }
             }
             return;
@@ -193,7 +190,12 @@ const EventDelegation = {
 
         // Whitelist-Validierung für Sicherheit
         if (!ALLOWED_CHANGE_HANDLERS.has(handlerName)) {
-            console.warn(`[EventDelegation] Blocked unauthorized onInput handler: ${handlerName}`);
+            if (window.APP_CONFIG?.DEBUG_MODE && window.ErrorHandler) {
+                window.ErrorHandler.log(
+                    'EventDelegation',
+                    new Error(`Blocked unauthorized onInput handler: ${handlerName}`)
+                );
+            }
             return;
         }
 
@@ -204,8 +206,6 @@ const EventDelegation = {
             } catch (inputError) {
                 if (typeof ErrorHandler !== 'undefined') {
                     ErrorHandler.log('EventDelegation', inputError, `onInput: ${handlerName}`);
-                } else {
-                    console.error('[EventDelegation] onInput Fehler:', inputError);
                 }
             }
         }

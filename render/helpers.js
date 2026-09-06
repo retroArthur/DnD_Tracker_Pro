@@ -35,7 +35,7 @@ const ErrorHandler = {
             this._errorLog.pop();
         }
         if (this._consoleLog) {
-            console.error(`[${fnName}]${context ? ` (${context})` : ''}:`, error);
+            console.error(`[${fnName}]${context ? ` (${context})` : ''}:`, error); // gsd:konsolen-senke einziger sanktionierter Ausgang dieses Projekts
         }
         // Ins Debug-Log schreiben wenn verfügbar
         const debugLogAdd = window.debugLogAdd;
@@ -86,7 +86,9 @@ function safeExecute(fn, fnName, options = {}) {
             try {
                 onError(error);
             } catch (e) {
-                console.error('Error in onError callback:', e);
+                if (window.APP_CONFIG?.DEBUG_MODE) {
+                    ErrorHandler.log('safeExecute.onError', e, fnName);
+                }
             }
         }
         return fallback;
@@ -233,7 +235,8 @@ function validateDataIntegrity() {
     const repairs = [];
     // Stelle sicher, dass D existiert
     if (typeof D !== 'object' || D === null) {
-        console.error('Kritischer Fehler: D ist nicht definiert');
+        // Fatalfall beim Start: läuft ohne DEBUG_MODE-Guard über den einen sanktionierten Ausgang
+        ErrorHandler.log('validateDataIntegrity', new Error('Kritischer Fehler: D ist nicht definiert'));
         return { valid: false, repairs: ['D war nicht definiert'] };
     }
     // Prüfe und initialisiere Arrays
@@ -321,7 +324,9 @@ function validateDataIntegrity() {
         }
     }
     if (repairs.length > 0) {
-        console.warn('Daten-Reparaturen durchgeführt:', repairs);
+        if (window.APP_CONFIG?.DEBUG_MODE) {
+            ErrorHandler.log('validateDataIntegrity', new Error('Daten-Reparaturen durchgeführt'), repairs.join('; '));
+        }
     }
     return { valid: repairs.length === 0, repairs };
 }
