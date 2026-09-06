@@ -185,12 +185,25 @@ const UIActions = {
     // Dynamic function call (SEC-03: nur Ziele aus CALL_ACTION_WHITELIST erlaubt)
     call: ctx => {
         if (!window.CALL_ACTION_WHITELIST?.has(ctx.value)) {
-            console.error('[EventDelegation] Function not found:', ctx.value);
+            if (window.APP_CONFIG?.DEBUG_MODE && window.ErrorHandler) {
+                window.ErrorHandler.log(
+                    'EventDelegation',
+                    new Error('Call-Ziel nicht in Whitelist'),
+                    ctx.value
+                );
+            }
             return;
         }
         const fn = window[ctx.value];
-        if (typeof fn === 'function') fn(ctx.id);
-        else console.error('[EventDelegation] Function not found:', ctx.value);
+        if (typeof fn === 'function') {
+            fn(ctx.id);
+        } else if (window.APP_CONFIG?.DEBUG_MODE && window.ErrorHandler) {
+            window.ErrorHandler.log(
+                'EventDelegation',
+                new Error('Call-Ziel ist keine Funktion'),
+                ctx.value
+            );
+        }
     },
 
     // Search input (generic: calls render function + updateSearchClear)

@@ -154,4 +154,76 @@ describe('UIActions.call Whitelist-Wächter (SEC-03)', () => {
         const missingFromWhitelist = [...targets].filter(name => !whitelist.has(name));
         expect(missingFromWhitelist).toEqual([]);
     });
+
+    test('protokolliert ein nicht gelistetes Ziel bei aktivem DEBUG_MODE genau einmal über ErrorHandler', () => {
+        const errorHandlerLog = jest.fn();
+        const { handlers } = loadUIActions({
+            whitelist: new Set(['flipCoin']),
+            debugMode: true,
+            errorHandlerLog
+        });
+
+        handlers.get('call')({ value: 'nichtGelistet', id: 1 });
+
+        expect(errorHandlerLog).toHaveBeenCalledTimes(1);
+        expect(errorHandlerLog.mock.calls[0][0]).toBe('EventDelegation');
+        expect(errorHandlerLog.mock.calls[0][2]).toBe('nichtGelistet');
+        const notInWhitelistMessage = errorHandlerLog.mock.calls[0][1].message;
+
+        errorHandlerLog.mockClear();
+        const { handlers: handlers2, windowStub } = loadUIActions({
+            whitelist: new Set(['nichtAufrufbar']),
+            debugMode: true,
+            errorHandlerLog
+        });
+        windowStub.nichtAufrufbar = 'kein-callable';
+        handlers2.get('call')({ value: 'nichtAufrufbar', id: 1 });
+        const notAFunctionMessage = errorHandlerLog.mock.calls[0][1].message;
+
+        // Zwei unterscheidbare Meldungstexte fuer die zwei blockierten Faelle (Task 3)
+        expect(notInWhitelistMessage).not.toBe(notAFunctionMessage);
+    });
+
+    test('protokolliert nicht, wenn DEBUG_MODE aus ist (nicht gelistetes Ziel)', () => {
+        const errorHandlerLog = jest.fn();
+        const { handlers } = loadUIActions({
+            whitelist: new Set(['flipCoin']),
+            debugMode: false,
+            errorHandlerLog
+        });
+
+        handlers.get('call')({ value: 'nichtGelistet', id: 1 });
+
+        expect(errorHandlerLog).not.toHaveBeenCalled();
+    });
+
+    test('protokolliert ein gelistetes, aber nicht aufrufbares Ziel bei aktivem DEBUG_MODE genau einmal über ErrorHandler', () => {
+        const errorHandlerLog = jest.fn();
+        const { handlers, windowStub } = loadUIActions({
+            whitelist: new Set(['nichtAufrufbar']),
+            debugMode: true,
+            errorHandlerLog
+        });
+        windowStub.nichtAufrufbar = 'kein-callable';
+
+        handlers.get('call')({ value: 'nichtAufrufbar', id: 1 });
+
+        expect(errorHandlerLog).toHaveBeenCalledTimes(1);
+        expect(errorHandlerLog.mock.calls[0][0]).toBe('EventDelegation');
+        expect(errorHandlerLog.mock.calls[0][2]).toBe('nichtAufrufbar');
+    });
+
+    test('protokolliert nicht, wenn DEBUG_MODE aus ist (gelistetes, nicht aufrufbares Ziel)', () => {
+        const errorHandlerLog = jest.fn();
+        const { handlers, windowStub } = loadUIActions({
+            whitelist: new Set(['nichtAufrufbar']),
+            debugMode: false,
+            errorHandlerLog
+        });
+        windowStub.nichtAufrufbar = 'kein-callable';
+
+        handlers.get('call')({ value: 'nichtAufrufbar', id: 1 });
+
+        expect(errorHandlerLog).not.toHaveBeenCalled();
+    });
 });
