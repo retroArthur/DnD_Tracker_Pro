@@ -2348,3 +2348,278 @@ describe('Nachzug R15 — save()-Debounce: genau ein Schreibvorgang pro Fenster 
         expect(hookSpy).toHaveBeenCalledTimes(2);
     }, 10000);
 });
+
+// ----------------------------------------------------------------
+// PERF-01, Task 3 (13-06): Messung gegen eine realistisch dimensionierte Kampagne. Der
+// Warnblock zu Erfolgskriterium 2 in 13-CONTEXT.md verlangt eine Messung statt einer
+// Vermutung, BEVOR die Abweichung (Undo-Pfad bleibt teilweise redundant, D-10) abgenommen
+// oder zur Neubewertung vorgelegt wird. Dieser Testfall baut die Fixture, misst und
+// schreibt das Ergebnis nach 13-PERF-MEASUREMENT.md — kein Assert auf eine absolute
+// Millisekundenschwelle (flackert auf fremder Hardware), nur der Beweis, dass ueberhaupt
+// realistisch gross gemessen wurde.
+// ----------------------------------------------------------------
+describe('PERF-01 — Messung gegen realistisch dimensionierte Kampagne (13-PERF-MEASUREMENT.md)', () => {
+    const fs = require('fs');
+    const path = require('path');
+    const vm = require('vm');
+    const os = require('os');
+
+    // core/srd-spells.js exportiert getSRDSpells() NICHT explizit auf window (anders als
+    // core/srd-monsters.js) — Funktionsdeklarationen werden unter Jests CommonJS-Modul-Wrapper
+    // NICHT automatisch zu window-Eigenschaften (das passiert nur im echten, konkatenierten
+    // Classic-Script). Deshalb ueber vm laden, gleiche Technik wie _ladeUtf8ByteLength().
+    function ladeSRDSpells() {
+        const source = fs.readFileSync(path.join(__dirname, '../../core/srd-spells.js'), 'utf-8');
+        const context = { window: {}, log: () => {}, console };
+        vm.createContext(context);
+        vm.runInContext(source + '\nvar __getSRDSpells = getSRDSpells;\n', context);
+        return context.__getSRDSpells();
+    }
+
+    // core/srd-monsters.js SCHREIBT explizit window.getSRDMonsters am Dateiende — ein
+    // gewoehnliches require() (jsdom liefert das globale window) reicht hier aus.
+    function ladeSRDMonsters() {
+        require('../../core/srd-monsters.js');
+        return window.getSRDMonsters();
+    }
+
+    function baueRealistischeKampagne() {
+        const macheCharakter = i => ({
+            id: i,
+            name: `Held ${i}`,
+            playerName: `Spieler ${i}`,
+            characterClass: 'Kämpfer',
+            race: 'Mensch',
+            level: 5,
+            background: 'Soldat',
+            alignment: 'LG',
+            attributes: { str: 16, dex: 14, con: 14, int: 10, wis: 12, cha: 8 },
+            saveProficiencies: {
+                str: true,
+                dex: false,
+                con: true,
+                int: false,
+                wis: false,
+                cha: false
+            },
+            hpCurrent: 44,
+            hpMax: 44,
+            armorClass: 18,
+            initiative: 2,
+            speed: '9m',
+            proficiencyBonus: 3,
+            hitDice: '5d10',
+            spellSlots: {
+                1: { max: 4, used: 0 },
+                2: { max: 3, used: 0 },
+                3: { max: 2, used: 0 }
+            },
+            inventory: Array.from({ length: 10 }, (_, j) => ({ name: `Gegenstand ${j}`, qty: 1 })),
+            notes: 'Hintergrundgeschichte '.repeat(20)
+        });
+        const macheNpc = i => ({
+            id: i,
+            name: `NPC ${i}`,
+            role: 'Händler',
+            race: 'Mensch',
+            description: 'Beschreibung '.repeat(15),
+            relationships: [
+                { targetType: 'character', targetId: 1, type: 'ally', note: 'Alte Bekannte' }
+            ]
+        });
+        const macheOrt = i => ({
+            id: i,
+            name: `Ort ${i}`,
+            type: 'Stadt',
+            description: 'Beschreibung '.repeat(15)
+        });
+        const macheQuest = i => ({
+            id: i,
+            title: `Quest ${i}`,
+            status: 'active',
+            description: 'Beschreibung '.repeat(20)
+        });
+        const macheEncounter = i => ({
+            id: i,
+            name: `Encounter ${i}`,
+            creatures: [{ name: 'Goblin', cr: '1/4', count: 4 }]
+        });
+        const macheWiki = i => ({ id: i, title: `Wiki-Eintrag ${i}`, content: 'X'.repeat(2000) });
+        const macheNotiz = i => ({
+            id: i,
+            date: `2026-0${(i % 9) + 1}-01`,
+            content: 'Sitzungsnotiz '.repeat(25)
+        });
+
+        return {
+            characters: Array.from({ length: 8 }, (_, i) => macheCharakter(i)),
+            npcs: Array.from({ length: 120 }, (_, i) => macheNpc(i)),
+            locations: Array.from({ length: 60 }, (_, i) => macheOrt(i)),
+            quests: Array.from({ length: 80 }, (_, i) => macheQuest(i)),
+            encounters: Array.from({ length: 40 }, (_, i) => macheEncounter(i)),
+            spells: ladeSRDSpells(),
+            bestiary: ladeSRDMonsters(),
+            wiki: Array.from({ length: 200 }, (_, i) => macheWiki(i)),
+            sessionNotes: Array.from({ length: 300 }, (_, i) => macheNotiz(i)),
+            initiative: { combatants: [], currentTurn: 0, round: 1 },
+            settings: { theme: 'dark' },
+            _nextId: {}
+        };
+    }
+
+    function median(werte) {
+        const sortiert = [...werte].sort((a, b) => a - b);
+        return sortiert[Math.floor(sortiert.length / 2)];
+    }
+
+    test('Messfall: JSON.stringify(D)-Dauer, Stringgroesse, Undo-Stack-Groesse — Ergebnis nach 13-PERF-MEASUREMENT.md geschrieben', () => {
+        const utf8ByteLength = _ladeUtf8ByteLength();
+        const kampagne = baueRealistischeKampagne();
+        const jsonString = JSON.stringify(kampagne);
+
+        // (1) Median-Dauer aus mindestens 20 Laeufen
+        const laufzeiten = [];
+        for (let i = 0; i < 20; i++) {
+            const start = performance.now();
+            JSON.stringify(kampagne);
+            laufzeiten.push(performance.now() - start);
+        }
+        const medianMs = median(laufzeiten);
+
+        // (2) Laenge in Zeichen und UTF-8-Bytes
+        const zeichenLaenge = jsonString.length;
+        const byteLaenge = utf8ByteLength(jsonString);
+
+        // (3) Undo-Stack-Gesamtgroesse bei 30 Eintraegen (keine Dedupe-Wirkung: 30x derselbe
+        // String, wie ein Worst-Case ohne Dedupe-Entlastung zwischen den Aktionen)
+        const undoStackBytes = byteLaenge * 30;
+
+        // (4) Vergleich: alte Blob-Messung vs. neue Zaehlung auf demselben String
+        const blobLaufzeiten = [];
+        for (let i = 0; i < 20; i++) {
+            const start = performance.now();
+            void new Blob([jsonString]).size;
+            blobLaufzeiten.push(performance.now() - start);
+        }
+        const blobMedianMs = median(blobLaufzeiten);
+
+        const utf8Laufzeiten = [];
+        for (let i = 0; i < 20; i++) {
+            const start = performance.now();
+            utf8ByteLength(jsonString);
+            utf8Laufzeiten.push(performance.now() - start);
+        }
+        const utf8MedianMs = median(utf8Laufzeiten);
+
+        // Kein Assert auf eine absolute Millisekundenschwelle (flackert auf fremder Hardware) —
+        // nur der Beweis, dass ueberhaupt gemessen wurde und die Fixture realistisch gross ist.
+        expect(medianMs).toBeGreaterThan(0);
+        expect(zeichenLaenge).toBeGreaterThan(100000);
+        expect(byteLaenge).toBeGreaterThan(0);
+        expect(kampagne.bestiary.length).toBe(112);
+        expect(kampagne.spells.length).toBeGreaterThan(0);
+
+        const UNDO_BYTE_BUDGET_MB = 64;
+        const undoStackMB = undoStackBytes / (1024 * 1024);
+        const budgetGreiftImNormalfall = undoStackMB > UNDO_BYTE_BUDGET_MB;
+        const millisekundenEinstellig = medianMs < 10;
+
+        const cpuModell = (os.cpus() && os.cpus()[0] && os.cpus()[0].model) || 'unbekannt';
+        const cpuAnzahl = (os.cpus() && os.cpus().length) || 0;
+
+        const inhalt = `# Phase 13 Plan 06 — Messprotokoll PERF-01 (Erfolgskriterium 2)
+
+**Datum:** ${new Date().toISOString().slice(0, 10)}
+**Node-Version:** ${process.version}
+**Hardware:** ${cpuAnzahl}x ${cpuModell}, ${(os.totalmem() / 1024 / 1024 / 1024).toFixed(1)} GB RAM
+
+## Fixture
+
+Synthetische, realistisch dimensionierte Kampagne (kein \`window.D\` — ein lokales Testobjekt
+gleicher Form, ausschliesslich fuer diese Messung):
+
+| Sammlung | Anzahl | Quelle |
+|---|---|---|
+| \`characters\` | 8 | vollstaendige Attribute, Zauberplaetze, Inventar |
+| \`npcs\` | 120 | mit Beziehungen |
+| \`locations\` | 60 | |
+| \`quests\` | 80 | |
+| \`encounters\` | 40 | |
+| \`spells\` | ${kampagne.spells.length} | \`core/srd-spells.js\` (\`getSRDSpells()\`, vollstaendiger Satz) |
+| \`bestiary\` | ${kampagne.bestiary.length} | \`core/srd-monsters.js\` (\`getSRDMonsters()\`, SRD 5.1 DE) |
+| \`wiki\` | 200 | je ~2 KB Text |
+| \`sessionNotes\` | 300 | |
+
+Hinweis: \`diceStats\` ist laut Phase-12-Befund NICHT Teil von \`D\` (liegt in IndexedDB) und geht
+folgerichtig nicht in diese Messung ein.
+
+## Messwerte
+
+| Messgroesse | Wert |
+|---|---|
+| Median \`JSON.stringify(D)\`-Dauer (20 Laeufe) | ${medianMs.toFixed(3)} ms |
+| Stringlaenge (Zeichen) | ${zeichenLaenge.toLocaleString('de-DE')} Zeichen |
+| Stringgroesse (UTF-8-Bytes, \`utf8ByteLength()\`) | ${byteLaenge.toLocaleString('de-DE')} Bytes (${(byteLaenge / 1024 / 1024).toFixed(2)} MB) |
+| Undo-Stack-Gesamtgroesse bei 30 Eintraegen (kein Dedupe zwischen den Eintraegen) | ${undoStackBytes.toLocaleString('de-DE')} Bytes (${undoStackMB.toFixed(2)} MB) |
+| Median \`new Blob([s]).size\`-Dauer (20 Laeufe, Referenz) | ${blobMedianMs.toFixed(3)} ms |
+| Median \`utf8ByteLength(s)\`-Dauer (20 Laeufe) | ${utf8MedianMs.toFixed(3)} ms |
+
+*Hinweis zur Blob-Zeile:* gemessen in Jest/jsdom (Node ${process.version}), dessen \`Blob\`-Implementierung
+eine reine JS-Nachbildung ist, kein natives Browser-\`Blob\`. Der absolute Faktor zwischen den
+beiden letzten Zeilen ist deshalb ein Artefakt der Testumgebung, keine verlaessliche Aussage ueber
+reale Chrome/Firefox-Laufzeiten. Der eigentliche Gewinn aus Task 1/2 ist nicht "schneller als
+Blob", sondern "keine zweite Kopie mehr" — das gilt umgebungsunabhaengig.
+
+## Abnahme Erfolgskriterium 2
+
+Erfolgskriterium 2 verlangt, dass keine Kampagnen-Serialisierung im laufenden Betrieb spuerbar
+Zeit kostet. Die gemessene Median-Dauer von \`JSON.stringify(D)\` liegt bei ${medianMs.toFixed(3)} ms
+und damit ${millisekundenEinstellig ? 'im geforderten einstelligen Millisekundenbereich' : 'OBERHALB des geforderten einstelligen Millisekundenbereichs'}.
+
+${
+    millisekundenEinstellig
+        ? `**Entscheidung: Erfolgskriterium 2 wird fuer den Save-Pfad als erfuellt, fuer den Undo-Pfad
+als nachweislich unkritisch abgenommen.** Die in Task 1/2 entlastete Byte-Zaehlung entfernt die
+zweite Vollkopie an beiden Save-Aufrufstellen; die verbleibende Redundanz (\`JSON.stringify(D)\`
+laeuft bei jedem Undo-Push zusaetzlich zum naechsten Save erneut) bleibt bestehen, weil D-10 sie
+bewusst nicht durch Scoping oder Delta-Snapshots aufloest — bei ${medianMs.toFixed(3)} ms pro Lauf
+ist das am Spieltisch nicht wahrnehmbar, auch nicht bei mehreren Aktionen pro Sekunde. Die
+Abweichung von der urspruenglichen Formulierung des Kriteriums ist damit gemessen statt vermutet
+und bewusst benannt akzeptiert.`
+        : `**Entscheidung: D-10 (kein Scoping, keine Delta-Snapshots) muss anhand dieses Messwerts neu
+bewertet werden.** Die gemessene Dauer liegt ueber dem einstelligen Millisekundenbereich — der
+Befund geht als Empfehlung in den Backlog, NICHT als Sofortumbau in diese Phase (13-06-PLAN.md,
+Task 3).`
+}
+
+**Byte-Budget-Pruefung:** Bei ${undoStackMB.toFixed(2)} MB fuer den vollen 30-Eintraege-Undo-Stack
+${budgetGreiftImNormalfall ? `greift das in Task 2 gewaehlte Budget von ${UNDO_BYTE_BUDGET_MB} MB bereits im gemessenen Normalfall — das widerspricht der Absicht (der Deckel soll den Ausreisser fangen, nicht den Alltag) und die Zahl muesste in \`core/config.js\` (\`UNDO_BYTE_BUDGET_MB\`) nach oben korrigiert werden.` : `greift das in Task 2 gewaehlte Budget von ${UNDO_BYTE_BUDGET_MB} MB im gemessenen Normalfall NICHT — es bleibt ein reiner Ausreisser-Deckel, keine Korrektur noetig.`}
+
+## Nachvollziehen an der eigenen Kampagne
+
+Diese Fixture ist die automatisierte Referenz — die eigene, echte Kampagne ist die Wahrheit.
+So misst man dieselben Werte in der laufenden App nach:
+
+1. Browserkonsole oeffnen (F12), Tab "Konsole".
+2. Eingeben:
+   \`\`\`js
+   const t0 = performance.now();
+   const s = JSON.stringify(window.D);
+   const t1 = performance.now();
+   console.log('Dauer (ms):', t1 - t0);
+   console.log('Zeichen:', s.length);
+   console.log('UTF-8-Bytes:', window.utf8ByteLength(s));
+   \`\`\`
+3. Mehrfach ausfuehren (Pfeil-hoch in der Konsole) und den kleinsten/typischen Wert nehmen —
+   der erste Lauf ist durch JIT-Aufwaermen oft langsamer als die folgenden.
+`;
+
+        const zielPfad = path.join(
+            __dirname,
+            '../../.planning/phases/13-h-rtung-wartbarkeit/13-PERF-MEASUREMENT.md'
+        );
+        fs.writeFileSync(zielPfad, inhalt, 'utf-8');
+        expect(fs.existsSync(zielPfad)).toBe(true);
+        expect(fs.readFileSync(zielPfad, 'utf-8')).toContain('Abnahme Erfolgskriterium 2');
+    });
+});
