@@ -4,6 +4,10 @@
 **Node-Version:** v24.14.0
 **Hardware:** 16x AMD Ryzen 7 9850X3D 8-Core Processor           , 61.7 GB RAM
 
+> Diese Datei wird nicht bei jedem Testlauf neu geschrieben — die gemessenen Zeiten schwanken,
+> und ein Testlauf soll den Arbeitsbaum nicht veraendern. Neu erzeugen auf der eigenen Hardware:
+> `GSD_WRITE_PERF_REPORT=1 npx jest tests/unit/stability.test.js`
+
 ## Fixture
 
 Synthetische, realistisch dimensionierte Kampagne (kein `window.D` — ein lokales Testobjekt
@@ -28,12 +32,12 @@ folgerichtig nicht in diese Messung ein.
 
 | Messgroesse | Wert |
 |---|---|
-| Median `JSON.stringify(D)`-Dauer (20 Laeufe) | 0.801 ms |
+| Median `JSON.stringify(D)`-Dauer (20 Laeufe) | 0.922 ms |
 | Stringlaenge (Zeichen) | 836.419 Zeichen |
 | Stringgroesse (UTF-8-Bytes, `utf8ByteLength()`) | 838.213 Bytes (0.80 MB) |
 | Undo-Stack-Gesamtgroesse bei 30 Eintraegen (kein Dedupe zwischen den Eintraegen) | 25.146.390 Bytes (23.98 MB) |
-| Median `new Blob([s]).size`-Dauer (20 Laeufe, Referenz) | 14.558 ms |
-| Median `utf8ByteLength(s)`-Dauer (20 Laeufe) | 1.128 ms |
+| Median `new Blob([s]).size`-Dauer (20 Laeufe, Referenz) | 15.086 ms |
+| Median `utf8ByteLength(s)`-Dauer (20 Laeufe) | 1.148 ms |
 
 *Hinweis zur Blob-Zeile:* gemessen in Jest/jsdom (Node v24.14.0), dessen `Blob`-Implementierung
 eine reine JS-Nachbildung ist, kein natives Browser-`Blob`. Der absolute Faktor zwischen den
@@ -44,14 +48,14 @@ Blob", sondern "keine zweite Kopie mehr" — das gilt umgebungsunabhaengig.
 ## Abnahme Erfolgskriterium 2
 
 Erfolgskriterium 2 verlangt, dass keine Kampagnen-Serialisierung im laufenden Betrieb spuerbar
-Zeit kostet. Die gemessene Median-Dauer von `JSON.stringify(D)` liegt bei 0.801 ms
+Zeit kostet. Die gemessene Median-Dauer von `JSON.stringify(D)` liegt bei 0.922 ms
 und damit im geforderten einstelligen Millisekundenbereich.
 
 **Entscheidung: Erfolgskriterium 2 wird fuer den Save-Pfad als erfuellt, fuer den Undo-Pfad
 als nachweislich unkritisch abgenommen.** Die in Task 1/2 entlastete Byte-Zaehlung entfernt die
 zweite Vollkopie an beiden Save-Aufrufstellen; die verbleibende Redundanz (`JSON.stringify(D)`
 laeuft bei jedem Undo-Push zusaetzlich zum naechsten Save erneut) bleibt bestehen, weil D-10 sie
-bewusst nicht durch Scoping oder Delta-Snapshots aufloest — bei 0.801 ms pro Lauf
+bewusst nicht durch Scoping oder Delta-Snapshots aufloest — bei 0.922 ms pro Lauf
 ist das am Spieltisch nicht wahrnehmbar, auch nicht bei mehreren Aktionen pro Sekunde. Die
 Abweichung von der urspruenglichen Formulierung des Kriteriums ist damit gemessen statt vermutet
 und bewusst benannt akzeptiert.

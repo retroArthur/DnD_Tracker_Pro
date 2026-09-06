@@ -2354,7 +2354,7 @@ describe('Nachzug R15 — save()-Debounce: genau ein Schreibvorgang pro Fenster 
 // Warnblock zu Erfolgskriterium 2 in 13-CONTEXT.md verlangt eine Messung statt einer
 // Vermutung, BEVOR die Abweichung (Undo-Pfad bleibt teilweise redundant, D-10) abgenommen
 // oder zur Neubewertung vorgelegt wird. Dieser Testfall baut die Fixture, misst und
-// schreibt das Ergebnis nach 13-PERF-MEASUREMENT.md — kein Assert auf eine absolute
+// baut daraus den Berichtstext fuer 13-PERF-MEASUREMENT.md — kein Assert auf eine absolute
 // Millisekundenschwelle (flackert auf fremder Hardware), nur der Beweis, dass ueberhaupt
 // realistisch gross gemessen wurde.
 // ----------------------------------------------------------------
@@ -2472,7 +2472,7 @@ describe('PERF-01 — Messung gegen realistisch dimensionierte Kampagne (13-PERF
         return sortiert[Math.floor(sortiert.length / 2)];
     }
 
-    test('Messfall: JSON.stringify(D)-Dauer, Stringgroesse, Undo-Stack-Groesse — Ergebnis nach 13-PERF-MEASUREMENT.md geschrieben', () => {
+    test('Messfall: JSON.stringify(D)-Dauer, Stringgroesse, Undo-Stack-Groesse — Bericht nur mit GSD_WRITE_PERF_REPORT=1 geschrieben', () => {
         const utf8ByteLength = _ladeUtf8ByteLength();
         const kampagne = baueRealistischeKampagne();
         const jsonString = JSON.stringify(kampagne);
@@ -2532,6 +2532,10 @@ describe('PERF-01 — Messung gegen realistisch dimensionierte Kampagne (13-PERF
 **Datum:** ${new Date().toISOString().slice(0, 10)}
 **Node-Version:** ${process.version}
 **Hardware:** ${cpuAnzahl}x ${cpuModell}, ${(os.totalmem() / 1024 / 1024 / 1024).toFixed(1)} GB RAM
+
+> Diese Datei wird nicht bei jedem Testlauf neu geschrieben — die gemessenen Zeiten schwanken,
+> und ein Testlauf soll den Arbeitsbaum nicht veraendern. Neu erzeugen auf der eigenen Hardware:
+> \`GSD_WRITE_PERF_REPORT=1 npx jest tests/unit/stability.test.js\`
 
 ## Fixture
 
@@ -2614,12 +2618,21 @@ So misst man dieselben Werte in der laufenden App nach:
    der erste Lauf ist durch JIT-Aufwaermen oft langsamer als die folgenden.
 `;
 
-        const zielPfad = path.join(
-            __dirname,
-            '../../.planning/phases/13-h-rtung-wartbarkeit/13-PERF-MEASUREMENT.md'
-        );
-        fs.writeFileSync(zielPfad, inhalt, 'utf-8');
-        expect(fs.existsSync(zielPfad)).toBe(true);
-        expect(fs.readFileSync(zielPfad, 'utf-8')).toContain('Abnahme Erfolgskriterium 2');
+        // Der Berichtstext wird immer gebaut und geprueft — das kostet nichts und erhaelt die
+        // Aussage des Testfalls. Die VERSIONIERTE Datei wird dagegen nur auf ausdrueckliche
+        // Anforderung geschrieben: die gemessenen Zeiten schwanken zwischen Laeufen, und ein
+        // Test darf einen normalen `npx jest`-Lauf nicht mit einem schmutzigen Arbeitsbaum
+        // hinterlassen. Neu erzeugen mit:
+        //   GSD_WRITE_PERF_REPORT=1 npx jest tests/unit/stability.test.js
+        expect(inhalt).toContain('Abnahme Erfolgskriterium 2');
+
+        if (process.env.GSD_WRITE_PERF_REPORT === '1') {
+            const zielPfad = path.join(
+                __dirname,
+                '../../.planning/phases/13-h-rtung-wartbarkeit/13-PERF-MEASUREMENT.md'
+            );
+            fs.writeFileSync(zielPfad, inhalt, 'utf-8');
+            expect(fs.existsSync(zielPfad)).toBe(true);
+        }
     });
 });
