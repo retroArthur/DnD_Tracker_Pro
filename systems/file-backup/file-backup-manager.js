@@ -3,8 +3,9 @@
 // Implementierung: Phase 2, Welle 2 (Plan 02-04)
 //
 // Verhaltensuebersicht:
-//   - initFileBackup(): Haengt sich per Live-Sync-Muster in window.save() ein;
-//     stellt zuvor gewaehlten Backup-Ordner aus IDB wieder her (D-16).
+//   - initFileBackup(): Registriert sich ueber registerPostSaveHook() am generischen
+//     Post-Save-Hook-Punkt der Persistenz (feuert an jedem Persist-Erfolgspunkt NACH
+//     dem tatsaechlichen Write); stellt zuvor gewaehlten Backup-Ordner aus IDB wieder her (D-16).
 //   - Nach jedem save(): iteriert ueber ALLE Kampagnen des Index (Standard-Kampagne
 //     + getCampaignIndex(), D-03) und schreibt je Kampagne eine -aktuell.json (atomar);
 //     erstellt pro Spieltag genau einen Snapshot; behaelt max FILE_BACKUP_MAX_SNAPSHOTS
@@ -671,7 +672,9 @@ function _getActiveCampaignName(campaignKey) {
 
 /**
  * Initialisiert das Datei-Backup-System:
- * 1. Haengt sich einmalig in window.save() ein (Live-Sync-Pattern)
+ * 1. Registriert sich einmalig ueber registerPostSaveHook() (Post-Save-Hook-Pattern) —
+ *    der Hook laeuft an jedem Persist-Erfolgspunkt der Persistenz, nach dem Write,
+ *    isoliert gegen werfende Hooks
  * 2. Stellt vorhandenen Backup-Ordner aus IDB wieder her
  *
  * Wird aus core/init.js defensiv aufgerufen:

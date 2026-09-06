@@ -1186,3 +1186,32 @@ describe('Nyquist-Nachhaerten — Fehler-Isolation, Datenquelle und Kollisions-S
         expect(serie200).toEqual(['kampagne-1-200-' + heute + '.json']);
     });
 });
+
+// ============================================================
+// Kopfkommentare beschreiben registerPostSaveHook(), nicht das verbotene
+// window.save-Monkey-Patch-Muster (MAINT-06, Plan 13-08, Task 3)
+// ============================================================
+describe('Kopfkommentare — registerPostSaveHook() statt window.save-Monkey-Patch (MAINT-06)', () => {
+    const sourcePath = path.join(__dirname, '../../systems/file-backup/file-backup-manager.js');
+    const source = fs.readFileSync(sourcePath, 'utf8');
+
+    test('die irrefuehrende Formulierung ueber ein Einhaengen in die globale Speicherfunktion kommt nicht mehr vor', () => {
+        expect(source).not.toMatch(/in window\.save\(\) ein/);
+    });
+
+    test('der Dateikopf (Zeilen 1-15) nennt registerPostSaveHook', () => {
+        const header = source.split('\n').slice(0, 15).join('\n');
+        expect(header).toMatch(/registerPostSaveHook/);
+    });
+
+    test('die JSDoc ueber initFileBackup() nennt registerPostSaveHook', () => {
+        const jsdocStart = source.indexOf('Initialisiert das Datei-Backup-System');
+        expect(jsdocStart).toBeGreaterThan(-1);
+        const jsdocBlock = source.slice(jsdocStart, jsdocStart + 400);
+        expect(jsdocBlock).toMatch(/registerPostSaveHook/);
+    });
+
+    test('die Begruendung, warum das Monkey-Patch-Muster strukturell wirkungslos ist, bleibt unveraendert vorhanden', () => {
+        expect(source).toMatch(/Monkey-Patch/);
+    });
+});
