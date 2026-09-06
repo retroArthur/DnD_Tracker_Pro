@@ -79,8 +79,16 @@ const SystemActions = {
             editor.focus();
             const url = prompt('Link URL eingeben:');
             if (url) {
-                document.execCommand('createLink', false, url);
-                showToast('🔗 Link eingefügt');
+                const selection = window.getSelection();
+                if (selection && selection.rangeCount > 0) {
+                    const range = selection.getRangeAt(0);
+                    const anchor = document.createElement('a');
+                    anchor.href = url;
+                    if (typeof window.wrapRangeWithElement === 'function') {
+                        window.wrapRangeWithElement(range, anchor);
+                        showToast('🔗 Link eingefügt');
+                    }
+                }
             }
         }
     },

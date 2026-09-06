@@ -828,7 +828,9 @@ function searchWikiTag(tag) {
 function insertWikiLink() {
     const title = prompt('Wiki-Link einfügen:', '');
     if (title) {
-        document.execCommand('insertText', false, `[[${title}]]`);
+        if (typeof window.insertTextAtSelection === 'function') {
+            window.insertTextAtSelection(`[[${title}]]`);
+        }
     }
 }
 // ============================================================
