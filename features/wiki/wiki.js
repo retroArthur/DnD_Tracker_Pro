@@ -389,7 +389,6 @@ function renderWikiTreeItem(entry, childrenMap, depth) {
     return `
         <div class="wiki-tree-item ${isSelected ? 'selected' : ''} ${entry.pinned ? 'pinned' : ''} ${hasChildren ? 'has-children' : ''} ${isExpanded ? 'expanded' : ''}"
              data-action="select-wiki-entry" data-id="${entry.id}"
-             data-id="${entry.id}"
              style="padding-left: ${4 + depth * 8}px;"
              title="${esc(entry.title)}">
             ${hasChildren ? `<span class="wiki-tree-item-toggle" data-action="toggle-wiki-stop" data-id="${entry.id}">▶</span>` : ''}
@@ -429,9 +428,12 @@ function renderWikiDetail() {
         ? renderMarkdownInContent(entry.content || '')
         : entry.content || '';
     const contentWithAnchors = addTOCAnchors(markdownRendered);
-    // Reihenfolge sicherheitskritisch: parseWikiLinks() setzt Linktext unescaped
-    // ein und ist nur deshalb ungefährlich, weil sanitizeHTML() (in
-    // renderMarkdownInContent()) vorher bereits global bereinigt hat — NICHT ändern.
+    // parseWikiLinks() escapt seinen eigenen Regex-Capture (Attributwert UND
+    // sichtbarer Textknoten via esc()) und ist damit selbst sicher — nicht mehr
+    // von der vorgelagerten Sanitisierung abhängig. Die Aufrufreihenfolge
+    // renderMarkdownInContent() -> addTOCAnchors() -> parseWikiLinks() bleibt aus
+    // einem anderen Grund bestehen: addTOCAnchors() braucht das bereits
+    // gerenderte Markup, um die Anker-Ids an den richtigen Überschriften zu setzen.
     const parsedContent = parseWikiLinks(contentWithAnchors);
     const backlinks = findBacklinks(entry.title);
     const outlinks = extractWikiLinks(entry.content || '');
@@ -649,8 +651,8 @@ function parseWikiLinks(content) {
     const D = window.D;
     return content.replace(/\[\[([^\]]+)\]\]/g, (match, linkText) => {
         const exists = D.wiki?.some(e => e.title.toLowerCase() === linkText.toLowerCase());
-        const escapedText = linkText.replace(/"/g, '&quot;');
-        return `<span class="wiki-link ${exists ? '' : 'missing'}" data-action="wiki-link-click-stop" data-value="${escapedText}" data-exists="${exists}">${linkText}</span>`;
+        const escapedText = esc(linkText);
+        return `<span class="wiki-link ${exists ? '' : 'missing'}" data-action="wiki-link-click-stop" data-value="${escapedText}" data-exists="${exists}">${escapedText}</span>`;
     });
 }
 function extractWikiLinks(content) {
