@@ -187,6 +187,37 @@ Plans:
 
 **Execution Order:** streng sequenziell 12 → 13 → 14. Präzedenz aus v1.0/v1.1: fast alle Pläne fassen geteilte Dateien an, paralleles Ausführen kollidiert.
 
+**Plans:** 9 plans
+
+Plans:
+
+**Wave 1** *(D-15: der rote Lint-Fehler zuerst — die gesamte CI-Kette hängt per `needs:` daran)*
+
+- [ ] 14-01-PLAN.md — D-07: gezielter `no-control-regex`-Disable in `systems/avatars.js` plus Vor-Schärfungs-Messprotokoll (Welle 1)
+
+**Wave 2** *(blocked on Wave 1 — vier Pläne ohne Dateiüberschneidung, innerhalb der Welle parallel ausführbar)*
+
+- [ ] 14-02-PLAN.md — D-08: **Tracer** — Globals-Generator aus `loader.js MODULES` end-to-end bis Lint-Lauf und Drift-Wächter (Welle 2)
+- [ ] 14-03-PLAN.md — TEST-03 / D-01…D-03: `seedCleanSession(page)` extrahiert, fünf CRUD-Specs verdrahtet, Toast-Race mit rotem Vorlauf belegt (Welle 2)
+- [ ] 14-04-PLAN.md — TEST-04 / D-04…D-06: E2E-Sammel-Spec in fünf dedizierte Dateien aufgeteilt (Welle 2)
+- [ ] 14-05-PLAN.md — TEST-04 / D-04/D-05: Unit-Sammeldatei in fünf dedizierte Dateien aufgeteilt (Welle 2)
+
+**Wave 3** *(blocked on Wave 2 — die Warnungs-Ratsche wird erst nach der Testdatei-Umschichtung gepinnt)*
+
+- [ ] 14-06-PLAN.md — D-09/D-08/D-10: sieben tote Aktionsziele behoben, `no-undef` auf `error`, `--max-warnings`-Ratsche, zweiter Lint-Befehl entfällt (Welle 3)
+
+**Wave 4** *(blocked on Wave 3 — teilt das Messprotokoll `14-GATE-BASELINE.md`)*
+
+- [ ] 14-08-PLAN.md — D-12/D-14: `roots` repariert, ehrliche Coverage dokumentiert, Schwellen für `utils/testable-utils.js` angehoben (Welle 4)
+
+**Wave 5** *(blocked on Wave 4 — teilt `package.json` mit 14-06 und das Messprotokoll mit 14-08)*
+
+- [ ] 14-07-PLAN.md — D-11: `tsconfig.strict.json` mit wachsender Zulassungsliste, `typecheck:strict` in CI, Restposten benannt (Welle 5)
+
+**Wave 6** *(blocked on Wave 5 — D-15: das Modul-zu-Test-Gate zuletzt, weil TEST-04 seine Basislinie verschiebt)*
+
+- [ ] 14-09-PLAN.md — D-13: Modul-zu-Test-Abdeckungs-Gate aus `loader.js MODULES` mit datierter Ausnahmeliste, beidseitig belegt (Welle 6)
+
 ## Progress
 
 | Milestone | Plans Complete | Status | Completed |
@@ -198,4 +229,4 @@ Plans:
 |-------|----------------|--------|-----------|
 | 12. Datensicherheit | 17/17 | Complete (2026-09-05) — Verifikation `passed` (9/9), UAT 28/28, `threats_open: 0`, `nyquist_compliant: true`. Gap-Closure SEC-01…SEC-07 in den Wellen 9–11 geschlossen, dazu CR-01/WR-01 aus dem Code-Review | 2026-09-05 |
 | 13. Härtung & Wartbarkeit | 0/12 | Planned (12 Pläne, 7 Wellen; Welle 1 mit sechs parallelen Plänen). Drei Pläne nicht autonom: Entscheidungs-Checkpoint zur Würfelstatistik-Obergrenze (13-07), Bedienproben nach den Aufteilungen von `rich-text.js` (13-11) und `dmscreen-render.js` (13-12) | |
-| 14. Tests & Gates | TBD | Not started | |
+| 14. Tests & Gates | 0/9 | Planned (9 Pläne, 6 Wellen; Welle 2 mit vier parallelen Plänen, danach sequenziell wegen geteiltem Messprotokoll und `package.json`). Alle Pläne autonom — die manuelle Abnahme der Toast-Race-Beweisführung läuft als `human-check` am Phasenende statt als Zwischen-Checkpoint | |
