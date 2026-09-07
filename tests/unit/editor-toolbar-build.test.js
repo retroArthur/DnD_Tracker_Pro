@@ -126,9 +126,22 @@ describe('buildEditorToolbar — Stufen', () => {
         expect(api.buildEditorToolbar('session-text', 'full')).not.toContain('insertWikiLink');
     });
 
-    test('opts.clear:false unterdrueckt den Loeschen-Button', () => {
-        expect(api.buildEditorToolbar('fraktion-agenda', 'minimal', { clear: false })).not.toContain(
-            'clear-formatting'
+    test('opts.clear:false unterdrueckt Loeschen-Knopf UND harten Reset', () => {
+        const html = api.buildEditorToolbar('fraktion-agenda', 'minimal', { clear: false });
+        expect(html).not.toContain('data-action="clear-formatting"');
+        expect(html).not.toContain('data-action="clear-formatting-hard"');
+    });
+
+    test('der harte Reset liegt im ⋯-Menue, nicht auf dem Papierkorb-Knopf (W-17)', () => {
+        const html = api.buildEditorToolbar('npc-desc', 'minimal');
+        expect(html).toContain('data-action="clear-formatting" data-value="npc-desc"');
+        expect(html).toContain(
+            'class="tb-menu-item tb-menu-item-danger" data-action="clear-formatting-hard"'
+        );
+        // Reihenfolge: der Menueeintrag steht HINTER dem Knopf, sonst haette der
+        // Knopf-Test oben auch dann bestanden, wenn beide vertauscht waeren.
+        expect(html.indexOf('data-action="clear-formatting" data-value=')).toBeLessThan(
+            html.indexOf('data-action="clear-formatting-hard"')
         );
     });
 });

@@ -247,23 +247,14 @@ function initFloatingToolbar() {
         } else if (action === 'table') {
             insertTable();
         } else if (action === 'removeFormat') {
-            clearInlineFormattingAtSelection(editor);
-            const editorEl = editor;
-            if (editorEl) {
-                const marks = editorEl.querySelectorAll('mark');
-                marks.forEach(mark => {
-                    if (selection && selection.containsNode(mark, true)) {
-                        const parent = mark.parentNode;
-                        if (parent) {
-                            while (mark.firstChild) {
-                                parent.insertBefore(mark.firstChild, mark);
-                            }
-                            parent.removeChild(mark);
-                        }
-                    }
-                });
-            }
-            removeSelectionBorders();
+            // W-17: eine Implementierung fuer Blase und Papierkorb-Knopf. Die
+            // frueheren drei Schritte (clearInline + mark entpacken + Rahmen
+            // entfernen) sind darin aufgegangen; zusaetzlich fallen jetzt
+            // Verknuepfungen und uebrige Inline-Stile.
+            stripEditorFormatting(
+                editor,
+                selection && selection.rangeCount ? selection.getRangeAt(0) : null
+            );
             showToast('🧹 Formatierung entfernt');
         }
     }

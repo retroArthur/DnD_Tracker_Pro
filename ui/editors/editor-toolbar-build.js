@@ -322,13 +322,13 @@ function editorToolbarRightGroup(editorId, tier, opts) {
                 title: 'Weitere Werkzeuge',
                 body: editorToolbarIcon('more')
             }) +
-            editorToolbarMoreMenu(editorId, tier) +
+            editorToolbarMoreMenu(editorId, tier, opts) +
             '</span>'
     );
     return `<div class="toolbar-group toolbar-group-right" data-tb="right">${parts.join('')}</div>`;
 }
 
-function editorToolbarMoreMenu(editorId, tier) {
+function editorToolbarMoreMenu(editorId, tier, opts) {
     const items = [
         `<button type="button" class="tb-menu-item" data-action="format-text" data-cmd="${editorId}" ` +
             `data-editor="list">Liste</button>`
@@ -358,6 +358,18 @@ function editorToolbarMoreMenu(editorId, tier) {
             editorToolbarIcon('bubble') +
             'Werkzeug-Blase</button>'
     );
+    // Der harte Reset. Liegt bewusst NICHT auf dem Papierkorb-Knopf: der wirkt
+    // seit W-17 bereichsweise und laesst Tabellen und Bausteine stehen.
+    // opts.clear === false bedeutet "dieser Editor kennt kein Format-Entfernen"
+    // und nimmt deshalb auch diesen Eintrag mit.
+    if (!opts || opts.clear !== false) {
+        items.push(
+            '<div class="tb-menu-head">Zuruecksetzen</div>',
+            `<button type="button" class="tb-menu-item tb-menu-item-danger" data-action="clear-formatting-hard" data-editor="${editorId}">` +
+                editorToolbarIcon('trash') +
+                'Alles entkleiden</button>'
+        );
+    }
     return `<div class="tb-menu tb-menu-right" id="tb-menu-more-${editorId}" hidden>${items.join('')}</div>`;
 }
 

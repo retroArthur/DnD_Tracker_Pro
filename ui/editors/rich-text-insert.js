@@ -286,7 +286,7 @@ function handleEditorKeydown(e) {
         const selection = window.getSelection();
         let node = selection && selection.anchorNode;
         if (node && node.nodeType === Node.TEXT_NODE) node = node.parentElement;
-        const block = node?.closest?.('.editor-block, .read-aloud');
+        const block = node?.closest?.(EDITOR_BLOCK_SELECTOR);
         const inTable = node?.closest?.('table');
         if (block && !inTable) {
             const editor = node.closest(window.EDITOR_HOST_SELECTOR);

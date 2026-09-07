@@ -856,3 +856,111 @@ test.describe('Marker-Haltbarkeit beim Weitertippen (2a, W-11-Begruendung)', () 
         expect(result.outside).toContain('</mark> Passiv 13 danach');
     });
 });
+
+// NEU mit Variante 2a (W-17) — NICHT Teil des eingefrorenen Phase-9-Netzes.
+//
+// Der Papierkorb-Knopf hat vorher die ganze Flaeche auf reinen Text
+// zurueckgesetzt — auch Tabellen und Bausteine. Seit W-17 wirkt er
+// bereichsweise und loest zusaetzlich Verknuepfungen auf; der harte Reset
+// liegt als "Alles entkleiden" im ⋯-Menue.
+test.describe('Formatierung entfernen, erweitert (2a, W-17)', () => {
+    test.beforeEach(async ({ page }) => {
+        await gotoBundleFresh(page);
+    });
+
+    // Kern der Erweiterung: das alte removeFormat-Kommando liess Links stehen.
+    test('loest Verknuepfungen auf und behaelt ihren Text', async ({ page }) => {
+        await openFreshWikiForm(page, 'W17 Link');
+        const editor = page.locator('#wiki-content');
+        await editor.click();
+        await page.evaluate(() => {
+            document.getElementById('wiki-content').innerHTML =
+                '<p><a href="https://example.com/probe">Kontor</a> am Aschepfad</p>';
+        });
+        await selectElementContents(page, '#wiki-content p');
+        await page.click('[data-action="clear-formatting"][data-value="wiki-content"]');
+        await expect(editor).toHaveJSProperty('innerHTML', '<p>Kontor am Aschepfad</p>');
+    });
+
+    test('raeumt fremde Inline-Stile weg (Farbe, Groesse, Schriftart)', async ({ page }) => {
+        await openFreshWikiForm(page, 'W17 Stile');
+        const editor = page.locator('#wiki-content');
+        await editor.click();
+        await page.evaluate(() => {
+            document.getElementById('wiki-content').innerHTML =
+                '<p style="color: #ff0; font-size: 22px; font-family: Comic Sans MS">Gelber Wikitext</p>';
+        });
+        await selectElementContents(page, '#wiki-content p');
+        await page.click('[data-action="clear-formatting"][data-value="wiki-content"]');
+        await expect(editor).toHaveJSProperty('innerHTML', '<p>Gelber Wikitext</p>');
+    });
+
+    // Der eigentliche Verhaltenswechsel: vorher nahm ein Klick IMMER alles mit.
+    test('wirkt nur auf die Auswahl — der Rest behaelt seine Auszeichnung', async ({ page }) => {
+        await openFreshWikiForm(page, 'W17 Bereich');
+        const editor = page.locator('#wiki-content');
+        await editor.click();
+        await page.evaluate(() => {
+            document.getElementById('wiki-content').innerHTML =
+                '<p id="w17-a"><b>Bleibt fett</b></p><p id="w17-b"><b>Wird entkleidet</b></p>';
+        });
+        await selectElementContents(page, '#w17-b');
+        await page.click('[data-action="clear-formatting"][data-value="wiki-content"]');
+        await expect(editor).toHaveJSProperty(
+            'innerHTML',
+            '<p id="w17-a"><b>Bleibt fett</b></p><p id="w17-b">Wird entkleidet</p>'
+        );
+    });
+
+    // Ohne Auswahl greift er auf die ganze Flaeche — aber Bausteine bleiben
+    // stehen. Genau das konnte der alte Knopf nicht.
+    test('ohne Auswahl ganze Flaeche, Baustein bleibt trotzdem stehen', async ({ page }) => {
+        await openFreshWikiForm(page, 'W17 Baustein');
+        const editor = page.locator('#wiki-content');
+        await editor.click();
+        await page.evaluate(() => {
+            document.getElementById('wiki-content').innerHTML =
+                '<p><b>Vorspann</b></p><div class="editor-block editor-block-statblock">' +
+                '<span style="color: #ff0">Wache</span></div>';
+            window.getSelection().removeAllRanges();
+        });
+        await page.click('[data-action="clear-formatting"][data-value="wiki-content"]');
+        // Der Kasten selbst ueberlebt, seine Auszeichnung nicht.
+        await expect(editor.locator('.editor-block-statblock')).toHaveCount(1);
+        await expect(editor).toHaveJSProperty(
+            'innerHTML',
+            '<p>Vorspann</p><div class="editor-block editor-block-statblock">Wache</div>'
+        );
+    });
+
+    test('"Alles entkleiden" im ⋯-Menue nimmt auch den Baustein mit', async ({ page }) => {
+        await openFreshWikiForm(page, 'W17 Hart');
+        const editor = page.locator('#wiki-content');
+        await editor.click();
+        await page.evaluate(() => {
+            document.getElementById('wiki-content').innerHTML =
+                '<p>Vorspann</p><div class="editor-block editor-block-statblock">Wache</div>';
+        });
+        page.once('dialog', dialog => dialog.accept());
+        await page.click('[data-tb-menu="more"][data-editor="wiki-content"]');
+        await page.click('[data-action="clear-formatting-hard"][data-editor="wiki-content"]');
+        await expect(editor.locator('.editor-block-statblock')).toHaveCount(0);
+        await expect(editor.evaluate(el => el.textContent)).resolves.toContain('Vorspann');
+    });
+
+    test('"Alles entkleiden" laesst bei abgelehnter Rueckfrage alles unberuehrt', async ({
+        page
+    }) => {
+        await openFreshWikiForm(page, 'W17 HartAbbruch');
+        const editor = page.locator('#wiki-content');
+        await editor.click();
+        await page.evaluate(() => {
+            document.getElementById('wiki-content').innerHTML =
+                '<div class="editor-block editor-block-statblock">Wache</div>';
+        });
+        page.once('dialog', dialog => dialog.dismiss());
+        await page.click('[data-tb-menu="more"][data-editor="wiki-content"]');
+        await page.click('[data-action="clear-formatting-hard"][data-editor="wiki-content"]');
+        await expect(editor.locator('.editor-block-statblock')).toHaveCount(1);
+    });
+});

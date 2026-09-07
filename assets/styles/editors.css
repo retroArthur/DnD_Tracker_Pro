@@ -253,6 +253,16 @@
             outline-offset: -2px;
         }
 
+        /* Harter Reset. Loeschen-Tint aus den Design-Tokens des Handoffs. */
+        .editor-toolbar .tb-menu-item-danger {
+            color: var(--text-dim);
+        }
+
+        .editor-toolbar .tb-menu-item-danger:hover {
+            background: rgba(239, 68, 68, 0.12);
+            color: #ef4444;
+        }
+
         .editor-toolbar .tb-menu .editor-select {
             width: calc(100% - 20px);
             max-width: none;

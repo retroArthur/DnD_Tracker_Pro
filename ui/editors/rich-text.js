@@ -46,6 +46,12 @@ function unwrapEditorElement(element) {
 // (Charakter-Notizen) gehoert dazu — ohne ihn nisten Formate dort endlos
 // statt zu togglen.
 const EDITOR_HOST_SELECTOR = '.rich-editor, .spell-editor, .dialog-text, .cf-notes-editor';
+// Strukturbausteine, die von Formatierungs-Operationen AUSGENOMMEN bleiben:
+// sie tragen ihre Optik ueber Klassen, nicht ueber Auszeichnungselemente.
+// Wer sie loswerden will, entfernt den Baustein selbst (Block-Handle bzw. der
+// Vorlesetext-Umschalter) — nicht "Format entfernen". Handoff Abschnitt 7.
+const EDITOR_BLOCK_SELECTOR = '.editor-block, .read-aloud';
+
 window.EDITOR_HOST_SELECTOR = EDITOR_HOST_SELECTOR;
 
 // Sichert die aktuelle, nicht-leere Selektion fuer Bedienelemente, die den
@@ -315,6 +321,11 @@ function setEditorFontSize(elementIdOrSelect, selectElOrValue) {
     }
     applyFontSizeToSelection(editor, sizeValue);
 }
+/**
+ * Harter Reset: die Flaeche behaelt nur noch ihren Text. Zerstoert auch
+ * Tabellen und Bausteine und liegt deshalb seit W-17 nicht mehr auf dem
+ * Papierkorb-Knopf, sondern als "Alles entkleiden" im ⋯-Menue.
+ */
 function clearEditorFormatting(elementId) {
     const editor = $(elementId);
     if (!editor) return;
@@ -383,29 +394,90 @@ function setReadAloudFormat(elementId, style = 'parchment') {
         selection.removeAllRanges();
     }
 }
-function removeSelectionBorders() {
-    const selection = window.getSelection();
-    if (!selection || !selection.rangeCount) return;
-    const range = selection.getRangeAt(0);
-    const container = range.commonAncestorContainer;
-    const editor =
-        container.nodeType === Node.TEXT_NODE
-            ? container.parentElement?.closest(EDITOR_HOST_SELECTOR)
-            : container.closest?.(EDITOR_HOST_SELECTOR);
+// ------------------------------------------------------------
+// W-17: Formatierung entfernen, weiter gefasst als das alte
+// removeFormat-Kommando.
+//
+// Der Unterschied zu clearInlineFormattingAtSelection(): jene Funktion
+// repliziert bewusst punktgenau das Verhalten der alten Editier-Kommando-API
+// (09-BASELINE.md Zeile 344) und wird von formatText(..., 'highlight', 'none')
+// getragen — ein eingefrorener Test pinnt ihr Ergebnis. Sie bleibt deshalb
+// unangetastet. Diese hier ist die Bedienoberflaechen-Variante: sie loest
+// zusaetzlich Verknuepfungen auf und raeumt die uebrigen Inline-Stile weg.
+// ------------------------------------------------------------
+
+// Elemente, die restlos entpackt werden. <span> gehoert dazu, weil ein
+// zurueckbleibendes <span> ohne Stil sonst als leeres Huellenelement im
+// Markup stehen bliebe.
+const EDITOR_STRIP_TAGS = ['b', 'strong', 'i', 'em', 'u', 's', 'strike', 'font', 'a', 'mark', 'span'];
+
+// Stil-Eigenschaften, die an den verbleibenden Elementen entfernt werden.
+// Deckungsgleich mit Abschnitt 7 des Handoffs.
+const EDITOR_STRIP_STYLE_PROPS = [
+    'color',
+    'background-color',
+    'background',
+    'font-size',
+    'font-family',
+    'text-shadow'
+];
+
+/**
+ * Entfernt Auszeichnung in einem Bereich der Schreibflaeche.
+ *
+ * @param {HTMLElement} editor  contenteditable-Host
+ * @param {Range|null} range    Bereich; null bedeutet: die ganze Flaeche
+ */
+function stripEditorFormatting(editor, range) {
     if (!editor) return;
-    const borderSpans = editor.querySelectorAll('span[style*="border"], span.editor-border');
-    borderSpans.forEach(span => {
-        if (range.intersectsNode(span) || span.contains(range.commonAncestorContainer)) {
-            const parent = span.parentNode;
-            if (parent) {
-                while (span.firstChild) {
-                    parent.insertBefore(span.firstChild, span);
-                }
-                parent.removeChild(span);
-            }
+    // Die Liste WIRD VORHER erhoben. Sobald das Entpacken laeuft, veraendert
+    // sich der Baum unter dem Range, und intersectsNode() liefert fuer bereits
+    // verschobene Knoten keine verlaesslichen Antworten mehr.
+    const scoped = Array.from(editor.querySelectorAll('*')).filter(el => {
+        // matches(), NICHT closest(): geschuetzt ist der Baustein SELBST, nicht
+        // sein Inhalt. Wer im Statblock etwas fett gemacht hat und die
+        // Auszeichnung wieder loswerden will, soll das koennen — der Kasten
+        // bleibt trotzdem stehen.
+        if (el.matches(EDITOR_BLOCK_SELECTOR)) return false;
+        if (!range) return true;
+        try {
+            return range.intersectsNode(el);
+        } catch (_e) {
+            return false;
         }
     });
+    scoped.forEach(el => {
+        if (!el.isConnected) return;
+        if (EDITOR_STRIP_TAGS.indexOf(el.tagName.toLowerCase()) !== -1) {
+            unwrapEditorElement(el);
+        }
+    });
+    scoped.forEach(el => {
+        if (!el.isConnected || !el.style) return;
+        EDITOR_STRIP_STYLE_PROPS.forEach(prop => el.style.removeProperty(prop));
+        if (!el.getAttribute('style')) el.removeAttribute('style');
+    });
+    editor.normalize();
 }
+
+/**
+ * Bedienpfad des Papierkorb-Knopfes. Mit Auswahl wirkt er auf die Auswahl,
+ * ohne Auswahl auf die ganze Flaeche (Handoff Abschnitt 7).
+ */
+function clearEditorFormattingInScope(elementId) {
+    const editor = $(elementId);
+    if (!editor) return;
+    const selection = window.getSelection();
+    let range = null;
+    if (selection && selection.rangeCount && !selection.isCollapsed) {
+        const candidate = selection.getRangeAt(0);
+        // Nur uebernehmen, wenn die Auswahl tatsaechlich in DIESEM Editor liegt.
+        if (editor.contains(candidate.commonAncestorContainer)) range = candidate;
+    }
+    stripEditorFormatting(editor, range);
+    showToast('🧹 Formatierung entfernt');
+}
+
 // ============================================================
 // EXPORTS FOR GLOBAL ACCESS
 // ============================================================
@@ -520,5 +592,7 @@ window.formatText = formatText;
 window.setEditorFont = setEditorFont;
 window.setEditorFontSize = setEditorFontSize;
 window.clearEditorFormatting = clearEditorFormatting;
+window.clearEditorFormattingInScope = clearEditorFormattingInScope;
+window.stripEditorFormatting = stripEditorFormatting;
 window.setBorderFormat = setBorderFormat;
 window.setReadAloudFormat = setReadAloudFormat;

@@ -68,7 +68,19 @@ const SystemActions = {
         const editorId = ctx.target.dataset.editor;
         formatText(cmd, editorId);
     },
-    'clear-formatting': ctx => clearEditorFormatting(ctx.value),
+    // W-17: wirkt auf die Auswahl, ohne Auswahl auf die ganze Flaeche.
+    // Bausteine und Vorlesetext-Kaesten bleiben stehen.
+    'clear-formatting': ctx => clearEditorFormattingInScope(ctx.value),
+    // Harter Reset — nur noch Text. Braucht eine Rueckfrage, weil er auch
+    // Tabellen und Bausteine mitnimmt.
+    'clear-formatting-hard': ctx => {
+        const editorId = ctx.target.dataset.editor;
+        closeAllEditorMenus();
+        if (!confirm('Wirklich ALLES entkleiden? Tabellen und Bausteine gehen dabei verloren.'))
+            return;
+        if (typeof saveUndoState === 'function') saveUndoState('Editor entkleidet');
+        clearEditorFormatting(editorId);
+    },
     'set-editor-font': ctx => {
         const editorId = ctx.target.dataset.editor;
         const font = ctx.target.value || ctx.target.dataset.value || ctx.value;
