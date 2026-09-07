@@ -257,6 +257,57 @@ Vollständigkeit halber mit aufgelöst: **diese Messung setzt 28 als maßgeblich
 projektinterne Praxis ist grundsätzlich, jede Zahl gegen den Live-Baum nachzurechnen statt aus
 einem älteren Dokument zu übernehmen, und der `grep`-Befehl ist exakt reproduzierbar.
 
+## Coverage nach dem roots-Fix (Plan 14-08, Task 1)
+
+**Datum:** 2026-09-07
+**Änderung:** `roots: ['<rootDir>/tests']` → `roots: ['<rootDir>']` in `jest.config.cjs`.
+`testMatch`, `testPathIgnorePatterns` und `collectCoverageFrom` sind dabei unverändert geblieben
+(per `git diff --unified=0 jest.config.cjs | grep -c '^-.*collectCoverageFrom\|^-.*testMatch'` →
+`0` bestätigt).
+
+**Testerkennung unverändert:** `npx jest` meldet vor und nach der Änderung identisch
+**48 Suiten / 1112 Tests** (Stand nach Plan 14-06, siehe `14-06-SUMMARY.md`) — der breitere
+`roots`-Wert sammelt keine zusätzlichen Testdateien ein. Bestätigt zusätzlich per
+`find . -name "*.test.js" -not -path "./node_modules/*" -not -path "./tests/*" -not -path "./dist/*"`
+→ keine Treffer außerhalb von `tests/`.
+
+**Befehl:** `npx jest --coverage`
+
+| Kennzahl | Wert |
+|---|---|
+| Suiten / Tests | 48 / 1112 (unverändert) |
+| Instrumentierte Dateien in der Coverage-Tabelle | **125** (zuvor 2) |
+| Statements gedeckt/gesamt | 147/18942 (**0,77 %**) |
+| Branches | 126/14843 (**0,84 %**) |
+| Functions | 26/2811 (**0,92 %**) |
+| Lines | 124/16793 (**0,73 %**) |
+
+**`utils/testable-utils.js` — vier Einzelwerte (unverändert gegenüber der Vormessung in Plan 14-01,
+da die Datei bereits vorher instrumentiert war):**
+
+| Statements | Branches | Functions | Lines |
+|---|---|---|---|
+| 92,81 % | 89,28 % | 100 % | 94,44 % |
+
+**Einordnung, warum die Gesamtzahl so niedrig ist:** `collectCoverageFrom` erfasst jetzt
+tatsächlich die fünf Quellverzeichnisse (`core/`, `features/`, `systems/`, `ui/`, `render/`) plus
+`utils/testable-utils.js` — 125 von rund 134 `loader.js`-Modulen erscheinen in der Tabelle
+(einige `.d.ts`/Test-Ausschlüsse greifen). Der überwiegende Teil der Unit-Tests in diesem Projekt
+lädt Produktionscode nicht über den regulären Jest-Modul-Ladepfad, sondern über einen eigenen
+`vm.createContext`/`readFileSync`-Ausführungskontext (siehe Messblock 4/`14-RESEARCH.md`) — an
+diesen Ausführungspfad kommt Istanbuls Instrumentierung strukturell nicht heran, weil der Code
+dort nie durch `require()`/den transformierten Jest-Modulgraphen läuft. Ein weiterer Teil der
+Tests prüft Quelltext als reinen Text (`readFileSync` + String-/Regex-Assertions auf den
+Dateiinhalt, etwa Konventions- oder Muster-Prüfungen) und kann per Konstruktion keine
+Statement-Coverage erzeugen, weil der Code dabei nie ausgeführt wird. Die Zahl **0,77 %
+Statement-Coverage gesamt** ist deshalb die ehrliche Zahl für diese Architektur — sie wird hier
+dokumentiert und bewusst nicht als projektweite Schwelle verwendet (siehe D-13/D-14 in
+`14-CONTEXT.md`: die einzige aussagekräftige Schwelle bleibt auf `utils/testable-utils.js`
+begrenzt, die einzige Datei, die über den regulären Ladepfad läuft).
+
+`collectCoverageFrom` wurde dabei nicht gekürzt — die volle Liste der fünf Quellverzeichnisse
+bleibt bestehen, die Zahl ist absichtlich nicht durch einen engeren Nenner beschönigt.
+
 ---
 *Phase: 14-tests-gates*
 *Plan: 01*

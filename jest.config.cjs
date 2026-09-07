@@ -3,8 +3,11 @@ module.exports = {
   // Test-Umgebung
   testEnvironment: 'jsdom',
   
-  // Roots für Tests
-  roots: ['<rootDir>/tests'],
+  // roots muss das Projekt-Wurzelverzeichnis umfassen, sonst durchsucht Jest die in
+  // collectCoverageFrom gelisteten Quellverzeichnisse gar nicht erst (Coverage bleibt tote
+  // Konfiguration); testPathIgnorePatterns verhindert weiterhin, dass Jest im Quellbaum nach
+  // Testdateien sucht.
+  roots: ['<rootDir>'],
   
   // Test-Dateien Pattern
   testMatch: [
