@@ -4,12 +4,12 @@ milestone: v1.2
 milestone_name: Schulden-Abbau
 current_phase: 14
 current_phase_name: Tests & Gates
-status: verifying
+status: executing
 stopped_at: Completed 14-09-PLAN.md — Phase 14 (Tests & Gates) vollstaendig abgeschlossen
-last_updated: "2026-09-07T07:57:34.017Z"
+last_updated: "2026-09-07T08:59:02.627Z"
 last_activity: 2026-09-07
 last_activity_desc: Phase 14 execution started
-state_head: 99829440260c92879c48eed0acd140eaf486d8d1
+state_head: 0a7aae95cce437648f2ea6e37441086a0eb789e2
 progress:
   total_phases: 3
   completed_phases: 1
@@ -22,7 +22,7 @@ progress:
 
 **Last Updated:** 2026-09-06
 **Milestone:** v1.2 „Schulden-Abbau" — Phase 12 abgeschlossen (17/17 Pläne), Phase 13 abgeschlossen (12/12 Pläne)
-**Status:** Phase complete — ready for verification
+**Status:** Executing Phase 14
 
 **Progress:** [██████████████████████] 29/29 plans ([███░░░░░░░] 33%) · 2/3 Phasen des Milestones
 
@@ -41,8 +41,8 @@ See: `.planning/PROJECT.md` (Stand 2026-09-05)
 ## Current Position
 
 Phase: 14 (Tests & Gates) — EXECUTING
-Plan: 9 of 9
-Status: Phase complete — ready for verification
+Plan: 1 of 9
+Status: Executing Phase 14
 Last activity: 2026-09-07 — Phase 14 execution started
 
 **Nächster Schritt:** `/gsd-discuss-phase 14`. Phase 13 ist abgeschlossen — 12/12 Pläne, Verifikation `passed` (7/8 Must-Haves belegt, Erfolgskriterium 2 als vorab benannte, gemessene Abweichung freigegeben: D-09/D-10 halten den Undo-Snapshot bewusst vollständig, gemessen 0,922 ms Median). Code-Review `issues_found` → beide Warnungen behoben (WR-01 insert-link-Guards, WR-02 Konsolen-Notausgang + unbedingte Whitelist-Protokollierung). Suiten: Jest 1089/1089 (41 Suites), Playwright 321 passed / 2 skipped, `pytest tests/build` 24/24, ESLint 1 vorbestehender Fehler (`systems/avatars.js:17`). Offen für Phase 14: der Toast-Race aus der bekannten Vorbelastung sowie IN-01 aus `13-REVIEW.md` (vorbestehendes Doppel-Feuern der DM-Screen-Widget-Checkbox).
