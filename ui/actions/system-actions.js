@@ -3,6 +3,35 @@
 // SYSTEM ACTIONS - @undo @redo @export @import @backup
 // ============================================================
 
+// ------------------------------------------------------------
+// Editor-Werkzeugleiste: Aufklapp-Menues (Variante 2a)
+// ------------------------------------------------------------
+// Seit 2a koennen Marker- und Bausteine-Auswahl ein Menue-BUTTON sein
+// (data-value) statt eines Selects (.value). Die schwebende Leiste nutzt
+// weiterhin Selects, deshalb muessen beide Formen bedient werden.
+function readEditorControlValue(target) {
+    if (!target) return '';
+    if (target.tagName === 'SELECT') return target.value || '';
+    return target.dataset?.value || '';
+}
+
+// Ein Select wird nach Anwendung auf den Platzhalter zurueckgesetzt; ein
+// Button hat keinen selectedIndex und darf davon nicht werfen.
+function resetEditorControl(target) {
+    if (target && target.tagName === 'SELECT') target.selectedIndex = 0;
+}
+
+function closeAllEditorMenus() {
+    document.querySelectorAll('.editor-toolbar .tb-menu').forEach(menu => {
+        menu.hidden = true;
+    });
+    document.querySelectorAll('.editor-toolbar [data-tb-menu]').forEach(btn => {
+        btn.setAttribute('aria-expanded', 'false');
+    });
+}
+
+window.closeAllEditorMenus = closeAllEditorMenus;
+
 const SystemActions = {
     // Undo/Redo
     undo: () => undo(),
@@ -59,13 +88,56 @@ const SystemActions = {
         const editorId = ctx.target.dataset.editor;
         setReadAloudFormat(editorId);
     },
+    // Oeffnet/schliesst ein an seinem Button verankertes Menue. Die Selektion
+    // im Editor wurde bereits beim mousedown gesichert (saveEditorSelection()
+    // in rich-text-toolbars.js), weil der Klick den Fokus aus dem
+    // contenteditable nimmt.
+    'toggle-editor-menu': ctx => {
+        const menuId = ctx.target.dataset.value;
+        const menu = menuId ? $(menuId) : null;
+        if (!menu) return;
+        const wasHidden = menu.hidden;
+        closeAllEditorMenus();
+        if (wasHidden) {
+            menu.hidden = false;
+            ctx.target.setAttribute('aria-expanded', 'true');
+        }
+    },
+
+    // Werkzeug-Blase an/aus. Vorgabe ist AN — der Schalter blendet sie aus.
+    // Zustand ueberlebt den Neustart, faellt aber bei blockiertem Speicher
+    // still auf "an" zurueck.
+    'toggle-editor-bubble': () => {
+        let enabled = true;
+        try {
+            enabled = localStorage.getItem('dnd-editor-bubble') !== '0';
+        } catch {
+            enabled = true;
+        }
+        const next = !enabled;
+        try {
+            localStorage.setItem('dnd-editor-bubble', next ? '1' : '0');
+        } catch {
+            // Speicher nicht verfuegbar: Zustand gilt nur fuer diese Sitzung.
+        }
+        window.editorBubbleEnabled = next;
+        if (!next && typeof window.hideFloatingToolbar === 'function') {
+            window.hideFloatingToolbar();
+        }
+        showToast(next ? '💬 Werkzeug-Blase an' : '💬 Werkzeug-Blase aus');
+        closeAllEditorMenus();
+    },
+
     'set-read-aloud-style': ctx => {
         const editorId = ctx.target.dataset.editor;
-        const style = ctx.target.value || 'parchment';
+        // Seit Variante 2a kann das Ziel ein Menue-Button (dataset.value) ODER
+        // weiterhin ein Select (.value) sein — die schwebende Leiste nutzt
+        // nach wie vor ein Select.
+        const style = readEditorControlValue(ctx.target) || 'parchment';
         if (style) {
             setReadAloudFormat(editorId, style);
-            // Reset dropdown nach Anwendung
-            ctx.target.selectedIndex = 0;
+            resetEditorControl(ctx.target);
+            closeAllEditorMenus();
         }
     },
     'insert-entity-link-btn': ctx => {
@@ -110,10 +182,11 @@ const SystemActions = {
     },
     'set-highlight-color': ctx => {
         const editorId = ctx.target.dataset.editor;
-        const color = ctx.target.value;
+        const color = readEditorControlValue(ctx.target);
         const editor = $(editorId);
         if (!editor || !color) {
-            ctx.target.selectedIndex = 0;
+            resetEditorControl(ctx.target);
+            closeAllEditorMenus();
             return;
         }
         editor.focus();
@@ -121,7 +194,8 @@ const SystemActions = {
         const selection = window.getSelection();
         if (!selection.rangeCount || !selection.toString()) {
             showToast('⚠️ Bitte erst Text markieren', 'warning');
-            ctx.target.selectedIndex = 0;
+            resetEditorControl(ctx.target);
+            closeAllEditorMenus();
             return;
         }
 
@@ -155,7 +229,12 @@ const SystemActions = {
             }
             showToast('🖍️ Text hervorgehoben');
         }
-        ctx.target.selectedIndex = 0;
+        // Gewaehlte Farbe im Menue-Trigger als kleiner Swatch spiegeln.
+        const anchor = ctx.target.closest?.('.tb-anchor');
+        const current = anchor?.querySelector('.tb-swatch-current');
+        if (current && color !== 'transparent') current.style.background = color;
+        resetEditorControl(ctx.target);
+        closeAllEditorMenus();
     },
     'set-preset-emoji': ctx => setPresetEmoji(ctx.value),
 

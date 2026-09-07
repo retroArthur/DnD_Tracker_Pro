@@ -19,6 +19,32 @@ const ERWARTET_BOLD_NACH_KLICK = '<b>Tracertext</b>';
 // da <b> in der allowedTags-Whitelist von sanitizeHTML() enthalten ist.
 const ERWARTET_BOLD_NACH_RELOAD = '<b>Tracertext</b>';
 
+
+/**
+ * Marker bzw. Vorlese-Baustein ueber das Aufklapp-Menue setzen.
+ *
+ * Bis Variante 2a waren beides <select>-Elemente und wurden per
+ * selectOption() bedient. Seit 2a haengen sie als verankerte Menues an ihrem
+ * Button: erst den Trigger klicken, dann den Eintrag. Playwright klickt nur
+ * Sichtbares — ohne den Oeffnen-Schritt laeuft der Klick in den
+ * 30-Sekunden-Timeout statt in einen schnellen Fehlschlag.
+ *
+ * Schrift- und Groessen-Auswahl sind weiterhin Selects und bleiben bei
+ * selectOption().
+ */
+async function pickFromEditorMenu(page, action, editorId, value, menu) {
+    await page.click(`[data-tb-menu="${menu}"][data-editor="${editorId}"]`);
+    await page.click(`[data-action="${action}"][data-editor="${editorId}"][data-value="${value}"]`);
+}
+
+async function pickMarker(page, editorId, value) {
+    await pickFromEditorMenu(page, 'set-highlight-color', editorId, value, 'marker');
+}
+
+async function pickReadAloud(page, editorId, value) {
+    await pickFromEditorMenu(page, 'set-read-aloud-style', editorId, value, 'block');
+}
+
 test.describe('Editor-Regressionsnetz — Statische Toolbar (Wiki)', () => {
     test.beforeEach(async ({ page }) => {
         const filePath = `file:///${process.cwd().replace(/\\/g, '/')}/dist/dnd-tracker-bundled.html`;
@@ -279,10 +305,7 @@ test.describe('Markup direkt nach Aktion', () => {
         await openFreshWikiForm(page, 'Netz Highlight Set');
         const editor = page.locator('#wiki-content');
         await typeAndSelectAll(editor, TESTTEXT);
-        await page.selectOption(
-            '[data-action="set-highlight-color"][data-editor="wiki-content"]',
-            '#fbbf24'
-        );
+        await pickMarker(page, 'wiki-content', '#fbbf24');
         await expect(editor).toHaveJSProperty('innerHTML', NETZ.highlightSet.after);
         await expect(editor.evaluate(el => el.textContent)).resolves.toContain(TESTTEXT);
     });
@@ -291,16 +314,10 @@ test.describe('Markup direkt nach Aktion', () => {
         await openFreshWikiForm(page, 'Netz Highlight Remove');
         const editor = page.locator('#wiki-content');
         await typeAndSelectAll(editor, TESTTEXT);
-        await page.selectOption(
-            '[data-action="set-highlight-color"][data-editor="wiki-content"]',
-            '#fbbf24'
-        );
+        await pickMarker(page, 'wiki-content', '#fbbf24');
         await editor.click();
         await editor.selectText();
-        await page.selectOption(
-            '[data-action="set-highlight-color"][data-editor="wiki-content"]',
-            'transparent'
-        );
+        await pickMarker(page, 'wiki-content', 'transparent');
         await expect(editor).toHaveJSProperty('innerHTML', NETZ.highlightRemove.after);
         await expect(editor.evaluate(el => el.textContent)).resolves.toContain(TESTTEXT);
     });
@@ -309,17 +326,11 @@ test.describe('Markup direkt nach Aktion', () => {
         await openFreshWikiForm(page, 'Netz ReadAloud');
         const editor = page.locator('#wiki-content');
         await typeAndSelectAll(editor, TESTTEXT);
-        await page.selectOption(
-            '[data-action="set-read-aloud-style"][data-editor="wiki-content"]',
-            'crimson'
-        );
+        await pickReadAloud(page, 'wiki-content', 'crimson');
         await expect(editor).toHaveJSProperty('innerHTML', NETZ.readAloud.after);
         // Toggle: erneutes Anwenden auf denselben Block entfernt ihn wieder
         await editor.click();
-        await page.selectOption(
-            '[data-action="set-read-aloud-style"][data-editor="wiki-content"]',
-            'crimson'
-        );
+        await pickReadAloud(page, 'wiki-content', 'crimson');
         await expect(editor).toHaveJSProperty(
             'innerHTML',
             NETZ.readAloudToggleRemoved.after
@@ -460,10 +471,7 @@ test.describe('Persistenz-Roundtrip', () => {
         await openFreshWikiForm(page, 'RT Highlight Set');
         const editor = page.locator('#wiki-content');
         await typeAndSelectAll(editor, TESTTEXT);
-        await page.selectOption(
-            '[data-action="set-highlight-color"][data-editor="wiki-content"]',
-            '#fbbf24'
-        );
+        await pickMarker(page, 'wiki-content', '#fbbf24');
         const reopened = await saveAndReopenWikiEntry(page, 'RT Highlight Set');
         await expect(reopened).toHaveJSProperty('innerHTML', NETZ.highlightSet.roundtrip);
         await expect(reopened.evaluate(el => el.textContent)).resolves.toContain(TESTTEXT);
@@ -473,16 +481,10 @@ test.describe('Persistenz-Roundtrip', () => {
         await openFreshWikiForm(page, 'RT Highlight Remove');
         const editor = page.locator('#wiki-content');
         await typeAndSelectAll(editor, TESTTEXT);
-        await page.selectOption(
-            '[data-action="set-highlight-color"][data-editor="wiki-content"]',
-            '#fbbf24'
-        );
+        await pickMarker(page, 'wiki-content', '#fbbf24');
         await editor.click();
         await editor.selectText();
-        await page.selectOption(
-            '[data-action="set-highlight-color"][data-editor="wiki-content"]',
-            'transparent'
-        );
+        await pickMarker(page, 'wiki-content', 'transparent');
         const reopened = await saveAndReopenWikiEntry(page, 'RT Highlight Remove');
         await expect(reopened).toHaveJSProperty('innerHTML', NETZ.highlightRemove.roundtrip);
         await expect(reopened.evaluate(el => el.textContent)).resolves.toContain(TESTTEXT);
@@ -492,10 +494,7 @@ test.describe('Persistenz-Roundtrip', () => {
         await openFreshWikiForm(page, 'RT ReadAloud');
         const editor = page.locator('#wiki-content');
         await typeAndSelectAll(editor, TESTTEXT);
-        await page.selectOption(
-            '[data-action="set-read-aloud-style"][data-editor="wiki-content"]',
-            'crimson'
-        );
+        await pickReadAloud(page, 'wiki-content', 'crimson');
         const reopened = await saveAndReopenWikiEntry(page, 'RT ReadAloud');
         await expect(reopened).toHaveJSProperty('innerHTML', NETZ.readAloud.roundtrip);
         await expect(reopened.evaluate(el => el.textContent)).resolves.toContain(TESTTEXT);
@@ -505,15 +504,9 @@ test.describe('Persistenz-Roundtrip', () => {
         await openFreshWikiForm(page, 'RT ReadAloud Remove');
         const editor = page.locator('#wiki-content');
         await typeAndSelectAll(editor, TESTTEXT);
-        await page.selectOption(
-            '[data-action="set-read-aloud-style"][data-editor="wiki-content"]',
-            'crimson'
-        );
+        await pickReadAloud(page, 'wiki-content', 'crimson');
         await editor.click();
-        await page.selectOption(
-            '[data-action="set-read-aloud-style"][data-editor="wiki-content"]',
-            'crimson'
-        );
+        await pickReadAloud(page, 'wiki-content', 'crimson');
         const reopened = await saveAndReopenWikiEntry(page, 'RT ReadAloud Remove');
         await expect(reopened).toHaveJSProperty(
             'innerHTML',

@@ -22,7 +22,16 @@ function initFloatingToolbar() {
     // Selektion waehrend eines Toolbar-Klicks am Leben haelt.
     document.addEventListener('mousedown', e => {
         const target = e.target;
-        if (!target.closest || !target.closest('.editor-toolbar')) return;
+        if (!target.closest) return;
+        // Aufklapp-Menue schliessen, sobald irgendwo ausserhalb SEINES Ankers
+        // gedrueckt wird. Bewusst mousedown und nicht click: EventDelegation
+        // registriert in der Capture-Phase und ruft bei jedem Treffer
+        // stopPropagation(), ein Bubble-click-Listener wuerde fuer Klicks auf
+        // andere Toolbar-Buttons daher nie feuern — das Menue bliebe offen.
+        if (!target.closest('.tb-anchor') && typeof window.closeAllEditorMenus === 'function') {
+            window.closeAllEditorMenus();
+        }
+        if (!target.closest('.editor-toolbar')) return;
         const sel = target.closest('.editor-select');
         if (sel) {
             saveEditorSelection();
@@ -36,7 +45,11 @@ function initFloatingToolbar() {
             e.preventDefault();
             return;
         }
-        if (target.closest('.editor-btn')) {
+        // .tb-menu-item gehoert ausdruecklich dazu: ein Menue-Eintrag ist
+        // weder .editor-btn noch [data-tb-menu], wuerde also ohne diesen Zweig
+        // die Selektion im Editor verlieren — und die Formatierung liefe ins
+        // Leere, obwohl das Oeffnen des Menues sie noch bewahrt hatte.
+        if (target.closest('.editor-btn') || target.closest('.tb-menu-item')) {
             e.preventDefault();
         }
     });
@@ -131,6 +144,9 @@ function initFloatingToolbar() {
     document.addEventListener('keydown', e => {
         if (e.key === 'Escape') {
             hideFloatingToolbar();
+            if (typeof window.closeAllEditorMenus === 'function') {
+                window.closeAllEditorMenus();
+            }
         }
     });
     function applyFloatingFormat(action, editor, savedRange) {

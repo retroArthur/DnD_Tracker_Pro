@@ -140,6 +140,32 @@ const NETZ = {
 // ---------------------------------------------------------------
 // Task 1: Sichtbarkeit + Inline-Formate, Liste, Rahmen, Tabelle, Link
 // ---------------------------------------------------------------
+
+/**
+ * Marker bzw. Vorlese-Baustein ueber das Aufklapp-Menue setzen.
+ *
+ * Bis Variante 2a waren beides <select>-Elemente und wurden per
+ * selectOption() bedient. Seit 2a haengen sie als verankerte Menues an ihrem
+ * Button: erst den Trigger klicken, dann den Eintrag. Playwright klickt nur
+ * Sichtbares — ohne den Oeffnen-Schritt laeuft der Klick in den
+ * 30-Sekunden-Timeout statt in einen schnellen Fehlschlag.
+ *
+ * Schrift- und Groessen-Auswahl sind weiterhin Selects und bleiben bei
+ * selectOption().
+ */
+async function pickFromEditorMenu(page, action, editorId, value, menu) {
+    await page.click(`[data-tb-menu="${menu}"][data-editor="${editorId}"]`);
+    await page.click(`[data-action="${action}"][data-editor="${editorId}"][data-value="${value}"]`);
+}
+
+async function pickMarker(page, editorId, value) {
+    await pickFromEditorMenu(page, 'set-highlight-color', editorId, value, 'marker');
+}
+
+async function pickReadAloud(page, editorId, value) {
+    await pickFromEditorMenu(page, 'set-read-aloud-style', editorId, value, 'block');
+}
+
 test.describe('Editor-Regressionsnetz — Floating Toolbar (Wiki)', () => {
     test.beforeEach(async ({ page }) => {
         await gotoBundleFresh(page);
@@ -591,10 +617,7 @@ test.describe('UI-lose Zweige (kein Toolbar-Pfad vorhanden)', () => {
         await openFreshWikiForm(page, 'Floating UILos Highlight None');
         const editor = page.locator('#wiki-content');
         await typeAndSelectAll(editor, TESTTEXT);
-        await page.selectOption(
-            '[data-action="set-highlight-color"][data-editor="wiki-content"]',
-            '#fbbf24'
-        );
+        await pickMarker(page, 'wiki-content', '#fbbf24');
         await expect(editor).toHaveJSProperty(
             'innerHTML',
             '<mark style="background-color: rgba(251, 191, 36, 0.4); color: inherit; border-radius: 2px; padding: 0px 3px;">Probetext</mark>'
