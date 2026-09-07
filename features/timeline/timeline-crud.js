@@ -192,10 +192,7 @@ function saveTimelineEvent() {
 
     if (typeof renderTimeline === 'function') renderTimeline();
     if (typeof renderKalender === 'function') renderKalender();
-    var countEl = document.getElementById('kalender-count');
-    if (countEl && d.calendar && d.calendar.events) {
-        countEl.textContent = String(d.calendar.events.length);
-    }
+    if (d.calendar && d.calendar.events) setViewCount('kalender', d.calendar.events.length);
     if (typeof showToast === 'function') showToast('Ereignis gespeichert', 'success');
 }
 
@@ -230,8 +227,7 @@ function deleteTimelineEvent(id) {
     }
 
     if (typeof renderTimeline === 'function') renderTimeline();
-    var countEl = document.getElementById('kalender-count');
-    if (countEl) countEl.textContent = String(d.calendar.events.length);
+    setViewCount('kalender', d.calendar.events.length);
     if (typeof showToast === 'function') showToast('Ereignis gelöscht', 'success');
 }
 

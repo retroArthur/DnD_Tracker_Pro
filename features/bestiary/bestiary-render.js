@@ -168,8 +168,7 @@ function renderBestiaryList() {
     populateBestiaryFilterDropdowns(allMonsters);
 
     // Update count badge
-    var countEl = window.$('bestiary-count');
-    if (countEl) countEl.textContent = String(allMonsters.length);
+    setViewCount('bestiary', allMonsters.length);
 
     // Read filter values
     var onlyCustom = window.$('bestiary-filter-custom') ? window.$('bestiary-filter-custom').checked : false;

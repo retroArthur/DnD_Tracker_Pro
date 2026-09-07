@@ -66,9 +66,13 @@ function renderTimeline() {
     }
 
     var d = window.D;
-    var events = (d && d.calendar && Array.isArray(d.calendar.events))
+    var alleEvents = (d && d.calendar && Array.isArray(d.calendar.events))
         ? d.calendar.events
         : [];
+    // F-09: Suche. Der Zaehler unten zeigt das GEFILTERTE Ergebnis.
+    var events = filterBySearch(alleEvents, 'kalender-search', function (ev) {
+        return [ev.titel || '', ev.beschreibung || '', ev.typ || ''];
+    });
 
     // Chronologisch sortieren (via geteilten Helfer)
     var sorted = (typeof sortiereTimelineEvents === 'function')
@@ -136,8 +140,7 @@ function renderTimeline() {
     container.innerHTML = html.join('\n');
 
     // Zähler aktualisieren
-    var countEl = document.getElementById('kalender-count');
-    if (countEl) countEl.textContent = String(events.length);
+    setViewCount('kalender', events.length);
 }
 
 /**

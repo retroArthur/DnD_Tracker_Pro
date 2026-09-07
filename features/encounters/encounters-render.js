@@ -72,7 +72,7 @@ function renderEncounters() {
     // Enable EntityLookup cache for performance
     EntityLookup.enableCache();
     // Update counter
-    updateCounters({ 'encounter-io-count': D.encounters?.length || 0 });
+    setViewCount('encounter', D.encounters?.length || 0);
     // Render filter chips (by creature type)
     if (filterContainer) {
         const typeSet = new Set();

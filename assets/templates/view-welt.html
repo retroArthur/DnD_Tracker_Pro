@@ -9,6 +9,19 @@
             <span class="section-toolbar-title">📋 Session-Vorbereitung</span>
             <span class="section-toolbar-count" id="sessionprep-count">0</span>
         </div>
+        <div class="section-toolbar-search">
+            <div class="search-wrapper">
+                <input type="text" id="sessionprep-search" class="toolbar-search" placeholder="🔍 Session-Prep suchen..." data-action="search-input" data-render="renderSessionPrepList">
+                <button class="search-clear-btn" data-action="clear-search" data-value="sessionprep-search" title="Suche leeren">✕</button>
+            </div>
+        </div>
+        <div class="section-toolbar-filters">
+            <div class="section-toolbar-io">
+                <button class="io-btn export" data-action="export-data" data-value="sessionPreps" title="Session-Preps exportieren">📤</button>
+                <button class="io-btn import" data-action="trigger-click" data-value="import-sessionPreps" title="Session-Preps importieren">📥</button>
+                <input type="file" id="import-sessionPreps" class="io-file-input" accept=".json" data-on-change="import-data" data-type="sessionPreps">
+            </div>
+        </div>
         <div class="section-toolbar-actions">
             <button class="btn btn-primary" data-action="show-session-prep-modal">+ Neue Session-Prep</button>
         </div>
@@ -24,6 +37,19 @@
         <div class="section-toolbar-identity">
             <span class="section-toolbar-title">📅 Timeline &amp; Kalender</span>
             <span class="section-toolbar-count" id="kalender-count">0</span>
+        </div>
+        <div class="section-toolbar-search">
+            <div class="search-wrapper">
+                <input type="text" id="kalender-search" class="toolbar-search" placeholder="🔍 Ereignis suchen..." data-action="search-input" data-render="renderTimeline">
+                <button class="search-clear-btn" data-action="clear-search" data-value="kalender-search" title="Suche leeren">✕</button>
+            </div>
+        </div>
+        <div class="section-toolbar-filters">
+            <div class="section-toolbar-io">
+                <button class="io-btn export" data-action="export-data" data-value="calendarEvents" title="Timeline exportieren">📤</button>
+                <button class="io-btn import" data-action="trigger-click" data-value="import-calendarEvents" title="Timeline importieren">📥</button>
+                <input type="file" id="import-calendarEvents" class="io-file-input" accept=".json" data-on-change="import-data" data-type="calendarEvents">
+            </div>
         </div>
         <div class="section-toolbar-actions">
             <button class="btn btn-primary" data-action="show-timeline-modal">+ Ereignis</button>
@@ -43,6 +69,12 @@
         <div class="section-toolbar-identity">
             <span class="section-toolbar-title">&#x1F9ED; Reise &amp; Wetter</span>
         </div>
+        <!-- F-09/F-10: bewusst OHNE Zaehler, Suche und Import/Export. Reise ist
+             ein Rechner, keine Liste: die Ansicht liest ein Formular, berechnet
+             Tagesmaersche und rueckt den Kalender vor (features/reise/reise-crud.js).
+             Es gibt kein Datenfeld, das man zaehlen, durchsuchen oder
+             exportieren koennte. Ein Zaehler von nichts waere schlechter als
+             keiner. -->
     </div>
     <div class="rs-view-content" id="reise-content">
         <!-- renderReise() befüllt diesen Bereich -->
@@ -55,6 +87,19 @@
         <div class="section-toolbar-identity">
             <span class="section-toolbar-title">⚔️ Fraktionen &amp; Ruf</span>
             <span class="section-toolbar-count" id="fraktionen-count">0</span>
+        </div>
+        <div class="section-toolbar-search">
+            <div class="search-wrapper">
+                <input type="text" id="fraktionen-search" class="toolbar-search" placeholder="🔍 Fraktion suchen..." data-action="search-input" data-render="renderFraktionen">
+                <button class="search-clear-btn" data-action="clear-search" data-value="fraktionen-search" title="Suche leeren">✕</button>
+            </div>
+        </div>
+        <div class="section-toolbar-filters">
+            <div class="section-toolbar-io">
+                <button class="io-btn export" data-action="export-data" data-value="factions" title="Fraktionen exportieren">📤</button>
+                <button class="io-btn import" data-action="trigger-click" data-value="import-factions" title="Fraktionen importieren">📥</button>
+                <input type="file" id="import-factions" class="io-file-input" accept=".json" data-on-change="import-data" data-type="factions">
+            </div>
         </div>
         <div class="section-toolbar-actions">
             <button class="btn btn-primary" data-action="show-fraktion-modal">+ Neue Fraktion</button>

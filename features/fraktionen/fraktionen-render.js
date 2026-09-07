@@ -55,11 +55,13 @@ function renderFraktionen() {
     }
 
     var daten = window.D;
-    var fraktionen = (daten && daten.factions) ? daten.factions : [];
+    var alleFraktionen = (daten && daten.factions) ? daten.factions : [];
+    // F-09: Suche. Der Zähler zeigt das GEFILTERTE Ergebnis.
+    var fraktionen = filterBySearch(alleFraktionen, 'fraktionen-search', function(f) {
+        return [f.name || '', f.agenda || '', f.beschreibung || ''];
+    });
 
-    // Update counter
-    var counter = document.getElementById('fraktionen-count');
-    if (counter) counter.textContent = fraktionen.length;
+    setViewCount('fraktionen', fraktionen.length);
 
     // Layout: zwei-Spalten auf Desktop, Stapel auf Mobil
     var contentArea = document.getElementById('fraktionen-content');

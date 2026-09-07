@@ -138,8 +138,76 @@ const IO_SCHEMA = {
         url: { type: 'string', required: true },
         category: { type: 'string', required: false, default: 'other' },
         description: { type: 'string', required: false, default: '' }
+    },
+    // F-09: die drei Listen-Ansichten des Welt-Moduls. Reise fehlt bewusst —
+    // sie ist ein Rechner ohne gespeicherte Eintraege (siehe unten).
+    sessionPreps: {
+        id: { type: 'number', required: true },
+        sessionNr: { type: 'number', required: false, default: 0 },
+        datum: { type: 'string', required: false, default: '' },
+        inGameDatum: { type: 'string', required: false, default: '' },
+        strongStart: { type: 'string', required: false, default: '' },
+        szenen: { type: 'object', required: false, default: [] },
+        offeneFaeden: { type: 'object', required: false, default: [] },
+        erstellt: { type: 'number', required: false, default: 0 }
+    },
+    factions: {
+        id: { type: 'number', required: true },
+        name: { type: 'string', required: true },
+        symbol: { type: 'string', required: false, default: '' },
+        ruf: { type: 'number', required: false, default: 0 },
+        agenda: { type: 'string', required: false, default: '' },
+        beschreibung: { type: 'string', required: false, default: '' },
+        sitzOrtId: { type: 'number', required: false, default: null },
+        verbuendete: { type: 'object', required: false, default: [] },
+        rivalen: { type: 'object', required: false, default: [] },
+        rufHistorie: { type: 'object', required: false, default: [] }
+    },
+    calendarEvents: {
+        id: { type: 'number', required: true },
+        titel: { type: 'string', required: true },
+        datum: { type: 'object', required: false, default: null },
+        typ: { type: 'string', required: false, default: 'sonstiges' },
+        beschreibung: { type: 'string', required: false, default: '' },
+        quelleId: { type: 'number', required: false, default: null }
     }
 };
+
+// F-09: Datentypen, deren Array NICHT direkt unter D liegt. Die
+// Kalender-Ereignisse haengen unter D.calendar.events — ohne diese Karte
+// scheiterte der Export an der Array-Pruefung.
+const IO_DATA_PATH = {
+    calendarEvents: ['calendar', 'events']
+};
+
+/** Liest das Datenarray eines Typs, auch wenn es verschachtelt liegt. */
+function ioGetArray(type) {
+    const D = window.D;
+    const path = IO_DATA_PATH[type];
+    if (!path) return D[type];
+    let node = D;
+    for (const key of path) {
+        if (!node) return undefined;
+        node = node[key];
+    }
+    return node;
+}
+
+/** Schreibt das Datenarray eines Typs, auch wenn es verschachtelt liegt. */
+function ioSetArray(type, items) {
+    const D = window.D;
+    const path = IO_DATA_PATH[type];
+    if (!path) {
+        D[type] = items;
+        return;
+    }
+    let node = D;
+    for (let i = 0; i < path.length - 1; i++) {
+        if (!node[path[i]]) node[path[i]] = {};
+        node = node[path[i]];
+    }
+    node[path[path.length - 1]] = items;
+}
 // Import-Sicherheitsgrenze (SEC-01/D-02): Feldliste der HTML-tragenden Felder je
 // Entity-Typ, per Render-Pfad-Audit ermittelt (10-RESEARCH.md). Rein textuelle und
 // kategoriale Felder (name, title, tags, category, …) bleiben bewusst außen vor —
@@ -154,7 +222,21 @@ const HTML_FIELDS_BY_TYPE = {
     spells: ['description'],
     sessionNotes: ['content'],
     wiki: ['content'],
-    links: ['description']
+    links: ['description'],
+    // F-09, Render-Pfad-Audit vom 2026-09-07: in allen drei Ansichten laeuft
+    // JEDES HTML-tragende Feld bereits beim Rendern durch sanitizeHTML() —
+    // session-prep-render.js:103/193/366 (strongStart),
+    // session-prep-render.js:24 (szene.beschreibung, verschachtelt),
+    // fraktionen-render.js:169/177 (agenda, beschreibung),
+    // timeline-render.js (beschreibung). Die Eintraege hier sind die zweite
+    // Schicht beim Import.
+    // BEWUSSTE LUECKE: sanitizeImportedItem() geht nur ueber Felder der
+    // OBERSTEN Ebene. szenen[].beschreibung wird hier NICHT erfasst; dort
+    // traegt allein der Render-Pfad. Wer diese Funktion auf verschachtelte
+    // Strukturen erweitert, sollte 'szenen' hier ergaenzen.
+    sessionPreps: ['strongStart'],
+    factions: ['agenda', 'beschreibung'],
+    calendarEvents: ['beschreibung']
 };
 // Bereinigt die HTML-tragenden Felder eines importierten Items über den
 // projektweiten Sanitizer (utils/basic.js: sanitizeHTML()). Modul-intern
@@ -177,9 +259,8 @@ function sanitizeImportedItem(type, item) {
 // EXPORT FUNCTIONS
 // ============================================================
 function exportData(dataType) {
-    const D = window.D;
     const APP_CONFIG = window.APP_CONFIG;
-    const data = D[dataType];
+    const data = ioGetArray(dataType);
     if (!data || !Array.isArray(data) || data.length === 0) {
         showToast(`Keine ${dataType} zum Exportieren vorhanden`, 'warning');
         return;
@@ -231,8 +312,7 @@ function exportData(dataType) {
     }
 }
 function exportToCSV(dataType) {
-    const D = window.D;
-    const data = D[dataType];
+    const data = ioGetArray(dataType);
     if (!data || !Array.isArray(data) || data.length === 0) {
         showToast(`Keine ${dataType} zum Exportieren`, 'warning');
         return;
@@ -388,7 +468,6 @@ function executeImport(dataType) {
         showToast('Keine Daten zum Importieren', 'error');
         return;
     }
-    const D = window.D;
     const renderAll = window.renderAll;
     saveUndoState(`${items.length} ${type} importiert`);
     // Sicherheitskopie bei Replace-Modus
@@ -402,14 +481,14 @@ function executeImport(dataType) {
                 window.ErrorHandler.log('Import', err, 'Backup failed');
             }
         }
-        D[type] = items;
+        ioSetArray(type, items);
     } else {
         // Merge: Neue IDs vergeben für importierte Einträge
         const getNextId = window.getNextId;
         const merged = items.map(item => {
             return { ...item, id: getNextId(type) };
         });
-        D[type] = [...(D[type] || []), ...merged];
+        ioSetArray(type, [...(ioGetArray(type) || []), ...merged]);
     }
     save();
     renderAll();
@@ -426,22 +505,24 @@ function updateIOCounts() {
     // Direct id mapping — keys are the actual element ids in the templates.
     // Not all follow `${key}-io-count`: encounter is singular, shops/notes/links
     // map to differently-named data arrays.
+    // Schluessel = data-view-Wert der Navigation (F-10). Die IDs im Markup
+    // heissen `<view>-count`; geschrieben wird ausschliesslich ueber
+    // setViewCount().
     const counts = {
-        'party-io-count': D.characters?.length || 0,
-        'npcs-io-count': D.npcs?.length || 0,
-        'locations-io-count': D.locations?.length || 0,
-        'quests-io-count': D.quests?.length || 0,
-        'loot-io-count': D.loot?.length || 0,
-        'spells-io-count': D.spells?.length || 0,
-        'notes-io-count': D.sessionNotes?.length || 0,
-        'encounter-io-count': D.encounters?.length || 0,
-        'wiki-io-count': D.wiki?.length || 0,
-        'links-io-count': D.links?.length || 0,
-        'shops-io-count': D.shops?.length || 0
+        party: D.characters?.length || 0,
+        npcs: D.npcs?.length || 0,
+        locations: D.locations?.length || 0,
+        quests: D.quests?.length || 0,
+        loot: D.loot?.length || 0,
+        spells: D.spells?.length || 0,
+        notes: D.sessionNotes?.length || 0,
+        encounter: D.encounters?.length || 0,
+        wiki: D.wiki?.length || 0,
+        links: D.links?.length || 0,
+        shops: D.shops?.length || 0
     };
-    for (const [id, count] of Object.entries(counts)) {
-        const el = $(id);
-        if (el) el.textContent = String(count);
+    for (const [view, count] of Object.entries(counts)) {
+        setViewCount(view, count);
     }
     // Encounter-Runde aktualisieren
     const roundEl = $('encounter-round-num');

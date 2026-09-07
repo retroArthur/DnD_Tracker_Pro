@@ -214,8 +214,7 @@ function renderWiki() {
     renderWikiTree();
     renderWikiDetail();
     const D = window.D;
-    const countEl = $('wiki-io-count');
-    if (countEl) countEl.textContent = String(D.wiki?.length || 0);
+    setViewCount('wiki', D.wiki?.length || 0);
     updateWikiParentSelect();
 }
 function renderWikiQuickAccess() {

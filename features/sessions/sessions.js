@@ -215,7 +215,7 @@ function renderSessions() {
         });
     }
     // Counter aktualisieren
-    updateCounters({ 'notes-io-count': notes.length });
+    setViewCount('notes', notes.length);
     // Tag-Filter rendern
     renderSessionTagFilters();
     if (!notes.length) {

@@ -56,7 +56,7 @@ function renderNPCList() {
     // Enable EntityLookup cache for performance
     EntityLookup.enableCache();
     // Update counter
-    updateCounters({ 'npcs-io-count': D.npcs?.length || 0 });
+    setViewCount('npcs', D.npcs?.length || 0);
     // Render filter chips (by location)
     if (filterContainer) {
         const locations = D.locations || [];

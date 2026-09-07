@@ -15,8 +15,7 @@ function renderLinks() {
     const search = (searchInput?.value || '').toLowerCase();
     const catFilter = catFilterInput?.value || '';
     // Counter aktualisieren
-    const countEl = $('links-io-count');
-    if (countEl) countEl.textContent = String(D.links?.length || 0);
+    setViewCount('links', D.links?.length || 0);
     let links = D.links || [];
     // Kategorie-Filter anwenden
     if (catFilter) {

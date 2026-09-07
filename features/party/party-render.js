@@ -45,7 +45,7 @@ function renderParty() {
         }
     );
     // Counter aktualisieren
-    updateCounters({ 'party-io-count': D.characters.length || 0 });
+    setViewCount('party', D.characters.length || 0);
     // Render Roster (always show all characters)
     if (roster) {
         renderPartyRoster(roster, D.characters);

@@ -429,6 +429,43 @@ function renderEmptyState(config) {
     `;
 }
 /**
+ * Filtert eine Liste nach dem Inhalt eines Suchfelds (F-09).
+ *
+ * Ein Helfer statt dreier Kopien derselben vier Zeilen. Leeres oder fehlendes
+ * Suchfeld liefert die Liste unveraendert zurueck — die Ansicht funktioniert
+ * also auch dann, wenn ihr Suchfeld (noch) nicht im Markup steht.
+ *
+ * @param {Array} items
+ * @param {string} inputId ID des Suchfelds
+ * @param {(item: any) => string[]} fields liefert die durchsuchbaren Texte
+ * @returns {Array}
+ */
+function filterBySearch(items, inputId, fields) {
+    const el = $(inputId);
+    const q = (el?.value || '').trim().toLowerCase();
+    if (!q) return items;
+    return items.filter(item =>
+        fields(item).some(v => typeof v === 'string' && v.toLowerCase().includes(q))
+    );
+}
+
+/**
+ * Setzt den Zaehler einer Ansicht (F-10).
+ *
+ * Die Zaehler-IDs hiessen frueher teils `<view>-io-count`, teils
+ * `<view>-count`, und geschrieben wurde an einem Dutzend Stellen direkt per
+ * textContent. Seit 2026-09-07 gilt EIN Schema: die ID ist der data-view-Wert
+ * der Navigation plus `-count`, und geschrieben wird nur noch hier.
+ *
+ * @param {string} view data-view-Wert aus der Navigation, z.B. 'locations'
+ * @param {number} n
+ */
+function setViewCount(view, n) {
+    const el = $(view + '-count');
+    if (el) el.textContent = String(n);
+}
+
+/**
  * Aktualisiert mehrere Counter-Elemente
  */
 function updateCounters(counters) {
@@ -696,6 +733,8 @@ window.safeJSONParse = safeJSONParse;
 window.safeJSONStringify = safeJSONStringify;
 window.renderEmptyState = renderEmptyState;
 window.updateCounters = updateCounters;
+window.setViewCount = setViewCount;
+window.filterBySearch = filterBySearch;
 window.populateFilterDropdown = populateFilterDropdown;
 window.EntityLookup = EntityLookup;
 window.getEntityForCombat = getEntityForCombat;

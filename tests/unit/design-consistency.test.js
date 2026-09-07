@@ -1,5 +1,5 @@
 /**
- * Design-Konsistenz — Wellen 1 und 2 (F-01, F-02, F-07, F-11, F-13, F-14)
+ * Design-Konsistenz — Wellen 1 und 2 (F-01, F-02, F-07, F-09..F-11, F-13, F-14)
  *
  * Warum diese Tests statt einer abgehakten Liste: alle drei Befunde sind
  * LAUTLOS. Ein `var(--surface)` ohne Definition liefert keine Fehlermeldung,
@@ -275,5 +275,110 @@ describe('F-14 — eine Primaerfarbe fuer "Neu anlegen"', () => {
             }
         });
         expect(offenders).toEqual([]);
+    });
+});
+
+
+/** Alle JS-Quelldateien des Projekts (ohne Werkzeuge und Tests). */
+function sourceJs() {
+    const out = [];
+    const walk = dir => {
+        for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
+            const full = path.join(dir, e.name);
+            if (e.isDirectory()) walk(full);
+            else if (e.name.endsWith('.js')) out.push({ name: full, content: fs.readFileSync(full, 'utf8') });
+        }
+    };
+    ['features', 'systems', 'ui', 'core', 'render', 'utils'].forEach(d => {
+        const abs = path.join(REPO, d);
+        if (fs.existsSync(abs)) walk(abs);
+    });
+    return out;
+}
+
+describe('F-10 — ein Zaehler-Schema', () => {
+    // data-view-Werte der Navigation, die einen Listenzaehler tragen.
+    const COUNTED_VIEWS = [
+        'party', 'npcs', 'locations', 'quests', 'loot', 'spells', 'notes',
+        'encounter', 'wiki', 'links', 'shops', 'bestiary',
+        'sessionprep', 'kalender', 'fraktionen'
+    ];
+
+    test('jeder Zaehler heisst <view>-count', () => {
+        const markup = tplFiles.map(f => f.content).join('\n');
+        const ids = [...markup.matchAll(/class="section-toolbar-count"[^>]*id="([\w-]+)"/g)].map(m => m[1]);
+        expect(ids.length).toBeGreaterThan(10);
+        const falsch = ids.filter(id => !/^[a-z]+-count$/.test(id));
+        expect(falsch).toEqual([]);
+        // Der alte -io-count-Bestand ist restlos weg.
+        expect(markup).not.toContain('-io-count');
+    });
+
+    test('jede gezaehlte Ansicht hat ihr Zaehler-Element', () => {
+        const markup = tplFiles.map(f => f.content).join('\n');
+        const fehlend = COUNTED_VIEWS.filter(v => !markup.includes(`id="${v}-count"`));
+        expect(fehlend).toEqual([]);
+    });
+
+    test('setViewCount() ist die einzige Schreibstelle', () => {
+        // Vorher schrieben ein Dutzend Stellen direkt per textContent.
+        const offenders = [];
+        sourceJs().forEach(f => {
+            if (f.name.endsWith('helpers.js')) return; // die Definition selbst
+            for (const m of f.content.matchAll(/['"]([a-z]+)-count['"]/g)) {
+                if (COUNTED_VIEWS.includes(m[1])) {
+                    offenders.push(`${path.basename(f.name)}: ${m[1]}-count`);
+                }
+            }
+        });
+        expect(offenders).toEqual([]);
+    });
+});
+
+describe('F-09 — Suche und Import/Export im Welt-Modul', () => {
+    const welt = () => tplFiles.find(f => f.name === 'view-welt.html').content;
+
+    test('die drei Listen-Ansichten haben ein Suchfeld mit data-render', () => {
+        const m = welt();
+        [
+            ['sessionprep-search', 'renderSessionPrepList'],
+            ['kalender-search', 'renderTimeline'],
+            ['fraktionen-search', 'renderFraktionen']
+        ].forEach(([id, render]) => {
+            expect(m).toContain(`id="${id}"`);
+            expect(m).toMatch(new RegExp(`id="${id}"[^>]*data-render="${render}"`));
+        });
+    });
+
+    test('die drei Listen-Ansichten haben Export UND Import', () => {
+        const m = welt();
+        ['sessionPreps', 'calendarEvents', 'factions'].forEach(type => {
+            expect(m).toContain(`data-action="export-data" data-value="${type}"`);
+            expect(m).toContain(`data-type="${type}"`);
+        });
+    });
+
+    test('Reise bleibt bewusst ohne Zaehler, Suche und IO — mit Begruendung im Markup', () => {
+        // Reise ist ein Rechner ohne gespeicherte Eintraege (Modul
+        // reise-crud im Ordner features/reise). Ein Zaehler von nichts waere
+        // schlechter als keiner. Faellt dieser Test, weil jemand Reise doch
+        // eine Datenliste gegeben hat, gehoert der Kontrakt nachgezogen.
+        //
+        // Der Pfad steht hier BEWUSST nicht vollstaendig: das
+        // Modul-Abdeckungs-Gate erkennt Abdeckung an der Zeichenkette des
+        // Pfads in einer Testdatei. Ein blosser Erklaerkommentar wuerde das
+        // Modul faelschlich als getestet ausweisen — erschlichene Abdeckung.
+        const m = welt();
+        const abschnitt = m.slice(m.indexOf('id="view-reise"'), m.indexOf('id="view-fraktionen"'));
+        expect(abschnitt).not.toContain('section-toolbar-count');
+        expect(abschnitt).not.toContain('toolbar-search');
+        expect(abschnitt).toContain('Rechner, keine Liste');
+    });
+
+    test('jeder neue Import-Typ hat ein IO_SCHEMA und steht in der HTML-Feldliste', () => {
+        const src = fs.readFileSync(path.join(REPO, 'systems/spellslots/import-export.js'), 'utf8');
+        ['sessionPreps', 'factions', 'calendarEvents'].forEach(type => {
+            expect(src).toMatch(new RegExp(`\\n    ${type}: \\{`));
+        });
     });
 });

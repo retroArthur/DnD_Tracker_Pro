@@ -56,11 +56,14 @@ function renderSessionPrepList() {
     }
 
     var daten = window.D;
-    var preps = (daten && daten.sessionPreps) ? daten.sessionPreps : [];
+    var alle = (daten && daten.sessionPreps) ? daten.sessionPreps : [];
+    // F-09: Suche. Der Zähler zeigt das GEFILTERTE Ergebnis — sonst behauptet
+    // er bei aktiver Suche etwas anderes als die Liste darunter zeigt.
+    var preps = filterBySearch(alle, 'sessionprep-search', function(p) {
+        return [String(p.sessionNr || ''), p.inGameDatum || '', p.datum || '', p.strongStart || ''];
+    });
 
-    // Zähler aktualisieren
-    var countEl = $('sessionprep-count');
-    if (countEl) countEl.textContent = String(preps.length);
+    setViewCount('sessionprep', preps.length);
 
     if (preps.length === 0) {
         container.innerHTML = [

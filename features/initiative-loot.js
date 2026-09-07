@@ -20,7 +20,7 @@ function renderLootList() {
     if (!listContainer) return;
     const D = window.D;
     // Update counter
-    window.updateCounters({ 'loot-io-count': D.loot?.length || 0 });
+    window.setViewCount('loot', D.loot?.length || 0);
     // Render filter chips (by category)
     if (filterContainer) {
         filterContainer.innerHTML = `

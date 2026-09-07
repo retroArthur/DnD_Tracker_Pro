@@ -85,8 +85,7 @@ function saveFraktion() {
     showToast(id ? 'Fraktion aktualisiert' : 'Fraktion hinzugefügt', 'success');
 
     // Update counter
-    var counter = document.getElementById('fraktionen-count');
-    if (counter) counter.textContent = daten.factions.length;
+    setViewCount('fraktionen', daten.factions.length);
 }
 
 /**
@@ -100,8 +99,7 @@ function deleteFraktion(id) {
         undoLabel: 'Fraktion gelöscht',
         onSuccess: function() {
             if (typeof window.renderFraktionen === 'function') window.renderFraktionen();
-            var counter = document.getElementById('fraktionen-count');
-            if (counter) counter.textContent = (window.D.factions || []).length;
+            setViewCount('fraktionen', (window.D.factions || []).length);
             showToast('Fraktion gelöscht', 'success');
         }
     });

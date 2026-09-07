@@ -326,14 +326,13 @@ function copyReceipt() {
 function renderShops() {
     const D = window.D;
     const renderEmptyState = window.renderEmptyState;
-    const updateCounters = window.updateCounters;
     const populateFilterDropdown = window.populateFilterDropdown;
     const renderEntityLink = window.renderEntityLink;
     const container = $('shop-list');
     if (!container) return;
     try {
         if (!D.shops) D.shops = [];
-        updateCounters({ 'shops-io-count': D.shops.length });
+        setViewCount('shops', D.shops.length);
         populateFilterDropdown('shop-location-filter', D.locations || [], {
             allLabel: 'Alle Orte'
         });

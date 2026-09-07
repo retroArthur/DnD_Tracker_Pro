@@ -110,10 +110,29 @@ describe('HTML_FIELDS_BY_TYPE — Feldliste (D-02, Render-Pfad-Audit)', () => {
         spells: ['description'],
         sessionNotes: ['content'],
         wiki: ['content'],
-        links: ['description']
+        links: ['description'],
+        // ERWEITERUNG 2026-09-07 (Design-Konsistenz F-09): die drei Listen-
+        // Ansichten des Welt-Moduls bekommen Import/Export. Der von D-02
+        // geforderte Render-Pfad-Audit wurde dafür durchgeführt:
+        //   sessionPreps.strongStart  — session-prep-render.js:103/193/366,
+        //                               jeweils durch sanitizeHTML()
+        //   factions.agenda           — fraktionen-render.js:169
+        //   factions.beschreibung     — fraktionen-render.js:177
+        //   calendarEvents.beschreibung — timeline-render.js
+        // Alle übrigen Felder dieser Typen (Namen, Daten, Zahlen, IDs) laufen
+        // über esc() und gehören deshalb bewusst NICHT in diese Liste.
+        //
+        // BEKANNTE LÜCKE, bewusst: sanitizeImportedItem() geht nur über Felder
+        // der OBERSTEN Ebene. sessionPreps.szenen[].beschreibung wird hier
+        // nicht erfasst; dort trägt allein der Render-Pfad
+        // (session-prep-render.js:24, sanitizeHTML + parseEntityLinks). Wer den
+        // Helfer auf verschachtelte Strukturen erweitert, ergänzt 'szenen'.
+        sessionPreps: ['strongStart'],
+        factions: ['agenda', 'beschreibung'],
+        calendarEvents: ['beschreibung']
     };
 
-    test('enthält genau die neun erwarteten Typen mit den erwarteten Feldern', () => {
+    test('enthält genau die zwölf erwarteten Typen mit den erwarteten Feldern', () => {
         expect(HTML_FIELDS_BY_TYPE).toBeDefined();
         expect(Object.keys(HTML_FIELDS_BY_TYPE).sort()).toEqual(Object.keys(EXPECTED).sort());
         for (const [type, fields] of Object.entries(EXPECTED)) {
@@ -335,5 +354,61 @@ describe('Quelltext-Strukturprüfung — Verdrahtung an beiden Eintrittspunkten'
         expect(undoIdx).toBeLessThan(assignIdx);
         expect(backupIdx).toBeGreaterThan(overwriteBranchIdx);
         expect(backupIdx).toBeLessThan(assignIdx);
+    });
+});
+
+// ============================================================
+// VERSCHACHTELTE DATENPFADE (F-09, Design-Konsistenz)
+// ============================================================
+//
+// Warum dieser Block existiert: beim Einbau von ioGetArray/ioSetArray ist mir
+// im Rueckfall-Zweig ein `ioSetArray(type, items)` statt `D[type] = items`
+// hineingeraten — eine Endlosrekursion, die JEDEN normalen Import mit einem
+// Stack-Overflow beendet haette. Kein bestehender Test hat sie bemerkt, weil
+// der Import-Pfad nur ueber ein dynamisch erzeugtes Dateifeld erreichbar ist.
+// Gefunden habe ich sie beim Lesen. Diese Tests sorgen dafuer, dass das nicht
+// vom Lesen abhaengt.
+describe('ioGetArray / ioSetArray — Datenpfade (F-09)', () => {
+    let ioGetArray, ioSetArray, ctx;
+
+    beforeEach(() => {
+        ctx = context;
+        ctx.window.D = {
+            factions: [{ id: 1 }],
+            calendar: { day: 1, events: [{ id: 9 }] }
+        };
+        ioGetArray = vm.runInContext('ioGetArray', ctx);
+        ioSetArray = vm.runInContext('ioSetArray', ctx);
+    });
+
+    test('liest ein Array der obersten Ebene', () => {
+        expect(ioGetArray('factions')).toEqual([{ id: 1 }]);
+    });
+
+    test('liest ein verschachteltes Array (calendar.events)', () => {
+        expect(ioGetArray('calendarEvents')).toEqual([{ id: 9 }]);
+    });
+
+    test('unbekannter Typ liefert undefined statt zu werfen', () => {
+        expect(ioGetArray('gibtEsNicht')).toBeUndefined();
+    });
+
+    test('KERNBELEG: Schreiben auf oberster Ebene terminiert (keine Rekursion)', () => {
+        ioSetArray('factions', [{ id: 2 }, { id: 3 }]);
+        expect(ctx.window.D.factions).toEqual([{ id: 2 }, { id: 3 }]);
+    });
+
+    test('Schreiben in einen verschachtelten Pfad laesst die Nachbarn stehen', () => {
+        ioSetArray('calendarEvents', [{ id: 7 }]);
+        expect(ctx.window.D.calendar.events).toEqual([{ id: 7 }]);
+        expect(ctx.window.D.calendar.day).toBe(1);
+        // Und KEIN Schatten-Array auf oberster Ebene:
+        expect(ctx.window.D.calendarEvents).toBeUndefined();
+    });
+
+    test('fehlende Zwischenebene wird angelegt statt zu werfen', () => {
+        ctx.window.D = {};
+        ioSetArray('calendarEvents', [{ id: 1 }]);
+        expect(ctx.window.D.calendar.events).toEqual([{ id: 1 }]);
     });
 });

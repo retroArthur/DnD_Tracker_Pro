@@ -53,7 +53,7 @@ function renderLocations() {
     // Enable EntityLookup cache for performance
     EntityLookup.enableCache();
     // Update counter
-    updateCounters({ 'locations-io-count': D.locations?.length || 0 });
+    setViewCount('locations', D.locations?.length || 0);
     // Render filter chips
     if (filterContainer) {
         filterContainer.innerHTML = `
