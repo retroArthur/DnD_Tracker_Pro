@@ -65,6 +65,11 @@
         
         <!-- DICE VIEW -->
         <section id="view-dice" class="view">
+            <div class="section-toolbar">
+                <div class="section-toolbar-identity">
+                    <span class="section-toolbar-title">🎲 Würfel</span>
+                </div>
+            </div>
             <div class="dice-roller">
                 <!-- Hero Result Display -->
                 <div class="dice-hero" id="dice-hero">
@@ -235,6 +240,11 @@
         
         <!-- TIMERS VIEW -->
         <section id="view-timers" class="view">
+            <div class="section-toolbar">
+                <div class="section-toolbar-identity">
+                    <span class="section-toolbar-title">⏱️ Timer</span>
+                </div>
+            </div>
             <div class="timer-hub">
                 <!-- Hero Timer Display -->
                 <div class="timer-hero" id="timer-hero">
@@ -296,6 +306,11 @@
         
         </section>
         <section id="view-data" class="view">
+            <div class="section-toolbar">
+                <div class="section-toolbar-identity">
+                    <span class="section-toolbar-title">💾 Daten</span>
+                </div>
+            </div>
             <div class="card">
                 <div class="card-title" style="margin-bottom: 12px;">📚 Kampagnen-Verwaltung</div>
                 <div class="campaign-list" id="campaign-list"></div>
@@ -363,12 +378,12 @@
 
         <!-- DM SCREEN VIEW -->
         <section id="view-dmscreen" class="view dmscreen-view">
-            <div class="dmscreen-header">
-                <div class="dmscreen-title">🎮 DM Screen <span class="dms-live-badge" title="Widgets aktualisieren sich automatisch">● Live</span></div>
-                <div class="dms-quick-bar" id="dms-quick-bar">
-                    <!-- Kompakte Quick Action Buttons im Header -->
+            <div class="section-toolbar">
+                <div class="section-toolbar-identity">
+                    <span class="section-toolbar-title">🎮 DM Screen</span>
+                    <span class="dms-live-badge" title="Widgets aktualisieren sich automatisch">● Live</span>
                 </div>
-                <div class="dmscreen-actions">
+                <div class="section-toolbar-actions">
                     <div class="dms-config-wrapper">
                         <button class="btn btn-sm" id="dms-profile-btn" data-action="dms-toggle-profiles" title="Layout-Profile">📋 Profile</button>
                         <div class="dms-config-dropdown dms-profile-dropdown" id="dms-profile-dropdown">
@@ -399,6 +414,10 @@
                     <button class="btn btn-sm" data-action="call" data-value="resetDMScreenLayout" title="Layout zurücksetzen">🔄</button>
                 </div>
             </div>
+            <!-- F-08: Spezialsteuerung steht UNTER der Kopfzeile, nicht darin. -->
+            <div class="dms-quick-bar" id="dms-quick-bar">
+                <!-- Kompakte Quick Action Buttons -->
+            </div>
             <div class="dmscreen-grid" id="dmscreen-grid">
                 <!-- Widgets werden dynamisch gerendert -->
             </div>
@@ -406,11 +425,21 @@
 
         <!-- SOUNDBOARD VIEW (Phase 7 — UX-01) -->
         <section id="view-soundboard" class="view">
+            <div class="section-toolbar">
+                <div class="section-toolbar-identity">
+                    <span class="section-toolbar-title">🔊 Soundboard</span>
+                </div>
+            </div>
             <div id="soundboard-container"></div>
         </section>
 
         <!-- DICE STATS VIEW (Phase 7 — UX-02) -->
         <section id="view-dicestats" class="view">
+            <div class="section-toolbar">
+                <div class="section-toolbar-identity">
+                    <span class="section-toolbar-title">📊 Statistiken</span>
+                </div>
+            </div>
             <div id="dicestats-container"></div>
         </section>
     </main>

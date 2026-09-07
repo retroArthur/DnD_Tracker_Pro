@@ -382,3 +382,61 @@ describe('F-09 — Suche und Import/Export im Welt-Modul', () => {
         });
     });
 });
+
+
+describe('F-08 — Werkzeugleisten-Kontrakt', () => {
+    // Vorher gab es DREI Kopfzeilen-Muster: volle Leiste (12 Ansichten),
+    // Kurzfassung (4), gar keine (8). Beim Reiterwechsel verlor man den festen
+    // Ankerpunkt links oben.
+    const TOOL_VIEWS = [
+        'dashboard',
+        'initiative',
+        'dice',
+        'timers',
+        'dmscreen',
+        'soundboard',
+        'dicestats',
+        'data'
+    ];
+
+    function viewBody(id) {
+        const markup = tplFiles.map(f => f.content).join('\n');
+        const start = markup.indexOf(`<section id="view-${id}"`);
+        expect(start).toBeGreaterThan(-1);
+        const next = markup.indexOf('<section id="view-', start + 1);
+        return markup.slice(start, next === -1 ? undefined : next);
+    }
+
+    test('JEDE Ansicht hat eine .section-toolbar mit Titel', () => {
+        const markup = tplFiles.map(f => f.content).join('\n');
+        const ids = [...markup.matchAll(/<section id="view-([\w-]+)"/g)].map(m => m[1]);
+        expect(ids.length).toBeGreaterThan(20);
+        const ohne = ids.filter(id => {
+            const body = viewBody(id);
+            return !body.includes('section-toolbar-title');
+        });
+        expect(ohne).toEqual([]);
+    });
+
+    test('die acht Werkzeug-Ansichten tragen die Standard-Leiste, keine eigene', () => {
+        TOOL_VIEWS.forEach(id => {
+            const body = viewBody(id);
+            expect(body).toContain('class="section-toolbar"');
+            expect(body).toContain('section-toolbar-identity');
+        });
+    });
+
+    test('der DM Screen hat seine eigene Kopfzeile aufgegeben', () => {
+        const markup = tplFiles.map(f => f.content).join('\n');
+        expect(markup).not.toContain('dmscreen-header');
+        expect(markup).not.toContain('dmscreen-title');
+        // und die dazugehoerigen Regeln sind mit entfallen
+        expect(cssCode).not.toContain('.dmscreen-header');
+        expect(cssCode).not.toContain('.dmscreen-title');
+    });
+
+    test('die Schnellleiste des DM Screens steht UNTER der Kopfzeile', () => {
+        const body = viewBody('dmscreen');
+        expect(body.indexOf('section-toolbar')).toBeLessThan(body.indexOf('dms-quick-bar'));
+    });
+});
