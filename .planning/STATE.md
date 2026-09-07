@@ -376,6 +376,20 @@ Browser-Verhalten an der Base64-Grenze (12-07).
 - [Phase 14]: Zulassungsliste fuer tsconfig.strict.json auf 8 statt 17 Dateien korrigiert (Plan 14-07): eine Selbstkonsistenz-Probe gegen die tatsaechliche schmale include-Menge deckte auf, dass 9 der 17 im vollen Kontext gemessenen Kandidaten auf globale Symbole ausgeschlossener Dateien verweisen (EntityLookup, StorageAPI, window.render*-Familie) und dort Fehler werfen.
 - [Phase 14]: Modul-zu-Test-Gate: Pfad-Kriterium statt Basisnamen-Kriterium gewaehlt (78 statt 62 Ausnahmen), da Basisname Zufallstreffer wie npc-generator.js/data-action erzeugt — Eine falsche Abdeckungs-Zusicherung nimmt ein Modul dauerhaft und unsichtbar aus dem Gate; eine laengere, datierte Liste ist sichtbar und schrumpfbar (D-13)
 
+## Deferred Items
+
+Items acknowledged and deferred at milestone close, most recent first:
+
+| Category | Item | Status | Deferred At | Milestone |
+|----------|------|--------|-------------|-----------|
+| deferred_items | 08/deferred-items.md: Flaky `tests/unit/welt-story.test.js` (test-order-dependent) | acknowledged — **inhaltlich erledigt**: die Datei existiert nicht mehr (Plan 14-05 hat sie in fuenf dedizierte Dateien aufgeteilt, Commit `bf809d5`); volle Suite gruen ohne Order-Effekt | 2026-09-07 | v1.2 |
+| deferred_items | 11/deferred-items.md: Pre-existing failing test `test_build_generates_valid_javascript` | acknowledged — **inhaltlich erledigt**: Test laeuft gruen (`1 passed`), und CI fuehrt `pytest tests/build/ -v` inzwischen aus (`ci.yml:46`), was der Eintrag als fehlend beklagte | 2026-09-07 | v1.2 |
+
+> Beide Eintraege wurden vor dem Acknowledge gegen den Live-Baum geprueft und sind **tatsaechlich
+> aufgeloest**, nicht bloss unterdrueckt. Der Acknowledge-Marker war noetig, weil der Scanner auf die
+> Abschnittsueberschrift in `deferred-items.md` anspricht, nicht auf deren Inhalt; die Aufloesung
+> selbst ist in den beiden Quelldateien dokumentiert.
+
 ## Operator Next Steps
 
 - Start the next milestone with /gsd-new-milestone

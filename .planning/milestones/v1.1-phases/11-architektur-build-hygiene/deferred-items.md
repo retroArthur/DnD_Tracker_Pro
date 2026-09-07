@@ -3,7 +3,20 @@
 Items found during execution that are out of scope for the current plan (Scope Boundary rule:
 only auto-fix issues directly caused by the current task's changes).
 
-## 11-01 — Pre-existing failing test, unrelated to SSoT parser change
+## 11-01 — Pre-existing failing test, unrelated to SSoT parser change — ✅ ERLEDIGT 2026-09-07
+
+> **Beide Bedingungen, die dieser Eintrag beklagte, sind erfuellt.** (1) Der Test laeuft gruen:
+> `python -m pytest tests/build/test_build_deduplication.py::TestBuildDeduplication::test_build_generates_valid_javascript`
+> → `1 passed` (gemessen 2026-09-07); die volle Datei `pytest tests/build/` → 24 passed.
+> (2) Der Eintrag hielt fest, `.github/workflows/ci.yml` fahre `pytest tests/build/` gar nicht —
+> das tut sie inzwischen (`ci.yml:46`, `- run: python -m pytest tests/build/ -v`), eingefuehrt
+> mit der D-03-Arbeit derselben Phase. Der als D-06 vorgemerkte Umbau der
+> Duplikatspruefung auf die Brace-Depth-at-column-0-Technik ist mit Phase 11 (ARCH-02/D-05)
+> geschehen: der fehleranfaellige dritte Dedup-Pass wurde ersatzlos entfernt und durch
+> `check_duplicate_functions()` VOR dem Buendeln ersetzt.
+
+<details>
+<summary>Urspruenglicher Eintrag (historisch)</summary>
 
 - **Test:** `tests/build/test_build_deduplication.py::TestBuildDeduplication::test_build_generates_valid_javascript`
 - **Failure:** `Failed: Duplicate var declaration found: el at lines 48750 (var) and 48784 (var)`
@@ -30,6 +43,7 @@ only auto-fix issues directly caused by the current task's changes).
   duplicate check to the same brace-depth-at-column-0 technique already used by the post-build
   validator in `build()` (see `11-PATTERNS.md` "Depth-tracking alternative"), which correctly
   distinguishes nested-function-scoped `var` from true top-level duplicates.
+  status: acknowledged
 
 ## 11-03 — Confirmed still out of scope (not the D-06/D-07 plan referenced above)
 
@@ -65,3 +79,5 @@ Verified: `python -m pytest tests/build/ -v` now shows `23 passed` (was `22 pass
 Regression-checked with two synthetic snippets: a genuine top-level `var X` redeclared twice is
 still caught (unchanged behavior), and two function-scoped `var el` declarations are correctly
 ignored (the fix). `.planning/WINDOWS.md` entry id 2 is now `fixed`.
+
+</details>

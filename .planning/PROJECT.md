@@ -8,7 +8,31 @@ Ein offline-first Single-Page D&D 5e Kampagnen-Manager (pures JavaScript/HTML/CS
 
 Die App muss am Spieltisch **zuverlässig offline laufen** — ein Spielleiter-Begleiter, der nie im Weg steht und keine Daten verliert.
 
-## Current State (v1.1 shipped 2026-07-27)
+## Current State (v1.2 shipped 2026-09-07)
+
+- **Version:** v2.6.1, Milestones **v1.0**, **v1.1** und **v1.2 „Schulden-Abbau"** geshippt (14 Phasen, 109 Pläne)
+- **Codebase:** 134 Module (nach vier Aufteilungen in Phase 13), non-ESM Single-Bundle via `build.py`; `loader.js` ist alleinige Modulliste (ARCH-01)
+- **Qualität:** **1120 Jest-Tests** (50 Suiten), **321 Playwright-Tests** (2 skipped), **24 pytest-Build-Tests** — alle grün. `no-undef: error`, Warnungs-Ratsche auf 367 gepinnt, strikter Typecheck über eine 8-Datei-Zulassungsliste, Coverage-Gate läuft jetzt in CI
+- **Verifikation:** alle drei Phasen `passed`, `threats_open: 0` über 12/13/14, Nyquist 12 COMPLIANT · 13 COMPLIANT · 14 PARTIAL
+- **Live:** https://retroarthur.github.io/DnD_Tracker_Pro/dnd-tracker-optimized.html
+
+**Was v1.2 gebracht hat:** Der `DEBT`-Backlog aus der v1.1-Triage ist abgearbeitet — 26 Posten über
+19 Requirements. Datenverlust-Risiken in Backup, Export und Migration geschlossen (Umzugs-Export
+nimmt IndexedDB mit, Audio-Löschen ist rückgängig, das Datei-Backup kann seine eigene gute Sicherung
+nicht mehr durch ein leeres Schema überschreiben). `call`-Aktionen laufen gegen eine 130-Einträge-
+Whitelist. Vier Module mit 1500–1900 Zeilen in 14 Dateien aufgeteilt, alle ≤ 800 Zeilen, abgesichert
+durch einen vorab eingefrorenen Charakterisierungs-Snapshot. `execCommand` jetzt auf **0** im ganzen
+Quellbaum (die drei dokumentierten Ausnahmen aus v1.1 sind weg).
+
+**Was der Milestone-Audit zusätzlich fand — beide Male, weil auf echten Nachweisen bestanden wurde:**
+Ein in Phase 14 gebautes Coverage-Gate war korrekt kalibriert, lief aber **nirgends** (CI fuhr blankes
+`npm test`, `collectCoverage: false`). Und ein totes Aktionsziel (`populateImportNodesList`) stand
+weiter in der Handler-Whitelist und ging in beide Bundles, obwohl das Plan-Summary ausdrücklich das
+Gegenteil behauptete. Beide am 2026-09-07 geschlossen, letzteres mit einem stehenden Wächter.
+
+<details>
+<summary>Stand bei v1.1 (shipped 2026-07-27)</summary>
+
 
 - **Version:** v2.6.1, Milestones **v1.0 „Stabilisierung & Ausbau"** und **v1.1 „Tech-Debt & Härtung"** geshippt (11 Phasen, 71 Pläne)
 - **Codebase:** 123 Module, non-ESM Single-Bundle via `build.py` (eine Modulliste in `loader.js` als Single Source of Truth, Hard-Abort bei fehlender Datei)
@@ -27,7 +51,29 @@ CI-Artefakt-Paketierung (der `smoke-test` prüfte ein Artefakt ohne Service Work
 Datenverlust im Datei-Backup ab 5 MB Kampagnengröße, bei dem `pruneOldSnapshots()` binnen zehn
 Spieltagen alle echten Snapshots wegräumte — bei grüner Statusanzeige. Beide behoben.
 
-## Current Milestone: v1.2 Schulden-Abbau
+</details>
+
+## Next Milestone: v1.3 (noch nicht aufgesetzt)
+
+**Der `DEBT`-Backlog ist leer.** v1.3 ist damit erstmals seit v1.0 wieder frei für Features statt
+Schuldenabbau. Was aus v1.2 als *bewusst geführte* Restschuld übrig bleibt — vollständig in
+`milestones/v1.2-MILESTONE-AUDIT.md`, hier als Übertrag, damit es das Archivieren überlebt:
+
+| Posten | Herkunft | Kern |
+|--------|----------|------|
+| **NQ-03..NQ-11** (9 Punkte) | `14-VALIDATION.md` | Die drei Gate-Ratschen (`--max-warnings 367`, `tsconfig.strict`-Include, `MODULE_TEST_EXCEPTIONS`) sind reine Prosa-Regeln; zwei haben sich bereits gegen die eigene Vorschrift bewegt. `14-GATE-BASELINE.md` ist in fünf Zahlen veraltet. Beide stehenden Gates hängen an EINEM ungeprüften Extraktor. |
+| **`npm run check` ist rot** | NQ-09 | `format:check` scheitert an 132 Prettier-Dateien, und CI fährt `format:check` gar nicht — obwohl `npm run check` erklärtes Akzeptanzkriterium zweier Pläne war. Billigster Einstieg: einmal `npm run format`, dann den Schritt in CI aufnehmen. |
+| **Aufteilung vs. Abdeckungs-Gate** | Cross-Phase | 7 von 8 Phase-13-Aufteilungsdateien stehen auf `MODULE_TEST_EXCEPTIONS`. Die Aufteilung geschah für Testbarkeit — eingelöst ist sie erst, wenn diese Dateien echte Tests bekommen. |
+| **`DEBT-01` teiloffen** | TEST-05 | `tsconfig.strict.json` deckt 8 von 134 Dateien. Bewusst, mit gemessenen Zahlen benannt. |
+| **2 Bedienabnahmen offen** | `13-VALIDATION.md` | Editor-Bediengefühl nach dem `rich-text.js`-Split, DM-Screen-Masonry bei 320/768 px. Subjektiv, funktional abgedeckt. |
+| **Doku-Drift** | Audit | `CLAUDE.md` behauptet weiterhin drei verbliebene `execCommand`-Aufrufe — die sind seit Phase 13 weg. Ebenso die Constraint-Zeile zur Modullisten-Synchronität (seit ARCH-01 obsolet, hier bereits korrigiert). |
+
+**Zurückgestellt:** Soundboard Per-Track-Play (Layering — Design aus der v1.0-Session liegt bereit).
+
+<details>
+<summary>Zielsetzung v1.2 (bei Milestone-Start)</summary>
+
+### v1.2 Schulden-Abbau
 
 **Goal:** Die 26 in der v1.1-Triage erfassten `DEBT`-Posten abarbeiten — allen voran die
 Datenverlust-Risiken in Backup, Export und Migration — damit der Backlog leer ist und v1.3 wieder
@@ -94,6 +140,8 @@ nur gezielt und nicht erschöpfend gesucht.
 
 **Zurückgestellt auf später:** Soundboard Per-Track-Play (Layering — Design aus v1.0-Session liegt bereit)
 
+
+</details>
 
 </details>
 
@@ -220,15 +268,60 @@ nur gezielt und nicht erschöpfend gesucht.
   (31 Suites) · Playwright 321 passed / 2 skipped · `pytest tests/build` 24/24 · Code-Review
   CR-01/WR-01 behoben, IN-01 advisory offen
 
+**Validated in Phase 13: Härtung & Wartbarkeit (2026-09-06):**
+
+- ✓ SEC-03: `UIActions.call` ruft `window[ctx.value]` nur noch auf, wenn der Name in der
+  130-Einträge-Allowlist `CALL_ACTION_WHITELIST` steht; das Verwerfen wird protokolliert.
+- ✓ SEC-04: `parseWikiLinks()` escapt Attributwert **und** sichtbaren Textknoten über dieselbe
+  `esc()`-Ausgabe; das doppelte `data-id` im Wiki-Baum ist weg.
+- ✓ PERF-01: `utf8ByteLength()` ersetzt an beiden Save-Aufrufstellen die zweite `new Blob(...)`-
+  Vollkopie; der Undo-Stack dedupliziert und deckelt mit Byte-Budget und Untergrenze. Die
+  verbleibende Redundanz (`pushUndo()` serialisiert weiterhin die volle Kampagne) ist **gemessen
+  statt vermutet** (0,922 ms Median) und als Verifikations-Override formal freigegeben.
+- ✓ PERF-02: Der `diceStats`-IndexedDB-Store trägt einen harten Deckel (50.000 Datensätze,
+  ältestes zuerst), eine abgesicherte Löschfunktion, und die Auswertung aggregiert per Cursor.
+- ✓ MAINT-01: Vier Module mit 1500–1900 Zeilen in 14 Dateien aufgeteilt, alle ≤ 800 Zeilen
+  (größte 673) — `dmscreen-render.js` abgesichert durch einen **vor** der ersten Verschiebung
+  eingefrorenen 50-Snapshot-Charakterisierungstest, `rich-text.js` durch das Phase-9-Netz.
+- ✓ MAINT-02: Die Tab-Registry löst Render-/Init-/Cleanup-Funktionen über verzögerte
+  Funktionsreferenzen auf statt über `window[name]`-Strings.
+- ✓ MAINT-03: Unterstrich-Emphase folgt der CommonMark-Wortgrenzenregel; `foo_bar_baz`-URLs
+  bleiben unkorrumpiert.
+- ✓ MAINT-04: `document.execCommand` ist auf **0** im gesamten Quellbaum — auch die drei in v1.1
+  bewusst stehengelassenen Aufrufe außerhalb des Editor-Moduls sind abgelöst.
+- ✓ MAINT-05: `initPerformanceMonitoring()` hat dieselbe Mehrfachstart-Guard wie
+  `startAutoBackup()`; tote `mindmap`-Seeds und die `const D`-Überschattung sind entfernt.
+- ✓ MAINT-06: Keine ungeguardete `console.*`-Ausgabe in Produktionspfaden mehr (89 → 24, alle
+  vier verbleibenden Klassen sanktioniert und markiert).
+- ✓ Qualitätszyklus: Verifikation `passed` 7/8 (ein vorab benannter, gemessener und formal
+  freigegebener Override) · UAT 6/6 · `13-SECURITY.md` `threats_open: 0` (67 Bedrohungen) ·
+  `13-VALIDATION.md` `nyquist_compliant: true`
+
+**Validated in Phase 14: Tests & Gates (2026-09-07):**
+
+- ✓ TEST-03: Die Toast-Race in den CRUD-E2E-Specs ist geschlossen — `seedCleanSession(page)` als
+  einziger Seed-Helfer in allen fünf Specs, belegt durch einen **protokollierten roten Vorlauf**
+  gegen den ungefixten Stand und zwei grüne Nachläufe bei zeichengleichen Lastparametern.
+- ✓ TEST-04: Zwei 500+-zeilige Sammel-Testdateien in je fünf dedizierte Dateien zerlegt, Summen
+  nachweislich unverändert (37 Unit, 26 E2E).
+- ✓ TEST-05: `no-undef` auf `error` (Globals-Generator aus `loader.js MODULES` mit Drift-Wächter),
+  Warnungsgrenze exakt auf den Reststand 367 gepinnt, strikter Typecheck über eine
+  Zulassungsliste, `roots` repariert (Coverage misst wieder den Quellbaum), und ein
+  Modul-zu-Test-Gate ersetzt die für diese Architektur bedeutungslose globale Schwelle.
+- ✓ Qualitätszyklus: Verifikation `passed` 5/5 · UAT 1/1 · `14-SECURITY.md` `threats_open: 0`
+  (32 Bedrohungen) · `14-VALIDATION.md` `validated` mit 9 datierten, bewusst offenen Restposten
+
+**Shipped als Milestone v1.2 (2026-09-07)** — alle 19 Requirements validiert, Archiv:
+`milestones/v1.2-REQUIREMENTS.md`, Audit: `milestones/v1.2-MILESTONE-AUDIT.md`.
+
 ### Active
 
-_(Milestone v1.2 — Details in `.planning/REQUIREMENTS.md`)_
+_(v1.3 ist noch nicht aufgesetzt — der `DEBT`-Backlog ist leer. Übertrag siehe „Next Milestone: v1.3" oben.)_
 
-- [ ] SEC-03, SEC-04 — `call`-Whitelist, Regex-Capture in `parseWikiLinks()` escapt (Phase 13)
-- [ ] PERF-01, PERF-02 — Serialisierungslast senken, Würfelstatistik-Store begrenzen (Phase 13)
-- [ ] MAINT-01…MAINT-06 — vier übergroße Module aufteilen, tote und irreführende Codestellen
-      beseitigen (Phase 13)
-- [ ] TEST-03…TEST-05 — Toast-Race schließen, fünf Welt-Features abdecken, Gates schärfen (Phase 14)
+- [ ] Gate-Ratschen mechanisieren statt sie als Prosa-Regel zu führen (NQ-03, NQ-06, NQ-07)
+- [ ] `npm run check` grün bekommen — Prettier-Schuld abtragen, `format:check` in CI aufnehmen (NQ-09)
+- [ ] Echte Tests für die sieben ausgenommenen Phase-13-Aufteilungsdateien (löst die MAINT-01/TEST-05-Spannung auf)
+- [ ] `DEBT-01` fortsetzen: `tsconfig.strict.json`-Zulassungsliste über die 8 Dateien hinaus wachsen lassen
 
 ### Out of Scope
 
@@ -241,10 +334,12 @@ _(Milestone v1.2 — Details in `.planning/REQUIREMENTS.md`)_
 
 ## Context
 
+- **Stand nach v1.2 (2026-09-07):** 134 JS-Module (nach den vier Aufteilungen in Phase 13), non-ESM Global-Scope-Architektur, `build.py` bündelt alles in eine standalone HTML-Datei (dev + `--production`). Suiten: Jest 1120 / Playwright 321 (2 skipped) / pytest 24. CI fährt Lint, beide Typechecks, Jest **mit Coverage-Schwelle**, Playwright, pytest und den Pages-Deploy.
+- **Codebase-Map veraltet:** `.planning/codebase/` ist vom 2026-06-11 — also vor den Phasen 3–14 und damit vor den Modulaufteilungen. Vor größeren v1.3-Vorhaben per `/gsd-map-codebase` auffrischen (Achtung: der Mapper erfindet gelegentlich Zahlen — Kernzahlen gegen den Live-Code gegenprüfen).
 - **Stand nach v1.0 (2026-07-22):** ~123 JS-Module (~81k Zeilen Quellcode), non-ESM Global-Scope-Architektur, `build.py` bündelt alles in eine standalone HTML-Datei (dev + `--production`). GitHub-Pages-Deploy via ci.yml (voll verifiziert: PWA-Install, SW-Update, Datei-Backup, Migrations-Wizard). Codebase-Map in `.planning/codebase/` (Stand 2026-06-11, vor Phasen 3–7 — bei Bedarf via `/gsd-map-codebase` auffrischen).
 - **Nutzung:** Einzelnutzer (Entwickler = Spielleiter), Windows, Chromium-Browser; `file://`-Doppelklick UND installierte PWA. Deutsche UI durchgängig.
 - **Wichtige Architektur-Lektion aus v1.0-UAT:** `window.save`-Monkey-Patches sind wirkungslos (globale `const`-Bindung überdeckt die window-Property) → expliziter `registerPostSaveHook`-Mechanismus in persistence.js (siehe CLAUDE.md „Live-Sync Pattern").
-- **Offene Altlasten (nicht-blockierend, Kandidaten für v1.1):** Phase-1-Code-Review-Findings (1 vorbestehender Import-XSS), Phase-1-Security-Audit (SECURITY.md fehlt), 11 vorbestehende E2E-Fails (Task-Chip existiert), deprecated `document.execCommand` (21 Call-Sites, eigene Tech-Debt-Phase), Phase-3-Browser-Sichtchecks, `D.calendar.month` 0→1-Basis (benign).
+- **Die v1.0-Altlastenliste ist abgearbeitet:** Import-XSS (Phase 10), fehlende SECURITY.md (alle Phasen tragen jetzt eine, `threats_open: 0`), 11 E2E-Fails (Phase 8), `document.execCommand` 21 → **0** (Phasen 9 und 13). Offen bleibt allein `D.calendar.month` 0→1-Basis (benign).
 
 ## Constraints
 
@@ -253,7 +348,7 @@ _(Milestone v1.2 — Details in `.planning/REQUIREMENTS.md`)_
 - **Persistenz**: Nur LocalStorage + IndexedDB, kein Backend
 - **Sprache**: Deutsche UI-Texte, Code-Kommentare gemischt DE/EN
 - **Plattform**: Windows als primäre Dev-Umgebung (`PYTHONIOENCODING=utf-8`, `python` statt `python3`)
-- **Build**: `build.py` ist das einzige Build-System; Modullisten in loader.js und build.py müssen synchron bleiben
+- **Build**: `build.py` ist das einzige Build-System. **`loader.js` ist die alleinige Modulliste** — `build.py` liest sie zur Buildzeit und bricht hart ab, wenn eine gelistete Datei fehlt (ARCH-01, Phase 11). Die früher hier geforderte Hand-Synchronität zweier Listen gibt es nicht mehr.
 
 ## Key Decisions
 
@@ -266,6 +361,11 @@ _(Milestone v1.2 — Details in `.planning/REQUIREMENTS.md`)_
 | Tests grün ist kein hartes Stabilisierungs-Kriterium                            | Nutzer definiert „sauber" als: Konsole fehlerfrei, Build aktuell, Lint/Typecheck grün — Tests laufen mit, sind aber nicht Gate | ✓ Good — Suite wuchs organisch auf 453 grüne Tests |
 | Sequenzielle Executor auf `main` statt Worktrees (ab Phase 5)                   | Windows-Stdio-Hänger + geteilte Dateien (view-html, CSS, actions) in fast jedem Plan                                            | ✓ Good — 0 Merge-Konflikte, stabile Läufe |
 | Human-UAT als eigener Gate nach jeder Phase                                      | Automatisierte Checks decken Hörbares/Visuelles/Browser-only nicht ab                                                          | ✓ Good — UAT fand 8+ echte Bugs, die alle Test-Suiten verpassten |
+| Datensicherheit zuerst, Gates zuletzt (v1.2-Reihenfolge)                        | `DEBT-18` bedeutet irreversiblen Verlust beim einmaligen Umzug; schärfere Gates auf einer gerade aufgeteilten Codebasis arbeiten gegen sich selbst | ✓ Good — die Reihenfolge hat gehalten; das Coverage-Gate traf am Ende die endgültige Modulstruktur |
+| Charakterisierungs-Snapshot VOR der Aufteilung einfrieren (D-04, Phase 13)      | `dmscreen-render.js` (1576 Zeilen, 21 Widgets) hatte kein eigenes Testnetz — ohne Vorher-Beweis ist „verhaltensneutral" eine Behauptung | ✓ Good — 50 Snapshots zeichengleich vor und nach jeder Verschiebung; fing zugleich T-13-50 (verlorener `esc()`) ab |
+| Roter Vorlauf als Pflicht für den Toast-Race-Beweis (D-02, Phase 14)            | Ein grüner Nachlauf allein beweist nichts, wenn der Lastlauf die Race vorher gar nicht reproduziert                              | ✓ Good — der Vorlauf war tatsächlich rot (5/95); ohne ihn wäre der Fix unbelegt geblieben |
+| `MODULE_TEST_EXCEPTIONS` als datierte, sichtbare Ausnahmeliste statt globaler Schwelle | Eine globale Statement-Schwelle ist in einer non-ESM-Global-Scope-Architektur bedeutungslos                                | ⚠️ Revisit — ehrlicher als vorher, aber 7 der 8 Phase-13-Aufteilungsdateien landeten sofort auf der Liste |
+| Milestone-Audit besteht auf Ausführungsnachweis, nicht auf SUMMARY-Behauptungen  | Zwei Phasen-Summaries behaupteten Dinge, die im Baum nicht zutrafen                                                            | ✓ Good — fand ein nie ausgeführtes Coverage-Gate und ein totes, ausgeliefertes Aktionsziel |
 
 ## Evolution
 
@@ -288,4 +388,4 @@ This document evolves at phase transitions and milestone boundaries.
 
 ---
 
-_Last updated: 2026-09-05 after Phase 12 completion (v1.2: Datensicherheit — SAFE-01…SAFE-06 validiert. 17 Pläne: 11 aus der Erstplanung plus sechs Gap-Pläne für die sieben reproduzierten Befunde SEC-01…SEC-07, dazu zwei Code-Review-Fixes (CR-01 Teilschreibung beim Umzugs-Import, WR-01 Protokollfilter). Zwei per `test.failing` verankerte Defekte (IMPL-01 Wizard-Fehlmeldung, IMPL-02 Undo/Redo-Crash) sind aufgelöst — der Anker-Mechanismus hat funktioniert. `threats_open: 0` über 72 Threats aus 17 Plan-Registern; `nyquist_compliant: true`. Ein Security-Befund kam aus dem Werkzeug selbst: T-12-70 zeigte, dass `npm run build` nur den Production-Bundle schreibt und die E2E-Suite deshalb Vor-Fix-Code geprüft hatte. Suiten: Jest 908/908 (31 Suites), Playwright 321 passed / 2 skipped, pytest tests/build 24/24)._
+_Last updated: 2026-09-07 nach Abschluss von Milestone v1.2 „Schulden-Abbau" (3 Phasen, 38 Pläne, 241 Commits, 122 Dateien +22.861/−6.265). Der `DEBT`-Backlog aus der v1.1-Triage ist leer: 26 Posten über 19 Requirements, alle validiert. Der Milestone-Audit bestand auf Ausführungsnachweisen statt SUMMARY-Behauptungen und fand dadurch zwei Dinge, die keine Phase gemeldet hatte — ein korrekt kalibriertes, aber nie ausgeführtes Coverage-Gate und ein totes Aktionsziel, das in beide Bundles ging. Beide geschlossen. Phase 13 bekam ihre nie gelaufene Sicherheits- und Validierungsprüfung retroaktiv (67 Bedrohungen, 16/16 Verifikationszeilen — null Lücken). Suiten: Jest 1120/1120, Playwright 321 passed / 2 skipped, pytest 24/24._
