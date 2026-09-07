@@ -1,5 +1,5 @@
 /**
- * Design-Konsistenz — Wellen 1 und 2 (F-01, F-02, F-07, F-09..F-11, F-13, F-14)
+ * Design-Konsistenz — Wellen 1 bis 3
  *
  * Warum diese Tests statt einer abgehakten Liste: alle drei Befunde sind
  * LAUTLOS. Ein `var(--surface)` ohne Definition liefert keine Fehlermeldung,
@@ -438,5 +438,130 @@ describe('F-08 — Werkzeugleisten-Kontrakt', () => {
     test('die Schnellleiste des DM Screens steht UNTER der Kopfzeile', () => {
         const body = viewBody('dmscreen');
         expect(body.indexOf('section-toolbar')).toBeLessThan(body.indexOf('dms-quick-bar'));
+    });
+});
+
+
+// ==================================================================
+// Welle 3 — Skalen
+// ==================================================================
+
+/** Alle Deklarationen einer Eigenschaft im CSS (ohne variables.css). */
+function declarationsOf(prop, { includeVariables = false } = {}) {
+    const scope = includeVariables
+        ? cssCode
+        : withoutComments(
+              cssFiles.filter(f => f.name !== 'variables.css').map(f => f.content).join('\n')
+          );
+    return [...scope.matchAll(new RegExp(`${prop}\\s*:([^;{}]*)`, 'g'))].map(m => m[1].trim());
+}
+
+describe('F-05 — zwei Schrift-Quellen plus eine bewusste dritte', () => {
+    test('jede font-family kommt aus einem Token oder ist inherit', () => {
+        // fonts.css bleibt aussen vor: dort stehen die @font-face-Bloecke, die
+        // die Familien ueberhaupt erst definieren.
+        const scope = withoutComments(
+            cssFiles
+                .filter(f => f.name !== 'variables.css' && f.name !== 'fonts.css')
+                .map(f => f.content)
+                .join('\n')
+        );
+        const decls = [...scope.matchAll(/font-family\s*:([^;{}]*)/g)].map(m => m[1].trim());
+        expect(decls.length).toBeGreaterThan(20);
+        const fremd = decls.filter(d => !/^var\(--font-(ui|mono|serif)\)$|^inherit$/.test(d));
+        expect(fremd).toEqual([]);
+    });
+
+    test('die drei Tokens sind definiert', () => {
+        const vars = cssFiles.find(f => f.name === 'variables.css').content;
+        ['--font-ui', '--font-mono', '--font-serif'].forEach(t => {
+            expect(vars).toContain(`${t}:`);
+        });
+    });
+
+    test('keine Komponente erzwingt mehr eine eigene UI-Schrift', () => {
+        // .section-toolbar tat das und ueberschrieb damit in JEDER Leiste die
+        // Vererbung. Nur body darf die UI-Schrift setzen.
+        const scope = withoutComments(
+            cssFiles
+                .filter(f => f.name !== 'variables.css' && f.name !== 'fonts.css')
+                .map(f => f.content)
+                .join('\n')
+        );
+        const uiDecls = (scope.match(/font-family:\s*var\(--font-ui\)/g) || []).length;
+        expect(uiDecls).toBe(1);
+    });
+});
+
+describe('F-06 — drei Radien', () => {
+    test('border-radius nur aus der Skala, 50%, 999px oder 0', () => {
+        const decls = declarationsOf('border(?:-[a-z]+)?-radius');
+        expect(decls.length).toBeGreaterThan(100);
+        const fremd = [];
+        decls.forEach(d => {
+            d.split(/[\s/]+/)
+                .filter(Boolean)
+                .forEach(tok => {
+                    if (
+                        !/^var\(--radius-(sm|md|lg)\)$|^0$|^50%$|^999px$|^inherit$|^!important$/.test(
+                            tok
+                        )
+                    ) {
+                        fremd.push(tok);
+                    }
+                });
+        });
+        expect([...new Set(fremd)]).toEqual([]);
+    });
+
+    test('das alte --radius (10px) ist verschwunden, damit kein vierter danebensteht', () => {
+        expect(cssCode).not.toMatch(/--radius:\s/);
+        expect(cssCode).not.toContain('var(--radius)');
+    });
+});
+
+describe('F-19 — Stapel-Leiter', () => {
+    // Die Reihenfolge ist am gebauten Buendel nachgemessen worden:
+    // 100 -> 300 -> 600 -> 1000 -> 2000 -> 3000 -> 4000.
+    const TIERS = [
+        '--z-sticky',
+        '--z-dropdown',
+        '--z-panel',
+        '--z-modal',
+        '--z-floating',
+        '--z-tooltip',
+        '--z-toast'
+    ];
+
+    test('die Stufen sind definiert und aufsteigend', () => {
+        const vars = cssFiles.find(f => f.name === 'variables.css').content;
+        const werte = TIERS.map(t => {
+            const m = vars.match(new RegExp(`${t}:\\s*(\\d+)`));
+            expect(m).not.toBeNull();
+            return parseInt(m[1], 10);
+        });
+        expect(werte).toEqual([...werte].sort((a, b) => a - b));
+        expect(new Set(werte).size).toBe(werte.length);
+    });
+
+    test('kein globaler z-index mehr als nackte Zahl', () => {
+        // Ausgenommen sind die lokalen Ebenen der Kartenansicht und zwei
+        // komponenteninterne Stapel: sie ordnen Elemente INNERHALB einer
+        // Komponente und gehoeren nicht in die globale Leiter. Alles ueber 20
+        // waere dagegen ein globaler Wert.
+        const roh = [...cssCode.matchAll(/z-index:\s*(\d+)/g)].map(m => parseInt(m[1], 10));
+        const global = roh.filter(v => v > 20);
+        expect(global).toEqual([]);
+    });
+
+    test('KERNBELEG: schwebende Editor-Werkzeuge liegen ueber Overlays', () => {
+        // Der Editor liegt IN einem Overlay. Waere seine Blase nicht hoeher
+        // eingestuft, verschwaende sie darunter — genau das passiert, wenn man
+        // z-index-Werte nur nach Zahlengroesse zusammenschiebt.
+        const vars = cssFiles.find(f => f.name === 'variables.css').content;
+        const val = t => parseInt(vars.match(new RegExp(`${t}:\\s*(\\d+)`))[1], 10);
+        expect(val('--z-floating')).toBeGreaterThan(val('--z-modal'));
+        expect(cssCode).toMatch(/\.floating-toolbar[\s\S]{0,400}?z-index:\s*var\(--z-floating\)/);
+        expect(cssCode).toMatch(/\.editor-block-handle[\s\S]{0,400}?z-index:\s*var\(--z-floating\)/);
     });
 });

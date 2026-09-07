@@ -113,7 +113,7 @@
 /* Abschnitt-Blöcke im Modal */
 .wp-section {
     border: 1px solid var(--border);
-    border-radius: var(--radius);
+    border-radius: var(--radius-md);
     padding: var(--space-md, 1rem);
     margin-bottom: var(--space-md, 1rem);
     background: var(--surface);
@@ -147,7 +147,7 @@
 /* Rich-Text-Editor-Felder */
 .wp-rich-editor {
     border: 1px solid var(--border);
-    border-radius: var(--radius);
+    border-radius: var(--radius-md);
     padding: 0.5rem;
     min-height: 80px;
     background: var(--bg);
@@ -184,7 +184,7 @@
 
 .wp-szene-item {
     border: 1px solid var(--border);
-    border-radius: var(--radius);
+    border-radius: var(--radius-md);
     padding: 0.7rem;
     background: var(--bg);
 }
@@ -299,7 +299,7 @@
 
 .wp-szene-detail {
     border: 1px solid var(--border);
-    border-radius: var(--radius);
+    border-radius: var(--radius-md);
     padding: 0.6rem;
     margin-bottom: 0.5rem;
     background: var(--surface);
@@ -344,7 +344,7 @@
 .npcg-preview-card {
     background: var(--surface);
     border: 1px solid var(--border);
-    border-radius: var(--radius);
+    border-radius: var(--radius-md);
     padding: var(--space-md, 1rem);
     margin-bottom: var(--space-md, 1rem);
 }
@@ -504,7 +504,7 @@
 .tl-vorschlag-bereich {
     margin-bottom: var(--space-md, 1rem);
     border: 1px dashed var(--border);
-    border-radius: var(--radius);
+    border-radius: var(--radius-md);
     padding: var(--space-sm, 0.5rem) var(--space-md, 1rem);
     background: var(--surface);
 }
@@ -522,7 +522,7 @@
     gap: 0.5rem;
     flex-wrap: wrap;
     padding: 0.4rem 0.5rem;
-    border-radius: var(--radius);
+    border-radius: var(--radius-md);
     background: var(--bg);
     margin-bottom: 0.3rem;
 }
@@ -592,7 +592,7 @@
 .rs-config-panel {
     background: var(--surface);
     border: 1px solid var(--border);
-    border-radius: var(--radius);
+    border-radius: var(--radius-md);
     padding: var(--space-md, 1rem);
     margin-bottom: var(--space-md, 1rem);
 }
@@ -608,7 +608,7 @@
 .rs-result-card {
     background: var(--surface);
     border: 1px solid var(--border);
-    border-radius: var(--radius);
+    border-radius: var(--radius-md);
     padding: var(--space-md, 1rem);
     margin-top: var(--space-md, 1rem);
 }
@@ -688,7 +688,7 @@
 .rs-tag-eintrag {
     background: var(--bg);
     border: 1px solid var(--border);
-    border-radius: var(--radius);
+    border-radius: var(--radius-md);
     padding: 0.6rem 0.75rem;
 }
 
@@ -702,7 +702,7 @@
 .rs-wetter-badge {
     display: block;
     padding: 0.2rem 0.6rem;
-    border-radius: var(--radius);
+    border-radius: var(--radius-md);
     background: var(--surface-alt, var(--surface));
     border: 1px solid var(--border);
     font-size: 0.85rem;
@@ -713,7 +713,7 @@
 .rs-begegnung-badge {
     display: block;
     padding: 0.2rem 0.6rem;
-    border-radius: var(--radius);
+    border-radius: var(--radius-md);
     background: var(--surface-alt, var(--surface));
     border: 1px solid var(--border);
     font-size: 0.85rem;
@@ -737,7 +737,7 @@
     background: rgba(34, 197, 94, 0.12);
     border: 1px solid rgba(34, 197, 94, 0.3);
     color: var(--green, #22c55e);
-    border-radius: var(--radius);
+    border-radius: var(--radius-md);
     padding: 0.5rem 0.75rem;
     font-size: 0.9rem;
     margin-bottom: var(--space-sm, 0.5rem);
@@ -806,7 +806,7 @@
 
 .fr-ruf-btn {
     padding: 0.2rem 0.6rem;
-    border-radius: var(--radius);
+    border-radius: var(--radius-md);
     border: 1px solid var(--border);
     background: var(--surface);
     cursor: pointer;
@@ -886,7 +886,7 @@
 .npcg-preview-card {
     background: var(--surface);
     border: 1px solid var(--border);
-    border-radius: var(--radius);
+    border-radius: var(--radius-md);
     padding: var(--space-md, 1rem);
 }
 
@@ -908,7 +908,7 @@
 .npcg-meta-tag {
     font-size: 0.75rem;
     padding: 0.15rem 0.5rem;
-    border-radius: 99px;
+    border-radius: 999px;
     background: var(--surface-alt, rgba(255,255,255,0.07));
     color: var(--text-dim);
     border: 1px solid var(--border);
@@ -979,7 +979,7 @@
     gap: 0.6rem;
     background: var(--surface);
     border: 1px solid var(--border);
-    border-radius: var(--radius);
+    border-radius: var(--radius-md);
     padding: 0.6rem 0.75rem;
     cursor: pointer;
     transition: border-color 0.15s, background 0.15s;
@@ -1050,7 +1050,7 @@
 .fr-detail-panel {
     background: var(--surface);
     border: 1px solid var(--border);
-    border-radius: var(--radius);
+    border-radius: var(--radius-md);
     padding: var(--space-md, 1rem);
     min-height: 200px;
 }
@@ -1089,7 +1089,7 @@
 .fr-ruf-statusbar {
     display: inline-block;
     padding: 0.2rem 0.6rem;
-    border-radius: var(--radius);
+    border-radius: var(--radius-md);
     font-size: 0.85rem;
     font-weight: 500;
 }
@@ -1124,7 +1124,7 @@
     padding: 0.3rem 0.5rem;
     background: var(--bg-dark, var(--surface-alt));
     border: 1px solid var(--border);
-    border-radius: var(--radius);
+    border-radius: var(--radius-md);
     color: var(--text);
     font-size: 0.9rem;
     box-sizing: border-box;
@@ -1164,7 +1164,7 @@
     padding: 0.3rem 0.5rem;
     background: var(--bg-dark, var(--surface-alt));
     border: 1px solid var(--border);
-    border-radius: var(--radius);
+    border-radius: var(--radius-md);
     color: var(--text);
     font-size: 0.9rem;
 }
@@ -1189,7 +1189,7 @@
     gap: 0.5rem;
     font-size: 0.85rem;
     padding: 0.2rem 0.4rem;
-    border-radius: 4px;
+    border-radius: var(--radius-sm);
     background: var(--surface-alt, rgba(255,255,255,0.04));
 }
 

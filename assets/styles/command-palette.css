@@ -9,7 +9,7 @@
     display: none;
     position: fixed;
     inset: 0;
-    z-index: 1200;
+    z-index: var(--z-modal);
     background: rgba(0, 0, 0, 0.6);
     backdrop-filter: blur(4px);
     -webkit-backdrop-filter: blur(4px);
@@ -28,7 +28,7 @@
 .cp-box {
     background: var(--bg-card);
     border: 1px solid rgba(212, 175, 55, 0.3);
-    border-radius: 12px;
+    border-radius: var(--radius-lg);
     box-shadow: 0 16px 48px rgba(0, 0, 0, 0.6);
     width: 90%;
     max-width: 560px;
@@ -78,7 +78,7 @@
     font-size: 11px;
     background: var(--bg-elevated, rgba(255, 255, 255, 0.05));
     border: 1px solid var(--border);
-    border-radius: 4px;
+    border-radius: var(--radius-sm);
     padding: 2px 6px;
     flex-shrink: 0;
     user-select: none;
@@ -174,7 +174,7 @@
 
     .cp-box {
         width: 95%;
-        border-radius: 8px;
+        border-radius: var(--radius-md);
     }
 
     .cp-results {

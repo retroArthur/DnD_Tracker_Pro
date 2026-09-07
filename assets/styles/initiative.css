@@ -14,7 +14,7 @@
             background: var(--bg-card);
             border: 2px solid var(--gold);
             padding: 6px 16px;
-            border-radius: 6px;
+            border-radius: var(--radius-md);
             font-size: 1.1em;
         }
         
@@ -27,7 +27,7 @@
             gap: 12px;
             background: linear-gradient(135deg, #2a2a4a 0%, var(--bg-dark) 100%);
             border: 1px solid var(--border);
-            border-radius: 8px;
+            border-radius: var(--radius-md);
             padding: 10px 14px;
             margin-bottom: 12px;
             flex-wrap: wrap;
@@ -50,7 +50,7 @@
             align-items: center;
             gap: 5px;
             padding: 4px 10px;
-            border-radius: 16px;
+            border-radius: var(--radius-lg);
             font-size: 0.75rem;
             font-weight: 500;
         }
@@ -80,7 +80,7 @@
             color: var(--text-dim);
             width: 24px;
             height: 24px;
-            border-radius: 4px;
+            border-radius: var(--radius-sm);
             cursor: pointer;
             display: flex;
             align-items: center;
@@ -115,7 +115,7 @@
             gap: 8px;
             background: var(--bg-card);
             border: 1px solid var(--border);
-            border-radius: 6px;
+            border-radius: var(--radius-md);
             padding: 8px 12px;
         }
         
@@ -153,7 +153,7 @@
             text-align: center;
             background: rgba(126, 196, 207, 0.15);
             padding: 4px 6px;
-            border-radius: 4px;
+            border-radius: var(--radius-sm);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -190,7 +190,7 @@
         .init-effect {
             font-size: 9px;
             padding: 2px 6px;
-            border-radius: 3px;
+            border-radius: var(--radius-sm);
             display: flex;
             align-items: center;
             gap: 3px;
@@ -216,7 +216,7 @@
             flex-wrap: wrap;
             padding: 4px 8px;
             background: var(--bg-dark);
-            border-radius: 4px;
+            border-radius: var(--radius-sm);
             margin-left: auto;
         }
         
@@ -242,7 +242,7 @@
             width: 12px;
             height: 12px;
             border: 1px solid var(--purple);
-            border-radius: 2px;
+            border-radius: var(--radius-sm);
             cursor: pointer;
             transition: all 0.15s;
         }
@@ -268,7 +268,7 @@
             padding: 6px 10px;
             background: rgba(239, 68, 68, 0.15);
             border: 1px solid var(--red);
-            border-radius: 6px;
+            border-radius: var(--radius-md);
             margin-top: 6px;
         }
 
@@ -333,7 +333,7 @@
             font-weight: 600;
             margin-left: auto;
             padding: 3px 8px;
-            border-radius: 4px;
+            border-radius: var(--radius-sm);
         }
 
         .death-saves-status.dead {
@@ -354,7 +354,7 @@
             padding: 4px 10px;
             background: linear-gradient(135deg, rgba(147, 51, 234, 0.2) 0%, rgba(168, 85, 247, 0.15) 100%);
             border: 1px solid var(--purple);
-            border-radius: 6px;
+            border-radius: var(--radius-md);
             font-size: 0.75em;
             color: var(--purple);
             cursor: pointer;
@@ -384,7 +384,7 @@
             font-weight: 700;
             padding: 2px 6px;
             background: rgba(239, 68, 68, 0.2);
-            border-radius: 3px;
+            border-radius: var(--radius-sm);
             margin-left: 4px;
         }
 
@@ -400,7 +400,7 @@
             padding: 3px 8px;
             background: transparent;
             border: 1px dashed var(--purple);
-            border-radius: 4px;
+            border-radius: var(--radius-sm);
             color: var(--purple);
             font-size: 0.7em;
             cursor: pointer;
@@ -421,7 +421,7 @@
             padding: 8px 12px;
             background: linear-gradient(135deg, rgba(234, 179, 8, 0.15) 0%, rgba(147, 51, 234, 0.15) 100%);
             border: 1px solid var(--gold);
-            border-radius: 6px;
+            border-radius: var(--radius-md);
             margin-top: 6px;
         }
 
@@ -435,7 +435,7 @@
             background: var(--purple);
             color: white;
             border: none;
-            border-radius: 4px;
+            border-radius: var(--radius-sm);
             cursor: pointer;
             font-weight: 600;
             font-size: 0.85em;
@@ -476,7 +476,7 @@
             margin-bottom: 16px;
             padding: 12px;
             background: var(--bg-dark);
-            border-radius: 8px;
+            border-radius: var(--radius-md);
         }
 
         .aoe-damage-input input {
@@ -485,7 +485,7 @@
             background: var(--bg-card);
             border: 1px solid var(--border);
             color: var(--text);
-            border-radius: 6px;
+            border-radius: var(--radius-md);
             font-size: 1em;
         }
 
@@ -494,7 +494,7 @@
             background: var(--red);
             color: white;
             border: none;
-            border-radius: 6px;
+            border-radius: var(--radius-md);
             cursor: pointer;
             font-weight: 600;
             display: flex;
@@ -510,7 +510,7 @@
             padding: 8px 14px;
             background: var(--red);
             color: white;
-            border-radius: 6px;
+            border-radius: var(--radius-md);
             font-weight: 700;
             font-size: 1.2em;
             min-width: 50px;
@@ -540,7 +540,7 @@
             background: var(--bg-dark);
             border: 1px solid var(--border);
             color: var(--text-dim);
-            border-radius: 4px;
+            border-radius: var(--radius-sm);
             cursor: pointer;
             font-size: 0.8em;
         }
@@ -557,7 +557,7 @@
             overflow-y: auto;
             margin-bottom: 16px;
             border: 1px solid var(--border);
-            border-radius: 8px;
+            border-radius: var(--radius-md);
         }
 
         .aoe-target {
@@ -640,7 +640,7 @@
             background: var(--red);
             color: white;
             border: none;
-            border-radius: 6px;
+            border-radius: var(--radius-md);
             cursor: pointer;
             font-weight: 600;
             font-size: 1em;
@@ -668,7 +668,7 @@
             gap: 10px;
             padding: 10px 12px;
             background: var(--bg-dark);
-            border-radius: 8px;
+            border-radius: var(--radius-md);
             border: 1px solid var(--border);
             transition: all 0.15s;
         }
@@ -705,13 +705,13 @@
             width: 80px;
             height: 8px;
             background: var(--bg-card);
-            border-radius: 4px;
+            border-radius: var(--radius-sm);
             overflow: hidden;
         }
 
         .npc-relation-fill {
             height: 100%;
-            border-radius: 4px;
+            border-radius: var(--radius-sm);
             transition: width 0.3s ease;
         }
 
@@ -734,7 +734,7 @@
             font-size: 0.75em;
             font-weight: 600;
             padding: 3px 8px;
-            border-radius: 4px;
+            border-radius: var(--radius-sm);
         }
 
         .npc-relation-status.friendly {
@@ -762,7 +762,7 @@
             background: transparent;
             border: 1px solid var(--border);
             color: var(--text-dim);
-            border-radius: 4px;
+            border-radius: var(--radius-sm);
             cursor: pointer;
             font-size: 0.8em;
         }
@@ -802,7 +802,7 @@
             margin-bottom: 20px;
             padding: 16px;
             background: var(--bg-dark);
-            border-radius: 8px;
+            border-radius: var(--radius-md);
         }
 
         .relations-form-row {
@@ -818,7 +818,7 @@
             background: var(--bg-card);
             border: 1px solid var(--border);
             color: var(--text);
-            border-radius: 6px;
+            border-radius: var(--radius-md);
         }
 
         .relations-status-btns {
@@ -830,7 +830,7 @@
             padding: 8px 14px;
             border: 2px solid var(--border);
             background: transparent;
-            border-radius: 6px;
+            border-radius: var(--radius-md);
             cursor: pointer;
             transition: all 0.15s;
             font-weight: 600;
@@ -874,7 +874,7 @@
             background: var(--gold);
             color: var(--bg-dark);
             border: none;
-            border-radius: 6px;
+            border-radius: var(--radius-md);
             cursor: pointer;
             font-weight: 600;
         }
@@ -936,7 +936,7 @@
     background: var(--bg-card);
     color: var(--text-dim);
     border: 1px solid var(--border);
-    border-radius: 8px;
+    border-radius: var(--radius-md);
     font-size: 18px;
     line-height: 1;
     cursor: pointer;
@@ -955,7 +955,7 @@
     gap: 8px;
     background: var(--bg-card);
     padding: 16px;
-    border-radius: 8px;
+    border-radius: var(--radius-md);
 }
 
 .init-statblock-name {
@@ -975,7 +975,7 @@
     .init-statblock-content {
         width: 100%;
         height: 60vh;
-        border-radius: 12px 12px 0 0;
+        border-radius: var(--radius-lg) var(--radius-lg) 0 0;
     }
 
     .init-statblock-close {
@@ -1071,7 +1071,7 @@
     border: 1px solid var(--border);
     background: transparent;
     color: var(--text-dim);
-    border-radius: 4px;
+    border-radius: var(--radius-sm);
     cursor: pointer;
     font-size: 0.8em;
     display: flex;
@@ -1117,7 +1117,7 @@
     margin-top: 4px;
     padding: 8px;
     background: var(--bg-dark);
-    border-radius: 4px;
+    border-radius: var(--radius-sm);
 }
 
 .init-mob-label {
@@ -1138,7 +1138,7 @@
     background: var(--bg-card);
     border: 1px solid var(--border);
     color: var(--text-dim);
-    border-radius: 4px;
+    border-radius: var(--radius-sm);
     cursor: pointer;
     transition: all 0.15s;
 }
@@ -1167,7 +1167,7 @@
     background: var(--bg-card);
     border: 1px solid var(--border);
     color: var(--text);
-    border-radius: 4px;
+    border-radius: var(--radius-sm);
     font-size: 0.9em;
     text-align: center;
 }
@@ -1178,7 +1178,7 @@
     background: var(--red);
     color: white;
     border: none;
-    border-radius: 4px;
+    border-radius: var(--radius-sm);
     cursor: pointer;
     font-weight: 600;
     transition: background 0.15s;
@@ -1194,7 +1194,7 @@
     background: transparent;
     border: 1px solid var(--border);
     color: var(--text-dim);
-    border-radius: 4px;
+    border-radius: var(--radius-sm);
     cursor: pointer;
     display: flex;
     align-items: center;
@@ -1214,7 +1214,7 @@
     padding: 4px 8px;
     background: var(--red);
     color: var(--bg-dark);
-    border-radius: 4px;
+    border-radius: var(--radius-sm);
     font-size: 0.75em;
     font-weight: 700;
 }
@@ -1237,7 +1237,7 @@
 .xp-dist-autosum {
     background: var(--bg-dark);
     border: 1px solid var(--border);
-    border-radius: 8px;
+    border-radius: var(--radius-md);
     padding: 12px 16px;
     display: flex;
     align-items: center;
@@ -1260,7 +1260,7 @@
     padding: 8px 12px;
     background: var(--bg-card);
     border: 1px solid var(--border);
-    border-radius: 6px;
+    border-radius: var(--radius-md);
     color: var(--text);
     font-size: 1rem;
 }
@@ -1276,7 +1276,7 @@
     gap: 8px;
     padding: 8px 12px;
     background: var(--bg-card);
-    border-radius: 6px;
+    border-radius: var(--radius-md);
     font-size: 0.9rem;
     color: var(--text-dim);
 }
@@ -1293,7 +1293,7 @@
     padding: 8px 12px;
     background: rgba(var(--gold-rgb), 0.1);
     border-left: 3px solid var(--gold);
-    border-radius: 4px;
+    border-radius: var(--radius-sm);
     font-size: 0.9rem;
 }
 
@@ -1328,7 +1328,7 @@
     max-height: 180px;
     overflow-y: auto;
     border: 1px solid var(--border);
-    border-radius: 8px;
+    border-radius: var(--radius-md);
     background: var(--bg-dark);
 }
 

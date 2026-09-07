@@ -15,7 +15,7 @@
     margin-bottom: 20px;
     background: var(--bg-card);
     border: 1px solid var(--border);
-    border-radius: 16px;
+    border-radius: var(--radius-lg);
 }
 
 .dice-hero-result {
@@ -40,7 +40,7 @@
     font-size: 1.2em;
     color: var(--text-dim);
     margin-top: 8px;
-    font-family: monospace;
+    font-family: var(--font-mono);
 }
 
 .dice-hero-breakdown {
@@ -62,7 +62,7 @@
     width: 56px;
     height: 56px;
     border: 2px solid var(--border);
-    border-radius: 10px;
+    border-radius: var(--radius-md);
     background: var(--bg-elevated);
     cursor: pointer;
     font-size: 1.1em;
@@ -103,7 +103,7 @@
     gap: 8px;
     background: var(--bg-card);
     border: 1px solid var(--border);
-    border-radius: 10px;
+    border-radius: var(--radius-md);
     padding: 8px 12px;
 }
 
@@ -112,7 +112,7 @@
     padding: 8px;
     background: var(--bg-elevated);
     border: 1px solid var(--border);
-    border-radius: 6px;
+    border-radius: var(--radius-md);
     color: var(--text);
     text-align: center;
     font-size: 1em;
@@ -128,10 +128,10 @@
     padding: 10px 12px;
     background: var(--bg-elevated);
     border: 1px solid var(--border);
-    border-radius: 6px;
+    border-radius: var(--radius-md);
     color: var(--text);
     font-size: 1em;
-    font-family: monospace;
+    font-family: var(--font-mono);
 }
 
 .dice-formula:focus {
@@ -144,7 +144,7 @@
     height: 44px;
     background: var(--gold);
     border: none;
-    border-radius: 8px;
+    border-radius: var(--radius-md);
     cursor: pointer;
     font-size: 1.4em;
     transition: all 0.2s;
@@ -160,7 +160,7 @@
     height: 44px;
     background: var(--bg-elevated);
     border: 1px solid var(--border);
-    border-radius: 8px;
+    border-radius: var(--radius-md);
     cursor: pointer;
     font-size: 1.2em;
     color: var(--text);
@@ -184,7 +184,7 @@
 .dice-chip {
     background: var(--bg-elevated);
     border: 1px solid var(--border);
-    border-radius: 20px;
+    border-radius: var(--radius-lg);
     padding: 8px 16px;
     font-size: 0.9em;
     color: var(--text);
@@ -202,7 +202,7 @@
 .dice-details {
     background: var(--bg-card);
     border: 1px solid var(--border);
-    border-radius: 10px;
+    border-radius: var(--radius-md);
     margin-bottom: 12px;
 }
 
@@ -233,7 +233,7 @@
     justify-content: center;
     background: var(--bg-elevated);
     border: 1px solid var(--border);
-    border-radius: 8px;
+    border-radius: var(--radius-md);
     cursor: pointer;
     font-size: 1.3em;
     transition: all 0.2s;
@@ -282,7 +282,7 @@
     padding: 8px;
     background: var(--bg-elevated);
     border: 1px solid var(--border);
-    border-radius: 6px;
+    border-radius: var(--radius-md);
     color: var(--text);
     text-align: center;
 }
@@ -298,7 +298,7 @@
     padding: 12px;
     background: var(--bg-card);
     border: 1px solid var(--border);
-    border-radius: 10px;
+    border-radius: var(--radius-md);
     display: flex;
     align-items: center;
     gap: 10px;
@@ -323,7 +323,7 @@
 .dice-fav-item {
     background: var(--bg-card) !important;
     border: 1px solid var(--border) !important;
-    border-radius: 8px;
+    border-radius: var(--radius-md);
     padding: 8px 12px;
     cursor: pointer;
     font-size: 0.85em;
@@ -394,7 +394,7 @@
     padding: 8px 12px;
     background: var(--bg-elevated);
     border: 1px solid var(--border);
-    border-radius: 6px;
+    border-radius: var(--radius-md);
     color: var(--text);
     font-size: 0.9em;
 }
@@ -432,7 +432,7 @@
     padding: 8px 4px;
     background: var(--bg-elevated);
     border: 1px solid var(--border);
-    border-radius: 6px;
+    border-radius: var(--radius-md);
     cursor: pointer;
     transition: all 0.2s;
 }
@@ -482,7 +482,7 @@
     padding: 6px 10px;
     background: var(--bg-elevated);
     border: 1px solid var(--border);
-    border-radius: 6px;
+    border-radius: var(--radius-md);
     cursor: pointer;
     font-size: 0.8em;
     transition: all 0.2s;
@@ -527,13 +527,13 @@
     justify-content: space-between;
     padding: 8px 12px;
     background: var(--bg-elevated);
-    border-radius: 6px;
+    border-radius: var(--radius-md);
     font-size: 0.85em;
 }
 
 .dice-history-formula {
     color: var(--text-dim);
-    font-family: monospace;
+    font-family: var(--font-mono);
 }
 
 .dice-history-result {
@@ -558,7 +558,7 @@
     border: 2px solid rgba(255, 255, 255, 0.2);
     color: white;
     cursor: pointer;
-    z-index: 5000;
+    z-index: var(--z-floating);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -599,9 +599,9 @@
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
     border: 1px solid rgba(212, 175, 55, 0.3);
-    border-radius: 16px;
+    border-radius: var(--radius-lg);
     padding: 16px;
-    z-index: 5001;
+    z-index: var(--z-floating);
     box-shadow:
         0 8px 32px rgba(0, 0, 0, 0.5),
         0 0 0 1px rgba(255, 255, 255, 0.05) inset;
@@ -642,7 +642,7 @@
     cursor: pointer;
     font-size: 1.2em;
     padding: 4px 8px;
-    border-radius: 4px;
+    border-radius: var(--radius-sm);
     transition: all 0.2s;
 }
 
@@ -656,7 +656,7 @@
     text-align: center;
     padding: 16px 12px;
     background: var(--bg-dark);
-    border-radius: 12px;
+    border-radius: var(--radius-lg);
     margin-bottom: 12px;
     min-height: 80px;
     display: flex;
@@ -687,7 +687,7 @@
     font-size: 0.85em;
     color: var(--text-dim);
     margin-top: 4px;
-    font-family: monospace;
+    font-family: var(--font-mono);
 }
 
 .fdp-breakdown {
@@ -709,7 +709,7 @@
     padding: 10px 8px;
     background: var(--bg-elevated);
     border: 1px solid var(--border);
-    border-radius: 8px;
+    border-radius: var(--radius-md);
     color: var(--gold);
     cursor: pointer;
     font-weight: 600;
@@ -753,7 +753,7 @@
     padding: 8px;
     background: var(--bg-elevated);
     border: 1px solid var(--border);
-    border-radius: 6px;
+    border-radius: var(--radius-md);
     color: var(--text);
     cursor: pointer;
     font-size: 0.8em;
@@ -794,10 +794,10 @@
     padding: 8px 12px;
     background: var(--bg-dark);
     border: 1px solid var(--border);
-    border-radius: 6px;
+    border-radius: var(--radius-md);
     color: var(--text);
     font-size: 0.9em;
-    font-family: monospace;
+    font-family: var(--font-mono);
 }
 
 .fdp-input:focus {
@@ -814,7 +814,7 @@
     padding: 8px 12px;
     background: var(--gold);
     border: none;
-    border-radius: 6px;
+    border-radius: var(--radius-md);
     cursor: pointer;
     font-size: 1em;
     transition: all 0.2s;
@@ -858,7 +858,7 @@
     align-items: center;
     padding: 4px 8px;
     background: var(--bg-elevated);
-    border-radius: 4px;
+    border-radius: var(--radius-sm);
     cursor: pointer;
     min-width: 40px;
     transition: all 0.2s;

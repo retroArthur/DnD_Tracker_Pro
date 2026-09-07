@@ -12,7 +12,7 @@
     display: none;
     position: fixed;
     inset: 0;
-    z-index: 1100;
+    z-index: var(--z-modal);
     background: rgba(0, 0, 0, 0.75);
     align-items: center;
     justify-content: center;
@@ -21,7 +21,7 @@
 
 .migration-wizard {
     background: var(--bg-card, #1a1a1a);
-    border-radius: 12px;
+    border-radius: var(--radius-lg);
     max-width: 560px;
     width: 100%;
     padding: 24px;
@@ -107,7 +107,7 @@
     color: var(--bg-dark, #0d0d0d);
     border: none;
     padding: 10px 20px;
-    border-radius: 6px;
+    border-radius: var(--radius-md);
     font-weight: 600;
     min-height: 44px;
     cursor: pointer;
@@ -120,7 +120,7 @@
 /* Drag&Drop-Zone */
 .wizard-dropzone {
     border: 2px dashed var(--border, #3a3a3a);
-    border-radius: 8px;
+    border-radius: var(--radius-md);
     min-height: 120px;
     display: flex;
     flex-direction: column;
@@ -248,7 +248,7 @@
     top: 0;
     left: 0;
     right: 0;
-    z-index: 990;
+    z-index: var(--z-panel);
     min-height: 48px;
     background: var(--bg-elevated, #252525);
     border-bottom: 1px solid rgba(212, 175, 55, 0.4);
@@ -319,7 +319,7 @@ body.has-migration-hint {
     top: 0;
     left: 0;
     right: 0;
-    z-index: 989;
+    z-index: var(--z-panel);
     height: 40px;
     background: var(--bg-elevated, #252525);
     border-left: 4px solid var(--yellow, #fbbf24);

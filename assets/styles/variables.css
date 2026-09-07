@@ -133,6 +133,20 @@
             --text-light: var(--text);
             --teal: var(--cyan);
 
+            /* Schrift-Familien (F-05). Vorher standen 14 verschiedene
+               Deklarationen im CSS, darunter neunmal dieselbe Segoe-Kette und
+               SIEBEN verschiedene Mono-Stapel.
+
+               DREI Tokens statt der zwei, die der Handoff vorschlaegt: die
+               Serifenschrift ist keine Drift, sondern eine bewusste
+               typografische Entscheidung fuer Text AUS DER SPIELWELT —
+               Statblocks im Bestiar, Vorlesetext im Editor, Hintergrund in
+               der Party-Ansicht. Sie in die UI-Schrift zu falten waere kein
+               Aufraeumen, sondern ein Designwechsel. */
+            --font-ui: 'Segoe UI', system-ui, sans-serif;
+            --font-mono: 'JetBrains Mono', 'Fira Code', Consolas, monospace;
+            --font-serif: Georgia, 'Times New Roman', serif;
+
             /* Abstands- und Radius-Skala (F-06); px wie der Bestand */
             --space-xs: 4px;
             --space-sm: 8px;
@@ -142,7 +156,24 @@
             --radius-sm: 4px;
             --radius-md: 8px;
             --radius-lg: 12px;
-            --radius: 10px; /* Bestandswert von .loc-item/.npc-item */
+
+            /* Stapel-Leiter (F-19). Vorher 24 gewachsene Werte von 2 bis
+               10001, ohne erkennbare Stufenlogik.
+
+               Die lokalen Ebenen der Kartenansicht (2..15) bleiben bewusst
+               ausserhalb dieser Leiter: sie stapeln Elemente INNERHALB einer
+               Komponente uebereinander und haben mit der globalen Reihenfolge
+               nichts zu tun. Sie in die Leiter zu ziehen wuerde ihre
+               Reihenfolge zerstoeren. */
+            --z-sticky: 100; /* Kopfzeile, angeheftete Leisten */
+            --z-dropdown: 300; /* an ein Bedienelement gebundene Menues */
+            --z-panel: 600; /* Seitenpanels, Hinweisbaender */
+            --z-modal: 1000; /* Overlays, die den Rest blockieren */
+            --z-floating: 2000; /* muss ueber Overlays liegen: der Editor
+                                   liegt IN einem Overlay, seine Blase darf
+                                   nicht darunter verschwinden */
+            --z-tooltip: 3000; /* kurzlebige Einblendungen */
+            --z-toast: 4000; /* Meldungen, immer obenauf */
 
             /* Hover-/Dim-Stufen: aus den Basisfarben gemischt statt neu
                erfunden, damit sie jedem Theme folgen. */
@@ -199,7 +230,9 @@
             top: auto;
             left: 0;
             right: 0;
-            z-index: 1000;
+            /* Als fest sitzende Navigationsleiste hoeher als die
+               Desktop-Kopfzeile: sie muss ueber Seitenpanels liegen. */
+            z-index: var(--z-panel);
             padding: 0;
             border-top: 1px solid var(--border);
             border-bottom: none;

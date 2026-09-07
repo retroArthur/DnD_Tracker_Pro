@@ -320,7 +320,7 @@
         .spell-desc mark {
             background-color: rgba(251, 191, 36, 0.3);
             padding: 0 3px;
-            border-radius: 2px;
+            border-radius: var(--radius-sm);
             margin: 0;
         }
         
@@ -379,9 +379,9 @@
             max-width: 100%;
             padding: 14px 18px;
             margin: 12px 0;
-            font-family: Georgia, 'Times New Roman', serif;
+            font-family: var(--font-serif);
             font-style: italic;
-            border-radius: 0 4px 4px 0;
+            border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
             line-height: 1.7;
             /* Default: Parchment */
             background: linear-gradient(135deg, #f5e6c8 0%, #e8d4a8 100%);
@@ -466,7 +466,7 @@
         .link-card {
             background: var(--bg-card);
             border: 1px solid var(--border);
-            border-radius: 8px;
+            border-radius: var(--radius-md);
             padding: 12px;
             display: flex;
             align-items: center;
@@ -479,7 +479,7 @@
             width: 40px;
             height: 40px;
             background: var(--bg-elevated);
-            border-radius: 8px;
+            border-radius: var(--radius-md);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -500,9 +500,9 @@
             width: 280px;
             background: var(--bg-card);
             border: 2px solid var(--gold);
-            border-radius: 8px;
+            border-radius: var(--radius-md);
             box-shadow: 0 4px 20px rgba(0,0,0,0.4);
-            z-index: 1000;
+            z-index: var(--z-panel);
         }
         
         .quick-panel-header {
@@ -511,7 +511,7 @@
             align-items: center;
             padding: 8px 12px;
             background: var(--bg-elevated);
-            border-radius: 6px 6px 0 0;
+            border-radius: var(--radius-md) var(--radius-md) 0 0;
             cursor: pointer;
         }
         
@@ -527,7 +527,7 @@
             border: 1px solid var(--border);
             color: var(--text);
             padding: 8px;
-            border-radius: 5px;
+            border-radius: var(--radius-sm);
             resize: vertical;
             font-size: 12px;
         }
@@ -545,7 +545,7 @@
             width: 90%;
             max-height: 300px;
             overflow-y: auto;
-            z-index: 1200; /* über .modal-overlay (1100, dashboard.css) — unter App-Top-Overlays (9999/10000) */
+            z-index: var(--z-toast); /* Meldungen liegen ueber allem, auch ueber der Werkzeug-Blase */
             pointer-events: none;
         }
 
@@ -554,7 +554,7 @@
             pointer-events: auto;
             background: rgba(15, 15, 25, 0.98);
             border: 1px solid var(--border);
-            border-radius: 8px;
+            border-radius: var(--radius-md);
             padding: 12px;
             max-height: 400px;
         }
@@ -596,7 +596,7 @@
             border: 1px solid var(--border);
             color: var(--text-dim);
             padding: 4px 8px;
-            border-radius: 4px;
+            border-radius: var(--radius-sm);
             cursor: pointer;
             font-size: 0.8em;
         }
@@ -613,7 +613,7 @@
             background: rgba(20, 20, 30, 0.95);
             border: 1px solid var(--border);
             border-left: 3px solid var(--green);
-            border-radius: 6px;
+            border-radius: var(--radius-md);
             padding: 10px 14px;
             font-size: 0.9em;
             color: var(--text);
@@ -710,7 +710,7 @@
         .wiki-sidebar {
             background: var(--bg-card);
             border: 1px solid var(--border);
-            border-radius: 8px;
+            border-radius: var(--radius-md);
             display: flex;
             flex-direction: column;
             overflow: hidden;
@@ -744,7 +744,7 @@
             gap: 6px;
             padding: 8px 10px;
             background: var(--bg-dark);
-            border-radius: 6px;
+            border-radius: var(--radius-md);
             cursor: pointer;
             transition: all 0.2s;
             user-select: none;
@@ -785,7 +785,7 @@
             color: var(--text-dim);
             background: var(--bg-card);
             padding: 2px 6px;
-            border-radius: 10px;
+            border-radius: var(--radius-md);
         }
         
         /* Tree Items */
@@ -805,7 +805,7 @@
             gap: 4px;
             padding: 5px 8px;
             margin: 2px 0;
-            border-radius: 4px;
+            border-radius: var(--radius-sm);
             cursor: pointer;
             font-size: 0.8em;
             color: var(--text);
@@ -861,7 +861,7 @@
             cursor: pointer;
             padding: 4px;
             margin: -4px 4px -4px -4px;
-            border-radius: 3px;
+            border-radius: var(--radius-sm);
             transition: transform 0.2s, background 0.15s;
         }
         
@@ -884,7 +884,7 @@
         .wiki-detail {
             background: var(--bg-card);
             border: 1px solid var(--border);
-            border-radius: 8px;
+            border-radius: var(--radius-md);
             overflow-y: auto;
             padding: 0;
         }
@@ -957,7 +957,7 @@
             background: rgba(168, 85, 247, 0.15);
             color: var(--purple);
             padding: 2px 10px;
-            border-radius: 12px;
+            border-radius: var(--radius-lg);
         }
         
         .wiki-detail-actions {
@@ -1039,14 +1039,14 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            z-index: 1000;
+            z-index: var(--z-modal);
             padding: 20px;
         }
         
         .wiki-form-modal {
             background: var(--bg-card);
             border: 1px solid var(--border);
-            border-radius: 12px;
+            border-radius: var(--radius-lg);
             max-width: 700px;
             width: 100%;
             max-height: 90vh;
@@ -1076,7 +1076,7 @@
         .wiki-entry {
             background: var(--bg-card);
             border: 1px solid var(--border);
-            border-radius: 8px;
+            border-radius: var(--radius-md);
             overflow: hidden;
             border-left: 3px solid var(--purple);
         }
@@ -1123,7 +1123,7 @@
             color: var(--purple);
             background: rgba(168, 85, 247, 0.15);
             padding: 2px 8px;
-            border-radius: 4px;
+            border-radius: var(--radius-sm);
         }
         
         .wiki-entry-pin {
@@ -1170,7 +1170,7 @@
             background: var(--bg-dark);
             color: var(--cyan);
             padding: 3px 8px;
-            border-radius: 4px;
+            border-radius: var(--radius-sm);
             cursor: pointer;
         }
         
@@ -1203,7 +1203,7 @@
             color: var(--purple);
             background: rgba(168, 85, 247, 0.1);
             padding: 2px 8px;
-            border-radius: 4px;
+            border-radius: var(--radius-sm);
             cursor: pointer;
             font-size: 0.85em;
             text-decoration: none;
@@ -1257,7 +1257,7 @@
 .cf-panel {
     background: var(--bg-dark);
     border: 1px solid var(--border);
-    border-radius: 10px;
+    border-radius: var(--radius-md);
     padding: 16px;
 }
 
@@ -1340,7 +1340,7 @@
     padding: 10px 12px;
     background: var(--bg-card);
     border: 1px solid var(--border);
-    border-radius: 6px;
+    border-radius: var(--radius-md);
     color: var(--text);
     font-size: 0.95em;
     transition: border-color 0.2s, box-shadow 0.2s;
@@ -1404,7 +1404,7 @@
     padding: 16px;
     background: rgba(255, 100, 100, 0.08);
     border: 1px solid rgba(255, 100, 100, 0.25);
-    border-radius: 10px;
+    border-radius: var(--radius-md);
     margin-bottom: 20px;
 }
 
@@ -1439,7 +1439,7 @@
     text-align: center;
     background: var(--bg-card);
     border: 2px solid var(--red);
-    border-radius: 8px;
+    border-radius: var(--radius-md);
     color: var(--text);
 }
 
@@ -1461,7 +1461,7 @@
     text-align: center;
     background: var(--bg-card);
     border: 2px solid var(--cyan);
-    border-radius: 8px;
+    border-radius: var(--radius-md);
     color: var(--cyan);
 }
 
@@ -1476,7 +1476,7 @@
 .cf-combat-stat {
     background: var(--bg-card);
     border: 1px solid var(--border);
-    border-radius: 8px;
+    border-radius: var(--radius-md);
     padding: 12px;
     text-align: center;
     transition: all 0.2s;
@@ -1506,7 +1506,7 @@
 /* Speed Dropdown - Dark Theme */
 .cf-combat-value select {
     background: var(--bg-card);
-    border-radius: 6px;
+    border-radius: var(--radius-md);
     cursor: pointer;
     appearance: none;
     -webkit-appearance: none;
@@ -1547,7 +1547,7 @@
     color: var(--cyan);
     background: rgba(0, 180, 216, 0.15);
     padding: 2px 6px;
-    border-radius: 4px;
+    border-radius: var(--radius-sm);
     margin-left: 4px;
 }
 
@@ -1583,7 +1583,7 @@
 .cf-attr-card {
     background: var(--bg-card);
     border: 1px solid var(--border);
-    border-radius: 8px;
+    border-radius: var(--radius-md);
     padding: 12px 10px;
     text-align: center;
     transition: all 0.2s;
@@ -1612,7 +1612,7 @@
     text-align: center;
     background: var(--bg-dark);
     border: 1px solid var(--border);
-    border-radius: 6px;
+    border-radius: var(--radius-md);
     color: var(--text);
 }
 
@@ -1687,7 +1687,7 @@
     text-align: center;
     background: var(--bg-card);
     border: 1px solid var(--border);
-    border-radius: 6px;
+    border-radius: var(--radius-md);
     color: var(--text);
 }
 
@@ -1722,7 +1722,7 @@
     text-align: center;
     background: var(--bg-card);
     border: 1px solid var(--border);
-    border-radius: 4px;
+    border-radius: var(--radius-sm);
     color: var(--text);
 }
 
@@ -1736,7 +1736,7 @@
     padding: 10px 12px;
     background: var(--bg-card);
     border: 1px solid var(--border);
-    border-radius: 6px;
+    border-radius: var(--radius-md);
     color: var(--text);
     font-size: 0.85em;
     cursor: pointer;
@@ -1766,10 +1766,10 @@
     right: 0;
     background: var(--bg-card);
     border: 1px solid var(--gold);
-    border-radius: 6px;
+    border-radius: var(--radius-md);
     max-height: 200px;
     overflow-y: auto;
-    z-index: 100;
+    z-index: var(--z-dropdown);
     margin-top: 4px;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
 }
@@ -1801,7 +1801,7 @@
 .cf-defense-panel {
     background: var(--bg-dark);
     border: 1px solid var(--border);
-    border-radius: 10px;
+    border-radius: var(--radius-md);
     padding: 20px;
 }
 
@@ -1830,7 +1830,7 @@
     padding: 8px 12px;
     background: var(--bg-card);
     border: 1px solid var(--border);
-    border-radius: 20px;
+    border-radius: var(--radius-lg);
     cursor: pointer;
     transition: all 0.2s;
     font-size: 0.85em;
@@ -1883,7 +1883,7 @@
 .cf-notes-panel {
     background: var(--bg-dark);
     border: 1px solid var(--border);
-    border-radius: 10px;
+    border-radius: var(--radius-md);
     padding: 20px;
     margin-bottom: 24px;
     display: flex;
@@ -1917,7 +1917,7 @@
     padding: 6px 10px;
     background: var(--bg-card);
     border: 1px solid var(--border);
-    border-radius: 4px;
+    border-radius: var(--radius-sm);
     color: var(--text);
     cursor: pointer;
     font-size: 0.85em;
@@ -1933,7 +1933,7 @@
     padding: 6px 8px;
     background: var(--bg-card);
     border: 1px solid var(--border);
-    border-radius: 4px;
+    border-radius: var(--radius-sm);
     color: var(--text);
     font-size: 0.8em;
     cursor: pointer;
@@ -1945,7 +1945,7 @@
     padding: 14px;
     background: var(--bg-card);
     border: 1px solid var(--border);
-    border-radius: 6px;
+    border-radius: var(--radius-md);
     color: var(--text);
     font-size: 0.95em;
     line-height: 1.5;
@@ -2047,7 +2047,7 @@
     padding: 12px;
     background: var(--bg-card);
     border: 1px solid var(--border);
-    border-radius: 10px;
+    border-radius: var(--radius-md);
     margin-bottom: 12px;
 }
 
@@ -2059,7 +2059,7 @@
     text-align: center;
     padding: 12px 8px;
     background: var(--bg-dark);
-    border-radius: 8px;
+    border-radius: var(--radius-md);
     border: 1px solid var(--border);
     transition: all 0.2s;
 }
@@ -2096,14 +2096,14 @@
 .party-hp-bar {
     height: 6px;
     background: var(--bg-elevated);
-    border-radius: 3px;
+    border-radius: var(--radius-sm);
     margin-top: 6px;
     overflow: hidden;
 }
 
 .party-hp-fill {
     height: 100%;
-    border-radius: 3px;
+    border-radius: var(--radius-sm);
     transition: width 0.3s;
 }
 
@@ -2123,7 +2123,7 @@
     gap: 6px;
     padding: 10px 8px;
     background: var(--bg-dark);
-    border-radius: 8px;
+    border-radius: var(--radius-md);
     border: 1px solid var(--border);
 }
 
@@ -2141,7 +2141,7 @@
 
 .party-leveling-option {
     padding: 4px 10px;
-    border-radius: 6px;
+    border-radius: var(--radius-md);
     border: 1px solid var(--border);
     background: var(--bg-elevated);
     color: var(--text-dim);
@@ -2190,7 +2190,7 @@
     padding: 16px 20px;
     margin: 0 12px;
     background: var(--bg-dark);
-    border-radius: 12px;
+    border-radius: var(--radius-lg);
 }
 
 .rest-type-btn {
@@ -2201,7 +2201,7 @@
     padding: 16px;
     background: var(--bg-card);
     border: 2px solid var(--border);
-    border-radius: 12px;
+    border-radius: var(--radius-lg);
     cursor: pointer;
     transition: all 0.2s;
 }
@@ -2225,7 +2225,7 @@
 
 .rest-info {
     background: var(--bg-dark);
-    border-radius: 8px;
+    border-radius: var(--radius-md);
     padding: 12px 16px;
     margin-bottom: 12px;
 }
@@ -2257,7 +2257,7 @@
     gap: 10px;
     padding: 8px 12px;
     background: var(--bg-dark);
-    border-radius: 6px;
+    border-radius: var(--radius-md);
     margin-bottom: 6px;
     border: 1px solid var(--border);
 }
@@ -2280,7 +2280,7 @@
 .rest-hp-bar {
     height: 6px;
     background: var(--bg-elevated);
-    border-radius: 3px;
+    border-radius: var(--radius-sm);
     overflow: hidden;
     position: relative;
 }
@@ -2292,7 +2292,7 @@
     top: 0;
     height: 100%;
     width: var(--hp-pct);
-    border-radius: 3px;
+    border-radius: var(--radius-sm);
 }
 
 .rest-hp-bar.healthy::after { background: var(--green); }
@@ -2317,7 +2317,7 @@
     padding: 0;
     background: var(--bg-card);
     border: 1px solid var(--border);
-    border-radius: 4px;
+    border-radius: var(--radius-sm);
     color: var(--text);
     cursor: pointer;
     font-size: 14px;
@@ -2338,7 +2338,7 @@
     padding: 0;
     background: var(--bg-card);
     border: 1px solid var(--border);
-    border-radius: 4px;
+    border-radius: var(--radius-sm);
     color: var(--text);
     font-size: 12px;
 }
@@ -2372,7 +2372,7 @@
     margin: 12px;
     margin-top: 0;
     background: var(--bg-dark);
-    border-radius: 12px;
+    border-radius: var(--radius-lg);
 }
 
 /* ============================================================
@@ -2385,11 +2385,11 @@
     padding: 12px;
     background: var(--bg-card);
     border: 1px solid var(--border);
-    border-radius: 10px;
+    border-radius: var(--radius-md);
     margin-bottom: 12px;
     position: sticky;
     top: 145px;
-    z-index: 98;
+    z-index: var(--z-sticky);
 }
 
 [data-layout="mobile"] #quick-actions-bar {
@@ -2420,7 +2420,7 @@
     padding: 8px 12px;
     background: var(--bg-dark);
     border: 1px solid var(--border);
-    border-radius: 6px;
+    border-radius: var(--radius-md);
     cursor: pointer;
     transition: all 0.2s;
     color: var(--text);
@@ -2464,7 +2464,7 @@
     padding: 10px 14px;
     background: var(--bg-card);
     border: 1px solid var(--border);
-    border-radius: 8px;
+    border-radius: var(--radius-md);
     color: var(--text);
     font-size: 1em;
 }
@@ -2483,7 +2483,7 @@
 .condition-ref-item {
     padding: 12px;
     background: var(--bg-dark);
-    border-radius: 8px;
+    border-radius: var(--radius-md);
     margin-bottom: 8px;
     border: 1px solid var(--border);
 }
@@ -2611,7 +2611,7 @@
     font-size: 0.82em;
     cursor: pointer;
     padding: 2px 3px;
-    border-radius: 3px;
+    border-radius: var(--radius-sm);
     transition: background 0.1s;
     user-select: none;
 }
@@ -2708,7 +2708,7 @@
     font-size: 0.82em;
     background: var(--bg-input, var(--bg));
     border: 1px solid var(--border);
-    border-radius: 4px;
+    border-radius: var(--radius-sm);
     color: var(--text);
     box-sizing: border-box;
 }
@@ -2724,7 +2724,7 @@
     border: 1px solid var(--border);
     color: var(--text-dim);
     cursor: pointer;
-    border-radius: 3px;
+    border-radius: var(--radius-sm);
     transition: color 0.15s, border-color 0.15s;
 }
 
@@ -2743,7 +2743,7 @@
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    border-radius: 4px;
+    border-radius: var(--radius-sm);
     transition: background 0.15s, transform 0.08s;
     user-select: none;
 }
@@ -2767,7 +2767,7 @@
 .char-adv-btn {
     font-size: 0.7em;
     padding: 1px 4px;
-    border-radius: 3px;
+    border-radius: var(--radius-sm);
     cursor: pointer;
     border: 1px solid var(--border);
     background: transparent;
@@ -2848,7 +2848,7 @@
     align-items: center;
     gap: 5px;
     padding: 3px 5px;
-    border-radius: 4px;
+    border-radius: var(--radius-sm);
     font-size: 0.82em;
     cursor: pointer;
     transition: background 0.12s;
@@ -2931,7 +2931,7 @@
     gap: 4px;
     padding: 4px 8px;
     border: 1px solid var(--border);
-    border-radius: 5px;
+    border-radius: var(--radius-sm);
     font-size: 0.82em;
     cursor: pointer;
     transition: background 0.12s, border-color 0.12s;
@@ -2986,7 +2986,7 @@
     padding: 6px 10px;
     background: var(--bg-card, var(--bg));
     border: 1px solid var(--border);
-    border-radius: 5px;
+    border-radius: var(--radius-sm);
     font-size: 0.85em;
 }
 
@@ -3003,7 +3003,7 @@
     padding: 1px 5px;
     background: var(--bg);
     border: 1px solid var(--border);
-    border-radius: 3px;
+    border-radius: var(--radius-sm);
 }
 
 .char-attack-roll {
@@ -3022,7 +3022,7 @@
 .char-attack-entry .bestiary-dice {
     cursor: pointer;
     padding: 2px 6px;
-    border-radius: 4px;
+    border-radius: var(--radius-sm);
     background: var(--bg);
     border: 1px solid var(--border);
     color: var(--gold);
@@ -3042,7 +3042,7 @@
 .char-xp-section {
     background: var(--bg-card);
     border: 1px solid var(--border);
-    border-radius: 8px;
+    border-radius: var(--radius-md);
     padding: 14px 16px;
     margin: 8px 0;
     display: flex;
@@ -3085,14 +3085,14 @@
 .char-xp-bar-wrap {
     height: 6px;
     background: var(--bg-dark);
-    border-radius: 3px;
+    border-radius: var(--radius-sm);
     overflow: hidden;
 }
 
 .char-xp-bar {
     height: 100%;
     background: linear-gradient(90deg, var(--gold), #f0d060);
-    border-radius: 3px;
+    border-radius: var(--radius-sm);
     transition: width 0.3s;
 }
 
@@ -3105,7 +3105,7 @@
     flex-wrap: wrap;
     background: rgba(34, 197, 94, 0.12);
     border: 1px solid #22c55e;
-    border-radius: 6px;
+    border-radius: var(--radius-md);
     padding: 8px 12px;
     font-size: 0.9rem;
     font-weight: 600;
@@ -3117,7 +3117,7 @@
     color: #111;
     border: none;
     padding: 4px 10px;
-    border-radius: 4px;
+    border-radius: var(--radius-sm);
     font-size: 0.8rem;
     cursor: pointer;
     font-weight: 700;
@@ -3183,7 +3183,7 @@
 .char-xp-milestone-section {
     background: var(--bg-card);
     border: 1px solid #a855f7;
-    border-radius: 8px;
+    border-radius: var(--radius-md);
     padding: 14px 16px;
     margin: 8px 0;
     display: flex;
@@ -3203,7 +3203,7 @@
     color: #fff;
     border: none;
     padding: 6px 14px;
-    border-radius: 6px;
+    border-radius: var(--radius-md);
     font-size: 0.9rem;
     font-weight: 700;
     cursor: pointer;

@@ -16,7 +16,7 @@
             color: var(--text);
             font-weight: 700;
             font-size: 16px;
-            border-radius: 10px;
+            border-radius: var(--radius-md);
             cursor: pointer;
             transition: all 0.2s;
             position: relative;
@@ -31,7 +31,7 @@
             right: 0;
             bottom: 0;
             opacity: 0.15;
-            border-radius: 8px;
+            border-radius: var(--radius-md);
         }
         
         .dice-btn.d4 { border-color: var(--green); color: var(--green); }
@@ -80,8 +80,8 @@
             background: var(--bg-dark);
             border: 1px solid var(--border);
             color: var(--text);
-            border-radius: 5px;
-            font-family: monospace;
+            border-radius: var(--radius-sm);
+            font-family: var(--font-mono);
             font-size: 1em;
         }
         
@@ -100,7 +100,7 @@
         .dice-result {
             background: var(--bg-dark);
             border: 3px solid var(--gold);
-            border-radius: 16px;
+            border-radius: var(--radius-lg);
             padding: 24px;
             text-align: center;
             margin: 16px 0;
@@ -145,7 +145,7 @@
             font-size: 1em;
             color: var(--text-dim);
             margin-top: 10px;
-            font-family: monospace;
+            font-family: var(--font-mono);
         }
         
         .dice-result-extra {
@@ -171,7 +171,7 @@
         .dice-section {
             background: var(--bg-elevated);
             border: 1px solid var(--border);
-            border-radius: 8px;
+            border-radius: var(--radius-md);
             padding: 12px;
             margin: 12px 0;
         }
@@ -208,7 +208,7 @@
             padding: 8px 12px;
             background: var(--bg-dark);
             border: 1px solid var(--border);
-            border-radius: 6px;
+            border-radius: var(--radius-md);
             color: var(--text);
             cursor: pointer;
             transition: all 0.2s;
@@ -241,7 +241,7 @@
             padding: 6px 10px;
             background: var(--bg-dark);
             border: 1px solid var(--border);
-            border-radius: 4px;
+            border-radius: var(--radius-sm);
             color: var(--text);
             cursor: pointer;
             font-size: 0.8em;
@@ -277,7 +277,7 @@
             padding: 3px 8px;
             background: var(--bg-dark);
             border: 1px solid var(--border);
-            border-radius: 12px;
+            border-radius: var(--radius-lg);
             font-size: 0.75em;
             cursor: pointer;
             transition: all 0.2s;
@@ -306,7 +306,7 @@
         .dice-history-item {
             padding: 8px 10px;
             background: var(--bg-dark);
-            border-radius: 4px;
+            border-radius: var(--radius-sm);
             margin-bottom: 4px;
             display: flex;
             justify-content: space-between;
@@ -320,7 +320,7 @@
             background: var(--bg-elevated);
         }
         
-        .dice-history-notation { color: var(--cyan); font-family: monospace; flex: 1; }
+        .dice-history-notation { color: var(--cyan); font-family: var(--font-mono); flex: 1; }
         .dice-history-result { color: var(--gold); font-weight: 600; min-width: 40px; text-align: right; }
         .dice-history-rolls { color: var(--text-dim); font-size: 0.85em; }
         
@@ -335,9 +335,9 @@
             padding: 4px 10px;
             background: var(--bg-dark);
             border: 1px solid var(--border);
-            border-radius: 4px;
+            border-radius: var(--radius-sm);
             font-size: 0.8em;
-            font-family: monospace;
+            font-family: var(--font-mono);
             color: var(--cyan);
             cursor: pointer;
             transition: all 0.2s;
@@ -352,7 +352,7 @@
             position: absolute;
             width: 10px;
             height: 10px;
-            border-radius: 2px;
+            border-radius: var(--radius-sm);
             animation: confettiFall 1s ease-out forwards;
             pointer-events: none;
         }
@@ -390,7 +390,7 @@
             font-size: 1.1em;
             background: var(--bg-dark);
             border: 1px solid var(--border);
-            border-radius: 6px;
+            border-radius: var(--radius-md);
             cursor: pointer;
             transition: all 0.15s;
         }
@@ -404,7 +404,7 @@
         .timer-item {
             background: var(--bg-dark);
             border: 1px solid var(--border);
-            border-radius: 8px;
+            border-radius: var(--radius-md);
             padding: 12px;
             display: flex;
             align-items: center;
@@ -417,7 +417,7 @@
         
         .timer-info { flex: 1; }
         .timer-name { font-weight: 600; color: var(--cyan); }
-        .timer-display { font-size: 1.5em; font-weight: 700; font-family: monospace; color: var(--gold); }
+        .timer-display { font-size: 1.5em; font-weight: 700; font-family: var(--font-mono); color: var(--gold); }
         .timer-controls { display: flex; gap: 4px; }
         
         .round-timer-section {
@@ -444,13 +444,13 @@
             background: var(--bg-dark);
             border: 1px solid var(--border);
             color: var(--text);
-            border-radius: 5px;
+            border-radius: var(--radius-sm);
         }
         
         .round-timer-display {
             font-size: 1.2em;
             color: var(--gold);
-            font-family: monospace;
+            font-family: var(--font-mono);
         }
         
         /* ============================================================
@@ -473,7 +473,7 @@
         .gen-result {
             background: var(--bg-dark);
             border: 1px solid var(--border);
-            border-radius: 5px;
+            border-radius: var(--radius-sm);
             padding: 12px;
             margin-top: 10px;
             color: var(--gold);
@@ -506,7 +506,7 @@
         .campaign-item {
             background: var(--bg-dark);
             border: 1px solid var(--border);
-            border-radius: 8px;
+            border-radius: var(--radius-md);
             padding: 12px;
             display: flex;
             justify-content: space-between;
@@ -531,7 +531,7 @@
         .data-management-section {
             background: var(--bg-dark);
             border: 1px solid var(--border);
-            border-radius: 8px;
+            border-radius: var(--radius-md);
             padding: 16px;
         }
         
@@ -558,7 +558,7 @@
             background: rgba(0,0,0,0.6);
             backdrop-filter: blur(4px);
             -webkit-backdrop-filter: blur(4px);
-            z-index: 1100;
+            z-index: var(--z-modal);
             align-items: center;
             justify-content: center;
             opacity: 0;
@@ -575,7 +575,7 @@
             backdrop-filter: blur(12px);
             -webkit-backdrop-filter: blur(12px);
             border: 1px solid rgba(212, 175, 55, 0.2);
-            border-radius: 12px;
+            border-radius: var(--radius-lg);
             padding: 24px;
             max-width: 500px;
             width: 90%;
@@ -623,7 +623,7 @@
             padding: 8px 16px;
             background: var(--bg-dark);
             border: 1px solid var(--border);
-            border-radius: 6px 6px 0 0;
+            border-radius: var(--radius-md) var(--radius-md) 0 0;
             color: var(--text-dim);
             cursor: pointer;
             font-size: 0.9em;
@@ -645,7 +645,7 @@
             position: relative;
             background: var(--bg-dark);
             border: 1px solid var(--border);
-            border-radius: 8px;
+            border-radius: var(--radius-md);
             height: 800px;
             overflow: hidden;
         }
@@ -712,7 +712,7 @@
         }
         
         .map-marker.dragging {
-            z-index: 100;
+            z-index: var(--z-sticky);
             transform: translate(-50%, -50%) scale(1.2);
             box-shadow: 0 6px 16px rgba(0,0,0,0.7);
         }
@@ -758,12 +758,12 @@
             border: none;
         }
         .map-marker.shape-skull { 
-            border-radius: 8px; 
+            border-radius: var(--radius-md); 
             background: #1f2937;
             border: 2px solid #6b7280;
         }
         .map-marker.shape-chest { 
-            border-radius: 4px; 
+            border-radius: var(--radius-sm); 
             background: #92400e;
             border: 2px solid #fbbf24;
         }
@@ -790,14 +790,14 @@
             background: var(--bg-card);
             border: 2px solid var(--gold);
             padding: 10px 14px;
-            border-radius: 8px;
+            border-radius: var(--radius-md);
             white-space: normal;
             max-width: 250px;
             min-width: 120px;
             font-size: 14px;
             line-height: 1.4;
             display: none;
-            z-index: 200;
+            z-index: var(--z-dropdown);
             box-shadow: 0 6px 20px rgba(0,0,0,0.5);
         }
         
@@ -840,7 +840,7 @@
             justify-content: center;
             height: 300px;
             border: 2px dashed var(--border);
-            border-radius: 8px;
+            border-radius: var(--radius-md);
             color: var(--text-dim);
             cursor: pointer;
         }
@@ -895,7 +895,6 @@
             flex-wrap: wrap;
             align-items: center;
             flex: 1;
-            font-family: 'Segoe UI', system-ui, sans-serif;
             font-size: 14px;
         }
 
@@ -933,7 +932,7 @@
         .map-zoom-badge {
             padding: 2px 6px;
             background: var(--bg-card);
-            border-radius: 4px;
+            border-radius: var(--radius-sm);
             font-size: 0.75em;
             color: var(--cyan);
         }
@@ -1030,9 +1029,9 @@
             position: fixed;
             background: var(--bg-card);
             border: 1px solid var(--border);
-            border-radius: 8px;
+            border-radius: var(--radius-md);
             padding: 8px 0;
-            z-index: 1000;
+            z-index: var(--z-dropdown);
             box-shadow: 0 8px 24px rgba(0,0,0,0.4);
             min-width: 180px;
         }
@@ -1078,7 +1077,7 @@
         .map-sidebar-section {
             background: var(--bg-card);
             border: 1px solid var(--border);
-            border-radius: 8px;
+            border-radius: var(--radius-md);
             padding: 12px;
         }
         
@@ -1094,7 +1093,7 @@
         .map-marker-count {
             background: var(--bg-dark);
             padding: 2px 8px;
-            border-radius: 10px;
+            border-radius: var(--radius-md);
             font-size: 0.8em;
             color: var(--text-dim);
         }
@@ -1104,7 +1103,7 @@
             padding: 8px 10px;
             background: var(--bg-dark);
             border: 1px solid var(--border);
-            border-radius: 6px;
+            border-radius: var(--radius-md);
             color: var(--text);
             font-size: 0.9em;
         }
@@ -1122,7 +1121,7 @@
         
         .map-search-result {
             padding: 6px 8px;
-            border-radius: 4px;
+            border-radius: var(--radius-sm);
             cursor: pointer;
             display: flex;
             align-items: center;
@@ -1146,7 +1145,7 @@
             align-items: center;
             gap: 8px;
             padding: 6px 8px;
-            border-radius: 4px;
+            border-radius: var(--radius-sm);
             cursor: pointer;
             font-size: 0.85em;
             transition: background 0.15s;
@@ -1182,7 +1181,7 @@
             gap: 8px;
             padding: 8px;
             background: var(--bg-dark);
-            border-radius: 6px;
+            border-radius: var(--radius-md);
             cursor: pointer;
             transition: all 0.15s;
         }
@@ -1255,7 +1254,7 @@
         .tooltip-link {
             padding: 4px 8px;
             background: var(--bg-dark);
-            border-radius: 4px;
+            border-radius: var(--radius-sm);
             font-size: 0.8em;
             color: var(--cyan);
             cursor: pointer;
@@ -1302,10 +1301,10 @@
         #map-cursor-tooltip {
             position: fixed;
             pointer-events: none;
-            z-index: 10000;
+            z-index: var(--z-tooltip);
             background: var(--bg-dark);
             border: 1px solid var(--cyan);
-            border-radius: 4px;
+            border-radius: var(--radius-sm);
             padding: 4px 8px;
             font-size: 0.85em;
             font-weight: 600;
@@ -1354,7 +1353,7 @@
             text-align: center;
             background: var(--bg-dark);
             border: 1px solid var(--border);
-            border-radius: 4px;
+            border-radius: var(--radius-sm);
             padding: 4px 2px;
             min-width: 0;
         }
@@ -1439,7 +1438,7 @@
         .char-attr-box {
             background: var(--bg-dark);
             border: 2px solid var(--border);
-            border-radius: 8px;
+            border-radius: var(--radius-md);
             padding: 8px 4px;
             text-align: center;
             transition: border-color 0.2s;
@@ -1480,7 +1479,7 @@
             font-weight: 600;
             color: var(--text);
             background: var(--bg-card);
-            border-radius: 4px;
+            border-radius: var(--radius-sm);
             padding: 2px 6px;
             margin-top: 4px;
             display: inline-block;
@@ -1503,7 +1502,7 @@
             gap: 4px;
             padding: 6px;
             background: var(--bg-dark);
-            border-radius: 6px;
+            border-radius: var(--radius-md);
             cursor: pointer;
             transition: background 0.2s;
         }
@@ -1546,7 +1545,7 @@
             gap: 4px;
             padding: 8px 4px;
             background: var(--bg-dark);
-            border-radius: 6px;
+            border-radius: var(--radius-md);
             border: 1px solid transparent;
             transition: all 0.2s;
         }
@@ -1581,7 +1580,7 @@
             padding: 4px;
             background: var(--bg-card);
             border: 1px solid var(--border);
-            border-radius: 4px;
+            border-radius: var(--radius-sm);
             color: var(--text);
             font-size: 0.85em;
             text-align: center;
@@ -1613,7 +1612,7 @@
         .char-combat-box {
             background: var(--bg-dark);
             border: 1px solid var(--border);
-            border-radius: 6px;
+            border-radius: var(--radius-md);
             padding: 6px;
             text-align: center;
         }
@@ -1642,7 +1641,7 @@
             padding: 10px 12px;
             background: var(--bg-dark);
             border: 2px solid var(--border);
-            border-radius: 8px;
+            border-radius: var(--radius-md);
             cursor: pointer;
             transition: all 0.2s;
         }
@@ -1703,7 +1702,7 @@
             padding: 4px 10px;
             background: var(--bg-dark);
             border: 1px solid var(--border);
-            border-radius: 20px;
+            border-radius: var(--radius-lg);
             font-size: 0.8em;
             cursor: pointer;
             transition: all 0.2s;
@@ -1751,7 +1750,7 @@
             margin-bottom: 12px;
             padding: 10px;
             background: var(--bg-dark);
-            border-radius: 6px;
+            border-radius: var(--radius-md);
         }
         
         .monster-template-btn {
@@ -1760,7 +1759,7 @@
             background: var(--bg-card);
             border: 1px solid var(--border);
             color: var(--text);
-            border-radius: 4px;
+            border-radius: var(--radius-sm);
             cursor: pointer;
             transition: all 0.2s;
         }
@@ -1782,11 +1781,11 @@
             background: var(--bg-card);
             border: 1px solid var(--gold);
             padding: 12px 20px;
-            border-radius: 8px;
+            border-radius: var(--radius-md);
             display: none;
             align-items: center;
             gap: 12px;
-            z-index: 9999;
+            z-index: var(--z-modal);
             box-shadow: 0 4px 20px rgba(0,0,0,0.5);
         }
         
@@ -1838,7 +1837,7 @@
             padding: 12px 16px;
             background: var(--bg-elevated);
             border-bottom: 1px solid var(--border);
-            border-radius: 8px 8px 0 0;
+            border-radius: var(--radius-md) var(--radius-md) 0 0;
             margin: -12px -12px 12px -12px;
         }
         
@@ -1856,7 +1855,7 @@
             align-items: center;
             justify-content: center;
             background: var(--bg-dark);
-            border-radius: 6px;
+            border-radius: var(--radius-md);
         }
         
         .card-header-title {
@@ -1904,7 +1903,7 @@
             align-items: center;
             gap: 4px;
             padding: 3px 8px;
-            border-radius: 12px;
+            border-radius: var(--radius-lg);
             font-size: 0.75em;
             font-weight: 500;
         }
@@ -1916,7 +1915,7 @@
         .status-badge.primary { background: rgba(212, 175, 55, 0.2); color: var(--gold); }
         
         /* Entity-Farben für Sidebar/Tags */
-        .entity-tag { padding: 2px 8px; border-radius: 4px; font-size: 0.75em; }
+        .entity-tag { padding: 2px 8px; border-radius: var(--radius-sm); font-size: 0.75em; }
         .entity-tag.character { background: rgba(126, 196, 207, 0.2); color: var(--color-character); }
         .entity-tag.npc { background: rgba(167, 139, 250, 0.2); color: var(--color-npc); }
         .entity-tag.location { background: rgba(74, 222, 128, 0.2); color: var(--color-location); }
@@ -1958,7 +1957,7 @@
             color: var(--text-dim);
             cursor: pointer;
             padding: 6px;
-            border-radius: 6px;
+            border-radius: var(--radius-md);
             transition: all 0.2s;
             display: inline-flex;
             align-items: center;
@@ -1981,7 +1980,7 @@
             align-items: center;
             gap: 6px;
             padding: 4px 10px;
-            border-radius: 6px;
+            border-radius: var(--radius-md);
             font-size: 0.75em;
             transition: all 0.3s;
         }
@@ -2029,7 +2028,7 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
-            z-index: 10000;
+            z-index: var(--z-modal);
             transform: translateY(-100%);
             transition: transform 0.3s ease;
             box-shadow: 0 4px 12px rgba(0,0,0,0.3);
@@ -2072,7 +2071,7 @@
 .dash-party {
     background: var(--bg-card);
     border: 1px solid var(--border);
-    border-radius: 12px;
+    border-radius: var(--radius-lg);
     padding: 16px;
 }
 
@@ -2094,7 +2093,7 @@
 .dash-char {
     background: var(--bg-elevated);
     border: 1px solid var(--border);
-    border-radius: 10px;
+    border-radius: var(--radius-md);
     padding: 10px 8px;
     text-align: center;
     cursor: pointer;
@@ -2152,7 +2151,7 @@
 .dash-char-hp {
     height: 4px;
     background: var(--bg-dark);
-    border-radius: 2px;
+    border-radius: var(--radius-sm);
     overflow: hidden;
     margin-bottom: 4px;
 }
@@ -2194,7 +2193,7 @@
 .dash-stat {
     background: var(--bg-card);
     border: 1px solid var(--border);
-    border-radius: 10px;
+    border-radius: var(--radius-md);
     padding: 12px 16px;
     text-align: center;
     cursor: pointer;
@@ -2231,7 +2230,7 @@
 .dash-quick-btn {
     background: var(--bg-elevated);
     border: 1px solid var(--border);
-    border-radius: 8px;
+    border-radius: var(--radius-md);
     padding: 10px 16px;
     color: var(--text);
     cursor: pointer;
@@ -2265,7 +2264,7 @@
 .dash-card {
     background: var(--bg-card);
     border: 1px solid var(--border);
-    border-radius: 12px;
+    border-radius: var(--radius-lg);
     overflow: hidden;
 }
 
@@ -2303,7 +2302,7 @@
     align-items: center;
     gap: 8px;
     padding: 8px;
-    border-radius: 6px;
+    border-radius: var(--radius-md);
     cursor: pointer;
     transition: background 0.2s;
 }
@@ -2324,7 +2323,7 @@
 .dash-quest-type {
     font-size: 0.7em;
     padding: 2px 6px;
-    border-radius: 4px;
+    border-radius: var(--radius-sm);
     background: var(--bg-elevated);
     color: var(--text-dim);
     text-transform: uppercase;
@@ -2339,7 +2338,7 @@
     align-items: center;
     gap: 8px;
     padding: 8px;
-    border-radius: 6px;
+    border-radius: var(--radius-md);
     cursor: pointer;
     transition: background 0.2s;
 }
@@ -2375,7 +2374,7 @@
 /* Timer Widget */
 .dash-timer {
     background: var(--bg-elevated);
-    border-radius: 8px;
+    border-radius: var(--radius-md);
     padding: 12px;
     display: flex;
     align-items: center;
@@ -2385,7 +2384,7 @@
 .dash-timer-time {
     font-size: 1.5em;
     font-weight: 700;
-    font-family: monospace;
+    font-family: var(--font-mono);
     color: var(--gold);
 }
 
@@ -2397,7 +2396,7 @@
 .dash-timer-btn {
     background: var(--bg-card);
     border: 1px solid var(--border);
-    border-radius: 6px;
+    border-radius: var(--radius-md);
     padding: 6px 10px;
     cursor: pointer;
     font-size: 1.1em;
@@ -2421,7 +2420,7 @@
     justify-content: center;
     cursor: pointer;
     box-shadow: 0 4px 12px rgba(0,0,0,0.4);
-    z-index: 1000;
+    z-index: var(--z-panel);
     transition: all 0.2s;
 }
 
@@ -2443,9 +2442,9 @@
     max-height: calc(100vh - 120px);
     background: var(--bg-card);
     border: 1px solid var(--border);
-    border-radius: 12px;
+    border-radius: var(--radius-lg);
     box-shadow: 0 8px 32px rgba(0,0,0,0.5);
-    z-index: 999;
+    z-index: var(--z-panel);
     display: none;
     flex-direction: column;
     overflow: hidden;
@@ -2485,7 +2484,7 @@
 .qref-btn {
     background: var(--bg-card);
     border: 1px solid var(--border);
-    border-radius: 6px;
+    border-radius: var(--radius-md);
     padding: 4px 10px;
     color: var(--text);
     cursor: pointer;
@@ -2547,7 +2546,7 @@
 .qref-card {
     background: var(--bg-elevated);
     border: 1px solid var(--border);
-    border-radius: 8px;
+    border-radius: var(--radius-md);
     padding: 12px;
     margin-bottom: 10px;
 }
@@ -2606,7 +2605,7 @@
     align-items: center;
     background: var(--bg-card);
     border: 1px solid var(--border);
-    border-radius: 6px;
+    border-radius: var(--radius-md);
     padding: 6px 10px;
     min-width: 48px;
     cursor: help;
@@ -2653,7 +2652,7 @@
     align-items: center;
     padding: 4px 8px;
     background: var(--bg-card);
-    border-radius: 4px;
+    border-radius: var(--radius-sm);
     font-size: 0.85em;
 }
 
@@ -2679,7 +2678,7 @@
 .qref-chip {
     background: var(--bg-card);
     border: 1px solid var(--border);
-    border-radius: 12px;
+    border-radius: var(--radius-lg);
     padding: 4px 10px;
     font-size: 0.8em;
     cursor: help;
@@ -2707,7 +2706,7 @@
 .qref-badge {
     background: var(--bg-card);
     padding: 4px 8px;
-    border-radius: 4px;
+    border-radius: var(--radius-sm);
     font-size: 0.85em;
     font-weight: 600;
 }
@@ -2736,7 +2735,7 @@
     justify-content: center;
     background: var(--bg-card);
     border: 1px solid var(--border);
-    border-radius: 6px;
+    border-radius: var(--radius-md);
     font-weight: 700;
     cursor: help;
     transition: all 0.2s;
@@ -2771,7 +2770,7 @@
 
 .qref-diff {
     padding: 4px 10px;
-    border-radius: 4px;
+    border-radius: var(--radius-sm);
     font-size: 0.8em;
     cursor: help;
 }
@@ -2800,7 +2799,7 @@
 .qref-action {
     background: var(--bg-card);
     border: 1px solid var(--border);
-    border-radius: 6px;
+    border-radius: var(--radius-md);
     padding: 8px;
     cursor: help;
     transition: all 0.2s;
@@ -2840,7 +2839,7 @@
 .qref-btn-add {
     background: var(--bg-elevated);
     border: 1px dashed var(--border);
-    border-radius: 6px;
+    border-radius: var(--radius-md);
     padding: 8px 16px;
     color: var(--text-dim);
     cursor: pointer;
@@ -2856,7 +2855,7 @@
 .qref-custom-entry {
     background: var(--bg-card);
     border: 1px solid var(--border);
-    border-radius: 8px;
+    border-radius: var(--radius-md);
     margin-bottom: 8px;
     overflow: hidden;
 }
@@ -2913,10 +2912,10 @@
     padding: 2px 6px;
     background: var(--bg-card);
     border: 1px solid var(--border);
-    border-radius: 4px;
+    border-radius: var(--radius-sm);
     font-size: 0.7em;
     color: var(--text-dim);
-    font-family: monospace;
+    font-family: var(--font-mono);
     margin-left: 4px;
 }
 
@@ -2943,7 +2942,7 @@
     padding: 8px 12px 8px 32px;
     background: var(--bg-elevated);
     border: 1px solid var(--border);
-    border-radius: 6px;
+    border-radius: var(--radius-md);
     color: var(--text);
     font-size: 0.85em;
 }
@@ -2977,7 +2976,7 @@
 .qref-section {
     background: var(--bg-elevated);
     border: 1px solid var(--border);
-    border-radius: 8px;
+    border-radius: var(--radius-md);
     margin-bottom: 8px;
     overflow: hidden;
 }
@@ -3041,7 +3040,7 @@
     padding: 8px 10px;
     background: var(--bg-dark);
     border: 1px solid var(--border);
-    border-radius: 6px;
+    border-radius: var(--radius-md);
     color: var(--text);
     font-size: 1em;
     text-align: right;
@@ -3064,7 +3063,7 @@
     padding: 8px;
     background: var(--bg-dark);
     border: 1px solid var(--border);
-    border-radius: 6px;
+    border-radius: var(--radius-md);
     color: var(--text);
     font-size: 0.9em;
     cursor: pointer;
@@ -3086,7 +3085,7 @@
     padding: 2px 6px;
     background: rgba(34, 197, 94, 0.2);
     color: var(--green);
-    border-radius: 4px;
+    border-radius: var(--radius-sm);
     font-size: 0.65em;
     font-weight: 600;
     margin-left: auto;
@@ -3107,7 +3106,7 @@
     padding: 4px 8px;
     background: var(--bg-card);
     border: 1px solid var(--border);
-    border-radius: 4px;
+    border-radius: var(--radius-sm);
     font-size: 0.8em;
     cursor: pointer;
     transition: all 0.2s;
@@ -3134,7 +3133,7 @@
     padding: 0;
     background: var(--green);
     border: none;
-    border-radius: 3px;
+    border-radius: var(--radius-sm);
     color: var(--bg-dark);
     cursor: pointer;
     font-size: 0.8em;
@@ -3157,7 +3156,7 @@
     margin-top: 10px;
     padding: 10px;
     background: var(--bg-dark);
-    border-radius: 6px;
+    border-radius: var(--radius-md);
     border-left: 3px solid var(--gold);
     font-size: 0.85em;
 }
@@ -3186,7 +3185,7 @@
     justify-content: space-between;
     padding: 6px 10px;
     background: var(--bg-card);
-    border-radius: 6px;
+    border-radius: var(--radius-md);
     font-size: 0.85em;
 }
 
@@ -3212,7 +3211,7 @@
 
 .qref-dmg {
     padding: 3px 8px;
-    border-radius: 4px;
+    border-radius: var(--radius-sm);
     font-size: 0.75em;
     font-weight: 500;
     cursor: help;
@@ -3240,7 +3239,7 @@
 .qref-cover-badge {
     padding: 6px 12px;
     background: var(--bg-card);
-    border-radius: 4px;
+    border-radius: var(--radius-sm);
     font-size: 0.85em;
 }
 
@@ -3266,10 +3265,10 @@
     padding: 4px 10px;
     background: rgba(239, 68, 68, 0.1);
     border: 1px solid var(--red);
-    border-radius: 4px;
+    border-radius: var(--radius-sm);
     color: var(--red);
     cursor: pointer;
-    font-family: monospace;
+    font-family: var(--font-mono);
     font-size: 0.9em;
     font-weight: 600;
     transition: all 0.2s;
@@ -3308,7 +3307,7 @@
     padding: 4px 10px;
     background: var(--bg-card);
     border: 1px solid var(--red);
-    border-radius: 4px;
+    border-radius: var(--radius-sm);
     color: var(--red);
     cursor: pointer;
     font-size: 0.8em;
@@ -3334,7 +3333,7 @@
     align-items: center;
     padding: 8px;
     background: var(--bg-card);
-    border-radius: 6px;
+    border-radius: var(--radius-md);
     text-align: center;
 }
 
@@ -3375,7 +3374,7 @@
 .qref-highlight {
     background: rgba(212, 175, 55, 0.3);
     padding: 0 2px;
-    border-radius: 2px;
+    border-radius: var(--radius-sm);
 }
 
 /* ============================================================
@@ -3393,7 +3392,7 @@
     padding: 12px;
     background: var(--bg-card);
     border: 1px solid var(--border);
-    border-radius: 10px;
+    border-radius: var(--radius-md);
     margin-bottom: 12px;
 }
 
@@ -3403,7 +3402,7 @@
     gap: 8px;
     padding: 8px 10px;
     background: var(--bg-elevated);
-    border-radius: 6px;
+    border-radius: var(--radius-md);
     cursor: pointer;
     transition: all 0.2s;
 }

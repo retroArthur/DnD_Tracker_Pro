@@ -16,7 +16,7 @@
     background: transparent;
     color: var(--gold);
     border: 1px solid var(--gold);
-    border-radius: 4px;
+    border-radius: var(--radius-sm);
     font-size: var(--font-size-small, 12px);
     font-family: inherit;
     cursor: pointer;
@@ -55,7 +55,7 @@
     bottom: 0;
     left: 0;
     right: 0;
-    z-index: 1050;
+    z-index: var(--z-modal);
     height: 40px;
     align-items: center;
     justify-content: space-between;
@@ -83,7 +83,7 @@
     color: var(--yellow, #fbbf24);
     border: 1px solid var(--bg-dark, #0d0d0d);
     padding: 2px 10px;
-    border-radius: 3px;
+    border-radius: var(--radius-sm);
     font-size: 12px;
     font-weight: 600;
     cursor: pointer;
@@ -100,7 +100,7 @@
     color: var(--bg-dark, #0d0d0d);
     border: 1px solid rgba(13, 13, 13, 0.4);
     padding: 2px 10px;
-    border-radius: 3px;
+    border-radius: var(--radius-sm);
     font-size: 12px;
     cursor: pointer;
     min-height: 28px;

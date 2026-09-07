@@ -36,7 +36,7 @@
     padding: 6px 10px;
     background: var(--bg-card);
     border: 1px solid var(--border);
-    border-radius: 8px;
+    border-radius: var(--radius-md);
     color: var(--text);
     font-size: 0.85em;
     cursor: pointer;
@@ -55,7 +55,7 @@
     padding: 5px 10px;
     background: var(--bg-elevated);
     border: 1px solid var(--border);
-    border-radius: 20px;
+    border-radius: var(--radius-lg);
     font-size: 0.82em;
     color: var(--text-dim);
     cursor: pointer;
@@ -84,7 +84,7 @@
 #bestiary-count {
     background: var(--bg-elevated);
     padding: 2px 8px;
-    border-radius: 10px;
+    border-radius: var(--radius-md);
     font-size: 0.8em;
     color: var(--text-dim);
 }
@@ -124,7 +124,7 @@
 .bestiary-badge {
     font-size: 0.65em;
     padding: 4px 8px;
-    border-radius: 4px;
+    border-radius: var(--radius-sm);
     font-weight: 700;
     flex-shrink: 0;
     white-space: nowrap;
@@ -177,7 +177,7 @@
     padding: 4px;
     flex-shrink: 0;
     line-height: 1;
-    border-radius: 4px;
+    border-radius: var(--radius-sm);
     transition: color 0.15s;
     /* Minimum tap zone: ~32x32px via padding */
     min-width: 28px;
@@ -284,7 +284,7 @@
 .bestiary-statblock {
     margin: 0;
     padding: 16px 20px;
-    border-radius: 4px;
+    border-radius: var(--radius-sm);
     font-style: normal; /* override italic from .read-aloud */
 }
 
@@ -293,7 +293,7 @@
     font-size: 18px;
     font-weight: 700;
     color: var(--red);
-    font-family: Georgia, 'Times New Roman', serif;
+    font-family: var(--font-serif);
     margin: 0 0 2px 0;
 }
 
@@ -338,7 +338,7 @@
     flex-direction: column;
     align-items: center;
     background: rgba(139, 69, 19, 0.08);
-    border-radius: 4px;
+    border-radius: var(--radius-sm);
     padding: 4px 2px;
 }
 
@@ -373,7 +373,7 @@
     font-size: 16px;
     font-weight: 700;
     color: var(--red);
-    font-family: Georgia, 'Times New Roman', serif;
+    font-family: var(--font-serif);
     border-bottom: 1px solid var(--red);
     margin: 12px 0 6px 0;
     padding-bottom: 2px;
@@ -472,7 +472,7 @@
     padding: 8px 12px;
     background: none;
     border: 1px solid var(--border);
-    border-radius: 8px;
+    border-radius: var(--radius-md);
     color: var(--text);
     cursor: pointer;
     font-size: 0.9em;
@@ -641,7 +641,7 @@
     min-height: 80px;
     padding: 8px;
     border: 1px solid var(--border);
-    border-radius: 6px;
+    border-radius: var(--radius-md);
     background: var(--bg-dark);
     color: var(--text);
     font-size: 0.9em;

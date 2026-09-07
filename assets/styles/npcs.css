@@ -17,9 +17,8 @@
     padding: 12px 16px;
     background: var(--bg-card);
     border: 1px solid var(--gold-dim);
-    border-radius: 10px;
+    border-radius: var(--radius-md);
     flex-shrink: 0;
-    font-family: 'Segoe UI', system-ui, sans-serif;
     font-size: 14px;
 }
 
@@ -46,7 +45,7 @@
 .npc-toolbar-count {
     background: var(--bg-card);
     padding: 2px 8px;
-    border-radius: 10px;
+    border-radius: var(--radius-md);
     font-size: 0.8em;
     color: var(--text-dim);
 }
@@ -69,7 +68,7 @@
     padding: 8px 30px 8px 12px;
     background: var(--bg-card);
     border: 1px solid var(--border);
-    border-radius: 8px;
+    border-radius: var(--radius-md);
     color: var(--text);
     font-size: 0.9em;
 }
@@ -106,7 +105,7 @@
     padding: 5px 12px;
     background: var(--bg-card);
     border: 1px solid var(--border);
-    border-radius: 16px;
+    border-radius: var(--radius-lg);
     font-size: 0.8em;
     cursor: pointer;
     transition: all 0.2s;
@@ -127,7 +126,7 @@
     padding: 5px 8px;
     background: var(--bg-card);
     border: 1px solid var(--border);
-    border-radius: 8px;
+    border-radius: var(--radius-md);
     color: var(--text);
     font-size: 0.8em;
     cursor: pointer;
@@ -149,7 +148,7 @@
     height: 32px;
     background: var(--bg-card);
     border: 1px solid var(--border);
-    border-radius: 6px;
+    border-radius: var(--radius-md);
     cursor: pointer;
     display: flex;
     align-items: center;
@@ -165,7 +164,7 @@
     padding: 8px 16px;
     background: var(--green);
     border: none;
-    border-radius: 8px;
+    border-radius: var(--radius-md);
     color: var(--bg-dark);
     font-weight: 600;
     cursor: pointer;
@@ -237,7 +236,7 @@
 .npc-item-tag {
     font-size: 0.65em;
     padding: 2px 6px;
-    border-radius: 4px;
+    border-radius: var(--radius-sm);
     background: var(--purple);
     color: white;
 }
@@ -261,7 +260,7 @@
 .npc-badge {
     font-size: 0.75em;
     padding: 2px 6px;
-    border-radius: 4px;
+    border-radius: var(--radius-sm);
     background: var(--bg-dark);
 }
 
@@ -368,7 +367,7 @@
     height: 36px;
     background: var(--bg-dark);
     border: 1px solid var(--border);
-    border-radius: 8px;
+    border-radius: var(--radius-md);
     cursor: pointer;
     display: flex;
     align-items: center;
@@ -418,7 +417,7 @@
     height: 24px;
     background: var(--bg-dark);
     border: 1px solid var(--border);
-    border-radius: 4px;
+    border-radius: var(--radius-sm);
     cursor: pointer;
     font-size: 1em;
     color: var(--text);
@@ -431,7 +430,7 @@
 .npc-desc {
     background: var(--bg-dark);
     padding: 12px;
-    border-radius: 8px;
+    border-radius: var(--radius-md);
     font-size: 0.9em;
     line-height: 1.5;
 }
@@ -445,7 +444,7 @@
 .npc-tag {
     padding: 4px 10px;
     background: var(--bg-dark);
-    border-radius: 12px;
+    border-radius: var(--radius-lg);
     font-size: 0.8em;
     color: var(--text-dim);
 }
@@ -459,7 +458,7 @@
 .npc-link {
     padding: 4px 10px;
     background: var(--bg-dark);
-    border-radius: 6px;
+    border-radius: var(--radius-md);
     font-size: 0.8em;
     cursor: pointer;
     transition: all 0.2s;
@@ -482,7 +481,7 @@
     gap: 10px;
     padding: 10px;
     background: var(--bg-dark);
-    border-radius: 8px;
+    border-radius: var(--radius-md);
     border-left: 3px solid var(--border);
 }
 
@@ -545,7 +544,7 @@
     gap: 10px;
     padding: 10px;
     background: var(--bg-dark);
-    border-radius: 8px;
+    border-radius: var(--radius-md);
 }
 
 .npc-trigger-item.triggered {
@@ -556,7 +555,7 @@
     width: 20px;
     height: 20px;
     border: 2px solid var(--border);
-    border-radius: 4px;
+    border-radius: var(--radius-sm);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -651,10 +650,9 @@
     padding: 12px 16px;
     background: var(--bg-card);
     border: 1px solid var(--gold-dim);
-    border-radius: 10px;
+    border-radius: var(--radius-md);
     margin: 12px 16px 0 16px;
     flex-wrap: wrap;
-    font-family: 'Segoe UI', system-ui, sans-serif;
     font-size: 14px;
 }
 
@@ -680,7 +678,7 @@
 .loot-toolbar-count {
     background: var(--bg-dark);
     padding: 2px 8px;
-    border-radius: 10px;
+    border-radius: var(--radius-md);
     font-size: 0.8em;
     color: var(--text-dim);
 }
@@ -700,7 +698,7 @@
 .loot-search {
     padding: 8px 32px 8px 12px;
     border: 1px solid var(--border);
-    border-radius: 8px;
+    border-radius: var(--radius-md);
     background: var(--bg-dark);
     color: var(--text);
     width: 200px;
@@ -736,7 +734,7 @@
 
 .loot-filter-chip {
     padding: 4px 12px;
-    border-radius: 20px;
+    border-radius: var(--radius-lg);
     font-size: 0.85em;
     cursor: pointer;
     background: var(--bg-dark);
@@ -770,7 +768,7 @@
     height: 32px;
     background: var(--bg-card);
     border: 1px solid var(--border);
-    border-radius: 6px;
+    border-radius: var(--radius-md);
     cursor: pointer;
     display: flex;
     align-items: center;
@@ -786,7 +784,7 @@
     padding: 8px 16px;
     background: var(--green);
     border: none;
-    border-radius: 8px;
+    border-radius: var(--radius-md);
     color: var(--bg-dark);
     font-weight: 600;
     cursor: pointer;
@@ -831,7 +829,7 @@
     width: 40px;
     height: 40px;
     background: var(--bg-dark);
-    border-radius: 8px;
+    border-radius: var(--radius-md);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -856,7 +854,7 @@
     font-size: 0.7em;
     padding: 2px 6px;
     background: var(--purple);
-    border-radius: 4px;
+    border-radius: var(--radius-sm);
     color: white;
 }
 
@@ -875,7 +873,7 @@
 .loot-badge {
     font-size: 0.75em;
     padding: 2px 8px;
-    border-radius: 10px;
+    border-radius: var(--radius-md);
     background: var(--bg-dark);
 }
 
@@ -916,7 +914,7 @@
     width: 64px;
     height: 64px;
     background: var(--bg-dark);
-    border-radius: 12px;
+    border-radius: var(--radius-lg);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -951,7 +949,7 @@
     height: 36px;
     background: var(--bg-dark);
     border: 1px solid var(--border);
-    border-radius: 8px;
+    border-radius: var(--radius-md);
     cursor: pointer;
     display: flex;
     align-items: center;
@@ -1006,7 +1004,7 @@
 .loot-stat {
     background: var(--bg-dark);
     padding: 12px;
-    border-radius: 8px;
+    border-radius: var(--radius-md);
     text-align: center;
 }
 
@@ -1031,7 +1029,7 @@
 .loot-tag {
     padding: 4px 10px;
     background: var(--bg-dark);
-    border-radius: 6px;
+    border-radius: var(--radius-md);
     font-size: 0.8em;
 }
 
@@ -1065,7 +1063,7 @@
             line-height: 1.6;
             background: var(--bg-dark);
             padding: 12px;
-            border-radius: 8px;
+            border-radius: var(--radius-md);
         }
 
         .loc-npc-list {
@@ -1080,7 +1078,7 @@
             gap: 10px;
             padding: 8px 12px;
             background: var(--bg-elevated);
-            border-radius: 8px;
+            border-radius: var(--radius-md);
             cursor: pointer;
             transition: all 0.2s;
         }
@@ -1126,7 +1124,7 @@
         .loc-link {
             padding: 4px 10px;
             background: var(--bg-elevated);
-            border-radius: 6px;
+            border-radius: var(--radius-md);
             font-size: 0.8em;
             cursor: pointer;
             transition: all 0.2s;
@@ -1146,7 +1144,7 @@
         .loc-tag {
             padding: 3px 8px;
             background: var(--bg-dark);
-            border-radius: 4px;
+            border-radius: var(--radius-sm);
             font-size: 0.75em;
             color: var(--text-dim);
         }
@@ -1202,7 +1200,7 @@
         .location-card {
             background: var(--bg-card);
             border: 1px solid var(--border);
-            border-radius: 8px;
+            border-radius: var(--radius-md);
             overflow: hidden;
             width: 394px;
             max-width: 100%;
@@ -1296,7 +1294,7 @@
             font-size: 0.85em; 
             padding: 10px; 
             background: var(--bg-dark); 
-            border-radius: 6px; 
+            border-radius: var(--radius-md); 
             color: var(--text);
             margin: 8px 0;
             line-height: 1.5;
@@ -1321,7 +1319,7 @@
         
         .npc-card {
             background: var(--bg-dark);
-            border-radius: 5px;
+            border-radius: var(--radius-sm);
             padding: 10px;
             margin: 8px;
             margin-top: 4px;
@@ -1372,7 +1370,7 @@
             padding: 4px 10px;
             background: var(--bg-dark);
             border: 1px solid var(--border);
-            border-radius: 16px;
+            border-radius: var(--radius-lg);
             font-size: 0.85em;
             color: var(--cyan);
             cursor: pointer;
@@ -1395,10 +1393,10 @@
         /* NPC Popup */
         .npc-popup {
             position: fixed;
-            z-index: 10001;
+            z-index: var(--z-floating);
             background: var(--bg-card);
             border: 1px solid var(--border);
-            border-radius: 12px;
+            border-radius: var(--radius-lg);
             box-shadow: 0 8px 32px rgba(0,0,0,0.4);
             max-width: 350px;
             min-width: 280px;
@@ -1417,7 +1415,7 @@
             padding: 12px;
             border-bottom: 1px solid var(--border);
             background: var(--bg-dark);
-            border-radius: 12px 12px 0 0;
+            border-radius: var(--radius-lg) var(--radius-lg) 0 0;
         }
         
         .npc-popup-avatar {
@@ -1490,7 +1488,7 @@
             padding: 10px 12px;
             border-top: 1px solid var(--border);
             background: var(--bg-dark);
-            border-radius: 0 0 12px 12px;
+            border-radius: 0 0 var(--radius-lg) var(--radius-lg);
         }
         
         /* NPC List View */
@@ -1504,7 +1502,7 @@
         .npc-list-card {
             background: var(--bg-card);
             border: 1px solid var(--border);
-            border-radius: 10px;
+            border-radius: var(--radius-md);
             overflow: hidden;
             transition: all 0.2s;
         }
@@ -1569,7 +1567,7 @@
             color: var(--gold); 
             background: var(--bg-dark); 
             padding: 3px 8px; 
-            border-radius: 4px;
+            border-radius: var(--radius-sm);
             white-space: nowrap;
         }
         
@@ -1599,7 +1597,7 @@
             margin-right: 8px;
             padding: 8px;
             margin: -8px 8px -8px -8px;
-            border-radius: 4px;
+            border-radius: var(--radius-sm);
         }
         
         .npc-card-toggle:hover {
@@ -1628,7 +1626,7 @@
             color: var(--text);
             padding: 10px;
             background: var(--bg-dark);
-            border-radius: 6px;
+            border-radius: var(--radius-md);
             margin-bottom: 10px;
             line-height: 1.5;
         }
@@ -1644,7 +1642,7 @@
             font-size: 0.75em;
             padding: 3px 8px;
             background: var(--bg-elevated);
-            border-radius: 4px;
+            border-radius: var(--radius-sm);
             color: var(--text-dim);
         }
         
@@ -1664,7 +1662,7 @@
         .npc-triggers-section {
             margin-top: 10px;
             border: 1px solid var(--border);
-            border-radius: 6px;
+            border-radius: var(--radius-md);
             overflow: hidden;
         }
         
@@ -1725,7 +1723,7 @@
             width: 18px;
             height: 18px;
             border: 2px solid var(--yellow);
-            border-radius: 4px;
+            border-radius: var(--radius-sm);
             cursor: pointer;
             display: flex;
             align-items: center;
@@ -1755,7 +1753,7 @@
         .npc-trigger-reveal.hidden {
             background: var(--bg-dark);
             color: var(--bg-dark);
-            border-radius: 4px;
+            border-radius: var(--radius-sm);
             padding: 2px 6px;
             cursor: pointer;
             user-select: none;
@@ -1775,7 +1773,7 @@
         .npc-dialogs-section {
             margin-top: 10px;
             border: 1px solid var(--border);
-            border-radius: 6px;
+            border-radius: var(--radius-md);
             overflow: hidden;
         }
         
@@ -1799,7 +1797,7 @@
             font-size: 0.8em;
             padding: 2px 6px;
             background: var(--bg-dark);
-            border-radius: 10px;
+            border-radius: var(--radius-md);
             color: var(--text-dim);
         }
         
@@ -1872,13 +1870,13 @@
             padding: 2px 6px;
             background: var(--yellow);
             color: var(--bg-dark);
-            border-radius: 3px;
+            border-radius: var(--radius-sm);
         }
         
         .npc-dialog-status {
             font-size: 0.7em;
             padding: 2px 6px;
-            border-radius: 3px;
+            border-radius: var(--radius-sm);
         }
         
         .npc-dialog-status.unused {
@@ -1920,7 +1918,7 @@
             border-left: 3px solid var(--purple);
             margin: 10px 12px;
             background: var(--bg-dark);
-            border-radius: 0 6px 6px 0;
+            border-radius: 0 var(--radius-md) var(--radius-md) 0;
             font-style: italic;
             word-wrap: break-word;
             overflow-wrap: break-word;

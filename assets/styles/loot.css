@@ -10,7 +10,7 @@
             align-items: center;
             background: var(--bg-card);
             padding: 10px;
-            border-radius: 8px;
+            border-radius: var(--radius-md);
             border: 1px solid var(--border);
         }
         
@@ -21,7 +21,7 @@
             background: var(--bg-dark);
             border: 1px solid var(--border);
             color: var(--text);
-            border-radius: 6px;
+            border-radius: var(--radius-md);
             font-size: 14px;
         }
         
@@ -31,7 +31,7 @@
             background: var(--bg-dark);
             border: 1px solid var(--border);
             color: var(--text);
-            border-radius: 6px;
+            border-radius: var(--radius-md);
             font-size: 12px;
         }
         
@@ -41,7 +41,7 @@
             background: var(--bg-dark);
             border: 1px solid var(--border);
             color: var(--text);
-            border-radius: 6px;
+            border-radius: var(--radius-md);
             font-size: 13px;
             text-align: center;
         }
@@ -55,7 +55,7 @@
             padding: 6px 8px;
             background: var(--bg-card);
             border: 1px solid var(--border);
-            border-radius: 6px;
+            border-radius: var(--radius-md);
             height: 38px;
             transition: all 0.2s;
         }
@@ -83,7 +83,7 @@
             padding: 2px 5px;
             background: var(--purple);
             color: white;
-            border-radius: 3px;
+            border-radius: var(--radius-sm);
             margin-left: 4px;
         }
         
@@ -93,7 +93,7 @@
             background: var(--bg-card);
             border: 1px solid var(--border);
             color: var(--text);
-            border-radius: 6px;
+            border-radius: var(--radius-md);
             font-size: 13px;
             margin-bottom: 12px;
         }
@@ -122,7 +122,7 @@
         .loot-form-section {
             background: var(--bg-dark);
             padding: 12px;
-            border-radius: 8px;
+            border-radius: var(--radius-md);
             border: 1px solid var(--border);
         }
         
@@ -149,7 +149,7 @@
             margin-top: 12px;
             padding: 12px;
             background: var(--bg-dark);
-            border-radius: 8px;
+            border-radius: var(--radius-md);
             border: 1px solid var(--border);
         }
         
@@ -164,7 +164,7 @@
             padding: 5px 12px;
             background: var(--bg-card);
             border: 1px solid var(--border);
-            border-radius: 16px;
+            border-radius: var(--radius-lg);
             color: var(--text-dim);
             font-size: 0.8em;
             cursor: pointer;
@@ -197,7 +197,7 @@
             padding: 4px 10px;
             background: var(--bg-card);
             border: 1px solid var(--border);
-            border-radius: 16px;
+            border-radius: var(--radius-lg);
             font-size: 0.8em;
             cursor: pointer;
             transition: all 0.15s;
@@ -250,7 +250,7 @@
             padding: 4px 8px;
             background: var(--gold);
             color: var(--bg-dark);
-            border-radius: 12px;
+            border-radius: var(--radius-lg);
             font-size: 0.8em;
             font-weight: 500;
         }
@@ -277,7 +277,7 @@
         .shop-card {
             background: var(--bg-card);
             border: 1px solid var(--border);
-            border-radius: 8px;
+            border-radius: var(--radius-md);
             overflow: hidden;
         }
         
@@ -354,7 +354,7 @@
         .shop-meta-tag {
             font-size: 0.75em;
             padding: 2px 8px;
-            border-radius: 4px;
+            border-radius: var(--radius-sm);
             background: var(--bg-dark);
             color: var(--text-dim);
             cursor: pointer;
@@ -374,7 +374,7 @@
             color: var(--green);
             background: rgba(74, 222, 128, 0.1);
             padding: 2px 8px;
-            border-radius: 4px;
+            border-radius: var(--radius-sm);
         }
         
         .shop-header-actions {
@@ -417,7 +417,7 @@
         .shop-cat-badge {
             font-size: 0.8em;
             padding: 4px 10px;
-            border-radius: 4px;
+            border-radius: var(--radius-sm);
             background: var(--bg-card);
             border: 1px solid var(--border);
             cursor: pointer;
@@ -452,14 +452,14 @@
             margin-bottom: 12px;
             padding: 8px 12px;
             background: var(--bg-hover);
-            border-radius: 6px;
+            border-radius: var(--radius-md);
             border: 1px solid var(--border);
         }
 
         .shop-sort-btn {
             font-size: 0.85em;
             padding: 4px 12px;
-            border-radius: 4px;
+            border-radius: var(--radius-sm);
             background: var(--bg-card);
             border: 1px solid var(--border);
             color: var(--text);
@@ -484,7 +484,7 @@
         
         .shop-items-container {
             background: var(--bg-card);
-            border-radius: 6px;
+            border-radius: var(--radius-md);
             overflow: hidden;
         }
         
@@ -563,7 +563,7 @@
             border: 1px solid var(--gold);
             color: var(--gold);
             padding: 2px 6px;
-            border-radius: 4px;
+            border-radius: var(--radius-sm);
             cursor: pointer;
             font-size: 0.9em;
             transition: all 0.15s;
@@ -671,7 +671,7 @@
             background: var(--bg-dark);
             border: 1px solid var(--border);
             color: var(--text);
-            border-radius: 4px;
+            border-radius: var(--radius-sm);
         }
         
         .si-unavailable {
@@ -743,7 +743,7 @@
             background: rgba(212, 175, 55, 0.2);
             border: 1px solid var(--gold);
             color: var(--gold);
-            border-radius: 4px;
+            border-radius: var(--radius-sm);
             cursor: pointer;
             transition: all 0.2s;
         }
@@ -757,7 +757,7 @@
         .cart-content {
             padding: 12px;
             background: var(--bg-dark);
-            border-radius: 6px;
+            border-radius: var(--radius-md);
             margin-bottom: 12px;
         }
         
@@ -790,7 +790,7 @@
             gap: 10px;
             padding: 8px;
             background: var(--bg-card);
-            border-radius: 4px;
+            border-radius: var(--radius-sm);
             margin-bottom: 4px;
         }
         
@@ -829,7 +829,7 @@
             background: var(--bg-dark);
             border: 1px solid var(--border);
             color: var(--text);
-            border-radius: 4px;
+            border-radius: var(--radius-sm);
         }
         
         .cart-item-price {
@@ -851,7 +851,7 @@
         .cart-summary {
             background: var(--bg-card);
             padding: 12px;
-            border-radius: 6px;
+            border-radius: var(--radius-md);
             border: 1px solid var(--gold);
         }
         
@@ -888,13 +888,13 @@
         .checkout-receipt-container {
             position: relative;
             background: var(--bg-dark);
-            border-radius: 6px;
+            border-radius: var(--radius-md);
             padding: 12px;
             margin-bottom: 16px;
         }
         
         .checkout-receipt {
-            font-family: 'Courier New', monospace;
+            font-family: var(--font-mono);
             font-size: 0.85em;
             text-align: left;
             white-space: pre-wrap;
@@ -913,7 +913,7 @@
         .checkout-total-section {
             background: var(--bg-card);
             padding: 16px;
-            border-radius: 8px;
+            border-radius: var(--radius-md);
             border: 2px solid var(--gold);
             margin-bottom: 12px;
         }
@@ -940,7 +940,7 @@
         .checkout-breakdown span {
             background: var(--bg-dark);
             padding: 4px 10px;
-            border-radius: 4px;
+            border-radius: var(--radius-sm);
             font-size: 0.9em;
         }
         
@@ -953,7 +953,7 @@
             color: var(--text-dim);
             background: var(--bg-dark);
             padding: 8px 12px;
-            border-radius: 4px;
+            border-radius: var(--radius-sm);
         }
 
         /* Shop Handout Export Modal */
@@ -971,7 +971,7 @@
             padding: 10px;
             background: var(--bg-card);
             border: 1px solid var(--border);
-            border-radius: 6px;
+            border-radius: var(--radius-md);
             cursor: pointer;
             transition: all 0.2s;
         }
@@ -999,7 +999,7 @@
             padding: 12px;
             background: var(--bg-elevated);
             border-left: 3px solid var(--cyan);
-            border-radius: 4px;
+            border-radius: var(--radius-sm);
         }
 
         .handout-help-text p {
