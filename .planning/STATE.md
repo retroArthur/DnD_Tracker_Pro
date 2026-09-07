@@ -5,16 +5,16 @@ milestone_name: Schulden-Abbau
 current_phase: 14
 current_phase_name: Tests & Gates
 status: executing
-stopped_at: Completed 14-03-PLAN.md
-last_updated: "2026-09-07T06:47:23.887Z"
+stopped_at: Completed 14-04-PLAN.md
+last_updated: "2026-09-07T06:59:20.081Z"
 last_activity: 2026-09-07
 last_activity_desc: Phase 14 execution started
-state_head: f591c9d04902c30729017b9af6bfd14c207fb475
+state_head: d3c73522fa3350d7e2caee205210f416669ece4e
 progress:
   total_phases: 3
   completed_phases: 1
   total_plans: 38
-  completed_plans: 32
+  completed_plans: 33
   percent: 33
 ---
 
@@ -41,7 +41,7 @@ See: `.planning/PROJECT.md` (Stand 2026-09-05)
 ## Current Position
 
 Phase: 14 (Tests & Gates) — EXECUTING
-Plan: 4 of 9
+Plan: 5 of 9
 Status: Ready to execute
 Last activity: 2026-09-07 — Phase 14 execution started
 
@@ -138,6 +138,7 @@ Browser-Verhalten an der Base64-Grenze (12-07).
 | Phase 14 P01 | 15min | 2 tasks | 2 files |
 | Phase 14 P02 | 45min | 3 tasks | 6 files |
 | Phase 14 P03 | 35 min | 3 tasks | 7 files |
+| Phase 14 P04 | 15min | 2 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -224,8 +225,8 @@ Browser-Verhalten an der Base64-Grenze (12-07).
 
 ## Session Continuity
 
-**Last session:** 2026-09-07T06:47:23.711Z
-**Stopped at:** Completed 14-03-PLAN.md
+**Last session:** 2026-09-07T06:59:19.905Z
+**Stopped at:** Completed 14-04-PLAN.md
 **Resume file:** None
 
 **Last action:** `/gsd-execute-phase 13` (Plan 13-08, MAINT-06). Converted all 81 originally-counted unfiltered `console.*` calls across 31 `loader.js` MODULES files to the one sanctioned `ErrorHandler.log()` outlet in `render/helpers.js` (marked `gsd:konsolen-senke`), built `tests/unit/console-hygiene.test.js` as a permanent regression guard, and corrected two stale `file-backup-manager.js` header comments that wrongly described the forbidden `window.save` monkey-patch pattern (code has used `registerPostSaveHook()` correctly since Phase 12). Mid-execution finding: converting routine/self-healing diagnostics (data repairs, migration progress, per-tab render guards) to the single outlet elevated them to `console.error` and broke 5 Playwright tests (`editor-formatting.spec.js`, `editor-insert.spec.js`, `import-security.spec.js`) that assert zero console errors — fixed by routing those specific sites through the existing `window.debugLogAdd()` in-app debug panel instead, preserving the single-outlet invariant for genuine faults while not misclassifying normal operation as an error. Full suites green: `npx jest` 1066/1066, `npx playwright test` 321 passed/2 skipped (STATE.md baseline exactly matched), `python build.py` + `--production` + `pytest tests/build` 24/24 all green.
@@ -361,6 +362,7 @@ Browser-Verhalten an der Base64-Grenze (12-07).
 - [Phase 14]: readonly/writable-Unterscheidung im Globals-Generator (let/var -> writable, const/function/class -> readonly) statt pauschal readonly
 - [Phase 14]: tools/package.json mit type:commonjs als scoped Override gegen Root-type:module, damit tools/generate-eslint-globals.js per Node direkt ausfuehrbar ist
 - [Phase 14]: seedCleanSession(page) als einziger Seed-Helfer extrahiert (D-01); Fix nur mit rotem Vorlauf + gruenem Nachlauf bei identischen Lastparametern belegt (D-02); playwright.config.js unangetastet (D-03). — Byte-identische Kopie in drei Specs, Regression sonst nicht beweisbar allein durch gruenen Lauf, Retries sind nicht der Defekt.
+- [Phase 14]: APP_URL bleibt selbstgebaut in allen fuenf Ziel-E2E-Dateien, kein Wechsel auf loadApp() (D-06) — loadApp() macht mehr als goto (waitForSelector + 500ms Nachlauf) -- Wechsel waere Timing-Aenderung, verboten durch D-05 Verhaltensneutralitaet
 
 ## Operator Next Steps
 
