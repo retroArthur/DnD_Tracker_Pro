@@ -187,7 +187,7 @@ Plans:
 
 **Execution Order:** streng sequenziell 12 → 13 → 14. Präzedenz aus v1.0/v1.1: fast alle Pläne fassen geteilte Dateien an, paralleles Ausführen kollidiert.
 
-**Plans:** 7/9 plans executed
+**Plans:** 8/9 plans executed
 
 Plans:
 
@@ -212,7 +212,7 @@ Plans:
 
 **Wave 5** *(blocked on Wave 4 — teilt `package.json` mit 14-06 und das Messprotokoll mit 14-08)*
 
-- [ ] 14-07-PLAN.md — D-11: `tsconfig.strict.json` mit wachsender Zulassungsliste, `typecheck:strict` in CI, Restposten benannt (Welle 5)
+- [x] 14-07-PLAN.md — D-11: `tsconfig.strict.json` mit wachsender Zulassungsliste, `typecheck:strict` in CI, Restposten benannt (Welle 5)
 
 **Wave 6** *(blocked on Wave 5 — D-15: das Modul-zu-Test-Gate zuletzt, weil TEST-04 seine Basislinie verschiebt)*
 
