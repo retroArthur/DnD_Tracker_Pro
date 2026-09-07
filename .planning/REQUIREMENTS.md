@@ -164,7 +164,7 @@ wiederherstellbar ist (`SAFE-01`, `SAFE-02`, `SAFE-04`).
 | MAINT-04 | DEBT-03 | Phase 13 — Complete (13-02) |
 | MAINT-05 | DEBT-09, DEBT-10 | Phase 13 — Complete (13-04) |
 | MAINT-06 | DEBT-27, DEBT-26 | Phase 13 — Complete (13-08) |
-| TEST-03 | DEBT-15 | Pending |
+| TEST-03 | DEBT-15 | Phase 14 — Complete (14-03) |
 | TEST-04 | DEBT-28 | Pending |
 | TEST-05 | DEBT-01 | Pending |
 
