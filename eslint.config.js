@@ -31,6 +31,7 @@ export default tseslint.config(
                 sessionStorage: 'readonly',
                 indexedDB: 'readonly',
                 fetch: 'readonly',
+                getComputedStyle: 'readonly',
                 navigator: 'readonly',
                 performance: 'readonly',
                 requestAnimationFrame: 'readonly',
@@ -39,14 +40,19 @@ export default tseslint.config(
                 clearTimeout: 'readonly',
                 setInterval: 'readonly',
                 clearInterval: 'readonly',
+                atob: 'readonly',
                 alert: 'readonly',
                 confirm: 'readonly',
                 prompt: 'readonly',
                 location: 'readonly',
                 history: 'readonly',
+                BroadcastChannel: 'readonly',
+                ClipboardEvent: 'readonly',
                 CustomEvent: 'readonly',
+                DataTransfer: 'readonly',
                 Event: 'readonly',
                 HTMLElement: 'readonly',
+                HTMLInputElement: 'readonly',
                 Element: 'readonly',
                 Node: 'readonly',
                 NodeList: 'readonly',
@@ -54,6 +60,7 @@ export default tseslint.config(
                 IntersectionObserver: 'readonly',
                 MutationObserver: 'readonly',
                 ResizeObserver: 'readonly',
+                File: 'readonly',
                 FileReader: 'readonly',
                 Blob: 'readonly',
                 URL: 'readonly',
@@ -66,6 +73,7 @@ export default tseslint.config(
                 structuredClone: 'readonly',
                 crypto: 'readonly',
                 Audio: 'readonly',
+                AudioContext: 'readonly',
                 // App globals
                 D: 'writable',
                 $: 'readonly',
@@ -154,7 +162,29 @@ export default tseslint.config(
                 afterEach: 'readonly',
                 beforeAll: 'readonly',
                 afterAll: 'readonly',
-                jest: 'readonly'
+                jest: 'readonly',
+                // Node-Globals — decken die reine Konfigurationsluecke in
+                // tests/** ab (D-08, Task 2). Buffer ist eine gemessene
+                // Ergaenzung ueber die sechs PLAN.md-Namen hinaus: es wird in
+                // tests/e2e/features/import-security.spec.js und
+                // soundboard.spec.js verwendet und war ohne diesen Eintrag
+                // weiterhin ein no-undef-Fund (Live-Baum-Messung, Task 2).
+                require: 'readonly',
+                module: 'writable',
+                __dirname: 'readonly',
+                __filename: 'readonly',
+                process: 'readonly',
+                global: 'readonly',
+                Buffer: 'readonly',
+                // tests/setup.js definiert diese sieben Helfer als global.* —
+                // zur Testlaufzeit real vorhanden (D-08, Task 2)
+                createTestCharacter: 'readonly',
+                createTestEncounter: 'readonly',
+                createTestNPC: 'readonly',
+                deleteCharacter: 'readonly',
+                genId: 'readonly',
+                renderInitiative: 'readonly',
+                resetTestState: 'readonly'
             }
         },
         rules: {
@@ -177,6 +207,37 @@ export default tseslint.config(
         },
         rules: {
             'no-useless-escape': 'warn'
+        }
+    },
+
+    // Node-seitige Dateien ausserhalb von tests/** (D-08, Task 2): dieselben
+    // sechs Node-Globals wie im tests/**-Block. tools/debug.js braucht
+    // darueber hinaus nichts — seine Projektnamen kommen bereits aus dem
+    // generierten Artefakt aus Task 1.
+    {
+        files: ['tools/**/*.js', 'playwright.config.js', 'playwright.smoke.config.js'],
+        languageOptions: {
+            globals: {
+                require: 'readonly',
+                module: 'writable',
+                __dirname: 'readonly',
+                __filename: 'readonly',
+                process: 'readonly',
+                global: 'readonly'
+            }
+        }
+    },
+
+    // utils/testable-utils.js laeuft doppelt: im Browser ueber loader.js und
+    // in Jest ueber require(); die module.exports-Zeile am Dateiende ist
+    // beabsichtigt (D-08, Task 2). Eng gefasster Block statt module global
+    // freizugeben.
+    {
+        files: ['utils/testable-utils.js'],
+        languageOptions: {
+            globals: {
+                module: 'writable'
+            }
         }
     },
 
