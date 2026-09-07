@@ -32,3 +32,8 @@ __pycache__/
 
 # Lokale Kampagnendaten (beim Umzug 2026-08-25 mitgenommen, nicht versioniert)
 Daten/
+
+# Rohmaterial fuer das Soundboard (7,6 MB Audiodateien). Bewusst nicht
+# versioniert: die App laedt Klaenge zur Laufzeit in IndexedDB, das Repo
+# braucht sie nicht, und jeder Klon zoege sie mit.
+Ablage/

@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="_ds/nocturne-1f2207fe-fb48-4d8e-bca3-a75ccaded771/styles.css">
+<script src="_ds/nocturne-1f2207fe-fb48-4d8e-bca3-a75ccaded771/_ds_bundle.js"></script>
+<style>
+body { margin: 0; }
+a { color: var(--color-accent-300); text-decoration: none; }
+a:hover { color: var(--color-accent-200); }
+</style>
+</helmet>
+
+<div style="background: var(--color-bg); color: var(--color-text); font-family: var(--font-body); padding: 40px 28px 96px; min-height: 100vh;">
+<div style="max-width: 1060px; margin: 0 auto; display: flex; flex-direction: column; gap: var(--space-8);">
+
+  <header style="display: flex; flex-direction: column; gap: var(--space-4);">
+    <span style="font-family: ui-monospace, 'SF Mono', monospace; font-size: 12px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--color-accent-400);">Design-Audit · D&amp;D Kampagnen-Tracker Pro</span>
+    <h1 style="margin: 0; font-family: var(--font-heading); font-weight: 500; font-size: 42px; line-height: 1.1; letter-spacing: -0.02em; max-width: 20ch;">Prüfung der Design-Konsistenz</h1>
+    <p style="margin: 0; max-width: 68ch; font-size: 16px; line-height: 1.6; color: var(--color-neutral-300); text-wrap: pretty;">Statische Analyse von <span style="font-family: ui-monospace, monospace; font-size: 14px; color: var(--color-accent-300);">dnd-tracker-bundled.html</span> — 85.534 Zeilen, ~3.729 CSS-Regeln, 30 Views. 19 Befunde in vier Gruppen. Der von Ihnen genannte Unterschied zwischen <strong style="font-weight: 600;">Orte</strong> und <strong style="font-weight: 600;">Kalender</strong> ist kein Einzelfall, sondern das Symptom von zwei parallel gewachsenen CSS-Sprachen im selben Dokument.</p>
+    <div style="height: 1px; background: linear-gradient(to right, transparent, var(--color-neutral-700) 48px, var(--color-neutral-700) calc(100% - 48px), transparent); margin-top: var(--space-4);"></div>
+  </header>
+
+  <section style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: var(--space-4);">
+    <div style="background: var(--color-surface); border-radius: var(--radius-md); padding: var(--space-6); box-shadow: var(--shadow-sm);">
+      <div style="font-family: var(--font-heading); font-size: 32px; line-height: 1; color: var(--color-accent-300);">22</div>
+      <div style="margin-top: var(--space-3); font-size: 13px; line-height: 1.4; color: var(--color-neutral-400);">undefinierte Design-Tokens, 56× ohne Fallback</div>
+    </div>
+    <div style="background: var(--color-surface); border-radius: var(--radius-md); padding: var(--space-6); box-shadow: var(--shadow-sm);">
+      <div style="font-family: var(--font-heading); font-size: 32px; line-height: 1; color: var(--color-accent-300);">100</div>
+      <div style="margin-top: var(--space-3); font-size: 13px; line-height: 1.4; color: var(--color-neutral-400);">hartkodierte Hex-Farben neben 18 Farb-Tokens</div>
+    </div>
+    <div style="background: var(--color-surface); border-radius: var(--radius-md); padding: var(--space-6); box-shadow: var(--shadow-sm);">
+      <div style="font-family: var(--font-heading); font-size: 32px; line-height: 1; color: var(--color-accent-300);">3</div>
+      <div style="margin-top: var(--space-3); font-size: 13px; line-height: 1.4; color: var(--color-neutral-400);">verschiedene Kopfzeilen-Muster für 30 Views</div>
+    </div>
+    <div style="background: var(--color-surface); border-radius: var(--radius-md); padding: var(--space-6); box-shadow: var(--shadow-sm);">
+      <div style="font-family: var(--font-heading); font-size: 32px; line-height: 1; color: var(--color-accent-300);">18</div>
+      <div style="margin-top: var(--space-3); font-size: 13px; line-height: 1.4; color: var(--color-neutral-400);">unterschiedliche Breakpoint-Grenzen</div>
+    </div>
+    <div style="background: var(--color-surface); border-radius: var(--radius-md); padding: var(--space-6); box-shadow: var(--shadow-sm);">
+      <div style="font-family: var(--font-heading); font-size: 32px; line-height: 1; color: var(--color-accent-300);">132</div>
+      <div style="margin-top: var(--space-3); font-size: 13px; line-height: 1.4; color: var(--color-neutral-400);">!important-Deklarationen</div>
+    </div>
+  </section>
+
+  <section style="display: flex; flex-direction: column; gap: var(--space-6);">
+    <h2 style="margin: 0; font-family: var(--font-heading); font-weight: 500; font-size: 26px; letter-spacing: -0.01em;">Das Leitbeispiel: Orte vs. Kalender</h2>
+    <p style="margin: 0; max-width: 72ch; font-size: 15px; line-height: 1.65; color: var(--color-neutral-300); text-wrap: pretty;">Beide Views sind Listen-Views mit Detail-Inhalt. Sie sind aber in zwei verschiedenen Epochen des Projekts entstanden und benutzen kein gemeinsames Fundament. Der Code der beiden Seiten überlappt sich in praktisch keinem Punkt.</p>
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: var(--space-4);">
+      <div style="background: var(--color-surface); border-radius: var(--radius-md); padding: var(--space-6); box-shadow: var(--shadow-sm); display: flex; flex-direction: column; gap: var(--space-4);">
+        <div style="display: flex; align-items: center; gap: var(--space-3);">
+          <span style="font-family: var(--font-heading); font-size: 18px;">🏠 Orte</span>
+          <span style="font-family: ui-monospace, monospace; font-size: 11px; color: var(--color-neutral-500);">.loc-view</span>
+        </div>
+        <ul style="margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: var(--space-3); font-size: 14px; line-height: 1.5; color: var(--color-neutral-300);">
+          <li>Toolbar mit 4 Gruppen: Identität + Zähler, Suche, Filter-Chips + Import/Export, Primäraktion</li>
+          <li>Master-Detail-Grid <span style="font-family: ui-monospace, monospace; font-size: 12.5px; color: var(--color-accent-300);">1fr 825px</span>, Detail-Panel sticky</li>
+          <li>Listenzeile: <span style="font-family: ui-monospace, monospace; font-size: 12.5px; color: var(--color-accent-300);">background: var(--bg-card)</span>, Radius 10px, 2px transparenter Rahmen als Auswahl-Slot</li>
+          <li>Maße in px, Primärbutton <span style="font-family: ui-monospace, monospace; font-size: 12.5px; color: var(--color-accent-300);">btn-success</span> (grün)</li>
+          <li>Liegt in <span style="font-family: ui-monospace, monospace; font-size: 12.5px; color: var(--color-accent-300);">&lt;main class="main-content"&gt;</span></li>
+        </ul>
+      </div>
+      <div style="background: var(--color-surface); border-radius: var(--radius-md); padding: var(--space-6); box-shadow: var(--shadow-sm); display: flex; flex-direction: column; gap: var(--space-4);">
+        <div style="display: flex; align-items: center; gap: var(--space-3);">
+          <span style="font-family: var(--font-heading); font-size: 18px;">📅 Kalender</span>
+          <span style="font-family: ui-monospace, monospace; font-size: 11px; color: var(--color-neutral-500);">tl-*</span>
+        </div>
+        <ul style="margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: var(--space-3); font-size: 14px; line-height: 1.5; color: var(--color-neutral-300);">
+          <li>Toolbar mit 2 Gruppen: Titel + Zähler, Primäraktion — keine Suche, kein Filter, kein Export</li>
+          <li>Kein Grid; eine Kopfzeile plus <span style="font-family: ui-monospace, monospace; font-size: 12.5px; color: var(--color-accent-300);">.tl-view-content</span> mit eigenem Padding</li>
+          <li>Karte: <span style="font-family: ui-monospace, monospace; font-size: 12.5px; color: var(--color-accent-300);">background: var(--surface)</span> — nicht definiert, also transparent; <span style="font-family: ui-monospace, monospace; font-size: 12.5px; color: var(--color-accent-300);">border-radius: var(--radius)</span> — nicht definiert, also 0; dazu 3px goldene Linksleiste</li>
+          <li>Maße in rem, Primärbutton <span style="font-family: ui-monospace, monospace; font-size: 12.5px; color: var(--color-accent-300);">btn-primary</span></li>
+          <li>Liegt <strong style="font-weight: 600; color: var(--color-accent-200);">außerhalb</strong> von <span style="font-family: ui-monospace, monospace; font-size: 12.5px;">main-content</span>, zwischen den Modals</li>
+        </ul>
+      </div>
+    </div>
+    <p style="margin: 0; max-width: 72ch; font-size: 15px; line-height: 1.65; color: var(--color-neutral-300); text-wrap: pretty;">Kurz: Kalender ist keine Variante von Orte, sondern eine eigene Insel. Dieselbe Insel bilden <strong style="font-weight: 600;">Session-Prep</strong>, <strong style="font-weight: 600;">Reise</strong> und <strong style="font-weight: 600;">Fraktionen</strong> (Präfixe <span style="font-family: ui-monospace, monospace; font-size: 13px;">wp-, rs-, fr-</span>) — was dort auffällt, gilt für alle vier.</p>
+  </section>
+
+  <section style="display: flex; flex-direction: column;">
+    <h2 style="margin: 0 0 var(--space-4); font-family: var(--font-heading); font-weight: 500; font-size: 26px; letter-spacing: -0.01em;">A · Fundament: Tokens, Maße, Farben</h2>
+
+    <div style="display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: var(--space-6); padding: var(--space-6) 0; border-top: 1px solid var(--color-neutral-800);">
+      <div>
+        <div style="display: flex; align-items: center; gap: var(--space-3); margin-bottom: var(--space-3);"><span style="font-family: ui-monospace, monospace; font-size: 12px; color: var(--color-neutral-500);">F-01</span><span style="font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; padding: 2px 8px; border-radius: 999px; background: var(--color-accent-800); color: var(--color-accent-200);">Kritisch</span></div>
+        <h3 style="margin: 0 0 var(--space-3); font-family: var(--font-heading); font-weight: 500; font-size: 19px;">22 Custom Properties werden benutzt, aber nie definiert</h3>
+        <p style="margin: 0 0 var(--space-3); font-size: 14.5px; line-height: 1.6; color: var(--color-neutral-300); text-wrap: pretty;">Das <span style="font-family: ui-monospace, monospace; font-size: 13px;">:root</span> definiert 18 Farb- und 29 Layout-Tokens. Die neueren Module greifen auf ein zweites, nie angelegtes Set zu. 56 dieser Zugriffe haben keinen Fallback und fallen damit auf „ungültig" zurück — transparente Flächen, Radius 0, fehlende Abstände.</p>
+        <p style="margin: 0; font-size: 14.5px; line-height: 1.6; color: var(--color-neutral-200);"><strong style="font-weight: 600;">Fix:</strong> die fehlenden Namen einmalig als Alias auf die vorhandenen Tokens legen (<span style="font-family: ui-monospace, monospace; font-size: 13px;">--surface: var(--bg-card)</span>, <span style="font-family: ui-monospace, monospace; font-size: 13px;">--radius: 10px</span>, <span style="font-family: ui-monospace, monospace; font-size: 13px;">--space-md: 12px</span> …). Ein Block, ~20 Zeilen — behebt den Großteil des Orte/Kalender-Bruchs.</p>
+      </div>
+      <sc-if value="{{ showEvidence }}" hint-placeholder-val="{{ true }}">
+      <pre style="margin: 0; background: var(--color-neutral-900); border-radius: var(--radius-md); padding: var(--space-6); font-family: ui-monospace, 'SF Mono', monospace; font-size: 12px; line-height: 1.75; color: var(--color-neutral-300); overflow-x: auto; box-shadow: var(--shadow-sm);">--space-md   33×   --surface-alt   11×
+--space-sm   25×   --gold-hover     4×
+--radius     23×   --gold-rgb       4×
+--surface    17×   --border-color   4×
+--bg         14×   --teal, --text-light, …</pre>
+      </sc-if>
+    </div>
+
+    <div style="display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: var(--space-6); padding: var(--space-6) 0; border-top: 1px solid var(--color-neutral-800);">
+      <div>
+        <div style="display: flex; align-items: center; gap: var(--space-3); margin-bottom: var(--space-3);"><span style="font-family: ui-monospace, monospace; font-size: 12px; color: var(--color-neutral-500);">F-02</span><span style="font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; padding: 2px 8px; border-radius: 999px; background: var(--color-accent-800); color: var(--color-accent-200);">Kritisch</span></div>
+        <h3 style="margin: 0 0 var(--space-3); font-family: var(--font-heading); font-weight: 500; font-size: 19px;">Zwei Karten-Sprachen für dieselbe Sache</h3>
+        <p style="margin: 0 0 var(--space-3); font-size: 14.5px; line-height: 1.6; color: var(--color-neutral-300); text-wrap: pretty;">Listeneinträge der klassischen Views (<span style="font-family: ui-monospace, monospace; font-size: 13px;">.loc-item</span>, <span style="font-family: ui-monospace, monospace; font-size: 13px;">.npc-item</span>, <span style="font-family: ui-monospace, monospace; font-size: 13px;">.loot-item</span>) sind identisch aufgebaut. Die vier neuen Views bringen dagegen je eine eigene Karte mit anderem Grund, anderem Radius und einer Akzentleiste links mit.</p>
+        <p style="margin: 0; font-size: 14.5px; line-height: 1.6; color: var(--color-neutral-200);"><strong style="font-weight: 600;">Fix:</strong> eine Klasse <span style="font-family: ui-monospace, monospace; font-size: 13px;">.list-item</span> bzw. <span style="font-family: ui-monospace, monospace; font-size: 13px;">.card</span> als Single Source; <span style="font-family: ui-monospace, monospace; font-size: 13px;">tl-/wp-/fr-/rs-</span>-Karten darauf umstellen und nur Zustandsfarben ergänzen.</p>
+      </div>
+      <sc-if value="{{ showEvidence }}" hint-placeholder-val="{{ true }}">
+      <pre style="margin: 0; background: var(--color-neutral-900); border-radius: var(--radius-md); padding: var(--space-6); font-family: ui-monospace, 'SF Mono', monospace; font-size: 12px; line-height: 1.75; color: var(--color-neutral-300); overflow-x: auto; box-shadow: var(--shadow-sm);">.loc-item     { background: var(--bg-card);
+                border-radius: 10px;
+                border: 2px solid transparent; }
+
+.tl-event-card{ background: var(--surface);   /* ✗ */
+                border-radius: var(--radius); /* ✗ */
+                border-left: 3px solid var(--gold); }</pre>
+      </sc-if>
+    </div>
+
+    <div style="display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: var(--space-6); padding: var(--space-6) 0; border-top: 1px solid var(--color-neutral-800);">
+      <div>
+        <div style="display: flex; align-items: center; gap: var(--space-3); margin-bottom: var(--space-3);"><span style="font-family: ui-monospace, monospace; font-size: 12px; color: var(--color-neutral-500);">F-03</span><span style="font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; padding: 2px 8px; border-radius: 999px; background: var(--color-accent-900); color: var(--color-accent-300);">Hoch</span></div>
+        <h3 style="margin: 0 0 var(--space-3); font-family: var(--font-heading); font-weight: 500; font-size: 19px;">Zwei Maßsysteme: px und rem</h3>
+        <p style="margin: 0 0 var(--space-3); font-size: 14.5px; line-height: 1.6; color: var(--color-neutral-300); text-wrap: pretty;">Der Altbestand rechnet in px, die vier Welt-Views in rem. Dadurch skalieren gleich gemeinte Abstände bei geänderter Browser-Schriftgröße unterschiedlich — die Views laufen optisch auseinander, sobald der Nutzer zoomt.</p>
+        <p style="margin: 0; font-size: 14.5px; line-height: 1.6; color: var(--color-neutral-200);"><strong style="font-weight: 600;">Fix:</strong> eine Einheit festlegen (px passt zum Bestand) und die Spacing-Tokens in dieser Einheit definieren.</p>
+      </div>
+      <sc-if value="{{ showEvidence }}" hint-placeholder-val="{{ true }}">
+      <pre style="margin: 0; background: var(--color-neutral-900); border-radius: var(--radius-md); padding: var(--space-6); font-family: ui-monospace, 'SF Mono', monospace; font-size: 12px; line-height: 1.75; color: var(--color-neutral-300); overflow-x: auto; box-shadow: var(--shadow-sm);">Bestand (Z. 19–25 683)   5 272 px   ·    79 rem
+Welt-Views (Z. 25 684+)     63 px   ·   253 rem</pre>
+      </sc-if>
+    </div>
+
+    <div style="display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: var(--space-6); padding: var(--space-6) 0; border-top: 1px solid var(--color-neutral-800);">
+      <div>
+        <div style="display: flex; align-items: center; gap: var(--space-3); margin-bottom: var(--space-3);"><span style="font-family: ui-monospace, monospace; font-size: 12px; color: var(--color-neutral-500);">F-04</span><span style="font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; padding: 2px 8px; border-radius: 999px; background: var(--color-accent-900); color: var(--color-accent-300);">Hoch</span></div>
+        <h3 style="margin: 0 0 var(--space-3); font-family: var(--font-heading); font-weight: 500; font-size: 19px;">100 hartkodierte Hex-Farben neben der Token-Palette</h3>
+        <p style="margin: 0 0 var(--space-3); font-size: 14.5px; line-height: 1.6; color: var(--color-neutral-300); text-wrap: pretty;">240 Farbangaben stehen direkt im CSS, in 100 verschiedenen Werten. Für Erfolg, Gefahr und Info existieren jeweils drei bis fünf parallele Töne — Themes und Design-Profile greifen an diesen Stellen nicht.</p>
+        <p style="margin: 0; font-size: 14.5px; line-height: 1.6; color: var(--color-neutral-200);"><strong style="font-weight: 600;">Fix:</strong> semantische Tokens (<span style="font-family: ui-monospace, monospace; font-size: 13px;">--color-success/-warning/-danger/-info</span> sind vorhanden!) konsequent verwenden; Hex-Werte per Suchen-Ersetzen kanalisieren.</p>
+      </div>
+      <sc-if value="{{ showEvidence }}" hint-placeholder-val="{{ true }}">
+      <pre style="margin: 0; background: var(--color-neutral-900); border-radius: var(--radius-md); padding: var(--space-6); font-family: ui-monospace, 'SF Mono', monospace; font-size: 12px; line-height: 1.75; color: var(--color-neutral-300); overflow-x: auto; box-shadow: var(--shadow-sm);">Grün  #22c55e ×17  #16a34a ×5  #4ade80 ×4  #2ecc71
+Rot   #ef4444 ×13  #dc2626 ×8  #991b1b  #b91c1c  #e74c3c
+Blau  #3b82f6 ×10  #60a5fa      #3498db
+Gold  #d4af37 ×5   #c5a028 ×4  #f59e0b  #eab308</pre>
+      </sc-if>
+    </div>
+
+    <sc-if value="{{ showMinor }}" hint-placeholder-val="{{ true }}">
+    <div style="display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: var(--space-6); padding: var(--space-6) 0; border-top: 1px solid var(--color-neutral-800);">
+      <div>
+        <div style="display: flex; align-items: center; gap: var(--space-3); margin-bottom: var(--space-3);"><span style="font-family: ui-monospace, monospace; font-size: 12px; color: var(--color-neutral-500);">F-05</span><span style="font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; padding: 2px 8px; border-radius: 999px; background: var(--color-neutral-800); color: var(--color-neutral-300);">Mittel</span></div>
+        <h3 style="margin: 0 0 var(--space-3); font-family: var(--font-heading); font-weight: 500; font-size: 19px;">14 verschiedene Schrift-Deklarationen</h3>
+        <p style="margin: 0 0 var(--space-3); font-size: 14.5px; line-height: 1.6; color: var(--color-neutral-300); text-wrap: pretty;">Neben den gebündelten Profil-Fonts stehen Segoe UI, Inter, Poppins, Roboto, Source Sans Pro, Georgia und vier verschiedene Mono-Stacks im CSS. Besonders auffällig: <span style="font-family: ui-monospace, monospace; font-size: 13px;">.section-toolbar</span> erzwingt <span style="font-family: ui-monospace, monospace; font-size: 13px;">'Segoe UI'</span> und ignoriert damit das gewählte Design-Profil — in jeder Toolbar der App.</p>
+        <p style="margin: 0; font-size: 14.5px; line-height: 1.6; color: var(--color-neutral-200);"><strong style="font-weight: 600;">Fix:</strong> zwei Familien-Tokens (UI + Mono) und <span style="font-family: ui-monospace, monospace; font-size: 13px;">font-family: inherit</span> in Komponenten.</p>
+      </div>
+      <sc-if value="{{ showEvidence }}" hint-placeholder-val="{{ true }}">
+      <pre style="margin: 0; background: var(--color-neutral-900); border-radius: var(--radius-md); padding: var(--space-6); font-family: ui-monospace, 'SF Mono', monospace; font-size: 12px; line-height: 1.75; color: var(--color-neutral-300); overflow-x: auto; box-shadow: var(--shadow-sm);">.section-toolbar { font-family:'Segoe UI',system-ui; }
+Mono-Stacks: monospace ×17 · 'JetBrains Mono' ×5
+             'Roboto Mono' · 'Consolas','Monaco' · 'Courier New'</pre>
+      </sc-if>
+    </div>
+
+    <div style="display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: var(--space-6); padding: var(--space-6) 0; border-top: 1px solid var(--color-neutral-800);">
+      <div>
+        <div style="display: flex; align-items: center; gap: var(--space-3); margin-bottom: var(--space-3);"><span style="font-family: ui-monospace, monospace; font-size: 12px; color: var(--color-neutral-500);">F-06</span><span style="font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; padding: 2px 8px; border-radius: 999px; background: var(--color-neutral-800); color: var(--color-neutral-300);">Mittel</span></div>
+        <h3 style="margin: 0 0 var(--space-3); font-family: var(--font-heading); font-weight: 500; font-size: 19px;">Keine Radius- und Abstands-Skala</h3>
+        <p style="margin: 0 0 var(--space-3); font-size: 14.5px; line-height: 1.6; color: var(--color-neutral-300); text-wrap: pretty;">Neun einfache Radius-Werte konkurrieren (3, 4, 5, 6, 8, 10, 12, 16, 20 px), und für <span style="font-family: ui-monospace, monospace; font-size: 13px;">gap</span>/<span style="font-family: ui-monospace, monospace; font-size: 13px;">padding</span> existieren 136 verschiedene Werte. Gleichrangige Elemente wirken dadurch ungleich weich und ungleich dicht.</p>
+        <p style="margin: 0; font-size: 14.5px; line-height: 1.6; color: var(--color-neutral-200);"><strong style="font-weight: 600;">Fix:</strong> drei Radien (4/8/12) und fünf Abstände (4/8/12/16/24) als Tokens, alles andere darauf runden.</p>
+      </div>
+      <sc-if value="{{ showEvidence }}" hint-placeholder-val="{{ true }}">
+      <pre style="margin: 0; background: var(--color-neutral-900); border-radius: var(--radius-md); padding: var(--space-6); font-family: ui-monospace, 'SF Mono', monospace; font-size: 12px; line-height: 1.75; color: var(--color-neutral-300); overflow-x: auto; box-shadow: var(--shadow-sm);">border-radius: 4px ×167 · 6px ×161 · 8px ×138
+               10px ×62 · 12px ×40 · 3px ×38 · var(--radius) ×23
+gap/padding:   136 unterschiedliche Werte</pre>
+      </sc-if>
+    </div>
+    </sc-if>
+  </section>
+
+  <section style="display: flex; flex-direction: column;">
+    <h2 style="margin: 0 0 var(--space-4); font-family: var(--font-heading); font-weight: 500; font-size: 26px; letter-spacing: -0.01em;">B · View-Gerüst</h2>
+
+    <div style="display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: var(--space-6); padding: var(--space-6) 0; border-top: 1px solid var(--color-neutral-800);">
+      <div>
+        <div style="display: flex; align-items: center; gap: var(--space-3); margin-bottom: var(--space-3);"><span style="font-family: ui-monospace, monospace; font-size: 12px; color: var(--color-neutral-500);">F-07</span><span style="font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; padding: 2px 8px; border-radius: 999px; background: var(--color-accent-800); color: var(--color-accent-200);">Kritisch</span></div>
+        <h3 style="margin: 0 0 var(--space-3); font-family: var(--font-heading); font-weight: 500; font-size: 19px;">Vier Views liegen außerhalb des Seiten-Containers</h3>
+        <p style="margin: 0 0 var(--space-3); font-size: 14.5px; line-height: 1.6; color: var(--color-neutral-300); text-wrap: pretty;">Session-Prep, Kalender, Reise und Fraktionen stehen im Markup nach <span style="font-family: ui-monospace, monospace; font-size: 13px;">&lt;/main&gt;</span>, mitten im Modal-Bereich. Sie erben deshalb weder das Innenabstand-Padding noch <span style="font-family: ui-monospace, monospace; font-size: 13px;">max-width: 1800px</span> noch den Abstand zur fixierten Navigation. Genau das erzeugt den Eindruck, der Kalender sei „anders gebaut".</p>
+        <p style="margin: 0; font-size: 14.5px; line-height: 1.6; color: var(--color-neutral-200);"><strong style="font-weight: 600;">Fix:</strong> die vier <span style="font-family: ui-monospace, monospace; font-size: 13px;">&lt;section class="view"&gt;</span> vor <span style="font-family: ui-monospace, monospace; font-size: 13px;">&lt;/main&gt;</span> verschieben und die <span style="font-family: ui-monospace, monospace; font-size: 13px;">*-view-content</span>-Paddings entfernen.</p>
+      </div>
+      <sc-if value="{{ showEvidence }}" hint-placeholder-val="{{ true }}">
+      <pre style="margin: 0; background: var(--color-neutral-900); border-radius: var(--radius-md); padding: var(--space-6); font-family: ui-monospace, 'SF Mono', monospace; font-size: 12px; line-height: 1.75; color: var(--color-neutral-300); overflow-x: auto; box-shadow: var(--shadow-sm);">Z. 27 124  &lt;main class="main-content"&gt;
+Z. 29 599  &lt;/main&gt;
+Z. 29 608  &lt;section id="view-sessionprep"&gt;   ✗
+Z. 29 624  &lt;section id="view-kalender"&gt;      ✗
+Z. 29 643  &lt;section id="view-reise"&gt;         ✗
+Z. 29 655  &lt;section id="view-fraktionen"&gt;    ✗</pre>
+      </sc-if>
+    </div>
+
+    <div style="display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: var(--space-6); padding: var(--space-6) 0; border-top: 1px solid var(--color-neutral-800);">
+      <div>
+        <div style="display: flex; align-items: center; gap: var(--space-3); margin-bottom: var(--space-3);"><span style="font-family: ui-monospace, monospace; font-size: 12px; color: var(--color-neutral-500);">F-08</span><span style="font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; padding: 2px 8px; border-radius: 999px; background: var(--color-accent-900); color: var(--color-accent-300);">Hoch</span></div>
+        <h3 style="margin: 0 0 var(--space-3); font-family: var(--font-heading); font-weight: 500; font-size: 19px;">Drei Kopfzeilen-Muster in einer App</h3>
+        <p style="margin: 0 0 var(--space-3); font-size: 14.5px; line-height: 1.6; color: var(--color-neutral-300); text-wrap: pretty;">Zwölf Views tragen die volle <span style="font-family: ui-monospace, monospace; font-size: 13px;">.section-toolbar</span> (74 px hoch, vier Gruppen). Vier tragen eine Kurzfassung ohne Suche und Export. Acht haben überhaupt keine Toolbar, sondern jeweils einen eigenen Kopf (<span style="font-family: ui-monospace, monospace; font-size: 13px;">.dmscreen-header</span>, <span style="font-family: ui-monospace, monospace; font-size: 13px;">.dice-hero</span>, <span style="font-family: ui-monospace, monospace; font-size: 13px;">.timer-hub</span>, <span style="font-family: ui-monospace, monospace; font-size: 13px;">.encounter-controls</span>). Der Nutzer verliert damit den festen Ankerpunkt beim Tab-Wechsel.</p>
+        <p style="margin: 0; font-size: 14.5px; line-height: 1.6; color: var(--color-neutral-200);"><strong style="font-weight: 600;">Fix:</strong> Toolbar als verbindlicher Kontrakt für alle Views; Werkzeug-Views bekommen dieselbe Zeile mit Titel + Aktionen, ihre Spezialsteuerung darunter.</p>
+      </div>
+      <sc-if value="{{ showEvidence }}" hint-placeholder-val="{{ true }}">
+      <pre style="margin: 0; background: var(--color-neutral-900); border-radius: var(--radius-md); padding: var(--space-6); font-family: ui-monospace, 'SF Mono', monospace; font-size: 12px; line-height: 1.75; color: var(--color-neutral-300); overflow-x: auto; box-shadow: var(--shadow-sm);">.section-toolbar   16× im Markup
+.toolbar-search     12×
+.section-toolbar-io 10×
+ohne Toolbar: Start · Würfel · Timer · Initiative
+              DM Screen · Soundboard · Statistiken · Daten</pre>
+      </sc-if>
+    </div>
+
+    <div style="display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: var(--space-6); padding: var(--space-6) 0; border-top: 1px solid var(--color-neutral-800);">
+      <div>
+        <div style="display: flex; align-items: center; gap: var(--space-3); margin-bottom: var(--space-3);"><span style="font-family: ui-monospace, monospace; font-size: 12px; color: var(--color-neutral-500);">F-09</span><span style="font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; padding: 2px 8px; border-radius: 999px; background: var(--color-accent-900); color: var(--color-accent-300);">Hoch</span></div>
+        <h3 style="margin: 0 0 var(--space-3); font-family: var(--font-heading); font-weight: 500; font-size: 19px;">Suche und Import/Export fehlen in den neuen Views</h3>
+        <p style="margin: 0 0 var(--space-3); font-size: 14.5px; line-height: 1.6; color: var(--color-neutral-300); text-wrap: pretty;">Kalender, Fraktionen, Session-Prep und Reise führen Listen, bieten aber keine Suche und keinen Datenexport — beides ist in jeder älteren Liste vorhanden. Das ist nicht nur optisch inkonsistent, sondern ein Funktionsloch.</p>
+        <p style="margin: 0; font-size: 14.5px; line-height: 1.6; color: var(--color-neutral-200);"><strong style="font-weight: 600;">Fix:</strong> die Suchgruppe und den IO-Block der Toolbar in alle vier Views übernehmen (Markup ist identisch, nur <span style="font-family: ui-monospace, monospace; font-size: 13px;">data-render</span> anpassen).</p>
+      </div>
+      <sc-if value="{{ showEvidence }}" hint-placeholder-val="{{ true }}">
+      <pre style="margin: 0; background: var(--color-neutral-900); border-radius: var(--radius-md); padding: var(--space-6); font-family: ui-monospace, 'SF Mono', monospace; font-size: 12px; line-height: 1.75; color: var(--color-neutral-300); overflow-x: auto; box-shadow: var(--shadow-sm);">Orte      Identität · Suche · Filter+IO · Aktion
+Kalender  Identität · — · — · Aktion
+Reise     Identität · — · — · —   (auch ohne Zähler)</pre>
+      </sc-if>
+    </div>
+
+    <div style="display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: var(--space-6); padding: var(--space-6) 0; border-top: 1px solid var(--color-neutral-800);">
+      <div>
+        <div style="display: flex; align-items: center; gap: var(--space-3); margin-bottom: var(--space-3);"><span style="font-family: ui-monospace, monospace; font-size: 12px; color: var(--color-neutral-500);">F-11</span><span style="font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; padding: 2px 8px; border-radius: 999px; background: var(--color-accent-900); color: var(--color-accent-300);">Hoch</span></div>
+        <h3 style="margin: 0 0 var(--space-3); font-family: var(--font-heading); font-weight: 500; font-size: 19px;">Master-Detail: gleiche Grundform, fünf Verhaltensweisen</h3>
+        <p style="margin: 0 0 var(--space-3); font-size: 14.5px; line-height: 1.6; color: var(--color-neutral-300); text-wrap: pretty;">Orte, NPCs, Truhe, Encounter und Bestiar starten alle mit <span style="font-family: ui-monospace, monospace; font-size: 13px;">1fr 825px</span> — aber jede View reagiert anders auf schmale Fenster, und Fraktionen dreht die Achse komplett um (Liste links, 320 px).</p>
+        <p style="margin: 0; font-size: 14.5px; line-height: 1.6; color: var(--color-neutral-200);"><strong style="font-weight: 600;">Fix:</strong> eine Utility-Klasse <span style="font-family: ui-monospace, monospace; font-size: 13px;">.master-detail</span> mit einer Breakpoint-Kette für alle fünf; Fraktionen auf dieselbe Achse drehen.</p>
+      </div>
+      <sc-if value="{{ showEvidence }}" hint-placeholder-val="{{ true }}">
+      <pre style="margin: 0; background: var(--color-neutral-900); border-radius: var(--radius-md); padding: var(--space-6); font-family: ui-monospace, 'SF Mono', monospace; font-size: 12px; line-height: 1.75; color: var(--color-neutral-300); overflow-x: auto; box-shadow: var(--shadow-sm);">.loc-layout      1fr 825px  →           1fr
+.bestiary-layout 1fr 825px  →           1fr
+.npc-layout      1fr 825px  → 1fr 400px → 1fr
+.loot-layout     1fr 825px  → 1fr 500px → 1fr
+.enc-layout      1fr 825px  → 1fr 600px → 1fr 400px → 1fr
+.fr-layout       320px 1fr  →           1fr   ← gedreht</pre>
+      </sc-if>
+    </div>
+
+    <sc-if value="{{ showMinor }}" hint-placeholder-val="{{ true }}">
+    <div style="display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: var(--space-6); padding: var(--space-6) 0; border-top: 1px solid var(--color-neutral-800);">
+      <div>
+        <div style="display: flex; align-items: center; gap: var(--space-3); margin-bottom: var(--space-3);"><span style="font-family: ui-monospace, monospace; font-size: 12px; color: var(--color-neutral-500);">F-10</span><span style="font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; padding: 2px 8px; border-radius: 999px; background: var(--color-neutral-800); color: var(--color-neutral-300);">Mittel</span></div>
+        <h3 style="margin: 0 0 var(--space-3); font-family: var(--font-heading); font-weight: 500; font-size: 19px;">Drei Namensschemata für den Zähler</h3>
+        <p style="margin: 0 0 var(--space-3); font-size: 14.5px; line-height: 1.6; color: var(--color-neutral-300); text-wrap: pretty;">Elf Views nutzen <span style="font-family: ui-monospace, monospace; font-size: 13px;">*-io-count</span>, Bestiar <span style="font-family: ui-monospace, monospace; font-size: 13px;">bestiary-count</span>, die Welt-Views <span style="font-family: ui-monospace, monospace; font-size: 13px;">*-count</span>. Reise hat keinen Zähler und keine Primäraktion. Ein gemeinsames Update-Helper ist damit nicht möglich.</p>
+        <p style="margin: 0; font-size: 14.5px; line-height: 1.6; color: var(--color-neutral-200);"><strong style="font-weight: 600;">Fix:</strong> ein Schema <span style="font-family: ui-monospace, monospace; font-size: 13px;">&lt;view&gt;-count</span> plus <span style="font-family: ui-monospace, monospace; font-size: 13px;">setViewCount(view, n)</span>.</p>
+      </div>
+      <sc-if value="{{ showEvidence }}" hint-placeholder-val="{{ true }}">
+      <pre style="margin: 0; background: var(--color-neutral-900); border-radius: var(--radius-md); padding: var(--space-6); font-family: ui-monospace, 'SF Mono', monospace; font-size: 12px; line-height: 1.75; color: var(--color-neutral-300); overflow-x: auto; box-shadow: var(--shadow-sm);">party-io-count · locations-io-count · loot-io-count …
+bestiary-count
+kalender-count · fraktionen-count · sessionprep-count
+reise → kein Zähler</pre>
+      </sc-if>
+    </div>
+
+    <div style="display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: var(--space-6); padding: var(--space-6) 0; border-top: 1px solid var(--color-neutral-800);">
+      <div>
+        <div style="display: flex; align-items: center; gap: var(--space-3); margin-bottom: var(--space-3);"><span style="font-family: ui-monospace, monospace; font-size: 12px; color: var(--color-neutral-500);">F-12</span><span style="font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; padding: 2px 8px; border-radius: 999px; background: var(--color-neutral-800); color: var(--color-neutral-300);">Mittel</span></div>
+        <h3 style="margin: 0 0 var(--space-3); font-family: var(--font-heading); font-weight: 500; font-size: 19px;">18 verschiedene Breakpoint-Grenzen</h3>
+        <p style="margin: 0 0 var(--space-3); font-size: 14.5px; line-height: 1.6; color: var(--color-neutral-300); text-wrap: pretty;">Umbruchpunkte reichen von 480 bis 1400 px in elf Max-Width-Varianten. Beim Verkleinern brechen die Views daher zu unterschiedlichen Zeitpunkten um.</p>
+        <p style="margin: 0; font-size: 14.5px; line-height: 1.6; color: var(--color-neutral-200);"><strong style="font-weight: 600;">Fix:</strong> drei Grenzen festlegen (z. B. 600 / 900 / 1200) und alle Queries darauf ziehen.</p>
+      </div>
+      <sc-if value="{{ showEvidence }}" hint-placeholder-val="{{ true }}">
+      <pre style="margin: 0; background: var(--color-neutral-900); border-radius: var(--radius-md); padding: var(--space-6); font-family: ui-monospace, 'SF Mono', monospace; font-size: 12px; line-height: 1.75; color: var(--color-neutral-300); overflow-x: auto; box-shadow: var(--shadow-sm);">600 ×14 · 768 ×10 · 480 ×6 · 900 ×6 · 1200 ×5
+500 ×4 · 1400 ×3 · 700 ×2 · 800 · 1000 · 640 …</pre>
+      </sc-if>
+    </div>
+    </sc-if>
+  </section>
+
+  <section style="display: flex; flex-direction: column;">
+    <h2 style="margin: 0 0 var(--space-4); font-family: var(--font-heading); font-weight: 500; font-size: 26px; letter-spacing: -0.01em;">C · Komponenten</h2>
+
+    <div style="display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: var(--space-6); padding: var(--space-6) 0; border-top: 1px solid var(--color-neutral-800);">
+      <div>
+        <div style="display: flex; align-items: center; gap: var(--space-3); margin-bottom: var(--space-3);"><span style="font-family: ui-monospace, monospace; font-size: 12px; color: var(--color-neutral-500);">F-13</span><span style="font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; padding: 2px 8px; border-radius: 999px; background: var(--color-accent-900); color: var(--color-accent-300);">Hoch</span></div>
+        <h3 style="margin: 0 0 var(--space-3); font-family: var(--font-heading); font-weight: 500; font-size: 19px;">Drei Button-Varianten existieren nur im Markup</h3>
+        <p style="margin: 0 0 var(--space-3); font-size: 14.5px; line-height: 1.6; color: var(--color-neutral-300); text-wrap: pretty;"><span style="font-family: ui-monospace, monospace; font-size: 13px;">btn-secondary</span>, <span style="font-family: ui-monospace, monospace; font-size: 13px;">btn-warning</span> und <span style="font-family: ui-monospace, monospace; font-size: 13px;">btn-icon</span> werden 24× verwendet, sind aber nirgends definiert. Diese Buttons sehen aus wie Standard-Buttons — z. B. „🎲 Generator" in NPCs oder „⭐ XP" in der Initiative, die als sekundär bzw. als Warnung gemeint sind.</p>
+        <p style="margin: 0; font-size: 14.5px; line-height: 1.6; color: var(--color-neutral-200);"><strong style="font-weight: 600;">Fix:</strong> die drei Varianten definieren — oder das Markup auf die vorhandenen Varianten umstellen.</p>
+      </div>
+      <sc-if value="{{ showEvidence }}" hint-placeholder-val="{{ true }}">
+      <pre style="margin: 0; background: var(--color-neutral-900); border-radius: var(--radius-md); padding: var(--space-6); font-family: ui-monospace, 'SF Mono', monospace; font-size: 12px; line-height: 1.75; color: var(--color-neutral-300); overflow-x: auto; box-shadow: var(--shadow-sm);">Klasse           CSS-Regel   Verwendungen
+btn-icon         keine       17
+btn-secondary    keine        5
+btn-warning      keine        2</pre>
+      </sc-if>
+    </div>
+
+    <div style="display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: var(--space-6); padding: var(--space-6) 0; border-top: 1px solid var(--color-neutral-800);">
+      <div>
+        <div style="display: flex; align-items: center; gap: var(--space-3); margin-bottom: var(--space-3);"><span style="font-family: ui-monospace, monospace; font-size: 12px; color: var(--color-neutral-500);">F-14</span><span style="font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; padding: 2px 8px; border-radius: 999px; background: var(--color-accent-900); color: var(--color-accent-300);">Hoch</span></div>
+        <h3 style="margin: 0 0 var(--space-3); font-family: var(--font-heading); font-weight: 500; font-size: 19px;">Zwei Farben für dieselbe Rolle „Neu anlegen"</h3>
+        <p style="margin: 0 0 var(--space-3); font-size: 14.5px; line-height: 1.6; color: var(--color-neutral-300); text-wrap: pretty;">„+ Neuer Ort" ist grün (<span style="font-family: ui-monospace, monospace; font-size: 13px;">btn-success</span>), „+ Ereignis" und „+ Neue Fraktion" sind <span style="font-family: ui-monospace, monospace; font-size: 13px;">btn-primary</span>. Insgesamt 56 zu 29 Verwendungen — die Primäraktion hat keine erkennbare Farbe.</p>
+        <p style="margin: 0; font-size: 14.5px; line-height: 1.6; color: var(--color-neutral-200);"><strong style="font-weight: 600;">Fix:</strong> <span style="font-family: ui-monospace, monospace; font-size: 13px;">btn-primary</span> als einzige Primärvariante; <span style="font-family: ui-monospace, monospace; font-size: 13px;">btn-success</span> nur für bestätigende Aktionen (Speichern, Abschließen).</p>
+      </div>
+      <sc-if value="{{ showEvidence }}" hint-placeholder-val="{{ true }}">
+      <pre style="margin: 0; background: var(--color-neutral-900); border-radius: var(--radius-md); padding: var(--space-6); font-family: ui-monospace, 'SF Mono', monospace; font-size: 12px; line-height: 1.75; color: var(--color-neutral-300); overflow-x: auto; box-shadow: var(--shadow-sm);">Orte       btn btn-success  "+ Neuer Ort"
+Kalender   btn btn-primary  "+ Ereignis"
+Fraktionen btn btn-primary  "+ Neue Fraktion"
+Bestiar    btn btn-success  "+ Monster"</pre>
+      </sc-if>
+    </div>
+
+    <sc-if value="{{ showMinor }}" hint-placeholder-val="{{ true }}">
+    <div style="display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: var(--space-6); padding: var(--space-6) 0; border-top: 1px solid var(--color-neutral-800);">
+      <div>
+        <div style="display: flex; align-items: center; gap: var(--space-3); margin-bottom: var(--space-3);"><span style="font-family: ui-monospace, monospace; font-size: 12px; color: var(--color-neutral-500);">F-15</span><span style="font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; padding: 2px 8px; border-radius: 999px; background: var(--color-neutral-800); color: var(--color-neutral-300);">Mittel</span></div>
+        <h3 style="margin: 0 0 var(--space-3); font-family: var(--font-heading); font-weight: 500; font-size: 19px;">Bestiar bricht die Toolbar-Regeln im Detail</h3>
+        <p style="margin: 0 0 var(--space-3); font-size: 14.5px; line-height: 1.6; color: var(--color-neutral-300); text-wrap: pretty;">Der Titel trägt Inline-Farbe und -Gewicht statt der Klassenwerte, das Suchfeld hat kein 🔍 im Platzhalter (alle anderen elf haben es), und die Filter kommen als eigene <span style="font-family: ui-monospace, monospace; font-size: 13px;">bestiary-filter-select</span> mit Labels statt als Chips.</p>
+        <p style="margin: 0; font-size: 14.5px; line-height: 1.6; color: var(--color-neutral-200);"><strong style="font-weight: 600;">Fix:</strong> Inline-Styles entfernen, Platzhalter angleichen, Filter auf die Chip- oder Toolbar-Select-Variante bringen.</p>
+      </div>
+      <sc-if value="{{ showEvidence }}" hint-placeholder-val="{{ true }}">
+      <pre style="margin: 0; background: var(--color-neutral-900); border-radius: var(--radius-md); padding: var(--space-6); font-family: ui-monospace, 'SF Mono', monospace; font-size: 12px; line-height: 1.75; color: var(--color-neutral-300); overflow-x: auto; box-shadow: var(--shadow-sm);">&lt;span class="section-toolbar-title"
+      style="color:var(--gold);font-weight:700;"&gt;🐉 Bestiar
+
+placeholder="Monster suchen..."      ← ohne 🔍
+placeholder="🔍 Orte suchen..."      ← Standard</pre>
+      </sc-if>
+    </div>
+
+    <div style="display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: var(--space-6); padding: var(--space-6) 0; border-top: 1px solid var(--color-neutral-800);">
+      <div>
+        <div style="display: flex; align-items: center; gap: var(--space-3); margin-bottom: var(--space-3);"><span style="font-family: ui-monospace, monospace; font-size: 12px; color: var(--color-neutral-500);">F-16</span><span style="font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; padding: 2px 8px; border-radius: 999px; background: var(--color-neutral-800); color: var(--color-neutral-300);">Mittel</span></div>
+        <h3 style="margin: 0 0 var(--space-3); font-family: var(--font-heading); font-weight: 500; font-size: 19px;">Vier verschiedene Filter-Bedienungen</h3>
+        <p style="margin: 0 0 var(--space-3); font-size: 14.5px; line-height: 1.6; color: var(--color-neutral-300); text-wrap: pretty;">Filter-Chips (Orte, NPCs, Truhe, Encounter), natives Select (Party, Shops, Links), Label + Select (Bestiar) und Checkbox (Quests) — vier Interaktionsmodelle für dieselbe Aufgabe.</p>
+        <p style="margin: 0; font-size: 14.5px; line-height: 1.6; color: var(--color-neutral-200);"><strong style="font-weight: 600;">Fix:</strong> Chips als Standard für Kategorien, Select nur bei mehr als ~8 Optionen.</p>
+      </div>
+      <sc-if value="{{ showEvidence }}" hint-placeholder-val="{{ true }}">
+      <pre style="margin: 0; background: var(--color-neutral-900); border-radius: var(--radius-md); padding: var(--space-6); font-family: ui-monospace, 'SF Mono', monospace; font-size: 12px; line-height: 1.75; color: var(--color-neutral-300); overflow-x: auto; box-shadow: var(--shadow-sm);">.loc-filter-chips · .npc-filter-chips · .loot-filter-chips
+&lt;select id="party-class-filter"&gt; · #shop-type-filter
+.bestiary-filter-label + .bestiary-filter-select
+.filter-checkbox (Quests)</pre>
+      </sc-if>
+    </div>
+
+    <div style="display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: var(--space-6); padding: var(--space-6) 0; border-top: 1px solid var(--color-neutral-800);">
+      <div>
+        <div style="display: flex; align-items: center; gap: var(--space-3); margin-bottom: var(--space-3);"><span style="font-family: ui-monospace, monospace; font-size: 12px; color: var(--color-neutral-500);">F-17</span><span style="font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; padding: 2px 8px; border-radius: 999px; background: var(--color-neutral-800); color: var(--color-neutral-300);">Mittel</span></div>
+        <h3 style="margin: 0 0 var(--space-3); font-family: var(--font-heading); font-weight: 500; font-size: 19px;">Rund 15 eigene Leerzustände</h3>
+        <p style="margin: 0 0 var(--space-3); font-size: 14.5px; line-height: 1.6; color: var(--color-neutral-300); text-wrap: pretty;">Es gibt eine generische <span style="font-family: ui-monospace, monospace; font-size: 13px;">.empty-state</span>-Familie (3 Verwendungen) — und daneben pro View eine eigene: <span style="font-family: ui-monospace, monospace; font-size: 13px;">loc-detail-empty</span>, <span style="font-family: ui-monospace, monospace; font-size: 13px;">npc-detail-empty</span>, <span style="font-family: ui-monospace, monospace; font-size: 13px;">loot-detail-empty</span>, <span style="font-family: ui-monospace, monospace; font-size: 13px;">enc-detail-empty</span>, <span style="font-family: ui-monospace, monospace; font-size: 13px;">bestiary-detail-empty</span>, <span style="font-family: ui-monospace, monospace; font-size: 13px;">dms-widget-empty</span> …</p>
+        <p style="margin: 0; font-size: 14.5px; line-height: 1.6; color: var(--color-neutral-200);"><strong style="font-weight: 600;">Fix:</strong> ein Muster <span style="font-family: ui-monospace, monospace; font-size: 13px;">.empty-state</span> (Icon, Titel, Beschreibung, optionale Aktion), alles andere löschen.</p>
+      </div>
+      <sc-if value="{{ showEvidence }}" hint-placeholder-val="{{ true }}">
+      <pre style="margin: 0; background: var(--color-neutral-900); border-radius: var(--radius-md); padding: var(--space-6); font-family: ui-monospace, 'SF Mono', monospace; font-size: 12px; line-height: 1.75; color: var(--color-neutral-300); overflow-x: auto; box-shadow: var(--shadow-sm);">empty-state(-icon/-title/-desc)   3 Verwendungen
++ 14 View-eigene Familien
+  (loc-, npc-, loot-, enc-, bestiary-, wiki-,
+   dms-widget-, sb-, cart-, char-, calc-, rt-preview-)</pre>
+      </sc-if>
+    </div>
+    </sc-if>
+  </section>
+
+  <sc-if value="{{ showMinor }}" hint-placeholder-val="{{ true }}">
+  <section style="display: flex; flex-direction: column;">
+    <h2 style="margin: 0 0 var(--space-4); font-family: var(--font-heading); font-weight: 500; font-size: 26px; letter-spacing: -0.01em;">D · CSS-Hygiene</h2>
+
+    <div style="display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: var(--space-6); padding: var(--space-6) 0; border-top: 1px solid var(--color-neutral-800);">
+      <div>
+        <div style="display: flex; align-items: center; gap: var(--space-3); margin-bottom: var(--space-3);"><span style="font-family: ui-monospace, monospace; font-size: 12px; color: var(--color-neutral-500);">F-18</span><span style="font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; padding: 2px 8px; border-radius: 999px; background: var(--color-neutral-800); color: var(--color-neutral-300);">Mittel</span></div>
+        <h3 style="margin: 0 0 var(--space-3); font-family: var(--font-heading); font-weight: 500; font-size: 19px;">Mehrfach definierte Selektoren und 132× !important</h3>
+        <p style="margin: 0 0 var(--space-3); font-size: 14.5px; line-height: 1.6; color: var(--color-neutral-300); text-wrap: pretty;">28 Selektoren sind mehr als zweimal im Stylesheet definiert — <span style="font-family: ui-monospace, monospace; font-size: 13px;">.section-toolbar</span> viermal, <span style="font-family: ui-monospace, monospace; font-size: 13px;">.dmscreen-grid</span> fünfmal, <span style="font-family: ui-monospace, monospace; font-size: 13px;">.modal</span> und <span style="font-family: ui-monospace, monospace; font-size: 13px;">.modal-overlay</span> je dreimal. Wer eine Regel ändert, trifft womöglich die falsche Fundstelle; die 132 <span style="font-family: ui-monospace, monospace; font-size: 13px;">!important</span> sind die Folge davon.</p>
+        <p style="margin: 0; font-size: 14.5px; line-height: 1.6; color: var(--color-neutral-200);"><strong style="font-weight: 600;">Fix:</strong> Dubletten zusammenführen (je Komponente ein Block), danach <span style="font-family: ui-monospace, monospace; font-size: 13px;">!important</span> abbauen.</p>
+      </div>
+      <sc-if value="{{ showEvidence }}" hint-placeholder-val="{{ true }}">
+      <pre style="margin: 0; background: var(--color-neutral-900); border-radius: var(--radius-md); padding: var(--space-6); font-family: ui-monospace, 'SF Mono', monospace; font-size: 12px; line-height: 1.75; color: var(--color-neutral-300); overflow-x: auto; box-shadow: var(--shadow-sm);">5× .dmscreen-grid        3× .npc-layout
+4× .section-toolbar      3× .loot-layout · .loot-item
+4× .enc-layout           3× .modal · .modal-overlay
+4× .spell-slots-grid     3× .editor-toolbar</pre>
+      </sc-if>
+    </div>
+
+    <div style="display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: var(--space-6); padding: var(--space-6) 0; border-top: 1px solid var(--color-neutral-800); border-bottom: 1px solid var(--color-neutral-800);">
+      <div>
+        <div style="display: flex; align-items: center; gap: var(--space-3); margin-bottom: var(--space-3);"><span style="font-family: ui-monospace, monospace; font-size: 12px; color: var(--color-neutral-500);">F-19</span><span style="font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; padding: 2px 8px; border-radius: 999px; background: transparent; border: 1px solid var(--color-neutral-700); color: var(--color-neutral-400);">Niedrig</span></div>
+        <h3 style="margin: 0 0 var(--space-3); font-family: var(--font-heading); font-weight: 500; font-size: 19px;">684 Inline-Styles und 23 z-index-Werte</h3>
+        <p style="margin: 0 0 var(--space-3); font-size: 14.5px; line-height: 1.6; color: var(--color-neutral-300); text-wrap: pretty;">324 Inline-Styles allein im Body-Markup, darunter Farben direkt an Navigations-Tabs. Die z-index-Werte reichen ohne Stufenlogik von 2 bis 10001 — Overlays, Modals und Dropdowns konkurrieren.</p>
+        <p style="margin: 0; font-size: 14.5px; line-height: 1.6; color: var(--color-neutral-200);"><strong style="font-weight: 600;">Fix:</strong> wiederkehrende Inline-Styles in Utility-Klassen überführen; fünf z-index-Stufen als Tokens (Basis, Sticky, Dropdown, Modal, Toast).</p>
+      </div>
+      <sc-if value="{{ showEvidence }}" hint-placeholder-val="{{ true }}">
+      <pre style="margin: 0; background: var(--color-neutral-900); border-radius: var(--radius-md); padding: var(--space-6); font-family: ui-monospace, 'SF Mono', monospace; font-size: 12px; line-height: 1.75; color: var(--color-neutral-300); overflow-x: auto; box-shadow: var(--shadow-sm);">z-index: 2,3,4,5,10,15,98,99,100,200,989,990,998,
+         999,1000,1050,1100,1200,5000,5001,9999,
+         10000,10001</pre>
+      </sc-if>
+    </div>
+  </section>
+  </sc-if>
+
+  <sc-if value="{{ showPlan }}" hint-placeholder-val="{{ true }}">
+  <section style="display: flex; flex-direction: column; gap: var(--space-6);">
+    <h2 style="margin: 0; font-family: var(--font-heading); font-weight: 500; font-size: 26px; letter-spacing: -0.01em;">Empfohlene Reihenfolge</h2>
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: var(--space-4);">
+      <div style="background: var(--color-surface); border-radius: var(--radius-md); padding: var(--space-6); box-shadow: var(--shadow-sm); display: flex; flex-direction: column; gap: var(--space-3);">
+        <span style="font-family: ui-monospace, monospace; font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--color-accent-400);">Welle 1 · sofort</span>
+        <h3 style="margin: 0; font-family: var(--font-heading); font-weight: 500; font-size: 18px;">Der Orte/Kalender-Bruch</h3>
+        <ul style="margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: var(--space-2); font-size: 14px; line-height: 1.5; color: var(--color-neutral-300);">
+          <li>F-01 fehlende Tokens als Alias nachtragen</li>
+          <li>F-07 die vier Welt-Views in <span style="font-family: ui-monospace, monospace; font-size: 12.5px;">&lt;main&gt;</span> ziehen</li>
+          <li>F-13 fehlende Button-Varianten definieren</li>
+        </ul>
+        <span style="font-size: 13px; color: var(--color-neutral-500);">Kleiner Eingriff, größter sichtbarer Effekt.</span>
+      </div>
+      <div style="background: var(--color-surface); border-radius: var(--radius-md); padding: var(--space-6); box-shadow: var(--shadow-sm); display: flex; flex-direction: column; gap: var(--space-3);">
+        <span style="font-family: ui-monospace, monospace; font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--color-accent-400);">Welle 2 · Kontrakte</span>
+        <h3 style="margin: 0; font-family: var(--font-heading); font-weight: 500; font-size: 18px;">Ein Gerüst für alle Views</h3>
+        <ul style="margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: var(--space-2); font-size: 14px; line-height: 1.5; color: var(--color-neutral-300);">
+          <li>F-08 / F-09 Toolbar-Kontrakt: Identität + Zähler · Suche · Filter + IO · Primäraktion</li>
+          <li>F-02 eine Karten-/Listenzeilen-Klasse</li>
+          <li>F-14 eine Primärfarbe, F-10 ein Zähler-Schema</li>
+          <li>F-11 <span style="font-family: ui-monospace, monospace; font-size: 12.5px;">.master-detail</span> als gemeinsame Klasse</li>
+        </ul>
+      </div>
+      <div style="background: var(--color-surface); border-radius: var(--radius-md); padding: var(--space-6); box-shadow: var(--shadow-sm); display: flex; flex-direction: column; gap: var(--space-3);">
+        <span style="font-family: ui-monospace, monospace; font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--color-accent-400);">Welle 3 · Aufräumen</span>
+        <h3 style="margin: 0; font-family: var(--font-heading); font-weight: 500; font-size: 18px;">Skalen und Hygiene</h3>
+        <ul style="margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: var(--space-2); font-size: 14px; line-height: 1.5; color: var(--color-neutral-300);">
+          <li>F-03 – F-06 Einheit, Farb-, Radius-, Abstands- und Schrift-Skalen</li>
+          <li>F-12 drei Breakpoints, F-15 – F-17 Filter, Leerzustände, Bestiar</li>
+          <li>F-18 / F-19 Dubletten, !important, Inline-Styles, z-index</li>
+        </ul>
+      </div>
+    </div>
+    <p style="margin: 0; max-width: 74ch; font-size: 14px; line-height: 1.6; color: var(--color-neutral-500); text-wrap: pretty;">Methodik: statische Analyse des gebündelten Dokuments (Token-Auflösung, Selektor- und Wertehäufigkeiten, Markup-Struktur je View). Keine Laufzeitmessung — Befunde, die nur in bestimmten Themes oder Design-Profilen auftreten, können zusätzlich existieren. Zeilenangaben beziehen sich auf die geprüfte Fassung.</p>
+  </section>
+  </sc-if>
+
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;showEvidence&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Bericht&quot;},&quot;showMinor&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Bericht&quot;},&quot;showPlan&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Bericht&quot;}}">
+class Component extends DCLogic {
+  renderVals() {
+    return {
+      showEvidence: this.props.showEvidence ?? true,
+      showMinor: this.props.showMinor ?? true,
+      showPlan: this.props.showPlan ?? true
+    };
+  }
+}
+</script>
+</body>
+</html>
