@@ -37,27 +37,34 @@ const SHOP_TYPES = Object.freeze({
     fundus: { icon: '📦', name: 'Fundus' },
     unbekannt: { icon: '❓', name: 'Unbekannt' }
 });
+// Die frueher hier mitgefuehrte color-Eigenschaft ist entfallen (F-04).
+// Sie war eine ZWEITE Kopie der Kategoriefarben neben dem CSS — halb auf
+// Tokens, halb auf Hexwerten — und wurde von keiner Stelle gelesen
+// (nachgemessen: nur .icon und .name werden benutzt). Genau die Sorte
+// Doppelfuehrung, die bei den Schadensarten dazu gefuehrt hat, dass zwei
+// Ansichten verschiedene Farben zeigten. Die Farben stehen jetzt
+// ausschliesslich als --cat-*-Tokens in assets/styles/variables.css.
 const SHOP_ITEM_CATEGORIES = Object.freeze({
-    weapon: { icon: '⚔️', name: 'Waffe', color: 'var(--red)' },
-    armor: { icon: '🛡️', name: 'Rüstung', color: 'var(--blue)' },
-    gear: { icon: '⚙️', name: 'Ausrüstung', color: '#3498db' },
-    item: { icon: '🧪', name: 'Item', color: 'var(--green)' },
-    potion: { icon: '🧴', name: 'Trank', color: 'var(--purple)' },
-    food: { icon: '🍖', name: 'Essen', color: '#e67e22' },
-    drink: { icon: '🍺', name: 'Trinken', color: '#f39c12' },
-    lodging: { icon: '🛏️', name: 'Unterkunft', color: '#9b59b6' },
-    transport: { icon: '🐴', name: 'Transport', color: '#1abc9c' },
-    clothing: { icon: '👕', name: 'Kleidung', color: '#e91e63' },
-    accessory: { icon: '🎒', name: 'Zubehör', color: '#27ae60' },
-    craft: { icon: '🔨', name: 'Handwerk', color: '#d35400' },
-    prop: { icon: '🎪', name: 'Requisite', color: '#8e44ad' },
-    magic: { icon: '✨', name: 'Magie', color: '#9c27b0' },
-    enchant: { icon: '🔮', name: 'Verzauberung', color: '#673ab7' },
-    buff: { icon: '💪', name: 'Verstärkung', color: '#ff5722' },
-    info: { icon: '📜', name: 'Information', color: '#795548' },
-    trinket: { icon: '🎁', name: 'Kleinigkeit', color: '#607d8b' },
-    service: { icon: '🔧', name: 'Dienstleistung', color: 'var(--cyan)' },
-    misc: { icon: '📦', name: 'Sonstiges', color: 'var(--text-dim)' }
+    weapon: { icon: '⚔️', name: 'Waffe' },
+    armor: { icon: '🛡️', name: 'Rüstung' },
+    gear: { icon: '⚙️', name: 'Ausrüstung' },
+    item: { icon: '🧪', name: 'Item' },
+    potion: { icon: '🧴', name: 'Trank' },
+    food: { icon: '🍖', name: 'Essen' },
+    drink: { icon: '🍺', name: 'Trinken' },
+    lodging: { icon: '🛏️', name: 'Unterkunft' },
+    transport: { icon: '🐴', name: 'Transport' },
+    clothing: { icon: '👕', name: 'Kleidung' },
+    accessory: { icon: '🎒', name: 'Zubehör' },
+    craft: { icon: '🔨', name: 'Handwerk' },
+    prop: { icon: '🎪', name: 'Requisite' },
+    magic: { icon: '✨', name: 'Magie' },
+    enchant: { icon: '🔮', name: 'Verzauberung' },
+    buff: { icon: '💪', name: 'Verstärkung' },
+    info: { icon: '📜', name: 'Information' },
+    trinket: { icon: '🎁', name: 'Kleinigkeit' },
+    service: { icon: '🔧', name: 'Dienstleistung' },
+    misc: { icon: '📦', name: 'Sonstiges' }
 });
 // ============================================================
 // STATE
