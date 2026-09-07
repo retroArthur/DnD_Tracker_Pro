@@ -4,10 +4,10 @@ milestone: v1.2
 milestone_name: Schulden-Abbau
 status: completed
 stopped_at: Phase 14 complete — all phases complete
-last_updated: "2026-09-07T10:49:18.522Z"
+last_updated: "2026-09-07T21:47:37.000Z"
 last_activity: 2026-09-07
-last_activity_desc: Milestone v1.2 completed and archived
-state_head: dedc8538eb706d49cae3eb337e5f32bac7f24ea3
+last_activity_desc: "Zwischenarbeit nach v1.2: zwei Design-Handoffs, 29 Commits außerhalb des GSD-Ablaufs"
+state_head: 2b89d14f16e3136f31fe2fbf6df31ddd14a79b31
 progress:
   total_phases: 3
   completed_phases: 3
@@ -19,11 +19,11 @@ current_phase: 14
 
 # Project State: D&D Kampagnen-Tracker Pro — Schulden-Abbau
 
-**Last Updated:** 2026-09-06
-**Milestone:** v1.2 „Schulden-Abbau" — Phase 12 abgeschlossen (17/17 Pläne), Phase 13 abgeschlossen (12/12 Pläne)
-**Status:** v1.2 milestone complete
+**Last Updated:** 2026-09-07
+**Milestone:** v1.2 „Schulden-Abbau" — abgeschlossen und archiviert: Phase 12 (17/17 Pläne), Phase 13 (12/12), Phase 14 (9/9)
+**Status:** v1.2 abgeschlossen · danach Zwischenarbeit (kein Milestone) · v1.3 noch nicht aufgesetzt
 
-**Progress:** [██████████████████████] 29/29 plans ([███░░░░░░░] 33%) · 2/3 Phasen des Milestones
+**Progress:** [██████████] 38/38 Pläne · 3/3 Phasen · 19/19 Requirements — v1.2 vollständig
 
 ---
 
@@ -31,18 +31,40 @@ current_phase: 14
 
 **Core Value:** Die App muss am Spieltisch zuverlässig offline laufen — ein Spielleiter-Begleiter, der nie im Weg steht und keine Daten verliert.
 
-**Current Focus:** Phase 14 — Tests & Gates
+**Current Focus:** nächster Meilenstein noch nicht aufgesetzt (`/gsd-new-milestone`)
 
-See: `.planning/PROJECT.md` (Stand 2026-09-05)
+See: `.planning/PROJECT.md` (Stand 2026-09-07)
 
 ---
 
 ## Current Position
 
-Phase: Milestone v1.2 complete
+Phase: keine — v1.2 abgeschlossen, v1.3 noch nicht aufgesetzt
 Plan: —
 Status: Awaiting next milestone
-Last activity: 2026-09-07 — Milestone v1.2 completed and archived
+Last activity: 2026-09-07 — Zwischenarbeit nach v1.2 abgeschlossen (29 Commits)
+
+### Zwischenarbeit nach v1.2 (2026-09-07) — außerhalb des GSD-Ablaufs
+
+Zwei Design-Handoffs kamen nach dem Archivieren von v1.2 herein und wurden direkt
+abgearbeitet: **keine Phase, kein Plan, kein SUMMARY** — 29 Commits, letzter
+`2b89d14`. Bewusst nicht rückwirkend als Phase gebucht: v1.2 ist getaggt, und die
+Arbeit gehört der Sache nach vor v1.3, nicht in v1.2 hinein.
+
+- **Texterstellung, Variante 2a** (22 Arbeitspakete): Markup aller 24
+  Editor-Werkzeugleisten aus einer Quelle (`buildEditorToolbar()`), klassenbasierte
+  Bausteine, formaterhaltender Einfügefilter, Block-Handle, Kopf-/Statuszeile.
+- **Design-Konsistenz** (19 Befunde F-01..F-19): undefinierte Tokens 19 -> 0,
+  Hex-Literale außerhalb `:root` 240 -> 0, Radien 14 -> 3, Breakpoints 16 -> 3,
+  Dubletten 67 -> 0, `!important` 132 -> 105 (alle begründet).
+- **Drei Defekte gefunden, die im Auditbericht nicht standen:** zwei
+  widersprüchliche Schadensarten-Farbsätze (`acid`/`poison` zwischen
+  Schnellreferenz und DM Screen vertauscht), per Tastatur unerreichbare
+  Bestiar-Filter, im hellen Theme unsichtbarer `.btn-success:hover`.
+
+Gates zuletzt vollständig: Jest 1217, Playwright 352 bestanden / 2 übersprungen,
+eslint 0 Fehler / 366 Warnungen, tsc 0, pytest 24, Build grün.
+Details in `PROJECT.md` und `MILESTONES.md`.
 
 ### Historisch — Kontext der abgeschlossenen Phase 12
 
@@ -64,10 +86,12 @@ Browser-Verhalten an der Base64-Grenze (12-07).
 
 ## Performance Metrics
 
-- Plans completed: 88 (44 in v1.0 + 27 in v1.1 + 17 in v1.2)
-- Phases completed: 12 (11 in v1.0/v1.1 + Phase 12 in v1.2) — v1.2: 1 von 3 Phasen
-- Requirements delivered: 48 (31 in v1.0 + 11 in v1.1 + 6 von 19 in v1.2: SAFE-01…06)
-- Offener Backlog: **26** `DEBT`-Posten — der Scope von v1.2. (`DEBT-02` beim Aufsetzen als bereits erledigt erkannt, Plan 11-07 hatte es mit abgeräumt; `DEBT-17`/`DEBT-29` wurden in v1.1 behoben.)
+- Plans completed: 109 (44 in v1.0 + 27 in v1.1 + 38 in v1.2) — die Zwischenarbeit
+  lief ohne Pläne und zählt hier bewusst nicht mit
+- Phases completed: 14 (11 in v1.0/v1.1 + Phasen 12–14 in v1.2)
+- Requirements delivered: 61 (31 in v1.0 + 11 in v1.1 + 19 von 19 in v1.2) — Beleg: v1.2-MILESTONE-AUDIT.md:71
+- Offener Backlog: **leer** — die 26 `DEBT`-Posten der v1.1-Triage sind mit v1.2 abgearbeitet (Beleg: `PROJECT.md:116`). Was bleibt, ist *bewusst geführte* Restschuld:
+  **NQ-03..NQ-11** (Gate-Ratschen als Prosa statt als Mechanik, veraltete `14-GATE-BASELINE.md`, ein ungeprüfter Extraktor unter beiden stehenden Gates), `npm run check` rot wegen 224 Prettier-Dateien, und `DEBT-01` teiloffen (`tsconfig.strict.json` deckt 8 von 134 Dateien). Vollständig in `PROJECT.md` § „Next Milestone: v1.3".
 
 ---
 **Per-Plan Metrics:**

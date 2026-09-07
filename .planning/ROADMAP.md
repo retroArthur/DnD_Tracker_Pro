@@ -5,6 +5,7 @@
 - ✅ **v1.0 Stabilisierung & Ausbau** — Phasen 1–7 (shipped 2026-07-22) → [Archiv](milestones/v1.0-ROADMAP.md)
 - ✅ **v1.1 Tech-Debt & Härtung** — Phasen 8–11 (shipped 2026-07-27) → [Archiv](milestones/v1.1-ROADMAP.md)
 - ✅ **v1.2 Schulden-Abbau** — Phasen 12–14 (shipped 2026-09-07) → [Archiv](milestones/v1.2-ROADMAP.md)
+- 🔧 **Zwischenarbeit** — zwei Design-Handoffs nach v1.2, 29 Commits ausserhalb des GSD-Ablaufs (2026-09-07). Editor-Werkzeugleisten auf eine Quelle, Design-Konsistenz F-01..F-19. Details in [PROJECT.md](PROJECT.md#zwischenarbeit-nach-v12-2026-09-07-29-commits-ausserhalb-des-gsd-ablaufs)
 - ⬜ **v1.3** — noch nicht aufgesetzt (`/gsd-new-milestone`)
 
 ## Phases

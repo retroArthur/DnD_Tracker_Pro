@@ -1,5 +1,22 @@
 # Milestones
 
+## Zwischenarbeit nach v1.2 (2026-09-07)
+
+Zwei Design-Handoffs, direkt abgearbeitet — **kein Milestone, keine Phase**,
+29 Commits. Hier verzeichnet, damit die Luecke zwischen `v1.2` und dem
+naechsten Meilenstein nicht unerklaert bleibt.
+
+- **Texterstellung, Variante 2a** (22 Arbeitspakete): Markup aller 24
+  Editor-Werkzeugleisten aus einer Quelle, klassenbasierte Bausteine,
+  Einfuegefilter, Block-Handle, Kopf-/Statuszeile.
+- **Design-Konsistenz** (19 Befunde): undefinierte Tokens 19 -> 0, Hex-Literale
+  240 -> 0, Radien 14 -> 3, Breakpoints 16 -> 3, Dubletten 67 -> 0.
+- **Drei Defekte gefunden, die im Auditbericht nicht standen:** zwei
+  widerspruechliche Schadensarten-Farbsaetze (acid/poison vertauscht), per
+  Tastatur unerreichbare Bestiar-Filter, unsichtbarer Hover im hellen Theme.
+- Tests: Jest 1120 -> 1217, Playwright 321 -> 354.
+
+
 ## v1.2 Schulden-Abbau (Shipped: 2026-09-07)
 
 **Phases completed:** 3 phases, 38 plans, 98 tasks

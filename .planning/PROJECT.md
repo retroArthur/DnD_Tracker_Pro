@@ -11,8 +11,8 @@ Die App muss am Spieltisch **zuverlässig offline laufen** — ein Spielleiter-B
 ## Current State (v1.2 shipped 2026-09-07)
 
 - **Version:** v2.6.1, Milestones **v1.0**, **v1.1** und **v1.2 „Schulden-Abbau"** geshippt (14 Phasen, 109 Pläne)
-- **Codebase:** 134 Module (nach vier Aufteilungen in Phase 13), non-ESM Single-Bundle via `build.py`; `loader.js` ist alleinige Modulliste (ARCH-01)
-- **Qualität:** **1120 Jest-Tests** (50 Suiten), **321 Playwright-Tests** (2 skipped), **24 pytest-Build-Tests** — alle grün. `no-undef: error`, Warnungs-Ratsche auf 367 gepinnt, strikter Typecheck über eine 8-Datei-Zulassungsliste, Coverage-Gate läuft jetzt in CI
+- **Codebase:** 136 Module, non-ESM Single-Bundle via `build.py`; `loader.js` ist alleinige Modulliste (ARCH-01)
+- **Qualität:** **1217 Jest-Tests** (53 Suiten), **354 Playwright-Tests** (2 skipped), **24 pytest-Build-Tests** — alle grün. `no-undef: error`, Warnungs-Ratsche auf 367 gepinnt, strikter Typecheck über eine 8-Datei-Zulassungsliste, Coverage-Gate läuft jetzt in CI
 - **Verifikation:** alle drei Phasen `passed`, `threats_open: 0` über 12/13/14, Nyquist 12 COMPLIANT · 13 COMPLIANT · 14 PARTIAL
 - **Live:** https://retroarthur.github.io/DnD_Tracker_Pro/dnd-tracker-optimized.html
 
@@ -29,6 +29,64 @@ Ein in Phase 14 gebautes Coverage-Gate war korrekt kalibriert, lief aber **nirge
 `npm test`, `collectCoverage: false`). Und ein totes Aktionsziel (`populateImportNodesList`) stand
 weiter in der Handler-Whitelist und ging in beide Bundles, obwohl das Plan-Summary ausdrücklich das
 Gegenteil behauptete. Beide am 2026-09-07 geschlossen, letzteres mit einem stehenden Wächter.
+
+
+### Zwischenarbeit nach v1.2 (2026-09-07, 29 Commits, ausserhalb des GSD-Ablaufs)
+
+Zwei Design-Handoffs kamen nach dem Archivieren von v1.2 herein und wurden
+direkt abgearbeitet — ohne Phase, Plan oder SUMMARY. **Das ist bewusst hier
+vermerkt und nicht rueckwirkend als Phase gebucht:** v1.2 ist geshippt und
+getaggt, und die Arbeit gehoert der Sache nach vor v1.3, nicht in v1.2 hinein.
+
+**1. Texterstellung, Variante 2a** (`Anpassungen/Texterstellung verbessern …`,
+22 Arbeitspakete W-01..W-22, 10 Commits)
+
+- Das Markup **aller 24 Editor-Werkzeugleisten** kommt jetzt aus EINER Quelle:
+  `buildEditorToolbar()` in `ui/editors/editor-toolbar-build.js`. Die 22
+  statischen Leisten schreibt `tools/sync-editor-toolbars.js` daraus;
+  `--check` meldet Drift. Drei Stufen (minimal/mid/full), dreizeilige Leiste
+  auf 43 px zusammengezogen.
+- Bausteine (Statblock, Wuerfeltabelle, Trenner) als **klassenbasierte** Knoten
+  — `sanitizeHTML()` streicht alle `data-*`, und die Stil-Erlaubnisliste kennt
+  weder `border-left` noch `display`. Ein per `data-*` markierter Baustein waere
+  nach dem ersten Speichern kaputt gewesen.
+- Formaterhaltender Einfuegefilter, Block-Handle, Kopf-/Statuszeile fuer die
+  beiden Langform-Editoren, abschaltbare Werkzeug-Blase.
+- Die execCommand-Schranke deckt jetzt den **ganzen Quellbaum** ab und prueft
+  auf den Aufruf statt auf die Erwaehnung.
+
+**2. Design-Konsistenz** (`Anpassungen/Design-Konstanz …`, 19 Befunde
+F-01..F-19, 19 Commits)
+
+| | vorher | jetzt |
+|---|---|---|
+| Undefinierte Custom Properties | 19 | 0 |
+| `rem` neben `px` | 253 | 0 |
+| Hex-Literale ausserhalb `:root` | 240 | 0 |
+| Radius-Werte | 14 | 3 |
+| Breakpoint-Grenzen | 16 | 3 |
+| Mehrfach definierte Selektoren | 67 | 0 |
+| `!important` | 132 | 105 (alle begruendet) |
+| Leerzustands-Familien | 17 | 3 Muster |
+| z-index-Werte | 24 | 7 Stufen |
+
+**Drei echte Defekte, die der Auditbericht nicht genannt hatte:**
+
+1. Die App fuehrte **zwei Schadensarten-Farbsaetze**, die in fuenf von elf Typen
+   abwichen — bei `acid` und `poison` waren die Farben zwischen Schnellreferenz
+   und DM Screen **vertauscht**. Dieselbe Schadensart hatte je nach Bildschirm
+   eine andere Farbe.
+2. Die Bestiar-Filter waren **per Tastatur nicht erreichbar** (`display:none`
+   auf der Checkbox nimmt sie aus der Tab-Reihenfolge).
+3. `.btn-success:hover` stand auf `#16a34a` — dem Wert von `--green` im hellen
+   Theme. Dort war die Hover-Rueckmeldung unsichtbar.
+
+Alle drei behoben und mit Tests gesichert. Punkt 2 und 3 kamen aus einer
+adversarischen Gegenprobe, nicht aus der eigenen Durchsicht.
+
+**Neuer Testbestand:** `tests/unit/design-consistency.test.js` (64 Tests) haelt
+jeden der 19 Befunde als messbares Kriterium fest, inklusive zweier Ratschen
+(Dubletten, `!important`), die nur sinken duerfen.
 
 <details>
 <summary>Stand bei v1.1 (shipped 2026-07-27)</summary>
@@ -62,11 +120,11 @@ Schuldenabbau. Was aus v1.2 als *bewusst geführte* Restschuld übrig bleibt —
 | Posten | Herkunft | Kern |
 |--------|----------|------|
 | **NQ-03..NQ-11** (9 Punkte) | `14-VALIDATION.md` | Die drei Gate-Ratschen (`--max-warnings 367`, `tsconfig.strict`-Include, `MODULE_TEST_EXCEPTIONS`) sind reine Prosa-Regeln; zwei haben sich bereits gegen die eigene Vorschrift bewegt. `14-GATE-BASELINE.md` ist in fünf Zahlen veraltet. Beide stehenden Gates hängen an EINEM ungeprüften Extraktor. |
-| **`npm run check` ist rot** | NQ-09 | `format:check` scheitert an 132 Prettier-Dateien, und CI fährt `format:check` gar nicht — obwohl `npm run check` erklärtes Akzeptanzkriterium zweier Pläne war. Billigster Einstieg: einmal `npm run format`, dann den Schritt in CI aufnehmen. |
+| **`npm run check` ist rot** | NQ-09 | `format:check` scheitert an **224 versionierten Dateien** (Stand 2026-09-07; die im Audit genannten 132 waren vor der Zwischenarbeit), und CI fährt `format:check` gar nicht — obwohl `npm run check` erklärtes Akzeptanzkriterium zweier Pläne war. Billigster Einstieg: einmal `npm run format`, dann den Schritt in CI aufnehmen. |
 | **Aufteilung vs. Abdeckungs-Gate** | Cross-Phase | 7 von 8 Phase-13-Aufteilungsdateien stehen auf `MODULE_TEST_EXCEPTIONS`. Die Aufteilung geschah für Testbarkeit — eingelöst ist sie erst, wenn diese Dateien echte Tests bekommen. |
 | **`DEBT-01` teiloffen** | TEST-05 | `tsconfig.strict.json` deckt 8 von 134 Dateien. Bewusst, mit gemessenen Zahlen benannt. |
 | **2 Bedienabnahmen offen** | `13-VALIDATION.md` | Editor-Bediengefühl nach dem `rich-text.js`-Split, DM-Screen-Masonry bei 320/768 px. Subjektiv, funktional abgedeckt. |
-| **Doku-Drift** | Audit | `CLAUDE.md` behauptet weiterhin drei verbliebene `execCommand`-Aufrufe — die sind seit Phase 13 weg. Ebenso die Constraint-Zeile zur Modullisten-Synchronität (seit ARCH-01 obsolet, hier bereits korrigiert). |
+| ~~**Doku-Drift**~~ | Audit | ~~`CLAUDE.md` behauptet weiterhin drei verbliebene `execCommand`-Aufrufe~~ — **erledigt** in der Zwischenarbeit (W-22): die Stelle nennt jetzt den gemessenen Stand (null Aufrufe) samt Datum und erklärt die zwei verbliebenen Kommentar-Nennungen in `utils/basic.js`. |
 
 **Zurückgestellt:** Soundboard Per-Track-Play (Layering — Design aus der v1.0-Session liegt bereit).
 
