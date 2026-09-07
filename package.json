@@ -27,7 +27,7 @@
         "format": "prettier --write \"**/*.{js,json,md}\"",
         "format:check": "prettier --check \"**/*.{js,json,md}\"",
         "format:all": "prettier --write .",
-        "check": "npm run tsc:check && npm run lint && npm run format:check",
+        "check": "npm run tsc:check && npm run typecheck:strict && npm run lint && npm run format:check",
         "test:e2e": "npx playwright test",
         "test:e2e:headed": "npx playwright test --headed",
         "test:e2e:ui": "npx playwright test --ui",

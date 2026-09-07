@@ -308,7 +308,81 @@ begrenzt, die einzige Datei, die über den regulären Ladepfad läuft).
 `collectCoverageFrom` wurde dabei nicht gekürzt — die volle Liste der fünf Quellverzeichnisse
 bleibt bestehen, die Zahl ist absichtlich nicht durch einen engeren Nenner beschönigt.
 
+## Offener Restposten DEBT-01 (Plan 14-07)
+
+**Datum:** 2026-09-07
+**Ausgangsmessung (Messblock 2, wiederholt in Plan 14-07 Task 1):** `checkJs: true` gegen den
+vollen `include`-Satz der Basiskonfiguration (134 `.js`-Dateien über
+`core/features/ui/utils/systems/render`) ergibt **1751 Fehler über 117 von 134 Dateien**
+(Neumessung nach den `no-undef`-Fixes aus Plan 14-06; die vorherige Messung in Messblock 2 dieses
+Protokolls, vor 14-06, ergab 1758/117/134 — die Differenz von 7 Fehlern entspricht exakt den
+sieben in 14-06 behobenen Referenzen).
+
+**Aufschlüsselung nach TS-Code (Neumessung, absteigend):**
+
+| Code | Anzahl |
+|---|---|
+| TS2339 (Property does not exist) | 1616 |
+| TS2345 | 40 |
+| TS2551 (did you mean) | 23 |
+| TS2538 | 21 |
+| TS2451 | 12 |
+| TS2322 | 12 |
+| TS2349 | 6 |
+| TS2554 | 5 |
+| TS2300 | 5 |
+| TS2367 | 3 |
+| TS2304 (Cannot find name) | 3 |
+| TS1005 | 3 |
+| TS8024 | 1 |
+| TS2769 | 1 |
+
+Der weit überwiegende Anteil (1616 von 1751, ~92%) ist `TS2339` — „Property does not exist on
+type Window & typeof globalThis" bzw. auf `AppData`/`Settings`. Das ist exakt das im Objective
+benannte `window.X`/`D.X`-Zugriffsmuster dieser Architektur: globale Funktionen und das zentrale
+`D`-Datenobjekt sind für TypeScript nicht typisiert, jeder Zugriff über `window.` oder auf ein
+Feld von `D` erzeugt einen Fehler. Dieser Anteil bleibt außerhalb des Milestone-Scopes (siehe
+Objective: „dessen Umbau ausdrücklich außerhalb dieses Milestones liegt").
+
+**Zugelassene Dateien gegenüber Gesamtzahl:** **8 von 134** Dateien im `include`-Satz der
+Basiskonfiguration stehen in `tsconfig.strict.json` (0 Fehler unter `checkJs`, gemessen gegen die
+tatsächlich schmale `include`-Menge — nicht die 17 aus der ersten Messstufe, siehe Begründung
+unten).
+
+**Warum 8 und nicht die anfangs gemessenen 17:** Die Kandidatenmenge wurde zunächst wie in
+Messblock 2 gegen den *vollen* 134-Datei-Kontext gemessen (17 fehlerfreie Kandidaten, identisch
+mit der Liste in Messblock 2). Eine zweite Probe — dieselbe Kandidatenmenge NUR für sich
+genommen als `include`, exakt die Konfiguration, die `tsconfig.strict.json` tatsächlich verwendet
+— deckte auf, dass 9 dieser 17 Dateien auf globale Symbole verweisen, die von *anderen*,
+ausgeschlossenen Dateien deklariert werden (`EntityLookup` aus `render/helpers.js`, `StorageAPI`,
+über 20 Wiki-Aktionsfunktionen aus `features/wiki/`, mehrere `window.render*`-Funktionen aus
+`features/initiative.js`/`features/bestiary/`). In dieser Non-ESM-Script-Architektur (siehe
+CLAUDE.md, „Global Namespace") sind Top-Level-Deklarationen jeder kompilierten Datei Teil
+desselben globalen Scopes; eine schmalere `include`-Menge verliert diesen Kontext ersatzlos. Das
+ist kein Fehler dieser neun Dateien, sondern ein Artefakt des verkleinerten Kompilations-Scopes —
+dieselben neun Dateien sind unter dem vollen 134-Datei-Kontext weiterhin fehlerfrei (siehe
+Messblock 2). Die verbleibenden acht Dateien sind die einzigen der 17 Kandidaten, die auch
+isoliert unter der tatsächlichen `tsconfig.strict.json`-`include`-Menge nachweislich fehlerfrei
+bleiben — das ist die einzige Messung, die für das tatsächlich laufende Gate relevant ist.
+
+**Bedingung für den nächsten Schritt:** Die neun ausgeschlossenen Dateien (und mit ihnen ein
+relevanter Teil der übrigen 109 fehlerhaften Dateien) können erst dann gefahrlos in die
+Zulassungsliste aufgenommen werden, wenn entweder (a) `types/globals.d.ts` um Ambient-Deklarationen
+für die global referenzierten Objekte/Funktionen (`EntityLookup`, `StorageAPI`,
+`window.render*`-Familie) erweitert wird, oder (b) die jeweils deklarierenden Dateien selbst mit
+in die Zulassungsliste aufgenommen werden. Der weitaus größere Hebel bleibt aber eine echte
+Typbeschreibung des globalen Datenobjekts `D` (`AppData`-Interface) statt der heutigen
+`any`-artigen Lücke — das ist der Schritt, der den TS2339-Block (1616 von 1751 Fehlern) tatsächlich
+angreifen würde. Beides ist ausdrücklich außerhalb des Scopes von Plan 14-07.
+
+**Ehrliches Fazit:** `DEBT-01` ist mit diesem Plan zu einem kleinen, aber echten Teil geschlossen
+(8 Dateien laufen unter `checkJs: true` nachweislich fehlerfrei, und zwar unter genau der
+`include`-Menge, die auch tatsächlich geprüft wird) und für den weit überwiegenden Rest (126 von
+134 Dateien, 1751 Fehler) ausdrücklich NICHT geschlossen. Es steht hier mit Zahl, nicht als
+erledigt geführt.
+
 ---
 *Phase: 14-tests-gates*
 *Plan: 01*
 *Erhoben: 2026-09-07*
+*Ergänzt: Plan 14-07 (DEBT-01-Restposten), 2026-09-07*
