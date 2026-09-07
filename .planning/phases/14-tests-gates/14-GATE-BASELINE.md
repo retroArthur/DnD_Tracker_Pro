@@ -40,6 +40,31 @@ Warnungszahl (2196) ist gegenüber dem Vor-D-07-Stand unverändert, wie von der 
 gefordert. Die 367 Nicht-`no-undef`-Warnungen (336+11+8+8+4 = 367, exakte Summe, keine Rundung)
 sind der künftige `--max-warnings`-Startwert für D-10, sobald D-08 `no-undef` auf `error` hebt.
 
+### Nachtrag (Plan 14-06, Task 3) — Ratsche gepinnt
+
+**Datum:** 2026-09-07 (nach Task 1/2 von Plan 14-06: sieben D-09-Fundstellen behoben,
+`no-undef: error`)
+
+**Befehl:** `npx eslint . --format json`, ausgewertet nach `severity`.
+
+| Kennzahl | Wert |
+|---|---|
+| Fehler | **0** |
+| Warnungen gesamt | **367** |
+| `no-unused-vars` | 336 |
+| `no-misleading-character-class` | 11 |
+| (kein `ruleId` — unbenutzte `eslint-disable`-Direktiven) | 8 |
+| `no-useless-escape` | 8 |
+| `no-empty` | 4 |
+
+Die Zahl ist identisch mit dem in Messblock 1 erhobenen Nicht-`no-undef`-Reststand (367) — nach
+D-07 sind keine weiteren Warnungen hinzugekommen oder verschwunden, `no-undef` ist jetzt 0 statt
+1829, weil es ein Fehler ist, kein Warnungs-Ruleid mehr.
+
+`package.json`s `lint`-Skript ist auf `eslint . --max-warnings 367` gepinnt. Beidseitig geprüft:
+`npm run lint` → Exit 0; `npx eslint . --max-warnings 366` → Exit 1. `lint:all` ist aus
+`package.json` entfernt; kein Skript und keine CI-Konfiguration referenzieren es noch.
+
 ## Messblock 2 — `tsc --checkJs`-Erhebung
 
 **Befehl:**
