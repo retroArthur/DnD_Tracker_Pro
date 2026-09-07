@@ -225,6 +225,49 @@ Plan 14-04 verlassen diese elf Module die künftige Ausnahmeliste aus D-13 nur, 
 dedizierten Dateien tatsächlich Modulpfad oder Funktionsnamen zitieren — reines Verschieben allein
 genügt nicht, wenn D-13s Kriteriumswahl (a) oder (b)/(c) verwendet.
 
+### Nachtrag (Plan 14-09, Task 1) — Modul-zu-Test-Kriterium präzisiert, Basislinie nach der Aufteilung neu erhoben
+
+**Datum:** 2026-09-07 (nach Abschluss der Pläne 14-04 und 14-05 — beide Sammeldateien sind
+aufgeteilt, `tests/unit/welt-story.test.js` und `tests/e2e/features/welt-story.spec.js` existieren
+nicht mehr, Stand 48 Suiten / 1112 Unit-Tests plus die aufgeteilten E2E-Specs).
+
+**Kriteriumsentscheidung:** Das Gate in `tests/unit/module-test-coverage.test.js` verwendet
+Kriterium (a) — der `loader.js`-relative Pfad muss wörtlich in mindestens einer Datei unter
+`tests/` vorkommen — und **nicht** das kürzere Basisnamen-Kriterium (b)/(c). Beide Zahlen wurden
+frisch gegen den Live-Baum nach der Aufteilung erhoben, per rekursivem String-Abgleich über alle
+Dateien unter `tests/`, mit auf Schrägstriche normalisierten Pfadtrennern:
+
+| Kriterium | Module OHNE jede Testerwähnung (nach der Aufteilung) |
+|---|---|
+| (a) wörtlicher relativer Pfad | **78 von 134** |
+| (b) Basisname als Teilzeichenkette | **62 von 134** |
+
+Beide Zahlen sind **identisch** mit der Vormessung in Messblock 4 (vor der Aufteilung). Das ist
+kein Messfehler, sondern die direkte Bestätigung des dortigen Befunds: die Aufteilung aus
+14-04/14-05 war mechanisch und verhaltensneutral (D-05) — die fünf neuen Unit- und fünf neuen
+E2E-Dateien je Welt-Bereich übernehmen die `describe`-Blöcke wörtlich, ohne Modulpfade oder
+Funktionsnamen der Produktionsdateien zu zitieren. Die elf Welt-Module verlassen die
+Ausnahmeliste durch die Aufteilung deshalb **nicht** — genau wie in Messblock 4 und in
+`14-05-SUMMARY.md` bereits vorhergesagt.
+
+**Begründung der Kriteriumswahl (Pfad statt Basisname), mit Beleg:** Das Basisnamen-Kriterium
+(b) erzeugt einen dokumentierten Falsch-Positiv: `features/npc-generator/npc-generator.js` gilt
+unter (c) (Wortgrenzen-Variante von (b)) als "abgedeckt", weil `welt-story.spec.js` — jetzt
+`tests/e2e/features/npc-generator.spec.js` — wiederholt den `data-action="show-npc-generator"`
+und `#npc-generator-modal` erwähnt, nicht das Modul selbst. Ein Test, der nie eine Zeile
+Produktionscode aus `npc-generator.js` liest, würde unter (b)/(c) fälschlich als Beweis für
+Abdeckung zählen. Das Pfad-Kriterium (a) fällt nicht auf diesen Zufallstreffer herein — und genau
+deshalb fällt die Wahl auf (a), obwohl es mit 78 statt 62 die längere, strengere Ausnahmeliste
+ergibt. Eine falsche Abdeckungs-Zusicherung nimmt ein Modul dauerhaft und unsichtbar aus dem Gate
+heraus; eine längere, datierte Liste ist sichtbar und schrumpfbar (D-13). Beide Zahlen stehen hier
+nebeneinander, damit die Wahl nachvollziehbar bleibt, nicht nur behauptet ist.
+
+Die vollständige, alphabetisch sortierte 78-Modul-Ausnahmeliste unter Kriterium (a) ist als
+`MODULE_TEST_EXCEPTIONS` in `tests/unit/module-test-coverage.test.js` eingecheckt (Erhebungsdatum
+im dortigen Kopfkommentar). Sie ist eine Obermenge der elf Welt-Module aus Messblock 4 — die
+übrigen 67 Einträge sind Module, die auch vor jeder Welt-Feature-Arbeit nie testerwähnt waren
+(z. B. `features/dice/dice-core.js`, `systems/session-timer.js`, `ui/dom-builder.js`).
+
 ## Messblock 5 — Testsummen der beiden Sammeldateien
 
 | Datei | Befehl | Ergebnis |
