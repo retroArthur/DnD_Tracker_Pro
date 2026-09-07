@@ -1,6 +1,7 @@
 import js from '@eslint/js';
 import tseslint from 'typescript-eslint';
 import prettier from 'eslint-config-prettier';
+import generatedGlobals from './eslint.generated-globals.js';
 
 export default tseslint.config(
     // Base ESLint recommended rules
@@ -83,6 +84,17 @@ export default tseslint.config(
                 EntityLookup: 'readonly',
                 CURRENT_VERSION: 'readonly'
             }
+        }
+    },
+
+    // Generierte projekteigene Cross-Modul-Globals — aus loader.js MODULES
+    // abgeleitet (ARCH-01, D-08). Additiv zum vorherigen globals-Block: Flat
+    // Config mergt languageOptions.globals ueber Konfigurationsobjekte hinweg,
+    // nichts wird ersetzt. Nicht von Hand bearbeiten — siehe
+    // eslint.generated-globals.js und tools/generate-eslint-globals.js.
+    {
+        languageOptions: {
+            globals: generatedGlobals
         }
     },
 
