@@ -122,14 +122,24 @@ wiederherstellbar ist (`SAFE-01`, `SAFE-02`, `SAFE-04`).
 
 ### Tests & Gates
 
-- **TEST-03** (`DEBT-15`): Die latente Toast-Race in `tests/e2e/crud/locations.spec.js` und
-  `encounters.spec.js` ist geschlossen — der Seed-Nachzug aus Plan 08-02 fehlt dort als einziges.
-- **TEST-04** (`DEBT-28`): Timeline, Reise, Fraktionen, Session-Prep und NPC-Generator haben
-  dedizierte Testdateien. Heute teilen sich fünf Feature-Bereiche mit zusammen ~3200 Zeilen eine
-  gemeinsame Sammel-Spec.
-- **TEST-05** (`DEBT-01`): Die Lint-/Typecheck-/Coverage-Gates sind geschärft. **Bewusst als
-  letztes** — schärfere Gates auf einer Codebasis, die gerade durch `MAINT-01` in vier Modulen
-  aufgeteilt wird, würden gegen sich selbst arbeiten.
+- **TEST-03** ✓ (`DEBT-15`, Phase 14: 14-03 komplett): Die latente Toast-Race in
+  `tests/e2e/crud/locations.spec.js` und `encounters.spec.js` ist geschlossen — der Seed-Nachzug
+  aus Plan 08-02 fehlt dort als einziges.
+- **TEST-04** ✓ (`DEBT-28`, Phase 14: 14-04 + 14-05 komplett): Timeline, Reise, Fraktionen,
+  Session-Prep und NPC-Generator haben dedizierte Testdateien. Beide vormaligen Sammeldateien
+  (`tests/e2e/features/welt-story.spec.js`, `tests/unit/welt-story.test.js`) sind entfernt;
+  fünf dedizierte Dateien je Test-Ebene ersetzen sie, mechanisch und verhaltensneutral aufgeteilt
+  (Testzahl unverändert: 26 E2E, 37 Unit).
+- **TEST-05** ✓ (`DEBT-01`, Phase 14: 14-02 + 14-06 bis 14-09 komplett): Die Lint-/Typecheck-/
+  Coverage-Gates sind geschärft. Lint: der rote Fehler ist behoben, `no-undef` ist ein harter
+  Fehler (Globals-Generator aus `loader.js MODULES`), die Warnungszahl ist als Ratsche gepinnt
+  (367). Coverage: `roots` ist repariert (2 → 125 instrumentierte Module), die ehrliche
+  Gesamtzahl (0,77 % Statements) ist dokumentiert statt kaschiert, und ein Modul-zu-Test-Gate
+  (`tests/unit/module-test-coverage.test.js`) ersetzt die bedeutungslose globale Schwelle. Typecheck
+  ist **bewusst nur teilweise geschärft**: eine wachsende Zulassungsliste (`tsconfig.strict.json`,
+  8 von 134 Dateien) läuft fehlerfrei unter `checkJs: true`; der weit überwiegende Rest
+  (126 von 134 Dateien, 1751 Fehler, größtenteils `window.X`/`D.X`-Zugriffe) bleibt außerhalb des
+  Milestone-Scopes und ist als `DEBT-01`-Restposten benannt, nicht stillschweigend abgeschlossen.
 
 ---
 
@@ -165,8 +175,8 @@ wiederherstellbar ist (`SAFE-01`, `SAFE-02`, `SAFE-04`).
 | MAINT-05 | DEBT-09, DEBT-10 | Phase 13 — Complete (13-04) |
 | MAINT-06 | DEBT-27, DEBT-26 | Phase 13 — Complete (13-08) |
 | TEST-03 | DEBT-15 | Phase 14 — Complete (14-03) |
-| TEST-04 | DEBT-28 | Pending |
-| TEST-05 | DEBT-01 | Pending |
+| TEST-04 | DEBT-28 | Phase 14 — Complete (14-04, 14-05) |
+| TEST-05 | DEBT-01 | Phase 14 — Complete (14-02, 14-06, 14-07, 14-08, 14-09) |
 
 **19 Requirements decken alle 26 `DEBT`-Posten ab.** Die Bündelung fasst Posten zusammen, die
 dieselbe Datei oder dieselbe Fehlerklasse betreffen — sie in einem Zug anzufassen ist billiger als

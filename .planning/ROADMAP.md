@@ -187,7 +187,7 @@ Plans:
 
 **Execution Order:** streng sequenziell 12 → 13 → 14. Präzedenz aus v1.0/v1.1: fast alle Pläne fassen geteilte Dateien an, paralleles Ausführen kollidiert.
 
-**Plans:** 8/9 plans executed
+**Plans:** 9/9 plans executed
 
 Plans:
 
@@ -216,7 +216,7 @@ Plans:
 
 **Wave 6** *(blocked on Wave 5 — D-15: das Modul-zu-Test-Gate zuletzt, weil TEST-04 seine Basislinie verschiebt)*
 
-- [ ] 14-09-PLAN.md — D-13: Modul-zu-Test-Abdeckungs-Gate aus `loader.js MODULES` mit datierter Ausnahmeliste, beidseitig belegt (Welle 6)
+- [x] 14-09-PLAN.md — D-13: Modul-zu-Test-Abdeckungs-Gate aus `loader.js MODULES` mit datierter Ausnahmeliste, beidseitig belegt (Welle 6)
 
 ## Progress
 
