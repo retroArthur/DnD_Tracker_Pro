@@ -561,8 +561,21 @@ describe('F-19 — Stapel-Leiter', () => {
         const vars = cssFiles.find(f => f.name === 'variables.css').content;
         const val = t => parseInt(vars.match(new RegExp(`${t}:\\s*(\\d+)`))[1], 10);
         expect(val('--z-floating')).toBeGreaterThan(val('--z-modal'));
-        expect(cssCode).toMatch(/\.floating-toolbar[\s\S]{0,400}?z-index:\s*var\(--z-floating\)/);
-        expect(cssCode).toMatch(/\.editor-block-handle[\s\S]{0,400}?z-index:\s*var\(--z-floating\)/);
+        // Den REGELBLOCK lesen, nicht einen Zeichenabstand: ein Fenster von
+        // n Zeichen faellt, sobald der Block waechst — der Beleg haette dann
+        // nichts mit der Schichtung zu tun (passiert bei der Zusammenfuehrung
+        // der Dubletten, F-18).
+        const blockVon = sel => {
+            const escaped = sel.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            const re = new RegExp(`(?:^|\\}|\\*/)\\s*${escaped}\\s*\\{([^{}]*)\\}`, 'm');
+            const m = cssCode.match(re);
+            return m ? m[1] : null;
+        };
+        ['.floating-toolbar', '.editor-block-handle'].forEach(sel => {
+            const body = blockVon(sel);
+            expect(body).not.toBeNull();
+            expect(body).toMatch(/z-index:\s*var\(--z-floating\)/);
+        });
     });
 });
 
@@ -858,23 +871,31 @@ describe('F-18 — Dubletten und !important (Ratsche)', () => {
         return out;
     }
 
-    // Stand nach der Bereinigung, am 2026-09-07 erhoben. Diese Zahlen duerfen
-    // nur SINKEN. Sie sind bewusst nicht 0:
+    // Stand nach der Zusammenfuehrung, am 2026-09-07 erhoben. Diese Zahlen
+    // duerfen nur SINKEN.
     //
-    // Von 67 Dubletten (Token-Bloecke ausgenommen) waren nur VIER
-    // zeichengleich und damit beweisbar folgenlos loeschbar — die sind weg.
-    // Die uebrigen 63 setzen dieselbe Eigenschaft mit VERSCHIEDENEN Werten.
-    // Sie mechanisch zusammenzufuehren waere NICHT folgenlos: liegt zwischen
-    // den beiden Bloecken eine dritte Regel gleicher Spezifitaet, die heute
-    // den frueheren ueberschreibt, verliert sie nach dem Verschieben gegen den
-    // zusammengefuehrten Block. Jeder dieser Faelle braucht eine Entscheidung
-    // darueber, welcher Wert gemeint ist — keine Textersetzung.
+    // Dubletten: 0. Alle 63 abweichenden sind zusammengefuehrt — der spaetere
+    // Block bleibt (er gewann ohnehin jede widersprechende Eigenschaft), die
+    // Eigenschaften, die nur der fruehere setzte, wandern hinein. Dass das
+    // folgenlos ist, wurde nicht behauptet, sondern gemessen: 65 Selektoren mit
+    // 423 berechneten Eigenschaftswerten vorher und nachher im Browser
+    // verglichen, alle identisch.
     //
-    // Dasselbe gilt fuer die !important: der Befund nennt sie ausdruecklich
-    // als FOLGE der Dubletten ("danach !important abbauen"). Solange die
-    // Dubletten stehen, ist ihr Abbau Raten.
-    const DUBLETTEN_MAX = 63;
-    const IMPORTANT_MAX = 132;
+    // !important: 105 statt 132. Entfernt sind die 27, bei denen eine
+    // Komponentenregel sich mit Gewalt gegen eine Basisklasse durchsetzte —
+    // ebenfalls einzeln nachgemessen. Die verbliebenen 105 sind BEGRUENDET
+    // und sollen bleiben:
+    //   65  .spell-desc * (party.css) — schlaegt Inline-Stile, die der
+    //       Rich-Text-Editor in gespeicherte Inhalte schreibt. Genau der Fall,
+    //       fuer den !important gedacht ist.
+    //   21  Vollbild-Positionierung des Encounter-Rechners in Media Queries
+    //   12  .rich-editor strong/em/u/strike und die mobile Werkzeug-Blase
+    //    3  die data-tb-Leiter der Editorleiste
+    //    3  prefers-reduced-motion
+    //    1  .shop-card.expanded .shop-body — schlaegt ein per JS gesetztes
+    //       Inline-display
+    const DUBLETTEN_MAX = 0;
+    const IMPORTANT_MAX = 105;
 
     test('die Zahl echter Dubletten steigt nicht wieder', () => {
         const gruppen = new Map();

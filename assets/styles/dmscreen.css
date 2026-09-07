@@ -54,12 +54,6 @@
             display: block;
         }
         
-        .search-result-item {
-            padding: 10px 12px;
-            border-bottom: 1px solid var(--border);
-            cursor: pointer;
-        }
-        
         .search-result-item:hover {
             background: var(--bg-hover);
         }
@@ -608,6 +602,7 @@
             display: grid;
             grid-template-columns: repeat(9, 1fr);
             gap: 6px;
+            margin-top: 6px; /* F-18: aus der Dublette uebernommen */
         }
         
         .spell-slot-level {
@@ -635,6 +630,9 @@
             cursor: pointer;
             transition: all 0.2s;
             background: transparent;
+            text-align: center; /* F-18: aus der Dublette uebernommen */
+            padding: 4px 2px; /* F-18: aus der Dublette uebernommen */
+            min-width: 0; /* F-18: aus der Dublette uebernommen */
         }
         
         .spell-slot-box.available {
@@ -1071,12 +1069,37 @@
         .modal-overlay {
             overflow-y: auto;
             padding: 20px;
+            display: none; /* F-18: aus der Dublette uebernommen */
+            position: fixed; /* F-18: aus der Dublette uebernommen */
+            top: 0; /* F-18: aus der Dublette uebernommen */
+            left: 0; /* F-18: aus der Dublette uebernommen */
+            right: 0; /* F-18: aus der Dublette uebernommen */
+            bottom: 0; /* F-18: aus der Dublette uebernommen */
+            background: rgba(0,0,0,0.6); /* F-18: aus der Dublette uebernommen */
+            backdrop-filter: blur(4px); /* F-18: aus der Dublette uebernommen */
+            -webkit-backdrop-filter: blur(4px); /* F-18: aus der Dublette uebernommen */
+            z-index: var(--z-modal); /* F-18: aus der Dublette uebernommen */
+            align-items: center; /* F-18: aus der Dublette uebernommen */
+            justify-content: center; /* F-18: aus der Dublette uebernommen */
+            opacity: 0; /* F-18: aus der Dublette uebernommen */
+            transition: opacity 0.2s ease; /* F-18: aus der Dublette uebernommen */
         }
         
         .modal {
             max-height: calc(100vh - 40px);
             overflow-y: auto;
             margin: auto;
+            background: rgba(26, 26, 26, 0.95); /* F-18: aus der Dublette uebernommen */
+            backdrop-filter: blur(12px); /* F-18: aus der Dublette uebernommen */
+            -webkit-backdrop-filter: blur(12px); /* F-18: aus der Dublette uebernommen */
+            border: 1px solid rgba(212, 175, 55, 0.2); /* F-18: aus der Dublette uebernommen */
+            border-radius: var(--radius-lg); /* F-18: aus der Dublette uebernommen */
+            padding: 24px; /* F-18: aus der Dublette uebernommen */
+            max-width: 500px; /* F-18: aus der Dublette uebernommen */
+            width: 90%; /* F-18: aus der Dublette uebernommen */
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.05) inset; /* F-18: aus der Dublette uebernommen */
+            transform: translateY(20px) scale(0.95); /* F-18: aus der Dublette uebernommen */
+            transition: transform 0.25s ease, opacity 0.25s ease; /* F-18: aus der Dublette uebernommen */
         }
         
         @media (max-width: 600px) {
@@ -1120,8 +1143,8 @@
         }
         
         .drag-over {
-            border: 2px dashed var(--gold) !important;
-            background: rgba(212, 175, 55, 0.1) !important;
+            border: 2px dashed var(--gold);
+            background: rgba(212, 175, 55, 0.1);
         }
         
         .drag-ghost {
@@ -1457,24 +1480,32 @@
         /* Button Glow */
         .btn:hover {
             box-shadow: 0 0 12px rgba(212, 175, 55, 0.25);
+            background: var(--gold); /* F-18: aus der Dublette uebernommen */
+            color: var(--bg-dark); /* F-18: aus der Dublette uebernommen */
         }
         
         .btn-success:hover {
             box-shadow: 0 0 12px rgba(74, 222, 128, 0.25);
+            background: var(--green-dim); /* F-18: aus der Dublette uebernommen */
+            border-color: var(--green-dim); /* F-18: aus der Dublette uebernommen */
         }
         
         .btn-danger:hover {
             box-shadow: 0 0 12px rgba(239, 68, 68, 0.25);
+            background: var(--red); /* F-18: aus der Dublette uebernommen */
+            color: white; /* F-18: aus der Dublette uebernommen */
         }
         
         /* View Transitions - opacity only, no transform to avoid layout issues */
         .view {
             opacity: 0;
             transition: opacity 0.2s ease;
+            display: none; /* F-18: aus der Dublette uebernommen */
         }
 
         .view.active {
             opacity: 1;
+            display: block; /* F-18: aus der Dublette uebernommen */
         }
         
         /* Empty State */
@@ -1552,6 +1583,9 @@
             margin-bottom: 4px;
             text-transform: uppercase;
             letter-spacing: 0.03em;
+            display: block; /* F-18: aus der Dublette uebernommen */
+            color: var(--gold); /* F-18: aus der Dublette uebernommen */
+            font-weight: 500; /* F-18: aus der Dublette uebernommen */
         }
         
         /* Better Input Focus */
@@ -1560,6 +1594,7 @@
         .form-group textarea:focus {
             border-color: var(--gold);
             box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.1);
+            outline: none; /* F-18: aus der Dublette uebernommen */
         }
         
         /* Loading Spinner */
@@ -1725,7 +1760,7 @@
         }
         
         [data-sortable].drag-over {
-            border-color: var(--gold) !important;
+            border-color: var(--gold);
             box-shadow: 0 0 0 2px var(--gold), 0 4px 12px rgba(212, 175, 55, 0.3);
         }
         
@@ -2109,13 +2144,6 @@
     padding: 8px 12px;
     background: var(--bg-dark);
     border-radius: var(--radius-md);
-}
-
-.dms-dc-value {
-    font-weight: 700;
-    font-size: 1.1em;
-    color: var(--text);
-    min-width: 30px;
 }
 
 .dms-dc-desc {
@@ -2931,6 +2959,7 @@
     font-size: 0.9em;
     font-weight: 700;
     color: var(--gold);
+    min-width: 30px; /* F-18: aus der Dublette uebernommen */
 }
 
 .dms-dc-label {

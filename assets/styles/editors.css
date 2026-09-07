@@ -39,23 +39,6 @@
             margin-left: auto;
         }
 
-        /* Icon-Button: 30x30 Raster, randlos, Radius 0 (Variante 2a) */
-        .editor-toolbar .editor-btn {
-            display: grid;
-            place-items: center;
-            width: 30px;
-            height: 30px;
-            padding: 0;
-            background: transparent;
-            border: none;
-            border-radius: 0;
-            color: var(--text);
-            cursor: pointer;
-            font-size: 13px;
-            transition: background 0.15s, color 0.15s;
-            flex-shrink: 0;
-        }
-
         /* B/I/U/S als Typografie, nicht als Icon */
         .editor-toolbar .editor-btn-type {
             font-family: var(--font-serif);

@@ -228,11 +228,6 @@
             background: var(--bg-hover);
         }
         
-        /* Session Content Styling */
-        .session-content {
-            line-height: 1.6;
-        }
-        
         .session-content h3 {
             color: var(--gold);
             margin: 0 0 8px 0;
@@ -416,11 +411,6 @@
             max-width: 1800px;
             margin: 0 auto;
         }
-
-        .view { display: none; }
-        .view.active {
-            display: block;
-        }
         
         /* Cards */
         .card {
@@ -429,13 +419,6 @@
             border-radius: var(--radius-md);
             padding: 14px;
             margin-bottom: 14px;
-        }
-        
-        .card-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 10px;
         }
         
         .card-title {
@@ -458,8 +441,6 @@
             align-items: center;
             gap: 4px;
         }
-        
-        .btn:hover { background: var(--gold); color: var(--bg-dark); }
         .btn-sm { padding: 3px 8px; font-size: 11px; }
 
         /* btn-xs: zweimal im Markup benutzt, nie definiert (F-13). Eine Stufe
@@ -540,9 +521,7 @@
             outline-offset: 2px;
         }
         .btn-danger { border-color: var(--red); color: var(--red); }
-        .btn-danger:hover { background: var(--red); color: white; }
         .btn-success { background: var(--green); border-color: var(--green); color: var(--bg-dark); font-weight: 600; }
-        .btn-success:hover { background: var(--green-dim); border-color: var(--green-dim); }
         .btn-gold { background: var(--gold); border-color: var(--gold); color: var(--bg-dark); font-weight: 600; }
         .btn-gold:hover { background: var(--gold); border-color: var(--gold); }
         
@@ -554,13 +533,6 @@
         }
         
         .form-group { margin-bottom: 10px; }
-        .form-group label {
-            display: block;
-            color: var(--gold);
-            font-size: 11px;
-            margin-bottom: 3px;
-            font-weight: 500;
-        }
         
         .form-group input, .form-group select, .form-group textarea {
             width: 100%;
@@ -570,11 +542,6 @@
             padding: 6px 10px;
             border-radius: var(--radius-sm);
             font-size: 13px;
-        }
-        
-        .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
-            outline: none;
-            border-color: var(--gold);
         }
         
         .form-group textarea { min-height: 60px; resize: vertical; }
@@ -1082,23 +1049,10 @@
             gap: 4px;
         }
 
-        .char-tag {
-            padding: 2px 6px;
-            background: var(--bg-elevated);
-            border-radius: var(--radius-sm);
-            font-size: 0.7em;
-            color: var(--text-dim);
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
         .char-tag:hover {
             background: var(--bg-hover);
             color: var(--text);
         }
-
-        .char-tag.spell { color: var(--purple); }
-        .char-tag.item { color: var(--gold); }
 
         /* Action Buttons */
         .char-card-actions {
@@ -1295,14 +1249,6 @@
             margin-bottom: 14px;
         }
         
-        .char-attr-box {
-            background: var(--bg-dark);
-            border-radius: var(--radius-md);
-            padding: 6px 4px;
-            text-align: center;
-            border: 1px solid transparent;
-        }
-        
         .char-attr-box.proficient {
             border-color: var(--gold);
         }
@@ -1437,6 +1383,9 @@
             border-radius: var(--radius-sm);
             font-size: 0.75em;
             transition: transform 0.15s, box-shadow 0.15s;
+            background: var(--bg-elevated); /* F-18: aus der Dublette uebernommen */
+            color: var(--text-dim); /* F-18: aus der Dublette uebernommen */
+            cursor: pointer; /* F-18: aus der Dublette uebernommen */
         }
         
         .char-tag.clickable {
@@ -1675,9 +1624,15 @@
         /* ============================================================
            ASSIGN SPELL MODAL - Redesigned
            ============================================================ */
-        .assign-spell-modal {
-            max-width: 746px !important;
-            width: 95% !important;
+        /* .modal.assign-spell-modal statt .assign-spell-modal !important:
+           beide Regeln hatten dieselbe Spezifitaet, und .modal steht in der
+           spaeter geladenen dashboard.css — es gewann mit 500px gegen die hier
+           gemeinten 746px. Das war der Grund fuer das !important. Zwei Klassen
+           im Selektor schlagen eine, unabhaengig von der Ladereihenfolge; das
+           Markup traegt beide (class="modal assign-spell-modal"). */
+        .modal.assign-spell-modal {
+            max-width: 746px;
+            width: 95%;
         }
 
         .assign-spell-filters {
@@ -2864,32 +2819,6 @@
             display: flex;
             flex-wrap: wrap;
             gap: 6px;
-        }
-
-        .loc-link {
-            display: inline-flex;
-            align-items: center;
-            gap: 4px;
-            padding: 4px 10px;
-            background: var(--bg-dark);
-            border-radius: var(--radius-lg);
-            font-size: 0.85em;
-            color: var(--cyan);
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .loc-link:hover {
-            background: var(--cyan);
-            color: var(--bg-dark);
-        }
-
-        .loc-tag {
-            display: inline-block;
-            padding: 3px 10px;
-            border-radius: var(--radius-lg);
-            font-size: 0.8em;
-            font-weight: 500;
         }
 
         .loc-npcs-inline {

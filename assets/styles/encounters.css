@@ -142,20 +142,6 @@
             gap: 4px;
         }
         
-        /* Kompakte Listen-Zeile */
-        .list-view-row {
-            display: grid;
-            grid-template-columns: 40px 1fr auto auto;
-            align-items: center;
-            gap: 12px;
-            background: var(--bg-card);
-            border: 1px solid var(--border);
-            border-radius: var(--radius-md);
-            padding: 8px 12px;
-            cursor: pointer;
-            transition: all 0.15s;
-        }
-        
         .list-view-row:hover {
             border-color: var(--cyan);
             background: var(--bg-elevated);
@@ -275,6 +261,16 @@
         /* Expandierte Listenzeilen */
         .list-view-row {
             flex-wrap: wrap;
+            display: grid; /* F-18: aus der Dublette uebernommen */
+            grid-template-columns: 40px 1fr auto auto; /* F-18: aus der Dublette uebernommen */
+            align-items: center; /* F-18: aus der Dublette uebernommen */
+            gap: 12px; /* F-18: aus der Dublette uebernommen */
+            background: var(--bg-card); /* F-18: aus der Dublette uebernommen */
+            border: 1px solid var(--border); /* F-18: aus der Dublette uebernommen */
+            border-radius: var(--radius-md); /* F-18: aus der Dublette uebernommen */
+            padding: 8px 12px; /* F-18: aus der Dublette uebernommen */
+            cursor: pointer; /* F-18: aus der Dublette uebernommen */
+            transition: all 0.15s; /* F-18: aus der Dublette uebernommen */
         }
         
         .list-view-row .row-details {
@@ -1343,7 +1339,6 @@
         min-width: 100%;
     }
 }
-
 
 
 /* ============================================================

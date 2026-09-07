@@ -331,18 +331,6 @@
     border: 1px solid var(--border);
 }
 
-/* ========================================
-   npcg- NPC-Generator (WELT-02)
-   ======================================== */
-
-.npcg-preview-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-md);
-    padding: var(--space-md);
-    margin-bottom: var(--space-md);
-}
-
 .npcg-field-label {
     font-size: 13px;
     color: var(--text-dim);
@@ -354,26 +342,6 @@
 .npcg-field-value {
     color: var(--text);
     margin-bottom: var(--space-sm);
-}
-
-.npcg-filter-row {
-    display: flex;
-    gap: var(--space-sm);
-    flex-wrap: wrap;
-    margin-bottom: var(--space-md);
-}
-
-/* ========================================
-   tl- Timeline & Harptos-Kalender (WELT-03)
-   ======================================== */
-
-.tl-kalender-header {
-    background: var(--surface);
-    border-bottom: 1px solid var(--border);
-    padding: var(--space-sm) var(--space-md);
-    font-size: 18px;
-    font-weight: 600;
-    color: var(--gold);
 }
 
 #kalender-monat-anzeige {
@@ -466,6 +434,9 @@
     background: var(--surface);
     border-bottom: 1px solid var(--border);
     padding: var(--space-sm) var(--space-md);
+    font-size: 18px; /* F-18: aus der Dublette uebernommen */
+    font-weight: 600; /* F-18: aus der Dublette uebernommen */
+    color: var(--gold); /* F-18: aus der Dublette uebernommen */
 }
 
 .tl-kalender-datum {
@@ -735,16 +706,6 @@
     }
 }
 
-/* ========================================
-   fr- Fraktionen & Ruf (WELT-05)
-   ======================================== */
-
-.fr-list {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-sm);
-}
-
 .fr-card-header {
     display: flex;
     justify-content: space-between;
@@ -752,32 +713,10 @@
     margin-bottom: var(--space-sm);
 }
 
-.fr-card-name {
-    font-weight: 700;
-    font-size: 17px;
-}
-
-.fr-ruf-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    padding: 4px 8px;
-    border-radius: 999px;
-    font-size: 14px;
-    font-weight: 600;
-    border: 1px solid var(--border);
-}
-
 .fr-ruf-wert {
     font-size: 14px;
     color: var(--text-dim);
     margin-left: 8px;
-}
-
-.fr-ruf-buttons {
-    display: flex;
-    gap: 4px;
-    margin-top: var(--space-sm);
 }
 
 .fr-ruf-btn {
@@ -864,6 +803,7 @@
     border: 1px solid var(--border);
     border-radius: var(--radius-md);
     padding: var(--space-md);
+    margin-bottom: var(--space-md); /* F-18: aus der Dublette uebernommen */
 }
 
 .npcg-preview-name {
@@ -989,6 +929,7 @@
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    font-size: 17px; /* F-18: aus der Dublette uebernommen */
 }
 
 .fr-card-ruf {
@@ -1015,6 +956,12 @@
 .fr-ruf-badge {
     font-size: 14px;
     font-weight: 600;
+    display: inline-flex; /* F-18: aus der Dublette uebernommen */
+    align-items: center; /* F-18: aus der Dublette uebernommen */
+    gap: 4px; /* F-18: aus der Dublette uebernommen */
+    padding: 4px 8px; /* F-18: aus der Dublette uebernommen */
+    border-radius: 999px; /* F-18: aus der Dublette uebernommen */
+    border: 1px solid var(--border); /* F-18: aus der Dublette uebernommen */
 }
 
 .fr-ruf-value {
@@ -1110,6 +1057,7 @@
     display: flex;
     gap: 4px;
     margin-bottom: 8px;
+    margin-top: var(--space-sm); /* F-18: aus der Dublette uebernommen */
 }
 
 .fr-ruf-btn-minus {

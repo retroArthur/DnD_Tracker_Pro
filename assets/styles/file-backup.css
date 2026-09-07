@@ -153,9 +153,9 @@
 
 /* Restore-Button in Liste: roter Outline-Stil (destruktiv aber nicht solid) */
 .backup-entry-restore {
-    color: var(--red) !important;
-    border-color: var(--red) !important;
-    background: transparent !important;
+    color: var(--red);
+    border-color: var(--red);
+    background: transparent;
     font-size: 0.8em;
     padding: 4px 8px;
     border-radius: var(--radius-sm);
@@ -166,7 +166,7 @@
 }
 
 .backup-entry-restore:hover {
-    background: rgba(239, 68, 68, 0.12) !important;
+    background: rgba(239, 68, 68, 0.12);
 }
 
 /* Leerer Zustand */

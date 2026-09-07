@@ -321,8 +321,8 @@
 }
 
 .dice-fav-item {
-    background: var(--bg-card) !important;
-    border: 1px solid var(--border) !important;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
     border-radius: var(--radius-md);
     padding: 8px 12px;
     cursor: pointer;
@@ -334,8 +334,8 @@
 }
 
 .dice-fav-item:hover {
-    background: var(--bg-elevated) !important;
-    border-color: var(--cyan) !important;
+    background: var(--bg-elevated);
+    border-color: var(--cyan);
 }
 
 .dice-fav-item .fav-name {
@@ -359,9 +359,9 @@
     width: 32px;
     height: 32px;
     border-radius: 50%;
-    border: 1px dashed var(--border) !important;
-    background: transparent !important;
-    color: var(--text-dim) !important;
+    border: 1px dashed var(--border);
+    background: transparent;
+    color: var(--text-dim);
     font-size: 1.2em;
     cursor: pointer;
     transition: all 0.2s;
@@ -372,9 +372,9 @@
 }
 
 .dice-fav-add:hover {
-    border-color: var(--gold) !important;
-    color: var(--gold) !important;
-    background: color-mix(in srgb, var(--gold) 10%, transparent) !important;
+    border-color: var(--gold);
+    color: var(--gold);
+    background: color-mix(in srgb, var(--gold) 10%, transparent);
 }
 
 /* Character Dice Panel */
@@ -505,6 +505,9 @@
 /* Dice History */
 .dice-history {
     margin-top: 16px;
+    max-height: 200px; /* F-18: aus der Dublette uebernommen */
+    overflow-y: auto; /* F-18: aus der Dublette uebernommen */
+    font-size: 0.85em; /* F-18: aus der Dublette uebernommen */
 }
 
 .dice-history-title {
@@ -529,6 +532,11 @@
     background: var(--bg-elevated);
     border-radius: var(--radius-md);
     font-size: 0.85em;
+    margin-bottom: 4px; /* F-18: aus der Dublette uebernommen */
+    align-items: center; /* F-18: aus der Dublette uebernommen */
+    gap: 8px; /* F-18: aus der Dublette uebernommen */
+    cursor: pointer; /* F-18: aus der Dublette uebernommen */
+    transition: all 0.2s; /* F-18: aus der Dublette uebernommen */
 }
 
 .dice-history-formula {
@@ -539,6 +547,8 @@
 .dice-history-result {
     font-weight: 600;
     color: var(--gold);
+    min-width: 40px; /* F-18: aus der Dublette uebernommen */
+    text-align: right; /* F-18: aus der Dublette uebernommen */
 }
 
 

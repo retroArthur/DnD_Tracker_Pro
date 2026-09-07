@@ -165,8 +165,8 @@
             margin-top: 12px;
         }
 
-        .dice-crit { color: var(--green) !important; text-shadow: 0 0 10px color-mix(in srgb, var(--green) 50%, transparent); }
-        .dice-fail { color: var(--red) !important; text-shadow: 0 0 10px color-mix(in srgb, var(--red) 50%, transparent); }
+        .dice-crit { color: var(--green); text-shadow: 0 0 10px color-mix(in srgb, var(--green) 50%, transparent); }
+        .dice-fail { color: var(--red); text-shadow: 0 0 10px color-mix(in srgb, var(--red) 50%, transparent); }
         
         .dice-section {
             background: var(--bg-elevated);
@@ -231,12 +231,6 @@
             color: var(--text-dim);
         }
         
-        .dice-skill-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-            gap: 6px;
-        }
-        
         .dice-skill-btn {
             padding: 6px 10px;
             background: var(--bg-dark);
@@ -288,12 +282,6 @@
             background: rgba(126, 196, 207, 0.2);
         }
         
-        .dice-history {
-            max-height: 200px;
-            overflow-y: auto;
-            font-size: 0.85em;
-        }
-        
         .dice-history-header {
             display: flex;
             justify-content: space-between;
@@ -303,25 +291,11 @@
             border-bottom: 1px solid var(--border);
         }
         
-        .dice-history-item {
-            padding: 8px 10px;
-            background: var(--bg-dark);
-            border-radius: var(--radius-sm);
-            margin-bottom: 4px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 8px;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-        
         .dice-history-item:hover {
             background: var(--bg-elevated);
         }
         
         .dice-history-notation { color: var(--cyan); font-family: var(--font-mono); flex: 1; }
-        .dice-history-result { color: var(--gold); font-weight: 600; min-width: 40px; text-align: right; }
         .dice-history-rolls { color: var(--text-dim); font-size: 0.85em; }
         
         .dice-formula-history {
@@ -424,12 +398,6 @@
             margin-top: 16px;
             padding-top: 16px;
             border-top: 1px solid var(--border);
-        }
-        
-        .round-timer-info {
-            font-size: 0.8em;
-            color: var(--text-dim);
-            margin-bottom: 8px;
         }
         
         .round-timer-controls {
@@ -546,46 +514,10 @@
             color: var(--text-dim);
             margin-bottom: 12px;
         }
-
-        /* Modal */
-        .modal-overlay {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0,0,0,0.6);
-            backdrop-filter: blur(4px);
-            -webkit-backdrop-filter: blur(4px);
-            z-index: var(--z-modal);
-            align-items: center;
-            justify-content: center;
-            opacity: 0;
-            transition: opacity 0.2s ease;
-        }
         
         .modal-overlay.show { 
             display: flex; 
             opacity: 1;
-        }
-        
-        .modal {
-            background: rgba(26, 26, 26, 0.95);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border: 1px solid rgba(212, 175, 55, 0.2);
-            border-radius: var(--radius-lg);
-            padding: 24px;
-            max-width: 500px;
-            width: 90%;
-            max-height: 85vh;
-            overflow-y: auto;
-            box-shadow: 
-                0 8px 32px rgba(0, 0, 0, 0.4),
-                0 0 0 1px rgba(255, 255, 255, 0.05) inset;
-            transform: translateY(20px) scale(0.95);
-            transition: transform 0.25s ease, opacity 0.25s ease;
         }
         
         .modal-overlay.show .modal {
@@ -779,26 +711,6 @@
         }
         .map-marker.shape-eye > span:first-child {
             transform: rotate(-45deg);
-        }
-        
-        .map-marker-tooltip {
-            position: absolute;
-            bottom: calc(100% + 10px);
-            left: 50%;
-            transform: translateX(-50%) scale(calc(1 / var(--map-zoom, 1)));
-            transform-origin: bottom center;
-            background: var(--bg-card);
-            border: 2px solid var(--gold);
-            padding: 10px 14px;
-            border-radius: var(--radius-md);
-            white-space: normal;
-            max-width: 250px;
-            min-width: 120px;
-            font-size: 14px;
-            line-height: 1.4;
-            display: none;
-            z-index: var(--z-dropdown);
-            box-shadow: 0 6px 20px rgba(0,0,0,0.5);
         }
         
         .map-marker-tooltip .tooltip-title {
@@ -1235,6 +1147,22 @@
         /* Enhanced Marker Tooltip */
         .map-marker-tooltip {
             max-width: 280px;
+            position: absolute; /* F-18: aus der Dublette uebernommen */
+            bottom: calc(100% + 10px); /* F-18: aus der Dublette uebernommen */
+            left: 50%; /* F-18: aus der Dublette uebernommen */
+            transform: translateX(-50%) scale(calc(1 / var(--map-zoom, 1))); /* F-18: aus der Dublette uebernommen */
+            transform-origin: bottom center; /* F-18: aus der Dublette uebernommen */
+            background: var(--bg-card); /* F-18: aus der Dublette uebernommen */
+            border: 2px solid var(--gold); /* F-18: aus der Dublette uebernommen */
+            padding: 10px 14px; /* F-18: aus der Dublette uebernommen */
+            border-radius: var(--radius-md); /* F-18: aus der Dublette uebernommen */
+            white-space: normal; /* F-18: aus der Dublette uebernommen */
+            min-width: 120px; /* F-18: aus der Dublette uebernommen */
+            font-size: 14px; /* F-18: aus der Dublette uebernommen */
+            line-height: 1.4; /* F-18: aus der Dublette uebernommen */
+            display: none; /* F-18: aus der Dublette uebernommen */
+            z-index: var(--z-dropdown); /* F-18: aus der Dublette uebernommen */
+            box-shadow: 0 6px 20px rgba(0,0,0,0.5); /* F-18: aus der Dublette uebernommen */
         }
         
         .tooltip-timestamp {
@@ -1325,21 +1253,18 @@
             color: var(--cyan);
             cursor: pointer;
             border-bottom: 1px dotted var(--cyan);
+            background: rgba(168, 85, 247, 0.1); /* F-18: aus der Dublette uebernommen */
+            padding: 2px 8px; /* F-18: aus der Dublette uebernommen */
+            border-radius: var(--radius-sm); /* F-18: aus der Dublette uebernommen */
+            font-size: 0.85em; /* F-18: aus der Dublette uebernommen */
+            text-decoration: none; /* F-18: aus der Dublette uebernommen */
+            transition: all 0.2s; /* F-18: aus der Dublette uebernommen */
         }
         
         .wiki-link:hover {
             color: var(--gold);
             border-color: var(--gold);
-        }
-        
-        /* ============================================================
-           SPELL SLOTS
-           ============================================================ */
-        .spell-slots-grid {
-            display: grid;
-            grid-template-columns: repeat(5, 1fr);
-            gap: 6px;
-            margin-top: 6px;
+            background: var(--purple); /* F-18: aus der Dublette uebernommen */
         }
         
         @media (min-width: 601px) {
@@ -1347,15 +1272,6 @@
                 grid-template-columns: repeat(10, 1fr);
                 gap: 3px;
             }
-        }
-        
-        .spell-slot-box {
-            text-align: center;
-            background: var(--bg-dark);
-            border: 1px solid var(--border);
-            border-radius: var(--radius-sm);
-            padding: 4px 2px;
-            min-width: 0;
         }
         
         .spell-slot-box .slot-level {
@@ -1505,6 +1421,9 @@
             border-radius: var(--radius-md);
             cursor: pointer;
             transition: background 0.2s;
+            border: 1px solid var(--border); /* F-18: aus der Dublette uebernommen */
+            font-size: 0.82em; /* F-18: aus der Dublette uebernommen */
+            user-select: none; /* F-18: aus der Dublette uebernommen */
         }
         
         .char-save-box:hover {
@@ -1514,6 +1433,7 @@
         .char-save-box.proficient {
             background: rgba(74, 222, 128, 0.2);
             border: 1px solid var(--green);
+            color: var(--gold); /* F-18: aus der Dublette uebernommen */
         }
         
         .char-save-box input[type="checkbox"] {
@@ -2492,18 +2412,6 @@
     overflow-x: auto;
 }
 
-.qref-tab {
-    flex: 1;
-    padding: 10px 12px;
-    text-align: center;
-    cursor: pointer;
-    font-size: 0.85em;
-    color: var(--text-dim);
-    border-bottom: 2px solid transparent;
-    transition: all 0.2s;
-    white-space: nowrap;
-}
-
 .qref-tab:hover {
     color: var(--text);
     background: var(--bg-hover);
@@ -2796,17 +2704,6 @@
     border-color: var(--cyan);
 }
 
-.qref-action-name {
-    font-weight: 600;
-    font-size: 0.85em;
-    margin-bottom: 2px;
-}
-
-.qref-action-desc {
-    font-size: 0.75em;
-    color: var(--text-dim);
-}
-
 /* Empty state */
 .qref-empty {
     text-align: center;
@@ -2957,6 +2854,12 @@
     font-size: 0.75em;
     background: transparent;
     border: none;
+    flex: 1; /* F-18: aus der Dublette uebernommen */
+    text-align: center; /* F-18: aus der Dublette uebernommen */
+    cursor: pointer; /* F-18: aus der Dublette uebernommen */
+    color: var(--text-dim); /* F-18: aus der Dublette uebernommen */
+    transition: all 0.2s; /* F-18: aus der Dublette uebernommen */
+    white-space: nowrap; /* F-18: aus der Dublette uebernommen */
 }
 
 /* Collapsible Sections */
@@ -3182,6 +3085,8 @@
 
 .qref-action-name {
     font-weight: 600;
+    font-size: 0.85em; /* F-18: aus der Dublette uebernommen */
+    margin-bottom: 2px; /* F-18: aus der Dublette uebernommen */
 }
 
 .qref-action-desc {

@@ -1199,22 +1199,6 @@
             margin-bottom: 8px;
         }
         
-        .wiki-link {
-            color: var(--purple);
-            background: rgba(168, 85, 247, 0.1);
-            padding: 2px 8px;
-            border-radius: var(--radius-sm);
-            cursor: pointer;
-            font-size: 0.85em;
-            text-decoration: none;
-            transition: all 0.2s;
-        }
-        
-        .wiki-link:hover {
-            background: var(--purple);
-            color: white;
-        }
-        
         .wiki-link.missing {
             color: var(--red);
             background: rgba(239, 68, 68, 0.1);
@@ -2744,13 +2728,6 @@
     transform: scale(0.97);
 }
 
-/* Advantage / Disadvantage mini-buttons */
-.char-adv-btns {
-    display: inline-flex;
-    gap: 2px;
-    vertical-align: middle;
-}
-
 .char-adv-btn {
     font-size: 0.7em;
     padding: 1px 4px;
@@ -2910,29 +2887,6 @@
     display: flex;
     flex-wrap: wrap;
     gap: 5px;
-}
-
-.char-save-box {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    padding: 4px 8px;
-    border: 1px solid var(--border);
-    border-radius: var(--radius-sm);
-    font-size: 0.82em;
-    cursor: pointer;
-    transition: background 0.12s, border-color 0.12s;
-    user-select: none;
-    background: var(--bg-card, var(--bg));
-}
-
-.char-save-box:hover {
-    background: var(--bg-hover, rgba(255,255,255,0.07));
-}
-
-.char-save-box.proficient {
-    border-color: var(--gold);
-    color: var(--gold);
 }
 
 .char-save-box-name {
@@ -3131,6 +3085,9 @@
     visibility: visible;
     opacity: 1;
     pointer-events: auto;
+    display: inline-flex; /* F-18: aus der Dublette uebernommen */
+    gap: 2px; /* F-18: aus der Dublette uebernommen */
+    vertical-align: middle; /* F-18: aus der Dublette uebernommen */
 }
 
 @media (hover: hover) and (pointer: fine) {

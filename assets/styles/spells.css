@@ -215,32 +215,10 @@
             border-bottom: none;
         }
         
-        /* Schwebende Mini-Editor-Toolbar */
-        .floating-toolbar {
-            position: fixed;
-            display: flex;
-            gap: 2px;
-            padding: 4px 6px;
-            background: var(--bg-elevated);
-            border: 1px solid var(--gold);
-            border-radius: var(--radius-md);
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5), 0 0 10px rgba(251, 191, 36, 0.2);
-            z-index: var(--z-floating);
-            opacity: 0;
-            transform: translateY(5px);
-            transition: opacity 0.15s, transform 0.15s;
-            pointer-events: none;
-        }
-        
         .floating-toolbar.visible {
             opacity: 1;
             transform: translateY(0);
             pointer-events: auto;
-        }
-        
-        .floating-toolbar .editor-btn {
-            padding: 5px 8px;
-            font-size: 14px;
         }
         
         .floating-toolbar .editor-btn:hover {
@@ -301,6 +279,18 @@
 
         .editor-toolbar .editor-btn {
             flex-shrink: 0;
+            display: grid; /* F-18: aus der Dublette uebernommen */
+            place-items: center; /* F-18: aus der Dublette uebernommen */
+            width: 30px; /* F-18: aus der Dublette uebernommen */
+            height: 30px; /* F-18: aus der Dublette uebernommen */
+            padding: 0; /* F-18: aus der Dublette uebernommen */
+            background: transparent; /* F-18: aus der Dublette uebernommen */
+            border: none; /* F-18: aus der Dublette uebernommen */
+            border-radius: 0; /* F-18: aus der Dublette uebernommen */
+            color: var(--text); /* F-18: aus der Dublette uebernommen */
+            cursor: pointer; /* F-18: aus der Dublette uebernommen */
+            font-size: 13px; /* F-18: aus der Dublette uebernommen */
+            transition: background 0.15s, color 0.15s; /* F-18: aus der Dublette uebernommen */
         }
         
         .toolbar-separator {
@@ -425,6 +415,16 @@
             padding: 8px 10px;
             background: linear-gradient(135deg, var(--bg-elevated) 0%, var(--bg-card) 100%);
             min-width: 320px;
+            position: fixed; /* F-18: aus der Dublette uebernommen */
+            display: flex; /* F-18: aus der Dublette uebernommen */
+            border: 1px solid var(--gold); /* F-18: aus der Dublette uebernommen */
+            border-radius: var(--radius-md); /* F-18: aus der Dublette uebernommen */
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5), 0 0 10px rgba(251, 191, 36, 0.2); /* F-18: aus der Dublette uebernommen */
+            z-index: var(--z-floating); /* F-18: aus der Dublette uebernommen */
+            opacity: 0; /* F-18: aus der Dublette uebernommen */
+            transform: translateY(5px); /* F-18: aus der Dublette uebernommen */
+            transition: opacity 0.15s, transform 0.15s; /* F-18: aus der Dublette uebernommen */
+            pointer-events: none; /* F-18: aus der Dublette uebernommen */
         }
 
         .floating-toolbar .toolbar-row {
@@ -436,6 +436,7 @@
         .floating-toolbar .editor-btn {
             position: relative;
             padding: 6px 10px;
+            font-size: 14px; /* F-18: aus der Dublette uebernommen */
         }
 
         .floating-toolbar .editor-btn.active {
