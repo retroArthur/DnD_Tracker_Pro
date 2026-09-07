@@ -253,6 +253,62 @@
             outline-offset: -2px;
         }
 
+        /* ------------------------------------------------------------
+           Block-Handle (W-14)
+           position: fixed wie die beiden bestehenden Kontext-Leisten —
+           dadurch braucht sie KEIN positioniertes Wrapper-Element und ist
+           unabhaengig von W-18.
+           ------------------------------------------------------------ */
+        .editor-block-handle {
+            position: fixed;
+            display: none;
+            align-items: center;
+            gap: 2px;
+            padding: 3px 4px;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+            z-index: 10001;
+        }
+
+        .editor-block-handle.visible {
+            display: flex;
+        }
+
+        .editor-block-handle .ebh-label {
+            padding: 0 8px 0 4px;
+            font-size: 10px;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: var(--gold);
+            white-space: nowrap;
+        }
+
+        .editor-block-handle button {
+            padding: 3px 8px;
+            background: transparent;
+            border: none;
+            color: var(--text-dim);
+            font-size: 11px;
+            white-space: nowrap;
+            cursor: pointer;
+        }
+
+        .editor-block-handle button:hover {
+            background: rgba(212, 175, 55, 0.18);
+            color: var(--gold);
+        }
+
+        .editor-block-handle button[data-block-action='remove']:hover {
+            background: rgba(239, 68, 68, 0.12);
+            color: #ef4444;
+        }
+
+        .editor-block-handle button:focus-visible {
+            outline: 2px solid var(--gold);
+            outline-offset: -2px;
+        }
+
         /* Harter Reset. Loeschen-Tint aus den Design-Tokens des Handoffs. */
         .editor-toolbar .tb-menu-item-danger {
             color: var(--text-dim);

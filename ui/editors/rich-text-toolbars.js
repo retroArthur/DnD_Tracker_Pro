@@ -394,6 +394,7 @@ function applyFloatingHighlight(color, editor, savedRange) {
 function initContextToolbars() {
     if (contextToolbarsInitialized) return;
     contextToolbarsInitialized = true;
+    initEditorBlockHandle();
     const tableToolbar = $('table-context-toolbar');
     const linkToolbar = $('link-context-toolbar');
     if (!tableToolbar || !linkToolbar) return;
@@ -510,7 +511,9 @@ function showTableContextToolbar(table) {
     if (!toolbar) return;
     const rect = table.getBoundingClientRect();
     toolbar.style.left = rect.left + 'px';
-    toolbar.style.top = rect.top - 40 + 'px';
+    // UNTER die Tabelle. Vorher stand sie darueber und haette sich seit W-14
+    // mit dem Block-Handle ueberlagert, das denselben Platz beansprucht.
+    toolbar.style.top = rect.bottom + 8 + 'px';
     toolbar.classList.add('visible');
 }
 function hideTableContextToolbar() {
@@ -541,8 +544,211 @@ function hideContextToolbars() {
     hideTableContextToolbar();
     hideLinkContextToolbar();
 }
+
+// ============================================================
+// Block-Handle (W-14)
+//
+// Beim Ueberfahren eines Bausteins erscheint 26 px darueber eine schmale
+// Leiste: [Bezeichnung] Markieren | Duplizieren | (+ Zeile | + Spalte) | x
+//
+// Warum position: fixed und kein im Editor positionierter Kasten, wie der
+// Handoff vorschlaegt: die Leiste haette sonst ein Wrapper-Element mit
+// position: relative gebraucht, das erst mit W-18 entsteht. Die beiden
+// bestehenden Kontext-Leisten dieser App loesen dasselbe Problem seit
+// jeher mit fixed — dasselbe Muster, kein neuer Baustein in der Struktur.
+// ============================================================
+
+// Blocktypen, ueber denen das Handle erscheint, mit ihrer Bezeichnung.
+// Reihenfolge zaehlt: die spezifischste Klasse zuerst.
+const EDITOR_BLOCK_LABELS = [
+    ['.editor-block-statblock', 'Statblock'],
+    ['.editor-block-divider', 'Trenner'],
+    ['.editor-block-table', 'Würfeltabelle'],
+    ['.read-aloud', 'Vorlesetext'],
+    ['table', 'Tabelle']
+];
+
+let currentHandleBlock = null;
+let hideBlockHandleTimeout = null;
+
+function editorBlockLabel(el) {
+    for (const [selector, label] of EDITOR_BLOCK_LABELS) {
+        if (el.matches(selector)) return label;
+    }
+    return null;
+}
+
+/**
+ * Oberstes Kind der Schreibflaeche, in dem der Zeiger steht. Der Handoff
+ * spricht vom "obersten Kind unter dem Zeiger" — verschachtelte Bausteine
+ * bekommen also bewusst kein eigenes Handle.
+ */
+function topLevelEditorChild(editor, node) {
+    let el = node && node.nodeType === Node.TEXT_NODE ? node.parentElement : node;
+    while (el && el.parentElement && el.parentElement !== editor) {
+        el = el.parentElement;
+    }
+    return el && el.parentElement === editor ? el : null;
+}
+
+function hideBlockHandle() {
+    const handle = $('editor-block-handle');
+    if (handle) handle.classList.remove('visible');
+    currentHandleBlock = null;
+}
+
+function scheduleHideBlockHandle() {
+    if (hideBlockHandleTimeout) clearTimeout(hideBlockHandleTimeout);
+    // Kurze Gnadenfrist: die Leiste steht UEBER dem Block und damit oft
+    // ausserhalb der Schreibflaeche. Ohne sie waere sie unerreichbar.
+    hideBlockHandleTimeout = setTimeout(() => {
+        hideBlockHandle();
+        hideBlockHandleTimeout = null;
+    }, 220);
+}
+
+function showBlockHandle(block) {
+    const handle = $('editor-block-handle');
+    if (!handle) return;
+    const label = editorBlockLabel(block);
+    if (!label) return;
+    if (currentHandleBlock !== block) {
+        const isTable = block.tagName === 'TABLE';
+        const parts = [`<span class="ebh-label">${esc(label)}</span>`];
+        parts.push('<button type="button" data-block-action="select">Markieren</button>');
+        parts.push('<button type="button" data-block-action="duplicate">Duplizieren</button>');
+        if (isTable) {
+            parts.push('<button type="button" data-block-action="addRow">+ Zeile</button>');
+            parts.push('<button type="button" data-block-action="addCol">+ Spalte</button>');
+        }
+        parts.push('<button type="button" data-block-action="remove" title="Baustein entfernen">✕</button>');
+        handle.innerHTML = parts.join('');
+        currentHandleBlock = block;
+    }
+    const rect = block.getBoundingClientRect();
+    handle.classList.add('visible');
+    handle.style.left = rect.left + 'px';
+    handle.style.top = Math.max(2, rect.top - 26) + 'px';
+}
+
+/**
+ * Neu vermessen nur, wenn noetig. getBoundingClientRect() erzwingt einen
+ * Layout-Durchlauf; bei einem Listener auf mousemove waere das pro
+ * Mausbewegung einer.
+ */
+function showBlockHandleIfChanged(block) {
+    if (currentHandleBlock === block) return;
+    showBlockHandle(block);
+}
+
+function applyBlockHandleAction(action, block) {
+    const editor = block.closest(EDITOR_HOST_SELECTOR);
+    if (action === 'select') {
+        const range = document.createRange();
+        range.selectNode(block);
+        const selection = window.getSelection();
+        selection.removeAllRanges();
+        selection.addRange(range);
+        return;
+    }
+    if (action === 'duplicate') {
+        block.parentNode.insertBefore(block.cloneNode(true), block.nextSibling);
+        showToast('📋 Baustein dupliziert');
+        return;
+    }
+    if (action === 'remove') {
+        block.remove();
+        hideBlockHandle();
+        showToast('🗑️ Baustein entfernt');
+        return;
+    }
+    if (action === 'addRow') {
+        const rows = block.rows;
+        const template = rows[rows.length - 1];
+        if (!template) return;
+        const clone = template.cloneNode(true);
+        Array.from(clone.cells).forEach(cell => {
+            cell.innerHTML = '&nbsp;';
+        });
+        template.parentNode.insertBefore(clone, template.nextSibling);
+        return;
+    }
+    if (action === 'addCol') {
+        Array.from(block.rows).forEach(row => {
+            const last = row.cells[row.cells.length - 1];
+            if (!last) return;
+            const cell = last.cloneNode(false);
+            cell.innerHTML = '&nbsp;';
+            row.appendChild(cell);
+        });
+        return;
+    }
+    if (editor) editor.focus();
+}
+
+function initEditorBlockHandle() {
+    const handle = $('editor-block-handle');
+    if (!handle) return;
+
+    document.addEventListener('mousemove', e => {
+        const target = e.target;
+        if (!target || !target.closest) return;
+        // Ueber der Leiste selbst: stehen lassen, sonst waere sie nicht
+        // anklickbar.
+        if (target.closest('#editor-block-handle')) {
+            if (hideBlockHandleTimeout) {
+                clearTimeout(hideBlockHandleTimeout);
+                hideBlockHandleTimeout = null;
+            }
+            return;
+        }
+        const editor = target.closest(EDITOR_HOST_SELECTOR);
+        if (!editor) {
+            if (currentHandleBlock) scheduleHideBlockHandle();
+            return;
+        }
+        const block = topLevelEditorChild(editor, target);
+        if (!block || !editorBlockLabel(block)) {
+            if (currentHandleBlock) scheduleHideBlockHandle();
+            return;
+        }
+        if (hideBlockHandleTimeout) {
+            clearTimeout(hideBlockHandleTimeout);
+            hideBlockHandleTimeout = null;
+        }
+        showBlockHandleIfChanged(block);
+    });
+
+    // Beim Scrollen wandert der Block unter der Leiste weg. Neu zu vermessen
+    // waere teuer und flackert — ausblenden ist ehrlicher, der naechste
+    // Mauszeiger-Schritt holt sie zurueck.
+    window.addEventListener('scroll', () => {
+        if (currentHandleBlock) hideBlockHandle();
+    }, true);
+
+    // preventDefault, damit die Auswahl in der Schreibflaeche nicht verloren
+    // geht — "Markieren" waere sonst wirkungslos.
+    handle.addEventListener('mousedown', e => e.preventDefault());
+
+    handle.addEventListener('click', e => {
+        const btn = e.target.closest('[data-block-action]');
+        if (!btn || !currentHandleBlock) return;
+        const block = currentHandleBlock;
+        const action = btn.dataset.blockAction || '';
+        // Struktur aendern setzt einen Undo-Punkt, blosses Markieren nicht —
+        // dieselbe Trennlinie wie bei W-12 und W-17.
+        if (action !== 'select' && typeof saveUndoState === 'function') {
+            saveUndoState('Baustein geändert');
+        }
+        applyBlockHandleAction(action, block);
+        if (block.isConnected) showBlockHandle(block);
+    });
+}
+
 // ============================================================
 // EXPORTS FOR GLOBAL ACCESS
 // ============================================================
 window.initFloatingToolbar = initFloatingToolbar;
 window.initContextToolbars = initContextToolbars;
+window.showBlockHandle = showBlockHandle;
+window.hideBlockHandle = hideBlockHandle;

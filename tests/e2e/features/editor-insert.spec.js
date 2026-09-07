@@ -872,3 +872,116 @@ test.describe('Bausteine (2a, W-12/W-13)', () => {
         expect(outside).toBe(true);
     });
 });
+
+// NEU mit Variante 2a (W-14) — NICHT Teil des eingefrorenen Phase-9-Netzes.
+//
+// Das Block-Handle erscheint beim Ueberfahren eines Bausteins 26 px darueber.
+// Es ist absichtlich position: fixed und haengt NICHT an einem Wrapper: die
+// beiden bestehenden Kontext-Leisten dieser App loesen dasselbe Problem seit
+// jeher so, und damit ist das Handle unabhaengig von W-18.
+test.describe('Block-Handle (2a, W-14)', () => {
+    test.beforeEach(async ({ page }) => {
+        await gotoBundleFresh(page);
+    });
+
+    async function hoverBlock(page, selector) {
+        await page.locator(selector).hover();
+        await page.waitForSelector('#editor-block-handle.visible', { timeout: 3000 });
+    }
+
+    async function seedBlocks(page, html) {
+        await openFreshWikiForm(page, 'W14 ' + Math.random().toString(36).slice(2, 7));
+        await page.locator('#wiki-content').click();
+        await page.evaluate(markup => {
+            document.getElementById('wiki-content').innerHTML = markup;
+        }, html);
+    }
+
+    test('erscheint ueber einem Statblock und benennt ihn', async ({ page }) => {
+        await seedBlocks(
+            page,
+            '<p>Vorspann</p><div class="editor-block editor-block-statblock" id="w14-sb">Wache</div>'
+        );
+        await hoverBlock(page, '#w14-sb');
+        await expect(page.locator('#editor-block-handle .ebh-label')).toHaveText('Statblock');
+    });
+
+    test('erscheint NICHT ueber einem gewoehnlichen Absatz', async ({ page }) => {
+        await seedBlocks(page, '<p id="w14-p">Nur Text</p>');
+        await page.locator('#w14-p').hover();
+        await expect(page.locator('#editor-block-handle')).not.toHaveClass(/visible/);
+    });
+
+    test('Duplizieren haengt eine Kopie hinter den Baustein', async ({ page }) => {
+        await seedBlocks(
+            page,
+            '<div class="editor-block editor-block-statblock" id="w14-sb">Wache</div>'
+        );
+        await hoverBlock(page, '#w14-sb');
+        await page.click('#editor-block-handle [data-block-action="duplicate"]');
+        await expect(page.locator('#wiki-content .editor-block-statblock')).toHaveCount(2);
+    });
+
+    test('x entfernt den Baustein und blendet das Handle aus', async ({ page }) => {
+        await seedBlocks(
+            page,
+            '<div class="editor-block editor-block-divider" id="w14-div"></div><p>danach</p>'
+        );
+        await hoverBlock(page, '#w14-div');
+        await expect(page.locator('#editor-block-handle .ebh-label')).toHaveText('Trenner');
+        await page.click('#editor-block-handle [data-block-action="remove"]');
+        await expect(page.locator('#wiki-content .editor-block-divider')).toHaveCount(0);
+        await expect(page.locator('#editor-block-handle')).not.toHaveClass(/visible/);
+    });
+
+    test('Markieren legt eine Auswahl ueber den ganzen Baustein', async ({ page }) => {
+        await seedBlocks(
+            page,
+            '<div class="editor-block editor-block-statblock" id="w14-sb">Wache Passiv 13</div>'
+        );
+        await hoverBlock(page, '#w14-sb');
+        await page.click('#editor-block-handle [data-block-action="select"]');
+        const selected = await page.evaluate(() => window.getSelection().toString());
+        expect(selected).toContain('Wache Passiv 13');
+    });
+
+    test('Tabellen bekommen zusaetzlich + Zeile und + Spalte', async ({ page }) => {
+        await seedBlocks(
+            page,
+            '<table class="editor-block editor-block-table" id="w14-tb">' +
+                '<tr><th>W20</th><th>Ergebnis</th></tr><tr><td>1</td><td>Nichts</td></tr></table>'
+        );
+        await hoverBlock(page, '#w14-tb');
+        await expect(page.locator('#editor-block-handle .ebh-label')).toHaveText('Würfeltabelle');
+        await page.click('#editor-block-handle [data-block-action="addRow"]');
+        await expect(page.locator('#w14-tb tr')).toHaveCount(3);
+        await page.click('#editor-block-handle [data-block-action="addCol"]');
+        await expect(page.locator('#w14-tb tr').first().locator('th')).toHaveCount(3);
+    });
+
+    test('der Statblock bekommt KEINE Tabellenknoepfe', async ({ page }) => {
+        await seedBlocks(
+            page,
+            '<div class="editor-block editor-block-statblock" id="w14-sb">Wache</div>'
+        );
+        await hoverBlock(page, '#w14-sb');
+        await expect(page.locator('#editor-block-handle [data-block-action="addRow"]')).toHaveCount(
+            0
+        );
+    });
+
+    // Der Baustein ueberlebt den Umweg ueber die Persistenz — sonst waere das
+    // Duplizieren nur eine Anzeige-Illusion.
+    test('duplizierter Baustein uebersteht Speichern und Neuladen', async ({ page }) => {
+        await openFreshWikiForm(page, 'W14 Roundtrip');
+        await page.locator('#wiki-content').click();
+        await page.evaluate(() => {
+            document.getElementById('wiki-content').innerHTML =
+                '<div class="editor-block editor-block-statblock" id="w14-sb">Wache</div>';
+        });
+        await hoverBlock(page, '#w14-sb');
+        await page.click('#editor-block-handle [data-block-action="duplicate"]');
+        const reopened = await saveAndReopenWikiEntry(page, 'W14 Roundtrip');
+        await expect(reopened.locator('.editor-block-statblock')).toHaveCount(2);
+    });
+});
