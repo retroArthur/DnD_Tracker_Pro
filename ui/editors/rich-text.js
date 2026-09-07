@@ -46,6 +46,22 @@ function unwrapEditorElement(element) {
 // (Charakter-Notizen) gehoert dazu — ohne ihn nisten Formate dort endlos
 // statt zu togglen.
 const EDITOR_HOST_SELECTOR = '.rich-editor, .spell-editor, .dialog-text, .cf-notes-editor';
+window.EDITOR_HOST_SELECTOR = EDITOR_HOST_SELECTOR;
+
+// Sichert die aktuelle, nicht-leere Selektion fuer Bedienelemente, die den
+// Fokus aus dem Editor nehmen (Selects, Aufklapp-Menues). Ohne das ist die
+// Selektion beim Oeffnen eines Menues verloren und die Formatierung greift
+// ins Leere. Gegenstueck: die restoreSavedRange-Zweige in setEditorFont()
+// und setEditorFontSize() weiter unten.
+function saveEditorSelection() {
+    const selection = window.getSelection();
+    if (selection && selection.rangeCount > 0 && selection.toString()) {
+        editorSelectSavedRange = selection.getRangeAt(0).cloneRange();
+        return true;
+    }
+    return false;
+}
+window.saveEditorSelection = saveEditorSelection;
 function closestEditorAncestor(container, selector) {
     // container kann ein Text- ODER ein Element-Knoten sein (z.B. wenn die
     // Selektion per range.selectNodeContents(element) statt per
@@ -374,8 +390,8 @@ function removeSelectionBorders() {
     const container = range.commonAncestorContainer;
     const editor =
         container.nodeType === Node.TEXT_NODE
-            ? container.parentElement?.closest('.rich-editor, .spell-editor, .dialog-text')
-            : container.closest?.('.rich-editor, .spell-editor, .dialog-text');
+            ? container.parentElement?.closest(EDITOR_HOST_SELECTOR)
+            : container.closest?.(EDITOR_HOST_SELECTOR);
     if (!editor) return;
     const borderSpans = editor.querySelectorAll('span[style*="border"], span.editor-border');
     borderSpans.forEach(span => {

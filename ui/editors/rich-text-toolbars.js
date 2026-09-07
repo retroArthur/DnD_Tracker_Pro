@@ -14,22 +14,31 @@ function initFloatingToolbar() {
     // an den Verwendungsstellen unten vermeidet den Bundle-Laufzeitfehler.
     const toolbar = $('floating-toolbar');
     if (!toolbar) return;
-    document.querySelectorAll('.editor-toolbar').forEach(editorToolbar => {
-        editorToolbar.addEventListener('mousedown', e => {
-            const target = e.target;
-            const btn = target.closest('.editor-btn');
-            const sel = target.closest('.editor-select');
-            if (sel) {
-                const selection = window.getSelection();
-                if (selection && selection.rangeCount > 0 && selection.toString()) {
-                    editorSelectSavedRange = selection.getRangeAt(0).cloneRange();
-                }
-                return;
-            }
-            if (btn) {
-                e.preventDefault();
-            }
-        });
+    // Delegiert am document statt einmalig je .editor-toolbar: die beiden
+    // Leisten aus features/npcs/npc-dialogs.js entstehen ERST NACH diesem
+    // init und bekamen mit der frueheren querySelectorAll-Schleife nie einen
+    // Handler — dort ging die Selektion bei jedem Toolbar-Klick verloren.
+    // Der preventDefault() hier ist das Einzige, was die contenteditable-
+    // Selektion waehrend eines Toolbar-Klicks am Leben haelt.
+    document.addEventListener('mousedown', e => {
+        const target = e.target;
+        if (!target.closest || !target.closest('.editor-toolbar')) return;
+        const sel = target.closest('.editor-select');
+        if (sel) {
+            saveEditorSelection();
+            return;
+        }
+        // Menue-Trigger nehmen den Fokus ebenfalls aus dem Editor, brauchen
+        // also dieselbe Sicherung wie ein Select — und zusaetzlich das
+        // preventDefault(), damit die Selektion sichtbar bleibt.
+        if (target.closest('[data-tb-menu]')) {
+            saveEditorSelection();
+            e.preventDefault();
+            return;
+        }
+        if (target.closest('.editor-btn')) {
+            e.preventDefault();
+        }
     });
     document.addEventListener('selectionchange', debounce(handleSelectionChange, 150));
     document.addEventListener('mouseup', e => {
@@ -110,7 +119,11 @@ function initFloatingToolbar() {
         const target = e.target;
         if (
             !toolbar.contains(target) &&
-            !target.closest('.rich-editor, .spell-editor, .dialog-text')
+            !target.closest(window.EDITOR_HOST_SELECTOR) &&
+            // Ohne diese Ausnahme schliesst der erste Klick auf ein
+            // Aufklapp-Menue die Blase und nullt floatingToolbarTarget —
+            // die Menueaktion greift danach ins Leere.
+            !target.closest('.editor-toolbar')
         ) {
             hideFloatingToolbar();
         }
@@ -143,7 +156,7 @@ function initFloatingToolbar() {
         if (tagMap[action]) {
             const tag = tagMap[action];
             const parentTag = range.commonAncestorContainer.parentElement?.closest(tag);
-            if (parentTag && parentTag.closest('.rich-editor, .spell-editor, .dialog-text')) {
+            if (parentTag && parentTag.closest(window.EDITOR_HOST_SELECTOR)) {
                 const parent = parentTag.parentNode;
                 if (parent) {
                     while (parentTag.firstChild) {
@@ -185,7 +198,7 @@ function initFloatingToolbar() {
             }
         } else if (action === 'list') {
             const parentList = range.commonAncestorContainer.parentElement?.closest('ul, ol');
-            if (parentList && parentList.closest('.rich-editor, .spell-editor, .dialog-text')) {
+            if (parentList && parentList.closest(window.EDITOR_HOST_SELECTOR)) {
                 const listItems = parentList.querySelectorAll('li');
                 const fragment = document.createDocumentFragment();
                 listItems.forEach((li, index) => {
@@ -262,9 +275,9 @@ function handleSelectionChange() {
     const editor =
         anchorNode.nodeType === Node.TEXT_NODE
             ? anchorNode.parentElement?.closest(
-                  '.rich-editor, .spell-editor, .dialog-text, .cf-notes-editor'
+                  window.EDITOR_HOST_SELECTOR
               )
-            : anchorNode.closest?.('.rich-editor, .spell-editor, .dialog-text, .cf-notes-editor');
+            : anchorNode.closest?.(window.EDITOR_HOST_SELECTOR);
     if (!editor) {
         hideFloatingToolbar(false);
         return;
@@ -448,7 +461,7 @@ function initContextToolbars() {
     });
     document.addEventListener('click', e => {
         const target = e.target;
-        const editorSelector = '.rich-editor, .spell-editor, .dialog-text, .cf-notes-editor';
+        const editorSelector = window.EDITOR_HOST_SELECTOR;
         const editor = target.closest(editorSelector);
         if (!editor) {
             hideContextToolbars();
