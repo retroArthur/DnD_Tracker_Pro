@@ -199,36 +199,13 @@ const SystemActions = {
             return;
         }
 
-        const range = selection.getRangeAt(0);
-
-        if (color === 'transparent') {
-            // Remove highlight
-            const marks = editor.querySelectorAll('mark');
-            marks.forEach(mark => {
-                if (selection.containsNode(mark, true)) {
-                    const parent = mark.parentNode;
-                    while (mark.firstChild) {
-                        parent.insertBefore(mark.firstChild, mark);
-                    }
-                    parent.removeChild(mark);
-                }
-            });
-            showToast('🧹 Hervorhebung entfernt');
-        } else {
-            const wrapper = document.createElement('mark');
-            wrapper.style.backgroundColor = color + '66';
-            wrapper.style.color = 'inherit';
-            wrapper.style.borderRadius = '2px';
-            wrapper.style.padding = '0 3px';
-            try {
-                range.surroundContents(wrapper);
-            } catch (e) {
-                const fragment = range.extractContents();
-                wrapper.appendChild(fragment);
-                range.insertNode(wrapper);
-            }
-            showToast('🖍️ Text hervorgehoben');
+        // Gemeinsame Implementierung (ui/editors/rich-text.js). Frueher stand
+        // hier eine eigene, im Markup abweichende Fassung.
+        const applied = applyMarkerToSelection(editor, color, null);
+        if (applied) {
+            showToast(color === 'transparent' ? '🧹 Hervorhebung entfernt' : '🖍️ Text hervorgehoben');
         }
+
         // Gewaehlte Farbe im Menue-Trigger als kleiner Swatch spiegeln.
         const anchor = ctx.target.closest?.('.tb-anchor');
         const current = anchor?.querySelector('.tb-swatch-current');

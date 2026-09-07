@@ -45,6 +45,21 @@ async function pickReadAloud(page, editorId, value) {
     await pickFromEditorMenu(page, 'set-read-aloud-style', editorId, value, 'block');
 }
 
+// NETZ-FREEZE-AUSNAHME 2026-09-07 / NF-01 (Variante 2a, Handoff-Abschnitt 1)
+// -------------------------------------------------------------------------
+// Die <mark>-Erwartungen unten sind NEU VERMESSEN, nicht aufgeweicht. Zwei
+// bewusste Aenderungen an applyMarkerToSelection() (ui/editors/rich-text.js):
+//
+//   1. color: inherit -> #141414 (serialisiert als rgb(20, 20, 20)).
+//      'inherit' liess die Schrift die helle Themenfarbe erben; auf einem
+//      hellen Marker war der Text damit praktisch unlesbar. Der Handoff
+//      nennt das ausdruecklich "den groessten Fehler im Alt-Zustand".
+//   2. padding 0px 3px -> 0px 2px, einheitlich. Vorher lieferten statische
+//      und schwebende Leiste unterschiedliches Markup fuer dieselbe Aktion.
+//
+// Die Werte wurden gegen den laufenden Browser gemessen, nicht geraten.
+// Alles Uebrige am Markup ist unveraendert.
+
 test.describe('Editor-Regressionsnetz — Statische Toolbar (Wiki)', () => {
     test.beforeEach(async ({ page }) => {
         const filePath = `file:///${process.cwd().replace(/\\/g, '/')}/dist/dnd-tracker-bundled.html`;
@@ -189,9 +204,9 @@ const NETZ = {
     // border-radius ist NICHT im style-Whitelist von sanitizeHTML() (utils/basic.js) —
     // fällt beim Roundtrip weg, background-color/color/padding bleiben erhalten.
     highlightSet: {
-        after: '<mark style="background-color: rgba(251, 191, 36, 0.4); color: inherit; border-radius: 2px; padding: 0px 3px;">Probetext</mark>',
+        after: '<mark style="background-color: rgba(251, 191, 36, 0.4); color: rgb(20, 20, 20); border-radius: 2px; padding: 0px 2px;">Probetext</mark>',
         roundtrip:
-            '<mark style="background-color: rgba(251, 191, 36, 0.4); color: inherit; padding: 0px 3px">Probetext</mark>'
+            '<mark style="background-color: rgba(251, 191, 36, 0.4); color: rgb(20, 20, 20); padding: 0px 2px">Probetext</mark>'
     },
     highlightRemove: { after: 'Probetext', roundtrip: 'Probetext' },
     readAloud: {

@@ -409,6 +409,77 @@ function removeSelectionBorders() {
 // ============================================================
 // EXPORTS FOR GLOBAL ACCESS
 // ============================================================
+// Schriftfarbe innerhalb eines Markers. Bewusst ein fester dunkler Wert und
+// keine Themenvariable: der Marker-Hintergrund ist in allen vier Themes
+// derselbe helle Farbton, die Schrift darauf muss also in allen vieren dunkel
+// sein. 'inherit' hat genau das gebrochen.
+const MARKER_TEXT_COLOR = '#141414';
+
+// ------------------------------------------------------------
+// Marker (Texthervorhebung) — eine Implementierung fuer alle drei Wege
+// ------------------------------------------------------------
+// Vorher lagen hier DREI Fassungen mit unterschiedlichem Markup nebeneinander:
+// die der schwebenden Leiste (padding '0 2px'), die der statischen Leiste
+// ('0 3px') und ein toter <span>-Zweig in formatText(). Auseinanderlaufendes
+// Markup fuer dieselbe Nutzeraktion ist genau die Klasse Fehler, die spaeter
+// als "der Marker sieht woanders anders aus" auffaellt.
+//
+// Stufe B (Handoff 2a, Abschnitt 1): der Marker setzt IMMER Hintergrund UND
+// dunkle Schriftfarbe. Heller Text auf hellem Marker war der groesste
+// Lesbarkeitsfehler des Alt-Zustands — bei 'inherit' erbte die Schrift die
+// helle Themenfarbe und verschwand auf Gold/Gruen praktisch.
+// Das Padding ist zugleich auf einen Wert vereinheitlicht; vorher lieferten
+// statische und schwebende Leiste unterschiedliches Markup.
+function applyMarkerToSelection(editor, color, savedRange) {
+    let selection = window.getSelection();
+    if ((!selection || !selection.toString()) && savedRange) {
+        editor.focus();
+        selection = window.getSelection();
+        if (selection) {
+            selection.removeAllRanges();
+            selection.addRange(savedRange.cloneRange());
+        }
+    }
+    if (!selection || !selection.rangeCount) return false;
+    const range = selection.getRangeAt(0);
+    if (!range.toString()) return false;
+
+    if (color === 'transparent') {
+        // Beim Entfernen wird das <mark> aufgeloest; die dunkle Schriftfarbe
+        // verschwindet damit automatisch mit — ein eigener Ruecksetzschritt
+        // fuer die Farbe ist nicht noetig.
+        const marks = editor.querySelectorAll('mark');
+        marks.forEach(mark => {
+            if (selection.containsNode(mark, true)) {
+                const parent = mark.parentNode;
+                if (parent) {
+                    while (mark.firstChild) {
+                        parent.insertBefore(mark.firstChild, mark);
+                    }
+                    parent.removeChild(mark);
+                }
+            }
+        });
+        return true;
+    }
+
+    const wrapper = document.createElement('mark');
+    wrapper.style.backgroundColor = color.startsWith('#') ? color + '66' : color;
+    wrapper.style.color = MARKER_TEXT_COLOR;
+    wrapper.style.borderRadius = '2px';
+    wrapper.style.padding = '0 2px';
+    try {
+        range.surroundContents(wrapper);
+    } catch (e) {
+        // surroundContents wirft, sobald die Auswahl Elementgrenzen schneidet.
+        const fragment = range.extractContents();
+        wrapper.appendChild(fragment);
+        range.insertNode(wrapper);
+    }
+    return true;
+}
+window.applyMarkerToSelection = applyMarkerToSelection;
+
 window.formatText = formatText;
 window.setEditorFont = setEditorFont;
 window.setEditorFontSize = setEditorFontSize;

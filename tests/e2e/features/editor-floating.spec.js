@@ -166,6 +166,21 @@ async function pickReadAloud(page, editorId, value) {
     await pickFromEditorMenu(page, 'set-read-aloud-style', editorId, value, 'block');
 }
 
+// NETZ-FREEZE-AUSNAHME 2026-09-07 / NF-01 (Variante 2a, Handoff-Abschnitt 1)
+// -------------------------------------------------------------------------
+// Die <mark>-Erwartungen unten sind NEU VERMESSEN, nicht aufgeweicht. Zwei
+// bewusste Aenderungen an applyMarkerToSelection() (ui/editors/rich-text.js):
+//
+//   1. color: inherit -> #141414 (serialisiert als rgb(20, 20, 20)).
+//      'inherit' liess die Schrift die helle Themenfarbe erben; auf einem
+//      hellen Marker war der Text damit praktisch unlesbar. Der Handoff
+//      nennt das ausdruecklich "den groessten Fehler im Alt-Zustand".
+//   2. padding 0px 3px -> 0px 2px, einheitlich. Vorher lieferten statische
+//      und schwebende Leiste unterschiedliches Markup fuer dieselbe Aktion.
+//
+// Die Werte wurden gegen den laufenden Browser gemessen, nicht geraten.
+// Alles Uebrige am Markup ist unveraendert.
+
 test.describe('Editor-Regressionsnetz — Floating Toolbar (Wiki)', () => {
     test.beforeEach(async ({ page }) => {
         await gotoBundleFresh(page);
@@ -427,7 +442,7 @@ test.describe('Selects und Farbfelder', () => {
         await page.locator('#floating-toolbar .color-swatch[data-color="#fbbf24"]').click();
         await expect(editor).toHaveJSProperty(
             'innerHTML',
-            '<mark style="background-color: rgba(251, 191, 36, 0.4); color: inherit; border-radius: 2px; padding: 0px 2px;">Probetext</mark>'
+            '<mark style="background-color: rgba(251, 191, 36, 0.4); color: rgb(20, 20, 20); border-radius: 2px; padding: 0px 2px;">Probetext</mark>'
         );
         await expect(editor.evaluate(el => el.textContent)).resolves.toContain(TESTTEXT);
     });
@@ -463,7 +478,7 @@ test.describe('Selects und Farbfelder', () => {
         await page.locator('#floating-toolbar .color-swatch[data-color="#fbbf24"]').click();
         await expect(editor).toHaveJSProperty(
             'innerHTML',
-            '<mark style="background-color: rgba(251, 191, 36, 0.4); color: inherit; border-radius: 2px; padding: 0px 2px;"><b>Probetext</b></mark>'
+            '<mark style="background-color: rgba(251, 191, 36, 0.4); color: rgb(20, 20, 20); border-radius: 2px; padding: 0px 2px;"><b>Probetext</b></mark>'
         );
 
         await editor.selectText();
@@ -471,7 +486,7 @@ test.describe('Selects und Farbfelder', () => {
         await page.locator('#floating-toolbar [data-floating-action="border"]').click();
         await expect(editor).toHaveJSProperty(
             'innerHTML',
-            '<span class="editor-border" style="border: 1px solid var(--gold); padding: 2px 6px; border-radius: 4px; display: inline-block;"><mark style="background-color: rgba(251, 191, 36, 0.4); color: inherit; border-radius: 2px; padding: 0px 2px;"><b>Probetext</b></mark></span>'
+            '<span class="editor-border" style="border: 1px solid var(--gold); padding: 2px 6px; border-radius: 4px; display: inline-block;"><mark style="background-color: rgba(251, 191, 36, 0.4); color: rgb(20, 20, 20); border-radius: 2px; padding: 0px 2px;"><b>Probetext</b></mark></span>'
         );
 
         await editor.selectText();
@@ -549,7 +564,7 @@ test.describe('Persistenz-Roundtrip (floating)', () => {
         // — fällt beim Roundtrip weg, analog zum statischen-Toolbar-Befund aus 09-02.
         await expect(reopened).toHaveJSProperty(
             'innerHTML',
-            '<mark style="background-color: rgba(251, 191, 36, 0.4); color: inherit; padding: 0px 2px">Probetext</mark>'
+            '<mark style="background-color: rgba(251, 191, 36, 0.4); color: rgb(20, 20, 20); padding: 0px 2px">Probetext</mark>'
         );
         await expect(reopened.evaluate(el => el.textContent)).resolves.toContain(TESTTEXT);
     });
@@ -620,7 +635,7 @@ test.describe('UI-lose Zweige (kein Toolbar-Pfad vorhanden)', () => {
         await pickMarker(page, 'wiki-content', '#fbbf24');
         await expect(editor).toHaveJSProperty(
             'innerHTML',
-            '<mark style="background-color: rgba(251, 191, 36, 0.4); color: inherit; border-radius: 2px; padding: 0px 3px;">Probetext</mark>'
+            '<mark style="background-color: rgba(251, 191, 36, 0.4); color: rgb(20, 20, 20); border-radius: 2px; padding: 0px 2px;">Probetext</mark>'
         );
         await editor.click();
         await editor.selectText();
@@ -631,7 +646,7 @@ test.describe('UI-lose Zweige (kein Toolbar-Pfad vorhanden)', () => {
         // removeFormat() entfernt nur die background-color-Style-Eigenschaft —
         // das <mark>-Element selbst bleibt (execCommand entpackt keine
         // Custom-Elemente). 09-BASELINE.md Zeile 344 empirisch bestätigt.
-        expect(html).toBe('<mark style="border-radius: 2px; padding: 0px 3px;">Probetext</mark>');
+        expect(html).toBe('<mark style="border-radius: 2px; padding: 0px 2px;">Probetext</mark>');
         await expect(editor.evaluate(el => el.textContent)).resolves.toContain(TESTTEXT);
     });
 });

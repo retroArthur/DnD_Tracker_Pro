@@ -340,47 +340,13 @@ function hideFloatingToolbar(clearRange = true) {
     }
 }
 function applyFloatingHighlight(color, editor, savedRange) {
-    let selection = window.getSelection();
-    if (!selection || !selection.toString()) {
-        editor.focus();
-        selection = window.getSelection();
-        if (selection) {
-            selection.removeAllRanges();
-            selection.addRange(savedRange.cloneRange());
-        }
-    }
-    if (!selection || !selection.rangeCount) return;
-    const range = selection.getRangeAt(0);
-    const selectedText = range.toString();
-    if (!selectedText) return;
-    if (color === 'transparent') {
-        const marks = editor.querySelectorAll('mark');
-        marks.forEach(mark => {
-            if (selection && selection.containsNode(mark, true)) {
-                const parent = mark.parentNode;
-                if (parent) {
-                    while (mark.firstChild) {
-                        parent.insertBefore(mark.firstChild, mark);
-                    }
-                    parent.removeChild(mark);
-                }
-            }
-        });
-        showToast('🧹 Hervorhebung entfernt');
-    } else {
-        const wrapper = document.createElement('mark');
-        wrapper.style.backgroundColor = color.startsWith('#') ? color + '66' : color;
-        wrapper.style.color = 'inherit';
-        wrapper.style.borderRadius = '2px';
-        wrapper.style.padding = '0 2px';
-        try {
-            range.surroundContents(wrapper);
-        } catch (e) {
-            const fragment = range.extractContents();
-            wrapper.appendChild(fragment);
-            range.insertNode(wrapper);
-        }
-    }
+    // Delegiert an die gemeinsame Implementierung in rich-text.js. Das
+    // padding '0 2px' ist die historische Variante DIESES Wegs und wird bis
+    // zur Vereinheitlichung (Stufe B) beibehalten, damit das eingefrorene
+    // Netz byte-genau gruen bleibt.
+    const applied = applyMarkerToSelection(editor, color, savedRange);
+    if (!applied) return;
+    showToast(color === 'transparent' ? '🧹 Hervorhebung entfernt' : '🖍️ Text hervorgehoben');
 }
 // ============================================================
 // CONTEXT TOOLBARS
