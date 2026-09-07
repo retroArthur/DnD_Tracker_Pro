@@ -64,13 +64,18 @@ module.exports = {
   // Coverage-Reporter
   coverageReporters: ['text', 'text-summary', 'lcov', 'html'],
 
-  // Coverage-Schwellen (für testable-utils.js)
+  // Coverage-Schwellen (für testable-utils.js) — gemessen am 2026-09-07 (Plan 14-08, Task 2):
+  // statements 92,81% / branches 89,28% / functions 100% / lines 94,44%. Jeder Wert unten steht
+  // eine ganze Zahl unter seinem gemessenen Prozentwert (Ratsche gegen Rundungsschwankungen,
+  // faengt aber jeden echten Rueckschritt). Diese Werte duerfen nur steigen, nie sinken.
+  // Diese Datei ist die einzige, fuer die Statement-Coverage in dieser Architektur aussagekraeftig
+  // ist, weil sie ueber den regulaeren Jest-Ladepfad laeuft (siehe 14-GATE-BASELINE.md).
   coverageThreshold: {
     'utils/testable-utils.js': {
-      branches: 80,
-      functions: 80,
-      lines: 80,
-      statements: 80
+      branches: 89,
+      functions: 99,
+      lines: 94,
+      statements: 92
     }
   },
   
