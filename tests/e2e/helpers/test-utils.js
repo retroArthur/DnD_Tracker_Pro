@@ -29,6 +29,31 @@
  * which stomps the shared #toast node exactly like the onboarding toast did.
  * Seeding a fully "already valid" shape prevents both triggers so no early
  * save()-driven toast can fire during the assertion window.
+ *
+ * WR-02 cross-reference (14-REVIEW.md): the payload below has no automated
+ * link to the two schemas it depends on — if either changes without a
+ * matching update here, this exact toast race would silently reappear. Named
+ * explicitly so a future change is more likely to prompt an update:
+ *   - `core/data.js`:`initializeData()` — its default keys (`characters`,
+ *     `npcs`, `locations`, `quests`, `sessionNotes`, `storyArcs`, `loot`,
+ *     `encounters`, `spells`, `links`, `wiki`, `filters`, `tags`, `bestiary`,
+ *     `bestiaryFavorites`, `sessionPreps`, `factions`, plus the `initiative`,
+ *     `calendar`, `settings`, `soundboard` objects and `_nextId: {}`) already
+ *     exist before `load()`'s `Object.assign(D, p)` runs, so this seed does
+ *     NOT need to repeat them — only the keys initializeData() does NOT
+ *     default (`randomTables`, `timers`, `shops`, `campaign`) plus a
+ *     fully-populated `_nextId` map.
+ *   - `render/helpers.js`:`validateDataIntegrity()` — its `requiredArrays`
+ *     (`characters`, `npcs`, `locations`, `quests`, `spells`, `loot`,
+ *     `shops`, `encounters`, `sessionNotes`, `wiki`, `links`, `filters`,
+ *     `timers`) and `requiredObjects` (`settings`, `campaign`) lists must
+ *     each have a corresponding key present here (directly or via
+ *     initializeData()'s defaults above) — a repair `save()` fires 1s after
+ *     boot for any missing one, which is the second trigger this seed
+ *     prevents.
+ * If a future change adds a new required top-level array/object to either
+ * list without updating this seed accordingly, re-check both lists against
+ * the payload below.
  * @param {import('@playwright/test').Page} page
  */
 export async function seedCleanSession(page) {
