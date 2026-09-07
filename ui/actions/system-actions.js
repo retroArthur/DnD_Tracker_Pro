@@ -11,7 +11,7 @@ const SystemActions = {
     // Export/Import
     'export-data': ctx => exportData(ctx.value),
     'export-json': ctx => exportData(ctx.value),
-    'export-csv': ctx => exportDataCSV(ctx.value),
+    'export-csv': ctx => exportToCSV(ctx.value),
     'execute-import': ctx => executeImport(ctx.value),
 
     // Backup
@@ -162,10 +162,6 @@ const SystemActions = {
     // System
     'show-about-modal': () => showModal('about-modal'),
     'reload-page': () => location.reload(),
-    'clear-error-log': () => {
-        ErrorHandler.clearLog();
-        showErrorLogModal();
-    },
 
     // Debug/Test
     'generate-test-wiki': ctx => generateTestWiki(parseInt(ctx.value) || 5),

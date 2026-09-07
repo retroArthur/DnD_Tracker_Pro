@@ -434,7 +434,7 @@ declare global {
   function exportData(type?: string): void;
   
   /** Export data as CSV */
-  function exportDataCSV(type: string): void;
+  function exportToCSV(dataType: string): void;
   
   /** Import data */
   function importData(file: File): void;

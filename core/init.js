@@ -102,9 +102,6 @@ async function init() {
     // Kontext-Toolbars für Tabellen und Links initialisieren
     if (typeof initContextToolbars === 'function') initContextToolbars();
 
-    // Loot Tag-System initialisieren
-    if (typeof initLootTagSystem === 'function') initLootTagSystem();
-
     // Wiki Kategorie-Listener initialisieren
     if (typeof initWikiCategoryListener === 'function') initWikiCategoryListener();
 

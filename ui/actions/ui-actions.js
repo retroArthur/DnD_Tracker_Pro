@@ -19,7 +19,6 @@ const UIActions = {
     'show-view': ctx => switchView(ctx.value),
     'toggle-collapse': ctx => toggleCollapse(ctx.value),
     'toggle-layout': () => toggleLayout(),
-    'set-view-mode': ctx => setViewMode(ctx.type, ctx.value),
     'toggle-lang-dropdown': () => toggleLangDropdown(),
 
     // Navigation actions

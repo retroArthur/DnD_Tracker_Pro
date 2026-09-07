@@ -235,7 +235,6 @@ const EntityActions = {
     'set-npc-filter': ctx => {
         if (typeof setNpcFilter === 'function') setNpcFilter(ctx.id || ctx.value);
     },
-    'scroll-to-npc': ctx => scrollToNPC(ctx.id),
     'edit-npc-stop': ctx => {
         ctx.event.stopPropagation();
         editNPC(ctx.id);
@@ -417,7 +416,6 @@ const EntityActions = {
         ctx.event.stopPropagation();
         removeLoot(ctx.id);
     },
-    'remove-loot-tag': ctx => removeLootTag(ctx.value),
     'set-loot-filter': ctx => setLootFilter(ctx.value || 'all'),
     'show-loot-modal': ctx => {
         if (typeof showLootModal === 'function') showLootModal(ctx.id || null);
@@ -470,7 +468,6 @@ const EntityActions = {
     // Render actions
     'render-quests': () => renderQuests(),
     'render-spells': () => renderSpells(),
-    'populate-import-nodes': () => populateImportNodesList(),
 
     // Bestiary actions (Plan 03-05)
     // Note: bestiary-select reads raw dataset.id (string SRD keys must not go through parseEntityId)
