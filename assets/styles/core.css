@@ -2317,12 +2317,84 @@
         }
 
         /* Master-Detail Layout */
-        .loc-layout {
+
+        /* ============================================================
+           F-11: ein Master-Detail-Layout
+           ============================================================
+           Sechs Ansichten hatten dieselbe Grundform (1fr 825px) mit SECHS
+           verschiedenen Breakpoint-Ketten:
+             Orte      825 -> 1fr @900
+             NPCs      825 -> 400 @1200 -> 1fr @900
+             Truhe     825 -> 500 @1400 -> 1fr @900
+             Encounter 825 -> 600 @1400 -> 400 @1200 -> 1fr @900
+             Bestiar   825 -> 1fr @900
+             Fraktion  320px 1fr (umgekehrt!) -> 1fr @700
+           Beim Verkleinern des Fensters sprang jeder Reiter an einer anderen
+           Stelle um. Eine Kette fuer alle:
+             825px  ->  520px @1200  ->  eine Spalte @900
+           ============================================================ */
+        .master-detail,
+        .loc-layout,
+        .npc-layout,
+        .loot-layout,
+        .enc-layout,
+        .bestiary-layout,
+        .fr-layout {
             display: grid;
             grid-template-columns: 1fr 825px;
             gap: 0;
             flex: 1;
+            min-height: 0;
             overflow: hidden;
+        }
+
+        @media (max-width: 1200px) {
+            .master-detail,
+            .loc-layout,
+            .npc-layout,
+            .loot-layout,
+            .enc-layout,
+            .bestiary-layout,
+            .fr-layout {
+                grid-template-columns: 1fr 520px;
+            }
+        }
+
+        @media (max-width: 900px) {
+            .master-detail,
+            .loc-layout,
+            .npc-layout,
+            .loot-layout,
+            .enc-layout,
+            .bestiary-layout,
+            .fr-layout {
+                grid-template-columns: 1fr;
+                overflow: visible;
+            }
+        }
+
+        /* Detail-Panel: vier der fuenf Definitionen waren zeichengleich,
+           .enc-detail fehlten die vier Sticky-Deklarationen — sein Detail
+           scrollte mit der Liste weg. Werte aus dem Bestand (.loc-detail).
+
+           Das MOBILE Verhalten bleibt bewusst getrennt: Orte, NPCs, Truhe und
+           Encounter blenden das Detail unter 900px aus, das Bestiar zeigt es
+           stattdessen unter der Liste. Das ist gewollt und keine Abweichung. */
+        .detail-panel,
+        .loc-detail,
+        .npc-detail,
+        .loot-detail,
+        .enc-detail,
+        .bestiary-detail {
+            background: var(--bg-card);
+            border-left: 1px solid var(--border);
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            position: sticky;
+            top: 0;
+            height: calc(100vh - 120px);
+            align-self: start;
         }
 
         /* Master (List) */
@@ -2340,25 +2412,87 @@
         }
 
         /* Location Item */
-        .loc-item {
+
+        /* ============================================================
+           F-14: Primaeraktion
+           ============================================================
+           .btn-primary hatte KEINE eigene Regel — nur zusammengesetzte
+           Selektoren. Buttons mit dieser Klasse sahen aus wie ein normaler
+           .btn, waehrend die "+ Neu"-Aktionen gruen (btn-success) waren.
+           Gruen bleibt jetzt den BESTAETIGENDEN Aktionen vorbehalten
+           (Speichern, Abschliessen, Rasten); die Primaeraktion einer Ansicht
+           ist Gold. */
+        .btn-primary {
+            background: var(--gold);
+            border-color: var(--gold);
+            color: var(--bg-dark);
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        .btn-primary:hover {
+            background: var(--gold-hover);
+            border-color: var(--gold-hover);
+        }
+
+        /* ============================================================
+           F-02: eine Listenzeile, eine Karte
+           ============================================================
+           .loc-item, .npc-item und .loot-item trugen exakt dieselben neun
+           Deklarationen, dreimal ausgeschrieben. .enc-item wich in vier
+           Werten ab (12px statt 12px 14px, Radius 8 statt 10, Rahmen 1 statt
+           2, kein Hintergrund) — sichtbar als anderer Zeilenrhythmus im
+           Encounter-Reiter. Die Werte hier sind die des Bestands
+           (.loc-item), nicht neu erfunden.
+
+           Angehaengte Selektoren statt einer neuen Klasse im Markup: das
+           kommt ohne Aenderung an 24 Templates und den render-Funktionen
+           aus. Die Variante nennt der Handoff selbst ("Ohne Praeprozessor"). */
+        .list-item,
+        .loc-item,
+        .npc-item,
+        .loot-item,
+        .enc-item,
+        .bestiary-list-item {
             display: flex;
             align-items: center;
-            gap: 12px;
-            padding: 12px 14px;
+            gap: var(--space-md);
+            padding: var(--space-md) 14px;
             background: var(--bg-card);
-            border-radius: 10px;
+            border: 2px solid transparent; /* Slot fuer den Auswahl-Rahmen */
+            border-radius: var(--radius);
             cursor: pointer;
-            border: 2px solid transparent;
             transition: all 0.2s;
         }
 
-        .loc-item:hover {
+        .list-item:hover,
+        .loc-item:hover,
+        .npc-item:hover,
+        .loot-item:hover,
+        .enc-item:hover,
+        .bestiary-list-item:hover {
             background: var(--bg-elevated);
         }
 
-        .loc-item.selected {
+        .list-item.selected,
+        .loc-item.selected,
+        .npc-item.selected,
+        .loot-item.selected,
+        .enc-item.selected,
+        .bestiary-list-item.selected {
             border-color: var(--gold);
             background: var(--bg-elevated);
+        }
+
+        /* Inhaltskarte */
+        .card-surface,
+        .wp-card,
+        .tl-event-card,
+        .fr-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: var(--space-md);
         }
 
         .loc-item-icon {
@@ -2430,18 +2564,6 @@
         }
 
         /* Detail Sidebar */
-        .loc-detail {
-            background: var(--bg-card);
-            border-left: 1px solid var(--border);
-            overflow-y: auto;
-            display: flex;
-            flex-direction: column;
-            position: sticky;
-            top: 0;
-            height: calc(100vh - 120px);
-            align-self: start;
-        }
-
         .loc-detail-empty {
             flex: 1;
             display: flex;

@@ -1,5 +1,5 @@
 /**
- * Design-Konsistenz — Welle 1 (F-01, F-07, F-13)
+ * Design-Konsistenz — Wellen 1 und 2 (F-01, F-02, F-07, F-11, F-13, F-14)
  *
  * Warum diese Tests statt einer abgehakten Liste: alle drei Befunde sind
  * LAUTLOS. Ein `var(--surface)` ohne Definition liefert keine Fehlermeldung,
@@ -162,5 +162,118 @@ describe('F-13 — Button-Varianten', () => {
 
     test('Buttons haben einen sichtbaren Fokusring', () => {
         expect(cssCode).toMatch(/\.btn:focus-visible\s*\{[^}]*outline:/);
+    });
+});
+
+
+// ==================================================================
+// Welle 2 — Kontrakte
+// ==================================================================
+
+/** Deklarationen eines Regelblocks, dessen Selektorliste `sel` enthaelt. */
+function ruleBodiesFor(sel) {
+    const bodies = [];
+    const re = new RegExp(`(^|\\})([^{}]*\\.${sel}\\s*[,{][^{}]*)\\{([^{}]*)\\}`, 'g');
+    for (const m of cssCode.matchAll(re)) bodies.push({ selectors: m[2], body: m[3] });
+    return bodies;
+}
+
+describe('F-02 — eine Listenzeile, eine Karte', () => {
+    const LIST_CLASSES = ['loc-item', 'npc-item', 'loot-item', 'enc-item', 'bestiary-list-item'];
+    const CARD_CLASSES = ['wp-card', 'fr-card', 'tl-event-card'];
+
+    test('alle fuenf Listenzeilen haengen an derselben Basisregel', () => {
+        const base = ruleBodiesFor('list-item').find(r => r.body.includes('border-radius'));
+        expect(base).toBeDefined();
+        LIST_CLASSES.forEach(c => expect(base.selectors).toContain(`.${c}`));
+    });
+
+    test('keine eigene Flaechen-Deklaration mehr in den View-Dateien', () => {
+        // Die Werte, die vorher fuenfmal ausgeschrieben standen. Taucht einer
+        // davon wieder in einem eigenen Block auf, ist die Basis umgangen.
+        LIST_CLASSES.forEach(c => {
+            ruleBodiesFor(c).forEach(r => {
+                if (r.selectors.includes('.list-item')) return; // die Basis selbst
+                if (!new RegExp(`\\.${c}\\s*[,{]`).test(r.selectors)) return;
+                expect(r.body).not.toMatch(/background:\s*var\(--bg-card\)/);
+            });
+        });
+    });
+
+    test('die drei Karten haengen an .card-surface', () => {
+        const base = ruleBodiesFor('card-surface').find(r => r.body.includes('border-radius'));
+        expect(base).toBeDefined();
+        CARD_CLASSES.forEach(c => expect(base.selectors).toContain(`.${c}`));
+    });
+});
+
+describe('F-11 — ein Master-Detail-Layout', () => {
+    const LAYOUTS = [
+        'loc-layout',
+        'npc-layout',
+        'loot-layout',
+        'enc-layout',
+        'bestiary-layout',
+        'fr-layout'
+    ];
+
+    test('alle sechs Layouts haengen an derselben Basisregel', () => {
+        const base = ruleBodiesFor('master-detail').find(r => r.body.includes('grid-template-columns'));
+        expect(base).toBeDefined();
+        LAYOUTS.forEach(c => expect(base.selectors).toContain(`.${c}`));
+    });
+
+    test('EINE Breakpoint-Kette: kein View setzt grid-template-columns allein', () => {
+        // Vorher sechs verschiedene Ketten (825 -> 1fr @900 bis
+        // 825 -> 600 @1400 -> 400 @1200 -> 1fr @900). Beim Verkleinern sprang
+        // jeder Reiter woanders um.
+        const solo = [];
+        LAYOUTS.forEach(c => {
+            ruleBodiesFor(c).forEach(r => {
+                if (r.selectors.includes('.master-detail')) return;
+                if (r.selectors.includes('[data-layout=')) return; // Mobil-Profil, gewollt
+                if (/grid-template-columns/.test(r.body)) solo.push(`${r.selectors.trim()}`);
+            });
+        });
+        expect(solo).toEqual([]);
+    });
+
+    test('die Detail-Panels teilen eine Basis, .enc-detail eingeschlossen', () => {
+        const base = ruleBodiesFor('detail-panel').find(r => r.body.includes('position: sticky'));
+        expect(base).toBeDefined();
+        // .enc-detail fehlten vorher genau die vier Sticky-Deklarationen — sein
+        // Detail scrollte mit der Liste weg.
+        ['loc-detail', 'npc-detail', 'loot-detail', 'enc-detail', 'bestiary-detail'].forEach(c =>
+            expect(base.selectors).toContain(`.${c}`)
+        );
+    });
+});
+
+describe('F-14 — eine Primaerfarbe fuer "Neu anlegen"', () => {
+    test('.btn-primary ist eine echte Variante, nicht nur white-space', () => {
+        // Vorher gab es KEINE Basisregel, nur zusammengesetzte Selektoren
+        // (.section-toolbar-actions .btn-primary, .btn.btn-primary.migration-btn-next).
+        // Buttons mit der Klasse sahen aus wie ein gewoehnlicher .btn.
+        const base = cssCode.match(/\n\s*\.btn-primary\s*\{([^{}]*)\}/);
+        expect(base).not.toBeNull();
+        expect(base[1]).toMatch(/background:\s*var\(--gold\)/);
+        expect(base[1]).toMatch(/color:\s*var\(--bg-dark\)/);
+    });
+
+    test('kein "+ Neu"-Knopf in einer Werkzeugleiste ist mehr gruen', () => {
+        const offenders = [];
+        tplFiles.forEach(f => {
+            for (const m of f.content.matchAll(
+                /<button[^>]*class="([^"]*btn-success[^"]*)"[^>]*>\s*\+\s*([^<]{0,30})/g
+            )) {
+                // Bestaetigende Aktionen in Dialogen duerfen gruen bleiben —
+                // erkennbar daran, dass sie NICHT in einer section-toolbar stehen.
+                const before = f.content.slice(0, m.index);
+                const lastToolbar = before.lastIndexOf('section-toolbar-actions');
+                const lastClose = before.lastIndexOf('</div>');
+                if (lastToolbar > lastClose) offenders.push(`${f.name}: + ${m[2].trim()}`);
+            }
+        });
+        expect(offenders).toEqual([]);
     });
 });

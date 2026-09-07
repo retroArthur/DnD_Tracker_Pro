@@ -93,14 +93,6 @@
    MASTER-DETAIL LAYOUT (1fr + 825px — spiegelt .npc-layout)
    ============================================================ */
 
-.bestiary-layout {
-    display: grid;
-    grid-template-columns: 1fr 825px;
-    gap: 0;
-    flex: 1;
-    overflow: hidden;
-}
-
 /* ============================================================
    MASTER (LIST PANEL)
    ============================================================ */
@@ -122,27 +114,10 @@
    LIST ITEM (analog .npc-item)
    ============================================================ */
 
+/* Basis siehe .list-item in core.css (F-02). Hier bleibt nur das Besondere. */
 .bestiary-list-item {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 12px 16px;
-    background: var(--bg-card);
-    border-radius: 10px;
-    cursor: pointer;
-    border: 2px solid transparent;
-    transition: all 0.2s;
     min-height: 52px;
     box-sizing: border-box;
-}
-
-.bestiary-list-item:hover {
-    background: var(--bg-elevated);
-}
-
-.bestiary-list-item.selected {
-    border-color: var(--gold);
-    background: var(--bg-elevated);
 }
 
 /* Origin badge: SRD / Eigen */
@@ -244,18 +219,6 @@
 /* ============================================================
    DETAIL PANEL (analog .npc-detail)
    ============================================================ */
-
-.bestiary-detail {
-    background: var(--bg-card);
-    border-left: 1px solid var(--border);
-    overflow-y: auto;
-    display: flex;
-    flex-direction: column;
-    position: sticky;
-    top: 0;
-    height: calc(100vh - 120px);
-    align-self: start;
-}
 
 /* Empty state */
 .bestiary-detail-empty {
@@ -520,11 +483,6 @@
    ============================================================ */
 
 @media (max-width: 900px) {
-    .bestiary-layout {
-        grid-template-columns: 1fr;
-        overflow: visible;
-    }
-
     .bestiary-detail {
         position: static;
         height: auto;

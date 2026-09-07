@@ -25,13 +25,6 @@
     gap: var(--space-sm, 0.5rem);
 }
 
-.wp-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: var(--space-md, 1rem);
-}
-
 .wp-card-header {
     display: flex;
     justify-content: space-between;
@@ -405,11 +398,9 @@
     gap: var(--space-sm, 0.5rem);
 }
 
+/* Basis siehe .card-surface in core.css (F-02). Die goldene Akzentleiste
+   bleibt als bewusstes Unterscheidungsmerkmal der Zeitleiste. */
 .tl-event-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: var(--space-md, 1rem);
     border-left: 3px solid var(--gold);
 }
 
@@ -778,13 +769,6 @@
     gap: var(--space-sm, 0.5rem);
 }
 
-.fr-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: var(--space-md, 1rem);
-}
-
 .fr-card-header {
     display: flex;
     justify-content: space-between;
@@ -981,20 +965,6 @@
 /* ========================================
    fr- Fraktionen & Ruf-System (WELT-05)
    ======================================== */
-
-/* Layout: Liste links + Detail rechts */
-.fr-layout {
-    display: grid;
-    grid-template-columns: 320px 1fr;
-    gap: var(--space-md, 1rem);
-    align-items: start;
-}
-
-@media (max-width: 700px) {
-    .fr-layout {
-        grid-template-columns: 1fr;
-    }
-}
 
 /* Übersichtsliste */
 .fr-list {

@@ -1567,16 +1567,6 @@
 }
 
 /* Master-Detail Layout */
-.enc-layout {
-    display: grid;
-    grid-template-columns: 1fr 825px;
-    gap: 0;
-    flex: 1;
-    min-height: 0;
-    overflow: hidden;
-    margin-top: 12px;
-}
-
 /* Master (List) */
 .enc-master {
     overflow-y: auto;
@@ -1590,17 +1580,6 @@
 }
 
 /* List Item */
-.enc-item {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 12px;
-    border-radius: 8px;
-    cursor: pointer;
-    transition: all 0.15s ease;
-    border: 1px solid transparent;
-}
-
 .enc-item:hover {
     background: var(--bg-dark);
 }
@@ -1666,14 +1645,6 @@
 }
 
 /* Detail Panel */
-.enc-detail {
-    background: var(--bg-card);
-    border-left: 1px solid var(--border);
-    overflow-y: auto;
-    display: flex;
-    flex-direction: column;
-}
-
 .enc-detail-content {
     padding: 20px;
 }
@@ -2105,19 +2076,8 @@
    ENCOUNTER - Responsive Breakpoints
    ============================================ */
 
-/* Large desktop → reduced detail panel */
-@media (max-width: 1400px) {
-    .enc-layout {
-        grid-template-columns: 1fr 600px;
-    }
-}
-
 /* Medium screens (half window ~960px) → compact detail panel */
 @media (max-width: 1200px) {
-    .enc-layout {
-        grid-template-columns: 1fr 400px;
-    }
-
     .enc-detail-content {
         padding: 14px;
     }
@@ -2167,10 +2127,6 @@
 
 /* Tablet/small screens → single column, detail hidden */
 @media (max-width: 900px) {
-    .enc-layout {
-        grid-template-columns: 1fr;
-    }
-
     .enc-detail {
         display: none;
     }

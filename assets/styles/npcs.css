@@ -177,14 +177,6 @@
 }
 
 /* Master-Detail Layout */
-.npc-layout {
-    display: grid;
-    grid-template-columns: 1fr 825px;
-    gap: 0;
-    flex: 1;
-    overflow: hidden;
-}
-
 /* Master (List) */
 .npc-master {
     overflow-y: auto;
@@ -200,18 +192,6 @@
 }
 
 /* NPC Item */
-.npc-item {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 12px 14px;
-    background: var(--bg-card);
-    border-radius: 10px;
-    cursor: pointer;
-    border: 2px solid transparent;
-    transition: all 0.2s;
-}
-
 .npc-item:hover {
     background: var(--bg-elevated);
 }
@@ -294,18 +274,6 @@
 }
 
 /* Detail Sidebar */
-.npc-detail {
-    background: var(--bg-card);
-    border-left: 1px solid var(--border);
-    overflow-y: auto;
-    display: flex;
-    flex-direction: column;
-    position: sticky;
-    top: 0;
-    height: calc(100vh - 120px);
-    align-self: start;
-}
-
 .npc-detail-empty {
     flex: 1;
     display: flex;
@@ -654,18 +622,7 @@
     font-style: italic;
 }
 
-/* Responsive */
-@media (max-width: 1200px) {
-    .npc-layout {
-        grid-template-columns: 1fr 400px;
-    }
-}
-
 @media (max-width: 900px) {
-    .npc-layout {
-        grid-template-columns: 1fr;
-    }
-
     .npc-detail {
         display: none;
     }
@@ -841,14 +798,6 @@
 }
 
 /* Master-Detail Layout */
-.loot-layout {
-    display: grid;
-    grid-template-columns: 1fr 825px;
-    gap: 0;
-    flex: 1;
-    overflow: hidden;
-}
-
 .loot-master {
     overflow-y: auto;
     padding: 16px;
@@ -863,16 +812,8 @@
 }
 
 /* Loot Item */
+/* Basis siehe .list-item in core.css (F-02). Hier bleibt nur das Besondere. */
 .loot-item {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 12px 14px;
-    background: var(--bg-card);
-    border-radius: 10px;
-    cursor: pointer;
-    border: 2px solid transparent;
-    transition: all 0.2s;
     width: 100%;
     box-sizing: border-box;
 }
@@ -939,18 +880,6 @@
 }
 
 /* Detail Sidebar */
-.loot-detail {
-    background: var(--bg-card);
-    border-left: 1px solid var(--border);
-    overflow-y: auto;
-    display: flex;
-    flex-direction: column;
-    position: sticky;
-    top: 0;
-    height: calc(100vh - 120px);
-    align-self: start;
-}
-
 .loot-detail-empty {
     flex: 1;
     display: flex;
@@ -1106,18 +1035,7 @@
     font-size: 0.8em;
 }
 
-/* Responsive */
-@media (max-width: 1400px) {
-    .loot-layout {
-        grid-template-columns: 1fr 500px;
-    }
-}
-
 @media (max-width: 900px) {
-    .loot-layout {
-        grid-template-columns: 1fr;
-    }
-
     .loot-detail {
         display: none;
     }
@@ -1271,9 +1189,6 @@
 
         /* Responsive: Auf kleinen Bildschirmen Sidebar ausblenden */
         @media (max-width: 900px) {
-            .loc-layout {
-                grid-template-columns: 1fr;
-            }
             .loc-detail {
                 display: none;
             }
