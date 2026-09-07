@@ -611,3 +611,63 @@
     }
 }
 
+        /* ------------------------------------------------------------
+           Bausteine im Editor (Variante 2a)
+           Klassenbasiert statt inline: die Stil-Allowlist von sanitizeHTML()
+           kennt weder border-left noch font-style, display oder box-shadow —
+           ein Inline-Baustein waere nach dem ersten Speichern entkleidet.
+           ------------------------------------------------------------ */
+        .rich-editor .editor-block,
+        .spell-editor .editor-block,
+        .dialog-text .editor-block,
+        .cf-notes-editor .editor-block {
+            margin: 14px 0;
+        }
+
+        .rich-editor .editor-block-statblock,
+        .spell-editor .editor-block-statblock,
+        .dialog-text .editor-block-statblock,
+        .cf-notes-editor .editor-block-statblock {
+            border: 1px solid var(--border);
+            padding: 12px 16px;
+            font-size: 14px;
+        }
+
+        .rich-editor .editor-block-table,
+        .spell-editor .editor-block-table,
+        .dialog-text .editor-block-table,
+        .cf-notes-editor .editor-block-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .rich-editor .editor-block-table th,
+        .rich-editor .editor-block-table td,
+        .spell-editor .editor-block-table th,
+        .spell-editor .editor-block-table td,
+        .dialog-text .editor-block-table th,
+        .dialog-text .editor-block-table td,
+        .cf-notes-editor .editor-block-table th,
+        .cf-notes-editor .editor-block-table td {
+            border: 1px solid var(--border);
+            padding: 6px;
+        }
+
+        .rich-editor .editor-block-table th,
+        .spell-editor .editor-block-table th,
+        .dialog-text .editor-block-table th,
+        .cf-notes-editor .editor-block-table th {
+            background: var(--bg-elevated);
+            color: var(--gold);
+            text-align: left;
+        }
+
+        .rich-editor .editor-block-divider,
+        .spell-editor .editor-block-divider,
+        .dialog-text .editor-block-divider,
+        .cf-notes-editor .editor-block-divider {
+            border: none;
+            border-top: 2px solid var(--border);
+            margin: 16px 0;
+            height: 0;
+        }

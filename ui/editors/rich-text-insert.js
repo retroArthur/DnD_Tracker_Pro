@@ -277,6 +277,39 @@ function handleEditorKeydown(e) {
         return;
     }
     if (e.key === 'Enter' && !e.shiftKey) {
+        // W-13: Enter verlaesst einen Baustein, statt darin eine Zeile
+        // anzufuegen. Muss VOR dem regulaeren Zweig stehen — jener ruft
+        // stopImmediatePropagation() in der Capture-Phase, jeder spaeter
+        // registrierte keydown-Listener saehe Enter im Editor nie.
+        // Tabellen ausgenommen: dort ist Enter in einer Zelle das erwartete
+        // Browserverhalten.
+        const selection = window.getSelection();
+        let node = selection && selection.anchorNode;
+        if (node && node.nodeType === Node.TEXT_NODE) node = node.parentElement;
+        const block = node?.closest?.('.editor-block, .read-aloud');
+        const inTable = node?.closest?.('table');
+        if (block && !inTable) {
+            const editor = node.closest(window.EDITOR_HOST_SELECTOR);
+            // Nur wenn der Block ein direktes Kind der Schreibflaeche ist —
+            // sonst waere unklar, wohinter der neue Absatz gehoert.
+            let top = block;
+            while (top.parentElement && top.parentElement !== editor) {
+                top = top.parentElement;
+            }
+            if (editor && top.parentElement === editor) {
+                e.preventDefault();
+                e.stopImmediatePropagation();
+                const after = document.createElement('p');
+                after.appendChild(document.createElement('br'));
+                editor.insertBefore(after, top.nextSibling);
+                const range = document.createRange();
+                range.setStart(after, 0);
+                range.collapse(true);
+                selection.removeAllRanges();
+                selection.addRange(range);
+                return;
+            }
+        }
         e.preventDefault();
         e.stopImmediatePropagation();
         insertLineBreakAtSelection();
@@ -382,6 +415,111 @@ function sanitizePastedMarkup(html) {
     }
     return holder.innerHTML;
 }
+
+// ------------------------------------------------------------
+// Bausteine (Statblock, Wuerfeltabelle, Trenner)
+// ------------------------------------------------------------
+// KLASSENBASIERT, nicht per data-Attribut und nicht per Inline-Stil. Zwei
+// harte Grenzen des projektweiten Sanitizers (utils/basic.js) erzwingen das:
+//   - data-* steht NICHT in allowedAttributes und wird beim Speichern
+//     restlos entfernt. Ein data-block-Marker waere nach dem ersten
+//     Neuladen weg, und alles was daran haengt (Block-Handle, Enter-Austritt)
+//     erkennt seinen eigenen Block nicht mehr wieder.
+//   - Die Stil-Allowlist kennt weder font-style noch border-left, display,
+//     box-shadow oder line-height. Das Inline-Markup des Prototyps waere nach
+//     einem Speicher-/Ladezyklus praktisch entkleidet.
+// 'class' ist dagegen zugelassen (allowedAttributes.class === true) — genau
+// deshalb funktioniert die bestehende .read-aloud-Auszeichnung seit Phase 5
+// zuverlaessig. Die neuen Bausteine folgen demselben Muster.
+const EDITOR_BLOCK_BUILDERS = {
+    statblock() {
+        const el = document.createElement('div');
+        el.className = 'editor-block editor-block-statblock';
+        el.appendChild(document.createElement('br'));
+        return el;
+    },
+    table() {
+        const table = document.createElement('table');
+        table.className = 'editor-block editor-block-table';
+        const head = document.createElement('tr');
+        ['W20', 'Ergebnis'].forEach(label => {
+            const th = document.createElement('th');
+            th.textContent = label;
+            head.appendChild(th);
+        });
+        table.appendChild(head);
+        for (let i = 0; i < 2; i++) {
+            const tr = document.createElement('tr');
+            for (let c = 0; c < 2; c++) {
+                const td = document.createElement('td');
+                td.innerHTML = '&nbsp;';
+                tr.appendChild(td);
+            }
+            table.appendChild(tr);
+        }
+        return table;
+    },
+    divider() {
+        // BEWUSST ein div und kein <hr>: 'hr' steht nicht in der allowedTags-
+        // Liste von sanitizeHTML() (utils/basic.js) und wuerde beim Speichern
+        // restlos entfernt — der Trenner waere nach dem Neuladen weg. Die
+        // Allowlist dafuer aufzuweiten waere die falsche Richtung: ein
+        // zugelassenes Element leistet dasselbe, und eine Sicherheits-
+        // Allowlist weitet man nicht fuer Kosmetik.
+        const el = document.createElement('div');
+        el.className = 'editor-block editor-block-divider';
+        return el;
+    }
+};
+
+/**
+ * Haengt einen Baustein als ECHTEN Knoten hinter das oberste Kind ein, in dem
+ * der Cursor steht — und setzt danach einen leeren Absatz dahinter, damit der
+ * Nutzer weiterschreiben kann, ohne im Block gefangen zu sein.
+ *
+ * Bewusst NICHT ueber insertHtmlAtSelection(): dessen
+ * sanitizeInsertedInlineStyle() loescht padding/margin/width und zerlegt
+ * background in leere Longhands — ein Block waere danach unbrauchbar.
+ * Ausserdem zerreisst ein HTML-String-Einsatz Block-Markup an
+ * Absatzgrenzen.
+ */
+function insertBlockNodeAtSelection(editor, block) {
+    if (!editor || !block) return false;
+    editor.focus();
+    const selection = window.getSelection();
+    if (!selection || !selection.rangeCount) {
+        editor.appendChild(block);
+    } else {
+        // Vom Cursor nach oben laufen, bis das Elternelement die
+        // Schreibflaeche IST — dieses oberste Kind ist der Einfuegepunkt.
+        let top = selection.anchorNode;
+        if (top && top.nodeType === Node.TEXT_NODE) top = top.parentElement;
+        while (top && top.parentElement && top.parentElement !== editor) {
+            top = top.parentElement;
+        }
+        if (top && top.parentElement === editor) {
+            editor.insertBefore(block, top.nextSibling);
+        } else {
+            editor.appendChild(block);
+        }
+    }
+
+    const after = document.createElement('p');
+    after.appendChild(document.createElement('br'));
+    editor.insertBefore(after, block.nextSibling);
+
+    const range = document.createRange();
+    range.setStart(after, 0);
+    range.collapse(true);
+    const sel = window.getSelection();
+    if (sel) {
+        sel.removeAllRanges();
+        sel.addRange(range);
+    }
+    return true;
+}
+window.insertBlockNodeAtSelection = insertBlockNodeAtSelection;
+window.EDITOR_BLOCK_BUILDERS = EDITOR_BLOCK_BUILDERS;
 
 function handleEditorPaste(e) {
     if (e.__dndEditorPasteHandled) return;

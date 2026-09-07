@@ -211,10 +211,28 @@ function editorToolbarLabelGroup(editorId) {
             `data-editor="${editorId}" data-value="${b.value}" title="${b.label}">` +
             `<span class="tb-tint" style="background:${b.tint}"></span>${b.label}</button>`
     ).join('');
+    // Die drei strukturellen Bausteine des Handoffs. Vorlesetext steht
+    // darueber, weil er eine Auswahl umschliesst statt einen leeren Block
+    // einzusetzen — zwei verschiedene Aktionen, ein Menue.
+    const structureItems = [
+        { value: 'statblock', label: 'Statblock' },
+        { value: 'table', label: 'Wuerfeltabelle' },
+        { value: 'divider', label: 'Trenner' }
+    ]
+        .map(
+            b =>
+                `<button type="button" class="tb-menu-item" data-action="insert-block" ` +
+                `data-editor="${editorId}" data-value="${b.value}" title="${b.label}">` +
+                `<span class="tb-tint" style="background:var(--border)"></span>${b.label}</button>`
+        )
+        .join('');
+
     const blockMenu =
         `<div class="tb-menu" id="tb-menu-block-${editorId}" hidden>` +
         '<div class="tb-menu-head">Vorlesetext</div>' +
         blockItems +
+        '<div class="tb-menu-head">Struktur</div>' +
+        structureItems +
         '</div>';
 
     return (

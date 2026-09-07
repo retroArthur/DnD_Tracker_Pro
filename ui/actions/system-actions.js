@@ -128,6 +128,25 @@ const SystemActions = {
         closeAllEditorMenus();
     },
 
+    // Baustein einfuegen (Statblock, Wuerfeltabelle, Trenner). Vorlesetext
+    // laeuft weiterhin ueber set-read-aloud-style, weil er eine AUSWAHL
+    // umschliesst statt einen leeren Block einzusetzen.
+    'insert-block': ctx => {
+        const editorId = ctx.target.dataset.editor;
+        const kind = ctx.target.dataset.value;
+        const editor = $(editorId);
+        const builders = window.EDITOR_BLOCK_BUILDERS || {};
+        if (!editor || !builders[kind]) {
+            closeAllEditorMenus();
+            return;
+        }
+        // Destruktiv genug fuer einen Undo-Punkt: der Block veraendert die
+        // Struktur des Inhalts, nicht nur seine Auszeichnung.
+        if (typeof saveUndoState === 'function') saveUndoState('Baustein eingefuegt');
+        insertBlockNodeAtSelection(editor, builders[kind]());
+        closeAllEditorMenus();
+    },
+
     'set-read-aloud-style': ctx => {
         const editorId = ctx.target.dataset.editor;
         // Seit Variante 2a kann das Ziel ein Menue-Button (dataset.value) ODER

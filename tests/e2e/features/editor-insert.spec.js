@@ -801,3 +801,74 @@ test.describe('Einfuegefilter (2a, W-16)', () => {
         expect(html).toContain('rel="noopener noreferrer"');
     });
 });
+
+// NEU mit Variante 2a (W-12/W-13) — NICHT Teil des eingefrorenen Phase-9-Netzes.
+test.describe('Bausteine (2a, W-12/W-13)', () => {
+    test.beforeEach(async ({ page }) => {
+        await gotoBundleFresh(page);
+    });
+
+    test('Statblock wird als echter Knoten eingehaengt, mit Absatz dahinter', async ({ page }) => {
+        await openFreshWikiForm(page, 'Baustein Statblock');
+        const editor = page.locator('#wiki-content');
+        await editor.click();
+        await editor.pressSequentially('Vorher');
+
+        await page.click('[data-tb-menu="block"][data-editor="wiki-content"]');
+        await page.click('[data-action="insert-block"][data-editor="wiki-content"][data-value="statblock"]');
+
+        const html = await editor.evaluate(el => el.innerHTML);
+        expect(html).toContain('editor-block-statblock');
+        // Direkt hinter dem Block muss ein leerer Absatz stehen, sonst ist der
+        // Cursor im Block gefangen.
+        expect(html).toMatch(/editor-block-statblock[^>]*>.*?<\/div><p><br><\/p>/s);
+    });
+
+    test('KERNBELEG: Baustein ueberlebt Speichern und Neuladen', async ({ page }) => {
+        // Der Handoff markiert Bausteine per data-block und inline-Stilen.
+        // sanitizeHTML() streicht data-* restlos und kennt weder border-left
+        // noch font-style — ein so gebauter Block saehe bis zum ersten
+        // Speichern richtig aus und waere danach kaputt. Deshalb klassenbasiert.
+        // Dieser Test ist der Beleg, dass die Entscheidung traegt.
+        await openFreshWikiForm(page, 'Baustein Roundtrip');
+        const editor = page.locator('#wiki-content');
+        await editor.click();
+        await editor.pressSequentially('Text');
+        await page.click('[data-tb-menu="block"][data-editor="wiki-content"]');
+        await page.click('[data-action="insert-block"][data-editor="wiki-content"][data-value="divider"]');
+
+        const reopened = await saveAndReopenWikiEntry(page, 'Baustein Roundtrip');
+        const html = await reopened.evaluate(el => el.innerHTML);
+        expect(html).toContain('editor-block-divider');
+    });
+
+    test('Enter im Baustein setzt den Cursor dahinter statt eine Zeile einzufuegen', async ({
+        page
+    }) => {
+        await openFreshWikiForm(page, 'Baustein Enter');
+        const editor = page.locator('#wiki-content');
+        await editor.click();
+        await page.click('[data-tb-menu="block"][data-editor="wiki-content"]');
+        await page.click('[data-action="insert-block"][data-editor="wiki-content"][data-value="statblock"]');
+
+        // Cursor IN den Block setzen und Enter druecken
+        await editor.evaluate(el => {
+            const b = el.querySelector('.editor-block-statblock');
+            const range = document.createRange();
+            range.setStart(b, 0);
+            range.collapse(true);
+            const sel = window.getSelection();
+            sel.removeAllRanges();
+            sel.addRange(range);
+        });
+        await page.keyboard.press('Enter');
+
+        const outside = await editor.evaluate(el => {
+            const sel = window.getSelection();
+            let n = sel.anchorNode;
+            if (n && n.nodeType === Node.TEXT_NODE) n = n.parentElement;
+            return !n?.closest('.editor-block-statblock');
+        });
+        expect(outside).toBe(true);
+    });
+});
