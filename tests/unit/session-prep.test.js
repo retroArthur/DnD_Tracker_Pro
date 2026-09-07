@@ -2,8 +2,8 @@
  * Unit Tests — Session-Prep-Assistent (features/session-prep/)
  *
  * Herkunft: Phase-5-Wave-0-Stub, aktiviert in Plan 05-03. Bis Phase 14 Plan 05
- * Teil der Sammeldatei tests/unit/welt-story.test.js (WELT-01-Block); durch
- * TEST-04 (Plan 14-05) mechanisch in eine dedizierte Datei ausgegliedert —
+ * Teil der Welt-Story-Sammel-Testdatei (WELT-01-Block); durch TEST-04
+ * (Plan 14-05) mechanisch in eine dedizierte Datei ausgegliedert —
  * unveraendert uebernommen, kein Test geaendert oder hinzugefuegt.
  */
 
