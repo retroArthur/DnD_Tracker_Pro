@@ -151,3 +151,15 @@ module.exports = {
     generateGlobalsFromModules,
     renderGlobalsArtifact
 };
+
+// Direktaufruf-Zweig (Plan 14-02, Task 3): schreibt eslint.generated-globals.js
+// im Projekt-Wurzelverzeichnis und meldet die Anzahl der geschriebenen Namen
+// auf stdout. Kein Schreiben des Dateiinhalts auf stdout, keine
+// Shell-Umleitung noetig — die Datei schreibt sich selbst, damit der Befehl
+// unter PowerShell, cmd und Git Bash gleich funktioniert.
+if (require.main === module) {
+    const globals = generateGlobalsFromModules();
+    const content = renderGlobalsArtifact(globals);
+    fs.writeFileSync(OUTPUT_PATH, content, 'utf8');
+    console.log(`${Object.keys(globals).length} Namen nach eslint.generated-globals.js geschrieben.`);
+}
