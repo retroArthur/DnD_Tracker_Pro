@@ -1778,12 +1778,6 @@
     display: block;
 }
 
-/* === UNTERER BEREICH V4 === */
-.cf-bottom-section {
-    border-top: 1px solid var(--border);
-    padding-top: 24px;
-}
-
 /* UNTERER BEREICH - wie im Prototyp */
 .cf-bottom-section {
     border-top: 1px solid var(--border);
@@ -1876,7 +1870,6 @@
 .cf-lang-item input[type="checkbox"] {
     accent-color: var(--gold);
 }
-
 
 
 /* Notizen V4 */

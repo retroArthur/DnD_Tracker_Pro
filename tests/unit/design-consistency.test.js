@@ -795,3 +795,103 @@ describe('F-17 — drei Leerzustaende statt siebzehn', () => {
         expect(helpers).toContain('class="empty-state"');
     });
 });
+
+
+describe('F-18 — Dubletten und !important (Ratsche)', () => {
+    /**
+     * Zerlegt CSS in Regelbloecke MIT ihrem @-Kontext. Kommentare vor einem
+     * Selektor werden abgeschnitten — ohne das wird aus "/* Mobile *\/ @media
+     * (...)" ein vermeintlicher Selektor, dessen "Body" verschachtelte Regeln
+     * sind.
+     */
+    function bloecke(css) {
+        const out = [];
+        let i = 0;
+        const stack = [];
+        while (i < css.length) {
+            if (css.startsWith('/*', i)) {
+                const j = css.indexOf('*/', i);
+                i = j === -1 ? css.length : j + 2;
+                continue;
+            }
+            if (css[i] === '}') {
+                stack.pop();
+                i++;
+                continue;
+            }
+            const rest = css.slice(i);
+            const m = /^[^{}]*\{/.exec(rest);
+            if (!m) {
+                i++;
+                continue;
+            }
+            const kopf = m[0]
+                .slice(0, -1)
+                .replace(/\/\*[\s\S]*?\*\//g, ' ')
+                .replace(/\s+/g, ' ')
+                .trim();
+            if (kopf.startsWith('@') || !kopf) {
+                stack.push(kopf);
+                i += m[0].length;
+                continue;
+            }
+            let tiefe = 1;
+            let j = i + m[0].length;
+            while (j < css.length && tiefe) {
+                if (css[j] === '{') tiefe++;
+                else if (css[j] === '}') tiefe--;
+                j++;
+            }
+            out.push({ ctx: stack.join(' | ') || '(top)', sel: kopf });
+            i = j;
+        }
+        return out;
+    }
+
+    // Stand nach der Bereinigung, am 2026-09-07 erhoben. Diese Zahlen duerfen
+    // nur SINKEN. Sie sind bewusst nicht 0:
+    //
+    // Von 67 Dubletten (Token-Bloecke ausgenommen) waren nur VIER
+    // zeichengleich und damit beweisbar folgenlos loeschbar — die sind weg.
+    // Die uebrigen 63 setzen dieselbe Eigenschaft mit VERSCHIEDENEN Werten.
+    // Sie mechanisch zusammenzufuehren waere NICHT folgenlos: liegt zwischen
+    // den beiden Bloecken eine dritte Regel gleicher Spezifitaet, die heute
+    // den frueheren ueberschreibt, verliert sie nach dem Verschieben gegen den
+    // zusammengefuehrten Block. Jeder dieser Faelle braucht eine Entscheidung
+    // darueber, welcher Wert gemeint ist — keine Textersetzung.
+    //
+    // Dasselbe gilt fuer die !important: der Befund nennt sie ausdruecklich
+    // als FOLGE der Dubletten ("danach !important abbauen"). Solange die
+    // Dubletten stehen, ist ihr Abbau Raten.
+    const DUBLETTEN_MAX = 63;
+    const IMPORTANT_MAX = 132;
+
+    test('die Zahl echter Dubletten steigt nicht wieder', () => {
+        const gruppen = new Map();
+        cssFiles.forEach(f => {
+            if (f.name === 'fonts.css') return;
+            bloecke(f.content).forEach(({ ctx, sel }) => {
+                if (/^(?:\d+%|from|to)$/.test(sel)) return;
+                if (/:root|\[data-theme|\[data-layout/.test(sel)) return;
+                const key = `${ctx}||${sel}`;
+                gruppen.set(key, (gruppen.get(key) || 0) + 1);
+            });
+        });
+        const dubletten = [...gruppen.values()].filter(n => n > 1).length;
+        expect(dubletten).toBeLessThanOrEqual(DUBLETTEN_MAX);
+    });
+
+    test('die Zahl der !important steigt nicht wieder', () => {
+        const n = (cssCode.match(/!important/g) || []).length;
+        expect(n).toBeLessThanOrEqual(IMPORTANT_MAX);
+    });
+
+    test('Token-Bloecke bleiben getrennt — ihre Reihenfolge IST die Aussage', () => {
+        // :root und die [data-theme]-Bloecke duerfen nie zusammengefuehrt
+        // werden: der Aliasblock steht bewusst NACH den Themes, damit er per
+        // Vererbung dem jeweils aktiven Theme folgt.
+        const vars = cssFiles.find(f => f.name === 'variables.css').content;
+        const rootBloecke = (vars.match(/^\s*:root[^{]*\{/gm) || []).length;
+        expect(rootBloecke).toBeGreaterThan(1);
+    });
+});

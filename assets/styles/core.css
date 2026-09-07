@@ -678,16 +678,6 @@
         
         .dashboard-recent-item:hover { background: var(--bg-hover); }
         
-        /* ============================================================
-           CONDITIONS / STATUS EFFECTS
-           ============================================================ */
-        .conditions-bar {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 4px;
-            margin-top: 6px;
-        }
-        
         .condition-tag {
             font-size: 0.7em;
             padding: 2px 6px;

@@ -563,11 +563,6 @@
             transition: all 0.15s;
         }
         
-        .si-cart-btn:hover {
-            background: var(--gold);
-            color: var(--bg-dark);
-        }
-        
         .si-btns {
             display: flex;
             gap: 4px;

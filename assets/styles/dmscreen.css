@@ -64,10 +64,6 @@
             background: var(--bg-hover);
         }
         
-        .search-result-item:last-child {
-            border-bottom: none;
-        }
-        
         .search-result-type {
             font-size: 0.7em;
             padding: 2px 6px;
