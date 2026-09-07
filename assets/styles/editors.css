@@ -626,20 +626,8 @@
     border-color: var(--gold);
 }
 
-/* Checkbox-Filter (z.B. "Aktive" bei Quests) */
-.section-toolbar-filters .filter-checkbox {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    color: var(--text-dim);
-    font-size: 0.85em;
-    padding: 0 8px;
-    white-space: nowrap;
-}
-
-.section-toolbar-filters .filter-checkbox input[type="checkbox"] {
-    accent-color: var(--gold);
-}
+/* Der frueher hier stehende .filter-checkbox-Block ist entfallen: boolesche
+   Filter tragen seit F-16 die gemeinsame Gestalt .filter-toggle (core.css). */
 
 /* GRUPPE 4: Primäre Aktionen (Rechts, fix) */
 .section-toolbar-actions {

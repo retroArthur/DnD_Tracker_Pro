@@ -681,3 +681,62 @@ describe('F-04 — keine Hex-Literale ausserhalb des Token-Blocks', () => {
         expect(mit).toEqual([]);
     });
 });
+
+
+describe('F-15 / F-16 — Filter und Bestiar-Details', () => {
+    const markup = () => tplFiles.map(f => f.content).join('\n');
+
+    test('F-15a: kein Inline-Stil mehr am Bestiar-Titel', () => {
+        // Die Klasse .section-toolbar-title setzt Gold und Gewicht bereits;
+        // der Inline-Stil war eine Dublette mit abweichendem Gewicht (700
+        // statt 600).
+        expect(markup()).not.toMatch(/section-toolbar-title"\s+style=/);
+    });
+
+    test('F-15b: jedes Suchfeld traegt die Lupe im Platzhalter', () => {
+        const ohne = [];
+        for (const m of markup().matchAll(/class="toolbar-search"[^>]*placeholder="([^"]*)"/g)) {
+            if (!m[1].includes('\u{1F50D}') && !m[1].includes('&#x1F50D;')) ohne.push(m[1]);
+        }
+        expect(ohne).toEqual([]);
+    });
+
+    test('F-16: kein view-eigener Filter-Stil mehr', () => {
+        // Vorher vier Bedienungen mit vier Aussehen. Die view-eigenen Klassen
+        // sind entfallen; geblieben sind .filter-chip (Kategorien),
+        // .toolbar-select (viele Optionen) und .filter-toggle (Ja/Nein).
+        ['bestiary-filter-label', 'bestiary-filter-select', 'bestiary-filter-chip',
+         'filter-checkbox'].forEach(c => {
+            expect(cssCode).not.toContain(`.${c}`);
+            expect(markup()).not.toContain(`class="${c}"`);
+        });
+    });
+
+    test('F-16: die drei geteilten Bausteine sind definiert', () => {
+        ['toolbar-select', 'toolbar-filter-label', 'filter-toggle', 'filter-chip'].forEach(c => {
+            expect(cssCode).toMatch(new RegExp(`\\.${c}\\s*[,{:]`));
+        });
+    });
+
+    test('F-16: der boolesche Filter bleibt per Tastatur erreichbar', () => {
+        // Der Bestiar-Bestand hatte display:none auf der Checkbox. Das nimmt
+        // sie aus der Tab-Reihenfolge — am gebauten Buendel nachgemessen war
+        // focus() wirkungslos, das aktive Element blieb BODY. Die Chip-Gestalt
+        // traegt der Rahmen, nicht das Verstecken des Bedienelements.
+        const regel = cssCode.match(/\.filter-toggle input\[type='checkbox'\]\s*\{([^}]*)\}/);
+        expect(regel).not.toBeNull();
+        expect(regel[1]).not.toMatch(/display:\s*none/);
+    });
+
+    test('F-16: JEDES Select in einer Werkzeugleiste traegt .toolbar-select', () => {
+        // Drei Selects hatten gar keine Klasse und fielen auf den
+        // Browser-Standard zurueck.
+        const ohne = [];
+        for (const m of markup().matchAll(/<select\s+([^>]*)>/g)) {
+            const attrs = m[1];
+            if (!/id="(?:party-class|shop-type|link|bestiary)-filter/.test(attrs)) continue;
+            if (!attrs.includes('toolbar-select')) ohne.push(attrs.slice(0, 60));
+        }
+        expect(ohne).toEqual([]);
+    });
+});

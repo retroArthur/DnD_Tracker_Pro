@@ -26,60 +26,7 @@
     flex-wrap: wrap;
 }
 
-.bestiary-filter-label {
-    font-size: 0.85em;
-    color: var(--text-dim);
-    white-space: nowrap;
-}
-
-.bestiary-filter-select {
-    padding: 6px 10px;
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-md);
-    color: var(--text);
-    font-size: 0.85em;
-    cursor: pointer;
-}
-
-.bestiary-filter-select:focus {
-    border-color: var(--gold);
-    outline: none;
-}
-
 /* Filter-Chip (Checkbox-backed) */
-.bestiary-filter-chip {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    padding: 5px 10px;
-    background: var(--bg-elevated);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-lg);
-    font-size: 0.82em;
-    color: var(--text-dim);
-    cursor: pointer;
-    transition: all 0.2s;
-    white-space: nowrap;
-    user-select: none;
-}
-
-.bestiary-filter-chip:hover {
-    border-color: var(--gold-dim);
-    color: var(--text);
-}
-
-.bestiary-filter-chip input[type="checkbox"] {
-    display: none;
-}
-
-.bestiary-filter-chip:has(input:checked) {
-    background: var(--gold);
-    border-color: var(--gold);
-    color: var(--bg-dark);
-    font-weight: 700;
-}
-
 /* Count badge */
 #bestiary-count {
     background: var(--bg-elevated);

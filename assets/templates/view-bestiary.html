@@ -3,14 +3,14 @@
     <div class="section-toolbar">
         <!-- Gruppe 1: Identitaet -->
         <div class="section-toolbar-identity">
-            <span class="section-toolbar-title" style="color:var(--gold);font-weight:700;">&#x1F409; Bestiar</span>
+            <span class="section-toolbar-title">&#x1F409; Bestiar</span>
             <span class="section-toolbar-count" id="bestiary-count">0</span>
         </div>
         <!-- Gruppe 2: Suche -->
         <div class="section-toolbar-search">
             <div class="search-wrapper">
                 <input type="text" id="bestiary-search" class="toolbar-search"
-                       placeholder="Monster suchen..."
+                       placeholder="&#x1F50D; Monster suchen..."
                        data-action="search-input" data-render="renderBestiaryList">
                 <button class="search-clear-btn" data-action="clear-search"
                         data-value="bestiary-search" title="Suche leeren">&#x2715;</button>
@@ -18,22 +18,22 @@
         </div>
         <!-- Gruppe 3: Filter -->
         <div class="section-toolbar-filters bestiary-toolbar-filters">
-            <label class="bestiary-filter-label">HG</label>
-            <select id="bestiary-filter-cr" class="bestiary-filter-select"
+            <label class="toolbar-filter-label">HG</label>
+            <select id="bestiary-filter-cr" class="toolbar-select"
                     data-action="search-input" data-render="renderBestiaryList">
                 <option value="">Alle</option>
             </select>
-            <label class="bestiary-filter-label">Typ</label>
-            <select id="bestiary-filter-type" class="bestiary-filter-select"
+            <label class="toolbar-filter-label">Typ</label>
+            <select id="bestiary-filter-type" class="toolbar-select"
                     data-action="search-input" data-render="renderBestiaryList">
                 <option value="">Alle</option>
             </select>
-            <label class="bestiary-filter-chip">
+            <label class="filter-toggle">
                 <input type="checkbox" id="bestiary-filter-custom"
                        data-action="search-input" data-render="renderBestiaryList">
                 Nur Eigene
             </label>
-            <label class="bestiary-filter-chip">
+            <label class="filter-toggle">
                 <input type="checkbox" id="bestiary-filter-favs"
                        data-action="search-input" data-render="renderBestiaryList">
                 Favoriten
