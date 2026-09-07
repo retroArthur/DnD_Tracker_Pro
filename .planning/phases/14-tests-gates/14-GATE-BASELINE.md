@@ -424,8 +424,58 @@ angreifen würde. Beides ist ausdrücklich außerhalb des Scopes von Plan 14-07.
 134 Dateien, 1751 Fehler) ausdrücklich NICHT geschlossen. Es steht hier mit Zahl, nicht als
 erledigt geführt.
 
+## Stand nach Phase 14 (Plan 14-09, Phasenabschluss)
+
+**Datum:** 2026-09-07. Alle neun Pläne (14-01 bis 14-09) sind abgeschlossen; alle drei
+Requirements (`TEST-03`, `TEST-04`, `TEST-05`) sind erfüllt. Die folgende Tabelle stellt je Gate
+den Stand vor Phase 14 (2026-09-06, `14-CONTEXT.md`/Messblock 1-4 dieses Protokolls) dem Stand
+danach gegenüber — eine Zahlen-Gegenüberstellung, keine Behauptung.
+
+| Gate | Vorher (2026-09-06) | Nachher (2026-09-07) |
+|---|---|---|
+| Lint-Fehler | **1** (`systems/avatars.js:17`, `no-control-regex`) | **0** |
+| Lint-Warnungen und Grenzwert | **2196**, kein `--max-warnings`-Gate | **367**, `npm run lint` gepinnt auf `--max-warnings 367` |
+| `no-undef`-Schweregrad | `'warn'` (1829 Vorkommen, davon 6 echte tote Aktionsziele) | `'error'` (0 Vorkommen — Globals-Generator aus `loader.js MODULES` + 6 tote Ziele in Produktionscode behoben) |
+| Geprüfte Dateien unter `checkJs` | **0** (`checkJs: false` global, `tsc --noEmit` prüft faktisch kein JavaScript) | **8 von 134** unter `tsconfig.strict.json` (eigene, wachsende Zulassungsliste; Rest — 126 Dateien, 1751 Fehler — bleibt offen und benannt, `DEBT-01`-Restposten) |
+| Instrumentierte Module (`jest --coverage`) | **2 von 134** (`roots` verhinderte Instrumentierung des Quellbaums) | **125 von 134** (`roots`-Fix); ehrliche Gesamt-Coverage **0,77 % Statements** dokumentiert statt der vorherigen scheinbaren 92,45 % (nur 159 von 18950 möglichen Statements) |
+| Module ohne Testerwähnung (Modul-zu-Test-Gate) | Kein Gate; grobe Substring-Basislinie **75 von 134** | **78 von 134** unter dem präzisierten, strengeren Pfad-Kriterium — als eingecheckte, datierte `MODULE_TEST_EXCEPTIONS`-Liste mit Ratsche (Test schlägt fehl bei Wachstum, Verwaisung oder stiller Reparatur ohne Listenpflege) |
+| Schwellen für die gemessene Datei (`utils/testable-utils.js`) | Ein Pauschalwert **80 %** (13 Punkte unter der Wirklichkeit) | Vier Einzelwerte: Statements **92** / Branches **89** / Functions **99** / Lines **94** (je knapp unter den gemessenen 92,81 / 89,28 / 100 / 94,44) |
+| CI-Job `lint-and-typecheck` | **Rot** seit 2026-09-05 (D-07-Regression), blockierte per `needs:` die Jobs `e2e`, `build`, `smoke-test`, `deploy` | **Grün** — `npm run lint`, `npx tsc --noEmit`, `npm run typecheck:strict` laufen alle in der Kette |
+
+**Ausdrücklich festgehaltener Befund — kein stiller Übergang:** Die elf Module der fünf
+Welt-Bereiche (`features/session-prep/`, `features/npc-generator/`, `features/timeline/`,
+`features/reise/`, `features/fraktionen/`) verlassen die Ausnahmeliste durch die Aufteilung aus
+`TEST-04` (Pläne 14-04/14-05) **nicht**. Die dortigen Tests prüfen nachgebildete Logik gegen ein
+Mock-Objekt (`makeMockD()`) und lesen die Moduldateien weder ein noch nennen sie deren Pfade —
+die mechanische, verhaltensneutrale Aufteilung (D-05) hat an diesem Sachverhalt nichts geändert,
+weil sie ihn nicht ändern sollte. Das ist eine belegte Abweichung gegenüber der in `14-CONTEXT.md`
+D-13 formulierten Erwartung („75 → 64"), nicht deren Erfüllung — siehe den Nachtrag zu Plan 14-09
+Task 1 oben für die vollständige Herleitung. Sie inhaltlich abzudecken ist der bereits
+zurückgestellte Posten „Abdeckungslücken der fünf Welt-Features schließen"
+(`14-CONTEXT.md` §Deferred Ideas) und kein Versäumnis dieser Phase.
+
+**Was offen bleibt:**
+- **`DEBT-01` (Typecheck):** 126 von 134 Dateien (1751 Fehler, davon ~92 % `TS2339` auf
+  `window.X`/`D.X`) bleiben außerhalb der `checkJs`-Zulassungsliste. Der eigentliche Hebel — ein
+  `AppData`-Interface für `D` statt der heutigen `any`-artigen Lücke — ist ein eigenes Vorhaben
+  außerhalb dieses Milestones.
+- **`vm`-Ladepfad nicht instrumentierbar:** 30 von 40 Unit-Testdateien laden Produktionscode über
+  eigene `vm.createContext`-Kontexte ohne gemeinsamen Ladehelfer; Istanbuls Instrumentierung
+  kommt strukturell nicht heran. Ein gemeinsamer Ladehelfer plus `babel-plugin-istanbul` wäre der
+  einzige Weg zu aussagekräftiger Statement-Coverage jenseits von `utils/testable-utils.js`.
+- **Fünf Welt-Features dünn getestet:** 26 E2E- und 37 Unit-Tests gegen 3212 Quellzeilen in elf
+  Modulen, sichtbar jetzt je Feature in eigenen Dateien statt in zwei Sammeldateien versteckt.
+- **`retries: 2` in `playwright.config.js` bleibt unverändert** (D-03) — ein separater,
+  nicht-blockierender Nachtlauf ohne Retries wäre der Weg, Flakes dauerhaft sichtbar zu machen.
+
+Volle Suiten-Bestätigung zum Phasenabschluss: `npx jest` 49/49 Suiten · 1116/1116 Tests,
+`npx jest --coverage` grün (0,77 % Statements, kein Schwellen-Abbruch), `npx eslint .` Exit 0
+(0 Fehler / 367 Warnungen), `npx tsc --noEmit` Exit 0, `npm run typecheck:strict` Exit 0,
+`python -m pytest tests/build/` 24/24, `python build.py --production` Exit 0,
+`npx playwright test` 321 passed / 2 skipped.
+
 ---
 *Phase: 14-tests-gates*
 *Plan: 01*
 *Erhoben: 2026-09-07*
-*Ergänzt: Plan 14-07 (DEBT-01-Restposten), 2026-09-07*
+*Ergänzt: Plan 14-07 (DEBT-01-Restposten), Plan 14-09 (Phasenabschluss), 2026-09-07*
