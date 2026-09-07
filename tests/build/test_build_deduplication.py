@@ -285,7 +285,7 @@ var MAX_BACKUPS = window.MAX_BACKUPS;  // CONFLICT
         # 'features/dmscreen/dmscreen-widgets-base.js', 'features/dmscreen/dmscreen-widgets-combat.js'
         # und 'features/dmscreen/dmscreen-widgets-reference.js' neu registriert
         # (dmscreen-render.js aufgeteilt, D-02/D-04)
-        assert len(modules) == 135, f"Erwartet 135 Module, gefunden {len(modules)}"
+        assert len(modules) == 136, f"Erwartet 136 Module, gefunden {len(modules)}"
 
         # Reihenfolge muss der Reihenfolge im Datei-Text entsprechen
         loader_content = loader_path.read_text(encoding='utf-8')

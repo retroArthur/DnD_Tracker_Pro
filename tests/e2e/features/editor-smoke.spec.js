@@ -311,3 +311,88 @@ test.describe('Markdown-Live-Shortcuts (Nachbarschaft, muss unverändert bleiben
         await expect(reopened).toHaveJSProperty('innerHTML', '<b>fett</b>&nbsp;');
     });
 });
+
+// NEU mit Variante 2a (W-18) — NICHT Teil des eingefrorenen Phase-9-Netzes.
+//
+// Die Schale traegt Kopfzeile (Kontexttitel + Speicherstand) und Statuszeile
+// (Woerter, Zeichen, Hinweis). Sie liegt bewusst nur auf den beiden
+// Langform-Editoren: bei einer zweizeiligen NPC-Beschreibung kostet sie mehr
+// Platz als sie einbringt.
+test.describe('Editor-Schale (2a, W-18)', () => {
+    test.beforeEach(async ({ page }) => {
+        await gotoBundleFresh(page);
+    });
+
+    async function openWikiForm(page, title) {
+        await page.evaluate(() => window.switchView('wiki'));
+        await page.waitForSelector('#view-wiki', { state: 'visible' });
+        await page.click('[data-action="call"][data-value="showWikiForm"]');
+        await page.fill('#wiki-title', title);
+        await page.selectOption('#wiki-category', 'locations');
+    }
+
+    test('Wiki-Editor liegt in einer Schale mit Kopf- und Statuszeile', async ({ page }) => {
+        await openWikiForm(page, 'W18 Schale');
+        const shell = page.locator('[data-editor-shell="wiki-content"]');
+        await expect(shell).toHaveCount(1);
+        await expect(shell.locator('.esh-title')).toHaveText('Wiki-Eintrag');
+        await expect(shell.locator('.editor-shell-foot')).toBeVisible();
+        // Die ID sitzt weiterhin auf der SCHREIBFLAECHE, nicht auf der Schale —
+        // clearFormFields() und rund zwanzig Ladepfade adressieren sie direkt.
+        await expect(page.locator('#wiki-content')).toHaveAttribute('contenteditable', 'true');
+    });
+
+    test('Woerter und Zeichen zaehlen mit', async ({ page }) => {
+        await openWikiForm(page, 'W18 Zaehler');
+        const editor = page.locator('#wiki-content');
+        await editor.click();
+        await editor.pressSequentially('Das Kontor am Aschepfad');
+        await expect(page.locator('[data-editor-words-for="wiki-content"]')).toHaveText(
+            '4 Wörter'
+        );
+        await expect(page.locator('[data-editor-chars-for="wiki-content"]')).toHaveText(
+            '23 Zeichen'
+        );
+    });
+
+    // KERNBELEG. Der Prototyp meldet 1200 ms nach der letzten Eingabe
+    // "Gespeichert" — das waere hier eine Luege: der Editorinhalt liegt bis
+    // zum Absenden des Formulars ueberhaupt nicht in der Persistenz.
+    test('KERNBELEG: nach Tippen steht "Ungespeicherte Änderungen", nicht "Gespeichert"', async ({
+        page
+    }) => {
+        await openWikiForm(page, 'W18 Stand');
+        const editor = page.locator('#wiki-content');
+        await editor.click();
+        await editor.pressSequentially('Probe');
+        const state = page.locator('[data-editor-state-for="wiki-content"]');
+        await expect(state).toHaveText('Ungespeicherte Änderungen', { timeout: 4000 });
+    });
+
+    // Gegenprobe zum Kernbeleg: nach dem Schliessen des Formulars steht die
+    // Statuszeile wieder leer, statt den Stand des vorigen Eintrags zu
+    // behalten.
+    test('nach dem Speichern des Formulars ist der Stand zurueckgesetzt', async ({ page }) => {
+        await openWikiForm(page, 'W18 Zuruecksetzen');
+        const editor = page.locator('#wiki-content');
+        await editor.click();
+        await editor.pressSequentially('Probe');
+        const state = page.locator('[data-editor-state-for="wiki-content"]');
+        await expect(state).toHaveText('Ungespeicherte Änderungen', { timeout: 4000 });
+        await page.click('[data-action="call"][data-value="saveWikiEntry"]');
+        await expect(state).toHaveText('', { timeout: 4000 });
+    });
+
+    test('der Sitzungs-Editor bekommt dieselbe Schale', async ({ page }) => {
+        await page.evaluate(() => window.switchView('notes'));
+        await page.waitForSelector('#view-notes', { state: 'visible' });
+        await expect(page.locator('[data-editor-shell="session-text"]')).toHaveCount(1);
+        await expect(
+            page.locator('[data-editor-shell="session-text"] .esh-title')
+        ).toHaveText('Sitzungsnotiz');
+    });
+
+    test('kurze Felder bekommen KEINE Schale (npc-desc)', async ({ page }) => {
+        await expect(page.locator('[data-editor-shell="npc-desc"]')).toHaveCount(0);
+    });
+});

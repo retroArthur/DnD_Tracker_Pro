@@ -52,6 +52,9 @@ function hideWikiForm() {
     const overlay = $('wiki-form-overlay');
     if (overlay) overlay.style.display = 'none';
     cancelWikiEdit();
+    // Sonst stuende beim naechsten Oeffnen noch "Ungespeicherte Änderungen"
+    // des vorigen Eintrags in der Statuszeile (W-18).
+    if (typeof window.resetEditorShell === 'function') window.resetEditorShell('wiki-content');
 }
 function updateWikiParentSelect() {
     const D = window.D;

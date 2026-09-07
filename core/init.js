@@ -101,6 +101,7 @@ async function init() {
 
     // Kontext-Toolbars für Tabellen und Links initialisieren
     if (typeof initContextToolbars === 'function') initContextToolbars();
+    if (typeof initEditorShells === 'function') initEditorShells();
 
     // Wiki Kategorie-Listener initialisieren
     if (typeof initWikiCategoryListener === 'function') initWikiCategoryListener();

@@ -576,15 +576,10 @@
 
         /* Phase 4: Mobile Bottom Toolbar */
         @media (max-width: 768px) {
-            /* Die frueher hier stehende Regel '.editor-wrapper .editor-toolbar
-               { display:none !important }' ist entfallen: sie war wirkungslos
-               (kein Template emittiert .editor-wrapper), haette aber die neue
-               einzeilige Leiste unter 768px komplett verschluckt, sobald
-               W-18 den Editor-Wrapper einfuehrt. */
-
-            .editor-wrapper .rich-editor {
-                border-radius: 6px !important;
-            }
+            /* Die frueher hier stehenden '.editor-wrapper'-Regeln sind
+               entfallen: keine davon war erreichbar, beide waeren mit der
+               Schale aus W-18 scharf geworden. Die Schale heisst .editor-shell
+               und bringt ihre eigenen Regeln mit. */
 
             /* Mobile floating toolbar - bottom anchored */
             .floating-toolbar {

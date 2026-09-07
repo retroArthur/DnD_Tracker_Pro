@@ -160,6 +160,7 @@ const MODULES = [
     'ui/editors/editor-toolbar-build.js',
     'ui/editors/rich-text-insert.js',
     'ui/editors/rich-text-toolbars.js',
+    'ui/editors/editor-shell.js',
     'ui/editors/markdown-shortcuts.js',
     'ui/editors/markdown-converter.js',
     'systems/markdown-import-export.js',

@@ -254,6 +254,90 @@
         }
 
         /* ------------------------------------------------------------
+           Editor-Schale (W-18): Kopfzeile, Schreibflaeche, Statuszeile.
+           Heisst .editor-shell und NICHT .editor-wrapper — auf letzterer
+           lagen zwei tote Regeln, die der Schale runde Ecken verpasst
+           haetten. Variante 2a schreibt ausdruecklich keinen border-radius
+           vor.
+           ------------------------------------------------------------ */
+        .editor-shell {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+        }
+
+        .editor-shell .editor-toolbar {
+            border-left: none;
+            border-right: none;
+        }
+
+        .editor-shell-head {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 12px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .editor-shell-head .esh-dot {
+            width: 6px;
+            height: 6px;
+            background: var(--gold);
+        }
+
+        .editor-shell-head .esh-title {
+            font-size: 12px;
+            font-weight: 600;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            color: var(--text);
+        }
+
+        .editor-shell-head .esh-state {
+            margin-left: auto;
+            font-size: 11px;
+            color: var(--text-dim);
+            white-space: nowrap;
+        }
+
+        .editor-shell .rich-editor {
+            border: none;
+        }
+
+        /* Platzhalter. Greift nur, solange die Flaeche wirklich leer ist —
+           sobald der Browser ein <br> einsetzt, ist :empty nicht mehr wahr.
+           Das ist hinnehmbar: der Hinweis hat dann seine Aufgabe erfuellt. */
+        .editor-shell .rich-editor:empty::before {
+            content: attr(data-ph);
+            color: var(--text-dim);
+            opacity: 0.7;
+            pointer-events: none;
+        }
+
+        .editor-shell-foot {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 8px 12px;
+            border-top: 1px solid var(--border);
+            background: var(--bg-elevated);
+            font-size: 11px;
+            color: var(--text-dim);
+        }
+
+        .editor-shell-foot .esh-hint {
+            margin-left: auto;
+            opacity: 0.75;
+        }
+
+        @media (max-width: 680px) {
+            /* Der Hinweis nennt eine Tastenkombination — auf einem Geraet
+               ohne Tastatur ist er nutzlos und kostet nur Platz. */
+            .editor-shell-foot .esh-hint {
+                display: none;
+            }
+        }
+
+        /* ------------------------------------------------------------
            Block-Handle (W-14)
            position: fixed wie die beiden bestehenden Kontext-Leisten —
            dadurch braucht sie KEIN positioniertes Wrapper-Element und ist
@@ -387,15 +471,11 @@
             }
         }
 
-        /* Compatibility: Verbindung zu bestehenden Editoren */
-        .editor-wrapper .editor-toolbar {
-            border-bottom: none;
-            border-radius: 8px 8px 0 0;
-        }
-
-        .editor-wrapper .rich-editor {
-            border-radius: 0 0 8px 8px;
-        }
+        /* Die beiden frueheren '.editor-wrapper'-Regeln sind entfallen: kein
+           Template emittiert diese Klasse, und sie haetten der Schale aus W-18
+           runde Ecken verpasst — die Variante 2a schreibt ausdruecklich KEINEN
+           border-radius vor. Dieselbe Falle wie bei der display:none-Regel in
+           spells.css. Die Schale heisst deshalb .editor-shell. */
 
         /* ============================================================ */
 

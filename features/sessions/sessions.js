@@ -424,6 +424,9 @@ function editSession(id) {
     if (form) form.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 function cancelSessionEdit() {
+    // Siehe hideWikiForm(): der Stand des vorigen Eintrags darf nicht stehen
+    // bleiben (W-18).
+    if (typeof window.resetEditorShell === 'function') window.resetEditorShell('session-text');
     const editIdInput = $('edit-session-id');
     const numberInput = $('session-number');
     const nameInput = $('session-name');

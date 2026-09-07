@@ -448,7 +448,8 @@ function renderWikiDetail() {
     // — bekannte, dokumentierte Einschränkung (SEC-01, 10-RESEARCH.md).
     const toc = renderWikiTOC(entry.content || '');
     const plainText = (entry.content || '').replace(/<[^>]+>/g, ' ');
-    const wordCount = plainText.split(/\s+/).filter(w => w.length > 0).length;
+    // Eine Implementierung, geteilt mit der Statuszeile der Editoren (W-18).
+    const wordCount = countEditorWords(plainText);
     const children = D.wiki.filter(e => e.parentId === entry.id);
     detail.innerHTML = `
         ${breadcrumb}
