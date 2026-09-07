@@ -1,0 +1,51 @@
+{
+    "extends": "./tsconfig.json",
+    "compilerOptions": {
+        "checkJs": true,
+        "noEmit": true,
+        "emitDeclarationOnly": false
+    },
+
+    // Zulassungsliste (D-11, Plan 14-07) — nur wachsen, nie schrumpfen.
+    // Erhoben am: 2026-09-07
+    // Erhebungsbefehl (zweistufig, da diese Codebase Non-ESM/Global-Script ist):
+    //   Stufe 1 — Kandidatenmenge: temporaere Konfiguration, die ./tsconfig.json per
+    //   extends erbt und checkJs/noEmit/emitDeclarationOnly wie oben ueberschreibt,
+    //   OHNE eigenes `include` (erbt die volle 134-Datei-Basismenge), dann
+    //   `npx tsc -p <probe-config>` — ergibt die vollstaendige Liste der Dateien aus
+    //   dem `include`-Satz der Basiskonfiguration, die dabei null Fehler melden.
+    //   Stufe 2 — Selbstkonsistenz-Probe: dieselbe Kandidatenmenge NUR fuer sich
+    //   genommen als `include` in einer zweiten Probe (identisch zu diesem Block)
+    //   erneut kompilieren. In einer globalen Script-Architektur (siehe CLAUDE.md,
+    //   "Global Namespace") sind top-level `const`/`function`-Deklarationen anderer
+    //   Dateien Teil desselben globalen Scopes; eine schmalere `include`-Menge
+    //   verliert diesen Kontext und erzeugt fuer Dateien, die auf Symbole AUSSERHALB
+    //   der eigenen Menge verweisen (z. B. `EntityLookup`, `StorageAPI`, diverse
+    //   `window.render*`-Funktionen), neue Fehler, die in Stufe 1 nicht auftraten —
+    //   das ist keine Regression dieser Dateien, sondern ein Artefakt des
+    //   verkleinerten Kompilations-Scopes. Stufe 2 deckte neun der 17 Stufe-1-
+    //   Kandidaten so auf (core/themes.js, features/initiative-statblock.js,
+    //   features/npcs/npc-popup.js, systems/session-timer.js,
+    //   systems/spellslots/pwa-install.js, systems/spellslots/spellslots-ui.js,
+    //   systems/wiki-links.js, ui/actions/wiki-actions.js, ui/layout-profiles.js)
+    //   und schliesst sie aus der Zulassungsliste aus, bis entweder die fehlenden
+    //   Ambient-Deklarationen in types/ ergaenzt werden oder die referenzierten
+    //   Dateien selbst in die Liste aufgenommen werden (beides ausserhalb dieses
+    //   Plans). Die verbleibenden acht Dateien unten sind unter Stufe 2 selbst
+    //   fehlerfrei — das ist die tatsaechlich massgebliche Pruefung, weil genau
+    //   diese `include`-Menge auch von `npm run typecheck:strict` verwendet wird.
+    // Regel: Eine Datei aus dieser Liste zu entfernen, um einen roten Lauf
+    // gruen zu bekommen, ist ausgeschlossen — dann ist der Fehler zu beheben,
+    // nicht die Liste zu kuerzen.
+    "include": [
+        "core/srd-monsters.js",
+        "core/srd-spells.js",
+        "features/dmscreen/dmscreen-widgets-combat.js",
+        "features/dmscreen/dmscreen-widgets-reference.js",
+        "systems/spellslots/notes-templates.js",
+        "systems/spellslots/spell-slots-core.js",
+        "systems/spellslots/virtual-list.js",
+        "utils/testable-utils.js",
+        "types/**/*.d.ts"
+    ]
+}
