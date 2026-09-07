@@ -172,7 +172,7 @@
 }
 
 .npc-add-btn:hover {
-    background: #16a34a;
+    background: var(--green-dim);
 }
 
 /* Master-Detail Layout */
@@ -792,7 +792,7 @@
 }
 
 .loot-add-btn:hover {
-    background: #16a34a;
+    background: var(--green-dim);
 }
 
 /* Master-Detail Layout */

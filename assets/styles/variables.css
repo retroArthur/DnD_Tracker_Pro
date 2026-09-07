@@ -157,6 +157,128 @@
             --radius-md: 8px;
             --radius-lg: 12px;
 
+            /* ------------------------------------------------------------
+               Bedeutungstragende Farbskalen (F-04)
+               ------------------------------------------------------------
+               Diese Werte sind NICHT auf die Palette gemappt worden, und das
+               ist Absicht: elf Schadensarten und sechs Attribute muessen
+               voneinander unterscheidbar bleiben. Die Palette hat dafuer
+               nicht genug Toene — mehrere Schadensarten waeren auf dieselbe
+               Farbe gefallen, und am Spieltisch ist genau diese
+               Unterscheidung der Zweck der Einfaerbung.
+
+               Sie stehen trotzdem hier und nicht mehr im Komponenten-CSS:
+               damit kein Hex-Literal ausserhalb des Token-Blocks bleibt und
+               die Skalen an EINER Stelle liegen. Die Attributfarben waren
+               vorher doppelt gefuehrt (.dms-attr-item und .dms-save-attr) —
+               wer STR umfaerbte, hatte danach zwei verschiedene Rots.
+
+               Wo eine Skalenfarbe mit einer Palettenfarbe zusammenfaellt,
+               verweist sie darauf und folgt damit dem Theme. */
+            --dmg-physical: #4b5563;
+            --dmg-fire: var(--red);
+            --dmg-cold: #3b82f6;
+            --dmg-lightning: #eab308;
+            --dmg-thunder: #8b5cf6;
+            --dmg-acid: #22c55e;
+            --dmg-poison: #84cc16;
+            --dmg-psychic: #ec4899;
+            --dmg-radiant: var(--yellow);
+            --dmg-necrotic: #1f2937;
+            --dmg-necrotic-text: #9ca3af;
+            --dmg-necrotic-border: #374151;
+            --dmg-force: #06b6d4;
+
+            /* ------------------------------------------------------------
+               Kategorie-Skalen (F-04)
+               ------------------------------------------------------------
+               Zwanzig Warenkategorien im Laden und fuenf Wissensgebiete.
+               Beide brauchen Unterscheidbarkeit und dafuer mehr Toene,
+               als die Palette hat — deshalb eigene Werte statt einer
+               erzwungenen Zuordnung. Sie stehen hier, damit kein
+               Hex-Literal im Komponenten-CSS bleibt und die Skalen an
+               EINER Stelle liegen. Werte unveraendert uebernommen.
+
+               Sechs Warenkategorien laufen bereits ueber Palettentokens
+               (weapon/armor/item/service/misc/potion/info) — die bleiben
+               so, sie sind unterscheidbar genug. */
+            --cat-food: #e67e22;
+            --cat-drink: #f39c12;
+            --cat-lodging: #9b59b6;
+            --cat-transport: #1abc9c;
+            --cat-clothing: #e91e63;
+            --cat-accessory: #27ae60;
+            --cat-craft: #d35400;
+            --cat-prop: #8e44ad;
+            --cat-gear: #3498db;
+            --cat-magic: #9c27b0;
+            --cat-enchant: #673ab7;
+            --cat-buff: #ff5722;
+            --cat-trinket: #607d8b;
+
+            --know-arcana: #3b82f6;
+            --know-religion: #a855f7;
+            --know-history: #f59e0b;
+            --know-nature: #22c55e;
+            --know-investigation: #06b6d4;
+
+            /* ------------------------------------------------------------
+               Vorlese-Papierpalette (F-04)
+               ------------------------------------------------------------
+               Die sechs Varianten des Vorlesetexts sind BEWUSST
+               themenunabhaengig: der Kasten soll wie Papier aussehen,
+               egal welches Theme die App traegt. Sie auf die UI-Palette
+               zu mappen haette genau das zerstoert — aus dem violetten
+               Papier waere ein UI-Violett geworden.
+
+               Sie stehen hier und nicht mehr im Komponenten-CSS, damit
+               kein Hex-Literal ausserhalb des Token-Blocks bleibt und
+               die Palette an einer Stelle liegt. Die Farbwerte sind
+               unveraendert uebernommen. */
+            --ra-parchment-from: #f5e6c8;
+            --ra-parchment-to: #e8d4a8;
+            --ra-parchment-rule: #8b4513;
+            --ra-parchment-ink: #2c1810;
+            --ra-crimson-from: #f5e1e1;
+            --ra-crimson-to: #e8c4c4;
+            --ra-crimson-rule: #991b1b;
+            --ra-crimson-ink: #450a0a;
+            --ra-violet-from: #ede9fe;
+            --ra-violet-to: #ddd6fe;
+            --ra-violet-rule: #6d28d9;
+            --ra-violet-ink: #2e1065;
+            --ra-sage-from: #ecfdf5;
+            --ra-sage-to: #d1fae5;
+            --ra-sage-rule: #047857;
+            --ra-sage-ink: #064e3b;
+            --ra-sky-from: #e0f2fe;
+            --ra-sky-to: #bae6fd;
+            --ra-sky-rule: #0369a1;
+            --ra-sky-ink: #0c4a6e;
+            --ra-slate-from: #f1f5f9;
+            --ra-slate-to: #e2e8f0;
+            --ra-slate-rule: #475569;
+            --ra-slate-ink: #1e293b;
+
+            /* Pergament-Toene des Statblocks — bewusst eigene Farben und
+               keine Palettenabkoemmlinge: sie ahmen Tinte auf Papier nach
+               und haben mit dem UI-Farbschema nichts zu tun. */
+            --parchment-ink: #5c2d0a;
+            --parchment-ink-dark: #2c1810;
+
+            /* Schrift auf gesaettigten Akzentflaechen (roter/gruener
+               Knopf). BEWUSST themenunabhaengig weiss: die Akzentfarben
+               sind in allen vier Themes dunkel genug, und var(--text)
+               waere im hellen Theme dunkel auf dunkelrot. */
+            --on-accent: #ffffff;
+
+            --attr-str: var(--red);
+            --attr-dex: #22c55e;
+            --attr-con: #f59e0b;
+            --attr-int: #3b82f6;
+            --attr-wis: #a855f7;
+            --attr-cha: #ec4899;
+
             /* Stapel-Leiter (F-19). Vorher 24 gewachsene Werte von 2 bis
                10001, ohne erkennbare Stufenlogik.
 
@@ -180,6 +302,9 @@
             --gold-hover: color-mix(in srgb, var(--gold) 85%, #fff);
             --green-hover: color-mix(in srgb, var(--green) 85%, #000);
             --red-dim: color-mix(in srgb, var(--red) 70%, #000);
+            --green-dim: color-mix(in srgb, var(--green) 62%, #000);
+            --red-dark: color-mix(in srgb, var(--red) 55%, #000);
+            --orange-dim: color-mix(in srgb, var(--orange) 55%, #000);
         }
 
         /* ============================================================

@@ -384,57 +384,57 @@
             border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
             line-height: 1.7;
             /* Default: Parchment */
-            background: linear-gradient(135deg, #f5e6c8 0%, #e8d4a8 100%);
-            border-left: 4px solid #8b4513;
-            color: #2c1810;
+            background: linear-gradient(135deg, var(--ra-parchment-from) 0%, var(--ra-parchment-to) 100%);
+            border-left: 4px solid var(--ra-parchment-rule);
+            color: var(--ra-parchment-ink);
             box-shadow: inset 0 0 15px rgba(139, 69, 19, 0.08), 0 2px 6px rgba(0,0,0,0.15);
         }
 
         /* Parchment / Pergament (Default) */
         .read-aloud.parchment {
-            background: linear-gradient(135deg, #f5e6c8 0%, #e8d4a8 100%);
-            border-left-color: #8b4513;
-            color: #2c1810;
+            background: linear-gradient(135deg, var(--ra-parchment-from) 0%, var(--ra-parchment-to) 100%);
+            border-left-color: var(--ra-parchment-rule);
+            color: var(--ra-parchment-ink);
             box-shadow: inset 0 0 15px rgba(139, 69, 19, 0.08), 0 2px 6px rgba(0,0,0,0.15);
         }
 
         /* Crimson / Karmesin */
         .read-aloud.crimson {
-            background: linear-gradient(135deg, #f5e1e1 0%, #e8c4c4 100%);
-            border-left-color: #991b1b;
-            color: #450a0a;
+            background: linear-gradient(135deg, var(--ra-crimson-from) 0%, var(--ra-crimson-to) 100%);
+            border-left-color: var(--ra-crimson-rule);
+            color: var(--ra-crimson-ink);
             box-shadow: inset 0 0 15px rgba(153, 27, 27, 0.08), 0 2px 6px rgba(0,0,0,0.15);
         }
 
         /* Violet / Violett */
         .read-aloud.violet {
-            background: linear-gradient(135deg, #ede9fe 0%, #ddd6fe 100%);
-            border-left-color: #6d28d9;
-            color: #2e1065;
+            background: linear-gradient(135deg, var(--ra-violet-from) 0%, var(--ra-violet-to) 100%);
+            border-left-color: var(--ra-violet-rule);
+            color: var(--ra-violet-ink);
             box-shadow: inset 0 0 15px rgba(109, 40, 217, 0.08), 0 2px 6px rgba(0,0,0,0.15);
         }
 
         /* Sage / Salbei */
         .read-aloud.sage {
-            background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
-            border-left-color: #047857;
-            color: #064e3b;
+            background: linear-gradient(135deg, var(--ra-sage-from) 0%, var(--ra-sage-to) 100%);
+            border-left-color: var(--ra-sage-rule);
+            color: var(--ra-sage-ink);
             box-shadow: inset 0 0 15px rgba(4, 120, 87, 0.06), 0 2px 6px rgba(0,0,0,0.15);
         }
 
         /* Sky / Himmelblau */
         .read-aloud.sky {
-            background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%);
-            border-left-color: #0369a1;
-            color: #0c4a6e;
+            background: linear-gradient(135deg, var(--ra-sky-from) 0%, var(--ra-sky-to) 100%);
+            border-left-color: var(--ra-sky-rule);
+            color: var(--ra-sky-ink);
             box-shadow: inset 0 0 15px rgba(3, 105, 161, 0.06), 0 2px 6px rgba(0,0,0,0.15);
         }
 
         /* Slate / Schiefer */
         .read-aloud.slate {
-            background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
-            border-left-color: #475569;
-            color: #1e293b;
+            background: linear-gradient(135deg, var(--ra-slate-from) 0%, var(--ra-slate-to) 100%);
+            border-left-color: var(--ra-slate-rule);
+            color: var(--ra-slate-ink);
             box-shadow: inset 0 0 15px rgba(71, 85, 105, 0.06), 0 2px 6px rgba(0,0,0,0.15);
         }
 
@@ -1673,11 +1673,11 @@
     text-transform: uppercase;
 }
 
-.cf-coin-item.pm .cf-coin-label { color: #b8860b; }
-.cf-coin-item.gm .cf-coin-label { color: #ffd700; }
-.cf-coin-item.em .cf-coin-label { color: #50c878; }
-.cf-coin-item.sm .cf-coin-label { color: #c0c0c0; }
-.cf-coin-item.km .cf-coin-label { color: #cd7f32; }
+.cf-coin-item.pm .cf-coin-label { color: var(--gold-dim); }
+.cf-coin-item.gm .cf-coin-label { color: var(--yellow); }
+.cf-coin-item.em .cf-coin-label { color: var(--green); }
+.cf-coin-item.sm .cf-coin-label { color: var(--text); }
+.cf-coin-item.km .cf-coin-label { color: var(--gold-dim); }
 
 .cf-coin-item input {
     width: 100%;
@@ -2159,7 +2159,7 @@
 .party-leveling-option.active {
     background: var(--gold);
     border-color: var(--gold);
-    color: #000;
+    color: var(--bg-dark);
     font-weight: 700;
 }
 
@@ -2639,13 +2639,13 @@
 
 /* The expertise checkbox is visually small + distinct */
 .cf-skill-exp-check {
-    accent-color: var(--blue, #3b82f6) !important;
+    accent-color: var(--blue, var(--blue)) !important;
 }
 
 .cf-skill-exp-label {
     font-size: 0.7em;
     font-weight: 700;
-    color: var(--blue, #3b82f6);
+    color: var(--blue, var(--blue));
     opacity: 0.8;
     flex-shrink: 0;
 }
@@ -2875,8 +2875,8 @@
 }
 
 .char-skill-item.expertise .char-skill-item-dot {
-    background: var(--blue, #3b82f6);
-    border-color: var(--blue, #3b82f6);
+    background: var(--blue, var(--blue));
+    border-color: var(--blue, var(--blue));
 }
 
 .char-skill-item-name {
@@ -2889,7 +2889,7 @@
 }
 
 .char-skill-item.expertise .char-skill-item-name {
-    color: var(--blue, #3b82f6);
+    color: var(--blue, var(--blue));
 }
 
 .char-skill-item-mod {
@@ -3091,7 +3091,7 @@
 
 .char-xp-bar {
     height: 100%;
-    background: linear-gradient(90deg, var(--gold), #f0d060);
+    background: linear-gradient(90deg, var(--gold), var(--gold));
     border-radius: var(--radius-sm);
     transition: width 0.3s;
 }
@@ -3104,17 +3104,17 @@
     gap: 10px;
     flex-wrap: wrap;
     background: rgba(34, 197, 94, 0.12);
-    border: 1px solid #22c55e;
+    border: 1px solid var(--green);
     border-radius: var(--radius-md);
     padding: 8px 12px;
     font-size: 14px;
     font-weight: 600;
-    color: #22c55e;
+    color: var(--green);
 }
 
 .char-confirm-level-btn {
-    background: #22c55e;
-    color: #111;
+    background: var(--green);
+    color: var(--bg-dark);
     border: none;
     padding: 4px 10px;
     border-radius: var(--radius-sm);
@@ -3182,7 +3182,7 @@
 /* Milestone mode block — separate class (no .char-xp-section) so E2E can assert XP section absent */
 .char-xp-milestone-section {
     background: var(--bg-card);
-    border: 1px solid #a855f7;
+    border: 1px solid var(--purple);
     border-radius: var(--radius-md);
     padding: 14px 16px;
     margin: 8px 0;
@@ -3199,8 +3199,8 @@
 
 .char-milestone-btn {
     align-self: flex-start;
-    background: #a855f7;
-    color: #fff;
+    background: var(--purple);
+    color: var(--on-accent);
     border: none;
     padding: 6px 14px;
     border-radius: var(--radius-md);

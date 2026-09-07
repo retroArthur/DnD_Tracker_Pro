@@ -542,9 +542,9 @@
         .btn-danger { border-color: var(--red); color: var(--red); }
         .btn-danger:hover { background: var(--red); color: white; }
         .btn-success { background: var(--green); border-color: var(--green); color: var(--bg-dark); font-weight: 600; }
-        .btn-success:hover { background: #16a34a; border-color: #16a34a; }
+        .btn-success:hover { background: var(--green-dim); border-color: var(--green-dim); }
         .btn-gold { background: var(--gold); border-color: var(--gold); color: var(--bg-dark); font-weight: 600; }
-        .btn-gold:hover { background: #c5a028; border-color: #c5a028; }
+        .btn-gold:hover { background: var(--gold); border-color: var(--gold); }
         
         /* Forms */
         .form-grid {
@@ -706,21 +706,21 @@
         .condition-tag:hover .remove-condition { opacity: 1; }
         
         /* Condition Colors */
-        .condition-blinded { background: rgba(100,100,100,0.3); color: #aaa; }
+        .condition-blinded { background: rgba(100,100,100,0.3); color: var(--text-dim); }
         .condition-charmed { background: rgba(244,114,182,0.2); color: var(--pink); }
-        .condition-deafened { background: rgba(100,100,100,0.3); color: #aaa; }
+        .condition-deafened { background: rgba(100,100,100,0.3); color: var(--text-dim); }
         .condition-frightened { background: rgba(167,139,250,0.2); color: var(--purple); }
         .condition-grappled { background: rgba(251,146,60,0.2); color: var(--orange); }
         .condition-incapacitated { background: rgba(239,68,68,0.2); color: var(--red); }
         .condition-invisible { background: rgba(96,165,250,0.15); color: var(--blue); border: 1px dashed var(--blue); }
         .condition-paralyzed { background: rgba(251,191,36,0.2); color: var(--yellow); }
-        .condition-petrified { background: rgba(120,113,108,0.3); color: #a8a29e; }
+        .condition-petrified { background: rgba(120,113,108,0.3); color: var(--text-dim); }
         .condition-poisoned { background: rgba(74,222,128,0.2); color: var(--green); }
-        .condition-prone { background: rgba(180,83,9,0.2); color: #d97706; }
+        .condition-prone { background: rgba(180,83,9,0.2); color: var(--orange-dim); }
         .condition-restrained { background: rgba(251,146,60,0.2); color: var(--orange); }
         .condition-stunned { background: rgba(251,191,36,0.2); color: var(--yellow); }
         .condition-unconscious { background: rgba(239,68,68,0.3); color: var(--red); }
-        .condition-exhaustion { background: rgba(120,113,108,0.3); color: #a8a29e; }
+        .condition-exhaustion { background: rgba(120,113,108,0.3); color: var(--text-dim); }
         .condition-concentration { background: rgba(96,165,250,0.2); color: var(--blue); border: 1px solid var(--blue); }
         .condition-custom { background: rgba(212,175,55,0.2); color: var(--gold); }
         
@@ -1565,7 +1565,7 @@
             padding: 2px 6px;
             border-radius: var(--radius-sm);
             background: rgba(251, 146, 60, 0.2);
-            color: #fb923c;
+            color: var(--orange);
             transition: transform 0.15s, filter 0.15s;
         }
         
@@ -1960,7 +1960,7 @@
         }
         
         .quest-reward-item-tag .remove-btn:hover {
-            color: #ff6b6b;
+            color: var(--red);
         }
         
         .quest-header {
@@ -2312,7 +2312,7 @@
         }
 
         .loc-add-btn:hover {
-            background: #16a34a;
+            background: var(--green-dim);
         }
 
         /* Master-Detail Layout */
@@ -2524,7 +2524,7 @@
             font-size: 0.65em;
             padding: 2px 6px;
             border-radius: var(--radius-sm);
-            color: #000;
+            color: var(--bg-dark);
         }
 
         .loc-item-meta {
@@ -2600,7 +2600,7 @@
         .loc-detail-icon {
             width: 56px;
             height: 56px;
-            background: linear-gradient(135deg, var(--gold) 0%, #92400e 100%);
+            background: linear-gradient(135deg, var(--gold) 0%, var(--orange-dim) 100%);
             border-radius: var(--radius-lg);
             display: flex;
             align-items: center;

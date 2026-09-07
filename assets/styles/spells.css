@@ -72,7 +72,7 @@
         .spell-name { font-weight: 600; color: var(--text); }
         .spell-level { 
             font-size: 0.75em; 
-            color: #fff;
+            color: var(--on-accent);
             background: var(--purple);
             padding: 2px 8px;
             border-radius: var(--radius-md);
@@ -132,7 +132,7 @@
         }
         
         .spell-comp.active { background: var(--gold); color: var(--bg-dark); }
-        .spell-comp.active.ritual { background: var(--purple); color: #fff; }
+        .spell-comp.active.ritual { background: var(--purple); color: var(--on-accent); }
         .spell-comp.active.verbal { background: var(--green); color: var(--bg-dark); }
         .spell-comp.active.gestik { background: var(--gold); color: var(--bg-dark); }
         .spell-comp.active.material { background: var(--pink); color: var(--bg-dark); }
@@ -209,9 +209,9 @@
             gap: 3px;
             align-items: center;
             padding: 4px 6px;
-            background: #0d0d1a;
+            background: var(--bg-dark);
             border-radius: var(--radius-md) var(--radius-md) 0 0;
-            border: 1px solid #2a2a4a;
+            border: 1px solid var(--bg-hover);
             border-bottom: none;
         }
         
@@ -221,7 +221,7 @@
             display: flex;
             gap: 2px;
             padding: 4px 6px;
-            background: #1a1a2e;
+            background: var(--bg-elevated);
             border: 1px solid var(--gold);
             border-radius: var(--radius-md);
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5), 0 0 10px rgba(251, 191, 36, 0.2);
@@ -423,7 +423,7 @@
             flex-direction: column;
             gap: 4px;
             padding: 8px 10px;
-            background: linear-gradient(135deg, #1a1a2e 0%, #12121a 100%);
+            background: linear-gradient(135deg, var(--bg-elevated) 0%, var(--bg-card) 100%);
             min-width: 320px;
         }
 

@@ -20,7 +20,7 @@
 }
 
 .migration-wizard {
-    background: var(--bg-card, #1a1a1a);
+    background: var(--bg-card, var(--bg-card));
     border-radius: var(--radius-lg);
     max-width: 560px;
     width: 100%;
@@ -38,7 +38,7 @@
 .migration-wizard-title {
     font-size: 20px;
     font-weight: 600;
-    color: var(--gold, #d4af37);
+    color: var(--gold, var(--gold));
     margin: 0 0 16px 0;
     line-height: 1.2;
 }
@@ -55,18 +55,18 @@
     width: 8px;
     height: 8px;
     border-radius: 50%;
-    background: var(--text-dim, #888);
+    background: var(--text-dim, var(--text-dim));
     transition: background 0.2s ease, box-shadow 0.2s ease;
     flex-shrink: 0;
 }
 
 .wizard-step.active {
-    background: var(--gold, #d4af37);
+    background: var(--gold, var(--gold));
     box-shadow: 0 0 0 2px rgba(212, 175, 55, 0.3);
 }
 
 .wizard-step.done {
-    background: var(--green, #4ade80);
+    background: var(--green, var(--green));
 }
 
 /* Schritt-Inhalte */
@@ -82,14 +82,14 @@
 .migration-step-heading {
     font-size: 16px;
     font-weight: 600;
-    color: var(--text, #e0e0e0);
+    color: var(--text, var(--text));
     margin: 0 0 12px 0;
     line-height: 1.2;
 }
 
 .migration-step-body {
     font-size: 14px;
-    color: var(--text-dim, #888);
+    color: var(--text-dim, var(--text-dim));
     line-height: 1.5;
     margin: 0 0 16px 0;
 }
@@ -103,8 +103,8 @@
 
 /* Primärer CTA Button */
 .btn.btn-primary.migration-btn-next {
-    background: var(--gold, #d4af37);
-    color: var(--bg-dark, #0d0d0d);
+    background: var(--gold, var(--gold));
+    color: var(--bg-dark, var(--bg-dark));
     border: none;
     padding: 10px 20px;
     border-radius: var(--radius-md);
@@ -119,7 +119,7 @@
 
 /* Drag&Drop-Zone */
 .wizard-dropzone {
-    border: 2px dashed var(--border, #3a3a3a);
+    border: 2px dashed var(--border, var(--border));
     border-radius: var(--radius-md);
     min-height: 120px;
     display: flex;
@@ -139,14 +139,14 @@
 
 /* Drag-aktiv-Zustand */
 .wizard-dropzone.dragover {
-    border-color: var(--gold, #d4af37);
+    border-color: var(--gold, var(--gold));
     border-style: solid;
     background: rgba(212, 175, 55, 0.08);
 }
 
 /* Datei-ausgewaehlt-Zustand */
 .wizard-dropzone.file-ready {
-    border-color: var(--green, #4ade80);
+    border-color: var(--green, var(--green));
     border-style: solid;
 }
 
@@ -164,18 +164,18 @@
 
 .wizard-dropzone-text {
     font-size: 14px;
-    color: var(--text-dim, #888);
+    color: var(--text-dim, var(--text-dim));
 }
 
 .wizard-dropzone-filename {
     font-size: 13px;
-    color: var(--green, #4ade80);
+    color: var(--green, var(--green));
     word-break: break-all;
 }
 
 /* Fehlermeldung */
 .migration-step-error {
-    color: var(--red, #ef4444);
+    color: var(--red, var(--red));
     font-size: 13px;
     margin-top: 8px;
     line-height: 1.4;
@@ -189,7 +189,7 @@
 
 .migration-success-icon {
     font-size: 32px;
-    color: var(--green, #4ade80);
+    color: var(--green, var(--green));
     margin-bottom: 12px;
     display: block;
 }
@@ -200,7 +200,7 @@
 
 .migration-success-line {
     font-size: 14px;
-    color: var(--text-dim, #888);
+    color: var(--text-dim, var(--text-dim));
     margin-bottom: 4px;
 }
 
@@ -209,13 +209,13 @@
     margin-top: 24px;
     display: flex;
     justify-content: flex-end;
-    border-top: 1px solid var(--border, #3a3a3a);
+    border-top: 1px solid var(--border, var(--border));
     padding-top: 16px;
 }
 
 .migration-skip-btn {
     font-size: 13px;
-    color: var(--text-dim, #888);
+    color: var(--text-dim, var(--text-dim));
     background: none;
     border: none;
     cursor: pointer;
@@ -224,7 +224,7 @@
 }
 
 .migration-skip-btn:hover {
-    color: var(--text, #e0e0e0);
+    color: var(--text, var(--text));
 }
 
 /* reduced-motion */
@@ -250,7 +250,7 @@
     right: 0;
     z-index: var(--z-panel);
     min-height: 48px;
-    background: var(--bg-elevated, #252525);
+    background: var(--bg-elevated, var(--bg-elevated));
     border-bottom: 1px solid rgba(212, 175, 55, 0.4);
     display: flex;
     align-items: center;
@@ -261,14 +261,14 @@
 
 .migration-hint-text {
     font-size: 14px;
-    color: var(--text, #e0e0e0);
+    color: var(--text, var(--text));
     flex: 1;
     min-width: 200px;
 }
 
 .migration-hint-link {
     font-size: 14px;
-    color: var(--gold, #d4af37);
+    color: var(--gold, var(--gold));
     text-decoration: underline;
     background: none;
     border: none;
@@ -285,7 +285,7 @@
 .migration-hint-close {
     background: none;
     border: none;
-    color: var(--text-dim, #888);
+    color: var(--text-dim, var(--text-dim));
     cursor: pointer;
     font-size: 16px;
     padding: 4px 8px;
@@ -298,7 +298,7 @@
 }
 
 .migration-hint-close:hover {
-    color: var(--text, #e0e0e0);
+    color: var(--text, var(--text));
 }
 
 /* Phase 8 (D-02, Pitfall 3): Layout-Offset, solange der Hinweis sichtbar ist —
@@ -321,8 +321,8 @@ body.has-migration-hint {
     right: 0;
     z-index: var(--z-panel);
     height: 40px;
-    background: var(--bg-elevated, #252525);
-    border-left: 4px solid var(--yellow, #fbbf24);
+    background: var(--bg-elevated, var(--bg-elevated));
+    border-left: 4px solid var(--yellow, var(--yellow));
     display: flex;
     align-items: center;
     gap: 12px;
@@ -332,7 +332,7 @@ body.has-migration-hint {
 
 .divergence-banner-text {
     font-size: 12px;
-    color: var(--text-dim, #888);
+    color: var(--text-dim, var(--text-dim));
     flex: 1;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -341,7 +341,7 @@ body.has-migration-hint {
 
 .divergence-banner-dismiss {
     font-size: 12px;
-    color: var(--text-dim, #888);
+    color: var(--text-dim, var(--text-dim));
     background: none;
     border: none;
     cursor: pointer;
@@ -353,7 +353,7 @@ body.has-migration-hint {
 }
 
 .divergence-banner-dismiss:hover {
-    color: var(--text, #e0e0e0);
+    color: var(--text, var(--text));
 }
 
 /* Wenn beide Banner sichtbar sind, zweiten nach unten verschieben */

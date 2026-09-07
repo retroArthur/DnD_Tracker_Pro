@@ -816,11 +816,11 @@
     letter-spacing: 0.5px;
 }
 
-.calc-diff-badge.trivial { background: rgba(52, 152, 219, 0.2); color: #3498db; }
-.calc-diff-badge.easy { background: rgba(46, 204, 113, 0.2); color: #2ecc71; }
-.calc-diff-badge.medium { background: rgba(243, 156, 18, 0.2); color: #f39c12; }
-.calc-diff-badge.hard { background: rgba(230, 126, 34, 0.2); color: #e67e22; }
-.calc-diff-badge.deadly { background: rgba(231, 76, 60, 0.2); color: #e74c3c; }
+.calc-diff-badge.trivial { background: rgba(52, 152, 219, 0.2); color: var(--blue); }
+.calc-diff-badge.easy { background: rgba(46, 204, 113, 0.2); color: var(--green); }
+.calc-diff-badge.medium { background: rgba(243, 156, 18, 0.2); color: var(--yellow); }
+.calc-diff-badge.hard { background: rgba(230, 126, 34, 0.2); color: var(--orange); }
+.calc-diff-badge.deadly { background: rgba(231, 76, 60, 0.2); color: var(--red); }
 
 .calc-diff-info {
     flex: 1;
@@ -861,10 +861,10 @@
     flex: 1;
 }
 
-.calc-threshold-label.easy { color: #2ecc71; }
-.calc-threshold-label.medium { color: #f39c12; }
-.calc-threshold-label.hard { color: #e67e22; }
-.calc-threshold-label.deadly { color: #e74c3c; }
+.calc-threshold-label.easy { color: var(--green); }
+.calc-threshold-label.medium { color: var(--yellow); }
+.calc-threshold-label.hard { color: var(--orange); }
+.calc-threshold-label.deadly { color: var(--red); }
 
 .calc-threshold-track {
     height: 8px;
@@ -1016,7 +1016,7 @@
     width: 100%;
     height: 8px;
     border-radius: var(--radius-sm);
-    background: linear-gradient(to right, #22c55e 0%, #22c55e 25%, #eab308 25%, #eab308 50%, #f97316 50%, #f97316 75%, #ef4444 75%, #ef4444 100%);
+    background: linear-gradient(to right, var(--green) 0%, var(--green) 25%, var(--yellow) 25%, var(--yellow) 50%, var(--orange) 50%, var(--orange) 75%, var(--red) 75%, var(--red) 100%);
     -webkit-appearance: none;
     appearance: none;
     cursor: pointer;
@@ -1212,18 +1212,18 @@
 }
 
 .calc-action-btn.primary:hover {
-    background: var(--green-hover, #27ae60);
+    background: var(--green-hover);
     transform: translateY(-1px);
 }
 
 .calc-action-btn.initiative {
-    background: var(--orange, #f97316);
-    border-color: var(--orange, #f97316);
+    background: var(--orange);
+    border-color: var(--orange);
     color: var(--bg-dark);
 }
 
 .calc-action-btn.initiative:hover {
-    background: #ea580c;
+    background: var(--red);
     transform: translateY(-1px);
 }
 
@@ -1682,7 +1682,7 @@
 .enc-detail-icon {
     width: 56px;
     height: 56px;
-    background: linear-gradient(135deg, var(--red), var(--red-dim, #8b0000));
+    background: linear-gradient(135deg, var(--red), var(--red-dim));
     border-radius: var(--radius-lg);
     display: flex;
     align-items: center;

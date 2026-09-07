@@ -308,7 +308,7 @@
 /* Horizontal rule (parchment-tinted) */
 .bestiary-statblock hr {
     border: none;
-    border-top: 1px solid #8b4513;
+    border-top: 1px solid var(--ra-parchment-rule);
     margin: 8px 0;
 }
 
@@ -345,12 +345,12 @@
 .bestiary-attr-label {
     font-weight: 700;
     font-size: 0.9em;
-    color: #5c2d0a;
+    color: var(--parchment-ink);
 }
 
 .bestiary-attr-value {
     font-size: 0.95em;
-    color: #2c1810;
+    color: var(--parchment-ink-dark);
 }
 
 /* Saves / Skills / Senses / Languages block */
@@ -365,7 +365,7 @@
 }
 
 .bestiary-statblock-meta strong {
-    color: #5c2d0a;
+    color: var(--parchment-ink);
 }
 
 /* Section headings (Eigenschaften, Aktionen, etc.) */

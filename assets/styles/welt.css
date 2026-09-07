@@ -458,7 +458,7 @@
 
 .tl-typ-reise {
     background: rgba(34, 197, 94, 0.15);
-    color: var(--green, #22c55e);
+    color: var(--green);
     border: 1px solid rgba(34, 197, 94, 0.3);
 }
 
@@ -723,7 +723,7 @@
 .rs-begegnung-aktiv {
     background: rgba(239, 68, 68, 0.12);
     border-color: rgba(239, 68, 68, 0.3);
-    color: var(--red, #ef4444);
+    color: var(--red);
     font-weight: 500;
 }
 
@@ -736,7 +736,7 @@
 .rs-abschluss-info {
     background: rgba(34, 197, 94, 0.12);
     border: 1px solid rgba(34, 197, 94, 0.3);
-    color: var(--green, #22c55e);
+    color: var(--green);
     border-radius: var(--radius-md);
     padding: 8px 12px;
     font-size: 14px;
@@ -893,7 +893,7 @@
 .npcg-preview-name {
     font-size: 22px;
     font-weight: 700;
-    color: var(--gold, #c9a84c);
+    color: var(--gold);
     margin-bottom: 8px;
     line-height: 1.2;
 }
@@ -1137,16 +1137,16 @@
 }
 
 .fr-ruf-btn-minus {
-    background: var(--red, #ef4444);
-    color: #fff;
+    background: var(--red);
+    color: var(--on-accent);
     border: none;
 }
 .fr-ruf-btn-minus:hover {
     opacity: 0.85;
 }
 .fr-ruf-btn-plus {
-    background: var(--green, #22c55e);
-    color: #fff;
+    background: var(--green);
+    color: var(--on-accent);
     border: none;
 }
 .fr-ruf-btn-plus:hover {
@@ -1201,11 +1201,11 @@
 }
 
 .fr-hist-plus {
-    color: var(--green, #22c55e);
+    color: var(--green);
 }
 
 .fr-hist-minus {
-    color: var(--red, #ef4444);
+    color: var(--red);
 }
 
 .fr-hist-grund {

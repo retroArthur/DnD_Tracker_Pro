@@ -554,7 +554,7 @@
     width: 56px;
     height: 56px;
     border-radius: 50%;
-    background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%);
+    background: linear-gradient(135deg, var(--red-dim) 0%, var(--red-dark) 100%);
     border: 2px solid rgba(255, 255, 255, 0.2);
     color: white;
     cursor: pointer;
@@ -737,7 +737,7 @@
 }
 
 .fdp-die.d20:hover {
-    border-color: #dc2626;
+    border-color: var(--red);
     box-shadow: 0 0 12px rgba(220, 38, 38, 0.3);
 }
 

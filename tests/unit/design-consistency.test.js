@@ -613,3 +613,71 @@ describe('F-12 — drei Breakpoint-Grenzen', () => {
         expect([...new Set(fremd)]).toEqual([]);
     });
 });
+
+
+describe('F-04 — keine Hex-Literale ausserhalb des Token-Blocks', () => {
+    const komponentenCss = () =>
+        withoutComments(
+            cssFiles
+                .filter(f => f.name !== 'variables.css' && f.name !== 'fonts.css')
+                .map(f => f.content)
+                .join('\n')
+        );
+
+    test('kein einziges Hex-Literal mehr im Komponenten-CSS', () => {
+        // Ausgangswert: 240 Vorkommen in 100 verschiedenen Werten. Fuenf
+        // verschiedene Gruens standen fuer dieselbe Aussage "Erfolg", vier
+        // Grautoene fuer "gedaempft" — und Themes griffen an keiner davon.
+        const treffer = komponentenCss().match(/#[0-9a-fA-F]{3,8}\b/g) || [];
+        expect(treffer).toEqual([]);
+    });
+
+    test('die bedeutungstragenden Skalen sind Tokens, keine Zuordnung auf die Palette', () => {
+        // Elf Schadensarten, sechs Attribute, zwanzig Warenkategorien und
+        // fuenf Wissensgebiete brauchen Unterscheidbarkeit — dafuer hat die
+        // Palette nicht genug Toene. Sie stehen als eigene Tokens in :root.
+        const vars = cssFiles.find(f => f.name === 'variables.css').content;
+        ['--dmg-fire', '--dmg-acid', '--dmg-poison', '--attr-str', '--attr-cha',
+         '--cat-magic', '--know-arcana'].forEach(t => expect(vars).toContain(`${t}:`));
+    });
+
+    test('KERNBELEG: beide Schadensarten-Saetze zeigen auf dieselben Tokens', () => {
+        // Vor F-04 fuehrte die App ZWEI Schadensarten-Farbsaetze, die in fuenf
+        // von elf Typen abwichen — und bei acid/poison waren die Farben
+        // zwischen Schnellreferenz und DM Screen VERTAUSCHT. Dieselbe
+        // Schadensart hatte je nach Bildschirm eine andere Farbe.
+        const css = komponentenCss();
+        ['fire', 'cold', 'acid', 'poison', 'necrotic', 'radiant', 'force'].forEach(typ => {
+            expect(css).toMatch(new RegExp(`\\.qref-dmg\\.${typ}[^}]*var\\(--dmg-${typ}\\)`));
+            expect(css).toMatch(new RegExp(`\\.dms-dmg-item\\.${typ}[^}]*var\\(--dmg-${typ}\\)`));
+        });
+    });
+
+    test('die Attributfarben stehen nur noch an EINER Stelle', () => {
+        // Sie waren doppelt gefuehrt (.dms-attr-item und .dms-save-attr) — wer
+        // STR umfaerbte, hatte danach zwei verschiedene Rots.
+        const css = komponentenCss();
+        ['str', 'dex', 'con', 'int', 'wis', 'cha'].forEach(a => {
+            expect(css).toMatch(new RegExp(`\\.dms-attr-item\\.${a}[^}]*var\\(--attr-${a}\\)`));
+            expect(css).toMatch(new RegExp(`\\.dms-save-attr\\.${a}[^}]*var\\(--attr-${a}\\)`));
+        });
+    });
+
+    test('die Vorlese-Papierpalette bleibt themenunabhaengig', () => {
+        // Sie auf die UI-Palette zu mappen haette den Zweck zerstoert: der
+        // Kasten soll wie Papier aussehen, egal welches Theme die App traegt.
+        const vars = cssFiles.find(f => f.name === 'variables.css').content;
+        ['parchment', 'crimson', 'violet', 'sage', 'sky', 'slate'].forEach(v => {
+            ['from', 'to', 'rule', 'ink'].forEach(teil => {
+                expect(vars).toContain(`--ra-${v}-${teil}:`);
+            });
+        });
+        // und sie stehen NICHT als var(--purple) o.ae. da, sondern als eigene Werte
+        expect(vars).toMatch(/--ra-violet-rule:\s*#/);
+    });
+
+    test('keine toten Farb-Fallbacks mehr an var()-Aufrufen', () => {
+        const mit = komponentenCss().match(/var\(--[a-z-]+,\s*#[0-9a-fA-F]{3,8}\)/g) || [];
+        expect(mit).toEqual([]);
+    });
+});

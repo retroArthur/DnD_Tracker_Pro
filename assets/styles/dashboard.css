@@ -730,14 +730,14 @@
         .map-marker.entrance { background: var(--green); border: 2px solid white; }
         .map-marker.exit { background: var(--blue); border: 2px solid white; }
         .map-marker.shop { background: var(--green); }
-        .map-marker.blacksmith { background: var(--text-dim, #78716c); }
+        .map-marker.blacksmith { background: var(--text-dim, var(--text-dim)); }
         .map-marker.house { background: var(--gold-dim); }
         .map-marker.tavern { background: var(--yellow); }
         .map-marker.inn { background: var(--purple); }
         .map-marker.dicetest { background: var(--pink); border: 2px dashed white; }
-        .map-marker.ruins { background: var(--text-dim, #6b7280); }
+        .map-marker.ruins { background: var(--text-dim, var(--text-dim)); }
         .map-marker.magic { background: var(--purple); box-shadow: 0 0 10px var(--purple); }
-        .map-marker.tower { background: var(--border); border: 2px solid var(--text-dim, #94a3b8); }
+        .map-marker.tower { background: var(--border); border: 2px solid var(--text-dim, var(--cyan)); }
         .map-marker.lair { background: var(--red); border: 2px solid var(--yellow); box-shadow: 0 0 8px var(--red); }
         
         /* Marker-Formen */
@@ -759,13 +759,13 @@
         }
         .map-marker.shape-skull { 
             border-radius: var(--radius-md); 
-            background: #1f2937;
-            border: 2px solid #6b7280;
+            background: var(--bg-elevated);
+            border: 2px solid var(--text-dim);
         }
         .map-marker.shape-chest { 
             border-radius: var(--radius-sm); 
-            background: #92400e;
-            border: 2px solid #fbbf24;
+            background: var(--orange-dim);
+            border: 2px solid var(--yellow);
         }
         .map-marker.shape-eye { 
             border-radius: 50% 0 50% 0; 
@@ -2022,7 +2022,7 @@
             top: 0;
             left: 0;
             right: 0;
-            background: linear-gradient(135deg, var(--red), #b91c1c);
+            background: linear-gradient(135deg, var(--red), var(--red-dark));
             color: white;
             padding: 12px 20px;
             display: flex;
@@ -2776,7 +2776,7 @@
 }
 
 .qref-diff.trivial { background: var(--green); color: var(--bg-dark); }
-.qref-diff.easy { background: #86efac; color: var(--bg-dark); }
+.qref-diff.easy { background: var(--green); color: var(--bg-dark); }
 .qref-diff.medium { background: var(--yellow); color: var(--bg-dark); }
 .qref-diff.hard { background: var(--orange); color: var(--bg-dark); }
 .qref-diff.deadly { background: var(--red); color: white; }
@@ -3217,17 +3217,21 @@
     cursor: help;
 }
 
-.qref-dmg.physical { background: #4b5563; color: white; }
-.qref-dmg.fire { background: #ef4444; color: white; }
-.qref-dmg.cold { background: #3b82f6; color: white; }
-.qref-dmg.lightning { background: #eab308; color: black; }
-.qref-dmg.thunder { background: #8b5cf6; color: white; }
-.qref-dmg.acid { background: #22c55e; color: black; }
-.qref-dmg.poison { background: #84cc16; color: black; }
-.qref-dmg.psychic { background: #ec4899; color: white; }
-.qref-dmg.radiant { background: #fbbf24; color: black; }
-.qref-dmg.necrotic { background: #1f2937; color: #9ca3af; border: 1px solid #374151; }
-.qref-dmg.force { background: #06b6d4; color: black; }
+.qref-dmg.physical { background: var(--dmg-physical); color: white; }
+.qref-dmg.fire { background: var(--dmg-fire); color: white; }
+.qref-dmg.cold { background: var(--dmg-cold); color: white; }
+.qref-dmg.lightning { background: var(--dmg-lightning); color: black; }
+.qref-dmg.thunder { background: var(--dmg-thunder); color: white; }
+.qref-dmg.acid { background: var(--dmg-acid); color: black; }
+.qref-dmg.poison { background: var(--dmg-poison); color: black; }
+.qref-dmg.psychic { background: var(--dmg-psychic); color: white; }
+.qref-dmg.radiant { background: var(--dmg-radiant); color: black; }
+.qref-dmg.necrotic {
+    background: var(--dmg-necrotic);
+    color: var(--dmg-necrotic-text);
+    border: 1px solid var(--dmg-necrotic-border);
+}
+.qref-dmg.force { background: var(--dmg-force); color: black; }
 
 /* Cover Badges */
 .qref-cover-row {

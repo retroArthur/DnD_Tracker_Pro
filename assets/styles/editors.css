@@ -385,7 +385,7 @@
 
         .editor-block-handle button[data-block-action='remove']:hover {
             background: rgba(239, 68, 68, 0.12);
-            color: #ef4444;
+            color: var(--red);
         }
 
         .editor-block-handle button:focus-visible {
@@ -400,7 +400,7 @@
 
         .editor-toolbar .tb-menu-item-danger:hover {
             background: rgba(239, 68, 68, 0.12);
-            color: #ef4444;
+            color: var(--red);
         }
 
         .editor-toolbar .tb-menu .editor-select {

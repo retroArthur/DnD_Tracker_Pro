@@ -263,21 +263,21 @@
             transform: scale(1.05);
         }
         
-        .condition-badge.blinded { background: rgba(107, 114, 128, 0.3); color: #9ca3af; }
+        .condition-badge.blinded { background: rgba(107, 114, 128, 0.3); color: var(--text-dim); }
         .condition-badge.charmed { background: rgba(244, 114, 182, 0.3); color: var(--pink); }
-        .condition-badge.deafened { background: rgba(107, 114, 128, 0.3); color: #9ca3af; }
+        .condition-badge.deafened { background: rgba(107, 114, 128, 0.3); color: var(--text-dim); }
         .condition-badge.frightened { background: rgba(167, 139, 250, 0.3); color: var(--purple); }
         .condition-badge.grappled { background: rgba(251, 146, 60, 0.3); color: var(--orange); }
         .condition-badge.incapacitated { background: rgba(239, 68, 68, 0.3); color: var(--red); }
         .condition-badge.invisible { background: rgba(126, 196, 207, 0.3); color: var(--cyan); border-style: dashed; }
         .condition-badge.paralyzed { background: rgba(251, 191, 36, 0.3); color: var(--yellow); }
-        .condition-badge.petrified { background: rgba(156, 163, 175, 0.3); color: #d1d5db; }
+        .condition-badge.petrified { background: rgba(156, 163, 175, 0.3); color: var(--text); }
         .condition-badge.poisoned { background: rgba(74, 222, 128, 0.3); color: var(--green); }
         .condition-badge.prone { background: rgba(251, 146, 60, 0.3); color: var(--orange); }
         .condition-badge.restrained { background: rgba(251, 146, 60, 0.3); color: var(--orange); }
         .condition-badge.stunned { background: rgba(251, 191, 36, 0.3); color: var(--yellow); }
         .condition-badge.unconscious { background: rgba(239, 68, 68, 0.3); color: var(--red); }
-        .condition-badge.exhaustion { background: rgba(107, 114, 128, 0.3); color: #9ca3af; }
+        .condition-badge.exhaustion { background: rgba(107, 114, 128, 0.3); color: var(--text-dim); }
         .condition-badge.concentration { background: rgba(96, 165, 250, 0.3); color: var(--blue); border: 1px solid var(--blue); }
         
         .condition-tooltip {
@@ -365,7 +365,7 @@
         
         .relationship-badge.ally { background: rgba(74, 222, 128, 0.2); color: var(--green); }
         .relationship-badge.enemy { background: rgba(239, 68, 68, 0.2); color: var(--red); }
-        .relationship-badge.neutral { background: rgba(156, 163, 175, 0.2); color: #9ca3af; }
+        .relationship-badge.neutral { background: rgba(156, 163, 175, 0.2); color: var(--text-dim); }
         .relationship-badge.family { background: rgba(244, 114, 182, 0.2); color: var(--pink); }
         .relationship-badge.rival { background: rgba(251, 146, 60, 0.2); color: var(--orange); }
         .relationship-badge.mentor { background: rgba(96, 165, 250, 0.2); color: var(--blue); }
@@ -1890,9 +1890,9 @@
     transition: width 0.3s ease;
 }
 
-.dms-hp-bar.healthy { background: linear-gradient(90deg, var(--green), #22c55e); }
-.dms-hp-bar.bloodied { background: linear-gradient(90deg, var(--orange), #f97316); }
-.dms-hp-bar.critical { background: linear-gradient(90deg, var(--red), #ef4444); }
+.dms-hp-bar.healthy { background: linear-gradient(90deg, var(--green), var(--green)); }
+.dms-hp-bar.bloodied { background: linear-gradient(90deg, var(--orange), var(--orange)); }
+.dms-hp-bar.critical { background: linear-gradient(90deg, var(--red), var(--red)); }
 
 .dms-hp-text {
     position: absolute;
@@ -2019,13 +2019,13 @@
 }
 
 .dms-dice-btn.dms-dice-d20 {
-    background: linear-gradient(135deg, #dc2626, #b91c1c);
+    background: linear-gradient(135deg, var(--red-dim), var(--red-dark));
     color: white;
-    border-color: #991b1b;
+    border-color: var(--red-dark);
 }
 
 .dms-dice-btn.dms-dice-d20:hover {
-    background: linear-gradient(135deg, #ef4444, #dc2626);
+    background: linear-gradient(135deg, var(--red), var(--red));
 }
 
 .dms-dice-result {
@@ -2377,12 +2377,12 @@
 }
 
 /* Attribut-Farben */
-.dms-attr-item.str .dms-attr-abbr { color: #ef4444; }
-.dms-attr-item.dex .dms-attr-abbr { color: #22c55e; }
-.dms-attr-item.con .dms-attr-abbr { color: #f59e0b; }
-.dms-attr-item.int .dms-attr-abbr { color: #3b82f6; }
-.dms-attr-item.wis .dms-attr-abbr { color: #a855f7; }
-.dms-attr-item.cha .dms-attr-abbr { color: #ec4899; }
+.dms-attr-item.str .dms-attr-abbr { color: var(--attr-str); }
+.dms-attr-item.dex .dms-attr-abbr { color: var(--attr-dex); }
+.dms-attr-item.con .dms-attr-abbr { color: var(--attr-con); }
+.dms-attr-item.int .dms-attr-abbr { color: var(--attr-int); }
+.dms-attr-item.wis .dms-attr-abbr { color: var(--attr-wis); }
+.dms-attr-item.cha .dms-attr-abbr { color: var(--attr-cha); }
 
 /* Modifikator-Tabelle */
 .dms-mod-table {
@@ -2434,12 +2434,12 @@
     font-weight: 600;
 }
 
-.dms-save-attr.str { color: #ef4444; }
-.dms-save-attr.dex { color: #22c55e; }
-.dms-save-attr.con { color: #f59e0b; }
-.dms-save-attr.int { color: #3b82f6; }
-.dms-save-attr.wis { color: #a855f7; }
-.dms-save-attr.cha { color: #ec4899; }
+.dms-save-attr.str { color: var(--attr-str); }
+.dms-save-attr.dex { color: var(--attr-dex); }
+.dms-save-attr.con { color: var(--attr-con); }
+.dms-save-attr.int { color: var(--attr-int); }
+.dms-save-attr.wis { color: var(--attr-wis); }
+.dms-save-attr.cha { color: var(--attr-cha); }
 
 .dms-save-examples {
     color: var(--text-dim);
@@ -2471,11 +2471,11 @@
     width: fit-content;
 }
 
-.dms-skill-group.str .dms-skill-group-header { background: rgba(239, 68, 68, 0.2); color: #ef4444; }
-.dms-skill-group.dex .dms-skill-group-header { background: rgba(34, 197, 94, 0.2); color: #22c55e; }
-.dms-skill-group.int .dms-skill-group-header { background: rgba(59, 130, 246, 0.2); color: #3b82f6; }
-.dms-skill-group.wis .dms-skill-group-header { background: rgba(168, 85, 247, 0.2); color: #a855f7; }
-.dms-skill-group.cha .dms-skill-group-header { background: rgba(236, 72, 153, 0.2); color: #ec4899; }
+.dms-skill-group.str .dms-skill-group-header { background: rgba(239, 68, 68, 0.2); color: var(--red); }
+.dms-skill-group.dex .dms-skill-group-header { background: rgba(34, 197, 94, 0.2); color: var(--green); }
+.dms-skill-group.int .dms-skill-group-header { background: rgba(59, 130, 246, 0.2); color: var(--blue); }
+.dms-skill-group.wis .dms-skill-group-header { background: rgba(168, 85, 247, 0.2); color: var(--purple); }
+.dms-skill-group.cha .dms-skill-group-header { background: rgba(236, 72, 153, 0.2); color: var(--pink); }
 
 .dms-skill-list {
     display: flex;
@@ -2786,22 +2786,28 @@
     font-size: 1em;
 }
 
+/* Die Farben kommen aus den --dmg-*-Tokens, damit dieser Satz und der
+   der Schnellreferenz nicht wieder auseinanderlaufen: vor F-04 wichen
+   sie in FUENF von elf Typen ab, und bei acid/poison waren sie
+   zwischen den beiden Ansichten VERTAUSCHT — dieselbe Schadensart
+   hatte je nach Bildschirm eine andere Farbe. Massgeblich ist die
+   Schnellreferenz; sie ist die Regelansicht. */
 /* Physische Schadensarten */
-.dms-dmg-item.physical { border-left-color: #9ca3af; }
+.dms-dmg-item.physical { border-left-color: var(--dmg-physical); }
 
 /* Elementare Schadensarten */
-.dms-dmg-item.fire { border-left-color: #ef4444; }
-.dms-dmg-item.cold { border-left-color: #60a5fa; }
-.dms-dmg-item.lightning { border-left-color: #fbbf24; }
-.dms-dmg-item.acid { border-left-color: #84cc16; }
-.dms-dmg-item.thunder { border-left-color: #8b5cf6; }
+.dms-dmg-item.fire { border-left-color: var(--dmg-fire); }
+.dms-dmg-item.cold { border-left-color: var(--dmg-cold); }
+.dms-dmg-item.lightning { border-left-color: var(--dmg-lightning); }
+.dms-dmg-item.acid { border-left-color: var(--dmg-acid); }
+.dms-dmg-item.thunder { border-left-color: var(--dmg-thunder); }
 
 /* Spezielle Schadensarten */
-.dms-dmg-item.poison { border-left-color: #22c55e; }
-.dms-dmg-item.necrotic { border-left-color: #4b5563; }
-.dms-dmg-item.radiant { border-left-color: #fcd34d; }
-.dms-dmg-item.force { border-left-color: #c084fc; }
-.dms-dmg-item.psychic { border-left-color: #f472b6; }
+.dms-dmg-item.poison { border-left-color: var(--dmg-poison); }
+.dms-dmg-item.necrotic { border-left-color: var(--dmg-necrotic); }
+.dms-dmg-item.radiant { border-left-color: var(--dmg-radiant); }
+.dms-dmg-item.force { border-left-color: var(--dmg-force); }
+.dms-dmg-item.psychic { border-left-color: var(--dmg-psychic); }
 
 /* ========================================
    GELÄNDE-WIDGET
@@ -2869,11 +2875,11 @@
     border-left: 3px solid var(--border);
 }
 
-.dms-knowledge-item.arcana { border-left-color: #3b82f6; }
-.dms-knowledge-item.religion { border-left-color: #a855f7; }
-.dms-knowledge-item.history { border-left-color: #f59e0b; }
-.dms-knowledge-item.nature { border-left-color: #22c55e; }
-.dms-knowledge-item.investigation { border-left-color: #06b6d4; }
+.dms-knowledge-item.arcana { border-left-color: var(--know-arcana); }
+.dms-knowledge-item.religion { border-left-color: var(--know-religion); }
+.dms-knowledge-item.history { border-left-color: var(--know-history); }
+.dms-knowledge-item.nature { border-left-color: var(--know-nature); }
+.dms-knowledge-item.investigation { border-left-color: var(--know-investigation); }
 
 .dms-knowledge-header {
     display: flex;

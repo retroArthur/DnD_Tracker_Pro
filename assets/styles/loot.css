@@ -684,20 +684,20 @@
         
         /* Neue Kategoriefarben */
         .si-item.potion { border-left-color: var(--purple); }
-        .si-item.food { border-left-color: #e67e22; }
-        .si-item.drink { border-left-color: #f39c12; }
-        .si-item.lodging { border-left-color: #9b59b6; }
-        .si-item.transport { border-left-color: #1abc9c; }
-        .si-item.clothing { border-left-color: #e91e63; }
-        .si-item.accessory { border-left-color: #27ae60; }
-        .si-item.craft { border-left-color: #d35400; }
-        .si-item.prop { border-left-color: #8e44ad; }
-        .si-item.gear { border-left-color: #3498db; }
-        .si-item.magic { border-left-color: #9c27b0; }
-        .si-item.enchant { border-left-color: #673ab7; }
-        .si-item.buff { border-left-color: #ff5722; }
-        .si-item.info { border-left-color: #795548; }
-        .si-item.trinket { border-left-color: #607d8b; }
+        .si-item.food { border-left-color: var(--cat-food); }
+        .si-item.drink { border-left-color: var(--cat-drink); }
+        .si-item.lodging { border-left-color: var(--cat-lodging); }
+        .si-item.transport { border-left-color: var(--cat-transport); }
+        .si-item.clothing { border-left-color: var(--cat-clothing); }
+        .si-item.accessory { border-left-color: var(--cat-accessory); }
+        .si-item.craft { border-left-color: var(--cat-craft); }
+        .si-item.prop { border-left-color: var(--cat-prop); }
+        .si-item.gear { border-left-color: var(--cat-gear); }
+        .si-item.magic { border-left-color: var(--cat-magic); }
+        .si-item.enchant { border-left-color: var(--cat-enchant); }
+        .si-item.buff { border-left-color: var(--cat-buff); }
+        .si-item.info { border-left-color: var(--cyan); }
+        .si-item.trinket { border-left-color: var(--cat-trinket); }
         
         .shop-footer {
             margin-top: 12px;
@@ -715,8 +715,8 @@
         }
 
         .cart-btn:hover {
-            background: #c5a028;
-            border-color: #c5a028;
+            background: var(--gold);
+            border-color: var(--gold);
         }
         
         .cart-badge {
