@@ -23,7 +23,7 @@
                 <button class="btn btn-sm" data-action="hide-modal" data-value="timer-preset-modal">✕</button>
             </div>
             <input type="hidden" id="edit-preset-index" value="">
-            <div style="margin-bottom: 16px;">
+            <div class="u-mb-lg">
                 <div class="form-group"><label>Name</label><input type="text" id="preset-name" placeholder="z.B. Fackel"></div>
                 <div class="form-group">
                     <label>Emoji</label>
@@ -57,7 +57,7 @@
             </div>
             <div style="border-top: 1px solid var(--border); padding-top: 12px;">
                 <label style="color: var(--text-dim); font-size: 0.85em;">Gespeicherte Vorlagen:</label>
-                <div id="preset-list" style="margin-top: 8px;"></div>
+                <div class="u-mt-sm" id="preset-list"></div>
             </div>
         </div>
     </div>
@@ -128,21 +128,21 @@
                 <h4 style="margin: 0 0 8px 0; color: var(--purple);">🆕 Neue Features (v2.17)</h4>
                 <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; font-size: 0.85em;">
                     <div>
-                        <div style="font-size: 0.8em; color: var(--text-dim); margin-bottom: 4px;">Quick Reference v2</div>
+                        <div class="form-hint">Quick Reference v2</div>
                         <div class="btn-group" style="flex-wrap: wrap; gap: 4px;">
                             <button class="btn btn-sm" data-action="toggle-quick-ref">📖 Quick Ref öffnen</button>
                             <button class="btn btn-sm" data-action="call" data-value="testQuickReference">🧪 Quick Ref Test</button>
                         </div>
                     </div>
                     <div>
-                        <div style="font-size: 0.8em; color: var(--text-dim); margin-bottom: 4px;">Event Log</div>
+                        <div class="form-hint">Event Log</div>
                         <div class="btn-group" style="flex-wrap: wrap; gap: 4px;">
                             <button class="btn btn-sm" data-action="toggle-event-log">📋 Log öffnen (L)</button>
                             <button class="btn btn-sm" data-action="call" data-value="testEventLog">🧪 Event Log Test</button>
                         </div>
                     </div>
                     <div>
-                        <div style="font-size: 0.8em; color: var(--text-dim); margin-bottom: 4px;">Wiki-System</div>
+                        <div class="form-hint">Wiki-System</div>
                         <div class="btn-group" style="flex-wrap: wrap; gap: 4px;">
                             <button class="btn btn-sm" data-action="call" data-value="testWikiSystem">📚 Wiki Test</button>
                             <button class="btn btn-sm" data-action="call" data-value="testWikiLinks">🔗 Wiki-Links Test</button>
@@ -150,7 +150,7 @@
                         </div>
                     </div>
                     <div>
-                        <div style="font-size: 0.8em; color: var(--text-dim); margin-bottom: 4px;">Undo/Redo & Speicherung</div>
+                        <div class="form-hint">Undo/Redo & Speicherung</div>
                         <div class="btn-group" style="flex-wrap: wrap; gap: 4px;">
                             <button class="btn btn-sm" data-action="call" data-value="testUndoRedo">↩️ Undo/Redo Test</button>
                             <button class="btn btn-sm" data-action="call" data-value="testAutoSave">💾 AutoSave Test</button>
@@ -158,7 +158,7 @@
                         </div>
                     </div>
                     <div>
-                        <div style="font-size: 0.8em; color: var(--text-dim); margin-bottom: 4px;">UI & Navigation</div>
+                        <div class="form-hint">UI & Navigation</div>
                         <div class="btn-group" style="flex-wrap: wrap; gap: 4px;">
                             <button class="btn btn-sm" data-action="show-shortcuts-overlay">⌨️ Shortcuts</button>
                             <button class="btn btn-sm" data-action="toggle-quick-notes">📝 Schnellnotizen</button>
@@ -173,7 +173,7 @@
             <div style="background: var(--bg-dark); padding: 12px; border-radius: 8px; margin-bottom: 12px;">
                 <h4 style="margin: 0 0 8px 0; color: var(--purple);">📋 Debug-Log</h4>
                 <div id="debug-log" style="font-family: monospace; font-size: 0.75em; background: #000; color: #0f0; padding: 8px; border-radius: 4px; max-height: 150px; overflow-y: auto; white-space: pre-wrap;"></div>
-                <button class="btn btn-sm" style="margin-top: 8px;" data-action="call" data-value="clearDebugLog">Log leeren</button>
+                <button class="btn btn-sm u-mt-sm" data-action="call" data-value="clearDebugLog">Log leeren</button>
             </div>
             
             <!-- Danger Zone -->
@@ -192,15 +192,15 @@
     
     <!-- Schnellnotizen Modal -->
     <div class="modal-backdrop" id="quicknotes-modal" style="display: none;" data-action="backdrop-close" data-value="hideQuickNotesModal">
-        <div class="modal" style="max-width: 500px;" data-stop-propagation="true">
+        <div class="modal modal-md" data-stop-propagation="true">
             <div class="modal-header">
                 <span class="modal-title">📝 Schnellnotizen</span>
                 <button class="btn btn-sm" data-action="call" data-value="hideQuickNotesModal">✕</button>
             </div>
-            <div class="form-group" style="margin: 0;">
+            <div class="form-group u-m-0">
                 <textarea id="quick-notes" placeholder="Schnelle Notizen während der Session..." style="min-height: 200px; width: 100%; padding: 12px; background: var(--bg-dark); border: 1px solid var(--border); color: var(--text); border-radius: 6px; font-size: 0.95em; line-height: 1.5; resize: vertical;"></textarea>
             </div>
-            <div class="btn-group" style="margin-top: 12px;">
+            <div class="btn-group u-mt-md">
                 <button class="btn btn-success" data-action="save-and-hide-quick-notes">💾 Speichern & Schließen</button>
                 <button class="btn" data-action="call" data-value="hideQuickNotesModal">Schließen</button>
             </div>
@@ -281,7 +281,7 @@
     
     <!-- Theme Modal -->
     <div class="modal-overlay" id="theme-modal">
-        <div class="modal" style="max-width: 400px;">
+        <div class="modal modal-sm">
             <div class="modal-header">
                 <span class="modal-title">🎨 Theme wählen</span>
                 <button class="btn btn-sm" data-action="hide-modal" data-value="theme-modal">✕</button>
@@ -319,10 +319,10 @@
             <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; max-height: 400px; overflow-y: auto; padding: 4px;" id="conditions-list">
                 <!-- Dynamisch generiert -->
             </div>
-            <div class="form-group" style="margin-top: 12px;">
+            <div class="form-group u-mt-md">
                 <label style="text-transform: uppercase; font-size: 0.8em; color: var(--text-dim); letter-spacing: 1px;">Eigener Zustand</label>
                 <div style="display: flex; gap: 8px;">
-                    <input type="text" id="custom-condition-name" placeholder="Name des Zustands" style="flex: 1;">
+                    <input class="u-flex-1" type="text" id="custom-condition-name" placeholder="Name des Zustands">
                     <button class="btn" data-action="call" data-value="addCustomCondition">Hinzufügen</button>
                 </div>
             </div>
@@ -375,7 +375,7 @@
             <div class="form-group">
                 <label>Neuen Tag hinzufügen</label>
                 <div style="display: flex; gap: 8px;">
-                    <input type="text" id="new-tag-name" placeholder="Tag-Name" style="flex: 1;">
+                    <input class="u-flex-1" type="text" id="new-tag-name" placeholder="Tag-Name">
                     <select id="new-tag-color" style="width: 100px;">
                         <option value="red">🔴 Rot</option>
                         <option value="green">🟢 Grün</option>
@@ -410,18 +410,18 @@
     
     <!-- Entity Links Modal -->
     <div class="modal-overlay" id="entity-links-modal">
-        <div class="modal" style="max-width: 500px;">
+        <div class="modal modal-md">
             <div class="modal-header">
                 <span class="modal-title">🔗 Verknüpfungen</span>
                 <button class="btn btn-sm" data-action="hide-modal" data-value="entity-links-modal">✕</button>
             </div>
             <input type="hidden" id="link-source-type">
             <input type="hidden" id="link-source-id">
-            <div id="entity-current-links" style="margin-bottom: 16px;"></div>
+            <div class="u-mb-lg" id="entity-current-links"></div>
             <div class="form-group">
                 <label>Neue Verknüpfung hinzufügen</label>
                 <div style="display: grid; grid-template-columns: auto 1fr auto; gap: 8px; align-items: end;">
-                    <div class="form-group" style="margin: 0;">
+                    <div class="form-group u-m-0">
                         <label style="font-size: 0.8em;">Typ</label>
                         <select id="link-target-type" data-action="render-link-targets">
                             <option value="npcs">🎭 NPC</option>
@@ -434,7 +434,7 @@
                             <option value="wiki">📖 Wiki</option>
                         </select>
                     </div>
-                    <div class="form-group" style="margin: 0;">
+                    <div class="form-group u-m-0">
                         <label style="font-size: 0.8em;">Ziel</label>
                         <select id="link-target-id"></select>
                     </div>
@@ -446,7 +446,7 @@
     
     <!-- Avatar/Image Modal -->
     <div class="modal-overlay" id="avatar-modal">
-        <div class="modal" style="max-width: 400px;">
+        <div class="modal modal-sm">
             <div class="modal-header">
                 <span class="modal-title">🖼️ Bild festlegen</span>
                 <button class="btn btn-sm" data-action="hide-modal" data-value="avatar-modal">✕</button>

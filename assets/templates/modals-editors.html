@@ -1,6 +1,6 @@
     <!-- Markdown Help Modal -->
     <div class="modal-overlay" id="markdown-help-modal">
-        <div class="modal" style="max-width: 600px;">
+        <div class="modal modal-lg">
             <div class="modal-header">
                 <h3>📝 Markdown Syntax-Hilfe</h3>
                 <button class="modal-close" data-action="hide-modal" data-value="markdown-help-modal">×</button>
@@ -15,25 +15,25 @@
                     <div style="background: var(--bg-elevated); border-radius: 8px; padding: 16px;">
                         <h4 style="margin: 0 0 12px 0; color: var(--gold);">Textformatierung</h4>
                         <table style="width: 100%; color: var(--text-dim); font-size: 14px;">
-                            <tr style="border-bottom: 1px solid var(--border);">
-                                <td style="padding: 8px;"><code>**fett**</code></td>
-                                <td style="padding: 8px;">→</td>
-                                <td style="padding: 8px;"><b>fett</b></td>
+                            <tr class="u-rule-bottom">
+                                <td class="u-pad-sm"><code>**fett**</code></td>
+                                <td class="u-pad-sm">→</td>
+                                <td class="u-pad-sm"><b>fett</b></td>
                             </tr>
-                            <tr style="border-bottom: 1px solid var(--border);">
-                                <td style="padding: 8px;"><code>*kursiv*</code></td>
-                                <td style="padding: 8px;">→</td>
-                                <td style="padding: 8px;"><i>kursiv</i></td>
+                            <tr class="u-rule-bottom">
+                                <td class="u-pad-sm"><code>*kursiv*</code></td>
+                                <td class="u-pad-sm">→</td>
+                                <td class="u-pad-sm"><i>kursiv</i></td>
                             </tr>
-                            <tr style="border-bottom: 1px solid var(--border);">
-                                <td style="padding: 8px;"><code>~~durchgestrichen~~</code></td>
-                                <td style="padding: 8px;">→</td>
-                                <td style="padding: 8px;"><s>durchgestrichen</s></td>
+                            <tr class="u-rule-bottom">
+                                <td class="u-pad-sm"><code>~~durchgestrichen~~</code></td>
+                                <td class="u-pad-sm">→</td>
+                                <td class="u-pad-sm"><s>durchgestrichen</s></td>
                             </tr>
                             <tr>
-                                <td style="padding: 8px;"><code>`code`</code></td>
-                                <td style="padding: 8px;">→</td>
-                                <td style="padding: 8px;"><code style="background: var(--bg); padding: 2px 4px; border-radius: 3px;">code</code></td>
+                                <td class="u-pad-sm"><code>`code`</code></td>
+                                <td class="u-pad-sm">→</td>
+                                <td class="u-pad-sm"><code style="background: var(--bg); padding: 2px 4px; border-radius: 3px;">code</code></td>
                             </tr>
                         </table>
                     </div>
@@ -489,7 +489,7 @@
                                 </select>
                             </div>
                         </div>
-                        <div class="qref-note center" style="margin-top: 8px;">1m ≈ 3ft • 1km ≈ 0.6mi • 1in ≈ 2.5cm</div>
+                        <div class="qref-note center u-mt-sm">1m ≈ 3ft • 1km ≈ 0.6mi • 1in ≈ 2.5cm</div>
                     </div>
                 </div>
 
@@ -540,7 +540,7 @@
 
     <!-- Schnell-Referenz Eintrag Modal -->
     <div class="modal-overlay" id="quick-ref-entry-modal">
-        <div class="modal" style="max-width: 600px;">
+        <div class="modal modal-lg">
             <div class="modal-header">
                 <span class="modal-title">📝 <span id="quick-ref-modal-title">Eintrag hinzufügen</span></span>
                 <button class="btn btn-sm" data-action="hide-modal" data-value="quick-ref-entry-modal">✕</button>
@@ -565,7 +565,7 @@
 
     <!-- Entity-Link einfügen Modal -->
     <div class="modal-overlay" id="insert-entity-link-modal">
-        <div class="modal" style="max-width: 400px;">
+        <div class="modal modal-sm">
             <div class="modal-header">
                 <span class="modal-title">🔗 Entity verknüpfen</span>
                 <button class="btn btn-sm" data-action="hide-modal" data-value="insert-entity-link-modal">✕</button>
@@ -585,7 +585,7 @@
             </div>
             <div class="form-group">
                 <label>Auswählen</label>
-                <select id="insert-link-target-id" size="6" style="width: 100%;"></select>
+                <select class="u-w-full" id="insert-link-target-id" size="6"></select>
             </div>
             <div class="btn-group">
                 <button class="btn btn-success" data-action="call" data-value="insertEntityLinkToEditor">🔗 Einfügen</button>
@@ -670,7 +670,7 @@
 
     <!-- Beziehungen Modal -->
     <div class="modal-overlay" id="relationships-modal">
-        <div class="modal" style="max-width: 500px;">
+        <div class="modal modal-md">
             <div class="modal-header">
                 <span class="modal-title">🔗 Beziehung hinzufügen</span>
                 <button class="btn btn-sm" data-action="hide-modal" data-value="relationships-modal">✕</button>
@@ -678,11 +678,11 @@
             <div id="relationship-source-name" style="margin-bottom: 12px; color: var(--gold);"></div>
             <div class="form-group">
                 <label>Ziel auswählen</label>
-                <select id="relationship-target" style="width: 100%;"></select>
+                <select class="u-w-full" id="relationship-target"></select>
             </div>
             <div class="form-group">
                 <label>Beziehungstyp</label>
-                <select id="relationship-type" style="width: 100%;">
+                <select class="u-w-full" id="relationship-type">
                     <option value="ally">💚 Verbündeter</option>
                     <option value="enemy">❤️ Feind</option>
                     <option value="neutral">🤍 Neutral</option>
@@ -705,7 +705,7 @@
 
     <!-- Story-Arc Management Modal -->
     <div class="modal-overlay" id="story-arc-modal">
-        <div class="modal" style="max-width: 500px;">
+        <div class="modal modal-md">
             <div class="modal-header">
                 <span class="modal-title">📚 Story-Arcs verwalten</span>
                 <button class="btn btn-sm" data-action="hide-modal" data-value="story-arc-modal">✕</button>
@@ -739,7 +739,7 @@
 
     <!-- Notizen-Suche Modal -->
     <div class="modal-overlay" id="notes-search-modal">
-        <div class="modal" style="max-width: 600px;">
+        <div class="modal modal-lg">
             <div class="modal-header">
                 <span class="modal-title">🔍 Session-Notizen durchsuchen</span>
                 <button class="btn btn-sm" data-action="hide-modal" data-value="notes-search-modal">✕</button>

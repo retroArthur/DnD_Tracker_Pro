@@ -4,7 +4,7 @@
                 <span class="modal-title">Filter verwalten</span>
                 <button class="btn btn-sm" data-action="hide-modal" data-value="filter-modal">✕</button>
             </div>
-            <div id="filter-list" style="margin-bottom: 12px;"></div>
+            <div class="u-mb-md" id="filter-list"></div>
             <div class="form-grid">
                 <div class="form-group"><label>Name</label><input type="text" id="filter-name"></div>
                 <div class="form-group"><label>Farbe</label>
@@ -52,7 +52,7 @@
                 <input type="hidden" id="edit-npc-id">
                 
                 <!-- Grundinfos -->
-                <div class="char-section-title" style="margin-top: 0;">📋 Grundinformationen</div>
+                <div class="char-section-title u-mt-0">📋 Grundinformationen</div>
                 <div class="form-grid">
                     <div class="form-group"><label>Name *</label><input type="text" id="npc-name"></div>
                     <div class="form-group"><label>Rolle</label><input type="text" id="npc-role" placeholder="z.B. Händler, Wache"></div>
@@ -111,13 +111,13 @@
                 <div class="char-section-title">🔔 Trigger</div>
                 <small style="color: var(--text-dim); display: block; margin-bottom: 8px;">Trigger enthüllen Informationen wenn bestimmte Bedingungen erfüllt sind.</small>
                 <div id="npc-triggers-container"></div>
-                <button class="btn btn-sm" data-action="call" data-value="addTriggerField" style="margin-bottom: 16px;">+ Trigger hinzufügen</button>
+                <button class="btn btn-sm u-mb-lg" data-action="call" data-value="addTriggerField">+ Trigger hinzufügen</button>
                 
                 <!-- Dialoge -->
                 <div class="char-section-title">💬 Dialoge</div>
                 <small style="color: var(--text-dim); display: block; margin-bottom: 8px;">Speichere Dialogtexte die der NPC sagen kann. Optional mit Trigger-Bedingung.</small>
                 <div id="npc-dialogs-container"></div>
-                <button class="btn btn-sm" data-action="call" data-value="addDialogField" style="margin-bottom: 16px;">+ Dialog hinzufügen</button>
+                <button class="btn btn-sm u-mb-lg" data-action="call" data-value="addDialogField">+ Dialog hinzufügen</button>
             </div>
             
             <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border); position: relative; z-index: 10; display: flex; justify-content: space-between; align-items: center;">
@@ -144,7 +144,7 @@
                 <input type="hidden" id="edit-loot-id">
 
                 <!-- Basis -->
-                <div class="char-section-title" style="margin-top: 0;">📦 Basis</div>
+                <div class="char-section-title u-mt-0">📦 Basis</div>
                 <div class="form-group"><label>Name *</label><input type="text" id="loot-name" placeholder="Gegenstandsname"></div>
                 <div class="form-grid">
                     <div class="form-group"><label>Typ</label>
@@ -290,22 +290,22 @@
                 <label>💰 Belohnung</label>
                 <div class="quest-reward-section">
                     <div class="form-grid" style="gap: 8px;">
-                        <div class="form-group" style="margin: 0;">
-                            <label style="font-size: 0.85em;">Gold</label>
+                        <div class="form-group u-m-0">
+                            <label class="u-text-sm">Gold</label>
                             <div style="display: flex; align-items: center; gap: 4px;">
                                 <input type="number" id="quest-reward-gold" min="0" placeholder="0" style="width: 100px;">
                                 <span style="color: var(--gold);">GP</span>
                             </div>
                         </div>
-                        <div class="form-group" style="margin: 0;">
-                            <label style="font-size: 0.85em;">Item aus Truhe</label>
+                        <div class="form-group u-m-0">
+                            <label class="u-text-sm">Item aus Truhe</label>
                             <select id="quest-reward-item">
                                 <option value="">-- Item wählen --</option>
                             </select>
                         </div>
                     </div>
                     <div id="quest-reward-items-list" class="quest-reward-items"></div>
-                    <button type="button" class="btn btn-sm" data-action="call" data-value="addQuestRewardItem" style="margin-top: 8px;">+ Item hinzufügen</button>
+                    <button type="button" class="btn btn-sm u-mt-sm" data-action="call" data-value="addQuestRewardItem">+ Item hinzufügen</button>
                 </div>
             </div>
             <div class="form-group">
@@ -333,7 +333,7 @@
     </div>
     
     <div class="modal-overlay" id="spell-modal">
-        <div class="modal" style="max-width: 600px;">
+        <div class="modal modal-lg">
             <div class="modal-header">
                 <span class="modal-title">Zauber hinzufügen</span>
                 <button class="btn btn-sm" data-action="hide-modal" data-value="spell-modal">✕</button>
@@ -455,7 +455,7 @@
                     <input type="text" id="spell-duration-custom" placeholder="z.B. 7 Tage" style="display:none; margin-top:6px;">
                 </div>
             </div>
-            <div class="form-row" style="margin-bottom: 10px;">
+            <div class="form-row u-mb-md">
                 <label><input type="checkbox" id="spell-ritual"> Ritual</label>
                 <label><input type="checkbox" id="spell-v"> V (Verbal)</label>
                 <label><input type="checkbox" id="spell-g"> G (Gestik)</label>
@@ -494,7 +494,7 @@
             <input type="hidden" id="effect-combatant-id">
             
             <!-- Standard-Zustände Grid -->
-            <div style="margin-bottom: 12px;">
+            <div class="u-mb-md">
                 <label style="display: block; margin-bottom: 8px; color: var(--text-dim); font-size: 0.9em;">Standard-Zustände (klicken zum Hinzufügen)</label>
                 <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; max-height: 280px; overflow-y: auto;" id="effect-conditions-grid">
                     <!-- Dynamisch generiert -->
@@ -626,13 +626,13 @@
                 <input type="hidden" id="edit-fraktion-id">
 
                 <!-- Grunddaten -->
-                <div class="char-section-title" style="margin-top: 0;">⚔️ Grunddaten</div>
+                <div class="char-section-title u-mt-0">⚔️ Grunddaten</div>
                 <div class="form-grid">
                     <div class="form-group" style="flex: 3;">
                         <label>Name *</label>
                         <input type="text" id="fraktion-name" placeholder="z.B. Diebesgilde, Soldatenrat">
                     </div>
-                    <div class="form-group" style="flex: 1;">
+                    <div class="form-group u-flex-1">
                         <label>Symbol / Icon (max. 2 Zeichen)</label>
                         <input type="text" id="fraktion-symbol" placeholder="⚔️" maxlength="2" style="text-align: center; font-size: 1.2rem;">
                     </div>
@@ -688,7 +688,7 @@
 
     <!-- XP-Verteilungs-Modal (CHAR-01 / D-09 / D-10) -->
     <div class="modal-overlay" id="xp-distribution-modal">
-        <div class="modal" style="max-width: 500px;">
+        <div class="modal modal-md">
             <div class="modal-header">
                 <span class="modal-title">⭐ XP verteilen</span>
                 <button class="btn btn-sm" data-action="hide-modal" data-value="xp-distribution-modal">✕</button>

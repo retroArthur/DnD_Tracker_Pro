@@ -36,7 +36,7 @@
                 <div id="enc-form" class="collapsible-content">
                     <input type="hidden" id="edit-enc-id">
                     <!-- Schnell-Vorlagen -->
-                    <div class="enc-templates-section" style="margin-bottom: 16px;">
+                    <div class="enc-templates-section u-mb-lg">
                         <div class="char-section-title">⚡ Schnell-Vorlagen</div>
                         <div class="monster-templates">
                             <button class="monster-template-btn" data-action="load-monster-template" data-value="goblin">🗡️ Goblin</button>
@@ -171,7 +171,7 @@
                             <select id="enc-languages" multiple style="display:none;"></select>
                         </div>
                     </div>
-                    <div class="char-section-title" style="margin-top: 12px;">⚔️ Attribute</div>
+                    <div class="char-section-title u-mt-md">⚔️ Attribute</div>
                     <div class="char-attributes-grid">
                         <div class="char-attr-box">
                             <div class="attr-label">STR</div>
@@ -242,7 +242,7 @@
                     <!-- Resistenzen & Immunitäten -->
                     <div class="char-section-title">🔥 Resistenzen & Immunitäten</div>
                     <div style="margin-bottom: 8px;">
-                        <label style="font-size: 0.8em; color: var(--text-dim);">Resistenzen (halber Schaden)</label>
+                        <label class="form-hint">Resistenzen (halber Schaden)</label>
                         <div class="char-resistances-grid" id="enc-resistances">
                             <label class="char-resistance-chip" data-action="toggle-selected"><input type="checkbox" value="Feuer">🔥 Feuer</label>
                             <label class="char-resistance-chip" data-action="toggle-selected"><input type="checkbox" value="Kälte">❄️ Kälte</label>
@@ -259,8 +259,8 @@
                             <label class="char-resistance-chip" data-action="toggle-selected"><input type="checkbox" value="Hieb">⚔️ Hieb</label>
                         </div>
                     </div>
-                    <div style="margin-bottom: 12px;">
-                        <label style="font-size: 0.8em; color: var(--text-dim);">Immunitäten (kein Schaden)</label>
+                    <div class="u-mb-md">
+                        <label class="form-hint">Immunitäten (kein Schaden)</label>
                         <div class="char-resistances-grid" id="enc-immunities">
                             <label class="char-resistance-chip" data-action="toggle-selected"><input type="checkbox" value="Feuer">🔥 Feuer</label>
                             <label class="char-resistance-chip" data-action="toggle-selected"><input type="checkbox" value="Kälte">❄️ Kälte</label>
@@ -277,8 +277,8 @@
                             <label class="char-resistance-chip" data-action="toggle-selected"><input type="checkbox" value="Hieb">⚔️ Hieb</label>
                         </div>
                     </div>
-                    <div style="margin-bottom: 12px;">
-                        <label style="font-size: 0.8em; color: var(--text-dim);">Zustandsimmunitäten</label>
+                    <div class="u-mb-md">
+                        <label class="form-hint">Zustandsimmunitäten</label>
                         <div class="char-resistances-grid" id="enc-condition-immunities">
                             <label class="char-resistance-chip" data-action="toggle-selected"><input type="checkbox" value="Betäubt">😵 Betäubt</label>
                             <label class="char-resistance-chip" data-action="toggle-selected"><input type="checkbox" value="Bezaubert">😍 Bezaubert</label>
@@ -353,7 +353,7 @@
                 <button class="btn" data-action="call" data-value="nextTurn">▶ Nächster</button>
                 <button class="btn" data-action="call" data-value="prevTurn">◀ Zurück</button>
                 <button class="btn" data-action="call" data-value="nextEncounterRound">⏭️ Neue Runde</button>
-                <div style="flex: 1;"></div>
+                <div class="u-flex-1"></div>
                 <button class="btn" data-action="call" data-value="addPartyToInit">+ Party</button>
                 <button class="btn" data-action="call" data-value="rollAllInitiative">🎲 Alle würfeln</button>
                 <button class="btn" data-action="sort-initiative">↓ Sortieren</button>
@@ -372,7 +372,7 @@
 
             <div class="init-list" id="init-list"></div>
             <div class="card" style="margin-top: 16px;">
-                <div class="card-title" style="margin-bottom: 10px;">Kämpfer hinzufügen</div>
+                <div class="card-title u-mb-md">Kämpfer hinzufügen</div>
                 <div class="form-grid">
                     <div class="form-group"><label>Name</label><input type="text" id="init-name"></div>
                     <div class="form-group"><label>Initiative</label><input type="number" id="init-value"></div>

@@ -212,7 +212,7 @@
                     </div>
                 </div>
             </div>
-            <div class="card" style="margin-bottom: 12px;">
+            <div class="card u-mb-md">
                 <div class="collapsible-header" data-action="toggle-collapse" data-value="session-form">
                     <span class="card-title" id="session-form-title">+ Neue Session-Notiz</span>
                     <span id="session-form-icon">▼</span>
@@ -230,15 +230,15 @@
                     
                     <!-- Zeile 1: Nummer, Name, Datum -->
                     <div style="display: grid; grid-template-columns: 80px 1fr 140px; gap: 12px; margin-bottom: 12px;">
-                        <div class="form-group" style="margin: 0;">
+                        <div class="form-group u-m-0">
                             <label>Session #</label>
                             <input type="number" id="session-number" min="1" placeholder="Auto">
                         </div>
-                        <div class="form-group" style="margin: 0;">
+                        <div class="form-group u-m-0">
                             <label>Titel</label>
                             <input type="text" id="session-name" placeholder="z.B. Die Höhle des Drachen">
                         </div>
-                        <div class="form-group" style="margin: 0;">
+                        <div class="form-group u-m-0">
                             <label>Datum</label>
                             <input type="date" id="session-date">
                         </div>
@@ -246,16 +246,16 @@
                     
                     <!-- Zeile 2: Story-Arc und Tags -->
                     <div style="display: grid; grid-template-columns: 200px 1fr; gap: 12px; margin-bottom: 12px;">
-                        <div class="form-group" style="margin: 0;">
+                        <div class="form-group u-m-0">
                             <label>Story-Arc</label>
                             <div style="display: flex; gap: 4px;">
-                                <select id="session-arc" style="flex: 1;">
+                                <select class="u-flex-1" id="session-arc">
                                     <option value="">— Kein Arc —</option>
                                 </select>
                                 <button class="btn btn-sm" data-action="call" data-value="manageStoryArcs" title="Arcs verwalten">⚙️</button>
                             </div>
                         </div>
-                        <div class="form-group" style="margin: 0;">
+                        <div class="form-group u-m-0">
                             <label>Tags</label>
                             <div class="session-tags-input-wrapper">
                                 <div class="session-tags-container" id="session-tags-container"></div>
@@ -275,7 +275,7 @@
                     </div>
                     
                     <!-- Zeile 3: Zusammenfassung -->
-                    <div class="form-group" style="margin-bottom: 12px;">
+                    <div class="form-group u-mb-md">
                         <label>Zusammenfassung <span style="color: var(--text-dim); font-weight: normal;">(1-2 Sätze für Übersicht)</span></label>
                         <input type="text" id="session-summary" placeholder="Was ist das Wichtigste, das in dieser Session passiert ist?" maxlength="200">
                     </div>
@@ -354,7 +354,7 @@
             
             <!-- Quick Access Bar -->
             <div class="wiki-quick-access" id="wiki-quick-access">
-                <span style="color: var(--text-dim); font-size: 11px;">Besuche Einträge um Quick Access zu füllen</span>
+                <span class="meta-text">Besuche Einträge um Quick Access zu füllen</span>
             </div>
 
             <!-- Explorer Layout -->
@@ -415,17 +415,17 @@
                         </div>
                     </div>
                     <div class="form-group">
-                        <label>Übergeordneter Eintrag <span style="color: var(--text-dim); font-size: 11px;">(optional)</span></label>
+                        <label>Übergeordneter Eintrag <span class="meta-text">(optional)</span></label>
                         <select id="wiki-parent">
                             <option value="">— Kein übergeordneter Eintrag —</option>
                         </select>
                     </div>
                     <div class="form-group">
-                        <label>Tags <span style="color: var(--text-dim); font-size: 11px;">(kommagetrennt)</span></label>
+                        <label>Tags <span class="meta-text">(kommagetrennt)</span></label>
                         <input type="text" id="wiki-tags" placeholder="z.B. Stadt, Handel, Königreich">
                     </div>
                     <div class="form-group">
-                        <label>Inhalt <span style="color: var(--text-dim); font-size: 11px;">— Verwende [[Name]] für Wiki-Links</span></label>
+                        <label>Inhalt <span class="meta-text">— Verwende [[Name]] für Wiki-Links</span></label>
                         <div class="editor-shell" data-editor-shell="wiki-content">
                             <div class="editor-shell-head">
                                 <span class="esh-dot" aria-hidden="true"></span>

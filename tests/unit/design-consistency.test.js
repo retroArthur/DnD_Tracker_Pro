@@ -895,3 +895,31 @@ describe('F-18 — Dubletten und !important (Ratsche)', () => {
         expect(rootBloecke).toBeGreaterThan(1);
     });
 });
+
+
+describe('F-19 — Inline-Stile (Ratsche)', () => {
+    // Stand nach der Umstellung, am 2026-09-07 erhoben. Diese Zahl darf nur
+    // SINKEN. Sie ist bewusst nicht 0:
+    //   25 x display:none  — 102 JS-Stellen schalten style.display; eine
+    //                        Klasse daraus zu machen hiesse, jede anzufassen
+    //   36 x Farbfeld      — die Marker-Swatches der Editorleiste zeigen ihre
+    //                        eigene Farbe und stehen im eingefrorenen Testnetz
+    //   Rest               — Einzelfaelle; ein Stil, der genau einmal vorkommt,
+    //                        ist in einer Klasse nicht besser aufgehoben
+    const INLINE_MAX = 257;
+
+    test('die Zahl der Inline-Stile im Markup steigt nicht wieder', () => {
+        const n = tplFiles.reduce(
+            (sum, f) => sum + (f.content.match(/style="/g) || []).length,
+            0
+        );
+        expect(n).toBeLessThanOrEqual(INLINE_MAX);
+    });
+
+    test('die benannten Klassen sind definiert', () => {
+        ['u-pad-sm', 'u-m-0', 'u-mb-md', 'u-flex-1', 'form-hint', 'meta-text',
+         'modal-sm', 'modal-md', 'modal-lg'].forEach(c => {
+            expect(cssCode).toMatch(new RegExp(`\\.${c}\\s*[,{]`));
+        });
+    });
+});

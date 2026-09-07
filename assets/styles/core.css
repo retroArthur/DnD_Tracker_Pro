@@ -2045,6 +2045,54 @@
         }
         
 
+
+        /* ------------------------------------------------------------
+           F-19: benannte Klassen fuer wiederkehrende Inline-Stile
+           ------------------------------------------------------------
+           350 style="…"-Attribute standen im Markup. Umgestellt sind die
+           WIEDERKEHRENDEN — Muster, die mindestens dreimal vorkamen und
+           eindeutig sind. Bewusst kein Utility-Framework: die App hat keines,
+           und eines einzufuehren waere eine Entwurfsentscheidung, keine
+           Bereinigung.
+
+           NICHT umgestellt und warum:
+             display:none  102 JS-Stellen schalten style.display; eine Klasse
+                           daraus zu machen hiesse, jede davon anzufassen.
+             Farbfelder    die Marker-Swatches der Editorleiste zeigen ihre
+                           eigene Farbe und stehen im eingefrorenen Testnetz.
+             Einzelfaelle  ein Stil, der genau einmal vorkommt, ist in einer
+                           Klasse nicht besser aufgehoben.
+           ------------------------------------------------------------ */
+        .u-m-0 { margin: 0; }
+        .u-mt-0 { margin-top: 0; }
+        .u-mt-sm { margin-top: var(--space-sm); }
+        .u-mt-md { margin-top: var(--space-md); }
+        .u-mb-md { margin-bottom: var(--space-md); }
+        .u-mb-lg { margin-bottom: var(--space-lg); }
+        .u-pad-sm { padding: var(--space-sm); }
+        .u-flex-1 { flex: 1; }
+        .u-w-full { width: 100%; }
+        .u-text-sm { font-size: 0.85em; }
+        .u-rule-bottom { border-bottom: 1px solid var(--border); }
+
+        /* Zwei benannte statt generischer Klassen: sie beschreiben eine
+           Rolle, nicht eine Eigenschaft. */
+        .form-hint {
+            font-size: 0.8em;
+            color: var(--text-dim);
+            margin-bottom: var(--space-xs);
+        }
+
+        .meta-text {
+            color: var(--text-dim);
+            font-size: 11px;
+        }
+
+        /* Modalbreiten: drei Stufen statt dreier Inline-Werte. */
+        .modal-sm { max-width: 400px; }
+        .modal-md { max-width: 500px; }
+        .modal-lg { max-width: 600px; }
+
         /* ------------------------------------------------------------
            F-16: EINE Gestalt je Filterart
            ------------------------------------------------------------
