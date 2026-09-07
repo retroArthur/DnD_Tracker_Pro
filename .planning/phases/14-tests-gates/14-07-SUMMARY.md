@@ -212,3 +212,9 @@ None - keine externe Dienstkonfiguration noetig.
 ---
 *Phase: 14-tests-gates*
 *Completed: 2026-09-07*
+
+## Self-Check: PASSED
+
+- `tsconfig.strict.json` exists on disk
+- `.planning/phases/14-tests-gates/14-07-SUMMARY.md` exists on disk
+- Commits `d595f16`, `bec2237`, `f8ce20e` all present in `git log --oneline --all`
