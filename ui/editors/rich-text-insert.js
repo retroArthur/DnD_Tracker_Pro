@@ -262,6 +262,14 @@ function insertLineBreakAtSelection() {
     editor.addEventListener('blur', cleanupPlaceholder, { once: true });
 }
 function handleEditorKeydown(e) {
+    // Strg/Cmd+Shift+V = ohne Formatierung einfuegen. Der Merker wird hier
+    // gesetzt und im paste-Handler ausgewertet; der Browser liefert im
+    // paste-Ereignis selbst keine Information darueber, welche Tastenkombination
+    // es ausgeloest hat.
+    if ((e.key === 'v' || e.key === 'V') && (e.ctrlKey || e.metaKey) && e.shiftKey) {
+        editorForcePlainPaste = true;
+        return;
+    }
     if (e.key === 'T' && e.ctrlKey && e.shiftKey) {
         e.preventDefault();
         floatingToolbarTarget = e.target;
@@ -299,6 +307,82 @@ function handleEditorKeydown(e) {
 // nur einer Registrierung (z. B. char-notes) sind unveraendert — der Guard
 // greift dort beim ersten (einzigen) Aufruf und hat keinen zweiten Aufruf zu
 // unterdruecken.
+// Wird von Strg/Cmd+Shift+V gesetzt und vom naechsten paste-Ereignis
+// verbraucht. Bewusst modulweit und nicht am Event: das keydown- und das
+// paste-Ereignis sind zwei verschiedene Objekte.
+let editorForcePlainPaste = false;
+
+// Erlaubte Elemente beim formaterhaltenden Einfuegen. Alles andere wird
+// aufgeloest (Inhalt bleibt, Huelle faellt weg).
+const PASTE_ALLOWED_TAGS = new Set([
+    'B', 'STRONG', 'I', 'EM', 'U', 'S', 'STRIKE', 'P', 'BR', 'UL', 'OL', 'LI',
+    'A', 'DIV', 'SPAN', 'H1', 'H2', 'H3', 'TABLE', 'TBODY', 'TR', 'TD', 'TH'
+]);
+
+/**
+ * Bereitet fremdes HTML aus der Zwischenablage auf.
+ *
+ * Der eigentliche Punkt ist das Entfernen ALLER Attribute ausser href an <a>:
+ * fremde Schriftfarben, -groessen und Klassen sind genau die Ursache des
+ * Effekts, den der Handoff als "gelben Wiki-Text" beschreibt — kopierter Text
+ * brachte die Farbe seiner Herkunftsseite mit und blieb im dunklen Thema
+ * unlesbar.
+ *
+ * KEINE Sicherheitskontrolle: die uebernimmt danach window.sanitizeHTML().
+ *
+ * GEPARST UND BEREINIGT WIRD AUSSCHLIESSLICH IM DOMParser-DOKUMENT.
+ *
+ * Das ist keine Stilfrage, sondern der Unterschied zwischen sicher und nicht:
+ *   - div.innerHTML = <fremdes HTML> haengt die Knoten sofort ins LEBENDE
+ *     Dokument; ein <img src="x" onerror="..."> laedt, scheitert und FUEHRT
+ *     DEN HANDLER AUS, bevor irgendeine Bereinigung greift.
+ *   - Auch das Umhaengen der geparsten Knoten in ein
+ *     document.createElement('div') genuegt NICHT: dieses div gehoert dem
+ *     lebenden Dokument, appendChild adoptiert die Knoten dorthin, und der
+ *     Bildladevorgang startet — auch wenn das div nie im Baum haengt.
+ * Beides ist beim Bau dieser Funktion nacheinander passiert und jeweils vom
+ * Sicherheits-Regressionstest in tests/e2e/features/editor-insert.spec.js
+ * gefangen worden ("Einfuege-Fragment mit Ereignis-Attribut und
+ * Skript-Element"). Deshalb: nichts adoptieren, am Ende serialisieren.
+ */
+function sanitizePastedMarkup(html) {
+    const parsed = new DOMParser().parseFromString(html, 'text/html');
+    const holder = parsed.body;
+
+    holder.querySelectorAll('style, script, meta, link, img, svg').forEach(el => el.remove());
+
+    // Ueberschriften auf fetten Absatz abbilden — die Editoren dieser App
+    // kennen keine eigene Ueberschriftenebene.
+    holder.querySelectorAll('h1, h2, h3').forEach(h => {
+        // parsed.createElement, NICHT document.createElement: die neuen Knoten
+        // muessen demselben inerten Dokument gehoeren.
+        const para = parsed.createElement('p');
+        const strong = parsed.createElement('strong');
+        while (h.firstChild) strong.appendChild(h.firstChild);
+        para.appendChild(strong);
+        h.parentNode?.replaceChild(para, h);
+    });
+
+    // Rueckwaerts laufen: das Aufloesen eines Elements veraendert die Liste.
+    const all = Array.from(holder.querySelectorAll('*'));
+    for (let i = all.length - 1; i >= 0; i--) {
+        const el = all[i];
+        if (!PASTE_ALLOWED_TAGS.has(el.tagName)) {
+            const parent = el.parentNode;
+            if (!parent) continue;
+            while (el.firstChild) parent.insertBefore(el.firstChild, el);
+            parent.removeChild(el);
+            continue;
+        }
+        const href = el.tagName === 'A' ? el.getAttribute('href') : null;
+        while (el.attributes.length > 0) {
+            el.removeAttribute(el.attributes[0].name);
+        }
+        if (href) el.setAttribute('href', href);
+    }
+    return holder.innerHTML;
+}
+
 function handleEditorPaste(e) {
     if (e.__dndEditorPasteHandled) return;
     e.__dndEditorPasteHandled = true;
@@ -307,6 +391,14 @@ function handleEditorPaste(e) {
     if (!clipboardData) return;
     const html = clipboardData.getData('text/html');
     const text = clipboardData.getData('text/plain');
+    // Merker verbrauchen, bevor irgendein Zweig zurueckkehrt — sonst wirkt er
+    // auf das uebernaechste Einfuegen nach.
+    const forcePlain = editorForcePlainPaste;
+    editorForcePlainPaste = false;
+    if (forcePlain) {
+        insertTextAtSelection(text);
+        return;
+    }
     if (html && (html.includes('<table') || html.includes('<TABLE'))) {
         const tableMatch = html.match(/<table[\s\S]*?<\/table>/i);
         if (tableMatch) {
@@ -407,6 +499,19 @@ function handleEditorPaste(e) {
             tableHtml += '</table>';
             insertHtmlAtSelection(tableHtml);
             showToast('📊 Tabelle eingefügt (' + lines.length + ' Zeilen)');
+            return;
+        }
+    }
+    // Formaterhaltender Zweig (Handoff 2a, Abschnitt 6). Steht bewusst NACH
+    // Tabelle und TSV und VOR dem Klartext-Fallback.
+    if (html && html.trim()) {
+        const cleaned = sanitizePastedMarkup(html);
+        const sanitizerReachable = typeof window.sanitizeHTML === 'function';
+        const safe = sanitizerReachable ? window.sanitizeHTML(cleaned) : '';
+        // Fail-closed wie im Tabellenzweig: ohne erreichbaren Sanitizer oder
+        // ohne verbleibenden Inhalt wird nur der Klartext eingefuegt.
+        if (safe.trim()) {
+            insertHtmlAtSelection(safe);
             return;
         }
     }

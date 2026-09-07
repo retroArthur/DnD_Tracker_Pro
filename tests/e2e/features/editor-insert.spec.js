@@ -717,3 +717,87 @@ test.describe('Persistenz-Roundtrip (Insert-Call-Sites)', () => {
         expect(tdCount).toBe(2);
     });
 });
+
+// NEU mit Variante 2a (W-16) — NICHT Teil des eingefrorenen Phase-9-Netzes.
+test.describe('Einfuegefilter (2a, W-16)', () => {
+    // pasteInto ist in den bestehenden describe-Bloecken jeweils lokal
+    // definiert; hier eine eigene, gleichlautende Fassung statt einer
+    // Umstrukturierung des eingefrorenen Netzes.
+    async function pasteInto(page, editorSelector, { html, text }) {
+        await page.evaluate(
+            ({ selector, htmlData, textData }) => {
+                const el = document.querySelector(selector);
+                el.focus();
+                const dt = new DataTransfer();
+                if (htmlData) dt.setData('text/html', htmlData);
+                if (textData) dt.setData('text/plain', textData);
+                const evt = new ClipboardEvent('paste', {
+                    clipboardData: dt,
+                    bubbles: true,
+                    cancelable: true
+                });
+                el.dispatchEvent(evt);
+            },
+            { selector: editorSelector, htmlData: html, textData: text }
+        );
+    }
+
+    test.beforeEach(async ({ page }) => {
+        await gotoBundleFresh(page);
+    });
+
+    test('erhaelt Fett/Kursiv, entfernt aber fremde Farben, Groessen und Klassen', async ({
+        page
+    }) => {
+        await openFreshWikiForm(page, 'Filter Formatierung');
+        const editor = page.locator('#wiki-content');
+
+        // Genau das Muster, das der Handoff als Ursache des "gelben
+        // Wiki-Textes" benennt: kopierter Text bringt die Schriftfarbe seiner
+        // Herkunftsseite mit und bleibt im dunklen Thema unlesbar.
+        await pasteInto(page, '#wiki-content', {
+            html:
+                '<p style="color:#ffcc00;font-size:28px" class="fremd">' +
+                '<b>Fett</b> und <i>kursiv</i></p>',
+            text: 'Fett und kursiv'
+        });
+
+        const html = await editor.evaluate(el => el.innerHTML);
+        expect(html).toContain('<b>Fett</b>');
+        expect(html).toContain('<i>kursiv</i>');
+        expect(html).not.toContain('ffcc00');
+        expect(html).not.toContain('28px');
+        expect(html).not.toContain('fremd');
+    });
+
+    test('Ueberschriften werden zu fetten Absaetzen', async ({ page }) => {
+        await openFreshWikiForm(page, 'Filter Ueberschrift');
+        const editor = page.locator('#wiki-content');
+        await pasteInto(page, '#wiki-content', {
+            html: '<h2>Das Kontor</h2>',
+            text: 'Das Kontor'
+        });
+        const html = await editor.evaluate(el => el.innerHTML);
+        expect(html).not.toContain('<h2');
+        expect(html).toContain('<strong>Das Kontor</strong>');
+    });
+
+    test('Links behalten ihr Ziel, verlieren aber alles andere', async ({ page }) => {
+        await openFreshWikiForm(page, 'Filter Link');
+        const editor = page.locator('#wiki-content');
+        await pasteInto(page, '#wiki-content', {
+            html: '<a href="https://example.org" class="x" style="color:red" target="_blank">Ziel</a>',
+            text: 'Ziel'
+        });
+        const html = await editor.evaluate(el => el.innerHTML);
+        expect(html).toContain('href="https://example.org"');
+        // class und style entfernt der Einfuegefilter.
+        expect(html).not.toContain('class=');
+        expect(html).not.toContain('color:red');
+        // target/rel setzt sanitizeHTML danach ABSICHTLICH wieder — das ist die
+        // Link-Haertung des Projekts (rel=noopener gegen window.opener-Zugriff),
+        // nicht ein durchgerutschtes Fremdattribut. Der Filter hatte das
+        // urspruengliche target="_blank" zuvor entfernt.
+        expect(html).toContain('rel="noopener noreferrer"');
+    });
+});
