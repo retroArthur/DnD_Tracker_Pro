@@ -14,7 +14,7 @@
 
 import { test, expect } from '@playwright/test';
 
-// file://-Basis analog zu tests/e2e/crud/party.spec.js und welt-story.spec.js
+// file://-Basis analog zu tests/e2e/crud/party.spec.js und den Welt-Feature-Specs
 const APP_URL = `file:///${process.cwd().replace(/\\/g, '/')}/dist/dnd-tracker-bundled.html`;
 
 /**

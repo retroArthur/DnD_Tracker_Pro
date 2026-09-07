@@ -1,7 +1,7 @@
 /**
  * E2E Tests — Kalender-/Timeline-Tab
  *
- * Verschoben aus tests/e2e/features/welt-story.spec.js (Phase 14, TEST-04/DEBT-28).
+ * Aufgeteilt aus der frueheren Welt-&-Story-Sammel-Spec (Phase 14, TEST-04/DEBT-28).
  * Ursprünglich Teil der Phase-5-„Wave-0"-Sammel-Spec für Welt & Story; hier als
  * dedizierte Datei für den Timeline-Bereich (features/timeline/). Die Blockbeschriftung
  * "Kalender-Tab" ist Testtext und bleibt unverändert — Verhaltensneutralität (D-05).
