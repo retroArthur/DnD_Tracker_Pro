@@ -55,7 +55,18 @@ const LOADER_PATH = path.join(REPO_ROOT, 'loader.js');
 const TESTS_DIR = path.join(REPO_ROOT, 'tests');
 
 /**
- * Sammelt rekursiv alle Dateipfade unter `dir`.
+ * Sammelt rekursiv alle `.js`-Dateipfade unter `dir`.
+ *
+ * CR-01-Fix (14-REVIEW.md, unabhaengig bestaetigt in 14-VERIFICATION.md
+ * GAP-01/TEST-05): auf `.js`-Dateien beschraenkt, analog zum engeren Scope
+ * von `tests/unit/eslint-globals-freshness.test.js`. Ohne diesen Filter
+ * sammelte `walk()` z.B. auch `tests/build/test_build_deduplication.py`
+ * ein — eine Python-Datei, die `loader.js`-Modulpfade rein zufaellig als
+ * String in ihren eigenen Kommentaren/Assertions erwaehnt (fuer einen
+ * voellig anderen Zweck: Pruefung des Build-Dedup-Mechanismus). Das machte
+ * `isCovered()` fuer 8 real ungetestete JS-Module faelschlich gruen (siehe
+ * MODULE_TEST_EXCEPTIONS unten fuer die jetzt sichtbar aufgenommenen
+ * Eintraege).
  */
 function walk(dir) {
     let results = [];
@@ -63,7 +74,7 @@ function walk(dir) {
         const full = path.join(dir, entry.name);
         if (entry.isDirectory()) {
             results = results.concat(walk(full));
-        } else {
+        } else if (full.endsWith('.js')) {
             results.push(full);
         }
     }
@@ -103,21 +114,40 @@ function isCovered(relModulePath) {
 
 // Alphabetisch sortierte Ausnahmeliste, ein Pfad pro Zeile. Erhebungsdatum:
 // 2026-09-07 (Plan 14-09), nach den Aufteilungen aus 14-04/14-05.
+//
+// CR-01-Nachtrag (14-REVIEW.md, unabhaengig bestaetigt in 14-VERIFICATION.md
+// GAP-01/TEST-05), ebenfalls 2026-09-07: die acht mit "-- CR-01" markierten
+// Eintraege wurden erst durch den walk()-.js-Filter-Fix (oben) sichtbar. Sie
+// waren zuvor faelschlich "abgedeckt", weil ihr Pfad zufaellig in
+// tests/build/test_build_deduplication.py (einer Python-Datei, thematisch
+// unabhaengig von JS-Testabdeckung) erwaehnt wird. Tatsaechlich haben sie
+// null JS-Testabdeckung. Gemaess D-13 dieser Phase (14-CONTEXT.md) ist die
+// Ausnahmeliste der vorgesehene, datierte Weg fuer diesen Fund — echte Tests
+// fuer diese acht Widget-/Editor-Module zu schreiben ist eine eigene Phase,
+// keine Review-Fix-Aufgabe. Verifiziert per
+// `grep -rl "<pfad>" tests/ --include="*.js"` -> kein Treffer (Stand
+// 2026-09-07).
 const MODULE_TEST_EXCEPTIONS = [
     'core/themes.js',
     'features/bestiary/bestiary-actions.js',
     'features/bestiary/bestiary-crud.js',
+    'features/bestiary/bestiary-editor.js', // -- CR-01, 2026-09-07: s. Kommentar oben
     'features/bestiary/bestiary-render.js',
     'features/command-palette/command-palette.js',
     'features/dice-stats/dice-stats-render.js',
     'features/dice/dice-core.js',
     'features/dice/dice-favorites.js',
+    'features/dmscreen/dmscreen-widgets-base.js', // -- CR-01, 2026-09-07: s. Kommentar oben
+    'features/dmscreen/dmscreen-widgets-combat.js', // -- CR-01, 2026-09-07: s. Kommentar oben
+    'features/dmscreen/dmscreen-widgets-reference.js', // -- CR-01, 2026-09-07: s. Kommentar oben
     'features/encounter-calculator.js',
     'features/encounters/encounters-crud.js',
     'features/encounters/monster-templates.js',
     'features/fraktionen/fraktionen-crud.js',
     'features/fraktionen/fraktionen-render.js',
+    'features/initiative-combat-widgets.js', // -- CR-01, 2026-09-07: s. Kommentar oben
     'features/initiative-extras.js',
+    'features/initiative-loot.js', // -- CR-01, 2026-09-07: s. Kommentar oben
     'features/initiative-statblock.js',
     'features/locations/locations-crud.js',
     'features/locations/locations-render.js',
@@ -146,6 +176,7 @@ const MODULE_TEST_EXCEPTIONS = [
     'features/shops/shop-export.js',
     'features/shops/shops-core.js',
     'features/soundboard/soundboard-render.js',
+    'features/spells/spell-manager.js', // -- CR-01, 2026-09-07: s. Kommentar oben
     'features/timeline/timeline-crud.js',
     'features/timeline/timeline-render.js',
     'features/timers/timers.js',
@@ -172,6 +203,7 @@ const MODULE_TEST_EXCEPTIONS = [
     'ui/actions/shop-actions.js',
     'ui/actions/wiki-actions.js',
     'ui/dom-builder.js',
+    'ui/editors/rich-text-toolbars.js', // -- CR-01, 2026-09-07: s. Kommentar oben
     'ui/layout-profiles.js',
     'ui/lazy-loading.js',
     'ui/safe-render.js',
