@@ -34,7 +34,7 @@
 }
 
 /* Mobile: Icon-only mit Tooltip */
-@media (max-width: 640px) {
+@media (max-width: 600px) {
     .pwa-install-btn .pwa-install-text {
         display: none;
     }

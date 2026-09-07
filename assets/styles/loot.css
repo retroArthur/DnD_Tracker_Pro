@@ -113,7 +113,7 @@
             gap: 16px;
         }
         
-        @media (max-width: 768px) {
+        @media (max-width: 900px) {
             .loot-form-grid {
                 grid-template-columns: 1fr;
             }

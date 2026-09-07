@@ -565,3 +565,51 @@ describe('F-19 — Stapel-Leiter', () => {
         expect(cssCode).toMatch(/\.editor-block-handle[\s\S]{0,400}?z-index:\s*var\(--z-floating\)/);
     });
 });
+
+
+describe('F-03 — eine Einheit', () => {
+    test('keine rem-Werte mehr ausserhalb der Schriftdefinitionen', () => {
+        // Das Welt-Modul rechnete in rem, der Rest der App in px — gleich
+        // gemeinte Abstaende liefen beim Zoomen auseinander.
+        const scope = withoutComments(
+            cssFiles.filter(f => f.name !== 'fonts.css').map(f => f.content).join('\n')
+        );
+        const rems = scope.match(/\d*\.?\d+rem/g) || [];
+        expect(rems).toEqual([]);
+    });
+
+    test('keine toten Fallbacks mehr an den Abstands-Tokens', () => {
+        // var(--space-md, 1rem) behauptete 16px, waehrend das Token 12px ist.
+        // Seit F-01 ist es definiert, der Fallback also unerreichbar — und
+        // widerspraechlich.
+        const mit = cssCode.match(/var\(--space-[a-z]+\s*,[^)]*\)/g) || [];
+        expect(mit).toEqual([]);
+    });
+});
+
+describe('F-12 — drei Breakpoint-Grenzen', () => {
+    test('hoechstens vier verschiedene Grenzen in allen Media Queries', () => {
+        const conds = cssCode.match(/@media[^{]*/g) || [];
+        const grenzen = new Set();
+        conds.forEach(c => {
+            for (const m of c.matchAll(/(?:max|min)-width:\s*(\d+)px/g)) {
+                // min-Grenzen sind die Partner der max-Grenzen (601/901/1201)
+                grenzen.add(String(Math.round(parseInt(m[1], 10) / 100) * 100));
+            }
+        });
+        expect(grenzen.size).toBeLessThanOrEqual(4);
+        expect([...grenzen].sort()).toEqual(['1200', '600', '900']);
+    });
+
+    test('die Grenzen sind genau 600, 900 und 1200 (bzw. 601/901/1201)', () => {
+        const conds = cssCode.match(/@media[^{]*/g) || [];
+        const erlaubt = new Set(['600', '900', '1200', '601', '901', '1201']);
+        const fremd = [];
+        conds.forEach(c => {
+            for (const m of c.matchAll(/(?:max|min)-width:\s*(\d+)px/g)) {
+                if (!erlaubt.has(m[1])) fremd.push(m[1]);
+            }
+        });
+        expect([...new Set(fremd)]).toEqual([]);
+    });
+});

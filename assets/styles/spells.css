@@ -575,7 +575,7 @@
         }
 
         /* Phase 4: Mobile Bottom Toolbar */
-        @media (max-width: 768px) {
+        @media (max-width: 900px) {
             /* Die frueher hier stehenden '.editor-wrapper'-Regeln sind
                entfallen: keine davon war erreichbar, beide waeren mit der
                Schale aus W-18 scharf geworden. Die Schale heisst .editor-shell
@@ -634,7 +634,7 @@
             }
         }
 
-        @media (min-width: 769px) {
+        @media (min-width: 901px) {
             .floating-toolbar .swipe-indicator {
                 display: none;
             }

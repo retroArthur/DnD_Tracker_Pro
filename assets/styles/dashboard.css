@@ -1342,7 +1342,7 @@
             margin-top: 6px;
         }
         
-        @media (min-width: 500px) {
+        @media (min-width: 601px) {
             .spell-slots-grid {
                 grid-template-columns: repeat(10, 1fr);
                 gap: 3px;
@@ -1722,7 +1722,7 @@
             display: none;
         }
         
-        @media (max-width: 768px) {
+        @media (max-width: 900px) {
             .char-attributes-grid { grid-template-columns: repeat(3, 1fr); }
             .char-saves-grid { grid-template-columns: repeat(3, 1fr); }
             .char-combat-grid { grid-template-columns: repeat(3, 1fr); }
@@ -1794,7 +1794,7 @@
         }
         
         /* Responsive */
-        @media (max-width: 768px) {
+        @media (max-width: 900px) {
             .main-content { padding: 10px; }
             .party-grid, .npc-grid, .encounter-grid, .links-grid, .loot-list { grid-template-columns: 1fr; }
             .locations-list, .spell-list { justify-content: center; }
@@ -2890,7 +2890,7 @@
 }
 
 /* Responsive */
-@media (max-width: 480px) {
+@media (max-width: 600px) {
     .qref-panel {
         width: calc(100vw - 20px);
         right: 10px;

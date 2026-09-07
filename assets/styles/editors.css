@@ -173,7 +173,7 @@
             }
         }
 
-        @media (max-width: 680px) {
+        @media (max-width: 600px) {
             .editor-toolbar [data-tb='mid'] {
                 display: none !important;
             }
@@ -329,7 +329,7 @@
             opacity: 0.75;
         }
 
-        @media (max-width: 680px) {
+        @media (max-width: 600px) {
             /* Der Hinweis nennt eine Tastenkombination — auf einem Geraet
                ohne Tastatur ist er nutzlos und kostet nur Platz. */
             .editor-shell-foot .esh-hint {
@@ -445,7 +445,7 @@
         }
 
         /* Responsive: Mobile */
-        @media (max-width: 768px) {
+        @media (max-width: 900px) {
             .editor-toolbar {
                 padding: 6px 8px;
                 gap: 3px;

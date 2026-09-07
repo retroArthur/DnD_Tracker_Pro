@@ -500,7 +500,7 @@
     }
 }
 
-@media (max-width: 480px) {
+@media (max-width: 600px) {
     .bestiary-statblock-attrs {
         grid-template-columns: repeat(6, 1fr);
     }
@@ -667,7 +667,7 @@
 }
 
 /* Mobile: collapse speed/attr grids */
-@media (max-width: 480px) {
+@media (max-width: 600px) {
     .bst-speed-grid {
         grid-template-columns: repeat(3, 1fr);
     }

@@ -182,7 +182,7 @@
 }
 
 /* Responsive: auf schmalen Bildschirmen stacked Layout */
-@media (max-width: 480px) {
+@media (max-width: 600px) {
     .backup-entry {
         grid-template-columns: 1fr 80px 60px 90px;
         gap: 4px;

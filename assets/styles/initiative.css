@@ -34,7 +34,7 @@
         }
 
         .bf-label {
-            font-size: 0.75rem;
+            font-size: 12px;
             color: var(--text-dim);
             font-weight: 600;
         }
@@ -51,7 +51,7 @@
             gap: 5px;
             padding: 4px 10px;
             border-radius: var(--radius-lg);
-            font-size: 0.75rem;
+            font-size: 12px;
             font-weight: 500;
         }
 
@@ -69,7 +69,7 @@
 
         .bf-xp {
             margin-left: auto;
-            font-size: 0.8rem;
+            font-size: 13px;
             color: var(--gold);
             font-weight: 600;
         }
@@ -85,7 +85,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 0.7rem;
+            font-size: 11px;
             transition: all 0.2s;
         }
 
@@ -1245,12 +1245,12 @@
 }
 
 .xp-dist-autosum-label {
-    font-size: 0.85rem;
+    font-size: 14px;
     color: var(--text-dim);
 }
 
 .xp-dist-autosum-value {
-    font-size: 1.2rem;
+    font-size: 19px;
     font-weight: 700;
     color: var(--gold);
 }
@@ -1262,7 +1262,7 @@
     border: 1px solid var(--border);
     border-radius: var(--radius-md);
     color: var(--text);
-    font-size: 1rem;
+    font-size: 16px;
 }
 
 .xp-dist-total-input:focus {
@@ -1277,12 +1277,12 @@
     padding: 8px 12px;
     background: var(--bg-card);
     border-radius: var(--radius-md);
-    font-size: 0.9rem;
+    font-size: 14px;
     color: var(--text-dim);
 }
 
 .xp-dist-icon {
-    font-size: 1.1rem;
+    font-size: 18px;
 }
 
 .xp-dist-preview {
@@ -1294,7 +1294,7 @@
     background: rgba(var(--gold-rgb), 0.1);
     border-left: 3px solid var(--gold);
     border-radius: var(--radius-sm);
-    font-size: 0.9rem;
+    font-size: 14px;
 }
 
 .xp-dist-preview-hint {
@@ -1315,7 +1315,7 @@
 }
 
 .xp-dist-char-select-label {
-    font-size: 0.85rem;
+    font-size: 14px;
     color: var(--text-dim);
 }
 
@@ -1361,20 +1361,20 @@
 
 .xp-dist-char-name {
     flex: 1;
-    font-size: 0.9rem;
+    font-size: 14px;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
 }
 
 .xp-dist-char-xp {
-    font-size: 0.8rem;
+    font-size: 13px;
     color: var(--text-dim);
     white-space: nowrap;
 }
 
 .xp-dist-char-hp {
-    font-size: 0.78rem;
+    font-size: 12px;
     color: var(--text-dim);
     white-space: nowrap;
 }

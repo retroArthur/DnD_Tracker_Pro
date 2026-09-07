@@ -1836,14 +1836,14 @@
 
 .sb-section-title {
     margin: 0 0 4px 0;
-    font-size: 1rem;
+    font-size: 16px;
     color: var(--gold);
     font-weight: 600;
 }
 
 .sb-section-hint {
     margin: 0 0 12px 0;
-    font-size: 0.8rem;
+    font-size: 13px;
     color: var(--text-dim);
 }
 
@@ -1883,7 +1883,7 @@
 
 .sb-library-name {
     flex: 1;
-    font-size: 0.88rem;
+    font-size: 14px;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -1891,14 +1891,14 @@
 }
 
 .sb-library-size {
-    font-size: 0.8rem;
+    font-size: 13px;
     color: var(--text-dim);
     white-space: nowrap;
 }
 
 .sb-remove-btn {
     opacity: 0.6;
-    font-size: 0.85rem;
+    font-size: 14px;
 }
 
 .sb-remove-btn:hover {
@@ -1939,7 +1939,7 @@
 .sb-scene-title {
     flex: 1;
     font-weight: 600;
-    font-size: 0.95rem;
+    font-size: 15px;
     color: var(--text);
     min-width: 80px;
 }
@@ -1951,7 +1951,7 @@
     background: var(--bg-elevated);
     border: 1px solid var(--gold);
     border-radius: var(--radius-sm);
-    font-size: 0.75rem;
+    font-size: 12px;
     color: var(--gold);
     white-space: nowrap;
 }
@@ -2002,7 +2002,7 @@
 
 .sb-track-name {
     max-width: 100%;
-    font-size: 0.83rem;
+    font-size: 13px;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -2011,7 +2011,7 @@
 
 .sb-loop-btn {
     flex-shrink: 0;
-    font-size: 0.8rem;
+    font-size: 13px;
     opacity: 0.4;
     cursor: pointer;
 }
@@ -2049,7 +2049,7 @@
 }
 
 .sb-volume-pct {
-    font-size: 0.75rem;
+    font-size: 12px;
     color: var(--text-dim);
     min-width: 34px;
     text-align: right;
@@ -2057,7 +2057,7 @@
 
 .sb-remove-track-btn {
     opacity: 0.5;
-    font-size: 0.8rem;
+    font-size: 13px;
 }
 
 .sb-remove-track-btn:hover {
@@ -2075,7 +2075,7 @@
 
 .sb-add-track-select {
     flex: 1;
-    font-size: 0.83rem;
+    font-size: 13px;
     padding: 4px 6px;
     background: var(--bg-elevated);
     border: 1px solid var(--border-color);
@@ -2087,12 +2087,12 @@
 .sb-empty-hint {
     margin: 8px 0;
     color: var(--text-dim);
-    font-size: 0.85rem;
+    font-size: 14px;
     font-style: italic;
 }
 
 /* Responsive */
-@media (max-width: 480px) {
+@media (max-width: 600px) {
     .sb-scene-header {
         flex-direction: column;
         align-items: flex-start;
@@ -2133,7 +2133,7 @@
     background: transparent;
     color: var(--text-dim);
     cursor: pointer;
-    font-size: 0.9rem;
+    font-size: 14px;
     transition: background 0.15s, color 0.15s;
 }
 
@@ -2165,11 +2165,11 @@
     color: var(--text-dim);
     font-style: italic;
     margin: 8px 0 0;
-    font-size: 0.85rem;
+    font-size: 14px;
 }
 
 .ds-expected-note {
-    font-size: 0.8rem;
+    font-size: 13px;
     color: var(--text-dim);
     margin: 6px 0 0;
     text-align: right;
@@ -2191,7 +2191,7 @@
 .ds-rate-chip {
     padding: 4px 12px;
     border-radius: var(--radius-lg);
-    font-size: 0.85rem;
+    font-size: 14px;
     font-weight: 600;
 }
 
@@ -2209,7 +2209,7 @@
 
 .ds-rate-total {
     color: var(--text-dim);
-    font-size: 0.82rem;
+    font-size: 13px;
     margin-left: auto;
 }
 
@@ -2222,7 +2222,7 @@
 
 .ds-breakdown-title {
     margin: 0 0 10px;
-    font-size: 0.9rem;
+    font-size: 14px;
     color: var(--text-dim);
     text-transform: uppercase;
     letter-spacing: 0.05em;
@@ -2231,7 +2231,7 @@
 .ds-breakdown-table {
     width: 100%;
     border-collapse: collapse;
-    font-size: 0.88rem;
+    font-size: 14px;
 }
 
 .ds-breakdown-table th {
@@ -2240,7 +2240,7 @@
     color: var(--text-dim);
     font-weight: 600;
     border-bottom: 1px solid var(--border);
-    font-size: 0.8rem;
+    font-size: 13px;
 }
 
 .ds-breakdown-table td {
@@ -2256,5 +2256,5 @@
 .ds-loading {
     color: var(--text-dim);
     text-align: center;
-    padding: 2rem;
+    padding: 32px;
 }

@@ -1552,7 +1552,7 @@
         
         /* Improved Form Labels */
         .form-group label {
-            font-size: 0.8125rem;
+            font-size: 13px;
             margin-bottom: 4px;
             text-transform: uppercase;
             letter-spacing: 0.03em;
