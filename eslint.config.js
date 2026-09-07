@@ -119,7 +119,13 @@ export default tseslint.config(
                     varsIgnorePattern: '^_'
                 }
             ],
-            'no-undef': 'warn',
+            // Die Namensliste (eslint.generated-globals.js) wird aus loader.js
+            // MODULES generiert (ARCH-01, D-08) und per Drift-Waechter
+            // (tests/unit/eslint-globals-freshness.test.js) aktuell gehalten —
+            // ein Fund hier ist ein echter fehlender Bezeichner, kein
+            // Konfigurationsmangel. `npm run globals:generate` regeneriert die
+            // Liste nach Aenderungen an loader.js MODULES.
+            'no-undef': 'error',
             'no-console': 'off',
             'no-empty': 'warn',
             'no-prototype-builtins': 'off',
