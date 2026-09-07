@@ -15,7 +15,6 @@ const ALLOWED_CHANGE_HANDLERS = new Set([
     'setEncFilter',
     'setLocFilter',
     'setSpellFilter',
-    'populateImportNodesList',
     'filterAssignSpells',
     'filterAssignItems',
     // Neu hinzugefügt für Migration von inline handlers

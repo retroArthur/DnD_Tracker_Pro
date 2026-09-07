@@ -40,7 +40,7 @@ jobs:
         with:
           python-version: '3.x'
       - run: npm ci
-      - run: npm test
+      - run: npm run test:coverage
       - run: pip install -r requirements-dev.txt
       - run: python build.py
       - run: python -m pytest tests/build/ -v
