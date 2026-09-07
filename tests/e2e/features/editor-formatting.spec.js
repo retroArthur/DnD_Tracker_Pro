@@ -804,3 +804,55 @@ test.describe('Aktiver Formatzustand in der Leiste (2a)', () => {
         await expect(boldBtn).not.toHaveClass(/format-active/, { timeout: 3000 });
     });
 });
+
+// NEU mit Variante 2a (W-11) — NICHT Teil des eingefrorenen Phase-9-Netzes.
+//
+// Warum es diesen Test gibt, obwohl er trivial aussieht: der Handoff verlangt
+// in Abschnitt 1 eine Normalisierungsschleife, die bei jedem input-Ereignis
+// ueber die Schreibflaeche laeuft und die dunkle Schriftfarbe in Markern
+// wiederherstellt. Diese Schleife ist hier BEWUSST NICHT gebaut worden.
+//
+// Der Grund ist eine Eigenschaft unserer Umsetzung, nicht Nachlaessigkeit: der
+// Prototyp des Handoffs setzt den Marker per execCommand('hiliteColor'), was
+// getrennte Hintergrund-Elemente erzeugt, die beim Weitertippen die
+// Schriftfarbe verlieren. applyMarkerToSelection() erzeugt stattdessen EIN
+// <mark>, das Hintergrund und Schriftfarbe gemeinsam traegt — der Browser
+// fuehrt dieses Element beim Tippen unveraendert fort.
+//
+// Dieser Test haelt genau diese Voraussetzung fest. Faellt er, ist die
+// Begruendung fuer das Weglassen der Normalisierung hinfaellig und die
+// Schleife muss nachgeruestet werden.
+test.describe('Marker-Haltbarkeit beim Weitertippen (2a, W-11-Begruendung)', () => {
+    test.beforeEach(async ({ page }) => {
+        await gotoBundleFresh(page);
+    });
+
+    test('Tippen innerhalb eines Markers erhaelt die dunkle Schriftfarbe', async ({ page }) => {
+        const result = await page.evaluate(() => {
+            const ed = document.createElement('div');
+            ed.className = 'rich-editor';
+            ed.contentEditable = 'true';
+            document.body.appendChild(ed);
+            ed.innerHTML = '<p>Wache Passiv 13</p>';
+            const textNode = ed.querySelector('p').firstChild;
+            const range = document.createRange();
+            range.setStart(textNode, 0);
+            range.setEnd(textNode, 5);
+            const sel = window.getSelection();
+            sel.removeAllRanges();
+            sel.addRange(range);
+            window.applyMarkerToSelection(ed, '#fbbf24', null);
+            // Weitertippen im Marker
+            ed.querySelector('mark').firstChild.appendData('XYZ');
+            const inside = ed.innerHTML;
+            // Weitertippen hinter dem Marker
+            ed.querySelector('p').appendChild(document.createTextNode(' danach'));
+            return { inside, outside: ed.innerHTML };
+        });
+
+        expect(result.inside).toContain('color: rgb(20, 20, 20)');
+        expect(result.inside).toContain('>WacheXYZ<');
+        // Der Text hinter dem Marker darf NICHT mit hineingezogen werden
+        expect(result.outside).toContain('</mark> Passiv 13 danach');
+    });
+});
