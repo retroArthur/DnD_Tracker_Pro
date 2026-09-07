@@ -2,26 +2,26 @@
 gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: Schulden-Abbau
-current_phase: 14
 status: completed
 stopped_at: Phase 14 complete — all phases complete
-last_updated: "2026-09-07T10:11:14.279Z"
+last_updated: "2026-09-07T10:49:18.522Z"
 last_activity: 2026-09-07
-last_activity_desc: Phase 14 complete
-state_head: aa63a53cc74a578bf074a576cbcad0ecda0a6ae2
+last_activity_desc: Milestone v1.2 completed and archived
+state_head: dedc8538eb706d49cae3eb337e5f32bac7f24ea3
 progress:
   total_phases: 3
   completed_phases: 2
   total_plans: 38
   completed_plans: 38
   percent: 67
+current_phase: 14
 ---
 
 # Project State: D&D Kampagnen-Tracker Pro — Schulden-Abbau
 
 **Last Updated:** 2026-09-06
 **Milestone:** v1.2 „Schulden-Abbau" — Phase 12 abgeschlossen (17/17 Pläne), Phase 13 abgeschlossen (12/12 Pläne)
-**Status:** All phases complete
+**Status:** v1.2 milestone complete
 
 **Progress:** [██████████████████████] 29/29 plans ([███░░░░░░░] 33%) · 2/3 Phasen des Milestones
 
@@ -39,14 +39,10 @@ See: `.planning/PROJECT.md` (Stand 2026-09-05)
 
 ## Current Position
 
-Phase: 14
-Plan: Not started
-Status: Executing Phase 14
-Last activity: 2026-09-07 — Phase 14 complete
-
-**Nächster Schritt:** `/gsd-discuss-phase 14`. Phase 13 ist abgeschlossen — 12/12 Pläne, Verifikation `passed` (7/8 Must-Haves belegt, Erfolgskriterium 2 als vorab benannte, gemessene Abweichung freigegeben: D-09/D-10 halten den Undo-Snapshot bewusst vollständig, gemessen 0,922 ms Median). Code-Review `issues_found` → beide Warnungen behoben (WR-01 insert-link-Guards, WR-02 Konsolen-Notausgang + unbedingte Whitelist-Protokollierung). Suiten: Jest 1089/1089 (41 Suites), Playwright 321 passed / 2 skipped, `pytest tests/build` 24/24, ESLint 1 vorbestehender Fehler (`systems/avatars.js:17`). Offen für Phase 14: der Toast-Race aus der bekannten Vorbelastung sowie IN-01 aus `13-REVIEW.md` (vorbestehendes Doppel-Feuern der DM-Screen-Widget-Checkbox).
-
-**Aus Phase 12 mitzunehmen:** Playwright läuft gegen `dist/dnd-tracker-bundled.html`, `npm run build` schreibt aber nur den Production-Bundle — vor jedem E2E-Lauf `python build.py` fahren (Befund T-12-70, `12-SECURITY.md`). Offen und bewusst ausgeklammert: vier Nebenbefunde aus `12-VALIDATION.md` (`full-export.js:70` und `:181`, `soundboard-player.js:257`, `file-backup-manager.js:273`), IN-01 aus `12-REVIEW.md` (veralteter Kommentar in `loader.js:9`), sowie 14 unbestätigte Threat-Einwände in der Triage-Liste von `12-SECURITY.md`.
+Phase: Milestone v1.2 complete
+Plan: —
+Status: Awaiting next milestone
+Last activity: 2026-09-07 — Milestone v1.2 completed and archived
 
 ### Historisch — Kontext der abgeschlossenen Phase 12
 
