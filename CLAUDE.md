@@ -2,7 +2,7 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-**Version:** 2.6.1 | **Last Updated:** 2026-07-26
+**Version:** 2.6.1 | **Last Updated:** 2026-09-07
 
 ## Project Overview
 
@@ -450,7 +450,43 @@ function deleteEntity(id) {
 - **Language:** German (UI text, D&D terms, comments)
 - **Indentation:** 4 spaces
 - **Section markers:** `// [SECTION:MODULE_NAME]`
-- **execCommand-Ablösung (abgeschlossen, Phase 9):** `ui/editors/rich-text.js` enthält keinen Aufruf der deprecated `document.execCommand`-API mehr. Formatierung, Schriftart/-größe, Format-Entfernen, Einfügen (Zwischenablage/Tabelle) und Zeilenumbruch laufen über Selection/Range-DOM-Operationen. Für neue Editor-Funktionalität diese Hilfsfunktionen verwenden statt `execCommand` wiederzubeleben: `wrapRangeWithElement()`/`closestEditorAncestor()` (generische Tag-Wrap-/Toggle-Erkennung), `clearInlineFormattingAtSelection()` (Format entfernen, inkl. Tag-Unwrap), `applyFontFamilyToSelection()`/`applyFontSizeToSelection()` (Schriftart/-größe), `insertHtmlAtSelection()`/`insertTextAtSelection()`/`insertLineBreakAtSelection()` (Einfügen/Zeilenumbruch). Ein vierteiliges Regressionsnetz (`tests/e2e/features/editor-formatting.spec.js`, `editor-floating.spec.js`, `editor-insert.spec.js`, `editor-smoke.spec.js`, 80 Tests) läuft in der vollen E2E-Suite mit und ist die Schutzschicht für künftige Editor-Änderungen — vor jeder Änderung an `ui/editors/rich-text.js` laufen lassen. Außerhalb des Editor-Moduls bestehen noch drei bewusst nicht migrierte Aufrufe: `systems/entity-links.js:108`, `features/wiki/wiki.js:819`, `ui/actions/system-actions.js:79` (siehe `.planning/codebase/CONCERNS.md`).
+- **execCommand-Ablösung (abgeschlossen, Phase 9):** `ui/editors/rich-text.js` enthält keinen Aufruf der deprecated `document.execCommand`-API mehr. Formatierung, Schriftart/-größe, Format-Entfernen, Einfügen (Zwischenablage/Tabelle) und Zeilenumbruch laufen über Selection/Range-DOM-Operationen. Für neue Editor-Funktionalität diese Hilfsfunktionen verwenden statt `execCommand` wiederzubeleben: `wrapRangeWithElement()`/`closestEditorAncestor()` (generische Tag-Wrap-/Toggle-Erkennung), `clearInlineFormattingAtSelection()` (Format entfernen, inkl. Tag-Unwrap), `applyFontFamilyToSelection()`/`applyFontSizeToSelection()` (Schriftart/-größe), `insertHtmlAtSelection()`/`insertTextAtSelection()`/`insertLineBreakAtSelection()` (Einfügen/Zeilenumbruch). Ein vierteiliges Regressionsnetz (`tests/e2e/features/editor-formatting.spec.js`, `editor-floating.spec.js`, `editor-insert.spec.js`, `editor-smoke.spec.js`, 114 Tests) läuft in der vollen E2E-Suite mit und ist die Schutzschicht für künftige Editor-Änderungen — vor jeder Änderung an einem `ui/editors/`-Modul laufen lassen. **Stand 2026-09-07 (Variante 2a, W-21):** der Quellbaum enthält **null** Aufrufe. Die früher hier genannten drei verbliebenen Aufrufe (`systems/entity-links.js:108`, `features/wiki/wiki.js:819`, `ui/actions/system-actions.js:79`) existieren nicht mehr; die Angabe war überholt. Zwei verbliebene Nennungen in `utils/basic.js` sind nachgestellte Kommentare, die erklären, warum `<font face|size>` in der Sanitizer-Erlaubnisliste steht — keine Aufrufe. Die Schranke galt bis dahin nur für `ui/editors/rich-text.js`; sie deckt jetzt den ganzen Quellbaum ab und prüft auf den Aufruf (`/\.execCommand\s*\(/`) statt auf die bloße Erwähnung. Die Ausnahmeliste `EXEC_COMMAND_ALLOWLIST` in `editor-floating.spec.js` ist bewusst leer, nicht abwesend.
+- **Editor-Werkzeugleisten (Variante 2a, 2026-09-07):** Das Markup ALLER 24 Leisten kommt
+  aus genau einer Quelle — `buildEditorToolbar(editorId, tier, opts)` in
+  `ui/editors/editor-toolbar-build.js`. Die 22 statischen Leisten in den Templates werden
+  daraus von `tools/sync-editor-toolbars.js` geschrieben (`--check` meldet Drift, `--only=<id>`
+  für gestaffelte Rollouts); die 2 zur Laufzeit erzeugten in `features/npcs/npc-dialogs.js`
+  rufen den Generator direkt. **Leisten niemals von Hand in Templates editieren** — der
+  nächste Lauf des Werkzeugs überschreibt die Änderung. Drei Stufen: `minimal` (14 Leisten),
+  `mid` (6), `full` (2, nur Wiki und Sitzungen).
+    - **Attributvertrag mit einer Inversion:** bei `format-text` trägt `data-cmd` die
+      Editor-ID und `data-editor` das Format; bei allen anderen Aktionen ist `data-editor`
+      die Editor-ID, bei `clear-formatting` steht sie in `data-value`. Gewachsen, aber vom
+      eingefrorenen Testnetz vorausgesetzt — nicht "aufräumen".
+    - **`data-tb`** an jeder `.toolbar-group` steuert die Media-Query-Leiter (900px/680px):
+      ausgeblendete Werkzeuge werden im ⋯-Menü nachgereicht, nichts geht verloren.
+    - **Marker:** eine Implementierung, `applyMarkerToSelection()`. Sie erzeugt EIN `<mark>`,
+      das Hintergrund UND `color: #141414` trägt. Der feste dunkle Wert ist Absicht: der
+      Marker-Hintergrund ist in allen vier Themes hell. `inherit` hat genau das gebrochen.
+      Weil `<mark>` beide Eigenschaften gemeinsam führt, braucht es KEINE
+      Normalisierungsschleife beim Tippen (belegt in `editor-formatting.spec.js`).
+    - **Bausteine sind klassenbasiert** (`.editor-block` + `.editor-block-statblock|-table|
+      -divider`), niemals über `data-*` oder Inline-Stil: `sanitizeHTML()` streicht **alle**
+      `data-*`-Attribute, und die Stil-Erlaubnisliste kennt weder `font-style` noch
+      `border-left`, `display` oder `box-shadow`. Ein so gebauter Baustein sähe bis zum
+      ersten Speichern richtig aus und wäre danach kaputt. Aus demselben Grund ist der
+      Trenner ein `div` und kein `<hr>` — `hr` steht nicht in `allowedTags`.
+      **Eine Sicherheits-Erlaubnisliste nicht für Kosmetik aufweiten.**
+    - **Format entfernen** läuft über `stripEditorFormatting(editor, range)` (bereichsweise;
+      ohne Auswahl über die ganze Fläche) und lässt `.editor-block`/`.read-aloud` stehen.
+      `clearInlineFormattingAtSelection()` daneben ist die eingefrorene Nachbildung des alten
+      Kommando-Verhaltens und bleibt unangetastet.
+    - **Editor-Schale** (`.editor-shell`, `ui/editors/editor-shell.js`) liegt nur um die zwei
+      Langform-Editoren. **Nicht `.editor-wrapper` nennen** — auf dem Namen lagen tote Regeln,
+      die runde Ecken erzwungen hätten (entfernt). Die ID bleibt auf dem `contenteditable`,
+      nicht auf der Schale: `clearFormFields()` und ~20 Ladepfade adressieren sie direkt.
+      Die Statuszeile meldet **kein** "Gespeichert": `save()` ist entprellt und der
+      Post-Save-Hook ist keinem Formular zuzuordnen (am Bundle nachgemessen).
 - **Always call `saveUndoState()`** before delete/edit operations
 - **XSS prevention:** Use `esc()` for user content, validate input with whitelists
 

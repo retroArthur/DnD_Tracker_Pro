@@ -1,6 +1,7 @@
 // @ts-check
 import { test, expect } from '@playwright/test';
 import fs from 'node:fs';
+import path from 'node:path';
 
 /**
  * E2E Tests — Editor-Regressionsnetz (execCommand-Ablösung, Phase 9, Plan 09-03)
@@ -676,6 +677,55 @@ test.describe('Inventar-Zählnachweis (finaler Zustand nach vollständiger Migra
             .join('\n');
         const matches = codeOnly.match(/execCommand/g) || [];
         expect(matches.length).toBe(0);
+    });
+
+    // W-21 (Variante 2a): die Schranke galt nur fuer EINE Datei. Die
+    // Editor-Arbeit an Variante 2a hat vier weitere Module beruehrt und zwei
+    // neue angelegt — in jedem davon waere ein Rueckgriff auf die veraltete
+    // Editier-Kommando-API durchgerutscht. Der Zaehlnachweis oben bleibt als
+    // historischer Beleg der Phase-9-Migration bestehen; dieser hier zieht die
+    // Schranke ueber den ganzen Quellbaum.
+    //
+    // ESCAPE-LUKE: waere ein Rueckgriff einmal wirklich noetig (klassischer
+    // Kandidat: ein Zwischenablage-Rueckfall in aelteren Browsern), gehoert der
+    // Pfad hier hinein — mit Begruendung, sichtbar im Diff. Sie ist bewusst
+    // leer, nicht abwesend.
+    const EXEC_COMMAND_ALLOWLIST = [];
+
+    test('ZÄHLNACHWEIS (W-21): KEIN Modul im Quellbaum ruft die deprecated Editier-Kommando-API auf', () => {
+        const roots = ['core', 'features', 'systems', 'ui', 'utils', 'render'];
+        const files = [];
+        const walk = dir => {
+            for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+                const full = path.join(dir, entry.name);
+                if (entry.isDirectory()) walk(full);
+                else if (entry.name.endsWith('.js')) files.push(full);
+            }
+        };
+        roots.forEach(r => {
+            if (fs.existsSync(r)) walk(r);
+        });
+        files.push('loader.js');
+
+        const offenders = [];
+        for (const file of files) {
+            const rel = file.split(path.sep).join('/');
+            if (EXEC_COMMAND_ALLOWLIST.includes(rel)) continue;
+            // Gesucht ist der AUFRUF, nicht die Erwaehnung. Der Zaehlnachweis
+            // oben filtert Kommentarzeilen heraus, erwischt aber keine
+            // nachgestellten Kommentare — utils/basic.js erklaert in zwei
+            // solchen Zeilen, warum <font face|size> in der Erlaubnisliste
+            // steht, und waere faelschlich als Verstoss gezaehlt worden.
+            const hits = (
+                fs.readFileSync(file, 'utf8').match(/\.execCommand\s*\(/g) || []
+            ).length;
+            if (hits > 0) offenders.push(`${rel} (${hits})`);
+        }
+
+        expect(offenders).toEqual([]);
+        // Gegenprobe: der Scan hat ueberhaupt etwas gesehen. Ohne sie waere ein
+        // stillschweigend leerer Dateisatz ein gruener Test.
+        expect(files.length).toBeGreaterThan(100);
     });
 });
 
