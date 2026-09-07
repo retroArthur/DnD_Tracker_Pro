@@ -187,7 +187,7 @@ Plans:
 
 **Execution Order:** streng sequenziell 12 → 13 → 14. Präzedenz aus v1.0/v1.1: fast alle Pläne fassen geteilte Dateien an, paralleles Ausführen kollidiert.
 
-**Plans:** 4/9 plans executed
+**Plans:** 5/9 plans executed
 
 Plans:
 
@@ -200,7 +200,7 @@ Plans:
 - [x] 14-02-PLAN.md — D-08: **Tracer** — Globals-Generator aus `loader.js MODULES` end-to-end bis Lint-Lauf und Drift-Wächter (Welle 2)
 - [x] 14-03-PLAN.md — TEST-03 / D-01…D-03: `seedCleanSession(page)` extrahiert, fünf CRUD-Specs verdrahtet, Toast-Race mit rotem Vorlauf belegt (Welle 2)
 - [x] 14-04-PLAN.md — TEST-04 / D-04…D-06: E2E-Sammel-Spec in fünf dedizierte Dateien aufgeteilt (Welle 2)
-- [ ] 14-05-PLAN.md — TEST-04 / D-04/D-05: Unit-Sammeldatei in fünf dedizierte Dateien aufgeteilt (Welle 2)
+- [x] 14-05-PLAN.md — TEST-04 / D-04/D-05: Unit-Sammeldatei in fünf dedizierte Dateien aufgeteilt (Welle 2)
 
 **Wave 3** *(blocked on Wave 2 — die Warnungs-Ratsche wird erst nach der Testdatei-Umschichtung gepinnt)*
 
