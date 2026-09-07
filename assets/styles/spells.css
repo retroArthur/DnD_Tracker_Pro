@@ -198,7 +198,12 @@
             margin: 0;
         }
         
-        .spell-editor-toolbar, .editor-toolbar {
+        .spell-editor-toolbar {
+            /* .editor-toolbar bewusst NICHT mehr hier: assets/styles.css @import
+               laedt spells.css (#9) nach editors.css (#4), diese Regel gewann
+               deshalb bei gleicher Spezifitaet und diktierte der Editor-Leiste
+               hartkodierte Farben. Die Leiste wird jetzt allein in editors.css
+               definiert (Variante 2a). */
             display: flex;
             flex-wrap: wrap;
             gap: 3px;
@@ -284,7 +289,6 @@
             border-radius: 4px;
             cursor: pointer;
             font-size: 11px;
-            width: auto !important;
             min-width: 70px;
             max-width: 100px;
             flex-shrink: 0;
@@ -293,11 +297,6 @@
         .editor-select:hover, .editor-select:focus {
             border-color: var(--gold);
             outline: none;
-        }
-
-        /* Kompakte Editor-Toolbar in 2 Zeilen */
-        .editor-toolbar {
-            row-gap: 4px;
         }
 
         .editor-toolbar .editor-btn {
@@ -577,10 +576,11 @@
 
         /* Phase 4: Mobile Bottom Toolbar */
         @media (max-width: 768px) {
-            /* Hide static toolbars on mobile, use floating only */
-            .editor-wrapper .editor-toolbar {
-                display: none !important;
-            }
+            /* Die frueher hier stehende Regel '.editor-wrapper .editor-toolbar
+               { display:none !important }' ist entfallen: sie war wirkungslos
+               (kein Template emittiert .editor-wrapper), haette aber die neue
+               einzeilige Leiste unter 768px komplett verschluckt, sobald
+               W-18 den Editor-Wrapper einfuehrt. */
 
             .editor-wrapper .rich-editor {
                 border-radius: 6px !important;
