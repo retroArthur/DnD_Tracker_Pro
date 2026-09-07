@@ -5,16 +5,16 @@ milestone_name: Schulden-Abbau
 current_phase: 14
 current_phase_name: Tests & Gates
 status: executing
-stopped_at: Phase 14 context gathered
-last_updated: "2026-09-06T23:04:53.050Z"
+stopped_at: Completed 14-01-PLAN.md
+last_updated: "2026-09-07T06:16:14.801Z"
 last_activity: 2026-09-07
-last_activity_desc: Phase 14 planning complete
-state_head: ec586b78a3a1ac47059359d3b25aeaa9bc98afa7
+last_activity_desc: Phase 14 execution started
+state_head: 6c3fde70d77d76664c3d29a1949dcbcff826258b
 progress:
   total_phases: 3
   completed_phases: 1
   total_plans: 38
-  completed_plans: 29
+  completed_plans: 30
   percent: 33
 ---
 
@@ -24,7 +24,7 @@ progress:
 **Milestone:** v1.2 „Schulden-Abbau" — Phase 12 abgeschlossen (17/17 Pläne), Phase 13 abgeschlossen (12/12 Pläne)
 **Status:** Ready to execute
 
-**Progress:** [██████████████████████] 29/29 plans ([██████████] 100%) · 2/3 Phasen des Milestones
+**Progress:** [██████████████████████] 29/29 plans ([███░░░░░░░] 33%) · 2/3 Phasen des Milestones
 
 ---
 
@@ -32,7 +32,7 @@ progress:
 
 **Core Value:** Die App muss am Spieltisch zuverlässig offline laufen — ein Spielleiter-Begleiter, der nie im Weg steht und keine Daten verliert.
 
-**Current Focus:** Phase 13 — Härtung & Wartbarkeit
+**Current Focus:** Phase 14 — Tests & Gates
 
 See: `.planning/PROJECT.md` (Stand 2026-09-05)
 
@@ -40,10 +40,10 @@ See: `.planning/PROJECT.md` (Stand 2026-09-05)
 
 ## Current Position
 
-Phase: 14 (Tests & Gates) — READY TO EXECUTE
-Plan: 12 of 12
-Status: Alle 12 Pläne abgeschlossen, Bedienprobe 13-12 freigegeben — Phase 13 komplett
-Last activity: 2026-09-07 — Phase 14 planning complete
+Phase: 14 (Tests & Gates) — EXECUTING
+Plan: 2 of 9
+Status: Ready to execute
+Last activity: 2026-09-07 — Phase 14 execution started
 
 **Nächster Schritt:** `/gsd-discuss-phase 14`. Phase 13 ist abgeschlossen — 12/12 Pläne, Verifikation `passed` (7/8 Must-Haves belegt, Erfolgskriterium 2 als vorab benannte, gemessene Abweichung freigegeben: D-09/D-10 halten den Undo-Snapshot bewusst vollständig, gemessen 0,922 ms Median). Code-Review `issues_found` → beide Warnungen behoben (WR-01 insert-link-Guards, WR-02 Konsolen-Notausgang + unbedingte Whitelist-Protokollierung). Suiten: Jest 1089/1089 (41 Suites), Playwright 321 passed / 2 skipped, `pytest tests/build` 24/24, ESLint 1 vorbestehender Fehler (`systems/avatars.js:17`). Offen für Phase 14: der Toast-Race aus der bekannten Vorbelastung sowie IN-01 aus `13-REVIEW.md` (vorbestehendes Doppel-Feuern der DM-Screen-Widget-Checkbox).
 
@@ -135,6 +135,7 @@ Browser-Verhalten an der Base64-Grenze (12-07).
 | Phase 13 P10 | 40min | 3 tasks | 5 files |
 | Phase 13 P11 | 55min | 3 tasks | 6 files |
 | Phase 13 P12 | ~50min | 3 tasks | 8 files |
+| Phase 14 P01 | 15min | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -221,9 +222,9 @@ Browser-Verhalten an der Base64-Grenze (12-07).
 
 ## Session Continuity
 
-**Last session:** 2026-09-06T21:13:40.137Z
-**Stopped at:** Phase 14 context gathered
-**Resume file:** .planning/phases/14-tests-gates/14-CONTEXT.md
+**Last session:** 2026-09-07T06:16:14.626Z
+**Stopped at:** Completed 14-01-PLAN.md
+**Resume file:** None
 
 **Last action:** `/gsd-execute-phase 13` (Plan 13-08, MAINT-06). Converted all 81 originally-counted unfiltered `console.*` calls across 31 `loader.js` MODULES files to the one sanctioned `ErrorHandler.log()` outlet in `render/helpers.js` (marked `gsd:konsolen-senke`), built `tests/unit/console-hygiene.test.js` as a permanent regression guard, and corrected two stale `file-backup-manager.js` header comments that wrongly described the forbidden `window.save` monkey-patch pattern (code has used `registerPostSaveHook()` correctly since Phase 12). Mid-execution finding: converting routine/self-healing diagnostics (data repairs, migration progress, per-tab render guards) to the single outlet elevated them to `console.error` and broke 5 Playwright tests (`editor-formatting.spec.js`, `editor-insert.spec.js`, `import-security.spec.js`) that assert zero console errors — fixed by routing those specific sites through the existing `window.debugLogAdd()` in-app debug panel instead, preserving the single-outlet invariant for genuine faults while not misclassifying normal operation as an error. Full suites green: `npx jest` 1066/1066, `npx playwright test` 321 passed/2 skipped (STATE.md baseline exactly matched), `python build.py` + `--production` + `pytest tests/build` 24/24 all green.
 
@@ -353,6 +354,8 @@ Browser-Verhalten an der Base64-Grenze (12-07).
 - [Phase 13]: MAINT-01 1/4: wiki.js entlang Sektionsbannern in wiki.js (554) + wiki-crud.js (673) aufgeteilt, loader.js-only registriert, Export-Union 28 (nicht 30, Plan-Zahl war stale)
 - [Phase 13]: 13-10: initiative.js split 616/392/670 lines, export union 38 (not plan-stated 34, same stale-count pattern as 13-09), undo-call sum 2 unchanged
 - [Phase 13]: 13-11: rich-text.js entflochten (D-03, Zauberverwaltung -> features/spells/spell-manager.js) und geteilt (D-02) in rich-text.js/rich-text-insert.js/rich-text-toolbars.js (401/438/513 Zeilen), Exportsumme 26 (nicht plan-stated 30, gleiches Stale-Count-Muster), ein waehrend Task 1 selbstverursachter Fehler (falsche Zeilenspanne, 12 Deklarationen fehlend) nur durch E2E-Netz gefangen, nicht durch Build
+- [Phase 14]: D-07 zuerst und isoliert umgesetzt (14-01): roter Lint-Fehler blockierte die gesamte CI-Kette, deshalb eigene erste Aufgabe vor jeder anderen Gate-Arbeit
+- [Phase 14]: tsc --checkJs-Fehlerzahl (14-01, D-11-Vorarbeit): 1758 Fehler / 117 von 134 Dateien als massgeblich gesetzt gegenueber CONTEXT.md (1617/98/103) — reproduzierbar, deckt sich mit RESEARCH.md-Re-Verifikation
 
 ## Operator Next Steps
 

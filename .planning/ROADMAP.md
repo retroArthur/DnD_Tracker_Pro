@@ -187,13 +187,13 @@ Plans:
 
 **Execution Order:** streng sequenziell 12 → 13 → 14. Präzedenz aus v1.0/v1.1: fast alle Pläne fassen geteilte Dateien an, paralleles Ausführen kollidiert.
 
-**Plans:** 9 plans
+**Plans:** 1/9 plans executed
 
 Plans:
 
 **Wave 1** *(D-15: der rote Lint-Fehler zuerst — die gesamte CI-Kette hängt per `needs:` daran)*
 
-- [ ] 14-01-PLAN.md — D-07: gezielter `no-control-regex`-Disable in `systems/avatars.js` plus Vor-Schärfungs-Messprotokoll (Welle 1)
+- [x] 14-01-PLAN.md — D-07: gezielter `no-control-regex`-Disable in `systems/avatars.js` plus Vor-Schärfungs-Messprotokoll (Welle 1)
 
 **Wave 2** *(blocked on Wave 1 — vier Pläne ohne Dateiüberschneidung, innerhalb der Welle parallel ausführbar)*
 
