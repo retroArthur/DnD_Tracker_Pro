@@ -5,16 +5,16 @@ milestone_name: Schulden-Abbau
 current_phase: 14
 current_phase_name: Tests & Gates
 status: executing
-stopped_at: Completed 14-06-PLAN.md
-last_updated: "2026-09-07T07:22:35.529Z"
+stopped_at: Completed 14-08-PLAN.md
+last_updated: "2026-09-07T07:30:40.550Z"
 last_activity: 2026-09-07
 last_activity_desc: Phase 14 execution started
-state_head: 291a35b0d937afce18fb7b67975d505fe7a8c3a9
+state_head: 4d190de1e2c22d8e80b6464cf6b710fa6534b4ed
 progress:
   total_phases: 3
   completed_phases: 1
   total_plans: 38
-  completed_plans: 35
+  completed_plans: 36
   percent: 33
 ---
 
@@ -41,7 +41,7 @@ See: `.planning/PROJECT.md` (Stand 2026-09-05)
 ## Current Position
 
 Phase: 14 (Tests & Gates) — EXECUTING
-Plan: 7 of 9
+Plan: 8 of 9
 Status: Ready to execute
 Last activity: 2026-09-07 — Phase 14 execution started
 
@@ -141,6 +141,7 @@ Browser-Verhalten an der Base64-Grenze (12-07).
 | Phase 14 P04 | 15min | 2 tasks | 6 files |
 | Phase 14 P05 | 8min | 2 tasks | 6 files |
 | Phase 14 P06 | 35min | 3 tasks | 8 files |
+| Phase 14 P08 | 15min | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -227,8 +228,8 @@ Browser-Verhalten an der Base64-Grenze (12-07).
 
 ## Session Continuity
 
-**Last session:** 2026-09-07T07:22:35.340Z
-**Stopped at:** Completed 14-06-PLAN.md
+**Last session:** 2026-09-07T07:30:40.364Z
+**Stopped at:** Completed 14-08-PLAN.md
 **Resume file:** None
 
 **Last action:** `/gsd-execute-phase 13` (Plan 13-08, MAINT-06). Converted all 81 originally-counted unfiltered `console.*` calls across 31 `loader.js` MODULES files to the one sanctioned `ErrorHandler.log()` outlet in `render/helpers.js` (marked `gsd:konsolen-senke`), built `tests/unit/console-hygiene.test.js` as a permanent regression guard, and corrected two stale `file-backup-manager.js` header comments that wrongly described the forbidden `window.save` monkey-patch pattern (code has used `registerPostSaveHook()` correctly since Phase 12). Mid-execution finding: converting routine/self-healing diagnostics (data repairs, migration progress, per-tab render guards) to the single outlet elevated them to `console.error` and broke 5 Playwright tests (`editor-formatting.spec.js`, `editor-insert.spec.js`, `import-security.spec.js`) that assert zero console errors — fixed by routing those specific sites through the existing `window.debugLogAdd()` in-app debug panel instead, preserving the single-outlet invariant for genuine faults while not misclassifying normal operation as an error. Full suites green: `npx jest` 1066/1066, `npx playwright test` 321 passed/2 skipped (STATE.md baseline exactly matched), `python build.py` + `--production` + `pytest tests/build` 24/24 all green.
@@ -369,6 +370,8 @@ Browser-Verhalten an der Base64-Grenze (12-07).
 - [Phase 14]: Phase 14-05: // ====-Sektionsbanner aus welt-story.test.js unveraendert je Zieldatei mitgenommen, nur der umgebende Dateikopf-Kommentar neu formuliert
 - [Phase 14]: export-csv korrigiert statt Alias ergaenzt (exportToCSV statt exportDataCSV) — genau ein Name pro Funktion, keine zweite Wahrheit
 - [Phase 14]: Sechs tote Aktionsregistrierungen entfernt statt mit Platzhalter am Leben gehalten (D-09) — kein data-action in assets/templates/** referenziert sie; ein stiller Klick ohne Wirkung waere schlechter als der bisherige Fehler
+- [Phase 14]: Phase 14-08: roots von <rootDir>/tests auf <rootDir> erweitert statt collectCoverageFrom-Pfadstil zu aendern — roots steuert, welche Verzeichnisse Jest ueberhaupt in seine Modulkarte aufnimmt - der Defekt lag ausschliesslich dort
+- [Phase 14]: Phase 14-08: Coverage-Schwellen fuer utils/testable-utils.js einzeln je Metrik gesetzt (branches 89, functions 99, lines 94, statements 92) — Die vier gemessenen Prozentwerte liegen messbar auseinander; ein Pauschalwert waere fuer drei Metriken zu locker oder fuer eine zu eng
 
 ## Operator Next Steps
 

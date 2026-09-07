@@ -187,7 +187,7 @@ Plans:
 
 **Execution Order:** streng sequenziell 12 → 13 → 14. Präzedenz aus v1.0/v1.1: fast alle Pläne fassen geteilte Dateien an, paralleles Ausführen kollidiert.
 
-**Plans:** 6/9 plans executed
+**Plans:** 7/9 plans executed
 
 Plans:
 
@@ -208,7 +208,7 @@ Plans:
 
 **Wave 4** *(blocked on Wave 3 — teilt das Messprotokoll `14-GATE-BASELINE.md`)*
 
-- [ ] 14-08-PLAN.md — D-12/D-14: `roots` repariert, ehrliche Coverage dokumentiert, Schwellen für `utils/testable-utils.js` angehoben (Welle 4)
+- [x] 14-08-PLAN.md — D-12/D-14: `roots` repariert, ehrliche Coverage dokumentiert, Schwellen für `utils/testable-utils.js` angehoben (Welle 4)
 
 **Wave 5** *(blocked on Wave 4 — teilt `package.json` mit 14-06 und das Messprotokoll mit 14-08)*
 
