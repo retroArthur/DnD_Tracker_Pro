@@ -6,7 +6,8 @@ import {
     fillField,
     selectOption,
     generateTestName,
-    performUndo
+    performUndo,
+    seedCleanSession
 } from '../helpers/test-utils.js';
 
 /**
@@ -16,6 +17,7 @@ import {
 
 test.describe('Encounters - CRUD Operationen', () => {
     test.beforeEach(async ({ page }) => {
+        await seedCleanSession(page);
         await loadApp(page);
         await navigateToTab(page, 'encounter');
         await page.waitForTimeout(500);

@@ -5,7 +5,8 @@ import {
     navigateToTab,
     fillField,
     generateTestName,
-    performUndo
+    performUndo,
+    seedCleanSession
 } from '../helpers/test-utils.js';
 
 /**
@@ -15,6 +16,7 @@ import {
 
 test.describe('Locations - CRUD Operationen', () => {
     test.beforeEach(async ({ page }) => {
+        await seedCleanSession(page);
         await loadApp(page);
         await navigateToTab(page, 'locations');
     });
