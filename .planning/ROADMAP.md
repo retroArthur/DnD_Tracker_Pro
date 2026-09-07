@@ -47,7 +47,7 @@ sich spürbar.
 
 - [x] **Phase 12: Datensicherheit** — Umzugs-Export erfasst IndexedDB, Datei-Backup deckt alle Kampagnen ab, Audio-Löschen rückgängig machbar, Persistenz-Randfälle getestet (completed 2026-09-05)
 - [x] **Phase 13: Härtung & Wartbarkeit** — `call`-Whitelist (130 Ziele), Save-Pfad ohne Blob-Allokation, Würfelstatistik gedeckelt, vier übergroße Module in 14 Dateien aufgeteilt (alle ≤ 800 Zeilen), execCommand-Treffer auf 0, Konsole in Produktionspfaden still (completed 2026-09-06)
-- [ ] **Phase 14: Tests & Gates** — Toast-Race schließen, fünf Welt-Features abdecken, Lint-/Typecheck-/Coverage-Gates schärfen
+- [x] **Phase 14: Tests & Gates** — Toast-Race schließen, fünf Welt-Features abdecken, Lint-/Typecheck-/Coverage-Gates schärfen (completed 2026-09-07)
 
 ## Phase Details
 
@@ -187,7 +187,7 @@ Plans:
 
 **Execution Order:** streng sequenziell 12 → 13 → 14. Präzedenz aus v1.0/v1.1: fast alle Pläne fassen geteilte Dateien an, paralleles Ausführen kollidiert.
 
-**Plans:** 9/9 plans executed
+**Plans:** 9/9 plans complete
 
 Plans:
 
@@ -229,4 +229,4 @@ Plans:
 |-------|----------------|--------|-----------|
 | 12. Datensicherheit | 17/17 | Complete (2026-09-05) — Verifikation `passed` (9/9), UAT 28/28, `threats_open: 0`, `nyquist_compliant: true`. Gap-Closure SEC-01…SEC-07 in den Wellen 9–11 geschlossen, dazu CR-01/WR-01 aus dem Code-Review | 2026-09-05 |
 | 13. Härtung & Wartbarkeit | 0/12 | Planned (12 Pläne, 7 Wellen; Welle 1 mit sechs parallelen Plänen). Drei Pläne nicht autonom: Entscheidungs-Checkpoint zur Würfelstatistik-Obergrenze (13-07), Bedienproben nach den Aufteilungen von `rich-text.js` (13-11) und `dmscreen-render.js` (13-12) | |
-| 14. Tests & Gates | 0/9 | Planned (9 Pläne, 6 Wellen; Welle 2 mit vier parallelen Plänen, danach sequenziell wegen geteiltem Messprotokoll und `package.json`). Alle Pläne autonom — die manuelle Abnahme der Toast-Race-Beweisführung läuft als `human-check` am Phasenende statt als Zwischen-Checkpoint | |
+| 14. Tests & Gates | 9/9 | Complete (2026-09-07) — Verifikation `passed` (5/5 Wahrheiten, GAP-01 in der Re-Verifikation geschlossen), UAT 1/1 (manuelle Abnahme der Toast-Race-Beweisführung freigegeben), `threats_open: 0` (32 Bedrohungen), `nyquist_compliant: false` — 2 Blocker geschlossen (CI-Coverage-Gate verdrahtet, totes Aktionsziel entfernt + Wächter), 9 datierte Restposten NQ-03..NQ-11 in 14-VALIDATION.md | 2026-09-07 |

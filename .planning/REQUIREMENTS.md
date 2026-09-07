@@ -130,7 +130,7 @@ wiederherstellbar ist (`SAFE-01`, `SAFE-02`, `SAFE-04`).
   (`tests/e2e/features/welt-story.spec.js`, `tests/unit/welt-story.test.js`) sind entfernt;
   fünf dedizierte Dateien je Test-Ebene ersetzen sie, mechanisch und verhaltensneutral aufgeteilt
   (Testzahl unverändert: 26 E2E, 37 Unit).
-- **TEST-05** ○ (`DEBT-01`, Phase 14: offen — Gap aus 14-VERIFICATION.md, GAP-01): Die Lint-/Typecheck-/
+- **TEST-05** ✓ (`DEBT-01`, Phase 14 komplett; GAP-01 in der Re-Verifikation geschlossen, DEBT-01-Restposten bleibt benannt): Die Lint-/Typecheck-/
   Coverage-Gates sind geschärft. Lint: der rote Fehler ist behoben, `no-undef` ist ein harter
   Fehler (Globals-Generator aus `loader.js MODULES`), die Warnungszahl ist als Ratsche gepinnt
   (367). Coverage: `roots` ist repariert (2 → 125 instrumentierte Module), die ehrliche
@@ -176,7 +176,7 @@ wiederherstellbar ist (`SAFE-01`, `SAFE-02`, `SAFE-04`).
 | MAINT-06 | DEBT-27, DEBT-26 | Phase 13 — Complete (13-08) |
 | TEST-03 | DEBT-15 | Phase 14 — Complete (14-03) |
 | TEST-04 | DEBT-28 | Phase 14 — Complete (14-04, 14-05) |
-| TEST-05 | DEBT-01 | Phase 14 — Gaps found (Modul-zu-Test-Gate misst nicht, was es misst — GAP-01) |
+| TEST-05 | DEBT-01 | Phase 14 — Complete (14-01, 14-02, 14-06 bis 14-09; GAP-01 geschlossen. Restposten: DEBT-01-Typecheck nur teilgeschärft, plus 9 Nyquist-Restposten NQ-03..NQ-11 in 14-VALIDATION.md) |
 
 **19 Requirements decken alle 26 `DEBT`-Posten ab.** Die Bündelung fasst Posten zusammen, die
 dieselbe Datei oder dieselbe Fehlerklasse betreffen — sie in einem Zug anzufassen ist billiger als

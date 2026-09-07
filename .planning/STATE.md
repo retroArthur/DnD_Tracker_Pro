@@ -3,26 +3,25 @@ gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: Schulden-Abbau
 current_phase: 14
-current_phase_name: Tests & Gates
-status: executing
-stopped_at: Completed 14-09-PLAN.md — Phase 14 (Tests & Gates) vollstaendig abgeschlossen
-last_updated: "2026-09-07T08:59:02.627Z"
+status: completed
+stopped_at: Phase 14 complete — all phases complete
+last_updated: "2026-09-07T10:11:14.279Z"
 last_activity: 2026-09-07
-last_activity_desc: Phase 14 execution started
-state_head: 0a7aae95cce437648f2ea6e37441086a0eb789e2
+last_activity_desc: Phase 14 complete
+state_head: aa63a53cc74a578bf074a576cbcad0ecda0a6ae2
 progress:
   total_phases: 3
-  completed_phases: 1
+  completed_phases: 2
   total_plans: 38
   completed_plans: 38
-  percent: 33
+  percent: 67
 ---
 
 # Project State: D&D Kampagnen-Tracker Pro — Schulden-Abbau
 
 **Last Updated:** 2026-09-06
 **Milestone:** v1.2 „Schulden-Abbau" — Phase 12 abgeschlossen (17/17 Pläne), Phase 13 abgeschlossen (12/12 Pläne)
-**Status:** Executing Phase 14
+**Status:** All phases complete
 
 **Progress:** [██████████████████████] 29/29 plans ([███░░░░░░░] 33%) · 2/3 Phasen des Milestones
 
@@ -40,10 +39,10 @@ See: `.planning/PROJECT.md` (Stand 2026-09-05)
 
 ## Current Position
 
-Phase: 14 (Tests & Gates) — EXECUTING
-Plan: 1 of 9
+Phase: 14
+Plan: Not started
 Status: Executing Phase 14
-Last activity: 2026-09-07 — Phase 14 execution started
+Last activity: 2026-09-07 — Phase 14 complete
 
 **Nächster Schritt:** `/gsd-discuss-phase 14`. Phase 13 ist abgeschlossen — 12/12 Pläne, Verifikation `passed` (7/8 Must-Haves belegt, Erfolgskriterium 2 als vorab benannte, gemessene Abweichung freigegeben: D-09/D-10 halten den Undo-Snapshot bewusst vollständig, gemessen 0,922 ms Median). Code-Review `issues_found` → beide Warnungen behoben (WR-01 insert-link-Guards, WR-02 Konsolen-Notausgang + unbedingte Whitelist-Protokollierung). Suiten: Jest 1089/1089 (41 Suites), Playwright 321 passed / 2 skipped, `pytest tests/build` 24/24, ESLint 1 vorbestehender Fehler (`systems/avatars.js:17`). Offen für Phase 14: der Toast-Race aus der bekannten Vorbelastung sowie IN-01 aus `13-REVIEW.md` (vorbestehendes Doppel-Feuern der DM-Screen-Widget-Checkbox).
 
@@ -231,7 +230,7 @@ Browser-Verhalten an der Base64-Grenze (12-07).
 ## Session Continuity
 
 **Last session:** 2026-09-07T07:57:33.832Z
-**Stopped at:** Completed 14-09-PLAN.md — Phase 14 (Tests & Gates) vollstaendig abgeschlossen
+**Stopped at:** Phase 14 complete — all phases complete
 **Resume file:** None
 
 **Last action:** `/gsd-execute-phase 13` (Plan 13-08, MAINT-06). Converted all 81 originally-counted unfiltered `console.*` calls across 31 `loader.js` MODULES files to the one sanctioned `ErrorHandler.log()` outlet in `render/helpers.js` (marked `gsd:konsolen-senke`), built `tests/unit/console-hygiene.test.js` as a permanent regression guard, and corrected two stale `file-backup-manager.js` header comments that wrongly described the forbidden `window.save` monkey-patch pattern (code has used `registerPostSaveHook()` correctly since Phase 12). Mid-execution finding: converting routine/self-healing diagnostics (data repairs, migration progress, per-tab render guards) to the single outlet elevated them to `console.error` and broke 5 Playwright tests (`editor-formatting.spec.js`, `editor-insert.spec.js`, `import-security.spec.js`) that assert zero console errors — fixed by routing those specific sites through the existing `window.debugLogAdd()` in-app debug panel instead, preserving the single-outlet invariant for genuine faults while not misclassifying normal operation as an error. Full suites green: `npx jest` 1066/1066, `npx playwright test` 321 passed/2 skipped (STATE.md baseline exactly matched), `python build.py` + `--production` + `pytest tests/build` 24/24 all green.
