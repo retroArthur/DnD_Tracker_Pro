@@ -187,7 +187,7 @@ Plans:
 
 **Execution Order:** streng sequenziell 12 → 13 → 14. Präzedenz aus v1.0/v1.1: fast alle Pläne fassen geteilte Dateien an, paralleles Ausführen kollidiert.
 
-**Plans:** 5/9 plans executed
+**Plans:** 6/9 plans executed
 
 Plans:
 
@@ -204,7 +204,7 @@ Plans:
 
 **Wave 3** *(blocked on Wave 2 — die Warnungs-Ratsche wird erst nach der Testdatei-Umschichtung gepinnt)*
 
-- [ ] 14-06-PLAN.md — D-09/D-08/D-10: sieben tote Aktionsziele behoben, `no-undef` auf `error`, `--max-warnings`-Ratsche, zweiter Lint-Befehl entfällt (Welle 3)
+- [x] 14-06-PLAN.md — D-09/D-08/D-10: sieben tote Aktionsziele behoben, `no-undef` auf `error`, `--max-warnings`-Ratsche, zweiter Lint-Befehl entfällt (Welle 3)
 
 **Wave 4** *(blocked on Wave 3 — teilt das Messprotokoll `14-GATE-BASELINE.md`)*
 
