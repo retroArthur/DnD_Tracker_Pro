@@ -2165,12 +2165,14 @@
             margin: 0;
         }
 
-        .filter-toggle:has(input:checked) {
-            background: var(--gold);
-            border-color: var(--gold);
-            color: var(--bg-dark);
-            font-weight: 700;
-        }
+        /* KEINE :has(input:checked)-Einfaerbung. Sie sieht richtig aus und ist
+           falsch: Chromium wertet :has() beim UMSCHALTEN nicht neu aus, nur
+           beim ersten Aufbau. Am gebauten Buendel nachgemessen — Quest-Filter
+           "Aktive", der angehakt startet: abwaehlen setzt checked=false, der
+           Chip bleibt golden. Er behauptet dann "an", waehrend der Filter aus
+           ist. Ein Zustandsanzeiger, der luegt, ist schlimmer als keiner.
+           Den Zustand traegt das native Kaestchen, das seit F-16 sichtbar ist
+           (und deshalb auch per Tastatur erreichbar). */
 
         .filter-chip {
             padding: 4px 10px;

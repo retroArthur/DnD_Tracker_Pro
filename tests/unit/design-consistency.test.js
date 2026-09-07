@@ -728,6 +728,16 @@ describe('F-15 / F-16 — Filter und Bestiar-Details', () => {
         expect(regel[1]).not.toMatch(/display:\s*none/);
     });
 
+    test('F-16: keine :has(input:checked)-Einfaerbung am booleschen Filter', () => {
+        // Sie sieht richtig aus und ist falsch: Chromium wertet :has() beim
+        // UMSCHALTEN nicht neu aus, nur beim ersten Aufbau. Am gebauten
+        // Buendel nachgemessen — der Quest-Filter "Aktive" startet angehakt;
+        // nach dem Abwaehlen blieb der Chip golden und behauptete "an",
+        // waehrend der Filter aus war. Den Zustand traegt das native
+        // Kaestchen, das seit F-16 sichtbar ist.
+        expect(cssCode).not.toMatch(/\.filter-toggle:has\(input:checked\)/);
+    });
+
     test('F-16: JEDES Select in einer Werkzeugleiste traegt .toolbar-select', () => {
         // Drei Selects hatten gar keine Klasse und fielen auf den
         // Browser-Standard zurueck.
