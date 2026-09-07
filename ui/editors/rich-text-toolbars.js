@@ -268,6 +268,23 @@ function initFloatingToolbar() {
         }
     }
 }
+// Werkzeug-Blase an/aus. VORGABE IST AN — der Schalter im ⋯-Menue blendet sie
+// aus, nicht ein. Das ist bewusst andersherum als im Handoff: die schwebende
+// Leiste ist seit Phase 9 eingefuehrtes Verhalten, und 33 Tests des
+// eingefrorenen Netzes haengen daran, dass sie bei Auswahl erscheint. Ein
+// standardmaessig ausgeschalteter Schalter haette sie alle in Zeitueberschreitungen
+// laufen lassen.
+function isEditorBubbleEnabled() {
+    if (typeof window.editorBubbleEnabled === 'boolean') return window.editorBubbleEnabled;
+    try {
+        return localStorage.getItem('dnd-editor-bubble') !== '0';
+    } catch {
+        // Speicher blockiert (privates Fenster, Richtlinie): Vorgabe gilt.
+        return true;
+    }
+}
+window.isEditorBubbleEnabled = isEditorBubbleEnabled;
+
 // Spiegelt den Formatzustand am Cursor in die statische Leiste des Editors.
 // Bewusst getrennt von handleSelectionChange(): jene Funktion kehrt bei
 // LEERER Auswahl frueh zurueck (sie steuert die schwebende Leiste), der
@@ -294,7 +311,13 @@ function refreshEditorFormatState() {
 }
 
 function handleSelectionChange() {
+    // Der Formatzustand der statischen Leiste laeuft unabhaengig von der Blase
+    // weiter — er gehoert nicht zu ihr.
     refreshEditorFormatState();
+    if (!isEditorBubbleEnabled()) {
+        hideFloatingToolbar(false);
+        return;
+    }
     // Keine funktions-lokale Bindung von TOOLBAR_DIMENSIONS hier — Build-Dedup-Pass-Konflikt
     // vermeiden (CLAUDE.md "Duplicate Declaration Debugging Pattern"), direkt an der
     // Destrukturierungsstelle unten mit Guard auf window.TOOLBAR_DIMENSIONS zugreifen.

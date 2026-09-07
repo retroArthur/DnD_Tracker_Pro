@@ -678,3 +678,50 @@ test.describe('Inventar-Zählnachweis (finaler Zustand nach vollständiger Migra
         expect(matches.length).toBe(0);
     });
 });
+
+// NEU mit Variante 2a (W-19) — NICHT Teil des eingefrorenen Phase-9-Netzes.
+test.describe('Werkzeug-Blase abschaltbar (2a, W-19)', () => {
+    test.beforeEach(async ({ page }) => {
+        await gotoBundleFresh(page);
+    });
+
+    test('Vorgabe ist AN: die Blase erscheint ohne Zutun bei Auswahl', async ({ page }) => {
+        // Diese Vorgabe ist der Grund, warum der Schalter des Handoffs hier
+        // umgedreht ist: 33 Tests des eingefrorenen Netzes setzen voraus, dass
+        // die Blase bei Auswahl erscheint.
+        await openFreshWikiForm(page, 'Blase Vorgabe');
+        const editor = page.locator('#wiki-content');
+        await typeAndSelectAll(editor, TESTTEXT);
+        await expect(page.locator('#floating-toolbar')).toHaveClass(/visible/, { timeout: 3000 });
+    });
+
+    test('ausgeschaltet bleibt die Blase weg, der Formatzustand laeuft weiter', async ({ page }) => {
+        await openFreshWikiForm(page, 'Blase Aus');
+        const editor = page.locator('#wiki-content');
+
+        await page.click('[data-tb-menu="more"][data-editor="wiki-content"]');
+        await page.click('[data-action="toggle-editor-bubble"][data-editor="wiki-content"]');
+
+        await typeAndSelectAll(editor, TESTTEXT);
+        await page.waitForTimeout(500);
+        await expect(page.locator('#floating-toolbar')).not.toHaveClass(/visible/);
+
+        // Der Formatzustand der statischen Leiste gehoert NICHT zur Blase und
+        // muss weiterlaufen.
+        await page.click('[data-action="format-text"][data-cmd="wiki-content"][data-editor="bold"]');
+        const boldBtn = page.locator(
+            '[data-toolbar-for="wiki-content"] [data-action="format-text"][data-editor="bold"]'
+        );
+        await editor.evaluate(el => {
+            const t = el.querySelector('b');
+            const range = document.createRange();
+            range.setStart(t.firstChild, 1);
+            range.collapse(true);
+            const sel = window.getSelection();
+            sel.removeAllRanges();
+            sel.addRange(range);
+            document.dispatchEvent(new Event('selectionchange'));
+        });
+        await expect(boldBtn).toHaveClass(/format-active/, { timeout: 3000 });
+    });
+});

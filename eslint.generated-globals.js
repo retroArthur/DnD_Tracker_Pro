@@ -768,6 +768,7 @@ export default {
     "isBestiaryFavorite": 'readonly',
     "isDMScreenVisible": 'readonly',
     "isDescendantOf": 'readonly',
+    "isEditorBubbleEnabled": 'readonly',
     "isEmpty": 'readonly',
     "isFreshInstall": 'readonly',
     "jahreszeitAusDatum": 'readonly',
