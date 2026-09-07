@@ -170,12 +170,6 @@
 }
 
 /* Leerer Zustand */
-.backup-browser-empty {
-    padding: 32px;
-    text-align: center;
-    color: var(--text-dim);
-}
-
 /* Modale: max-width wird im JS gesetzt; nutzt Standard .modal / .modal-overlay */
 #file-backup-modal .modal {
     max-width: 600px;

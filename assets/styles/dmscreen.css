@@ -1833,14 +1833,6 @@
     font-style: italic;
 }
 
-.dms-widget-empty {
-    color: var(--text-dim);
-    font-style: italic;
-    font-size: 0.85em;
-    text-align: center;
-    padding: 16px;
-}
-
 /* Party Widget */
 .dms-party-stats {
     display: flex;

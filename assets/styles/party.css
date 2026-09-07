@@ -2509,12 +2509,6 @@
     line-height: 1.4;
 }
 
-.condition-ref-empty {
-    text-align: center;
-    padding: 20px;
-    color: var(--text-dim);
-}
-
 /* ============================================================
    INSPIRATION TOGGLE
    ============================================================ */

@@ -273,25 +273,6 @@
 }
 
 /* Detail Sidebar */
-.npc-detail-empty {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    color: var(--text-dim);
-}
-
-.npc-detail-empty-icon {
-    font-size: 3em;
-    margin-bottom: 12px;
-    opacity: 0.3;
-}
-
-.npc-detail-empty-text {
-    font-size: 0.9em;
-}
-
 /* Detail Content */
 .npc-detail-content {
     padding: 20px;
@@ -615,12 +596,6 @@
     color: var(--text-dim);
 }
 
-.npc-detail-empty-text {
-    color: var(--text-dim);
-    font-size: 0.85em;
-    font-style: italic;
-}
-
 @media (max-width: 900px) {
     .npc-detail {
         display: none;
@@ -878,25 +853,6 @@
 }
 
 /* Detail Sidebar */
-.loot-detail-empty {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    color: var(--text-dim);
-}
-
-.loot-detail-empty-icon {
-    font-size: 3em;
-    margin-bottom: 12px;
-    opacity: 0.3;
-}
-
-.loot-detail-empty-text {
-    font-size: 0.9em;
-}
-
 .loot-detail-content {
     padding: 20px;
 }

@@ -371,12 +371,6 @@
     padding: 0 16px 12px;
 }
 
-.rt-preview-empty {
-    text-align: center;
-    padding: 40px;
-    color: var(--text-dim);
-}
-
 .rt-preview-header {
     display: flex;
     align-items: center;

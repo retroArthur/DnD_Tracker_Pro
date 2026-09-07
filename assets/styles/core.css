@@ -1468,12 +1468,6 @@
             color: var(--orange);
         }
         
-        .char-empty {
-            color: var(--text-dim);
-            font-size: 0.8em;
-            font-style: italic;
-        }
-        
         /* Notes Section */
         .char-notes-section {
             background: var(--bg-dark);
@@ -2643,22 +2637,97 @@
         }
 
         /* Detail Sidebar */
-        .loc-detail-empty {
+
+
+        /* ------------------------------------------------------------
+           F-17: EIN Hinweis-Leerzustand
+           ------------------------------------------------------------
+           Siebzehn Klassen fuer dieselbe Sache: zentrierter, gedaempfter Text
+           in einem kleinen Behaelter ("Noch keine Eintraege"). Sie
+           unterschieden sich einzig im Innenabstand — acht verschiedene Werte
+           von 8 bis 48 px — und darin, ob sie kursiv waren. Die vier
+           Welt-Varianten waren zeichengleich, .fr-empty-state sogar doppelt
+           definiert.
+
+           Das ist der dritte und einfachste der drei Leerzustaende dieser App:
+             .empty-state   Liste, mit Symbol, Titel, Text und Aktion
+                            (renderEmptyState() in render/helpers.js)
+             .detail-empty  Detail-Panel, Symbol und eine Zeile
+             .empty-hint    Kachel oder Teilbereich, nur eine Zeile
+           ------------------------------------------------------------ */
+        .empty-hint,
+        .bestiary-empty-results,
+        .cp-empty,
+        .dash-empty,
+        .dash-party-empty,
+        .calc-fav-empty,
+        .calc-results-empty,
+        .calc-list-empty,
+        .backup-browser-empty,
+        .condition-ref-empty,
+        .wp-empty-state,
+        .tl-empty-state,
+        .rs-empty-state,
+        .fr-empty-state,
+        .cart-empty,
+        .shop-items-empty,
+        .rt-preview-empty,
+        .char-empty,
+        .dms-widget-empty {
+            padding: var(--space-xl);
+            text-align: center;
+            color: var(--text-dim);
+            font-size: 0.9em;
+        }
+
+        /* ------------------------------------------------------------
+           F-17: EIN Leerzustand fuer die Detail-Panels
+           ------------------------------------------------------------
+           Fuenf Ansichten hatten dafuer je eine eigene Klassenfamilie, drei
+           davon zeichengleich. Die Abweichungen der uebrigen zwei waren
+           unbeabsichtigt: der Encounter-Leerzustand hatte eine andere
+           Deckkraft (0.5 statt 0.3) und eine andere Schriftgroesse, das
+           Bestiar einen eigenen Innenabstand.
+
+           Der GENERISCHE Leerzustand .empty-state (mit renderEmptyState() in
+           render/helpers.js) bleibt daneben bestehen — er ist der Leerzustand
+           fuer LISTEN ("Noch keine Eintraege") und hat Titel, Beschreibung und
+           optionale Aktion. Dieser hier ist der Leerzustand fuer das
+           DETAIL-PANEL ("Waehle einen Eintrag aus der Liste"): Symbol und eine
+           Zeile, mehr braucht er nicht. Zwei Muster, zwei Aufgaben. */
+        .detail-empty,
+        .loc-detail-empty,
+        .npc-detail-empty,
+        .loot-detail-empty,
+        .enc-detail-empty,
+        .bestiary-detail-empty {
             flex: 1;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
+            text-align: center;
+            padding: var(--space-xl);
             color: var(--text-dim);
         }
 
-        .loc-detail-empty-icon {
+        .detail-empty-icon,
+        .loc-detail-empty-icon,
+        .npc-detail-empty-icon,
+        .loot-detail-empty-icon,
+        .enc-detail-empty-icon,
+        .bestiary-detail-empty-icon {
             font-size: 3em;
-            margin-bottom: 12px;
+            margin-bottom: var(--space-md);
             opacity: 0.3;
         }
 
-        .loc-detail-empty-text {
+        .detail-empty-text,
+        .loc-detail-empty-text,
+        .npc-detail-empty-text,
+        .loot-detail-empty-text,
+        .enc-detail-empty-text,
+        .bestiary-detail-empty-text {
             font-size: 0.9em;
         }
 

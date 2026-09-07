@@ -488,12 +488,6 @@
             overflow: hidden;
         }
         
-        .shop-items-empty {
-            padding: 20px;
-            text-align: center;
-            color: var(--text-dim);
-        }
-        
         /* Shop Items - Kompakte Mini-Zeilen (Variante 3) */
         .si-list {
             display: flex;
@@ -759,12 +753,6 @@
             background: var(--bg-dark);
             border-radius: var(--radius-md);
             margin-bottom: 12px;
-        }
-        
-        .cart-empty {
-            text-align: center;
-            color: var(--text-dim);
-            padding: 30px;
         }
         
         .cart-shop-group {

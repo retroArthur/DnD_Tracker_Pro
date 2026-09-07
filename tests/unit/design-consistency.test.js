@@ -740,3 +740,58 @@ describe('F-15 / F-16 — Filter und Bestiar-Details', () => {
         expect(ohne).toEqual([]);
     });
 });
+
+
+describe('F-17 — drei Leerzustaende statt siebzehn', () => {
+    // Die App braucht drei, nicht einen: eine LISTE ohne Eintraege will Symbol,
+    // Titel, Text und eine Aktion; ein DETAIL-PANEL ohne Auswahl will Symbol
+    // und eine Zeile; eine KACHEL will eine Zeile. Sie mit Gewalt in ein
+    // Muster zu pressen haette der Liste ihre Aktion oder der Kachel ihre
+    // Groesse genommen.
+    const DETAIL = ['loc-detail-empty', 'npc-detail-empty', 'loot-detail-empty',
+                    'enc-detail-empty', 'bestiary-detail-empty'];
+    const HINT = ['bestiary-empty-results', 'cp-empty', 'dash-empty', 'dash-party-empty',
+                  'calc-fav-empty', 'calc-results-empty', 'calc-list-empty',
+                  'backup-browser-empty', 'condition-ref-empty', 'wp-empty-state',
+                  'tl-empty-state', 'rs-empty-state', 'fr-empty-state', 'cart-empty',
+                  'shop-items-empty', 'rt-preview-empty', 'char-empty', 'dms-widget-empty'];
+
+    test('die drei Basisklassen sind definiert', () => {
+        ['empty-state', 'detail-empty', 'empty-hint'].forEach(c => {
+            expect(cssCode).toMatch(new RegExp(`\\.${c}\\s*[,{]`));
+        });
+    });
+
+    test('alle fuenf Detail-Leerzustaende haengen an derselben Regel', () => {
+        const treffer = ruleBodiesFor('detail-empty').find(r => r.body.includes('justify-content'));
+        expect(treffer).toBeDefined();
+        DETAIL.forEach(c => expect(treffer.selectors).toContain(`.${c}`));
+    });
+
+    test('alle Hinweis-Leerzustaende haengen an derselben Regel', () => {
+        const treffer = ruleBodiesFor('empty-hint').find(r => r.body.includes('text-align'));
+        expect(treffer).toBeDefined();
+        HINT.forEach(c => expect(treffer.selectors).toContain(`.${c}`));
+    });
+
+    test('keine view-eigene Leerzustands-Regel mehr', () => {
+        // Vorher: acht verschiedene Innenabstaende fuer dieselbe Sache, und
+        // .fr-empty-state sogar zweimal definiert.
+        // "Eigene Regel" heisst: die Klasse ist die EINZIGE des Blocks. Als
+        // letzter Eintrag einer geteilten Selektorliste steht sie zu Recht da —
+        // ein naiver Zeilentreffer haelt beides faelschlich fuer dasselbe.
+        const eigene = [];
+        [...DETAIL, ...HINT].forEach(c => {
+            const re = new RegExp(`(?:^|\\}|\\*/)\\s*\\.${c}\\s*\\{`, 'g');
+            const n = (cssCode.match(re) || []).length;
+            if (n > 0) eigene.push(`${c} (${n}x)`);
+        });
+        expect(eigene).toEqual([]);
+    });
+
+    test('renderEmptyState() bleibt der Weg fuer Listen', () => {
+        const helpers = fs.readFileSync(path.join(REPO, 'render/helpers.js'), 'utf8');
+        expect(helpers).toContain('function renderEmptyState');
+        expect(helpers).toContain('class="empty-state"');
+    });
+});

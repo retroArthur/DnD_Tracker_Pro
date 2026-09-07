@@ -132,13 +132,6 @@
 }
 
 /* Leerer Zustand */
-.cp-empty {
-    padding: 24px 16px;
-    text-align: center;
-    color: var(--text-dim);
-    font-size: var(--font-size-small, 12px);
-}
-
 /* Animationen */
 @keyframes cp-fade-in {
     from { opacity: 0; }

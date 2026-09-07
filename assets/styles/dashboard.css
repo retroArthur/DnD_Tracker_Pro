@@ -2176,12 +2176,6 @@
     flex-wrap: wrap;
 }
 
-.dash-party-empty {
-    text-align: center;
-    padding: 20px;
-    color: var(--text-dim);
-}
-
 /* Stats Row */
 .dash-stats {
     display: flex;
@@ -2364,13 +2358,6 @@
 }
 
 /* Empty State */
-.dash-empty {
-    text-align: center;
-    padding: 16px;
-    color: var(--text-dim);
-    font-size: 0.9em;
-}
-
 /* Timer Widget */
 .dash-timer {
     background: var(--bg-elevated);

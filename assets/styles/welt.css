@@ -13,12 +13,6 @@
    wp- Session-Prep (WELT-01)
    ======================================== */
 
-.wp-empty-state {
-    text-align: center;
-    color: var(--text-dim);
-    padding: 48px 16px;
-}
-
 .wp-list {
     display: flex;
     flex-direction: column;
@@ -386,12 +380,6 @@
     font-weight: 700;
 }
 
-.tl-empty-state {
-    text-align: center;
-    color: var(--text-dim);
-    padding: 48px 16px;
-}
-
 .tl-list {
     display: flex;
     flex-direction: column;
@@ -583,12 +571,6 @@
    rs- Reise-Simulator (WELT-04)
    ======================================== */
 
-.rs-empty-state {
-    text-align: center;
-    color: var(--text-dim);
-    padding: 48px 16px;
-}
-
 .rs-config-panel {
     background: var(--surface);
     border: 1px solid var(--border);
@@ -756,12 +738,6 @@
 /* ========================================
    fr- Fraktionen & Ruf (WELT-05)
    ======================================== */
-
-.fr-empty-state {
-    text-align: center;
-    color: var(--text-dim);
-    padding: 48px 16px;
-}
 
 .fr-list {
     display: flex;
@@ -1270,12 +1246,6 @@
 }
 
 /* Leer-Zustand */
-.fr-empty-state {
-    text-align: center;
-    color: var(--text-dim);
-    padding: 48px 16px;
-}
-
 @media (max-width: 600px) {
     .fr-ruf-buttons {
         flex-wrap: wrap;
