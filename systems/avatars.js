@@ -14,6 +14,7 @@ function validateAvatarURL(url) {
     // Ein reines trim()+startsWith()-Praefixfilter laesst sich damit umgehen,
     // z. B. "java\tscript:alert(1)" oder "jav\nascript:alert(1)" bestehen die
     // Pruefung, werden vom Browser aber als "javascript:"-URL interpretiert.
+    // eslint-disable-next-line no-control-regex -- Zeichenklasse trifft Steuerzeichen ABSICHTLICH (WR-01, Phase 12, Commit d2a521c)
     const strippedForProtocolCheck = trimmed.replace(/[\x00-\x20\x7F\s]/g, '');
     const lowerStrippedForProtocolCheck = strippedForProtocolCheck.toLowerCase();
     if (dangerousProtocols.some(proto => lowerStrippedForProtocolCheck.startsWith(proto))) {
