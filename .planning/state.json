@@ -1,0 +1,28 @@
+{
+  "contract": "1.0.0",
+  "flavor": "core",
+  "milestone": "v1.2 — Schulden-Abbau",
+  "phases": [
+    {
+      "number": "12",
+      "name": "Datensicherheit",
+      "status": "pending"
+    },
+    {
+      "number": "13",
+      "name": "Härtung & Wartbarkeit",
+      "status": "pending"
+    },
+    {
+      "number": "14",
+      "name": "Tests & Gates",
+      "status": "pending"
+    }
+  ],
+  "next": {
+    "command": "/gsd:new-milestone",
+    "label": "Start a new milestone",
+    "reason": "All phases complete — start a new milestone"
+  },
+  "updated_at": "2026-09-07T10:49:18.557Z"
+}

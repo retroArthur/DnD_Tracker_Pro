@@ -10,10 +10,10 @@ last_activity_desc: Milestone v1.2 completed and archived
 state_head: dedc8538eb706d49cae3eb337e5f32bac7f24ea3
 progress:
   total_phases: 3
-  completed_phases: 2
+  completed_phases: 3
   total_plans: 38
   completed_plans: 38
-  percent: 67
+  percent: 100
 current_phase: 14
 ---
 
