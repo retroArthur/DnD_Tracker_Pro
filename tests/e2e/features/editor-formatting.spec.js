@@ -758,3 +758,49 @@ test.describe('Randfälle', () => {
         expect(lauf1).toBe('<font style="font-size: 18px;">Ordnungstext</font>');
     });
 });
+
+// NEU mit Variante 2a (W-15) — NICHT Teil des eingefrorenen Phase-9-Netzes.
+// Der Zustand wird ueber getActiveFormatsAtSelection() ermittelt, nicht ueber
+// die deprecated queryCommandState-API; dieser Block ist der Beleg dafuer,
+// dass die Ermittlung an einem KOLLABIERTEN Cursor greift — genau der Fall,
+// bei dem handleSelectionChange() frueh zurueckkehrt.
+test.describe('Aktiver Formatzustand in der Leiste (2a)', () => {
+    test.beforeEach(async ({ page }) => {
+        await gotoBundleFresh(page);
+    });
+
+    test('Cursor in fettem Text markiert den B-Knopf, ausserhalb nicht', async ({ page }) => {
+        await openFreshWikiForm(page, 'Netz Formatzustand');
+        const editor = page.locator('#wiki-content');
+        await typeAndSelectAll(editor, TESTTEXT);
+        await page.click('[data-action="format-text"][data-cmd="wiki-content"][data-editor="bold"]');
+
+        const boldBtn = page.locator(
+            '[data-toolbar-for="wiki-content"] [data-action="format-text"][data-editor="bold"]'
+        );
+        // Cursor in den fetten Text setzen (kollabierte Auswahl)
+        await editor.evaluate(el => {
+            const target = el.querySelector('b');
+            const range = document.createRange();
+            range.setStart(target.firstChild, 2);
+            range.collapse(true);
+            const sel = window.getSelection();
+            sel.removeAllRanges();
+            sel.addRange(range);
+            document.dispatchEvent(new Event('selectionchange'));
+        });
+        await expect(boldBtn).toHaveClass(/format-active/, { timeout: 3000 });
+
+        // Cursor hinter das fette Element -> Zustand muss wieder abfallen
+        await editor.evaluate(el => {
+            const range = document.createRange();
+            range.setStart(el, el.childNodes.length);
+            range.collapse(true);
+            const sel = window.getSelection();
+            sel.removeAllRanges();
+            sel.addRange(range);
+            document.dispatchEvent(new Event('selectionchange'));
+        });
+        await expect(boldBtn).not.toHaveClass(/format-active/, { timeout: 3000 });
+    });
+});

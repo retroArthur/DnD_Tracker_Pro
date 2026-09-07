@@ -268,7 +268,33 @@ function initFloatingToolbar() {
         }
     }
 }
+// Spiegelt den Formatzustand am Cursor in die statische Leiste des Editors.
+// Bewusst getrennt von handleSelectionChange(): jene Funktion kehrt bei
+// LEERER Auswahl frueh zurueck (sie steuert die schwebende Leiste), der
+// Zustand muss aber gerade auch fuer einen kollabierten Cursor stimmen.
+function refreshEditorFormatState() {
+    const selection = window.getSelection();
+    if (!selection || !selection.rangeCount) return;
+    let node = selection.anchorNode;
+    if (!node) return;
+    if (node.nodeType === Node.TEXT_NODE) node = node.parentElement;
+    const editor = node?.closest?.(window.EDITOR_HOST_SELECTOR);
+    if (!editor || !editor.id) return;
+    const toolbar = document.querySelector(`[data-toolbar-for="${editor.id}"]`);
+    if (!toolbar) return;
+    const active = getActiveFormatsAtSelection(editor);
+    toolbar.querySelectorAll('[data-action="format-text"]').forEach(btn => {
+        const fmt = btn.dataset.editor;
+        if (!fmt) return;
+        // Nur die vier Zeichenformate faerben. Liste/Marker/Schrift haben
+        // keinen sinnvollen An-/Aus-Zustand an einem kollabierten Cursor.
+        if (!['bold', 'italic', 'underline', 'strikethrough'].includes(fmt)) return;
+        btn.classList.toggle('format-active', active.has(fmt));
+    });
+}
+
 function handleSelectionChange() {
+    refreshEditorFormatState();
     // Keine funktions-lokale Bindung von TOOLBAR_DIMENSIONS hier — Build-Dedup-Pass-Konflikt
     // vermeiden (CLAUDE.md "Duplicate Declaration Debugging Pattern"), direkt an der
     // Destrukturierungsstelle unten mit Guard auf window.TOOLBAR_DIMENSIONS zugreifen.

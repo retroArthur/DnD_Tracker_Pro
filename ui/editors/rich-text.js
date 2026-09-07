@@ -416,6 +416,42 @@ function removeSelectionBorders() {
 const MARKER_TEXT_COLOR = '#141414';
 
 // ------------------------------------------------------------
+// Aktiver Formatzustand (B/I/U/S)
+// ------------------------------------------------------------
+// Ohne queryCommandState: die deprecated Editier-Kommando-API ist in diesem
+// Projekt auf 0 und bleibt es. Stattdessen wird vom Cursor aus nach oben
+// gelaufen und geprueft, welche Formatelemente zwischen Cursor und Editor
+// liegen — dieselbe Technik, die applyInlineFormat() zum Togglen nutzt.
+const EDITOR_FORMAT_TAGS = {
+    B: 'bold',
+    STRONG: 'bold',
+    I: 'italic',
+    EM: 'italic',
+    U: 'underline',
+    S: 'strikethrough',
+    STRIKE: 'strikethrough'
+};
+
+function getActiveFormatsAtSelection(editor) {
+    const active = new Set();
+    const selection = window.getSelection();
+    if (!selection || !selection.rangeCount || !editor) return active;
+    const range = selection.getRangeAt(0);
+    let node = range.startContainer;
+    if (node.nodeType === Node.TEXT_NODE) node = node.parentElement;
+    // Nur innerhalb DIESES Editors laufen — sonst faerbte eine Auswahl in
+    // einem anderen Editor die Leiste hier mit ein.
+    if (!node || !editor.contains(node)) return active;
+    while (node && node !== editor) {
+        const fmt = EDITOR_FORMAT_TAGS[node.tagName];
+        if (fmt) active.add(fmt);
+        node = node.parentElement;
+    }
+    return active;
+}
+window.getActiveFormatsAtSelection = getActiveFormatsAtSelection;
+
+// ------------------------------------------------------------
 // Marker (Texthervorhebung) — eine Implementierung fuer alle drei Wege
 // ------------------------------------------------------------
 // Vorher lagen hier DREI Fassungen mit unterschiedlichem Markup nebeneinander:
