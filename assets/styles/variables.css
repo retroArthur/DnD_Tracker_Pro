@@ -18,6 +18,13 @@
             --text-dim: #888;
             --border: #3a3a3a;
             --shadow: rgba(0,0,0,0.5);
+            /* rgba()-Kanaele zu --gold/--green/--red. Muessen
+               Zahlentripel sein; CSS kann sie nicht aus dem
+               Hex-Token ableiten. BEIM AENDERN EINER FARBE HIER
+               MITZIEHEN. */
+            --gold-rgb: 212, 175, 55;
+            --green-rgb: 74, 222, 128;
+            --red-rgb: 239, 68, 68;
         }
         
         /* Theme: Light */
@@ -40,6 +47,10 @@
             --text-dim: #666;
             --border: #ccc;
             --shadow: rgba(0,0,0,0.15);
+            /* rgba()-Kanaele, siehe Kommentar im Dark-Block. */
+            --gold-rgb: 184, 134, 11;
+            --green-rgb: 22, 163, 74;
+            --red-rgb: 220, 38, 38;
         }
         
         /* Theme: Sepia/Parchment */
@@ -62,6 +73,10 @@
             --text-dim: #666;
             --border: #c9b99a;
             --shadow: rgba(0,0,0,0.1);
+            /* rgba()-Kanaele, siehe Kommentar im Dark-Block. */
+            --gold-rgb: 139, 69, 19;
+            --green-rgb: 133, 153, 0;
+            --red-rgb: 220, 50, 47;
         }
         
         /* Theme: High Contrast */
@@ -84,8 +99,58 @@
             --text-dim: #aaa;
             --border: #555;
             --shadow: rgba(255,255,255,0.1);
+            /* rgba()-Kanaele, siehe Kommentar im Dark-Block. */
+            --gold-rgb: 255, 215, 0;
+            --green-rgb: 0, 255, 0;
+            --red-rgb: 255, 0, 0;
         }
         
+
+        /* ============================================================
+           F-01: Aliase fuer das zweite, historisch gewachsene Token-Set
+           ============================================================
+           Die Module wp-/tl-/rs-/fr-/npcg- lesen diese Namen. Sie waren nie
+           definiert: 19 Namen, davon 10 OHNE Fallback — dort lieferte der
+           Browser transparente Flaechen, Radius 0 und fehlende Abstaende.
+
+           Der Block steht bewusst NACH allen Theme-Bloecken und verweist nur
+           auf Basis-Tokens. Dadurch traegt er kein Theme mit sich herum: wenn
+           [data-theme="light"] das Basis-Token umdefiniert, folgt der Alias
+           von selbst. Eine Kopie in jedem Theme-Block waere vier Stellen zum
+           Auseinanderdriften.
+
+           Zielbild: dieser Block verschwindet, sobald die Welt-Module direkt
+           die Basis-Tokens benutzen. */
+        :root {
+            --bg: var(--bg-dark);
+            --bg-alt: var(--bg-elevated);
+            --bg-input: var(--bg-dark);
+            --surface: var(--bg-card);
+            --surface-alt: var(--bg-elevated);
+            --surface-hover: var(--bg-hover);
+            --border-color: var(--border);
+            --border-light: var(--bg-hover);
+            --text-light: var(--text);
+            --teal: var(--cyan);
+
+            /* Abstands- und Radius-Skala (F-06); px wie der Bestand */
+            --space-xs: 4px;
+            --space-sm: 8px;
+            --space-md: 12px;
+            --space-lg: 16px;
+            --space-xl: 24px;
+            --radius-sm: 4px;
+            --radius-md: 8px;
+            --radius-lg: 12px;
+            --radius: 10px; /* Bestandswert von .loc-item/.npc-item */
+
+            /* Hover-/Dim-Stufen: aus den Basisfarben gemischt statt neu
+               erfunden, damit sie jedem Theme folgen. */
+            --gold-hover: color-mix(in srgb, var(--gold) 85%, #fff);
+            --green-hover: color-mix(in srgb, var(--green) 85%, #000);
+            --red-dim: color-mix(in srgb, var(--red) 70%, #000);
+        }
+
         /* ============================================================
            DESIGN PROFILES
            ============================================================ */

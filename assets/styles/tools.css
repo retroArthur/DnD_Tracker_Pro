@@ -2197,13 +2197,13 @@
 }
 
 .ds-rate-chip.ds-crit {
-    background: rgba(var(--green-rgb, 34, 197, 94), 0.15);
+    background: rgba(var(--green-rgb), 0.15);
     color: var(--green);
     border: 1px solid var(--green);
 }
 
 .ds-rate-chip.ds-fumble {
-    background: rgba(var(--red-rgb, 239, 68, 68), 0.15);
+    background: rgba(var(--red-rgb), 0.15);
     color: var(--red);
     border: 1px solid var(--red);
 }

@@ -1,3 +1,9 @@
+/* F-07: Die vier Welt-Views liegen seit 2026-09-07 in <main class="main-content">
+   und bekommen ihren Innenabstand von dort. Die frueheren Kompensations-Regeln
+   .wp-/.tl-/.rs-/.fr-view-content { padding: var(--space-md, 1rem) } sind
+   deshalb entfallen — sie haetten den Abstand nun doppelt gesetzt. Die
+   fr-Variante war ausserdem zweimal identisch definiert (F-18). */
+
 /* ========================================
    WELT.CSS - Phase 5: Welt & Story
    CSS-Grundgerüst für alle 5 Features
@@ -6,10 +12,6 @@
 /* ========================================
    wp- Session-Prep (WELT-01)
    ======================================== */
-
-.wp-view-content {
-    padding: var(--space-md, 1rem);
-}
 
 .wp-empty-state {
     text-align: center;
@@ -164,7 +166,7 @@
 
 .wp-rich-editor:focus {
     border-color: var(--gold);
-    box-shadow: 0 0 0 2px rgba(var(--gold-rgb, 180, 140, 60), 0.15);
+    box-shadow: 0 0 0 2px rgba(var(--gold-rgb), 0.15);
 }
 
 .wp-rich-editor:empty::before {
@@ -391,10 +393,6 @@
     font-weight: 700;
 }
 
-.tl-view-content {
-    padding: var(--space-md, 1rem);
-}
-
 .tl-empty-state {
     text-align: center;
     color: var(--text-dim);
@@ -474,9 +472,9 @@
 }
 
 .tl-typ-session {
-    background: rgba(var(--gold-rgb, 180, 140, 60), 0.15);
+    background: rgba(var(--gold-rgb), 0.15);
     color: var(--gold);
-    border: 1px solid rgba(var(--gold-rgb, 180, 140, 60), 0.3);
+    border: 1px solid rgba(var(--gold-rgb), 0.3);
 }
 
 /* Kalender-Datum-Zeile */
@@ -593,10 +591,6 @@
 /* ========================================
    rs- Reise-Simulator (WELT-04)
    ======================================== */
-
-.rs-view-content {
-    padding: var(--space-md, 1rem);
-}
 
 .rs-empty-state {
     text-align: center;
@@ -771,10 +765,6 @@
 /* ========================================
    fr- Fraktionen & Ruf (WELT-05)
    ======================================== */
-
-.fr-view-content {
-    padding: var(--space-md, 1rem);
-}
 
 .fr-empty-state {
     text-align: center;
@@ -991,10 +981,6 @@
 /* ========================================
    fr- Fraktionen & Ruf-System (WELT-05)
    ======================================== */
-
-.fr-view-content {
-    padding: var(--space-md, 1rem);
-}
 
 /* Layout: Liste links + Detail rechts */
 .fr-layout {

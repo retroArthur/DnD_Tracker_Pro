@@ -1291,7 +1291,7 @@
 
 .xp-dist-preview-line {
     padding: 8px 12px;
-    background: rgba(var(--gold-rgb, 212,175,55), 0.1);
+    background: rgba(var(--gold-rgb), 0.1);
     border-left: 3px solid var(--gold);
     border-radius: 4px;
     font-size: 0.9rem;

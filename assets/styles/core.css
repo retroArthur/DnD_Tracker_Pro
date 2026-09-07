@@ -461,6 +461,84 @@
         
         .btn:hover { background: var(--gold); color: var(--bg-dark); }
         .btn-sm { padding: 3px 8px; font-size: 11px; }
+
+        /* btn-xs: zweimal im Markup benutzt, nie definiert (F-13). Eine Stufe
+           unter btn-sm. */
+        .btn-xs { padding: 2px 6px; font-size: 10px; }
+
+        /* btn-text: dreimal im Migrations-Assistenten benutzt, nie definiert
+           (F-13). Reiner Text ohne Flaeche — fuer Nebenwege wie
+           "Ueberspringen" oder "Nicht mehr anzeigen". */
+        .btn-text {
+            background: transparent;
+            border-color: transparent;
+            color: var(--text-dim);
+            text-decoration: underline;
+            text-underline-offset: 3px;
+        }
+
+        .btn-text:hover {
+            background: transparent;
+            color: var(--gold);
+        }
+
+        /* ------------------------------------------------------------
+           F-13: Varianten, die im Markup und im JS benutzt, aber nie
+           definiert waren — btn-secondary (5 Verwendungen), btn-warning (2),
+           btn-icon (16). Bis hierher fielen sie auf die Basis-.btn-Optik
+           zurueck: ein Loeschen-Icon sah aus wie ein Bestaetigen-Knopf.
+           Stil folgt dem Bestand: Kontur auf --bg-elevated, gefuellt nur
+           fuer bestaetigende Aktionen.
+           ------------------------------------------------------------ */
+        .btn-secondary {
+            background: transparent;
+            border-color: var(--border);
+            color: var(--text-dim);
+        }
+
+        .btn-secondary:hover {
+            background: var(--bg-hover);
+            border-color: var(--text-dim);
+            color: var(--text);
+        }
+
+        .btn-warning {
+            border-color: var(--yellow);
+            color: var(--yellow);
+        }
+
+        .btn-warning:hover {
+            background: var(--yellow);
+            color: var(--bg-dark);
+        }
+
+        /* Nur-Icon: quadratisch, ohne Kontur, Flaeche >= 36px fuer Beruehrung */
+        .btn-icon {
+            padding: 0;
+            width: 36px;
+            height: 36px;
+            justify-content: center;
+            background: transparent;
+            border-color: transparent;
+            color: var(--text-dim);
+        }
+
+        .btn-icon:hover {
+            background: var(--bg-hover);
+            color: var(--gold);
+        }
+
+        .btn-sm.btn-icon {
+            width: 28px;
+            height: 28px;
+        }
+
+        /* Der Fokusring war bisher der Browser-Standard und auf dunklem
+           Grund kaum zu sehen. */
+        .btn:focus-visible {
+            outline: 2px solid var(--gold);
+            outline-offset: 2px;
+        }
         .btn-danger { border-color: var(--red); color: var(--red); }
         .btn-danger:hover { background: var(--red); color: white; }
         .btn-success { background: var(--green); border-color: var(--green); color: var(--bg-dark); font-weight: 600; }

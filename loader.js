@@ -238,8 +238,12 @@ async function loadModules() {
         'assets/templates/view-encounters.html',
         'assets/templates/view-bestiary.html',
         'assets/templates/view-resources.html',
-        'assets/templates/view-tools.html',
+        // F-07: view-welt MUSS vor view-tools stehen. </main> steht am Ende
+        // von view-tools.html; danach eingehaengte Sections landen ausserhalb
+        // des Containers und bekommen dessen Innenabstand nicht — das war der
+        // sichtbare Bruch zwischen den Reitern "Orte" und "Kalender".
         'assets/templates/view-welt.html',
+        'assets/templates/view-tools.html',
         'assets/templates/modals-entity.html',
         'assets/templates/modals-shops.html',
         'assets/templates/modals-tools.html',
