@@ -17,7 +17,8 @@ const fs = require('fs');
 const path = require('path');
 const {
     extractModulesFromLoader,
-    generateGlobalsFromModules
+    generateGlobalsFromModules,
+    hasUncapturedTopLevelBinding
 } = require('../../tools/generate-eslint-globals.js');
 
 const REPO_ROOT = path.resolve(__dirname, '..', '..');
@@ -29,9 +30,9 @@ const REGEN_COMMAND = 'npm run globals:generate';
  * Vergleicht zwei Namensmengen und meldet, welche Namen fehlen (in `actualKeys`
  * nicht vorhanden) und welche ueberzaehlig sind (in `actualKeys`, aber nicht in
  * `expectedKeys`). Bewusst lokal in dieser Testdatei implementiert, nicht im
- * Generator exportiert — der Generator exportiert genau drei Namen
+ * Generator exportiert — der Generator exportiert genau vier Namen
  * (`extractModulesFromLoader`, `generateGlobalsFromModules`,
- * `renderGlobalsArtifact`).
+ * `renderGlobalsArtifact`, `hasUncapturedTopLevelBinding`).
  */
 function diffKeySets(expectedKeys, actualKeys) {
     const expectedSet = new Set(expectedKeys);
@@ -87,6 +88,43 @@ describe('ESLint-Globals-Freshness (D-08)', () => {
 
         expect(diff.missing).toContain(removedName);
         expect(diff.extra).toContain(fakeName);
+    });
+
+    test('WR-01-Guard: erkennt destrukturierte und mehrfache Top-Level-Deklarationen, die DECLARATION_PATTERN allein nicht vollstaendig erfassen wuerde', () => {
+        // Faelle, die frueher STILLSCHWEIGEND null oder nur den ersten Namen
+        // geliefert haetten (14-REVIEW.md WR-01) und jetzt den lauten Abbruch
+        // in generateGlobalsFromModules() ausloesen muessen:
+        expect(hasUncapturedTopLevelBinding('const { FOO, BAR } = window.X;')).toBe(true);
+        expect(hasUncapturedTopLevelBinding('const [a, b] = arr;')).toBe(true);
+        expect(hasUncapturedTopLevelBinding('let a, b;')).toBe(true);
+        expect(hasUncapturedTopLevelBinding('var x = 1, y = 2;')).toBe(true);
+
+        // Gewoehnliche, bereits korrekt erfasste Einzeldeklarationen duerfen
+        // NICHT als riskant gelten (sonst wuerde der Generator gegen den
+        // gesamten Live-Baum faelschlich abbrechen):
+        expect(hasUncapturedTopLevelBinding('const FOO = window.X;')).toBe(false);
+        expect(hasUncapturedTopLevelBinding('function myFunc(a, b) {')).toBe(false);
+        expect(hasUncapturedTopLevelBinding('const obj = { a: 1, b: 2 };')).toBe(false);
+        expect(hasUncapturedTopLevelBinding('const result = fn(a, b);')).toBe(false);
+        expect(hasUncapturedTopLevelBinding('    const indented = 1;')).toBe(false);
+        expect(hasUncapturedTopLevelBinding('someCall(a, b);')).toBe(false);
+        // Regression: ein einzelner String mit Kommas darf nicht als
+        // Mehrfachdeklaration gelten (real im Quellbaum, siehe
+        // ui/editors/rich-text.js: EDITOR_HOST_SELECTOR).
+        expect(
+            hasUncapturedTopLevelBinding(
+                "const SEL = '.rich-editor, .spell-editor, .dialog-text';"
+            )
+        ).toBe(false);
+    });
+
+    test('WR-01-Guard: kein Live-Modul in loader.js MODULES enthaelt aktuell ein solches Muster', () => {
+        // generateGlobalsFromModules() wirft, sobald hasUncapturedTopLevelBinding()
+        // an Klammertiefe 0 anschlaegt (siehe tools/generate-eslint-globals.js).
+        // Dieser Aufruf gegen den echten Modulbaum ist damit gleichzeitig der
+        // Nachweis, dass der neue Guard heute nicht faelschlich den gesamten
+        // Live-Baum rot faerbt.
+        expect(() => generateGlobalsFromModules()).not.toThrow();
     });
 
     test('eslint.generated-globals.js ist identisch mit generateGlobalsFromModules() (kein Drift)', () => {
