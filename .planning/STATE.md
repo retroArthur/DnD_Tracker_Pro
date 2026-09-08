@@ -2,9 +2,14 @@
 gsd_state_version: 1.0
 milestone: v1.3
 milestone_name: Design-System
+current_phase: 15
+current_phase_name: Befundlage & Vorlauf
 status: planning
-last_updated: "2026-09-08T12:27:38.000Z"
+stopped_at: Phase 15 context gathered
+last_updated: "2026-09-08T18:04:57.026Z"
 last_activity: 2026-09-08
+last_activity_desc: Roadmap erstellt (Phasen 15–19, 46/46 Requirements gemappt)
+state_head: 44a604f0ed60cc1116ec32244802824dab2b8385
 progress:
   total_phases: 5
   completed_phases: 0
@@ -241,9 +246,9 @@ die Tastaturprobe der CHECKLISTE muss aus den Akzeptanzkriterien.
 
 ## Session Continuity
 
-**Last session:** 2026-09-07T07:57:33.832Z
-**Stopped at:** Phase 14 complete — all phases complete
-**Resume file:** None
+**Last session:** 2026-09-08T18:04:57.012Z
+**Stopped at:** Phase 15 context gathered
+**Resume file:** .planning/phases/15-befundlage-vorlauf/15-CONTEXT.md
 
 **Last action:** `/gsd-execute-phase 13` (Plan 13-08, MAINT-06). Converted all 81 originally-counted unfiltered `console.*` calls across 31 `loader.js` MODULES files to the one sanctioned `ErrorHandler.log()` outlet in `render/helpers.js` (marked `gsd:konsolen-senke`), built `tests/unit/console-hygiene.test.js` as a permanent regression guard, and corrected two stale `file-backup-manager.js` header comments that wrongly described the forbidden `window.save` monkey-patch pattern (code has used `registerPostSaveHook()` correctly since Phase 12). Mid-execution finding: converting routine/self-healing diagnostics (data repairs, migration progress, per-tab render guards) to the single outlet elevated them to `console.error` and broke 5 Playwright tests (`editor-formatting.spec.js`, `editor-insert.spec.js`, `import-security.spec.js`) that assert zero console errors — fixed by routing those specific sites through the existing `window.debugLogAdd()` in-app debug panel instead, preserving the single-outlet invariant for genuine faults while not misclassifying normal operation as an error. Full suites green: `npx jest` 1066/1066, `npx playwright test` 321 passed/2 skipped (STATE.md baseline exactly matched), `python build.py` + `--production` + `pytest tests/build` 24/24 all green.
 
