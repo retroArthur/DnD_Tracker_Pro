@@ -112,13 +112,30 @@ Zielwerten statt mit totem Ballast und unpassierbaren Ratschen.
 **Plans**: 8 plans in 6 waves
 
 Plans:
+**Wave 1**
+
 - [ ] 15-01-PLAN.md — Tracer: Ratschen-Schleife end-to-end an der Bewegungsunterdrückung (BASE-03, MOTION-05) plus `declarationsOf()`-Ausschluss
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
 - [ ] 15-02-PLAN.md — Die 13 Blocker in PROJECT.md buchen, GATE-04 setzen, Abnahmeform GATE-05 festschreiben
 - [ ] 15-03-PLAN.md — Korrigierte Kennzahlen in den Handoff, Anker als Tripel, ROADMAP/REQUIREMENTS nachführen, Canonical refs
 - [ ] 15-04-PLAN.md — FIX-01: die drei DM-Screen-Referenzwidgets gestylt, neuer Abnahme-Spec, `DMS_UNSTYLED_MAX`
+
+**Wave 3** *(blocked on Wave 2 completion)*
+
 - [ ] 15-05-PLAN.md — FIX-02 Zauberplatz-Pips und FIX-03 Würfelfarbe, je mit rotem Vorlauf
+
+**Wave 4** *(blocked on Wave 3 completion)*
+
 - [ ] 15-06-PLAN.md — `tools/css-usage-report.js`, Stil-Diff-Harness, erste Löschliste mit Handprüfung
+
+**Wave 5** *(blocked on Wave 4 completion)*
+
 - [ ] 15-07-PLAN.md — Löschlauf: eine Datei je Commit, PWA-Paar in einem Commit, `INLINE_MAX` gesenkt
+
+**Wave 6** *(blocked on Wave 5 completion)*
+
 - [ ] 15-08-PLAN.md — `15-RATCHET-BASELINE.md`, Neuerhebung aller Kennzahlen, Abschlusslauf und Sichtung
 
 **UI hint**: yes
