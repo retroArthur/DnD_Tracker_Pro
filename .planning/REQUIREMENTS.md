@@ -389,19 +389,69 @@ Akzeptanzkriterien heraus. Belege in `HANDOFF-V2-GEGENPROBEN.md`.
 
 ## Traceability
 
-Wird bei der Roadmap-Erstellung gefüllt.
-
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| _(offen)_ | _(offen)_ | Pending |
+| BASE-01 | Phase 15 | Pending |
+| BASE-02 | Phase 15 | Pending |
+| BASE-03 | Phase 15 | Pending |
+| BASE-04 | Phase 15 | Pending |
+| DEAD-01 | Phase 15 | Pending |
+| DEAD-02 | Phase 15 | Pending |
+| DEAD-03 | Phase 15 | Pending |
+| FIX-01 | Phase 15 | Pending |
+| FIX-02 | Phase 15 | Pending |
+| FIX-03 | Phase 15 | Pending |
+| GATE-03 | Phase 15 | Pending |
+| GATE-04 | Phase 15 | Pending |
+| GATE-05 | Phase 15 | Pending |
+| COLOR-01 | Phase 16 | Pending |
+| COLOR-02 | Phase 16 | Pending |
+| COLOR-03 | Phase 16 | Pending |
+| COLOR-04 | Phase 16 | Pending |
+| COLOR-05 | Phase 16 | Pending |
+| COLOR-06 | Phase 16 | Pending |
+| COLOR-07 | Phase 16 | Pending |
+| COLOR-08 | Phase 16 | Pending |
+| COLOR-09 | Phase 16 | Pending |
+| COLOR-10 | Phase 16 | Pending |
+| COLOR-11 | Phase 16 | Pending |
+| GATE-01 | Phase 16 | Pending |
+| GATE-02 | Phase 16 | Pending |
+| ELEV-01 | Phase 17 | Pending |
+| ELEV-02 | Phase 17 | Pending |
+| ELEV-03 | Phase 17 | Pending |
+| ELEV-04 | Phase 17 | Pending |
+| MOTION-01 | Phase 17 | Pending |
+| MOTION-02 | Phase 17 | Pending |
+| MOTION-03 | Phase 17 | Pending |
+| MOTION-04 | Phase 17 | Pending |
+| MOTION-05 | Phase 17 | Pending |
+| TYPO-01 | Phase 18 | Pending |
+| TYPO-02 | Phase 18 | Pending |
+| TYPO-03 | Phase 18 | Pending |
+| TYPO-04 | Phase 18 | Pending |
+| TYPO-05 | Phase 18 | Pending |
+| UX-01 | Phase 19 | Pending |
+| UX-02 | Phase 19 | Pending |
+| UX-03 | Phase 19 | Pending |
+| UX-04 | Phase 19 | Pending |
+| UX-05 | Phase 19 | Pending |
+| UX-06 | Phase 19 | Pending |
 
 **Coverage:**
 
 - v1.3 Requirements: 46 total
-- Mapped to phases: 0
-- Unmapped: 46 ⚠️
+- Mapped to phases: 46
+- Unmapped: 0 ✓
+
+**Zuordnungshinweis (GATE-01..05):** `GATE-03/04/05` sind in Phase 15 verortet, weil sie die
+Regeln festlegen (rot-grün-Beweispflicht, Geltungsbereich CSS vs. JS, Grün-Pflicht nach jeder Welle),
+denen alle Folgephasen nur noch folgen. `GATE-01/02` sind in Phase 16 verortet, weil `COLOR-*` die
+erste Welle ist, die einen berechneten Endwert statt Deklarationstext braucht (der headless-Harness
+und der Property-Mengen-Test); Phase 18 (`TYPO-*`) nutzt denselben Harness weiter, baut ihn nicht
+neu.
 
 ---
 
 _Requirements defined: 2026-09-08_
-_Last updated: 2026-09-08 beim Aufsetzen von Milestone v1.3_
+_Last updated: 2026-09-08 — Roadmap erstellt, Traceability gefüllt (Phasen 15–19, 46/46 Requirements gemappt)._
