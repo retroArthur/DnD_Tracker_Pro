@@ -111,11 +111,49 @@ Spieltagen alle echten Snapshots wegräumte — bei grüner Statusanzeige. Beide
 
 </details>
 
-## Next Milestone: v1.3 (noch nicht aufgesetzt)
+## Current Milestone: v1.3 Design-System
 
-**Der `DEBT`-Backlog ist leer.** v1.3 ist damit erstmals seit v1.0 wieder frei für Features statt
-Schuldenabbau. Was aus v1.2 als *bewusst geführte* Restschuld übrig bleibt — vollständig in
-`milestones/v1.2-MILESTONE-AUDIT.md`, hier als Übertrag, damit es das Archivieren überlebt:
+**Goal:** Die neun Befunde des Design-Audits v2 umsetzen — auf der **korrigierten Befundlage**
+(`HANDOFF-V2-VERIFIKATION.md`), nicht auf dem Wortlaut des Handoffs. Farbe kommt in allen vier
+Themes an, Schatten/Typografie/Tempo werden Skalen statt Sammlungen, und die Tastaturbedienung
+bekommt einen sichtbaren Zustand.
+
+**Target features:**
+
+- **Befundlage & Vorlauf** — die 13 Blocker schriftlich entscheiden, 36 korrigierte Kennzahlen
+  einarbeiten, N-08 als widerlegt schließen; 438 tote Klassen in 607 Regelblöcken löschen
+  (~3.174 Zeilen, darunter 678 Zeilen „MAP INTEGRATION“ für ein entferntes Feature); drei echte
+  Defekte beheben (DM-Screen-Referenzwidgets ungestylt, `.char-slot-pip` ohne CSS-Regel,
+  `dice-core.js:345` zerstört die Formatierung der Würfelzahl)
+- **Farbe** (N-02, N-01) — vollständiger `--on-<rolle>`-Satz plus `--*-text`-Rollen pro Theme,
+  dann die 390 `rgba()`-Literale auf Tokens bzw. `color-mix`. Schließt die vom Audit
+  übersehenen Fälle mit ein: 41 von 51 `color: white` auf gesättigten Flächen unter 4,5:1,
+  `--coin-*`/`--attr-*` bis herunter auf 1,29:1 in hellen Themes, fehlendes `color-scheme`
+- **Schatten & Bewegung** (N-03, N-06) — vier Höhenstufen mit gestaffelter Deckkraft und
+  eigenem Contrast-Wert (`--shadow` ist dort **weiß**); `transition: all` in drei Teilschritten
+  abbauen, ohne die elf tragenden Fälle (`opacity`, `visibility`, `filter`) fallenzulassen
+- **Typografie** (N-04, N-07a) — sieben Größenstufen gegen eine Wurzel, die bei 16px bleibt;
+  784 `em`-Fundstellen atomar in einem Commit; 21 folgenlose Gewichts-Stellen
+- **Bedienbarkeit** (N-05 neu geschnitten, N-09) — die bereits vorhandene globale
+  `:focus-visible`-Regel nach `core.css` holen und dokumentieren statt eine zweite danebenzustellen;
+  Zauber-Zähler-Semantik reparieren statt die funktionierende Anzeige zu löschen
+- **Messbare Abnahme** — das 64-Test-Netz prüft ausschließlich Deklarationstext, nie den
+  berechneten Endwert. Für N-02 und N-04 kommt eine headless gemessene Abnahme gegen das
+  gebaute Bündel dazu
+
+**Nicht in diesem Milestone** (vom Nutzer beim Aufsetzen abgewählt):
+
+- **Tastatur-Erreichbarkeit als JS-Strang** — 176 interaktive `div`/`span` ohne `tabindex`,
+  58 Chips mit `display:none`-Eingabe, 155 Labels ohne `for=`, 35 von 36 Modalen ohne
+  Fokusverwaltung. Belegt in `HANDOFF-V2-GEGENPROBEN.md`. Folge: N-05 bleibt an genau diesen
+  Elementen wirkungslos, und die Tastaturprobe der CHECKLISTE ist bis dahin nicht abnehmbar —
+  sie muss aus den Akzeptanzkriterien heraus.
+- **N-07 600er-Durchsicht** — 285 Stellen Handarbeit ohne Abnahmekriterium.
+
+### Übertrag aus v1.2 (weiterhin offen)
+
+Vollständig in `milestones/v1.2-MILESTONE-AUDIT.md`, hier als Übertrag, damit es das
+Archivieren überlebt:
 
 | Posten | Herkunft | Kern |
 |--------|----------|------|
@@ -374,12 +412,25 @@ nur gezielt und nicht erschöpfend gesucht.
 
 ### Active
 
-_(v1.3 ist noch nicht aufgesetzt — der `DEBT`-Backlog ist leer. Übertrag siehe „Next Milestone: v1.3" oben.)_
+_(v1.3 „Design-System" — die scharf geschnittenen Requirements mit REQ-IDs stehen in
+`REQUIREMENTS.md`, die geprüfte Befundlage in `HANDOFF-V2-VERIFIKATION.md`.)_
+
+- [ ] Befundlage festschreiben: 13 Blocker entscheiden, 36 Kennzahlen korrigieren, N-08 schließen
+- [ ] Toten CSS-Bestand löschen (438 Klassen, 607 Regelblöcke, ~3.174 Zeilen)
+- [ ] Drei echte Defekte beheben: DM-Screen-Referenzwidgets, `.char-slot-pip`, `dice-core.js:345`
+- [ ] Farbe folgt dem Theme: `--on-<rolle>` und `--*-text` vollständig, 390 `rgba()`-Literale abgebaut
+- [ ] Schatten als vier Höhenstufen mit theme-eigener Deckkraft; `transition: all` abgebaut ohne Regression
+- [ ] Typo-Skala gegen eine 16px-Wurzel; 784 `em`-Fundstellen atomar umgestellt
+- [ ] Ein dokumentierter Fokusring; Zauber-Zähler-Semantik repariert
+- [ ] Abnahme misst berechnete Endwerte, nicht Deklarationstext
+
+**Weiterhin offen aus v1.2** (nicht Teil von v1.3, siehe Übertragstabelle oben):
 
 - [ ] Gate-Ratschen mechanisieren statt sie als Prosa-Regel zu führen (NQ-03, NQ-06, NQ-07)
 - [ ] `npm run check` grün bekommen — Prettier-Schuld abtragen, `format:check` in CI aufnehmen (NQ-09)
 - [ ] Echte Tests für die sieben ausgenommenen Phase-13-Aufteilungsdateien (löst die MAINT-01/TEST-05-Spannung auf)
 - [ ] `DEBT-01` fortsetzen: `tsconfig.strict.json`-Zulassungsliste über die 8 Dateien hinaus wachsen lassen
+- [ ] Tastatur-Erreichbarkeit als eigener JS-Strang (aus v1.3 bewusst herausgehalten)
 
 ### Out of Scope
 
@@ -424,6 +475,12 @@ _(v1.3 ist noch nicht aufgesetzt — der `DEBT`-Backlog ist leer. Übertrag sieh
 | Roter Vorlauf als Pflicht für den Toast-Race-Beweis (D-02, Phase 14)            | Ein grüner Nachlauf allein beweist nichts, wenn der Lastlauf die Race vorher gar nicht reproduziert                              | ✓ Good — der Vorlauf war tatsächlich rot (5/95); ohne ihn wäre der Fix unbelegt geblieben |
 | `MODULE_TEST_EXCEPTIONS` als datierte, sichtbare Ausnahmeliste statt globaler Schwelle | Eine globale Statement-Schwelle ist in einer non-ESM-Global-Scope-Architektur bedeutungslos                                | ⚠️ Revisit — ehrlicher als vorher, aber 7 der 8 Phase-13-Aufteilungsdateien landeten sofort auf der Liste |
 | Milestone-Audit besteht auf Ausführungsnachweis, nicht auf SUMMARY-Behauptungen  | Zwei Phasen-Summaries behaupteten Dinge, die im Baum nicht zutrafen                                                            | ✓ Good — fand ein nie ausgeführtes Coverage-Gate und ein totes, ausgeliefertes Aktionsziel |
+| Design-Handoff v2 vor Ausführung verifiziert statt übernommen (v1.3-Start)     | Der Handoff ist eine externe Auftragsbeschreibung ohne Ausführungsnachweis — dieselbe Klasse Beleglage, die der v1.2-Audit als untragbar erwiesen hat | ✓ Good — 7 von 9 Rezepten defekt, N-08 widerlegt, 16 vom Audit übersehene Befunde, darunter der schwerste Kontrastfehler im Baum (1,74:1) |
+| Wurzel bleibt bei 16px, `--text-*` gegen 16 gerechnet (B-01)                    | `rem` löst nur gegen die Wurzel auf; die Handoff-Variante hätte 3.431 von 5.032 Elementen um 12,5 % geschrumpft und die Browser-Grundschriftgröße des Nutzers übersteuert | — Pending |
+| `--*-text`-Übersteuerungen INNERHALB der Theme-Blöcke statt in neuen dahinter (B-02) | Die Handoff-Variante hätte den bestehenden F-01-Test gebrochen, der die Blockreihenfolge prüft — Testbruch und Kaskadenproblem in einem Zug vermieden | — Pending |
+| N-08 gestrichen statt umgesetzt (B-07)                                          | Der globale `prefers-reduced-motion`-Block existiert seit Langem (`dmscreen.css:1408`); der Patch hätte eine Dublette angelegt und zwei grüne Ratschen gebrochen | ✓ Good — 2 Bearbeitungsstellen gespart, 2 Ratschen intakt |
+| Abnahme misst berechnete Endwerte, nicht Deklarationstext                       | Das 64-Test-Netz prüft nur Quelltext — genau deshalb konnte `--on-accent` 17 von 24 Theme-Zellen verfehlen, ohne rot zu werden | — Pending |
+| Tastatur-Strang aus v1.3 herausgehalten                                         | Vom Nutzer beim Aufsetzen abgewählt; JS/Markup statt CSS, berührt die Ereignisdelegation zentral | — Pending — Folge: N-05 bleibt an 176 Elementen wirkungslos, Tastaturprobe muss aus den Akzeptanzkriterien |
 
 ## Evolution
 
@@ -446,4 +503,14 @@ This document evolves at phase transitions and milestone boundaries.
 
 ---
 
-_Last updated: 2026-09-07 nach Abschluss von Milestone v1.2 „Schulden-Abbau" (3 Phasen, 38 Pläne, 241 Commits, 122 Dateien +22.861/−6.265). Der `DEBT`-Backlog aus der v1.1-Triage ist leer: 26 Posten über 19 Requirements, alle validiert. Der Milestone-Audit bestand auf Ausführungsnachweisen statt SUMMARY-Behauptungen und fand dadurch zwei Dinge, die keine Phase gemeldet hatte — ein korrekt kalibriertes, aber nie ausgeführtes Coverage-Gate und ein totes Aktionsziel, das in beide Bundles ging. Beide geschlossen. Phase 13 bekam ihre nie gelaufene Sicherheits- und Validierungsprüfung retroaktiv (67 Bedrohungen, 16/16 Verifikationszeilen — null Lücken). Suiten: Jest 1120/1120, Playwright 321 passed / 2 skipped, pytest 24/24._
+_Last updated: 2026-09-08 beim Aufsetzen von Milestone v1.3 „Design-System". Inhalt ist der
+Design-Handoff v2 (9 Befunde N-01..N-09, drei Wellen) — aber **nicht in seinem Wortlaut**: eine
+14-Agenten-Verifikation gegen HEAD `1aba0ac` hat jede Zahl des Berichts mit einem eigenen Kommando
+nachgemessen und vier adversarische Gegenproben gefahren. Ergebnis: die Diagnosen tragen (N-02 ist
+rechnerisch tadellos, alle 48 Tabellenzellen exakt), die Rezepte sind an sieben von neun Befunden
+defekt, N-08 ist widerlegt. 36 Kennzahlen korrigiert, 13 Blocker benannt, 16 vom Audit übersehene
+Befunde gefunden — darunter der schwerste Kontrastfehler im ganzen Baum (`--on-accent`, das Token,
+das N-02 als Lösung präsentiert, liegt bei 1,74:1) und 11,7 % toter CSS-Bestand, der in jeder
+Auditzahl mitgezählt wird. Befundlage: `HANDOFF-V2-VERIFIKATION.md` und
+`HANDOFF-V2-GEGENPROBEN.md`. Ausgangsstand: Jest 1217, Playwright 354 (2 skipped), pytest 24,
+`design-consistency.test.js` 64/64._

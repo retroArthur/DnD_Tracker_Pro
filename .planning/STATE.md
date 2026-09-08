@@ -1,29 +1,25 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.2
-milestone_name: Schulden-Abbau
-status: completed
-stopped_at: Phase 14 complete — all phases complete
-last_updated: "2026-09-07T21:47:37.000Z"
-last_activity: 2026-09-07
-last_activity_desc: "Zwischenarbeit nach v1.2: zwei Design-Handoffs, 29 Commits außerhalb des GSD-Ablaufs"
-state_head: 2b89d14f16e3136f31fe2fbf6df31ddd14a79b31
+milestone: v1.3
+milestone_name: Design-System
+status: planning
+last_updated: "2026-09-08T12:14:27.980Z"
+last_activity: 2026-09-08
 progress:
-  total_phases: 3
-  completed_phases: 3
-  total_plans: 38
-  completed_plans: 38
-  percent: 100
-current_phase: 14
+  total_phases: 0
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
+  percent: 0
 ---
 
-# Project State: D&D Kampagnen-Tracker Pro — Schulden-Abbau
+# Project State: D&D Kampagnen-Tracker Pro — Design-System
 
-**Last Updated:** 2026-09-07
-**Milestone:** v1.2 „Schulden-Abbau" — abgeschlossen und archiviert: Phase 12 (17/17 Pläne), Phase 13 (12/12), Phase 14 (9/9)
-**Status:** v1.2 abgeschlossen · danach Zwischenarbeit (kein Milestone) · v1.3 noch nicht aufgesetzt
+**Last Updated:** 2026-09-08
+**Milestone:** v1.3 „Design-System" — aufgesetzt, Requirements und Roadmap in Arbeit
+**Status:** Defining requirements
 
-**Progress:** [██████████] 38/38 Pläne · 3/3 Phasen · 19/19 Requirements — v1.2 vollständig
+**Progress:** [░░░░░░░░░░] 0/0 Pläne · 0/0 Phasen — Milestone gerade eröffnet
 
 ---
 
@@ -31,58 +27,54 @@ current_phase: 14
 
 **Core Value:** Die App muss am Spieltisch zuverlässig offline laufen — ein Spielleiter-Begleiter, der nie im Weg steht und keine Daten verliert.
 
-**Current Focus:** nächster Meilenstein noch nicht aufgesetzt (`/gsd-new-milestone`)
+**Current Focus:** v1.3 „Design-System" — Requirements schneiden, dann Roadmap
 
-See: `.planning/PROJECT.md` (Stand 2026-09-07)
+See: `.planning/PROJECT.md` (Stand 2026-09-08)
 
 ---
 
 ## Current Position
 
-Phase: keine — v1.2 abgeschlossen, v1.3 noch nicht aufgesetzt
+Phase: Not started (defining requirements)
 Plan: —
-Status: Awaiting next milestone
-Last activity: 2026-09-07 — Zwischenarbeit nach v1.2 abgeschlossen (29 Commits)
+Status: Defining requirements
+Last activity: 2026-09-08 — Milestone v1.3 started
 
-### Zwischenarbeit nach v1.2 (2026-09-07) — außerhalb des GSD-Ablaufs
+### Ausgangslage v1.3 — der Handoff ist geprüft, nicht übernommen
 
-Zwei Design-Handoffs kamen nach dem Archivieren von v1.2 herein und wurden direkt
-abgearbeitet: **keine Phase, kein Plan, kein SUMMARY** — 29 Commits, letzter
-`2b89d14`. Bewusst nicht rückwirkend als Phase gebucht: v1.2 ist getaggt, und die
-Arbeit gehört der Sache nach vor v1.3, nicht in v1.2 hinein.
+Inhalt des Milestones ist der Design-Handoff v2
+(`Anpassungen/Design-Konsistenz und Verbesserungen/design_handoff_konsistenz_v2/`,
+9 Befunde N-01..N-09). Er wurde vor dem Aufsetzen **verifiziert statt geglaubt** —
+14 Agenten, 797 Werkzeugaufrufe, jede Zahl mit einem eigenen Kommando gegen HEAD
+`1aba0ac` nachgemessen, dazu vier adversarische Gegenproben.
 
-- **Texterstellung, Variante 2a** (22 Arbeitspakete): Markup aller 24
-  Editor-Werkzeugleisten aus einer Quelle (`buildEditorToolbar()`), klassenbasierte
-  Bausteine, formaterhaltender Einfügefilter, Block-Handle, Kopf-/Statuszeile.
-- **Design-Konsistenz** (19 Befunde F-01..F-19): undefinierte Tokens 19 -> 0,
-  Hex-Literale außerhalb `:root` 240 -> 0, Radien 14 -> 3, Breakpoints 16 -> 3,
-  Dubletten 67 -> 0, `!important` 132 -> 105 (alle begründet).
-- **Drei Defekte gefunden, die im Auditbericht nicht standen:** zwei
-  widersprüchliche Schadensarten-Farbsätze (`acid`/`poison` zwischen
-  Schnellreferenz und DM Screen vertauscht), per Tastatur unerreichbare
-  Bestiar-Filter, im hellen Theme unsichtbarer `.btn-success:hover`.
+**Ergebnis:** Diagnosen tragen, Rezepte an 7 von 9 Befunden defekt, N-08 widerlegt.
 
-Gates zuletzt vollständig: Jest 1217, Playwright 352 bestanden / 2 übersprungen,
-eslint 0 Fehler / 366 Warnungen, tsc 0, pytest 24, Build grün.
-Details in `PROJECT.md` und `MILESTONES.md`.
+- **Befundlage:** `HANDOFF-V2-VERIFIKATION.md` (Urteil, 13 Blocker mit Empfehlung,
+  36 korrigierte Kennzahlen, 16 übersehene Befunde, revidierte Reihenfolge)
+- **Rohmaterial:** `HANDOFF-V2-GEGENPROBEN.md` (40 Einzelbefunde aus vier Linsen)
+- **Wo beides dem Handoff widerspricht, gilt die Verifikation.** Jede Abweichung
+  trägt dort das Kommando, mit dem sie gemessen wurde.
 
-### Historisch — Kontext der abgeschlossenen Phase 12
+**Vier Dinge, die den Zuschnitt bestimmt haben:**
 
-**Die drei offenen Fragen aus der Diskussion sind beantwortet:**
+1. `--on-accent` — das Token, das N-02 als *Lösung* präsentiert — liegt bei
+   **1,74:1** (weiß auf `--green`, Standard-Theme). Schwerster Kontrastfehler im
+   Baum, steht in keiner Tabelle des Berichts.
+2. N-08 ist widerlegt: der globale `prefers-reduced-motion`-Block existiert seit
+   Langem (`dmscreen.css:1408-1414`).
+3. N-05 ist Nullarbeit: `:where()` hat Spezifität 0 und verliert gegen alle 33
+   `.x:focus { outline: none }`-Regeln.
+4. N-04 steht auf falscher Prämisse: `html` ist in **beiden** Layout-Profilen 16px;
+   `--font-size-base: 14px` erreicht die Wurzel nie.
 
-1. **Base64-Grenze:** V8s String-Limit `0x1fffffe8` (512 MiB) ÷ 4/3 → Kodierung scheitert bei
-   **384 MiB Rohaudio**. Warnschwelle 300 MiB, geprüft über `listSoundBlobs()`-Metadaten **vor** dem
-   Kodieren — danach wäre der `RangeError` bereits geworfen.
+**Bewusst nicht in v1.3** (vom Nutzer abgewählt): Tastatur-Erreichbarkeit als
+JS-Strang, N-07 600er-Durchsicht. Folge: N-05 bleibt an 176 Elementen wirkungslos,
+die Tastaturprobe der CHECKLISTE muss aus den Akzeptanzkriterien.
 
-2. **`getCampaignIndex()` ist verlässlich:** `saveCampaignIndex()` (`campaign-manager.js:17-19`) ruft
-   `StorageAPI.setJSON()` direkt auf und umgeht `save()`/`saveImmediate()` — der Index überlebt den
-   IDB-Umschaltpfad, der `DEBT-17` verursachte.
-
-3. **`diceStats` braucht hier kein Cap** (~15 MB Worst Case). Begrenzung ist `PERF-02` in Phase 13 —
-   die Pläne verbieten ausdrücklich, sie hier mitzubauen (sonst zwei konkurrierende Mechanismen).
-
-**Zwei blockierende Human-Checkpoints in der Phase:** Wizard-UX mit zwei Dateien (12-02) und das
-Browser-Verhalten an der Base64-Grenze (12-07).
+**Ausgangsstand der Gates:** Jest 1217, Playwright 354 (2 skipped), pytest 24,
+`design-consistency.test.js` 64/64, `DUBLETTEN_MAX` 0, `IMPORTANT_MAX` 105 (Ist 105),
+`INLINE_MAX` 257 (Ist 257).
 
 ## Performance Metrics
 

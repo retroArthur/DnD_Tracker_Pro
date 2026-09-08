@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  body { margin: 0; background: #0d0d0d; color: #e0e0e0; font-family: 'Source Sans 3', 'Segoe UI', system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+  a { color: #d4af37; text-decoration: none; border-bottom: 1px solid rgba(212,175,55,.35); }
+  a:hover { color: #e6c65a; border-bottom-color: #e6c65a; }
+</style>
+</helmet>
+
+<div style="max-width: 1080px; margin: 0 auto; padding: 40px 24px 96px; display: flex; flex-direction: column; gap: 44px;">
+
+  <header style="display: flex; flex-direction: column; gap: 18px; border-bottom: 1px solid #3a3a3a; padding-bottom: 28px;">
+    <div style="display: flex; flex-wrap: wrap; gap: 10px; align-items: center; font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: #888;">
+      <span style="color: #d4af37;">Audit v2</span>
+      <span style="color: #3a3a3a;">·</span>
+      <span>D&amp;D Kampagnen-Tracker Pro</span>
+      <span style="color: #3a3a3a;">·</span>
+      <span>08.09.2026</span>
+    </div>
+    <h1 style="margin: 0; font-size: 40px; line-height: 1.1; font-weight: 700; letter-spacing: -.02em; text-wrap: pretty;">Design-Konsistenz: was jetzt noch auseinanderläuft</h1>
+    <p style="margin: 0; max-width: 68ch; font-size: 17px; line-height: 1.6; color: #b8b8b8; text-wrap: pretty;">Das erste Audit (F-01 … F-19) ist abgearbeitet: Tokens, Kartenflächen, Toolbar-Kontrakt, Radien, Breakpoints, z-index-Leiter und Hex-Literale sind bereinigt und gegen Rückfall getestet. Dieser Bericht ist eine neue Messung derselben Dateien — und findet die Schicht darunter: <strong style="color: #e0e0e0; font-weight: 600;">Farbe in rgba-Notation, Kontrast in den hellen Themes, Schatten, Typo-Skala, Fokus und Bewegung</strong>. Alle Zahlen sind aus dem Quellstand erhoben, nicht geschätzt.</p>
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 1px; background: #3a3a3a; border: 1px solid #3a3a3a; border-radius: 8px; overflow: hidden;">
+      <div style="background: #1a1a1a; padding: 14px 16px;"><div style="font-family: 'JetBrains Mono', monospace; font-size: 22px; font-weight: 700; color: #e0e0e0;">21</div><div style="font-size: 12px; color: #888; margin-top: 2px;">CSS-Dateien</div></div>
+      <div style="background: #1a1a1a; padding: 14px 16px;"><div style="font-family: 'JetBrains Mono', monospace; font-size: 22px; font-weight: 700; color: #e0e0e0;">27.187</div><div style="font-size: 12px; color: #888; margin-top: 2px;">Zeilen CSS</div></div>
+      <div style="background: #1a1a1a; padding: 14px 16px;"><div style="font-family: 'JetBrains Mono', monospace; font-size: 22px; font-weight: 700; color: #e0e0e0;">24</div><div style="font-size: 12px; color: #888; margin-top: 2px;">Ansichten</div></div>
+      <div style="background: #1a1a1a; padding: 14px 16px;"><div style="font-family: 'JetBrains Mono', monospace; font-size: 22px; font-weight: 700; color: #4ade80;">19/19</div><div style="font-size: 12px; color: #888; margin-top: 2px;">alte Befunde erledigt</div></div>
+      <div style="background: #1a1a1a; padding: 14px 16px;"><div style="font-family: 'JetBrains Mono', monospace; font-size: 22px; font-weight: 700; color: #fbbf24;">9</div><div style="font-size: 12px; color: #888; margin-top: 2px;">neue Befunde</div></div>
+    </div>
+  </header>
+
+  <sc-if value="{{ zeigeErledigt }}" hint-placeholder-val="{{ true }}">
+  <section style="display: flex; flex-direction: column; gap: 14px;">
+    <h2 style="margin: 0; font-size: 13px; font-family: 'JetBrains Mono', monospace; letter-spacing: .12em; text-transform: uppercase; color: #4ade80;">Bestand — nachgemessen, sauber</h2>
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px;">
+      <div style="background: #131313; border: 1px solid #2a2a2a; border-radius: 8px; padding: 12px 14px; font-size: 14px; line-height: 1.5;"><strong style="color: #e0e0e0; font-weight: 600;">Tokens</strong><br><span style="color: #999;">Kein <code style="font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #7ec4cf;">var(--x)</code> ohne Definition. Nur die drei Laufzeit-Tokens offen — wie vorgesehen.</span></div>
+      <div style="background: #131313; border: 1px solid #2a2a2a; border-radius: 8px; padding: 12px 14px; font-size: 14px; line-height: 1.5;"><strong style="color: #e0e0e0; font-weight: 600;">Hex-Literale</strong><br><span style="color: #999;">0 im Komponenten-CSS (von 240). Der einzige Treffer steht in einem Kommentar.</span></div>
+      <div style="background: #131313; border: 1px solid #2a2a2a; border-radius: 8px; padding: 12px 14px; font-size: 14px; line-height: 1.5;"><strong style="color: #e0e0e0; font-weight: 600;">Radien</strong><br><span style="color: #999;">660 Angaben, alle aus der Dreier-Skala plus 50% / 999px.</span></div>
+      <div style="background: #131313; border: 1px solid #2a2a2a; border-radius: 8px; padding: 12px 14px; font-size: 14px; line-height: 1.5;"><strong style="color: #e0e0e0; font-weight: 600;">Breakpoints</strong><br><span style="color: #999;">Genau 600 / 900 / 1200 statt 18 Grenzen.</span></div>
+      <div style="background: #131313; border: 1px solid #2a2a2a; border-radius: 8px; padding: 12px 14px; font-size: 14px; line-height: 1.5;"><strong style="color: #e0e0e0; font-weight: 600;">Einheiten</strong><br><span style="color: #999;">Kein rem mehr außerhalb der Schriftdefinitionen.</span></div>
+      <div style="background: #131313; border: 1px solid #2a2a2a; border-radius: 8px; padding: 12px 14px; font-size: 14px; line-height: 1.5;"><strong style="color: #e0e0e0; font-weight: 600;">z-index</strong><br><span style="color: #999;">Siebenstufige Leiter, kein globaler Rohwert; die 6 lokalen Ebenen sind begründet.</span></div>
+      <div style="background: #131313; border: 1px solid #2a2a2a; border-radius: 8px; padding: 12px 14px; font-size: 14px; line-height: 1.5;"><strong style="color: #e0e0e0; font-weight: 600;">Toolbar</strong><br><span style="color: #999;">Alle 24 Ansichten mit Titelzeile; Reise bewusst ohne Zähler (Rechner, keine Liste).</span></div>
+      <div style="background: #131313; border: 1px solid #2a2a2a; border-radius: 8px; padding: 12px 14px; font-size: 14px; line-height: 1.5;"><strong style="color: #e0e0e0; font-weight: 600;">Layout</strong><br><span style="color: #999;">Ein Master-Detail (825 → 520 → 1fr) für alle sechs Ansichten.</span></div>
+    </div>
+    <p style="margin: 0; font-size: 13px; color: #777; line-height: 1.6;">Gesichert durch <code style="font-family: 'JetBrains Mono', monospace; color: #7ec4cf;">tests/unit/design-consistency.test.js</code> — inklusive zweier Ratschen (<code style="font-family: 'JetBrains Mono', monospace; color: #7ec4cf;">!important</code> ≤ 105, Inline-Stile ≤ 257), die nur sinken dürfen. Die neuen Befunde brauchen jeweils eine eigene Ratsche, sonst wachsen sie zurück.</p>
+  </section>
+  </sc-if>
+
+  <section style="display: flex; flex-direction: column; gap: 20px;">
+    <h2 style="margin: 0; font-size: 13px; font-family: 'JetBrains Mono', monospace; letter-spacing: .12em; text-transform: uppercase; color: #ef4444;">Hoch — sichtbar, in mindestens einem Theme defekt</h2>
+
+    <article style="background: #1a1a1a; border: 1px solid #3a3a3a; border-left: 3px solid #ef4444; border-radius: 8px; padding: 22px 24px; display: flex; flex-direction: column; gap: 14px;">
+      <div style="display: flex; flex-wrap: wrap; gap: 12px; align-items: baseline;">
+        <span style="font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 700; color: #ef4444;">N-01</span>
+        <h3 style="margin: 0; font-size: 21px; font-weight: 700; line-height: 1.25; letter-spacing: -.01em;">Die Palette hat ein zweites Leben in rgba-Notation</h3>
+      </div>
+      <p style="margin: 0; font-size: 15px; line-height: 1.65; color: #c5c5c5; max-width: 74ch; text-wrap: pretty;">Der Hex-Umbau hat die Literale in <code style="font-family: 'JetBrains Mono', monospace; font-size: 13px; color: #7ec4cf;">color:</code> und <code style="font-family: 'JetBrains Mono', monospace; font-size: 13px; color: #7ec4cf;">background:</code> beseitigt — die Farbkanäle in <code style="font-family: 'JetBrains Mono', monospace; font-size: 13px; color: #7ec4cf;">rgba()</code> sind geblieben. Dort steht die Dark-Theme-Palette weiterhin als Zahlentripel im Komponenten-CSS, und kein Theme erreicht sie.</p>
+      <pre style="margin: 0; background: #0d0d0d; border: 1px solid #2a2a2a; border-radius: 6px; padding: 14px 16px; overflow-x: auto; font-family: 'JetBrains Mono', monospace; font-size: 12.5px; line-height: 1.7; color: #cfcfcf;">390 rgba()-Literale in 173 verschiedenen Werten
+
+  rgba(0,0,0,…)         58×   Schatten  (siehe N-03)
+  rgba(212,175,55,…)    54×   = --gold   im Dark-Theme
+  rgba(251,191,36,…)    44×   = --yellow im Dark-Theme
+  rgba(239,68,68,…)     40×   = --red    im Dark-Theme
+  rgba(255,255,255,…)   35×   Weiß-Auflagen (.nav-tab u. a.)
+
+  Gegenprobe: --gold-rgb / --green-rgb / --red-rgb sind
+  in ALLEN vier Themes definiert — und werden 4× benutzt.</pre>
+      <p style="margin: 0; font-size: 15px; line-height: 1.65; color: #c5c5c5; max-width: 74ch; text-wrap: pretty;"><strong style="color: #fbbf24; font-weight: 600;">Belegfall:</strong> Im Light-Theme ist <code style="font-family: 'JetBrains Mono', monospace; font-size: 13px; color: #7ec4cf;">--gold</code> <code style="font-family: 'JetBrains Mono', monospace; font-size: 13px; color: #7ec4cf;">#b8860b</code>. Jede goldene Hinterlegung, die als <code style="font-family: 'JetBrains Mono', monospace; font-size: 13px; color: #7ec4cf;">rgba(212,175,55,.2)</code> geschrieben ist, bleibt dort das dunkle Gold — Rahmen und Fläche desselben aktiven Elements haben zwei verschiedene Goldtöne. Dasselbe für <code style="font-family: 'JetBrains Mono', monospace; font-size: 13px; color: #7ec4cf;">.nav-tab</code>: die Grundfläche ist <code style="font-family: 'JetBrains Mono', monospace; font-size: 13px; color: #7ec4cf;">rgba(255,255,255,.05)</code> — im Sepia- und Light-Theme eine Weiß-Auflage auf Weiß, also wirkungslos.</p>
+      <sc-if value="{{ zeigeFixes }}" hint-placeholder-val="{{ true }}">
+      <div style="background: #131313; border-radius: 6px; padding: 14px 16px; font-size: 14.5px; line-height: 1.6; color: #b5b5b5;"><strong style="color: #4ade80; font-weight: 600;">Fix:</strong> <code style="font-family: 'JetBrains Mono', monospace; font-size: 13px; color: #7ec4cf;">color-mix(in srgb, var(--gold) 20%, transparent)</code> statt <code style="font-family: 'JetBrains Mono', monospace; font-size: 13px; color: #7ec4cf;">rgba(212,175,55,.2)</code> — dieselbe Optik, folgt aber dem Theme; <code style="font-family: 'JetBrains Mono', monospace; font-size: 13px; color: #7ec4cf;">color-mix</code> ist im Projekt für die Hover-Stufen schon in Gebrauch. Für die Weiß-Auflagen zwei Tokens pro Theme (<code style="font-family: 'JetBrains Mono', monospace; font-size: 13px; color: #7ec4cf;">--overlay-weak</code>, <code style="font-family: 'JetBrains Mono', monospace; font-size: 13px; color: #7ec4cf;">--overlay-strong</code>), in den hellen Themes schwarz statt weiß. Danach als Test: kein <code style="font-family: 'JetBrains Mono', monospace; font-size: 13px; color: #7ec4cf;">rgba(</code> mit Zahlentripel im Komponenten-CSS.</div>
+      </sc-if>
+    </article>
+
+    <article style="background: #1a1a1a; border: 1px solid #3a3a3a; border-left: 3px solid #ef4444; border-radius: 8px; padding: 22px 24px; display: flex; flex-direction: column; gap: 14px;">
+      <div style="display: flex; flex-wrap: wrap; gap: 12px; align-items: baseline;">
+        <span style="font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 700; color: #ef4444;">N-02</span>
+        <h3 style="margin: 0; font-size: 21px; font-weight: 700; line-height: 1.25; letter-spacing: -.01em;">Die Palette ist für Dark entworfen — Light und Sepia unterschreiten den Kontrast</h3>
+      </div>
+      <p style="margin: 0; font-size: 15px; line-height: 1.65; color: #c5c5c5; max-width: 74ch; text-wrap: pretty;">Alle vier Themes verwenden dieselben semantischen Rollen, aber nur Dark und Contrast wurden gegen ihren Hintergrund geprüft. In Light und Sepia sind die Akzentfarben zu hell für ihren neuen, hellen Grund. Berechnet nach WCAG aus <code style="font-family: 'JetBrains Mono', monospace; font-size: 13px; color: #7ec4cf;">variables.css</code>; Grenze für Text ist 4,5:1.</p>
+      <sc-if value="{{ zeigeKontrastTabelle }}" hint-placeholder-val="{{ true }}">
+      <div style="overflow-x: auto; border: 1px solid #2a2a2a; border-radius: 6px;">
+        <table style="width: 100%; border-collapse: collapse; font-family: 'JetBrains Mono', monospace; font-size: 12.5px; min-width: 520px;">
+          <thead>
+            <tr style="background: #0d0d0d;">
+              <th style="text-align: left; padding: 10px 14px; font-weight: 500; color: #888; border-bottom: 1px solid #2a2a2a;">Rolle auf --bg-card</th>
+              <th style="text-align: right; padding: 10px 14px; font-weight: 500; color: #888; border-bottom: 1px solid #2a2a2a;">Dark</th>
+              <th style="text-align: right; padding: 10px 14px; font-weight: 500; color: #888; border-bottom: 1px solid #2a2a2a;">Light</th>
+              <th style="text-align: right; padding: 10px 14px; font-weight: 500; color: #888; border-bottom: 1px solid #2a2a2a;">Sepia</th>
+              <th style="text-align: right; padding: 10px 14px; font-weight: 500; color: #888; border-bottom: 1px solid #2a2a2a;">Contrast</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td style="padding: 9px 14px; color: #cfcfcf; border-bottom: 1px solid #202020;">--text</td><td style="padding: 9px 14px; text-align: right; color: #4ade80; border-bottom: 1px solid #202020;">13,18</td><td style="padding: 9px 14px; text-align: right; color: #4ade80; border-bottom: 1px solid #202020;">17,40</td><td style="padding: 9px 14px; text-align: right; color: #4ade80; border-bottom: 1px solid #202020;">10,23</td><td style="padding: 9px 14px; text-align: right; color: #4ade80; border-bottom: 1px solid #202020;">18,88</td></tr>
+            <tr><td style="padding: 9px 14px; color: #cfcfcf; border-bottom: 1px solid #202020;">--text-dim</td><td style="padding: 9px 14px; text-align: right; color: #4ade80; border-bottom: 1px solid #202020;">4,91</td><td style="padding: 9px 14px; text-align: right; color: #4ade80; border-bottom: 1px solid #202020;">5,74</td><td style="padding: 9px 14px; text-align: right; color: #4ade80; border-bottom: 1px solid #202020;">5,32</td><td style="padding: 9px 14px; text-align: right; color: #4ade80; border-bottom: 1px solid #202020;">8,13</td></tr>
+            <tr><td style="padding: 9px 14px; color: #cfcfcf; border-bottom: 1px solid #202020;">--gold</td><td style="padding: 9px 14px; text-align: right; color: #4ade80; border-bottom: 1px solid #202020;">8,28</td><td style="padding: 9px 14px; text-align: right; color: #ef4444; font-weight: 700; border-bottom: 1px solid #202020;">3,25</td><td style="padding: 9px 14px; text-align: right; color: #4ade80; border-bottom: 1px solid #202020;">6,58</td><td style="padding: 9px 14px; text-align: right; color: #4ade80; border-bottom: 1px solid #202020;">13,46</td></tr>
+            <tr><td style="padding: 9px 14px; color: #cfcfcf; border-bottom: 1px solid #202020;">--green</td><td style="padding: 9px 14px; text-align: right; color: #4ade80; border-bottom: 1px solid #202020;">9,99</td><td style="padding: 9px 14px; text-align: right; color: #ef4444; font-weight: 700; border-bottom: 1px solid #202020;">3,30</td><td style="padding: 9px 14px; text-align: right; color: #ef4444; font-weight: 700; border-bottom: 1px solid #202020;">2,97</td><td style="padding: 9px 14px; text-align: right; color: #4ade80; border-bottom: 1px solid #202020;">13,76</td></tr>
+            <tr><td style="padding: 9px 14px; color: #cfcfcf; border-bottom: 1px solid #202020;">--cyan</td><td style="padding: 9px 14px; text-align: right; color: #4ade80; border-bottom: 1px solid #202020;">8,85</td><td style="padding: 9px 14px; text-align: right; color: #ef4444; font-weight: 700; border-bottom: 1px solid #202020;">3,68</td><td style="padding: 9px 14px; text-align: right; color: #ef4444; font-weight: 700; border-bottom: 1px solid #202020;">2,93</td><td style="padding: 9px 14px; text-align: right; color: #4ade80; border-bottom: 1px solid #202020;">15,06</td></tr>
+            <tr><td style="padding: 9px 14px; color: #cfcfcf; border-bottom: 1px solid #202020;">--yellow</td><td style="padding: 9px 14px; text-align: right; color: #4ade80; border-bottom: 1px solid #202020;">10,43</td><td style="padding: 9px 14px; text-align: right; color: #ef4444; font-weight: 700; border-bottom: 1px solid #202020;">2,94</td><td style="padding: 9px 14px; text-align: right; color: #ef4444; font-weight: 700; border-bottom: 1px solid #202020;">2,98</td><td style="padding: 9px 14px; text-align: right; color: #4ade80; border-bottom: 1px solid #202020;">17,58</td></tr>
+            <tr><td style="padding: 9px 14px; color: #cfcfcf; border-bottom: 1px solid #202020;">--orange</td><td style="padding: 9px 14px; text-align: right; color: #4ade80; border-bottom: 1px solid #202020;">7,69</td><td style="padding: 9px 14px; text-align: right; color: #ef4444; font-weight: 700; border-bottom: 1px solid #202020;">3,56</td><td style="padding: 9px 14px; text-align: right; color: #fbbf24; border-bottom: 1px solid #202020;">4,27</td><td style="padding: 9px 14px; text-align: right; color: #4ade80; border-bottom: 1px solid #202020;">7,50</td></tr>
+            <tr><td style="padding: 9px 14px; color: #cfcfcf; border-bottom: 1px solid #202020;">--blue</td><td style="padding: 9px 14px; text-align: right; color: #4ade80; border-bottom: 1px solid #202020;">6,85</td><td style="padding: 9px 14px; text-align: right; color: #4ade80; border-bottom: 1px solid #202020;">5,17</td><td style="padding: 9px 14px; text-align: right; color: #ef4444; font-weight: 700; border-bottom: 1px solid #202020;">3,41</td><td style="padding: 9px 14px; text-align: right; color: #4ade80; border-bottom: 1px solid #202020;">4,97</td></tr>
+            <tr style="background: #131313;"><td style="padding: 9px 14px; color: #e0e0e0; border-bottom: 1px solid #202020;">.btn-primary <span style="color: #777;">(Schrift auf Gold)</span></td><td style="padding: 9px 14px; text-align: right; color: #4ade80; border-bottom: 1px solid #202020;">9,24</td><td style="padding: 9px 14px; text-align: right; color: #ef4444; font-weight: 700; border-bottom: 1px solid #202020;">2,98</td><td style="padding: 9px 14px; text-align: right; color: #4ade80; border-bottom: 1px solid #202020;">5,65</td><td style="padding: 9px 14px; text-align: right; color: #4ade80; border-bottom: 1px solid #202020;">14,97</td></tr>
+            <tr style="background: #131313;"><td style="padding: 9px 14px; color: #e0e0e0;">.btn-success <span style="color: #777;">(Schrift auf Grün)</span></td><td style="padding: 9px 14px; text-align: right; color: #4ade80;">11,15</td><td style="padding: 9px 14px; text-align: right; color: #ef4444; font-weight: 700;">3,02</td><td style="padding: 9px 14px; text-align: right; color: #ef4444; font-weight: 700;">2,55</td><td style="padding: 9px 14px; text-align: right; color: #4ade80;">15,30</td></tr>
+          </tbody>
+        </table>
+      </div>
+      </sc-if>
+      <p style="margin: 0; font-size: 15px; line-height: 1.65; color: #c5c5c5; max-width: 74ch; text-wrap: pretty;">Die beiden untersten Zeilen sind die schwerwiegendsten: <strong style="color: #e0e0e0; font-weight: 600;">die Primäraktion und der Speichern-Knopf sind im Light- und Sepia-Theme grenzwertig lesbar</strong> — und das sind die Knöpfe, die in jeder Ansicht oben rechts stehen. Ursache ist die Kombination <code style="font-family: 'JetBrains Mono', monospace; font-size: 13px; color: #7ec4cf;">background: var(--gold)</code> mit <code style="font-family: 'JetBrains Mono', monospace; font-size: 13px; color: #7ec4cf;">color: var(--bg-dark)</code>: in den hellen Themes ist <code style="font-family: 'JetBrains Mono', monospace; font-size: 13px; color: #7ec4cf;">--bg-dark</code> hell, die Fläche also hell auf hell. Das vorhandene Token <code style="font-family: 'JetBrains Mono', monospace; font-size: 13px; color: #7ec4cf;">--on-accent</code> löst genau dieses Problem und wird 6× benutzt — an den beiden gefüllten Button-Varianten nicht.</p>
+      <sc-if value="{{ zeigeFixes }}" hint-placeholder-val="{{ true }}">
+      <div style="background: #131313; border-radius: 6px; padding: 14px 16px; font-size: 14.5px; line-height: 1.6; color: #b5b5b5;"><strong style="color: #4ade80; font-weight: 600;">Fix:</strong> pro Theme ein <code style="font-family: 'JetBrains Mono', monospace; font-size: 13px; color: #7ec4cf;">--on-accent</code> setzen (dunkel in Light/Sepia, hell in Dark/Contrast) und es in <code style="font-family: 'JetBrains Mono', monospace; font-size: 13px; color: #7ec4cf;">.btn-primary</code> / <code style="font-family: 'JetBrains Mono', monospace; font-size: 13px; color: #7ec4cf;">.btn-success</code> / <code style="font-family: 'JetBrains Mono', monospace; font-size: 13px; color: #7ec4cf;">.btn-gold</code> statt <code style="font-family: 'JetBrains Mono', monospace; font-size: 13px; color: #7ec4cf;">--bg-dark</code> verwenden. Für Text-Akzente die Light- und Sepia-Werte von <code style="font-family: 'JetBrains Mono', monospace; font-size: 13px; color: #7ec4cf;">--green / --cyan / --yellow / --orange / --blue</code> abdunkeln, bis sie gegen <code style="font-family: 'JetBrains Mono', monospace; font-size: 13px; color: #7ec4cf;">--bg-card</code> mindestens 4,5:1 erreichen — Hue behalten, nur Lightness senken, dann bleibt das Farbschema erkennbar. Danach als Test: derselbe Rechenweg über alle vier Themes, Grenze 4,5.</div>
+      </sc-if>
+    </article>
+
+    <article style="background: #1a1a1a; border: 1px solid #3a3a3a; border-left: 3px solid #ef4444; border-radius: 8px; padding: 22px 24px; display: flex; flex-direction: column; gap: 14px;">
+      <div style="display: flex; flex-wrap: wrap; gap: 12px; align-items: baseline;">
+        <span style="font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 700; color: #ef4444;">N-03</span>
+        <h3 style="margin: 0; font-size: 21px; font-weight: 700; line-height: 1.25; letter-spacing: -.01em;">66 verschiedene Schatten, ein ungenutztes Schatten-Token</h3>
+      </div>
+      <pre style="margin: 0; background: #0d0d0d; border: 1px solid #2a2a2a; border-radius: 6px; padding: 14px 16px; overflow-x: auto; font-family: 'JetBrains Mono', monospace; font-size: 12.5px; line-height: 1.7; color: #cfcfcf;">66 verschiedene box-shadow-Werte
+58 davon mit hartem rgba(0,0,0,…)
+ 1 Verwendung von var(--shadow)   ← das themenfähige Token
+
+  0 4px 12px  rgba(0,0,0,0.3)     7×
+  0 4px 16px  rgba(0, 0, 0, 0.4)  4×   ← gleiche Absicht,
+  0 4px 16px  rgba(0,0,0,0.3)     2×      drei Schreibweisen
+  0 8px 24px  rgba(0,0,0,0.4)     3×
+  0 2px 8px   rgba(0,0,0,0.5)     2×</pre>
+      <p style="margin: 0; font-size: 15px; line-height: 1.65; color: #c5c5c5; max-width: 74ch; text-wrap: pretty;">Gleichrangige Elemente schweben unterschiedlich hoch — und weil die Deckkraft fest verdrahtet ist, wirkt derselbe Schatten im Sepia-Theme auf Pergament wie ein Fleck, wo im Dark-Theme kaum etwas zu sehen war. Das Token <code style="font-family: 'JetBrains Mono', monospace; font-size: 13px; color: #7ec4cf;">--shadow</code> ist in allen vier Themes passend definiert und wird genau einmal benutzt.</p>
+      <sc-if value="{{ zeigeFixes }}" hint-placeholder-val="{{ true }}">
+      <div style="background: #131313; border-radius: 6px; padding: 14px 16px; font-size: 14.5px; line-height: 1.6; color: #b5b5b5;"><strong style="color: #4ade80; font-weight: 600;">Fix:</strong> vier Höhenstufen als Tokens — <code style="font-family: 'JetBrains Mono', monospace; font-size: 13px; color: #7ec4cf;">--elev-1</code> (Karte, ruhend), <code style="font-family: 'JetBrains Mono', monospace; font-size: 13px; color: #7ec4cf;">--elev-2</code> (Hover, Dropdown), <code style="font-family: 'JetBrains Mono', monospace; font-size: 13px; color: #7ec4cf;">--elev-3</code> (Modal), <code style="font-family: 'JetBrains Mono', monospace; font-size: 13px; color: #7ec4cf;">--glow-gold</code> (Fokus/Aktiv) — jede aus <code style="font-family: 'JetBrains Mono', monospace; font-size: 13px; color: #7ec4cf;">var(--shadow)</code> gebaut, also pro Theme richtig. Die 66 Werte auf diese vier runden; die 3 Innen- und Glüh-Sonderfälle (Statblock-Pergament, Würfel-Kritisch) bleiben begründet stehen.</div>
+      </sc-if>
+    </article>
+  </section>
+
+  <sc-if value="{{ zeigeAlle }}" hint-placeholder-val="{{ true }}">
+  <section style="display: flex; flex-direction: column; gap: 20px;">
+    <h2 style="margin: 0; font-size: 13px; font-family: 'JetBrains Mono', monospace; letter-spacing: .12em; text-transform: uppercase; color: #fbbf24;">Mittel — systematische Drift</h2>
+
+    <article style="background: #1a1a1a; border: 1px solid #3a3a3a; border-left: 3px solid #fbbf24; border-radius: 8px; padding: 22px 24px; display: flex; flex-direction: column; gap: 14px;">
+      <div style="display: flex; flex-wrap: wrap; gap: 12px; align-items: baseline;">
+        <span style="font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 700; color: #fbbf24;">N-04</span>
+        <h3 style="margin: 0; font-size: 21px; font-weight: 700; line-height: 1.25; letter-spacing: -.01em;">55 Schriftgrößen, zwei Maßsysteme — und em multipliziert sich</h3>
+      </div>
+      <pre style="margin: 0; background: #0d0d0d; border: 1px solid #2a2a2a; border-radius: 6px; padding: 14px 16px; overflow-x: auto; font-family: 'JetBrains Mono', monospace; font-size: 12.5px; line-height: 1.7; color: #cfcfcf;">55 verschiedene font-size-Werte
+
+  relativ   0.85em 157×   0.8em 133×   0.9em 127×   0.75em 92×
+            0.7em   48×   1.1em  43×   1em    32×   0.65em 16×
+            … bis 0.6em, 0.78em, 0.82em, 1.05em
+  absolut   14px    81×   12px   55×   13px   46×   11px   30×
+            10px    22×   16px   15×   18px   13×   9px     6×
+
+  Es gibt keine Typo-Skala; --font-size-base/-small sind
+  Layout-Profil-Tokens (14px/12px bzw. 16px/14px) und
+  werden 2× gelesen.</pre>
+      <p style="margin: 0; font-size: 15px; line-height: 1.65; color: #c5c5c5; max-width: 74ch; text-wrap: pretty;">Die relativen Werte sind das eigentliche Problem: <code style="font-family: 'JetBrains Mono', monospace; font-size: 13px; color: #7ec4cf;">em</code> rechnet gegen den Elternwert, also ergibt eine Meta-Zeile mit <code style="font-family: 'JetBrains Mono', monospace; font-size: 13px; color: #7ec4cf;">0.85em</code> in einer Karte, die selbst <code style="font-family: 'JetBrains Mono', monospace; font-size: 13px; color: #7ec4cf;">0.9em</code> trägt, 0,77em — dieselbe Klasse ist je Einbautiefe verschieden groß. Im Mobil-Profil wächst die Basis auf 16px, wodurch sich alle Abweichungen mit skalieren. Ab 0,7em (≈10px) wird es auf dem Telefon unlesbar.</p>
+      <sc-if value="{{ zeigeFixes }}" hint-placeholder-val="{{ true }}">
+      <div style="background: #131313; border-radius: 6px; padding: 14px 16px; font-size: 14.5px; line-height: 1.6; color: #b5b5b5;"><strong style="color: #4ade80; font-weight: 600;">Fix:</strong> sieben Stufen als Tokens (<code style="font-family: 'JetBrains Mono', monospace; font-size: 13px; color: #7ec4cf;">--text-xs 11 · sm 12 · md 14 · lg 16 · xl 20 · 2xl 26 · 3xl 34</code>), in <code style="font-family: 'JetBrains Mono', monospace; font-size: 13px; color: #7ec4cf;">rem</code> gegen die Profil-Basis definiert, damit das Mobil-Profil weiter greift. Alle 55 Werte darauf runden — die vier häufigsten <code style="font-family: 'JetBrains Mono', monospace; font-size: 13px; color: #7ec4cf;">em</code>-Werte deckeln bereits 509 der ~1.000 Fundstellen, das ist im Wesentlichen ein Suchen-Ersetzen. Untergrenze festlegen (11px in der UI) und als Test verankern.</div>
+      </sc-if>
+    </article>
+
+    <article style="background: #1a1a1a; border: 1px solid #3a3a3a; border-left: 3px solid #fbbf24; border-radius: 8px; padding: 22px 24px; display: flex; flex-direction: column; gap: 14px;">
+      <div style="display: flex; flex-wrap: wrap; gap: 12px; align-items: baseline;">
+        <span style="font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 700; color: #fbbf24;">N-05</span>
+        <h3 style="margin: 0; font-size: 21px; font-weight: 700; line-height: 1.25; letter-spacing: -.01em;">Fokus: 37× abgeschaltet, 7× ersetzt</h3>
+      </div>
+      <pre style="margin: 0; background: #0d0d0d; border: 1px solid #2a2a2a; border-radius: 6px; padding: 14px 16px; overflow-x: auto; font-family: 'JetBrains Mono', monospace; font-size: 12.5px; line-height: 1.7; color: #cfcfcf;">outline: none        37×    :focus-visible    7×    :focus (alt)  45×
+
+Einen Ring haben:   .btn · die Editorleiste (4 Regeln) · .rt-dice-btn
+Keinen Ring haben:  .filter-chip · .nav-tab · .btn-icon
+                    .toolbar-select · .toolbar-search
+                    Listenzeilen und Karten mit data-action
+
+Ohne jeden sichtbaren Ersatz:
+  .cf-combat-value input:focus, .cf-combat-value select:focus</pre>
+      <p style="margin: 0; font-size: 15px; line-height: 1.65; color: #c5c5c5; max-width: 74ch; text-wrap: pretty;">Die Eingabefelder ersetzen den Ring meist durch eine Rahmenfarbe — das ist in Ordnung, aber es ist 36× einzeln entschieden worden, mit unterschiedlichem Ergebnis. Die Chips, Nav-Reiter und Icon-Buttons haben nichts: wer mit der Tastatur arbeitet, sieht nicht, wo er steht. Bei den Icon-Buttons (Bearbeiten/Löschen in jeder Liste) ist das ein echtes Bedienrisiko, weil die Reihenfolge ohne Ring nicht nachvollziehbar ist.</p>
+      <sc-if value="{{ zeigeFixes }}" hint-placeholder-val="{{ true }}">
+      <div style="background: #131313; border-radius: 6px; padding: 14px 16px; font-size: 14.5px; line-height: 1.6; color: #b5b5b5;"><strong style="color: #4ade80; font-weight: 600;">Fix:</strong> eine globale Regel <code style="font-family: 'JetBrains Mono', monospace; font-size: 13px; color: #7ec4cf;">:where(a, button, input, select, textarea, [tabindex]):focus-visible</code> mit einem Ring-Token (2px <code style="font-family: 'JetBrains Mono', monospace; font-size: 13px; color: #7ec4cf;">--gold</code> plus <code style="font-family: 'JetBrains Mono', monospace; font-size: 13px; color: #7ec4cf;">outline-offset: 2px</code>) — <code style="font-family: 'JetBrains Mono', monospace; font-size: 13px; color: #7ec4cf;">:where()</code> hat Spezifität 0, jede Komponente kann sie also ohne <code style="font-family: 'JetBrains Mono', monospace; font-size: 13px; color: #7ec4cf;">!important</code> überschreiben. Danach die 37 <code style="font-family: 'JetBrains Mono', monospace; font-size: 13px; color: #7ec4cf;">outline: none</code> auf <code style="font-family: 'JetBrains Mono', monospace; font-size: 13px; color: #7ec4cf;">:focus</code> (nicht <code style="font-family: 'JetBrains Mono', monospace; font-size: 13px; color: #7ec4cf;">:focus-visible</code>) beschränken, damit der Maus-Klick ruhig bleibt und die Tastatur den Ring behält. Test: kein <code style="font-family: 'JetBrains Mono', monospace; font-size: 13px; color: #7ec4cf;">outline: none</code> auf einem <code style="font-family: 'JetBrains Mono', monospace; font-size: 13px; color: #7ec4cf;">:focus-visible</code>-Selektor.</div>
+      </sc-if>
+    </article>
+
+    <article style="background: #1a1a1a; border: 1px solid #3a3a3a; border-left: 3px solid #fbbf24; border-radius: 8px; padding: 22px 24px; display: flex; flex-direction: column; gap: 14px;">
+      <div style="display: flex; flex-wrap: wrap; gap: 12px; align-items: baseline;">
+        <span style="font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 700; color: #fbbf24;">N-06</span>
+        <h3 style="margin: 0; font-size: 21px; font-weight: 700; line-height: 1.25; letter-spacing: -.01em;">132× <code style="font-family: 'JetBrains Mono', monospace; font-size: 18px;">transition: all</code></h3>
+      </div>
+      <pre style="margin: 0; background: #0d0d0d; border: 1px solid #2a2a2a; border-radius: 6px; padding: 14px 16px; overflow-x: auto; font-family: 'JetBrains Mono', monospace; font-size: 12.5px; line-height: 1.7; color: #cfcfcf;">58 verschiedene transition-Deklarationen, 8 Dauern
+
+  all 0.2s      132×      0.2s   195×
+  all 0.15s      19×      0.15s   62×
+  transform 0.2s 14×      0.3s    21×
+  background 0.2s 13×     0.1s     6×   0.12s 6×
+  …                       0.25s 1× · 0.5s 1×</pre>
+      <p style="margin: 0; font-size: 15px; line-height: 1.65; color: #c5c5c5; max-width: 74ch; text-wrap: pretty;">Zwei Dinge stecken darin. Erstens: 0,1 / 0,12 / 0,15 / 0,2 / 0,25 / 0,3 / 0,5 Sekunden sind sieben Geschwindigkeiten für dieselbe Art von Übergang — die App fühlt sich je Ansicht anders schnell an. Zweitens ist <code style="font-family: 'JetBrains Mono', monospace; font-size: 13px; color: #7ec4cf;">all</code> teuer und riskant: es animiert auch <code style="font-family: 'JetBrains Mono', monospace; font-size: 13px; color: #7ec4cf;">width</code>, <code style="font-family: 'JetBrains Mono', monospace; font-size: 13px; color: #7ec4cf;">padding</code> und <code style="font-family: 'JetBrains Mono', monospace; font-size: 13px; color: #7ec4cf;">grid-template-columns</code>, sodass beim Auf- und Zuklappen von Karten und Widgets Layout-Sprünge mit-animiert werden.</p>
+      <sc-if value="{{ zeigeFixes }}" hint-placeholder-val="{{ true }}">
+      <div style="background: #131313; border-radius: 6px; padding: 14px 16px; font-size: 14.5px; line-height: 1.6; color: #b5b5b5;"><strong style="color: #4ade80; font-weight: 600;">Fix:</strong> drei Tokens — <code style="font-family: 'JetBrains Mono', monospace; font-size: 13px; color: #7ec4cf;">--dur-fast 120ms</code> (Hover, Farbe), <code style="font-family: 'JetBrains Mono', monospace; font-size: 13px; color: #7ec4cf;">--dur 200ms</code> (Standard), <code style="font-family: 'JetBrains Mono', monospace; font-size: 13px; color: #7ec4cf;">--dur-slow 300ms</code> (Panel, Overlay) — plus eine Kurve. <code style="font-family: 'JetBrains Mono', monospace; font-size: 13px; color: #7ec4cf;">all</code> durch die tatsächlich gemeinten Eigenschaften ersetzen; in fast allen 132 Fällen sind es <code style="font-family: 'JetBrains Mono', monospace; font-size: 13px; color: #7ec4cf;">background, border-color, color, transform, box-shadow</code>.</div>
+      </sc-if>
+    </article>
+  </section>
+
+  <section style="display: flex; flex-direction: column; gap: 20px;">
+    <h2 style="margin: 0; font-size: 13px; font-family: 'JetBrains Mono', monospace; letter-spacing: .12em; text-transform: uppercase; color: #7ec4cf;">Niedrig — Wartbarkeit und Feinschliff</h2>
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px;">
+      <article style="background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 8px; padding: 18px 20px; display: flex; flex-direction: column; gap: 10px;">
+        <div style="display: flex; gap: 10px; align-items: baseline;"><span style="font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 700; color: #7ec4cf;">N-07</span><h3 style="margin: 0; font-size: 16.5px; font-weight: 700; line-height: 1.3;">Halbfett ist der Normalzustand</h3></div>
+        <pre style="margin: 0; font-family: 'JetBrains Mono', monospace; font-size: 12px; line-height: 1.7; color: #a8a8a8;">600  277×    700   91×
+500   49×    bold  13×
+400    6×    normal 3×</pre>
+        <p style="margin: 0; font-size: 14px; line-height: 1.6; color: #b5b5b5;">277 Stellen zeichnen etwas aus — damit zeichnet nichts mehr aus. Dazu <code style="font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #7ec4cf;">bold</code> und <code style="font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #7ec4cf;">700</code> parallel für dieselbe Absicht, und die gebündelten Schriften liegen nur in 400/500/600/700 vor. <strong style="color: #4ade80; font-weight: 600;">Fix:</strong> drei Gewichte (400 Fließtext, 600 Überschrift/Label, 700 Zahl/Titel), <code style="font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #7ec4cf;">bold</code>/<code style="font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #7ec4cf;">normal</code> ersetzen.</p>
+      </article>
+
+      <article style="background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 8px; padding: 18px 20px; display: flex; flex-direction: column; gap: 10px;">
+        <div style="display: flex; gap: 10px; align-items: baseline;"><span style="font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 700; color: #7ec4cf;">N-08</span><h3 style="margin: 0; font-size: 16.5px; font-weight: 700; line-height: 1.3;">Bewegung ist kaum abschaltbar</h3></div>
+        <pre style="margin: 0; font-family: 'JetBrains Mono', monospace; font-size: 12px; line-height: 1.7; color: #a8a8a8;">19  @keyframes
+29  animation-Deklarationen
+ 4  prefers-reduced-motion</pre>
+        <p style="margin: 0; font-size: 14px; line-height: 1.6; color: #b5b5b5;">Würfelwurf, Trefferpunkt-Puls, Toast und die Kampf-Hervorhebung laufen weiter, wenn das Betriebssystem „weniger Bewegung" meldet. <strong style="color: #4ade80; font-weight: 600;">Fix:</strong> ein Block am Ende, der <code style="font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #7ec4cf;">animation-duration</code> und <code style="font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #7ec4cf;">transition-duration</code> global auf 0,01ms setzt — die drei Ausnahmen, die Information tragen (Würfelergebnis), namentlich ausnehmen.</p>
+      </article>
+
+      <article style="background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 8px; padding: 18px 20px; display: flex; flex-direction: column; gap: 10px;">
+        <div style="display: flex; gap: 10px; align-items: baseline;"><span style="font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 700; color: #7ec4cf;">N-09</span><h3 style="margin: 0; font-size: 16.5px; font-weight: 700; line-height: 1.3;">Zwei Zähler in der Zauber-Ansicht</h3></div>
+        <pre style="margin: 0; font-family: 'JetBrains Mono', monospace; font-size: 12px; line-height: 1.7; color: #a8a8a8;">id="spells-count"   Toolbar, Klasse
+id="spell-count"    Filterzeile,
+                    4 Eigenschaften inline</pre>
+        <p style="margin: 0; font-size: 14px; line-height: 1.6; color: #b5b5b5;">Die einzige Ansicht mit zwei Zähl-Anzeigen für dieselbe Liste — die zweite umgeht das Zähler-Schema aus F-10 und ist inline gestylt. Nebenbei heißt die Filterleiste dort <code style="font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #7ec4cf;">.filter-bar</code>, überall sonst <code style="font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #7ec4cf;">.filter-chips</code>. <strong style="color: #4ade80; font-weight: 600;">Fix:</strong> zweiten Zähler entfernen oder in <code style="font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #7ec4cf;">setViewCount()</code> überführen.</p>
+      </article>
+    </div>
+  </section>
+  </sc-if>
+
+  <section style="display: flex; flex-direction: column; gap: 16px; border-top: 1px solid #3a3a3a; padding-top: 32px;">
+    <h2 style="margin: 0; font-size: 13px; font-family: 'JetBrains Mono', monospace; letter-spacing: .12em; text-transform: uppercase; color: #d4af37;">Vorschlag: drei weitere Wellen</h2>
+    <div style="display: flex; flex-direction: column; gap: 12px;">
+      <div style="background: #1a1a1a; border: 1px solid #3a3a3a; border-radius: 8px; padding: 18px 20px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px;">
+        <div style="display: flex; flex-wrap: wrap; gap: 10px; align-items: baseline;"><span style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #888; letter-spacing: .08em;">WELLE 4</span><h3 style="margin: 0; font-size: 18px; font-weight: 700;">Farbe kommt in allen Themes an</h3><span style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #ef4444; border: 1px solid #ef4444; border-radius: 999px; padding: 2px 8px;">N-01 · N-02 · N-03</span></div>
+        <p style="margin: 0; font-size: 14.5px; line-height: 1.6; color: #b5b5b5; max-width: 74ch;">Zuerst N-02 (die beiden Knöpfe und die Light/Sepia-Akzente — kleiner Eingriff, sofort sichtbar), dann die 390 rgba-Literale auf <code style="font-family: 'JetBrains Mono', monospace; font-size: 13px; color: #7ec4cf;">color-mix</code> und die Schatten auf vier Höhenstufen. Alles drei ist derselbe Umbau: Farbe wieder an die Tokens hängen. Größter Effekt, weil danach drei der vier Themes zum ersten Mal wirklich stimmen.</p>
+      </div>
+      <div style="background: #1a1a1a; border: 1px solid #3a3a3a; border-radius: 8px; padding: 18px 20px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px;">
+        <div style="display: flex; flex-wrap: wrap; gap: 10px; align-items: baseline;"><span style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #888; letter-spacing: .08em;">WELLE 5</span><h3 style="margin: 0; font-size: 18px; font-weight: 700;">Typografie und Tempo als Skala</h3><span style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #fbbf24; border: 1px solid #fbbf24; border-radius: 999px; padding: 2px 8px;">N-04 · N-06 · N-07</span></div>
+        <p style="margin: 0; font-size: 14.5px; line-height: 1.6; color: #b5b5b5; max-width: 74ch;">Sieben Größenstufen, drei Gewichte, drei Dauern — dasselbe Muster wie die Radius- und Abstands-Skala aus Welle 3, nur für Schrift und Bewegung. Überwiegend Suchen-Ersetzen; die Aufmerksamkeit liegt auf den <code style="font-family: 'JetBrains Mono', monospace; font-size: 13px; color: #7ec4cf;">em</code>-Verschachtelungen, die sich beim Umstellen auf feste Stufen sichtbar verändern.</p>
+      </div>
+      <div style="background: #1a1a1a; border: 1px solid #3a3a3a; border-radius: 8px; padding: 18px 20px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px;">
+        <div style="display: flex; flex-wrap: wrap; gap: 10px; align-items: baseline;"><span style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #888; letter-spacing: .08em;">WELLE 6</span><h3 style="margin: 0; font-size: 18px; font-weight: 700;">Bedienbarkeit ohne Maus</h3><span style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #7ec4cf; border: 1px solid #7ec4cf; border-radius: 999px; padding: 2px 8px;">N-05 · N-08 · N-09</span></div>
+        <p style="margin: 0; font-size: 14.5px; line-height: 1.6; color: #b5b5b5; max-width: 74ch;">Ein Fokusring für alles, ein vollständiger <code style="font-family: 'JetBrains Mono', monospace; font-size: 13px; color: #7ec4cf;">prefers-reduced-motion</code>-Block, der doppelte Zähler weg. Der kleinste Aufwand der drei Wellen — und der einzige Befundblock, bei dem es nicht um Aussehen geht, sondern darum, ob die App per Tastatur bedienbar ist.</p>
+      </div>
+    </div>
+    <p style="margin: 0; font-size: 13.5px; color: #777; line-height: 1.65; max-width: 74ch;">Jede Welle sollte wie Welle 1 – 3 mit einer Ratsche in <code style="font-family: 'JetBrains Mono', monospace; color: #7ec4cf;">design-consistency.test.js</code> abschließen. Alle neun Befunde sind lautlos: ein zu heller Akzent, ein fehlender Fokusring und ein <code style="font-family: 'JetBrains Mono', monospace; color: #7ec4cf;">rgba()</code> mit festem Tripel erzeugen keine Fehlermeldung — genau deshalb sind sie durch drei Wellen Aufräumen hindurchgekommen.</p>
+  </section>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;zeigeErledigt&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Umfang&quot;},&quot;nurHoheSchwere&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Umfang&quot;},&quot;zeigeFixes&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Detailtiefe&quot;},&quot;zeigeKontrastTabelle&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Detailtiefe&quot;}}">
+class Component extends DCLogic {
+  renderVals() {
+    return {
+      zeigeErledigt: this.props.zeigeErledigt ?? true,
+      zeigeKontrastTabelle: this.props.zeigeKontrastTabelle ?? true,
+      zeigeFixes: this.props.zeigeFixes ?? true,
+      zeigeAlle: (this.props.nurHoheSchwere ?? false) ? false : true
+    };
+  }
+}
+</script>
+</body>
+</html>
