@@ -2555,13 +2555,19 @@
     background: var(--bg-hover);
 }
 
-/* Attribut-Farben */
-.attr-str { color: var(--red); font-weight: 600; }
-.attr-dex { color: var(--green); font-weight: 600; }
-.attr-con { color: var(--orange); font-weight: 600; }
-.attr-int { color: var(--cyan); font-weight: 600; }
-.attr-wis { color: var(--purple); font-weight: 600; }
-.attr-cha { color: var(--pink); font-weight: 600; }
+/* Attribut-Farben.
+   Code-Review 2026-09-08: F-04 fuehrte --attr-* ein, um zwei
+   DM-Screen-Widgets zu vereinheitlichen, und uebersah dieses dritte
+   (Schnellreferenz-Modal). Fuenf der sechs Attribute zeigten dadurch je
+   nach Widget eine andere Farbe — am gebauten Buendel gemessen, z.B. INT
+   rgb(59,130,246) gegen rgb(126,196,207). Genau die Doppelfuehrung, die
+   bei den Schadensarten zum acid/poison-Tausch gefuehrt hat. */
+.attr-str { color: var(--attr-str); font-weight: 600; }
+.attr-dex { color: var(--attr-dex); font-weight: 600; }
+.attr-con { color: var(--attr-con); font-weight: 600; }
+.attr-int { color: var(--attr-int); font-weight: 600; }
+.attr-wis { color: var(--attr-wis); font-weight: 600; }
+.attr-cha { color: var(--attr-cha); font-weight: 600; }
 
 /* Chips */
 .qref-chips {

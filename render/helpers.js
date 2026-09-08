@@ -444,8 +444,20 @@ function filterBySearch(items, inputId, fields) {
     const el = $(inputId);
     const q = (el?.value || '').trim().toLowerCase();
     if (!q) return items;
+    // Code-Review 2026-09-08: mehrere Aufrufstellen reichen Felder herein, die
+    // als sanitizeHTML(innerHTML) gespeichert sind, also rohes Markup tragen
+    // (session-prep strongStart, fraktionen agenda/beschreibung). Ohne das
+    // Entfernen der Tags trifft eine Suche nach "div" oder "class" das Markup,
+    // und ein durch <b> geteiltes Wort wird nicht gefunden. Ersetzt wird durch
+    // die LEERE Zeichenkette, nicht durch ein Leerzeichen — so bleibt ein an
+    // einer Formatierungsgrenze geteiltes Wort zusammenhaengend suchbar.
+    // Gleiches Muster wie sessions.js:191.
     return items.filter(item =>
-        fields(item).some(v => typeof v === 'string' && v.toLowerCase().includes(q))
+        fields(item).some(
+            v =>
+                typeof v === 'string' &&
+                v.replace(/<[^>]+>/g, '').toLowerCase().includes(q)
+        )
     );
 }
 

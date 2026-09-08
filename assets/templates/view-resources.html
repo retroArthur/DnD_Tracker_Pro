@@ -20,7 +20,7 @@
                     <div class="section-toolbar-io">
                         <button class="io-btn export" data-action="export-data" data-value="loot" title="Truhe exportieren">📤</button>
                         <button class="io-btn import" data-action="trigger-click" data-value="import-loot" title="Truhe importieren">📥</button>
-                        <input type="file" id="import-loot" class="io-file-input" accept=".json" data-on-change="import-data" data-type="loot">
+                        <input type="file" id="import-loot" class="io-file-input" accept=".json" data-on-change="importData" data-type="loot">
                     </div>
                 </div>
                 <!-- Gruppe 4: Primäre Aktion -->
@@ -144,7 +144,7 @@
                             </div>
                         </div>
                         <button class="io-btn import" data-action="trigger-click" data-value="import-spells" title="Zauber importieren">📥</button>
-                        <input type="file" id="import-spells" class="io-file-input" accept=".json,.csv" data-on-change="import-data" data-type="spells">
+                        <input type="file" id="import-spells" class="io-file-input" accept=".json,.csv" data-on-change="importData" data-type="spells">
                     </div>
                     <button class="btn" data-action="call" data-value="loadSRDSpells" title="SRD-Zauber laden">📚 SRD</button>
                     <select id="spell-class-filter" data-action="render-spells">
@@ -347,7 +347,7 @@
                     <div class="section-toolbar-io">
                         <button class="io-btn export" data-action="export-data" data-value="wiki" title="Wiki exportieren">📤</button>
                         <button class="io-btn import" data-action="trigger-click" data-value="import-wiki" title="Wiki importieren">📥</button>
-                        <input type="file" id="import-wiki" class="io-file-input" accept=".json" data-on-change="import-data" data-type="wiki">
+                        <input type="file" id="import-wiki" class="io-file-input" accept=".json" data-on-change="importData" data-type="wiki">
                     </div>
                 </div>
             </div>

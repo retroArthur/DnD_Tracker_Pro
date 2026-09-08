@@ -171,7 +171,14 @@ function initFloatingToolbar() {
         };
         if (tagMap[action]) {
             const tag = tagMap[action];
-            const parentTag = range.commonAncestorContainer.parentElement?.closest(tag);
+            // Code-Review 2026-09-08: war das naive Muster, dessen Fehler der
+            // Kommentar in closestEditorAncestor() (rich-text.js) beschreibt —
+            // ist der commonAncestorContainer bereits ein ELEMENT, springt
+            // .parentElement eine Ebene zu weit, das Umschalten fand das eigene
+            // Tag nicht mehr und wickelte erneut ein. Der Helfer ist eine
+            // Top-Level-Deklaration in der frueher geladenen rich-text.js und
+            // damit ohne Export erreichbar.
+            const parentTag = closestEditorAncestor(range.commonAncestorContainer, tag);
             if (parentTag && parentTag.closest(window.EDITOR_HOST_SELECTOR)) {
                 const parent = parentTag.parentNode;
                 if (parent) {
@@ -198,7 +205,9 @@ function initFloatingToolbar() {
             applyFloatingHighlight('rgba(251, 191, 36, 0.4)', editor, savedRange);
         } else if (action === 'link') {
             const url = prompt('URL eingeben:', 'https://');
-            if (url && url !== 'https://') {
+            if (url && url !== 'https://' && !isAllowedEditorHref(url)) {
+                showToast('⚠️ Nur http(s)-, /-, #- oder ./-Adressen', 'error');
+            } else if (url && url !== 'https://') {
                 const link = document.createElement('a');
                 link.href = url;
                 link.target = '_blank';
@@ -213,7 +222,7 @@ function initFloatingToolbar() {
                 showToast('🔗 Link eingefügt');
             }
         } else if (action === 'list') {
-            const parentList = range.commonAncestorContainer.parentElement?.closest('ul, ol');
+            const parentList = closestEditorAncestor(range.commonAncestorContainer, 'ul, ol');
             if (parentList && parentList.closest(window.EDITOR_HOST_SELECTOR)) {
                 const listItems = parentList.querySelectorAll('li');
                 const fragment = document.createDocumentFragment();
@@ -466,7 +475,9 @@ function initContextToolbars() {
             window.open(link.href, '_blank', 'noopener,noreferrer');
         } else if (action === 'edit') {
             const newUrl = prompt('URL bearbeiten:', link.href);
-            if (newUrl && newUrl !== link.href) {
+            if (newUrl && newUrl !== link.href && !isAllowedEditorHref(newUrl)) {
+                showToast('⚠️ Nur http(s)-, /-, #- oder ./-Adressen', 'error');
+            } else if (newUrl && newUrl !== link.href) {
                 link.href = newUrl;
                 showToast('🔗 Link aktualisiert');
             }

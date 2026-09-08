@@ -19,7 +19,7 @@
                     <div class="section-toolbar-io">
                         <button class="io-btn export" data-action="export-data" data-value="npcs" title="NPCs exportieren">📤</button>
                         <button class="io-btn import" data-action="trigger-click" data-value="import-npcs" title="NPCs importieren">📥</button>
-                        <input type="file" id="import-npcs" class="io-file-input" accept=".json" data-on-change="import-data" data-type="npcs">
+                        <input type="file" id="import-npcs" class="io-file-input" accept=".json" data-on-change="importData" data-type="npcs">
                     </div>
                 </div>
                 <!-- Gruppe 4: Primäre Aktion -->
@@ -67,7 +67,7 @@
                     <div class="section-toolbar-io">
                         <button class="io-btn export" data-action="export-data" data-value="locations" title="Orte exportieren">📤</button>
                         <button class="io-btn import" data-action="trigger-click" data-value="import-locations" title="Orte importieren">📥</button>
-                        <input type="file" id="import-locations" class="io-file-input" accept=".json" data-on-change="import-data" data-type="locations">
+                        <input type="file" id="import-locations" class="io-file-input" accept=".json" data-on-change="importData" data-type="locations">
                     </div>
                 </div>
                 <!-- Gruppe 4: Primäre Aktion -->
@@ -115,7 +115,7 @@
                     <div class="section-toolbar-io">
                         <button class="io-btn export" data-action="export-data" data-value="quests" title="Quests exportieren">📤</button>
                         <button class="io-btn import" data-action="trigger-click" data-value="import-quests" title="Quests importieren">📥</button>
-                        <input type="file" id="import-quests" class="io-file-input" accept=".json" data-on-change="import-data" data-type="quests">
+                        <input type="file" id="import-quests" class="io-file-input" accept=".json" data-on-change="importData" data-type="quests">
                     </div>
                     <label class="filter-toggle">
                         <input type="checkbox" id="quest-filter-active" checked data-action="render-quests"> Aktive

@@ -787,3 +787,19 @@
             margin: 16px 0;
             height: 0;
         }
+
+        /* Code-Review 2026-09-08: setBorderFormat() setzt border-radius und
+           display: inline-block als Inline-Stil. Beide stehen NICHT in der
+           Stil-Erlaubnisliste von sanitizeHTML() (utils/basic.js) — der Rahmen
+           sah bis zum ersten Speichern richtig aus und war danach eckig und
+           wieder im Fliesstext. Eine Klassenregel ueberlebt den Filter, weil
+           class erlaubt ist; genau das Muster, das CLAUDE.md fuer Bausteine
+           vorschreibt. border/padding bleiben inline, sie sind erlaubt.
+           Die Regel steht bewusst NICHT auf die Editor-Flaechen beschraenkt:
+           der gespeicherte Inhalt wird auch ausserhalb des Editors angezeigt.
+           Der Marker braucht keine Entsprechung — die globale mark-Regel in
+           dmscreen.css setzt bereits border-radius. */
+        .editor-border {
+            display: inline-block;
+            border-radius: var(--radius-sm);
+        }

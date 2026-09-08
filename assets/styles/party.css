@@ -1657,11 +1657,11 @@
     text-transform: uppercase;
 }
 
-.cf-coin-item.pm .cf-coin-label { color: var(--gold-dim); }
-.cf-coin-item.gm .cf-coin-label { color: var(--yellow); }
+.cf-coin-item.pm .cf-coin-label { color: var(--coin-pm); }
+.cf-coin-item.gm .cf-coin-label { color: var(--coin-gm); }
 .cf-coin-item.em .cf-coin-label { color: var(--green); }
-.cf-coin-item.sm .cf-coin-label { color: var(--text); }
-.cf-coin-item.km .cf-coin-label { color: var(--gold-dim); }
+.cf-coin-item.sm .cf-coin-label { color: var(--coin-sm); }
+.cf-coin-item.km .cf-coin-label { color: var(--coin-km); }
 
 .cf-coin-item input {
     width: 100%;

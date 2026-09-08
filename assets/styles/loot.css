@@ -675,7 +675,7 @@
         .si-item.magic { border-left-color: var(--cat-magic); }
         .si-item.enchant { border-left-color: var(--cat-enchant); }
         .si-item.buff { border-left-color: var(--cat-buff); }
-        .si-item.info { border-left-color: var(--cyan); }
+        .si-item.info { border-left-color: var(--cat-info); }
         .si-item.trinket { border-left-color: var(--cat-trinket); }
         
         .shop-footer {

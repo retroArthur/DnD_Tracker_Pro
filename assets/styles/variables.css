@@ -215,6 +215,20 @@
             --cat-enchant: #673ab7;
             --cat-buff: #ff5722;
             --cat-trinket: #607d8b;
+            /* Code-Review 2026-09-08: --cat-info fehlte als einziges der
+               vierzehn Hex-Literale dieser Gruppe. loot.css wich deshalb
+               auf var(--cyan) aus — aus dem Braun der Kategorie
+               "Information" wurde Cyan. Wert aus v1.2 uebernommen. */
+            --cat-info: #795548;
+
+            /* Muenzmetalle. Gleiche Ursache: beim Token-Umbau landeten
+               Platin UND Kupfer auf --gold-dim und waren damit im
+               Finanz-Widget nicht mehr unterscheidbar (am gebauten
+               Buendel gemessen: beide rgb(166,138,42)). Werte aus v1.2. */
+            --coin-pm: #b8860b;
+            --coin-gm: #ffd700;
+            --coin-sm: #c0c0c0;
+            --coin-km: #cd7f32;
 
             --know-arcana: #3b82f6;
             --know-religion: #a855f7;

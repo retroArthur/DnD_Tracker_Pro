@@ -2,6 +2,16 @@
 // Extrahiert aus spellslots.js
 // Import/Export System mit Validierung
 // Zeilen: 565
+// Code-Review 2026-09-08: Vorgabewerte NIE per Referenz herausgeben.
+// field.default wurde an drei Stellen direkt zugewiesen; zwei Datensaetze
+// ohne dasselbe Feld teilten sich dadurch EIN Array-Objekt, und weil
+// IO_SCHEMA nicht eingefroren ist, mutierte eine Aenderung daran das
+// Schema selbst.
+function ioCloneDefault(wert) {
+    if (Array.isArray(wert)) return wert.slice();
+    if (wert && typeof wert === 'object') return Object.assign({}, wert);
+    return wert;
+}
 // Schema-Definition: Welche Felder werden für jeden Datentyp exportiert/importiert?
 const IO_SCHEMA = {
     characters: {
@@ -147,8 +157,8 @@ const IO_SCHEMA = {
         datum: { type: 'string', required: false, default: '' },
         inGameDatum: { type: 'string', required: false, default: '' },
         strongStart: { type: 'string', required: false, default: '' },
-        szenen: { type: 'object', required: false, default: [] },
-        offeneFaeden: { type: 'object', required: false, default: [] },
+        szenen: { type: 'array', required: false, default: [] },
+        offeneFaeden: { type: 'array', required: false, default: [] },
         erstellt: { type: 'number', required: false, default: 0 }
     },
     factions: {
@@ -159,9 +169,14 @@ const IO_SCHEMA = {
         agenda: { type: 'string', required: false, default: '' },
         beschreibung: { type: 'string', required: false, default: '' },
         sitzOrtId: { type: 'number', required: false, default: null },
-        verbuendete: { type: 'object', required: false, default: [] },
-        rivalen: { type: 'object', required: false, default: [] },
-        rufHistorie: { type: 'object', required: false, default: [] }
+        // Code-Review 2026-09-08: verbuendete/rivalen sind Freitextfelder
+        // (fraktionen-crud.js:43-44), keine Listen. Mit default: [] erzeugte
+        // ein Import ohne diese Felder eine leere, beschriftete Sektion —
+        // ein leeres Array ist in JS truthy, die Pruefung in
+        // fraktionen-render.js:269 griff also ins Leere.
+        verbuendete: { type: 'string', required: false, default: '' },
+        rivalen: { type: 'string', required: false, default: '' },
+        rufHistorie: { type: 'array', required: false, default: [] }
     },
     calendarEvents: {
         id: { type: 'number', required: true },
@@ -275,7 +290,7 @@ function exportData(dataType) {
         const filtered = data.map(item => {
             const obj = {};
             for (const [key, field] of Object.entries(schema)) {
-                obj[key] = item[key] !== undefined ? item[key] : field.default;
+                obj[key] = item[key] !== undefined ? item[key] : ioCloneDefault(field.default);
             }
             return obj;
         });
@@ -414,7 +429,8 @@ function showImportModal(dataType) {
                         if (field.required && item[key] === undefined) {
                             throw new Error(`Eintrag ${idx + 1}: Pflichtfeld "${key}" fehlt`);
                         }
-                        validated[key] = item[key] !== undefined ? item[key] : field.default;
+                        validated[key] =
+                            item[key] !== undefined ? item[key] : ioCloneDefault(field.default);
                     }
                     // SEC-01/D-01: HTML-tragende Felder vor der Anzeige bereinigen (Import-Grenze)
                     return sanitizeImportedItem(dataType, validated);
@@ -502,9 +518,6 @@ function executeImport(dataType) {
 // ============================================================
 function updateIOCounts() {
     const D = window.D;
-    // Direct id mapping — keys are the actual element ids in the templates.
-    // Not all follow `${key}-io-count`: encounter is singular, shops/notes/links
-    // map to differently-named data arrays.
     // Schluessel = data-view-Wert der Navigation (F-10). Die IDs im Markup
     // heissen `<view>-count`; geschrieben wird ausschliesslich ueber
     // setViewCount().

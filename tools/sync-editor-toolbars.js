@@ -147,6 +147,13 @@ function main() {
     let drift = 0;
     const problems = [];
 
+    // Code-Review 2026-09-08: zuerst ALLE Dateien im Speicher aufbauen, erst
+    // danach schreiben. Vorher stand fs.writeFileSync INNERHALB dieser
+    // Schleife, waehrend problems erst nach ihr geprueft wurde — eine nicht
+    // gefundene Leiste in der letzten Datei beendete den Lauf mit Code 1,
+    // obwohl die vorherigen Dateien laengst geschrieben waren. "Fehler" hiess
+    // also nicht "nichts angefasst".
+    const zuSchreiben = [];
     for (const [rel, entries] of byFile) {
         const abs = path.join(REPO_ROOT, rel);
         let content = fs.readFileSync(abs, 'utf8');
@@ -166,7 +173,7 @@ function main() {
 
         if (content !== before) {
             changed++;
-            if (!check) fs.writeFileSync(abs, content, 'utf8');
+            zuSchreiben.push([abs, content]);
         }
     }
 
@@ -174,6 +181,14 @@ function main() {
         console.error('FEHLER:');
         problems.forEach(p => console.error('  - ' + p));
         process.exit(1);
+    }
+
+    // Erst hier schreiben: an dieser Stelle steht fest, dass JEDE Leiste
+    // gefunden wurde. --check schreibt weiterhin nichts.
+    if (!check) {
+        for (const [abs, content] of zuSchreiben) {
+            fs.writeFileSync(abs, content, 'utf8');
+        }
     }
 
     if (check) {

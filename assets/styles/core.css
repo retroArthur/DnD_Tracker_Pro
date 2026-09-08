@@ -523,7 +523,11 @@
         .btn-danger { border-color: var(--red); color: var(--red); }
         .btn-success { background: var(--green); border-color: var(--green); color: var(--bg-dark); font-weight: 600; }
         .btn-gold { background: var(--gold); border-color: var(--gold); color: var(--bg-dark); font-weight: 600; }
-        .btn-gold:hover { background: var(--gold); border-color: var(--gold); }
+        /* Code-Review 2026-09-08: stand auf var(--gold) — identisch zur Basisregel
+   darueber, der Knopf reagierte also gar nicht. In v1.2 war es #c5a028;
+   beim Token-Umbau wurde das dunklere Gold durch das Basis-Gold ersetzt.
+   --gold-dim ist in allen vier Themes vom Basiswert verschieden. */
+        .btn-gold:hover { background: var(--gold-dim); border-color: var(--gold-dim); }
         
         /* Forms */
         .form-grid {

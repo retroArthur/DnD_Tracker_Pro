@@ -68,6 +68,27 @@ function saveEditorSelection() {
     return false;
 }
 window.saveEditorSelection = saveEditorSelection;
+// Code-Review 2026-09-08: Spiegel der Href-Regel aus sanitizeHTML()
+// (utils/basic.js). Ohne sie schrieb die Linkfunktion jede Eingabe aus
+// prompt() ungeprueft ins DOM: ein 'javascript:'-Link existierte bis zum
+// naechsten Speichern, und ein voellig vernuenftiger 'mailto:'-Link
+// verschwand beim Speichern KOMMENTARLOS, weil der Filter ihn verwirft.
+// Diese Liste absichtlich identisch zur Sanitizer-Liste halten.
+function isAllowedEditorHref(url) {
+    const v = String(url || '').trim();
+    if (!v) return false;
+    const lower = v.toLowerCase();
+    const gefaehrlich = ['javascript:', 'vbscript:', 'data:', 'file:', 'blob:'];
+    if (gefaehrlich.some(proto => lower.startsWith(proto))) return false;
+    return (
+        lower.startsWith('http://') ||
+        lower.startsWith('https://') ||
+        v.startsWith('/') ||
+        v.startsWith('#') ||
+        v.startsWith('./')
+    );
+}
+window.isAllowedEditorHref = isAllowedEditorHref;
 function closestEditorAncestor(container, selector) {
     // container kann ein Text- ODER ein Element-Knoten sein (z.B. wenn die
     // Selektion per range.selectNodeContents(element) statt per
@@ -343,7 +364,12 @@ function setBorderFormat(elementId) {
     if (!editor) return;
     editor.focus();
     const selection = window.getSelection();
-    if (selection && selection.rangeCount > 0) {
+    // Code-Review 2026-09-08: ohne collapsed-Pruefung fuegt ein blosser
+    // Cursorklick eine LEERE Rahmenbox ein — extractContents() liefert bei
+    // kollabierter Range ein leeres Fragment — und removeAllRanges() loescht
+    // danach die Auswahl, ohne eine neue Cursorposition zu setzen. Jede
+    // andere Formatierfunktion dieser Datei prueft das bereits.
+    if (selection && selection.rangeCount > 0 && !selection.getRangeAt(0).collapsed) {
         const range = selection.getRangeAt(0);
         const selectedText = range.extractContents();
         const wrapper = document.createElement('span');
@@ -375,6 +401,11 @@ function setReadAloudFormat(elementId, style = 'parchment') {
                 parent.removeChild(existingBlock);
             }
             showToast('📖 Vorlese-Text entfernt');
+        } else if (range.collapsed) {
+            // Code-Review 2026-09-08: ohne diesen Zweig entstand bei blossem
+            // Cursor ein LEERER, farbiger Vorlese-Block — und der Toast meldete
+            // trotzdem Erfolg. Das Entfernen oben bleibt per Cursor moeglich.
+            showToast('⚠️ Bitte zuerst Text markieren', 'error');
         } else {
             const selectedContent = range.extractContents();
             const wrapper = document.createElement('div');
