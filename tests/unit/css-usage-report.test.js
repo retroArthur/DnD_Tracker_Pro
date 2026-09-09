@@ -28,8 +28,18 @@ describe('css-usage-report — Grundexporte', () => {
         expect(LIVE_PREFIXES).toEqual(['color-', 'condition-', 'editor-toolbar-', 'rel-btn-', 'tag-']);
     });
 
-    test('DEAD_EXCEPTIONS startet leer', () => {
-        expect(DEAD_EXCEPTIONS).toEqual([]);
+    test('DEAD_EXCEPTIONS ist eine Liste datierter, begruendeter Eintraege (leer waere ebenfalls gueltig)', () => {
+        // Vor der Pflicht-Fehlalarm-Pruefung (Task 3) leer; danach traegt sie
+        // jeden gefundenen Fehlalarm mit Datum und Begruendung — beide
+        // Zustaende sind fuer diesen Testfall gueltig, geprueft wird nur die
+        // FORM je Eintrag (D-50-Kommentarformat, uebertragen auf Code).
+        DEAD_EXCEPTIONS.forEach(entry => {
+            expect(typeof entry.class).toBe('string');
+            expect(entry.class.length).toBeGreaterThan(0);
+            expect(entry.date).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+            expect(typeof entry.reason).toBe('string');
+            expect(entry.reason.length).toBeGreaterThan(0);
+        });
     });
 
     test('COMMENT_RE erscheint woertlich auch in tests/unit/design-consistency.test.js (eine Zaehlart, keine zweite)', () => {
