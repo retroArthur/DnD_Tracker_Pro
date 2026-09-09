@@ -342,7 +342,11 @@ function displayDiceResult(result, notation, rolls, isCrit, isFail, extraHtml = 
     if (heroContainer && heroResult) {
         // New compact design
         heroResult.textContent = String(result);
-        heroResult.className = '';
+        // Formatierungsklasse (Schriftgroesse/Goldton) beibehalten statt
+        // loeschen — .dice-hero-result traegt die Basisformatierung, und
+        // .crit/.fail sind ausschliesslich auf DIESEM Element definiert
+        // (assets/styles/dice.css), nicht auf dem Container (FIX-03).
+        heroResult.className = 'dice-hero-result';
         if (heroFormula) heroFormula.textContent = notation + dmgType;
         if (heroBreakdown) {
             const rollsStr = Array.isArray(rolls) ? rolls.join(', ') : rolls;
@@ -352,13 +356,14 @@ function displayDiceResult(result, notation, rolls, isCrit, isFail, extraHtml = 
                 heroBreakdown.innerHTML += `<div style="margin-top: 6px;">${extraHtml}</div>`;
             }
         }
-        // Effects
-        heroContainer.classList.remove('crit', 'fail');
+        // Effects — Zustandsklassen auf der Ergebniszahl, nicht auf dem
+        // Container (dort existiert keine entsprechende CSS-Regel)
+        heroResult.classList.remove('crit', 'fail');
         if (isCrit) {
-            heroContainer.classList.add('crit');
+            heroResult.classList.add('crit');
             createConfetti(heroContainer);
         } else if (isFail) {
-            heroContainer.classList.add('fail');
+            heroResult.classList.add('fail');
         }
         // Animation
         heroContainer.style.transform = 'scale(1.03)';
