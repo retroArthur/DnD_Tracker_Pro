@@ -1,24 +1,4 @@
-        /* ============================================================
-           INITIATIVE
-           ============================================================ */
-        .init-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 10px;
-            margin-bottom: 12px;
-        }
-        
-        .round-badge {
-            background: var(--bg-card);
-            border: 2px solid var(--gold);
-            padding: 6px 16px;
-            border-radius: var(--radius-md);
-            font-size: 1.1em;
-        }
-        
-        .round-badge span { color: var(--gold); font-weight: 700; }
+
 
         /* Battlefield Conditions Banner */
         .battlefield-banner {
@@ -1148,28 +1128,6 @@
     color: var(--bg-dark);
     border-color: var(--gold);
     font-weight: 600;
-}
-
-.init-mob-dmg-inputs {
-    display: flex;
-    gap: 8px;
-    align-items: center;
-    font-size: 0.75em;
-}
-
-.init-mob-dmg-inputs.hidden {
-    display: none;
-}
-
-.init-mob-dmg-inputs input {
-    width: 48px;
-    padding: 4px 8px;
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    color: var(--text);
-    border-radius: var(--radius-sm);
-    font-size: 0.9em;
-    text-align: center;
 }
 
 .init-mob-attack-btn {
