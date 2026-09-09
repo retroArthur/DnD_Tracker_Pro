@@ -5,16 +5,16 @@ milestone_name: Design-System
 current_phase: 15
 current_phase_name: Befundlage & Vorlauf
 status: executing
-stopped_at: Completed 15-befundlage-vorlauf-02-PLAN.md
-last_updated: "2026-09-09T08:47:28.781Z"
+stopped_at: Completed 15-befundlage-vorlauf-05-PLAN.md
+last_updated: "2026-09-09T09:11:24.576Z"
 last_activity: 2026-09-09
 last_activity_desc: Phase 15 execution started
-state_head: e143e9a033456debcc44bb5c5cd3f677182e1ecd
+state_head: 69496af4a2a08002ec78981be703c9ef152506e1
 progress:
   total_phases: 5
   completed_phases: 0
   total_plans: 8
-  completed_plans: 4
+  completed_plans: 5
   percent: 0
 ---
 
@@ -41,7 +41,7 @@ See: `.planning/PROJECT.md` (Stand 2026-09-08)
 ## Current Position
 
 Phase: 15 (Befundlage & Vorlauf) — EXECUTING
-Plan: 5 of 8
+Plan: 6 of 8
 Status: Ready to execute
 Last activity: 2026-09-09 — Phase 15 execution started
 
@@ -164,6 +164,7 @@ die Tastaturprobe der CHECKLISTE muss aus den Akzeptanzkriterien.
 | Phase 15-befundlage-vorlauf P04 | ~35min | 3 tasks | 3 files |
 | Phase 15-befundlage-vorlauf P03 | ~55min | 3 tasks | 6 files |
 | Phase 15-befundlage-vorlauf P02 | ~40min | 3 tasks | 2 files |
+| Phase 15-befundlage-vorlauf P05 | ~50min | 3 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -250,8 +251,8 @@ die Tastaturprobe der CHECKLISTE muss aus den Akzeptanzkriterien.
 
 ## Session Continuity
 
-**Last session:** 2026-09-09T08:47:28.757Z
-**Stopped at:** Completed 15-befundlage-vorlauf-02-PLAN.md
+**Last session:** 2026-09-09T09:11:24.552Z
+**Stopped at:** Completed 15-befundlage-vorlauf-05-PLAN.md
 **Resume file:** None
 
 **Last action:** `/gsd-execute-phase 13` (Plan 13-08, MAINT-06). Converted all 81 originally-counted unfiltered `console.*` calls across 31 `loader.js` MODULES files to the one sanctioned `ErrorHandler.log()` outlet in `render/helpers.js` (marked `gsd:konsolen-senke`), built `tests/unit/console-hygiene.test.js` as a permanent regression guard, and corrected two stale `file-backup-manager.js` header comments that wrongly described the forbidden `window.save` monkey-patch pattern (code has used `registerPostSaveHook()` correctly since Phase 12). Mid-execution finding: converting routine/self-healing diagnostics (data repairs, migration progress, per-tab render guards) to the single outlet elevated them to `console.error` and broke 5 Playwright tests (`editor-formatting.spec.js`, `editor-insert.spec.js`, `import-security.spec.js`) that assert zero console errors — fixed by routing those specific sites through the existing `window.debugLogAdd()` in-app debug panel instead, preserving the single-outlet invariant for genuine faults while not misclassifying normal operation as an error. Full suites green: `npx jest` 1066/1066, `npx playwright test` 321 passed/2 skipped (STATE.md baseline exactly matched), `python build.py` + `--production` + `pytest tests/build` 24/24 all green.
@@ -404,6 +405,8 @@ die Tastaturprobe der CHECKLISTE muss aus den Akzeptanzkriterien.
 - [Phase 15]: 15-03: Loeschzahlen in DEAD-01/ROADMAP-SC3 durch 'die vom Werkzeug tools/css-usage-report.js gemessene Menge' ersetzt statt einer neuen Schaetzzahl — die drei kolportierten Zahlen (438/607/~3174) sind in drei unabhaengigen Nachmessungen nicht reproduziert worden
 - [Phase 15-befundlage-vorlauf]: D-53 (Reduktion der haendischen Abnahme von fuenf auf drei volle Vier-Themes-Runden) wurde dem Nutzer als Checkpoint vorgelegt und ausdruecklich ABGELEHNT (2026-09-09) -- GATE-05 bucht die urspruengliche, strengere Form: eine volle Runde nach JEDER der fuenf Phasen 15-19, keine gezielte Stellenliste als Ersatz. — Der Nutzer beantwortete die vier vorgelegten Punkte individuell; D-43/D-39/D-41 bestaetigt, D-53 verworfen. Die Ablehnung selbst erfuellt GATE-05s Verbot einer stillschweigenden Absenkung -- es wurde ausdruecklich vorgeschlagen und ausdruecklich abgelehnt.
 - [Phase 15-befundlage-vorlauf]: GATE-04 gesetzt: sechs Befundgruppen ausserhalb assets/styles/ je einer Phase (16/18) oder einer neuen Uebertrag-aus-v1.3-Tabelle zugeordnet; CLAUDE.md-CSS-Dateizahl auf gemessene 20 korrigiert (war 13), Werkzeugleisten-Waechter als nicht existierende Restschuld dokumentiert.
+- [Phase 15]: Container-Klasse fuer die Zauberplatz-Anzeige: spell-slots-compact/slot-pip (bereits in dashboard.css gestylt), nicht char-card-slots/char-slot-pip (nachweislich null CSS-Regeln) — Vor der Aenderung per grep gemessen: char-card-slots-Familie existiert in keiner Stylesheet-Datei; spell-slots-compact/slot-pip sind bereits in dashboard.css gestylt (Zielmuster spellslots-ui.js).
+- [Phase 15]: ROADMAP-Erfolgskriterium 4 (Phase 15) auf .spell-slots-compact .slot-pip korrigiert (D-55) - ersetzt die von Plan 15-03 (D-15) gebuchte Vermutung .char-card-slots .slot-pip — D-15 beschrieb nur das ungeprueft gemessene, kaputte Markup vor der Reparatur, nicht die tatsaechlich implementierte Loesung.
 
 ## Deferred Items
 

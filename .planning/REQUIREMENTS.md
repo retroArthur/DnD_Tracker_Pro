@@ -108,14 +108,14 @@ pytest 24 · `design-consistency.test.js` 64/64 · `DUBLETTEN_MAX` 0 · `IMPORTA
       transparent, border-radius 0px; `.dms-skill-header.str` background transparent, font-weight
       400. 62 tote `dms-*`-Klassen im CSS gegen 15 `dms-*`-Klassen im JS ohne jede Regel. Reparatur:
       Plan 15-04 (`tests/e2e/features/design-fixes.spec.js`, Ratsche `DMS_UNSTYLED_MAX`).
-- [ ] **FIX-02**: Die kompakte Zauberplatz-Anzeige der Charakterkarte ist sichtbar und bedienbar.
+- [x] **FIX-02**: Die kompakte Zauberplatz-Anzeige der Charakterkarte ist sichtbar und bedienbar.
       `party-render.js:330` erzeugt `.char-slot-pip` als `<span>` **ohne Textinhalt** mit
       `data-action="toggle-spell-slot-stop"` — und es existiert keine einzige CSS-Regel dafür
       (auch nicht für `.char-slot-group/-label`, `.char-card-slots`). Ein Inline-Element der Breite 0:
       weder sichtbar noch anklickbar noch antippbar. Der Codepfad ist aktiv
       (`party-render.js:159`, `:241`); die Schwesterklasse `.slot-pip` (`dashboard.css:1320`)
       existiert sehr wohl.
-- [ ] **FIX-03**: Die Würfelzahl behält nach dem ersten Wurf ihre Formatierung, und die
+- [x] **FIX-03**: Die Würfelzahl behält nach dem ersten Wurf ihre Formatierung, und die
       Kritisch-/Patzer-Färbung greift. `dice-core.js:345` setzt `heroResult.className = ''` und
       nimmt `#dice-hero-result` damit `.dice-hero-result` weg — mit `font-size: 5em`,
       `color: var(--gold)` und `font-weight: 700` (`dice.css:21-27`). Die anschließend gesetzten
@@ -430,8 +430,8 @@ Akzeptanzkriterien heraus. Belege in `HANDOFF-V2-GEGENPROBEN.md`.
 | DEAD-02 | Phase 15 | Pending |
 | DEAD-03 | Phase 15 | Pending |
 | FIX-01 | Phase 15 | Complete |
-| FIX-02 | Phase 15 | Pending |
-| FIX-03 | Phase 15 | Pending |
+| FIX-02 | Phase 15 | Complete |
+| FIX-03 | Phase 15 | Complete |
 | GATE-03 | Phase 15 | Complete |
 | GATE-04 | Phase 15 | Complete |
 | GATE-05 | Phase 15 | Pending |

@@ -106,10 +106,10 @@ Zielwerten statt mit totem Ballast und unpassierbaren Ratschen.
   1. Alle 13 Blocker (B-01..B-13) stehen als entschiedene, begründete Einträge (drei — B-01/B-02/B-07 — bereits als Key Decision in `PROJECT.md` gebucht); §8 aus `PATCHES.md` ist entfernt, N-08 als widerlegt geschlossen.
   2. `grep -rn "prefers-reduced-motion" assets/styles/` zeigt genau einen Top-Level-Block, neu angelegt in `core.css` (Ausgangslage: vier Top-Level-Blöcke, u. a. `dmscreen.css:1408-1419`, keiner in `core.css` — vier Entfernungen und eine Neuanlage, kein Umzug), dokumentiert und gegen Rückbau gesichert — keine Dublette, `DUBLETTEN_MAX` bleibt 0.
   3. Der Löschlauf (mit Präfixerkennung für dynamisch zusammengesetzte Klassennamen wie `condition-${…}`) senkt `assets/styles/` um **die von `tools/css-usage-report.js` gemessene Menge** toter Klassen und Regelblöcke, u. a. `dashboard.css:547-1224` (Handoff-Angabe: rund 3.174 Zeilen / 438 tote Klassen / 607 Regelblöcke — in drei unabhängigen Nachmessungen NICHT reproduziert, nur die Gesamtzeilenzahl 27.141 hat sich bestätigt; der tatsächliche Wert steht nach dem Lauf in `15-RATCHET-BASELINE.md`, siehe REQUIREMENTS DEAD-01/D-20); danach bleiben Jest 1217/1217, Playwright 354 (2 skipped) und `design-consistency.test.js` 64/64 grün, `pytest tests/build` 24/24 grün, `python build.py` und `python build.py --production` laufen durch.
-  4. Im gebauten Bündel: `.dms-terrain-item` trägt padding/background/border-radius ≠ 0 und `.dms-skill-header.str` trägt background ≠ transparent (DM-Screen-Referenzwidgets „Gelände"/„Fertigkeiten" gestylt — *Korrektur D-12: hier stand zuvor „Wissensgebiete", obwohl `.dms-skill-header.str` zum Fertigkeiten-Widget gehört*); der Zauberplatz-Pip im kompakten Zauberplatz-Container der Charakterkarte (`.char-card-slots .slot-pip`, der gemessene Nachfolgeselektor — *Korrektur D-15: `.char-slot-pip` verschwindet mit FIX-02 aus dem Markup, der geprüfte Sachverhalt bleibt unverändert*) hat eine definierte, klickbare Breite > 0, UND ein Klick auf den Pip ändert nachweislich den persistierten Zauberplatz-Zustand des Charakters; nach einem Würfelwurf in der Haupt-Würfelansicht behält `#dice-hero-result` `font-size: 5em`/`color: var(--gold)`, und Crit-/Fumble-Färbung ist sichtbar.
+  4. Im gebauten Bündel: `.dms-terrain-item` trägt padding/background/border-radius ≠ 0 und `.dms-skill-header.str` trägt background ≠ transparent (DM-Screen-Referenzwidgets „Gelände"/„Fertigkeiten" gestylt — *Korrektur D-12: hier stand zuvor „Wissensgebiete", obwohl `.dms-skill-header.str` zum Fertigkeiten-Widget gehört*); der Zauberplatz-Pip im kompakten Zauberplatz-Container der Charakterkarte (`.spell-slots-compact .slot-pip`, der von Plan 15-05 tatsächlich implementierte Selektor — *Korrektur D-55: ersetzt die in D-15 vermutete Klasse `.char-card-slots .slot-pip`, die im damals ungeprüften Markup stand, aber nirgends in `assets/styles/` gestylt war; `.spell-slots-compact`/`.slot-pip` sind die bereits vorhandenen, gestylten Pip-Regeln aus `dashboard.css` (Vorbild: `systems/spellslots/spellslots-ui.js`) — der geprüfte Sachverhalt selbst bleibt unverändert*) hat eine definierte, klickbare Breite > 0, UND ein Klick auf den Pip ändert nachweislich den persistierten Zauberplatz-Zustand des Charakters; nach einem Würfelwurf in der Haupt-Würfelansicht behält `#dice-hero-result` `font-size: 5em`/`color: var(--gold)`, und Crit-/Fumble-Färbung ist sichtbar.
   5. Jede neue Ratsche dieser und aller Folgephasen ist vorab beidseitig rot-grün bewiesen und trägt ihren gemessenen Ausgangswert im Kommentar (GATE-03); der Geltungsbereich CSS vs. JS/Templates ist pro Befund vorab entschieden und dokumentiert (GATE-04, u. a. die ~170 Fundstellen außerhalb `assets/styles/`); die Abnahme läuft **dreistufig** (GATE-05, Entscheidung D-53, gebucht in `PROJECT.md` § Blocker-Entscheidungen v1.3) statt einer vollen Vier-Themes-Sichtung nach jeder Welle: Stufe 1 automatisch nach jeder Welle (alle Suiten grün, Build läuft durch, GATE-01-Harness über vier Themes), Stufe 2 eine Screenshot-Serie über die Stellenliste der Welle mal vier Themes, Stufe 3 menschlich — volle Runde nach den Phasen 16/17/18, gezielte Stellenliste nach 15 und 19. Diese Absenkung ist eine ausdrückliche, gebuchte Abweichung, kein stillschweigendes Unterlaufen der Abnahme.
 
-**Plans**: 3/8 plans executed in 6 waves
+**Plans**: 5/8 plans executed in 6 waves
 
 Plans:
 **Wave 1**
@@ -124,7 +124,7 @@ Plans:
 
 **Wave 3** *(blocked on Wave 2 completion)*
 
-- [ ] 15-05-PLAN.md — FIX-02 Zauberplatz-Pips und FIX-03 Würfelfarbe, je mit rotem Vorlauf
+- [x] 15-05-PLAN.md — FIX-02 Zauberplatz-Pips und FIX-03 Würfelfarbe, je mit rotem Vorlauf
 
 **Wave 4** *(blocked on Wave 3 completion)*
 
@@ -256,7 +256,7 @@ der CHECKLISTE ist deshalb nicht abnehmbar und aus den Akzeptanzkriterien heraus
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 15. Befundlage & Vorlauf | 3/8 | In Progress|  |
+| 15. Befundlage & Vorlauf | 5/8 | In Progress|  |
 | 16. Farbe | –/TBD | Not started | - |
 | 17. Schatten & Bewegung | –/TBD | Not started | - |
 | 18. Typografie | –/TBD | Not started | - |
