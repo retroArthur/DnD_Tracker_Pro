@@ -63,17 +63,26 @@ pytest 24 · `design-consistency.test.js` 64/64 · `DUBLETTEN_MAX` 0 · `IMPORTA
 
 ### Toter Bestand — was nicht mehr gebraucht wird, wird nicht mitgezählt
 
-- [ ] **DEAD-01**: 438 tote Klassen in 607 vollständig toten Regelblöcken (~3.174 von 27.141 Zeilen)
-      sind gelöscht, beginnend mit `dashboard.css:547-1224` — 678 Zeilen „MAP INTEGRATION" für ein
-      Feature, das im Code nicht mehr existiert (kein Karten-Modul in `loader.js`, 0 Treffer für
-      `map-marker`/`map-container` in JS und HTML). Mit weg: zwei tote `@media`-Blöcke
+- [ ] **DEAD-01**: **Die von `tools/css-usage-report.js` gemessene Menge** toter Klassen in
+      vollständig toten Regelblöcken ist gelöscht, beginnend mit `dashboard.css:547-1224` — 678
+      Zeilen „MAP INTEGRATION" für ein Feature, das im Code nicht mehr existiert (kein Karten-Modul
+      in `loader.js`, 0 Treffer für `map-marker`/`map-container` in JS und HTML). *(Korrektur D-20:
+      die kolportierten Zahlen — 438 tote Klassen in 607 Regelblöcken, ~3.174 von 27.141 Zeilen —
+      sind in drei unabhängigen Nachmessungen NICHT reproduziert worden; nur die Gesamtzeilenzahl
+      27.141 hat sich bestätigt. Verbindlich ist der Wert, den das Werkzeug nach seinem Lauf
+      ausgibt; er steht dann in `.planning/phases/15-befundlage-vorlauf/15-RATCHET-BASELINE.md`.)*
+      Mit weg: zwei tote `@media`-Blöcke
       (`dashboard.css:1270`, `loot.css:116`), die ungenutzte Leiter
       `.shadow-sm/-md/-lg` (`dmscreen.css:1427-1429`, stünde sonst als Dublette zu den geplanten
       `--elev-*`), `.nav-tab-icon`/`.nav-tab-text` (`variables.css:423-432`, das Markup hat keine
       Kind-Spans) und der tote `.pwa-install-banner`.
 - [ ] **DEAD-02**: Vor jeder Löschung läuft eine Präfixerkennung für dynamisch zusammengesetzte
       Klassennamen (`condition-${…}`), damit nichts gelöscht wird, das nur zur Laufzeit entsteht —
-      in der Erhebung hat sie 140 Klassen als lebend erkannt. Die E2E-Suite ist danach grün.
+      **die vom Werkzeug gemessene Menge** wird als lebend erkannt. *(Korrektur D-20/D-21: die
+      Handoff-Angabe „140 präfixgerettete Klassen" ist nicht reproduzierbar; klassenkontext-
+      beschränkt [nur `class="…"`, `className =`, `classList.*`] retten die fünf eingefrorenen
+      Präfixe [`color-`, `condition-`, `editor-toolbar-`, `rel-btn-`, `tag-`] gemessen 34.)* Die
+      E2E-Suite ist danach grün.
 - [ ] **DEAD-03**: Der Umfang jeder Folgewelle ist nach der Löschung **neu gemessen**, nicht
       fortgeschrieben. Anteile in totem CSS: 52 von 400 `rgba` (13 %), 126 von 784 `em` (16 %),
       14 von 88 `box-shadow` (16 %), 13 von 163 `transition: all` (8 %). Ohne diesen Schritt frieren
@@ -81,13 +90,24 @@ pytest 24 · `design-consistency.test.js` 64/64 · `DUBLETTEN_MAX` 0 · `IMPORTA
 
 ### Echte Defekte — vom Audit nicht gesucht, beim Nachmessen gefunden
 
-- [x] **FIX-01**: Die DM-Screen-Referenzwidgets „Gelände" und „Wissensgebiete" rendern wieder
-      gestylt. CSS und JS-Markup sind zwei Generationen auseinander: `dmscreen.css:2469-2510`
-      erwartet `.dms-terrain-sections/-section/-title/-examples/-tag`, das JS
-      (`dmscreen-widgets-reference.js:89-118`) erzeugt `.dms-terrain-list/-item/-type`. Gemessen am
-      gebauten Bündel: `.dms-terrain-item` padding 0px, background transparent, border-radius 0px;
-      `.dms-skill-header.str` background transparent, font-weight 400. 62 tote `dms-*`-Klassen im
-      CSS gegen 15 `dms-*`-Klassen im JS ohne jede Regel.
+- [x] **FIX-01**: Die DM-Screen-Referenzwidgets „Gelände", „Fertigkeiten" und „Wissensgebiete"
+      rendern wieder gestylt — **drei Widgets, nicht zwei** (Korrektur D-12: die Registry ist
+      eindeutig, `terrain` = „Gelände", `skills` = „Fertigkeiten", `knowledge` = „Wissensgebiete";
+      diese Fassung nannte zuvor nur „Gelände" und „Wissensgebiete", belegte Letzteres aber mit
+      einer Klasse aus „Fertigkeiten" — genau diese Verwechslung ist die Ursache dafür, dass zwei
+      aufeinanderfolgende Analysen dasselbe falsche Widget bearbeitet haben). CSS und JS-Markup
+      waren zwei Generationen auseinander. *(Korrektur D-11 der Fundstellen: der hier ursprünglich
+      zitierte CSS-Bereich `dmscreen.css:2469-2510` war in Wahrheit der Block des
+      FERTIGKEITEN-Widgets [`.dms-skill-*`, heute nach Plan 15-04 bei `dmscreen.css:2404-2459`] und
+      enthielt keine einzige `.dms-terrain-*`-Regel; die Gelände-Regeln liegen an anderer Stelle
+      derselben Datei [heute `dmscreen.css:2777-2827`]. Ebenso war das zitierte JS-Fenster
+      `dmscreen-widgets-reference.js:89-118` der Fertigkeiten-Renderer [`renderDMSSkillsWidget`,
+      gemessen heute Zeilen 87-125], nicht der Gelände-Renderer — der liegt in
+      `features/dmscreen/dmscreen-widgets-combat.js` [`renderDMSTerrainWidget`, Zeilen 133-170].)*
+      Gemessen am gebauten Bündel vor der Reparatur: `.dms-terrain-item` padding 0px, background
+      transparent, border-radius 0px; `.dms-skill-header.str` background transparent, font-weight
+      400. 62 tote `dms-*`-Klassen im CSS gegen 15 `dms-*`-Klassen im JS ohne jede Regel. Reparatur:
+      Plan 15-04 (`tests/e2e/features/design-fixes.spec.js`, Ratsche `DMS_UNSTYLED_MAX`).
 - [ ] **FIX-02**: Die kompakte Zauberplatz-Anzeige der Charakterkarte ist sichtbar und bedienbar.
       `party-render.js:330` erzeugt `.char-slot-pip` als `<span>` **ohne Textinhalt** mit
       `data-action="toggle-spell-slot-stop"` — und es existiert keine einzige CSS-Regel dafür
@@ -145,7 +165,9 @@ pytest 24 · `design-consistency.test.js` 64/64 · `DUBLETTEN_MAX` 0 · `IMPORTA
       Dark- und Contrast-Theme hell — die einzige theme-relevante Eigenschaft, die man durch
       Aufräumen von Literalen *nicht* erreicht.
 - [ ] **COLOR-08**: Kein `rgba()` mit Zahlentripel mehr im Komponenten-CSS, **außer den benannten
-      und kommentierten Ausnahmen**. Ausgangswert 390 Fundstellen in 173 Werten. Der Handoff deckt
+      und kommentierten Ausnahmen**. Ausgangswert 390 Fundstellen in 143 [Bericht: 173] Werten nach
+      Leerraum-Normierung (D-30 — die Differenz sind 30 reine Schreibweisenvarianten; wer aus 173
+      einen Tokenbedarf ableitet, plant 30 Tokens zu viel). Der Handoff deckt
       nur 249 davon ab (§3a 35 + §3b 156 + §4 58) und behauptet zugleich Vollständigkeit; die
       restlichen 141 sind vorab zu klassifizieren (66 palettenfremd, 25 aus **fremden**
       Theme-Paletten, 8 schwarze `rgba` außerhalb `box-shadow`, 42 sonstige).
@@ -185,11 +207,15 @@ pytest 24 · `design-consistency.test.js` 64/64 · `DUBLETTEN_MAX` 0 · `IMPORTA
       **weiß**. Der Bericht behauptet „in allen vier Themes passend (rgba(0,0,0,0.5) bis
       rgba(0,0,0,0.1))". Dass es heute niemandem auffällt, liegt allein daran, dass genau ein
       Element das Token benutzt; §4 skaliert diesen Sonderfall auf 88 Schatten hoch.
-- [ ] **ELEV-04**: Die 22 Deklarationen, die auf keine der vier Stufen abbilden, haben eine
-      benannte Behandlung: 9 farbige Glühe (purpur/rot/grün), 4 gold getönte Schlagschatten als
+- [ ] **ELEV-04**: Die 22 [Bericht — gemessen: die deterministische Klassifikation aller 88
+      `box-shadow`-Deklarationen ergibt rund **40** Sonderfälle, nicht 22] Deklarationen, die auf
+      keine der vier Stufen abbilden, haben eine benannte Behandlung nach vier Behandlungsarten
+      statt einzeln verhandelt: 9 farbige Glühe (purpur/rot/grün), 4 gold getönte Schlagschatten als
       Zustandsanzeige, 4 Größen zwischen den Tabellenzeilen (darunter das einzige heute korrekte
       `var(--shadow)` in `core.css:857`), 1 negativer X-Offset (`initiative.css:922`, seitlich
-      einfahrende Schublade), 2 `@keyframes`-Zustände (`dice.css:598/599`, animierter Spread 0→8px).
+      einfahrende Schublade), 2 `@keyframes`-Zustände (`dice.css:598/599`, animierter Spread 0→8px)
+      — plus die weiteren Fälle, die erst die vollständige 88er-Klassifikation aufdeckt (Gesamtsumme
+      rund 40, siehe `.planning/phases/15-befundlage-vorlauf/15-CONTEXT.md` D-37).
       `--glow-gold` wird geteilt: Ring (`0 0 0 3px`) und Glühen (Blur 4–12px) sind zwei Rollen.
       *(Korrektur zum Bericht: von den drei genannten „dokumentierten Sonderfällen" existieren zwei
       nicht. Alle 7 `inset`-Schatten sitzen auf `.read-aloud`; `bestiary.css` hat **0** `box-shadow`;

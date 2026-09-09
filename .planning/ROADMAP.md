@@ -86,7 +86,7 @@ Bugfixes. Der Handoff wurde vor der Ausführung durch 14 Agenten gegen HEAD `1ab
 statt übernommen — 7 von 9 Rezepten waren defekt, N-08 ist widerlegt, 13 Blocker mussten vorab
 entschieden werden. Details: `REQUIREMENTS.md`, `HANDOFF-V2-VERIFIKATION.md`.
 
-- [ ] **Phase 15: Befundlage & Vorlauf** — 13 Blocker entschieden, 36 Kennzahlen korrigiert, 438 tote CSS-Klassen gelöscht (~3.174 Zeilen), drei echte Defekte behoben
+- [ ] **Phase 15: Befundlage & Vorlauf** — 13 Blocker entschieden, 36 Kennzahlen korrigiert, die von `tools/css-usage-report.js` gemessene Menge toter CSS-Klassen gelöscht (Handoff-Angabe: 438 Klassen / ~3.174 Zeilen — nicht reproduziert, siehe DEAD-01), drei echte Defekte behoben
 - [ ] **Phase 16: Farbe** — Vollständiger `--on-<rolle>`- und `--*-text`-Satz, 390 `rgba()`-Literale abgebaut, `color-scheme` pro Theme, 4,5:1 in allen vier Themes
 - [ ] **Phase 17: Schatten & Bewegung** — Vier Höhenstufen mit theme-eigener, gestaffelter Deckkraft; `transition: all` (163 Stellen) abgebaut ohne die elf tragenden Fälle zu verlieren
 - [ ] **Phase 18: Typografie** — Sieben-Stufen-Skala gegen eine bei 16px bleibende Wurzel, 784 `em`-Fundstellen atomar in einem Commit umgestellt
@@ -105,9 +105,9 @@ Zielwerten statt mit totem Ballast und unpassierbaren Ratschen.
 
   1. Alle 13 Blocker (B-01..B-13) stehen als entschiedene, begründete Einträge (drei — B-01/B-02/B-07 — bereits als Key Decision in `PROJECT.md` gebucht); §8 aus `PATCHES.md` ist entfernt, N-08 als widerlegt geschlossen.
   2. `grep -rn "prefers-reduced-motion" assets/styles/` zeigt genau einen Top-Level-Block, neu angelegt in `core.css` (Ausgangslage: vier Top-Level-Blöcke, u. a. `dmscreen.css:1408-1419`, keiner in `core.css` — vier Entfernungen und eine Neuanlage, kein Umzug), dokumentiert und gegen Rückbau gesichert — keine Dublette, `DUBLETTEN_MAX` bleibt 0.
-  3. Der Löschlauf (mit Präfixerkennung für dynamisch zusammengesetzte Klassennamen wie `condition-${…}`) senkt `assets/styles/` um rund 3.174 Zeilen (438 tote Klassen in 607 Regelblöcken, u. a. `dashboard.css:547-1224`); danach bleiben Jest 1217/1217, Playwright 354 (2 skipped) und `design-consistency.test.js` 64/64 grün, `pytest tests/build` 24/24 grün, `python build.py` und `python build.py --production` laufen durch.
-  4. Im gebauten Bündel: `.dms-terrain-item` trägt padding/background/border-radius ≠ 0 und `.dms-skill-header.str` trägt background ≠ transparent (DM-Screen-Referenzwidgets „Gelände"/„Wissensgebiete" gestylt); `.char-slot-pip` hat eine definierte, klickbare Breite > 0; nach einem Würfelwurf in der Haupt-Würfelansicht behält `#dice-hero-result` `font-size: 5em`/`color: var(--gold)`, und Crit-/Fumble-Färbung ist sichtbar.
-  5. Jede neue Ratsche dieser und aller Folgephasen ist vorab beidseitig rot-grün bewiesen und trägt ihren gemessenen Ausgangswert im Kommentar (GATE-03); der Geltungsbereich CSS vs. JS/Templates ist pro Befund vorab entschieden und dokumentiert (GATE-04, u. a. die ~170 Fundstellen außerhalb `assets/styles/`); nach jeder Folgewelle sind alle Suiten grün, der Build läuft durch, und die App ist in allen vier Themes gesichtet (GATE-05).
+  3. Der Löschlauf (mit Präfixerkennung für dynamisch zusammengesetzte Klassennamen wie `condition-${…}`) senkt `assets/styles/` um **die von `tools/css-usage-report.js` gemessene Menge** toter Klassen und Regelblöcke, u. a. `dashboard.css:547-1224` (Handoff-Angabe: rund 3.174 Zeilen / 438 tote Klassen / 607 Regelblöcke — in drei unabhängigen Nachmessungen NICHT reproduziert, nur die Gesamtzeilenzahl 27.141 hat sich bestätigt; der tatsächliche Wert steht nach dem Lauf in `15-RATCHET-BASELINE.md`, siehe REQUIREMENTS DEAD-01/D-20); danach bleiben Jest 1217/1217, Playwright 354 (2 skipped) und `design-consistency.test.js` 64/64 grün, `pytest tests/build` 24/24 grün, `python build.py` und `python build.py --production` laufen durch.
+  4. Im gebauten Bündel: `.dms-terrain-item` trägt padding/background/border-radius ≠ 0 und `.dms-skill-header.str` trägt background ≠ transparent (DM-Screen-Referenzwidgets „Gelände"/„Fertigkeiten" gestylt — *Korrektur D-12: hier stand zuvor „Wissensgebiete", obwohl `.dms-skill-header.str` zum Fertigkeiten-Widget gehört*); der Zauberplatz-Pip im kompakten Zauberplatz-Container der Charakterkarte (`.char-card-slots .slot-pip`, der gemessene Nachfolgeselektor — *Korrektur D-15: `.char-slot-pip` verschwindet mit FIX-02 aus dem Markup, der geprüfte Sachverhalt bleibt unverändert*) hat eine definierte, klickbare Breite > 0, UND ein Klick auf den Pip ändert nachweislich den persistierten Zauberplatz-Zustand des Charakters; nach einem Würfelwurf in der Haupt-Würfelansicht behält `#dice-hero-result` `font-size: 5em`/`color: var(--gold)`, und Crit-/Fumble-Färbung ist sichtbar.
+  5. Jede neue Ratsche dieser und aller Folgephasen ist vorab beidseitig rot-grün bewiesen und trägt ihren gemessenen Ausgangswert im Kommentar (GATE-03); der Geltungsbereich CSS vs. JS/Templates ist pro Befund vorab entschieden und dokumentiert (GATE-04, u. a. die ~170 Fundstellen außerhalb `assets/styles/`); die Abnahme läuft **dreistufig** (GATE-05, Entscheidung D-53, gebucht in `PROJECT.md` § Blocker-Entscheidungen v1.3) statt einer vollen Vier-Themes-Sichtung nach jeder Welle: Stufe 1 automatisch nach jeder Welle (alle Suiten grün, Build läuft durch, GATE-01-Harness über vier Themes), Stufe 2 eine Screenshot-Serie über die Stellenliste der Welle mal vier Themes, Stufe 3 menschlich — volle Runde nach den Phasen 16/17/18, gezielte Stellenliste nach 15 und 19. Diese Absenkung ist eine ausdrückliche, gebuchte Abweichung, kein stillschweigendes Unterlaufen der Abnahme.
 
 **Plans**: 8 plans in 6 waves
 
@@ -153,13 +153,14 @@ sollte gezielt gegenprüfen, dass sie jetzt wie erwartet aussehen.
 Textfarbe und in den nativen Bedienelementen.
 **Depends on**: Phase 15 (korrigierte Ausgangswerte, gelöschter toter Bestand, GATE-03/04/05-Disziplin stehen)
 **Requirements**: COLOR-01, COLOR-02, COLOR-03, COLOR-04, COLOR-05, COLOR-06, COLOR-07, COLOR-08, COLOR-09, COLOR-10, COLOR-11, GATE-01, GATE-02
+**Canonical refs**: .planning/PROJECT.md (§ Blocker-Entscheidungen v1.3), .planning/HANDOFF-V2-VERIFIKATION.md, .planning/REQUIREMENTS.md
 **Success Criteria** (what must be TRUE):
 
   1. Headless gegen das gebaute Bündel gemessen (GATE-01-Harness): `.btn-primary`, `.btn-success`, `.btn-gold` sowie ihre `:hover`-Ableitungen erreichen 4,5:1 in allen vier Themes (Ausgangswerte: Gold/Light 2,98, Grün/Light 3,02, Grün/Sepia 2,55; `.btn-gold:hover` Light 4,67, `.btn-success:hover` in drei von vier Themes durchgefallen).
   2. Ein Property-Mengen-Test (GATE-02) zeigt für alle vier Theme-Blöcke `FEHLT []` / `EXTRA []` bei vollständigem `--on-<rolle>`-Satz für alle acht Akzente plus `--gold-dim`/`--gold-hover`/`--green-dim`.
   3. `--on-accent` (bzw. sein Ersatz) besteht headless-gemessen in allen vier Themes gegen jede Trägerfläche — namentlich `.fr-ruf-btn-plus` (`welt.css:1073`, Ausgangswert 1,74:1 im Standard-Theme, der schwerste Kontrastfehler im Baum).
   4. `--*-text`-Rollen (inkl. `--red-text` im Aliasblock) erreichen 4,5:1 gegen `--bg-card` in allen vier Themes; `--coin-*`/`--attr-*` erreichen 4,5:1 gegen `--bg-dark` in allen vier Themes (Ausgangswert bis 1,29:1 in Light).
-  5. `color-scheme` ist pro Theme gesetzt (Ausgangswert 0 Treffer) — Checkbox/Select/Zahlenfeld folgen im Dark-/Contrast-Theme sichtbar dem Theme (Sichtprüfung in allen vier Themes); `grep -rn "rgba([[:space:]]*[0-9]" assets/styles/` zeigt nur die vorab benannten, kommentierten Ausnahmen (Ausgangswert 390 Fundstellen in 173 Werten).
+  5. `color-scheme` ist pro Theme gesetzt (Ausgangswert 0 Treffer) — Checkbox/Select/Zahlenfeld folgen im Dark-/Contrast-Theme sichtbar dem Theme (Sichtprüfung in allen vier Themes); `grep -rn "rgba([[:space:]]*[0-9]" assets/styles/` zeigt nur die vorab benannten, kommentierten Ausnahmen (Ausgangswert 390 Fundstellen in 143 [Bericht: 173] Werten nach Leerraum-Normierung — D-30).
 
 **Plans**: TBD
 **UI hint**: yes
@@ -180,9 +181,10 @@ in allen vier Themes. Braucht Sichtprüfung in allen vier Themes, nicht nur Test
 sichtbare Arbeit leisten.
 **Depends on**: Phase 16 (Trägerflächen-Urteile werden geteilt; 1px-Haarlinien stehen teils in derselben Deklaration wie ein Schatten)
 **Requirements**: ELEV-01, ELEV-02, ELEV-03, ELEV-04, MOTION-01, MOTION-02, MOTION-03, MOTION-04
+**Canonical refs**: .planning/PROJECT.md (§ Blocker-Entscheidungen v1.3), .planning/HANDOFF-V2-VERIFIKATION.md, .planning/REQUIREMENTS.md
 **Success Criteria** (what must be TRUE):
 
-  1. `box-shadow` kommt aus vier Höhenstufen-Tokens (Ausgangswert: 88 Deklarationen, 65 verschiedene Werte, 58 mit hartem `rgba(0,0,0,…)`, `var(--shadow)` genau 1× benutzt) oder aus den 22 benannten Sonderfällen (9 farbige Glühe, 4 goldene Zustands-Schlagschatten, 4 Tabellenzeilen-Größen, 1 negativer X-Offset, 2 `@keyframes`-Zustände).
+  1. `box-shadow` kommt aus vier Höhenstufen-Tokens (Ausgangswert: 88 Deklarationen, 65 verschiedene Werte, 58 mit hartem `rgba(0,0,0,…)`, `var(--shadow)` genau 1× benutzt) oder aus den rund 40 [Bericht: 22] benannten Sonderfällen (9 farbige Glühe, 4 goldene Zustands-Schlagschatten, 4 Tabellenzeilen-Größen, 1 negativer X-Offset, 2 `@keyframes`-Zustände, plus die weiteren Fälle aus der vollständigen 88er-Klassifikation — D-37).
   2. Die Deckkraft ist pro Höhenstufe gestaffelt (nicht aus einem einzigen `--shadow` abgeleitet), und das Contrast-Theme hat einen eigenen, nicht-weißen Schattenwert — oder die Inversion ist als eigene Key Decision ausdrücklich freigegeben (Ausgangslage: `variables.css:101` setzt dort `--shadow: rgba(255,255,255,0.1)`).
   3. `grep -c "transition: all" assets/styles/*.css` (summiert) = 0 (Ausgangswert 163); Sichtprüfung bestätigt: Floating-Dice-Panel schließt weiterhin weich (kein Sofort-Verschwinden), die acht Würfelknöpfe und `encounters.css:1537` behalten ihre `filter: brightness()`-Hoveraufhellung.
   4. Es gibt drei Dauer-Tokens und eine Kurve (Ausgangswert 8 Dauern, u. a. `0.08s` in `party.css`); ob `--ease` die 263 heute impliziten `ease`-Übergänge ersetzt, ist eine eigene, dokumentierte Key Decision (MOTION-04) — nicht stillschweigend angenommen.
@@ -202,6 +204,7 @@ braucht eine eigene Sichtprüfung, falls angenommen.
 aus 30 `em`-Werten, und `font-weight` kennt keine folgenlosen Zwischenformen mehr.
 **Depends on**: Phase 17 (Farbe und Bewegung müssen stehen, damit eine optische Regression nach der Typografie-Umstellung eindeutig zuzuordnen ist)
 **Requirements**: TYPO-01, TYPO-02, TYPO-03, TYPO-04, TYPO-05
+**Canonical refs**: .planning/PROJECT.md (§ Blocker-Entscheidungen v1.3), .planning/HANDOFF-V2-VERIFIKATION.md, .planning/REQUIREMENTS.md
 **Success Criteria** (what must be TRUE):
 
   1. Derselbe grep-Ausdruck wie in der CHECKLISTE findet 0 `em`-Fundstellen für `font-size` in `assets/styles/` (Ausgangswert 784 in 30 Werten); Wurzelregel und alle Ersetzungen sind in einem einzigen Commit gelandet (TYPO-01, atomar — kein dateiweiser Rollout möglich, sonst ist die App in jeder noch nicht umgestellten Datei 12,5 % zu klein).
@@ -223,6 +226,7 @@ benannten Stellen in allen vier Themes, keine reine Testabnahme.
 Zauber-Zähler zeigen wieder korrekt an, was sie behaupten.
 **Depends on**: Phase 18 (kleinste, vom Rest unabhängige Welle — zuletzt)
 **Requirements**: UX-01, UX-02, UX-03, UX-04, UX-05, UX-06
+**Canonical refs**: .planning/PROJECT.md (§ Blocker-Entscheidungen v1.3), .planning/HANDOFF-V2-VERIFIKATION.md, .planning/REQUIREMENTS.md
 **Success Criteria** (what must be TRUE):
 
   1. Es gibt genau eine dokumentierte globale `:focus-visible`-Regel, verschoben nach `core.css` (Ausgangslage: bereits vorhanden in `dmscreen.css:1722`, nackt auf Klammertiefe 0) — keine zweite Regel danebenstehend.
