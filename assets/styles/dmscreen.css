@@ -677,58 +677,6 @@
         }
         
         /* ============================================================
-           PWA INSTALL PROMPT
-           ============================================================ */
-        .pwa-install-banner {
-            position: fixed;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: linear-gradient(135deg, var(--bg-card), var(--bg-elevated));
-            border: 1px solid var(--gold);
-            border-radius: var(--radius-lg);
-            padding: 16px 20px;
-            display: flex;
-            align-items: center;
-            gap: 16px;
-            z-index: var(--z-modal);
-            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
-            max-width: 400px;
-            opacity: 0;
-            pointer-events: none;
-            transition: all 0.3s ease;
-        }
-        
-        .pwa-install-banner.show {
-            opacity: 1;
-            pointer-events: auto;
-        }
-        
-        .pwa-install-icon {
-            font-size: 2em;
-        }
-        
-        .pwa-install-text {
-            flex: 1;
-        }
-        
-        .pwa-install-title {
-            font-weight: 600;
-            color: var(--gold);
-            margin-bottom: 4px;
-        }
-        
-        .pwa-install-desc {
-            font-size: 0.85em;
-            color: var(--text-dim);
-        }
-        
-        .pwa-install-actions {
-            display: flex;
-            gap: 8px;
-        }
-        
-        /* ============================================================
            BUG FIXES - MODAL SIZING
            ============================================================ */
         .modal-overlay {
