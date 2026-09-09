@@ -45,12 +45,6 @@
             justify-content: space-between;
         }
         
-        [data-layout="mobile"] .mobile-header-title {
-            font-size: 1em;
-            font-weight: 600;
-            color: var(--gold);
-        }
-        
         [data-layout="mobile"] .mobile-search-btn {
             background: none;
             border: none;
@@ -591,64 +585,6 @@
         .color-orange { background: rgba(251,146,60,0.2); border-color: var(--orange); color: var(--orange); }
         .color-pink { background: rgba(244,114,182,0.2); border-color: var(--pink); color: var(--pink); }
         
-        /* ============================================================
-           DASHBOARD VIEW
-           ============================================================ */
-        .dashboard-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 16px;
-        }
-        
-        .dashboard-card {
-            background: var(--bg-card);
-            border: 1px solid var(--border);
-            border-radius: var(--radius-md);
-            padding: 16px;
-        }
-        
-        .dashboard-card-title {
-            color: var(--gold);
-            font-size: 1.1em;
-            font-weight: 600;
-            margin-bottom: 12px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        
-        .dashboard-stat {
-            display: flex;
-            justify-content: space-between;
-            padding: 8px 0;
-            border-bottom: 1px solid var(--border);
-        }
-        
-        .dashboard-stat:last-child { border-bottom: none; }
-        
-        .dashboard-stat-value {
-            color: var(--cyan);
-            font-weight: 600;
-        }
-        
-        .dashboard-quick-actions {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-            margin-top: 12px;
-        }
-        
-        .dashboard-recent-item {
-            padding: 8px;
-            background: var(--bg-dark);
-            border-radius: var(--radius-md);
-            margin-bottom: 6px;
-            cursor: pointer;
-            transition: background 0.2s;
-        }
-        
-        .dashboard-recent-item:hover { background: var(--bg-hover); }
-        
         .condition-tag {
             font-size: 0.7em;
             padding: 2px 6px;
@@ -697,9 +633,6 @@
             background: var(--bg-dark);
             flex-shrink: 0;
         }
-        
-        .avatar-sm { width: 32px; height: 32px; }
-        .avatar-lg { width: 64px; height: 64px; }
         .avatar-xl { width: 96px; height: 96px; }
         
         .avatar-placeholder {
@@ -768,29 +701,6 @@
             gap: 4px;
         }
         
-        /* ============================================================
-           DAMAGE/HEALING CALCULATOR
-           ============================================================ */
-        .hp-calculator {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            padding: 8px;
-            background: var(--bg-dark);
-            border-radius: var(--radius-md);
-            margin-top: 6px;
-        }
-        
-        .hp-calc-input {
-            width: 80px;
-            padding: 4px 8px;
-            background: var(--bg-card);
-            border: 1px solid var(--border);
-            color: var(--text);
-            border-radius: var(--radius-sm);
-            text-align: center;
-        }
-        
         .hp-calc-btn {
             padding: 4px 12px;
             border: none;
@@ -816,27 +726,6 @@
         .entity-link:hover {
             color: var(--gold);
             text-decoration-style: solid;
-        }
-        
-        .linked-entities {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 4px;
-            margin-top: 4px;
-        }
-        
-        .linked-entity-chip {
-            font-size: 0.75em;
-            padding: 2px 8px;
-            background: var(--bg-dark);
-            border: 1px solid var(--border);
-            border-radius: var(--radius-sm);
-            cursor: pointer;
-        }
-        
-        .linked-entity-chip:hover {
-            border-color: var(--cyan);
-            color: var(--cyan);
         }
         
         /* ============================================================
@@ -1099,42 +988,6 @@
             color: white;
             border-color: var(--red);
         }
-
-        .char-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            margin-bottom: 6px;
-            padding-bottom: 6px;
-            border-bottom: 1px solid var(--border);
-        }
-        
-        .char-name { color: var(--gold); font-weight: 600; font-size: 1em; }
-        .char-player { color: var(--text-dim); font-size: 0.75em; }
-        
-        .char-hp { display: flex; align-items: center; gap: 3px; font-weight: 600; font-size: 0.9em; }
-        .char-hp.healthy { color: var(--green); }
-        .char-hp.bloodied { color: var(--yellow); }
-        .char-hp.critical { color: var(--red); }
-        
-        .char-stats {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 4px;
-            font-size: 0.8em;
-            margin: 6px 0;
-        }
-        
-        .char-stat {
-            display: flex;
-            justify-content: space-between;
-            padding: 3px 6px;
-            background: var(--bg-dark);
-            border-radius: var(--radius-sm);
-        }
-        
-        .char-stat-label { color: var(--text-dim); }
-        .char-stat-value { color: var(--cyan); }
         
         /* ============================================================
            CHARACTER DETAIL MODAL (Neu gestaltet)
@@ -1456,54 +1309,6 @@
             .char-vital-row {
                 justify-content: center;
             }
-        }
-        
-        .char-spells {
-            margin-top: 6px;
-            padding-top: 6px;
-            border-top: 1px solid var(--border);
-        }
-        
-        .char-spell-list {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 3px;
-            margin-top: 4px;
-        }
-        
-        .spell-tag {
-            font-size: 10px;
-            padding: 2px 6px;
-            border-radius: var(--radius-sm);
-            cursor: pointer;
-            transition: transform 0.15s, filter 0.15s;
-        }
-        
-        .spell-tag:hover {
-            filter: brightness(1.2);
-            transform: scale(1.05);
-        }
-        
-        .char-items {
-            margin-top: 6px;
-            padding-top: 6px;
-            border-top: 1px solid var(--border);
-        }
-        
-        .char-item-list {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 3px;
-            margin-top: 4px;
-        }
-        
-        .item-tag {
-            font-size: 10px;
-            padding: 2px 6px;
-            border-radius: var(--radius-sm);
-            background: rgba(251, 146, 60, 0.2);
-            color: var(--orange);
-            transition: transform 0.15s, filter 0.15s;
         }
         
         .item-tag.clickable {
@@ -1931,17 +1736,6 @@
         .quest-type-badge.plot { background: var(--orange); color: var(--bg-dark); }
         .quest-type-badge.quest { background: var(--green); color: var(--bg-dark); }
         
-        .quest-link {
-            color: var(--gold);
-            cursor: pointer;
-            transition: color 0.15s, text-decoration 0.15s;
-        }
-        
-        .quest-link:hover {
-            color: var(--cyan);
-            text-decoration: underline;
-        }
-        
         .quest-details {
             display: none;
             padding: 12px;
@@ -2206,24 +2000,6 @@
             color: var(--red);
         }
         
-        .custom-filter {
-            display: inline-flex;
-            align-items: center;
-            gap: 4px;
-            padding: 4px 10px;
-            border-radius: var(--radius-lg);
-            font-size: 11px;
-            cursor: pointer;
-            border: 1px solid;
-        }
-        
-        .locations-list {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 12px;
-            align-items: flex-start;
-        }
-        
         /* ============================================================
            LOCATIONS VIEW - Master-Detail Layout (Redesigned)
            ============================================================ */
@@ -2234,89 +2010,12 @@
             overflow: hidden;
         }
 
-        /* Toolbar */
-        .loc-toolbar {
-            display: flex;
-            align-items: center;
-            gap: 16px;
-            padding: 12px 16px;
-            background: var(--bg-card);
-            border: 1px solid var(--gold-dim);
-            border-radius: var(--radius-md);
-            flex-shrink: 0;
-            font-size: 14px;
-        }
-
         .loc-toolbar button,
         .loc-toolbar input,
         .loc-toolbar select,
         .loc-toolbar .btn {
             font-family: inherit;
             font-size: inherit;
-        }
-
-        .loc-toolbar-left {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .loc-toolbar-title {
-            font-weight: 700;
-            font-size: 1.1em;
-            color: var(--gold);
-        }
-
-        .loc-toolbar-count {
-            background: var(--bg-dark);
-            padding: 2px 10px;
-            border-radius: var(--radius-lg);
-            font-size: 0.8em;
-            color: var(--text-dim);
-        }
-
-        .loc-toolbar-center {
-            flex: 1;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .loc-search-wrapper {
-            position: relative;
-            width: 220px;
-        }
-
-        .loc-search {
-            width: 100%;
-            padding: 8px 32px 8px 12px;
-            background: var(--bg-dark);
-            border: 1px solid var(--border);
-            border-radius: var(--radius-md);
-            color: var(--text);
-            font-size: 0.9em;
-        }
-
-        .loc-search:focus {
-            outline: none;
-            border-color: var(--gold);
-        }
-
-        .loc-search-clear {
-            position: absolute;
-            right: 8px;
-            top: 50%;
-            transform: translateY(-50%);
-            background: none;
-            border: none;
-            color: var(--text-dim);
-            cursor: pointer;
-            font-size: 0.8em;
-            opacity: 0.5;
-        }
-
-        .loc-search-clear:hover {
-            opacity: 1;
         }
 
         .loc-filter-chips {
@@ -2342,33 +2041,6 @@
         .loc-filter-chip.active {
             background: var(--gold);
             color: var(--bg-dark);
-            border-color: var(--gold);
-        }
-
-        .loc-toolbar-right {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .loc-io-btns {
-            display: flex;
-            gap: 4px;
-        }
-
-        .loc-io-btn {
-            width: 32px;
-            height: 32px;
-            border-radius: var(--radius-md);
-            border: 1px solid var(--border);
-            background: var(--bg-elevated);
-            cursor: pointer;
-            font-size: 0.85em;
-            transition: all 0.2s;
-        }
-
-        .loc-io-btn:hover {
-            background: var(--bg-hover);
             border-color: var(--gold);
         }
 
