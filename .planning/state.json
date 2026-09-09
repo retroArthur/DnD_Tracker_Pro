@@ -1,28 +1,38 @@
 {
   "contract": "1.0.0",
   "flavor": "core",
-  "milestone": "v1.2 — Schulden-Abbau",
+  "milestone": "v1.3 — Design-System",
   "phases": [
     {
-      "number": "12",
-      "name": "Datensicherheit",
+      "number": "15",
+      "name": "Befundlage & Vorlauf",
+      "status": "in_progress"
+    },
+    {
+      "number": "16",
+      "name": "Farbe",
       "status": "pending"
     },
     {
-      "number": "13",
-      "name": "Härtung & Wartbarkeit",
+      "number": "17",
+      "name": "Schatten & Bewegung",
       "status": "pending"
     },
     {
-      "number": "14",
-      "name": "Tests & Gates",
+      "number": "18",
+      "name": "Typografie",
+      "status": "pending"
+    },
+    {
+      "number": "19",
+      "name": "Bedienbarkeit",
       "status": "pending"
     }
   ],
   "next": {
-    "command": "/gsd:new-milestone",
-    "label": "Start a new milestone",
-    "reason": "All phases complete — start a new milestone"
+    "command": "/gsd:progress --next",
+    "label": "Advance to the next step",
+    "reason": "Phase 15 of 5 · 0% · executing"
   },
-  "updated_at": "2026-09-07T10:49:18.557Z"
+  "updated_at": "2026-09-09T14:50:11.986Z"
 }
