@@ -490,11 +490,6 @@
             list-style-position: outside;
         }
         
-        /* Sicherstellen dass Inhalts-Bereiche nicht überlaufen */
-        .encounter-content, .loot-item-content, .wiki-entry-body {
-            overflow: visible;
-        }
-        
 /* ================================================
    STANDARDISIERTE SECTION TOOLBAR (Variante A)
    Layout: [Titel+Badge] | [Suche+ViewToggle] | [Filter+IO] | [Aktion]
