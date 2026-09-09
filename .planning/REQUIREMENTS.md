@@ -33,19 +33,19 @@ pytest 24 · `design-consistency.test.js` 64/64 · `DUBLETTEN_MAX` 0 · `IMPORTA
 
 ### Befundlage — erst messen, dann ändern
 
-- [x] **BASE-01**: Die 13 Blocker aus `HANDOFF-V2-VERIFIKATION.md` sind schriftlich entschieden,
+- [ ] **BASE-01**: Die 13 Blocker aus `HANDOFF-V2-VERIFIKATION.md` sind schriftlich entschieden,
       jeder mit Begründung und Auswirkung. Drei davon sind beim Milestone-Aufsetzen bereits
       entschieden und als Key Decision in `PROJECT.md` gebucht: **B-01** (Wurzel bleibt bei 16px,
       `--text-*` gegen 16 gerechnet), **B-02** (`--*-text`-Übersteuerungen *innerhalb* der
       bestehenden Theme-Blöcke), **B-07** (§8 gestrichen). Die übrigen zehn sind offen.
-- [x] **BASE-02**: Die 36 korrigierten Kennzahlen sind in `BEFUNDE-v2.md`, `PATCHES.md` und
+- [ ] **BASE-02**: Die 36 korrigierten Kennzahlen sind in `BEFUNDE-v2.md`, `PATCHES.md` und
       `CHECKLISTE.md` eingearbeitet, damit keine Welle mit falschen Ausgangs- oder Zielzahlen
       beginnt. Kernfälle: `transition: all` ist **163**, nicht 151 (der Abnahme-grep der CHECKLISTE
       findet alle 163 — die Abnahme ist heute strenger als die eigene Anweisung); `em`-Fundstellen
       sind **784 in 30 Werten**, nicht ~740 in 20; `rgba(251,191,36,…)` ist **32×**, nicht 44×
       (die 44 enthalten 12× `rgba(251,146,60,…)` = `--orange`, zwei Rollen in einer Zahl);
       §1c nennt „fünf weitere Stellen", es sind **97**.
-- [x] **BASE-03**: N-08 ist als **widerlegt** geschlossen und §8 aus `PATCHES.md` aus dem
+- [ ] **BASE-03**: N-08 ist als **widerlegt** geschlossen und §8 aus `PATCHES.md` aus dem
       Ausführungsumfang genommen und im Dokument als VERWORFEN markiert. Der
       globale `prefers-reduced-motion`-Block existiert seit Langem (`dmscreen.css:1408-1419`,
       Top-Level, in beiden Bundles). Der Patch hätte eine Dublette angelegt (`DUBLETTEN_MAX = 0`
@@ -53,7 +53,7 @@ pytest 24 · `design-consistency.test.js` 64/64 · `DUBLETTEN_MAX` 0 · `IMPORTA
       trifft nichts: `.dice-crit-glow` existiert nirgends im Repo, `.dice-result` ist toter Code.
       Verteidigbarer Rest: den vorhandenen Block nach `core.css` **verschieben** und gegen Rückbau
       sichern — nicht einen zweiten danebenstellen.
-- [x] **BASE-04**: Jede Ratsche, die eine Welle abschließen soll, ist **vorab mit demselben
+- [ ] **BASE-04**: Jede Ratsche, die eine Welle abschließen soll, ist **vorab mit demselben
       Ausdruck gemessen**, den der Test später benutzt. Fünf heute grüne Prüfungen brechen sonst
       an den Patches, ohne dass der Handoff es erwähnt: `F-14` prüft wörtlich
       `color: var(--bg-dark)` in `.btn-primary` (§1b entfernt genau das), `F-01` prüft die
@@ -63,7 +63,7 @@ pytest 24 · `design-consistency.test.js` 64/64 · `DUBLETTEN_MAX` 0 · `IMPORTA
 
 ### Toter Bestand — was nicht mehr gebraucht wird, wird nicht mitgezählt
 
-- [x] **DEAD-01**: **Die von `tools/css-usage-report.js` gemessene Menge** toter Klassen in
+- [ ] **DEAD-01**: **Die von `tools/css-usage-report.js` gemessene Menge** toter Klassen in
       vollständig toten Regelblöcken ist gelöscht, beginnend mit `dashboard.css:547-1224` — 678
       Zeilen „MAP INTEGRATION" für ein Feature, das im Code nicht mehr existiert (kein Karten-Modul
       in `loader.js`, 0 Treffer für `map-marker`/`map-container` in JS und HTML). *(Korrektur D-20:
@@ -76,21 +76,21 @@ pytest 24 · `design-consistency.test.js` 64/64 · `DUBLETTEN_MAX` 0 · `IMPORTA
       `.shadow-sm/-md/-lg` (`dmscreen.css:1427-1429`, stünde sonst als Dublette zu den geplanten
       `--elev-*`), `.nav-tab-icon`/`.nav-tab-text` (`variables.css:423-432`, das Markup hat keine
       Kind-Spans) und der tote `.pwa-install-banner`.
-- [x] **DEAD-02**: Vor jeder Löschung läuft eine Präfixerkennung für dynamisch zusammengesetzte
+- [ ] **DEAD-02**: Vor jeder Löschung läuft eine Präfixerkennung für dynamisch zusammengesetzte
       Klassennamen (`condition-${…}`), damit nichts gelöscht wird, das nur zur Laufzeit entsteht —
       **die vom Werkzeug gemessene Menge** wird als lebend erkannt. *(Korrektur D-20/D-21: die
       Handoff-Angabe „140 präfixgerettete Klassen" ist nicht reproduzierbar; klassenkontext-
       beschränkt [nur `class="…"`, `className =`, `classList.*`] retten die fünf eingefrorenen
       Präfixe [`color-`, `condition-`, `editor-toolbar-`, `rel-btn-`, `tag-`] gemessen 34.)* Die
       E2E-Suite ist danach grün.
-- [x] **DEAD-03**: Der Umfang jeder Folgewelle ist nach der Löschung **neu gemessen**, nicht
+- [ ] **DEAD-03**: Der Umfang jeder Folgewelle ist nach der Löschung **neu gemessen**, nicht
       fortgeschrieben. Anteile in totem CSS: 52 von 400 `rgba` (13 %), 126 von 784 `em` (16 %),
       14 von 88 `box-shadow` (16 %), 13 von 163 `transition: all` (8 %). Ohne diesen Schritt frieren
       die neuen Ratschen toten Bestand ein.
 
 ### Echte Defekte — vom Audit nicht gesucht, beim Nachmessen gefunden
 
-- [x] **FIX-01**: Die DM-Screen-Referenzwidgets „Gelände", „Fertigkeiten" und „Wissensgebiete"
+- [ ] **FIX-01**: Die DM-Screen-Referenzwidgets „Gelände", „Fertigkeiten" und „Wissensgebiete"
       rendern wieder gestylt — **drei Widgets, nicht zwei** (Korrektur D-12: die Registry ist
       eindeutig, `terrain` = „Gelände", `skills` = „Fertigkeiten", `knowledge` = „Wissensgebiete";
       diese Fassung nannte zuvor nur „Gelände" und „Wissensgebiete", belegte Letzteres aber mit
@@ -108,14 +108,14 @@ pytest 24 · `design-consistency.test.js` 64/64 · `DUBLETTEN_MAX` 0 · `IMPORTA
       transparent, border-radius 0px; `.dms-skill-header.str` background transparent, font-weight
       400. 62 tote `dms-*`-Klassen im CSS gegen 15 `dms-*`-Klassen im JS ohne jede Regel. Reparatur:
       Plan 15-04 (`tests/e2e/features/design-fixes.spec.js`, Ratsche `DMS_UNSTYLED_MAX`).
-- [x] **FIX-02**: Die kompakte Zauberplatz-Anzeige der Charakterkarte ist sichtbar und bedienbar.
+- [ ] **FIX-02**: Die kompakte Zauberplatz-Anzeige der Charakterkarte ist sichtbar und bedienbar.
       `party-render.js:330` erzeugt `.char-slot-pip` als `<span>` **ohne Textinhalt** mit
       `data-action="toggle-spell-slot-stop"` — und es existiert keine einzige CSS-Regel dafür
       (auch nicht für `.char-slot-group/-label`, `.char-card-slots`). Ein Inline-Element der Breite 0:
       weder sichtbar noch anklickbar noch antippbar. Der Codepfad ist aktiv
       (`party-render.js:159`, `:241`); die Schwesterklasse `.slot-pip` (`dashboard.css:1320`)
       existiert sehr wohl.
-- [x] **FIX-03**: Die Würfelzahl behält nach dem ersten Wurf ihre Formatierung, und die
+- [ ] **FIX-03**: Die Würfelzahl behält nach dem ersten Wurf ihre Formatierung, und die
       Kritisch-/Patzer-Färbung greift. `dice-core.js:345` setzt `heroResult.className = ''` und
       nimmt `#dice-hero-result` damit `.dice-hero-result` weg — mit `font-size: 5em`,
       `color: var(--gold)` und `font-weight: 700` (`dice.css:21-27`). Die anschließend gesetzten
@@ -332,19 +332,19 @@ pytest 24 · `design-consistency.test.js` 64/64 · `DUBLETTEN_MAX` 0 · `IMPORTA
       Symmetrie ist perfekt und **durch nichts geschützt**: der bestehende `F-01`-Test bildet eine
       einzige `defined`-Menge über alle Dateien und Blöcke, eine Definition in irgendeinem Block
       genügt ihm.
-- [x] **GATE-03**: Jede neue Ratsche ist beidseitig als rot-machend bewiesen (wie in Phase 14
+- [ ] **GATE-03**: Jede neue Ratsche ist beidseitig als rot-machend bewiesen (wie in Phase 14
       etabliert) und trägt ihren gemessenen Ausgangswert im Kommentar. Ausnahmelisten sind datiert
       und begründet — `T-2` wird als „leer außer den N benannten Ausnahmen" formuliert, nicht als
       Alles-oder-nichts (sonst widersprechen sich `COLOR-08` und `ELEV-04` gegenseitig und keiner
       der beiden Haken ist je setzbar).
-- [x] **GATE-04**: Der Geltungsbereich ist pro Befund entschieden und dokumentiert. Alle
+- [ ] **GATE-04**: Der Geltungsbereich ist pro Befund entschieden und dokumentiert. Alle
       Abnahme-greps enden heute bei `assets/styles/`; außerhalb liegen ~170 Fundstellen:
       7 numerische `rgba` in JS, 39 Inline-`font-size` in 6 Templates und 108 in 29 JS-Dateien,
       16 `font-weight`-Stellen. Zwei harte Ausnahmen bleiben: `features/shops/shop-export.js`
       (eigenständiges Druckdokument mit `pt`-Einheiten ohne Token-Zugriff) und der Editor-Marker
       (CLAUDE.md verbietet die Änderung ausdrücklich — „der feste dunkle Wert ist Absicht",
       eingefrorenes Testnetz).
-- [x] **GATE-05**: Nach jeder Welle sind alle Suiten grün (Jest, Playwright, pytest), `python build.py`
+- [ ] **GATE-05**: Nach jeder Welle sind alle Suiten grün (Jest, Playwright, pytest), `python build.py`
       läuft durch, und die App ist in **allen vier Themes** gesichtet — die Hälfte dieser Befunde ist
       nur dort zu sehen.
 
@@ -422,19 +422,19 @@ Akzeptanzkriterien heraus. Belege in `HANDOFF-V2-GEGENPROBEN.md`.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| BASE-01 | Phase 15 | Complete |
-| BASE-02 | Phase 15 | Complete |
-| BASE-03 | Phase 15 | Complete |
-| BASE-04 | Phase 15 | Complete |
-| DEAD-01 | Phase 15 | Complete |
-| DEAD-02 | Phase 15 | Complete |
-| DEAD-03 | Phase 15 | Complete |
-| FIX-01 | Phase 15 | Complete |
-| FIX-02 | Phase 15 | Complete |
-| FIX-03 | Phase 15 | Complete |
-| GATE-03 | Phase 15 | Complete |
-| GATE-04 | Phase 15 | Complete |
-| GATE-05 | Phase 15 | Complete |
+| BASE-01 | Phase 15 | Gaps Found |
+| BASE-02 | Phase 15 | Gaps Found |
+| BASE-03 | Phase 15 | Gaps Found |
+| BASE-04 | Phase 15 | Gaps Found |
+| DEAD-01 | Phase 15 | Gaps Found |
+| DEAD-02 | Phase 15 | Gaps Found |
+| DEAD-03 | Phase 15 | Gaps Found |
+| FIX-01 | Phase 15 | Gaps Found |
+| FIX-02 | Phase 15 | Gaps Found |
+| FIX-03 | Phase 15 | Gaps Found |
+| GATE-03 | Phase 15 | Gaps Found |
+| GATE-04 | Phase 15 | Gaps Found |
+| GATE-05 | Phase 15 | Gaps Found |
 | COLOR-01 | Phase 16 | Pending |
 | COLOR-02 | Phase 16 | Pending |
 | COLOR-03 | Phase 16 | Pending |
