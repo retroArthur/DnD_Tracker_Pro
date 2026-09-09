@@ -164,6 +164,51 @@ Archivieren überlebt:
 | **2 Bedienabnahmen offen** | `13-VALIDATION.md` | Editor-Bediengefühl nach dem `rich-text.js`-Split, DM-Screen-Masonry bei 320/768 px. Subjektiv, funktional abgedeckt. |
 | ~~**Doku-Drift**~~ | Audit | ~~`CLAUDE.md` behauptet weiterhin drei verbliebene `execCommand`-Aufrufe~~ — **erledigt** in der Zwischenarbeit (W-22): die Stelle nennt jetzt den gemessenen Stand (null Aufrufe) samt Datum und erklärt die zwei verbliebenen Kommentar-Nennungen in `utils/basic.js`. |
 
+### GATE-04 — Geltungsbereich CSS vs. JS/Markup (B-10, D-32)
+
+Sechs Befundgruppen liegen außerhalb `assets/styles/` (`HANDOFF-V2-VERIFIKATION.md` B-10). GATE-04
+ist erst gesetzt, wenn jede von ihnen entweder eine Folgephase oder eine Übertragszeile trägt —
+ein grünes Gate bei weiterlaufenden, unbenannten Fundstellen ist genau das Muster, das der
+v1.2-Audit verworfen hat. Drei Gruppen sind einer Phase zugeordnet:
+
+| Gruppe | Umfang | Phase |
+|--------|--------|-------|
+| Farbliterale mit Zahlentripel außerhalb CSS | 4 Stellen mit echtem Theme-Gewinn (von 7 numerischen rgba in JS + 1 Inline-Stil) | 16 |
+| Schriftgrößen außerhalb CSS | 39 in 6 Templates + 108 in JS (`loader.js` ausgenommen) | 18 |
+| Schriftgewichte außerhalb CSS | 3 Stellen, von TYPO-05 wörtlich verboten (`bold`/`normal`) | 18 |
+
+Die übrigen drei Gruppen werden datierte Restschuld — siehe Tabelle „Übertrag aus v1.3" unten.
+
+**Sieben harte Ausnahmen** (D-34) — diese Stellen sind keine offenen Befunde, sondern strukturell
+außerhalb jeder Tokenisierung und werden NICHT auf CSS-Custom-Properties umgestellt:
+
+1. `features/shops/shop-export.js` — die GANZE Datei (eigenständiges `<!DOCTYPE html>`-Dokument,
+   gemessen null `var(--…)`-Zugriffe; 17 `font-size`, davon 5 in `pt`, ausschließlich unter
+   `@media print`).
+2. `ui/editors/rich-text.js:519` (`MARKER_TEXT_COLOR`) — der Editor-Marker; CLAUDE.md § Conventions
+   schützt den festen dunklen Wert ausdrücklich (`applyMarkerToSelection()`).
+3. `assets/templates/modals-tools.html` — der Theme-Wähler: vier Farbfelder müssen die Farben der
+   jeweils *anderen* Themes zeigen; Tokenisierung ist dort strukturell unmöglich.
+4. Alles von `tools/sync-editor-toolbars.js` Generierte — generierter Output folgt der Quelle
+   (`ui/editors/editor-toolbar-build.js`), nicht umgekehrt.
+5. `loader.js` — alleinige Modulliste (ARCH-01), kein CSS-Konsument.
+6. `index.html:6` — die `theme-color`-Meta-Angabe kann keine CSS-Variable annehmen.
+7. `features/wiki/wiki-crud.js:495`.
+
+Ausdrücklich NICHT unter den Ausnahmen: `sw.js` — die Datei ist in allen fünf Merkmalsgruppen
+(rgba, font-size, font-weight, transition, box-shadow) bei null und braucht keine Ausnahme.
+
+### Übertrag aus v1.3 (weiterhin offen)
+
+Analog zur v1.2-Tabelle oben, hier als Übertrag, damit es das Archivieren überlebt — je Posten
+der Messbefehl samt gemessener Zahl im Kernfeld (D-33):
+
+| Posten | Herkunft | Kern |
+|--------|----------|------|
+| Übergänge/Schatten außerhalb CSS | B-10, D-32 | `grep -rn "transition:\s*all\b" features/ systems/ ui/ core/ render/ utils/ assets/templates/ loader.js index.html \| wc -l` = **0** — die Sammel-Kurzform `transition: all` kommt außerhalb CSS gemessen null Mal vor; als Gruppe dennoch ausdrücklich benannt, statt stillschweigend als „erledigt" zu gelten. |
+| Hex-Farbliterale außerhalb CSS | B-10, D-32 | `grep -rhoP "(?<!&)#[0-9a-fA-F]{3,8}\b" features/ systems/ ui/ core/ render/ utils/ assets/templates/ loader.js index.html \| wc -l` = **149** (Stand 2026-09-09). Achtung bei Nachmessung: die naive Regex ohne die Lookbehind-Ausnahme trifft in diesem deutschsprachigen Projekt HTML-Entities wie `&#246;` fälschlich mit — insbesondere in `systems/migration/migration-wizard.js` und `assets/templates/view-bestiary.html`, wo nach Ausschluss der Entities **0** echte Treffer bleiben. Von keinem Requirement gedeckt. |
+| Werkzeugleisten-Wächter fehlt | 15-CONTEXT.md Deferred | `tools/sync-editor-toolbars.js:18` benennt `tests/unit/editor-toolbar-sync.test.js` als Prüfmodus-Fahrer — die Datei existiert nicht (`ls tests/unit/editor-toolbar-sync.test.js` → *No such file*), kein `npm`-Skript und kein CI-Schritt fährt `--check`. Der aktuelle Stand ist synchron (22/22 schreibfrei geprüft, Stand 2026-09-09), aber nichts hält ihn so. |
+
 **Zurückgestellt:** Soundboard Per-Track-Play (Layering — Design aus der v1.0-Session liegt bereit).
 
 <details>

@@ -141,7 +141,7 @@ function deleteEntity(id) {
 | `ui/actions/`          | Action handlers by domain (entity, combat, ui, dice, wiki, shop, map, system)        |
 | `render/`              | Rendering utilities/helpers                                                          |
 | `assets/`              | styles.css (@import hub), body.html (Hinweis-Datei)                                  |
-| `assets/styles/`       | 13 modulare CSS-Dateien (variables, core, editors, npcs, encounters, etc.)           |
+| `assets/styles/`       | 20 modulare CSS-Dateien (variables, core, editors, npcs, encounters, etc.; Stand 2026-09-09, `ls assets/styles/*.css \| wc -l`) |
 | `assets/templates/`    | 10 modulare HTML-Templates (header, views, modals)                                   |
 | `tests/`               | Jest unit tests, Playwright E2E tests                                                |
 | `tools/`               | Analysis scripts (render split, event handler migration, globals check)              |
@@ -459,6 +459,11 @@ function deleteEntity(id) {
   rufen den Generator direkt. **Leisten niemals von Hand in Templates editieren** — der
   nächste Lauf des Werkzeugs überschreibt die Änderung. Drei Stufen: `minimal` (14 Leisten),
   `mid` (6), `full` (2, nur Wiki und Sitzungen).
+  **Kein Wächtertest (Stand 2026-09-09, Phase 15 GATE-04):** `--check` existiert als Fähigkeit
+  des Generators, aber nichts fährt ihn automatisch — es gibt weder eine Testdatei, die
+  `--check` ausführt, noch ein `npm`-Skript, noch einen CI-Schritt. Der aktuelle Stand ist
+  synchron (22/22 schreibfrei geprüft), aber ungesichert; offene Restschuld, siehe
+  `.planning/PROJECT.md` § Übertrag aus v1.3.
     - **Attributvertrag mit einer Inversion:** bei `format-text` trägt `data-cmd` die
       Editor-ID und `data-editor` das Format; bei allen anderen Aktionen ist `data-editor`
       die Editor-ID, bei `clear-formatting` steht sie in `data-value`. Gewachsen, aber vom
