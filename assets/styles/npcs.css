@@ -9,19 +9,6 @@
     overflow: hidden;
 }
 
-/* Toolbar */
-.npc-toolbar {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-    padding: 12px 16px;
-    background: var(--bg-card);
-    border: 1px solid var(--gold-dim);
-    border-radius: var(--radius-md);
-    flex-shrink: 0;
-    font-size: 14px;
-}
-
 /* Konsistente Font-Vererbung für NPC-Toolbar-Elemente */
 .npc-toolbar button,
 .npc-toolbar input,
@@ -29,70 +16,6 @@
 .npc-toolbar .btn {
     font-family: inherit;
     font-size: inherit;
-}
-
-.npc-toolbar-left {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.npc-toolbar-title {
-    font-weight: 600;
-    color: var(--gold);
-}
-
-.npc-toolbar-count {
-    background: var(--bg-card);
-    padding: 2px 8px;
-    border-radius: var(--radius-md);
-    font-size: 0.8em;
-    color: var(--text-dim);
-}
-
-.npc-toolbar-center {
-    flex: 1;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    min-width: 200px;
-}
-
-.npc-search-wrapper {
-    position: relative;
-    width: 200px;
-}
-
-.npc-search {
-    width: 100%;
-    padding: 8px 30px 8px 12px;
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-md);
-    color: var(--text);
-    font-size: 0.9em;
-}
-
-.npc-search:focus {
-    border-color: var(--gold);
-    outline: none;
-}
-
-.npc-search-clear {
-    position: absolute;
-    right: 8px;
-    top: 50%;
-    transform: translateY(-50%);
-    background: none;
-    border: none;
-    color: var(--text-dim);
-    cursor: pointer;
-    opacity: 0;
-    transition: opacity 0.2s;
-}
-
-.npc-search:not(:placeholder-shown) + .npc-search-clear {
-    opacity: 1;
 }
 
 .npc-filter-chips {
@@ -130,34 +53,6 @@
     color: var(--text);
     font-size: 0.8em;
     cursor: pointer;
-}
-
-.npc-toolbar-right {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.npc-io-btns {
-    display: flex;
-    gap: 4px;
-}
-
-.npc-io-btn {
-    width: 32px;
-    height: 32px;
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-md);
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.2s;
-}
-
-.npc-io-btn:hover {
-    border-color: var(--gold);
 }
 
 .npc-add-btn {
@@ -522,88 +417,12 @@
     overflow: hidden;
 }
 
-/* Toolbar */
-.loot-toolbar {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-    padding: 12px 16px;
-    background: var(--bg-card);
-    border: 1px solid var(--gold-dim);
-    border-radius: var(--radius-md);
-    margin: 12px 16px 0 16px;
-    flex-wrap: wrap;
-    font-size: 14px;
-}
-
 .loot-toolbar button,
 .loot-toolbar input,
 .loot-toolbar select,
 .loot-toolbar .btn {
     font-family: inherit;
     font-size: inherit;
-}
-
-.loot-toolbar-left {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.loot-toolbar-title {
-    font-weight: 600;
-    color: var(--gold);
-}
-
-.loot-toolbar-count {
-    background: var(--bg-dark);
-    padding: 2px 8px;
-    border-radius: var(--radius-md);
-    font-size: 0.8em;
-    color: var(--text-dim);
-}
-
-.loot-toolbar-center {
-    flex: 1;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    flex-wrap: wrap;
-}
-
-.loot-search-wrapper {
-    position: relative;
-}
-
-.loot-search {
-    padding: 8px 32px 8px 12px;
-    border: 1px solid var(--border);
-    border-radius: var(--radius-md);
-    background: var(--bg-dark);
-    color: var(--text);
-    width: 200px;
-}
-
-.loot-search:focus {
-    border-color: var(--gold);
-    outline: none;
-}
-
-.loot-search-clear {
-    position: absolute;
-    right: 8px;
-    top: 50%;
-    transform: translateY(-50%);
-    background: none;
-    border: none;
-    color: var(--text-dim);
-    cursor: pointer;
-    opacity: 0;
-    transition: opacity 0.2s;
-}
-
-.loot-search:not(:placeholder-shown) + .loot-search-clear {
-    opacity: 1;
 }
 
 .loot-filter-chips {
@@ -629,34 +448,6 @@
 .loot-filter-chip.active {
     background: var(--gold);
     color: var(--bg-dark);
-    border-color: var(--gold);
-}
-
-.loot-toolbar-right {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.loot-io-btns {
-    display: flex;
-    gap: 4px;
-}
-
-.loot-io-btn {
-    width: 32px;
-    height: 32px;
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-md);
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.2s;
-}
-
-.loot-io-btn:hover {
     border-color: var(--gold);
 }
 
@@ -920,12 +711,6 @@
             border-radius: var(--radius-md);
         }
 
-        .loc-npc-list {
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-        }
-
         .loc-npc-item {
             display: flex;
             align-items: center;
@@ -1051,130 +836,17 @@
                 display: none;
             }
         }
-
-        /* Legacy support - hide old styles */
-        .location-filter-bar {
-            display: none;
-        }
-
-        .location-card {
-            background: var(--bg-card);
-            border: 1px solid var(--border);
-            border-radius: var(--radius-md);
-            overflow: hidden;
-            width: 394px;
-            max-width: 100%;
-        }
-        
-        .location-card-header {
-            padding: 10px 12px;
-            cursor: pointer;
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            background: linear-gradient(90deg, rgba(251, 191, 36, 0.1) 0%, transparent 100%);
-            border-bottom: 1px solid transparent;
-            transition: background 0.2s;
-            gap: 8px;
-            min-height: 72px;
-            box-sizing: border-box;
-        }
-        
-        .location-card-header:hover {
-            background: linear-gradient(90deg, rgba(251, 191, 36, 0.2) 0%, transparent 100%);
-        }
         
         .location-card.expanded .location-card-header {
             border-bottom-color: var(--border);
-        }
-        
-        .location-card-toggle {
-            color: var(--text-dim);
-            font-size: 12px;
-            transition: transform 0.2s;
-            flex-shrink: 0;
         }
         
         .location-card.expanded .location-card-toggle {
             transform: rotate(90deg);
         }
         
-        .location-card-content {
-            display: none;
-            padding: 12px;
-        }
-        
         .location-card.expanded .location-card-content {
             display: block;
-        }
-        
-        .location-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            padding: 10px 12px;
-            background: var(--bg-elevated);
-            border-bottom: 1px solid var(--border);
-            gap: 8px;
-            min-width: 0;
-        }
-        
-        .location-name { 
-            color: var(--gold); 
-            font-weight: 600; 
-            display: flex; 
-            flex-direction: column;
-            gap: 4px;
-            min-width: 0;
-            flex: 1;
-            overflow: hidden;
-        }
-        
-        .location-name-text {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            min-width: 0;
-        }
-        
-        .location-name-text span.loc-title {
-            flex: 1;
-            min-width: 0;
-            word-wrap: break-word;
-            overflow-wrap: break-word;
-        }
-        
-        .location-badges {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 4px;
-        }
-        
-        .location-description { 
-            font-size: 0.85em; 
-            padding: 10px; 
-            background: var(--bg-dark); 
-            border-radius: var(--radius-md); 
-            color: var(--text);
-            margin: 8px 0;
-            line-height: 1.5;
-        }
-        
-        .location-description p { margin: 0 0 8px 0; }
-        .location-description p:last-child { margin-bottom: 0; }
-        
-        .location-buttons {
-            display: flex;
-            gap: 4px;
-            flex-shrink: 0;
-            flex-wrap: wrap;
-            justify-content: flex-end;
-        }
-        
-        .location-filter-badge {
-            font-size: 0.75em;
-            color: var(--text-dim);
-            margin-top: 2px;
         }
         
         .npc-card {
@@ -1188,39 +860,12 @@
             min-width: 0;
         }
         
-        .npc-header { 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: flex-start; 
-            margin-bottom: 4px;
-            gap: 6px;
-            min-width: 0;
-        }
-        
         .npc-name { 
             color: var(--cyan); 
             font-weight: 600;
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
-        }
-        
-        .npc-chapter { font-size: 9px; color: var(--text-dim); white-space: nowrap; }
-        
-        .npc-buttons {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 3px;
-            flex-shrink: 0;
-            justify-content: flex-end;
-        }
-        
-        /* NPC Tags für Locations */
-        .location-npc-tags {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 6px;
-            padding: 8px;
         }
         
         .npc-tag {
@@ -1241,13 +886,6 @@
             background: var(--bg-hover);
             border-color: var(--cyan);
             transform: translateY(-1px);
-        }
-        
-        .npc-tag-avatar {
-            width: 18px;
-            height: 18px;
-            border-radius: 50%;
-            object-fit: cover;
         }
         
         /* NPC Popup */
@@ -1351,148 +989,14 @@
             border-radius: 0 0 var(--radius-lg) var(--radius-lg);
         }
         
-        /* NPC List View */
-        .npc-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
-            gap: 16px;
-            align-items: start;
-        }
-        
-        .npc-list-card {
-            background: var(--bg-card);
-            border: 1px solid var(--border);
-            border-radius: var(--radius-md);
-            overflow: hidden;
-            transition: all 0.2s;
-        }
-        
-        .npc-list-card:hover { 
-            border-color: var(--cyan); 
-            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-        }
-        
-        .npc-card-avatar {
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
-            background: var(--bg-dark);
-            border: 2px solid var(--cyan);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.5em;
-            flex-shrink: 0;
-        }
-        
-        .npc-card-avatar img {
-            width: 100%;
-            height: 100%;
-            border-radius: 50%;
-            object-fit: cover;
-        }
-        
-        .npc-card-info {
-            flex: 1;
-            min-width: 0;
-        }
-        
-        .npc-list-name { 
-            color: var(--cyan); 
-            font-weight: 600; 
-            font-size: 1.15em;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        
-        .npc-list-role { 
-            color: var(--text-dim); 
-            font-size: 0.85em;
-            margin-top: 2px;
-        }
-        
-        .npc-list-location { 
-            font-size: 0.75em; 
-            color: var(--gold); 
-            background: var(--bg-dark); 
-            padding: 3px 8px; 
-            border-radius: var(--radius-sm);
-            white-space: nowrap;
-        }
-        
-        .npc-card-badges {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 4px;
-            margin-top: 6px;
-        }
-        
-        .npc-card-body {
-            padding: 12px 14px;
-        }
-        
         /* Collapsed State für NPC-Karten */
         .npc-list-card.collapsed .npc-card-body,
         .npc-list-card.collapsed .npc-card-footer {
             display: none;
         }
         
-        .npc-card-toggle {
-            cursor: pointer;
-            user-select: none;
-            transition: transform 0.2s;
-            color: var(--text-dim);
-            font-size: 0.9em;
-            margin-right: 8px;
-            padding: 8px;
-            margin: -8px 8px -8px -8px;
-            border-radius: var(--radius-sm);
-        }
-        
-        .npc-card-toggle:hover {
-            background: rgba(255,255,255,0.1);
-            color: var(--gold);
-        }
-        
         .npc-list-card.collapsed .npc-card-toggle {
             transform: rotate(-90deg);
-        }
-        
-        .npc-card-header {
-            cursor: default;
-            display: flex; /* F-18: aus der Dublette uebernommen */
-            justify-content: space-between; /* F-18: aus der Dublette uebernommen */
-            align-items: flex-start; /* F-18: aus der Dublette uebernommen */
-            padding: 12px 14px; /* F-18: aus der Dublette uebernommen */
-            background: linear-gradient(135deg, var(--bg-elevated) 0%, var(--bg-card) 100%); /* F-18: aus der Dublette uebernommen */
-            border-bottom: 1px solid var(--border); /* F-18: aus der Dublette uebernommen */
-            gap: 10px; /* F-18: aus der Dublette uebernommen */
-        }
-        
-        .npc-header-actions {
-            display: flex;
-            gap: 4px;
-            align-items: center;
-            margin-left: auto;
-            flex-shrink: 0;
-        }
-        
-        .npc-list-desc {
-            font-size: 0.85em;
-            color: var(--text);
-            padding: 10px;
-            background: var(--bg-dark);
-            border-radius: var(--radius-md);
-            margin-bottom: 10px;
-            line-height: 1.5;
-        }
-        
-        .npc-list-tags {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 4px;
-            margin-bottom: 10px;
         }
         
         .npc-list-tag {
@@ -1515,47 +1019,10 @@
             box-shadow: 0 2px 8px rgba(0,0,0,0.3);
         }
         
-        /* NPC Trigger Section */
-        .npc-triggers-section {
-            margin-top: 10px;
-            border: 1px solid var(--border);
-            border-radius: var(--radius-md);
-            overflow: hidden;
-        }
-        
-        .npc-triggers-header {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            padding: 8px 10px;
-            background: var(--bg-elevated);
-            cursor: pointer;
-            font-size: 0.85em;
-            font-weight: 600;
-            color: var(--yellow);
-        }
-        
-        .npc-triggers-header:hover {
-            background: var(--bg-dark);
-        }
-        
-        .npc-triggers-content {
-            padding: 8px 10px;
-            background: var(--bg-dark);
-            max-height: 500px;
-            overflow: hidden;
-            transition: max-height 0.3s ease, padding 0.3s ease;
-        }
-        
         .npc-triggers-content.collapsed {
             max-height: 0;
             padding-top: 0;
             padding-bottom: 0;
-        }
-        
-        .npc-section-arrow {
-            display: inline-block;
-            transition: transform 0.2s ease;
         }
         
         .npc-triggers-content:not(.collapsed) ~ .npc-triggers-header .npc-section-arrow,
@@ -1635,44 +1102,6 @@
             font-size: 0.8em;
         }
         
-        /* NPC Dialogs Section */
-        .npc-dialogs-section {
-            margin-top: 10px;
-            border: 1px solid var(--border);
-            border-radius: var(--radius-md);
-            overflow: hidden;
-        }
-        
-        .npc-dialogs-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 8px 10px;
-            background: var(--bg-elevated);
-            cursor: pointer;
-            font-size: 0.85em;
-            font-weight: 600;
-            color: var(--purple);
-        }
-        
-        .npc-dialogs-header:hover {
-            background: var(--bg-dark);
-        }
-        
-        .npc-dialogs-count {
-            font-size: 0.8em;
-            padding: 2px 6px;
-            background: var(--bg-dark);
-            border-radius: var(--radius-md);
-            color: var(--text-dim);
-        }
-        
-        .npc-dialogs-content {
-            max-height: 0;
-            overflow: hidden;
-            transition: max-height 0.3s ease;
-        }
-        
         .npc-dialogs-content.open {
             max-height: 500px;
             overflow-y: auto;
@@ -1691,20 +1120,6 @@
         
         .npc-dialog-item:last-child {
             border-bottom: none;
-        }
-        
-        .npc-dialog-header {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            padding: 10px 12px;
-            background: var(--bg-dark);
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-        
-        .npc-dialog-header:hover {
-            background: var(--bg-elevated);
         }
         
         .npc-dialog-marker {
@@ -1740,44 +1155,13 @@
             text-decoration: line-through;
         }
         
-        .npc-dialog-trigger-badge {
-            font-size: 0.7em;
-            padding: 2px 6px;
-            background: var(--yellow);
-            color: var(--bg-dark);
-            border-radius: var(--radius-sm);
-        }
-        
-        .npc-dialog-status {
-            font-size: 0.7em;
-            padding: 2px 6px;
-            border-radius: var(--radius-sm);
-        }
-        
-        .npc-dialog-status.unused {
-            background: var(--green);
-            color: var(--bg-dark);
-        }
-        
         .npc-dialog-status.used {
             background: var(--text-dim);
             color: var(--bg-dark);
         }
         
-        .npc-dialog-expand {
-            color: var(--text-dim);
-            transition: transform 0.2s;
-        }
-        
         .npc-dialog-expand.open {
             transform: rotate(180deg);
-        }
-        
-        .npc-dialog-body {
-            max-height: 0;
-            overflow: hidden;
-            transition: max-height 0.3s ease;
-            background: var(--bg-card);
         }
         
         .npc-dialog-body.open {
@@ -1822,14 +1206,5 @@
             padding: 8px 12px;
             justify-content: flex-end;
             flex-shrink: 0; /* F-18: aus der Dublette uebernommen */
-        }
-        
-        .npc-card-footer {
-            display: flex;
-            gap: 6px;
-            padding: 10px 14px;
-            background: var(--bg-elevated);
-            border-top: 1px solid var(--border);
-            flex-wrap: wrap;
         }
         
