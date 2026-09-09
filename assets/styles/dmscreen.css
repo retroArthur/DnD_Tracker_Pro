@@ -2405,7 +2405,7 @@
    FERTIGKEITEN-WIDGET
    ======================================== */
 
-.dms-skill-groups {
+.dms-skills-widget {
     display: flex;
     flex-direction: column;
     gap: 8px;
@@ -2417,7 +2417,11 @@
     gap: 4px;
 }
 
-.dms-skill-group-header {
+/* F-15-04: die Kopfzeilen-Klasse traegt das JS direkt an der Kopfzeile
+   (dmscreen-widgets-reference.js), nicht an der Gruppe. Die fuenf
+   Attributregeln stehen bewusst NACH dieser Basisregel, damit sie deren
+   Flaeche ueberschreiben (D-13/FIX-01/ordering). */
+.dms-skill-header {
     font-size: 0.75em;
     font-weight: 600;
     padding: 2px 6px;
@@ -2426,11 +2430,17 @@
     width: fit-content;
 }
 
-.dms-skill-group.str .dms-skill-group-header { background: rgba(239, 68, 68, 0.2); color: var(--red); }
-.dms-skill-group.dex .dms-skill-group-header { background: rgba(34, 197, 94, 0.2); color: var(--green); }
-.dms-skill-group.int .dms-skill-group-header { background: rgba(59, 130, 246, 0.2); color: var(--blue); }
-.dms-skill-group.wis .dms-skill-group-header { background: rgba(168, 85, 247, 0.2); color: var(--purple); }
-.dms-skill-group.cha .dms-skill-group-header { background: rgba(236, 72, 153, 0.2); color: var(--pink); }
+.dms-skill-header.str { background: color-mix(in srgb, var(--attr-str) 20%, transparent); color: var(--attr-str); }
+.dms-skill-header.dex { background: color-mix(in srgb, var(--attr-dex) 20%, transparent); color: var(--attr-dex); }
+.dms-skill-header.int { background: color-mix(in srgb, var(--attr-int) 20%, transparent); color: var(--attr-int); }
+.dms-skill-header.wis { background: color-mix(in srgb, var(--attr-wis) 20%, transparent); color: var(--attr-wis); }
+.dms-skill-header.cha { background: color-mix(in srgb, var(--attr-cha) 20%, transparent); color: var(--attr-cha); }
+
+.dms-skill-item {
+    font-size: 0.8em;
+    color: var(--text-dim);
+    padding-left: 8px;
+}
 
 .dms-skill-list {
     display: flex;
@@ -2768,35 +2778,37 @@
    GELÄNDE-WIDGET
    ======================================== */
 
-.dms-terrain-sections {
+/* F-15-04: die Liste, das Item und die Zustandsklasse (normal/difficult/hazard)
+   sind die Struktur, die dmscreen-widgets-combat.js tatsaechlich erzeugt. Der
+   Listencontainer bekommt bewusst KEINE eigene Flaeche/Rahmen/Mindesthoehe —
+   ein Widget ohne Eintraege darf keine leere Kachel erzeugen (FIX-01/empty). */
+.dms-terrain-list {
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 8px;
 }
 
-.dms-terrain-section {
+.dms-terrain-item {
     padding: 8px;
     background: var(--bg-dark);
     border-radius: var(--radius-md);
 }
 
-.dms-terrain-title {
+.dms-terrain-type {
+    display: block;
     font-size: 0.8em;
     font-weight: 600;
-    margin-bottom: 6px;
-    display: flex;
-    align-items: center;
-    gap: 6px;
+    margin-bottom: 4px;
 }
 
-.dms-terrain-title.normal { color: var(--green); }
-.dms-terrain-title.difficult { color: var(--gold); }
-.dms-terrain-title.hazardous { color: var(--red); }
+.dms-terrain-item.normal .dms-terrain-type { color: var(--green); }
+.dms-terrain-item.difficult .dms-terrain-type { color: var(--gold); }
+.dms-terrain-item.hazard .dms-terrain-type { color: var(--red); }
 
 .dms-terrain-effect {
+    display: block;
     font-size: 0.75em;
     color: var(--text-dim);
-    margin-bottom: 6px;
 }
 
 .dms-terrain-examples {
