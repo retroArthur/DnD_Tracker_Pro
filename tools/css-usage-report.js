@@ -152,14 +152,58 @@ function readJsFiles() {
 // demselben Wortlaut zaehlt ausdruecklich NICHT.
 // ----------------------------------------------------------------------
 
-const CLASS_ATTR_RE = /class=(["'`])([\s\S]*?)\1/g;
-const CLASS_NAME_ASSIGN_RE = /\.className\s*\+?=(?!=)\s*(["'`])([\s\S]*?)\1/g;
+const CLASS_ATTR_OPEN_RE = /class=(["'`])/g;
+const CLASS_NAME_ASSIGN_OPEN_RE = /\.className\s*\+?=(?!=)\s*(["'`])/g;
 const CLASS_LIST_CALL_RE = /classList\.(?:add|remove|toggle|contains|replace)\(([^)]*)\)/g;
 const QUOTED_STRING_RE = /(["'`])((?:\\.|(?!\1).)*)\1/g;
 
+/**
+ * Liest den Klassen-Kontext-Wert ab `startIndex` (direkt nach der
+ * oeffnenden Anfuehrung), bis entweder die oeffnende Anfuehrung selbst
+ * wiederkehrt (regulaerer Abschluss) ODER eine der beiden ANDEREN
+ * Anfuehrungsarten auftaucht. Letzteres faengt den in diesem Quellbaum
+ * verbreiteten String-Konkatenations-Stil ab
+ * (`'<button class="foo' + (bar ? ' baz' : '') + '"'` — die HTML-Anfuehrung
+ * "\"" wird erst viel spaeter, ausserhalb des eigentlichen Klassennamens,
+ * wieder geschlossen; ohne diese Regel wuerde ein naiver Scan bis dorthin
+ * fressen und Muell einsammeln statt "foo"). `${...}`-Interpolationen
+ * werden als Ganzes uebersprungen (Klammertiefe mitgefuehrt) und durch ein
+ * Leerzeichen ersetzt — Anfuehrungszeichen INNERHALB einer Interpolation
+ * (z. B. `${x ? 'a' : 'b'}`) brechen den Scan NICHT ab.
+ *
+ * @param {string} text
+ * @param {number} startIndex
+ * @param {string} quoteChar - die oeffnende Anfuehrung (fuer den Regelfall)
+ * @returns {string}
+ */
+function scanClassContextValue(text, startIndex, quoteChar) {
+    let out = '';
+    let i = startIndex;
+    while (i < text.length) {
+        const ch = text[i];
+        if (ch === '$' && text[i + 1] === '{') {
+            let depth = 1;
+            let j = i + 2;
+            while (j < text.length && depth > 0) {
+                if (text[j] === '{') depth++;
+                else if (text[j] === '}') depth--;
+                j++;
+            }
+            out += ' ';
+            i = j;
+            continue;
+        }
+        if (ch === quoteChar || ch === '"' || ch === "'" || ch === '`') break;
+        out += ch;
+        i++;
+    }
+    return out;
+}
+
 function addTokensFromValue(tokens, rawValue) {
-    // Interpolationsplatzhalter (`${...}`) entfernen, BEVOR in Woerter
-    // gesplittet wird — sonst wuerde der Ausdruckstext selbst zu einem
+    // Verbleibende Interpolationsplatzhalter (falls scanClassContextValue
+    // nicht verwendet wurde, z. B. aus classList.*-Argumenten) vor dem
+    // Splitten entfernen — sonst wuerde der Ausdruckstext selbst zu einem
     // Fantasie-Token werden (z. B. "isAvailable" aus "${isAvailable ? ...}").
     const cleaned = rawValue.replace(/\$\{[^}]*\}/g, ' ');
     cleaned
@@ -180,11 +224,13 @@ function collectLiveTokens(files) {
     const tokens = new Set();
     files.forEach(f => {
         const content = f.content;
-        for (const m of content.matchAll(CLASS_ATTR_RE)) {
-            addTokensFromValue(tokens, m[2]);
+        for (const m of content.matchAll(CLASS_ATTR_OPEN_RE)) {
+            const value = scanClassContextValue(content, m.index + m[0].length, m[1]);
+            addTokensFromValue(tokens, value);
         }
-        for (const m of content.matchAll(CLASS_NAME_ASSIGN_RE)) {
-            addTokensFromValue(tokens, m[2]);
+        for (const m of content.matchAll(CLASS_NAME_ASSIGN_OPEN_RE)) {
+            const value = scanClassContextValue(content, m.index + m[0].length, m[1]);
+            addTokensFromValue(tokens, value);
         }
         for (const m of content.matchAll(CLASS_LIST_CALL_RE)) {
             for (const arg of m[1].matchAll(QUOTED_STRING_RE)) {

@@ -245,7 +245,7 @@ test.describe('Computed-Style-Vergleichslauf (D-24)', () => {
         await loadApp(page);
         await page.setViewportSize({ width: 375, height: 812 });
         await page.evaluate(() => {
-            // @ts-ignore — global aus ui/layout-profiles.js
+            // @ts-ignore — global aus dem Layout-Profil-Modul
             if (typeof window.setLayout === 'function') window.setLayout('mobile');
         });
         await page.waitForTimeout(200);

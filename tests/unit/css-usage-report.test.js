@@ -184,6 +184,38 @@ describe('css-usage-report — Kommentarentfernung vor jeder Zaehlung', () => {
     });
 });
 
+describe('css-usage-report — String-Konkatenation statt Template-Literal (Rule-1-Fund, Task 3)', () => {
+    test('eine per "+"-Konkatenation gebaute class="..."-Zuweisung wird trotz abweichendem Anfuehrungstyp erkannt', () => {
+        // Muster aus features/initiative-mob.js: die HTML-Anfuehrung ist ",
+        // die umschliessende JS-Zeichenkette nutzt aber ' — ein naiver Scan
+        // bis zur naechsten " liefe an der echten Klassen-Grenze vorbei.
+        const cssFiles = [{ name: 'a.css', content: '.init-mob-mode-btn { color: red; }' }];
+        const jsFiles = [
+            {
+                name: 'initiative-mob.js',
+                content:
+                    "html += '<button class=\"init-mob-mode-btn' + (!isDmgRegel ? ' active' : '') + '\"' + '>X</button>';"
+            }
+        ];
+        const result = analyze({ cssFiles, templateFiles: [], jsFiles });
+        const file = result.files.find(f => f.name === 'a.css');
+        expect(file.deadClasses).not.toContain('init-mob-mode-btn');
+    });
+
+    test('${...}-Interpolation innerhalb einer doppelt zitierten class="..." bricht den Scan nicht vorzeitig ab, auch wenn sie einfache Anfuehrungszeichen enthaelt', () => {
+        const cssFiles = [{ name: 'a.css', content: '.slot-pip { color: gold; }' }];
+        const jsFiles = [
+            {
+                name: 'render.js',
+                content: "html += `<span class=\"slot-pip ${isAvailable ? 'filled' : ''}\"></span>`;"
+            }
+        ];
+        const result = analyze({ cssFiles, templateFiles: [], jsFiles });
+        const file = result.files.find(f => f.name === 'a.css');
+        expect(file.deadClasses).not.toContain('slot-pip');
+    });
+});
+
 describe('css-usage-report — @keyframes-Namen sind keine Klassenselektoren', () => {
     test('ein @keyframes-Name mit dms-Praefix wird nicht als toter/lebender Klassenselektor gezaehlt', () => {
         const cssFiles = [
