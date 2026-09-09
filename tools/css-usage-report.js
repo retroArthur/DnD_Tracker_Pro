@@ -14,9 +14,13 @@
  * beiden Node-Standardmodule, benannte Konstanten fuer Pfade, alle
  * Kernfunktionen einzeln exportiert, Direktaufruf-Zweig am Ende).
  *
- * Lebend-Erkennung in drei Stufen (D-21):
+ * Lebend-Erkennung in drei Stufen (D-21; um zwei Klassen-Kontexte erweitert
+ * in Plan 15-09, CR-01/WR-01):
  *   1. Wort-Token-Gleichheit aus Klassen-Kontexten (class="...", className=,
- *      classList.add/remove/toggle/contains/replace) — ein Teilstring-Treffer
+ *      eine anweisungsweite Zuweisung an .className/.className+= (auch per
+ *      Ternary oder Konkatenation), die Objektschluessel className:/
+ *      containerClass:, und classList.add/remove/toggle/contains/replace mit
+ *      ausgeglichener Klammertiefe im Argumentteil — ein Teilstring-Treffer
  *      zaehlt NICHT.
  *   2. Genau fuenf eingefrorene Praefixe (LIVE_PREFIXES) fuer dynamisch
  *      zusammengesetzte Klassennamen, ausschliesslich aus Klassen-Kontexten
@@ -192,7 +196,28 @@ function readJsFiles() {
 
 const CLASS_ATTR_OPEN_RE = /class=(["'`])/g;
 const CLASS_NAME_ASSIGN_OPEN_RE = /\.className\s*\+?=(?!=)\s*(["'`])/g;
-const CLASS_LIST_CALL_RE = /classList\.(?:add|remove|toggle|contains|replace)\(([^)]*)\)/g;
+
+// CR-01a (Plan 15-09): dieselbe Zuweisung wie CLASS_NAME_ASSIGN_OPEN_RE oben,
+// aber OHNE die Vorbedingung eines sofortigen Anfuehrungszeichens — faengt
+// eine Ternary oder Konkatenation rechts vom Gleichheitszeichen
+// (`.className = bedingung ? 'a' : 'b';`, reale Form ui/dom-builder.js:393).
+// Der Schnellpfad oben bleibt fuer den haeufigen Fall des sofortigen Literals
+// bestehen; beide Pfade duerfen dasselbe Token doppelt einsammeln (Set).
+const CLASS_NAME_ASSIGN_STMT_RE = /\.className\s*\+?=(?!=)/g;
+
+// CR-01b/CR-01c (Plan 15-09): Objektschluessel className/containerClass, mit
+// Wortgrenze davor — ohne sie wuerde ein Schluessel wie `classNames` oder
+// `containerClasses` mitgelesen (ui/safe-render.js:360-Muster:
+// `containerClass: bedingung ? 'a' : 'b',`).
+const CLASS_KEY_ASSIGN_RE = /\b(?:className|containerClass)\s*:/g;
+
+// WR-01 (Plan 15-09): nur noch die Aufruf-Oeffnung; der Argumentteil wird
+// per scanBalancedCallArgs() ueber ausgeglichene Klammertiefe gelesen statt
+// per Regex-Ausschlussklasse begrenzt — sonst verschluckt ein geklammerter
+// Ausdruck VOR dem Klassenliteral (`classList.toggle(berechneName(x), 'a')`)
+// alles danach.
+const CLASS_LIST_CALL_RE = /classList\.(?:add|remove|toggle|contains|replace)\(/g;
+
 const QUOTED_STRING_RE = /(["'`])((?:\\.|(?!\1).)*)\1/g;
 
 /**
@@ -238,6 +263,73 @@ function scanClassContextValue(text, startIndex, quoteChar) {
     return out;
 }
 
+/**
+ * Liest ab `startIndex`, bis (bei Klammertiefe 0) eines der Zeichen in
+ * `terminators` auftaucht oder eine Zeile endet — dieselbe Klammertiefe-
+ * Technik wie `scanClassContextValue()`s `${...}`-Ueberspringen, hier fuer
+ * ganze Anweisungen/Werte statt fuer eine einzelne Interpolation (Plan
+ * 15-09, CR-01a/CR-01b/CR-01c/WR-01). Anfuehrungszeichen und ihr Inhalt
+ * werden komplett uebersprungen, damit ein Komma oder eine Klammer
+ * INNERHALB eines Zeichenketten-Literals den Abbruch nicht vorzeitig
+ * ausloest. Eine schliessende Klammer/Kommata/geschweifte Klammer, die bei
+ * Tiefe 0 auftritt (kein passendes Gegenstueck INNERHALB dieses Aufrufs),
+ * beendet den Scan ebenfalls — sie gehoert der umschliessenden Struktur, nicht
+ * dem gelesenen Segment.
+ *
+ * @param {string} text
+ * @param {number} startIndex
+ * @param {string} terminators - Zeichen, die bei Klammertiefe 0 beenden
+ * @returns {string}
+ */
+function scanBalancedSegment(text, startIndex, terminators) {
+    let depth = 0;
+    let quote = null;
+    let i = startIndex;
+    while (i < text.length) {
+        const ch = text[i];
+        if (quote) {
+            if (ch === '\\' && i + 1 < text.length) {
+                i += 2;
+                continue;
+            }
+            if (ch === quote) quote = null;
+            i++;
+            continue;
+        }
+        if (ch === '"' || ch === "'" || ch === '`') {
+            quote = ch;
+            i++;
+            continue;
+        }
+        if (ch === '\n') break;
+        if (depth === 0 && terminators.includes(ch)) break;
+        if (ch === '(' || ch === '[' || ch === '{') {
+            depth++;
+        } else if (ch === ')' || ch === ']' || ch === '}') {
+            if (depth === 0) break;
+            depth--;
+        }
+        i++;
+    }
+    return text.slice(startIndex, i);
+}
+
+/**
+ * Liest den Argumenttext eines classList.*(...)-Aufrufs ab der Stelle direkt
+ * nach der oeffnenden Klammer, bis zur zugehoerigen schliessenden Klammer —
+ * ueber mitgefuehrte Klammertiefe statt einer Regex-Ausschlussklasse (WR-01,
+ * Plan 15-09). Ein geklammerter Ausdruck VOR dem Klassenliteral
+ * (`classList.toggle(berechneName(x), 'a')`) geht dadurch nicht mehr
+ * verloren.
+ *
+ * @param {string} text
+ * @param {number} startIndex - Position direkt nach der oeffnenden Klammer
+ * @returns {string}
+ */
+function scanBalancedCallArgs(text, startIndex) {
+    return scanBalancedSegment(text, startIndex, ')');
+}
+
 function addTokensFromValue(tokens, rawValue) {
     // Verbleibende Interpolationsplatzhalter (falls scanClassContextValue
     // nicht verwendet wurde, z. B. aus classList.*-Argumenten) vor dem
@@ -270,8 +362,21 @@ function collectLiveTokens(files) {
             const value = scanClassContextValue(content, m.index + m[0].length, m[1]);
             addTokensFromValue(tokens, value);
         }
+        for (const m of content.matchAll(CLASS_NAME_ASSIGN_STMT_RE)) {
+            const rest = scanBalancedSegment(content, m.index + m[0].length, ';');
+            for (const lit of rest.matchAll(QUOTED_STRING_RE)) {
+                addTokensFromValue(tokens, lit[2]);
+            }
+        }
+        for (const m of content.matchAll(CLASS_KEY_ASSIGN_RE)) {
+            const rest = scanBalancedSegment(content, m.index + m[0].length, ',}');
+            for (const lit of rest.matchAll(QUOTED_STRING_RE)) {
+                addTokensFromValue(tokens, lit[2]);
+            }
+        }
         for (const m of content.matchAll(CLASS_LIST_CALL_RE)) {
-            for (const arg of m[1].matchAll(QUOTED_STRING_RE)) {
+            const argsText = scanBalancedCallArgs(content, m.index + m[0].length);
+            for (const arg of argsText.matchAll(QUOTED_STRING_RE)) {
                 addTokensFromValue(tokens, arg[2]);
             }
         }
@@ -586,7 +691,10 @@ module.exports = {
     LIVE_PREFIXES,
     DEAD_EXCEPTIONS,
     analyze,
-    renderTable
+    renderTable,
+    CLASS_NAME_ASSIGN_STMT_RE,
+    CLASS_KEY_ASSIGN_RE,
+    scanBalancedCallArgs
 };
 
 // ----------------------------------------------------------------------
