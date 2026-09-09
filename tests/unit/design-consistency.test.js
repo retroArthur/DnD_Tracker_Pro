@@ -982,7 +982,7 @@ describe('F-20 — Bewegungsunterdrueckung (Ratsche)', () => {
     // migration.css, pwa.css) wirkungsseitig redundant zur globalen
     // *-Regel mit !important sind und der pwa-Block ueberdies schon vorher
     // inert war (Spezifitaet 0-1-0 gegen .pwa-update-banner[style*="flex"]
-    // mit 0-2-0). Messblock: siehe
+    // mit 0-2-0). Messblock: siehe Messblock 3 in
     // .planning/phases/15-befundlage-vorlauf/15-RATCHET-BASELINE.md.
     const REDUCED_MOTION_BLOCKS_MAX = 1;
 
@@ -1019,7 +1019,8 @@ describe('F-21 — DM-Screen-Widget-Klassen ohne Regel (Ratsche)', () => {
     // dieser Plan D-10 folgt (alle drei Referenzwidgets werden repariert,
     // nicht zwei) und das Wissensgebiete-Widget mit einschliesst.
     //
-    // Messblock: siehe .planning/phases/15-befundlage-vorlauf/15-RATCHET-BASELINE.md.
+    // Messblock: siehe Messblock 4 in
+    // .planning/phases/15-befundlage-vorlauf/15-RATCHET-BASELINE.md.
     const WIDGET_PREFIX = 'dms-';
     const DMS_UNSTYLED_MAX = 7;
 
