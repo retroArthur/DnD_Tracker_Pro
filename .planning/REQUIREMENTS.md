@@ -83,7 +83,7 @@ pytest 24 · `design-consistency.test.js` 64/64 · `DUBLETTEN_MAX` 0 · `IMPORTA
       beschränkt [nur `class="…"`, `className =`, `classList.*`] retten die fünf eingefrorenen
       Präfixe [`color-`, `condition-`, `editor-toolbar-`, `rel-btn-`, `tag-`] gemessen 34.)* Die
       E2E-Suite ist danach grün.
-- [ ] **DEAD-03**: Der Umfang jeder Folgewelle ist nach der Löschung **neu gemessen**, nicht
+- [x] **DEAD-03**: Der Umfang jeder Folgewelle ist nach der Löschung **neu gemessen**, nicht
       fortgeschrieben. Anteile in totem CSS: 52 von 400 `rgba` (13 %), 126 von 784 `em` (16 %),
       14 von 88 `box-shadow` (16 %), 13 von 163 `transition: all` (8 %). Ohne diesen Schritt frieren
       die neuen Ratschen toten Bestand ein.
@@ -344,7 +344,7 @@ pytest 24 · `design-consistency.test.js` 64/64 · `DUBLETTEN_MAX` 0 · `IMPORTA
       (eigenständiges Druckdokument mit `pt`-Einheiten ohne Token-Zugriff) und der Editor-Marker
       (CLAUDE.md verbietet die Änderung ausdrücklich — „der feste dunkle Wert ist Absicht",
       eingefrorenes Testnetz).
-- [ ] **GATE-05**: Nach jeder Welle sind alle Suiten grün (Jest, Playwright, pytest), `python build.py`
+- [x] **GATE-05**: Nach jeder Welle sind alle Suiten grün (Jest, Playwright, pytest), `python build.py`
       läuft durch, und die App ist in **allen vier Themes** gesichtet — die Hälfte dieser Befunde ist
       nur dort zu sehen.
 
@@ -428,13 +428,13 @@ Akzeptanzkriterien heraus. Belege in `HANDOFF-V2-GEGENPROBEN.md`.
 | BASE-04 | Phase 15 | Complete |
 | DEAD-01 | Phase 15 | Complete |
 | DEAD-02 | Phase 15 | Complete |
-| DEAD-03 | Phase 15 | Pending |
+| DEAD-03 | Phase 15 | Complete |
 | FIX-01 | Phase 15 | Complete |
 | FIX-02 | Phase 15 | Complete |
 | FIX-03 | Phase 15 | Complete |
 | GATE-03 | Phase 15 | Complete |
 | GATE-04 | Phase 15 | Complete |
-| GATE-05 | Phase 15 | Pending |
+| GATE-05 | Phase 15 | Complete |
 | COLOR-01 | Phase 16 | Pending |
 | COLOR-02 | Phase 16 | Pending |
 | COLOR-03 | Phase 16 | Pending |

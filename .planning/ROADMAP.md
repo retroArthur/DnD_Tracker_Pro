@@ -136,7 +136,7 @@ Plans:
 
 **Wave 6** *(blocked on Wave 5 completion)*
 
-- [ ] 15-08-PLAN.md — `15-RATCHET-BASELINE.md`, Neuerhebung aller Kennzahlen, Abschlusslauf und Sichtung
+- [x] 15-08-PLAN.md — `15-RATCHET-BASELINE.md`, Neuerhebung aller Kennzahlen, Abschlusslauf und Sichtung
 
 **UI hint**: yes
 
