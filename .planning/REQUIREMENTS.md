@@ -33,7 +33,7 @@ pytest 24 · `design-consistency.test.js` 64/64 · `DUBLETTEN_MAX` 0 · `IMPORTA
 
 ### Befundlage — erst messen, dann ändern
 
-- [x] **BASE-01**: Die 13 Blocker aus `HANDOFF-V2-VERIFIKATION.md` sind schriftlich entschieden,
+- [ ] **BASE-01**: Die 13 Blocker aus `HANDOFF-V2-VERIFIKATION.md` sind schriftlich entschieden,
       jeder mit Begründung und Auswirkung. Drei davon sind beim Milestone-Aufsetzen bereits
       entschieden und als Key Decision in `PROJECT.md` gebucht: **B-01** (Wurzel bleibt bei 16px,
       `--text-*` gegen 16 gerechnet), **B-02** (`--*-text`-Übersteuerungen *innerhalb* der
@@ -63,7 +63,7 @@ pytest 24 · `design-consistency.test.js` 64/64 · `DUBLETTEN_MAX` 0 · `IMPORTA
 
 ### Toter Bestand — was nicht mehr gebraucht wird, wird nicht mitgezählt
 
-- [x] **DEAD-01**: **Die von `tools/css-usage-report.js` gemessene Menge** toter Klassen in
+- [ ] **DEAD-01**: **Die von `tools/css-usage-report.js` gemessene Menge** toter Klassen in
       vollständig toten Regelblöcken ist gelöscht, beginnend mit `dashboard.css:547-1224` — 678
       Zeilen „MAP INTEGRATION" für ein Feature, das im Code nicht mehr existiert (kein Karten-Modul
       in `loader.js`, 0 Treffer für `map-marker`/`map-container` in JS und HTML). *(Korrektur D-20:
@@ -76,7 +76,7 @@ pytest 24 · `design-consistency.test.js` 64/64 · `DUBLETTEN_MAX` 0 · `IMPORTA
       `.shadow-sm/-md/-lg` (`dmscreen.css:1427-1429`, stünde sonst als Dublette zu den geplanten
       `--elev-*`), `.nav-tab-icon`/`.nav-tab-text` (`variables.css:423-432`, das Markup hat keine
       Kind-Spans) und der tote `.pwa-install-banner`.
-- [x] **DEAD-02**: Vor jeder Löschung läuft eine Präfixerkennung für dynamisch zusammengesetzte
+- [ ] **DEAD-02**: Vor jeder Löschung läuft eine Präfixerkennung für dynamisch zusammengesetzte
       Klassennamen (`condition-${…}`), damit nichts gelöscht wird, das nur zur Laufzeit entsteht —
       **die vom Werkzeug gemessene Menge** wird als lebend erkannt. *(Korrektur D-20/D-21: die
       Handoff-Angabe „140 präfixgerettete Klassen" ist nicht reproduzierbar; klassenkontext-
@@ -240,7 +240,7 @@ pytest 24 · `design-consistency.test.js` 64/64 · `DUBLETTEN_MAX` 0 · `IMPORTA
 - [ ] **MOTION-04**: Ob `--ease: cubic-bezier(0.2,0,0.2,1)` die **263 heute impliziten**
       `ease`-Übergänge ersetzt, ist eine eigene, ausdrückliche Freigabe — das ist eine app-weite
       Änderung des Bewegungsgefühls und steht in keinem der drei Handoff-Dokumente als Folge.
-- [x] **MOTION-05**: Der bestehende globale `prefers-reduced-motion`-Block ist nach `core.css`
+- [ ] **MOTION-05**: Der bestehende globale `prefers-reduced-motion`-Block ist nach `core.css`
       verschoben, dort dokumentiert und gegen Rückbau gesichert — ohne Dublette, ohne zusätzliches
       `!important`. `scroll-behavior: auto !important` entfällt ersatzlos: alle 16 Scroll-Stellen
       rufen `scrollIntoView({behavior:'smooth'})` mit explizitem Argument, gegen das CSS nie gewinnt.
@@ -332,12 +332,12 @@ pytest 24 · `design-consistency.test.js` 64/64 · `DUBLETTEN_MAX` 0 · `IMPORTA
       Symmetrie ist perfekt und **durch nichts geschützt**: der bestehende `F-01`-Test bildet eine
       einzige `defined`-Menge über alle Dateien und Blöcke, eine Definition in irgendeinem Block
       genügt ihm.
-- [x] **GATE-03**: Jede neue Ratsche ist beidseitig als rot-machend bewiesen (wie in Phase 14
+- [ ] **GATE-03**: Jede neue Ratsche ist beidseitig als rot-machend bewiesen (wie in Phase 14
       etabliert) und trägt ihren gemessenen Ausgangswert im Kommentar. Ausnahmelisten sind datiert
       und begründet — `T-2` wird als „leer außer den N benannten Ausnahmen" formuliert, nicht als
       Alles-oder-nichts (sonst widersprechen sich `COLOR-08` und `ELEV-04` gegenseitig und keiner
       der beiden Haken ist je setzbar).
-- [x] **GATE-04**: Der Geltungsbereich ist pro Befund entschieden und dokumentiert. Alle
+- [ ] **GATE-04**: Der Geltungsbereich ist pro Befund entschieden und dokumentiert. Alle
       Abnahme-greps enden heute bei `assets/styles/`; außerhalb liegen ~170 Fundstellen:
       7 numerische `rgba` in JS, 39 Inline-`font-size` in 6 Templates und 108 in 29 JS-Dateien,
       16 `font-weight`-Stellen. Zwei harte Ausnahmen bleiben: `features/shops/shop-export.js`
@@ -422,18 +422,18 @@ Akzeptanzkriterien heraus. Belege in `HANDOFF-V2-GEGENPROBEN.md`.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| BASE-01 | Phase 15 | Complete |
+| BASE-01 | Phase 15 | Gaps Found |
 | BASE-02 | Phase 15 | Gaps Found |
 | BASE-03 | Phase 15 | Gaps Found |
 | BASE-04 | Phase 15 | Gaps Found |
-| DEAD-01 | Phase 15 | Complete |
-| DEAD-02 | Phase 15 | Complete |
+| DEAD-01 | Phase 15 | Gaps Found |
+| DEAD-02 | Phase 15 | Gaps Found |
 | DEAD-03 | Phase 15 | Gaps Found |
 | FIX-01 | Phase 15 | Gaps Found |
 | FIX-02 | Phase 15 | Gaps Found |
 | FIX-03 | Phase 15 | Gaps Found |
-| GATE-03 | Phase 15 | Complete |
-| GATE-04 | Phase 15 | Complete |
+| GATE-03 | Phase 15 | Gaps Found |
+| GATE-04 | Phase 15 | Gaps Found |
 | GATE-05 | Phase 15 | Gaps Found |
 | COLOR-01 | Phase 16 | Pending |
 | COLOR-02 | Phase 16 | Pending |
@@ -456,7 +456,7 @@ Akzeptanzkriterien heraus. Belege in `HANDOFF-V2-GEGENPROBEN.md`.
 | MOTION-02 | Phase 17 | Pending |
 | MOTION-03 | Phase 17 | Pending |
 | MOTION-04 | Phase 17 | Pending |
-| MOTION-05 | Phase 15 | Complete |
+| MOTION-05 | Phase 15 | Gaps Found |
 | TYPO-01 | Phase 18 | Pending |
 | TYPO-02 | Phase 18 | Pending |
 | TYPO-03 | Phase 18 | Pending |
