@@ -4,17 +4,17 @@ milestone: v1.3
 milestone_name: Design-System
 current_phase: 15
 current_phase_name: Befundlage & Vorlauf
-status: planning
-stopped_at: Phase 15 planned (8 Pläne, 6 Wellen)
-last_updated: "2026-09-08T19:39:20.294Z"
-last_activity: 2026-09-08
-last_activity_desc: Phase 15 geplant — 8 Pläne, 6 Wellen, Plan-Checker bestanden
-state_head: 21ecb4b4777be068f83d9b781201133b5a267364
+status: executing
+stopped_at: Completed 15-befundlage-vorlauf-01-PLAN.md
+last_updated: "2026-09-09T07:12:38.158Z"
+last_activity: 2026-09-09
+last_activity_desc: Phase 15 execution started
+state_head: a51a12ac0bbcd73568a82fdfe396e768ce783ad5
 progress:
   total_phases: 5
   completed_phases: 0
   total_plans: 8
-  completed_plans: 0
+  completed_plans: 1
   percent: 0
 ---
 
@@ -22,9 +22,9 @@ progress:
 
 **Last Updated:** 2026-09-08
 **Milestone:** v1.3 „Design-System" — 5 Phasen (15–19); Phase 15 geplant, Phasen 16–19 offen
-**Status:** Phase 15 geplant — bereit zur Ausführung
+**Status:** Ready to execute
 
-**Progress:** [░░░░░░░░░░] 0/8 Pläne · 0/5 Phasen — Phase 15 geplant, Ausführung noch offen
+**Progress:** [░░░░░░░░░░] 0%
 
 ---
 
@@ -32,7 +32,7 @@ progress:
 
 **Core Value:** Die App muss am Spieltisch zuverlässig offline laufen — ein Spielleiter-Begleiter, der nie im Weg steht und keine Daten verliert.
 
-**Current Focus:** v1.3 „Design-System" — Phase 15 (Befundlage & Vorlauf) ausführen
+**Current Focus:** Phase 15 — Befundlage & Vorlauf
 
 See: `.planning/PROJECT.md` (Stand 2026-09-08)
 
@@ -40,10 +40,10 @@ See: `.planning/PROJECT.md` (Stand 2026-09-08)
 
 ## Current Position
 
-Phase: 15 (Befundlage & Vorlauf) — READY TO EXECUTE
-Plan: —
+Phase: 15 (Befundlage & Vorlauf) — EXECUTING
+Plan: 2 of 8
 Status: Ready to execute
-Last activity: 2026-09-08 — Phase 15 geplant (8 Pläne, 6 Wellen); Plan-Checker: bestanden, 0 Blocker
+Last activity: 2026-09-09 — Phase 15 execution started
 
 ### Ausgangslage v1.3 — der Handoff ist geprüft, nicht übernommen
 
@@ -160,6 +160,7 @@ die Tastaturprobe der CHECKLISTE muss aus den Akzeptanzkriterien.
 | Phase 14 P08 | 15min | 2 tasks | 2 files |
 | Phase 14 P07 | 25min | 2 tasks | 3 files |
 | Phase 14 P09 | ~35min | 2 tasks | 2 files |
+| Phase 15-befundlage-vorlauf P01 | 25min | 3 tasks | 10 files |
 
 ## Accumulated Context
 
@@ -246,9 +247,9 @@ die Tastaturprobe der CHECKLISTE muss aus den Akzeptanzkriterien.
 
 ## Session Continuity
 
-**Last session:** 2026-09-08T18:04:57.012Z
-**Stopped at:** Phase 15 context gathered
-**Resume file:** .planning/phases/15-befundlage-vorlauf/15-CONTEXT.md
+**Last session:** 2026-09-09T07:12:38.140Z
+**Stopped at:** Completed 15-befundlage-vorlauf-01-PLAN.md
+**Resume file:** None
 
 **Last action:** `/gsd-execute-phase 13` (Plan 13-08, MAINT-06). Converted all 81 originally-counted unfiltered `console.*` calls across 31 `loader.js` MODULES files to the one sanctioned `ErrorHandler.log()` outlet in `render/helpers.js` (marked `gsd:konsolen-senke`), built `tests/unit/console-hygiene.test.js` as a permanent regression guard, and corrected two stale `file-backup-manager.js` header comments that wrongly described the forbidden `window.save` monkey-patch pattern (code has used `registerPostSaveHook()` correctly since Phase 12). Mid-execution finding: converting routine/self-healing diagnostics (data repairs, migration progress, per-tab render guards) to the single outlet elevated them to `console.error` and broke 5 Playwright tests (`editor-formatting.spec.js`, `editor-insert.spec.js`, `import-security.spec.js`) that assert zero console errors — fixed by routing those specific sites through the existing `window.debugLogAdd()` in-app debug panel instead, preserving the single-outlet invariant for genuine faults while not misclassifying normal operation as an error. Full suites green: `npx jest` 1066/1066, `npx playwright test` 321 passed/2 skipped (STATE.md baseline exactly matched), `python build.py` + `--production` + `pytest tests/build` 24/24 all green.
 
@@ -392,6 +393,9 @@ die Tastaturprobe der CHECKLISTE muss aus den Akzeptanzkriterien.
 - [Phase 14]: Phase 14-08: Coverage-Schwellen fuer utils/testable-utils.js einzeln je Metrik gesetzt (branches 89, functions 99, lines 94, statements 92) — Die vier gemessenen Prozentwerte liegen messbar auseinander; ein Pauschalwert waere fuer drei Metriken zu locker oder fuer eine zu eng
 - [Phase 14]: Zulassungsliste fuer tsconfig.strict.json auf 8 statt 17 Dateien korrigiert (Plan 14-07): eine Selbstkonsistenz-Probe gegen die tatsaechliche schmale include-Menge deckte auf, dass 9 der 17 im vollen Kontext gemessenen Kandidaten auf globale Symbole ausgeschlossener Dateien verweisen (EntityLookup, StorageAPI, window.render*-Familie) und dort Fehler werfen.
 - [Phase 14]: Modul-zu-Test-Gate: Pfad-Kriterium statt Basisnamen-Kriterium gewaehlt (78 statt 62 Ausnahmen), da Basisname Zufallstreffer wie npc-generator.js/data-action erzeugt — Eine falsche Abdeckungs-Zusicherung nimmt ein Modul dauerhaft und unsichtbar aus dem Gate; eine laengere, datierte Liste ist sichtbar und schrumpfbar (D-13)
+- [Phase 15]: Rueckbau-Ratsche zaehlt Dateien (readAll+withoutComments), nicht Vorkommen; REDUCED_MOTION_BLOCKS_MAX=1
+- [Phase 15]: PATCHES.md Paragraph 8 und BEFUNDE-v2.md N-08 als VERWORFEN/widerlegt markiert, Originaltext erhalten (D-05)
+- [Phase 15]: MOTION-05 scroll-behavior-Klausel als bereits erfuellt vermerkt (null Treffer gemessen), von Phase 17 auf Phase 15 verschoben
 
 ## Deferred Items
 

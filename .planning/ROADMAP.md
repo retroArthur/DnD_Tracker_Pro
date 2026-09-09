@@ -114,7 +114,7 @@ Zielwerten statt mit totem Ballast und unpassierbaren Ratschen.
 Plans:
 **Wave 1**
 
-- [ ] 15-01-PLAN.md — Tracer: Ratschen-Schleife end-to-end an der Bewegungsunterdrückung (BASE-03, MOTION-05) plus `declarationsOf()`-Ausschluss
+- [x] 15-01-PLAN.md — Tracer: Ratschen-Schleife end-to-end an der Bewegungsunterdrückung (BASE-03, MOTION-05) plus `declarationsOf()`-Ausschluss
 
 **Wave 2** *(blocked on Wave 1 completion)*
 

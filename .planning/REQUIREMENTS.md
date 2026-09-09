@@ -45,7 +45,7 @@ pytest 24 · `design-consistency.test.js` 64/64 · `DUBLETTEN_MAX` 0 · `IMPORTA
       sind **784 in 30 Werten**, nicht ~740 in 20; `rgba(251,191,36,…)` ist **32×**, nicht 44×
       (die 44 enthalten 12× `rgba(251,146,60,…)` = `--orange`, zwei Rollen in einer Zahl);
       §1c nennt „fünf weitere Stellen", es sind **97**.
-- [ ] **BASE-03**: N-08 ist als **widerlegt** geschlossen und §8 aus `PATCHES.md` aus dem
+- [x] **BASE-03**: N-08 ist als **widerlegt** geschlossen und §8 aus `PATCHES.md` aus dem
       Ausführungsumfang genommen und im Dokument als VERWORFEN markiert. Der
       globale `prefers-reduced-motion`-Block existiert seit Langem (`dmscreen.css:1408-1419`,
       Top-Level, in beiden Bundles). Der Patch hätte eine Dublette angelegt (`DUBLETTEN_MAX = 0`
@@ -53,7 +53,7 @@ pytest 24 · `design-consistency.test.js` 64/64 · `DUBLETTEN_MAX` 0 · `IMPORTA
       trifft nichts: `.dice-crit-glow` existiert nirgends im Repo, `.dice-result` ist toter Code.
       Verteidigbarer Rest: den vorhandenen Block nach `core.css` **verschieben** und gegen Rückbau
       sichern — nicht einen zweiten danebenstellen.
-- [ ] **BASE-04**: Jede Ratsche, die eine Welle abschließen soll, ist **vorab mit demselben
+- [x] **BASE-04**: Jede Ratsche, die eine Welle abschließen soll, ist **vorab mit demselben
       Ausdruck gemessen**, den der Test später benutzt. Fünf heute grüne Prüfungen brechen sonst
       an den Patches, ohne dass der Handoff es erwähnt: `F-14` prüft wörtlich
       `color: var(--bg-dark)` in `.btn-primary` (§1b entfernt genau das), `F-01` prüft die
@@ -214,7 +214,7 @@ pytest 24 · `design-consistency.test.js` 64/64 · `DUBLETTEN_MAX` 0 · `IMPORTA
 - [ ] **MOTION-04**: Ob `--ease: cubic-bezier(0.2,0,0.2,1)` die **263 heute impliziten**
       `ease`-Übergänge ersetzt, ist eine eigene, ausdrückliche Freigabe — das ist eine app-weite
       Änderung des Bewegungsgefühls und steht in keinem der drei Handoff-Dokumente als Folge.
-- [ ] **MOTION-05**: Der bestehende globale `prefers-reduced-motion`-Block ist nach `core.css`
+- [x] **MOTION-05**: Der bestehende globale `prefers-reduced-motion`-Block ist nach `core.css`
       verschoben, dort dokumentiert und gegen Rückbau gesichert — ohne Dublette, ohne zusätzliches
       `!important`. `scroll-behavior: auto !important` entfällt ersatzlos: alle 16 Scroll-Stellen
       rufen `scrollIntoView({behavior:'smooth'})` mit explizitem Argument, gegen das CSS nie gewinnt.
@@ -306,7 +306,7 @@ pytest 24 · `design-consistency.test.js` 64/64 · `DUBLETTEN_MAX` 0 · `IMPORTA
       Symmetrie ist perfekt und **durch nichts geschützt**: der bestehende `F-01`-Test bildet eine
       einzige `defined`-Menge über alle Dateien und Blöcke, eine Definition in irgendeinem Block
       genügt ihm.
-- [ ] **GATE-03**: Jede neue Ratsche ist beidseitig als rot-machend bewiesen (wie in Phase 14
+- [x] **GATE-03**: Jede neue Ratsche ist beidseitig als rot-machend bewiesen (wie in Phase 14
       etabliert) und trägt ihren gemessenen Ausgangswert im Kommentar. Ausnahmelisten sind datiert
       und begründet — `T-2` wird als „leer außer den N benannten Ausnahmen" formuliert, nicht als
       Alles-oder-nichts (sonst widersprechen sich `COLOR-08` und `ELEV-04` gegenseitig und keiner
@@ -398,15 +398,15 @@ Akzeptanzkriterien heraus. Belege in `HANDOFF-V2-GEGENPROBEN.md`.
 |-------------|-------|--------|
 | BASE-01 | Phase 15 | Pending |
 | BASE-02 | Phase 15 | Pending |
-| BASE-03 | Phase 15 | Pending |
-| BASE-04 | Phase 15 | Pending |
+| BASE-03 | Phase 15 | Complete |
+| BASE-04 | Phase 15 | Complete |
 | DEAD-01 | Phase 15 | Pending |
 | DEAD-02 | Phase 15 | Pending |
 | DEAD-03 | Phase 15 | Pending |
 | FIX-01 | Phase 15 | Pending |
 | FIX-02 | Phase 15 | Pending |
 | FIX-03 | Phase 15 | Pending |
-| GATE-03 | Phase 15 | Pending |
+| GATE-03 | Phase 15 | Complete |
 | GATE-04 | Phase 15 | Pending |
 | GATE-05 | Phase 15 | Pending |
 | COLOR-01 | Phase 16 | Pending |
@@ -430,7 +430,7 @@ Akzeptanzkriterien heraus. Belege in `HANDOFF-V2-GEGENPROBEN.md`.
 | MOTION-02 | Phase 17 | Pending |
 | MOTION-03 | Phase 17 | Pending |
 | MOTION-04 | Phase 17 | Pending |
-| MOTION-05 | Phase 15 | Pending |
+| MOTION-05 | Phase 15 | Complete |
 | TYPO-01 | Phase 18 | Pending |
 | TYPO-02 | Phase 18 | Pending |
 | TYPO-03 | Phase 18 | Pending |
