@@ -306,39 +306,51 @@ function renderCharacterCard(ch, renderConditionsBar, CATS) {
  * Renders compact spell slot pips
  */
 function renderCompactSpellSlots(ch) {
+    // Kanonische Datenform (features/party/party-crud.js:186, wie
+    // systems/spellslots/spellslots-ui.js sie liest): ch.spellSlots[level] =
+    // { max, current }. Die initialisierende Hilfsfunktion aus
+    // spellslots-ui.js wird hier bewusst NICHT aufgerufen — sie
+    // initialisiert/mutiert das Datenobjekt, und eine Renderfunktion darf den
+    // gespeicherten Zustand nicht als Nebenwirkung des Zeichnens umschreiben
+    // (T-15-11). Defensiver Lesezugriff stattdessen.
     const slots = ch.spellSlots || {};
-    const used = ch.spellSlotsUsed || {};
-    // Check if character has any spell slots
+    // Hat der Charakter ueberhaupt Zauberplaetze (inkl. Zaubertricks)?
     let hasSlots = false;
-    for (let i = 0; i <= 9; i++) {
-        if (slots[i] > 0) {
+    for (let level = 0; level <= 9; level++) {
+        if (slots[level] && slots[level].max > 0) {
             hasSlots = true;
             break;
         }
     }
     if (!hasSlots) return '';
-    let html = '<div class="char-card-slots">';
-    for (let level = 0; level <= 9; level++) {
-        const max = slots[level] || 0;
-        const usedCount = used[level] || 0;
-        const available = max - usedCount;
-        if (max > 0) {
-            html += `<div class="char-slot-group">
-                <span class="char-slot-label">${level === 0 ? '🔮' : level}</span>`;
-            for (let i = 0; i < max; i++) {
-                const isAvailable = i < available;
-                html += `<span class="char-slot-pip ${isAvailable ? 'available' : ''}"
-                    data-action="toggle-spell-slot-stop"
-                    data-char="${ch.id}"
-                    data-level="${level}"
-                    data-index="${i}"
-                    title="${isAvailable ? 'Verfügbar' : 'Verbraucht'}"></span>`;
+    let html = '';
+    // Zaubertricks (Grad 0) — reiner Zaehler ohne Klickaktion, wird nicht
+    // verbraucht (Zielmuster: systems/spellslots/spellslots-ui.js:64-72)
+    const cantrips = slots[0];
+    if (cantrips && cantrips.max > 0) {
+        html += `<span style="margin-right: 10px; display: inline-flex; align-items: center;" title="Bekannte Zaubertricks">`;
+        html += `<span style="font-size: 10px; color: var(--gold); margin-right: 3px;">🔮</span>`;
+        html += `<span style="font-size: 11px; color: var(--purple); font-weight: 600;">${cantrips.max}</span>`;
+        html += `</span>`;
+    }
+    // Grade 1-9 aufsteigend, Pips innerhalb eines Grades aufsteigend nach
+    // Index — die Reihenfolge haengt damit nicht an der Schluesselreihenfolge
+    // des Datenobjekts (FIX-02/ordering)
+    for (let level = 1; level <= 9; level++) {
+        const slot = slots[level];
+        if (slot && slot.max > 0) {
+            html += `<span style="margin-right: 8px; display: inline-flex; align-items: center;">`;
+            html += `<span style="font-size: 10px; color: var(--text-dim); margin-right: 2px;">${level}:</span>`;
+            for (let i = 0; i < slot.max; i++) {
+                const filled = i < slot.current;
+                // Attribute exakt wie ui/event-delegation.js sie liest:
+                // data-id -> ctx.id, data-value -> ctx.value (D-14/D-46)
+                html += `<span class="slot-pip ${filled ? 'filled' : ''}" data-action="toggle-spell-slot-stop" data-id="${ch.id}" data-value="${level}" title="Grad ${level} Slot ${filled ? '(verfügbar)' : '(verbraucht)'}"></span>`;
             }
-            html += '</div>';
+            html += `</span>`;
         }
     }
-    html += '</div>';
-    return html;
+    return `<div class="spell-slots-compact" data-stop-propagation="true">${html}</div>`;
 }
 /**
  * Scroll to character in list
