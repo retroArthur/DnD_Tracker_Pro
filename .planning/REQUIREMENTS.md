@@ -45,8 +45,9 @@ pytest 24 · `design-consistency.test.js` 64/64 · `DUBLETTEN_MAX` 0 · `IMPORTA
       sind **784 in 30 Werten**, nicht ~740 in 20; `rgba(251,191,36,…)` ist **32×**, nicht 44×
       (die 44 enthalten 12× `rgba(251,146,60,…)` = `--orange`, zwei Rollen in einer Zahl);
       §1c nennt „fünf weitere Stellen", es sind **97**.
-- [ ] **BASE-03**: N-08 ist als **widerlegt** geschlossen und §8 aus `PATCHES.md` entfernt. Der
-      globale `prefers-reduced-motion`-Block existiert seit Langem (`dmscreen.css:1408-1414`,
+- [ ] **BASE-03**: N-08 ist als **widerlegt** geschlossen und §8 aus `PATCHES.md` aus dem
+      Ausführungsumfang genommen und im Dokument als VERWORFEN markiert. Der
+      globale `prefers-reduced-motion`-Block existiert seit Langem (`dmscreen.css:1408-1419`,
       Top-Level, in beiden Bundles). Der Patch hätte eine Dublette angelegt (`DUBLETTEN_MAX = 0`
       bricht), `!important` auf 110 statt der angewiesenen 109 gehoben, und seine Ausnahmeliste
       trifft nichts: `.dice-crit-glow` existiert nirgends im Repo, `.dice-result` ist toter Code.
@@ -217,6 +218,10 @@ pytest 24 · `design-consistency.test.js` 64/64 · `DUBLETTEN_MAX` 0 · `IMPORTA
       verschoben, dort dokumentiert und gegen Rückbau gesichert — ohne Dublette, ohne zusätzliches
       `!important`. `scroll-behavior: auto !important` entfällt ersatzlos: alle 16 Scroll-Stellen
       rufen `scrollIntoView({behavior:'smooth'})` mit explizitem Argument, gegen das CSS nie gewinnt.
+      **Bereits erfüllt (nachgemessen, Plan 15-01):** im gesamten Verzeichnis `assets/styles/`
+      gibt es keine einzige `scroll-behavior: auto !important`-Deklaration (null Treffer); der
+      einzige ähnliche Fund ist `core.css`s `overscroll-behavior: contain`, eine andere
+      Eigenschaft. Dieser Teil des Requirements verlangt keine weitere Ausführung.
 
 ### Typografie — eine Skala statt 55 Größen
 
@@ -425,7 +430,7 @@ Akzeptanzkriterien heraus. Belege in `HANDOFF-V2-GEGENPROBEN.md`.
 | MOTION-02 | Phase 17 | Pending |
 | MOTION-03 | Phase 17 | Pending |
 | MOTION-04 | Phase 17 | Pending |
-| MOTION-05 | Phase 17 | Pending |
+| MOTION-05 | Phase 15 | Pending |
 | TYPO-01 | Phase 18 | Pending |
 | TYPO-02 | Phase 18 | Pending |
 | TYPO-03 | Phase 18 | Pending |

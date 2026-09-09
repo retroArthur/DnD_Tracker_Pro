@@ -237,6 +237,12 @@ wenn das Betriebssystem „weniger Bewegung" meldet.
 `transition-duration` global auf 0,01 ms setzt; die Animationen, die
 Information tragen (Würfelergebnis), namentlich ausnehmen. → `PATCHES.md` §8
 
+**WIDERLEGT (B-07, 2026-09-08):** Der beschriebene Block existiert bereits seit Langem
+in `assets/styles/dmscreen.css` (gemessene Spanne 1408-1419), Top-Level, app-weit
+wirksam — dieser Befund ist geschlossen, nicht ausgeführt. Details:
+`.planning/HANDOFF-V2-VERIFIKATION.md` Blocker B-07, und der VERWORFEN-Block in
+`PATCHES.md` §8.
+
 ## N-09 · Niedrig — zwei Zähler in der Zauber-Ansicht
 
 ```

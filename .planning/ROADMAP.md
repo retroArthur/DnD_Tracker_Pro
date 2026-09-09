@@ -100,11 +100,11 @@ entschieden werden. Details: `REQUIREMENTS.md`, `HANDOFF-V2-VERIFIKATION.md`.
 bereinigte, fehlerfreie CSS-Basis — jede spätere Welle startet mit richtigen Ausgangs- und
 Zielwerten statt mit totem Ballast und unpassierbaren Ratschen.
 **Depends on**: Nothing (erste Phase des Milestones, folgt auf Phase 14)
-**Requirements**: BASE-01, BASE-02, BASE-03, BASE-04, DEAD-01, DEAD-02, DEAD-03, FIX-01, FIX-02, FIX-03, GATE-03, GATE-04, GATE-05
+**Requirements**: BASE-01, BASE-02, BASE-03, BASE-04, DEAD-01, DEAD-02, DEAD-03, FIX-01, FIX-02, FIX-03, GATE-03, GATE-04, GATE-05, MOTION-05
 **Success Criteria** (what must be TRUE):
 
   1. Alle 13 Blocker (B-01..B-13) stehen als entschiedene, begründete Einträge (drei — B-01/B-02/B-07 — bereits als Key Decision in `PROJECT.md` gebucht); §8 aus `PATCHES.md` ist entfernt, N-08 als widerlegt geschlossen.
-  2. `grep -rn "prefers-reduced-motion" assets/styles/` zeigt genau einen Top-Level-Block, jetzt in `core.css`, dokumentiert und gegen Rückbau gesichert (Ausgangslage: `dmscreen.css:1408-1414`) — keine Dublette, `DUBLETTEN_MAX` bleibt 0.
+  2. `grep -rn "prefers-reduced-motion" assets/styles/` zeigt genau einen Top-Level-Block, neu angelegt in `core.css` (Ausgangslage: vier Top-Level-Blöcke, u. a. `dmscreen.css:1408-1419`, keiner in `core.css` — vier Entfernungen und eine Neuanlage, kein Umzug), dokumentiert und gegen Rückbau gesichert — keine Dublette, `DUBLETTEN_MAX` bleibt 0.
   3. Der Löschlauf (mit Präfixerkennung für dynamisch zusammengesetzte Klassennamen wie `condition-${…}`) senkt `assets/styles/` um rund 3.174 Zeilen (438 tote Klassen in 607 Regelblöcken, u. a. `dashboard.css:547-1224`); danach bleiben Jest 1217/1217, Playwright 354 (2 skipped) und `design-consistency.test.js` 64/64 grün, `pytest tests/build` 24/24 grün, `python build.py` und `python build.py --production` laufen durch.
   4. Im gebauten Bündel: `.dms-terrain-item` trägt padding/background/border-radius ≠ 0 und `.dms-skill-header.str` trägt background ≠ transparent (DM-Screen-Referenzwidgets „Gelände"/„Wissensgebiete" gestylt); `.char-slot-pip` hat eine definierte, klickbare Breite > 0; nach einem Würfelwurf in der Haupt-Würfelansicht behält `#dice-hero-result` `font-size: 5em`/`color: var(--gold)`, und Crit-/Fumble-Färbung ist sichtbar.
   5. Jede neue Ratsche dieser und aller Folgephasen ist vorab beidseitig rot-grün bewiesen und trägt ihren gemessenen Ausgangswert im Kommentar (GATE-03); der Geltungsbereich CSS vs. JS/Templates ist pro Befund vorab entschieden und dokumentiert (GATE-04, u. a. die ~170 Fundstellen außerhalb `assets/styles/`); nach jeder Folgewelle sind alle Suiten grün, der Build läuft durch, und die App ist in allen vier Themes gesichtet (GATE-05).
@@ -179,7 +179,7 @@ in allen vier Themes. Braucht Sichtprüfung in allen vier Themes, nicht nur Test
 Übergänge sind gezielt statt pauschal — ohne die elf Fälle zu verlieren, die heute unter `all` die
 sichtbare Arbeit leisten.
 **Depends on**: Phase 16 (Trägerflächen-Urteile werden geteilt; 1px-Haarlinien stehen teils in derselben Deklaration wie ein Schatten)
-**Requirements**: ELEV-01, ELEV-02, ELEV-03, ELEV-04, MOTION-01, MOTION-02, MOTION-03, MOTION-04, MOTION-05
+**Requirements**: ELEV-01, ELEV-02, ELEV-03, ELEV-04, MOTION-01, MOTION-02, MOTION-03, MOTION-04
 **Success Criteria** (what must be TRUE):
 
   1. `box-shadow` kommt aus vier Höhenstufen-Tokens (Ausgangswert: 88 Deklarationen, 65 verschiedene Werte, 58 mit hartem `rgba(0,0,0,…)`, `var(--shadow)` genau 1× benutzt) oder aus den 22 benannten Sonderfällen (9 farbige Glühe, 4 goldene Zustands-Schlagschatten, 4 Tabellenzeilen-Größen, 1 negativer X-Offset, 2 `@keyframes`-Zustände).

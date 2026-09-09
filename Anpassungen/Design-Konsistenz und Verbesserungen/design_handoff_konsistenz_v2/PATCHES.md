@@ -327,6 +327,24 @@ Eine Stelle hat **keinen** sichtbaren Ersatz und muss einen bekommen:
 
 ## §8 · N-08 — `prefers-reduced-motion`
 
+**VERWORFEN (B-07, 2026-09-08)** — N-08 ist widerlegt, dieser Patch wurde NICHT ausgeführt.
+Begründung:
+
+1. Der globale Block existiert bereits seit Langem in `assets/styles/dmscreen.css`
+   (gemessene Spanne 1408-1419), Top-Level, wirkt app-weit — dieser Patch hätte ihn
+   dupliziert, nicht neu angelegt.
+2. Der Patch hätte eine Dublette erzeugt und damit die Ratsche für Dubletten von
+   `DUBLETTEN_MAX = 0` auf 1 gehoben.
+3. Der Patch hätte die Zahl der `!important`-Deklarationen von 105 auf 110 gehoben,
+   statt auf die angewiesenen 109.
+4. Seine Ausnahmeliste trifft nichts: `.dice-crit-glow` existiert nirgends im Repo,
+   `.dice-result` ist toter Code.
+
+Ausgeführt wurde stattdessen: vier Entfernungen (`command-palette.css`, `dmscreen.css`,
+`migration.css`, `pwa.css`) und eine Neuanlage des einen verbliebenen globalen Blocks in
+`core.css`, plus eine Rückbau-Ratsche (`REDUCED_MOTION_BLOCKS_MAX`, Plan 15-01, Task 1).
+Siehe `.planning/HANDOFF-V2-VERIFIKATION.md` Blocker B-07.
+
 Am Ende von `core.css`:
 
 ```css
