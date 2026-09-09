@@ -304,12 +304,6 @@
     gap: 10px;
 }
 
-.dice-fav-title {
-    font-weight: 600;
-    color: var(--gold);
-    margin-bottom: 8px;
-}
-
 .dice-fav-list,
 .dice-favorites-list {
     display: flex;
@@ -475,56 +469,6 @@
     margin-top: 8px;
 }
 
-.dice-skill {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 6px 10px;
-    background: var(--bg-elevated);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-md);
-    cursor: pointer;
-    font-size: 0.8em;
-    transition: all 0.2s;
-}
-
-.dice-skill:hover {
-    background: var(--bg-hover);
-    border-color: var(--green);
-}
-
-.dice-skill-name {
-    color: var(--text);
-}
-
-.dice-skill-mod {
-    color: var(--green);
-    font-weight: 600;
-}
-
-/* Dice History */
-.dice-history {
-    margin-top: 16px;
-    max-height: 200px; /* F-18: aus der Dublette uebernommen */
-    overflow-y: auto; /* F-18: aus der Dublette uebernommen */
-    font-size: 0.85em; /* F-18: aus der Dublette uebernommen */
-}
-
-.dice-history-title {
-    font-weight: 600;
-    color: var(--text-dim);
-    margin-bottom: 8px;
-    font-size: 0.9em;
-}
-
-.dice-history-list {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    max-height: 200px;
-    overflow-y: auto;
-}
-
 .dice-history-item {
     display: flex;
     justify-content: space-between;
@@ -537,11 +481,6 @@
     gap: 8px; /* F-18: aus der Dublette uebernommen */
     cursor: pointer; /* F-18: aus der Dublette uebernommen */
     transition: all 0.2s; /* F-18: aus der Dublette uebernommen */
-}
-
-.dice-history-formula {
-    color: var(--text-dim);
-    font-family: var(--font-mono);
 }
 
 .dice-history-result {
