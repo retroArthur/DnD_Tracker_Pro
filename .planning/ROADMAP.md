@@ -109,7 +109,7 @@ Zielwerten statt mit totem Ballast und unpassierbaren Ratschen.
   4. Im gebauten Bündel: `.dms-terrain-item` trägt padding/background/border-radius ≠ 0 und `.dms-skill-header.str` trägt background ≠ transparent (DM-Screen-Referenzwidgets „Gelände"/„Fertigkeiten" gestylt — *Korrektur D-12: hier stand zuvor „Wissensgebiete", obwohl `.dms-skill-header.str` zum Fertigkeiten-Widget gehört*); der Zauberplatz-Pip im kompakten Zauberplatz-Container der Charakterkarte (`.char-card-slots .slot-pip`, der gemessene Nachfolgeselektor — *Korrektur D-15: `.char-slot-pip` verschwindet mit FIX-02 aus dem Markup, der geprüfte Sachverhalt bleibt unverändert*) hat eine definierte, klickbare Breite > 0, UND ein Klick auf den Pip ändert nachweislich den persistierten Zauberplatz-Zustand des Charakters; nach einem Würfelwurf in der Haupt-Würfelansicht behält `#dice-hero-result` `font-size: 5em`/`color: var(--gold)`, und Crit-/Fumble-Färbung ist sichtbar.
   5. Jede neue Ratsche dieser und aller Folgephasen ist vorab beidseitig rot-grün bewiesen und trägt ihren gemessenen Ausgangswert im Kommentar (GATE-03); der Geltungsbereich CSS vs. JS/Templates ist pro Befund vorab entschieden und dokumentiert (GATE-04, u. a. die ~170 Fundstellen außerhalb `assets/styles/`); die Abnahme läuft **dreistufig** (GATE-05, Entscheidung D-53, gebucht in `PROJECT.md` § Blocker-Entscheidungen v1.3) statt einer vollen Vier-Themes-Sichtung nach jeder Welle: Stufe 1 automatisch nach jeder Welle (alle Suiten grün, Build läuft durch, GATE-01-Harness über vier Themes), Stufe 2 eine Screenshot-Serie über die Stellenliste der Welle mal vier Themes, Stufe 3 menschlich — volle Runde nach den Phasen 16/17/18, gezielte Stellenliste nach 15 und 19. Diese Absenkung ist eine ausdrückliche, gebuchte Abweichung, kein stillschweigendes Unterlaufen der Abnahme.
 
-**Plans**: 8 plans in 6 waves
+**Plans**: 3/8 plans executed in 6 waves
 
 Plans:
 **Wave 1**
@@ -119,7 +119,7 @@ Plans:
 **Wave 2** *(blocked on Wave 1 completion)*
 
 - [ ] 15-02-PLAN.md — Die 13 Blocker in PROJECT.md buchen, GATE-04 setzen, Abnahmeform GATE-05 festschreiben
-- [ ] 15-03-PLAN.md — Korrigierte Kennzahlen in den Handoff, Anker als Tripel, ROADMAP/REQUIREMENTS nachführen, Canonical refs
+- [x] 15-03-PLAN.md — Korrigierte Kennzahlen in den Handoff, Anker als Tripel, ROADMAP/REQUIREMENTS nachführen, Canonical refs
 - [x] 15-04-PLAN.md — FIX-01: die drei DM-Screen-Referenzwidgets gestylt, neuer Abnahme-Spec, `DMS_UNSTYLED_MAX`
 
 **Wave 3** *(blocked on Wave 2 completion)*
@@ -256,7 +256,7 @@ der CHECKLISTE ist deshalb nicht abnehmbar und aus den Akzeptanzkriterien heraus
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 15. Befundlage & Vorlauf | 0/8 | Planned | - |
+| 15. Befundlage & Vorlauf | 3/8 | In Progress|  |
 | 16. Farbe | –/TBD | Not started | - |
 | 17. Schatten & Bewegung | –/TBD | Not started | - |
 | 18. Typografie | –/TBD | Not started | - |

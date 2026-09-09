@@ -38,7 +38,7 @@ pytest 24 · `design-consistency.test.js` 64/64 · `DUBLETTEN_MAX` 0 · `IMPORTA
       entschieden und als Key Decision in `PROJECT.md` gebucht: **B-01** (Wurzel bleibt bei 16px,
       `--text-*` gegen 16 gerechnet), **B-02** (`--*-text`-Übersteuerungen *innerhalb* der
       bestehenden Theme-Blöcke), **B-07** (§8 gestrichen). Die übrigen zehn sind offen.
-- [ ] **BASE-02**: Die 36 korrigierten Kennzahlen sind in `BEFUNDE-v2.md`, `PATCHES.md` und
+- [x] **BASE-02**: Die 36 korrigierten Kennzahlen sind in `BEFUNDE-v2.md`, `PATCHES.md` und
       `CHECKLISTE.md` eingearbeitet, damit keine Welle mit falschen Ausgangs- oder Zielzahlen
       beginnt. Kernfälle: `transition: all` ist **163**, nicht 151 (der Abnahme-grep der CHECKLISTE
       findet alle 163 — die Abnahme ist heute strenger als die eigene Anweisung); `em`-Fundstellen
@@ -423,7 +423,7 @@ Akzeptanzkriterien heraus. Belege in `HANDOFF-V2-GEGENPROBEN.md`.
 | Requirement | Phase | Status |
 |-------------|-------|--------|
 | BASE-01 | Phase 15 | Pending |
-| BASE-02 | Phase 15 | Pending |
+| BASE-02 | Phase 15 | Complete |
 | BASE-03 | Phase 15 | Complete |
 | BASE-04 | Phase 15 | Complete |
 | DEAD-01 | Phase 15 | Pending |

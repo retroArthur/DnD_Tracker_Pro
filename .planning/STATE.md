@@ -5,16 +5,16 @@ milestone_name: Design-System
 current_phase: 15
 current_phase_name: Befundlage & Vorlauf
 status: executing
-stopped_at: Completed 15-befundlage-vorlauf-04-PLAN.md
-last_updated: "2026-09-09T07:32:06.648Z"
+stopped_at: Completed 15-befundlage-vorlauf-03-PLAN.md
+last_updated: "2026-09-09T07:58:42.000Z"
 last_activity: 2026-09-09
 last_activity_desc: Phase 15 execution started
-state_head: 5a186791ff35aaf9e1d19c2b9bd2b011969f6d95
+state_head: 8b7dbc86eea4acc8ae756d210a394c4a59afffce
 progress:
   total_phases: 5
   completed_phases: 0
   total_plans: 8
-  completed_plans: 2
+  completed_plans: 3
   percent: 0
 ---
 
@@ -41,7 +41,7 @@ See: `.planning/PROJECT.md` (Stand 2026-09-08)
 ## Current Position
 
 Phase: 15 (Befundlage & Vorlauf) — EXECUTING
-Plan: 3 of 8
+Plan: 4 of 8
 Status: Ready to execute
 Last activity: 2026-09-09 — Phase 15 execution started
 
@@ -162,6 +162,7 @@ die Tastaturprobe der CHECKLISTE muss aus den Akzeptanzkriterien.
 | Phase 14 P09 | ~35min | 2 tasks | 2 files |
 | Phase 15-befundlage-vorlauf P01 | 25min | 3 tasks | 10 files |
 | Phase 15-befundlage-vorlauf P04 | ~35min | 3 tasks | 3 files |
+| Phase 15-befundlage-vorlauf P03 | ~55min | 3 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -248,8 +249,8 @@ die Tastaturprobe der CHECKLISTE muss aus den Akzeptanzkriterien.
 
 ## Session Continuity
 
-**Last session:** 2026-09-09T07:32:06.610Z
-**Stopped at:** Completed 15-befundlage-vorlauf-04-PLAN.md
+**Last session:** 2026-09-09T07:58:41.981Z
+**Stopped at:** Completed 15-befundlage-vorlauf-03-PLAN.md
 **Resume file:** None
 
 **Last action:** `/gsd-execute-phase 13` (Plan 13-08, MAINT-06). Converted all 81 originally-counted unfiltered `console.*` calls across 31 `loader.js` MODULES files to the one sanctioned `ErrorHandler.log()` outlet in `render/helpers.js` (marked `gsd:konsolen-senke`), built `tests/unit/console-hygiene.test.js` as a permanent regression guard, and corrected two stale `file-backup-manager.js` header comments that wrongly described the forbidden `window.save` monkey-patch pattern (code has used `registerPostSaveHook()` correctly since Phase 12). Mid-execution finding: converting routine/self-healing diagnostics (data repairs, migration progress, per-tab render guards) to the single outlet elevated them to `console.error` and broke 5 Playwright tests (`editor-formatting.spec.js`, `editor-insert.spec.js`, `import-security.spec.js`) that assert zero console errors — fixed by routing those specific sites through the existing `window.debugLogAdd()` in-app debug panel instead, preserving the single-outlet invariant for genuine faults while not misclassifying normal operation as an error. Full suites green: `npx jest` 1066/1066, `npx playwright test` 321 passed/2 skipped (STATE.md baseline exactly matched), `python build.py` + `--production` + `pytest tests/build` 24/24 all green.
@@ -398,6 +399,8 @@ die Tastaturprobe der CHECKLISTE muss aus den Akzeptanzkriterien.
 - [Phase 15]: PATCHES.md Paragraph 8 und BEFUNDE-v2.md N-08 als VERWORFEN/widerlegt markiert, Originaltext erhalten (D-05)
 - [Phase 15]: MOTION-05 scroll-behavior-Klausel als bereits erfuellt vermerkt (null Treffer gemessen), von Phase 17 auf Phase 15 verschoben
 - [Phase 15]: D-10 schlaegt die widerspruechliche Deferred-Ideas-Notiz: alle drei DM-Screen-Referenzwidgets (Gelaende, Fertigkeiten, Wissensgebiete) werden repariert, nicht zwei; DMS_UNSTYLED_MAX misst 7 statt der urspruenglich erwarteten 9
+- [Phase 15]: 15-03: .char-card-slots .slot-pip als Nachfolgeselektor fuer Erfolgskriterium 4 (selbst erhoben, weicht von 15-CONTEXT D-15s .spell-slots-compact ab) — party-render.js erzeugt .char-card-slots, nicht .spell-slots-compact; letzteres gehoert zu einer anderen, ungenutzten Komponente
+- [Phase 15]: 15-03: Loeschzahlen in DEAD-01/ROADMAP-SC3 durch 'die vom Werkzeug tools/css-usage-report.js gemessene Menge' ersetzt statt einer neuen Schaetzzahl — die drei kolportierten Zahlen (438/607/~3174) sind in drei unabhaengigen Nachmessungen nicht reproduziert worden
 
 ## Deferred Items
 
