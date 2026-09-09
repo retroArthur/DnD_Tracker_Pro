@@ -331,19 +331,6 @@
     border: 1px solid var(--border);
 }
 
-.npcg-field-label {
-    font-size: 13px;
-    color: var(--text-dim);
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    margin-bottom: 4px;
-}
-
-.npcg-field-value {
-    color: var(--text);
-    margin-bottom: var(--space-sm);
-}
-
 #kalender-monat-anzeige {
     font-weight: 700;
 }
@@ -704,40 +691,6 @@
     .rs-config-field-sm {
         flex: 1;
     }
-}
-
-.fr-card-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: var(--space-sm);
-}
-
-.fr-ruf-wert {
-    font-size: 14px;
-    color: var(--text-dim);
-    margin-left: 8px;
-}
-
-.fr-ruf-btn {
-    padding: 4px 8px;
-    border-radius: var(--radius-md);
-    border: 1px solid var(--border);
-    background: var(--surface);
-    cursor: pointer;
-    font-size: 14px;
-    color: var(--text);
-}
-
-.fr-ruf-btn:hover {
-    background: var(--surface-hover, var(--border));
-}
-
-.fr-history-entry {
-    font-size: 13px;
-    color: var(--text-dim);
-    padding: 4px 0;
-    border-top: 1px solid var(--border);
 }
 
 /* ========================================
@@ -1122,14 +1075,6 @@
     min-width: 40px;
     text-align: right;
     flex-shrink: 0;
-}
-
-.fr-hist-plus {
-    color: var(--green);
-}
-
-.fr-hist-minus {
-    color: var(--red);
 }
 
 .fr-hist-grund {
