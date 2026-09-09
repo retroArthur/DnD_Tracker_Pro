@@ -3,7 +3,7 @@
 Out-of-scope discoveries found during plan execution, logged per the executor's
 scope-boundary rule instead of auto-fixed (not directly caused by the task at hand).
 
-## 1. ROADMAP.md Erfolgskriterium 5 beschreibt eine bereits abgelehnte GATE-05-Reduktion
+## 1. [ERLEDIGT 2026-09-09] ROADMAP.md Erfolgskriterium 5 beschrieb eine bereits abgelehnte GATE-05-Reduktion
 
 **Found during:** Plan 15-05, Task 3 (read_first las `.planning/PROJECT.md` § GATE-05)
 
@@ -21,7 +21,12 @@ Orchestrator explizit als Teil dieses Plans benannt, Kriterium 5 nicht — die D
 nicht durch eine Änderung dieses Plans verursacht (Scope-Boundary-Regel: nur direkt vom
 aktuellen Task verursachte Probleme werden automatisch behoben).
 
-**Empfehlung:** `.planning/ROADMAP.md` Phase-15-Erfolgskriterium 5 auf die in `PROJECT.md` §
+**Erledigt:** Der Orchestrator hat Erfolgskriterium 5 direkt nach Welle 3 auf die verbindliche
+Form nachgezogen (fünf volle Vier-Themes-Runden, keine Reduktion), mit der D-53-Ablehnung als
+sichtbarer Korrekturnotiz daneben. Ursache war die Reihenfolge: 15-03 schrieb das Kriterium,
+bevor die Checkpoint-Antwort zu 15-02 vorlag.
+
+**Ursprüngliche Empfehlung:** `.planning/ROADMAP.md` Phase-15-Erfolgskriterium 5 auf die in `PROJECT.md` §
 GATE-05 dokumentierte, verbindliche Form (fünf volle Runden, eine nach jeder Phase, keine
 Reduktion) nachziehen — z. B. als kleiner Dokumentations-Task in einem der verbleibenden
 Phase-15-Pläne (15-06/15-07/15-08) oder vor `/gsd-verify-work 15`.
