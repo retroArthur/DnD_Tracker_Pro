@@ -988,7 +988,15 @@
             background: var(--bg-dark);
             border-radius: 0 0 var(--radius-lg) var(--radius-lg);
         }
-        
+
+        /* NPC List View */
+        .npc-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+            gap: 16px;
+            align-items: start;
+        }
+
         /* Collapsed State für NPC-Karten */
         .npc-list-card.collapsed .npc-card-body,
         .npc-list-card.collapsed .npc-card-footer {

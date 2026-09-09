@@ -12,7 +12,14 @@
             background: var(--bg-elevated);
             color: var(--cyan);
         }
-        
+
+        /* Listenansicht Container */
+        .list-view-container {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
         .list-view-row.expanded {
             border-color: var(--cyan);
             background: var(--bg-elevated);
