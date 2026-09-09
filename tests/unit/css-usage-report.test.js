@@ -326,7 +326,7 @@ describe('css-usage-report — renderTable() und JSON-Form', () => {
 
 describe('css-usage-report — CR-01/WR-01: die bewiesene Blindstelle (Plan 15-09, Task 1)', () => {
     test('CR-01a: eine Zuweisung an die Klassenlisten-Eigenschaft mit einer Ternary rechts vom Gleichheitszeichen haelt BEIDE Zweige lebendig', () => {
-        // Reale Form aus ui/dom-builder.js:393 —
+        // Reale Form aus dom-builder.js (im ui/-Verzeichnis), Zeile 393 —
         // `container.className = options.viewMode === 'list' ? 'list-view-container' : 'npc-grid';`
         const cssFiles = [
             {
@@ -345,7 +345,7 @@ describe('css-usage-report — CR-01/WR-01: die bewiesene Blindstelle (Plan 15-0
     });
 
     test('CR-01b: ein Objektschluessel "containerClass:" mit einer Ternary haelt BEIDE Zweige lebendig', () => {
-        // Reale Form aus ui/safe-render.js:360 —
+        // Reale Form aus safe-render.js (im ui/-Verzeichnis), Zeile 360 —
         // `containerClass: options.viewMode === 'list' ? 'list-view-container' : 'npc-grid',`
         const cssFiles = [
             {
