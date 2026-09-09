@@ -489,48 +489,7 @@
         .link-info { flex: 1; }
         .link-title { font-weight: 600; color: var(--cyan); }
         .link-url { font-size: 0.75em; color: var(--text-dim); word-break: break-all; }
-        
-        /* ============================================================
-           QUICK NOTES
-           ============================================================ */
-        .quick-panel {
-            position: fixed;
-            bottom: 16px;
-            right: 16px;
-            width: 280px;
-            background: var(--bg-card);
-            border: 2px solid var(--gold);
-            border-radius: var(--radius-md);
-            box-shadow: 0 4px 20px rgba(0,0,0,0.4);
-            z-index: var(--z-panel);
-        }
-        
-        .quick-panel-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 8px 12px;
-            background: var(--bg-elevated);
-            border-radius: var(--radius-md) var(--radius-md) 0 0;
-            cursor: pointer;
-        }
-        
-        .quick-panel-title { color: var(--gold); font-weight: 600; font-size: 0.9em; }
-        
-        .quick-panel-content { padding: 10px; display: none; }
         .quick-panel.open .quick-panel-content { display: block; }
-        
-        .quick-panel textarea {
-            width: 100%;
-            min-height: 80px;
-            background: var(--bg-dark);
-            border: 1px solid var(--border);
-            color: var(--text);
-            padding: 8px;
-            border-radius: var(--radius-sm);
-            resize: vertical;
-            font-size: 12px;
-        }
         
         /* Event Log (ersetzt Toast) */
         .event-log {
@@ -1066,103 +1025,12 @@
             color: var(--gold);
         }
         
-        /* Legacy wiki styles for compatibility */
-        .wiki-list {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
-        
-        .wiki-entry {
-            background: var(--bg-card);
-            border: 1px solid var(--border);
-            border-radius: var(--radius-md);
-            overflow: hidden;
-            border-left: 3px solid var(--purple);
-        }
-        
-        .wiki-entry.pinned {
-            border-left-color: var(--gold);
-        }
-        
-        .wiki-entry-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 12px 14px;
-            cursor: pointer;
-            transition: background 0.2s;
-        }
-        
-        .wiki-entry-header:hover {
-            background: rgba(168, 85, 247, 0.1);
-        }
-        
-        .wiki-entry.pinned .wiki-entry-header:hover {
-            background: rgba(251, 191, 36, 0.1);
-        }
-        
-        .wiki-entry-title-row {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            flex: 1;
-        }
-        
-        .wiki-entry-icon {
-            font-size: 1.2em;
-        }
-        
-        .wiki-entry-title {
-            font-weight: 600;
-            color: var(--text);
-        }
-        
-        .wiki-entry-category {
-            font-size: 0.75em;
-            color: var(--purple);
-            background: rgba(168, 85, 247, 0.15);
-            padding: 2px 8px;
-            border-radius: var(--radius-sm);
-        }
-        
-        .wiki-entry-pin {
-            color: var(--gold);
-            font-size: 0.9em;
-        }
-        
-        .wiki-entry-toggle {
-            color: var(--text-dim);
-            font-size: 12px;
-            margin-left: 8px;
-            transition: transform 0.2s;
-        }
-        
-        .wiki-entry-content {
-            display: none;
-            padding: 0 14px 14px 14px;
-            border-top: 1px solid var(--border);
-        }
-        
         .wiki-entry.expanded .wiki-entry-content {
             display: block;
         }
         
         .wiki-entry.expanded .wiki-entry-toggle {
             transform: rotate(90deg);
-        }
-        
-        .wiki-entry-body {
-            margin: 12px 0;
-            line-height: 1.6;
-            color: var(--text);
-        }
-        
-        .wiki-entry-tags {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 6px;
-            margin: 10px 0;
         }
         
         .wiki-tag {
@@ -1179,44 +1047,10 @@
             color: var(--bg-dark);
         }
         
-        .wiki-links-section {
-            margin-top: 12px;
-            padding-top: 10px;
-            border-top: 1px dashed var(--border);
-            font-size: 0.85em;
-        }
-        
-        .wiki-links-label {
-            color: var(--text-dim);
-            font-size: 0.8em;
-            margin-bottom: 4px;
-        }
-        
-        .wiki-backlinks, .wiki-outlinks {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 6px;
-            margin-bottom: 8px;
-        }
-        
         .wiki-link.missing {
             color: var(--red);
             background: rgba(239, 68, 68, 0.1);
             text-decoration: line-through;
-        }
-        
-        .wiki-entry-footer {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-top: 12px;
-            padding-top: 10px;
-            border-top: 1px solid var(--border);
-        }
-        
-        .wiki-entry-meta {
-            font-size: 0.75em;
-            color: var(--text-dim);
         }
         
         /* ============================================================
@@ -1970,10 +1804,6 @@
 
     .cf-slots-grid {
         grid-template-columns: repeat(5, 1fr);
-    }
-
-    .cf-bottom-grid {
-        grid-template-columns: 1fr;
     }
 
     .cf-bottom-grid > .cf-notes-panel {
