@@ -5,16 +5,16 @@ milestone_name: Design-System
 current_phase: 15
 current_phase_name: Befundlage & Vorlauf
 status: executing
-stopped_at: Completed 15-befundlage-vorlauf-05-PLAN.md
-last_updated: "2026-09-09T09:11:24.576Z"
+stopped_at: Completed 15-befundlage-vorlauf-06-PLAN.md
+last_updated: "2026-09-09T10:00:35.222Z"
 last_activity: 2026-09-09
 last_activity_desc: Phase 15 execution started
-state_head: 69496af4a2a08002ec78981be703c9ef152506e1
+state_head: 4e34fa84242aaf4011e3688ddbc815f1e656c885
 progress:
   total_phases: 5
   completed_phases: 0
   total_plans: 8
-  completed_plans: 5
+  completed_plans: 6
   percent: 0
 ---
 
@@ -41,7 +41,7 @@ See: `.planning/PROJECT.md` (Stand 2026-09-08)
 ## Current Position
 
 Phase: 15 (Befundlage & Vorlauf) — EXECUTING
-Plan: 6 of 8
+Plan: 7 of 8
 Status: Ready to execute
 Last activity: 2026-09-09 — Phase 15 execution started
 
@@ -165,6 +165,7 @@ die Tastaturprobe der CHECKLISTE muss aus den Akzeptanzkriterien.
 | Phase 15-befundlage-vorlauf P03 | ~55min | 3 tasks | 6 files |
 | Phase 15-befundlage-vorlauf P02 | ~40min | 3 tasks | 2 files |
 | Phase 15-befundlage-vorlauf P05 | ~50min | 3 tasks | 5 files |
+| Phase 15-befundlage-vorlauf P06 | ~110min | 3 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -251,8 +252,8 @@ die Tastaturprobe der CHECKLISTE muss aus den Akzeptanzkriterien.
 
 ## Session Continuity
 
-**Last session:** 2026-09-09T09:11:24.552Z
-**Stopped at:** Completed 15-befundlage-vorlauf-05-PLAN.md
+**Last session:** 2026-09-09T10:00:35.200Z
+**Stopped at:** Completed 15-befundlage-vorlauf-06-PLAN.md
 **Resume file:** None
 
 **Last action:** `/gsd-execute-phase 13` (Plan 13-08, MAINT-06). Converted all 81 originally-counted unfiltered `console.*` calls across 31 `loader.js` MODULES files to the one sanctioned `ErrorHandler.log()` outlet in `render/helpers.js` (marked `gsd:konsolen-senke`), built `tests/unit/console-hygiene.test.js` as a permanent regression guard, and corrected two stale `file-backup-manager.js` header comments that wrongly described the forbidden `window.save` monkey-patch pattern (code has used `registerPostSaveHook()` correctly since Phase 12). Mid-execution finding: converting routine/self-healing diagnostics (data repairs, migration progress, per-tab render guards) to the single outlet elevated them to `console.error` and broke 5 Playwright tests (`editor-formatting.spec.js`, `editor-insert.spec.js`, `import-security.spec.js`) that assert zero console errors — fixed by routing those specific sites through the existing `window.debugLogAdd()` in-app debug panel instead, preserving the single-outlet invariant for genuine faults while not misclassifying normal operation as an error. Full suites green: `npx jest` 1066/1066, `npx playwright test` 321 passed/2 skipped (STATE.md baseline exactly matched), `python build.py` + `--production` + `pytest tests/build` 24/24 all green.
@@ -407,6 +408,9 @@ die Tastaturprobe der CHECKLISTE muss aus den Akzeptanzkriterien.
 - [Phase 15-befundlage-vorlauf]: GATE-04 gesetzt: sechs Befundgruppen ausserhalb assets/styles/ je einer Phase (16/18) oder einer neuen Uebertrag-aus-v1.3-Tabelle zugeordnet; CLAUDE.md-CSS-Dateizahl auf gemessene 20 korrigiert (war 13), Werkzeugleisten-Waechter als nicht existierende Restschuld dokumentiert.
 - [Phase 15]: Container-Klasse fuer die Zauberplatz-Anzeige: spell-slots-compact/slot-pip (bereits in dashboard.css gestylt), nicht char-card-slots/char-slot-pip (nachweislich null CSS-Regeln) — Vor der Aenderung per grep gemessen: char-card-slots-Familie existiert in keiner Stylesheet-Datei; spell-slots-compact/slot-pip sind bereits in dashboard.css gestylt (Zielmuster spellslots-ui.js).
 - [Phase 15]: ROADMAP-Erfolgskriterium 4 (Phase 15) auf .spell-slots-compact .slot-pip korrigiert (D-55) - ersetzt die von Plan 15-03 (D-15) gebuchte Vermutung .char-card-slots .slot-pip — D-15 beschrieb nur das ungeprueft gemessene, kaputte Markup vor der Reparatur, nicht die tatsaechlich implementierte Loesung.
+- [Phase 15-befundlage-vorlauf]: Die drei kolportierten Loeschzahlen (438/607/~3.174) werden NICHT uebernommen; verbindlich sind die vom neuen Werkzeug tools/css-usage-report.js gemessenen 738 tote Klassen / 757 Regelbloecke / 5.762 Zeilen (D-20)
+- [Phase 15-befundlage-vorlauf]: Waehrend der Pflicht-Fehlalarm-Pruefung (D-22) gefundener Klassifikationsfehler im Werkzeug (String-Konkatenations-Klassenattribute) wurde als Rule-1-Bugfix behoben statt als Ausnahme kaschiert - 14 Klassen betroffen, darunter ein v1.0-Feature (init-mob-mode-btn), das ohne den Fund geloescht worden waere
+- [Phase 15-befundlage-vorlauf]: Fuenf Read-Aloud-Farbvarianten (crimson/violet/sage/sky/slate) sind echte, nicht mit vertretbarem Aufwand erkennbare Werkzeuggrenzen (Klassenname kommt nur als Dropdown-Optionswert vor, nie als Klassen-Kontext-Literal) und wurden als datierte DEAD_EXCEPTIONS dokumentiert statt die Erkennung zu erweitern
 
 ## Deferred Items
 
