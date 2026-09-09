@@ -33,7 +33,7 @@ pytest 24 · `design-consistency.test.js` 64/64 · `DUBLETTEN_MAX` 0 · `IMPORTA
 
 ### Befundlage — erst messen, dann ändern
 
-- [ ] **BASE-01**: Die 13 Blocker aus `HANDOFF-V2-VERIFIKATION.md` sind schriftlich entschieden,
+- [x] **BASE-01**: Die 13 Blocker aus `HANDOFF-V2-VERIFIKATION.md` sind schriftlich entschieden,
       jeder mit Begründung und Auswirkung. Drei davon sind beim Milestone-Aufsetzen bereits
       entschieden und als Key Decision in `PROJECT.md` gebucht: **B-01** (Wurzel bleibt bei 16px,
       `--text-*` gegen 16 gerechnet), **B-02** (`--*-text`-Übersteuerungen *innerhalb* der
@@ -337,7 +337,7 @@ pytest 24 · `design-consistency.test.js` 64/64 · `DUBLETTEN_MAX` 0 · `IMPORTA
       und begründet — `T-2` wird als „leer außer den N benannten Ausnahmen" formuliert, nicht als
       Alles-oder-nichts (sonst widersprechen sich `COLOR-08` und `ELEV-04` gegenseitig und keiner
       der beiden Haken ist je setzbar).
-- [ ] **GATE-04**: Der Geltungsbereich ist pro Befund entschieden und dokumentiert. Alle
+- [x] **GATE-04**: Der Geltungsbereich ist pro Befund entschieden und dokumentiert. Alle
       Abnahme-greps enden heute bei `assets/styles/`; außerhalb liegen ~170 Fundstellen:
       7 numerische `rgba` in JS, 39 Inline-`font-size` in 6 Templates und 108 in 29 JS-Dateien,
       16 `font-weight`-Stellen. Zwei harte Ausnahmen bleiben: `features/shops/shop-export.js`
@@ -422,7 +422,7 @@ Akzeptanzkriterien heraus. Belege in `HANDOFF-V2-GEGENPROBEN.md`.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| BASE-01 | Phase 15 | Pending |
+| BASE-01 | Phase 15 | Complete |
 | BASE-02 | Phase 15 | Complete |
 | BASE-03 | Phase 15 | Complete |
 | BASE-04 | Phase 15 | Complete |
@@ -433,7 +433,7 @@ Akzeptanzkriterien heraus. Belege in `HANDOFF-V2-GEGENPROBEN.md`.
 | FIX-02 | Phase 15 | Pending |
 | FIX-03 | Phase 15 | Pending |
 | GATE-03 | Phase 15 | Complete |
-| GATE-04 | Phase 15 | Pending |
+| GATE-04 | Phase 15 | Complete |
 | GATE-05 | Phase 15 | Pending |
 | COLOR-01 | Phase 16 | Pending |
 | COLOR-02 | Phase 16 | Pending |
