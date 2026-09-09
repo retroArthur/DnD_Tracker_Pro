@@ -379,25 +379,6 @@
     display: flex;
 }
 
-/* Back button (mobile) */
-.bestiary-back-btn {
-    display: none;
-}
-
-[data-layout="mobile"] .bestiary-back-btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    margin-bottom: 12px;
-    padding: 8px 12px;
-    background: none;
-    border: 1px solid var(--border);
-    border-radius: var(--radius-md);
-    color: var(--text);
-    cursor: pointer;
-    font-size: 0.9em;
-}
-
 /* ============================================================
    RESPONSIVE: narrow screens (max-width 900px)
    ============================================================ */
