@@ -323,3 +323,72 @@ describe('css-usage-report — renderTable() und JSON-Form', () => {
         expect(json.totals).toBeDefined();
     });
 });
+
+describe('css-usage-report — CR-01/WR-01: die bewiesene Blindstelle (Plan 15-09, Task 1)', () => {
+    test('CR-01a: eine Zuweisung an die Klassenlisten-Eigenschaft mit einer Ternary rechts vom Gleichheitszeichen haelt BEIDE Zweige lebendig', () => {
+        // Reale Form aus ui/dom-builder.js:393 —
+        // `container.className = options.viewMode === 'list' ? 'list-view-container' : 'npc-grid';`
+        const cssFiles = [
+            {
+                name: 'a.css',
+                content: '.alpha { color: red; } .beta { color: blue; } .dead-control { color: green; }'
+            }
+        ];
+        const jsFiles = [
+            { name: 'a.js', content: "container.className = bedingung ? 'alpha' : 'beta';" }
+        ];
+        const result = analyze({ cssFiles, templateFiles: [], jsFiles });
+        const file = result.files.find(f => f.name === 'a.css');
+        expect(file.deadClasses).not.toContain('alpha');
+        expect(file.deadClasses).not.toContain('beta');
+        expect(file.deadClasses).toContain('dead-control');
+    });
+
+    test('CR-01b: ein Objektschluessel "containerClass:" mit einer Ternary haelt BEIDE Zweige lebendig', () => {
+        // Reale Form aus ui/safe-render.js:360 —
+        // `containerClass: options.viewMode === 'list' ? 'list-view-container' : 'npc-grid',`
+        const cssFiles = [
+            {
+                name: 'a.css',
+                content: '.alpha { color: red; } .beta { color: blue; } .dead-control { color: green; }'
+            }
+        ];
+        const jsFiles = [
+            {
+                name: 'a.js',
+                content: "renderListFast(container, items, render, { containerClass: bedingung ? 'alpha' : 'beta' });"
+            }
+        ];
+        const result = analyze({ cssFiles, templateFiles: [], jsFiles });
+        const file = result.files.find(f => f.name === 'a.css');
+        expect(file.deadClasses).not.toContain('alpha');
+        expect(file.deadClasses).not.toContain('beta');
+        expect(file.deadClasses).toContain('dead-control');
+    });
+
+    test('CR-01c: ein Objektschluessel "className:" mit einem einfachen Literal haelt die Klasse lebendig', () => {
+        const cssFiles = [
+            { name: 'a.css', content: '.alpha { color: red; } .dead-control { color: green; }' }
+        ];
+        const jsFiles = [
+            { name: 'a.js', content: "renderCard(container, { className: 'alpha' });" }
+        ];
+        const result = analyze({ cssFiles, templateFiles: [], jsFiles });
+        const file = result.files.find(f => f.name === 'a.css');
+        expect(file.deadClasses).not.toContain('alpha');
+        expect(file.deadClasses).toContain('dead-control');
+    });
+
+    test('WR-01: ein geklammerter Funktionsaufruf VOR dem Klassenliteral in classList.toggle() darf das Literal nicht verschlucken', () => {
+        const cssFiles = [
+            { name: 'a.css', content: '.alpha { color: red; } .dead-control { color: green; }' }
+        ];
+        const jsFiles = [
+            { name: 'a.js', content: "el.classList.toggle(berechneName(x), 'alpha');" }
+        ];
+        const result = analyze({ cssFiles, templateFiles: [], jsFiles });
+        const file = result.files.find(f => f.name === 'a.css');
+        expect(file.deadClasses).not.toContain('alpha');
+        expect(file.deadClasses).toContain('dead-control');
+    });
+});
