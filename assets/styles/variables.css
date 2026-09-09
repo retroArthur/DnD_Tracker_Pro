@@ -419,17 +419,6 @@
         [data-layout="mobile"] .nav-group { display: contents; }
         [data-layout="mobile"] .nav-group-btn { display: none; }
         [data-layout="mobile"] .nav-group-menu { display: contents; }
-
-        [data-layout="mobile"] .nav-tab-icon {
-            font-size: 18px;
-            display: block;
-            margin-bottom: 2px;
-        }
-        
-        [data-layout="mobile"] .nav-tab-text {
-            display: block;
-            font-size: 9px;
-        }
         
         [data-layout="mobile"] .main-content {
             padding: var(--content-padding);
@@ -495,8 +484,4 @@
         
         [data-layout="mobile"] .form-grid {
             grid-template-columns: 1fr;
-        }
-        
-        [data-layout="mobile"] .quick-panel {
-            display: none;
         }
