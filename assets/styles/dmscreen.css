@@ -2848,6 +2848,21 @@
 .dms-knowledge-item.nature { border-left-color: var(--know-nature); }
 .dms-knowledge-item.investigation { border-left-color: var(--know-investigation); }
 
+/* F-15-04: die beiden Spans, die dmscreen-widgets-reference.js tatsaechlich
+   erzeugt (Fertigkeitsname, Kreaturentypen). Beide als eigene Zeile, damit
+   sie untereinander statt nebeneinander stehen. */
+.dms-know-skill {
+    display: block;
+    font-weight: 600;
+    color: var(--text);
+}
+
+.dms-know-types {
+    display: block;
+    font-size: 0.75em;
+    color: var(--text-dim);
+}
+
 .dms-knowledge-header {
     display: flex;
     justify-content: space-between;

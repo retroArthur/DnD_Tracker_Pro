@@ -992,3 +992,55 @@ describe('F-20 — Bewegungsunterdrueckung (Ratsche)', () => {
         expect(names).toEqual(['core.css']);
     });
 });
+
+
+describe('F-21 — DM-Screen-Widget-Klassen ohne Regel (Ratsche)', () => {
+    // Erhoben am 2026-09-09, NACH dem Umbau von Gelaende/Fertigkeiten/
+    // Wissensgebiete (Plan 15-04). Diese Zahl darf nur SINKEN. Zaehlart:
+    // Klassennamen mit dem Widget-Praefix `dms-`, die in einem class-Attribut
+    // des Quellbaums (JS-Renderer unter features/systems/ui/core/render/utils
+    // via sourceJs(), sowie assets/templates via tplFiles) vorkommen, und fuer
+    // die es im kommentarfreien CSS (assets/styles) keinen Selektor gibt.
+    // Der Filter auf class-Attribute ist zwingend: ohne ihn liefert dieselbe
+    // Suche 24 statt 7, weil data-action-Werte und Element-IDs mit demselben
+    // Praefix mitgezaehlt wuerden.
+    //
+    // Restbestand, namentlich (7): dms-dc-mini, dms-econ-icon, dms-econ-val,
+    // dms-economy-header, dms-ritual-item, dms-ritual-list, dms-save-desc.
+    //
+    // Abweichung von der urspruenglich erwarteten Deferred-Liste (9 statt 7):
+    // dms-know-skill und dms-know-types sind NICHT mehr im Restbestand, weil
+    // dieser Plan D-10 folgt (alle drei Referenzwidgets werden repariert,
+    // nicht zwei) und das Wissensgebiete-Widget mit einschliesst.
+    //
+    // Messblock: siehe .planning/phases/15-befundlage-vorlauf/15-RATCHET-BASELINE.md.
+    const WIDGET_PREFIX = 'dms-';
+    const DMS_UNSTYLED_MAX = 7;
+
+    function classAttrTokens() {
+        const files = [...sourceJs(), ...tplFiles];
+        const tokens = new Set();
+        files.forEach(f => {
+            for (const m of f.content.matchAll(/class=(["'])([\s\S]*?)\1/g)) {
+                const value = m[2].replace(/\$\{[^}]*\}/g, ' ');
+                for (const t of value.matchAll(new RegExp(`\\b${WIDGET_PREFIX}[\\w-]+`, 'g'))) {
+                    tokens.add(t[0]);
+                }
+            }
+        });
+        return tokens;
+    }
+
+    function hasSelector(cls) {
+        const re = new RegExp(`\\.${cls}(?![\\w-])`);
+        return re.test(cssCode);
+    }
+
+    function unstyledDmsClasses() {
+        return [...classAttrTokens()].filter(c => !hasSelector(c));
+    }
+
+    test('die Zahl regelfreier dms-Klassen aus class-Attributen steigt nicht wieder', () => {
+        expect(unstyledDmsClasses().length).toBeLessThanOrEqual(DMS_UNSTYLED_MAX);
+    });
+});
