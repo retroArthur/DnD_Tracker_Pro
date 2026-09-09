@@ -24,6 +24,8 @@
         "lint": "eslint . --max-warnings 367",
         "lint:fix": "eslint . --fix",
         "globals:generate": "node tools/generate-eslint-globals.js",
+        "css-usage:report": "node tools/css-usage-report.js",
+        "css-usage:check": "node tools/css-usage-report.js --check",
         "format": "prettier --write \"**/*.{js,json,md}\"",
         "format:check": "prettier --check \"**/*.{js,json,md}\"",
         "format:all": "prettier --write .",
