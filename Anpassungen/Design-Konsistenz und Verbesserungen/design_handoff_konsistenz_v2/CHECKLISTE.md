@@ -1,5 +1,11 @@
 # Checkliste — Abnahme Welle 4 bis 6
 
+> **Korrekturvermerk (2026-09-09):** Die Ausgangswerte dieser Datei wurden gegen
+> `.planning/HANDOFF-V2-VERIFIKATION.md` (Tabelle „Korrigierte Ausgangswerte") nachgemessen. Wo
+> dieses Dokument der Verifikation widerspricht, gilt die Verifikation. Der ursprüngliche
+> Bericht-Wert bleibt an jeder korrigierten Stelle als Vergleichswert sichtbar (Kennzeichnung
+> „[Bericht]"), nichts wurde spurlos ersetzt.
+
 Jede Zeile ist per `grep` oder Test überprüfbar. Ausgangswerte sind am Stand
 vom 08.09.2026 erhoben; sie dürfen nur **sinken**.
 
@@ -27,7 +33,9 @@ vom 08.09.2026 erhoben; sie dürfen nur **sinken**.
   ```
   grep -rn "rgba([[:space:]]*[0-9]" assets/styles/ | grep -v variables.css   # leer
   ```
-  Ausgangswert: **390 Treffer in 173 Werten**
+  Ausgangswert: **390 Treffer in 173 [Bericht] Werten** — gemessen: 143 verschiedene Werte nach
+  Leerraum-Normierung; die Differenz sind 30 reine Schreibweisenvarianten. Die 390 Vorkommen sind
+  bestätigt und bleiben.
 - [ ] `--overlay-weak/-mid/-strong` in allen vier Theme-Blöcken, in Light und
   Sepia **schwarz** statt weiß
 - [ ] `.nav-tab` hat in allen vier Themes eine sichtbare Grundfläche
@@ -38,7 +46,9 @@ vom 08.09.2026 erhoben; sie dürfen nur **sinken**.
   ```
   grep -rn "box-shadow" assets/styles/ | grep -v "elev-\|glow-\|inset\|variables.css"   # nur Sonderfaelle
   ```
-  Ausgangswert: **66 verschiedene Werte, var(--shadow) 1×**
+  Ausgangswert: **66 [Bericht] verschiedene Werte, var(--shadow) 1×** — gemessen: 65 nach
+  Leerraum-Normierung (dice.css:575 und :598 sind derselbe Wert, einmal umbrochen), 88
+  Deklarationen insgesamt
 
 ---
 
@@ -49,7 +59,9 @@ vom 08.09.2026 erhoben; sie dürfen nur **sinken**.
   ```
   grep -rn "font-size:[^;]*em" assets/styles/ | grep -v variables.css   # leer
   ```
-  Ausgangswert: **~740 em-Fundstellen in 20 Werten**
+  Ausgangswert: **~740 [Bericht] em-Fundstellen in 20 Werten** — gemessen: 784 in 30 Werten, mit
+  exakt dem in dieser CHECKLISTE abgedruckten grep. Die Checkliste widersprach der Ausgabe ihres
+  eigenen Kommandos.
 - [ ] `font-size` nur aus `--text-xs … --text-3xl` oder `inherit`
 - [ ] Nichts kleiner als `--text-xs` (11px) in der UI
 - [ ] Sichtprüfung der vier Stellen aus `PATCHES.md` §5b: Karten-Metazeilen,
@@ -60,7 +72,10 @@ vom 08.09.2026 erhoben; sie dürfen nur **sinken**.
   ```
   grep -rn "transition:[^;]*all" assets/styles/   # leer
   ```
-  Ausgangswert: **151× (132 all 0.2s + 19 all 0.15s)**
+  Ausgangswert: **163×** — verbindlich, der Abnahme-grep oben findet bereits alle 163. *(Fließtext
+  nannte zuvor „151× [132 all 0.2s + 19 all 0.15s]" — es fehlen `all 0.3s` [4], `all 0.2s ease` [4],
+  `all 0.3s ease` [2], `all 0.15s ease` [1], `all 0.3s cubic-bezier(…)` [1]. Die Abnahme war damit
+  strenger als ihre eigene Anweisung; die strengere Fassung [163] ist die richtige.)*
 - [ ] Nur drei Dauern im Komponenten-CSS
   ```
   grep -rno "[0-9.]\+m\?s" assets/styles/*.css | grep -v variables.css | sort -u   # nur die Tokens
@@ -72,8 +87,9 @@ vom 08.09.2026 erhoben; sie dürfen nur **sinken**.
   ```
   grep -rn "font-weight:[[:space:]]*\(bold\|normal\|300\)" assets/styles/   # leer
   ```
-  Ausgangswert: **17 Treffer**
-- [ ] Nur 400 / 600 / 700 (Ausgangswert: 6 verschiedene Angaben)
+  Ausgangswert: **17 [Bericht] Treffer** — gemessen 18 Treffer
+- [ ] Nur 400 / 600 / 700 (Ausgangswert: 6 [Bericht] verschiedene Angaben — gemessen 7: 300, 400,
+  500, 600, 700, bold, normal)
 
 ---
 
@@ -100,7 +116,12 @@ vom 08.09.2026 erhoben; sie dürfen nur **sinken**.
 ### N-09 · Zauber-Zähler
 - [ ] `id="spell-count"` ist entfernt oder läuft über `setViewCount('spells', n)`
 - [ ] Kein Inline-Stil mehr an der Stelle (`.meta-text` benutzen)
-- [ ] `.filter-bar` in `view-resources.html` heißt `.filter-chips`
+- [ ] `.filter-bar` in `view-resources.html` heißt `.filter-chips` *(Korrektur, gemessen: eine
+  nackte Klasse `.filter-chips` existiert NIRGENDS [0 Treffer]. Etabliert sind vier präfigierte
+  Container [`.npc-`/`.loc-`/`.enc-`/`.loot-filter-chips`]; `.filter-bar` trägt echtes Layout
+  [`display:flex; gap:6px; flex-wrap:wrap`]. Dieser Abnahmepunkt ist damit nicht wie geplant
+  ausführbar — siehe `.planning/HANDOFF-V2-VERIFIKATION.md` Blocker B-12 und
+  `.planning/REQUIREMENTS.md` UX-06.)*
 
 ---
 

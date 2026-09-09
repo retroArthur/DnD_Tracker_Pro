@@ -1,5 +1,11 @@
 # Handoff: Design-Konsistenz — Welle 4 bis 6
 
+> **Korrekturvermerk (2026-09-09):** Die Kennzahlen dieser Datei wurden gegen
+> `.planning/HANDOFF-V2-VERIFIKATION.md` (Tabelle „Korrigierte Ausgangswerte") nachgemessen. Wo
+> dieses Dokument der Verifikation widerspricht, gilt die Verifikation. Der ursprüngliche
+> Bericht-Wert bleibt an jeder korrigierten Stelle als Vergleichswert sichtbar, nichts wurde
+> spurlos ersetzt.
+
 ## Auftrag in einem Satz
 Die neun Befunde aus `BEFUNDE-v2.md` in den modularen Quelldateien von
 `DnD_Tracker_App_Pro` beheben — beginnend mit den Farb- und Kontrastbefunden
@@ -35,8 +41,11 @@ Typo-Skala, Fokus und Bewegung.
 * `Design-Konsistenz-Bericht v2.dc.html` — derselbe Bericht als lesbare Seite
   (Design-Referenz, kein Produktionscode). Braucht `support.js` daneben.
 
-Erhoben am **08.09.2026** über `assets/styles/*.css` (21 Dateien, 27.187
-Zeilen) und `assets/templates/*.html` (13 Dateien, 24 Ansichten). Keine
+Erhoben am **08.09.2026** über `assets/styles/*.css` (21 Dateien [Bericht], 27.187
+Zeilen [Bericht] — gemessen: 20 Dateien in `assets/styles/` mit 27.141 Zeilen; mit dem `@import`-Hub
+`assets/styles.css` mitgezählt 21 Dateien / 27.166 Zeilen; 27.187 ist in keiner Lesart
+reproduzierbar) und `assets/templates/*.html` (13 Dateien [Bericht] — gemessen 12, `loader.js`
+`TEMPLATES` führt ebenfalls 12; 24 Ansichten bestätigt). Keine
 Laufzeitmessung, keine Screenshots — alle Zahlen sind statisch aus dem Quellstand.
 
 ## Arbeitsweise
@@ -62,7 +71,7 @@ Laufzeitmessung, keine Screenshots — alle Zahlen sind statisch aus dem Quellst
 **Welle 4 — Farbe kommt in allen Themes an** (größter sichtbarer Effekt)
 * N-02 — Schriftfarbe auf gefüllten Knöpfen + Light/Sepia-Akzente → `PATCHES.md` §1, §2
 * N-01 — 390 `rgba()`-Literale auf `color-mix` / Overlay-Tokens → §3
-* N-03 — 66 Schatten auf vier Höhenstufen → §4
+* N-03 — 66 [Bericht, gemessen 65] Schatten auf vier Höhenstufen → §4
 
 **Welle 5 — Typografie und Tempo als Skala**
 * N-04 — sieben Größenstufen, `em` raus → §5
