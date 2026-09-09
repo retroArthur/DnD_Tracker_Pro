@@ -398,8 +398,70 @@ Der verbleibende `--check`-Restbefund aus Messblock 6 (Ankerregel-Ueberlebende i
 Kommaselektoren) ist durch diesen Plan NICHT geschlossen — er ist eine strukturelle Grenze der
 Textpruefung ohne echten JS-Parser, vertagt in `deferred-items.md`.
 
+## Messblock 9 — CLAUDE.md CSS-Dateizahl widerspruchsfrei, Waechter-Rot-Gruen-Beweis (Plan 15-10)
+
+**Datum:** 2026-09-09
+**Anlass:** `15-VERIFICATION.md` (Gap 2, "partial") hat bewiesen, dass Plan 15-02s Korrektur der
+CSS-Dateizahl in CLAUDE.md nur an EINER von drei Stellen ankam (Zeile 144, Modul-Organisations-
+Tabelle). Zeile 523 (Roadmap-Tabelle) und Zeile 759 samt Struktur-Codeblock (Abschnitt "CSS
+Organization for New Features") nannten weiterhin 13 statt 20 und listeten sieben Dateien nicht.
+Ursache war eine woertliche Ein-Sprachen-Abnahme (`grep -c "13 modulare CSS-Dateien" CLAUDE.md ==
+0`), die die englische Formulierung "split into 13 modular files" an zwei Stellen nicht sah.
+
+**Messbefehl fuer die Dateizahl:**
+
+```
+ls assets/styles/*.css | wc -l
+-> 20
+```
+
+Dieser Wert ist der einzige, der ab diesem Plan an allen drei Stellen in CLAUDE.md steht (Zeile
+144, Zeile 523, Zeile 759 samt Struktur-Codeblock).
+
+**Rot-Gruen-Protokoll (GATE-03/D-49), Task 1 und Task 2:**
+
+```
+Task 1 — vier neue Faelle (DOC-01..DOC-04) gegen das UNVERAENDERTE CLAUDE.md:
+npx jest tests/unit/docs-consistency.test.js
+Tests:       3 failed, 1 passed, 4 total
+Exit-Code:   1
+Fehlgeschlagene Faelle: DOC-02, DOC-03, DOC-04 (DOC-01 gruen)
+
+Task 2 — nach der Korrektur an allen drei Stellen von CLAUDE.md:
+npx jest tests/unit/docs-consistency.test.js
+Tests:       4 passed, 4 total
+Exit-Code:   0
+
+Vollstaendige Suite danach:
+npx jest
+Tests:       1251 passed, 1251 total (55 Suiten, 50 Snapshots)
+Exit-Code:   0
+```
+
+Zwei protokollierte Zustaende, Exit-Code 1 vor der Korrektur und 0 danach — Kriterium erfuellt.
+Ein Test, der nie rot war, haette nichts bewiesen; hier ist der rote Zustand exakt die drei
+Stellen, die `15-VERIFICATION.md` als widersprochen benannt hat, kein anderer.
+
+**Entscheidung: Zeilenzahlen-Spalte im Struktur-Codeblock entfernt, nicht neu gemessen.** Die
+bisherige Klammerangabe je Datei (z.B. `variables.css (260)`, `dashboard.css (3433)`) war bereits
+vor dem Loeschlauf der Phase 15 grob falsch — die tatsaechliche Zeilenzahl von `variables.css` lag
+zum Planungszeitpunkt bei weit ueber dem Doppelten des genannten Werts, die von `dashboard.css`
+bei etwa der Haelfte. Eine Zahl, die sich bei jeder CSS-Aenderung verschiebt und die kein Test
+schuetzt, waere beim naechsten Mal wieder falsch gewesen (BASE-01/empty-Prinzip: eine nicht
+messbar geschuetzte Angabe wird weggelassen, nicht geraten). An ihre Stelle tritt unter dem
+Struktur-Codeblock eine Zeile mit Stand-Datum und dem woertlichen Messbefehl. Die Reihenfolge der
+Auflistung ist ab jetzt die Kaskadenreihenfolge des `@import`-Hubs in `assets/styles.css` — damit
+nicht nur richtig, sondern durch DOC-04 auch dauerhaft pruefbar.
+
+**Was dieser Plan NICHT schliesst (GATE-04/unclassified, ausdruecklich unberuehrt):** Der in
+CLAUDE.md selbst gefuehrte fehlende Werkzeugleisten-Wächtertest (Abschnitt "Editor-Werkzeugleisten
+(Variante 2a, 2026-09-07)", "Kein Wächtertest") bleibt unveraendert offene Restschuld — dieser Plan
+schliesst genau den einen Befund, den `15-VERIFICATION.md` Gap 2 benannt hat, und formuliert keine
+andere Restschuld als erledigt um.
+
 ---
 *Phase: 15-befundlage-vorlauf*
 *Plan: 08*
 *Erhoben: 2026-09-09*
 *Nachtrag Messblock 8: Plan 15-09, 2026-09-09*
+*Nachtrag Messblock 9: Plan 15-10, 2026-09-09*

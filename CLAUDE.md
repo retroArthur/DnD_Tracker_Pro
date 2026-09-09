@@ -520,7 +520,7 @@ npx playwright test tests/e2e/features/wiki.spec.js
 
 | Priority | Task                                   | Notes                                                                                           |
 | -------- | -------------------------------------- | ----------------------------------------------------------------------------------------------- |
-| ~~Done~~ | ~~**CSS aufteilen**~~                  | Already split into 13 modular files in `assets/styles/` (see CSS Organization)                  |
+| ~~Done~~ | ~~**CSS aufteilen**~~                  | Already split into 20 modular files in `assets/styles/` (see CSS Organization)                  |
 | ~~Done~~ | ~~**Inline Event-Handler migrieren**~~ | Migration abgeschlossen (641 data-action-Attribute, 0 inline-Handler verbleibend, Juni 2026)    |
 | ~~Done~~ | ~~**Build-System konsolidieren**~~     | Webpack removed (March 2026), Python `build.py` is sole build system                            |
 | ~~Done~~ | ~~**CI/CD Pipeline**~~                 | GitHub Actions workflow in `.github/workflows/ci.yml` (lint, typecheck, test, build)            |
@@ -756,27 +756,37 @@ function refreshIfVisible() {
 
 ### CSS Organization for New Features
 
-**Problem Solved:** CSS file was 23k+ lines in a single file. Now split into 13 modular files under `assets/styles/`, loaded via `@import` in dev mode and concatenated by `build.py` for production.
+**Problem Solved:** CSS file was 23k+ lines in a single file. Now split into 20 modular files under `assets/styles/`, loaded via `@import` in dev mode and concatenated by `build.py` for production.
 
 **Current Structure:**
 
 ```
-assets/styles.css          ← @import hub (18 lines)
+assets/styles.css       ← @import hub
 assets/styles/
-├── variables.css (260)    ← CSS custom properties
-├── core.css (2500)        ← Base layout, global utilities
-├── editors.css (451)      ← Rich text editor toolbars
-├── npcs.css (2046)        ← NPC management
-├── encounters.css (2200)  ← Encounter UI
-├── initiative.css (896)   ← Combat tracker
-├── loot.css (1010)        ← Loot/treasure
-├── spells.css (674)       ← Spell management
-├── party.css (2466)       ← Character roster
-├── dashboard.css (3433)   ← Main dashboard
-├── dmscreen.css (3037)    ← DM Screen widgets
-├── dice.css (902)         ← Dice roller
-└── tools.css (2583)       ← Quick reference, tools
+├── fonts.css           ← Font-face declarations, Google Fonts fallbacks
+├── variables.css       ← CSS custom properties
+├── core.css            ← Base layout, global utilities
+├── editors.css         ← Rich text editor toolbars
+├── npcs.css            ← NPC management
+├── encounters.css      ← Encounter UI
+├── initiative.css      ← Combat tracker
+├── loot.css            ← Loot/treasure
+├── spells.css          ← Spell management
+├── party.css           ← Character roster
+├── dashboard.css       ← Main dashboard
+├── dmscreen.css        ← DM Screen widgets
+├── dice.css            ← Dice roller
+├── tools.css           ← Quick reference, tools
+├── pwa.css             ← PWA install banner, offline indicator
+├── migration.css       ← Cross-origin data migration wizard
+├── file-backup.css     ← File System Access API backup UI
+├── command-palette.css ← Command palette (Ctrl+Shift+K)
+├── bestiary.css        ← Bestiary/monster statblocks
+└── welt.css            ← World/timeline/factions views
 ```
+
+Reihenfolge = Kaskadenreihenfolge des `@import`-Hubs in `assets/styles.css`, nicht
+alphabetisch. Stand 2026-09-09, gemessen mit `ls assets/styles/*.css | wc -l`.
 
 **Pattern to Follow:**
 
