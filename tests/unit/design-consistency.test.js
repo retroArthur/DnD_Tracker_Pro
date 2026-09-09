@@ -947,7 +947,13 @@ describe('F-19 — Inline-Stile (Ratsche)', () => {
     //                        eigene Farbe und stehen im eingefrorenen Testnetz
     //   Rest               — Einzelfaelle; ein Stil, der genau einmal vorkommt,
     //                        ist in einer Klasse nicht besser aufgehoben
-    const INLINE_MAX = 257;
+    // Gesenkt am 2026-09-09 (Plan 15-07, Task 3): 257 -> 256. Die geloeschte
+    // PWA-Install-Banner-Markup-Zeile (`style="display:none;"`) trug genau
+    // EIN style="-Vorkommen; mit ihrer Loeschung (D-22) sinkt der neue
+    // gemessene Ausgangswert um eins. Eine weitere Senkung um eins wird in
+    // Phase 19 erwartet (D-51) — jede Senkung nennt ihren eigenen gemessenen
+    // Ausgangswert.
+    const INLINE_MAX = 256;
 
     test('die Zahl der Inline-Stile im Markup steigt nicht wieder', () => {
         const n = tplFiles.reduce(
