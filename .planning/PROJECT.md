@@ -744,6 +744,50 @@ gegen die zitierte Handoff-Zahl; `15-RATCHET-BASELINE.md` ist das einzige Baseli
 entsteht nach FIX-01/FIX-02, damit die neun (D-13: fünf) durch FIX-01 wiederbelebten Selektoren
 korrekt aus der Löschliste fallen.
 
+## GATE-05 — Abnahmeform, dreistufig
+
+Verbindlich für die Phasen 15-19. Drei Stufen:
+
+**Stufe 1 — automatisch, nach jeder Welle:** alle Suiten (Jest, Playwright, pytest), beide
+Builds (`build.py`, `build.py --production`); ab Phase 16 zusätzlich der headless messende
+Abnahme-Harness über alle vier Themes.
+
+**Stufe 2 — Screenshot-Serie:** eine Screenshot-Serie über die Stellenliste der jeweiligen Welle,
+jeweils in allen vier Themes.
+
+**Stufe 3 — menschlich, eine volle Runde nach JEDER der fünf Phasen 15, 16, 17, 18 und 19.**
+Jede Runde deckt alle vier Themes ab. Es gibt **keine** reduzierte, gezielte Stellenliste als
+Ersatz für eine volle Runde — weder nach Phase 15 noch nach Phase 19.
+
+**D-53 wurde vorgeschlagen und vom Nutzer per Checkpoint-Entscheidung ABGELEHNT (2026-09-09).**
+Der ursprüngliche Vorschlag (dokumentiert in `15-CONTEXT.md`) sah eine Absenkung auf drei volle
+Runden (nach den Phasen 16, 17, 18) plus je eine gezielte Stellenliste nach den Phasen 15 und 19
+vor, mit der Begründung, fünf Wellen mal vier Themes vollständig von Hand sei für einen
+Einzelentwickler nicht durchhaltbar. Der Nutzer hat diese Reduktion ausdrücklich **nicht**
+angenommen: die Abnahmeform bleibt bei fünf vollen Runden — eine nach jeder Phase, jede über
+alle vier Themes, ohne Verkürzung auf eine Stellenliste. Diese Ablehnung ist selbst die
+Erfüllung des Verbots in GATE-04/GATE-05 („MUSS NICHT eine Absenkung der händischen Abnahme
+stillschweigend vornehmen") — es wird nicht stillschweigend reduziert; die Reduktion wurde
+ausdrücklich vorgeschlagen und ebenso ausdrücklich verworfen, und die ursprüngliche, striktere
+Form steht.
+
+Für die volle Runde nach Phase 15 gehören mindestens die drei neuen/geänderten Bereiche dieser
+Phase in den Prüfumfang (zusätzlich zum Rest der App, den eine volle Runde ohnehin abdeckt): die
+DM-Screen-Referenzwidgets Gelände, Fertigkeiten und Wissensgebiete; die Zauberplatz-Pips auf der
+Charakterkarte; das Würfelergebnis der Hauptansicht nach einem Wurf einschließlich Kritisch- und
+Patzerfärbung — jede Stelle in allen vier Themes. Diese drei Bereiche sind der Mindestumfang, den
+Plan 15-08 sicher abdecken muss; sie ersetzen die volle Runde nicht, sondern sind Teil von ihr.
+
+**D-54 — Grenze des Harness:** Stufe 1 deckt ab: Kontrastverhältnisse, Tokenwerte je Theme, das
+Farbschema-Signal (`color-scheme`), berechnete `font-size` und `box-shadow`, die
+Eigenschaftsmengen der vier Theme-Blöcke, und das Verhalten unter emuliertem
+`prefers-reduced-motion`. NICHT abgedeckt und deshalb der menschlichen Stufe 3 vorbehalten:
+
+1. Ob ein Schatten noch tatsächlich ablösend *wirkt* (nicht nur die richtigen Werte trägt).
+2. Ob eine Größenvereinheitlichung eine dicht besetzte Zeile unleserlich macht.
+3. Das Bewegungsgefühl (Kurven, Timing) — kein Werkzeug bewertet „fühlt sich richtig an".
+4. Hover- und Fokuszustände über Zeit (Übergänge, wiederholte Interaktion).
+
 ## Evolution
 
 This document evolves at phase transitions and milestone boundaries.
