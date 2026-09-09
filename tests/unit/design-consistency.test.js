@@ -446,12 +446,22 @@ describe('F-08 — Werkzeugleisten-Kontrakt', () => {
 // Welle 3 — Skalen
 // ==================================================================
 
-/** Alle Deklarationen einer Eigenschaft im CSS (ohne variables.css). */
+/**
+ * Alle Deklarationen einer Eigenschaft im CSS (ohne variables.css, ohne
+ * fonts.css). fonts.css bleibt aussen vor, weil dort ausschliesslich
+ * @font-face-Bloecke stehen (inter-500, poppins-500 etc.) — eine spaetere
+ * font-weight-Ratsche (D-42, zurueckgestellt bis TYPO-07 ausgefuehrt wird)
+ * wuerde sonst @font-face-Deklarationen mitzaehlen. Vorarbeit, keine
+ * Freigabe: die Ratsche selbst wird hier NICHT geschrieben.
+ */
 function declarationsOf(prop, { includeVariables = false } = {}) {
     const scope = includeVariables
         ? cssCode
         : withoutComments(
-              cssFiles.filter(f => f.name !== 'variables.css').map(f => f.content).join('\n')
+              cssFiles
+                  .filter(f => f.name !== 'variables.css' && f.name !== 'fonts.css')
+                  .map(f => f.content)
+                  .join('\n')
           );
     return [...scope.matchAll(new RegExp(`${prop}\\s*:([^;{}]*)`, 'g'))].map(m => m[1].trim());
 }
