@@ -140,7 +140,7 @@ Plans:
 
 **Wave 7** *(Gap-Closure aus `15-VERIFICATION.md`, blocked on Wave 6 completion)*
 
-- [ ] 15-09-PLAN.md — Gap 1: Blindstelle der Lebend-Erkennung schließen (CR-01/WR-01), `.npc-grid`/`.list-view-container` wiederherstellen, Prüfmodus neu messen, Fund in `WINDOWS.md`
+- [x] 15-09-PLAN.md — Gap 1: Blindstelle der Lebend-Erkennung schließen (CR-01/WR-01), `.npc-grid`/`.list-view-container` wiederherstellen, Prüfmodus neu messen, Fund in `WINDOWS.md`
 
 **Wave 8** *(blocked on Wave 7 completion)*
 

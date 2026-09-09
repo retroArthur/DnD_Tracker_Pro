@@ -3,18 +3,18 @@ gsd_state_version: 1.0
 milestone: v1.3
 milestone_name: Design-System
 current_phase: 15
-current_phase_name: befundlage-vorlauf
+current_phase_name: Befundlage & Vorlauf
 status: executing
-stopped_at: Completed 15-befundlage-vorlauf-08-PLAN.md
-last_updated: "2026-09-09T12:27:29.549Z"
+stopped_at: Completed 15-befundlage-vorlauf-09-PLAN.md
+last_updated: "2026-09-09T13:01:22.838Z"
 last_activity: 2026-09-09
 last_activity_desc: Phase 15 execution started
-state_head: b5b760e6748f6e848eb77fdc97c8bf80a0fa26e1
+state_head: 3c51368dbb6530d1a9ddb6b0b585f29aeee9f8b0
 progress:
   total_phases: 5
   completed_phases: 0
   total_plans: 10
-  completed_plans: 8
+  completed_plans: 9
   percent: 0
 ---
 
@@ -40,8 +40,8 @@ See: `.planning/PROJECT.md` (Stand 2026-09-08)
 
 ## Current Position
 
-Phase: 15 (befundlage-vorlauf) — READY TO EXECUTE
-Plan: 8 of 8
+Phase: 15 (Befundlage & Vorlauf) — EXECUTING
+Plan: 2 of 10
 Status: Ready to execute
 Last activity: 2026-09-09 — Phase 15 execution started
 
@@ -168,6 +168,7 @@ die Tastaturprobe der CHECKLISTE muss aus den Akzeptanzkriterien.
 | Phase 15-befundlage-vorlauf P06 | ~110min | 3 tasks | 4 files |
 | Phase 15-befundlage-vorlauf P07 | ~55min | 3 tasks | 18 files |
 | Phase 15-befundlage-vorlauf P08 | 50min | 3 tasks | 2 files |
+| Phase 15-befundlage-vorlauf P09 | ~45min | 3 tasks | 7 files |
 
 ## Accumulated Context
 
@@ -254,8 +255,8 @@ die Tastaturprobe der CHECKLISTE muss aus den Akzeptanzkriterien.
 
 ## Session Continuity
 
-**Last session:** 2026-09-09T11:20:17.471Z
-**Stopped at:** Completed 15-befundlage-vorlauf-08-PLAN.md
+**Last session:** 2026-09-09T13:01:22.814Z
+**Stopped at:** Completed 15-befundlage-vorlauf-09-PLAN.md
 **Resume file:** None
 
 **Last action:** `/gsd-execute-phase 13` (Plan 13-08, MAINT-06). Converted all 81 originally-counted unfiltered `console.*` calls across 31 `loader.js` MODULES files to the one sanctioned `ErrorHandler.log()` outlet in `render/helpers.js` (marked `gsd:konsolen-senke`), built `tests/unit/console-hygiene.test.js` as a permanent regression guard, and corrected two stale `file-backup-manager.js` header comments that wrongly described the forbidden `window.save` monkey-patch pattern (code has used `registerPostSaveHook()` correctly since Phase 12). Mid-execution finding: converting routine/self-healing diagnostics (data repairs, migration progress, per-tab render guards) to the single outlet elevated them to `console.error` and broke 5 Playwright tests (`editor-formatting.spec.js`, `editor-insert.spec.js`, `import-security.spec.js`) that assert zero console errors — fixed by routing those specific sites through the existing `window.debugLogAdd()` in-app debug panel instead, preserving the single-outlet invariant for genuine faults while not misclassifying normal operation as an error. Full suites green: `npx jest` 1066/1066, `npx playwright test` 321 passed/2 skipped (STATE.md baseline exactly matched), `python build.py` + `--production` + `pytest tests/build` 24/24 all green.
@@ -416,6 +417,9 @@ die Tastaturprobe der CHECKLISTE muss aus den Akzeptanzkriterien.
 - [Phase 15]: Dead-CSS-Loeschlauf (Plan 15-07): 0 tote Regelbloecke bleiben; --check meldet dennoch 204 Restklassen (Ankerregel-Ueberlebende in Verbund-/Kommaselektoren) - als dokumentierte Restschuld gefuehrt statt bulk-generierter Ausnahmen
 - [Phase 15-befundlage-vorlauf]: [Phase 15-08] Task-1-Praezondition (--check Exit 0) woertlich nicht erfuellt (Exit 1, 204 Restklassen, identisch mit 15-07) — als bekannter, orchestrator-vorbenannter Zustand fortgesetzt statt blockiert, weil die Loeschlauf-Vollstaendigkeit selbst (0 tote Regelbloecke) unabhaengig verifiziert wurde.
 - [Phase 15-befundlage-vorlauf]: [Phase 15-08] GATE-05-Konflikt aufgeloest zugunsten der verbindlichen Form (volle Vier-Themes-Runde, D-53-Ablehnung) statt des Plantexts (gezielte Sichtung): Stufe-2-Screenshot-Serie durchgefuehrt und von Claude gesichtet, ausdruecklich NICHT als Stufe-3-Ersatz ausgegeben — die menschliche Runde bleibt der Phasen-UAT vorbehalten.
+- [Phase 15-09]: scanBalancedSegment() als eine gemeinsame, anfuehrungszeichen- und klammertiefe-bewusste Scan-Funktion statt drei separater Leser gebaut (CR-01a/CR-01b/WR-01)
+- [Phase 15-09]: DEAD_EXCEPTIONS und LIVE_PREFIXES unveraendert bei je fuenf Eintraegen gelassen — DEAD-02 verbietet, eine mechanisch schliessbare Erkennungsluecke ueber die Ausnahmeliste zu schliessen
+- [Phase 15-09]: npc-grid und list-view-container woertlich aus Commit 4faca38 wiederhergestellt, nichts anderes aus diesem Commit zurueckgeholt
 
 ## Deferred Items
 
