@@ -336,7 +336,70 @@ Damit Phase 16-19 diese vier Punkte nicht für gemessene Tatsachen halten:
    die Abnahme), GATE-05 (Abnahmeform — angenommen: erfüllt, wenn Stufe 1/2 automatisch laufen und
    Stufe 3 protokolliert stattfindet, siehe „Vier-Themes-Sichtung" in `15-08-SUMMARY.md`).
 
+## Messblock 8 — Neumessung des Pruefmodus nach dem CR-01/WR-01-Fix (Plan 15-09)
+
+**Datum:** 2026-09-09
+**Anlass:** Der Code-Review (`15-REVIEW.md`, CR-01/WR-01) hat eine reale Blindstelle in
+`tools/css-usage-report.js`s Lebend-Erkennung bewiesen: eine Zuweisung an die Klassenlisten-
+Eigenschaft mit einer Ternary rechts vom Gleichheitszeichen (`.className = bedingung ? 'a' : 'b';`),
+die Objektschluessel `containerClass:`/`className:`, und ein `classList.toggle()`-Aufruf mit einem
+geklammerten Ausdruck vor dem Klassenliteral wurden nicht als Klassen-Kontext erkannt. Genau dieses
+Muster hatte in Plan 15-07 zur Loeschung der Regelbloecke `.npc-grid` (`assets/styles/npcs.css`) und
+`.list-view-container` (`assets/styles/encounters.css`) gefuehrt (`ui/dom-builder.js:393`,
+`ui/safe-render.js:360`). Plan 15-09 hat die Erkennung mechanisch erweitert und beide Bloecke
+woertlich aus Commit `4faca38` wiederhergestellt.
+
+**Rot-Gruen-Protokoll (GATE-03), Task 1 und Task 2:**
+
+```
+Task 1 — vier neue Faelle gegen das UNVERAENDERTE Werkzeug:
+npx jest tests/unit/css-usage-report.test.js
+Tests:       4 failed, 23 passed, 27 total
+Exit-Code:   1
+Fehlgeschlagene Faelle: CR-01a, CR-01b, CR-01c, WR-01
+
+Task 2 — nach der Erweiterung von collectLiveTokens():
+npx jest tests/unit/css-usage-report.test.js
+Tests:       27 passed, 27 total
+Exit-Code:   0
+```
+
+**Befehle der Neumessung:**
+
+```
+node tools/css-usage-report.js --json
+```
+
+**Vorher-/Nachher-Tabelle (tote Klassen ausserhalb der Ausnahmeliste, `checkFailures.length`):**
+
+| Zeitpunkt | Wert | Quelle |
+|---|---|---|
+| Vorher (Ausgangswert, `15-RATCHET-BASELINE.md` Messblock 6, Plan 15-08) | 204 | `node tools/css-usage-report.js --check` |
+| Nachher (diese Sitzung, nach Task 2 + Task 3) | **199** | `node tools/css-usage-report.js --json`, `checkFailures.length` |
+
+Die Zahl ist frisch gemessen, nicht aus der Planungsmessung (Objective-Abschnitt von
+`15-09-PLAN.md`, dort ebenfalls 199 als Simulation) uebernommen — beide stimmen ueberein, was die
+Simulation bestaetigt, ersetzt aber nicht die eigene Messung (DEAD-03-Prinzip). Zwei
+aufeinanderfolgende Laeufe von `node tools/css-usage-report.js --json` liefern byte-gleiche
+Ausgabe.
+
+**Namentlich freigegebene Klassen (in `checkFailures` VORHER enthalten, NACHHER nicht mehr):**
+
+`location`, `negative`, `npc`, `npc-grid`, `positive`
+
+**Interpretation:** `npc-grid` und `list-view-container` stehen nach der Wiederherstellung in
+`assets/styles/` UND werden vom erweiterten Werkzeug sofort als lebendig erkannt — keine der beiden
+Klassen erscheint zu irgendeinem Zeitpunkt dieser Sitzung in `checkFailures`. Die drei weiteren
+freigegebenen Klassen (`location`, `negative`, `npc`) sind Nebeneffekte derselben
+Erkennungserweiterung (Ternary-Zweige realer, unabhaengiger `.className=`-Zuweisungen im
+Quellbaum) und keine Restaurierung — sie waren nie geloescht, nur faelschlich als tot gemeldet.
+`DEAD_EXCEPTIONS` bleibt unveraendert bei fuenf Eintraegen, `LIVE_PREFIXES` unveraendert bei fuenf.
+Der verbleibende `--check`-Restbefund aus Messblock 6 (Ankerregel-Ueberlebende in Verbund-/
+Kommaselektoren) ist durch diesen Plan NICHT geschlossen — er ist eine strukturelle Grenze der
+Textpruefung ohne echten JS-Parser, vertagt in `deferred-items.md`.
+
 ---
 *Phase: 15-befundlage-vorlauf*
 *Plan: 08*
 *Erhoben: 2026-09-09*
+*Nachtrag Messblock 8: Plan 15-09, 2026-09-09*
