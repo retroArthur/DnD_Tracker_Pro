@@ -227,17 +227,6 @@
     color: var(--text, var(--text));
 }
 
-/* reduced-motion */
-@media (prefers-reduced-motion: reduce) {
-    .migration-wizard,
-    .wizard-dropzone,
-    .wizard-step,
-    .migration-step {
-        transition: none;
-        animation: none;
-    }
-}
-
 /* ========================================
    Komponente 4 — Einmaliger Umzugs-Hinweis (D-10)
    .migration-hint-banner

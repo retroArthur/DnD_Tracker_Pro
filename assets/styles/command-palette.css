@@ -149,15 +149,6 @@
     }
 }
 
-/* Reduzierte Bewegung */
-@media (prefers-reduced-motion: reduce) {
-    .cp-overlay.cp-visible,
-    .cp-box {
-        animation: none;
-        transition: none;
-    }
-}
-
 /* Mobile */
 @media (max-width: 600px) {
     .cp-overlay {

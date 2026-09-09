@@ -1316,53 +1316,6 @@
             font-size: 0.9em;
         }
         
-        /* ============================================================
-           SKELETON LOADING
-           ============================================================ */
-        .skeleton {
-            background: linear-gradient(
-                90deg,
-                var(--bg-elevated) 25%,
-                var(--bg-hover) 50%,
-                var(--bg-elevated) 75%
-            );
-            background-size: 200% 100%;
-            animation: skeleton-loading 1.5s ease-in-out infinite;
-            border-radius: var(--radius-sm);
-        }
-        
-        @keyframes skeleton-loading {
-            0% { background-position: 200% 0; }
-            100% { background-position: -200% 0; }
-        }
-        
-        .skeleton-text {
-            height: 1em;
-            margin-bottom: 0.5em;
-        }
-        
-        .skeleton-text.short { width: 40%; }
-        .skeleton-text.medium { width: 70%; }
-        .skeleton-text.long { width: 100%; }
-        
-        .skeleton-avatar {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-        }
-        
-        .skeleton-card {
-            height: 120px;
-            border-radius: var(--radius-md);
-        }
-        
-        .skeleton-row {
-            display: flex;
-            gap: 12px;
-            align-items: center;
-            padding: 12px;
-        }
-        
         /* Loading Overlay */
         .loading-overlay {
             position: absolute;
@@ -1402,20 +1355,6 @@
         .card, .btn, .modal, .nav-tab {
             will-change: transform;
             transform: translateZ(0);
-        }
-        
-        /* Reduzierte Bewegung respektieren */
-        @media (prefers-reduced-motion: reduce) {
-            *, *::before, *::after {
-                animation-duration: 0.01ms !important;
-                animation-iteration-count: 1 !important;
-                transition-duration: 0.01ms !important;
-            }
-            
-            .skeleton {
-                animation: none;
-                background: var(--bg-elevated);
-            }
         }
         
         /* Content-Visibility für besseres Scrolling */

@@ -954,3 +954,31 @@ describe('F-19 — Inline-Stile (Ratsche)', () => {
         });
     });
 });
+
+
+describe('F-20 — Bewegungsunterdrueckung (Ratsche)', () => {
+    // Erhoben am 2026-09-09. Diese Zahl darf nur SINKEN. Zaehlart: Zahl der
+    // Dateien unter assets/styles/, deren kommentarfreier Inhalt die At-Rule
+    // fuer reduzierte Bewegung (`prefers-reduced-motion`) mindestens einmal
+    // enthaelt — erhoben mit readAll()/withoutComments(), nicht mit einem
+    // grep-Aequivalent. Nach der Zusammenfuehrung bleibt genau EIN globaler
+    // Block, weil die drei Komponentenbloecke (command-palette.css,
+    // migration.css, pwa.css) wirkungsseitig redundant zur globalen
+    // *-Regel mit !important sind und der pwa-Block ueberdies schon vorher
+    // inert war (Spezifitaet 0-1-0 gegen .pwa-update-banner[style*="flex"]
+    // mit 0-2-0). Messblock: siehe
+    // .planning/phases/15-befundlage-vorlauf/15-RATCHET-BASELINE.md.
+    const REDUCED_MOTION_BLOCKS_MAX = 1;
+
+    const reducedMotionFiles = () =>
+        cssFiles.filter(f => withoutComments(f.content).includes('prefers-reduced-motion'));
+
+    test('die Zahl der Dateien mit einem prefers-reduced-motion-Block steigt nicht wieder', () => {
+        expect(reducedMotionFiles().length).toBeLessThanOrEqual(REDUCED_MOTION_BLOCKS_MAX);
+    });
+
+    test('der verbliebene Block steht in core.css', () => {
+        const names = reducedMotionFiles().map(f => f.name);
+        expect(names).toEqual(['core.css']);
+    });
+});

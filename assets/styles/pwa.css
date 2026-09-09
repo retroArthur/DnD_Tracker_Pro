@@ -126,9 +126,3 @@
 .pwa-update-banner[style*="flex"] {
     animation: pwa-banner-slide-up 0.2s ease;
 }
-
-@media (prefers-reduced-motion: reduce) {
-    .pwa-update-banner {
-        animation: none;
-    }
-}

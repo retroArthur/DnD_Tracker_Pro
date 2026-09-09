@@ -2863,3 +2863,13 @@
             cursor: default;
         }
 
+        /* Bewegung fuer Nutzer mit dieser Systemeinstellung unterdruecken
+           (D-18, F-20): einziger globaler Block dieser Art im Baum. */
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
+
