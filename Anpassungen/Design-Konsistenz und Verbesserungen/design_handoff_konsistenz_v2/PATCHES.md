@@ -1,5 +1,13 @@
 # Patches — Welle 4 bis 6
 
+> **Korrekturvermerk (2026-09-09):** Die Kennzahlen dieser Datei wurden gegen
+> `.planning/HANDOFF-V2-VERIFIKATION.md` (Tabelle „Korrigierte Ausgangswerte") nachgemessen. Wo
+> dieses Dokument der Verifikation widerspricht, gilt die Verifikation. Der ursprüngliche
+> Bericht-Wert bleibt an jeder korrigierten Stelle als Vergleichswert sichtbar, nichts wurde
+> spurlos ersetzt. Zusätzlich sind die in `.planning/HANDOFF-V2-VERIFIKATION.md` Zeile 318 namentlich
+> genannten defekten Anker (§1b, §3b) in `.planning/phases/15-befundlage-vorlauf/15-03-SUMMARY.md`
+> als Tripel repariert (Task 2 dieses Plans).
+
 Einsetzbare Blöcke. **Such-Anker statt Zeilennummer**: der zitierte Text ist im
 Repo eindeutig. Alle Farbwerte sind berechnet, nicht geschätzt — der Zielwert
 ist 4,5:1 gegen `--bg-card` des jeweiligen Themes, Hue und Sättigung bleiben,
@@ -15,7 +23,11 @@ dunkelbraun (`#8b4513`, braucht helle Schrift), `--green` aber olivhell
 
 ### 1a — in `assets/styles/variables.css`, in **jeden** der vier Theme-Blöcke
 
-Anker: die Zeile `--shadow: rgba(...)` am Ende jedes Theme-Blocks.
+**Anker (Tripel, erhoben 2026-09-09):**
+- Datei+Zeile: `assets/styles/variables.css:20/49/75/101` (je eine pro Theme-Block)
+- Wörtliches Zitat (Dark, Zeile 20): `            --shadow: rgba(0,0,0,0.5);`
+- Grep mit erwarteter Trefferzahl: `grep -n -- "--shadow: rgba" assets/styles/variables.css` → **4**
+  Treffer (Zeilen 20, 49, 75, 101 — Dark/Light/Sepia/Contrast in dieser Reihenfolge)
 
 ```css
 /* Dark  — Anker: --shadow: rgba(0,0,0,0.5); */
@@ -37,7 +49,28 @@ Anker: die Zeile `--shadow: rgba(...)` am Ende jedes Theme-Blocks.
 
 ### 1b — in `assets/styles/core.css`
 
-Anker: `.btn-primary { background: var(--gold);` und die beiden folgenden.
+**Anker (Tripel, erhoben 2026-09-09 — REPARIERT, vormals defekt):** Der bisher zitierte Einzeiler
+`.btn-primary { background: var(--gold);` existiert so NICHT — `.btn-primary` ist ein
+**mehrzeiliger Regelblock**, kein einzeiliges Kompaktformat (`.planning/HANDOFF-V2-VERIFIKATION.md`
+Zeile 318 nennt diesen Anker namentlich als defekt).
+- Datei+Zeile: `assets/styles/core.css:2497-2503`
+- Wörtliches Zitat:
+  ```css
+  .btn-primary {
+      background: var(--gold);
+      border-color: var(--gold);
+      color: var(--bg-dark);
+      font-weight: 600;
+      white-space: nowrap;
+  }
+  ```
+- Grep mit erwarteter Trefferzahl: `grep -n "^        .btn-primary {$" assets/styles/core.css` → **1**
+  Treffer (Zeile 2497); `grep -c "color: var(--bg-dark);" assets/styles/core.css` findet diese
+  Zeile unter mehreren `--bg-dark`-Fundstellen wieder (siehe §1c, 100 echte Treffer im ganzen Baum).
+
+`.btn-success` und `.btn-gold` liegen als eigene, ebenfalls mehrzeilige Blöcke unmittelbar danach
+(nicht als kompakte Einzeiler wie unten dargestellt — das folgende Codebeispiel zeigt nur den
+**Zielzustand** nach dem Patch, nicht den Ist-Zustand):
 
 ```css
 .btn-primary { background: var(--gold);  border-color: var(--gold);  color: var(--on-gold);  font-weight: 600; white-space: nowrap; }
@@ -48,13 +81,18 @@ Anker: `.btn-primary { background: var(--gold);` und die beiden folgenden.
 **Gegenprobe im Browser:** Theme auf Light, dann Sepia stellen und den Knopf
 „+ Neuer Ort" ansehen — vorher hell auf hell, nachher dunkle Schrift.
 
-### 1c — dieselbe Ursache an fünf weiteren Stellen
+### 1c — dieselbe Ursache an fünf [Bericht] weiteren Stellen
 
 `color: var(--bg-dark)` auf gesättigter Fläche steht außerdem in:
 
 ```
 grep -rn "color: var(--bg-dark)" assets/styles/
 ```
+
+**Gemessen: 97, nicht 5.** Eigene Messung: 100 echte `color: var(--bg-dark)`-Deklarationen (der
+abgedruckte grep liefert 101 Zeilen, davon 1 Fehltreffer auf `background-color`), minus die 3
+Buttons aus §1b = 97. Verteilung: gold 45, green 21, cyan 13, yellow 4, orange 4, red 4, purple 1,
+pink 1, gold-dim 1, ohne Hintergrund 5.
 
 Jede Fundstelle prüfen: liegt darunter eine `--gold`- oder `--green`-Fläche,
 gehört das passende `--on-*`-Token hin. Liegt darunter `--red` oder `--blue`,
@@ -72,7 +110,11 @@ zwei Rollen — sie brauchen zwei Tokens.
 
 ### 2a — in `variables.css`, Aliasblock (NACH den Theme-Blöcken)
 
-Anker: `--teal: var(--cyan);`
+**Anker (Tripel, erhoben 2026-09-09):**
+- Datei+Zeile: `assets/styles/variables.css:134`
+- Wörtliches Zitat: `            --teal: var(--cyan);`
+- Grep mit erwarteter Trefferzahl: `grep -n -- "--teal: var(--cyan);" assets/styles/variables.css`
+  → **1** Treffer
 
 ```css
             /* N-02: Akzent als TEXTFARBE. In Dark und Contrast identisch zur
@@ -124,6 +166,12 @@ oder `box-shadow`:
 grep -rn "color: var(--\(gold\|green\|cyan\|yellow\|orange\|blue\|purple\|pink\))" assets/styles/
 ```
 
+**Achtung — die Trefferliste ist NICHT unmittelbar die Arbeitsliste (gemessen):** dieser grep
+liefert 715 Treffer, davon 229 Fehltreffer auf `border-color: var(--…)` — genau die Eigenschaft,
+die dieser Abschnitt zwei Zeilen darüber ausdrücklich ausschließt. Echte `color:`-Deklarationen:
+482. Vor der Bearbeitung `grep -v "border-color"` vorschalten, sonst gilt implizit „die Trefferliste
+ist die Arbeitsliste", was hier gemessen falsch ist.
+
 Bei jeder Fundstelle prüfen, worauf der Text liegt. Auf `--bg-card`,
 `--bg-dark` oder `--bg-elevated` → `--*-text`. Auf einer gesättigten Fläche
 → unverändert lassen, das ist §1.
@@ -146,15 +194,26 @@ Bei jeder Fundstelle prüfen, worauf der Text liegt. Auf `--bg-card`,
     --overlay-strong: rgba(0,0,0,0.16);
 ```
 
-Damit sind die 35 `rgba(255,255,255,…)` erledigt. Anker für die
-schwerwiegendste Stelle, `core.css`:
+Damit sind die 35 `rgba(255,255,255,…)` erledigt.
+
+**Anker für die schwerwiegendste Stelle (Tripel, erhoben 2026-09-09):**
+- Datei+Zeile: `assets/styles/core.css:337-349`
+- Wörtliches Zitat (erste Zeile des Blocks): `        .nav-tab {` gefolgt von
+  `            background: rgba(255,255,255,0.05);` (Zeile 338)
+- Grep mit erwarteter Trefferzahl: `grep -n "background: rgba(255,255,255,0.05);" assets/styles/core.css`
+  → **2** Treffer (Zeile 338 `.nav-tab`, Zeile 369 `.nav-group-btn` — beide betroffen, nicht nur
+  `.nav-tab`)
 
 ```css
 /* vorher */  .nav-tab { background: rgba(255,255,255,0.05); …
 /* nachher */ .nav-tab { background: var(--overlay-weak); …
 ```
 
-### 3b — die 138 Farb-Auflagen auf `color-mix`
+### 3b — die 138 [Bericht] Farb-Auflagen auf `color-mix`
+
+**Gemessen: 156, nicht 138.** 54 (gold) + 32 (gelb, korrigiert von §N-01) + 40 (rot) + 19 (grün,
+`rgba(74,222,128,…)`) + 11 (blau, `rgba(96,165,250,…)`) = 156. Die 138 aus dem Bericht sind
+54+44+40 — also dieselbe Tabellenzeile, die den falschen Gelb-Wert (44 statt 32) trägt.
 
 Mechanisches Ersetzen, Deckkraft bleibt gleich:
 
@@ -166,7 +225,15 @@ rgba(74,222,128,X)  ->  color-mix(in srgb, var(--green)  {X*100}%, transparent)
 rgba(96,165,250,X)  ->  color-mix(in srgb, var(--blue)   {X*100}%, transparent)
 ```
 
-Beispiel (`core.css`, Anker `rgba(212, 175, 55, 0.3)`):
+**Anker (Tripel, erhoben 2026-09-09 — REPARIERT, vormals defekt):** Der bisher als `core.css`
+zitierte Anker `rgba(212, 175, 55, 0.3)` steht dort NICHT — die Zeile existiert wörtlich
+**zweimal in `loot.css`**, nicht in `core.css` (`.planning/HANDOFF-V2-VERIFIKATION.md` Zeile 318
+nennt diesen Anker namentlich als defekt).
+- Datei+Zeile: `assets/styles/loot.css:439` und `:483`
+- Wörtliches Zitat (identisch an beiden Stellen): `            box-shadow: 0 2px 4px rgba(212, 175, 55, 0.3);`
+- Grep mit erwarteter Trefferzahl: `grep -n "box-shadow: 0 2px 4px rgba(212, 175, 55, 0.3);" assets/styles/loot.css`
+  → **2** Treffer (Zeilen 439, 483) — der Mehrfachtreffer darf nicht als Einzelstelle
+  missverstanden werden; beide Vorkommen brauchen dieselbe Ersetzung.
 
 ```css
 /* vorher */  box-shadow: 0 2px 4px rgba(212, 175, 55, 0.3);
@@ -177,8 +244,10 @@ Beispiel (`core.css`, Anker `rgba(212, 175, 55, 0.3)`):
 `--green-dim` in `variables.css`) — keine neue Abhängigkeit.
 
 **Reihenfolge:** 3a zuerst (35 Stellen, mechanisch), dann 3b nach Farbe
-gruppiert, dann §4 für die 58 Schatten-rgba. Danach bleibt in `rgba()` kein
-Zahlentripel mehr übrig außer denen in `variables.css`.
+gruppiert, dann §4 für die 58 Schatten-rgba. *(Bericht: „danach bleibt kein Zahlentripel mehr übrig"
+— gemessen FALSCH: §3a [35] + §3b [156] + §4 [58] = 249 von 390. 141 Fundstellen haben nach diesem
+Patch noch KEINE Vorschrift, während `CHECKLISTE.md` §T-2 exakt null verlangt und keine Ausnahme
+kennt. Diese 141 sind vorab zu klassifizieren, siehe `.planning/REQUIREMENTS.md` COLOR-08.)*
 
 ---
 
@@ -186,7 +255,11 @@ Zahlentripel mehr übrig außer denen in `variables.css`.
 
 ### 4a — in `variables.css`, Aliasblock
 
-Anker: `--gold-hover: color-mix(...)` (Ende des Blocks)
+**Anker (Tripel, erhoben 2026-09-09):**
+- Datei+Zeile: `assets/styles/variables.css:316`
+- Wörtliches Zitat: `            --gold-hover: color-mix(in srgb, var(--gold) 85%, #fff);`
+- Grep mit erwarteter Trefferzahl: `grep -n -- "--gold-hover: color-mix" assets/styles/variables.css`
+  → **1** Treffer
 
 ```css
             /* N-03: Hoehenstufen. Aus var(--shadow) gebaut, damit die
@@ -199,7 +272,8 @@ Anker: `--gold-hover: color-mix(...)` (Ende des Blocks)
             --glow-gold: 0 0 0 3px color-mix(in srgb, var(--gold) 35%, transparent);
 ```
 
-### 4b — Zuordnung der 66 Werte
+### 4b — Zuordnung der 66 [Bericht] Werte *(gemessen 65 nach Leerraum-Normierung — dice.css:575 und
+:598 sind derselbe Wert, einmal umbrochen; 88 Deklarationen insgesamt)*
 
 | bisher | neu |
 |---|---|
@@ -210,7 +284,11 @@ Anker: `--gold-hover: color-mix(...)` (Ende des Blocks)
 
 **Bleiben unverändert** (begründete Sonderfälle, jeweils mit Kommentar
 versehen): die `inset`-Schatten des Statblock-Pergaments, das Würfel-Glühen
-bei kritischem Treffer, die Fortschrittsbalken-Innenschatten.
+bei kritischem Treffer, die Fortschrittsbalken-Innenschatten. *(Korrektur, gemessen: von diesen drei
+"dokumentierten Sonderfällen" existieren ZWEI NICHT. Alle 7 `inset`-Schatten sitzen auf
+`.read-aloud` [party.css:390-438]; `bestiary.css` hat 0 `box-shadow`; es gibt keinen einzigen
+`inset`-Schatten an einem Fortschrittsbalken. Siehe `.planning/REQUIREMENTS.md` ELEV-04 für die
+tatsächliche Sonderfall-Liste.)*
 
 ---
 
@@ -233,8 +311,25 @@ bei kritischem Treffer, die Fortschrittsbalken-Innenschatten.
 ```
 
 Voraussetzung: `html { font-size: var(--font-size-base); }` bzw. `body` — die
-Profil-Tokens existieren schon (`14px` Desktop, `16px` Mobil), werden aber nur
-2× gelesen. Anker: `[data-layout="mobile"] body { font-size: var(--font-size-base); }`
+Profil-Tokens existieren schon, werden aber nur 2× gelesen. *(Korrektur, gemessen: nicht 14px
+Desktop/16px Mobil wie im Bericht behauptet — `html` und `body` sind in BEIDEN Layout-Profilen
+16px; `--font-size-base: 14px` erreicht die Wurzel nie, siehe N-04-Korrektur oben.)*
+
+**Anker (Tripel, erhoben 2026-09-09):**
+- Datei+Zeile: `assets/styles/variables.css:361-364`
+- Wörtliches Zitat:
+  ```css
+  [data-layout="mobile"] body {
+      font-size: var(--font-size-base);
+      padding-bottom: 70px;
+  }
+  ```
+  Diese Regel setzt `body`-`font-size` NUR im Mobil-Profil explizit (auf `--font-size-base`, dort
+  16px); im Desktop-Profil gibt es keine `body{font-size:…}`-Regel — die 16px kommen dort aus dem
+  Browser-Standard. Beide Profile landen also bei 16px, aber auf verschiedenen Wegen — das ist die
+  gemessene Grundlage der N-04-Korrektur oben, nicht ein Widerspruch dazu.
+- Grep mit erwarteter Trefferzahl: `grep -n "data-layout=\"mobile\"\] body {" assets/styles/variables.css`
+  → **1** Treffer
 
 ### 5b — Zuordnung
 
@@ -291,6 +386,15 @@ Komponenten darauf zeigen lassen. `0.15s`/`0.12s`/`0.1s` → `--dur-fast`;
 
 ### 7a — in `core.css`, direkt nach dem `.btn:focus-visible`-Block
 
+**Anker (Tripel, erhoben 2026-09-09):**
+- Datei+Zeile: `assets/styles/core.css:519`
+- Wörtliches Zitat: `        .btn:focus-visible {` (Beginn des Regelblocks)
+- Grep mit erwarteter Trefferzahl: `grep -n "\.btn:focus-visible {" assets/styles/core.css` →
+  **1** Treffer. *(Hinweis: eine app-weite globale `:focus-visible`-Regel existiert bereits an
+  anderer Stelle, `assets/styles/dmscreen.css:1661` — siehe BEFUNDE-v2.md N-05-Korrektur. §7 fügt
+  eine ZWEITE, `:where()`-basierte Regel hinzu; ob das neben der bestehenden globalen Regel Sinn
+  ergibt, ist bei der Ausführung [Phase 19] zu klären.)*
+
 ```css
         /* N-05: EIN Fokusring fuer alles Fokussierbare. :where() hat
            Spezifitaet 0 — jede Komponente kann die Regel ohne !important
@@ -305,6 +409,10 @@ Komponenten darauf zeigen lassen. `0.15s`/`0.12s`/`0.1s` → `--dur-fast`;
 
 ### 7b — die 37 `outline: none` entschärfen
 
+**Anker (Tripel, erhoben 2026-09-09):**
+- Grep mit erwarteter Trefferzahl: `grep -rn "outline: none" assets/styles/` → **37** Treffer
+  (bestätigt, Bericht-Wert und gemessener Wert stimmen überein)
+
 ```
 grep -rn "outline: none" assets/styles/
 ```
@@ -316,6 +424,18 @@ greift trotzdem. Liegt sie ohne Pseudoklasse auf dem Element
 auf `:focus-visible` ändern oder streichen.
 
 Eine Stelle hat **keinen** sichtbaren Ersatz und muss einen bekommen:
+
+**Anker (Tripel, erhoben 2026-09-09):**
+- Datei+Zeile: `assets/styles/party.css:1485-1488`
+- Wörtliches Zitat:
+  ```css
+  .cf-combat-value input:focus,
+  .cf-combat-value select:focus {
+      outline: none;
+  }
+  ```
+- Grep mit erwarteter Trefferzahl:
+  `grep -n "cf-combat-value input:focus" assets/styles/party.css` → **1** Treffer (Zeile 1485)
 
 ```css
 /* party.css, Anker: .cf-combat-value input:focus, .cf-combat-value select:focus */
