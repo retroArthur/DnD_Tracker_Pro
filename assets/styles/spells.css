@@ -1,12 +1,4 @@
-        /* ============================================================
-           SPELLS
-           ============================================================ */
-        .spell-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-            gap: 10px;
-            align-items: start;
-        }
+
         
         .spell-card {
             background: var(--bg-card);
@@ -196,23 +188,6 @@
             height: 12px;
             flex-shrink: 0;
             margin: 0;
-        }
-        
-        .spell-editor-toolbar {
-            /* .editor-toolbar bewusst NICHT mehr hier: assets/styles.css @import
-               laedt spells.css (#9) nach editors.css (#4), diese Regel gewann
-               deshalb bei gleicher Spezifitaet und diktierte der Editor-Leiste
-               hartkodierte Farben. Die Leiste wird jetzt allein in editors.css
-               definiert (Variante 2a). */
-            display: flex;
-            flex-wrap: wrap;
-            gap: 3px;
-            align-items: center;
-            padding: 4px 6px;
-            background: var(--bg-dark);
-            border-radius: var(--radius-md) var(--radius-md) 0 0;
-            border: 1px solid var(--bg-hover);
-            border-bottom: none;
         }
         
         .floating-toolbar.visible {
