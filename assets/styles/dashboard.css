@@ -561,13 +561,6 @@
             background: var(--purple); /* F-18: aus der Dublette uebernommen */
         }
         
-        @media (min-width: 601px) {
-            .spell-slots-grid {
-                grid-template-columns: repeat(10, 1fr);
-                gap: 3px;
-            }
-        }
-        
         .spell-slot-box .slot-level {
             font-size: 0.65em;
             color: var(--gold);
