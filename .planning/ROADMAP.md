@@ -144,7 +144,7 @@ Plans:
 
 **Wave 8** *(blocked on Wave 7 completion)*
 
-- [ ] 15-10-PLAN.md — Gap 2: CLAUDE.md widerspruchsfrei über die CSS-Dateizahl, vollständige Strukturliste, sprachunabhängiger Wächtertest
+- [x] 15-10-PLAN.md — Gap 2: CLAUDE.md widerspruchsfrei über die CSS-Dateizahl, vollständige Strukturliste, sprachunabhängiger Wächtertest
 
 **UI hint**: yes
 

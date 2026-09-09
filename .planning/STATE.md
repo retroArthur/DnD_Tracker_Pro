@@ -5,16 +5,16 @@ milestone_name: Design-System
 current_phase: 15
 current_phase_name: Befundlage & Vorlauf
 status: executing
-stopped_at: Completed 15-befundlage-vorlauf-09-PLAN.md
-last_updated: "2026-09-09T13:01:22.838Z"
+stopped_at: Completed 15-befundlage-vorlauf-10-PLAN.md (Phase 15 alle 10 Plaene fertig)
+last_updated: "2026-09-09T13:11:36.384Z"
 last_activity: 2026-09-09
 last_activity_desc: Phase 15 execution started
-state_head: 3c51368dbb6530d1a9ddb6b0b585f29aeee9f8b0
+state_head: bc2686d9644760677ae94432b113df944308a356
 progress:
   total_phases: 5
   completed_phases: 0
   total_plans: 10
-  completed_plans: 9
+  completed_plans: 10
   percent: 0
 ---
 
@@ -40,10 +40,10 @@ See: `.planning/PROJECT.md` (Stand 2026-09-08)
 
 ## Current Position
 
-Phase: 15 (Befundlage & Vorlauf) — EXECUTING
-Plan: 2 of 10
-Status: Ready to execute
-Last activity: 2026-09-09 — Phase 15 execution started
+Phase: 15 (Befundlage & Vorlauf) — ALLE 10 PLAENE ABGESCHLOSSEN
+Plan: 10 of 10 (complete)
+Status: Phase 15 execution complete — bereit fuer /gsd-verify-work 15 (Re-Verifikation gegen 15-VERIFICATION.md Gap 1 und Gap 2)
+Last activity: 2026-09-09 — Plan 15-10 (CLAUDE.md CSS-Dateizahl-Widerspruch geschlossen, docs-consistency.test.js) abgeschlossen
 
 ### Ausgangslage v1.3 — der Handoff ist geprüft, nicht übernommen
 
@@ -169,6 +169,7 @@ die Tastaturprobe der CHECKLISTE muss aus den Akzeptanzkriterien.
 | Phase 15-befundlage-vorlauf P07 | ~55min | 3 tasks | 18 files |
 | Phase 15-befundlage-vorlauf P08 | 50min | 3 tasks | 2 files |
 | Phase 15-befundlage-vorlauf P09 | ~45min | 3 tasks | 7 files |
+| Phase 15-befundlage-vorlauf P10 | ~15min | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -255,8 +256,8 @@ die Tastaturprobe der CHECKLISTE muss aus den Akzeptanzkriterien.
 
 ## Session Continuity
 
-**Last session:** 2026-09-09T13:01:22.814Z
-**Stopped at:** Completed 15-befundlage-vorlauf-09-PLAN.md
+**Last session:** 2026-09-09T13:11:36.360Z
+**Stopped at:** Completed 15-befundlage-vorlauf-10-PLAN.md (Phase 15 alle 10 Plaene fertig)
 **Resume file:** None
 
 **Last action:** `/gsd-execute-phase 13` (Plan 13-08, MAINT-06). Converted all 81 originally-counted unfiltered `console.*` calls across 31 `loader.js` MODULES files to the one sanctioned `ErrorHandler.log()` outlet in `render/helpers.js` (marked `gsd:konsolen-senke`), built `tests/unit/console-hygiene.test.js` as a permanent regression guard, and corrected two stale `file-backup-manager.js` header comments that wrongly described the forbidden `window.save` monkey-patch pattern (code has used `registerPostSaveHook()` correctly since Phase 12). Mid-execution finding: converting routine/self-healing diagnostics (data repairs, migration progress, per-tab render guards) to the single outlet elevated them to `console.error` and broke 5 Playwright tests (`editor-formatting.spec.js`, `editor-insert.spec.js`, `import-security.spec.js`) that assert zero console errors — fixed by routing those specific sites through the existing `window.debugLogAdd()` in-app debug panel instead, preserving the single-outlet invariant for genuine faults while not misclassifying normal operation as an error. Full suites green: `npx jest` 1066/1066, `npx playwright test` 321 passed/2 skipped (STATE.md baseline exactly matched), `python build.py` + `--production` + `pytest tests/build` 24/24 all green.
@@ -420,6 +421,7 @@ die Tastaturprobe der CHECKLISTE muss aus den Akzeptanzkriterien.
 - [Phase 15-09]: scanBalancedSegment() als eine gemeinsame, anfuehrungszeichen- und klammertiefe-bewusste Scan-Funktion statt drei separater Leser gebaut (CR-01a/CR-01b/WR-01)
 - [Phase 15-09]: DEAD_EXCEPTIONS und LIVE_PREFIXES unveraendert bei je fuenf Eintraegen gelassen — DEAD-02 verbietet, eine mechanisch schliessbare Erkennungsluecke ueber die Ausnahmeliste zu schliessen
 - [Phase 15-09]: npc-grid und list-view-container woertlich aus Commit 4faca38 wiederhergestellt, nichts anderes aus diesem Commit zurueckgeholt
+- [Phase 15]: Zeilenzahlen-Spalte im CSS-Struktur-Codeblock entfernt statt neu gemessen; ersetzt durch Messbefehl+Datum (BASE-01/empty-Prinzip) — Alte Werte bereits vor dem Loeschlauf grob falsch und ohne Waechter dauerhaft driftend; DOC-01..DOC-04 sichert stattdessen die Zahl selbst gegen den gemessenen Baum
 
 ## Deferred Items
 
