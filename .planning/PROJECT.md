@@ -481,6 +481,223 @@ _(v1.3 „Design-System" — die scharf geschnittenen Requirements mit REQ-IDs s
 | N-08 gestrichen statt umgesetzt (B-07)                                          | Der globale `prefers-reduced-motion`-Block existiert seit Langem (`dmscreen.css:1408`); der Patch hätte eine Dublette angelegt und zwei grüne Ratschen gebrochen | ✓ Good — 2 Bearbeitungsstellen gespart, 2 Ratschen intakt |
 | Abnahme misst berechnete Endwerte, nicht Deklarationstext                       | Das 64-Test-Netz prüft nur Quelltext — genau deshalb konnte `--on-accent` 17 von 24 Theme-Zellen verfehlen, ohne rot zu werden | — Pending |
 | Tastatur-Strang aus v1.3 herausgehalten                                         | Vom Nutzer beim Aufsetzen abgewählt; JS/Markup statt CSS, berührt die Ereignisdelegation zentral | — Pending — Folge: N-05 bleibt an 176 Elementen wirkungslos, Tastaturprobe muss aus den Akzeptanzkriterien |
+| B-01: siehe § Blocker-Entscheidungen v1.3 unten                                 | Verweiszeile — Entscheidung steht bereits in dieser Tabelle (Zeile „Wurzel bleibt bei 16px"), der neue Abschnitt liefert Begründung und Auswirkung auf Phase 18 im Detail | — Pending |
+| B-02: siehe § Blocker-Entscheidungen v1.3 unten                                 | Verweiszeile — Entscheidung steht bereits in dieser Tabelle (Zeile „`--*-text`-Übersteuerungen"), ergänzt um D-52 (Ratschen-Verträglichkeit) | — Pending |
+| B-03: siehe § Blocker-Entscheidungen v1.3 unten                                 | Vollständiger `--on-<rolle>`-Tintensatz für neun Akzente statt der lückenhaften Zwei-Rollen-Lösung des Handoffs | — Pending |
+| B-04: siehe § Blocker-Entscheidungen v1.3 unten                                 | `color-mix` löst die `--*-rgb`-Tokenfamilie vollständig ab, statt beide Mechanismen parallel zu führen | — Pending |
+| B-05: siehe § Blocker-Entscheidungen v1.3 unten                                 | Vorkommens-basierte Ausnahmeliste mit Inline-Marker statt eines widersprüchlichen Alles-oder-nichts-Gates | — Pending |
+| B-06: siehe § Blocker-Entscheidungen v1.3 unten                                 | Sichtbarer Rahmenwechsel gilt als Fokusring-Ersatz — schrumpft die Fokus-Welle von 33 auf 1 wirklich ringlose Stelle | — Pending |
+| B-07: siehe § Blocker-Entscheidungen v1.3 unten                                 | Verweiszeile — Entscheidung steht bereits in dieser Tabelle (Zeile „N-08 gestrichen") | ✓ Good — ausgeführt in Plan 15-01 |
+| B-08: siehe § Blocker-Entscheidungen v1.3 unten                                 | Vier Höhenstufen als vollständige Schatten-Kurzform je Theme-Block statt eines einzigen `--shadow`-Tokens | — Pending |
+| B-09: siehe § Blocker-Entscheidungen v1.3 unten                                 | Standard-Übergangsliste mit acht statt fünf Eigenschaften — verhindert mindestens elf stille Regressionen | — Pending |
+| B-10: siehe § Blocker-Entscheidungen v1.3 unten                                 | Geltungsbereich CSS-vs-JS/Markup ist GATE-04 — siehe eigener Abschnitt „Übertrag aus v1.3" unten | — Pending |
+| B-11: siehe § Blocker-Entscheidungen v1.3 unten                                 | Zielwert für `font-weight: 500` ist 600; die Ausführung selbst bleibt bei TYPO-07 zurückgestellt | — Pending |
+| B-12: siehe § Blocker-Entscheidungen v1.3 unten                                 | `setViewCount` wandert vor den Leerzustands-Return; die bestehende Filterrückmeldung bleibt erhalten | — Pending |
+| B-13: siehe § Blocker-Entscheidungen v1.3 unten                                 | Ein eingechecktes Werkzeug (`tools/css-usage-report.js`) erzeugt die bindenden Löschzahlen für den Löschlauf | — Pending |
+
+## Blocker-Entscheidungen v1.3 (B-01..B-13)
+
+Jeder der dreizehn Blocker aus `HANDOFF-V2-VERIFIKATION.md` § „Blocker — vor der ersten Zeile
+Code zu entscheiden" ist hier mit Entscheidung, Begründung und Auswirkung auf die Folgephasen
+gebucht. Der Ursprung jeder Entscheidung steht in `.planning/phases/15-befundlage-vorlauf/15-CONTEXT.md`
+§ „Implementation Decisions" (Kennungen `D-NN`). Diese Bindung gilt für die Phasen 16-19 —
+keine davon wird dort erneut verhandelt, außer über einen eigenen Änderungsvorgang.
+
+**B-01 — Wurzel bleibt bei 16px, `--text-*` gegen 16 gerechnet.**
+Entscheidung: `html` bekommt keine `font-size`-Deklaration und bleibt bei den
+Browser-Standard-16px; die sieben `--text-*`-Größenstufen werden gegen 16px (nicht gegen die
+vom Handoff vorgeschlagenen 14px) berechnet.
+Begründung: `rem` löst ausschließlich gegen das Wurzelelement auf. Es gibt 0 `html`-Selektoren
+in `assets/styles/`, `core.css:284` `body{}` setzt keine `font-size`, und die Basis ist gemessen
+in BEIDEN Layout-Profilen 16px. Die Handoff-Wurzeländerung hätte ohne eine einzige
+em-Ersetzung 3.431 von 5.032 Elementen um 12,5 % geschrumpft und die Browser-Grundschriftgröße
+des Nutzers übersteuert (`HANDOFF-V2-VERIFIKATION.md` B-01).
+Auswirkung: Phase 18 (Typografie) rechnet die Typo-Skala gegen 16px; kein Wurzel-Commit, kein
+Mobil-Profil-Risiko. Bereits in der Key-Decisions-Tabelle gebucht.
+
+**B-02 — `--*-text`-Übersteuerungen innerhalb der bestehenden Theme-Blöcke.**
+Entscheidung: Die theme-eigenen `--*-text`-Rollen werden INNERHALB der vier bestehenden
+`[data-theme]`-Blöcke gesetzt, nicht in zwei neuen Blöcken hinter dem Aliasblock.
+Begründung: Der Handoff-Vorschlag hätte den heute grünen Test F-01 gebrochen (prüft die
+Blockreihenfolge: Aliasblock nach allen `[data-theme]`-Blöcken). Ergänzt um D-52: von den fünf
+laut `HANDOFF-V2-VERIFIKATION.md` B-02 bedrohten Prüfungen bricht nur `F-14` wirklich (wird im
+selben Commit wie PATCHES §1b auf `color: var(--on-gold)` umgestellt); `F-01` bleibt unter der
+Bedingung erhalten, dass nichts Literales in den Aliasblock geht; `F-03` wird von einer
+Datei- auf eine Zeilenausnahme umgebaut, die Skala bleibt in `rem`. `DUBLETTEN_MAX` und
+`IMPORTANT_MAX` bleiben unverändert, weil ihr einziger Bruchgrund (PATCHES §8) durch B-07
+gestrichen ist.
+Auswirkung: Phase 16 (Farbe) setzt die `--*-text`-Rollen ohne Testbruch; kein Ratschen-Umbau
+nötig außer der geplanten F-14/F-03-Anpassung.
+
+**B-03 — Vollständiger Tintensatz für neun Akzente, nur Schwarz oder Weiß.**
+Entscheidung: Ein vollständiger `--on-<rolle>`-Satz für alle neun Akzente (`--gold`, `--green`,
+`--red`, `--cyan`, `--yellow`, `--orange`, `--purple`, `--pink`, `--blue`) je Theme; die Tinte
+ist ausschließlich `#000` oder `#fff`, plus genau zwei abgeleitete Tokens (`--on-gold-dim`,
+`--on-green-dim`). `#111111` aus PATCHES §1a wird verworfen.
+Begründung: Der Handoff deckt mit `--on-gold`/`--on-green` nur 66 von 97 Fundstellen ab, hat
+für fünf Akzente gar keine Regel und ist für `--red` nachweislich falsch (Weiß auf `--red`:
+3,76:1 Dark, 4,00:1 Contrast — beide unter 4,5:1). `--blue` fehlt zudem in der
+Achter-Aufzählung des Handoffs, trägt aber zwei `color: white`-Stellen. `#111111` fällt an acht
+Zellen unter 4,5:1 (D-31, `HANDOFF-V2-VERIFIKATION.md` B-03).
+Auswirkung: Phase 16 (COLOR-02) implementiert neun statt acht Rollen; drei messbare
+Kontrast-Regressionen (`.btn-gold:hover`, `.btn-success:hover`) sind mit abgedeckt, weil jede
+abgeleitete Fläche pro Theme einzeln geprüft wird.
+
+**B-04 — Eine Mechanik: `color-mix` löst die `--*-rgb`-Tokenfamilie ab.**
+Entscheidung: Alle theme-fähigen Farbauflagen werden `color-mix(in srgb, var(--token) N%,
+transparent)`. Die zwölf `--*-rgb`-Deklarationen, ihr Wartungskommentar
+(„BEIM ÄNDERN EINER FARBE HIER MITZIEHEN") und die beiden daran hängenden F-01-Tests entfallen
+im selben Commit.
+Begründung: Der Handoff führt `color-mix` als zweiten Mechanismus ein, ohne den ersten
+(`--*-rgb`, 6 Nutzungen, testgeschützt) abzulösen oder zu erweitern — das Ergebnis wäre ein
+toter, aber testgeschützter Mechanismus. `color-mix` ist bereits etabliert (13 Nutzungen gegen
+6) und überwiegt. Das Serialisierungsrisiko ist kleiner als befürchtet: genau ein `toHaveCSS`
+im gesamten E2E-Baum (`wiki.spec.js:396`), nicht sieben — die sieben rgba-Stellen in den
+eingefrorenen Editor-Specs sind Zeichenkettenvergleiche auf das `style`-Attribut und von der
+Farb-Serialisierung nicht betroffen (D-27, `HANDOFF-V2-VERIFIKATION.md` B-04).
+Auswirkung: Phase 16 räumt rund 250 Fundstellen in einem Zug ab; kein doppelter Mechanismus
+bleibt stehen. Reversibility: costly — ein Rückweg verlangt denselben Durchlauf rückwärts plus
+Wiederanlage der Tokenfamilie.
+
+**B-05 — Vorkommens-basierte Ausnahmeliste mit Inline-Marker statt Alles-oder-nichts.**
+Entscheidung: `T-2` wird zu „kein `rgba()`/`rgb()` mit Zahlentripel in `assets/styles/` außer
+den in der Datei markierten und in der Testdatei gelisteten Ausnahmen", geprüft je Vorkommen
+(nicht je Zeile). Marker: nachgestellter Kommentar auf derselben Zeile,
+`/* rgba-ok[<i>]: <Grund> */`. Keine regelbasierte Freistellung schwarzer Schatten, keine
+Datei-Ausnahme für `variables.css`.
+Begründung: Das N-01-Kriterium (`T-2`, „leer, keine Ausnahme") widerspricht sich mit den
+N-03-Sonderfällen (23 Zahlentripel bleiben stehen) — beide Haken sind nicht gleichzeitig zu
+setzen. Zeilenbasierte Zählung verschiebt sich zudem systematisch: 19 Zeilen tragen mehr als
+ein `rgba`, mehrzeilige `box-shadow`-Werte verschärfen das. 141 Fundstellen hatten im Handoff
+keine Vorschrift (D-28, `HANDOFF-V2-VERIFIKATION.md` B-05).
+Auswirkung: Phase 16 klassifiziert vorab (66 palettenfremd, 25 aus fremden Theme-Paletten, 8
+schwarze rgba außerhalb `box-shadow`, 42 sonstige) und trägt die themelosen Tokens `--scrim`/
+`--shadow-ink`/`--sheen` für Schwarz/Weiß (D-29). Verbindliche Zählart: Vorkommen ohne
+`variables.css` = 390 (nicht 173 Werte, sondern 143 nach Whitespace-Normierung — D-30).
+
+**B-06 — Sichtbarer Rahmenwechsel gilt als Fokusring-Ersatz.**
+Entscheidung: Die 33 `.x:focus { outline: none }`-Stellen bleiben unverändert; nur die eine
+wirklich ringlose Stelle wird bearbeitet. Die bereits vorhandene globale Fokusring-Regel
+(`dmscreen.css:1722`) zieht unverändert nach `core.css` — keine zweite Regel daneben. Das
+Kampfwert-Eingabefeld bekommt seinen Fokuszustand am Elternelement (das Feld selbst trägt
+`border: none`). Phase 19 trägt einen ausdrücklichen Nicht-Anspruch für die 176 interaktiven
+`div`/`span` ohne `tabindex`.
+Begründung: `:where(…):focus-visible` hat Spezifität (0,1,0) und verliert gegen jede der 33
+`:focus { outline: none }`-Regeln (mindestens (0,2,0)) — der Handoff-Patch ist nachweislich
+Nullarbeit. Gemessen tragen 27 der 33 Stellen bereits einen goldenen und 5 einen anderen
+Akzentrahmen als Ersatz — wirklich ringlos ist eine. Die Forderung nach `border-radius` in der
+globalen Regel ist gegenstandslos: die Regel enthält nur `outline`/`outline-offset` (D-43 bis
+D-46, `HANDOFF-V2-VERIFIKATION.md` B-06).
+Auswirkung: Phase 19 (UX-01..03) schrumpft von 37 Bearbeitungsstellen auf 5 Edits; die
+Tastaturprobe der CHECKLISTE entfällt, weil sie an 4 von 4 Punkten unerfüllbar wäre.
+
+**B-07 — N-08 gestrichen statt umgesetzt.**
+Entscheidung: PATCHES §8 wird nicht ausgeführt; der bestehende globale
+`prefers-reduced-motion`-Block bleibt die einzige Quelle, wird aber redundanzfrei
+zusammengeführt.
+Begründung: Der globale Block existiert seit Langem (`dmscreen.css:1408-1419` vor der
+Zusammenführung); §8 hätte eine Dublette angelegt (`DUBLETTEN_MAX` 0→1), `!important` auf 110
+bei angewiesener Grenze 109 gehoben, und seine Ausnahmeliste trifft nichts (`.dice-crit-glow`
+existiert nicht, `.dice-result` ist tot) (`HANDOFF-V2-VERIFIKATION.md` B-07).
+Auswirkung: Bereits in Plan 15-01 ausgeführt — vier redundante Blöcke entfernt, ein einziger
+Block in `core.css`, neue Rückbau-Ratsche `REDUCED_MOTION_BLOCKS_MAX=1`, beidseitig bewiesen.
+Bereits in der Key-Decisions-Tabelle gebucht.
+
+**B-08 — Vier Höhenstufen als vollständige Schatten-Kurzform je Theme-Block.**
+Entscheidung: `--elev-1/-2/-3` werden komplett (Geometrie UND Farbe) in jedem der vier
+Theme-Blöcke definiert, nicht aus einem einzigen `--shadow` abgeleitet. Die Farbe kommt per
+`color-mix` über `--shadow-ink`. Das Contrast-Theme bekommt eine deckende Kante statt der
+weißen Inversion. `--ring-gold` (Blur 0, Spread) und `--glow-gold` (weicher Schein) sind zwei
+getrennte Tokens; `@keyframes`-Zustände (`dice.css:598/599`) bleiben ausdrücklich ausgenommen.
+Begründung: Ein einziges `--shadow` kann drei Höhenstufen nicht bedienen (Sepia 0.1 → Modale
+verlieren ihre Ablösung; Dark 0.5 → dreifacher Blur bei 2,5-facher Deckkraft an `.shadow-sm`).
+Im Contrast-Theme ist `--shadow` WEISS — alle 58 heute schwarzen Schatten würden dort zu Halos.
+22 von 88 Deklarationen bilden im Handoff auf keine der vier Zeilen ab; die deterministische
+Klassifikation aller 88 ergibt rund 40 Sonderfälle, nicht 22 (D-35 bis D-37,
+`HANDOFF-V2-VERIFIKATION.md` B-08).
+Auswirkung: Phase 17 (ELEV-01..04) plant mit ~40 statt 22 Sonderfällen; Phase-17-Kriterium 1
+ist entsprechend nachgezogen.
+
+**B-09 — Standard-Übergangsliste mit acht statt fünf Eigenschaften.**
+Entscheidung: `background-color, border-color, color, opacity, transform, box-shadow, filter,
+text-shadow`; die `visibility`-Variante bekommt genau ein Overlay (`dice.css:603`, Floating
+Dice Panel). Übergänge laufen über Custom Properties (`--trans-std`), nicht über eine
+Utility-Klasse. `--ease` wird eingeführt, aber mit dem Wert `ease` — der Wechsel auf
+`cubic-bezier(0.2,0,0.2,1)` wird zurückgestellt.
+Begründung: Die vom Handoff vorgeschlagene Fünferliste (`background, border-color, color,
+transform, box-shadow`) lässt genau die Eigenschaften weg, die unter `transition: all` die
+sichtbare Arbeit leisten — `opacity` (9 Stellen), `visibility` (1), `filter` (2), `text-shadow`
+(1). Schwerster Fall: das Floating Dice Panel würde beim Schließen ohne `visibility`
+schlagartig verschwinden statt auszublenden. Eine App-weite Utility-Klasse verlangte Änderungen
+an rund 163 Elementen in Templates und JS und sprengte den CSS-only-Rahmen. Der Kurvenwechsel
+ist eine App-weite Änderung des Bewegungsgefühls, die in keinem der drei Handoff-Dokumente als
+Folge benannt ist (D-38 bis D-40, `HANDOFF-V2-VERIFIKATION.md` B-09).
+Auswirkung: Phase 17/18 (MOTION-01..04) verhindert mindestens elf stille Regressionen; der
+Kurvenwechsel bleibt als datierter, sichtprüfungspflichtiger Restposten offen (siehe Übertrag
+unten).
+
+**B-10 — Geltungsbereich CSS vs. JS/Markup ist GATE-04.**
+Entscheidung: Siehe eigener Abschnitt „GATE-04" und Tabelle „Übertrag aus v1.3" unten — je
+Befundgruppe außerhalb `assets/styles/` entweder eine Phasenzuordnung oder eine
+Übertragszeile.
+Begründung: Rund 170 Fundstellen liegen außerhalb des reinen CSS-Prüfumfangs (7 numerische
+rgba in JS, 1 Inline-Stil, 39+108 font-size, 16 font-weight). Ohne Entscheidung wären nach
+„erfolgreicher" Umsetzung alle Ratschen grün, während dieselben Defekte weiterliefen —
+genau das Muster, das der v1.2-Audit als untragbar verworfen hat (D-32 bis D-34,
+`HANDOFF-V2-VERIFIKATION.md` B-10).
+Auswirkung: Phasen 16 und 18 übernehmen die mitgenommenen Gruppen; drei Gruppen bleiben
+sichtbare, datierte Restschuld.
+
+**B-11 — Zielwert 600 für `font-weight: 500`, Ausführung bleibt zurückgestellt.**
+Entscheidung: Der Zielwert für die 49+5 Vorkommen von `font-weight: 500` ist 600, nicht 400.
+Die Ausführung selbst bleibt bei TYPO-07 zurückgestellt (TYPO-05 nimmt 500 aus). Die eine
+300er-Stelle (`party.css:1433`, `.cf-hp-divider`) wird auf 400 gesetzt, ohne dauerhafte
+Ausnahme. Der `fonts.css`-Ausschluss in `declarationsOf()` ist bereits in Plan 15-01 erledigt.
+Begründung: Segoe UI hat keinen 500er-Schnitt — 500 rendert unter Windows/Chromium mit dem
+echten UI-Stack pixelidentisch wie 600, nicht wie 400 (die Handoff-Begründung „fällt ohnehin
+auf 400 zurück" ist widerlegt). 500→400 wäre eine Null-Änderung; 500→600 wird an macOS/SF Pro
+und Android/Roboto sichtbar und hebt an 54 Stellen die Unterscheidung `.nav-tab` (500) gegen
+`.nav-tab.active` (600) auf (D-41, D-42, `HANDOFF-V2-VERIFIKATION.md` B-11).
+Auswirkung: TYPO-07 (zurückgestellt, 285 Stellen Handarbeit ohne Abnahmekriterium) trägt den
+Zielwert, wenn es aufgegriffen wird. Bis dahin ist `declarationsOf()` bereits vorbereitet, ohne
+dass eine `font-weight`-Ratsche vorzeitig geschrieben wurde.
+
+**B-12 — Zählfunktion vor den Leerzustands-Return, Filterrückmeldung bleibt erhalten.**
+Entscheidung: `setViewCount` wandert in `renderSpells()`/`renderQuests()` vor den
+Leerzustands-Return, nicht ans Funktionsende. Der Inline-Zähler `#spell-count` („📖 12/318")
+bleibt als Filterrückmeldung erhalten und wird NICHT umbenannt (`.filter-bar` bleibt
+`.filter-bar`); er bekommt eine eigene Klasse statt Inline-Eigenschaften.
+Begründung: Hinter dem späten Return feuerte `setViewCount` beim Löschen des letzten Eintrags
+nie — genau der Fehler, den UX-05 beheben soll (`#quests-count` hat dieselbe Lücke). Die
+Handoff-Umbenennung `.filter-bar` → `.filter-chips` hätte das Layout gebrochen, weil
+`.filter-chips` im CSS nicht existiert und `.filter-bar` (`core.css:1965`)
+`display:flex`/`gap`/`flex-wrap` trägt. `#spells-count` und `#spell-count` zeigen zudem nicht
+dasselbe — Letzterer ist die einzige Filterrückmeldung über 300+ Zauber (D-47, D-48,
+`HANDOFF-V2-VERIFIKATION.md` B-12).
+Auswirkung: Phase 19 (UX-04..06) behebt den Altfehler zusätzlich, statt die App optisch zu
+verschlechtern; die F-10-Ratsche wird nachgeschärft (`COUNTED_VIEWS` kennt `'spells'`, nicht
+`'spell'`).
+
+**B-13 — Ein eingechecktes Werkzeug erzeugt die bindenden Löschzahlen.**
+Entscheidung: `tools/css-usage-report.js` (Node, ohne Abhängigkeiten) misst je CSS-Datei tote
+Klassen, tote Regelblöcke und Zeilen darin, nach Kommentarentfernung. Dreistufige
+Lebend-Erkennung: Stufe 1 Wort-Token (keine Teilstring-Treffer); Stufe 2 die fünf eingefrorenen
+Präfixe `color-`, `condition-`, `editor-toolbar-`, `rel-btn-`, `tag-`, ausschließlich aus
+Klassen-Kontexten; Stufe 3 Anker-Regel für Verbundselektoren. Fehlalarm-Prüfung ist Pflicht.
+Eine Datei je Commit, MAP-Block zuerst, Testdatei zuletzt. Der Nachweis steht auf drei Säulen
+(Playwright-Stil-Diff erwartungsgeführt, volle Suite, menschliche UAT). Die Löschliste wird
+NACH den FIX-Commits neu erhoben, nicht fortgeschrieben. Ein einziges Baseline-Artefakt
+(`15-RATCHET-BASELINE.md`), erhoben als letzter Plan der Phase.
+Begründung: Die Handoff-Zahlen (438 Klassen, 607 Blöcke, ~3.174 Zeilen) sind methodenabhängig
+und in drei unabhängigen Nachmessungen nicht reproduziert worden — nur die 27.141
+Gesamtzeilen bestätigten sich. Teilstring-Greps sind als Prüfmethode unbrauchbar: eine
+Stichprobe von 27 toten Klassen meldete zwei Fehlalarme. Die Handoff-Angabe „140
+präfixgerettete Klassen" ist nicht reproduzierbar; klassenkontext-beschränkt retten die fünf
+Präfixe 34 (D-20 bis D-26, `HANDOFF-V2-VERIFIKATION.md` B-13).
+Auswirkung: Der Löschlauf (DEAD-01..03) misst gegen die vom Werkzeug gemessene Menge, nicht
+gegen die zitierte Handoff-Zahl; `15-RATCHET-BASELINE.md` ist das einzige Baseline-Artefakt und
+entsteht nach FIX-01/FIX-02, damit die neun (D-13: fünf) durch FIX-01 wiederbelebten Selektoren
+korrekt aus der Löschliste fallen.
 
 ## Evolution
 
