@@ -81,7 +81,7 @@ pytest 24 · `design-consistency.test.js` 64/64 · `DUBLETTEN_MAX` 0 · `IMPORTA
 
 ### Echte Defekte — vom Audit nicht gesucht, beim Nachmessen gefunden
 
-- [ ] **FIX-01**: Die DM-Screen-Referenzwidgets „Gelände" und „Wissensgebiete" rendern wieder
+- [x] **FIX-01**: Die DM-Screen-Referenzwidgets „Gelände" und „Wissensgebiete" rendern wieder
       gestylt. CSS und JS-Markup sind zwei Generationen auseinander: `dmscreen.css:2469-2510`
       erwartet `.dms-terrain-sections/-section/-title/-examples/-tag`, das JS
       (`dmscreen-widgets-reference.js:89-118`) erzeugt `.dms-terrain-list/-item/-type`. Gemessen am
@@ -403,7 +403,7 @@ Akzeptanzkriterien heraus. Belege in `HANDOFF-V2-GEGENPROBEN.md`.
 | DEAD-01 | Phase 15 | Pending |
 | DEAD-02 | Phase 15 | Pending |
 | DEAD-03 | Phase 15 | Pending |
-| FIX-01 | Phase 15 | Pending |
+| FIX-01 | Phase 15 | Complete |
 | FIX-02 | Phase 15 | Pending |
 | FIX-03 | Phase 15 | Pending |
 | GATE-03 | Phase 15 | Complete |

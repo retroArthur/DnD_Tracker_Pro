@@ -120,7 +120,7 @@ Plans:
 
 - [ ] 15-02-PLAN.md — Die 13 Blocker in PROJECT.md buchen, GATE-04 setzen, Abnahmeform GATE-05 festschreiben
 - [ ] 15-03-PLAN.md — Korrigierte Kennzahlen in den Handoff, Anker als Tripel, ROADMAP/REQUIREMENTS nachführen, Canonical refs
-- [ ] 15-04-PLAN.md — FIX-01: die drei DM-Screen-Referenzwidgets gestylt, neuer Abnahme-Spec, `DMS_UNSTYLED_MAX`
+- [x] 15-04-PLAN.md — FIX-01: die drei DM-Screen-Referenzwidgets gestylt, neuer Abnahme-Spec, `DMS_UNSTYLED_MAX`
 
 **Wave 3** *(blocked on Wave 2 completion)*
 
