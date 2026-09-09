@@ -132,7 +132,7 @@ Plans:
 
 **Wave 5** *(blocked on Wave 4 completion)*
 
-- [ ] 15-07-PLAN.md — Löschlauf: eine Datei je Commit, PWA-Paar in einem Commit, `INLINE_MAX` gesenkt
+- [x] 15-07-PLAN.md — Löschlauf: eine Datei je Commit, PWA-Paar in einem Commit, `INLINE_MAX` gesenkt
 
 **Wave 6** *(blocked on Wave 5 completion)*
 
