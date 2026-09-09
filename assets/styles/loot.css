@@ -1,138 +1,4 @@
-        /* ============================================================
-           LOOT
-           ============================================================ */
-        /* Kompaktes Loot-Add Formular */
-        .loot-add-bar {
-            display: flex;
-            gap: 6px;
-            margin-bottom: 6px;
-            flex-wrap: wrap;
-            align-items: center;
-            background: var(--bg-card);
-            padding: 10px;
-            border-radius: var(--radius-md);
-            border: 1px solid var(--border);
-        }
-        
-        .loot-input-name {
-            flex: 1;
-            min-width: 120px;
-            padding: 8px 10px;
-            background: var(--bg-dark);
-            border: 1px solid var(--border);
-            color: var(--text);
-            border-radius: var(--radius-md);
-            font-size: 14px;
-        }
-        
-        .loot-input-sm {
-            width: 110px;
-            padding: 8px 6px;
-            background: var(--bg-dark);
-            border: 1px solid var(--border);
-            color: var(--text);
-            border-radius: var(--radius-md);
-            font-size: 12px;
-        }
-        
-        .loot-input-xs {
-            width: 55px;
-            padding: 8px 6px;
-            background: var(--bg-dark);
-            border: 1px solid var(--border);
-            color: var(--text);
-            border-radius: var(--radius-md);
-            font-size: 13px;
-            text-align: center;
-        }
-        
-        /* Legacy loot-add-btn entfernt - jetzt in Master-Detail Sektion definiert */
-        
-        .loot-attunement-toggle {
-            display: flex;
-            align-items: center;
-            cursor: pointer;
-            padding: 6px 8px;
-            background: var(--bg-card);
-            border: 1px solid var(--border);
-            border-radius: var(--radius-md);
-            height: 38px;
-            transition: all 0.2s;
-        }
-        
-        .loot-attunement-toggle:hover {
-            border-color: var(--purple);
-        }
-        
-        .loot-attunement-toggle input {
-            display: none;
-        }
-        
-        .loot-attunement-toggle .attunement-label {
-            font-size: 16px;
-            opacity: 0.4;
-            transition: opacity 0.2s;
-        }
-        
-        .loot-attunement-toggle input:checked + .attunement-label {
-            opacity: 1;
-        }
-        
-        .loot-attunement-badge {
-            font-size: 10px;
-            padding: 2px 5px;
-            background: var(--purple);
-            color: white;
-            border-radius: var(--radius-sm);
-            margin-left: 4px;
-        }
-        
-        .loot-desc-input {
-            width: 100%;
-            padding: 8px 12px;
-            background: var(--bg-card);
-            border: 1px solid var(--border);
-            color: var(--text);
-            border-radius: var(--radius-md);
-            font-size: 13px;
-            margin-bottom: 12px;
-        }
-        
-        .loot-desc-input:focus,
-        .loot-input-name:focus,
-        .loot-input-sm:focus,
-        .loot-input-xs:focus {
-            border-color: var(--gold);
-            outline: none;
-        }
-        
-        /* Loot Formular (Modal) */
-        .loot-form-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 16px;
-        }
-        
-        .loot-form-section {
-            background: var(--bg-dark);
-            padding: 12px;
-            border-radius: var(--radius-md);
-            border: 1px solid var(--border);
-        }
-        
-        .loot-form-section-title {
-            font-weight: 600;
-            color: var(--gold);
-            margin-bottom: 12px;
-            font-size: 0.9em;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-        
-        .loot-form-row {
-            display: flex;
-            gap: 10px;
-        }
+
         
         .loot-form-row .form-group {
             margin-bottom: 10px;
@@ -238,28 +104,6 @@
             font-style: italic;
         }
         
-        .loot-selected-tag {
-            display: inline-flex;
-            align-items: center;
-            gap: 4px;
-            padding: 4px 8px;
-            background: var(--gold);
-            color: var(--bg-dark);
-            border-radius: var(--radius-lg);
-            font-size: 0.8em;
-            font-weight: 500;
-        }
-        
-        .loot-selected-tag .remove-tag {
-            cursor: pointer;
-            margin-left: 2px;
-            opacity: 0.7;
-        }
-        
-        .loot-selected-tag .remove-tag:hover {
-            opacity: 1;
-        }
-        
         /* ============================================================
            SHOPS
            ============================================================ */
@@ -345,24 +189,6 @@
             gap: 8px;
             flex-wrap: wrap;
         }
-        
-        .shop-meta-tag {
-            font-size: 0.75em;
-            padding: 2px 8px;
-            border-radius: var(--radius-sm);
-            background: var(--bg-dark);
-            color: var(--text-dim);
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-        
-        .shop-meta-tag:hover {
-            background: var(--bg-elevated);
-            color: var(--text);
-        }
-        
-        .shop-meta-tag.npc { color: var(--purple); }
-        .shop-meta-tag.location { color: var(--cyan); }
         
         .shop-item-count {
             font-size: 0.8em;
@@ -645,10 +471,6 @@
             border: 1px solid var(--border);
             color: var(--text);
             border-radius: var(--radius-sm);
-        }
-        
-        .si-unavailable {
-            opacity: 0.5;
         }
         
         .si-unavailable .si-name {
