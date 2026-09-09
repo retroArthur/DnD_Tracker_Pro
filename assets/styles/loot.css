@@ -113,12 +113,6 @@
             gap: 16px;
         }
         
-        @media (max-width: 900px) {
-            .loot-form-grid {
-                grid-template-columns: 1fr;
-            }
-        }
-        
         .loot-form-section {
             background: var(--bg-dark);
             padding: 12px;
