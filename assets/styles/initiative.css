@@ -1130,6 +1130,28 @@
     font-weight: 600;
 }
 
+.init-mob-dmg-inputs {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    font-size: 0.75em;
+}
+
+.init-mob-dmg-inputs.hidden {
+    display: none;
+}
+
+.init-mob-dmg-inputs input {
+    width: 48px;
+    padding: 4px 8px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: var(--radius-sm);
+    font-size: 0.9em;
+    text-align: center;
+}
+
 .init-mob-attack-btn {
     padding: 4px 8px;
     font-size: 0.8em;
