@@ -15,13 +15,18 @@
  * Kernfunktionen einzeln exportiert, Direktaufruf-Zweig am Ende).
  *
  * Lebend-Erkennung in drei Stufen (D-21; um zwei Klassen-Kontexte erweitert
- * in Plan 15-09, CR-01/WR-01):
+ * in Plan 15-09, CR-01/WR-01; um Interpolations-Literal-Ernte erweitert in
+ * Plan 15-11, CR-03a):
  *   1. Wort-Token-Gleichheit aus Klassen-Kontexten (class="...", className=,
  *      eine anweisungsweite Zuweisung an .className/.className+= (auch per
  *      Ternary oder Konkatenation), die Objektschluessel className:/
  *      containerClass:, und classList.add/remove/toggle/contains/replace mit
  *      ausgeglichener Klammertiefe im Argumentteil — ein Teilstring-Treffer
- *      zaehlt NICHT.
+ *      zaehlt NICHT. Der Inhalt einer `${...}`-Interpolation innerhalb eines
+ *      Klassen-Kontexts wird nicht mehr pauschal verworfen: seine
+ *      Zeichenketten-Literale werden als Token gefuehrt, der uebrige
+ *      Ausdruckstext (z. B. der Name der Bedingungsvariablen) weiterhin
+ *      nicht (Plan 15-11, CR-03a).
  *   2. Genau fuenf eingefrorene Praefixe (LIVE_PREFIXES) fuer dynamisch
  *      zusammengesetzte Klassennamen, ausschliesslich aus Klassen-Kontexten
  *      gewonnen.
@@ -237,9 +242,12 @@ const QUOTED_STRING_RE = /(["'`])((?:\\.|(?!\1).)*)\1/g;
  * @param {string} text
  * @param {number} startIndex
  * @param {string} quoteChar - die oeffnende Anfuehrung (fuer den Regelfall)
+ * @param {Set<string>} [tokens] - wird uebergeben, wenn Interpolationsinhalte
+ *   geerntet werden sollen (Plan 15-11, CR-03a); ohne Parameter bleibt das
+ *   Verhalten wie zuvor (Interpolation wird verworfen, kein Ernten).
  * @returns {string}
  */
-function scanClassContextValue(text, startIndex, quoteChar) {
+function scanClassContextValue(text, startIndex, quoteChar, tokens) {
     let out = '';
     let i = startIndex;
     while (i < text.length) {
@@ -251,6 +259,9 @@ function scanClassContextValue(text, startIndex, quoteChar) {
                 if (text[j] === '{') depth++;
                 else if (text[j] === '}') depth--;
                 j++;
+            }
+            if (tokens) {
+                addTokensFromInterpolation(tokens, text.slice(i + 2, j - 1));
             }
             out += ' ';
             i = j;
@@ -330,16 +341,42 @@ function scanBalancedCallArgs(text, startIndex) {
     return scanBalancedSegment(text, startIndex, ')');
 }
 
+// Named statt anonym (Plan 15-11, CR-03a) — dieselbe Regex wird jetzt an
+// zwei Stellen gebraucht: zum Ernten der Literale VOR dem Verwerfen (hier)
+// und weiterhin zum Entfernen des restlichen Ausdruckstexts.
+const INTERPOLATION_PLACEHOLDER_RE = /\$\{([^}]*)\}/g;
+
 function addTokensFromValue(tokens, rawValue) {
     // Verbleibende Interpolationsplatzhalter (falls scanClassContextValue
-    // nicht verwendet wurde, z. B. aus classList.*-Argumenten) vor dem
-    // Splitten entfernen — sonst wuerde der Ausdruckstext selbst zu einem
-    // Fantasie-Token werden (z. B. "isAvailable" aus "${isAvailable ? ...}").
-    const cleaned = rawValue.replace(/\$\{[^}]*\}/g, ' ');
+    // nicht verwendet wurde, z. B. aus classList.*-Argumenten) VOR dem
+    // Verwerfen nach Zeichenketten-Literalen durchsuchen (Plan 15-11,
+    // CR-03a) — der uebrige Ausdruckstext wird weiterhin verworfen, sonst
+    // wuerde er selbst zu einem Fantasie-Token werden (z. B. "isAvailable"
+    // aus "${isAvailable ? ...}").
+    for (const m of rawValue.matchAll(INTERPOLATION_PLACEHOLDER_RE)) {
+        addTokensFromInterpolation(tokens, m[1]);
+    }
+    const cleaned = rawValue.replace(INTERPOLATION_PLACEHOLDER_RE, ' ');
     cleaned
         .split(/\s+/)
         .filter(Boolean)
         .forEach(tok => tokens.add(tok));
+}
+
+/**
+ * Sammelt aus einem Interpolationsinhalt (dem Text zwischen `${` und `}`)
+ * ausschliesslich die Zeichenketten-Literale ueber die vorhandene
+ * QUOTED_STRING_RE-Maschinerie und fuehrt sie als Token — der uebrige
+ * Ausdruckstext (Bezeichner, Operatoren) wird NICHT zum Token (Plan 15-11,
+ * CR-03a).
+ *
+ * @param {Set<string>} tokens
+ * @param {string} interpolationText
+ */
+function addTokensFromInterpolation(tokens, interpolationText) {
+    for (const lit of interpolationText.matchAll(QUOTED_STRING_RE)) {
+        addTokensFromValue(tokens, lit[2]);
+    }
 }
 
 /**
@@ -355,11 +392,11 @@ function collectLiveTokens(files) {
     files.forEach(f => {
         const content = f.content;
         for (const m of content.matchAll(CLASS_ATTR_OPEN_RE)) {
-            const value = scanClassContextValue(content, m.index + m[0].length, m[1]);
+            const value = scanClassContextValue(content, m.index + m[0].length, m[1], tokens);
             addTokensFromValue(tokens, value);
         }
         for (const m of content.matchAll(CLASS_NAME_ASSIGN_OPEN_RE)) {
-            const value = scanClassContextValue(content, m.index + m[0].length, m[1]);
+            const value = scanClassContextValue(content, m.index + m[0].length, m[1], tokens);
             addTokensFromValue(tokens, value);
         }
         for (const m of content.matchAll(CLASS_NAME_ASSIGN_STMT_RE)) {
@@ -694,7 +731,8 @@ module.exports = {
     renderTable,
     CLASS_NAME_ASSIGN_STMT_RE,
     CLASS_KEY_ASSIGN_RE,
-    scanBalancedCallArgs
+    scanBalancedCallArgs,
+    addTokensFromInterpolation
 };
 
 // ----------------------------------------------------------------------
