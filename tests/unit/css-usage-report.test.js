@@ -533,7 +533,7 @@ describe('css-usage-report — CR-03b/c: vierte Kontextregel fuer die Zwischenva
         expect(file.deadClasses).toContain('dead-control');
     });
 
-    test('CR-03c (Praezisions-Gegenprobe): derselbe per var-Ternary deklarierte Bezeichner bleibt tot, wenn er in KEINER Anweisung mit einem class="..."-Vorkommen konkateniert wird', () => {
+    test('CR-03c: Praezisions-Gegenprobe — derselbe per var-Ternary deklarierte Bezeichner bleibt tot, wenn er in KEINER Anweisung mit einem class="..."-Vorkommen konkateniert wird', () => {
         // Ohne diesen Fall waere die vierte Regel eine Pauschalfreigabe fuer
         // jede Ternary-Variable im Baum, unabhaengig davon, ob sie je mit
         // einem class="..."-Vorkommen zusammentrifft.
