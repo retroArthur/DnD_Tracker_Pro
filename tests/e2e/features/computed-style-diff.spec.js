@@ -7,32 +7,50 @@
  * berechneter Endwerte (`getComputedStyle`) ueber ALLE Ansichten, in drei Durchgaengen (Standard /
  * schmales Layoutprofil / emulierte reduzierte Bewegung), verglichen gegen den vorigen Abzug.
  *
- * Der Sollstand liegt unter `tests/e2e/baselines/computed-style-baseline.json` — VERSIONIERT, NICHT
- * unter dem per `.gitignore` ausgeschlossenen Ergebnisverzeichnis. Ein Sollstand, der nur im
- * Arbeitsverzeichnis des Autors existiert, ist in CI und in jedem frischen Klon `null`; der
+ * Der Sollstand liegt unter `tests/e2e/baselines/computed-style-baseline.json` — VERSIONIERT,
+ * NICHT unter dem per `.gitignore` ausgeschlossenen Ergebnisverzeichnis. Ein Sollstand, der nur
+ * im Arbeitsverzeichnis des Autors existiert, ist in CI und in jedem frischen Klon `null`; der
  * Vergleich liefert dann sofort eine leere Liste und alle drei Faelle laufen gruen OHNE zu
  * vergleichen (15-REVIEW.md CR-04, Mangel 1). Der Sollstand ist damit ein VERTRAG: er wandert in
  * die Git-Historie, und jede Welle, die berechnete Stile absichtlich aendert (Phasen 16-19), muss
  * ihn danach ausdruecklich neu erheben.
  *
- * Schreibsperre (CR-04, Mangel 2): der Sollstand wird nur geschrieben, wenn entweder gar keiner
- * existiert ODER die Umgebungsvariable `UPDATE_STYLE_BASELINE` auf `1` steht — UND in allen drei
- * Faellen steht der Schreibaufruf HINTER der Zusicherung. Beide Aenderungen zusammen: die
- * Reihenfolge allein genuegt nicht (ein Lauf mit gesetztem Schalter wuerde sonst weiterhin vor der
- * Zusicherung schreiben), die Sperre allein genuegt nicht (ein zweiter Lauf nach einem Fehlschlag
- * duerfte sonst wieder schreiben). Ein Waechter, der eine gefundene Abweichung im selben Lauf als
- * neuen Sollstand festschreibt, meldet einen Befund genau einmal und nie wieder — das ist
- * schlechter als gar kein Waechter (T-15-27).
+ * **Form des versionierten Sollstands (Checkpoint-Entscheidung C, 2026-09-11 — Hybrid).** Der
+ * verbindliche, eingecheckte Sollstand ist NICHT der Vollabzug der berechneten Werte, sondern eine
+ * KURZFORM: je Ansicht und Elementschluessel ein stabiler SHA-256-Hash ueber die zwoelf
+ * Eigenschaften (`digestElement()`), plus die vollstaendige Schluesselmenge der Ansicht. Der
+ * Vollabzug (alle zwoelf Rohwerte je Element) wird weiterhin — unveraendert wie vor diesem Plan —
+ * NUR unter dem per `.gitignore` ausgeschlossenen Ergebnisverzeichnis geschrieben
+ * (`tests/e2e/test-results/computed-style-snapshot.json`) und dient der oertlichen Fehlersuche; er
+ * ist bei jedem Lauf aktuell, auch bei einem roten. Warum Hybrid statt Vollabzug: ein je Phase neu
+ * geschriebener Mehrmegabyte-Sollstand (gemessen: der Vollabzug dieses Plans allein waere ueber
+ * 1,6 MB) waechst die Git-Historie dauerhaft und ist nicht folgenlos zuruecknehmbar; die Kurzform
+ * ist rund eine Groessenordnung kleiner, erkennt Wertaenderungen UND beide Richtungen der
+ * Schluesselmengen-Aenderung genauso zuverlaessig, und ihr Diff ist zeilenweise lesbar. Die
+ * Fehlermeldung einer Digest-Abweichung kann keinen alten/neuen Wert nennen — nur DASS sich an
+ * diesem Schluessel etwas geaendert hat — und verweist deshalb auf den lokalen Vollabzug fuer die
+ * konkreten Werte.
+ *
+ * Schreibsperre (CR-04, Mangel 2): der versionierte Sollstand wird nur geschrieben, wenn entweder
+ * gar keiner existiert ODER die Umgebungsvariable `UPDATE_STYLE_BASELINE` auf `1` steht — UND in
+ * allen drei Faellen steht der Schreibaufruf HINTER der Zusicherung. Beide Aenderungen zusammen:
+ * die Reihenfolge allein genuegt nicht (ein Lauf mit gesetztem Schalter wuerde sonst weiterhin vor
+ * der Zusicherung schreiben), die Sperre allein genuegt nicht (ein zweiter Lauf nach einem
+ * Fehlschlag duerfte sonst wieder schreiben). Ein Waechter, der eine gefundene Abweichung im
+ * selben Lauf als neuen Sollstand festschreibt, meldet einen Befund genau einmal und nie wieder —
+ * das ist schlechter als gar kein Waechter (T-15-27). Der lokale Vollabzug UNTERLIEGT dieser
+ * Sperre NICHT — er wird vor jeder Zusicherung geschrieben, weil er gerade bei einem roten Lauf
+ * gebraucht wird.
  *
  * Der Diff ist ERWARTUNGSGEFUEHRT, nicht leer verlangt: eine Welle, die berechnete Stile
  * absichtlich aendert, aendert `EXPECTED_DEVIATION_KEYS`. Diese Liste ist NACH der Neuerhebung des
  * Sollstands in Plan 15-13 wieder LEER — siehe Regel im Kommentar dort.
  *
  * Beidseitiger Schluesselmengen-Vergleich (CR-04, Mangel 3): `diffPass()` meldet neben geaenderten
- * Eigenschaften an gemeinsamen Schluesseln zusaetzlich Schluessel, die nur im Vorlauf vorhanden
- * waren (Element verschwunden), UND Schluessel, die nur im aktuellen Lauf vorhanden sind (Element
- * neu erschienen). Die zweite Richtung ist die vom Bericht verlangte; die dritte ist die Richtung,
- * in der die schwerste Regression dieser Phase gewirkt hat — `.init-mob-dmg-inputs.hidden` wurde
+ * Digests an gemeinsamen Schluesseln zusaetzlich Schluessel, die nur im Vorlauf vorhanden waren
+ * (Element verschwunden), UND Schluessel, die nur im aktuellen Lauf vorhanden sind (Element neu
+ * erschienen). Die zweite Richtung ist die vom Bericht verlangte; die dritte ist die Richtung, in
+ * der die schwerste Regression dieser Phase gewirkt hat — `.init-mob-dmg-inputs.hidden` wurde
  * geloescht, ein bis dahin verborgenes Element wurde sichtbar, also erschien ein NEUER Schluessel,
  * den der alte, einseitige Vergleich stillschweigend uebergangen haette.
  *
@@ -43,14 +61,15 @@
  * stellt diesen Zustand vor der Erfassung her.
  *
  * Drei Tests = drei Durchgaenge, serialisiert (test.describe.configure mode: 'serial') — alle drei
- * schreiben (bei gesetzter Schreibsperre) in dieselbe Sollstandsdatei, und `fullyParallel: true` in
- * playwright.config.js wuerde sie sonst nebenlaeufig ausfuehren und die Datei gegenseitig
- * ueberschreiben.
+ * schreiben (bei gesetzter Schreibsperre bzw. immer, im Fall des lokalen Vollabzugs) in dieselbe
+ * Datei, und `fullyParallel: true` in playwright.config.js wuerde sie sonst nebenlaeufig ausfuehren
+ * und die Datei gegenseitig ueberschreiben.
  */
 
 import { test, expect } from '@playwright/test';
 import fs from 'fs';
 import path from 'path';
+import crypto from 'crypto';
 import { loadApp, seedPopulatedSession } from '../helpers/test-utils.js';
 
 test.describe.configure({ mode: 'serial' });
@@ -134,21 +153,28 @@ function isExpectedDeviation(elementKey) {
     return EXPECTED_DEVIATION_KEYS.some(frag => elementKey.includes(frag));
 }
 
-// Versionierter Sollstand — NICHT unter dem per .gitignore ausgeschlossenen Ergebnisverzeichnis
-// (siehe Kopfkommentar). `UPDATE_STYLE_BASELINE=1` erzwingt eine bewusste Neuerhebung; ohne
-// gesetzten Schalter UND ohne fehlenden Sollstand wird nicht geschrieben (Schreibsperre, CR-04
-// Mangel 2).
+// Versionierter Sollstand (Kurzform/Digest, Checkpoint-Entscheidung C) — NICHT unter dem per
+// .gitignore ausgeschlossenen Ergebnisverzeichnis (siehe Kopfkommentar). `UPDATE_STYLE_BASELINE=1`
+// erzwingt eine bewusste Neuerhebung; ohne gesetzten Schalter UND ohne fehlenden Sollstand wird
+// nicht geschrieben (Schreibsperre, CR-04 Mangel 2).
 const BASELINE_DIR = path.join(process.cwd(), 'tests/e2e/baselines');
 const BASELINE_PATH = path.join(BASELINE_DIR, 'computed-style-baseline.json');
 
+// Lokaler Vollabzug (alle Rohwerte je Element) — bewusst weiterhin unter dem ausgeschlossenen
+// Ergebnisverzeichnis, dient ausschliesslich der oertlichen Fehlersuche bei einer gemeldeten
+// Digest-Abweichung. Wird bei JEDEM Lauf geschrieben (auch einem roten), unterliegt NICHT der
+// Schreibsperre — anders als der versionierte Sollstand ist er kein Vergleichsgegenstand.
+const FULL_CAPTURE_DIR = path.join(process.cwd(), 'tests/e2e/test-results');
+const FULL_CAPTURE_PATH = path.join(FULL_CAPTURE_DIR, 'computed-style-snapshot.json');
+const FULL_CAPTURE_PATH_REL = 'tests/e2e/test-results/computed-style-snapshot.json';
+
 /**
- * Vorlauf-Abzug, EINMAL beim Laden dieses Moduls gelesen (nicht pro Test) —
- * damit alle drei Durchgaenge gegen denselben, unveraenderten Ausgangsstand
- * dieses Prozesslaufs diffen, unabhaengig davon, in welcher Reihenfolge sie
- * selbst schon geschrieben haben.
+ * Vorlauf-Sollstand (Digestform), EINMAL beim Laden dieses Moduls gelesen (nicht pro Test) —
+ * damit alle drei Durchgaenge gegen denselben, unveraenderten Ausgangsstand dieses Prozesslaufs
+ * diffen, unabhaengig davon, in welcher Reihenfolge sie selbst schon geschrieben haben.
  * @returns {object|null}
  */
-function loadSnapshot() {
+function loadBaseline() {
     if (!fs.existsSync(BASELINE_PATH)) return null;
     try {
         return JSON.parse(fs.readFileSync(BASELINE_PATH, 'utf8'));
@@ -157,13 +183,19 @@ function loadSnapshot() {
     }
 }
 
-function saveSnapshot(snapshot) {
+function saveBaseline(baseline) {
     fs.mkdirSync(BASELINE_DIR, { recursive: true });
-    fs.writeFileSync(BASELINE_PATH, JSON.stringify(snapshot, null, 2), 'utf8');
+    fs.writeFileSync(BASELINE_PATH, JSON.stringify(baseline, null, 2), 'utf8');
 }
 
-const previousSnapshot = loadSnapshot();
-const currentSnapshot = previousSnapshot ? JSON.parse(JSON.stringify(previousSnapshot)) : {};
+function saveFullCapture(capture) {
+    fs.mkdirSync(FULL_CAPTURE_DIR, { recursive: true });
+    fs.writeFileSync(FULL_CAPTURE_PATH, JSON.stringify(capture, null, 2), 'utf8');
+}
+
+const previousBaseline = loadBaseline();
+const currentBaseline = previousBaseline ? JSON.parse(JSON.stringify(previousBaseline)) : {};
+const currentFullCapture = {};
 
 /**
  * Erfasst je sichtbarem Element mit mindestens einer Klasse innerhalb der
@@ -201,6 +233,14 @@ function captureViewInBrowser({ viewId, properties, maxElements }) {
         const key = `${signature}#${idx}`;
 
         const cs = getComputedStyle(el);
+        // Laufend animierte Elemente NICHT in den Vergleich aufnehmen (Signatur-Index bleibt
+        // trotzdem stabil, s.o.): eine CSS-`animation` mit `infinite` (z.B. `.dms-live-badge`,
+        // `animation: dms-live-pulse 2s ease-in-out infinite`) liefert je nach Erfassungszeitpunkt
+        // innerhalb des Zyklus einen anderen Endwert (hier: `opacity` zwischen 1 und 0.6) — reines
+        // Zeitrauschen ohne Aussage ueber eine echte Stiländerung, analog zum Ausschluss von
+        // width/height oben. `elementCount` (Sichtbarkeitspruefung) zaehlt das Element trotzdem mit.
+        if (cs.animationName && cs.animationName !== 'none') return;
+
         const record = {};
         properties.forEach(p => {
             record[p] = cs[p];
@@ -209,6 +249,48 @@ function captureViewInBrowser({ viewId, properties, maxElements }) {
     });
 
     return { found: true, capped, elementCount: visible.length, elements };
+}
+
+// Digestlaenge in Hex-Zeichen (64 Bit) — der volle SHA-256 (64 Hex-Zeichen) waere fuer eine
+// Kollisionsdomaene von wenigen tausend Elementen je Lauf (< 10.000, gemessen) deutlich
+// ueberdimensioniert; 64 Bit halten die Kollisionswahrscheinlichkeit bei dieser Groessenordnung
+// astronomisch klein (Geburtstagsschranke ~2^32 Eintraege) und tragen den Groessenvorteil der
+// Kurzform (Checkpoint-Entscheidung C) tatsaechlich in die Datei.
+const DIGEST_HEX_LENGTH = 16;
+
+/**
+ * Stabiler, gekuerzter SHA-256-Hash ueber die feste Eigenschaftsliste eines einzelnen Elements —
+ * die Kurzform, die im versionierten Sollstand landet (Checkpoint-Entscheidung C). Eigenschaften
+ * werden in `PROPERTIES`-Reihenfolge mit einem Trennzeichen verkettet, das in keinem der
+ * berechneten CSS-Werte vorkommt (U+241F, Unit Separator als sichtbares Steuerzeichen).
+ * @param {Record<string, string>} record
+ * @returns {string}
+ */
+function digestElement(record) {
+    const serialized = PROPERTIES.map(p =>
+        Object.prototype.hasOwnProperty.call(record, p) ? String(record[p]) : ' '
+    ).join('␟');
+    return crypto.createHash('sha256').update(serialized).digest('hex').slice(0, DIGEST_HEX_LENGTH);
+}
+
+/**
+ * Wandelt einen rohen Durchgang (`runPass()`-Ergebnis) in die Digestform je Ansicht um:
+ * die sortierte Schluesselmenge plus ein Digest je Schluessel.
+ * @param {object} rawPass
+ * @returns {object}
+ */
+function toDigestPass(rawPass) {
+    const digestPass = {};
+    for (const viewId of Object.keys(rawPass)) {
+        const view = rawPass[viewId];
+        const keys = Object.keys(view.elements).sort();
+        const digests = {};
+        keys.forEach(key => {
+            digests[key] = digestElement(view.elements[key]);
+        });
+        digestPass[viewId] = { elementCount: view.elementCount, capped: view.capped, keys, digests };
+    }
+    return digestPass;
 }
 
 /**
@@ -262,40 +344,39 @@ async function runPass(page) {
 }
 
 /**
- * Vergleicht den aktuellen Durchgang mit dem vorigen (falls vorhanden) und liefert die Liste
- * UNERWARTETER Abweichungen (Schluessel ausserhalb EXPECTED_DEVIATION_KEYS). Meldet DREI Arten
- * von Befund je Ansicht (CR-04, Mangel 3): eine geaenderte Eigenschaft an einem in beiden
- * Laeufen vorhandenen Schluessel; einen Schluessel, der im Vorlauf vorhanden war und jetzt nicht
- * mehr erfasst wird (Element verschwunden); und einen Schluessel, der im Vorlauf fehlte und jetzt
- * erfasst wird (Element neu erschienen). Alle drei unterliegen derselben Erwartungsliste.
- * @param {object|null} previousPass
- * @param {object} currentPass
+ * Vergleicht den aktuellen Durchgang (Digestform) mit dem vorigen (falls vorhanden) und liefert
+ * die Liste UNERWARTETER Abweichungen (Schluessel ausserhalb EXPECTED_DEVIATION_KEYS). Meldet
+ * DREI Arten von Befund je Ansicht (CR-04, Mangel 3): ein geaenderter Digest an einem in beiden
+ * Laeufen vorhandenen Schluessel (die Meldung nennt Ansicht und Schluessel und verweist fuer die
+ * konkreten Werte auf den lokalen Vollabzug — der Digest selbst kann keinen alten/neuen Wert
+ * nennen); ein Schluessel, der im Vorlauf vorhanden war und jetzt nicht mehr erfasst wird (Element
+ * verschwunden); und ein Schluessel, der im Vorlauf fehlte und jetzt erfasst wird (Element neu
+ * erschienen). Alle drei unterliegen derselben Erwartungsliste.
+ * @param {object|null} previousDigestPass
+ * @param {object} currentDigestPass
  * @returns {string[]}
  */
-function diffPass(previousPass, currentPass) {
-    if (!previousPass) return [];
+function diffPass(previousDigestPass, currentDigestPass) {
+    if (!previousDigestPass) return [];
     const unexpected = [];
-    for (const viewId of Object.keys(currentPass)) {
-        const prevView = previousPass[viewId];
-        const currView = currentPass[viewId];
+    for (const viewId of Object.keys(currentDigestPass)) {
+        const prevView = previousDigestPass[viewId];
+        const currView = currentDigestPass[viewId];
         if (!prevView) continue; // Ansicht ist neu im Vergleich zur Vorlaufdatei
 
-        // Art 1: geaenderte Eigenschaft an einem gemeinsamen Schluessel
-        for (const key of Object.keys(currView.elements)) {
-            const prevEl = prevView.elements[key];
-            const currEl = currView.elements[key];
-            if (!prevEl) continue; // Art 3, separat unten behandelt
-            for (const prop of PROPERTIES) {
-                if (prevEl[prop] !== currEl[prop]) {
-                    const entry = `${viewId}/${key}/${prop}: "${prevEl[prop]}" -> "${currEl[prop]}"`;
-                    if (!isExpectedDeviation(key)) unexpected.push(entry);
-                }
+        // Art 1: geaenderter Digest an einem gemeinsamen Schluessel
+        for (const key of currView.keys) {
+            const prevDigest = prevView.digests[key];
+            if (prevDigest === undefined) continue; // Art 3, separat unten behandelt
+            if (prevDigest !== currView.digests[key]) {
+                const entry = `${viewId}/${key}: Digest geaendert (Werte im lokalen Vollabzug ${FULL_CAPTURE_PATH_REL})`;
+                if (!isExpectedDeviation(key)) unexpected.push(entry);
             }
         }
 
         // Art 2: Schluessel im Vorlauf vorhanden, jetzt nicht mehr erfasst (Element verschwunden)
-        for (const key of Object.keys(prevView.elements)) {
-            if (!currView.elements[key] && !isExpectedDeviation(key)) {
+        for (const key of prevView.keys) {
+            if (!(key in currView.digests) && !isExpectedDeviation(key)) {
                 unexpected.push(`${viewId}/${key}: Element im Vorlauf vorhanden, jetzt nicht mehr erfasst`);
             }
         }
@@ -303,8 +384,8 @@ function diffPass(previousPass, currentPass) {
         // Art 3: Schluessel im Vorlauf NICHT vorhanden, jetzt erfasst (Element neu erschienen) —
         // die Richtung, in der die schwerste Regression dieser Phase gewirkt hat
         // (.init-mob-dmg-inputs.hidden geloescht -> Element wurde sichtbar).
-        for (const key of Object.keys(currView.elements)) {
-            if (!prevView.elements[key] && !isExpectedDeviation(key)) {
+        for (const key of currView.keys) {
+            if (!(key in prevView.digests) && !isExpectedDeviation(key)) {
                 unexpected.push(`${viewId}/${key}: Element im Vorlauf nicht vorhanden, jetzt neu erfasst`);
             }
         }
@@ -318,17 +399,23 @@ test.describe('Computed-Style-Vergleichslauf (D-24)', () => {
         await loadApp(page);
 
         const passResult = await runPass(page);
-        const unexpected = diffPass(previousSnapshot ? previousSnapshot.standard : null, passResult);
+        const digestPass = toDigestPass(passResult);
 
-        currentSnapshot.standard = passResult;
+        // Lokaler Vollabzug: VOR der Zusicherung geschrieben (auch bei einem roten Lauf verfuegbar
+        // fuer die oertliche Fehlersuche) und OHNE Schreibsperre — er ist kein Vergleichsgegenstand.
+        currentFullCapture.standard = passResult;
+        saveFullCapture(currentFullCapture);
+
+        const unexpected = diffPass(previousBaseline ? previousBaseline.standard : null, digestPass);
+        currentBaseline.standard = digestPass;
 
         expect(unexpected, `Unerwartete Stilabweichungen (Standard):\n${unexpected.join('\n')}`).toEqual([]);
 
         // Schreibsperre (CR-04, Mangel 2): schreibt NUR wenn noch kein Sollstand existiert oder
         // der Schalter gesetzt ist — UND erst NACH der Zusicherung, damit ein gefundener Befund
-        // nicht im selben Lauf als neuer Sollstand festgeschrieben wird.
-        if (!previousSnapshot || process.env.UPDATE_STYLE_BASELINE === '1') {
-            saveSnapshot(currentSnapshot);
+        // nicht im selben Lauf als neuen Sollstand festgeschrieben wird.
+        if (!previousBaseline || process.env.UPDATE_STYLE_BASELINE === '1') {
+            saveBaseline(currentBaseline);
         }
     });
 
@@ -343,14 +430,18 @@ test.describe('Computed-Style-Vergleichslauf (D-24)', () => {
         await page.waitForTimeout(200);
 
         const passResult = await runPass(page);
-        const unexpected = diffPass(previousSnapshot ? previousSnapshot.narrow : null, passResult);
+        const digestPass = toDigestPass(passResult);
 
-        currentSnapshot.narrow = passResult;
+        currentFullCapture.narrow = passResult;
+        saveFullCapture(currentFullCapture);
+
+        const unexpected = diffPass(previousBaseline ? previousBaseline.narrow : null, digestPass);
+        currentBaseline.narrow = digestPass;
 
         expect(unexpected, `Unerwartete Stilabweichungen (schmales Layout):\n${unexpected.join('\n')}`).toEqual([]);
 
-        if (!previousSnapshot || process.env.UPDATE_STYLE_BASELINE === '1') {
-            saveSnapshot(currentSnapshot);
+        if (!previousBaseline || process.env.UPDATE_STYLE_BASELINE === '1') {
+            saveBaseline(currentBaseline);
         }
     });
 
@@ -360,14 +451,18 @@ test.describe('Computed-Style-Vergleichslauf (D-24)', () => {
         await loadApp(page);
 
         const passResult = await runPass(page);
-        const unexpected = diffPass(previousSnapshot ? previousSnapshot.reducedMotion : null, passResult);
+        const digestPass = toDigestPass(passResult);
 
-        currentSnapshot.reducedMotion = passResult;
+        currentFullCapture.reducedMotion = passResult;
+        saveFullCapture(currentFullCapture);
+
+        const unexpected = diffPass(previousBaseline ? previousBaseline.reducedMotion : null, digestPass);
+        currentBaseline.reducedMotion = digestPass;
 
         expect(unexpected, `Unerwartete Stilabweichungen (reduzierte Bewegung):\n${unexpected.join('\n')}`).toEqual([]);
 
-        if (!previousSnapshot || process.env.UPDATE_STYLE_BASELINE === '1') {
-            saveSnapshot(currentSnapshot);
+        if (!previousBaseline || process.env.UPDATE_STYLE_BASELINE === '1') {
+            saveBaseline(currentBaseline);
         }
     });
 });
