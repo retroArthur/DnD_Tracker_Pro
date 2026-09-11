@@ -105,3 +105,37 @@ Objektnamen `ErrorHandler`, render/helpers.js:9), sowie `crimson`, `sage`, `sky`
 
 Rohdaten (sitzungslokal, nicht versioniert): `harness.js`, `css-usage-report.copy.js`,
 `provenance.json`, `summary.txt` im Scratchpad-Unterordner `audit/` dieser Sitzung.
+
+## Nachtrag — Gegenprobe der Stil-Vergleichspruefung (Plan 15-13, Stand 2bdc087)
+
+Vom Orchestrator nach Abschluss von 15-13 selbst gemessen (Nutzerentscheidung am Checkpoint:
+**C — Kurzform versionieren, Vollabzug lokal**, 2026-09-11).
+
+1. **CI-Portabilitaet — plausibel, lokal nicht beweisbar.** Der Sollstand wurde unter Windows
+   erhoben; der CI-Job `e2e` laeuft auf `ubuntu-latest` mit `npx playwright test`, die Pruefung ist
+   ab jetzt lasttragend. Die zwoelf verglichenen Eigenschaften (`color`, `backgroundColor`,
+   `borderColor`, `borderRadius`, `padding`, `margin`, `fontSize`, `fontWeight`, `boxShadow`,
+   `opacity`, `display`, `textAlign`) enthalten weder Breite/Hoehe noch Schriftmetriken; das
+   Viewport ist in `playwright.config.js` fest. Im Sollstand stehen keine datumsabhaengigen
+   Schluessel — die 18 Zustandsklassen-Treffer (`active`, `selected`, `fr-selected`, `healthy`,
+   `ds-toggle-btn--active`) setzt der Seed deterministisch; keine Timer-Statusklassen
+   (`expired`/`running`/`paused`). **Beweis ist erst der erste CI-Lauf nach einem Push** — HEAD
+   liegt vor `origin/HEAD`, CI hat den neuen Stand noch nie gesehen.
+2. **NUL-Byte im Quelltext (Warnung, Werkzeug-Hygiene).**
+   `tests/e2e/features/computed-style-diff.spec.js:271` enthaelt im Platzhalter fuer fehlende
+   Eigenschaften ein woertliches `0x00` statt der Escape-Sequenz. `grep` meldet die Datei als
+   „Binary file", und ripgrep (auch das Grep-Werkzeug der Agenten) ueberspringt Binaerdateien
+   standardmaessig — eine kuenftige Codesuche findet den lasttragenden Test also still nicht.
+   Abhilfe ist mechanisch und hash-neutral: `'\u0000'` als Escape schreiben ergibt zur Laufzeit
+   denselben String, der versionierte Sollstand bleibt gueltig.
+3. **Animations-Ausschluss breiter als sein Kommentar (Info, latent).** Der Kommentar begruendet
+   den Ausschluss mit `infinite`-Animationen; der Code (`captureViewInBrowser`) ueberspringt jedes
+   Element mit `animationName !== 'none'` — also auch einmalige Animationen, deren
+   `animation-name` nach Ablauf gesetzt bleibt. `assets/styles/` deklariert 17 solche Animationen,
+   nur 3 davon `infinite`. **Heutige Wirkung gemessen am Sollstand: 3 von 3629 erfassten
+   Elementen** ausgeschlossen, alle drei `.dms-live-badge` im DM-Screen (je Durchgang eines) —
+   genau der beabsichtigte Fall. Die Elemente mit einmaliger Animation (Wuerfelergebnis,
+   Popups, Befehlspalette, Migrationsschritte) sind zum Erfassungszeitpunkt nicht gerendert.
+   Risiko nur fuer Folgephasen, die animierte Dauerelemente einfuehren; robuster waere
+   `animationIterationCount === 'infinite'` oder ein Anhalten/Beenden ueber
+   `document.getAnimations()` statt eines Element-Ausschlusses.
