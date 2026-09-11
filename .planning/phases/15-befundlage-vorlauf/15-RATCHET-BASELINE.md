@@ -569,6 +569,94 @@ Stufe 3 (die menschliche Vier-Themes-Sichtung) wurde durch diesen Plan NICHT dur
 Plan aendert kein ausgeliefertes CSS oder Laufzeit-JavaScript, nur ein Bauzeit-Werkzeug und seine
 Testdatei.
 
+## Messblock 11 — Gegenprobe des GESAMTEN Loeschstands, Wiederherstellung und Endstand (Plan 15-12)
+
+**Datum:** 2026-09-11
+**Anlass:** `15-REVIEW.md` CR-01 hat bewiesen, dass Plan 15-09 nur die zwei damals namentlich
+bekannten Faelle (`.npc-grid`, `.list-view-container`) nachgeprueft hat — eine Gegenprobe des
+GESAMTEN Loeschstands der Welle aus Plan 15-07 wurde nie gefahren. Plan 15-12 hat diese Gegenprobe
+zu einem dauerhaften Testfall (`tests/unit/css-deletion-audit.test.js`) gemacht, gegen eine
+versionierte Klassenmenge vor der Loeschwelle (`tests/fixtures/css-classes-before-15-07.json`,
+Bezugscommit `09cb913dc389bda68ceb04df3cd46f5dfcd60b6b`, 2754 Klassen).
+
+**Rot-Gruen-Protokoll (GATE-03), Task 1 und Task 2:**
+
+```
+Task 1 — DEL-02 gegen den unveraenderten Baum (vor jeder Wiederherstellung):
+npx jest tests/unit/css-deletion-audit.test.js
+Tests:       1 failed, 2 passed, 3 total
+Exit-Code:   1
+DEL-02 nennt 22 Klassen: description, dice-char-select, dice-crit, dice-fail,
+dice-formula-history, dice-history, divider, enc-search, encounter,
+fr-hist-minus, fr-hist-plus, init-mob-dmg-inputs, loc-search, loot,
+loot-search, npc-header, npc-search, party, shop-meta-tag, timer-list,
+timer-name, timer-presets
+
+Task 2 — nach Wiederherstellung der acht genuinen Regelbloecke (6 Familien)
+und Dokumentation der 15 bestaetigten Detektor-Fehlalarme als
+KNOWN_FALSE_POSITIVES im Testfile:
+npx jest tests/unit/css-deletion-audit.test.js
+Tests:       3 passed, 3 total
+Exit-Code:   0
+```
+
+**Klassenzahlen vor/heute/Loeschmenge (aus dem Gegenprobe-Lauf selbst):**
+
+| Kennzahl | Wert |
+|---|---|
+| Klassen vor der Loeschwelle (Fixture, Commit `09cb913`) | 2754 |
+| Davon heute noch/wieder in `assets/styles/` vorhanden | (2754 − Loeschmenge) |
+| Loeschmenge (DEL-03, in Fixture vorhanden, heute nicht mehr) | > 0, bestaetigt nicht-leer |
+
+**Namentlich wiederhergestellte Klassen, mit Herkunftscommit (woertlich aus dem Elternstand):**
+
+| Klasse(n) | Datei | Herkunftscommit (Elternstand) |
+|---|---|---|
+| `.shop-meta-tag` (+ `:hover`, `.npc`, `.location`) | `assets/styles/loot.css` | `4ed26ad9b4fdefb9294e93120b39c29ba40c56ab^` |
+| `.si-unavailable` (Basisregel) | `assets/styles/loot.css` | `4ed26ad9b4fdefb9294e93120b39c29ba40c56ab^` |
+| `.fr-hist-plus`, `.fr-hist-minus` | `assets/styles/welt.css` | `c83b8cca10461dae15e0a8f756a3e3e9c21555cc^` |
+| `.init-mob-dmg-inputs` (+ `.hidden`, `input`) | `assets/styles/initiative.css` | `2fc147ed2459e1f9908e437076af63d5adfe1487^` |
+| `.npc-header` | `assets/styles/npcs.css` | `e743f8d6bb99cb92626d906ab044c710d9845d8d^` |
+| `.dice-crit`, `.dice-fail` | `assets/styles/dashboard.css` | `a37e17e7aac46ca70224971d80ad71a4b51af369^` |
+
+**Frisch gemessene Endzahl des Pruefmodus:**
+
+```
+node tools/css-usage-report.js --json  ->  checkFailures.length = 159
+```
+
+Unveraendert gegenueber Messblock 10 (auch 159) — die Wiederherstellungen betreffen ausschliesslich
+Klassen, die bereits als lebendig erkannt wurden (sie standen in `checkFailures` nie drin); ihre
+Wiederherstellung aendert die Zahl der TOTEN Klassen folglich nicht.
+
+**Entscheidung zu den zwei Faellen ohne heutige Laufzeitwirkung:** `npc-header` (kein Aufrufer von
+`renderNPCCard()`, `ui/dom-builder.js`) und `dice-crit`/`dice-fail` (Rueckfallzweig in
+`features/dice/dice-core.js:374-382` schreibt auf ein in keiner Vorlage existierendes Element)
+wurden TROTZDEM wiederhergestellt, nicht der unerreichbare JS-Pfad geloescht: der Loeschgrund waere
+"dieser JS-Pfad ist unerreichbar", nicht "diese Klasse ist tot" (sie ist es nicht), und das ist ein
+anderer Befund mit anderem Pruefbedarf, der die Phasengrenze dieser Luekenschluss-Welle
+ueberschreiten wuerde (siehe `deferred-items.md` Eintrag 4).
+
+**Detektor-Fehlalarm, entdeckt in dieser Sitzung (NEUER Befund, ueber die Planung hinaus):** Der
+volle Gegenprobe-Lauf nannte 22 statt der sechs aus `15-REVIEW.md` CR-01 erwarteten
+Klassenfamilien. Die zusaetzlichen 15 (`description`, `dice-char-select`, `dice-formula-history`,
+`dice-history`, `divider`, `enc-search`, `encounter`, `loc-search`, `loot`, `loot-search`,
+`npc-search`, `party`, `timer-list`, `timer-name`, `timer-presets`) sind KEINE echten
+Fehlloeschungen, sondern reproduzierbare Fehlalarme von `collectConcatVarLiterals()` (Plan 15-11,
+CR-03b): ein kurzer, mehrfach verwendeter Bezeichner (`c`, `select`, `searchEl`, `viewMap`, ...)
+wird ueber eine voellig unabhaengige `$('irgendeine-id')`-Referenz oder Objekt-/Array-Literal
+deklariert, deren Wert zufaellig wortgleich mit einer echt geloeschten CSS-Klasse ist; der
+anweisungsweite Vorwaertsscan des Detektors greift diesen Bezeichner spaeter im selben, nur
+klammertiefen-gebundenen Anweisungsfenster faelschlich auf. Vollstaendige Herleitung je Klasse in
+`deferred-items.md` Eintrag 6. Diese 15 Klassen wurden NICHT als CSS wiederhergestellt (das haette
+genuinely-totes CSS erneut in den Baum geholt, teils in Dateien ausserhalb des `files_modified`
+dieses Plans), sondern als datierte, einzeln begruendete `KNOWN_FALSE_POSITIVES`-Ausnahmeliste im
+Testfile selbst gefuehrt. `tools/css-usage-report.js` bleibt in dieser Welle unangetastet
+(Planvorgabe); die Detektor-Korrektur ist eine eigene, kuenftige, architektonische Aenderung.
+
+**GATE-05 Stufe 3 (menschliche Vier-Themes-Sichtung) wurde durch diesen Plan NICHT durchgefuehrt.**
+Sie bleibt Plan 15-14 vorbehalten.
+
 ---
 *Phase: 15-befundlage-vorlauf*
 *Plan: 08*
@@ -576,3 +664,4 @@ Testdatei.
 *Nachtrag Messblock 8: Plan 15-09, 2026-09-09*
 *Nachtrag Messblock 9: Plan 15-10, 2026-09-09*
 *Nachtrag Messblock 10: Plan 15-11, 2026-09-11*
+*Nachtrag Messblock 11: Plan 15-12, 2026-09-11*
