@@ -459,9 +459,120 @@ CLAUDE.md selbst gefuehrte fehlende Werkzeugleisten-Wächtertest (Abschnitt "Edi
 schliesst genau den einen Befund, den `15-VERIFICATION.md` Gap 2 benannt hat, und formuliert keine
 andere Restschuld als erledigt um.
 
+## Messblock 10 — Neumessung des Pruefmodus nach dem CR-02/CR-03-Fix (Plan 15-11)
+
+**Datum:** 2026-09-11
+**Anlass:** `15-VERIFICATION.md` und `15-REVIEW.md` (CR-02/CR-03) haben drei verbliebene
+Erkennungsluecken in `tools/css-usage-report.js`s Lebend-Erkennung benannt, die Plan 15-09
+uebriggelassen hatte:
+
+1. `scanBalancedSegment()` brach bei jedem Zeilenumbruch ab — eine ueber zwei Zeilen umbrochene
+   Zuweisung an die Klassenlisten-Eigenschaft (Prettier-Normalform, reale Fundstelle
+   `features/dice/dice-core.js:379-381`) lieferte ein leeres Segment.
+2. Der Inhalt einer `${...}`-Interpolation wurde an zwei Stellen vollstaendig verworfen — im
+   Projekt das dominierende Idiom fuer bedingte Klassen (reale Fundstelle
+   `features/shops/shops-core.js:596`).
+3. Die Zwischenvariablen-Form (ein Ternary in eine Variable, die Variable danach in eine
+   `class=`-Zeichenkette konkateniert) war ueberhaupt kein Klassen-Kontext des Werkzeugs (reale
+   Fundstellen `features/fraktionen/fraktionen-render.js` und `features/initiative-mob.js`).
+
+Plan 15-11 hat alle drei Luecken mechanisch geschlossen: Interpolations-Literal-Ernte (CR-03a,
+Task 1), eine harte Zeichen-Obergrenze `MAX_SEGMENT_SCAN_CHARS` (2000) statt der
+Umbruchschranke (CR-02, Task 2), und eine vierte Kontextregel `collectConcatVarLiterals()` fuer
+die Zwischenvariablen-Form (CR-03b, Task 3).
+
+**Rot-Gruen-Protokoll (GATE-03), alle drei Tasks:**
+
+```
+Task 1 — CR-03a gegen das unveraenderte Werkzeug:
+npx jest tests/unit/css-usage-report.test.js
+Tests:       1 failed, 27 passed, 28 total
+Exit-Code:   1
+Fehlgeschlagener Fall: CR-03a
+
+Task 1 — nach der Interpolations-Literal-Ernte:
+npx jest tests/unit/css-usage-report.test.js
+Tests:       28 passed, 28 total
+Exit-Code:   0
+
+Task 2 — CR-02a/CR-02b gegen den Stand nach Task 1 (CR-02c bereits gruen, da die alte
+Umbruchschranke den Scan noch frueher beendete):
+npx jest tests/unit/css-usage-report.test.js
+Tests:       2 failed, 29 passed, 31 total
+Exit-Code:   1
+Fehlgeschlagene Faelle: CR-02a, CR-02b
+
+Task 2 — nach dem Ersatz der Umbruchschranke durch MAX_SEGMENT_SCAN_CHARS:
+npx jest tests/unit/css-usage-report.test.js
+Tests:       31 passed, 31 total
+Exit-Code:   0
+
+Task 3 — CR-03b gegen den Stand nach Task 2 (CR-03c bereits gruen — Praezisions-Gegenprobe, muss
+es bleiben):
+npx jest tests/unit/css-usage-report.test.js
+Tests:       1 failed, 32 passed, 33 total
+Exit-Code:   1
+Fehlgeschlagener Fall: CR-03b
+
+Task 3 — nach der vierten Kontextregel (collectConcatVarLiterals):
+npx jest tests/unit/css-usage-report.test.js
+Tests:       33 passed, 33 total
+Exit-Code:   0
+```
+
+**Befehl der Neumessung:**
+
+```
+node tools/css-usage-report.js --json
+```
+
+**Vorher-/Nachher-Tabelle (tote Klassen ausserhalb der Ausnahmeliste, `checkFailures.length`):**
+
+| Zeitpunkt | Wert | Quelle |
+|---|---|---|
+| Vorher (Ausgangswert, `15-RATCHET-BASELINE.md` Messblock 8, Plan 15-09) | 199 | `node tools/css-usage-report.js --json`, `checkFailures.length` |
+| Nachher (diese Sitzung, nach Task 1+2+3) | **159** | `node tools/css-usage-report.js --json`, `checkFailures.length` |
+
+Die Zahl ist frisch gemessen (Vergleich des unveraenderten Werkzeugs beim Ledger-Basis-Commit
+dieses Plans gegen den Stand nach allen drei Tasks), nicht fortgeschrieben (DEAD-03-Prinzip).
+Zwei aufeinanderfolgende Laeufe von `node tools/css-usage-report.js --json` liefern weiterhin
+byte-gleiche Ausgabe.
+
+**Namentlich freigegebene Klassen (40, in `checkFailures` VORHER enthalten, NACHHER nicht mehr):**
+
+`ally`, `arcana`, `available`, `bloodied`, `buff`, `character`, `completed`, `critical`, `custom`,
+`defeated`, `ds-toggle-btn--active`, `error`, `expertise`, `expired`, `filled`, `full`, `gestik`,
+`half`, `has-children`, `healing`, `healthy`, `hidden`, `history`, `inactive`, `investigation`,
+`locations-list`, `material`, `misc`, `missing`, `nature`, `pinned`, `player`, `plot`, `proficient`,
+`religion`, `sb-file-warn`, `si-unavailable`, `side`, `srd`, `verbal`
+
+Keine Klasse ist im Vergleich NEU in `checkFailures` aufgetaucht (0 newly-dead) — die Erweiterung
+ist strikt konservativ, sie erklaert nur mehr Klassen fuer lebendig, nie weniger.
+
+**Interpretation:** Alle vier von `15-VERIFICATION.md`/`15-REVIEW.md` namentlich benannten
+Klassen (`si-unavailable`, `filled`, `proficient`, `hidden`) stehen nach diesem Plan nachweislich
+NICHT mehr in `checkFailures`. `DEAD_EXCEPTIONS` bleibt unveraendert bei fuenf Eintraegen,
+`LIVE_PREFIXES` unveraendert bei fuenf — kein einziger Klassenname wurde fuer diese Erweiterung
+in eine Ausnahmeliste eingetragen, die Erweiterung ist durchgehend mechanisch.
+
+**Ausdruecklich festgehalten: `.planning/WINDOWS.md` bleibt in diesem Plan bewusst unberuehrt.**
+Eintrag 5 traegt weiterhin die Zahl 199 (nicht die hier gemessenen 159) — er wird ERST durch
+Plan 15-12 nachgezogen, nachdem auch die dortigen Wiederherstellungen stehen. Eine zwischenzeitliche
+Aktualisierung wuerde die Registerzahl innerhalb derselben Welle zweimal umschreiben und waere
+zwischendurch weder der alte noch der neue Stand.
+
+**Was dieser Plan NICHT schliesst:** Die 159 verbleibenden `checkFailures` sind (wie bereits bei
+Messblock 8 dokumentiert) ueberwiegend Ankerregel-Ueberlebende in Verbund-/Kommaselektoren mit
+mindestens einer lebenden Geschwisterklasse — eine strukturelle Grenze der Textpruefung ohne
+echten JS-Parser, unveraendert in `deferred-items.md` dieser Phase gefuehrt (Punkt 2). GATE-05
+Stufe 3 (die menschliche Vier-Themes-Sichtung) wurde durch diesen Plan NICHT durchgefuehrt — dieser
+Plan aendert kein ausgeliefertes CSS oder Laufzeit-JavaScript, nur ein Bauzeit-Werkzeug und seine
+Testdatei.
+
 ---
 *Phase: 15-befundlage-vorlauf*
 *Plan: 08*
 *Erhoben: 2026-09-09*
 *Nachtrag Messblock 8: Plan 15-09, 2026-09-09*
 *Nachtrag Messblock 9: Plan 15-10, 2026-09-09*
+*Nachtrag Messblock 10: Plan 15-11, 2026-09-11*
