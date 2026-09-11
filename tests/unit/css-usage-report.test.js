@@ -425,3 +425,82 @@ describe('css-usage-report — CR-03a: Interpolationsinhalt wird geerntet statt 
         expect(file.deadClasses).toContain('dead-control');
     });
 });
+
+describe('css-usage-report — CR-02: Umbruchschranke ersetzt durch harte Zeichen-Obergrenze (Plan 15-11, Task 2)', () => {
+    test('CR-02a: eine ueber zwei Zeilen umbrochene .className-Zuweisung mit Basisliteral und zwei geklammerten Ternaries haelt alle drei Zeichenketten-Literale lebendig', () => {
+        // Reale Form aus features/dice/dice-core.js:379-381 — Gleichheitszeichen
+        // am Zeilenende, Ausdruck (Basisliteral + zwei geklammerte Ternaries)
+        // in der Folgezeile.
+        const cssFiles = [
+            {
+                name: 'a.css',
+                content:
+                    '.dice-result-main { color: red; } .dice-crit { color: gold; } .dice-fail { color: grey; } .dead-control { color: blue; }'
+            }
+        ];
+        const jsFiles = [
+            {
+                name: 'a.js',
+                content:
+                    "main.className =\n    'dice-result-main' + (isCrit ? ' dice-crit' : '') + (isFail ? ' dice-fail' : '');"
+            }
+        ];
+        const result = analyze({ cssFiles, templateFiles: [], jsFiles });
+        const file = result.files.find(f => f.name === 'a.css');
+        expect(file.deadClasses).not.toContain('dice-result-main');
+        expect(file.deadClasses).not.toContain('dice-crit');
+        expect(file.deadClasses).not.toContain('dice-fail');
+        expect(file.deadClasses).toContain('dead-control');
+    });
+
+    test('CR-02b: ein "containerClass:"-Objektschluessel mit einer ueber die Folgezeile umbrochenen Ternary haelt beide Zweige lebendig', () => {
+        // Reale Form aus ui/safe-render.js:360 — hier bewusst mit dem Wert in
+        // der Folgezeile, um den Umbruchfall zu belegen (im echten Baum steht
+        // die Zeile heute nur zufaellig einzeilig).
+        const cssFiles = [
+            { name: 'a.css', content: '.gamma { color: red; } .delta { color: blue; } .dead-control { color: green; }' }
+        ];
+        const jsFiles = [
+            {
+                name: 'a.js',
+                content:
+                    "renderListFast(container, items, render, {\n    containerClass:\n        bedingung ? 'gamma' : 'delta'\n});"
+            }
+        ];
+        const result = analyze({ cssFiles, templateFiles: [], jsFiles });
+        const file = result.files.find(f => f.name === 'a.css');
+        expect(file.deadClasses).not.toContain('gamma');
+        expect(file.deadClasses).not.toContain('delta');
+        expect(file.deadClasses).toContain('dead-control');
+    });
+
+    test('CR-02c: ein Klassen-Kontext ohne Terminator sammelt keine Token aus weit entferntem Dateitext ein, weil der Scan an MAX_SEGMENT_SCAN_CHARS endet', () => {
+        // Der Wegfall der Umbruchschranke (CR-02a/b) darf keine unbegrenzte
+        // Leseweite eroeffnen: ohne Terminator bis zum Dateiende muesste die
+        // konstante Obergrenze den Scan beenden, bevor er weit entfernten,
+        // unbeteiligten Dateitext (hier eine Kontrollklasse in einem
+        // console.log()-Aufruf) als Token einsammelt.
+        const filler = 'x'.repeat(2200);
+        const cssFiles = [
+            {
+                name: 'a.css',
+                content:
+                    '.alpha { color: red; } .beta { color: blue; } .nicht-eine-klasse-weit-entfernt { color: green; }'
+            }
+        ];
+        const jsFiles = [
+            {
+                name: 'a.js',
+                content:
+                    "el.className = 'alpha' + (cond ? ' beta' : '')\n" +
+                    filler +
+                    "\nconsole.log('nicht-eine-klasse-weit-entfernt');\n"
+            }
+        ];
+        const result = analyze({ cssFiles, templateFiles: [], jsFiles });
+        const file = result.files.find(f => f.name === 'a.css');
+        expect(file.deadClasses).not.toContain('alpha');
+        expect(file.deadClasses).not.toContain('beta');
+        expect(file.deadClasses).toContain('nicht-eine-klasse-weit-entfernt');
+    });
+});
