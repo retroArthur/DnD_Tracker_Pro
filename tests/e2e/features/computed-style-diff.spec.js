@@ -1,38 +1,57 @@
 // @ts-check
 /**
- * Computed-Style-Vergleichslauf — Phase 15, Plan 15-06 (D-24)
+ * Computed-Style-Vergleichslauf — Phase 15, Plan 15-06 (D-24), repariert in Plan 15-13 (D-17,
+ * 15-VERIFICATION.md Gap 2, 15-REVIEW.md CR-04).
  *
- * Dritte Nachweissaeule neben der gruenen Suite und der menschlichen Sichtung:
- * ein Abzug berechneter Endwerte (`getComputedStyle`) ueber ALLE Ansichten, in
- * drei Durchgaengen (Standard / schmales Layoutprofil / emulierte reduzierte
- * Bewegung), verglichen gegen den vorigen Abzug unter
- * `tests/e2e/test-results/computed-style-snapshot.json`. Der dritte Durchgang
- * ist nicht optional — die Zusammenfuehrung aus Plan 15-01 hat die einzige
- * globale Bewegungsunterdrueckung von Kaskadenposition zwoelf auf drei
- * verschoben, und das ist ausschliesslich unter emulierter
- * `prefers-reduced-motion`-Einstellung messbar.
+ * Dritte Nachweissaeule neben der gruenen Suite und der menschlichen Sichtung: ein Abzug
+ * berechneter Endwerte (`getComputedStyle`) ueber ALLE Ansichten, in drei Durchgaengen (Standard /
+ * schmales Layoutprofil / emulierte reduzierte Bewegung), verglichen gegen den vorigen Abzug.
  *
- * Der Diff ist ERWARTUNGSGEFUEHRT, nicht leer: die drei Fixes dieser Phase
- * (15-04 DM-Screen-Widgets, 15-05 Zauberplatz-Pips + Wuerfelfarbe) aendern
- * berechnete Stile absichtlich. Jede Abweichung, deren Element-Schluessel
- * einen der EXPECTED_DEVIATION_KEYS-Fragmente enthaelt, ist erlaubt — jede
- * andere Abweichung laesst den Lauf fehlschlagen (D-24).
+ * Der Sollstand liegt unter `tests/e2e/baselines/computed-style-baseline.json` — VERSIONIERT, NICHT
+ * unter dem per `.gitignore` ausgeschlossenen Ergebnisverzeichnis. Ein Sollstand, der nur im
+ * Arbeitsverzeichnis des Autors existiert, ist in CI und in jedem frischen Klon `null`; der
+ * Vergleich liefert dann sofort eine leere Liste und alle drei Faelle laufen gruen OHNE zu
+ * vergleichen (15-REVIEW.md CR-04, Mangel 1). Der Sollstand ist damit ein VERTRAG: er wandert in
+ * die Git-Historie, und jede Welle, die berechnete Stile absichtlich aendert (Phasen 16-19), muss
+ * ihn danach ausdruecklich neu erheben.
  *
- * Der ERSTE Abzug (wenn keine Vorlaufdatei existiert) erzeugt nur die
- * Baseline und vergleicht nichts — er ist der Vergleichsstand fuer den
- * Loeschlauf in Plan 15-07. Ablageort und Erhebungszeitpunkt dieses ersten
- * Abzugs werden im SUMMARY von Plan 15-06 Task 3 festgehalten.
+ * Schreibsperre (CR-04, Mangel 2): der Sollstand wird nur geschrieben, wenn entweder gar keiner
+ * existiert ODER die Umgebungsvariable `UPDATE_STYLE_BASELINE` auf `1` steht — UND in allen drei
+ * Faellen steht der Schreibaufruf HINTER der Zusicherung. Beide Aenderungen zusammen: die
+ * Reihenfolge allein genuegt nicht (ein Lauf mit gesetztem Schalter wuerde sonst weiterhin vor der
+ * Zusicherung schreiben), die Sperre allein genuegt nicht (ein zweiter Lauf nach einem Fehlschlag
+ * duerfte sonst wieder schreiben). Ein Waechter, der eine gefundene Abweichung im selben Lauf als
+ * neuen Sollstand festschreibt, meldet einen Befund genau einmal und nie wieder — das ist
+ * schlechter als gar kein Waechter (T-15-27).
  *
- * Drei Tests = drei Durchgaenge, serialisiert (test.describe.configure mode:
- * 'serial') — alle drei schreiben in dieselbe Snapshot-Datei, und
- * `fullyParallel: true` in playwright.config.js wuerde sie sonst nebenlaeufig
- * ausfuehren und die Datei gegenseitig ueberschreiben.
+ * Der Diff ist ERWARTUNGSGEFUEHRT, nicht leer verlangt: eine Welle, die berechnete Stile
+ * absichtlich aendert, aendert `EXPECTED_DEVIATION_KEYS`. Diese Liste ist NACH der Neuerhebung des
+ * Sollstands in Plan 15-13 wieder LEER — siehe Regel im Kommentar dort.
+ *
+ * Beidseitiger Schluesselmengen-Vergleich (CR-04, Mangel 3): `diffPass()` meldet neben geaenderten
+ * Eigenschaften an gemeinsamen Schluesseln zusaetzlich Schluessel, die nur im Vorlauf vorhanden
+ * waren (Element verschwunden), UND Schluessel, die nur im aktuellen Lauf vorhanden sind (Element
+ * neu erschienen). Die zweite Richtung ist die vom Bericht verlangte; die dritte ist die Richtung,
+ * in der die schwerste Regression dieser Phase gewirkt hat — `.init-mob-dmg-inputs.hidden` wurde
+ * geloescht, ein bis dahin verborgenes Element wurde sichtbar, also erschien ein NEUER Schluessel,
+ * den der alte, einseitige Vergleich stillschweigend uebergangen haette.
+ *
+ * Alle drei Durchgaenge benutzen `seedPopulatedSession()` statt des leeren Seeds (CR-04, Mangel 4)
+ * — ohne befuellte Daten werden die Entitaets-Markups, auf die geloeschte CSS-Regeln wirken, nie
+ * gerendert. Zwei der betroffenen Markups (Shop-Artikelbereich, Fraktions-Ruf-Historie) entstehen
+ * zusaetzlich erst im aufgeklappten Shop bzw. bei ausgewaehlter Fraktion — `VIEW_STATE_SETUP`
+ * stellt diesen Zustand vor der Erfassung her.
+ *
+ * Drei Tests = drei Durchgaenge, serialisiert (test.describe.configure mode: 'serial') — alle drei
+ * schreiben (bei gesetzter Schreibsperre) in dieselbe Sollstandsdatei, und `fullyParallel: true` in
+ * playwright.config.js wuerde sie sonst nebenlaeufig ausfuehren und die Datei gegenseitig
+ * ueberschreiben.
  */
 
 import { test, expect } from '@playwright/test';
 import fs from 'fs';
 import path from 'path';
-import { loadApp, seedCleanSession } from '../helpers/test-utils.js';
+import { loadApp, seedPopulatedSession } from '../helpers/test-utils.js';
 
 test.describe.configure({ mode: 'serial' });
 
@@ -68,25 +87,59 @@ const PROPERTIES = [
 // Abbruch nicht als "keine Abweichung" erscheint.
 const MAX_ELEMENTS_PER_VIEW = 300;
 
-// Erwartungsliste absichtlicher Abweichungen (D-24) — MUSS nicht leer sein:
-// die drei Fixes dieser Phase aendern berechnete Stile absichtlich, ein Gate
-// mit leerem Diff waere in derselben Phase nie passierbar. Jeder Eintrag ist
-// ein Teilstring, der gegen den Element-Schluessel geprueft wird.
-const EXPECTED_DEVIATION_KEYS = [
-    'dms-terrain-item', // 15-04: Gelaende-Widget, CSS folgt jetzt dem JS-Markup (D-09)
-    'dms-skill-header', // 15-04: Fertigkeiten-Kopfzeilen, color-mix-Attributfarben (D-13)
-    'dms-know-skill', // 15-04: Wissensgebiete — Fettung/Farbe des Fertigkeitsnamens
-    'dms-know-types', // 15-04: Wissensgebiete — Daempfung der Kreaturentypen
-    'slot-pip', // 15-05: Zauberplatz-Pips, neue Klassenfamilie (spell-slots-compact/.slot-pip)
-    'dice-hero-result' // 15-05: Wuerfelergebniszahl behaelt Formatierung/Crit-/Fumble-Farbe
-];
+// Ansicht → Zustandsherstellung VOR der Erfassung (Plan 15-13, CR-04 Mangel 4). Zwei der vier von
+// Plan 15-12 wiederhergestellten Markups entstehen erst im aufgeklappten Shop bzw. bei
+// ausgewaehlter Fraktion — ohne diesen Schritt bleiben Artikelbereich und Fraktions-Detailbereich
+// verborgen und fallen aus der Erfassung, selbst mit befuelltem Seed. Beide Funktionen sind aus
+// dem jeweiligen Feature-Modul exportiert (toggleShop/selectFraktion), keine UI-Klickpfade.
+const VIEW_STATE_SETUP = {
+    shops: async page => {
+        await page.evaluate(() => {
+            // @ts-ignore — global aus features/shops/shops-core.js
+            if (typeof window.toggleShop === 'function') window.toggleShop(1);
+        });
+    },
+    fraktionen: async page => {
+        await page.evaluate(() => {
+            // @ts-ignore — global aus features/fraktionen/fraktionen-render.js
+            if (typeof window.selectFraktion === 'function') window.selectFraktion(1);
+        });
+    }
+};
+
+// Gemessener Leerzustand je Ansicht (seedCleanSession, ohne Zustandsherstellung, gegen das
+// gebaute Buendel dieser Sitzung — Plan 15-13, Task 2). Diese vier Ansichten tragen die
+// geseedeten Entitaeten dieses Plans (party: Charakter mit Zauberplaetzen; shops: Shop mit NPC-
+// /Ort-Verknuepfung und nicht verfuegbarem Artikel; fraktionen: Fraktion mit Ruf-Historie;
+// initiative: Mob-Kombattant). Die Erfassung mit dem befuellten Seed MUSS darueber liegen — sonst
+// ist der Durchgang stillschweigend auf einen Leerzustand zurueckgefallen (z. B. weil sich eine
+// Datenform geaendert hat), und das waere ein Fehlschlag, kein bestandener Lauf.
+const MIN_ELEMENTS_ABOVE_EMPTY = {
+    party: 23,
+    shops: 21,
+    fraktionen: 16,
+    initiative: 29
+};
+
+// Erwartungsliste absichtlicher Abweichungen (D-24) — nach der Neuerhebung des Sollstands in
+// Plan 15-13 LEER. Ein Eintrag gehoert hierhin AUSSCHLIESSLICH fuer die Dauer genau der Welle,
+// die eine berechnete Stiländerung absichtlich herbeifuehrt — mit Nennung des Plans, aus dem er
+// stammt (z. B. "15-16: Farbtoken-Umstellung, siehe D-27"). Eine Ausnahmeliste, die nichts mehr
+// ausnimmt, ist eine stille Freigabe: sie wuerde ab dem naechsten Lauf echte Befunde an genau
+// diesen Schluesseln verschlucken. Jeder Eintrag ist ein Teilstring, der gegen den
+// Element-Schluessel geprueft wird.
+const EXPECTED_DEVIATION_KEYS = [];
 
 function isExpectedDeviation(elementKey) {
     return EXPECTED_DEVIATION_KEYS.some(frag => elementKey.includes(frag));
 }
 
-const SNAPSHOT_DIR = path.join(process.cwd(), 'tests/e2e/test-results');
-const SNAPSHOT_PATH = path.join(SNAPSHOT_DIR, 'computed-style-snapshot.json');
+// Versionierter Sollstand — NICHT unter dem per .gitignore ausgeschlossenen Ergebnisverzeichnis
+// (siehe Kopfkommentar). `UPDATE_STYLE_BASELINE=1` erzwingt eine bewusste Neuerhebung; ohne
+// gesetzten Schalter UND ohne fehlenden Sollstand wird nicht geschrieben (Schreibsperre, CR-04
+// Mangel 2).
+const BASELINE_DIR = path.join(process.cwd(), 'tests/e2e/baselines');
+const BASELINE_PATH = path.join(BASELINE_DIR, 'computed-style-baseline.json');
 
 /**
  * Vorlauf-Abzug, EINMAL beim Laden dieses Moduls gelesen (nicht pro Test) —
@@ -96,17 +149,17 @@ const SNAPSHOT_PATH = path.join(SNAPSHOT_DIR, 'computed-style-snapshot.json');
  * @returns {object|null}
  */
 function loadSnapshot() {
-    if (!fs.existsSync(SNAPSHOT_PATH)) return null;
+    if (!fs.existsSync(BASELINE_PATH)) return null;
     try {
-        return JSON.parse(fs.readFileSync(SNAPSHOT_PATH, 'utf8'));
+        return JSON.parse(fs.readFileSync(BASELINE_PATH, 'utf8'));
     } catch {
         return null;
     }
 }
 
 function saveSnapshot(snapshot) {
-    fs.mkdirSync(SNAPSHOT_DIR, { recursive: true });
-    fs.writeFileSync(SNAPSHOT_PATH, JSON.stringify(snapshot, null, 2), 'utf8');
+    fs.mkdirSync(BASELINE_DIR, { recursive: true });
+    fs.writeFileSync(BASELINE_PATH, JSON.stringify(snapshot, null, 2), 'utf8');
 }
 
 const previousSnapshot = loadSnapshot();
@@ -167,7 +220,8 @@ function captureViewInBrowser({ viewId, properties, maxElements }) {
  * blockiert nachfolgende Klicks (`sticky`-Elemente wie `.encounter-controls`
  * werden dann faelschlich als Ursache gemeldet). `switchView()` ist derselbe
  * Codepfad, den ein echter Klick am Ende ausloest (Rendering + `.active`
- * class), nur ohne den Dropdown-Umweg.
+ * class), nur ohne den Dropdown-Umweg. Nach dem Ansichtswechsel wird — falls
+ * registriert — die Zustandsherstellung aus `VIEW_STATE_SETUP` ausgefuehrt.
  * @param {import('@playwright/test').Page} page
  * @returns {Promise<object>}
  */
@@ -179,6 +233,9 @@ async function runPass(page) {
             window.switchView(v);
         }, viewId);
         await page.waitForSelector(`#view-${viewId}.active`, { state: 'visible', timeout: 5000 });
+        if (VIEW_STATE_SETUP[viewId]) {
+            await VIEW_STATE_SETUP[viewId](page);
+        }
         await page.waitForTimeout(150);
         const captured = await page.evaluate(captureViewInBrowser, {
             viewId,
@@ -191,15 +248,26 @@ async function runPass(page) {
         );
         expect(captured.found, `Ansicht view-${viewId} wurde nicht im DOM gefunden`).toBe(true);
         expect(captured.elementCount, `Ansicht view-${viewId} hat kein klassenbehaftetes sichtbares Element`).toBeGreaterThan(0);
+        if (Object.prototype.hasOwnProperty.call(MIN_ELEMENTS_ABOVE_EMPTY, viewId)) {
+            expect(
+                captured.elementCount,
+                `Ansicht view-${viewId} liefert mit befuelltem Seed nicht mehr Elemente als der ` +
+                    `gemessene Leerzustand (${MIN_ELEMENTS_ABOVE_EMPTY[viewId]}) — der Durchgang ist ` +
+                    `stillschweigend auf einen Leerzustand zurueckgefallen`
+            ).toBeGreaterThan(MIN_ELEMENTS_ABOVE_EMPTY[viewId]);
+        }
         result[viewId] = captured;
     }
     return result;
 }
 
 /**
- * Vergleicht den aktuellen Durchgang mit dem vorigen (falls vorhanden) und
- * liefert die Liste UNERWARTETER Abweichungen (Schluessel ausserhalb
- * EXPECTED_DEVIATION_KEYS).
+ * Vergleicht den aktuellen Durchgang mit dem vorigen (falls vorhanden) und liefert die Liste
+ * UNERWARTETER Abweichungen (Schluessel ausserhalb EXPECTED_DEVIATION_KEYS). Meldet DREI Arten
+ * von Befund je Ansicht (CR-04, Mangel 3): eine geaenderte Eigenschaft an einem in beiden
+ * Laeufen vorhandenen Schluessel; einen Schluessel, der im Vorlauf vorhanden war und jetzt nicht
+ * mehr erfasst wird (Element verschwunden); und einen Schluessel, der im Vorlauf fehlte und jetzt
+ * erfasst wird (Element neu erschienen). Alle drei unterliegen derselben Erwartungsliste.
  * @param {object|null} previousPass
  * @param {object} currentPass
  * @returns {string[]}
@@ -211,15 +279,33 @@ function diffPass(previousPass, currentPass) {
         const prevView = previousPass[viewId];
         const currView = currentPass[viewId];
         if (!prevView) continue; // Ansicht ist neu im Vergleich zur Vorlaufdatei
+
+        // Art 1: geaenderte Eigenschaft an einem gemeinsamen Schluessel
         for (const key of Object.keys(currView.elements)) {
             const prevEl = prevView.elements[key];
             const currEl = currView.elements[key];
-            if (!prevEl) continue; // Element-Schluessel ist neu, kein Rueckbau-Befund
+            if (!prevEl) continue; // Art 3, separat unten behandelt
             for (const prop of PROPERTIES) {
                 if (prevEl[prop] !== currEl[prop]) {
                     const entry = `${viewId}/${key}/${prop}: "${prevEl[prop]}" -> "${currEl[prop]}"`;
                     if (!isExpectedDeviation(key)) unexpected.push(entry);
                 }
+            }
+        }
+
+        // Art 2: Schluessel im Vorlauf vorhanden, jetzt nicht mehr erfasst (Element verschwunden)
+        for (const key of Object.keys(prevView.elements)) {
+            if (!currView.elements[key] && !isExpectedDeviation(key)) {
+                unexpected.push(`${viewId}/${key}: Element im Vorlauf vorhanden, jetzt nicht mehr erfasst`);
+            }
+        }
+
+        // Art 3: Schluessel im Vorlauf NICHT vorhanden, jetzt erfasst (Element neu erschienen) —
+        // die Richtung, in der die schwerste Regression dieser Phase gewirkt hat
+        // (.init-mob-dmg-inputs.hidden geloescht -> Element wurde sichtbar).
+        for (const key of Object.keys(currView.elements)) {
+            if (!prevView.elements[key] && !isExpectedDeviation(key)) {
+                unexpected.push(`${viewId}/${key}: Element im Vorlauf nicht vorhanden, jetzt neu erfasst`);
             }
         }
     }
@@ -228,20 +314,26 @@ function diffPass(previousPass, currentPass) {
 
 test.describe('Computed-Style-Vergleichslauf (D-24)', () => {
     test('Standard', async ({ page }) => {
-        await seedCleanSession(page);
+        await seedPopulatedSession(page);
         await loadApp(page);
 
         const passResult = await runPass(page);
         const unexpected = diffPass(previousSnapshot ? previousSnapshot.standard : null, passResult);
 
         currentSnapshot.standard = passResult;
-        saveSnapshot(currentSnapshot);
 
         expect(unexpected, `Unerwartete Stilabweichungen (Standard):\n${unexpected.join('\n')}`).toEqual([]);
+
+        // Schreibsperre (CR-04, Mangel 2): schreibt NUR wenn noch kein Sollstand existiert oder
+        // der Schalter gesetzt ist — UND erst NACH der Zusicherung, damit ein gefundener Befund
+        // nicht im selben Lauf als neuer Sollstand festgeschrieben wird.
+        if (!previousSnapshot || process.env.UPDATE_STYLE_BASELINE === '1') {
+            saveSnapshot(currentSnapshot);
+        }
     });
 
     test('Schmales Layout', async ({ page }) => {
-        await seedCleanSession(page);
+        await seedPopulatedSession(page);
         await loadApp(page);
         await page.setViewportSize({ width: 375, height: 812 });
         await page.evaluate(() => {
@@ -254,13 +346,16 @@ test.describe('Computed-Style-Vergleichslauf (D-24)', () => {
         const unexpected = diffPass(previousSnapshot ? previousSnapshot.narrow : null, passResult);
 
         currentSnapshot.narrow = passResult;
-        saveSnapshot(currentSnapshot);
 
         expect(unexpected, `Unerwartete Stilabweichungen (schmales Layout):\n${unexpected.join('\n')}`).toEqual([]);
+
+        if (!previousSnapshot || process.env.UPDATE_STYLE_BASELINE === '1') {
+            saveSnapshot(currentSnapshot);
+        }
     });
 
     test('Emulierte reduzierte Bewegung', async ({ page }) => {
-        await seedCleanSession(page);
+        await seedPopulatedSession(page);
         await page.emulateMedia({ reducedMotion: 'reduce' });
         await loadApp(page);
 
@@ -268,8 +363,11 @@ test.describe('Computed-Style-Vergleichslauf (D-24)', () => {
         const unexpected = diffPass(previousSnapshot ? previousSnapshot.reducedMotion : null, passResult);
 
         currentSnapshot.reducedMotion = passResult;
-        saveSnapshot(currentSnapshot);
 
         expect(unexpected, `Unerwartete Stilabweichungen (reduzierte Bewegung):\n${unexpected.join('\n')}`).toEqual([]);
+
+        if (!previousSnapshot || process.env.UPDATE_STYLE_BASELINE === '1') {
+            saveSnapshot(currentSnapshot);
+        }
     });
 });
