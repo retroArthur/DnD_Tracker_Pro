@@ -148,7 +148,7 @@ Plans:
 
 **Wave 9** *(zweite Gap-Closure aus `15-VERIFICATION.md` — Nachprüfung `gaps_found` 10/13, blocked on Wave 8 completion)*
 
-- [ ] 15-11-PLAN.md — Die drei verbliebenen Erkennungslücken schließen (CR-02 Zeilenumbruch, CR-03 Interpolationsinhalt und Zwischenvariable), sechs rot-grün bewiesene Fälle, Messblock 10
+- [x] 15-11-PLAN.md — Die drei verbliebenen Erkennungslücken schließen (CR-02 Zeilenumbruch, CR-03 Interpolationsinhalt und Zwischenvariable), sechs rot-grün bewiesene Fälle, Messblock 10
 
 **Wave 10** *(blocked on Wave 9 completion)*
 
