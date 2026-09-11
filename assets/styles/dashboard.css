@@ -63,7 +63,9 @@
         
         .dice-result-hit { color: var(--green); font-weight: 600; }
         .dice-result-miss { color: var(--red); font-weight: 600; }
-        
+        .dice-crit { color: var(--green); text-shadow: 0 0 10px color-mix(in srgb, var(--green) 50%, transparent); }
+        .dice-fail { color: var(--red); text-shadow: 0 0 10px color-mix(in srgb, var(--red) 50%, transparent); }
+
         .dice-attr-btn .attr-mod {
             font-size: 0.9em;
             color: var(--text-dim);
