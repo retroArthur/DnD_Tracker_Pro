@@ -101,6 +101,193 @@ export async function seedCleanSession(page) {
 }
 
 /**
+ * Seedet einen BEFUELLTEN App-Zustand VOR dem App-Boot (per page.addInitScript) — Geschwister
+ * von `seedCleanSession()` oben, NICHT dessen Ersatz. `seedCleanSession()` bleibt zeichengleich
+ * unveraendert; jeder bestehende Spec, der ihn benutzt, behaelt seine dokumentierte Absicherung
+ * gegen die beiden Fruehstart-Rennen (siehe Kopfkommentar oben). Dieser Seed erbt dieselbe
+ * Begruendung (weit-in-der-Zukunft-`_version` ueberspringt `migrateData()`; dieselben vier
+ * Schluessel, die `initializeData()` nicht vorbelegt: `randomTables`, `timers`, `shops`,
+ * `campaign`; eine vollstaendig gefuellte `_nextId`-Abbildung) und ergaenzt sie um sechs
+ * Datensaetze, die je eine der vier in Plan 15-12 wiederhergestellten CSS-Regelfamilien
+ * erreichbar machen (Phase 15, Plan 15-13, REG-01..REG-05):
+ *
+ *   - Ein Charakter mit Zauberplaetzen in der kanonischen Form aus
+ *     `features/party/party-crud.js:186` (`{max, current}` je Grad) — Grad 0 vollstaendig
+ *     gefuellt (2/2), Grad 1 mit gefuelltem UND leerem Punkt (2 von 4) — beide Pip-Zustaende
+ *     werden gerendert.
+ *   - Ein NPC — Ziel des Shop-Kopf-Chips (REG-01) und Mitgliederzaehlung der Fraktion.
+ *   - Ein Ort — Ziel des zweiten Shop-Kopf-Chips.
+ *   - Ein Shop mit `npcId`/`locationId` auf die beiden vorigen Datensaetze und zwei Artikeln:
+ *     einer mit `available: false` (REG-02, `.si-unavailable`-Deckkraft), einer ohne diese
+ *     Angabe (Standard = verfuegbar, damit beide Zustaende nebeneinander stehen).
+ *   - Eine Fraktion mit einer Ruf-Historie aus einem positiven UND einem negativen Eintrag
+ *     (REG-03, `.fr-hist-plus`/`.fr-hist-minus` — ohne beide Vorzeichen ist nur eine der beiden
+ *     Farbklassen belegt).
+ *   - Ein Mob-Kombattant in der Initiative in der Datenform aus `features/initiative-mob.js`
+ *     (`cb.mob = {count, poolHp, maxPoolHp, individualMaxHp, attackMode}`), Angriffsmodus
+ *     `'nfach'` (N-facher Einzelwurf) — der Zustand, in dem `.init-mob-dmg-inputs` per
+ *     `.hidden`-Zusatzklasse verborgen sein MUSS (REG-04); REG-05 schaltet den Modus im Test
+ *     selbst um.
+ *
+ * Der Shop-Kopf-Chip (REG-01) und die Ruf-Historie (REG-03) entstehen erst im aufgeklappten
+ * Shop bzw. bei ausgewaehlter Fraktion — dieser Seed allein genuegt nicht, der jeweilige Test
+ * muss `window.toggleShop(id)` bzw. `window.selectFraktion(id)` selbst aufrufen.
+ * @param {import('@playwright/test').Page} page
+ */
+export async function seedPopulatedSession(page) {
+    await page.addInitScript(() => {
+        try {
+            localStorage.setItem(
+                'dnd-tracker-v4',
+                JSON.stringify({
+                    // Far-future _version so load() skips migrateData() entirely — wie
+                    // seedCleanSession(), s.o.
+                    _version: '99.0.0',
+                    settings: {
+                        theme: 'dark',
+                        lastView: 'dashboard',
+                        enableMarkdownShortcuts: true,
+                        enableMarkdownImportExport: true,
+                        markdownOnboardingSeen: true,
+                        levelingMode: 'xp'
+                    },
+                    randomTables: [],
+                    timers: [],
+                    campaign: {},
+                    characters: [
+                        {
+                            id: 1,
+                            name: 'Testzauberin (Populated Seed, 15-13)',
+                            characterClass: 'Magier',
+                            level: 5,
+                            attributes: { str: 8, dex: 12, con: 12, int: 16, wis: 10, cha: 10 },
+                            hpCurrent: 30,
+                            hpMax: 30,
+                            armorClass: 12,
+                            spellSlots: {
+                                0: { max: 2, current: 2 },
+                                1: { max: 4, current: 2 }
+                            }
+                        }
+                    ],
+                    npcs: [
+                        {
+                            id: 1,
+                            name: 'Testhaendler (Populated Seed, 15-13)',
+                            role: 'Merchant',
+                            race: 'Mensch',
+                            chapter: '1',
+                            description: 'Seed-NPC fuer die REG-Faelle aus Plan 15-13.'
+                        }
+                    ],
+                    locations: [
+                        {
+                            id: 1,
+                            name: 'Testort (Populated Seed, 15-13)',
+                            description: 'Seed-Ort fuer die REG-Faelle aus Plan 15-13.'
+                        }
+                    ],
+                    shops: [
+                        {
+                            id: 1,
+                            type: 'laden',
+                            name: 'Testladen (Populated Seed, 15-13)',
+                            npcId: 1,
+                            locationId: 1,
+                            description: '',
+                            special: '',
+                            note: '',
+                            items: [
+                                {
+                                    name: 'Nicht verfuegbarer Trank',
+                                    category: 'misc',
+                                    cost: '10 gp',
+                                    available: false,
+                                    quantity: 1
+                                },
+                                {
+                                    name: 'Verfuegbares Schwert',
+                                    category: 'weapon',
+                                    cost: '15 gp',
+                                    quantity: 1
+                                }
+                            ]
+                        }
+                    ],
+                    factions: [
+                        {
+                            id: 1,
+                            name: 'Testfraktion (Populated Seed, 15-13)',
+                            symbol: '⚔️',
+                            agenda: '',
+                            beschreibung: '',
+                            ruf: 5,
+                            rufHistorie: [
+                                { delta: 10, grund: 'Testgrund positiv (15-13)', zeitstempel: Date.now() },
+                                { delta: -5, grund: 'Testgrund negativ (15-13)', zeitstempel: Date.now() }
+                            ],
+                            mitgliederNpcIds: [],
+                            sitzOrtId: null,
+                            rivalen: '',
+                            verbuendete: '',
+                            links: []
+                        }
+                    ],
+                    initiative: {
+                        combatants: [
+                            {
+                                id: 1,
+                                name: 'Testmob-Schwarm (Populated Seed, 15-13)',
+                                initiative: 15,
+                                initBonus: 2,
+                                maxHp: 40,
+                                currentHp: 40,
+                                ac: 14,
+                                type: 'monster',
+                                cr: '1',
+                                xp: 200,
+                                effects: [],
+                                statblockRef: { source: 'srd', id: 'goblin' },
+                                mob: {
+                                    count: 5,
+                                    poolHp: 40,
+                                    maxPoolHp: 40,
+                                    individualMaxHp: 8,
+                                    attackMode: 'nfach'
+                                }
+                            }
+                        ],
+                        currentTurn: 0,
+                        round: 1
+                    },
+                    // Vollstaendig gefuellte Kennungszaehler-Abbildung — dieselben elf Schluessel
+                    // wie seedCleanSession(), auf die neuen Hoechst-IDs (1) je befuellter
+                    // Sammlung angehoben (validateAndRepairNextId() prueft ausschliesslich diese
+                    // elf Schluessel; shops/factions/combatants sind darin NICHT enthalten und
+                    // werden folglich nicht ueberprueft).
+                    _nextId: {
+                        characters: 2,
+                        npcs: 2,
+                        locations: 2,
+                        quests: 1,
+                        encounters: 1,
+                        spells: 1,
+                        loot: 1,
+                        items: 1,
+                        wiki: 1,
+                        sessionNotes: 1,
+                        randomTables: 1
+                    }
+                })
+            );
+        } catch {
+            // file:// localStorage restrictions vary by browser build; if the seed
+            // silently fails, the app falls back to its own default (empty state).
+        }
+    });
+}
+
+/**
  * Lädt die App und wartet auf vollständige Initialisierung
  * @param {import('@playwright/test').Page} page
  */
