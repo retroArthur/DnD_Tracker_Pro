@@ -189,7 +189,25 @@
             gap: 8px;
             flex-wrap: wrap;
         }
-        
+
+        .shop-meta-tag {
+            font-size: 0.75em;
+            padding: 2px 8px;
+            border-radius: var(--radius-sm);
+            background: var(--bg-dark);
+            color: var(--text-dim);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .shop-meta-tag:hover {
+            background: var(--bg-elevated);
+            color: var(--text);
+        }
+
+        .shop-meta-tag.npc { color: var(--purple); }
+        .shop-meta-tag.location { color: var(--cyan); }
+
         .shop-item-count {
             font-size: 0.8em;
             color: var(--green);
@@ -473,6 +491,10 @@
             border-radius: var(--radius-sm);
         }
         
+        .si-unavailable {
+            opacity: 0.5;
+        }
+
         .si-unavailable .si-name {
             text-decoration: line-through;
         }
