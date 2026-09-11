@@ -15,23 +15,26 @@
  * Kernfunktionen einzeln exportiert, Direktaufruf-Zweig am Ende).
  *
  * Lebend-Erkennung in drei Stufen (D-21; um zwei Klassen-Kontexte erweitert
- * in Plan 15-09, CR-01/WR-01; um Interpolations-Literal-Ernte und eine
- * harte Zeichen-Obergrenze statt Umbruchschranke erweitert in Plan 15-11,
- * CR-03a/CR-02):
+ * in Plan 15-09, CR-01/WR-01; um Interpolations-Literal-Ernte, eine harte
+ * Zeichen-Obergrenze statt Umbruchschranke, und einen vierten Klassen-
+ * Kontext erweitert in Plan 15-11, CR-03a/CR-02/CR-03b):
  *   1. Wort-Token-Gleichheit aus Klassen-Kontexten (class="...", className=,
  *      eine anweisungsweite Zuweisung an .className/.className+= (auch per
  *      Ternary oder Konkatenation), die Objektschluessel className:/
- *      containerClass:, und classList.add/remove/toggle/contains/replace mit
- *      ausgeglichener Klammertiefe im Argumentteil — ein Teilstring-Treffer
- *      zaehlt NICHT. Der Inhalt einer `${...}`-Interpolation innerhalb eines
- *      Klassen-Kontexts wird nicht mehr pauschal verworfen: seine
- *      Zeichenketten-Literale werden als Token gefuehrt, der uebrige
- *      Ausdruckstext (z. B. der Name der Bedingungsvariablen) weiterhin
- *      nicht (Plan 15-11, CR-03a). Ein anweisungsweiter Scan endet
- *      spaetestens nach MAX_SEGMENT_SCAN_CHARS gelesenen Zeichen statt bei
- *      jedem Zeilenumbruch — eine ueber mehrere Zeilen umbrochene Zuweisung
- *      (Prettier-Normalform) liefert dadurch weiterhin alle ihre Literale
- *      (Plan 15-11, CR-02).
+ *      containerClass:, classList.add/remove/toggle/contains/replace mit
+ *      ausgeglichener Klammertiefe im Argumentteil, und die Zwischen-
+ *      variablen-Form (ein Bezeichner, per var/let/const aus Zeichenketten-
+ *      Literalen deklariert und INNERHALB DERSELBEN ANWEISUNG wie ein
+ *      class="..."-Vorkommen konkateniert, Plan 15-11 CR-03b) — ein
+ *      Teilstring-Treffer zaehlt NICHT. Der Inhalt einer `${...}`-
+ *      Interpolation innerhalb eines Klassen-Kontexts wird nicht mehr
+ *      pauschal verworfen: seine Zeichenketten-Literale werden als Token
+ *      gefuehrt, der uebrige Ausdruckstext (z. B. der Name der
+ *      Bedingungsvariablen) weiterhin nicht (Plan 15-11, CR-03a). Ein
+ *      anweisungsweiter Scan endet spaetestens nach MAX_SEGMENT_SCAN_CHARS
+ *      gelesenen Zeichen statt bei jedem Zeilenumbruch — eine ueber mehrere
+ *      Zeilen umbrochene Zuweisung (Prettier-Normalform) liefert dadurch
+ *      weiterhin alle ihre Literale (Plan 15-11, CR-02).
  *   2. Genau fuenf eingefrorene Praefixe (LIVE_PREFIXES) fuer dynamisch
  *      zusammengesetzte Klassennamen, ausschliesslich aus Klassen-Kontexten
  *      gewonnen.
@@ -399,6 +402,94 @@ function addTokensFromInterpolation(tokens, interpolationText) {
     }
 }
 
+// CR-03b (Plan 15-11, Task 3): Bezeichnernamen aus Buchstaben, Ziffern,
+// Unterstrich und Dollarzeichen — die Kandidaten fuer die Zwischenvariablen-
+// Form, NACH Entfernung der Zeichenketten-Literale aus einem Textbereich.
+const CONCAT_IDENT_RE = /[A-Za-z_$][\w$]*/g;
+
+// Eine var/let/const-Deklaration mit dem Bezeichnernamen in Gruppe 1.
+const VAR_DECL_RE = /\b(?:var|let|const)\s+([A-Za-z_$][\w$]*)\s*=/g;
+
+/**
+ * Sammelt je Bezeichnername (aus var/let/const-Deklarationen) die
+ * Zeichenketten-Literale seines Zuweisungswerts — EINMAL je Dateiinhalt,
+ * damit die Kandidatensuche in collectConcatVarLiterals() nachschlaegt statt
+ * je Kandidat neu zu suchen (sonst waere sie quadratisch). Reine Funktion,
+ * kein Dateisystemzugriff.
+ *
+ * @param {string} content
+ * @returns {Map<string, string[]>}
+ */
+function collectVarDeclarationLiterals(content) {
+    const map = new Map();
+    for (const m of content.matchAll(VAR_DECL_RE)) {
+        const name = m[1];
+        const valueText = scanBalancedSegment(content, m.index + m[0].length, ';');
+        const literals = [];
+        for (const lit of valueText.matchAll(QUOTED_STRING_RE)) {
+            literals.push(lit[2]);
+        }
+        if (literals.length === 0) continue;
+        const existing = map.get(name);
+        map.set(name, existing ? existing.concat(literals) : literals);
+    }
+    return map;
+}
+
+/**
+ * Vierte Kontextregel (CR-03b, Plan 15-11 Task 3): ein Bezeichner, der per
+ * var/let/const aus Zeichenketten-Literalen deklariert und danach INNERHALB
+ * DERSELBEN ANWEISUNG wie ein class="..."-Vorkommen konkateniert wird, haelt
+ * seine Literale lebendig (reale Form: features/fraktionen/fraktionen-
+ * render.js, features/initiative-mob.js).
+ *
+ * Fuer jedes class=-Vorkommen wird zunaechst die Attributwert-Grenze
+ * uebersprungen — dieselbe "eine der drei Anfuehrungsarten schliesst"-Regel
+ * wie scanClassContextValue() — damit der anschliessende Anweisungs-Scan an
+ * einer ECHTEN Anfuehrungsgrenze beginnt, nicht mitten in einem
+ * JS-Zeichenkettenliteral. Wuerde stattdessen direkt nach der class=-
+ * Anfuehrung selbst gescannt, verschoebe sich die Anfuehrungs-Paritaet und
+ * QUOTED_STRING_RE wuerde spaeter ueber die Grenze zwischen zwei getrennten
+ * JS-Literalen hinweg falsch paaren — genau der konkatenierte Bezeichner
+ * ginge dabei verloren (empirisch geprueft gegen die beiden realen
+ * Fundstellen).
+ *
+ * @param {string} content
+ * @param {Set<string>} tokens
+ */
+function collectConcatVarLiterals(content, tokens) {
+    const declLiterals = collectVarDeclarationLiterals(content);
+    if (declLiterals.size === 0) return;
+    for (const m of content.matchAll(CLASS_ATTR_OPEN_RE)) {
+        const quoteChar = m[1];
+        let i = m.index + m[0].length;
+        while (i < content.length) {
+            const ch = content[i];
+            if (ch === '$' && content[i + 1] === '{') {
+                let depth = 1;
+                let j = i + 2;
+                while (j < content.length && depth > 0) {
+                    if (content[j] === '{') depth++;
+                    else if (content[j] === '}') depth--;
+                    j++;
+                }
+                i = j;
+                continue;
+            }
+            if (ch === quoteChar || ch === '"' || ch === "'" || ch === '`') break;
+            i++;
+        }
+        const rest = scanBalancedSegment(content, i + 1, ';');
+        const withoutLiterals = rest.replace(QUOTED_STRING_RE, ' ');
+        for (const identMatch of withoutLiterals.matchAll(CONCAT_IDENT_RE)) {
+            const literals = declLiterals.get(identMatch[0]);
+            if (literals) {
+                literals.forEach(lit => addTokensFromValue(tokens, lit));
+            }
+        }
+    }
+}
+
 /**
  * Sammelt alle Klassen-Token aus Klassen-Kontexten der uebergebenen
  * Quelldateien (Markup und/oder JS, jeweils { content }). Reine Funktion,
@@ -437,6 +528,7 @@ function collectLiveTokens(files) {
                 addTokensFromValue(tokens, arg[2]);
             }
         }
+        collectConcatVarLiterals(content, tokens);
     });
     return tokens;
 }
@@ -753,7 +845,9 @@ module.exports = {
     CLASS_KEY_ASSIGN_RE,
     scanBalancedCallArgs,
     addTokensFromInterpolation,
-    MAX_SEGMENT_SCAN_CHARS
+    MAX_SEGMENT_SCAN_CHARS,
+    collectConcatVarLiterals,
+    CONCAT_IDENT_RE
 };
 
 // ----------------------------------------------------------------------
