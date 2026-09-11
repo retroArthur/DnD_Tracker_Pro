@@ -504,3 +504,55 @@ describe('css-usage-report — CR-02: Umbruchschranke ersetzt durch harte Zeiche
         expect(file.deadClasses).toContain('nicht-eine-klasse-weit-entfernt');
     });
 });
+
+describe('css-usage-report — CR-03b/c: vierte Kontextregel fuer die Zwischenvariablen-Form (Plan 15-11, Task 3)', () => {
+    test('CR-03b: ein per var-Ternary deklarierter Bezeichner, der innerhalb derselben Anweisung wie ein class="..."-Vorkommen konkateniert wird, haelt beide Literale lebendig', () => {
+        // Reale Form aus features/fraktionen/fraktionen-render.js: eine
+        // Deklaration mit var, rechts ein Ternary aus zwei Klassenliteralen,
+        // danach eine Anweisung, die ein class="..."-Attribut oeffnet und den
+        // Bezeichner per Konkatenation einsetzt.
+        const cssFiles = [
+            {
+                name: 'a.css',
+                content:
+                    '.fr-hist-plus { color: green; } .fr-hist-minus { color: red; } .dead-control { color: blue; }'
+            }
+        ];
+        const jsFiles = [
+            {
+                name: 'a.js',
+                content:
+                    "var deltaClass = delta >= 0 ? 'fr-hist-plus' : 'fr-hist-minus';\n" +
+                    "html += '<span class=\"fr-hist-delta ' + deltaClass + '\">' + esc(deltaStr) + '</span>';"
+            }
+        ];
+        const result = analyze({ cssFiles, templateFiles: [], jsFiles });
+        const file = result.files.find(f => f.name === 'a.css');
+        expect(file.deadClasses).not.toContain('fr-hist-plus');
+        expect(file.deadClasses).not.toContain('fr-hist-minus');
+        expect(file.deadClasses).toContain('dead-control');
+    });
+
+    test('CR-03c (Praezisions-Gegenprobe): derselbe per var-Ternary deklarierte Bezeichner bleibt tot, wenn er in KEINER Anweisung mit einem class="..."-Vorkommen konkateniert wird', () => {
+        // Ohne diesen Fall waere die vierte Regel eine Pauschalfreigabe fuer
+        // jede Ternary-Variable im Baum, unabhaengig davon, ob sie je mit
+        // einem class="..."-Vorkommen zusammentrifft.
+        const cssFiles = [
+            {
+                name: 'a.css',
+                content: '.fr-hist-plus { color: green; } .fr-hist-minus { color: red; } .dead-control { color: blue; }'
+            }
+        ];
+        const jsFiles = [
+            {
+                name: 'a.js',
+                content: "var deltaClass = delta >= 0 ? 'fr-hist-plus' : 'fr-hist-minus';\nconsole.log(deltaClass);"
+            }
+        ];
+        const result = analyze({ cssFiles, templateFiles: [], jsFiles });
+        const file = result.files.find(f => f.name === 'a.css');
+        expect(file.deadClasses).toContain('fr-hist-plus');
+        expect(file.deadClasses).toContain('fr-hist-minus');
+        expect(file.deadClasses).toContain('dead-control');
+    });
+});
