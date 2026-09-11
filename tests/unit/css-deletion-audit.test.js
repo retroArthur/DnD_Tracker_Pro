@@ -143,25 +143,25 @@ const KNOWN_FALSE_POSITIVES = Object.freeze([
         class: 'description',
         date: '2026-09-11',
         reason:
-            'concat-var-Fehlalarm: "score" (utils/performance-extras.js) wird aus fuzzySearchFields(..., ["name", ..., "description"]) deklariert; "description" ist dort ein Suchfeldname, keine CSS-Klasse.'
+            'concat-var-Fehlalarm: "score" (performance-extras.js (im utils/-Verzeichnis)) wird aus fuzzySearchFields(..., ["name", ..., "description"]) deklariert; "description" ist dort ein Suchfeldname, keine CSS-Klasse.'
     },
     {
         class: 'dice-char-select',
         date: '2026-09-11',
         reason:
-            'concat-var-Fehlalarm: "select"/"selectEl" (features/dice/dice-core.js) sind $("dice-char-select")-Element-ID-Referenzen, keine Klassenverkettung.'
+            'concat-var-Fehlalarm: "select"/"selectEl" (dice-core.js (im features/dice/-Verzeichnis)) sind $("dice-char-select")-Element-ID-Referenzen, keine Klassenverkettung.'
     },
     {
         class: 'dice-formula-history',
         date: '2026-09-11',
         reason:
-            'concat-var-Fehlalarm: "c" (features/dice/dice-core.js) ist eine $("dice-formula-history")-Element-ID-Referenz, keine Klassenverkettung.'
+            'concat-var-Fehlalarm: "c" (dice-core.js (im features/dice/-Verzeichnis)) ist eine $("dice-formula-history")-Element-ID-Referenz, keine Klassenverkettung.'
     },
     {
         class: 'dice-history',
         date: '2026-09-11',
         reason:
-            'concat-var-Fehlalarm: "c" (features/dice/dice-core.js, andere Fundstelle) ist eine $("dice-history")-Element-ID-Referenz, keine Klassenverkettung.'
+            'concat-var-Fehlalarm: "c" (dice-core.js (im features/dice/-Verzeichnis), andere Fundstelle) ist eine $("dice-history")-Element-ID-Referenz, keine Klassenverkettung.'
     },
     {
         class: 'divider',
@@ -179,25 +179,25 @@ const KNOWN_FALSE_POSITIVES = Object.freeze([
         class: 'encounter',
         date: '2026-09-11',
         reason:
-            'concat-var-Fehlalarm: "viewMap"/"allowedTypes"/"lookupMap" (systems/entity-links.js, systems/search/global-search.js, features/locations/locations-render.js) sind Typ-Name-Zuordnungstabellen, keine Klassenverkettung.'
+            'concat-var-Fehlalarm: "viewMap"/"allowedTypes"/"lookupMap" (entity-links.js (im systems/-Verzeichnis), systems/search/global-search.js, locations-render.js (im features/locations/-Verzeichnis)) sind Typ-Name-Zuordnungstabellen, keine Klassenverkettung.'
     },
     {
         class: 'loc-search',
         date: '2026-09-11',
         reason:
-            'concat-var-Fehlalarm: "searchEl" (features/locations/locations-render.js) ist eine $("loc-search")-Element-ID-Referenz, keine Klassenverkettung.'
+            'concat-var-Fehlalarm: "searchEl" (locations-render.js (im features/locations/-Verzeichnis)) ist eine $("loc-search")-Element-ID-Referenz, keine Klassenverkettung.'
     },
     {
         class: 'loot',
         date: '2026-09-11',
         reason:
-            'concat-var-Fehlalarm: "viewMap"/"allowedTypes"/"searchIn" (systems/entity-links.js, systems/search/global-search.js, systems/tags.js) sind Typ-Name-/Suchfeld-Listen, keine Klassenverkettung.'
+            'concat-var-Fehlalarm: "viewMap"/"allowedTypes"/"searchIn" (entity-links.js (im systems/-Verzeichnis), systems/search/global-search.js, tags.js (im systems/-Verzeichnis)) sind Typ-Name-/Suchfeld-Listen, keine Klassenverkettung.'
     },
     {
         class: 'loot-search',
         date: '2026-09-11',
         reason:
-            'concat-var-Fehlalarm: "searchInput" (features/initiative-loot.js) ist eine $("loot-search")-Element-ID-Referenz, keine Klassenverkettung.'
+            'concat-var-Fehlalarm: "searchInput" (initiative-loot.js (im features/-Verzeichnis)) ist eine $("loot-search")-Element-ID-Referenz, keine Klassenverkettung.'
     },
     {
         class: 'npc-search',
@@ -209,25 +209,25 @@ const KNOWN_FALSE_POSITIVES = Object.freeze([
         class: 'party',
         date: '2026-09-11',
         reason:
-            'concat-var-Fehlalarm: "viewMap" (systems/entity-links.js)/"existingRelations" (features/npcs/npc-render.js) sind Typ-Name-Zuordnung bzw. NPC-Beziehungsliste, keine Klassenverkettung.'
+            'concat-var-Fehlalarm: "viewMap" (entity-links.js (im systems/-Verzeichnis))/"existingRelations" (features/npcs/npc-render.js) sind Typ-Name-Zuordnung bzw. NPC-Beziehungsliste, keine Klassenverkettung.'
     },
     {
         class: 'timer-list',
         date: '2026-09-11',
         reason:
-            'concat-var-Fehlalarm: "c" (features/timers/timers.js) ist eine $("timer-list")-Element-ID-Referenz, keine Klassenverkettung.'
+            'concat-var-Fehlalarm: "c" (timers.js (im features/timers/-Verzeichnis)) ist eine $("timer-list")-Element-ID-Referenz, keine Klassenverkettung.'
     },
     {
         class: 'timer-name',
         date: '2026-09-11',
         reason:
-            'concat-var-Fehlalarm: "nameInput" (features/timers/timers.js) ist eine Element-Referenz auf ein Eingabefeld, keine Klassenverkettung.'
+            'concat-var-Fehlalarm: "nameInput" (timers.js (im features/timers/-Verzeichnis)) ist eine Element-Referenz auf ein Eingabefeld, keine Klassenverkettung.'
     },
     {
         class: 'timer-presets',
         date: '2026-09-11',
         reason:
-            'concat-var-Fehlalarm: "container" (features/timers/timers.js) ist eine allgemeine Containerreferenz, keine Klassenverkettung.'
+            'concat-var-Fehlalarm: "container" (timers.js (im features/timers/-Verzeichnis)) ist eine allgemeine Containerreferenz, keine Klassenverkettung.'
     }
 ]);
 
