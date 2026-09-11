@@ -395,7 +395,7 @@ describe('css-usage-report — CR-01/WR-01: die bewiesene Blindstelle (Plan 15-0
 
 describe('css-usage-report — CR-03a: Interpolationsinhalt wird geerntet statt verworfen (Plan 15-11, Task 1)', () => {
     test('CR-03a: eine ${...}-Interpolation mit einer Ternary aus zwei Zeichenketten-Literalen in einem class="..."-Attribut haelt BEIDE Literale lebendig', () => {
-        // Reale Form aus features/shops/shops-core.js:596 —
+        // Reale Form aus shops-core.js (im features/shops/-Verzeichnis), Zeile 596 —
         // `<div class="si-item ${isAvailable ? '' : 'si-unavailable'}">` — hier
         // mit zwei nicht-leeren Zweigen nachgebildet, um zu zeigen, dass BEIDE
         // Literale einer Ternary erkannt werden, nicht nur eines.
@@ -428,7 +428,7 @@ describe('css-usage-report — CR-03a: Interpolationsinhalt wird geerntet statt 
 
 describe('css-usage-report — CR-02: Umbruchschranke ersetzt durch harte Zeichen-Obergrenze (Plan 15-11, Task 2)', () => {
     test('CR-02a: eine ueber zwei Zeilen umbrochene .className-Zuweisung mit Basisliteral und zwei geklammerten Ternaries haelt alle drei Zeichenketten-Literale lebendig', () => {
-        // Reale Form aus features/dice/dice-core.js:379-381 — Gleichheitszeichen
+        // Reale Form aus dice-core.js (im features/dice/-Verzeichnis), Zeilen 379-381 — Gleichheitszeichen
         // am Zeilenende, Ausdruck (Basisliteral + zwei geklammerte Ternaries)
         // in der Folgezeile.
         const cssFiles = [
@@ -454,7 +454,7 @@ describe('css-usage-report — CR-02: Umbruchschranke ersetzt durch harte Zeiche
     });
 
     test('CR-02b: ein "containerClass:"-Objektschluessel mit einer ueber die Folgezeile umbrochenen Ternary haelt beide Zweige lebendig', () => {
-        // Reale Form aus ui/safe-render.js:360 — hier bewusst mit dem Wert in
+        // Reale Form aus safe-render.js (im ui/-Verzeichnis), Zeile 360 — hier bewusst mit dem Wert in
         // der Folgezeile, um den Umbruchfall zu belegen (im echten Baum steht
         // die Zeile heute nur zufaellig einzeilig).
         const cssFiles = [
@@ -507,7 +507,7 @@ describe('css-usage-report — CR-02: Umbruchschranke ersetzt durch harte Zeiche
 
 describe('css-usage-report — CR-03b/c: vierte Kontextregel fuer die Zwischenvariablen-Form (Plan 15-11, Task 3)', () => {
     test('CR-03b: ein per var-Ternary deklarierter Bezeichner, der innerhalb derselben Anweisung wie ein class="..."-Vorkommen konkateniert wird, haelt beide Literale lebendig', () => {
-        // Reale Form aus features/fraktionen/fraktionen-render.js: eine
+        // Reale Form aus fraktionen-render.js (im features/fraktionen/-Verzeichnis): eine
         // Deklaration mit var, rechts ein Ternary aus zwei Klassenliteralen,
         // danach eine Anweisung, die ein class="..."-Attribut oeffnet und den
         // Bezeichner per Konkatenation einsetzt.
