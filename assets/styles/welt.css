@@ -1077,6 +1077,14 @@
     flex-shrink: 0;
 }
 
+.fr-hist-plus {
+    color: var(--green);
+}
+
+.fr-hist-minus {
+    color: var(--red);
+}
+
 .fr-hist-grund {
     flex: 1;
     color: var(--text);
