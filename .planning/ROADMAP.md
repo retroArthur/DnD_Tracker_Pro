@@ -109,7 +109,7 @@ Zielwerten statt mit totem Ballast und unpassierbaren Ratschen.
   4. Im gebauten Bündel: `.dms-terrain-item` trägt padding/background/border-radius ≠ 0 und `.dms-skill-header.str` trägt background ≠ transparent (DM-Screen-Referenzwidgets „Gelände"/„Fertigkeiten" gestylt — *Korrektur D-12: hier stand zuvor „Wissensgebiete", obwohl `.dms-skill-header.str` zum Fertigkeiten-Widget gehört*); der Zauberplatz-Pip im kompakten Zauberplatz-Container der Charakterkarte (`.spell-slots-compact .slot-pip`, der von Plan 15-05 tatsächlich implementierte Selektor — *Korrektur D-55: ersetzt die in D-15 vermutete Klasse `.char-card-slots .slot-pip`, die im damals ungeprüften Markup stand, aber nirgends in `assets/styles/` gestylt war; `.spell-slots-compact`/`.slot-pip` sind die bereits vorhandenen, gestylten Pip-Regeln aus `dashboard.css` (Vorbild: `systems/spellslots/spellslots-ui.js`) — der geprüfte Sachverhalt selbst bleibt unverändert*) hat eine definierte, klickbare Breite > 0, UND ein Klick auf den Pip ändert nachweislich den persistierten Zauberplatz-Zustand des Charakters; nach einem Würfelwurf in der Haupt-Würfelansicht behält `#dice-hero-result` `font-size: 5em`/`color: var(--gold)`, und Crit-/Fumble-Färbung ist sichtbar.
   5. Jede neue Ratsche dieser und aller Folgephasen ist vorab beidseitig rot-grün bewiesen und trägt ihren gemessenen Ausgangswert im Kommentar (GATE-03); der Geltungsbereich CSS vs. JS/Templates ist pro Befund vorab entschieden und dokumentiert (GATE-04, u. a. die ~170 Fundstellen außerhalb `assets/styles/`); die Abnahme läuft **dreistufig** (GATE-05, gebucht in `PROJECT.md` § GATE-05): Stufe 1 automatisch nach jeder Welle (alle Suiten grün, Build läuft durch, GATE-01-Harness über vier Themes), Stufe 2 eine Screenshot-Serie über die Stellenliste der Welle mal vier Themes, Stufe 3 menschlich — **eine volle Vier-Themes-Runde nach JEDER der fünf Phasen 15, 16, 17, 18 und 19**, ohne Verkürzung auf eine gezielte Stellenliste. *Korrektur D-53: die zuvor hier beschriebene Absenkung auf drei volle Runden plus gezielte Stellenlisten nach 15 und 19 wurde dem Nutzer als Checkpoint-Entscheidung vorgelegt und am 2026-09-09 ausdrücklich ABGELEHNT; die ursprüngliche, striktere Form gilt. Dieser Text stand vor der Checkpoint-Antwort hier und war danach überholt.*
 
-**Plans**: 12/14 plans executed in 12 waves
+**Plans**: 13/14 plans executed in 12 waves
 
 Plans:
 **Wave 1**
@@ -156,7 +156,7 @@ Plans:
 
 **Wave 11** *(blocked on Wave 10 completion)*
 
-- [ ] 15-13-PLAN.md — Stil-Vergleichslauf lasttragend machen (versionierter Sollstand, Schreibsperre, beidseitiger Schlüsselvergleich, befüllter Seed) plus Regressionsspec über berechnete Endwerte, Messblock 12
+- [x] 15-13-PLAN.md — Stil-Vergleichslauf lasttragend machen (versionierter Sollstand, Schreibsperre, beidseitiger Schlüsselvergleich, befüllter Seed) plus Regressionsspec über berechnete Endwerte, Messblock 12
 
 **Wave 12** *(blocked on Wave 11 completion)*
 
@@ -280,7 +280,7 @@ der CHECKLISTE ist deshalb nicht abnehmbar und aus den Akzeptanzkriterien heraus
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 15. Befundlage & Vorlauf | 12/14 | In Progress|  |
+| 15. Befundlage & Vorlauf | 13/14 | In Progress|  |
 | 16. Farbe | –/TBD | Not started | - |
 | 17. Schatten & Bewegung | –/TBD | Not started | - |
 | 18. Typografie | –/TBD | Not started | - |
