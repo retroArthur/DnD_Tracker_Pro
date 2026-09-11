@@ -144,7 +144,6 @@ const MODULE_TEST_EXCEPTIONS = [
     'features/encounters/encounters-crud.js',
     'features/encounters/monster-templates.js',
     'features/fraktionen/fraktionen-crud.js',
-    'features/fraktionen/fraktionen-render.js',
     'features/initiative-combat-widgets.js', // -- CR-01, 2026-09-07: s. Kommentar oben
     'features/initiative-extras.js',
     'features/initiative-loot.js', // -- CR-01, 2026-09-07: s. Kommentar oben
@@ -174,7 +173,6 @@ const MODULE_TEST_EXCEPTIONS = [
     'features/sessions/sessions.js',
     'features/shops/links.js',
     'features/shops/shop-export.js',
-    'features/shops/shops-core.js',
     'features/soundboard/soundboard-render.js',
     'features/spells/spell-manager.js', // -- CR-01, 2026-09-07: s. Kommentar oben
     'features/timeline/timeline-crud.js',

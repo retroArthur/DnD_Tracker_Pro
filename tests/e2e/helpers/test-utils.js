@@ -111,8 +111,8 @@ export async function seedCleanSession(page) {
  * Datensaetze, die je eine der vier in Plan 15-12 wiederhergestellten CSS-Regelfamilien
  * erreichbar machen (Phase 15, Plan 15-13, REG-01..REG-05):
  *
- *   - Ein Charakter mit Zauberplaetzen in der kanonischen Form aus
- *     `features/party/party-crud.js:186` (`{max, current}` je Grad) — Grad 0 vollstaendig
+ *   - Ein Charakter mit Zauberplaetzen in der kanonischen Form aus `party-crud.js` (im
+ *     `features/party/`-Verzeichnis, Zeile 186) — `{max, current}` je Grad; Grad 0 vollstaendig
  *     gefuellt (2/2), Grad 1 mit gefuelltem UND leerem Punkt (2 von 4) — beide Pip-Zustaende
  *     werden gerendert.
  *   - Ein NPC — Ziel des Shop-Kopf-Chips (REG-01) und Mitgliederzaehlung der Fraktion.
