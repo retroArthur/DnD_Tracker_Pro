@@ -5,16 +5,16 @@ milestone_name: Design-System
 current_phase: 15
 current_phase_name: Befundlage & Vorlauf
 status: executing
-stopped_at: Completed 15-befundlage-vorlauf-11-PLAN.md
-last_updated: "2026-09-11T20:20:49.973Z"
+stopped_at: Completed 15-12-PLAN.md
+last_updated: "2026-09-11T20:58:26.016Z"
 last_activity: 2026-09-11
 last_activity_desc: Phase 15 execution started
-state_head: d64b10f3be4555a6e3e5328ba634b0a374cff82d
+state_head: d7a0ea710f07962977d449a7205da9a76eb71aac
 progress:
   total_phases: 5
   completed_phases: 0
   total_plans: 14
-  completed_plans: 11
+  completed_plans: 12
   percent: 0
 ---
 
@@ -22,7 +22,7 @@ progress:
 
 **Last Updated:** 2026-09-11
 **Milestone:** v1.3 „Design-System" — 5 Phasen (15–19); Phase 15 geplant, Phasen 16–19 offen
-**Status:** Executing Phase 15
+**Status:** Ready to execute
 
 **Progress:** [░░░░░░░░░░] 0%
 
@@ -41,8 +41,8 @@ See: `.planning/PROJECT.md` (Stand 2026-09-08)
 ## Current Position
 
 Phase: 15 (Befundlage & Vorlauf) — EXECUTING
-Plan: 12 of 14 (11 abgeschlossen, naechster: 15-12)
-Status: Executing Phase 15
+Plan: 13 of 14 (11 abgeschlossen, naechster: 15-12)
+Status: Ready to execute
 Last activity: 2026-09-11 — Plan 15-11 abgeschlossen (CR-02/CR-03-Fix, Messblock 10)
 
 ### Ausgangslage v1.3 — der Handoff ist geprüft, nicht übernommen
@@ -171,6 +171,7 @@ die Tastaturprobe der CHECKLISTE muss aus den Akzeptanzkriterien.
 | Phase 15-befundlage-vorlauf P09 | ~45min | 3 tasks | 7 files |
 | Phase 15-befundlage-vorlauf P10 | ~15min | 2 tasks | 3 files |
 | Phase 15-befundlage-vorlauf P11 | 65min | 3 tasks | 4 files |
+| Phase 15 P12 | 130min | 3 tasks | 10 files |
 
 ## Accumulated Context
 
@@ -257,8 +258,8 @@ die Tastaturprobe der CHECKLISTE muss aus den Akzeptanzkriterien.
 
 ## Session Continuity
 
-**Last session:** 2026-09-11T20:20:49.940Z
-**Stopped at:** Completed 15-befundlage-vorlauf-11-PLAN.md
+**Last session:** 2026-09-11T20:58:25.981Z
+**Stopped at:** Completed 15-12-PLAN.md
 **Resume file:** None
 
 **Last action:** `/gsd-execute-phase 13` (Plan 13-08, MAINT-06). Converted all 81 originally-counted unfiltered `console.*` calls across 31 `loader.js` MODULES files to the one sanctioned `ErrorHandler.log()` outlet in `render/helpers.js` (marked `gsd:konsolen-senke`), built `tests/unit/console-hygiene.test.js` as a permanent regression guard, and corrected two stale `file-backup-manager.js` header comments that wrongly described the forbidden `window.save` monkey-patch pattern (code has used `registerPostSaveHook()` correctly since Phase 12). Mid-execution finding: converting routine/self-healing diagnostics (data repairs, migration progress, per-tab render guards) to the single outlet elevated them to `console.error` and broke 5 Playwright tests (`editor-formatting.spec.js`, `editor-insert.spec.js`, `import-security.spec.js`) that assert zero console errors — fixed by routing those specific sites through the existing `window.debugLogAdd()` in-app debug panel instead, preserving the single-outlet invariant for genuine faults while not misclassifying normal operation as an error. Full suites green: `npx jest` 1066/1066, `npx playwright test` 321 passed/2 skipped (STATE.md baseline exactly matched), `python build.py` + `--production` + `pytest tests/build` 24/24 all green.
@@ -424,6 +425,7 @@ die Tastaturprobe der CHECKLISTE muss aus den Akzeptanzkriterien.
 - [Phase 15-09]: npc-grid und list-view-container woertlich aus Commit 4faca38 wiederhergestellt, nichts anderes aus diesem Commit zurueckgeholt
 - [Phase 15]: Zeilenzahlen-Spalte im CSS-Struktur-Codeblock entfernt statt neu gemessen; ersetzt durch Messbefehl+Datum (BASE-01/empty-Prinzip) — Alte Werte bereits vor dem Loeschlauf grob falsch und ohne Waechter dauerhaft driftend; DOC-01..DOC-04 sichert stattdessen die Zahl selbst gegen den gemessenen Baum
 - [Phase 15]: Statement-Scan fuer die Zwischenvariablen-Form beginnt NACH der class=-Attributwertgrenze (any-of-three-quotes), nicht direkt nach der class=-Anfuehrung — sonst verschiebt sich die Anfuehrungs-Paritaet und der konkatenierte Bezeichner geht verloren (empirisch an fraktionen-render.js/initiative-mob.js geprueft vor der Implementierung)
+- [Phase 15]: Gegenprobe-Fund (22 statt 6 rote Klassen): 15 zusaetzliche Namen per Provenienz-Nachverfolgung als Detektor-Fehlalarm (collectConcatVarLiterals, Plan 15-11) identifiziert und als evidenzbasierte Ausnahmeliste dokumentiert statt blind restauriert
 
 ## Deferred Items
 
