@@ -15,8 +15,9 @@
  * Kernfunktionen einzeln exportiert, Direktaufruf-Zweig am Ende).
  *
  * Lebend-Erkennung in drei Stufen (D-21; um zwei Klassen-Kontexte erweitert
- * in Plan 15-09, CR-01/WR-01; um Interpolations-Literal-Ernte erweitert in
- * Plan 15-11, CR-03a):
+ * in Plan 15-09, CR-01/WR-01; um Interpolations-Literal-Ernte und eine
+ * harte Zeichen-Obergrenze statt Umbruchschranke erweitert in Plan 15-11,
+ * CR-03a/CR-02):
  *   1. Wort-Token-Gleichheit aus Klassen-Kontexten (class="...", className=,
  *      eine anweisungsweite Zuweisung an .className/.className+= (auch per
  *      Ternary oder Konkatenation), die Objektschluessel className:/
@@ -26,7 +27,11 @@
  *      Klassen-Kontexts wird nicht mehr pauschal verworfen: seine
  *      Zeichenketten-Literale werden als Token gefuehrt, der uebrige
  *      Ausdruckstext (z. B. der Name der Bedingungsvariablen) weiterhin
- *      nicht (Plan 15-11, CR-03a).
+ *      nicht (Plan 15-11, CR-03a). Ein anweisungsweiter Scan endet
+ *      spaetestens nach MAX_SEGMENT_SCAN_CHARS gelesenen Zeichen statt bei
+ *      jedem Zeilenumbruch — eine ueber mehrere Zeilen umbrochene Zuweisung
+ *      (Prettier-Normalform) liefert dadurch weiterhin alle ihre Literale
+ *      (Plan 15-11, CR-02).
  *   2. Genau fuenf eingefrorene Praefixe (LIVE_PREFIXES) fuer dynamisch
  *      zusammengesetzte Klassennamen, ausschliesslich aus Klassen-Kontexten
  *      gewonnen.
@@ -225,6 +230,15 @@ const CLASS_LIST_CALL_RE = /classList\.(?:add|remove|toggle|contains|replace)\(/
 
 const QUOTED_STRING_RE = /(["'`])((?:\\.|(?!\1).)*)\1/g;
 
+// Harte Zeichen-Obergrenze fuer scanBalancedSegment() (Plan 15-11, CR-02).
+// Ersetzt die fruehere Zeilenumbruch-Abbruchbedingung: ein Zeilenumbruch
+// beendet den Scan nicht mehr (Prettier bricht lange Zuweisungen nach dem
+// Gleichheitszeichen um), aber ohne Ersatzschranke waere der Wegfall eine
+// unbegrenzte Leseweite bei einem unbeendeten Konstrukt (T-15-20). 2000 ist
+// grosszuegig gegenueber jeder realen Anweisung im Baum und klein genug, um
+// Fremdtext fernzuhalten.
+const MAX_SEGMENT_SCAN_CHARS = 2000;
+
 /**
  * Liest den Klassen-Kontext-Wert ab `startIndex` (direkt nach der
  * oeffnenden Anfuehrung), bis entweder die oeffnende Anfuehrung selbst
@@ -276,16 +290,22 @@ function scanClassContextValue(text, startIndex, quoteChar, tokens) {
 
 /**
  * Liest ab `startIndex`, bis (bei Klammertiefe 0) eines der Zeichen in
- * `terminators` auftaucht oder eine Zeile endet — dieselbe Klammertiefe-
- * Technik wie `scanClassContextValue()`s `${...}`-Ueberspringen, hier fuer
- * ganze Anweisungen/Werte statt fuer eine einzelne Interpolation (Plan
- * 15-09, CR-01a/CR-01b/CR-01c/WR-01). Anfuehrungszeichen und ihr Inhalt
- * werden komplett uebersprungen, damit ein Komma oder eine Klammer
- * INNERHALB eines Zeichenketten-Literals den Abbruch nicht vorzeitig
- * ausloest. Eine schliessende Klammer/Kommata/geschweifte Klammer, die bei
- * Tiefe 0 auftritt (kein passendes Gegenstueck INNERHALB dieses Aufrufs),
- * beendet den Scan ebenfalls — sie gehoert der umschliessenden Struktur, nicht
- * dem gelesenen Segment.
+ * `terminators` auftaucht, die Datei endet, oder MAX_SEGMENT_SCAN_CHARS
+ * gelesene Zeichen erreicht sind — dieselbe Klammertiefe-Technik wie
+ * `scanClassContextValue()`s `${...}`-Ueberspringen, hier fuer ganze
+ * Anweisungen/Werte statt fuer eine einzelne Interpolation (Plan 15-09,
+ * CR-01a/CR-01b/CR-01c/WR-01). Ein Zeilenumbruch beendet den Scan NICHT
+ * mehr (Plan 15-11, CR-02) — Prettier bricht eine lange Zuweisung nach dem
+ * Gleichheitszeichen um, und die vorherige Umbruchschranke lieferte dann
+ * ein leeres Segment. An ihrer Stelle steht MAX_SEGMENT_SCAN_CHARS als
+ * feste Obergrenze gegen Weglaufen bei einem unbeendeten Konstrukt
+ * (T-15-20). Anfuehrungszeichen und ihr Inhalt werden komplett
+ * uebersprungen, damit ein Komma oder eine Klammer INNERHALB eines
+ * Zeichenketten-Literals den Abbruch nicht vorzeitig ausloest. Eine
+ * schliessende Klammer/Kommata/geschweifte Klammer, die bei Tiefe 0
+ * auftritt (kein passendes Gegenstueck INNERHALB dieses Aufrufs), beendet
+ * den Scan ebenfalls — sie gehoert der umschliessenden Struktur, nicht dem
+ * gelesenen Segment.
  *
  * @param {string} text
  * @param {number} startIndex
@@ -296,7 +316,8 @@ function scanBalancedSegment(text, startIndex, terminators) {
     let depth = 0;
     let quote = null;
     let i = startIndex;
-    while (i < text.length) {
+    const limit = Math.min(text.length, startIndex + MAX_SEGMENT_SCAN_CHARS);
+    while (i < limit) {
         const ch = text[i];
         if (quote) {
             if (ch === '\\' && i + 1 < text.length) {
@@ -312,7 +333,6 @@ function scanBalancedSegment(text, startIndex, terminators) {
             i++;
             continue;
         }
-        if (ch === '\n') break;
         if (depth === 0 && terminators.includes(ch)) break;
         if (ch === '(' || ch === '[' || ch === '{') {
             depth++;
@@ -732,7 +752,8 @@ module.exports = {
     CLASS_NAME_ASSIGN_STMT_RE,
     CLASS_KEY_ASSIGN_RE,
     scanBalancedCallArgs,
-    addTokensFromInterpolation
+    addTokensFromInterpolation,
+    MAX_SEGMENT_SCAN_CHARS
 };
 
 // ----------------------------------------------------------------------
