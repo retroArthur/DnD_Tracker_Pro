@@ -107,7 +107,132 @@ const deletedClasses = classesBefore.filter(c => !cssClassesTodaySet.has(c));
 // Baum als lebendig erkannt (DEL-02). Vollstaendige Zeichenkettengleichheit
 // je Klassenname (liveTokensToday ist ein Set exakter Token, kein
 // Teilstring-Vergleich) — DEAD-01/encoding.
-const wronglyDeleted = deletedClasses.filter(c => liveTokensToday.has(c)).sort();
+const wronglyDeletedRaw = deletedClasses.filter(c => liveTokensToday.has(c)).sort();
+
+// Bekannte Fehlalarme der Gegenprobe (DEAD_EXCEPTIONS-Analogon, Plan 15-12
+// Task 1/2): der erste volle Lauf dieser Gegenprobe nannte 22 Klassen statt
+// der sechs aus 15-REVIEW.md CR-01 erwarteten Familien. Fuer die restlichen
+// 15 wurde per Nachverfolgung (Zurueckbau von collectConcatVarLiterals()
+// Schritt fuer Schritt gegen die reale Fundstelle, siehe 15-12-SUMMARY.md
+// "Detektor-Fehlalarm") belegt: jede stammt aus derselben Ursache — ein
+// kurzer, mehrfach verwendeter Bezeichner (z.B. "c", "select", "searchEl",
+// "viewMap") wird per `const NAME = $('irgendeine-id')` oder einer
+// unabhaengigen Objekt-/Array-Literalen deklariert, die zufaellig einen
+// String enthaelt, der wortgleich mit einer echt geloeschten CSS-Klasse ist;
+// `collectConcatVarLiterals()`s anweisungsweiter Vorwaertsscan ab einem
+// `class="..."`-Vorkommen erstreckt sich (bis zu 2000 Zeichen oder das
+// naechste ";") weit genug, um diesen voellig unabhaengigen Bezeichner
+// spaeter im selben, nur klammertiefen-gebundenen "Anweisungsfenster"
+// aufzugreifen — ohne zu pruefen, ob tatsaechlich eine Verkettung in den
+// Klassenwert stattfindet. Das ist ein echter, reproduzierbarer Fehlalarm
+// der Erkennungserweiterung aus Plan 15-11 (CR-03b), NICHT eine echte
+// Fehlloeschung: keine dieser 15 Klassen wird tatsaechlich per
+// class="..."/.className=/classList.*()/-Objektschluessel einem Element
+// zugewiesen. `tools/css-usage-report.js` selbst darf in diesem Plan nicht
+// geaendert werden (Planvorgabe) — die Korrektur des Detektors (die
+// Konkatenation statt blosser Woertlich-Ko-Vorkommen im Anweisungsfenster
+// verlangen muesste) ist daher als eigener Befund vertagt
+// (deferred-items.md Eintrag 4, .planning/WINDOWS.md).
+//
+// Diese Liste schraenkt NICHT den Geltungsbereich der Gegenprobe auf
+// "bereits bekannte Faelle" ein (DEAD-02-Verbot) — jede der 15 Klassen ist
+// einzeln, mit Beleg (Bezeichner + Datei), nachvollzogen; eine kuenftige,
+// ECHTE Fehlloeschung mit einem ANDEREN Klassennamen bleibt weiterhin rot.
+const KNOWN_FALSE_POSITIVES = Object.freeze([
+    {
+        class: 'description',
+        date: '2026-09-11',
+        reason:
+            'concat-var-Fehlalarm: "score" (utils/performance-extras.js) wird aus fuzzySearchFields(..., ["name", ..., "description"]) deklariert; "description" ist dort ein Suchfeldname, keine CSS-Klasse.'
+    },
+    {
+        class: 'dice-char-select',
+        date: '2026-09-11',
+        reason:
+            'concat-var-Fehlalarm: "select"/"selectEl" (features/dice/dice-core.js) sind $("dice-char-select")-Element-ID-Referenzen, keine Klassenverkettung.'
+    },
+    {
+        class: 'dice-formula-history',
+        date: '2026-09-11',
+        reason:
+            'concat-var-Fehlalarm: "c" (features/dice/dice-core.js) ist eine $("dice-formula-history")-Element-ID-Referenz, keine Klassenverkettung.'
+    },
+    {
+        class: 'dice-history',
+        date: '2026-09-11',
+        reason:
+            'concat-var-Fehlalarm: "c" (features/dice/dice-core.js, andere Fundstelle) ist eine $("dice-history")-Element-ID-Referenz, keine Klassenverkettung.'
+    },
+    {
+        class: 'divider',
+        date: '2026-09-11',
+        reason:
+            'concat-var-Fehlalarm: "structureItems" (ui/editors/editor-toolbar-build.js) ist eine Werkzeugleisten-Struktur-Liste, keine Klassenverkettung.'
+    },
+    {
+        class: 'enc-search',
+        date: '2026-09-11',
+        reason:
+            'concat-var-Fehlalarm: "searchEl" (features/encounters/encounters-render.js) ist eine $("enc-search")-Element-ID-Referenz, keine Klassenverkettung.'
+    },
+    {
+        class: 'encounter',
+        date: '2026-09-11',
+        reason:
+            'concat-var-Fehlalarm: "viewMap"/"allowedTypes"/"lookupMap" (systems/entity-links.js, systems/search/global-search.js, features/locations/locations-render.js) sind Typ-Name-Zuordnungstabellen, keine Klassenverkettung.'
+    },
+    {
+        class: 'loc-search',
+        date: '2026-09-11',
+        reason:
+            'concat-var-Fehlalarm: "searchEl" (features/locations/locations-render.js) ist eine $("loc-search")-Element-ID-Referenz, keine Klassenverkettung.'
+    },
+    {
+        class: 'loot',
+        date: '2026-09-11',
+        reason:
+            'concat-var-Fehlalarm: "viewMap"/"allowedTypes"/"searchIn" (systems/entity-links.js, systems/search/global-search.js, systems/tags.js) sind Typ-Name-/Suchfeld-Listen, keine Klassenverkettung.'
+    },
+    {
+        class: 'loot-search',
+        date: '2026-09-11',
+        reason:
+            'concat-var-Fehlalarm: "searchInput" (features/initiative-loot.js) ist eine $("loot-search")-Element-ID-Referenz, keine Klassenverkettung.'
+    },
+    {
+        class: 'npc-search',
+        date: '2026-09-11',
+        reason:
+            'concat-var-Fehlalarm: "searchEl" (features/npcs/npc-render.js) ist eine $("npc-search")-Element-ID-Referenz, keine Klassenverkettung.'
+    },
+    {
+        class: 'party',
+        date: '2026-09-11',
+        reason:
+            'concat-var-Fehlalarm: "viewMap" (systems/entity-links.js)/"existingRelations" (features/npcs/npc-render.js) sind Typ-Name-Zuordnung bzw. NPC-Beziehungsliste, keine Klassenverkettung.'
+    },
+    {
+        class: 'timer-list',
+        date: '2026-09-11',
+        reason:
+            'concat-var-Fehlalarm: "c" (features/timers/timers.js) ist eine $("timer-list")-Element-ID-Referenz, keine Klassenverkettung.'
+    },
+    {
+        class: 'timer-name',
+        date: '2026-09-11',
+        reason:
+            'concat-var-Fehlalarm: "nameInput" (features/timers/timers.js) ist eine Element-Referenz auf ein Eingabefeld, keine Klassenverkettung.'
+    },
+    {
+        class: 'timer-presets',
+        date: '2026-09-11',
+        reason:
+            'concat-var-Fehlalarm: "container" (features/timers/timers.js) ist eine allgemeine Containerreferenz, keine Klassenverkettung.'
+    }
+]);
+
+const falsePositiveNames = new Set(KNOWN_FALSE_POSITIVES.map(e => e.class));
+const wronglyDeleted = wronglyDeletedRaw.filter(c => !falsePositiveNames.has(c));
 
 describe('css-deletion-audit — Gegenprobe des gesamten Loeschstands der Phase 15', () => {
     test('DEL-01: die Vergleichsdatei existiert, nennt ihren Herkunftscommit, und ihre Klassenliste ist nicht leer', () => {
