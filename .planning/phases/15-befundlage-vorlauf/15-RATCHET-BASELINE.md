@@ -657,6 +657,185 @@ Testfile selbst gefuehrt. `tools/css-usage-report.js` bleibt in dieser Welle una
 **GATE-05 Stufe 3 (menschliche Vier-Themes-Sichtung) wurde durch diesen Plan NICHT durchgefuehrt.**
 Sie bleibt Plan 15-14 vorbehalten.
 
+## Messblock 12 — Stil-Vergleichslauf von einer dekorativen in eine lasttragende Pruefung verwandelt (Plan 15-13)
+
+**Datum:** 2026-09-11
+**Node-Version:** v24.14.0
+
+**Anlass:** `15-VERIFICATION.md` Gap 2 (deckungsgleich mit `15-REVIEW.md` CR-04) hat vier
+voneinander unabhaengige Maengel in `tests/e2e/features/computed-style-diff.spec.js` benannt, die
+zusammen bewirkten, dass die als dritte Nachweissaeule gedachte Pruefung die Art Regression, die
+Phase 15 tatsaechlich produziert hat, strukturell nicht sehen konnte:
+
+1. Der Sollstand lag unter `tests/e2e/test-results/`, per `.gitignore:25` ausgeschlossen — in CI
+   und jedem frischen Klon war der Vorlauf `null`, der Vergleich lief sofort gruen ohne zu
+   vergleichen.
+2. Der Sollstand wurde in allen drei Faellen VOR der Zusicherung geschrieben — ein Lauf, der eine
+   Abweichung meldet, schrieb sie im selben Atemzug als neuen Sollstand fest.
+3. `diffPass()` iterierte ausschliesslich ueber die Schluessel des AKTUELLEN Durchgangs und
+   uebersprang Schluessel, die im Vorlauf fehlten — ein durch eine geloeschte Regel unsichtbar
+   gewordenes Element verschwand lautlos aus dem Vergleich, UND (die schwerste Richtung) ein durch
+   eine geloeschte Ausblendregel neu sichtbar gewordenes Element wurde als "neuer Schluessel"
+   ebenso uebergangen.
+4. Alle drei Durchgaenge liefen gegen die leere Kampagne (`seedCleanSession`) — die
+   Entitaets-Markups, auf die die in Plan 15-12 wiederhergestellten Regeln wirken, wurden nie
+   gerendert; zwei davon (Shop-Artikelbereich, Fraktions-Ruf-Historie) zusaetzlich nur im
+   aufgeklappten Shop bzw. bei ausgewaehlter Fraktion.
+
+### Checkpoint-Entscheidung: Form des versionierten Sollstands
+
+Vor Task 1 wurde ein `checkpoint:decision` gestellt (drei Optionen: A Vollabzug, B Kurzform/Digest,
+C Hybrid). **Der Mensch waehlte C (Hybrid, die Empfehlung des Plans)** am 2026-09-11: der
+verbindliche, eingecheckte Sollstand ist eine Kurzform — je Ansicht und Elementschluessel ein
+stabiler Hash ueber die zwoelf Eigenschaften, plus die vollstaendige Schluesselmenge; der Vollabzug
+wird weiterhin unter dem ausgeschlossenen Ergebnisverzeichnis geschrieben und dient der oertlichen
+Fehlersuche. Begruendung (aus dem Checkpoint-Kontext): ein je Phase neu geschriebener
+Mehrmegabyte-Sollstand waechst die Git-Historie dauerhaft und ist nicht folgenlos zuruecknehmbar;
+die Kurzform erkennt Wertaenderungen UND beide Richtungen der Schluesselmengen-Aenderung genauso
+zuverlaessig, bei deutlich kleinerem Umfang, und ihr Diff bleibt zeilenweise lesbar.
+
+Umsetzung: `digestElement()` in `computed-style-diff.spec.js` haelt einen auf 16 Hex-Zeichen (64
+Bit) gekuerzten SHA-256 je Element — der volle 256-Bit-Hash waere fuer eine Kollisionsdomaene von
+wenigen tausend Elementen je Lauf deutlich ueberdimensioniert; 64 Bit halten die
+Kollisionswahrscheinlichkeit astronomisch klein und tragen den Groessenvorteil der Kurzform
+tatsaechlich in die Datei.
+
+### Messbefehl fuer die Groesse (woertlich)
+
+```
+wc -c tests/e2e/baselines/computed-style-baseline.json tests/e2e/test-results/computed-style-snapshot.json
+328261 tests/e2e/baselines/computed-style-baseline.json
+1661269 tests/e2e/test-results/computed-style-snapshot.json
+1989530 total
+```
+
+Der versionierte Sollstand (Kurzform) ist **328.261 Byte** (~321 KiB) gross — rund 5x kleiner als
+der lokale Vollabzug (~1,58 MiB), der weiterhin unter dem ausgeschlossenen Ergebnisverzeichnis
+entsteht. Diese Zahl ist die Grundlage, an der die Phasen 16-19 den Aufwand ihrer eigenen
+Neuerhebung abschaetzen.
+
+### Elementzahl je Ansicht: befuellter Seed gegen den vorigen Leerzustand
+
+Gemessen mit einer instrumentierten, nicht committeten Wegwerf-Kopie des Erfassungscodes vor
+Task 2 (einmal mit `seedCleanSession`, einmal mit `seedPopulatedSession` inklusive
+Zustandsherstellung) gegen dasselbe gebaute Buendel:
+
+| Ansicht | Leerzustand | Befuellter Seed | Differenz |
+|---|---|---|---|
+| party | 23 | 105 | +82 |
+| shops | 21 | 64 | +43 |
+| fraktionen | 16 | 59 | +43 |
+| initiative | 29 | 81 | +52 |
+
+Diese vier Werte sind gleichzeitig `MIN_ELEMENTS_ABOVE_EMPTY` in `computed-style-diff.spec.js` —
+die Schranke, die einen stillen Ruckfall auf Leerzustands-Markup fuer diese vier Ansichten rot
+macht.
+
+### Rot-Gruen-Protokoll (GATE-03), Task 1 — Regressionsspec, beidseitiger Beweis der Mob-Ausblendregel
+
+```
+Ohne .init-mob-dmg-inputs.hidden (Regel entfernt):
+npx playwright test tests/e2e/features/css-restore-regression.spec.js --reporter=list
+1 failed (REG-04: Expected "none", Received "flex"), 4 passed
+Exit-Code: 1
+
+Mit .init-mob-dmg-inputs.hidden (Regel wiederhergestellt):
+npx playwright test tests/e2e/features/css-restore-regression.spec.js --reporter=list
+5 passed
+Exit-Code: 0
+```
+
+Zwei protokollierte Exit-Codes, einer davon ungleich 0 — Kriterium erfuellt.
+`git status --porcelain assets/styles/` nach dem Beweis: leer.
+
+### Rot-Gruen-Protokoll (GATE-03), Task 3 — drei Befundarten des reparierten Vergleichslaufs
+
+Alle drei Proben gegen den frisch gebauten Baum, jeweils `npx playwright test
+tests/e2e/features/computed-style-diff.spec.js --reporter=list` OHNE `UPDATE_STYLE_BASELINE`:
+
+**(a) Wertaenderung** — `.si-unavailable { opacity: 0.5 }` voruebergehend auf `0.4` geaendert:
+
+```
+ROT:   1 failed — "shops/div.misc.si-item.si-unavailable#0: Digest geaendert (Werte im lokalen
+       Vollabzug tests/e2e/test-results/computed-style-snapshot.json)"
+       Exit-Code: 1
+GRUEN: nach Ruecknahme — 3 passed, Exit-Code: 0
+```
+
+**(b) Verschwundenes Element** — `.fr-hist-minus` voruebergehend `display: none;` ergaenzt:
+
+```
+ROT:   1 failed — "fraktionen/span.fr-hist-delta.fr-hist-minus#0: Element im Vorlauf vorhanden,
+       jetzt nicht mehr erfasst"
+       Exit-Code: 1
+GRUEN: nach Ruecknahme — 3 passed, Exit-Code: 0
+```
+
+**(c) Neu erschienenes Element** — `.init-mob-dmg-inputs.hidden { display: none; }` voruebergehend
+entfernt (dieselbe Regression wie Task 1, jetzt gegen den reparierten Stil-Vergleichslauf statt
+gegen den Regressionsspec):
+
+```
+ROT:   1 failed — drei neue Schluessel gemeldet:
+       "initiative/div.hidden.init-mob-dmg-inputs#0: Element im Vorlauf nicht vorhanden, jetzt neu
+       erfasst", "initiative/input.init-mob-ac-input#0: ... jetzt neu erfasst",
+       "initiative/input.init-mob-bonus-input#0: ... jetzt neu erfasst"
+       Exit-Code: 1
+GRUEN: nach Ruecknahme — 3 passed, Exit-Code: 0
+```
+
+Sechs protokollierte Exit-Codes (drei Proben je rot/gruen), drei davon ungleich 0 — Kriterium
+erfuellt. Nach jeder Probe: `git status --porcelain assets/styles/` leer (vollstaendige
+Ruecknahme bestaetigt).
+
+### Schreibsperren-Probe (T-15-27)
+
+Waehrend Probe (a) im ROTEN Zustand: der Sollstand vor dem roten Lauf gesichert, der rote Lauf OHNE
+`UPDATE_STYLE_BASELINE` gefahren, danach `diff` gegen die Sicherung:
+
+```
+diff <Sicherung vor dem roten Lauf> tests/e2e/baselines/computed-style-baseline.json
+(keine Ausgabe — byte-gleich)
+```
+
+Ein Lauf, der eine Abweichung findet, schreibt sie NICHT als neuen Sollstand fest — die
+Schreibsperre haelt auch im roten Zustand.
+
+### Reproduzierbarkeits-Nebenfund: animierte Elemente ausgeschlossen
+
+Beim ersten Reproduzierbarkeits-Lauf (unveraenderter Baum, kein Schalter) meldete der Lauf einen
+FALSCHEN roten Befund: `dmscreen/span.dms-live-badge#0` hat `animation: dms-live-pulse 2s
+ease-in-out infinite;` (pulsiert `opacity` zwischen 1 und 0.6) — zwei Erfassungen desselben
+unveraenderten Baums lieferten je nach Zeitpunkt im Animationszyklus unterschiedliche `opacity`-
+Werte. Das ist reines Zeitrauschen, keine Stiländerung. Behoben durch Ausschluss laufend
+animierter Elemente (`getComputedStyle(el).animationName !== 'none'`) aus der erfassten Menge in
+`captureViewInBrowser()` — analog zum bestehenden Ausschluss von `width`/`height`. Nach der
+Korrektur: drei aufeinanderfolgende Laeufe gegen den unveraenderten Baum, alle drei gruen,
+Sollstand byte-gleich (siehe Schreibsperren-Probe oben).
+
+### Vollstaendige Abnahme, Abschlusslauf dieser Sitzung
+
+| Suite | Befehl | Ergebnis |
+|---|---|---|
+| Jest (gesamt) | `npx jest` | **1260/1260 bestanden** (56 Suiten, 50 Snapshots) |
+| Playwright (gesamt) | `npx playwright test --reporter=list` | **369 bestanden / 2 skipped**, 0 fehlgeschlagen (364 vorher + 5 neu: REG-01..REG-05) |
+| pytest (Build-Tests) | `PYTHONIOENCODING=utf-8 python -m pytest tests/build -q` | **24/24 bestanden** |
+| Build (Development) | `PYTHONIOENCODING=utf-8 python build.py` | **Exit 0** |
+| Build (Production) | `PYTHONIOENCODING=utf-8 python build.py --production` | **Exit 0** |
+
+**Deviation (Rule 3, blocking):** Zwei Kommentare in den neuen/geaenderten Testdateien nannten
+`features/shops/shops-core.js` und `features/fraktionen/fraktionen-render.js` woertlich, was
+`tests/unit/module-test-coverage.test.js`s Ratsche `nowCovered` faelschlich (aber diesmal
+zutreffend — beide Module werden von `window.toggleShop()`/`window.selectFraktion()` jetzt
+tatsaechlich zur Laufzeit durchlaufen) ausloeste; beide Eintraege wurden aus
+`MODULE_TEST_EXCEPTIONS` gestrichen (die Liste darf nur schrumpfen). Ein dritter Treffer
+(`features/party/party-crud.js`, reine Zitat-Erwaehnung im Seed-Kommentar ohne tatsaechlichen
+Laufzeitaufruf) wurde auf die etablierte nicht-treffende Zitierkonvention umgestellt (Vorbild:
+Plan 15-12 Deviation 1, dieselbe Datei). Siehe `15-13-SUMMARY.md` fuer Details.
+
+**GATE-05 Stufe 3 (menschliche Vier-Themes-Sichtung) wurde durch diesen Plan NICHT durchgefuehrt.**
+Sie bleibt ausdruecklich Plan 15-14 vorbehalten.
+
 ---
 *Phase: 15-befundlage-vorlauf*
 *Plan: 08*
@@ -665,3 +844,4 @@ Sie bleibt Plan 15-14 vorbehalten.
 *Nachtrag Messblock 9: Plan 15-10, 2026-09-09*
 *Nachtrag Messblock 10: Plan 15-11, 2026-09-11*
 *Nachtrag Messblock 11: Plan 15-12, 2026-09-11*
+*Nachtrag Messblock 12: Plan 15-13, 2026-09-11*
