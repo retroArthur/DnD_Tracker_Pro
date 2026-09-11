@@ -392,3 +392,36 @@ describe('css-usage-report — CR-01/WR-01: die bewiesene Blindstelle (Plan 15-0
         expect(file.deadClasses).toContain('dead-control');
     });
 });
+
+describe('css-usage-report — CR-03a: Interpolationsinhalt wird geerntet statt verworfen (Plan 15-11, Task 1)', () => {
+    test('CR-03a: eine ${...}-Interpolation mit einer Ternary aus zwei Zeichenketten-Literalen in einem class="..."-Attribut haelt BEIDE Literale lebendig', () => {
+        // Reale Form aus features/shops/shops-core.js:596 —
+        // `<div class="si-item ${isAvailable ? '' : 'si-unavailable'}">` — hier
+        // mit zwei nicht-leeren Zweigen nachgebildet, um zu zeigen, dass BEIDE
+        // Literale einer Ternary erkannt werden, nicht nur eines.
+        const cssFiles = [
+            {
+                name: 'a.css',
+                content:
+                    '.si-available { color: green; } .si-unavailable { color: red; } .istVerfuegbar { color: pink; } .dead-control { color: blue; }'
+            }
+        ];
+        const jsFiles = [
+            {
+                name: 'a.js',
+                content:
+                    "html += `<div class=\"si-item ${istVerfuegbar ? 'si-available' : 'si-unavailable'}\">`;"
+            }
+        ];
+        const result = analyze({ cssFiles, templateFiles: [], jsFiles });
+        const file = result.files.find(f => f.name === 'a.css');
+        // Beide Ternary-Zweige (Zeichenketten-Literale) sind lebendig.
+        expect(file.deadClasses).not.toContain('si-available');
+        expect(file.deadClasses).not.toContain('si-unavailable');
+        // CR-03a-Gegenrichtung: der Bezeichner der Bedingung wird NICHT zum
+        // Token — nur Zeichenketten-Literale zaehlen, kein Ausdruckstext.
+        expect(file.deadClasses).toContain('istVerfuegbar');
+        // CR-03a-Kontrollklasse: eine nirgends zugewiesene Klasse bleibt tot.
+        expect(file.deadClasses).toContain('dead-control');
+    });
+});
