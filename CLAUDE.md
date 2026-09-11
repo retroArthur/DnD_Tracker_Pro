@@ -142,7 +142,7 @@ function deleteEntity(id) {
 | `render/`              | Rendering utilities/helpers                                                          |
 | `assets/`              | styles.css (@import hub), body.html (Hinweis-Datei)                                  |
 | `assets/styles/`       | 20 modulare CSS-Dateien (variables, core, editors, npcs, encounters, etc.; Stand 2026-09-09, `ls assets/styles/*.css \| wc -l`) |
-| `assets/templates/`    | 10 modulare HTML-Templates (header, views, modals)                                   |
+| `assets/templates/`    | 12 modulare HTML-Templates (header, views, modals, bestiary, welt; Stand 2026-09-12, `ls assets/templates/*.html \| wc -l`) |
 | `tests/`               | Jest unit tests, Playwright E2E tests                                                |
 | `tools/`               | Analysis scripts (render split, event handler migration, globals check)              |
 

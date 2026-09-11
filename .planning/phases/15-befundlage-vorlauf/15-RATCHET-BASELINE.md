@@ -836,6 +836,111 @@ Plan 15-12 Deviation 1, dieselbe Datei). Siehe `15-13-SUMMARY.md` fuer Details.
 **GATE-05 Stufe 3 (menschliche Vier-Themes-Sichtung) wurde durch diesen Plan NICHT durchgefuehrt.**
 Sie bleibt ausdruecklich Plan 15-14 vorbehalten.
 
+## Messblock 13 — Vorlagenzahl widerspruchsfrei, Waechter-Rot-Gruen-Beweis, Abschluss der Welle (Plan 15-14)
+
+**Datum:** 2026-09-12
+**Anlass:** `15-VERIFICATION.md` und `15-REVIEW.md` (WR-03/IN-06) haben bewiesen, dass derselbe
+Fehlermodus wie in Messblock 9 (eine Zahl im Dokument, die niemand misst) ein zweites Mal vorlag —
+diesmal bei der Vorlagenzahl. Der Waechter aus Plan 15-10 (DOC-02) klammert diese Zahl
+AUSDRUECKLICH aus (sein Kandidatenfilter zaehlt "modulare HTML-Vorlagen" bewusst nicht mit), damit
+er sich nicht mit einer kuenftigen Vorlagenpruefung gegenseitig rot faerbt. Genau diese
+Ausklammerung liess die Vorlagenzahl unbewacht: `CLAUDE.md` Zeile 145 nannte 10, gemessen sind es
+12. `15-REVIEW.md` (IN-06) hat die Ursache benannt: der Hinweiskommentar in `assets/body.html`
+listet ebenfalls nur 10 Vorlagen und ist die nachgewiesene Quelle der falschen Abschrift.
+
+**Messbefehl fuer die Vorlagenzahl:**
+
+```
+ls assets/templates/*.html | wc -l
+-> 12
+```
+
+**Ladeliste in `loader.js` (TEMPLATES-Array), Eintragszahl:** 12 — Namensmenge identisch mit dem
+Verzeichnis (DOC-05 gruen belegt das). Beide Zahlen stimmen ab diesem Plan an jeder Fundstelle in
+`CLAUDE.md` sowie im Hinweiskommentar von `assets/body.html` mit dem gemessenen Wert ueberein.
+
+**Rot-Gruen-Protokoll (GATE-03/D-49), Task 1 und Task 2:**
+
+```
+Task 1 — drei neue Faelle (DOC-05..DOC-07) gegen das UNVERAENDERTE CLAUDE.md/assets/body.html:
+npx jest tests/unit/docs-consistency.test.js
+Tests:       2 failed, 5 passed, 7 total
+Exit-Code:   1
+Fehlgeschlagene Faelle: DOC-06, DOC-07 (DOC-05 gruen, DOC-01..DOC-04 unveraendert gruen)
+
+Task 2 — nach der Korrektur in CLAUDE.md Zeile 145 und im Hinweiskommentar von assets/body.html:
+npx jest tests/unit/docs-consistency.test.js
+Tests:       7 passed, 7 total
+Exit-Code:   0
+```
+
+Zwei protokollierte Zustaende, Exit-Code 1 vor der Korrektur und 0 danach — Kriterium erfuellt.
+Die zwei roten Faelle sind exakt die zwei Stellen, die `15-VERIFICATION.md`/`15-REVIEW.md` als
+falsch benannt haben (die Dokumentzahl und der Hinweiskommentar), kein anderer Fall wurde
+zufaellig rot mitgerissen.
+
+### Entscheidung: Pruefung gegen ZWEI Quellen statt nur gegen das Verzeichnis
+
+DOC-05 haelt die Vorlagenzahl NICHT nur gegen das Verzeichnis `assets/templates/`, sondern
+zusaetzlich gegen die Ladeliste in `loader.js`, und zwar in Anzahl UND Namensmenge. Begruendung:
+`CLAUDE.md` selbst (Abschnitt "Single Source of Truth for Modules/Templates/CSS", ARCH-01) haelt
+fest, dass die Ladeliste die alleinige Registrierstelle fuer Vorlagen ist und dass `build.py` sie
+zur Bauzeit ausliest — eine im Verzeichnis liegende, aber nicht geladene Datei wuerde bei einer
+Pruefung, die nur das Verzeichnis zaehlt, stillschweigend mitgezaehlt und koennte eine falsche
+Zahl decken, ohne dass der Waechter das je bemerkt. Ein Abweichen der beiden Quellen ist damit ein
+eigener Befund (Verletzung der Einzelquellen-Regel) und darf nicht durch Waehlen einer der beiden
+Zahlen uebergangen werden — genau das haelt DOC-05 fest, indem es beide Groessen UND die
+Namensmenge vergleicht, nicht nur die Anzahl.
+
+### Deviation (Rule 3, blocking): Plan-eigener Verify-Befehl fuer Task 2 hatte einen
+Regex-Randfall-Fehler, `loader.js` blieb unveraendert
+
+Der im Plan woertlich genannte automatisierte Verify-Befehl fuer Task 2,
+
+```
+test "$(ls assets/templates/*.html | wc -l)" = "$(grep -cE "^\s*'assets/templates/[a-z-]+\.html'," loader.js)"
+```
+
+zaehlt nur Zeilen, die mit einem Komma enden. Der LETZTE Eintrag des `TEMPLATES`-Arrays in
+`loader.js` (`'assets/templates/modals-editors.html'`) traegt — gueltige JS-Array-Syntax — KEIN
+Trennkomma, weil kein Eintrag mehr folgt. Der Befehl zaehlt deshalb nur 11 statt 12 Eintraege und
+meldet einen Mismatch, obwohl Verzeichnis und Ladeliste tatsaechlich uebereinstimmen (12 = 12,
+durch DOC-05 UND die eigene Namensmengenpruefung in `tests/unit/docs-consistency.test.js`
+bewiesen). Der Plan verbietet ausdruecklich jede Aenderung an `loader.js` in diesem Plan ("KEINE
+Aenderung an Produktionscode ... an `loader.js`"); ein Trennkomma haette den Verify-Befehl zum
+Laufen gebracht, waere aber eine verbotene Produktionscode-Aenderung gewesen, nur um einen
+Zaehl-Randfall in einem Shell-Einzeiler zu bedienen. Stattdessen mechanisch gleichwertiger Nachweis
+gefuehrt, OHNE das Komma-Erfordernis:
+
+```
+grep -nE "^\s*'assets/templates/[a-z-]+\.html'" loader.js | wc -l
+-> 12
+```
+
+12 Treffer, identisch mit `ls assets/templates/*.html | wc -l`. Der Mismatch war ein Fehler im
+Verify-Befehl des Plans, kein Befund ueber den Baum. `loader.js` wurde in diesem Plan an keiner
+Stelle geaendert (`git status --porcelain loader.js` leer, siehe Abschlusslauf unten).
+
+### Vollstaendige Abnahme, Abschlusslauf der GESAMTEN Luekenschluss-Welle (Plaene 15-11 bis 15-14)
+
+| Suite | Befehl | Ergebnis |
+|---|---|---|
+| Jest (gesamt) | `npx jest` | **1263/1263 bestanden** (56 Suiten, 50 Snapshots) |
+| Playwright (gesamt) | `npx playwright test --reporter=list` | **369 bestanden / 2 skipped**, 0 fehlgeschlagen |
+| pytest (Build-Tests) | `PYTHONIOENCODING=utf-8 python -m pytest tests/build -q` | **24/24 bestanden** |
+| Build (Development) | `PYTHONIOENCODING=utf-8 python build.py` | **Exit 0** |
+| Build (Production) | `PYTHONIOENCODING=utf-8 python build.py --production` | **Exit 0** |
+
+`git status --porcelain features/ systems/ ui/ core/ render/ utils/ assets/styles/` nach dem
+Abschlusslauf: leer — kein Produktionscode und kein CSS wurde in diesem Plan geaendert.
+
+**Messblock 13 ist der letzte maschinelle Eintrag dieser Phase.** Die Vorlagenzahl steht ab jetzt
+an jeder Fundstelle mit dem gemessenen Wert; der Waechter aus `tests/unit/docs-consistency.test.js`
+deckt beide Zahlen desselben Fehlermodus (CSS-Dateizahl UND Vorlagenzahl) ab. Was dieser
+Messblock NICHT erbringt und nicht erbringen kann: GATE-05 Stufe 3, die volle menschliche
+Vier-Themes-Runde. Ihr Ergebnis steht — falls durchgefuehrt — woertlich in `15-14-SUMMARY.md`, nicht
+hier; ein Messprotokoll fuehrt Zahlen und Exit-Codes, keine menschlichen Urteile.
+
 ---
 *Phase: 15-befundlage-vorlauf*
 *Plan: 08*
@@ -845,3 +950,4 @@ Sie bleibt ausdruecklich Plan 15-14 vorbehalten.
 *Nachtrag Messblock 10: Plan 15-11, 2026-09-11*
 *Nachtrag Messblock 11: Plan 15-12, 2026-09-11*
 *Nachtrag Messblock 12: Plan 15-13, 2026-09-11*
+*Nachtrag Messblock 13: Plan 15-14, 2026-09-12*
