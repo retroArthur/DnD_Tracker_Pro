@@ -860,6 +860,15 @@
             min-width: 0;
         }
         
+        .npc-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 4px;
+            gap: 6px;
+            min-width: 0;
+        }
+
         .npc-name { 
             color: var(--cyan); 
             font-weight: 600;
