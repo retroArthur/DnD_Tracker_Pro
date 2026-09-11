@@ -63,3 +63,19 @@ Zwei Restpunkte aus Plan 15-09 (CR-01/WR-01-Fix), bewusst nicht in dieser Phase 
   nach diesem Fix — eine bekannte Restgrenze hat, die kein weiterer mechanischer Regel-Zusatz
   vollständig schließen kann; ein echter JS-Parser wäre eine architektonische Entscheidung (Rule 4),
   keine Wartungsroutine.
+
+### 3. `npm run lint` bereits vor Plan 15-11 rot — unbeteiligte `Anpassungen/`-Datei
+
+- **Status:** open
+- **Quelle:** gefunden während Plan 15-11, Task 2 (Akzeptanzkriterium "`npm run lint` bleibt
+  innerhalb seiner Warnungsgrenze")
+- **Begründung:** `Anpassungen/Design-Konsistenz und Verbesserungen/design_handoff_konsistenz_v2/support.js`
+  (zuletzt geändert in Commit `05515de`, "start milestone v1.3 Design-System", lange vor Phase 15)
+  wirft 5 `no-undef`-Fehler (`customElements`, `URLSearchParams`) und trägt zusammen mit anderen
+  vorbestehenden Warnungen die Gesamtzahl auf 371 — über die in `package.json` gepinnte Grenze
+  `--max-warnings 367`. Diese Datei ist in keinem `files_modified` dieses Plans genannt und wurde
+  von keinem Commit dieser Phase berührt; `npx eslint tools/ tests/unit/css-usage-report.test.js`
+  (nur die von diesem Plan geänderten Dateien) meldet 0 Probleme. Scope-Boundary-Regel: nicht
+  behoben, da nicht durch diesen Task verursacht. Deckt sich mit dem bereits in `PROJECT.md` §
+  NQ-03..NQ-11 dokumentierten Befund, dass die drei Gate-Ratschen (`--max-warnings 367` eine davon)
+  reine Prosa-Regeln ohne Mechanik sind.
