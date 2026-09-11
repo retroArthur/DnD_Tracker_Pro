@@ -94,8 +94,9 @@ describe('DOC — CLAUDE.md widerspricht sich nicht ueber die CSS-Dateizahl', ()
         // Kandidatenzeilen: entweder die Zeichenfolge "assets/styles" oder der
         // Wortbestandteil "CSS-Datei" (case-insensitive) — die Einschraenkung
         // ist notwendig, weil dieselbe Tabelle eine Zeile tiefer eine Zahl
-        // modularer HTML-Vorlagen nennt ("10 modulare HTML-Templates"), die
-        // hier nicht mitgezaehlt werden darf.
+        // modularer HTML-Vorlagen nennt; die ist ab jetzt durch DOC-06
+        // geschuetzt, nicht mehr eine ungeschuetzte Zahl wie zu dem Zeitpunkt,
+        // als dieser Kommentar zuerst geschrieben wurde.
         const candidateLines = claudeMdContent
             .split('\n')
             .filter(line => line.includes('assets/styles') || /CSS-Datei/i.test(line));
@@ -142,5 +143,102 @@ describe('DOC — CLAUDE.md widerspricht sich nicht ueber die CSS-Dateizahl', ()
         // fuer Element per ===, ein Praefixtreffer (z.B. "core.css" gegen
         // "dashboard-core.css") zaehlt also nicht als Gleichheit.
         expect(entries).toEqual(importFilenames);
+    });
+});
+
+// Ladeliste der HTML-Vorlagen aus loader.js (DOC-05/DOC-06/DOC-07) — Anlass:
+// 15-REVIEW.md WR-03/IN-06. Laut CLAUDE.md (Abschnitt "Single Source of Truth
+// for Modules/Templates/CSS") ist diese Ladeliste die Einzelquelle fuer
+// Vorlagen; build.py liest sie zur Bauzeit aus. Ein benannter regulaerer
+// Ausdruck holt die Dateinamen aus den Eintraegen des TEMPLATES-Arrays.
+const LOADER_JS_PATH = path.join(REPO, 'loader.js');
+const TEMPLATES_DIR = path.join(REPO, 'assets', 'templates');
+const BODY_HTML_PATH = path.join(REPO, 'assets', 'body.html');
+
+const loaderContent = fs.readFileSync(LOADER_JS_PATH, 'utf8');
+const bodyHtmlContent = fs.readFileSync(BODY_HTML_PATH, 'utf8');
+
+// Gemessener Ausgangswert (2026-09-11, ls assets/templates/*.html | wc -l): 12
+// HTML-Vorlagen. Wird NICHT hartkodiert, sondern in jedem Testlauf frisch vom
+// Baum erhoben.
+const measuredTemplateFileNames = fs
+    .readdirSync(TEMPLATES_DIR)
+    .filter(f => f.endsWith('.html'));
+const measuredTemplateFileCount = measuredTemplateFileNames.length;
+
+// Benannter regulaerer Ausdruck auf die Eintraege des TEMPLATES-Arrays in
+// loader.js, normalisiert auf den blossen Dateinamen.
+const TEMPLATE_ENTRY_PATTERN = /'assets\/templates\/(?<filename>[a-z0-9-]+\.html)'/g;
+const loaderTemplateFileNames = [...loaderContent.matchAll(TEMPLATE_ENTRY_PATTERN)].map(
+    m => m.groups.filename
+);
+
+// Vorlagenpfade, die der Hinweiskommentar in assets/body.html aufzaehlt
+// (DOC-07), normalisiert auf den blossen Dateinamen.
+const BODY_HTML_TEMPLATE_PATTERN = /assets\/templates\/(?<filename>[a-z0-9-]+\.html)/g;
+const bodyHtmlTemplateFileNames = [...bodyHtmlContent.matchAll(BODY_HTML_TEMPLATE_PATTERN)].map(
+    m => m.groups.filename
+);
+
+describe('DOC — CLAUDE.md widerspricht sich nicht ueber die Vorlagenzahl', () => {
+    test('DOC-05: Zahl und Namensmenge der .html-Dateien in assets/templates/ entsprechen der Ladeliste in loader.js', () => {
+        // Anzahl UND Namensmenge — zwei gleich lange, aber inhaltlich
+        // unterschiedliche Listen waeren sonst gruen, obwohl die
+        // Einzelquellen-Regel des Projekts (CLAUDE.md, ARCH-01) verletzt
+        // waere: eine im Verzeichnis liegende, aber nicht geladene Datei
+        // zaehlte sonst stillschweigend mit. Reihenfolge wird bewusst NICHT
+        // gefordert — die Ladeliste traegt eine sachlich begruendete
+        // Sonderreihenfolge (F-07, view-welt vor view-tools), die das
+        // Verzeichnis nicht abbildet.
+        expect(measuredTemplateFileCount).toBe(loaderTemplateFileNames.length);
+        expect([...measuredTemplateFileNames].sort()).toEqual(
+            [...loaderTemplateFileNames].sort()
+        );
+    });
+
+    test('DOC-06: jede Zahlenbehauptung ueber die Vorlagenzahl in CLAUDE.md nennt die gemessene Zahl, sprachunabhaengig', () => {
+        // Kandidatenzeilen: entweder die Zeichenfolge "assets/templates" oder
+        // der Wortbestandteil "HTML-Template(s)" (case-insensitive) — CSS-
+        // Zeilen werden ausdruecklich ausgeschlossen, damit DOC-02 und DOC-06
+        // sich nicht gegenseitig rot faerben.
+        const candidateLines = claudeMdContent
+            .split('\n')
+            .filter(
+                line =>
+                    (line.includes('assets/templates') || /HTML-Templates?/i.test(line)) &&
+                    !(line.includes('assets/styles') || /CSS-Datei/i.test(line))
+            );
+
+        // (\d+)\s+modular\w* trifft "modular", "modulare" und "modularen"
+        // gleichermassen — dieselbe sprachunabhaengige Kernpruefung wie
+        // DOC-02.
+        const numberClaimPattern = /(\d+)\s+modular\w*/gi;
+        const claims = [];
+        candidateLines.forEach(line => {
+            for (const match of line.matchAll(numberClaimPattern)) {
+                claims.push(parseInt(match[1], 10));
+            }
+        });
+
+        // BASE-01/empty: ein leerer Trefferlauf ist ein Fehlschlag, kein
+        // stiller Erfolg.
+        expect(claims.length).toBeGreaterThanOrEqual(1);
+
+        claims.forEach(claim => {
+            expect(claim).toBe(measuredTemplateFileCount);
+        });
+    });
+
+    test('DOC-07: der Hinweiskommentar in assets/body.html listet dieselbe Vorlagenmenge wie die Ladeliste', () => {
+        // BASE-01/encoding: vollstaendige Zeichenkettengleichheit je Eintrag.
+        // Der Kommentar beschreibt sich selbst als nicht mehr direkt
+        // verwendet (assets/body.html:1-2) — genau deshalb faellt er beim
+        // Aendern der Ladeliste nicht automatisch auf, und genau deshalb ist
+        // er laut 15-REVIEW.md (IN-06) die nachgewiesene Quelle der falschen
+        // Zahl in CLAUDE.md.
+        expect(bodyHtmlTemplateFileNames.length).toBe(loaderTemplateFileNames.length);
+        expect([...bodyHtmlTemplateFileNames].sort()).toEqual(
+            [...loaderTemplateFileNames].sort()
+        );
     });
 });
