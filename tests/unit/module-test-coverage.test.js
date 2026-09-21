@@ -180,7 +180,6 @@ const MODULE_TEST_EXCEPTIONS = [
     'features/timers/timers.js',
     'systems/conditions.js',
     'systems/entity-links.js',
-    'systems/file-backup/file-backup-permissions.js',
     'systems/file-backup/file-backup-ui.js',
     'systems/hp-calculator.js',
     'systems/markdown-import-export.js',

@@ -6,7 +6,8 @@ import {
     openCollapseForm,
     fillField,
     generateTestName,
-    performSave
+    performSave,
+    seedCleanSession
 } from '../helpers/test-utils.js';
 
 /**
@@ -260,5 +261,78 @@ test.describe('Datenintegrität', () => {
         }, npcId);
 
         expect(stillExists).toBe(false);
+    });
+});
+
+// Code-Review 2026-09-21, Einheit U3 (R04): ein abgebrochener IndexedDB-Commit darf weder
+// einen Erfolg melden noch den letzten gueltigen localStorage-Stand entfernen.
+test.describe('IndexedDB-Commit-Abbruch (R04)', () => {
+    test('abgebrochener >5-MB-Commit laesst den letzten Stand stehen und meldet den Fehler', async ({
+        page
+    }) => {
+        await seedCleanSession(page);
+        // Nach put()-Erfolg die Transaktion abbrechen: Chromium feuert dann NUR 'abort' —
+        // derselbe Ablauf wie bei einem Quota-Fehler beim Commit.
+        await page.addInitScript(() => {
+            const originalPut = window.IDBObjectStore.prototype.put;
+            window.IDBObjectStore.prototype.put = function (...args) {
+                const req = originalPut.apply(this, args);
+                // @ts-ignore
+                if (window.__r04AbortCampaignCommit && this.name === 'campaigns') {
+                    req.addEventListener('success', () => {
+                        try {
+                            req.transaction.abort();
+                        } catch (e) {
+                            // Transaktion bereits beendet
+                        }
+                    });
+                }
+                return req;
+            };
+        });
+        await loadApp(page);
+
+        const key = await page.evaluate(
+            // @ts-ignore
+            () => window.STORAGE_KEY_OVERRIDE || window.APP_CONFIG.STORAGE_KEY
+        );
+        await page.evaluate(async () => {
+            // @ts-ignore
+            D.characters.push({ id: 990001, name: 'R04-Anker', notes: '' });
+            // @ts-ignore
+            await saveImmediate();
+        });
+        const lesen = k => ({
+            data: localStorage.getItem(k),
+            ts: localStorage.getItem(k + '_ts')
+        });
+        const vorher = await page.evaluate(lesen, key);
+        expect(vorher.data).toContain('R04-Anker');
+        expect(vorher.ts).not.toBeNull();
+
+        await page.evaluate(async () => {
+            // @ts-ignore
+            window.__r04AbortCampaignCommit = true;
+            // @ts-ignore
+            D.characters.find(c => c.id === 990001).notes = 'A'.repeat(6 * 1024 * 1024);
+            // @ts-ignore
+            await saveImmediate();
+        });
+
+        expect(await page.evaluate(lesen, key)).toEqual(vorher);
+        await expect(page.locator('#save-indicator')).toHaveClass(/\berror\b/);
+        const logText = (await page.locator('#event-log').textContent()) || '';
+        expect(logText).toContain('Speichern fehlgeschlagen');
+        expect(logText).not.toContain('Daten sicher gespeichert');
+
+        // Zweite Seite ohne Neuladen der ersten: der Anker ist der zuletzt gueltige Stand
+        const page2 = await page.context().newPage();
+        await loadApp(page2);
+        const ankerDa = await page2.evaluate(
+            // @ts-ignore
+            () => D.characters.some(c => c.id === 990001 && c.name === 'R04-Anker')
+        );
+        expect(ankerDa).toBe(true);
+        await page2.close();
     });
 });
