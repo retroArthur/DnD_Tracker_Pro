@@ -140,3 +140,71 @@ describe('Bestiary-Migration 3.0.0', () => {
         expect(content).toMatch(/data\.bestiaryFavorites/);
     });
 });
+
+// ============================================================
+// TESTS: Migration 2.3.0 nicht zerstoerend, robuste Versionsbehandlung
+// (Code-Review 2026-09-21, Einheit U2 — R01-Skeptiker)
+// ============================================================
+
+describe('Migration 2.3.0 und Versionsvergleich (Code-Review 2026-09-21, U2)', () => {
+    test('zweifache Migration eines versionslosen Stands behaelt Zustands-Objekte', () => {
+        const conditions = [
+            { type: 'poisoned', name: 'Vergiftet', addedAt: 1 },
+            { type: 'custom', name: 'Verflucht', addedAt: 2 }
+        ];
+        const first = migrateData({
+            characters: [{ id: 1, conditions: JSON.parse(JSON.stringify(conditions)) }]
+        });
+        // Erstsitzungs-Speicherstaende sind versionslos: zweiter load() migriert erneut
+        delete first._version;
+        const second = migrateData(first);
+        expect(JSON.parse(JSON.stringify(second.characters[0].conditions))).toEqual(conditions);
+    });
+
+    test('numerisches _version (2.6) wirft nicht und gilt als fehlend', () => {
+        let migrated;
+        expect(() => {
+            migrated = migrateData({ _version: 2.6, characters: [] });
+        }).not.toThrow();
+        expect(migrated._version).toBe(global.APP_CONFIG.VERSION);
+        // behandelt wie 2.2.0: 3.0.0 hat bestiary angelegt
+        expect(Array.isArray(migrated.bestiary)).toBe(true);
+        expect(() => compareVersions(2.6, '2.6.1')).not.toThrow();
+        expect(() => compareVersions(undefined, '2.6.1')).not.toThrow();
+    });
+
+    test('Migrationsschluessel laufen numerisch sortiert (10.0.0 nach 5.0.0)', () => {
+        const order = [];
+        const ctx = {
+            window: {
+                APP_CONFIG: global.APP_CONFIG,
+                ErrorHandler: { log: jest.fn() },
+                getSpellSlotsForClass: jest.fn(() => [0, 0, 0, 0, 0, 0, 0, 0, 0])
+            },
+            APP_CONFIG: global.APP_CONFIG
+        };
+        vm.createContext(ctx);
+        vm.runInContext(
+            fs.readFileSync(
+                path.join(__dirname, '../../systems/spellslots/version-migration.js'),
+                'utf8'
+            ),
+            ctx
+        );
+        const migrations = ctx.window.MIGRATIONS;
+        for (const key of Object.keys(migrations)) {
+            const original = migrations[key];
+            migrations[key] = data => {
+                order.push(key);
+                return original(data);
+            };
+        }
+        migrations['10.0.0'] = data => {
+            order.push('10.0.0');
+            return data;
+        };
+        ctx.migrateData({ _version: '2.2.0', characters: [] });
+        expect(order[order.length - 1]).toBe('10.0.0');
+        expect(order.indexOf('2.3.0')).toBe(0);
+    });
+});
