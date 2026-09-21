@@ -10,3 +10,8 @@ package-lock.json
 tests/e2e/test-results/
 tests/e2e/test-results-smoke/
 playwright-report/
+
+# Generierte Design-Handoff-Referenzartefakte und lokale Claude-Ordner (R09) —
+# `npm run format` darf sie nie umschreiben
+Anpassungen/
+.claude/

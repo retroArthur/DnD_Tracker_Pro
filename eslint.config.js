@@ -247,8 +247,46 @@ export default tseslint.config(
         }
     },
 
-    // Ignore patterns
+    // Globale Ausschluesse (R09, Code-Review 2026-09-21).
+    //
+    // Dieses Objekt ist die EINZIGE Stelle, die Dateien aus dem Lint-Lauf
+    // ausschliesst: nur ein Konfigurationsobjekt, das ausschliesslich
+    // `ignores` enthaelt, wirkt global. Ein `ignores` im Objekt mit
+    // `files: ['**/*.js']` (oben) schliesst KEINE Datei aus, es nimmt ihr nur
+    // die gelockerten Regeln weg (gemessen: 15 statt 5 Fehler, wenn die
+    // Handoffs dort eingetragen werden).
+    //
+    // Anpassungen/ enthaelt generierte Design-Handoff-Referenzartefakte
+    // ("GENERATED ... do not edit"). Sie stehen nicht in loader.js MODULES,
+    // werden nicht gebuendelt und duerfen von `eslint --fix` nie umgeschrieben
+    // werden.
+    //
+    // Die uebrigen Ordner sind lokale Werkzeug-, Worktree- oder Report-
+    // Ausgaben. ESLint 9 Flat Config liest .gitignore nicht und lintet auch
+    // Punkt-Ordner: ein fehlgeschlagener lokaler Playwright-Lauf kopiert den
+    // Trace-Viewer-JS nach tests/e2e/reports/trace/ (gemessen +220 Fehler), ein
+    // Claude-Worktree unter .claude/worktrees/ wuerde jede Zahl verdoppeln.
+    //
+    // Produktive Pfade (core, utils, systems, features, ui, render, tools,
+    // tests, loader.js, eslint.config.js) niemals hier eintragen —
+    // tests/unit/lint-gate.test.js prueft das.
     {
-        ignores: ['node_modules/**', 'dist/**', 'coverage/**', '*.min.js', 'sw.js']
+        ignores: [
+            'node_modules/**',
+            'dist/**',
+            'coverage/**',
+            '*.min.js',
+            'sw.js',
+            'Anpassungen/**',
+            '.claude/**',
+            '.gsd/**',
+            '.planning/**',
+            'Daten/**',
+            'Ablage/**',
+            'tests/e2e/reports/**',
+            'tests/e2e/test-results/**',
+            'tests/e2e/test-results-smoke/**',
+            'playwright-report/**'
+        ]
     }
 );
