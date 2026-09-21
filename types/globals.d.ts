@@ -83,6 +83,61 @@ declare global {
   function restoreBackup(id: EntityId): void;
   
   // ============================================================
+  // KAMPAGNEN-DATEN & ID-INVARIANTE (Code-Review 2026-09-21, U2)
+  // ============================================================
+
+  /** Ergebnis von normalizeEntityIds(): eine Aenderung je neu vergebener ID */
+  interface EntityIdChange {
+    type: string;
+    from: unknown;
+    to: number;
+  }
+
+  /** Ergebnis von normalizeCampaignData() */
+  type CampaignNormalizeResult =
+    | { ok: true; data: Record<string, any>; repairs: string[]; renumbered: EntityIdChange[] }
+    | { ok: false; error: string };
+
+  /** Einfaches Datenobjekt (kein Array, kein null), realm-unabhaengig */
+  function isPlainDataObject(v: unknown): v is Record<string, any>;
+
+  /** ID-Sammlung eines nextId()-Typs (verschachtelte Pfade laut ID_COUNTER_PATHS) */
+  function getIdCollection(data: Record<string, any>, type: string): any[] | undefined;
+
+  /** Gueltige Entitaets-ID: sichere positive Ganzzahl bis ENTITY_ID_MAX */
+  function isValidEntityId(n: unknown): boolean;
+
+  /** Groesste gueltige ID einer Sammlung (0, wenn keine) */
+  function maxEntityId(items: unknown): number;
+
+  /** Macht alle Register-IDs eindeutig und gueltig (in place) */
+  function normalizeEntityIds(data: Record<string, any>): EntityIdChange[];
+
+  /** Bestimmt data._nextId aus Datei-Zaehlern und tatsaechlichen IDs neu */
+  function recomputeNextIds(
+    data: Record<string, any>,
+    fileCounters?: Record<string, unknown>
+  ): Record<string, number>;
+
+  /** Prueft/repariert _nextId (Standard: window.D und die 11 Alt-Typen) */
+  function validateAndRepairNextId(
+    data?: Record<string, any>,
+    types?: readonly string[]
+  ): { valid: boolean; repairs: string[] };
+
+  /** Aktiver Kampagnen-Speicherschluessel dieses Tabs (oder null) */
+  function getActiveCampaignKey(): string | null;
+
+  /** Ersetzt den Inhalt von target in place durch next */
+  function replaceCampaignData<T extends Record<string, any>>(target: T, next: Record<string, any>): T;
+
+  /** Reiner Kampagnen-Normalisierer (parsen, pruefen, migrieren, Defaults, IDs) */
+  function normalizeCampaignData(raw: unknown): CampaignNormalizeResult;
+
+  /** Alt-Versionsstempel wie load() normalisieren ('2.11' -> '2.0.0', Nicht-String entfernt) */
+  function normalizeLegacyVersionStamp<T extends Record<string, any>>(data: T): T;
+
+  // ============================================================
   // RENDER FUNCTIONS
   // ============================================================
   

@@ -262,3 +262,48 @@ describe('validateDataIntegrity() Duplikat-Reparatur (R03)', () => {
         expect(ids[2]).toBe(2);
     });
 });
+
+describe('normalizeEntityIds() / recomputeNextIds() (U2)', () => {
+    test('Nicht-Objekt-Eintraege bleiben stehen, jede Aenderung wird gemeldet', () => {
+        const ctx = makeContext();
+        const data = {
+            npcs: [{ id: 2 }, 'text', null, { id: 2 }, { id: -1 }, { id: 1e16 }],
+            calendar: { events: [{ id: '3' }] }
+        };
+        const changes = plain(ctx.normalizeEntityIds(data));
+        expect(data.npcs.map(n => (n && typeof n === 'object' ? n.id : n))).toEqual([
+            2,
+            'text',
+            null,
+            3,
+            4,
+            5
+        ]);
+        expect(data.calendar.events[0].id).toBe(3);
+        expect(changes).toEqual([
+            { type: 'npcs', from: 2, to: 3 },
+            { type: 'npcs', from: -1, to: 4 },
+            { type: 'npcs', from: 1e16, to: 5 },
+            { type: 'calendarEvents', from: '3', to: 3 }
+        ]);
+        expect(ctx.normalizeEntityIds(data)).toHaveLength(0);
+    });
+
+    test('recomputeNextIds: gueltige Datei-Zaehler bleiben, ungueltige fallen weg, Untergrenze greift', () => {
+        const ctx = makeContext();
+        const data = { npcs: [{ id: 9 }], initiative: { combatants: [{ id: 4 }] } };
+        const counters = ctx.recomputeNextIds(data, {
+            npcs: 3,
+            items: 7,
+            spells: 'x',
+            loot: 1e300
+        });
+        expect(data._nextId).toBe(counters);
+        expect(counters.npcs).toBe(10);
+        expect(counters.items).toBe(7);
+        expect(counters.combatants).toBe(5);
+        expect(counters.spells).toBe(1);
+        expect(counters.loot).toBe(1);
+        expect(Object.keys(counters)).toHaveLength(Object.keys(ctx.ID_COUNTER_PATHS).length + 1);
+    });
+});

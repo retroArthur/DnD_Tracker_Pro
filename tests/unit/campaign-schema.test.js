@@ -489,3 +489,32 @@ describe('normalizeCampaignData() — IDs und Zaehler (R03)', () => {
         }
     });
 });
+
+describe('Kampagnen-Grundbausteine aus core/data.js (U2)', () => {
+    test('replaceCampaignData ersetzt in place: keine Alt-Schluessel, kein __proto__', () => {
+        const ctx = makeContext();
+        const target = ctx.D;
+        target.factions = [{ id: 1, name: 'Alt' }];
+        target.altFeld = 'weg';
+        const next = JSON.parse(
+            '{"npcs":[{"id":2}],"__proto__":{"polluted":true},"settings":{"theme":"light"}}'
+        );
+        const result = ctx.replaceCampaignData(target, next);
+        expect(result).toBe(target);
+        expect(ctx.D).toBe(target);
+        expect(Object.keys(target).sort()).toEqual(['npcs', 'settings']);
+        expect(target.polluted).toBeUndefined();
+        expect(Object.getPrototypeOf(target)).toBe(vm.runInContext('Object.prototype', ctx));
+    });
+
+    test('getActiveCampaignKey: Override vor Standard; kein nicht-leerer String -> null', () => {
+        const ctx = makeContext();
+        expect(ctx.getActiveCampaignKey()).toBe(ctx.APP_CONFIG.STORAGE_KEY);
+        ctx.STORAGE_KEY_OVERRIDE = 'dnd-campaign-x';
+        expect(ctx.getActiveCampaignKey()).toBe('dnd-campaign-x');
+        ctx.STORAGE_KEY_OVERRIDE = '';
+        expect(ctx.getActiveCampaignKey()).toBe(ctx.APP_CONFIG.STORAGE_KEY);
+        ctx.STORAGE_KEY_OVERRIDE = 5;
+        expect(ctx.getActiveCampaignKey()).toBeNull();
+    });
+});

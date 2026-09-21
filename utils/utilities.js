@@ -176,55 +176,171 @@ function withErrorBoundary(fn, context = 'Operation') {
         }
     };
 }
+// ============================================================
+// ID-INVARIANTE (Code-Review 2026-09-21, R03)
+// Eine gueltige Entitaets-ID ist eine sichere positive Ganzzahl <= ENTITY_ID_MAX.
+// nextId() vertraut keinem gespeicherten Zaehler blind: die Untergrenze ist immer
+// die groesste gueltige ID der Sammlung + 1 (Sammlung ueber ID_COUNTER_PATHS, damit
+// auch verschachtelte Sammlungen wie D.calendar.events gefunden werden).
+// ============================================================
 /**
- * Generiert eine eindeutige ID für einen Entity-Typ
- * @param type - Entity-Typ (characters, npcs, quests, etc.)
+ * Obergrenze gueltiger Entitaets-IDs. Date.now()-basierte IDs (~1.8e12) bleiben gueltig;
+ * 1e300 oder Werte >= 2^53 wuerden nextId() doppelte bzw. unaufloesbare IDs liefern lassen.
+ */
+const ENTITY_ID_MAX = 1e15;
+/**
+ * Register ALLER je an nextId() uebergebenen Typen -> Pfad ihrer Sammlung im Kampagnenobjekt.
+ * calendarEvents und combatants liegen NICHT unter D[type]. Jeder neue nextId-Aufruf mit
+ * Typ-Literal braucht hier einen Eintrag (tests/unit/next-id.test.js N6 scannt den Quellbaum).
+ * Bewusst ohne das Phantom 'items' (kein Schreibpfad; nur in NEXT_ID_REPAIR_TYPES).
+ */
+const ID_COUNTER_PATHS = Object.freeze({
+    characters: Object.freeze(['characters']),
+    npcs: Object.freeze(['npcs']),
+    locations: Object.freeze(['locations']),
+    quests: Object.freeze(['quests']),
+    encounters: Object.freeze(['encounters']),
+    spells: Object.freeze(['spells']),
+    loot: Object.freeze(['loot']),
+    wiki: Object.freeze(['wiki']),
+    sessionNotes: Object.freeze(['sessionNotes']),
+    randomTables: Object.freeze(['randomTables']),
+    shops: Object.freeze(['shops']),
+    links: Object.freeze(['links']),
+    filters: Object.freeze(['filters']),
+    bestiary: Object.freeze(['bestiary']),
+    factions: Object.freeze(['factions']),
+    sessionPreps: Object.freeze(['sessionPreps']),
+    quickRefCustom: Object.freeze(['quickRefCustom']),
+    calendarEvents: Object.freeze(['calendar', 'events']),
+    combatants: Object.freeze(['initiative', 'combatants'])
+});
+/**
+ * Alt-Liste der Typen, die validateAndRepairNextId() ohne Argumente prueft — Inhalt und
+ * Reihenfolge unveraendert (inkl. Phantom 'items'). NICHT erweitern: die E2E-Seeds in
+ * tests/e2e/helpers/test-utils.js sind darauf kalibriert, dass beim Boot KEINE Reparatur
+ * (und damit kein verzoegertes save() mit Toast-Rennen) ausgeloest wird.
+ */
+const NEXT_ID_REPAIR_TYPES = Object.freeze([
+    'characters',
+    'npcs',
+    'locations',
+    'quests',
+    'encounters',
+    'spells',
+    'loot',
+    'items',
+    'wiki',
+    'sessionNotes',
+    'randomTables'
+]);
+/**
+ * Prueft auf ein einfaches Datenobjekt (kein Array, kein null) — realm-unabhaengig,
+ * damit auch Objekte aus JSON.parse in einem anderen Kontext (Tests, Worker) passen.
+ * @param v - Beliebiger Wert
+ * @returns true fuer ein einfaches Objekt
+ */
+function isPlainDataObject(v) {
+    return (
+        v !== null &&
+        typeof v === 'object' &&
+        Object.prototype.toString.call(v) === '[object Object]'
+    );
+}
+/**
+ * Liefert die ID-Sammlung eines Typs (verschachtelte Pfade laut ID_COUNTER_PATHS).
+ * @param data - Kampagnenobjekt (z. B. window.D)
+ * @param type - Typ wie an nextId() uebergeben
+ * @returns Das Array oder undefined, wenn am Pfad kein Array liegt
+ */
+function getIdCollection(data, type) {
+    const segments = Object.prototype.hasOwnProperty.call(ID_COUNTER_PATHS, type)
+        ? ID_COUNTER_PATHS[type]
+        : [type];
+    let cursor = data;
+    for (const segment of segments) {
+        if (cursor === null || typeof cursor !== 'object') return undefined;
+        cursor = cursor[segment];
+    }
+    return Array.isArray(cursor) ? cursor : undefined;
+}
+/**
+ * Wandelt eine gespeicherte ID in eine Zahl: Zahlen bleiben, rein numerische
+ * Zeichenketten ('7') werden zur Zahl, alles andere wird NaN.
+ * @param id - Gespeicherte ID
+ * @returns Zahl oder NaN
+ */
+function toEntityIdNumber(id) {
+    if (typeof id === 'number') return id;
+    if (typeof id === 'string' && /^[0-9]+$/.test(id)) return Number(id);
+    return NaN;
+}
+/**
+ * Gueltige Entitaets-ID: sichere positive Ganzzahl bis ENTITY_ID_MAX.
+ * @param n - Zu pruefender Wert
+ * @returns true, wenn gueltig
+ */
+function isValidEntityId(n) {
+    return Number.isSafeInteger(n) && n > 0 && n <= ENTITY_ID_MAX;
+}
+/**
+ * Groesste gueltige ID einer Sammlung (ungueltige IDs zaehlen nicht).
+ * Schleife statt Math.max(...spread): kein Stapelueberlauf bei sehr grossen Sammlungen.
+ * @param items - Sammlung
+ * @returns Groesste gueltige ID oder 0
+ */
+function maxEntityId(items) {
+    if (!Array.isArray(items)) return 0;
+    let max = 0;
+    for (const item of items) {
+        if (item === null || typeof item !== 'object') continue;
+        const n = toEntityIdNumber(item.id);
+        if (isValidEntityId(n) && n > max) max = n;
+    }
+    return max;
+}
+/**
+ * Generiert eine eindeutige ID für einen Entity-Typ.
+ * Monoton: ein gueltiger Zaehler wird nie gesenkt (geloeschte IDs werden nicht
+ * wiederverwendet); veraltete, ungueltige (NaN, 1e300, 'abc', 2.5) Zaehler und
+ * verschachtelte Sammlungen heilen sich selbst ueber die Untergrenze max(ID) + 1.
+ * @param type - Entity-Typ (characters, npcs, calendarEvents, combatants, ...)
  * @returns Neue eindeutige ID
  */
 function nextId(type) {
     const D = window.D;
-    if (!D._nextId) D._nextId = {};
-    if (!D._nextId[type]) {
-        const items = D[type] || [];
-        const maxId = items.length > 0 ? Math.max(...items.map(i => i.id || 0)) : 0;
-        D._nextId[type] = maxId + 1;
-    }
-    return D._nextId[type]++;
+    if (!isPlainDataObject(D._nextId)) D._nextId = {};
+    const floor = maxEntityId(getIdCollection(D, type)) + 1;
+    const counter = D._nextId[type];
+    const id = isValidEntityId(counter) && counter >= floor ? counter : floor;
+    D._nextId[type] = id + 1;
+    return id;
 }
 /**
- * Validates and repairs D._nextId for all entity types
- * Ensures _nextId[type] is always greater than max ID in D[type]
+ * Validates and repairs data._nextId for the given entity types
+ * Ensures _nextId[type] is a valid id and always greater than the max valid ID of the collection
+ * @param data - Kampagnenobjekt (Standard: window.D)
+ * @param types - Zu pruefende Typen (Standard: die 11 Alt-Typen, NEXT_ID_REPAIR_TYPES)
  * @returns Object with validation status and repairs performed
  */
-function validateAndRepairNextId() {
-    const D = window.D;
-    if (!D._nextId) D._nextId = {};
+function validateAndRepairNextId(data = window.D, types = NEXT_ID_REPAIR_TYPES) {
+    if (!isPlainDataObject(data._nextId)) data._nextId = {};
+    const counters = data._nextId;
     const repairs = [];
-    const entityTypes = [
-        'characters',
-        'npcs',
-        'locations',
-        'quests',
-        'encounters',
-        'spells',
-        'loot',
-        'items',
-        'wiki',
-        'sessionNotes',
-        'randomTables'
-    ];
-    entityTypes.forEach(type => {
-        if (!Array.isArray(D[type])) return;
+    types.forEach(type => {
+        const collection = getIdCollection(data, type);
+        if (!collection) return;
         // Calculate correct next ID
-        const maxId = D[type].length > 0 ? Math.max(...D[type].map(i => i.id || 0)) : 0;
+        const maxId = maxEntityId(collection);
         const correctNextId = maxId + 1;
         // Check if current _nextId is valid
-        if (!D._nextId[type] || D._nextId[type] <= maxId) {
+        const counter = counters[type];
+        if (!isValidEntityId(counter) || counter <= maxId) {
             repairs.push(
-                `${type}: _nextId was ${D._nextId[type] || 'undefined'}, ` +
+                `${type}: _nextId was ${counter || 'undefined'}, ` +
                     `corrected to ${correctNextId} (max ID in array: ${maxId})`
             );
-            D._nextId[type] = correctNextId;
+            counters[type] = correctNextId;
         }
     });
     if (repairs.length > 0 && window.APP_CONFIG?.DEBUG_MODE && typeof window.debugLogAdd === 'function') {
@@ -234,6 +350,75 @@ function validateAndRepairNextId() {
     }
     return { valid: repairs.length === 0, repairs };
 }
+/**
+ * Macht die IDs aller Register-Sammlungen eindeutig und gueltig (in place).
+ * Pass 1: rein numerische Zeichenketten-IDs werden zur Zahl (Referenzen wie giverId: 7
+ * bleiben so aufloesbar). Pass 2: die erste gueltige Instanz einer ID bleibt; fehlende,
+ * doppelte, gebrochene, <= 0, zu grosse und nicht-numerische IDs bekommen eine neue ID
+ * oberhalb des Maximums. Nicht-Objekt-Eintraege bleiben unangetastet — nichts wird still
+ * geloescht.
+ * @param data - Kampagnenobjekt
+ * @returns Liste der Aenderungen [{ type, from, to }] — [] = nichts geaendert
+ */
+function normalizeEntityIds(data) {
+    const changes = [];
+    for (const type of Object.keys(ID_COUNTER_PATHS)) {
+        const collection = getIdCollection(data, type);
+        if (!collection) continue;
+        for (const item of collection) {
+            if (!isPlainDataObject(item)) continue;
+            if (typeof item.id === 'string' && /^[0-9]+$/.test(item.id)) {
+                const to = Number(item.id);
+                changes.push({ type, from: item.id, to });
+                item.id = to;
+            }
+        }
+        let next = maxEntityId(collection) + 1;
+        const seen = new Set();
+        for (const item of collection) {
+            if (!isPlainDataObject(item)) continue;
+            if (isValidEntityId(item.id) && !seen.has(item.id)) {
+                seen.add(item.id);
+                continue;
+            }
+            changes.push({ type, from: item.id, to: next });
+            item.id = next;
+            seen.add(next);
+            next++;
+        }
+    }
+    return changes;
+}
+/**
+ * Bestimmt data._nextId neu: gueltige Zaehler der Datei bleiben erhalten (auch Alt-Schluessel
+ * wie 'items'), jeder Registertyp bekommt mindestens max(ID) + 1.
+ * @param data - Kampagnenobjekt (IDs bereits per normalizeEntityIds() bereinigt)
+ * @param fileCounters - _nextId aus der Datei (optional)
+ * @returns Das neue _nextId-Objekt (auch als data._nextId gesetzt)
+ */
+function recomputeNextIds(data, fileCounters) {
+    const counters = {};
+    if (isPlainDataObject(fileCounters)) {
+        for (const key of Object.keys(fileCounters)) {
+            if (isValidEntityId(fileCounters[key])) counters[key] = fileCounters[key];
+        }
+    }
+    for (const type of Object.keys(ID_COUNTER_PATHS)) {
+        const floor = maxEntityId(getIdCollection(data, type)) + 1;
+        const counter = counters[type];
+        counters[type] = isValidEntityId(counter) && counter >= floor ? counter : floor;
+    }
+    data._nextId = counters;
+    return counters;
+}
+// Exporte der ID-Invariante (Restore/Import/Normalisierer nutzen sie modulübergreifend)
+window.ID_COUNTER_PATHS = ID_COUNTER_PATHS;
+window.isPlainDataObject = isPlainDataObject;
+window.getIdCollection = getIdCollection;
+window.maxEntityId = maxEntityId;
+window.isValidEntityId = isValidEntityId;
+window.normalizeEntityIds = normalizeEntityIds;
+window.recomputeNextIds = recomputeNextIds;
 /**
  * Formatiert ein Datum für die deutsche Anzeige
  * @param date - Datum (ISO-String, Date-Objekt oder Timestamp)

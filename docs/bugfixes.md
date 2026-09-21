@@ -452,6 +452,37 @@
 
 ---
 
+## Code-Review 2026-09-21
+
+### Restore/Import nie gegen lokale Schlüssellisten filtern (R01/R03/R07, Grundlage U2)
+
+- **Problem:** Der Restore (`systems/backups.js`) filterte Backups gegen ein veraltetes, lokal gepflegtes `defaultD` und verlor dabei gültige Felder (sessionNotes, settings, calendar, bestiary, factions, soundboard, `_nextId` …). Der überschreibende Import (`Object.assign(D, imp)`) behielt dagegen alte, nicht importierte Felder und den alten Zähler.
+- **Ursache:** Es gab keinen gemeinsamen Weg von Rohdaten zu einer vollständigen Kampagne. Jede Stelle pflegte eigene Schlüssellisten und eigene Standardwerte.
+- **Fix (Grundlage; die Aufrufer folgen in U3/U4/U6):** `normalizeCampaignData(raw)` in `systems/spellslots/version-migration.js` ist rein, liest und schreibt also weder `window.D` noch den Speicher. Es klont die Rohdaten (der Reviver entfernt `__proto__`/`constructor`/`prototype` in jeder Tiefe) und prüft die Container-Typen. Danach migriert es mit derselben Bedingung wie `load()`, führt einstufig mit `initializeData()` zusammen, repariert die IDs mit `normalizeEntityIds()` und bestimmt die Zähler mit `recomputeNextIds()` neu. `replaceCampaignData(target, next)` in `core/data.js` ist das eine Idiom, um `D` in place zu ersetzen. `getActiveCampaignKey()` ist der eine Resolver für den aktiven Kampagnenschlüssel.
+- **Regel:** Restore und Import nie gegen lokale Schlüssellisten filtern. Stattdessen `normalizeCampaignData()` + `initializeData()` + `replaceCampaignData()` verwenden. Schlüssel, die `initializeData()` nicht kennt (`randomTables`, `shops`, `dmScreenLayout`), bleiben abwesend, wenn sie fehlen, denn `features/random-tables.js` seedet seine Standardtabellen nur bei `!D.randomTables`.
+- **Dateien:** `systems/spellslots/version-migration.js`, `core/data.js`, `utils/utilities.js`
+- **Tests:** `tests/unit/campaign-schema.test.js`
+
+### nextId: gespeichertem Zähler blind vertraut (R03)
+
+- **Problem:** Nach einem Import ohne `_nextId` vergab `nextId('npcs')` eine bereits belegte ID erneut. `calendarEvents` und `combatants` begannen immer bei 1 und kollidierten, weil die Sammlungen verschachtelt sind und `D[type]` nicht existiert. Ein Zähler `1e300` lieferte zweimal dieselbe ID, `'abc'` lieferte `NaN`. Die Duplikat-Reparatur in `validateDataIntegrity()` zog aus dem veralteten Zähler und machte aus `[1,1,2]` ein `[1,2,2]`.
+- **Ursache:** `nextId()` übernahm jeden "truthy" Zähler ungeprüft und las die Sammlung nur über `D[type]`.
+- **Fix:** `nextId()` nimmt max(gültiger Zähler, größte gültige ID + 1) und ist damit monoton: gelöschte IDs werden nicht wiederverwendet. `ID_COUNTER_PATHS` in `utils/utilities.js` registriert alle 19 Typen samt Pfad. Eine gültige ID ist eine sichere Ganzzahl in 1..`ENTITY_ID_MAX` (1e15), numerische Zeichenketten zählen. `validateAndRepairNextId(data, types)` arbeitet auf dem übergebenen Objekt; ohne Argumente prüft es unverändert die 11 Alt-Typen, weil die E2E-Seeds in `tests/e2e/helpers/test-utils.js` darauf kalibriert sind.
+- **Regel:** `nextId` nie einem gespeicherten Zähler blind vertrauen. Jeder neue `nextId`-Aufruf mit Typ-Literal braucht einen Eintrag in `ID_COUNTER_PATHS`; Test N6 in `tests/unit/next-id.test.js` scannt dafür den Quellbaum.
+- **Datei:** `utils/utilities.js`
+- **Tests:** `tests/unit/next-id.test.js`
+
+### Migration 2.3.0 war zerstörerisch (R01)
+
+- **Problem:** `MIGRATIONS['2.3.0']` wandelte die **aktuellen** Zustands-Objekte `{type, name, addedAt}` in Zeichenketten um. Eigene Zustandsnamen gingen verloren, und die Chips waren nicht mehr darstellbar, weil `renderConditionsBar` `c.type` und `c.name` liest.
+- **Ursache:** Die Migration läuft auf jedem versionslosen Stand. `initializeData()` setzt kein `_version`, also ist jede Speicherung und jedes Backup der Erstsitzung versionslos, und der nächste `load()` beschädigte die Zustände.
+- **Fix:** Objekte mit String-`type` bleiben unverändert. Alt-Zeichenketten werden zu `{type, name: CONDITIONS[type]?.name || type}`, alles andere wird verworfen. Außerdem wirft `compareVersions()` bei einem numerischen `_version` nicht mehr (`String(v || '0')`), und `migrateData()` sortiert die Migrationsschlüssel numerisch statt lexikalisch.
+- **Regel:** Jede Migration muss auf bereits aktuellem Format verlustfrei und idempotent sein. Versionslose Daten sind **nicht** automatisch Altdaten.
+- **Datei:** `systems/spellslots/version-migration.js`
+- **Tests:** `tests/unit/campaign-schema.test.js` (S2–S5), `tests/unit/migration.test.js`
+
+---
+
 ## Known Technical Debt
 
 ### ui/editors/rich-text.js: document.execCommand() (21 Call-Sites)
