@@ -285,7 +285,9 @@ var MAX_BACKUPS = window.MAX_BACKUPS;  // CONFLICT
         # 'features/dmscreen/dmscreen-widgets-base.js', 'features/dmscreen/dmscreen-widgets-combat.js'
         # und 'features/dmscreen/dmscreen-widgets-reference.js' neu registriert
         # (dmscreen-render.js aufgeteilt, D-02/D-04)
-        assert len(modules) == 136, f"Erwartet 136 Module, gefunden {len(modules)}"
+        # Code-Review 2026-09-21, Einheit U3 (R04): 'utils/idb-tx.js' neu registriert
+        # (IndexedDB-Schreibbestaetigung, direkt nach utils/basic.js)
+        assert len(modules) == 137, f"Erwartet 137 Module, gefunden {len(modules)}"
 
         # Reihenfolge muss der Reihenfolge im Datei-Text entsprechen
         loader_content = loader_path.read_text(encoding='utf-8')

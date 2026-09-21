@@ -25,6 +25,12 @@ global.window.initIndexedDB = function() { return Promise.resolve(); };
 global.window.idb = null;
 global.showToast = function() {};
 
+// Commit-Helfer (R04, Code-Review 2026-09-21, U3) zuerst — wie in loader.js steht
+// utils/idb-tx.js vor soundboard-idb.js; die Schreib-Helfer laufen ueber window.idbWriteTx().
+eval(
+    fs.readFileSync(path.resolve(__dirname, '../../utils/idb-tx.js'), 'utf8')
+);
+
 // Modul-Code evaluieren — setzt checkAudioFileSize, MAX_AUDIO_BYTES etc. auf window
 eval(moduleSrc); // eslint-disable-line no-eval
 

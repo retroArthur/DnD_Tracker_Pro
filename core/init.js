@@ -348,19 +348,7 @@ async function initIndexedDB() {
     });
 }
 
-async function saveToIndexedDB(storeName, data) {
-    if (!idb) await initIndexedDB();
-
-    return new Promise((resolve, reject) => {
-        const transaction = idb.transaction([storeName], 'readwrite');
-        const store = transaction.objectStore(storeName);
-        const request = store.put(data);
-
-        request.onsuccess = () => resolve(request.result);
-        request.onerror = () => reject(request.error);
-    });
-}
-
+// Schreibende IndexedDB-Zugriffe laufen ausschliesslich ueber idbWriteTx() (utils/idb-tx.js, R04).
 // IndexedDB Backup wird jetzt von createAutoBackup() verwaltet
 
 // ============================================================

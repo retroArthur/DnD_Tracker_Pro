@@ -560,7 +560,9 @@ describe('Persistence Regression Tests (Plan 01-02)', () => {
         });
     }
 
-    // saveToIndexedDBFallback — echte Logik aus persistence.js extrahiert für Tests
+    // saveToIndexedDBFallback — vereinfachte Nachbildung OHNE Commit-Semantik (loest bei
+    // request.onsuccess auf). Seit R04 bestaetigt die echte Funktion erst nach 'complete'
+    // (utils/idb-tx.js); diesen Vertrag prueft tests/unit/idb-transaction-commit.test.js.
     function realSaveToIndexedDB(key, dataString) {
         return new Promise((resolve, reject) => {
             const transaction = idbInstance.transaction(['campaigns'], 'readwrite');
@@ -2071,29 +2073,35 @@ function _erzeugePersistenzKontext(optionen = {}) {
     const vm = require('vm');
 
     const idbStore = {};
+    // Seit R04 (Code-Review 2026-09-21, U3) bestaetigt persistence.js einen IDB-Write erst mit
+    // dem 'complete'-Event der Transaktion (utils/idb-tx.js). Dieses einfache Double feuert
+    // deshalb nach put() zusaetzlich tx.oncomplete; Abbruch-Semantik (nur 'abort') prueft
+    // das spec-nahe Double in tests/unit/idb-transaction-commit.test.js.
     const idbInstance = {
         transaction() {
-            return {
-                objectStore() {
-                    return {
-                        put(record) {
-                            const req = { onsuccess: null, onerror: null, result: record.id };
-                            idbStore[record.id] = Object.assign({}, record);
-                            Promise.resolve().then(() => req.onsuccess && req.onsuccess());
-                            return req;
-                        },
-                        get(key) {
-                            const req = {
-                                onsuccess: null,
-                                onerror: null,
-                                result: idbStore[key] || null
-                            };
-                            Promise.resolve().then(() => req.onsuccess && req.onsuccess());
-                            return req;
-                        }
-                    };
-                }
+            const tx = { oncomplete: null, onabort: null, onerror: null, error: null };
+            tx.objectStore = function () {
+                return {
+                    put(record) {
+                        const req = { onsuccess: null, onerror: null, result: record.id };
+                        idbStore[record.id] = Object.assign({}, record);
+                        Promise.resolve()
+                            .then(() => req.onsuccess && req.onsuccess())
+                            .then(() => tx.oncomplete && tx.oncomplete());
+                        return req;
+                    },
+                    get(key) {
+                        const req = {
+                            onsuccess: null,
+                            onerror: null,
+                            result: idbStore[key] || null
+                        };
+                        Promise.resolve().then(() => req.onsuccess && req.onsuccess());
+                        return req;
+                    }
+                };
             };
+            return tx;
         }
     };
 
@@ -2164,6 +2172,9 @@ function _erzeugePersistenzKontext(optionen = {}) {
     const utf8Ende = basicSrc.indexOf('\n}', utf8Start);
     if (utf8Ende < 0) throw new Error('utf8ByteLength-Blockende nicht gefunden');
     vm.runInContext(basicSrc.slice(utf8Start, utf8Ende + 2), context);
+
+    // ECHTER Commit-Helfer (R04): persistence.js schreibt ueber window.idbWriteTx()
+    vm.runInContext(fs.readFileSync(path.join(wurzel, 'utils/idb-tx.js'), 'utf-8'), context);
 
     vm.runInContext(
         fs.readFileSync(path.join(wurzel, 'systems/spellslots/persistence.js'), 'utf-8'),

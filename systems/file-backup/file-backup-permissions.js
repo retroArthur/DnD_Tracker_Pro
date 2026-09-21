@@ -25,15 +25,14 @@ const FILE_BACKUP_IDB_KEY = 'fileBackupDirHandle';
  * @returns {Promise<void>}
  */
 async function saveHandleToIDB(handle) {
-    // initIndexedDB() liefert die DB-Instanz zurück (core/init.js setzt zusätzlich window.idb)
-    const idb = await window.initIndexedDB();
-    return new Promise((resolve, reject) => {
-        // Defensiv: Falls 'fileHandles'-Store nicht existiert, wird ein Fehler gewurfen.
-        // Das passiert, wenn IDB_VERSION noch nicht gebumpt wurde.
-        const tx = idb.transaction(['fileHandles'], 'readwrite');
+    // initIndexedDB() setzt window.idb (core/init.js), das idbWriteTx() verwendet
+    await window.initIndexedDB();
+    // Defensiv: Falls 'fileHandles'-Store nicht existiert, wird ein Fehler geworfen.
+    // Das passiert, wenn IDB_VERSION noch nicht gebumpt wurde.
+    // R04: erst nach bestaetigtem Commit aufloesen; ein Commit-Abbruch lehnt ab, damit der
+    // Warnhinweis in file-backup-ui.js erreichbar ist.
+    await window.idbWriteTx(['fileHandles'], tx => {
         tx.objectStore('fileHandles').put({ id: FILE_BACKUP_IDB_KEY, handle });
-        tx.oncomplete = () => resolve();
-        tx.onerror = () => reject(tx.error);
     });
 }
 

@@ -5,6 +5,16 @@
 // PERSISTENCE
 // ============================================================
 let saveTimeout = null;
+// R04 (Code-Review 2026-09-21) — Ueberholschutz: jeder Save, der D serialisiert hat, zieht
+// eine Generation. INVARIANTE: localStorage-Writes laufen synchron im selben Task wie
+// ++_persistGeneration — zwischen beiden NIE ein await einfuegen, sonst ist
+// _lsWriteGeneration nicht mehr monoton. Nach einem IDB-Commit werden LS-Eintraege nur
+// entfernt, wenn seither kein neuerer LS-Write gelungen ist; ein ueberholter Save verwirft
+// seinen Retry (der neuere Save enthaelt den vollstaendigen Stand und meldet selbst).
+let _persistGeneration = 0;
+let _lsWriteGeneration = 0;
+// (D-03) Notfall-Export nur einmal pro Fehlerserie; jeder erfolgreiche Save setzt zurueck.
+let _persistFailureStreak = false;
 // Generische Post-Save-Hooks: explizite Registrierung statt window.save-Monkey-Patch.
 // WICHTIG: Bare save()-Aufrufe binden an die globale const-Deklaration und umgehen
 // jeden window.save-Wrapper dauerhaft (UAT 02: Datei-Backup schrieb nie bei Entity-CRUD;
@@ -38,7 +48,25 @@ function _measureDataByteLength(str) {
     if (typeof window.utf8ByteLength === 'function') return window.utf8ByteLength(str);
     return new Blob([str]).size;
 }
-// Sofortiges Speichern (für kritische Aktionen)
+// (D-03) Endgueltiger Save-Fehler: Anzeige und lauter Toast bei JEDEM Fehlschlag, der
+// Notfall-Export nur einmal pro Fehlerserie — sonst laedt ein dauerhafter Quota-Fehler
+// bei jeder Aenderung erneut ~5 MB herunter.
+function _reportPersistFailure() {
+    window.updateSaveIndicator('error');
+    showToast(
+        '❌ Speichern fehlgeschlagen! Daten gehen sonst verloren — JETZT exportieren!',
+        'error',
+        10000
+    );
+    if (!_persistFailureStreak && typeof window.exportAllDataAsFile === 'function') {
+        window.exportAllDataAsFile();
+    }
+    _persistFailureStreak = true;
+}
+// Sofortiges Speichern (für kritische Aktionen).
+// Ergebnis (R04): {success:true, backend:'localStorage'|'indexedDB'} erst nach bestaetigtem
+// Write, {success:false, error} bei endgueltigem Fehler, {success:false, superseded:true,
+// error:'superseded'}, wenn ein neuerer Save diesen ueberholt hat.
 async function saveImmediate() {
     const STORAGE_KEY = window.STORAGE_KEY;
     const key = window.STORAGE_KEY_OVERRIDE || STORAGE_KEY;
@@ -46,7 +74,17 @@ async function saveImmediate() {
     const updateSaveIndicator = window.updateSaveIndicator;
     const broadcastSave = window.broadcastSave;
     updateSaveIndicator('saving');
-    const dataString = JSON.stringify(D);
+    let dataString;
+    try {
+        dataString = JSON.stringify(D);
+    } catch (serializeError) {
+        window.ErrorHandler &&
+            window.ErrorHandler.log('saveImmediate', serializeError, 'JSON Serialisierung fehlgeschlagen');
+        updateSaveIndicator('error');
+        window.ErrorHandler && window.ErrorHandler.showError('Daten konnten nicht serialisiert werden');
+        return { success: false, error: serializeError.message };
+    }
+    const generation = ++_persistGeneration;
     const dataSizeMB = _measureDataByteLength(dataString) / (1024 * 1024);
     // localStorage Limit: ~5-10MB je nach Browser
     const LS_LIMIT_MB = 5;
@@ -66,9 +104,12 @@ async function saveImmediate() {
         // (D-01 / STAB-05) IDB-only-Pfad bei >5MB: LS-Schatten entfernen nach bestätigtem IDB-Write
         if (dataSizeMB > LS_LIMIT_MB) {
             await saveToIndexedDBFallback(key, dataString);
-            // Reihenfolge zwingend: erst await IDB-Write, DANN LS löschen (Pitfall 1)
-            StorageAPI.remove(key);
-            StorageAPI.remove(key + '_ts');
+            // R04: erst nach dem Commit, und nur ohne neueren LS-Write
+            if (_lsWriteGeneration < generation) {
+                StorageAPI.remove(key);
+                StorageAPI.remove(key + '_ts');
+            }
+            _persistFailureStreak = false;
             updateSaveIndicator('saved');
             // (D-02) Sitzungs-Hinweis einmal pro Sitzung, kein Per-Save-Toast
             if (!window._idbModeSeen) {
@@ -81,7 +122,7 @@ async function saveImmediate() {
             }
             broadcastSave();
             _notifyPostSaveHooks();
-            return;
+            return { success: true, backend: 'indexedDB' };
         }
         // Normaler localStorage-Save
         const saveResult = StorageAPI.set(key, dataString);
@@ -91,12 +132,15 @@ async function saveImmediate() {
         }
         // (D-01) Begleit-Timestamp für Konflikt-Erkennung beim Laden
         StorageAPI.set(key + '_ts', String(Date.now()));
+        _lsWriteGeneration = generation;
+        _persistFailureStreak = false;
         updateSaveIndicator('saved');
         broadcastSave();
         _notifyPostSaveHooks();
-        // Zusätzliches IndexedDB-Backup bei großen Daten (>2MB)
+        // Zusätzliches IndexedDB-Backup bei großen Daten (>2MB) — ohne strict-fsync:
+        // localStorage bleibt hier die fuehrende Kopie
         if (dataSizeMB > 2) {
-            saveToIndexedDBFallback(key, dataString).catch(e => {
+            saveToIndexedDBFallback(key, dataString, { optionalCopy: true }).catch(e => {
                 if (window.APP_CONFIG && window.APP_CONFIG.DEBUG_MODE) {
                     window.ErrorHandler &&
                         window.ErrorHandler.log(
@@ -107,51 +151,98 @@ async function saveImmediate() {
                 }
             });
         }
+        return { success: true, backend: 'localStorage' };
     } catch (e) {
+        // R04: ueberholt — ein neuerer Save hat D bereits vollstaendig serialisiert und meldet
+        // selbst. Ein spaeter Retry mit diesem aelteren Stand koennte ihn in IDB ueberschreiben.
+        if (generation !== _persistGeneration) {
+            return { success: false, superseded: true, error: 'superseded' };
+        }
         if (window.APP_CONFIG && window.APP_CONFIG.DEBUG_MODE) {
             window.ErrorHandler &&
                 window.ErrorHandler.log('saveImmediate', e, 'localStorage save failed');
         }
+        // >5 MB: der Fehler kam aus dem IDB-Zweig, dies ist der zweite Versuch
+        const retryAfterIdb = dataSizeMB > LS_LIMIT_MB;
         // Fallback zu IndexedDB bei Fehler
         try {
             await saveToIndexedDBFallback(key, dataString);
-            // (D-01) Begleit-Timestamp für IDB-Fallback entfernen (IDB hat eigenen timestamp)
-            StorageAPI.remove(key + '_ts');
+            // (D-01) Begleit-Timestamp für IDB-Fallback entfernen (IDB hat eigenen timestamp).
+            // R04: nur ohne neueren LS-Write; nach einem >5-MB-Retry auch keinen LS-Schatten
+            // ohne _ts zuruecklassen (loest sonst beim Laden einen Schein-Konflikt aus).
+            if (_lsWriteGeneration < generation) {
+                StorageAPI.remove(key + '_ts');
+                if (dataSizeMB > LS_LIMIT_MB) StorageAPI.remove(key);
+            }
+            _persistFailureStreak = false;
             updateSaveIndicator('saved');
-            showToast('💾 In IndexedDB gespeichert (localStorage voll)', 'warning');
+            showToast(
+                retryAfterIdb
+                    ? '💾 In IndexedDB gespeichert (zweiter Versuch)'
+                    : '💾 In IndexedDB gespeichert (localStorage voll)',
+                'warning'
+            );
             broadcastSave();
             _notifyPostSaveHooks();
+            return { success: true, backend: 'indexedDB' };
         } catch (idbError) {
             if (window.APP_CONFIG && window.APP_CONFIG.DEBUG_MODE) {
                 window.ErrorHandler &&
                     window.ErrorHandler.log('saveImmediate', idbError, 'IndexedDB fallback failed');
             }
-            // (D-03) Lauter Fehler-Toast + automatischer Export-Versuch
-            updateSaveIndicator('error');
-            showToast(
-                '❌ Speichern fehlgeschlagen! Daten gehen sonst verloren — JETZT exportieren!',
-                'error',
-                10000
-            );
-            if (typeof window.exportAllDataAsFile === 'function') {
-                window.exportAllDataAsFile();
-            }
+            // (D-03) Lauter Fehler-Toast + Export-Versuch (einmal pro Fehlerserie)
+            _reportPersistFailure();
+            return { success: false, error: (idbError && idbError.message) || String(idbError) };
         }
     }
 }
-// IndexedDB Fallback für große Kampagnen
-async function saveToIndexedDBFallback(key, dataString) {
-    const initIndexedDB = window.initIndexedDB;
-    let idb = window.idb;
-    if (!idb) await initIndexedDB();
-    idb = window.idb; // Reload after init
-    return new Promise((resolve, reject) => {
-        const transaction = idb.transaction(['campaigns'], 'readwrite');
-        const store = transaction.objectStore('campaigns');
-        const request = store.put({ id: key, data: dataString, timestamp: Date.now() });
-        request.onsuccess = () => resolve(request.result);
-        request.onerror = () => reject(request.error);
-    });
+// IndexedDB Fallback für große Kampagnen. R04: loest erst nach dem bestaetigten Commit auf
+// ('complete'); ein abgebrochener Commit lehnt ab. Standard ist durability 'strict', weil die
+// Aufrufer danach die andere Kopie (LS-Schatten, _ts) entfernen; nur die optionale Zusatzkopie
+// neben einem gelungenen localStorage-Save verzichtet darauf ({ optionalCopy: true }).
+async function saveToIndexedDBFallback(key, dataString, opts) {
+    await window.idbWriteTx(
+        ['campaigns'],
+        tx => {
+            tx.objectStore('campaigns').put({ id: key, data: dataString, timestamp: Date.now() });
+        },
+        { durability: opts && opts.optionalCopy ? undefined : 'strict' }
+    );
+    return key;
+}
+/**
+ * Entfernt alle gespeicherten Kopien einer Kampagne: IndexedDB ZUERST (bestaetigter Commit,
+ * strict), erst danach localStorage (Daten, _ts, _rev). Scheitert der IDB-Delete, bleibt
+ * localStorage unangetastet — sonst holte load() eine womoeglich aeltere IDB-Kopie zurueck.
+ * Wirft nie.
+ * @param {string} key - Kampagnen-Speicherschluessel
+ * @returns {Promise<{success: true} | {success: false, stage: string, error: *}>}
+ */
+async function removeCampaignData(key) {
+    if (typeof key !== 'string' || key === '') {
+        return { success: false, stage: 'key', error: new Error('Ungültiger Kampagnenschlüssel') };
+    }
+    if (window.indexedDB || window.idb) {
+        try {
+            await window.idbWriteTx(
+                ['campaigns'],
+                tx => {
+                    tx.objectStore('campaigns').delete(key);
+                },
+                { durability: 'strict' }
+            );
+        } catch (error) {
+            return { success: false, stage: 'indexedDB', error };
+        }
+    }
+    try {
+        StorageAPI.remove(key);
+        StorageAPI.remove(key + '_ts');
+        StorageAPI.remove(key + '_rev');
+    } catch (error) {
+        return { success: false, stage: 'localStorage', error };
+    }
+    return { success: true };
 }
 // Load mit IndexedDB-Fallback (gibt nur .data zurück)
 async function loadFromIndexedDBFallback(key) {
@@ -210,14 +301,19 @@ const save = function (showMessage = false) {
             ErrorHandler.showError('Daten konnten nicht serialisiert werden');
             return;
         }
+        const generation = ++_persistGeneration;
         const dataSizeMB = _measureDataByteLength(dataString) / (1024 * 1024);
         const LS_LIMIT_MB = 5;
         try {
             // (D-01 / STAB-05) IDB-only-Pfad: LS-Schatten nach bestätigtem IDB-Write entfernen
             if (dataSizeMB > LS_LIMIT_MB) {
                 await saveToIndexedDBFallback(key, dataString);
-                StorageAPI.remove(key);
-                StorageAPI.remove(key + '_ts');
+                // R04: erst nach dem Commit, und nur ohne neueren LS-Write
+                if (_lsWriteGeneration < generation) {
+                    StorageAPI.remove(key);
+                    StorageAPI.remove(key + '_ts');
+                }
+                _persistFailureStreak = false;
                 updateSaveIndicator('saved');
                 broadcastSave();
                 _notifyPostSaveHooks();
@@ -238,32 +334,38 @@ const save = function (showMessage = false) {
             }
             // (D-01) Begleit-Timestamp setzen
             StorageAPI.set(key + '_ts', String(Date.now()));
+            _lsWriteGeneration = generation;
+            _persistFailureStreak = false;
             updateSaveIndicator('saved');
             broadcastSave();
             _notifyPostSaveHooks();
             if (showMessage) showToast('💾 Gespeichert', 'success');
         } catch (e) {
+            // R04: ueberholt — der neuere Save meldet selbst, kein Retry mit altem Stand
+            if (generation !== _persistGeneration) return;
             ErrorHandler.log('save', e, 'localStorage');
+            const retryAfterIdb = dataSizeMB > LS_LIMIT_MB;
             // Fallback zu IndexedDB
             try {
                 await saveToIndexedDBFallback(key, dataString);
-                StorageAPI.remove(key + '_ts');
+                if (_lsWriteGeneration < generation) {
+                    StorageAPI.remove(key + '_ts');
+                    if (dataSizeMB > LS_LIMIT_MB) StorageAPI.remove(key);
+                }
+                _persistFailureStreak = false;
                 updateSaveIndicator('saved');
                 broadcastSave();
                 _notifyPostSaveHooks();
-                showToast('💾 In IndexedDB gespeichert (localStorage voll)', 'warning');
+                showToast(
+                    retryAfterIdb
+                        ? '💾 In IndexedDB gespeichert (zweiter Versuch)'
+                        : '💾 In IndexedDB gespeichert (localStorage voll)',
+                    'warning'
+                );
             } catch (idbError) {
                 ErrorHandler.log('save', idbError, 'IndexedDB Fallback');
-                updateSaveIndicator('error');
-                // (D-03) Laut bei IDB-Fehler
-                showToast(
-                    '❌ Speichern fehlgeschlagen! Daten gehen sonst verloren — JETZT exportieren!',
-                    'error',
-                    10000
-                );
-                if (typeof window.exportAllDataAsFile === 'function') {
-                    window.exportAllDataAsFile();
-                }
+                // (D-03) Laut bei IDB-Fehler, Export einmal pro Fehlerserie
+                _reportPersistFailure();
             }
         }
     }, 300);
@@ -274,4 +376,5 @@ window.save = save;
 window.saveImmediate = saveImmediate;
 window.registerPostSaveHook = registerPostSaveHook;
 window.loadFromIndexedDBFallbackRaw = loadFromIndexedDBFallbackRaw;
+window.removeCampaignData = removeCampaignData;
 // Note: load() and loadFromBackup() are defined in systems/backups.js

@@ -17,6 +17,7 @@ const MODULES = [
     // Utils
     'utils/performance.js',
     'utils/basic.js',
+    'utils/idb-tx.js',
     'utils/utilities.js',
     'utils/crud-helpers.js',
     'utils/validation.js',

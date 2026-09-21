@@ -62,7 +62,8 @@ describe('Post-Save-Hooks feuern bei jedem Save (TECH-03 / Live-Sync)', function
         window._postSaveHooks = [];
         window.registerPostSaveHook(bad);
         window.registerPostSaveHook(after);
-        await expect(window.saveImmediate()).resolves.toBeUndefined();
+        // Ergebnisvertrag seit R04 (Code-Review 2026-09-21, U3): {success, backend}
+        await expect(window.saveImmediate()).resolves.toMatchObject({ success: true });
         expect(bad).toHaveBeenCalled();
         expect(after).toHaveBeenCalledTimes(1); // trotz Fehler im ersten Hook
     });
@@ -77,6 +78,6 @@ describe('Post-Save-Hooks feuern bei jedem Save (TECH-03 / Live-Sync)', function
 
     test('keine registrierten Hooks → Speichern wirft nicht', async function () {
         delete window._postSaveHooks;
-        await expect(window.saveImmediate()).resolves.toBeUndefined();
+        await expect(window.saveImmediate()).resolves.toMatchObject({ success: true });
     });
 });

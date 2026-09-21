@@ -14,8 +14,10 @@ function getCampaignIndex() {
         active: APP_CONFIG.STORAGE_KEY
     });
 }
+// Liefert das StorageAPI-Ergebnis ({success, error?}), damit Aufrufer einen gescheiterten
+// Index-Write erkennen koennen (deleteCampaign bricht dann ab, R04/R07).
 function saveCampaignIndex(index) {
-    StorageAPI.setJSON(CAMPAIGN_INDEX_KEY, index);
+    return StorageAPI.setJSON(CAMPAIGN_INDEX_KEY, index);
 }
 function createCampaign() {
     const input = $('new-campaign-name');
@@ -63,10 +65,22 @@ function switchCampaign(key) {
     saveCampaignIndex(index);
     location.reload();
 }
+// Loescht die Kampagne, die DIESER Tab zeigt (getActiveCampaignKey), nicht index.active:
+// nach einem Wechsel in einem anderen Tab oder einem gescheiterten Import koennen beide
+// auseinanderlaufen. Reihenfolge (R04/R07): Index zuerst (benannte Kampagne), dann
+// removeCampaignData() — IndexedDB-Delete mit bestaetigtem Commit VOR localStorage.
+// Erfolgsmeldung und Navigation erst danach.
 async function deleteCampaign() {
+    const key =
+        typeof window.getActiveCampaignKey === 'function' ? window.getActiveCampaignKey() : null;
+    if (!key) {
+        alert(
+            '❌ Fehler beim Löschen:\n\nDie aktive Kampagne konnte nicht bestimmt werden. Es wurde nichts gelöscht.'
+        );
+        return;
+    }
+    const isDefault = key === APP_CONFIG.STORAGE_KEY;
     const index = getCampaignIndex();
-    const isDefault = index.active === APP_CONFIG.STORAGE_KEY;
-    const key = isDefault ? APP_CONFIG.STORAGE_KEY : index.active;
     // Datengröße ermitteln
     const dataSize = localStorage.getItem(key);
     const sizeKB = dataSize ? (dataSize.length / 1024).toFixed(1) : 0;
@@ -84,74 +98,51 @@ async function deleteCampaign() {
     if (typeof window.stopAllTracks === 'function') window.stopAllTracks();
     try {
         log('[deleteCampaign] Lösche Kampagne:', key);
-        // 1. LocalStorage löschen
-        localStorage.removeItem(key);
-        log('[deleteCampaign] LocalStorage gelöscht');
-        // 2. IndexedDB Eintrag löschen (nicht die ganze DB!)
-        if (window.indexedDB) {
-            try {
-                // Initialisiere IDB falls nötig
-                const idbInstance = window.idb;
-                if (!idbInstance) await initIndexedDB();
-                // Lösche den spezifischen Eintrag aus dem campaigns Store
-                await new Promise((resolve, _reject) => {
-                    const transaction = window.idb.transaction(['campaigns'], 'readwrite');
-                    const store = transaction.objectStore('campaigns');
-                    const request = store.delete(key);
-                    request.onsuccess = () => {
-                        log('[deleteCampaign] IndexedDB Eintrag gelöscht');
-                        resolve();
-                    };
-                    request.onerror = () => {
-                        if (window.ErrorHandler) {
-                            window.ErrorHandler.log(
-                                'deleteCampaign',
-                                request.error,
-                                'IndexedDB Löschung fehlgeschlagen'
-                            );
-                        }
-                        resolve(); // Trotzdem weitermachen
-                    };
-                });
-            } catch (idbError) {
-                if (window.ErrorHandler) {
-                    window.ErrorHandler.log('deleteCampaign', idbError, 'IndexedDB Fehler');
-                }
+        // 1. Benannte Kampagne: zuerst aus dem Index entfernen (frisch gelesen). Die aktive
+        //    Auswahl eines anderen Tabs bleibt stehen; scheitert der Write, wird nichts geloescht.
+        if (!isDefault) {
+            const current = getCampaignIndex();
+            const next = Object.assign({}, current, {
+                campaigns: (current.campaigns || []).filter(c => c.key !== key)
+            });
+            if (current.active === key) next.active = APP_CONFIG.STORAGE_KEY;
+            const indexResult = saveCampaignIndex(next);
+            if (!indexResult || !indexResult.success) {
+                alert(
+                    '❌ Fehler beim Löschen:\n\nDer Kampagnenindex konnte nicht gespeichert werden. Es wurde nichts gelöscht.'
+                );
+                return;
             }
         }
-        // 3. Wenn nicht Standard-Kampagne, aus Index entfernen
-        if (!isDefault) {
-            index.campaigns = index.campaigns.filter(c => c.key !== key);
-            index.active = APP_CONFIG.STORAGE_KEY;
-            saveCampaignIndex(index);
+        // 2. Gespeicherte Daten entfernen: IndexedDB (bestaetigter Commit) VOR localStorage
+        const removal = await window.removeCampaignData(key);
+        if (!removal || !removal.success) {
+            if (window.ErrorHandler) {
+                window.ErrorHandler.log(
+                    'deleteCampaign',
+                    removal && removal.error,
+                    'Kampagnendaten konnten nicht entfernt werden'
+                );
+            }
+            if (isDefault) {
+                alert(
+                    '❌ Fehler beim Löschen:\n\nDie IndexedDB-Kopie konnte nicht entfernt werden. Es wurde nichts gelöscht.'
+                );
+                return;
+            }
+            alert(
+                `⚠️ "${campaignName}" wurde aus der Liste entfernt, aber die gespeicherten Daten konnten nicht vollständig gelöscht werden.`
+            );
+        } else {
+            log('[deleteCampaign] Kampagnendaten entfernt');
         }
-        // 4. Globales D-Objekt zurücksetzen (falls Seite nicht neu lädt)
-        // D is const, cannot reassign - clear and recreate structure
-        const D = window.D;
-        for (const key in D) delete D[key];
-        Object.assign(D, {
-            locations: [],
-            npcs: [],
-            quests: [],
-            characters: [],
-            sessionNotes: [],
-            storyArcs: [],
-            quickNotes: '',
-            initiative: { combatants: [], currentTurn: 0, round: 1 },
-            loot: [],
-            items: [],
-            encounters: [],
-            spells: [],
-            links: [],
-            wiki: [],
-            filters: [],
-            calendar: { day: 1, month: 0, year: 1492, events: [] },
-            tags: [],
-            settings: { theme: 'dark', lastView: 'dashboard' },
-            _nextId: {}
-        });
-        alert(`✅ "${campaignName}" wurde gelöscht!\n\nDie Seite wird neu geladen...`);
-        // 5. Seite mit Cache-Bypass neu laden
+        // 3. Globales D-Objekt zurücksetzen (falls Seite nicht neu lädt) — vollstaendiges
+        //    Grundgeruest aus initializeData(), in place (D ist const)
+        window.replaceCampaignData(window.D, window.initializeData());
+        if (removal && removal.success) {
+            alert(`✅ "${campaignName}" wurde gelöscht!\n\nDie Seite wird neu geladen...`);
+        }
+        // 4. Seite mit Cache-Bypass neu laden
         window.location.href = window.location.pathname + '?cleared=' + Date.now();
     } catch (error) {
         if (window.ErrorHandler) {

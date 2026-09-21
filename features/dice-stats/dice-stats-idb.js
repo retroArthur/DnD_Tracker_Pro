@@ -230,22 +230,15 @@ async function getStatsCount() {
 async function clearAllStats() {
     if (!window.initIndexedDB) return false;
     await window.initIndexedDB();
-    return new Promise(function(resolve) {
-        if (!window.idb) { resolve(false); return; }
-        try {
-            var tx = window.idb.transaction(['diceStats'], 'readwrite');
-            var store = tx.objectStore('diceStats');
-            var req = store.clear();
-            if (req) {
-                req.onsuccess = function() { resolve(true); };
-                req.onerror = function() { resolve(false); };
-            } else {
-                resolve(true);
-            }
-        } catch (e) {
-            resolve(false);
-        }
-    });
+    if (!window.idb) return false;
+    try {
+        // R04: true erst nach bestaetigtem Commit — request.onsuccess ist keine Bestaetigung
+        return window.idbWriteTx(['diceStats'], function(tx) {
+            tx.objectStore('diceStats').clear();
+        }).then(function() { return true; }, function() { return false; });
+    } catch (e) {
+        return false;
+    }
 }
 
 window.statsIdbPut = statsIdbPut;

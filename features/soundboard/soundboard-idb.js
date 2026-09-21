@@ -57,20 +57,18 @@ async function saveSoundBlob(id, file) {
     }
 
     await window.initIndexedDB();
-    return new Promise((resolve, reject) => {
-        const entry = {
-            id,
-            name: file.name,
-            size: file.size,
-            type: file.type,
-            blob: file,
-            savedAt: Date.now()
-        };
-        const tx = window.idb.transaction(['audioBlobs'], 'readwrite');
-        const store = tx.objectStore('audioBlobs');
-        store.put(entry);
-        tx.oncomplete = () => resolve();
-        tx.onerror = () => reject(tx.error);
+    const entry = {
+        id,
+        name: file.name,
+        size: file.size,
+        type: file.type,
+        blob: file,
+        savedAt: Date.now()
+    };
+    // R04: erst nach bestaetigtem Commit aufloesen; ein Commit-Abbruch (grosser Blob, Quota)
+    // lehnt ab, statt ewig zu haengen
+    await window.idbWriteTx(['audioBlobs'], tx => {
+        tx.objectStore('audioBlobs').put(entry);
     });
 }
 
@@ -137,12 +135,8 @@ async function listSoundBlobs() {
  */
 async function deleteSoundBlob(id) {
     await window.initIndexedDB();
-    return new Promise((resolve, reject) => {
-        const tx = window.idb.transaction(['audioBlobs'], 'readwrite');
-        const store = tx.objectStore('audioBlobs');
-        store.delete(id);
-        tx.oncomplete = () => resolve();
-        tx.onerror = () => reject(tx.error);
+    await window.idbWriteTx(['audioBlobs'], tx => {
+        tx.objectStore('audioBlobs').delete(id);
     });
 }
 
@@ -160,8 +154,7 @@ async function deleteSoundBlob(id) {
  */
 async function softDeleteSoundBlob(id) {
     await window.initIndexedDB();
-    return new Promise((resolve, reject) => {
-        const tx = window.idb.transaction(['audioBlobs'], 'readwrite');
+    await window.idbWriteTx(['audioBlobs'], tx => {
         const store = tx.objectStore('audioBlobs');
         const getReq = store.get(id);
         getReq.onsuccess = () => {
@@ -170,11 +163,9 @@ async function softDeleteSoundBlob(id) {
                 entry.deletedAt = Date.now();
                 store.put(entry);
             }
-            // Fehlt der Eintrag: nichts zu tun — Aufloesung ueber tx.oncomplete
+            // Fehlt der Eintrag: nichts zu tun — Aufloesung nach dem Commit (idbWriteTx)
         };
-        getReq.onerror = () => reject(getReq.error);
-        tx.oncomplete = () => resolve();
-        tx.onerror = () => reject(tx.error);
+        // getReq-Fehler blubbert zur Transaktion und laesst idbWriteTx ablehnen
     });
 }
 
@@ -188,23 +179,24 @@ async function softDeleteSoundBlob(id) {
  */
 async function restoreSoundBlob(id) {
     await window.initIndexedDB();
-    return new Promise((resolve, reject) => {
-        const tx = window.idb.transaction(['audioBlobs'], 'readwrite');
+    const holder = { found: false };
+    await window.idbWriteTx(['audioBlobs'], tx => {
         const store = tx.objectStore('audioBlobs');
         const getReq = store.get(id);
-        let found = false;
         getReq.onsuccess = () => {
             const entry = getReq.result;
             if (entry) {
-                found = true;
-                delete entry.deletedAt;
-                store.put(entry);
+                holder.found = true;
+                // Nur Grabsteine zurueckschreiben — einen unversehrten (grossen) Blob nicht
+                // ohne Not neu speichern
+                if (entry.deletedAt) {
+                    delete entry.deletedAt;
+                    store.put(entry);
+                }
             }
         };
-        getReq.onerror = () => reject(getReq.error);
-        tx.oncomplete = () => resolve(found);
-        tx.onerror = () => reject(tx.error);
     });
+    return holder.found;
 }
 
 /**
@@ -231,11 +223,13 @@ async function _cleanupStaleTombstones() {
                 resolve();
                 return;
             }
-            const delTx = window.idb.transaction(['audioBlobs'], 'readwrite');
-            const delStore = delTx.objectStore('audioBlobs');
-            stale.forEach(function(entry) { delStore.delete(entry.id); });
-            delTx.oncomplete = () => resolve();
-            delTx.onerror = () => resolve();
+            // R04: auch ein Commit-Abbruch ('abort') loest auf — listSoundBlobs() haengt nie
+            window
+                .idbWriteTx(['audioBlobs'], delTx => {
+                    const delStore = delTx.objectStore('audioBlobs');
+                    stale.forEach(function(entry) { delStore.delete(entry.id); });
+                })
+                .then(resolve, resolve);
         };
         req.onerror = () => resolve();
     });

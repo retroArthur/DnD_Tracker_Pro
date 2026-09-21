@@ -138,6 +138,36 @@ declare global {
   function normalizeLegacyVersionStamp<T extends Record<string, any>>(data: T): T;
 
   // ============================================================
+  // INDEXEDDB-SCHREIBBESTAETIGUNG & SAVE-ERGEBNIS (Code-Review 2026-09-21, U3/R04)
+  // ============================================================
+
+  /** Ergebnis von saveImmediate() — Erfolg erst nach bestaetigtem Write */
+  type SaveImmediateResult =
+    | { success: true; backend: 'localStorage' | 'indexedDB' }
+    | { success: false; error: string; superseded?: true };
+
+  /** Ergebnis von removeCampaignData() — wirft nie */
+  type RemoveCampaignDataResult =
+    | { success: true }
+    | { success: false; stage: 'key' | 'indexedDB' | 'localStorage'; error: unknown };
+
+  /** Loest mit 'complete' auf; 'abort'/'error' lehnen ab (setzt tx.oncomplete/onabort/onerror) */
+  function idbTransactionDone(tx: IDBTransaction): Promise<void>;
+
+  /** Einzige Tuer fuer schreibende IDB-Transaktionen: work(tx) synchron, Ergebnis erst nach Commit */
+  function idbWriteTx<T>(
+    storeNames: string | string[],
+    work: (tx: IDBTransaction) => T,
+    options?: { durability?: 'strict' | 'relaxed' | 'default' }
+  ): Promise<T>;
+
+  /** Sofort speichern; Ergebnis erst nach bestaetigtem Write */
+  function saveImmediate(): Promise<SaveImmediateResult>;
+
+  /** Alle Kopien einer Kampagne entfernen: IndexedDB (Commit) vor localStorage */
+  function removeCampaignData(key: string): Promise<RemoveCampaignDataResult>;
+
+  // ============================================================
   // RENDER FUNCTIONS
   // ============================================================
   

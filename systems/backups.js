@@ -84,13 +84,10 @@ async function createAutoBackup() {
         }
     }
 }
-// IndexedDB Backup-Speicherung
+// IndexedDB Backup-Speicherung. R04: loest erst nach dem bestaetigten Commit auf; ein
+// abgebrochener Commit lehnt ab, damit createAutoBackup() den localStorage-Rueckfall erreicht.
 async function saveBackupToIndexedDB(backup) {
-    const initIndexedDB = window.initIndexedDB;
-    await initIndexedDB();
-    const idb = window.idb;
-    return new Promise((resolve, reject) => {
-        const transaction = idb.transaction(['backups'], 'readwrite');
+    return window.idbWriteTx(['backups'], transaction => {
         const store = transaction.objectStore('backups');
         // Alte Backups dieser Kampagne laden und begrenzen
         const request = store.index('campaign').getAll(backup.campaignKey);
@@ -107,8 +104,6 @@ async function saveBackupToIndexedDB(backup) {
             backup.id = `${backup.campaignKey}-${backup.timestamp}`;
             store.put(backup);
         };
-        transaction.oncomplete = () => resolve();
-        transaction.onerror = () => reject(transaction.error);
     });
 }
 // Backups aus beiden Quellen laden

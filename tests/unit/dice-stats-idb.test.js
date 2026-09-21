@@ -34,6 +34,12 @@ global.window.idb = null;
 global.window.initIndexedDB = function () { return Promise.resolve(); };
 global.window.D = { characters: [] };
 
+// Commit-Helfer (R04, Code-Review 2026-09-21, U3) wie in loader.js vor dem Modul laden:
+// clearAllStats() bestaetigt erst ueber window.idbWriteTx() nach dem Transaktions-Commit.
+eval(
+    fs.readFileSync(path.resolve(__dirname, '../../utils/idb-tx.js'), 'utf8')
+);
+
 const moduleSrc = fs.readFileSync(
     path.resolve(__dirname, '../../features/dice-stats/dice-stats-idb.js'),
     'utf8'
@@ -153,8 +159,25 @@ function createMockIDB(seedRecords, opts) {
     return {
         mockStore: mockStore,
         idbInstance: {
+            // Transaktion mit Ereignis-Eigenschaften (R04): 'complete' feuert in einem
+            // Microtask, nachdem idbWriteTx() seine Handler gesetzt und die Arbeit
+            // synchron eingereiht hat; wirft die Arbeit, bleibt es beim abort-Pfad.
             transaction: function () {
-                return { objectStore: function () { return makeStore(); } };
+                const tx = {
+                    oncomplete: null,
+                    onabort: null,
+                    onerror: null,
+                    error: null,
+                    objectStore: function () { return makeStore(); },
+                    abort: function () {
+                        tx._aborted = true;
+                        Promise.resolve().then(function () { if (tx.onabort) tx.onabort(); });
+                    }
+                };
+                Promise.resolve().then(function () {
+                    if (!tx._aborted && tx.oncomplete) tx.oncomplete();
+                });
+                return tx;
             }
         }
     };
