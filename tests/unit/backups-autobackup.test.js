@@ -568,6 +568,25 @@ describe('R10 — keine Duplikate, Sicherheitskopie rotiert nicht heraus', () =>
         expect(r.wert).toBe('written');
     });
 
+    test('T6b: localStorage-Rueckfall — auch hier zaehlt nur der NEUESTE eigene Eintrag', async () => {
+        const w = erzeugeWerkbank({ idbAus: true });
+        mitHeld(w, 'Stand A');
+        const standA = JSON.stringify(w.ctx.D);
+        w.ls.set(
+            BACKUP_KEY,
+            JSON.stringify([
+                eintrag(KEY_B, 2000, '{"characters":[{"id":1,"name":"Stand B"}]}'),
+                eintrag(KEY_B, 1000, standA)
+            ])
+        );
+        const r = await mitFrist(w.ctx.createAutoBackup());
+        expect(r.wert).toBe('written');
+        const eigene = lsListe(w).filter(b => b.campaignKey === KEY_B);
+        expect(eigene).toHaveLength(2);
+        expect(eigene[0].data).toBe(standA);
+        expect(eigene[0].timestamp).toBeGreaterThan(2000);
+    });
+
     test('T7: Sicherheitskopie + 6 Ticks mit wechselnder Sitzungsdauer -> die Sicherheitskopie bleibt erhalten', async () => {
         const w = erzeugeWerkbank();
         mitHeld(w);

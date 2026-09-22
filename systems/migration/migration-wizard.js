@@ -64,8 +64,8 @@ let _wizardStep = 1;
  *   requiredObjects) initialisiert ihn als leeres Objekt, kein Nutzerinhalt.
  * - lastSessionDuration: Nebenprodukt der Sitzungsuhr (Zahl), nicht vom Nutzer
  *   verfasst — derselbe Grund wie sessionHistory.
- * - notes: toter Schluessel — nur defensiv gelesen in systems/backups.js:340
- *   (D.notes?.length), nirgends geschrieben.
+ * - notes: toter Schluessel — nur defensiv gelesen in updateEntityCounts()
+ *   (systems/backups.js, D.notes?.length), nirgends geschrieben.
  * - items: Altlast aus dem Leerschema von createCampaign()
  *   (campaign-manager.js:43), im Code nie gelesen.
  *
@@ -122,6 +122,14 @@ const CAMPAIGN_CONTENT_EXCLUDED = [
  * Wirft NIE — isFreshInstall() laeuft im Init-Pfad (core/init.js), ein Wurf hier
  * wuerde den App-Start mitreissen (T-12-28). Ein falscher Typ an einer gelisteten
  * Stelle (z. B. wiki: "kaputt" statt eines Arrays) zaehlt einfach als "kein Inhalt".
+ *
+ * Verbraucher (die EINE Definition von "enthaelt Nutzerinhalt"):
+ * - isFreshInstall() (Init, Migrations-Wizard): Erststart-Erkennung.
+ * - createAutoBackup() (systems/backups.js, Code-Review 2026-09-21, R10): nur Kampagnen mit
+ *   Inhalt bekommen Auto-Backups und Sicherheitskopien. Wer hier einen Schluessel
+ *   ausschliesst (CAMPAIGN_CONTENT_EXCLUDED), nimmt ihn damit AUCH aus der Auto-Backup-
+ *   Abdeckung — eine Kampagne, deren einzige Arbeit in diesem Schluessel steckt, wird dann
+ *   nicht mehr automatisch gesichert.
  *
  * @param {*} data - Rueckgabewert von readCampaignDataForBackup() bzw. StorageAPI.getJSON()
  * @returns {boolean}

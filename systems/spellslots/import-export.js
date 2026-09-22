@@ -486,17 +486,10 @@ function executeImport(dataType) {
     }
     const renderAll = window.renderAll;
     saveUndoState(`${items.length} ${type} importiert`);
-    // Sicherheitskopie bei Replace-Modus
+    // Sicherheitskopie bei Replace-Modus. createAutoBackup() erfasst D synchron beim Aufruf,
+    // deshalb ohne await; die Meldung folgt dem echten Ergebnis (Code-Review 2026-09-21, R10).
     if (mode === 'replace') {
-        try {
-            createAutoBackup();
-            showToast('💾 Sicherheitskopie erstellt', 'info', 1000);
-        } catch (err) {
-            // Ausnahme (c): fehlgeschlagenes Backup vor Datenverlust verdient sichtbare Diagnose
-            if (window.ErrorHandler) {
-                window.ErrorHandler.log('Import', err, 'Backup failed');
-            }
-        }
+        reportSafetyBackup(createAutoBackup({ reason: 'safety' }));
         ioSetArray(type, items);
     } else {
         // Merge: Neue IDs vergeben für importierte Einträge
@@ -720,14 +713,9 @@ function importDataGlobal() {
                 // Muster von executeImport() (Zeilen ~386/389) — ein überschreibender Import
                 // war zuvor ohne Rückgängig-Punkt und ohne Backup endgültig.
                 saveUndoState('Kampagne überschrieben (Import)');
-                try {
-                    createAutoBackup();
-                    showToast('💾 Sicherheitskopie erstellt', 'info', 1000);
-                } catch (err) {
-                    if (window.ErrorHandler) {
-                        window.ErrorHandler.log('Import', err, 'Backup failed');
-                    }
-                }
+                // Sicherheitskopie: D wird synchron beim Aufruf erfasst (vor Object.assign),
+                // die Meldung folgt dem echten Ergebnis (Code-Review 2026-09-21, R10)
+                reportSafetyBackup(createAutoBackup({ reason: 'safety' }));
                 // Soundboard-Audio stoppen — Web Audio überlebt sonst den Daten-Reset
                 if (typeof window.stopAllTracks === 'function') window.stopAllTracks();
                 Object.assign(D, imp);
@@ -774,7 +762,11 @@ function copyData() {
         }
     }
 }
-function clearStorage() {
+// async (Code-Review 2026-09-21, R10): die Sicherheitskopie ist COMMITTET, bevor irgendetwas
+// entfernt wird; entfernt werden beide Kopien (IndexedDB und localStorage) — frueher holte
+// load() die Kampagne aus IndexedDB zurueck. Der data-action-'call'-Dispatcher ignoriert das
+// zurueckgegebene Promise; die Funktion lehnt nie ab.
+async function clearStorage() {
     // Step 1: Strong warning with detailed explanation
     const confirmed = confirm(
         '⚠️ ACHTUNG: Alle Daten löschen?\n\n' +
@@ -790,26 +782,33 @@ function clearStorage() {
         '🚨 LETZTE WARNUNG!\n\n' + 'Bitte bestätigen Sie erneut: Alle Daten unwiderruflich löschen?'
     );
     if (!doubleCheck) return;
-    // Step 3: Create safety backup before deletion
-    try {
-        createAutoBackup();
-        showToast('💾 Sicherheitskopie erstellt', 'info', 1500);
-    } catch (err) {
-        if (window.ErrorHandler) {
-            window.ErrorHandler.log('Clear', err, 'Backup failed');
+    // Step 3: Sicherheitskopie — bestaetigt geschrieben, BEVOR etwas entfernt wird
+    const status = await createAutoBackup({ reason: 'safety' });
+    if (status === 'failed') {
+        if (
+            !confirm(
+                '⚠️ Die Sicherheitskopie konnte nicht erstellt werden.\n\nTrotzdem ALLE Daten dieser Kampagne löschen?'
+            )
+        ) {
+            return;
         }
+    } else {
+        await reportSafetyBackup(status);
     }
-    // Step 4: Execute deletion
-    const STORAGE_KEY = window.STORAGE_KEY;
-    const key = window.STORAGE_KEY_OVERRIDE || STORAGE_KEY;
-    const result = StorageAPI.remove(key);
-    if (result.success) {
+    // Step 4: Kampagnendaten entfernen — IndexedDB-Kopie (bestaetigter Commit) und localStorage
+    const key =
+        typeof window.getActiveCampaignKey === 'function' ? window.getActiveCampaignKey() : null;
+    const result =
+        typeof window.removeCampaignData === 'function'
+            ? await window.removeCampaignData(key)
+            : null;
+    if (result && result.success) {
         showToast('✅ Alle Daten gelöscht', 'info');
         setTimeout(() => location.reload(), 1000);
     } else {
         showToast('❌ Fehler beim Löschen', 'error');
         if (window.ErrorHandler) {
-            window.ErrorHandler.log('Clear storage', result.error);
+            window.ErrorHandler.log('Clear storage', result && result.error);
         }
     }
 }

@@ -92,6 +92,8 @@ declare global {
     campaignKey: string;
     data: string;
     id?: string;
+    /** 'safety' = Sicherheitskopie vor destruktiver Aktion (U5); fehlt bei Alt-Zeilen = 'auto' */
+    kind?: 'auto' | 'safety';
   }
 
   /** Gehoert das Backup zur Kampagne key (nicht-leerer, exakt gleicher campaignKey)? */
@@ -130,6 +132,30 @@ declare global {
 
   /** Anzeigename einer Kampagne ('Standard-Kampagne', Indexname oder der Schluessel) */
   function getCampaignDisplayName(key: string): string;
+
+  // ============================================================
+  // AUTO-BACKUP-SCHREIBSEITE (Code-Review 2026-09-21, U5/R10/R05)
+  // ============================================================
+
+  /** Ergebnis von createAutoBackup() */
+  type AutoBackupStatus = 'written' | 'unchanged' | 'skipped-empty' | 'failed';
+
+  /**
+   * Auto-Backup der aktiven Kampagne (gemeinsame Inhaltsregel hasCampaignContent()).
+   * Erfasst D SYNCHRON beim Aufruf; reason 'safety' schuetzt die Kopie vor der Rotation.
+   */
+  function createAutoBackup(options?: { reason?: 'safety' | 'auto' }): Promise<AutoBackupStatus>;
+
+  /** IndexedDB-Backup nach bestaetigtem Commit; vergleicht nur mit der neuesten Zeile */
+  function saveBackupToIndexedDB(backup: AutoBackupRecord): Promise<'written' | 'unchanged'>;
+
+  /** Meldet das echte Ergebnis einer Sicherheitskopie per Toast; wirft nie */
+  function reportSafetyBackup(
+    statusOrPromise: AutoBackupStatus | Promise<AutoBackupStatus>
+  ): Promise<AutoBackupStatus>;
+
+  /** Entfernt alle Auto-Backups einer Kampagne aus beiden Quellen (D2 = A); wirft nie */
+  function purgeCampaignBackups(key: string): Promise<{ success: boolean; error?: unknown }>;
 
   // ============================================================
   // KAMPAGNEN-DATEN & ID-INVARIANTE (Code-Review 2026-09-21, U2)

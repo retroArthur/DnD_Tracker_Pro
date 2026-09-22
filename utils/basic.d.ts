@@ -15,6 +15,7 @@ interface StorageInfo {
 declare const StorageAPI: {
     get(key: string, fallback?: any): any;
     set(key: string, value: string): StorageResult;
+    setQuiet(key: string, value: string): StorageResult;
     remove(key: string): StorageResult;
     isAvailable(): boolean;
     getStorageInfo(): StorageInfo | null;

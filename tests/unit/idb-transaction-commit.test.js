@@ -990,14 +990,23 @@ function erzeugeGeschwister(module, opt = {}) {
 }
 
 describe('Geschwister — systems/backups.js', () => {
+    // U5 (R05/R10): createAutoBackup() schreibt nur unter dem Schluessel aus
+    // getActiveCampaignKey() (core/data.js, hier nicht geladen -> Stub) und die
+    // localStorage-Liste ueber StorageAPI.setQuiet() (ohne Quota-Toast).
     function storageStub() {
         return {
             getJSON: jest.fn((k, d) => d),
             setJSON: jest.fn(() => ({ success: true })),
+            setQuiet: jest.fn(() => ({ success: true })),
             get: jest.fn(() => null),
             set: jest.fn(() => ({ success: true })),
             remove: jest.fn()
         };
+    }
+    function erzeugeBackupGeschwister(opt) {
+        const g = erzeugeGeschwister(['systems/backups.js'], opt);
+        g.context.getActiveCampaignKey = () => SCHLUESSEL;
+        return g;
     }
 
     test('saveBackupToIndexedDB() lehnt bei Commit-Abbruch ab', async () => {
@@ -1013,22 +1022,25 @@ describe('Geschwister — systems/backups.js', () => {
 
     test('createAutoBackup() erreicht bei Commit-Abbruch den localStorage-Rueckfall', async () => {
         const api = storageStub();
-        const g = erzeugeGeschwister(['systems/backups.js'], {
+        const g = erzeugeBackupGeschwister({
             StorageAPI: api,
             commitFehler: alleCommitsScheitern
         });
         const r = await mitFrist(g.context.createAutoBackup());
         expect(r.zustand).toBe('erfuellt');
-        expect(api.setJSON).toHaveBeenCalledWith(BACKUP_SCHLUESSEL, expect.any(Array));
+        expect(r.wert).toBe('written');
+        expect(api.setQuiet).toHaveBeenCalledWith(BACKUP_SCHLUESSEL, expect.any(String));
     });
 
     test('Kontrolle: erfolgreicher Commit legt das Backup in IndexedDB ab, ohne LS-Rueckfall', async () => {
         const api = storageStub();
-        const g = erzeugeGeschwister(['systems/backups.js'], { StorageAPI: api });
+        const g = erzeugeBackupGeschwister({ StorageAPI: api });
         const r = await mitFrist(g.context.createAutoBackup());
         expect(r.zustand).toBe('erfuellt');
+        expect(r.wert).toBe('written');
         expect(g.fake.anzahl('backups')).toBe(1);
         expect(api.setJSON).not.toHaveBeenCalled();
+        expect(api.setQuiet).not.toHaveBeenCalled();
     });
 });
 

@@ -3,6 +3,7 @@ interface BackupData {
     campaignKey: string;
     data: string;
     id?: string;
+    kind?: 'auto' | 'safety';
 }
 interface PerformanceMetrics {
     renderTimes: Array<{
@@ -28,9 +29,23 @@ declare const BACKUP_KEY: any;
 declare const BACKUP_INTERVAL: any;
 declare const MAX_BACKUPS: any;
 declare const MAX_BACKUP_SIZE_MB: any;
+declare const MAX_LS_BACKUPS_PER_CAMPAIGN: number;
+declare const LS_BACKUP_BUDGET_CHARS: number;
 declare const STORAGE_KEY: any;
-declare function createAutoBackup(): Promise<void>;
-declare function saveBackupToIndexedDB(backup: BackupData): Promise<void>;
+declare function createAutoBackup(options?: {
+    reason?: 'safety' | 'auto';
+}): Promise<'written' | 'unchanged' | 'skipped-empty' | 'failed'>;
+declare function saveBackupToIndexedDB(backup: BackupData): Promise<'written' | 'unchanged'>;
+declare function knownBackupCampaignKeys(): Set<string> | null;
+declare function pickLocalBackupEviction(
+    list: BackupData[],
+    backup: BackupData,
+    known: Set<string> | null
+): number;
+declare function capOwnLocalBackups(list: BackupData[], backup: BackupData): BackupData[];
+declare function writeLocalBackup(backup: BackupData): 'written' | 'unchanged' | 'failed';
+declare function reportSafetyBackup(statusOrPromise: string | Promise<string>): Promise<string>;
+declare function purgeCampaignBackups(key: string): Promise<{ success: boolean; error?: any }>;
 declare function isBackupOfCampaign(b: any, key: string): boolean;
 declare function isValidBackupRecord(b: any): b is BackupData;
 declare function readLocalBackups(): BackupData[];

@@ -7,104 +7,323 @@ const BACKUP_INTERVAL = window.APP_CONFIG?.BACKUP_INTERVAL || 300000; // 5 minut
 const MAX_BACKUPS = window.APP_CONFIG?.MAX_BACKUPS || 5;
 const MAX_BACKUP_SIZE_MB = window.APP_CONFIG?.MAX_BACKUP_SIZE_MB || 2;
 const BACKUP_KEY = window.APP_CONFIG?.BACKUP_KEY || 'dnd-tracker-backups';
+// localStorage-Rueckfall (Code-Review 2026-09-21, R05/R10): EIN Schluessel fuer alle Kampagnen,
+// und er teilt sich die ~5-MB-Quota der Origin mit dem Live-Save — dessen eigener
+// IndexedDB-Rueckfall faellt genau dann auch aus, wenn dieser Pfad laeuft. Deshalb hoechstens
+// zwei Eintraege der schreibenden Kampagne und ein Budget fuer die ganze Liste.
+const MAX_LS_BACKUPS_PER_CAMPAIGN = 2;
+const LS_BACKUP_BUDGET_CHARS = MAX_BACKUP_SIZE_MB * 2 * 1024 * 1024;
 
 // Track if we already warned about backup failures (avoid console spam)
 let _backupFailureLogged = false;
 
-// Backups werden primär in IndexedDB gespeichert, localStorage als Fallback
-async function createAutoBackup() {
+/**
+ * Auto-Backup der AKTIVEN Kampagne; primaer IndexedDB, localStorage als Rueckfall
+ * (Code-Review 2026-09-21, R10/R05).
+ *
+ * VERTRAG: alles bis einschliesslich JSON.stringify(D) laeuft SYNCHRON beim Aufruf, vor dem
+ * ersten await. Die Sicherheitskopie-Aufrufer in import-export.js verlassen sich darauf: sie
+ * rufen ohne await auf und aendern D direkt danach. Kein await davor einfuegen.
+ *
+ * - Nie unter einem ungueltigen Schluessel schreiben oder aufraeumen:
+ *   IDBIndex.getAll(undefined) traefe die Backups ALLER Kampagnen.
+ * - Inhaltsregel ist die gemeinsame, SEC-06-gepruefte Definition hasCampaignContent()
+ *   (migration-wizard.js). Sie wird zur Aufrufzeit gebunden, weil migration-wizard.js nach
+ *   backups.js laedt; fehlt sie, wird gesichert (fail-open). NICHT _hatKampagnenInhalt() aus
+ *   file-backup: die zaehlt diceHistory und partyGold — eine geleerte Kampagne plus ein
+ *   Probewurf wuerde alle 5 Minuten gesichert und verdraengte die Sicherheitskopie von vor
+ *   dem Leeren.
+ * @param {{reason?: string}} [options] - reason 'safety': Sicherheitskopie vor einer
+ *   destruktiven Aktion; sie ist gegen die periodische Rotation geschuetzt
+ * @returns {Promise<'written'|'unchanged'|'skipped-empty'|'failed'>}
+ */
+async function createAutoBackup(options = {}) {
     try {
+        const key =
+            typeof window.getActiveCampaignKey === 'function'
+                ? window.getActiveCampaignKey()
+                : null;
+        if (!key) return 'failed';
         const D = window.D;
-        const APP_CONFIG = window.APP_CONFIG;
-        const ErrorHandler = window.ErrorHandler;
-        // Nur speichern wenn Daten existieren
-        if (!D.characters?.length && !D.npcs?.length && !D.quests?.length) return;
+        if (typeof window.hasCampaignContent === 'function' && !window.hasCampaignContent(D)) {
+            return 'skipped-empty';
+        }
         const backup = {
             timestamp: Date.now(),
-            campaignKey: window.STORAGE_KEY_OVERRIDE || STORAGE_KEY,
-            data: JSON.stringify(D)
+            campaignKey: key,
+            data: JSON.stringify(D),
+            kind: options && options.reason === 'safety' ? 'safety' : 'auto'
         };
-        const backupSizeMB = new Blob([backup.data]).size / (1024 * 1024);
         // Versuche IndexedDB (bevorzugt, kein Quota-Limit)
         try {
-            await saveBackupToIndexedDB(backup);
-            return;
+            return await saveBackupToIndexedDB(backup);
         } catch (idbError) {
-            if (APP_CONFIG.DEBUG_MODE) {
-                ErrorHandler.log(
+            if (window.APP_CONFIG?.DEBUG_MODE) {
+                window.ErrorHandler?.log(
                     'createAutoBackup',
                     idbError,
                     'IndexedDB failed, trying localStorage'
                 );
             }
         }
-        // Fallback: localStorage (nur für kleine Backups)
-        if (backupSizeMB > MAX_BACKUP_SIZE_MB) {
-            if (APP_CONFIG.DEBUG_MODE) {
-                ErrorHandler.log(
-                    'createAutoBackup',
-                    new Error('Backup too large for localStorage'),
-                    `${backupSizeMB.toFixed(1)}MB exceeds limit`
-                );
-            }
-            return;
-        }
-        const backups = StorageAPI.getJSON(BACKUP_KEY, []) || [];
-        backups.unshift(backup);
-        // Max Backups einhalten
-        while (backups.length > MAX_BACKUPS) {
-            backups.pop();
-        }
-        const result = StorageAPI.setJSON(BACKUP_KEY, backups);
-        if (!result.success) {
-            // Bei Quota-Fehler: Alte Backups löschen und nochmal versuchen
-            if (result.error?.includes('quota') || result.error?.includes('QUOTA')) {
-                if (APP_CONFIG.DEBUG_MODE) {
-                    ErrorHandler.log(
-                        'createAutoBackup',
-                        new Error('Quota exceeded'),
-                        'Clearing old backups'
-                    );
-                }
-                StorageAPI.remove(BACKUP_KEY);
-                // Nur aktuelles Backup speichern
-                StorageAPI.setJSON(BACKUP_KEY, [backup]);
-            }
-        }
+        return writeLocalBackup(backup);
     } catch (e) {
-        const APP_CONFIG = window.APP_CONFIG;
-        const ErrorHandler = window.ErrorHandler;
-        if (APP_CONFIG?.DEBUG_MODE && !_backupFailureLogged) {
-            ErrorHandler?.log(
+        if (window.APP_CONFIG?.DEBUG_MODE && !_backupFailureLogged) {
+            window.ErrorHandler?.log(
                 'createAutoBackup',
                 e,
                 'Auto-backup failed (weitere Fehler werden unterdrückt)'
             );
             _backupFailureLogged = true;
         }
+        return 'failed';
     }
 }
-// IndexedDB Backup-Speicherung. R04: loest erst nach dem bestaetigten Commit auf; ein
-// abgebrochener Commit lehnt ab, damit createAutoBackup() den localStorage-Rueckfall erreicht.
+/**
+ * IndexedDB-Backup. R04: loest erst nach dem bestaetigten Commit auf; ein abgebrochener
+ * Commit lehnt ab, damit createAutoBackup() den localStorage-Rueckfall erreicht.
+ * R10: verglichen wird nur mit der NEUESTEN Zeile der Kampagne — nach einem Undo auf einen
+ * aelteren Stand muss dieser erneut geschrieben werden, sonst laege er nur noch in der
+ * aeltesten Zeile, die als erste herausrotiert. Beim Rotieren bleibt die neueste
+ * Sicherheitskopie ('safety') stehen; Zeilen ohne kind zaehlen als 'auto'.
+ * @param {{timestamp: number, campaignKey: string, data: string, kind?: string}} backup
+ * @returns {Promise<'written'|'unchanged'>}
+ */
 async function saveBackupToIndexedDB(backup) {
-    return window.idbWriteTx(['backups'], transaction => {
+    if (!backup || typeof backup.campaignKey !== 'string' || backup.campaignKey === '') {
+        throw new Error('Kein Kampagnenschlüssel');
+    }
+    const outcome = await window.idbWriteTx(['backups'], transaction => {
         const store = transaction.objectStore('backups');
-        // Alte Backups dieser Kampagne laden und begrenzen
+        const result = { status: 'written' };
         const request = store.index('campaign').getAll(backup.campaignKey);
         request.onsuccess = () => {
-            const existingBackups = request.result || [];
-            // Sortiere nach Timestamp (neueste zuerst)
-            existingBackups.sort((a, b) => b.timestamp - a.timestamp);
-            // Lösche alte Backups (behalte nur MAX_BACKUPS - 1)
-            const toDelete = existingBackups.slice(MAX_BACKUPS - 1);
-            toDelete.forEach(old => {
-                if (old.id) store.delete(old.id);
-            });
-            // Neues Backup speichern
+            const existing = Array.isArray(request.result) ? request.result.slice() : [];
+            existing.sort((a, b) => b.timestamp - a.timestamp);
+            const newest = existing[0];
+            if (newest && newest.data === backup.data) {
+                result.status = 'unchanged';
+                if (backup.kind === 'safety' && newest.kind !== 'safety') {
+                    newest.kind = 'safety';
+                    store.put(newest);
+                }
+                return;
+            }
+            const protectedRow =
+                backup.kind === 'safety' ? null : existing.find(b => b.kind === 'safety') || null;
+            // Aelteste nicht geschuetzte Zeilen loeschen, bis Platz fuer die neue ist
+            let remaining = existing.length;
+            for (let i = existing.length - 1; i >= 0 && remaining > MAX_BACKUPS - 1; i--) {
+                if (existing[i] === protectedRow) continue;
+                store.delete(existing[i].id);
+                remaining--;
+            }
             backup.id = `${backup.campaignKey}-${backup.timestamp}`;
             store.put(backup);
         };
+        return result;
     });
+    return outcome.status;
+}
+/**
+ * Schluessel aller bekannten Kampagnen (Standard + Kampagnenindex). null, wenn der Index
+ * nicht lesbar ist — dann gilt kein Eintrag als verwaist.
+ * @returns {Set<string>|null}
+ */
+function knownBackupCampaignKeys() {
+    if (typeof window.getCampaignIndex !== 'function') return null;
+    try {
+        const index = window.getCampaignIndex();
+        const keys = new Set([window.APP_CONFIG?.STORAGE_KEY]);
+        (index && Array.isArray(index.campaigns) ? index.campaigns : []).forEach(c => {
+            if (c && typeof c.key === 'string') keys.add(c.key);
+        });
+        return keys;
+    } catch {
+        return null;
+    }
+}
+/**
+ * Naechster Verdraengungskandidat der localStorage-Liste (Index) oder -1. Reihenfolge:
+ * (1) verwaiste Eintraege (Kampagne weder Standard noch im Index), aelteste zuerst;
+ * (2) nicht-neueste Eintraege anderer Kampagnen, aelteste zuerst;
+ * (3) aeltere Eintraege der schreibenden Kampagne;
+ * (4) neueste Eintraege anderer Kampagnen, aelteste zuerst.
+ * Das neue Backup weicht nie.
+ * @param {Array<Object>} list
+ * @param {Object} backup - das neue Backup (Objektidentitaet)
+ * @param {Set<string>|null} known - knownBackupCampaignKeys()
+ * @returns {number}
+ */
+function pickLocalBackupEviction(list, backup, known) {
+    const newestOf = new Map();
+    for (const b of list) {
+        const cur = newestOf.get(b.campaignKey);
+        if (!cur || b.timestamp > cur.timestamp) newestOf.set(b.campaignKey, b);
+    }
+    const foreign = b => b.campaignKey !== backup.campaignKey;
+    const stufen = [
+        b => foreign(b) && known !== null && !known.has(b.campaignKey),
+        b => foreign(b) && newestOf.get(b.campaignKey) !== b,
+        b => !foreign(b),
+        b => foreign(b)
+    ];
+    for (const passt of stufen) {
+        let best = -1;
+        list.forEach((b, i) => {
+            if (b === backup || !passt(b)) return;
+            if (best === -1 || b.timestamp < list[best].timestamp) best = i;
+        });
+        if (best !== -1) return best;
+    }
+    return -1;
+}
+/**
+ * Deckelt NUR die schreibende Kampagne auf MAX_LS_BACKUPS_PER_CAMPAIGN Eintraege: das neue
+ * Backup, bevorzugt ihre neueste Sicherheitskopie, dann die neuesten uebrigen.
+ * @param {Array<Object>} list - enthaelt backup
+ * @param {Object} backup
+ * @returns {Array<Object>}
+ */
+function capOwnLocalBackups(list, backup) {
+    const own = list
+        .filter(b => b !== backup && isBackupOfCampaign(b, backup.campaignKey))
+        .sort((a, b) => b.timestamp - a.timestamp);
+    const keep = new Set([backup]);
+    if (backup.kind !== 'safety') {
+        const safety = own.find(b => b.kind === 'safety');
+        if (safety) keep.add(safety);
+    }
+    for (const b of own) {
+        if (keep.size >= MAX_LS_BACKUPS_PER_CAMPAIGN) break;
+        keep.add(b);
+    }
+    return list.filter(b => !isBackupOfCampaign(b, backup.campaignKey) || keep.has(b));
+}
+/**
+ * localStorage-Rueckfall fuer EIN Backup (Code-Review 2026-09-21, R05/R10). Fremde Eintraege
+ * weichen nur bei Budgetueberschreitung oder Quota-Fehler (pickLocalBackupEviction), die Liste
+ * wird nie als Ganzes geloescht (frueher entfernte der Quota-Zweig den ganzen Schluessel und
+ * damit die Backups ALLER Kampagnen). Scheitert auch der letzte Versuch, bleibt die
+ * gespeicherte Liste unveraendert.
+ * @param {Object} backup
+ * @returns {'written'|'unchanged'|'failed'}
+ */
+function writeLocalBackup(backup) {
+    const backupSizeMB = new Blob([backup.data]).size / (1024 * 1024);
+    if (backupSizeMB > MAX_BACKUP_SIZE_MB) {
+        if (window.APP_CONFIG?.DEBUG_MODE) {
+            window.ErrorHandler?.log(
+                'createAutoBackup',
+                new Error('Backup too large for localStorage'),
+                `${backupSizeMB.toFixed(1)}MB exceeds limit`
+            );
+        }
+        return 'failed';
+    }
+    const list = readLocalBackups();
+    // Dublette nur gegen den NEUESTEN Eintrag derselben Kampagne pruefen
+    const newestOwn = list
+        .filter(b => isBackupOfCampaign(b, backup.campaignKey))
+        .reduce((a, b) => (!a || b.timestamp > a.timestamp ? b : a), null);
+    if (newestOwn && newestOwn.data === backup.data) {
+        if (backup.kind === 'safety' && newestOwn.kind !== 'safety') {
+            newestOwn.kind = 'safety';
+            StorageAPI.setQuiet(BACKUP_KEY, JSON.stringify(list));
+        }
+        return 'unchanged';
+    }
+    const next = capOwnLocalBackups([backup, ...list], backup);
+    const known = knownBackupCampaignKeys();
+    const sizes = new Map(next.map(b => [b, JSON.stringify(b).length]));
+    // Laenge von JSON.stringify(list), ohne die (grossen) Daten erneut zu serialisieren
+    const totalChars = l => l.reduce((sum, b) => sum + sizes.get(b), 0) + l.length + 1;
+    while (totalChars(next) > LS_BACKUP_BUDGET_CHARS) {
+        const i = pickLocalBackupEviction(next, backup, known);
+        if (i === -1) break;
+        next.splice(i, 1);
+    }
+    let result = StorageAPI.setQuiet(BACKUP_KEY, JSON.stringify(next));
+    while (!result.success && result.error === 'QUOTA_EXCEEDED') {
+        const i = pickLocalBackupEviction(next, backup, known);
+        if (i === -1) break;
+        next.splice(i, 1);
+        result = StorageAPI.setQuiet(BACKUP_KEY, JSON.stringify(next));
+    }
+    return result.success ? 'written' : 'failed';
+}
+/**
+ * Meldet das ECHTE Ergebnis einer Sicherheitskopie (Code-Review 2026-09-21, R10) — frueher
+ * stand "Sicherheitskopie erstellt" unbedingt da, auch wenn nichts geschrieben wurde. Wartet
+ * auf den Status und wirft nie; ein abgelehntes Promise gilt als 'failed'.
+ * @param {Promise<string>|string} statusOrPromise - Ergebnis von createAutoBackup()
+ * @returns {Promise<string>} der Status
+ */
+async function reportSafetyBackup(statusOrPromise) {
+    let status;
+    try {
+        status = await statusOrPromise;
+    } catch (e) {
+        if (window.APP_CONFIG?.DEBUG_MODE) {
+            window.ErrorHandler?.log('reportSafetyBackup', e, 'Sicherheitskopie abgelehnt');
+        }
+        status = 'failed';
+    }
+    try {
+        if (status === 'written') {
+            showToast('💾 Sicherheitskopie erstellt', 'info', 1500);
+        } else if (status === 'unchanged') {
+            showToast('💾 Sicherheitskopie vorhanden', 'info', 1500);
+        } else if (status !== 'skipped-empty') {
+            status = 'failed';
+            showToast('⚠️ Sicherheitskopie fehlgeschlagen', 'warning');
+        }
+    } catch (e) {
+        if (window.APP_CONFIG?.DEBUG_MODE) {
+            window.ErrorHandler?.log('reportSafetyBackup', e, 'Meldung fehlgeschlagen');
+        }
+    }
+    return status;
+}
+/**
+ * Entfernt ALLE Auto-Backups einer Kampagne aus beiden Quellen (Nutzerentscheidung D2 = A:
+ * das Loeschen einer Kampagne loescht auch ihre Auto-Backups). Nie ohne gueltigen Schluessel —
+ * index.getAll(undefined) liefe ueber ALLE Kampagnen. Fremde Eintraege der localStorage-Liste
+ * bleiben unveraendert. Wirft nie.
+ * @param {string} key - Kampagnen-Speicherschluessel
+ * @returns {Promise<{success: boolean, error?: *}>}
+ */
+async function purgeCampaignBackups(key) {
+    if (typeof key !== 'string' || key === '') {
+        return { success: false, error: new Error('Kein Kampagnenschlüssel') };
+    }
+    let error = null;
+    try {
+        await window.idbWriteTx(['backups'], transaction => {
+            const store = transaction.objectStore('backups');
+            const request = store.index('campaign').getAll(key);
+            request.onsuccess = () => {
+                (Array.isArray(request.result) ? request.result : []).forEach(row => {
+                    if (isBackupOfCampaign(row, key)) store.delete(row.id);
+                });
+            };
+        });
+    } catch (e) {
+        error = e;
+    }
+    try {
+        const raw = StorageAPI.getJSON(BACKUP_KEY, null);
+        if (Array.isArray(raw)) {
+            const rest = raw.filter(b => !isBackupOfCampaign(b, key));
+            if (rest.length !== raw.length) {
+                const r = StorageAPI.setQuiet(BACKUP_KEY, JSON.stringify(rest));
+                if (!r.success && !error) error = r.original || new Error(r.error);
+            }
+        }
+    } catch (e) {
+        if (!error) error = e;
+    }
+    return error ? { success: false, error } : { success: true };
 }
 // ============================================================
 // BACKUP-LISTE & WIEDERHERSTELLUNG (Code-Review 2026-09-21, R01/R05)
@@ -544,8 +763,11 @@ function getPerformanceReport() {
     }
     return report;
 }
-// Export für Auto-Backup vor destruktiven Operationen
+// Export für Auto-Backup vor destruktiven Operationen; ehrliche Meldung dazu (R10) und das
+// Mitentfernen beim Loeschen einer Kampagne (D2 = A, campaign-manager.js)
 window.createAutoBackup = createAutoBackup;
+window.reportSafetyBackup = reportSafetyBackup;
+window.purgeCampaignBackups = purgeCampaignBackups;
 // Gemeinsamer Restore-Schluss (restoreFromFileBackup in file-backup-ui.js) und
 // Audio-Wiederbelebung (Code-Review 2026-09-21, R01)
 window.applyRestoredCampaign = applyRestoredCampaign;

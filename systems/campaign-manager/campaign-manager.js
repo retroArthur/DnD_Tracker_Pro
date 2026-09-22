@@ -99,7 +99,7 @@ async function deleteCampaign() {
         : index.campaigns.find(c => c.key === key)?.name || 'Unbekannt';
     if (
         !confirm(
-            `⚠️ "${campaignName}" LÖSCHEN?\n\nAlle Daten (${sizeKB} KB) werden gelöscht:\n- Charaktere, NPCs, Orte\n- Quests, Encounters\n- Initiative, Beute\n- Wiki, Netzwerk\n- Sessions\n\nDieser Vorgang kann NICHT rückgängig gemacht werden!`
+            `⚠️ "${campaignName}" LÖSCHEN?\n\nAlle Daten (${sizeKB} KB) werden gelöscht:\n- Charaktere, NPCs, Orte\n- Quests, Encounters\n- Initiative, Beute\n- Wiki, Netzwerk\n- Sessions\n- Automatische Backups dieser Kampagne\n\nDieser Vorgang kann NICHT rückgängig gemacht werden!`
         )
     ) {
         return;
@@ -145,6 +145,18 @@ async function deleteCampaign() {
             );
         } else {
             log('[deleteCampaign] Kampagnendaten entfernt');
+            // D2 = A: auch die Auto-Backups dieser Kampagne entfernen — erst NACH dem
+            // erfolgreichen Entfernen der Daten; ein Fehler hier haelt das Loeschen nicht auf
+            if (typeof window.purgeCampaignBackups === 'function') {
+                const purge = await window.purgeCampaignBackups(key);
+                if (!purge.success && APP_CONFIG.DEBUG_MODE && window.ErrorHandler) {
+                    window.ErrorHandler.log(
+                        'deleteCampaign',
+                        purge.error,
+                        'Auto-Backups der Kampagne konnten nicht entfernt werden'
+                    );
+                }
+            }
         }
         // 3. Globales D-Objekt zurücksetzen (falls Seite nicht neu lädt) — vollstaendiges
         //    Grundgeruest aus initializeData(), in place (D ist const)

@@ -324,6 +324,28 @@ const StorageAPI = {
             }
         }
     },
+    // Wie set() — gleiche Ergebnisform, gleiches Fehlerlog —, aber OHNE Toast
+    // (Code-Review 2026-09-21, R05/R10): fuer Aufrufer, die einen Quota-Fehler selbst
+    // behandeln (Backup-Liste: verdraengen und erneut versuchen). Mit set() meldete jeder
+    // Versuch "Speicher voll! Versuche Fallback zu IndexedDB...".
+    setQuiet(key, value) {
+        try {
+            localStorage.setItem(key, value);
+            return { success: true };
+        } catch (e) {
+            const error = e;
+            if (window.ErrorHandler) {
+                window.ErrorHandler.log('StorageAPI.setQuiet', error, key);
+            }
+            if (error.name === 'QuotaExceededError') {
+                return { success: false, error: 'QUOTA_EXCEEDED', original: error };
+            }
+            if (error.name === 'SecurityError') {
+                return { success: false, error: 'SECURITY_ERROR', original: error };
+            }
+            return { success: false, error: 'UNKNOWN', original: error };
+        }
+    },
     // Sicheres Löschen aus localStorage
     remove(key) {
         try {
