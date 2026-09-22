@@ -491,11 +491,13 @@ function executeImport(dataType) {
     if (mode === 'replace') {
         reportSafetyBackup(createAutoBackup({ reason: 'safety' }));
         ioSetArray(type, items);
+        // Zaehler ueber die groesste ersetzte ID heben (Code-Review 2026-09-21, R03)
+        validateAndRepairNextId(undefined, [type]);
     } else {
-        // Merge: Neue IDs vergeben für importierte Einträge
-        const getNextId = window.getNextId;
+        // Merge: neue IDs ueber den ID-Generator der App (nextId, auch fuer verschachtelte
+        // Sammlungen wie calendarEvents) — R03: die hier frueher aufgerufene Funktion gab es nicht
         const merged = items.map(item => {
-            return { ...item, id: getNextId(type) };
+            return { ...item, id: nextId(type) };
         });
         ioSetArray(type, [...(ioGetArray(type) || []), ...merged]);
     }
@@ -592,31 +594,203 @@ function showMindmapExportDialog(mindmap, campaignName) {
         document.body.appendChild(overlay);
     });
 }
-// Legacy: Globaler Import (alte Funktion umbenennen)
+// ============================================================
+// KAMPAGNEN-IMPORT (Code-Review 2026-09-21, R03/R07)
+// Eine Kampagnendatei wird VOLLSTAENDIG vorbereitet (Plausibilitaet, Alt-Charaktere,
+// Bereinigung, Migration, Standardwerte, eindeutige IDs, Zaehler), bevor ein Dialog
+// erscheint. "Ueberschreiben" ERSETZT danach die Kampagne (replaceCampaignData) statt die
+// Datei in D zu mischen; "neue Kampagne" schreibt Daten vor Index (addCampaignWithData).
+// ============================================================
+/**
+ * Sammlungen, von denen eine Kampagnendatei mindestens EINE als Array enthalten muss.
+ * Ohne diese Pruefung ersetzte eine reine Einstellungs- oder fremde JSON-Datei die ganze
+ * Kampagne durch Standardwerte. Pfade wie ID_COUNTER_PATHS (utils/utilities.js) — hier als
+ * eigene Liste, weil diese Datei beim Laden nicht auf utilities.js zugreifen darf.
+ */
+const CAMPAIGN_IMPORT_COLLECTIONS = [
+    ['characters'],
+    ['npcs'],
+    ['locations'],
+    ['quests'],
+    ['encounters'],
+    ['loot'],
+    ['spells'],
+    ['wiki'],
+    ['sessionNotes'],
+    ['storyArcs'],
+    ['bestiary'],
+    ['sessionPreps'],
+    ['factions'],
+    ['shops'],
+    ['links'],
+    ['filters'],
+    ['tags'],
+    ['quickRefCustom'],
+    ['randomTables'],
+    ['calendar', 'events'],
+    ['initiative', 'combatants']
+];
+/**
+ * App-Einstellungen, die ein ueberschreibender Import von der aktuellen Kampagne behaelt,
+ * wenn die Datei sie nicht mitbringt (Exporte enthalten sie immer).
+ */
+const CAMPAIGN_IMPORT_APP_KEYS = [
+    'settings',
+    'dmScreenLayout',
+    'dmScreenProfiles',
+    'dmScreenActiveProfile'
+];
+// Alt-Charaktere: Herkunft/Gewicht aus den Notizen, Spielername aus "(Name)" — unveraendert
+// aus dem frueheren Importpfad uebernommen
+function migrateImportedCharacters(copy) {
+    if (!Array.isArray(copy.characters)) return;
+    copy.characters = copy.characters.map(c => {
+        let bg = c.background || '';
+        let wt = c.weight || 0;
+        let pn = c.playerName || '';
+        if (c.notes && !bg) {
+            const m = c.notes.match(/Herkunft\s*:\s*([^\n]+)/i);
+            if (m) bg = m[1].trim();
+        }
+        if (c.notes && !wt) {
+            const m = c.notes.match(/Gewicht\s*:\s*(\d+)/i);
+            if (m) wt = parseInt(m[1]);
+        }
+        if (c.name?.includes('(') && !pn) {
+            const m = c.name.match(/\(([^)]+)\)/);
+            if (m) pn = m[1];
+        }
+        return {
+            ...c,
+            background: bg,
+            weight: wt,
+            playerName: pn,
+            hpCurrent: c.hpCurrent || 0,
+            hpMax: c.hpMax || 0,
+            spells: c.spells || []
+        };
+    });
+}
+/**
+ * Bereitet eine Kampagnendatei fuer beide Import-Zweige vor. Beruehrt nichts Globales
+ * (weder D noch Index noch Speicher) und wirft bei einer unbrauchbaren Datei einen Fehler
+ * mit deutscher Begruendung.
+ * @param {*} imp - geparste Datei
+ * @returns {{data: object, renumbered: Array<{type, from, to}>, keepFromCurrent: string[]}}
+ */
+function prepareCampaignImport(imp) {
+    if (imp === null || typeof imp !== 'object' || Array.isArray(imp)) {
+        throw new Error('Ungültige Importdatei');
+    }
+    if (typeof imp._dataType === 'string' || Array.isArray(imp.data)) {
+        throw new Error('Einzel-Export – bitte im jeweiligen Reiter importieren');
+    }
+    if (typeof imp._exportType === 'string') {
+        throw new Error(
+            'Umzugs- oder Audio-Export – bitte über den Umzugs-Assistenten importieren'
+        );
+    }
+    const hasCollection = CAMPAIGN_IMPORT_COLLECTIONS.some(segments => {
+        let node = imp;
+        for (const segment of segments) {
+            if (node === null || typeof node !== 'object') return false;
+            node = node[segment];
+        }
+        return Array.isArray(node);
+    });
+    if (!hasCollection) throw new Error('Keine Kampagnendaten gefunden');
+    // Flache Kopie; _version bleibt — der Normalisierer entscheidet ueber die Migration
+    const copy = { ...imp };
+    delete copy._campaignName;
+    delete copy._exportDate;
+    delete copy.mindmap;
+    const keepFromCurrent = CAMPAIGN_IMPORT_APP_KEYS.filter(
+        k => !Object.prototype.hasOwnProperty.call(copy, k)
+    );
+    migrateImportedCharacters(copy);
+    // SEC-01/D-01: HTML-tragende Felder an der Import-Grenze bereinigen — fuer BEIDE Zweige
+    Object.keys(HTML_FIELDS_BY_TYPE).forEach(type => {
+        if (Array.isArray(copy[type])) {
+            copy[type] = copy[type].map(item => sanitizeImportedItem(type, item));
+        }
+    });
+    // Kalender-Ereignisse liegen verschachtelt (calendar.events) und liefen frueher
+    // unbereinigt durch
+    if (
+        HTML_FIELDS_BY_TYPE.calendarEvents &&
+        copy.calendar &&
+        Array.isArray(copy.calendar.events)
+    ) {
+        copy.calendar = {
+            ...copy.calendar,
+            events: copy.calendar.events.map(e => sanitizeImportedItem('calendarEvents', e))
+        };
+    }
+    const result = window.normalizeCampaignData(copy);
+    if (!result.ok) throw new Error(result.error);
+    return { data: result.data, renumbered: result.renumbered, keepFromCurrent };
+}
+// Browser feuern fuer <input type=file> beim Auswaehlen 'input' UND 'change'; beide rufen
+// data-action="import-data-global" auf. Ein laufender Import ignoriert den zweiten Aufruf
+// (sonst zwei Dialogfolgen und zwei Importe derselben Datei).
+let _campaignImportRunning = false;
+// Globaler Kampagnen-Import (#import-file)
 function importDataGlobal() {
     const fileInput = $('import-file');
     const file = fileInput.files?.[0];
-    if (!file) return;
+    if (!file || _campaignImportRunning) return;
+    _campaignImportRunning = true;
+    const finish = () => {
+        fileInput.value = '';
+        _campaignImportRunning = false;
+    };
     const reader = new FileReader();
     reader.onload = async e => {
         try {
-            const result = e.target?.result;
-            const imp = JSON.parse(result);
+            let imp;
+            try {
+                imp = JSON.parse(e.target?.result);
+            } catch {
+                throw new Error('Datei ist kein gültiges JSON');
+            }
             const D = window.D;
-            const getCampaignIndex = window.getCampaignIndex;
-            const saveCampaignIndex = window.saveCampaignIndex;
             const renderAll = window.renderAll;
-            // Kampagnennamen aus Import holen
+            // Vorbereitung VOR jedem Dialog: eine unbrauchbare Datei beruehrt weder D noch
+            // Index noch Speicher
+            const prepared = prepareCampaignImport(imp);
             const campaignName =
-                imp._campaignName ||
-                file.name.replace('.json', '').replace(/-\d{4}-\d{2}-\d{2}$/, '');
-            // Benutzer fragen: Neue Kampagne oder aktuelle überschreiben?
+                String(
+                    imp._campaignName ||
+                        file.name.replace('.json', '').replace(/-\d{4}-\d{2}-\d{2}$/, '')
+                )
+                    .trim()
+                    .slice(0, 100) || 'Import';
+            // D3 = A: zwei native Dialoge — Abbrechen/Escape ist nie zerstoererisch
             const choice = confirm(
                 `Import: "${campaignName}"\n\n` +
-                    `OK = Als neue Kampagne importieren\n` +
-                    `Abbrechen = Aktuelle Kampagne überschreiben`
+                    `OK = Als NEUE Kampagne importieren\n` +
+                    `Abbrechen = weitere Optionen`
             );
+            if (!choice) {
+                const activeKey =
+                    typeof window.getActiveCampaignKey === 'function'
+                        ? window.getActiveCampaignKey()
+                        : null;
+                const activeName =
+                    activeKey && typeof window.getCampaignDisplayName === 'function'
+                        ? window.getCampaignDisplayName(activeKey)
+                        : 'aktuelle Kampagne';
+                const replace = confirm(
+                    `Aktuelle Kampagne „${activeName}“ durch den Import ERSETZEN?\n\n` +
+                        `Bereiche, die in der Datei fehlen, werden auf Standardwerte zurückgesetzt ` +
+                        `(Rückgängig mit Strg+Z).\n\n` +
+                        `OK = Ersetzen\n` +
+                        `Abbrechen = Import abbrechen`
+                );
+                if (!replace) return;
+            }
             // STAB-02 / D-09: Mindmap-Inhalt pruefen, bevor er beim Import verworfen wird
+            // (prepareCampaignImport() hat ihn aus den Importdaten bereits entfernt)
             if (imp.mindmap) {
                 const hasRealContent =
                     (imp.mindmap.nodes && imp.mindmap.nodes.length > 0) ||
@@ -624,115 +798,79 @@ function importDataGlobal() {
                 if (hasRealContent) {
                     await showMindmapExportDialog(imp.mindmap, campaignName); // bietet JSON-Backup an (D-10)
                 }
-                delete imp.mindmap; // danach immer entfernen (Feature ist abgeschafft)
             }
-            // Meta-Felder entfernen
-            delete imp._campaignName;
-            delete imp._exportDate;
-            delete imp._version;
-            // Migration
-            if (imp.characters) {
-                imp.characters = imp.characters.map(c => {
-                    let bg = c.background || '';
-                    let wt = c.weight || 0;
-                    let pn = c.playerName || '';
-                    if (c.notes && !bg) {
-                        const m = c.notes.match(/Herkunft\s*:\s*([^\n]+)/i);
-                        if (m) bg = m[1].trim();
-                    }
-                    if (c.notes && !wt) {
-                        const m = c.notes.match(/Gewicht\s*:\s*(\d+)/i);
-                        if (m) wt = parseInt(m[1]);
-                    }
-                    if (c.name?.includes('(') && !pn) {
-                        const m = c.name.match(/\(([^)]+)\)/);
-                        if (m) pn = m[1];
-                    }
-                    return {
-                        ...c,
-                        background: bg,
-                        weight: wt,
-                        playerName: pn,
-                        hpCurrent: c.hpCurrent || 0,
-                        hpMax: c.hpMax || 0,
-                        spells: c.spells || []
-                    };
-                });
-            }
-            // SEC-01/D-01/Pitfall 2: HTML-tragende Felder VOR der choice-Verzweigung bereinigen.
-            // Beide Zweige persistieren imp direkt (StorageAPI.setJSON bei "neue Kampagne",
-            // Object.assign(D, imp) beim Überschreiben) — ohne diese Vorschaltung wäre der
-            // "neue Kampagne"-Zweig genauso ungeschützt wie der Überschreib-Zweig.
-            Object.keys(HTML_FIELDS_BY_TYPE).forEach(type => {
-                if (Array.isArray(imp[type])) {
-                    imp[type] = imp[type].map(item => sanitizeImportedItem(type, item));
-                }
-            });
             if (choice) {
-                // Als neue Kampagne importieren
-                const index = getCampaignIndex();
-                const key = 'dnd-campaign-' + Date.now();
-                // Neue Kampagne in Index hinzufügen
-                index.campaigns.push({
-                    key,
-                    name: campaignName,
-                    created: new Date().toISOString()
+                // Als neue Kampagne importieren (R07): Daten zuerst (localStorage oder
+                // IndexedDB wie save()), dann EIN Indexwrite mit Eintrag und `active`;
+                // jeder Fehlschlag wird zurueckgenommen
+                const result = await window.addCampaignWithData(campaignName, prepared.data, {
+                    activate: true
                 });
-                // Kampagne aktivieren
-                index.active = key;
-                saveCampaignIndex(index);
-                // Daten speichern
-                const newData = {
-                    locations: [],
-                    npcs: [],
-                    quests: [],
-                    characters: [],
-                    sessionNotes: [],
-                    quickNotes: '',
-                    initiative: { combatants: [], currentTurn: 0, round: 1 },
-                    loot: [],
-                    items: [],
-                    encounters: [],
-                    spells: [],
-                    links: [],
-                    filters: [],
-                    calendar: { day: 1, month: 0, year: 1492, events: [] },
-                    _nextId: {},
-                    ...imp
-                };
-                const saveResult = StorageAPI.setJSON(key, newData);
-                if (saveResult.success) {
-                    showToast(`✅ Kampagne "${campaignName}" importiert`);
-                    location.reload();
-                } else {
-                    throw new Error(`Speichern fehlgeschlagen: ${saveResult.error}`);
+                if (!result.success) {
+                    let reason;
+                    if (result.stage === 'index') {
+                        reason = result.key
+                            ? 'Kampagnenindex konnte nicht gespeichert werden — Import zurückgenommen'
+                            : `${result.error || 'Kampagnenindex nicht lesbar'} — Import abgebrochen`;
+                    } else {
+                        reason = `Speichern fehlgeschlagen: ${result.error}`;
+                    }
+                    throw new Error(reason);
                 }
+                showToast(`✅ Kampagne "${campaignName}" importiert`);
+                location.reload();
             } else {
-                // Aktuelle Kampagne überschreiben (D is const, use Object.assign)
-                // WR-03/D-07: Undo-Punkt + Sicherungskopie VOR dem Datenwechsel, nach dem
-                // Muster von executeImport() (Zeilen ~386/389) — ein überschreibender Import
-                // war zuvor ohne Rückgängig-Punkt und ohne Backup endgültig.
+                // Aktuelle Kampagne überschreiben: vollstaendig ERSETZEN (R03) — Bereiche,
+                // die in der Datei fehlen, stehen danach auf den Standardwerten.
+                // WR-03/D-07: Undo-Punkt + Sicherungskopie VOR dem Datenwechsel.
                 saveUndoState('Kampagne überschrieben (Import)');
-                // Sicherheitskopie: D wird synchron beim Aufruf erfasst (vor Object.assign),
-                // die Meldung folgt dem echten Ergebnis (Code-Review 2026-09-21, R10)
+                // Sicherheitskopie: D wird synchron beim Aufruf erfasst (vor dem Ersetzen),
+                // die Meldung folgt dem echten Ergebnis (R10)
                 reportSafetyBackup(createAutoBackup({ reason: 'safety' }));
                 // Soundboard-Audio stoppen — Web Audio überlebt sonst den Daten-Reset
                 if (typeof window.stopAllTracks === 'function') window.stopAllTracks();
-                Object.assign(D, imp);
-                if (!D._nextId) D._nextId = {};
+                const next = prepared.data;
+                prepared.keepFromCurrent.forEach(k => {
+                    if (k in D) next[k] = D[k];
+                });
+                window.replaceCampaignData(D, next);
+                // Paritaet mit load(): Laufzeit-Container (shops, timers, campaign) anlegen
+                window.validateDataIntegrity();
                 renderAll();
                 updateIOCounts();
                 const quickNotes = $('quick-notes');
                 if (quickNotes) quickNotes.value = D.quickNotes || '';
                 save();
                 showToast('Import OK!');
+                // Reine Typumwandlungen ('7' -> 7) sind keine neu vergebenen IDs
+                const reassigned = prepared.renumbered.filter(
+                    change =>
+                        !(typeof change.from === 'string' && Number(change.from) === change.to)
+                ).length;
+                if (reassigned > 0) {
+                    showToast(
+                        `⚠️ ${reassigned} doppelte/fehlende IDs beim Import neu vergeben`,
+                        'warning'
+                    );
+                }
             }
-        } catch (e) {
-            alert('Fehler: ' + e.message);
+        } catch (err) {
+            alert('Fehler: ' + err.message);
+        } finally {
+            finish();
         }
-        fileInput.value = '';
     };
-    reader.readAsText(file);
+    reader.onerror = () => {
+        finish();
+        showToast('❌ Datei konnte nicht gelesen werden', 'error');
+    };
+    try {
+        reader.readAsText(file);
+    } catch (readError) {
+        finish();
+        showToast('❌ Datei konnte nicht gelesen werden', 'error');
+        if (window.ErrorHandler) window.ErrorHandler.log('importDataGlobal', readError);
+    }
 }
 function copyData() {
     try {

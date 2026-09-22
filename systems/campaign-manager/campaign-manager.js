@@ -29,50 +29,181 @@ function getCampaignDisplayName(key) {
     const entry = campaigns.find(c => c && c.key === key);
     return entry && typeof entry.name === 'string' && entry.name !== '' ? entry.name : key;
 }
-function createCampaign() {
+// ============================================================
+// KAMPAGNENANLAGE (Code-Review 2026-09-21, R07)
+// INVARIANTE: der Index verweist nie auf eine Kampagne, deren Daten nicht gespeichert sind,
+// und `active` aendert sich nur im letzten, einzigen Indexwrite. Reihenfolge: Daten
+// (writeCampaignData: localStorage oder IndexedDB nach den Regeln von save()) -> EIN
+// Indexwrite; jeder Fehlschlag nimmt die geschriebenen Daten wieder zurueck.
+// ============================================================
+/**
+ * Liest den Kampagnenindex STRENG. Ein vorhandener, aber unlesbarer Index wird nie durch
+ * einen Standardindex ersetzt: getJSON() liefert dann den Rueckfallwert, und wer den
+ * zurueckschreibt, macht jeden Kampagneneintrag unerreichbar.
+ * @returns {{ok: true, index: {campaigns: Array, active: string}} | {ok: false, error: string}}
+ */
+function readCampaignIndexStrict() {
+    const raw = StorageAPI.get(CAMPAIGN_INDEX_KEY, null);
+    if (raw === null) {
+        return { ok: true, index: { campaigns: [], active: APP_CONFIG.STORAGE_KEY } };
+    }
+    let parsed;
+    try {
+        parsed = JSON.parse(raw);
+    } catch {
+        return { ok: false, error: 'Kampagnenindex ist beschädigt' };
+    }
+    if (
+        !parsed ||
+        typeof parsed !== 'object' ||
+        Array.isArray(parsed) ||
+        !Array.isArray(parsed.campaigns)
+    ) {
+        return { ok: false, error: 'Kampagnenindex ist beschädigt' };
+    }
+    return { ok: true, index: parsed };
+}
+/**
+ * Freier Schluessel fuer eine neue Kampagne: weder im Index noch in localStorage belegt. So
+ * kann ein Rueckbau nie fremde Daten loeschen (zwei Anlagen in derselben Millisekunde
+ * bekommen ein Zaehler-Suffix).
+ * @param {{campaigns: Array}} index - streng gelesener Index
+ * @returns {string}
+ */
+function newCampaignKey(index) {
+    const taken = key =>
+        index.campaigns.some(c => c && c.key === key) || StorageAPI.get(key, null) !== null;
+    const base = 'dnd-campaign-' + Date.now();
+    let key = base;
+    for (let n = 1; taken(key); n++) key = base + '-' + n;
+    return key;
+}
+/**
+ * Entfernt die Daten einer eben angelegten, nicht in den Index uebernommenen Kampagne.
+ * Nur localStorage beschrieben: gezielt dort (funktioniert auch ohne oeffnbare IndexedDB);
+ * sonst ueber removeCampaignData() (IndexedDB mit bestaetigtem Commit, dann localStorage).
+ * @param {string} key
+ * @param {'localStorage'|'indexedDB'|null} backend - wohin writeCampaignData() geschrieben hat
+ */
+async function rollbackNewCampaignData(key, backend) {
+    if (backend === 'localStorage') {
+        StorageAPI.remove(key);
+        StorageAPI.remove(key + '_ts');
+        return;
+    }
+    const removal =
+        typeof window.removeCampaignData === 'function'
+            ? await window.removeCampaignData(key)
+            : null;
+    if ((!removal || !removal.success) && APP_CONFIG.DEBUG_MODE && window.ErrorHandler) {
+        window.ErrorHandler.log(
+            'addCampaignWithData',
+            removal && removal.error,
+            'Rueckbau der neuen Kampagne unvollstaendig: ' + key
+        );
+    }
+}
+/**
+ * Legt eine Kampagne atomar an: Daten zuerst, danach EIN Indexwrite (Eintrag, bei
+ * activate auch `active`). Scheitert ein Schritt, werden die Daten zurueckgenommen und der
+ * Index bleibt byte-identisch. Wirft nie.
+ * @param {string} name - Anzeigename
+ * @param {object|string} data - vollstaendiger Kampagnenstand
+ * @param {{activate?: boolean}} [options]
+ * @returns {Promise<{success: true, key: string, backend: string} |
+ *   {success: false, stage: 'index'|'data'|'unexpected', key?: string, error: *}>}
+ */
+async function addCampaignWithData(name, data, { activate = false } = {}) {
+    let key = null;
+    let backend = null;
+    try {
+        const before = readCampaignIndexStrict();
+        if (!before.ok) return { success: false, stage: 'index', error: before.error };
+        key = newCampaignKey(before.index);
+        const write = await window.writeCampaignData(key, data);
+        if (!write || !write.success) {
+            await rollbackNewCampaignData(key, null);
+            return { success: false, stage: 'data', key, error: write && write.error };
+        }
+        backend = write.backend;
+        // Nach dem await frisch lesen: ein anderer Tab kann den Index inzwischen geaendert haben
+        const current = readCampaignIndexStrict();
+        if (!current.ok) {
+            await rollbackNewCampaignData(key, backend);
+            return { success: false, stage: 'index', key, error: current.error };
+        }
+        const next = Object.assign({}, current.index, {
+            campaigns: current.index.campaigns.concat([
+                { key, name, created: new Date().toISOString() }
+            ])
+        });
+        if (activate) next.active = key;
+        const indexResult = saveCampaignIndex(next);
+        if (!indexResult || !indexResult.success) {
+            await rollbackNewCampaignData(key, backend);
+            return {
+                success: false,
+                stage: 'index',
+                key,
+                error: (indexResult && indexResult.error) || 'Index nicht gespeichert'
+            };
+        }
+        return { success: true, key, backend };
+    } catch (error) {
+        if (key) await rollbackNewCampaignData(key, backend);
+        return {
+            success: false,
+            stage: 'unexpected',
+            key,
+            error: (error && error.message) || String(error)
+        };
+    }
+}
+// Doppelklick-Schutz: waehrend einer laufenden Anlage (IndexedDB-Rueckfall ist asynchron)
+// wird ein zweiter Klick ignoriert
+let _campaignCreateInFlight = false;
+// async (R07): der data-action-'call'-Dispatcher ignoriert das Promise; die Funktion lehnt nie ab
+async function createCampaign() {
     const input = $('new-campaign-name');
-    if (!input) return;
-    const name = input.value.trim();
+    if (!input || _campaignCreateInFlight) return;
+    const name = input.value.trim().slice(0, 100);
     if (!name) {
         showToast('⚠️ Name erforderlich', 'error');
         return;
     }
-    const index = getCampaignIndex();
-    const key = 'dnd-campaign-' + Date.now();
-    index.campaigns.push({ key, name, created: new Date().toISOString() });
-    saveCampaignIndex(index);
-    // Create empty campaign data
-    const emptyData = {
-        locations: [],
-        npcs: [],
-        quests: [],
-        characters: [],
-        sessionNotes: [],
-        storyArcs: [],
-        quickNotes: '',
-        initiative: { combatants: [], currentTurn: 0, round: 1 },
-        loot: [],
-        items: [],
-        encounters: [],
-        spells: [],
-        links: [],
-        filters: [],
-        calendar: { day: 1, month: 0, year: 1492, events: [] },
-        _nextId: {}
-    };
-    const result = StorageAPI.setJSON(key, emptyData);
-    if (!result.success) {
-        showToast('❌ Fehler beim Erstellen der Kampagne', 'error');
-        return;
+    _campaignCreateInFlight = true;
+    input.disabled = true;
+    try {
+        // Vollstaendiges Grundgeruest aus initializeData(); eine neue Kampagne wird nicht aktiviert
+        const result = await addCampaignWithData(name, window.initializeData());
+        if (!result.success) {
+            if (window.ErrorHandler) {
+                window.ErrorHandler.log(
+                    'createCampaign',
+                    new Error(String(result.error)),
+                    result.stage
+                );
+            }
+            showToast('❌ Fehler beim Erstellen der Kampagne', 'error');
+            return;
+        }
+        input.value = '';
+        renderCampaignList();
+        showToast(`Kampagne "${name}" erstellt`);
+    } finally {
+        input.disabled = false;
+        _campaignCreateInFlight = false;
     }
-    input.value = '';
-    renderCampaignList();
-    showToast(`Kampagne "${name}" erstellt`);
 }
 function switchCampaign(key) {
     const index = getCampaignIndex();
     index.active = key;
-    saveCampaignIndex(index);
+    // Nur neu laden, wenn der Wechsel wirklich gespeichert ist (R07)
+    const result = saveCampaignIndex(index);
+    if (!result || !result.success) {
+        showToast('❌ Kampagnenwechsel fehlgeschlagen (Speicher voll?)', 'error');
+        return;
+    }
     location.reload();
 }
 // Loescht die Kampagne, die DIESER Tab zeigt (getActiveCampaignKey), nicht index.active:
@@ -202,6 +333,8 @@ function renderCampaignList() {
 // ============================================================
 window.getCampaignIndex = getCampaignIndex;
 window.getCampaignDisplayName = getCampaignDisplayName;
+window.readCampaignIndexStrict = readCampaignIndexStrict;
+window.addCampaignWithData = addCampaignWithData;
 window.createCampaign = createCampaign;
 window.switchCampaign = switchCampaign;
 window.deleteCampaign = deleteCampaign;

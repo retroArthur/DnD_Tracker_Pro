@@ -269,6 +269,20 @@ function validateDataIntegrity() {
             repairs.push(`${key} war kein Objekt, wurde initialisiert`);
         }
     }
+    // Bestandsschaeden reparieren (Code-Review 2026-09-21, R03): ueberschreibende Importe
+    // konnten doppelte IDs in ALLEN Register-Sammlungen hinterlassen — auch verschachtelten
+    // (calendar.events, initiative.combatants), die die Pruefungen unten nicht kennen; das
+    // Loeschen eines Kalender-Ereignisses entfernte dann jedes mit derselben ID.
+    // normalizeEntityIds() laeuft VOR der ID-Pruefung unten: rein numerische Zeichenketten-IDs
+    // ('5') werden zur Zahl, statt neu vergeben zu werden (Referenzen wie giverId bleiben
+    // aufloesbar). Fuer gueltige, eindeutige Zahlen-IDs aendert es nichts — die kalibrierten
+    // E2E-Seeds loesen weiterhin keine Reparatur aus.
+    if (typeof window.normalizeEntityIds === 'function') {
+        for (const change of window.normalizeEntityIds(D)) {
+            const from = change.from === undefined ? 'fehlend' : JSON.stringify(change.from);
+            repairs.push(`${change.type}: ID ${from} zu ${change.to} geändert`);
+        }
+    }
     // Prüfe auf Entities ohne ID
     const nextId = window.nextId;
     for (const [collection, schema] of [

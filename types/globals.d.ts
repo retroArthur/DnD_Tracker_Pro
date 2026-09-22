@@ -158,6 +158,66 @@ declare global {
   function purgeCampaignBackups(key: string): Promise<{ success: boolean; error?: unknown }>;
 
   // ============================================================
+  // KAMPAGNEN-IMPORT & ATOMARE KAMPAGNENANLAGE (Code-Review 2026-09-21, U6/R03/R07)
+  // ============================================================
+
+  /** Eintrag im Kampagnenindex */
+  interface CampaignIndexEntry {
+    key: string;
+    name: string;
+    created?: string;
+  }
+
+  /** Kampagnenindex (localStorage, APP_CONFIG.CAMPAIGN_INDEX_KEY) */
+  interface CampaignIndex {
+    campaigns: CampaignIndexEntry[];
+    active: string;
+  }
+
+  /** Ergebnis von writeCampaignData() — wirft nie */
+  interface WriteCampaignDataResult {
+    success: boolean;
+    backend: 'localStorage' | 'indexedDB' | null;
+    error: string | null;
+  }
+
+  /** Ergebnis von addCampaignWithData() — wirft nie */
+  type AddCampaignResult =
+    | { success: true; key: string; backend: 'localStorage' | 'indexedDB' }
+    | { success: false; stage: 'index' | 'data' | 'unexpected'; key?: string; error: unknown };
+
+  /** Vorbereitete Kampagnendatei (beide Import-Zweige) */
+  interface PreparedCampaignImport {
+    data: Record<string, any>;
+    renumbered: EntityIdChange[];
+    keepFromCurrent: string[];
+  }
+
+  /** Kampagnendaten nach den Regeln von save() schreiben, ohne UI-Nebenwirkungen */
+  function writeCampaignData(key: string, data: object | string): Promise<WriteCampaignDataResult>;
+
+  /** Kampagnenindex streng lesen: ein unlesbarer Index wird nie ueberschrieben */
+  function readCampaignIndexStrict():
+    | { ok: true; index: CampaignIndex }
+    | { ok: false; error: string };
+
+  /** Kampagne atomar anlegen: Daten vor EINEM Indexwrite, Rueckbau bei jedem Fehlschlag */
+  function addCampaignWithData(
+    name: string,
+    data: object | string,
+    options?: { activate?: boolean }
+  ): Promise<AddCampaignResult>;
+
+  /** Kampagnendatei pruefen, bereinigen und normalisieren — wirft mit deutscher Begruendung */
+  function prepareCampaignImport(imp: unknown): PreparedCampaignImport;
+
+  /** Alt-Charakterfelder einer Importkopie ergaenzen (in place) */
+  function migrateImportedCharacters(copy: Record<string, any>): void;
+
+  /** Kampagnen-Import ueber #import-file (zwei Dialoge, D3 = A) */
+  function importDataGlobal(): void;
+
+  // ============================================================
   // KAMPAGNEN-DATEN & ID-INVARIANTE (Code-Review 2026-09-21, U2)
   // ============================================================
 
@@ -577,14 +637,17 @@ declare global {
   // CAMPAIGN FUNCTIONS
   // ============================================================
   
-  /** Create campaign */
-  function createCampaign(): void;
-  
-  /** Switch campaign */
+  /** Create campaign (async seit U6/R07: Daten vor Index; lehnt nie ab) */
+  function createCampaign(): Promise<void>;
+
+  /** Switch campaign (laedt nur nach gespeichertem Indexwrite neu) */
   function switchCampaign(key: string): void;
-  
-  /** Get campaign index */
-  function getCampaignIndex(): Record<string, { name: string; lastModified: string }>;
+
+  /** Get campaign index (nachsichtig: unlesbar -> Standardindex; siehe readCampaignIndexStrict) */
+  function getCampaignIndex(): CampaignIndex;
+
+  /** Kampagnenindex speichern; liefert das StorageAPI-Ergebnis */
+  function saveCampaignIndex(index: CampaignIndex): { success: boolean; error?: string };
   
   // ============================================================
   // EXPORT/IMPORT FUNCTIONS

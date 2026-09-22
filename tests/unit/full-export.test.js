@@ -106,6 +106,9 @@ beforeAll(() => {
                 writtenKeys[key] = value;
                 return { success: true };
             }),
+            // Code-Review 2026-09-21 (R07): _ts-Begleiter je Kampagne — bewusst NICHT in
+            // writtenKeys, damit die Schluessel-Aufzaehlungen unten unveraendert bleiben
+            set: jest.fn(() => ({ success: true })),
             has: jest.fn(() => false)
         },
         // 12-07: Stubs, die importFullExport() nachschlaegt (bare oder ueber window)
@@ -594,6 +597,7 @@ describe('Versions-Rundlauf mit echter migrateData (SAFE-06)', () => {
                     echtGeschrieben[key] = value;
                     return { success: true };
                 },
+                set: () => ({ success: true }),
                 has: () => false
             },
             saveCampaignIndex: idx => {

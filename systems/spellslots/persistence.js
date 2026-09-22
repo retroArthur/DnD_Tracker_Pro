@@ -244,6 +244,59 @@ async function removeCampaignData(key) {
     }
     return { success: true };
 }
+/**
+ * Schreibt die Daten EINER Kampagne nach denselben Regeln wie save(), aber ohne
+ * UI-Nebenwirkungen (kein Toast, keine Speicheranzeige, kein Broadcast, keine
+ * Post-Save-Hooks) — fuer Kampagnen, die dieser Tab (noch) nicht anzeigt: neue Kampagne,
+ * Import als neue Kampagne (Code-Review 2026-09-21, R07).
+ *  - > 5 MB (UTF-8): nur IndexedDB (strict, bestaetigter Commit), danach localStorage-Kopie
+ *    und _ts entfernen
+ *  - sonst localStorage plus _ts-Begleiter (sonst haelt load() den Stand fuer einen
+ *    veralteten Schatten)
+ *  - scheitert localStorage: IndexedDB-Rueckfall (strict), _ts entfernen
+ * Ein IndexedDB-Erfolg ist belastbar, weil saveToIndexedDBFallback() erst nach 'complete'
+ * aufloest (R04). Wirft nie.
+ * @param {string} key - Kampagnen-Speicherschluessel
+ * @param {object|string} data - Kampagnenobjekt oder bereits serialisierter Text
+ * @returns {Promise<{success: boolean, backend: 'localStorage'|'indexedDB'|null, error: string|null}>}
+ */
+async function writeCampaignData(key, data) {
+    const LS_LIMIT_MB = 5;
+    const fail = error => ({ success: false, backend: null, error: String(error) });
+    if (typeof key !== 'string' || key === '') return fail('Ungültiger Kampagnenschlüssel');
+    let dataString;
+    try {
+        dataString = typeof data === 'string' ? data : JSON.stringify(data);
+    } catch (serializeError) {
+        return fail((serializeError && serializeError.message) || 'Serialisierung fehlgeschlagen');
+    }
+    if (typeof dataString !== 'string') return fail('Keine Kampagnendaten');
+    try {
+        if (_measureDataByteLength(dataString) / (1024 * 1024) > LS_LIMIT_MB) {
+            await saveToIndexedDBFallback(key, dataString);
+            StorageAPI.remove(key);
+            StorageAPI.remove(key + '_ts');
+            return { success: true, backend: 'indexedDB', error: null };
+        }
+        const lsResult = StorageAPI.setQuiet(key, dataString);
+        if (lsResult.success) {
+            StorageAPI.setQuiet(key + '_ts', String(Date.now()));
+            return { success: true, backend: 'localStorage', error: null };
+        }
+        try {
+            await saveToIndexedDBFallback(key, dataString);
+        } catch (idbError) {
+            if (window.APP_CONFIG && window.APP_CONFIG.DEBUG_MODE && window.ErrorHandler) {
+                window.ErrorHandler.log('writeCampaignData', idbError, 'IndexedDB-Rueckfall fehlgeschlagen');
+            }
+            return fail(lsResult.error || 'Speichern fehlgeschlagen');
+        }
+        StorageAPI.remove(key + '_ts');
+        return { success: true, backend: 'indexedDB', error: null };
+    } catch (error) {
+        return fail((error && error.message) || error);
+    }
+}
 // Load mit IndexedDB-Fallback (gibt nur .data zurück)
 async function loadFromIndexedDBFallback(key) {
     const initIndexedDB = window.initIndexedDB;
@@ -377,4 +430,5 @@ window.saveImmediate = saveImmediate;
 window.registerPostSaveHook = registerPostSaveHook;
 window.loadFromIndexedDBFallbackRaw = loadFromIndexedDBFallbackRaw;
 window.removeCampaignData = removeCampaignData;
+window.writeCampaignData = writeCampaignData;
 // Note: load() and loadFromBackup() are defined in systems/backups.js

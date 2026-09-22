@@ -167,6 +167,10 @@ function importFullExport(parsedObj) {
         if (!saveResult.success) {
             throw new Error('Speichern fehlgeschlagen: ' + (saveResult.error || 'Unbekannter Fehler'));
         }
+        // _ts-Begleiter (Code-Review 2026-09-21, R07): ohne ihn haelt load() den frisch
+        // importierten Stand fuer einen veralteten localStorage-Schatten und nimmt eine
+        // vorhandene (aeltere) IndexedDB-Kopie — jede Kampagne ueber 2 MB hat eine.
+        StorageAPI.set(key + '_ts', String(Date.now()));
         totalBytes += JSON.stringify(migratedData).length;
     }
 
