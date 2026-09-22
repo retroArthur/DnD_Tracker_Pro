@@ -15,8 +15,9 @@
  *    im IndexedDB-Modus wird der Save angestossen
  *  - die native Rueckfrage nur bei einem ausdruecklich angestossenen Save (ausstehend, laufend,
  *    gescheitert) — D5 = A; harmlose Nebenaenderungen fragen nie
- *  - automatische Saves (Session-Timer, Reparatur nach load(), initRandomTables) schreiben in
- *    einem veralteten Tab nie (D4 = A); ausdrueckliche Saves bleiben last-writer-wins
+ *  - automatische Saves (Session-Timer, Reparatur nach load(), initRandomTables,
+ *    Markdown-Onboarding) schreiben in einem veralteten Tab und nach gescheitertem load() nie
+ *    (D4 = A); ausdrueckliche Saves bleiben last-writer-wins
  *  - retireCampaignWrites(): harte Schreibsperre VOR dem Entfernen/Umziehen
  *
  * Werkbank: tests/unit/helpers/multi-tab-harness.js (ein vm-Kontext je Tab, geteilter
@@ -144,6 +145,48 @@ describe('R02 — Kern: ein Tab schreibt beim Verlassen nie blind zurueck', () =
         expect(ev.defaultPrevented).toBe(false);
     });
 
+    // Jede echte Sitzung hat schon gespeichert: nach dem EIGENEN Save muss die Baseline dem
+    // eigenen Write folgen — sonst gilt der Tab gegen sich selbst als veraltet (automatische
+    // Saves, der Flush beim Verstecken und das Schreiben beim Verlassen waeren gesperrt)
+    const EIGENER_SAVE = {
+        saveImmediate: async (u, A) => {
+            expect(await A.ctx.saveImmediate()).toMatchObject({
+                success: true,
+                backend: 'localStorage'
+            });
+        },
+        'entprellter save()': async (u, A) => {
+            A.ctx.save();
+            await u.uhr.laufen(350);
+        }
+    };
+
+    test.each(Object.keys(EIGENER_SAVE))(
+        'U4b (Sicherheitsnetz nach eigenem Save, %s): erneut geaendert mit ausstehendem save() — synchron geschrieben, keine Rueckfrage, _rev neu',
+        async art => {
+            const u = erzeugeUrsprung();
+            u.saeen(KEY, kampagne(['Aria']), { ts: '1000' });
+            const A = await oeffneTab(u, 'A').starten();
+            A.ctx.D.characters[0].name = 'Aria 1';
+            await EIGENER_SAVE[art](u, A);
+            expect(namen(u.ls.get(KEY))).toEqual(['Aria 1']); // Nicht-Vakuitaet
+            const revNachEigenemSave = u.ls.get(KEY + '_rev');
+            expect(revNachEigenemSave).toEqual(expect.any(String));
+            expect(A.ctx.isCampaignStorageStale(KEY)).toBe(false);
+            expect(A.ctx.saveAutomatic()).toBe(true); // Session-Timer & Co. schreiben weiter
+
+            A.ctx.D.characters[0].name = 'Aria 2';
+            A.ctx.save(); // ausstehend (300 ms)
+            const ev = A.entladen('schliessen innerhalb des Debounce');
+
+            expect(namen(u.ls.get(KEY))).toEqual(['Aria 2']);
+            expect(ev.defaultPrevented).toBe(false);
+            expect(u.ls.get(KEY + '_rev')).toEqual(expect.any(String));
+            expect(u.ls.get(KEY + '_rev')).not.toBe(revNachEigenemSave);
+            expect(beimEntladen(u, 'A').map(e => e.key)).toContain(KEY);
+        }
+    );
+
     test('U5: geaendert UND veraltet, ausdruecklicher Save ausstehend — Bs Daten bleiben, Rueckfrage angefordert', async () => {
         const u = erzeugeUrsprung();
         u.saeen(KEY, kampagne(['Aria']));
@@ -256,6 +299,123 @@ describe('R02 — IndexedDB-Modus (> 5 MB)', () => {
         expect(ev.defaultPrevented).toBe(false);
         const C = await oeffneTab(u, 'C').starten();
         expect(C.ctx.D.characters[0].name).toBe('Umbenannt vor Tabwechsel');
+    });
+
+    const idbPuts = (u, ab) =>
+        u.idb.anfragen.slice(ab).filter(a => a.op === 'put' && a.store === 'campaigns');
+
+    // Nach dem eigenen IndexedDB-Save folgt die Baseline dem eigenen Write (Snapshot, _rev)
+    async function eigenerIdbSave(u, A, name) {
+        A.ctx.D.characters[0].name = name;
+        const r = await A.ctx.saveImmediate();
+        await u.uhr.laufen(0);
+        expect(r).toMatchObject({ success: true, backend: 'indexedDB' });
+        expect(JSON.parse(u.idbDatensatz(KEY).data).characters[0].name).toBe(name);
+    }
+
+    test('U4c: nach dem eigenen IndexedDB-Save — _rev gesetzt; unveraendert geschlossen: kein weiterer put, keine Rueckfrage', async () => {
+        const u = erzeugeUrsprung({ lsQuotaZeichen: LS_QUOTA });
+        u.saeenIdb(KEY, grosseKampagne());
+        const A = await oeffneTab(u, 'A').starten();
+        await eigenerIdbSave(u, A, 'Gespeichert');
+        // Der _rev-Marker ist im IndexedDB-Modus das einzige Signal an andere Tabs
+        expect(u.ls.get(KEY + '_rev')).toEqual(expect.any(String));
+        expect(A.ctx.isCampaignStorageStale(KEY)).toBe(false);
+        const vorher = u.idb.anfragen.length;
+
+        const ev = A.entladen('schliessen');
+        await u.uhr.laufen(0);
+
+        expect(idbPuts(u, vorher)).toEqual([]);
+        expect(ev.defaultPrevented).toBe(false);
+        expect(u.schreibvorgaenge({ tab: 'A', phase: ['beforeunload', 'pagehide'] })).toEqual([]);
+    });
+
+    test('U4d: nach dem eigenen IndexedDB-Save erneut geaendert mit ausstehendem save() — put mit der neuen Aenderung abgesetzt, Rueckfrage angefordert', async () => {
+        const u = erzeugeUrsprung({ lsQuotaZeichen: LS_QUOTA });
+        u.saeenIdb(KEY, grosseKampagne());
+        const A = await oeffneTab(u, 'A').starten();
+        await eigenerIdbSave(u, A, 'Erste');
+        expect(A.ctx.saveAutomatic()).toBe(true);
+        A.ctx.D.characters[0].name = 'Zweite';
+        A.ctx.save();
+        const vorher = u.idb.anfragen.length;
+
+        const ev = A.entladen('schliessen innerhalb des Debounce');
+
+        const puts = idbPuts(u, vorher);
+        expect(puts.length).toBeGreaterThanOrEqual(1);
+        expect(JSON.parse(puts[puts.length - 1].wert.data).characters[0].name).toBe('Zweite');
+        expect(ev.defaultPrevented).toBe(true); // D5: > 5 MB schreibt noch
+        expect(speicherVoll(A)).toEqual([]);
+    });
+
+    // A ist veraltet UND geaendert (ausdruecklicher Save ausstehend): Bs neuerer
+    // IndexedDB-Datensatz ueberlebt, As Aenderung landet nirgends, die Rueckfrage kommt.
+    // Im IndexedDB-Modus fehlt der Kampagnenschluessel in localStorage — die Inhaltspruefung
+    // sieht dort null === null und erkennt NICHTS. Veraltung haengt allein an _rev und am
+    // external-Flag (BroadcastChannel/storage-Ereignis ueber systems/undo.js).
+    async function veraltetUndGeaendertSchliessen(u, A, { zustellen = true } = {}) {
+        if (zustellen) await u.uhr.laufen(0);
+        A.ctx.D.characters[0].name = 'A (veraltet)';
+        A.ctx.save();
+        const ev = A.entladen('schliessen');
+        await u.uhr.laufen(0); // ein angestossener put haette jetzt committet
+        const rec = JSON.parse(u.idbDatensatz(KEY).data);
+        expect(rec.characters[1].name).toBe('Neu aus B');
+        expect(rec.characters[0].name).toBe('Held 0');
+        expect(ev.defaultPrevented).toBe(true);
+        return ev;
+    }
+
+    async function bSpeichertInIdb(u, B) {
+        B.ctx.D.characters[1].name = 'Neu aus B';
+        const r = await B.ctx.saveImmediate();
+        expect(r).toMatchObject({ success: true, backend: 'indexedDB' });
+        expect(u.ls.has(KEY)).toBe(false); // kein localStorage-Schatten: Inhaltspruefung blind
+    }
+
+    test('U9b: veraltet UND geaendert im IndexedDB-Modus — Bs Datensatz ueberlebt, Rueckfrage angefordert', async () => {
+        const u = erzeugeUrsprung({ lsQuotaZeichen: LS_QUOTA });
+        u.saeenIdb(KEY, grosseKampagne());
+        const { A, B } = await zweiTabs(u);
+        await bSpeichertInIdb(u, B);
+
+        await veraltetUndGeaendertSchliessen(u, A);
+        expect(A.bannerSichtbar()).toBe(true);
+    });
+
+    test('U9c: _rev allein — A schliesst, bevor Bs Broadcast und storage-Ereignis zugestellt sind', async () => {
+        const u = erzeugeUrsprung({ lsQuotaZeichen: LS_QUOTA });
+        u.saeenIdb(KEY, grosseKampagne());
+        const { A, B } = await zweiTabs(u);
+        await bSpeichertInIdb(u, B);
+        expect(A.bannerSichtbar()).toBe(false); // noch nichts zugestellt
+
+        await veraltetUndGeaendertSchliessen(u, A, { zustellen: false });
+    });
+
+    test('U9d: localStorage voll — Bs _rev-Write scheitert, allein der BroadcastChannel macht A veraltet', async () => {
+        const u = erzeugeUrsprung({ lsQuotaZeichen: 0 });
+        u.saeenIdb(KEY, grosseKampagne());
+        const { A, B } = await zweiTabs(u);
+        await bSpeichertInIdb(u, B);
+        expect(u.ls.has(KEY + '_rev')).toBe(false); // der _rev-Marker fehlt wirklich
+
+        await veraltetUndGeaendertSchliessen(u, A);
+        expect(A.bannerSichtbar()).toBe(true);
+    });
+
+    test('U9e: ohne BroadcastChannel — das storage-Ereignis des _rev-Markers zeigt das Banner, A ueberschreibt nicht', async () => {
+        const u = erzeugeUrsprung({ lsQuotaZeichen: LS_QUOTA });
+        u.saeenIdb(KEY, grosseKampagne());
+        const ohneKanal = { stubs: { BroadcastChannel: undefined } };
+        const { A, B } = await zweiTabs(u, { A: ohneKanal, B: ohneKanal });
+        await bSpeichertInIdb(u, B);
+        await u.uhr.laufen(0);
+        expect(A.bannerSichtbar()).toBe(true);
+
+        await veraltetUndGeaendertSchliessen(u, A);
     });
 
     test('U22: switchCampaign() schreibt einen ausstehenden Save fest, BEVOR neu geladen wird — keine Rueckfrage', async () => {
@@ -524,6 +684,9 @@ describe('R02 — Randfaelle', () => {
         B.ctx.D.characters.push({ id: 2, name: 'Yara' });
         await B.ctx.saveImmediate();
         await u.uhr.laufen(0);
+        // Broadcast und storage-Ereignisse der anderen Kampagne: weder Banner noch Veraltung
+        expect(A.bannerSichtbar()).toBe(false);
+        expect(A.ctx.isCampaignStorageStale(KEY)).toBe(false);
 
         const ev = A.entladen('schliessen');
 
