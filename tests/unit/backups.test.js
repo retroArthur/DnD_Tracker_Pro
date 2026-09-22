@@ -13,8 +13,10 @@
  *    toten mindmap-Schluessel (mindmap: { nodes: [], edges: [] }) — mit
  *    `edges` statt des ueberall sonst verwendeten `connections`. Der Seed
  *    wird entfernt (Task 3); ein Backup, das den Schluessel NOCH enthaelt,
- *    muss weiterhin fehlerfrei durch sanitizeBackupData() laufen und danach
- *    den Schluessel nicht mehr tragen.
+ *    muss weiterhin fehlerfrei wiederhergestellt werden und danach den
+ *    Schluessel nicht mehr tragen. Seit Code-Review 2026-09-21 (U4, R01)
+ *    gibt es weder defaultD noch sanitizeBackupData(): der Restore laeuft
+ *    ueber normalizeCampaignData() (loadRestorePath() unten).
  *
  * Lädt systems/backups.js per `vm` in eine frische Sandbox (Muster aus
  * tests/unit/file-backup-idb.test.js) und ersetzt setInterval/clearInterval/
@@ -158,44 +160,88 @@ describe('initPerformanceMonitoring() — Mehrfachstart-Guard (T-13-12)', () => 
     });
 });
 
-describe('restoreBackup() / sanitizeBackupData() — toter mindmap-Seed entfernt (Task 3)', () => {
-    test('sanitizeBackupData() laeuft mit einem alten mindmap-Schluessel fehlerfrei durch, wenn das Schema ihn nicht mehr kennt', () => {
-        const { context } = loadBackupsModule();
+/**
+ * Restore-Pfad mit den ECHTEN Modulen (Code-Review 2026-09-21, U4): der vm-Kontext ist
+ * zugleich `window`, damit version-migration.js (normalizeCampaignData) und core/data.js
+ * (initializeData, replaceCampaignData) wie im Browser zusammenspielen. window.idb bleibt
+ * null und initIndexedDB() ein No-op — getBackups() faellt wie im echten
+ * "kein IndexedDB verfuegbar"-Fall auf die (gefilterte) localStorage-Liste zurueck.
+ */
+const REPO_ROOT = path.join(__dirname, '../..');
+const RESTORE_FILES = [
+    'core/config.js',
+    'core/data.js',
+    'utils/basic.js',
+    'utils/idb-tx.js',
+    'utils/utilities.js',
+    'systems/spellslots/version-migration.js',
+    'systems/backups.js'
+];
+function loadRestorePath({ storedBackups = [] } = {}) {
+    const lsStore = { 'dnd-tracker-backups': JSON.stringify(storedBackups) };
+    const context = { setTimeout, clearTimeout, Blob, console };
+    context.window = context;
+    context.document = { getElementById: () => null, querySelector: () => null, querySelectorAll: () => [] };
+    context.localStorage = {
+        getItem: k => (Object.prototype.hasOwnProperty.call(lsStore, k) ? lsStore[k] : null),
+        setItem: (k, v) => {
+            lsStore[k] = String(v);
+        },
+        removeItem: k => {
+            delete lsStore[k];
+        }
+    };
+    context.ErrorHandler = { log: jest.fn() };
+    context.getSpellSlotsForClass = jest.fn(() => [0, 0, 0, 0, 0, 0, 0, 0, 0]);
+    vm.createContext(context);
+    for (const rel of RESTORE_FILES) {
+        vm.runInContext(fs.readFileSync(path.join(REPO_ROOT, rel), 'utf8'), context, { filename: rel });
+    }
+    // Stubs nach dem Laden (utilities.js deklariert showToast selbst)
+    const showToast = jest.fn();
+    context.showToast = showToast;
+    context.ErrorHandler = { log: jest.fn() };
+    context.getActiveCampaignKey = jest.fn(() => 'dnd-tracker-test');
+    context.confirm = jest.fn(() => true);
+    context.saveUndoState = jest.fn();
+    context.stopAllTracks = jest.fn();
+    context.renderAll = jest.fn();
+    context.saveImmediate = jest.fn(async () => ({ success: true, backend: 'localStorage' }));
+    context.idb = null;
+    context.initIndexedDB = jest.fn(async () => {});
+    return { context, showToast };
+}
 
-        // Das Schema OHNE mindmap-Eintrag — der reale Zustand nach Task 3
-        // (systems/backups.js:232 hatte `mindmap: { nodes: [], edges: [] }`,
-        // ersatzlos entfernt).
-        const defaultSchemaOhneMindmap = {
-            characters: [],
-            npcs: [],
-            quests: [],
-            locations: [],
-            loot: []
-        };
-        // Ein Backup, das den alten (toten) Schluessel noch enthaelt —
-        // simuliert ein vor Task 3 erstelltes Backup.
-        const backupMitAltemMindmap = {
-            characters: [{ id: 1, name: 'Thorin' }],
-            npcs: [],
-            quests: [],
-            locations: [],
-            loot: [],
-            mindmap: { nodes: [], edges: [] }
-        };
+describe('Restore-Pfad — toter mindmap-Seed bleibt weg (Task 3, seit U4 ueber normalizeCampaignData)', () => {
+    // sanitizeBackupData() und sein defaultD-Literal sind entfernt (Code-Review 2026-09-21,
+    // R01): der Restore laeuft ueber den gemeinsamen Normalisierer. Ein vor Task 3 erstelltes
+    // Backup mit dem toten Schluessel `mindmap: { nodes: [], edges: [] }` (`edges` statt des
+    // ueberall sonst verwendeten `connections`) ist versionslos — die 2.6.1-Migration
+    // (Smart-Strip) entfernt den leeren Seed.
+    const backupMitAltemMindmap = {
+        characters: [{ id: 1, name: 'Thorin' }],
+        npcs: [],
+        quests: [],
+        locations: [],
+        loot: [],
+        mindmap: { nodes: [], edges: [] }
+    };
 
-        let sanitized;
-        expect(() => {
-            sanitized = context.sanitizeBackupData(backupMitAltemMindmap, defaultSchemaOhneMindmap);
-        }).not.toThrow();
+    test('normalizeCampaignData(): versionsloses Backup mit leerem mindmap-Seed ist ok und traegt ihn danach nicht mehr', () => {
+        const { context } = loadRestorePath();
 
-        expect(sanitized).not.toHaveProperty('mindmap');
-        expect(sanitized.characters).toEqual([{ id: 1, name: 'Thorin' }]);
+        const result = context.normalizeCampaignData(JSON.stringify(backupMitAltemMindmap));
+
+        expect(result.ok).toBe(true);
+        expect(result.data).not.toHaveProperty('mindmap');
+        expect(JSON.parse(JSON.stringify(result.data.characters))).toMatchObject([
+            { id: 1, name: 'Thorin' }
+        ]);
     });
 
     test('restoreBackup() (voller Pfad): ein Backup mit dem alten mindmap-Schluessel wird fehlerfrei wiederhergestellt und traegt ihn danach nicht mehr', async () => {
-        // Ein reales, vor Task 3 erstelltes Backup — der abgeschaffte
-        // Schluessel ist noch drin, in der Form, die kein Konsument je las
-        // (`edges` statt `connections`).
+        // Ein reales, vor Task 3 erstelltes Backup der AKTIVEN Kampagne ('dnd-tracker-test') —
+        // der abgeschaffte Schluessel ist noch drin.
         const altesBackupPayload = {
             characters: [{ id: 1, name: 'Thorin Eisenfaust' }],
             npcs: [],
@@ -205,22 +251,28 @@ describe('restoreBackup() / sanitizeBackupData() — toter mindmap-Seed entfernt
             mindmap: { nodes: [], edges: [] }
         };
         const storedBackups = [
-            { timestamp: 1700000000000, campaignKey: 'test', data: JSON.stringify(altesBackupPayload) }
+            {
+                timestamp: 1700000000000,
+                campaignKey: 'dnd-tracker-test',
+                data: JSON.stringify(altesBackupPayload)
+            }
         ];
-        const laufendesD = {};
-        const { context, windowObj, showToast } = loadBackupsModule({ D: laufendesD, storedBackups });
+        const { context, showToast } = loadRestorePath({ storedBackups });
+        const laufendesD = context.D;
 
-        await expect(context.restoreBackup(0)).resolves.not.toThrow();
+        // Stabile Backup-ID: der Zeitstempel (nicht mehr die Listenposition)
+        await expect(context.restoreBackup(1700000000000)).resolves.not.toThrow();
 
-        // restoreBackup() faengt eigene Fehler intern ab (zeigt einen Toast
-        // statt zu werfen) — der eigentliche Nachweis ist der Erfolgs-Toast,
-        // nicht das Ausbleiben eines rejects.
+        // restoreBackup() faengt eigene Fehler intern ab (zeigt einen Toast statt zu
+        // werfen) — der eigentliche Nachweis ist der Erfolgs-Toast nach bestaetigtem Speichern.
         expect(showToast).toHaveBeenCalledWith('✅ Backup wiederhergestellt');
         expect(showToast).not.toHaveBeenCalledWith(expect.stringContaining('fehlerhaft'));
 
-        // Der Restore-Pfad ersetzt window.D komplett (delete + Object.assign) —
-        // dieselbe Referenz wie laufendesD, da beide auf denselben Zeiger zeigen.
-        expect(windowObj.D).not.toHaveProperty('mindmap');
-        expect(windowObj.D.characters).toEqual([{ id: 1, name: 'Thorin Eisenfaust' }]);
+        // Der Restore ersetzt window.D in place (replaceCampaignData) — dieselbe Referenz.
+        expect(context.D).toBe(laufendesD);
+        expect(context.D).not.toHaveProperty('mindmap');
+        expect(JSON.parse(JSON.stringify(context.D.characters))).toMatchObject([
+            { id: 1, name: 'Thorin Eisenfaust' }
+        ]);
     });
 });
