@@ -385,6 +385,78 @@ describe('_processWizardFile() — Bestandsschutz-Dialog bleibt erhalten, Reihen
 });
 
 // ============================================================
+// Code-Review 2026-09-21, Einheit U7 — R02: location.reload() feuert beforeunload. Nach dem
+// geschriebenen Umzugs-Import muss der Tab seine Schreibpfade SOFORT sperren
+// (retireCampaignWrites), sonst schreibt Strg+S, Strg+Z, der Session-Timer-Autosave oder ein
+// ausstehender save() den Vor-Import-Stand ueber den Import, bevor wizard-close neu laedt.
+// ============================================================
+describe('_processWizardFile() — Schreibsperre direkt nach dem Import (U7, R02)', () => {
+    let errorEl, filenameEl, resultEl, dropzone;
+
+    beforeEach(() => {
+        errorEl = { textContent: '', style: { display: 'none' } };
+        filenameEl = { textContent: '', style: { display: 'none' } };
+        resultEl = { innerHTML: '' };
+        dropzone = { classList: { add: jest.fn(), remove: jest.fn() } };
+        context.document = {
+            getElementById: id => {
+                if (id === 'migration-wizard-error') return errorEl;
+                if (id === 'migration-wizard-filename') return filenameEl;
+                if (id === 'migration-wizard-result') return resultEl;
+                return null;
+            },
+            querySelectorAll: () => []
+        };
+        mockReadCampaignDataForBackup.mockResolvedValue(null);
+        mockGetCampaignIndex.mockReturnValue({ campaigns: [] });
+    });
+
+    afterEach(() => {
+        delete context.window.retireCampaignWrites;
+    });
+
+    function exportDatei() {
+        return new global.File(
+            [JSON.stringify({ _exportType: 'full-v1', campaigns: { c1: {} } })],
+            'export.json',
+            { type: 'application/json' }
+        );
+    }
+
+    test('erfolgreicher Import -> retireCampaignWrites() unmittelbar nach importFullExport()', async () => {
+        const callOrder = [];
+        context.window.saveUndoState = jest.fn(() => callOrder.push('saveUndoState'));
+        context.window.importFullExport = jest.fn(() => {
+            callOrder.push('importFullExport');
+            return { totalBytes: 4096, campaignCount: 1 };
+        });
+        context.window.retireCampaignWrites = jest.fn(() => {
+            callOrder.push('retireCampaignWrites');
+            return Promise.resolve();
+        });
+
+        context._processWizardFile(exportDatei(), dropzone);
+        await waitFor(() => resultEl.innerHTML !== '');
+
+        expect(callOrder).toEqual(['saveUndoState', 'importFullExport', 'retireCampaignWrites']);
+    });
+
+    test('scheiternder Import -> keine Schreibsperre (der Tab bleibt voll nutzbar)', async () => {
+        context.window.saveUndoState = jest.fn();
+        context.window.importFullExport = jest.fn(() => {
+            throw new Error('Speichern fehlgeschlagen: QUOTA_EXCEEDED');
+        });
+        context.window.retireCampaignWrites = jest.fn(() => Promise.resolve());
+
+        context._processWizardFile(exportDatei(), dropzone);
+        await waitFor(() => errorEl.textContent !== '');
+
+        expect(errorEl.textContent).toMatch(/Import fehlgeschlagen/);
+        expect(context.window.retireCampaignWrites).not.toHaveBeenCalled();
+    });
+});
+
+// ============================================================
 // GAP-CLOSURE 12-09 — CR-01: wizard-skip nach abgeschlossenem Import muss
 // denselben Reload-Pfad nehmen wie wizard-close (12-VERIFICATION.md gaps[0],
 // Truth 7 FAILED; 12-REVIEW.md CR-01). Vor dem Fix (Task 2) rot: Test A und

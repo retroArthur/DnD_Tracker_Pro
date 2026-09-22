@@ -57,47 +57,68 @@
  * @param {import('@playwright/test').Page} page
  */
 export async function seedCleanSession(page) {
-    await page.addInitScript(() => {
+    await page.addInitScript(seed => {
         try {
-            localStorage.setItem(
-                'dnd-tracker-v4',
-                JSON.stringify({
-                    // Far-future _version so load() skips migrateData() entirely —
-                    // the seed is a minimal settings-only payload, not a full export.
-                    _version: '99.0.0',
-                    settings: {
-                        theme: 'dark',
-                        lastView: 'dashboard',
-                        enableMarkdownShortcuts: true,
-                        enableMarkdownImportExport: true,
-                        markdownOnboardingSeen: true,
-                        levelingMode: 'xp'
-                    },
-                    randomTables: [],
-                    timers: [],
-                    shops: [],
-                    campaign: {},
-                    _nextId: {
-                        characters: 1,
-                        npcs: 1,
-                        locations: 1,
-                        quests: 1,
-                        encounters: 1,
-                        spells: 1,
-                        loot: 1,
-                        items: 1,
-                        wiki: 1,
-                        sessionNotes: 1,
-                        randomTables: 1
-                    }
-                })
-            );
+            localStorage.setItem('dnd-tracker-v4', JSON.stringify(seed));
         } catch {
             // file:// localStorage restrictions vary by browser build; if the seed
             // silently fails, the app falls back to its own default (the pre-fix
             // race may return) — no crash either way.
         }
-    });
+    }, CLEAN_SESSION_SEED);
+}
+
+/**
+ * The seedCleanSession() payload (see the WR-02 cross-reference above — keep it in sync
+ * with initializeData() and validateDataIntegrity()).
+ */
+const CLEAN_SESSION_SEED = {
+    // Far-future _version so load() skips migrateData() entirely —
+    // the seed is a minimal settings-only payload, not a full export.
+    _version: '99.0.0',
+    settings: {
+        theme: 'dark',
+        lastView: 'dashboard',
+        enableMarkdownShortcuts: true,
+        enableMarkdownImportExport: true,
+        markdownOnboardingSeen: true,
+        levelingMode: 'xp'
+    },
+    randomTables: [],
+    timers: [],
+    shops: [],
+    campaign: {},
+    _nextId: {
+        characters: 1,
+        npcs: 1,
+        locations: 1,
+        quests: 1,
+        encounters: 1,
+        spells: 1,
+        loot: 1,
+        items: 1,
+        wiki: 1,
+        sessionNotes: 1,
+        randomTables: 1
+    }
+};
+
+/**
+ * Wie seedCleanSession(), aber fuer den ganzen Browserkontext und NUR, solange noch keine
+ * Kampagne gespeichert ist (Code-Review 2026-09-21, U7/R02). Mehrere Seiten eines Kontexts
+ * teilen unter file:// dasselbe localStorage; ein bei jeder Navigation erneut geschriebener
+ * Seed wuerde einen Reload-Test (Daten ueberleben das Neuladen?) sinnlos machen.
+ * @param {import('@playwright/test').BrowserContext} context
+ */
+export async function seedCleanSessionOnce(context) {
+    await context.addInitScript(seed => {
+        try {
+            if (localStorage.getItem('dnd-tracker-v4') !== null) return;
+            localStorage.setItem('dnd-tracker-v4', JSON.stringify(seed));
+        } catch {
+            // file:// localStorage restrictions vary by browser build — no crash either way.
+        }
+    }, CLEAN_SESSION_SEED);
 }
 
 /**

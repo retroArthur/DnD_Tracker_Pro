@@ -182,7 +182,6 @@ const MODULE_TEST_EXCEPTIONS = [
     'systems/entity-links.js',
     'systems/hp-calculator.js',
     'systems/markdown-import-export.js',
-    'systems/session-timer.js',
     'systems/spellslots/keyboard-shortcuts.js',
     'systems/spellslots/navigation.js',
     'systems/spellslots/notes-templates.js',
