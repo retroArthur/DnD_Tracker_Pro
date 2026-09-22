@@ -37,6 +37,10 @@ from tools.logging_util import log
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 SOURCE_DIR = SCRIPT_DIR
 
+# R08: Platzhalter fuer CACHE_VERSION in sw.js. Muss dort GENAU EINMAL stehen
+# (Zeile 4); bump_sw_cache_version() ersetzt ihn im Production-Build.
+SW_CACHE_VERSION_PLACEHOLDER = "'dnd-tracker-v3'"
+
 def parse_js_string_array(source_text, array_name, source_label):
     """Extrahiert die einfach quotierten String-Literale eines JS-Array-Literals.
 
@@ -206,6 +210,26 @@ def check_duplicate_functions(source_dir, modules):
                     print(f"[FEHLER] Doppelte Top-Level-Deklaration '{name}': {seen[name]} und {module}")
                     sys.exit(1)
                 seen[name] = module
+
+
+def bump_sw_cache_version(sw_src, new_version):
+    """Ersetzt den CACHE_VERSION-Platzhalter in sw.js durch new_version (R08).
+
+    Bricht mit sys.exit(1) ab, wenn der Platzhalter nicht GENAU EINMAL vorkommt:
+    fehlt er, bliebe die Cache-Version unveraendert und der Cache-First-SW wuerde
+    nach dem Deploy weiter die alte App ausliefern; steht er zusaetzlich z. B. in
+    einem Kommentar weiter oben, wuerde die falsche Stelle gepatcht. Frueher
+    ersetzte der Build still das erste Vorkommen oder gar nichts.
+    """
+    count = sw_src.count(SW_CACHE_VERSION_PLACEHOLDER)
+    if count != 1:
+        print(
+            f"[ABORTED] sw.js enthaelt den CACHE_VERSION-Platzhalter "
+            f"{SW_CACHE_VERSION_PLACEHOLDER} {count}-mal statt genau einmal — "
+            f"ohne Bump wuerde der Service Worker nach dem Deploy die alte App ausliefern."
+        )
+        sys.exit(1)
+    return sw_src.replace(SW_CACHE_VERSION_PLACEHOLDER, f"'{new_version}'", 1)
 
 
 def read_file(filepath):
@@ -466,7 +490,7 @@ def build(minify=False, production=False, verbose=False):
                 app_version = vm.group(1)
         except Exception:
             pass
-        timestamp = _dt.datetime.utcnow().strftime('%Y%m%d%H%M')
+        timestamp = _dt.datetime.now(_dt.timezone.utc).strftime('%Y%m%d%H%M')
         bumped_cache_version = f'dnd-tracker-v{app_version}-{timestamp}'
         print(f"\n[PROD] CACHE_VERSION bump: dnd-tracker-v3 -> {bumped_cache_version}")
         # Patch CACHE_VERSION in kombiniertem JS (falls enthalten)
@@ -478,7 +502,11 @@ def build(minify=False, production=False, verbose=False):
         sw_dst_path = os.path.join(dist_dir, 'sw.js')
         try:
             sw_src = read_file(sw_src_path)
-            sw_patched = sw_src.replace("'dnd-tracker-v3'", f"'{bumped_cache_version}'", 1)
+            # R08: genau ein Platzhalter, sonst sys.exit(1). SystemExit ist keine
+            # Exception-Unterklasse und passiert das except unten unverfaelscht —
+            # es wird weder dist/sw.js noch das Production-Bundle geschrieben.
+            # Der SW bildet daraus seinen Cache-Namen dnd-tracker:<scope>:<version>.
+            sw_patched = bump_sw_cache_version(sw_src, bumped_cache_version)
             write_file(sw_dst_path, sw_patched)
             log.success(f"sw.js nach dist/ kopiert (CACHE_VERSION={bumped_cache_version})")
         except Exception as e:

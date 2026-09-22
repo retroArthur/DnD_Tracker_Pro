@@ -3,6 +3,27 @@ import tseslint from 'typescript-eslint';
 import prettier from 'eslint-config-prettier';
 import generatedGlobals from './eslint.generated-globals.js';
 
+// Von Hand gepflegte App-Globals der Fensterseite. Als Konstante gefuehrt,
+// damit der Service-Worker-Block (sw.js, R08) sie gezielt abschalten kann.
+const APP_GLOBALS = {
+    D: 'writable',
+    $: 'readonly',
+    $$: 'readonly',
+    esc: 'readonly',
+    log: 'readonly',
+    save: 'readonly',
+    showToast: 'readonly',
+    showModal: 'readonly',
+    hideModal: 'readonly',
+    debounce: 'readonly',
+    throttle: 'readonly',
+    renderAll: 'readonly',
+    switchView: 'readonly',
+    ErrorHandler: 'readonly',
+    EntityLookup: 'readonly',
+    CURRENT_VERSION: 'readonly'
+};
+
 export default tseslint.config(
     // Base ESLint recommended rules
     js.configs.recommended,
@@ -75,22 +96,7 @@ export default tseslint.config(
                 Audio: 'readonly',
                 AudioContext: 'readonly',
                 // App globals
-                D: 'writable',
-                $: 'readonly',
-                $$: 'readonly',
-                esc: 'readonly',
-                log: 'readonly',
-                save: 'readonly',
-                showToast: 'readonly',
-                showModal: 'readonly',
-                hideModal: 'readonly',
-                debounce: 'readonly',
-                throttle: 'readonly',
-                renderAll: 'readonly',
-                switchView: 'readonly',
-                ErrorHandler: 'readonly',
-                EntityLookup: 'readonly',
-                CURRENT_VERSION: 'readonly'
+                ...APP_GLOBALS
             }
         }
     },
@@ -247,6 +253,35 @@ export default tseslint.config(
         }
     },
 
+    // Service Worker (R08, Code-Review 2026-09-21). sw.js stand seit dem
+    // Initial-Commit ohne Begruendung in den globalen Ausschluessen. Er laeuft
+    // als klassisches Skript im ServiceWorkerGlobalScope, nicht im Fenster:
+    // Fenster-Globals und die App-Globals (generiert + von Hand) gibt es dort
+    // nicht und werden abgeschaltet, damit no-undef ihre Verwendung meldet.
+    // location, fetch, URL, Response bleiben (auch im Worker vorhanden).
+    {
+        files: ['sw.js'],
+        languageOptions: {
+            sourceType: 'script',
+            globals: {
+                ...Object.fromEntries(
+                    Object.keys({ ...generatedGlobals, ...APP_GLOBALS }).map(k => [k, 'off'])
+                ),
+                window: 'off',
+                document: 'off',
+                localStorage: 'off',
+                sessionStorage: 'off',
+                alert: 'off',
+                confirm: 'off',
+                prompt: 'off',
+                history: 'off',
+                self: 'readonly',
+                caches: 'readonly',
+                clients: 'readonly'
+            }
+        }
+    },
+
     // Globale Ausschluesse (R09, Code-Review 2026-09-21).
     //
     // Dieses Objekt ist die EINZIGE Stelle, die Dateien aus dem Lint-Lauf
@@ -268,15 +303,15 @@ export default tseslint.config(
     // Claude-Worktree unter .claude/worktrees/ wuerde jede Zahl verdoppeln.
     //
     // Produktive Pfade (core, utils, systems, features, ui, render, tools,
-    // tests, loader.js, eslint.config.js) niemals hier eintragen —
-    // tests/unit/lint-gate.test.js prueft das.
+    // tests, loader.js, eslint.config.js, sw.js) niemals hier eintragen —
+    // tests/unit/lint-gate.test.js prueft das. sw.js hat seinen eigenen
+    // Globals-Block oben (R08).
     {
         ignores: [
             'node_modules/**',
             'dist/**',
             'coverage/**',
             '*.min.js',
-            'sw.js',
             'Anpassungen/**',
             '.claude/**',
             '.gsd/**',
