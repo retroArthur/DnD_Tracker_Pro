@@ -75,8 +75,38 @@ function renderAll() {
         }
     });
 }
+/**
+ * R06 (Code-Review 2026-09-21, U8): Nachlauf, wenn D als Ganzes ersetzt wurde (Konflikt-
+ * Neuladen). renderAll() deckt weder das nur beim Start angewandte Theme/Layout noch die
+ * aktive TAB_RENDER_REGISTRY-Ansicht (Dashboard, DM-Screen, Welt, ...) noch das
+ * Schnellnotiz-Feld ab. Jeder Schritt ist einzeln abgesichert; kein Markup.
+ */
+function renderAfterDataReplace() {
+    const schritt = (name, fn) => {
+        try {
+            fn();
+        } catch (e) {
+            if (window.APP_CONFIG?.DEBUG_MODE && window.ErrorHandler) {
+                window.ErrorHandler.log('renderAfterDataReplace', e, name);
+            }
+        }
+    };
+    schritt('loadTheme', () => window.loadTheme?.());
+    schritt('loadLayout', () => window.loadLayout?.());
+    schritt('renderAll', () => renderAll());
+    schritt('renderTabContent', () => {
+        const aktiv = document.querySelector('.view.active');
+        const ansicht = aktiv && aktiv.id ? aktiv.id.replace(/^view-/, '') : '';
+        if (ansicht) window.renderTabContent?.(ansicht);
+    });
+    schritt('quick-notes', () => {
+        const q = $('quick-notes');
+        if (q) q.value = window.D.quickNotes || '';
+    });
+}
 // ============================================================
 // EXPORTS FOR GLOBAL ACCESS
 // ============================================================
 window.renderAll = renderAll;
+window.renderAfterDataReplace = renderAfterDataReplace;
 window.renderPending = renderPending;

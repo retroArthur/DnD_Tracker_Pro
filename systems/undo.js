@@ -48,10 +48,15 @@ function pushUndo(action) {
         redoStack.length = 0;
         return;
     }
+    _pushUndoSnapshot(action, stateJSON);
+}
+// Legt einen bereits serialisierten Stand auf den Undo-Stack — gemeinsam fuer pushUndo() und
+// das Konflikt-Neuladen (reloadData, R06).
+function _pushUndoSnapshot(action, stateJSON) {
     // Dedupe (D-09a): ein Snapshot, der zeichengleich zum aktuellen Stack-Kopf ist, wird
-    // NICHT erneut gepusht — die Serialisierung oben lief trotzdem, weil sie der einzige
-    // Weg ist, das ueberhaupt festzustellen. Der Redo-Stack wird unten unabhaengig davon
-    // geleert, weil der Aufrufer eine neue Aktion signalisiert hat (T-13-23).
+    // NICHT erneut gepusht — die Serialisierung in pushUndo() lief trotzdem, weil sie der
+    // einzige Weg ist, das ueberhaupt festzustellen. Der Redo-Stack wird unten unabhaengig
+    // davon geleert, weil der Aufrufer eine neue Aktion signalisiert hat (T-13-23).
     const currentTop = undoStack[undoStack.length - 1];
     if (!currentTop || currentTop.state !== stateJSON) {
         undoStack.push({
@@ -251,10 +256,19 @@ function updateSaveIndicator(status = 'saved') {
 let broadcastChannel = null;
 const tabId = Math.random().toString(36).substr(2, 9);
 let conflictDismissed = false;
+// R06 (Code-Review 2026-09-21, U8): laufendes Konflikt-Neuladen (ein Doppelklick teilt es) und
+// Zaehler fremder Saves DIESER Kampagne — ein waehrend des Neuladens eingetroffener Save haelt
+// die Konfliktanzeige offen (der gelesene Stand kann ihn verpasst haben)
+let _reloadInFlight = null;
+let _conflictSignalSeq = 0;
+// Hoechstens so lange wartet das Neuladen auf den Speicher (initIndexedDB kennt kein
+// onblocked); danach gilt es als gescheitert und ein spaetes Lesen wird verworfen
+const RELOAD_WATCHDOG_MS = 10000;
 // Ein anderer Tab hat DIESE Kampagne gespeichert: der Tab ist veraltet (R02 — seine
 // automatischen Saves und das Verlassen schreiben nicht mehr zurueck), unabhaengig davon,
 // ob der Nutzer das Banner weggeklickt hat; das Banner nur, solange nicht weggeklickt
 function _noteForeignCampaignSave(campaignKey) {
+    _conflictSignalSeq++;
     if (typeof window.markExternalCampaignWrite === 'function') {
         window.markExternalCampaignWrite(campaignKey);
     }
@@ -305,6 +319,7 @@ function showConflictBanner() {
         banner.classList.add('show');
     }
 }
+// "✕ Ignorieren": weitere Konflikte dieser Sitzung bleiben stumm (bewusst unveraendert)
 function dismissConflict() {
     const banner = $('conflict-banner');
     if (banner) {
@@ -312,13 +327,152 @@ function dismissConflict() {
         conflictDismissed = true;
     }
 }
+// Banner schliessen, OHNE spaetere Konflikte stummzuschalten (erfolgreiches Neuladen, R06)
+function hideConflictBanner() {
+    const banner = $('conflict-banner');
+    if (banner) banner.classList.remove('show');
+}
+/**
+ * "🔄 Neu laden" im Konflikt-Banner (R06). Laedt den gespeicherten Stand VOLLSTAENDIG, bevor
+ * gerendert und bestaetigt wird; ein Doppelklick teilt sich den Lauf. Lehnt nie ab — der
+ * data-action-'call'-Dispatcher ignoriert das Promise.
+ * @returns {Promise<Object>} das LoadResult des Laufs
+ */
 function reloadData() {
-    const load = window.load;
-    const renderAll = window.renderAll;
-    if (load) load();
-    if (renderAll) renderAll();
-    dismissConflict();
-    showToast('🔄 Daten neu geladen');
+    if (_reloadInFlight) return _reloadInFlight;
+    _reloadInFlight = _reloadDataNow().finally(() => {
+        _reloadInFlight = null;
+    });
+    return _reloadInFlight;
+}
+// Liest unter zurueckgestellten entprellten Saves, begrenzt durch den Waechter. Ein nach dem
+// Waechter eintreffendes Lesen uebernimmt nichts mehr (shouldApply).
+async function _loadForReload() {
+    let abandoned = false;
+    let watchdog = null;
+    const suspend =
+        typeof window.runWithSavesSuspended === 'function'
+            ? window.runWithSavesSuspended
+            : fn => fn();
+    try {
+        const result = await suspend(() =>
+            Promise.race([
+                Promise.resolve(
+                    window.load({ strictIdb: true, shouldApply: () => !abandoned })
+                ).then(r => {
+                    // Der geladene Stand ersetzt den verdraengten — dessen Save nicht nachholen
+                    if (r && r.applied && typeof window.cancelPendingSave === 'function') {
+                        window.cancelPendingSave();
+                    }
+                    return r;
+                }),
+                new Promise(resolve => {
+                    watchdog = setTimeout(() => {
+                        abandoned = true;
+                        resolve({ ok: false, applied: false, source: null, reason: 'timeout' });
+                    }, RELOAD_WATCHDOG_MS);
+                })
+            ])
+        );
+        if (result && typeof result === 'object') return result;
+        return { ok: false, applied: false, source: null, reason: 'exception' };
+    } catch (e) {
+        return { ok: false, applied: false, source: null, reason: 'exception', error: e };
+    } finally {
+        clearTimeout(watchdog);
+    }
+}
+// Nach dem Uebernehmen: Undo-Punkt (D6 = A), Modulzustand, vollstaendiges Neuzeichnen und —
+// falls dieser Tab im Ladefenster doch gespeichert hat (saveImmediate, z. B. per Strg+Z) — den
+// geladenen Stand neu festschreiben. Nicht, wenn inzwischen ein fremder Save eintraf: der
+// waere neuer als der gelesene Stand. true, wenn der Speicher D entspricht.
+async function _afterReloadApplied(beforeJSON, successAtStart, foreignSaveSince) {
+    const D = window.D;
+    if (beforeJSON) _pushUndoSnapshot('Neu laden (anderer Tab)', beforeJSON);
+    encounterRound = (D.initiative && D.initiative.round) || 1;
+    try {
+        (window.renderAfterDataReplace || window.renderAll)();
+    } catch (e) {
+        if (window.ErrorHandler) window.ErrorHandler.log('reloadData', e, 'Neuzeichnen');
+    }
+    const count = window.getPersistSuccessCount;
+    if (typeof count !== 'function' || count() === successAtStart) return true;
+    if (foreignSaveSince) return false;
+    try {
+        const res = await window.saveImmediate();
+        return !!(res && res.success);
+    } catch (e) {
+        if (window.ErrorHandler) window.ErrorHandler.log('reloadData', e, 'Neu festschreiben');
+        return false;
+    }
+}
+async function _reloadDataNow() {
+    try {
+        if (typeof window.load !== 'function') {
+            showToast('❌ Neu laden nicht möglich', 'error');
+            return { ok: false, applied: false, source: null, reason: 'exception' };
+        }
+        const seqAtStart = _conflictSignalSeq;
+        const successAtStart =
+            typeof window.getPersistSuccessCount === 'function'
+                ? window.getPersistSuccessCount()
+                : null;
+        let beforeJSON = null;
+        try {
+            beforeJSON = JSON.stringify(window.D);
+        } catch {
+            // ohne Undo-Punkt weiter — wie pushUndo() (D-06)
+        }
+        const result = await _loadForReload();
+        let persisted = true;
+        if (result.applied) {
+            persisted = await _afterReloadApplied(
+                beforeJSON,
+                successAtStart,
+                _conflictSignalSeq !== seqAtStart
+            );
+        }
+        const signalDuringReload = _conflictSignalSeq !== seqAtStart;
+        if (result.ok) {
+            conflictDismissed = false;
+            if (signalDuringReload) {
+                // Der gelesene Stand kann den spaeteren Save verpasst haben: Banner bleibt,
+                // der Tab bleibt veraltet (automatische Saves gesperrt, R02)
+                if (typeof window.markExternalCampaignWrite === 'function') {
+                    window.markExternalCampaignWrite(getCurrentStorageKey());
+                }
+            } else {
+                hideConflictBanner();
+            }
+            if (persisted) updateSaveIndicator('saved');
+            if (result.warning) {
+                showToast('⚠️ Daten neu geladen (Nachbearbeitung unvollständig)', 'warning');
+            } else {
+                showToast('🔄 Daten neu geladen');
+            }
+        } else {
+            if (window.ErrorHandler) {
+                window.ErrorHandler.log(
+                    'reloadData',
+                    result.error || new Error(String(result.reason)),
+                    'Neu laden fehlgeschlagen'
+                );
+            }
+            // Banner bleibt; ein zurueckgestellter lokaler Save wird danach geschrieben
+            let text = '❌ Neu laden fehlgeschlagen – aktueller Stand bleibt erhalten';
+            if (result.reason === 'timeout') {
+                text =
+                    '❌ Neu laden fehlgeschlagen – Zeitüberschreitung, aktueller Stand bleibt erhalten';
+            } else if (result.applied) {
+                text = '⚠️ Daten neu geladen (Nachbearbeitung unvollständig)';
+            }
+            showToast(text, result.applied ? 'warning' : 'error');
+        }
+        return result;
+    } catch (e) {
+        if (window.ErrorHandler) window.ErrorHandler.log('reloadData', e);
+        return { ok: false, applied: false, source: null, reason: 'exception', error: e };
+    }
 }
 // Einziger Resolver: getActiveCampaignKey() (core/data.js, R02)
 function getCurrentStorageKey() {

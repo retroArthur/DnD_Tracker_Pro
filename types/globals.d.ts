@@ -64,8 +64,38 @@ declare global {
   /** Save data to localStorage */
   function save(): void;
   
-  /** Load data from localStorage */
-  function load(): void;
+  /**
+   * Ergebnis von load() (R06, Code-Review 2026-09-21, U8). ok: ein gespeicherter Stand wurde
+   * gelesen UND uebernommen; applied: D wurde veraendert.
+   */
+  interface LoadResult {
+    ok: boolean;
+    applied: boolean;
+    source: 'localStorage' | 'indexedDB' | null;
+    reason?:
+      | 'no-key'
+      | 'not-found'
+      | 'idb-error'
+      | 'parse'
+      | 'invalid'
+      | 'abandoned'
+      | 'exception'
+      | 'timeout';
+    /** Start ohne IndexedDB-Pruefung des localStorage-Schattens (nur ohne strictIdb) */
+    degraded?: boolean;
+    /** Stand uebernommen, Nachbearbeitung (Integritaet, Vorberechnung) gescheitert */
+    warning?: string;
+    error?: unknown;
+  }
+
+  /** Aktive Kampagne laden (localStorage, bei Bedarf IndexedDB) und in D uebernehmen */
+  function load(options?: { strictIdb?: boolean; shouldApply?: () => boolean }): Promise<LoadResult>;
+
+  /** "Neu laden" im Konflikt-Banner: wartet auf das Laden, lehnt nie ab (R06) */
+  function reloadData(): Promise<LoadResult>;
+
+  /** Konflikt-Banner schliessen, ohne spaetere Konflikte stummzuschalten (R06) */
+  function hideConflictBanner(): void;
   
   /** Push undo state */
   function pushUndo(description?: string): void;
@@ -342,12 +372,21 @@ declare global {
   /** Einmalig: beforeunload, pagehide und visibilitychange(hidden) registrieren */
   function initUnloadPersistence(): void;
 
+  /** Ausstehenden entprellten save() verwerfen; true, wenn einer ausstand (R06) */
+  function cancelPendingSave(): boolean;
+
+  /** fn ausfuehren, waehrend entprellte Saves zurueckgestellt sind (verschachtelbar, R06) */
+  function runWithSavesSuspended<T>(fn: () => T | Promise<T>): Promise<T>;
+
   // ============================================================
   // RENDER FUNCTIONS
   // ============================================================
   
   /** Render all views */
   function renderAll(): void;
+
+  /** Nach dem Ersetzen von D: Theme/Layout, renderAll, aktive Ansicht, Schnellnotizen (R06) */
+  function renderAfterDataReplace(): void;
   
   /** Render dashboard */
   function renderDashboard(): void;

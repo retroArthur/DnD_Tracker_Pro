@@ -452,6 +452,23 @@ describe('R06 — Konflikterkennung nach dem Neuladen', () => {
         expect(A.ctx.isCampaignStorageStale(KEY)).toBe(true);
     });
 
+    test('T4e: ein erfolgreiches Neuladen nach "Ignorieren" macht die Konflikterkennung wieder scharf', async () => {
+        const u = erzeugeUrsprung();
+        u.saeen(KEY, kampagne(['Aria']));
+        const A = await starte(oeffne(u, 'A'));
+        const kanal = fremderKanal(u, A);
+        await fremderSave(u, kanal);
+        A.ctx.dismissConflict();
+        u.saeen(KEY, kampagne(['Aria', 'Borin']), { ts: '2000' });
+
+        // ausdrueckliches Neuladen (reloadData steht auch ausserhalb des Banners zur Verfuegung)
+        const r = await ergebnisVon(u, A.ctx.reloadData());
+        expect(r).toMatchObject({ ok: true, applied: true });
+        await fremderSave(u, kanal);
+
+        expect(A.bannerSichtbar()).toBe(true);
+    });
+
     test('T4d: ein fremder Save fuer eine ANDERE Kampagne waehrend des Neuladens haelt das Banner nicht offen', async () => {
         const u = erzeugeUrsprung();
         const A = await tabImIdbModus(u);
@@ -562,7 +579,10 @@ describe('R06 — ausstehende Saves im Ladefenster', () => {
         const halt = halteLesen(u);
 
         const p = A.ctx.reloadData();
-        await u.uhr.laufen(WAECHTER_MS + 1000);
+        await u.uhr.laufen(WAECHTER_MS - 1000);
+        // Bis zum Waechter bleibt der Save zurueckgestellt (IndexedDB-Modus: LS noch leer)
+        expect(u.ls.get(KEY)).toBeUndefined();
+        await u.uhr.laufen(2000);
 
         expect(A.toastTexte()).toContain(ZEIT_TOAST);
         expect(A.toastTexte()).not.toContain(OK_TOAST);
@@ -576,6 +596,54 @@ describe('R06 — ausstehende Saves im Ladefenster', () => {
         await u.uhr.laufen(1000);
         expect(namenIn(A.ctx.D)).toEqual(['Lokal']);
         expect(namen(u.ls.get(KEY))).toEqual(['Lokal']);
+    });
+
+    test('T5g: Tab wird im Ladefenster versteckt — der vorgezogene Flush schreibt den verdraengten Stand nicht', async () => {
+        const u = erzeugeUrsprung();
+        const A = await tabImIdbModus(u);
+        u.saeenIdb(KEY, kampagne(['Neu'])); // ohne _rev/Signal: der Tab gilt nicht als veraltet
+        A.ctx.D.characters[0].name = 'Alt-lokal';
+        A.ctx.save();
+        const halt = halteLesen(u);
+
+        const p = A.ctx.reloadData();
+        await u.uhr.ruhe();
+        A.verstecken(); // visibilitychange(hidden) -> flushPendingSave()
+        await u.uhr.ruhe();
+
+        expect(u.ls.has(KEY)).toBe(false);
+        halt.freigeben();
+        const r = await ergebnisVon(u, p);
+        await u.uhr.laufen(1000);
+
+        expect(r).toMatchObject({ ok: true, applied: true });
+        expect(u.ls.has(KEY)).toBe(false);
+        expect(namen(u.idbDatensatz(KEY).data)).toEqual(['Neu']);
+    });
+
+    test('T5f: eigener saveImmediate UND ein fremder Save im Ladefenster — kein Neu-Festschreiben ueber den fremden Stand', async () => {
+        const u = erzeugeUrsprung();
+        const A = await tabImIdbModus(u);
+        const kanal = fremderKanal(u, A);
+        A.ctx.saveUndoState('lokale Änderung');
+        A.ctx.D.characters[0].name = 'Alt-editiert';
+        u.saeenIdb(KEY, kampagne(['Neu']));
+        const halt = halteLesen(u);
+
+        const p = A.ctx.reloadData();
+        await u.uhr.ruhe();
+        A.ctx.undo(); // eigener Sofort-Save im Ladefenster
+        await u.uhr.ruhe();
+        // danach speichert ein anderer Tab (neuer als der gelesene Stand)
+        u.saeen(KEY, kampagne(['Fremd']), { ts: '9000' });
+        await fremderSave(u, kanal);
+        halt.freigeben();
+        const r = await ergebnisVon(u, p);
+
+        expect(r).toMatchObject({ ok: true, applied: true });
+        expect(namen(u.ls.get(KEY))).toEqual(['Fremd']);
+        expect(A.bannerSichtbar()).toBe(true);
+        expect(A.ctx.isCampaignStorageStale(KEY)).toBe(true);
     });
 });
 
@@ -647,5 +715,128 @@ describe('R06 — Undo, Doppelklick, Altformat', () => {
         expect(Array.isArray(A.ctx.D.bestiary)).toBe(true); // 3.0.0
         expect(A.ctx.D._version).toBe(A.ctx.APP_CONFIG.VERSION);
         expect(A.anzahlToast(OK_TOAST)).toBe(1);
+    });
+});
+
+describe('R06 — LoadResult auf jedem Pfad, reloadData lehnt nie ab', () => {
+    test('T9a: ohne aktiven Kampagnenschluessel — reason "no-key"', async () => {
+        const u = erzeugeUrsprung();
+        u.saeen(KEY, kampagne(['Alt']));
+        const A = await starte(oeffne(u, 'A'));
+        A.ctx.getActiveCampaignKey = () => null;
+
+        const r = await A.ctx.load();
+
+        expect(r).toMatchObject({ ok: false, applied: false, source: null, reason: 'no-key' });
+    });
+
+    test('T9b: ungueltige Struktur (kein Objekt) — reason "invalid", D unveraendert', async () => {
+        const u = erzeugeUrsprung();
+        u.saeen(KEY, kampagne(['Alt']));
+        const A = await starte(oeffne(u, 'A'));
+        u.saeen(KEY, '42', { ts: '2000' });
+
+        const r = await A.ctx.load({ strictIdb: true });
+
+        expect(r).toMatchObject({
+            ok: false,
+            applied: false,
+            source: 'localStorage',
+            reason: 'invalid'
+        });
+        expect(namenIn(A.ctx.D)).toEqual(['Alt']);
+    });
+
+    test('T9c: shouldApply() === false — reason "abandoned", nichts uebernommen', async () => {
+        const u = erzeugeUrsprung();
+        u.saeen(KEY, kampagne(['Alt']));
+        const A = await starte(oeffne(u, 'A'));
+        u.saeen(KEY, kampagne(['Neu']), { ts: '2000' });
+
+        const r = await A.ctx.load({ strictIdb: true, shouldApply: () => false });
+
+        expect(r).toEqual({
+            ok: false,
+            applied: false,
+            source: 'localStorage',
+            reason: 'abandoned'
+        });
+        expect(namenIn(A.ctx.D)).toEqual(['Alt']);
+    });
+
+    test('T9d: Ausnahme beim Uebernehmen — reason "exception" statt stillem undefined', async () => {
+        const u = erzeugeUrsprung();
+        u.saeen(KEY, kampagne(['Alt']));
+        const A = await starte(oeffne(u, 'A'));
+        A.ctx.D = Object.freeze({ characters: [] }); // Object.assign wirft
+
+        const r = await A.ctx.load();
+
+        expect(r).toMatchObject({ ok: false, applied: false, reason: 'exception' });
+        expect(r.error && r.error.name).toBe('TypeError'); // anderer Realm: kein instanceof
+    });
+
+    test('T9e: Start mit Schatten und IndexedDB-Lesefehler — weiter mit localStorage, als degraded gemeldet', async () => {
+        const u = erzeugeUrsprung();
+        u.saeen(KEY, kampagne(['Schatten']), { ts: null });
+        lesenScheitert(u);
+        const A = oeffne(u, 'A');
+
+        const r = await A.ctx.load();
+
+        expect(r).toEqual({ ok: true, applied: true, source: 'localStorage', degraded: true });
+        expect(namenIn(A.ctx.D)).toEqual(['Schatten']);
+    });
+
+    test('T9f: Start mit leerem localStorage und IndexedDB-Lesefehler — idb-error, Warnung, keine Baseline (automatische Saves gesperrt)', async () => {
+        const u = erzeugeUrsprung();
+        u.saeenIdb(KEY, kampagne(['Nur-in-IDB']));
+        lesenScheitert(u);
+        const A = oeffne(u, 'A');
+
+        const r = await A.ctx.load();
+
+        expect(r).toMatchObject({ ok: false, applied: false, source: null, reason: 'idb-error' });
+        expect(A.toastTexte()).toContain(IDB_WARN_TOAST);
+        expect(A.ctx.isCampaignStorageStale(KEY)).toBe(true);
+        expect(A.ctx.saveAutomatic()).toBe(false);
+        expect(namen(u.idbDatensatz(KEY).data)).toEqual(['Nur-in-IDB']);
+    });
+
+    test('T9g: frischer Start ohne gespeicherte Kampagne — "not-found" MIT Baseline (Startverhalten wie bisher)', async () => {
+        const u = erzeugeUrsprung();
+        const A = oeffne(u, 'A');
+
+        const r = await A.ctx.load();
+
+        expect(r).toEqual({ ok: false, applied: false, source: null, reason: 'not-found' });
+        expect(A.toastTexte()).not.toContain(IDB_WARN_TOAST);
+        expect(A.ctx.isCampaignStorageStale(KEY)).toBe(false);
+    });
+
+    test('T9h: reloadData lehnt nie ab — load() wirft synchron, das Neuzeichnen wirft, load() fehlt', async () => {
+        const u = erzeugeUrsprung();
+        u.saeen(KEY, kampagne(['Alt']));
+        const A = await starte(oeffne(u, 'A'));
+        const echtesLoad = A.ctx.load;
+
+        A.ctx.load = () => {
+            throw new Error('load kaputt');
+        };
+        await expect(A.ctx.reloadData()).resolves.toMatchObject({ ok: false, reason: 'exception' });
+        expect(A.toastTexte()).toContain(FEHLER_TOAST);
+
+        A.ctx.load = echtesLoad;
+        A.ctx.renderAfterDataReplace = () => {
+            throw new Error('Neuzeichnen kaputt');
+        };
+        u.saeen(KEY, kampagne(['Neu']), { ts: '2000' });
+        await expect(A.ctx.reloadData()).resolves.toMatchObject({ ok: true, applied: true });
+        expect(namenIn(A.ctx.D)).toEqual(['Neu']);
+
+        A.ctx.load = undefined;
+        await expect(A.ctx.reloadData()).resolves.toMatchObject({ ok: false });
+        await u.uhr.laufen(WAECHTER_MS + 1000);
+        expect(u.uhr.fehler).toEqual([]);
     });
 });

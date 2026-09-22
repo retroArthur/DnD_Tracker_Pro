@@ -38,6 +38,9 @@ let _lastPersistFailed = false;
 let _persistSuccessCount = 0;
 // showMessage des ausstehenden entprellten save() (fuer den vorgezogenen Flush)
 let _pendingSaveShowMessage = false;
+// R06 (U8): > 0, solange reloadData() den gespeicherten Stand liest (runWithSavesSuspended) —
+// ein faelliger entprellter save() schriebe sonst den gerade verdraengten Stand zurueck
+let _saveSuspendDepth = 0;
 // Ab dieser UTF-8-Groesse: IndexedDB-Modus (localStorage fasst ~5 MB)
 const PERSIST_LS_LIMIT_MB = 5;
 // Hoechstens so lange warten Sperre/Flush auf laufende IndexedDB-Writes
@@ -156,11 +159,28 @@ function _onPersistSuccess(key, lsValueNow, dataString) {
 function getPersistSuccessCount() {
     return _persistSuccessCount;
 }
-function _cancelPendingSave() {
+// Verwirft einen noch nicht gestarteten entprellten save(); true, wenn einer ausstand.
+// Auch fuer reloadData() (R06): der geladene Stand ersetzt den verdraengten.
+function cancelPendingSave() {
     if (!saveTimeout) return false;
     clearTimeout(saveTimeout);
     saveTimeout = null;
     return true;
+}
+/**
+ * R06 (Code-Review 2026-09-21, U8): fuehrt fn aus, waehrend entprellte Saves zurueckgestellt
+ * sind (verschachtelbar). Ein in dieser Zeit faelliger save() schreibt nicht, sondern plant
+ * sich neu ein — scheitert das Konflikt-Neuladen, landet die lokale Aenderung danach wie
+ * gewohnt im Speicher; gelingt es, verwirft reloadData() den Lauf (cancelPendingSave).
+ * saveImmediate() ist NICHT zurueckgestellt (reloadData schreibt danach neu fest).
+ */
+async function runWithSavesSuspended(fn) {
+    _saveSuspendDepth++;
+    try {
+        return await fn();
+    } finally {
+        _saveSuspendDepth--;
+    }
 }
 function _endPersistWrite() {
     _persistWritesInFlight = Math.max(0, _persistWritesInFlight - 1);
@@ -191,7 +211,7 @@ function _waitForPersistSettle(capMs) {
  */
 function retireCampaignWrites() {
     _campaignWritesRetired = true;
-    if (_cancelPendingSave()) _retireCancelledSave = true;
+    if (cancelPendingSave()) _retireCancelledSave = true;
     return _waitForPersistSettle(PERSIST_SETTLE_CAP_MS);
 }
 // Abbruchpfade: Sperre aufheben; einen verworfenen save() nachholen
@@ -229,10 +249,11 @@ function saveAutomatic() {
 // Ein veralteter Tab zieht nicht vor: sein ausstehender Save laeuft regulaer, solange die
 // Seite lebt, und endet mit ihr, wenn der Nutzer sie nach der Rueckfrage verlaesst.
 function flushPendingSave() {
-    if (_campaignWritesRetired || !saveTimeout) return;
+    // R06: waehrend des Konflikt-Neuladens nicht vorziehen — der Save bleibt zurueckgestellt
+    if (_campaignWritesRetired || !saveTimeout || _saveSuspendDepth > 0) return;
     const key = window.getActiveCampaignKey();
     if (!key || isCampaignStorageStale(key)) return;
-    _cancelPendingSave();
+    cancelPendingSave();
     _persistNow(_pendingSaveShowMessage);
 }
 // Fuer interne Reload-Stellen (Kampagnenwechsel): festschreiben und den Commit abwarten
@@ -272,7 +293,7 @@ function persistOnUnload(event) {
     const explicit = !!saveTimeout || _persistWritesInFlight > 0 || _lastPersistFailed;
     if (current === b.snapshot) {
         if (_persistWritesInFlight > 0) _askToStay(event);
-        else _cancelPendingSave(); // nichts zu schreiben: identisch mit dem letzten Stand
+        else cancelPendingSave(); // nichts zu schreiben: identisch mit dem letzten Stand
         return;
     }
     if (isCampaignStorageStale(key)) {
@@ -280,12 +301,12 @@ function persistOnUnload(event) {
         return;
     }
     if (_measureDataByteLength(current) / (1024 * 1024) > PERSIST_LS_LIMIT_MB) {
-        _cancelPendingSave();
+        cancelPendingSave();
         _persistNow(false);
         if (explicit) _askToStay(event);
         return;
     }
-    _cancelPendingSave();
+    cancelPendingSave();
     const generation = ++_persistGeneration;
     if (StorageAPI.set(key, current).success) {
         StorageAPI.set(key + '_ts', String(Date.now()));
@@ -574,7 +595,10 @@ async function loadFromIndexedDBFallback(key) {
             if (request.result) {
                 resolve(request.result.data);
             } else {
-                reject(new Error('No data found'));
+                // R06: "nichts gespeichert" von einem echten IDB-Lesefehler unterscheidbar
+                const notFound = new Error('No data found');
+                notFound.code = 'NOT_FOUND';
+                reject(notFound);
             }
         };
         request.onerror = () => reject(request.error);
@@ -606,6 +630,11 @@ const save = function (showMessage = false) {
     _pendingSaveShowMessage = showMessage;
     saveTimeout = window.setTimeout(() => {
         saveTimeout = null;
+        // R06: waehrend reloadData() nicht schreiben, sondern neu einplanen
+        if (_saveSuspendDepth > 0) {
+            save(showMessage);
+            return;
+        }
         _persistNow(showMessage);
     }, 300);
 };
@@ -724,4 +753,7 @@ window.flushPendingSave = flushPendingSave;
 window.flushPendingSaveAndSettle = flushPendingSaveAndSettle;
 window.persistOnUnload = persistOnUnload;
 window.initUnloadPersistence = initUnloadPersistence;
-// Note: load() and loadFromBackup() are defined in systems/backups.js
+// R06 (Code-Review 2026-09-21, U8)
+window.cancelPendingSave = cancelPendingSave;
+window.runWithSavesSuspended = runWithSavesSuspended;
+// Note: load() is defined in systems/spellslots/quick-roll.js

@@ -34,20 +34,118 @@ function resolveStorageConflict(lsData, idbData, onUseLS, onUseIDB) {
         if (typeof onUseIDB === 'function') onUseIDB();
     }
 }
-async function load() {
+// R06: gespeicherter Rohtext -> normalisiertes, migriertes Kampagnenobjekt ({p}) oder
+// {reason: 'parse'|'invalid', error}. Meldet Parse-Fehler wie bisher.
+function _parseStoredCampaign(s) {
+    const ErrorHandler = window.ErrorHandler;
+    const APP_CONFIG = window.APP_CONFIG;
+    const CURRENT_VERSION = APP_CONFIG.VERSION;
+    // Sichere JSON-Parse
+    let p;
+    try {
+        p = JSON.parse(s);
+    } catch (parseError) {
+        ErrorHandler.log('load', parseError, 'JSON Parse fehlgeschlagen');
+        ErrorHandler.showError('Kampagnendaten sind beschädigt');
+        return { reason: 'parse', error: parseError };
+    }
+    // Prüfe auf valides Objekt
+    if (!p || typeof p !== 'object') {
+        const error = new Error('Ungültige Datenstruktur');
+        ErrorHandler.log('load', error);
+        return { reason: 'invalid', error };
+    }
+    // (D-05/STAB-06) Legacy-Stempel-Normalisierung: '2.11' wurde fälschlicherweise
+    // als "neuer als 2.6.x" behandelt (compareVersions: 11 > 6).
+    // Normalisierung auf '2.0.0' stellt sicher, dass Migration korrekt ausgeführt wird.
+    if (p._version === '2.11') {
+        p._version = '2.0.0';
+        if (APP_CONFIG.DEBUG_MODE && typeof log === 'function') {
+            log('[LOAD] Legacy-Stempel 2.11 auf 2.0.0 normalisiert');
+        }
+    }
+    // Versionierung und Migration
+    if (!p._version || compareVersions(p._version, CURRENT_VERSION) < 0) {
+        if (APP_CONFIG.DEBUG_MODE && typeof log === 'function') {
+            log(`[LOAD] Migriere von ${p._version || 'unbekannt'} auf ${CURRENT_VERSION}`);
+        }
+        try {
+            p = migrateData(p);
+        } catch (migrateError) {
+            ErrorHandler.log('load', migrateError, 'Migration fehlgeschlagen');
+            // Fahre trotzdem fort mit unmigierten Daten
+        }
+    }
+    return { p };
+}
+// R06: Nachbearbeitung, NACHDEM der Stand in D uebernommen ist (Laufzeit-Container, Version,
+// Integritaet, spellClasses). Wirft sie, bleibt der Stand trotzdem uebernommen.
+function _finishAppliedCampaign(D) {
+    const APP_CONFIG = window.APP_CONFIG;
+    if (!D.encounters) D.encounters = [];
+    if (!D.spells) D.spells = [];
+    if (!D.links) D.links = [];
+    if (!D.filters) D.filters = [];
+    if (!D.calendar) D.calendar = { day: 1, month: 4, year: 1492, events: [] };
+    if (!D._nextId) D._nextId = {};
+    // Setze aktuelle Version
+    D._version = APP_CONFIG.VERSION;
+    // Validiere Datenintegrität
+    const validateDataIntegrity = window.validateDataIntegrity;
+    const validation = validateDataIntegrity();
+    if (!validation.valid) {
+        if (APP_CONFIG.DEBUG_MODE && typeof window.debugLogAdd === 'function') {
+            // Selbstheilung ist Normalverhalten, kein Fehler — nur ins in-App-Debug-Log
+            // (validateDataIntegrity loggt die Reparaturliste bereits separat dort;
+            // console.error waere hier ein falscher Alarm, UAT 01).
+            window.debugLogAdd(
+                `[load] Daten-Reparaturen durchgeführt: ${validation.repairs.join('; ')}`
+            );
+        }
+        // Speichere reparierte Daten — automatisch, also nur in einem nicht veralteten
+        // Tab (R02, D4 = A)
+        setTimeout(() => window.saveAutomatic(), 1000);
+    }
+    // Pre-compute spellClasses arrays for performance
+    if (D.spells && Array.isArray(D.spells)) {
+        D.spells.forEach(spell => {
+            // Pre-compute spellClasses array from comma-separated string
+            if (spell.spellClass && !spell.spellClasses) {
+                spell.spellClasses = spell.spellClass.split(',').map(c => c.trim());
+            }
+        });
+    }
+}
+/**
+ * Laedt die aktive Kampagne (localStorage, bei Bedarf IndexedDB) und uebernimmt sie in D.
+ * R06 (Code-Review 2026-09-21, U8): liefert ein LoadResult statt stillem undefined —
+ * {ok, applied, source: 'localStorage'|'indexedDB'|null, reason?, degraded?, warning?, error?}.
+ * ok: ein gespeicherter Stand wurde gelesen UND uebernommen. reason bei ok:false: 'no-key',
+ * 'not-found', 'idb-error', 'parse', 'invalid', 'abandoned' oder 'exception'.
+ * @param {{strictIdb?: boolean, shouldApply?: () => boolean}} [options]
+ *   strictIdb (Neuladen): ein gescheitertes IndexedDB-Lesen ist ein Fehlschlag — beim Start
+ *   geht es mit dem localStorage-Schatten weiter (degraded: true).
+ *   shouldApply: unmittelbar vor dem Uebernehmen gefragt; false -> reason 'abandoned'.
+ */
+async function load(options = {}) {
+    const opts = options && typeof options === 'object' ? options : {};
     const key = window.getActiveCampaignKey();
     const D = window.D;
     const ErrorHandler = window.ErrorHandler;
     const APP_CONFIG = window.APP_CONFIG;
-    const CURRENT_VERSION = APP_CONFIG.VERSION;
     if (!key) {
-        ErrorHandler.log('load', new Error('Kein aktiver Kampagnenschlüssel'));
-        return;
+        const error = new Error('Kein aktiver Kampagnenschlüssel');
+        ErrorHandler.log('load', error);
+        return { ok: false, applied: false, source: null, reason: 'no-key', error };
     }
+    let source = null;
+    let applied = false;
+    let degraded = false;
     try {
         let s = StorageAPI.get(key, null);
         // R02: localStorage-Rohwert VOR jeder IndexedDB-Ersetzung — Basis der Veraltungspruefung
         const lsRaw = s;
+        if (s) source = 'localStorage';
         const lsTimestamp = StorageAPI.get(key + '_ts', null);
         // (D-01/D-07) Stale-Shadow-Detection: LS vorhanden, aber ohne _ts
         // → prüfe ob IDB neuere Daten hat
@@ -64,12 +162,26 @@ async function load() {
                         },
                         () => {
                             s = idbRecord.data;
+                            source = 'indexedDB';
                         }
                     );
                 }
                 // Identischer Inhalt: kein Dialog, s bleibt (kein Datenverlust)
             } catch (e) {
-                // IDB nicht verfügbar — LS-Daten nutzen
+                // R06: beim Neuladen ist ein ungeprüfter Schatten kein belastbarer Stand —
+                // Fehlschlag, BEVOR etwas uebernommen wird
+                if (opts.strictIdb) {
+                    ErrorHandler.log('load', e, '[D-07] IDB-Konfliktprüfung fehlgeschlagen');
+                    return {
+                        ok: false,
+                        applied: false,
+                        source: null,
+                        reason: 'idb-error',
+                        error: e
+                    };
+                }
+                // Start: IDB nicht verfügbar — LS-Daten nutzen, aber als eingeschraenkt melden
+                degraded = true;
                 if (APP_CONFIG.DEBUG_MODE) {
                     ErrorHandler &&
                         ErrorHandler.log('load', e, '[D-07] IDB-Konfliktprüfung fehlgeschlagen');
@@ -82,6 +194,7 @@ async function load() {
                 const loadFromIndexedDBFallback = window.loadFromIndexedDBFallback;
                 s = await loadFromIndexedDBFallback(key);
                 if (s) {
+                    source = 'indexedDB';
                     if (APP_CONFIG.DEBUG_MODE && typeof log === 'function') {
                         // Erfolgsmeldung, kein Fehler — nicht rot via ErrorHandler.log (UAT 01)
                         log('[LOAD] Daten aus IndexedDB geladen');
@@ -89,91 +202,74 @@ async function load() {
                     showToast('💾 Kampagne aus IndexedDB geladen', 'info', 3000);
                 }
             } catch (e) {
+                // R06: nur "nichts gespeichert" (NOT_FOUND) ist ein normaler, frischer Start. Ein
+                // echter Lesefehler setzt KEINE Baseline — automatische Saves schreiben dann nicht
+                // ueber die ungelesene IndexedDB-Kampagne (R02).
+                if (!(e && e.code === 'NOT_FOUND')) {
+                    ErrorHandler.log('load', e, 'IndexedDB-Lesefehler');
+                    showToast('⚠️ Kampagne konnte nicht aus IndexedDB gelesen werden', 'warning');
+                    return {
+                        ok: false,
+                        applied: false,
+                        source: null,
+                        reason: 'idb-error',
+                        error: e
+                    };
+                }
                 if (APP_CONFIG.DEBUG_MODE && typeof log === 'function') {
                     // Erwarteter Pfad bei frischem Boot (keine IDB-Daten) — kein roter Fehler
-                    log('[LOAD] Keine Daten in IndexedDB:', e && e.message);
+                    log('[LOAD] Keine Daten in IndexedDB:', e.message);
                 }
             }
         }
-        if (s) {
-            // Sichere JSON-Parse
-            let p;
-            try {
-                p = JSON.parse(s);
-            } catch (parseError) {
-                ErrorHandler.log('load', parseError, 'JSON Parse fehlgeschlagen');
-                ErrorHandler.showError('Kampagnendaten sind beschädigt');
-                return;
+        if (!s) {
+            // Nichts gespeichert (frische Kampagne). R02: der Start setzt die Baseline. Beim
+            // Neuladen (strictIdb) bleibt die bisherige — ein anderer Tab hat die Kampagne
+            // entfernt; automatische Saves schreiben den verdraengten Stand nicht zurueck.
+            if (!opts.strictIdb && typeof window.setPersistBaseline === 'function') {
+                window.setPersistBaseline(key, lsRaw, JSON.stringify(D));
             }
-            // Prüfe auf valides Objekt
-            if (!p || typeof p !== 'object') {
-                ErrorHandler.log('load', new Error('Ungültige Datenstruktur'));
-                return;
-            }
-            // (D-05/STAB-06) Legacy-Stempel-Normalisierung: '2.11' wurde fälschlicherweise
-            // als "neuer als 2.6.x" behandelt (compareVersions: 11 > 6).
-            // Normalisierung auf '2.0.0' stellt sicher, dass Migration korrekt ausgeführt wird.
-            if (p._version === '2.11') {
-                p._version = '2.0.0';
-                if (APP_CONFIG.DEBUG_MODE && typeof log === 'function') {
-                    log('[LOAD] Legacy-Stempel 2.11 auf 2.0.0 normalisiert');
-                }
-            }
-            // Versionierung und Migration
-            if (!p._version || compareVersions(p._version, CURRENT_VERSION) < 0) {
-                if (APP_CONFIG.DEBUG_MODE && typeof log === 'function') {
-                    log(`[LOAD] Migriere von ${p._version || 'unbekannt'} auf ${CURRENT_VERSION}`);
-                }
-                try {
-                    p = migrateData(p);
-                } catch (migrateError) {
-                    ErrorHandler.log('load', migrateError, 'Migration fehlgeschlagen');
-                    // Fahre trotzdem fort mit unmigierten Daten
-                }
-            }
-            // Merge imported data into D (D is now const, cannot reassign)
-            Object.assign(D, p);
-            if (!D.encounters) D.encounters = [];
-            if (!D.spells) D.spells = [];
-            if (!D.links) D.links = [];
-            if (!D.filters) D.filters = [];
-            if (!D.calendar) D.calendar = { day: 1, month: 4, year: 1492, events: [] };
-            if (!D._nextId) D._nextId = {};
-            // Setze aktuelle Version
-            D._version = CURRENT_VERSION;
-            // Validiere Datenintegrität
-            const validateDataIntegrity = window.validateDataIntegrity;
-            const validation = validateDataIntegrity();
-            if (!validation.valid) {
-                if (APP_CONFIG.DEBUG_MODE && typeof window.debugLogAdd === 'function') {
-                    // Selbstheilung ist Normalverhalten, kein Fehler — nur ins in-App-Debug-Log
-                    // (validateDataIntegrity loggt die Reparaturliste bereits separat dort;
-                    // console.error waere hier ein falscher Alarm, UAT 01).
-                    window.debugLogAdd(`[load] Daten-Reparaturen durchgeführt: ${validation.repairs.join('; ')}`);
-                }
-                // Speichere reparierte Daten — automatisch, also nur in einem nicht veralteten
-                // Tab (R02, D4 = A)
-                setTimeout(() => window.saveAutomatic(), 1000);
-            }
-            // Pre-compute spellClasses arrays for performance
-            if (D.spells && Array.isArray(D.spells)) {
-                D.spells.forEach(spell => {
-                    // Pre-compute spellClasses array from comma-separated string
-                    if (spell.spellClass && !spell.spellClasses) {
-                        spell.spellClasses = spell.spellClass.split(',').map(c => c.trim());
-                    }
-                });
-            }
+            return { ok: false, applied: false, source: null, reason: 'not-found' };
         }
-        // R02: Baseline erst nach erfolgreichem Laden (auch "nichts gespeichert"). Die fruehen
-        // Returns (Parse-Fehler, ungueltige Struktur) und der catch setzen keine — ein Tab, der
-        // nicht laden konnte, schreibt beim Verlassen nie blind ueber die Daten.
+        const parsed = _parseStoredCampaign(s);
+        if (!parsed.p) {
+            return {
+                ok: false,
+                applied: false,
+                source,
+                reason: parsed.reason,
+                error: parsed.error
+            };
+        }
+        // R06: ein aufgegebenes Neuladen (Waechter abgelaufen) uebernimmt nichts mehr
+        if (typeof opts.shouldApply === 'function' && !opts.shouldApply()) {
+            return { ok: false, applied: false, source, reason: 'abandoned' };
+        }
+        // Merge imported data into D (D is now const, cannot reassign)
+        Object.assign(D, parsed.p);
+        applied = true;
+        let warning = null;
+        try {
+            _finishAppliedCampaign(D);
+        } catch (postError) {
+            // Der Stand IST uebernommen — ehrlich als Warnung, nicht als "nichts geaendert"
+            warning = (postError && postError.message) || String(postError);
+            ErrorHandler.log('load', postError, 'Nachbearbeitung nach dem Laden fehlgeschlagen');
+        }
+        // R02: Baseline erst nach erfolgreichem Laden. Die fruehen Returns (Lesefehler,
+        // Parse-Fehler, ungueltige Struktur, aufgegeben) und der catch setzen keine — ein Tab,
+        // der nicht laden konnte, schreibt beim Verlassen nie blind ueber die Daten.
         if (typeof window.setPersistBaseline === 'function') {
             window.setPersistBaseline(key, lsRaw, JSON.stringify(D));
         }
+        const result = { ok: true, applied: true, source };
+        if (degraded) result.degraded = true;
+        if (warning) result.warning = warning;
+        return result;
     } catch (e) {
         ErrorHandler.log('load', e);
         ErrorHandler.showError('Fehler beim Laden der Kampagne');
+        return { ok: false, applied, source, reason: 'exception', error: e };
     }
 }
 function exportAllDataAsFile() {
