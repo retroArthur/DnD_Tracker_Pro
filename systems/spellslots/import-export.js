@@ -933,7 +933,10 @@ async function clearStorage() {
     } else {
         await reportSafetyBackup(status);
     }
-    // Step 4: Kampagnendaten entfernen — IndexedDB-Kopie (bestaetigter Commit) und localStorage
+    // Step 4 (R02): Schreibsperre ZUERST — ein ausstehender oder ueberfaelliger save(), Strg+S,
+    // Strg+Z oder der Session-Timer schreiben sonst vor dem Neuladen alles zurueck
+    if (typeof window.retireCampaignWrites === 'function') await window.retireCampaignWrites();
+    // Step 5: Kampagnendaten entfernen — IndexedDB-Kopie (bestaetigter Commit) und localStorage
     const key =
         typeof window.getActiveCampaignKey === 'function' ? window.getActiveCampaignKey() : null;
     const result =
@@ -944,6 +947,7 @@ async function clearStorage() {
         showToast('✅ Alle Daten gelöscht', 'info');
         setTimeout(() => location.reload(), 1000);
     } else {
+        if (typeof window.resumeCampaignWrites === 'function') window.resumeCampaignWrites();
         showToast('❌ Fehler beim Löschen', 'error');
         if (window.ErrorHandler) {
             window.ErrorHandler.log('Clear storage', result && result.error);

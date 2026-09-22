@@ -16,11 +16,14 @@ const path = require('path');
 
 // Stubs fuer die Modul-Umgebung (jsdom liefert window/document/Blob)
 window.STORAGE_KEY = 'test-backup-key';
+// Einziger Schluessel-Resolver seit U7 (R02): getActiveCampaignKey() aus core/data.js
+window.getActiveCampaignKey = () => window.STORAGE_KEY_OVERRIDE || window.STORAGE_KEY;
 window.D = { characters: [{ id: 1, name: 'Testheld' }] };
 window.updateSaveIndicator = jest.fn();
 window.broadcastSave = jest.fn();
 global.StorageAPI = {
     set: jest.fn(() => ({ success: true })),
+    setQuiet: jest.fn(() => ({ success: true })), // _rev-Marker (U7)
     remove: jest.fn(),
     get: jest.fn(() => null),
     getJSON: jest.fn(() => ({}))

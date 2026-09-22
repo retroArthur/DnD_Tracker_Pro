@@ -316,9 +316,9 @@ describe('R02 — loeschende/umziehende Ablaeufe: harte Schreibsperre VOR dem En
 
             expect(A.geschlossen).toBe(true); // Reload lief
             expect(A.toasts.map(t => t.text)).toContain('✅ Alle Daten gelöscht');
-            expect(u.ls.get(KEY)).toBeNull();
-            expect(u.ls.get(KEY + '_ts')).toBeNull();
-            expect(u.ls.get(KEY + '_rev')).toBeNull();
+            expect(u.ls.has(KEY)).toBe(false);
+            expect(u.ls.has(KEY + '_ts')).toBe(false);
+            expect(u.ls.has(KEY + '_rev')).toBe(false);
             expect(u.idbDatensatz(KEY)).toBeUndefined();
             // Nach dem Entfernen schreibt nichts den Schluessel neu
             const log = u.schreibvorgaenge({ tab: 'A', praefix: KEY });
@@ -418,9 +418,9 @@ describe('R02 — loeschende/umziehende Ablaeufe: harte Schreibsperre VOR dem En
 
         expect(A.geschlossen).toBe(true);
         expect(A.entladungen[0].defaultPrevented).toBe(false);
-        expect(u.ls.get(NEBEN_KEY)).toBeNull();
-        expect(u.ls.get(NEBEN_KEY + '_ts')).toBeNull();
-        expect(u.ls.get(NEBEN_KEY + '_rev')).toBeNull();
+        expect(u.ls.has(NEBEN_KEY)).toBe(false);
+        expect(u.ls.has(NEBEN_KEY + '_ts')).toBe(false);
+        expect(u.ls.has(NEBEN_KEY + '_rev')).toBe(false);
         expect(JSON.parse(u.ls.get(INDEX_KEY)).campaigns).toEqual([]);
     });
 
@@ -440,9 +440,9 @@ describe('R02 — loeschende/umziehende Ablaeufe: harte Schreibsperre VOR dem En
         await u.uhr.laufen(400);
 
         expect(A.geschlossen).toBe(true);
-        expect(u.ls.get(KEY)).toBeNull();
-        expect(u.ls.get(KEY + '_ts')).toBeNull();
-        expect(u.ls.get(KEY + '_rev')).toBeNull();
+        expect(u.ls.has(KEY)).toBe(false);
+        expect(u.ls.has(KEY + '_ts')).toBe(false);
+        expect(u.ls.has(KEY + '_rev')).toBe(false);
         expect(u.idbDatensatz(KEY)).toBeUndefined();
     });
 });

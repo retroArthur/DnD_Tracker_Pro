@@ -79,9 +79,9 @@ const CAMPAIGN_FORBIDDEN_KEYS = Object.freeze(['__proto__', 'constructor', 'prot
 /**
  * Einziger Resolver fuer "welche Kampagne zeigt dieser Tab?".
  * Liest die globale STORAGE_KEY-Konstante dieser Datei (= APP_CONFIG.STORAGE_KEY), NICHT
- * window.STORAGE_KEY: die funktionslokalen `const STORAGE_KEY = window.STORAGE_KEY`-
- * Schatten anderer Module sind im Loader-Modus undefined — U7 stellt sie auf diese
- * Funktion um.
+ * die window-Eigenschaft gleichen Namens — die gibt es nicht (im Loader-Modus undefined).
+ * Seit U7 (R02) loesen persistence.js, quick-roll.js und undo.js den Schluessel nur noch
+ * hierueber auf; tests/unit/unload-persistence.test.js (S2) haelt den Quellbaum frei davon.
  * @returns Aktiver Kampagnen-Speicherschluessel oder null
  */
 function getActiveCampaignKey() {

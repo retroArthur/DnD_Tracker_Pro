@@ -31,6 +31,9 @@ async function init() {
     }
 
     await load();
+    // R02: Verlassen-Schutz (kein blindes Zurueckschreiben) und vorgezogener Flush beim
+    // Verstecken — direkt nach dem Laden, damit die Baseline von load() gilt
+    if (typeof window.initUnloadPersistence === 'function') window.initUnloadPersistence();
 
     // Theme initialisieren
     loadTheme();
@@ -74,6 +77,9 @@ async function init() {
     if (typeof window.renderDiceHistory === 'function') window.renderDiceHistory();
     if (typeof window.renderDiceFavorites === 'function') window.renderDiceFavorites();
     if (typeof window.renderRandomTables === 'function') window.renderRandomTables();
+    // R02: Render-Normalisierungen gelten nicht als ungespeicherte Aenderung (auch wenn ein
+    // spaeterer init-Schritt wirft)
+    if (typeof window.refreshPersistSnapshot === 'function') window.refreshPersistSnapshot();
 
     // Drag-and-Drop für Initiative initialisieren
     initDragDrop();
@@ -147,6 +153,9 @@ async function init() {
 
     // Version anzeigen
     log(`[D&D Tracker] Version ${CURRENT_VERSION}`);
+
+    // R02: Snapshot nach allen init-Schritten (Lazy-Inits der Module)
+    if (typeof window.refreshPersistSnapshot === 'function') window.refreshPersistSnapshot();
 }
 
 function initSortableLists() {

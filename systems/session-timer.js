@@ -55,10 +55,10 @@ function toggleSessionTimer() {
         sessionTimerInterval = window.setInterval(() => {
             sessionTimerSeconds++;
             updateSessionTimerDisplay();
-            // Auto-save Session-Zeit
+            // Auto-save Session-Zeit — automatisch, also nie aus einem veralteten Tab (R02)
             if (sessionTimerSeconds % SESSION_AUTO_SAVE_INTERVAL === 0) {
                 D.lastSessionDuration = sessionTimerSeconds;
-                save();
+                window.saveAutomatic();
             }
         }, 1000);
     }

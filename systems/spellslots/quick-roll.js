@@ -35,14 +35,19 @@ function resolveStorageConflict(lsData, idbData, onUseLS, onUseIDB) {
     }
 }
 async function load() {
-    const STORAGE_KEY = window.STORAGE_KEY;
-    const key = window.STORAGE_KEY_OVERRIDE || STORAGE_KEY;
+    const key = window.getActiveCampaignKey();
     const D = window.D;
     const ErrorHandler = window.ErrorHandler;
     const APP_CONFIG = window.APP_CONFIG;
     const CURRENT_VERSION = APP_CONFIG.VERSION;
+    if (!key) {
+        ErrorHandler.log('load', new Error('Kein aktiver Kampagnenschlüssel'));
+        return;
+    }
     try {
         let s = StorageAPI.get(key, null);
+        // R02: localStorage-Rohwert VOR jeder IndexedDB-Ersetzung — Basis der Veraltungspruefung
+        const lsRaw = s;
         const lsTimestamp = StorageAPI.get(key + '_ts', null);
         // (D-01/D-07) Stale-Shadow-Detection: LS vorhanden, aber ohne _ts
         // → prüfe ob IDB neuere Daten hat
@@ -146,9 +151,9 @@ async function load() {
                     // console.error waere hier ein falscher Alarm, UAT 01).
                     window.debugLogAdd(`[load] Daten-Reparaturen durchgeführt: ${validation.repairs.join('; ')}`);
                 }
-                // Speichere reparierte Daten
-                const save = window.save;
-                setTimeout(() => save(), 1000);
+                // Speichere reparierte Daten — automatisch, also nur in einem nicht veralteten
+                // Tab (R02, D4 = A)
+                setTimeout(() => window.saveAutomatic(), 1000);
             }
             // Pre-compute spellClasses arrays for performance
             if (D.spells && Array.isArray(D.spells)) {
@@ -159,6 +164,12 @@ async function load() {
                     }
                 });
             }
+        }
+        // R02: Baseline erst nach erfolgreichem Laden (auch "nichts gespeichert"). Die fruehen
+        // Returns (Parse-Fehler, ungueltige Struktur) und der catch setzen keine — ein Tab, der
+        // nicht laden konnte, schreibt beim Verlassen nie blind ueber die Daten.
+        if (typeof window.setPersistBaseline === 'function') {
+            window.setPersistBaseline(key, lsRaw, JSON.stringify(D));
         }
     } catch (e) {
         ErrorHandler.log('load', e);

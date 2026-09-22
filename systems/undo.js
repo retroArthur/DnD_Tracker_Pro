@@ -251,29 +251,43 @@ function updateSaveIndicator(status = 'saved') {
 let broadcastChannel = null;
 const tabId = Math.random().toString(36).substr(2, 9);
 let conflictDismissed = false;
+// Ein anderer Tab hat DIESE Kampagne gespeichert: der Tab ist veraltet (R02 — seine
+// automatischen Saves und das Verlassen schreiben nicht mehr zurueck), unabhaengig davon,
+// ob der Nutzer das Banner weggeklickt hat; das Banner nur, solange nicht weggeklickt
+function _noteForeignCampaignSave(campaignKey) {
+    if (typeof window.markExternalCampaignWrite === 'function') {
+        window.markExternalCampaignWrite(campaignKey);
+    }
+    if (!conflictDismissed) showConflictBanner();
+}
 function initConflictDetection() {
     try {
         const APP_CONFIG = window.APP_CONFIG;
         broadcastChannel = new BroadcastChannel(APP_CONFIG.BROADCAST_CHANNEL);
         broadcastChannel.onmessage = event => {
-            if (event.data.tabId !== tabId && event.data.campaign === getCurrentStorageKey()) {
-                if (event.data.type === 'save' && !conflictDismissed) {
-                    showConflictBanner();
-                }
+            const data = event.data || {};
+            if (
+                data.tabId !== tabId &&
+                data.type === 'save' &&
+                data.campaign === getCurrentStorageKey()
+            ) {
+                _noteForeignCampaignSave(data.campaign);
             }
         };
-        // Bei Speicherung anderen Tabs mitteilen
-        window.addEventListener('storage', e => {
-            if (e.key === getCurrentStorageKey()) {
-                if (!conflictDismissed) {
-                    showConflictBanner();
-                }
-            }
-        });
     } catch (e) {
         const log = window.log;
         if (log) log('BroadcastChannel nicht unterstützt, fallback auf localStorage events');
     }
+    // storage-Ereignisse kommen nur aus ANDEREN Tabs — auch ohne BroadcastChannel. Der
+    // _rev-Marker meldet Saves im IndexedDB-Modus (dort gibt es keinen Kampagnenschluessel in
+    // localStorage); key === null ist localStorage.clear(). Andere Kampagnen: ignorieren.
+    window.addEventListener('storage', e => {
+        const k = getCurrentStorageKey();
+        if (!k) return;
+        if (e.key === k || e.key === k + '_rev' || e.key === null) {
+            _noteForeignCampaignSave(k);
+        }
+    });
 }
 function broadcastSave() {
     if (broadcastChannel) {
@@ -306,9 +320,9 @@ function reloadData() {
     dismissConflict();
     showToast('🔄 Daten neu geladen');
 }
+// Einziger Resolver: getActiveCampaignKey() (core/data.js, R02)
 function getCurrentStorageKey() {
-    const STORAGE_KEY = window.STORAGE_KEY;
-    return window.STORAGE_KEY_OVERRIDE || STORAGE_KEY;
+    return window.getActiveCampaignKey();
 }
 // ============================================================
 // TASTENKÜRZEL-OVERLAY

@@ -191,6 +191,9 @@ function erzeugePersistenz(opt = {}) {
         setTimeout,
         clearTimeout
     };
+    // Einziger Schluessel-Resolver seit U7 (R02): getActiveCampaignKey() aus core/data.js,
+    // hier nicht geladen -> nachgebildet
+    context.getActiveCampaignKey = () => context.STORAGE_KEY_OVERRIDE || context.STORAGE_KEY;
     context.initIndexedDB = jest.fn(async () => {
         context.idb = fake.db;
         return fake.db;

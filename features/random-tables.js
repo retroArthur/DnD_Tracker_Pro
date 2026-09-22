@@ -19,7 +19,8 @@ function initRandomTables() {
     const D = window.D;
     if (!D.randomTables) {
         D.randomTables = getDefaultRandomTables();
-        window.save();
+        // Automatischer Save: nie aus einem veralteten Tab oder nach gescheitertem load() (R02)
+        window.saveAutomatic();
     }
 }
 function getDefaultRandomTables() {

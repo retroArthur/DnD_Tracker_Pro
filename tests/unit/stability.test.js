@@ -1262,10 +1262,15 @@ describe('Persistence Regression Tests (Plan 01-02)', () => {
             const saveImmediateCatch = saveImmediateBody.slice(saveImmediateBody.indexOf('} catch (e) {'));
             expect(saveImmediateCatch).toMatch(/saveToIndexedDBFallback\(/);
 
-            // save(): dasselbe Muster im setTimeout-Callback-Körper.
+            // save(): dasselbe Muster im Koerper des entprellten Durchlaufs. Seit U7 (R02) ist
+            // der setTimeout-Callback-Koerper nach _persistNow() ausgelagert (flushPendingSave()
+            // zieht ihn vor); save() selbst plant nur noch diesen Durchlauf ein.
             const saveMatch = src.match(/const save = function[\s\S]*?\n};\n/);
             expect(saveMatch).not.toBeNull();
-            const saveBody = saveMatch[0];
+            expect(saveMatch[0]).toMatch(/_persistNow\(showMessage\)/);
+            const persistNowMatch = src.match(/async function _persistNow\([^)]*\)\s*{[\s\S]*?\n}\n/);
+            expect(persistNowMatch).not.toBeNull();
+            const saveBody = persistNowMatch[0];
             const saveCatch = saveBody.slice(saveBody.lastIndexOf('} catch (e) {'));
             expect(saveCatch).toMatch(/saveToIndexedDBFallback\(/);
         });
@@ -1703,13 +1708,16 @@ describe('Nachzug R12 — kein Autosave-Schalter-Guard in den Save-Funktionen', 
         expect(saveImmediateMatch).not.toBeNull();
         const saveMatch = src.match(/const save = function[\s\S]*?\n};\n/);
         expect(saveMatch).not.toBeNull();
+        // Seit U7 (R02) liegt der entprellte Save-Koerper in _persistNow()
+        const persistNowMatch = src.match(/async function _persistNow\([^)]*\)\s*{[\s\S]*?\n}\n/);
+        expect(persistNowMatch).not.toBeNull();
 
         // Der geloeschte Codepfad war ein Vorab-Guard, der bei nicht gesetztem
         // Schalter still zurueckkehrte. Ein Ersatz unter anderem Element-Namen
         // (z. B. 'autosave-switch') stellt denselben Defekt wieder her und wuerde
         // vom reinen Literal-Grep auf "autosave-toggle" NICHT gefangen. Deshalb
         // hier: in beiden Funktionskoerpern darf gar keine DOM-Abfrage stehen.
-        [saveImmediateMatch[0], saveMatch[0]].forEach(koerper => {
+        [saveImmediateMatch[0], saveMatch[0], persistNowMatch[0]].forEach(koerper => {
             expect(koerper).not.toMatch(/getElementById\(/);
             expect(koerper).not.toMatch(/querySelector\(/);
             expect(koerper).not.toMatch(/\$c?\(['"][a-z-]+['"]\)/);
@@ -2142,6 +2150,9 @@ function _erzeugePersistenzKontext(optionen = {}) {
         compareVersions: () => 0,
         log: () => {}
     };
+    // Einziger Schluessel-Resolver seit U7 (R02) ist getActiveCampaignKey() aus core/data.js —
+    // diese Werkbank laedt core/data.js nicht und bildet ihn nach
+    context.getActiveCampaignKey = () => context.STORAGE_KEY_OVERRIDE || context.STORAGE_KEY;
     context.initIndexedDB = jest.fn(async () => {
         context.idb = idbInstance;
     });

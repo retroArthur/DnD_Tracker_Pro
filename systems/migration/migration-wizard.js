@@ -544,6 +544,10 @@ function _processWizardFile(file, dropzone) {
 
             result = importFn(parsedObj);
             // ---- Grenze: ab hier sind die Kampagnendaten in localStorage geschrieben.
+            // R02 (Code-Review 2026-09-21): SOFORT die Schreibpfade dieses Tabs sperren — sein
+            // D ist der Vor-Import-Stand. Die Sperre greift synchron (kein await noetig);
+            // Strg+S, Strg+Z, Autosave und das Verlassen schreiben ab jetzt nichts mehr.
+            if (typeof window.retireCampaignWrites === 'function') window.retireCampaignWrites();
         } catch (err) {
             const msg = err.message || 'Unbekannter Fehler';
             showError('Import fehlgeschlagen: ' + msg + '. Bitte erneut versuchen oder Überspringen wählen.');
@@ -779,9 +783,11 @@ function _setupWizardActions(modal) {
             // shown-Flag setzen (immer, unabhaengig vom Schritt)
             StorageAPI.setJSON('migration-wizard-shown', { shown: true, skipped: true });
             // Gap-Closure 12-09 (CR-01): ab Schritt 4 ist der Import bereits gelaufen —
-            // window.D steht noch auf dem Vor-Import-Stand, und der unbedingte
-            // beforeunload-Autosave in systems/avatars.js wuerde ihn ohne Neuladen in
-            // denselben Storage-Key zurueckschreiben (derselbe Grund wie wizard-close).
+            // window.D steht noch auf dem Vor-Import-Stand; neu laden, damit die App den
+            // Import zeigt. Korrektur (Code-Review 2026-09-21, R02): auch location.reload()
+            // feuert beforeunload — den Import schuetzt nicht der Reload, sondern die
+            // Schreibsperre direkt nach importFn() (retireCampaignWrites) plus die
+            // Baseline-Pruefung beim Verlassen (persistence.js persistOnUnload).
             if (_wizardStep >= 4) {
                 window.location.reload();
                 return;
@@ -793,6 +799,8 @@ function _setupWizardActions(modal) {
             // App neu laden, damit die importierten Daten geladen werden.
             // KEIN renderAll()/save() auf dem stale In-Memory-D — save() würde
             // die frisch importierte Aktiv-Kampagne mit dem leeren D überschreiben (CR-04).
+            // Der Reload feuert beforeunload (R02); geschuetzt ist der Import durch die
+            // Schreibsperre nach importFn() und die Baseline-Pruefung beim Verlassen.
             window.location.reload();
         } else if (action === 'wizard-setup-backup') {
             StorageAPI.setJSON('migration-wizard-shown', { shown: true, completed: true });
@@ -802,8 +810,9 @@ function _setupWizardActions(modal) {
             if (typeof sessionStorage !== 'undefined') {
                 sessionStorage.setItem('migration-backup-setup-pending', '1');
             }
-            // Reload aus demselben Grund wie wizard-close: stale D darf den Import
-            // nicht per Autosave überschreiben (CR-04)
+            // Reload aus demselben Grund wie wizard-close (CR-04). Er selbst schuetzt den
+            // Import nicht — er feuert beforeunload; das tun Schreibsperre und
+            // Baseline-Pruefung (R02)
             window.location.reload();
         }
     });

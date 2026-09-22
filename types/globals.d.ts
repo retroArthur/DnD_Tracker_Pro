@@ -303,6 +303,46 @@ declare global {
   function removeCampaignData(key: string): Promise<RemoveCampaignDataResult>;
 
   // ============================================================
+  // PERSIST-BASELINE & SCHREIBSTEUERUNG (Code-Review 2026-09-21, U7/R02)
+  // ============================================================
+
+  /** Baseline nach load(): localStorage-Rohwert (vor IDB-Ersetzung) und Snapshot von D */
+  function setPersistBaseline(key: string, stored: string | null, snapshot: string): void;
+
+  /** Snapshot an D angleichen — nur ohne ausstehenden oder laufenden Save */
+  function refreshPersistSnapshot(): void;
+
+  /** Ein anderer Tab hat diese Kampagne gespeichert (Konflikt-Erkennung) */
+  function markExternalCampaignWrite(key: string | null | undefined): void;
+
+  /** true: keine Baseline, fremder Save gemeldet, anderer _rev oder anderer Inhalt */
+  function isCampaignStorageStale(key: string | null): boolean;
+
+  /** Anzahl bestaetigter Saves dieses Tabs */
+  function getPersistSuccessCount(): number;
+
+  /** Harte Schreibsperre; loest nach laufenden IndexedDB-Writes auf (hoechstens 5 s) */
+  function retireCampaignWrites(): Promise<void>;
+
+  /** Sperre aufheben (Abbruchpfade); holt einen verworfenen save() nach */
+  function resumeCampaignWrites(): void;
+
+  /** Automatischer Save nur in einem nicht gesperrten, nicht veralteten Tab (true = angestossen) */
+  function saveAutomatic(): boolean;
+
+  /** Ausstehenden entprellten Save sofort ausfuehren (nicht in einem veralteten Tab) */
+  function flushPendingSave(): void;
+
+  /** flushPendingSave() plus Warten auf den IndexedDB-Commit (vor internen Reloads) */
+  function flushPendingSaveAndSettle(): Promise<void>;
+
+  /** beforeunload: schreibt nie blind, fordert die Rueckfrage nur fuer ausdrueckliche Saves an */
+  function persistOnUnload(event: BeforeUnloadEvent): void;
+
+  /** Einmalig: beforeunload, pagehide und visibilitychange(hidden) registrieren */
+  function initUnloadPersistence(): void;
+
+  // ============================================================
   // RENDER FUNCTIONS
   // ============================================================
   
@@ -640,8 +680,8 @@ declare global {
   /** Create campaign (async seit U6/R07: Daten vor Index; lehnt nie ab) */
   function createCampaign(): Promise<void>;
 
-  /** Switch campaign (laedt nur nach gespeichertem Indexwrite neu) */
-  function switchCampaign(key: string): void;
+  /** Switch campaign (async seit U7/R02: ausstehenden Save erst festschreiben; laedt nur nach gespeichertem Indexwrite neu) */
+  function switchCampaign(key: string): Promise<void>;
 
   /** Get campaign index (nachsichtig: unlesbar -> Standardindex; siehe readCampaignIndexStrict) */
   function getCampaignIndex(): CampaignIndex;

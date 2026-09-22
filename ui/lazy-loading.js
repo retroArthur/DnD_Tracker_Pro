@@ -151,10 +151,12 @@ function restoreNavOrder() {
     fixedTabs.forEach(tab => container.appendChild(tab));
 }
 
-function resetNavOrder() {
+// async (R02): erst bestaetigt speichern, dann neu laden — sonst muesste das Verlassen im
+// IndexedDB-Modus nachfragen, weil der Save noch laeuft
+async function resetNavOrder() {
     if (D.settings) {
         delete D.settings.navOrder;
-        save();
+        await window.saveImmediate();
     }
     location.reload();
 }

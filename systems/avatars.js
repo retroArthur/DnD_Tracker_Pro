@@ -172,17 +172,8 @@ function initOfflineMode() {
     window.addEventListener('online', updateOnlineStatus);
     window.addEventListener('offline', updateOnlineStatus);
     updateOnlineStatus();
-    // Service Worker: Blob-URLs funktionieren nicht in modernen Browsern
-    // Stattdessen: Cache wichtige Daten im localStorage (bereits implementiert)
-    // Für echten Offline-Support müsste sw.js als separate Datei gehostet werden
-    // Fallback: Speichere kritische Daten zusätzlich
-    window.addEventListener('beforeunload', () => {
-        const STORAGE_KEY = window.STORAGE_KEY;
-        const D = window.D;
-        const StorageAPI = window.StorageAPI;
-        const key = window.STORAGE_KEY_OVERRIDE || STORAGE_KEY;
-        StorageAPI.setJSON(key, D); // Bereits mit try-catch geschützt
-    });
+    // Das Speichern beim Verlassen liegt in systems/spellslots/persistence.js
+    // (initUnloadPersistence/persistOnUnload, Code-Review 2026-09-21, R02)
 }
 // ============================================================
 // TOUCH OPTIMIZATIONS

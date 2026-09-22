@@ -511,6 +511,16 @@ function oeffneTab(ursprung, name, opt = {}) {
     ctx.compareVersions = () => 0;
     ctx.migrateData = d => d;
     ctx.validateDataIntegrity = () => ({ valid: true, repairs: [] });
+    // render/helpers.js bzw. die Render-Module (nicht geladen)
+    ctx.safeJSONParse = (text, ersatz = null) => {
+        try {
+            return JSON.parse(text);
+        } catch {
+            return ersatz;
+        }
+    };
+    ctx.renderAll = () => {};
+    ctx.validateAndRepairNextId = () => ({ valid: true, repairs: [] }); // utils/utilities.js
     ctx.confirm = m => {
         tab.confirms.push(String(m));
         return tab.antworten.length ? tab.antworten.shift() : true;

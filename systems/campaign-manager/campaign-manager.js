@@ -195,7 +195,12 @@ async function createCampaign() {
         _campaignCreateInFlight = false;
     }
 }
-function switchCampaign(key) {
+// async (R02): einen ausstehenden Save der alten Kampagne erst festschreiben und den Commit
+// abwarten — sonst muesste das Verlassen im IndexedDB-Modus nachfragen
+async function switchCampaign(key) {
+    if (typeof window.flushPendingSaveAndSettle === 'function') {
+        await window.flushPendingSaveAndSettle();
+    }
     const index = getCampaignIndex();
     index.active = key;
     // Nur neu laden, wenn der Wechsel wirklich gespeichert ist (R07)
@@ -237,6 +242,13 @@ async function deleteCampaign() {
     }
     // Soundboard-Audio stoppen — Web Audio überlebt sonst den D-Reset und spielt im Hintergrund weiter
     if (typeof window.stopAllTracks === 'function') window.stopAllTracks();
+    // R02: Schreibsperre ZUERST — ein ausstehender/ueberfaelliger save() oder das Verlassen
+    // wuerde die geloeschte Kampagne sonst neu anlegen. Jeder Abbruchpfad hebt sie wieder auf.
+    const resume = () => {
+        if (typeof window.resumeCampaignWrites === 'function') window.resumeCampaignWrites();
+    };
+    if (typeof window.retireCampaignWrites === 'function') await window.retireCampaignWrites();
+    let dataRemoved = false;
     try {
         log('[deleteCampaign] Lösche Kampagne:', key);
         // 1. Benannte Kampagne: zuerst aus dem Index entfernen (frisch gelesen). Die aktive
@@ -249,6 +261,7 @@ async function deleteCampaign() {
             if (current.active === key) next.active = APP_CONFIG.STORAGE_KEY;
             const indexResult = saveCampaignIndex(next);
             if (!indexResult || !indexResult.success) {
+                resume();
                 alert(
                     '❌ Fehler beim Löschen:\n\nDer Kampagnenindex konnte nicht gespeichert werden. Es wurde nichts gelöscht.'
                 );
@@ -257,6 +270,7 @@ async function deleteCampaign() {
         }
         // 2. Gespeicherte Daten entfernen: IndexedDB (bestaetigter Commit) VOR localStorage
         const removal = await window.removeCampaignData(key);
+        dataRemoved = !!(removal && removal.success);
         if (!removal || !removal.success) {
             if (window.ErrorHandler) {
                 window.ErrorHandler.log(
@@ -266,6 +280,7 @@ async function deleteCampaign() {
                 );
             }
             if (isDefault) {
+                resume();
                 alert(
                     '❌ Fehler beim Löschen:\n\nDie IndexedDB-Kopie konnte nicht entfernt werden. Es wurde nichts gelöscht.'
                 );
@@ -298,6 +313,8 @@ async function deleteCampaign() {
         // 4. Seite mit Cache-Bypass neu laden
         window.location.href = window.location.pathname + '?cleared=' + Date.now();
     } catch (error) {
+        // Nur solange nichts entfernt ist, darf der Tab wieder schreiben
+        if (!dataRemoved) resume();
         if (window.ErrorHandler) {
             window.ErrorHandler.log('deleteCampaign', error);
         }
