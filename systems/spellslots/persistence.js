@@ -204,8 +204,8 @@ function resumeCampaignWrites() {
 }
 /**
  * Fuer Schreibvorgaenge, um die niemand ausdruecklich gebeten hat (Session-Timer-Autosave,
- * Reparatur nach load(), Standard-Zufallstabellen): nur in einem nicht gesperrten, nicht
- * veralteten Tab (D4 = A). Ausdrueckliche Saves bleiben last-writer-wins.
+ * Reparatur nach load(), Standard-Zufallstabellen, Markdown-Onboarding): nur in einem nicht
+ * gesperrten, nicht veralteten Tab mit Baseline (D4 = A). Ausdrueckliche Saves bleiben last-writer-wins.
  * @returns {boolean} true, wenn ein save() angestossen wurde
  */
 function saveAutomatic() {

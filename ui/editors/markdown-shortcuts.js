@@ -247,8 +247,10 @@ function initMarkdownSettings() {
                 );
             }
             D.settings.markdownOnboardingSeen = true;
-            if (typeof save === 'function') {
-                save();
+            // Automatischer Save (R02): nicht nach gescheitertem load(), nicht aus einem
+            // veralteten Tab — sonst ersetzte initializeData() die rettbaren Rohdaten
+            if (typeof window.saveAutomatic === 'function') {
+                window.saveAutomatic();
             }
         }, 2000); // 2 seconds delay after app load
     }
