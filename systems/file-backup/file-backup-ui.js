@@ -186,7 +186,12 @@ async function showFileBackupBrowser() {
 
 /**
  * Stellt einen Snapshot aus dem Backup-Ordner wieder her.
- * Sicherheitsmuster: confirm + saveUndoState DAVOR + JSON.parse + sanitize + Object.assign.
+ * Ablauf (Code-Review 2026-09-21, R01): confirm -> Datei lesen -> normalizeCampaignData()
+ * (klonen ohne __proto__, Typen pruefen, migrieren, Standardwerte, IDs) -> erst bei
+ * Erfolg applyRestoredCampaign() aus systems/backups.js (Undo-Punkt, D ersetzen,
+ * Integritaet, Audio-Blobs wiederbeleben, rendern, speichern; Erfolg nur nach
+ * bestaetigtem Speichern). Eine ungueltige Datei hinterlaesst weder Undo-Punkt noch
+ * veraendertes D.
  * (Bestaetigung mit Strg+Z-Hinweis gemaess UI-SPEC Copywriting)
  *
  * @param {string} filename - Dateiname im Backup-Ordner
@@ -221,74 +226,35 @@ async function restoreFromFileBackup(filename) {
     const confirmText = `${campaignDisplay} wird auf den Stand vom ${dateStr} zurückgesetzt.\n\nDieser Vorgang kann mit Strg+Z rückgängig gemacht werden.`;
     if (!confirm(confirmText)) return;
 
+    // Code-Review 2026-09-21 (R01): Datei lesen und VOLLSTAENDIG normalisieren, bevor
+    // D, der Undo-Stapel oder der Speicher angefasst werden (ungueltige Datei -> kein
+    // Undo-Punkt, D unveraendert). normalizeCampaignData() ersetzt die frueheren eigenen
+    // Pruefungen, die Migration und das Auffuellen der Standardwerte.
+    let result;
     try {
-        // saveUndoState VOR allen Datenveraenderungen (CLAUDE.md: ALWAYS first)
-        if (typeof window.saveUndoState === 'function') {
-            window.saveUndoState('Backup wiederhergestellt');
-        }
-
-        // Datei lesen
         const fileHandle = await dirHandle.getFileHandle(filename, { create: false });
         const file = await fileHandle.getFile();
         const text = await file.text();
-
-        // JSON parsen
-        const parsed = JSON.parse(text);
-        if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
-            throw new Error('Ungültiges Backup-Format');
-        }
-
-        // Struktur-Validierung: mindestens erwartete Arrays pruefen
-        const requiredArrays = ['characters', 'npcs', 'quests', 'locations', 'loot'];
-        for (const key of requiredArrays) {
-            if (parsed[key] !== undefined && !Array.isArray(parsed[key])) {
-                throw new Error(`Ungültiger Datentyp für ${key}`);
-            }
-        }
-
-        // Sanity-Check initiative
-        if (parsed.initiative && typeof parsed.initiative !== 'object') {
-            throw new Error('Ungültige Initiative-Daten');
-        }
-
-        // WR-11: Versions-Migration wie im Import-Pfad (importFullExport → migrateData) —
-        // extern editierbares JSON kann von einer aelteren App-Version stammen
-        let restored = parsed;
-        if (typeof window.migrateData === 'function') {
-            restored = window.migrateData(restored);
-        }
-
-        // WR-11: Fehlende Kernfelder mit Defaults auffuellen (initializeData =
-        // kanonisches D-Schema aus core/data.js) — ein unvollstaendiges JSON darf
-        // kein kaputtes D (z.B. ohne initiative/settings) hinterlassen
-        if (typeof window.initializeData === 'function') {
-            const defaults = window.initializeData();
-            for (const key of Object.keys(defaults)) {
-                if (restored[key] === undefined) restored[key] = defaults[key];
-            }
-        }
-
-        // Daten uebernehmen (analog restoreBackup aus systems/backups.js)
-        const D = window.D;
-        if (D) {
-            // Soundboard-Audio stoppen — Web Audio überlebt sonst den Daten-Reset
-            if (typeof window.stopAllTracks === 'function') window.stopAllTracks();
-            for (const key in D) delete D[key];
-            Object.assign(D, restored);
-        }
-
-        if (typeof window.renderAll === 'function') window.renderAll();
-        if (typeof window.saveImmediate === 'function') window.saveImmediate();
-        window.showToast('✅ Backup wiederhergestellt');
-
-        // Modal schliessen
-        if (typeof window.hideModal === 'function') window.hideModal('file-backup-modal');
+        result = window.normalizeCampaignData(text);
     } catch (e) {
-        if (window.APP_CONFIG?.DEBUG_MODE) {
-            window.ErrorHandler?.log('restoreFromFileBackup', e, 'Restore fehlgeschlagen');
-        }
-        window.showToast('❌ Restore fehlgeschlagen: ' + (e.message || 'Unbekannter Fehler'), 'error');
+        result = { ok: false, error: (e && e.message) || 'Unbekannter Fehler' };
     }
+    if (!result || !result.ok) {
+        const error = (result && result.error) || 'Unbekannter Fehler';
+        if (window.APP_CONFIG?.DEBUG_MODE) {
+            window.ErrorHandler?.log('restoreFromFileBackup', new Error(error), 'Restore fehlgeschlagen');
+        }
+        window.showToast('❌ Restore fehlgeschlagen: ' + error, 'error');
+        return;
+    }
+
+    // Gemeinsamer Schluss mit restoreBackup() (systems/backups.js): Undo-Punkt, D ersetzen,
+    // Integritaet, Audio-Blobs wiederbeleben, rendern, speichern — Erfolg nur nach
+    // bestaetigtem Speichern
+    await window.applyRestoredCampaign(result.data, 'restoreFromFileBackup');
+
+    // Modal schliessen
+    if (typeof window.hideModal === 'function') window.hideModal('file-backup-modal');
 }
 
 // ============================================================

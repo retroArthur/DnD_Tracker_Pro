@@ -79,9 +79,58 @@ declare global {
   /** Create backup */
   function createBackup(): void;
   
-  /** Restore backup */
-  function restoreBackup(id: EntityId): void;
-  
+  /** Auto-Backup der aktiven Kampagne wiederherstellen (ID = Zeitstempel, Code-Review 2026-09-21, U4) */
+  function restoreBackup(backupId: number): Promise<void>;
+
+  // ============================================================
+  // AUTO-BACKUP-LISTE & WIEDERHERSTELLUNG (Code-Review 2026-09-21, U4/R01/R05)
+  // ============================================================
+
+  /** Auto-Backup-Datensatz (localStorage-Liste oder IndexedDB-Store 'backups') */
+  interface AutoBackupRecord {
+    timestamp: number;
+    campaignKey: string;
+    data: string;
+    id?: string;
+  }
+
+  /** Gehoert das Backup zur Kampagne key (nicht-leerer, exakt gleicher campaignKey)? */
+  function isBackupOfCampaign(b: unknown, key: string): boolean;
+
+  /** Formpruefung: sichere positive Ganzzahl als timestamp, String-data, String-campaignKey */
+  function isValidBackupRecord(b: unknown): b is AutoBackupRecord;
+
+  /** Formgepruefte localStorage-Backup-Liste (alle Kampagnen) */
+  function readLocalBackups(): AutoBackupRecord[];
+
+  /** IndexedDB-Backups einer Kampagne (lehnt bei Fehlern ab) */
+  function readIndexedDbBackups(key: string): Promise<AutoBackupRecord[]>;
+
+  /** Entdoppeln nach Zeitstempel, neueste zuerst, auf MAX_BACKUPS begrenzen */
+  function sortAndLimitBackups(list: AutoBackupRecord[]): AutoBackupRecord[];
+
+  /** Backups der aktiven Kampagne aus beiden Quellen ([] ohne aktiven Schluessel) */
+  function getBackups(): Promise<AutoBackupRecord[]>;
+
+  /** Backup-ID (Zeitstempel) gegen eine Liste aufloesen — rein */
+  function findBackupForRestore(
+    backups: AutoBackupRecord[],
+    backupId: number | string,
+    key: string
+  ): { status: 'ok' | 'missing' | 'foreign'; backup: AutoBackupRecord | null };
+
+  /** Referenzierte Soundboard-Blobs wiederbeleben; liefert die Anzahl fehlender Dateien */
+  function reviveReferencedSoundBlobs(data: Record<string, any>): Promise<number>;
+
+  /** Gemeinsamer Restore-Schluss (Undo, ersetzen, speichern); true nach bestaetigtem Save */
+  function applyRestoredCampaign(data: Record<string, any>, source: string): Promise<boolean>;
+
+  /** Backup-Modal der aktiven Kampagne anzeigen */
+  function showBackupsModal(): Promise<void>;
+
+  /** Anzeigename einer Kampagne ('Standard-Kampagne', Indexname oder der Schluessel) */
+  function getCampaignDisplayName(key: string): string;
+
   // ============================================================
   // KAMPAGNEN-DATEN & ID-INVARIANTE (Code-Review 2026-09-21, U2)
   // ============================================================

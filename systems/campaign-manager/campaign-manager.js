@@ -19,6 +19,16 @@ function getCampaignIndex() {
 function saveCampaignIndex(index) {
     return StorageAPI.setJSON(CAMPAIGN_INDEX_KEY, index);
 }
+// Anzeigename einer Kampagne (Code-Review 2026-09-21, R05: Backup-Modal und
+// Restore-Rueckfrage nennen die Kampagne): Standard-Kampagne, sonst der Name aus dem
+// Index, sonst der Schluessel selbst.
+function getCampaignDisplayName(key) {
+    if (key === APP_CONFIG.STORAGE_KEY) return 'Standard-Kampagne';
+    const index = getCampaignIndex();
+    const campaigns = index && Array.isArray(index.campaigns) ? index.campaigns : [];
+    const entry = campaigns.find(c => c && c.key === key);
+    return entry && typeof entry.name === 'string' && entry.name !== '' ? entry.name : key;
+}
 function createCampaign() {
     const input = $('new-campaign-name');
     if (!input) return;
@@ -179,6 +189,7 @@ function renderCampaignList() {
 // BACKWARD COMPATIBILITY EXPORTS
 // ============================================================
 window.getCampaignIndex = getCampaignIndex;
+window.getCampaignDisplayName = getCampaignDisplayName;
 window.createCampaign = createCampaign;
 window.switchCampaign = switchCampaign;
 window.deleteCampaign = deleteCampaign;

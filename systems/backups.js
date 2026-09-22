@@ -106,157 +106,284 @@ async function saveBackupToIndexedDB(backup) {
         };
     });
 }
-// Backups aus beiden Quellen laden
-async function getBackups() {
-    const localBackups = StorageAPI.getJSON(BACKUP_KEY, []) || [];
-    const APP_CONFIG = window.APP_CONFIG;
-    const ErrorHandler = window.ErrorHandler;
-    try {
-        const initIndexedDB = window.initIndexedDB;
-        await initIndexedDB();
-        const campaignKey = window.STORAGE_KEY_OVERRIDE || STORAGE_KEY;
-        const idb = window.idb;
-        const idbBackups = await new Promise((resolve, reject) => {
-            const transaction = idb.transaction(['backups'], 'readonly');
-            const store = transaction.objectStore('backups');
-            const request = store.index('campaign').getAll(campaignKey);
-            request.onsuccess = () => resolve(request.result || []);
-            request.onerror = () => resolve([]); // Bei Fehler leeres Array
-        });
-        // Kombiniere und dedupliziere nach Timestamp
-        const allBackups = [...localBackups, ...idbBackups];
-        const uniqueBackups = [];
-        const seen = new Set();
-        allBackups.forEach(b => {
-            if (!seen.has(b.timestamp)) {
-                seen.add(b.timestamp);
-                uniqueBackups.push(b);
-            }
-        });
-        // Sortiere nach Timestamp (neueste zuerst)
-        uniqueBackups.sort((a, b) => b.timestamp - a.timestamp);
-        return uniqueBackups.slice(0, MAX_BACKUPS);
-    } catch (e) {
-        if (APP_CONFIG.DEBUG_MODE) {
-            ErrorHandler.log('getBackups', e, 'Failed to load IndexedDB backups');
-        }
-        return localBackups;
-    }
+// ============================================================
+// BACKUP-LISTE & WIEDERHERSTELLUNG (Code-Review 2026-09-21, R01/R05)
+// Nur Backups der AKTIVEN Kampagne werden angeboten und wiederhergestellt. Beide Quellen
+// (gemeinsamer localStorage-Schluessel aller Kampagnen, IndexedDB-Store) werden VOR dem
+// Zusammenfuehren formgeprueft und gefiltert; Alt-Backups ohne campaignKey werden nicht
+// angeboten (Nutzerentscheidung D1). Stabile Backup-ID ist der Zeitstempel, nie eine
+// Listenposition (die driftet, sobald ein neues Auto-Backup dazukommt).
+// ============================================================
+/**
+ * Gehoert ein Backup zur Kampagne key? Nur ein nicht-leerer, exakt gleicher
+ * campaignKey zaehlt.
+ * @param {any} b - Backup-Datensatz
+ * @param {string} key - Kampagnen-Speicherschluessel
+ * @returns {boolean}
+ */
+function isBackupOfCampaign(b, key) {
+    return (
+        !!b && typeof b.campaignKey === 'string' && b.campaignKey !== '' && b.campaignKey === key
+    );
 }
 /**
- * Validiert und bereinigt Backup-Daten gegen ein Standardschema
- * @param parsed - Die geparsten Backup-Daten
- * @param defaultSchema - Das Standardschema mit Defaultwerten
- * @returns Bereinigte Daten
+ * Formpruefung fuer Backup-Datensaetze aus BEIDEN Quellen. Der Zeitstempel landet als
+ * stabile ID im data-id-Attribut des Modals und muss deshalb eine sichere positive
+ * Ganzzahl sein (ein String-Zeitstempel aus IndexedDB darf dort nie ankommen).
+ * @param {any} b - Backup-Datensatz
+ * @returns {boolean}
  */
-function sanitizeBackupData(parsed, defaultSchema) {
-    const sanitized = {};
-    // Kopiere alle erlaubten Keys mit Typprüfung
-    for (const [key, defaultValue] of Object.entries(defaultSchema)) {
-        if (!(key in parsed)) {
-            // Key nicht im Backup - verwende Default
-            sanitized[key] = structuredClone(defaultValue);
-        } else if (Array.isArray(defaultValue)) {
-            // Array-Typ erwartet
-            sanitized[key] = Array.isArray(parsed[key])
-                ? structuredClone(parsed[key])
-                : structuredClone(defaultValue);
-        } else if (typeof defaultValue === 'object' && defaultValue !== null) {
-            // Object-Typ erwartet
-            sanitized[key] =
-                typeof parsed[key] === 'object' &&
-                parsed[key] !== null &&
-                !Array.isArray(parsed[key])
-                    ? structuredClone(parsed[key])
-                    : structuredClone(defaultValue);
-        } else if (typeof defaultValue === 'number') {
-            sanitized[key] = typeof parsed[key] === 'number' ? parsed[key] : defaultValue;
-        } else if (typeof defaultValue === 'string') {
-            sanitized[key] = typeof parsed[key] === 'string' ? parsed[key] : defaultValue;
-        } else if (typeof defaultValue === 'boolean') {
-            sanitized[key] = typeof parsed[key] === 'boolean' ? parsed[key] : defaultValue;
-        } else {
-            sanitized[key] = structuredClone(defaultValue);
-        }
-    }
-    return sanitized;
+function isValidBackupRecord(b) {
+    return (
+        isPlainDataObject(b) &&
+        Number.isSafeInteger(b.timestamp) &&
+        b.timestamp > 0 &&
+        typeof b.data === 'string' &&
+        typeof b.campaignKey === 'string'
+    );
 }
-async function restoreBackup(index) {
-    const backups = await getBackups();
-    if (!backups[index]) {
-        showToast('❌ Backup nicht gefunden');
-        return;
-    }
-    if (!confirm('Aktuellen Stand mit Backup überschreiben?')) return;
-    const ErrorHandler = window.ErrorHandler;
-    const renderAll = window.renderAll;
-    const saveImmediate = window.saveImmediate;
-    try {
-        const parsed = JSON.parse(backups[index].data);
-        // Validiere Backup-Struktur
-        if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
-            throw new Error('Ungültiges Backup-Format');
+/**
+ * Formgepruefte localStorage-Backup-Liste (ein Schluessel fuer ALLE Kampagnen —
+ * Aufrufer filtern selbst nach Kampagne).
+ * @returns {Array<Object>}
+ */
+function readLocalBackups() {
+    const list = StorageAPI.getJSON(BACKUP_KEY, []);
+    return Array.isArray(list) ? list.filter(isValidBackupRecord) : [];
+}
+/**
+ * IndexedDB-Backups einer Kampagne ueber den 'campaign'-Index (nur lesend). Lehnt bei
+ * jedem Fehler ab. key MUSS ein gueltiger Schluessel sein: index.getAll(undefined)
+ * liefert ALLE Datensaetze.
+ * @param {string} key - Kampagnen-Speicherschluessel
+ * @returns {Promise<Array<Object>>}
+ */
+async function readIndexedDbBackups(key) {
+    if (typeof key !== 'string' || key === '') throw new Error('Kein Kampagnenschlüssel');
+    if (!window.idb) {
+        if (typeof window.initIndexedDB !== 'function') {
+            throw new Error('IndexedDB nicht verfügbar');
         }
-        // Prüfe auf erforderliche Arrays (mindestens leere Arrays)
-        const requiredArrays = ['characters', 'npcs', 'quests', 'locations', 'loot'];
-        for (const key of requiredArrays) {
-            if (parsed[key] !== undefined && !Array.isArray(parsed[key])) {
-                throw new Error(`Ungültiger Datentyp für ${key}`);
+        await window.initIndexedDB();
+    }
+    const idb = window.idb;
+    if (!idb) throw new Error('IndexedDB nicht verfügbar');
+    return new Promise((resolve, reject) => {
+        const transaction = idb.transaction(['backups'], 'readonly');
+        const request = transaction.objectStore('backups').index('campaign').getAll(key);
+        request.onsuccess = () => resolve(Array.isArray(request.result) ? request.result : []);
+        request.onerror = () => reject(request.error || new Error('IndexedDB-Lesefehler'));
+    });
+}
+/**
+ * Nach Zeitstempel entdoppeln (erster Treffer gewinnt), neueste zuerst, auf MAX_BACKUPS
+ * begrenzen. Erst NACH dem Filtern aufrufen — sonst verdraengen fremde Backups eigene.
+ * @param {Array<Object>} list
+ * @returns {Array<Object>}
+ */
+function sortAndLimitBackups(list) {
+    const seen = new Set();
+    const unique = [];
+    for (const b of list) {
+        if (seen.has(b.timestamp)) continue;
+        seen.add(b.timestamp);
+        unique.push(b);
+    }
+    unique.sort((a, b) => b.timestamp - a.timestamp);
+    return unique.slice(0, MAX_BACKUPS);
+}
+/**
+ * Backups der aktiven Kampagne aus beiden Quellen. Faellt IndexedDB aus, bleibt es bei
+ * der gefilterten localStorage-Liste (derselbe Filter, dieselbe Begrenzung).
+ * @returns {Promise<Array<Object>>}
+ */
+async function getBackups() {
+    const key =
+        typeof window.getActiveCampaignKey === 'function' ? window.getActiveCampaignKey() : null;
+    if (!key) return [];
+    const own = readLocalBackups().filter(b => isBackupOfCampaign(b, key));
+    let fromIdb = [];
+    try {
+        fromIdb = (await readIndexedDbBackups(key)).filter(
+            b => isValidBackupRecord(b) && isBackupOfCampaign(b, key)
+        );
+    } catch (e) {
+        if (window.APP_CONFIG?.DEBUG_MODE) {
+            window.ErrorHandler?.log('getBackups', e, 'IndexedDB-Backups nicht lesbar');
+        }
+    }
+    return sortAndLimitBackups([...own, ...fromIdb]);
+}
+/**
+ * Loest eine Backup-ID (Zeitstempel aus data-id) gegen eine Backup-Liste auf. Rein.
+ * 'foreign' ist Verteidigung in der Tiefe: getBackups() liefert nur eigene Backups.
+ * @param {Array<Object>} backups
+ * @param {number|string} backupId - Zeitstempel
+ * @param {string} key - aktiver Kampagnenschluessel
+ * @returns {{status: 'ok'|'missing'|'foreign', backup: Object|null}}
+ */
+function findBackupForRestore(backups, backupId, key) {
+    const ts = parseEntityId(backupId);
+    if (!Number.isSafeInteger(ts)) return { status: 'missing', backup: null };
+    const backup = (Array.isArray(backups) ? backups : []).find(b => b && b.timestamp === ts);
+    if (!backup) return { status: 'missing', backup: null };
+    return isBackupOfCampaign(backup, key)
+        ? { status: 'ok', backup }
+        : { status: 'foreign', backup };
+}
+/**
+ * Holt die Audio-Blobs zurueck, auf die die Soundboard-Szenen von data verweisen.
+ * Grund: removeAudioFile() setzt nur einen Grabstein, und _cleanupStaleTombstones()
+ * loescht Grabsteine frueherer Sitzungen beim naechsten Start endgueltig — eine
+ * wiederhergestellte Szene spielte jetzt und verloere ihr Audio still in der naechsten
+ * Sitzung. restoreSoundBlob() ist idempotent; false heisst "schon endgueltig weg".
+ * @param {Object} data - Kampagnenobjekt
+ * @returns {Promise<number>} Anzahl referenzierter Dateien, die es nicht mehr gibt
+ */
+async function reviveReferencedSoundBlobs(data) {
+    const scenes = Array.isArray(data?.soundboard?.scenes) ? data.soundboard.scenes : [];
+    const ids = new Set();
+    for (const scene of scenes) {
+        if (!scene || !Array.isArray(scene.tracks)) continue;
+        for (const track of scene.tracks) {
+            if (track && typeof track.blobId === 'string' && track.blobId !== '') {
+                ids.add(track.blobId);
             }
         }
-        // Prüfe initiative-Struktur
-        if (parsed.initiative && typeof parsed.initiative !== 'object') {
-            throw new Error('Ungültige Initiative-Daten');
-        }
-        // SICHER: Verwende Default-Schema aus core/data.js für Validierung
-        // und erstelle Deep Clone statt direkter Zuweisung
-        const defaultD = {
-            characters: [],
-            npcs: [],
-            quests: [],
-            locations: [],
-            loot: [],
-            encounters: [],
-            filters: [],
-            notes: [],
-            shops: [],
-            spells: [],
-            wiki: [],
-            links: [],
-            storyArcs: [],
-            initiative: { entries: [], round: 1 },
-            lastSync: 0
-        };
-        // Validiere und bereinige gegen Schema (mit Deep Clone)
-        // D is const, cannot reassign - clear and merge instead
-        const sanitized = sanitizeBackupData(parsed, defaultD);
-        const D = window.D;
-        // Soundboard-Audio stoppen — Web Audio überlebt sonst den Daten-Reset
-        if (typeof window.stopAllTracks === 'function') window.stopAllTracks();
-        for (const key in D) delete D[key];
-        Object.assign(D, sanitized);
-        if (renderAll) renderAll();
-        if (saveImmediate) saveImmediate();
-        showToast('✅ Backup wiederhergestellt');
-    } catch (e) {
-        ErrorHandler.log('restoreBackup', e, 'Backup restore failed');
-        showToast('❌ Backup fehlerhaft: ' + (e.message || 'Unbekannter Fehler'));
     }
+    if (ids.size === 0 || typeof window.restoreSoundBlob !== 'function') return 0;
+    let missing = 0;
+    for (const id of ids) {
+        try {
+            const found = await window.restoreSoundBlob(id);
+            if (found === false) missing++;
+        } catch (e) {
+            if (window.APP_CONFIG?.DEBUG_MODE) {
+                window.ErrorHandler?.log('reviveReferencedSoundBlobs', e, id);
+            }
+        }
+    }
+    return missing;
+}
+/**
+ * Gemeinsamer Schluss von restoreBackup() und restoreFromFileBackup(): uebernimmt eine
+ * NORMALISIERTE Kampagne (normalizeCampaignData(...).data) als aktuellen Stand.
+ * Reihenfolge: Undo-Punkt -> Audio stoppen -> D ersetzen -> Integritaet -> Audio-Blobs
+ * wiederbeleben -> rendern -> speichern. Ein Fehler NACH dem Ersetzen (z. B. beim Rendern)
+ * wird nur geloggt — der Stand ist gueltig und muss gespeichert werden. Erfolg wird nur
+ * nach bestaetigtem Speichern gemeldet; saveImmediate() meldet Fehler selbst laut.
+ * @param {Object} data - normalisierte Kampagne
+ * @param {string} source - Aufrufer (fuer das Fehlerlog)
+ * @returns {Promise<boolean>} true, wenn das Speichern bestaetigt wurde
+ */
+async function applyRestoredCampaign(data, source) {
+    if (typeof window.saveUndoState === 'function') {
+        window.saveUndoState('Backup wiederhergestellt');
+    }
+    // Soundboard-Audio stoppen — Web Audio überlebt sonst den Daten-Reset
+    if (typeof window.stopAllTracks === 'function') window.stopAllTracks();
+    window.replaceCampaignData(window.D, data);
+    try {
+        // Paritaet mit load(): Selbstheilung nach dem Uebernehmen
+        if (typeof window.validateDataIntegrity === 'function') window.validateDataIntegrity();
+    } catch (e) {
+        window.ErrorHandler?.log(source, e, 'Integritätsprüfung nach Wiederherstellung');
+    }
+    const missing = await reviveReferencedSoundBlobs(window.D);
+    if (missing > 0) {
+        showToast(
+            `⚠️ ${missing} Audiodatei(en) aus diesem Backup sind nicht mehr vorhanden`,
+            'warning'
+        );
+    }
+    try {
+        if (typeof window.renderAll === 'function') window.renderAll();
+        const quickNotes = $('quick-notes');
+        if (quickNotes) quickNotes.value = window.D.quickNotes || '';
+    } catch (e) {
+        window.ErrorHandler?.log(source, e, 'Rendern nach Wiederherstellung fehlgeschlagen');
+    }
+    let res = null;
+    try {
+        res = typeof window.saveImmediate === 'function' ? await window.saveImmediate() : null;
+    } catch (e) {
+        window.ErrorHandler?.log(source, e, 'Speichern nach Wiederherstellung fehlgeschlagen');
+    }
+    if (res && res.success) {
+        showToast('✅ Backup wiederhergestellt');
+        return true;
+    }
+    return false;
+}
+/**
+ * Stellt ein Auto-Backup der aktiven Kampagne wieder her.
+ * Invariante: window.D, Undo-Stapel und Speicher bleiben unberuehrt, bis das Backup
+ * vollstaendig geprueft und normalisiert ist. Kein Sicherungs-Backup vorab: dessen
+ * Rotation verdraengte gerade die noch nicht probierten Backups — Strg+Z ist das Netz.
+ * @param {number|string} backupId - Zeitstempel des Backups (data-id im Modal)
+ */
+async function restoreBackup(backupId) {
+    const key =
+        typeof window.getActiveCampaignKey === 'function' ? window.getActiveCampaignKey() : null;
+    if (!key) {
+        showToast('❌ Keine aktive Kampagne', 'error');
+        return;
+    }
+    const { status, backup } = findBackupForRestore(await getBackups(), backupId, key);
+    if (status === 'foreign') {
+        showToast(
+            '❌ Dieses Backup gehört nicht zur aktiven Kampagne — Wiederherstellung abgebrochen.',
+            'error'
+        );
+        return;
+    }
+    if (status !== 'ok') {
+        showToast('❌ Backup nicht gefunden', 'error');
+        return;
+    }
+    const label =
+        typeof window.getCampaignDisplayName === 'function'
+            ? window.getCampaignDisplayName(key)
+            : key;
+    // confirm() zeigt Klartext — esc() würde sichtbare Entities erzeugen (WR-05)
+    const when = new Date(backup.timestamp).toLocaleString('de-DE');
+    if (
+        !confirm(
+            `Kampagne „${label}“ auf das Backup vom ${when} zurücksetzen?\n\nDer aktuelle Stand wird überschrieben. Dieser Vorgang kann mit Strg+Z rückgängig gemacht werden.`
+        )
+    ) {
+        return;
+    }
+    const result = window.normalizeCampaignData(backup.data);
+    if (!result.ok) {
+        window.ErrorHandler?.log('restoreBackup', new Error(result.error), 'Backup restore failed');
+        showToast('❌ Backup fehlerhaft: ' + result.error, 'error');
+        return;
+    }
+    await applyRestoredCampaign(result.data, 'restoreBackup');
 }
 async function showBackupsModal() {
+    const key =
+        typeof window.getActiveCampaignKey === 'function' ? window.getActiveCampaignKey() : null;
+    const label =
+        key && typeof window.getCampaignDisplayName === 'function'
+            ? window.getCampaignDisplayName(key)
+            : key || '';
     const backups = await getBackups();
     const renderEmptyState = window.renderEmptyState;
     const showModal = window.showModal;
-    let content = '';
+    // Welche Kampagne diese Liste zeigt (auch im leeren Zustand)
+    let content = `<div class="meta-text">Kampagne: ${esc(label)}</div>`;
     if (backups.length === 0) {
-        content = renderEmptyState({
+        content += renderEmptyState({
             icon: '💾',
             titleEmpty: 'Keine Backups',
             descEmpty: 'Backups werden automatisch alle 5 Minuten erstellt.',
             gridSpan: 'auto'
         });
     } else {
-        content = backups
+        // data-id = Zeitstempel: von isValidBackupRecord() als sichere Ganzzahl geprueft
+        content += backups
             .map((b, i) => {
                 const date = new Date(b.timestamp);
                 const timeStr = date.toLocaleString('de-DE');
@@ -266,7 +393,7 @@ async function showBackupsModal() {
                     <div style="font-weight: 500;">${timeStr}</div>
                     <div style="font-size: 0.85em; color: var(--text-dim);">Backup #${i + 1} (${sizeMB} MB)</div>
                 </div>
-                <button class="btn btn-sm" data-action="restore-backup" data-id="${i}">Wiederherstellen</button>
+                <button class="btn btn-sm" data-action="restore-backup" data-id="${b.timestamp}">Wiederherstellen</button>
             </div>`;
             })
             .join('');
@@ -419,4 +546,8 @@ function getPerformanceReport() {
 }
 // Export für Auto-Backup vor destruktiven Operationen
 window.createAutoBackup = createAutoBackup;
+// Gemeinsamer Restore-Schluss (restoreFromFileBackup in file-backup-ui.js) und
+// Audio-Wiederbelebung (Code-Review 2026-09-21, R01)
+window.applyRestoredCampaign = applyRestoredCampaign;
+window.reviveReferencedSoundBlobs = reviveReferencedSoundBlobs;
 // ============================================================
