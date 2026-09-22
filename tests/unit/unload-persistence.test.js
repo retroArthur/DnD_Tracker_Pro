@@ -452,21 +452,45 @@ describe('R02 — loeschende/umziehende Ablaeufe: harte Schreibsperre VOR dem En
 // ============================================================
 
 describe('R02 — Randfaelle', () => {
-    test('U16: load() scheitert an abgeschnittenem JSON — weder Entladen noch initRandomTables() ueberschreiben den Rohtext', async () => {
+    // Die automatischen Schreiber des Starts in core/init.js-Reihenfolge: initRandomTables()
+    // (ueber renderRandomTables) und das Markdown-Onboarding (initMarkdownSettings(), save()
+    // 2 s nach dem Start)
+    const START_SCHREIBER = ['features/random-tables.js', 'ui/editors/markdown-shortcuts.js'];
+    const ONBOARDING_MS = 2000 + 300 + 200; // Onboarding-Timeout + Debounce + Reserve
+
+    test('U16: load() scheitert an abgeschnittenem JSON — weder Entladen noch die automatischen Start-Saves (initRandomTables, Markdown-Onboarding) ueberschreiben den Rohtext', async () => {
         const u = erzeugeUrsprung();
         const kaputt =
             '{"_version":"2.6.1","characters":[{"id":1,"name":"Aria"}],"notes":"abgeschn';
         u.ls.set(KEY, kaputt);
-        const A = await oeffneTab(u, 'A', { module: ['features/random-tables.js'] }).starten();
+        const A = await oeffneTab(u, 'A', { module: START_SCHREIBER }).starten();
         expect(A.ctx.D.randomTables).toBeUndefined();
+        expect(A.ctx.D.settings.markdownOnboardingSeen).toBe(false); // initializeData()
 
         A.ctx.initRandomTables();
-        await u.uhr.laufen(400);
+        A.ctx.initMarkdownSettings();
+        await u.uhr.laufen(ONBOARDING_MS);
         A.entladen('schliessen');
 
-        expect(A.ctx.D.randomTables.length).toBeGreaterThan(0); // Nicht-Vakuitaet
+        // Nicht-Vakuitaet: beide automatischen Schreiber liefen
+        expect(A.ctx.D.randomTables.length).toBeGreaterThan(0);
+        expect(A.ctx.D.settings.markdownOnboardingSeen).toBe(true);
+        expect(A.toasts.some(t => /Markdown Shortcuts/.test(t.text))).toBe(true);
         expect(u.ls.get(KEY)).toBe(kaputt);
         expect(u.schreibvorgaenge({ tab: 'A', praefix: KEY })).toEqual([]);
+    });
+
+    test('U16b (Kontrolle): gesunder Start — das Markdown-Onboarding speichert sein Flag weiterhin', async () => {
+        const u = erzeugeUrsprung();
+        u.saeen(KEY, kampagne(['Aria'], { settings: { markdownOnboardingSeen: false } }));
+        const A = await oeffneTab(u, 'A', { module: START_SCHREIBER }).starten();
+
+        A.ctx.initMarkdownSettings();
+        await u.uhr.laufen(ONBOARDING_MS);
+
+        const gespeichert = JSON.parse(u.ls.get(KEY));
+        expect(gespeichert.settings.markdownOnboardingSeen).toBe(true);
+        expect(namen(u.ls.get(KEY))).toEqual(['Aria']);
     });
 
     test('U17: das Schliessen des veralteten Tabs A zeigt in B keinen Konflikt, Bs "Neu laden" behaelt Borin', async () => {
