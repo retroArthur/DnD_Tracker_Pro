@@ -210,7 +210,10 @@ describe('sanitizeImportedItem() — zusätzliche Angriffsvektoren', () => {
 
     test('SVG-Ereignis-Attribut (onload) wird entfernt', () => {
         expect(sanitizeImportedItem).toBeDefined();
-        const item = { id: 1, content: '<svg onload="window.__xssUnit10 = true"></svg>HarmloserText' };
+        const item = {
+            id: 1,
+            content: '<svg onload="window.__xssUnit10 = true"></svg>HarmloserText'
+        };
         const result = sanitizeImportedItem('wiki', item);
         expect(result.content).not.toMatch(/onload/i);
         expect(result.content).toContain('HarmloserText');
@@ -320,40 +323,56 @@ describe('Quelltext-Strukturprüfung — Verdrahtung an beiden Eintrittspunkten'
         expect(sanitizeCallIdx).toBeGreaterThan(mapStart);
     });
 
-    test('importDataGlobal(): Sanitisierungs-Schleife steht VOR der choice-Verzweigung', () => {
+    // Code-Review 2026-09-21 (R03, Einheit U6): der Kampagnen-Import bereitet die Datei in
+    // prepareCampaignImport() vollstaendig vor (Plausibilitaet, Bereinigung, Normalisierung),
+    // BEVOR ein Dialog erscheint; beide Zweige verwenden dasselbe bereinigte Ergebnis.
+    // Diese Anker ersetzen die frueheren ("HTML_FIELDS_BY_TYPE vor if (choice)" und
+    // "Undo/Sicherungskopie vor der Zuweisung in D").
+    const importDataGlobalBody = () => {
         const fnStart = importExportSourceCode.indexOf('function importDataGlobal(');
         expect(fnStart).toBeGreaterThan(-1);
         const fnEnd = importExportSourceCode.indexOf('function copyData(');
         expect(fnEnd).toBeGreaterThan(fnStart);
-        const body = importExportSourceCode.slice(fnStart, fnEnd);
-        const loopIdx = body.indexOf('HTML_FIELDS_BY_TYPE');
-        const choiceIdx = body.indexOf('if (choice)');
-        expect(loopIdx).toBeGreaterThan(-1);
-        expect(choiceIdx).toBeGreaterThan(-1);
-        expect(loopIdx).toBeLessThan(choiceIdx);
+        return importExportSourceCode.slice(fnStart, fnEnd);
+    };
+
+    test('importDataGlobal(): prepareCampaignImport() läuft VOR dem ersten confirm()-Dialog', () => {
+        const body = importDataGlobalBody();
+        const prepareIdx = body.indexOf('prepareCampaignImport(');
+        const confirmIdx = body.indexOf('confirm(');
+        expect(prepareIdx).toBeGreaterThan(-1);
+        expect(confirmIdx).toBeGreaterThan(-1);
+        expect(prepareIdx).toBeLessThan(confirmIdx);
     });
 
-    test('importDataGlobal(): Undo-Punkt und Sicherungskopie stehen im Überschreib-Zweig vor Object.assign(D, imp)', () => {
-        const fnStart = importExportSourceCode.indexOf('function importDataGlobal(');
+    test('prepareCampaignImport(): bereinigt über sanitizeImportedItem() — auch die Kalender-Ereignisse (calendar.events)', () => {
+        const fnStart = importExportSourceCode.indexOf('function prepareCampaignImport(');
         expect(fnStart).toBeGreaterThan(-1);
-        const fnEnd = importExportSourceCode.indexOf('function copyData(');
+        const fnEnd = importExportSourceCode.indexOf('function importDataGlobal(', fnStart);
         expect(fnEnd).toBeGreaterThan(fnStart);
         const body = importExportSourceCode.slice(fnStart, fnEnd);
-        // Eindeutiger Marker für den Beginn des Überschreib-Zweigs. "Aktuelle Kampagne
-        // überschreiben" allein ist NICHT eindeutig (kommt auch im confirm()-Dialogtext
-        // weiter oben vor) — der volle Kommentar mit Zusatz ist eindeutig.
-        const overwriteBranchIdx = body.indexOf(
-            'Aktuelle Kampagne überschreiben (D is const, use Object.assign)'
-        );
+        expect(body).toContain('HTML_FIELDS_BY_TYPE');
+        expect(body).toContain('sanitizeImportedItem(');
+        expect(body).toContain('calendar.events');
+        expect(body).toContain("sanitizeImportedItem('calendarEvents'");
+    });
+
+    test('importDataGlobal(): Undo-Punkt und Sicherungskopie stehen im Überschreib-Zweig vor replaceCampaignData()', () => {
+        const body = importDataGlobalBody();
+        const overwriteBranchIdx = body.indexOf('// Aktuelle Kampagne überschreiben');
         expect(overwriteBranchIdx).toBeGreaterThan(-1);
-        const assignIdx = body.indexOf('Object.assign(D, imp)', overwriteBranchIdx);
-        expect(assignIdx).toBeGreaterThan(overwriteBranchIdx);
+        const replaceIdx = body.indexOf('replaceCampaignData(', overwriteBranchIdx);
+        expect(replaceIdx).toBeGreaterThan(overwriteBranchIdx);
         const undoIdx = body.indexOf('saveUndoState(', overwriteBranchIdx);
         const backupIdx = body.indexOf('createAutoBackup(', overwriteBranchIdx);
         expect(undoIdx).toBeGreaterThan(overwriteBranchIdx);
-        expect(undoIdx).toBeLessThan(assignIdx);
+        expect(undoIdx).toBeLessThan(replaceIdx);
         expect(backupIdx).toBeGreaterThan(overwriteBranchIdx);
-        expect(backupIdx).toBeLessThan(assignIdx);
+        expect(backupIdx).toBeLessThan(replaceIdx);
+    });
+
+    test('import-export.js mischt die Datei nicht mehr per Object.assign in D', () => {
+        expect(importExportSourceCode).not.toContain('Object.assign(D, imp)');
     });
 });
 

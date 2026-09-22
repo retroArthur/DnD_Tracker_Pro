@@ -23,14 +23,20 @@ async function gotoBundleFresh(page) {
 
 /**
  * Spielt eine Kampagnen-JSON-Datei über den echten Import-Eintrittspunkt ein
- * (#import-file, data-action="import-data-global"). Der confirm()-Dialog wird
- * abgewiesen ("Abbrechen" = aktuelle Kampagne überschreiben, Object.assign(D, imp)
- * ohne location.reload() — der Zweig, der ohne Reload sofort renderbar ist).
+ * (#import-file, data-action="import-data-global") und wählt den Überschreib-Zweig
+ * (Entscheidung D3, Code-Review 2026-09-21): der ERSTE Dialog wird abgewiesen
+ * ("Abbrechen = weitere Optionen"), der ZWEITE bestätigt ("OK = Ersetzen"). Der
+ * Zweig ersetzt die aktuelle Kampagne durch die bereinigte, normalisierte Datei
+ * (replaceCampaignData) ohne location.reload() — sofort renderbar.
  * @param {import('@playwright/test').Page} page
  * @param {object} payload
  */
 async function importCampaignFile(page, payload) {
-    page.on('dialog', dialog => dialog.dismiss());
+    let dialogCount = 0;
+    page.on('dialog', dialog => {
+        dialogCount++;
+        return dialogCount === 1 ? dialog.dismiss() : dialog.accept();
+    });
     await page.setInputFiles('#import-file', {
         name: 'boese-kampagne.json',
         mimeType: 'application/json',
@@ -74,9 +80,7 @@ async function importCampaignFileAsNewCampaign(page, payload) {
 async function openWikiEntry(page, title) {
     await page.evaluate(() => window.switchView('wiki'));
     await page.waitForSelector('#view-wiki', { state: 'visible' });
-    const catToggle = page.locator(
-        '[data-action="toggle-wiki-category"][data-value="locations"]'
-    );
+    const catToggle = page.locator('[data-action="toggle-wiki-category"][data-value="locations"]');
     const isOpen = await page.evaluate(() => {
         const list = document.querySelector('[data-wiki-category="locations"]');
         return list ? getComputedStyle(list).display !== 'none' : false;
@@ -109,8 +113,7 @@ test.describe('Import-Sicherheit — Exploit-Kette Datei → Wiki-Anzeige (SEC-0
                     id: 1,
                     title: 'Boesartiger Eintrag',
                     category: 'locations',
-                    content:
-                        '<img src=x onerror="window.__xssImport10 = true">HarmloserText'
+                    content: '<img src=x onerror="window.__xssImport10 = true">HarmloserText'
                 }
             ]
         };
@@ -291,6 +294,61 @@ test.describe('Import-Sicherheit — Import-Grenze am gespeicherten Zustand (SEC
 
         const xssFlag = await page.evaluate(() => window.__xssImport10New);
         expect(xssFlag).toBeUndefined();
+        expect(errors).toEqual([]);
+    });
+});
+
+test.describe('Kampagnen-Import — Abbrechen ist nie zerstörerisch (D3, Code-Review 2026-09-21 R03)', () => {
+    test.beforeEach(async ({ page }) => {
+        await gotoBundleFresh(page);
+    });
+
+    test('Abbrechen in beiden Dialogen lässt die aktuelle Kampagne unverändert', async ({
+        page
+    }) => {
+        const errors = [];
+        page.on('pageerror', e => errors.push(String(e)));
+        page.on('console', msg => {
+            if (msg.type() === 'error') errors.push(msg.text());
+        });
+        const messages = [];
+        page.on('dialog', dialog => {
+            messages.push(dialog.message());
+            return dialog.dismiss();
+        });
+
+        const before = await page.evaluate(() => ({
+            wiki: JSON.stringify(window.D.wiki),
+            undo: typeof undoStack !== 'undefined' ? undoStack.length : -1
+        }));
+
+        await page.setInputFiles('#import-file', {
+            name: 'abbrechen.json',
+            mimeType: 'application/json',
+            buffer: Buffer.from(
+                JSON.stringify({
+                    _campaignName: 'Soll nicht ankommen',
+                    wiki: [
+                        { id: 1, title: 'Soll nicht ankommen', category: 'locations', content: 'x' }
+                    ]
+                })
+            )
+        });
+
+        // Zwei Dialoge: "Als NEUE Kampagne importieren?" und danach "… ERSETZEN?"
+        await expect.poll(() => messages.length, { timeout: 5000 }).toBe(2);
+        expect(messages[0]).toContain('Abbrechen = weitere Optionen');
+        expect(messages[1]).toContain('ERSETZEN');
+        expect(messages[1]).toContain('Abbrechen = Import abbrechen');
+
+        await expect
+            .poll(() => page.evaluate(() => document.querySelector('#import-file').value))
+            .toBe('');
+        const after = await page.evaluate(() => ({
+            wiki: JSON.stringify(window.D.wiki),
+            undo: typeof undoStack !== 'undefined' ? undoStack.length : -1
+        }));
+        expect(after).toEqual(before);
         expect(errors).toEqual([]);
     });
 });
