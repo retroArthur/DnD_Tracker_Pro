@@ -9,6 +9,13 @@
  * Einzige Erweiterung gegenueber U3: jeder Eintrag in `anfragen` traegt zusaetzlich den
  * geklonten Wert (`wert`) — so laesst sich pruefen, dass ein put() mit bestimmten Daten
  * ABGESETZT wurde, ohne dessen Commit abzuwarten.
+ *
+ * Erweiterung U8 (R06): Policy `halten(op, store, wert)` kann einen LESE-Request (get, getAll,
+ * count) zurueckhalten. Sie liefert ein Promise (oder null). Ein gehaltener Request nimmt
+ * seinen Schnappschuss bei der ERSTELLUNG (IDB-Transaktionsreihenfolge: ein spaeter
+ * erstellter Schreibvorgang ist fuer ihn unsichtbar) und feuert erst, wenn das Promise
+ * aufloest; loest es mit einem Error auf, scheitert der Request mit genau diesem Fehler.
+ * Ohne halten-Policy ist das Verhalten unveraendert.
  */
 
 'use strict';
@@ -49,8 +56,10 @@ function erzeugeFakeIDB(opt = {}) {
     const anfragen = [];
     const policy = {
         commitFehler: opt.commitFehler || (() => null),
-        requestFehler: opt.requestFehler || (() => null)
+        requestFehler: opt.requestFehler || (() => null),
+        halten: opt.halten || (() => null)
     };
+    const LESE_OPS = new Set(['get', 'getAll', 'count']);
     let rwKette = Promise.resolve();
     let txZaehler = 0;
     let rwCommitZaehler = 0;
@@ -108,8 +117,21 @@ function erzeugeFakeIDB(opt = {}) {
                 commit();
                 return;
             }
-            const { req, ausfuehren, op, storeName, wert } = offen.shift();
-            let fehler = policy.requestFehler(op, storeName, wert);
+            // Gehaltener Lese-Request (U8): erst weiter, wenn der Test ihn freigibt
+            const kopf = offen[0];
+            if (kopf.halt) {
+                const halt = kopf.halt;
+                kopf.halt = null;
+                geplant = true;
+                Promise.resolve(halt).then(ergebnis => {
+                    if (ergebnis instanceof Error) kopf.haltFehler = ergebnis;
+                    geplant = false;
+                    planeSchritt();
+                });
+                return;
+            }
+            const { req, ausfuehren, op, storeName, wert, haltFehler } = offen.shift();
+            let fehler = haltFehler || policy.requestFehler(op, storeName, wert);
             let ergebnis;
             if (!fehler) {
                 try {
@@ -204,7 +226,14 @@ function erzeugeFakeIDB(opt = {}) {
                 readyState: 'pending'
             });
             anfragen.push({ tx: id, op, store: storeName, wert });
-            offen.push({ req, ausfuehren, op, storeName, wert });
+            const halt = LESE_OPS.has(op) ? policy.halten(op, storeName, wert) : null;
+            let ausf = ausfuehren;
+            if (halt) {
+                // Schnappschuss bei der Erstellung (Lesen hat keine Nebenwirkung)
+                const schnappschuss = ausfuehren();
+                ausf = () => schnappschuss;
+            }
+            offen.push({ req, ausfuehren: ausf, op, storeName, wert, halt: halt || null });
             planeSchritt();
             return req;
         }

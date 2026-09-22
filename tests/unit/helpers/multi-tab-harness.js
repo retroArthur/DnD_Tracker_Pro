@@ -196,6 +196,8 @@ function erzeugeUhr() {
         blockieren: ms => {
             jetzt += Math.max(0, ms);
         },
+        /** Anzahl geplanter Timer — alle oder nur die eines Tabs (U8: "kein Timer bleibt") */
+        anstehend: tab => Array.from(timer.values()).filter(t => !tab || t.tab === tab).length,
         fehler,
         get jetzt() {
             return jetzt;

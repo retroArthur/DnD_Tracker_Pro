@@ -164,7 +164,6 @@ const MODULE_TEST_EXCEPTIONS = [
     'features/reise/reise-crud.js',
     'features/reise/reise-default-tables.js',
     'features/reise/reise-render.js',
-    'features/render-dashboard.js',
     'features/render-loot.js',
     'features/render-spells.js',
     'features/rest-manager.js',
