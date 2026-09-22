@@ -62,3 +62,46 @@ test('Keine Favicon-404 und keine Meta-Tag-Deprecation', async ({ page }) => {
         `Deprecation-Konsolentexte: ${JSON.stringify(consoleWarnings)}`
     ).toHaveLength(0);
 });
+
+// R08 (Code-Review 2026-09-21, Einheit U9): der echte, von build.py gebumpte
+// Service Worker raeumt bei der Aktivierung nur SEINE Caches ab. Cache Storage
+// ist pro Origin geteilt (GitHub Pages: <user>.github.io, CI: localhost:8000).
+// Nur unter http(s) — unter file:// gibt es keinen Service Worker; lokal daher
+// uebersprungen, im CI-Smoke-Job laeuft der Test gegen dist/ (Scope '/').
+test('Service Worker löscht nur eigene Caches (R08)', async ({ page }) => {
+    test.skip(BASE_URL.startsWith('file:'), 'Service Worker nur unter http/https');
+
+    const eigeneHtml = new URL('./dnd-tracker-optimized.html', BASE_URL).href;
+    const betaHtml = new URL('/tracker-beta/dnd-tracker-optimized.html', BASE_URL).href;
+    const EIGENER_ALTCACHE = 'dnd-tracker-v2.6.0-202601010000';
+    const BETA_ALTCACHE = 'dnd-tracker-v2.5.0-202512010000';
+
+    // Gleiche Origin, noch kein Service Worker registriert: 404-Seite des Servers.
+    await page.goto(new URL('/__r08-seed__', BASE_URL).href);
+    await page.evaluate(
+        async ({ eigeneHtml, betaHtml, EIGENER_ALTCACHE, BETA_ALTCACHE }) => {
+            const fremd = await window.caches.open('another-app-cache');
+            await fremd.put('/other-app/index.html', new Response('x'));
+            const eigenAlt = await window.caches.open(EIGENER_ALTCACHE);
+            await eigenAlt.put(eigeneHtml, new Response('alt'));
+            const betaAlt = await window.caches.open(BETA_ALTCACHE);
+            await betaAlt.put(betaHtml, new Response('beta'));
+        },
+        { eigeneHtml, betaHtml, EIGENER_ALTCACHE, BETA_ALTCACHE }
+    );
+
+    await page.goto(BASE_URL);
+    await page.waitForSelector('.app-title', { timeout: 15000 });
+    await page.evaluate(async () => {
+        await navigator.serviceWorker.ready;
+    });
+
+    // ready loest schon zu Beginn der Aktivierung auf — das Aufraeumen abwarten.
+    await expect
+        .poll(() => page.evaluate(() => window.caches.keys()), { timeout: 10000 })
+        .not.toContain(EIGENER_ALTCACHE);
+
+    const keys = await page.evaluate(() => window.caches.keys());
+    expect(keys).toEqual(expect.arrayContaining(['another-app-cache', BETA_ALTCACHE]));
+    expect(keys.filter(k => k.startsWith('dnd-tracker:'))).toHaveLength(1);
+});

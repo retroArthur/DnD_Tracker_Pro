@@ -8,6 +8,7 @@ Diese Tests prüfen:
 3. Code-Integrität: Generierte HTML enthält keine duplicate declarations
 """
 
+import os
 import pytest
 import re
 import sys
@@ -694,3 +695,83 @@ class TestFaviconDataUri:
         # 4. Keine Doppelkodierung
         assert urllib.parse.unquote(decoded) == decoded, \
             "Payload ist doppelt prozentkodiert (Reihenfolge der Ersetzungen falsch)"
+
+
+class TestServiceWorkerCacheBump:
+    """R08 (Code-Review 2026-09-21, Einheit U9): build.py --production ersetzt den
+    Platzhalter 'dnd-tracker-v3' in sw.js durch 'dnd-tracker-v<VERSION>-<Zeit>'.
+
+    Frueher ersetzte build.py das ERSTE Vorkommen und tat still nichts, wenn es
+    fehlte. Ein Production-Build ohne Bump liesse den Cache-First-SW nach dem
+    Deploy die alte App ausliefern; ein zusaetzliches Vorkommen (z. B. in einem
+    Kommentar oberhalb) wuerde die falsche Stelle patchen. bump_sw_cache_version()
+    verlangt deshalb genau ein Vorkommen und bricht sonst mit sys.exit(1) ab.
+
+    bump_sw_cache_version wird IN jedem Test importiert, damit die uebrigen Tests
+    dieser Datei unabhaengig davon laufen.
+    """
+
+    SW_PATH = Path(__file__).parent.parent.parent / 'sw.js'
+    PLACEHOLDER = "'dnd-tracker-v3'"
+    BUMPED = 'dnd-tracker-v9.9.9-209901010000'
+
+    def test_bump_replaces_only_the_cache_version_line(self):
+        from build import bump_sw_cache_version
+
+        src = self.SW_PATH.read_text(encoding='utf-8')
+        out = bump_sw_cache_version(src, self.BUMPED)
+
+        assert f"const CACHE_VERSION = '{self.BUMPED}';" in out
+        assert self.PLACEHOLDER not in out
+        src_lines = src.split('\n')
+        out_lines = out.split('\n')
+        assert len(src_lines) == len(out_lines)
+        changed = [i for i, (a, b) in enumerate(zip(src_lines, out_lines)) if a != b]
+        assert len(changed) == 1, f"Erwartet genau eine geaenderte Zeile, gefunden: {changed}"
+        assert src_lines[changed[0]].startswith(f"const CACHE_VERSION = {self.PLACEHOLDER};")
+
+    @pytest.mark.parametrize('variant', ['fehlt', 'doppelt'])
+    def test_bump_aborts_without_exactly_one_placeholder(self, variant, capsys):
+        from build import bump_sw_cache_version
+
+        src = self.SW_PATH.read_text(encoding='utf-8')
+        if variant == 'fehlt':
+            bad = src.replace(self.PLACEHOLDER, "'dnd-tracker-v4'")
+        else:
+            bad = f"// alter Cache-Name: {self.PLACEHOLDER}\n" + src
+
+        with pytest.raises(SystemExit) as exc:
+            bump_sw_cache_version(bad, self.BUMPED)
+
+        assert exc.value.code == 1
+        assert '[ABORTED]' in capsys.readouterr().out
+
+    def test_production_build_aborts_before_writing_when_placeholder_missing(self, monkeypatch):
+        """Verdrahtung: der Production-Build nutzt den Waechter. Fehlt der
+        Platzhalter in sw.js, endet build(production=True) mit SystemExit und
+        schreibt weder dist/sw.js noch das Production-Bundle."""
+        import build as build_module
+
+        dist_dir = Path(__file__).parent.parent.parent / 'dist'
+        outputs = [dist_dir / 'sw.js', dist_dir / 'dnd-tracker-optimized.html']
+        before = {p: (p.read_bytes() if p.exists() else None) for p in outputs}
+
+        sw_path = os.path.normcase(os.path.abspath(str(self.SW_PATH)))
+        real_read_file = build_module.read_file
+
+        def fake_read_file(filepath):
+            content = real_read_file(filepath)
+            if os.path.normcase(os.path.abspath(filepath)) == sw_path:
+                return content.replace(self.PLACEHOLDER, "'dnd-tracker-v4'")
+            return content
+
+        monkeypatch.setattr(build_module, 'read_file', fake_read_file)
+
+        with pytest.raises(SystemExit):
+            build_module.build(production=True)
+
+        for p in outputs:
+            if before[p] is None:
+                assert not p.exists(), f"{p.name} wurde trotz Abbruch neu geschrieben"
+            else:
+                assert p.read_bytes() == before[p], f"{p.name} wurde trotz Abbruch veraendert"

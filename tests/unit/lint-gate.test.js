@@ -20,6 +20,11 @@
  *   5. Warnungszahl == --max-warnings-Pin (exakt). Faellt die Zahl, muss der
  *      Pin im selben Commit mitfallen (D-10 verschaerft: "nur fallen darf" ->
  *      der Pin folgt jeder Senkung sofort).
+ *   6. Der Service Worker (sw.js) ist gelintet und befundfrei (R08, Einheit
+ *      U9). Er stand seit dem Initial-Commit ohne Begruendung in den globalen
+ *      Ausschluessen; ein eigener Konfigurationsblock schaltet dort die
+ *      Fenster- und App-Globals ab (der SW laeuft im
+ *      ServiceWorkerGlobalScope, nicht im Fenster).
  *
  * ESLint laeuft in einem Kind-Prozess: eslint.config.js ist ESM und wird von
  * ESLint per dynamischem import() geladen, was im Jest-VM-Kontext nicht
@@ -70,11 +75,16 @@ const PRODUCTIVE_PROBES = [
     'tests/unit/backups.test.js'
 ];
 
+// Service Worker im Projektwurzelverzeichnis (R08). Nicht in loader.js
+// MODULES, laeuft nicht im Fenster — eigener Konfigurationsblock.
+const SERVICE_WORKER = 'sw.js';
+
 const PROBE_PATHS = [
     HANDOFF_FILE,
     HANDOFF_SYNTHETIC,
     ...LOCAL_ARTIFACT_PROBES,
-    ...PRODUCTIVE_PROBES
+    ...PRODUCTIVE_PROBES,
+    SERVICE_WORKER
 ];
 
 // Kind-Prozess-Skript: lintet genau wie `npm run lint` (`eslint .` mit der
@@ -89,11 +99,22 @@ const results = await eslint.lintFiles(['.']);
 const toRel = abs => path.relative(cwd, abs).split(path.sep).join('/');
 const errorMessages = [];
 const warningsByRule = {};
+const perFile = {};
 let errors = 0;
 let warnings = 0;
 for (const r of results) {
     errors += r.errorCount + r.fatalErrorCount;
     warnings += r.warningCount;
+    const rel = toRel(r.filePath);
+    if (probePaths.includes(rel)) {
+        perFile[rel] = {
+            errors: r.errorCount + r.fatalErrorCount,
+            warnings: r.warningCount,
+            messages: r.messages
+                .slice(0, 20)
+                .map(m => m.line + ' ' + (m.ruleId || '(parse)') + ' ' + m.message)
+        };
+    }
     for (const m of r.messages) {
         const rule = m.ruleId || '(unused-disable-directive/parse)';
         if (m.severity === 2 || m.fatal) {
@@ -113,6 +134,7 @@ process.stdout.write(JSON.stringify({
     warnings,
     errorMessages,
     warningsByRule,
+    perFile,
     ignored
 }));
 `;
@@ -179,6 +201,12 @@ describe('Lint-Gate (R09)', () => {
 
         const wronglyIgnored = PRODUCTIVE_PROBES.filter(p => run.ignored[p] !== false);
         expect(wronglyIgnored).toEqual([]);
+    });
+
+    test('Service Worker (sw.js) wird gelintet und ist befundfrei (R08)', () => {
+        expect(run.ignored[SERVICE_WORKER]).toBe(false);
+        expect(linted.has(SERVICE_WORKER)).toBe(true);
+        expect(run.perFile[SERVICE_WORKER]).toEqual({ errors: 0, warnings: 0, messages: [] });
     });
 
     test('0 Fehler', () => {
