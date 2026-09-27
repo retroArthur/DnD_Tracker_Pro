@@ -318,8 +318,9 @@ function maxEntityId(items) {
 /**
  * Erste freie gueltige ID einer Sammlung ab `start` (aufwaerts gesucht).
  * Nur fuer den Saettigungsfall gedacht: sobald max(ID) + 1 die Obergrenze
- * ueberschreitet, gibt es oberhalb keine gueltige ID mehr, also werden die
- * Luecken UNTERHALB des Maximums genutzt.
+ * erreicht oder ueberschreitet, gibt es oberhalb keine neu vergebbare ID mehr
+ * (siehe isMintableEntityId), also werden die Luecken UNTERHALB des Maximums
+ * genutzt.
  * @param items - Sammlung (Nicht-Arrays werden als leer behandelt)
  * @param start - Startkandidat; nicht vergebbare Werte starten bei 1
  * @returns Freie vergebbare ID (1 .. ENTITY_ID_MAX - 1)
