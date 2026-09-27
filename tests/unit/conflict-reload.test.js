@@ -645,6 +645,79 @@ describe('R06 — ausstehende Saves im Ladefenster', () => {
         expect(A.bannerSichtbar()).toBe(true);
         expect(A.ctx.isCampaignStorageStale(KEY)).toBe(true);
     });
+
+    // Korrekturrunde F3 (U8 minor:1 / open:2, R06-Restbefund R2): im IndexedDB-Modus committet
+    // ein im Ladefenster GESTARTETER Write erst NACH dem gehaltenen Lesen (IndexedDB-Reihenfolge,
+    // seit F1 auch im Double). Der Erfolgszaehler steht beim Entscheiden also noch auf dem alten
+    // Wert — die Entscheidung muss an der Save-Generation haengen und den Commit abwarten.
+    test('T5d-gross (F3): > 5 MB — der im Ladefenster gestartete Write committet spaeter; danach entspricht IndexedDB D', async () => {
+        const u = erzeugeUrsprung();
+        const A = await tabImIdbModus(u, grosseKampagne('Alt'));
+        A.ctx.saveUndoState('lokale Änderung');
+        A.ctx.D.characters[0].name = 'Alt-editiert';
+        u.saeenIdb(KEY, grosseKampagne('Neu'));
+        const halt = halteLesen(u);
+
+        const p = A.ctx.reloadData();
+        await u.uhr.ruhe();
+        A.ctx.undo(); // > 5 MB -> IndexedDB-Write des verdraengten Stands, wartet hinter dem Lesen
+        await u.uhr.ruhe();
+
+        halt.freigeben();
+        await p;
+        await u.uhr.laufen(3000);
+
+        expect(namenIn(A.ctx.D)[0]).toBe('Neu');
+        expect(namen(u.idbDatensatz(KEY).data)[0]).toBe('Neu');
+        expect(u.idbDatensatz(KEY).data).toBe(JSON.stringify(A.ctx.D));
+    });
+
+    test('T5f-gross (F3): > 5 MB — eigener Write UND fremder Save im Ladefenster; der Tab bleibt veraltet', async () => {
+        const u = erzeugeUrsprung();
+        const A = await tabImIdbModus(u, grosseKampagne('Alt'));
+        const kanal = fremderKanal(u, A);
+        A.ctx.saveUndoState('lokale Änderung');
+        A.ctx.D.characters[0].name = 'Alt-editiert';
+        u.saeenIdb(KEY, grosseKampagne('Neu'));
+        const halt = halteLesen(u);
+
+        const p = A.ctx.reloadData();
+        await u.uhr.ruhe();
+        A.ctx.undo(); // eigener IndexedDB-Write, committet erst nach dem Lesen
+        await u.uhr.ruhe();
+        await fremderSave(u, kanal);
+
+        halt.freigeben();
+        await p;
+        await u.uhr.laufen(3000);
+
+        expect(A.bannerSichtbar()).toBe(true);
+        expect(A.ctx.isCampaignStorageStale(KEY)).toBe(true);
+    });
+
+    test('T5h (F3, Pin): scheitert das Neu-Festschreiben, bleibt die Anzeige "error" statt "saved"', async () => {
+        const u = erzeugeUrsprung();
+        const A = await tabImIdbModus(u);
+        A.ctx.exportAllDataAsFile = () => {};
+        A.ctx.saveUndoState('lokale Änderung');
+        A.ctx.D.characters[0].name = 'Alt-editiert';
+        u.saeenIdb(KEY, kampagne(['Neu']));
+        const halt = halteLesen(u);
+
+        const p = A.ctx.reloadData();
+        await u.uhr.ruhe();
+        A.ctx.undo(); // eigener Sofort-Save im Ladefenster (localStorage, gelingt)
+        await u.uhr.ruhe();
+        // Danach ist jeder Schreibweg dicht: Quota voll UND IndexedDB-Commit scheitert
+        u.quota.zeichen = 0;
+        u.idb.policy.commitFehler = () => new Error('commit');
+
+        halt.freigeben();
+        await p;
+        await u.uhr.ruhe();
+
+        expect(A.element('save-indicator').className).toBe('save-indicator error');
+    });
 });
 
 describe('R06 — Undo, Doppelklick, Altformat', () => {
@@ -664,6 +737,35 @@ describe('R06 — Undo, Doppelklick, Altformat', () => {
         const letzter = A.toastTexte()[A.toastTexte().length - 1];
         expect(letzter).toBe('↩️ Rückgängig: Neu laden (anderer Tab)');
         expect(namenIn(A.ctx.D)).toEqual(['Alt-editiert']);
+    });
+
+    // Korrekturrunde F3 (U8 minor:2): der Undo-Punkt muss den Stand UNMITTELBAR VOR dem
+    // Uebernehmen halten, nicht den vom Klick. Sonst ist eine Aenderung aus dem Ladefenster
+    // in keinem Schnappschuss (der gleich lautende Push wird dedupliziert) und unwiederbringlich.
+    test('T6b (F3): eine Aenderung im Ladefenster holt Strg+Z nach dem Neuladen zurueck', async () => {
+        const u = erzeugeUrsprung();
+        const A = await tabImIdbModus(u);
+        u.saeenIdb(KEY, kampagne(['Neu']));
+        const halt = halteLesen(u);
+
+        const p = A.ctx.reloadData();
+        await u.uhr.ruhe();
+        A.ctx.saveUndoState('Charakter umbenannt');
+        A.ctx.D.characters[0].name = 'Im-Fenster-editiert';
+        A.ctx.save();
+        await u.uhr.ruhe();
+
+        halt.freigeben();
+        await p;
+        await u.uhr.laufen(1000);
+        expect(namenIn(A.ctx.D)).toEqual(['Neu']);
+
+        A.toasts.length = 0;
+        A.ctx.undo();
+        await u.uhr.ruhe();
+
+        expect(A.toastTexte()).toContain('↩️ Rückgängig: Neu laden (anderer Tab)');
+        expect(namenIn(A.ctx.D)).toEqual(['Im-Fenster-editiert']);
     });
 
     test('T7: Doppelklick waehrend des gehaltenen Lesens — genau ein load(), genau eine Bestaetigung', async () => {
@@ -838,5 +940,153 @@ describe('R06 — LoadResult auf jedem Pfad, reloadData lehnt nie ab', () => {
         await expect(A.ctx.reloadData()).resolves.toMatchObject({ ok: false });
         await u.uhr.laufen(WAECHTER_MS + 1000);
         expect(u.uhr.fehler).toEqual([]);
+    });
+});
+
+/**
+ * Korrekturrunde zum Code-Review 2026-09-21, Einheit F3 — das Konflikt-Neuladen ERSETZT den
+ * Stand, statt ihn zu mischen (holistischer Befund "user-flows" major, U8 open:1).
+ *
+ * load() uebernahm den gespeicherten Stand mit Object.assign(D, parsed.p). Ein Schluessel, den
+ * nur das verdraengte D dieses Tabs trug, ueberlebte das Neuladen — und der naechste Save
+ * schrieb ihn zurueck. Genau die Schluessel also, die ein "Überschreiben"-Import (U6) oder ein
+ * Backup-Restore (U4) in einem anderen Tab ueber replaceCampaignData ENTFERNT hatte. Ein
+ * gespeicherter eigener '__proto__'-Schluessel tauschte zusaetzlich den Prototyp von D.
+ */
+describe('R06-Nachtrag (F3) — Neuladen ersetzt den Stand', () => {
+    test('T11a: Schluessel, die der gespeicherte Stand nicht traegt, ueberleben das Neuladen nicht und werden nicht zurueckgeschrieben', async () => {
+        const u = erzeugeUrsprung();
+        u.saeen(
+            KEY,
+            kampagne(['Alt'], {
+                partyGold: 500,
+                randomTables: [{ id: 1, name: 'Alte Gerüchte', icon: '🎲', entries: [] }],
+                quickRefCustom: [{ id: 1, title: 'Alte Hausregel', content: '' }],
+                dmScreenNotes: 'Notizen',
+                bestiary: [{ id: 1, name: 'Alt-Kreatur' }]
+            })
+        );
+        const A = await starte(oeffne(u, 'A'));
+        expect(A.ctx.D.partyGold).toBe(500);
+
+        // Anderer Tab: "Überschreiben"-Import/Restore ohne diese Schluessel
+        u.saeen(KEY, kampagne(['Neu-Held']), { ts: '2000' });
+        const r = await ergebnisVon(u, A.ctx.reloadData());
+
+        expect(r).toMatchObject({ ok: true, applied: true });
+        expect(namenIn(A.ctx.D)).toEqual(['Neu-Held']);
+        expect('partyGold' in A.ctx.D).toBe(false);
+        expect('randomTables' in A.ctx.D).toBe(false);
+        expect('quickRefCustom' in A.ctx.D).toBe(false);
+        expect('dmScreenNotes' in A.ctx.D).toBe(false);
+        // bestiary steht in initializeData() — Standard, nicht der verdraengte Inhalt
+        expect(A.ctx.D.bestiary).toEqual([]);
+
+        // Der Tab arbeitet normal weiter: kein Zurueckschreiben der alten Schluessel
+        A.ctx.D.quickNotes = 'weiter getippt';
+        A.ctx.save();
+        await u.uhr.laufen(400);
+        const gespeichert = JSON.parse(u.ls.get(KEY));
+        expect('partyGold' in gespeichert).toBe(false);
+        expect('randomTables' in gespeichert).toBe(false);
+        expect('quickRefCustom' in gespeichert).toBe(false);
+        expect('dmScreenNotes' in gespeichert).toBe(false);
+    });
+
+    test('T11b: ein gespeicherter "__proto__"-Schluessel tauscht beim Neuladen nicht den Prototyp von D', async () => {
+        const u = erzeugeUrsprung();
+        u.saeen(KEY, kampagne(['Alt']));
+        const A = await starte(oeffne(u, 'A'));
+        // Object.prototype DES TAB-REALMS (ctx selbst traegt die Intrinsics nicht als
+        // eigene Eigenschaft — initializeData() laeuft im Realm und liefert sie)
+        const objektPrototyp = Object.getPrototypeOf(A.ctx.initializeData());
+        expect(Object.getPrototypeOf(A.ctx.D)).toBe(objektPrototyp);
+        u.ls.set(
+            KEY,
+            '{"_version":"2.6.1","characters":[{"id":1,"name":"X"}],"__proto__":{"eingeschleust":true}}'
+        );
+        u.ls.set(KEY + '_ts', '2000');
+
+        const r = await ergebnisVon(u, A.ctx.reloadData());
+
+        expect(r).toMatchObject({ ok: true, applied: true });
+        expect(namenIn(A.ctx.D)).toEqual(['X']);
+        expect(Object.getPrototypeOf(A.ctx.D)).toBe(objektPrototyp);
+        expect(A.ctx.D.eingeschleust).toBeUndefined();
+    });
+
+    test('T10 (Pin): nach dem Neuladen zaehlt "Neue Runde" vom geladenen Stand weiter', async () => {
+        const u = erzeugeUrsprung();
+        const ini = r => ({ initiative: { round: r, currentTurn: 0, combatants: [] } });
+        u.saeen(KEY, kampagne(['Alt'], ini(2)));
+        const A = await starte(oeffne(u, 'A'));
+        u.saeen(KEY, kampagne(['Neu'], ini(7)), { ts: '2000' });
+
+        await ergebnisVon(u, A.ctx.reloadData());
+        A.ctx.nextEncounterRound();
+
+        expect(A.ctx.D.initiative.round).toBe(8);
+    });
+});
+
+/**
+ * Korrekturrunde F3 — ein degradierter Start (localStorage-Schatten ohne _ts, IndexedDB nicht
+ * lesbar) gilt nicht mehr als sauberes Laden (holistischer Befund "write-paths" major).
+ *
+ * Vorher setzte load() dort eine normale Baseline und schwieg. Der naechste automatische Save
+ * oder das Verlassen schrieb den ungeprueften Schatten MIT _ts — und ab dann uebersprang jedes
+ * spaetere load() die IndexedDB-Pruefung, der neuere IndexedDB-Datensatz war dauerhaft verdeckt.
+ */
+describe('R06-Nachtrag (F3) — degradierter Start ist veraltet', () => {
+    const SCHATTEN = kampagne(['Aria']);
+    const IDB_NEUER = kampagne(['Aria', 'Borin (nur in IndexedDB)']);
+
+    test('T12a: Schatten ohne _ts plus IndexedDB-Lesefehler — Warnung, Tab veraltet, kein automatischer und kein Entlade-Write', async () => {
+        const u = erzeugeUrsprung();
+        u.saeen(KEY, SCHATTEN, { ts: null });
+        u.saeenIdb(KEY, IDB_NEUER);
+        lesenScheitert(u);
+        const A = oeffne(u, 'A');
+
+        const r = await A.ctx.load();
+        A.ctx.initUnloadPersistence();
+        A.ctx.initConflictDetection();
+        await u.uhr.laufen(0);
+
+        expect(r).toMatchObject({ ok: true, degraded: true });
+        expect(A.toastTexte()).toContain(IDB_WARN_TOAST);
+        expect(A.ctx.isCampaignStorageStale(KEY)).toBe(true);
+        expect(A.ctx.saveAutomatic()).toBe(false);
+        await u.uhr.laufen(1000);
+        expect(u.ls.get(KEY + '_ts')).toBeUndefined();
+
+        // Harmlose Nebenaenderung, Tab schliessen: nichts wird geschrieben
+        A.ctx.D.quickNotes = 'nebenbei';
+        A.entladen('schliessen');
+        await u.uhr.laufen(1000);
+        expect(namen(u.ls.get(KEY))).toEqual(['Aria']);
+        expect(u.ls.get(KEY + '_ts')).toBeUndefined();
+
+        // Naechster Start mit gesundem IndexedDB: der neuere Datensatz kommt wieder zum Zug
+        u.idb.policy.requestFehler = () => null;
+        const C = oeffne(u, 'C');
+        await C.ctx.load();
+        expect(namenIn(C.ctx.D)).toEqual(['Aria', 'Borin (nur in IndexedDB)']);
+    });
+
+    test('T12b (Pin): ein ausdruecklicher Save nach dem degradierten Start schreibt und hebt die Veraltung auf (D4)', async () => {
+        const u = erzeugeUrsprung();
+        u.saeen(KEY, SCHATTEN, { ts: null });
+        u.saeenIdb(KEY, IDB_NEUER);
+        lesenScheitert(u);
+        const A = oeffne(u, 'A');
+        await A.ctx.load();
+
+        A.ctx.D.characters.push({ id: 9, name: 'Ausdruecklich' });
+        A.ctx.save();
+        await u.uhr.laufen(400);
+
+        expect(namen(u.ls.get(KEY))).toEqual(['Aria', 'Ausdruecklich']);
+        expect(A.ctx.isCampaignStorageStale(KEY)).toBe(false);
     });
 });
