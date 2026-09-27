@@ -351,10 +351,20 @@ declare global {
   /** Anzahl bestaetigter Saves dieses Tabs */
   function getPersistSuccessCount(): number;
 
+  /** Laeuft gerade ein loeschender/umziehender Ablauf? (retireCampaignWrites) */
+  function areCampaignWritesRetired(): boolean;
+
+  /** Aktuelle Save-Generation (R04-Ueberholschutz) */
+  function getPersistGeneration(): number;
+
+  /** Loest auf, sobald kein IndexedDB-Write mehr laeuft (hoechstens 5 s) */
+  function waitForPersistSettle(): Promise<void>;
+
   /** Harte Schreibsperre; loest nach laufenden IndexedDB-Writes auf (hoechstens 5 s) */
   function retireCampaignWrites(): Promise<void>;
 
-  /** Sperre aufheben (Abbruchpfade); holt einen verworfenen save() nach */
+  /** Sperre aufheben (Abbruchpfade); holt einen verworfenen save() oder den unter der
+   *  Sperre uebersprungenen Nachlauf eines IndexedDB-Commits nach */
   function resumeCampaignWrites(): void;
 
   /** Automatischer Save nur in einem nicht gesperrten, nicht veralteten Tab (true = angestossen) */

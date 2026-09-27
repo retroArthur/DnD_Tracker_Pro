@@ -29,6 +29,18 @@ let _persistBaseline = null;
 let _campaignWritesRetired = false;
 // retireCampaignWrites() hat einen ausstehenden save() verworfen (resume holt ihn nach)
 let _retireCancelledSave = false;
+// War der von retireCampaignWrites() verworfene save() ein rein automatischer?
+let _retireCancelledAutomaticOnly = false;
+// Ein IndexedDB-Commit ist UNTER der Sperre gelandet: sein Nachlauf (LS-Schatten raeumen,
+// _rev, Baseline) wurde uebersprungen. resumeCampaignWrites() holt ihn mit einem save() nach —
+// sonst bliebe eine aeltere localStorage-Kopie MIT _ts liegen, die load() bevorzugt.
+let _retiredPersistSkipped = false;
+// Der ausstehende entprellte save() geht ausschliesslich auf automatische Schreiber zurueck
+// (Session-Timer, Reparatur nach load(), Standard-Zufallstabellen, Markdown-Onboarding).
+// D4: solche Saves schreiben in einem veralteten Tab nie — geprueft bei der Einplanung UND
+// erneut im Timer-Koerper, weil der Tab in den 300 ms veralten kann. D5: ein solcher Timer
+// zaehlt beim Verlassen nicht als ausdrueckliche Arbeit und fordert keine Rueckfrage an.
+let _pendingSaveAutomaticOnly = false;
 // Laufende IndexedDB-Schreibvorgaenge (saveToIndexedDBFallback) und wer auf ihr Ende wartet
 let _persistWritesInFlight = 0;
 const _persistSettleWaiters = [];
@@ -149,7 +161,14 @@ function isCampaignStorageStale(key) {
 // Gemeinsamer Erfolgspunkt aller Schreibpfade: neuer _rev-Marker (leise — kein zweiter
 // Quota-Toast; scheitert er, gilt der vorhandene), neue Baseline. lsValueNow ist der
 // localStorage-Wert NACH dem Save (im IndexedDB-Modus ggf. null).
+// R02-Nachtrag (F2, U7 minor:3/open:7): unter der Schreibsperre passiert hier NICHTS. Der
+// Speicher gehoert waehrend eines loeschenden/umziehenden Ablaufs nicht mehr diesem Save —
+// ein _rev und eine Baseline auf seinen Stand wuerden den Umzugs-Import ueberschreiben.
 function _onPersistSuccess(key, lsValueNow, dataString) {
+    if (_campaignWritesRetired) {
+        _retiredPersistSkipped = true;
+        return;
+    }
     let rev = Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 8);
     if (!StorageAPI.setQuiet(key + '_rev', rev).success) rev = StorageAPI.get(key + '_rev', null);
     _persistBaseline = { key, stored: lsValueNow, rev, snapshot: dataString, external: false };
@@ -159,13 +178,39 @@ function _onPersistSuccess(key, lsValueNow, dataString) {
 function getPersistSuccessCount() {
     return _persistSuccessCount;
 }
+// Laeuft gerade ein loeschender/umziehender Ablauf? (retireCampaignWrites)
+function areCampaignWritesRetired() {
+    return _campaignWritesRetired;
+}
+// Aktuelle Save-Generation (R04-Ueberholschutz) — fuer Aufrufer, die erkennen wollen,
+// ob ihr Stand seit einem Zeitpunkt von einem neueren Save ueberholt wurde
+function getPersistGeneration() {
+    return _persistGeneration;
+}
+// Loest auf, sobald kein IndexedDB-Write mehr laeuft (hoechstens PERSIST_SETTLE_CAP_MS)
+function waitForPersistSettle() {
+    return _waitForPersistSettle(PERSIST_SETTLE_CAP_MS);
+}
 // Verwirft einen noch nicht gestarteten entprellten save(); true, wenn einer ausstand.
 // Auch fuer reloadData() (R06): der geladene Stand ersetzt den verdraengten.
 function cancelPendingSave() {
     if (!saveTimeout) return false;
     clearTimeout(saveTimeout);
     saveTimeout = null;
+    _pendingSaveAutomaticOnly = false;
     return true;
+}
+/**
+ * Steht ausdrueckliche Arbeit aus? Ein ausstehender entprellter save() zaehlt nur, wenn er
+ * nicht ausschliesslich von automatischen Schreibern kommt (D5, F2). Ein laufender
+ * IndexedDB-Write und ein endgueltig gescheiterter Save zaehlen immer.
+ */
+function _hasExplicitPendingWork() {
+    return (
+        (!!saveTimeout && !_pendingSaveAutomaticOnly) ||
+        _persistWritesInFlight > 0 ||
+        _lastPersistFailed
+    );
 }
 /**
  * R06 (Code-Review 2026-09-21, U8): fuehrt fn aus, waehrend entprellte Saves zurueckgestellt
@@ -211,21 +256,38 @@ function _waitForPersistSettle(capMs) {
  */
 function retireCampaignWrites() {
     _campaignWritesRetired = true;
-    if (cancelPendingSave()) _retireCancelledSave = true;
+    const warAutomatisch = _pendingSaveAutomaticOnly;
+    if (cancelPendingSave()) {
+        _retireCancelledSave = true;
+        _retireCancelledAutomaticOnly = warAutomatisch;
+    }
     return _waitForPersistSettle(PERSIST_SETTLE_CAP_MS);
 }
-// Abbruchpfade: Sperre aufheben; einen verworfenen save() nachholen
+/**
+ * Abbruchpfade: Sperre aufheben; einen verworfenen save() nachholen. Ebenso nachgeholt wird
+ * der unter der Sperre uebersprungene Nachlauf eines IndexedDB-Commits (F2): dieser save()
+ * raeumt den LS-Schatten und zieht _rev und Baseline nach. Er ist dann NICHT automatisch —
+ * ohne ihn bliebe eine aeltere localStorage-Kopie mit _ts liegen, die load() bevorzugt.
+ */
 function resumeCampaignWrites() {
     _campaignWritesRetired = false;
-    if (_retireCancelledSave) {
-        _retireCancelledSave = false;
-        save(_pendingSaveShowMessage);
-    }
+    if (!_retiredPersistSkipped && !_retireCancelledSave) return;
+    const automaticOnly = _retiredPersistSkipped ? false : _retireCancelledAutomaticOnly;
+    _retiredPersistSkipped = false;
+    _retireCancelledSave = false;
+    _retireCancelledAutomaticOnly = false;
+    save(_pendingSaveShowMessage);
+    _pendingSaveAutomaticOnly = automaticOnly;
 }
 /**
  * Fuer Schreibvorgaenge, um die niemand ausdruecklich gebeten hat (Session-Timer-Autosave,
  * Reparatur nach load(), Standard-Zufallstabellen, Markdown-Onboarding): nur in einem nicht
  * gesperrten, nicht veralteten Tab mit Baseline (D4 = A). Ausdrueckliche Saves bleiben last-writer-wins.
+ *
+ * Der Tab kann in den 300 ms der Entprellung veralten. Deshalb merkt sich dieser Aufruf, dass
+ * der ausstehende save() ausschliesslich automatisch ist (_pendingSaveAutomaticOnly), und der
+ * Timer-Koerper prueft die Veraltung ERNEUT (F2). Ein spaeterer ausdruecklicher save() loescht
+ * die Markierung und bleibt last-writer-wins.
  * @returns {boolean} true, wenn ein save() angestossen wurde
  */
 function saveAutomatic() {
@@ -242,7 +304,10 @@ function saveAutomatic() {
         }
         return false;
     }
+    // Ein schon ausstehender ausdruecklicher save() bleibt ausdruecklich
+    const automaticOnly = !saveTimeout || _pendingSaveAutomaticOnly;
     save();
+    _pendingSaveAutomaticOnly = automaticOnly;
     return true;
 }
 // Ausstehenden entprellten Save sofort ausfuehren (pagehide, verstecken, vor dem Neuladen).
@@ -270,27 +335,35 @@ function _askToStay(event) {
 }
 /**
  * beforeunload (R02): schreibt NIE blind.
- *  - gesperrt oder keine passende Baseline (load() gescheitert) -> nichts
+ *  - gesperrt -> nichts
+ *  - keine passende Baseline (load() gescheitert) -> nie schreiben; Rueckfrage nur fuer
+ *    ausdrueckliche Arbeit, damit sie nicht still verfaellt (D5, F2)
  *  - unveraendert -> nichts (Rueckfrage nur, solange ein IndexedDB-Write laeuft)
- *  - veraltet -> nie schreiben; Rueckfrage nur fuer einen ausdruecklichen Save (ausstehend,
+ *  - veraltet -> nie schreiben; Rueckfrage nur fuer ausdrueckliche Arbeit (ausstehend,
  *    laufend, gescheitert). Harmlose Nebenaenderungen verfallen still.
- *  - > 5 MB -> IndexedDB-Save anstossen (asynchron, bestmoeglich)
+ *  - > 5 MB -> nur fuer ausdrueckliche Arbeit einen IndexedDB-Save anstossen (asynchron,
+ *    bestmoeglich). Fuer harmlose Nebenaenderungen NICHT: sein put wird nach einem laufenden
+ *    Save eines anderen Tabs angelegt und committet danach (D4, F2).
  *  - sonst synchron nach localStorage mit _ts und _rev
- * Der ausstehende Timer wird erst verworfen, wenn wirklich geschrieben wird — waehlt der
+ * "Ausdrueckliche Arbeit" ist _hasExplicitPendingWork(): ein rein automatischer Timer zaehlt
+ * nicht. Der ausstehende Timer wird erst verworfen, wenn wirklich geschrieben wird — waehlt der
  * Nutzer "Bleiben", laeuft er danach regulaer.
  */
 function persistOnUnload(event) {
     if (_campaignWritesRetired) return;
     const key = window.getActiveCampaignKey();
     const b = _persistBaseline;
-    if (!key || !b || b.key !== key) return;
+    const explicit = _hasExplicitPendingWork();
+    if (!key || !b || b.key !== key) {
+        if (key && explicit) _askToStay(event);
+        return;
+    }
     let current;
     try {
         current = JSON.stringify(window.D);
     } catch {
         return;
     }
-    const explicit = !!saveTimeout || _persistWritesInFlight > 0 || _lastPersistFailed;
     if (current === b.snapshot) {
         if (_persistWritesInFlight > 0) _askToStay(event);
         else cancelPendingSave(); // nichts zu schreiben: identisch mit dem letzten Stand
@@ -301,9 +374,10 @@ function persistOnUnload(event) {
         return;
     }
     if (_measureDataByteLength(current) / (1024 * 1024) > PERSIST_LS_LIMIT_MB) {
+        if (!explicit) return;
         cancelPendingSave();
         _persistNow(false);
-        if (explicit) _askToStay(event);
+        _askToStay(event);
         return;
     }
     cancelPendingSave();
@@ -315,8 +389,10 @@ function persistOnUnload(event) {
         _onPersistSuccess(key, current, current);
         return;
     }
-    _persistNow(false);
-    if (explicit) _askToStay(event);
+    if (explicit) {
+        _persistNow(false);
+        _askToStay(event);
+    }
 }
 // Einmalig: Verlassen-Schutz plus vorgezogener Flush beim Verstecken/pagehide — grosse
 // Kampagnen sind so schon waehrend der Nutzung sicher, nicht erst beim Verlassen
@@ -334,6 +410,10 @@ function initUnloadPersistence() {
 // Write, {success:false, error} bei endgueltigem Fehler, {success:false, superseded:true,
 // error:'superseded'}, wenn ein neuerer Save diesen ueberholt hat. R02: {success:false,
 // error:'retired'} unter der Schreibsperre, {success:false, error:'no-campaign-key'} ohne Schluessel.
+// 'superseded' heisst AUSSCHLIESSLICH "von diesem Aufruf nicht geschrieben" — kein Fehler:
+// der neuere Save hat D vollstaendig serialisiert und meldet sein Ergebnis selbst. Beide
+// catch-Ebenen (erster Versuch und IndexedDB-Retry) melden so (F2); ein ueberholter Aufruf
+// fasst Anzeige, Toasts und Notfall-Export nicht an.
 async function saveImmediate() {
     if (_campaignWritesRetired) return { success: false, error: 'retired' };
     const key = window.getActiveCampaignKey();
@@ -373,10 +453,12 @@ async function saveImmediate() {
         // (D-01 / STAB-05) IDB-only-Pfad bei >5MB: LS-Schatten entfernen nach bestätigtem IDB-Write
         if (dataSizeMB > LS_LIMIT_MB) {
             await saveToIndexedDBFallback(key, dataString);
-            // R04: erst nach dem Commit, und nur ohne neueren LS-Write
-            if (_lsWriteGeneration < generation) {
+            // R04: erst nach dem Commit, nur ohne neueren LS-Write; F2: nie gesperrt.
+            if (_lsWriteGeneration < generation && !_campaignWritesRetired) {
                 StorageAPI.remove(key);
                 StorageAPI.remove(key + '_ts');
+            } else if (_lsWriteGeneration < generation) {
+                _retiredPersistSkipped = true;
             }
             _persistFailureStreak = false;
             _onPersistSuccess(key, StorageAPI.get(key, null), dataString);
@@ -441,9 +523,12 @@ async function saveImmediate() {
             // (D-01) Begleit-Timestamp für IDB-Fallback entfernen (IDB hat eigenen timestamp).
             // R04: nur ohne neueren LS-Write; nach einem >5-MB-Retry auch keinen LS-Schatten
             // ohne _ts zuruecklassen (loest sonst beim Laden einen Schein-Konflikt aus).
-            if (_lsWriteGeneration < generation) {
+            // R02-Nachtrag (F2): nicht unter der Schreibsperre.
+            if (_lsWriteGeneration < generation && !_campaignWritesRetired) {
                 StorageAPI.remove(key + '_ts');
                 if (dataSizeMB > LS_LIMIT_MB) StorageAPI.remove(key);
+            } else if (_lsWriteGeneration < generation) {
+                _retiredPersistSkipped = true;
             }
             _persistFailureStreak = false;
             _onPersistSuccess(key, StorageAPI.get(key, null), dataString);
@@ -458,6 +543,13 @@ async function saveImmediate() {
             _notifyPostSaveHooks();
             return { success: true, backend: 'indexedDB' };
         } catch (idbError) {
+            // R04-Nachtrag (F2): ueberholt — der neuere Save hat D vollstaendig serialisiert
+            // und meldet selbst. Kein lauter Toast, kein Notfall-Export, keine Fehleranzeige
+            // fuer Daten, die sicher liegen (gesperrte und schluessellose Saves kehren vor
+            // ++_persistGeneration zurueck, eine neuere Generation ist also ein echter Save).
+            if (generation !== _persistGeneration) {
+                return { success: false, superseded: true, error: 'superseded' };
+            }
             if (window.APP_CONFIG && window.APP_CONFIG.DEBUG_MODE) {
                 window.ErrorHandler &&
                     window.ErrorHandler.log('saveImmediate', idbError, 'IndexedDB fallback failed');
@@ -624,16 +716,32 @@ async function loadFromIndexedDBFallbackRaw(key) {
 // Der Timer-Koerper ist _persistNow() — flushPendingSave() zieht ihn vor (R02).
 const save = function (showMessage = false) {
     if (_campaignWritesRetired) return;
+    // Ein Aufruf ueber save() ist ausdruecklich; saveAutomatic() setzt die Markierung danach
+    // wieder (F2)
+    _pendingSaveAutomaticOnly = false;
     const updateSaveIndicator = window.updateSaveIndicator;
     updateSaveIndicator('saving');
     if (saveTimeout) clearTimeout(saveTimeout);
     _pendingSaveShowMessage = showMessage;
     saveTimeout = window.setTimeout(() => {
         saveTimeout = null;
+        const automaticOnly = _pendingSaveAutomaticOnly;
+        _pendingSaveAutomaticOnly = false;
         // R06: waehrend reloadData() nicht schreiben, sondern neu einplanen
         if (_saveSuspendDepth > 0) {
             save(showMessage);
+            _pendingSaveAutomaticOnly = automaticOnly;
             return;
+        }
+        // D4-Nachtrag (F2): der Tab kann in den 300 ms veraltet sein. Ein rein automatischer
+        // Save schreibt dann nicht — und stellt die Anzeige wieder her, die save() auf
+        // 'saving' gesetzt hatte.
+        if (automaticOnly) {
+            const key = window.getActiveCampaignKey();
+            if (!key || isCampaignStorageStale(key)) {
+                window.updateSaveIndicator(_lastPersistFailed ? 'error' : 'saved');
+                return;
+            }
         }
         _persistNow(showMessage);
     }, 300);
@@ -668,10 +776,13 @@ async function _persistNow(showMessage = false) {
         // (D-01 / STAB-05) IDB-only-Pfad: LS-Schatten nach bestätigtem IDB-Write entfernen
         if (dataSizeMB > LS_LIMIT_MB) {
             await saveToIndexedDBFallback(key, dataString);
-            // R04: erst nach dem Commit, und nur ohne neueren LS-Write
-            if (_lsWriteGeneration < generation) {
+            // R04: erst nach dem Commit, und nur ohne neueren LS-Write.
+            // R02-Nachtrag (F2): nicht unter der Schreibsperre.
+            if (_lsWriteGeneration < generation && !_campaignWritesRetired) {
                 StorageAPI.remove(key);
                 StorageAPI.remove(key + '_ts');
+            } else if (_lsWriteGeneration < generation) {
+                _retiredPersistSkipped = true;
             }
             _persistFailureStreak = false;
             _onPersistSuccess(key, StorageAPI.get(key, null), dataString);
@@ -710,9 +821,12 @@ async function _persistNow(showMessage = false) {
         // Fallback zu IndexedDB
         try {
             await saveToIndexedDBFallback(key, dataString);
-            if (_lsWriteGeneration < generation) {
+            // R02-Nachtrag (F2): nicht unter der Schreibsperre raeumen
+            if (_lsWriteGeneration < generation && !_campaignWritesRetired) {
                 StorageAPI.remove(key + '_ts');
                 if (dataSizeMB > LS_LIMIT_MB) StorageAPI.remove(key);
+            } else if (_lsWriteGeneration < generation) {
+                _retiredPersistSkipped = true;
             }
             _persistFailureStreak = false;
             _onPersistSuccess(key, StorageAPI.get(key, null), dataString);
@@ -726,6 +840,8 @@ async function _persistNow(showMessage = false) {
                 'warning'
             );
         } catch (idbError) {
+            // R04-Nachtrag (F2): ueberholt — der neuere Save meldet selbst (siehe saveImmediate)
+            if (generation !== _persistGeneration) return;
             ErrorHandler.log('save', idbError, 'IndexedDB Fallback');
             // (D-03) Laut bei IDB-Fehler, Export einmal pro Fehlerserie
             _reportPersistFailure();
@@ -746,6 +862,9 @@ window.refreshPersistSnapshot = refreshPersistSnapshot;
 window.markExternalCampaignWrite = markExternalCampaignWrite;
 window.isCampaignStorageStale = isCampaignStorageStale;
 window.getPersistSuccessCount = getPersistSuccessCount;
+window.areCampaignWritesRetired = areCampaignWritesRetired;
+window.getPersistGeneration = getPersistGeneration;
+window.waitForPersistSettle = waitForPersistSettle;
 window.retireCampaignWrites = retireCampaignWrites;
 window.resumeCampaignWrites = resumeCampaignWrites;
 window.saveAutomatic = saveAutomatic;
