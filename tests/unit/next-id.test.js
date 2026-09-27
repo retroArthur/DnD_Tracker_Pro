@@ -307,3 +307,49 @@ describe('normalizeEntityIds() / recomputeNextIds() (U2)', () => {
         expect(Object.keys(counters)).toHaveLength(Object.keys(ctx.ID_COUNTER_PATHS).length + 1);
     });
 });
+
+describe('ID-Obergrenze ENTITY_ID_MAX — Saettigung (U2 minor:3/open:4/minor:9)', () => {
+    /** Lesbare Zusicherung: der Wert selbst steht in der Fehlermeldung. */
+    const istGueltigeId = id => ({
+        id,
+        gueltig: Number.isSafeInteger(id) && id > 0 && id <= 1e15
+    });
+
+    test('N9: nextId vergibt an der Obergrenze gueltige, eindeutige IDs — auch im Stapel', () => {
+        const ctx = makeContext();
+        // minor:9 (Mutant U03): die Obergrenze selbst ist die Bedingung, die 1e15 + 1
+        // ungueltig macht. Ohne `n <= ENTITY_ID_MAX` verschiebt sich die Saettigung
+        // nur auf 2^53, das Problem bleibt dasselbe.
+        expect(ctx.isValidEntityId(5e15)).toBe(false);
+        expect(ctx.isValidEntityId(1e15)).toBe(true);
+        expect(ctx.isValidEntityId(1e15 + 1)).toBe(false);
+
+        // Eine ID von genau 1e15 kommt aus einer fremden oder beschaedigten Datei
+        // (R03-Bedrohungsmodell) — Normalisierer und validateDataIntegrity nehmen sie an.
+        ctx.D.npcs = [{ id: 1e15 }, { id: 1 }, { id: 3 }];
+        ctx.D._nextId = {};
+        // Drei Aufrufe OHNE push dazwischen (Stapelvergabe, z. B. Import mehrerer Datensaetze)
+        const stapel = [ctx.nextId('npcs'), ctx.nextId('npcs'), ctx.nextId('npcs')];
+        for (const id of stapel) ctx.D.npcs.push({ id });
+
+        expect(stapel.map(istGueltigeId)).toEqual(stapel.map(id => ({ id, gueltig: true })));
+        const ids = ctx.D.npcs.map(n => n.id);
+        expect(new Set(ids).size).toBe(ids.length);
+    });
+
+    test('N10: normalizeEntityIds vergibt an der Obergrenze keine ungueltigen IDs', () => {
+        const ctx = makeContext();
+        const data = { npcs: [{ id: 1e15 }, { id: 'x' }, { id: 1e15 }, { id: 1 }] };
+        ctx.normalizeEntityIds(data);
+        const ids = data.npcs.map(n => n.id);
+
+        expect(ids.map(istGueltigeId)).toEqual(ids.map(id => ({ id, gueltig: true })));
+        expect(new Set(ids).size).toBe(ids.length);
+        // Die spaeter stehende gueltige ID 1 bleibt unangetastet ...
+        expect(data.npcs[3].id).toBe(1);
+        // ... die Luecken darunter werden aufgefuellt
+        expect(ids).toEqual([1e15, 2, 3, 1]);
+        // Zweiter Lauf ist ein Nullschritt
+        expect(ctx.normalizeEntityIds(data)).toHaveLength(0);
+    });
+});

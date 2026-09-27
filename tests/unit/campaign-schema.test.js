@@ -436,6 +436,33 @@ describe('normalizeCampaignData() — Eingangsgrenze', () => {
         expect(res.data.settings.theme).toBe('dark');
         expect(res.data.settings.levelingMode).toBe('milestone');
     });
+
+    test('S14: null-Unterlisten werden zu leeren Listen (Schritt 7)', () => {
+        // Pin fuer ensureCampaignContainerLists(): checkCampaignShape LAESST null fuer
+        // calendar.events und initiative.combatants durch, der Default-Merge in Schritt 6
+        // kopiert dieses null ueber den Standardwert, und validateDataIntegrity repariert
+        // verschachtelte Listen nicht. Verbraucher greifen ungeschuetzt zu
+        // (features/initiative.js: D.initiative.combatants.length) — ohne Schritt 7 legte
+        // ein Restore oder Import eine null-Liste in D.
+        const ctx = makeContext();
+        const res = normalize(ctx, {
+            npcs: [],
+            calendar: { day: 1, month: 1, year: 1492, events: null },
+            initiative: { combatants: null, currentTurn: 0, round: 1 },
+            soundboard: { scenes: null }
+        });
+        expect(res.ok).toBe(true);
+        expect(plain(res.data.calendar.events)).toEqual([]);
+        expect(plain(res.data.initiative.combatants)).toEqual([]);
+        expect(plain(res.data.soundboard.scenes)).toEqual([]);
+        expect(res.repairs).toEqual(
+            expect.arrayContaining([
+                'calendar.events: fehlte, leere Liste angelegt',
+                'initiative.combatants: fehlte, leere Liste angelegt',
+                'soundboard.scenes: fehlte, leere Liste angelegt'
+            ])
+        );
+    });
 });
 
 describe('normalizeCampaignData() — IDs und Zaehler (R03)', () => {
