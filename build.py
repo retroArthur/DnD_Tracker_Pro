@@ -220,12 +220,18 @@ def bump_sw_cache_version(sw_src, new_version):
     nach dem Deploy weiter die alte App ausliefern; steht er zusaetzlich z. B. in
     einem Kommentar weiter oben, wuerde die falsche Stelle gepatcht. Frueher
     ersetzte der Build still das erste Vorkommen oder gar nichts.
+
+    Die Abbruchmeldung ist bewusst rein ASCII (F7): sie laeuft ueber ein rohes
+    print() VOR sys.exit(1), und auf einer cp850/cp437/ascii-Konsole haette ein
+    Zeichen ausserhalb des Codecs dort UnicodeEncodeError geworfen statt den
+    Abbruch auszuloesen — der Waechter waere also genau in dem Fall offen
+    ausgefallen, den er verhindern soll.
     """
     count = sw_src.count(SW_CACHE_VERSION_PLACEHOLDER)
     if count != 1:
         print(
             f"[ABORTED] sw.js enthaelt den CACHE_VERSION-Platzhalter "
-            f"{SW_CACHE_VERSION_PLACEHOLDER} {count}-mal statt genau einmal — "
+            f"{SW_CACHE_VERSION_PLACEHOLDER} {count}-mal statt genau einmal - "
             f"ohne Bump wuerde der Service Worker nach dem Deploy die alte App ausliefern."
         )
         sys.exit(1)
@@ -500,6 +506,14 @@ def build(minify=False, production=False, verbose=False):
         os.makedirs(dist_dir, exist_ok=True)
         sw_src_path = os.path.join(SCRIPT_DIR, 'sw.js')
         sw_dst_path = os.path.join(dist_dir, 'sw.js')
+        # Das except fasst NUR Datei-/EA-Fehler (OSError: sw.js fehlt, dist/ nicht
+        # beschreibbar). Die waren immer als "kopieren ging nicht" gemeint. Alles
+        # andere muss den Build beenden (F7): vorher stand hier `except Exception`,
+        # und auf einer cp850/cp437/ascii-Konsole verschluckte das den
+        # UnicodeEncodeError, mit dem die Abbruchmeldung des Waechters scheiterte —
+        # der Production-Build lief weiter und schrieb sein Bundle mit veraltetem
+        # oder fehlendem dist/sw.js, also genau dem stillen Nicht-Bump, den R08
+        # ausschliesst.
         try:
             sw_src = read_file(sw_src_path)
             # R08: genau ein Platzhalter, sonst sys.exit(1). SystemExit ist keine
@@ -509,7 +523,7 @@ def build(minify=False, production=False, verbose=False):
             sw_patched = bump_sw_cache_version(sw_src, bumped_cache_version)
             write_file(sw_dst_path, sw_patched)
             log.success(f"sw.js nach dist/ kopiert (CACHE_VERSION={bumped_cache_version})")
-        except Exception as e:
+        except OSError as e:
             log.warning(f"sw.js konnte nicht nach dist/ kopiert werden: {e}")
 
     if minify:
