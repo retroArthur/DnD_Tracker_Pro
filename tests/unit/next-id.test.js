@@ -378,10 +378,14 @@ describe('ID-Obergrenze ENTITY_ID_MAX — Saettigung (U2 minor:3/open:4/minor:9)
 
     test('N12: der gespeicherte Zaehler bleibt nach jedem nextId selbst eine gueltige ID', () => {
         const ctx = makeContext();
-        // Der Zaehler ist die einzige Erinnerung an "diese ID ist im laufenden Stapel schon
-        // vergeben". Wird er ungueltig, verwirft ihn der naechste Aufruf und faellt auf die
+        // Unterhalb der Saettigung ist der Zaehler die Erinnerung an "diese ID ist im
+        // laufenden Stapel schon vergeben" (die Sammlung weiss es erst nach dem push).
+        // Wird er ungueltig, verwirft ihn der naechste Aufruf und faellt auf die
         // Untergrenze zurueck — die doppelte ID aus N11. Deshalb muenzt nextId nie
-        // ENTITY_ID_MAX selbst: so ist id + 1 immer noch eine gueltige ID.
+        // ENTITY_ID_MAX selbst: so ist id + 1 immer noch eine gueltige ID. In der
+        // Saettigung traegt den Stapel der modulinterne Suchzeiger (siehe N13/N14), und
+        // der Zaehler haelt mit ENTITY_ID_MAX das Signal "gesaettigt" — auch das eine
+        // gueltige ID, also bleibt die hier gepinnte Zusicherung in beiden Faellen wahr.
         for (const max of [1e15 - 2, 1e15 - 1, 1e15]) {
             ctx.D.npcs = [{ id: max }];
             ctx.D._nextId = {};
