@@ -300,6 +300,30 @@ function maxEntityId(items) {
     return max;
 }
 /**
+ * Erste freie gueltige ID einer Sammlung ab `start` (aufwaerts gesucht).
+ * Nur fuer den Saettigungsfall gedacht: sobald max(ID) + 1 die Obergrenze
+ * ueberschreitet, gibt es oberhalb keine gueltige ID mehr, also werden die
+ * Luecken UNTERHALB des Maximums genutzt.
+ * @param items - Sammlung (Nicht-Arrays werden als leer behandelt)
+ * @param start - Startkandidat; ungueltige Werte starten bei 1
+ * @returns Freie gueltige ID
+ * @throws Error, wenn jede ID bis ENTITY_ID_MAX belegt ist (praktisch unerreichbar)
+ */
+function nextFreeEntityId(items, start) {
+    const belegt = new Set();
+    if (Array.isArray(items)) {
+        for (const item of items) {
+            if (item === null || typeof item !== 'object') continue;
+            const n = toEntityIdNumber(item.id);
+            if (isValidEntityId(n)) belegt.add(n);
+        }
+    }
+    let candidate = isValidEntityId(start) ? start : 1;
+    while (belegt.has(candidate)) candidate++;
+    if (!isValidEntityId(candidate)) throw new Error('Keine freie ID');
+    return candidate;
+}
+/**
  * Generiert eine eindeutige ID für einen Entity-Typ.
  * Monoton: ein gueltiger Zaehler wird nie gesenkt (geloeschte IDs werden nicht
  * wiederverwendet); veraltete, ungueltige (NaN, 1e300, 'abc', 2.5) Zaehler und
@@ -312,7 +336,16 @@ function nextId(type) {
     if (!isPlainDataObject(D._nextId)) D._nextId = {};
     const floor = maxEntityId(getIdCollection(D, type)) + 1;
     const counter = D._nextId[type];
-    const id = isValidEntityId(counter) && counter >= floor ? counter : floor;
+    let id = isValidEntityId(counter) && counter >= floor ? counter : floor;
+    // Saettigung: traegt die Sammlung eine ID von genau ENTITY_ID_MAX (nur aus einer
+    // fremden oder beschaedigten Datei), ist die Untergrenze selbst ungueltig und
+    // wuerde bei jedem Aufruf identisch zurueckkommen — also doppelte IDs erzeugen.
+    // Dann stattdessen die erste freie Luecke unterhalb des Maximums vergeben.
+    if (!isValidEntityId(id)) {
+        id = nextFreeEntityId(getIdCollection(D, type), isValidEntityId(counter) ? counter : 1);
+    }
+    // Der Zaehler wirkt in der Saettigung als Suchzeiger: Stapelaufrufe ohne push
+    // dazwischen liefern deshalb nie zweimal dieselbe ID.
     D._nextId[type] = id + 1;
     return id;
 }
@@ -375,15 +408,28 @@ function normalizeEntityIds(data) {
         }
         let next = maxEntityId(collection) + 1;
         const seen = new Set();
+        // Alle bereits belegten gueltigen IDs der Sammlung — auch die weiter hinten
+        // stehenden, die beim Umnummerieren noch nicht in `seen` sind.
+        const taken = new Set();
+        for (const item of collection) {
+            if (!isPlainDataObject(item)) continue;
+            const n = toEntityIdNumber(item.id);
+            if (isValidEntityId(n)) taken.add(n);
+        }
         for (const item of collection) {
             if (!isPlainDataObject(item)) continue;
             if (isValidEntityId(item.id) && !seen.has(item.id)) {
                 seen.add(item.id);
                 continue;
             }
+            // Saettigung (siehe nextId): oberhalb von ENTITY_ID_MAX gibt es keine
+            // gueltige ID mehr, also die Luecken unterhalb des Maximums auffuellen.
+            if (!isValidEntityId(next)) next = 1;
+            while (taken.has(next) || seen.has(next)) next++;
             changes.push({ type, from: item.id, to: next });
             item.id = next;
             seen.add(next);
+            taken.add(next);
             next++;
         }
     }

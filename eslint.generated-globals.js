@@ -896,6 +896,7 @@ export default {
     "navigateToWikiEntry": 'readonly',
     "newCampaignKey": 'readonly',
     "nextEncounterRound": 'readonly',
+    "nextFreeEntityId": 'readonly',
     "nextId": 'readonly',
     "nextTurn": 'readonly',
     "normalizeCampaignData": 'readonly',
