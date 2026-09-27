@@ -13,6 +13,13 @@ const BACKUP_KEY = window.APP_CONFIG?.BACKUP_KEY || 'dnd-tracker-backups';
 // zwei Eintraege der schreibenden Kampagne und ein Budget fuer die ganze Liste.
 const MAX_LS_BACKUPS_PER_CAMPAIGN = 2;
 const LS_BACKUP_BUDGET_CHARS = MAX_BACKUP_SIZE_MB * 2 * 1024 * 1024;
+// Frist fuer das Wiederbeleben der Audio-Blobs (Code-Review 2026-09-21, Korrekturrunde F4).
+// initIndexedDB() hat keinen onblocked-Handler, und restoreSoundBlob() oeffnet je Blob eine
+// Verbindung: ein ausstehendes Versions-Upgrade eines anderen Tabs laesst jeden open() ewig
+// warten. Ohne Frist blieb der Restore genau dort stehen — D schon ersetzt, nichts gerendert,
+// nichts gespeichert, keine Meldung. Nicht ueber die Kulanzzeit hinaus erhoehen: die Frist ist
+// die Obergrenze, die der Nutzer auf eine geschlossene Modalflaeche wartet.
+const REVIVE_TIMEOUT_MS = 5000;
 
 // Track if we already warned about backup failures (avoid console spam)
 let _backupFailureLogged = false;
@@ -44,6 +51,18 @@ async function createAutoBackup(options = {}) {
                 ? window.getActiveCampaignKey()
                 : null;
         if (!key) return 'failed';
+        // Schreibsperre respektieren (Korrekturrunde F4, D2): laeuft deleteCampaign() oder
+        // clearStorage(), darf kein Tick die Kampagne erneut sichern — seine Transaktion
+        // entsteht NACH der Aufraeum-Transaktion und laeuft deshalb auch danach. Fuer den
+        // Standard-Schluessel tauchte so ein Backup in der neuen, leeren Kampagne wieder auf.
+        // Sicher: clearStorage() wartet seine Sicherheitskopie ab, BEVOR es sperrt, und die
+        // Importpfade sperren ueberhaupt nicht.
+        if (
+            typeof window.areCampaignWritesRetired === 'function' &&
+            window.areCampaignWritesRetired()
+        ) {
+            return 'failed';
+        }
         const D = window.D;
         if (typeof window.hasCampaignContent === 'function' && !window.hasCampaignContent(D)) {
             return 'skipped-empty';
@@ -414,6 +433,12 @@ function sortAndLimitBackups(list) {
 /**
  * Backups der aktiven Kampagne aus beiden Quellen. Faellt IndexedDB aus, bleibt es bei
  * der gefilterten localStorage-Liste (derselbe Filter, dieselbe Begrenzung).
+ *
+ * Die neueste Sicherheitskopie ist in BEIDEN Quellen gegen die Rotation geschuetzt und muss
+ * deshalb auch sichtbar bleiben (Code-Review 2026-09-21, Korrekturrunde F4): schon ein
+ * abgebrochener IndexedDB-Commit legt localStorage-Eintraege an, die die (aelteste)
+ * Sicherheitskopie dauerhaft aus der auf MAX_BACKUPS gekuerzten Liste schoben — die Zeile
+ * existierte weiter, restoreBackup() meldete aber "Backup nicht gefunden".
  * @returns {Promise<Array<Object>>}
  */
 async function getBackups() {
@@ -431,7 +456,17 @@ async function getBackups() {
             window.ErrorHandler?.log('getBackups', e, 'IndexedDB-Backups nicht lesbar');
         }
     }
-    return sortAndLimitBackups([...own, ...fromIdb]);
+    const all = [...own, ...fromIdb];
+    const list = sortAndLimitBackups(all);
+    const safety = all
+        .filter(b => b.kind === 'safety')
+        .reduce((neueste, b) => (!neueste || b.timestamp > neueste.timestamp ? b : neueste), null);
+    if (safety && !list.some(b => b.timestamp === safety.timestamp)) {
+        // Sie ist aelter als jede sichtbare Zeile (sonst waere sie gelistet), steht also
+        // sortiert am Ende; die Liste bleibt hoechstens MAX_BACKUPS lang.
+        list.splice(Math.min(list.length, MAX_BACKUPS - 1), MAX_BACKUPS, safety);
+    }
+    return list;
 }
 /**
  * Loest eine Backup-ID (Zeitstempel aus data-id) gegen eine Backup-Liste auf. Rein.
@@ -456,8 +491,15 @@ function findBackupForRestore(backups, backupId, key) {
  * loescht Grabsteine frueherer Sitzungen beim naechsten Start endgueltig — eine
  * wiederhergestellte Szene spielte jetzt und verloere ihr Audio still in der naechsten
  * Sitzung. restoreSoundBlob() ist idempotent; false heisst "schon endgueltig weg".
+ *
+ * Kommt binnen REVIVE_TIMEOUT_MS zurueck, auch wenn ein restoreSoundBlob() nie siedelt
+ * (Code-Review 2026-09-21, Korrekturrunde F4). Was bis dahin nicht durch ist, zaehlt als
+ * 'failed' — genau wie eine Ablehnung, die frueher nur geloggt wurde: der Grabstein bleibt
+ * dann stehen und der naechste Start loescht die Datei endgueltig, also muss der Nutzer es
+ * erfahren. 'missing' ist der andere Fall: die Datei ist schon endgueltig weg.
  * @param {Object} data - Kampagnenobjekt
- * @returns {Promise<number>} Anzahl referenzierter Dateien, die es nicht mehr gibt
+ * @returns {Promise<{missing: number, failed: number}>} endgueltig fehlende bzw. nicht
+ *   wiederbelebte Dateien
  */
 async function reviveReferencedSoundBlobs(data) {
     const scenes = Array.isArray(data?.soundboard?.scenes) ? data.soundboard.scenes : [];
@@ -470,27 +512,50 @@ async function reviveReferencedSoundBlobs(data) {
             }
         }
     }
-    if (ids.size === 0 || typeof window.restoreSoundBlob !== 'function') return 0;
-    let missing = 0;
-    for (const id of ids) {
-        try {
-            const found = await window.restoreSoundBlob(id);
-            if (found === false) missing++;
-        } catch (e) {
-            if (window.APP_CONFIG?.DEBUG_MODE) {
-                window.ErrorHandler?.log('reviveReferencedSoundBlobs', e, id);
-            }
-        }
+    if (ids.size === 0 || typeof window.restoreSoundBlob !== 'function') {
+        return { missing: 0, failed: 0 };
     }
-    return missing;
+    let missing = 0;
+    let failed = 0;
+    let settled = 0;
+    const worker = (async () => {
+        for (const id of ids) {
+            try {
+                const found = await window.restoreSoundBlob(id);
+                if (found === false) missing++;
+            } catch (e) {
+                failed++;
+                if (window.APP_CONFIG?.DEBUG_MODE) {
+                    window.ErrorHandler?.log('reviveReferencedSoundBlobs', e, id);
+                }
+            }
+            settled++;
+        }
+    })();
+    let frist = null;
+    await Promise.race([
+        worker,
+        new Promise(resolve => {
+            frist = window.setTimeout(resolve, REVIVE_TIMEOUT_MS);
+        })
+    ]);
+    if (frist !== null) window.clearTimeout(frist);
+    // Schnappschuss NACH dem Rennen: was noch laeuft, gilt als nicht wiederbelebt
+    return { missing, failed: failed + (ids.size - settled) };
 }
 /**
  * Gemeinsamer Schluss von restoreBackup() und restoreFromFileBackup(): uebernimmt eine
  * NORMALISIERTE Kampagne (normalizeCampaignData(...).data) als aktuellen Stand.
- * Reihenfolge: Undo-Punkt -> Audio stoppen -> D ersetzen -> Integritaet -> Audio-Blobs
- * wiederbeleben -> rendern -> speichern. Ein Fehler NACH dem Ersetzen (z. B. beim Rendern)
+ * Reihenfolge: Undo-Punkt -> Audio stoppen -> D ersetzen -> Integritaet -> rendern ->
+ * Audio-Blobs wiederbeleben -> speichern. Ein Fehler NACH dem Ersetzen (z. B. beim Rendern)
  * wird nur geloggt — der Stand ist gueltig und muss gespeichert werden. Erfolg wird nur
  * nach bestaetigtem Speichern gemeldet; saveImmediate() meldet Fehler selbst laut.
+ *
+ * Gerendert wird VOR dem Wiederbeleben (Code-Review 2026-09-21, Korrekturrunde F4): das
+ * Wiederbeleben haengt an fremden IndexedDB-Verbindungen, und solange es das Zeichnen
+ * aufhielt, stand ein bereits ersetztes D hinter einer veralteten, bedienbaren Oberflaeche.
+ * Das Wiederbeleben bleibt aber VOR dem Speichern — sonst raeumt der naechste Start die
+ * Grabsteine ab, bevor sie zurueckgenommen sind (von R6a gepinnt).
  * @param {Object} data - normalisierte Kampagne
  * @param {string} source - Aufrufer (fuer das Fehlerlog)
  * @returns {Promise<boolean>} true, wenn das Speichern bestaetigt wurde
@@ -508,19 +573,25 @@ async function applyRestoredCampaign(data, source) {
     } catch (e) {
         window.ErrorHandler?.log(source, e, 'Integritätsprüfung nach Wiederherstellung');
     }
-    const missing = await reviveReferencedSoundBlobs(window.D);
+    try {
+        // U8-Nachlauf fuer einen ganz ersetzten D: Theme, Layout, aktive Ansicht und
+        // Schnellnotizen. renderAll() allein liess Theme/Layout bis zum naechsten Start stehen.
+        const zeichnen = window.renderAfterDataReplace || window.renderAll;
+        if (typeof zeichnen === 'function') zeichnen();
+        const quickNotes = $('quick-notes');
+        if (quickNotes) quickNotes.value = window.D.quickNotes || '';
+    } catch (e) {
+        window.ErrorHandler?.log(source, e, 'Rendern nach Wiederherstellung fehlgeschlagen');
+    }
+    const { missing, failed } = await reviveReferencedSoundBlobs(window.D);
     if (missing > 0) {
         showToast(
             `⚠️ ${missing} Audiodatei(en) aus diesem Backup sind nicht mehr vorhanden`,
             'warning'
         );
     }
-    try {
-        if (typeof window.renderAll === 'function') window.renderAll();
-        const quickNotes = $('quick-notes');
-        if (quickNotes) quickNotes.value = window.D.quickNotes || '';
-    } catch (e) {
-        window.ErrorHandler?.log(source, e, 'Rendern nach Wiederherstellung fehlgeschlagen');
+    if (failed > 0) {
+        showToast(`⚠️ ${failed} Audiodatei(en) konnten nicht wiederhergestellt werden`, 'warning');
     }
     let res = null;
     try {

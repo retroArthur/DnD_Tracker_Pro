@@ -163,8 +163,14 @@ declare global {
     key: string
   ): { status: 'ok' | 'missing' | 'foreign'; backup: AutoBackupRecord | null };
 
-  /** Referenzierte Soundboard-Blobs wiederbeleben; liefert die Anzahl fehlender Dateien */
-  function reviveReferencedSoundBlobs(data: Record<string, any>): Promise<number>;
+  /**
+   * Referenzierte Soundboard-Blobs wiederbeleben. Liefert die endgueltig fehlenden
+   * (`missing`) und die nicht wiederbelebten Dateien (`failed`: abgelehnt oder nicht binnen
+   * REVIVE_TIMEOUT_MS durch).
+   */
+  function reviveReferencedSoundBlobs(
+    data: Record<string, any>
+  ): Promise<{ missing: number; failed: number }>;
 
   /** Gemeinsamer Restore-Schluss (Undo, ersetzen, speichern); true nach bestaetigtem Save */
   function applyRestoredCampaign(data: Record<string, any>, source: string): Promise<boolean>;

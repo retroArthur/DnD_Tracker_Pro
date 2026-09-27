@@ -148,6 +148,7 @@ export default {
     "REISE_TEMPO": 'readonly',
     "RELATION_STATUS": 'readonly',
     "RELOAD_WATCHDOG_MS": 'readonly',
+    "REVIVE_TIMEOUT_MS": 'readonly',
     "RenderStrategy": 'readonly',
     "SATURATION_CURSOR": 'readonly',
     "SESSION_AUTO_SAVE_INTERVAL": 'writable',

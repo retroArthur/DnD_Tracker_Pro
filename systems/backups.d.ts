@@ -57,7 +57,9 @@ declare function findBackupForRestore(
     backupId: number | string,
     key: string
 ): { status: 'ok' | 'missing' | 'foreign'; backup: BackupData | null };
-declare function reviveReferencedSoundBlobs(data: any): Promise<number>;
+declare function reviveReferencedSoundBlobs(
+    data: any
+): Promise<{ missing: number; failed: number }>;
 declare function applyRestoredCampaign(data: any, source: string): Promise<boolean>;
 declare function restoreBackup(backupId: number): Promise<void>;
 declare function showBackupsModal(): Promise<void>;
