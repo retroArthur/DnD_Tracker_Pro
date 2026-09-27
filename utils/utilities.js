@@ -343,10 +343,24 @@ function nextFreeEntityId(items, start) {
     return candidate;
 }
 /**
+ * Suchzeiger der Saettigung je Typ — bewusst NUR im Speicher, nie persistiert.
+ * In der Saettigung vergibt nextId() Luecken UNTERHALB des Maximums. Diese niedrige ID
+ * darf nicht im persistenten Zaehler landen: dort liegt sie unter der Untergrenze
+ * max(ID) + 1, gilt beim naechsten Aufruf als veraltet und wird verworfen — die
+ * Untergrenze wuerde ein zweites Mal vergeben (doppelte IDs = R03-Fehlerklasse: ein
+ * `filter(e => e.id !== id)` loescht dann mehrere Entitaeten auf einmal). Deshalb traegt
+ * dieser Zeiger die Erinnerung innerhalb eines Stapels. Nach einem Neuladen ist er weg,
+ * die vergebenen IDs stehen dann aber in der Sammlung, also setzt die Lueckensuche dort
+ * korrekt fort. Ein Typ unterhalb der Saettigung raeumt seinen Eintrag selbst wieder ab.
+ */
+const SATURATION_CURSOR = new Map();
+/**
  * Generiert eine eindeutige ID für einen Entity-Typ.
  * Monoton: ein gueltiger Zaehler wird nie gesenkt (geloeschte IDs werden nicht
  * wiederverwendet); veraltete, ungueltige (NaN, 1e300, 'abc', 2.5) Zaehler und
  * verschachtelte Sammlungen heilen sich selbst ueber die Untergrenze max(ID) + 1.
+ * Ausnahme ist allein die Saettigung (siehe SATURATION_CURSOR): oberhalb des Maximums
+ * gibt es dort keine gueltige ID mehr, also werden Luecken darunter wiederverwendet.
  * @param type - Entity-Typ (characters, npcs, calendarEvents, combatants, ...)
  * @returns Neue eindeutige ID
  */
@@ -356,20 +370,28 @@ function nextId(type) {
     const floor = maxEntityId(getIdCollection(D, type)) + 1;
     const counter = D._nextId[type];
     let id = isValidEntityId(counter) && counter >= floor ? counter : floor;
-    // Saettigung: reicht die Sammlung bis an die Obergrenze heran (IDs von 1e15 oder
-    // 1e15 - 1 gibt es nur aus einer fremden oder beschaedigten Datei), taugt die
-    // Untergrenze nicht mehr — sie ist entweder selbst ungueltig oder genau
-    // ENTITY_ID_MAX, und dann wuerde der Zaehler id + 1 ungueltig und die Vergabe
-    // vergessen werden (siehe isMintableEntityId). Beides kommt bei jedem Aufruf
-    // identisch zurueck, also doppelte IDs. Stattdessen die erste freie Luecke
-    // unterhalb des Maximums vergeben — in der Saettigung werden geloeschte IDs
-    // also bewusst wiederverwendet, weil es oberhalb keine mehr gibt.
+    // Saettigung: reicht die Sammlung bis an die Obergrenze heran (solche IDs gibt es nur
+    // aus einer fremden oder beschaedigten Datei), taugt die berechnete ID nicht mehr —
+    // sie ist entweder selbst ungueltig oder genau ENTITY_ID_MAX, und beides kommt bei
+    // jedem Aufruf identisch zurueck, also doppelte IDs. Stattdessen die erste freie
+    // Luecke unterhalb des Maximums vergeben: geloeschte IDs werden hier bewusst
+    // wiederverwendet, weil es oberhalb keine mehr gibt.
     if (!isMintableEntityId(id)) {
-        id = nextFreeEntityId(getIdCollection(D, type), isMintableEntityId(counter) ? counter : 1);
+        id = nextFreeEntityId(getIdCollection(D, type), SATURATION_CURSOR.get(type) || 1);
+        SATURATION_CURSOR.set(type, id + 1);
+        // Der persistente Zaehler darf die niedrige Luecken-ID NICHT tragen: sie liegt
+        // unter der Untergrenze, gilt beim naechsten Aufruf als veraltet und wird
+        // verworfen — die Untergrenze waere dann ein zweites Mal vergeben. Er bekommt
+        // stattdessen die Obergrenze selbst: eine gueltige ID (wird also nie verworfen),
+        // die nie neu gemuenzt wird — das dauerhafte Signal "gesaettigt", das jeden
+        // weiteren Aufruf in die Lueckensuche schickt.
+        D._nextId[type] = ENTITY_ID_MAX;
+        return id;
     }
-    // Der Zaehler bleibt dadurch immer selbst eine gueltige ID und wirkt in der
-    // Saettigung als Suchzeiger: Stapelaufrufe ohne push dazwischen (z. B. der
-    // Merge-Zweig des Imports) liefern deshalb nie zweimal dieselbe ID.
+    SATURATION_CURSOR.delete(type);
+    // Unterhalb der Saettigung traegt der Zaehler die Erinnerung an die Vergabe und bleibt
+    // dabei immer selbst eine gueltige ID (siehe isMintableEntityId): Stapelaufrufe ohne
+    // push dazwischen (z. B. der Merge-Zweig des Imports) liefern nie zweimal dieselbe ID.
     D._nextId[type] = id + 1;
     return id;
 }

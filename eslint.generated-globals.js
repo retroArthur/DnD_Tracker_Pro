@@ -149,6 +149,7 @@ export default {
     "RELATION_STATUS": 'readonly',
     "RELOAD_WATCHDOG_MS": 'readonly',
     "RenderStrategy": 'readonly',
+    "SATURATION_CURSOR": 'readonly',
     "SESSION_AUTO_SAVE_INTERVAL": 'writable',
     "SHOP_ITEM_CATEGORIES": 'readonly',
     "SHOP_TYPES": 'readonly',
