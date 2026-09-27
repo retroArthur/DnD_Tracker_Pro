@@ -284,6 +284,22 @@ function isValidEntityId(n) {
     return Number.isSafeInteger(n) && n > 0 && n <= ENTITY_ID_MAX;
 }
 /**
+ * Neu zu vergebende ID: gueltig UND strikt unterhalb der Obergrenze.
+ * Warum strikt unterhalb: nextId() merkt sich die Vergabe ausschliesslich in
+ * `_nextId[type] = id + 1`. Nur wenn id + 1 selbst noch eine gueltige ID ist, bleibt
+ * dieser Zaehler erhalten und traegt die Information "id ist vergeben" in den naechsten
+ * Aufruf. Genau ENTITY_ID_MAX zu muenzen wuerde den Zaehler ungueltig machen — der
+ * naechste Aufruf im Stapel (noch kein push in die Sammlung) haette die Information
+ * verloren und dieselbe ID erneut ausgegeben (doppelte IDs = R03-Fehlerklasse).
+ * ENTITY_ID_MAX bleibt als GESPEICHERTE ID gueltig (fremde Dateien), wird aber nie
+ * neu gemuenzt; das kostet genau eine von 1e15 IDs.
+ * @param n - Zu pruefender Wert
+ * @returns true, wenn n neu vergeben werden darf
+ */
+function isMintableEntityId(n) {
+    return isValidEntityId(n) && n < ENTITY_ID_MAX;
+}
+/**
  * Groesste gueltige ID einer Sammlung (ungueltige IDs zaehlen nicht).
  * Schleife statt Math.max(...spread): kein Stapelueberlauf bei sehr grossen Sammlungen.
  * @param items - Sammlung
@@ -305,9 +321,9 @@ function maxEntityId(items) {
  * ueberschreitet, gibt es oberhalb keine gueltige ID mehr, also werden die
  * Luecken UNTERHALB des Maximums genutzt.
  * @param items - Sammlung (Nicht-Arrays werden als leer behandelt)
- * @param start - Startkandidat; ungueltige Werte starten bei 1
- * @returns Freie gueltige ID
- * @throws Error, wenn jede ID bis ENTITY_ID_MAX belegt ist (praktisch unerreichbar)
+ * @param start - Startkandidat; nicht vergebbare Werte starten bei 1
+ * @returns Freie vergebbare ID (1 .. ENTITY_ID_MAX - 1)
+ * @throws Error, wenn jede ID bis ENTITY_ID_MAX - 1 belegt ist (praktisch unerreichbar)
  */
 function nextFreeEntityId(items, start) {
     const belegt = new Set();
@@ -318,9 +334,11 @@ function nextFreeEntityId(items, start) {
             if (isValidEntityId(n)) belegt.add(n);
         }
     }
-    let candidate = isValidEntityId(start) ? start : 1;
+    let candidate = isMintableEntityId(start) ? start : 1;
     while (belegt.has(candidate)) candidate++;
-    if (!isValidEntityId(candidate)) throw new Error('Keine freie ID');
+    // Bewusst ein Fehler statt einer ungueltigen oder doppelten ID: lieber ein
+    // sichtbarer Abbruch als stiller Datenverlust beim naechsten Loeschen.
+    if (!isMintableEntityId(candidate)) throw new Error('Keine freie ID');
     return candidate;
 }
 /**
@@ -337,15 +355,20 @@ function nextId(type) {
     const floor = maxEntityId(getIdCollection(D, type)) + 1;
     const counter = D._nextId[type];
     let id = isValidEntityId(counter) && counter >= floor ? counter : floor;
-    // Saettigung: traegt die Sammlung eine ID von genau ENTITY_ID_MAX (nur aus einer
-    // fremden oder beschaedigten Datei), ist die Untergrenze selbst ungueltig und
-    // wuerde bei jedem Aufruf identisch zurueckkommen — also doppelte IDs erzeugen.
-    // Dann stattdessen die erste freie Luecke unterhalb des Maximums vergeben.
-    if (!isValidEntityId(id)) {
-        id = nextFreeEntityId(getIdCollection(D, type), isValidEntityId(counter) ? counter : 1);
+    // Saettigung: reicht die Sammlung bis an die Obergrenze heran (IDs von 1e15 oder
+    // 1e15 - 1 gibt es nur aus einer fremden oder beschaedigten Datei), taugt die
+    // Untergrenze nicht mehr — sie ist entweder selbst ungueltig oder genau
+    // ENTITY_ID_MAX, und dann wuerde der Zaehler id + 1 ungueltig und die Vergabe
+    // vergessen werden (siehe isMintableEntityId). Beides kommt bei jedem Aufruf
+    // identisch zurueck, also doppelte IDs. Stattdessen die erste freie Luecke
+    // unterhalb des Maximums vergeben — in der Saettigung werden geloeschte IDs
+    // also bewusst wiederverwendet, weil es oberhalb keine mehr gibt.
+    if (!isMintableEntityId(id)) {
+        id = nextFreeEntityId(getIdCollection(D, type), isMintableEntityId(counter) ? counter : 1);
     }
-    // Der Zaehler wirkt in der Saettigung als Suchzeiger: Stapelaufrufe ohne push
-    // dazwischen liefern deshalb nie zweimal dieselbe ID.
+    // Der Zaehler bleibt dadurch immer selbst eine gueltige ID und wirkt in der
+    // Saettigung als Suchzeiger: Stapelaufrufe ohne push dazwischen (z. B. der
+    // Merge-Zweig des Imports) liefern deshalb nie zweimal dieselbe ID.
     D._nextId[type] = id + 1;
     return id;
 }

@@ -856,6 +856,7 @@ export default {
     "isEditorBubbleEnabled": 'readonly',
     "isEmpty": 'readonly',
     "isFreshInstall": 'readonly',
+    "isMintableEntityId": 'readonly',
     "isPlainDataObject": 'readonly',
     "isValidBackupRecord": 'readonly',
     "isValidEntityId": 'readonly',
