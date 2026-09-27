@@ -105,7 +105,10 @@ function oeffne(u, name, opt = {}) {
     tab.renders = [];
     tab.tabRenders = [];
     tab.nachlauf = [];
-    STUMME_RENDERER.forEach(n => {
+    // opt.echt: diese Renderer NICHT stummschalten (ihr echter Koerper ist der Gegenstand
+    // des Falls — z. B. das Nachsaeen lazy angelegter Schluessel in T11a)
+    const echt = new Set(opt.echt || []);
+    STUMME_RENDERER.filter(n => !echt.has(n)).forEach(n => {
         ctx[n] = () => {};
     });
     ctx.renderParty = () => tab.renders.push(namenIn(ctx.D));
@@ -180,6 +183,22 @@ async function ergebnisVon(u, promise) {
     const r = await promise;
     await u.uhr.ruhe();
     return r;
+}
+
+/**
+ * Tab, dessen renderAll() initQuickRefCustom() und renderRandomTables() ECHT ausfuehrt.
+ * Nur so zeigt sich, was der Frame nach dem Ersetzen wieder anlegt (F3-Korrekturrunde).
+ */
+function tabMitSaatRenderern(u, name = 'A') {
+    const tab = oeffne(u, name, {
+        module: ['systems/spellslots/quick-reference.js', 'features/random-tables.js'],
+        echt: ['initQuickRefCustom', 'renderRandomTables']
+    });
+    // Die Anzeige-Nachlaeufe der beiden bleiben stumm; Gegenstand ist das Anlegen der Schluessel
+    tab.ctx.renderQuickRefCustom = () => {};
+    tab.ctx.initQrefSearch = () => {};
+    tab.ctx.showTablePreview = () => {};
+    return tab;
 }
 
 /** Tab A im IndexedDB-Modus (localStorage leer), Stand "Alt". */
@@ -954,7 +973,7 @@ describe('R06 — LoadResult auf jedem Pfad, reloadData lehnt nie ab', () => {
  * gespeicherter eigener '__proto__'-Schluessel tauschte zusaetzlich den Prototyp von D.
  */
 describe('R06-Nachtrag (F3) — Neuladen ersetzt den Stand', () => {
-    test('T11a: Schluessel, die der gespeicherte Stand nicht traegt, ueberleben das Neuladen nicht und werden nicht zurueckgeschrieben', async () => {
+    test('T11a: der verdraengte Inhalt ueberlebt das Neuladen nicht; nur der Frame saet die lazy Schluessel als Standard neu', async () => {
         const u = erzeugeUrsprung();
         u.saeen(
             KEY,
@@ -966,7 +985,7 @@ describe('R06-Nachtrag (F3) — Neuladen ersetzt den Stand', () => {
                 bestiary: [{ id: 1, name: 'Alt-Kreatur' }]
             })
         );
-        const A = await starte(oeffne(u, 'A'));
+        const A = await starte(tabMitSaatRenderern(u));
         expect(A.ctx.D.partyGold).toBe(500);
 
         // Anderer Tab: "Überschreiben"-Import/Restore ohne diese Schluessel
@@ -975,6 +994,7 @@ describe('R06-Nachtrag (F3) — Neuladen ersetzt den Stand', () => {
 
         expect(r).toMatchObject({ ok: true, applied: true });
         expect(namenIn(A.ctx.D)).toEqual(['Neu-Held']);
+        // Unmittelbar nach dem Ersetzen traegt D KEINEN der verdraengten Schluessel mehr
         expect('partyGold' in A.ctx.D).toBe(false);
         expect('randomTables' in A.ctx.D).toBe(false);
         expect('quickRefCustom' in A.ctx.D).toBe(false);
@@ -982,15 +1002,30 @@ describe('R06-Nachtrag (F3) — Neuladen ersetzt den Stand', () => {
         // bestiary steht in initializeData() — Standard, nicht der verdraengte Inhalt
         expect(A.ctx.D.bestiary).toEqual([]);
 
+        // Der von renderAfterDataReplace() eingeplante Frame — im Browser laeuft er IMMER.
+        // initQuickRefCustom() und renderRandomTables() legen ihre lazy Schluessel dabei neu
+        // an, genau wie bei einem gewoehnlichen Start (core/init.js ruft beide direkt auf);
+        // initRandomTables() schreibt die STANDARD-Tabellen per saveAutomatic() auch fest.
+        // Der verdraengte INHALT kommt dabei nicht zurueck — das ist der Gegenstand des Falls.
+        A.frame();
+        await u.uhr.laufen(400);
+        const standardNamen = A.ctx.getDefaultRandomTables().map(t => t.name);
+        expect(A.ctx.D.quickRefCustom).toEqual([]);
+        expect(A.ctx.D.randomTables.map(t => t.name)).toEqual(standardNamen);
+        expect(standardNamen).not.toContain('Alte Gerüchte');
+        // Diese beiden legt kein Render-Pfad wieder an: hier wirkt das Ersetzen ungebrochen
+        expect('partyGold' in A.ctx.D).toBe(false);
+        expect('dmScreenNotes' in A.ctx.D).toBe(false);
+
         // Der Tab arbeitet normal weiter: kein Zurueckschreiben der alten Schluessel
         A.ctx.D.quickNotes = 'weiter getippt';
         A.ctx.save();
         await u.uhr.laufen(400);
         const gespeichert = JSON.parse(u.ls.get(KEY));
         expect('partyGold' in gespeichert).toBe(false);
-        expect('randomTables' in gespeichert).toBe(false);
-        expect('quickRefCustom' in gespeichert).toBe(false);
         expect('dmScreenNotes' in gespeichert).toBe(false);
+        expect(gespeichert.quickRefCustom).toEqual([]);
+        expect((gespeichert.randomTables || []).map(t => t.name)).toEqual(standardNamen);
     });
 
     test('T11b: ein gespeicherter "__proto__"-Schluessel tauscht beim Neuladen nicht den Prototyp von D', async () => {
