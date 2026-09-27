@@ -445,6 +445,35 @@ describe('R02 — IndexedDB-Modus (> 5 MB)', () => {
         expect(namenIn(C.ctx.D)).toContain('Borin');
     });
 
+    // Korrekturrunde 2 (F2): derselbe Fall wie U9f mit der gewoehnlichsten Zutat — einem
+    // ausstehenden Session-Timer-Autosave. persistOnUnload verweigerte den put korrekt, aber
+    // ein Flush der Entlade-Sequenz (pagehide, visibilitychange) zog ihn danach doch vor und
+    // ueberschrieb Bs Arbeit. Und weil ein rein automatischer Timer nicht als ausdrueckliche
+    // Arbeit zaehlt, entfiel die Rueckfrage: der ausstehende Save verfiel still, obwohl ihn
+    // niemand ausgefuehrt hat. Geschrieben wird nicht (D4) — gefragt wird trotzdem (D5).
+    test('U9g: ausstehender automatischer Save beim Schliessen — kein put ueber die Entlade-Flushes, aber Rueckfrage (D5)', async () => {
+        const u = erzeugeUrsprung({ lsQuotaZeichen: LS_QUOTA });
+        u.saeenIdb(KEY, grosseKampagne());
+        const { A, B } = await zweiTabs(u);
+        const vorher = u.idb.anfragen.length;
+        B.ctx.D.characters.push({ id: 99, name: 'Borin' });
+        const bSave = B.ctx.saveImmediate();
+        A.ctx.D.lastSessionDuration = 300; // Session-Timer-Tick
+        expect(A.ctx.saveAutomatic()).toBe(true); // Nicht-Vakuitaet: der Timer steht wirklich
+        expect(A.ctx.isCampaignStorageStale(KEY)).toBe(false); // und A gilt als frisch
+
+        const ev = A.entladen('schliessen');
+        await u.uhr.laufen(0);
+        const r = await bSave;
+        await u.uhr.laufen(0);
+
+        expect(r).toMatchObject({ success: true, backend: 'indexedDB' });
+        expect(idbPuts(u, vorher)).toHaveLength(1);
+        expect(ev.defaultPrevented).toBe(true);
+        const C = await oeffneTab(u, 'C').starten();
+        expect(namenIn(C.ctx.D)).toContain('Borin');
+    });
+
     test('U22: switchCampaign() schreibt einen ausstehenden Save fest, BEVOR neu geladen wird — keine Rueckfrage', async () => {
         const u = erzeugeUrsprung({ lsQuotaZeichen: LS_QUOTA });
         u.saeenIdb(KEY, grosseKampagne());
@@ -1179,6 +1208,33 @@ describe('R02 — Waechter der Korrekturrunde (F2)', () => {
         const C = await oeffneTab(u, 'C').starten();
         expect(namenIn(C.ctx.D)).toEqual(['Aria']);
         expect(C.ctx.D.characters[0].notes).toHaveLength(6 * MB);
+    });
+
+    // Korrekturrunde 2 (F2): der letzte Zweig von persistOnUnload ist die Notrettung fuer
+    // den dokumentierten Fall "localStorage voll" — der synchrone Write ist gescheitert, der
+    // ausstehende Timer ist schon verworfen und die Generation hochgezaehlt, also holt ihn
+    // nichts nach. Sie darf nicht davon abhaengen, ob die ausstehende Arbeit ausdruecklich
+    // war: hier gibt es keinen Fremdschreiber zu schuetzen, nur die eigenen Daten zu retten.
+    test('U29: localStorage voll, ein einzelner Tab, ausstehender automatischer Save — Rettung nach IndexedDB und Rueckfrage', async () => {
+        const u = erzeugeUrsprung({ lsQuotaZeichen: 260 });
+        u.saeen(KEY, kampagne(['Aria']));
+        const A = await oeffneTab(u, 'A').starten();
+        const lsVorher = u.ls.get(KEY);
+        A.ctx.D.sessionNotes = [{ id: 1, text: 'x'.repeat(200) }];
+        expect(A.ctx.saveAutomatic()).toBe(true); // Nicht-Vakuitaet: der Timer steht
+        expect(A.ctx.isCampaignStorageStale(KEY)).toBe(false); // und A gilt als frisch
+
+        const ev = A.entladen('schliessen');
+        await u.uhr.laufen(0);
+        await u.uhr.laufen(400);
+
+        // Die Quota liess den synchronen localStorage-Write wirklich scheitern
+        expect(u.ls.get(KEY)).toBe(lsVorher);
+        expect(u.schreibvorgaenge({ tab: 'A' }).some(e => e.op === 'setItem-quota')).toBe(true);
+        const rec = u.idbDatensatz(KEY);
+        expect(rec).toBeTruthy();
+        expect(JSON.parse(rec.data).sessionNotes).toHaveLength(1);
+        expect(ev.defaultPrevented).toBe(true);
     });
 });
 
