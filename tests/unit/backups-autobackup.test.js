@@ -1215,6 +1215,99 @@ describe('D2 = A — deleteCampaign() entfernt auch die Auto-Backups DIESER Kamp
 
         expect(backupZeilen(w).filter(z => z.campaignKey === KEY_A)).toHaveLength(0);
     }, 20000);
+
+    // RA-F4 (Korrekturrunde F4, Restloch): die Sperrpruefung lag NUR vor dem IndexedDB-
+    // Versuch. Der localStorage-Rueckfall steht dahinter, also HINTER einem await. Scheitert
+    // der IDB-Commit eines Ticks erst, nachdem deleteCampaign() gesperrt, entfernt und
+    // purgeCampaignBackups() aufgeraeumt hat, schrieb derselbe Tick die Zeile der geloeschten
+    // Kampagne per localStorage neu — und meldete dafuer 'written'. Invariante: solange die
+    // Schreibpfade gesperrt sind, entsteht KEINE Backup-Zeile dieser Kampagne, in keiner Quelle.
+    test('T17d: der localStorage-Rueckfall eines Ticks schreibt nach dem Aufraeumen nichts mehr', async () => {
+        const w = erzeugeWerkbank({
+            aktiv: KEY_A,
+            ls: {
+                [KEY_A]: '{"characters":[{"id":1,"name":"A"}]}',
+                [BACKUP_KEY]: JSON.stringify([eintrag(KEY_A, 21, '{"alt":1}')])
+            },
+            idbZeilen: [
+                ['campaigns', { id: KEY_A, data: '{}', timestamp: 1 }],
+                ['backups', zeile(KEY_A, 21, '{"alt":1}')]
+            ]
+        });
+        mitHeld(w, 'A-Held');
+        // Den IndexedDB-Versuch des Ticks abfangen und erst nach dem Loeschen ablehnen
+        const echtesIdbWriteTx = w.ctx.idbWriteTx;
+        let ablehnen = null;
+        w.ctx.idbWriteTx = (stores, fn, opt) => {
+            if (!ablehnen && [].concat(stores).includes('backups')) {
+                return new Promise((_, rej) => {
+                    ablehnen = () => rej(new Error('IDB-Commit abgebrochen (Test)'));
+                });
+            }
+            return echtesIdbWriteTx(stores, fn, opt);
+        };
+        // 1) Tick startet VOR der Sperre und passiert deren Pruefung
+        const tick = w.ctx.createAutoBackup();
+        await ruhe(3);
+        expect(ablehnen).not.toBeNull();
+        // 2) Loeschen laeuft vollstaendig durch (Sperre, Entfernen, Backups aufraeumen)
+        const geloescht = await mitFrist(w.ctx.deleteCampaign(), 7000);
+        expect(geloescht.zustand).toBe('erfuellt');
+        expect(lsListe(w).filter(b => b.campaignKey === KEY_A)).toHaveLength(0);
+        // 3) Erst JETZT scheitert der IDB-Versuch des Ticks -> localStorage-Rueckfall
+        ablehnen();
+        const r = await mitFrist(tick, 3000);
+        await ruhe();
+
+        expect(r.wert).toBe('failed');
+        expect(lsListe(w).filter(b => b.campaignKey === KEY_A)).toHaveLength(0);
+        expect(backupZeilen(w).filter(z => z.campaignKey === KEY_A)).toHaveLength(0);
+    }, 20000);
+
+    // Dieselbe Luecke im IndexedDB-Zweig: idbWriteTx() wartet auf initIndexedDB(), solange
+    // window.idb noch nicht offen ist (utils/idb-tx.js). In genau diesem await kann
+    // deleteCampaign() sperren, entfernen und aufraeumen — die Transaktion des Ticks entsteht
+    // danach. Deshalb wird die Sperre auch noch im Transaktions-Callback geprueft, also in
+    // demselben synchronen Durchlauf, in dem die Requests eingereiht wuerden.
+    test('T17e: ein Tick, dessen IndexedDB erst nach dem Aufraeumen geoeffnet wird, reiht nichts ein', async () => {
+        const w = erzeugeWerkbank({
+            aktiv: KEY_A,
+            ls: { [KEY_A]: '{"characters":[{"id":1,"name":"A"}]}' },
+            idbZeilen: [
+                ['campaigns', { id: KEY_A, data: '{}', timestamp: 1 }],
+                ['backups', zeile(KEY_A, 21, '{"alt":1}')]
+            ]
+        });
+        mitHeld(w, 'A-Held');
+        // Die erste Oeffnung haengt (ausstehendes Versions-Upgrade eines anderen Tabs);
+        // jede weitere — die von deleteCampaign() — gelingt sofort.
+        w.ctx.idb = null;
+        const echtesInit = w.ctx.initIndexedDB;
+        let oeffnen = null;
+        w.ctx.initIndexedDB = () => {
+            if (oeffnen) return echtesInit();
+            return new Promise(resolve => {
+                oeffnen = () => {
+                    w.ctx.idb = w.fake.db;
+                    resolve(w.fake.db);
+                };
+            });
+        };
+        const tick = w.ctx.createAutoBackup();
+        await ruhe(3);
+        expect(oeffnen).not.toBeNull();
+
+        const geloescht = await mitFrist(w.ctx.deleteCampaign(), 7000);
+        expect(geloescht.zustand).toBe('erfuellt');
+        // Erst jetzt ist die Verbindung des Ticks da -> seine Transaktion entsteht NACH dem Purge
+        oeffnen();
+        const r = await mitFrist(tick, 3000);
+        await ruhe();
+
+        expect(r.wert).toBe('failed');
+        expect(backupZeilen(w).filter(z => z.campaignKey === KEY_A)).toHaveLength(0);
+        expect(lsListe(w).filter(b => b.campaignKey === KEY_A)).toHaveLength(0);
+    }, 20000);
 });
 
 // ============================================================
