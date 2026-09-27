@@ -352,4 +352,47 @@ describe('ID-Obergrenze ENTITY_ID_MAX — Saettigung (U2 minor:3/open:4/minor:9)
         // Zweiter Lauf ist ein Nullschritt
         expect(ctx.normalizeEntityIds(data)).toHaveLength(0);
     });
+
+    test('N11: eine Ganzzahl UNTER der Obergrenze — Stapelvergabe bleibt eindeutig', () => {
+        const ctx = makeContext();
+        // Voraussetzung ist nur EINE ID von 1e15 - 1 aus einer fremden oder beschaedigten
+        // Datei (dasselbe R03-Bedrohungsmodell wie bei genau 1e15). Der Zaehler 1e15 stammt
+        // danach aus der App selbst (recomputeNextIds), nicht aus der Datei.
+        ctx.D.npcs = [{ id: 1e15 - 1, name: 'Alt-NSC' }];
+        ctx.recomputeNextIds(ctx.D);
+        expect(ctx.isValidEntityId(ctx.D._nextId.npcs)).toBe(true);
+
+        // Stapelvergabe OHNE push dazwischen — genau das Muster von
+        // systems/spellslots/import-export.js (Merge-Zweig: items.map(... nextId(type)))
+        const stapel = [ctx.nextId('npcs'), ctx.nextId('npcs'), ctx.nextId('npcs')];
+        expect(stapel.map(istGueltigeId)).toEqual(stapel.map(id => ({ id, gueltig: true })));
+        expect(new Set(stapel).size).toBe(stapel.length);
+
+        for (const [i, id] of stapel.entries()) ctx.D.npcs.push({ id, name: `Import ${i}` });
+        const ids = ctx.D.npcs.map(n => n.id);
+        expect(new Set(ids).size).toBe(ids.length);
+        // Die R03-Fehlerklasse selbst: ein Loeschen darf genau eine Entitaet entfernen
+        const ziel = stapel[0];
+        expect(ctx.D.npcs.filter(e => e.id !== ziel)).toHaveLength(ctx.D.npcs.length - 1);
+    });
+
+    test('N12: der gespeicherte Zaehler bleibt nach jedem nextId selbst eine gueltige ID', () => {
+        const ctx = makeContext();
+        // Der Zaehler ist die einzige Erinnerung an "diese ID ist im laufenden Stapel schon
+        // vergeben". Wird er ungueltig, verwirft ihn der naechste Aufruf und faellt auf die
+        // Untergrenze zurueck — die doppelte ID aus N11. Deshalb muenzt nextId nie
+        // ENTITY_ID_MAX selbst: so ist id + 1 immer noch eine gueltige ID.
+        for (const max of [1e15 - 2, 1e15 - 1, 1e15]) {
+            ctx.D.npcs = [{ id: max }];
+            ctx.D._nextId = {};
+            for (let i = 0; i < 3; i++) {
+                const id = ctx.nextId('npcs');
+                expect(istGueltigeId(id)).toEqual({ id, gueltig: true });
+                expect(istGueltigeId(ctx.D._nextId.npcs)).toEqual({
+                    id: ctx.D._nextId.npcs,
+                    gueltig: true
+                });
+            }
+        }
+    });
 });
