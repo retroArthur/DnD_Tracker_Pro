@@ -11,11 +11,28 @@
  * ABGESETZT wurde, ohne dessen Commit abzuwarten.
  *
  * Erweiterung U8 (R06): Policy `halten(op, store, wert)` kann einen LESE-Request (get, getAll,
- * count) zurueckhalten. Sie liefert ein Promise (oder null). Ein gehaltener Request nimmt
- * seinen Schnappschuss bei der ERSTELLUNG (IDB-Transaktionsreihenfolge: ein spaeter
- * erstellter Schreibvorgang ist fuer ihn unsichtbar) und feuert erst, wenn das Promise
- * aufloest; loest es mit einem Error auf, scheitert der Request mit genau diesem Fehler.
- * Ohne halten-Policy ist das Verhalten unveraendert.
+ * count) zurueckhalten. Sie liefert ein Promise (oder null). Ein gehaltener Request feuert
+ * erst, wenn das Promise aufloest; loest es mit einem Error auf, scheitert der Request mit
+ * genau diesem Fehler. Ohne halten-Policy ist das Verhalten unveraendert.
+ *
+ * Korrekturrunde F1 (Code-Review 2026-09-21) — TRANSAKTIONSREIHENFOLGE nach IndexedDB 3.0
+ * (§transaction scheduling), statt nur einer Kette ueber die readwrite-Transaktionen:
+ *   - eine readwrite-Transaktion wartet auf ALLE frueher erstellten, noch nicht beendeten
+ *     Transaktionen mit ueberlappendem Bereich;
+ *   - eine readonly-Transaktion wartet auf frueher erstellte, noch nicht beendete
+ *     readwrite-Transaktionen; readonly untereinander laufen nebenlaeufig.
+ * Dieses Double behandelt JEDES Paar als ueberlappend (der Store-Bereich wird ignoriert) —
+ * strenger als die Spezifikation, aber nie falsch-freigebend. "Beendet" heisst hier:
+ * 'complete' oder 'abort' ist gefeuert; jede Transaktion gibt ihre Nachfolger frei, auch
+ * eine abgebrochene.
+ *
+ * Damit braucht ein gehaltener Lese-Request KEINEN Schnappschuss bei der Erstellung mehr:
+ * ein spaeter erstellter Schreibvorgang wartet ohnehin hinter dem gehaltenen Lesen und liest
+ * es denselben Stand wie in einem echten IndexedDB. Vorher schrieb dieser Write waehrend des
+ * Haltens fest und verdeckte damit das R06-Rennen (eigener Save im Ladefenster). Die
+ * halten()-Schnittstelle selbst ist unveraendert.
+ *
+ * Festgehalten in tests/unit/fake-idb-scheduling.test.js (S1-S6).
  */
 
 'use strict';
@@ -47,7 +64,8 @@ function mitEreignissen(obj) {
  * - requestFehler(op, store, wert) laesst einen Request scheitern; das Event blubbert zur
  *   Transaktion ('error'), danach bricht sie ab ('abort'), wie in der Spezifikation.
  * - tx.abort() durch Skript: 'abort' mit tx.error === null.
- * - readwrite-Transaktionen laufen seriell in Erstellungsreihenfolge.
+ * - readwrite-Transaktionen laufen seriell in Erstellungsreihenfolge; readonly wartet auf
+ *   frueher erstellte, noch offene readwrite-Transaktionen (siehe Kopfkommentar, F1).
  */
 function erzeugeFakeIDB(opt = {}) {
     const log = opt.log || [];
@@ -60,7 +78,9 @@ function erzeugeFakeIDB(opt = {}) {
         halten: opt.halten || (() => null)
     };
     const LESE_OPS = new Set(['get', 'getAll', 'count']);
-    let rwKette = Promise.resolve();
+    // Alle je erzeugten Transaktionen in Erstellungsreihenfolge (Planung, siehe Kopfkommentar):
+    // { id, mode, erledigt, fertig }. `fertig` loest auf, sobald 'complete' oder 'abort' gefeuert ist.
+    const alleTx = [];
     let txZaehler = 0;
     let rwCommitZaehler = 0;
     let autoInc = 1000;
@@ -227,13 +247,9 @@ function erzeugeFakeIDB(opt = {}) {
             });
             anfragen.push({ tx: id, op, store: storeName, wert });
             const halt = LESE_OPS.has(op) ? policy.halten(op, storeName, wert) : null;
-            let ausf = ausfuehren;
-            if (halt) {
-                // Schnappschuss bei der Erstellung (Lesen hat keine Nebenwirkung)
-                const schnappschuss = ausfuehren();
-                ausf = () => schnappschuss;
-            }
-            offen.push({ req, ausfuehren: ausf, op, storeName, wert, halt: halt || null });
+            // Kein Schnappschuss bei der Erstellung: spaeter erstellte Schreibvorgaenge warten
+            // hinter dieser Transaktion, also liest sie ohnehin den Stand von vorher (F1).
+            offen.push({ req, ausfuehren, op, storeName, wert, halt: halt || null });
             planeSchritt();
             return req;
         }
@@ -323,17 +339,22 @@ function erzeugeFakeIDB(opt = {}) {
             gestartet = true;
             planeSchritt();
         };
-        if (mode === 'readwrite') {
-            rwKette = rwKette.then(
-                () =>
-                    new Promise(resolve => {
-                        freigeben = resolve;
-                        starten();
-                    })
-            );
-        } else {
-            naechsterTask(starten);
-        }
+        // Planung nach IndexedDB 3.0 (F1): readwrite wartet auf alle frueher erstellten,
+        // noch offenen Transaktionen, readonly nur auf die frueher erstellten readwrite.
+        const blocker = alleTx.filter(
+            t => !t.erledigt && (mode === 'readwrite' || t.mode === 'readwrite')
+        );
+        const eintrag = { id, mode, erledigt: false };
+        eintrag.fertig = new Promise(resolve => {
+            freigeben = () => {
+                eintrag.erledigt = true;
+                log.push(`tx.finished#${id}`);
+                resolve();
+            };
+        });
+        alleTx.push(eintrag);
+        if (blocker.length) log.push(`tx.wait#${id}(on ${blocker.map(b => b.id).join(',')})`);
+        Promise.all(blocker.map(b => b.fertig)).then(() => naechsterTask(starten));
         return tx;
     }
 
