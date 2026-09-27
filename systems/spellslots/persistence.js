@@ -357,8 +357,11 @@ function _askToStay(event) {
  *    bestmoeglich). Fuer harmlose Nebenaenderungen NICHT: sein put wird nach einem laufenden
  *    Save eines anderen Tabs angelegt und committet danach (D4, F2).
  *  - sonst synchron nach localStorage mit _ts und _rev; scheitert der (Quota), bleibt nur der
- *    IndexedDB-Rueckfall. Der laeuft IMMER: der ausstehende Timer ist hier schon verworfen und
- *    die Generation hochgezaehlt, es holt ihn also nichts nach (F2).
+ *    IndexedDB-Rueckfall — und der laeuft nach derselben Regel wie der >5-MB-Zweig: nur fuer
+ *    ausdrueckliche Arbeit. Fuer nicht ausdrueckliche Arbeit wird der verworfene Timer neu
+ *    eingeplant (nach "Bleiben" rettet er) und gefragt, aber kein put abgesetzt: bei voller
+ *    Quota faellt auch der ausdrueckliche Save eines anderen Tabs auf IndexedDB zurueck, und
+ *    unser put committete nach seinem (D4, F2).
  * "Ausdrueckliche Arbeit" ist _hasExplicitPendingWork(): ein rein automatischer Timer zaehlt
  * nicht. Der ausstehende Timer wird erst verworfen, wenn wirklich geschrieben wird — waehlt der
  * Nutzer "Bleiben", laeuft er danach regulaer.
@@ -405,6 +408,7 @@ function persistOnUnload(event) {
         _askToStay(event);
         return;
     }
+    const standSaveAus = !!saveTimeout; // vor cancelPendingSave() erfassen
     cancelPendingSave();
     const generation = ++_persistGeneration;
     if (StorageAPI.set(key, current).success) {
@@ -414,10 +418,25 @@ function persistOnUnload(event) {
         _onPersistSuccess(key, current, current);
         return;
     }
-    // Notrettung "localStorage voll": der synchrone Write ist gescheitert, cancelPendingSave()
-    // hat den Timer verworfen und die Generation ist hochgezaehlt — nichts holt diesen Save
-    // nach. Der IndexedDB-Rueckfall ist die letzte Gelegenheit und laeuft deshalb unabhaengig
-    // davon, ob die Arbeit ausdruecklich war; die Rueckfrage laesst den Nutzer entscheiden (F2).
+    // Notrettung "localStorage voll": der synchrone Write ist an der Quota gescheitert, der
+    // IndexedDB-Rueckfall ist die letzte Gelegenheit. Dass die Quota zuschlug, sagt aber
+    // NICHTS darueber, ob gerade ein anderer Tab speichert — faellt dessen ausdruecklicher
+    // Save aus demselben Grund auf IndexedDB zurueck, wuerde unser put nach seinem angelegt
+    // und committete danach ueber ihn hinweg (U9h/U9i). Deshalb symmetrisch zum >5-MB-Zweig:
+    if (!explicit) {
+        // Kein put fuer nicht ausdrueckliche Arbeit (D4). Stand ein — dann automatischer —
+        // Save aus, planen wir ihn neu ein: bleibt der Nutzer, rettet er 300 ms spaeter nach
+        // IndexedDB, und seine erneute Veraltungspruefung schuetzt dabei den anderen Tab.
+        // save() loescht _unloadFlushDeclined, also erneut setzen — sonst zieht der
+        // pagehide-Flush ihn doch vor und umgeht die Entscheidung. Die Rueckfrage haelt das
+        // Schliessen auf, damit der Nutzer entscheidet (D5, F2).
+        if (standSaveAus) {
+            saveAutomatic();
+            _unloadFlushDeclined = true;
+            _askToStay(event);
+        }
+        return;
+    }
     _persistNow(false);
     _askToStay(event);
 }
