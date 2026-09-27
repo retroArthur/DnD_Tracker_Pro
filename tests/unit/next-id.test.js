@@ -395,4 +395,84 @@ describe('ID-Obergrenze ENTITY_ID_MAX — Saettigung (U2 minor:3/open:4/minor:9)
             }
         }
     });
+
+    test('N13: Saettigungsmatrix — der Stapel bleibt fuer JEDE Naehe zur Obergrenze eindeutig', () => {
+        // Korrekturrunde 2 (Code-Review 2026-09-21): die Runde-1-Fassung heilte nur den
+        // gemeldeten Wert max(ID) = 1e15 - 1. Ursache war aber nicht dieser eine Wert,
+        // sondern der SPEICHERORT der Erinnerung: der Saettigungszweig schrieb die niedrige
+        // Luecken-ID in den persistenten Zaehler. Beim naechsten Aufruf lag dieser Wert
+        // unter der Untergrenze max(ID) + 1, galt deshalb als veraltet, wurde verworfen —
+        // und die Untergrenze wurde ein zweites Mal vergeben. Gemessen vor der Korrektur:
+        // bei max(ID) = 1e15 - k sind ab dem (k+1)-ten Aufruf eines Stapels die IDs
+        // zyklisch doppelt (k = 2: [1e15-1, 1, 1e15-1, 1, ...], 2 verschiedene von 8).
+        const STAPEL = 8;
+        for (let k = 0; k <= 6; k++) {
+            const ctx = makeContext();
+            // Eine einzige hohe ID aus einer fremden oder beschaedigten Datei genuegt
+            // (R03-Bedrohungsmodell); der Zaehler kommt danach aus der App selbst.
+            ctx.D.npcs = [{ id: 1e15 - k, name: 'Alt-NSC' }];
+            ctx.recomputeNextIds(ctx.D);
+
+            // Stapelvergabe OHNE push dazwischen — das Muster des Merge-Zweigs in
+            // systems/spellslots/import-export.js (items.map(... nextId(type))).
+            const stapel = [];
+            for (let i = 0; i < STAPEL; i++) {
+                stapel.push(ctx.nextId('npcs'));
+                // Der gespeicherte Zaehler bleibt in jedem Schritt selbst eine gueltige ID
+                // (N12), damit ihn der naechste Aufruf nicht verwerfen muss.
+                expect({ k, ...istGueltigeId(ctx.D._nextId.npcs) }).toEqual({
+                    k,
+                    id: ctx.D._nextId.npcs,
+                    gueltig: true
+                });
+            }
+            expect({ k, ungueltig: stapel.filter(id => !istGueltigeId(id).gueltig) }).toEqual({
+                k,
+                ungueltig: []
+            });
+            expect({ k, verschieden: new Set(stapel).size }).toEqual({ k, verschieden: STAPEL });
+
+            // Die R03-Fehlerklasse selbst: ein Loeschen darf genau eine Entitaet entfernen
+            for (const [i, id] of stapel.entries()) ctx.D.npcs.push({ id, name: `Import ${i}` });
+            const ids = ctx.D.npcs.map(n => n.id);
+            expect({ k, eindeutig: new Set(ids).size }).toEqual({ k, eindeutig: ids.length });
+            const ziel = stapel[0];
+            expect({ k, rest: ctx.D.npcs.filter(e => e.id !== ziel).length }).toEqual({
+                k,
+                rest: ids.length - 1
+            });
+        }
+    });
+
+    test('N14: die Saettigungserinnerung ueberlebt einen Datei-Rundlauf ohne Kollision', () => {
+        // Der Suchzeiger der Saettigung liegt bewusst nur im Speicher. Nach einem Neuladen
+        // ist er weg — die bereits vergebenen IDs stehen aber in der Sammlung, also setzt
+        // die Lueckensuche dort korrekt fort. Ein frischer vm-Kontext ist dieses Neuladen.
+        const stapelVergeben = (ctx, anzahl, praefix) => {
+            const stapel = [];
+            for (let i = 0; i < anzahl; i++) stapel.push(ctx.nextId('npcs'));
+            stapel.forEach((id, i) => ctx.D.npcs.push({ id, name: `${praefix}-${i}` }));
+            return stapel;
+        };
+
+        const sitzung1 = makeContext();
+        sitzung1.D.npcs = [{ id: 1e15 - 2, name: 'Alt-NSC' }];
+        sitzung1.recomputeNextIds(sitzung1.D);
+        const erst = stapelVergeben(sitzung1, 4, 'S1');
+
+        // Speichern/Laden wie ueber localStorage: JSON-Rundlauf, danach frischer Kontext
+        const datei = plain({ npcs: sitzung1.D.npcs, _nextId: sitzung1.D._nextId });
+        const sitzung2 = makeContext();
+        sitzung2.D.npcs = datei.npcs;
+        sitzung2.D._nextId = datei._nextId;
+        const zweit = stapelVergeben(sitzung2, 4, 'S2');
+
+        const ids = sitzung2.D.npcs.map(n => n.id);
+        expect(ids.map(istGueltigeId)).toEqual(ids.map(id => ({ id, gueltig: true })));
+        expect({ sitzung1: erst, sitzung2: zweit, eindeutig: new Set(ids).size }).toEqual({
+            sitzung1: erst,
+            sitzung2: zweit,
+            eindeutig: ids.length
+        });
+    });
 });
