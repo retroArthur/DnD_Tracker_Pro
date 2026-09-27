@@ -374,6 +374,7 @@ export default {
     "assignSpellsSelectNone": 'readonly',
     "attributeRolls": 'readonly',
     "backupInterval": 'writable',
+    "backupWritesRetired": 'readonly',
     "base64ToBlob": 'readonly',
     "batchDOMUpdate": 'readonly',
     "batchUpdater": 'readonly',

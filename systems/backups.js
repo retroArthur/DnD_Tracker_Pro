@@ -25,6 +25,30 @@ const REVIVE_TIMEOUT_MS = 5000;
 let _backupFailureLogged = false;
 
 /**
+ * Sind die Schreibpfade dieser Kampagne gesperrt (retireCampaignWrites)? Laeuft
+ * deleteCampaign() oder clearStorage(), darf kein Auto-Backup-Tick die Kampagne erneut
+ * sichern — fuer den Standard-Schluessel tauchte so eine Zeile nach dem Neuladen in der neuen,
+ * leeren Kampagne wieder auf und widersprach dem Bestaetigungstext (D2 = A).
+ *
+ * WICHTIG (Korrekturrunde F4): an JEDER Stelle pruefen, an der wirklich geschrieben wird,
+ * nicht nur einmal am Anfang von createAutoBackup(). Zwischen der ersten Pruefung und dem
+ * Schreiben liegen awaits — der IndexedDB-Versuch selbst und, solange window.idb noch nicht
+ * offen ist, initIndexedDB() darin. In diesen awaits laeuft das Sperren, Entfernen und
+ * Aufraeumen vollstaendig durch; danach schrieb derselbe Tick die Zeile der geloeschten
+ * Kampagne neu und meldete dafuer 'written' (T17d/T17e).
+ *
+ * Es geht dabei nichts verloren: die Sicherheitskopie von clearStorage() ist bestaetigt
+ * geschrieben, BEVOR gesperrt wird, und die Importpfade sperren erst nach ihrer Kopie.
+ * @returns {boolean}
+ */
+function backupWritesRetired() {
+    return (
+        typeof window.areCampaignWritesRetired === 'function' &&
+        window.areCampaignWritesRetired() === true
+    );
+}
+
+/**
  * Auto-Backup der AKTIVEN Kampagne; primaer IndexedDB, localStorage als Rueckfall
  * (Code-Review 2026-09-21, R10/R05).
  *
@@ -51,18 +75,11 @@ async function createAutoBackup(options = {}) {
                 ? window.getActiveCampaignKey()
                 : null;
         if (!key) return 'failed';
-        // Schreibsperre respektieren (Korrekturrunde F4, D2): laeuft deleteCampaign() oder
-        // clearStorage(), darf kein Tick die Kampagne erneut sichern — seine Transaktion
-        // entsteht NACH der Aufraeum-Transaktion und laeuft deshalb auch danach. Fuer den
-        // Standard-Schluessel tauchte so ein Backup in der neuen, leeren Kampagne wieder auf.
-        // Sicher: clearStorage() wartet seine Sicherheitskopie ab, BEVOR es sperrt, und die
-        // Importpfade sperren ueberhaupt nicht.
-        if (
-            typeof window.areCampaignWritesRetired === 'function' &&
-            window.areCampaignWritesRetired()
-        ) {
-            return 'failed';
-        }
+        // Schreibsperre respektieren (Korrekturrunde F4, D2) — erste von drei Pruefungen:
+        // hier gar nicht erst anfangen. Die beiden anderen stehen unmittelbar vor den echten
+        // Schreibvorgaengen (saveBackupToIndexedDB, writeLocalBackup), weil dazwischen awaits
+        // liegen. Siehe backupWritesRetired().
+        if (backupWritesRetired()) return 'failed';
         const D = window.D;
         if (typeof window.hasCampaignContent === 'function' && !window.hasCampaignContent(D)) {
             return 'skipped-empty';
@@ -106,15 +123,25 @@ async function createAutoBackup(options = {}) {
  * aeltesten Zeile, die als erste herausrotiert. Beim Rotieren bleibt die neueste
  * Sicherheitskopie ('safety') stehen; Zeilen ohne kind zaehlen als 'auto'.
  * @param {{timestamp: number, campaignKey: string, data: string, kind?: string}} backup
- * @returns {Promise<'written'|'unchanged'>}
+ * @returns {Promise<'written'|'unchanged'|'failed'>}
  */
 async function saveBackupToIndexedDB(backup) {
     if (!backup || typeof backup.campaignKey !== 'string' || backup.campaignKey === '') {
         throw new Error('Kein Kampagnenschlüssel');
     }
     const outcome = await window.idbWriteTx(['backups'], transaction => {
-        const store = transaction.objectStore('backups');
         const result = { status: 'written' };
+        // Zweite Sperrpruefung (Korrekturrunde F4, T17e): DIESER Durchlauf laeuft im selben
+        // Task, in dem die Transaktion entsteht — es ist der letzte Punkt, an dem eine
+        // Reihenfolge gegenueber der Aufraeum-Transaktion noch feststeht. Davor liegt
+        // initIndexedDB() hinter einem await (utils/idb-tx.js), in dem deleteCampaign() bzw.
+        // clearStorage() vollstaendig durchlaufen kann. Dann wird nichts eingereiht und die
+        // Transaktion committet leer.
+        if (backupWritesRetired()) {
+            result.status = 'retired';
+            return result;
+        }
+        const store = transaction.objectStore('backups');
         const request = store.index('campaign').getAll(backup.campaignKey);
         request.onsuccess = () => {
             const existing = Array.isArray(request.result) ? request.result.slice() : [];
@@ -142,7 +169,7 @@ async function saveBackupToIndexedDB(backup) {
         };
         return result;
     });
-    return outcome.status;
+    return outcome.status === 'retired' ? 'failed' : outcome.status;
 }
 /**
  * Schluessel aller bekannten Kampagnen (Standard + Kampagnenindex). null, wenn der Index
@@ -225,10 +252,17 @@ function capOwnLocalBackups(list, backup) {
  * wird nie als Ganzes geloescht (frueher entfernte der Quota-Zweig den ganzen Schluessel und
  * damit die Backups ALLER Kampagnen). Scheitert auch der letzte Versuch, bleibt die
  * gespeicherte Liste unveraendert.
+ *
+ * Dritte Sperrpruefung (Korrekturrunde F4, T17d): dieser Pfad wird erst NACH dem
+ * gescheiterten IndexedDB-Versuch erreicht, also hinter einem await. Genau dafuer existiert
+ * er — fuer abgebrochene oder quota-bedingt scheiternde Commits — und genau so ein Commit
+ * kann in die mehreren IDB-Umlaeufe von removeCampaignData() + purgeCampaignBackups()
+ * fallen. Ohne die Pruefung kehrte die Zeile der geloeschten Kampagne hier zurueck.
  * @param {Object} backup
  * @returns {'written'|'unchanged'|'failed'}
  */
 function writeLocalBackup(backup) {
+    if (backupWritesRetired()) return 'failed';
     const backupSizeMB = new Blob([backup.data]).size / (1024 * 1024);
     if (backupSizeMB > MAX_BACKUP_SIZE_MB) {
         if (window.APP_CONFIG?.DEBUG_MODE) {
