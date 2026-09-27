@@ -383,6 +383,27 @@ describe('R08 — Service-Worker-Caches bleiben im eigenen Namensraum', () => {
         expect(speicher.unscopedMatchCalls).toBe(0);
     });
 
+    test('S7b: eine online nachgeladene Antwort landet NUR im eigenen Cache (Schreibseite)', async () => {
+        // S7/S8/S9a pinnen die LESE-Seite. Die Schreibseite war ungepinnt: ein
+        // entferntes cache.put() und ein put() in einen zusaetzlichen, nicht
+        // namensraeumigen Cache (caches.open(CACHE_VERSION)) liessen die Suite
+        // beide gruen. Dieser Test bindet sie (Korrekturrunde F7).
+        const speicher = new FakeCacheStorage();
+        speicher.setze('another-app-cache', ORIGIN + '/other-app/index.html', 'x');
+        const sw = ladeSw({ scope: SCOPE_HAUPT, speicher, version: VERSION_NEU });
+        const { name: eigen } = await sw.installiere();
+        const namenVorher = speicher.namen();
+        const anfrage = sw.anfrage('./assets/extra.js');
+
+        const { antwort, fehler } = await sw.feuere('fetch', { request: anfrage });
+
+        expect(antwort.body).toBe('net:' + anfrage.url);
+        expect(fehler).toEqual([]);
+        expect(speicher.urls(eigen)).toContain(anfrage.url); // put() ist passiert
+        expect(speicher.namen()).toEqual(namenVorher); // und zwar in KEINEN neuen Cache
+        expect(speicher.urls('another-app-cache')).not.toContain(anfrage.url);
+    });
+
     test('S8: im Warte-Fenster antwortet der alte SW nicht aus dem Cache der neuen Version', async () => {
         const speicher = new FakeCacheStorage();
         const alt = ladeSw({ scope: SCOPE_HAUPT, speicher, version: VERSION_ALT });

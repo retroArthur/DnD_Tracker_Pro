@@ -8,6 +8,7 @@ Diese Tests prüfen:
 3. Code-Integrität: Generierte HTML enthält keine duplicate declarations
 """
 
+import io
 import os
 import pytest
 import re
@@ -697,6 +698,21 @@ class TestFaviconDataUri:
             "Payload ist doppelt prozentkodiert (Reihenfolge der Ersetzungen falsch)"
 
 
+def _stdout_ohne_unicode(monkeypatch, encoding='ascii'):
+    """Ersetzt sys.stdout durch einen Strom, der nur `encoding` kodieren kann.
+
+    Bildet eine Windows-Konsole mit cp850/cp437 (oder eine ascii-Umleitung) nach:
+    dort scheitert jedes raw print() mit einem Zeichen ausserhalb des Codecs mit
+    UnicodeEncodeError. Liefert (Strom, Puffer); der Aufrufer MUSS die Referenz
+    halten, sonst wird der Wrapper waehrend des Tests eingesammelt und spuelt
+    beim Abraeumen.
+    """
+    puffer = io.BytesIO()
+    strom = io.TextIOWrapper(puffer, encoding=encoding, errors='strict')
+    monkeypatch.setattr(sys, 'stdout', strom)
+    return strom, puffer
+
+
 class TestServiceWorkerCacheBump:
     """R08 (Code-Review 2026-09-21, Einheit U9): build.py --production ersetzt den
     Platzhalter 'dnd-tracker-v3' in sw.js durch 'dnd-tracker-v<VERSION>-<Zeit>'.
@@ -766,12 +782,71 @@ class TestServiceWorkerCacheBump:
             return content
 
         monkeypatch.setattr(build_module, 'read_file', fake_read_file)
+        # F7: write_file wird stillgelegt, damit eine kuenftige Regression des
+        # Waechters nicht das echte dist/ dieses Repos ueberschreibt. Die
+        # Datei-Pruefungen unten bleiben als zweite Schranke (kein anderer
+        # Schreibpfad umgeht den Recorder).
+        writes = []
+        monkeypatch.setattr(build_module, 'write_file', lambda p, c: writes.append(os.path.basename(p)))
 
         with pytest.raises(SystemExit):
             build_module.build(production=True)
 
+        assert writes == [], f"Trotz Abbruch geschrieben: {writes}"
         for p in outputs:
             if before[p] is None:
                 assert not p.exists(), f"{p.name} wurde trotz Abbruch neu geschrieben"
             else:
                 assert p.read_bytes() == before[p], f"{p.name} wurde trotz Abbruch veraendert"
+
+    def test_bump_aborts_even_if_stdout_cannot_encode(self, monkeypatch):
+        """F7 (Korrekturrunde zum Code-Review 2026-09-21): der Waechter muss auch
+        dann abbrechen, wenn stdout die Meldung nicht kodieren kann.
+
+        Die [ABORTED]-Meldung enthielt einen Gedankenstrich (U+2014). Auf einer
+        cp850/cp437/ascii-Konsole wirft das raw print() dann UnicodeEncodeError
+        BEVOR sys.exit(1) laeuft — und die Aufrufstelle in build() verschluckte
+        das mit `except Exception`. Der Waechter fiel also offen aus, genau in
+        dem Fall, den er verhindern soll. Die Meldung ist deshalb rein ASCII.
+        """
+        from build import bump_sw_cache_version
+
+        src = self.SW_PATH.read_text(encoding='utf-8')
+        bad = src.replace(self.PLACEHOLDER, "'dnd-tracker-v4'")  # Variante 'fehlt'
+        strom, puffer = _stdout_ohne_unicode(monkeypatch)
+
+        with pytest.raises(SystemExit) as exc:
+            bump_sw_cache_version(bad, self.BUMPED)
+
+        assert exc.value.code == 1
+        strom.flush()
+        assert b'[ABORTED]' in puffer.getvalue(), \
+            "Die Abbruchmeldung muss auch durch einen ascii-Codec vollstaendig durchkommen"
+
+    def test_production_build_aborts_on_missing_placeholder_even_if_stdout_cannot_encode(self, monkeypatch):
+        """F7: dieselbe Lage ueber den echten build(). read_file liefert sw.js
+        ohne Platzhalter, write_file ist ein Recorder (dist/ wird nie beruehrt),
+        stdout kann kein Unicode. Vorher kehrte build() normal zurueck und
+        schrieb dnd-tracker-optimized.html — mit veraltetem oder fehlendem
+        dist/sw.js, also dem stillen Nicht-Bump, den R08 ausschliesst."""
+        import build as build_module
+
+        sw_path = os.path.normcase(os.path.abspath(str(self.SW_PATH)))
+        real_read_file = build_module.read_file
+
+        def fake_read_file(filepath):
+            content = real_read_file(filepath)
+            if os.path.normcase(os.path.abspath(filepath)) == sw_path:
+                return content.replace(self.PLACEHOLDER, "'dnd-tracker-v4'")
+            return content
+
+        writes = []
+        monkeypatch.setattr(build_module, 'read_file', fake_read_file)
+        monkeypatch.setattr(build_module, 'write_file', lambda p, c: writes.append(os.path.basename(p)))
+        strom, _puffer = _stdout_ohne_unicode(monkeypatch)
+
+        with pytest.raises(SystemExit):
+            build_module.build(production=True, minify=True)
+
+        strom.flush()
+        assert writes == [], f"Trotz Abbruch geschrieben: {writes}"
