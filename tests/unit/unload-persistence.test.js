@@ -27,6 +27,7 @@
 
 const fs = require('fs');
 const path = require('path');
+const vm = require('vm');
 const {
     erzeugeUrsprung,
     oeffneTab,
@@ -418,6 +419,32 @@ describe('R02 — IndexedDB-Modus (> 5 MB)', () => {
         await veraltetUndGeaendertSchliessen(u, A);
     });
 
+    // Korrekturrunde zum Code-Review 2026-09-21 (F2, U7 minor:2 / R02-Restbefund R1):
+    // der >5-MB-Zweig von persistOnUnload stiess _persistNow() auch fuer harmlose
+    // Nebenaenderungen an. Sein put wird NACH dem laufenden ausdruecklichen Save des
+    // anderen Tabs angelegt und committet danach — D4 verbietet genau das.
+    test('U9f: harmlose Nebenaenderung beim Schliessen setzt keinen put ab, waehrend Bs ausdruecklicher IDB-Save laeuft', async () => {
+        const u = erzeugeUrsprung({ lsQuotaZeichen: LS_QUOTA });
+        u.saeenIdb(KEY, grosseKampagne());
+        const { A, B } = await zweiTabs(u);
+        const vorher = u.idb.anfragen.length;
+        B.ctx.D.characters.push({ id: 99, name: 'Borin' });
+        const bSave = B.ctx.saveImmediate();
+        A.ctx.D.diceHistory = [{ dice: 'd20', result: 7, timestamp: 1 }]; // harmlos, ohne save()
+        expect(A.ctx.isCampaignStorageStale(KEY)).toBe(false); // Nicht-Vakuitaet: A gilt als frisch
+
+        const ev = A.entladen('schliessen');
+        await u.uhr.laufen(0);
+        const r = await bSave;
+        await u.uhr.laufen(0);
+
+        expect(r).toMatchObject({ success: true, backend: 'indexedDB' });
+        expect(idbPuts(u, vorher)).toHaveLength(1);
+        expect(ev.defaultPrevented).toBe(false);
+        const C = await oeffneTab(u, 'C').starten();
+        expect(namenIn(C.ctx.D)).toContain('Borin');
+    });
+
     test('U22: switchCampaign() schreibt einen ausstehenden Save fest, BEVOR neu geladen wird — keine Rueckfrage', async () => {
         const u = erzeugeUrsprung({ lsQuotaZeichen: LS_QUOTA });
         u.saeenIdb(KEY, grosseKampagne());
@@ -504,6 +531,10 @@ describe('R02 — loeschende/umziehende Ablaeufe: harte Schreibsperre VOR dem En
         const automatisch = A.ctx.saveAutomatic();
         A.ctx.undo(); // ruft saveImmediate()
         await u.uhr.laufen(400);
+        // F2: undo() stellt D wieder her — ohne diese erneute Aenderung endete
+        // persistOnUnload schon an der Unveraendert-Pruefung und der Retired-Waechter
+        // blieb ungebunden (U7 minor:9)
+        A.ctx.D.quickNotes = 'nach undo';
         const ev = A.entladen('reload');
 
         expect(sofort).toEqual({ success: false, error: 'retired' });
@@ -513,13 +544,20 @@ describe('R02 — loeschende/umziehende Ablaeufe: harte Schreibsperre VOR dem En
         expect(namen(u.ls.get(KEY))).toEqual(['Aria']);
     });
 
-    function exportDatei(namenListe) {
-        const exp = {
+    function exportObjekt(namenListe) {
+        return {
             _exportType: 'full-v1',
             campaigns: { [KEY]: { meta: { key: KEY }, data: kampagne(namenListe) } },
             campaignIndex: { campaigns: [], active: KEY }
         };
-        return { name: 'umzug.json', size: 200, inhalt: JSON.stringify(exp) };
+    }
+
+    function exportDatei(namenListe) {
+        return {
+            name: 'umzug.json',
+            size: 200,
+            inhalt: JSON.stringify(exportObjekt(namenListe))
+        };
     }
 
     test.each([['unveraendert'], ['mit ausstehendem Save vor dem Import']])(
@@ -555,6 +593,75 @@ describe('R02 — loeschende/umziehende Ablaeufe: harte Schreibsperre VOR dem En
             expect(namenIn(C.ctx.D)).toEqual(['Importiert']);
         }
     );
+
+    // Korrekturrunde zum Code-Review 2026-09-21 (F2, U7 minor:3 + open:7 /
+    // R02-Restbefund R2): der Umzugs-Assistent schreibt den Import ueber
+    // StorageAPI (ohne Generationszaehler) und sperrt danach die Schreibpfade.
+    // Ein noch laufender IndexedDB-Save DIESES Tabs raeumte danach den frisch
+    // importierten Schluessel samt _ts weg — der naechste Start las die alte
+    // IndexedDB-Kopie, obwohl der Assistent Erfolg gemeldet hatte.
+    const IMPORT_MODULE = [
+        'systems/campaign-manager/campaign-manager.js',
+        'systems/migration/full-export.js'
+    ];
+
+    function grosseAltKampagne(anzahl = 6) {
+        const k = kampagne(Array.from({ length: anzahl }, (_, i) => 'Alt ' + i));
+        k.characters.forEach(c => {
+            c.notes = 'A'.repeat(MB);
+        });
+        return k;
+    }
+
+    test('U14c: Import waehrend eines laufenden IndexedDB-Saves — der Nachlauf des Saves loescht den Import nicht', async () => {
+        const u = erzeugeUrsprung({ lsQuotaZeichen: 5 * MB });
+        u.saeenIdb(KEY, grosseAltKampagne());
+        const A = await oeffneTab(u, 'A', { module: IMPORT_MODULE }).starten();
+        expect(namenIn(A.ctx.D)).toHaveLength(6); // Nicht-Vakuitaet: IndexedDB-Modus
+
+        A.ctx.D.quickNotes = 'x';
+        const laufend = A.ctx.saveImmediate(); // put abgesetzt, Commit offen
+        A.ctx.importFullExport(exportObjekt(['Importiert']));
+        A.ctx.retireCampaignWrites(); // genau migration-wizard.js:550 (ohne await)
+        expect(u.ls.has(KEY)).toBe(true); // der Import steht im Speicher
+        await u.uhr.laufen(0);
+        await laufend;
+        await u.uhr.laufen(0);
+        A.entladen('reload');
+
+        expect(u.ls.has(KEY)).toBe(true);
+        const C = await oeffneTab(u, 'C').starten();
+        expect(namenIn(C.ctx.D)).toEqual(['Importiert']);
+    });
+
+    test('U14d: dasselbe mit await retireCampaignWrites() VOR dem Import (gleiches Realm) — Umsortieren hilft nicht', async () => {
+        const u = erzeugeUrsprung({ lsQuotaZeichen: 5 * MB });
+        u.saeenIdb(KEY, grosseAltKampagne());
+        const A = await oeffneTab(u, 'A', { module: IMPORT_MODULE }).starten();
+        A.ctx.__exp = exportObjekt(['Importiert']);
+
+        // Im Realm des Tabs, damit die await-Reihenfolge dieselbe ist wie im Assistenten:
+        // die Settle-Warter werden im finally von saveToIndexedDBFallback freigegeben, also
+        // VOR dem Nachlauf des Aufrufers (open:7).
+        const direkt = await vm.runInContext(
+            `(async () => {
+                D.quickNotes = 'x';
+                const laufend = saveImmediate();
+                await retireCampaignWrites();
+                importFullExport(__exp);
+                const da = localStorage.getItem('${KEY}') !== null;
+                await laufend;
+                return da;
+            })()`,
+            A.ctx
+        );
+        expect(direkt).toBe(true);
+        await u.uhr.laufen(0);
+
+        expect(u.ls.has(KEY)).toBe(true);
+        const C = await oeffneTab(u, 'C').starten();
+        expect(namenIn(C.ctx.D)).toEqual(['Importiert']);
+    });
 
     test('U15: deleteCampaign() auf der aktiven benannten Kampagne mit ausstehendem Save — nach der Navigation kein Waisen-Schluessel', async () => {
         const u = erzeugeUrsprung();
@@ -651,6 +758,70 @@ describe('R02 — Randfaelle', () => {
         const gespeichert = JSON.parse(u.ls.get(KEY));
         expect(gespeichert.settings.markdownOnboardingSeen).toBe(true);
         expect(namen(u.ls.get(KEY))).toEqual(['Aria']);
+    });
+
+    // Korrekturrunde zum Code-Review 2026-09-21 (F2, U7 minor:5 / R02-Restbefund R3):
+    // ohne Baseline kehrte persistOnUnload zurueck, BEVOR `explicit` berechnet war —
+    // der ausdrueckliche Save eines Tabs mit gescheitertem load() verfiel still.
+    test('U16c: load() gescheitert, ausdruecklicher Save ausstehend — Rueckfrage angefordert, Rohtext unberuehrt', async () => {
+        const u = erzeugeUrsprung();
+        const kaputt = '{"_version":"2.6.1","characters":[{"id":1,"na';
+        u.ls.set(KEY, kaputt);
+        const A = await oeffneTab(u, 'A').starten();
+        A.ctx.D.characters.push({ id: 1, name: 'Neu angelegt' });
+        A.ctx.save(); // ausdruecklich (CRUD)
+
+        const ev = A.entladen('schliessen innerhalb des Debounce');
+
+        expect(ev.defaultPrevented).toBe(true);
+        expect(u.ls.get(KEY)).toBe(kaputt);
+        expect(u.schreibvorgaenge({ tab: 'A', praefix: KEY })).toEqual([]);
+    });
+
+    // Korrekturrunde zum Code-Review 2026-09-21 (F2, holistisch user-flows):
+    // saveAutomatic() prueft die Veraltung nur beim Aufruf. Wurde der Tab waehrend
+    // der 300 ms Entprellung veraltet, schrieb der Timer-Koerper trotzdem (D4), und
+    // persistOnUnload zaehlte den Timer als ausdruecklich (D5).
+    test('U23: ein waehrend der Entprellung veralteter automatischer Save schreibt nicht mehr', async () => {
+        const u = erzeugeUrsprung();
+        u.saeen(KEY, kampagne(['Aria']));
+        const { A, B } = await zweiTabs(u);
+        B.ctx.D.characters.push({ id: 2, name: 'B-Arbeit' });
+        B.ctx.save(); // ausdruecklich, faellig bei t=300
+        await u.uhr.laufen(100);
+
+        // t=100: A ist noch frisch — der Session-Timer-Autosave wird angenommen
+        A.ctx.D.lastSessionDuration = 300;
+        expect(A.ctx.saveAutomatic()).toBe(true);
+        await u.uhr.laufen(250); // t=350: B hat geschrieben, A hat das Ereignis gesehen
+        expect(namen(u.ls.get(KEY))).toEqual(['Aria', 'B-Arbeit']);
+        expect(A.ctx.isCampaignStorageStale(KEY)).toBe(true); // Nicht-Vakuitaet
+        await u.uhr.laufen(100); // t=450: As Timer (faellig t=400) ist gelaufen
+
+        expect(namen(u.ls.get(KEY))).toEqual(['Aria', 'B-Arbeit']);
+        expect(u.schreibvorgaenge({ tab: 'A', praefix: KEY })).toEqual([]);
+        const ev = B.entladen('schliessen');
+        expect(ev.defaultPrevented).toBe(false);
+        expect(namen(u.ls.get(KEY))).toEqual(['Aria', 'B-Arbeit']);
+    });
+
+    test('U24: veralteter Tab mit ausschliesslich automatischem Save — keine Rueckfrage, kein Schreiben (D5)', async () => {
+        const u = erzeugeUrsprung();
+        u.saeen(KEY, kampagne(['Aria']));
+        const { A, B } = await zweiTabs(u);
+        B.ctx.D.characters.push({ id: 2, name: 'B-Arbeit' });
+        B.ctx.save();
+        await u.uhr.laufen(100);
+        A.ctx.D.lastSessionDuration = 300; // Session-Timer-Tick, A noch frisch
+        expect(A.ctx.saveAutomatic()).toBe(true);
+        await u.uhr.laufen(250); // B hat bei t=300 geschrieben, A ist veraltet
+        expect(A.ctx.isCampaignStorageStale(KEY)).toBe(true);
+
+        const ev = A.entladen('schliessen');
+
+        expect(ev.defaultPrevented).toBe(false);
+        expect(u.schreibvorgaenge({ tab: 'A', praefix: KEY })).toEqual([]);
+        expect(namen(u.ls.get(KEY))).toEqual(['Aria', 'B-Arbeit']);
     });
 
     test('U17: das Schliessen des veralteten Tabs A zeigt in B keinen Konflikt, Bs "Neu laden" behaelt Borin', async () => {
@@ -760,6 +931,254 @@ describe('R02 — Randfaelle', () => {
         A.ctx.toggleSessionTimer();
 
         expect(JSON.parse(u.ls.get(KEY)).lastSessionDuration).toBe(1);
+    });
+});
+
+// ============================================================
+// Waechter der Korrekturrunde (F2): Zusicherungen, die U7 hinterlassen, aber nicht
+// gebunden hat. Alle vor und nach dem Fix gruen; die Mutationen, die sie toeten,
+// stehen im docs/bugfixes.md-Eintrag "R02/R04 Nachtrag".
+// ============================================================
+
+describe('R02 — Waechter der Korrekturrunde (F2)', () => {
+    const LS_QUOTA = 5 * MB;
+
+    function mitImportExport(u, name) {
+        const A = oeffneTab(u, name, {
+            module: ['systems/spellslots/import-export.js'],
+            stubs: { reportSafetyBackup: async s => s }
+        });
+        A.ctx.createAutoBackup = async () => 'written';
+        return A;
+    }
+
+    test('U25: frischer Ursprung, geaenderter Tab, "Alle Daten loeschen" — der Schluessel entsteht nicht neu', async () => {
+        const u = erzeugeUrsprung();
+        const A = mitImportExport(u, 'A');
+        await A.starten();
+        A.ctx.D.characters.push({ id: 1, name: 'Nie gespeichert' }); // geaendert, ohne save()
+
+        const fertig = A.ctx.clearStorage();
+        await u.uhr.laufen(1100);
+        await fertig;
+
+        expect(A.geschlossen).toBe(true);
+        expect(u.ls.has(KEY)).toBe(false);
+    });
+
+    test('U26a: der letzte Save ist gescheitert (IndexedDB-Modus) — das Schliessen fragt nach (D5)', async () => {
+        const u = erzeugeUrsprung({ lsQuotaZeichen: LS_QUOTA });
+        u.saeenIdb(KEY, grosseKampagne());
+        const A = await oeffneTab(u, 'A').starten();
+        u.idb.policy.commitFehler = () => new Error('commit failed');
+        A.ctx.D.characters[0].name = 'Umbenannt';
+        A.ctx.save();
+        await u.uhr.laufen(350);
+        for (let i = 0; i < 5; i++) await u.uhr.laufen(0);
+        expect(A.toasts.some(t => /Speichern fehlgeschlagen/.test(t.text))).toBe(true);
+
+        const ev = A.entladen('schliessen nach gescheitertem Save');
+
+        expect(ev.defaultPrevented).toBe(true);
+    });
+
+    test('U26b: ein laufender IndexedDB-Write beim Schliessen — Rueckfrage angefordert (D5)', async () => {
+        const u = erzeugeUrsprung({ lsQuotaZeichen: LS_QUOTA });
+        u.saeenIdb(KEY, grosseKampagne());
+        const A = await oeffneTab(u, 'A').starten();
+        A.ctx.D.characters[0].name = 'Umbenannt';
+        A.ctx.saveImmediate(); // put abgesetzt, noch nicht committet
+
+        const ev = A.entladen('schliessen waehrend des Commits');
+
+        expect(ev.defaultPrevented).toBe(true);
+    });
+
+    test('U26c: switchCampaign() im IndexedDB-Modus — der Datensatz ist VOR dem beforeunload committet', async () => {
+        const u = erzeugeUrsprung({ lsQuotaZeichen: LS_QUOTA });
+        u.saeenIdb(KEY, grosseKampagne());
+        u.ls.set(
+            INDEX_KEY,
+            JSON.stringify({ campaigns: [{ key: NEBEN_KEY, name: 'Neben' }], active: KEY })
+        );
+        const A = await oeffneTab(u, 'A', {
+            module: ['systems/campaign-manager/campaign-manager.js']
+        }).starten();
+        let beimEntladenName = null;
+        A.ctx.addEventListener('beforeunload', () => {
+            const rec = u.idbDatensatz(KEY);
+            beimEntladenName = rec ? JSON.parse(rec.data).characters[0].name : null;
+        });
+        A.ctx.D.characters[0].name = 'Vor dem Wechsel';
+        A.ctx.save();
+
+        const fertig = A.ctx.switchCampaign(NEBEN_KEY);
+        await u.uhr.laufen(0);
+        await fertig;
+
+        expect(beimEntladenName).toBe('Vor dem Wechsel');
+        expect(A.geschlossen).toBe(true);
+    });
+
+    test('U26d: deleteCampaign() bricht ab (Index-Write scheitert) — der Tab bleibt nicht gesperrt', async () => {
+        const u = erzeugeUrsprung();
+        u.ls.set(
+            INDEX_KEY,
+            JSON.stringify({ campaigns: [{ key: NEBEN_KEY, name: 'Neben' }], active: NEBEN_KEY })
+        );
+        u.saeen(NEBEN_KEY, kampagne(['X']));
+        const A = await oeffneTab(u, 'A', {
+            aktiv: NEBEN_KEY,
+            module: ['systems/campaign-manager/campaign-manager.js']
+        }).starten();
+        A.ctx.D.quickNotes = 'getippt';
+        A.ctx.save();
+        A.ctx.saveCampaignIndex = () => ({ success: false, error: 'quota' });
+
+        await A.ctx.deleteCampaign();
+        await u.uhr.laufen(400);
+        expect(JSON.parse(u.ls.get(NEBEN_KEY)).quickNotes).toBe('getippt');
+
+        A.ctx.D.quickNotes = 'spaeter';
+        A.ctx.save();
+        await u.uhr.laufen(400);
+        expect(JSON.parse(u.ls.get(NEBEN_KEY)).quickNotes).toBe('spaeter');
+    });
+
+    test('U26e: clearStorage() bricht ab (IndexedDB-Delete scheitert) — der Tab bleibt nicht gesperrt', async () => {
+        const u = erzeugeUrsprung();
+        u.saeen(KEY, kampagne(['Aria']));
+        const A = mitImportExport(u, 'A');
+        await A.starten();
+        A.ctx.D.quickNotes = 'getippt';
+        A.ctx.save();
+        u.idb.policy.requestFehler = op => (op === 'delete' ? new Error('delete failed') : null);
+
+        const fertig = A.ctx.clearStorage();
+        await u.uhr.laufen(0);
+        await fertig;
+        u.idb.policy.requestFehler = () => null;
+        await u.uhr.laufen(400);
+
+        expect(A.geschlossen).toBe(false);
+        expect(A.toasts.map(t => t.text)).toContain('❌ Fehler beim Löschen');
+        expect(JSON.parse(u.ls.get(KEY)).quickNotes).toBe('getippt');
+
+        A.ctx.D.quickNotes = 'spaeter';
+        A.ctx.save();
+        await u.uhr.laufen(400);
+        expect(JSON.parse(u.ls.get(KEY)).quickNotes).toBe('spaeter');
+    });
+
+    test('U26f: der Reparatur-Save nach load() schreibt nichts, wenn der Tab binnen 1 s veraltet', async () => {
+        const u = erzeugeUrsprung();
+        u.saeen(KEY, kampagne(['Aria']));
+        const A = await oeffneTab(u, 'A', {
+            stubs: {
+                validateDataIntegrity: () => ({ valid: false, repairs: ['nextId korrigiert'] })
+            }
+        }).starten();
+        const B = await oeffneTab(u, 'B').starten();
+        B.ctx.D.characters.push({ id: 2, name: 'Borin' });
+        await B.ctx.saveImmediate();
+        await u.uhr.laufen(0);
+
+        await u.uhr.laufen(1000 + 400); // As Reparatur-Timer (1 s) plus Entprellung
+
+        expect(namen(u.ls.get(KEY))).toEqual(['Aria', 'Borin']);
+        expect(u.schreibvorgaenge({ tab: 'A', praefix: KEY }).filter(e => e.key === KEY)).toEqual(
+            []
+        );
+    });
+
+    test('U27a: IndexedDB-Modus ohne BroadcastChannel — Bs entprellter save() macht A veraltet', async () => {
+        const u = erzeugeUrsprung({ lsQuotaZeichen: LS_QUOTA });
+        u.saeenIdb(KEY, grosseKampagne());
+        const ohneKanal = { stubs: { BroadcastChannel: undefined } };
+        const { A, B } = await zweiTabs(u, { A: ohneKanal, B: ohneKanal });
+        B.ctx.D.characters[1].name = 'Neu aus B';
+        B.ctx.save();
+        await u.uhr.laufen(350);
+        await u.uhr.laufen(0);
+        expect(JSON.parse(u.idbDatensatz(KEY).data).characters[1].name).toBe('Neu aus B');
+
+        expect(A.ctx.isCampaignStorageStale(KEY)).toBe(true);
+        A.ctx.D.characters[0].name = 'A (veraltet)';
+        A.ctx.save();
+        const ev = A.entladen('schliessen');
+        await u.uhr.laufen(0);
+
+        expect(JSON.parse(u.idbDatensatz(KEY).data).characters[1].name).toBe('Neu aus B');
+        expect(ev.defaultPrevented).toBe(true);
+    });
+
+    // Bs localStorage-Write scheitert an der Quota — der IndexedDB-Rueckfall committet.
+    // Sein _rev ist das einzige Signal, das A veralten laesst.
+    function bScheitertAmSchluessel(B) {
+        const orig = B.ctx.localStorage.setItem;
+        B.ctx.localStorage.setItem = (k, v) => {
+            if (k === KEY) throw Object.assign(new Error('quota'), { name: 'QuotaExceededError' });
+            return orig(k, v);
+        };
+    }
+
+    test('U27b: localStorage-Quota-Rueckfall des entprellten save() setzt _rev — A wird veraltet', async () => {
+        const u = erzeugeUrsprung();
+        u.saeen(KEY, kampagne(['Aria']));
+        const ohneKanal = { stubs: { BroadcastChannel: undefined } };
+        const { A, B } = await zweiTabs(u, { A: ohneKanal, B: ohneKanal });
+        const revVorher = u.ls.get(KEY + '_rev');
+        bScheitertAmSchluessel(B);
+        B.ctx.D.characters.push({ id: 2, name: 'Borin' });
+
+        B.ctx.save();
+        await u.uhr.laufen(350);
+        await u.uhr.laufen(0);
+
+        expect(namen(u.idbDatensatz(KEY).data)).toEqual(['Aria', 'Borin']);
+        expect(u.ls.get(KEY + '_rev')).not.toBe(revVorher);
+        expect(A.ctx.isCampaignStorageStale(KEY)).toBe(true);
+    });
+
+    test('U27c: localStorage-Quota-Rueckfall von saveImmediate() setzt _rev — A wird veraltet', async () => {
+        // Quota: Startwert, _ts und _rev passen, ein deutlich groesseres D nicht
+        const u = erzeugeUrsprung({ lsQuotaZeichen: 2000 });
+        u.saeen(KEY, kampagne(['Aria']));
+        const ohneKanal = { stubs: { BroadcastChannel: undefined } };
+        const { A, B } = await zweiTabs(u, { A: ohneKanal, B: ohneKanal });
+        const revVorher = u.ls.get(KEY + '_rev');
+        B.ctx.D.characters.push({ id: 2, name: 'Borin', notes: 'x'.repeat(3000) });
+
+        const r = await B.ctx.saveImmediate();
+        await u.uhr.laufen(0);
+
+        expect(r).toMatchObject({ success: true, backend: 'indexedDB' });
+        expect(namen(u.idbDatensatz(KEY).data)).toEqual(['Aria', 'Borin']);
+        expect(u.ls.get(KEY + '_rev')).not.toBe(revVorher);
+        expect(A.ctx.isCampaignStorageStale(KEY)).toBe(true);
+    });
+
+    test('U28: ein unter der Sperre committeter IDB-Save holt Aufraeumen und Baseline beim Aufheben nach', async () => {
+        const u = erzeugeUrsprung();
+        u.saeen(KEY, kampagne(['Aria']), { ts: '1000' });
+        const A = await oeffneTab(u, 'A').starten();
+        expect(u.ls.has(KEY + '_ts')).toBe(true); // Nicht-Vakuitaet: LS-Kopie mit _ts
+        A.ctx.D.characters[0].notes = 'A'.repeat(6 * MB); // ueber 5 MB: IndexedDB-Modus
+
+        const laufend = A.ctx.saveImmediate();
+        A.ctx.retireCampaignWrites();
+        await u.uhr.laufen(0);
+        await laufend;
+        await u.uhr.laufen(0);
+
+        A.ctx.resumeCampaignWrites();
+        await u.uhr.laufen(400);
+
+        expect(u.ls.has(KEY)).toBe(false);
+        expect(u.ls.has(KEY + '_ts')).toBe(false);
+        const C = await oeffneTab(u, 'C').starten();
+        expect(namenIn(C.ctx.D)).toEqual(['Aria']);
+        expect(C.ctx.D.characters[0].notes).toHaveLength(6 * MB);
     });
 });
 

@@ -236,6 +236,25 @@ function ereignisse(log, muster) {
     return log.filter(e => muster.test(e)).map(e => e.replace(/#\d+(\([a-z]+\))?$/, ''));
 }
 
+/**
+ * Startet fn in einem Microtask, sobald das IDB-Double die n-te readwrite-Transaktion anlegt —
+ * also NACH dem synchronen Teil des laufenden Saves, aber VOR jedem Commit/Abort (die kommen
+ * im Double fruehestens im naechsten Task). Damit laesst sich ein zweiter Save GENAU in das
+ * Fenster legen, in dem der erste auf seinen Commit wartet.
+ */
+function beiTxCreate(w, n, fn) {
+    const orig = w.log.push;
+    let gezaehlt = 0;
+    w.log.push = function (e) {
+        const r = orig.call(this, e);
+        if (/^tx\.create#\d+\(readwrite\)/.test(e)) {
+            gezaehlt++;
+            if (gezaehlt === n) Promise.resolve().then(fn); // Mikrotask
+        }
+        return r;
+    };
+}
+
 const V1 = JSON.stringify({ characters: [{ id: 1, name: 'V1-Anker' }] });
 
 // ============================================================
@@ -601,6 +620,140 @@ describe('P — persistence.js bestaetigt IndexedDB-Saves erst nach dem Commit (
         expect(w.exportSpy).not.toHaveBeenCalled();
         expect(w.toasts.some(t => t.includes('fehlgeschlagen'))).toBe(false);
     });
+
+    // ------------------------------------------------------------
+    // Korrekturrunde zum Code-Review 2026-09-21 (F2, U3 minor:1): der INNERE
+    // catch (idbError) meldete einen Fehlschlag auch dann, wenn ein neuerer Save
+    // laengst laeuft — lauter Toast, Notfall-Export und 'error'-Anzeige fuer Daten,
+    // die sicher liegen. A1b pinnt das nur fuer den aeusseren catch.
+    // ------------------------------------------------------------
+
+    test('A1c: ueberholt im INNEREN Retry-catch — superseded gemeldet, kein Alarm, kein Notfall-Export', async () => {
+        const w = erzeugePersistenz({
+            D: grosseKampagne('A'),
+            commitFehler: commitNummernScheitern([1, 2])
+        });
+        let pB;
+        // B startet, nachdem A seinen Retry (tx#2) angelegt hat
+        beiTxCreate(w, 2, () => {
+            w.context.D = grosseKampagne('B');
+            pB = w.context.saveImmediate();
+        });
+        const rA = await mitFrist(w.context.saveImmediate(), 5000);
+        await warteBis(() => !!pB);
+        const rB = await mitFrist(pB, 5000);
+        await warte(20);
+        expect(rA.wert).toEqual({ success: false, superseded: true, error: 'superseded' });
+        expect(rB.wert).toEqual({ success: true, backend: 'indexedDB' });
+        expect(w.exportSpy).not.toHaveBeenCalled();
+        expect(w.toasts.filter(t => t.includes('fehlgeschlagen'))).toEqual([]);
+        expect(tagVon(w.fake.datensatz('campaigns', SCHLUESSEL))).toBe('B');
+    }, 10000);
+
+    test('A1d: ueberholt von einem kleinen localStorage-Save — Anzeige endet auf saved, kein Export', async () => {
+        const w = erzeugePersistenz({
+            D: grosseKampagne('A'),
+            commitFehler: commitNummernScheitern([1, 2])
+        });
+        let rB = null;
+        beiTxCreate(w, 2, () => {
+            w.context.D = kleineKampagne('B-klein');
+            w.context.saveImmediate().then(r => (rB = r));
+        });
+        const rA = await mitFrist(w.context.saveImmediate(), 5000);
+        await warteBis(() => rB !== null);
+        await warte(20);
+        expect(rA.wert).toEqual({ success: false, superseded: true, error: 'superseded' });
+        expect(rB).toEqual({ success: true, backend: 'localStorage' });
+        expect(letzter(w.indikator)).toBe('saved');
+        expect(w.exportSpy).not.toHaveBeenCalled();
+        expect(w.toasts.filter(t => t.includes('fehlgeschlagen'))).toEqual([]);
+
+        const D = await neustart(w);
+        expect(namenIn(D)).toEqual(['B-klein']);
+    }, 10000);
+
+    // ------------------------------------------------------------
+    // Waechter (F2, U3 minor:5): die R04-Schutzmassnahmen im entprellten Pfad
+    // (_persistNow) waren von keinem Test gebunden. Vor und nach dem Fix gruen;
+    // die kill-Mutationen stehen im docs/bugfixes.md-Eintrag der Korrekturrunde.
+    // ------------------------------------------------------------
+
+    test('S-A1: save() A (erster Commit bricht ab), von saveImmediate B ueberholt — IDB behaelt B, A bleibt still', async () => {
+        const w = erzeugePersistenz({
+            D: grosseKampagne('A'),
+            commitFehler: ersteCommitsScheitern(1)
+        });
+        let pB;
+        beiTxCreate(w, 1, () => {
+            w.context.D = grosseKampagne('B');
+            pB = w.context.saveImmediate();
+        });
+        w.context.save();
+        await warteBis(() => !!pB, 3000);
+        const rB = await mitFrist(pB, 5000);
+        await warte(300);
+        expect(rB.wert).toEqual({ success: true, backend: 'indexedDB' });
+        expect(tagVon(w.fake.datensatz('campaigns', SCHLUESSEL))).toBe('B');
+        expect(w.toasts.some(t => t.includes('zweiter Versuch'))).toBe(false);
+        const D = await neustart(w);
+        expect(namenIn(D)).toEqual(['B']);
+    }, 10000);
+
+    test('S-P8: ein spaeter >5-MB-saveImmediate A loescht den neueren LS-Stand des save() B nicht', async () => {
+        const w = erzeugePersistenz({ D: grosseKampagne('A') });
+        // Baseline passend zum Speicher, damit flushPendingSave() schreibt (U7-Regel)
+        w.context.setPersistBaseline(SCHLUESSEL, null, '');
+        const B = JSON.stringify(kleineKampagne('B-klein'));
+        beiTxCreate(w, 1, () => {
+            w.context.D = kleineKampagne('B-klein');
+            w.context.save();
+            w.context.flushPendingSave();
+        });
+        const rA = await mitFrist(w.context.saveImmediate(), 5000);
+        await warte(20);
+        expect(rA.zustand).toBe('erfuellt');
+        expect(w.lsStore[SCHLUESSEL]).toBe(B);
+        expect(w.lsStore[SCHLUESSEL + '_ts']).toBeDefined();
+        const D = await neustart(w);
+        expect(namenIn(D)).toEqual(['B-klein']);
+    }, 10000);
+
+    test('S-P8c: ein spaeter >5-MB-save() A loescht den neueren LS-Stand des saveImmediate B nicht', async () => {
+        const w = erzeugePersistenz({ D: grosseKampagne('A') });
+        const B = JSON.stringify(kleineKampagne('B-klein'));
+        let rB = null;
+        beiTxCreate(w, 1, () => {
+            w.context.D = kleineKampagne('B-klein');
+            w.context.saveImmediate().then(r => (rB = r));
+        });
+        w.context.save();
+        await warteBis(() => rB !== null, 3000);
+        await warteBis(() => w.log.some(e => /^tx\.complete#1/.test(e)), 3000);
+        await warte(20);
+        expect(w.lsStore[SCHLUESSEL]).toBe(B);
+        expect(w.lsStore[SCHLUESSEL + '_ts']).toBeDefined();
+        const D = await neustart(w);
+        expect(namenIn(D)).toEqual(['B-klein']);
+    }, 10000);
+
+    test('S-P7b: save() >5 MB, erster Commit bricht ab, Retry gelingt — "zweiter Versuch", kein LS-Schatten/_ts', async () => {
+        const w = erzeugePersistenz({
+            D: grosseKampagne('V2'),
+            lsStart: { [SCHLUESSEL]: V1, [SCHLUESSEL + '_ts']: '111' },
+            commitFehler: ersteCommitsScheitern(1)
+        });
+        w.context.save();
+        await warte(400);
+        await warteBis(() => letzter(w.indikator) === 'saved', 3000);
+        expect(w.lsStore[SCHLUESSEL]).toBeUndefined();
+        expect(w.lsStore[SCHLUESSEL + '_ts']).toBeUndefined();
+        expect(tagVon(w.fake.datensatz('campaigns', SCHLUESSEL))).toBe('V2');
+        expect(w.toasts.some(t => t.includes('zweiter Versuch'))).toBe(true);
+        expect(w.toasts.some(t => t.includes('localStorage voll'))).toBe(false);
+        const D = await neustart(w);
+        expect(namenIn(D)).toEqual(['V2']);
+    }, 10000);
 
     test('E1: Notfall-Export einmal pro Fehlerserie, Fehleranzeige bei jedem Fehlschlag', async () => {
         const schalter = { idbKaputt: true };
