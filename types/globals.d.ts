@@ -81,15 +81,27 @@ declare global {
       | 'abandoned'
       | 'exception'
       | 'timeout';
-    /** Start ohne IndexedDB-Pruefung des localStorage-Schattens (nur ohne strictIdb) */
+    /**
+     * Start ohne IndexedDB-Pruefung des localStorage-Schattens (nur ohne strictIdb). Der
+     * Schatten ist damit ungeprueft: der Tab gilt als veraltet (keine automatischen Saves,
+     * kein Entlade-Write) und zeigt eine Warnung (F3).
+     */
     degraded?: boolean;
     /** Stand uebernommen, Nachbearbeitung (Integritaet, Vorberechnung) gescheitert */
     warning?: string;
     error?: unknown;
   }
 
-  /** Aktive Kampagne laden (localStorage, bei Bedarf IndexedDB) und in D uebernehmen */
-  function load(options?: { strictIdb?: boolean; shouldApply?: () => boolean }): Promise<LoadResult>;
+  /**
+   * Aktive Kampagne laden (localStorage, bei Bedarf IndexedDB) und in D uebernehmen.
+   * replace (F3): den Stand ERSETZEN statt mischen — frische initializeData()-Standards plus
+   * die gespeicherten Schluessel. Das Konflikt-Neuladen setzt es, der Startpfad nicht.
+   */
+  function load(options?: {
+    strictIdb?: boolean;
+    replace?: boolean;
+    shouldApply?: () => boolean;
+  }): Promise<LoadResult>;
 
   /** "Neu laden" im Konflikt-Banner: wartet auf das Laden, lehnt nie ab (R06) */
   function reloadData(): Promise<LoadResult>;

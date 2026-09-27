@@ -122,9 +122,12 @@ function _finishAppliedCampaign(D) {
  * {ok, applied, source: 'localStorage'|'indexedDB'|null, reason?, degraded?, warning?, error?}.
  * ok: ein gespeicherter Stand wurde gelesen UND uebernommen. reason bei ok:false: 'no-key',
  * 'not-found', 'idb-error', 'parse', 'invalid', 'abandoned' oder 'exception'.
- * @param {{strictIdb?: boolean, shouldApply?: () => boolean}} [options]
+ * @param {{strictIdb?: boolean, replace?: boolean, shouldApply?: () => boolean}} [options]
  *   strictIdb (Neuladen): ein gescheitertes IndexedDB-Lesen ist ein Fehlschlag — beim Start
  *   geht es mit dem localStorage-Schatten weiter (degraded: true).
+ *   replace (Neuladen, F3): den Stand ERSETZEN statt mischen — frische initializeData()-
+ *   Standards plus die gespeicherten Schluessel. Ohne replace bleibt der Startpfad beim
+ *   Mischen (lazy angelegte Schluessel wie randomTables bleiben dort erhalten).
  *   shouldApply: unmittelbar vor dem Uebernehmen gefragt; false -> reason 'abandoned'.
  */
 async function load(options = {}) {
@@ -245,8 +248,23 @@ async function load(options = {}) {
         if (typeof opts.shouldApply === 'function' && !opts.shouldApply()) {
             return { ok: false, applied: false, source, reason: 'abandoned' };
         }
-        // Merge imported data into D (D is now const, cannot reassign)
-        Object.assign(D, parsed.p);
+        if (opts.replace) {
+            // R06-Nachtrag (F3, holistisch "user-flows" major / U8 open:1): das
+            // Konflikt-Neuladen ERSETZT. Frische Standards plus die gespeicherten
+            // Schluessel = dieselbe Gestalt, die ein Start erzeugt. Ein Schluessel, den nur
+            // das verdraengte D trug, ueberlebt nicht und wird nicht zurueckgeschrieben —
+            // sonst holte dieser Tab zurueck, was ein "Überschreiben"-Import oder ein
+            // Restore in einem anderen Tab entfernt hat. '__proto__', 'constructor' und
+            // 'prototype' werden dabei nie zugewiesen (CAMPAIGN_FORBIDDEN_KEYS).
+            const next = window.initializeData();
+            for (const k of Object.keys(parsed.p)) {
+                if (!window.CAMPAIGN_FORBIDDEN_KEYS.includes(k)) next[k] = parsed.p[k];
+            }
+            window.replaceCampaignData(D, next);
+        } else {
+            // Startpfad: mischen wie bisher (D is now const, cannot reassign)
+            Object.assign(D, parsed.p);
+        }
         applied = true;
         let warning = null;
         try {
@@ -261,6 +279,18 @@ async function load(options = {}) {
         // der nicht laden konnte, schreibt beim Verlassen nie blind ueber die Daten.
         if (typeof window.setPersistBaseline === 'function') {
             window.setPersistBaseline(key, lsRaw, JSON.stringify(D));
+        }
+        if (degraded) {
+            // R06-Nachtrag (F3, holistisch "write-paths" major): der localStorage-Schatten
+            // ist UNGEPRUEFT — IndexedDB war nicht lesbar und kann den neueren Stand halten.
+            // Der Tab gilt darum als veraltet: keine automatischen Saves, kein Entlade-Write
+            // (die schrieben den Schatten MIT _ts, und ab dann uebersprang jedes spaetere
+            // load() die IndexedDB-Pruefung). Ein ausdruecklicher Save schreibt weiter (D4)
+            // und setzt die Baseline neu.
+            if (typeof window.markExternalCampaignWrite === 'function') {
+                window.markExternalCampaignWrite(key);
+            }
+            showToast('⚠️ Kampagne konnte nicht aus IndexedDB gelesen werden', 'warning');
         }
         const result = { ok: true, applied: true, source };
         if (degraded) result.degraded = true;

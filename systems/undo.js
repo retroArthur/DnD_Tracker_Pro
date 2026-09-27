@@ -346,8 +346,10 @@ function reloadData() {
     return _reloadInFlight;
 }
 // Liest unter zurueckgestellten entprellten Saves, begrenzt durch den Waechter. Ein nach dem
-// Waechter eintreffendes Lesen uebernimmt nichts mehr (shouldApply).
-async function _loadForReload() {
+// Waechter eintreffendes Lesen uebernimmt nichts mehr (shouldApply). onBeforeApply laeuft
+// UNMITTELBAR vor dem Uebernehmen (F3): nur dort ist der Stand greifbar, den der Undo-Punkt
+// halten muss — eine Aenderung aus dem Ladefenster gehoert hinein.
+async function _loadForReload(onBeforeApply) {
     let abandoned = false;
     let watchdog = null;
     const suspend =
@@ -358,7 +360,15 @@ async function _loadForReload() {
         const result = await suspend(() =>
             Promise.race([
                 Promise.resolve(
-                    window.load({ strictIdb: true, shouldApply: () => !abandoned })
+                    window.load({
+                        strictIdb: true,
+                        replace: true,
+                        shouldApply: () => {
+                            if (abandoned) return false;
+                            if (onBeforeApply) onBeforeApply();
+                            return true;
+                        }
+                    })
                 ).then(r => {
                     // Der geladene Stand ersetzt den verdraengten — dessen Save nicht nachholen
                     if (r && r.applied && typeof window.cancelPendingSave === 'function') {
@@ -386,7 +396,16 @@ async function _loadForReload() {
 // falls dieser Tab im Ladefenster doch gespeichert hat (saveImmediate, z. B. per Strg+Z) — den
 // geladenen Stand neu festschreiben. Nicht, wenn inzwischen ein fremder Save eintraf: der
 // waere neuer als der gelesene Stand. true, wenn der Speicher D entspricht.
-async function _afterReloadApplied(beforeJSON, successAtStart, foreignSaveSince) {
+//
+// F3 (U8 minor:1 / open:2): die Entscheidung haengt an der Save-GENERATION, nicht am
+// Erfolgszaehler. Der Zaehler steigt erst nach dem IndexedDB-Commit, und ein im Ladefenster
+// gestarteter Write committet nach dem gehaltenen Lesen (IndexedDB-Transaktionsreihenfolge) —
+// beim Entscheiden stand er also noch auf dem alten Wert und das Neu-Festschreiben fiel aus.
+// Die Generation steigt dagegen SYNCHRON beim Start des Saves. Danach wird der Commit
+// abgewartet und der fremde Save ERST DANACH geprueft (als Funktion, nicht als vorab
+// erfasster Wahrheitswert): sonst setzte der spaete Commit die Baseline zurueck und der Tab
+// waere trotz stehendem Banner nicht mehr veraltet.
+async function _afterReloadApplied(beforeJSON, generationAtStart, foreignSaveSinceFn) {
     const D = window.D;
     if (beforeJSON) _pushUndoSnapshot('Neu laden (anderer Tab)', beforeJSON);
     encounterRound = (D.initiative && D.initiative.round) || 1;
@@ -395,9 +414,10 @@ async function _afterReloadApplied(beforeJSON, successAtStart, foreignSaveSince)
     } catch (e) {
         if (window.ErrorHandler) window.ErrorHandler.log('reloadData', e, 'Neuzeichnen');
     }
-    const count = window.getPersistSuccessCount;
-    if (typeof count !== 'function' || count() === successAtStart) return true;
-    if (foreignSaveSince) return false;
+    const gen = window.getPersistGeneration;
+    if (typeof gen !== 'function' || gen() === generationAtStart) return true;
+    if (typeof window.waitForPersistSettle === 'function') await window.waitForPersistSettle();
+    if (foreignSaveSinceFn()) return false;
     try {
         const res = await window.saveImmediate();
         return !!(res && res.success);
@@ -413,9 +433,9 @@ async function _reloadDataNow() {
             return { ok: false, applied: false, source: null, reason: 'exception' };
         }
         const seqAtStart = _conflictSignalSeq;
-        const successAtStart =
-            typeof window.getPersistSuccessCount === 'function'
-                ? window.getPersistSuccessCount()
+        const generationAtStart =
+            typeof window.getPersistGeneration === 'function'
+                ? window.getPersistGeneration()
                 : null;
         let beforeJSON = null;
         try {
@@ -423,13 +443,22 @@ async function _reloadDataNow() {
         } catch {
             // ohne Undo-Punkt weiter — wie pushUndo() (D-06)
         }
-        const result = await _loadForReload();
+        // F3 (U8 minor:2): der Undo-Punkt haelt den Stand UNMITTELBAR VOR dem Uebernehmen.
+        // Der Stand vom Klick liess eine Aenderung aus dem Ladefenster in keinem
+        // Schnappschuss zurueck — ihr gleich lautender Push wurde dedupliziert.
+        const result = await _loadForReload(() => {
+            try {
+                beforeJSON = JSON.stringify(window.D);
+            } catch {
+                beforeJSON = null;
+            }
+        });
         let persisted = true;
         if (result.applied) {
             persisted = await _afterReloadApplied(
                 beforeJSON,
-                successAtStart,
-                _conflictSignalSeq !== seqAtStart
+                generationAtStart,
+                () => _conflictSignalSeq !== seqAtStart
             );
         }
         const signalDuringReload = _conflictSignalSeq !== seqAtStart;
