@@ -972,6 +972,16 @@ describe('R02 — Randfaelle', () => {
 describe('R02 — Waechter der Korrekturrunde (F2)', () => {
     const LS_QUOTA = 5 * MB;
 
+    const idbPutsF2 = (u, ab) =>
+        u.idb.anfragen.slice(ab).filter(a => a.op === 'put' && a.store === 'campaigns');
+
+    // Belegte Zeichen im localStorage — um die Quota erst NACH dem Booten zuzuschnueren
+    const belegteZeichen = u => {
+        let n = 0;
+        for (const [k, v] of u.ls) n += k.length + v.length;
+        return n;
+    };
+
     function mitImportExport(u, name) {
         const A = oeffneTab(u, name, {
             module: ['systems/spellslots/import-export.js'],
@@ -1210,16 +1220,83 @@ describe('R02 — Waechter der Korrekturrunde (F2)', () => {
         expect(C.ctx.D.characters[0].notes).toHaveLength(6 * MB);
     });
 
-    // Korrekturrunde 2 (F2): der letzte Zweig von persistOnUnload ist die Notrettung fuer
-    // den dokumentierten Fall "localStorage voll" — der synchrone Write ist gescheitert, der
-    // ausstehende Timer ist schon verworfen und die Generation hochgezaehlt, also holt ihn
-    // nichts nach. Sie darf nicht davon abhaengen, ob die ausstehende Arbeit ausdruecklich
-    // war: hier gibt es keinen Fremdschreiber zu schuetzen, nur die eigenen Daten zu retten.
-    test('U29: localStorage voll, ein einzelner Tab, ausstehender automatischer Save — Rettung nach IndexedDB und Rueckfrage', async () => {
+    // Korrekturrunde 3 (F2): derselbe Ablauf wie U9f/U9g, nur unter 5 MB — die Kampagne passt
+    // grundsaetzlich in den localStorage, aber er ist voll. Dann faellt Bs ausdruecklicher
+    // Save auf IndexedDB zurueck, und As Entladen landet im LETZTEN Zweig von
+    // persistOnUnload, dessen Notrettung bedingungslos _persistNow() anstiess. Ihr put wird
+    // NACH Bs laufendem put angelegt und committet danach: Bs bestaetigte, ausdrueckliche
+    // Arbeit war weg, obwohl A nur eine harmlose Nebenaenderung hatte (D4).
+    test('U9h: localStorage voll, harmlose Nebenaenderung beim Schliessen — kein put, waehrend Bs ausdruecklicher IDB-Save laeuft', async () => {
+        const u = erzeugeUrsprung();
+        u.saeen(KEY, kampagne(['Aria'], { quickNotes: 'q'.repeat(400) }));
+        const A = await oeffneTab(u, 'A').starten();
+        const B = await oeffneTab(u, 'B').starten();
+        // Die Quota erst nach dem Booten zuschnueren: jeder groessere Write scheitert jetzt
+        u.quota.zeichen = belegteZeichen(u) + 10;
+
+        const vorher = u.idb.anfragen.length;
+        B.ctx.D.characters.push({ id: 2, name: 'Borin' });
+        const bSave = B.ctx.saveImmediate();
+        A.ctx.D.diceHistory = [{ dice: 'd20', result: 7, timestamp: 1 }]; // harmlos, ohne save()
+        expect(A.ctx.isCampaignStorageStale(KEY)).toBe(false); // Nicht-Vakuitaet: A gilt als frisch
+
+        A.entladen('schliessen');
+        await u.uhr.laufen(0);
+        const r = await bSave;
+        await u.uhr.laufen(0);
+
+        // Nicht-Vakuitaet: die Quota liess Bs synchronen localStorage-Write wirklich scheitern
+        expect(u.schreibvorgaenge({ tab: 'B' }).some(e => e.op === 'setItem-quota')).toBe(true);
+        expect(r).toMatchObject({ success: true, backend: 'indexedDB' });
+        expect(idbPutsF2(u, vorher)).toHaveLength(1); // genau Bs put
+        expect(namenIn(JSON.parse(u.idbDatensatz(KEY).data))).toContain('Borin');
+        const C = await oeffneTab(u, 'C').starten();
+        expect(namenIn(C.ctx.D)).toContain('Borin');
+    });
+
+    // Wie U9h mit der gewoehnlichsten Zutat: einem ausstehenden Session-Timer-Autosave.
+    // _unloadFlushDeclined half hier nicht, weil persistOnUnload selbst schrieb. Geschrieben
+    // wird nicht (D4) — gefragt wird trotzdem (D5).
+    test('U9i: localStorage voll, ausstehender automatischer Save beim Schliessen — kein put, aber Rueckfrage (D5)', async () => {
+        const u = erzeugeUrsprung();
+        u.saeen(KEY, kampagne(['Aria'], { quickNotes: 'q'.repeat(400) }));
+        const A = await oeffneTab(u, 'A').starten();
+        const B = await oeffneTab(u, 'B').starten();
+        u.quota.zeichen = belegteZeichen(u) + 10;
+
+        const vorher = u.idb.anfragen.length;
+        B.ctx.D.characters.push({ id: 2, name: 'Borin' });
+        const bSave = B.ctx.saveImmediate();
+        A.ctx.D.lastSessionDuration = 300; // Session-Timer-Tick
+        expect(A.ctx.saveAutomatic()).toBe(true); // Nicht-Vakuitaet: der Timer steht wirklich
+        expect(A.ctx.isCampaignStorageStale(KEY)).toBe(false);
+
+        const ev = A.entladen('schliessen');
+        await u.uhr.laufen(0);
+        const r = await bSave;
+        await u.uhr.laufen(400);
+
+        expect(r).toMatchObject({ success: true, backend: 'indexedDB' });
+        expect(idbPutsF2(u, vorher)).toHaveLength(1); // genau Bs put
+        expect(ev.defaultPrevented).toBe(true);
+        const C = await oeffneTab(u, 'C').starten();
+        expect(namenIn(C.ctx.D)).toContain('Borin');
+    });
+
+    // Korrekturrunde 3 (F2): der letzte Zweig von persistOnUnload ist die Notrettung fuer den
+    // dokumentierten Fall "localStorage voll". Dass der synchrone Write an der Quota
+    // gescheitert ist, sagt aber NICHTS darueber, ob es einen Fremdschreiber zu schuetzen gibt
+    // — U9h/U9i stellen genau den Fall mit zweitem Tab nach. Dieser Zweig ist deshalb jetzt
+    // symmetrisch zum >5-MB-Zweig: fuer nicht ausdrueckliche Arbeit KEIN put beim Entladen,
+    // dafuer die Rueckfrage — und der verworfene Timer wird neu eingeplant, damit "Bleiben"
+    // nichts verliert (U29b). Gerettet wird also ueber den Nutzer, nicht ueber einen put,
+    // der die Arbeit eines anderen Tabs treffen kann.
+    test('U29: localStorage voll, ein einzelner Tab, ausstehender automatischer Save — kein put beim Entladen, aber Rueckfrage', async () => {
         const u = erzeugeUrsprung({ lsQuotaZeichen: 260 });
         u.saeen(KEY, kampagne(['Aria']));
         const A = await oeffneTab(u, 'A').starten();
         const lsVorher = u.ls.get(KEY);
+        const vorher = u.idb.anfragen.length;
         A.ctx.D.sessionNotes = [{ id: 1, text: 'x'.repeat(200) }];
         expect(A.ctx.saveAutomatic()).toBe(true); // Nicht-Vakuitaet: der Timer steht
         expect(A.ctx.isCampaignStorageStale(KEY)).toBe(false); // und A gilt als frisch
@@ -1231,6 +1308,48 @@ describe('R02 — Waechter der Korrekturrunde (F2)', () => {
         // Die Quota liess den synchronen localStorage-Write wirklich scheitern
         expect(u.ls.get(KEY)).toBe(lsVorher);
         expect(u.schreibvorgaenge({ tab: 'A' }).some(e => e.op === 'setItem-quota')).toBe(true);
+        // Der Tab ist entladen: der neu eingeplante Timer laeuft nicht mehr, es wird nichts
+        // geschrieben — gefragt wurde vorher (D5).
+        expect(idbPutsF2(u, vorher)).toEqual([]);
+        expect(ev.defaultPrevented).toBe(true);
+    });
+
+    // Gegenprobe zu U29: derselbe Fall, aber der Nutzer bleibt. Dann darf nichts verloren
+    // gehen — der von persistOnUnload verworfene Timer ist neu eingeplant und rettet 300 ms
+    // spaeter nach IndexedDB. Getoetet durch ein blankes `return` ohne saveAutomatic().
+    test('U29b: localStorage voll, automatischer Save, Nutzer bleibt — der neu eingeplante Timer rettet nach IndexedDB', async () => {
+        const u = erzeugeUrsprung({ lsQuotaZeichen: 260 });
+        u.saeen(KEY, kampagne(['Aria']));
+        const A = await oeffneTab(u, 'A').starten();
+        A.ctx.D.sessionNotes = [{ id: 1, text: 'x'.repeat(200) }];
+        expect(A.ctx.saveAutomatic()).toBe(true);
+
+        const ev = A.entladen('schliessen', { bleiben: true });
+        expect(ev.defaultPrevented).toBe(true); // der Nutzer wird gefragt
+        expect(A.geschlossen).toBe(false);
+        await u.uhr.laufen(400);
+
+        const rec = u.idbDatensatz(KEY);
+        expect(rec).toBeTruthy();
+        expect(JSON.parse(rec.data).sessionNotes).toHaveLength(1);
+    });
+
+    // Gegenprobe zu U29: der Waechter nimmt der Notrettung genau die Faelle NICHT weg, in
+    // denen wirklich nur eigene Daten auf dem Spiel stehen. Ein AUSDRUECKLICHER ausstehender
+    // Save wird beim Entladen weiter sofort nach IndexedDB gerettet.
+    test('U29c: localStorage voll, ein einzelner Tab, AUSDRUECKLICHER Save — die Notrettung laeuft beim Entladen', async () => {
+        const u = erzeugeUrsprung({ lsQuotaZeichen: 260 });
+        u.saeen(KEY, kampagne(['Aria']));
+        const A = await oeffneTab(u, 'A').starten();
+        const lsVorher = u.ls.get(KEY);
+        A.ctx.D.sessionNotes = [{ id: 1, text: 'x'.repeat(200) }];
+        A.ctx.save(); // ausdruecklich
+
+        const ev = A.entladen('schliessen');
+        await u.uhr.laufen(0);
+        await u.uhr.laufen(400);
+
+        expect(u.ls.get(KEY)).toBe(lsVorher); // die Quota griff
         const rec = u.idbDatensatz(KEY);
         expect(rec).toBeTruthy();
         expect(JSON.parse(rec.data).sessionNotes).toHaveLength(1);
