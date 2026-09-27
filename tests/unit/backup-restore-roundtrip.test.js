@@ -78,6 +78,20 @@ const plain = v => (v === undefined ? undefined : JSON.parse(JSON.stringify(v)))
 
 const quelle = rel => fs.readFileSync(path.join(REPO_ROOT, rel), 'utf8');
 
+/**
+ * Ein ewig offenes Promise wird zur klaren Assertion statt zum Jest-Timeout
+ * (Muster aus backups-autobackup.test.js).
+ */
+function mitFrist(promise, ms = 1500) {
+    return Promise.race([
+        Promise.resolve(promise).then(
+            wert => ({ zustand: 'erfuellt', wert }),
+            fehler => ({ zustand: 'abgelehnt', fehler })
+        ),
+        new Promise(resolve => setTimeout(() => resolve({ zustand: 'haengt' }), ms))
+    ]);
+}
+
 function erzeugeLocalStorage(store) {
     return {
         getItem: k => (Object.prototype.hasOwnProperty.call(store, k) ? store[k] : null),
@@ -230,9 +244,15 @@ function erzeugeWerkbank(opt = {}) {
         log.push('renderAll');
         if (opt.renderWirft) throw new Error('Render kaputt (Test)');
     });
-    ctx.restoreSoundBlob = jest.fn(async id => {
+    // haengendeBlobs: das Promise siedelt NIE (blockierter IndexedDB-open, kein onblocked)
+    // abgelehnteBlobs: put/Transaktion scheitert — restoreSoundBlob() lehnt ab
+    ctx.restoreSoundBlob = jest.fn(id => {
         log.push('revive:' + id);
-        return !(opt.fehlendeBlobs || []).includes(id);
+        if (opt.haengendeBlobs) return new Promise(() => {});
+        if ((opt.abgelehnteBlobs || []).includes(id)) {
+            return Promise.reject(new Error('IndexedDB-Abbruch (Test)'));
+        }
+        return Promise.resolve(!(opt.fehlendeBlobs || []).includes(id));
     });
     ctx.saveImmediate = jest.fn(async () => {
         log.push('saveImmediate');
@@ -593,6 +613,38 @@ describe('R5 — Undo-Punkt, Reihenfolge und bestaetigtes Speichern', () => {
         expect(w.ctx.saveUndoState).not.toHaveBeenCalled();
         expect(w.toasts.some(t => t.includes('fehlerhaft'))).toBe(true);
     });
+
+    // Waechter (U4 minor:4): validateDataIntegrity() ist NICHT redundant zum Normalisierer.
+    // Ohne den Aufruf bleibt der null-Eintrag in characters stehen und shops/timers/campaign
+    // fehlen ganz — ein Stand, den load() nie erzeugen wuerde, und er wird so gespeichert.
+    test('R5c: Paritaet mit load() — Backup mit null-Eintrag und ohne shops/timers/campaign', async () => {
+        const w = erzeugeWerkbank({
+            idbBackups: [
+                idbDatensatz(KEY_A, TS, {
+                    _version: '2.6.1',
+                    characters: [null, { id: 1, name: 'A' }],
+                    npcs: [{ id: 2, name: 'N' }]
+                })
+            ]
+        });
+
+        await wiederherstellenUeberModal(w);
+
+        const gespeichert = w.persistiert();
+        expect(gespeichert).not.toBeNull();
+        for (const stand of [plain(w.ctx.D), gespeichert]) {
+            expect(stand.characters).toEqual([{ id: 1, name: 'A' }]);
+            expect(Array.isArray(stand.shops)).toBe(true);
+            expect(Array.isArray(stand.timers)).toBe(true);
+            expect(typeof stand.campaign).toBe('object');
+            expect(stand.campaign).not.toBeNull();
+        }
+        // Audio aus, BEVOR D ersetzt wird; Undo-Punkt davor, Speichern danach
+        expect(w.ctx.stopAllTracks).toHaveBeenCalledTimes(1);
+        const undo = w.log.find(e => e && typeof e === 'object' && e.undo);
+        expect(w.log.indexOf(undo)).toBeLessThan(w.log.indexOf('stopAllTracks'));
+        expect(w.log.indexOf('stopAllTracks')).toBeLessThan(w.log.indexOf('saveImmediate'));
+    });
 });
 
 describe('R6 — Soundboard: Metadaten zurueck, Audio-Blobs wiederbelebt', () => {
@@ -633,6 +685,62 @@ describe('R6 — Soundboard: Metadaten zurueck, Audio-Blobs wiederbelebt', () =>
                 expect(Object.keys(spur).sort()).toEqual(['blobId', 'loop', 'volume']);
             }
         }
+    });
+
+    // U4 minor:1 (b): eine ABGELEHNTE Wiederbelebung wurde nur geloggt. Der Grabstein blieb
+    // stehen, _cleanupStaleTombstones() loescht ihn beim naechsten Start endgueltig — und der
+    // Restore meldete '✅ Backup wiederhergestellt'. Das ist stiller Audio-Verlust.
+    test('R6c: abgelehnte Wiederbelebung wird gemeldet, nicht verschluckt', async () => {
+        const probe = erzeugeWerkbank();
+        const fixture = volleKampagne(probe.ctx);
+        const w = erzeugeWerkbank({
+            idbBackups: [idbDatensatz(KEY_A, TS, fixture)],
+            abgelehnteBlobs: ['blob-taverne']
+        });
+
+        await wiederherstellenUeberModal(w);
+
+        const warnung = w.toasts.find(t => t.startsWith('⚠️'));
+        expect(warnung).toBeDefined();
+        expect(warnung).toContain('Audiodatei');
+        expect(warnung).toContain('1');
+        expect(w.ctx.saveImmediate).toHaveBeenCalledTimes(1);
+    });
+
+    // U4 minor:1 (a): siedelt restoreSoundBlob() nie (blockierter IndexedDB-open ohne
+    // onblocked-Handler), war D schon ersetzt, aber es wurde nie gerendert, nie gespeichert
+    // und nichts gemeldet — das Modal ist zu, die alte Oberflaeche bleibt bedienbar.
+    test('R6d: haengende Wiederbelebung haelt Rendern und Speichern nicht mehr auf', async () => {
+        const probe = erzeugeWerkbank();
+        const fixture = volleKampagne(probe.ctx);
+        const w = erzeugeWerkbank({
+            idbBackups: [idbDatensatz(KEY_A, TS, fixture)],
+            haengendeBlobs: true
+        });
+        // Die Wiederbelebungsfrist sofort feuern lassen; kurze Fristen (Fake-IndexedDB
+        // nutzt setTimeout 0) laufen echt weiter.
+        const frist = vm.runInContext(
+            'typeof REVIVE_TIMEOUT_MS === "number" ? REVIVE_TIMEOUT_MS : 5000',
+            w.ctx
+        );
+        const echterTimeout = w.ctx.setTimeout;
+        w.ctx.setTimeout = (fn, ms) => {
+            if (ms >= frist) {
+                Promise.resolve().then(fn);
+                return 0;
+            }
+            return echterTimeout(fn, ms);
+        };
+
+        const lauf = await mitFrist(wiederherstellenUeberModal(w));
+
+        expect(lauf.zustand).toBe('erfuellt');
+        expect(w.ctx.renderAll).toHaveBeenCalledTimes(1);
+        expect(w.ctx.saveImmediate).toHaveBeenCalledTimes(1);
+        const warnung = w.toasts.find(t => t.startsWith('⚠️'));
+        expect(warnung).toBeDefined();
+        expect(warnung).toContain('Audiodatei');
+        expect(w.toasts).toContain('✅ Backup wiederhergestellt');
     });
 });
 

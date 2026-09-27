@@ -622,6 +622,135 @@ describe('R10 — keine Duplikate, Sicherheitskopie rotiert nicht heraus', () =>
         expect(JSON.parse(eigene.find(b => b !== geschuetzt).data).lastSessionDuration).toBe(900);
     });
 
+    // Waechter (U5 minor:5): der haeufigste echte Weg — der letzte periodische Tick gleicht D
+    // schon, dann folgt ein ueberschreibender Import. Der 'unchanged'-Zweig muss die bestehende
+    // Zeile auf kind 'safety' HOCHSTUFEN, sonst rotiert der Vor-Import-Stand heraus.
+    test('T7c: "unchanged" stuft die bestehende IndexedDB-Zeile auf "safety" hoch — sie bleibt 6 Ticks erhalten', async () => {
+        const w = erzeugeWerkbank();
+        mitHeld(w);
+        const stand = JSON.stringify(w.ctx.D);
+        expect((await mitFrist(w.ctx.createAutoBackup())).wert).toBe('written');
+        await warte(3);
+        expect((await mitFrist(w.ctx.createAutoBackup({ reason: 'safety' }))).wert).toBe(
+            'unchanged'
+        );
+        for (let i = 1; i <= 6; i++) {
+            await warte(3);
+            w.ctx.D.lastSessionDuration = i * 300;
+            await mitFrist(w.ctx.createAutoBackup());
+        }
+        const zeile6 = backupZeilen(w).find(z => z.data === stand);
+        expect(zeile6).toBeDefined();
+        expect(zeile6.kind).toBe('safety');
+    });
+
+    test('T7d: dasselbe im localStorage-Rueckfall — "unchanged" stuft den bestehenden Eintrag hoch', async () => {
+        const w = erzeugeWerkbank({ idbAus: true });
+        mitHeld(w);
+        const stand = JSON.stringify(w.ctx.D);
+        expect((await mitFrist(w.ctx.createAutoBackup())).wert).toBe('written');
+        await warte(3);
+        expect((await mitFrist(w.ctx.createAutoBackup({ reason: 'safety' }))).wert).toBe(
+            'unchanged'
+        );
+        for (let i = 1; i <= 3; i++) {
+            await warte(3);
+            w.ctx.D.lastSessionDuration = i * 300;
+            await mitFrist(w.ctx.createAutoBackup());
+        }
+        const eintragS = lsListe(w).find(b => b.data === stand);
+        expect(eintragS).toBeDefined();
+        expect(eintragS.kind).toBe('safety');
+    });
+
+    // Waechter (U5 minor:7): geschuetzt ist die NEUESTE Sicherheitskopie, nicht die aelteste.
+    // Der zuletzt gesicherte Stand vor einer destruktiven Aktion ist der, den der Nutzer sucht.
+    test('T7e: zwei Sicherheitskopien + 6 Ticks -> die NEUERE bleibt erhalten', async () => {
+        const w = erzeugeWerkbank();
+        mitHeld(w);
+        const s1 = JSON.stringify(w.ctx.D);
+        expect((await mitFrist(w.ctx.createAutoBackup({ reason: 'safety' }))).wert).toBe('written');
+        await warte(3);
+        w.ctx.D.characters.push({ id: 2, name: 'Zweiter' });
+        const s2 = JSON.stringify(w.ctx.D);
+        expect((await mitFrist(w.ctx.createAutoBackup({ reason: 'safety' }))).wert).toBe('written');
+        for (let i = 1; i <= 6; i++) {
+            await warte(3);
+            w.ctx.D.lastSessionDuration = i * 300;
+            await mitFrist(w.ctx.createAutoBackup());
+        }
+        const zeilen = backupZeilen(w);
+        const neuere = zeilen.find(z => z.data === s2);
+        expect(neuere).toBeDefined();
+        expect(neuere.kind).toBe('safety');
+        expect(zeilen.length).toBeLessThanOrEqual(5); // MAX_BACKUPS
+        // Nicht-vakuos: die aeltere Sicherheitskopie IST herausrotiert
+        expect(zeilen.some(z => z.data === s1)).toBe(false);
+    });
+
+    // U5 minor:1 / R10 P1: nach EINEM abgebrochenen IndexedDB-Commit schieben die
+    // localStorage-Eintraege die geschuetzte Sicherheitskopie dauerhaft aus getBackups() —
+    // die Zeile existiert noch, restoreBackup() meldet aber '❌ Backup nicht gefunden'.
+    test('T19: geschuetzte Sicherheitskopie bleibt nach einem voruebergehenden IndexedDB-Ausfall gelistet und wiederherstellbar', async () => {
+        const schalter = { idbKaputt: false };
+        const w = erzeugeWerkbank({
+            abbruch: namen => schalter.idbKaputt && namen.includes('backups')
+        });
+        mitHeld(w);
+        const sicherung = JSON.stringify(w.ctx.D);
+        expect((await mitFrist(w.ctx.createAutoBackup({ reason: 'safety' }))).wert).toBe('written');
+        let tick = 0;
+        const naechsterTick = async () => {
+            tick++;
+            await warte(3);
+            w.ctx.D.lastSessionDuration = tick * 300;
+            return (await mitFrist(w.ctx.createAutoBackup())).wert;
+        };
+        schalter.idbKaputt = true;
+        await naechsterTick();
+        await naechsterTick();
+        schalter.idbKaputt = false;
+        for (let i = 0; i < 4; i++) await naechsterTick();
+
+        const zeile21 = backupZeilen(w).find(z => z.data === sicherung);
+        expect(zeile21).toBeDefined(); // die Zeile ist nicht verloren, nur unsichtbar
+        const liste = await w.ctx.getBackups();
+        expect(liste.some(b => b.data === sicherung)).toBe(true);
+        expect(liste.length).toBeLessThanOrEqual(5); // MAX_BACKUPS
+        expect(liste.map(b => b.timestamp)).toEqual(
+            liste.map(b => b.timestamp).sort((a, b) => b - a)
+        );
+
+        w.toasts.length = 0;
+        await mitFrist(w.ctx.restoreBackup(String(zeile21.timestamp)), 3000);
+        expect(texte(w)).not.toContain('❌ Backup nicht gefunden');
+    }, 20000);
+
+    test('T19b: ein abgebrochener Tick und 14 gesunde Ticks spaeter ist sie weiterhin gelistet', async () => {
+        const schalter = { idbKaputt: false };
+        const w = erzeugeWerkbank({
+            abbruch: namen => schalter.idbKaputt && namen.includes('backups')
+        });
+        mitHeld(w);
+        const sicherung = JSON.stringify(w.ctx.D);
+        await mitFrist(w.ctx.createAutoBackup({ reason: 'safety' }));
+        let tick = 0;
+        const naechsterTick = async () => {
+            tick++;
+            await warte(3);
+            w.ctx.D.lastSessionDuration = tick * 300;
+            return (await mitFrist(w.ctx.createAutoBackup())).wert;
+        };
+        schalter.idbKaputt = true;
+        await naechsterTick();
+        schalter.idbKaputt = false;
+        for (let i = 0; i < 14; i++) await naechsterTick();
+
+        const liste = await w.ctx.getBackups();
+        expect(liste.some(b => b.data === sicherung)).toBe(true);
+        expect(liste.length).toBeLessThanOrEqual(5);
+    }, 30000);
+
     test('T8 (Kontrolle, U3): Commit-Abbruch (nur abort) -> createAutoBackup kommt binnen 300 ms zurueck und schreibt den localStorage-Rueckfall', async () => {
         const w = erzeugeWerkbank({ abbruch: namen => namen.includes('backups') });
         mitHeld(w);
@@ -835,6 +964,44 @@ describe('R05 (Schreibseite) — localStorage-Rueckfallliste je Kampagne, kein L
         expect(r.wert).toBe('written');
     });
 
+    // Waechter (U5 minor:7): Stufe 2 (nicht-neueste fremde Eintraege) kommt VOR Stufe 4
+    // (neueste fremde Eintraege). Sonst weicht der EINZIGE Eintrag einer Kampagne, obwohl
+    // eine andere einen redundanten aelteren hat.
+    test('T14c: Budget ueberschritten -> der nicht-neueste Eintrag von C weicht, der einzige von A bleibt', async () => {
+        const gross = n => 'x'.repeat(Math.round(n));
+        const KEY_C = 'dnd-campaign-3000';
+        const w = erzeugeWerkbank({
+            idbAus: true,
+            ls: {
+                [INDEX_KEY]: JSON.stringify({
+                    campaigns: [
+                        { key: KEY_A, name: 'Nordmark' },
+                        { key: KEY_B, name: 'Suedland' },
+                        { key: KEY_C, name: 'Cormyr' }
+                    ],
+                    active: KEY_B
+                }),
+                [BACKUP_KEY]: JSON.stringify([
+                    eintrag(KEY_C, 3000, `{"c3":"${gross(1.3 * MB)}"}`),
+                    eintrag(KEY_C, 2000, `{"c2":"${gross(1.3 * MB)}"}`),
+                    eintrag(KEY_A, 1000, `{"a1":"${gross(1.3 * MB)}"}`)
+                ])
+            }
+        });
+        const d = startzustand(w);
+        d.characters = [{ id: 1, name: 'B', notes: gross(0.5 * MB) }];
+        setzeD(w, d);
+
+        const r = await mitFrist(w.ctx.createAutoBackup(), 5000);
+
+        const kennungen = lsListe(w).map(kennung);
+        expect(r.wert).toBe('written');
+        expect(kennungen).toContain(`${KEY_A}@1000`);
+        expect(kennungen).not.toContain(`${KEY_C}@2000`);
+        expect(kennungen).toContain(`${KEY_C}@3000`);
+        expect(lsListe(w)[0].campaignKey).toBe(KEY_B);
+    });
+
     test('T15: kein gueltiger Kampagnenschluessel -> kein IDB-Zugriff, kein localStorage-Write, kein Aufraeumen', async () => {
         const vorher = JSON.stringify([eintrag(KEY_A, 5, '{"a":1}')]);
         const w = erzeugeWerkbank({
@@ -1013,6 +1180,41 @@ describe('D2 = A — deleteCampaign() entfernt auch die Auto-Backups DIESER Kamp
         expect(lsListe(w).map(kennung)).toEqual([`${STANDARD_KEY}@11`]);
         expect(w.alerts.some(a => a.includes('Fehler beim Löschen'))).toBe(true);
     });
+
+    // U5 minor:2 / R10 P2b: ein Auto-Backup-Tick, der WAEHREND der Aufraeum-Transaktion von
+    // deleteCampaign() startet, schrieb die geloeschte Kampagne erneut — seine Transaktion
+    // entsteht nach der Aufraeum-Transaktion und laeuft deshalb auch echt danach. Fuer den
+    // Standard-Schluessel taucht die Zeile in der neuen, leeren Kampagne wieder auf; der
+    // Bestaetigungstext verspricht das Gegenteil (D2 = A).
+    test('T17c: ein Tick waehrend des Aufraeumens schreibt kein Backup der geloeschten Kampagne', async () => {
+        const w = erzeugeWerkbank({
+            aktiv: KEY_A,
+            ls: { [KEY_A]: '{"characters":[{"id":1,"name":"A"}]}' },
+            idbZeilen: [
+                ['campaigns', { id: KEY_A, data: '{}', timestamp: 1 }],
+                ['backups', zeile(KEY_A, 21, '{"a":3}')]
+            ]
+        });
+        mitHeld(w, 'A-Held');
+        // Im Task nach dem ersten index.getAll(KEY_A) des Aufraeumens einen Tick starten
+        let tick = null;
+        const originalPush = w.fake.zaehler.getAll.push.bind(w.fake.zaehler.getAll);
+        w.fake.zaehler.getAll.push = q => {
+            const r = originalPush(q);
+            if (q === KEY_A && !tick) {
+                tick = new Promise(res => naechsterTask(() => res(w.ctx.createAutoBackup())));
+            }
+            return r;
+        };
+
+        const geloescht = await mitFrist(w.ctx.deleteCampaign(), 7000);
+        expect(geloescht.zustand).toBe('erfuellt');
+        expect(tick).not.toBeNull();
+        await mitFrist(tick, 3000);
+        await ruhe();
+
+        expect(backupZeilen(w).filter(z => z.campaignKey === KEY_A)).toHaveLength(0);
+    }, 20000);
 });
 
 // ============================================================
