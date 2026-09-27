@@ -775,6 +775,27 @@ describe('R8 — Renderfehler nach dem Ersetzen ist kein "Backup fehlerhaft"', (
         expect(w.ctx.saveImmediate).toHaveBeenCalledTimes(1);
         expect(w.toasts).toContain('✅ Backup wiederhergestellt');
     });
+
+    // U4 open:3: renderAll() deckt weder das nur beim Start angewandte Theme/Layout noch die
+    // aktive TAB_RENDER_REGISTRY-Ansicht ab. U8 hat dafuer renderAfterDataReplace() gebaut,
+    // aber nur das Konflikt-Neuladen nutzte es — ein wiederhergestelltes settings.theme wirkte
+    // erst beim naechsten Start.
+    test('R8b: ist renderAfterDataReplace() vorhanden, wird es statt renderAll() genutzt', async () => {
+        const probe = erzeugeWerkbank();
+        const w = erzeugeWerkbank({
+            idbBackups: [idbDatensatz(KEY_A, TS, volleKampagne(probe.ctx))]
+        });
+        w.ctx.renderAfterDataReplace = jest.fn(() => w.log.push('renderAfterDataReplace'));
+
+        await wiederherstellenUeberModal(w);
+
+        expect(w.ctx.renderAfterDataReplace).toHaveBeenCalledTimes(1);
+        expect(w.ctx.renderAll).not.toHaveBeenCalled();
+        expect(w.log.indexOf('renderAfterDataReplace')).toBeLessThan(
+            w.log.indexOf('saveImmediate')
+        );
+        expect(w.toasts).toContain('✅ Backup wiederhergestellt');
+    });
 });
 
 describe('R9 — Alt-Stempel 2.11 wird wie in load() migriert', () => {
