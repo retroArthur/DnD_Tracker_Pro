@@ -39,8 +39,15 @@ let _retiredPersistSkipped = false;
 // (Session-Timer, Reparatur nach load(), Standard-Zufallstabellen, Markdown-Onboarding).
 // D4: solche Saves schreiben in einem veralteten Tab nie — geprueft bei der Einplanung UND
 // erneut im Timer-Koerper, weil der Tab in den 300 ms veralten kann. D5: ein solcher Timer
-// zaehlt beim Verlassen nicht als ausdrueckliche Arbeit und fordert keine Rueckfrage an.
+// zaehlt beim Verlassen nicht als ausdrueckliche Arbeit (_hasExplicitPendingWork).
 let _pendingSaveAutomaticOnly = false;
+// persistOnUnload hat entschieden, den ausstehenden entprellten save() NICHT auszufuehren.
+// Die Entlade-Sequenz feuert danach noch pagehide UND visibilitychange (hidden) — beide
+// wuerden ihn ueber flushPendingSave() doch vorziehen und damit die Entscheidung umgehen
+// (D4). Die Markierung gilt nur, solange genau dieser Timer aussteht: save() plant neu und
+// hebt sie auf, cancelPendingSave() verwirft ihn, und laeuft er regulaer, greift in
+// flushPendingSave() schon die Pruefung auf saveTimeout.
+let _unloadFlushDeclined = false;
 // Laufende IndexedDB-Schreibvorgaenge (saveToIndexedDBFallback) und wer auf ihr Ende wartet
 let _persistWritesInFlight = 0;
 const _persistSettleWaiters = [];
@@ -198,6 +205,7 @@ function cancelPendingSave() {
     clearTimeout(saveTimeout);
     saveTimeout = null;
     _pendingSaveAutomaticOnly = false;
+    _unloadFlushDeclined = false;
     return true;
 }
 /**
@@ -313,9 +321,13 @@ function saveAutomatic() {
 // Ausstehenden entprellten Save sofort ausfuehren (pagehide, verstecken, vor dem Neuladen).
 // Ein veralteter Tab zieht nicht vor: sein ausstehender Save laeuft regulaer, solange die
 // Seite lebt, und endet mit ihr, wenn der Nutzer sie nach der Rueckfrage verlaesst.
-function flushPendingSave() {
+// Hat persistOnUnload den Save schon abgelehnt, zieht ihn auch kein Flush der
+// Entlade-Sequenz mehr vor (_unloadFlushDeclined, F2); interne Festschreib-Stellen
+// verlangen ihn mit { force: true } ausdruecklich.
+function flushPendingSave(opts) {
     // R06: waehrend des Konflikt-Neuladens nicht vorziehen — der Save bleibt zurueckgestellt
     if (_campaignWritesRetired || !saveTimeout || _saveSuspendDepth > 0) return;
+    if (_unloadFlushDeclined && !(opts && opts.force)) return;
     const key = window.getActiveCampaignKey();
     if (!key || isCampaignStorageStale(key)) return;
     cancelPendingSave();
@@ -323,7 +335,7 @@ function flushPendingSave() {
 }
 // Fuer interne Reload-Stellen (Kampagnenwechsel): festschreiben und den Commit abwarten
 async function flushPendingSaveAndSettle() {
-    flushPendingSave();
+    flushPendingSave({ force: true });
     await _waitForPersistSettle(PERSIST_SETTLE_CAP_MS);
 }
 // Native "Seite verlassen?"-Rueckfrage anfordern (D5 = A). Browser zeigen sie nur nach einer
@@ -344,13 +356,20 @@ function _askToStay(event) {
  *  - > 5 MB -> nur fuer ausdrueckliche Arbeit einen IndexedDB-Save anstossen (asynchron,
  *    bestmoeglich). Fuer harmlose Nebenaenderungen NICHT: sein put wird nach einem laufenden
  *    Save eines anderen Tabs angelegt und committet danach (D4, F2).
- *  - sonst synchron nach localStorage mit _ts und _rev
+ *  - sonst synchron nach localStorage mit _ts und _rev; scheitert der (Quota), bleibt nur der
+ *    IndexedDB-Rueckfall. Der laeuft IMMER: der ausstehende Timer ist hier schon verworfen und
+ *    die Generation hochgezaehlt, es holt ihn also nichts nach (F2).
  * "Ausdrueckliche Arbeit" ist _hasExplicitPendingWork(): ein rein automatischer Timer zaehlt
  * nicht. Der ausstehende Timer wird erst verworfen, wenn wirklich geschrieben wird — waehlt der
  * Nutzer "Bleiben", laeuft er danach regulaer.
+ * Wird ein ausstehender Save NICHT ausgefuehrt, fragt der Tab nach (D5), damit der Nutzer
+ * entscheidet, statt die Arbeit still verfallen zu lassen — und _unloadFlushDeclined haelt die
+ * spaeteren Flushes der Entlade-Sequenz von genau diesem Save fern (F2).
  */
 function persistOnUnload(event) {
     if (_campaignWritesRetired) return;
+    // Bis eine Schreibentscheidung getroffen ist, gilt der ausstehende Save als abgelehnt
+    _unloadFlushDeclined = true;
     const key = window.getActiveCampaignKey();
     const b = _persistBaseline;
     const explicit = _hasExplicitPendingWork();
@@ -374,7 +393,13 @@ function persistOnUnload(event) {
         return;
     }
     if (_measureDataByteLength(current) / (1024 * 1024) > PERSIST_LS_LIMIT_MB) {
-        if (!explicit) return;
+        if (!explicit) {
+            // Kein put fuer nicht ausdrueckliche Arbeit (D4). Stand dennoch ein — dann
+            // automatischer — Save aus, den wir damit nicht ausfuehren, entscheidet der
+            // Nutzer: die Rueckfrage haelt das Schliessen auf (D5, F2).
+            if (saveTimeout) _askToStay(event);
+            return;
+        }
         cancelPendingSave();
         _persistNow(false);
         _askToStay(event);
@@ -389,10 +414,12 @@ function persistOnUnload(event) {
         _onPersistSuccess(key, current, current);
         return;
     }
-    if (explicit) {
-        _persistNow(false);
-        _askToStay(event);
-    }
+    // Notrettung "localStorage voll": der synchrone Write ist gescheitert, cancelPendingSave()
+    // hat den Timer verworfen und die Generation ist hochgezaehlt — nichts holt diesen Save
+    // nach. Der IndexedDB-Rueckfall ist die letzte Gelegenheit und laeuft deshalb unabhaengig
+    // davon, ob die Arbeit ausdruecklich war; die Rueckfrage laesst den Nutzer entscheiden (F2).
+    _persistNow(false);
+    _askToStay(event);
 }
 // Einmalig: Verlassen-Schutz plus vorgezogener Flush beim Verstecken/pagehide — grosse
 // Kampagnen sind so schon waehrend der Nutzung sicher, nicht erst beim Verlassen
@@ -400,7 +427,8 @@ function initUnloadPersistence() {
     if (window._unloadPersistenceBound) return;
     window._unloadPersistenceBound = true;
     window.addEventListener('beforeunload', persistOnUnload);
-    window.addEventListener('pagehide', flushPendingSave);
+    // Ohne Argument: das Ereignisobjekt darf nicht als Optionen durchschlagen
+    window.addEventListener('pagehide', () => flushPendingSave());
     document.addEventListener('visibilitychange', () => {
         if (document.visibilityState === 'hidden') flushPendingSave();
     });
@@ -719,6 +747,8 @@ const save = function (showMessage = false) {
     // Ein Aufruf ueber save() ist ausdruecklich; saveAutomatic() setzt die Markierung danach
     // wieder (F2)
     _pendingSaveAutomaticOnly = false;
+    // Ein neu eingeplanter Save ist nicht der beim Verlassen abgelehnte (F2)
+    _unloadFlushDeclined = false;
     const updateSaveIndicator = window.updateSaveIndicator;
     updateSaveIndicator('saving');
     if (saveTimeout) clearTimeout(saveTimeout);

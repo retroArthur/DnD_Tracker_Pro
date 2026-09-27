@@ -289,6 +289,7 @@ export default {
     "_statsCapWriteCounter": 'writable',
     "_statsScope": 'writable',
     "_stopProgress": 'readonly',
+    "_unloadFlushDeclined": 'writable',
     "_updateCPFocus": 'readonly',
     "_waitForPersistSettle": 'readonly',
     "_wizardStep": 'writable',

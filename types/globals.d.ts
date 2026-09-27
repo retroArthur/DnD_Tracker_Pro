@@ -370,8 +370,12 @@ declare global {
   /** Automatischer Save nur in einem nicht gesperrten, nicht veralteten Tab (true = angestossen) */
   function saveAutomatic(): boolean;
 
-  /** Ausstehenden entprellten Save sofort ausfuehren (nicht in einem veralteten Tab) */
-  function flushPendingSave(): void;
+  /**
+   * Ausstehenden entprellten Save sofort ausfuehren (nicht in einem veralteten Tab).
+   * Hat persistOnUnload ihn abgelehnt, ziehen die Flushes der Entlade-Sequenz ihn nicht
+   * mehr vor; `force` verlangt ihn fuer interne Festschreib-Stellen trotzdem.
+   */
+  function flushPendingSave(opts?: { force?: boolean }): void;
 
   /** flushPendingSave() plus Warten auf den IndexedDB-Commit (vor internen Reloads) */
   function flushPendingSaveAndSettle(): Promise<void>;

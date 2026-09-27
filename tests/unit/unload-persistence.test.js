@@ -1236,6 +1236,37 @@ describe('R02 — Waechter der Korrekturrunde (F2)', () => {
         expect(JSON.parse(rec.data).sessionNotes).toHaveLength(1);
         expect(ev.defaultPrevented).toBe(true);
     });
+
+    // Gegenprobe zu U9g: der abgelehnte Save bleibt nur von den Flushes der Entlade-Sequenz
+    // verschont. Bleibt der Nutzer und wechselt danach die Kampagne, muss die interne
+    // Festschreib-Stelle ihn weiterhin vorziehen — sonst ginge er beim Neuladen verloren.
+    test('U30: nach "Bleiben" schreibt switchCampaign() den abgelehnten automatischen Save trotzdem fest', async () => {
+        const u = erzeugeUrsprung({ lsQuotaZeichen: LS_QUOTA });
+        u.saeenIdb(KEY, grosseKampagne());
+        u.ls.set(
+            INDEX_KEY,
+            JSON.stringify({ campaigns: [{ key: NEBEN_KEY, name: 'Neben' }], active: KEY })
+        );
+        const A = await oeffneTab(u, 'A', {
+            module: ['systems/campaign-manager/campaign-manager.js']
+        }).starten();
+        A.ctx.D.characters[0].name = 'Automatisch geplant';
+        expect(A.ctx.saveAutomatic()).toBe(true);
+
+        const ev = A.entladen('schliessen', { bleiben: true });
+        expect(ev.defaultPrevented).toBe(true); // Nicht-Vakuitaet: der Save wurde abgelehnt
+        expect(A.geschlossen).toBe(false);
+        expect(JSON.parse(u.idbDatensatz(KEY).data).characters[0].name).toBe('Held 0');
+
+        const fertig = A.ctx.switchCampaign(NEBEN_KEY);
+        await u.uhr.laufen(0);
+        await fertig;
+
+        expect(JSON.parse(u.idbDatensatz(KEY).data).characters[0].name).toBe(
+            'Automatisch geplant'
+        );
+        expect(A.geschlossen).toBe(true);
+    });
 });
 
 // ============================================================
