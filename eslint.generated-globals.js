@@ -124,6 +124,7 @@ export default {
     "MIGRATIONS": 'readonly',
     "MIGRATION_PWA_URL": 'readonly',
     "MINT_CURSOR": 'readonly',
+    "MINT_PEAK": 'readonly',
     "MONSTER_TEMPLATES": 'writable',
     "MUTE_FADE": 'readonly',
     "M_TO_IMPERIAL": 'readonly',

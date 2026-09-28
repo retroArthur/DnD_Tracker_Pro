@@ -351,14 +351,25 @@ function nextFreeEntityId(items, start) {
  *    Untergrenze wuerde ein zweites Mal vergeben (doppelte IDs = R03-Fehlerklasse: ein
  *    `filter(e => e.id !== id)` loescht dann mehrere Entitaeten auf einmal). Deshalb traegt
  *    dieser Zeiger die Erinnerung innerhalb eines Stapels.
- * 2. Seine reine ANWESENHEIT sagt "in diesem Prozess wurde fuer den Typ schon gemuenzt,
- *    es kann eine ID unterwegs sein, die noch in keiner Sammlung steht". Fehlt er, ist der
- *    Stand frisch geladen und allein die Sammlung traegt die Wahrheit — nur dann darf ein
- *    Zaehler von ENTITY_ID_MAX als veralteter Saettigungs-Pin verworfen werden (G2).
+ * 2. Er ist die Untergrenze, unterhalb der in diesem Prozess NICHTS mehr geheilt werden
+ *    darf: liegt max(ID) + 1 noch unter ihm, kann eine bereits herausgegebene Luecken-ID
+ *    unterwegs sein, die in keiner Sammlung steht — sie ein zweites Mal zu vergeben ist
+ *    genau die R03-Fehlerklasse (siehe den Waechter in nextId, G2).
  * Nach einem Neuladen ist der Zeiger weg, die vergebenen IDs stehen dann aber in der
  * Sammlung, also setzt die Lueckensuche dort korrekt fort.
  */
 const MINT_CURSOR = new Map();
+/**
+ * Hoechste im NORMALPFAD gemuenzte ID je Typ — ebenfalls nur im Speicher. Die zweite,
+ * getrennte Erinnerung neben MINT_CURSOR, und zwar aus einem genauen Grund: der
+ * Saettigungszweig setzt MINT_CURSOR selbst wieder nach unten (auf Luecke + 1), taugt also
+ * nicht als Beweis dafuer, wie weit die monotone Vergabe schon gekommen ist. Ohne diese
+ * zweite Marke wuerde der Waechter in nextId() eine schon monoton vergebene ID erneut als
+ * Untergrenze anerkennen und damit doppelt vergeben (gemessen: bei max(ID) = 1e15 - k ab
+ * dem (k+1)-ten Aufruf zyklisch doppelte IDs). Geheilt wird deshalb nur oberhalb BEIDER
+ * Marken.
+ */
+const MINT_PEAK = new Map();
 /**
  * Generiert eine eindeutige ID für einen Entity-Typ.
  * Monoton: ein gueltiger Zaehler wird nie gesenkt (geloeschte IDs werden nicht
@@ -381,13 +392,22 @@ function nextId(type) {
     // schon — dann stammt sie aus dem Zaehler und der ist genau ENTITY_ID_MAX (der einzige
     // gueltige, nie vergebbare Wert). Der Zaehler behauptet also die Saettigung, die
     // Sammlung liegt aber weit darunter: entweder kam der Wert aus einer fremden Datei,
-    // oder die Entitaet an der Obergrenze wurde inzwischen geloescht. Ohne Zeiger ist in
-    // diesem Prozess nichts unterwegs (frisch geladen), also traegt allein die Sammlung die
-    // Wahrheit und die monotone Vergabe setzt ab der Untergrenze wieder auf. Innerhalb
-    // eines Stapels bleibt der Zeiger gesetzt und die Lueckensuche zustaendig — die schon
-    // vergebenen IDs stehen noch in keiner Sammlung, die Untergrenze waere sonst ein
-    // zweites Mal vergeben.
-    if (!isMintableEntityId(id) && isMintableEntityId(floor) && !MINT_CURSOR.has(type)) {
+    // oder die Entitaet an der Obergrenze wurde inzwischen geloescht. Dann darf die
+    // monotone Vergabe ab der Untergrenze wieder aufsetzen, statt geloeschte IDs zu
+    // wiederverwenden — auch mitten in einer Sitzung, in der fuer den Typ schon gemuenzt
+    // wurde (die reine Anwesenheit eines Zeigers taugt dafuer nicht, sie hielte den Pin
+    // ein ganzes Seitenleben fest). Geheilt wird nur OBERHALB beider Speicher-Marken:
+    //   - oberhalb der hoechsten normal gemuenzten ID (MINT_PEAK), sonst wird sie ein
+    //     zweites Mal als Untergrenze anerkannt und doppelt vergeben;
+    //   - nicht unterhalb des Vergabezeigers (MINT_CURSOR), sonst wird eine schon
+    //     herausgegebene Luecken-ID doppelt vergeben, die noch in keiner Sammlung steht.
+    // Darunter bleibt die Lueckensuche zustaendig.
+    if (
+        !isMintableEntityId(id) &&
+        isMintableEntityId(floor) &&
+        floor > (MINT_PEAK.get(type) || 0) &&
+        floor >= (MINT_CURSOR.get(type) || 1)
+    ) {
         id = floor;
     }
     // Saettigung: reicht die Sammlung bis an die Obergrenze heran (solche IDs gibt es nur
@@ -408,10 +428,12 @@ function nextId(type) {
         D._nextId[type] = ENTITY_ID_MAX;
         return id;
     }
-    // Auch der Normalpfad fuehrt den Zeiger fort: er ist die Erinnerung "hier wurde in
-    // diesem Prozess gemuenzt" und damit die Unterscheidung zwischen einem laufenden
-    // Stapel und einem frisch geladenen Stand (siehe oben und MINT_CURSOR).
+    // Auch der Normalpfad fuehrt den Zeiger fort — sonst koennte die Lueckensuche eine
+    // hier schon vergebene ID erneut ausgeben. Die zweite Marke haelt zusaetzlich fest,
+    // wie weit die monotone Vergabe gekommen ist; nur sie bleibt monoton, weil der
+    // Saettigungszweig den Zeiger selbst wieder nach unten setzt (siehe MINT_PEAK).
     MINT_CURSOR.set(type, id + 1);
+    MINT_PEAK.set(type, id);
     // Unterhalb der Saettigung traegt der Zaehler die Erinnerung an die Vergabe und bleibt
     // dabei immer selbst eine gueltige ID (siehe isMintableEntityId): Stapelaufrufe ohne
     // push dazwischen (z. B. der Merge-Zweig des Imports) liefern nie zweimal dieselbe ID.
@@ -445,7 +467,11 @@ function validateAndRepairNextId(data = window.D, types = NEXT_ID_REPAIR_TYPES) 
             counters[type] = correctNextId;
         }
     });
-    if (repairs.length > 0 && window.APP_CONFIG?.DEBUG_MODE && typeof window.debugLogAdd === 'function') {
+    if (
+        repairs.length > 0 &&
+        window.APP_CONFIG?.DEBUG_MODE &&
+        typeof window.debugLogAdd === 'function'
+    ) {
         // Reparatur ist Normalverhalten (Selbstheilung), kein Fehler — nur ins in-App-Debug-Log,
         // nicht ueber den Browser-Konsolenkanal (UAT 01: Konsolen-Hygiene beim Boot)
         window.debugLogAdd(`[validateAndRepairNextId] ID-Reparaturen: ${repairs.join('; ')}`);
