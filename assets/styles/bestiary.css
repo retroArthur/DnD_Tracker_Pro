@@ -135,7 +135,7 @@
 }
 
 .bestiary-fav:hover {
-    color: var(--gold);
+    color: var(--gold-text);
 }
 
 .bestiary-fav.active {
@@ -171,7 +171,7 @@
 .bestiary-detail-name {
     font-size: 1.2em;
     font-weight: 700;
-    color: var(--gold);
+    color: var(--gold-text);
     margin-bottom: 8px;
 }
 
