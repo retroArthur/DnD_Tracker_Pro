@@ -360,18 +360,28 @@ function nextFreeEntityId(items, start, vergeben) {
     return candidate;
 }
 /**
- * Vergabezeiger je Typ — bewusst NUR im Speicher, nie persistiert. Er wird bei JEDEM
- * Muenzen fortgeschrieben und hat zwei Aufgaben:
- * 1. In der Saettigung vergibt nextId() Luecken UNTERHALB des Maximums. Diese niedrige ID
- *    darf nicht im persistenten Zaehler landen: dort liegt sie unter der Untergrenze
- *    max(ID) + 1, gilt beim naechsten Aufruf als veraltet und wird verworfen — die
- *    Untergrenze wuerde ein zweites Mal vergeben (doppelte IDs = R03-Fehlerklasse: ein
- *    `filter(e => e.id !== id)` loescht dann mehrere Entitaeten auf einmal). Deshalb traegt
- *    dieser Zeiger die Erinnerung innerhalb eines Stapels.
- * 2. Er ist die Untergrenze, unterhalb der in diesem Prozess NICHTS mehr geheilt werden
- *    darf: liegt max(ID) + 1 noch unter ihm, kann eine bereits herausgegebene Luecken-ID
- *    unterwegs sein, die in keiner Sammlung steht — sie ein zweites Mal zu vergeben ist
- *    genau die R03-Fehlerklasse (siehe den Waechter in nextId, G2).
+ * Suchzeiger je Typ — bewusst NUR im Speicher, nie persistiert.
+ * Er hat GENAU EINE Aufgabe: er ist der Startwert der Lueckensuche im Saettigungszweig,
+ * damit ein Stapel nicht bei jeder Vergabe wieder von 1 an hochzaehlt. Mehr ist er nicht.
+ * `MINT_CURSOR.get` steht an genau einer Stelle, eben dort.
+ * Was er ausdruecklich NICHT (mehr) ist — hier stand bis G3 das Gegenteil, und diese
+ * Fehlbeschreibung hat die Anlaeufe an dieser Kante wiederholt in die Irre gefuehrt:
+ * er ist KEINE Schranke, unterhalb derer nicht geheilt werden darf, und er traegt AUCH
+ * NICHT die Erinnerung an die Vergaben eines Stapels. Beides leistet allein MINT_ISSUED,
+ * und zwar an BEIDEN Vergabestellen (der Waechter fragt es direkt, die Lueckensuche
+ * bekommt es als `vergeben`). Der Waechter liest den Zeiger seit G2 gar nicht mehr.
+ * Daraus folgt die Sicherheitsaussage: der Zeiger kann KEINE doppelte ID verursachen,
+ * egal wo er steht. Die Suche prueft jeden Kandidaten gegen Sammlung UND `vergeben` und
+ * gibt nur einen freien zurueck — ein falsch stehender Zeiger kostet Schleifendurch-
+ * laeufe, nie die Eindeutigkeit.
+ * Er wird deshalb bewusst NICHT monoton gefuehrt: er faellt auf die zuletzt vergebene ID
+ * zurueck, auch wenn der Waechter auf eine niedrige Untergrenze geheilt hat. Das ist
+ * Absicht, kein Ruecklauf-Fehler. Ein monotoner Zeiger (Math.max, in der Abschlussrunde
+ * G3 geprueft und verworfen) bliebe nach einer hohen Normalpfad-Vergabe an der
+ * Obergrenze stehen, waere dort nie vergebbar, und die Suche finge danach bei JEDER
+ * Vergabe wieder bei 1 an — gemessen 1,5x langsamer bei 500..4000 Vergaben im
+ * Saettigungszweig, ohne dass sich an Gueltigkeit oder Eindeutigkeit irgendetwas aendert
+ * (1008 Gitterpunkte in tests/unit/next-id.test.js, G3a/G3b).
  * Nach einem Neuladen ist der Zeiger weg, die vergebenen IDs stehen dann aber in der
  * Sammlung, also setzt die Lueckensuche dort korrekt fort.
  */
@@ -470,9 +480,11 @@ function nextId(type) {
         D._nextId[type] = ENTITY_ID_MAX;
         return id;
     }
-    // Auch der Normalpfad fuehrt den Zeiger fort — sonst koennte die Lueckensuche eine
-    // hier schon vergebene ID erneut ausgeben. Und jede Vergabe wird gemerkt, egal auf
-    // welchem Zweig: der Waechter oben fragt nach der einzelnen ID (siehe MINT_ISSUED).
+    // Auch der Normalpfad fuehrt den Zeiger nach — und zwar UNBEDINGT, nicht monoton
+    // (kein Math.max, siehe MINT_CURSOR): heilt der Waechter oben auf eine niedrige
+    // Untergrenze, soll die Lueckensuche danach genau dort fortsetzen und nicht wieder
+    // bei 1 beginnen. Jede Vergabe wird zusaetzlich gemerkt, egal auf welchem Zweig:
+    // der Waechter oben fragt nach der einzelnen ID (siehe MINT_ISSUED).
     MINT_CURSOR.set(type, id + 1);
     issued.add(id);
     // Unterhalb der Saettigung traegt der Zaehler die Erinnerung an die Vergabe und bleibt
