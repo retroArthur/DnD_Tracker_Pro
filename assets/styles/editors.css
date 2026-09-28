@@ -630,7 +630,7 @@
 
 .section-toolbar-actions .btn-special:hover {
     background: var(--cyan);
-    color: var(--bg-dark);
+    color: var(--on-cyan);
 }
 
 /* Cart Badge für Warenkorb */
