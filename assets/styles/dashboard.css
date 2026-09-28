@@ -926,8 +926,12 @@
     font-weight: 600;
 }
 
+/* Tinte wechselt mit der Flaeche (R-03): var(--on-gold) aus der Ruheregel
+   faellt auf --gold-dim in Light auf 3,71, mit var(--on-gold-dim) sind es
+   5,66 / 5,09 / 9,89 / 8,51. Gleiche Behandlung wie core.css .btn-gold:hover. */
 .dash-quick-btn.primary:hover {
     background: var(--gold-dim);
+    color: var(--on-gold-dim);
 }
 
 /* Two Column Cards */

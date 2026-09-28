@@ -520,8 +520,12 @@
         /* Code-Review 2026-09-08: stand auf var(--gold) — identisch zur Basisregel
    darueber, der Knopf reagierte also gar nicht. In v1.2 war es #c5a028;
    beim Token-Umbau wurde das dunklere Gold durch das Basis-Gold ersetzt.
-   --gold-dim ist in allen vier Themes vom Basiswert verschieden. */
-        .btn-gold:hover { background: var(--gold-dim); border-color: var(--gold-dim); }
+   --gold-dim ist in allen vier Themes vom Basiswert verschieden.
+   W1-C: und genau deshalb muss die Tinte mitwechseln (R-03). var(--on-gold)
+   aus der Regel darueber faellt auf --gold-dim in Light auf 3,71; mit
+   var(--on-gold-dim) sind es 5,66 / 5,09 / 9,89 / 8,51. Das Token gab es
+   seit Schritt 4 in allen vier Bloecken, nur benutzt hat es niemand. */
+        .btn-gold:hover { background: var(--gold-dim); border-color: var(--gold-dim); color: var(--on-gold-dim); }
         
         /* Forms */
         .form-grid {
