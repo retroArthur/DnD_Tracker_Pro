@@ -1223,6 +1223,13 @@
     transform: translate(-50%, -50%);
     font-size: 0.75em;
     font-weight: 600;
+    /* BLEIBT weiss (Welle 1 Schritt 7). Die Regel hat keinen eigenen
+       Hintergrund: der Text liegt absolut mittig UEBER dem HP-Balken, also
+       je nach Fuellstand ueber der Balkenfarbe ODER ueber der Spur. Die
+       Traegerflaeche ist damit nicht aus dieser Regel ableitbar und wechselt
+       innerhalb desselben Elements. Das ist Schritt 10 (Kaskade aufloesen);
+       hier wird bewusst nicht geraten. Der text-shadow darunter ist der
+       heutige Ersatz fuer den fehlenden Kontrast. */
     color: white;
     text-shadow: 0 1px 2px rgba(0,0,0,0.5);
 }
@@ -1334,6 +1341,11 @@
 
 .dms-dice-btn.dms-dice-d20 {
     background: linear-gradient(135deg, var(--red-dim), var(--red-dark));
+    /* BLEIBT weiss (Welle 1 Schritt 7, Urteilsstelle) — gleiche Lage wie
+       dice.css .floating-dice-trigger: Verlauf zweier abgeleiteter Toene
+       (--red-dim/--red-dark), zu denen es kein --on-* gibt. Gemessen
+       (dark light sepia contrast, schlechtester Punkt): weiss 6,76 8,25
+       7,97 7,20 gegenueber var(--on-red) 2,03 8,25 7,97 1,90. */
     color: white;
     border-color: var(--red-dark);
 }

@@ -685,6 +685,20 @@
             left: 0;
             right: 0;
             background: linear-gradient(135deg, var(--red), var(--red-dark));
+            /* BLEIBT weiss (Welle 1 Schritt 7, Urteilsstelle). Die Flaeche ist
+               ein Verlauf ueber ZWEI Toene, nicht eine volle Akzentflaeche —
+               var(--on-red) waere nur fuer das helle Ende gerechnet und faellt
+               am dunklen durch: --red-dark ist color-mix(--red 55%, #000),
+               und --on-red ist in Dark/Contrast #111111. Gemessen
+               (tests/unit/helpers/wcag-contrast.js, dark light sepia contrast)
+               ueber die ganze Verlaufsspanne, schlechtester Punkt:
+                 weiss        3,76 4,83 4,63 4,00   (dunkles Ende 9,31-10,87)
+                 var(--on-red) 2,03 4,83 4,63 1,90
+               Weiss ist an jedem Punkt die bessere der beiden Tinten. Die
+               Unterschreitung in Dark (3,76) und Contrast (4,00) bleibt und
+               ist hier aktenkundig: abgeleitete Flaechen (--red-dim,
+               --red-dark, --gold-hover, ...) haben kein --on-*-Pendant, das
+               ist Welle 3/4. */
             color: white;
             padding: 12px 20px;
             display: flex;
@@ -714,6 +728,12 @@
         .conflict-banner .btn {
             background: rgba(255,255,255,0.2);
             border-color: rgba(255,255,255,0.3);
+            /* BLEIBT weiss. Die Flaeche ist ein rgba-Literal AUF dem Verlauf
+               der Elternregel, also eine um 20 % aufgehellte Rotflaeche —
+               keine Rolle, zu der es ein --on-* gaebe. Gemessen ueber die
+               Verlaufsspanne (dark light sepia contrast): weiss 3,00 3,78
+               3,56 3,64 am hellen Ende, 5,66 6,63 6,35 6,82 am dunklen.
+               rgba-Flaechen sind Welle 2; hier nur festgehalten. */
             color: white;
         }
         
@@ -1715,6 +1735,22 @@
     cursor: help;
 }
 
+/* Die Schadensartenskala ist eine bedeutungstragende Farbskala und von der
+   Umstellung auf --on-<rolle> ausgenommen (Handoff v3 Paragraph 7). Die
+   Ausnahme ist ab Welle 1 Schritt 7 BELEGT statt behauptet — gemessen mit
+   tests/unit/helpers/wcag-contrast.js gegen die tatsaechliche Flaeche,
+   weisse Tinte, Reihenfolge dark light sepia contrast:
+     --dmg-physical #4b5563        7,56 7,56 7,56 7,56   haelt
+     --dmg-fire     var(--red)     3,76 4,83 4,63 4,00   haelt NICHT in Dark/Contrast
+     --dmg-cold     #3b82f6        3,68 3,68 3,68 3,68   haelt NICHT
+     --dmg-thunder  #8b5cf6        4,23 4,23 4,23 4,23   haelt NICHT
+     --dmg-psychic  #ec4899        3,53 3,53 3,53 3,53   haelt NICHT
+   Vier der fuenf liegen unter 4,5. Das ist keine Freigabe, sondern die
+   Feststellung, dass die Skala als Ganzes neu gerechnet werden muss (alle
+   13 Typen zusammen, sonst verschiebt sich ihre Ordnung) — das gehoert in
+   die Welle, die die Skalen anfasst, nicht in eine Stelle-fuer-Stelle-
+   Ersetzung. --dmg-fire ist ausserdem var(--red) und damit themenabhaengig,
+   die anderen vier nicht. */
 .qref-dmg.physical { background: var(--dmg-physical); color: white; }
 .qref-dmg.fire { background: var(--dmg-fire); color: white; }
 .qref-dmg.cold { background: var(--dmg-cold); color: white; }
