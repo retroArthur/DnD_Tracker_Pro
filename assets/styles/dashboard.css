@@ -1792,7 +1792,18 @@
 }
 
 .qref-cover-badge.gold strong {
-    color: var(--bg-dark);
+    /* Welle 1 Schritt 6, aus Schritt 10 vorgezogen. Die Regel hat keinen
+       eigenen Hintergrund; ihre Flaeche ist die der Elternregel direkt
+       darueber (.qref-cover-badge.gold, background: var(--gold)) — die
+       Kaskade ist hier eindeutig, das <strong> ist ein Kind der Marke.
+       Vorgezogen, weil Schritt 6 die ELTERNregel auf var(--on-gold)
+       umgestellt hat: haette das Kind var(--bg-dark) behalten, waere in
+       Light ein fast weisses <strong> (2,98) inmitten fast schwarzer Schrift
+       auf derselben Goldflaeche stehen geblieben — ein Bruch, den erst
+       dieser Schritt erzeugt haette. Gemessen (dark light sepia contrast):
+       var(--bg-dark) 9,24 2,98 5,65 14,97 -> var(--on-gold) 8,98 5,80 7,10
+       13,46, identisch mit der Elternregel. */
+    color: var(--on-gold);
 }
 
 /* Clickable Dice Formulas */

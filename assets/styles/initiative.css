@@ -847,6 +847,13 @@
 
         .relations-status-btn.neutral:hover,
         .relations-status-btn.neutral.active {
+            /* NICHT Schritt 6: die Flaeche ist --text, keine Akzentrolle.
+               --bg-dark auf --text ist das natuerliche Umkehrpaar und
+               gemessen 14,72 15,96 8,78 21,00 (dark light sepia contrast) —
+               der beste Wert im ganzen Baum. Hier ist nichts zu tun; die
+               Stelle steht nur deshalb in der Restliste von Schritt 6, weil
+               sie denselben Deklarationstext traegt wie die 86 geaenderten.
+               Genau dafuer war die regelweise Klassifikation noetig. */
             background: var(--text);
             color: var(--bg-dark);
         }

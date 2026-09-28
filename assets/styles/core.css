@@ -2269,6 +2269,14 @@
             font-size: 0.65em;
             padding: 2px 6px;
             border-radius: var(--radius-sm);
+            /* NICHT Schritt 6: die Regel hat gar keine Flaeche. Sie wird von
+               features/locations/locations-render.js:153 zur Laufzeit als
+               Inline-Stil gesetzt, aus einem vom Nutzer gespeicherten
+               Farbwert. Welche Rolle darunter liegt, steht deshalb nicht im
+               CSS und ist hier nicht entscheidbar. Das ist Schritt 13
+               (Entscheidung D-7: eine genehmigte Zeile im JS, mit
+               Absicherung gegen unbekannte Altwerte). Bis dahin unveraendert
+               — raten waere hier schlimmer als warten. */
             color: var(--bg-dark);
         }
 

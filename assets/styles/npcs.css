@@ -1101,6 +1101,13 @@
         }
         
         .npc-trigger-reveal.hidden {
+            /* BLEIBT unveraendert (Welle 1 Schritt 6, Ausnahme nach Handoff
+               v3 Paragraph 7). Tinte und Flaeche sind hier ABSICHTLICH
+               dasselbe Token: der Text soll unlesbar sein, bis der
+               Spielleiter ihn aufdeckt — das Verhaeltnis 1,00 ist die
+               Funktion, nicht der Mangel. Die Stelle liegt ausserdem auf
+               keiner Akzentflaeche, sondern auf --bg-dark selbst, und faellt
+               damit gar nicht unter die Regel dieses Schritts. */
             background: var(--bg-dark);
             color: var(--bg-dark);
             border-radius: var(--radius-sm);
@@ -1154,6 +1161,15 @@
         }
         
         .npc-dialog-marker.used {
+            /* NICHT Schritt 6: die Flaeche ist --text-dim, keine
+               Akzentrolle — es gibt kein --on-text-dim, und eines anzulegen
+               waere eine Systemerweiterung. Schritt 9. Schon gemessen, damit
+               Schritt 9 die Zahl nicht neu suchen muss: var(--bg-dark) auf
+               --text-dim MIT der Deckkraft 0,6 ergibt 3,02 3,02 2,73 4,19
+               (dark light sepia contrast) — unter 4,5 in allen vier Themes,
+               und die Ursache ist die Deckkraft, nicht das Token (ohne sie
+               waeren es 5,48 5,27 4,57 9,04, siehe .npc-dialog-status.used
+               unten). */
             background: var(--text-dim);
             opacity: 0.6;
             color: var(--bg-dark); /* F-18: aus der Dublette uebernommen */
@@ -1173,6 +1189,10 @@
         }
         
         .npc-dialog-status.used {
+            /* NICHT Schritt 6, gleiche Lage wie .npc-dialog-marker.used:
+               Flaeche --text-dim, keine Akzentrolle. Gemessen 5,48 5,27 4,57
+               9,04 (dark light sepia contrast) — haelt 4,5 ueberall, hier ist
+               nichts zu tun. Schritt 9 entscheidet nur die Schreibweise. */
             background: var(--text-dim);
             color: var(--bg-dark);
         }
