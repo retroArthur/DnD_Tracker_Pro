@@ -62,7 +62,7 @@
     cursor: pointer;
     padding: 2px 6px;
     border-radius: var(--radius-sm);
-    color: var(--yellow);
+    color: var(--yellow-text);
     font-size: 12px;
     background: transparent;
     transition: background 0.15s;
