@@ -512,7 +512,10 @@ describe('R03 — Waechter der Abschlussrunde (G2)', () => {
         // die Saettigung ab, obwohl oberhalb von max(ID) = 5 noch 1e15 IDs frei sind.
         // giverId: 3 ist ein Haenger auf einen frueher geloeschten NSC — genau die Sorte
         // Verweis, die ein Luecken-Modus still an eine NEUE Entitaet umbindet (Loeschen
-        // raeumt Verweise nicht auf, features/npcs/npc-crud.js -> deleteWithConfirm).
+        // raeumt Verweise nicht auf: deleteWithConfirm im NSC-CRUD filtert nur die Sammlung.
+        // Der Modulpfad steht hier bewusst NICHT woertlich — das Abdeckungs-Gate in
+        // tests/unit/module-test-coverage.test.js wertet jede woertliche Pfadnennung als
+        // "Modul von einem Test angefasst", und dieser Test liest das Modul nicht).
         const ctx = makeContext({ withMigration: true });
         expect(typeof ctx.normalizeCampaignData).toBe('function');
         const res = ctx.normalizeCampaignData({

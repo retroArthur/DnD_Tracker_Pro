@@ -343,24 +343,31 @@ function nextFreeEntityId(items, start) {
     return candidate;
 }
 /**
- * Suchzeiger der Saettigung je Typ — bewusst NUR im Speicher, nie persistiert.
- * In der Saettigung vergibt nextId() Luecken UNTERHALB des Maximums. Diese niedrige ID
- * darf nicht im persistenten Zaehler landen: dort liegt sie unter der Untergrenze
- * max(ID) + 1, gilt beim naechsten Aufruf als veraltet und wird verworfen — die
- * Untergrenze wuerde ein zweites Mal vergeben (doppelte IDs = R03-Fehlerklasse: ein
- * `filter(e => e.id !== id)` loescht dann mehrere Entitaeten auf einmal). Deshalb traegt
- * dieser Zeiger die Erinnerung innerhalb eines Stapels. Nach einem Neuladen ist er weg,
- * die vergebenen IDs stehen dann aber in der Sammlung, also setzt die Lueckensuche dort
- * korrekt fort. Ein Typ unterhalb der Saettigung raeumt seinen Eintrag selbst wieder ab.
+ * Vergabezeiger je Typ — bewusst NUR im Speicher, nie persistiert. Er wird bei JEDEM
+ * Muenzen fortgeschrieben und hat zwei Aufgaben:
+ * 1. In der Saettigung vergibt nextId() Luecken UNTERHALB des Maximums. Diese niedrige ID
+ *    darf nicht im persistenten Zaehler landen: dort liegt sie unter der Untergrenze
+ *    max(ID) + 1, gilt beim naechsten Aufruf als veraltet und wird verworfen — die
+ *    Untergrenze wuerde ein zweites Mal vergeben (doppelte IDs = R03-Fehlerklasse: ein
+ *    `filter(e => e.id !== id)` loescht dann mehrere Entitaeten auf einmal). Deshalb traegt
+ *    dieser Zeiger die Erinnerung innerhalb eines Stapels.
+ * 2. Seine reine ANWESENHEIT sagt "in diesem Prozess wurde fuer den Typ schon gemuenzt,
+ *    es kann eine ID unterwegs sein, die noch in keiner Sammlung steht". Fehlt er, ist der
+ *    Stand frisch geladen und allein die Sammlung traegt die Wahrheit — nur dann darf ein
+ *    Zaehler von ENTITY_ID_MAX als veralteter Saettigungs-Pin verworfen werden (G2).
+ * Nach einem Neuladen ist der Zeiger weg, die vergebenen IDs stehen dann aber in der
+ * Sammlung, also setzt die Lueckensuche dort korrekt fort.
  */
-const SATURATION_CURSOR = new Map();
+const MINT_CURSOR = new Map();
 /**
  * Generiert eine eindeutige ID für einen Entity-Typ.
  * Monoton: ein gueltiger Zaehler wird nie gesenkt (geloeschte IDs werden nicht
  * wiederverwendet); veraltete, ungueltige (NaN, 1e300, 'abc', 2.5) Zaehler und
  * verschachtelte Sammlungen heilen sich selbst ueber die Untergrenze max(ID) + 1.
- * Ausnahme ist allein die Saettigung (siehe SATURATION_CURSOR): oberhalb des Maximums
- * gibt es dort keine gueltige ID mehr, also werden Luecken darunter wiederverwendet.
+ * Ausnahme ist allein die Saettigung: reicht die SAMMLUNG bis an die Obergrenze, gibt es
+ * oberhalb keine vergebbare ID mehr, also werden Luecken darunter wiederverwendet. Das ist
+ * eine Eigenschaft der Sammlung (und des laufenden Stapels, siehe MINT_CURSOR), nie eine
+ * dauerhafte Eigenschaft des Zaehlers.
  * @param type - Entity-Typ (characters, npcs, calendarEvents, combatants, ...)
  * @returns Neue eindeutige ID
  */
@@ -370,6 +377,19 @@ function nextId(type) {
     const floor = maxEntityId(getIdCollection(D, type)) + 1;
     const counter = D._nextId[type];
     let id = isValidEntityId(counter) && counter >= floor ? counter : floor;
+    // Veralteter Saettigungs-Pin (G2): die berechnete ID taugt nicht, die Untergrenze aber
+    // schon — dann stammt sie aus dem Zaehler und der ist genau ENTITY_ID_MAX (der einzige
+    // gueltige, nie vergebbare Wert). Der Zaehler behauptet also die Saettigung, die
+    // Sammlung liegt aber weit darunter: entweder kam der Wert aus einer fremden Datei,
+    // oder die Entitaet an der Obergrenze wurde inzwischen geloescht. Ohne Zeiger ist in
+    // diesem Prozess nichts unterwegs (frisch geladen), also traegt allein die Sammlung die
+    // Wahrheit und die monotone Vergabe setzt ab der Untergrenze wieder auf. Innerhalb
+    // eines Stapels bleibt der Zeiger gesetzt und die Lueckensuche zustaendig — die schon
+    // vergebenen IDs stehen noch in keiner Sammlung, die Untergrenze waere sonst ein
+    // zweites Mal vergeben.
+    if (!isMintableEntityId(id) && isMintableEntityId(floor) && !MINT_CURSOR.has(type)) {
+        id = floor;
+    }
     // Saettigung: reicht die Sammlung bis an die Obergrenze heran (solche IDs gibt es nur
     // aus einer fremden oder beschaedigten Datei), taugt die berechnete ID nicht mehr —
     // sie ist entweder selbst ungueltig oder genau ENTITY_ID_MAX, und beides kommt bei
@@ -377,18 +397,21 @@ function nextId(type) {
     // Luecke unterhalb des Maximums vergeben: geloeschte IDs werden hier bewusst
     // wiederverwendet, weil es oberhalb keine mehr gibt.
     if (!isMintableEntityId(id)) {
-        id = nextFreeEntityId(getIdCollection(D, type), SATURATION_CURSOR.get(type) || 1);
-        SATURATION_CURSOR.set(type, id + 1);
+        id = nextFreeEntityId(getIdCollection(D, type), MINT_CURSOR.get(type) || 1);
+        MINT_CURSOR.set(type, id + 1);
         // Der persistente Zaehler darf die niedrige Luecken-ID NICHT tragen: sie liegt
         // unter der Untergrenze, gilt beim naechsten Aufruf als veraltet und wird
         // verworfen — die Untergrenze waere dann ein zweites Mal vergeben. Er bekommt
-        // stattdessen die Obergrenze selbst: eine gueltige ID (wird also nie verworfen),
-        // die nie neu gemuenzt wird — das dauerhafte Signal "gesaettigt", das jeden
-        // weiteren Aufruf in die Lueckensuche schickt.
+        // stattdessen die Obergrenze selbst: eine gueltige ID, die nie neu gemuenzt wird
+        // (N12), also ein Platzhalter, der den naechsten Aufruf nicht in die Irre fuehrt.
+        // Ob dieser weiter Luecken sucht, entscheidet die Sammlung, nicht dieser Wert.
         D._nextId[type] = ENTITY_ID_MAX;
         return id;
     }
-    SATURATION_CURSOR.delete(type);
+    // Auch der Normalpfad fuehrt den Zeiger fort: er ist die Erinnerung "hier wurde in
+    // diesem Prozess gemuenzt" und damit die Unterscheidung zwischen einem laufenden
+    // Stapel und einem frisch geladenen Stand (siehe oben und MINT_CURSOR).
+    MINT_CURSOR.set(type, id + 1);
     // Unterhalb der Saettigung traegt der Zaehler die Erinnerung an die Vergabe und bleibt
     // dabei immer selbst eine gueltige ID (siehe isMintableEntityId): Stapelaufrufe ohne
     // push dazwischen (z. B. der Merge-Zweig des Imports) liefern nie zweimal dieselbe ID.
@@ -498,7 +521,13 @@ function recomputeNextIds(data, fileCounters) {
     for (const type of Object.keys(ID_COUNTER_PATHS)) {
         const floor = maxEntityId(getIdCollection(data, type)) + 1;
         const counter = counters[type];
-        counters[type] = isValidEntityId(counter) && counter >= floor ? counter : floor;
+        // isMintableEntityId statt isValidEntityId (G2): ein Datei-Zaehler von genau
+        // ENTITY_ID_MAX wird nie gemuenzt, traegt also keine Vergabe-Information — er ist
+        // nur das Signal "gesaettigt" aus einer fremden Datei. Hier, wo garantiert keine
+        // Vergabe unterwegs ist (Restore/Import bauen den Stand gerade erst auf), faellt er
+        // deshalb auf die Untergrenze zurueck. Ist die Sammlung wirklich gesaettigt, ist die
+        // Untergrenze selbst >= ENTITY_ID_MAX und nextId() sucht ohnehin Luecken.
+        counters[type] = isMintableEntityId(counter) && counter >= floor ? counter : floor;
     }
     data._nextId = counters;
     return counters;
