@@ -348,24 +348,24 @@
 }
 
 /* ============================================================
-   CLICKABLE DICE (D-09)
-   Tinte auf Pergament, nicht Palette: die Spans liegen INNERHALB von
-   .bestiary-statblock (read-aloud parchment), und der Pergamentverlauf
-   folgt keinem Theme. Mit var(--cyan)/var(--gold) hielten sie in sieben
-   von acht Faellen keine 4,5 (Contrast 1,02). Seit 2026-09-28 tragen sie
-   --parchment-ink-link / --parchment-ink-link-hover; die Rollen bleiben
-   kuehl in Ruhe, warm im Hover. Bewacht von R-07 in
-   tests/unit/design-consistency.test.js.
+   CLICKABLE DICE (D-09) — NUR im Pergament-Statblock
+   Der Praefix .bestiary-statblock ist PFLICHT: party-details.js:215-216
+   erzeugt Spans derselben Klasse im Charakter-Detail, dort auf --bg bzw.
+   --bg-hover. Ohne Praefix schlug .bestiary-dice:hover (0,2,0, spaeter im
+   @import-Hub) dessen .char-attack-entry .bestiary-dice (0,2,0) und senkte
+   den Hover-Kontrast auf 1,69 (dark/contrast). Auf dem Pergament, das
+   keinem Theme folgt, halten die beiden Tinten 5,93/5,02 und 6,07/5,13.
+   Bewacht von R-07 (Pergament) und R-05 (Kaskade) in design-consistency.
    ============================================================ */
 
-.bestiary-dice {
+.bestiary-statblock .bestiary-dice {
     color: var(--parchment-ink-link);
     cursor: pointer;
     text-decoration: underline dotted;
     transition: color 0.15s;
 }
 
-.bestiary-dice:hover {
+.bestiary-statblock .bestiary-dice:hover {
     color: var(--parchment-ink-link-hover);
 }
 
