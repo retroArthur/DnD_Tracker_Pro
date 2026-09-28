@@ -123,11 +123,11 @@
             font-weight: 600;
         }
         
-        .spell-comp.active { background: var(--gold); color: var(--bg-dark); }
+        .spell-comp.active { background: var(--gold); color: var(--on-gold); }
         .spell-comp.active.ritual { background: var(--purple); color: var(--on-purple); }
-        .spell-comp.active.verbal { background: var(--green); color: var(--bg-dark); }
-        .spell-comp.active.gestik { background: var(--gold); color: var(--bg-dark); }
-        .spell-comp.active.material { background: var(--pink); color: var(--bg-dark); }
+        .spell-comp.active.verbal { background: var(--green); color: var(--on-green); }
+        .spell-comp.active.gestik { background: var(--gold); color: var(--on-gold); }
+        .spell-comp.active.material { background: var(--pink); color: var(--on-pink); }
         .spell-comp.inactive { background: var(--bg-dark); color: var(--text-dim); }
         
         .spell-material {
@@ -416,7 +416,7 @@
 
         .floating-toolbar .editor-btn.active {
             background: var(--gold);
-            color: var(--bg-dark);
+            color: var(--on-gold);
         }
 
         /* Keyboard shortcut hints */
