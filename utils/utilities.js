@@ -342,10 +342,20 @@ function nextFreeEntityId(items, start, vergeben) {
             if (isValidEntityId(n)) belegt.add(n);
         }
     }
+    const frei = n => !belegt.has(n) && !(vergeben ? vergeben.has(n) : false);
     let candidate = isMintableEntityId(start) ? start : 1;
-    while (belegt.has(candidate) || (vergeben ? vergeben.has(candidate) : false)) candidate++;
+    while (!frei(candidate) && isMintableEntityId(candidate)) candidate++;
+    // Der Aufstieg kann oben anstossen, obwohl UNTERHALB des Zeigers frei ist — der
+    // Zeiger steht ja dort, wo die letzte Vergabe endete, nicht dort, wo die Luecken
+    // liegen. Dann noch einmal von 1 an, sonst gibt die Suche auf, obwohl praktisch
+    // alle IDs frei sind (G2m).
+    if (!isMintableEntityId(candidate) && candidate > 1) {
+        candidate = 1;
+        while (!frei(candidate) && isMintableEntityId(candidate)) candidate++;
+    }
     // Bewusst ein Fehler statt einer ungueltigen oder doppelten ID: lieber ein
-    // sichtbarer Abbruch als stiller Datenverlust beim naechsten Loeschen.
+    // sichtbarer Abbruch als stiller Datenverlust beim naechsten Loeschen. Hier ist
+    // er echt: jede vergebbare ID ist belegt.
     if (!isMintableEntityId(candidate)) throw new Error('Keine freie ID');
     return candidate;
 }
@@ -423,8 +433,15 @@ function nextId(type) {
     // sowohl die noch nicht abgelegte Luecken-ID eines Stapels als auch eine bereits
     // monoton vergebene Untergrenze. Ist auch der erste freie Kandidat nicht mehr
     // vergebbar, bleibt die Lueckensuche zustaendig.
-    if (!isMintableEntityId(id) && isMintableEntityId(floor)) {
-        let candidate = floor;
+    // Derselbe Aufstieg heilt einen zweiten Fall (G2l): die berechnete ID ist vergebbar,
+    // aber dieses Seitenleben hat sie schon herausgegeben. Der Zaehler kann das nicht
+    // verhindern — schreibt der Waechter eine niedrige geheilte ID hinein, ist die
+    // Erinnerung an eine hohe, noch unterwegs befindliche ID dort weg, und ein Restore
+    // hebt die Untergrenze auf genau sie zurueck. Beide Faelle sind dieselbe Frage nach
+    // derselben Menge, also derselbe Aufstieg — nur beginnt er beim Kandidaten selbst,
+    // wenn der schon oberhalb der Untergrenze liegt (die Vergabe bleibt monoton).
+    if ((!isMintableEntityId(id) || issued.has(id)) && isMintableEntityId(floor)) {
+        let candidate = isMintableEntityId(id) && id > floor ? id : floor;
         while (issued.has(candidate) && isMintableEntityId(candidate)) candidate++;
         if (isMintableEntityId(candidate)) id = candidate;
     }
@@ -433,8 +450,10 @@ function nextId(type) {
     // sie ist entweder selbst ungueltig oder genau ENTITY_ID_MAX, und beides kommt bei
     // jedem Aufruf identisch zurueck, also doppelte IDs. Stattdessen die erste freie
     // Luecke unterhalb des Maximums vergeben: geloeschte IDs werden hier bewusst
-    // wiederverwendet, weil es oberhalb keine mehr gibt.
-    if (!isMintableEntityId(id)) {
+    // wiederverwendet, weil es oberhalb keine mehr gibt. Zustaendig ist die Suche auch
+    // dann, wenn der Aufstieg oben angestossen ist und die ID noch herausgegeben ist
+    // (G2l): oberhalb der Untergrenze existiert dann nachweislich nichts Freies mehr.
+    if (!isMintableEntityId(id) || issued.has(id)) {
         // Die Suche bekommt BEIDE Belegungen: die Sammlung und die schon herausgegebenen
         // IDs dieses Seitenlebens. Der Startzeiger allein genuegt nicht — er faellt mit
         // jeder geheilten niedrigen Untergrenze zurueck und laeuft dann erneut ueber
