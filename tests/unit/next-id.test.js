@@ -596,6 +596,85 @@ describe('R03 — Waechter der Abschlussrunde (G2)', () => {
         expect(istGueltigeId(sitzung2.D._nextId.npcs)).toEqual({ id: 7, gueltig: true });
     });
 
+    test('G2f: der veraltete Pin heilt im SELBEN Seitenleben — ohne Neuladen', () => {
+        // Korrekturrunde 1 der Abschlussrunde: G2b pinnt den Weg ueber ein Neuladen
+        // (frischer Kontext = frischer Vergabezeiger). Genau daran hing der Waechter aber:
+        // er sprang nur, solange fuer den Typ in diesem Prozess noch NIE gemuenzt worden
+        // war. Nach dem ersten nextId() konnte der Pin in dieser Sitzung nicht mehr heilen.
+        // Der Ablauf braucht kein Neuladen, keinen Import, kein Undo: "NSC anlegen, die
+        // komische importierte Entitaet loeschen, naechsten NSC anlegen". Gemessen vor der
+        // Korrektur: der zweite Aufruf gab 3 zurueck — eine geloeschte ID, obwohl 501 frei
+        // war — und band den Haenger quest.giverId = 3 an den NEUEN NSC um.
+        const ctx = makeContext();
+        ctx.D.npcs = [
+            { id: 1, name: 'Borin' },
+            { id: 500, name: 'Mira' },
+            { id: 1e15, name: 'Fremd' }
+        ];
+        ctx.D.quests = [{ id: 2, title: 'Auftrag', giverId: 3 }];
+        ctx.recomputeNextIds(ctx.D);
+
+        // Erster Aufruf: die Saettigung ist hier ECHT (max(ID) = 1e15), die Luecke
+        // unterhalb der Grenze ist die einzige Moeglichkeit.
+        const inSaettigung = vergebenUndAblegen(ctx, 1, 'S1-');
+        expect(inSaettigung).toEqual([2]);
+
+        // Der Nutzer loescht die fremde Obergrenzen-Entitaet — im selben Seitenleben.
+        ctx.D.npcs = ctx.D.npcs.filter(n => n.id !== 1e15);
+        expect(ctx.maxEntityId(ctx.D.npcs) + 1).toBe(501);
+
+        const neu = vergebenUndAblegen(ctx, 2, 'NEU');
+
+        // 1. Die Bedeutung zuerst: der Haenger auf den laengst geloeschten NSC 3 bleibt
+        //    ein Haenger. Zeigt er auf eine Entitaet, hat die App eine fremde Beziehung
+        //    erfunden — still, dauerhaft, ohne Signal.
+        const giver = ctx.D.npcs.find(n => n.id === ctx.D.quests[0].giverId);
+        expect({ giverId: ctx.D.quests[0].giverId, zeigtAuf: giver ? giver.name : null }).toEqual({
+            giverId: 3,
+            zeigtAuf: null
+        });
+        // 2. Der Mechanismus: die Sammlung reicht nur bis 500, also setzt die monotone
+        //    Vergabe darueber auf, statt Luecken (3, 4, ...) wiederzuverwenden.
+        expect({ neu, unterhalbDerUntergrenze: neu.filter(id => id < 501) }).toEqual({
+            neu: [501, 502],
+            unterhalbDerUntergrenze: []
+        });
+        // 3. Der Zaehler traegt die Vergabe und bleibt selbst eine gueltige ID (N12).
+        expect(istGueltigeId(ctx.D._nextId.npcs)).toEqual({ id: 503, gueltig: true });
+        const ids = ctx.D.npcs.map(n => n.id);
+        expect(new Set(ids).size).toBe(ids.length);
+    });
+
+    test('G2g: eine unvergebene Luecken-ID unterwegs verhindert das Heilen (kein Duplikat)', () => {
+        // Die Gegenrichtung zu G2f und die Grenze der Korrektur: der Saettigungszweig gibt
+        // eine niedrige Luecken-ID heraus, die noch in KEINER Sammlung steht (Stapel ohne
+        // push, Merge-Zweig des Imports). Faellt die Obergrenzen-Entitaet genau dazwischen
+        // weg, sinkt die Untergrenze auf genau diese unterwegs befindliche ID. Wer nur die
+        // hoechste normal gemuenzte ID vergleicht, heilt hier und vergibt 4 ein zweites Mal
+        // (gemessen: mint1 = 4, mint2 = 4). Der Vergabezeiger ist die zweite, getrennte
+        // Erinnerung, die das verhindert.
+        const ctx = makeContext();
+        ctx.D.npcs = [{ id: 1 }, { id: 2 }, { id: 3 }, { id: 1e15, name: 'Fremd' }];
+        ctx.recomputeNextIds(ctx.D);
+
+        const unterwegs = ctx.nextId('npcs'); // bewusst NICHT abgelegt
+        expect(unterwegs).toBe(4);
+        ctx.D.npcs = ctx.D.npcs.filter(n => n.id !== 1e15);
+        expect(ctx.maxEntityId(ctx.D.npcs) + 1).toBe(4);
+
+        const zweite = ctx.nextId('npcs');
+        expect({ unterwegs, zweite, doppelt: unterwegs === zweite }).toEqual({
+            unterwegs: 4,
+            zweite: 5,
+            doppelt: false
+        });
+        // Beide IDs landen in der Sammlung: ein Loeschen darf genau eine Entitaet treffen.
+        ctx.D.npcs.push({ id: unterwegs, name: 'A' }, { id: zweite, name: 'B' });
+        const ids = ctx.D.npcs.map(n => n.id);
+        expect(new Set(ids).size).toBe(ids.length);
+        expect(ctx.D.npcs.filter(e => e.id !== unterwegs).length).toBe(ids.length - 1);
+    });
+
     test('G2c: recomputeNextIds heilt den veralteten Pin, echte Saettigung bleibt', () => {
         const ctx = makeContext();
         // Veralteter Pin bei harmloser Sammlung -> Untergrenze. 1e15 ist gueltig, aber
