@@ -1594,4 +1594,52 @@ describe('D-B — nicht oeffenbare IndexedDB: der Nutzer entscheidet (clearStora
         expect(meldung).toContain('lokal');
         expect(w.alerts.some(a => a.includes('Es wurde nichts gelöscht'))).toBe(false);
     });
+
+    // Dieselbe Verzweigung fuer eine BENANNTE Kampagne (Korrekturrunde F9): dort entfernt
+    // Schritt 1 von deleteCampaign() den Indexeintrag, BEVOR die Rueckfrage gestellt wird.
+    // Die Rueckfrage sagt woertlich "ABBRECHEN (empfohlen): Es wird nichts geloescht. Erst
+    // exportieren, dann spaeter erneut versuchen." — also darf ein Abbruch die Kampagne auch
+    // nicht aus der Liste verlieren: sonst ist sie ueber die Oberflaeche nicht mehr
+    // erreichbar (es gibt keine Waisen-Wiederherstellung) und genau der empfohlene Weg ist
+    // versperrt.
+    test('T24: deleteCampaign (benannte Kampagne) — "Abbrechen" laesst den Indexeintrag stehen, die Kampagne bleibt erreichbar', async () => {
+        const w = nichtOeffenbar({ antworten: [true, false] });
+        const r = await mitFrist(w.ctx.deleteCampaign(), 3000);
+        expect(r.zustand).toBe('erfuellt');
+        await ruhe();
+        expect(w.confirms).toHaveLength(2);
+        expect(w.confirms[1]).toContain('IndexedDB');
+        // Die Zusage der Rueckfrage: es wird nichts geloescht — auch nicht der Indexeintrag
+        const index = JSON.parse(w.ls.get(INDEX_KEY));
+        expect(index.campaigns.map(c => c.key)).toEqual([KEY_A, KEY_B]);
+        expect(index.active).toBe(KEY_B);
+        expect(w.ls.get(KEY_B)).toBe(WIKI);
+        expect(w.ls.has(KEY_B + '_ts')).toBe(true);
+        expect(w.fake.tab('campaigns').has(KEY_B)).toBe(true);
+        expect(w.alerts.some(a => a.includes('Es wurde nichts gelöscht'))).toBe(true);
+        expect(w.alerts.some(a => a.includes('aus der Liste entfernt'))).toBe(false);
+        // Kein Verlassen der Seite, und der Tab darf wieder schreiben
+        expect(w.ctx.location.href).toBe('file:///dnd-tracker.html');
+        expect(w.ctx.areCampaignWritesRetired()).toBe(false);
+    });
+
+    test('T25: deleteCampaign (benannte Kampagne) nach der Bestaetigung — lokale Daten weg, Kampagne aus der Liste, Meldung ehrlich', async () => {
+        const w = nichtOeffenbar({ antworten: [true, true] });
+        const r = await mitFrist(w.ctx.deleteCampaign(), 3000);
+        expect(r.zustand).toBe('erfuellt');
+        await ruhe();
+        expect(w.confirms).toHaveLength(2);
+        expect(w.ls.has(KEY_B)).toBe(false);
+        expect(w.ls.has(KEY_B + '_ts')).toBe(false);
+        expect(w.ls.has(KEY_B + '_rev')).toBe(false);
+        // Die IndexedDB-Kopie bleibt — genau darauf weist die Meldung hin
+        expect(w.fake.tab('campaigns').has(KEY_B)).toBe(true);
+        const index = JSON.parse(w.ls.get(INDEX_KEY));
+        expect(index.campaigns.map(c => c.key)).toEqual([KEY_A]);
+        expect(index.active).toBe(STANDARD_KEY);
+        const meldung = w.alerts.find(a => a.includes('IndexedDB'));
+        expect(meldung).toBeDefined();
+        expect(meldung).toContain('lokal');
+        expect(w.ctx.location.href).toContain('?cleared=');
+    });
 });

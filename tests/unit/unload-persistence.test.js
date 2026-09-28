@@ -1602,5 +1602,61 @@ describe('D-C — veralteter Tab mit ausdruecklicher Arbeit wechselt verlustfrei
         expect(A.toasts.map(t => t.text).join(' | ')).not.toContain('Sicherungskopie');
         expect(A.entladungen[0].defaultPrevented).toBe(false);
         expect(JSON.parse(u.ls.get(INDEX_KEY)).active).toBe(NEBEN_KEY);
+        // Gegenprobe zu U34/U35: ein sauberer Wechsel haelt den Nutzer mit nichts auf
+        expect(A.alerts).toEqual([]);
+    });
+
+    // Zustellbarkeit (Korrekturrunde F9): der Hinweis ist das EINZIGE, was den Weg zurueck
+    // nennt — die Sicherungskopie gehoert der ALTEN Kampagne, und getBackups() zeigt nur die
+    // Backups der aktiven. showToast() schreibt aber nur in das DOM-Element #event-log, und
+    // switchCampaign() laedt unmittelbar danach ohne jede Verzoegerung neu. Der Hinweis muss
+    // also blockierend zugestellt werden, BEVOR der Reload das Log wegwischt.
+    test('U34: der gesicherte Wechsel meldet den Weg zurueck blockierend und VOR dem Neuladen', async () => {
+        const u = erzeugeUrsprung();
+        u.saeen(KEY, kampagne(['Aria']));
+        nebenkampagne(u);
+        const A = await mitBackups(u, 'A').starten();
+        const B = await oeffneTab(u, 'B').starten();
+        await bSpeichertBorin(u, B);
+        A.ctx.D.characters[0].name = 'Nur in A';
+        A.ctx.save();
+        // Beweist die Reihenfolge: zum Zeitpunkt der Meldung zeigt der Index noch auf die
+        // ALTE Kampagne — der Wechsel und damit das Neuladen sind noch nicht geschrieben.
+        const aktivBeiMeldung = [];
+        A.ctx.alert = m => {
+            A.alerts.push(String(m));
+            aktivBeiMeldung.push(JSON.parse(u.ls.get(INDEX_KEY)).active);
+        };
+
+        const fertig = A.ctx.switchCampaign(NEBEN_KEY);
+        await u.uhr.laufen(0);
+        await fertig;
+
+        const meldung = A.alerts.find(a => /Sicherungskopie/.test(a));
+        expect(meldung).toBeDefined();
+        // Sie nennt die Kampagne, unter deren Backups der Stand jetzt liegt
+        expect(meldung).toContain('Standard-Kampagne');
+        expect(aktivBeiMeldung).toEqual([KEY]);
+        expect(A.geschlossen).toBe(true);
+    });
+
+    test('U35: auch die ehrliche Meldung "nicht gespeichert" wird blockierend zugestellt', async () => {
+        const u = erzeugeUrsprung();
+        u.saeen(KEY, kampagne(['Aria']));
+        nebenkampagne(u);
+        const A = await mitBackups(u, 'A').starten();
+        const B = await oeffneTab(u, 'B').starten();
+        await bSpeichertBorin(u, B);
+        A.ctx.D.characters[0].name = 'Nur in A';
+        A.ctx.save();
+        A.ctx.createAutoBackup = () => Promise.resolve('skipped-empty');
+
+        const fertig = A.ctx.switchCampaign(NEBEN_KEY);
+        await u.uhr.laufen(0);
+        await fertig;
+
+        expect(A.alerts.some(a => /nicht gespeichert/.test(a))).toBe(true);
+        expect(A.geschlossen).toBe(true);
+        expect(JSON.parse(u.ls.get(INDEX_KEY)).active).toBe(NEBEN_KEY);
     });
 });
