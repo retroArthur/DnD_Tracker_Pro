@@ -413,7 +413,7 @@
         .concentration-check-banner .conc-roll-btn {
             padding: 4px 10px;
             background: var(--purple);
-            color: white;
+            color: var(--on-purple);
             border: none;
             border-radius: var(--radius-sm);
             cursor: pointer;
@@ -472,7 +472,7 @@
         .aoe-roll-btn {
             padding: 10px 16px;
             background: var(--red);
-            color: white;
+            color: var(--on-red);
             border: none;
             border-radius: var(--radius-md);
             cursor: pointer;
@@ -489,7 +489,7 @@
         .aoe-damage-result {
             padding: 8px 14px;
             background: var(--red);
-            color: white;
+            color: var(--on-red);
             border-radius: var(--radius-md);
             font-weight: 700;
             font-size: 1.2em;
@@ -618,7 +618,7 @@
         .aoe-apply-btn {
             padding: 10px 20px;
             background: var(--red);
-            color: white;
+            color: var(--on-red);
             border: none;
             border-radius: var(--radius-md);
             cursor: pointer;
@@ -754,7 +754,7 @@
 
         .npc-relation-btn.danger:hover {
             background: var(--red);
-            color: white;
+            color: var(--on-red);
             border-color: var(--red);
         }
 
@@ -1156,7 +1156,7 @@
     padding: 4px 8px;
     font-size: 0.8em;
     background: var(--red);
-    color: white;
+    color: var(--on-red);
     border: none;
     border-radius: var(--radius-sm);
     cursor: pointer;
