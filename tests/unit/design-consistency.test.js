@@ -2616,6 +2616,24 @@ describe("R-06 — jeder Zeilenanker der Aktenlage trifft seine Deklaration (Rat
    und `.bestiary-statblock-section-heading` (deren border-bottom mitgezaehlt).
    Gruen wird sie mit Schritt 11.
 
+   NACHTRAG 2026-09-28 (Pruefrunde W1-E): ihr Suchmuster liess
+   `.bestiary-dice` aus — die Wuerfelspans in Merkmalen und Aktionen, die
+   mitten auf dem Pergament liegen und mit `var(--cyan)`/`var(--gold)` die
+   SCHLECHTESTEN Werte des ganzen Kastens trugen, schlechter als die in
+   Schritt 11 behobenen 2,58-3,92. Gemessen mit dem Helfer dieser Datei,
+   je Theme Ruhe / Hover, jeweils beide Verlaufsenden:
+
+       dark    1,59 / 1,35   und   1,71 / 1,44
+       light   2,99 / 2,53   und   2,64 / 2,23
+       sepia   2,56 / 2,17   und   5,76 / 4,87
+       contrast 1,02 / 1,16  und   1,14 / 1,04
+
+   Einziger Wert ueber 4,5: Sepia im Hover. Die zwei Regeln tragen seitdem
+   --parchment-ink-link #105f6b (5,93 / 5,02) und --parchment-ink-link-hover
+   #7a4a00 (6,07 / 5,13) — dieselbe Loesung wie beim Statblock-Rot, eigene
+   themenunabhaengige Pergamenttinte statt Palettenfarbe. Die Rollen bleiben
+   erhalten: kuehl in Ruhe, warm im Hover.
+
    NICHT GEMEINT ist `.bestiary-statblock-subline` mit ihrem
    `rgba(44, 24, 16, 0.7)`. Das ist zwar das einzige rgba-Literal im ganzen
    Baum, das als Textfarbe steht, aber es ist themenunabhaengig UND es haelt:
@@ -2637,8 +2655,22 @@ describe('R-07 — Pergament-Statblock: themenunabhaengige Tinte (Ratsche)', () 
     const RENDER_MODUL = path.join(REPO, 'features/bestiary/bestiary-render.js');
     /** Die Regeln, die IM Statblock faerben. `.bestiary-attribution` faengt
      *  der Praefix `.bestiary-attr` sonst mit ein — deshalb die drei
-     *  Zellenklassen einzeln statt als Praefix. */
-    const IM_STATBLOCK = /\.bestiary-statblock|\.bestiary-attr-(?:cell|label|value)\b/;
+     *  Zellenklassen einzeln statt als Praefix.
+     *
+     *  `.bestiary-dice` traegt keinen `bestiary-statblock`-Praefix und fiel
+     *  deshalb bis 2026-09-28 aus dem Muster — lautlos, wie es sich fuer
+     *  diesen Fehlertyp gehoert. Die Spans entstehen in
+     *  renderClickableDice() (bestiary-render.js:41) und gehen ueber
+     *  renderTraitList() (:240, :249) in Merkmale und Aktionen; beides
+     *  verpackt renderStatblockHTML() (:300) in die Pergamentschachtel, auf
+     *  demselben Weg auch in der Initiative-Schublade
+     *  (initiative-statblock.js:86). Die Spans liegen also mitten auf dem
+     *  Pergament und trugen mit `var(--cyan)`/`var(--gold)` die schlechteste
+     *  Tinte des ganzen Kastens (Contrast 1,02 in Ruhe, 1,04 im Hover).
+     *  Seit der Aufnahme ins Muster bewacht die Ratsche das, was ihre
+     *  Ueberschrift immer schon behauptet hat: JEDE Tinte im Statblock. */
+    const IM_STATBLOCK =
+        /\.bestiary-statblock|\.bestiary-attr-(?:cell|label|value)\b|\.bestiary-dice\b/;
     /** Die getoente Attributzelle liegt zwischen Tinte und Pergament. */
     const ZELLE = /\.bestiary-attr-(?:label|value)\b/;
     const ZELL_TOENUNG = 'rgba(139, 69, 19, 0.08)';
@@ -2740,8 +2772,11 @@ describe('R-07 — Pergament-Statblock: themenunabhaengige Tinte (Ratsche)', () 
             });
         });
 
-        // Gegenprobe: die Ratsche muss die Stellen wirklich SEHEN.
-        expect(geprueft).toBeGreaterThanOrEqual(6);
+        // Gegenprobe: die Ratsche muss die Stellen wirklich SEHEN. Die
+        // Untergrenze stieg mit `.bestiary-dice` von 6 auf 8 (Ruhe und Hover
+        // sind zwei eigene Regeln) — eine Zahl, die beim Schrumpfen des
+        // Suchmusters sofort faellt, statt es lautlos zu erlauben.
+        expect(geprueft).toBeGreaterThanOrEqual(8);
         expect([...new Set(befunde)].sort()).toEqual([]);
     });
 });
