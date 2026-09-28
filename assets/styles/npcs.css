@@ -133,7 +133,7 @@
     padding: 2px 6px;
     border-radius: var(--radius-sm);
     background: var(--purple);
-    color: white;
+    color: var(--on-purple);
 }
 
 .npc-item-meta {
@@ -526,7 +526,7 @@
     padding: 2px 6px;
     background: var(--purple);
     border-radius: var(--radius-sm);
-    color: white;
+    color: var(--on-purple);
 }
 
 .loot-item-meta {
@@ -1024,7 +1024,7 @@
             color: var(--text-dim);
         }
         
-        .npc-list-tag.quest { background: var(--purple); color: white; }
+        .npc-list-tag.quest { background: var(--purple); color: var(--on-purple); }
         .npc-list-tag.relation { background: var(--green); color: var(--on-green); }
         .npc-list-tag.info { background: var(--cyan); color: var(--on-cyan); }
         .npc-list-tag.clickable { 
@@ -1144,7 +1144,7 @@
             height: 24px;
             border-radius: 50%;
             background: var(--purple);
-            color: white;
+            color: var(--on-purple);
             display: flex;
             align-items: center;
             justify-content: center;
