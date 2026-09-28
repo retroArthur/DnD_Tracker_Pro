@@ -2546,3 +2546,174 @@ describe("R-06 — jeder Zeilenanker der Aktenlage trifft seine Deklaration (Rat
     expect(befunde.sort()).toEqual([]);
   });
 });
+
+/* ===========================================================================
+   Design-Handoff v3, Welle 1 — R-07: das Statblock-Pergament traegt keine
+   Theme-Farbe
+   ===========================================================================
+   Der Bestiarium-Statblock liegt NICHT auf einer Theme-Flaeche. Er liegt auf
+   der Vorlese-Papierpalette: `features/bestiary/bestiary-render.js:300` baut
+   `<div class="bestiary-statblock read-aloud parchment">`, und
+   `party.css .read-aloud.parchment` faerbt das mit einem Verlauf aus
+   --ra-parchment-from (#f5e6c8) nach --ra-parchment-to (#e8d4a8). Diese beiden
+   Toene stehen im Aliasblock und sind in ALLEN vier Themes dieselben — das ist
+   Absicht und von einem eigenen Test ("die Vorlese-Papierpalette bleibt
+   themenunabhaengig") bewacht.
+
+   DER FEHLER, GEGEN DEN DIESE RATSCHE STEHT, ist die Kombination aus beidem:
+   eine Tinte, die dem Theme folgt, auf einer Flaeche, die es nicht tut. Genau
+   das stand hier bis zum 2026-09-28: `color: var(--red)` auf dem Pergament,
+   gemessen (eigener Lauf mit diesem Rechner, beide Verlaufsenden)
+
+       dark 3,05 / 2,58 · light 3,92 / 3,31 · sepia 3,75 / 3,17 · contrast 3,24 / 2,74
+
+   — also in keinem einzigen Theme 4,5, und am hellen Ende nie ueber 3,92. Der
+   Wert schwankt ausserdem mit einer Einstellung, die auf die Flaeche keinerlei
+   Wirkung hat; wer --red fuer ein Theme aufhellt, verschlechtert den Statblock,
+   ohne es zu merken.
+
+   WARUM KEINE DER DREI IM HANDOFF VORGESCHLAGENEN ERSATZTINTEN GENOMMEN WURDE:
+   --parchment-ink #5c2d0a ist Braun, --parchment-ink-dark #2c1810 fast Schwarz,
+   --ra-parchment-rule #8b4513 Sattelbraun. Der Kommentar ueber
+   `.bestiary-statblock-name` sagt seit jeher "classic 5e red", und §7 des
+   Auftrags schuetzt genau diese Gestaltungsabsicht. Statt sie zu loeschen,
+   traegt der Statblock jetzt eine EIGENE, themenunabhaengige Pergamenttinte:
+   --parchment-ink-red #58180d, gemessen 10,98 gegen --ra-parchment-from und
+   9,29 gegen --ra-parchment-to, in allen vier Themes identisch.
+
+   WAS SIE PRUEFT, in drei Stufen, damit sie nicht an einer verschobenen
+   Voraussetzung vorbeigruent:
+     (1) die Flaeche ist noch die, von der die Zahlen handeln — das Markup
+         setzt `read-aloud parchment` und die Regel dazu faerbt mit BEIDEN
+         Verlaufstokens;
+     (2) jede Tinte im Statblock loest in allen vier Themes auf DENSELBEN Wert
+         auf (Themenunabhaengigkeit);
+     (3) sie haelt 4,5 (Text) bzw. 3 (Linien) auf beiden Verlaufsenden.
+
+   SIE IST BEI IHRER GEBURT ROT, mit zwei Stellen: `.bestiary-statblock-name`
+   und `.bestiary-statblock-section-heading` (deren border-bottom mitgezaehlt).
+   Gruen wird sie mit Schritt 11.
+
+   NICHT GEMEINT ist `.bestiary-statblock-subline` mit ihrem
+   `rgba(44, 24, 16, 0.7)`. Das ist zwar das einzige rgba-Literal im ganzen
+   Baum, das als Textfarbe steht, aber es ist themenunabhaengig UND es haelt:
+   ueber dem jeweiligen Verlaufsende zusammengesetzt ergibt es #685647 bzw.
+   #64503e und damit 5,66 und 5,22. Literal -> Token ist Welle-2-Arbeit, kein
+   Kontrastmangel. Ebenso NICHT gemeint ist `.bestiary-attribution`: sie steht
+   trotz des gemeinsamen Namensanfangs ausserhalb des Statblocks
+   (bestiary-render.js:435, Geschwister der Statblock-Schachtel).
+   =========================================================================== */
+describe('R-07 — Pergament-Statblock: themenunabhaengige Tinte (Ratsche)', () => {
+    /** Die Regeln, die IM Statblock faerben. `.bestiary-attribution` faengt
+     *  der Praefix `.bestiary-attr` sonst mit ein — deshalb die drei
+     *  Zellenklassen einzeln statt als Praefix. */
+    const IM_STATBLOCK = /\.bestiary-statblock|\.bestiary-attr-(?:cell|label|value)\b/;
+    /** Die getoente Attributzelle liegt zwischen Tinte und Pergament. */
+    const ZELLE = /\.bestiary-attr-(?:label|value)\b/;
+    const ZELL_TOENUNG = 'rgba(139, 69, 19, 0.08)';
+
+    const TEXT_SCHWELLE = 4.5;
+    const LINIEN_SCHWELLE = 3;
+
+    test('die Flaeche ist noch der Pergamentverlauf — sonst handelt der Rest von nichts', () => {
+        const js = fs.readFileSync(
+            path.join(REPO, 'features', 'bestiary', 'bestiary-render.js'),
+            'utf8'
+        );
+        expect(js).toContain('class="bestiary-statblock read-aloud parchment"');
+
+        const party = cssFiles.find(f => f.name === 'party.css').content;
+        const regel = regelnMitRumpf(party).find(r => /\.read-aloud\.parchment\b/.test(r.sel));
+        expect(regel).toBeDefined();
+        const flaeche = deklaration(regel.rumpf, 'background');
+        expect(flaeche).toContain('var(--ra-parchment-from)');
+        expect(flaeche).toContain('var(--ra-parchment-to)');
+    });
+
+    test('jede Tinte im Statblock ist themenunabhaengig und haelt auf beiden Verlaufsenden', () => {
+        const pals = WCAG.palettes();
+        const alias = aliasSchicht();
+        const paletten = WCAG.THEMES.map(t => ({ theme: t, p: { ...pals[t], ...alias } }));
+        const p0 = paletten[0].p;
+        const enden = [
+            WCAG.resolve('var(--ra-parchment-from)', p0),
+            WCAG.resolve('var(--ra-parchment-to)', p0)
+        ];
+        // Plausibilitaetsprobe: ohne aufgeloeste Enden waere alles gruen.
+        expect(enden.every(Boolean)).toBe(true);
+
+        const bestiary = cssFiles.find(f => f.name === 'bestiary.css');
+        const befunde = [];
+        let geprueft = 0;
+
+        regelnMitRumpf(bestiary.content).forEach(regel => {
+            const treffer = regel.sel
+                .split(',')
+                .map(s => s.trim())
+                .filter(s => IM_STATBLOCK.test(s));
+            if (!treffer.length) return;
+
+            const flaechen = treffer.some(s => ZELLE.test(s))
+                ? enden.map(e => WCAG.resolveOver(ZELL_TOENUNG, p0, e))
+                : enden;
+
+            // Der Anzeigename steht neben dem Muster: eine Fundmeldung, die
+            // das Suchmuster selbst ausdruckt, ist unlesbar.
+            [
+                ['color', 'color', TEXT_SCHWELLE],
+                [
+                    'border(?:-(?:top|right|bottom|left))?(?:-color)?',
+                    'Rahmenfarbe',
+                    LINIEN_SCHWELLE
+                ]
+            ].forEach(([prop, name, schwelle]) => {
+                const roh = deklaration(regel.rumpf, prop);
+                if (!roh) return;
+                // Aus `1px solid var(--x)` bzw. `1px solid #abc` den Farbteil.
+                const farbe = (roh.match(/var\([^)]*\)|#[0-9a-fA-F]{3,8}|rgba?\([^)]*\)/) || [])[0];
+                if (!farbe) return;
+                geprueft++;
+
+                // (2) Themenunabhaengigkeit: derselbe Endwert in allen vier Themes.
+                const proTheme = paletten.map(({ theme, p }) => ({
+                    theme,
+                    wert: WCAG.resolve(farbe, p) || WCAG.resolveOver(farbe, p, flaechen[0])
+                }));
+                if (proTheme.some(x => !x.wert)) {
+                    befunde.push(
+                        `bestiary.css:${regel.zeile} (${regel.sel}) ${name}: ${farbe} ist nicht ` +
+                            `aufloesbar — was der Rechner nicht kennt, darf nicht als gruen gelten`
+                    );
+                    return;
+                }
+                if (new Set(proTheme.map(x => x.wert)).size > 1) {
+                    befunde.push(
+                        `bestiary.css:${regel.zeile} (${regel.sel}) ${name}: ${farbe} folgt dem ` +
+                            `Theme (${proTheme.map(x => `${x.theme} ${x.wert}`).join(' · ')}), das ` +
+                            `Pergament tut es nicht. §7 verlangt hier eine eigene Pergamenttinte`
+                    );
+                }
+
+                // (3) Kontrast auf beiden Verlaufsenden, je Theme und Ende.
+                paletten.forEach(({ theme, p }) => {
+                    flaechen.forEach((grund, i) => {
+                        const tinte = WCAG.resolve(farbe, p) || WCAG.resolveOver(farbe, p, grund);
+                        if (!tinte || !grund) return;
+                        const r = WCAG.ratio2(tinte, grund);
+                        if (r < schwelle) {
+                            befunde.push(
+                                `bestiary.css:${regel.zeile} (${regel.sel}) ${name}: ${theme} ` +
+                                    `${tinte} auf ${grund} (Verlaufsende ${i + 1}): ${r} < ` +
+                                    `${schwelle}`
+                            );
+                        }
+                    });
+                });
+            });
+        });
+
+        // Gegenprobe: die Ratsche muss die Stellen wirklich SEHEN.
+        expect(geprueft).toBeGreaterThanOrEqual(6);
+        expect([...new Set(befunde)].sort()).toEqual([]);
+    });
+});
