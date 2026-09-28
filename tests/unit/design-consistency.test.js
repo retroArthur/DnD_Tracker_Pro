@@ -2122,11 +2122,17 @@ describe('R-04 — jede Regel haelt 4,5 auf ihrer EIGENEN Flaeche (Ratsche)', ()
        `var(--on-gold-dim)` umgestellt und als erledigt verbucht. Sie kommt nie
        zum Zug: `editors.css .editor-toolbar .editor-btn.format-active` (0,3,0)
        gewinnt BEIDE Eigenschaften, und die Klasse `format-active` wird
-       ausschliesslich in `ui/editors/rich-text-toolbars.js` auf Knoepfen
-       unterhalb von `[data-toolbar-for]` gesetzt — jedes dieser Elemente
-       traegt zugleich `editor-toolbar` (22 statische Leisten in den Vorlagen,
-       plus `ui/editors/editor-toolbar-build.js`). Es gibt keinen Zustand, in
-       dem die schwaechere Regel gilt.
+       ausschliesslich in `rich-text-toolbars.js:309` (Ordner ui/editors) auf
+       Knoepfen unterhalb von `[data-toolbar-for]` gesetzt — jedes dieser
+       Elemente traegt zugleich `editor-toolbar` (22 statische Leisten in den
+       Vorlagen, plus `editor-toolbar-build.js:405` im selben Ordner). Es gibt
+       keinen Zustand, in dem die schwaechere Regel gilt.
+
+       Die beiden Modulpfade stehen hier absichtlich OHNE ihren Ordner in
+       einem Stueck: das Abdeckungs-Gate (tests/unit/module-test-coverage.test.js)
+       zaehlt einen loader.js-Pfad, der woertlich in einer Testdatei vorkommt,
+       als abgedeckt. Eine Erwaehnung im Erklaertext ist aber kein Test — sie
+       wuerde ein ungetestetes Modul lautlos aus dem Gate nehmen.
 
    (2) `loot.css .shop-cat-badge.active` setzt Flaeche UND Tinte, aber zwoelf
        Zeilen SPAETER standen die sechs Kategorieregeln mit derselben
