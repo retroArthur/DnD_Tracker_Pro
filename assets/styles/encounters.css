@@ -10,7 +10,7 @@
         
         .view-mode-btn.active {
             background: var(--bg-elevated);
-            color: var(--cyan);
+            color: var(--cyan-text);
         }
 
         /* Listenansicht Container */
@@ -116,7 +116,7 @@
 
 .calc-header h3 {
     margin: 0;
-    color: var(--gold);
+    color: var(--gold-text);
     font-size: 16px;
     font-weight: 600;
     display: flex;
@@ -199,12 +199,12 @@
 
 .calc-card-btn:hover {
     border-color: var(--gold);
-    color: var(--gold);
+    color: var(--gold-text);
 }
 
 .calc-card-btn.danger:hover {
     border-color: var(--red);
-    color: var(--red);
+    color: var(--red-text);
 }
 
 /* Input Row */
@@ -573,7 +573,7 @@
 }
 
 .calc-budget-info strong {
-    color: var(--cyan);
+    color: var(--cyan-text);
 }
 
 .calc-budget-apply {
@@ -706,7 +706,7 @@
 
 .calc-action-btn.secondary:hover {
     border-color: var(--gold);
-    color: var(--gold);
+    color: var(--gold-text);
 }
 
 .calc-action-btn.primary {
@@ -848,7 +848,7 @@
 }
 
 .calc-lair-toggle input:checked ~ .calc-lair-text {
-    color: var(--gold);
+    color: var(--gold-text);
     font-weight: 500;
 }
 
@@ -1061,7 +1061,7 @@
 .enc-detail-name {
     font-size: 1.2em;
     font-weight: 700;
-    color: var(--gold);
+    color: var(--gold-text);
     word-break: break-word;
 }
 
@@ -1097,7 +1097,7 @@
 
 .enc-detail-btn.success {
     border-color: var(--green);
-    color: var(--green);
+    color: var(--green-text);
 }
 
 .enc-detail-btn.success:hover {
@@ -1160,7 +1160,7 @@
 .enc-core-stat-value {
     font-size: 1.1em;
     font-weight: 700;
-    color: var(--cyan);
+    color: var(--cyan-text);
     margin-top: 2px;
 }
 
@@ -1211,11 +1211,11 @@
 }
 
 .enc-attr-mod.positive {
-    color: var(--green);
+    color: var(--green-text);
 }
 
 .enc-attr-mod.negative {
-    color: var(--red);
+    color: var(--red-text);
 }
 
 /* Tags */
@@ -1382,7 +1382,7 @@
 .enc-speed-label {
     display: block;
     font-size: 0.85em;
-    color: var(--gold);
+    color: var(--gold-text);
     margin-bottom: 10px;
     font-weight: 600;
 }
