@@ -40,7 +40,7 @@
         .loot-tag-filter-btn.active {
             background: var(--gold);
             border-color: var(--gold);
-            color: var(--bg-dark);
+            color: var(--on-gold);
         }
         
         .loot-tag-grid {
@@ -527,7 +527,7 @@
             position: relative;
             background: var(--gold);
             border: 1px solid var(--gold);
-            color: var(--bg-dark);
+            color: var(--on-gold);
             font-weight: 600;
         }
 
@@ -567,7 +567,7 @@
         
         .si-cart-btn:hover {
             background: var(--gold);
-            color: var(--bg-dark);
+            color: var(--on-gold);
         }
         
         /* Cart Modal Styles */
