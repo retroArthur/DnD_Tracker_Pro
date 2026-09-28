@@ -627,8 +627,15 @@
 
         /* Active format state indicators in toolbar */
         .editor-btn.format-active {
+            /* Schritt 10, Fall 1: Gold auf Gold-dim war neben .wiki-link:hover
+               die schlechteste Stelle im ganzen Baum — 1,59 1,56 1,39 1,58
+               (dark light sepia contrast), in ALLEN VIER Themes praktisch
+               unlesbar. Der aktive Zustand einer Werkzeugleiste ist genau die
+               Stelle, an der man ihn sehen koennen muss. Mit var(--on-gold-dim),
+               dem Tintentoken DERSELBEN Rolle: 5,66 5,09 9,89 8,51.
+               Das Token steht seit Schritt 4 in allen vier Theme-Bloecken. */
             background: var(--gold-dim);
-            color: var(--gold);
+            color: var(--on-gold-dim);
         }
 
         .editor-btn.format-active::after {

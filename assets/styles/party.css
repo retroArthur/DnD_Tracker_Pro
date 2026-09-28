@@ -1347,8 +1347,14 @@
 
 .cf-combat-value select option:hover,
 .cf-combat-value select option:checked {
+    /* Schritt 10, W1-C-01 Gruppe b (letzte der vier): var(--bg) ist ein Alias
+       auf --bg-dark und fiel deshalb durch die Bestandsaufnahme von Schritt 6.
+       Gemessen 9,24 2,98 5,65 14,97, mit var(--on-gold) 8,98 5,80 7,10 13,46.
+       Ob die Auswahlliste eines <select> die Farben ueberhaupt uebernimmt,
+       entscheidet der Browser; seit Schritt 4 steht in allen vier Themes
+       color-scheme, die Chancen stehen also besser als vorher. */
     background: var(--gold);
-    color: var(--bg);
+    color: var(--on-gold);
 }
 
 .cf-combat-label {

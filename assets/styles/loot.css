@@ -270,8 +270,12 @@
         }
 
         .shop-cat-badge.active {
+            /* Schritt 10, W1-C-01 Gruppe b: `var(--bg)` ist ein Alias auf
+               --bg-dark (variables.css:486) und fiel deshalb durch die
+               Bestandsaufnahme von Schritt 6. Gemessen 9,24 2,98 5,65 14,97,
+               mit var(--on-gold) 8,98 5,80 7,10 13,46. */
             background: var(--gold);
-            color: var(--bg);
+            color: var(--on-gold);
             border-color: var(--gold);
             font-weight: bold;
             box-shadow: 0 2px 4px rgba(212, 175, 55, 0.3);
@@ -314,8 +318,11 @@
         }
 
         .shop-sort-btn.active {
+            /* Schritt 10, W1-C-01 Gruppe b — gleiche Lage wie
+               .shop-cat-badge.active oben: 2,98 in Light mit var(--bg),
+               5,80 mit var(--on-gold). */
             background: var(--gold);
-            color: var(--bg);
+            color: var(--on-gold);
             border-color: var(--gold);
             font-weight: bold;
             box-shadow: 0 2px 4px rgba(212, 175, 55, 0.3);

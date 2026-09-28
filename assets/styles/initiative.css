@@ -853,7 +853,11 @@
                der beste Wert im ganzen Baum. Hier ist nichts zu tun; die
                Stelle steht nur deshalb in der Restliste von Schritt 6, weil
                sie denselben Deklarationstext traegt wie die 86 geaenderten.
-               Genau dafuer war die regelweise Klassifikation noetig. */
+               Genau dafuer war die regelweise Klassifikation noetig.
+               SCHRITT 10 (Fall 6) BESTAETIGT: es bleibt var(--bg-dark). Die
+               Anweisung bot --bg-card oder --text als Alternativen an; --text
+               waere die Flaeche selbst (Kontrast 1,0), --bg-card ist heller und
+               damit schlechter. Nichts zu tun. */
             background: var(--text);
             color: var(--bg-dark);
         }

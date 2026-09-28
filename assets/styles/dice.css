@@ -366,6 +366,15 @@
 }
 
 .dice-fav-add:hover {
+    /* Schritt 10, Fall 4 — NICHT geaendert. Die Flaeche ist eine 10-%-Toenung
+       DERSELBEN Rolle und faellt damit unter Entscheidung D-4 (Welle 2).
+       Gemessen (min ueber die vier neutralen Traegerflaechen, auf denen die
+       Toenung liegen kann): var(--gold) dark 5,00 · light 2,20 · sepia 4,51 ·
+       contrast 7,10. Der Grund, warum eine Vorziehung hier NICHTS gebracht
+       haette: mit var(--gold-text) kaeme Light auf 4,21 und bliebe unter der
+       Schwelle. Nicht die Tinte ist zu hell, die Toenung ist zu stark —
+       genau der Fall, fuer den D-4 Staerke und Tinte zusammen entscheidet.
+       Gefuehrt in .planning/HANDOFF-V3-OFFENE-PUNKTE.md, W1-D-02. */
     border-color: var(--gold);
     color: var(--gold);
     background: color-mix(in srgb, var(--gold) 10%, transparent);

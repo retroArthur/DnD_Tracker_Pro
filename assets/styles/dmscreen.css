@@ -1339,8 +1339,14 @@
 }
 
 .dms-dice-btn:hover {
+    /* Schritt 10: eine der vier Stellen aus W1-C-01 Gruppe b. Dieselbe
+       Fehlerart, die Welle 1 sonst 143x behoben hat; stehengeblieben, weil die
+       Bestandsaufnahme auf var(--bg-dark) suchte und --bg dessen Alias ist
+       (variables.css:486). Gemessen 9,24 2,98 5,65 14,97 (dark light sepia
+       contrast), mit var(--on-gold) 8,98 5,80 7,10 13,46 — Light steigt ueber
+       die Schwelle, die drei anderen bleiben weit darueber. */
     background: var(--gold);
-    color: var(--bg);
+    color: var(--on-gold);
     transform: scale(1.05);
 }
 

@@ -1175,7 +1175,16 @@
                (dark light sepia contrast) — unter 4,5 in allen vier Themes,
                und die Ursache ist die Deckkraft, nicht das Token (ohne sie
                waeren es 5,48 5,27 4,57 9,04, siehe .npc-dialog-status.used
-               unten). */
+               unten).
+               SCHRITT 10 (Fall 6) HAT DAS ENTSCHIEDEN: keine Tinte hilft.
+               Durchgerechnet wurden vier, jeweils min ueber die vier neutralen
+               Traeger — var(--bg-dark) 2,69 2,40 2,22 3,66 · #000000
+               2,82 2,28 2,32 3,66 · var(--bg-card) 2,53 2,52 2,43 3,45 ·
+               weiss 2,56 2,52 2,53 1,91. Keine erreicht 4,5 in irgendeinem
+               Theme, weil die Deckkraft Flaeche UND Schrift gegen denselben
+               Traeger mischt und den Abstand zwischen ihnen zusammendrueckt.
+               Die Stelle bleibt unveraendert und gehoert in die Welle, die
+               `opacity` auf Textelementen anfasst. W1-D-03. */
             background: var(--text-dim);
             opacity: 0.6;
             color: var(--bg-dark); /* F-18: aus der Dublette uebernommen */
@@ -1198,7 +1207,11 @@
             /* NICHT Schritt 6, gleiche Lage wie .npc-dialog-marker.used:
                Flaeche --text-dim, keine Akzentrolle. Gemessen 5,48 5,27 4,57
                9,04 (dark light sepia contrast) — haelt 4,5 ueberall, hier ist
-               nichts zu tun. Schritt 9 entscheidet nur die Schreibweise. */
+               nichts zu tun. Schritt 9 entscheidet nur die Schreibweise.
+               SCHRITT 10 (Fall 6) HAT ENTSCHIEDEN: es bleibt var(--bg-dark).
+               Die Alternativen der Anweisung waeren schlechter (var(--bg-card)
+               ist heller und verliert gegen dasselbe Grau), und --text-dim ist
+               keine Akzentrolle, also gibt es kein --on-*-Pendant. */
             background: var(--text-dim);
             color: var(--bg-dark);
         }

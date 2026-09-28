@@ -1175,6 +1175,33 @@ describe('R-02 — Tinte erreicht ihre Schwelle auf der TATSAECHLICHEN Flaeche (
        rgba-Alpha ueber einer gegebenen Flaeche auf). Bis dahin ist diese
        Luecke hier benannt und damit keine stille Freigabe.
 
+       WAS SCHRITT 9 (WELLE 1, 2026-09-28) DARAUS GEMACHT HAT — und was nicht.
+       214 Deklarationen sind von `var(--<rolle>)` auf `var(--<rolle>-text)`
+       gewechselt, AUSSCHLIESSLICH solche, deren Traegerflaeche nachweislich
+       eine der vier neutralen ist. Der Nachweis ist gemessen, nicht
+       geschlossen: fuer die 309 Stellen ohne neutrale Flaeche in der eigenen
+       Regel wurde am gebauten Buendel der naechste DECKENDE Vorfahr bestimmt
+       (alle halbdurchsichtigen Schichten zusammengesetzt), in Dark UND Light,
+       und nur bei Uebereinstimmung beider Themes umgestellt. 126 Stellen
+       blieben deshalb unveraendert — 45 mit einer nachweislich ANDEREN Flaeche
+       (Dialogflaeche rgba(26,26,26,0.95), Verlaeufe, Akzentflaechen) und 81,
+       deren Element in keinem erreichbaren Zustand gerendert wird. Sie stehen
+       namentlich in .planning/HANDOFF-V3-OFFENE-PUNKTE.md unter W1-D-01.
+       Warum nicht geraten wurde: die -text-Werte sind fuer HELLE Flaechen
+       gerechnet und auf der Dialogflaeche messbar SCHLECHTER als die Rolle
+       selbst (an party.css .cf-skill-exp-label gemessen: 3,23 -> 2,68 in
+       Light). Eine falsch geratene Flaeche ist schlimmer als eine
+       unveraenderte Stelle.
+
+       Die Zahl der Toenungsstellen ist die Kontrollzahl dafuer, dass Schritt 9
+       keine davon mitgenommen hat: die Kategorie `ROLE | rgba-Literal` stand
+       vor und nach dem Schritt auf 111 (red 22 · gold 19 · green 16 ·
+       orange 12 · cyan 10 · blue 10 · yellow 8 · purple 8 · pink 5 ·
+       orange-dim 1). Die Planung nennt 108; woher die Differenz von drei
+       kommt, ist NICHT geklaert und fuer Welle 1 auch nicht wichtig —
+       massgeblich ist, dass die Zahl sich waehrend des Schritts nicht bewegt
+       hat.
+
        DASS DIESE RATSCHE JETZT ROT IST, ist der Zweck von Schritt 2: keines
        der geforderten Tokens existiert. Gruen wird sie mit Schritt 4
        (Tokendefinition), nicht vorher. Die Meldung nennt die fehlenden Tokens
@@ -1851,25 +1878,25 @@ describe('R-04 — jede Regel haelt 4,5 auf ihrer EIGENEN Flaeche (Ratsche)', ()
      *  Minimum ueber die vier Themes, und der Eintrag meldet sowohl eine
      *  Verschlechterung als auch den Fall, dass er nur noch Altlast ist.
      *
-     *  Drei Gruppen, alle drei vorgefunden und keine aus Welle 1:
+     *  Von den drei Gruppen, mit denen diese Liste geboren wurde, ist nach
+     *  Schritt 10 (Welle 1, W1-D) nur noch EINE uebrig:
      *
-     *  (a) Akzent auf Akzent — zwei Stellen, bei denen Tinte UND Flaeche eine
-     *      Farbrolle sind. Das ist keine Tintenfrage, sondern eine
-     *      Gestaltungsfrage (welche Flaeche soll der Knopf ueberhaupt haben),
-     *      und gehoert damit in die Welle, die die Rolle anfasst.
-     *  (b) `var(--bg)` auf `var(--gold)` — vier Stellen, siehe Blockkommentar.
-     *  (c) weisse Schrift auf der Schadensartenskala — vier Stellen. Die
-     *      Begruendung steht seit Welle 1 ausfuehrlich in dashboard.css
+     *  (a) Akzent auf Akzent — ERLEDIGT in Schritt 10. Beide Stellen
+     *      (dashboard.css .wiki-link:hover 1,29 · spells.css
+     *      .editor-btn.format-active 1,39) tragen jetzt das Tintentoken ihrer
+     *      eigenen Flaechenrolle und halten 5,05 bzw. 5,09 im schlechtesten
+     *      Theme. Es war eben doch eine Tintenfrage: beide Flaechen sind
+     *      Rollen MIT --on-*-Token, die Flaeche musste gar nicht angefasst
+     *      werden.
+     *  (b) `var(--bg)` auf `var(--gold)` — ERLEDIGT in Schritt 10, alle vier
+     *      Stellen auf var(--on-gold) (2,98 -> 5,80 in Light, dem einzigen
+     *      Theme unter der Schwelle).
+     *  (c) weisse Schrift auf der Schadensartenskala — vier Stellen, OFFEN.
+     *      Die Begruendung steht seit Welle 1 ausfuehrlich in dashboard.css
      *      ueber .qref-dmg: die Skala muss als GANZES neu gerechnet werden
      *      (13 Typen, sonst verschiebt sich ihre Ordnung). --dmg-physical
      *      haelt mit weiss bereits 5,17 und steht deshalb nicht hier. */
     const RUHE_AUSNAHME = {
-        'dashboard.css .wiki-link:hover': 1.29,
-        'spells.css .editor-btn.format-active': 1.39,
-        'dmscreen.css .dms-dice-btn:hover': 2.98,
-        'loot.css .shop-cat-badge.active': 2.98,
-        'loot.css .shop-sort-btn.active': 2.98,
-        'party.css .cf-combat-value select option:hover, .cf-combat-value select option:checked': 2.98,
         'dashboard.css .qref-dmg.psychic': 3.53,
         'dashboard.css .qref-dmg.cold': 3.68,
         'dashboard.css .qref-dmg.fire': 3.76,

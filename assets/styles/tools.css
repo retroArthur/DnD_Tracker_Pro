@@ -1696,12 +1696,23 @@
 }
 
 .ds-rate-chip.ds-crit {
+    /* Schritt 10, Fall 5 — NICHT geaendert, Toenung derselben Rolle (D-4,
+       Welle 2). Gemessen, min ueber die vier neutralen Traegerflaechen:
+       var(--green) dark 5,26 · light 2,11 · sepia 2,07 · contrast 6,53.
+       Mit var(--green-text) waeren es light 3,92 und sepia 4,08 — besser,
+       aber weiter darunter. Die 15-%-Toenung ist zu stark, nicht die Tinte
+       zu hell. W1-D-02. */
     background: rgba(var(--green-rgb), 0.15);
     color: var(--green);
     border: 1px solid var(--green);
 }
 
 .ds-rate-chip.ds-fumble {
+    /* Schritt 10, Fall 5 — der schwerere der beiden: var(--red) haelt hier in
+       KEINEM Theme 4,5 (dark 2,92 · light 2,89 · sepia 2,78 · contrast 3,02),
+       und var(--red-text) ebenfalls nicht (3,93 · 3,69 · 3,82 · 4,35). Eine
+       Tintenaenderung allein loest das nicht; Welle 2 muss die Toenung
+       mitentscheiden. Bis dahin unveraendert, W1-D-02. */
     background: rgba(var(--red-rgb), 0.15);
     color: var(--red);
     border: 1px solid var(--red);

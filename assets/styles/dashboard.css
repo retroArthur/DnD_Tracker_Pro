@@ -247,6 +247,14 @@
            WIKI LINKS
            ============================================================ */
         .wiki-link {
+            /* NICHT Schritt 9/10: die Ruheflaeche ist eine 10-%-Toenung einer
+               FREMDEN Rolle (Violett unter Cyan-Text) und faellt damit unter
+               Entscheidung D-4 — Toenungsstaerke und Tinte entscheidet Welle 2
+               in einem Zug. Schon gemessen, damit Welle 2 die Zahl nicht neu
+               suchen muss (min ueber die vier neutralen Traegerflaechen, auf
+               denen die Toenung liegen kann): dark 5,84 · light 2,44 ·
+               sepia 2,08 · contrast 9,15. Der Mangel ist echt, aber er ist ein
+               Toenungsmangel und keiner der Tinte. */
             color: var(--cyan);
             cursor: pointer;
             border-bottom: 1px dotted var(--cyan);
@@ -259,7 +267,20 @@
         }
         
         .wiki-link:hover {
-            color: var(--gold);
+            /* Schritt 10, Fall 3 — und hier weicht die Umsetzung von der
+               Anweisung ab, weil die Anweisung die falsche Regel gelesen hat.
+               Sie beschreibt die Flaeche als 10-%-Toenung (das ist die
+               RUHEregel eine Regel weiter oben) und nennt die kursierende
+               Zahl 1,29 falsch. Gemessen ist 1,29 richtig und gehoert GENAU
+               HIERHER: der Hover-Zustand ersetzt die Toenung durch das VOLLE
+               var(--purple), und var(--gold) darauf ergibt 1,29 1,75 1,40 2,24
+               (dark light sepia contrast) — der schlechteste Wert im ganzen
+               Baum. Eine volle Akzentflaeche ist keine Toenung, D-4 schuetzt
+               sie also nicht. Mit var(--on-purple): 6,94 5,70 5,05 6,02.
+               Der Rahmen bleibt var(--gold): er ist der Hover-Hinweis, und ein
+               Rahmen ist keine Textfarbe — 1,4:1 gegen die Flaeche ist ein
+               Mangel nach WCAG 1.4.11 und gehoert in die Rahmen-Welle. */
+            color: var(--on-purple);
             border-color: var(--gold);
             background: var(--purple); /* F-18: aus der Dublette uebernommen */
         }
