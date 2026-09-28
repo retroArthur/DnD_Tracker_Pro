@@ -269,24 +269,36 @@
             transform: translateY(-1px);
         }
 
-        .shop-cat-badge.active {
-            /* Schritt 10, W1-C-01 Gruppe b: `var(--bg)` ist ein Alias auf
-               --bg-dark (variables.css:486) und fiel deshalb durch die
-               Bestandsaufnahme von Schritt 6. Gemessen 9,24 2,98 5,65 14,97,
-               mit var(--on-gold) 8,98 5,80 7,10 13,46. */
-            background: var(--gold);
-            color: var(--on-gold);
-            border-color: var(--gold);
-            font-weight: bold;
-            box-shadow: 0 2px 4px rgba(212, 175, 55, 0.3);
-        }
-
+        /* REIHENFOLGE IST HIER DIE GANZE AUSSAGE (Pruefung W1-D, Runde 1):
+           die sechs Kategorieregeln und `.shop-cat-badge.active` haben
+           dieselbe Spezifitaet (0,2,0), und jede Marke traegt IMMER beide
+           Klassen (`features/shops/shops-core.js:427` und :438). Bei
+           Gleichstand entscheidet die Quellreihenfolge — standen die
+           Kategorien weiter unten, gewannen sie `color`, und die
+           Voreinstellung jedes Ladens (`shop-cat-badge all active`) rechnete
+           Gold auf Gold: 1,00 in ALLEN VIER Themes. Der Ruhezustand braucht
+           die Kategoriefarbe, der aktive Zustand die Gegentinte — also
+           stehen die Kategorien VOR `.active`. Nicht umsortieren. */
         .shop-cat-badge.weapon { border-color: var(--red); color: var(--red); }
         .shop-cat-badge.armor { border-color: var(--blue); color: var(--blue); }
         .shop-cat-badge.item { border-color: var(--green); color: var(--green); }
         .shop-cat-badge.service { border-color: var(--purple); color: var(--purple); }
         .shop-cat-badge.misc { border-color: var(--text-dim); color: var(--text-dim); }
         .shop-cat-badge.all { border-color: var(--gold); color: var(--gold); }
+
+        .shop-cat-badge.active {
+            /* Schritt 10, W1-C-01 Gruppe b: `var(--bg)` ist ein Alias auf
+               --bg-dark (variables.css:486) und fiel deshalb durch die
+               Bestandsaufnahme von Schritt 6. Gemessen 9,24 2,98 5,65 14,97,
+               mit var(--on-gold) 8,98 5,80 7,10 13,46 — und seit der
+               Umsortierung oben sind das auch die Zahlen, die auf dem Schirm
+               ankommen. */
+            background: var(--gold);
+            color: var(--on-gold);
+            border-color: var(--gold);
+            font-weight: bold;
+            box-shadow: 0 2px 4px rgba(212, 175, 55, 0.3);
+        }
 
         .shop-sort-controls {
             display: flex;
