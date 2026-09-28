@@ -1546,3 +1546,253 @@ describe('R-02 — Tinte erreicht ihre Schwelle auf der TATSAECHLICHEN Flaeche (
         expect(befunde.sort()).toEqual([]);
     });
 });
+
+/* ===========================================================================
+   Design-Handoff v3, Welle 1 — R-03: die Tinte gilt je ZUSTAND, nicht je Regel
+   ===========================================================================
+   Diese Ratsche schliesst die Luecke, durch die Welle 1 einen Blocker und zwei
+   major-Befunde erzeugt hat (Pruefung W1-C, Runde 1).
+
+   DER FEHLER, GEGEN DEN SIE STEHT, hat eine sehr genaue Form. Eine Basisregel
+   setzt Flaeche UND Tinte:
+
+       .loc-add-btn        { background: var(--green); color: var(--on-green); }
+
+   Die zugehoerige Zustandsregel wechselt NUR die Flaeche:
+
+       .loc-add-btn:hover  { background: var(--green-dim); }
+
+   Damit wandert eine Tinte, die fuer --green gerechnet wurde, auf --green-dim —
+   eine ANDERE Farbe. Gemessen ist das kein Randfall: die Umstellung von
+   `color: var(--bg-dark)` auf `color: var(--on-green)` liess dieselben vier
+   Knoepfe in Light von 6,60 auf 2,63 und in Sepia von 5,58 auf 2,69 fallen,
+   also um den Faktor 2,5 bzw. 2,1 — und zwar auf "+ NPC", "+ Ort", "+ Beute"
+   und jedem globalen .btn-success.
+
+   WARUM R-02 DAS NICHT SIEHT: R-02 urteilt ueber TOKENWERTE (haelt --on-gold
+   auf --gold?), nicht ueber Verwendungsstellen. Die Tokenpaare waren waehrend
+   der ganzen Regression einwandfrei. Beide Ratschen zusammen sind erst die
+   Aussage "die Tinte stimmt" — einzeln behauptet jede nur die Haelfte davon.
+
+   SIE IST BEI DER GEBURT ROT, mit sieben Zeilen, und das ist ihr Zweck.
+   =========================================================================== */
+describe('R-03 — geerbte Tinte auf gewechselter Flaeche (Ratsche)', () => {
+    /**
+     * Zerlegt eine CSS-Datei regelweise, MIT Zeilennummer und Rumpf.
+     * Verwandt mit bloecke() im F-18-Block, aber nicht dieselbe Funktion: dort
+     * genuegt der Selektor, hier wird der Rumpf gebraucht. Kommentare werden
+     * durch gleich lange Leerzeichen ersetzt statt entfernt, damit die
+     * gemeldete Zeilennummer die der Datei bleibt — eine Ratsche, deren
+     * Fundstelle man erst suchen muss, kostet mehr als sie einbringt.
+     */
+    function regelnMitRumpf(css) {
+        const maskiert = css.replace(/\/\*[\s\S]*?\*\//g, m => m.replace(/[^\n]/g, ' '));
+        const out = [];
+        let i = 0;
+        while (i < maskiert.length) {
+            if (maskiert[i] === '}') {
+                i++;
+                continue;
+            }
+            const m = /^[^{}]*\{/.exec(maskiert.slice(i));
+            if (!m) {
+                i++;
+                continue;
+            }
+            const kopf = m[0].slice(0, -1).replace(/\s+/g, ' ').trim();
+            if (kopf.startsWith('@') || !kopf) {
+                i += m[0].length; // @media & Co.: hineinlaufen, nicht ueberspringen
+                continue;
+            }
+            let tiefe = 1;
+            let j = i + m[0].length;
+            while (j < maskiert.length && tiefe) {
+                if (maskiert[j] === '{') tiefe++;
+                else if (maskiert[j] === '}') tiefe--;
+                j++;
+            }
+            out.push({
+                zeile: maskiert.slice(0, i + m[0].length).split('\n').length,
+                sel: kopf,
+                rumpf: maskiert.slice(i + m[0].length, j - 1)
+            });
+            i = j;
+        }
+        return out;
+    }
+
+    /** Die Zustaende, die eine Flaeche wechseln koennen. */
+    const ZUSTAND = /(:hover|:focus-visible|:focus|:active|\.active|\.selected)\b/;
+
+    /** Erste Deklaration einer Eigenschaft im Rumpf. Der Praefixschutz
+     *  `(^|[;{\s])` ist nicht Kosmetik: ohne ihn liest `border-color:` als
+     *  `color:` mit und `background-image:` als `background:`. Genau dieses
+     *  Zaehlartefakt hat in der Planung zu Handoff v3 sieben angebliche
+     *  `color: var(--gold-dim)` erzeugt, die alle `border-color` waren. */
+    const deklaration = (rumpf, prop) => {
+        const m = rumpf.match(new RegExp(`(?:^|[;{\\s])${prop}\\s*:\\s*([^;}]+)`));
+        return m ? m[1].trim() : null;
+    };
+
+    /** BENANNTE AUSNAHMEN — dieselbe Bauart wie ATTR_HOVER_AUSNAHME eine
+     *  Ratsche weiter oben: der eingetragene Wert ist der GEMESSENE Stand, und
+     *  der Eintrag meldet sowohl eine Verschlechterung als auch den Fall, dass
+     *  er nur noch Altlast ist.
+     *
+     *  .calc-action-btn.primary:hover ist KEIN Schaden dieser Welle, und das
+     *  ist nachgemessen und nicht behauptet: die Flaeche --green-hover trug
+     *  vorher var(--bg-dark) und erreichte dark/light/sepia/contrast
+     *  8,06 · 4,02 · 3,41 · 10,93 (min 3,41), jetzt mit var(--on-green)
+     *  7,83 · 4,31 · 4,40 · 9,82 (min 4,31). Jedes Theme, das unter der
+     *  Schwelle liegt, liegt HOEHER als vorher; die Welle hat die Stelle
+     *  verbessert, nur nicht bis 4,5. Sie hier anzuheben hiesse, eine Farbe
+     *  ausserhalb des Auftrags zu aendern (ein --on-green-hover mit #000000
+     *  erreichte min 4,79) — das gehoert entschieden, nicht nebenbei getan.
+     *  Gefuehrt in .planning/HANDOFF-V3-OFFENE-PUNKTE.md, W1-C-01. */
+    const ZUSTAND_AUSNAHME = {
+        '.calc-action-btn.primary:hover': 4.31
+    };
+
+    const SCHWELLE = 4.5;
+
+    /** Alle Regeln aller Komponentendateien in Kaskadenreihenfolge.
+     *  variables.css und fonts.css tragen keine Komponentenregeln. */
+    function komponentenRegeln() {
+        const alle = [];
+        cssFiles.forEach(f => {
+            if (f.name === 'variables.css' || f.name === 'fonts.css') return;
+            regelnMitRumpf(f.content).forEach(r => alle.push({ ...r, datei: f.name }));
+        });
+        return alle;
+    }
+
+    const teile = sel => sel.split(',').map(s => s.trim());
+
+    /** Zustandsregel -> geerbte Tinte. Liefert die Paare, ueber die geurteilt
+     *  wird; von beiden Tests benutzt, damit Urteil und Gegenprobe dieselbe
+     *  Menge sehen. */
+    function zustandsPaare(alle) {
+        const paare = [];
+        const gesehen = new Set();
+        alle.forEach(regel => {
+            const flaeche = deklaration(regel.rumpf, 'background(?:-color)?');
+            if (!flaeche || !/^var\(--[\w-]+\)$/.test(flaeche)) return;
+            if (deklaration(regel.rumpf, 'color')) return; // setzt eigene Tinte
+            teile(regel.sel).forEach(s => {
+                if (!ZUSTAND.test(s)) return;
+                const stamm = s.replace(ZUSTAND, '').trim();
+                if (!stamm) return;
+                // Die ZULETZT deklarierte Tinte des Stamms. "Zuletzt" ist die
+                // Kaskade: bei gleicher Spezifitaet gewinnt die spaetere Regel.
+                let basis = null;
+                alle.forEach(b => {
+                    const tinte = deklaration(b.rumpf, 'color');
+                    if (!tinte || !/^var\(--on-[\w-]+\)$/.test(tinte)) return;
+                    if (teile(b.sel).includes(stamm)) basis = { ...b, tinte };
+                });
+                if (!basis) return;
+                const schluessel = `${regel.datei} ${s}`;
+                if (gesehen.has(schluessel)) return;
+                gesehen.add(schluessel);
+                paare.push({ schluessel, regel, sel: s, flaeche, basis });
+            });
+        });
+        return paare;
+    }
+
+    test('jede Zustandsregel haelt 4,5 mit der Tinte, die sie tatsaechlich erbt', () => {
+        const pals = WCAG.palettes();
+        const alias = aliasSchicht();
+        const paletten = {};
+        WCAG.THEMES.forEach(t => {
+            paletten[t] = { ...pals[t], ...alias };
+        });
+
+        const befunde = [];
+        zustandsPaare(komponentenRegeln()).forEach(({ schluessel, regel, sel, flaeche, basis }) => {
+            const werte = {};
+            let fehlt = null;
+            WCAG.THEMES.forEach(theme => {
+                const p = paletten[theme];
+                const tinte = WCAG.resolve(basis.tinte, p);
+                const grund = WCAG.resolve(flaeche, p);
+                if (!tinte || !grund) {
+                    fehlt = fehlt || `${theme}: ${!tinte ? basis.tinte : flaeche}`;
+                    return;
+                }
+                werte[theme] = WCAG.ratio2(tinte, grund);
+            });
+            if (fehlt) {
+                befunde.push(
+                    `${schluessel}:${regel.zeile} — nicht aufloesbar (${fehlt}). Eine Flaeche, ` +
+                        `die der Rechner nicht kennt, darf nicht als gruen gelten`
+                );
+                return;
+            }
+
+            const min = Math.min(...WCAG.THEMES.map(t => werte[t]));
+            const zahlen = WCAG.THEMES.map(t => `${t} ${werte[t]}`).join(' · ');
+            const eingetragen = ZUSTAND_AUSNAHME[sel];
+
+            if (eingetragen === undefined) {
+                if (min < SCHWELLE) {
+                    befunde.push(
+                        `${schluessel}:${regel.zeile} erbt ${basis.tinte} von "${basis.sel}" ` +
+                            `(${basis.datei}:${basis.zeile}) und traegt sie auf ${flaeche}: ` +
+                            `min ${min} < ${SCHWELLE} (${zahlen})`
+                    );
+                }
+                return;
+            }
+            if (min < eingetragen) {
+                befunde.push(
+                    `${schluessel}: eingetragen war min ${eingetragen}, gemessen ${min} ` +
+                        `(${zahlen}) — die benannte Ausnahme verschlechtert sich`
+                );
+            }
+            if (min >= SCHWELLE) {
+                befunde.push(
+                    `${schluessel}: haelt jetzt min ${min} — Eintrag aus ZUSTAND_AUSNAHME ` +
+                        `und aus HANDOFF-V3-OFFENE-PUNKTE.md entfernen`
+                );
+            }
+        });
+
+        expect(befunde.sort()).toEqual([]);
+    });
+
+    /** Gegenprobe, dass der Scanner ueberhaupt etwas sieht. Ohne sie waere ein
+     *  Selektor-Regex, der nichts mehr trifft, von einer bestandenen Pruefung
+     *  nicht zu unterscheiden — die Ratsche waere gruen und leer.
+     *
+     *  Sie prueft den MECHANISMUS an einem festen Beispiel und nicht an
+     *  Selektoren aus dem Baum. Das ist Absicht: jede Stelle, die man hier
+     *  namentlich verlangte, verschwindet genau dann aus der Paarmenge, wenn
+     *  sie repariert wird (sie setzt dann eine eigene Tinte) — die Gegenprobe
+     *  wuerde also ausgerechnet durch das Beheben eines Befundes rot. Der
+     *  feste Fall bleibt gueltig, solange der Scanner funktioniert. */
+    test('der Scanner erkennt Zustandspaare und laesst eigene Tinte in Ruhe', () => {
+        const probe = [
+            '.a { background: var(--green); color: var(--on-green); }',
+            '.a:hover { background: var(--green-dim); }', // Paar: erbt die Tinte
+            '.b { background: var(--gold); color: var(--on-gold); }',
+            '.b:hover { background: var(--gold-dim); color: var(--on-gold-dim); }', // eigene Tinte
+            '.c:hover { background: var(--red); }', // keine Basis mit --on-*
+            '.d { background: var(--blue); color: var(--bg-dark); }',
+            '.d:hover { background: var(--cyan); }', // Basis ohne --on-*-Tinte
+            '@media (max-width: 600px) { .e { background: var(--pink);',
+            '    color: var(--on-pink); } .e:hover { background: var(--red-dim); } }'
+        ].join('\n');
+        const regeln = regelnMitRumpf(probe).map(r => ({ ...r, datei: 'probe.css' }));
+        const gefunden = zustandsPaare(regeln).map(p => `${p.sel} -> ${p.flaeche}`);
+        expect(gefunden.sort()).toEqual([
+            '.a:hover -> var(--green-dim)',
+            '.e:hover -> var(--red-dim)' // auch in einer Media Query
+        ]);
+
+        // Und der Baum selbst ist nicht leer. Am 2026-09-28 waren es 16 Paare
+        // vor den Korrekturen dieser Runde, 12 danach. Die Zahl darf wachsen
+        // (neue Knoepfe) und schrumpfen (eigene Tinte gesetzt).
+        expect(zustandsPaare(komponentenRegeln()).length).toBeGreaterThanOrEqual(5);
+    });
+});
