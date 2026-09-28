@@ -974,3 +974,247 @@ describe('R03 — Waechter der Abschlussrunde (G2)', () => {
         expect(alle.map(istGueltigeId)).toEqual(alle.map(id => ({ id, gueltig: true })));
     });
 });
+
+describe('R03 — erschoepfende Gittersimulation der Vergabe (G3)', () => {
+    // Warum ein Gitter und keine weiteren Einzelfaelle: an dieser Kante (Sammlung nahe
+    // ENTITY_ID_MAX, Zaehler aus einer fremden Datei, Stapel ohne zwischenzeitliches
+    // Ablegen) sind vier Anlaeufe nacheinander an einem Fall haengen geblieben, den der
+    // jeweils vorige Anlauf nicht kannte. Ein Fall pro Befund pinnt immer nur den Befund.
+    // Deshalb faehrt dieser Block die Vergabe ueber JEDE Kombination der Achsen ab,
+    // deterministisch (kein Math.random, keine Zeit), und prueft nach JEDER einzelnen
+    // Vergabe dieselben Invarianten.
+    const MAX = 1e15;
+    const KS = [0, 1, 2, 3, 4, 5, 6];
+    const ZAEHLER_ARTEN = ['fehlt', 'maxPlus1', 'max', 'grenzeMinus1', 'grenze', 'unterMax'];
+    const STAPELGROESSEN = [1, 2, 3, 4];
+    const ABLEGE_ARTEN = ['sofort', 'amEnde'];
+
+    /** Zaehlerwert der Achse "gespeicherter Zaehler". */
+    const zaehlerFuer = (art, maxId) =>
+        ({
+            fehlt: undefined,
+            maxPlus1: maxId + 1,
+            max: maxId,
+            grenzeMinus1: MAX - 1,
+            grenze: MAX,
+            unterMax: 2
+        })[art];
+
+    /** Alle gueltigen IDs einer Sammlung. */
+    const idsVon = coll =>
+        (Array.isArray(coll) ? coll : [])
+            .map(e => e.id)
+            .filter(n => Number.isSafeInteger(n) && n > 0 && n <= MAX);
+
+    /**
+     * Muenzt `anzahl` IDs in EINEM Seitenleben und prueft nach jeder Vergabe.
+     * `ablegen` bildet die beiden realen Aufrufformen ab: 'sofort' = jeder CRUD-Pfad
+     * (push direkt nach der Vergabe), 'amEnde' = der Merge-Zweig des Imports, der erst
+     * ALLE IDs muenzt und die Datensaetze danach anhaengt.
+     * @param ctx - vm-Kontext mit den echten Quellen
+     * @param sammlung - Zugriff auf die aktuelle Sammlung (sie wird ersetzt, nicht mutiert)
+     * @param vergeben - Set der in DIESEM Seitenleben schon herausgegebenen IDs
+     * @param anzahl - Stapelgroesse
+     * @param ablegen - 'sofort' | 'amEnde'
+     * @param verstoesse - Sammelliste der Befunde
+     * @param marke - Bezeichner des Stapels in den Befunden
+     * @returns Die vergebenen IDs
+     */
+    function muenzeStapel(ctx, sammlung, vergeben, anzahl, ablegen, verstoesse, marke) {
+        const ids = [];
+        const wartend = [];
+        for (let i = 0; i < anzahl; i++) {
+            let id;
+            try {
+                id = ctx.nextId('npcs');
+            } catch (e) {
+                // Ein Abbruch ist nur zulaessig, wenn wirklich keine ID mehr frei ist —
+                // hier sind die Sammlungen winzig, also ist er immer ein Befund.
+                verstoesse.push({ marke, i, art: 'abbruch', meldung: e.message });
+                continue;
+            }
+            const inSammlung = idsVon(sammlung());
+            const hoechste = Math.max(0, ...inSammlung, ...vergeben);
+            // Invariante 1: die ID ist selbst gueltig UND neu vergebbar.
+            if (!(Number.isSafeInteger(id) && id > 0 && id < MAX)) {
+                verstoesse.push({ marke, i, art: 'nicht-vergebbar', id: String(id) });
+            }
+            // Invariante 2: sie steht weder in der Sammlung, noch wurde sie in diesem
+            // Seitenleben schon herausgegeben (Stapel ohne push, geloeschte Entitaet,
+            // Restore — in all diesen Faellen traegt die Sammlung die Wahrheit nicht).
+            if (inSammlung.includes(id)) {
+                verstoesse.push({ marke, i, art: 'schon-in-sammlung', id: String(id) });
+            }
+            if (vergeben.has(id)) {
+                verstoesse.push({ marke, i, art: 'doppelt-vergeben', id: String(id) });
+            }
+            // Wunscheigenschaft, geprueft NUR wo erreichbar: solange oberhalb der
+            // Hoechstmarke noch etwas vergebbar ist, laeuft die Vergabe monoton. Sonst
+            // bindet ein liegen gebliebener Verweis (quest.giverId auf einen geloeschten
+            // NSC) still an eine neue Entitaet um. In der Saettigung gibt es oberhalb
+            // nichts mehr — dort ist Lueckenvergabe die bewusste Notloesung.
+            if (hoechste + 1 < MAX && !(id > hoechste)) {
+                verstoesse.push({
+                    marke,
+                    i,
+                    art: 'nicht-monoton',
+                    id: String(id),
+                    hoechste: String(hoechste)
+                });
+            }
+            vergeben.add(id);
+            ids.push(id);
+            if (ablegen === 'sofort') sammlung().push({ id, name: `E${id}` });
+            else wartend.push({ id, name: `E${id}` });
+        }
+        if (ablegen === 'amEnde') for (const e of wartend) sammlung().push(e);
+        return ids;
+    }
+
+    test('G3a: 672 Gitterpunkte — Stapel, Loeschen, Speichern, zweites Seitenleben', () => {
+        const verstoesse = [];
+        let punkte = 0;
+        for (const k of KS) {
+            for (const zaehlerArt of ZAEHLER_ARTEN) {
+                for (const groesse of STAPELGROESSEN) {
+                    for (const ablegen of ABLEGE_ARTEN) {
+                        for (const mitLoeschen of [false, true]) {
+                            punkte++;
+                            const maxId = MAX - k;
+                            // ---- Seitenleben 1
+                            const s1 = makeContext({ withMigration: true });
+                            s1.D.npcs = [
+                                { id: 1, name: 'Borin' },
+                                { id: maxId, name: 'Fremd' }
+                            ];
+                            const zaehler = zaehlerFuer(zaehlerArt, maxId);
+                            s1.D._nextId = zaehler === undefined ? {} : { npcs: zaehler };
+                            const vergeben1 = new Set();
+                            const sammlung1 = () => s1.D.npcs;
+                            const a = muenzeStapel(
+                                s1,
+                                sammlung1,
+                                vergeben1,
+                                groesse,
+                                ablegen,
+                                verstoesse,
+                                'A'
+                            );
+                            if (mitLoeschen && a.length) {
+                                s1.D.npcs = s1.D.npcs.filter(e => e.id !== a[0]);
+                            }
+                            muenzeStapel(
+                                s1,
+                                sammlung1,
+                                vergeben1,
+                                groesse,
+                                ablegen,
+                                verstoesse,
+                                'B'
+                            );
+                            // Die Schadensform selbst: ein `filter(e => e.id !== id)` darf
+                            // nie mehr als eine Entitaet treffen.
+                            const alle = s1.D.npcs.map(e => e.id);
+                            const doppelt = [
+                                ...new Set(alle.filter((x, i) => alle.indexOf(x) !== i))
+                            ];
+                            if (doppelt.length) {
+                                verstoesse.push({
+                                    marke: 'datei',
+                                    art: 'sammlung-doppelt',
+                                    id: doppelt.map(String)
+                                });
+                            }
+                            // ---- Speichern und Laden ueber den ECHTEN Normalisierer
+                            const datei = plain({ npcs: s1.D.npcs, _nextId: s1.D._nextId });
+                            const s2 = makeContext({ withMigration: true });
+                            const geladen = s2.normalizeCampaignData(datei);
+                            if (!geladen.ok) {
+                                verstoesse.push({
+                                    marke: 'laden',
+                                    art: 'laden-fehlgeschlagen',
+                                    meldung: geladen.error
+                                });
+                                continue;
+                            }
+                            s2.D = geladen.data;
+                            // ---- Seitenleben 2: frische Prozess-Erinnerung
+                            muenzeStapel(
+                                s2,
+                                () => s2.D.npcs,
+                                new Set(),
+                                groesse,
+                                ablegen,
+                                verstoesse,
+                                'C'
+                            );
+                        }
+                    }
+                }
+            }
+        }
+        expect(punkte).toBe(
+            KS.length * ZAEHLER_ARTEN.length * STAPELGROESSEN.length * ABLEGE_ARTEN.length * 2
+        );
+        expect(punkte).toBe(672);
+        // Die ersten Befunde ausgeschrieben: die Fehlermeldung nennt Marke, Art und Wert.
+        expect(verstoesse.slice(0, 12)).toEqual([]);
+        expect({ punkte, verletzt: verstoesse.length }).toEqual({ punkte: 672, verletzt: 0 });
+    });
+
+    test('G3b: 336 Gitterpunkte — Undo/Restore mitten im Seitenleben', () => {
+        // Zweite Achse derselben Frage: nicht die Sammlung waechst, sondern sie SPRINGT
+        // zurueck. Ein Undo setzt Sammlung UND gespeicherten Zaehler auf einen aelteren
+        // Stand, die Prozess-Erinnerung ueberlebt aber. Genau hier hebt die Untergrenze
+        // wieder auf eine ID, die dieses Seitenleben schon herausgegeben hat — und die
+        // Sammlung kann das nicht mehr sagen.
+        const verstoesse = [];
+        let punkte = 0;
+        for (const k of KS) {
+            for (const zaehlerArt of ZAEHLER_ARTEN) {
+                for (const groesse of STAPELGROESSEN) {
+                    for (const ablegen of ABLEGE_ARTEN) {
+                        punkte++;
+                        const maxId = MAX - k;
+                        const ctx = makeContext();
+                        ctx.D.npcs = [
+                            { id: 1, name: 'Borin' },
+                            { id: maxId, name: 'Fremd' }
+                        ];
+                        const zaehler = zaehlerFuer(zaehlerArt, maxId);
+                        ctx.D._nextId = zaehler === undefined ? {} : { npcs: zaehler };
+                        const stand = plain({ npcs: ctx.D.npcs, _nextId: ctx.D._nextId });
+                        const vergeben = new Set();
+                        const sammlung = () => ctx.D.npcs;
+                        muenzeStapel(
+                            ctx,
+                            sammlung,
+                            vergeben,
+                            groesse,
+                            ablegen,
+                            verstoesse,
+                            'vor-undo'
+                        );
+                        ctx.D.npcs = plain(stand.npcs);
+                        ctx.D._nextId = plain(stand._nextId);
+                        muenzeStapel(
+                            ctx,
+                            sammlung,
+                            vergeben,
+                            groesse,
+                            ablegen,
+                            verstoesse,
+                            'nach-undo'
+                        );
+                    }
+                }
+            }
+        }
+        expect(punkte).toBe(
+            KS.length * ZAEHLER_ARTEN.length * STAPELGROESSEN.length * ABLEGE_ARTEN.length
+        );
+        expect(punkte).toBe(336);
+        expect(verstoesse.slice(0, 12)).toEqual([]);
+        expect({ punkte, verletzt: verstoesse.length }).toEqual({ punkte: 336, verletzt: 0 });
+    });
+});
