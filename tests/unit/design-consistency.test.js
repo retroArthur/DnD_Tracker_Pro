@@ -42,6 +42,18 @@ describe('F-01 — Custom Properties', () => {
     // haben im CSS bewusst keine Definition.
     const RUNTIME_TOKENS = new Set(['--hp-pct', '--map-zoom', '--migration-hint-height']);
 
+    /* ACHTUNG BEIM KOMMENTIEREN VON CSS — diese Falle ist in Welle 1 dreimal
+       zugeschnappt (W1-B in variables.css, W1-C in pwa.css, W1-E in core.css).
+       Der Test unten liest `cssAll`, also die Dateien MIT ihren Kommentaren.
+       Wer in einem CSS-Kommentar einen Platzhalter in var()-Schreibweise
+       benutzt — etwa "var(--<rolle>)" oder "var(--attr-<a>)" —, dem liest die
+       Regex daraus ein Token wie `--` oder `--attr-` heraus und meldet es als
+       undefiniert. Der Test geht rot, obwohl kein einziges CSS falsch ist.
+       Abhilfe: im Kommentar die Tokennamen ausschreiben (var(--attr-str) bis
+       var(--attr-cha)) oder die var()-Klammern ganz weglassen.
+       Warum die Kommentare nicht einfach entfernt werden: der Test soll auch
+       einen auskommentierten var()-Aufruf finden, der beim Wiedereinschalten
+       ins Leere zeigen wuerde. */
     test('kein var(--x) ohne Definition, Fallback oder Laufzeitquelle', () => {
         const defined = new Set(cssAll.match(/^\s*(--[\w-]+)\s*:/gm)?.map(m => m.trim().replace(/\s*:$/, '')) || []);
         const undefinedNames = new Set();
