@@ -2162,6 +2162,17 @@ describe('R-04 — jede Regel haelt 4,5 auf ihrer EIGENEN Flaeche (Ratsche)', ()
    saemtliche Farbdeklarationen von STRIKT hoeherer Spezifitaet geschlagen
    werden: die ist wirkungslos und gehoert entfernt, nicht korrigiert.
 
+   (3) DRITTER FALL, Pruefrunde W1-E Runde 2, und er hat die Ratsche selbst
+       erweitert: `.bestiary-dice` traegt zwei voellig verschiedene
+       Verwendungen — die Wuerfel im Pergament-Statblock und, ueber
+       party-details.js:215-216, die Angriffswuerfel im Charakter-Detail auf
+       --bg/--bg-hover. Die neue Pergamenttinte schlug ueber die Kaskade auf
+       den HOVER-Zustand der zweiten Verwendung durch und senkte ihn von 6,01
+       auf 1,69 (dark und contrast). Diese Ratsche sah es nicht, weil sie
+       Pseudoklassen ausdruecklich ausschloss. Seitdem darf ein Zustand
+       `pseudo: ':hover'` fuehren; der Fall steht als siebter Eintrag in
+       ZUSTAENDE, samt Zahlen.
+
    WARUM NUR EINE BENANNTE LISTE und keine vollstaendige Kaskade: eine
    allgemeine Kaskadenaufloesung braucht das DOM. Die Liste hier ist die Menge
    der Zustaende, an denen der Fehler belegt aufgetreten ist; sie waechst mit
@@ -2215,15 +2226,29 @@ describe("R-05 — die Kaskade entscheidet, nicht die Regel (Ratsche)", () => {
    * Trifft eine Selektor-Alternative den beschriebenen Elementzustand?
    *
    * Bewusst eng: nur Klassenselektoren und Nachfahren-Kombinatoren. Alles
-   * andere (Element, ID, Pseudoklasse, `>`/`+`/`~`, Attribut) gilt als
-   * NICHT-Treffer — die Zustaende dieser Liste sind Ruhezustaende ohne
-   * Pseudoklasse. Eine zu grosszuegige Uebereinstimmung waere schlimmer als
-   * gar keine: sie rechnete eine Tinte auf eine Flaeche, die nie zusammen
-   * auftreten.
+   * andere (Element, ID, `>`/`+`/`~`, Attribut) gilt als NICHT-Treffer. Eine
+   * zu grosszuegige Uebereinstimmung waere schlimmer als gar keine: sie
+   * rechnete eine Tinte auf eine Flaeche, die nie zusammen auftreten.
+   *
+   * PSEUDOKLASSEN, seit Pruefrunde W1-E Runde 2: bis dahin galt hier
+   * ausnahmslos "Pseudoklasse = kein Treffer", und genau diese Ausnahme hat
+   * einen Blocker durchgelassen (siehe den Zustand "Angriffswuerfel im
+   * Charakter-Detail" unten in ZUSTAENDE). Ein Zustand darf jetzt mit
+   * `pseudo: ':hover'` sagen, dass er ein Zustand MIT Pseudoklasse ist. Dann
+   * — und nur dann — zaehlt eine Alternative, deren letzter Teil genau auf
+   * diese Pseudoklasse endet, als Treffer; die Ruheregel ohne Pseudoklasse
+   * trifft weiterhin mit, denn der Hover-Zustand erbt sie. Ohne `pseudo` ist
+   * das Verhalten Zeichen fuer Zeichen das alte: die sieben vorhandenen
+   * Zustaende sind Ruhezustaende und bleiben unberuehrt.
    */
-  function trifft(alternative, klassen, vorfahren) {
-    if (/[>+~[\]#]|::/.test(alternative)) return false;
-    const teile = alternative.trim().split(/\s+/);
+  function trifft(alternative, klassen, vorfahren, pseudo) {
+    let roh = alternative.trim();
+    if (pseudo && roh.endsWith(pseudo)) roh = roh.slice(0, -pseudo.length);
+    // `:` steht jetzt ausdruecklich in der Ablehnung. Das aendert nichts —
+    // die Klammerprobe in alleKlassen() hat einzelne Pseudoklassen schon
+    // vorher verworfen —, macht die Absicht aber lesbar.
+    if (/[>+~[\]#]|:/.test(roh)) return false;
+    const teile = roh.split(/\s+/);
     if (!teile.length) return false;
     const alleKlassen = (t) => {
       const tok = t.match(/\.[-\w]+/g) || [];
@@ -2240,9 +2265,13 @@ describe("R-05 — die Kaskade entscheidet, nicht die Regel (Ratsche)", () => {
     });
   }
 
-  /** Spezifitaet reicht hier als Klassenzahl: die Liste kennt nur Klassen. */
+  /** Spezifitaet = Klassen + Pseudoklassen. Beide wiegen in der Kaskade
+   *  gleich viel (0,x,0); Elemente und IDs kommen in dieser Liste nicht vor.
+   *  Fuer die sieben Ruhezustaende ist der zweite Summand immer 0 — ihre
+   *  Selektoren fuehren keinen Doppelpunkt. */
   const spezifitaet = (alternative) =>
-    (alternative.match(/\.[-\w]+/g) || []).length;
+    (alternative.match(/\.[-\w]+/g) || []).length +
+    (alternative.replace(/::[-\w]+/g, "").match(/:[-\w]+/g) || []).length;
 
   /** Die gewinnende Deklaration einer Eigenschaft fuer einen Zustand. */
   function gewinner(kandidaten, prop) {
@@ -2270,7 +2299,9 @@ describe("R-05 — die Kaskade entscheidet, nicht die Regel (Ratsche)", () => {
         const treffer = r.sel
           .split(",")
           .map((s) => s.trim())
-          .filter((s) => trifft(s, zustand.klassen, zustand.vorfahren));
+          .filter((s) =>
+            trifft(s, zustand.klassen, zustand.vorfahren, zustand.pseudo),
+          );
         if (!treffer.length) return;
         out.push({
           datei: f.name,
@@ -2319,6 +2350,53 @@ describe("R-05 — die Kaskade entscheidet, nicht die Regel (Ratsche)", () => {
                2026-09-28: dark 5,06 · light 2,41 · sepia 5,28 · contrast 7,94. */
       ausnahme: 2.41,
       flaecheUeber: "var(--bg-elevated)",
+    },
+    /* -------------------------------------------------------------------
+       DER ZUSTAND, DER DIESE RATSCHE UM PSEUDOKLASSEN ERWEITERT HAT
+       (Pruefrunde W1-E, Runde 2)
+
+       `.bestiary-dice` ist NICHT nur eine Statblock-Klasse. Ausser
+       renderClickableDice() (bestiary-render.js:41, immer innerhalb von
+       `.bestiary-statblock`) erzeugt auch party-details.js:215-216 Spans
+       mit dieser Klasse — die klickbaren Treffer- und Schadenswuerfel im
+       Charakter-Detail, verpackt in `.char-attack-entry`. Dort liegt kein
+       Pergament, sondern --bg (Ruhe) bzw. --bg-hover (Hover).
+
+       Der RUHEZUSTAND war immer abgesichert: `.char-attack-entry
+       .bestiary-dice` (0,2,0) schlaegt `.bestiary-dice` (0,1,0) und setzt
+       --gold-text. Der HOVER-Zustand war es nicht. party.css setzt dort nur
+       `background`, keine `color`; fuer `color` standen sich
+       `.char-attack-entry .bestiary-dice` (0,2,0, party.css, Hub-Rang 9)
+       und `.bestiary-dice:hover` (0,2,0, bestiary.css, Hub-Rang 18)
+       gleichauf gegenueber — die Quellreihenfolge entschied fuer bestiary.
+
+       Als die Statblock-Wuerfel am 2026-09-28 ihre Pergamenttinte bekamen,
+       fiel dieser fremde Hover-Zustand deshalb mit: --parchment-ink-link-
+       hover #7a4a00 auf --bg-hover ergibt dark 1,69 und contrast 1,69,
+       wo vorher (var(--gold)) 6,01 bzw. 9,01 standen. Dark ist das
+       Standardtheme. Keine Ratsche sah es: R-05 schloss Pseudoklassen
+       ausdruecklich aus, R-03 verlangt eine Flaeche ohne Rueckfallwert
+       (hier steht `var(--bg-hover, rgba(255,255,255,0.07))`), R-07 liest
+       nur bestiary.css und kennt die Verwendung ausserhalb des Pergaments
+       nicht. Die volle Jest-Suite war gruen — genau deshalb.
+
+       Behoben strukturell: die beiden bestiary.css-Regeln heissen jetzt
+       `.bestiary-statblock .bestiary-dice(:hover)` und gelten nur noch da,
+       wo auch Pergament liegt. Damit erbt der Hover-Zustand hier wieder
+       --gold-text: dark 6,01 · light 4,59 · sepia 5,16 · contrast 9,01,
+       min 4,59 — das repariert nebenbei den vorbestehenden Light-Wert 2,40.
+       ------------------------------------------------------------------- */
+    {
+      name: "Angriffswuerfel im Charakter-Detail, Mauszeiger darauf",
+      dateien: ["party.css", "bestiary.css"],
+      klassen: ["bestiary-dice"],
+      vorfahren: [
+        "char-attack-entry",
+        "char-attacks-list",
+        "char-attacks-section",
+      ],
+      marke: ":hover",
+      pseudo: ":hover",
     },
   ];
 
@@ -2394,7 +2472,11 @@ describe("R-05 — die Kaskade entscheidet, nicht die Regel (Ratsche)", () => {
       kand.forEach((k) => {
         // Nur Regeln, die die Zustandsmarke selbst fuehren: nur bei
         // ihnen heisst "in diesem Zustand geschlagen" auch "nie wirksam".
-        if (!k.alternativen.some((a) => a.includes(`.${z.marke}`))) return;
+        // Die Marke ist entweder eine Klasse (`active`) oder — seit W1-E
+        // Runde 2 — eine Pseudoklasse (`:hover`); im zweiten Fall traegt
+        // sie den Doppelpunkt schon.
+        const markeText = z.marke.startsWith(":") ? z.marke : `.${z.marke}`;
+        if (!k.alternativen.some((a) => a.includes(markeText))) return;
         const props = ["color", "background(?:-color)?"].filter((p) =>
           deklaration(k.rumpf, p),
         );
