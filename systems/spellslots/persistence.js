@@ -221,6 +221,16 @@ function _hasExplicitPendingWork() {
     );
 }
 /**
+ * Oeffentliche Fassung von _hasExplicitPendingWork() fuer Aufrufer ausserhalb dieses Moduls
+ * (D-C, systems/campaign-manager/campaign-manager.js): ein Kampagnenwechsel muss wissen, ob
+ * dieser Tab ausdrueckliche, noch nicht gespeicherte Arbeit hat — in einem VERALTETEN Tab darf
+ * sie den neueren gespeicherten Stand nicht ueberschreiben, aber auch nicht verfallen.
+ * @returns {boolean}
+ */
+function hasExplicitPendingWork() {
+    return _hasExplicitPendingWork();
+}
+/**
  * R06 (Code-Review 2026-09-21, U8): fuehrt fn aus, waehrend entprellte Saves zurueckgestellt
  * sind (verschachtelbar). Ein in dieser Zeit faelliger save() schreibt nicht, sondern plant
  * sich neu ein — scheitert das Konflikt-Neuladen, landet die lokale Aenderung danach wie
@@ -638,8 +648,16 @@ async function saveToIndexedDBFallback(key, dataString, opts) {
  * strict), erst danach localStorage (Daten, _ts, _rev). Scheitert der IDB-Delete, bleibt
  * localStorage unangetastet — sonst holte load() eine womoeglich aeltere IDB-Kopie zurueck.
  * Wirft nie.
+ *
+ * D-B (Nutzerentscheidung 2026-09-27): bei stage 'indexedDB' sagt `reason`, WARUM. 'open' =
+ * die Datenbank liess sich gar nicht oeffnen (window.idb ist danach leer) — dann kann niemand
+ * wissen, ob dort noch eine Kopie liegt, und der Aufrufer darf den Nutzer entscheiden lassen
+ * (confirmLocalOnlyCampaignRemoval). 'commit' = die Transaktion einer GEOEFFNETEN Datenbank
+ * wurde abgebrochen; dort ist belegt, dass eine erreichbare Kopie existiert, und der Aufrufer
+ * bleibt fail-closed.
  * @param {string} key - Kampagnen-Speicherschluessel
- * @returns {Promise<{success: true} | {success: false, stage: string, error: *}>}
+ * @returns {Promise<{success: true} |
+ *   {success: false, stage: string, reason?: 'open'|'commit', error: *}>}
  */
 async function removeCampaignData(key) {
     if (typeof key !== 'string' || key === '') {
@@ -655,7 +673,12 @@ async function removeCampaignData(key) {
                 { durability: 'strict' }
             );
         } catch (error) {
-            return { success: false, stage: 'indexedDB', error };
+            return {
+                success: false,
+                stage: 'indexedDB',
+                reason: window.idb ? 'commit' : 'open',
+                error
+            };
         }
     }
     try {
@@ -666,6 +689,49 @@ async function removeCampaignData(key) {
         return { success: false, stage: 'localStorage', error };
     }
     return { success: true };
+}
+/**
+ * D-B (Nutzerentscheidung 2026-09-27): window.indexedDB ist gemeldet, die Datenbank liess sich
+ * aber nicht OEFFNEN (aeltere Firefox-Privatfenster, manche file://-Aufbauten). Ein Loeschpfad
+ * kann dann nicht wissen, ob dort noch eine Kopie dieser Kampagne liegt, und darf sie nicht
+ * stillschweigend aufgeben — vorher scheiterte er deshalb ganz ("Es wurde nichts geloescht")
+ * und die Kampagne war in so einer Umgebung nicht loeschbar.
+ *
+ * Statt fuer den Nutzer zu entscheiden, fragt diese Funktion ihn: abbrechen (empfohlen, erst
+ * exportieren) oder nur die lokalen Daten loeschen, mit benannter Folge. NUR bei
+ * ausdruecklicher Bestaetigung wird localStorage geleert; die Meldung des Aufrufers muss
+ * danach sagen, was geloescht wurde und was nicht. Wirft nie.
+ * @param {string} key - Kampagnen-Speicherschluessel
+ * @param {string} [label] - Anzeigename der Kampagne fuer die Rueckfrage
+ * @returns {{removed: boolean, error?: *}} removed: die localStorage-Kopie ist entfernt
+ */
+function confirmLocalOnlyCampaignRemoval(key, label) {
+    if (typeof key !== 'string' || key === '') return { removed: false };
+    const wen = label ? `von „${label}“` : 'dieser Kampagne';
+    let bestaetigt = false;
+    try {
+        bestaetigt =
+            confirm(
+                '⚠️ IndexedDB kann nicht geöffnet werden.\n\n' +
+                    'Der Browser meldet IndexedDB, aber die Datenbank lässt sich nicht öffnen. ' +
+                    `Eine Kopie ${wen} kann dort liegen und ist jetzt nicht entfernbar.\n\n` +
+                    'ABBRECHEN (empfohlen): Es wird nichts gelöscht. Erst exportieren, dann ' +
+                    'später erneut versuchen.\n\n' +
+                    'OK: Nur die lokalen Daten (localStorage) werden gelöscht. Die mögliche ' +
+                    'IndexedDB-Kopie bleibt und kann beim nächsten Start wieder auftauchen.'
+            ) === true;
+    } catch (error) {
+        return { removed: false, error };
+    }
+    if (!bestaetigt) return { removed: false };
+    try {
+        StorageAPI.remove(key);
+        StorageAPI.remove(key + '_ts');
+        StorageAPI.remove(key + '_rev');
+    } catch (error) {
+        return { removed: false, error };
+    }
+    return { removed: true };
 }
 /**
  * Schreibt die Daten EINER Kampagne nach denselben Regeln wie save(), aber ohne
@@ -905,6 +971,9 @@ window.registerPostSaveHook = registerPostSaveHook;
 window.loadFromIndexedDBFallbackRaw = loadFromIndexedDBFallbackRaw;
 window.removeCampaignData = removeCampaignData;
 window.writeCampaignData = writeCampaignData;
+// D-B / D-C (Nutzerentscheidungen 2026-09-27)
+window.confirmLocalOnlyCampaignRemoval = confirmLocalOnlyCampaignRemoval;
+window.hasExplicitPendingWork = hasExplicitPendingWork;
 // R02 (Code-Review 2026-09-21, U7)
 window.setPersistBaseline = setPersistBaseline;
 window.refreshPersistSnapshot = refreshPersistSnapshot;

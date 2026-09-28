@@ -195,17 +195,99 @@ async function createCampaign() {
         _campaignCreateInFlight = false;
     }
 }
+/**
+ * D-C (Nutzerentscheidung 2026-09-27): Ist dieser Tab VERALTET und hat er ausdrueckliche, noch
+ * nicht gespeicherte Arbeit, darf sein Stand die neueren gespeicherten Daten der alten
+ * Kampagne NICHT ueberschreiben — verfallen darf er aber auch nicht. Er wird deshalb als
+ * GESCHUETZTE Sicherungskopie (kind 'safety') der ALTEN Kampagne gesichert; erst danach wird
+ * gewechselt. Scheitert die Kopie, wird NICHT gewechselt.
+ *
+ * Vorher schrieb flushPendingSaveAndSettle() hier zu Recht nichts (der Save wuerde den
+ * fremden, neueren Stand ueberschreiben), liess den Save aber eingeplant: das beforeunload des
+ * Neuladens fragte nach (D5), und nach "Bleiben" zeigte der Tab die ALTE Kampagne, waehrend
+ * index.active schon auf die neue zeigte.
+ * Wirft nie.
+ * @returns {Promise<{mayContinue: boolean, secured: boolean}>} secured: der Stand dieses Tabs
+ *   ist gesichert (oder enthielt keinen sicherungsfaehigen Inhalt) — dann wird die
+ *   Schreibsperre statt eines Flushs benutzt
+ */
+async function secureStaleTabBeforeSwitch() {
+    const key =
+        typeof window.getActiveCampaignKey === 'function' ? window.getActiveCampaignKey() : null;
+    const veraltet =
+        !!key &&
+        typeof window.isCampaignStorageStale === 'function' &&
+        window.isCampaignStorageStale(key);
+    const ausdruecklich =
+        typeof window.hasExplicitPendingWork === 'function' && window.hasExplicitPendingWork();
+    if (!veraltet || !ausdruecklich) return { mayContinue: true, secured: false };
+    let status = 'failed';
+    try {
+        status =
+            typeof window.createAutoBackup === 'function'
+                ? await window.createAutoBackup({ reason: 'safety' })
+                : 'failed';
+    } catch (error) {
+        if (window.ErrorHandler) {
+            window.ErrorHandler.log('switchCampaign', error, 'Sicherungskopie vor dem Wechsel');
+        }
+        status = 'failed';
+    }
+    if (status === 'failed') {
+        showToast(
+            '❌ Kampagnenwechsel abgebrochen: Die ungespeicherte Änderung dieses Tabs konnte ' +
+                'nicht als Sicherungskopie gesichert werden.',
+            'error',
+            8000
+        );
+        return { mayContinue: false, secured: false };
+    }
+    if (status === 'skipped-empty') {
+        // Kein sicherungsfaehiger Inhalt (gemeinsame Definition hasCampaignContent): eine
+        // Sicherungskopie koennte nichts zurueckholen. Ehrlich benennen statt Erfolg melden.
+        showToast(
+            '⚠️ Veralteter Tab: Die ungespeicherte Änderung enthielt keinen sicherungsfähigen ' +
+                'Inhalt und wurde nicht gespeichert.',
+            'warning',
+            8000
+        );
+        return { mayContinue: true, secured: true };
+    }
+    showToast(
+        '⚠️ Ein anderer Tab hat diese Kampagne inzwischen gespeichert. Die ungespeicherte ' +
+            'Änderung dieses Tabs wurde als Sicherungskopie gesichert — über Backups ' +
+            'wiederherstellbar.',
+        'warning',
+        8000
+    );
+    return { mayContinue: true, secured: true };
+}
 // async (R02): einen ausstehenden Save der alten Kampagne erst festschreiben und den Commit
 // abwarten — sonst muesste das Verlassen im IndexedDB-Modus nachfragen
 async function switchCampaign(key) {
     if (typeof window.flushPendingSaveAndSettle === 'function') {
         await window.flushPendingSaveAndSettle();
     }
+    // D-C: In einem veralteten Tab schreibt der Flush nichts. Ausdrueckliche Arbeit wird dann
+    // erst gesichert (siehe secureStaleTabBeforeSwitch), sonst ginge sie beim Neuladen
+    // verloren oder das beforeunload fragte nach.
+    const gesichert = await secureStaleTabBeforeSwitch();
+    if (!gesichert.mayContinue) return;
+    if (gesichert.secured && typeof window.retireCampaignWrites === 'function') {
+        // Schreibsperre statt Flush: sie verwirft den ausstehenden Save und haelt das
+        // beforeunload still (persistOnUnload kehrt unter der Sperre sofort zurueck). Der
+        // Stand liegt in der Sicherungskopie, der Speicher behaelt den neueren fremden Stand.
+        await window.retireCampaignWrites();
+    }
     const index = getCampaignIndex();
     index.active = key;
     // Nur neu laden, wenn der Wechsel wirklich gespeichert ist (R07)
     const result = saveCampaignIndex(index);
     if (!result || !result.success) {
+        // Der Tab bleibt, wo er ist — und muss wieder schreiben duerfen
+        if (gesichert.secured && typeof window.resumeCampaignWrites === 'function') {
+            window.resumeCampaignWrites();
+        }
         showToast('❌ Kampagnenwechsel fehlgeschlagen (Speicher voll?)', 'error');
         return;
     }
@@ -271,7 +353,23 @@ async function deleteCampaign() {
         // 2. Gespeicherte Daten entfernen: IndexedDB (bestaetigter Commit) VOR localStorage
         const removal = await window.removeCampaignData(key);
         dataRemoved = !!(removal && removal.success);
-        if (!removal || !removal.success) {
+        // D-B (Nutzerentscheidung 2026-09-27): IndexedDB ist gemeldet, liess sich aber nicht
+        // OEFFNEN — ob dort eine Kopie liegt, ist unbekannt. Statt fail-closed ("Es wurde
+        // nichts gelöscht") entscheidet der Nutzer, ob wenigstens die lokale Kopie weichen
+        // soll. Ein abgebrochener Commit einer GEOEFFNETEN Datenbank bleibt fail-closed.
+        let nurLokal = false;
+        if (
+            !dataRemoved &&
+            removal &&
+            removal.stage === 'indexedDB' &&
+            removal.reason === 'open' &&
+            typeof window.confirmLocalOnlyCampaignRemoval === 'function' &&
+            window.confirmLocalOnlyCampaignRemoval(key, campaignName).removed
+        ) {
+            nurLokal = true;
+            dataRemoved = true;
+        }
+        if (!dataRemoved) {
             if (window.ErrorHandler) {
                 window.ErrorHandler.log(
                     'deleteCampaign',
@@ -288,6 +386,13 @@ async function deleteCampaign() {
             }
             alert(
                 `⚠️ "${campaignName}" wurde aus der Liste entfernt, aber die gespeicherten Daten konnten nicht vollständig gelöscht werden.`
+            );
+        } else if (nurLokal) {
+            // Ehrlich benennen, was geschehen ist. Die Auto-Backups dieser Kampagne werden
+            // hier BEWUSST nicht entfernt (Abweichung von D2 = A): sie sind der einzige Weg
+            // zurueck, solange die IndexedDB-Kopie unerreichbar ist.
+            alert(
+                `⚠️ "${campaignName}": Nur die lokalen Daten wurden gelöscht.\n\nDie IndexedDB-Kopie konnte nicht entfernt werden und kann beim nächsten Start wieder auftauchen. Die automatischen Backups dieser Kampagne bleiben erhalten.`
             );
         } else {
             log('[deleteCampaign] Kampagnendaten entfernt');
@@ -307,7 +412,7 @@ async function deleteCampaign() {
         // 3. Globales D-Objekt zurücksetzen (falls Seite nicht neu lädt) — vollstaendiges
         //    Grundgeruest aus initializeData(), in place (D ist const)
         window.replaceCampaignData(window.D, window.initializeData());
-        if (removal && removal.success) {
+        if (dataRemoved && !nurLokal) {
             alert(`✅ "${campaignName}" wurde gelöscht!\n\nDie Seite wird neu geladen...`);
         }
         // 4. Seite mit Cache-Bypass neu laden

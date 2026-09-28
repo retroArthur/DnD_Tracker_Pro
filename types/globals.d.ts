@@ -329,10 +329,19 @@ declare global {
     | { success: true; backend: 'localStorage' | 'indexedDB' }
     | { success: false; error: string; superseded?: true };
 
-  /** Ergebnis von removeCampaignData() — wirft nie */
+  /**
+   * Ergebnis von removeCampaignData() — wirft nie. `reason` nur bei stage 'indexedDB':
+   * 'open' = die Datenbank liess sich nicht oeffnen (eine Kopie KANN dort liegen, unbekannt);
+   * 'commit' = Transaktion einer geoeffneten Datenbank abgebrochen (Kopie belegt erreichbar).
+   */
   type RemoveCampaignDataResult =
     | { success: true }
-    | { success: false; stage: 'key' | 'indexedDB' | 'localStorage'; error: unknown };
+    | {
+        success: false;
+        stage: 'key' | 'indexedDB' | 'localStorage';
+        reason?: 'open' | 'commit';
+        error: unknown;
+      };
 
   /** Loest mit 'complete' auf; 'abort'/'error' lehnen ab (setzt tx.oncomplete/onabort/onerror) */
   function idbTransactionDone(tx: IDBTransaction): Promise<void>;
@@ -349,6 +358,15 @@ declare global {
 
   /** Alle Kopien einer Kampagne entfernen: IndexedDB (Commit) vor localStorage */
   function removeCampaignData(key: string): Promise<RemoveCampaignDataResult>;
+
+  /**
+   * D-B: IndexedDB gemeldet, aber nicht oeffenbar — fragt per confirm() und entfernt NUR bei
+   * ausdruecklicher Bestaetigung die localStorage-Kopie (Daten, _ts, _rev). Wirft nie.
+   */
+  function confirmLocalOnlyCampaignRemoval(
+    key: string,
+    label?: string
+  ): { removed: boolean; error?: unknown };
 
   // ============================================================
   // PERSIST-BASELINE & SCHREIBSTEUERUNG (Code-Review 2026-09-21, U7/R02)
@@ -384,6 +402,12 @@ declare global {
   /** Sperre aufheben (Abbruchpfade); holt einen verworfenen save() oder den unter der
    *  Sperre uebersprungenen Nachlauf eines IndexedDB-Commits nach */
   function resumeCampaignWrites(): void;
+
+  /**
+   * D-C: Steht ausdrueckliche, noch nicht gespeicherte Arbeit aus? Ein rein automatischer
+   * Timer zaehlt nicht; ein laufender IndexedDB-Write und ein gescheiterter Save zaehlen immer.
+   */
+  function hasExplicitPendingWork(): boolean;
 
   /** Automatischer Save nur in einem nicht gesperrten, nicht veralteten Tab (true = angestossen) */
   function saveAutomatic(): boolean;

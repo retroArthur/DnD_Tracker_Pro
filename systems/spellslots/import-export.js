@@ -946,12 +946,36 @@ async function clearStorage() {
     if (result && result.success) {
         showToast('✅ Alle Daten gelöscht', 'info');
         setTimeout(() => location.reload(), 1000);
-    } else {
-        if (typeof window.resumeCampaignWrites === 'function') window.resumeCampaignWrites();
-        showToast('❌ Fehler beim Löschen', 'error');
-        if (window.ErrorHandler) {
-            window.ErrorHandler.log('Clear storage', result && result.error);
-        }
+        return;
     }
+    if (window.ErrorHandler) {
+        window.ErrorHandler.log('Clear storage', result && result.error);
+    }
+    // Step 5b (D-B, Nutzerentscheidung 2026-09-27): IndexedDB ist gemeldet, liess sich aber
+    // nicht OEFFNEN. Ob dort eine Kopie liegt, ist unbekannt — statt nur fehlzuschlagen
+    // ("Es wurde nichts gelöscht") entscheidet der Nutzer. Ein abgebrochener Commit einer
+    // GEOEFFNETEN Datenbank bleibt fail-closed: dort ist eine erreichbare Kopie belegt.
+    if (
+        result &&
+        result.stage === 'indexedDB' &&
+        result.reason === 'open' &&
+        typeof window.confirmLocalOnlyCampaignRemoval === 'function' &&
+        window.confirmLocalOnlyCampaignRemoval(key).removed
+    ) {
+        showToast(
+            '⚠️ Nur die lokalen Daten wurden gelöscht. Die IndexedDB-Kopie konnte nicht ' +
+                'entfernt werden und kann beim nächsten Start wieder auftauchen.',
+            'warning',
+            8000
+        );
+        setTimeout(() => location.reload(), 1000);
+        return;
+    }
+    if (typeof window.resumeCampaignWrites === 'function') window.resumeCampaignWrites();
+    if (result && result.stage === 'indexedDB' && result.reason === 'open') {
+        showToast('❌ IndexedDB nicht erreichbar — es wurde nichts gelöscht', 'error');
+        return;
+    }
+    showToast('❌ Fehler beim Löschen', 'error');
 }
 // ============================================================

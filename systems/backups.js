@@ -190,29 +190,44 @@ function knownBackupCampaignKeys() {
     }
 }
 /**
- * Naechster Verdraengungskandidat der localStorage-Liste (Index) oder -1. Reihenfolge:
- * (1) verwaiste Eintraege (Kampagne weder Standard noch im Index), aelteste zuerst;
- * (2) nicht-neueste Eintraege anderer Kampagnen, aelteste zuerst;
- * (3) aeltere Eintraege der schreibenden Kampagne;
- * (4) neueste Eintraege anderer Kampagnen, aelteste zuerst.
- * Das neue Backup weicht nie.
+ * Naechster Verdraengungskandidat der localStorage-Liste (Index) oder -1.
+ * Reihenfolge (Nutzerentscheidung 2026-09-27, D-A):
+ * (1) verwaiste Eintraege (kein campaignKey, oder Kampagne weder Standard noch im Index),
+ *     aelteste zuerst;
+ * (2) aeltere Eintraege der SCHREIBENDEN Kampagne, aelteste zuerst — nie ihre geschuetzte
+ *     neueste Sicherungskopie (der Stand vor einer destruktiven Aktion);
+ * (3) aeltere Eintraege FREMDER Kampagnen, aelteste zuerst, aber NUR solange dieser Kampagne
+ *     danach mindestens ein Backup bleibt.
+ * Das LETZTE verbleibende Backup einer fremden Kampagne weicht nie — es kann die einzige
+ * Kopie ihrer Geschichte sein; das neue Backup weicht ebenfalls nie. Darf nichts weichen,
+ * liefert die Funktion -1 und der Aufrufer scheitert ehrlich ('failed'), ohne einen Erfolg zu
+ * melden: die Live-Daten der aktiven Kampagne sind ohnehin gespeichert, es geht nichts
+ * verloren. Frueher gab es eine vierte Stufe (neueste fremde Eintraege) und die eigenen
+ * Eintraege standen HINTER den fremden.
  * @param {Array<Object>} list
  * @param {Object} backup - das neue Backup (Objektidentitaet)
  * @param {Set<string>|null} known - knownBackupCampaignKeys()
  * @returns {number}
  */
 function pickLocalBackupEviction(list, backup, known) {
-    const newestOf = new Map();
+    const anzahlJeKampagne = new Map();
     for (const b of list) {
-        const cur = newestOf.get(b.campaignKey);
-        if (!cur || b.timestamp > cur.timestamp) newestOf.set(b.campaignKey, b);
+        anzahlJeKampagne.set(b.campaignKey, (anzahlJeKampagne.get(b.campaignKey) || 0) + 1);
     }
     const foreign = b => b.campaignKey !== backup.campaignKey;
+    // Die eigene geschuetzte Sicherungskopie — nur relevant, wenn das neue Backup selbst keine
+    // ist; sonst ist das neue die neueste und als solches ohnehin unverdraengbar.
+    let ownSafety = null;
+    if (backup.kind !== 'safety') {
+        for (const b of list) {
+            if (b === backup || foreign(b) || b.kind !== 'safety') continue;
+            if (!ownSafety || b.timestamp > ownSafety.timestamp) ownSafety = b;
+        }
+    }
     const stufen = [
-        b => foreign(b) && known !== null && !known.has(b.campaignKey),
-        b => foreign(b) && newestOf.get(b.campaignKey) !== b,
-        b => !foreign(b),
-        b => foreign(b)
+        b => foreign(b) && (!b.campaignKey || (known !== null && !known.has(b.campaignKey))),
+        b => !foreign(b) && b !== ownSafety,
+        b => foreign(b) && (anzahlJeKampagne.get(b.campaignKey) || 0) > 1
     ];
     for (const passt of stufen) {
         let best = -1;
