@@ -389,19 +389,45 @@ in allen vier Themes identisch (vorher 2,58–3,92). Bewacht von **R-07** in
 
 **Zwei weitere Einträge sind seit dem 2026-09-28 erledigt und ebenfalls aus der Tabelle
 entfernt** (Prüfrunde W1-E): `bestiary.css` `.bestiary-dice` (`--cyan`) und
-`.bestiary-dice:hover` (`--gold`). Ihre Trägerangabe in dieser Tabelle war schlicht falsch —
-geführt als „`--bg-dark` · GRAD:#0d0d0d · GRAD:#1a1a1a", tatsächlich liegen die Würfelspans
-INNERHALB des Pergaments: `renderClickableDice()` (`bestiary-render.js:41`) setzt sie über
+`.bestiary-dice:hover` (`--gold`).
+
+> **Berichtigung, Prüfrunde W1-E Runde 2.** Die erste Fassung dieser Vorbemerkung hat die
+> Trägerangabe der beiden Zeilen für „schlicht falsch" erklärt. Das war sie **nicht**. Geführt
+> war „`--bg-dark` · GRAD:#0d0d0d · GRAD:#1a1a1a" bzw. „`--bg-dark` · GRAD:#f5f5f5 ·
+> GRAD:#ffffff", und diese Werte lösen Zeichen für Zeichen auf `--bg-dark`, `--bg` und
+> `--bg-card` auf — die App-Flächen einer **zweiten, realen Verwendungsstelle derselben
+> Klasse**: `features/party/party-details.js:215-216` erzeugt die klickbaren Treffer- und
+> Schadenswürfel im Charakter-Detail mit `class="bestiary-dice"`, verpackt in
+> `.char-attack-entry`. Die Zeilen waren also nicht falsch, sondern **unvollständig**: sie
+> beschrieben die Nicht-Pergament-Verwendung, und die Pergament-Verwendung fehlte in der Akte.
+> Mit der Streichung verschwand zugleich der einzige schriftliche Hinweis darauf, dass es die
+> zweite Stelle überhaupt gibt — unmittelbar bevor genau sie kaputtging (Hover-Kontrast 6,01 →
+> 1,69 in dark und contrast, siehe unten). Die Streichung war damit zum Zeitpunkt des Commits
+> **verfrüht**, nicht unberechtigt.
+
+Für die Pergament-Verwendung gilt unverändert: die Würfelspans liegen INNERHALB des
+Pergaments — `renderClickableDice()` (`bestiary-render.js:41`) setzt sie über
 `renderTraitList()` (:240, :249) in Merkmale und Aktionen, und `renderStatblockHTML()` (:300)
-verpackt beides in `bestiary-statblock read-aloud parchment`. Es ist derselbe Irrtum wie bei
-den zwei Zeilen oben, nur eine Ebene tiefer im Markup. Gemessen je Theme Ruhe / Hover, beide
-Verlaufsenden: dark 1,59/1,35 und 1,71/1,44 · light 2,99/2,53 und 2,64/2,23 · sepia 2,56/2,17
-und 5,76/4,87 · contrast 1,02/1,16 und 1,14/1,04 — der schlechteste Wert des ganzen Kastens,
-schlechter als die 2,58–3,92, die Schritt 11 behoben hat. Sie tragen jetzt
+verpackt beides in `bestiary-statblock read-aloud parchment`. Gemessen je Theme Ruhe / Hover,
+beide Verlaufsenden: dark 1,59/1,35 und 1,71/1,44 · light 2,99/2,53 und 2,64/2,23 · sepia
+2,56/2,17 und 5,76/4,87 · contrast 1,02/1,16 und 1,14/1,04 — der schlechteste Wert des ganzen
+Kastens, schlechter als die 2,58–3,92, die Schritt 11 behoben hat. Sie tragen jetzt
 `var(--parchment-ink-link)` #105f6b (5,93 / 5,02) und `var(--parchment-ink-link-hover)`
-#7a4a00 (6,07 / 5,13), beide themenunabhängig und seitdem von **R-07** bewacht, dessen
-Suchmuster `.bestiary-dice` bis dahin nicht kannte. Die Zahl der geführten Stellen sinkt damit
-von 126 auf 124.
+#7a4a00 (6,07 / 5,13), beide themenunabhängig und von **R-07** bewacht, dessen Suchmuster
+`.bestiary-dice` bis dahin nicht kannte.
+
+Seit Runde 2 tragen die beiden Regeln den Präfix `.bestiary-statblock` und gelten damit nur
+noch dort, wo auch Pergament liegt. Die Nicht-Pergament-Verwendung erbt seitdem wieder
+`--gold-text` aus `party.css:2854` und hält in beiden Zuständen: Ruhe auf `--bg` dark 9,24 ·
+light 5,71 · sepia 5,65 · contrast 14,97; Hover auf `--bg-hover` dark 6,01 · light 4,59 ·
+sepia 5,16 · contrast 9,01. **Sie wird deshalb NICHT als eigene Zeile hier aufgenommen** — sie
+hält 4,5 in allen vier Themes, und ihre Träger sind flache Tokens, keine Verläufe; in eine
+Akte offener Punkte gehört sie nicht. Bewacht wird sie stattdessen als benannter Zustand
+„Angriffswürfel im Charakter-Detail, Mauszeiger darauf" in **R-05**, der dafür um
+Pseudoklassen erweitert wurde.
+
+Die Zahl der geführten Stellen sinkt damit von 126 auf 124 — diese Zahl ist **erst seit der
+Behebung in Runde 2** gedeckt, davor war sie es für eine der beiden Zeilen nicht.
 
 | Stelle | Selektor | Rolle | Traeger dark | Traeger light |
 | ------ | -------- | ----- | ------------ | ------------- |

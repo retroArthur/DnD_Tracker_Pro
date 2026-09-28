@@ -2615,11 +2615,25 @@ describe("R-06 — jeder Zeilenanker der Aktenlage trifft seine Deklaration (Rat
        sie deshalb nie bekommen. Sie tragen jetzt --parchment-ink-red
        (10,98 / 9,29 statt 2,58-3,92) und stehen unter R-07. Seit der
        Pruefrunde W1-E sind es 124: `.bestiary-dice` und
-       `.bestiary-dice:hover` lagen aus demselben Grund falsch in der
-       Liste — ihre Traegerangabe nannte den App-Hintergrund, tatsaechlich
-       liegen die Wuerfelspans MITTEN auf demselben Pergament. Sie tragen
-       jetzt --parchment-ink-link / --parchment-ink-link-hover (5,93 / 5,02
-       bzw. 6,07 / 5,13 statt 1,02-5,76) und stehen ebenfalls unter R-07.
+       `.bestiary-dice:hover` sind ebenfalls heraus, weil die Wuerfelspans
+       im Statblock MITTEN auf demselben Pergament liegen; sie tragen jetzt
+       --parchment-ink-link / --parchment-ink-link-hover (5,93 / 5,02 bzw.
+       6,07 / 5,13 statt 1,02-5,76) und stehen ebenfalls unter R-07.
+
+       BERICHTIGUNG, Runde 2 derselben Pruefung: die Begruendung dieser
+       Streichung lautete zunaechst, die Traegerangabe der beiden Zeilen
+       ("--bg-dark, GRAD:#0d0d0d, GRAD:#1a1a1a") sei falsch gewesen. Sie war
+       es nicht — sie beschrieb die ZWEITE Verwendung derselben Klasse,
+       party-details.js:215-216 im Charakter-Detail, wo kein Pergament
+       liegt. Die Zeilen waren unvollstaendig, nicht falsch, und zum
+       Zeitpunkt der Streichung war eine der beiden gerade VERSCHLECHTERT
+       worden (Hover 6,01 -> 1,69). Erst der Praefix `.bestiary-statblock`
+       auf beiden Regeln hat die 124 gedeckt. Die zweite Verwendung kommt
+       NICHT in die Liste zurueck: sie erbt --gold-text und haelt 4,5 in
+       allen vier Themes (min 4,59 im Hover); sie steht stattdessen als
+       benannter Zustand in R-05. Vollstaendig in
+       .planning/HANDOFF-V3-OFFENE-PUNKTE.md, Gruppe B.
+
        Wer die Zahl senkt, OHNE dass eine Stelle erledigt ist, nimmt der
        Ratsche lautlos Stellen weg. */
     expect(stellen.length).toBe(124);
