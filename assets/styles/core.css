@@ -343,7 +343,7 @@
         }
 
         .nav-tab:hover { background: rgba(255,255,255,0.1); color: var(--text); border-color: var(--border); }
-        .nav-tab.active { background: var(--gold); color: var(--bg-dark); font-weight: 600; border-color: var(--gold); }
+        .nav-tab.active { background: var(--gold); color: var(--on-gold); font-weight: 600; border-color: var(--gold); }
         
         /* Nav Tab Drag & Drop (Legacy — bei gruppierter Nav inaktiv) */
         .nav-tab[draggable="true"] { cursor: grab; }
@@ -372,7 +372,7 @@
             transition: all 0.2s;
         }
         .nav-group-btn:hover { background: rgba(255,255,255,0.1); color: var(--text); border-color: var(--border); }
-        .nav-group-btn.has-active { background: var(--gold); color: var(--bg-dark); font-weight: 600; border-color: var(--gold); }
+        .nav-group-btn.has-active { background: var(--gold); color: var(--on-gold); font-weight: 600; border-color: var(--gold); }
         .nav-group.open > .nav-group-btn { color: var(--text); border-color: var(--gold); }
 
         .nav-group-menu {
@@ -484,7 +484,7 @@
 
         .btn-warning:hover {
             background: var(--yellow);
-            color: var(--bg-dark);
+            color: var(--on-yellow);
         }
 
         /* Nur-Icon: quadratisch, ohne Kontur, Flaeche >= 36px fuer Beruehrung */
@@ -515,8 +515,8 @@
             outline-offset: 2px;
         }
         .btn-danger { border-color: var(--red); color: var(--red); }
-        .btn-success { background: var(--green); border-color: var(--green); color: var(--bg-dark); font-weight: 600; }
-        .btn-gold { background: var(--gold); border-color: var(--gold); color: var(--bg-dark); font-weight: 600; }
+        .btn-success { background: var(--green); border-color: var(--green); color: var(--on-green); font-weight: 600; }
+        .btn-gold { background: var(--gold); border-color: var(--gold); color: var(--on-gold); font-weight: 600; }
         /* Code-Review 2026-09-08: stand auf var(--gold) — identisch zur Basisregel
    darueber, der Knopf reagierte also gar nicht. In v1.2 war es #c5a028;
    beim Token-Umbau wurde das dunklere Gold durch das Basis-Gold ersetzt.
@@ -573,7 +573,7 @@
             border: 1px solid var(--border);
         }
         
-        .chip.active { border-color: var(--gold); background: var(--gold); color: var(--bg-dark); }
+        .chip.active { border-color: var(--gold); background: var(--gold); color: var(--on-gold); }
         
         /* Color coding */
         .color-blue { background: rgba(96,165,250,0.2); border-color: var(--blue); color: var(--blue); }
@@ -710,7 +710,7 @@
         }
         
         .hp-calc-btn.damage { background: var(--red); color: white; }
-        .hp-calc-btn.heal { background: var(--green); color: var(--bg-dark); }
+        .hp-calc-btn.heal { background: var(--green); color: var(--on-green); }
         .hp-calc-btn.temp { background: var(--blue); color: white; }
         
         /* ============================================================
@@ -1499,7 +1499,7 @@
         .assign-spell-count-badge {
             display: inline-block;
             background: var(--gold);
-            color: var(--bg-dark);
+            color: var(--on-gold);
             padding: 2px 8px;
             border-radius: var(--radius-md);
             font-weight: 600;
@@ -1598,19 +1598,19 @@
         .assign-spell-level.level-1,
         .assign-spell-level.level-2 {
             background: var(--green);
-            color: var(--bg-dark);
+            color: var(--on-green);
         }
 
         .assign-spell-level.level-3,
         .assign-spell-level.level-4 {
             background: var(--cyan);
-            color: var(--bg-dark);
+            color: var(--on-cyan);
         }
 
         .assign-spell-level.level-5,
         .assign-spell-level.level-6 {
             background: var(--gold);
-            color: var(--bg-dark);
+            color: var(--on-gold);
         }
 
         .assign-spell-level.level-7,
@@ -1732,9 +1732,9 @@
             border-radius: var(--radius-sm);
         }
         
-        .quest-type-badge.side { background: var(--cyan); color: var(--bg-dark); }
-        .quest-type-badge.plot { background: var(--orange); color: var(--bg-dark); }
-        .quest-type-badge.quest { background: var(--green); color: var(--bg-dark); }
+        .quest-type-badge.side { background: var(--cyan); color: var(--on-cyan); }
+        .quest-type-badge.plot { background: var(--orange); color: var(--on-orange); }
+        .quest-type-badge.quest { background: var(--green); color: var(--on-green); }
         
         .quest-details {
             display: none;
@@ -1938,7 +1938,7 @@
         }
         
         .filter-chip:hover { border-color: var(--gold); }
-        .filter-chip.active { background: var(--gold); color: var(--bg-dark); border-color: var(--gold); }
+        .filter-chip.active { background: var(--gold); color: var(--on-gold); border-color: var(--gold); }
         
         .toolbar-search {
             flex: 1;
@@ -2040,14 +2040,14 @@
 
         .loc-filter-chip.active {
             background: var(--gold);
-            color: var(--bg-dark);
+            color: var(--on-gold);
             border-color: var(--gold);
         }
 
         .loc-add-btn {
             padding: 8px 16px;
             background: var(--green);
-            color: var(--bg-dark);
+            color: var(--on-green);
             border: none;
             border-radius: var(--radius-md);
             font-weight: 600;
@@ -2169,7 +2169,7 @@
         .btn-primary {
             background: var(--gold);
             border-color: var(--gold);
-            color: var(--bg-dark);
+            color: var(--on-gold);
             font-weight: 600;
             white-space: nowrap;
         }
@@ -2303,7 +2303,7 @@
 
         .loc-mini-avatar.more {
             background: var(--cyan);
-            color: var(--bg-dark);
+            color: var(--on-cyan);
             font-weight: 700;
         }
 
@@ -2519,7 +2519,7 @@
 
         .loc-npc-chip:hover {
             background: var(--purple);
-            color: var(--bg-dark);
+            color: var(--on-purple);
         }
 
         .loc-npc-chip-avatar {
