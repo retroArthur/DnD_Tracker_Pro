@@ -174,7 +174,7 @@
 
 .timer-time-btn:hover {
     background: var(--gold);
-    color: var(--bg-dark);
+    color: var(--on-gold);
     border-color: var(--gold);
 }
 
@@ -246,7 +246,7 @@
 .timer-card-btn:hover {
     background: var(--cyan);
     border-color: var(--cyan);
-    color: var(--bg-dark);
+    color: var(--on-cyan);
 }
 
 .timer-card-btn.delete:hover {
@@ -386,7 +386,7 @@
 .rt-roll-btn {
     padding: 8px 16px;
     background: var(--gold);
-    color: var(--bg-dark);
+    color: var(--on-gold);
     border: none;
     border-radius: var(--radius-md);
     font-weight: 600;
@@ -594,7 +594,7 @@
 .rt-dice-btn.active {
     background: var(--gold);
     border-color: var(--gold);
-    color: var(--bg-dark);
+    color: var(--on-gold);
 }
 
 .rt-dice-label {
@@ -633,7 +633,7 @@
 .rt-preview-dice {
     padding: 4px 10px;
     background: var(--gold);
-    color: var(--bg-dark);
+    color: var(--on-gold);
     font-weight: 600;
     font-size: 0.85em;
     border-radius: var(--radius-lg);
@@ -732,7 +732,7 @@
 
 .generator-table-dice {
     font-size: 0.8em;
-    color: var(--bg-dark);
+    color: var(--on-gold);
     background: var(--gold);
     padding: 3px 10px;
     border-radius: var(--radius-md);
@@ -804,7 +804,7 @@
 
 .ld-tab.active {
     background: var(--gold);
-    color: var(--bg-dark);
+    color: var(--on-gold);
     border-color: var(--gold);
 }
 
