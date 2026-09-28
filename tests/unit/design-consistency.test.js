@@ -2727,3 +2727,168 @@ describe('R-07 — Pergament-Statblock: themenunabhaengige Tinte (Ratsche)', () 
         expect([...new Set(befunde)].sort()).toEqual([]);
     });
 });
+
+/* ===========================================================================
+   Design-Handoff v3, Welle 1 — R-08: Muenzen sind Flaechen, keine Tinten
+   ===========================================================================
+   ENTSCHEIDUNG D-5 (Nutzer, 2026-09-28) in einer Zeile: die vier Metalle
+   bleiben als FARBE erhalten und werden zur Flaeche; die Schrift darauf ist
+   --on-coin-*. Der Weg, den §3.1 vorschlug — die Muenzfarbe als Textfarbe so
+   weit abdunkeln, bis sie 4,5 auf --bg-dark haelt — ist ausdruecklich
+   verworfen, und zwar mit Zahlen: --coin-gm #ffd700 braeuchte in Light 49 %
+   Abdunklung auf #826e00. Eine olivbraune Goldmuenze verfehlt den einzigen
+   Zweck, den diese vier Farben haben.
+
+   WAS DER ZUSTAND VOR DIESER RATSCHE WAR, gemessen mit dem Helfer aus
+   Schritt 1 gegen .cf-panel { background: var(--bg-dark) }:
+
+       --coin-pm  dark 5,97 · light 2,98 · sepia 2,59 · contrast 6,45
+       --coin-gm  dark 13,86 · light 1,29 · sepia 1,12 · contrast 14,97
+       --coin-sm  dark 10,68 · light 1,67 · sepia 1,45 · contrast 11,54
+       --coin-km  dark 6,18 · light 2,88 · sepia 2,50 · contrast 6,68
+
+   1,12 ist der schlechteste Wert, den dieser Baum ueberhaupt kennt — die
+   Silber- und Goldmarke des Geldbeutels waren in Light und Sepia praktisch
+   unsichtbar. Als Flaeche mit ihrer eigenen Tinte tragen dieselben vier
+   Farben 5,80 / 13,46 / 10,38 / 6,00, und zwar in allen vier Themes gleich,
+   weil --on-coin-* ueberall #111111 ist.
+
+   WARUM SIE GEBRAUCHT WIRD, obwohl R-02 schon ueber die Muenzen urteilt: R-02
+   Teilformel 1 prueft das PAAR (--on-coin-gm auf --coin-gm). Sie sagt nichts
+   darueber, ob die Verwendungsstelle das Paar auch benutzt. Wer morgen
+   `color: var(--coin-gm)` zurueckschreibt, laesst R-02 unberuehrt gruen und
+   R-04 ebenfalls (die urteilt nur ueber Regeln, die Flaeche UND Tinte selbst
+   setzen — eine Regel ohne Flaeche faellt aus ihrer Menge heraus). Genau
+   diese Luecke schliesst R-08.
+
+   DIE DRITTE PROBE IST KEIN SCHMUCK: der Geldbeutel hat FUENF Marken, und die
+   fuenfte (Elektrum) faerbt sich nicht mit einem Muenz-Token, sondern mit
+   --green. Blieben die vier Metalle Pillen und EM nackter Text, stuende eine
+   Marke sichtbar aus der Reihe. Die Probe verlangt deshalb fuer alle fuenf
+   Flaeche UND Tinte in derselben Regel.
+
+   SIE IST BEI IHRER GEBURT ROT, mit vier Muenzstellen ohne Flaeche und der
+   Reihenprobe. Gruen wird sie mit Schritt 12.
+   =========================================================================== */
+describe('R-08 — Muenzfarben sind Flaechen, keine Tinten (Ratsche)', () => {
+    const METALLE = ['pm', 'gm', 'sm', 'km'];
+    /** Die fuenf Marken des Geldbeutels, in der Reihenfolge des Markups
+     *  (assets/templates/view-party.html:311-330). `em` ist bewusst dabei. */
+    const MARKEN = ['pm', 'gm', 'em', 'sm', 'km'];
+
+    /** Alle Regeln aller Dateien mit ihrer Herkunft. */
+    function alleRegeln() {
+        const out = [];
+        cssFiles.forEach(f => {
+            if (f.name === 'variables.css' || f.name === 'fonts.css') return;
+            regelnMitRumpf(f.content).forEach(r => out.push({ ...r, datei: f.name }));
+        });
+        return out;
+    }
+
+    test('keine Muenzrolle steht als Textfarbe, und jede Muenzflaeche traegt ihre Tinte', () => {
+        const befunde = [];
+        let flaechen = 0;
+
+        alleRegeln().forEach(r => {
+            const tinte = deklaration(r.rumpf, 'color');
+            const flaeche = deklaration(r.rumpf, 'background(?:-color)?');
+
+            const alsText = tinte && tinte.match(/^var\(--coin-(pm|gm|sm|km)\)$/);
+            if (alsText) {
+                befunde.push(
+                    `${r.datei}:${r.zeile} (${r.sel}) setzt --coin-${alsText[1]} als TEXTfarbe. ` +
+                        `D-5 macht die Metalle zur Flaeche: background: var(--coin-${alsText[1]}); ` +
+                        `color: var(--on-coin-${alsText[1]})`
+                );
+            }
+
+            const alsFlaeche = flaeche && flaeche.match(/^var\(--coin-(pm|gm|sm|km)\)$/);
+            if (alsFlaeche) {
+                flaechen++;
+                const soll = `var(--on-coin-${alsFlaeche[1]})`;
+                if (tinte !== soll) {
+                    befunde.push(
+                        `${r.datei}:${r.zeile} (${r.sel}) fuellt mit --coin-${alsFlaeche[1]}, ` +
+                            `traegt aber ${tinte || 'keine eigene Tinte'} statt ${soll}`
+                    );
+                }
+            }
+        });
+
+        expect(befunde.sort()).toEqual([]);
+        // Gegenprobe, NACH der Fundliste: ohne gefundene Muenzflaechen waere
+        // diese Ratsche sonst gruen und leer. Die Reihenfolge ist Absicht —
+        // bei ihrer Geburt sind noch null Flaechen da, und die Fundliste ist
+        // dann die brauchbarere Meldung.
+        expect(flaechen).toBeGreaterThanOrEqual(METALLE.length);
+    });
+
+    test('die fuenf Geldbeutel-Marken sind EINE Reihe — keine faellt heraus', () => {
+        const party = cssFiles.find(f => f.name === 'party.css');
+        const regeln = regelnMitRumpf(party.content);
+        const befunde = [];
+
+        MARKEN.forEach(m => {
+            const r = regeln.find(x => x.sel.includes(`.cf-coin-item.${m} .cf-coin-label`));
+            if (!r) {
+                befunde.push(`party.css: keine Regel fuer .cf-coin-item.${m} .cf-coin-label`);
+                return;
+            }
+            const flaeche = deklaration(r.rumpf, 'background(?:-color)?');
+            const tinte = deklaration(r.rumpf, 'color');
+            if (!flaeche || !tinte) {
+                befunde.push(
+                    `party.css:${r.zeile} .cf-coin-item.${m} .cf-coin-label setzt ` +
+                        `${!flaeche ? 'keine Flaeche' : 'keine Tinte'} — dann steht diese eine ` +
+                        `Marke als nackter Text zwischen vier Pillen`
+                );
+            }
+        });
+
+        expect(befunde.sort()).toEqual([]);
+    });
+
+    test('die Attributkuerzel der Schnellreferenz beziehen ihre Farbe aus dem Token', () => {
+        /* Schwesterprobe zu "die Attributfarben stehen nur noch an EINER
+           Stelle": die friert die zwoelf DM-Screen-Regeln ein, sagt aber
+           nichts ueber die fuenf Regeln der Schnellreferenz
+           (dashboard.css .attr-str .. .attr-cha).
+           --attr-con FEHLT dort, und das ist kein Versehen: das Markup
+           (modals-editors.html:370-376) fuehrt sieben Beispielzeilen und
+           keine davon ist eine Konstitutionsprobe. Eine Regel fuer eine
+           Klasse, die nirgends entsteht, waere toter Buchstabe. Die zweite
+           Zusicherung haelt beides zusammen: sobald jemand eine CON-Zeile
+           ins Markup schreibt, verlangt dieser Test die Regel dazu. */
+        const dashboard = cssFiles.find(f => f.name === 'dashboard.css').content;
+        const markup = tplFiles.find(f => f.name === 'modals-editors.html').content;
+        const befunde = [];
+
+        ['str', 'dex', 'con', 'int', 'wis', 'cha'].forEach(a => {
+            const imMarkup = new RegExp(`class="attr-${a}"`).test(markup);
+            const imCss = new RegExp(`\\.attr-${a}\\b[^}]*var\\(--attr-${a}\\)`).test(
+                withoutComments(dashboard)
+            );
+            if (imMarkup && !imCss) {
+                befunde.push(
+                    `.attr-${a} kommt im Markup vor, aber dashboard.css faerbt es nicht mit ` +
+                        `var(--attr-${a}) — die Zeile erbt dann die Zeilenfarbe`
+                );
+            }
+            if (!imMarkup && imCss) {
+                befunde.push(
+                    `dashboard.css faerbt .attr-${a}, aber kein Markup setzt die Klasse — ` +
+                        `tote Regel`
+                );
+            }
+        });
+
+        // Gegenprobe: mindestens fuenf der sechs muessen wirklich vorkommen,
+        // sonst prueft die Schleife ueber Leerlauf.
+        const vorhanden = ['str', 'dex', 'con', 'int', 'wis', 'cha'].filter(a =>
+            new RegExp(`class="attr-${a}"`).test(markup)
+        );
+        expect(vorhanden.length).toBeGreaterThanOrEqual(5);
+        expect(befunde.sort()).toEqual([]);
+    });
+});
