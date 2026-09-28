@@ -35,10 +35,12 @@ const plain = v => JSON.parse(JSON.stringify(v));
 
 /**
  * Laedt die echten Module in einen frischen vm-Kontext.
- * @param {{ withHelpers?: boolean }} opts - withHelpers: zusaetzlich render/helpers.js
- *   (ENTITY_SCHEMAS + validateDataIntegrity) laden
+ * @param {{ withHelpers?: boolean, withMigration?: boolean }} opts - withHelpers:
+ *   zusaetzlich render/helpers.js (ENTITY_SCHEMAS + validateDataIntegrity); withMigration:
+ *   zusaetzlich systems/spellslots/version-migration.js, also den ECHTEN Restore/Import-
+ *   Normalisierer normalizeCampaignData() (Stubs wie in campaign-schema.test.js)
  */
-function makeContext({ withHelpers = false } = {}) {
+function makeContext({ withHelpers = false, withMigration = false } = {}) {
     const ctx = { setTimeout, clearTimeout };
     ctx.window = ctx;
     ctx.document = {
@@ -48,8 +50,13 @@ function makeContext({ withHelpers = false } = {}) {
     };
     ctx.ErrorHandler = { log: jest.fn() };
     ctx.debugLogAdd = jest.fn();
+    if (withMigration) {
+        ctx.getSpellSlotsForClass = jest.fn(() => [0, 0, 0, 0, 0, 0, 0, 0, 0]);
+        ctx.CONDITIONS = { poisoned: { name: 'Vergiftet' }, prone: { name: 'Liegend' } };
+    }
     vm.createContext(ctx);
-    const files = withHelpers ? [...BASE_FILES, 'render/helpers.js'] : BASE_FILES;
+    const files = withHelpers ? [...BASE_FILES, 'render/helpers.js'] : [...BASE_FILES];
+    if (withMigration) files.push('systems/spellslots/version-migration.js');
     for (const rel of files) {
         vm.runInContext(fs.readFileSync(path.join(REPO_ROOT, rel), 'utf8'), ctx, { filename: rel });
     }
@@ -477,6 +484,177 @@ describe('ID-Obergrenze ENTITY_ID_MAX — Saettigung (U2 minor:3/open:4/minor:9)
             sitzung1: erst,
             sitzung2: zweit,
             eindeutig: ids.length
+        });
+    });
+});
+
+describe('R03 — Waechter der Abschlussrunde (G2)', () => {
+    /** Lesbare Zusicherung: der Wert selbst steht in der Fehlermeldung. */
+    const istGueltigeId = id => ({
+        id,
+        gueltig: Number.isSafeInteger(id) && id > 0 && id <= 1e15
+    });
+
+    /** Vergibt `anzahl` IDs und schiebt sie in die Sammlung (wie jeder CRUD-Pfad). */
+    const vergebenUndAblegen = (ctx, anzahl, praefix) => {
+        const ids = [];
+        for (let i = 0; i < anzahl; i++) {
+            const id = ctx.nextId('npcs');
+            ids.push(id);
+            ctx.D.npcs.push({ id, name: `${praefix}${i}` });
+        }
+        return ids;
+    };
+
+    test('G2a: Datei-Zaehler 1e15 bei kleiner Sammlung — Vergabe setzt UEBER max(ID) auf', () => {
+        // Ende-zu-Ende ueber den ECHTEN Restore/Import-Normalisierer. 1e15 ist eine
+        // GUELTIGE ID, also behielt recomputeNextIds() den Zaehler, und nextId() las daraus
+        // die Saettigung ab, obwohl oberhalb von max(ID) = 5 noch 1e15 IDs frei sind.
+        // giverId: 3 ist ein Haenger auf einen frueher geloeschten NSC — genau die Sorte
+        // Verweis, die ein Luecken-Modus still an eine NEUE Entitaet umbindet (Loeschen
+        // raeumt Verweise nicht auf, features/npcs/npc-crud.js -> deleteWithConfirm).
+        const ctx = makeContext({ withMigration: true });
+        expect(typeof ctx.normalizeCampaignData).toBe('function');
+        const res = ctx.normalizeCampaignData({
+            npcs: [
+                { id: 1, name: 'Borin' },
+                { id: 2, name: 'Mira' },
+                { id: 5, name: 'Zogg' }
+            ],
+            quests: [{ id: 1, title: 'Auftrag', giverId: 3 }],
+            _nextId: { npcs: 1e15 }
+        });
+        expect(res.ok).toBe(true);
+        ctx.D = res.data;
+        expect(ctx.maxEntityId(ctx.D.npcs)).toBe(5);
+
+        const neu = vergebenUndAblegen(ctx, 3, 'Neu');
+
+        // 1. Die Bedeutung zuerst: der Haenger bleibt ein Haenger. Zeigt er nach der
+        //    Vergabe auf eine Entitaet, hat die App eine fremde Beziehung erfunden.
+        const giver = ctx.D.npcs.find(n => n.id === ctx.D.quests[0].giverId);
+        expect({ giverId: ctx.D.quests[0].giverId, zeigtAuf: giver ? giver.name : null }).toEqual({
+            giverId: 3,
+            zeigtAuf: null
+        });
+        // 2. Der Mechanismus: monoton oberhalb des Maximums, nicht in den Luecken.
+        expect(neu).toEqual([6, 7, 8]);
+        expect(neu.map(istGueltigeId)).toEqual(neu.map(id => ({ id, gueltig: true })));
+        // 3. Der Zaehler traegt danach die Vergabe und bleibt selbst gueltig.
+        expect(istGueltigeId(ctx.D._nextId.npcs)).toEqual({ id: 9, gueltig: true });
+        expect(ctx.D._nextId.npcs).toBeGreaterThan(ctx.maxEntityId(ctx.D.npcs));
+        const ids = ctx.D.npcs.map(n => n.id);
+        expect(new Set(ids).size).toBe(ids.length);
+    });
+
+    test('G2b: nach dem Loeschen der Obergrenzen-Entitaet ist die Vergabe wieder monoton', () => {
+        // Eine fremde Datei bringt EINE Entitaet mit id 1e15 mit (R03-Bedrohungsmodell).
+        // Die Saettigung ist dort echt und der Luecken-Modus richtig. Der Nutzer loescht
+        // diese Entitaet danach — und zwei NSCs. Ab dem naechsten Laden ist die Sammlung
+        // harmlos, also darf die Vergabe die geloeschten IDs NICHT wiederverwenden.
+        const sitzung1 = makeContext();
+        sitzung1.D.npcs = [
+            { id: 1, name: 'Borin' },
+            { id: 2, name: 'Mira' },
+            { id: 3, name: 'Zogg' },
+            { id: 1e15, name: 'Fremd' }
+        ];
+        sitzung1.D.quests = [{ id: 1, title: 'Auftrag', giverId: 2 }];
+        sitzung1.recomputeNextIds(sitzung1.D);
+        const inSaettigung = vergebenUndAblegen(sitzung1, 1, 'S1-');
+        expect(inSaettigung[0]).toBe(4); // echte Saettigung: Luecke unterhalb der Grenze
+        sitzung1.D.npcs = sitzung1.D.npcs.filter(n => ![1e15, 2, 3].includes(n.id));
+
+        // Speichern/Laden wie ueber localStorage: JSON-Rundlauf, danach frischer Kontext
+        const datei = plain({
+            npcs: sitzung1.D.npcs,
+            quests: sitzung1.D.quests,
+            _nextId: sitzung1.D._nextId
+        });
+        const sitzung2 = makeContext();
+        sitzung2.D.npcs = datei.npcs;
+        sitzung2.D.quests = datei.quests;
+        sitzung2.D._nextId = datei._nextId;
+        expect(sitzung2.maxEntityId(sitzung2.D.npcs) + 1).toBe(5);
+
+        const neu = vergebenUndAblegen(sitzung2, 2, 'S2-');
+
+        // 1. Die Bedeutung zuerst: der Verweis auf den geloeschten NSC 2 bleibt ein Haenger.
+        const giver = sitzung2.D.npcs.find(n => n.id === sitzung2.D.quests[0].giverId);
+        expect({
+            giverId: sitzung2.D.quests[0].giverId,
+            zeigtAuf: giver ? giver.name : null
+        }).toEqual({ giverId: 2, zeigtAuf: null });
+        // 2. Der Mechanismus: keine geloeschte ID wird wiederverwendet.
+        expect({ neu, wiederverwendet: neu.filter(id => [2, 3].includes(id)) }).toEqual({
+            neu: [5, 6],
+            wiederverwendet: []
+        });
+        expect(istGueltigeId(sitzung2.D._nextId.npcs)).toEqual({ id: 7, gueltig: true });
+    });
+
+    test('G2c: recomputeNextIds heilt den veralteten Pin, echte Saettigung bleibt', () => {
+        const ctx = makeContext();
+        // Veralteter Pin bei harmloser Sammlung -> Untergrenze. 1e15 ist gueltig, aber
+        // niemals vergebbar (isMintableEntityId), traegt also keine Information.
+        const veraltet = { npcs: [{ id: 1 }, { id: 2 }, { id: 5 }] };
+        ctx.recomputeNextIds(veraltet, { npcs: 1e15 });
+        expect(veraltet._nextId.npcs).toBe(6);
+        // Ein berechtigter Zaehler oberhalb der Untergrenze bleibt unberuehrt (S10b).
+        const berechtigt = { npcs: [{ id: 9 }] };
+        ctx.recomputeNextIds(berechtigt, { npcs: 20, items: 3 });
+        expect({ npcs: berechtigt._nextId.npcs, items: berechtigt._nextId.items }).toEqual({
+            npcs: 20,
+            items: 3
+        });
+        // Echte Saettigung: die Untergrenze selbst liegt an oder ueber der Obergrenze.
+        const gesaettigt = { npcs: [{ id: 1e15 }] };
+        ctx.recomputeNextIds(gesaettigt, { npcs: 1e15 });
+        expect(gesaettigt._nextId.npcs).toBe(1e15 + 1);
+        const fastGesaettigt = { npcs: [{ id: 1e15 - 1 }] };
+        ctx.recomputeNextIds(fastGesaettigt, { npcs: 1e15 });
+        expect(fastGesaettigt._nextId.npcs).toBe(1e15);
+    });
+
+    test('G2d: echte Saettigung vergibt weiter Luecken — der Waechter schaltet sie nicht ab', () => {
+        // Gegenprobe zu G2a/G2b: liegt die Sammlung wirklich an der Obergrenze, ist der
+        // Luecken-Modus die einzige Moeglichkeit und muss erhalten bleiben — auch im
+        // Stapel ohne push dazwischen (Merge-Zweig des Imports).
+        const ctx = makeContext();
+        ctx.D.npcs = [{ id: 1e15 }, { id: 1 }, { id: 3 }];
+        ctx.D._nextId = {};
+        const stapel = [];
+        for (let i = 0; i < 8; i++) {
+            stapel.push(ctx.nextId('npcs'));
+            expect(istGueltigeId(ctx.D._nextId.npcs)).toEqual({
+                id: ctx.D._nextId.npcs,
+                gueltig: true
+            });
+        }
+        expect(stapel.map(istGueltigeId)).toEqual(stapel.map(id => ({ id, gueltig: true })));
+        expect(new Set(stapel).size).toBe(stapel.length);
+        expect(stapel.filter(id => [1, 3, 1e15].includes(id))).toEqual([]);
+        // Luecken UNTERHALB des Maximums, nicht darueber — oberhalb gibt es keine mehr.
+        expect(stapel.every(id => id < 1e15)).toBe(true);
+        for (const [i, id] of stapel.entries()) ctx.D.npcs.push({ id, name: `Import${i}` });
+        const ids = ctx.D.npcs.map(n => n.id);
+        expect(new Set(ids).size).toBe(ids.length);
+    });
+
+    test('G2e: unterhalb der Saettigung bleibt die Vergabe monoton und einmalig', () => {
+        const ctx = makeContext();
+        ctx.D.npcs = [{ id: 1 }, { id: 2 }, { id: 3 }];
+        ctx.D._nextId = {};
+        // Stapel ohne push dazwischen (N13-Bindung fuer den Normalfall)
+        const stapel = [ctx.nextId('npcs'), ctx.nextId('npcs'), ctx.nextId('npcs')];
+        expect(stapel).toEqual([4, 5, 6]);
+        stapel.forEach((id, i) => ctx.D.npcs.push({ id, name: `Import${i}` }));
+        // Geloeschte IDs werden nicht wiederverwendet
+        ctx.D.npcs = ctx.D.npcs.filter(n => ![2, 6].includes(n.id));
+        const nachher = ctx.nextId('npcs');
+        expect({ nachher, wiederverwendet: [2, 6].includes(nachher) }).toEqual({
+            nachher: 7,
+            wiederverwendet: false
         });
     });
 });
