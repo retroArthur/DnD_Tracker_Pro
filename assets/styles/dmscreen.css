@@ -121,7 +121,7 @@
         
         .shortcuts-title {
             font-size: 1.3em;
-            color: var(--gold);
+            color: var(--gold-text);
             margin-bottom: 20px;
             display: flex;
             align-items: center;
@@ -142,7 +142,7 @@
         
         .shortcuts-section-title {
             font-size: 0.85em;
-            color: var(--cyan);
+            color: var(--cyan-text);
             margin-bottom: 10px;
             font-weight: 600;
         }
@@ -167,7 +167,7 @@
             border-radius: var(--radius-sm);
             font-family: var(--font-mono);
             font-size: 0.85em;
-            color: var(--gold);
+            color: var(--gold-text);
         }
         
         /* ============================================================
@@ -402,7 +402,7 @@
         
         .encounter-round-num {
             font-size: 1.5em;
-            color: var(--gold);
+            color: var(--gold-text);
         }
         
         .encounter-round-label {
@@ -441,7 +441,7 @@
         
         .note-template-btn:hover {
             border-color: var(--gold);
-            color: var(--gold);
+            color: var(--gold-text);
         }
         
         /* SESSION TAGS INPUT */
@@ -467,7 +467,7 @@
             border: 1px solid var(--border);
             border-radius: var(--radius-lg);
             font-size: 0.8em;
-            color: var(--cyan);
+            color: var(--cyan-text);
         }
         .session-tag-remove {
             cursor: pointer;
@@ -499,7 +499,7 @@
             color: var(--text-dim);
             cursor: pointer;
         }
-        .tag-suggestion:hover { border-color: var(--cyan); color: var(--cyan); }
+        .tag-suggestion:hover { border-color: var(--cyan); color: var(--cyan-text); }
         
         /* SESSION FILTERS */
         .session-filters {
@@ -534,7 +534,7 @@
             color: var(--text-dim);
             cursor: pointer;
         }
-        .session-filter-tag:hover { border-color: var(--cyan); color: var(--cyan); }
+        .session-filter-tag:hover { border-color: var(--cyan); color: var(--cyan-text); }
         .session-filter-tag.active { background: var(--cyan); color: var(--on-cyan); border-color: var(--cyan); }
         
         /* SESSION LIST WITH ARCS */
@@ -580,7 +580,7 @@
         .session-number {
             font-size: 1.5em;
             font-weight: 700;
-            color: var(--gold);
+            color: var(--gold-text);
             line-height: 1;
             min-width: 50px;
         }
@@ -664,7 +664,7 @@
         
         .quick-ref-custom-content th {
             background: var(--bg-elevated);
-            color: var(--gold);
+            color: var(--gold-text);
         }
         
         .quick-ref-toggle-arrow {
@@ -775,13 +775,13 @@
         
         .io-btn:hover {
             border-color: var(--gold);
-            color: var(--gold);
+            color: var(--gold-text);
         }
         
-        .io-btn.export { color: var(--cyan); }
+        .io-btn.export { color: var(--cyan-text); }
         .io-btn.export:hover { border-color: var(--cyan); }
         
-        .io-btn.import { color: var(--green); }
+        .io-btn.import { color: var(--green-text); }
         .io-btn.import:hover { border-color: var(--green); }
         
         /* Export Dropdown */
@@ -822,7 +822,7 @@
         
         .export-dropdown-item:hover {
             background: var(--bg-hover);
-            color: var(--cyan);
+            color: var(--cyan-text);
         }
         
         .export-dropdown-item:first-child {
@@ -1248,7 +1248,7 @@
 
 .dms-init-header {
     font-weight: 600;
-    color: var(--gold);
+    color: var(--gold-text);
     font-size: 0.85em;
     text-align: center;
     padding-bottom: 6px;
@@ -1363,7 +1363,7 @@
     text-align: center;
     font-size: 1.4em;
     font-weight: 700;
-    color: var(--gold);
+    color: var(--gold-text);
     padding: 10px;
     background: var(--bg-dark);
     border-radius: var(--radius-md);
@@ -1473,7 +1473,7 @@
 .dms-rule-title {
     font-weight: 600;
     font-size: 0.85em;
-    color: var(--gold);
+    color: var(--gold-text);
     margin-bottom: 8px;
 }
 
@@ -1496,7 +1496,7 @@
 }
 
 .dms-rule-item span:first-child {
-    color: var(--cyan);
+    color: var(--cyan-text);
     font-weight: 500;
 }
 
@@ -1586,7 +1586,7 @@
 .dms-ref-title {
     font-size: 0.85em;
     font-weight: 600;
-    color: var(--gold);
+    color: var(--gold-text);
     padding-bottom: 4px;
     border-bottom: 1px solid var(--border);
 }
@@ -1677,7 +1677,7 @@
 }
 
 .dms-mod-row span:last-child {
-    color: var(--cyan);
+    color: var(--cyan-text);
     font-weight: 600;
 }
 
@@ -1907,9 +1907,9 @@
     margin-bottom: 4px;
 }
 
-.dms-terrain-item.normal .dms-terrain-type { color: var(--green); }
-.dms-terrain-item.difficult .dms-terrain-type { color: var(--gold); }
-.dms-terrain-item.hazard .dms-terrain-type { color: var(--red); }
+.dms-terrain-item.normal .dms-terrain-type { color: var(--green-text); }
+.dms-terrain-item.difficult .dms-terrain-type { color: var(--gold-text); }
+.dms-terrain-item.hazard .dms-terrain-type { color: var(--red-text); }
 
 .dms-terrain-effect {
     display: block;
@@ -1958,7 +1958,7 @@
 .dms-dc-value {
     font-size: 0.9em;
     font-weight: 700;
-    color: var(--gold);
+    color: var(--gold-text);
     min-width: 30px; /* F-18: aus der Dublette uebernommen */
 }
 
@@ -2003,7 +2003,7 @@
 }
 
 .dms-carry-row.penalty .dms-carry-label {
-    color: var(--red);
+    color: var(--red-text);
 }
 
 /* ========================================
