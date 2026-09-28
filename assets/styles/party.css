@@ -1044,7 +1044,7 @@
         
         .wiki-tag:hover {
             background: var(--cyan);
-            color: var(--bg-dark);
+            color: var(--on-cyan);
         }
         
         .wiki-link.missing {
@@ -1966,7 +1966,7 @@
 .party-leveling-option.active {
     background: var(--gold);
     border-color: var(--gold);
-    color: var(--bg-dark);
+    color: var(--on-gold);
     font-weight: 700;
 }
 
@@ -2885,7 +2885,7 @@
 
 .char-confirm-level-btn {
     background: var(--green);
-    color: var(--bg-dark);
+    color: var(--on-green);
     border: none;
     padding: 4px 10px;
     border-radius: var(--radius-sm);
