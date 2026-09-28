@@ -1181,9 +1181,28 @@ describe('R-02 — Tinte erreicht ihre Schwelle auf der TATSAECHLICHEN Flaeche (
        namentlich, damit sie als Arbeitsliste taugt.
        ----------------------------------------------------------------------- */
 
-    /** Die zehn Akzentrollen. --gold-dim gehoert dazu: `color: var(--gold-dim)`
-     *  steht 7x im Komponenten-CSS und verfehlt min4 in Dark (3,78) und Light
-     *  (3,74). Die Tabelle des Handoffs fuehrt nur neun Rollen; es sind zehn. */
+    /** Die zehn Akzentrollen. Die Tabelle des Handoffs fuehrt nur neun; die
+     *  zehnte ist --gold-dim, und ihre Aufnahme ist BEGRUENDET ANDERS als dort
+     *  behauptet — nachgemessen am 2026-09-28:
+     *
+     *  Die Planung sagt, `color: var(--gold-dim)` stehe 7x. Das ist ein
+     *  Zaehlartefakt: alle sieben Treffer sind `border-color: var(--gold-dim)`
+     *  (core.css:524/1906, dmscreen.css:909, encounters.css:911/965/1088/1306),
+     *  die der ungeschuetzte grep als "color:" mitliest. Gegengeprueft mit
+     *  `grep -rnE "(^|[^-a-zA-Z])color[[:space:]]*:[[:space:]]*var\(--gold-dim"
+     *  assets/styles/*.css` -> KEIN Treffer. --gold-dim ist im ganzen
+     *  Stylesheet-Baum nie eine Textfarbe.
+     *
+     *  Sie bleibt trotzdem in beiden Teilformeln, und zwar wegen Teilformel 1:
+     *  --gold-dim ist eine gefuellte FLAECHE (core.css:524 .btn-gold:hover,
+     *  spells.css:630 .editor-btn.format-active), also wird --on-gold-dim
+     *  wirklich gebraucht. Waere die Rolle nur dort und nicht in Teilformel 2,
+     *  haetten die beiden Formeln verschiedene Rollenmengen — genau die Art
+     *  Asymmetrie, gegen die R-01 eine Zeile weiter oben steht. Der Preis ist
+     *  ein heute ungenutztes --gold-dim-text je Theme; nachgerechnet
+     *  erfuellbar (Dark #b29946 4,54 · Light #7c5d12 4,51 · Sepia #6b3410 7,19
+     *  · Contrast #ccac00 5,70). Zum Vergleich: die ROLLE --gold-dim selbst
+     *  wuerde als Text min4 3,78 (Dark) bzw. 3,74 (Light) erreichen. */
     const ROLLEN = [
         '--gold',
         '--gold-dim',
@@ -1223,9 +1242,16 @@ describe('R-02 — Tinte erreicht ihre Schwelle auf der TATSAECHLICHEN Flaeche (
      *  und .dms-attr-item/.dms-save-item auf --bg-dark (party.css:1075), aber
      *  .attr-str..cha in dashboard.css:1278-1282 auf .qref-row mit --bg-card. */
     const ATTR_FLAECHEN = ['--bg-dark', '--bg-card'];
-    /** Eingabefelder: gemessen 20 input/select/textarea-Regeln mit --bg-card,
-     *  14 mit --bg-dark, 5 mit --bg-elevated. Ein Rahmen grenzt ausserdem immer
-     *  an zwei Farben; WCAG 1.4.11 will fuer beide 3:1. */
+    /** Eingabefelder. Eigene Zaehlung am 2026-09-28, regelweise ueber das
+     *  kommentarfreie CSS (Selektor enthaelt input|select|textarea UND die
+     *  Regel setzt background/background-color auf ein var(--bg-*)):
+     *  24x --bg-card, 18x --bg-dark, 6x --bg-elevated. Die Planung nennt
+     *  20/14/5 — die Zaehlart dort ist nicht angegeben, und die Differenz
+     *  aendert nichts: entscheidend ist die MENGE der drei Flaechen, nicht ihre
+     *  Haeufigkeit. --bg-dark allein zu pruefen reicht nicht, denn gegen
+     *  --bg-elevated faellt der vorgeschlagene Dark-Wert durch (D-8).
+     *  Ein Rahmen grenzt ausserdem immer an zwei Farben, innen die Fuellung und
+     *  aussen die Karte; WCAG 1.4.11 will fuer beide 3:1. */
     const RAHMEN_FLAECHEN = ['--bg-dark', '--bg-card', '--bg-elevated'];
 
     const TEXT_SCHWELLE = 4.5;
