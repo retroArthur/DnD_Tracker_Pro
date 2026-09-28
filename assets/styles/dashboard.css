@@ -778,7 +778,7 @@
     top: -6px;
     right: -6px;
     background: var(--purple);
-    color: white;
+    color: var(--on-purple);
     font-size: 10px;
     font-weight: 700;
     width: 18px;
@@ -985,7 +985,7 @@
     text-transform: uppercase;
 }
 
-.dash-quest-type.plot { background: var(--purple); color: white; }
+.dash-quest-type.plot { background: var(--purple); color: var(--on-purple); }
 .dash-quest-type.side { background: var(--cyan); color: var(--on-cyan); }
 
 /* Session Items */
@@ -1328,12 +1328,12 @@
 
 .qref-ex.death {
     background: var(--red);
-    color: white;
+    color: var(--on-red);
 }
 .qref-diff.easy { background: var(--green); color: var(--on-green); }
 .qref-diff.medium { background: var(--yellow); color: var(--on-yellow); }
 .qref-diff.hard { background: var(--orange); color: var(--on-orange); }
-.qref-diff.deadly { background: var(--red); color: white; }
+.qref-diff.deadly { background: var(--red); color: var(--on-red); }
 
 /* Empty state */
 .qref-empty {
@@ -1778,7 +1778,7 @@
 
 .qref-dice-formula:hover {
     background: var(--red);
-    color: white;
+    color: var(--on-red);
 }
 
 .qref-dice-formula::before {
@@ -1819,7 +1819,7 @@
 
 .qref-dice-btn:hover {
     background: var(--red);
-    color: white;
+    color: var(--on-red);
 }
 
 /* Spell Components */
@@ -1846,7 +1846,7 @@
     align-items: center;
     justify-content: center;
     background: var(--purple);
-    color: white;
+    color: var(--on-purple);
     border-radius: 50%;
     font-weight: bold;
     font-size: 0.9em;
