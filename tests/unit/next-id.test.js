@@ -645,14 +645,14 @@ describe('R03 — Waechter der Abschlussrunde (G2)', () => {
         expect(new Set(ids).size).toBe(ids.length);
     });
 
-    test('G2g: eine unvergebene Luecken-ID unterwegs verhindert das Heilen (kein Duplikat)', () => {
-        // Die Gegenrichtung zu G2f und die Grenze der Korrektur: der Saettigungszweig gibt
-        // eine niedrige Luecken-ID heraus, die noch in KEINER Sammlung steht (Stapel ohne
-        // push, Merge-Zweig des Imports). Faellt die Obergrenzen-Entitaet genau dazwischen
-        // weg, sinkt die Untergrenze auf genau diese unterwegs befindliche ID. Wer nur die
-        // hoechste normal gemuenzte ID vergleicht, heilt hier und vergibt 4 ein zweites Mal
-        // (gemessen: mint1 = 4, mint2 = 4). Der Vergabezeiger ist die zweite, getrennte
-        // Erinnerung, die das verhindert.
+    test('G2g: eine unvergebene Luecken-ID unterwegs wird nicht erneut vergeben', () => {
+        // Die Gegenrichtung zu G2f: der Saettigungszweig gibt eine niedrige Luecken-ID
+        // heraus, die noch in KEINER Sammlung steht (Stapel ohne push, Merge-Zweig des
+        // Imports). Faellt die Obergrenzen-Entitaet genau dazwischen weg, sinkt die
+        // Untergrenze auf genau diese unterwegs befindliche ID. Sie ein zweites Mal
+        // auszugeben ist die R03-Fehlerklasse (gemessen vor dem Waechter: mint1 = 4,
+        // mint2 = 4). Weil der Waechter die schon herausgegebenen IDs kennt, ueberspringt
+        // er die 4 und setzt auf 5 auf — geheilt wird also, nur nicht auf einer belegten ID.
         const ctx = makeContext();
         ctx.D.npcs = [{ id: 1 }, { id: 2 }, { id: 3 }, { id: 1e15, name: 'Fremd' }];
         ctx.recomputeNextIds(ctx.D);

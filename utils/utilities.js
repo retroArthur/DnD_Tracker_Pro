@@ -360,16 +360,21 @@ function nextFreeEntityId(items, start) {
  */
 const MINT_CURSOR = new Map();
 /**
- * Hoechste im NORMALPFAD gemuenzte ID je Typ — ebenfalls nur im Speicher. Die zweite,
- * getrennte Erinnerung neben MINT_CURSOR, und zwar aus einem genauen Grund: der
- * Saettigungszweig setzt MINT_CURSOR selbst wieder nach unten (auf Luecke + 1), taugt also
- * nicht als Beweis dafuer, wie weit die monotone Vergabe schon gekommen ist. Ohne diese
- * zweite Marke wuerde der Waechter in nextId() eine schon monoton vergebene ID erneut als
- * Untergrenze anerkennen und damit doppelt vergeben (gemessen: bei max(ID) = 1e15 - k ab
- * dem (k+1)-ten Aufruf zyklisch doppelte IDs). Geheilt wird deshalb nur oberhalb BEIDER
- * Marken.
+ * Die in diesem Prozess herausgegebenen IDs je Typ — ebenfalls nur im Speicher. Sie sind
+ * die Erinnerung, mit der der Waechter in nextId() arbeitet, und ihre FORM ist der Punkt:
+ * er muss genau eine Frage beantworten — "ist GENAU DIESE ID hier schon herausgegeben?".
+ * Eine Hoechstmarke (hier stand vorher MINT_PEAK) ueberapproximiert das zu "jede ID bis
+ * zur hoechsten je gemuenzten koennte unterwegs sein" und verfaellt nie: ein einziges
+ * Muenzen nahe der Obergrenze — voellig regulaer, z. B. aus einem Datei-Zaehler von
+ * 1e15 - 1 — haette den Waechter fuer diesen Typ den Rest des Seitenlebens abgeschaltet.
+ * Der Suchzeiger taugt genauso wenig, weil der Saettigungszweig ihn selbst wieder nach
+ * unten setzt. Deshalb steht hier die Menge selbst und nicht ihr Maximum.
+ * Bewusst NICHT beschnitten: eine ID, die heute in der Sammlung steht, kann morgen
+ * geloescht sein — dann braucht der Waechter die Erinnerung wieder, und die Sammlung
+ * traegt sie nicht mehr. Die Menge waechst um genau einen Eintrag je Vergabe und ist nach
+ * einem Neuladen weg; dann tragen die Sammlungen die Wahrheit.
  */
-const MINT_PEAK = new Map();
+const MINT_ISSUED = new Map();
 /**
  * Generiert eine eindeutige ID für einen Entity-Typ.
  * Monoton: ein gueltiger Zaehler wird nie gesenkt (geloeschte IDs werden nicht
@@ -385,6 +390,11 @@ const MINT_PEAK = new Map();
 function nextId(type) {
     const D = window.D;
     if (!isPlainDataObject(D._nextId)) D._nextId = {};
+    let issued = MINT_ISSUED.get(type);
+    if (!issued) {
+        issued = new Set();
+        MINT_ISSUED.set(type, issued);
+    }
     const floor = maxEntityId(getIdCollection(D, type)) + 1;
     const counter = D._nextId[type];
     let id = isValidEntityId(counter) && counter >= floor ? counter : floor;
@@ -393,22 +403,21 @@ function nextId(type) {
     // gueltige, nie vergebbare Wert). Der Zaehler behauptet also die Saettigung, die
     // Sammlung liegt aber weit darunter: entweder kam der Wert aus einer fremden Datei,
     // oder die Entitaet an der Obergrenze wurde inzwischen geloescht. Dann darf die
-    // monotone Vergabe ab der Untergrenze wieder aufsetzen, statt geloeschte IDs zu
-    // wiederverwenden — auch mitten in einer Sitzung, in der fuer den Typ schon gemuenzt
-    // wurde (die reine Anwesenheit eines Zeigers taugt dafuer nicht, sie hielte den Pin
-    // ein ganzes Seitenleben fest). Geheilt wird nur OBERHALB beider Speicher-Marken:
-    //   - oberhalb der hoechsten normal gemuenzten ID (MINT_PEAK), sonst wird sie ein
-    //     zweites Mal als Untergrenze anerkannt und doppelt vergeben;
-    //   - nicht unterhalb des Vergabezeigers (MINT_CURSOR), sonst wird eine schon
-    //     herausgegebene Luecken-ID doppelt vergeben, die noch in keiner Sammlung steht.
-    // Darunter bleibt die Lueckensuche zustaendig.
-    if (
-        !isMintableEntityId(id) &&
-        isMintableEntityId(floor) &&
-        floor > (MINT_PEAK.get(type) || 0) &&
-        floor >= (MINT_CURSOR.get(type) || 1)
-    ) {
-        id = floor;
+    // monotone Vergabe oberhalb der Untergrenze wieder aufsetzen, statt geloeschte IDs zu
+    // wiederverwenden — und zwar auch mitten in einer Sitzung, in der fuer den Typ schon
+    // gemuenzt wurde. Genau daran hingen die beiden Vorlaeufer dieses Waechters: erst die
+    // Anwesenheit eines Zeigers, dann eine Hoechstmarke — beides Flaggen mit
+    // Seitenlebensdauer. Gefragt ist die einzelne ID: die Untergrenze ist frei, sobald
+    // KEINE Sammlung und KEINE Vergabe dieses Prozesses sie belegt. Die Sammlung kann es
+    // nicht sein (floor = max(ID) + 1 liegt ueber jeder gespeicherten ID), also genuegt es,
+    // die schon herausgegebenen IDs (MINT_ISSUED) aufwaerts zu ueberspringen — das trifft
+    // sowohl die noch nicht abgelegte Luecken-ID eines Stapels als auch eine bereits
+    // monoton vergebene Untergrenze. Ist auch der erste freie Kandidat nicht mehr
+    // vergebbar, bleibt die Lueckensuche zustaendig.
+    if (!isMintableEntityId(id) && isMintableEntityId(floor)) {
+        let candidate = floor;
+        while (issued.has(candidate) && isMintableEntityId(candidate)) candidate++;
+        if (isMintableEntityId(candidate)) id = candidate;
     }
     // Saettigung: reicht die Sammlung bis an die Obergrenze heran (solche IDs gibt es nur
     // aus einer fremden oder beschaedigten Datei), taugt die berechnete ID nicht mehr —
@@ -419,6 +428,7 @@ function nextId(type) {
     if (!isMintableEntityId(id)) {
         id = nextFreeEntityId(getIdCollection(D, type), MINT_CURSOR.get(type) || 1);
         MINT_CURSOR.set(type, id + 1);
+        issued.add(id);
         // Der persistente Zaehler darf die niedrige Luecken-ID NICHT tragen: sie liegt
         // unter der Untergrenze, gilt beim naechsten Aufruf als veraltet und wird
         // verworfen — die Untergrenze waere dann ein zweites Mal vergeben. Er bekommt
@@ -429,11 +439,10 @@ function nextId(type) {
         return id;
     }
     // Auch der Normalpfad fuehrt den Zeiger fort — sonst koennte die Lueckensuche eine
-    // hier schon vergebene ID erneut ausgeben. Die zweite Marke haelt zusaetzlich fest,
-    // wie weit die monotone Vergabe gekommen ist; nur sie bleibt monoton, weil der
-    // Saettigungszweig den Zeiger selbst wieder nach unten setzt (siehe MINT_PEAK).
+    // hier schon vergebene ID erneut ausgeben. Und jede Vergabe wird gemerkt, egal auf
+    // welchem Zweig: der Waechter oben fragt nach der einzelnen ID (siehe MINT_ISSUED).
     MINT_CURSOR.set(type, id + 1);
-    MINT_PEAK.set(type, id);
+    issued.add(id);
     // Unterhalb der Saettigung traegt der Zaehler die Erinnerung an die Vergabe und bleibt
     // dabei immer selbst eine gueltige ID (siehe isMintableEntityId): Stapelaufrufe ohne
     // push dazwischen (z. B. der Merge-Zweig des Imports) liefern nie zweimal dieselbe ID.
