@@ -780,7 +780,7 @@
         
         [data-layout="mobile"] .nav-tab.active {
             background: var(--gold);
-            color: var(--bg-dark);
+            color: var(--on-gold);
         }
 
         /* Gruppierte Nav auf Mobile: Gruppen-Buttons aus, Eintraege flach ins Grid */
