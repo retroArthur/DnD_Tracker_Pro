@@ -318,12 +318,12 @@
 
         .death-saves-status.dead {
             background: var(--red);
-            color: var(--bg-dark);
+            color: var(--on-red);
         }
 
         .death-saves-status.stable {
             background: var(--green);
-            color: var(--bg-dark);
+            color: var(--on-green);
         }
 
         /* Concentration Tracker */
@@ -370,7 +370,7 @@
 
         .concentration-badge .conc-break:hover {
             background: var(--red);
-            color: var(--bg-dark);
+            color: var(--on-red);
         }
 
         .concentration-add-btn {
@@ -423,7 +423,7 @@
 
         .concentration-check-banner .conc-roll-btn:hover {
             background: var(--gold);
-            color: var(--bg-dark);
+            color: var(--on-gold);
         }
 
         /* AoE Damage Calculator */
@@ -824,7 +824,7 @@
         .relations-status-btn.friendly:hover,
         .relations-status-btn.friendly.active {
             background: var(--green);
-            color: var(--bg-dark);
+            color: var(--on-green);
         }
 
         .relations-status-btn.neutral {
@@ -846,13 +846,13 @@
         .relations-status-btn.hostile:hover,
         .relations-status-btn.hostile.active {
             background: var(--red);
-            color: var(--bg-dark);
+            color: var(--on-red);
         }
 
         .relations-add-btn {
             padding: 10px 20px;
             background: var(--gold);
-            color: var(--bg-dark);
+            color: var(--on-gold);
             border: none;
             border-radius: var(--radius-md);
             cursor: pointer;
@@ -1125,7 +1125,7 @@
 
 .init-mob-mode-btn.active {
     background: var(--gold);
-    color: var(--bg-dark);
+    color: var(--on-gold);
     border-color: var(--gold);
     font-weight: 600;
 }
@@ -1193,7 +1193,7 @@
     display: inline-block;
     padding: 4px 8px;
     background: var(--red);
-    color: var(--bg-dark);
+    color: var(--on-red);
     border-radius: var(--radius-sm);
     font-size: 0.75em;
     font-weight: 700;
