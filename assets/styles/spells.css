@@ -95,9 +95,9 @@
         }
         
         .spell-meta-label { color: var(--text-dim); }
-        .spell-meta-value { color: var(--cyan); }
-        .spell-meta-value.time { color: var(--gold); }
-        .spell-meta-value.range { color: var(--green); }
+        .spell-meta-value { color: var(--cyan-text); }
+        .spell-meta-value.time { color: var(--gold-text); }
+        .spell-meta-value.range { color: var(--green-text); }
         
         .spell-duration-line {
             font-size: 0.85em;
@@ -368,7 +368,7 @@
         .spell-editor th, .rich-editor th {
             background: var(--bg-elevated);
             font-weight: 600;
-            color: var(--gold);
+            color: var(--gold-text);
         }
         
         .spell-editor tr:nth-child(even), .rich-editor tr:nth-child(even) {
@@ -503,7 +503,7 @@
         }
 
         .table-context-toolbar .editor-btn:hover {
-            color: var(--cyan);
+            color: var(--cyan-text);
         }
 
         .table-context-toolbar::before {
@@ -547,7 +547,7 @@
         }
 
         .link-context-toolbar .editor-btn:hover {
-            color: var(--purple);
+            color: var(--purple-text);
         }
 
         /* Phase 4: Mobile Bottom Toolbar */
