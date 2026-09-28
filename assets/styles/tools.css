@@ -969,7 +969,7 @@
 
 .concentration-inline .conc-break {
     background: var(--red);
-    color: white;
+    color: var(--on-red);
     border: none;
     width: 16px;
     height: 16px;
