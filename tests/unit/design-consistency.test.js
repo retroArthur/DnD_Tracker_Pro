@@ -1280,10 +1280,16 @@ describe('R-02 — Tinte erreicht ihre Schwelle auf der TATSAECHLICHEN Flaeche (
 
             /** Teilformel 1 und der Muenz-Ersatz: Tinte AUF einer gefuellten
              *  Flaeche derselben Rolle. Heutiger Ausgangswert: dort steht
-             *  `color: var(--bg-dark)` (86x) oder `color: white` (39x). Mit
-             *  diesen zwei Systemtinten ist die schlechteste Zelle
-             *  Light --yellow 2,94; der schlechteste TATSAECHLICH benutzte Fall
-             *  ist weisse Schrift auf Dark --green = 1,74. */
+             *  `color: var(--bg-dark)` oder `color: white`. Eigene regelweise
+             *  Zaehlung am 2026-09-28 (Regel setzt background auf ein volles
+             *  var(--<rolle>) UND eine der beiden Tinten): 86x --bg-dark
+             *  (gold 41 · green 19 · cyan 12 · orange 4 · red 4 · yellow 3 ·
+             *  gold-dim 1 · purple 1 · pink 1) und 38x white (red 24 ·
+             *  purple 11 · blue 2 · green 1; die Planung zaehlt hier 39, eine
+             *  Regel faellt je nach Zaehlart heraus). Mit diesen zwei
+             *  Systemtinten ist die schlechteste Zelle Light --yellow 2,94; der
+             *  schlechteste TATSAECHLICH benutzte Fall ist weisse Schrift auf
+             *  Dark --green = 1,74. */
             const aufFlaeche = (tinte, flaeche) => {
                 const tw = wert(tinte);
                 const fw = wert(flaeche);
@@ -1305,10 +1311,14 @@ describe('R-02 — Tinte erreicht ihre Schwelle auf der TATSAECHLICHEN Flaeche (
 
             /** Teilformel 2: Akzent als Textfarbe auf NEUTRALER Theme-Flaeche.
              *  Heutiger Ausgangswert (die Rolle steht dort unveraendert als
-             *  Text): 20 der 40 Zellen unter 4,5, schlechteste Flaeche immer
-             *  --bg-hover. Light --yellow 2,16 · Sepia --cyan 2,30 ·
-             *  Dark --red 3,36 (69 Deklarationen im Standardtheme!) ·
-             *  Contrast --red 3,16. */
+             *  Text): 24 der 40 Zellen unter 4,5, schlechteste Flaeche immer
+             *  --bg-hover. Light alle zehn (2,16-4,20) · Sepia acht (2,30-3,36)
+             *  · Contrast vier (3,16-4,03) · Dark zwei. Der schwerste Einzelfall
+             *  ist Dark --red mit 3,36 — und das ist keine Randstelle: --red
+             *  steht 68x als echte Textfarbe im Standardtheme (eigene Zaehlung
+             *  am 2026-09-28, grep mit Praefixschutz gegen `-color:`; ohne
+             *  diesen Schutz zaehlt derselbe Ausdruck 96, die Planung nennt
+             *  69). */
             ROLLEN.forEach(rolle => {
                 const token = `${rolle}-text`;
                 const m = WCAG.minRatioOverSurfaces(token, TEXT_FLAECHEN, p);
