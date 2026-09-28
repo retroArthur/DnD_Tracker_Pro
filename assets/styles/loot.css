@@ -541,7 +541,7 @@
             top: -8px;
             right: -8px;
             background: var(--red);
-            color: white;
+            color: var(--on-red);
             font-size: 0.7em;
             font-weight: bold;
             min-width: 18px;
