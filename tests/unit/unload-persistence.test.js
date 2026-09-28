@@ -1491,3 +1491,119 @@ describe('Schluesselaufloesung (getActiveCampaignKey) und Quelltext-Waechter', (
         );
     });
 });
+
+// ============================================================
+// Nutzerentscheidung D-C (2026-09-27) — Kampagnenwechsel im veralteten Tab
+// ============================================================
+// Vorher: flushPendingSaveAndSettle() zog den ausstehenden Save eines VERALTETEN Tabs zu
+// Recht nicht vor (er wuerde den neueren Stand des anderen Tabs ueberschreiben), liess ihn
+// aber eingeplant. switchCampaign() schrieb danach index.active und rief location.reload() —
+// das beforeunload fragte nach (D5), und nach "Bleiben" zeigte der Tab die ALTE Kampagne,
+// waehrend index.active schon auf die neue zeigte.
+// Jetzt: der Stand dieses Tabs wird als GESCHUETZTE Sicherungskopie (kind 'safety') der
+// alten Kampagne gesichert, bevor gewechselt wird. Weder der neuere gespeicherte Stand noch
+// die Aenderung dieses Tabs geht verloren; scheitert die Kopie, wird nicht gewechselt.
+
+describe('D-C — veralteter Tab mit ausdruecklicher Arbeit wechselt verlustfrei', () => {
+    const mitBackups = (u, name, opt = {}) =>
+        oeffneTab(
+            u,
+            name,
+            Object.assign(
+                {
+                    module: [
+                        'systems/backups.js',
+                        'systems/campaign-manager/campaign-manager.js'
+                    ]
+                },
+                opt
+            )
+        );
+
+    function nebenkampagne(u) {
+        u.ls.set(
+            INDEX_KEY,
+            JSON.stringify({ campaigns: [{ key: NEBEN_KEY, name: 'Neben' }], active: KEY })
+        );
+    }
+
+    const backupZeilen = u => u.idb.zeilen('backups');
+
+    test('U31: A veraltet + ausdruecklicher Save -> Bs Stand bleibt, As Stand wird Sicherungskopie, kein Rueckfrage-Dialog', async () => {
+        const u = erzeugeUrsprung();
+        u.saeen(KEY, kampagne(['Aria']));
+        nebenkampagne(u);
+        const A = await mitBackups(u, 'A').starten();
+        const B = await oeffneTab(u, 'B').starten();
+        await bSpeichertBorin(u, B);
+        expect(A.ctx.isCampaignStorageStale(KEY)).toBe(true); // Nicht-Vakuitaet
+        A.ctx.D.characters[0].name = 'Nur in A';
+        A.ctx.save();
+
+        const fertig = A.ctx.switchCampaign(NEBEN_KEY);
+        await u.uhr.laufen(0);
+        await fertig;
+
+        // Bs neuerer Stand ist unberuehrt
+        expect(namen(u.ls.get(KEY))).toEqual(['Aria', 'Borin']);
+        expect(beimEntladen(u, 'A')).toEqual([]);
+        // Wechsel sauber: keine native Rueckfrage — sonst zeigte der Tab nach "Bleiben" die
+        // alte Kampagne, waehrend index.active schon auf die neue zeigt
+        expect(A.entladungen[0].defaultPrevented).toBe(false);
+        // ... und As Aenderung liegt als geschuetzte Sicherungskopie der ALTEN Kampagne
+        const zeilen = backupZeilen(u);
+        expect(zeilen).toHaveLength(1);
+        expect(zeilen[0].campaignKey).toBe(KEY);
+        expect(zeilen[0].kind).toBe('safety');
+        expect(namen(zeilen[0].data)).toEqual(['Nur in A']);
+        expect(A.geschlossen).toBe(true);
+        expect(JSON.parse(u.ls.get(INDEX_KEY)).active).toBe(NEBEN_KEY);
+        expect(A.toasts.map(t => t.text).join(' | ')).toContain('Sicherungskopie');
+    });
+
+    test('U32: scheitert die Sicherungskopie, wird NICHT gewechselt — der Tab bleibt, wo er ist', async () => {
+        const u = erzeugeUrsprung();
+        u.saeen(KEY, kampagne(['Aria']));
+        nebenkampagne(u);
+        const indexVorher = u.ls.get(INDEX_KEY);
+        const A = await mitBackups(u, 'A').starten();
+        const B = await oeffneTab(u, 'B').starten();
+        await bSpeichertBorin(u, B);
+        A.ctx.D.characters[0].name = 'Nur in A';
+        A.ctx.save();
+        A.ctx.createAutoBackup = () => Promise.resolve('failed');
+
+        const fertig = A.ctx.switchCampaign(NEBEN_KEY);
+        await u.uhr.laufen(0);
+        await fertig;
+
+        expect(A.geschlossen).toBe(false);
+        expect(u.ls.get(INDEX_KEY)).toBe(indexVorher);
+        expect(namen(u.ls.get(KEY))).toEqual(['Aria', 'Borin']);
+        expect(backupZeilen(u)).toHaveLength(0);
+        expect(A.toasts.map(t => t.text).join(' | ')).toMatch(/Kampagnenwechsel/);
+        // Der Tab bleibt schreibfaehig (keine haengende Schreibsperre)
+        expect(A.ctx.areCampaignWritesRetired()).toBe(false);
+    });
+
+    // Gegenprobe (vor und nach der Aenderung gruen): ein AKTUELLER Tab wechselt wie bisher —
+    // der ausstehende Save wird festgeschrieben, es entsteht KEINE Sicherungskopie.
+    test('U33: aktueller Tab mit ausstehendem Save -> Save landet im Speicher, keine Sicherungskopie', async () => {
+        const u = erzeugeUrsprung();
+        u.saeen(KEY, kampagne(['Aria']));
+        nebenkampagne(u);
+        const A = await mitBackups(u, 'A').starten();
+        A.ctx.D.characters[0].name = 'Vor dem Wechsel';
+        A.ctx.save();
+
+        const fertig = A.ctx.switchCampaign(NEBEN_KEY);
+        await u.uhr.laufen(0);
+        await fertig;
+
+        expect(namen(u.ls.get(KEY))).toEqual(['Vor dem Wechsel']);
+        expect(backupZeilen(u)).toHaveLength(0);
+        expect(A.toasts.map(t => t.text).join(' | ')).not.toContain('Sicherungskopie');
+        expect(A.entladungen[0].defaultPrevented).toBe(false);
+        expect(JSON.parse(u.ls.get(INDEX_KEY)).active).toBe(NEBEN_KEY);
+    });
+});

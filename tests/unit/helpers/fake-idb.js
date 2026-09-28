@@ -365,6 +365,9 @@ function erzeugeFakeIDB(opt = {}) {
         anfragen,
         policy,
         datensatz: (store, key) => klon(tabelle(store).get(key)),
+        // Alle committeten Zeilen eines Stores (Einfuegereihenfolge) — fuer Assertions ueber
+        // Datensaetze, deren Schluessel der Test nicht kennt (z. B. Backups mit Date.now()-ID)
+        zeilen: store => Array.from(tabelle(store).values(), klon),
         setze: (store, wert) => tabelle(store).set(wert.id, klon(wert)),
         anzahl: store => tabelle(store).size
     };

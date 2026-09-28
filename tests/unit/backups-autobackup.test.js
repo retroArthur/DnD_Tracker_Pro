@@ -879,22 +879,97 @@ describe('R05 (Schreibseite) — localStorage-Rueckfallliste je Kampagne, kein L
         expect(r.wert).toBe('written');
     });
 
-    test('T12c: nur A@5 im Weg -> A@5 weicht als letztes Mittel (Reihenfolge 4), das neue Backup steht', async () => {
+    // Nutzerentscheidung 2026-09-27 (D-A), frueher Reihenfolge 4: das LETZTE verbleibende
+    // Backup einer FREMDEN Kampagne weicht nie — auch nicht als letztes Mittel. Steht sonst
+    // nichts im Weg, scheitert das neue Backup ehrlich ('failed') und meldet keinen Erfolg;
+    // die Live-Daten der aktiven Kampagne sind ohnehin gespeichert, es geht nichts verloren.
+    test('T12c: nur A@5 im Weg -> es ist As letztes Backup und bleibt, das neue scheitert ehrlich', async () => {
+        const vorher = JSON.stringify([eintrag(KEY_A, 5, '{"characters":[{"id":1,"name":"A"}]}')]);
         const w = erzeugeWerkbank({
             idbAus: true,
-            ls: {
-                [BACKUP_KEY]: JSON.stringify([
-                    eintrag(KEY_A, 5, '{"characters":[{"id":1,"name":"A"}]}')
-                ])
-            },
+            ls: { [BACKUP_KEY]: vorher },
             quota: quotaEinmal(BACKUP_KEY)
         });
         mitHeld(w, 'B-Held');
         const r = await mitFrist(w.ctx.createAutoBackup());
+        expect(r.wert).toBe('failed');
+        expect(lsListe(w).map(kennung)).toEqual([`${KEY_A}@5`]);
+        expect(w.ls.get(BACKUP_KEY)).toBe(vorher);
+        expect(w.log).not.toContain('ls.remove:' + BACKUP_KEY);
+        expect(texte(w)).toEqual([]);
+    });
+
+    // D-A Regel 3+4: ein aelterer fremder Eintrag darf weichen, solange dieser Kampagne
+    // danach mindestens einer bleibt — der letzte nie, auch wenn das Budget danach weiter
+    // ueberschritten ist. Frueher raeumte Reihenfolge 4 hier auch A@2500 weg.
+    test('T12d: Budget bleibt nach der ersten Verdraengung ueberschritten -> As letzter Eintrag bleibt trotzdem', async () => {
+        const gross = n => 'x'.repeat(Math.round(n));
+        const w = erzeugeWerkbank({
+            idbAus: true,
+            ls: {
+                [BACKUP_KEY]: JSON.stringify([
+                    eintrag(KEY_A, 2500, `{"a2":"${gross(2.5 * MB)}"}`),
+                    eintrag(KEY_A, 100, `{"a1":"${gross(0.1 * MB)}"}`)
+                ])
+            }
+        });
+        const d = startzustand(w);
+        d.characters = [{ id: 1, name: 'B', notes: gross(1.9 * MB) }];
+        setzeD(w, d);
+
+        const r = await mitFrist(w.ctx.createAutoBackup(), 5000);
+
+        const kennungen = lsListe(w).map(kennung);
+        expect(r.wert).toBe('written');
+        expect(kennungen).toContain(`${KEY_A}@2500`);
+        expect(kennungen).not.toContain(`${KEY_A}@100`);
+        expect(lsListe(w)[0].campaignKey).toBe(KEY_B);
+    });
+
+    // D-A Regel 2 vor Regel 3: der eigene aeltere Eintrag weicht VOR einem fremden. Frueher
+    // stand der fremde nicht-neueste Eintrag davor (Reihenfolge 2 vor 3).
+    test('T12e: eigener aelterer Eintrag UND fremdes Paar -> der eigene weicht, A behaelt beide', async () => {
+        const w = erzeugeWerkbank({
+            idbAus: true,
+            ls: {
+                [BACKUP_KEY]: JSON.stringify([
+                    eintrag(KEY_A, 5, '{"characters":[{"id":1,"name":"A-neu"}]}'),
+                    eintrag(KEY_A, 4, '{"characters":[{"id":1,"name":"A-alt"}]}'),
+                    eintrag(KEY_B, 3, '{"characters":[{"id":1,"name":"B-alt"}]}')
+                ])
+            },
+            quota: quotaEinmal(BACKUP_KEY)
+        });
+        mitHeld(w, 'B-neu');
+        const r = await mitFrist(w.ctx.createAutoBackup());
+        const kennungen = lsListe(w).map(kennung);
+        expect(r.wert).toBe('written');
+        expect(kennungen).toContain(`${KEY_A}@5`);
+        expect(kennungen).toContain(`${KEY_A}@4`);
+        expect(kennungen).not.toContain(`${KEY_B}@3`);
+        const eigene = lsListe(w).filter(b => b.campaignKey === KEY_B);
+        expect(eigene).toHaveLength(1);
+        expect(JSON.parse(eigene[0].data).characters[0].name).toBe('B-neu');
+    });
+
+    // D-A Regel 2, Klammerzusatz: die eigene geschuetzte Sicherungskopie (kind 'safety', der
+    // Stand vor einer destruktiven Aktion) weicht nie. Frueher raeumte Reihenfolge 3 sie weg.
+    test('T12f: nur die eigene Sicherungskopie im Weg -> sie bleibt, das neue Backup scheitert ehrlich', async () => {
+        const vorher = JSON.stringify([
+            eintrag(KEY_B, 4, '{"characters":[{"id":1,"name":"B-vor-dem-Import"}]}', 'safety')
+        ]);
+        const w = erzeugeWerkbank({
+            idbAus: true,
+            ls: { [BACKUP_KEY]: vorher },
+            quota: quotaEinmal(BACKUP_KEY)
+        });
+        mitHeld(w, 'B-neu');
+        const r = await mitFrist(w.ctx.createAutoBackup());
+        expect(r.wert).toBe('failed');
+        expect(w.ls.get(BACKUP_KEY)).toBe(vorher);
         const liste = lsListe(w);
         expect(liste).toHaveLength(1);
-        expect(liste[0].campaignKey).toBe(KEY_B);
-        expect(r.wert).toBe('written');
+        expect(liste[0].kind).toBe('safety');
     });
 
     test('T13: jeder Schreibversuch scheitert -> "failed", die gespeicherte Liste bleibt byte-identisch, kein Toast-Spam', async () => {
@@ -1385,5 +1460,112 @@ describe('R10 — reportSafetyBackup(): die Meldung folgt dem echten Ergebnis', 
         expect(w.log.indexOf('idb.commit:backups')).toBeLessThan(
             w.log.indexOf('toast:💾 Sicherheitskopie erstellt')
         );
+    });
+});
+
+// ============================================================
+// Nutzerentscheidung D-B (2026-09-27) — IndexedDB gemeldet, aber nicht oeffenbar
+// ============================================================
+// Vorher scheiterte beides fail-closed mit "Es wurde nichts geloescht" bzw. "Fehler beim
+// Loeschen": in einer Umgebung, in der window.indexedDB existiert, die Datenbank sich aber
+// nicht oeffnen laesst (aeltere Firefox-Privatfenster, manche file://-Aufbauten), liess sich
+// die Kampagne gar nicht loeschen. Die Datengarantie bleibt — eine moeglicherweise
+// vorhandene IndexedDB-Kopie wird nie stillschweigend aufgegeben —, aber der Nutzer
+// entscheidet jetzt selbst ueber die native confirm()-Rueckfrage.
+// Abgrenzung: ein ABGEBROCHENER Commit auf einer GEOEFFNETEN Datenbank bleibt fail-closed
+// (T16d, T17b) — dort ist belegt, dass eine Kopie existiert und erreichbar waere.
+
+describe('D-B — nicht oeffenbare IndexedDB: der Nutzer entscheidet (clearStorage, deleteCampaign)', () => {
+    const WIKI = '{"wiki":[{"id":1,"title":"Götterpantheon"}]}';
+
+    function nichtOeffenbar(opt = {}) {
+        const w = erzeugeWerkbank(
+            Object.assign(
+                {
+                    idbAus: true,
+                    ls: { [KEY_B]: WIKI, [KEY_B + '_ts']: '1000', [KEY_B + '_rev']: 'r1' },
+                    idbZeilen: [['campaigns', { id: KEY_B, data: WIKI, timestamp: 1 }]]
+                },
+                opt
+            )
+        );
+        const d = startzustand(w);
+        d.wiki = [{ id: 1, title: 'Götterpantheon' }];
+        setzeD(w, d);
+        return w;
+    }
+
+    test('T20: clearStorage fragt nach und erklaert die Lage; "Abbrechen" entfernt nichts', async () => {
+        const w = nichtOeffenbar({ antworten: [true, true, false] });
+        const r = await mitFrist(w.ctx.clearStorage(), 3000);
+        expect(r.zustand).toBe('erfuellt');
+        await ruhe();
+        expect(w.confirms).toHaveLength(3);
+        expect(w.confirms[2]).toContain('IndexedDB');
+        expect(w.confirms[2]).toContain('exportieren');
+        expect(w.ls.get(KEY_B)).toBe(WIKI);
+        expect(w.ls.has(KEY_B + '_ts')).toBe(true);
+        expect(texte(w)).not.toContain('✅ Alle Daten gelöscht');
+        expect(texte(w).some(t => t.includes('nichts gelöscht'))).toBe(true);
+        expect(w.timer.some(t => t.ms === 1000)).toBe(false);
+        // Der Tab darf danach wieder schreiben
+        expect(w.ctx.areCampaignWritesRetired()).toBe(false);
+    });
+
+    test('T21: nach der Bestaetigung werden die lokalen Daten geloescht und die Meldung sagt genau das', async () => {
+        const w = nichtOeffenbar({ antworten: [true, true, true] });
+        const r = await mitFrist(w.ctx.clearStorage(), 3000);
+        expect(r.zustand).toBe('erfuellt');
+        await ruhe();
+        expect(w.confirms).toHaveLength(3);
+        expect(w.ls.has(KEY_B)).toBe(false);
+        expect(w.ls.has(KEY_B + '_ts')).toBe(false);
+        expect(w.ls.has(KEY_B + '_rev')).toBe(false);
+        // Die IndexedDB-Kopie bleibt — genau darauf weist die Meldung hin
+        expect(w.fake.tab('campaigns').has(KEY_B)).toBe(true);
+        expect(texte(w)).not.toContain('✅ Alle Daten gelöscht');
+        const hinweis = texte(w).find(t => t.includes('IndexedDB'));
+        expect(hinweis).toBeDefined();
+        expect(hinweis).toContain('lokal');
+        expect(w.timer.some(t => t.ms === 1000)).toBe(true);
+    });
+
+    test('T22: deleteCampaign (Standard-Kampagne) fragt nach; "Abbrechen" laesst alles stehen', async () => {
+        const w = erzeugeWerkbank({
+            aktiv: STANDARD_KEY,
+            idbAus: true,
+            ls: { [STANDARD_KEY]: WIKI, [STANDARD_KEY + '_ts']: '1000' },
+            idbZeilen: [['campaigns', { id: STANDARD_KEY, data: WIKI, timestamp: 1 }]],
+            antworten: [true, false]
+        });
+        const r = await mitFrist(w.ctx.deleteCampaign(), 3000);
+        expect(r.zustand).toBe('erfuellt');
+        await ruhe();
+        expect(w.confirms).toHaveLength(2);
+        expect(w.confirms[1]).toContain('IndexedDB');
+        expect(w.ls.get(STANDARD_KEY)).toBe(WIKI);
+        expect(w.alerts.some(a => a.includes('Es wurde nichts gelöscht'))).toBe(true);
+        expect(w.ctx.areCampaignWritesRetired()).toBe(false);
+    });
+
+    test('T23: deleteCampaign (Standard-Kampagne) nach der Bestaetigung — lokale Daten weg, Meldung ehrlich', async () => {
+        const w = erzeugeWerkbank({
+            aktiv: STANDARD_KEY,
+            idbAus: true,
+            ls: { [STANDARD_KEY]: WIKI, [STANDARD_KEY + '_ts']: '1000' },
+            idbZeilen: [['campaigns', { id: STANDARD_KEY, data: WIKI, timestamp: 1 }]],
+            antworten: [true, true]
+        });
+        const r = await mitFrist(w.ctx.deleteCampaign(), 3000);
+        expect(r.zustand).toBe('erfuellt');
+        await ruhe();
+        expect(w.confirms).toHaveLength(2);
+        expect(w.ls.has(STANDARD_KEY)).toBe(false);
+        expect(w.ls.has(STANDARD_KEY + '_ts')).toBe(false);
+        expect(w.fake.tab('campaigns').has(STANDARD_KEY)).toBe(true);
+        const meldung = w.alerts.find(a => a.includes('IndexedDB'));
+        expect(meldung).toBeDefined();
+        expect(meldung).toContain('lokal');
+        expect(w.alerts.some(a => a.includes('Es wurde nichts gelöscht'))).toBe(false);
     });
 });
