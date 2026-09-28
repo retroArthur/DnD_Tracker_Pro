@@ -41,7 +41,7 @@
 
 .npc-filter-chip.active {
     background: var(--gold);
-    color: var(--bg-dark);
+    color: var(--on-gold);
     border-color: var(--gold);
 }
 
@@ -60,7 +60,7 @@
     background: var(--green);
     border: none;
     border-radius: var(--radius-md);
-    color: var(--bg-dark);
+    color: var(--on-green);
     font-weight: 600;
     cursor: pointer;
     transition: all 0.2s;
@@ -447,7 +447,7 @@
 
 .loot-filter-chip.active {
     background: var(--gold);
-    color: var(--bg-dark);
+    color: var(--on-gold);
     border-color: var(--gold);
 }
 
@@ -456,7 +456,7 @@
     background: var(--green);
     border: none;
     border-radius: var(--radius-md);
-    color: var(--bg-dark);
+    color: var(--on-green);
     font-weight: 600;
     cursor: pointer;
     transition: all 0.2s;
@@ -1025,8 +1025,8 @@
         }
         
         .npc-list-tag.quest { background: var(--purple); color: white; }
-        .npc-list-tag.relation { background: var(--green); color: var(--bg-dark); }
-        .npc-list-tag.info { background: var(--cyan); color: var(--bg-dark); }
+        .npc-list-tag.relation { background: var(--green); color: var(--on-green); }
+        .npc-list-tag.info { background: var(--cyan); color: var(--on-cyan); }
         .npc-list-tag.clickable { 
             cursor: pointer; 
             transition: transform 0.1s, box-shadow 0.1s;
@@ -1082,7 +1082,7 @@
         
         .npc-trigger-check.triggered {
             background: var(--yellow);
-            color: var(--bg-dark);
+            color: var(--on-yellow);
             border-color: var(--yellow); /* F-18: aus der Dublette uebernommen */
         }
         
