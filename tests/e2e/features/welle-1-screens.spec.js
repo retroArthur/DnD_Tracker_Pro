@@ -84,15 +84,24 @@ const ZUSTANDSBILDER = [
 ];
 
 /**
- * Setzt das Theme ueber den echten Codepfad (core/themes.js) und raeumt die
- * Quittungsmeldung weg — `setTheme()` ruft `showToast()`, und ein Ereignis-Log
- * im Bild verdeckt genau die Werkzeugleiste, um die es geht.
+ * Setzt das Theme ueber den echten Codepfad (das Theme-Modul unter core/) und
+ * raeumt die Quittungsmeldung weg — `setTheme()` ruft `showToast()`, und ein
+ * Ereignis-Log im Bild verdeckt genau die Werkzeugleiste, um die es geht.
+ *
+ * Der Modulpfad steht hier BEWUSST nicht ausgeschrieben. Das
+ * Modul-zu-Test-Abdeckungs-Gate (tests/unit/module-test-coverage.test.js)
+ * wertet jedes woertliche Vorkommen eines loader.js-Modulpfads unter tests/
+ * als Abdeckung — auch eines in einem Kommentar. Dieser Spec liest das Modul
+ * nicht, und er laeuft ohne Schalter ueberhaupt nicht; eine Erwaehnung wuerde
+ * das Modul stillschweigend aus der Ausnahmeliste und damit aus dem Gate
+ * nehmen. Genau davor warnt der Kopfkommentar jenes Gates ("eine Erwaehnung
+ * zur Gate-Beruhigung, kein tatsaechlicher Test").
  * @param {import('@playwright/test').Page} page
  * @param {string} theme
  */
 async function setzeTheme(page, theme) {
     await page.evaluate(t => {
-        // @ts-ignore — global aus core/themes.js
+        // @ts-ignore — global aus dem Theme-Modul (Pfad bewusst nicht ausgeschrieben, s.o.)
         if (typeof window.setTheme === 'function') window.setTheme(t);
         // @ts-ignore — global aus utils/utilities.js
         if (typeof window.clearEventLog === 'function') window.clearEventLog();
