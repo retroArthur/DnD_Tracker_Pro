@@ -900,4 +900,77 @@ describe('R03 — Waechter der Abschlussrunde (G2)', () => {
         const ids = ctx.D.npcs.map(n => n.id);
         expect(new Set(ids).size).toBe(ids.length);
     });
+
+    test('G2l: der Normalpfad gibt keine ID erneut aus, die schon unterwegs ist', () => {
+        // Die Erinnerung MINT_ISSUED fragten bisher nur der Waechter und (seit G2j) die
+        // Lueckensuche. Der NORMALPFAD fragte sie nie — er verliess sich darauf, dass der
+        // Zaehler die Vergabe traegt. Genau das gilt aber nicht mehr, sobald der Waechter
+        // dazwischen heilt und eine niedrige ID in den Zaehler schreibt: die Erinnerung an
+        // die hohe, noch unterwegs befindliche ID ist dort dann weg.
+        const ctx = makeContext();
+        ctx.D.npcs = [
+            { id: 1, name: 'Borin' },
+            { id: 500, name: 'Mira' }
+        ];
+        // Gueltig UND vergebbar (die Praemisse von G2i) — also laeuft der Normalpfad.
+        ctx.D._nextId = { npcs: 1e15 - 1 };
+
+        // 1. Der Datensatz bleibt liegen (ungueltiger Eintrag, abgebrochenes Speichern),
+        //    die ID ist damit herausgegeben, steht aber in KEINER Sammlung.
+        const unterwegs = ctx.nextId('npcs');
+        expect(unterwegs).toBe(1e15 - 1);
+        expect(ctx.D.npcs.some(n => n.id === unterwegs)).toBe(false);
+
+        // 2. Der Zaehler steht jetzt auf 1e15, also heilt der Waechter beim naechsten
+        //    Muenzen auf die Untergrenze — und ueberschreibt den Zaehler mit 502.
+        const dazwischen = vergebenUndAblegen(ctx, 1, 'Neu');
+        expect(dazwischen).toEqual([501]);
+
+        // 3. Ein Restore bringt die Nachbarschaft der Obergrenze zurueck. Die Untergrenze
+        //    ist damit wieder genau die unterwegs befindliche ID — und der Normalpfad gab
+        //    sie ein zweites Mal aus (gemessen davor: 1e15 - 1 erneut).
+        ctx.D.npcs.push({ id: 1e15 - 2, name: 'Restore' });
+        const danach = ctx.nextId('npcs');
+        expect({ danach, erneut: danach === unterwegs }).toEqual({ danach: 502, erneut: false });
+        expect(istGueltigeId(danach)).toEqual({ id: danach, gueltig: true });
+
+        // Die R03-Fehlerklasse: beide IDs abgelegt, ein Loeschen trifft genau eine Entitaet.
+        ctx.D.npcs.push({ id: unterwegs, name: 'Nachgereicht' }, { id: danach, name: 'Spaet' });
+        const ids = ctx.D.npcs.map(n => n.id);
+        expect(new Set(ids).size).toBe(ids.length);
+        expect(ctx.D.npcs.filter(e => e.id !== unterwegs).length).toBe(ids.length - 1);
+    });
+
+    test('G2m: die Lueckensuche gibt nicht auf, solange unterhalb IDs frei sind', () => {
+        // Kehrseite derselben Naehe zur Obergrenze: die Suche startet auf dem Zeiger und
+        // stieg nur AUFWAERTS. Ist der Zeiger belegt und oberhalb nichts mehr vergebbar,
+        // brach sie mit Error('Keine freie ID') ab — obwohl unterhalb praktisch alle IDs
+        // frei sind. Der Abbruch ist als letzte Rettung gedacht (lieber sichtbar als eine
+        // doppelte ID), nicht als Antwort auf "der Zeiger passt gerade nicht".
+        const ctx = makeContext();
+        ctx.D.npcs = [{ id: 1e15 - 3, name: 'Fremd' }];
+        ctx.D._nextId = { npcs: 1e15 - 2 };
+
+        // Normalpfad; danach steht der Suchzeiger auf 1e15 - 1.
+        const unterwegs = ctx.nextId('npcs');
+        expect(unterwegs).toBe(1e15 - 2);
+
+        // Ein Restore belegt genau diesen Zeiger und schiebt die Sammlung an die Grenze.
+        ctx.D.npcs.push({ id: 1e15 - 1, name: 'Restore' });
+        expect(ctx.maxEntityId(ctx.D.npcs) + 1).toBe(1e15);
+
+        // Jetzt entscheidet die Lueckensuche — und muss unterhalb weitersuchen.
+        const weiter = ctx.nextId('npcs');
+        expect({ weiter, doppelt: weiter === unterwegs }).toEqual({ weiter: 1, doppelt: false });
+        expect(istGueltigeId(weiter)).toEqual({ id: 1, gueltig: true });
+
+        // Auch danach bleibt die Vergabe eindeutig, ohne Abbruch.
+        const rest = [0, 1, 2].map(() => ctx.nextId('npcs'));
+        const alle = [unterwegs, weiter, ...rest];
+        expect({ alle, verschieden: new Set(alle).size }).toEqual({
+            alle,
+            verschieden: alle.length
+        });
+        expect(alle.map(istGueltigeId)).toEqual(alle.map(id => ({ id, gueltig: true })));
+    });
 });
