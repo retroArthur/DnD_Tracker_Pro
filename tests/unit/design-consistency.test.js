@@ -1202,6 +1202,17 @@ describe('R-02 — Tinte erreicht ihre Schwelle auf der TATSAECHLICHEN Flaeche (
        massgeblich ist, dass die Zahl sich waehrend des Schritts nicht bewegt
        hat.
 
+       WIE WEIT DIESE KONTROLLZAHL TRAEGT, praezisiert nach der Pruefung W1-D
+       Runde 1: sie zaehlt REGELWEISE und verbindet `color` und `background`
+       nur INNERHALB derselben Regel. Eine Toenung, die in der ELTERNregel
+       steht — `loot.css .loot-tag-chip:has(input:checked) { background:
+       rgba(212,175,55,0.2) }` ueber `.loot-tag-chip input:checked + span
+       { color: … }` — ist fuer sie unsichtbar; die Zahl bewegt sich also
+       auch dann nicht, wenn eine solche Stelle mitgenommen wird. Sie belegt
+       "keine Toenungsstelle mit eigener Flaeche wurde angefasst", nicht
+       "keine Toenungsstelle wurde angefasst". Die eine bekannte Stelle
+       dieser Bauart ist als Vorziehung in W1-D-02 gefuehrt.
+
        DASS DIESE RATSCHE JETZT ROT IST, ist der Zweck von Schritt 2: keines
        der geforderten Tokens existiert. Gruen wird sie mit Schritt 4
        (Tokendefinition), nicht vorher. Die Meldung nennt die fehlenden Tokens
@@ -1221,9 +1232,13 @@ describe('R-02 — Tinte erreicht ihre Schwelle auf der TATSAECHLICHEN Flaeche (
      *  Stylesheet-Baum nie eine Textfarbe.
      *
      *  Sie bleibt trotzdem in beiden Teilformeln, und zwar wegen Teilformel 1:
-     *  --gold-dim ist eine gefuellte FLAECHE (core.css:524 .btn-gold:hover,
-     *  spells.css:630 .editor-btn.format-active), also wird --on-gold-dim
-     *  wirklich gebraucht. Waere die Rolle nur dort und nicht in Teilformel 2,
+     *  --gold-dim ist eine gefuellte FLAECHE (core.css:524 .btn-gold:hover),
+     *  also wird --on-gold-dim wirklich gebraucht. Die frueher hier als
+     *  zweiter Beleg genannte Stelle `spells.css .editor-btn.format-active`
+     *  ist entfallen: sie hat nie gemalt (editors.css:69 gewinnt mit (0,3,0)),
+     *  und die Regel ist in der Nachbesserung zu Schritt 10 entfernt worden.
+     *  core.css:524 allein traegt die Aussage.
+     *  Waere die Rolle nur dort und nicht in Teilformel 2,
      *  haetten die beiden Formeln verschiedene Rollenmengen — genau die Art
      *  Asymmetrie, gegen die R-01 eine Zeile weiter oben steht. Der Preis ist
      *  ein heute ungenutztes --gold-dim-text je Theme; nachgerechnet
@@ -1863,6 +1878,23 @@ describe('R-03 — geerbte Tinte auf gewechselter Flaeche (Ratsche)', () => {
    darauf ist (variables.css:486). Sie hier stillschweigend mitzuaendern waere
    ausserhalb des Auftrags; sie NICHT zu fuehren hiesse, die Ratsche etwas
    Falsches behaupten zu lassen.
+
+   IHRE BENANNTE GRENZE, belegt in der Pruefung W1-D Runde 1: R-04 urteilt
+   REGELWEISE. Sie liest Flaeche und Tinte EINER Regel und kennt die Kaskade
+   nicht. Zwei Folgen, die man wissen muss, bevor man ihr Gruen als Aussage
+   ueber den Schirm liest:
+     (1) Eine Regel, die eine spaetere oder staerkere Regel ueberschreibt,
+         wird trotzdem beurteilt — und faellt als gruen durch, obwohl sie nie
+         malt. So kam `spells.css .editor-btn.format-active` durch.
+     (2) Eine Regel, die NUR die Tinte setzt und deren Flaeche aus einer
+         anderen Regel kommt, faellt ganz aus dem Raster (`ruheRegeln()`
+         verlangt Flaeche UND Tinte in derselben Regel, und eine Flaeche als
+         rgba-Literal faellt ohnehin heraus). So blieben die sechs
+         `.shop-cat-badge`-Kategorieregeln unsichtbar, waehrend sie die
+         Voreinstellung jedes Ladens auf 1,00 druckten.
+   Beides deckt seit der Nachbesserung R-05 ab, und zwar fuer eine benannte
+   Liste von Elementzustaenden. R-04 bleibt die Flaechenprobe; sie wird durch
+   R-05 ergaenzt, nicht ersetzt.
    =========================================================================== */
 describe('R-04 — jede Regel haelt 4,5 auf ihrer EIGENEN Flaeche (Ratsche)', () => {
     /** Neutrale Traegerflaechen. Sie sind nicht gemeint: auf ihnen urteilt
@@ -1881,16 +1913,27 @@ describe('R-04 — jede Regel haelt 4,5 auf ihrer EIGENEN Flaeche (Ratsche)', ()
      *  Von den drei Gruppen, mit denen diese Liste geboren wurde, ist nach
      *  Schritt 10 (Welle 1, W1-D) nur noch EINE uebrig:
      *
-     *  (a) Akzent auf Akzent — ERLEDIGT in Schritt 10. Beide Stellen
-     *      (dashboard.css .wiki-link:hover 1,29 · spells.css
-     *      .editor-btn.format-active 1,39) tragen jetzt das Tintentoken ihrer
-     *      eigenen Flaechenrolle und halten 5,05 bzw. 5,09 im schlechtesten
-     *      Theme. Es war eben doch eine Tintenfrage: beide Flaechen sind
-     *      Rollen MIT --on-*-Token, die Flaeche musste gar nicht angefasst
-     *      werden.
+     *  (a) Akzent auf Akzent — ERLEDIGT in Schritt 10, aber nur an EINER der
+     *      beiden Stellen, anders als hier bis zur Pruefung W1-D Runde 1
+     *      stand. `dashboard.css .wiki-link:hover` (1,29) traegt jetzt das
+     *      Tintentoken seiner eigenen Flaechenrolle und haelt 5,05 im
+     *      schlechtesten Theme. `spells.css .editor-btn.format-active` (1,39)
+     *      dagegen hat nie gemalt: `editors.css:69 .editor-toolbar
+     *      .editor-btn.format-active` (0,3,0) gewinnt beide Eigenschaften,
+     *      und `format-active` sitzt ausschliesslich auf Knoepfen unterhalb
+     *      von `[data-toolbar-for]`, die allesamt `editor-toolbar` tragen.
+     *      Die Regel ist deshalb entfernt worden; die erreichbare Stelle in
+     *      editors.css ist eine 18-%-Toenung derselben Rolle (gemessen
+     *      light 2,41), faellt unter D-4 und ist als W1-D-02 gefuehrt. R-05
+     *      bewacht sie mit ihrem gemessenen Wert.
      *  (b) `var(--bg)` auf `var(--gold)` — ERLEDIGT in Schritt 10, alle vier
      *      Stellen auf var(--on-gold) (2,98 -> 5,80 in Light, dem einzigen
-     *      Theme unter der Schwelle).
+     *      Theme unter der Schwelle). WIRKSAM wurde das allerdings erst mit
+     *      der Nachbesserung: an `loot.css .shop-cat-badge.active` haben bis
+     *      dahin die sechs Kategorieregeln gleicher Spezifitaet die Tinte
+     *      zurueckgeholt (gemessen 1,00 bis 2,85, also SCHLECHTER als der
+     *      gestrichene Ausnahmewert). Seit die Kategorien vor `.active`
+     *      stehen, stimmen Regel und Schirm ueberein.
      *  (c) weisse Schrift auf der Schadensartenskala — vier Stellen, OFFEN.
      *      Die Begruendung steht seit Welle 1 ausfuehrlich in dashboard.css
      *      ueber .qref-dmg: die Skala muss als GANZES neu gerechnet werden

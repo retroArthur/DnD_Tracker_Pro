@@ -625,19 +625,33 @@
             font-style: italic;
         }
 
-        /* Active format state indicators in toolbar */
-        .editor-btn.format-active {
-            /* Schritt 10, Fall 1: Gold auf Gold-dim war neben .wiki-link:hover
-               die schlechteste Stelle im ganzen Baum — 1,59 1,56 1,39 1,58
-               (dark light sepia contrast), in ALLEN VIER Themes praktisch
-               unlesbar. Der aktive Zustand einer Werkzeugleiste ist genau die
-               Stelle, an der man ihn sehen koennen muss. Mit var(--on-gold-dim),
-               dem Tintentoken DERSELBEN Rolle: 5,66 5,09 9,89 8,51.
-               Das Token steht seit Schritt 4 in allen vier Theme-Bloecken. */
-            background: var(--gold-dim);
-            color: var(--on-gold-dim);
-        }
+        /* Active format state indicators in toolbar
 
+           HIER STAND EINE REGEL, DIE NIE GEMALT HAT (entfernt in der
+           Nachbesserung zu Schritt 10, Pruefung W1-D Runde 1):
+           `.editor-btn.format-active { background: var(--gold-dim); color:
+           var(--on-gold-dim) }` hat die Spezifitaet (0,2,0) und verliert
+           BEIDE Eigenschaften gegen `editors.css:69 .editor-toolbar
+           .editor-btn.format-active` (0,3,0). Es gibt keinen Zustand, in dem
+           sie gilt: `format-active` wird ausschliesslich in
+           `ui/editors/rich-text-toolbars.js:309` gesetzt, auf Knoepfen
+           unterhalb von `[data-toolbar-for]`, und jedes dieser Elemente
+           traegt zugleich `editor-toolbar` (22 statische Leisten in den
+           Vorlagen, plus `ui/editors/editor-toolbar-build.js:405`).
+
+           Die Zahlen, die dort als Beleg standen (1,39 -> 9,89 in Sepia),
+           gehoerten zu einer Flaeche, die nie erscheint. Was wirklich
+           gerendert wird, ist var(--gold) auf rgba(212,175,55,0.18):
+           dark 5,06 · light 2,41 · sepia 5,28 · contrast 7,94 — eine
+           18-%-Toenung DERSELBEN Rolle und damit ein Fall der
+           Nutzerentscheidung D-4. Er ist als offener Punkt gefuehrt
+           (.planning/HANDOFF-V3-OFFENE-PUNKTE.md, W1-D-02) und wird von
+           R-05 mit seinem gemessenen Wert bewacht. Nicht hier reparieren —
+           die Tinte muss dorthin, wo sie gewinnt, und Welle 2 entscheidet
+           Toenungsstaerke und Tinte zusammen.
+
+           Der Punkt darunter bleibt: er hat kein Gegenstueck in editors.css
+           und ist die einzige Regel dieser Datei, die den Zustand erreicht. */
         .editor-btn.format-active::after {
             content: '';
             position: absolute;

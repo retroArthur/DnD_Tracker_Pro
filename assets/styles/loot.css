@@ -73,11 +73,24 @@
             display: none;
         }
         
+        /* VORZIEHUNG AUS WELLE 2, benannt und gemessen (Pruefung W1-D
+           Runde 1): diese Tinte rendert NIE auf der neutralen Ruheflaeche.
+           Sie gilt nur bei angekreuztem Kaestchen, und genau dann setzt die
+           Elternregel darunter eine 20-%-Toenung DERSELBEN Rolle. Das ist der
+           Fall, den die Nutzerentscheidung D-4 in Welle 1 unangetastet lassen
+           wollte — Schritt 9 hat ihn trotzdem umgestellt, weil die Toenung in
+           der ELTERNregel steht und die Kontrollzahl sie nicht sieht.
+           Zurueckgedreht wird er nicht, denn die Zahlen werden besser:
+           var(--gold) 5,55 2,83 5,81 9,23 · var(--gold-text) 5,55 5,41 5,81
+           9,23 (dark light sepia contrast, rgba ueber --bg-card, gerechnet
+           mit tests/unit/helpers/wcag-contrast.js). Gefuehrt
+           als Vorziehung in .planning/HANDOFF-V3-OFFENE-PUNKTE.md, W1-D-02,
+           damit Welle 2 die Stelle nicht ein zweites Mal anfasst. */
         .loot-tag-chip input:checked + span {
             color: var(--gold-text);
             font-weight: 500;
         }
-        
+
         .loot-tag-chip:has(input:checked) {
             background: rgba(212, 175, 55, 0.2);
             border-color: var(--gold);
