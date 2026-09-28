@@ -21,18 +21,18 @@
 .dice-hero-result {
     font-size: 5em;
     font-weight: 700;
-    color: var(--gold);
+    color: var(--gold-text);
     line-height: 1;
     transition: all 0.3s;
 }
 
 .dice-hero-result.crit {
-    color: var(--green);
+    color: var(--green-text);
     text-shadow: 0 0 20px rgba(74,222,128,0.5);
 }
 
 .dice-hero-result.fail {
-    color: var(--red);
+    color: var(--red-text);
     text-shadow: 0 0 20px rgba(239,68,68,0.5);
 }
 
@@ -83,14 +83,14 @@
     transform: scale(0.95);
 }
 
-.dice-die.d4 { border-color: var(--green); color: var(--green); }
-.dice-die.d6 { border-color: var(--blue); color: var(--blue); }
-.dice-die.d8 { border-color: var(--purple); color: var(--purple); }
-.dice-die.d10 { border-color: var(--pink); color: var(--pink); }
-.dice-die.d12 { border-color: var(--orange); color: var(--orange); }
-.dice-die.d20 { border-color: var(--yellow); color: var(--yellow); }
-.dice-die.d100 { border-color: var(--red); color: var(--red); }
-.dice-die.coin { border-color: var(--cyan); color: var(--cyan); }
+.dice-die.d4 { border-color: var(--green); color: var(--green-text); }
+.dice-die.d6 { border-color: var(--blue); color: var(--blue-text); }
+.dice-die.d8 { border-color: var(--purple); color: var(--purple-text); }
+.dice-die.d10 { border-color: var(--pink); color: var(--pink-text); }
+.dice-die.d12 { border-color: var(--orange); color: var(--orange-text); }
+.dice-die.d20 { border-color: var(--yellow); color: var(--yellow-text); }
+.dice-die.d100 { border-color: var(--red); color: var(--red-text); }
+.dice-die.coin { border-color: var(--cyan); color: var(--cyan-text); }
 
 /* Formula Input Row */
 .dice-input-row {
@@ -210,7 +210,7 @@
     padding: 12px 16px;
     cursor: pointer;
     font-weight: 600;
-    color: var(--cyan);
+    color: var(--cyan-text);
 }
 
 .dice-details[open] summary {
@@ -259,7 +259,7 @@
 .dice-combat-section label {
     display: block;
     font-weight: 600;
-    color: var(--gold);
+    color: var(--gold-text);
     margin-bottom: 8px;
 }
 
@@ -407,7 +407,7 @@
 
 .dice-char-col-title {
     font-weight: 600;
-    color: var(--gold);
+    color: var(--gold-text);
     font-size: 0.85em;
     text-transform: uppercase;
     letter-spacing: 0.5px;
@@ -444,7 +444,7 @@
 }
 
 .dice-attr small {
-    color: var(--cyan);
+    color: var(--cyan-text);
     font-weight: 700;
     margin-top: 2px;
 }
@@ -459,7 +459,7 @@
 }
 
 .dice-attr.save small {
-    color: var(--purple);
+    color: var(--purple-text);
 }
 
 .dice-skill-grid {
@@ -485,7 +485,7 @@
 
 .dice-history-result {
     font-weight: 600;
-    color: var(--gold);
+    color: var(--gold-text);
     min-width: 40px; /* F-18: aus der Dublette uebernommen */
     text-align: right; /* F-18: aus der Dublette uebernommen */
 }
@@ -627,19 +627,19 @@
 .fdp-number {
     font-size: 3em;
     font-weight: 700;
-    color: var(--gold);
+    color: var(--gold-text);
     line-height: 1;
     transition: all 0.3s;
 }
 
 .fdp-number.crit {
-    color: var(--green);
+    color: var(--green-text);
     text-shadow: 0 0 20px rgba(74, 222, 128, 0.5);
     animation: critPulse 0.5s ease-out;
 }
 
 .fdp-number.fail {
-    color: var(--red);
+    color: var(--red-text);
     text-shadow: 0 0 20px rgba(239, 68, 68, 0.5);
 }
 
@@ -670,7 +670,7 @@
     background: var(--bg-elevated);
     border: 1px solid var(--border);
     border-radius: var(--radius-md);
-    color: var(--gold);
+    color: var(--gold-text);
     cursor: pointer;
     font-weight: 600;
     font-size: 0.9em;
@@ -730,7 +730,7 @@
 
 .fdp-quick.adv:hover {
     border-color: var(--green);
-    color: var(--green);
+    color: var(--green-text);
 }
 
 .fdp-quick.dis {
@@ -739,7 +739,7 @@
 
 .fdp-quick.dis:hover {
     border-color: var(--red);
-    color: var(--red);
+    color: var(--red-text);
 }
 
 /* Custom Input Row */
@@ -830,7 +830,7 @@
 
 .fdp-history-result {
     font-weight: 600;
-    color: var(--gold);
+    color: var(--gold-text);
     font-size: 0.9em;
 }
 
