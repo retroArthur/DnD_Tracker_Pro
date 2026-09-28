@@ -726,8 +726,14 @@
     color: var(--on-orange);
 }
 
+/* Diese Regel wechselt die FLAECHENROLLE (orange -> rot), nicht nur den Ton.
+   Dann muss die Tinte die Rolle mitwechseln (R-03): var(--on-orange) ist in
+   Light #111111, var(--on-red) aber #ffffff. Auf var(--red) gemessen
+   (dark light sepia contrast): var(--on-orange) 5,02 / 3,91 / 4,63 / 4,72 —
+   var(--on-red) 5,02 / 4,83 / 4,63 / 4,72. */
 .calc-action-btn.initiative:hover {
     background: var(--red);
+    color: var(--on-red);
     transform: translateY(-1px);
 }
 
