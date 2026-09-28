@@ -2056,8 +2056,13 @@
             transition: all 0.2s;
         }
 
+        /* Die Tinte MUSS hier mitwechseln (R-03): --green-dim ist eine ANDERE
+           Farbe als --green. var(--on-green) faellt darauf in Light auf 2,63
+           und in Sepia auf 2,69; mit var(--on-green-dim) sind es
+           4,86 / 7,19 / 7,01 / 5,30 (dark light sepia contrast). */
         .loc-add-btn:hover {
             background: var(--green-dim);
+            color: var(--on-green-dim);
         }
 
         /* Master-Detail Layout */

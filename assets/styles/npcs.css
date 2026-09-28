@@ -66,8 +66,12 @@
     transition: all 0.2s;
 }
 
+/* Tinte wechselt mit der Flaeche (R-03): var(--on-green) faellt auf
+   --green-dim in Light auf 2,63 und in Sepia auf 2,69. Mit
+   var(--on-green-dim): 4,86 / 7,19 / 7,01 / 5,30. */
 .npc-add-btn:hover {
     background: var(--green-dim);
+    color: var(--on-green-dim);
 }
 
 /* Master-Detail Layout */
@@ -462,8 +466,10 @@
     transition: all 0.2s;
 }
 
+/* Tinte wechselt mit der Flaeche (R-03), wie bei .npc-add-btn:hover. */
 .loot-add-btn:hover {
     background: var(--green-dim);
+    color: var(--on-green-dim);
 }
 
 /* Master-Detail Layout */

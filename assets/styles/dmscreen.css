@@ -920,6 +920,11 @@
             box-shadow: 0 0 12px rgba(74, 222, 128, 0.25);
             background: var(--green-dim); /* F-18: aus der Dublette uebernommen */
             border-color: var(--green-dim); /* F-18: aus der Dublette uebernommen */
+            /* Tinte wechselt mit der Flaeche (R-03): --green-dim ist eine
+               andere Farbe als --green in .btn-success (core.css:518), und
+               var(--on-green) faellt darauf in Light auf 2,63. Mit
+               var(--on-green-dim): 4,86 / 7,19 / 7,01 / 5,30. */
+            color: var(--on-green-dim);
         }
         
         .btn-danger:hover {

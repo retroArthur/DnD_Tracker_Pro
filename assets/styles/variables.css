@@ -73,6 +73,14 @@
             --on-gold: #111111;
             --on-gold-dim: #111111;
             --on-green: #111111;
+            /* ABGELEITETE Flaeche, Nachtrag aus der Pruefung W1-C:
+               --green-dim ist color-mix(--green 62%, #000) und traegt in VIER
+               :hover-Regeln die Tinte der Ruheflaeche mit (core.css .loc-add-btn,
+               npcs.css .npc-add-btn und .loot-add-btn, dmscreen.css .btn-success).
+               #111111 wie bei allen Nachbarn erreicht dort nur 4,37; deshalb steht
+               hier als einziger Wert dieses Blocks reines Schwarz (4,86). Kein
+               Theme kommt mit derselben Tinte aus — genau dafuer ist das Token da. */
+            --on-green-dim: #000000; /* auf --green-dim #2e8a4f: 4,86 */
             --on-red: #111111;
             --on-cyan: #111111;
             --on-yellow: #111111;
@@ -198,6 +206,7 @@
             --on-gold: #111111;
             --on-gold-dim: #ffffff;
             --on-green: #111111;
+            --on-green-dim: #ffffff; /* auf --green-dim #0e652e: 7,19 */
             --on-red: #ffffff;
             --on-cyan: #111111;
             --on-yellow: #111111;
@@ -311,6 +320,7 @@
             --on-gold: #ffffff;
             --on-gold-dim: #ffffff;
             --on-green: #111111;
+            --on-green-dim: #ffffff; /* auf --green-dim #525f00: 7,01 */
             --on-red: #ffffff;
             --on-cyan: #111111;
             --on-yellow: #111111;
@@ -404,6 +414,7 @@
             --on-gold: #111111;
             --on-gold-dim: #111111;
             --on-green: #111111;
+            --on-green-dim: #111111; /* auf --green-dim #009e00: 5,30 */
             --on-red: #111111;
             --on-cyan: #111111;
             --on-yellow: #111111;
