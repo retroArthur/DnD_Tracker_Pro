@@ -364,8 +364,8 @@ Gruppe E gerade nicht bewiesen ist. Sie sind **kein** erledigter Fall.
 | `initiative.css:601` | `.aoe-target-save` | `--green` | #191919 | #1e1e1e |
 | `initiative.css:618` | `.aoe-target-damage.full` | `--red` | #191919 | #1e1e1e |
 | `initiative.css:622` | `.aoe-target-damage.half` | `--yellow` | #191919 | #1e1e1e |
-| `party.css:1996` | `.rest-modal-header h3` | `--gold` | #191919 | #1e1e1e |
-| `party.css:2267` | `.condition-ref-header h3` | `--gold` | #191919 | #1e1e1e |
+| `party.css:2018` | `.rest-modal-header h3` | `--gold` | #191919 | #1e1e1e |
+| `party.css:2289` | `.condition-ref-header h3` | `--gold` | #191919 | #1e1e1e |
 | `tools.css:474` | `.rt-modal-header h3` | `--gold` | #191919 | #1e1e1e |
 | `tools.css:601` | `.rt-dice-label` | `--gold` | #191919 | #1e1e1e |
 | `tools.css:676` | `.generator-modal-header h3` | `--gold` | #191919 | #1e1e1e |
@@ -430,8 +430,8 @@ diese Tabelle führt.
 | `dashboard.css:505` | `.char-section-title` | `--gold` | --bg-card · #191919 | --bg-card · #1e1e1e |
 | `dice.css:602` | `.fdp-title` | `--gold` | --bg-card | #1e1e1e |
 | `dmscreen.css:999` | `.form-group label` | `--gold` | --bg-card · #191919 | --bg-card · #1e1e1e |
-| `party.css:2598` | `.char-adv-btn.adv` | `--green` | --bg-dark · #191919 | --bg-dark · #1e1e1e |
-| `party.css:2599` | `.char-adv-btn.dis` | `--red` | --bg-dark · #191919 | --bg-dark · #1e1e1e |
+| `party.css:2620` | `.char-adv-btn.adv` | `--green` | --bg-dark · #191919 | --bg-dark · #1e1e1e |
+| `party.css:2621` | `.char-adv-btn.dis` | `--red` | --bg-dark · #191919 | --bg-dark · #1e1e1e |
 
 ### Gruppe E — in keinem erreichbaren Zustand gerendert, 82 Stellen
 
@@ -466,7 +466,7 @@ dashboard.css
   655  .icon-btn.danger:hover
   656  .icon-btn.success:hover
  1082  .dash-timer-time
- 1331  .qref-chip.danger
+ 1346  .qref-chip.danger
 dice.css
   349  .dice-fav-item:hover .fav-del
 dmscreen.css
@@ -476,9 +476,9 @@ dmscreen.css
   477  .session-tag-remove:hover
   623  .quick-ref-section-title
  1201  .dms-stat-warning .dms-stat-value
- 2239  .dms-profile-check
- 2265  .dms-profile-save
- 2269  .dms-profile-save .dms-profile-name
+ 2259  .dms-profile-check
+ 2285  .dms-profile-save
+ 2289  .dms-profile-save .dms-profile-name
 encounters.css
    34  .list-view-row.expanded .row-toggle
    47  .list-dialog-item.used .list-dialog-status
@@ -515,12 +515,12 @@ npcs.css
   960  .npc-popup-name
   993  .npc-popup-section-title
 party.css
- 1904  .party-stat-card.critical .party-stat-value
- 2171  .rest-heal-preview
- 2177  .rest-hd-restore
- 2553  .cf-attack-remove:hover
- 2702  .char-skill-item.proficient .char-skill-item-name
- 2725  .char-skill-item.expertise .char-skill-item-name
+ 1926  .party-stat-card.critical .party-stat-value
+ 2193  .rest-heal-preview
+ 2199  .rest-hd-restore
+ 2575  .cf-attack-remove:hover
+ 2724  .char-skill-item.proficient .char-skill-item-name
+ 2747  .char-skill-item.expertise .char-skill-item-name
 spells.css
   135  .spell-material
 tools.css

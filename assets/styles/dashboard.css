@@ -1319,7 +1319,22 @@
    (Schnellreferenz-Modal). Fuenf der sechs Attribute zeigten dadurch je
    nach Widget eine andere Farbe — am gebauten Buendel gemessen, z.B. INT
    rgb(59,130,246) gegen rgb(126,196,207). Genau die Doppelfuehrung, die
-   bei den Schadensarten zum acid/poison-Tausch gefuehrt hat. */
+   bei den Schadensarten zum acid/poison-Tausch gefuehrt hat.
+
+   Schritt 12 (Welle 1), Entscheidung D-5: hier ist NICHTS zu aendern. Die
+   fuenf Regeln beziehen ihre Farbe aus dem Token, und die Tokenwerte sind
+   in Schritt 4 theme-faehig geworden (Light/Sepia abgedunkelt, Dark/Contrast
+   nur --attr-wis von #a855f7 auf #aa58f7). Die Traegerflaeche ist .qref-row
+   oben — --bg-card im Ruhezustand und --bg-hover beim Ueberfahren, NICHT
+   --bg-dark, wie die Befundlage annahm. Beide Flaechen stehen in der
+   R-02-Teilformel 3.
+
+   --attr-con hat hier bewusst KEINE Regel: das Markup
+   (assets/templates/modals-editors.html:370-376) fuehrt sieben
+   Beispielzeilen, und keine davon ist eine Konstitutionsprobe. Eine Regel
+   fuer eine Klasse, die nirgends entsteht, waere toter Buchstabe. R-08
+   bindet beides aneinander — wer eine CON-Zeile ins Markup schreibt,
+   bekommt vom Test die fehlende Regel gemeldet. */
 .attr-str { color: var(--attr-str); font-weight: 600; }
 .attr-dex { color: var(--attr-dex); font-weight: 600; }
 .attr-int { color: var(--attr-int); font-weight: 600; }

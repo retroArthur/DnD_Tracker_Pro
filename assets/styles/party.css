@@ -1495,13 +1495,35 @@
     font-size: 0.65em;
     font-weight: 700;
     text-transform: uppercase;
+    /* Schritt 12 (Welle 1), Entscheidung D-5: Die Marke ist jetzt eine
+       gefuellte Pille statt farbiger Text. Innenabstand und Radius stehen
+       hier, damit die fuenf Farbregeln darunter einzeilig bleiben. */
+    padding: 2px 8px;
+    border-radius: var(--radius-lg);
+    line-height: 1.5;
 }
 
-.cf-coin-item.pm .cf-coin-label { color: var(--coin-pm); }
-.cf-coin-item.gm .cf-coin-label { color: var(--coin-gm); }
-.cf-coin-item.em .cf-coin-label { color: var(--green-text); }
-.cf-coin-item.sm .cf-coin-label { color: var(--coin-sm); }
-.cf-coin-item.km .cf-coin-label { color: var(--coin-km); }
+/* Die fuenf Marken des Geldbeutels. Entscheidung D-5 (Nutzer, 2026-09-28):
+   die Metallfarbe wird FLAECHE, die Schrift darauf --on-coin-*. Als
+   Textfarbe auf .cf-panel { background: var(--bg-dark) } war sie in den
+   hellen Themes unlesbar — gemessen --coin-pm 5,97 2,98 2,59 6,45 ·
+   --coin-gm 13,86 1,29 1,12 14,97 · --coin-sm 10,68 1,67 1,45 11,54 ·
+   --coin-km 6,18 2,88 2,50 6,68 (dark light sepia contrast). Die 1,12 der
+   Goldmarke in Sepia ist der schlechteste Wert im ganzen Baum.
+   Der Weg des Rezepts — abdunkeln, bis 4,5 haelt — haette --coin-gm in
+   Light auf #826e00 gebracht, also eine olivbraune Goldmuenze; genau das
+   verwirft D-5. Als Flaeche tragen dieselben vier Farben 5,80 · 13,46 ·
+   10,38 · 6,00, in allen vier Themes gleich, weil --on-coin-* ueberall
+   #111111 ist.
+   .em faerbt sich nicht mit einem Muenz-Token (Elektrum hat keins),
+   sondern mit --green / --on-green: min 5,73. Es MUSS mitwandern — eine
+   nackte Textmarke zwischen vier Pillen faellt sichtbar aus der Reihe.
+   Bewacht von R-08 in tests/unit/design-consistency.test.js. */
+.cf-coin-item.pm .cf-coin-label { background: var(--coin-pm); color: var(--on-coin-pm); }
+.cf-coin-item.gm .cf-coin-label { background: var(--coin-gm); color: var(--on-coin-gm); }
+.cf-coin-item.em .cf-coin-label { background: var(--green); color: var(--on-green); }
+.cf-coin-item.sm .cf-coin-label { background: var(--coin-sm); color: var(--on-coin-sm); }
+.cf-coin-item.km .cf-coin-label { background: var(--coin-km); color: var(--on-coin-km); }
 
 .cf-coin-item input {
     width: 100%;

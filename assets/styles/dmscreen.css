@@ -1712,6 +1712,16 @@
     font-weight: 600;
 }
 
+/* Diese sechs Regeln sind zur Laufzeit toter Buchstabe: das Markup
+   (features/dmscreen/dmscreen-widgets-reference.js) erzeugt
+   `<span class="dms-save-attr">STR</span>` OHNE die Attributklasse. Sie
+   trotzdem stehen zu lassen ist kein Versehen — der Test "die
+   Attributfarben stehen nur noch an EINER Stelle"
+   (tests/unit/design-consistency.test.js) verlangt alle sechs woertlich,
+   weil ihre Doppelfuehrung mit .dms-attr-item einmal zu zwei verschiedenen
+   Rots gefuehrt hat. Wer sie "aufraeumt", macht den Test rot.
+   Folge fuer Schritt 12 (Welle 1): ihre Farbe aendert sich mit dem Token
+   mit, aber eine SICHTPRUEFUNG dieser sechs ist nicht moeglich. */
 .dms-save-attr.str { color: var(--attr-str); }
 .dms-save-attr.dex { color: var(--attr-dex); }
 .dms-save-attr.con { color: var(--attr-con); }
@@ -1738,7 +1748,17 @@
 /* F-15-04: die Kopfzeilen-Klasse traegt das JS direkt an der Kopfzeile
    (dmscreen-widgets-reference.js), nicht an der Gruppe. Die fuenf
    Attributregeln stehen bewusst NACH dieser Basisregel, damit sie deren
-   Flaeche ueberschreiben (D-13/FIX-01/ordering). */
+   Flaeche ueberschreiben (D-13/FIX-01/ordering).
+
+   NICHT Welle 1, Entscheidung D-4 (Nutzer, 2026-09-28): die fuenf Regeln
+   darunter setzen Tinte UND eine 20-%-Toenung DERSELBEN Rolle. Tinte und
+   Toenungsstaerke sind rechnerisch nicht unabhaengig — eine hier gesetzte
+   Tinte muesste Welle 2 erneut aendern. Welle 2 entscheidet beides in einem
+   Zug. Gemessen am 2026-09-28 ueber --bg-card (dark light sepia contrast):
+     str 3,71 4,42 4,27 4,06 · dex 5,34 4,64 4,33 5,91 · con 5,54 4,60 4,37 6,13
+     int 3,66 4,66 4,37 4,03 · wis 3,57 4,58 4,35 3,91 · cha 3,88 4,57 4,30 4,25
+   In Sepia haelt KEINE der sechs 4,5, in Dark und Contrast vier von sechs.
+   Das ist der lebende Pruefstein fuer Welle 2. */
 .dms-skill-header {
     font-size: 0.75em;
     font-weight: 600;
