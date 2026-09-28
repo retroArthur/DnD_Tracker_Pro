@@ -655,6 +655,23 @@
                4,5 (Text) bzw. 3 (Linien) halten. */
             --parchment-ink-red: #58180d;
 
+            /* Die anklickbaren Wuerfelformeln im Statblock (.bestiary-dice,
+               erzeugt von renderClickableDice()) standen bis 2026-09-28 auf
+               `var(--cyan)` mit `var(--gold)` im Hover — zwei Palettenfarben
+               auf einer Flaeche, die der Palette nicht folgt. Das ergab die
+               SCHLECHTESTEN Werte des ganzen Kastens, schlechter als das
+               zuvor behobene --red; je Theme Ruhe / Hover, beide
+               Verlaufsenden: dark 1,59/1,35 und 1,71/1,44 · light 2,99/2,53
+               und 2,64/2,23 · sepia 2,56/2,17 und 5,76/4,87 · contrast
+               1,02/1,16 und 1,14/1,04. Einziger Wert ueber 4,5 war Sepia im
+               Hover — in einem von acht Faellen lesbar ist nicht lesbar.
+               Die Nachfolge behaelt die Rollen: kuehl in Ruhe (ein Link,
+               kein Fliesstext), warm im Hover. #105f6b erreicht 5,93 gegen
+               --ra-parchment-from und 5,02 gegen --ra-parchment-to, #7a4a00
+               6,07 und 5,13. Bewacht von R-07 wie --parchment-ink-red. */
+            --parchment-ink-link: #105f6b;
+            --parchment-ink-link-hover: #7a4a00;
+
             /* --on-accent: #ffffff stand bis 2026-09-28 hier, begruendet mit
                "die Akzentfarben sind in allen vier Themes dunkel genug".
                Gemessen stimmte das an keiner seiner sechs Verwendungen:

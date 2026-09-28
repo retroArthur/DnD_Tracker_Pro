@@ -349,18 +349,24 @@
 
 /* ============================================================
    CLICKABLE DICE (D-09)
-   color: var(--cyan); hover: var(--gold)
+   Tinte auf Pergament, nicht Palette: die Spans liegen INNERHALB von
+   .bestiary-statblock (read-aloud parchment), und der Pergamentverlauf
+   folgt keinem Theme. Mit var(--cyan)/var(--gold) hielten sie in sieben
+   von acht Faellen keine 4,5 (Contrast 1,02). Seit 2026-09-28 tragen sie
+   --parchment-ink-link / --parchment-ink-link-hover; die Rollen bleiben
+   kuehl in Ruhe, warm im Hover. Bewacht von R-07 in
+   tests/unit/design-consistency.test.js.
    ============================================================ */
 
 .bestiary-dice {
-    color: var(--cyan);
+    color: var(--parchment-ink-link);
     cursor: pointer;
     text-decoration: underline dotted;
     transition: color 0.15s;
 }
 
 .bestiary-dice:hover {
-    color: var(--gold);
+    color: var(--parchment-ink-link-hover);
 }
 
 /* ============================================================

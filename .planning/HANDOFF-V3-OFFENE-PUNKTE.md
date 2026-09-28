@@ -279,7 +279,7 @@ sed -n '258,272p' core/constants.js
 
 ---
 
-## W1-D-01 — 126 Akzenttext-Stellen, deren Trägerfläche Schritt 9 nicht als neutral nachweisen konnte
+## W1-D-01 — 124 Akzenttext-Stellen, deren Trägerfläche Schritt 9 nicht als neutral nachweisen konnte
 
 **Status: OFFEN — bewusst unverändert gelassen, nicht übersehen.**
 Aufgenommen am 2026-09-28, Welle 1, Schritt 9.
@@ -294,8 +294,9 @@ Trägerfläche **nicht in ihrer eigenen Regel** — sie musste über den Vorfahr
 Sie wurde nicht geraten, sondern gemessen: headless am gebauten Bündel wurde für jede Stelle der
 nächste **deckende** Vorfahr bestimmt (alle halbdurchsichtigen Schichten zusammengesetzt), und
 zwar in **Dark und Light**. Umgestellt wurde nur, wenn beide Themes auf dieselbe neutrale
-Flächenmenge zeigen. 181 Stellen haben das erfüllt, 128 nicht. **Davon stehen heute noch 126
-unten**; zwei sind in Schritt 11 erledigt worden (siehe die Vorbemerkung zu Gruppe B).
+Flächenmenge zeigen. 181 Stellen haben das erfüllt, 128 nicht. **Davon stehen heute noch 124
+unten**; vier sind erledigt worden — zwei in Schritt 11, zwei im Nachtrag der Prüfrunde W1-E
+(siehe beide Vorbemerkungen zu Gruppe B).
 
 Der Grund für die Strenge ist gemessen und nicht vorsichtshalber: die `-text`-Werte sind für
 **helle** Flächen gerechnet. Auf der Dialogfläche sind sie **schlechter** als die Rolle selbst.
@@ -320,8 +321,9 @@ Welle Farben in Dialogen anfasst.
 
 ```bash
 cd /d/Claude_Code/Projekte/DnD_Tracker_App_Pro
-# Die verbliebenen Stellen als Kategorie (Summe 126 + 2 bei der Geburt der Liste;
-# seit Schritt 11 sind zwei davon erledigt, die Summe ist also um zwei kleiner):
+# Die verbliebenen Stellen als Kategorie (Summe 124 + 4 bei der Geburt der Liste;
+# seit Schritt 11 und der Prüfrunde W1-E sind vier davon erledigt, die Summe ist
+# also um vier kleiner):
 node <scratch>/classify.js | grep -E "^ *[0-9]+  ROLE \|"
 # Die Dialogfläche selbst:
 grep -n "^\.modal {" -A4 assets/styles/dmscreen.css
@@ -338,14 +340,15 @@ in `tests/unit/design-consistency.test.js` prüft jetzt jede geführte Zeile geg
 muss dort eine `color: var(--…)`-Deklaration im genannten Selektor mit der genannten Rolle
 treffen. **Wer eine dieser CSS-Dateien anfasst, zieht die Tabelle im selben Commit nach** — sonst
 ist die Ratsche rot. Ihre Plausibilitätsprobe nennt die Zahl der geführten Stellen; sie darf nur
-sinken, und nur zusammen mit einer erledigten Stelle (128 bei der Geburt, 126 seit Schritt 11).
+sinken, und nur zusammen mit einer erledigten Stelle (128 bei der Geburt, 126 seit Schritt 11,
+124 seit der Prüfrunde W1-E).
 
 Die Messung selbst: `<scratch>/measure5.js` (Playwright, gebautes Bündel, 24 Ansichten + 30
 Dialoge, zwei Themes) und `<scratch>/decide.js` (Urteil je Stelle plus Geschwisterbindung).
 
 ### Was bis zur Entscheidung gilt
 
-Diese 126 Stellen bleiben auf `color: var(--<rolle>)`. In Light und Sepia liegen sie damit
+Diese 124 Stellen bleiben auf `color: var(--<rolle>)`. In Light und Sepia liegen sie damit
 weiterhin bei 2,16–4,20 gegen eine neutrale Fläche — falls ihre Fläche neutral ist, was für
 Gruppe E gerade nicht bewiesen ist. Sie sind **kein** erledigter Fall.
 
@@ -355,8 +358,8 @@ Gruppe E gerade nicht bewiesen ist. Sie sind **kein** erledigter Fall.
 
 | Stelle | Selektor | Rolle | Traeger dark | Traeger light |
 | ------ | -------- | ----- | ------------ | ------------- |
-| `bestiary.css:477` | `.bst-section-title` | `--gold` | #191919 | #1e1e1e |
-| `bestiary.css:490` | `.bst-validation-error` | `--red` | #191919 | #1e1e1e |
+| `bestiary.css:483` | `.bst-section-title` | `--gold` | #191919 | #1e1e1e |
+| `bestiary.css:496` | `.bst-validation-error` | `--red` | #191919 | #1e1e1e |
 | `core.css:1043` | `.char-modal-title h2` | `--gold` | #191919 | #1e1e1e |
 | `core.css:1048` | `.char-modal-subtitle` | `--cyan` | #191919 | #1e1e1e |
 | `dashboard.css:240` | `.modal-title` | `--gold` | #191919 | #1e1e1e · #252525 |
@@ -372,7 +375,7 @@ Gruppe E gerade nicht bewiesen ist. Sie sind **kein** erledigter Fall.
 | `tools.css:803` | `.ld-modal-header h3` | `--gold` | #191919 | #1e1e1e |
 | `tools.css:836` | `.ld-gold-label` | `--gold` | #191919 | #1e1e1e |
 
-### Gruppe B — Verlauf als Traeger, 13 Stellen
+### Gruppe B — Verlauf als Traeger, 11 Stellen
 
 **Zwei Einträge dieser Gruppe sind seit dem 2026-09-28 erledigt und deshalb aus der Tabelle
 entfernt** (Welle 1, Schritt 11): `bestiary.css` `.bestiary-statblock-name` und
@@ -384,10 +387,24 @@ in allen vier Themes identisch (vorher 2,58–3,92). Bewacht von **R-07** in
 `tests/unit/design-consistency.test.js`. Die Zahl der geführten Stellen sinkt damit von 128 auf
 126; die Plausibilitätsprobe in R-06 ist im selben Commit nachgezogen.
 
+**Zwei weitere Einträge sind seit dem 2026-09-28 erledigt und ebenfalls aus der Tabelle
+entfernt** (Prüfrunde W1-E): `bestiary.css` `.bestiary-dice` (`--cyan`) und
+`.bestiary-dice:hover` (`--gold`). Ihre Trägerangabe in dieser Tabelle war schlicht falsch —
+geführt als „`--bg-dark` · GRAD:#0d0d0d · GRAD:#1a1a1a", tatsächlich liegen die Würfelspans
+INNERHALB des Pergaments: `renderClickableDice()` (`bestiary-render.js:41`) setzt sie über
+`renderTraitList()` (:240, :249) in Merkmale und Aktionen, und `renderStatblockHTML()` (:300)
+verpackt beides in `bestiary-statblock read-aloud parchment`. Es ist derselbe Irrtum wie bei
+den zwei Zeilen oben, nur eine Ebene tiefer im Markup. Gemessen je Theme Ruhe / Hover, beide
+Verlaufsenden: dark 1,59/1,35 und 1,71/1,44 · light 2,99/2,53 und 2,64/2,23 · sepia 2,56/2,17
+und 5,76/4,87 · contrast 1,02/1,16 und 1,14/1,04 — der schlechteste Wert des ganzen Kastens,
+schlechter als die 2,58–3,92, die Schritt 11 behoben hat. Sie tragen jetzt
+`var(--parchment-ink-link)` #105f6b (5,93 / 5,02) und `var(--parchment-ink-link-hover)`
+#7a4a00 (6,07 / 5,13), beide themenunabhängig und seitdem von **R-07** bewacht, dessen
+Suchmuster `.bestiary-dice` bis dahin nicht kannte. Die Zahl der geführten Stellen sinkt damit
+von 126 auf 124.
+
 | Stelle | Selektor | Rolle | Traeger dark | Traeger light |
 | ------ | -------- | ----- | ------------ | ------------- |
-| `bestiary.css:356` | `.bestiary-dice` | `--cyan` | --bg-dark · GRAD:#0d0d0d · GRAD:#1a1a1a | --bg-dark · GRAD:#f5f5f5 · GRAD:#ffffff |
-| `bestiary.css:363` | `.bestiary-dice:hover` | `--gold` | --bg-dark · GRAD:#0d0d0d · GRAD:#1a1a1a | --bg-dark · GRAD:#f5f5f5 · GRAD:#ffffff |
 | `dmscreen.css:553` | `.session-arc-title` | `--gold` | GRAD:#0d0d0d | GRAD:#f5f5f5 |
 | `dmscreen.css:1081` | `.drag-handle:hover` | `--gold` | --bg-card · GRAD:#0d0d0d | --bg-card · GRAD:#f5f5f5 |
 | `initiative.css:139` | `.init-value` | `--gold` | GRAD:#0d0d0d · --bg-card | GRAD:#f5f5f5 · --bg-card |
