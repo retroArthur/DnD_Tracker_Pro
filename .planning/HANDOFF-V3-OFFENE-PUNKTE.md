@@ -97,3 +97,140 @@ eine Zelle die Schwelle inzwischen hält und der Eintrag nur noch Altlast wäre.
 `.dms-skill-header` (`assets/styles/dmscreen.css:1728-1732`), wo dieselben Attributfarben auf
 einer Tönung sitzen — sind ein anderer, ebenfalls offener Punkt und gehören ausdrücklich in
 Welle 2. Sie sind hier nicht mitgemeint.
+
+---
+
+## W1-C-01 — Elf vorgefundene Stellen halten 4,5 auf ihrer eigenen Fläche nicht
+
+**Status: OFFEN — keine dieser Stellen stammt aus Welle 1, keine ist damit erledigt.**
+Aufgenommen am 2026-09-28, Welle 1, Schritt 15 (Prüfbefunde W1-C, Runde 1).
+
+### Worum es geht
+
+Die Runde-1-Prüfung hat gezeigt, dass von den 143 Deklarationen, die Welle 1 auf
+`color: var(--on-<rolle>)` umgestellt hat, genau **eine** von einer Ratsche gedeckt war. Die
+Lücke ist mit R-03 (Zustandsregeln) und R-04 (Ruheregeln) in
+`tests/unit/design-consistency.test.js` geschlossen. Beim Schließen sind elf Stellen aufgefallen,
+die die Schwelle heute nicht halten — **alle elf sind an base `0894408a` wortgleich vorhanden**,
+sind also vorgefundene Schwächen und keine erzeugten. Sie stehen namentlich in
+`ZUSTAND_AUSNAHME` (R-03) bzw. `RUHE_AUSNAHME` (R-04) und sind von dort aus an diese Tabelle
+gebunden.
+
+Gerechnet mit `tests/unit/helpers/wcag-contrast.js` (Selbstprobe `#777777`/`#767676` gegen Weiß
+= 4,48/4,54). „min" ist das Minimum über die vier Themes dark/light/sepia/contrast.
+
+| Datei | Selektor | Tinte auf Fläche | min | Gruppe |
+| ----- | -------- | ---------------- | --- | ------ |
+| `dashboard.css` | `.wiki-link:hover` | `var(--gold)` auf `var(--purple)` | 1,29 | a |
+| `spells.css` | `.editor-btn.format-active` | `var(--gold)` auf `var(--gold-dim)` | 1,39 | a |
+| `dmscreen.css` | `.dms-dice-btn:hover` | `var(--bg)` auf `var(--gold)` | 2,98 | b |
+| `loot.css` | `.shop-cat-badge.active` | `var(--bg)` auf `var(--gold)` | 2,98 | b |
+| `loot.css` | `.shop-sort-btn.active` | `var(--bg)` auf `var(--gold)` | 2,98 | b |
+| `party.css` | `.cf-combat-value select option:hover, .cf-combat-value select option:checked` | `var(--bg)` auf `var(--gold)` | 2,98 | b |
+| `dashboard.css` | `.qref-dmg.psychic` | `white` auf `var(--dmg-psychic)` | 3,53 | c |
+| `dashboard.css` | `.qref-dmg.cold` | `white` auf `var(--dmg-cold)` | 3,68 | c |
+| `dashboard.css` | `.qref-dmg.fire` | `white` auf `var(--dmg-fire)` | 3,76 | c |
+| `dashboard.css` | `.qref-dmg.thunder` | `white` auf `var(--dmg-thunder)` | 4,23 | c |
+| `encounters.css` | `.calc-action-btn.primary:hover` | `var(--on-green)` auf `var(--green-hover)` | 4,31 | d |
+
+### Die vier Gruppen, und warum sie nicht in Welle 1 gehören
+
+**(a) Akzent auf Akzent — 2 Stellen.** Tinte UND Fläche sind eine Farbrolle. Das ist keine
+Tintenfrage, sondern eine Gestaltungsfrage: welche Fläche soll der Knopf überhaupt haben? Bei
+`.editor-btn.format-active` sitzt Gold auf dem eigenen gedimmten Gold (1,39) — der aktive Zustand
+ist damit praktisch nicht lesbar. Gehört in die Welle, die die jeweilige Rolle anfasst.
+
+**(b) `var(--bg)` auf `var(--gold)` — 4 Stellen.** Dies ist **dieselbe Fehlerart, die Welle 1
+sonst überall behoben hat**, und sie ist nur deshalb stehengeblieben, weil die Bestandsaufnahme
+auf `var(--bg-dark)` suchte: `--bg` ist ein Alias darauf (`assets/styles/variables.css:486`).
+Mechanisch zu beheben (`var(--on-gold)`, dann 8,98 / 5,80 / 7,10 / 13,46), aber außerhalb des
+Auftrags dieser Runde — hier geführt, damit die nächste Welle sie nicht erneut übersieht.
+
+**(c) Weiße Schrift auf der Schadensartenskala — 4 Stellen.** Die Begründung steht seit Welle 1
+ausführlich in `assets/styles/dashboard.css` über `.qref-dmg`: die Skala muss als GANZES neu
+gerechnet werden (13 Typen, sonst verschiebt sich ihre Ordnung). `--dmg-physical` hält mit Weiß
+bereits 5,17 und steht deshalb nicht in der Tabelle.
+
+**(d) `.calc-action-btn.primary:hover` — 1 Stelle.** Die einzige der elf, die Welle 1 angefasst
+hat, und sie ist dabei **besser** geworden: vorher (mit `var(--bg-dark)`)
+8,06 · 4,02 · 3,41 · 10,93, also min 3,41; jetzt 7,83 · 4,31 · 4,40 · 9,82, also min 4,31. Jedes
+Theme unter der Schwelle liegt höher als zuvor. Sie ganz auf 4,5 zu bringen ginge mit einem neuen
+`--on-green-hover` (`#000000` erreicht min 4,79) — das ist eine Farbentscheidung und gehört
+entschieden, nicht nebenbei getan.
+
+### Nachrechnen
+
+```bash
+cd /d/Claude_Code/Projekte/DnD_Tracker_App_Pro
+npx jest tests/unit/design-consistency.test.js -t "R-03"
+npx jest tests/unit/design-consistency.test.js -t "R-04"
+git show 0894408a:assets/styles/loot.css | grep -A3 "shop-cat-badge.active"
+```
+
+### Was bis zur Entscheidung gilt
+
+Welle 1 ändert an diesen elf Stellen nichts. Die beiden Ausnahmelisten halten den gemessenen
+Stand fest und melden jede Verschlechterung, jeden Eintrag, dessen Stelle es nicht mehr gibt, und
+jeden Eintrag, dessen Stelle die Schwelle inzwischen hält.
+
+---
+
+## W1-C-02 — Fünf JS-Inlinestellen setzen Tinte auf eine volle Rollenfläche und fehlen in der Bestandsaufnahme
+
+**Status: OFFEN — nicht erledigt und nicht zurückgestellt, sondern bis zum 2026-09-28 nicht
+gesehen.** Aufgenommen am 2026-09-28, Welle 1, Schritt 15 (Prüfbefund W1-C, Runde 1, major).
+
+### Worum es geht
+
+Die Bestandsaufnahme der Welle zählt ausschließlich `assets/styles`. JS wird nur für
+`features/locations/locations-render.js:153` geführt (Entscheidung D-7, Schritt 13). Fünf weitere
+Stellen setzen im `style`-Attribut genau dieselbe Kombination, die Welle 1 im CSS überall ersetzt
+hat — eine volle Rollenfläche mit `color: var(--bg-dark)`:
+
+```bash
+grep -rnoE "style=\"[^\"]*\"" --include=*.js core features systems ui render utils \
+  | grep -E "color: ?var\(--bg-dark\)" | grep background
+```
+
+| Datei | Zeile | Fläche | gemessen (dark light sepia contrast) |
+| ----- | ----- | ------ | ------------------------------------ |
+| `features/quests/quests-render.js` | 77 | `var(--gold)` | 9,24 · 2,98 · 5,65 · 14,97 |
+| `systems/entity-links.js` | 317 | `var(--blue)` | 7,64 · 4,74 · 2,93 · 5,53 |
+| `systems/entity-links.js` | 318 | `var(--purple)` | Soll `var(--on-purple)` |
+| `systems/entity-links.js` | 287 | `statusColors[status]`: `--yellow` / `--green` / `--cyan` / `--red` | Gelb 11,64 · 2,69 · 2,55 · 19,56; Cyan 9,89 · 3,38 · 2,51 · 16,75 |
+| `features/initiative-loot.js` | 102 | `RARITY_COLORS[rarity]`, feste Hex-Werte | sehr selten `#facc15` 12,69 · 1,40 · 1,22 · 13,71; gewöhnlich `#4ade80` 11,15 · 1,60 · 1,39 · 12,05; legendär `#fb923c` 8,59 · 2,08 · 1,80 · 9,28 |
+
+**Damit ist eine Aussage des Umsetzungsberichts widerlegt:** „das PWA-Banner war mit 1,27 in
+Sepia die schlechteste Stelle im ganzen Baum" — die Seltenheitsmarke der Beute erreicht in Sepia
+1,22 und in Light 1,40.
+
+**Sichtbare Folge schon heute:** `.filter-chip.active` trägt in `core.css` `var(--on-gold)`, der
+inline gebaute Verfolgen-Knopf in `quests-render.js:77` daneben weiterhin `var(--bg-dark)` —
+dieselbe Goldfläche, zwei verschiedene Tinten.
+
+### Warum hier und nicht sofort behoben
+
+Die Arbeitsregel der Welle lautet „nur in `assets/styles/*.css` arbeiten; JS nur dort, wo die
+Schrittanweisung es ausdrücklich sagt", und der Prüfbefund verlangt ausdrücklich, die fünf
+Stellen „in die Bestandsaufnahme aufzunehmen und der Welle zuzuordnen, die ohnehin die
+JS-gesetzten Flächen anfasst". Das ist Schritt 13 (D-7).
+
+Drei davon sind mechanisch (feste Rolle → `var(--on-<rolle>)`): `quests-render.js:77`,
+`entity-links.js:317` und `:318`. `entity-links.js:287` braucht eine Abbildung
+`statusColors` → `--on-<rolle>`. `initiative-loot.js:102` braucht eine **Entscheidung über
+`RARITY_COLORS` als Ganzes** (`core/constants.js:265`, feste Hex-Werte ohne Themebezug) — analog
+zur Schadensartenskala in W1-C-01 Gruppe c.
+
+Die Inline-Stil-Ratsche (256) erlaubt keinen Zuwachs, steht dem aber nicht entgegen: ein
+Wertwechsel in einem bestehenden `style`-Attribut fügt keinen hinzu, und sie zählt ohnehin nur
+das Markup, nicht die von JS erzeugten Attribute.
+
+### Nachrechnen
+
+```bash
+cd /d/Claude_Code/Projekte/DnD_Tracker_App_Pro
+sed -n '77p' features/quests/quests-render.js
+sed -n '285,290p;315,320p' systems/entity-links.js
+sed -n '100,104p' features/initiative-loot.js
+sed -n '258,272p' core/constants.js
+```

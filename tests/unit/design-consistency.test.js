@@ -1547,6 +1547,67 @@ describe('R-02 — Tinte erreicht ihre Schwelle auf der TATSAECHLICHEN Flaeche (
     });
 });
 
+/* Gemeinsame Werkzeuge der beiden Stellen-Ratschen R-03 und R-04. */
+/**
+ * Zerlegt eine CSS-Datei regelweise, MIT Zeilennummer und Rumpf.
+ * Verwandt mit bloecke() im F-18-Block, aber nicht dieselbe Funktion: dort
+ * genuegt der Selektor, hier wird der Rumpf gebraucht. Kommentare werden
+ * durch gleich lange Leerzeichen ersetzt statt entfernt, damit die
+ * gemeldete Zeilennummer die der Datei bleibt — eine Ratsche, deren
+ * Fundstelle man erst suchen muss, kostet mehr als sie einbringt.
+ */
+function regelnMitRumpf(css) {
+    const maskiert = css.replace(/\/\*[\s\S]*?\*\//g, m => m.replace(/[^\n]/g, ' '));
+    const out = [];
+    let i = 0;
+    while (i < maskiert.length) {
+        if (maskiert[i] === '}') {
+            i++;
+            continue;
+        }
+        const m = /^[^{}]*\{/.exec(maskiert.slice(i));
+        if (!m) {
+            i++;
+            continue;
+        }
+        const kopf = m[0].slice(0, -1).replace(/\s+/g, ' ').trim();
+        if (kopf.startsWith('@') || !kopf) {
+            i += m[0].length; // @media & Co.: hineinlaufen, nicht ueberspringen
+            continue;
+        }
+        let tiefe = 1;
+        let j = i + m[0].length;
+        while (j < maskiert.length && tiefe) {
+            if (maskiert[j] === '{') tiefe++;
+            else if (maskiert[j] === '}') tiefe--;
+            j++;
+        }
+        out.push({
+            zeile: maskiert.slice(0, i + m[0].length).split('\n').length,
+            sel: kopf,
+            rumpf: maskiert.slice(i + m[0].length, j - 1)
+        });
+        i = j;
+    }
+    return out;
+}
+
+/** Erste Deklaration einer Eigenschaft im Rumpf. Der Praefixschutz
+ *  `(^|[;{\s])` ist nicht Kosmetik: ohne ihn liest `border-color:` als
+ *  `color:` mit und `background-image:` als `background:`. Genau dieses
+ *  Zaehlartefakt hat in der Planung zu Handoff v3 sieben angebliche
+ *  `color: var(--gold-dim)` erzeugt, die alle `border-color` waren. */
+const deklaration = (rumpf, prop) => {
+    const m = rumpf.match(new RegExp(`(?:^|[;{\\s])${prop}\\s*:\\s*([^;}]+)`));
+    return m ? m[1].trim() : null;
+};
+
+/** Benannte Ausnahme von R-03, modulweit, weil die Aktenlage-Ratsche im
+ *  R-04-Block beide Listen gemeinsam gegen den offenen Punkt prueft. */
+const ZUSTAND_AUSNAHME = {
+    'encounters.css .calc-action-btn.primary:hover': 4.31
+};
+
 /* ===========================================================================
    Design-Handoff v3, Welle 1 — R-03: die Tinte gilt je ZUSTAND, nicht je Regel
    ===========================================================================
@@ -1577,62 +1638,8 @@ describe('R-02 — Tinte erreicht ihre Schwelle auf der TATSAECHLICHEN Flaeche (
    SIE IST BEI DER GEBURT ROT, mit sieben Zeilen, und das ist ihr Zweck.
    =========================================================================== */
 describe('R-03 — geerbte Tinte auf gewechselter Flaeche (Ratsche)', () => {
-    /**
-     * Zerlegt eine CSS-Datei regelweise, MIT Zeilennummer und Rumpf.
-     * Verwandt mit bloecke() im F-18-Block, aber nicht dieselbe Funktion: dort
-     * genuegt der Selektor, hier wird der Rumpf gebraucht. Kommentare werden
-     * durch gleich lange Leerzeichen ersetzt statt entfernt, damit die
-     * gemeldete Zeilennummer die der Datei bleibt — eine Ratsche, deren
-     * Fundstelle man erst suchen muss, kostet mehr als sie einbringt.
-     */
-    function regelnMitRumpf(css) {
-        const maskiert = css.replace(/\/\*[\s\S]*?\*\//g, m => m.replace(/[^\n]/g, ' '));
-        const out = [];
-        let i = 0;
-        while (i < maskiert.length) {
-            if (maskiert[i] === '}') {
-                i++;
-                continue;
-            }
-            const m = /^[^{}]*\{/.exec(maskiert.slice(i));
-            if (!m) {
-                i++;
-                continue;
-            }
-            const kopf = m[0].slice(0, -1).replace(/\s+/g, ' ').trim();
-            if (kopf.startsWith('@') || !kopf) {
-                i += m[0].length; // @media & Co.: hineinlaufen, nicht ueberspringen
-                continue;
-            }
-            let tiefe = 1;
-            let j = i + m[0].length;
-            while (j < maskiert.length && tiefe) {
-                if (maskiert[j] === '{') tiefe++;
-                else if (maskiert[j] === '}') tiefe--;
-                j++;
-            }
-            out.push({
-                zeile: maskiert.slice(0, i + m[0].length).split('\n').length,
-                sel: kopf,
-                rumpf: maskiert.slice(i + m[0].length, j - 1)
-            });
-            i = j;
-        }
-        return out;
-    }
-
     /** Die Zustaende, die eine Flaeche wechseln koennen. */
     const ZUSTAND = /(:hover|:focus-visible|:focus|:active|\.active|\.selected)\b/;
-
-    /** Erste Deklaration einer Eigenschaft im Rumpf. Der Praefixschutz
-     *  `(^|[;{\s])` ist nicht Kosmetik: ohne ihn liest `border-color:` als
-     *  `color:` mit und `background-image:` als `background:`. Genau dieses
-     *  Zaehlartefakt hat in der Planung zu Handoff v3 sieben angebliche
-     *  `color: var(--gold-dim)` erzeugt, die alle `border-color` waren. */
-    const deklaration = (rumpf, prop) => {
-        const m = rumpf.match(new RegExp(`(?:^|[;{\\s])${prop}\\s*:\\s*([^;}]+)`));
-        return m ? m[1].trim() : null;
-    };
 
     /** BENANNTE AUSNAHMEN — dieselbe Bauart wie ATTR_HOVER_AUSNAHME eine
      *  Ratsche weiter oben: der eingetragene Wert ist der GEMESSENE Stand, und
@@ -1648,10 +1655,9 @@ describe('R-03 — geerbte Tinte auf gewechselter Flaeche (Ratsche)', () => {
      *  verbessert, nur nicht bis 4,5. Sie hier anzuheben hiesse, eine Farbe
      *  ausserhalb des Auftrags zu aendern (ein --on-green-hover mit #000000
      *  erreichte min 4,79) — das gehoert entschieden, nicht nebenbei getan.
-     *  Gefuehrt in .planning/HANDOFF-V3-OFFENE-PUNKTE.md, W1-C-01. */
-    const ZUSTAND_AUSNAHME = {
-        '.calc-action-btn.primary:hover': 4.31
-    };
+     *  Gefuehrt in .planning/HANDOFF-V3-OFFENE-PUNKTE.md, W1-C-01; die
+     *  Aktenlage-Ratsche dazu steht im R-04-Block, weil sie beide Listen
+     *  gemeinsam prueft. */
 
     const SCHWELLE = 4.5;
 
@@ -1732,7 +1738,7 @@ describe('R-03 — geerbte Tinte auf gewechselter Flaeche (Ratsche)', () => {
 
             const min = Math.min(...WCAG.THEMES.map(t => werte[t]));
             const zahlen = WCAG.THEMES.map(t => `${t} ${werte[t]}`).join(' · ');
-            const eingetragen = ZUSTAND_AUSNAHME[sel];
+            const eingetragen = ZUSTAND_AUSNAHME[schluessel];
 
             if (eingetragen === undefined) {
                 if (min < SCHWELLE) {
@@ -1794,5 +1800,240 @@ describe('R-03 — geerbte Tinte auf gewechselter Flaeche (Ratsche)', () => {
         // vor den Korrekturen dieser Runde, 12 danach. Die Zahl darf wachsen
         // (neue Knoepfe) und schrumpfen (eigene Tinte gesetzt).
         expect(zustandsPaare(komponentenRegeln()).length).toBeGreaterThanOrEqual(5);
+    });
+});
+
+/* ===========================================================================
+   Design-Handoff v3, Welle 1 — R-04: die Ruheflaechen, Stelle fuer Stelle
+   ===========================================================================
+   Befund der Pruefung W1-C, Runde 1: von den 143 Deklarationen, die Welle 1
+   auf `color: var(--on-<rolle>)` umgestellt hat, war GENAU EINE von einer
+   Ratsche gedeckt (.btn-primary, F-14 Test 1). Per Mutation belegt: drei echte
+   Stellen zurueckgedreht — core.css .nav-tab.active, core.css .btn-gold,
+   welt.css .fr-ruf-btn-plus, letzteres der als schwerster ausgewiesene Fall
+   mit 1,74 in Dark — und die ganze Datei blieb gruen. "Abgenommen" war fuer
+   142 Stellen eine Momentaufnahme, kein Zustand.
+
+   R-04 ist die fehlende Aussage. Sie ergaenzt die beiden anderen so:
+     R-02  Tokenwerte      — haelt --on-gold auf --gold?
+     R-03  Zustandsregeln  — erbt eine :hover-Regel eine fremde Tinte?
+     R-04  Ruheregeln      — haelt JEDE Regel, die Flaeche UND Tinte selbst
+                             setzt, auf ihrer eigenen Flaeche 4,5?
+   Erst zusammen sagen sie "die Tinte stimmt".
+
+   SIE IST BEI DER GEBURT GRUEN, und das ist kein Versehen — R-01 ist
+   ausdruecklich ebenso angelegt. Ihre Aufgabe ist, gruen zu BLEIBEN: 146 der
+   156 geurteilten Regeln halten, die zehn uebrigen stehen namentlich mit
+   ihrem gemessenen Wert in RUHE_AUSNAHME und sind dort an
+   .planning/HANDOFF-V3-OFFENE-PUNKTE.md gebunden.
+
+   WAS DIE ZEHN AUSNAHMEN VERBINDET: keine einzige stammt aus Welle 1. Alle
+   zehn sind an base 0894408a wortgleich vorhanden (`git show
+   0894408a:assets/styles/<datei>`), es sind also vorgefundene Schwaechen und
+   keine erzeugten. Vier davon — `color: var(--bg)` auf `var(--gold)` — sind
+   dieselbe Fehlerart, die Welle 1 sonst ueberall behoben hat; sie blieben
+   stehen, weil die Suche auf `var(--bg-dark)` lief und `--bg` ein Alias
+   darauf ist (variables.css:486). Sie hier stillschweigend mitzuaendern waere
+   ausserhalb des Auftrags; sie NICHT zu fuehren hiesse, die Ratsche etwas
+   Falsches behaupten zu lassen.
+   =========================================================================== */
+describe('R-04 — jede Regel haelt 4,5 auf ihrer EIGENEN Flaeche (Ratsche)', () => {
+    /** Neutrale Traegerflaechen. Sie sind nicht gemeint: auf ihnen urteilt
+     *  R-02 Teilformel 2 ueber die Textrollen. Gemeint sind die FARBflaechen —
+     *  Akzentrollen, Muenzen, Schadensarten, und was sonst noch als
+     *  Vollton-Hintergrund auftaucht. Die Abgrenzung laeuft ueber die
+     *  Namenspraefixe und nicht ueber eine Liste, damit eine neue Rolle
+     *  automatisch mitgeprueft wird statt lautlos durchzufallen. */
+    const NEUTRAL = /^--(bg|surface|border)(-|$)/;
+
+    /** BENANNTE AUSNAHMEN, gemessen am 2026-09-28 — Bauart wie
+     *  ATTR_HOVER_AUSNAHME und ZUSTAND_AUSNAHME: der Wert ist das gemessene
+     *  Minimum ueber die vier Themes, und der Eintrag meldet sowohl eine
+     *  Verschlechterung als auch den Fall, dass er nur noch Altlast ist.
+     *
+     *  Drei Gruppen, alle drei vorgefunden und keine aus Welle 1:
+     *
+     *  (a) Akzent auf Akzent — zwei Stellen, bei denen Tinte UND Flaeche eine
+     *      Farbrolle sind. Das ist keine Tintenfrage, sondern eine
+     *      Gestaltungsfrage (welche Flaeche soll der Knopf ueberhaupt haben),
+     *      und gehoert damit in die Welle, die die Rolle anfasst.
+     *  (b) `var(--bg)` auf `var(--gold)` — vier Stellen, siehe Blockkommentar.
+     *  (c) weisse Schrift auf der Schadensartenskala — vier Stellen. Die
+     *      Begruendung steht seit Welle 1 ausfuehrlich in dashboard.css
+     *      ueber .qref-dmg: die Skala muss als GANZES neu gerechnet werden
+     *      (13 Typen, sonst verschiebt sich ihre Ordnung). --dmg-physical
+     *      haelt mit weiss bereits 5,17 und steht deshalb nicht hier. */
+    const RUHE_AUSNAHME = {
+        'dashboard.css .wiki-link:hover': 1.29,
+        'spells.css .editor-btn.format-active': 1.39,
+        'dmscreen.css .dms-dice-btn:hover': 2.98,
+        'loot.css .shop-cat-badge.active': 2.98,
+        'loot.css .shop-sort-btn.active': 2.98,
+        'party.css .cf-combat-value select option:hover, .cf-combat-value select option:checked': 2.98,
+        'dashboard.css .qref-dmg.psychic': 3.53,
+        'dashboard.css .qref-dmg.cold': 3.68,
+        'dashboard.css .qref-dmg.fire': 3.76,
+        'dashboard.css .qref-dmg.thunder': 4.23
+    };
+
+    const SCHWELLE = 4.5;
+
+    /** Die Regeln, ueber die geurteilt wird. Ausgelagert, damit Urteil und
+     *  Gegenprobe dieselbe Menge sehen. */
+    function ruheRegeln() {
+        const out = [];
+        cssFiles.forEach(f => {
+            if (f.name === 'variables.css' || f.name === 'fonts.css') return;
+            regelnMitRumpf(f.content).forEach(r => {
+                const flaeche = deklaration(r.rumpf, 'background(?:-color)?');
+                const tinte = deklaration(r.rumpf, 'color');
+                if (!flaeche || !tinte) return;
+                const m = flaeche.match(/^var\((--[\w-]+)\)$/);
+                if (!m || NEUTRAL.test(m[1])) return;
+                out.push({ ...r, datei: f.name, flaeche, tinte });
+            });
+        });
+        return out;
+    }
+
+    test('keine Regel setzt eine Tinte, die auf ihrer eigenen Flaeche durchfaellt', () => {
+        const pals = WCAG.palettes();
+        const alias = aliasSchicht();
+        const befunde = [];
+        const offen = new Set(Object.keys(RUHE_AUSNAHME));
+
+        ruheRegeln().forEach(regel => {
+            const schluessel = `${regel.datei} ${regel.sel}`;
+            const werte = {};
+            let fehlt = null;
+            WCAG.THEMES.forEach(theme => {
+                const p = { ...pals[theme], ...alias };
+                const tinte = WCAG.resolve(regel.tinte, p);
+                const grund = WCAG.resolve(regel.flaeche, p);
+                if (!tinte || !grund) {
+                    fehlt = fehlt || `${theme}: ${!tinte ? regel.tinte : regel.flaeche}`;
+                    return;
+                }
+                werte[theme] = WCAG.ratio2(tinte, grund);
+            });
+            if (fehlt) {
+                befunde.push(
+                    `${schluessel}:${regel.zeile} — nicht aufloesbar (${fehlt}). Was der ` +
+                        `Rechner nicht kennt, darf nicht als gruen gelten`
+                );
+                return;
+            }
+
+            const min = Math.min(...WCAG.THEMES.map(t => werte[t]));
+            const zahlen = WCAG.THEMES.map(t => `${t} ${werte[t]}`).join(' · ');
+            const eingetragen = RUHE_AUSNAHME[schluessel];
+            offen.delete(schluessel);
+
+            if (eingetragen === undefined) {
+                if (min < SCHWELLE) {
+                    befunde.push(
+                        `${schluessel}:${regel.zeile} setzt ${regel.tinte} auf ` +
+                            `${regel.flaeche}: min ${min} < ${SCHWELLE} (${zahlen})`
+                    );
+                }
+                return;
+            }
+            if (min < eingetragen) {
+                befunde.push(
+                    `${schluessel}: eingetragen war min ${eingetragen}, gemessen ${min} ` +
+                        `(${zahlen}) — die benannte Ausnahme verschlechtert sich`
+                );
+            }
+            if (min >= SCHWELLE) {
+                befunde.push(
+                    `${schluessel}: haelt jetzt min ${min} — Eintrag aus RUHE_AUSNAHME und ` +
+                        `aus HANDOFF-V3-OFFENE-PUNKTE.md entfernen`
+                );
+            }
+        });
+
+        [...offen]
+            .sort()
+            .forEach(k =>
+                befunde.push(
+                    `${k} steht in RUHE_AUSNAHME, aber es gibt keine solche Regel mehr — ` +
+                        `der Eintrag ist Altlast und gehoert entfernt`
+                )
+            );
+
+        expect(befunde.sort()).toEqual([]);
+    });
+
+    /** KERNBELEG gegen die Momentaufnahme: die Ratsche muss die 143 Stellen
+     *  wirklich SEHEN, sonst ist sie gruen und leer. Gezaehlt wird, wie viele
+     *  der geurteilten Regeln ihre Tinte aus einem --on-*-Token beziehen; das
+     *  ist genau die Menge, deren Ruecknahme Runde 1 per Mutation unbemerkt
+     *  durchbekommen hat. Am 2026-09-28: 136 von 156. */
+    test('die --on-*-Deklarationen der Welle stehen wirklich unter Aufsicht', () => {
+        const geurteilt = ruheRegeln();
+        const mitOn = geurteilt.filter(r => /^var\(--on-[\w-]+\)$/.test(r.tinte));
+        expect(geurteilt.length).toBeGreaterThanOrEqual(120);
+        expect(mitOn.length).toBeGreaterThanOrEqual(120);
+        // Und die drei Stellen, mit denen Runde 1 die Luecke belegt hat, sind
+        // namentlich dabei. Anders als bei R-03 koennen sie hier nicht durch
+        // eine Korrektur verschwinden: sie setzen Flaeche UND Tinte, also
+        // bleiben sie in der Menge, solange es sie gibt.
+        const schluessel = geurteilt.map(r => `${r.datei} ${r.sel}`);
+        expect(schluessel).toEqual(
+            expect.arrayContaining([
+                'core.css .nav-tab.active',
+                'core.css .btn-gold',
+                'welt.css .fr-ruf-btn-plus'
+            ])
+        );
+    });
+
+    /** Die Aktenlage-Ratsche, wie sie R-02 fuer ATTR_HOVER_AUSNAHME schon
+     *  fuehrt: eine Ausnahme, die nur im Kommentar einer Testdatei steht,
+     *  sieht niemand, der sie aufloesen koennte. Sie prueft BEIDE Listen —
+     *  die von R-03 und die von R-04 — gegen dieselbe Tabelle, und in beide
+     *  Richtungen: eine fehlende Zeile ist ein Befund, eine ueberzaehlige
+     *  ebenso. */
+    test('jede benannte Ausnahme aus R-03 und R-04 ist im offenen Punkt gefuehrt', () => {
+        const datei = path.join(REPO, '.planning', 'HANDOFF-V3-OFFENE-PUNKTE.md');
+        expect(fs.existsSync(datei)).toBe(true);
+        const text = fs.readFileSync(datei, 'utf8');
+
+        // Erwartete Tabellenzeile: | `dashboard.css` | `.wiki-link:hover` | … | 1,29 |
+        const zeilenRe =
+            /^\s*\|\s*`([\w.-]+\.css)`\s*\|\s*`([^`]+)`\s*\|[^|]*\|\s*(\d+,\d{2})\s*\|/gm;
+        const gefuehrt = new Map();
+        for (const m of text.matchAll(zeilenRe)) {
+            gefuehrt.set(`${m[1]} ${m[2]}`, Number(m[3].replace(',', '.')));
+        }
+
+        const erwartet = { ...ZUSTAND_AUSNAHME, ...RUHE_AUSNAHME };
+        const befunde = [];
+        Object.keys(erwartet).forEach(k => {
+            if (!gefuehrt.has(k)) {
+                befunde.push(
+                    `${k} (min ${erwartet[k]}) steht in einer Ausnahmeliste, aber in keiner ` +
+                        `Zeile von .planning/HANDOFF-V3-OFFENE-PUNKTE.md`
+                );
+                return;
+            }
+            if (gefuehrt.get(k) !== erwartet[k]) {
+                befunde.push(
+                    `${k}: Ausnahmeliste sagt ${erwartet[k]}, der offene Punkt sagt ` +
+                        `${gefuehrt.get(k)} — die beiden Stellen laufen auseinander`
+                );
+            }
+            gefuehrt.delete(k);
+        });
+        [...gefuehrt.keys()]
+            .sort()
+            .forEach(k =>
+                befunde.push(
+                    `${k} steht im offenen Punkt, aber in keiner Ausnahmeliste — die Zeile ` +
+                        `ist Altlast und gehoert entfernt`
+                )
+            );
+
+        expect(befunde.sort()).toEqual([]);
     });
 });
