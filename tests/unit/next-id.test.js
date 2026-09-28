@@ -1217,4 +1217,57 @@ describe('R03 — erschoepfende Gittersimulation der Vergabe (G3)', () => {
         expect(verstoesse.slice(0, 12)).toEqual([]);
         expect({ punkte, verletzt: verstoesse.length }).toEqual({ punkte: 336, verletzt: 0 });
     });
+
+    test('G3c: der Suchzeiger faellt bewusst zurueck — und das bleibt sicher', () => {
+        // Der Zeiger faellt auf die zuletzt vergebene ID zurueck, sobald der Waechter auf
+        // eine niedrige Untergrenze heilt. Das SIEHT nach einem Ruecklauf-Fehler aus und
+        // ist genau deshalb hier festgehalten: es ist Absicht. Der Zeiger ist nur der
+        // Startwert der Lueckensuche; die Eindeutigkeit haengt allein daran, dass die
+        // Suche `vergeben` (MINT_ISSUED) prueft. Ein monotoner Zeiger (Math.max) wurde in
+        // G3 gebaut, gemessen und verworfen: er bleibt nach einer hohen Normalpfad-Vergabe
+        // an der Obergrenze kleben, ist dort nie vergebbar, und die Suche beginnt danach
+        // bei JEDER Vergabe wieder bei 1 — 1,5x langsamer, ohne einen einzigen Gitterpunkt
+        // in G3a/G3b zu veraendern. Wer den Zeiger monoton machen will, aendert eine
+        // Bequemlichkeit und bezahlt sie mit Laufzeit.
+        const ctx = makeContext();
+        // Der Zeiger ist eine lexikalische Modulkonstante, kein window-Feld: im selben
+        // Kontext ausgewertet, so wie die uebrigen Module ihn auch sehen.
+        const zeigerStand = () =>
+            vm.runInContext('MINT_CURSOR.get("npcs") || 0', ctx, { filename: 'zeiger' });
+
+        ctx.D.npcs = [
+            { id: 1, name: 'Borin' },
+            { id: 500, name: 'Mira' }
+        ];
+        ctx.D._nextId = { npcs: 1e15 - 1 };
+
+        // 1. Normalpfad nahe der Obergrenze: der Zeiger steht danach auf 1e15.
+        const hoch = ctx.nextId('npcs');
+        expect({ hoch, zeiger: zeigerStand() }).toEqual({ hoch: 1e15 - 1, zeiger: 1e15 });
+
+        // 2. Der Waechter heilt auf die Untergrenze 501 — und der Zeiger FAELLT MIT.
+        const geheilt = ctx.nextId('npcs');
+        ctx.D.npcs.push({ id: geheilt, name: 'Geheilt' });
+        expect({ geheilt, zeiger: zeigerStand() }).toEqual({ geheilt: 501, zeiger: 502 });
+
+        // 3. Der Nutzen dieses Ruecklaufs: die Lueckensuche setzt bei 502 fort, statt bei
+        //    1 wieder anzufangen. Ein Restore schiebt die Sammlung an die Obergrenze, also
+        //    entscheidet ab jetzt die Suche.
+        ctx.D.npcs.push({ id: 1e15 - 2, name: 'Restore' });
+        const luecken = [ctx.nextId('npcs'), ctx.nextId('npcs'), ctx.nextId('npcs')];
+        for (const id of luecken) ctx.D.npcs.push({ id, name: `L${id}` });
+        expect(luecken).toEqual([502, 503, 504]);
+
+        // 4. Die Sicherheitsaussage, die der Ruecklauf NICHT verletzt: die noch unterwegs
+        //    befindliche hohe ID (nie abgelegt) wird kein zweites Mal vergeben, und alles
+        //    bleibt gueltig und eindeutig.
+        const alle = [hoch, geheilt, ...luecken];
+        const gueltig = id => ({ id, gueltig: Number.isSafeInteger(id) && id > 0 && id < MAX });
+        expect(alle.map(gueltig)).toEqual(alle.map(id => ({ id, gueltig: true })));
+        expect({ anzahl: alle.length, verschieden: new Set(alle).size }).toEqual({
+            anzahl: alle.length,
+            verschieden: alle.length
+        });
+        expect(ctx.D.npcs.some(n => n.id === hoch)).toBe(false);
+    });
 });
