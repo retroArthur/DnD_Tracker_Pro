@@ -84,7 +84,7 @@
 
 .bestiary-badge.custom {
     background: var(--gold-dim);
-    color: var(--bg-dark);
+    color: var(--on-gold-dim);
 }
 
 /* Monster name */
