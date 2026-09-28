@@ -279,7 +279,7 @@ sed -n '258,272p' core/constants.js
 
 ---
 
-## W1-D-01 — 128 Akzenttext-Stellen, deren Trägerfläche Schritt 9 nicht als neutral nachweisen konnte
+## W1-D-01 — 126 Akzenttext-Stellen, deren Trägerfläche Schritt 9 nicht als neutral nachweisen konnte
 
 **Status: OFFEN — bewusst unverändert gelassen, nicht übersehen.**
 Aufgenommen am 2026-09-28, Welle 1, Schritt 9.
@@ -294,7 +294,8 @@ Trägerfläche **nicht in ihrer eigenen Regel** — sie musste über den Vorfahr
 Sie wurde nicht geraten, sondern gemessen: headless am gebauten Bündel wurde für jede Stelle der
 nächste **deckende** Vorfahr bestimmt (alle halbdurchsichtigen Schichten zusammengesetzt), und
 zwar in **Dark und Light**. Umgestellt wurde nur, wenn beide Themes auf dieselbe neutrale
-Flächenmenge zeigen. 181 Stellen haben das erfüllt, 128 nicht — die stehen unten.
+Flächenmenge zeigen. 181 Stellen haben das erfüllt, 128 nicht. **Davon stehen heute noch 126
+unten**; zwei sind in Schritt 11 erledigt worden (siehe die Vorbemerkung zu Gruppe B).
 
 Der Grund für die Strenge ist gemessen und nicht vorsichtshalber: die `-text`-Werte sind für
 **helle** Flächen gerechnet. Auf der Dialogfläche sind sie **schlechter** als die Rolle selbst.
@@ -319,7 +320,8 @@ Welle Farben in Dialogen anfasst.
 
 ```bash
 cd /d/Claude_Code/Projekte/DnD_Tracker_App_Pro
-# Die verbliebenen Stellen als Kategorie (muss 126 + 2 ergeben):
+# Die verbliebenen Stellen als Kategorie (Summe 126 + 2 bei der Geburt der Liste;
+# seit Schritt 11 sind zwei davon erledigt, die Summe ist also um zwei kleiner):
 node <scratch>/classify.js | grep -E "^ *[0-9]+  ROLE \|"
 # Die Dialogfläche selbst:
 grep -n "^\.modal {" -A4 assets/styles/dmscreen.css
@@ -332,17 +334,18 @@ npx jest tests/unit/design-consistency.test.js -t "R-06"
 128 auf `font-weight`, auf eine Leerzeile oder auf eine schließende Klammer — sie waren vor den
 Kommentareinfügungen desselben Commits erzeugt und nicht nachgezogen worden. Das ist genau die
 Fehlerart, wegen der die Auftragslage die Anker des Handoffs v3 für unbrauchbar erklärt hat. R-06
-in `tests/unit/design-consistency.test.js` prüft jetzt jede der 128 Zeilen gegen die Datei: sie
+in `tests/unit/design-consistency.test.js` prüft jetzt jede geführte Zeile gegen die Datei: sie
 muss dort eine `color: var(--…)`-Deklaration im genannten Selektor mit der genannten Rolle
 treffen. **Wer eine dieser CSS-Dateien anfasst, zieht die Tabelle im selben Commit nach** — sonst
-ist die Ratsche rot.
+ist die Ratsche rot. Ihre Plausibilitätsprobe nennt die Zahl der geführten Stellen; sie darf nur
+sinken, und nur zusammen mit einer erledigten Stelle (128 bei der Geburt, 126 seit Schritt 11).
 
 Die Messung selbst: `<scratch>/measure5.js` (Playwright, gebautes Bündel, 24 Ansichten + 30
 Dialoge, zwei Themes) und `<scratch>/decide.js` (Urteil je Stelle plus Geschwisterbindung).
 
 ### Was bis zur Entscheidung gilt
 
-Diese 128 Stellen bleiben auf `color: var(--<rolle>)`. In Light und Sepia liegen sie damit
+Diese 126 Stellen bleiben auf `color: var(--<rolle>)`. In Light und Sepia liegen sie damit
 weiterhin bei 2,16–4,20 gegen eine neutrale Fläche — falls ihre Fläche neutral ist, was für
 Gruppe E gerade nicht bewiesen ist. Sie sind **kein** erledigter Fall.
 
@@ -352,8 +355,8 @@ Gruppe E gerade nicht bewiesen ist. Sie sind **kein** erledigter Fall.
 
 | Stelle | Selektor | Rolle | Traeger dark | Traeger light |
 | ------ | -------- | ----- | ------------ | ------------- |
-| `bestiary.css:451` | `.bst-section-title` | `--gold` | #191919 | #1e1e1e |
-| `bestiary.css:464` | `.bst-validation-error` | `--red` | #191919 | #1e1e1e |
+| `bestiary.css:477` | `.bst-section-title` | `--gold` | #191919 | #1e1e1e |
+| `bestiary.css:490` | `.bst-validation-error` | `--red` | #191919 | #1e1e1e |
 | `core.css:1043` | `.char-modal-title h2` | `--gold` | #191919 | #1e1e1e |
 | `core.css:1048` | `.char-modal-subtitle` | `--cyan` | #191919 | #1e1e1e |
 | `dashboard.css:240` | `.modal-title` | `--gold` | #191919 | #1e1e1e · #252525 |
@@ -369,14 +372,22 @@ Gruppe E gerade nicht bewiesen ist. Sie sind **kein** erledigter Fall.
 | `tools.css:803` | `.ld-modal-header h3` | `--gold` | #191919 | #1e1e1e |
 | `tools.css:836` | `.ld-gold-label` | `--gold` | #191919 | #1e1e1e |
 
-### Gruppe B — Verlauf als Traeger, 15 Stellen
+### Gruppe B — Verlauf als Traeger, 13 Stellen
+
+**Zwei Einträge dieser Gruppe sind seit dem 2026-09-28 erledigt und deshalb aus der Tabelle
+entfernt** (Welle 1, Schritt 11): `bestiary.css` `.bestiary-statblock-name` und
+`.bestiary-statblock-section-heading`, beide `--red`. Ihr „Verlauf" war kein Theme-Verlauf,
+sondern die **themenunabhängige** Pergamentpalette (`--ra-parchment-from` #f5e6c8 →
+`--ra-parchment-to` #e8d4a8) — sie konnten deshalb gar nie eine `-text`-Rolle bekommen. Sie tragen
+jetzt `var(--parchment-ink-red)` #58180d, gemessen 10,98 und 9,29 gegen die beiden Verlaufsenden,
+in allen vier Themes identisch (vorher 2,58–3,92). Bewacht von **R-07** in
+`tests/unit/design-consistency.test.js`. Die Zahl der geführten Stellen sinkt damit von 128 auf
+126; die Plausibilitätsprobe in R-06 ist im selben Commit nachgezogen.
 
 | Stelle | Selektor | Rolle | Traeger dark | Traeger light |
 | ------ | -------- | ----- | ------------ | ------------- |
-| `bestiary.css:215` | `.bestiary-statblock-name` | `--red` | GRAD:#0d0d0d · GRAD:#1a1a1a | GRAD:#f5f5f5 · GRAD:#ffffff |
-| `bestiary.css:295` | `.bestiary-statblock-section-heading` | `--red` | GRAD:#0d0d0d · GRAD:#1a1a1a | GRAD:#f5f5f5 · GRAD:#ffffff |
-| `bestiary.css:330` | `.bestiary-dice` | `--cyan` | --bg-dark · GRAD:#0d0d0d · GRAD:#1a1a1a | --bg-dark · GRAD:#f5f5f5 · GRAD:#ffffff |
-| `bestiary.css:337` | `.bestiary-dice:hover` | `--gold` | --bg-dark · GRAD:#0d0d0d · GRAD:#1a1a1a | --bg-dark · GRAD:#f5f5f5 · GRAD:#ffffff |
+| `bestiary.css:356` | `.bestiary-dice` | `--cyan` | --bg-dark · GRAD:#0d0d0d · GRAD:#1a1a1a | --bg-dark · GRAD:#f5f5f5 · GRAD:#ffffff |
+| `bestiary.css:363` | `.bestiary-dice:hover` | `--gold` | --bg-dark · GRAD:#0d0d0d · GRAD:#1a1a1a | --bg-dark · GRAD:#f5f5f5 · GRAD:#ffffff |
 | `dmscreen.css:553` | `.session-arc-title` | `--gold` | GRAD:#0d0d0d | GRAD:#f5f5f5 |
 | `dmscreen.css:1081` | `.drag-handle:hover` | `--gold` | --bg-card · GRAD:#0d0d0d | --bg-card · GRAD:#f5f5f5 |
 | `initiative.css:139` | `.init-value` | `--gold` | GRAD:#0d0d0d · --bg-card | GRAD:#f5f5f5 · --bg-card |

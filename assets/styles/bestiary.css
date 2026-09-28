@@ -212,7 +212,17 @@
 .bestiary-statblock-name {
     font-size: 18px;
     font-weight: 700;
-    color: var(--red);
+    /* Schritt 11 (Welle 1): Das Pergament folgt keinem Theme — die
+       Verlaufsenden --ra-parchment-from/-to sind in allen vier Themes
+       dieselben. `var(--red)` tat es trotzdem und erreichte darauf
+       dark 3,05/2,58 · light 3,92/3,31 · sepia 3,75/3,17 ·
+       contrast 3,24/2,74, also nirgends 4,5. --parchment-ink-red #58180d
+       gehoert zu den Pergamenttoenen, ist ebenfalls themenunabhaengig und
+       haelt 10,98 bzw. 9,29. Die drei vorhandenen Pergamenttinten waeren
+       KEIN Ersatz: --parchment-ink ist Braun, --parchment-ink-dark
+       Fast-Schwarz, --ra-parchment-rule Sattelbraun — das klassische
+       5e-Rot dieser Zeile waere geloescht (§7 schuetzt genau das). */
+    color: var(--parchment-ink-red);
     font-family: var(--font-serif);
     margin: 0 0 2px 0;
 }
@@ -221,6 +231,15 @@
 .bestiary-statblock-subline {
     font-size: 12px;
     font-style: italic;
+    /* NICHT Welle 1, und das ist entschieden, nicht uebersehen: das hier
+       ist das einzige rgba-Literal im ganzen Stylesheet-Baum, das als
+       Textfarbe steht — aber es ist KEIN Kontrastmangel. Ueber dem
+       jeweiligen Verlaufsende zusammengesetzt ergibt es #685647 bzw.
+       #64503e und damit 5,66 und 5,22. Es ist themenunabhaengig wie das
+       Pergament selbst. Zu tun bleibt nur Kosmetik (Literal -> Token oder
+       color-mix aus --parchment-ink-dark), und das ist Welle-2-Arbeit.
+       Damit ist die Doppelzustaendigkeit aufgeloest, die der Wellenplan
+       offenlaesst. */
     color: rgba(44, 24, 16, 0.7);
     margin: 0 0 8px 0;
 }
@@ -292,9 +311,16 @@
 .bestiary-statblock-section-heading {
     font-size: 16px;
     font-weight: 700;
-    color: var(--red);
+    /* Schritt 11 (Welle 1), dieselbe Rechnung wie bei
+       .bestiary-statblock-name: `var(--red)` erreichte auf dem
+       themenunabhaengigen Pergament hoechstens 3,92 (Text) und fiel mit
+       der Trennlinie am dunklen Verlaufsende unter 3 (dark 2,58 ·
+       contrast 2,74). --parchment-ink-red haelt 10,98 bzw. 9,29 und
+       aendert sich mit dem Theme nicht. Tinte und Linie MUESSEN dabei
+       zusammen wandern — sie sind dieselbe Gestaltungsabsicht. */
+    color: var(--parchment-ink-red);
     font-family: var(--font-serif);
-    border-bottom: 1px solid var(--red);
+    border-bottom: 1px solid var(--parchment-ink-red);
     margin: 12px 0 6px 0;
     padding-bottom: 2px;
 }

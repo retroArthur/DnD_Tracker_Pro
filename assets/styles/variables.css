@@ -646,7 +646,13 @@
                Fast-Schwarz, Sattelbraun); die Gestaltungsabsicht waere
                geloescht worden. #58180d erreicht 10,98 gegen
                --ra-parchment-from und 9,29 gegen --ra-parchment-to.
-               VERWENDET wird das Token erst in Schritt 11. */
+               Seit Schritt 11 traegt es die beiden Statblock-Stellen
+               (bestiary.css .bestiary-statblock-name und
+               .bestiary-statblock-section-heading samt deren Trennlinie).
+               Bewacht von R-07 in tests/unit/design-consistency.test.js:
+               jede Tinte im Statblock muss in allen vier Themes auf
+               DENSELBEN Wert aufloesen und auf beiden Verlaufsenden
+               4,5 (Text) bzw. 3 (Linien) halten. */
             --parchment-ink-red: #58180d;
 
             /* --on-accent: #ffffff stand bis 2026-09-28 hier, begruendet mit

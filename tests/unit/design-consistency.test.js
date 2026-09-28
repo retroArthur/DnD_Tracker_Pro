@@ -2507,12 +2507,22 @@ describe("R-06 — jeder Zeilenanker der Aktenlage trifft seine Deklaration (Rat
     return out;
   }
 
-  test("die 128 Stellen von W1-D-01 zeigen auf eine passende Farbdeklaration", () => {
+  test("die gefuehrten Stellen von W1-D-01 zeigen auf eine passende Farbdeklaration", () => {
     expect(fs.existsSync(DOK)).toBe(true);
     const stellen = gefuehrteStellen(fs.readFileSync(DOK, "utf8"));
-    // Plausibilitaetsprobe: faellt die Zerlegung auseinander, waere die
-    // Ratsche gruen und leer.
-    expect(stellen.length).toBe(128);
+    /* Plausibilitaetsprobe: faellt die Zerlegung auseinander, waere die
+       Ratsche gruen und leer.
+       DIESE ZAHL DARF NUR SINKEN, und nur zusammen mit einer wirklich
+       erledigten Stelle. Geboren am 2026-09-28 mit 128. Seit Schritt 11
+       derselben Welle sind es 126: `.bestiary-statblock-name` und
+       `.bestiary-statblock-section-heading` sind aus der Liste heraus,
+       weil ihr "Verlauf" gar kein Theme-Verlauf war, sondern die
+       themenunabhaengige Pergamentpalette — eine `-text`-Rolle konnten
+       sie deshalb nie bekommen. Sie tragen jetzt --parchment-ink-red
+       (10,98 / 9,29 statt 2,58-3,92) und stehen unter R-07. Wer die Zahl
+       senkt, OHNE dass eine Stelle erledigt ist, nimmt der Ratsche
+       lautlos Stellen weg. */
+    expect(stellen.length).toBe(126);
 
     const befunde = [];
     stellen.forEach((s) => {
