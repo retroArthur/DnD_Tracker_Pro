@@ -65,11 +65,11 @@
             margin-right: 8px;
         }
         
-        .search-result-type.npc { background: var(--cyan); color: var(--bg-dark); }
-        .search-result-type.location { background: var(--green); color: var(--bg-dark); }
+        .search-result-type.npc { background: var(--cyan); color: var(--on-cyan); }
+        .search-result-type.location { background: var(--green); color: var(--on-green); }
         .search-result-type.quest { background: var(--purple); color: white; }
         .search-result-type.spell { background: var(--blue); color: white; }
-        .search-result-type.character { background: var(--gold); color: var(--bg-dark); }
+        .search-result-type.character { background: var(--gold); color: var(--on-gold); }
         
         .search-result-name {
             font-weight: 600;
@@ -535,7 +535,7 @@
             cursor: pointer;
         }
         .session-filter-tag:hover { border-color: var(--cyan); color: var(--cyan); }
-        .session-filter-tag.active { background: var(--cyan); color: var(--bg-dark); border-color: var(--cyan); }
+        .session-filter-tag.active { background: var(--cyan); color: var(--on-cyan); border-color: var(--cyan); }
         
         /* SESSION LIST WITH ARCS */
         .session-arc-group { margin-bottom: 16px; }
@@ -913,7 +913,7 @@
         .btn:hover {
             box-shadow: 0 0 12px rgba(212, 175, 55, 0.25);
             background: var(--gold); /* F-18: aus der Dublette uebernommen */
-            color: var(--bg-dark); /* F-18: aus der Dublette uebernommen */
+            color: var(--on-gold); /* F-18: aus der Dublette uebernommen */
         }
         
         .btn-success:hover {
