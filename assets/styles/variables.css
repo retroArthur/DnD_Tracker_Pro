@@ -638,11 +638,21 @@
                VERWENDET wird das Token erst in Schritt 11. */
             --parchment-ink-red: #58180d;
 
-            /* Schrift auf gesaettigten Akzentflaechen (roter/gruener
-               Knopf). BEWUSST themenunabhaengig weiss: die Akzentfarben
-               sind in allen vier Themes dunkel genug, und var(--text)
-               waere im hellen Theme dunkel auf dunkelrot. */
-            --on-accent: #ffffff;
+            /* --on-accent: #ffffff stand bis 2026-09-28 hier, begruendet mit
+               "die Akzentfarben sind in allen vier Themes dunkel genug".
+               Gemessen stimmte das an keiner seiner sechs Verwendungen:
+               weiss auf --green ergab 1,74 (Dark) und 1,37 (Contrast), auf
+               --purple 2,72 bzw. 3,14, auf --red 3,76 bzw. 4,00. EINE
+               themenunabhaengige Tinte kann es auch gar nicht geben — Sepia
+               --gold #8b4513 braucht Weiss, Sepia --green #859900 braucht
+               Schwarz. Nachfolge sind die zehn --on-<rolle> aus den
+               Theme-Bloecken (Schritt 4), je Rolle und Theme einzeln
+               gewaehlt. Die sechs Verwendungen sind in Schritt 5 umgestellt:
+               initiative.css .init-statblock-close:hover und welt.css
+               .fr-ruf-btn-minus auf var(--on-red), welt.css .fr-ruf-btn-plus
+               auf var(--on-green), party.css .char-milestone-btn sowie
+               spells.css .spell-level und .spell-comp.active.ritual auf
+               var(--on-purple). */
 
             /* Die sechs Attributfarben standen bis 2026-09-28 hier und waren
                damit themenunabhaengig — in Light und Sepia erreichten alle

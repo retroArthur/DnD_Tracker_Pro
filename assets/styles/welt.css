@@ -1015,7 +1015,7 @@
 
 .fr-ruf-btn-minus {
     background: var(--red);
-    color: var(--on-accent);
+    color: var(--on-red);
     border: none;
 }
 .fr-ruf-btn-minus:hover {
@@ -1023,7 +1023,7 @@
 }
 .fr-ruf-btn-plus {
     background: var(--green);
-    color: var(--on-accent);
+    color: var(--on-green);
     border: none;
 }
 .fr-ruf-btn-plus:hover {

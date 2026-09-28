@@ -925,7 +925,7 @@
 
 .init-statblock-close:hover {
     background: var(--red);
-    color: var(--on-accent);
+    color: var(--on-red);
     border-color: var(--red);
 }
 

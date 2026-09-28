@@ -64,7 +64,7 @@
         .spell-name { font-weight: 600; color: var(--text); }
         .spell-level { 
             font-size: 0.75em; 
-            color: var(--on-accent);
+            color: var(--on-purple);
             background: var(--purple);
             padding: 2px 8px;
             border-radius: var(--radius-md);
@@ -124,7 +124,7 @@
         }
         
         .spell-comp.active { background: var(--gold); color: var(--bg-dark); }
-        .spell-comp.active.ritual { background: var(--purple); color: var(--on-accent); }
+        .spell-comp.active.ritual { background: var(--purple); color: var(--on-purple); }
         .spell-comp.active.verbal { background: var(--green); color: var(--bg-dark); }
         .spell-comp.active.gestik { background: var(--gold); color: var(--bg-dark); }
         .spell-comp.active.material { background: var(--pink); color: var(--bg-dark); }

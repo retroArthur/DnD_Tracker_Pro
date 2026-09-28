@@ -2974,7 +2974,7 @@
 .char-milestone-btn {
     align-self: flex-start;
     background: var(--purple);
-    color: var(--on-accent);
+    color: var(--on-purple);
     border: none;
     padding: 6px 14px;
     border-radius: var(--radius-md);
