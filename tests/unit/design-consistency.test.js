@@ -1051,3 +1051,293 @@ describe('F-21 — DM-Screen-Widget-Klassen ohne Regel (Ratsche)', () => {
         expect(unstyledDmsClasses().length).toBeLessThanOrEqual(DMS_UNSTYLED_MAX);
     });
 });
+
+/* ===========================================================================
+   Design-Handoff v3, Welle 1 — Vorlauf B: die zwei Farb-Ratschen
+   ===========================================================================
+   Beide Ratschen urteilen ueber den BERECHNETEN Farbwert, nicht ueber den
+   Deklarationstext. Das ist der Unterschied zum uebrigen Netz dieser Datei:
+   F-01 bis F-21 pruefen, DASS ein Token benutzt wird; R-01 und R-02 pruefen,
+   WAS dabei herauskommt. Der Rechner dahinter ist
+   tests/unit/helpers/wcag-contrast.js; er hat seinen eigenen Test
+   (tests/unit/wcag-contrast-helper.test.js, 24 Faelle) und einen Selbsttest
+   gegen die kanonischen Referenzwerte #777777/#fff = 4,48 und
+   #767676/#fff = 4,54, der bei jedem require() laeuft.
+
+   Er benutzt dieselbe Deklarations-Regex wie F-01 Test 1 (nur Zeilenanfang).
+   Das ist Absicht: urteilten die beiden Tests ueber verschiedene Tokenmengen,
+   waere die Differenz genau der Bereich, in dem ein Fehler unbemerkt bleibt.
+   =========================================================================== */
+
+const WCAG = require('./helpers/wcag-contrast.js');
+
+/**
+ * Die Tokens der :root-Schichten von variables.css — alles, was NICHT in einem
+ * der vier Theme-Bloecke steht.
+ *
+ * WARUM DIESE SCHICHT UEBER DEM THEME-BLOCK LIEGT, und nicht darunter:
+ * `:root` und `[data-theme="light"]` haben dieselbe Spezifitaet (0,1,0). Bei
+ * Gleichstand entscheidet die Quellreihenfolge, und der Aliasblock steht
+ * bewusst NACH allen vier Theme-Bloecken (F-01 Test 2 friert genau das ein).
+ * Ein Token, das in BEIDEN steht, nimmt also den Aliaswert an — der
+ * themenabhaengige Wert ist dann toter Buchstabe.
+ *
+ * Folge fuer Welle 1 Schritt 4: wer --attr-* und --coin-* in die Theme-Bloecke
+ * schreibt, MUSS die Aliaszeile entfernen. Sonst sieht der Quelltext richtig
+ * aus und die Farbe aendert sich nicht. R-02 meldet diesen Fall namentlich.
+ */
+function aliasSchicht() {
+    let rest = cssFiles.find(f => f.name === 'variables.css').content;
+    WCAG.THEMES.forEach(t => {
+        rest = rest.replace(WCAG.blockRegexFor(t), '\n');
+    });
+    const out = {};
+    // Letzter Treffer gewinnt — das ist die Kaskade.
+    for (const m of rest.matchAll(WCAG.DECL_RE)) out[m[1]] = m[2].trim();
+    return out;
+}
+
+describe('R-01 — Theme-Symmetrie (Ratsche)', () => {
+    // DIESE RATSCHE IST BEI IHRER GEBURT GRUEN, und das ist kein Versehen.
+    // Gemessen am 2026-09-28 (HEAD ca85d1b): alle vier Bloecke fuehren
+    // identisch dieselben 21 Schluessel, die Differenzmenge ist in beiden
+    // Richtungen leer. Es gab also KEINEN Rotlauf — wer einen sucht, sucht
+    // umsonst.
+    //
+    // Ihre Aufgabe ist eine andere: gruen zu BLEIBEN, waehrend Welle 1
+    // Schritt 4 je Block rund 31 Eintraege ergaenzt. Der Fehler, gegen den sie
+    // steht, ist der wahrscheinlichste dieser ganzen Welle — ein Token in drei
+    // von vier Bloecken. Im vierten Theme faellt es dann auf einen geerbten
+    // oder fehlenden Wert zurueck, lautlos, und nur dort.
+    test('die vier Theme-Bloecke fuehren genau dieselben Tokens', () => {
+        const pals = WCAG.palettes();
+        const mengen = {};
+        WCAG.THEMES.forEach(t => {
+            mengen[t] = new Set(Object.keys(pals[t]));
+        });
+        const abweichungen = [];
+        WCAG.THEMES.forEach(a => {
+            WCAG.THEMES.forEach(b => {
+                if (a === b) return;
+                [...mengen[a]]
+                    .filter(k => !mengen[b].has(k))
+                    .forEach(k => abweichungen.push(`${k}: in ${a}, fehlt in ${b}`));
+            });
+        });
+        expect([...new Set(abweichungen)].sort()).toEqual([]);
+    });
+});
+
+describe('R-02 — Tinte erreicht ihre Schwelle auf der TATSAECHLICHEN Flaeche (Ratsche)', () => {
+    /* -----------------------------------------------------------------------
+       VIER TEILFORMELN, und bei jeder ist die FLAECHENMENGE der eigentliche
+       Inhalt. Eine Kontrastpruefung gegen zu wenige Flaechen ist schlimmer als
+       keine: sie ist gruen und behauptet damit etwas Falsches.
+
+       Entscheidung D-2 (2026-09-28): massgeblich ist das MINIMUM ueber alle
+       tatsaechlichen Traegerflaechen, nicht --bg-card allein. --bg-hover ist
+       dabei NICHT optional — fuenf Regeln setzen Akzenttext ausdruecklich
+       darauf (core.css .header-action-btn:hover, .session-timer-btn:hover,
+       .btn-icon:hover; dmscreen.css .export-dropdown-item:hover; npcs.css
+       .loc-link:hover), und es ist in jedem Theme die schlechteste Flaeche.
+       Gegen die drei Flaechen ohne --bg-hover waere diese Ratsche ueber
+       16 von 18 zu schwachen Textwerten gruen.
+
+       WAS DIESE RATSCHE BEWUSST NICHT PRUEFT — Entscheidung D-4 (2026-09-28):
+       die 108 Stellen, an denen Akzenttext auf einer 20-%-TOENUNG DERSELBEN
+       Rolle sitzt (Prototyp core.css:579-586: `.color-<rolle> { background:
+       rgba(<Tripel>,0.2); color: var(--<rolle>) }`), plus die eine
+       color-mix-Variante. Auf dieser Flaeche haelt heute kein einziger Wert
+       4,5 (gemessen Light 2,82-3,50 · Sepia 3,01-4,23 · Dark red 3,29 ·
+       Contrast blue 3,32). Sie bleiben in WELLE 1 unangetastet, weil Tinte und
+       Toenungsstaerke rechnerisch nicht unabhaengig sind: eine hier gesetzte
+       Tinte muesste in Welle 2 erneut geaendert werden. WELLE 2 erweitert
+       R-02 um die Toenungsflaeche und entscheidet Staerke und Tinte in einem
+       Zug — der Rechner kann das schon (resolveOver() loest color-mix und
+       rgba-Alpha ueber einer gegebenen Flaeche auf). Bis dahin ist diese
+       Luecke hier benannt und damit keine stille Freigabe.
+
+       DASS DIESE RATSCHE JETZT ROT IST, ist der Zweck von Schritt 2: keines
+       der geforderten Tokens existiert. Gruen wird sie mit Schritt 4
+       (Tokendefinition), nicht vorher. Die Meldung nennt die fehlenden Tokens
+       namentlich, damit sie als Arbeitsliste taugt.
+       ----------------------------------------------------------------------- */
+
+    /** Die zehn Akzentrollen. --gold-dim gehoert dazu: `color: var(--gold-dim)`
+     *  steht 7x im Komponenten-CSS und verfehlt min4 in Dark (3,78) und Light
+     *  (3,74). Die Tabelle des Handoffs fuehrt nur neun Rollen; es sind zehn. */
+    const ROLLEN = [
+        '--gold',
+        '--gold-dim',
+        '--green',
+        '--red',
+        '--cyan',
+        '--yellow',
+        '--orange',
+        '--blue',
+        '--purple',
+        '--pink'
+    ];
+
+    const ATTRIBUTE = [
+        '--attr-str',
+        '--attr-dex',
+        '--attr-con',
+        '--attr-int',
+        '--attr-wis',
+        '--attr-cha'
+    ];
+
+    /** MUENZEN — Ausnahmeliste zu Teilformel 3, Entscheidung D-5 (2026-09-28).
+     *  Sie werden NICHT als Textfarbe geprueft, weil sie keine mehr sind: die
+     *  vier Metalle werden zur FLAECHE mit passender Tinte (--on-coin-*).
+     *  Grund: das Abdunkeln auf 4,5:1 zerstoert ihren einzigen Zweck —
+     *  --coin-gm #ffd700 braeuchte in Light 49 % Abdunklung auf #826e00, die
+     *  Goldmuenze waere olivbraun; --coin-sm #c0c0c0 wuerde #6f6f6f. Geprueft
+     *  wird stattdessen die Tinte AUF dem Metall, wie bei den Akzentrollen.
+     *  Wer in Schritt 12 stattdessen die dokumentierte Ausnahme
+     *  "Materialidentitaet" waehlt (D-5 nennt sie als Alternative), muss DIESE
+     *  Liste anpassen — und nicht die Ratsche rot stehen lassen. */
+    const MUENZEN = ['--coin-pm', '--coin-gm', '--coin-sm', '--coin-km'];
+
+    const TEXT_FLAECHEN = ['--bg-card', '--bg-dark', '--bg-elevated', '--bg-hover'];
+    /** Attributkuerzel liegen auf zwei Flaechen, nicht auf einer: .cf-coin-label
+     *  und .dms-attr-item/.dms-save-item auf --bg-dark (party.css:1075), aber
+     *  .attr-str..cha in dashboard.css:1278-1282 auf .qref-row mit --bg-card. */
+    const ATTR_FLAECHEN = ['--bg-dark', '--bg-card'];
+    /** Eingabefelder: gemessen 20 input/select/textarea-Regeln mit --bg-card,
+     *  14 mit --bg-dark, 5 mit --bg-elevated. Ein Rahmen grenzt ausserdem immer
+     *  an zwei Farben; WCAG 1.4.11 will fuer beide 3:1. */
+    const RAHMEN_FLAECHEN = ['--bg-dark', '--bg-card', '--bg-elevated'];
+
+    const TEXT_SCHWELLE = 4.5;
+    const RAHMEN_SCHWELLE = 3;
+
+    test('vier Teilformeln in allen vier Themes', () => {
+        const pals = WCAG.palettes();
+        const alias = aliasSchicht();
+        const befunde = [];
+        const fehlt = new Map();
+        const doppelt = new Map();
+
+        const merke = (karte, token, theme) => {
+            if (!karte.has(token)) karte.set(token, new Set());
+            karte.get(token).add(theme);
+        };
+
+        WCAG.THEMES.forEach(theme => {
+            // Effektive Palette: Aliasschicht UEBER dem Theme-Block (Kaskade).
+            const p = { ...pals[theme], ...alias };
+            Object.keys(alias).forEach(k => {
+                if (k in pals[theme] && alias[k] !== pals[theme][k]) merke(doppelt, k, theme);
+            });
+
+            const wert = token => (token in p ? WCAG.resolve(p[token], p) : null);
+
+            /** Teilformel 1 und der Muenz-Ersatz: Tinte AUF einer gefuellten
+             *  Flaeche derselben Rolle. Heutiger Ausgangswert: dort steht
+             *  `color: var(--bg-dark)` (86x) oder `color: white` (39x). Mit
+             *  diesen zwei Systemtinten ist die schlechteste Zelle
+             *  Light --yellow 2,94; der schlechteste TATSAECHLICH benutzte Fall
+             *  ist weisse Schrift auf Dark --green = 1,74. */
+            const aufFlaeche = (tinte, flaeche) => {
+                const tw = wert(tinte);
+                const fw = wert(flaeche);
+                if (!tw) return merke(fehlt, tinte, theme);
+                if (!fw) return merke(fehlt, flaeche, theme);
+                const r = WCAG.ratio2(tw, fw);
+                if (r < TEXT_SCHWELLE) {
+                    befunde.push(
+                        `(1) ${theme} ${tinte} ${tw} auf ${flaeche} ${fw}: ${r} < ${TEXT_SCHWELLE}`
+                    );
+                }
+                return undefined;
+            };
+            // --gold -> --on-gold, --coin-gm -> --on-coin-gm (EIN fuehrender
+            // Bindestrich wird durch das Praefix ersetzt, nicht verdoppelt).
+            const tinteZu = rolle => `--on${rolle.slice(1)}`;
+            ROLLEN.forEach(r => aufFlaeche(tinteZu(r), r));
+            MUENZEN.forEach(m => aufFlaeche(tinteZu(m), m));
+
+            /** Teilformel 2: Akzent als Textfarbe auf NEUTRALER Theme-Flaeche.
+             *  Heutiger Ausgangswert (die Rolle steht dort unveraendert als
+             *  Text): 20 der 40 Zellen unter 4,5, schlechteste Flaeche immer
+             *  --bg-hover. Light --yellow 2,16 · Sepia --cyan 2,30 ·
+             *  Dark --red 3,36 (69 Deklarationen im Standardtheme!) ·
+             *  Contrast --red 3,16. */
+            ROLLEN.forEach(rolle => {
+                const token = `${rolle}-text`;
+                const m = WCAG.minRatioOverSurfaces(token, TEXT_FLAECHEN, p);
+                if (m.min === null) {
+                    m.missing.forEach(x => merke(fehlt, x, theme));
+                    return;
+                }
+                if (m.min < TEXT_SCHWELLE) {
+                    befunde.push(
+                        `(2) ${theme} ${token} ${wert(token)}: min4 ${m.min} < ${TEXT_SCHWELLE} ` +
+                            `(schlechteste Flaeche ${m.worst})`
+                    );
+                }
+            });
+
+            /** Teilformel 3: Attributkuerzel als Textfarbe. Heutiger
+             *  Ausgangswert: Dark --attr-wis 4,40 (verfehlt knapp, deshalb
+             *  korrigiert D-5 auch Dark); Light alle sechs 1,97-4,43; Sepia
+             *  alle sechs 1,71-3,68; Contrast alle sechs >= 4,72 (halten).
+             *  NEBENBEFUND, hier notiert weil hier geurteilt wird:
+             *  --attr-con hat in der Schnellreferenz gar keine Regel
+             *  (dashboard.css:1278-1282 faerbt nur str/dex/int/wis/cha, KON
+             *  erbt die Zeilenfarbe), und die sechs .dms-save-attr-Regeln sind
+             *  zur Laufzeit tot (dmscreen-widgets-reference.js:56-76 setzt die
+             *  Attributklasse nicht). Fuer diese sieben Stellen ist keine
+             *  Sichtpruefung moeglich — die Ratsche urteilt trotzdem. Die
+             *  Tokennamen sind ausserdem eingefroren: design-consistency.
+             *  test.js:679-687 verlangt wortwoertlich `var(--attr-<a>)`, ein
+             *  umbenanntes Token matcht das Regex nicht mehr. */
+            ATTRIBUTE.forEach(token => {
+                const m = WCAG.minRatioOverSurfaces(token, ATTR_FLAECHEN, p);
+                if (m.min === null) {
+                    m.missing.forEach(x => merke(fehlt, x, theme));
+                    return;
+                }
+                if (m.min < TEXT_SCHWELLE) {
+                    befunde.push(
+                        `(3) ${theme} ${token} ${wert(token)}: min2 ${m.min} < ${TEXT_SCHWELLE} ` +
+                            `(schlechteste Flaeche ${m.worst})`
+                    );
+                }
+            });
+
+            /** Teilformel 4: Eingaberahmen, Schwelle 3 (WCAG 1.4.11, kein
+             *  Text). Heutiger Ausgangswert: --border-input existiert nicht,
+             *  die Felder tragen --border — min3 Dark 1,35 · Light 1,31 ·
+             *  Sepia 1,53 · Contrast 2,13, also in JEDEM Theme unter 3.
+             *  Entscheidung D-8: Dark wird #7c7c7c und nicht #6b6b6b — der
+             *  kleinere Wert ergibt gegen --bg-elevated nur 2,88, und dort
+             *  sitzen 5 Eingabefelder. Das ANWENDEN auf die Felder ist
+             *  Welle 6; Welle 1 definiert nur das Token. */
+            const m4 = WCAG.minRatioOverSurfaces('--border-input', RAHMEN_FLAECHEN, p);
+            if (m4.min === null) m4.missing.forEach(x => merke(fehlt, x, theme));
+            else if (m4.min < RAHMEN_SCHWELLE) {
+                befunde.push(
+                    `(4) ${theme} --border-input ${wert('--border-input')}: ` +
+                        `min3 ${m4.min} < ${RAHMEN_SCHWELLE} (schlechteste Flaeche ${m4.worst})`
+                );
+            }
+        });
+
+        const themenliste = karte =>
+            [...karte.keys()]
+                .sort()
+                .map(t => `${t} (${WCAG.THEMES.filter(x => karte.get(t).has(x)).join('/')})`);
+
+        themenliste(fehlt).forEach(z => befunde.push(`FEHLT: ${z}`));
+        themenliste(doppelt).forEach(z =>
+            befunde.push(
+                `DOPPELT DEFINIERT, der Aliaswert gewinnt und der Theme-Wert ist tot: ${z}`
+            )
+        );
+
+        expect(befunde.sort()).toEqual([]);
+    });
+});
