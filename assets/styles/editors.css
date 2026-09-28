@@ -347,7 +347,7 @@
             font-size: 10px;
             letter-spacing: 0.12em;
             text-transform: uppercase;
-            color: var(--gold);
+            color: var(--gold-text);
             white-space: nowrap;
         }
 
@@ -533,13 +533,13 @@
 .section-toolbar-title {
     font-size: 1em;
     font-weight: 600;
-    color: var(--gold);
+    color: var(--gold-text);
     white-space: nowrap;
 }
 
 .section-toolbar-count {
     font-size: 0.85em;
-    color: var(--cyan);
+    color: var(--cyan-text);
     padding: 3px 10px;
     background: var(--bg-dark);
     border-radius: var(--radius-lg);
@@ -625,7 +625,7 @@
 .section-toolbar-actions .btn-special {
     background: var(--bg-elevated);
     border: 1px solid var(--cyan);
-    color: var(--cyan);
+    color: var(--cyan-text);
 }
 
 .section-toolbar-actions .btn-special:hover {
@@ -769,7 +769,7 @@
         .dialog-text .editor-block-table th,
         .cf-notes-editor .editor-block-table th {
             background: var(--bg-elevated);
-            color: var(--gold);
+            color: var(--gold-text);
             text-align: left;
         }
 
