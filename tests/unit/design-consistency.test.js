@@ -1238,10 +1238,51 @@ describe('R-02 — Tinte erreicht ihre Schwelle auf der TATSAECHLICHEN Flaeche (
     const MUENZEN = ['--coin-pm', '--coin-gm', '--coin-sm', '--coin-km'];
 
     const TEXT_FLAECHEN = ['--bg-card', '--bg-dark', '--bg-elevated', '--bg-hover'];
-    /** Attributkuerzel liegen auf zwei Flaechen, nicht auf einer: .cf-coin-label
-     *  und .dms-attr-item/.dms-save-item auf --bg-dark (party.css:1075), aber
-     *  .attr-str..cha in dashboard.css:1278-1282 auf .qref-row mit --bg-card. */
-    const ATTR_FLAECHEN = ['--bg-dark', '--bg-card'];
+    /** Attributkuerzel liegen auf DREI Flaechen. Die frueher hier stehende
+     *  Zweierliste war doppelt falsch, beides am 2026-09-28 nachgesehen:
+     *
+     *  (a) --bg-hover FEHLTE. `.attr-str`..`.attr-cha` sind direkte Kinder von
+     *      `.qref-row` (modals-editors.html:370-376), und dashboard.css fuehrt
+     *      BEIDE Zustaende: `.qref-row { background: var(--bg-card) }` (:1257)
+     *      und `.qref-row:hover { background: var(--bg-hover) }` (:1267). Der
+     *      Hover-Zustand ist beim Lesen einer Zeile nicht die Ausnahme, sondern
+     *      der Normalfall. Ohne diese Flaeche war die Teilformel gruen, waehrend
+     *      10 der 12 Light-/Sepia-Zellen dort unter 4,5 lagen (3,66-4,21) —
+     *      genau die Auslassung, gegen die D-2 eine Teilformel weiter oben
+     *      geschrieben ist.
+     *  (b) `.cf-coin-label` gehoerte nie hierher: party.css:1494-1498 faerbt es
+     *      mit --coin-pm/-gm/-sm/-km und --green, nie mit einem --attr-*. Die
+     *      Traeger auf --bg-dark sind `.dms-attr-item` (dmscreen.css:1613) und
+     *      `.dms-save-item` (dmscreen.css:1676).
+     *
+     *  --bg-elevated bleibt BEWUSST draussen, anders als bei den Rollen: kein
+     *  Attributkuerzel erreicht diese Flaeche. Die tragenden Behaelter setzen
+     *  ihren eigenen deckenden Hintergrund (--bg-card/--bg-hover bzw.
+     *  --bg-dark), damit ist der Hintergrund ihrer Eltern gleichgueltig. Eine
+     *  Flaeche mitzupruefen, die es nicht gibt, waere keine schaerfere Ratsche,
+     *  sondern eine unbelegte. Die vierte denkbare Flaeche — die 20-%-Toenung
+     *  derselben Rolle in `.dms-skill-header` (dmscreen.css:1728-1732) — ist
+     *  durch D-4 ausdruecklich erst Welle 2. */
+    const ATTR_FLAECHEN = ['--bg-dark', '--bg-card', '--bg-hover'];
+
+    /** BENANNTE AUSNAHME zu Teilformel 3 — nur fuer --bg-hover, nur fuer die
+     *  Zellen, die Entscheidung D-5 ausdruecklich eingefroren hat
+     *  ("Dark/Contrast behalten ihre Werte, ausser --attr-wis").
+     *
+     *  Diese acht Zellen halten auf --bg-dark und --bg-card (4,52-5,95), aber
+     *  nicht auf --bg-hover (#333 in beiden Themes). Sie ANZUHEBEN hiesse, eine
+     *  Nutzerentscheidung zu ueberschreiben; sie STILL zu lassen hiesse, die
+     *  Ratsche wieder etwas Falsches behaupten zu lassen. Also stehen sie hier
+     *  namentlich mit ihrem gemessenen Wert, und der Eintrag ist selbst eine
+     *  Ratsche: er meldet, wenn eine Zelle sich VERSCHLECHTERT, wenn sie auf
+     *  einer der beiden anderen Flaechen faellt, und wenn sie die Schwelle
+     *  inzwischen haelt und der Eintrag damit nur noch Altlast waere.
+     *  Light/Sepia stehen NICHT hier: dort erlaubt D-5 das Abdunkeln
+     *  ("nur so weit wie noetig"), und noetig ist es auf --bg-hover. */
+    const ATTR_HOVER_AUSNAHME = {
+        dark: { '--attr-str': 3.36, '--attr-int': 3.44, '--attr-wis': 3.28, '--attr-cha': 3.58 },
+        contrast: { '--attr-str': 3.16, '--attr-int': 3.44, '--attr-wis': 3.28, '--attr-cha': 3.58 }
+    };
     /** Eingabefelder. Eigene Zaehlung am 2026-09-28, regelweise ueber das
      *  kommentarfreie CSS (Selektor enthaelt input|select|textarea UND die
      *  Regel setzt background/background-color auf ein var(--bg-*)):
@@ -1334,10 +1375,14 @@ describe('R-02 — Tinte erreicht ihre Schwelle auf der TATSAECHLICHEN Flaeche (
                 }
             });
 
-            /** Teilformel 3: Attributkuerzel als Textfarbe. Heutiger
-             *  Ausgangswert: Dark --attr-wis 4,40 (verfehlt knapp, deshalb
-             *  korrigiert D-5 auch Dark); Light alle sechs 1,97-4,43; Sepia
-             *  alle sechs 1,71-3,68; Contrast alle sechs >= 4,72 (halten).
+            /** Teilformel 3: Attributkuerzel als Textfarbe. Ausgangswert VOR
+             *  Welle 1, noch auf der alten Zweierbasis gemessen und deshalb hier
+             *  als das gekennzeichnet, was er ist — ein historischer Stand:
+             *  Dark --attr-wis 4,40 (verfehlt knapp, deshalb korrigiert D-5 auch
+             *  Dark); Light alle sechs 1,97-4,43; Sepia alle sechs 1,71-3,68;
+             *  Contrast alle sechs >= 4,72. Geurteilt wird jetzt ueber drei
+             *  Flaechen (siehe ATTR_FLAECHEN); --bg-hover ist in jedem Theme die
+             *  schlechteste.
              *  NEBENBEFUND, hier notiert weil hier geurteilt wird:
              *  --attr-con hat in der Schnellreferenz gar keine Regel
              *  (dashboard.css:1278-1282 faerbt nur str/dex/int/wis/cha, KON
@@ -1354,10 +1399,39 @@ describe('R-02 — Tinte erreicht ihre Schwelle auf der TATSAECHLICHEN Flaeche (
                     m.missing.forEach(x => merke(fehlt, x, theme));
                     return;
                 }
-                if (m.min < TEXT_SCHWELLE) {
+                const eingetragen = (ATTR_HOVER_AUSNAHME[theme] || {})[token];
+                if (eingetragen === undefined) {
+                    if (m.min < TEXT_SCHWELLE) {
+                        befunde.push(
+                            `(3) ${theme} ${token} ${wert(token)}: min3 ${m.min} < ` +
+                                `${TEXT_SCHWELLE} (schlechteste Flaeche ${m.worst})`
+                        );
+                    }
+                    return;
+                }
+                // Eingetragene Ausnahme: sie deckt AUSSCHLIESSLICH --bg-hover,
+                // und auch dort nur den eingetragenen Stand.
+                const hover = m.values['--bg-hover'];
+                const ohneHover = Math.min(
+                    ...ATTR_FLAECHEN.filter(f => f !== '--bg-hover').map(f => m.values[f])
+                );
+                if (ohneHover < TEXT_SCHWELLE) {
                     befunde.push(
-                        `(3) ${theme} ${token} ${wert(token)}: min2 ${m.min} < ${TEXT_SCHWELLE} ` +
-                            `(schlechteste Flaeche ${m.worst})`
+                        `(3) ${theme} ${token} ${wert(token)}: min2 ohne --bg-hover ` +
+                            `${ohneHover} < ${TEXT_SCHWELLE} — die Ausnahme deckt nur --bg-hover`
+                    );
+                }
+                if (hover < eingetragen) {
+                    befunde.push(
+                        `(3) ${theme} ${token} ${wert(token)}: auf --bg-hover ${hover}, ` +
+                            `eingetragen war ${eingetragen} — die benannte Ausnahme ` +
+                            `verschlechtert sich`
+                    );
+                }
+                if (hover >= TEXT_SCHWELLE) {
+                    befunde.push(
+                        `(3) ${theme} ${token} ${wert(token)}: haelt auf --bg-hover jetzt ` +
+                            `${hover} — Eintrag aus ATTR_HOVER_AUSNAHME entfernen`
                     );
                 }
             });
