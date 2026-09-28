@@ -113,7 +113,7 @@
         
         .header-action-btn:hover {
             border-color: var(--gold);
-            color: var(--gold);
+            color: var(--gold-text);
             background: var(--bg-hover);
         }
         
@@ -193,17 +193,17 @@
         .session-timer-display {
             font-size: 14px;
             font-weight: 600;
-            color: var(--gold);
+            color: var(--gold-text);
             min-width: 65px;
             text-align: center;
         }
         
         .session-timer.running .session-timer-display {
-            color: var(--green);
+            color: var(--green-text);
         }
         
         .session-timer.paused .session-timer-display {
-            color: var(--yellow);
+            color: var(--yellow-text);
         }
         
         .session-timer-btn {
@@ -218,18 +218,18 @@
         }
         
         .session-timer-btn:hover {
-            color: var(--gold);
+            color: var(--gold-text);
             background: var(--bg-hover);
         }
         
         .session-content h3 {
-            color: var(--gold);
+            color: var(--gold-text);
             margin: 0 0 8px 0;
             font-size: 1.1em;
         }
         
         .session-content h4 {
-            color: var(--cyan);
+            color: var(--cyan-text);
             margin: 12px 0 6px 0;
             font-size: 0.95em;
         }
@@ -264,7 +264,7 @@
         
         .session-content th {
             background: var(--bg-dark);
-            color: var(--gold);
+            color: var(--gold-text);
         }
         
         :root {
@@ -301,7 +301,7 @@
         }
         
         .app-title {
-            color: var(--gold);
+            color: var(--gold-text);
             font-size: 1.2em;
         }
         
@@ -416,7 +416,7 @@
         }
         
         .card-title {
-            color: var(--gold);
+            color: var(--gold-text);
             font-size: 1em;
             font-weight: 600;
         }
@@ -424,7 +424,7 @@
         /* Buttons */
         .btn {
             background: var(--bg-elevated);
-            color: var(--gold);
+            color: var(--gold-text);
             border: 1px solid var(--gold);
             padding: 6px 12px;
             border-radius: var(--radius-sm);
@@ -454,7 +454,7 @@
 
         .btn-text:hover {
             background: transparent;
-            color: var(--gold);
+            color: var(--gold-text);
         }
 
         /* ------------------------------------------------------------
@@ -479,7 +479,7 @@
 
         .btn-warning {
             border-color: var(--yellow);
-            color: var(--yellow);
+            color: var(--yellow-text);
         }
 
         .btn-warning:hover {
@@ -500,7 +500,7 @@
 
         .btn-icon:hover {
             background: var(--bg-hover);
-            color: var(--gold);
+            color: var(--gold-text);
         }
 
         .btn-sm.btn-icon {
@@ -514,7 +514,7 @@
             outline: 2px solid var(--gold);
             outline-offset: 2px;
         }
-        .btn-danger { border-color: var(--red); color: var(--red); }
+        .btn-danger { border-color: var(--red); color: var(--red-text); }
         .btn-success { background: var(--green); border-color: var(--green); color: var(--on-green); font-weight: 600; }
         .btn-gold { background: var(--gold); border-color: var(--gold); color: var(--on-gold); font-weight: 600; }
         /* Code-Review 2026-09-08: stand auf var(--gold) — identisch zur Basisregel
@@ -721,14 +721,14 @@
            LINKS / REFERENCES
            ============================================================ */
         .entity-link {
-            color: var(--cyan);
+            color: var(--cyan-text);
             cursor: pointer;
             text-decoration: underline;
             text-decoration-style: dotted;
         }
         
         .entity-link:hover {
-            color: var(--gold);
+            color: var(--gold-text);
             text-decoration-style: solid;
         }
         
@@ -809,7 +809,7 @@
 
         .char-card-name {
             font-weight: 600;
-            color: var(--gold);
+            color: var(--gold-text);
             font-size: 0.95em;
             display: flex;
             align-items: center;
@@ -845,9 +845,9 @@
             font-size: 0.9em;
         }
 
-        .char-card-hp-value.healthy { color: var(--green); }
-        .char-card-hp-value.bloodied { color: var(--yellow); }
-        .char-card-hp-value.critical { color: var(--red); }
+        .char-card-hp-value.healthy { color: var(--green-text); }
+        .char-card-hp-value.bloodied { color: var(--yellow-text); }
+        .char-card-hp-value.critical { color: var(--red-text); }
 
         .char-card-hp-bar {
             width: 60px;
@@ -895,7 +895,7 @@
         }
 
         .char-stat-pill-value {
-            color: var(--cyan);
+            color: var(--cyan-text);
             font-weight: 600;
         }
 
@@ -929,7 +929,7 @@
         }
 
         .char-attr-pill-mod {
-            color: var(--gold);
+            color: var(--gold-text);
             font-size: 0.95em;
         }
 
@@ -1030,7 +1030,7 @@
             justify-content: center;
             font-size: 1.8em;
             font-weight: 700;
-            color: var(--gold);
+            color: var(--gold-text);
         }
         
         .char-modal-title {
@@ -1092,7 +1092,7 @@
         .char-vital-value {
             font-size: 1.1em;
             font-weight: 700;
-            color: var(--cyan);
+            color: var(--cyan-text);
         }
         
         .char-vital-label {
@@ -1116,7 +1116,7 @@
         
         .char-attr-name {
             font-size: 0.65em;
-            color: var(--gold);
+            color: var(--gold-text);
             font-weight: 600;
         }
         
@@ -1128,7 +1128,7 @@
         
         .char-attr-mod {
             font-size: 0.8em;
-            color: var(--cyan);
+            color: var(--cyan-text);
         }
         
         /* Info Grid */
@@ -1182,7 +1182,7 @@
         }
         
         .char-info-value.gold {
-            color: var(--gold);
+            color: var(--gold-text);
         }
         
         /* Inventory Boxes */
@@ -1354,7 +1354,7 @@
         .spell-tooltip-name {
             font-size: 1.1em;
             font-weight: bold;
-            color: var(--gold);
+            color: var(--gold-text);
         }
         
         .spell-tooltip-level {
@@ -1403,7 +1403,7 @@
             padding: 2px 6px;
             border-radius: var(--radius-sm);
             background: var(--bg-dark);
-            color: var(--cyan);
+            color: var(--cyan-text);
         }
         
         .spell-tooltip-classes {
@@ -2001,7 +2001,7 @@
         }
         
         .search-clear-btn:hover {
-            color: var(--red);
+            color: var(--red-text);
         }
         
         /* ============================================================
@@ -2454,7 +2454,7 @@
         .loc-detail-name {
             font-size: 1.2em;
             font-weight: 700;
-            color: var(--gold);
+            color: var(--gold-text);
             word-break: break-word;
         }
 
