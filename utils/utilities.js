@@ -321,12 +321,19 @@ function maxEntityId(items) {
  * erreicht oder ueberschreitet, gibt es oberhalb keine neu vergebbare ID mehr
  * (siehe isMintableEntityId), also werden die Luecken UNTERHALB des Maximums
  * genutzt.
+ * Die Sammlung allein beantwortet die Frage "ist diese ID frei?" NICHT: eine ID, die
+ * dieses Seitenleben schon herausgegeben hat, ist bis zum `push` in KEINER Sammlung
+ * (Stapel ohne push, liegen gebliebener Import-Datensatz, abgebrochenes Speichern).
+ * Darum nimmt die Suche mit `vergeben` dieselbe Erinnerung, mit der auch der Waechter
+ * in nextId() arbeitet (MINT_ISSUED) — sonst gibt sie eine unterwegs befindliche ID ein
+ * zweites Mal aus, sobald der Startzeiger unter sie zurueckfaellt (G2).
  * @param items - Sammlung (Nicht-Arrays werden als leer behandelt)
  * @param start - Startkandidat; nicht vergebbare Werte starten bei 1
+ * @param vergeben - Zusaetzlich belegte IDs dieses Seitenlebens (Set, optional)
  * @returns Freie vergebbare ID (1 .. ENTITY_ID_MAX - 1)
  * @throws Error, wenn jede ID bis ENTITY_ID_MAX - 1 belegt ist (praktisch unerreichbar)
  */
-function nextFreeEntityId(items, start) {
+function nextFreeEntityId(items, start, vergeben) {
     const belegt = new Set();
     if (Array.isArray(items)) {
         for (const item of items) {
@@ -336,7 +343,7 @@ function nextFreeEntityId(items, start) {
         }
     }
     let candidate = isMintableEntityId(start) ? start : 1;
-    while (belegt.has(candidate)) candidate++;
+    while (belegt.has(candidate) || (vergeben ? vergeben.has(candidate) : false)) candidate++;
     // Bewusst ein Fehler statt einer ungueltigen oder doppelten ID: lieber ein
     // sichtbarer Abbruch als stiller Datenverlust beim naechsten Loeschen.
     if (!isMintableEntityId(candidate)) throw new Error('Keine freie ID');
@@ -361,8 +368,10 @@ function nextFreeEntityId(items, start) {
 const MINT_CURSOR = new Map();
 /**
  * Die in diesem Prozess herausgegebenen IDs je Typ — ebenfalls nur im Speicher. Sie sind
- * die Erinnerung, mit der der Waechter in nextId() arbeitet, und ihre FORM ist der Punkt:
- * er muss genau eine Frage beantworten — "ist GENAU DIESE ID hier schon herausgegeben?".
+ * die Erinnerung, mit der BEIDE Vergabestellen in nextId() arbeiten (der Waechter und die
+ * Lueckensuche der Saettigung, die sie als `vergeben` bekommt: fragt nur eine von beiden,
+ * gibt die andere eine unterwegs befindliche ID erneut aus). Ihre FORM ist der Punkt:
+ * sie muss genau eine Frage beantworten — "ist GENAU DIESE ID hier schon herausgegeben?".
  * Eine Hoechstmarke (hier stand vorher MINT_PEAK) ueberapproximiert das zu "jede ID bis
  * zur hoechsten je gemuenzten koennte unterwegs sein" und verfaellt nie: ein einziges
  * Muenzen nahe der Obergrenze — voellig regulaer, z. B. aus einem Datei-Zaehler von
@@ -426,7 +435,11 @@ function nextId(type) {
     // Luecke unterhalb des Maximums vergeben: geloeschte IDs werden hier bewusst
     // wiederverwendet, weil es oberhalb keine mehr gibt.
     if (!isMintableEntityId(id)) {
-        id = nextFreeEntityId(getIdCollection(D, type), MINT_CURSOR.get(type) || 1);
+        // Die Suche bekommt BEIDE Belegungen: die Sammlung und die schon herausgegebenen
+        // IDs dieses Seitenlebens. Der Startzeiger allein genuegt nicht — er faellt mit
+        // jeder geheilten niedrigen Untergrenze zurueck und laeuft dann erneut ueber
+        // Zahlen, die noch unterwegs sind und in keiner Sammlung stehen (G2j/G2k).
+        id = nextFreeEntityId(getIdCollection(D, type), MINT_CURSOR.get(type) || 1, issued);
         MINT_CURSOR.set(type, id + 1);
         issued.add(id);
         // Der persistente Zaehler darf die niedrige Luecken-ID NICHT tragen: sie liegt
