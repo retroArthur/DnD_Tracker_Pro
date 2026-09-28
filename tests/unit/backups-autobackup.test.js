@@ -972,6 +972,32 @@ describe('R05 (Schreibseite) — localStorage-Rueckfallliste je Kampagne, kein L
         expect(liste[0].kind).toBe('safety');
     });
 
+    // D-A Regel 1, zweite Haelfte: ein Eintrag OHNE campaignKey ist verwaist, auch wenn der
+    // Kampagnenindex unlesbar ist (dann gilt sonst kein Eintrag als verwaist) — sonst muesste
+    // hier der einzige Eintrag einer echten Kampagne weichen oder alles scheitern.
+    test('T12g: unlesbarer Index, Eintrag ohne campaignKey -> die Waise weicht, As einziger Eintrag bleibt', async () => {
+        const w = erzeugeWerkbank({
+            idbAus: true,
+            ls: {
+                [BACKUP_KEY]: JSON.stringify([
+                    eintrag(KEY_A, 5, '{"characters":[{"id":1,"name":"A"}]}'),
+                    eintrag('', 3, '{"characters":[{"id":1,"name":"Ohne Schlüssel"}]}')
+                ])
+            },
+            quota: quotaEinmal(BACKUP_KEY)
+        });
+        w.ctx.getCampaignIndex = () => {
+            throw new Error('Kampagnenindex unlesbar (Test)');
+        };
+        mitHeld(w, 'B-Held');
+        const r = await mitFrist(w.ctx.createAutoBackup());
+        const kennungen = lsListe(w).map(kennung);
+        expect(r.wert).toBe('written');
+        expect(kennungen).toContain(`${KEY_A}@5`);
+        expect(kennungen).not.toContain('@3');
+        expect(lsListe(w).filter(b => b.campaignKey === KEY_B)).toHaveLength(1);
+    });
+
     test('T13: jeder Schreibversuch scheitert -> "failed", die gespeicherte Liste bleibt byte-identisch, kein Toast-Spam', async () => {
         const roh = JSON.stringify([
             eintrag(KEY_A, 5, '{"characters":[{"id":1,"name":"A"}]}'),

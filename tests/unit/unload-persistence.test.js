@@ -1511,10 +1511,7 @@ describe('D-C — veralteter Tab mit ausdruecklicher Arbeit wechselt verlustfrei
             name,
             Object.assign(
                 {
-                    module: [
-                        'systems/backups.js',
-                        'systems/campaign-manager/campaign-manager.js'
-                    ]
+                    module: ['systems/backups.js', 'systems/campaign-manager/campaign-manager.js']
                 },
                 opt
             )
