@@ -67,8 +67,8 @@
         
         .search-result-type.npc { background: var(--cyan); color: var(--on-cyan); }
         .search-result-type.location { background: var(--green); color: var(--on-green); }
-        .search-result-type.quest { background: var(--purple); color: white; }
-        .search-result-type.spell { background: var(--blue); color: white; }
+        .search-result-type.quest { background: var(--purple); color: var(--on-purple); }
+        .search-result-type.spell { background: var(--blue); color: var(--on-blue); }
         .search-result-type.character { background: var(--gold); color: var(--on-gold); }
         
         .search-result-name {
@@ -925,7 +925,7 @@
         .btn-danger:hover {
             box-shadow: 0 0 12px rgba(239, 68, 68, 0.25);
             background: var(--red); /* F-18: aus der Dublette uebernommen */
-            color: white; /* F-18: aus der Dublette uebernommen */
+            color: var(--on-red); /* F-18: aus der Dublette uebernommen */
         }
         
         /* View Transitions - opacity only, no transform to avoid layout issues */
@@ -2234,7 +2234,7 @@
 
 .dms-profile-delete:hover {
     background: var(--red);
-    color: white;
+    color: var(--on-red);
 }
 
 .dms-profile-save {
@@ -2280,7 +2280,7 @@
 
 .dmscreen-widget-hide:hover {
     background: var(--red);
-    color: white;
+    color: var(--on-red);
 }
 
 /* Widget Drag States */
