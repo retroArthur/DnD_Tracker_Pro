@@ -292,7 +292,7 @@
         
         .slot-pip.filled {
             background: var(--cyan);
-            color: var(--bg-dark);
+            color: var(--on-cyan);
         }
         
         .slot-pip:hover {
@@ -565,7 +565,7 @@
         
         .monster-template-btn:hover {
             background: var(--gold);
-            color: var(--bg-dark);
+            color: var(--on-gold);
             border-color: var(--gold);
         }
         
@@ -901,7 +901,7 @@
 
 .dash-quick-btn.primary {
     background: var(--gold);
-    color: var(--bg-dark);
+    color: var(--on-gold);
     border-color: var(--gold);
     font-weight: 600;
 }
@@ -986,7 +986,7 @@
 }
 
 .dash-quest-type.plot { background: var(--purple); color: white; }
-.dash-quest-type.side { background: var(--cyan); color: var(--bg-dark); }
+.dash-quest-type.side { background: var(--cyan); color: var(--on-cyan); }
 
 /* Session Items */
 .dash-session {
@@ -1288,7 +1288,7 @@
 
 .qref-badge.gold {
     background: var(--gold);
-    color: var(--bg-dark);
+    color: var(--on-gold);
 }
 
 /* Exhaustion */
@@ -1313,7 +1313,7 @@
 
 .qref-ex:hover {
     background: var(--orange);
-    color: var(--bg-dark);
+    color: var(--on-orange);
 }
 
 .qref-ex.warn {
@@ -1330,9 +1330,9 @@
     background: var(--red);
     color: white;
 }
-.qref-diff.easy { background: var(--green); color: var(--bg-dark); }
-.qref-diff.medium { background: var(--yellow); color: var(--bg-dark); }
-.qref-diff.hard { background: var(--orange); color: var(--bg-dark); }
+.qref-diff.easy { background: var(--green); color: var(--on-green); }
+.qref-diff.medium { background: var(--yellow); color: var(--on-yellow); }
+.qref-diff.hard { background: var(--orange); color: var(--on-orange); }
 .qref-diff.deadly { background: var(--red); color: white; }
 
 /* Empty state */
@@ -1630,7 +1630,7 @@
     background: var(--green);
     border: none;
     border-radius: var(--radius-sm);
-    color: var(--bg-dark);
+    color: var(--on-green);
     cursor: pointer;
     font-size: 0.8em;
     font-weight: bold;
@@ -1751,7 +1751,7 @@
 
 .qref-cover-badge.gold {
     background: var(--gold);
-    color: var(--bg-dark);
+    color: var(--on-gold);
     font-weight: 600;
 }
 
