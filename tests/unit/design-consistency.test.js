@@ -254,10 +254,28 @@ describe('F-14 — eine Primaerfarbe fuer "Neu anlegen"', () => {
         // Vorher gab es KEINE Basisregel, nur zusammengesetzte Selektoren
         // (.section-toolbar-actions .btn-primary, .btn.btn-primary.migration-btn-next).
         // Buttons mit der Klasse sahen aus wie ein gewoehnlicher .btn.
+        //
+        // DIE LETZTE ZUSICHERUNG IST AB 2026-09-28 ABSICHTLICH ROT, bis Welle 1
+        // Schritt 6 core.css erreicht. NICHT auf var(--bg-dark) zurueckdrehen.
+        //
+        // Vorher verlangte sie hier wortwoertlich `color: var(--bg-dark)` und hat
+        // damit genau den Fehler eingefroren, den sie finden sollte: in Light ist
+        // --bg-dark HELL (#f5f5f5), die Primaeraktion war also hell auf hell.
+        // Gemessen 2,98:1 in Light und 2,55:1 in Sepia — an dem Knopf, der in
+        // jeder Ansicht oben rechts steht. Die Tinte auf einer gefuellten
+        // Akzentflaeche gehoert nicht aus der Flaechenpalette, sondern aus
+        // --on-<rolle>; hier --on-gold.
+        //
+        // Der Rotlauf ist die Reihenfolge, die Arbeitsregel 5 verlangt: die
+        // Zusicherung wird VOR der Aenderung angepasst, nicht waehrend des
+        // Rotlaufs entschaerft. Gruen macht sie Schritt 6, der core.css von
+        // `color: var(--bg-dark)` auf `color: var(--on-gold)` umstellt (eine von
+        // 86 gleichartigen Stellen). Die zweite Zusicherung dieses describe-Blocks
+        // (kein gruener "+ Neu"-Knopf) ist von Welle 1 nicht betroffen.
         const base = cssCode.match(/\n\s*\.btn-primary\s*\{([^{}]*)\}/);
         expect(base).not.toBeNull();
         expect(base[1]).toMatch(/background:\s*var\(--gold\)/);
-        expect(base[1]).toMatch(/color:\s*var\(--bg-dark\)/);
+        expect(base[1]).toMatch(/color:\s*var\(--on-gold\)/);
     });
 
     test('kein "+ Neu"-Knopf in einer Werkzeugleiste ist mehr gruen', () => {
