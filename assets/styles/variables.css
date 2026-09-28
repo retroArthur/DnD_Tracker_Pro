@@ -25,6 +25,129 @@
             --gold-rgb: 212, 175, 55;
             --green-rgb: 74, 222, 128;
             --red-rgb: 239, 68, 68;
+            /* Sagt dem Browser, welche Helligkeit die Systemteile treffen
+               sollen. Ohne diese Zeile zeichnet er Auswahlmenues, Ankreuz-
+               felder und Zahlenfelder im Systemhell — im ganzen Baum stand
+               sie bisher NULL Mal, bei 88 select, 205 checkbox, 76 number. */
+            color-scheme: dark;
+
+            /* ------------------------------------------------------------
+               Design-Handoff v3, Welle 1 — Tinte, Textfarbe, Muenzen,
+               Attribute und Eingaberahmen
+               ------------------------------------------------------------
+               Alles ab hier steht in ALLEN VIER Theme-Bloecken unter
+               denselben Namen. Die Ratsche R-01 (design-consistency.test.js)
+               vergleicht die Schluesselmengen der vier Bloecke und scheitert,
+               sobald ein Token nur in dreien steht. Das ist der
+               wahrscheinlichste Fehler dieser Welle, weil er lautlos ist und
+               nur in EINEM Theme auffaellt.
+
+               Warum hier und nicht im Aliasblock weiter unten: `:root` und
+               `[data-theme="light"]` haben dieselbe Spezifitaet (0,1,0), bei
+               Gleichstand gewinnt die Quellreihenfolge — und der Aliasblock
+               steht bewusst danach. Ein Token in BEIDEN naehme den Aliaswert
+               an, der themenabhaengige Wert waere toter Buchstabe. R-02 meldet
+               diesen Fall namentlich als "DOPPELT DEFINIERT".
+
+               --on-<rolle>    Schrift AUF einer gefuellten Flaeche dieser
+                               Rolle. Heute steht dort `color: var(--bg-dark)`
+                               (86 Stellen) oder `color: white` (38) — weisse
+                               Schrift auf Dark --green ergibt 1,74:1.
+               --<rolle>-text  Die Rolle ALS Schrift auf einer neutralen
+                               Theme-Flaeche.
+
+               Jede Zahl in diesen Kommentaren ist mit
+               tests/unit/helpers/wcag-contrast.js nachgerechnet. Die
+               Textwerte sind gegen das MINIMUM ueber --bg-card, --bg-dark,
+               --bg-elevated UND --bg-hover gerechnet (Entscheidung D-2, siehe
+               R-02); --bg-hover ist in jedem Theme die schlechteste Flaeche,
+               und fuenf Regeln setzen Akzenttext ausdruecklich darauf. Gegen
+               --bg-card allein waeren 16 von 18 zu schwachen Werten
+               durchgegangen.
+
+               ANGEWENDET wird hier noch nichts — die Komponenten stellen
+               spaeter in der Welle um. Dieser Schritt definiert nur. */
+
+            /* Tinte auf voller Akzentflaeche. In Dark sind alle zehn Flaechen
+               hell genug fuer dunkle Schrift; schlechteste Zelle --red 5,02. */
+            --on-gold: #111111;
+            --on-gold-dim: #111111;
+            --on-green: #111111;
+            --on-red: #111111;
+            --on-cyan: #111111;
+            --on-yellow: #111111;
+            --on-orange: #111111;
+            --on-blue: #111111;
+            --on-purple: #111111;
+            --on-pink: #111111;
+
+            /* Rolle als Schrift auf neutraler Flaeche. Acht Rollen halten 4,5
+               unveraendert (min4 4,64-7,57) und bleiben deshalb eine Referenz
+               auf die Rolle selbst — so folgt der Text automatisch, wenn die
+               Rolle sich aendert. Zwei halten nicht und bekommen einen eigenen,
+               aufgehellten Wert: --red erreicht unveraendert nur 3,36 (und das
+               ist keine Randstelle, --red steht 68x als echte Textfarbe im
+               Standardtheme), --gold-dim nur 3,78. Neu: --red-text 4,52 ·
+               --gold-dim-text 4,54. */
+            --gold-text: var(--gold);
+            --gold-dim-text: #b29946;
+            --green-text: var(--green);
+            --red-text: #f37373;
+            --cyan-text: var(--cyan);
+            --yellow-text: var(--yellow);
+            --orange-text: var(--orange);
+            --blue-text: var(--blue);
+            --purple-text: var(--purple);
+            --pink-text: var(--pink);
+
+            /* Muenzmetalle. Sie tragen in allen vier Bloecken DIESELBEN Werte,
+               und das ist Absicht (Entscheidung D-5): eine Goldmuenze, die man
+               nicht mehr als Gold erkennt, verfehlt ihren einzigen Zweck. Auf
+               4,5:1 abgedunkelt waere --coin-gm in Light #826e00, also
+               olivbraun, und --coin-sm #6f6f6f. Statt die Farbe zu verbiegen,
+               wird das Metall zur FLAECHE und bekommt eine eigene Tinte
+               (--on-coin-*, dunkel auf allen vier Metallen, 5,80-13,46).
+
+               Sie stehen hier statt im Aliasblock, weil R-01 ueber die
+               Theme-Bloecke urteilt und Flaeche und Tinte zusammengehoeren.
+               Herkunft der Werte (v1.2): beim Token-Umbau landeten Platin UND
+               Kupfer auf --gold-dim und waren im Finanz-Widget nicht mehr
+               unterscheidbar (am gebauten Buendel gemessen: beide
+               rgb(166,138,42)). */
+            --coin-pm: #b8860b;
+            --coin-gm: #ffd700;
+            --coin-sm: #c0c0c0;
+            --coin-km: #cd7f32;
+            --on-coin-pm: #111111;
+            --on-coin-gm: #111111;
+            --on-coin-sm: #111111;
+            --on-coin-km: #111111;
+
+            /* Attributfarben. Sie liegen auf ZWEI Flaechen, nicht auf einer:
+               .dms-attr-item und .cf-coin-label auf --bg-dark, .attr-str..cha
+               der Schnellreferenz auf --bg-card. In Dark bleibt alles wie
+               bisher bis auf --attr-wis: #a855f7 erreichte 4,40 gegen
+               --bg-card, #aa58f7 erreicht 4,52 bei identischem Farbton
+               (271 Grad). --attr-str bleibt eine Referenz auf die Rot-Rolle;
+               innerhalb eines Theme-Blocks ist das korrekt, weil --red im
+               selben Block steht (min2 4,62). Die NAMEN sind eingefroren:
+               design-consistency.test.js:679-687 verlangt fuer alle sechs
+               Attribute woertlich die Schreibweise `var(--attr-str)` bis
+               `var(--attr-cha)`; ein umbenanntes Token matcht das Regex nicht
+               mehr. */
+            --attr-str: var(--red);
+            --attr-dex: #22c55e;
+            --attr-con: #f59e0b;
+            --attr-int: #3b82f6;
+            --attr-wis: #aa58f7;
+            --attr-cha: #ec4899;
+
+            /* Eingaberahmen, WCAG 1.4.11 (3:1, kein Text). Gerechnet gegen
+               alle drei Fuellungen der Eingabefelder, nicht nur --bg-dark:
+               #6b6b6b haette gegen --bg-elevated nur 2,88 erreicht, und dort
+               sitzen sechs Felder (Entscheidung D-8). #7c7c7c erreicht 3,67.
+               ANGEWENDET wird das Token erst in Welle 6. */
+            --border-input: #7c7c7c;
         }
         
         /* Theme: Light */
@@ -51,6 +174,73 @@
             --gold-rgb: 184, 134, 11;
             --green-rgb: 22, 163, 74;
             --red-rgb: 220, 38, 38;
+            color-scheme: light;
+
+            /* Erlaeuterung zu allen folgenden Gruppen: Dark-Block oben.
+               Hier stehen nur die gemessenen Zahlen dieses Themes.
+
+               Tinte auf voller Akzentflaeche. Anders als in Dark entscheidet
+               sie sich je Rolle: fuenf Flaechen sind hell genug fuer dunkle
+               Schrift, fuenf verlangen weisse. Schlechteste Zelle --pink 4,60,
+               beste --yellow 6,43. */
+            --on-gold: #111111;
+            --on-gold-dim: #ffffff;
+            --on-green: #111111;
+            --on-red: #ffffff;
+            --on-cyan: #111111;
+            --on-yellow: #111111;
+            --on-orange: #111111;
+            --on-blue: #ffffff;
+            --on-purple: #ffffff;
+            --on-pink: #ffffff;
+
+            /* Rolle als Schrift auf neutraler Flaeche. In Light haelt KEINE
+               der zehn Rollen unveraendert 4,5 — gemessen 2,16-4,20, jeweils
+               auf --bg-hover (#ddd). Alle zehn bekommen daher einen eigenen,
+               abgedunkelten Wert; min4 jetzt 4,51-4,59. Das sind 11-17 % unter
+               der Rolle, nicht die 4-11 %, die eine Rechnung gegen --bg-card
+               allein ergeben haette. */
+            --gold-text: #7d5b07;
+            --gold-dim-text: #7c5d12;
+            --green-text: #0f7133;
+            --red-text: #bd2121;
+            --cyan-text: #066a82;
+            --yellow-text: #835a02;
+            --orange-text: #a94008;
+            --blue-text: #2158d1;
+            --purple-text: #7637e1;
+            --pink-text: #b62063;
+
+            /* Muenzmetalle unveraendert in allen vier Themes, siehe Dark. */
+            --coin-pm: #b8860b;
+            --coin-gm: #ffd700;
+            --coin-sm: #c0c0c0;
+            --coin-km: #cd7f32;
+            --on-coin-pm: #111111;
+            --on-coin-gm: #111111;
+            --on-coin-sm: #111111;
+            --on-coin-km: #111111;
+
+            /* Attributfarben, in Light alle sechs zu hell (min2 1,97-4,43).
+               Abgedunkelt wird kanalweise mit EINEM Faktor — das haelt Farbton
+               und Saettigung exakt und senkt nur die Helligkeit; der kleinste
+               Abstand zweier Nachbarfarben im Farbton bleibt damit bei den
+               heutigen 30 Grad (Entscheidung D-6), statt die sechs Attribute
+               einander anzunaehern. Faktoren 0,65-0,88, min2 jetzt 4,56-4,60.
+               --attr-str ist die einzige Ausnahme von "bleibt var(--red)":
+               Lights --red erreicht nur 4,43 gegen --bg-dark. Statt eines
+               Beinahe-Duplikats (#d82525, 1 % neben --red) steht hier die
+               Referenz auf den text-sicheren Rotwert desselben Themes, min2
+               5,66 — so bleibt STR an die Rot-Rolle gebunden. */
+            --attr-str: var(--red-text);
+            --attr-dex: #16803d;
+            --attr-con: #9b6407;
+            --attr-int: #326dcf;
+            --attr-wis: #934ad8;
+            --attr-cha: #c23b7e;
+
+            /* Eingaberahmen: min3 3,71 (schlechteste Flaeche --bg-elevated). */
+            --border-input: #767676;
         }
         
         /* Theme: Sepia/Parchment */
@@ -65,7 +255,16 @@
             --green: #859900;
             --red: #dc322f;
             --yellow: #b58900;
-            --purple: #6c71c4;
+            /* Entscheidung D-1 (2026-09-28): von #6c71c4 abgedunkelt. Der
+               alte Wert erreichte mit KEINER der beiden Systemtinten 4,5
+               (weiss 4,38 · #111111 4,31) und war damit die einzige
+               Akzentflaeche im ganzen Farbsystem ohne lesbare Schrift — bei
+               16 Regeln, die Text auf eine --purple-Flaeche setzen. #6266bd
+               traegt weisse Schrift mit 5,05 und bleibt als Flaeche gegen
+               --bg-card bei 4,69, also weit ueber den 3:1 fuer Nicht-Text.
+               Die Schwelle laege schon bei #6a6fc0 (4,52); der Wert geht
+               bewusst darueber. */
+            --purple: #6266bd;
             --blue: #268bd2;
             --orange: #cb4b16;
             --pink: #d33682;
@@ -77,6 +276,69 @@
             --gold-rgb: 139, 69, 19;
             --green-rgb: 133, 153, 0;
             --red-rgb: 220, 50, 47;
+            /* Sepia ist ein HELLES Theme — Pergament, nicht Nacht. */
+            color-scheme: light;
+
+            /* Erlaeuterung zu allen folgenden Gruppen: Dark-Block oben.
+
+               Tinte auf voller Akzentflaeche. Schlechteste Zelle --pink 4,55,
+               beste --gold-dim 9,89. --on-purple ist weiss und haelt 5,05 —
+               aber nur, weil --purple weiter oben abgedunkelt wurde (D-1). */
+            --on-gold: #ffffff;
+            --on-gold-dim: #ffffff;
+            --on-green: #111111;
+            --on-red: #ffffff;
+            --on-cyan: #111111;
+            --on-yellow: #111111;
+            --on-orange: #ffffff;
+            --on-blue: #111111;
+            --on-purple: #ffffff;
+            --on-pink: #ffffff;
+
+            /* Rolle als Schrift auf neutraler Flaeche. Zwei Rollen halten 4,5
+               unveraendert (--gold 5,16 · --gold-dim 7,19) und bleiben
+               Referenz; acht sind zu hell (2,30-3,36 auf --bg-hover #e5dbc5)
+               und bekommen eigene Werte, min4 jetzt 4,51-4,61. --purple-text
+               #575a9c ist dabei DUNKLER als die neue Flaeche #6266bd — mit dem
+               urspruenglich vorgeschlagenen #666ab8 waeren Text und Flaeche
+               derselben Rolle auseinandergelaufen. */
+            --gold-text: var(--gold);
+            --gold-dim-text: var(--gold-dim);
+            --green-text: #596600;
+            --red-text: #b52927;
+            --cyan-text: #1c6c66;
+            --yellow-text: #795c00;
+            --orange-text: #a83e12;
+            --blue-text: #1c6597;
+            --purple-text: #575a9c;
+            --pink-text: #ae2d6b;
+
+            /* Muenzmetalle unveraendert in allen vier Themes, siehe Dark. */
+            --coin-pm: #b8860b;
+            --coin-gm: #ffd700;
+            --coin-sm: #c0c0c0;
+            --coin-km: #cd7f32;
+            --on-coin-pm: #111111;
+            --on-coin-gm: #111111;
+            --on-coin-sm: #111111;
+            --on-coin-km: #111111;
+
+            /* Attributfarben, in Sepia alle sechs zu hell (min2 1,71-3,68).
+               Dieselbe kanalweise Abdunklung wie in Light, nur staerker: die
+               schlechteste Flaeche ist hier --bg-dark #f4e4c1, ein Pergament-
+               ton und damit dunkler als Lights #f5f5f5. Faktoren 0,58-0,80,
+               Farbtoene unveraendert, kleinster Nachbarabstand 31 Grad.
+               min2 jetzt 4,55-4,60; --attr-str wie in Light var(--red-text),
+               5,05 (Sepias --red erreichte nur 3,68). */
+            --attr-str: var(--red-text);
+            --attr-dex: #147538;
+            --attr-con: #8e5b06;
+            --attr-int: #2d64bd;
+            --attr-wis: #8744c6;
+            --attr-cha: #b23674;
+
+            /* Eingaberahmen: min3 3,33 (schlechteste Flaeche --bg-dark). */
+            --border-input: #8a7a5a;
         }
         
         /* Theme: High Contrast */
@@ -103,6 +365,62 @@
             --gold-rgb: 255, 215, 0;
             --green-rgb: 0, 255, 0;
             --red-rgb: 255, 0, 0;
+            color-scheme: dark;
+
+            /* Erlaeuterung zu allen folgenden Gruppen: Dark-Block oben.
+
+               Tinte auf voller Akzentflaeche: alle zehn Flaechen sind
+               Vollton und hell, dunkle Schrift auf allen. Schlechteste Zelle
+               --red 4,72, beste --yellow 17,58. */
+            --on-gold: #111111;
+            --on-gold-dim: #111111;
+            --on-green: #111111;
+            --on-red: #111111;
+            --on-cyan: #111111;
+            --on-yellow: #111111;
+            --on-orange: #111111;
+            --on-blue: #111111;
+            --on-purple: #111111;
+            --on-pink: #111111;
+
+            /* Rolle als Schrift auf neutraler Flaeche. Sechs Rollen halten
+               unveraendert (5,02-11,77) und bleiben Referenz; vier nicht —
+               --red 3,16 · --blue 3,33 · --pink 3,35 · --purple 4,03, jeweils
+               auf --bg-hover. Dass ausgerechnet das Kontrast-Theme vier zu
+               schwache Textfarben fuehrt, ist der Vollton: #ff0000 ist auf
+               Schwarz kraeftig, aber nicht hell. Aufgehellt auf 4,53-4,57. */
+            --gold-text: var(--gold);
+            --gold-dim-text: var(--gold-dim);
+            --green-text: var(--green);
+            --red-text: #ff6b6b;
+            --cyan-text: var(--cyan);
+            --yellow-text: var(--yellow);
+            --orange-text: var(--orange);
+            --blue-text: #3d9eff;
+            --purple-text: #ff45ff;
+            --pink-text: #ff61b0;
+
+            /* Muenzmetalle unveraendert in allen vier Themes, siehe Dark. */
+            --coin-pm: #b8860b;
+            --coin-gm: #ffd700;
+            --coin-sm: #c0c0c0;
+            --coin-km: #cd7f32;
+            --on-coin-pm: #111111;
+            --on-coin-gm: #111111;
+            --on-coin-sm: #111111;
+            --on-coin-km: #111111;
+
+            /* Attributfarben unveraendert bis auf --attr-wis (wie in Dark,
+               #a855f7 -> #aa58f7). Alle sechs halten: min2 4,90-8,79. */
+            --attr-str: var(--red);
+            --attr-dex: #22c55e;
+            --attr-con: #f59e0b;
+            --attr-int: #3b82f6;
+            --attr-wis: #aa58f7;
+            --attr-cha: #ec4899;
+
+            /* Eingaberahmen: min3 4,73 (schlechteste Flaeche --bg-elevated). */
+            --border-input: #8c8c8c;
         }
         
 
@@ -221,14 +539,11 @@
                "Information" wurde Cyan. Wert aus v1.2 uebernommen. */
             --cat-info: #795548;
 
-            /* Muenzmetalle. Gleiche Ursache: beim Token-Umbau landeten
-               Platin UND Kupfer auf --gold-dim und waren damit im
-               Finanz-Widget nicht mehr unterscheidbar (am gebauten
-               Buendel gemessen: beide rgb(166,138,42)). Werte aus v1.2. */
-            --coin-pm: #b8860b;
-            --coin-gm: #ffd700;
-            --coin-sm: #c0c0c0;
-            --coin-km: #cd7f32;
+            /* Die vier Muenzmetalle standen bis 2026-09-28 hier. Sie liegen
+               jetzt in den vier Theme-Bloecken, zusammen mit ihrer Tinte
+               --on-coin-* (Welle 1 Schritt 4). Ihre Werte sind dort weiterhin
+               in allen vier Themes gleich — die Begruendung dafuer und die
+               Herkunft aus v1.2 stehen im Dark-Block. */
 
             --know-arcana: #3b82f6;
             --know-religion: #a855f7;
@@ -279,6 +594,17 @@
                und haben mit dem UI-Farbschema nichts zu tun. */
             --parchment-ink: #5c2d0a;
             --parchment-ink-dark: #2c1810;
+            /* Das klassische Statblock-Rot des 5e-Regelwerks. Es gehoert zu
+               denselben Pergamenttoenen und ist deshalb ebenfalls
+               themenunabhaengig. Bisher stand an diesen Stellen
+               `color: var(--red)` — auf dem Pergament 2,58-3,92:1, je nach
+               Theme. Das Rezept wollte sie auf --parchment-ink umstellen, aber
+               keiner der drei vorhandenen Pergamenttoene IST rot (Braun,
+               Fast-Schwarz, Sattelbraun); die Gestaltungsabsicht waere
+               geloescht worden. #58180d erreicht 10,98 gegen
+               --ra-parchment-from und 9,29 gegen --ra-parchment-to.
+               VERWENDET wird das Token erst in Schritt 11. */
+            --parchment-ink-red: #58180d;
 
             /* Schrift auf gesaettigten Akzentflaechen (roter/gruener
                Knopf). BEWUSST themenunabhaengig weiss: die Akzentfarben
@@ -286,12 +612,12 @@
                waere im hellen Theme dunkel auf dunkelrot. */
             --on-accent: #ffffff;
 
-            --attr-str: var(--red);
-            --attr-dex: #22c55e;
-            --attr-con: #f59e0b;
-            --attr-int: #3b82f6;
-            --attr-wis: #a855f7;
-            --attr-cha: #ec4899;
+            /* Die sechs Attributfarben standen bis 2026-09-28 hier und waren
+               damit themenunabhaengig — in Light und Sepia erreichten alle
+               sechs nur 1,71-4,43 gegen ihre Traegerflaechen. Sie liegen jetzt
+               in den vier Theme-Bloecken (Welle 1 Schritt 4); die Namen sind
+               unveraendert, weil design-consistency.test.js:679-687 sie
+               woertlich verlangt. */
 
             /* Stapel-Leiter (F-19). Vorher 24 gewachsene Werte von 2 bis
                10001, ohne erkennbare Stufenlogik.
