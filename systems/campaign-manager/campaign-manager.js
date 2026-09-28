@@ -242,6 +242,12 @@ async function secureStaleTabBeforeSwitch() {
         );
         return { mayContinue: false, secured: false };
     }
+    // Zustellbarkeit (Korrekturrunde F9): showToast() schreibt nur in das DOM-Element
+    // #event-log, und switchCampaign() ruft unmittelbar danach location.reload() — der Toast
+    // allein ist nie lesbar. Der Hinweis ist aber das Einzige, was den Weg zurueck nennt: die
+    // Sicherungskopie gehoert der ALTEN Kampagne, und getBackups() zeigt nur die Backups der
+    // aktiven. Er wird deshalb blockierend per nativem alert() zugestellt, VOR dem Neuladen.
+    const alteKampagne = getCampaignDisplayName(key);
     if (status === 'skipped-empty') {
         // Kein sicherungsfaehiger Inhalt (gemeinsame Definition hasCampaignContent): eine
         // Sicherungskopie koennte nichts zurueckholen. Ehrlich benennen statt Erfolg melden.
@@ -251,6 +257,9 @@ async function secureStaleTabBeforeSwitch() {
             'warning',
             8000
         );
+        alert(
+            `⚠️ Veralteter Tab\n\nEin anderer Tab hat „${alteKampagne}“ inzwischen gespeichert. Die ungespeicherte Änderung dieses Tabs enthielt keinen sicherungsfähigen Inhalt und wurde nicht gespeichert.`
+        );
         return { mayContinue: true, secured: true };
     }
     showToast(
@@ -259,6 +268,9 @@ async function secureStaleTabBeforeSwitch() {
             'wiederherstellbar.',
         'warning',
         8000
+    );
+    alert(
+        `⚠️ Veralteter Tab\n\nEin anderer Tab hat „${alteKampagne}“ inzwischen gespeichert. Die ungespeicherte Änderung dieses Tabs wurde deshalb nicht in den Speicher geschrieben, sondern als geschützte Sicherungskopie von „${alteKampagne}“ gesichert.\n\nSo kommen Sie heran: zu „${alteKampagne}“ zurückwechseln und die Sicherungskopie unter Backups wiederherstellen.`
     );
     return { mayContinue: true, secured: true };
 }
@@ -335,14 +347,22 @@ async function deleteCampaign() {
         log('[deleteCampaign] Lösche Kampagne:', key);
         // 1. Benannte Kampagne: zuerst aus dem Index entfernen (frisch gelesen). Die aktive
         //    Auswahl eines anderen Tabs bleibt stehen; scheitert der Write, wird nichts geloescht.
+        let entfernterEintrag = null; // gesetzt, sobald Schritt 1 den Eintrag entfernt hat
+        let warAktiv = false;
         if (!isDefault) {
             const current = getCampaignIndex();
+            entfernterEintrag = (current.campaigns || []).find(c => c && c.key === key) || {
+                key,
+                name: campaignName
+            };
+            warAktiv = current.active === key;
             const next = Object.assign({}, current, {
                 campaigns: (current.campaigns || []).filter(c => c.key !== key)
             });
-            if (current.active === key) next.active = APP_CONFIG.STORAGE_KEY;
+            if (warAktiv) next.active = APP_CONFIG.STORAGE_KEY;
             const indexResult = saveCampaignIndex(next);
             if (!indexResult || !indexResult.success) {
+                entfernterEintrag = null;
                 resume();
                 alert(
                     '❌ Fehler beim Löschen:\n\nDer Kampagnenindex konnte nicht gespeichert werden. Es wurde nichts gelöscht.'
@@ -350,6 +370,26 @@ async function deleteCampaign() {
                 return;
             }
         }
+        /**
+         * Legt den in Schritt 1 entfernten Indexeintrag zurueck (Korrekturrunde F9). Notwendig
+         * nur auf dem D-B-Abbruchpfad: dort ist NICHTS geloescht, die Rueckfrage hat das
+         * ausdruecklich zugesagt ("ABBRECHEN: Es wird nichts geloescht. Erst exportieren"), und
+         * ohne den Eintrag waere die Kampagne ueber die Oberflaeche nicht mehr erreichbar —
+         * getCampaignIndex()/renderCampaignList() zeigen nur Standard + index.campaigns, eine
+         * Waisen-Wiederherstellung gibt es nicht. Frisch gelesen, damit ein anderer Tab nicht
+         * ueberschrieben wird; `active` nur dann zurueck, wenn niemand sonst gewechselt hat.
+         * @returns {boolean} der Eintrag steht wieder im Index (oder war nie entfernt)
+         */
+        const indexEintragZuruecklegen = () => {
+            if (!entfernterEintrag) return true;
+            const current = getCampaignIndex();
+            const campaigns = (current.campaigns || []).slice();
+            if (!campaigns.some(c => c && c.key === key)) campaigns.push(entfernterEintrag);
+            const next = Object.assign({}, current, { campaigns });
+            if (warAktiv && current.active === APP_CONFIG.STORAGE_KEY) next.active = key;
+            const result = saveCampaignIndex(next);
+            return !!(result && result.success);
+        };
         // 2. Gespeicherte Daten entfernen: IndexedDB (bestaetigter Commit) VOR localStorage
         const removal = await window.removeCampaignData(key);
         dataRemoved = !!(removal && removal.success);
@@ -363,11 +403,44 @@ async function deleteCampaign() {
             removal &&
             removal.stage === 'indexedDB' &&
             removal.reason === 'open' &&
-            typeof window.confirmLocalOnlyCampaignRemoval === 'function' &&
-            window.confirmLocalOnlyCampaignRemoval(key, campaignName).removed
+            typeof window.confirmLocalOnlyCampaignRemoval === 'function'
         ) {
-            nurLokal = true;
-            dataRemoved = true;
+            const entscheidung = window.confirmLocalOnlyCampaignRemoval(key, campaignName);
+            if (entscheidung.removed) {
+                nurLokal = true;
+                dataRemoved = true;
+            } else {
+                // ABBRECHEN (oder ein Fehler beim Leeren): es ist nichts geloescht — also auch
+                // der Indexeintrag zurueck, sonst haelt die Zusage der Rueckfrage nicht und die
+                // Kampagne ist weg, obwohl ihre Daten liegen (Korrekturrunde F9). Danach bleibt
+                // der Tab, wo er ist: keine Navigation, kein D-Reset, Schreibsperre auf.
+                const zurueck = indexEintragZuruecklegen();
+                resume();
+                if (entscheidung.error && window.ErrorHandler) {
+                    window.ErrorHandler.log(
+                        'deleteCampaign',
+                        entscheidung.error,
+                        'Lokale Kampagnendaten konnten nicht entfernt werden'
+                    );
+                }
+                const kopf = entscheidung.error
+                    ? `⚠️ "${campaignName}": Die lokalen Daten ließen sich nicht entfernen.`
+                    : `❌ "${campaignName}" wurde nicht gelöscht.\n\nEs wurde nichts gelöscht.`;
+                let hinweis;
+                if (!zurueck) {
+                    hinweis =
+                        'ACHTUNG: Die Kampagne ließ sich nicht in die Liste zurücklegen und ist ' +
+                        `über die Oberfläche nicht mehr erreichbar. Ihre gespeicherten Daten liegen unverändert unter dem Schlüssel "${key}".`;
+                } else if (entfernterEintrag) {
+                    hinweis =
+                        'Die Kampagne bleibt in der Liste — exportieren Sie sie und versuchen ' +
+                        'Sie es später erneut.';
+                } else {
+                    hinweis = 'Exportieren Sie die Kampagne und versuchen Sie es später erneut.';
+                }
+                alert(kopf + '\n\n' + hinweis);
+                return;
+            }
         }
         if (!dataRemoved) {
             if (window.ErrorHandler) {
