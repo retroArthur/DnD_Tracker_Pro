@@ -54,7 +54,7 @@
         .list-trigger-item.triggered .list-trigger-check {
             border-color: var(--green);
             background: var(--green);
-            color: var(--bg-dark);
+            color: var(--on-green);
         }
         
 /* ============================================================
@@ -236,7 +236,7 @@
 .calc-add-btn {
     background: var(--gold);
     border: none;
-    color: var(--bg-dark);
+    color: var(--on-gold);
     padding: 6px 12px;
     border-radius: var(--radius-sm);
     font-size: 13px;
@@ -516,7 +516,7 @@
     padding: 2px 10px;
     border-radius: var(--radius-lg);
     background: var(--gold);
-    color: var(--bg-dark);
+    color: var(--on-gold);
 }
 
 .calc-budget-slider-wrap {
@@ -578,7 +578,7 @@
 
 .calc-budget-apply {
     background: var(--gold);
-    color: var(--bg-dark);
+    color: var(--on-gold);
     border: none;
     border-radius: var(--radius-sm);
     padding: 4px 12px;
@@ -712,7 +712,7 @@
 .calc-action-btn.primary {
     background: var(--green);
     border-color: var(--green);
-    color: var(--bg-dark);
+    color: var(--on-green);
 }
 
 .calc-action-btn.primary:hover {
@@ -723,7 +723,7 @@
 .calc-action-btn.initiative {
     background: var(--orange);
     border-color: var(--orange);
-    color: var(--bg-dark);
+    color: var(--on-orange);
 }
 
 .calc-action-btn.initiative:hover {
@@ -787,7 +787,7 @@
 .calc-terrain-btn.active {
     background: var(--gold);
     border-color: var(--gold);
-    color: var(--bg-dark);
+    color: var(--on-gold);
     font-weight: 600;
 }
 
@@ -915,7 +915,7 @@
 .enc-filter-chip.active {
     background: var(--gold);
     border-color: var(--gold);
-    color: var(--bg-dark);
+    color: var(--on-gold);
 }
 
 .enc-filter-select {
@@ -932,7 +932,7 @@
     background: var(--green);
     border: none;
     border-radius: var(--radius-md);
-    color: var(--bg-dark);
+    color: var(--on-green);
     font-weight: 600;
     cursor: pointer;
     transition: all 0.2s;
@@ -1222,7 +1222,7 @@
 .enc-save-tag {
     padding: 3px 8px;
     background: var(--green);
-    color: var(--bg-dark);
+    color: var(--on-green);
     border-radius: var(--radius-sm);
     font-size: 0.75em;
     font-weight: 600;
@@ -1236,12 +1236,12 @@
 
 .enc-res-tag.res {
     background: var(--cyan);
-    color: var(--bg-dark);
+    color: var(--on-cyan);
 }
 
 .enc-res-tag.imm {
     background: var(--gold);
-    color: var(--bg-dark);
+    color: var(--on-gold);
 }
 
 .enc-res-tag.cond {
@@ -1578,7 +1578,7 @@
 .calc-import-btn {
     background: var(--gold);
     border: none;
-    color: var(--bg-dark);
+    color: var(--on-gold);
     width: 32px;
     height: 32px;
     border-radius: var(--radius-sm);
