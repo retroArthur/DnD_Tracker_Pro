@@ -170,7 +170,19 @@ function importFullExport(parsedObj) {
         // _ts-Begleiter (Code-Review 2026-09-21, R07): ohne ihn haelt load() den frisch
         // importierten Stand fuer einen veralteten localStorage-Schatten und nimmt eine
         // vorhandene (aeltere) IndexedDB-Kopie — jede Kampagne ueber 2 MB hat eine.
-        StorageAPI.set(key + '_ts', String(Date.now()));
+        // Korrekturrunde (F5, U6 minor:5): das Ergebnis PRUEFEN. Scheitert dieser ~13 Byte
+        // kleine Write (Quota), meldete der Assistent trotzdem Erfolg, und der naechste
+        // Start lud die aeltere IndexedDB-Kopie. setQuiet() statt set(), weil set() dabei
+        // "💾 Speicher voll! Versuche Fallback zu IndexedDB..." meldet — es gibt hier
+        // keinen Rueckfall. Ein VORHANDENER (auch alter) Stempel genuegt: load() prueft nur,
+        // DASS er da ist (quick-roll.js:152); nur ohne jeden Stempel ist es ein Fehlschlag.
+        const tsResult = StorageAPI.setQuiet(key + '_ts', String(Date.now()));
+        if (!tsResult.success && StorageAPI.get(key + '_ts', null) === null) {
+            throw new Error(
+                'Speichern fehlgeschlagen: Zeitstempel für "' + key + '" (' +
+                (tsResult.error || 'Unbekannter Fehler') + ')'
+            );
+        }
         totalBytes += JSON.stringify(migratedData).length;
     }
 
@@ -187,6 +199,22 @@ function importFullExport(parsedObj) {
     const getCampaignIndexFn = typeof getCampaignIndex === 'function'
         ? getCampaignIndex
         : window.getCampaignIndex;
+    // Korrekturrunde (F5, R07-Restbefund): das Ergebnis des Indexwrites PRUEFEN. Ohne die
+    // Pruefung meldete der Assistent Erfolg, obwohl die importierten benannten Kampagnen
+    // ueber den Index nicht erreichbar sind — ihre Daten liegen unter ihrem Key, nur der
+    // Verweis fehlt. Ein Wurf wird vom Assistenten zu "Import fehlgeschlagen: ..." und
+    // sperrt die Schreibpfade dieses Tabs NICHT (migration-wizard.js:550-554).
+    // Bekannte Grenze: die bereits geschriebenen Kampagnendaten werden NICHT
+    // zurueckgenommen (Folgearbeit) — sie sind erreichbar, sobald der Index wieder
+    // schreibbar ist und der Import wiederholt wird.
+    const pruefeIndexErgebnis = indexResult => {
+        if (!indexResult || indexResult.success !== true) {
+            throw new Error(
+                'Kampagnenindex konnte nicht gespeichert werden' +
+                (indexResult && indexResult.error ? ' (' + indexResult.error + ')' : '')
+            );
+        }
+    };
     let preservedIndexEntriesCount = 0;
     if (typeof saveCampaignIndexFn === 'function') {
         const importedIndex = parsedObj.campaignIndex;
@@ -206,9 +234,9 @@ function importFullExport(parsedObj) {
                 campaigns: importedCampaigns.concat(keptLocalCampaigns),
                 active: importedIndex.active
             });
-            saveCampaignIndexFn(mergedIndex);
+            pruefeIndexErgebnis(saveCampaignIndexFn(mergedIndex));
         } else {
-            saveCampaignIndexFn(importedIndex);
+            pruefeIndexErgebnis(saveCampaignIndexFn(importedIndex));
         }
     }
 

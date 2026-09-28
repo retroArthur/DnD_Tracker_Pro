@@ -107,13 +107,20 @@ beforeAll(() => {
                 return { success: true };
             }),
             // Code-Review 2026-09-21 (R07): _ts-Begleiter je Kampagne — bewusst NICHT in
-            // writtenKeys, damit die Schluessel-Aufzaehlungen unten unveraendert bleiben
+            // writtenKeys, damit die Schluessel-Aufzaehlungen unten unveraendert bleiben.
+            // Korrekturrunde F5: importFullExport() schreibt den Stempel jetzt ueber
+            // setQuiet() (ohne Quota-Toast) und liest ihn bei Fehlschlag per get() nach.
             set: jest.fn(() => ({ success: true })),
+            setQuiet: jest.fn(() => ({ success: true })),
+            get: jest.fn((key, fallback) => (fallback !== undefined ? fallback : null)),
             has: jest.fn(() => false)
         },
         // 12-07: Stubs, die importFullExport() nachschlaegt (bare oder ueber window)
+        // F5: der Rueckgabewert wird jetzt geprueft — ein erfolgreicher Indexwrite
+        // liefert {success: true}.
         saveCampaignIndex: jest.fn(idx => {
             savedIndexCalls.push(idx);
+            return { success: true };
         }),
         // Identitaets-Migration: veraendert die Nutzdaten nicht, zeichnet aber auf,
         // dass sie je Kampagne gelaufen ist.
@@ -598,10 +605,15 @@ describe('Versions-Rundlauf mit echter migrateData (SAFE-06)', () => {
                     return { success: true };
                 },
                 set: () => ({ success: true }),
+                // Korrekturrunde F5: Stempel per setQuiet(), Nachlese per get()
+                setQuiet: () => ({ success: true }),
+                get: (key, fallback) => (fallback !== undefined ? fallback : null),
                 has: () => false
             },
+            // F5: der Rueckgabewert wird jetzt geprueft
             saveCampaignIndex: idx => {
                 echtIndexCalls.push(idx);
+                return { success: true };
             },
             console: console
         };
