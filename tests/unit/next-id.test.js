@@ -675,6 +675,82 @@ describe('R03 — Waechter der Abschlussrunde (G2)', () => {
         expect(ctx.D.npcs.filter(e => e.id !== unterwegs).length).toBe(ids.length - 1);
     });
 
+    test('G2h: eine hohe NORMALE Vergabe pinnt das Seitenleben nicht (k-Nachbarschaft)', () => {
+        // Korrekturrunde 2: G2f/G2d pruefen ausschliesslich max(ID) = 1e15, also den
+        // SAETTIGUNGSZWEIG. Genau eine Ganzzahl darunter laeuft der NORMALPFAD — und der
+        // schrieb eine prozessweite Hoechstmarke, die nie verfiel. Damit war der Waechter
+        // fuer diesen Typ den Rest des Seitenlebens toter Code: eine Marke bei ~1e15 kann
+        // von keiner harmlosen Untergrenze mehr uebertroffen werden. Derselbe Fehler wie in
+        // Korrekturrunde 1, nur eine Ebene tiefer: ein Hoechststand ueberapproximiert die
+        // Frage "ist GENAU DIESE ID schon herausgegeben?" zu "jede ID bis zur hoechsten je
+        // gemuenzten koennte unterwegs sein".
+        const ctx = makeContext();
+        ctx.D.npcs = [
+            { id: 1, name: 'Borin' },
+            { id: 500, name: 'Mira' },
+            { id: 1e15 - 2, name: 'Fremd' }
+        ];
+        ctx.D.quests = [{ id: 2, title: 'Auftrag', giverId: 3 }];
+        ctx.D._nextId = {};
+
+        // Erster Aufruf: die Untergrenze 1e15 - 1 ist selbst noch vergebbar, also laeuft
+        // hier der NORMALPFAD — das ist der Unterschied zu G2f und der ganze Punkt.
+        const normal = vergebenUndAblegen(ctx, 1, 'Hoch');
+        expect(normal).toEqual([1e15 - 1]);
+
+        // Der Nutzer loescht die beiden Eintraege nahe der Obergrenze — im selben
+        // Seitenleben, ohne Neuladen, ohne Import, ohne Undo.
+        ctx.D.npcs = ctx.D.npcs.filter(n => n.id < 1e15 - 3);
+        expect(ctx.maxEntityId(ctx.D.npcs) + 1).toBe(501);
+
+        const neu = vergebenUndAblegen(ctx, 3, 'NEU');
+
+        // 1. Die Bedeutung zuerst: der Haenger auf den laengst geloeschten NSC 3 bleibt
+        //    ein Haenger, statt auf eine NEUE Entitaet umgebunden zu werden.
+        const giver = ctx.D.npcs.find(n => n.id === ctx.D.quests[0].giverId);
+        expect({ giverId: ctx.D.quests[0].giverId, zeigtAuf: giver ? giver.name : null }).toEqual({
+            giverId: 3,
+            zeigtAuf: null
+        });
+        // 2. Der Mechanismus: oberhalb von max(ID) = 500 sind 1e15 IDs frei, also setzt die
+        //    monotone Vergabe dort auf, statt geloeschte niedrige IDs wiederzuverwenden.
+        expect({ neu, unterhalbDerUntergrenze: neu.filter(id => id < 501) }).toEqual({
+            neu: [501, 502, 503],
+            unterhalbDerUntergrenze: []
+        });
+        expect(istGueltigeId(ctx.D._nextId.npcs)).toEqual({ id: 504, gueltig: true });
+        const ids = ctx.D.npcs.map(n => n.id);
+        expect(new Set(ids).size).toBe(ids.length);
+    });
+
+    test('G2i: ein gueltiger Datei-Zaehler nahe der Obergrenze pinnt nichts', () => {
+        // Der noch harmlosere Einstieg in denselben Schaden: kein 1e15 im Zaehler und keine
+        // Obergrenzen-ID in der Sammlung. Ein Datei-Zaehler von 1e15 - 1 ist voellig
+        // gueltig UND vergebbar, wird also im Normalpfad gemuenzt — und hinterliess damit
+        // dieselbe unverfallbare Hoechstmarke.
+        const ctx = makeContext();
+        ctx.D.npcs = [
+            { id: 1, name: 'Borin' },
+            { id: 500, name: 'Mira' }
+        ];
+        ctx.D._nextId = { npcs: 1e15 - 1 };
+
+        const hoch = vergebenUndAblegen(ctx, 1, 'Datei');
+        expect(hoch).toEqual([1e15 - 1]);
+
+        // Der Nutzer loescht die komisch hohe Entitaet wieder.
+        ctx.D.npcs = ctx.D.npcs.filter(n => n.id !== 1e15 - 1);
+        expect(ctx.maxEntityId(ctx.D.npcs) + 1).toBe(501);
+
+        const neu = vergebenUndAblegen(ctx, 2, 'NEU');
+        expect({ neu, unterhalbDerUntergrenze: neu.filter(id => id < 501) }).toEqual({
+            neu: [501, 502],
+            unterhalbDerUntergrenze: []
+        });
+        const ids = ctx.D.npcs.map(n => n.id);
+        expect(new Set(ids).size).toBe(ids.length);
+    });
+
     test('G2c: recomputeNextIds heilt den veralteten Pin, echte Saettigung bleibt', () => {
         const ctx = makeContext();
         // Veralteter Pin bei harmloser Sammlung -> Untergrenze. 1e15 ist gueltig, aber
