@@ -221,7 +221,7 @@
         
         .init-slot-label {
             font-size: 10px;
-            color: var(--purple);
+            color: var(--purple-text);
             font-weight: 600;
             min-width: 10px;
         }
@@ -394,7 +394,7 @@
             background: transparent;
             border: 1px dashed var(--purple);
             border-radius: var(--radius-sm);
-            color: var(--purple);
+            color: var(--purple-text);
             font-size: 0.7em;
             cursor: pointer;
             opacity: 0.6;
@@ -686,7 +686,7 @@
         }
 
         .npc-relation-name:hover {
-            color: var(--gold);
+            color: var(--gold-text);
         }
 
         .npc-relation-type {
@@ -830,7 +830,7 @@
         }
 
         .relations-status-btn.friendly {
-            color: var(--green);
+            color: var(--green-text);
             border-color: var(--green);
         }
 
@@ -859,7 +859,7 @@
         }
 
         .relations-status-btn.hostile {
-            color: var(--red);
+            color: var(--red-text);
             border-color: var(--red);
         }
 
@@ -1252,7 +1252,7 @@
 .xp-dist-autosum-value {
     font-size: 19px;
     font-weight: 700;
-    color: var(--gold);
+    color: var(--gold-text);
 }
 
 .xp-dist-total-input {
