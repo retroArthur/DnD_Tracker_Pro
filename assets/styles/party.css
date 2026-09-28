@@ -2446,7 +2446,21 @@
 .cf-skill-exp-label {
     font-size: 0.7em;
     font-weight: 700;
-    color: var(--blue, var(--blue));
+    /* Welle 1 Schritt 8: Selbst-Fallback aufgeloest UND Wert umgestellt.
+       Traegerflaeche ist .cf-panel (background: var(--bg-dark)) bzw. beim
+       Ueberfahren .cf-skill-row:hover (var(--bg-hover)) — beides neutrale
+       Theme-Flaechen, also --blue-text. TEILERFOLG, hier aktenkundig: die
+       Regel traegt `opacity: 0.8`, und die mischt die Schrift zu 20 % in die
+       Flaeche zurueck. Gemessen MIT der Deckkraft (dark light sepia contrast,
+       je --bg-dark / --bg-hover):
+         vorher var(--blue)      5,24/3,73  3,41/2,92  2,37/2,21  3,77/2,61
+         jetzt  var(--blue-text) 5,24/3,73  3,91/3,32  3,52/3,26  4,99/3,45
+       Besser in jedem Theme, aber 4,5 traegt nur Dark auf --bg-dark und
+       Contrast auf --bg-dark. Der Rest liegt an der Deckkraft, nicht am
+       Token — sie zu entfernen waere eine Gestaltungsaenderung und in Welle 1
+       ausgeschlossen (Arbeitsregel 1). Offen fuer die Welle, die Deckkraeften
+       nachgeht. */
+    color: var(--blue-text);
     opacity: 0.8;
     flex-shrink: 0;
 }
@@ -2683,7 +2697,26 @@
 }
 
 .char-skill-item.expertise .char-skill-item-name {
-    color: var(--blue, var(--blue));
+    /* Nur die Schreibweise ist geaendert (Welle 1 Schritt 8): der
+       Selbst-Fallback `var(--blue, var(--blue))` hatte keine Wirkung und hat
+       die Stelle vor jeder zeilenbasierten Suche versteckt. Der WERT bleibt
+       var(--blue), obwohl die Anweisung hier var(--blue-text) vorsieht —
+       nachgerechnet waere das eine Verschlechterung. Grund: die
+       Fertigkeitenliste steht ausschliesslich im Charakter-Detail-Dialog,
+       und `.modal` traegt `background: rgba(26, 26, 26, 0.95)`
+       (dmscreen.css) — ein festes Dunkel, das KEINEM Theme folgt. Die
+       Traegerflaeche ist damit in allen vier Themes nahezu schwarz
+       (#191919 bis #1e1e1e), nicht --bg-card. Gemessen (dark light sepia
+       contrast) gegen diese tatsaechliche Flaeche:
+         var(--blue)      6,92 3,23 4,57 4,63
+         var(--blue-text) 6,92 2,68 2,69 6,31
+       --blue-text ist fuer HELLE Flaechen gerechnet und wird auf einer
+       dunklen zwangslaeufig schlechter. Die eigentliche Ursache ist der
+       themenblinde Dialoghintergrund, nicht die Tinte; sie gehoert in die
+       Welle, die die rgba-Literale aufloest. Die Geschwisterregel
+       .char-skill-item.proficient (var(--gold), dieselbe Flaeche) liegt aus
+       demselben Grund still. */
+    color: var(--blue);
 }
 
 .char-skill-item-mod {

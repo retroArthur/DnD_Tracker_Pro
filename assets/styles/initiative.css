@@ -38,7 +38,20 @@
         .bf-tag.terrain {
             background: rgba(249, 115, 22, 0.2);
             border: 1px solid var(--orange, var(--orange));
-            color: var(--orange, var(--orange));
+            /* Nur die Schreibweise ist geaendert (Welle 1 Schritt 8): der
+               Selbst-Fallback `var(--orange, var(--orange))` hatte keine
+               Wirkung und hat die Stelle vor jeder zeilenbasierten Suche
+               versteckt. Der WERT bleibt var(--orange) — die Flaeche ist eine
+               20-%-Toenung DERSELBEN Rolle, und ueber Toenungsstaerke und
+               Tinte entscheidet Welle 2 zusammen (Entscheidung D-4). Hier
+               schon gemessen, damit Welle 2 die Zahl nicht neu suchen muss
+               (dark light sepia contrast, Toenung ueber --bg-card):
+                 var(--orange)      5,65 2,90 3,53 5,62
+                 var(--orange-text) 5,65 5,00 4,78 5,62
+               Light und Sepia sind heute mangelhaft; ein Wechsel hier waere
+               aber eine halbe Entscheidung, weil Welle 2 die 20 % ohnehin
+               anfasst. */
+            color: var(--orange);
         }
 
         .bf-tag.lair {

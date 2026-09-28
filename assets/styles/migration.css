@@ -38,7 +38,7 @@
 .migration-wizard-title {
     font-size: 20px;
     font-weight: 600;
-    color: var(--gold, var(--gold));
+    color: var(--gold-text);
     margin: 0 0 16px 0;
     line-height: 1.2;
 }
@@ -104,7 +104,7 @@
 /* Primärer CTA Button */
 .btn.btn-primary.migration-btn-next {
     background: var(--gold, var(--gold));
-    color: var(--bg-dark, var(--bg-dark));
+    color: var(--on-gold);
     border: none;
     padding: 10px 20px;
     border-radius: var(--radius-md);
@@ -169,13 +169,13 @@
 
 .wizard-dropzone-filename {
     font-size: 13px;
-    color: var(--green, var(--green));
+    color: var(--green-text);
     word-break: break-all;
 }
 
 /* Fehlermeldung */
 .migration-step-error {
-    color: var(--red, var(--red));
+    color: var(--red-text);
     font-size: 13px;
     margin-top: 8px;
     line-height: 1.4;
@@ -189,7 +189,7 @@
 
 .migration-success-icon {
     font-size: 32px;
-    color: var(--green, var(--green));
+    color: var(--green-text);
     margin-bottom: 12px;
     display: block;
 }
@@ -257,7 +257,7 @@
 
 .migration-hint-link {
     font-size: 14px;
-    color: var(--gold, var(--gold));
+    color: var(--gold-text);
     text-decoration: underline;
     background: none;
     border: none;

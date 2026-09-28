@@ -61,7 +61,22 @@
     justify-content: space-between;
     padding: 0 16px;
     background: rgba(251, 191, 36, 0.85); /* var(--yellow) @ 85% */
-    color: var(--bg-dark, var(--bg-dark));
+    /* Welle 1 Schritt 8. Die Flaeche ist ein Bernstein-Literal und folgt
+       KEINEM Theme; die Tinte stand aber auf var(--bg-dark) und folgte dem
+       Theme sehr wohl — in Light und Sepia also Fast-Weiss auf Gelb.
+       Gemessen ueber der Seitenflaeche (dark light sepia contrast):
+         vorher var(--bg-dark)   8,53 1,45 1,27 9,02
+         jetzt  var(--on-yellow) 8,29 11,97 11,79 8,11
+       var(--on-yellow) ist in allen vier Themes #111111 und passt damit zur
+       themenunabhaengigen Flaeche — das ist der Grund, warum hier die
+       Gelb-Tinte richtig ist und nicht eine der neutralen. 1,27 in Sepia war
+       der schlechteste Wert im ganzen Baum; die Stelle war unsichtbar, weil
+       ein Token mit sich selbst als Ersatzwert durch jede zeilenbasierte
+       Suche faellt. (Die Schreibweise hier NICHT als var()-Ausdruck mit
+       Platzhalter notieren: F-01 Test 1 liest variables.css und die
+       Komponentendateien samt Kommentaren und haelt den Platzhalter fuer ein
+       undefiniertes Token.) */
+    color: var(--on-yellow);
     font-size: var(--font-size-small, 12px);
     gap: 12px;
 }
@@ -80,7 +95,7 @@
 
 .pwa-update-reload {
     background: var(--bg-dark, var(--bg-dark));
-    color: var(--yellow, var(--yellow));
+    color: var(--yellow-text);
     border: 1px solid var(--bg-dark, var(--bg-dark));
     padding: 2px 10px;
     border-radius: var(--radius-sm);
@@ -97,7 +112,7 @@
 
 .pwa-update-dismiss {
     background: transparent;
-    color: var(--bg-dark, var(--bg-dark));
+    color: var(--on-yellow);
     border: 1px solid rgba(13, 13, 13, 0.4);
     padding: 2px 10px;
     border-radius: var(--radius-sm);
