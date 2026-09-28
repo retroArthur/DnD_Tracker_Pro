@@ -1389,6 +1389,114 @@ describe('R02 — Waechter der Korrekturrunde (F2)', () => {
 });
 
 // ============================================================
+// Waechter der Abschlussrunde (G1): R02 — ein rein automatischer Save darf beim Verstecken des
+// Tabs nicht vorgezogen werden. flushPendingSave() hielt nur zwei Faelle zurueck: einen
+// VERALTETEN Tab und einen von persistOnUnload abgelehnten Save (_unloadFlushDeclined). Diese
+// Marke setzt aber ausschliesslich persistOnUnload, also nur NACH beforeunload. Der
+// visibilitychange-Zuhoerer feuert bei JEDEM Tabwechsel und Minimieren ohne beforeunload —
+// dort war sie false, und der rein automatische Save wurde vorgezogen: sein put entstand nach
+// dem laufenden ausdruecklichen Save des anderen Tabs und committete danach ueber ihn hinweg.
+// Genau das verbietet D4, und U9f/U9g/U9h/U9i nageln es fuer die Entlade-Sequenz fest.
+// Derselbe Zuhoerer-Pfad gilt fuer pagehide ohne vorheriges beforeunload.
+// ============================================================
+
+describe('R02 — Waechter der Abschlussrunde (G1)', () => {
+    const LS_QUOTA = 5 * MB;
+
+    const idbPutsG1 = (u, ab) =>
+        u.idb.anfragen.slice(ab).filter(a => a.op === 'put' && a.store === 'campaigns');
+
+    // Wie U9g, nur mit dem gewoehnlichsten Ausloeser ueberhaupt: der DM wechselt zum zweiten
+    // Tab, um dort weiterzuarbeiten — kein beforeunload, nur visibilitychange(hidden).
+    test('G1a: Tabwechsel mit ausstehendem automatischem Save — kein put, waehrend Bs ausdruecklicher IDB-Save laeuft', async () => {
+        const u = erzeugeUrsprung({ lsQuotaZeichen: LS_QUOTA });
+        u.saeenIdb(KEY, grosseKampagne());
+        const { A, B } = await zweiTabs(u);
+        const vorher = u.idb.anfragen.length;
+        B.ctx.D.characters.push({ id: 99, name: 'Borin' });
+        const bSave = B.ctx.saveImmediate();
+        A.ctx.D.lastSessionDuration = 300; // Session-Timer-Tick
+        expect(A.ctx.saveAutomatic()).toBe(true); // Nicht-Vakuitaet: der Timer steht wirklich
+        expect(A.ctx.isCampaignStorageStale(KEY)).toBe(false); // und A gilt als frisch
+
+        A.verstecken();
+        await u.uhr.laufen(0);
+        const r = await bSave;
+        // Der zurueckgestellte Save laeuft regulaer weiter — und findet den Tab jetzt veraltet
+        await u.uhr.laufen(400);
+
+        expect(r).toMatchObject({ success: true, backend: 'indexedDB' });
+        expect(namenIn(JSON.parse(u.idbDatensatz(KEY).data))).toContain('Borin');
+        const C = await oeffneTab(u, 'C').starten();
+        expect(namenIn(C.ctx.D)).toContain('Borin');
+        expect(idbPutsG1(u, vorher)).toHaveLength(1); // genau Bs put
+    });
+
+    // Zurueckgestellt heisst nicht verworfen: ohne Fremdschreiber schreibt derselbe
+    // ausstehende Save 300 ms spaeter regulaer. Der Tabwechsel zieht ihn nur nicht vor.
+    test('G1b: einzelner Tab — der automatische Save wird beim Tabwechsel nicht vorgezogen, aber auch nicht verloren', async () => {
+        const u = erzeugeUrsprung({ lsQuotaZeichen: LS_QUOTA });
+        u.saeenIdb(KEY, grosseKampagne());
+        const A = await oeffneTab(u, 'A').starten();
+        const vorher = u.idb.anfragen.length;
+        A.ctx.D.characters[0].name = 'Automatisch geplant';
+        expect(A.ctx.saveAutomatic()).toBe(true);
+
+        A.verstecken();
+        await u.uhr.laufen(0);
+        expect(idbPutsG1(u, vorher)).toEqual([]); // nicht vorgezogen
+
+        await u.uhr.laufen(400);
+
+        expect(idbPutsG1(u, vorher)).toHaveLength(1); // der regulaere Timer schreibt ihn
+        expect(JSON.parse(u.idbDatensatz(KEY).data).characters[0].name).toBe(
+            'Automatisch geplant'
+        );
+    });
+
+    // Gegenprobe zu G1a/G1b, damit die Zurueckstellung U11 nicht still abschaltet: ein
+    // AUSDRUECKLICHER Save wird beim Verstecken weiterhin sofort vorgezogen — ohne
+    // Timer-Fortschritt.
+    test('G1c: Tabwechsel mit ausdruecklichem Save — weiterhin sofort vorgezogen (U11 bleibt gebunden)', async () => {
+        const u = erzeugeUrsprung({ lsQuotaZeichen: LS_QUOTA });
+        u.saeenIdb(KEY, grosseKampagne());
+        const A = await oeffneTab(u, 'A').starten();
+        const vorher = u.idb.anfragen.length;
+        A.ctx.D.characters[0].name = 'Ausdruecklich vor dem Tabwechsel';
+        A.ctx.save();
+
+        A.verstecken();
+        await u.uhr.laufen(0);
+
+        expect(idbPutsG1(u, vorher)).toHaveLength(1);
+        expect(JSON.parse(u.idbDatensatz(KEY).data).characters[0].name).toBe(
+            'Ausdruecklich vor dem Tabwechsel'
+        );
+    });
+
+    // Ein spaeterer ausdruecklicher save() loescht die Markierung: derselbe ausstehende Timer
+    // zaehlt danach als ausdrueckliche Arbeit und wird beim Verstecken wieder vorgezogen.
+    test('G1d: erst automatisch, dann ausdruecklich gespeichert — der Tabwechsel zieht den Save wieder vor', async () => {
+        const u = erzeugeUrsprung({ lsQuotaZeichen: LS_QUOTA });
+        u.saeenIdb(KEY, grosseKampagne());
+        const A = await oeffneTab(u, 'A').starten();
+        const vorher = u.idb.anfragen.length;
+        A.ctx.D.lastSessionDuration = 300;
+        expect(A.ctx.saveAutomatic()).toBe(true);
+        A.ctx.D.characters[0].name = 'Ausdruecklich nachgezogen';
+        A.ctx.save();
+
+        A.verstecken();
+        await u.uhr.laufen(0);
+
+        expect(idbPutsG1(u, vorher)).toHaveLength(1);
+        expect(JSON.parse(u.idbDatensatz(KEY).data).characters[0].name).toBe(
+            'Ausdruecklich nachgezogen'
+        );
+    });
+});
+
+// ============================================================
 // Vertraege (vor und nach dem Fix gruen)
 // ============================================================
 
