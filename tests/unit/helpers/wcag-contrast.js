@@ -266,6 +266,26 @@ function resolve(value, pal, depth) {
             return rgbToHex(parts.slice(0, 3).map(Number));
         }
     }
+
+    /* DECKENDES color-mix. Eine Mischung zweier VOLLER Farben ist selbst eine
+       volle Farbe und braucht keine Traegerflaeche — anders als die
+       transparent-Form, die in resolveOver() bleibt.
+
+       Ohne diesen Zweig sind die sechs abgeleiteten Flaechen des Aliasblocks
+       (--gold-hover, --green-hover, --red-dim, --green-dim, --red-dark,
+       --orange-dim) fuer jede Ratsche unsichtbar: resolve() gab null, und wer
+       null bekommt, meldet nichts. Genau auf diesen Flaechen sitzen die
+       Zustandsregeln, ueber die R-03 urteilt. */
+    const mixMatch = v.match(
+        /^color-mix\(\s*in\s+srgb\s*,\s*([\s\S]+?)\s+([\d.]+)%\s*,\s*([\s\S]+?)\s*\)$/i
+    );
+    if (mixMatch) {
+        const basis = resolve(mixMatch[1], pal, d + 1);
+        const gegen = resolve(mixMatch[3], pal, d + 1);
+        // gegen === null heisst `transparent` (oder ein unbekanntes Token):
+        // dann fehlt die Flaeche und resolveOver() ist zustaendig.
+        if (basis && gegen) return mixOver(basis, parseFloat(mixMatch[2]) / 100, gegen);
+    }
     return null;
 }
 

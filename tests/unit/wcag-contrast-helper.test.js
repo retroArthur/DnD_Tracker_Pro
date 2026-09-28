@@ -131,6 +131,67 @@ describe('WCAG-Kontrastrechner — var()- und Mischungsaufloesung', () => {
         expect(W.mixOver('#d4af37', 1, '#1a1a1a')).toBe('#d4af37');
         expect(W.mixOver('#d4af37', 0, '#1a1a1a')).toBe('#1a1a1a');
     });
+
+    /* DECKENDES color-mix — die Luecke, die R-03 ueberhaupt erst moeglich macht.
+       Bis zum 2026-09-28 kannte der Rechner nur die Form mit `transparent` und
+       gab fuer jede andere Mischung null zurueck. Genau die sechs ABGELEITETEN
+       Flaechen des Aliasblocks sind aber deckend gemischt (--gold-hover,
+       --green-hover, --red-dim, --green-dim, --red-dark, --orange-dim), und auf
+       ihnen sitzen die Zustandsregeln, ueber die R-03 urteilt. Ein Rechner, der
+       sie nicht aufloesen kann, haette dort gar nichts gemeldet — die
+       gefaehrlichste Art von gruen.
+
+       Der Unterschied zur transparent-Form ist, dass hier KEINE Traegerflaeche
+       noetig ist: die Mischung ist selbst eine volle Farbe. Deshalb gehoert sie
+       in resolve() und nicht in resolveOver(). */
+    test('deckendes color-mix ist eine volle Farbe und braucht keine Flaeche', () => {
+        // --green-dim: color-mix(in srgb, var(--green) 62%, #000)
+        // Dark --green #4ade80 = (74,222,128):
+        //   0,62*74  =  45,88 ->  46 = 0x2e
+        //   0,62*222 = 137,64 -> 138 = 0x8a
+        //   0,62*128 =  79,36 ->  79 = 0x4f
+        expect(W.resolve('color-mix(in srgb, var(--green) 62%, #000)', pals.dark)).toBe('#2e8a4f');
+        // --gold-hover mischt gegen WEISS, nicht gegen Schwarz — die Gegenprobe,
+        // dass die zweite Farbe wirklich gelesen wird und nicht "Schwarz" heisst,
+        // weil das haeufiger vorkommt.
+        // Dark --gold #d4af37 = (212,175,55), 85 % ueber #fff:
+        //   0,85*212 + 0,15*255 = 218,45 -> 218 = 0xda
+        //   0,85*175 + 0,15*255 = 187,00 -> 187 = 0xbb
+        //   0,85* 55 + 0,15*255 =  85,00 ->  85 = 0x55
+        expect(W.resolve('color-mix(in srgb, var(--gold) 85%, #fff)', pals.dark)).toBe('#dabb55');
+        // Die transparent-Form bleibt ohne Flaeche null — sonst waere die
+        // Erweiterung genau das Raten, das eine Zeile weiter oben verboten ist.
+        expect(W.resolve('color-mix(in srgb, var(--gold) 20%, transparent)', pals.dark)).toBeNull();
+    });
+
+    test('die sechs abgeleiteten Flaechen des Aliasblocks loesen in JEDEM Theme auf', () => {
+        // Die Mischungen stehen im Aliasblock von variables.css, ihre Basisfarbe
+        // im jeweiligen Theme-Block. Aufgeloest wird also die Kaskade, die der
+        // Browser auch faehrt — und das Ergebnis muss eine volle Farbe sein,
+        // sonst kann keine Ratsche darauf urteilen.
+        const quelle = require('fs').readFileSync(W.VARIABLES_CSS, 'utf8');
+        const mischung = name => {
+            const m = quelle.match(new RegExp(`^\\s*${name}\\s*:\\s*(color-mix\\([^;]+)\\;`, 'm'));
+            expect(m).not.toBeNull();
+            return m[1].trim();
+        };
+        const abgeleitet = [
+            '--gold-hover',
+            '--green-hover',
+            '--red-dim',
+            '--green-dim',
+            '--red-dark',
+            '--orange-dim'
+        ];
+        const offen = [];
+        W.THEMES.forEach(theme => {
+            abgeleitet.forEach(token => {
+                const wert = W.resolve(mischung(token), pals[theme]);
+                if (!/^#[0-9a-f]{6}$/.test(wert || '')) offen.push(`${theme} ${token}: ${wert}`);
+            });
+        });
+        expect(offen).toEqual([]);
+    });
 });
 
 describe('WCAG-Kontrastrechner — Minimum ueber mehreren Traegerflaechen (D-2)', () => {
