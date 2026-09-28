@@ -193,7 +193,7 @@
 .wp-szene-nr {
     font-weight: 600;
     font-size: 14px;
-    color: var(--gold);
+    color: var(--gold-text);
 }
 
 .wp-szene-fields {
@@ -423,7 +423,7 @@
     padding: var(--space-sm) var(--space-md);
     font-size: 18px; /* F-18: aus der Dublette uebernommen */
     font-weight: 600; /* F-18: aus der Dublette uebernommen */
-    color: var(--gold); /* F-18: aus der Dublette uebernommen */
+    color: var(--gold-text); /* F-18: aus der Dublette uebernommen */
 }
 
 .tl-kalender-datum {
@@ -432,7 +432,7 @@
     gap: 8px;
     font-size: 18px;
     font-weight: 600;
-    color: var(--gold);
+    color: var(--gold-text);
 }
 
 .tl-kalender-actions {
@@ -762,7 +762,7 @@
 .npcg-preview-name {
     font-size: 22px;
     font-weight: 700;
-    color: var(--gold);
+    color: var(--gold-text);
     margin-bottom: 8px;
     line-height: 1.2;
 }
@@ -1078,11 +1078,11 @@
 }
 
 .fr-hist-plus {
-    color: var(--green);
+    color: var(--green-text);
 }
 
 .fr-hist-minus {
-    color: var(--red);
+    color: var(--red-text);
 }
 
 .fr-hist-grund {
