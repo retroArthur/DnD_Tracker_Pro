@@ -2892,3 +2892,174 @@ describe('R-08 — Muenzfarben sind Flaechen, keine Tinten (Ratsche)', () => {
         expect(befunde.sort()).toEqual([]);
     });
 });
+
+/* ===========================================================================
+   Design-Handoff v3, Welle 1 — R-09: die Ortsfarben aus dem JS
+   ===========================================================================
+   DREI STELLEN IN features/locations/locations-render.js schreiben eine
+   Farbe direkt ins Markup, weil sie aus den Kampagnendaten kommt und im CSS
+   deshalb gar nicht stehen KANN:
+
+     :66   der Filter-Chip     — `color: var(--${f.color})` im Inline-Stil
+     :153  der Listenaufkleber — `background: var(--${filter.color})`,
+                                 die Tinte stand in core.css
+     :253  die Detailkopfzeile — `color: var(--${filter.color})`
+
+   FUER JEDE RATSCHE DIESER DATEI SIND DIESE DREI UNSICHTBAR: R-02 bis R-05
+   und R-07/R-08 lesen CSS. Was ein Template-Literal in eine style=-Zeichen-
+   kette schreibt, sieht keine von ihnen. Genau deshalb steht diese hier —
+   sonst waere die Ortsansicht die eine Ansicht der App, deren Farben nach
+   Welle 1 unbewacht bleiben.
+
+   WAS SICH IN SCHRITT 13 GEAENDERT HAT, und warum jeweils:
+   (a) Der AUFKLEBER traegt eine volle Akzentflaeche, also gehoert die
+       Tinte --on-<rolle> darauf (gemessen min 4,55 ueber alle acht Rollen
+       und vier Themes; vorher war es `color: var(--bg-dark)` aus core.css
+       mit min 2,51). Die core.css-Zeile ist entfallen: gegen einen
+       Inline-Stil gewinnt sie ohnehin nie, sie waere toter Code.
+   (b) Chip und Detailkopfzeile liegen auf NEUTRALER Flaeche (der Chip auf
+       --bg-elevated bzw. --bg-hover, die Kopfzeile in derselben Schachtel
+       wie .loc-detail-name, die Schritt 9 nachweislich als neutral
+       gemessen und auf --gold-text gestellt hat). Dort gilt die Regel von
+       Schritt 9: `--<rolle>-text`. Gemessen min 4,51.
+   (c) `class="chip color-${f.color}"` bei :346 bleibt unveraendert — das
+       ist eine 20-%-Toenung und faellt unter Entscheidung D-4 (Welle 2).
+       Diese Ratsche haelt sie ausdruecklich fest, damit sie nicht
+       "mitgenommen" wird.
+
+   DER RUECKFALLWERT IST DER EIGENTLICHE INHALT VON ENTSCHEIDUNG D-7, und
+   er ist hier nachgerechnet statt behauptet. Steht in den Kampagnendaten
+   ein Farbwert ausserhalb der acht Optionen — aus einer aelteren Fassung,
+   aus einem von Hand bearbeiteten Export — dann ist `var(--xyz)` ungueltig
+   und die ganze background-Deklaration faellt aus (invalid at computed
+   value time): der Aufkleber hat dann GAR KEINE Flaeche und liegt auf der
+   Karte. Die Tinte muss also auf der KARTE lesbar sein, nicht auf Gold.
+   Der Test rechnet genau das nach. Zur Einordnung, am 2026-09-28 gemessen:
+   `var(--on-gold)` — der im Rezept vorgeschlagene Rueckfallwert — traegt
+   auf --bg-card dark 1,08 · light 18,88 · sepia 1,08 · contrast 1,00. In
+   drei von vier Themes waere der Aufkleber unsichtbar. `var(--text)`
+   traegt 8,78-21,00 auf beiden Kartenflaechen.
+
+   SIE IST BEI IHRER GEBURT ROT, mit vier Zeilen: die drei Stellen und die
+   tote core.css-Tinte. Gruen wird sie mit Schritt 13.
+   =========================================================================== */
+describe('R-09 — die Ortsfarben aus dem JS (Ratsche)', () => {
+    const QUELLE = path.join(REPO, 'features', 'locations', 'locations-render.js');
+    const js = fs.readFileSync(QUELLE, 'utf8');
+    /** Die Farboptionen des Filter-Dialogs sind die Wahrheit ueber die
+     *  moeglichen Werte — nicht eine Liste in diesem Test. */
+    const OPTIONEN = [
+        ...(tplFiles
+            .find(f => f.name === 'modals-entity.html')
+            .content.match(/<select id="filter-color">[\s\S]*?<\/select>/)?.[0]
+            .matchAll(/<option value="([\w-]+)"/g) || [])
+    ].map(m => m[1]);
+
+    const SCHWELLE = 4.5;
+
+    test('jede waehlbare Filterfarbe hat Flaeche, Tinte und Textwert in allen vier Themes', () => {
+        // Gegenprobe zuerst: ohne Optionen prueft die Schleife ueber Leerlauf.
+        expect(OPTIONEN.length).toBe(8);
+        const pals = WCAG.palettes();
+        const alias = aliasSchicht();
+        const befunde = [];
+        WCAG.THEMES.forEach(theme => {
+            const p = { ...pals[theme], ...alias };
+            OPTIONEN.forEach(farbe => {
+                [`--${farbe}`, `--on-${farbe}`, `--${farbe}-text`].forEach(tok => {
+                    if (!(tok in p)) befunde.push(`${theme}: ${tok} fehlt`);
+                });
+            });
+        });
+        expect(befunde.sort()).toEqual([]);
+    });
+
+    test('die drei JS-Stellen schreiben die richtige Tokenfamilie', () => {
+        const befunde = [];
+
+        // (a) Aufkleber: Flaeche UND Tinte, die Tinte mit Rueckfallwert.
+        if (!/class="loc-item-tag"[^`]*background:\s*var\(--\$\{filter\.color\}\)/.test(js)) {
+            befunde.push(
+                'locations-render.js: der Aufkleber .loc-item-tag fuellt nicht mehr mit ' +
+                    'var(--${filter.color}) — dann handelt der Rest dieser Ratsche von nichts'
+            );
+        }
+        if (!/class="loc-item-tag"[^`]*color:\s*var\(--on-\$\{filter\.color\}\s*,/.test(js)) {
+            befunde.push(
+                'locations-render.js: der Aufkleber .loc-item-tag setzt keine eigene Tinte ' +
+                    'var(--on-${filter.color}, …). Auf einer vollen Akzentflaeche gehoert sie ' +
+                    'dorthin, und ohne Rueckfallwert bricht ein alter gespeicherter Farbwert sie'
+            );
+        }
+
+        /* (b) Keine Stelle setzt die ROLLE selbst als Textfarbe.
+           Der Praefixschutz `(^|[^-\w])` ist nicht Kosmetik, sondern beim
+           ersten Lauf dieser Ratsche gemessen: ohne ihn liest `border-color:
+           var(--${f.color})` in Zeile 66 als `color:` mit, und die Stelle
+           steht doppelt in der Fundliste. Dasselbe Zaehlartefakt hat in der
+           Planung zu Handoff v3 sieben angebliche `color: var(--gold-dim)`
+           erzeugt, die alle `border-color` waren. */
+        for (const m of js.matchAll(/(?:^|[^-\w])color:\s*var\(\s*--\$\{([^}]+)\}\s*\)/g)) {
+            const vor = js.slice(0, m.index).split('\n').length;
+            befunde.push(
+                `locations-render.js:${vor} setzt \`color: var(--\${${m[1]}})\` — die Rolle ` +
+                    `selbst. Auf neutraler Flaeche gehoert dort --<rolle>-text hin, auf einer ` +
+                    `Akzentflaeche --on-<rolle>`
+            );
+        }
+
+        // (c) Die Toenungsstelle bleibt, wie sie ist (D-4, Welle 2).
+        if (!/class="chip color-\$\{f\.color\}"/.test(js)) {
+            befunde.push(
+                'locations-render.js: die Toenungsstelle `class="chip color-${f.color}"` ist ' +
+                    'weg. Sie faellt unter D-4 und gehoert in Welle 2, nicht hierher'
+            );
+        }
+
+        // (d) Die tote Tinte in core.css.
+        const core = cssFiles.find(f => f.name === 'core.css');
+        const regel = regelnMitRumpf(core.content).find(r => r.sel === '.loc-item-tag');
+        expect(regel).toBeDefined();
+        const tinte = deklaration(regel.rumpf, 'color');
+        if (tinte) {
+            befunde.push(
+                `core.css:${regel.zeile} .loc-item-tag setzt \`color: ${tinte}\`. Gegen den ` +
+                    `Inline-Stil derselben Elemente gewinnt sie nie — das ist toter Code, und ` +
+                    `solange sie dasteht, sieht sie aus wie die gueltige Tinte`
+            );
+        }
+
+        expect(befunde.sort()).toEqual([]);
+    });
+
+    test('der Rueckfallwert des Aufklebers ist auf der KARTE lesbar, nicht auf Gold', () => {
+        /* Warum die Karte und nicht die Akzentflaeche: der Rueckfallwert
+           greift genau dann, wenn `--<farbe>` unbekannt ist — und dann ist
+           auch `background: var(--<farbe>)` ungueltig und faellt komplett
+           aus. Der Aufkleber liegt in diesem Fall ohne eigene Flaeche auf
+           der Karte. Eine Tinte, die nur auf Gold gut aussieht, hilft
+           gerade dort nicht. */
+        const m = js.match(/color:\s*var\(--on-\$\{filter\.color\}\s*,\s*var\((--[\w-]+)\)\s*\)/);
+        expect(m).not.toBeNull();
+        const rueckfall = m[1];
+        const pals = WCAG.palettes();
+        const alias = aliasSchicht();
+        const befunde = [];
+        WCAG.THEMES.forEach(theme => {
+            const p = { ...pals[theme], ...alias };
+            const r = WCAG.minRatioOverSurfaces(rueckfall, ['--bg-card', '--bg-dark'], p);
+            if (r.min === null) {
+                befunde.push(`${theme}: ${rueckfall} oder eine Kartenflaeche ist nicht aufloesbar`);
+                return;
+            }
+            if (r.min < SCHWELLE) {
+                befunde.push(
+                    `${theme}: der Rueckfallwert ${rueckfall} traegt auf ${r.worst} nur ` +
+                        `${r.min} < ${SCHWELLE}. Greift der Rueckfall, hat der Aufkleber keine ` +
+                        `eigene Flaeche mehr und liegt auf der Karte`
+                );
+            }
+        });
+        expect(befunde.sort()).toEqual([]);
+    });
+});
