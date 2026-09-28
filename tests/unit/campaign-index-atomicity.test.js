@@ -417,6 +417,29 @@ describe('R07 — Import als neue Kampagne: Daten vor Index, Rueckbau bei jedem 
         expect(seite.alerts[0]).toMatch(/Fehler/);
     });
 
+    // Korrekturrunde zum Code-Review 2026-09-21 (F5, U6 minor:6): Pin fuer den
+    // IndexedDB-Zweig des Rueckbaus. T2 deckt nur den localStorage-Zweig ab; ohne
+    // diesen Fall bleibt ein Waisen-Datensatz in IndexedDB unbemerkt.
+    test('T2b (Pin): Daten liegen nach dem Rueckfall in IndexedDB, dann scheitert der Indexwrite — der IndexedDB-Datensatz wird zurueckgenommen', async () => {
+        const seite = await sitzungAlt();
+        const indexVorher = seite.speicher.ls.get(INDEX_KEY);
+        seite.speicher.politik.lsWirft = k => k === INDEX_KEY || istNeuerKampagnenSchluessel(k);
+
+        await importiere(seite, NEU_PAYLOAD, [true]);
+
+        // Nicht-Vakuitaet: der localStorage-Write des neuen Schluessels ist wirklich
+        // gescheitert, die Daten liefen also ueber den IndexedDB-Rueckfall.
+        expect(
+            seite.speicher.log.some(l => /^ls.quota:dnd-campaign-/.test(l) && !l.includes(ALT_KEY))
+        ).toBe(true);
+        expect(neueIdbSchluessel(seite.speicher)).toEqual([]);
+        expect(neueSchluessel(seite.speicher)).toEqual([]);
+        expect(seite.speicher.ls.get(INDEX_KEY)).toBe(indexVorher);
+        expect(seite.alerts).toHaveLength(1);
+        expect(seite.alerts[0]).toMatch(/Fehler/);
+        expect(seite.ctx.location.reload).not.toHaveBeenCalled();
+    });
+
     test('T3: grosser Import (localStorage-Quota > 200 000 Zeichen) — IndexedDB-Rueckfall, aktiv, und der naechste Start laedt ihn', async () => {
         const seite = await sitzungAlt();
         seite.speicher.politik.lsWirft = (k, v) => v.length > 200000;
@@ -528,6 +551,37 @@ describe('R07 — Import als neue Kampagne: Daten vor Index, Rueckbau bei jedem 
         );
         expect(daten).toEqual([neu[0].key]);
     });
+
+    // Korrekturrunde zum Code-Review 2026-09-21 (F5, U6 minor:7): Pin fuer das frische
+    // Lesen des Index NACH dem asynchronen Datenwrite (campaign-manager.js:130). Ohne
+    // es verliert der Eintrag eines anderen Tabs seinen Platz im Index und die dort
+    // angelegte Kampagne wird unerreichbar.
+    test('T15 (Pin): der Index wird nach dem asynchronen Datenwrite erneut gelesen — der Eintrag eines anderen Tabs bleibt erhalten', async () => {
+        const seite = await sitzungAlt();
+        seite.speicher.politik.lsWirft = k => istNeuerKampagnenSchluessel(k);
+        let gefeuert = false;
+        // Waehrend der IndexedDB-Write laeuft, haengt ein anderer Tab seine Kampagne
+        // an den Rohindex an (der Hook laeuft im Request-Task, also nach dem Lesen
+        // VOR dem await und vor dem Indexwrite danach).
+        seite.speicher.politik.requestFehler = stores => {
+            if (!gefeuert && stores.includes('campaigns')) {
+                gefeuert = true;
+                const idx = JSON.parse(seite.speicher.ls.get(INDEX_KEY));
+                idx.campaigns.push({ key: 'dnd-campaign-222', name: 'Fremd' });
+                seite.speicher.ls.set(INDEX_KEY, JSON.stringify(idx));
+            }
+            return false;
+        };
+
+        await importiere(seite, NEU_PAYLOAD, [true]);
+
+        expect(gefeuert).toBe(true); // Nicht-Vakuitaet: der Fremdschreiber lief wirklich
+        expect(indexVon(seite.speicher).campaigns.map(c => c.name)).toEqual([
+            'Alt',
+            'Fremd',
+            'Neu'
+        ]);
+    });
 });
 
 // ============================================================
@@ -561,6 +615,46 @@ describe('R07 — createCampaign(), switchCampaign(), saveCampaignIndex()', () =
         expect(neueSchluessel(seite.speicher)).toEqual([]);
         expect(seite.toasts.map(t => t.text)).toContain('❌ Fehler beim Erstellen der Kampagne');
         expect(seite.toasts.some(t => /erstellt/.test(t.text))).toBe(false);
+    });
+
+    // Korrekturrunde zum Code-Review 2026-09-21 (F5, U6 minor:6): Geschwister von T2b
+    // fuer createCampaign — derselbe IndexedDB-Zweig des Rueckbaus.
+    test('T6b (Pin): createCampaign — Daten liegen nach dem Rueckfall in IndexedDB, dann scheitert der Indexwrite: der IndexedDB-Datensatz wird zurueckgenommen', async () => {
+        const seite = await sitzungAlt();
+        const indexVorher = seite.speicher.ls.get(INDEX_KEY);
+        seite.speicher.politik.lsWirft = k => k === INDEX_KEY || istNeuerKampagnenSchluessel(k);
+
+        await erstelleKampagne(seite, 'Leer');
+
+        expect(
+            seite.speicher.log.some(l => /^ls.quota:dnd-campaign-/.test(l) && !l.includes(ALT_KEY))
+        ).toBe(true);
+        expect(neueIdbSchluessel(seite.speicher)).toEqual([]);
+        expect(neueSchluessel(seite.speicher)).toEqual([]);
+        expect(seite.speicher.ls.get(INDEX_KEY)).toBe(indexVorher);
+        expect(seite.toasts.map(t => t.text)).toContain('❌ Fehler beim Erstellen der Kampagne');
+        expect(seite.toasts.some(t => /erstellt/.test(t.text))).toBe(false);
+    });
+
+    // Korrekturrunde zum Code-Review 2026-09-21 (F5, U6 minor:7): Pin fuer den
+    // kollisionsfreien Schluessel (newCampaignKey, campaign-manager.js:78). Ohne die
+    // Suffix-Schleife ueberschreibt die Anlage fremde Daten unter demselben
+    // Millisekunden-Schluessel — und ihr Rueckbau loescht sie.
+    test('T16 (Pin): ein bereits belegter Millisekunden-Schluessel wird nie beschrieben — der Rueckbau trifft nur den eigenen', async () => {
+        const seite = await sitzungAlt();
+        const FEST = 1790000000000;
+        const FREMD = 'dnd-campaign-' + FEST;
+        vm.runInContext('Date.now = function () { return ' + FEST + '; };', seite.ctx);
+        seite.speicher.ls.set(FREMD, 'FREMDE-DATEN');
+        seite.speicher.politik.lsWirft = k => k === INDEX_KEY;
+
+        await erstelleKampagne(seite, 'Leer');
+
+        expect(seite.speicher.ls.get(FREMD)).toBe('FREMDE-DATEN');
+        expect(seite.speicher.log).toContain('ls.set:' + FREMD + '-1');
+        expect(seite.speicher.log).not.toContain('ls.set:' + FREMD);
+        expect(seite.speicher.log).not.toContain('ls.remove:' + FREMD);
+        expect(seite.toasts.map(t => t.text)).toContain('❌ Fehler beim Erstellen der Kampagne');
     });
 
     test('T7: createCampaign — Erfolg: Schluessel = initializeData(), Daten vor Index, active unveraendert', async () => {
@@ -666,5 +760,79 @@ describe('R07 — importFullExport() schreibt den _ts-Begleiter', () => {
         const neustart = await boote(erzeugeSeite(speicher));
         expect(neustart.ctx.STORAGE_KEY_OVERRIDE).toBe(ALT_KEY);
         expect(neustart.ctx.D.npcs[0].name).toBe('Importiert');
+    });
+});
+
+// ============================================================
+// Umzugs-Import: gescheiterte Schreibvorgaenge melden (Korrekturrunde F5)
+// ============================================================
+
+/**
+ * Werkbank von T14: reine IndexedDB-Kampagne "Alt" mit einer AELTEREN Kopie, Index mit Alt
+ * aktiv, KEIN localStorage-Eintrag und KEIN _ts. Liefert Speicher, Bau-Seite und die
+ * Umzugs-Nutzlast, deren NPC 'Importiert' heisst.
+ */
+function umzugsWerkbank() {
+    const speicher = erzeugeSpeicher();
+    const bau = erzeugeSeite(speicher);
+    const altIdb = standAlt(bau.ctx);
+    altIdb.npcs = [{ id: 1, name: 'Alte IndexedDB-Kopie' }];
+    speicher.fake.tab('campaigns').set(ALT_KEY, {
+        id: ALT_KEY,
+        data: JSON.stringify(altIdb),
+        timestamp: Date.now() - 60000
+    });
+    speicher.ls.set(
+        INDEX_KEY,
+        JSON.stringify({ campaigns: [{ key: ALT_KEY, name: 'Alt' }], active: ALT_KEY })
+    );
+    const importiert = standAlt(bau.ctx);
+    importiert.npcs = [{ id: 1, name: 'Importiert' }];
+    const nutzlast = {
+        _exportType: 'full-v1',
+        campaigns: { [ALT_KEY]: { meta: { key: ALT_KEY, name: 'Alt' }, data: importiert } },
+        campaignIndex: { campaigns: [{ key: ALT_KEY, name: 'Alt' }], active: ALT_KEY }
+    };
+    return { speicher, bau, nutzlast };
+}
+
+describe('R07-Nachtrag (F5) — importFullExport() meldet gescheiterte Schreibvorgaenge', () => {
+    test('T14b: der _ts-Write scheitert und es gibt keinen Stempel — der Umzugs-Import meldet Fehlschlag statt Erfolg', () => {
+        const { speicher, bau, nutzlast } = umzugsWerkbank();
+        speicher.politik.lsWirft = k => k === ALT_KEY + '_ts';
+
+        expect(() => bau.ctx.importFullExport(nutzlast)).toThrow(/Speichern fehlgeschlagen/);
+
+        // Nicht-Vakuitaet: die Kampagnendaten selbst sind geschrieben, es fehlt NUR der
+        // Stempel — genau der Zustand, in dem load() die Kopie fuer einen veralteten
+        // Schatten haelt und die aeltere IndexedDB-Kopie nimmt.
+        expect(speicher.ls.has(ALT_KEY)).toBe(true);
+        expect(speicher.ls.has(ALT_KEY + '_ts')).toBe(false);
+    });
+
+    test('T14c: der _ts-Write scheitert, aber ein alter Stempel liegt vor — kein Fehlschlag, und der Import gewinnt beim Neustart', async () => {
+        const { speicher, bau, nutzlast } = umzugsWerkbank();
+        // Ein vorhandener (auch alter) Stempel genuegt: load() prueft nur, DASS er da ist
+        speicher.ls.set(ALT_KEY + '_ts', String(Date.now() - 120000));
+        speicher.politik.lsWirft = k => k === ALT_KEY + '_ts';
+
+        const ergebnis = bau.ctx.importFullExport(nutzlast);
+        expect(ergebnis.campaignCount).toBe(1);
+
+        speicher.politik.lsWirft = null;
+        const neustart = await boote(erzeugeSeite(speicher));
+        expect(neustart.ctx.STORAGE_KEY_OVERRIDE).toBe(ALT_KEY);
+        expect(neustart.ctx.D.npcs[0].name).toBe('Importiert');
+    });
+
+    test('T14d: der Indexwrite scheitert — der Umzugs-Import meldet Fehlschlag statt Erfolg', () => {
+        const { speicher, bau, nutzlast } = umzugsWerkbank();
+        speicher.politik.lsWirft = k => k === INDEX_KEY;
+
+        expect(() => bau.ctx.importFullExport(nutzlast)).toThrow(/Kampagnenindex/);
+
+        // Nicht-Vakuitaet: der Rohindex ist unveraendert, die importierten Kampagnen
+        // waeren also ueber ihn nicht erreichbar.
+        expect(JSON.parse(speicher.ls.get(INDEX_KEY)).campaigns.map(c => c.name)).toEqual(['Alt']);
     });
 });

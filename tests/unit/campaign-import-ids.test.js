@@ -413,6 +413,40 @@ describe('R03 — Ueberschreiben ersetzt die Kampagne (Review-Tests)', () => {
         }
         expect(persistiert.npcs.map(n => n.name)).toEqual(['Neuer NPC']);
     });
+
+    // Korrekturrunde zum Code-Review 2026-09-21 (F5, U5 minor:6): Pin fuer die
+    // Sicherheitskopie des Ueberschreib-Zweigs (import-export.js:829). Der bestehende
+    // Quelltext-Pin in import-sanitization.test.js prueft nur die Reihenfolge
+    // "createAutoBackup( vor replaceCampaignData(" — die alte, luegende Form
+    // (createAutoBackup() ohne reason plus bedingungsloses
+    // '💾 Sicherheitskopie erstellt') ueberlebt ihn.
+    test('C1b (Pin): der Ueberschreib-Zweig erfasst den VOR-Import-Stand als Sicherheitskopie und meldet erst deren echtes Ergebnis', async () => {
+        const ziel = await boote(
+            erzeugeSeite(speicherMitStand({ factions: [{ id: 1, name: 'Alte Gilde' }] }))
+        );
+        let erfasst = null;
+        ziel.ctx.createAutoBackup = jest.fn(() => {
+            erfasst = JSON.stringify(ziel.ctx.D);
+            return Promise.resolve('written');
+        });
+
+        await importiere(
+            ziel,
+            { _campaignName: 'Neu', _version: VERSION, npcs: [{ id: 1, name: 'Neuer NPC' }] },
+            { antworten: [false, true] }
+        );
+
+        expect(ziel.ctx.createAutoBackup).toHaveBeenCalledTimes(1);
+        expect(ziel.ctx.createAutoBackup).toHaveBeenCalledWith({ reason: 'safety' });
+        // synchron beim Aufruf erfasst, also VOR dem Ersetzen
+        expect(erfasst).toContain('Alte Gilde');
+        expect(ziel.ctx.reportSafetyBackup).toHaveBeenCalledTimes(1);
+        expect(ziel.ctx.reportSafetyBackup.mock.calls[0][0]).toBe(
+            ziel.ctx.createAutoBackup.mock.results[0].value
+        );
+        // keine bedingungslose Erfolgsmeldung — reportSafetyBackup meldet das Ergebnis
+        expect(ziel.toasts.map(t => t.text)).not.toContain('💾 Sicherheitskopie erstellt');
+    });
 });
 
 // ============================================================
