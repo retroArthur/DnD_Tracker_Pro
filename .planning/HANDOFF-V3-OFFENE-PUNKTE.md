@@ -138,18 +138,47 @@ inzwischen hält, wird von ihr als Altlast gemeldet).
 | Datei | Selektor | vorher | jetzt | gemessen (dark light sepia contrast) |
 | ----- | -------- | ------ | ----- | ------------------------------------ |
 | dashboard.css | .wiki-link:hover | `var(--gold)` auf `var(--purple)` | `var(--on-purple)` | 6,94 5,70 5,05 6,02 |
-| spells.css | .editor-btn.format-active | `var(--gold)` auf `var(--gold-dim)` | `var(--on-gold-dim)` | 5,66 5,09 9,89 8,51 |
+| ~~spells.css~~ | ~~.editor-btn.format-active~~ | — | Regel entfernt | siehe Berichtigung |
 | dmscreen.css | .dms-dice-btn:hover | `var(--bg)` auf `var(--gold)` | `var(--on-gold)` | 8,98 5,80 7,10 13,46 |
 | loot.css | .shop-cat-badge.active | `var(--bg)` auf `var(--gold)` | `var(--on-gold)` | 8,98 5,80 7,10 13,46 |
 | loot.css | .shop-sort-btn.active | `var(--bg)` auf `var(--gold)` | `var(--on-gold)` | 8,98 5,80 7,10 13,46 |
 | party.css | .cf-combat-value select option:hover/:checked | `var(--bg)` auf `var(--gold)` | `var(--on-gold)` | 8,98 5,80 7,10 13,46 |
 
-**Gruppe (a) war entgegen der ursprünglichen Einschätzung doch eine Tintenfrage.** Beide Flächen
-(`--purple`, `--gold-dim`) sind Rollen, für die seit Schritt 4 ein `--on-*`-Token in allen vier
-Theme-Blöcken steht. Die Fläche musste gar nicht angefasst werden, es fehlte nur die Tinte.
-`.wiki-link:hover` war mit 1,29 die schlechteste Stelle im ganzen Baum.
+**Berichtigung vom 2026-09-28 (Prüfung W1-D, Runde 1).** Zwei der sechs Zeilen haben zunächst
+etwas anderes behauptet, als auf dem Schirm ankam. Beide Male war die Kaskade der Grund, und beide
+Male hat keine der drei Ratschen es sehen können, weil sie regelweise urteilen. Seither gibt es
+dafür R-05.
 
-**Gruppe (b) ist mechanisch behoben**, genau wie in der Fassung vom 2026-09-28 angekündigt.
+- **`spells.css .editor-btn.format-active` hat nie gemalt.** Die Regel hat die Spezifität (0,2,0)
+  und verliert **beide** Eigenschaften gegen `editors.css:69 .editor-toolbar
+  .editor-btn.format-active` (0,3,0). `format-active` wird ausschließlich in
+  `ui/editors/rich-text-toolbars.js:309` auf Knöpfen unterhalb von `[data-toolbar-for]` gesetzt,
+  und jedes dieser Elemente trägt zugleich `editor-toolbar` — die 22 statischen Leisten der
+  Vorlagen wie die vom Generator erzeugten. Es gab keinen Zustand, in dem sie galt. Die Regel ist
+  entfernt. Was wirklich rendert, ist `var(--gold)` auf `rgba(212,175,55,0.18)`: **5,06 2,41 5,28
+  7,94** — eine 18-%-Tönung derselben Rolle und damit ein Fall von D-4. Er steht jetzt in
+  W1-D-02. **Die frühere Sichtprüfungsanweisung „in Sepia 1,39 → 9,89, dort ist der Unterschied
+  am deutlichsten" ist gegenstandslos** — dort war und ist kein Unterschied zu sehen.
+- **`loot.css .shop-cat-badge.active` war umgestellt, aber unwirksam.** Zwölf Zeilen später
+  standen die sechs Kategorieregeln mit derselben Spezifität und holten `color` zurück. Jede Marke
+  trägt immer beide Klassen (`features/shops/shops-core.js:427` und :438); die Voreinstellung
+  jedes Ladens ist `shop-cat-badge all active`, also Gold auf Gold. Gemessen auf `var(--gold)`:
+  `.all` 1,00 1,00 1,00 1,00 · `.weapon` 1,79 1,48 1,53 2,85 · `.armor` 1,21 1,59 1,93 2,71 ·
+  `.item` 1,21 1,01 2,22 1,02 · `.service` 1,29 1,75 1,40 2,24 · `.misc` 1,69 1,76 1,24 1,66 —
+  also **schlechter als der gestrichene Ausnahmewert 2,98**. Behoben, indem die sechs
+  Kategorieregeln jetzt **vor** `.shop-cat-badge.active` stehen: keine Spezifitätserhöhung, kein
+  neuer Selektor, nur Reihenfolge. Seither gelten die 8,98 5,80 7,10 13,46 der Tabelle wirklich.
+  Die vier Einträge der Gruppe C in W1-D-01 beschreiben den **Ruhezustand** derselben Marken und
+  sind davon unberührt.
+
+**Gruppe (a) war entgegen der ursprünglichen Einschätzung doch eine Tintenfrage** — aber nur an
+**einer** der beiden Stellen. `--purple` ist eine Rolle, für die seit Schritt 4 ein
+`--on-*`-Token in allen vier Theme-Blöcken steht; die Fläche musste gar nicht angefasst werden, es
+fehlte nur die Tinte. `.wiki-link:hover` war mit 1,29 die schlechteste Stelle im ganzen Baum. Die
+zweite Stelle (`--gold-dim`) war gar keine Stelle, siehe Berichtigung.
+
+**Gruppe (b) ist mechanisch behoben** — drei der vier Stellen sofort, die vierte
+(`.shop-cat-badge.active`) erst mit der Umsortierung aus der Berichtigung.
 
 ### Die zwei verbliebenen Gruppen, und warum sie nicht in Welle 1 gehören
 
@@ -171,7 +200,13 @@ entschieden, nicht nebenbei getan.
 cd /d/Claude_Code/Projekte/DnD_Tracker_App_Pro
 npx jest tests/unit/design-consistency.test.js -t "R-03"
 npx jest tests/unit/design-consistency.test.js -t "R-04"
+# Die Kaskadenprobe der Berichtigung — sie urteilt auf der Tinte, die gewinnt:
+npx jest tests/unit/design-consistency.test.js -t "R-05"
 git show 0894408a:assets/styles/loot.css | grep -A3 "shop-cat-badge.active"
+# Die Marke trägt IMMER beide Klassen, `active` kommt nur dazu:
+grep -n "shop-cat-badge" features/shops/shops-core.js
+# Und `format-active` sitzt nur in Leisten, die `editor-toolbar` tragen:
+grep -c 'class="editor-toolbar[^"]*" data-toolbar-for=' assets/templates/*.html
 ```
 
 ### Was bis zur Entscheidung gilt
@@ -289,7 +324,18 @@ node <scratch>/classify.js | grep -E "^ *[0-9]+  ROLE \|"
 # Die Dialogfläche selbst:
 grep -n "^\.modal {" -A4 assets/styles/dmscreen.css
 grep -rn "modal-overlay" assets/styles/*.css | head -3
+# Die Zeilenanker gegen den HEAD-Stand (seit 2026-09-28 eine Ratsche):
+npx jest tests/unit/design-consistency.test.js -t "R-06"
 ```
+
+**Die Zeilenanker sind seit dem 2026-09-28 bewacht.** In der Fassung vom selben Tag zeigten 34 der
+128 auf `font-weight`, auf eine Leerzeile oder auf eine schließende Klammer — sie waren vor den
+Kommentareinfügungen desselben Commits erzeugt und nicht nachgezogen worden. Das ist genau die
+Fehlerart, wegen der die Auftragslage die Anker des Handoffs v3 für unbrauchbar erklärt hat. R-06
+in `tests/unit/design-consistency.test.js` prüft jetzt jede der 128 Zeilen gegen die Datei: sie
+muss dort eine `color: var(--…)`-Deklaration im genannten Selektor mit der genannten Rolle
+treffen. **Wer eine dieser CSS-Dateien anfasst, zieht die Tabelle im selben Commit nach** — sonst
+ist die Ratsche rot.
 
 Die Messung selbst: `<scratch>/measure5.js` (Playwright, gebautes Bündel, 24 Ansichten + 30
 Dialoge, zwei Themes) und `<scratch>/decide.js` (Urteil je Stelle plus Geschwisterbindung).
@@ -315,8 +361,8 @@ Gruppe E gerade nicht bewiesen ist. Sie sind **kein** erledigter Fall.
 | `initiative.css:601` | `.aoe-target-save` | `--green` | #191919 | #1e1e1e |
 | `initiative.css:618` | `.aoe-target-damage.full` | `--red` | #191919 | #1e1e1e |
 | `initiative.css:622` | `.aoe-target-damage.half` | `--yellow` | #191919 | #1e1e1e |
-| `party.css:1990` | `.rest-modal-header h3` | `--gold` | #191919 | #1e1e1e |
-| `party.css:2261` | `.condition-ref-header h3` | `--gold` | #191919 | #1e1e1e |
+| `party.css:1996` | `.rest-modal-header h3` | `--gold` | #191919 | #1e1e1e |
+| `party.css:2267` | `.condition-ref-header h3` | `--gold` | #191919 | #1e1e1e |
 | `tools.css:474` | `.rt-modal-header h3` | `--gold` | #191919 | #1e1e1e |
 | `tools.css:601` | `.rt-dice-label` | `--gold` | #191919 | #1e1e1e |
 | `tools.css:676` | `.generator-modal-header h3` | `--gold` | #191919 | #1e1e1e |
@@ -337,23 +383,31 @@ Gruppe E gerade nicht bewiesen ist. Sie sind **kein** erledigter Fall.
 | `initiative.css:171` | `.init-name:hover` | `--gold` | GRAD:#0d0d0d · --bg-card | GRAD:#f5f5f5 · --bg-card |
 | `initiative.css:199` | `.init-hp-value.healthy` | `--green` | GRAD:#0d0d0d | GRAD:#f5f5f5 |
 | `initiative.css:200` | `.init-hp-value.bloodied` | `--yellow` | GRAD:#0d0d0d · --bg-card | GRAD:#f5f5f5 · --bg-card |
-| `initiative.css:1107` | `.init-mob-alive.healthy` | `--green` | GRAD:#0d0d0d | GRAD:#f5f5f5 |
-| `initiative.css:1108` | `.init-mob-alive.bloodied` | `--yellow` | GRAD:#0d0d0d | GRAD:#f5f5f5 |
+| `initiative.css:1111` | `.init-mob-alive.healthy` | `--green` | GRAD:#0d0d0d | GRAD:#f5f5f5 |
+| `initiative.css:1112` | `.init-mob-alive.bloodied` | `--yellow` | GRAD:#0d0d0d | GRAD:#f5f5f5 |
 | `spells.css:79` | `.spell-info-line.classes` | `--cyan` | GRAD:#1a1a1a | GRAD:#ffffff |
 | `spells.css:80` | `.spell-info-line.school` | `--purple` | GRAD:#1a1a1a | GRAD:#ffffff |
 | `tools.css:851` | `.ld-split-amount` | `--gold` | GRAD:#191919 | GRAD:#1e1e1e |
 
 ### Gruppe C — Akzent- oder Toenungsflaeche, 10 Stellen
 
+Die vier `.shop-cat-badge.*`-Zeilen dieser Gruppe beschreiben den **Ruhezustand** der Ladenmarken
+(Kategoriefarbe auf `--bg-card` bzw. auf der Goldfläche der aktiven Marke). Ihr **aktiver**
+Zustand war ein eigener Befund und ist behoben — siehe die Berichtigung unter W1-C-01: bis zum
+2026-09-28 gewannen genau diese vier Regeln die Tinte auch dann, wenn `.active` daneben stand, und
+druckten die Voreinstellung jedes Ladens auf 1,00. Seit die Kategorieregeln **vor**
+`.shop-cat-badge.active` stehen, betreffen sie nur noch den Ruhezustand — also genau das, was
+diese Tabelle führt.
+
 | Stelle | Selektor | Rolle | Traeger dark | Traeger light |
 | ------ | -------- | ----- | ------------ | ------------- |
 | `dashboard.css:192` | `.campaign-name` | `--cyan` | #1f2e24 | #edfcf2 |
 | `dmscreen.css:1296` | `.dms-init-marker` | `--gold` | #3c331b | #fef5de |
 | `dmscreen.css:1309` | `.dms-init-value` | `--cyan` | #3c331b | #fef5de |
-| `loot.css:280` | `.shop-cat-badge.weapon` | `--red` | --bg-card | --bg-card |
-| `loot.css:281` | `.shop-cat-badge.armor` | `--blue` | #d4af37 · --bg-card | #b8860b · --bg-card |
-| `loot.css:283` | `.shop-cat-badge.service` | `--purple` | #d4af37 · --bg-card | #b8860b · --bg-card |
-| `loot.css:285` | `.shop-cat-badge.all` | `--gold` | #d4af37 | #b8860b |
+| `loot.css:295` | `.shop-cat-badge.weapon` | `--red` | --bg-card | --bg-card |
+| `loot.css:296` | `.shop-cat-badge.armor` | `--blue` | #d4af37 · --bg-card | #b8860b · --bg-card |
+| `loot.css:298` | `.shop-cat-badge.service` | `--purple` | #d4af37 · --bg-card | #b8860b · --bg-card |
+| `loot.css:300` | `.shop-cat-badge.all` | `--gold` | #d4af37 | #b8860b |
 | `party.css:796` | `.wiki-tree-item.pinned` | `--gold` | --bg-card · #2f233b | --bg-card · #f2e6fe |
 | `tools.css:586` | `.rt-dice-btn:hover` | `--gold` | --bg-dark · #d4af37 | --bg-dark · #b8860b |
 | `tools.css:629` | `.rt-hint-warn` | `--orange` | #2f2618 | #332a1c |
@@ -362,11 +416,11 @@ Gruppe E gerade nicht bewiesen ist. Sie sind **kein** erledigter Fall.
 
 | Stelle | Selektor | Rolle | Traeger dark | Traeger light |
 | ------ | -------- | ----- | ------------ | ------------- |
-| `dashboard.css:484` | `.char-section-title` | `--gold` | --bg-card · #191919 | --bg-card · #1e1e1e |
-| `dice.css:593` | `.fdp-title` | `--gold` | --bg-card | #1e1e1e |
+| `dashboard.css:505` | `.char-section-title` | `--gold` | --bg-card · #191919 | --bg-card · #1e1e1e |
+| `dice.css:602` | `.fdp-title` | `--gold` | --bg-card | #1e1e1e |
 | `dmscreen.css:999` | `.form-group label` | `--gold` | --bg-card · #191919 | --bg-card · #1e1e1e |
-| `party.css:2592` | `.char-adv-btn.adv` | `--green` | --bg-dark · #191919 | --bg-dark · #1e1e1e |
-| `party.css:2593` | `.char-adv-btn.dis` | `--red` | --bg-dark · #191919 | --bg-dark · #1e1e1e |
+| `party.css:2598` | `.char-adv-btn.adv` | `--green` | --bg-dark · #191919 | --bg-dark · #1e1e1e |
+| `party.css:2599` | `.char-adv-btn.dis` | `--red` | --bg-dark · #191919 | --bg-dark · #1e1e1e |
 
 ### Gruppe E — in keinem erreichbaren Zustand gerendert, 82 Stellen
 
@@ -396,12 +450,12 @@ dashboard.css
    66  .dice-crit
    67  .dice-fail
    88  .dice-skill-btn:hover
-  401  .char-save-box.proficient .save-label
-  445  .enc-save-box.active .enc-save-label
-  634  .icon-btn.danger:hover
-  635  .icon-btn.success:hover
- 1061  .dash-timer-time
- 1310  .qref-chip.danger
+  422  .char-save-box.proficient .save-label
+  466  .enc-save-box.active .enc-save-label
+  655  .icon-btn.danger:hover
+  656  .icon-btn.success:hover
+ 1082  .dash-timer-time
+ 1331  .qref-chip.danger
 dice.css
   349  .dice-fav-item:hover .fav-del
 dmscreen.css
@@ -411,9 +465,9 @@ dmscreen.css
   477  .session-tag-remove:hover
   623  .quick-ref-section-title
  1201  .dms-stat-warning .dms-stat-value
- 2233  .dms-profile-check
- 2259  .dms-profile-save
- 2263  .dms-profile-save .dms-profile-name
+ 2239  .dms-profile-check
+ 2265  .dms-profile-save
+ 2269  .dms-profile-save .dms-profile-name
 encounters.css
    34  .list-view-row.expanded .row-toggle
    47  .list-dialog-item.used .list-dialog-status
@@ -436,26 +490,26 @@ initiative.css
   201  .init-hp-value.critical
   271  .death-saves-label
   423  .concentration-check-banner .conc-dc
- 1000  .la-label
- 1041  .lr-label
- 1109  .init-mob-alive.critical
+ 1004  .la-label
+ 1045  .lr-label
+ 1113  .init-mob-alive.critical
 loot.css
-  282  .shop-cat-badge.item
-  443  .si-tag-v
-  591  .cart-shop-name
-  658  .cart-item-total
+  297  .shop-cat-badge.item
+  475  .si-tag-v
+  623  .cart-shop-name
+  690  .cart-item-total
 npcs.css
   236  .npc-detail-location
   879  .npc-name
   960  .npc-popup-name
   993  .npc-popup-section-title
 party.css
- 1898  .party-stat-card.critical .party-stat-value
- 2165  .rest-heal-preview
- 2171  .rest-hd-restore
- 2547  .cf-attack-remove:hover
- 2696  .char-skill-item.proficient .char-skill-item-name
- 2719  .char-skill-item.expertise .char-skill-item-name
+ 1904  .party-stat-card.critical .party-stat-value
+ 2171  .rest-heal-preview
+ 2177  .rest-hd-restore
+ 2553  .cf-attack-remove:hover
+ 2702  .char-skill-item.proficient .char-skill-item-name
+ 2725  .char-skill-item.expertise .char-skill-item-name
 spells.css
   135  .spell-material
 tools.css
@@ -479,10 +533,11 @@ wie für die 181 umgestellten. Der Messaufbau liegt bei und ist wiederverwendbar
 
 ---
 
-## W1-D-02 — Vier Tönungsstellen, die Schritt 10 einzeln nachgerechnet hat: die Tinte allein reicht dort nicht
+## W1-D-02 — Fünf Tönungsstellen, die Schritt 10 einzeln nachgerechnet hat, plus eine Vorziehung
 
 **Status: OFFEN — gehört nach Entscheidung D-4 geschlossen in Welle 2.**
-Aufgenommen am 2026-09-28, Welle 1, Schritt 10.
+Aufgenommen am 2026-09-28, Welle 1, Schritt 10; fortgeschrieben am 2026-09-28 nach der Prüfung
+W1-D, Runde 1 (eine Stelle kam dazu, eine Vorziehung wurde ausgewiesen).
 
 ### Worum es geht
 
@@ -500,9 +555,32 @@ Begründung, mit der D-4 die Trennung gezogen hat.
 | `tools.css:1700` | `.ds-rate-chip.ds-crit` | `rgba(--green-rgb, 0.15)` | dark 5,26 · light 2,11 · sepia 2,07 · contrast 6,53 | light **3,92** · sepia **4,08** |
 | `tools.css:1706` | `.ds-rate-chip.ds-fumble` | `rgba(--red-rgb, 0.15)` | dark 2,92 · light 2,89 · sepia 2,78 · contrast 3,02 | dark **3,93** · light **3,69** · sepia **3,82** · contrast **4,35** |
 | `dashboard.css:250` | `.wiki-link` (Ruhezustand) | `rgba(168,85,247,0.1)`, FREMDE Rolle unter Cyan-Text | dark 5,84 · light 2,44 · sepia 2,08 · contrast 9,15 | — |
+| `editors.css:69` + `:75` | `.editor-toolbar .editor-btn.format-active` und `[aria-expanded='true']` | `rgba(212,175,55,0.18)` über `var(--bg-elevated)` | dark 5,06 · light **2,41** · sepia 5,28 · contrast 7,94 | light 4,62 — **reicht** |
 
 `.ds-rate-chip.ds-fumble` hält in **keinem** Theme 4,5, auch nicht mit der Textvariante. Die
 Tönung muss dort schwächer werden oder die Fläche eine andere Rolle bekommen.
+
+**`editors.css:69`/`:75` kam am 2026-09-28 durch die Prüfung W1-D dazu** und ist der einzige
+Eintrag dieser Tabelle, an dem die Textvariante allein genügen würde (light 2,41 → 4,62). Die
+Stelle ist nachgetragen, weil Schritt 10 sie für erledigt hielt: die dort korrigierte Regel stand
+in `spells.css` und hat nie gemalt (Spezifität 0,2,0 gegen 0,3,0 — siehe Berichtigung unter
+W1-C-01). Die Trägerfläche ist **bewiesen, nicht geschätzt**: `editors.css:15 .editor-toolbar`
+setzt `background: var(--bg-elevated)`. `var(--on-gold)` wäre hier falsch (1,34 in Sepia) — die
+Tönung ist hell, nicht voll. Bewacht von R-05 mit dem gemessenen Wert 2,41; wird der Wert besser
+oder schlechter, meldet die Ratsche es.
+
+### Vorziehung: eine Stelle dieser Bauart ist in Welle 1 schon umgestellt
+
+`loot.css` `.loot-tag-chip input:checked + span` trägt seit Schritt 9 `var(--gold-text)` statt
+`var(--gold)`. Die Stelle gehört der Bauart nach hierher: sie gilt nur bei angekreuztem Kästchen,
+und genau dann setzt die Elternregel `.loot-tag-chip:has(input:checked)` eine 20-%-Tönung
+**derselben** Rolle. Sie ist Schritt 9 durchgerutscht, weil die Kontrollzahl `ROLE | rgba` nur
+innerhalb **einer** Regel zählt und eine Tönung in der Elternregel nicht sieht.
+
+Zurückgedreht wird sie nicht, weil die Zahlen besser werden — gemessen über `--bg-card`:
+`var(--gold)` 5,55 2,83 5,81 9,23 → `var(--gold-text)` 5,55 **5,41** 5,81 9,23. Sie steht hier,
+damit **Welle 2 sie nicht ein zweites Mal anfasst**: die Tintenfrage ist entschieden, offen bleibt
+nur, ob die 20-%-Tönung selbst bleibt. Der Hinweis steht wortgleich an der Stelle im CSS.
 
 `.wiki-link` ist der einzige Fall im Baum, bei dem die Tönung von einer **anderen** Rolle stammt
 als der Text (Violett-Tönung, Cyan-Schrift). Der Hover-Zustand derselben Regel ist in Schritt 10
@@ -515,6 +593,10 @@ cd /d/Claude_Code/Projekte/DnD_Tracker_App_Pro
 sed -n '368,373p' assets/styles/dice.css
 sed -n '1696,1710p' assets/styles/tools.css
 sed -n '249,262p' assets/styles/dashboard.css
+# Die zwei Nachträge vom 2026-09-28:
+sed -n '15,23p;66,80p' assets/styles/editors.css
+grep -n "loot-tag-chip" -A4 assets/styles/loot.css | head -40
+npx jest tests/unit/design-consistency.test.js -t "R-05"
 ```
 
 ---
