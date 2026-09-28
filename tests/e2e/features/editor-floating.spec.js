@@ -1,5 +1,6 @@
 // @ts-check
 import { test, expect } from '@playwright/test';
+import { waitForAppReady } from '../helpers/test-utils.js';
 import fs from 'node:fs';
 import path from 'node:path';
 
@@ -25,7 +26,7 @@ const TESTTEXT = 'Probetext';
 async function gotoBundleFresh(page) {
     const filePath = `file:///${process.cwd().replace(/\\/g, '/')}/dist/dnd-tracker-bundled.html`;
     await page.goto(filePath);
-    await page.waitForSelector('.app-title', { timeout: 10000 });
+    await waitForAppReady(page);
 }
 
 async function openFreshWikiForm(page, title) {
@@ -90,7 +91,7 @@ async function selectExactTextRange(page, matchText) {
 async function saveAndReopenWikiEntry(page, title) {
     await page.click('[data-action="call"][data-value="saveWikiEntry"]');
     await page.reload();
-    await page.waitForSelector('.app-title', { timeout: 10000 });
+    await waitForAppReady(page);
     await page.evaluate(() => window.switchView('wiki'));
     await page.waitForSelector('#view-wiki', { state: 'visible' });
     const catToggle = page.locator(

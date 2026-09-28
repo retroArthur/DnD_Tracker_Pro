@@ -1,5 +1,6 @@
 // @ts-check
 import { test, expect } from '@playwright/test';
+import { waitForAppReady } from '../helpers/test-utils.js';
 
 /**
  * E2E Tests - Editor-Regressionsnetz (execCommand-Ablösung, Phase 9, Plan 04)
@@ -16,7 +17,7 @@ import { test, expect } from '@playwright/test';
 async function gotoBundleFresh(page) {
     const filePath = `file:///${process.cwd().replace(/\\/g, '/')}/dist/dnd-tracker-bundled.html`;
     await page.goto(filePath);
-    await page.waitForSelector('.app-title', { timeout: 10000 });
+    await waitForAppReady(page);
 }
 
 async function openFreshWikiForm(page, title) {
@@ -30,7 +31,7 @@ async function openFreshWikiForm(page, title) {
 async function saveAndReopenWikiEntry(page, title) {
     await page.click('[data-action="call"][data-value="saveWikiEntry"]');
     await page.reload();
-    await page.waitForSelector('.app-title', { timeout: 10000 });
+    await waitForAppReady(page);
     await page.evaluate(() => window.switchView('wiki'));
     await page.waitForSelector('#view-wiki', { state: 'visible' });
     const catToggle = page.locator(

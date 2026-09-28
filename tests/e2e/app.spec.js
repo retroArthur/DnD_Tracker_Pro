@@ -1,5 +1,6 @@
 // @ts-check
 import { test, expect } from '@playwright/test';
+import { waitForAppReady } from './helpers/test-utils.js';
 
 /**
  * D&D Tracker - Basis-Tests
@@ -13,7 +14,7 @@ test.beforeEach(async ({ page }) => {
     await page.goto(filePath);
 
     // Warten bis App geladen ist
-    await page.waitForSelector('.app-title', { timeout: 10000 });
+    await waitForAppReady(page);
 });
 
 test.describe('App Grundfunktionen', () => {

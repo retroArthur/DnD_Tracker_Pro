@@ -15,6 +15,7 @@
  */
 
 import { test, expect } from '@playwright/test';
+import { waitForAppReady } from '../helpers/test-utils.js';
 
 // file://-Basis analog zu tests/e2e/crud/party.spec.js
 const APP_URL = `file:///${process.cwd().replace(/\\/g, '/')}/dist/dnd-tracker-bundled.html`;
@@ -24,7 +25,7 @@ const APP_URL = `file:///${process.cwd().replace(/\\/g, '/')}/dist/dnd-tracker-b
  */
 async function loadApp(page) {
     await page.goto(APP_URL);
-    await page.waitForSelector('.app-title', { timeout: 10000 });
+    await waitForAppReady(page);
     await page.waitForTimeout(500);
 }
 

@@ -1,5 +1,6 @@
 // @ts-check
 import { test, expect } from '@playwright/test';
+import { waitForAppReady } from '../helpers/test-utils.js';
 
 /**
  * E2E Tests — Gruppierte Navigation (Design 2026-06-20)
@@ -16,7 +17,7 @@ const APP_URL = `file:///${process.cwd().replace(/\\/g, '/')}/dist/dnd-tracker-b
 test.describe('Nav-Gruppen', function () {
     test('grouped nav: dropdown opens, switches view, highlights group, closes', async ({ page }) => {
         await page.goto(APP_URL);
-        await page.waitForSelector('.app-title', { timeout: 10000 });
+        await waitForAppReady(page);
 
         // Start ist direkt sichtbar
         await expect(page.locator('.nav-tab[data-view="dashboard"]')).toBeVisible();
@@ -56,7 +57,7 @@ test.describe('Nav-Gruppen', function () {
 
     test('1-9 keyboard shortcuts still switch views and highlight the group', async ({ page }) => {
         await page.goto(APP_URL);
-        await page.waitForSelector('.app-title', { timeout: 10000 });
+        await waitForAppReady(page);
 
         // '3' -> npcs (feste Shortcut-Liste, unabhaengig von der Gruppierung)
         await page.keyboard.press('3');

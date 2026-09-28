@@ -20,7 +20,7 @@
  */
 
 import { test, expect } from '@playwright/test';
-import { loadApp, navigateToTab } from '../helpers/test-utils.js';
+import { loadApp, navigateToTab, waitForAppReady } from '../helpers/test-utils.js';
 
 const PROBE_ID = 'design-fixes-probe';
 
@@ -223,7 +223,7 @@ test.describe('FIX-02: Zauberplatz-Pips einer Charakterkarte (kompakte Anzeige)'
         await page.waitForTimeout(500);
 
         await page.reload();
-        await page.waitForSelector('.app-title', { timeout: 10000 });
+        await waitForAppReady(page);
         await page.waitForTimeout(500);
 
         const current = await page.evaluate(id => {

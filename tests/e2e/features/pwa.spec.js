@@ -11,6 +11,7 @@
  */
 
 import { test, expect } from '@playwright/test';
+import { waitForAppReady } from '../helpers/test-utils.js';
 
 const BASE_URL =
     process.env.SMOKE_BASE_URL ||
@@ -57,7 +58,7 @@ test.describe('PWA Manifest und Service Worker (TECH-01)', () => {
         page.on('pageerror', err => errors.push(err.message));
 
         await page.goto(targetUrl);
-        await page.waitForSelector('.app-title', { timeout: 15000 });
+        await waitForAppReady(page);
 
         // Service Worker muss registriert sein
         const swRegistered = await page.evaluate(async () => {

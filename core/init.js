@@ -2,7 +2,29 @@
 // ============================================================
 // INIT FUNKTION - @init @startup @bootstrap @load
 // ============================================================
+// F8: Der Start bekommt eine maschinenlesbare Bereit-Markierung. '.app-title' und alles
+// andere im Kopfbereich stehen im STATISCHEN HTML des Bundles und sind lange vor init()
+// da — wer darauf wartet, klickt womoeglich in ein Fenster, in dem noch kein einziger
+// Klick-Listener der Navigation haengt (die werden erst NACH `await load()` angehaengt).
+// Ein solcher Klick wird stillschweigend verschluckt; das war die Wurzel des
+// Editor-Wacklers im E2E-Vollauf.
+//
+// Die Markierung steht bewusst in einem finally: wirft ein init-Schritt, ist die App
+// eingeschraenkt, aber "so bereit wie sie wird" — sonst warteten Tests und Harnesses
+// endlos auf einen Zustand, der nie mehr kommt. Sie bedeutet also "init() ist
+// durchgelaufen", NICHT "alle Schritte haben funktioniert". Der Fehler fliegt wie bisher
+// weiter, damit der Aufrufer ihn meldet.
 async function init() {
+    try {
+        await initSteps();
+    } finally {
+        document.documentElement.dataset.appReady = 'true';
+        // Zweiter Weg fuer Harnesses, die kein DOM abfragen — dieselbe Aussage
+        window.__appReady = true;
+    }
+}
+
+async function initSteps() {
     // Globale Error Handler für unerwartete Fehler
     window.onerror = function (message, source, lineno, colno, error) {
         if (typeof ErrorHandler !== 'undefined') {

@@ -1,5 +1,6 @@
 // @ts-check
 import { test, expect } from '@playwright/test';
+import { waitForAppReady } from '../helpers/test-utils.js';
 
 /**
  * E2E Tests — Soundboard (Phase 7 — UX-01)
@@ -59,7 +60,7 @@ function makeWavBuffer(sampleCount) {
  */
 async function openSoundboardTab(page) {
     await page.goto(APP_URL);
-    await page.waitForSelector('.app-title', { timeout: 10000 });
+    await waitForAppReady(page);
     await page.waitForTimeout(500);
     // Soundboard liegt in der "Werkzeuge"-Gruppe -> Dropdown erst oeffnen
     const tab = page.locator('.nav-tab[data-view="soundboard"]');
@@ -200,7 +201,7 @@ test.describe('Soundboard', function () {
 
         // Seite neu laden (gleiche IDB-Daten unter file://)
         await page.reload();
-        await page.waitForSelector('.app-title', { timeout: 10000 });
+        await waitForAppReady(page);
         await page.waitForTimeout(800);
 
         // Nach dem Reload pruefen: Blob immer noch in IDB (A3 IDB-Persistenz unter file://)
@@ -321,7 +322,7 @@ test.describe('Soundboard', function () {
 
         // Persistenz ueber Reload (D.soundboard.scenes[].loop in localStorage)
         await page.reload();
-        await page.waitForSelector('.app-title', { timeout: 10000 });
+        await waitForAppReady(page);
         await page.waitForTimeout(300);
         const loopPersist = await page.evaluate(function() {
             const s = (window.D.soundboard.scenes || []).find(function(x) { return x.name === 'Loop-Test'; });
@@ -407,7 +408,7 @@ test.describe('Soundboard', function () {
         // (Vorsicht: JS-Modul-Caches wie soundboard-player.js:_bufferCache koennten sonst
         // einen kaputten Restore als funktionierend erscheinen lassen)
         await page.reload();
-        await page.waitForSelector('.app-title', { timeout: 10000 });
+        await waitForAppReady(page);
         await page.waitForTimeout(600);
 
         const afterReload = await page.evaluate(async function(id) {
@@ -486,7 +487,7 @@ test.describe('Soundboard', function () {
 
         // Neustart — leert den AudioBuffer-Cache in soundboard-player.js (T-12-23)
         await page.reload();
-        await page.waitForSelector('.app-title', { timeout: 10000 });
+        await waitForAppReady(page);
         await page.waitForTimeout(800);
 
         // Vorbedingung nach dem Neustart: die Datei ist wirklich weg

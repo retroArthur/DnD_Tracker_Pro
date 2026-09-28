@@ -1,5 +1,6 @@
 // @ts-check
 import { test, expect } from '@playwright/test';
+import { waitForAppReady } from '../helpers/test-utils.js';
 
 /**
  * E2E Tests - Import-Sicherheit (Phase 10, Plan 01)
@@ -18,7 +19,7 @@ import { test, expect } from '@playwright/test';
 async function gotoBundleFresh(page) {
     const filePath = `file:///${process.cwd().replace(/\\/g, '/')}/dist/dnd-tracker-bundled.html`;
     await page.goto(filePath);
-    await page.waitForSelector('.app-title', { timeout: 10000 });
+    await waitForAppReady(page);
 }
 
 /**
@@ -68,7 +69,7 @@ async function importCampaignFileAsNewCampaign(page, payload) {
         buffer: Buffer.from(JSON.stringify(payload))
     });
     await reloadPromise;
-    await page.waitForSelector('.app-title', { timeout: 10000 });
+    await waitForAppReady(page);
 }
 
 /**

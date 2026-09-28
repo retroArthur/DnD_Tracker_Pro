@@ -1,5 +1,6 @@
 // @ts-check
 import { test, expect } from '@playwright/test';
+import { waitForAppReady } from '../helpers/test-utils.js';
 
 /**
  * E2E Tests - Editor-Smoke (execCommand-Ablösung, Phase 9, Plan 04)
@@ -21,7 +22,7 @@ const BOLD_ERWARTET = '<b>Probetext</b>';
 async function gotoBundleFresh(page) {
     const filePath = `file:///${process.cwd().replace(/\\/g, '/')}/dist/dnd-tracker-bundled.html`;
     await page.goto(filePath);
-    await page.waitForSelector('.app-title', { timeout: 10000 });
+    await waitForAppReady(page);
 }
 
 /**
@@ -289,7 +290,7 @@ test.describe('Markdown-Live-Shortcuts (Nachbarschaft, muss unverändert bleiben
 
         await page.click('[data-action="call"][data-value="saveWikiEntry"]');
         await page.reload();
-        await page.waitForSelector('.app-title', { timeout: 10000 });
+        await waitForAppReady(page);
         await page.evaluate(() => window.switchView('wiki'));
         await page.waitForSelector('#view-wiki', { state: 'visible' });
         const catToggle = page.locator(

@@ -309,13 +309,41 @@ export async function seedPopulatedSession(page) {
 }
 
 /**
+ * Wartet, bis die App WIRKLICH bedienbar ist — zweistufig (F8).
+ *
+ * Stufe 1 ist der billige, bisherige Test auf '.app-title'. Der Titel steht im STATISCHEN
+ * HTML des Bundles und sagt nur "die Seite ist geparst". Stufe 2 wartet auf die Markierung,
+ * die core/init.js nach ALLEN init-Schritten am <html> setzt: erst danach haengen die
+ * Klick-Listener der Navigation (core/init.js haengt sie erst nach `await load()` an). Ein
+ * Klick oder ein Einfuegen im Fenster dazwischen geht verloren — im Vollauf unter Last war
+ * genau das der Wackler der Editor-Specs, der im Einzellauf nie auftrat.
+ *
+ * Die Markierung erscheint auch, wenn ein init-Schritt geworfen hat (core/init.js setzt sie
+ * in einem finally), es kann hier also keine Endlos-Wartezeit auf eine eingeschraenkte App
+ * entstehen.
+ *
+ * Diese Funktion ersetzt jedes alleinstehende `waitForSelector('.app-title')` in den Specs;
+ * ein nachfolgendes goto/reload braucht sie erneut.
+ *
+ * @param {import('@playwright/test').Page} page
+ * @param {{ timeout?: number }} [options] Zeitgrenze fuer BEIDE Stufen (Standard 15000 ms)
+ */
+export async function waitForAppReady(page, options = {}) {
+    const timeout = options.timeout || 15000;
+    await page.waitForSelector('.app-title', { timeout });
+    await page.waitForFunction(() => document.documentElement.dataset.appReady === 'true', null, {
+        timeout
+    });
+}
+
+/**
  * Lädt die App und wartet auf vollständige Initialisierung
  * @param {import('@playwright/test').Page} page
  */
 export async function loadApp(page) {
     const filePath = `file:///${process.cwd().replace(/\\/g, '/')}/dist/dnd-tracker-bundled.html`;
     await page.goto(filePath);
-    await page.waitForSelector('.app-title', { timeout: 10000 });
+    await waitForAppReady(page);
     // Warte auf App-Initialisierung
     await page.waitForTimeout(500);
 }

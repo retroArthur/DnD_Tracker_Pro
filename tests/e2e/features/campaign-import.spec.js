@@ -1,5 +1,6 @@
 // @ts-check
 import { test, expect } from '@playwright/test';
+import { waitForAppReady } from '../helpers/test-utils.js';
 
 /**
  * E2E Tests — Kampagnen-Import im Browser (R03, Korrekturrunde F5)
@@ -85,7 +86,7 @@ async function seedLaufendeKampagne(page) {
 /** @param {import('@playwright/test').Page} page */
 async function ladeApp(page) {
     await page.goto(APP_URL);
-    await page.waitForSelector('.app-title', { timeout: 10000 });
+    await waitForAppReady(page);
 }
 
 /**
@@ -197,7 +198,7 @@ test.describe('Kampagnen-Import im Browser — Ueberschreiben ersetzt, IDs bleib
             .toBe('1,2,3');
 
         await page.reload();
-        await page.waitForSelector('.app-title', { timeout: 10000 });
+        await waitForAppReady(page);
         // validateDataIntegrity() plant eine Reparatur erst 1 s nach load() ein — solange
         // warten, damit ein etwaiges Umnummerieren sichtbar wird statt uebersehen zu werden.
         await page.waitForTimeout(1500);

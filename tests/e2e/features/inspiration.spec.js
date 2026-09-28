@@ -13,6 +13,7 @@
  */
 
 import { test, expect } from '@playwright/test';
+import { waitForAppReady } from '../helpers/test-utils.js';
 
 // file://-Basis analog zu tests/e2e/crud/party.spec.js und den Welt-Feature-Specs
 const APP_URL = `file:///${process.cwd().replace(/\\/g, '/')}/dist/dnd-tracker-bundled.html`;
@@ -22,7 +23,7 @@ const APP_URL = `file:///${process.cwd().replace(/\\/g, '/')}/dist/dnd-tracker-b
  */
 async function loadAndNavToParty(page) {
     await page.goto(APP_URL);
-    await page.waitForSelector('.app-title', { timeout: 10000 });
+    await waitForAppReady(page);
     await page.waitForTimeout(500);
     await page.evaluate(() => window.switchView('party'));
     await page.waitForTimeout(300);
@@ -83,7 +84,7 @@ test.describe('CHAR-02: Inspiration-Toggle', () => {
             await page.waitForTimeout(300);
             // Neu laden und prüfen ob Zustand persistiert
             await page.reload();
-            await page.waitForSelector('.app-title', { timeout: 10000 });
+            await waitForAppReady(page);
             await page.evaluate(() => window.switchView('party'));
             await page.waitForTimeout(300);
             await expect(page.locator('.char-inspiration-toggle.active')).toBeVisible();

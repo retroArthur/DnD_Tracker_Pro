@@ -1,5 +1,6 @@
 // @ts-check
 import { test, expect } from '@playwright/test';
+import { waitForAppReady } from './helpers/test-utils.js';
 
 const BASE_URL =
     process.env.SMOKE_BASE_URL ||
@@ -13,7 +14,7 @@ test('App bootet ohne Konsolen-Fehler', async ({ page }) => {
     const errors = [];
     page.on('pageerror', err => errors.push(err.message));
     await page.goto(BASE_URL);
-    await page.waitForSelector('.app-title', { timeout: 15000 });
+    await waitForAppReady(page);
     await page.waitForTimeout(1000);
     expect(errors).toHaveLength(0);
 });
@@ -25,7 +26,7 @@ test.describe('Tab-Sweep', () => {
             const errors = [];
             page.on('pageerror', err => errors.push(err.message));
             await page.goto(BASE_URL);
-            await page.waitForSelector('.app-title', { timeout: 15000 });
+            await waitForAppReady(page);
             const tabButton = page.locator(`.nav-tab[data-view="${tab}"]`);
             await page.evaluate(v => window.switchView(v), tab);
             await page.waitForTimeout(500);
@@ -54,7 +55,7 @@ test('Keine Favicon-404 und keine Meta-Tag-Deprecation', async ({ page }) => {
     });
 
     await page.goto(BASE_URL);
-    await page.waitForSelector('.app-title', { timeout: 15000 });
+    await waitForAppReady(page);
 
     expect(failed404s, `404-Antworten: ${JSON.stringify(failed404s)}`).toHaveLength(0);
     expect(
@@ -91,7 +92,7 @@ test('Service Worker löscht nur eigene Caches (R08)', async ({ page }) => {
     );
 
     await page.goto(BASE_URL);
-    await page.waitForSelector('.app-title', { timeout: 15000 });
+    await waitForAppReady(page);
     await page.evaluate(async () => {
         await navigator.serviceWorker.ready;
     });

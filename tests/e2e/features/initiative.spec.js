@@ -1,5 +1,6 @@
 // @ts-check
 import { test, expect } from '@playwright/test';
+import { waitForAppReady } from '../helpers/test-utils.js';
 
 /**
  * E2E Tests - Initiative System
@@ -28,7 +29,7 @@ test.describe('Initiative System', () => {
         await page.goto(filePath);
 
         // Warten bis App geladen ist
-        await page.waitForSelector('.app-title', { timeout: 10000 });
+        await waitForAppReady(page);
 
         // Zur Initiative-View wechseln
         await page.evaluate(() => window.switchView('initiative'));

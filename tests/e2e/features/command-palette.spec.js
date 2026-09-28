@@ -7,6 +7,7 @@
  */
 
 import { test, expect } from '@playwright/test';
+import { waitForAppReady } from '../helpers/test-utils.js';
 
 const BASE_URL =
     process.env.SMOKE_BASE_URL ||
@@ -18,7 +19,7 @@ test.describe('Command Palette (TECH-04)', () => {
         page.on('pageerror', err => errors.push(err.message));
 
         await page.goto(BASE_URL);
-        await page.waitForSelector('.app-title', { timeout: 15000 });
+        await waitForAppReady(page);
 
         // Klick auf den Body um Fokus zu sichern (Tastatur-Events benoetigen Browser-Fokus)
         await page.click('body');
@@ -41,7 +42,7 @@ test.describe('Command Palette (TECH-04)', () => {
         page.on('pageerror', err => errors.push(err.message));
 
         await page.goto(BASE_URL);
-        await page.waitForSelector('.app-title', { timeout: 15000 });
+        await waitForAppReady(page);
 
         // Klick auf den Body um Fokus zu sichern (Tastatur-Events benoetigen Browser-Fokus)
         await page.click('body');

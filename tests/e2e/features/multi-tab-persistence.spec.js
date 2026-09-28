@@ -1,6 +1,6 @@
 // @ts-check
 import { test, expect } from '@playwright/test';
-import { loadApp, seedCleanSessionOnce } from '../helpers/test-utils.js';
+import { loadApp, seedCleanSessionOnce, waitForAppReady } from '../helpers/test-utils.js';
 
 /**
  * Code-Review 2026-09-21, Einheit U7 — R02: Schliessen oder Neuladen eines veralteten Tabs
@@ -63,7 +63,7 @@ test.describe('Mehrere Tabs: Verlassen ueberschreibt keine neueren Daten (R02)',
         expect(await gespeichert(pageA)).toContain(HELD);
 
         await pageA.reload();
-        await pageA.waitForSelector('.app-title', { timeout: 10000 });
+        await waitForAppReady(pageA);
 
         // @ts-ignore — App-Global im Seitenkontext
         const namenA = await pageA.evaluate(() => window.D.characters.map(c => c.name));
@@ -84,7 +84,7 @@ test.describe('Mehrere Tabs: Verlassen ueberschreibt keine neueren Daten (R02)',
             window.save();
         });
         await page.reload();
-        await page.waitForSelector('.app-title', { timeout: 10000 });
+        await waitForAppReady(page);
 
         // @ts-ignore
         expect(await page.evaluate(() => window.D.quickNotes)).toBe('R02-Sicherheitsnetz');

@@ -1,5 +1,6 @@
 // @ts-check
 import { test, expect } from '@playwright/test';
+import { waitForAppReady } from '../helpers/test-utils.js';
 
 /**
  * E2E Tests — Bestiary System
@@ -15,7 +16,7 @@ import { test, expect } from '@playwright/test';
 async function openBestiaryTab(page) {
     const filePath = `file:///${process.cwd().replace(/\\/g, '/')}/dist/dnd-tracker-bundled.html`;
     await page.goto(filePath);
-    await page.waitForSelector('.app-title', { timeout: 10000 });
+    await waitForAppReady(page);
     await page.evaluate(() => window.switchView('bestiary'));
     // Warten bis die Section aktiv ist
     await page.waitForSelector('#view-bestiary.active', { state: 'attached', timeout: 5000 });

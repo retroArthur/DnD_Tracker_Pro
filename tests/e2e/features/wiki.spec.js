@@ -1,5 +1,6 @@
 // @ts-check
 import { test, expect } from '@playwright/test';
+import { waitForAppReady } from '../helpers/test-utils.js';
 
 /**
  * E2E Tests - Wiki System
@@ -28,7 +29,7 @@ test.describe('Wiki System', () => {
         await page.goto(filePath);
 
         // Warten bis App geladen ist
-        await page.waitForSelector('.app-title', { timeout: 10000 });
+        await waitForAppReady(page);
 
         // Zur Wiki-View wechseln
         await page.evaluate(() => window.switchView('wiki'));
@@ -339,7 +340,7 @@ test.describe('Wiki System', () => {
 
             // Seite neu laden
             await page.reload();
-            await page.waitForSelector('.app-title', { timeout: 10000 });
+            await waitForAppReady(page);
 
             // Zur Wiki-View wechseln
             await page.evaluate(() => window.switchView('wiki'));

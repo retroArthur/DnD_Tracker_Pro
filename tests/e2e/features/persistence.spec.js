@@ -7,7 +7,8 @@ import {
     fillField,
     generateTestName,
     performSave,
-    seedCleanSession
+    seedCleanSession,
+    waitForAppReady
 } from '../helpers/test-utils.js';
 
 /**
@@ -64,7 +65,7 @@ test.describe('Datenpersistenz', () => {
 
             // Page neu laden
             await page.reload();
-            await page.waitForSelector('.app-title', { timeout: 10000 });
+            await waitForAppReady(page);
 
             // Charakter sollte noch in den Daten sein
             const charExists = await page.evaluate(name => {
@@ -127,7 +128,7 @@ test.describe('Datenpersistenz', () => {
 
             // Page neu laden
             await page.reload();
-            await page.waitForSelector('.app-title', { timeout: 10000 });
+            await waitForAppReady(page);
 
             // Alle Entities via Daten prüfen
             const allData = await page.evaluate(

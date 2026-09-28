@@ -838,6 +838,7 @@ export default {
     "initSessionTimer": 'readonly',
     "initSessionsEnhanced": 'readonly',
     "initSortableLists": 'readonly',
+    "initSteps": 'readonly',
     "initTouchOptimizations": 'readonly',
     "initUnloadPersistence": 'readonly',
     "initWikiCategoryListener": 'readonly',

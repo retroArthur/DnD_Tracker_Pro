@@ -1,6 +1,6 @@
 // @ts-check
 import { test, expect } from '@playwright/test';
-import { loadApp, navigateToTab } from '../helpers/test-utils.js';
+import { loadApp, navigateToTab, waitForAppReady } from '../helpers/test-utils.js';
 
 /**
  * Auto-Backup-Restore im echten Browser — R01/R05 (Code-Review 2026-09-21, Einheit U4)
@@ -193,7 +193,7 @@ test.describe('Auto-Backup-Restore (R01/R05)', () => {
 
         // Neuladen: der wiederhergestellte Stand bleibt
         await page.reload();
-        await page.waitForSelector('.app-title');
+        await waitForAppReady(page);
         const nachReload = await page.evaluate(
             keys => Object.fromEntries(keys.map(k => [k, window.D[k]])),
             CHECKED
