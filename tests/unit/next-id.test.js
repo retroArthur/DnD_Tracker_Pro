@@ -815,4 +815,89 @@ describe('R03 — Waechter der Abschlussrunde (G2)', () => {
             wiederverwendet: false
         });
     });
+
+    test('G2j: die Lueckensuche ueberspringt eine unterwegs befindliche ID', () => {
+        // Korrekturrunde 3: der Waechter fragt MINT_ISSUED, die Lueckensuche der Saettigung
+        // fragt nur die SAMMLUNG. Zwei Verbraucher derselben Frage, nur einer erinnert sich —
+        // also kann eine schon herausgegebene, aber noch nicht abgelegte ID ein zweites Mal
+        // herauskommen. Der Ablauf ist die uebliche Folge aus einem Merge-Import, bei dem ein
+        // Datensatz liegen bleibt (ungueltiger Eintrag, abgebrochenes Speichern), und einem
+        // Loeschen danach.
+        const ctx = makeContext();
+        // Fremde Datei mit ZWEI IDs nahe der Obergrenze (R03-Bedrohungsmodell).
+        ctx.D.npcs = [
+            { id: 1e15 - 1, name: 'Fremd A' },
+            { id: 1e15 - 2, name: 'Fremd B' }
+        ];
+        ctx.recomputeNextIds(ctx.D);
+
+        // Merge-Import von vier NSCs (Stapel ohne push): echte Saettigung, also Luecken.
+        const stapel = [0, 1, 2, 3].map(() => ctx.nextId('npcs'));
+        expect(stapel).toEqual([1, 2, 3, 4]);
+        // Nur drei werden abgelegt — der vierte bleibt unterwegs und steht in KEINER
+        // Sammlung. Genau darum kann die Sammlung allein die Frage nicht beantworten.
+        for (const id of stapel.slice(0, 3)) ctx.D.npcs.push({ id, name: `Import ${id}` });
+        const unterwegs = stapel[3];
+        expect(ctx.D.npcs.some(n => n.id === unterwegs)).toBe(false);
+
+        // Der DM loescht den komischen fremden NSC A. Die Untergrenze 1e15 - 1 ist danach
+        // selbst wieder vergebbar, also heilt der Waechter und der NORMALPFAD laeuft.
+        ctx.D.npcs = ctx.D.npcs.filter(n => n.id !== 1e15 - 1);
+        const neu = vergebenUndAblegen(ctx, 2, 'Neu');
+
+        // Die erste Vergabe nimmt zu Recht die geheilte Untergrenze. Danach liegt die
+        // Sammlung wieder an der Obergrenze, also entscheidet die Lueckensuche — und die
+        // darf die unterwegs befindliche 4 NICHT erneut ausgeben (gemessen davor: 4).
+        expect({ neu, erneut: neu.includes(unterwegs) }).toEqual({
+            neu: [1e15 - 1, 5],
+            erneut: false
+        });
+        expect(neu.map(istGueltigeId)).toEqual(neu.map(id => ({ id, gueltig: true })));
+
+        // Die R03-Fehlerklasse selbst: der nachgereichte Import legt seine ID ab, und ein
+        // Loeschen darf danach genau EINE Entitaet treffen (davor: zwei).
+        ctx.D.npcs.push({ id: unterwegs, name: 'Import nachgereicht' });
+        const ids = ctx.D.npcs.map(n => n.id);
+        expect({ eindeutig: new Set(ids).size, gesamt: ids.length }).toEqual({
+            eindeutig: ids.length,
+            gesamt: ids.length
+        });
+        expect(ctx.D.npcs.filter(e => e.id !== unterwegs).length).toBe(ids.length - 1);
+    });
+
+    test('G2k: ein Zeigerruecklauf holt eine unterwegs befindliche Luecken-ID nicht zurueck', () => {
+        // Derselbe Befund ohne Datei-Zaehler, dafuer mit offen gelegtem Mechanismus: der
+        // Suchzeiger MINT_CURSOR wird von JEDEM Muenzen fortgeschrieben, also zieht ihn eine
+        // geheilte niedrige Untergrenze wieder nach unten. Ab dort laeuft die Lueckensuche
+        // erneut ueber Zahlen, die dieses Seitenleben bereits herausgegeben hat.
+        const ctx = makeContext();
+        ctx.D.npcs = [{ id: 1 }, { id: 2 }, { id: 3 }, { id: 4 }, { id: 1e15, name: 'Fremd' }];
+        ctx.D._nextId = {};
+
+        // 1. Echte Saettigung: die erste freie Luecke ist 5 — und bleibt unterwegs.
+        const unterwegs = ctx.nextId('npcs');
+        expect(unterwegs).toBe(5);
+
+        // 2. Der DM loescht die 4 und die fremde Obergrenzen-Entitaet. Die Untergrenze ist
+        //    jetzt 4 und vergebbar, der Waechter heilt — und zieht den Suchzeiger auf 5.
+        ctx.D.npcs = [{ id: 1 }, { id: 2 }, { id: 3 }];
+        const geheilt = ctx.nextId('npcs');
+        expect(geheilt).toBe(4);
+
+        // 3. Ein Import bringt die Obergrenzen-Entitaet zurueck: wieder Saettigung, und die
+        //    Lueckensuche startet genau auf der unterwegs befindlichen 5.
+        ctx.D.npcs.push({ id: 1e15, name: 'Fremd erneut' });
+        const weiter = [0, 1, 2, 3].map(() => ctx.nextId('npcs'));
+
+        const alle = [unterwegs, geheilt, ...weiter];
+        expect({ alle, verschieden: new Set(alle).size }).toEqual({
+            alle,
+            verschieden: alle.length
+        });
+        expect(alle.map(istGueltigeId)).toEqual(alle.map(id => ({ id, gueltig: true })));
+        // Abgelegt bleibt jede ID genau einmal in der Sammlung.
+        for (const id of alle) ctx.D.npcs.push({ id, name: `E${id}` });
+        const ids = ctx.D.npcs.map(n => n.id);
+        expect(new Set(ids).size).toBe(ids.length);
+    });
 });
