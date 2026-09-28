@@ -672,7 +672,7 @@
 
 .calc-fav-delete:hover {
     background: var(--red);
-    color: white;
+    color: var(--on-red);
     opacity: 1;
 }
 
@@ -999,7 +999,7 @@
     font-weight: 500;
     padding: 2px 6px;
     background: var(--red);
-    color: white;
+    color: var(--on-red);
     border-radius: var(--radius-sm);
 }
 
@@ -1096,13 +1096,13 @@
 
 .enc-detail-btn.success:hover {
     background: var(--green);
-    color: white;
+    color: var(--on-green);
 }
 
 .enc-detail-btn.danger:hover {
     border-color: var(--red);
     background: var(--red);
-    color: white;
+    color: var(--on-red);
 }
 
 /* Stats Row */
@@ -1246,7 +1246,7 @@
 
 .enc-res-tag.cond {
     background: var(--purple);
-    color: white;
+    color: var(--on-purple);
 }
 
 /* Text Content */
