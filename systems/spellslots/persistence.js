@@ -334,10 +334,17 @@ function saveAutomatic() {
 // Hat persistOnUnload den Save schon abgelehnt, zieht ihn auch kein Flush der
 // Entlade-Sequenz mehr vor (_unloadFlushDeclined, F2); interne Festschreib-Stellen
 // verlangen ihn mit { force: true } ausdruecklich.
+// Ein rein automatischer Save wird GENAUSO behandelt wie ein veralteter Tab (G1): nicht
+// vorziehen. _unloadFlushDeclined half hier nicht — die Marke setzt nur persistOnUnload, also
+// erst nach beforeunload, waehrend der visibilitychange-Zuhoerer bei JEDEM Tabwechsel und
+// Minimieren feuert. Vorgezogen entstand sein put NACH dem laufenden ausdruecklichen Save
+// eines anderen Tabs und committete danach ueber ihn hinweg (D4). Zurueckgestellt heisst nicht
+// verworfen: der regulaere 300-ms-Timer schreibt ihn und prueft die Veraltung dabei erneut (F2).
 function flushPendingSave(opts) {
     // R06: waehrend des Konflikt-Neuladens nicht vorziehen — der Save bleibt zurueckgestellt
     if (_campaignWritesRetired || !saveTimeout || _saveSuspendDepth > 0) return;
     if (_unloadFlushDeclined && !(opts && opts.force)) return;
+    if (_pendingSaveAutomaticOnly && !(opts && opts.force)) return;
     const key = window.getActiveCampaignKey();
     if (!key || isCampaignStorageStale(key)) return;
     cancelPendingSave();
