@@ -55,6 +55,15 @@ function renderLocations() {
     // Update counter
     setViewCount('locations', D.locations?.length || 0);
     // Render filter chips
+    // Schritt 13 (Design-Handoff v3, Welle 1): Der Chip im Ruhezustand liegt
+    // auf --bg-elevated, beim Ueberfahren auf --bg-hover — beides neutrale
+    // Theme-Flaechen. Dort gilt die Regel von Schritt 9: als TEXTfarbe
+    // gehoert --<rolle>-text hin, nicht die Rolle selbst (gemessen min 4,51
+    // statt 2,16-4,20). Der RAHMEN behaelt die Rolle: er darf kraeftig
+    // bleiben, fuer ihn gilt 3:1, nicht 4,5:1.
+    // Der aktive Chip setzt gar keinen Inline-Stil; er faerbt sich aus
+    // core.css .loc-filter-chip.active (--gold / --on-gold).
+    // Bewacht von R-09 in tests/unit/design-consistency.test.js.
     if (filterContainer) {
         filterContainer.innerHTML = `
             <div class="loc-filter-chip ${currentLocFilter === 'all' ? 'active' : ''}" data-action="set-loc-filter" data-value="all">Alle</div>
@@ -63,7 +72,7 @@ function renderLocations() {
                     f => `
                 <div class="loc-filter-chip ${currentLocFilter === f.id ? 'active' : ''}"
                      data-action="set-loc-filter" data-id="${f.id}"
-                     style="${currentLocFilter === f.id ? '' : `border-color: var(--${f.color}); color: var(--${f.color})`}">
+                     style="${currentLocFilter === f.id ? '' : `border-color: var(--${f.color}); color: var(--${f.color}-text)`}">
                     ${esc(f.name)}
                 </div>
             `
@@ -145,12 +154,29 @@ function renderLocationItem(loc, stripHtml) {
         .join('');
     const moreNpcs =
         npcs.length > 4 ? `<div class="loc-mini-avatar more">+${npcs.length - 4}</div>` : '';
+    // Schritt 13 (Design-Handoff v3, Welle 1), Entscheidung D-7: Der
+    // Aufkleber traegt eine VOLLE Akzentflaeche, also gehoert seine Tinte
+    // --on-<rolle> hierher. Bis dahin stand sie als `color: var(--bg-dark)`
+    // in core.css .loc-item-tag — gegen einen Inline-Stil gewinnt das nie,
+    // die Zeile war toter Code und ist entfernt. Gemessen: vorher min 2,51
+    // (--cyan in Sepia), jetzt min 4,55 ueber alle acht Rollen und vier
+    // Themes.
+    // DER RUECKFALLWERT IST KEIN SCHMUCK. Steht in den Kampagnendaten ein
+    // Farbwert ausserhalb der acht Optionen des Filterdialogs — aus einer
+    // aelteren Fassung oder einem von Hand bearbeiteten Export —, dann ist
+    // `var(--xyz)` ungueltig; die background-Deklaration faellt dann
+    // VOLLSTAENDIG aus und der Aufkleber liegt ohne eigene Flaeche auf der
+    // Karte. Die Tinte muss also auf der KARTE lesbar sein. var(--text)
+    // traegt dort 8,78-21,00 in allen vier Themes; das im Rezept
+    // vorgeschlagene var(--on-gold) traegt 1,08 / 18,88 / 1,08 / 1,00 und
+    // waere in drei von vier Themes unsichtbar gewesen. R-09 rechnet das
+    // bei jedem Lauf nach.
     return `
         <div class="loc-item ${isSelected ? 'selected' : ''}" data-action="select-location" data-id="${loc.id}">
             <div class="loc-item-icon">${icon}</div>
             <div class="loc-item-info">
                 <div class="loc-item-name">
-                    ${filter ? `<span class="loc-item-tag" style="background: var(--${filter.color})">${esc(filter.name)}</span>` : ''}${esc(loc.name)}
+                    ${filter ? `<span class="loc-item-tag" style="background: var(--${filter.color}); color: var(--on-${filter.color}, var(--text))">${esc(filter.name)}</span>` : ''}${esc(loc.name)}
                 </div>
                 <div class="loc-item-meta">
                     ${descPreview ? descPreview + (loc.description && stripHtml(loc.description).length > 60 ? '...' : '') : 'Keine Beschreibung'}
@@ -243,6 +269,11 @@ function showLocationDetail(id) {
               .map(t => `<span class="loc-tag tag-${t.color || 'blue'}">${esc(t.name || t)}</span>`)
               .join('')
         : '';
+    // Schritt 13 (Design-Handoff v3, Welle 1): Der Filtername in der
+    // Detailkopfzeile steht in derselben Schachtel wie .loc-detail-name,
+    // deren Traegerflaeche Schritt 9 als neutral GEMESSEN hat (sie steht
+    // seitdem auf --gold-text). Also dieselbe Regel: --<rolle>-text statt
+    // der Rolle. Gemessen min 4,98 auf --bg-dark statt 2,51-4,74.
     panel.innerHTML = `
         <div class="loc-detail-content">
             <div class="loc-detail-header">
@@ -250,7 +281,7 @@ function showLocationDetail(id) {
                 <div class="loc-detail-title">
                     <div class="loc-detail-name">${esc(loc.name)}</div>
                     <div class="loc-detail-region">
-                        ${filter ? `<span style="color: var(--${filter.color})">● ${esc(filter.name)}</span>` : '📍 Ort'}
+                        ${filter ? `<span style="color: var(--${filter.color}-text)">● ${esc(filter.name)}</span>` : '📍 Ort'}
                     </div>
                 </div>
                 <div class="loc-detail-actions">
