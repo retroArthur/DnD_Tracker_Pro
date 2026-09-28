@@ -1468,4 +1468,81 @@ describe('R-02 — Tinte erreicht ihre Schwelle auf der TATSAECHLICHEN Flaeche (
 
         expect(befunde.sort()).toEqual([]);
     });
+
+    /** ZWEITE RATSCHE dieses Blocks. Sie urteilt nicht ueber Farbe, sondern
+     *  ueber AKTENLAGE — und sie existiert, weil die Ausnahme eine Stufe
+     *  weiter oben sonst genau das waere, was sie von sich weist: eine stille
+     *  Freigabe.
+     *
+     *  Die Lage, nachgerechnet am 2026-09-28: ATTR_HOVER_AUSNAHME beruft sich
+     *  auf Entscheidung D-5 ("Dark/Contrast behalten ihre Werte"). D-5 wurde
+     *  aber auf der alten ZWEI-Flaechen-Messung getroffen; dort zeigen
+     *  dieselben acht Zellen 4,52-5,95 und damit ueberhaupt kein Problem. Erst
+     *  die dritte, wirklich erreichbare Flaeche --bg-hover (.qref-row:hover,
+     *  dashboard.css:1267) bringt sie auf 3,16-3,58. Diese Zahlen lagen der
+     *  Entscheidung nie vor. Eine Ausnahme, die sich auf eine Entscheidung
+     *  beruft, die ihre eigene Tatsachengrundlage nicht kannte, darf nicht
+     *  ausschliesslich im Kommentar einer Testdatei stehen — dort sieht sie
+     *  niemand, der die Entscheidung revidieren koennte.
+     *
+     *  Die Ratsche geht rot, wenn das Dokument fehlt, wenn eine eingetragene
+     *  Zelle dort nicht namentlich mit ihrem gemessenen Wert steht, wenn die
+     *  beiden Stellen auseinanderlaufen, oder wenn dort eine Zeile zurueck-
+     *  bleibt, deren Zelle es nicht mehr gibt. */
+    const OFFENE_PUNKTE = '.planning/HANDOFF-V3-OFFENE-PUNKTE.md';
+
+    test('jede Zelle aus ATTR_HOVER_AUSNAHME ist im offenen Punkt gefuehrt', () => {
+        const datei = path.join(REPO, ...OFFENE_PUNKTE.split('/'));
+
+        expect(
+            fs.existsSync(datei)
+                ? []
+                : [
+                      `${OFFENE_PUNKTE} fehlt — die eingefrorenen Zellen waeren nur im ` +
+                          `Kommentar dieser Testdatei gefuehrt und damit fuer niemanden ` +
+                          `sichtbar, der Entscheidung D-5 revidieren koennte`
+                  ]
+        ).toEqual([]);
+
+        // Erwartete Tabellenzeile: | dark | --attr-str | #ef4444 | 3,36 | ...
+        const zeile =
+            /^\s*\|\s*(dark|contrast|light|sepia)\s*\|\s*(--attr-[a-z]{3})\s*\|[^|]*\|\s*(\d+,\d{2})\s*\|/gm;
+        const gefuehrt = new Map();
+        for (const m of fs.readFileSync(datei, 'utf8').matchAll(zeile)) {
+            gefuehrt.set(`${m[1]} ${m[2]}`, Number(m[3].replace(',', '.')));
+        }
+
+        const befunde = [];
+        Object.keys(ATTR_HOVER_AUSNAHME).forEach(theme => {
+            Object.keys(ATTR_HOVER_AUSNAHME[theme]).forEach(token => {
+                const schluessel = `${theme} ${token}`;
+                const soll = ATTR_HOVER_AUSNAHME[theme][token];
+                if (!gefuehrt.has(schluessel)) {
+                    befunde.push(
+                        `${schluessel} (auf --bg-hover ${soll}) steht in ` +
+                            `ATTR_HOVER_AUSNAHME, aber in keiner Zeile von ${OFFENE_PUNKTE}`
+                    );
+                    return;
+                }
+                if (gefuehrt.get(schluessel) !== soll) {
+                    befunde.push(
+                        `${schluessel}: Ausnahmeliste sagt ${soll}, ${OFFENE_PUNKTE} sagt ` +
+                            `${gefuehrt.get(schluessel)} — die beiden Stellen laufen auseinander`
+                    );
+                }
+                gefuehrt.delete(schluessel);
+            });
+        });
+
+        [...gefuehrt.keys()]
+            .sort()
+            .forEach(k =>
+                befunde.push(
+                    `${k} steht in ${OFFENE_PUNKTE}, aber nicht mehr in ATTR_HOVER_AUSNAHME — ` +
+                        `die Zeile ist Altlast und gehoert entfernt`
+                )
+            );
+
+        expect(befunde.sort()).toEqual([]);
+    });
 });
