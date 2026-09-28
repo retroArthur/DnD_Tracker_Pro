@@ -128,7 +128,7 @@
         .spell-desc th {
             background: var(--bg-elevated) !important;
             font-weight: 600 !important;
-            color: var(--gold) !important;
+            color: var(--gold-text) !important;
         }
         
         /* Tabellen-Zeilen (abwechselnd) */
@@ -164,7 +164,7 @@
         .wiki-detail-body h1,
         .encounter-content h1,
         .spell-desc h1 {
-            color: var(--gold) !important;
+            color: var(--gold-text) !important;
             margin: 12px 0 8px 0 !important;
             font-size: 1.3em !important;
             font-weight: 600 !important;
@@ -179,7 +179,7 @@
         .wiki-detail-body h2,
         .encounter-content h2,
         .spell-desc h2 {
-            color: var(--gold) !important;
+            color: var(--gold-text) !important;
             margin: 12px 0 6px 0 !important;
             font-size: 1.2em !important;
             font-weight: 600 !important;
@@ -194,7 +194,7 @@
         .wiki-detail-body h3,
         .encounter-content h3,
         .spell-desc h3 {
-            color: var(--gold) !important;
+            color: var(--gold-text) !important;
             margin: 10px 0 6px 0 !important;
             font-size: 1.1em !important;
             font-weight: 600 !important;
@@ -209,7 +209,7 @@
         .wiki-detail-body h4,
         .encounter-content h4,
         .spell-desc h4 {
-            color: var(--cyan) !important;
+            color: var(--cyan-text) !important;
             margin: 10px 0 4px 0 !important;
             font-size: 1.0em !important;
             font-weight: 600 !important;
@@ -224,7 +224,7 @@
         .wiki-detail-body h5,
         .encounter-content h5,
         .spell-desc h5 {
-            color: var(--cyan) !important;
+            color: var(--cyan-text) !important;
             margin: 8px 0 4px 0 !important;
             font-size: 0.95em !important;
             font-weight: 600 !important;
@@ -333,7 +333,7 @@
         .wiki-detail-body a,
         .encounter-content a,
         .spell-desc a {
-            color: var(--cyan) !important;
+            color: var(--cyan-text) !important;
             text-decoration: underline !important;
         }
         
@@ -345,7 +345,7 @@
         .wiki-detail-body a:hover,
         .encounter-content a:hover,
         .spell-desc a:hover {
-            color: var(--gold) !important;
+            color: var(--gold-text) !important;
         }
         
         /* Blockquotes */
@@ -487,7 +487,7 @@
         }
         
         .link-info { flex: 1; }
-        .link-title { font-weight: 600; color: var(--cyan); }
+        .link-title { font-weight: 600; color: var(--cyan-text); }
         .link-url { font-size: 0.75em; color: var(--text-dim); word-break: break-all; }
         .quick-panel.open .quick-panel-content { display: block; }
         
@@ -683,7 +683,7 @@
             background: var(--bg-elevated);
             border-bottom: 1px solid var(--border);
             font-weight: 600;
-            color: var(--gold);
+            color: var(--gold-text);
         }
         
         .wiki-tree {
@@ -1022,7 +1022,7 @@
             border-bottom: 1px solid var(--border);
             font-size: 1.1em;
             font-weight: 600;
-            color: var(--gold);
+            color: var(--gold-text);
         }
         
         .wiki-entry.expanded .wiki-entry-content {
@@ -1036,7 +1036,7 @@
         .wiki-tag {
             font-size: 0.75em;
             background: var(--bg-dark);
-            color: var(--cyan);
+            color: var(--cyan-text);
             padding: 3px 8px;
             border-radius: var(--radius-sm);
             cursor: pointer;
@@ -1095,7 +1095,7 @@
 .cf-panel-title {
     font-size: 1em;
     font-weight: 600;
-    color: var(--gold);
+    color: var(--gold-text);
     text-transform: uppercase;
     letter-spacing: 0.05em;
 }
@@ -1146,7 +1146,7 @@
 .cf-panel .cf-field label {
     display: block;
     font-size: 0.7em;
-    color: var(--gold);
+    color: var(--gold-text);
     text-transform: uppercase;
     letter-spacing: 0.05em;
     margin-bottom: 4px;
@@ -1280,7 +1280,7 @@
     background: var(--bg-card);
     border: 2px solid var(--cyan);
     border-radius: var(--radius-md);
-    color: var(--cyan);
+    color: var(--cyan-text);
 }
 
 /* Combat Stats Grid V4 */
@@ -1386,7 +1386,7 @@
 .cf-section-header span {
     font-size: 0.8em;
     font-weight: 600;
-    color: var(--gold);
+    color: var(--gold-text);
     text-transform: uppercase;
     letter-spacing: 0.05em;
 }
@@ -1416,7 +1416,7 @@
     display: block;
     font-size: 0.7em;
     font-weight: 700;
-    color: var(--gold);
+    color: var(--gold-text);
     text-transform: uppercase;
     letter-spacing: 0.05em;
     margin-bottom: 6px;
@@ -1438,7 +1438,7 @@
     display: block;
     font-size: 1em;
     font-weight: 700;
-    color: var(--cyan);
+    color: var(--cyan-text);
     margin: 6px 0;
 }
 
@@ -1461,7 +1461,7 @@
     display: block;
     font-size: 0.7em;
     font-weight: 600;
-    color: var(--gold);
+    color: var(--gold-text);
     text-transform: uppercase;
     letter-spacing: 0.05em;
     margin-bottom: 10px;
@@ -1493,7 +1493,7 @@
 
 .cf-coin-item.pm .cf-coin-label { color: var(--coin-pm); }
 .cf-coin-item.gm .cf-coin-label { color: var(--coin-gm); }
-.cf-coin-item.em .cf-coin-label { color: var(--green); }
+.cf-coin-item.em .cf-coin-label { color: var(--green-text); }
 .cf-coin-item.sm .cf-coin-label { color: var(--coin-sm); }
 .cf-coin-item.km .cf-coin-label { color: var(--coin-km); }
 
@@ -1621,7 +1621,7 @@
     display: block;
     font-size: 0.85em;
     font-weight: 600;
-    color: var(--gold);
+    color: var(--gold-text);
     text-transform: uppercase;
     letter-spacing: 0.05em;
     margin-bottom: 16px;
@@ -1709,7 +1709,7 @@
     display: block;
     font-size: 0.85em;
     font-weight: 600;
-    color: var(--gold);
+    color: var(--gold-text);
     text-transform: uppercase;
     letter-spacing: 0.05em;
     margin-bottom: 12px;
@@ -1883,7 +1883,7 @@
 .party-stat-value {
     font-size: 1.5em;
     font-weight: 700;
-    color: var(--gold);
+    color: var(--gold-text);
     line-height: 1.2;
 }
 
@@ -1896,8 +1896,8 @@
 }
 
 .party-stat-card.critical .party-stat-value { color: var(--red); }
-.party-stat-card.bloodied .party-stat-value { color: var(--yellow); }
-.party-stat-card.healthy .party-stat-value { color: var(--green); }
+.party-stat-card.bloodied .party-stat-value { color: var(--yellow-text); }
+.party-stat-card.healthy .party-stat-value { color: var(--green-text); }
 
 /* HP Bar in Party Overview */
 .party-hp-bar {
@@ -2039,7 +2039,7 @@
 
 .rest-info h4 {
     margin: 0 0 8px 0;
-    color: var(--gold);
+    color: var(--gold-text);
 }
 
 .rest-info ul {
@@ -2157,7 +2157,7 @@
 }
 
 .rest-hd-available {
-    color: var(--gold);
+    color: var(--gold-text);
 }
 
 .rest-heal-preview {
@@ -2304,7 +2304,7 @@
     align-items: center;
     gap: 8px;
     font-weight: 600;
-    color: var(--gold);
+    color: var(--gold-text);
     margin-bottom: 6px;
 }
 
@@ -2337,13 +2337,13 @@
 }
 
 .char-inspiration-toggle.active {
-    color: var(--gold);
+    color: var(--gold-text);
     opacity: 1;
 }
 
 .char-inspiration-toggle:hover {
     opacity: 1;
-    color: var(--gold);
+    color: var(--gold-text);
 }
 
 /* ============================================================
@@ -2829,7 +2829,7 @@
     border-radius: var(--radius-sm);
     background: var(--bg);
     border: 1px solid var(--border);
-    color: var(--gold);
+    color: var(--gold-text);
     font-weight: 600;
     transition: background 0.12s, transform 0.08s;
 }
@@ -2878,7 +2878,7 @@
 .char-xp-value {
     font-size: 18px;
     font-weight: 700;
-    color: var(--gold);
+    color: var(--gold-text);
 }
 
 .char-xp-threshold {
