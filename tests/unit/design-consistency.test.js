@@ -2064,3 +2064,436 @@ describe('R-04 — jede Regel haelt 4,5 auf ihrer EIGENEN Flaeche (Ratsche)', ()
         expect(befunde.sort()).toEqual([]);
     });
 });
+/* ===========================================================================
+   Design-Handoff v3, Welle 1 — R-05: die Kaskade entscheidet, nicht die Regel
+   ===========================================================================
+   R-02, R-03 und R-04 urteilen REGELWEISE. Sie nehmen eine Regel, lesen ihre
+   Flaeche und ihre Tinte und rechnen. Genau dort sitzt ihre Blindstelle: eine
+   Deklaration, die eine andere Regel ueberschreibt, malt nie — und die drei
+   Ratschen melden trotzdem gruen, weil sie die zweite Regel gar nicht kennen.
+
+   ZWEI BELEGTE FAELLE haben diese Luecke in Schritt 10 ausgenutzt (Pruefung
+   W1-D, Runde 1):
+
+   (1) `spells.css .editor-btn.format-active` (0,2,0) wurde auf
+       `var(--on-gold-dim)` umgestellt und als erledigt verbucht. Sie kommt nie
+       zum Zug: `editors.css .editor-toolbar .editor-btn.format-active` (0,3,0)
+       gewinnt BEIDE Eigenschaften, und die Klasse `format-active` wird
+       ausschliesslich in `ui/editors/rich-text-toolbars.js` auf Knoepfen
+       unterhalb von `[data-toolbar-for]` gesetzt — jedes dieser Elemente
+       traegt zugleich `editor-toolbar` (22 statische Leisten in den Vorlagen,
+       plus `ui/editors/editor-toolbar-build.js`). Es gibt keinen Zustand, in
+       dem die schwaechere Regel gilt.
+
+   (2) `loot.css .shop-cat-badge.active` setzt Flaeche UND Tinte, aber zwoelf
+       Zeilen SPAETER standen die sechs Kategorieregeln mit derselben
+       Spezifitaet und setzten `color` erneut. Jede Marke traegt immer beide
+       Klassen (`features/shops/shops-core.js:427` und :438), die
+       Voreinstellung jedes Ladens ist `shop-cat-badge all active` — also Gold
+       auf Gold, gemessen 1,00 in allen vier Themes, waehrend Ratsche und
+       Kommentar 5,80 behaupteten.
+
+   WAS DIESE RATSCHE TUT: sie modelliert die Kaskade fuer eine benannte Liste
+   von ELEMENTZUSTAENDEN (Klassenmenge plus Vorfahrklassen), bestimmt je
+   Eigenschaft die wirklich gewinnende Deklaration — Spezifitaet, bei
+   Gleichstand Quellreihenfolge entlang des @import-Hubs — und rechnet den
+   Kontrast auf DEM Ergebnis. Zusaetzlich meldet sie jede Regel, deren
+   saemtliche Farbdeklarationen von STRIKT hoeherer Spezifitaet geschlagen
+   werden: die ist wirkungslos und gehoert entfernt, nicht korrigiert.
+
+   WARUM NUR EINE BENANNTE LISTE und keine vollstaendige Kaskade: eine
+   allgemeine Kaskadenaufloesung braucht das DOM. Die Liste hier ist die Menge
+   der Zustaende, an denen der Fehler belegt aufgetreten ist; sie waechst mit
+   jedem weiteren Befund und ist damit eine Ratsche, keine Vollpruefung.
+   =========================================================================== */
+describe("R-05 — die Kaskade entscheidet, nicht die Regel (Ratsche)", () => {
+  /** Kaskadenreihenfolge der Dateien = Reihenfolge des @import-Hubs. */
+  const HUB = fs.readFileSync(path.join(REPO, "assets", "styles.css"), "utf8");
+  const DATEI_RANG = new Map();
+  [...HUB.matchAll(/@import\s+url\(['"]styles\/([\w-]+\.css)['"]\)/g)].forEach(
+    (m, i) => DATEI_RANG.set(m[1], i),
+  );
+
+  /** Regeln samt Angabe, ob sie in einem @-Block (z. B. @media) liegen. */
+  function regelnMitKontext(text) {
+    const s = text.replace(/\/\*[\s\S]*?\*\//g, (m) =>
+      m.replace(/[^\n]/g, " "),
+    );
+    const out = [];
+    const stapel = [];
+    let buf = "";
+    let zeile = 1;
+    for (let i = 0; i < s.length; i++) {
+      const ch = s[i];
+      if (ch === "\n") zeile++;
+      if (ch === "{") {
+        const kopf = buf.replace(/\s+/g, " ").trim();
+        stapel.push({ kopf, at: kopf.startsWith("@"), zeile, ab: i + 1 });
+        buf = "";
+        continue;
+      }
+      if (ch === "}") {
+        const oben = stapel.pop();
+        if (oben && !oben.at) {
+          out.push({
+            sel: oben.kopf,
+            zeile: oben.zeile,
+            rumpf: s.slice(oben.ab, i),
+            imAt: stapel.some((x) => x.at),
+          });
+        }
+        buf = "";
+        continue;
+      }
+      buf += ch;
+    }
+    return out;
+  }
+
+  /**
+   * Trifft eine Selektor-Alternative den beschriebenen Elementzustand?
+   *
+   * Bewusst eng: nur Klassenselektoren und Nachfahren-Kombinatoren. Alles
+   * andere (Element, ID, Pseudoklasse, `>`/`+`/`~`, Attribut) gilt als
+   * NICHT-Treffer — die Zustaende dieser Liste sind Ruhezustaende ohne
+   * Pseudoklasse. Eine zu grosszuegige Uebereinstimmung waere schlimmer als
+   * gar keine: sie rechnete eine Tinte auf eine Flaeche, die nie zusammen
+   * auftreten.
+   */
+  function trifft(alternative, klassen, vorfahren) {
+    if (/[>+~[\]#]|::/.test(alternative)) return false;
+    const teile = alternative.trim().split(/\s+/);
+    if (!teile.length) return false;
+    const alleKlassen = (t) => {
+      const tok = t.match(/\.[-\w]+/g) || [];
+      return tok.length && tok.join("") === t
+        ? tok.map((x) => x.slice(1))
+        : null;
+    };
+    const letzte = alleKlassen(teile[teile.length - 1]);
+    if (!letzte || !letzte.every((k) => klassen.includes(k))) return false;
+    const erlaubt = [...klassen, ...vorfahren];
+    return teile.slice(0, -1).every((t) => {
+      const k = alleKlassen(t);
+      return k && k.every((x) => erlaubt.includes(x));
+    });
+  }
+
+  /** Spezifitaet reicht hier als Klassenzahl: die Liste kennt nur Klassen. */
+  const spezifitaet = (alternative) =>
+    (alternative.match(/\.[-\w]+/g) || []).length;
+
+  /** Die gewinnende Deklaration einer Eigenschaft fuer einen Zustand. */
+  function gewinner(kandidaten, prop) {
+    let best = null;
+    kandidaten.forEach((k) => {
+      const wert = deklaration(k.rumpf, prop);
+      if (!wert) return;
+      const besser =
+        !best ||
+        k.spez > best.spez ||
+        (k.spez === best.spez &&
+          (DATEI_RANG.get(k.datei) > DATEI_RANG.get(best.datei) ||
+            (k.datei === best.datei && k.zeile > best.zeile)));
+      if (besser) best = { ...k, wert };
+    });
+    return best;
+  }
+
+  function kandidatenFuer(zustand) {
+    const out = [];
+    cssFiles.forEach((f) => {
+      if (!zustand.dateien.includes(f.name)) return;
+      regelnMitKontext(f.content).forEach((r) => {
+        if (r.imAt) return;
+        const treffer = r.sel
+          .split(",")
+          .map((s) => s.trim())
+          .filter((s) => trifft(s, zustand.klassen, zustand.vorfahren));
+        if (!treffer.length) return;
+        out.push({
+          datei: f.name,
+          zeile: r.zeile,
+          sel: r.sel,
+          rumpf: r.rumpf,
+          alternativen: treffer,
+          spez: Math.max(...treffer.map(spezifitaet)),
+        });
+      });
+    });
+    return out;
+  }
+
+  /**
+   * Die benannte Liste.
+   *
+   * `marke` ist die Klasse, die den Zustand VOM RUHEZUSTAND unterscheidet.
+   * Sie wird fuer die zweite Probe gebraucht: nur eine Regel, die die Marke
+   * selbst fuehrt, gilt ausschliesslich in diesem Zustand — bei ihr und nur
+   * bei ihr folgt aus "hier geschlagen" auch "ueberall geschlagen". `.shop-cat-badge`
+   * und `.shop-cat-badge.weapon` verlieren hier ebenfalls, malen aber die
+   * RUHENDE Marke; sie sind nicht wirkungslos, sondern gehoeren zu einem
+   * anderen Zustand.
+   *
+   * `ausnahme` traegt das gemessene Minimum einer Stelle, die bewusst offen
+   * bleibt — hier die 18-%-Toenung derselben Rolle unter der
+   * Nutzerentscheidung D-4 (Toenungsstaerke und Tinte entscheidet Welle 2
+   * zusammen). Gefuehrt in .planning/HANDOFF-V3-OFFENE-PUNKTE.md, W1-D-02.
+   */
+  const ZUSTAENDE = [
+    ...["all", "weapon", "armor", "item", "service", "misc"].map((kat) => ({
+      name: `Ladenmarke .${kat} im aktiven Filter`,
+      dateien: ["loot.css"],
+      klassen: ["shop-cat-badge", kat, "active"],
+      vorfahren: ["shop-category-tabs", "shop-body", "shop-card"],
+      marke: "active",
+    })),
+    {
+      name: "Werkzeugleisten-Knopf im aktiven Format",
+      dateien: ["editors.css", "spells.css"],
+      klassen: ["editor-btn", "format-active"],
+      vorfahren: ["editor-toolbar", "toolbar-group"],
+      marke: "format-active",
+      /* rgba(212,175,55,0.18) ueber --bg-elevated, gemessen am
+               2026-09-28: dark 5,06 · light 2,41 · sepia 5,28 · contrast 7,94. */
+      ausnahme: 2.41,
+      flaecheUeber: "var(--bg-elevated)",
+    },
+  ];
+
+  const SCHWELLE = 4.5;
+
+  test("die Tinte, die am Ende gewinnt, haelt 4,5 auf der Flaeche, die am Ende gewinnt", () => {
+    const pals = WCAG.palettes();
+    const alias = aliasSchicht();
+    const befunde = [];
+
+    ZUSTAENDE.forEach((z) => {
+      const kand = kandidatenFuer(z);
+      const tinte = gewinner(kand, "color");
+      const flaeche = gewinner(kand, "background(?:-color)?");
+      if (!tinte || !flaeche) {
+        befunde.push(
+          `${z.name}: keine gewinnende ${!tinte ? "Tinte" : "Flaeche"} gefunden — ` +
+            `der Zustand ist falsch beschrieben, nicht heil`,
+        );
+        return;
+      }
+      const werte = {};
+      WCAG.THEMES.forEach((t) => {
+        const p = { ...pals[t], ...alias };
+        const vg = WCAG.resolve(tinte.wert, p);
+        let bg = WCAG.resolve(flaeche.wert, p);
+        if (bg === null && z.flaecheUeber) {
+          bg = WCAG.resolveOver(
+            flaeche.wert,
+            p,
+            WCAG.resolve(z.flaecheUeber, p),
+          );
+        }
+        werte[t] = vg && bg ? WCAG.ratio2(vg, bg) : null;
+      });
+      if (WCAG.THEMES.some((t) => werte[t] === null)) {
+        befunde.push(
+          `${z.name}: ${tinte.wert} auf ${flaeche.wert} ist nicht aufloesbar — ` +
+            `was der Rechner nicht kennt, darf nicht als gruen gelten`,
+        );
+        return;
+      }
+      const min = Math.min(...WCAG.THEMES.map((t) => werte[t]));
+      const zahlen = WCAG.THEMES.map((t) => `${t} ${werte[t]}`).join(" · ");
+      const quelle =
+        `Tinte ${tinte.datei}:${tinte.zeile} (${tinte.sel}) · ` +
+        `Flaeche ${flaeche.datei}:${flaeche.zeile} (${flaeche.sel})`;
+      if (z.ausnahme !== undefined) {
+        if (min !== z.ausnahme) {
+          befunde.push(
+            `${z.name}: benannte Ausnahme sagt ${z.ausnahme}, gemessen ${min} ` +
+              `(${zahlen}). ${quelle}`,
+          );
+        }
+        return;
+      }
+      if (min < SCHWELLE) {
+        befunde.push(
+          `${z.name}: ${min} < ${SCHWELLE} (${zahlen}). ${quelle}. Die Kaskade ` +
+            `verwirft, was die Regel behauptet`,
+        );
+      }
+    });
+
+    expect(befunde.sort()).toEqual([]);
+  });
+
+  test("keine Farbregel ist durch strikt hoehere Spezifitaet wirkungslos", () => {
+    const befunde = [];
+    ZUSTAENDE.forEach((z) => {
+      const kand = kandidatenFuer(z);
+      const maxSpez = Math.max(...kand.map((k) => k.spez));
+      kand.forEach((k) => {
+        // Nur Regeln, die die Zustandsmarke selbst fuehren: nur bei
+        // ihnen heisst "in diesem Zustand geschlagen" auch "nie wirksam".
+        if (!k.alternativen.some((a) => a.includes(`.${z.marke}`))) return;
+        const props = ["color", "background(?:-color)?"].filter((p) =>
+          deklaration(k.rumpf, p),
+        );
+        if (!props.length || k.spez >= maxSpez) return;
+        const geschlagen = props.every((p) => {
+          const g = gewinner(kand, p);
+          return g && g.spez > k.spez;
+        });
+        if (geschlagen) {
+          befunde.push(
+            `${k.datei}:${k.zeile} (${k.sel}) malt im Zustand "${z.name}" nie — ` +
+              `jede ihrer Farbdeklarationen verliert gegen strikt hoehere ` +
+              `Spezifitaet. Eine wirkungslose Regel gehoert entfernt, nicht ` +
+              `korrigiert`,
+          );
+        }
+      });
+    });
+    expect([...new Set(befunde)].sort()).toEqual([]);
+  });
+});
+
+/* ===========================================================================
+   Design-Handoff v3, Welle 1 — R-06: die Zeilenanker der Aktenlage
+   ===========================================================================
+   Die Aktenlage-Ratsche im R-04-Block prueft SELEKTOR-Schluessel. Die Tabellen
+   von W1-D-01 fuehren aber `datei.css:ZEILE` — und genau diese Zeilen sind in
+   Schritt 10 um die Zahl der eingefuegten Kommentarzeilen verrutscht: 34 der
+   128 Anker zeigten danach auf `font-weight`, auf eine Leerzeile oder auf eine
+   schliessende Klammer (Pruefung W1-D, Runde 1).
+
+   Das ist dieselbe Fehlerart, wegen der die Auftragslage die Anker des
+   Handoffs v3 fuer unbrauchbar erklaert hat. Ein Aktenstueck, das die naechste
+   Welle vom Neu-Herleiten befreien soll, darf sie nicht kosten. Diese Ratsche
+   faellt bei JEDEM weiteren Kommentar-Commit, der eine gefuehrte Stelle
+   verschiebt, ohne die Tabelle nachzuziehen.
+   =========================================================================== */
+describe("R-06 — jeder Zeilenanker der Aktenlage trifft seine Deklaration (Ratsche)", () => {
+  const DOK = path.join(REPO, ".planning", "HANDOFF-V3-OFFENE-PUNKTE.md");
+
+  /** Alle `color: var(--x)`-Deklarationen einer CSS-Datei mit Zeile und
+   *  Selektor. Zeichenweise, damit einzeilige Regeln
+   *  (`.a { margin: 0; color: var(--gold); }`) genauso erfasst werden. */
+  function farbstellen(datei) {
+    const text = cssFiles.find((f) => f.name === datei);
+    if (!text) return null;
+    const zeilen = text.content.split(/\r?\n/);
+    const out = [];
+    const stapel = [];
+    let selBuf = "";
+    for (let i = 0; i < zeilen.length; i++) {
+      let buf = "";
+      const roh = zeilen[i];
+      for (let c = 0; c < roh.length; c++) {
+        const ch = roh[c];
+        if (ch === "{") {
+          stapel.push(
+            (selBuf + buf)
+              .replace(/\/\*[\s\S]*?\*\//g, "")
+              .replace(/\s+/g, " ")
+              .trim(),
+          );
+          selBuf = "";
+          buf = "";
+        } else if (ch === "}") {
+          stapel.pop();
+          selBuf = "";
+          buf = "";
+        } else if (ch === ";") {
+          const m = buf.trim().match(/^color\s*:\s*var\(\s*(--[\w-]+)\s*\)$/);
+          if (m && stapel.length) {
+            out.push({
+              zeile: i + 1,
+              sel: stapel[stapel.length - 1],
+              rolle: m[1],
+            });
+          }
+          buf = "";
+        } else buf += ch;
+      }
+      selBuf += buf + " ";
+      if (!stapel.length && /^\s*$/.test(roh)) selBuf = "";
+    }
+    return out;
+  }
+
+  /** Die gefuehrten Stellen: Tabellenzeilen der Gruppen A-D und der
+   *  Codeblock der Gruppe E. */
+  function gefuehrteStellen(text) {
+    const out = [];
+    let inE = false;
+    let aktDatei = null;
+    text.split(/\r?\n/).forEach((l) => {
+      const t = l.match(
+        /^\|\s*`([\w-]+\.css):(\d+)`\s*\|\s*`([^`]+)`\s*\|\s*`(--[\w-]+)`\s*\|/,
+      );
+      if (t) {
+        out.push({ datei: t[1], zeile: Number(t[2]), sel: t[3], rolle: t[4] });
+        return;
+      }
+      if (/^### Gruppe E/.test(l)) {
+        inE = true;
+        return;
+      }
+      if (/^### /.test(l)) inE = false;
+      if (!inE) return;
+      const d = l.match(/^([\w-]+\.css)\s*$/);
+      if (d) {
+        aktDatei = d[1];
+        return;
+      }
+      const e = l.match(/^\s+(\d+)\s+(\S.*?)\s*$/);
+      if (e && aktDatei) {
+        out.push({
+          datei: aktDatei,
+          zeile: Number(e[1]),
+          sel: e[2],
+          rolle: null,
+        });
+      }
+    });
+    return out;
+  }
+
+  test("die 128 Stellen von W1-D-01 zeigen auf eine passende Farbdeklaration", () => {
+    expect(fs.existsSync(DOK)).toBe(true);
+    const stellen = gefuehrteStellen(fs.readFileSync(DOK, "utf8"));
+    // Plausibilitaetsprobe: faellt die Zerlegung auseinander, waere die
+    // Ratsche gruen und leer.
+    expect(stellen.length).toBe(128);
+
+    const befunde = [];
+    stellen.forEach((s) => {
+      const idx = farbstellen(s.datei);
+      if (!idx) {
+        befunde.push(`${s.datei}: Datei gibt es nicht (mehr)`);
+        return;
+      }
+      const treffer = idx.find((x) => x.zeile === s.zeile);
+      if (!treffer) {
+        befunde.push(
+          `${s.datei}:${s.zeile} (${s.sel}) — dort steht keine ` +
+            `color-var-Deklaration mehr`,
+        );
+        return;
+      }
+      const teile = treffer.sel.split(",").map((x) => x.trim());
+      if (treffer.sel !== s.sel && !teile.includes(s.sel)) {
+        befunde.push(
+          `${s.datei}:${s.zeile} — gefuehrt als ${s.sel}, dort steht ${treffer.sel}`,
+        );
+        return;
+      }
+      if (s.rolle && treffer.rolle !== s.rolle) {
+        befunde.push(
+          `${s.datei}:${s.zeile} (${s.sel}) — gefuehrt als ${s.rolle}, dort ` +
+            `steht ${treffer.rolle}`,
+        );
+      }
+    });
+    expect(befunde.sort()).toEqual([]);
+  });
+});
