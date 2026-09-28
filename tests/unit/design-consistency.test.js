@@ -2626,6 +2626,15 @@ describe("R-06 — jeder Zeilenanker der Aktenlage trifft seine Deklaration (Rat
    (bestiary-render.js:435, Geschwister der Statblock-Schachtel).
    =========================================================================== */
 describe('R-07 — Pergament-Statblock: themenunabhaengige Tinte (Ratsche)', () => {
+    /** Der Modulpfad steht hier BEWUSST am Stueck und in ausfuehrbarem Code,
+     *  nicht nur im Erklaertext darueber: das Abdeckungs-Gate
+     *  (tests/unit/module-test-coverage.test.js) zaehlt ein Modul als
+     *  angefasst, wenn sein loader.js-Pfad woertlich in einer Testdatei
+     *  vorkommt. Stuende der Pfad nur im Kommentar, haenge die
+     *  Abdeckungsaussage an Prosa — und die naechste Kommentarueberarbeitung
+     *  nimmt das Modul lautlos wieder aus dem Gate. Hier liest ihn die
+     *  Zusicherung selbst. */
+    const RENDER_MODUL = path.join(REPO, 'features/bestiary/bestiary-render.js');
     /** Die Regeln, die IM Statblock faerben. `.bestiary-attribution` faengt
      *  der Praefix `.bestiary-attr` sonst mit ein — deshalb die drei
      *  Zellenklassen einzeln statt als Praefix. */
@@ -2638,10 +2647,7 @@ describe('R-07 — Pergament-Statblock: themenunabhaengige Tinte (Ratsche)', () 
     const LINIEN_SCHWELLE = 3;
 
     test('die Flaeche ist noch der Pergamentverlauf — sonst handelt der Rest von nichts', () => {
-        const js = fs.readFileSync(
-            path.join(REPO, 'features', 'bestiary', 'bestiary-render.js'),
-            'utf8'
-        );
+        const js = fs.readFileSync(RENDER_MODUL, 'utf8');
         expect(js).toContain('class="bestiary-statblock read-aloud parchment"');
 
         const party = cssFiles.find(f => f.name === 'party.css').content;
@@ -2956,7 +2962,10 @@ describe('R-08 — Muenzfarben sind Flaechen, keine Tinten (Ratsche)', () => {
    tote core.css-Tinte. Gruen wird sie mit Schritt 13.
    =========================================================================== */
 describe('R-09 — die Ortsfarben aus dem JS (Ratsche)', () => {
-    const QUELLE = path.join(REPO, 'features', 'locations', 'locations-render.js');
+    /** Der Pfad am Stueck und in ausfuehrbarem Code, aus demselben Grund wie
+     *  bei R-07: das Abdeckungs-Gate soll an der Zusicherung haengen, die
+     *  die Datei wirklich liest, nicht an einem Kommentar. */
+    const QUELLE = path.join(REPO, 'features/locations/locations-render.js');
     const js = fs.readFileSync(QUELLE, 'utf8');
     /** Die Farboptionen des Filter-Dialogs sind die Wahrheit ueber die
      *  moeglichen Werte — nicht eine Liste in diesem Test. */

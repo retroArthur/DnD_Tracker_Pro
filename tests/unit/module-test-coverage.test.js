@@ -127,12 +127,22 @@ function isCovered(relModulePath) {
 // keine Review-Fix-Aufgabe. Verifiziert per
 // `grep -rl "<pfad>" tests/ --include="*.js"` -> kein Treffer (Stand
 // 2026-09-07).
+//
+// 2026-09-28, Design-Handoff v3 Welle 1 Schritt 11/13: ZWEI EINTRAEGE
+// GESTRICHEN, die Liste schrumpft von 80 auf 78. `bestiary-render.js` und
+// `locations-render.js` werden seither von tests/unit/design-consistency.test.js
+// wirklich gelesen und beurteilt — R-07 haelt fest, dass der Statblock die
+// Pergamentklassen `read-aloud parchment` ausgibt (sonst handeln ihre
+// Kontrastzahlen von einer anderen Flaeche), R-09 beurteilt die drei
+// Inline-Stile der Ortsansicht und rechnet ihren Rueckfallwert nach. Beide
+// Zusicherungen fuehren den Modulpfad in AUSFUEHRBAREM Code, nicht nur im
+// Erklaertext — sonst haenge die Abdeckungsaussage an einem Kommentar (genau
+// diese Unterscheidung steht im Kommentar zu R-05 derselben Datei).
 const MODULE_TEST_EXCEPTIONS = [
     'core/themes.js',
     'features/bestiary/bestiary-actions.js',
     'features/bestiary/bestiary-crud.js',
     'features/bestiary/bestiary-editor.js', // -- CR-01, 2026-09-07: s. Kommentar oben
-    'features/bestiary/bestiary-render.js',
     'features/command-palette/command-palette.js',
     'features/dice-stats/dice-stats-render.js',
     'features/dice/dice-core.js',
@@ -149,7 +159,6 @@ const MODULE_TEST_EXCEPTIONS = [
     'features/initiative-loot.js', // -- CR-01, 2026-09-07: s. Kommentar oben
     'features/initiative-statblock.js',
     'features/locations/locations-crud.js',
-    'features/locations/locations-render.js',
     'features/loot-distribution.js',
     'features/npc-generator/npc-default-tables.js',
     'features/npc-generator/npc-generator.js',
