@@ -74,7 +74,7 @@
         }
         
         .loot-tag-chip input:checked + span {
-            color: var(--gold);
+            color: var(--gold-text);
             font-weight: 500;
         }
         
@@ -172,7 +172,7 @@
         .shop-name {
             font-weight: 600;
             font-size: 1.1em;
-            color: var(--gold);
+            color: var(--gold-text);
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
@@ -205,8 +205,8 @@
             color: var(--text);
         }
 
-        .shop-meta-tag.npc { color: var(--purple); }
-        .shop-meta-tag.location { color: var(--cyan); }
+        .shop-meta-tag.npc { color: var(--purple-text); }
+        .shop-meta-tag.location { color: var(--cyan-text); }
 
         .shop-item-count {
             font-size: 0.8em;
@@ -234,7 +234,7 @@
         }
         
         .shop-special {
-            color: var(--gold);
+            color: var(--gold-text);
             font-size: 0.9em;
             margin-bottom: 6px;
         }
@@ -381,7 +381,7 @@
         
         .si-cost {
             text-align: right;
-            color: var(--gold);
+            color: var(--gold-text);
             font-size: 0.9em;
             font-weight: 500;
             white-space: nowrap;
@@ -444,12 +444,12 @@
         }
         
         .si-special {
-            color: var(--gold);
+            color: var(--gold-text);
             font-style: italic;
         }
         
         .si-note {
-            color: var(--yellow);
+            color: var(--yellow-text);
             font-style: italic;
             margin-left: 8px;
         }
@@ -676,7 +676,7 @@
         
         .cart-total-value {
             font-weight: bold;
-            color: var(--gold);
+            color: var(--gold-text);
         }
         
         .cart-total-gold {
@@ -737,7 +737,7 @@
         .checkout-amount {
             font-size: 1.8em;
             font-weight: bold;
-            color: var(--gold);
+            color: var(--gold-text);
             margin: 8px 0;
         }
         
