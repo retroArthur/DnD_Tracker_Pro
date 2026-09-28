@@ -709,9 +709,9 @@
             font-weight: 600;
         }
         
-        .hp-calc-btn.damage { background: var(--red); color: white; }
+        .hp-calc-btn.damage { background: var(--red); color: var(--on-red); }
         .hp-calc-btn.heal { background: var(--green); color: var(--on-green); }
-        .hp-calc-btn.temp { background: var(--blue); color: white; }
+        .hp-calc-btn.temp { background: var(--blue); color: var(--on-blue); }
         
         /* ============================================================
            LINKS / REFERENCES
@@ -737,7 +737,7 @@
             left: 50%;
             transform: translateX(-50%);
             background: var(--red);
-            color: white;
+            color: var(--on-red);
             padding: 8px 16px;
             border-radius: var(--radius-lg);
             font-size: 0.85em;
@@ -980,12 +980,12 @@
 
         .char-action-btn.primary:hover {
             background: var(--red);
-            color: white;
+            color: var(--on-red);
         }
 
         .char-action-btn.danger:hover {
             background: var(--red);
-            color: white;
+            color: var(--on-red);
             border-color: var(--red);
         }
         
@@ -1425,7 +1425,7 @@
         
         .spell-tooltip-close:hover {
             background: var(--red);
-            color: white;
+            color: var(--on-red);
             border-color: var(--red);
         }
         
@@ -1592,7 +1592,7 @@
 
         .assign-spell-level.trick {
             background: var(--purple);
-            color: white;
+            color: var(--on-purple);
         }
 
         .assign-spell-level.level-1,
@@ -1617,7 +1617,7 @@
         .assign-spell-level.level-8,
         .assign-spell-level.level-9 {
             background: var(--red);
-            color: white;
+            color: var(--on-red);
         }
 
         .assign-spell-footer {
