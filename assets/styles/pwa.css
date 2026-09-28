@@ -14,7 +14,7 @@
     gap: 6px;
     padding: 4px 10px;
     background: transparent;
-    color: var(--gold);
+    color: var(--gold-text);
     border: 1px solid var(--gold);
     border-radius: var(--radius-sm);
     font-size: var(--font-size-small, 12px);
