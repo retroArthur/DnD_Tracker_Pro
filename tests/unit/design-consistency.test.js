@@ -3375,6 +3375,21 @@ describe('R-10 — rgba()-Zahlentripel ausserhalb der Schatten (Ratsche)', () =>
                 continue;
             }
             if (ch === '{' || ch === '}') {
+                /* Das abschliessende Semikolon der letzten Deklaration eines
+                   Blocks ist in CSS optional. Ohne diesen Zweig faellt genau
+                   sie aus der Zaehlung — und das ist die Schreibweise, in der
+                   ein Rueckfall an der Ratsche vorbeikaeme. `tiefe` wird VOR
+                   dem Dekrement geprueft, sonst waere der Block schon
+                   verlassen; die Bedingung ist im uebrigen dieselbe wie im
+                   `;`-Zweig, ein Selektor mit `:hover` faellt also nicht
+                   durch (er wird vom oeffnenden `{` zurueckgesetzt). */
+                if (ch === '}' && tiefe > 0 && start >= 0 && doppel > start) {
+                    out.push({
+                        prop: css.slice(start, doppel).trim().toLowerCase(),
+                        von: doppel + 1,
+                        bis: i
+                    });
+                }
                 tiefe += ch === '{' ? 1 : -1;
                 start = -1;
                 doppel = -1;
