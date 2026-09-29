@@ -445,7 +445,7 @@
     flex-direction: column;
     gap: 6px;
     padding: 16px;
-    background: linear-gradient(135deg, rgba(212,175,55,0.15), rgba(212,175,55,0.05));
+    background: linear-gradient(135deg, color-mix(in srgb, var(--gold) 15%, transparent), color-mix(in srgb, var(--gold) 5%, transparent));
     border: 1px solid var(--gold);
     border-radius: var(--radius-md);
 }
@@ -643,7 +643,7 @@
 .rt-entry .rt-entry-range {
     min-width: 50px;
     padding: 2px 8px;
-    background: rgba(212, 175, 55, 0.15);
+    background: color-mix(in srgb, var(--gold) 15%, transparent);
     color: var(--gold);
     border-radius: var(--radius-sm);
     font-weight: 500;
@@ -711,7 +711,7 @@
 
 .generator-table-card:hover {
     border-color: var(--gold);
-    background: rgba(212,175,55,0.05);
+    background: color-mix(in srgb, var(--gold) 5%, transparent);
 }
 
 .generator-table-info {
@@ -761,7 +761,7 @@
 
 .generator-result-box {
     padding: 16px;
-    background: linear-gradient(135deg, rgba(212,175,55,0.15), rgba(212,175,55,0.05));
+    background: linear-gradient(135deg, color-mix(in srgb, var(--gold) 15%, transparent), color-mix(in srgb, var(--gold) 5%, transparent));
     border: 1px solid var(--gold);
     border-radius: var(--radius-md);
 }
@@ -836,7 +836,7 @@
 .ld-gold-label { color: var(--gold); font-weight: 600; }
 
 .ld-split-box {
-    background: linear-gradient(135deg, rgba(212,175,55,0.15), rgba(212,175,55,0.05));
+    background: linear-gradient(135deg, color-mix(in srgb, var(--gold) 15%, transparent), color-mix(in srgb, var(--gold) 5%, transparent));
     border: 1px solid var(--gold);
     border-radius: var(--radius-md);
     padding: 16px;
@@ -925,27 +925,27 @@
 }
 
 .difficulty-badge.trivial {
-    background: rgba(96, 165, 250, 0.2);
+    background: color-mix(in srgb, var(--blue) 20%, transparent);
     color: var(--blue);
 }
 
 .difficulty-badge.easy {
-    background: rgba(74, 222, 128, 0.2);
+    background: color-mix(in srgb, var(--green) 20%, transparent);
     color: var(--green);
 }
 
 .difficulty-badge.medium {
-    background: rgba(251, 191, 36, 0.2);
+    background: color-mix(in srgb, var(--yellow) 20%, transparent);
     color: var(--yellow);
 }
 
 .difficulty-badge.hard {
-    background: rgba(251, 146, 60, 0.2);
+    background: color-mix(in srgb, var(--orange) 20%, transparent);
     color: var(--orange);
 }
 
 .difficulty-badge.deadly {
-    background: rgba(239, 68, 68, 0.2);
+    background: color-mix(in srgb, var(--red) 20%, transparent);
     color: var(--red);
 }
 
