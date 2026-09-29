@@ -2809,11 +2809,17 @@ beträgt dort rund 1,05).
 
 ## W3-F-01 — Sichtprobenliste der Vier-Themes-Runde (Welle 3, Schritt 10)
 
-**Stand:** 2026-09-30, Welle 3 Schritt 2. **Offen bis zur Runde.** Gesichert durch **R-20** in
-`tests/unit/design-consistency.test.js`: die beiden Tests „jede Gluehlage, deren Deckung sich
-aendert, steht in der Aktenlage unter W3-F-01" und „die sechs volldeckenden Goldrahmen stehen in
-der Aktenlage unter W3-F-01" gehen rot, wenn eine Stelle hier verschwindet. Diese Liste kann also
-nicht durch Vergessen kürzer werden.
+**Stand:** 2026-09-30, Welle 3 Schritt 2, **berichtigt in Runde 2 der Nachprüfung** (Teil B von 22
+auf 27, Teil C um die zwei Farbfeld-Marken). **Offen bis zur Runde.** Gesichert durch **R-20** in
+`tests/unit/design-consistency.test.js`: die beiden Tests „jede Gluehlage, deren Deckung ODER Ton
+sich aendert, steht in der Aktenlage unter W3-F-01" und „jeder Rahmennachbar mit Abstand unter 3
+steht namentlich in der Aktenlage unter W3-F-01" gehen rot, wenn eine Stelle hier verschwindet.
+Diese Liste kann also nicht durch Vergessen kürzer werden.
+
+Was die Ratsche **nicht** leistet: sie sucht Datei und Selektor als Teilstrings im Abschnitt, nicht
+als Paar in einer Zeile. Eine Stelle kann darum durch einen Nachbareintrag mitgedeckt scheinen —
+`dice.css` → `.floating-dice-trigger` gilt schon durch `.floating-dice-trigger:hover` als geführt.
+Sie steht trotzdem ausdrücklich in Teil B.
 
 ### Warum sie existiert
 
@@ -2847,12 +2853,23 @@ niemand sie nachzieht, wären sie nach dem nächsten Kommentar-Commit falsch.
 | 5 | `dashboard.css` → `.dash-char:hover` und `party.css` → `.event-log-entry` | Dort trifft der Contrast-Umriss auf einen farbigen `border-left`-Statusstreifen. | Bleibt der Statusstreifen als Farbe erkennbar, oder verschluckt ihn der Umriss? |
 | 6 | `migration.css` → der Assistentenschritt | Ring von 30 % auf 15 %. | Ist der aktive Schritt noch hervorgehoben? |
 
-### Teil B — die Umrisse in Contrast: **22** Kandidaten, nicht 13
+### Teil B — die Umrisse in Contrast: **27** Kandidaten, nicht 22 und nicht 13
 
 Die Entscheidung W3-D-01 stellt Höhe in Contrast als harten Umriss dar (`#888` / `#aaa` / `#ccc`,
 getrennt über den Spread 1/2/3 px). Der Plan nennt als Kandidaten für „Umriss nicht von Rahmen zu
 unterscheiden" nur die **13** Schattenregeln mit `border: 1px solid var(--border)`. Gemessen am
-2026-09-30 tragen **zusätzlich neun** Schattenregeln einen Rahmen aus `--gold`. Summe **22**.
+2026-09-30 tragen **zusätzlich neun** Schattenregeln einen Rahmen aus `--gold` — und **fünf
+weitere** einen anderen farbigen Rahmen. Summe **27**.
+
+**Warum hier zuerst 22 stand.** Die erste Fassung dieses Abschnitts zählte drei Klassen
+(13 + 6 + 3) und nannte die Summe eine Kandidatenzahl. `rahmenArt()` in `R-20` hatte aber eine
+**vierte** Klasse `sonst`, die kein Test angesehen hat, und dort lagen sechs weitere Regeln. Die
+Zahl 22 war damit eine Messung von drei Klassen und keine Aussage über Geschlossenheit. Seit dem
+2026-09-30 (Runde 2) fällt jede Schattenregel mit `border` in genau eine von **fünf** Klassen —
+13 `var(--border)` · 6 volles Gold · 3 gemischtes Gold · 5 andere Farbe · 1 `border: none` —, und
+`R-20` rechnet den Abstand **jeder** der 27 mit sichtbarem Rahmen. Die 28. Regel
+(`encounters.css` → `#calculator-modal`) trägt `border: none !important` neben
+`box-shadow: none !important` und ist deshalb kein Kandidat.
 
 In Contrast ist `--gold` = `#ffd700`. Gerechnet mit `tests/unit/helpers/wcag-contrast.js`
 (Selbstprobe `#777`/weiß = 4,48 und `#767676`/weiß = 4,54 bestanden):
@@ -2862,11 +2879,18 @@ In Contrast ist `--gold` = `#ffd700`. Gerechnet mit `tests/unit/helpers/wcag-con
 | `core.css` → `.spell-tooltip` | voll `var(--gold)` | 3 | `#ccc`, 3 px | **1,14** |
 | `editors.css` → `.editor-toolbar .tb-menu` | voll `var(--gold)` | 3 | `#ccc`, 3 px | **1,14** |
 | `encounters.css` → `#calculator-modal .modal-content` | voll `var(--gold)` | 3 | `#ccc`, 3 px | **1,14** |
+| `spells.css` → `.link-context-toolbar` | voll `var(--purple)` = `#ff00ff` | 2 | `#aaa`, 2 px | **1,35** |
 | `party.css` → `.cf-languages-block .cf-lang-dropdown` | voll `var(--gold)` | 2 | `#aaa`, 2 px | 1,66 |
 | `spells.css` → `.floating-toolbar` | voll `var(--gold)` | 2 | `#aaa`, 2 px | 1,66 |
 | `tools.css` → `.wiki-link-suggester` | voll `var(--gold)` | 2 | `#aaa`, 2 px | 1,66 |
+| `spells.css` → `.table-context-toolbar` | voll `var(--cyan)` = `#00ffff` | 2 | `#aaa`, 2 px | 1,85 |
+| `dmscreen.css` → `[data-tooltip]::after` | `var(--border)` = `#555` | 1 | `#888`, 1 px | 2,10 |
+| `dice.css` → `.floating-dice-trigger` | 20 % Weiß auf rotem Verlauf | 2 | `#aaa`, 2 px | 2,37 |
+| die anderen **zwölf** `var(--border)`-Regeln | `#555` | 2 bzw. 3 | `#aaa` / `#ccc` | 3,21 / 4,64 |
 | `command-palette.css` → `.cp-box` | 30 % Gold | 3 | `#ccc`, 3 px | 5,33 |
 | `dice.css` → `.floating-dice-panel` | 30 % Gold | 3 | `#ccc`, 3 px | 5,33 |
+| `encounters.css` → `#calc-budget-slider::-webkit-slider-thumb` | `var(--bg-dark)` = `#000` | 1 | `#888`, 1 px | 5,92 |
+| `encounters.css` → `#calc-budget-slider::-moz-range-thumb` | `var(--bg-dark)` = `#000` | 1 | `#888`, 1 px | 5,92 |
 | `dmscreen.css` → `.modal` | 20 % Gold | 3 | `#ccc`, 3 px | 7,20 |
 
 **Die drei gemischten sind nicht das Problem, die sechs volldeckenden sind es.** 20–30 % Gold über
@@ -2876,9 +2900,23 @@ dort entsteht eine 4 px breite Bande aus 1 px Gold und 3 px Fast-Weiß, die als 
 Rahmen** liest und nicht als Höhe. Die drei schlimmsten sind die Stufe-3-Fälle, und
 `#calculator-modal .modal-content` ist gleichzeitig Punkt 1 dieser Liste.
 
-**Anzusehen sind alle 22**, in dieser Reihenfolge: erst die drei mit 1,14, dann die drei mit 1,66,
-dann die 13 Regeln mit `border: 1px solid var(--border)` (dort sollte `#888` gegen `#555`
-unterscheidbar sein), zuletzt die drei gemischten als Gegenprobe.
+**Die vier Nachzügler aus der alten Klasse `sonst` und der aufgeschlüsselten 13.** `--purple` mit
+**1,35** ist schlechter als jeder volldeckende Goldrahmen derselben Stufe: die Werkzeugleiste für
+Verweise bekommt in Contrast eine 3 px breite Bande aus 1 px Magenta und 2 px `#aaa`, in der die
+Rahmenfarbe nicht mehr als eigene Linie liest. `--cyan` mit **1,85** ist derselbe Fall eine Spur
+milder. `dmscreen.css` → `[data-tooltip]::after` ist die **einzige** der 13 `var(--border)`-Regeln
+auf Stufe 1 und liegt mit **2,10** ebenfalls im Problembereich — die anderen zwölf liegen bei 3,21
+und 4,64 und sind unauffällig; die frühere Sammelaussage „dort sollte `#888` gegen `#555`
+unterscheidbar sein" betraf also genau eine Stelle. `dice.css` → `.floating-dice-trigger`
+schließlich trägt `border: 2px solid var(--overlay-strong)` (20 % Weiß) auf einem Verlauf aus
+`--red-dim` (70 % Rot auf Schwarz) und `--red-dark` (55 %); in Contrast löst der Rahmen dort zu
+`#c23333` bzw. `#a33333` auf und liegt bei **2,37** bzw. 2,94 — gerechnet wird der schlechtere.
+Der runde Würfelknopf bekommt damit einen 4 px breiten Doppelring.
+
+**Anzusehen sind alle 27**, in dieser Reihenfolge: erst die drei mit 1,14, dann `--purple` (1,35),
+dann die drei mit 1,66, dann `--cyan` (1,85), dann `[data-tooltip]::after` (2,10) und der
+Würfelknopf (2,37), dann die restlichen zwölf `var(--border)`-Regeln, zuletzt die drei gemischten
+Goldrahmen und die zwei Schieberegler-Griffe als Gegenprobe.
 
 **Fällt die Ablesung an den sechs Goldrahmen durch, ist die FORM falsch, nicht der Grauwert.** Die
 Grauleiter ist nach oben ausgereizt: `#ccc` ist bereits die hellste der drei Stufen, und heller
@@ -2886,13 +2924,22 @@ würde den Abstand zu Gold weiter verkleinern. Dann kommen nur zwei Wege in Frag
 Umriss (y > 0, damit die Bande nicht rundherum gleich dick ist) oder für diese sechs Stellen eine
 helle weiche Auflage statt des harten Umrisses. Die Grauleiter nachzujustieren löst es nicht.
 
-### Teil C — die Glühlagen: alle 14 ändern ihre Deckung
+### Teil C — die Glühlagen: **zwölf** von 14 ändern sich sichtbar
 
 `--glow-gold` / `-yellow` / `-green` / `-red` tragen nach W3-D-03 nur die Farbe; die 14 Radien
 bleiben unberührt (4/4/6/6/8/8/10/12/12/12/12/20/30/30, unter `R-20`). Die **Deckung** ist aber
 ebenfalls keine Geometrie, und sie steht heute an jeder Stelle einzeln: sechs verschiedene Werte
 (0,20 · 0,25 ×3 · 0,30 ×2 · 0,40 ×2 · 0,50 ×4 · 1,00 ×2; Median 0,40, Mittel 0,4536). Gewählt ist
-**0,50** — der häufigste Wert —, damit vier Stellen bildpunktgleich bleiben. Die übrigen zehn:
+**0,50** — der häufigste Wert —, damit **vier Stellen in Dark bildpunktgleich bleiben**.
+
+**Die Überschrift hieß hier zuerst „alle 14 ändern ihre Deckung", und das war in zwei Richtungen
+falsch.** Vier ändern die Deckung nicht (Faktor 1,00), und von diesen vier wechseln **zwei** in
+den anderen drei Themes trotzdem den **Ton** — sie standen darum auf keiner Liste. Ihr Literal
+`rgba(251, 191, 36, 0.5)` ist zufällig die Dark-Ziffer von `--yellow` (`#fbbf24`); nach der
+Umstellung auf `var(--glow-yellow)` folgen sie dem Theme. Der Filter in `R-20`, der „ändert sich
+sichtbar" auf die Deckungsdifferenz prüfte, sah davon nichts (Differenz null), und das Merkmal
+`fremd` konnte es auch nicht fangen: es feuert nur, wenn das Literal **ungleich** dem Dark-Token
+ist. Er prüft seit Runde 2 auf „Deckung **oder** Ton". Die zehn mit Deckungsänderung:
 
 | Stelle | Deckung heute → Token | Faktor | Worauf zu achten ist |
 | --- | --- | --: | --- |
@@ -2906,6 +2953,19 @@ ebenfalls keine Geometrie, und sie steht heute an jeder Stelle einzeln: sechs ve
 | `dice.css` → `.fdp-die.d20:hover` | 0,30 → 0,50 | 1,67 | derselbe Tonwechsel |
 | `file-backup.css` → `.backup-dot-active` | 0,40 → 0,50 | 1,25 | Kaum sichtbar; nur zur Vollständigkeit. |
 | `file-backup.css` → `.backup-dot-paused` | 0,40 → 0,50 | 1,25 | ebenda |
+
+Und die **zwei mit gleicher Deckung, aber wechselndem Ton** — nicht mit Faktor geführt, der ist
+1,00, sondern mit dem Ton je Theme:
+
+| Stelle | Ton heute → Token | Faktor | Worauf zu achten ist |
+| --- | --- | --: | --- |
+| `editors.css` → `.editor-toolbar .color-swatch.active` | `rgba(251,191,36,.5)` fest → `--yellow` des Themes: Dark `#fbbf24`, Light `#ca8a04`, Sepia `#b58900`, Contrast `#ffff00` | 1,00 | Aus Amber wird in Light dunkles Ocker, in Contrast reines Gelb — an einem **Aktiv-Marker**. Ist das ausgewählte Farbfeld in Light und Sepia noch als ausgewählt erkennbar, oder verschwindet der Glanz in der Fläche? |
+| `spells.css` → `.color-swatch.active` | ebenda (dieselbe Klasse in der schwebenden Leiste) | 1,00 | ebenda. Beide Leisten nebeneinander ansehen: sie sollen gleich aussehen, und in Dark tun sie es bildpunktgenau. |
+
+**Wirklich unverändert bleiben nur zwei Stellen:** `dashboard.css` → `.dice-result.crit-effect`
+und `.dice-result.fail-effect`. Sie tragen schon heute `color-mix(… var(--green)/var(--red) 50 %
+…)` — gleiche Deckung, gleicher Ton, in allen vier Themes. Die anderen zwölf gehören auf diese
+Liste.
 
 **Die zwei Goldmarken oben sind die CSS-Zwillinge der vier JS-Sprungmarken aus W3-D-05** —
 dieselbe Aufgabe („zeig mir in zwei Sekunden, wohin ich gesprungen bin"), dieselbe Richtung der
