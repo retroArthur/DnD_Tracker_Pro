@@ -1748,9 +1748,16 @@ npx jest tests/unit/design-consistency.test.js -t "R-04"
 
 ---
 
-## W2-D-02 — Zwei `var(--text-dim)`-Stellen auf der Goldtönung: der Deckel ist nicht die Abhilfe
+## W2-D-02 — `var(--text-dim)` auf Rollentönungen: der Deckel ist nicht die Abhilfe
 
-**Stand:** 2026-09-29, Welle 2 Schritt 8. Offen — Nachfolger von W2-C-02 Nachtrag I.
+**Stand:** 2026-09-29, Welle 2 Schritt 8; **Bestand erweitert im Nachtrag, Runde 2**. Offen —
+Nachfolger von W2-C-02 Nachtrag I.
+
+**Die Überschrift hieß bis dahin „Zwei `var(--text-dim)`-Stellen auf der Goldtönung".** Beide
+Zahlwörter sind überholt: es sind mehr als zwei Stellen, und eine davon liegt auf einer
+**Rot**tönung. Die Zahl im Titel war schon vor Runde 2 falsch — die Ausnahmetabelle von R-18
+führte seit Runde 1 zwei `party.css`-Stellen zusätzlich hierher. Ein Titel, der mitzählt, wird
+still falsch; dieser zählt nicht mehr mit.
 
 ### Worum es geht
 
@@ -1758,6 +1765,19 @@ npx jest tests/unit/design-consistency.test.js -t "R-04"
 `color: var(--text-dim)`; die 10-%-Goldtönung, auf der sie liegen, kommt aus der **Elternregel**.
 W2-C-02 Nachtrag I hat die Abhilfe Schritt 8 zugewiesen. Schritt 8 hat sie gerechnet und **nicht
 ausgeführt**, und der Grund ist die Messung.
+
+**Dazu seit Runde 2 des Nachtrags zwei Stellen in `initiative.css`,** gefunden, als R-18 auch die
+**Klassenform** des Zustands zu sehen bekam (siehe W2-D-05). Beide malen dieselbe Tinte auf die
+Tönung derselben Zeile:
+
+| Paar | Tönung | min (dark · light · sepia · contrast) |
+| ---- | ------ | -------------------------------------- |
+| `.init-entry.active` → `.init-entry .drag-handle` | Gold 10 % | **3,56** · 4,28 · 3,98 · 5,38 |
+| `.init-entry.lair` → `.init-entry .drag-handle` | Rot 10 % | **3,93** · 4,22 · 4,18 · 6,53 |
+
+Der Ziehgriff ⠿ steht als erste Gitterspalte (30 px) genau auf dem 0-%-Ende des Verlaufs, also
+auf der **vollen** Tönung, und `.active` markiert die Zeile, auf die im Kampf am häufigsten
+gesehen wird (`features/initiative.js` setzt die Klasse beim Rendern der aktiven Zeile).
 
 ### Was gemessen ist
 
@@ -1771,27 +1791,42 @@ Die letzte Zeile ist der Befund: `--text-dim` erreicht in Dark schon **ohne jede
 4,32 über `--bg-elevated` (und 3,56 über `--bg-hover`). Nicht die Tönung ist zu stark, die
 gedämpfte Textfarbe ist zu blass. Ein Deckel kann das nicht heilen.
 
+An `.init-entry.active` ist das in Runde 2 noch einmal einzeln nachgerechnet worden, weil dort
+gar kein Deckel steht: mit Deckel 3,56 · 4,40 · 4,15 · 5,38, also in Dark **exakt dieselbe Zahl**
+wie ohne. Der Grund ist arithmetisch und nicht strittig — 10 % liegt unter `--tint-max` 13 % in
+Dark, `min(10%, var(--tint-max))` ist dort die 10 % selbst. Wer hier deckelt, ändert in Dark
+nichts und hat trotzdem etwas geändert.
+
 ### Was zu entscheiden ist, und von wem
 
 Drei Wege, keiner davon eine Tönungsfrage:
 
 1. `--text-dim` als Token anheben — betrifft den ganzen Baum (die Rolle steht hunderte Male) und
    verschiebt die Schrifthierarchie. Gehört zu einer eigenen Entscheidung.
-2. Die zwei Stellen auf `var(--text)` setzen — hält mit 9,59 · 12,99 · 7,63 · 12,49 mühelos, macht
-   aber Vorschautext und Löschknopf so kräftig wie den Haupttext und nimmt der Kachel ihre
-   Hierarchie.
+2. Die betroffenen Stellen auf `var(--text)` setzen — hält mit 9,59 · 12,99 · 7,63 · 12,49
+   mühelos (am Ziehgriff gemessen 9,55 · 12,97 · 7,64 · 12,51 auf der Gold- und
+   10,55 · 12,80 · 8,03 · 15,17 auf der Rottönung), macht aber Vorschautext, Löschknopf und
+   Ziehgriff so kräftig wie den Haupttext und nimmt der Kachel bzw. der Zeile ihre Hierarchie.
 3. Stehen lassen und führen — gegen ihre **tatsächliche** Trägerfläche `var(--bg-card)`
-   (`.wiki-search-dropdown` bzw. `.wiki-quick-access` setzen sie ausdrücklich) lesen beide
-   4,10 · 5,18 · 4,59 · 6,63; nur Dark liegt darunter, und zwar um 0,4.
+   (`.wiki-search-dropdown` bzw. `.wiki-quick-access` setzen sie ausdrücklich) lesen die beiden
+   `tools.css`-Stellen 4,10 · 5,18 · 4,59 · 6,63; nur Dark liegt darunter, und zwar um 0,4. Für
+   den Ziehgriff gilt dasselbe Bild: `.init-entry` setzt `var(--bg-card)` selbst, dagegen
+   gerechnet 4,10 · 5,19 · 4,58 · 6,62 (Gold) bzw. 4,47 · 5,17 · 4,82 · 7,73 (Rot).
 
-Gewählt ist vorerst (3): nicht geändert, hier geführt. Keine Ratsche urteilt über die beiden —
-R-04 verlangt Fläche UND Schrift in derselben Regel, und die Tönung steht eine Regel höher.
+Gewählt ist vorerst (3): nicht geändert, hier geführt. **Geurteilt wird seit dem Nachtrag sehr
+wohl** — R-18 führt alle vier Paare als benannte Ausnahme mit ihrem gemessenen Minimum und meldet
+jede Verschlechterung. Der Satz „keine Ratsche urteilt über die beiden" stand hier bis Runde 2
+und war die Lage von Schritt 8: R-04 verlangt Fläche UND Schrift in derselben Regel, und die
+Tönung steht eine Regel höher. Die Ratsche ersetzt die Entscheidung nicht, sie hält den Stand
+fest.
 
 ### Befehle
 
 ```bash
 cd /d/Claude_Code/Projekte/DnD_Tracker_App_Pro
 grep -n "EINE DRITTE TINTE LIEGT" -A 20 assets/styles/tools.css
+grep -n "init-entry.active" -A 4 assets/styles/initiative.css
+npx jest tests/unit/design-consistency.test.js -t "R-18"
 ```
 
 ---
@@ -1911,9 +1946,29 @@ npx jest tests/unit/design-consistency.test.js -t "Toenungen IM VERLAUF"
 
 ## W2-D-05 — Zustandsregeln legen eine Rollen-Tönung, die Tinte kommt aus der Basisregel; keine Ratsche urteilt darüber
 
-**Stand:** 2026-09-29, Prüfung W2-D Runde 2, **geschlossen im Nachtrag der Welle 2, Runde 1** —
-Stellen und Lücke. Vorbestand, kein Rückschritt dieser Welle; es war die vierte Lücke derselben
-Familie und die einzige, die noch nirgends geführt war.
+**Stand:** 2026-09-29, Prüfung W2-D Runde 2, **geschlossen im Nachtrag der Welle 2, Runde 1**
+(Stellen und Lücke), **Schließung nachgebessert in Runde 2** (die Klassenform des Zustands).
+Vorbestand, kein Rückschritt dieser Welle; es war die vierte Lücke derselben Familie und die
+einzige, die noch nirgends geführt war.
+
+**Was Runde 2 berichtigt hat.** Dieser Punkt und der Kopf von R-18 haben nach Runde 1
+behauptet, die Menge der 14 Paare sei geschlossen geführt und eine fünfzehnte Stelle werde rot.
+**Das galt nur für Zustände als Pseudoklasse.** `ZUSTAND` streicht `:hover`, `:checked`,
+`:has(…)` und Genossen; steht der Zustand als **Klasse** im Kompound, blieb der Selektor
+unverändert und wurde per `if (!basis || basis === zSel) return;` als „kein Zustand" verworfen.
+Genau dort lag die nächste Stelle: `initiative.css` `.init-entry.active` tönt mit 10 % Gold und
+setzt keine Tinte, `.init-entry .drag-handle` bringt `var(--text-dim)` mit — **3,56 · 4,28 ·
+3,98 · 5,38**, Zahl für Zahl dieselbe Reihe wie bei zwei der benannten Ausnahmen. Belegt war die
+Lücke per Mutation: Gold von 10 % auf 95 % gestellt, volle Jest-Suite unverändert grün, kein
+einziger neuer roter Test. Seit Runde 2 meldet R-18 dieselbe Mutation mit min 1,10.
+
+Die Paarung läuft seither über die **Teilmenge der Klassen** des Basis-Kompounds statt nur über
+Zeichengleichheit (`trifftBasis()`): `.init-entry` trifft jedes `.init-entry.active`. Eine bloße
+Erweiterung von `ZUSTAND` hätte dafür `.dice-attr.save small` verloren — das ist keine
+Nachfahrenschreibweise von `.dice-attr`. Die Menge wächst damit von 14 auf **19**, die benannten
+Ausnahmen von vier auf **sieben**; die drei Neuzugänge stehen in der Tabelle unter „Die gekreuzte
+Bauart". Einer davon, `dice.css` `.fdp-die.d20`, gehört nicht zur `--text-dim`-Familie und läuft
+als eigener Punkt **W2-D-06** weiter.
 
 **Was der Nachtrag geändert hat, in zwei Schüben.** Der erste Schub hat vier der fünf
 Unterschreitungen mit dem Tönungsdeckel aus Schritt 8 geschlossen, im selben Idiom wie die 114
@@ -1931,11 +1986,13 @@ gemessen". Runde 1 des Nachtrags hat die drei Reste erledigt:
    4,41 · 4,09 · 4,18 · 5,05, in drei Themes darunter. Sie ist gedeckelt; die gekreuzte Bauart ist
    unter „Die Klasse, gemessen" nachgetragen.
 3. **Die Lücke selbst ist geschlossen** — nicht an R-03, wie diese Akte es vorgezeichnet hatte,
-   sondern in einer eigenen Ratsche **R-18** („Zustandsregel tönt, Tinte ist geerbt", am Ende von
-   `tests/unit/design-consistency.test.js`). Sie urteilt über **beide** Wege, führt die 14 Paare
-   als **Menge** und hat vier benannte Ausnahmen mit gemessenem Minimum, alle Vorbestand aus
-   W2-D-02 bzw. der Vorziehung aus Welle 1 Schritt 9. Die Mutationsprobe, mit der die Prüfung die
-   Lücke belegt hat (alle vier Deckel zurück auf BASE), läuft heute **rot**.
+   sondern in einer eigenen Ratsche **R-18** („verfeinernde Regel tönt, Tinte ist geerbt", am Ende
+   von `tests/unit/design-consistency.test.js`). Sie urteilt über **beide** Wege, führt die Paare
+   als **Menge** und hat benannte Ausnahmen mit gemessenem Minimum. Die Mutationsprobe, mit der
+   die Prüfung die Lücke belegt hat (alle vier Deckel zurück auf BASE), läuft heute **rot**.
+   Wieviele Paare und wieviele Ausnahmen es sind, steht oben unter „Was Runde 2 berichtigt hat"
+   und in der Liste `ERWARTETE_PAARE` — nicht mehr an drei Stellen dieser Akte, denn genau das
+   hat die falsche Zahl so lange am Leben gehalten.
 
 ### Worum es geht
 
@@ -2096,15 +2153,19 @@ schlechter als `.concentration-add-btn:hover`, die der erste Schub behoben hat. 
 Warum sie durch **alle** Netze fiel: R-04 sieht sie nicht (keine eigene Tinte in der Regel), R-14
 auch nicht (sie paart nach Selektorpräfix, und `.dice-attr.save small` ist keine
 Nachfahrenschreibweise von `.dice-attr.save:hover`) — und die Zählung dieser Akte sah sie ebenfalls
-nicht, weil sie nur die Regeln mit Tinte aus der eigenen Grundregel erfaßt. Beide Wege zusammen sind
-**14 Paare**; sie stehen seit Runde 1 unter R-18. Die vier, die unter 4,5 bleiben, sind Vorbestand
-aus offenen Punkten und dort mit gemessenem Minimum eingetragen:
+nicht, weil sie nur die Regeln mit Tinte aus der eigenen Grundregel erfaßt. Beide Wege zusammen
+standen nach Runde 1 als **14 Paare** unter R-18; seit Runde 2 kommt die **Klassenform** des
+Zustands dazu (oben, „Was Runde 2 berichtigt hat"), und es sind **19**. Die sieben, die unter 4,5
+bleiben, sind samt und sonders Vorbestand und mit gemessenem Minimum geführt:
 
 | Paar | Tinte | min | geführt als |
 | ---- | ----- | --- | ----------- |
 | `tools.css` `.quick-access-item:hover` → `.remove-btn` | `--text-dim` | 3,56 | W2-D-02 |
 | `party.css` `.cf-attr-card:has(…)` → `.cf-attr-save` | `--text-dim` | 3,56 | W2-D-02 (gleiche Tinte, gleiche 10-%-Goldtönung) |
 | `party.css` `.cf-attr-card:has(…)` → `.cf-attr-mod` | `--cyan-text` | 4,29 | dito |
+| `initiative.css` `.init-entry.active` → `.init-entry .drag-handle` | `--text-dim` | 3,56 | W2-D-02, seit Runde 2 (dieselbe Reihe, dieselbe 10-%-Goldtönung) |
+| `initiative.css` `.init-entry.lair` → `.init-entry .drag-handle` | `--text-dim` | 3,93 | W2-D-02, seit Runde 2 (dieselbe Tinte auf 10 % **Rot**) |
+| `dice.css` `.fdp-die.d20` → `.fdp-die` | `--gold-text` | 2,87 | **W2-D-06**, seit Runde 2 |
 | `loot.css` `.loot-tag-chip:has(input:checked)` → `input:checked + span` | `--gold-text` | 4,23 | Vorziehung Welle 1 Schritt 9 (siehe oben, § Vorziehung) |
 
 ### Warum keine Ratsche greift — Quelltext, nicht Vermutung (Stand der Prüfung)
@@ -2158,8 +2219,12 @@ Dieselbe Erhebung gegen `bb7650e` (BASE der Welle), Trägerflächen und Mathemat
 `--<rolle>-text` in Schritt 5/6), drei waren unverändert, **keine war schlechter geworden**. Der
 Befund war deshalb nie die Zahl, sondern daß **niemand hinsieht** — derselbe Maßstab wie in W2-D-04.
 Genau das ist mit R-18 erledigt: alle sechs Zeilen oben stehen namentlich unter Aufsicht, und die
-Menge der 14 Paare ist geschlossen geführt, so daß eine fünfzehnte Stelle rot wird statt still in
-den blinden Fleck zu fallen.
+Menge ist geschlossen geführt, so daß eine weitere Stelle rot wird statt still in den blinden
+Fleck zu fallen. **Wie weit „geschlossen" reicht, hat Runde 2 berichtigen müssen** — bis dahin
+galt es nur für Zustände als Pseudoklasse, und die Klassenform lag daneben im selben blinden
+Fleck (oben, „Was Runde 2 berichtigt hat"). Die Lehre ist dieselbe wie beim ersten Mal: eine
+Schließung ist erst belegt, wenn die Mutation an einer Stelle **außerhalb** der bekannten Liste
+rot wird.
 
 ### Die eine Stelle, die ein naiver Ausbau falsch melden würde
 
@@ -2186,10 +2251,10 @@ führte, ist beides getan:
 1. **Die Ratsche** ist **R-18**, nicht die hier vorgezeichnete R-03-Erweiterung. Der Grund für den
    eigenen Block statt des Umbaus an R-03: R-03 modelliert die **Kaskade** (welche Deklaration am
    Ende gewinnt), R-18 die **Vererbung über die Fläche hinweg** — zwei verschiedene Fragen, und der
-   Umbau hätte die geerbte `--on-*`-Logik von R-03 mitreißen müssen. R-18 führt die 14 Paare als
-   geschlossene Menge, prüft 4,5 auf der Tönung der Zustandsregel und hält vier benannte Ausnahmen
-   mit gemessenem Minimum. Die Regeln unter „Wo derselbe Bau schon trägt" stehen damit ebenfalls
-   unter Aufsicht — sie waren als Erste gefährdet und sind es nicht mehr.
+   Umbau hätte die geerbte `--on-*`-Logik von R-03 mitreißen müssen. R-18 führt die Paare als
+   geschlossene Menge, prüft 4,5 auf der Tönung der verfeinernden Regel und hält die benannten
+   Ausnahmen mit gemessenem Minimum. Die Regeln unter „Wo derselbe Bau schon trägt" stehen damit
+   ebenfalls unter Aufsicht — sie waren als Erste gefährdet und sind es nicht mehr.
 2. **Die fünfte Stelle**, `.backup-entry-restore` samt ihrem `:hover`, hat **Tintenkorrektur und
    Deckel**. Die Grundregel war dabei der schwerere Fall: gewöhnlicher Text, in allen vier Themes
    unter 4,5.
@@ -2228,6 +2293,82 @@ grep -n "WORAUF SICH DIE ZAHL 128" -A 60 tests/unit/design-consistency.test.js
 npx jest tests/unit/design-consistency.test.js -t "R-18"
 # Der Zweig fuer blanke Flaechen in R-04:
 npx jest tests/unit/design-consistency.test.js -t "blanker Flaeche"
+```
+
+---
+
+## W2-D-06 — Die Goldtinte des W20-Knopfs liegt auf zwei Rotstopps; die Zahlen standen im Kommentar, an keiner Schwelle
+
+**Stand:** 2026-09-29, Nachtrag der Welle 2, **Runde 2**. Offen. Vorbestand seit Schritt 7, kein
+Rückschritt dieser Welle — gefunden, als R-18 in Runde 2 auch die **Klassenform** der
+verfeinernden Regel zu sehen bekam (W2-D-05).
+
+### Worum es geht
+
+```css
+.fdp-die      { background: var(--bg-elevated); color: var(--gold-text); }
+.fdp-die.d20  { background: linear-gradient(135deg,
+                  color-mix(in srgb, var(--red) 20%, transparent),
+                  color-mix(in srgb, var(--red-dark) 30%, transparent)); }
+```
+
+Dieselbe Bauart wie in W2-D-05, nur mit einer **Klasse** statt einer Pseudoklasse als
+Verfeinerung: `.fdp-die.d20` ersetzt die Fläche der Grundregel vollständig durch zwei Rotstopps
+und setzt **keine eigene Tinte**. Gemalt wird `var(--gold-text)` aus `.fdp-die` — Gold auf Rot.
+
+### Was gemessen ist
+
+Minimum über `--bg-card`/`--bg-dark`/`--bg-elevated` nach D-2 (dark · light · sepia · contrast):
+
+- heute: **2,87** — 5,89 · **2,87** · **3,26** · 10,00
+- mit dem Tönungsdeckel: 6,40 · **4,48** · 5,01 · 10,00 — **Light verfehlt um 0,02**
+
+Gegen die **tatsächliche** Trägerfläche gerechnet ist es weniger dramatisch und immer noch
+darunter. Das Panel `.floating-dice-panel` setzt `color-mix(in srgb, var(--bg-card) 98%,
+transparent)`, also praktisch `--bg-card`; dagegen liest der Verlaufskopf
+6,64 · 4,56 · 4,93 · 11,57 und der Verlaufsfuß 7,27 · 3,42 · 3,72 · 12,33. **Diese acht Zahlen
+stehen seit Welle 2 Schritt 7 im Kommentar der Regel selbst** — sie waren nur nie gegen eine
+Schwelle gehalten. Der Kommentar bewertet sie als „besser in Light und Sepia", und das stimmt
+auch (vorher 2,29 bzw. 2,01 im Kopf); er sagt nur nicht, daß sie unter 4,5 bleiben.
+
+### Warum keine Ratsche darüber urteilte
+
+- **R-04** verlangt Fläche **und** Tinte in derselben Regel — `.fdp-die.d20` hat keine Tinte.
+- **R-14** verlangt eine Nachfahrenschreibweise — `.fdp-die` ist kein Nachfahre von
+  `.fdp-die.d20`, sondern sein Kopf.
+- **R-18** sah bis Runde 2 nur Pseudoklassen als Verfeinerung.
+- **R-12** urteilt über die Stelle, aber in einer anderen Sache: sie verbietet Skalentoken als
+  Fläche. Der zweite Stopp stand bis Schritt 7 auf `--ra-crimson-rule` und ist genau deshalb auf
+  `--red-dark` umgestellt worden (Entscheidung E1). Die **Lesbarkeit** der Beschriftung war in
+  dieser Umstellung nie die Frage.
+
+Seit Runde 2 steht das Paar als benannte Ausnahme mit min 2,87 in R-18 und meldet jede
+Verschlechterung.
+
+### Was zu entscheiden ist, und von wem
+
+Eine D-4-Frage (Tinte gegen Tönung), keine Schreibweise:
+
+1. **Nur deckeln** reicht nicht — 4,48 in Light, 0,02 unter der Schwelle. Eine Zahl, die man
+   nicht runden darf, weil die Schwelle selbst die Rundung schon enthält.
+2. **Eigene Tinte `var(--red-text)`** — gedeckelt 4,81 · 4,44 · 4,48 · 5,06, also in Light und
+   Sepia weiterhin knapp darunter. Trägt nicht.
+3. **Eigene Tinte `var(--text)`** — hält schon **ohne** Deckel: 9,38 · 8,02 · 5,07 · 14,03.
+   Nimmt dem W20-Knopf aber die Goldbeschriftung, die alle anderen Würfelknöpfe tragen, und
+   damit einen Teil seiner Sonderstellung. Mit Deckel 10,19 · 12,51 · 7,78 · 14,03.
+
+Gewählt ist vorerst: nicht geändert, hier geführt, in R-18 bewacht. Die Sichtprobe zu E1
+(Schritt 4 der Vier-Themes-Runde, „hebt sich der W20 noch von den übrigen Würfelknöpfen ab")
+fragt nach genau der Eigenschaft, die Weg 3 kostet — sie gehört vor diese Entscheidung, nicht
+danach.
+
+### Befehle
+
+```bash
+cd /d/Claude_Code/Projekte/DnD_Tracker_App_Pro
+grep -n "fdp-die.d20" -A 26 assets/styles/dice.css
+grep -n "floating-dice-panel" -A 40 assets/styles/dice.css | grep -n "background"
+npx jest tests/unit/design-consistency.test.js -t "R-18"
 ```
 
 ---
