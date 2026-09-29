@@ -401,13 +401,13 @@ Gruppe E gerade nicht bewiesen ist. Sie sind **kein** erledigter Fall.
 | ------ | -------- | ----- | ------------ | ------------- |
 | `bestiary.css:493` | `.bst-section-title` | `--gold` | #191919 | #1e1e1e |
 | `bestiary.css:506` | `.bst-validation-error` | `--red` | #191919 | #1e1e1e |
-| `core.css:1113` | `.char-modal-title h2` | `--gold` | #191919 | #1e1e1e |
-| `core.css:1118` | `.char-modal-subtitle` | `--cyan` | #191919 | #1e1e1e |
+| `core.css:1133` | `.char-modal-title h2` | `--gold` | #191919 | #1e1e1e |
+| `core.css:1138` | `.char-modal-subtitle` | `--cyan` | #191919 | #1e1e1e |
 | `dashboard.css:240` | `.modal-title` | `--gold` | #191919 | #1e1e1e · #252525 |
-| `initiative.css:534` | `.aoe-modal-header h3` | `--red` | #191919 | #1e1e1e |
-| `initiative.css:674` | `.aoe-target-save` | `--green` | #191919 | #1e1e1e |
-| `initiative.css:691` | `.aoe-target-damage.full` | `--red` | #191919 | #1e1e1e |
-| `initiative.css:695` | `.aoe-target-damage.half` | `--yellow` | #191919 | #1e1e1e |
+| `initiative.css:572` | `.aoe-modal-header h3` | `--red` | #191919 | #1e1e1e |
+| `initiative.css:712` | `.aoe-target-save` | `--green` | #191919 | #1e1e1e |
+| `initiative.css:729` | `.aoe-target-damage.full` | `--red` | #191919 | #1e1e1e |
+| `initiative.css:733` | `.aoe-target-damage.half` | `--yellow` | #191919 | #1e1e1e |
 | `party.css:2074` | `.rest-modal-header h3` | `--gold` | #191919 | #1e1e1e |
 | `party.css:2345` | `.condition-ref-header h3` | `--gold` | #191919 | #1e1e1e |
 | `tools.css:474` | `.rt-modal-header h3` | `--gold` | #191919 | #1e1e1e |
@@ -478,8 +478,8 @@ Behebung in Runde 2** gedeckt, davor war sie es für eine der beiden Zeilen nich
 | `initiative.css:184` | `.init-name:hover` | `--gold` | GRAD:#0d0d0d · --bg-card | GRAD:#f5f5f5 · --bg-card |
 | `initiative.css:212` | `.init-hp-value.healthy` | `--green` | GRAD:#0d0d0d | GRAD:#f5f5f5 |
 | `initiative.css:213` | `.init-hp-value.bloodied` | `--yellow` | GRAD:#0d0d0d · --bg-card | GRAD:#f5f5f5 · --bg-card |
-| `initiative.css:1202` | `.init-mob-alive.healthy` | `--green` | GRAD:#0d0d0d | GRAD:#f5f5f5 |
-| `initiative.css:1203` | `.init-mob-alive.bloodied` | `--yellow` | GRAD:#0d0d0d | GRAD:#f5f5f5 |
+| `initiative.css:1240` | `.init-mob-alive.healthy` | `--green` | GRAD:#0d0d0d | GRAD:#f5f5f5 |
+| `initiative.css:1241` | `.init-mob-alive.bloodied` | `--yellow` | GRAD:#0d0d0d | GRAD:#f5f5f5 |
 | `spells.css:92` | `.spell-info-line.classes` | `--cyan` | GRAD:#1a1a1a | GRAD:#ffffff |
 | `spells.css:93` | `.spell-info-line.school` | `--purple` | GRAD:#1a1a1a | GRAD:#ffffff |
 | `tools.css:859` | `.ld-split-amount` | `--gold` | GRAD:#191919 | GRAD:#1e1e1e |
@@ -552,9 +552,9 @@ core.css
    75  [data-layout="mobile"] #mobile-timer-display
    79  [data-layout="mobile"] .mobile-timer.running #mobile-timer-display
    83  [data-layout="mobile"] .mobile-timer.paused #mobile-timer-display
- 1009  .char-card-currency
- 1785  .quest-reward-item-tag .remove-btn:hover
- 1778  .quest-reward-item-tag .remove-btn
+ 1029  .char-card-currency
+ 1805  .quest-reward-item-tag .remove-btn:hover
+ 1798  .quest-reward-item-tag .remove-btn
 dashboard.css
     3  .dice-btn.d4
     5  .dice-btn.d6
@@ -609,9 +609,9 @@ initiative.css
   111  .init-entry.lair .init-name
   214  .init-hp-value.critical
   284  .death-saves-label
- 1095  .la-label
- 1136  .lr-label
- 1204  .init-mob-alive.critical
+ 1133  .la-label
+ 1174  .lr-label
+ 1242  .init-mob-alive.critical
 loot.css
   297  .shop-cat-badge.item
   475  .si-tag-v
@@ -1911,8 +1911,18 @@ npx jest tests/unit/design-consistency.test.js -t "Toenungen IM VERLAUF"
 
 ## W2-D-05 — Zustandsregeln legen eine Rollen-Tönung, die Tinte kommt aus der Basisregel; keine Ratsche urteilt darüber
 
-**Stand:** 2026-09-29, Prüfung W2-D Runde 2. Vorbestand, kein Rückschritt dieser Welle — aber die
-vierte Lücke derselben Familie, und die einzige, die noch nirgends geführt war.
+**Stand:** 2026-09-29, Prüfung W2-D Runde 2, **berichtigt und teilweise geschlossen im Nachtrag der
+Welle 2**. Vorbestand, kein Rückschritt dieser Welle — aber die vierte Lücke derselben Familie, und
+die einzige, die noch nirgends geführt war.
+
+**Was der Nachtrag geändert hat.** Vier der fünf Unterschreitungen sind **geschlossen**, mit dem
+Tönungsdeckel aus Schritt 8 und im selben Idiom wie die 114 übrigen Stellen dieser Welle. Die
+Begründung, mit der diese Akte den Deckel zuvor verworfen hat („keine davon dadurch über 4,5"), war
+**gemessen falsch**; sie steht berichtigt unter „Die Klasse, gemessen". Offen bleibt genau eine
+Stelle — `file-backup.css` `.backup-entry-restore:hover` —, und die aus einem anderen Grund.
+**Nicht geschlossen ist die Lücke selbst:** über diese Bauart urteilt weiterhin keine Ratsche. Die
+vier Korrekturen sind von Hand gerechnet und nur durch die Kommentare an ihren Regeln belegt; wer
+eine der vier Stärken wieder anhebt, merkt es an keinem roten Test.
 
 ### Worum es geht
 
@@ -1934,7 +1944,8 @@ Verlaufsstopps (W2-D-04, offen). Dies ist das vierte.
 Eigene Vollerhebung über `assets/styles/*.css` in Kaskadenreihenfolge des `@import`-Hubs (eigener
 Klammerzähl-Parser, `tests/unit/helpers/wcag-contrast.js` für die sRGB-Mathematik; Selbstprobe
 `#777777`/`#767676` gegen Weiß = 4,48/4,54). Minimum über `--bg-card`/`--bg-dark`/`--bg-elevated`,
-alle vier Themes. Neun Regeln haben diese Bauart, fünf unterschreiten 4,5:
+alle vier Themes. Neun Regeln haben diese Bauart, fünf unterschreiten 4,5 — **Stand der Prüfung**;
+vier davon sind seit dem Nachtrag geschlossen, siehe den Abschnitt gleich darunter:
 
 | Regel | Tönung | geerbte Tinte | dark | light | sepia | contrast |
 | ----- | ------ | ------------- | ---- | ----- | ----- | -------- |
@@ -1946,14 +1957,77 @@ alle vier Themes. Neun Regeln haben diese Bauart, fünf unterschreiten 4,5:
 
 ¹ hält; fett steht nur, was unter 4,5 liegt.
 
-Zwei Nebenbefunde aus derselben Erhebung:
+#### Der Deckel IST die Abhilfe — an vier der fünf (Berichtigung, Nachtrag)
 
-- `.backup-entry-restore` führt als Tinte `var(--red)`, nicht `var(--red-text)` — eine
-  Rollenbasis als Schriftfarbe, also zusätzlich ein Rest aus Welle 1.
-- Die Tönungsstärken dieser fünf (40/30/22/12/10 %) sind **ungedeckelt**: der Deckel aus Schritt 8
-  (`min(20%, var(--tint-max))`) sitzt auf Ruheflächen. Vier der fünf lägen mit Deckel besser, aber
-  keine davon dadurch über 4,5 — der Deckel ist hier nicht die Abhilfe (dasselbe Ergebnis wie in
-  W2-D-02, aus einem anderen Grund).
+Diese Akte hat an dieser Stelle behauptet: „Vier der fünf lägen mit Deckel besser, aber keine davon
+dadurch über 4,5 — der Deckel ist hier nicht die Abhilfe." **Das ist falsch, und es war die
+Begründung, mit der die Abhilfe auf E3/Schritt 9 verschoben wurde.** Nachgerechnet im Nachtrag
+(eigener Klammerzähl-Parser über `assets/styles/*.css` in Kaskadenreihenfolge des `@import`-Hubs,
+`tests/unit/helpers/wcag-contrast.js` für die sRGB-Mathematik, Selbstprobe `#777777`/`#767676`
+gegen Weiß = 4,48/4,54; Minimum über `--bg-card`/`--bg-dark`/`--bg-elevated`, alle vier Themes), mit
+der eigenen Stärke jeder Regel im Idiom aus Schritt 8, also `min(<eigene Stärke>%, var(--tint-max))`:
+
+| Regel | Stärke | vorher (d·l·s·c) | mit Deckel (d·l·s·c) | |
+| ----- | ------ | ---------------- | -------------------- | - |
+| `core.css` `.link-chip:hover` | 40 % | 2,87 · 2,96 · 3,25 · 3,37 | 4,81 · 4,64 · 4,64 · 4,52 | **hält** |
+| `initiative.css` `.concentration-badge:hover` | 30 % | 3,32 · 3,28 · 3,46 · 4,07 | 4,57 · 4,57 · 4,60 · 4,74 | **hält** |
+| `pwa.css` `.pwa-install-btn:active` | 22 % | 4,66 · 4,15 · 4,12 · 6,34 | 5,65 · 4,78 · 5,14 · 6,76 | **hält** |
+| `initiative.css` `.concentration-add-btn:hover` | 10 % | 4,81 · 4,40 · 4,43 · 5,31 | 4,81 · 4,57 · 4,60 · 5,31 | **hält** |
+| `file-backup.css` `.backup-entry-restore:hover` | 12 % | 3,61 · 3,32 · 3,15 · 3,74 | 3,61 · 3,55 · 3,37 · 3,74 | hält **nicht** |
+
+**Warum das so sein muß, ohne den Rechner:** `--tint-max` ist 13/7/7/20 %, also in jedem Theme
+höchstens 20 %. `min(40%, var(--tint-max))` und `min(20%, var(--tint-max))` ergeben damit
+**dieselbe** Farbe. Die Grundregel `core.css` `.link-chip` trägt genau diese gedeckelte Fläche mit
+derselben Tinte `var(--blue-text)`, wird von R-04 beurteilt und ist grün. Dasselbe Argument trägt
+bei `.concentration-badge:hover`: der Verlaufskopf ihrer Grundregel liegt bei
+`min(20%, var(--tint-max))` und ist im Kommentar derselben Regel mit 4,56 · 4,57 · 4,60 · 4,73
+ausgewiesen.
+
+**Die vier sind im Nachtrag gedeckelt**, je Datei ein Commit, mit der gerechneten Reihe als
+Kommentar an der Regel. Zwei benannte Sichtfolgen dabei, beide im CSS-Kommentar festgehalten:
+
+- Bei `.link-chip:hover` und `.concentration-badge:hover` fällt die Hover-Fläche mit der Ruhefläche
+  zusammen (beide Stärken liegen über dem Deckel). Das Überfahren meldet sich nur noch über
+  `transform`. Dieselbe Folge hat der Deckel an den 114 übrigen Stellen der Welle.
+- `pwa.css`: `.pwa-install-btn:hover` daneben trägt 12 % **ungedeckelt** und hält
+  (5,75 · 4,55 · 4,77 · 8,40), bleibt deshalb unangetastet. In Light und Sepia deckelt `--tint-max`
+  auf 7 %, die gedrückte Fläche wird dort also **blasser** als die überfahrene — die Zustandsleiter
+  kehrt sich um. In Dark (13 %) und Contrast (20 %) bleibt sie richtig herum. Das ist eine
+  Sichtfrage der Tönungsregel E2 und nur zusammen mit der Hover-Stufe zu entscheiden; sie gehört zu
+  E3/Schritt 9.
+
+#### Die fünfte: `.backup-entry-restore:hover` — offen, und zwar wegen ihrer Tinte
+
+Sie ist die einzige der fünf, die der Deckel **nicht** trägt, und der Grund steht in der Tabelle
+oben: ihre geerbte Tinte ist `var(--red)`, die Rollenbasis, nicht `var(--red-text)`. Gemessen,
+derselbe Rechenweg, min über die drei Trägerflächen:
+
+| Fassung | dark | light | sepia | contrast | |
+| ------- | ---- | ----- | ----- | -------- | - |
+| heute (12 % ungedeckelt, Tinte `--red`) | 3,61 | 3,32 | 3,15 | 3,74 | |
+| nur Deckel, Tinte bleibt `--red` | 3,61 | 3,55 | 3,37 | 3,74 | hält nicht |
+| **nur Tintenkorrektur** auf `--red-text`, 12 % ungedeckelt | 4,85 | **4,24** | **4,31** | 5,39 | hält **nicht** |
+| Tintenkorrektur **und** Deckel | 4,85 | 4,54 | 4,62 | 5,39 | hält |
+
+**Die Tintenkorrektur allein genügt nicht** — Light 4,24 und Sepia 4,31 bleiben darunter. Deshalb
+ist an dieser Regel im Nachtrag **nichts geändert** worden: eine Änderung, die den Mangel nicht
+schließt, verbraucht die Sichtänderung, ohne die Frage zu erledigen.
+
+**Neu gemessen und bisher nirgends notiert — die Grundregel ist selbst betroffen.** Nicht nur der
+Hover-Zustand: `.backup-entry-restore` trägt `background: transparent`, ihre Tinte `var(--red)`
+liest direkt auf den Trägerflächen **4,07 · 3,94 · 3,68 · 3,98** — in **allen vier** Themes unter
+4,5. Mit `var(--red-text)` wären es 5,48 · 5,04 · 5,05 · 5,73. R-04 sieht das nicht: `transparent`
+löst sich zu keiner Farbe auf, die Regel fällt vor der Rechnung heraus. Das ist ein Rest aus
+Welle 1 (Rollenbasis als Schriftfarbe) und zugleich die schwerere Hälfte dieses Punktes — es geht um
+lesbaren Text, nicht um einen Zustand unter der Maus.
+
+**Und noch eine Ebene tiefer:** die tatsächliche Trägerfläche dieser Schaltfläche ist nicht
+`--bg-card`, sondern `--bg-hover`. Wer den Knopf überfährt, überfährt die Zeile `.backup-entry`
+mit, und die schaltet auf `var(--bg-hover)`. Dagegen gerechnet hält **keine** der vier Fassungen
+oben (beste: Tinte + Deckel mit 4,06 · 4,12 · 4,21 · 4,42). Das ist genau die Frage, die R-04 mit
+seiner Begründung für drei statt vier Trägerflächen ausdrücklich an W1-B-01/E3 abgibt („solange eine
+Zeile ihren Hover über eine Fläche meldet, liegt jede Tönung darin auf einer Fläche, für die ihre
+Tinte nicht gerechnet ist"). Wer diese Stelle anfaßt, entscheidet sie mit.
 
 ### Wo derselbe Bau schon trägt
 
@@ -1982,21 +2056,29 @@ bei der nächsten Stärkeänderung als Erste:
 tests/unit/design-consistency.test.js` — **93 von 93 grün**, kein einziger Befund. Die Mutation ist
 zurückgenommen.
 
+Seit dem Nachtrag trägt dieselbe Regel `min(30%, var(--tint-max))`. Wer die Probe wiederholt, muß
+deshalb **den Deckel mit entfernen** (`background: color-mix(in srgb, var(--purple) 95%,
+transparent)`) — sonst mißt er den Deckel und nicht die fehlende Ratsche. Das Ergebnis ist
+unverändert: die Lücke besteht fort, nur ihre fünf bekannten Stellen sind zu vieren geschlossen.
+
 ### Was daran Vorbestand ist, und was diese Welle getan hat
 
 Dieselbe Erhebung gegen `bb7650e` (BASE der Welle), Trägerflächen und Mathematik unverändert:
 
-| Regel | min an BASE | min heute |
-| ----- | ----------- | --------- |
-| `core.css` `.link-chip:hover` | 1,91 (Tinte war `var(--blue)`) | 2,87 |
-| `initiative.css` `.concentration-badge:hover` | 2,79 (Tinte war `var(--purple)`) | 3,28 |
-| `file-backup.css` `.backup-entry-restore:hover` | 3,15 | 3,15 |
-| `pwa.css` `.pwa-install-btn:active` | 4,12 | 4,12 |
-| `initiative.css` `.concentration-add-btn:hover` | 4,40 | 4,40 |
+| Regel | min an BASE | min bei der Prüfung | min nach dem Nachtrag |
+| ----- | ----------- | ------------------- | --------------------- |
+| `core.css` `.link-chip:hover` | 1,91 (Tinte war `var(--blue)`) | 2,87 | **4,52** |
+| `initiative.css` `.concentration-badge:hover` | 2,79 (Tinte war `var(--purple)`) | 3,28 | **4,57** |
+| `file-backup.css` `.backup-entry-restore:hover` | 3,15 | 3,15 | 3,15 (offen) |
+| `pwa.css` `.pwa-install-btn:active` | 4,12 | 4,12 | **4,78** |
+| `initiative.css` `.concentration-add-btn:hover` | 4,40 | 4,40 | **4,57** |
 
-**Zwei** der fünf hat Welle 2 verbessert (durch die Umstellung der Basis-Tinte auf `--<rolle>-text`
-in Schritt 5/6), drei sind unverändert, **keine ist schlechter geworden**. Der Befund ist deshalb
-nicht die Zahl, sondern daß **niemand hinsieht** — derselbe Maßstab wie in W2-D-04.
+**Zwei** der fünf hatte Welle 2 bis zur Prüfung verbessert (durch die Umstellung der Basis-Tinte auf
+`--<rolle>-text` in Schritt 5/6), drei waren unverändert, **keine war schlechter geworden**. Der
+Nachtrag hat vier davon über die Schwelle gebracht; die fünfte steht unverändert. Der Befund war
+deshalb nie die Zahl, sondern daß **niemand hinsieht** — derselbe Maßstab wie in W2-D-04, und der
+gilt nach dem Nachtrag unverändert weiter, weil die vier Korrekturen von keiner Ratsche gehalten
+werden.
 
 ### Die eine Stelle, die ein naiver Ausbau falsch melden würde
 
@@ -2010,12 +2092,27 @@ sonst kauft er sich einen Fehlalarm mit Faktor 12 ein.
 
 ### Der Weg
 
-Dieselbe Erweiterung wie Schritt 16, nur eine Ebene daneben: **R-03** um Tönungsflächen
-(`color-mix(…, transparent)`, aufgelöst über die drei Trägerflächen wie in R-04/R-11/R-14) und um
-**Rollentinten** (`var(--<rolle>-text)` und die nackte Rolle `var(--<rolle>)`) erweitern, statt
-beides vor der Rechnung zu verwerfen. Die Abhilfe an den fünf Stellen selbst gehört zu E3/Schritt 9
-(„Hover ohne Füllung"): drei der fünf melden das Überfahren über eine Füllung, und für genau diese
-Frage ist E3 entschieden — bisher allerdings nur für `.qref-row:hover` ausformuliert.
+**Berichtigt im Nachtrag.** Dieser Abschnitt hat die Abhilfe an den **fünf** Stellen geschlossen an
+E3/Schritt 9 verwiesen. Das ruhte auf der falschen Zahl oben; vier der fünf waren mit dem Mittel
+dieser Welle und ohne jede Palettenfrage zu schließen, und sie **sind** es. Was bleibt, sind zwei
+verschiedene Dinge:
+
+1. **Die Ratsche.** Dieselbe Erweiterung wie Schritt 16, nur eine Ebene daneben: **R-03** um
+   Tönungsflächen (`color-mix(…, transparent)`, aufgelöst über die drei Trägerflächen wie in
+   R-04/R-11/R-14) und um **Rollentinten** (`var(--<rolle>-text)` und die nackte Rolle
+   `var(--<rolle>)`) erweitern, statt beides vor der Rechnung zu verwerfen. Das ist der eigentliche
+   offene Punkt: die vier Korrekturen des Nachtrags sind ungesichert, und die vier Regeln unter „Wo
+   derselbe Bau schon trägt" sind es ebenfalls. Wer sie baut, braucht das Trägermodell aus dem
+   Abschnitt darunter, sonst kauft er sich einen Fehlalarm mit Faktor 12 ein.
+2. **Die eine offene Stelle**, `.backup-entry-restore` samt ihrem `:hover`. Sie ist eine
+   **Tintenfrage** (`var(--red)` statt `var(--red-text)`, Rest aus Welle 1) und, für den
+   Hover-Zustand, eine **Trägerflächenfrage** (`--bg-hover`, also E3/„Hover ohne Füllung"). Die
+   gerechneten Fassungen stehen oben. Die Grundregel ist dabei der schwerere Fall: sie ist
+   gewöhnlicher Text und liegt in allen vier Themes unter 4,5.
+
+Für E3 selbst ändert sich nichts an der Lage: drei der fünf melden das Überfahren über eine
+Füllung, und für genau diese Frage ist E3 entschieden — bisher allerdings nur für `.qref-row:hover`
+ausformuliert.
 
 ### Was der Schrittbericht von Schritt 8 damit zu weit sagt
 
