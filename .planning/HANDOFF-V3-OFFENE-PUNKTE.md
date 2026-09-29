@@ -2152,3 +2152,47 @@ grep -rn "RARITY_COLORS\|RARITY_TEXT_COLORS" --include=*.js core features system
 ```
 
 ---
+
+---
+
+## W2-E-05 — Der Alt-`#toast` ist sichtbar; das offene Risiko ist mit einem Bild geschlossen
+
+**Status: OFFEN, gehört keiner Welle.** Aufgenommen am 2026-09-29, Welle 2 Schritt 10 (Sichtprobe).
+
+Die Risikoliste des Wellenplans führt als achten Punkt: „Das Alt-`#toast`
+(`utils/utilities.js`, Weiß auf festen Hexflächen, 2,15–3,76, keine verbergende CSS-Regel) ist
+**ungeprüft** sichtbar — das braucht ein Bild, keine Rechnung, und ist in keiner Welle geführt."
+
+**Das Bild gibt es jetzt.** Bei der Sichtprobe zu Schritt 10 (gebautes Bündel, Chromium,
+`showToast()` dreimal aufgerufen) steht das Element sichtbar oben in der Mitte: 204 × 45 px,
+`display: block`, Text „Konzentration gebrochen", `color: rgb(255,255,255)` auf
+`rgb(245,158,11)`. Am Element gemessen: **2,15**. Es erscheint zusätzlich zum Ereignis-Log, also
+zweimal dieselbe Meldung an zwei Stellen des Bildschirms.
+
+Die vier Flächen und ihre beiden Tintenmöglichkeiten:
+
+| Typ | Fläche | weiß (heute) | `#111111` |
+| --- | ------ | ------------ | --------- |
+| success | `#10b981` | **2,54** | 7,44 |
+| error | `#ef4444` | **3,76** | 5,02 |
+| warning | `#f59e0b` | **2,15** | 8,79 |
+| info | `#3b82f6` | **3,68** | 5,13 |
+
+Alle vier fallen durch, in allen vier Themes gleich (die Werte sind themenblind). Eine dunkle
+Tinte brächte alle vier über 5.
+
+**Warum hier nichts geändert wurde:** die Tinte zu tauschen wäre eine Zeile. Die eigentliche
+Frage ist aber, ob das Element überhaupt noch erscheinen soll — sein Kommentar sagt „Backward
+compatibility for E2E tests", und es dupliziert seit der Einführung des Ereignis-Logs jede
+Meldung. Das ist keine Farbentscheidung, und es steht in keinem Schritt dieser Welle. Der Punkt
+gehört vor die Entscheidung, nicht in einen Schritt.
+
+### Befehle
+
+```bash
+cd /d/Claude_Code/Projekte/DnD_Tracker_App_Pro
+grep -n "legacy #toast" -A 26 utils/utilities.js
+grep -rn "#toast\|\.toast" assets/styles/*.css   # keine verbergende Regel
+```
+
+---
