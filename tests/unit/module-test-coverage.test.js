@@ -138,6 +138,16 @@ function isCovered(relModulePath) {
 // Zusicherungen fuehren den Modulpfad in AUSFUEHRBAREM Code, nicht nur im
 // Erklaertext — sonst haenge die Abdeckungsaussage an einem Kommentar (genau
 // diese Unterscheidung steht im Kommentar zu R-05 derselben Datei).
+//
+// 2026-09-29, Design-Handoff v3 Welle 2 Schritt 10: EIN WEITERER EINTRAG
+// GESTRICHEN, die Liste schrumpft von 78 auf 77. Die Verweis-Vorschau wird
+// seither von der Ratsche R-16 in tests/unit/design-consistency.test.js
+// gelesen und beurteilt: dass ihre Statusabbildung ROLLENNAMEN fuehrt statt
+// fertiger Farbwerte, dass die Vorlage daraus Flaeche UND Tinte baut, und
+// dass jede der vier Rollen ihre eigene Tinte in allen vier Themes traegt
+// (gemessen, nicht behauptet). Auch diese Zusicherung fuehrt den Modulpfad in
+// AUSFUEHRBAREM Code, nicht nur im Erklaertext — dieselbe Unterscheidung wie
+// bei den zwei Eintraegen darueber.
 const MODULE_TEST_EXCEPTIONS = [
     'core/themes.js',
     'features/bestiary/bestiary-actions.js',
@@ -187,7 +197,6 @@ const MODULE_TEST_EXCEPTIONS = [
     'features/timeline/timeline-render.js',
     'features/timers/timers.js',
     'systems/conditions.js',
-    'systems/entity-links.js',
     'systems/hp-calculator.js',
     'systems/markdown-import-export.js',
     'systems/spellslots/keyboard-shortcuts.js',
