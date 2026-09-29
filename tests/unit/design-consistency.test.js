@@ -3221,3 +3221,254 @@ describe('R-09 — die Ortsfarben aus dem JS (Ratsche)', () => {
         expect(befunde.sort()).toEqual([]);
     });
 });
+
+/* ===========================================================================
+   Design-Handoff v3, Welle 2 — R-10: rgba()-Zahlentripel im Komponenten-CSS
+   ===========================================================================
+   ZUR NUMMER. R-01 bis R-09 sind vollstaendig von Welle 1 belegt (:1130,
+   :1161, :1694, :1911, :2181, :2517, :2748, :2928, :3101). Der Handoff v3
+   nennt diese Ratsche in Paragraph 6.1 "R-03" und in Paragraph 5 "T-2" —
+   zwei Namen fuer dieselbe Sache, und R-03 heisst hier schon "geerbte Tinte
+   auf gewechselter Flaeche". Wer Paragraph 6.1 woertlich folgt,
+   ueberschreibt eine gruene Ratsche. Diese heisst deshalb R-10.
+
+   WAS SIE ZAEHLT. Jedes rgba()/rgb() mit einem Zahlentripel in
+   assets/styles/*.css, das NICHT in einer Schattendeklaration steht und
+   nicht in der Ausnahmeliste unten gefuehrt ist. Der Quelltext wird vorher
+   zeilentreu von Kommentaren geleert — ein roher grep zaehlt sonst die
+   Erklaertexte mit.
+
+   DIE ZAHLEN, am 2026-09-29 gegen ba3d3c2 selbst gemessen (nicht aus dem
+   Handoff uebernommen; der nennt 390 Literale und 143 Werte, einen Stand von
+   vor einem Loeschlauf, der schon vor Welle 1 falsch war — 336 an ca85d1b wie
+   an HEAD):
+
+       336   Zahlentripel in assets/styles/*.css, alle 20 Dateien
+       332   davon im Komponenten-CSS
+         4   in variables.css, ausschliesslich die vier --shadow
+        85   in einer Schattendeklaration -> WELLE 3, hier ausgenommen
+             (78 box-shadow, 6 text-shadow, 1 filter: drop-shadow,
+              dice.css:553)
+       247   Revier dieser Ratsche = AUSGANGSWERT bei der Geburt
+       130   verschiedene vollstaendige Literale im Revier, auf 43 Tripeln
+
+   Gegenprobe von aussen:
+       grep -o "rgba?([[:space:]]*[0-9][^)]*)" assets/styles/*.css | wc -l
+   (das Fragezeichen dort als Basic-Regex maskiert) liefert 341 Rohtreffer;
+   5 davon stehen in Kommentaren, 341 - 5 = 336.
+
+   SECHS KLASSEN im Revier — der Handoff fuehrt nur fuenf, und sechs seiner
+   sieben Zahlen sind falsch (groesste Abweichung Faktor 9):
+
+       162  exakter Treffer einer DARK-Rolle (gold 37, red 28, yellow 22,
+            green 13, blue 11, orange 11, cyan 9, attr-dex 9, purple 6,
+            coin-gm 6, pink 5, bg-card 2, bg-dark 2, attr-con 1)
+        29  Weiss-Auflagen rgba(255,255,255,a), ein Tripel, acht Alphastufen
+        28  palettenfremd — in keinem Theme und keiner Skala vorhanden
+        17  Treffer eines themenunabhaengigen SKALENTOKENS (--know-*, --dmg-*,
+            --cat-*, --ra-*) — DIE KLASSE, DIE IM HANDOFF FEHLT; sie erklaert
+            die Differenz zweier Zaehllaeufe (17 + 28 = 45)
+         6  Schwarz-Flaechen rgba(0,0,0,a) ohne jeden Schatten
+         5  aus einer FREMDEN Theme-Palette (Light/Sepia/Contrast)
+       ---
+       247
+
+   Eine Stelle steht zwischen den letzten beiden Klassen: bestiary.css:279
+   rgba(139,69,19,0.08) ist zugleich Sepia --gold und Alias
+   --ra-parchment-rule. Welcher Klasse sie zufaellt, haengt allein an der
+   Reihenfolge der Pruefung (17/5 oder 18/4); die Summe 247 ist davon
+   unberuehrt. Die Ratsche selbst zaehlt Stellen, nicht Klassen.
+
+   GELTUNGSBEREICH, schriftlich, weil der Handoff hier irrefuehrt: NUR
+   assets/styles/*.css. Im Komponenten-CSS gibt es NULL Hex-Farben, NULL
+   hsl() und NULL rgb() ohne Alpha — Hex bildet dort keine Klasse. Der
+   Handoff-Beleg "tools.css:1517 #ffd700" hat in der gesamten Historie nie
+   existiert (git log -S ffd700 -- assets/styles/tools.css: null Commits);
+   auf :1517 steht .sb-loop-btn { flex-shrink: 0 }. Das fremde Gold liegt als
+   rgba(255,215,0,.) in tools.css:1067/1151/1188/1267/1272/1314.
+   AUSSERHALB bleiben: assets/templates/*.html (55 Hex) und der JS-Baum
+   (64 Hex, 7 rgba). Zwei davon sind nach Paragraph 7 begruendete Ausnahmen
+   und bleiben es — features/shops/shop-export.js (25, eigenstaendiges
+   Ausgabedokument ohne Theme) und ui/editors/editor-toolbar-build.js (12,
+   die Markierstift-Palette, deren Werte im eingefrorenen Editor-Testnetz
+   zeichenweise zugesichert sind).
+
+   SIE IST BEI IHRER GEBURT ROT, mit 247 Stellen. Das Ziel ist 0 plus eine
+   begruendete Ausnahmeliste; gruen wird sie mit Schritt 7 der Welle.
+   =========================================================================== */
+describe('R-10 — rgba()-Zahlentripel ausserhalb der Schatten (Ratsche)', () => {
+    /** Zielwert der Ratsche. 0 von der Geburt an: was bleiben darf, steht
+     *  namentlich in R10_AUSNAHMEN, nicht in einer Restzahl. Der gemessene
+     *  Ausgangswert 247 steht im Kopfkommentar, nicht hier — eine Ratsche,
+     *  deren Schranke mitwandert, schuetzt nichts. */
+    const R10_ZIEL = 0;
+
+    /** Begruendete Ausnahmen. Schluessel ist NICHT die Zeile (die verschiebt
+     *  jeder Kommentar-Commit, siehe R-06), sondern Datei plus vollstaendiges
+     *  Literal, dazu die Zahl der gedeckten Stellen: deckt eine Ausnahme
+     *  ploetzlich mehr Stellen als eingetragen, meldet die Ratsche das,
+     *  statt die neuen stillschweigend mitzuverzeihen.
+     *
+     *  SIE IST BEI DER GEBURT LEER, und das ist Absicht, nicht Vergessen —
+     *  wie EXEC_COMMAND_ALLOWLIST in editor-floating.spec.js. Schritt 10 der
+     *  Welle traegt die zwei festen Flaechen des Ereignis-Logs ein. */
+    const R10_AUSNAHMEN = [
+        // { datei: 'party.css', lit: 'rgba(15, 15, 25, 0.98)', anzahl: 1, grund: '...' }
+    ];
+
+    /** Kommentare zeilentreu leeren. withoutComments() weiter oben loescht
+     *  sie ganz und verschiebt damit jede Zeilennummer — fuer einen Befund,
+     *  der die Stelle nennen soll, unbrauchbar. */
+    function leerKommentare(css) {
+        let out = '';
+        let i = 0;
+        while (i < css.length) {
+            if (css[i] === '/' && css[i + 1] === '*') {
+                const e = css.indexOf('*/', i + 2);
+                const stop = e === -1 ? css.length : e + 2;
+                for (let k = i; k < stop; k++) out += css[k] === '\n' ? '\n' : ' ';
+                i = stop;
+                continue;
+            }
+            out += css[i];
+            i++;
+        }
+        return out;
+    }
+
+    /** Alle Deklarationen einer Datei mit Eigenschaft und Wertbereich.
+     *  Klammertiefe statt Zeilenlogik, damit einzeilige Regeln und
+     *  mehrzeilige Werte gleich behandelt werden; runde Klammern werden am
+     *  Stueck uebersprungen, damit ein Semikolon in einer url() oder einem
+     *  Verlauf keine Deklaration beendet. */
+    function deklarationen(css) {
+        const out = [];
+        let tiefe = 0;
+        let i = 0;
+        let start = -1;
+        let doppel = -1;
+        let quote = null;
+        while (i < css.length) {
+            const ch = css[i];
+            if (quote) {
+                if (ch === quote && css[i - 1] !== '\\') quote = null;
+                i++;
+                continue;
+            }
+            if (ch === '"' || ch === "'") {
+                quote = ch;
+                i++;
+                continue;
+            }
+            if (ch === '(') {
+                let k = 1;
+                i++;
+                while (i < css.length && k > 0) {
+                    if (css[i] === '(') k++;
+                    else if (css[i] === ')') k--;
+                    i++;
+                }
+                continue;
+            }
+            if (ch === '{' || ch === '}') {
+                tiefe += ch === '{' ? 1 : -1;
+                start = -1;
+                doppel = -1;
+                i++;
+                continue;
+            }
+            if (ch === ';') {
+                if (tiefe > 0 && start >= 0 && doppel > start) {
+                    out.push({
+                        prop: css.slice(start, doppel).trim().toLowerCase(),
+                        von: doppel + 1,
+                        bis: i
+                    });
+                }
+                start = -1;
+                doppel = -1;
+                i++;
+                continue;
+            }
+            if (start < 0 && !/\s/.test(ch)) start = i;
+            if (ch === ':' && doppel < 0 && start >= 0) doppel = i;
+            i++;
+        }
+        return out;
+    }
+
+    /** Schattendeklarationen gehoeren Welle 3 und bleiben hier aussen vor. */
+    function istSchatten(prop) {
+        return /(^|-)(box|text)-shadow$/.test(prop) || /filter$/.test(prop);
+    }
+
+    const TRIPEL = /\brgba?\(\s*\d+\s*,\s*\d+\s*,\s*\d+/g;
+
+    test('kein rgba()-Zahlentripel ausser den begruendeten Ausnahmen', () => {
+        const stellen = [];
+        cssFiles.forEach(f => {
+            const css = leerKommentare(f.content);
+            const zeilenAnfang = [0];
+            for (let i = 0; i < css.length; i++) if (css[i] === '\n') zeilenAnfang.push(i + 1);
+            const zeileVon = idx => {
+                let lo = 0;
+                let hi = zeilenAnfang.length - 1;
+                while (lo < hi) {
+                    const m = (lo + hi + 1) >> 1;
+                    if (zeilenAnfang[m] <= idx) lo = m;
+                    else hi = m - 1;
+                }
+                return lo + 1;
+            };
+            deklarationen(css).forEach(d => {
+                if (istSchatten(d.prop)) return;
+                const wert = css.slice(d.von, d.bis);
+                for (const t of wert.matchAll(TRIPEL)) {
+                    const abs = d.von + t.index;
+                    const voll = css.slice(abs).match(/^rgba?\([^)]*\)/);
+                    stellen.push({
+                        datei: f.name,
+                        zeile: zeileVon(abs),
+                        prop: d.prop,
+                        lit: voll ? voll[0] : t[0]
+                    });
+                }
+            });
+        });
+
+        /* Gegenprobe: faellt die Zerlegung auseinander, waere die Ratsche
+           gruen und leer. Die vier --shadow-Definitionen in variables.css
+           sind Tokendefinitionen, keine Schattendeklarationen, und deshalb
+           die einzigen Treffer dieser Datei. */
+        expect(stellen.filter(s => s.datei === 'variables.css').length).toBe(4);
+
+        const offen = [];
+        const gezaehlt = new Map();
+        stellen.forEach(s => {
+            if (s.datei === 'variables.css') return;
+            const a = R10_AUSNAHMEN.find(x => x.datei === s.datei && x.lit === s.lit);
+            if (a) {
+                const k = `${a.datei}||${a.lit}`;
+                gezaehlt.set(k, (gezaehlt.get(k) || 0) + 1);
+                return;
+            }
+            offen.push(`${s.datei}:${s.zeile} ${s.prop}: ${s.lit}`);
+        });
+        R10_AUSNAHMEN.forEach(a => {
+            const ist = gezaehlt.get(`${a.datei}||${a.lit}`) || 0;
+            if (ist !== a.anzahl) {
+                offen.push(
+                    `AUSNAHME ${a.datei} ${a.lit} — gefuehrt fuer ${a.anzahl} Stelle(n), ` +
+                        `gefunden ${ist}`
+                );
+            }
+        });
+
+        /* Die Stichprobe haelt die Fehlerausgabe lesbar, solange die Ratsche
+           rot ist: die Zahl ist die Aussage, zwoelf Stellen zeigen die Art. */
+        expect({ anzahl: offen.length, stichprobe: offen.slice(0, 12) }).toEqual({
+            anzahl: R10_ZIEL,
+            stichprobe: []
+        });
+    });
+});
