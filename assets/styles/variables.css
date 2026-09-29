@@ -17,7 +17,61 @@
             --text: #e0e0e0;
             --text-dim: #888;
             --border: #3a3a3a;
-            --shadow: rgba(0,0,0,0.5);
+            /* ------------------------------------------------------------
+               Design-Handoff v3, Welle 3 — die Schattenleiter
+               ------------------------------------------------------------
+               DREI STUFEN, und sie liegen schon im Bestand: gemessen sind 53
+               Hoehenlagen mit y=2 (15x), y=4 (20x), y=6 (2x), y=8 (12x) und
+               nur vier Ausreissern jenseits davon — genau die vier Modal-
+               und Schwebeflaechen, fuer die Stufe 3 gedacht ist.
+
+               DIE LEITER IST 2/6 - 4/16 - 8/32 und nicht die 2/8 - 4/16 -
+               12/32 aus Paragraph 3.2: mit dieser bleiben 24 der 53 Lagen
+               WORTGLEICH statt elf. Der Versatz y=8 ist der haeufigste im
+               oberen Band (12 Lagen) und fehlt in der Handoff-Leiter;
+               `0 2px 6px` kommt achtmal vor. Eine vierte Stufe kauft in
+               derselben Rechnung nur +1/-1 und betraefe ein Element.
+
+               DIE TINTE WIRD MIT DER HOEHE DICHTER, nicht nur breiter: was
+               hoeher liegt, verdeckt mehr Licht. Dark 0,35 / 0,45 / 0,60,
+               Light 0,10 / 0,14 / 0,20, Sepia ein warmes 60,40,10 mit
+               0,12 / 0,16 / 0,22 — reines Schwarz wirkt auf Papierton kalt.
+               Contrast bekommt statt einer Weichzeichnung einen harten
+               Umriss; die Begruendung steht dort.
+
+               WELCHE STELLE WELCHE STUFE TRAEGT, steht nicht hier, sondern
+               als Ort-zu-Stufe-Tabelle in R-19 (design-consistency.test.js).
+               Sie ist die einzige automatische Absicherung dieser Welle: der
+               versionierte Stil-Sollstand erfasst von 71 Schattendeklara-
+               tionen nur zwei.
+
+               Das Token --shadow ist ersatzlos entfallen. Es trug nur eine
+               FARBE, die Geometrie stand an seiner einzigen Verwendung
+               (core.css, der Offline-Hinweis). Sein Eintrag in
+               BASELINE_TOKENS (tests/unit/helpers/wcag-contrast.js) faellt im
+               SELBEN Commit: getrennt entfernt wirft palette() in allen vier
+               Themes und reisst 40 Tests aus dem Lauf. NICHT WIEDER
+               EINFUEHREN. */
+            --shadow-1: 0 2px 6px rgba(0,0,0,0.35);
+            --shadow-2: 0 4px 16px rgba(0,0,0,0.45);
+            --shadow-3: 0 8px 32px rgba(0,0,0,0.6);
+            /* Die Schublade des Statblocks: x=-4, y=0, Radius 24 — die
+               einzige Lage im Bestand mit X-Versatz. Eigene Definition je
+               Block statt einer Ableitung aus Stufe 2 (0/4/16): andere
+               Richtung, anderer Radius, und in Contrast waere "Stufe 2 mit
+               negativem X" ein Ring um eine bildschirmhohe Schublade. In Dark
+               traegt sie ihre gemessene Tinte 0,5 unveraendert weiter, damit
+               die einzige Stelle dieser Bauart im Standardtheme wortgleich
+               bleibt; Light und Sepia folgen der Tinte von Stufe 2. */
+            --shadow-drawer: -4px 0 24px rgba(0,0,0,0.5);
+            /* Der Fokus- und Zustandsring. 15 % ist der Wert, den zwei der
+               drei Fokusringe heute schon tragen; die in Paragraph 3.2
+               vorgeschlagenen 40 % wuerden sie um das 2,7- bis 4-fache
+               deckender machen und zugleich das voll deckende Ablageziel
+               (dmscreen.css) schwaechen — genau verkehrt herum. Eine
+               Verstaerkung gehoert, wenn ueberhaupt, in Welle 6 zusammen mit
+               dem Tastaturfokus. */
+            --ring-gold: 0 0 0 3px color-mix(in srgb, var(--gold) 15%, transparent);
             /* HIER STANDEN DIE DREI rgba()-KANAELE zu --gold, --green und
                --red (Welle 1; ihre Namen trugen den Zusatz rgb, hier
                absichtlich nicht ausgeschrieben, damit ein Suchlauf nach der
@@ -314,7 +368,14 @@
             --text: #1a1a1a;
             --text-dim: #666;
             --border: #ccc;
-            --shadow: rgba(0,0,0,0.15);
+            /* Schattenleiter, Begruendung im Dark-Block oben. Light traegt
+               dieselbe Geometrie und eine deutlich duennere Tinte — auf
+               heller Flaeche liest schon 0,10 als Kante. */
+            --shadow-1: 0 2px 6px rgba(0,0,0,0.10);
+            --shadow-2: 0 4px 16px rgba(0,0,0,0.14);
+            --shadow-3: 0 8px 32px rgba(0,0,0,0.20);
+            --shadow-drawer: -4px 0 24px rgba(0,0,0,0.14);
+            --ring-gold: 0 0 0 3px color-mix(in srgb, var(--gold) 15%, transparent);
             color-scheme: light;
 
             /* Erlaeuterung zu allen folgenden Gruppen: Dark-Block oben.
@@ -459,7 +520,15 @@
             --text: #3c3c3c;
             --text-dim: #666;
             --border: #c9b99a;
-            --shadow: rgba(0,0,0,0.1);
+            /* Schattenleiter, Begruendung im Dark-Block oben. Die Tinte ist
+               hier NICHT schwarz, sondern das warme 60,40,10 des Pergaments:
+               reines Schwarz auf Papierton liest kalt und fremd, und der
+               ganze Block ist darauf gebaut. */
+            --shadow-1: 0 2px 6px rgba(60,40,10,0.12);
+            --shadow-2: 0 4px 16px rgba(60,40,10,0.16);
+            --shadow-3: 0 8px 32px rgba(60,40,10,0.22);
+            --shadow-drawer: -4px 0 24px rgba(60,40,10,0.16);
+            --ring-gold: 0 0 0 3px color-mix(in srgb, var(--gold) 15%, transparent);
             /* Sepia ist ein HELLES Theme — Pergament, nicht Nacht. */
             color-scheme: light;
 
@@ -581,7 +650,47 @@
             --text: #ffffff;
             --text-dim: #aaa;
             --border: #555;
-            --shadow: rgba(255,255,255,0.1);
+            /* ------------------------------------------------------------
+               Schattenleiter in Contrast: UMRISS statt Weichzeichnung
+               ------------------------------------------------------------
+               Eine Weichzeichnung traegt hier nicht. Contrast ist selbst ein
+               dunkles Theme (--bg-dark ist #000): ein schwarzer Schatten
+               liest darauf 1,00:1 und ist damit gar nicht vorhanden. Der
+               bisherige Wert ging den anderen Weg — eine WEISSE Auflage mit
+               10 % — und deckte zu 1,21:1. Beide Richtungen scheitern an
+               derselben Sache: Hoehe ueber Helligkeitsverlauf braucht
+               Zwischentoene, und die hat dieses Theme nicht.
+
+               Deshalb DREI HARTE UMRISSE, getrennt ueber die DICKE:
+               1px / 2px / 3px. Die Grauwerte sind #888 / #aaa / #ccc und
+               nicht die #555 / #777 / #aaa aus Paragraph 3.2. Zwei Gruende,
+               beide nachgerechnet mit dem Rechenweg von
+               tests/unit/helpers/wcag-contrast.js:
+
+               (a) #555 IST in diesem Block bereits --border (drei Zeilen
+                   darueber). 13 Regeln tragen `border: 1px solid
+                   var(--border)` im selben Koerper — der Umriss waere dort
+                   vom Rahmen nicht zu unterscheiden.
+               (b) #555 haelt gegen die vier Flaechen nur 2,82 / 2,53 /
+                   2,13 / 1,69, #777 nur 4,69 / 4,22 / 3,55 / 2,82. R-02
+                   verlangt 3. #888 ist der kleinste Grauwert, der auf ALLEN
+                   vier haelt: 5,92 / 5,33 / 4,49 / 3,56. #aaa liest
+                   9,04 / 8,13 / 6,85 / 5,44, #ccc 13,08 / 11,76 / 9,91 /
+                   7,87.
+
+               Die Stufen trennen NICHT ueber den Grauwert: #888 gegen #aaa
+               ist 1,53, das liest niemand als Hoehenunterschied. Sie trennen
+               ueber den Spread. */
+            --shadow-1: 0 0 0 1px #888;
+            --shadow-2: 0 0 0 2px #aaa;
+            --shadow-3: 0 0 0 3px #ccc;
+            /* Die Schublade behaelt ihre RICHTUNG (harte linke Kante), auch
+               wenn die Stufen hier versatzlos sind. */
+            --shadow-drawer: -2px 0 0 0 #aaa;
+            /* Voll deckend: eine 15-%-Mischung ist in einem Kontrastthema
+               keine Aussage. --gold liest hier 14,97 / 13,46 / 11,34 / 9,01
+               gegen die vier Flaechen. */
+            --ring-gold: 0 0 0 3px var(--gold);
             color-scheme: dark;
 
             /* Erlaeuterung zu allen folgenden Gruppen: Dark-Block oben.
@@ -698,6 +807,40 @@
             --border-light: var(--bg-hover);
             --text-light: var(--text);
             --teal: var(--cyan);
+
+            /* ------------------------------------------------------------
+               Design-Handoff v3, Welle 3 — die vier Leuchtfarben
+               ------------------------------------------------------------
+               DAS TOKEN TRAEGT NUR DIE FARBE, der Radius bleibt in der
+               jeweiligen Regel stehen: `box-shadow: 0 0 12px var(--glow-gold)`
+               statt `0 0 12px rgba(212,175,55,.25)`. Damit loesen sich alle
+               Literale auf, ohne dass eine einzige Groesse wandert. Die 14
+               gemessenen Gluehlagen reichen von 4px bis 30px; ein Token mit
+               festem `0 0 12px` (so Paragraph 3.2) traefe weder die 4px am
+               Sicherungs-Punkt noch die 30px-Hoefe des Wuerfelergebnisses und
+               machte beide zu Ausnahmen.
+
+               SIE STEHEN HIER UND NICHT IN DEN VIER THEME-BLOECKEN, weil sie
+               nur auf die Rolle zeigen: wechselt --gold das Theme, wechselt
+               die Leuchte mit. Eine Kopie je Block waere vier Stellen zum
+               Auseinanderdriften — dieselbe Begruendung wie fuer den Block
+               oben.
+
+               VIER, nicht fuenf und nicht drei. Kein Lila: null Stellen im
+               Bestand, es kaeme tot zur Welt. Aber GELB: vier Stellen tragen
+               heute rgba(251,191,36) — das ist auf die Ziffer das Gelb des
+               Dark-Blocks und nicht das Gold. Wer sie unter --glow-gold
+               zoege, aenderte sichtbar den Ton und haette es als mechanische
+               Ersetzung verbucht. Paragraph 3.2 kennt --glow-yellow nicht.
+
+               OHNE RUECKFALL, und das ist gefuehrt: ein color-mix in einem
+               nur EINMAL deklarierten Custom Property hat keine
+               vorausgehende Deklaration, auf die es zurueckfallen koennte.
+               Die vier stehen deshalb im Inventar von R-13. */
+            --glow-gold: color-mix(in srgb, var(--gold) 55%, transparent);
+            --glow-yellow: color-mix(in srgb, var(--yellow) 55%, transparent);
+            --glow-green: color-mix(in srgb, var(--green) 55%, transparent);
+            --glow-red: color-mix(in srgb, var(--red) 55%, transparent);
 
             /* Schrift-Familien (F-05). Vorher standen 14 verschiedene
                Deklarationen im CSS, darunter neunmal dieselbe Segoe-Kette und
@@ -1067,9 +1210,13 @@
                (vier Modalblenden, vier Staerken) — ihre Vereinheitlichung
                ist sichtbar und gehoert deshalb nicht in diesen Schritt.
 
-               color-mix statt rgba(): in dieser Datei stehen genau VIER
-               rgba()-Tripel, die vier --shadow, und R-10 sichert diese Zahl
-               hart zu. `color-mix(in srgb, #fff 5%, transparent)` ergibt
+               color-mix statt rgba(): die rgba()-Tripel dieser Datei sind
+               ABGEZAEHLT und R-10 sichert die Zahl hart zu. Bei der
+               Niederschrift waren es VIER, je einmal das Token --shadow pro
+               Theme-Block; seit Welle 3 sind es ZWOELF — die Schattenleiter
+               traegt in Dark, Light und Sepia je drei Stufen plus die
+               Schublade, Contrast dagegen Hex-Umrisse und damit keine.
+               `color-mix(in srgb, #fff 5%, transparent)` ergibt
                rechnerisch dasselbe wie `rgba(255,255,255,0.05)` — die
                Deckkraft ist 5 % von 1 plus 95 % von 0, die vormultiplizierte
                Farbe bleibt Weiss. */

@@ -837,7 +837,21 @@
             font-size: 0.85em;
             display: none;
             z-index: var(--z-panel);
-            box-shadow: 0 2px 10px var(--shadow);
+            /* Design-Handoff v3, Welle 3, Schritt 2. Hier stand die EINZIGE
+               Verwendung des Tokens --shadow im ganzen Quellbaum (in
+               var()-Schreibweise; sie wird hier nicht ausgeschrieben, weil
+               F-01 aus einem Kommentar mitliest und ein entfallenes Token als
+               undefiniert meldet). Das Token ist mit diesem Commit entfallen.
+
+               STUFE 2 UND NICHT 1, und das weicht bewusst von der
+               Radiusregel ab: nach dem naechsten Weichzeichnungsradius
+               (10 liegt naeher an 6 als an 16) waere es Stufe 1. Die Leiste
+               ist aber `position: fixed` — eine frei schwebende Auflage ueber
+               allem, keine angehobene Flaeche. Bezifferte Sichtfolge:
+               Weichzeichnung 10 -> 16 px (Faktor 1,6), y-Versatz 2 -> 4 px,
+               Tinte in Dark 0,50 -> 0,45. Die Stelle steht deswegen
+               namentlich auf der Sichtprobenliste der Vier-Themes-Runde. */
+            box-shadow: var(--shadow-2);
         }
         
         .offline-indicator.visible { display: flex; align-items: center; gap: 8px; }

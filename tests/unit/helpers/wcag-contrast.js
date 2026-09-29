@@ -45,7 +45,7 @@ const VARIABLES_CSS = path.join(REPO, 'assets', 'styles', 'variables.css');
 const THEMES = ['dark', 'light', 'sepia', 'contrast'];
 
 /**
- * Die 18 Tokens, die JEDER Theme-Block heute fuehrt (bei der Geburt 21,
+ * Die 17 Tokens, die JEDER Theme-Block heute fuehrt (bei der Geburt 21,
  * gemessen am 2026-09-28, HEAD ca85d1b: dark=21 light=21 sepia=21
  * contrast=21).
  *
@@ -65,6 +65,17 @@ const THEMES = ['dark', 'light', 'sepia', 'contrast'];
  * waehrend design-consistency.test.js acht palettes()-Tests einzeln verliert.
  * Dieselbe Falle schnappt bei jedem kuenftigen Token, das hier gefuehrt und
  * im CSS entfernt wird: beides gehoert in EINEN Commit.
+ *
+ * EIN VIERTER NAME IST AM 2026-09-30 HERAUS (Welle 3, Schritt 2): '--shadow'.
+ * Es trug in jedem Block eine blosse FARBE, waehrend die Geometrie an seiner
+ * einzigen Verwendung stand (core.css, der Offline-Hinweis). An seine Stelle
+ * treten --shadow-1/-2/-3, --shadow-drawer und --ring-gold, und die tragen
+ * Geometrie UND Farbe zusammen — sie sind damit keine Basis-Farbtokens mehr
+ * und gehoeren nicht in diese Liste. Die oben beschriebene Falle ist bei
+ * dieser Entfernung wirklich zugeschnappt getestet worden: --shadow hier zu
+ * lassen und im CSS zu entfernen laesst palette() in ALLEN VIER Themes werfen
+ * und reisst 40 Tests aus dem Lauf. Deshalb liegen CSS-Aenderung und diese
+ * Zeile in EINEM Commit.
  *
  * ABWEICHUNG VON DER SCHRITTANWEISUNG, bewusst: geprueft wird nicht "genau so
  * viele Schluessel", sondern "diese Schluessel sind da". Welle 1 Schritt 4
@@ -90,8 +101,7 @@ const BASELINE_TOKENS = [
     '--pink',
     '--text',
     '--text-dim',
-    '--border',
-    '--shadow'
+    '--border'
 ];
 
 /** Die vier neutralen Theme-Flaechen, gegen die Akzenttext gerechnet wird. */

@@ -3936,9 +3936,14 @@ describe('R-09 — die Ortsfarben aus dem JS (Ratsche)', () => {
        336   Zahlentripel in assets/styles/*.css, alle 20 Dateien
        332   davon im Komponenten-CSS
          4   in variables.css, ausschliesslich die vier --shadow
+             (seit Welle 3 Schritt 2: ZWOELF, siehe die Gegenprobe im Test
+              unten — --shadow ist entfallen, an seine Stelle treten in Dark,
+              Light und Sepia je drei Stufen plus die Schublade; Contrast
+              traegt Hex-Umrisse und steuert kein Tripel bei)
         85   in einer Schattendeklaration -> WELLE 3, hier ausgenommen
              (78 box-shadow, 6 text-shadow, 1 filter: drop-shadow,
-              dice.css:553)
+              dice.css:553 — der Anker ist ueberholt, die Deklaration steht
+              heute auf dice.css:583)
        247   Revier dieser Ratsche = AUSGANGSWERT bei der Geburt
        130   verschiedene vollstaendige Literale im Revier, auf 43 Tripeln
 
@@ -4267,10 +4272,19 @@ describe('R-10 — rgba()-Zahlentripel ausserhalb der Schatten (Ratsche)', () =>
         });
 
         /* Gegenprobe: faellt die Zerlegung auseinander, waere die Ratsche
-           gruen und leer. Die vier --shadow-Definitionen in variables.css
-           sind Tokendefinitionen, keine Schattendeklarationen, und deshalb
-           die einzigen Treffer dieser Datei. */
-        expect(stellen.filter(s => s.datei === 'variables.css').length).toBe(4);
+           gruen und leer. Die Schattentokens von variables.css sind
+           Tokendefinitionen, keine Schattendeklarationen, und deshalb die
+           einzigen Treffer dieser Datei.
+
+           VIER WAREN ES BIS WELLE 3, je einmal --shadow pro Theme-Block.
+           ZWOELF sind es seither, und die Zahl ist bewusst nachgezogen und
+           nicht umgangen: istSchatten() prueft /(^|-)(box|text)-shadow$/ und
+           /filter$/ — der Name --shadow-1 endet auf "-1" und faellt unter
+           keines von beiden, das Tripel in seinem Wert zaehlt also mit. Drei
+           Bloecke tragen je drei Stufen plus die Schublade (3 x 4 = 12);
+           Contrast traegt Hex-Umrisse und steuert null Tripel bei. Wer die
+           Leiter anfasst, aendert diese Zahl mit — das ist der Zweck. */
+        expect(stellen.filter(s => s.datei === 'variables.css').length).toBe(12);
 
         const offen = [];
         const gezaehlt = new Map();
@@ -4507,17 +4521,31 @@ describe('R-12 — Skalentoken als Toenungsflaeche (Ratsche)', () => {
    sondern eine kleiner gewordene Restschuld — und die verbliebenen neun
    tragen ausgerechnet die Modalblenden, also den Fall, an dem die
    Eigenschaft nicht blass wird, sondern verschwindet.
+
+   STAND SEIT WELLE 3 SCHRITT 2: DREIZEHN. Die vier Leuchtfarben --glow-gold,
+   --glow-yellow, --glow-green und --glow-red sind dazugekommen. Sie stehen im
+   Basis-:root und damit in genau einem Block — dasselbe Muster, dieselbe
+   Restschuld. Ihr Schadensbild ist allerdings milder als das der
+   Modalblenden: faellt eine Leuchte aus, verschwindet ein Hof, nicht eine
+   Flaeche. --ring-gold ist AUSDRUECKLICH NICHT dabei, obwohl es color-mix
+   traegt: es steht in allen vier Theme-Bloecken und faellt damit nicht unter
+   "in genau einem Block deklariert".
    =========================================================================== */
 describe('R-13 — color-mix im Basis-:root ohne Rueckfall (Inventar)', () => {
-    /** Die gefuehrte Menge, seit Schritt 11 NEUN statt fuenfzehn. Die sechs
-     *  von E4 benannten sind heraus — nicht weil jemand sie gestrichen haette,
+    /** Die gefuehrte Menge, seit Welle 3 Schritt 2 DREIZEHN. Die sechs von E4
+     *  benannten sind heraus — nicht weil jemand sie gestrichen haette,
      *  sondern weil sie einen Rueckfall bekommen haben und damit nicht mehr
-     *  rueckfalllos sind (die zweite Probe unten haelt das fest). Uebrig sind
-     *  die neun, die Schritt 3 angelegt hat: sie tragen die Modalblenden und
-     *  Auflagen und sind damit der Rest der Schuld, nicht ihr Ende.
+     *  rueckfalllos sind (die zweite Probe unten haelt das fest). Es bleiben
+     *  die neun aus Welle 2 Schritt 3 (Modalblenden und Auflagen) und die
+     *  vier Leuchtfarben aus Welle 3.
      *  Sortiert, damit ein Zugang an seiner Stelle auffaellt und nicht am
-     *  Listenende versteckt werden kann. */
+     *  Listenende versteckt werden kann — die vier --glow- stehen deshalb
+     *  VORNE und nicht hinten angehaengt. */
     const RUECKFALLLOSE_COLOR_MIX_TOKENS = [
+        '--glow-gold',
+        '--glow-green',
+        '--glow-red',
+        '--glow-yellow',
         '--overlay-faint',
         '--overlay-heavy',
         '--overlay-mid',
@@ -6609,8 +6637,20 @@ describe('R-19 — Schatten nur aus Tokens (Ratsche)', () => {
     }
 
     /** Bauart einer Lage. Erschoepfend: jede der 86 gemessenen Lagen faellt in
-     *  genau einen dieser Faelle. */
+     *  genau einen dieser Faelle.
+     *
+     *  DIE DREI ERSTEN ZEILEN SIND KEIN SONDERFALL, sondern die Fortsetzung
+     *  derselben Frage nach der Umstellung: sobald eine Lage ihr Token traegt,
+     *  steht die Geometrie IM Token und nicht mehr in der Regel. Ohne sie
+     *  lieste die Zerlegung `var(--shadow-2)` als Lage ohne Laengen und damit
+     *  als Ring — die Stelle fiele aus der Urteilsmenge von Teil (2) heraus,
+     *  und die Ratsche koennte nie gruen werden. Die ZUORDNUNG Ort zu Stufe
+     *  aendert das nicht; sie steht unveraendert in der Tabelle und ist aus
+     *  der Messung gebildet. */
     function bauart(lage) {
+        if (/^var\(--shadow-[123]\)$/.test(lage)) return 'hoehe';
+        if (/^var\(--shadow-drawer\)$/.test(lage)) return 'seitlich';
+        if (/^var\(--ring-gold\)$/.test(lage)) return 'ring';
         if (/\binset\b/.test(lage)) return 'inset';
         const [x = null, y = null, b = 0] = laengen(lage);
         if (x !== null && x !== 0) return 'seitlich';
@@ -6928,13 +6968,13 @@ describe('R-19 — Schatten nur aus Tokens (Ratsche)', () => {
         { datei: 'core.css', zeile: 390, stufe: 3,
           pfad: '.nav-group-menu',
           vorher: '0 8px 24px rgba(0,0,0,0.45)' },
-        { datei: 'core.css', zeile: 840, stufe: 2,
+        { datei: 'core.css', zeile: 854, stufe: 2,
           pfad: '.offline-indicator',
           vorher: '0 2px 10px var(--shadow)' },
-        { datei: 'core.css', zeile: 1348, stufe: 1,
+        { datei: 'core.css', zeile: 1362, stufe: 1,
           pfad: '.char-tag.clickable:hover',
           vorher: '0 2px 6px rgba(0,0,0,0.3)' },
-        { datei: 'core.css', zeile: 1427, stufe: 3,
+        { datei: 'core.css', zeile: 1441, stufe: 3,
           pfad: '.spell-tooltip',
           vorher: '0 8px 24px rgba(0,0,0,0.5)' },
         { datei: 'dashboard.css', zeile: 784, stufe: 2,
