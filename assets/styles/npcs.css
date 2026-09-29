@@ -536,12 +536,24 @@
     flex-wrap: wrap;
 }
 
+/* Der Seltenheitsaufkleber bekommt Flaeche UND Tinte aus einem Inline-Stil
+   (features/initiative-loot.js: das Flaechentoken der jeweiligen Stufe und
+   die themenblinde Tinte dazu — die Namen stehen hier absichtlich nicht
+   ausgeschrieben, F-01 liest einen Platzhalter in einer var()-Klammer als
+   undefiniertes Token und wird davon rot).
+   Hier standen bis Welle 2 Schritt 10 `background: var(--purple)` und
+   `color: var(--on-purple)` — gegen einen Inline-Stil derselben Elemente
+   gewinnt eine Stylesheet-Regel nie, beides war also toter Code. Gefaehrlich
+   war daran, dass es aussah wie die gueltige Deklaration: wer die
+   Seltenheitsfarben suchte, fand hier ein Violett, das nirgends erscheint.
+   Dieselbe Bauart wie .loc-item-tag in core.css; beide fuehrt R-09 Teil (d).
+
+   Was bleibt, ist echt: Schriftgroesse, Innenabstand und Eckenradius setzt
+   der Inline-Stil nicht. */
 .loot-item-tag {
     font-size: 0.7em;
     padding: 2px 6px;
-    background: var(--purple);
     border-radius: var(--radius-sm);
-    color: var(--on-purple);
 }
 
 .loot-item-meta {

@@ -619,9 +619,9 @@ loot.css
   690  .cart-item-total
 npcs.css
   236  .npc-detail-location
-  888  .npc-name
-  969  .npc-popup-name
- 1002  .npc-popup-section-title
+  900  .npc-name
+  981  .npc-popup-name
+ 1014  .npc-popup-section-title
 party.css
  1982  .party-stat-card.critical .party-stat-value
  2249  .rest-heal-preview
