@@ -1550,6 +1550,91 @@ describe('R-02 — Tinte erreicht ihre Schwelle auf der TATSAECHLICHEN Flaeche (
         expect(befunde.sort()).toEqual([]);
     });
 
+    /** DRITTE RATSCHE dieses Blocks, seit Welle 2 Schritt 9 (Entscheidung E3).
+     *
+     *  SIE TRAEGT DIE TEILFORMEL 3. ATTR_FLAECHEN fuehrt seit Schritt 9 nur
+     *  noch zwei Flaechen statt drei, und das ist keine Abschwaechung, sondern
+     *  eine Tatsachenaenderung: die Schnellreferenz-Zeile meldet das
+     *  Ueberfahren nicht mehr ueber ihre Fuellung, sondern ueber einen Umriss.
+     *  Damit gibt es die dritte Traegerflaeche nicht mehr.
+     *
+     *  Eine Behauptung dieser Art gehoert nicht in einen Kommentar. Schreibt
+     *  jemand die Fuellung zurueck — und sei es als "kleine Verbesserung" —,
+     *  dann faellt Teilformel 3 lautlos auf eine Flaeche zurueck, die sie gar
+     *  nicht mehr prueft, und die vier Kuerzel stehen wieder bei 3,16-3,58,
+     *  ohne dass ein Test das meldet. Diese Ratsche ist genau diese Meldung.
+     *
+     *  SIE ZAEHLT DIE FLAECHEN ALLER TRAEGER, nicht nur der einen Regel: die
+     *  Schnellreferenz-Zeile in jeder ihrer Zustandsformen UND die beiden
+     *  DM-Screen-Widgets, die dieselben Tokens als Schrift fuehren. Wer einen
+     *  vierten Traeger anlegt, bekommt ihn hier gemeldet, nicht erst beim
+     *  Nachmessen. */
+    const ATTR_TRAEGER = [
+        // Selektor-Teilstring, erwartete Flaechenmenge, wo die Regel steht.
+        { datei: 'dashboard.css', teil: '.qref-row', flaechen: ['var(--bg-card)'] },
+        { datei: 'dmscreen.css', teil: '.dms-attr-item', flaechen: ['var(--bg-dark)'] },
+        { datei: 'dmscreen.css', teil: '.dms-save-item', flaechen: ['var(--bg-dark)'] }
+    ];
+
+    test('die Attributkuerzel liegen auf genau den Flaechen, die Teilformel 3 prueft', () => {
+        // Gegenprobe: ohne Traeger prueft die Schleife ueber Leerlauf.
+        expect(ATTR_TRAEGER.length).toBe(3);
+
+        const befunde = [];
+        ATTR_TRAEGER.forEach(t => {
+            const f = cssFiles.find(x => x.name === t.datei);
+            if (!f) {
+                befunde.push(`${t.datei} fehlt — dann handelt der Rest dieser Ratsche von nichts`);
+                return;
+            }
+            const regeln = regelnMitRumpf(f.content).filter(r => r.sel.includes(t.teil));
+            if (!regeln.length) {
+                befunde.push(
+                    `${t.datei}: keine Regel mit "${t.teil}" — der Traeger ist umbenannt oder ` +
+                        `weg, und Teilformel 3 prueft seither eine Flaeche, die es nicht gibt`
+                );
+                return;
+            }
+            const gefunden = new Set();
+            regeln.forEach(r => {
+                ['background', 'background-color'].forEach(eig => {
+                    const w = deklaration(r.rumpf, eig);
+                    if (w) gefunden.add(w.trim());
+                });
+            });
+            const ueberzaehlig = [...gefunden].filter(w => !t.flaechen.includes(w)).sort();
+            ueberzaehlig.forEach(w =>
+                befunde.push(
+                    `${t.datei} "${t.teil}" setzt die Flaeche ${w}. Teilformel 3 prueft die ` +
+                        `Attributkuerzel nur gegen ${ATTR_FLAECHEN.join(' und ')} — eine ` +
+                        `weitere Flaeche ist damit ungeprueft. Auf --bg-hover (#333 in Dark ` +
+                        `und Contrast) fallen vier der sechs auf 3,16-3,58; genau deshalb hat ` +
+                        `Entscheidung E3 die Fuellung beim Ueberfahren durch einen Umriss ` +
+                        `ersetzt`
+                )
+            );
+            t.flaechen
+                .filter(w => !gefunden.has(w))
+                .forEach(w =>
+                    befunde.push(
+                        `${t.datei} "${t.teil}" setzt ${w} nicht mehr — die Flaeche, gegen die ` +
+                            `Teilformel 3 rechnet, ist eine andere geworden`
+                    )
+                );
+        });
+
+        expect(befunde.sort()).toEqual([]);
+    });
+
+    test('Teilformel 3 rechnet gegen genau diese zwei Flaechen', () => {
+        /* Die Liste steht in ZWEI Formen da — als Eingabe der Rechnung und
+           als Erwartung hier. Das ist Absicht: wer eine Flaeche ergaenzt oder
+           streicht, muss beide beruehren und kommt an der Begruendung oben
+           nicht vorbei. --bg-elevated war nie dabei (kein Kuerzel erreicht
+           sie), --bg-hover bis Schritt 9. */
+        expect(ATTR_FLAECHEN).toEqual(['--bg-dark', '--bg-card']);
+    });
+
     /** ZWEITE RATSCHE dieses Blocks. Sie urteilt nicht ueber Farbe, sondern
      *  ueber AKTENLAGE — und sie existiert, weil die Ausnahme eine Stufe
      *  weiter oben sonst genau das waere, was sie von sich weist: eine stille
