@@ -259,16 +259,51 @@ const RARITY_LABELS = {
     legendary: 'Legendär'
 };
 /**
- * Seltenheits-Farben für Loot-System - verwendet lowercase keys
+ * Seltenheits-FLÄCHE für Loot-System - verwendet lowercase keys.
+ *
+ * Design-Handoff v3, Welle 2, Schritt 10: bis dahin standen hier fünf feste
+ * Hexwerte, und sie dienten gleichzeitig als Fläche (Seltenheitsmarke) und als
+ * Tinte (Gegenstandsname an drei Stellen). Paragraph 7 erlaubt einer
+ * bedeutungstragenden Skala genau das erste — „themenunabhängig als
+ * Fläche/Rahmen; als Text nur über theme-fähige Ableitungen". Die Werte sind
+ * unverändert, sie stehen nur nicht mehr hier, sondern in
+ * `assets/styles/variables.css`; dort sieht sie das Testnetz, das CSS liest.
+ *
+ * Tinte AUF dieser Fläche ist `var(--on-rarity)` — themenblind wie die Fläche
+ * selbst. Tinte IN dieser Farbe ist RARITY_TEXT_COLORS eine Zeile weiter.
+ *
  * @type {Object.<string, string>}
  */
 const RARITY_COLORS = {
     normal: 'var(--text)',
-    common: '#4ade80',
-    uncommon: '#60a5fa',
-    rare: '#a78bfa',
-    veryrare: '#facc15',
-    legendary: '#fb923c'
+    common: 'var(--rarity-common)',
+    uncommon: 'var(--rarity-uncommon)',
+    rare: 'var(--rarity-rare)',
+    veryrare: 'var(--rarity-veryrare)',
+    legendary: 'var(--rarity-legendary)'
+};
+/**
+ * Seltenheits-TINTE für Loot-System - dieselben Schlüssel, theme-fähig.
+ *
+ * Design-Handoff v3, Welle 2, Schritt 10. In Dark und Contrast sind es die
+ * Werte der Fläche; in Light und Sepia deren abgedunkelte Ableitungen, weil
+ * die hellen Originaltöne dort auf Karte, Auswahlzeile und Verteilen-Dialog
+ * 1,12 bis 2,72 erreichen — der schlechteste Einzelwert des ganzen
+ * Farbbefunds steht hier („sehr selten" in Sepia, 1,12).
+ *
+ * Wer eine Seltenheitsfarbe als SCHRIFT setzt, nimmt diese Tabelle. Wer sie
+ * als FLÄCHE setzt, nimmt RARITY_COLORS und dazu `var(--on-rarity)`.
+ * Bewacht von R-16 in tests/unit/design-consistency.test.js.
+ *
+ * @type {Object.<string, string>}
+ */
+const RARITY_TEXT_COLORS = {
+    normal: 'var(--text)',
+    common: 'var(--rarity-common-text)',
+    uncommon: 'var(--rarity-uncommon-text)',
+    rare: 'var(--rarity-rare-text)',
+    veryrare: 'var(--rarity-veryrare-text)',
+    legendary: 'var(--rarity-legendary-text)'
 };
 /**
  * Herkunfts-Labels für Loot-Items
@@ -705,6 +740,7 @@ window.DND_RULES = Object.freeze({
     RARITIES,
     RARITY_LABELS,
     RARITY_COLORS,
+    RARITY_TEXT_COLORS,
     COMBAT_CONSTANTS,
     INIT_CONSTANTS,
     COMBATANT_TYPES,
@@ -748,6 +784,7 @@ window.SKILL_INFO = SKILL_INFO;
 window.RARITIES = RARITIES;
 window.RARITY_LABELS = RARITY_LABELS;
 window.RARITY_COLORS = RARITY_COLORS;
+window.RARITY_TEXT_COLORS = RARITY_TEXT_COLORS;
 window.ORIGIN_LABELS = ORIGIN_LABELS;
 window.LOOT_TAG_LABELS = LOOT_TAG_LABELS;
 window.INIT_CONSTANTS = INIT_CONSTANTS;
