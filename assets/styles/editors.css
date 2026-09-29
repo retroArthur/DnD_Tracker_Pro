@@ -56,8 +56,8 @@
         }
 
         .editor-toolbar .editor-btn:hover {
-            color: var(--gold);
-            background: color-mix(in srgb, var(--gold) 14%, transparent);
+            color: var(--gold-text);
+            background: color-mix(in srgb, var(--gold) min(14%, var(--tint-max)), transparent);
         }
 
         .editor-toolbar .editor-btn:focus-visible {
@@ -67,14 +67,14 @@
 
         /* Cursor steht in diesem Format */
         .editor-toolbar .editor-btn.format-active {
-            background: color-mix(in srgb, var(--gold) 18%, transparent);
-            color: var(--gold);
+            background: color-mix(in srgb, var(--gold) min(18%, var(--tint-max)), transparent);
+            color: var(--gold-text);
         }
 
         /* Offenes Menue: Trigger bleibt sichtbar gedrueckt */
         .editor-toolbar .editor-btn[aria-expanded='true'] {
-            background: color-mix(in srgb, var(--gold) 18%, transparent);
-            color: var(--gold);
+            background: color-mix(in srgb, var(--gold) min(18%, var(--tint-max)), transparent);
+            color: var(--gold-text);
         }
 
         .editor-toolbar .tb-caret {
@@ -227,8 +227,8 @@
         }
 
         .editor-toolbar .tb-menu-item:hover {
-            background: color-mix(in srgb, var(--gold) 18%, transparent);
-            color: var(--gold);
+            background: color-mix(in srgb, var(--gold) min(18%, var(--tint-max)), transparent);
+            color: var(--gold-text);
         }
 
         .editor-toolbar .tb-menu-item:focus-visible {
@@ -362,13 +362,13 @@
         }
 
         .editor-block-handle button:hover {
-            background: color-mix(in srgb, var(--gold) 18%, transparent);
-            color: var(--gold);
+            background: color-mix(in srgb, var(--gold) min(18%, var(--tint-max)), transparent);
+            color: var(--gold-text);
         }
 
         .editor-block-handle button[data-block-action='remove']:hover {
-            background: color-mix(in srgb, var(--red) 12%, transparent);
-            color: var(--red);
+            background: color-mix(in srgb, var(--red) min(12%, var(--tint-max)), transparent);
+            color: var(--red-text);
         }
 
         .editor-block-handle button:focus-visible {
@@ -382,8 +382,8 @@
         }
 
         .editor-toolbar .tb-menu-item-danger:hover {
-            background: color-mix(in srgb, var(--red) 12%, transparent);
-            color: var(--red);
+            background: color-mix(in srgb, var(--red) min(12%, var(--tint-max)), transparent);
+            color: var(--red-text);
         }
 
         .editor-toolbar .tb-menu .editor-select {

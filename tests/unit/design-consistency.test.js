@@ -2441,35 +2441,24 @@ describe("R-05 — die Kaskade entscheidet, nicht die Regel (Ratsche)", () => {
       klassen: ["editor-btn", "format-active"],
       vorfahren: ["editor-toolbar", "toolbar-group"],
       marke: "format-active",
-      /* 18-%-Toenung derselben Rolle ueber --bg-elevated.
-               2026-09-28, als die Toenung noch das feste Dark-Gold
-               rgba(212,175,55,0.18) war:
-                   dark 5,06 · light 2,41 · sepia 5,28 · contrast 7,94
-               2026-09-29, seit Welle 2 Schritt 6 die Toenung auf
-               color-mix(in srgb, var(--gold) 18%, transparent) stellt und
-               sie damit dem Theme folgt:
-                   dark 5,06 · light 2,25 · sepia 4,47 · contrast 7,09
+      /* KEINE AUSNAHME MEHR (Welle 2, Schritt 8, D-4/E2). Der Eintrag stand
+               hier, seit die Ratsche geboren wurde, und war der einzige der
+               D-4-Tabelle, an dem die Tinte allein einmal gereicht haette.
+               Die Geschichte in Zahlen, 18-%-Toenung derselben Rolle ueber
+               --bg-elevated:
+                 2026-09-28  festes Dark-Gold rgba(212,175,55,0.18)
+                             dark 5,06 · light 2,41 · sepia 5,28 · contrast 7,94
+                 2026-09-29  Schritt 6 stellt die Toenung auf color-mix und
+                             laesst sie dem Theme folgen
+                             dark 5,06 · light 2,25 · sepia 4,47 · contrast 7,09
+                 2026-09-29  Schritt 8: Deckel plus --gold-text
+                             dark 5,65 · light 4,78 · sepia 5,26 · contrast 7,09
 
-               DER EINTRAG IST DESHALB VON 2,41 AUF 2,25 GESENKT, und das
-               ist keine Aufweichung, sondern dieselbe Stelle auf ihrer nun
-               richtigen Flaeche: bis hierher rechnete die Zahl gegen eine
-               Toenung, die in drei von vier Themes gar nicht zum Theme
-               gehoerte. Dark bleibt unveraendert (dort IST das Dark-Gold
-               das Theme-Gold), die drei anderen verlieren 0,16 bis 0,85.
-               Keine Schwelle wird ueberschritten — light lag mit 2,41
-               ohnehin weit unter 4,5, sepia und contrast halten mit 4,47
-               und 7,09 weiter ihren Abstand (4,47 liegt knapp unter 4,5,
-               war aber nie die massgebliche Zahl dieses Eintrags; das
-               Minimum ist und bleibt light).
-
-               NEBENBEFUND, der die Aktenlage betrifft: die dort
-               vorgerechnete Abhilfe "Tinte auf var(--gold-text), light
-               2,41 -> 4,62, reicht" traegt nicht mehr. Auf der
-               themenfolgenden Toenung ergibt --gold-text in light nur noch
-               4,31. Die Textvariante allein genuegt also nicht mehr; D-4
-               muss hier ueber die STAERKE entscheiden. In W1-D-02
-               nachgetragen. */
-      ausnahme: 2.25,
+               Die in W1-D-02 vorgerechnete Abhilfe "Tinte auf var(--gold-text)
+               genuegt" traegt seit Schritt 6 nicht mehr (light 4,31). Erst
+               Tinte UND Staerke zusammen bringen die Stelle ueber 4,5 — genau
+               die Aussage, um derentwillen D-4 beides in einem Zug
+               entscheidet. */
       flaecheUeber: "var(--bg-elevated)",
     },
     /* -------------------------------------------------------------------
