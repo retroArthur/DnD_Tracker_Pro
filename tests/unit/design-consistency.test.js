@@ -4799,6 +4799,11 @@ describe('R-14 — Toenung im Elter, Tinte im Kind (Ratsche)', () => {
        gerueckt (Farbton 330,37 -> 333,84, also 3,47 Grad naeher an die
        Staerke) meldet "dark: minNb 26,16 < 29,63 — die Attributfarben
        ruecken zusammen" samt der sortierten Farbtonreihe;
+     - dasselbe mit dem kleinstmoeglichen Schritt, den die Abnahme dieses
+       Schritts nennt: #ee4897 liegt GENAU ein Grad naeher (330,37 ->
+       331,45, in Hex nicht feiner aufloesbar) und meldet in dark UND
+       contrast "minNb 28,55 < 29,63". Ein Grad reicht also — die Ratsche
+       ist so scharf, wie ihr Spielraum von 0,00 es verlangt;
      - das Token der Weisheit auf #808080 gesetzt meldet die Graustufe als
        eigenen, sprechenden Befund UND laesst den Rechner werfen — beides,
        weil die Ratsche gar nicht erst zu einer Zahl kommen soll;
