@@ -144,6 +144,7 @@ export default {
     "RARITIES": 'readonly',
     "RARITY_COLORS": 'readonly',
     "RARITY_LABELS": 'readonly',
+    "RARITY_TEXT_COLORS": 'readonly',
     "REISE_BEGEGNUNGS_TABELLEN": 'readonly',
     "REISE_GEL": 'readonly',
     "REISE_MAX_TAGE": 'writable',
