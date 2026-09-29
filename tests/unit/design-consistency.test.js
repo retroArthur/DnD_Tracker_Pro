@@ -3408,6 +3408,45 @@ describe('R-10 — rgba()-Zahlentripel ausserhalb der Schatten (Ratsche)', () =>
 
     const TRIPEL = /\brgba?\(\s*\d+\s*,\s*\d+\s*,\s*\d+/g;
 
+    /** Mutationsprobe fuer die Zerlegung SELBST, nicht fuer ihr Ergebnis.
+     *
+     *  Eine Deklaration ohne abschliessendes Semikolon ist gueltiges CSS,
+     *  wird von keinem Formatierer im Projekt erzwungen und ist damit genau
+     *  die Schreibweise, in der ein neu eingefuehrtes Literal an dieser
+     *  Ratsche vorbeikaeme. In assets/styles/*.css gibt es heute NULL solche
+     *  Stellen — die Luecke faellt also bei keinem Zaehllauf auf, sondern
+     *  erst beim Rueckfall, den die Ratsche verhindern soll, und dann nicht
+     *  mehr. Deshalb wird die Zerlegung hier gegen synthetische Eingaben
+     *  geprueft statt gegen den Quellbaum.
+     *
+     *  (d) ist die Gegenprobe: ein Selektor traegt mit `:hover` ebenfalls
+     *  einen Doppelpunkt und darf am schliessenden `}` NICHT als
+     *  Deklaration durchgehen. */
+    test('deklarationen() sieht auch die letzte Deklaration ohne Semikolon', () => {
+        const props = css => deklarationen(css).map(d => d.prop);
+        const werte = css => deklarationen(css).map(d => css.slice(d.von, d.bis).trim());
+
+        // (a) mit Semikolon — der Fall, den die Zerlegung schon immer sah
+        expect(props('.a { background: rgba(1, 2, 3, 0.5); }')).toEqual(['background']);
+
+        // (b) einzeilig, letzte Deklaration ohne Semikolon
+        expect(props('.a { background: rgba(4, 5, 6, 0.5) }')).toEqual(['background']);
+        expect(werte('.a { background: rgba(4, 5, 6, 0.5) }')).toEqual(['rgba(4, 5, 6, 0.5)']);
+
+        // (c) mehrzeilig, letzte Deklaration ohne Semikolon
+        expect(props('.a {\n    color: red;\n    background: rgba(7, 8, 9, 0.5)\n}')).toEqual([
+            'color',
+            'background'
+        ]);
+
+        // (d) keine Falschtreffer: leere Bloecke und Selektoren mit
+        //     Doppelpunkt liefern nichts, verschachtelte At-Regeln genau
+        //     ihre eine Deklaration
+        expect(props('.a { }')).toEqual([]);
+        expect(props('.a:hover { }')).toEqual([]);
+        expect(props('@media screen { .a:hover { color: red } }')).toEqual(['color']);
+    });
+
     test('kein rgba()-Zahlentripel ausser den begruendeten Ausnahmen', () => {
         const stellen = [];
         cssFiles.forEach(f => {
