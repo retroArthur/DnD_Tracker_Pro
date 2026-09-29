@@ -390,9 +390,9 @@ Gruppe E gerade nicht bewiesen ist. Sie sind **kein** erledigter Fall.
 | `party.css:2324` | `.condition-ref-header h3` | `--gold` | #191919 | #1e1e1e |
 | `tools.css:474` | `.rt-modal-header h3` | `--gold` | #191919 | #1e1e1e |
 | `tools.css:601` | `.rt-dice-label` | `--gold` | #191919 | #1e1e1e |
-| `tools.css:676` | `.generator-modal-header h3` | `--gold` | #191919 | #1e1e1e |
-| `tools.css:803` | `.ld-modal-header h3` | `--gold` | #191919 | #1e1e1e |
-| `tools.css:836` | `.ld-gold-label` | `--gold` | #191919 | #1e1e1e |
+| `tools.css:684` | `.generator-modal-header h3` | `--gold` | #191919 | #1e1e1e |
+| `tools.css:811` | `.ld-modal-header h3` | `--gold` | #191919 | #1e1e1e |
+| `tools.css:844` | `.ld-gold-label` | `--gold` | #191919 | #1e1e1e |
 
 ### Gruppe B — Verlauf als Traeger, 11 Stellen
 
@@ -460,7 +460,7 @@ Behebung in Runde 2** gedeckt, davor war sie es für eine der beiden Zeilen nich
 | `initiative.css:1158` | `.init-mob-alive.bloodied` | `--yellow` | GRAD:#0d0d0d | GRAD:#f5f5f5 |
 | `spells.css:92` | `.spell-info-line.classes` | `--cyan` | GRAD:#1a1a1a | GRAD:#ffffff |
 | `spells.css:93` | `.spell-info-line.school` | `--purple` | GRAD:#1a1a1a | GRAD:#ffffff |
-| `tools.css:851` | `.ld-split-amount` | `--gold` | GRAD:#191919 | GRAD:#1e1e1e |
+| `tools.css:859` | `.ld-split-amount` | `--gold` | GRAD:#191919 | GRAD:#1e1e1e |
 
 ### Gruppe C — Akzent- oder Toenungsflaeche, 10 Stellen
 
@@ -483,7 +483,7 @@ diese Tabelle führt.
 | `loot.css:300` | `.shop-cat-badge.all` | `--gold` | #d4af37 | #b8860b |
 | `party.css:821` | `.wiki-tree-item.pinned` | `--gold` | --bg-card · #2f233b | --bg-card · #f2e6fe |
 | `tools.css:586` | `.rt-dice-btn:hover` | `--gold` | --bg-dark · #d4af37 | --bg-dark · #b8860b |
-| `tools.css:629` | `.rt-hint-warn` | `--orange` | #2f2618 | #332a1c |
+| `tools.css:637` | `.rt-hint-warn` | `--orange` | #2f2618 | #332a1c |
 
 ### Gruppe D — zwei verschiedene Traeger fuer denselben Selektor, 5 Stellen
 
@@ -595,8 +595,8 @@ spells.css
 tools.css
   261  .timer-card-time
   455  .rt-result-label
- 1113  .breadcrumb-item:hover
- 1412  .sb-remove-btn:hover
+ 1138  .breadcrumb-item:hover
+ 1451  .sb-remove-btn:hover
 welt.css
    61  .wp-session-nr
   272  .wp-detail-header h3

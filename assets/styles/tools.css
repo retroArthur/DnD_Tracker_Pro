@@ -611,12 +611,20 @@
 }
 
 .rt-range-hint.complete {
-    background: rgba(45, 212, 191, 0.1);
+    /* Welle 2 Schritt 7: 45,212,191 ist palettenfremd; die Regel fuehrt
+       --teal (ein Alias auf --cyan) schon im Rahmen. Tinte geerbt var(--text):
+       9,48 · 13,48 · 8,31 · 13,05 -> 9,48 · 12,77 · 8,01 · 12,49. */
+    background: color-mix(in srgb, var(--teal) 10%, transparent);
     border: 1px solid var(--teal);
 }
 
 .rt-range-hint.incomplete {
-    background: rgba(245, 158, 11, 0.1);
+    /* 245,158,11 traf --attr-con in Dark und Contrast und --know-history;
+       nach dem Zweck ist es keins davon, sondern die Orangerolle des eigenen
+       Rahmens (R-12). 9,69 · 13,40 · 8,30 · 13,34 -> 9,75 · 12,76 · 7,80 ·
+       13,69. Die dritte Regel dieser Gruppe (.empty) steht seit Schritt 3
+       schon auf var(--overlay-weak). */
+    background: color-mix(in srgb, var(--orange) 10%, transparent);
     border: 1px solid var(--orange);
 }
 
@@ -1062,9 +1070,26 @@
     transition: all 0.2s;
 }
 
+/* ENTSCHEIDUNG E1, die sechs Goldstellen dieser Datei (Welle 2 Schritt 7).
+   255,215,0 ist MEHRDEUTIG: es ist --coin-gm in allen vier Themes UND --gold
+   im Contrast-Theme. Alle sechs Stellen sind Bedienoberflaeche —
+   Schnellzugriff-Kachel, ausgewaehlter Suchtreffer, Trefferhervorhebung,
+   Inhaltsverzeichnis (Hover und aktiv), Verknuepfungsvorschlag — und keine
+   davon zeigt eine Muenze an. Sie stehen deshalb auf var(--gold), der
+   Akzentrolle, die vier von ihnen als Rahmen oder Tinte schon fuehren.
+   Ausserhalb des Contrast-Themes ist das eine sichtbare Aenderung: das
+   grelle Muenzgold weicht dem waermeren Akzentgold. Gemessen dort, wo eine
+   Tinte auf der Toenung liegt (min ueber die drei neutralen
+   Traegerflaechen, dark light sepia contrast):
+     :hover/Treffer/Vorschlag, Tinte geerbt var(--text)
+       9,07 · 13,87 · 8,66 · 12,51  ->  9,55 · 12,97 · 7,64 · 12,51
+     .toc-item.active, Tinte var(--gold)
+       4,96 ·  2,56 · 5,52 ·  7,78  ->  5,41 ·  2,32 · 4,56 ·  7,78
+   Die Trefferhervorhebung .search-result-preview mark hat dabei zusaetzlich
+   ihre Tinte gewechselt — Begruendung dort. */
 .quick-access-item:hover {
     border-color: var(--gold);
-    background: rgba(255, 215, 0, 0.1);
+    background: color-mix(in srgb, var(--gold) 10%, transparent);
 }
 
 .quick-access-item.recent {
@@ -1148,7 +1173,7 @@
 
 .search-result-item:hover,
 .search-result-item.selected {
-    background: rgba(255, 215, 0, 0.1);
+    background: color-mix(in srgb, var(--gold) 10%, transparent);
 }
 
 .search-result-item:last-child {
@@ -1185,8 +1210,22 @@
 }
 
 .search-result-preview mark {
-    background: rgba(255, 215, 0, 0.3);
-    color: var(--gold);
+    /* E1 wie die fuenf Geschwister — hier mit einem zweiten Schritt. Gold auf
+       Gold hielt an dieser Stelle nur in Sepia, und zwar aus Versehen: das
+       grelle Muenzgold der Flaeche und das braune Sepia-Gold der Tinte
+       lagen weit auseinander. Auf der Akzentrolle faellt dieser Zufall weg
+       (5,40 -> 3,62). Eine Trefferhervorhebung ist aber Fliesstext, kein
+       Akzent — ihre Tinte ist die Textfarbe. Gemessen, vorher -> nachher:
+         var(--gold) auf Muenzgold 30 %   3,28 ·  2,51 · 5,40 · 5,07
+         var(--gold) auf --gold 30 %      3,90 ·  2,03 · 3,62 · 5,07
+         var(--gold-text) auf --gold 30 % 3,90 ·  3,88 · 3,62 · 5,07
+         var(--text) auf --gold 30 %      6,22 · 10,84 · 5,63 · 7,12   <- gewaehlt
+       Damit haelt die Regel erstmals in ALLEN vier Themes; vorher fiel sie in
+       dreien durch. Sie verlaesst dadurch die D-4-Klasse (Rollentext auf
+       Toenung derselben Rolle) — E2 haette sie mit var(--gold-text) nicht
+       gerettet, das zeigt die dritte Zeile. */
+    background: color-mix(in srgb, var(--gold) 30%, transparent);
+    color: var(--text);
     padding: 0 2px;
     border-radius: var(--radius-sm);
 }
@@ -1264,12 +1303,12 @@
 }
 
 .toc-item:hover {
-    background: rgba(255, 215, 0, 0.1);
+    background: color-mix(in srgb, var(--gold) 10%, transparent);
     color: var(--text);
 }
 
 .toc-item.active {
-    background: rgba(255, 215, 0, 0.15);
+    background: color-mix(in srgb, var(--gold) 15%, transparent);
     color: var(--gold);
     border-left: 2px solid var(--gold);
 }
@@ -1311,7 +1350,7 @@
 
 .link-suggestion:hover,
 .link-suggestion.selected {
-    background: rgba(255, 215, 0, 0.15);
+    background: color-mix(in srgb, var(--gold) 15%, transparent);
 }
 
 .link-suggestion-icon {
@@ -1529,7 +1568,14 @@
 
 .sb-progress {
     height: 4px;
-    background: rgba(127, 127, 127, 0.25);
+    /* Welle 2 Schritt 7: 127,127,127 kommt in keinem Theme und keiner Skala
+       vor — ein Mittelgrau als Laufschiene. Die neutrale Rolle dieses
+       Projekts ist --border, und sie trifft den heutigen Eindruck fast
+       genau: 25 % von 127,127,127 ueber --bg-card ergibt in Dark #353535,
+       --border ist dort #3a3a3a. Deckend statt getoent, weil eine Schiene
+       keine Toenung ist, sondern eine Flaeche; die Fuellung darueber traegt
+       var(--gold). */
+    background: var(--border);
     border-radius: 999px;
     overflow: hidden;
 }
