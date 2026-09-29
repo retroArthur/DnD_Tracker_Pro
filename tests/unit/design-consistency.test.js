@@ -2062,44 +2062,119 @@ describe('R-04 — jede Regel haelt 4,5 auf ihrer EIGENEN Flaeche (Ratsche)', ()
     const TOENUNGSFLAECHE =
         /^color-mix\(\s*in\s+srgb\s*,\s*var\(\s*(--[\w-]+)\s*\)\s+[\s\S]+,\s*transparent\s*\)$/i;
 
+    /* ------------------------------------------------------------------
+       EINE TOENUNG BLEIBT EINE TOENUNG, AUCH ALS VERLAUFSSTOPP
+       (Pruefung W2-D Runde 1, Befund 1/2/4).
+
+       Die Anker `^…$` von TOENUNGSFLAECHE verlangen, dass die GANZE
+       Deklaration die Toenung ist. Steht dieselbe Toenung als Stopp in
+       einem `linear-gradient(…)`, faellt die Regel heraus — vor jeder
+       Rechnung, genau wie vor Schritt 8 die Toenung selbst herausfiel.
+
+       DASS DAS KEINE THEORIE IST, hat die Pruefung an zwei Stellen belegt:
+       `spells.css .spell-note` traegt var(--gold) auf einem 10-%-Gelbstopp
+       und misst in Light 2,45 — der Zwilling derselben Datei
+       (`.editor-btn:hover`, gleiche Rolle, gleiche Staerke, gleicher
+       Ausgangswert) ist in Schritt 15 behoben worden, diese Regel acht
+       Zeilen davor nicht, weil kein Test sie nannte. Und die einzige
+       Ratsche ueber `.concentration-badge` ist in Schritt 8 mit der
+       Begruendung entfernt worden, R-04 urteile jetzt an derselben Stelle
+       haerter — was fuer die drei anderen Eintraege stimmte, fuer diese
+       eine aber nicht: ihre Flaeche ist ein Verlauf. Seit dieser
+       Erweiterung stimmt es fuer alle vier.
+
+       GEURTEILT WIRD JEDER ROLLEN-TOENUNGSSTOPP EINZELN, und die Regel
+       bekommt den schlechtesten davon — ein Verlauf malt jeden seiner
+       Stopps, also muss jeder tragen.
+
+       WAS SIE WEITERHIN NICHT SIEHT, und das ist eine Grenze und kein
+       Versehen: DECKENDE Verlaufsstopps (`linear-gradient(…, var(--red),
+       var(--red-dark))`). Sie sind eine andere Bauart — unter einem
+       deckenden Stopp liegt keine Traegerflaeche, die Rechnung braucht
+       also nicht das Minimum ueber drei Flaechen, sondern den Stopp
+       selbst. Im Baum sind es 10 Regeln (3x Rot-Verlauf mit
+       var(--ink-on-dark), 7x Vorlese-Papier); gemessen halten die sieben
+       Papierregeln 7,13-11,87 in allen vier Themes. Gefuehrt als offener
+       Punkt W2-D-04. */
+
+    /** Alle `color-mix(…)`-Teilausdruecke eines Werts, klammergenau
+     *  abgegrenzt. Eine Regex mit `[^)]*` waere hier falsch: der Anteil
+     *  `min(20%, var(--tint-max))` bringt seit Schritt 8 eigene Klammern
+     *  UND ein eigenes Komma mit. */
+    function mixAusdruecke(wert) {
+        const out = [];
+        const re = /color-mix\s*\(/gi;
+        let m;
+        while ((m = re.exec(wert))) {
+            let tiefe = 0;
+            let i = m.index + m[0].length - 1;
+            for (; i < wert.length; i++) {
+                if (wert[i] === '(') tiefe++;
+                else if (wert[i] === ')') {
+                    tiefe--;
+                    if (!tiefe) break;
+                }
+            }
+            if (tiefe === 0) out.push(wert.slice(m.index, i + 1));
+        }
+        return out;
+    }
+
     function ruheRegeln() {
         const out = [];
         cssFiles.forEach(f => {
             if (f.name === 'variables.css' || f.name === 'fonts.css') return;
             regelnMitRumpf(f.content).forEach(r => {
-                const flaeche = deklaration(r.rumpf, 'background(?:-color)?');
+                const roh = deklaration(r.rumpf, 'background(?:-color)?');
                 const tinte = deklaration(r.rumpf, 'color');
-                if (!flaeche || !tinte) return;
+                if (!roh || !tinte) return;
+                // Mehrzeilige Verlaeufe lesbar halten — die Zeichenfolge steht
+                // in jeder Befundmeldung.
+                const flaeche = roh.replace(/\s+/g, ' ');
                 const voll = flaeche.match(/^var\((--[\w-]+)\)$/);
                 const toenung = voll ? null : flaeche.match(TOENUNGSFLAECHE);
                 const rolle = voll ? voll[1] : toenung ? toenung[1] : null;
-                if (!rolle || NEUTRAL.test(rolle)) return;
-                out.push({ ...r, datei: f.name, flaeche, tinte, toenung: Boolean(toenung) });
+                if (rolle) {
+                    if (NEUTRAL.test(rolle)) return;
+                    out.push({ ...r, datei: f.name, flaeche, tinte, stopps: null });
+                    return;
+                }
+                // Verlauf: jede Rollen-Toenung darin zaehlt einzeln.
+                const stopps = mixAusdruecke(flaeche).filter(x => {
+                    const m = x.match(TOENUNGSFLAECHE);
+                    return m && !NEUTRAL.test(m[1]);
+                });
+                if (!stopps.length) return;
+                out.push({ ...r, datei: f.name, flaeche, tinte, stopps });
             });
         });
         return out;
     }
 
     /** Das schlechteste Verhaeltnis EINER Regel in EINEM Theme.
-     *  Volle Flaeche: eine Zahl. Toenung: das Minimum ueber die drei Traeger. */
+     *  Volle Flaeche: eine Zahl. Toenung: das Minimum ueber die drei Traeger.
+     *  Verlauf: dasselbe, zusaetzlich ueber alle Rollenstopps minimiert. */
     function verhaeltnis(regel, p) {
         const tinte = WCAG.resolve(regel.tinte, p);
         if (!tinte) return { fehlt: regel.tinte };
-        if (!regel.toenung) {
+        if (!regel.stopps && /^var\(--[\w-]+\)$/.test(regel.flaeche)) {
             const grund = WCAG.resolve(regel.flaeche, p);
             if (!grund) return { fehlt: regel.flaeche };
             return { wert: WCAG.ratio2(tinte, grund) };
         }
+        const flaechen = regel.stopps || [regel.flaeche];
         let min = Infinity;
         let fehlt = null;
-        TOENUNGS_TRAEGER.forEach(s => {
-            const grund = WCAG.resolve(`var(${s})`, p);
-            const feld = grund ? WCAG.resolveOver(regel.flaeche, p, grund) : null;
-            if (!feld) {
-                fehlt = fehlt || `${regel.flaeche} ueber ${s}`;
-                return;
-            }
-            min = Math.min(min, WCAG.ratio(tinte, feld));
+        flaechen.forEach(fl => {
+            TOENUNGS_TRAEGER.forEach(s => {
+                const grund = WCAG.resolve(`var(${s})`, p);
+                const feld = grund ? WCAG.resolveOver(fl, p, grund) : null;
+                if (!feld) {
+                    fehlt = fehlt || `${fl} ueber ${s}`;
+                    return;
+                }
+                min = Math.min(min, WCAG.ratio(tinte, feld));
+            });
         });
         if (fehlt) return { fehlt };
         return { wert: Number(min.toFixed(2)) };
@@ -2194,6 +2269,24 @@ describe('R-04 — jede Regel haelt 4,5 auf ihrer EIGENEN Flaeche (Ratsche)', ()
                 'welt.css .fr-ruf-btn-plus'
             ])
         );
+    });
+
+    /** DIE BEIDEN VERLAUFSREGELN NAMENTLICH (Pruefung W2-D Runde 1). Es sind
+     *  im Baum genau zwei Regeln, die ihre Toenung als Verlaufsstopp fuehren
+     *  UND eine eigene Tinte setzen; beide waren bis zu dieser Erweiterung
+     *  unsichtbar. `.concentration-badge` ist dabei der Beleg fuer den
+     *  zweiten Befund der Runde: die Begruendung, mit der Schritt 8 ihre
+     *  einzige Ratsche entfernt hat ("dieselbe Schwelle an derselben Stelle,
+     *  nur haerter"), wird erst durch diesen Test wahr. Wer die Siebung
+     *  wieder auf `^color-mix(…)$` verengt, macht ihn rot statt still. */
+    test('die beiden Toenungen IM VERLAUF stehen namentlich unter Aufsicht', () => {
+        const mitStopps = ruheRegeln().filter(r => r.stopps);
+        expect(mitStopps.map(r => `${r.datei} ${r.sel}`).sort()).toEqual([
+            'initiative.css .concentration-badge',
+            'spells.css .spell-note'
+        ]);
+        // Und jede von ihnen fuehrt wirklich Stopps, nicht eine leere Liste.
+        mitStopps.forEach(r => expect(r.stopps.length).toBeGreaterThanOrEqual(1));
     });
 
     /** Die Aktenlage-Ratsche, wie sie R-02 fuer ATTR_HOVER_AUSNAHME schon
