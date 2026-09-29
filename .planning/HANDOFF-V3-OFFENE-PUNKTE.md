@@ -9,6 +9,24 @@ Die Einträge sind teilweise durch eine Ratsche gesichert: `tests/unit/design-co
 wenn eine hier geführte Zeile verschwindet, wenn ein Wert auseinanderläuft oder wenn eine Zeile
 zur Altlast wird. Ein offener Punkt kann also nicht durch Vergessen verschwinden.
 
+**Die 124 Zeilenanker `datei.css:ZEILE` in W1-D-01 werden ab dem 2026-09-29 nicht mehr von Hand
+nachgezählt.** `R-06` prüft sie gegen die echten `color: var(--x)`-Deklarationen, und jede in
+eine der 14 geführten CSS-Dateien eingefügte oder aus ihr entfernte Zeile verschiebt sie — auch
+ein reiner Kommentar-Commit. Welle 2 fasst genau diese Dateien an. Das Werkzeug dazu:
+
+```bash
+node tools/sync-aktenlage-anker.js --check   # meldet Abweichungen, Exit 1
+node tools/sync-aktenlage-anker.js --write   # zieht sie nach
+```
+
+Es benutzt zeichengleich dieselbe Zerlegung wie R-06 und löst zusätzlich `Selektor + Rolle →
+Zeile` rückwärts auf; mehrdeutige oder verschwundene Stellen zieht es **nicht** stillschweigend
+nach, sondern meldet sie. Es läuft am Ende jedes Welle-2-Schritts.
+
+Die rgba-Literale im Komponenten-CSS bewacht seit dem 2026-09-29 die Ratsche **R-10** in
+derselben Testdatei (Ausgangswert 247 Stellen außerhalb jeder Schattendeklaration, Ziel 0 plus
+eine begründete Ausnahmeliste; die Liste ist bei ihrer Geburt absichtlich leer).
+
 ---
 
 ## W1-B-01 — Vier Attributkürzel fallen in Dark und Contrast beim Überfahren der Zeile unter 4,5
