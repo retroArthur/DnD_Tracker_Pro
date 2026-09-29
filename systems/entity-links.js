@@ -275,16 +275,24 @@ function showEntityPreviewModal(type, id, entity) {
     const EntityLookup = window.EntityLookup;
     let content = '';
     if (type === 'quests') {
+        /* Die Abbildung fuehrt ROLLENNAMEN, nicht fertige Farbwerte (Welle 2
+           Schritt 10, Bauform aus D-7/R-09). Nur so kann die Vorlage darunter
+           zu jeder Flaeche die passende Tinte bilden. Bis hierher stand hier
+           `var(--gelb)` usw. und darunter pauschal `color: var(--bg-dark)` —
+           in Dark fast schwarz und richtig, in Light #f5f5f5 und in Sepia
+           #f4e4c1, also fast weiss auf einer hellen Pille: gemessen
+           2,51-4,43. Mit var(--on-<rolle>) sind es 4,63-17,58. */
         const statusColors = {
-            offen: 'var(--yellow)',
-            aktiv: 'var(--green)',
-            abgeschlossen: 'var(--cyan)',
-            fehlgeschlagen: 'var(--red)'
+            offen: 'yellow',
+            aktiv: 'green',
+            abgeschlossen: 'cyan',
+            fehlgeschlagen: 'red'
         };
         const status = entity.status || 'offen';
+        const statusRolle = statusColors[status] || statusColors.offen;
         content = `
             <div style="margin-bottom: 12px;">
-                <span style="background: ${statusColors[status]}; color: var(--bg-dark); padding: 2px 8px; border-radius: 10px; font-size: 0.8em; font-weight: 600;">${status.toUpperCase()}</span>
+                <span style="background: var(--${statusRolle}); color: var(--on-${statusRolle}); padding: 2px 8px; border-radius: 10px; font-size: 0.8em; font-weight: 600;">${status.toUpperCase()}</span>
             </div>
             ${entity.description ? `<div style="color: var(--text); margin-bottom: 10px;">${sanitizeHTML(entity.description)}</div>` : ''}
             ${entity.reward ? `<div style="color: var(--gold); font-size: 0.9em;">💰 ${esc(entity.reward)}</div>` : ''}
@@ -312,10 +320,14 @@ function showEntityPreviewModal(type, id, entity) {
         `;
     } else if (type === 'spells') {
         const levelText = entity.level === 0 ? 'Zaubertrick' : `Grad ${entity.level}`;
+        /* Die zwei Pillen darunter tragen volle Akzentflaechen, also die Tinte
+           der jeweiligen Rolle (Welle 2 Schritt 10). Vorher stand dort
+           pauschal var(--bg-dark): die Zaubergrad-Pille erreichte in Sepia
+           2,93, die Schul-Pille 4,02. Jetzt 4,97-7,43 bzw. 5,05-6,94. */
         content = `
             <div style="margin-bottom: 8px;">
-                <span style="background: var(--blue); color: var(--bg-dark); padding: 2px 8px; border-radius: 10px; font-size: 0.8em;">${levelText}</span>
-                ${entity.school ? `<span style="background: var(--purple); color: var(--bg-dark); padding: 2px 8px; border-radius: 10px; font-size: 0.8em; margin-left: 4px;">${esc(entity.school)}</span>` : ''}
+                <span style="background: var(--blue); color: var(--on-blue); padding: 2px 8px; border-radius: 10px; font-size: 0.8em;">${levelText}</span>
+                ${entity.school ? `<span style="background: var(--purple); color: var(--on-purple); padding: 2px 8px; border-radius: 10px; font-size: 0.8em; margin-left: 4px;">${esc(entity.school)}</span>` : ''}
             </div>
             ${entity.castingTime ? `<div style="font-size: 0.85em;"><span style="color: var(--text-dim);">Zeitaufwand:</span> ${esc(entity.castingTime)}</div>` : ''}
             ${entity.range ? `<div style="font-size: 0.85em;"><span style="color: var(--text-dim);">Reichweite:</span> ${esc(entity.range)}</div>` : ''}
