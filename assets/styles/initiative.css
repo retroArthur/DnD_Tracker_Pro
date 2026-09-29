@@ -55,7 +55,7 @@
         }
 
         .bf-tag.lair {
-            background: rgba(239, 68, 68, 0.2);
+            background: color-mix(in srgb, var(--red) 20%, transparent);
             border: 1px solid var(--red);
             color: var(--red);
         }
@@ -85,13 +85,13 @@
         .bf-clear:hover {
             border-color: var(--red);
             color: var(--red);
-            background: rgba(239, 68, 68, 0.1);
+            background: color-mix(in srgb, var(--red) 10%, transparent);
         }
 
         /* Lair Action Entry in Initiative */
         .init-entry.lair {
             border-left: 3px solid var(--red);
-            background: linear-gradient(90deg, rgba(239, 68, 68, 0.1) 0%, var(--bg-card) 100%);
+            background: linear-gradient(90deg, color-mix(in srgb, var(--red) 10%, transparent) 0%, var(--bg-card) 100%);
         }
 
         .init-entry.lair .init-name {
@@ -114,7 +114,7 @@
         
         .init-entry.active {
             border-color: var(--gold);
-            background: linear-gradient(90deg, rgba(212,175,55,0.1) 0%, var(--bg-card) 100%);
+            background: linear-gradient(90deg, color-mix(in srgb, var(--gold) 10%, transparent) 0%, var(--bg-card) 100%);
         }
         
         .init-entry.enemy { border-left: 3px solid var(--red); }
@@ -144,7 +144,7 @@
             font-weight: 600;
             color: var(--cyan);
             text-align: center;
-            background: rgba(126, 196, 207, 0.15);
+            background: color-mix(in srgb, var(--cyan) 15%, transparent);
             padding: 4px 6px;
             border-radius: var(--radius-sm);
             display: flex;
@@ -259,7 +259,7 @@
             align-items: center;
             gap: 10px;
             padding: 6px 10px;
-            background: rgba(239, 68, 68, 0.15);
+            background: color-mix(in srgb, var(--red) 15%, transparent);
             border: 1px solid var(--red);
             border-radius: var(--radius-md);
             margin-top: 6px;
@@ -376,7 +376,7 @@
             color: var(--red);
             font-weight: 700;
             padding: 2px 6px;
-            background: rgba(239, 68, 68, 0.2);
+            background: color-mix(in srgb, var(--red) 20%, transparent);
             border-radius: var(--radius-sm);
             margin-left: 4px;
         }
@@ -412,7 +412,7 @@
             align-items: center;
             gap: 10px;
             padding: 8px 12px;
-            background: linear-gradient(135deg, rgba(234, 179, 8, 0.15) 0%, rgba(147, 51, 234, 0.15) 100%);
+            background: linear-gradient(135deg, color-mix(in srgb, var(--dmg-lightning) 15%, transparent) 0%, rgba(147, 51, 234, 0.15) 100%);
             border: 1px solid var(--gold);
             border-radius: var(--radius-md);
             margin-top: 6px;
@@ -573,7 +573,7 @@
         }
 
         .aoe-target.selected {
-            background: rgba(239, 68, 68, 0.1);
+            background: color-mix(in srgb, var(--red) 10%, transparent);
         }
 
         .aoe-target-checkbox {
@@ -736,12 +736,12 @@
         }
 
         .npc-relation-status.neutral {
-            background: rgba(156, 163, 175, 0.2);
+            background: color-mix(in srgb, var(--dmg-necrotic-text) 20%, transparent);
             color: var(--text);
         }
 
         .npc-relation-status.hostile {
-            background: rgba(239, 68, 68, 0.2);
+            background: color-mix(in srgb, var(--red) 20%, transparent);
             color: var(--red);
         }
 
@@ -1088,7 +1088,7 @@
 .lr-reset-btn:hover {
     border-color: var(--purple);
     color: var(--purple);
-    background: rgba(167, 139, 250, 0.1);
+    background: color-mix(in srgb, var(--purple) 10%, transparent);
 }
 
 /* ========================================
@@ -1210,7 +1210,7 @@
 .init-mob-dissolve-btn:hover {
     border-color: var(--red);
     color: var(--red);
-    background: rgba(239, 68, 68, 0.1);
+    background: color-mix(in srgb, var(--red) 10%, transparent);
 }
 
 .init-mob-defeated-badge {
