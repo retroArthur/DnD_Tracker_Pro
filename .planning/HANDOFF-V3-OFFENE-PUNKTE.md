@@ -1406,3 +1406,61 @@ cd /d/Claude_Code/Projekte/DnD_Tracker_App_Pro
 PYTHONIOENCODING=utf-8 python build.py
 # dist/dnd-tracker-bundled.html öffnen, Theme im Kopf umschalten
 ```
+
+---
+
+## W2-C-05 — Der Computed-Style-Sollstand (D-24) ist seit den Tönungsschritten rot; die Playwright-Suite ist es damit auch
+
+**Stand:** 2026-09-29, Prüfung W2-C Runde 1. Offen für Schritt 11. Nicht von dieser Prüfeinheit
+verursacht.
+
+### Worum es geht
+
+`tests/e2e/features/computed-style-diff.spec.js` vergleicht die berechneten Stile gegen den
+versionierten Sollstand `tests/e2e/baselines/computed-style-baseline.json`. Die Tönungsschritte
+dieser Welle (4–7) ändern berechnete Hintergründe — genau das, wogegen der Wächter steht —, und der
+Sollstand ist seither nicht nachgezogen worden. Der Lauf meldet **acht** abweichende Schlüssel:
+
+```
+party/button.char-action-btn.primary#0        initiative/div.init-ac#0
+shops/button.si-cart-btn#0                    shops/span.shop-item-count#0
+data/div.active.campaign-item#0               dmscreen/div.active.dms-init-entry.healthy#0
+dicestats/span.ds-crit.ds-rate-chip#0         dicestats/span.ds-fumble.ds-rate-chip#0
+```
+
+Weil der Block `test.describe.configure({ mode: 'serial' })` führt, zieht der eine rote Test die
+beiden folgenden („Schmales Layout", „Emulierte reduzierte Bewegung") mit: **1 failed, 2 did not
+run**. Die volle Suite steht damit bei 378 passed / 1 failed / 7 skipped / 2 did not run statt der
+in der Auftragslage genannten 381 / 0 / 7.
+
+### Beleg, dass es nicht aus dieser Prüfeinheit stammt
+
+Gegenprobe im Arbeitsbaum: `git checkout 34e8408 -- assets/styles`, neu gebaut, derselbe Lauf —
+**dieselben acht Schlüssel, derselbe eine Fehlschlag**. Keiner der acht Selektoren wird vom Diff
+dieser Einheit berührt (`git diff 34e8408..HEAD -- assets/styles` enthält keinen davon). Die
+Einheit fügt dem Befund also **null** neue Schlüssel hinzu. Die Basiswerte der Auftragslage sind an
+`ba3d3c2` gemessen, nicht an `34e8408`.
+
+### Was zu tun ist, und von wem
+
+Die Datei gehört ausdrücklich zu **Schritt 11** („Sollstand nachziehen"). Zwei Wege sieht der
+Wächter selbst vor, und die Wahl gehört zu diesem Schritt, nicht hierher:
+
+- `UPDATE_STYLE_BASELINE=1 npx playwright test tests/e2e/features/computed-style-diff.spec.js`
+  erhebt den Sollstand bewusst neu — **erst**, wenn alle Stiländerungen der Welle stehen, sonst
+  friert er einen Zwischenstand ein und verschluckt die Abweichungen der Schritte 8–10.
+- `EXPECTED_DEVIATION_KEYS` in der Spec nimmt die acht Schlüssel für die Dauer der Welle auf. Der
+  Kommentar dort verlangt die Nennung des Plans und das Leeren danach; eine Liste, die nichts mehr
+  ausnimmt, wäre eine stille Freigabe.
+
+Solange keiner der beiden Wege gegangen ist, ist **jeder** Playwright-Vollauf dieser Welle rot, und
+zwar an genau dieser einen Stelle. Wer eine andere Zahl meldet, hat entweder den Sollstand
+angefasst oder die Suite nicht vollständig gefahren.
+
+### Befehle
+
+```bash
+cd /d/Claude_Code/Projekte/DnD_Tracker_App_Pro
+PYTHONIOENCODING=utf-8 python build.py
+npx playwright test tests/e2e/features/computed-style-diff.spec.js
+```
