@@ -1351,6 +1351,17 @@ npx jest tests/unit/design-consistency.test.js -t "kein rgba"
 
 ---
 
+### Nachtrag 2026-09-29 (Schritt 10): die Frage ist größer als der Fließtext
+
+Schritt 10 hat beim Nachsehen der Trägerflächen festgestellt, dass auch die **Verweis-Vorschau**
+(`systems/entity-links.js`) auf dieser Fläche liegt — samt einer zweiten, abweichenden
+Seltenheitstabelle. Dort ist zusätzlich **gemessen**, dass die naheliegende Abhilfe genau falsch
+herum wäre: `--<rolle>-text` ist in Light und Sepia die abgedunkelte Fassung und fällt auf dieser
+dunklen Fläche von 2,93–5,25 auf 2,65–2,72. Die Zahlen und die Doppelführung stehen in **W2-E-02**.
+Wer diesen Punkt entscheidet, entscheidet den dort mit.
+
+---
+
 ## W2-C-02 — Vier Regeln fallen durch Schritt 7 in **Dark** unter 4,5; alle vier sind D-4-Stellen
 
 **Status: GESCHLOSSEN am 2026-09-29 durch Welle 2, Schritt 8.** Alle vier halten jetzt 4,5 in
@@ -1555,6 +1566,15 @@ PYTHONIOENCODING=utf-8 python build.py
 ```
 
 ---
+
+### Nachtrag Schritte 9 und 10 (2026-09-29) — vier sichtbare Stellen, eine davon in allen Themes
+
+| Stelle | Was sich ändert | Sichtbar in |
+| ------ | --------------- | ----------- |
+| `dashboard.css` `.qref-row:hover` | **E3.** Die Zeile der Schnellreferenz füllt sich beim Überfahren nicht mehr (`--bg-hover`), sondern bekommt einen Umriss (1px `--gold-dim`). **Das ist die einzige Stelle dieser beiden Schritte, die in allen vier Themes anders aussieht.** Der Gewinn: die vier Attributkürzel, die dort in Dark und Contrast auf 3,16–3,58 fielen, liegen jetzt bei 4,52–8,79. Zu prüfen ist nur eines: **ist der Umriss als Hover-Rückmeldung erkennbar, und verwechselt man ihn nicht mit dem Tastaturfokus** (der ist 2px `--gold`). | alle vier |
+| `party.css` Ereignis-Log, vier Tinten | **E6.** Meldung, Titel, Knöpfe und Zeitstempel bekommen themenblinde Tinte. In **Dark und Contrast praktisch unverändert** (13,86 → 15,02 usw.); in **Light und Sepia** wird die Anzeige überhaupt erst lesbar (vorher 1,05–3,21). Zu prüfen: dass die Blende selbst unverändert dunkel wirkt und die farbigen Randstreifen ihren Ton behalten. | light, sepia (stark) |
+| Schatzkammer, Seltenheitsfarben als Schrift | Gegenstandsname, Detailüberschrift und Zuweisungsliste. In **Dark und Contrast unverändert**; in **Light und Sepia** werden die fünf Töne deutlich dunkler (bis 4,5 auf der schlechtesten Trägerfläche). Zu prüfen: dass die fünf Stufen dort **untereinander** noch unterscheidbar sind — sie liegen nach der Abdunklung enger beieinander als im Dark-Theme. | light, sepia |
+| Seltenheitsmarke, Verfolgen-Knopf, drei Pillen der Verweis-Vorschau | Tinte auf voller Akzentfläche: `var(--bg-dark)` → `var(--on-<rolle>)` bzw. `var(--on-rarity)`. In **Light und Sepia** von fast weiß auf fast schwarz — der eigentliche Zweck. In **Dark und Contrast** ein kaum merklicher Rückgang (z. B. 9,24 → 8,98), weil `--on-gold` #111111 ist und `--bg-dark` dort noch dunkler. | light, sepia (stark) |
 
 ## W2-C-05 — Der Computed-Style-Sollstand (D-24) ist seit den Tönungsschritten rot; die Playwright-Suite ist es damit auch
 
@@ -1956,3 +1976,179 @@ grep -n "setzt eigene Tinte" -B 2 tests/unit/design-consistency.test.js
 # Die Einschraenkung im R-04-Block:
 grep -n "WORAUF SICH DIE ZAHL 128" -A 12 tests/unit/design-consistency.test.js
 ```
+
+---
+
+## W2-E-01 — Die Ruf-Leiste der Fraktionen baut einen ungültigen Farbwert und hat es immer getan
+
+**Status: DOKUMENTIERT, nicht repariert.** Aufgenommen am 2026-09-29, Welle 2 Schritt 10.
+So vom Plan verlangt („Nur dokumentieren, nicht reparieren").
+
+### Worum es geht
+
+`features/fraktionen/fraktionen-render.js` baut die Statusleiste der Rufstufe so:
+
+```js
+style="background:' + stufe.farbe + '22; border-left: 3px solid ' + stufe.farbe + '"
+```
+
+Das angehängte `22` soll eine 13-%-Tönung erzeugen. Diese Schreibweise (Alpha als zwei
+zusätzliche Hexziffern) funktioniert **nur mit einem Hex-Literal**. `stufe.farbe` ist aber eine
+`var()`-Referenz aus `FRAKTIONS_RUF_STUFEN` derselben Datei (fünf Stufen, alle mit Rollentokens).
+Nach der Ersetzung stehen an der Stelle zwei getrennte Bestandteile; der Wert ist zur
+Berechnungszeit ungültig, und die **ganze** `background`-Deklaration entfällt.
+
+`.fr-ruf-statusbar` in `assets/styles/welt.css` setzt selbst keinen Hintergrund. Die beabsichtigte
+Tönung erscheint also **in keinem Theme** und hat es nie getan. Es wirkt nur der linke Rand.
+
+### Warum das nicht in dieser Welle repariert wird
+
+Es ist kein Kontrastbefund — es fehlt eine Fläche, die nie da war. Sie erscheinen zu lassen wäre
+eine **Sichtänderung ohne Entscheidung**, und die Fragen dahinter sind Gestaltungsfragen: welche
+Stärke (der Tönungsdeckel aus E2 gilt für Flächen unter Schrift, und diese hier trägt Schrift),
+und ob die Leiste überhaupt eine Fläche bekommen soll, nachdem sie seit jeher ohne auskommt.
+
+Die Stelle trägt die Begründung jetzt im Klartext, damit sie nicht ein drittes Mal als „sieht
+umgesetzt aus" durchgeht.
+
+### Befehle
+
+```bash
+cd /d/Claude_Code/Projekte/DnD_Tracker_App_Pro
+grep -n "fr-ruf-statusbar" features/fraktionen/fraktionen-render.js assets/styles/welt.css
+grep -n "FRAKTIONS_RUF_STUFEN" -A 8 features/fraktionen/fraktionen-render.js
+```
+
+---
+
+## W2-E-02 — Die Verweis-Vorschau liegt auf `.modal`; ihre Tinten gehören zu W2-C-01, nicht zu Schritt 10
+
+**Status: OFFEN, gehört zu W2-C-01.** Aufgenommen am 2026-09-29, Welle 2 Schritt 10.
+
+### Worum es geht
+
+Schritt 10 stellt drei Stellen in `systems/entity-links.js` um (Status-Pille, Zaubergrad-Pille,
+Schul-Pille). Alle drei setzen eine **eigene deckende Akzentfläche** und sind damit unabhängig von
+ihrem Behälter — die Umstellung auf `var(--on-<rolle>)` ist dort richtig und gemessen.
+
+Beim Nachsehen der Trägerfläche ist aufgefallen, dass **der Rest derselben Vorschau** es nicht ist.
+Das Vorschaufenster wird in derselben Datei erzeugt und trägt `class="modal"` — also
+`rgba(26, 26, 26, 0.95)`, die dunkle Fläche aus **W2-C-01**. Alle Fließtextzeilen der Vorschau
+(Beschreibung, Belohnung, Rolle, Ort, Zeitaufwand, Reichweite, Dauer …) liegen darauf.
+
+Dazu gehört eine **zweite Seltenheitstabelle** in derselben Datei, mit anderen Schlüsseln
+(`very-rare`, `artifact` statt `veryrare`, `legendary`) und Rollentokens statt der Skala:
+
+```js
+const rarityColors = { common: 'var(--text)', uncommon: 'var(--green)', rare: 'var(--blue)',
+                       'very-rare': 'var(--purple)', legendary: 'var(--gold)', artifact: 'var(--red)' };
+```
+
+Gemessen auf der zusammengesetzten Modalfläche (Schleier `--scrim-60` über der Seite, darauf
+`rgba(26,26,26,0.95)`) — dark / light / sepia / contrast:
+
+| Tinte | heute | mit der Textvariante |
+| ----- | ----- | -------------------- |
+| `var(--text)` (Fließtext) | 13,32 · **1,04** · **1,52** · 17,58 | — |
+| `var(--text-dim)` | 4,96 · **2,90** · **2,93** · 7,57 | — |
+| `var(--green)` (ungewöhnlich) | 10,09 · 5,06 · 5,25 · 12,81 | 10,09 · **2,72** · **2,66** · 12,81 |
+| `var(--blue)` (selten) | 6,92 · **3,23** · 4,57 · 4,63 | 6,92 · **2,68** · **2,69** · 6,31 |
+| `var(--purple)` (sehr selten) | 6,46 · **2,93** · **3,33** · 5,61 | 6,46 · **2,70** · **2,68** · 6,32 |
+| `var(--gold)` (legendär) | 8,36 · 5,12 · **2,37** · 12,54 | 8,36 · **2,68** · **2,37** · 12,54 |
+| `var(--red)` (Artefakt) | 4,67 · **3,45** · **3,64** · 4,40 | 6,29 · **2,70** · **2,65** · 6,34 |
+
+### Warum hier nichts geändert wurde
+
+**Die Textvariante wäre eine Verschlechterung.** `--<rolle>-text` ist in Light und Sepia die
+**abgedunkelte** Fassung — richtig auf hellen Flächen, falsch auf dieser dunklen. Die Regel, die
+Welle 1 überall durchgesetzt hat („Rolle als Tinte auf neutraler Fläche → Textvariante"), dreht
+sich hier um, weil die Fläche eben nicht dem Theme folgt.
+
+Das ist keine eigene Frage, sondern dieselbe wie W2-C-01: solange `.modal` in allen Themes dunkel
+ist, braucht **alles** darauf themenblinde Tinte. Wer W2-C-01 nach Weg 1 entscheidet (Fläche auf
+`var(--bg-card)`), wird diese Tabelle auf die Textvarianten umstellen müssen; nach Weg 2
+(themenblinde `--on-modal`-Tokens) fällt sie mit den übrigen Zeilen zusammen. Beides gehört in
+einen Zug, nicht in diesen Schritt.
+
+**Nebenbefund für dieselbe Entscheidung:** die zweite Seltenheitstabelle ist eine Doppelführung.
+`core/constants.js` führt `RARITY_LABELS` mit den Schlüsseln `normal/common/uncommon/rare/
+veryrare/legendary`, diese hier mit `common/uncommon/rare/very-rare/legendary/artifact`. Die
+Schlüssel überschneiden sich, die Bedeutungen verschieben sich um eine Stufe („common" ist hier
+das, was dort „normal" ist), und die Farben stimmen nicht überein. Wer W2-C-01 anfasst, sollte das
+mitentscheiden statt es zweimal zu übersetzen.
+
+### Befehle
+
+```bash
+cd /d/Claude_Code/Projekte/DnD_Tracker_App_Pro
+grep -n "rarityColors" -A 8 systems/entity-links.js
+grep -n "entity-preview-modal" -A 14 systems/entity-links.js
+grep -n "RARITY_LABELS" -A 8 core/constants.js
+```
+
+---
+
+## W2-E-03 — Die Knöpfe des Ereignis-Logs blitzen im Überfahren hell auf
+
+**Status: OFFEN, keine Kontrastfrage.** Aufgenommen am 2026-09-29, Welle 2 Schritt 10.
+
+`assets/styles/party.css` `.event-log-btn:hover` setzt `background: var(--bg-alt)` und dazu
+`color: var(--text)`. Beides folgt dem Theme und ist **in sich stimmig** — in Light dunkle Schrift
+auf heller Fläche, gemessen weit über der Schwelle.
+
+Der Log selbst ist seit Schritt 10 in allen vier Themes eine dunkle Blende mit themenblinder
+Tinte (E6). In Light und Sepia blitzt beim Überfahren also ein **helles Rechteck in einer dunklen
+Blende** auf. Das ist keine Verschlechterung durch diesen Schritt — es war vorher genauso, nur fiel
+es nicht auf, weil dort ohnehin nichts zu lesen war.
+
+Die Abhilfe wäre eine themenblinde Hoverfläche (etwa eine schwache weiße Auflage aus der Leiter,
+die Schritt 3 angelegt hat) statt `--bg-alt`. Das ist eine Sichtänderung ohne Kontrastgewinn und
+gehört deshalb in die Vier-Themes-Runde, nicht in diesen Schritt. Der Satz steht auch im CSS an
+der Regel darüber.
+
+### Befehle
+
+```bash
+cd /d/Claude_Code/Projekte/DnD_Tracker_App_Pro
+grep -n "event-log-btn" -A 12 assets/styles/party.css
+```
+
+---
+
+## W2-E-04 — Die Seltenheitsfarbe stand an vier Stellen als Schrift, gezählt war eine
+
+**Status: ERLEDIGT am 2026-09-29 (Welle 2 Schritt 10).** Steht hier als Zählbefund, nicht als
+offene Frage — die Lehre daraus betrifft jede weitere Bestandsaufnahme dieser Art.
+
+Der Suchbefehl aus W1-C-02 sucht nach `style="… background …; color: var(--bg-…)"` und fand
+fünf Stellen. Er findet **keine** Stelle, an der eine themenlose Farbe als **Schrift** gesetzt
+wird — dort steht kein `var(--bg-…)`, sondern ein Template-Platzhalter. Genau so ist der
+schlechteste Einzelwert des ganzen Farbbefunds durch alle Listen gefallen:
+
+| Stelle | Was | in welcher Liste |
+| ------ | --- | ---------------- |
+| `features/initiative-loot.js` Gegenstandsname | Skala als Schrift | in keiner; erst in der Prüfrunde zu Welle 2 gefunden (1,12 in Sepia) |
+| `features/initiative-loot.js` Detailüberschrift | dieselbe Skala, dieselbe Richtung | in keiner |
+| `features/render-loot.js` Zuweisungsliste | dieselbe Skala, dieselbe Richtung | in keiner |
+| `features/initiative-loot.js` Seltenheitsmarke | Theme-Tinte auf themenloser Fläche | W1-C-02, Plan Schritt 10 |
+
+Drei von vier Stellen derselben Tabelle waren also ungezählt, und die **eine** gezählte war die
+mit der harmloseren Richtung. Alle vier sind in Schritt 10 erledigt (Fläche und Tinte getrennt,
+`RARITY_COLORS` und `RARITY_TEXT_COLORS`), und R-16 Teil (4) rechnet sie seither nach.
+
+**Die Lehre:** ein Suchbefehl, der nach der falschen TINTE sucht, findet die Fälle nicht, in denen
+die falsche Farbe die SCHRIFT ist. Wer eine Skala auf ihre Verwendungen absucht, muss nach dem
+Namen der Skala suchen, nicht nach dem Muster des Fehlers.
+
+### Befehle
+
+```bash
+cd /d/Claude_Code/Projekte/DnD_Tracker_App_Pro
+# Der alte Befehl (findet die Marke, nicht die drei Schriftstellen):
+grep -rnoE "style=\"[^\"]*\"" --include=*.js core features systems ui render utils \
+  | grep -E "color: ?var\(--bg-dark\)" | grep background
+# Der Befehl, der alle vier findet:
+grep -rn "RARITY_COLORS\|RARITY_TEXT_COLORS" --include=*.js core features systems ui render utils
+```
+
+---
