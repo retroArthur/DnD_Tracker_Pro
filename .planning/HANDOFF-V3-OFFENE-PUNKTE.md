@@ -615,7 +615,9 @@ wie für die 181 umgestellten. Der Messaufbau liegt bei und ist wiederverwendbar
 
 ## W1-D-02 — Fünf Tönungsstellen, die Schritt 10 einzeln nachgerechnet hat, plus eine Vorziehung
 
-**Status: OFFEN — gehört nach Entscheidung D-4 geschlossen in Welle 2.**
+**Status: GESCHLOSSEN am 2026-09-29 durch Welle 2, Schritt 8 (D-4/E2).** Der Nachtrag ganz unten
+führt die neuen Zahlen; alles darüber ist der Stand VOR Schritt 8 und bleibt stehen, weil die
+Begründungskette sonst nicht mehr lesbar wäre.
 Aufgenommen am 2026-09-28, Welle 1, Schritt 10; fortgeschrieben am 2026-09-28 nach der Prüfung
 W1-D, Runde 1 (eine Stelle kam dazu, eine Vorziehung wurde ausgewiesen).
 
@@ -692,6 +694,37 @@ nur, ob die 20-%-Tönung selbst bleibt. Der Hinweis steht wortgleich an der Stel
 `.wiki-link` ist der einzige Fall im Baum, bei dem die Tönung von einer **anderen** Rolle stammt
 als der Text (Violett-Tönung, Cyan-Schrift). Der Hover-Zustand derselben Regel ist in Schritt 10
 behoben worden (siehe W1-C-01), die Ruhefläche nicht — sie ist eine Tönung.
+
+> **Berichtigung, Schritt 8:** *der einzige Fall* stimmt nicht. Es sind **drei**, und der dritte
+> stand in keiner Liste dieser Welle: `dashboard.css` `.char-save-box.proficient` (Gold auf Grün)
+> war als zweiter bekannt, `spells.css` `.editor-btn:hover` (Gold auf Gelb) hat erst die erweiterte
+> R-04 gefunden. Alle drei sind entschieden: die fremde Rolle bleibt, gedeckelt wird die Stärke,
+> und die Schrift nimmt ihre Textvariante.
+
+### Nachtrag 2026-09-29 (Welle 2, Schritt 8) — alle sechs Zeilen sind erledigt
+
+Entscheidung **E2** setzt die Tinte auf `var(--<rolle>-text)` und deckelt die Stärke je Theme auf
+**13 / 7 / 7 / 20 %** (`--tint-max` in `variables.css`). Gemessen mit
+`tests/unit/helpers/wcag-contrast.js`, min über `--bg-card`/`--bg-dark`/`--bg-elevated` — das ist
+die Zählweise, mit der der Deckel gerechnet ist, und sie ist eine andere als die vierflächige
+Zählung der Tabelle weiter oben (dazu der eigene Punkt **W2-D-01**):
+
+| Selektor | Datei | vorher → nachher (dark · light · sepia · contrast) |
+| -------- | ----- | -------------------------------------------------- |
+| `.dice-fav-add:hover` | dice.css | 6,02 · 2,43 · 4,91 · 8,91 → 6,02 · 4,78 · 5,13 · 8,91 |
+| `.ds-rate-chip.ds-crit` | tools.css | 6,35 · 2,32 · 2,25 · 8,16 → 6,66 · 4,67 · 4,74 · 8,16 |
+| `.ds-rate-chip.ds-fumble` | tools.css | 3,49 · 3,17 · 3,02 · 3,67 → 4,81 · 4,55 · 4,60 · 5,28 |
+| `.wiki-link` (Ruhe) | dashboard.css | 6,65 · 2,62 · 2,24 · 11,81 → 6,65 · 4,59 · 4,55 · 11,81 |
+| `.editor-btn.format-active`, `[aria-expanded='true']` | editors.css | 5,06 · 2,25 · 4,47 · 7,09 → 5,65 · 4,78 · 5,26 · 7,09 |
+
+`.ds-rate-chip.ds-fumble` — die Zeile, die in **keinem** Theme 4,5 hielt, auch nicht mit der
+Textvariante — hält jetzt in allen vieren. Die Abhilfe war, wie diese Akte seit dem 2026-09-28
+vermutet hat, die **Stärke** und nicht die Tinte.
+
+Der R-05-Eintrag zu `editors.css:69` ist im selben Commit **ersatzlos entfernt**; er war der
+einzige `ausnahme`-Posten dieser Ratsche. Die Vorziehung `loot.css`
+`.loot-tag-chip input:checked + span` ist wie angekündigt **nicht** ein zweites Mal angefasst
+worden — nur die Tönung ihrer Elternregel ist mitgedeckelt.
 
 ### Befehle
 
@@ -1004,8 +1037,10 @@ grep -rn "cat-drink\|cat-food\|cat-gear\|know-religion\|dmg-necrotic-text\|dmg-l
 
 ## W2-B-04 — 17 Regel-×-Theme-Paare verlieren durch Welle 2 die 4,5; über die Themes minimiert sieht man keines davon
 
-**Stand:** 2026-09-29, Prüfrunde W2-B Runde 1. Offen — Eingangsdaten für die **D-4**-Entscheidung
-in Schritt 8.
+**Status: ERLEDIGT am 2026-09-29 durch Welle 2, Schritt 8.** Alle 17 Paare gehören zu den
+Tönungsstellen, die E2 gedeckelt hat; keines liegt danach noch unter 4,5. Der Punkt bleibt als
+**Eingangsdatum** stehen, weil er die Zählweisenfrage aufgeworfen hat, die jetzt als **W2-D-01**
+weiterläuft. Der Abschluss steht am Ende.
 
 ### Worum es geht
 
@@ -1087,6 +1122,25 @@ halbdurchsichtigen Fläche wird von keiner Ratsche geprüft.
    selbst bleibt Welle 4, die Farbentscheidung nicht.
 4. `dashboard.css` `.char-save-box.proficient` ist einer der zwei Fälle mit **fremder Rolle**
    (Gold auf Grün), die Schritt 8 ohnehin namentlich mitentscheidet.
+
+### Abschluss 2026-09-29 (Schritt 8)
+
+Alle vier Folgerungen sind ausgeführt. Über die **drei** Trägerflächen gerechnet, mit denen der
+Deckel belegt ist, liegen die drei Gruppen jetzt so (vorher → nachher, dark · light · sepia ·
+contrast):
+
+- Gold auf Gold, 30 % (`mark`, `.notes-search-excerpt mark`): 3,89 · 2,02 · 3,63 · 5,05 →
+  5,66 · 4,78 · 5,13 · 6,74. Der schlechteste Abfall der Liste ist damit nicht nur zurückgeholt,
+  sondern in Sepia **besser als vor Welle 2**.
+- Gold auf Gold, 14–20 % (acht Regeln in core/dashboard/editors/loot/party/tools): alle zwischen
+  5,66 · 4,78 · 5,13 · 6,74 und 5,66 · 4,78 · 5,13 · 7,78.
+- Grün auf Grün, 30 % (`.condition-badge.poisoned`) 4,38 · 2,00 · 1,97 · 5,30 →
+  6,66 · 4,67 · 4,74 · 7,09; Gold auf Grün (`.char-save-box.proficient`)
+  4,66 · 2,18 · 4,76 · 6,94 → 5,52 · 4,75 · 5,33 · 6,94.
+
+Folgerung 1 — die Kontrastbuchhaltung ist je Theme zu führen — ist eingehalten: jede Zahl dieses
+Schritts steht als Viererreihe, keine ist über die Themes minimiert. Folgerung 3 (`mark`
+vorziehen) ist erledigt; die **Verlagerung** der Weltregel aus einer Widget-Datei bleibt Welle 4.
 
 ### Befehle
 
@@ -1260,7 +1314,10 @@ npx jest tests/unit/design-consistency.test.js -t "kein rgba"
 
 ## W2-C-02 — Vier Regeln fallen durch Schritt 7 in **Dark** unter 4,5; alle vier sind D-4-Stellen
 
-**Stand:** 2026-09-29, Welle 2 Schritt 7. Offen für Schritt 8, keine eigene Entscheidung nötig.
+**Status: GESCHLOSSEN am 2026-09-29 durch Welle 2, Schritt 8.** Alle vier halten jetzt 4,5 in
+allen vier Themes. Die `W2C02`-Liste in R-11 ist im selben Zug entfallen, weil R-04 dieselben vier
+Regeln seither mit derselben Schwelle beurteilt, nur härter: 4,5 statt *nicht schlechter als
+gestern*. Nachtrag III unten führt die Zahlen.
 
 ### Worum es geht
 
@@ -1334,6 +1391,29 @@ Seit Runde 1 gilt:
   behandelt. **Die Erweiterung ist deshalb die rote Ratsche, mit der Schritt 8 beginnt**, nicht eine
   Nachbesserung von Schritt 7.
 
+### Nachtrag III (Schritt 8): die vier Zahlen, und was aus dem blinden Fleck wurde
+
+| Selektor | Datei | vorher → nachher (dark · light · sepia · contrast) |
+| -------- | ----- | -------------------------------------------------- |
+| `.calc-diff-badge.trivial` | encounters.css | 4,22 · 3,24 · 2,38 · 3,32 → 4,84 · 4,64 · 4,63 · 4,53 |
+| `.concentration-badge` (Kopf) | initiative.css | 4,03 · 3,50 · 3,18 · 4,21 → 4,56 · 4,57 · 4,60 · 4,73 |
+| `.wiki-tree-item.selected` | party.css | 4,41 · 3,78 · 3,37 · 4,48 → 4,56 · 4,57 · 4,60 · 5,05 |
+| `.wiki-detail-category` | party.css | 4,41 · 3,78 · 3,37 · 4,48 → 4,56 · 4,57 · 4,60 · 5,05 |
+
+`--purple` ist die **bindende** Rolle des Dark-Deckels: 13 % ergeben 4,56, 14 % nur noch 4,48. Die
+drei Violettstellen liegen damit auf der knappsten Kante der ganzen Klasse — wer den Dark-Deckel je
+anhebt, bricht zuerst hier.
+
+**Der blinde Fleck ist geschlossen.** `ruheRegeln()` in R-04 löst die Tönung seit Schritt 8 über den
+drei neutralen Trägerflächen auf, statt sie zu verwerfen. Die Erweiterung war bei ihrer Geburt rot
+mit **116 Befunden** (114 unter 4,5, 2 nicht auflösbar) und ist am Ende des Schritts grün: 288
+beurteilte Regeln, davon 128 Tönungen, 0 Befunde, ohne einen einzigen neuen Eintrag in
+`RUHE_AUSNAHME`. Nachtrag II oben schätzte *124 von 128*; gemessen waren es 116, weil die zehn
+farblosen Marken und zwei weitere schon hielten.
+
+Nachtrag I (die zwei `var(--text-dim)`-Stellen auf der Goldtönung) ist damit **nicht** erledigt. Er
+läuft als **W2-D-02** weiter: der Deckel ist dort nachweislich nicht die Abhilfe.
+
 ### Befehle
 
 ```bash
@@ -1389,7 +1469,24 @@ braucht keinen Blick.
 | `tools.css` `.sb-progress` | `rgba(127,127,127,0.25)` → 20-%-Tönung von `var(--text-dim)`. Reproduziert die alte Laufschiene fast zeichengleich (Light `#cecece` identisch, Dark `#393939` statt `#3c3c3c`) und folgt dabei dem Theme. **Kaum sichtbar — der Blick gilt dem goldenen Fortschrittsbalken darauf.** | alle vier |
 | `core.css` / `dmscreen.css` / `initiative.css`, die zehn farblosen Marken | Vier verschiedene Fremdgrau → 20-/30-%-Tönung von `var(--text-dim)`, **Tinte jetzt `var(--text)` statt `var(--text-dim)`**. Die Beschriftung der farblosen Zustände und der neutralen Beziehungsmarke liest sich damit kräftiger als bei den farbigen Geschwistern; die Fläche liegt wieder auf dem Stand vor der Welle. **Die zweitgrößte Sichtänderung der Welle.** | alle vier |
 | `encounters.css` Schwierigkeitsskala, `initiative.css` Konzentration/Gelände, `party.css` Wiki-Violett und Cyan-Marken, `npcs.css`, `welt.css`, `dashboard.css` | Flat-UI- bzw. Tailwind-Literale → die Rolle, die die Regel ohnehin als Tinte führt. Jeweils ein kleiner Farbton-Versatz, keine Umfärbung. | alle vier |
-| `welt.css` `.tl-typ-reise` (aus **W2-A**) | `#22c55e` → `var(--green)`. Beziffert: dark 5,64 → 5,26 · light 2,20 → 2,11 · sepia 2,13 → 2,07 · contrast 7,16 → 6,53. | alle vier |
+| `welt.css` `.tl-typ-reise` (aus **W2-A**) | `#22c55e` → `var(--green)`. Beziffert: dark 5,64 → 5,26 · light 2,20 → 2,11 · sepia 2,13 → 2,07 · contrast 7,16 → 6,53. Schritt 8 holt das mehr als zurück (siehe unten). | alle vier |
+
+### Nachtrag Schritt 8 (2026-09-29) — die eine beabsichtigte Sichtänderung der Welle
+
+| Stelle | Was sich ändert | Sichtbar in |
+| ------ | --------------- | ----------- |
+| **Alle 113 Tönungsstellen, Fläche** | **E2.** Die Stärke wird je Theme gedeckelt: Dark 13 %, Light 7 %, Sepia 7 %, Contrast 20 %. In **Light und Sepia** sinkt sie damit von heute 10–30 % auf 7 % und ist **fast unsichtbar**: die Marke wird dort zu farbiger Schrift auf nahezu blanker Karte. In Dark sinkt sie von 14–30 % auf 13 % (10 % und 12 % bleiben stehen), in Contrast nur von 30 % auf 20 %. **Das ist die einzige beabsichtigte Sichtänderung dieses Schritts und der ganzen Welle.** | **light, sepia** (stark), dark/contrast (schwach) |
+| **Alle 113 Tönungsstellen, Schrift** | **E2.** `var(--<rolle>)` → `var(--<rolle>-text)`. In **Dark und Contrast** ist das für sieben der zehn Rollen dieselbe Farbe und damit unsichtbar; in **Light und Sepia** wird die Schrift durchweg dunkler und satter. Zusammen mit der schwächeren Fläche liest sich die Rolle dort künftig über die Schrift. | light, sepia |
+| `dmscreen.css` die fünf `.dms-skill-header` | Die Attributköpfe der Fertigkeitenliste verlieren ihre **Schriftfarbe**: `var(--attr-*)` → `var(--text)`. Die 20-%-Tönung bleibt unverändert und trägt die Zuordnung allein. Grund: die Attributfarben sind nach D-5 in Dark und Contrast eingefroren und erreichen dort schon auf der blanken Fläche nur 3,98–4,35. | alle vier |
+| `core.css` `.condition-prone` | Rolle wechselt von `--orange-dim` auf `--orange` und wird dadurch **heller** — dieselbe Farbe wie `grappled` und `restrained` und wie die Zwillingsregel `.condition-badge.prone` in `dmscreen.css`. | alle vier |
+| `welt.css` `.tl-typ-reise` | Der Verlust aus W2-A ist zurückgeholt und übertroffen: 6,35 · 2,32 · 2,25 · 8,16 → 6,66 · 4,67 · 4,74 · 8,16. | light, sepia |
+| Die drei Stellen mit **fremder Rolle** | `.wiki-link` (Cyan auf Violett), `.char-save-box.proficient` (Gold auf Grün), `.editor-btn:hover` in `spells.css` (Gold auf Gelb). Die Farbpaarung bleibt **absichtlich** erhalten; nur Stärke und Schriftvariante ändern sich. | light, sepia |
+
+**Worauf beim Blick zu achten ist:** ob eine Marke in Light und Sepia noch als Marke erkennbar
+ist. Der Kontrast der Schrift ist gemessen und hält (≥ 4,5 in allen vier Themes, R-04); die
+Frage, die eine Messung nicht beantwortet, ist die nach der **Fläche**: 7 % Tönung über
+`--bg-card` ergibt einen Abstand von rund 1,05 zur Karte. Das ist gewollt (E2 nennt es
+ausdrücklich als Preis), aber es ist die Stelle, an der der Nutzer widersprechen könnte.
 
 ### Zwei Nebenwirkungen, die zu W2-B-01 gehören
 
@@ -1463,4 +1560,138 @@ angefasst oder die Suite nicht vollständig gefahren.
 cd /d/Claude_Code/Projekte/DnD_Tracker_App_Pro
 PYTHONIOENCODING=utf-8 python build.py
 npx playwright test tests/e2e/features/computed-style-diff.spec.js
+```
+
+---
+
+## W2-D-01 — Der Tönungsdeckel ist gegen DREI Trägerflächen gerechnet, nicht gegen vier
+
+**Stand:** 2026-09-29, Welle 2 Schritt 8. Offen — eine benannte Grenze, kein Versehen.
+
+### Worum es geht
+
+Hausregel **D-2** sagt: maßgeblich ist das Minimum über die tatsächlichen Trägerflächen, und für
+Textfarben sind das **vier** — `--bg-card`, `--bg-dark`, `--bg-elevated` und `--bg-hover`. Der
+Tönungsdeckel aus **E2** (13 / 7 / 7 / 20 %) ist gegen **drei** gerechnet; `--bg-hover` steht
+nicht darin. R-04 urteilt über Tönungen mit derselben Dreierliste, R-11 tut es seit Schritt 7.
+
+### Warum nicht vier — gemessen, nicht bequem
+
+Die `--<rolle>-text`-Tokens sind in Welle 1 so gewählt worden, dass sie auf der **schlechtesten**
+der vier neutralen Flächen genau 4,5 erreichen. Diese schlechteste Fläche ist in jedem Theme
+`--bg-hover`. Jede halbdurchsichtige Auflage darüber drückt sie also unter die Schwelle, gleich
+welcher Stärke. Der größte zulässige Deckel gegen vier Flächen, für alle zehn Rollen gerechnet:
+
+| Theme | Deckel gegen drei Flächen | Deckel gegen vier Flächen |
+| ----- | ------------------------: | ------------------------: |
+| dark | 13 % | **0 %** |
+| light | 7 % | **0 %** |
+| sepia | 7 % | **0 %** |
+| contrast | 20 % | **0 %** |
+
+Ein Deckel von 0 % ist ein Verbot jeder Tönung überhaupt — also die Abschaffung einer
+Gestaltungsklasse mit 113 Stellen, und keine Entscheidung, die ein Kontrastschritt nebenbei
+treffen darf.
+
+### Warum das trotzdem offen ist, und wohin es gehört
+
+Die Frage ist nicht D-4, sondern **W1-B-01 / E3**: solange eine Zeile ihren Hover-Zustand über
+eine **Fläche** meldet (`background: var(--bg-hover)`), liegt jede Tönung darin auf einem Grund,
+für den ihre Schrift nicht gerechnet ist. E3 stellt genau das für `.qref-row:hover` auf einen
+Rahmen um. Wird derselbe Weg für die übrigen Hover-Flächen gegangen, verschwindet die Frage; wird
+er es nicht, bleibt sie.
+
+Ein konkreter Beleg steht im CSS: `dice.css` `.dice-fav-add:hover` hält mit dem Deckel gegen drei
+Flächen 6,02 · 4,78 · 5,13 · 8,91 und gegen vier nur 4,97 · 4,33 · 4,70 · 7,05. Beide Zahlenreihen
+stehen dort im Kommentar, damit niemand die alte Prognose gegen die neue Zusicherung stellt.
+
+### Befehle
+
+```bash
+cd /d/Claude_Code/Projekte/DnD_Tracker_App_Pro
+grep -n "bg-hover steht NICHT" -A 6 assets/styles/variables.css
+npx jest tests/unit/design-consistency.test.js -t "R-04"
+```
+
+---
+
+## W2-D-02 — Zwei `var(--text-dim)`-Stellen auf der Goldtönung: der Deckel ist nicht die Abhilfe
+
+**Stand:** 2026-09-29, Welle 2 Schritt 8. Offen — Nachfolger von W2-C-02 Nachtrag I.
+
+### Worum es geht
+
+`tools.css` `.search-result-preview` und `.quick-access-item:hover .remove-btn` setzen
+`color: var(--text-dim)`; die 10-%-Goldtönung, auf der sie liegen, kommt aus der **Elternregel**.
+W2-C-02 Nachtrag I hat die Abhilfe Schritt 8 zugewiesen. Schritt 8 hat sie gerechnet und **nicht
+ausgeführt**, und der Grund ist die Messung.
+
+### Was gemessen ist
+
+Min über `--bg-card`/`--bg-dark`/`--bg-elevated` (dark · light · sepia · contrast):
+
+- `var(--text-dim)` auf 10 % Gold, heute: 3,57 · 4,29 · 3,97 · 5,38
+- dasselbe mit dem Deckel: 3,57 · 4,40 · 4,15 · 5,38 — **der Deckel bringt 0,00 bis 0,18**
+- `var(--text-dim)` auf der **blanken** Fläche, ganz ohne Tönung: 4,32 · 4,69 · 4,57 · 6,85
+
+Die letzte Zeile ist der Befund: `--text-dim` erreicht in Dark schon **ohne jede Tönung** nur
+4,32 über `--bg-elevated` (und 3,56 über `--bg-hover`). Nicht die Tönung ist zu stark, die
+gedämpfte Textfarbe ist zu blass. Ein Deckel kann das nicht heilen.
+
+### Was zu entscheiden ist, und von wem
+
+Drei Wege, keiner davon eine Tönungsfrage:
+
+1. `--text-dim` als Token anheben — betrifft den ganzen Baum (die Rolle steht hunderte Male) und
+   verschiebt die Schrifthierarchie. Gehört zu einer eigenen Entscheidung.
+2. Die zwei Stellen auf `var(--text)` setzen — hält mit 9,59 · 12,99 · 7,63 · 12,49 mühelos, macht
+   aber Vorschautext und Löschknopf so kräftig wie den Haupttext und nimmt der Kachel ihre
+   Hierarchie.
+3. Stehen lassen und führen — gegen ihre **tatsächliche** Trägerfläche `var(--bg-card)`
+   (`.wiki-search-dropdown` bzw. `.wiki-quick-access` setzen sie ausdrücklich) lesen beide
+   4,10 · 5,18 · 4,59 · 6,63; nur Dark liegt darunter, und zwar um 0,4.
+
+Gewählt ist vorerst (3): nicht geändert, hier geführt. Keine Ratsche urteilt über die beiden —
+R-04 verlangt Fläche UND Schrift in derselben Regel, und die Tönung steht eine Regel höher.
+
+### Befehle
+
+```bash
+cd /d/Claude_Code/Projekte/DnD_Tracker_App_Pro
+grep -n "EINE DRITTE TINTE LIEGT" -A 20 assets/styles/tools.css
+```
+
+---
+
+## W2-D-03 — Elf von dreizehn Farbaliasen in `dashboard.css` werden nirgends benutzt
+
+**Stand:** 2026-09-29, Welle 2 Schritt 8. Nur vermerkt, keine Farbfrage.
+
+### Worum es geht
+
+`dashboard.css` führt einen eigenen `:root`-Block mit dreizehn semantischen Aliasen
+(`--color-success`, `--color-warning`, `--color-danger`, `--color-info`, `--color-primary`,
+`--color-secondary`, `--color-character`, `--color-npc`, `--color-location`, `--color-quest`,
+`--color-encounter`, `--color-spell`, `--color-loot`, `--color-note`). Benutzt wurden bis zu
+diesem Schritt genau **zwei**: `--color-quest` und `--color-spell`, je einmal, als Tinte der
+beiden `.entity-tag`-Regeln. Seit Schritt 8 nennen die beiden Regeln ihre Rolle direkt, wie die
+vier `.status-badge`-Regeln vier Zeilen darüber — damit ist **keiner** der dreizehn mehr in
+Gebrauch.
+
+### Warum das hier steht
+
+Der Umweg über ein Zweittoken hat die zwei Regeln vor **jeder** Bestandszählung dieser Welle
+verborgen: wer nach *Rolle als Tinte auf einer Tönung derselben Rolle* sucht, sieht dort einen
+fremden Namen und geht weiter. Gefunden hat sie erst die erweiterte R-04 — als *nicht auflösbar*,
+weil der Kontrastrechner nur die Tokens aus `variables.css` kennt. Das ist die eigentliche
+Lehre: **ein Alias, der nur an einer Stelle steht, ist keine Abstraktion, sondern eine Tarnung.**
+
+Das Löschen der dreizehn Zeilen ist eine Aufräumfrage und gehört nicht in einen Farbschritt. F-01
+verlangt nur die umgekehrte Richtung (jedes benutzte `var()` muss definiert sein) und bleibt grün.
+
+### Befehle
+
+```bash
+cd /d/Claude_Code/Projekte/DnD_Tracker_App_Pro
+grep -rn -- "--color-quest\|--color-spell\|--color-npc" assets/ features/ ui/ systems/
 ```
