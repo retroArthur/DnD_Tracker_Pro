@@ -223,8 +223,8 @@
 
         .shop-item-count {
             font-size: 0.8em;
-            color: var(--green);
-            background: color-mix(in srgb, var(--green) 10%, transparent);
+            color: var(--green-text);
+            background: color-mix(in srgb, var(--green) min(10%, var(--tint-max)), transparent);
             padding: 2px 8px;
             border-radius: var(--radius-sm);
         }
@@ -589,9 +589,9 @@
         .si-cart-btn {
             padding: 3px 8px;
             font-size: 0.8em;
-            background: color-mix(in srgb, var(--gold) 20%, transparent);
+            background: color-mix(in srgb, var(--gold) min(20%, var(--tint-max)), transparent);
             border: 1px solid var(--gold);
-            color: var(--gold);
+            color: var(--gold-text);
             border-radius: var(--radius-sm);
             cursor: pointer;
             transition: all 0.2s;
