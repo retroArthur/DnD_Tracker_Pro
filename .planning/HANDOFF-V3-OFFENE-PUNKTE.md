@@ -1194,8 +1194,9 @@ grep -rn "color-mix(in srgb, var(--gold)" assets/styles/*.css
 
 ## W2-B-05 — Der `@supports`-Auftrag von Schritt 11 nennt 6 Tokens; die Klasse hat 15
 
-**Stand:** 2026-09-29, Prüfrunde W2-B Runde 1. Offen — **Geltungsbereich von E4 / Schritt 11
-Punkt (2)** ist zu erweitern, bevor Schritt 11 läuft.
+**Stand:** 2026-09-29, Prüfrunde W2-B Runde 1. **Teilweise erledigt, weiterhin offen** — Schritt 11
+hat die sechs benannten abgesichert; die neun aus Schritt 3 sind es nicht. Der Nachtrag am Ende
+dieses Punktes nennt den Reststand und das, was dagegen jetzt spricht.
 
 ### Worum es geht
 
@@ -1286,6 +1287,38 @@ grep -rn "var(--overlay-\|var(--scrim-" assets/styles/*.css | wc -l
 grep -rn "@supports" assets/styles/*.css          # heute: kein Treffer
 npx jest tests/unit/design-consistency.test.js -t "rueckfalllosen"
 ```
+
+
+### Nachtrag Schritt 11 (2026-09-29) — sechs abgesichert, neun offen, und die Lage hat sich verändert
+
+Schritt 11 hat den Geltungsbereich **nicht** eigenmächtig erweitert: die Schrittanweisung sagt
+wörtlich „@supports NUR um die 6 abgeleiteten Tokens", die Abnahmebedingung wiederholt es, und
+eine Erweiterung ist eine Entscheidung des Nutzers bzw. des Orchestrators, keine des ausführenden
+Schrittes. Umgesetzt ist deshalb genau das Angeordnete:
+
+```css
+@supports not (color: color-mix(in srgb, #000 50%, #fff)) {
+    :root { --gold-hover: var(--gold); … --orange-dim: var(--orange); }
+}
+```
+
+Der Rückfall setzt die **Rolle**, kein Literal — ein Hex wäre themenblind und in drei von vier
+Themes die falsche Farbe. `R-13` fällt dadurch von 15 auf **9**: die sechs sind nicht mehr
+rückfalllos, die neun aus Schritt 3 sind es weiterhin, und sie tragen ausgerechnet die sechs
+Modalblenden.
+
+**Was sich seit der Aufnahme dieses Punktes geändert hat:** der Browserboden ist jetzt
+aufgeschrieben (`DEVELOPMENT.md`, Abschnitt „Browser-Mindestanforderung"). Er liegt bei
+Chromium/Edge 121 und Firefox 121 — nicht wegen `color-mix` (111/113), sondern wegen
+`scrollbar-color` und sechs `:has()`-Regeln, die beide **älter** im Baum sind. Ein Browser, der
+`color-mix` nicht kennt, würde also schon an zwei anderen Stellen scheitern. Das Restrisiko der
+neun ist damit **theoretisch**, nicht praktisch — es bleibt trotzdem eine ungleiche Behandlung
+zweier Hälften derselben Klasse, und genau das ist der Grund, warum der Punkt offen bleibt statt
+abgehakt zu werden.
+
+**Zu entscheiden bleibt** (Welle 3): den Zweig um die neun erweitern — ein Einzeiler je Token, in
+demselben Block, `R-13` würde dabei auf 0 fallen und müsste dann als leeres Inventar begründet
+werden.
 
 ---
 
@@ -1578,8 +1611,9 @@ PYTHONIOENCODING=utf-8 python build.py
 
 ## W2-C-05 — Der Computed-Style-Sollstand (D-24) ist seit den Tönungsschritten rot; die Playwright-Suite ist es damit auch
 
-**Stand:** 2026-09-29, Prüfung W2-C Runde 1. Offen für Schritt 11. Nicht von dieser Prüfeinheit
-verursacht.
+**Stand:** 2026-09-29, Prüfung W2-C Runde 1. **Geschlossen in Schritt 11** — der Nachtrag am Ende
+dieses Punktes nennt Verfahren, Zahlen und die Begründung der Wegwahl. Nicht von dieser
+Prüfeinheit verursacht.
 
 ### Worum es geht
 
@@ -1631,6 +1665,35 @@ cd /d/Claude_Code/Projekte/DnD_Tracker_App_Pro
 PYTHONIOENCODING=utf-8 python build.py
 npx playwright test tests/e2e/features/computed-style-diff.spec.js
 ```
+
+
+### Nachtrag Schritt 11 (2026-09-29) — geschlossen, mit dem schlüsselweisen Vergleich als Beleg
+
+**24 von 3626 Digests geändert (0,66 %), 0 Zugänge, 0 Abgänge.** Genau die erwartete
+Größenordnung; Welle 1 änderte 254. Betroffen sind die acht oben genannten Schlüssel, jeder in
+allen drei Durchgängen (`standard`, `narrow`, `reducedMotion`) — 8 × 3 = 24. Bei allen acht
+ändert sich **genau eine** der zwölf Eigenschaften: `backgroundColor`. Chromium serialisiert eine
+`color-mix`-Tönung als `color(srgb R G B / a)` statt als `rgba()`; die Zahlen sind dieselben
+(0.937255 × 255 = 239 = `--red`).
+
+**Weg (b) statt (a), und warum.** Der Plan sah vor, die Schlüssel in `EXPECTED_DEVIATION_KEYS`
+einzutragen, mit `UPDATE_STYLE_BASELINE=1` neu zu schreiben und sie danach wieder zu entfernen.
+Das trägt hier nicht:
+
+1. Die drei Durchgänge laufen `serial`. Der erste rote bricht die beiden anderen ab — die
+   Schlüssel von `narrow` und `reducedMotion` sind unsichtbar, solange `standard` rot ist. Die
+   Liste wäre in drei Runden zu erraten.
+2. `isExpectedDeviation()` prüft den **Element**-Schlüssel als Teilstring, ohne Ansicht und ohne
+   Durchgang. Ein Eintrag für `div.init-ac#0` verschluckt an dieser Stelle auch Zugänge und
+   Abgänge — also genau die zwei Befundarten, die 0 sein **müssen**.
+
+Stattdessen: alte Fassung gesichert, Sollstand gelöscht, neu erhoben, und der Vergleich
+schlüsselweise **außerhalb** des Tests gefahren. `EXPECTED_DEVIATION_KEYS` wurde dabei nicht
+angefasst und ist weiterhin leer; `computed-style-diff.spec.js` steht unverändert.
+
+Volle Suite danach: **381 bestanden, 0 Fehlschläge**. Übersprungen sind jetzt **11 statt 7** —
+die vier neuen sind die vier Themes von `welle-2-screens.spec.js`, die ohne `WELLE2_SCREENS=1`
+nicht laufen (dasselbe Muster wie Welle 1).
 
 ---
 
@@ -2270,5 +2333,145 @@ sed -i '511s/var(--yellow) 10%/var(--yellow) 15%/' assets/styles/npcs.css
 npx jest tests/unit/design-consistency.test.js   # muss jetzt rot sein
 git checkout -- assets/styles/npcs.css
 ```
+
+---
+
+## W2-F-01 — Das Testmodell war blind für `@supports`; der Befund ist geschlossen
+
+**Stand:** 2026-09-29, Welle 2 Schritt 11 (Abnahme). **Geschlossen**, Ratsche und Selbstprobe
+stehen.
+
+### Worum es ging
+
+Beide Kaskadenmodelle von `tests/unit/design-consistency.test.js` lesen `variables.css` **flach**:
+`aliasSchicht()` nimmt je Token den letzten Treffer, `themenblindeTokens()` zählt die Blöcke je
+Token. Für flach nebeneinander liegende Blöcke ist das richtig. Ein `@supports not (…)`-Zweig
+steht aber später in der Datei und greift trotzdem **nirgends** — er ist der Rückfall für eine
+Fassung, die es oberhalb des Browserbodens nicht gibt.
+
+Der Rückfall aus Schritt 11 hat das sofort sichtbar gemacht: `R-03` meldete für
+`.calc-action-btn.primary:hover` plötzlich **5,73 statt 5,10**, `R-04` verschob sich mit — obwohl
+im Browser keine einzige Farbe anders war. Das Modell urteilte über den Rückfallzweig statt über
+das Sichtbare. In der Gegenrichtung wäre derselbe Fehler gefährlicher: ein Rückfall, der eine
+Schwelle **hält**, hätte eine Regel grün gemeldet, die im Browser durchfällt.
+
+### Was jetzt gilt
+
+`ohneUnerreichbareZweige()` maskiert die verneinte Form zeilentreu, und zwar in **beiden**
+Modellen. Zwei Eigenheiten sind Absicht:
+
+- **Nur die verneinte Form.** Ob ein positiver `@supports`-Zweig greift, hängt an Bedingung und
+  Boden. Die Funktion **wirft** dort hart, statt ihn als „gilt immer" zu lesen — wer einen
+  einführt, entscheidet bewusst.
+- **Kommentare werden vorher maskiert.** Die erste Fassung tat das nicht und las das Wort
+  `@supports` aus dem Erklärtext neben dem Zweig; sieben Ratschen warfen auf einmal über einem
+  Halbsatz. Die Selbstprobe hält genau diesen Fall fest.
+
+Die Selbstprobe („Testmodell — unerreichbare @supports-Zweige") läuft gegen **Kunst-CSS**, nicht
+gegen `variables.css`: sie muss grün bleiben, wenn der Zweig dort wieder verschwindet. Ihr
+vierter Fall ist die Gegenprobe (ohne Maskierung „blau", mit „rot"); ohne ihn wären die drei
+davor grün ohne Aussage.
+
+### Befehle
+
+```bash
+cd /d/Claude_Code/Projekte/DnD_Tracker_App_Pro
+npx jest tests/unit/design-consistency.test.js -t "unerreichbare"
+# Gegenprobe, dass die Maskierung wirklich etwas tut:
+npx jest tests/unit/design-consistency.test.js -t "Unterschied"
+```
+
+---
+
+## W2-F-02 — Die Bestandszahlen des Handoffs sind falsch; hier stehen die gemessenen
+
+**Stand:** 2026-09-29, Welle 2 Schritt 11. **Kein Befund am Code** — eine Berichtigung, damit
+Welle 3 die Drift nicht erbt. Das Auftragsdokument selbst liegt außerhalb dieses Repositoriums
+und wird von hier aus nicht angefasst.
+
+### Der Gesamtbestand
+
+| | Handoff §1/§5 | gemessen (HEAD `ba3d3c2`, vor Welle 2) |
+| --- | ---: | ---: |
+| `rgba()`-Literale in `assets/styles/*.css` | 390 | **336** (332 Komponenten-CSS + 4 `--shadow`) |
+| verschiedene vollständige Literale | 143 | **133** |
+| verschiedene Zahlentripel | — | **47** |
+| Hex-Farben im CSS | „Klasse" | **0** — der Beleganker `tools.css:1517 #ffd700` hat nie existiert |
+
+### Die Überschneidung mit Welle 3, die der Handoff nur als Reihenfolgehinweis führt
+
+**85 der 336 Literale stehen in einer Schattendeklaration** und gehören damit nach Welle 3:
+78 in `box-shadow` (verteilt auf **71** Deklarationen, sieben tragen zwei Literale), 6 in
+`text-shadow`, 1 in `filter: drop-shadow()` (`dice.css`). Der Handoff nennt für Welle 3
+„88 box-shadow-Deklarationen" und für Welle 2 pauschal 390 Stellen — zwei Mengen, die sich zu
+einem Viertel decken, ohne dass die Überschneidung beziffert wäre.
+
+Das echte Revier der Welle 2 waren damit **247** Literale, nicht 390 und nicht 332. Genau diese
+247 sind der Ausgangswert von `R-10`.
+
+### Die Unterteilung, sechs von sieben Zahlen falsch
+
+| Klasse | Handoff | gemessen |
+| --- | ---: | ---: |
+| exakte Treffer einer Dark-Rolle | 198 | 162 |
+| Weiß-Auflagen | 35 | 29 |
+| **schwarz außerhalb `box-shadow`** | **66** | **8** (davon 6 echte Flächen) |
+| fremde Theme-Palette | 25 | 5 |
+| palettenfremd | 66 | 28 |
+
+„66 schwarz außerhalb `box-shadow`" ist um **Faktor 9** zu hoch — die 45 schwarzen Literale
+liegen im `box-shadow`. Wer die Zahl für die Planung nimmt, dimensioniert die
+`--overlay-*`-Arbeit für Stellen, die es nicht gibt, und zieht 45 Stellen versehentlich aus
+Welle 3 nach vorn.
+
+### Befehle
+
+```bash
+cd /d/Claude_Code/Projekte/DnD_Tracker_App_Pro
+grep -o "rgba\?([[:space:]]*[0-9][^)]*)" assets/styles/*.css | wc -l   # Rohtreffer inkl. Kommentare
+npx jest tests/unit/design-consistency.test.js -t "R-10"
+```
+
+---
+
+## W2-F-03 — Sichtungsliste für die menschliche Vier-Themes-Runde (Schritt 11)
+
+**Stand:** 2026-09-29, Welle 2 Schritt 11. **Offen bis zur Runde.** Sechzehn Punkte, eng geführt.
+
+Welle 2 ist per Konstruktion fast keine Sichtänderung: 8 von 8 Farbpaaren rendern
+bildpunktgleich, der Sollstand ändert 24 von 3626 Digests und in allen 24 Fällen nur die
+Schreibweise derselben Farbe. Eine ungeführte Runde durch 24 Ansichten fände deshalb **nichts**.
+Diese Liste nennt die Stellen, an denen es etwas zu sehen gibt.
+
+Material: `WELLE2_SCREENS=1 npx playwright test tests/e2e/features/welle-2-screens.spec.js`
+legt 108 Bilder unter `tests/e2e/__screens__/welle-2/` ab (24 Ansichten × 4 Themes plus
+`qref-hover`, `wuerfelblase`, `ereignis-log` je Theme). Umschalten im Kopf der App:
+`PYTHONIOENCODING=utf-8 python build.py`, dann `dist/dnd-tracker-bundled.html` öffnen.
+
+| # | Ansicht / Weg dorthin | Was sich geändert hat | Worauf zu achten ist |
+| --: | --- | --- | --- |
+| 1 | **Light und Sepia**, Schatzkammer · Zauber · Begegnungen · Initiative · NSC | **E2, die sichtbarste Änderung der Welle.** Die Füllung der farbigen Felder sinkt von 20 % auf **7 %**. Die Rolle liest sich dort künftig über die Schriftfarbe. | Ist eine Marke noch als Marke erkennbar — oder wirkt sie wie farbige Schrift auf blanker Karte? Das ist die Stelle, an der zu widersprechen wäre (E2 nennt den Preis ausdrücklich). |
+| 2 | **Dark**, dieselben Ansichten | **E2.** Der Deckel liegt bei 13 %: Stellen mit 14/15/18/20/30 % sinken darauf, Stellen mit 10 % und 12 % bleiben stehen. | Stehen zwei Felder nebeneinander, die vorher verschieden stark waren und jetzt gleich aussehen? Eine verlorene Abstufung wäre ein Befund. |
+| 3 | **Contrast**, dieselben Ansichten | **E2.** Nur 30 % → 20 %, sonst unverändert. | Verlieren die kräftigsten Marken ihr Signal? Im Kontrast-Theme ist die Fläche das tragende Merkmal, nicht die Schrift. |
+| 4 | **Alle Ansichten** → roter W20-Knopf unten links anklicken | **E1.** `.fdp-die.d20` trägt die Rotrolle statt eines fremden Literals; in **Dark sichtbar heller** (`dc2626` → `ef4444`). Bild: `wuerfelblase-<theme>.png`. | Hebt sich der W20 noch von den übrigen Würfelknöpfen ab, und passt sein Rot zu den anderen roten Stellen derselben Ansicht? |
+| 5 | **Zauber** → Kopfzeile einer Zauberkarte, in Ruhe **und** beim Überfahren | **E1.** Eigene Violettrolle statt Light-`--purple`; in **Dark sichtbar heller** (`7c3aed` → `a78bfa`). | Ist der Kopf noch vom Kartenrumpf zu unterscheiden, und ändert sich beim Überfahren noch sichtbar etwas? |
+| 6 | **Start** → `/` drücken → Reiter **Regeln** → Abschnitt „Typische Proben" → Zeile überfahren | **E3.** Die Zeile füllt sich nicht mehr, sondern bekommt einen **Umriss** (1px `--gold-dim`). Bild: `qref-hover-<theme>.png`. | Ist der Umriss als Rückmeldung erkennbar — und verwechselt man ihn **nicht** mit dem Tastaturfokus? Der ist 2px `--gold`. |
+| 7 | **Beliebig** → eine Aktion auslösen, die eine Meldung erzeugt (z. B. speichern) | **E6.** Der Ereignis-Log behält seine dunkle Blende und bekommt themenblinde Schrift. In **Light und Sepia** erstmals lesbar (vorher 1,05–3,21). Bild: `ereignis-log-<theme>.png`. | Wirkt die Blende noch dunkel (sie soll unverändert aussehen), behalten die vier farbigen Randstreifen ihren Ton, und sind die Kopfknöpfe lesbar? |
+| 8 | **Werkzeuge / Suche** | **E1.** Sechs Goldstellen wechseln von Münzgold (`255,215,0`) auf `var(--gold)` — außer im Contrast-Theme wärmer und dunkler. Zusätzlich: die Trefferhervorhebung der Suche trägt jetzt `--text` statt `--gold`. | Stehen zwei verschiedene Goldtöne nebeneinander? Und ist der hervorgehobene Treffer noch auf Anhieb zu finden? |
+| 9 | **Soundboard** | Die Laufschiene (`.sb-progress`) ist eine 20-%-Tönung von `--text-dim` statt eines Fremdgraus und folgt jetzt dem Theme. | Der Blick gilt dem **goldenen Balken darauf**: hebt er sich in allen vier Themes ausreichend von der Schiene ab? |
+| 10 | **Initiative** · **DM-Screen** · **NSC** → die farblosen Zustands- und Beziehungsmarken | Fläche aus `--text-dim` getönt, **Schrift jetzt `--text` statt `--text-dim`** — sie liest sich kräftiger als bei den farbigen Geschwistern. | Schreit die neutrale Marke jetzt lauter als eine rote oder grüne? Eine umgekehrte Rangfolge wäre ein Befund. |
+| 11 | **Schatzkammer**, Light und Sepia → Gegenstandsname, Detailüberschrift, Zuweisungsliste | Die fünf Seltenheitsfarben als **Schrift** werden dort deutlich dunkler. | Sind die fünf Stufen **untereinander** noch unterscheidbar? Sie liegen nach der Abdunklung enger beieinander als in Dark. |
+| 12 | **Schatzkammer** (Seltenheitsmarke) · **Quests** (Verfolgen-Knopf) · **Verweise** (Pillen der Vorschau) | Schrift auf voller Akzentfläche: `--bg-dark` → `--on-<rolle>`. In **Light und Sepia** von fast weiß auf fast schwarz. | Wirkt keine dieser Marken „invertiert"? In Dark und Contrast darf sich fast nichts ändern. |
+| 13 | **DM-Screen** → Widget „Fertigkeiten" | Die fünf Attributköpfe verlieren ihre **Schriftfarbe** (`--attr-*` → `--text`); die Tönung bleibt und trägt die Zuordnung allein. | Ist auf einen Blick noch zu sehen, welche Fertigkeit zu welchem Attribut gehört? |
+| 14 | **Initiative** · **DM-Screen** → Zustand „liegend" | `.condition-prone` wechselt von `--orange-dim` auf `--orange` und wird **heller** — wie `grappled` und `restrained`. | Passt „liegend" jetzt zu seinen Geschwistern, und sieht die Zwillingsmarke im DM-Screen genauso aus? |
+| 15 | **Welt → Zeitleiste**, Light und Sepia | `.tl-typ-reise` trägt die Grünrolle, Deckel und Schriftvariante zusammen heben sie von 2,32 auf 4,67. | Ist der Reise-Eintrag noch von den übrigen Zeitleisten-Typen zu unterscheiden? |
+| 16 | **Quer durch alle Ansichten**, in Light oder Sepia | Sucharbeit, kein Einzelfall: die Deckelung steht an **119 Stellen** im Komponenten-CSS einzeln in der Datei (`grep -rc "var(--tint-max)" assets/styles/*.css` → 121 Treffer, zwei davon in `variables.css`: eine Erklärung und die Vorlage). | Fällt **eine** Marke auf, die deutlich stärker oder schwächer gefüllt ist als ihre Nachbarn? Das wäre ein Tippfehler in einem Prozentwert — die einzige Fehlerart, die keine Ratsche fängt. |
+
+### Was diese Runde **nicht** finden kann
+
+Kontrastwerte. Die sind gemessen und durch `R-02` bis `R-05`, `R-11` und `R-14` gesichert; ein
+Auge misst sie nicht nach. Die Runde beantwortet genau eine Frage, die keine Messung beantwortet:
+**ob eine 7-%-Fläche in Light und Sepia noch als Fläche wahrgenommen wird** (der Abstand zur Karte
+beträgt dort rund 1,05).
 
 ---
