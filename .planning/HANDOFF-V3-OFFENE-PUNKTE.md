@@ -1318,3 +1318,43 @@ Dasselbe gilt für die Doppelführung `.condition-*` (`core.css`) / `.condition-
 **vier** verschiedene Grautöne (`100,100,100` · `120,113,108` · `107,114,128` · `156,163,175`) und
 steht jetzt in beiden Dateien geschlossen auf `--border`. Wer sie zusammenlegt, findet damit
 erstmals zwei identische Fassungen vor.
+
+---
+
+## W2-C-04 — Sichtliste für die Vier-Themes-Runde in Schritt 11
+
+**Stand:** 2026-09-29, Welle 2 Schritt 7. Offen bis Schritt 11. Eine Liste, kein Befund.
+
+Schritt 11 verlangt eine Sichtprobe „gegen die drei benannten Punkte, nicht als ungeführte
+Vollrunde". Bis hierher gab es keine Stelle, an der die sichtbaren Änderungen der Welle gesammelt
+werden; die Abnahmebedingung von Schritt 7 nennt eine „Sichtliste", die es noch nicht gab. Hier
+ist sie. Alles andere dieser Welle ist **farbneutral** (gleicher Wert, andere Schreibweise) und
+braucht keinen Blick.
+
+| Stelle | Was sich ändert | Sichtbar in |
+| ------ | --------------- | ----------- |
+| `dice.css` `.floating-dice-panel` + `.fdp-title` | Feste dunkle Karte → `var(--bg-card)`; Titel `--gold` → `--gold-text`. **Die größte Sichtänderung der Welle.** Vorher war der Fließtext dieses Panels in Light (1,04) und Sepia (1,51) unsichtbar. | light, sepia |
+| `dice.css` `.fdp-die.d20` | **E1.** Light-`--red` → eigene Rotrolle; dunkles Verlaufsende `--ra-crimson-rule` → `--red-dark`. In Dark sichtbar heller (`dc2626` → `ef4444`). | alle vier |
+| `spells.css` `.spell-card-header` (Ruhe und Hover) | **E1.** Light-`--purple` → eigene Violettrolle. In Dark sichtbar heller (`7c3aed` → `a78bfa`). | alle vier |
+| `tools.css`, sechs Goldstellen | **E1.** Münzgold `255,215,0` → Akzentgold `var(--gold)`. Nur im Contrast-Theme identisch, sonst wärmer und dunkler. | dark, light, sepia |
+| `tools.css` `.search-result-preview mark` | Tinte `--gold` → `--text`. Hält dadurch erstmals in allen vier Themes (vorher in dreien durchgefallen). | alle vier |
+| `tools.css` `.sb-progress` | `rgba(127,127,127,0.25)` → deckendes `var(--border)`. In Dark praktisch identisch (`#353535` → `#3a3a3a`), in den anderen drei folgt die Laufschiene jetzt dem Theme. | light, sepia, contrast |
+| `core.css` / `dmscreen.css`, vier farblose Zustände je Datei | Vier verschiedene Fremdgrau → `var(--border)`. In Dark etwas dunkler, sonst themengerecht. | alle vier |
+| `encounters.css` Schwierigkeitsskala, `initiative.css` Konzentration/Gelände, `party.css` Wiki-Violett und Cyan-Marken, `npcs.css`, `welt.css`, `dashboard.css` | Flat-UI- bzw. Tailwind-Literale → die Rolle, die die Regel ohnehin als Tinte führt. Jeweils ein kleiner Farbton-Versatz, keine Umfärbung. | alle vier |
+| `welt.css` `.tl-typ-reise` (aus **W2-A**) | `#22c55e` → `var(--green)`. Beziffert: dark 5,64 → 5,26 · light 2,20 → 2,11 · sepia 2,13 → 2,07 · contrast 7,16 → 6,53. | alle vier |
+
+### Zwei Nebenwirkungen, die zu W2-B-01 gehören
+
+Seit die Fläche des Würfel-Panels dem Theme folgt, sind der Trennstrich in `.fdp-header` und die
+Hover-Fläche von `.fdp-close` in **Light und Sepia unsichtbar** — beide stehen auf
+`var(--overlay-mid)`, und die Auflagen-Leiter ist themenblind Weiß. Das ist keine neue Baustelle,
+sondern genau der in W2-B-01 beschriebene Umschlag; das Panel ist jetzt der erste Ort, an dem er
+auffällt. Kein Lesbarkeitsmangel: die Hover-Tinte `var(--text)` hält 17,40 bzw. 10,22.
+
+### Befehle
+
+```bash
+cd /d/Claude_Code/Projekte/DnD_Tracker_App_Pro
+PYTHONIOENCODING=utf-8 python build.py
+# dist/dnd-tracker-bundled.html öffnen, Theme im Kopf umschalten
+```
