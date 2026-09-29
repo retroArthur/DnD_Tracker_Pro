@@ -366,18 +366,24 @@
 }
 
 .dice-fav-add:hover {
-    /* Schritt 10, Fall 4 — NICHT geaendert. Die Flaeche ist eine 10-%-Toenung
-       DERSELBEN Rolle und faellt damit unter Entscheidung D-4 (Welle 2).
-       Gemessen (min ueber die vier neutralen Traegerflaechen, auf denen die
-       Toenung liegen kann): var(--gold) dark 5,00 · light 2,20 · sepia 4,51 ·
-       contrast 7,10. Der Grund, warum eine Vorziehung hier NICHTS gebracht
-       haette: mit var(--gold-text) kaeme Light auf 4,21 und bliebe unter der
-       Schwelle. Nicht die Tinte ist zu hell, die Toenung ist zu stark —
-       genau der Fall, fuer den D-4 Staerke und Tinte zusammen entscheidet.
-       Gefuehrt in .planning/HANDOFF-V3-OFFENE-PUNKTE.md, W1-D-02. */
+    /* Welle 1 Schritt 10 hat diese Stelle ausgelassen und den Grund
+       aufgeschrieben: mit var(--gold-text) allein kaeme Light nur auf 4,21 —
+       nicht die Tinte ist zu hell, die Toenung ist zu stark. Genau dafuer
+       entscheidet D-4 Staerke UND Tinte zusammen, und Schritt 8 tut es jetzt.
+       Gemessen, min ueber --bg-card/--bg-dark/--bg-elevated:
+         heute    var(--gold) 10 %                 6,02 · 2,43 · 4,91 · 8,91
+         nachher  var(--gold-text), Deckel greift  6,02 · 4,78 · 5,13 · 8,91
+       In Light sinkt die Flaeche dabei von 10 auf 7 %.
+
+       DIE ALTE PROGNOSE BLEIBT WAHR, wenn man --bg-hover mitzaehlt: dann
+       ergibt die gedeckelte Fassung in Light 4,33 und in Dark 4,97. Das ist
+       die benannte Grenze der Toenungsregel und kein Versehen — auf
+       --bg-hover traegt ueberhaupt keine Toenung, siehe --tint-max in
+       variables.css. Gefuehrt in .planning/HANDOFF-V3-OFFENE-PUNKTE.md,
+       W1-D-02. */
     border-color: var(--gold);
-    color: var(--gold);
-    background: color-mix(in srgb, var(--gold) 10%, transparent);
+    color: var(--gold-text);
+    background: color-mix(in srgb, var(--gold) min(10%, var(--tint-max)), transparent);
 }
 
 /* Character Dice Panel */

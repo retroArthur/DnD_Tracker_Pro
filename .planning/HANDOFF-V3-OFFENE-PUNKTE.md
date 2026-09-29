@@ -490,7 +490,7 @@ diese Tabelle führt.
 | Stelle | Selektor | Rolle | Traeger dark | Traeger light |
 | ------ | -------- | ----- | ------------ | ------------- |
 | `dashboard.css:541` | `.char-section-title` | `--gold` | --bg-card · #191919 | --bg-card · #1e1e1e |
-| `dice.css:633` | `.fdp-title` | `--gold-text` | --bg-card | --bg-card |
+| `dice.css:639` | `.fdp-title` | `--gold-text` | --bg-card | --bg-card |
 | `dmscreen.css:1060` | `.form-group label` | `--gold` | --bg-card · #191919 | --bg-card · #1e1e1e |
 | `party.css:2655` | `.char-adv-btn.adv` | `--green` | --bg-dark · #191919 | --bg-dark · #1e1e1e |
 | `party.css:2656` | `.char-adv-btn.dis` | `--red` | --bg-dark · #191919 | --bg-dark · #1e1e1e |
