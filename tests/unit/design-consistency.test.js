@@ -2822,7 +2822,23 @@ describe('R-07 — Pergament-Statblock: themenunabhaengige Tinte (Ratsche)', () 
         /\.bestiary-statblock|\.bestiary-attr-(?:cell|label|value)\b|\.bestiary-dice\b/;
     /** Die getoente Attributzelle liegt zwischen Tinte und Pergament. */
     const ZELLE = /\.bestiary-attr-(?:label|value)\b/;
-    const ZELL_TOENUNG = 'rgba(139, 69, 19, 0.08)';
+    /** Die Toenung der Attributzelle wird aus bestiary.css GELESEN, nicht
+     *  hier wiederholt.
+     *
+     *  Bis Welle 2 Schritt 7 stand hier das Literal `rgba(139, 69, 19, 0.08)`
+     *  fest verdrahtet. Das ist die gefaehrlichste Bauart, die eine Ratsche
+     *  haben kann: aendert das Stylesheet seine Toenung, rechnet der Test
+     *  stumm mit dem alten Wert weiter. Er wird nicht rot — er prueft nichts
+     *  mehr. Genau das waere beim Umstieg auf
+     *  `color-mix(in srgb, var(--ra-parchment-rule) 8%, transparent)`
+     *  passiert: der WERT ist derselbe, die Zahl haette also gestimmt, aber
+     *  die Aussage "geprueft wird, was im Stylesheet steht" nicht mehr.
+     *  Design-Handoff v3, Welle 2, Schritt 7. */
+    const ZELL_TOENUNG = (() => {
+        const bestiaryCss = cssFiles.find(f => f.name === 'bestiary.css').content;
+        const zelle = regelnMitRumpf(bestiaryCss).find(r => /\.bestiary-attr-cell\b/.test(r.sel));
+        return zelle ? deklaration(zelle.rumpf, 'background') : null;
+    })();
 
     const TEXT_SCHWELLE = 4.5;
     const LINIEN_SCHWELLE = 3;
@@ -2850,6 +2866,13 @@ describe('R-07 — Pergament-Statblock: themenunabhaengige Tinte (Ratsche)', () 
         ];
         // Plausibilitaetsprobe: ohne aufgeloeste Enden waere alles gruen.
         expect(enden.every(Boolean)).toBe(true);
+        /* Zweite Plausibilitaetsprobe, seit die Toenung gelesen statt
+           verdrahtet wird: findet die Zerlegung die Regel nicht mehr, waere
+           ZELL_TOENUNG null, `flaechen` [null, null] — und der Rechner
+           wuerfe erst weiter unten, mit einer Meldung ueber Hexwerte statt
+           ueber die verschwundene Regel. */
+        expect(typeof ZELL_TOENUNG).toBe('string');
+        expect(WCAG.resolveOver(ZELL_TOENUNG, p0, enden[0])).toBeTruthy();
 
         const bestiary = cssFiles.find(f => f.name === 'bestiary.css');
         const befunde = [];
@@ -2878,8 +2901,20 @@ describe('R-07 — Pergament-Statblock: themenunabhaengige Tinte (Ratsche)', () 
             ].forEach(([prop, name, schwelle]) => {
                 const roh = deklaration(regel.rumpf, prop);
                 if (!roh) return;
-                // Aus `1px solid var(--x)` bzw. `1px solid #abc` den Farbteil.
-                const farbe = (roh.match(/var\([^)]*\)|#[0-9a-fA-F]{3,8}|rgba?\([^)]*\)/) || [])[0];
+                /* Aus `1px solid var(--x)` bzw. `1px solid #abc` den Farbteil.
+                   color-mix() MUSS vor var() stehen und muss seine eigene
+                   innere Klammer mitnehmen: die Alternation ist ungeankert,
+                   und `var\([^)]*\)` findet in
+                   `color-mix(in srgb, var(--x) 70%, transparent)` das innere
+                   `var(--x)`. Der Rechner bekaeme dann die VOLLE Tinte statt
+                   der Mischung, der Kontrast waere zu gut gerechnet und der
+                   Test bliebe gruen — dieselbe stille Kopplung wie beim frueher
+                   verdrahteten ZELL_TOENUNG. resolveOver() kennt beide Formen
+                   laengst (deckend wie transparent), es fehlte nur der Zugriff.
+                   Design-Handoff v3, Welle 2, Schritt 7. */
+                const farbe = (roh.match(
+                    /color-mix\((?:[^()]|\([^()]*\))*\)|var\([^)]*\)|#[0-9a-fA-F]{3,8}|rgba?\([^)]*\)/
+                ) || [])[0];
                 if (!farbe) return;
                 geprueft++;
 
@@ -3648,7 +3683,21 @@ describe('R-12 — Skalentoken als Toenungsflaeche (Ratsche)', () => {
      *  editor-floating.spec.js. Schritt 7 traegt hier ein, was er nach Zweck
      *  bewusst auf einer Skala stehen laesst. */
     const R12_AUSNAHMEN = [
-        // { datei: 'encounters.css', token: '--cat-food', anteil: '20%', anzahl: 1, grund: '...' }
+        {
+            datei: 'bestiary.css',
+            token: '--ra-parchment-rule',
+            anteil: '8%',
+            anzahl: 1,
+            grund:
+                '.bestiary-attr-cell — Entscheidung E1, Welle 2 Schritt 7. Die einzige ' +
+                'Stelle, die Schritt 7 bewusst auf einer Skala stehen laesst, und die ' +
+                'einzige, bei der die Skala KEINE fremde Bedeutung ist: die Zelle liegt ' +
+                'im Pergament-Statblock, der keinem Theme folgt, und --ra-parchment-rule ' +
+                'ist die Linienfarbe ebendieses Pergaments (die Trennlinie zwei Regeln ' +
+                'darueber benutzt sie bereits). Das Zahlentripel 139,69,19 war zugleich ' +
+                'Sepia --gold; nach dem Wert waere die Goldrolle richtig gewesen, nach ' +
+                'dem Zweck ist es das Pergament. Farbneutral.'
+        }
     ];
 
     /** Tokens, die in GENAU EINEM Block von variables.css deklariert sind.

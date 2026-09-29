@@ -377,8 +377,8 @@ Gruppe E gerade nicht bewiesen ist. Sie sind **kein** erledigter Fall.
 
 | Stelle | Selektor | Rolle | Traeger dark | Traeger light |
 | ------ | -------- | ----- | ------------ | ------------- |
-| `bestiary.css:483` | `.bst-section-title` | `--gold` | #191919 | #1e1e1e |
-| `bestiary.css:496` | `.bst-validation-error` | `--red` | #191919 | #1e1e1e |
+| `bestiary.css:493` | `.bst-section-title` | `--gold` | #191919 | #1e1e1e |
+| `bestiary.css:506` | `.bst-validation-error` | `--red` | #191919 | #1e1e1e |
 | `core.css:1043` | `.char-modal-title h2` | `--gold` | #191919 | #1e1e1e |
 | `core.css:1048` | `.char-modal-subtitle` | `--cyan` | #191919 | #1e1e1e |
 | `dashboard.css:240` | `.modal-title` | `--gold` | #191919 | #1e1e1e · #252525 |

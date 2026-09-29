@@ -231,16 +231,15 @@
 .bestiary-statblock-subline {
     font-size: 12px;
     font-style: italic;
-    /* NICHT Welle 1, und das ist entschieden, nicht uebersehen: das hier
-       ist das einzige rgba-Literal im ganzen Stylesheet-Baum, das als
-       Textfarbe steht — aber es ist KEIN Kontrastmangel. Ueber dem
-       jeweiligen Verlaufsende zusammengesetzt ergibt es #685647 bzw.
-       #64503e und damit 5,66 und 5,22. Es ist themenunabhaengig wie das
-       Pergament selbst. Zu tun bleibt nur Kosmetik (Literal -> Token oder
-       color-mix aus --parchment-ink-dark), und das ist Welle-2-Arbeit.
-       Damit ist die Doppelzustaendigkeit aufgeloest, die der Wellenplan
-       offenlaesst. */
-    color: rgba(44, 24, 16, 0.7);
+    /* Die Kosmetik, die Welle 1 hier ausdruecklich offengelassen hat, ist
+       erledigt (Welle 2, Schritt 7): das frueher hier stehende rgba-Literal
+       war das einzige im ganzen Stylesheet-Baum, das als TEXTFARBE stand.
+       Es war kein Kontrastmangel und ist keiner — sein Zahlentripel war
+       zeichengleich --parchment-ink-dark, die Mischung ergibt ueber den
+       beiden Verlaufsenden unveraendert #685647 bzw. #64503e und damit
+       5,66 und 5,22. Themenunabhaengig wie das Pergament selbst, deshalb
+       das Pergamenttoken und keine Palettenrolle. */
+    color: color-mix(in srgb, var(--parchment-ink-dark) 70%, transparent);
     margin: 0 0 8px 0;
 }
 
@@ -276,7 +275,18 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    background: rgba(139, 69, 19, 0.08);
+    /* Entscheidung E1 (Welle 2, Schritt 7). Das Tripel 139,69,19 ist
+       zugleich Sepia --gold UND das bestehende Alias --ra-parchment-rule,
+       mit dem der Trennstrich zwei Regeln weiter oben schon arbeitet. Nach
+       dem ZWECK entschieden, nicht nach dem Wert: die Zelle liegt auf dem
+       Pergament und folgt keinem Theme — also das Pergamenttoken, nicht die
+       Goldrolle. Farbneutral, der Wert ist derselbe.
+
+       Diese Stelle ist die eine gefuehrte Ausnahme der Ratsche R-12
+       (Skalentoken als Toenungsflaeche) — R-12 verbietet nichts, sie
+       verlangt eine Begruendung, und hier ist sie: die --ra-*-Skala IST das
+       Pergament, auf dem diese Zelle sitzt, keine fremde Bedeutung. */
+    background: color-mix(in srgb, var(--ra-parchment-rule) 8%, transparent);
     border-radius: var(--radius-sm);
     padding: 4px 2px;
 }
