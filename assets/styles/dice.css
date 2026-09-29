@@ -470,7 +470,29 @@
 
 .dice-attr.save:hover {
     border-color: var(--purple);
-    background: color-mix(in srgb, var(--purple) 15%, transparent);
+    /* Welle 2, Nachtrag. DIESELBE Bauart wie die vier Zustandsregeln aus
+       W2-D-05, nur GEKREUZT: die Regel wechselt nur die Flaeche, die Tinte
+       kommt nicht aus ihrer Grundregel, sondern aus dem Nachfahren
+       `.dice-attr.save small` weiter unten in dieser Datei (var(--purple-text),
+       Spezifitaet 0,2,1 schlaegt `.dice-attr small` mit --cyan-text bei
+       0,1,1; Markup: assets/templates/view-tools.html ab Zeile 194,
+       `<button class="dice-attr save"><span>STR</span><small>+0</small>`).
+
+       WARUM SIE DURCH ALLE NETZE FIEL. R-04 verlangt Flaeche UND Tinte in
+       derselben Regel — hier fehlt die Tinte. R-14 verlangt eine
+       Nachfahrenschreibweise des Toenungsselektors — `.dice-attr.save small`
+       ist keine von `.dice-attr.save:hover`. Und die Zaehlung "neun Regeln
+       dieser Bauart" in der Aktenlage erfasst nur Regeln mit Tinte aus der
+       EIGENEN Grundregel; diese hier stand in keiner Liste. Seit dem
+       Nachtrag urteilt R-18 ueber beide Wege.
+
+       Gemessen, min ueber --bg-card/--bg-dark/--bg-elevated (D-2), dark
+       light sepia contrast:
+         4,41 · 4,09 · 4,18 · 5,05 -> 4,57 · 4,57 · 4,60 · 5,05
+       Ungedeckelt fiel sie in DREI Themes durch. 15 % liegen in dark, light
+       und sepia ueber --tint-max (13/7/7/20 %); in contrast greift der
+       Deckel nicht, dort war sie schon vorher gruen. */
+    background: color-mix(in srgb, var(--purple) min(15%, var(--tint-max)), transparent);
 }
 
 .dice-attr.save small {
