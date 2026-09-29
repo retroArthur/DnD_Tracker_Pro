@@ -204,21 +204,37 @@
             transform: scale(1.05);
         }
         
-        .condition-badge.blinded { background: rgba(107, 114, 128, 0.3); color: var(--text-dim); }
+        /* Zweite Fuehrung derselben Zustandsgruppe (die erste steht in
+           core.css als .condition-*, D-05 legt sie in Welle 4 zusammen —
+           wer das tut, findet zweimal dieselbe Arbeit vor). Welle 2
+           Schritt 7: die vier farblosen Zustaende trugen hier 107,114,128
+           und 156,163,175 aus einer fremden Palette, in core.css waren es
+           zwei ANDERE Grautoene fuer dieselbe Aussage. Sie stehen jetzt in
+           beiden Dateien auf --border, der neutralen Rolle dieses Projekts,
+           mit unveraenderter Staerke. Gemessen (min ueber die drei neutralen
+           Traegerflaechen, vorher -> nachher, dark light sepia contrast):
+             blinded/deafened/exhaustion 3,12 · 3,31 · 3,24 · 4,90
+                                      -> 3,99 · 4,35 · 4,04 · 5,60
+             petrified (Tinte --text)    6,63 · 11,61 · 7,26 · 9,03
+                                      -> 10,73 · 13,18 · 7,77 · 13,01
+           156,163,175 traf zufaellig --dmg-necrotic-text, die TINTE der
+           Schadensart "nekrotisch"; nach dem Zweck hat ein versteinerter
+           Zustand damit nichts zu tun (R-12). */
+        .condition-badge.blinded { background: color-mix(in srgb, var(--border) 30%, transparent); color: var(--text-dim); }
         .condition-badge.charmed { background: color-mix(in srgb, var(--pink) 30%, transparent); color: var(--pink); }
-        .condition-badge.deafened { background: rgba(107, 114, 128, 0.3); color: var(--text-dim); }
+        .condition-badge.deafened { background: color-mix(in srgb, var(--border) 30%, transparent); color: var(--text-dim); }
         .condition-badge.frightened { background: color-mix(in srgb, var(--purple) 30%, transparent); color: var(--purple); }
         .condition-badge.grappled { background: color-mix(in srgb, var(--orange) 30%, transparent); color: var(--orange); }
         .condition-badge.incapacitated { background: color-mix(in srgb, var(--red) 30%, transparent); color: var(--red); }
         .condition-badge.invisible { background: color-mix(in srgb, var(--cyan) 30%, transparent); color: var(--cyan); border-style: dashed; }
         .condition-badge.paralyzed { background: color-mix(in srgb, var(--yellow) 30%, transparent); color: var(--yellow); }
-        .condition-badge.petrified { background: rgba(156, 163, 175, 0.3); color: var(--text); }
+        .condition-badge.petrified { background: color-mix(in srgb, var(--border) 30%, transparent); color: var(--text); }
         .condition-badge.poisoned { background: color-mix(in srgb, var(--green) 30%, transparent); color: var(--green); }
         .condition-badge.prone { background: color-mix(in srgb, var(--orange) 30%, transparent); color: var(--orange); }
         .condition-badge.restrained { background: color-mix(in srgb, var(--orange) 30%, transparent); color: var(--orange); }
         .condition-badge.stunned { background: color-mix(in srgb, var(--yellow) 30%, transparent); color: var(--yellow); }
         .condition-badge.unconscious { background: color-mix(in srgb, var(--red) 30%, transparent); color: var(--red); }
-        .condition-badge.exhaustion { background: rgba(107, 114, 128, 0.3); color: var(--text-dim); }
+        .condition-badge.exhaustion { background: color-mix(in srgb, var(--border) 30%, transparent); color: var(--text-dim); }
         .condition-badge.concentration { background: color-mix(in srgb, var(--blue) 30%, transparent); color: var(--blue); border: 1px solid var(--blue); }
         
         .condition-tooltip {
@@ -296,7 +312,10 @@
         
         .relationship-badge.ally { background: color-mix(in srgb, var(--green) 20%, transparent); color: var(--green); }
         .relationship-badge.enemy { background: color-mix(in srgb, var(--red) 20%, transparent); color: var(--red); }
-        .relationship-badge.neutral { background: rgba(156, 163, 175, 0.2); color: var(--text-dim); }
+        /* Dieselbe Entscheidung wie bei den farblosen Zustaenden: 156,163,175
+           traf --dmg-necrotic-text, gemeint war "keine Farbe" -> --border.
+           3,02 · 4,11 · 4,02 · 4,77 -> 4,10 · 4,43 · 4,20 · 6,01. */
+        .relationship-badge.neutral { background: color-mix(in srgb, var(--border) 20%, transparent); color: var(--text-dim); }
         .relationship-badge.family { background: color-mix(in srgb, var(--pink) 20%, transparent); color: var(--pink); }
         .relationship-badge.rival { background: color-mix(in srgb, var(--orange) 20%, transparent); color: var(--orange); }
         .relationship-badge.mentor { background: color-mix(in srgb, var(--blue) 20%, transparent); color: var(--blue); }
@@ -702,6 +721,28 @@
             max-height: calc(100vh - 40px);
             overflow-y: auto;
             margin: auto;
+            /* BLEIBT ein Literal, und das ist entschieden, nicht uebersehen:
+               gefuehrte Ausnahme von R-10 (Welle 2, Schritt 7), offener
+               Punkt W2-C-01.
+
+               26,26,26 ist zeichengleich --bg-card im DARK-Block. Die Tinten
+               auf dieser Flaeche folgen dem Theme sehr wohl, und das ist
+               gemessen katastrophal: var(--text) erreicht in Light 1,14 und
+               in Sepia 1,41 — der Fliesstext JEDES Modals der Anwendung ist
+               dort unsichtbar. var(--bg-card) 95 % wuerde daraus
+               17,40 und 10,15 machen.
+
+               Warum es trotzdem hier stehen bleibt: .modal ist die
+               Universalschachtel (19 Vorkommen in den Templates, einzige
+               Flaechenquelle im ganzen Baum), und ihre Tinten kommen aus
+               rund zwanzig Dateien. Mindestens eine verschlechtert sich
+               nachweislich — var(--gold) in Ueberschriften faellt auf heller
+               Karte von 4,71 auf 3,25. Das ist keine Literalaufloesung mehr,
+               sondern eine Gestaltungsentscheidung mit Sichtprobe in vier
+               Themes; Schritt 7 faellt sie nicht nebenbei.
+
+               Die gleich gebaute Stelle mit ueberschaubarem Tintenkreis IST
+               umgestellt: dice.css .floating-dice-panel. */
             background: rgba(26, 26, 26, 0.95); /* F-18: aus der Dublette uebernommen */
             backdrop-filter: blur(12px); /* F-18: aus der Dublette uebernommen */
             -webkit-backdrop-filter: blur(12px); /* F-18: aus der Dublette uebernommen */
@@ -2057,7 +2098,11 @@
     font-size: 0.55em;
     font-weight: 500;
     color: var(--green);
-    background: rgba(34, 197, 94, 0.15);
+    /* Welle 2 Schritt 7: 34,197,94 ist vierfach belegt (--attr-dex in Dark und
+       Contrast, --dmg-acid, --know-nature). Nach dem Zweck ist es keins davon,
+       sondern die Gruenrolle, die diese Regel als Tinte fuehrt.
+       6,75 · 2,42 · 2,29 · 8,96 -> 6,32 · 2,33 · 2,25 · 8,17 (D-4, Schritt 8). */
+    background: color-mix(in srgb, var(--green) 15%, transparent);
     padding: 3px 8px;
     border-radius: var(--radius-md);
     animation: dms-live-pulse 2s ease-in-out infinite;
