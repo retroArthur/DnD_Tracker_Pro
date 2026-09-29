@@ -400,8 +400,31 @@
 
         .concentration-badge:hover {
             /* 4,42 · 3,03 · 2,62 · 3,94 -> 3,32 · 3,03 · 2,79 · 3,61; lag
-               schon vorher in allen vier Themes unter 4,5 (D-4). */
-            background: color-mix(in srgb, var(--purple) 30%, transparent);
+               schon vorher in allen vier Themes unter 4,5 (D-4).
+
+               DIESE REIHE IST UEBERHOLT, nicht falsch: sie ist gegen die
+               damalige Tinte var(--purple) gerechnet. Seit Schritt 5/6 fuehrt
+               die Grundregel var(--purple-text), und mit ihr liest dieselbe
+               ungedeckelte 30-%-Flaeche 3,32 · 3,28 · 3,46 · 4,07.
+
+               WELLE 2, NACHTRAG. Die Regel wechselt nur die FLAECHE; die Tinte
+               erbt sie aus .concentration-badge (offener Punkt W2-D-05). Die
+               Aktenlage hielt fest, der Deckel bringe sie nicht ueber 4,5 —
+               das ist gemessen falsch. 30 % liegen in jedem Theme ueber
+               --tint-max (13/7/7/20 %), min(30%, var(--tint-max)) ergibt damit
+               zeichengleich den Verlaufskopf der Grundregel oben, der mit
+               4,56 · 4,57 · 4,60 · 4,73 ausgewiesen ist. Gemessen, min ueber
+               --bg-card/--bg-dark/--bg-elevated (D-2), dark light sepia
+               contrast:
+                 3,32 · 3,28 · 3,46 · 4,07 -> 4,57 · 4,57 · 4,60 · 4,74
+               Das Minimum stellt --bg-elevated, in Sepia --bg-dark.
+
+               SICHTFOLGE, bewusst: die Hover-Flaeche faellt mit dem
+               Verlaufskopf der Ruheflaeche zusammen; das Ueberfahren meldet
+               sich ueber translateY(-1px) und den verschwindenden Verlauf.
+               Dieselbe Folge wie an den uebrigen 114 gedeckelten Stellen;
+               "Hover ohne Fuellung" ist E3/Schritt 9. */
+            background: color-mix(in srgb, var(--purple) min(30%, var(--tint-max)), transparent);
             transform: translateY(-1px);
         }
 
@@ -450,8 +473,23 @@
         .concentration-add-btn:hover {
             opacity: 1;
             /* Tinte ist var(--purple-text) aus der Grundregel:
-               5,28 · 4,39 · 4,34 · 5,33 -> 4,81 · 4,40 · 4,43 · 5,31. */
-            background: color-mix(in srgb, var(--purple) 10%, transparent);
+               5,28 · 4,39 · 4,34 · 5,33 -> 4,81 · 4,40 · 4,43 · 5,31.
+
+               WELLE 2, NACHTRAG. Light und Sepia lagen damit unter 4,5, und
+               die Aktenlage hielt fest, der Deckel helfe nicht — gemessen
+               falsch. Hier greift er nur in zwei der vier Themes, weil 10 %
+               unter dem Dark- und dem Contrast-Deckel liegen (13 bzw. 20 %)
+               und min() sie unveraendert laesst; in Light und Sepia deckelt
+               er auf 7 %, und genau dort war der Mangel. Gemessen, min ueber
+               --bg-card/--bg-dark/--bg-elevated (D-2), dark light sepia
+               contrast:
+                 4,81 · 4,40 · 4,43 · 5,31 -> 4,81 · 4,57 · 4,60 · 5,31
+               Das Minimum stellt --bg-elevated, in Sepia --bg-dark.
+
+               KEINE Sichtfolge in Dark und Contrast — dort ist die Flaeche
+               zeichengleich dieselbe. In Light und Sepia wird sie blasser;
+               das Ueberfahren meldet sich ohnehin ueber opacity 0,6 -> 1. */
+            background: color-mix(in srgb, var(--purple) min(10%, var(--tint-max)), transparent);
         }
 
         .concentration-check-banner {
