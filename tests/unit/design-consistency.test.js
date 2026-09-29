@@ -7358,3 +7358,434 @@ describe('R-19 — Schatten nur aus Tokens (Ratsche)', () => {
         expect(kf[0].pfad).toBe('@keyframes p >> 0%, 100%');
     });
 });
+
+/* ===========================================================================
+   Design-Handoff v3, Welle 3 — R-20: die Gluehlagen und die Rahmennachbarn
+   ===========================================================================
+   WARUM SIE NEBEN R-19 STEHT UND NICHT IN IHR. R-19 urteilt in Teil (2) ueber
+   die 52 Hoehen- und die eine seitliche Lage. Die 14 GLUEHLAGEN kommen dort
+   nur in Teil (1) vor, und der erlaubt die Form `0 0 <r>px var(--glow-*)`
+   OHNE zu sagen, welches r. Damit stand die eine Groesse, die W3-D-03
+   ausdruecklich unberuehrt lassen will — der Radius —, unter keiner Ratsche;
+   und die DECKUNG, die das Token seit dem 2026-09-30 fuer alle 14 Stellen
+   gemeinsam setzt, unter gar keiner.
+
+   DREI LUECKEN, die sie schliesst, alle am 2026-09-30 gemessen:
+
+   (a) DIE DECKUNG WANDERT AN ALLEN 14 STELLEN. `--glow-*` traegt EINEN
+       Prozentwert fuer vierzehn Stellen, die im Bestand sechs verschiedene
+       tragen: 0,20 (1x) · 0,25 (3x) · 0,30 (2x) · 0,40 (2x) · 0,50 (4x) ·
+       1,00 (2x). Median 0,40, Mittel 0,4536, HAEUFIGSTER Wert 0,50.
+       Mit 55 % — dem ersten hier gesetzten Wert — blieb KEINE der 14 Stellen
+       gleich; mit 50 % bleiben vier bildpunktgleich (dashboard.css zweimal
+       wortgleich, editors.css und spells.css als color-mix derselben Farbe).
+       Das ist dieselbe Rechnung, mit der W3-D-02 die Hoehenleiter gewaehlt
+       hat ("24 von 53 wortgleich statt elf"), und dieselbe, mit der
+       `--ring-gold` auf 15 % kam (party.css traegt genau das schon).
+       Deshalb prueft diese Ratsche nicht, ob ein Kommentar eine Zahl NENNT,
+       sondern ob die gewaehlte Zahl im Bestand VORKOMMT und dort die
+       haeufigste ist.
+
+   (b) DIE RADIEN. 4/4/6/6/8/8/10/12/12/12/12/20/30/30. W3-D-03 laesst sie
+       bewusst stehen; ohne Tabelle faellt eine Verschiebung bei der
+       Umstellung in Schritt 6/7 niemandem auf.
+
+   (c) DIE DOPPELTE LINIE IN CONTRAST IST GROESSER ALS 13. Der Plan fuehrt
+       als Kandidaten fuer "Umriss nicht von Rahmen zu unterscheiden" nur die
+       13 Schattenregeln mit `border: 1px solid var(--border)`. Gemessen
+       tragen ZUSAETZLICH NEUN einen Rahmen aus `--gold`, sechs davon
+       volldeckend — und im Contrast-Theme ist `--gold` #ffd700. Gegen die
+       Grauleiter liest das volle Gold 1,14 (#ccc) bzw. 1,66 (#aaa): an diesen
+       sechs Stellen entsteht eine Bande aus 1px Gold und 2-3px Fast-Weiss
+       ohne Helligkeitsunterschied, die als verbreiteter RAHMEN liest und
+       nicht als Hoehe. Die drei mit gemischtem Goldrahmen sind NICHT
+       betroffen: 20-30 % Gold ueber der Contrast-Karte loesen zu einem
+       dunklen Oliv auf (#41390e / #584c0c) und lesen 5,33-7,20 gegen #ccc.
+       Diese Unterscheidung steht hier, weil der Befund sie nicht traf und
+       eine ungepruefte Sichtprobenliste sonst drei Stellen zuviel und die
+       drei schlimmsten nicht hervorgehoben nennt.
+
+   WAS SIE NICHT TUT. Sie schreibt keiner Gluehlage eine Deckung vor, die von
+   ihrer heutigen abweicht — sie besteht darauf, dass jede Abweichung in der
+   Aktenlage unter W3-F-01 namentlich auf der Sichtprobenliste steht. Ein Auge
+   entscheidet, ob eine Marke noch "zeig mir, wo" leistet; eine Ratsche
+   entscheidet nur, ob die Frage ueberhaupt gestellt wurde.
+   =========================================================================== */
+describe('R-20 — Gluehlagen und Rahmennachbarn, beziffert gefuehrt (Ratsche)', () => {
+    const AKTENLAGE_PFAD = path.join(REPO, '.planning', 'HANDOFF-V3-OFFENE-PUNKTE.md');
+    const AKTENLAGE = fs.readFileSync(AKTENLAGE_PFAD, 'utf8');
+
+    /** Der Abschnitt W3-F-01 der Aktenlage, ohne seine Nachbarn. Leer, solange
+     *  er nicht existiert — dann gehen die zwei Fuehrungstests rot, und genau
+     *  das ist ihr Zweck. */
+    function aktenlageAbschnitt(marke) {
+        const i = AKTENLAGE.indexOf(`## ${marke}`);
+        if (i < 0) return '';
+        const j = AKTENLAGE.indexOf('\n## ', i + 1);
+        return AKTENLAGE.slice(i, j < 0 ? AKTENLAGE.length : j);
+    }
+    const W3F01 = aktenlageAbschnitt('W3-F-01');
+
+    /* -------------------------------------------------------------------
+       ZERLEGUNG. Bewusst NICHT die von R-19 wiederverwendet: die steht im
+       Rumpf ihres describe und waere nur durch ein Herausziehen erreichbar,
+       das ihren eingefrorenen Block anfasst. Diese hier baut auf dem
+       modulweiten regelnMitRumpf() auf, urteilt also ueber dieselben Datei-
+       inhalte, und ihre Zahlen werden gegen R-19s Zahlen gehalten (Test
+       "dieselbe Menge wie R-19"): 71 Deklarationen, 14 Gluehlagen.
+       ------------------------------------------------------------------- */
+
+    /** Lagen am Komma der OBERSTEN Klammerebene. */
+    function lagen20(wert) {
+        const out = [];
+        let tiefe = 0;
+        let cur = '';
+        for (const ch of wert) {
+            if (ch === '(') tiefe++;
+            else if (ch === ')') tiefe--;
+            if (ch === ',' && tiefe === 0) {
+                if (cur.trim()) out.push(cur.trim());
+                cur = '';
+            } else cur += ch;
+        }
+        if (cur.trim()) out.push(cur.trim());
+        return out;
+    }
+
+    /** Die fuehrenden Laengen einer Lage. Abbruch beim ersten Wort, das keine
+     *  Laenge ist — danach kommt die Farbe. */
+    function laengen20(lage) {
+        const nums = [];
+        for (const tok of lage
+            .replace(/\binset\b/g, ' ')
+            .trim()
+            .split(/\s+/)) {
+            if (/^-?\d*\.?\d+px$/.test(tok)) nums.push(parseFloat(tok));
+            else if (tok === '0') nums.push(0);
+            else break;
+        }
+        return nums;
+    }
+
+    /** Gluehlage: X=0, Y=0, Weichzeichnung > 0, kein inset. Zeichengleich mit
+     *  bauart() === 'gluehe' in R-19. */
+    function istGluehe(lage) {
+        if (/\binset\b/.test(lage)) return false;
+        const [x = null, y = null, b = 0] = laengen20(lage);
+        return x === 0 && y === 0 && b > 0;
+    }
+
+    /** Die Deckung einer Lage, oder null wenn sie keine Farbe mit Deckung
+     *  traegt. `var(--glow-*)` gibt bewusst null zuruck und nicht 1: eine
+     *  umgestellte Stelle traegt ihre Deckung im Token und nicht mehr hier. */
+    function deckungVon(lage) {
+        if (/var\(--glow-/.test(lage)) return null;
+        let m = lage.match(/rgba\(\s*[\d.]+\s*,\s*[\d.]+\s*,\s*[\d.]+\s*,\s*([\d.]+)\s*\)/);
+        if (m) return parseFloat(m[1]);
+        m = lage.match(/color-mix\(\s*in srgb\s*,[^,]*?([\d.]+)%\s*,\s*transparent\s*\)/);
+        if (m) return parseFloat(m[1]) / 100;
+        if (/var\(--|#[0-9a-f]{3,8}\b|\brgb\(/i.test(lage)) return 1.0;
+        return null;
+    }
+
+    /** Alle box-shadow-Deklarationen mit Datei, Selektor, Zeile und Rumpf. */
+    function schattenRegeln() {
+        const out = [];
+        cssFiles.forEach(f =>
+            regelnMitRumpf(f.content).forEach(r => {
+                const re = /(?:^|[;{\s])((?:-webkit-)?box-shadow)\s*:\s*([^;}]+)/g;
+                let m;
+                while ((m = re.exec(r.rumpf))) {
+                    out.push({
+                        datei: f.name,
+                        sel: r.sel,
+                        rumpf: r.rumpf,
+                        prop: m[1],
+                        wert: m[2].trim().replace(/\s+/g, ' '),
+                        zeile: r.zeile + (r.rumpf.slice(0, m.index).match(/\n/g) || []).length
+                    });
+                }
+            })
+        );
+        return out;
+    }
+    const SCHATTEN = schattenRegeln();
+
+    /** Jede Gluehlage mit ihrer Deklaration im Ruecken. */
+    function gluehlagen() {
+        const out = [];
+        SCHATTEN.forEach(d => {
+            if (/^none\b/.test(d.wert)) return;
+            lagen20(d.wert).forEach(l => {
+                if (istGluehe(l)) out.push({ ...d, lage: l, radius: laengen20(l)[2], deckung: deckungVon(l) });
+            });
+        });
+        return out;
+    }
+
+    /* -------------------------------------------------------------------
+       DIE VIERZEHN GLUEHLAGEN, gemessen am 2026-09-30 an HEAD 947cdb1.
+
+       `vorher` ist der Messwert im Bestand und wird NICHT dauerhaft gegen das
+       CSS gehalten — nach der Umstellung in Schritt 6/7 traegt keine dieser
+       Stellen mehr ein Literal, genau wie `vorher` in R-19s ORT_ZU_STUFE. Was
+       dauerhaft geprueft wird: solange eine Stelle noch ein Literal traegt,
+       ist es dieses; der RADIUS bleibt in jedem Fall dieser; und die Deckung
+       des Tokens ist einer dieser Werte.
+
+       `rolle` ist das Basis-Token, dessen Leuchte die Stelle tragen wird —
+       gegen den Dark-Block nachgerechnet, nicht geschaetzt. Zwei Stellen
+       tragen bewusst eine FREMDE Rolle (dice.css: #dc2626 ist das Rot des
+       Light-Blocks, nicht --red des Dark-Blocks); sie stehen mit `fremd: true`
+       und sind Punkt 5 der Sichtprobenliste.
+       ------------------------------------------------------------------- */
+    const GLUEH_STELLEN = [
+        { datei: 'dashboard.css', zeile: 34, sel: '.dice-result.crit-effect', radius: 30, vorher: 0.5, rolle: '--green' },
+        { datei: 'dashboard.css', zeile: 40, sel: '.dice-result.fail-effect', radius: 30, vorher: 0.5, rolle: '--red' },
+        { datei: 'dice.css', zeile: 573, sel: '.floating-dice-trigger:hover', radius: 20, vorher: 0.3, rolle: '--red', fremd: true },
+        { datei: 'dice.css', zeile: 788, sel: '.fdp-die.d20:hover', radius: 12, vorher: 0.3, rolle: '--red', fremd: true },
+        { datei: 'dmscreen.css', zeile: 983, sel: '.btn:hover', radius: 12, vorher: 0.25, rolle: '--gold' },
+        { datei: 'dmscreen.css', zeile: 989, sel: '.btn-success:hover', radius: 12, vorher: 0.25, rolle: '--green' },
+        { datei: 'dmscreen.css', zeile: 1000, sel: '.btn-danger:hover', radius: 12, vorher: 0.25, rolle: '--red' },
+        { datei: 'editors.css', zeile: 138, sel: '.editor-toolbar .color-swatch.active', radius: 6, vorher: 0.5, rolle: '--yellow' },
+        { datei: 'encounters.css', zeile: 441, sel: '.calc-threshold-marker', radius: 8, vorher: 1.0, rolle: '--gold' },
+        { datei: 'file-backup.css', zeile: 40, sel: '.backup-dot-active', radius: 4, vorher: 0.4, rolle: '--green' },
+        { datei: 'file-backup.css', zeile: 45, sel: '.backup-dot-paused', radius: 4, vorher: 0.4, rolle: '--yellow' },
+        { datei: 'spells.css', zeile: 446, sel: '.floating-toolbar', radius: 10, vorher: 0.2, rolle: '--yellow' },
+        { datei: 'spells.css', zeile: 515, sel: '.color-swatch.active', radius: 6, vorher: 0.5, rolle: '--yellow' },
+        { datei: 'tools.css', zeile: 1026, sel: '.char-form-progress-dot.current', radius: 8, vorher: 1.0, rolle: '--gold' }
+    ];
+    const gluehSchluessel = e => `${e.datei} {${e.sel}}`;
+
+    /* -------------------------------------------------------------------
+       DIE NEUN SCHATTENREGELN MIT GOLDRAHMEN, gemessen am 2026-09-30.
+       `stufe` ist die Stufe, die R-19s ORT_ZU_STUFE derselben Stelle gibt;
+       `grau` der Contrast-Umriss dieser Stufe; `abstand` das GEMESSENE
+       Kontrastverhaeltnis zwischen Umriss und Rahmenfarbe ueber der
+       Traegerflaeche. Unter 3 liest die Bande als ein breiterer Rahmen.
+       ------------------------------------------------------------------- */
+    const RAHMEN_GOLD = [
+        { datei: 'core.css', sel: '.spell-tooltip', art: 'voll', stufe: 3, grau: '#cccccc', abstand: 1.14 },
+        { datei: 'editors.css', sel: '.editor-toolbar .tb-menu', art: 'voll', stufe: 3, grau: '#cccccc', abstand: 1.14 },
+        { datei: 'encounters.css', sel: '#calculator-modal .modal-content', art: 'voll', stufe: 3, grau: '#cccccc', abstand: 1.14 },
+        { datei: 'party.css', sel: '.cf-languages-block .cf-lang-dropdown', art: 'voll', stufe: 2, grau: '#aaaaaa', abstand: 1.66 },
+        { datei: 'spells.css', sel: '.floating-toolbar', art: 'voll', stufe: 2, grau: '#aaaaaa', abstand: 1.66 },
+        { datei: 'tools.css', sel: '.wiki-link-suggester', art: 'voll', stufe: 2, grau: '#aaaaaa', abstand: 1.66 },
+        { datei: 'command-palette.css', sel: '.cp-box', art: 'mix', anteil: 30, flaeche: '--bg-card', stufe: 3, grau: '#cccccc', abstand: 5.33 },
+        { datei: 'dice.css', sel: '.floating-dice-panel', art: 'mix', anteil: 30, flaeche: '--bg-card', stufe: 3, grau: '#cccccc', abstand: 5.33 },
+        { datei: 'dmscreen.css', sel: '.modal', art: 'mix', anteil: 20, flaeche: '--bg-card', stufe: 3, grau: '#cccccc', abstand: 7.2 }
+    ];
+
+    /** Rahmenart einer Schattenregel, oder null wenn sie keinen `border`
+     *  traegt. `border-left`, `border-color` und Co. zaehlen NICHT: der
+     *  Praefixschutz ist derselbe wie in deklaration(). */
+    function rahmenArt(rumpf) {
+        const m = rumpf.match(/(?:^|[;{\s])border\s*:\s*([^;}]+)/);
+        if (!m) return null;
+        const v = m[1].trim().replace(/\s+/g, ' ');
+        if (/var\(--border\)/.test(v)) return { klasse: 'border', wert: v };
+        if (/solid\s+var\(--gold\)/.test(v)) return { klasse: 'goldVoll', wert: v };
+        if (/color-mix/.test(v) && /var\(--gold\)/.test(v)) return { klasse: 'goldMix', wert: v };
+        return { klasse: 'sonst', wert: v };
+    }
+
+    /** Eine Regel je Datei+Selektor, auch wenn sie zwei box-shadow traegt. */
+    function rahmenNachbarn() {
+        const out = new Map();
+        SCHATTEN.forEach(d => {
+            const k = `${d.datei} {${d.sel}}`;
+            if (out.has(k)) return;
+            const a = rahmenArt(d.rumpf);
+            if (a) out.set(k, { datei: d.datei, sel: d.sel, ...a });
+        });
+        return [...out.values()];
+    }
+
+    /* ===================================================================
+       (a) DIE VIERZEHN GLUEHLAGEN
+       =================================================================== */
+
+    test('die Menge der Gluehlagen ist die gemessene: 14, und jede steht in GLUEH_STELLEN', () => {
+        const ist = gluehlagen().map(gluehSchluessel).sort();
+        const soll = GLUEH_STELLEN.map(gluehSchluessel).sort();
+        expect(ist).toEqual(soll);
+        expect(GLUEH_STELLEN.length).toBe(14);
+        expect(new Set(soll).size).toBe(14);
+    });
+
+    test('dieselbe Menge wie R-19: 71 box-shadow-Deklarationen, 14 Gluehlagen', () => {
+        expect({ dekl: SCHATTEN.length, gluehe: gluehlagen().length }).toEqual({ dekl: 71, gluehe: 14 });
+    });
+
+    test('die vierzehn Radien bleiben unberuehrt (W3-D-03): 4/4/6/6/8/8/10/12/12/12/12/20/30/30', () => {
+        const nach = new Map(gluehlagen().map(l => [gluehSchluessel(l), l.radius]));
+        const abweichung = GLUEH_STELLEN.filter(e => nach.get(gluehSchluessel(e)) !== e.radius).map(
+            e => `${gluehSchluessel(e)} — Tabelle ${e.radius}px, gefunden ${nach.get(gluehSchluessel(e))}px`
+        );
+        expect(abweichung.sort()).toEqual([]);
+        expect(
+            GLUEH_STELLEN.map(e => e.radius)
+                .sort((a, b) => a - b)
+                .join('/')
+        ).toBe('4/4/6/6/8/8/10/12/12/12/12/20/30/30');
+    });
+
+    test('solange eine Gluehlage ein Literal traegt, ist es das gemessene', () => {
+        const nach = new Map(gluehlagen().map(l => [gluehSchluessel(l), l.deckung]));
+        const abweichung = GLUEH_STELLEN.filter(e => {
+            const d = nach.get(gluehSchluessel(e));
+            return d !== null && d !== undefined && Math.abs(d - e.vorher) > 1e-9;
+        }).map(e => `${gluehSchluessel(e)} — Tabelle ${e.vorher}, gefunden ${nach.get(gluehSchluessel(e))}`);
+        expect(abweichung.sort()).toEqual([]);
+    });
+
+    test('die Verteilung der gemessenen Deckungen ist 0,20/0,25x3/0,30x2/0,40x2/0,50x4/1,00x2', () => {
+        const verteilung = {};
+        GLUEH_STELLEN.forEach(e => (verteilung[e.vorher] = (verteilung[e.vorher] || 0) + 1));
+        expect(verteilung).toEqual({ 0.2: 1, 0.25: 3, 0.3: 2, 0.4: 2, 0.5: 4, 1: 2 });
+    });
+
+    /* -------------------------------------------------------------------
+       DER KERN VON (a). Ein Token, das fuer 14 Stellen EINE Deckung setzt,
+       darf nicht irgendeine sein. Geprueft wird nicht, ob ein Kommentar eine
+       Zahl nennt — das laesst sich nachtraeglich hinschreiben —, sondern ob
+       die gewaehlte Zahl im Bestand VORKOMMT und dort die haeufigste ist.
+       Mit 55 % war beides falsch: 55 kommt nicht vor, haeufigster Wert ist
+       0,50 (viermal). Dieselbe Rechnung wie bei der Hoehenleiter (W3-D-02)
+       und bei --ring-gold (15 %, weil party.css genau das schon traegt).
+       ------------------------------------------------------------------- */
+    test('die Deckung der vier --glow-Tokens ist EINE, kommt im Bestand vor und ist dort die haeufigste', () => {
+        const css = fs.readFileSync(path.join(REPO, 'assets', 'styles', 'variables.css'), 'utf8');
+        const anteile = {};
+        ['--glow-gold', '--glow-yellow', '--glow-green', '--glow-red'].forEach(t => {
+            const m = css.match(
+                new RegExp(`${t}\\s*:\\s*color-mix\\(\\s*in srgb\\s*,\\s*var\\(--[a-z]+\\)\\s*([\\d.]+)%\\s*,\\s*transparent\\s*\\)`)
+            );
+            anteile[t] = m ? parseFloat(m[1]) / 100 : null;
+        });
+        // EINE Deckung fuer alle vier — sonst leuchtet Gold anders als Rot.
+        expect([...new Set(Object.values(anteile))]).toHaveLength(1);
+        const gewaehlt = anteile['--glow-gold'];
+
+        const haeufigkeit = {};
+        GLUEH_STELLEN.forEach(e => (haeufigkeit[e.vorher] = (haeufigkeit[e.vorher] || 0) + 1));
+        const spitze = Math.max(...Object.values(haeufigkeit));
+        const haeufigste = Object.keys(haeufigkeit)
+            .filter(k => haeufigkeit[k] === spitze)
+            .map(Number);
+
+        expect({ gewaehlt, vorkommen: haeufigkeit[gewaehlt] || 0, haeufigste }).toEqual({
+            gewaehlt: 0.5,
+            vorkommen: 4,
+            haeufigste: [0.5]
+        });
+    });
+
+    test('vier Gluehlagen bleiben bei der gewaehlten Deckung bildpunktgleich, keine wird staerker als 2,5-fach', () => {
+        const gewaehlt = 0.5;
+        const faktoren = GLUEH_STELLEN.map(e => ({ ort: gluehSchluessel(e), faktor: +(gewaehlt / e.vorher).toFixed(2) }));
+        expect(faktoren.filter(f => f.faktor === 1).length).toBe(4);
+        expect(Math.max(...faktoren.map(f => f.faktor))).toBeLessThanOrEqual(2.5);
+        // Die zwei volldeckenden Goldmarken verlieren die Haelfte — das ist die
+        // Stelle, an der die Sichtprobe widersprechen darf (W3-D-05 fuehrt
+        // dieselbe Frage fuer die vier JS-Sprungmarken).
+        expect(faktoren.filter(f => f.faktor === 0.5).map(f => f.ort).sort()).toEqual([
+            'encounters.css {.calc-threshold-marker}',
+            'tools.css {.char-form-progress-dot.current}'
+        ]);
+    });
+
+    test('jede Gluehlage, deren Deckung sich aendert, steht in der Aktenlage unter W3-F-01', () => {
+        expect(W3F01).not.toBe('');
+        const gewaehlt = 0.5;
+        const offen = GLUEH_STELLEN.filter(e => Math.abs(gewaehlt - e.vorher) > 1e-9)
+            .filter(e => !(W3F01.includes(e.datei) && W3F01.includes(e.sel)))
+            .map(gluehSchluessel);
+        expect(offen.sort()).toEqual([]);
+    });
+
+    /* ===================================================================
+       (b) DIE RAHMENNACHBARN — 22, nicht 13
+       =================================================================== */
+
+    test('die Nachbarschaft von Schatten und Rahmen zaehlt 22 Kandidaten, nicht 13', () => {
+        const nb = rahmenNachbarn();
+        const zahl = k => nb.filter(n => n.klasse === k).length;
+        expect({ border: zahl('border'), goldVoll: zahl('goldVoll'), goldMix: zahl('goldMix') }).toEqual({
+            border: 13,
+            goldVoll: 6,
+            goldMix: 3
+        });
+        expect(zahl('border') + zahl('goldVoll') + zahl('goldMix')).toBe(22);
+    });
+
+    test('die neun Goldrahmen sind die gemessenen und stehen in RAHMEN_GOLD', () => {
+        const ist = rahmenNachbarn()
+            .filter(n => n.klasse === 'goldVoll' || n.klasse === 'goldMix')
+            .map(n => `${n.datei} {${n.sel}} ${n.klasse === 'goldVoll' ? 'voll' : 'mix'}`)
+            .sort();
+        const soll = RAHMEN_GOLD.map(e => `${e.datei} {${e.sel}} ${e.art}`).sort();
+        expect(ist).toEqual(soll);
+    });
+
+    /* -------------------------------------------------------------------
+       DIE ZAHLEN, auf denen die Sichtprobenliste beruht. Sie werden hier
+       gerechnet und nicht abgeschrieben: aendert jemand die Grauleiter oder
+       --gold im Contrast-Block, geht dieser Test rot und die Aktenlage muss
+       nachgezogen werden, statt eine veraltete Zahl weiterzutragen.
+       ------------------------------------------------------------------- */
+    test('der gemessene Abstand Umriss zu Goldrahmen im Contrast-Theme ist der gefuehrte', () => {
+        const c = WCAG.palettes().contrast;
+        const abweichung = [];
+        RAHMEN_GOLD.forEach(e => {
+            const rahmen =
+                e.art === 'voll'
+                    ? c['--gold']
+                    : WCAG.resolveOver(`color-mix(in srgb, var(--gold) ${e.anteil}%, transparent)`, c, c[e.flaeche]);
+            const ist = +WCAG.ratio(e.grau, rahmen).toFixed(2);
+            if (Math.abs(ist - e.abstand) > 0.011) {
+                abweichung.push(`${e.datei} {${e.sel}} — gefuehrt ${e.abstand}, gemessen ${ist}`);
+            }
+        });
+        expect(abweichung.sort()).toEqual([]);
+        // Die sechs volldeckenden liegen unter 2 und sind damit das Problem;
+        // die drei gemischten ueber 3 und damit nicht.
+        expect(RAHMEN_GOLD.filter(e => e.art === 'voll').every(e => e.abstand < 2)).toBe(true);
+        expect(RAHMEN_GOLD.filter(e => e.art === 'mix').every(e => e.abstand >= 3)).toBe(true);
+    });
+
+    test('die sechs volldeckenden Goldrahmen stehen in der Aktenlage unter W3-F-01', () => {
+        expect(W3F01).not.toBe('');
+        const offen = RAHMEN_GOLD.filter(e => e.art === 'voll')
+            .filter(e => !(W3F01.includes(e.datei) && W3F01.includes(e.sel)))
+            .map(e => `${e.datei} {${e.sel}}`);
+        expect(offen.sort()).toEqual([]);
+        // Die berichtigte Zahl selbst muss dort stehen, nicht die 13 des Plans.
+        expect(/\b22\b/.test(W3F01)).toBe(true);
+    });
+
+    /* ===================================================================
+       (c) SELBSTPROBE DER ZERLEGUNG, nicht ihres Ergebnisses
+       =================================================================== */
+
+    test('istGluehe() und deckungVon() urteilen wie R-19 und lesen beide Schreibweisen', () => {
+        expect(istGluehe('0 0 8px var(--gold)')).toBe(true);
+        expect(istGluehe('0 0 12px var(--glow-gold)')).toBe(true);
+        expect(istGluehe('0 4px 16px rgba(0,0,0,0.4)')).toBe(false); // Hoehe
+        expect(istGluehe('0 0 0 3px rgba(212,175,55,0.1)')).toBe(false); // Ring
+        expect(istGluehe('inset 0 0 15px rgba(139,69,19,0.08)')).toBe(false);
+        expect(istGluehe('-4px 0 24px rgba(0,0,0,0.5)')).toBe(false); // seitlich
+
+        expect(deckungVon('0 0 4px rgba(74, 222, 128, 0.4)')).toBe(0.4);
+        expect(deckungVon('0 0 30px color-mix(in srgb, var(--green) 50%, transparent)')).toBe(0.5);
+        expect(deckungVon('0 0 8px var(--gold)')).toBe(1);
+        // Eine umgestellte Stelle traegt ihre Deckung im Token, nicht hier:
+        expect(deckungVon('0 0 12px var(--glow-gold)')).toBe(null);
+
+        // Und der Fall, der die 22 von den 13 trennt: ein Goldrahmen ist ein
+        // Rahmen, `border-left` ist keiner.
+        expect(rahmenArt('box-shadow: 0 2px 6px #000; border: 1px solid var(--gold);').klasse).toBe('goldVoll');
+        expect(rahmenArt('border-left: 3px solid var(--gold);')).toBe(null);
+        expect(rahmenArt('border: 1px solid var(--border);').klasse).toBe('border');
+    });
+});
