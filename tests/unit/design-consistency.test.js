@@ -4349,3 +4349,187 @@ describe('R-11 — Toenungsflaechen werden gemessen, nicht uebersprungen (Ratsch
         expect(befunde.sort()).toEqual([]);
     });
 });
+
+/* ===========================================================================
+   Design-Handoff v3, Welle 2 — R-14: Quergriffe (Ratsche)
+   ===========================================================================
+   DIE BAUART. Die Toenung steht in der ELTERNregel, die Tinte in einer
+   Nachfahrenregel:
+
+       .enc-save-box.active                 { background: color-mix(… --green …); }
+       .enc-save-box.active .enc-save-label { color: var(--green-text); }
+
+   Keine bestehende Ratsche urteilt darueber. R-04 verlangt Flaeche UND Tinte
+   in DERSELBEN Regel — die Elternregel hat keine Tinte, die Kindregel keine
+   Flaeche, also faellt das Paar durch beide Maschen. R-05 modelliert die
+   Kaskade, aber nur fuer eine benannte Liste von Elementzustaenden, und keiner
+   dieser Zustaende beschreibt einen Quergriff.
+
+   WAS DAS GEKOSTET HAT. Schritt 8 hat drei Quergriffe von Hand gefunden und
+   behoben und ihre Zahlen in den CSS-Kommentar geschrieben. Die Pruefung W2-D
+   Runde 1 hat einen VIERTEN gefunden, der genauso gebaut ist und beim Zaehlen
+   uebersehen wurde: `initiative.css .concentration-check-banner .conc-dc`
+   traegt var(--gold) auf den beiden ungedeckelten 15-%-Stopps der Elternregel
+   und misst in Light 2,35 bzw. 2,16 — schlechter als der schlechteste der drei
+   behobenen (2,21). Die Zahlen standen sogar schon im CSS-Kommentar von
+   Schritt 7; sie waren nur nie gegen eine Schwelle gehalten.
+
+   Gefuehrt war die Stelle als Gruppe E von W1-D-01, ueberschrieben "in keinem
+   erreichbaren Zustand gerendert". Das ist widerlegt: die E2E-Pruefung des
+   Konzentrations-Banners erzeugt es ueber einen realen Klick auf die
+   Schadensschaltflaeche und prueft danach `.conc-dc` auf "DC 10".
+
+   WAS DIESE RATSCHE TUT, und wo ihre Grenze liegt. Sie sucht SELBER, statt
+   eine Liste zu fuehren: jede Regel mit Rollen-Toenungsstopps (freistehend
+   oder im Verlauf) wird mit jeder Regel DERSELBEN Datei gepaart, deren
+   Selektor eine Nachfahrenschreibweise davon ist und die KEINE eigene Flaeche
+   setzt. Die eigene Flaeche ist der entscheidende Ausschluss: `.conc-roll-btn`
+   sitzt im selben Banner, setzt aber `background: var(--purple)` — seine Tinte
+   liegt auf dem Knopf, nicht auf der Toenung des Elters, und ohne diesen
+   Ausschluss meldete die Ratsche vier Fehlalarme mit Werten um 1,2.
+
+   Ihre Grenze ist die SELEKTOR-Verschachtelung. Ein Kind, das im DOM unter der
+   Toenung liegt, ohne dass sein Selektor das sagt (`.spell-info-line.classes`
+   unter `.spell-card-header`), sieht sie nicht — das ist die Gruppe B von
+   W1-D-01, ein eigener offener Punkt mit 11 Stellen und einem eigenen
+   Loesungsweg.
+
+   Die vier Paare stehen als MENGE unter Aufsicht, nicht nur ihre Werte: wer
+   einen fuenften Quergriff anlegt, bekommt einen roten Test und muss ihn
+   ausrechnen, statt ihn stillschweigend in den blinden Fleck zu legen.
+   =========================================================================== */
+describe('R-14 — Toenung im Elter, Tinte im Kind (Ratsche)', () => {
+    /** Dieselben drei Traegerflaechen wie in R-04 und R-11 (D-2). */
+    const TRAEGER = ['--bg-card', '--bg-dark', '--bg-elevated'];
+    const SCHWELLE = 4.5;
+
+    const TOENUNGSSTOPP =
+        /^color-mix\(\s*in\s+srgb\s*,\s*var\(\s*(--[\w-]+)\s*\)\s+[\s\S]+,\s*transparent\s*\)$/i;
+    const NEUTRAL = /^--(bg|surface|border|overlay|scrim)(-|$)/;
+
+    /** Klammergenaue Abgrenzung — `min(20%, var(--tint-max))` bringt eigene
+     *  Klammern und ein eigenes Komma mit. */
+    function mixAusdruecke(wert) {
+        const out = [];
+        const re = /color-mix\s*\(/gi;
+        let m;
+        while ((m = re.exec(wert))) {
+            let tiefe = 0;
+            let i = m.index + m[0].length - 1;
+            for (; i < wert.length; i++) {
+                if (wert[i] === '(') tiefe++;
+                else if (wert[i] === ')') {
+                    tiefe--;
+                    if (!tiefe) break;
+                }
+            }
+            if (tiefe === 0) out.push(wert.slice(m.index, i + 1));
+        }
+        return out;
+    }
+
+    const selektorTeile = sel =>
+        sel
+            .split(',')
+            .map(x => x.trim())
+            .filter(Boolean);
+
+    /** Alle Quergriff-Paare des Baums. */
+    function quergriffe() {
+        const out = [];
+        cssFiles.forEach(f => {
+            if (f.name === 'variables.css' || f.name === 'fonts.css') return;
+            const regeln = regelnMitRumpf(f.content);
+            regeln.forEach(eltern => {
+                const roh = deklaration(eltern.rumpf, 'background(?:-color)?');
+                if (!roh) return;
+                const stopps = mixAusdruecke(roh.replace(/\s+/g, ' ')).filter(x => {
+                    const m = x.match(TOENUNGSSTOPP);
+                    return m && !NEUTRAL.test(m[1]);
+                });
+                if (!stopps.length) return;
+                regeln.forEach(kind => {
+                    if (kind === eltern) return;
+                    // Eigene Flaeche: die Tinte liegt nicht auf der Toenung.
+                    if (deklaration(kind.rumpf, 'background(?:-color)?')) return;
+                    const tinte = deklaration(kind.rumpf, 'color');
+                    if (!tinte) return;
+                    const m = tinte.match(/^var\((--[\w-]+)\)$/);
+                    if (!m || NEUTRAL.test(m[1])) return;
+                    const verschachtelt = selektorTeile(eltern.sel).some(p =>
+                        selektorTeile(kind.sel).some(k => k.startsWith(p + ' '))
+                    );
+                    if (!verschachtelt) return;
+                    out.push({ datei: f.name, eltern, kind, stopps, tinte });
+                });
+            });
+        });
+        return out;
+    }
+
+    /** DIE MENGE, nicht nur die Werte. Ein fuenfter Quergriff ist ein Befund,
+     *  bis jemand ihn ausrechnet und hier eintraegt. */
+    const ERWARTETE_PAARE = [
+        'dashboard.css .char-save-box.proficient -> .char-save-box.proficient .save-label',
+        'dashboard.css .enc-save-box.active -> .enc-save-box.active .enc-save-label',
+        'initiative.css .concentration-check-banner -> .concentration-check-banner .conc-dc',
+        'initiative.css .init-entry.lair -> .init-entry.lair .init-name'
+    ];
+
+    test('die vier bekannten Quergriffe sind die einzigen im Baum', () => {
+        const gefunden = quergriffe()
+            .map(q => `${q.datei} ${q.eltern.sel} -> ${q.kind.sel}`)
+            .sort();
+        expect(gefunden).toEqual(ERWARTETE_PAARE);
+    });
+
+    test('jeder Quergriff haelt 4,5 auf der Toenung seines Elters', () => {
+        const pals = WCAG.palettes();
+        const alias = aliasSchicht();
+        const befunde = [];
+
+        quergriffe().forEach(q => {
+            const werte = {};
+            let fehlt = null;
+            WCAG.THEMES.forEach(theme => {
+                const p = { ...pals[theme], ...alias };
+                const tinte = WCAG.resolve(q.tinte, p);
+                if (!tinte) {
+                    fehlt = fehlt || `${theme}: ${q.tinte}`;
+                    return;
+                }
+                let min = Infinity;
+                q.stopps.forEach(stopp => {
+                    TRAEGER.forEach(s => {
+                        const grund = WCAG.resolve(`var(${s})`, p);
+                        const feld = grund ? WCAG.resolveOver(stopp, p, grund) : null;
+                        if (!feld) {
+                            fehlt = fehlt || `${theme}: ${stopp} ueber ${s}`;
+                            return;
+                        }
+                        min = Math.min(min, WCAG.ratio(tinte, feld));
+                    });
+                });
+                werte[theme] = Number(min.toFixed(2));
+            });
+            if (fehlt) {
+                befunde.push(
+                    `${q.datei} ${q.kind.sel}:${q.kind.zeile} — nicht aufloesbar (${fehlt}). ` +
+                        `Was der Rechner nicht kennt, darf nicht als gruen gelten`
+                );
+                return;
+            }
+            const min = Math.min(...WCAG.THEMES.map(t => werte[t]));
+            if (min < SCHWELLE) {
+                const zahlen = WCAG.THEMES.map(t => `${t} ${werte[t]}`).join(' · ');
+                befunde.push(
+                    `${q.datei} ${q.kind.sel}:${q.kind.zeile} setzt ${q.tinte} auf die ` +
+                        `Toenung von "${q.eltern.sel}":${q.eltern.zeile}: min ${min} < ` +
+                        `${SCHWELLE} (${zahlen})`
+                );
+            }
+        });
+
+        expect(befunde.sort()).toEqual([]);
+    });
+});
