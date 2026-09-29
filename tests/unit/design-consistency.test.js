@@ -3581,3 +3581,153 @@ describe('R-10 — rgba()-Zahlentripel ausserhalb der Schatten (Ratsche)', () =>
         });
     });
 });
+
+/* ===========================================================================
+   Design-Handoff v3, Welle 2 — R-12: Skalentoken als Toenungsflaeche
+   ===========================================================================
+   ZUR NUMMER. R-11 ist fuer Schritt 10 (D-6, Ereignis-Log) reserviert und
+   noch nicht vergeben; diese hier entsteht aus der Pruefrunde W2-B und heisst
+   deshalb R-12, nicht R-11.
+
+   DER FEHLER, GEGEN DEN SIE STEHT. Die Schritte 4-6 ersetzen mechanisch
+   rgba(R,G,B,a) durch color-mix(in srgb, var(--rolle) N%, transparent). Der
+   Filter, der entscheidet, WAS mechanisch darf, lautet "das Tripel trifft
+   genau EINEN Tokennamen". Dieser Filter trennt eine THEME-ROLLE (--gold,
+   --red, --blue: vier Bloecke, vier Werte) nicht von einem SKALENTOKEN
+   (--cat-food, --know-religion, --dmg-necrotic-text, --ra-crimson-rule: ein
+   Block, ein Wert) — im Gegenteil, die Skalentokens sind die EINDEUTIGSTEN
+   Treffer ueberhaupt, weil kein zweites Theme denselben Wert noch einmal
+   vergibt. Sie rutschen damit zwangslaeufig durch einen Filter, der sie
+   heraushalten soll.
+
+   WARUM DAS NICHT FOLGENLOS IST, obwohl keine Farbe wechselt. Ein
+   Skalentoken traegt eine BEDEUTUNG aus seinem eigenen Gegenstandsbereich:
+   --cat-drink ist die Ladenkategorie "Getraenk", --know-religion das
+   Wissensgebiet "Religion", --dmg-necrotic-text die TINTE der Schadensart
+   "nekrotisch", --ra-crimson-rule die Linienfarbe eines Vorlesetext-Stils.
+   Wer es als Flaeche einer fremden Bedienoberflaeche einsetzt, koppelt beide
+   aneinander: wer die Ladenkategorien umfaerbt, faerbt dann den
+   Schwierigkeitsgrad einer Begegnung mit. Das ist eine Zweckentscheidung,
+   und sie ist in den Schritten 4-6 nach dem WERT gefallen statt nach dem
+   Zweck. Schritt 7 Punkt (3) ist genau dafuer da und schreibt ein anderes
+   Verfahren vor ("auf das TOKEN umstellen, NICHT auf color-mix").
+
+   WAS SIE ZAEHLT. Jede background-/background-color-Deklaration in
+   assets/styles/*.css, deren Wert eine Toenung color-mix(in srgb,
+   var(--X) N%, transparent) enthaelt, bei der --X
+     (a) zu einer Skalenfamilie gehoert (--know-, --cat-, --dmg-, --ra-) UND
+     (b) themenblind ist, also in GENAU EINEM Block von variables.css
+         deklariert wird.
+   Punkt (b) ist der Grund, warum --attr-* und --coin-* nicht auftauchen: die
+   werden je Theme neu gesetzt und sind damit Theme-Rollen, keine Skala.
+
+   SIE VERBIETET NICHTS, SIE VERLANGT EINE BEGRUENDUNG. Es kann richtig sein,
+   eine Skala als Toenung zu benutzen — dann steht die Stelle mit ihrem Grund
+   in R12_AUSNAHMEN. Was sie unmoeglich macht, ist die STILLE Umstellung: eine
+   mechanische Runde, die eine Bedeutungsfrage nebenbei mitentscheidet, faellt
+   auf.
+
+   SIE IST BEI IHRER GEBURT ROT, mit den 16 Stellen, die die Schritte 4-6 so
+   umgestellt haben (dashboard 1, party 3, initiative 3, dmscreen 2,
+   encounters 5, npcs 1, dice 1). Sie wird gruen, indem diese 16 auf ihre
+   Literale zuruecknehmen und damit wieder in R-10 stehen, wo Schritt 7 sie
+   nach Zweck entscheidet.
+   =========================================================================== */
+describe('R-12 — Skalentoken als Toenungsflaeche (Ratsche)', () => {
+    /** Die Familien, die eine Skala fuehren, nicht eine Theme-Rolle. */
+    const SKALENFAMILIE = /^--(know|cat|dmg|ra)-/;
+
+    /** Begruendete Ausnahmen. Schluessel ist Datei plus Token plus Anteil —
+     *  NICHT die Zeile, die verschiebt jeder Kommentar-Commit (siehe R-06).
+     *  `anzahl` deckt mehrere gleichartige Stellen derselben Datei ab; deckt
+     *  ein Eintrag ploetzlich mehr, meldet die Ratsche das, statt die neuen
+     *  stillschweigend mitzuverzeihen.
+     *
+     *  SIE IST BEI DER GEBURT LEER, und das ist Absicht, nicht Vergessen —
+     *  wie R10_AUSNAHMEN und EXEC_COMMAND_ALLOWLIST in
+     *  editor-floating.spec.js. Schritt 7 traegt hier ein, was er nach Zweck
+     *  bewusst auf einer Skala stehen laesst. */
+    const R12_AUSNAHMEN = [
+        // { datei: 'encounters.css', token: '--cat-food', anteil: '20%', anzahl: 1, grund: '...' }
+    ];
+
+    /** Tokens, die in GENAU EINEM Block von variables.css deklariert sind.
+     *  variables.css hat keine @media-/@supports-Schachtelung (nachgeprueft),
+     *  die Bloecke liegen also flach nebeneinander. */
+    function themenblindeTokens() {
+        const maskiert = cssFiles
+            .find(f => f.name === 'variables.css')
+            .content.replace(/\/\*[\s\S]*?\*\//g, m => m.replace(/[^\n]/g, ' '));
+        const zahl = new Map();
+        let i = 0;
+        while (i < maskiert.length) {
+            if (maskiert[i] !== '{') {
+                i++;
+                continue;
+            }
+            let tiefe = 1;
+            let j = i + 1;
+            while (j < maskiert.length && tiefe) {
+                if (maskiert[j] === '{') tiefe++;
+                else if (maskiert[j] === '}') tiefe--;
+                j++;
+            }
+            new Set([...maskiert.slice(i + 1, j - 1).matchAll(/(--[\w-]+)\s*:/g)].map(m => m[1]))
+                .forEach(t => zahl.set(t, (zahl.get(t) || 0) + 1));
+            i = j;
+        }
+        return new Set([...zahl.entries()].filter(([, n]) => n === 1).map(([t]) => t));
+    }
+
+    function toenungsstellen() {
+        const blind = themenblindeTokens();
+        const out = [];
+        cssFiles.forEach(f => {
+            if (f.name === 'variables.css' || f.name === 'fonts.css') return;
+            const maskiert = f.content.replace(/\/\*[\s\S]*?\*\//g, m => m.replace(/[^\n]/g, ' '));
+            for (const d of maskiert.matchAll(
+                /(?:^|[;{\s])(background(?:-color)?)\s*:\s*([^;}]+)/g
+            )) {
+                const prop = d[1];
+                for (const t of d[2].matchAll(
+                    /color-mix\(\s*in\s+srgb\s*,\s*var\(\s*(--[\w-]+)\s*\)\s*([\d.]+)%\s*,\s*transparent\s*\)/g
+                )) {
+                    if (!SKALENFAMILIE.test(t[1]) || !blind.has(t[1])) continue;
+                    const pos = maskiert.indexOf(prop, d.index);
+                    out.push({
+                        datei: f.name,
+                        zeile: maskiert.slice(0, pos).split('\n').length,
+                        token: t[1],
+                        anteil: `${t[2]}%`,
+                        prop
+                    });
+                }
+            }
+        });
+        return out;
+    }
+
+    test('keine Skala traegt eine fremde Flaeche ohne eingetragene Begruendung', () => {
+        const stellen = toenungsstellen();
+        const gezaehlt = new Map();
+        const offen = [];
+        stellen.forEach(s => {
+            const schluessel = `${s.datei}||${s.token}||${s.anteil}`;
+            gezaehlt.set(schluessel, (gezaehlt.get(schluessel) || 0) + 1);
+            if (R12_AUSNAHMEN.some(a => `${a.datei}||${a.token}||${a.anteil}` === schluessel)) {
+                return;
+            }
+            offen.push(`${s.datei}:${s.zeile} ${s.prop}: ${s.token} ${s.anteil}`);
+        });
+        R12_AUSNAHMEN.forEach(a => {
+            const ist = gezaehlt.get(`${a.datei}||${a.token}||${a.anteil}`) || 0;
+            if (ist !== a.anzahl) {
+                offen.push(
+                    `AUSNAHME ${a.datei} ${a.token} ${a.anteil} — gefuehrt fuer ` +
+                        `${a.anzahl} Stelle(n), gefunden ${ist}`
+                );
+            }
+        });
+        expect(offen.sort()).toEqual([]);
+    });
+});
