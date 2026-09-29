@@ -57,7 +57,7 @@
 
         .editor-toolbar .editor-btn:hover {
             color: var(--gold);
-            background: rgba(212, 175, 55, 0.14);
+            background: color-mix(in srgb, var(--gold) 14%, transparent);
         }
 
         .editor-toolbar .editor-btn:focus-visible {
@@ -67,13 +67,13 @@
 
         /* Cursor steht in diesem Format */
         .editor-toolbar .editor-btn.format-active {
-            background: rgba(212, 175, 55, 0.18);
+            background: color-mix(in srgb, var(--gold) 18%, transparent);
             color: var(--gold);
         }
 
         /* Offenes Menue: Trigger bleibt sichtbar gedrueckt */
         .editor-toolbar .editor-btn[aria-expanded='true'] {
-            background: rgba(212, 175, 55, 0.18);
+            background: color-mix(in srgb, var(--gold) 18%, transparent);
             color: var(--gold);
         }
 
@@ -227,7 +227,7 @@
         }
 
         .editor-toolbar .tb-menu-item:hover {
-            background: rgba(212, 175, 55, 0.18);
+            background: color-mix(in srgb, var(--gold) 18%, transparent);
             color: var(--gold);
         }
 
@@ -362,12 +362,12 @@
         }
 
         .editor-block-handle button:hover {
-            background: rgba(212, 175, 55, 0.18);
+            background: color-mix(in srgb, var(--gold) 18%, transparent);
             color: var(--gold);
         }
 
         .editor-block-handle button[data-block-action='remove']:hover {
-            background: rgba(239, 68, 68, 0.12);
+            background: color-mix(in srgb, var(--red) 12%, transparent);
             color: var(--red);
         }
 
@@ -382,7 +382,7 @@
         }
 
         .editor-toolbar .tb-menu-item-danger:hover {
-            background: rgba(239, 68, 68, 0.12);
+            background: color-mix(in srgb, var(--red) 12%, transparent);
             color: var(--red);
         }
 
