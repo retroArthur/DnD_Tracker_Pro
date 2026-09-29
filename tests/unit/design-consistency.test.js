@@ -2051,6 +2051,25 @@ describe('R-04 — jede Regel haelt 4,5 auf ihrer EIGENEN Flaeche (Ratsche)', ()
        Fuellung"): solange eine Zeile ihren Hover ueber eine FLAECHE meldet,
        liegt jede Toenung darin auf einer Flaeche, fuer die ihre Tinte nicht
        gerechnet ist. Sie gehoert zu Schritt 9 und ist dort benannt.
+
+       WORAUF SICH DIE ZAHL 128 UND DAS "0 BEFUNDE" BEZIEHEN, praezisiert nach
+       der Pruefung W2-D Runde 2: auf Regeln mit EIGENER Tinte. `ruheRegeln()`
+       verlangt `background` UND `color` in derselben Regel. Eine ZUSTANDSregel,
+       die nur die Flaeche auf eine Rollen-Toenung wechselt und die Tinte aus
+       ihrer Basisregel erbt, faellt vorher heraus:
+
+           .concentration-badge       { color: var(--purple-text); }
+           .concentration-badge:hover { background: color-mix(…--purple 30%…); }
+
+       Neun solche Regeln stehen im Baum, fuenf davon unter 4,5 (schlechteste
+       `core.css .link-chip:hover`, Dark 2,87). Auch R-03 sieht sie nicht — sie
+       verwirft jede color-mix-Flaeche und verlangt eine `var(--on-*)`-Tinte;
+       R-05 fuehrt eine Liste benannter Zustaende, R-14 verlangt einen
+       Nachfahren ohne eigene Flaeche. Belegt per Mutation:
+       `.concentration-badge:hover` von 30 % auf 95 % gestellt, Kontrast gegen
+       1,0 in allen vier Themes — kein einziger roter Test. Gefuehrt als
+       offener Punkt W2-D-05; der Weg ist derselbe wie in Schritt 16, nur an
+       R-03 statt an R-04.
        ------------------------------------------------------------------ */
 
     /** Die Traegerflaechen einer TOENUNG (D-2, Lesart wie R-11). */

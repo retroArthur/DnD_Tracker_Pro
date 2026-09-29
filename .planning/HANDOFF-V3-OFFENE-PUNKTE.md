@@ -1801,3 +1801,136 @@ grep -n "BLEIBT weiss" -A 20 assets/styles/dashboard.css
 # Die beiden Toenungen IM VERLAUF, die seit Schritt 16 geurteilt werden:
 npx jest tests/unit/design-consistency.test.js -t "Toenungen IM VERLAUF"
 ```
+
+---
+
+## W2-D-05 — Zustandsregeln legen eine Rollen-Tönung, die Tinte kommt aus der Basisregel; keine Ratsche urteilt darüber
+
+**Stand:** 2026-09-29, Prüfung W2-D Runde 2. Vorbestand, kein Rückschritt dieser Welle — aber die
+vierte Lücke derselben Familie, und die einzige, die noch nirgends geführt war.
+
+### Worum es geht
+
+Die Bauart steht vier Zeilen unter der, die Schritt 16 gerade gesichert hat:
+
+```css
+.concentration-badge       { color: var(--purple-text); /* … */ }
+.concentration-badge:hover { background: color-mix(in srgb, var(--purple) 30%, transparent); }
+```
+
+Die Zustandsregel wechselt die **Fläche** auf eine Rollen-Tönung und setzt **keine eigene Tinte**.
+Gemalt wird also die geerbte Tinte der Basisregel auf einer Fläche, für die sie nie gerechnet
+wurde. Die Familie hat in dieser Welle schon drei Löcher gehabt — Tönung als Verlaufsstopp (R-04
+erweitert, Schritt 16), Tönung im Elter und Tinte im Kind (R-14, Schritt 18), deckende
+Verlaufsstopps (W2-D-04, offen). Dies ist das vierte.
+
+### Die Klasse, gemessen
+
+Eigene Vollerhebung über `assets/styles/*.css` in Kaskadenreihenfolge des `@import`-Hubs (eigener
+Klammerzähl-Parser, `tests/unit/helpers/wcag-contrast.js` für die sRGB-Mathematik; Selbstprobe
+`#777777`/`#767676` gegen Weiß = 4,48/4,54). Minimum über `--bg-card`/`--bg-dark`/`--bg-elevated`,
+alle vier Themes. Neun Regeln haben diese Bauart, fünf unterschreiten 4,5:
+
+| Regel | Tönung | geerbte Tinte | dark | light | sepia | contrast |
+| ----- | ------ | ------------- | ---- | ----- | ----- | -------- |
+| `core.css` `.link-chip:hover` | `--blue` 40 % | `--blue-text` | **2,87** | **2,96** | **3,25** | **3,37** |
+| `initiative.css` `.concentration-badge:hover` | `--purple` 30 % | `--purple-text` | **3,32** | **3,28** | **3,46** | **4,07** |
+| `file-backup.css` `.backup-entry-restore:hover` | `--red` 12 % | `--red` | **3,61** | **3,32** | **3,15** | **3,74** |
+| `pwa.css` `.pwa-install-btn:active` | `--gold` 22 % | `--gold-text` | **4,66**¹ | **4,15** | **4,12** | 6,34 |
+| `initiative.css` `.concentration-add-btn:hover` | `--purple` 10 % | `--purple-text` | 4,81 | **4,40** | **4,43** | 5,31 |
+
+¹ hält; fett steht nur, was unter 4,5 liegt.
+
+Zwei Nebenbefunde aus derselben Erhebung:
+
+- `.backup-entry-restore` führt als Tinte `var(--red)`, nicht `var(--red-text)` — eine
+  Rollenbasis als Schriftfarbe, also zusätzlich ein Rest aus Welle 1.
+- Die Tönungsstärken dieser fünf (40/30/22/12/10 %) sind **ungedeckelt**: der Deckel aus Schritt 8
+  (`min(20%, var(--tint-max))`) sitzt auf Ruheflächen. Vier der fünf lägen mit Deckel besser, aber
+  keine davon dadurch über 4,5 — der Deckel ist hier nicht die Abhilfe (dasselbe Ergebnis wie in
+  W2-D-02, aus einem anderen Grund).
+
+### Wo derselbe Bau schon trägt
+
+Die vier übrigen Regeln dieser Bauart halten in allen vier Themes, drei davon knapp — sie fallen
+bei der nächsten Stärkeänderung als Erste:
+
+- `dashboard.css` `.dice-formula-chip:hover` — `--cyan`, min 4,50 (sepia)
+- `pwa.css` `.pwa-install-btn:hover` — `--gold`, min 4,55 (light)
+- `file-backup.css` `.backup-warning-indicator:hover` — `--yellow`, min 4,60 (sepia)
+
+### Warum keine Ratsche greift — Quelltext, nicht Vermutung
+
+- **R-03** (geerbte Tinte auf gewechselter Fläche) scheidet **doppelt** aus:
+  `if (!flaeche || !/^var\(--[\w-]+\)$/.test(flaeche)) return;` verwirft jede `color-mix`-Fläche
+  vor jeder Rechnung, und die geerbte Tinte muß `/^var\(--on-[\w-]+\)$/` erfüllen —
+  `--purple-text` tut das nicht.
+- **R-04** (jede Regel hält 4,5 auf ihrer eigenen Fläche): `ruheRegeln()` verlangt `background`
+  **und** `color` in derselben Regel. Diese Regeln haben keine eigene Tinte.
+- **R-05** (die Kaskade entscheidet) modelliert drei **benannte** Elementzustände
+  (`shop-cat-badge`, `editor-btn.format-active`, `bestiary-dice`). Keiner davon ist dabei.
+- **R-14** (Quergriffe) verlangt eine **Nachfahren**schreibweise (`k.startsWith(p + ' ')`) und ein
+  Kind **ohne eigene Fläche**. Eine `:hover`-Regel am selben Element ist beides nicht.
+
+**Empirisch belegt, nicht nur gelesen:** `.concentration-badge:hover` von 30 % auf 95 % gestellt
+(Kontrast fällt gegen 1,0 in allen vier Themes), danach `npx jest
+tests/unit/design-consistency.test.js` — **93 von 93 grün**, kein einziger Befund. Die Mutation ist
+zurückgenommen.
+
+### Was daran Vorbestand ist, und was diese Welle getan hat
+
+Dieselbe Erhebung gegen `bb7650e` (BASE der Welle), Trägerflächen und Mathematik unverändert:
+
+| Regel | min an BASE | min heute |
+| ----- | ----------- | --------- |
+| `core.css` `.link-chip:hover` | 1,91 (Tinte war `var(--blue)`) | 2,87 |
+| `initiative.css` `.concentration-badge:hover` | 2,79 (Tinte war `var(--purple)`) | 3,28 |
+| `file-backup.css` `.backup-entry-restore:hover` | 3,15 | 3,15 |
+| `pwa.css` `.pwa-install-btn:active` | 4,12 | 4,12 |
+| `initiative.css` `.concentration-add-btn:hover` | 4,40 | 4,40 |
+
+**Zwei** der fünf hat Welle 2 verbessert (durch die Umstellung der Basis-Tinte auf `--<rolle>-text`
+in Schritt 5/6), drei sind unverändert, **keine ist schlechter geworden**. Der Befund ist deshalb
+nicht die Zahl, sondern daß **niemand hinsieht** — derselbe Maßstab wie in W2-D-04.
+
+### Die eine Stelle, die ein naiver Ausbau falsch melden würde
+
+`pwa.css` `.pwa-update-dismiss:hover` hat exakt dieselbe Bauart (`--on-yellow` 10 % als Fläche,
+`var(--on-yellow)` aus der Basisregel als Tinte) und liest über die drei neutralen Trägerflächen
+1,03 · 12,61 · 12,25 · 1,00 — Unsinn. Ihre **tatsächliche** Trägerfläche ist die Bernsteinleiste
+`.pwa-update-banner` (`rgba(251,191,36,0.85)`, geführte R-10-Ausnahme W2-B-02); dagegen gerechnet
+hält sie 9,33 · 5,42 · 4,98 · 14,23, und genau diese vier Zahlen stehen seit Schritt 7 im Kommentar
+derselben Regel. Wer R-03 erweitert, braucht für sie ein Trägermodell oder eine benannte Ausnahme,
+sonst kauft er sich einen Fehlalarm mit Faktor 12 ein.
+
+### Der Weg
+
+Dieselbe Erweiterung wie Schritt 16, nur eine Ebene daneben: **R-03** um Tönungsflächen
+(`color-mix(…, transparent)`, aufgelöst über die drei Trägerflächen wie in R-04/R-11/R-14) und um
+**Rollentinten** (`var(--<rolle>-text)` und die nackte Rolle `var(--<rolle>)`) erweitern, statt
+beides vor der Rechnung zu verwerfen. Die Abhilfe an den fünf Stellen selbst gehört zu E3/Schritt 9
+(„Hover ohne Füllung"): drei der fünf melden das Überfahren über eine Füllung, und für genau diese
+Frage ist E3 entschieden — bisher allerdings nur für `.qref-row:hover` ausformuliert.
+
+### Was der Schrittbericht von Schritt 8 damit zu weit sagt
+
+„128 Tönungsregeln, 0 Befunde, dreifach nachgerechnet, gegen die tatsächliche Trägerfläche" gilt
+für Regeln mit **eigener** Tinte. Regeln, die nur die Fläche wechseln und die Tinte erben, waren in
+den 128 nie enthalten und sind bis heute ungerechnet. Die Einschränkung steht seit dieser Runde
+auch im R-04-Block von `tests/unit/design-consistency.test.js`, damit sie dort steht, wo jemand die
+Zahl liest.
+
+### Befehle
+
+```bash
+cd /d/Claude_Code/Projekte/DnD_Tracker_App_Pro
+# Die fuenf Stellen samt Zeilennummern (Anker bewusst nicht in der Tabelle — sie rotten):
+grep -n "concentration-badge:hover\|concentration-add-btn:hover" assets/styles/initiative.css
+grep -n "link-chip:hover" assets/styles/core.css
+grep -n "backup-entry-restore:hover" assets/styles/file-backup.css
+grep -n "pwa-install-btn:active" assets/styles/pwa.css
+# Die beiden Ausschluesse in R-03, wortgleich:
+grep -n "setzt eigene Tinte" -B 2 tests/unit/design-consistency.test.js
+# Die Einschraenkung im R-04-Block:
+grep -n "WORAUF SICH DIE ZAHL 128" -A 12 tests/unit/design-consistency.test.js
+```
