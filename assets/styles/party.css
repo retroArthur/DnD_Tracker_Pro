@@ -511,6 +511,14 @@
         /* Permanenter Modus */
         .event-log.persistent {
             pointer-events: auto;
+            /* BLEIBT ein Literal: gefuehrte Ausnahme von R-10, Entscheidung
+               E6. Die dunkle Blende des Ereignis-Logs ist gewollt und bleibt
+               themenblind; 15,15,25 kommt in keinem Theme vor und hat
+               deshalb auch keine Rolle, auf die sie zeigen koennte. Was NICHT
+               bleibt, ist die geerbte Tinte darauf — sie erreicht in Light
+               1,07, rechnerisch schlechter als jede Stelle, die Welle 1
+               angefasst hat. Schritt 10 gibt beiden Regeln themenblinde
+               Tinte-Tokens (--on-log, --on-log-dim, Muster pwa.css). */
             background: rgba(15, 15, 25, 0.98);
             border: 1px solid var(--border);
             border-radius: var(--radius-md);
@@ -569,6 +577,8 @@
             display: flex;
             align-items: flex-start;
             gap: 10px;
+            /* Zweite Flaeche desselben Ereignis-Logs, dieselbe gefuehrte
+               R-10-Ausnahme (E6, Schritt 10). */
             background: rgba(20, 20, 30, 0.95);
             border: 1px solid var(--border);
             border-left: 3px solid var(--green);
@@ -713,8 +723,23 @@
             background: var(--bg-elevated);
         }
         
+        /* Die drei Wiki-Violettflaechen (Kategoriekopf, ausgewaehlter Eintrag,
+           Kategoriemarke) trugen 168,85,247 — zeichengleich --know-religion,
+           dem Wissensgebiet "Religion". Eine mechanische Runde waere dort
+           gelandet und haette den Wiki-Baum an die Wissensgebiete gekoppelt
+           (R-12). Nach dem Zweck ist es die Violettrolle, die zwei der drei
+           Regeln schon als Tinte fuehren. Gemessen, vorher -> nachher
+           (dark light sepia contrast):
+             Kategoriekopf (Tinte geerbt --text)
+               9,19 · 11,40 · 7,02 · 12,61 -> 8,32 · 10,69 · 6,93 · 13,20
+             Eintrag und Marke (Tinte --purple)
+               4,76 · 3,94 · 3,43 · 4,27 -> 4,41 · 3,78 · 3,37 · 4,48
+           Die beiden letzten fallen in DARK unter 4,5, weil das fremde
+           Violett dunkler war als die Rolle; die Abhilfe ist die
+           Toenungsstaerke, und ueber die entscheidet D-4 in Schritt 8
+           (Deckel Dark 13 %). Beide gehoeren zu den 108 D-4-Stellen. */
         .wiki-tree-cat-header.active {
-            background: rgba(168, 85, 247, 0.2);
+            background: color-mix(in srgb, var(--purple) 20%, transparent);
         }
         
         .wiki-tree-toggle {
@@ -787,7 +812,7 @@
         }
         
         .wiki-tree-item.selected {
-            background: rgba(168, 85, 247, 0.15);
+            background: color-mix(in srgb, var(--purple) 15%, transparent);
             border-left-color: var(--purple);
             color: var(--purple);
         }
@@ -913,7 +938,7 @@
         }
         
         .wiki-detail-category {
-            background: rgba(168, 85, 247, 0.15);
+            background: color-mix(in srgb, var(--purple) 15%, transparent);
             color: var(--purple);
             padding: 2px 10px;
             border-radius: var(--radius-lg);
@@ -1220,8 +1245,14 @@
     align-items: center;
     gap: 16px;
     padding: 16px;
-    background: rgba(255, 100, 100, 0.08);
-    border: 1px solid rgba(255, 100, 100, 0.25);
+    /* Welle 2 Schritt 7: 255,100,100 kommt in keinem Theme und keiner Skala
+       vor. Zweck ist der Trefferpunkte-Block -> Rotrolle. Tinte ist
+       var(--text-dim) aus .cf-hp-label: 3,89 · 4,34 · 4,27 · 6,17 ->
+       4,03 · 4,16 · 4,12 · 6,64. Der Rahmen bleibt wie vorher unter 3:1
+       (1,48 · 1,31 · 1,28 · 1,46 -> 1,35 · 1,49 · 1,44 · 1,24); er ist
+       Schmuck neben einer Ueberschrift, die dieselbe Aussage traegt. */
+    background: color-mix(in srgb, var(--red) 8%, transparent);
+    border: 1px solid color-mix(in srgb, var(--red) 25%, transparent);
     border-radius: var(--radius-md);
     margin-bottom: 20px;
 }
@@ -1369,7 +1400,9 @@
     display: inline-block;
     font-size: 0.85em;
     color: var(--cyan);
-    background: rgba(0, 180, 216, 0.15);
+    /* 0,180,216 ist palettenfremd; die Regel fuehrt die Cyanrolle als Tinte.
+       6,15 · 2,66 · 2,22 · 9,94 -> 5,70 · 2,56 · 2,20 · 8,65 (D-4). */
+    background: color-mix(in srgb, var(--cyan) 15%, transparent);
     padding: 2px 6px;
     border-radius: var(--radius-sm);
     margin-left: 4px;
@@ -1690,7 +1723,9 @@
 
 .cf-chip.imm.selected,
 .cf-chip.imm:has(input:checked) {
-    background: rgba(78, 205, 196, 0.15);
+    /* 78,205,196 ist palettenfremd; Rahmen und Tinte fuehren die Cyanrolle
+       schon. 5,75 · 2,79 · 2,34 · 9,30 -> 5,70 · 2,56 · 2,20 · 8,65 (D-4). */
+    background: color-mix(in srgb, var(--cyan) 15%, transparent);
     border-color: var(--cyan);
     color: var(--cyan);
 }
@@ -2935,7 +2970,10 @@
     align-items: center;
     gap: 10px;
     flex-wrap: wrap;
-    background: rgba(34, 197, 94, 0.12);
+    /* 34,197,94 ist vierfach belegt (--attr-dex Dark/Contrast, --dmg-acid,
+       --know-nature); nach dem Zweck die Gruenrolle, die Rahmen und Tinte
+       schon fuehren. 7,17 · 2,47 · 2,34 · 9,40 -> 6,84 · 2,40 · 2,31 · 8,79. */
+    background: color-mix(in srgb, var(--green) 12%, transparent);
     border: 1px solid var(--green);
     border-radius: var(--radius-md);
     padding: 8px 12px;
