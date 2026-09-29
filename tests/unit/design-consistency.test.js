@@ -1981,8 +1981,56 @@ describe('R-04 — jede Regel haelt 4,5 auf ihrer EIGENEN Flaeche (Ratsche)', ()
 
     const SCHWELLE = 4.5;
 
-    /** Die Regeln, ueber die geurteilt wird. Ausgelagert, damit Urteil und
-     *  Gegenprobe dieselbe Menge sehen. */
+    /* ------------------------------------------------------------------
+       WELLE 2, SCHRITT 8 — die Toenungsflaechen kommen HINZU.
+
+       Bis hierher siebte `ruheRegeln()` mit `^var\((--[\w-]+)\)$`. Eine
+       Flaeche der Form `color-mix(in srgb, var(--x) N%, transparent)` fiel
+       damit heraus, BEVOR ueberhaupt gerechnet wurde — und genau diese Form
+       hat Welle 2 in den Schritten 4-7 flaechendeckend erzeugt. R-11 hat den
+       blinden Fleck beziffert (128 Regeln setzten Tinte auf eine Toenung, und
+       keine wurde beurteilt) und per Mutation belegt: `.calc-diff-badge
+       .trivial` von 20 % auf 95 % gestellt, Kontrast rund 1,0 in allen vier
+       Themes — kein einziger roter Test.
+
+       AUSGANGSWERT DIESER ERWEITERUNG, gemessen am 2026-09-29 vor der
+       CSS-Aenderung: die geurteilte Menge waechst von 160 auf 288 Regeln, die
+       128 neuen sind Toenungen — und 116 davon sind Befunde. 114 fallen unter
+       4,5 (schlechtester Wert 1,86: `dmscreen .condition-badge.paralyzed` in
+       Light), 2 sind ueberhaupt nicht aufloesbar, weil ihre Tinte ueber ein
+       nur in dashboard.css definiertes Token laeuft — `.entity-tag.quest` und
+       `.entity-tag.spell` mit var(--color-quest)/var(--color-spell). Diese
+       zwei standen in KEINER Bestandsliste dieser Welle; der Umweg ueber das
+       Zweittoken hat sie vor jeder Zaehlung verborgen.
+
+       Das ist die rote Ratsche, mit der Schritt 8 beginnt; gruen wird sie
+       durch die Toenungsregel E2 (Tinte --<rolle>-text, Staerke je Theme
+       gedeckelt auf 13/7/7/20 %), nicht durch eine Ausnahmeliste.
+
+       WARUM DREI TRAEGERFLAECHEN UND NICHT VIER. Eine Toenung hat keine eigene
+       Farbe; was unter ihr liegt, entscheidet. Gerechnet wird deshalb das
+       Minimum ueber `--bg-card`, `--bg-dark` und `--bg-elevated` — dieselbe
+       Liste, die R-11 schon fuehrt. `--bg-hover` steht NICHT darin, und das
+       ist keine Bequemlichkeit, sondern eine Rechnung: die `--<rolle>-text`-
+       Tokens sind in Welle 1 gegen genau diese schlechteste Flaeche auf 4,5
+       gerechnet worden. Jede Auflage darueber drueckt sie unter die Schwelle,
+       gleich welcher Staerke — mit --bg-hover als Traeger waere der zulaessige
+       Deckel in allen vier Themes 0 %, also ein Verbot jeder Toenung
+       ueberhaupt. Diese Frage ist nicht D-4, sondern W1-B-01/E3 ("Hover ohne
+       Fuellung"): solange eine Zeile ihren Hover ueber eine FLAECHE meldet,
+       liegt jede Toenung darin auf einer Flaeche, fuer die ihre Tinte nicht
+       gerechnet ist. Sie gehoert zu Schritt 9 und ist dort benannt.
+       ------------------------------------------------------------------ */
+
+    /** Die Traegerflaechen einer TOENUNG (D-2, Lesart wie R-11). */
+    const TOENUNGS_TRAEGER = ['--bg-card', '--bg-dark', '--bg-elevated'];
+
+    /** Eine Toenung: halbdurchsichtige Auflage EINER Rolle. Der Anteil bleibt
+     *  ungeparst — seit Schritt 8 steht dort `min(20%, var(--tint-max))` und
+     *  nicht mehr nur ein Literal; WCAG.resolveOver() rechnet beides. */
+    const TOENUNGSFLAECHE =
+        /^color-mix\(\s*in\s+srgb\s*,\s*var\(\s*(--[\w-]+)\s*\)\s+[\s\S]+,\s*transparent\s*\)$/i;
+
     function ruheRegeln() {
         const out = [];
         cssFiles.forEach(f => {
@@ -1991,12 +2039,39 @@ describe('R-04 — jede Regel haelt 4,5 auf ihrer EIGENEN Flaeche (Ratsche)', ()
                 const flaeche = deklaration(r.rumpf, 'background(?:-color)?');
                 const tinte = deklaration(r.rumpf, 'color');
                 if (!flaeche || !tinte) return;
-                const m = flaeche.match(/^var\((--[\w-]+)\)$/);
-                if (!m || NEUTRAL.test(m[1])) return;
-                out.push({ ...r, datei: f.name, flaeche, tinte });
+                const voll = flaeche.match(/^var\((--[\w-]+)\)$/);
+                const toenung = voll ? null : flaeche.match(TOENUNGSFLAECHE);
+                const rolle = voll ? voll[1] : toenung ? toenung[1] : null;
+                if (!rolle || NEUTRAL.test(rolle)) return;
+                out.push({ ...r, datei: f.name, flaeche, tinte, toenung: Boolean(toenung) });
             });
         });
         return out;
+    }
+
+    /** Das schlechteste Verhaeltnis EINER Regel in EINEM Theme.
+     *  Volle Flaeche: eine Zahl. Toenung: das Minimum ueber die drei Traeger. */
+    function verhaeltnis(regel, p) {
+        const tinte = WCAG.resolve(regel.tinte, p);
+        if (!tinte) return { fehlt: regel.tinte };
+        if (!regel.toenung) {
+            const grund = WCAG.resolve(regel.flaeche, p);
+            if (!grund) return { fehlt: regel.flaeche };
+            return { wert: WCAG.ratio2(tinte, grund) };
+        }
+        let min = Infinity;
+        let fehlt = null;
+        TOENUNGS_TRAEGER.forEach(s => {
+            const grund = WCAG.resolve(`var(${s})`, p);
+            const feld = grund ? WCAG.resolveOver(regel.flaeche, p, grund) : null;
+            if (!feld) {
+                fehlt = fehlt || `${regel.flaeche} ueber ${s}`;
+                return;
+            }
+            min = Math.min(min, WCAG.ratio(tinte, feld));
+        });
+        if (fehlt) return { fehlt };
+        return { wert: Number(min.toFixed(2)) };
     }
 
     test('keine Regel setzt eine Tinte, die auf ihrer eigenen Flaeche durchfaellt', () => {
@@ -2011,13 +2086,12 @@ describe('R-04 — jede Regel haelt 4,5 auf ihrer EIGENEN Flaeche (Ratsche)', ()
             let fehlt = null;
             WCAG.THEMES.forEach(theme => {
                 const p = { ...pals[theme], ...alias };
-                const tinte = WCAG.resolve(regel.tinte, p);
-                const grund = WCAG.resolve(regel.flaeche, p);
-                if (!tinte || !grund) {
-                    fehlt = fehlt || `${theme}: ${!tinte ? regel.tinte : regel.flaeche}`;
+                const v = verhaeltnis(regel, p);
+                if (v.fehlt) {
+                    fehlt = fehlt || `${theme}: ${v.fehlt}`;
                     return;
                 }
-                werte[theme] = WCAG.ratio2(tinte, grund);
+                werte[theme] = v.wert;
             });
             if (fehlt) {
                 befunde.push(
@@ -3940,59 +4014,48 @@ describe('R-13 — color-mix im Basis-:root ohne Rueckfall (Inventar)', () => {
 /* ===========================================================================
    Design-Handoff v3, Welle 2 — R-11: Toenungsflaechen werden gemessen
    ===========================================================================
-   DER BLINDE FLECK, gegen den sie steht, hat eine sehr genaue Form.
-   `ruheRegeln()` im R-04-Block siebt die zu urteilende Menge mit
+   IHRE ERSTE AUFGABE IST SEIT SCHRITT 8 ERLEDIGT, und das gehoert hierher,
+   weil sonst niemand versteht, warum von vier Teilen nur noch zwei da sind.
+   R-11 wurde in Schritt 7 geboren, um einen blinden Fleck zu beziffern:
+   `ruheRegeln()` im R-04-Block siebte die zu urteilende Menge mit
 
        const m = flaeche.match(/^var\((--[\w-]+)\)$/);
        if (!m || NEUTRAL.test(m[1])) return;
 
-   Eine Flaeche der Form `color-mix(in srgb, var(--x) N%, transparent)` faellt
-   damit HERAUS, bevor ueberhaupt gerechnet wird. Genau diese Form hat Welle 2
-   in den Schritten 4-7 flaechendeckend erzeugt: 128 Regeln setzen heute
-   Toenung UND Tinte, und KEINE davon wird beurteilt — R-02 urteilt auf Token-,
-   nicht auf Regelebene; R-10 zaehlt rgba-Tripel, die es hier nicht mehr gibt;
-   R-12 sieht nur Skalentokens.
+   Eine Flaeche der Form `color-mix(in srgb, var(--x) N%, transparent)` fiel
+   damit HERAUS, bevor ueberhaupt gerechnet wurde — und genau diese Form hat
+   Welle 2 in den Schritten 4-7 flaechendeckend erzeugt. 128 Regeln setzten
+   Toenung UND Tinte, und KEINE wurde beurteilt. Belegt per Mutation
+   (Pruefung W2-C Runde 1): `.calc-diff-badge.trivial` von 20 % auf 95 %
+   gestellt, Kontrast rund 1,0 in allen vier Themes, kein einziger roter Test.
 
-   BELEGT hat das die Pruefung W2-C, Runde 1, per Mutation: `.calc-diff-badge
-   .trivial` im Spiegel von 20 % auf 95 % gestellt, Tinte unveraendert —
-   Kontrast faellt auf rund 1,0 in allen vier Themes, und `npx jest` meldet
-   KEINEN zusaetzlichen roten Test. Dieselbe Luecke erklaert, warum die vier
-   Rueckschritte, die Schritt 7 selbst verursacht hat (W2-C-02), nur deshalb
-   aktenkundig sind, weil der Umsetzer sie von Hand nachgerechnet hat.
+   SCHRITT 8 HAT DIE SIEBUNG ERSETZT. `ruheRegeln()` erkennt die Toenung
+   jetzt und rechnet sie mit WCAG.resolveOver() ueber die drei Traegerflaechen
+   auf; die Begruendung steht im R-04-Block. Damit sind zwei Teile dieser
+   Ratsche gegenstandslos geworden und im selben Commit entfernt:
 
-   WAS SIE TUT, UND WAS SIE BEWUSST NICHT TUT. Die vollstaendige Abhilfe ist,
-   in `ruheRegeln()` die Toenung aufzuloesen statt sie zu verwerfen —
-   WCAG.resolveOver() kann die Form laengst. Das ist hier NICHT geschehen, und
-   zwar aus einem gemessenen Grund: mit der 4,5-Schwelle faellt danach nicht
-   eine Handvoll Regeln durch, sondern 124 von 128. Die Abhilfe dafuer heisst
-   D-4/E2 und ist der Gegenstand von Schritt 8; die Erweiterung ist die ROTE
-   Ratsche, mit der Schritt 8 beginnt. Bis dahin deckt R-11 die Stellen ab, die
-   diese Welle beziffert hat, und haelt die Groesse des blinden Flecks als Zahl
-   fest, damit er nicht lautlos waechst.
-   Vollstaendig in .planning/HANDOFF-V3-OFFENE-PUNKTE.md unter W2-C-02.
+     - die Zaehlung des blinden Flecks (`TOENUNGSREGELN_OHNE_URTEIL = 128`) —
+       es gibt ihn nicht mehr, und eine Zahl, die nichts mehr misst, ist
+       schlimmer als keine;
+     - die vier bezifferten Rueckschritte aus W2-C-02 — sie waren die
+       Notsicherung fuer die Zeit BIS Schritt 8 und sind durch dieselbe
+       Schwelle an derselben Stelle ersetzt, nur haerter: R-04 verlangt 4,5,
+       W2C02 verlangte nur "nicht schlechter als gestern".
+
+   WAS BLEIBT, ist das, was R-04 nach wie vor NICHT sieht: die ZWEITE Achse.
+   R-04 urteilt ueber Tinte-gegen-Flaeche. Ob eine Marke ueberhaupt als Marke
+   zu erkennen ist, entscheidet Flaeche-gegen-Traeger, und das misst nur
+   diese Ratsche (Teil 1, die zehn farblosen Marken) — samt dem einzigen
+   bedeutungstragenden Paar eines Fortschrittsbalkens (Teil 2).
    =========================================================================== */
 describe('R-11 — Toenungsflaechen werden gemessen, nicht uebersprungen (Ratsche)', () => {
     /** D-2: massgeblich ist das Minimum ueber die tatsaechlichen Traegerflaechen. */
     const TRAEGER = ['--bg-card', '--bg-dark', '--bg-elevated'];
 
-    const TOENUNG =
-        /^color-mix\(\s*in\s+srgb\s*,\s*var\(\s*--[\w-]+\s*\)\s+[\d.]+%\s*,\s*transparent\s*\)$/i;
-
-    /** Alle Regeln, die Flaeche UND Tinte setzen und deren Flaeche eine Toenung
-     *  ist — genau die Menge, die `ruheRegeln()` in R-04 wegwirft. */
-    function toenungsRegeln() {
-        const out = [];
-        cssFiles.forEach(f => {
-            if (f.name === 'variables.css' || f.name === 'fonts.css') return;
-            regelnMitRumpf(f.content).forEach(r => {
-                const flaeche = deklaration(r.rumpf, 'background(?:-color)?');
-                const tinte = deklaration(r.rumpf, 'color');
-                if (!flaeche || !tinte || !TOENUNG.test(flaeche)) return;
-                out.push({ ...r, datei: f.name, flaeche, tinte });
-            });
-        });
-        return out;
-    }
+    /* Die Siebung `toenungsRegeln()` stand bis Schritt 8 hier. Sie ist
+       entfallen, weil `ruheRegeln()` im R-04-Block dieselbe Menge jetzt
+       BEURTEILT statt sie nur zu zaehlen — zwei Siebungen fuer dieselbe Menge
+       waeren zwei Orte, an denen sie auseinanderlaufen koennen. */
 
     /** Eine Regel ueber Datei und Selektor holen. Fehlt sie, ist das ein Befund
      *  und keine stille Null — eine umbenannte Regel darf die Ratsche nicht
@@ -4171,100 +4234,5 @@ describe('R-11 — Toenungsflaechen werden gemessen, nicht uebersprungen (Ratsch
             }
         });
         expect(befunde.sort()).toEqual([]);
-    });
-
-    /* -------------------------------------------------------------------
-       (3) Die vier bezifferten Rueckschritte aus W2-C-02
-       ------------------------------------------------------------------- */
-
-    /** Die vier Regeln, die Schritt 7 in Dark unter 4,5 gedrueckt hat. Sie sind
-     *  bis Schritt 8 offen; bis dahin duerfen sie nicht WEITER fallen. Die Werte
-     *  sind die der Aktenlage-Tabelle unter W2-C-02, unabhaengig nachgerechnet. */
-    const W2C02 = [
-        {
-            datei: 'encounters.css',
-            sel: '.calc-diff-badge.trivial',
-            flaeche: 'color-mix(in srgb, var(--blue) 20%, transparent)',
-            tinte: 'var(--blue)',
-            soll: { dark: 4.22, light: 3.24, sepia: 2.38, contrast: 3.32 }
-        },
-        {
-            datei: 'initiative.css',
-            sel: '.concentration-badge',
-            flaeche: 'color-mix(in srgb, var(--purple) 20%, transparent)',
-            tinte: 'var(--purple)',
-            soll: { dark: 4.03, light: 3.5, sepia: 3.18, contrast: 4.21 }
-        },
-        {
-            datei: 'party.css',
-            sel: '.wiki-tree-item.selected',
-            flaeche: 'color-mix(in srgb, var(--purple) 15%, transparent)',
-            tinte: 'var(--purple)',
-            soll: { dark: 4.41, light: 3.78, sepia: 3.37, contrast: 4.48 }
-        },
-        {
-            datei: 'party.css',
-            sel: '.wiki-detail-category',
-            flaeche: 'color-mix(in srgb, var(--purple) 15%, transparent)',
-            tinte: 'var(--purple)',
-            soll: { dark: 4.41, light: 3.78, sepia: 3.37, contrast: 4.48 }
-        }
-    ];
-
-    test('die vier bezifferten Rueckschritte aus W2-C-02 fallen nicht weiter', () => {
-        const befunde = [];
-        W2C02.forEach(e => {
-            const r = regel(e.datei, e.sel);
-            if (!r) {
-                befunde.push(`${e.datei} ${e.sel}: Regel nicht gefunden`);
-                return;
-            }
-            /* Der Kopf von .concentration-badge steht in einem Verlauf; gesucht
-               wird deshalb im Rumpf, nicht in der Deklaration. */
-            if (!r.rumpf.includes(e.flaeche)) {
-                befunde.push(
-                    `${e.datei} ${e.sel}:${r.zeile} fuehrt ${e.flaeche} nicht mehr — die ` +
-                        `Zeile in W2-C-02 beschreibt etwas anderes als der Quelltext`
-                );
-                return;
-            }
-            const ist = beideAchsen(e.flaeche, e.tinte);
-            WCAG.THEMES.forEach(t => {
-                if (ist.tinte[t] === null) {
-                    befunde.push(`${e.datei} ${e.sel}: ${t} nicht aufloesbar`);
-                    return;
-                }
-                if (ist.tinte[t] < e.soll[t]) {
-                    befunde.push(
-                        `${e.datei} ${e.sel}: ${t} ${ist.tinte[t]} < gefuehrte ${e.soll[t]} ` +
-                            `(${reihe(ist.tinte)})`
-                    );
-                }
-            });
-            const min = Math.min(...WCAG.THEMES.map(t => ist.tinte[t]));
-            if (min >= 4.5) {
-                befunde.push(
-                    `${e.datei} ${e.sel}: haelt jetzt min ${min} — Zeile aus W2-C-02 und ` +
-                        `Eintrag aus W2C02 entfernen`
-                );
-            }
-        });
-        expect(befunde.sort()).toEqual([]);
-    });
-
-    /* -------------------------------------------------------------------
-       (4) Die Groesse des blinden Flecks
-       ------------------------------------------------------------------- */
-
-    /** DIESE ZAHL IST DER BEFUND, nicht die Buchfuehrung. 128 Regeln setzen
-     *  Tinte auf eine Toenung, und R-04 urteilt ueber keine davon. Sie faellt
-     *  weg, sobald `ruheRegeln()` die Toenung aufloest statt sie zu verwerfen —
-     *  das ist die rote Ratsche, mit der Schritt 8 beginnt. Bis dahin: wer eine
-     *  Toenungsregel anlegt, legt sie in den blinden Fleck und traegt sie hier
-     *  ein. */
-    const TOENUNGSREGELN_OHNE_URTEIL = 128;
-
-    test('der blinde Fleck von R-04 ist beziffert und waechst nicht lautlos', () => {
-        expect(toenungsRegeln().length).toBe(TOENUNGSREGELN_OHNE_URTEIL);
     });
 });

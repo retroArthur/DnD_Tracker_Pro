@@ -132,6 +132,77 @@ describe('WCAG-Kontrastrechner — var()- und Mischungsaufloesung', () => {
         expect(W.mixOver('#d4af37', 0, '#1a1a1a')).toBe('#1a1a1a');
     });
 
+    /* DER GEDECKELTE ANTEIL — Welle 2 Schritt 8, Entscheidung E2.
+       Seit der Toenungsregel steht der Prozentsatz nicht mehr als Literal in
+       der Regel, sondern als `min(<eigene Staerke>, var(--tint-max))`: die
+       Regel nennt ihren Wunsch, der Theme-Block deckelt ihn. Ein Rechner, der
+       das nicht liest, gibt null zurueck — und null heisst in R-04 "nicht
+       aufloesbar", also ein Fehlalarm an 113 Stellen gleichzeitig statt eines
+       Urteils.
+
+       Dass Chromium diese Form wirklich so rechnet, ist gemessen und nicht
+       angenommen (Chromium 143.0.7499.4, Playwright-Probe vom 2026-09-29):
+       `min(20%, var(--tint-max))` ergibt mit --tint-max: 13% die Deckkraft
+       0,13 und mit 7% die Deckkraft 0,07; `min(10%, var(--tint-max))` ergibt
+       0,1 bzw. 0,07. Genau diese vier Zahlen stehen unten. */
+    /* Diese beiden Proben laufen bewusst gegen eine KUENSTLICHE Palette und
+       nicht gegen variables.css: sie pruefen den Parser, nicht die Deckelwerte.
+       Ueber die tatsaechlichen 13/7/7/20 urteilt R-14 in
+       design-consistency.test.js — dort, wo auch die Begruendung steht. Sonst
+       stuenden dieselben vier Zahlen an zwei Orten und liefen auseinander. */
+    const DECKEL_PROBE = { '--tint-max': '13%', '--eng': '7%', '--gold': '#d4af37' };
+
+    test('min(<staerke>, var(--tint-max)) ist der gedeckelte Anteil, nicht null', () => {
+        expect(W.mischAnteil('min(20%, var(--tint-max))', DECKEL_PROBE)).toBe(13);
+        expect(W.mischAnteil('min(20%, var(--eng))', DECKEL_PROBE)).toBe(7);
+        expect(W.mischAnteil('min(10%, var(--tint-max))', DECKEL_PROBE)).toBe(10);
+        expect(W.mischAnteil('min(10%, var(--eng))', DECKEL_PROBE)).toBe(7);
+        expect(W.mischAnteil('20%', DECKEL_PROBE)).toBe(20);
+        expect(W.mischAnteil('var(--tint-max)', DECKEL_PROBE)).toBe(13);
+        expect(W.mischAnteil('max(5%, var(--eng))', DECKEL_PROBE)).toBe(7);
+        // Was der Rechner NICHT kennt, wird nicht geraten.
+        expect(W.mischAnteil('var(--gibt-es-nicht)', DECKEL_PROBE)).toBeNull();
+        expect(W.mischAnteil('20', DECKEL_PROBE)).toBeNull();
+    });
+
+    test('resolveOver rechnet die gedeckelte Toenung wie das Literal', () => {
+        // Die beiden Schreibweisen muessen denselben Hexwert ergeben, sonst
+        // urteilt die Ratsche ueber etwas anderes als der Browser malt.
+        expect(
+            W.resolveOver(
+                'color-mix(in srgb, var(--gold) min(20%, var(--tint-max)), transparent)',
+                DECKEL_PROBE,
+                '#1a1a1a'
+            )
+        ).toBe(W.mixOver('#d4af37', 0.13, '#1a1a1a'));
+        // Und unter dem Deckel bleibt die eigene Staerke stehen.
+        expect(
+            W.resolveOver(
+                'color-mix(in srgb, var(--gold) min(10%, var(--tint-max)), transparent)',
+                DECKEL_PROBE,
+                '#1a1a1a'
+            )
+        ).toBe(W.mixOver('#d4af37', 0.1, '#1a1a1a'));
+    });
+
+    test('zerlegeMix trennt Basis, Anteil und Gegenfarbe an der obersten Klammerebene', () => {
+        // Das Komma in min(...) gehoert NICHT dem color-mix. Wer an jedem Komma
+        // trennt, bekommt drei Teile und gibt auf.
+        expect(
+            W.zerlegeMix('color-mix(in srgb, var(--red) min(20%, var(--tint-max)), transparent)')
+        ).toEqual({
+            basis: 'var(--red)',
+            anteil: 'min(20%, var(--tint-max))',
+            gegen: 'transparent'
+        });
+        expect(W.zerlegeMix('color-mix(in srgb, var(--gold) 85%, #fff)')).toEqual({
+            basis: 'var(--gold)',
+            anteil: '85%',
+            gegen: '#fff'
+        });
+        expect(W.zerlegeMix('var(--gold)')).toBeNull();
+    });
+
     /* DECKENDES color-mix — die Luecke, die R-03 ueberhaupt erst moeglich macht.
        Bis zum 2026-09-28 kannte der Rechner nur die Form mit `transparent` und
        gab fuer jede andere Mischung null zurueck. Genau die sechs ABGELEITETEN

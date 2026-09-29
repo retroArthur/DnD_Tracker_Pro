@@ -234,6 +234,102 @@ const NAMED_COLORS = {
 
 const MAX_VAR_DEPTH = 10;
 
+// ---------------------------------------------------------------------------
+// (c0) Der ANTEIL einer Mischung, und die Zerlegung von color-mix()
+// ---------------------------------------------------------------------------
+
+/**
+ * Zerlegt an Kommas der OBERSTEN Klammerebene.
+ * `min(20%, var(--tint-max)), transparent` sind ZWEI Teile, nicht drei — das
+ * Komma in `min(...)` gehoert nicht dem color-mix.
+ */
+function kommaTeile(s) {
+    const out = [];
+    let tiefe = 0;
+    let cur = '';
+    for (const ch of String(s)) {
+        if (ch === '(') tiefe++;
+        if (ch === ')') tiefe--;
+        if (ch === ',' && tiefe === 0) {
+            out.push(cur);
+            cur = '';
+            continue;
+        }
+        cur += ch;
+    }
+    out.push(cur);
+    return out;
+}
+
+/**
+ * Der ANTEIL einer Mischung — der Prozentsatz hinter der Basisfarbe in
+ * `color-mix(in srgb, X <anteil>, transparent)`, als Zahl in 0..100.
+ *
+ * BIS WELLE 2 SCHRITT 7 stand dort ausnahmslos ein Literal (`20%`), und die
+ * beiden color-mix-Regexes lasen es mit `([\d.]+)%`. Seit der Toenungsregel
+ * (Entscheidung E2, Schritt 8) steht dort
+ *
+ *     min(20%, var(--tint-max))
+ *
+ * — die Regel nennt ihre eigene Staerke, der Theme-Block deckelt sie. Wer
+ * diese Form nicht lesen kann, bekommt von resolveOver() `null`, und `null`
+ * heisst in JEDER Ratsche dieses Baums "nicht aufloesbar": ein Fehlalarm
+ * statt eines Urteils, an 113 Stellen gleichzeitig.
+ *
+ * Gelesen werden `<zahl>%`, `var(--x)` (auch mit Ersatzwert) und die
+ * Rechenfunktionen min()/max()/clamp() darueber, rekursiv. Alles andere
+ * ergibt null — dieselbe Hausregel wie in resolve(): lieber nichts sagen als
+ * raten.
+ */
+function mischAnteil(ausdruck, pal, depth) {
+    const d = depth || 0;
+    const v = String(ausdruck === null || ausdruck === undefined ? '' : ausdruck).trim();
+    if (d > MAX_VAR_DEPTH) {
+        throw new Error(`wcag-contrast: Anteils-Kette zu tief (Zyklus?) bei: ${v}`);
+    }
+    if (/^-?[\d.]+%$/.test(v)) return parseFloat(v);
+
+    const varMatch = v.match(/^var\(\s*(--[\w-]+)\s*(?:,([\s\S]*))?\)$/);
+    if (varMatch) {
+        if (pal && varMatch[1] in pal) return mischAnteil(pal[varMatch[1]], pal, d + 1);
+        if (varMatch[2] !== undefined) return mischAnteil(varMatch[2], pal, d + 1);
+        return null;
+    }
+
+    const fnMatch = v.match(/^(min|max|clamp)\(([\s\S]*)\)$/i);
+    if (fnMatch) {
+        const teile = kommaTeile(fnMatch[2]).map(t => mischAnteil(t, pal, d + 1));
+        if (teile.some(t => t === null) || !teile.length) return null;
+        const f = fnMatch[1].toLowerCase();
+        if (f === 'min') return Math.min(...teile);
+        if (f === 'max') return Math.max(...teile);
+        if (teile.length !== 3) return null;
+        return Math.min(Math.max(teile[1], teile[0]), teile[2]);
+    }
+    return null;
+}
+
+/**
+ * `color-mix(in srgb, <basis> <anteil>, <gegen>)` -> { basis, anteil, gegen },
+ * jeweils als ROHTEXT. Nur der srgb-Farbraum, weil das Stylesheet nur den
+ * benutzt (F-19 friert das ein).
+ *
+ * Der Anteil wird NICHT hier geparst, sondern von mischAnteil() — sonst
+ * muesste diese Funktion die Klammerebenen ein zweites Mal zaehlen.
+ */
+function zerlegeMix(value) {
+    const v = String(value === null || value === undefined ? '' : value).trim();
+    const m = v.match(/^color-mix\(\s*in\s+srgb\s*,\s*([\s\S]+)\)$/i);
+    if (!m) return null;
+    const teile = kommaTeile(m[1]);
+    if (teile.length !== 2) return null;
+    const kopf = teile[0]
+        .trim()
+        .match(/^(var\(\s*--[\w-]+\s*(?:,[\s\S]*)?\)|rgba?\([^()]*\)|#[0-9a-fA-F]{3,8}|[a-zA-Z][\w-]*)\s*([\s\S]*)$/);
+    if (!kopf) return null;
+    return { basis: kopf[1], anteil: kopf[2].trim(), gegen: teile[1].trim() };
+}
+
 /**
  * Loest einen Deklarationswert zu '#rrggbb' auf.
  *
@@ -285,15 +381,14 @@ function resolve(value, pal, depth) {
        --orange-dim) fuer jede Ratsche unsichtbar: resolve() gab null, und wer
        null bekommt, meldet nichts. Genau auf diesen Flaechen sitzen die
        Zustandsregeln, ueber die R-03 urteilt. */
-    const mixMatch = v.match(
-        /^color-mix\(\s*in\s+srgb\s*,\s*([\s\S]+?)\s+([\d.]+)%\s*,\s*([\s\S]+?)\s*\)$/i
-    );
-    if (mixMatch) {
-        const basis = resolve(mixMatch[1], pal, d + 1);
-        const gegen = resolve(mixMatch[3], pal, d + 1);
+    const zerlegt = zerlegeMix(v);
+    if (zerlegt) {
+        const basis = resolve(zerlegt.basis, pal, d + 1);
+        const gegen = resolve(zerlegt.gegen, pal, d + 1);
+        const anteil = mischAnteil(zerlegt.anteil, pal, d + 1);
         // gegen === null heisst `transparent` (oder ein unbekanntes Token):
         // dann fehlt die Flaeche und resolveOver() ist zustaendig.
-        if (basis && gegen) return mixOver(basis, parseFloat(mixMatch[2]) / 100, gegen);
+        if (basis && gegen && anteil !== null) return mixOver(basis, anteil / 100, gegen);
     }
     return null;
 }
@@ -328,13 +423,12 @@ function resolveOver(value, pal, surfaceHex) {
     if (!surfaceHex) return null;
     const v = String(value === null || value === undefined ? '' : value).trim();
 
-    const mix = v.match(
-        /^color-mix\(\s*in\s+srgb\s*,\s*([\s\S]+?)\s+([\d.]+)%\s*,\s*transparent\s*\)$/i
-    );
-    if (mix) {
-        const base = resolve(mix[1], pal);
-        if (!base) return null;
-        return mixOver(base, parseFloat(mix[2]) / 100, surfaceHex);
+    const zerlegt = zerlegeMix(v);
+    if (zerlegt && /^transparent$/i.test(zerlegt.gegen)) {
+        const base = resolve(zerlegt.basis, pal);
+        const anteil = mischAnteil(zerlegt.anteil, pal);
+        if (!base || anteil === null) return null;
+        return mixOver(base, anteil / 100, surfaceHex);
     }
 
     const rgba = v.match(/^rgba?\(\s*([^)]+)\)$/i);
@@ -436,6 +530,8 @@ module.exports = {
     resolve,
     resolveOver,
     mixOver,
+    mischAnteil,
+    zerlegeMix,
     minRatioOverSurfaces,
     selfTest,
     SELFTEST_CASES
