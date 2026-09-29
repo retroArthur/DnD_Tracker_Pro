@@ -112,6 +112,63 @@
             --purple-text: var(--purple);
             --pink-text: var(--pink);
 
+            /* DER TOENUNGSDECKEL (Design-Handoff v3, Welle 2, Schritt 8,
+               Entscheidung D-4/E2). Er begrenzt, wie stark eine Regel ihre
+               eigene Rolle als halbdurchsichtige Flaeche unter ihre eigene
+               Schrift legen darf:
+
+                   background: color-mix(in srgb, var(--<rolle>)
+                               min(20%, var(--tint-max)), transparent);
+                   color: var(--<rolle>-text);
+
+               ER DECKELT, ER SETZT NICHT GLEICH. Die Regel nennt weiter ihre
+               eigene Staerke; min() laesst sie stehen, solange sie unter dem
+               Deckel liegt. Von den 107 Toenungsstellen liegen 8 bei 10 % und
+               5 bei 12 % — die behalten in Dark und Contrast ihren Wert.
+
+               WOHER DIE VIER ZAHLEN KOMMEN. Gerechnet ist var(--<rolle>-text)
+               auf einer Toenung derselben Rolle, ueber der schlechtesten von
+               --bg-card/--bg-dark/--bg-elevated, fuer alle zehn Rollen. Der
+               Deckel ist die groesste Staerke, bei der die SCHWAECHSTE Rolle
+               noch 4,5 haelt. Bindend ist je Theme genau eine Rolle:
+                 dark     13 % — --purple 4,56; bei 14 % nur noch 4,48
+                 light     7 % — --red    4,55; bei  8 % nur noch 4,49
+                 sepia     7 % — --pink   4,52; bei  8 % nur noch 4,46
+                 contrast 20 % — --blue   4,53; bei 21 % nur noch 4,47
+               Die Option "8-13 %" aus dem Handoff ist am unteren Ende einen
+               Punkt zu grosszuegig: 8 % faellt in Light UND Sepia durch.
+
+               DER PREIS IST BENANNT UND KEIN VERSEHEN: in Light und Sepia
+               sinkt die Flaeche von 20 auf 7 % und ist fast unsichtbar. Die
+               Rolle liest sich dort ueber die Schriftfarbe, nicht mehr ueber
+               die Flaeche. Das ist die einzige beabsichtigte Sichtaenderung
+               dieser Welle.
+
+               --bg-hover steht NICHT in der Rechnung, und das ist keine
+               Bequemlichkeit: die --<rolle>-text-Werte sind gegen genau diese
+               Flaeche auf 4,5 gerechnet, jede Auflage darueber drueckt sie
+               darunter. Mit --bg-hover als Traeger waere jeder Deckel 0 %,
+               also ein Verbot jeder Toenung ueberhaupt. Die Frage gehoert zu
+               W1-B-01/E3 ("Hover ohne Fuellung"), nicht zu D-4.
+
+               NICHT GEDECKELT werden Toenungen unter NEUTRALER Schrift
+               (var(--text) auf einer --text-dim- oder --attr-*-Toenung): der
+               Deckel folgt aus der Rollenschrift, und eine neutrale Tinte hat
+               dort 6,5-14,0 Luft. Die farblosen Zustandsmarken bleiben
+               deshalb bei 30 %, .dms-skill-header bei 20 %.
+
+               Chromium nimmt beide Formen an — Custom Property als Anteil und
+               min() darum herum. Gemessen, nicht angenommen: Chromium
+               143.0.7499.4 serialisiert min(20%, var(--tint-max)) mit diesem
+               Deckel zu Deckkraft 0,13 und in Light zu 0,07.
+
+               Die Platzhalter oben stehen mit spitzen Klammern da, und das
+               ist kein Schoenheitsfehler: F-01 liest JEDE var()-Nennung im
+               CSS als Verwendung, auch die im Kommentar, und meldet dann ein
+               undefiniertes Token. Ein ausgeschriebener Platzhalter in der
+               var()-Schreibweise macht die Ratsche rot. */
+            --tint-max: 13%;
+
             /* Muenzmetalle. Sie tragen in allen vier Bloecken DIESELBEN Werte,
                und das ist Absicht (Entscheidung D-5): eine Goldmuenze, die man
                nicht mehr als Gold erkennt, verfehlt ihren einzigen Zweck. Auf
@@ -232,6 +289,12 @@
             --purple-text: #7637e1;
             --pink-text: #b62063;
 
+            /* Toenungsdeckel, siehe Dark. In Light ist --red die bindende
+               Rolle: 7 % ergeben 4,55, 8 % nur noch 4,49. Die Flaeche sinkt
+               damit von 20 auf 7 % und ist fast unsichtbar — der benannte
+               Preis der Entscheidung E2. */
+            --tint-max: 7%;
+
             /* Muenzmetalle unveraendert in allen vier Themes, siehe Dark. */
             --coin-pm: #b8860b;
             --coin-gm: #ffd700;
@@ -343,6 +406,11 @@
             --purple-text: #575a9c;
             --pink-text: #ae2d6b;
 
+            /* Toenungsdeckel, siehe Dark. In Sepia ist --pink die bindende
+               Rolle: 7 % ergeben 4,52, 8 % nur noch 4,46. Derselbe Preis wie
+               in Light. */
+            --tint-max: 7%;
+
             /* Muenzmetalle unveraendert in allen vier Themes, siehe Dark. */
             --coin-pm: #b8860b;
             --coin-gm: #ffd700;
@@ -431,6 +499,13 @@
             --blue-text: #3d9eff;
             --purple-text: #ff45ff;
             --pink-text: #ff61b0;
+
+            /* Toenungsdeckel, siehe Dark. Im Barrierefreiheits-Theme sind
+               --blue und --orange die bindenden Rollen: 20 % ergeben 4,53
+               bzw. 4,51, 21 % nur noch 4,47. 20 % ist zugleich die heute
+               haeufigste Staerke — hier aendert der Deckel nur die 15
+               Stellen, die darueber lagen (30 %). */
+            --tint-max: 20%;
 
             /* Muenzmetalle unveraendert in allen vier Themes, siehe Dark. */
             --coin-pm: #b8860b;
