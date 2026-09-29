@@ -30,7 +30,25 @@
 }
 
 .pwa-install-btn:active {
-    background: color-mix(in srgb, var(--gold) 22%, transparent);
+    /* Welle 2, Nachtrag. Die Regel wechselt nur die FLAECHE; gemalt wird die
+       geerbte Tinte var(--gold-text) der Grundregel (offener Punkt W2-D-05).
+       Die Aktenlage hielt fest, der Deckel bringe keine der vier Stellen
+       ueber 4,5 — gemessen falsch. Gemessen, min ueber
+       --bg-card/--bg-dark/--bg-elevated (D-2), dark light sepia contrast:
+         4,66 · 4,15 · 4,12 · 6,34 -> 5,65 · 4,78 · 5,14 · 6,76
+       Das Minimum stellt --bg-elevated, in Sepia --bg-dark. Dark und
+       Contrast hielten schon vorher; Light und Sepia lagen darunter.
+
+       BENANNTE SICHTFOLGE, nicht uebersehen: .pwa-install-btn:hover daneben
+       traegt 12 % UNGEDECKELT und haelt damit (5,75 · 4,55 · 4,77 · 8,40) —
+       sie ist deshalb nicht Teil dieses Nachtrags. In Light und Sepia deckelt
+       --tint-max auf 7 %; die gedrueckte Flaeche wird dort also BLASSER als
+       die ueberfahrene, die Zustandsleiter kehrt sich um. In Dark (13 %) und
+       Contrast (20 %) bleibt sie richtig herum. Das ist eine Sichtfrage der
+       Toenungsregel E2, keine Kontrastfrage; sie ist in der Aktenlage unter
+       W2-D-05 benannt und gehoert zu E3/Schritt 9 ("Hover ohne Fuellung"),
+       weil sie nur zusammen mit der Hover-Stufe zu entscheiden ist. */
+    background: color-mix(in srgb, var(--gold) min(22%, var(--tint-max)), transparent);
 }
 
 /* Mobile: Icon-only mit Tooltip */
