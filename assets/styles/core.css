@@ -764,7 +764,27 @@
             transition: all 0.15s ease;
         }
         .link-chip:hover {
-            background: color-mix(in srgb, var(--blue) 40%, transparent);
+            /* Welle 2, Nachtrag. Diese Zustandsregel wechselt NUR die Flaeche;
+               gemalt wird die geerbte Tinte var(--blue-text) der Grundregel
+               neun Zeilen darueber, die fuer diese Flaeche nie gerechnet war
+               (offener Punkt W2-D-05). 40 % waren ungedeckelt — die
+               schlechteste Stelle der ganzen Klasse.
+
+               Der Deckel aus Schritt 8 traegt sie. 40 % liegen in JEDEM Theme
+               ueber --tint-max (13/7/7/20 %); min(40%, var(--tint-max)) ergibt
+               damit zeichengleich dieselbe Flaeche wie min(20%, …) in der
+               Grundregel, und die urteilt R-04 gruen. Gemessen, min ueber
+               --bg-card/--bg-dark/--bg-elevated (D-2), dark light sepia
+               contrast:
+                 2,87 · 2,96 · 3,25 · 3,37 -> 4,81 · 4,64 · 4,64 · 4,52
+               Das Minimum stellt --bg-elevated, in Sepia --bg-dark.
+
+               SICHTFOLGE, bewusst: weil Ruhe- und Hover-Flaeche nach dem
+               Deckel zusammenfallen, meldet das Ueberfahren sich nur noch
+               ueber transform: scale(1.05). Das ist dieselbe Folge, die der
+               Deckel an den uebrigen 114 Stellen dieser Welle hat; die Frage
+               "Hover ohne Fuellung" ist E3/Schritt 9. */
+            background: color-mix(in srgb, var(--blue) min(40%, var(--tint-max)), transparent);
             transform: scale(1.05);
         }
         .tag-gold { background: color-mix(in srgb, var(--gold) min(20%, var(--tint-max)), transparent); color: var(--gold-text); }
