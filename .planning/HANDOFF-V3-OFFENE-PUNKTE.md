@@ -408,8 +408,8 @@ Gruppe E gerade nicht bewiesen ist. Sie sind **kein** erledigter Fall.
 | `initiative.css:674` | `.aoe-target-save` | `--green` | #191919 | #1e1e1e |
 | `initiative.css:691` | `.aoe-target-damage.full` | `--red` | #191919 | #1e1e1e |
 | `initiative.css:695` | `.aoe-target-damage.half` | `--yellow` | #191919 | #1e1e1e |
-| `party.css:2053` | `.rest-modal-header h3` | `--gold` | #191919 | #1e1e1e |
-| `party.css:2324` | `.condition-ref-header h3` | `--gold` | #191919 | #1e1e1e |
+| `party.css:2074` | `.rest-modal-header h3` | `--gold` | #191919 | #1e1e1e |
+| `party.css:2345` | `.condition-ref-header h3` | `--gold` | #191919 | #1e1e1e |
 | `tools.css:474` | `.rt-modal-header h3` | `--gold` | #191919 | #1e1e1e |
 | `tools.css:601` | `.rt-dice-label` | `--gold` | #191919 | #1e1e1e |
 | `tools.css:684` | `.generator-modal-header h3` | `--gold` | #191919 | #1e1e1e |
@@ -503,7 +503,7 @@ diese Tabelle führt.
 | `loot.css:296` | `.shop-cat-badge.armor` | `--blue` | #d4af37 · --bg-card | #b8860b · --bg-card |
 | `loot.css:298` | `.shop-cat-badge.service` | `--purple` | #d4af37 · --bg-card | #b8860b · --bg-card |
 | `loot.css:300` | `.shop-cat-badge.all` | `--gold` | #d4af37 | #b8860b |
-| `party.css:821` | `.wiki-tree-item.pinned` | `--gold` | --bg-card · #2f233b | --bg-card · #f2e6fe |
+| `party.css:842` | `.wiki-tree-item.pinned` | `--gold` | --bg-card · #2f233b | --bg-card · #f2e6fe |
 | `tools.css:586` | `.rt-dice-btn:hover` | `--gold` | --bg-dark · #d4af37 | --bg-dark · #b8860b |
 | `tools.css:637` | `.rt-hint-warn` | `--orange` | #2f2618 | #332a1c |
 
@@ -514,8 +514,8 @@ diese Tabelle führt.
 | `dashboard.css:541` | `.char-section-title` | `--gold` | --bg-card · #191919 | --bg-card · #1e1e1e |
 | `dice.css:639` | `.fdp-title` | `--gold-text` | --bg-card | --bg-card |
 | `dmscreen.css:1068` | `.form-group label` | `--gold` | --bg-card · #191919 | --bg-card · #1e1e1e |
-| `party.css:2655` | `.char-adv-btn.adv` | `--green` | --bg-dark · #191919 | --bg-dark · #1e1e1e |
-| `party.css:2656` | `.char-adv-btn.dis` | `--red` | --bg-dark · #191919 | --bg-dark · #1e1e1e |
+| `party.css:2676` | `.char-adv-btn.adv` | `--green` | --bg-dark · #191919 | --bg-dark · #1e1e1e |
+| `party.css:2677` | `.char-adv-btn.dis` | `--red` | --bg-dark · #191919 | --bg-dark · #1e1e1e |
 
 `.fdp-title` ist als einzige Zeile dieser Gruppe erledigt (Welle 2, Schritt 7), bleibt aber
 gefuehrt, damit die Zahl 124 nicht lautlos sinkt: der zweite Traeger `#1e1e1e` WAR das
@@ -623,12 +623,12 @@ npcs.css
   969  .npc-popup-name
  1002  .npc-popup-section-title
 party.css
- 1961  .party-stat-card.critical .party-stat-value
- 2228  .rest-heal-preview
- 2234  .rest-hd-restore
- 2610  .cf-attack-remove:hover
- 2759  .char-skill-item.proficient .char-skill-item-name
- 2782  .char-skill-item.expertise .char-skill-item-name
+ 1982  .party-stat-card.critical .party-stat-value
+ 2249  .rest-heal-preview
+ 2255  .rest-hd-restore
+ 2631  .cf-attack-remove:hover
+ 2780  .char-skill-item.proficient .char-skill-item-name
+ 2803  .char-skill-item.expertise .char-skill-item-name
 spells.css
   148  .spell-material
 tools.css

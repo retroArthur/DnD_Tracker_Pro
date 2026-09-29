@@ -514,11 +514,16 @@
             /* BLEIBT ein Literal: gefuehrte Ausnahme von R-10, Entscheidung
                E6. Die dunkle Blende des Ereignis-Logs ist gewollt und bleibt
                themenblind; 15,15,25 kommt in keinem Theme vor und hat
-               deshalb auch keine Rolle, auf die sie zeigen koennte. Was NICHT
-               bleibt, ist die geerbte Tinte darauf — sie erreicht in Light
-               1,07, rechnerisch schlechter als jede Stelle, die Welle 1
-               angefasst hat. Schritt 10 gibt beiden Regeln themenblinde
-               Tinte-Tokens (--on-log, --on-log-dim, Muster pwa.css). */
+               deshalb auch keine Rolle, auf die sie zeigen koennte.
+
+               Was NICHT geblieben ist, ist die geerbte Tinte darauf: sie
+               erreichte in Light 1,07, rechnerisch schlechter als jede
+               Stelle, die Welle 1 angefasst hat. Seit Schritt 10 tragen
+               beide Regeln themenblinde Tinte-Tokens (--on-log,
+               --on-log-dim, Muster pwa.css) und kommen in allen vier Themes
+               ueber 6,96. Warum die Stelle so lange ueberlebt hat: F-04
+               verbietet Hex-Literale im Komponenten-CSS kompromisslos, aber
+               keine rgba-Literale — und bis R-10 zaehlte niemand die. */
             background: rgba(15, 15, 25, 0.98);
             border: 1px solid var(--border);
             border-radius: var(--radius-md);
@@ -550,7 +555,11 @@
 
         .event-log-title {
             font-weight: 600;
-            color: var(--text);
+            /* Themenblinde Tinte auf themenblinder Flaeche (E6, Schritt 10).
+               var(--text) erreichte auf dem Dauermodus-Kasten in Light 1,05
+               und in Sepia 1,67; --on-log erreicht 15,02-15,63 in allen vier
+               Themes. Begruendung der Token in variables.css. */
+            color: var(--on-log);
         }
 
         .event-log-actions {
@@ -561,7 +570,13 @@
         .event-log-btn {
             background: transparent;
             border: 1px solid var(--border);
-            color: var(--text-dim);
+            /* var(--text-dim) erreichte auf dem Kasten in Light 3,19 und in
+               Sepia 3,21; --on-log-dim erreicht 7,81-8,12 (E6, Schritt 10).
+               Die :hover-Regel darunter bleibt, wie sie ist: sie setzt eine
+               eigene THEME-Flaeche (--bg-alt) und dazu var(--text), ist also
+               in sich stimmig — anders als diese Zeile hier, die eine
+               Theme-Tinte auf eine themenblinde Flaeche legte. */
+            color: var(--on-log-dim);
             padding: 4px 8px;
             border-radius: var(--radius-sm);
             cursor: pointer;
@@ -578,14 +593,18 @@
             align-items: flex-start;
             gap: 10px;
             /* Zweite Flaeche desselben Ereignis-Logs, dieselbe gefuehrte
-               R-10-Ausnahme (E6, Schritt 10). */
+               R-10-Ausnahme (E6, in Schritt 10 eingeloest). */
             background: rgba(20, 20, 30, 0.95);
             border: 1px solid var(--border);
             border-left: 3px solid var(--green);
             border-radius: var(--radius-md);
             padding: 10px 14px;
             font-size: 0.9em;
-            color: var(--text);
+            /* Die Meldung selbst — die schlechteste Stelle des ganzen
+               Farbbefunds vor diesem Schritt: var(--text) erreichte hier in
+               Light 1,07 und in Sepia 1,50. --on-log erreicht 13,40-15,13
+               ueber beide Flaechen und alle vier Themes (E6, Schritt 10). */
+            color: var(--on-log);
             backdrop-filter: blur(8px);
             box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
             animation: eventSlideIn 0.3s ease-out;
@@ -618,7 +637,9 @@
 
         .event-log-time {
             font-size: 0.75em;
-            color: var(--text-dim);
+            /* Zeitstempel: var(--text-dim) erreichte in Light 2,84 und in
+               Sepia 2,88; --on-log-dim erreicht 6,96-7,87 (E6, Schritt 10). */
+            color: var(--on-log-dim);
             margin-top: 4px;
         }
 

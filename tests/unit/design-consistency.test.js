@@ -3754,14 +3754,18 @@ describe('R-10 — rgba()-Zahlentripel ausserhalb der Schatten (Ratsche)', () =>
                 '.event-log.persistent — Entscheidung E6. Die dunkle Blende des ' +
                 'Ereignis-Logs ist gewollt themenblind; 15,15,25 kommt in keinem Theme ' +
                 'und keiner Skala vor und hat keine Rolle, auf die es zeigen koennte. ' +
-                'Die geerbte TINTE darauf ist dagegen mangelhaft (Light 1,07) und ' +
-                'bekommt in Schritt 10 themenblinde Tokens (--on-log, --on-log-dim).'
+                'Die geerbte TINTE darauf war dagegen mangelhaft (Light 1,07) und ist ' +
+                'in Schritt 10 auf themenblinde Tokens umgestellt (--on-log, ' +
+                '--on-log-dim; jetzt 6,96-15,63 in allen vier Themes). Die Flaeche ' +
+                'bleibt, die Tinte folgt ihr — nicht umgekehrt.'
         },
         {
             datei: 'party.css',
             lit: 'rgba(20, 20, 30, 0.95)',
             anzahl: 1,
-            grund: '.event-log-entry — zweite Flaeche desselben Logs, gleiche Begruendung.'
+            grund:
+                '.event-log-entry — zweite Flaeche desselben Logs, gleiche Begruendung. ' +
+                'Ihre Tinte ist in Schritt 10 mitgezogen worden.'
         },
         {
             datei: 'pwa.css',
