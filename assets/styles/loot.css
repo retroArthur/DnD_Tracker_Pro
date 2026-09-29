@@ -92,7 +92,7 @@
         }
 
         .loot-tag-chip:has(input:checked) {
-            background: rgba(212, 175, 55, 0.2);
+            background: color-mix(in srgb, var(--gold) 20%, transparent);
             border-color: var(--gold);
         }
         
@@ -224,7 +224,7 @@
         .shop-item-count {
             font-size: 0.8em;
             color: var(--green);
-            background: rgba(74, 222, 128, 0.1);
+            background: color-mix(in srgb, var(--green) 10%, transparent);
             padding: 2px 8px;
             border-radius: var(--radius-sm);
         }
@@ -589,7 +589,7 @@
         .si-cart-btn {
             padding: 3px 8px;
             font-size: 0.8em;
-            background: rgba(212, 175, 55, 0.2);
+            background: color-mix(in srgb, var(--gold) 20%, transparent);
             border: 1px solid var(--gold);
             color: var(--gold);
             border-radius: var(--radius-sm);
