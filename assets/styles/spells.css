@@ -21,13 +21,26 @@
             display: flex;
             justify-content: space-between;
             align-items: flex-start;
-            background: linear-gradient(90deg, rgba(124, 58, 237, 0.1) 0%, transparent 100%);
+            /* Entscheidung E1 (Welle 2 Schritt 7): 124,58,237 ist LIGHT
+               --purple, eine fremde Theme-Palette. Steht jetzt auf der
+               Violettrolle und wird in Dark sichtbar heller (7c3aed ->
+               a78bfa). Gemessen mit den Tinten der Kopfzeile, min ueber die
+               drei neutralen Traegerflaechen (dark light sepia contrast):
+                 var(--text)      10,86 · 12,41 · 7,65 · 14,91
+                               ->  9,92 · 12,41 · 7,79 · 14,78
+                 var(--text-dim)   4,04 ·  4,09 · 3,98 ·  6,42
+                               ->  3,69 ·  4,09 · 4,05 ·  6,36
+               SICHTLISTE Schritt 11. */
+            background: linear-gradient(90deg, color-mix(in srgb, var(--purple) 10%, transparent) 0%, transparent 100%);
             border-bottom: 1px solid transparent;
             transition: background 0.2s;
         }
         
         .spell-card-header:hover {
-            background: linear-gradient(90deg, rgba(124, 58, 237, 0.2) 0%, transparent 100%);
+            /* Dieselbe E1-Stelle im Hover. var(--text) 10,06 · 10,69 · 6,63 ·
+               13,66 -> 8,32 · 10,69 · 6,93 · 13,20; var(--text-dim)
+               3,75 · 3,53 · 3,45 · 5,88 -> 3,10 · 3,53 · 3,61 · 5,68. */
+            background: linear-gradient(90deg, color-mix(in srgb, var(--purple) 20%, transparent) 0%, transparent 100%);
         }
         
         .spell-card.expanded .spell-card-header {
