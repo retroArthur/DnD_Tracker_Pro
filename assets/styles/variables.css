@@ -538,9 +538,77 @@
             --dmg-psychic: #ec4899;
             --dmg-radiant: var(--yellow);
             --dmg-necrotic: #1f2937;
-            --dmg-necrotic-text: #9ca3af;
             --dmg-necrotic-border: #374151;
             --dmg-force: #06b6d4;
+
+            /* Die Tinte JEDER Schadensart, an EINER Stelle (D-01-Rest aus
+               Welle 1, abgeraeumt in Welle 2 Schritt 6 Teil B).
+
+               Bis hierher stand sie als `color: white` bzw. `color: black`
+               im Komponenten-CSS — zehn benannte Farbliterale, genau der
+               Befund D-01. Die WERTE sind unveraendert uebernommen; keine
+               Zelle wechselt die Farbe, keine Kontrastzahl bewegt sich.
+               --dmg-necrotic-text stand schon hier und ist nur
+               hierhergerueckt, damit die dreizehn beieinander stehen.
+
+               WARUM NICHT --on-<rolle>: die Schadensartenskala ist nach
+               Paragraph 7 eine begruendete Ausnahme von der
+               --on-<rolle>-Umstellung, und Welle 1 Schritt 7 hat das
+               belegt statt behauptet. Vier der fuenf weissen Tinten liegen
+               unter 4,5 (gemessen, dark light sepia contrast):
+
+                 --dmg-physical #4b5563   7,56 7,56 7,56 7,56   haelt
+                 --dmg-fire     var(--red) 3,76 4,83 4,63 4,00  haelt nicht
+                 --dmg-cold     #3b82f6   3,68 3,68 3,68 3,68   haelt nicht
+                 --dmg-thunder  #8b5cf6   4,23 4,23 4,23 4,23   haelt nicht
+                 --dmg-psychic  #ec4899   3,53 3,53 3,53 3,53   haelt nicht
+
+               Schwarz waere an dreien davon besser (cold 5,71 · thunder
+               4,96 · psychic 5,95; fire nur 4,35 in Light und damit immer
+               noch darunter). Das ist NICHT die Reparatur: die Skala muss
+               als GANZES neu gerechnet werden, alle dreizehn Typen
+               zusammen, sonst verschiebt sich ihre Ordnung — und das
+               gehoert in die Welle, die die Skalen anfasst. Vier der
+               Stellen sind als benannte Ausnahme in R-04 (RUHE_AUSNAHME)
+               und in HANDOFF-V3-OFFENE-PUNKTE.md gefuehrt; ihre Zahlen
+               duerfen sich durch diesen Schritt NICHT bewegen, und sie tun
+               es nicht.
+
+               Dass die Tinten jetzt Tokens sind, macht genau diese kuenftige
+               Neuberechnung zu EINER Aenderung an EINER Stelle statt zu elf
+               im Komponenten-CSS. */
+            --dmg-physical-text: #ffffff;
+            --dmg-fire-text: #ffffff;
+            --dmg-cold-text: #ffffff;
+            --dmg-lightning-text: #000000;
+            --dmg-thunder-text: #ffffff;
+            --dmg-acid-text: #000000;
+            --dmg-poison-text: #000000;
+            --dmg-psychic-text: #ffffff;
+            --dmg-radiant-text: #000000;
+            --dmg-necrotic-text: #9ca3af;
+            --dmg-force-text: #000000;
+
+            /* Helle Tinte fuer Flaechen, zu denen es kein --on-<rolle> gibt
+               (D-01-Rest, Welle 2 Schritt 6 Teil B).
+
+               Fuenf Stellen tragen `color: white` auf einem Traeger, der
+               keine Rolle IST: zwei Verlaeufe aus abgeleiteten Toenen
+               (--red-dim/--red-dark), eine Auflage auf einem Verlauf, und
+               ein Text, der je nach Fuellstand ueber der Balkenfarbe ODER
+               ueber der Spur liegt. Welle 1 Schritt 7 hat alle fuenf
+               einzeln gemessen und WEISS ausdruecklich bestaetigt — auf den
+               Verlaeufen haelt es 6,76/8,25/7,97/7,20, waehrend var(--on-red)
+               in Dark und Contrast auf 2,03 bzw. 1,90 faellt. Die
+               Begruendung steht an jeder der fuenf Stellen im Kommentar.
+
+               Dieses Token wechselt die SCHREIBWEISE, nicht die Farbe: es
+               ist themenblind weiss, weil die fuenf Traeger in jedem Theme
+               dunkel sind. Es ist kein Ersatz fuer --on-<rolle> und darf
+               nicht dort benutzt werden, wo die Flaeche eine Rolle hat. Die
+               fehlenden --on-*-Pendants der abgeleiteten Toene sind Welle
+               3/4. */
+            --ink-on-dark: #ffffff;
 
             /* ------------------------------------------------------------
                Kategorie-Skalen (F-04)

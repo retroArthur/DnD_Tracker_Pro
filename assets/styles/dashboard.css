@@ -719,8 +719,10 @@
                Unterschreitung in Dark (3,76) und Contrast (4,00) bleibt und
                ist hier aktenkundig: abgeleitete Flaechen (--red-dim,
                --red-dark, --gold-hover, ...) haben kein --on-*-Pendant, das
-               ist Welle 3/4. */
-            color: white;
+               ist Welle 3/4. Seit Welle 2 Schritt 6 steht die Tinte als
+               var(--ink-on-dark) statt als Wort `white` — themenblind
+               weiss, derselbe Wert, dieselben Zahlen. */
+            color: var(--ink-on-dark);
             padding: 12px 20px;
             display: flex;
             align-items: center;
@@ -749,13 +751,18 @@
         .conflict-banner .btn {
             background: var(--overlay-strong);
             border-color: var(--overlay-heavy);
-            /* BLEIBT weiss. Die Flaeche ist ein rgba-Literal AUF dem Verlauf
-               der Elternregel, also eine um 20 % aufgehellte Rotflaeche —
-               keine Rolle, zu der es ein --on-* gaebe. Gemessen ueber die
-               Verlaufsspanne (dark light sepia contrast): weiss 3,00 3,78
-               3,56 3,64 am hellen Ende, 5,66 6,63 6,35 6,82 am dunklen.
-               rgba-Flaechen sind Welle 2; hier nur festgehalten. */
-            color: white;
+            /* BLEIBT weiss, jetzt als var(--ink-on-dark). Die Flaeche ist
+               eine Auflage AUF dem Verlauf der Elternregel, also eine um
+               20 % aufgehellte Rotflaeche — keine Rolle, zu der es ein
+               --on-* gaebe. Gemessen ueber die Verlaufsspanne (dark light
+               sepia contrast): weiss 3,00 3,78 3,56 3,64 am hellen Ende,
+               5,66 6,63 6,35 6,82 am dunklen. Welle 2 Schritt 3 hat die
+               Auflage vom Literal rgba(255,255,255,0.2) auf das Token
+               --overlay-strong gehoben (zeichengleicher Wert, themenblind)
+               und Schritt 6 die Tinte vom Wort `white` auf
+               --ink-on-dark — beides Schreibweise, nicht Farbe, die acht
+               Zahlen oben gelten unveraendert. */
+            color: var(--ink-on-dark);
         }
         
 /* ============================================================
@@ -1790,22 +1797,28 @@
    13 Typen zusammen, sonst verschiebt sich ihre Ordnung) — das gehoert in
    die Welle, die die Skalen anfasst, nicht in eine Stelle-fuer-Stelle-
    Ersetzung. --dmg-fire ist ausserdem var(--red) und damit themenabhaengig,
-   die anderen vier nicht. */
-.qref-dmg.physical { background: var(--dmg-physical); color: white; }
-.qref-dmg.fire { background: var(--dmg-fire); color: white; }
-.qref-dmg.cold { background: var(--dmg-cold); color: white; }
-.qref-dmg.lightning { background: var(--dmg-lightning); color: black; }
-.qref-dmg.thunder { background: var(--dmg-thunder); color: white; }
-.qref-dmg.acid { background: var(--dmg-acid); color: black; }
-.qref-dmg.poison { background: var(--dmg-poison); color: black; }
-.qref-dmg.psychic { background: var(--dmg-psychic); color: white; }
-.qref-dmg.radiant { background: var(--dmg-radiant); color: black; }
+   die anderen vier nicht.
+
+   Seit Welle 2 Schritt 6 Teil B steht die Tinte JEDER Zeile als
+   var(--dmg-<typ>-text) statt als Wort `white` oder `black` — dieselben
+   elf Werte, aber an EINER Stelle in variables.css. Die kuenftige
+   Neuberechnung der ganzen Skala ist damit eine Aenderung an einer Stelle
+   statt an elf. Keine der Zahlen oben bewegt sich dadurch. */
+.qref-dmg.physical { background: var(--dmg-physical); color: var(--dmg-physical-text); }
+.qref-dmg.fire { background: var(--dmg-fire); color: var(--dmg-fire-text); }
+.qref-dmg.cold { background: var(--dmg-cold); color: var(--dmg-cold-text); }
+.qref-dmg.lightning { background: var(--dmg-lightning); color: var(--dmg-lightning-text); }
+.qref-dmg.thunder { background: var(--dmg-thunder); color: var(--dmg-thunder-text); }
+.qref-dmg.acid { background: var(--dmg-acid); color: var(--dmg-acid-text); }
+.qref-dmg.poison { background: var(--dmg-poison); color: var(--dmg-poison-text); }
+.qref-dmg.psychic { background: var(--dmg-psychic); color: var(--dmg-psychic-text); }
+.qref-dmg.radiant { background: var(--dmg-radiant); color: var(--dmg-radiant-text); }
 .qref-dmg.necrotic {
     background: var(--dmg-necrotic);
     color: var(--dmg-necrotic-text);
     border: 1px solid var(--dmg-necrotic-border);
 }
-.qref-dmg.force { background: var(--dmg-force); color: black; }
+.qref-dmg.force { background: var(--dmg-force); color: var(--dmg-force-text); }
 
 /* Cover Badges */
 .qref-cover-row {

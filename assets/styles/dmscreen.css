@@ -1234,8 +1234,11 @@
        Traegerflaeche ist damit nicht aus dieser Regel ableitbar und wechselt
        innerhalb desselben Elements. Das ist Schritt 10 (Kaskade aufloesen);
        hier wird bewusst nicht geraten. Der text-shadow darunter ist der
-       heutige Ersatz fuer den fehlenden Kontrast. */
-    color: white;
+       heutige Ersatz fuer den fehlenden Kontrast. Seit Welle 2 Schritt 6
+       steht die Tinte als var(--ink-on-dark) statt als Wort `white` — das
+       ist die Abraeumung des Farbliterals (D-01) und AENDERT AN DER LAGE
+       NICHTS: die Traegerflaeche ist weiterhin nicht ableitbar. */
+    color: var(--ink-on-dark);
     text-shadow: 0 1px 2px rgba(0,0,0,0.5);
 }
 
@@ -1356,8 +1359,10 @@
        dice.css .floating-dice-trigger: Verlauf zweier abgeleiteter Toene
        (--red-dim/--red-dark), zu denen es kein --on-* gibt. Gemessen
        (dark light sepia contrast, schlechtester Punkt): weiss 6,76 8,25
-       7,97 7,20 gegenueber var(--on-red) 2,03 8,25 7,97 1,90. */
-    color: white;
+       7,97 7,20 gegenueber var(--on-red) 2,03 8,25 7,97 1,90. Seit Welle 2
+       Schritt 6 als var(--ink-on-dark) geschrieben — themenblind weiss,
+       derselbe Wert. */
+    color: var(--ink-on-dark);
     border-color: var(--red-dark);
 }
 

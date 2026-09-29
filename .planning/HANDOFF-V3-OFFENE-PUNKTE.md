@@ -475,8 +475,8 @@ diese Tabelle führt.
 | Stelle | Selektor | Rolle | Traeger dark | Traeger light |
 | ------ | -------- | ----- | ------------ | ------------- |
 | `dashboard.css:192` | `.campaign-name` | `--cyan` | #1f2e24 | #edfcf2 |
-| `dmscreen.css:1296` | `.dms-init-marker` | `--gold` | #3c331b | #fef5de |
-| `dmscreen.css:1309` | `.dms-init-value` | `--cyan` | #3c331b | #fef5de |
+| `dmscreen.css:1299` | `.dms-init-marker` | `--gold` | #3c331b | #fef5de |
+| `dmscreen.css:1312` | `.dms-init-value` | `--cyan` | #3c331b | #fef5de |
 | `loot.css:295` | `.shop-cat-badge.weapon` | `--red` | --bg-card | --bg-card |
 | `loot.css:296` | `.shop-cat-badge.armor` | `--blue` | #d4af37 · --bg-card | #b8860b · --bg-card |
 | `loot.css:298` | `.shop-cat-badge.service` | `--purple` | #d4af37 · --bg-card | #b8860b · --bg-card |
@@ -490,7 +490,7 @@ diese Tabelle führt.
 | Stelle | Selektor | Rolle | Traeger dark | Traeger light |
 | ------ | -------- | ----- | ------------ | ------------- |
 | `dashboard.css:505` | `.char-section-title` | `--gold` | --bg-card · #191919 | --bg-card · #1e1e1e |
-| `dice.css:602` | `.fdp-title` | `--gold` | --bg-card | #1e1e1e |
+| `dice.css:604` | `.fdp-title` | `--gold` | --bg-card | #1e1e1e |
 | `dmscreen.css:999` | `.form-group label` | `--gold` | --bg-card · #191919 | --bg-card · #1e1e1e |
 | `party.css:2620` | `.char-adv-btn.adv` | `--green` | --bg-dark · #191919 | --bg-dark · #1e1e1e |
 | `party.css:2621` | `.char-adv-btn.dis` | `--red` | --bg-dark · #191919 | --bg-dark · #1e1e1e |
@@ -527,8 +527,8 @@ dashboard.css
   466  .enc-save-box.active .enc-save-label
   655  .icon-btn.danger:hover
   656  .icon-btn.success:hover
- 1082  .dash-timer-time
- 1346  .qref-chip.danger
+ 1089  .dash-timer-time
+ 1353  .qref-chip.danger
 dice.css
   349  .dice-fav-item:hover .fav-del
 dmscreen.css
@@ -538,9 +538,9 @@ dmscreen.css
   477  .session-tag-remove:hover
   623  .quick-ref-section-title
  1201  .dms-stat-warning .dms-stat-value
- 2259  .dms-profile-check
- 2285  .dms-profile-save
- 2289  .dms-profile-save .dms-profile-name
+ 2264  .dms-profile-check
+ 2290  .dms-profile-save
+ 2294  .dms-profile-save .dms-profile-name
 encounters.css
    34  .list-view-row.expanded .row-toggle
    47  .list-dialog-item.used .list-dialog-status
