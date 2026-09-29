@@ -836,11 +836,65 @@
                OHNE RUECKFALL, und das ist gefuehrt: ein color-mix in einem
                nur EINMAL deklarierten Custom Property hat keine
                vorausgehende Deklaration, auf die es zurueckfallen koennte.
-               Die vier stehen deshalb im Inventar von R-13. */
-            --glow-gold: color-mix(in srgb, var(--gold) 55%, transparent);
-            --glow-yellow: color-mix(in srgb, var(--yellow) 55%, transparent);
-            --glow-green: color-mix(in srgb, var(--green) 55%, transparent);
-            --glow-red: color-mix(in srgb, var(--red) 55%, transparent);
+               Die vier stehen deshalb im Inventar von R-13.
+
+               DIE 50 % SIND GERECHNET, NICHT GESETZT. Das Token traegt nach
+               W3-D-03 nur die Farbe, aber die DECKUNG ist genauso wenig
+               Geometrie wie der Radius — und sie wandert an jeder der 14
+               Stellen, an denen sie heute einzeln in der Regel steht. Der
+               Bestand traegt SECHS verschiedene Werte (gemessen 2026-09-30,
+               Tabelle GLUEH_STELLEN in tests/unit/design-consistency.test.js):
+
+                 0,20  1x   spells.css .floating-toolbar
+                 0,25  3x   dmscreen.css .btn/.btn-success/.btn-danger:hover
+                 0,30  2x   dice.css .floating-dice-trigger/.fdp-die.d20:hover
+                 0,40  2x   file-backup.css .backup-dot-active/-paused
+                 0,50  4x   dashboard.css 2x, editors.css, spells.css
+                 1,00  2x   encounters.css .calc-threshold-marker,
+                            tools.css .char-form-progress-dot.current
+
+               Median 0,40, Mittel 0,4536, HAEUFIGSTER Wert 0,50. Gewaehlt ist
+               der haeufigste und nicht der mittlere, aus demselben Grund, aus
+               dem die Hoehenleiter 2/6-4/16-8/32 und nicht die Leiter des
+               Handoffs ist (W3-D-02): so bleiben VIER der 14 Stellen
+               bildpunktgleich statt keiner. Dieselbe Regel steckt schon in
+               `--ring-gold` mit seinen 15 Prozent — party.css:1217 traegt
+               `0 0 0 3px rgba(212,175,55,0.15)` bereits.
+
+               Der erste Ansatz hier waren 55 %. Dieser Wert kommt im Bestand
+               NICHT vor; er haette alle 14 Stellen verschoben und die vier
+               0,50er ohne Not mitgenommen. R-20 prueft deshalb nicht, ob
+               dieser Kommentar eine Zahl nennt, sondern ob die gewaehlte Zahl
+               im Bestand vorkommt und dort die haeufigste ist.
+
+               DREI STELLEN AENDERN SICH TROTZDEM SICHTBAR und stehen darum
+               namentlich auf der Sichtprobenliste (Aktenlage W3-F-01):
+                 encounters.css .calc-threshold-marker  1,00 -> 0,50
+                 tools.css .char-form-progress-dot.current  1,00 -> 0,50
+                       Beide sind heute volldeckendes Gold und werden halb so
+                       stark. Sie sind die CSS-Zwillinge der vier
+                       JS-Sprungmarken aus W3-D-05 mit derselben Aufgabe
+                       ("zeig mir in zwei Sekunden, wo") und bekommen dieselbe
+                       Antwort: faellt die Ablesung durch, hoehere Deckung am
+                       Code begruendet, nicht stillschweigend hinnehmen.
+                 spells.css .floating-toolbar  0,20 -> 0,50, der einzige
+                       groessere Sprung nach OBEN (Faktor 2,5).
+
+               KEIN TOKENNAME IN DIESEM KOMMENTAR TRAEGT EINEN DOPPELPUNKT,
+               und das ist keine Schreiblaune. aliasSchicht() in
+               tests/unit/design-consistency.test.js liest DECL_RE ueber
+               diesen Aliasblock, OHNE Kommentare zu maskieren. Die erste
+               Fassung des Absatzes oben schrieb `--ring-gold` mit Doppelpunkt
+               und Prozentwert; R-02 las daraus eine zweite Deklaration und
+               meldete "DOPPELT DEFINIERT ... der Theme-Wert ist tot" ueber
+               einem Halbsatz. Dieselbe Falle ist in Welle 2 fuer @supports
+               schon einmal zugeschnappt und dort IM PARSER geschlossen
+               worden ("das Wort im Kommentar ist kein Zweig"); fuer DECL_RE
+               steht sie offen und ist als W3-F-02 in der Aktenlage gefuehrt. */
+            --glow-gold: color-mix(in srgb, var(--gold) 50%, transparent);
+            --glow-yellow: color-mix(in srgb, var(--yellow) 50%, transparent);
+            --glow-green: color-mix(in srgb, var(--green) 50%, transparent);
+            --glow-red: color-mix(in srgb, var(--red) 50%, transparent);
 
             /* Schrift-Familien (F-05). Vorher standen 14 verschiedene
                Deklarationen im CSS, darunter neunmal dieselbe Segoe-Kette und
