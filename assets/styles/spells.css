@@ -151,7 +151,7 @@
         .spell-note {
             font-size: 0.8em;
             color: var(--gold);
-            background: linear-gradient(90deg, rgba(251, 191, 36, 0.1) 0%, transparent 100%);
+            background: linear-gradient(90deg, color-mix(in srgb, var(--yellow) 10%, transparent) 0%, transparent 100%);
             padding: 8px;
             border-radius: var(--radius-md);
             margin-bottom: 10px;
@@ -197,7 +197,7 @@
         }
         
         .floating-toolbar .editor-btn:hover {
-            background: rgba(251, 191, 36, 0.2);
+            background: color-mix(in srgb, var(--yellow) 20%, transparent);
         }
         
         .floating-toolbar::after {
@@ -231,7 +231,7 @@
 
         .editor-btn:hover {
             color: var(--gold);
-            background: rgba(251, 191, 36, 0.1);
+            background: color-mix(in srgb, var(--yellow) 10%, transparent);
         }
 
         .editor-select {
@@ -376,7 +376,7 @@
         }
         
         .spell-editor tr:hover, .rich-editor tr:hover {
-            background: rgba(251, 191, 36, 0.05);
+            background: color-mix(in srgb, var(--yellow) 5%, transparent);
         }
 
         /* ============================================================
