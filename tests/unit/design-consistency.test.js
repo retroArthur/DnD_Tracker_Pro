@@ -3383,8 +3383,25 @@ describe('R-09 — die Ortsfarben aus dem JS (Ratsche)', () => {
    Ausnahmeliste ist inzwischen abgedeckt"). Wer hier einen Modulpfad
    ausschreibt, behauptet eine Testabdeckung, die es nicht gibt.
 
-   SIE IST BEI IHRER GEBURT ROT, mit 247 Stellen. Das Ziel ist 0 plus eine
-   begruendete Ausnahmeliste; gruen wird sie mit Schritt 7 der Welle.
+   SIE WAR BEI IHRER GEBURT ROT, mit 247 Stellen. Das Ziel war 0 plus eine
+   begruendete Ausnahmeliste, und mit Schritt 7 ist es erreicht. Der Weg
+   dorthin, damit die Zwischenstaende nachvollziehbar bleiben:
+
+       247  Geburt (Schritt 1)
+       245  Schritt 2: die zwoelf --*-rgb-Kanaele und ihre Geschwisterstelle
+       209  Schritt 3: 14 tote var()-Rueckfaelle, Auflagen- und Blendenleiter
+        52  Schritte 4-6: 157 eindeutige Dark-Literale, 15 benannte Farben
+        68  Nachtrag zu R-12: 16 Skalentoken-Stellen zurueck auf ihre
+            Literale, damit Schritt 7 sie nach ZWECK entscheidet statt nach
+            Wert (52 + 16 = 68 — die Zahl steigt hier bewusst)
+         0  Schritt 7: 64 Urteilsstellen aufgeloest, 4 begruendete Ausnahmen
+
+   DIE VIER AUSNAHMEN sind keine Restmenge, sondern vier einzeln
+   entschiedene Faelle; ihre Begruendungen stehen unten in R10_AUSNAHMEN und
+   noch einmal an der jeweiligen Regel im CSS. Drei decken eine ABSICHT
+   (Flaechen, die keinem Theme folgen sollen), der vierte deckt einen
+   gemessenen MANGEL, der eine Gestaltungsentscheidung braucht — er ist als
+   W2-C-01 aktenkundig und darf nicht als erledigt gelesen werden.
    =========================================================================== */
 describe('R-10 — rgba()-Zahlentripel ausserhalb der Schatten (Ratsche)', () => {
     /** Zielwert der Ratsche. 0 von der Geburt an: was bleiben darf, steht
@@ -3399,11 +3416,62 @@ describe('R-10 — rgba()-Zahlentripel ausserhalb der Schatten (Ratsche)', () =>
      *  ploetzlich mehr Stellen als eingetragen, meldet die Ratsche das,
      *  statt die neuen stillschweigend mitzuverzeihen.
      *
-     *  SIE IST BEI DER GEBURT LEER, und das ist Absicht, nicht Vergessen —
-     *  wie EXEC_COMMAND_ALLOWLIST in editor-floating.spec.js. Schritt 10 der
-     *  Welle traegt die zwei festen Flaechen des Ereignis-Logs ein. */
+     *  SIE WAR BEI DER GEBURT LEER, und das war Absicht, nicht Vergessen —
+     *  wie EXEC_COMMAND_ALLOWLIST in editor-floating.spec.js. Schritt 7
+     *  fuellt sie mit VIER Eintraegen. Drei davon sind Flaechen, die
+     *  absichtlich keinem Theme folgen; der vierte ist ein gemessener
+     *  Mangel, der eine Gestaltungsentscheidung braucht und nicht in einem
+     *  Literal-Aufloesungsschritt nebenbei fallen darf. */
     const R10_AUSNAHMEN = [
-        // { datei: 'party.css', lit: 'rgba(15, 15, 25, 0.98)', anzahl: 1, grund: '...' }
+        {
+            datei: 'party.css',
+            lit: 'rgba(15, 15, 25, 0.98)',
+            anzahl: 1,
+            grund:
+                '.event-log.persistent — Entscheidung E6. Die dunkle Blende des ' +
+                'Ereignis-Logs ist gewollt themenblind; 15,15,25 kommt in keinem Theme ' +
+                'und keiner Skala vor und hat keine Rolle, auf die es zeigen koennte. ' +
+                'Die geerbte TINTE darauf ist dagegen mangelhaft (Light 1,07) und ' +
+                'bekommt in Schritt 10 themenblinde Tokens (--on-log, --on-log-dim).'
+        },
+        {
+            datei: 'party.css',
+            lit: 'rgba(20, 20, 30, 0.95)',
+            anzahl: 1,
+            grund: '.event-log-entry — zweite Flaeche desselben Logs, gleiche Begruendung.'
+        },
+        {
+            datei: 'pwa.css',
+            lit: 'rgba(251, 191, 36, 0.85)',
+            anzahl: 1,
+            grund:
+                '.pwa-update-banner — W2-B-02, in Schritt 7 entschieden. Der Wert ist ' +
+                'zwar zeichengleich --yellow im Dark-Block, aber die Themen' +
+                'unabhaengigkeit DIESER Flaeche ist die Voraussetzung der Messung, die ' +
+                'Welle 1 daneben gefuehrt hat: --on-yellow ist in allen vier Themes ' +
+                '#111111 und passt nur deshalb (8,29 · 11,97 · 11,79 · 8,11). Folgte ' +
+                'die Flaeche dem Theme, waeren diese Zahlen hinfaellig. Die zwei ' +
+                'kleineren Literale derselben Leiste sind aufgeloest — sie zeigten auf ' +
+                'ein THEME-Token (--bg-dark@dark) und tragen jetzt --on-yellow.'
+        },
+        {
+            datei: 'dmscreen.css',
+            lit: 'rgba(26, 26, 26, 0.95)',
+            anzahl: 1,
+            grund:
+                '.modal — W2-C-01, die einzige Ausnahme dieser Liste, die einen MANGEL ' +
+                'deckt statt einer Absicht. 26,26,26 ist --bg-card im Dark-Block, und ' +
+                'die Tinten darauf folgen dem Theme: var(--text) erreicht Light 1,14 ' +
+                'und Sepia 1,41, der Fliesstext jedes Modals ist dort unsichtbar. ' +
+                'var(--bg-card) 95 % machte daraus 17,40 und 10,15. Aber .modal ist die ' +
+                'Universalschachtel (19 Vorkommen in den Templates, einzige ' +
+                'Flaechenquelle im Baum), ihre Tinten kommen aus rund zwanzig Dateien, ' +
+                'und mindestens eine verschlechtert sich nachweislich (var(--gold) in ' +
+                'Ueberschriften 4,71 -> 3,25). Das ist eine Gestaltungsentscheidung mit ' +
+                'Sichtprobe in vier Themes, keine Literalaufloesung. Die gleich gebaute ' +
+                'Stelle mit ueberschaubarem Tintenkreis IST umgestellt ' +
+                '(dice.css .floating-dice-panel).'
+        }
     ];
 
     /** Kommentare zeilentreu leeren. withoutComments() weiter oben loescht
