@@ -69,7 +69,7 @@
 }
 
 .backup-warning-indicator:hover {
-    background: rgba(251, 191, 36, 0.1);
+    background: color-mix(in srgb, var(--yellow) 10%, transparent);
 }
 
 /* -----------------------------------------------
@@ -166,7 +166,7 @@
 }
 
 .backup-entry-restore:hover {
-    background: rgba(239, 68, 68, 0.12);
+    background: color-mix(in srgb, var(--red) 12%, transparent);
 }
 
 /* Leerer Zustand */
