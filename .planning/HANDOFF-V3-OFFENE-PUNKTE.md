@@ -9,7 +9,7 @@ Die Einträge sind teilweise durch eine Ratsche gesichert: `tests/unit/design-co
 wenn eine hier geführte Zeile verschwindet, wenn ein Wert auseinanderläuft oder wenn eine Zeile
 zur Altlast wird. Ein offener Punkt kann also nicht durch Vergessen verschwinden.
 
-**Die 124 Zeilenanker `datei.css:ZEILE` in W1-D-01 werden ab dem 2026-09-29 nicht mehr von Hand
+**Die 123 Zeilenanker `datei.css:ZEILE` in W1-D-01 werden ab dem 2026-09-29 nicht mehr von Hand
 nachgezählt.** `R-06` prüft sie gegen die echten `color: var(--x)`-Deklarationen, und jede in
 eine der 14 geführten CSS-Dateien eingefügte oder aus ihr entfernte Zeile verschiebt sie — auch
 ein reiner Kommentar-Commit. Welle 2 fasst genau diese Dateien an. Das Werkzeug dazu:
@@ -298,7 +298,7 @@ sed -n '258,272p' core/constants.js
 
 ---
 
-## W1-D-01 — 124 Akzenttext-Stellen, deren Trägerfläche Schritt 9 nicht als neutral nachweisen konnte
+## W1-D-01 — 123 Akzenttext-Stellen, deren Trägerfläche Schritt 9 nicht als neutral nachweisen konnte
 
 **Status: OFFEN — bewusst unverändert gelassen, nicht übersehen.**
 Aufgenommen am 2026-09-28, Welle 1, Schritt 9.
@@ -313,9 +313,9 @@ Trägerfläche **nicht in ihrer eigenen Regel** — sie musste über den Vorfahr
 Sie wurde nicht geraten, sondern gemessen: headless am gebauten Bündel wurde für jede Stelle der
 nächste **deckende** Vorfahr bestimmt (alle halbdurchsichtigen Schichten zusammengesetzt), und
 zwar in **Dark und Light**. Umgestellt wurde nur, wenn beide Themes auf dieselbe neutrale
-Flächenmenge zeigen. 181 Stellen haben das erfüllt, 128 nicht. **Davon stehen heute noch 124
-unten**; vier sind erledigt worden — zwei in Schritt 11, zwei im Nachtrag der Prüfrunde W1-E
-(siehe beide Vorbemerkungen zu Gruppe B).
+Flächenmenge zeigen. 181 Stellen haben das erfüllt, 128 nicht. **Davon stehen heute noch 123
+unten**; fünf sind erledigt worden — zwei in Schritt 11, zwei im Nachtrag der Prüfrunde W1-E
+(siehe beide Vorbemerkungen zu Gruppe B), eine in Schritt 18 (Vorbemerkung zu Gruppe E).
 
 Der Grund für die Strenge ist gemessen und nicht vorsichtshalber: die `-text`-Werte sind für
 **helle** Flächen gerechnet. Auf der Dialogfläche sind sie **schlechter** als die Rolle selbst.
@@ -340,9 +340,9 @@ Welle Farben in Dialogen anfasst.
 
 ```bash
 cd /d/Claude_Code/Projekte/DnD_Tracker_App_Pro
-# Die verbliebenen Stellen als Kategorie (Summe 124 + 4 bei der Geburt der Liste;
-# seit Schritt 11 und der Prüfrunde W1-E sind vier davon erledigt, die Summe ist
-# also um vier kleiner):
+# Die verbliebenen Stellen als Kategorie (Summe 123 + 5 bei der Geburt der Liste;
+# seit Schritt 11, der Prüfrunde W1-E und Schritt 18 sind fünf davon erledigt,
+# die Summe ist also um fünf kleiner):
 node <scratch>/classify.js | grep -E "^ *[0-9]+  ROLE \|"
 # Die Dialogfläche selbst:
 grep -n "^\.modal {" -A4 assets/styles/dmscreen.css
@@ -360,14 +360,14 @@ muss dort eine `color: var(--…)`-Deklaration im genannten Selektor mit der gen
 treffen. **Wer eine dieser CSS-Dateien anfasst, zieht die Tabelle im selben Commit nach** — sonst
 ist die Ratsche rot. Ihre Plausibilitätsprobe nennt die Zahl der geführten Stellen; sie darf nur
 sinken, und nur zusammen mit einer erledigten Stelle (128 bei der Geburt, 126 seit Schritt 11,
-124 seit der Prüfrunde W1-E).
+124 seit der Prüfrunde W1-E, 123 seit Schritt 18).
 
 Die Messung selbst: `<scratch>/measure5.js` (Playwright, gebautes Bündel, 24 Ansichten + 30
 Dialoge, zwei Themes) und `<scratch>/decide.js` (Urteil je Stelle plus Geschwisterbindung).
 
 ### Was bis zur Entscheidung gilt
 
-Diese 124 Stellen bleiben auf `color: var(--<rolle>)`. In Light und Sepia liegen sie damit
+Diese 123 Stellen bleiben auf `color: var(--<rolle>)`. In Light und Sepia liegen sie damit
 weiterhin bei 2,16–4,20 gegen eine neutrale Fläche — falls ihre Fläche neutral ist, was für
 Gruppe E gerade nicht bewiesen ist. Sie sind **kein** erledigter Fall.
 
@@ -382,10 +382,10 @@ Gruppe E gerade nicht bewiesen ist. Sie sind **kein** erledigter Fall.
 | `core.css:1113` | `.char-modal-title h2` | `--gold` | #191919 | #1e1e1e |
 | `core.css:1118` | `.char-modal-subtitle` | `--cyan` | #191919 | #1e1e1e |
 | `dashboard.css:240` | `.modal-title` | `--gold` | #191919 | #1e1e1e · #252525 |
-| `initiative.css:521` | `.aoe-modal-header h3` | `--red` | #191919 | #1e1e1e |
-| `initiative.css:661` | `.aoe-target-save` | `--green` | #191919 | #1e1e1e |
-| `initiative.css:678` | `.aoe-target-damage.full` | `--red` | #191919 | #1e1e1e |
-| `initiative.css:682` | `.aoe-target-damage.half` | `--yellow` | #191919 | #1e1e1e |
+| `initiative.css:534` | `.aoe-modal-header h3` | `--red` | #191919 | #1e1e1e |
+| `initiative.css:674` | `.aoe-target-save` | `--green` | #191919 | #1e1e1e |
+| `initiative.css:691` | `.aoe-target-damage.full` | `--red` | #191919 | #1e1e1e |
+| `initiative.css:695` | `.aoe-target-damage.half` | `--yellow` | #191919 | #1e1e1e |
 | `party.css:2053` | `.rest-modal-header h3` | `--gold` | #191919 | #1e1e1e |
 | `party.css:2324` | `.condition-ref-header h3` | `--gold` | #191919 | #1e1e1e |
 | `tools.css:474` | `.rt-modal-header h3` | `--gold` | #191919 | #1e1e1e |
@@ -456,8 +456,8 @@ Behebung in Runde 2** gedeckt, davor war sie es für eine der beiden Zeilen nich
 | `initiative.css:184` | `.init-name:hover` | `--gold` | GRAD:#0d0d0d · --bg-card | GRAD:#f5f5f5 · --bg-card |
 | `initiative.css:212` | `.init-hp-value.healthy` | `--green` | GRAD:#0d0d0d | GRAD:#f5f5f5 |
 | `initiative.css:213` | `.init-hp-value.bloodied` | `--yellow` | GRAD:#0d0d0d · --bg-card | GRAD:#f5f5f5 · --bg-card |
-| `initiative.css:1189` | `.init-mob-alive.healthy` | `--green` | GRAD:#0d0d0d | GRAD:#f5f5f5 |
-| `initiative.css:1190` | `.init-mob-alive.bloodied` | `--yellow` | GRAD:#0d0d0d | GRAD:#f5f5f5 |
+| `initiative.css:1202` | `.init-mob-alive.healthy` | `--green` | GRAD:#0d0d0d | GRAD:#f5f5f5 |
+| `initiative.css:1203` | `.init-mob-alive.bloodied` | `--yellow` | GRAD:#0d0d0d | GRAD:#f5f5f5 |
 | `spells.css:92` | `.spell-info-line.classes` | `--cyan` | GRAD:#1a1a1a | GRAD:#ffffff |
 | `spells.css:93` | `.spell-info-line.school` | `--purple` | GRAD:#1a1a1a | GRAD:#ffffff |
 | `tools.css:859` | `.ld-split-amount` | `--gold` | GRAD:#191919 | GRAD:#1e1e1e |
@@ -502,7 +502,25 @@ fest verdrahtete `rgba(26,26,26,0.98)` des Wuerfel-Panels. Seit die Panelflaeche
 (8,28 · 6,23 · 6,58 · 13,46 statt 5,12 · 3,25 in Light auf heller Karte). Die
 gleichlautende Stelle an `.modal` ist NICHT erledigt — siehe W2-C-01.
 
-### Gruppe E — in keinem erreichbaren Zustand gerendert, 82 Stellen
+### Gruppe E — in keinem erreichbaren Zustand gerendert, 81 Stellen
+
+**Ein Eintrag dieser Gruppe ist seit dem 2026-09-29 erledigt und deshalb aus der Liste entfernt**
+(Welle 2, Schritt 18, Prüfung W2-D Runde 1): `initiative.css` `.concentration-check-banner
+.conc-dc` (`--gold`). Die Überschrift der Gruppe traf für sie **nicht zu** — sie wird sehr wohl
+gerendert, und zwar über einen realen Klick: die E2E-Prüfung des Konzentrations-Bannens
+(`tests/e2e/features/initiative.spec.js`) erzeugt es über die Schadensschaltfläche und prüft
+danach `.conc-dc` auf „DC 10". Die Stelle war ein **Quergriff** (Tönung in der Elternregel, Tinte
+im Kind) und lag mit Light 2,35 (Kopf) bzw. 2,16 (Fuß) unter dem schlechtesten der drei
+Quergriffe, die Schritt 8 von Hand behoben hat. Sie trägt jetzt `var(--gold-text)` auf zwei
+gedeckelten Stopps: Kopf 5,44 · 4,78 · 5,34 · 7,27, Fuß 5,91 · 4,62 · 5,21 · 10,01. Bewacht von
+**R-14** in `tests/unit/design-consistency.test.js`. Die Zahl der geführten Stellen sinkt damit
+von 124 auf 123; die Plausibilitätsprobe in R-06 ist im selben Commit nachgezogen.
+
+**Die Überschrift dieser Gruppe ist damit eine Behauptung und kein Befund.** Sie ist für 81
+Stellen nicht geprüft, sondern aus dem Ausbleiben eines Treffers im geseedeten Messlauf
+geschlossen — eine Stelle, die der Messaufbau nicht erreicht, sieht genauso aus wie eine, die es
+nicht gibt. Wer die Gruppe auflöst (siehe unten), prüft jede Zeile gegen die E2E-Suite, bevor er
+sie als unerreichbar abschreibt.
 
 ```
 bestiary.css
@@ -569,10 +587,9 @@ initiative.css
   111  .init-entry.lair .init-name
   214  .init-hp-value.critical
   284  .death-saves-label
-  483  .concentration-check-banner .conc-dc
- 1082  .la-label
- 1123  .lr-label
- 1191  .init-mob-alive.critical
+ 1095  .la-label
+ 1136  .lr-label
+ 1204  .init-mob-alive.critical
 loot.css
   297  .shop-cat-badge.item
   475  .si-tag-v
@@ -605,7 +622,7 @@ welt.css
 
 ### Wie Gruppe E aufzulösen ist
 
-Nicht durch Raten, sondern durch mehr Zustand: die 82 Stellen sind Elemente, die im geseedeten
+Nicht durch Raten, sondern durch mehr Zustand: die 81 Stellen sind Elemente, die im geseedeten
 Zustand nirgends gerendert werden (Würfelergebnisse vor dem ersten Wurf, der
 Begegnungs-Rechner, Warenkorb, NPC-Aufklapper, das mobile Layout, Rastdialog-Details). Wer den
 Messlauf um die fehlenden Zustände erweitert, bekommt für jede dieser Stellen dieselbe Antwort

@@ -2868,9 +2868,19 @@ describe("R-06 — jeder Zeilenanker der Aktenlage trifft seine Deklaration (Rat
        benannter Zustand in R-05. Vollstaendig in
        .planning/HANDOFF-V3-OFFENE-PUNKTE.md, Gruppe B.
 
+       SEIT SCHRITT 18 SIND ES 123 (Pruefung W2-D Runde 1):
+       `.concentration-check-banner .conc-dc` ist heraus. Ihre Gruppe E war
+       ueberschrieben "in keinem erreichbaren Zustand gerendert", und das war
+       fuer sie falsch — die E2E-Pruefung des Konzentrations-Banners erzeugt
+       das Element ueber einen realen Klick und prueft `.conc-dc` auf
+       "DC 10". Sie war ein Quergriff (Toenung im Elter, Tinte im Kind) mit
+       Light 2,35 bzw. 2,16 und traegt jetzt --gold-text auf zwei gedeckelten
+       Stopps (Kopf 5,44 · 4,78 · 5,34 · 7,27, Fuss 5,91 · 4,62 · 5,21 ·
+       10,01). Bewacht von R-14.
+
        Wer die Zahl senkt, OHNE dass eine Stelle erledigt ist, nimmt der
        Ratsche lautlos Stellen weg. */
-    expect(stellen.length).toBe(124);
+    expect(stellen.length).toBe(123);
 
     const befunde = [];
     stellen.forEach((s) => {

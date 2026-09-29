@@ -467,20 +467,33 @@
                wie an der Konzentrationsmarke. Gemessen mit der Tinte
                var(--gold) aus .conc-dc (vorher -> nachher):
                  Kopf 5,35 · 2,47 · 5,31 · 8,31 -> 5,18 · 2,35 · 4,96 · 7,27
-                 Fuss 6,54 · 2,16 · 4,57 · 10,12 -> 5,70 · 2,16 · 4,73 · 10,01 */
+                 Fuss 6,54 · 2,16 · 4,57 · 10,12 -> 5,70 · 2,16 · 4,73 · 10,01
+
+               SCHRITT 18 HAT ES GETAN (Pruefung W2-D, Befund 3). Diese Regel
+               ist ein QUERGRIFF wie .char-save-box.proficient und
+               .enc-save-box.active in dashboard.css: die Toenung steht hier,
+               die Tinte in .conc-dc darunter. Schritt 8 hat drei solche
+               Stellen behoben und diese uebersehen — sie faellt durch beide
+               Maschen, weil R-04 Flaeche UND Tinte in derselben Regel
+               verlangt und R-05 nur benannte Elementzustaende kennt. Seit
+               Schritt 17 urteilt R-14 darueber.
+               Beide Stopps gedeckelt, Tinte var(--gold-text):
+                 Kopf 5,18 · 2,35 · 4,96 · 7,27 -> 5,44 · 4,78 · 5,34 · 7,27
+                 Fuss 5,70 · 2,16 · 4,73 · 10,01 -> 5,91 · 4,62 · 5,21 · 10,01 */
             background: linear-gradient(
                 135deg,
-                color-mix(in srgb, var(--yellow) 15%, transparent) 0%,
-                color-mix(in srgb, var(--purple) 15%, transparent) 100%
+                color-mix(in srgb, var(--yellow) min(15%, var(--tint-max)), transparent) 0%,
+                color-mix(in srgb, var(--purple) min(15%, var(--tint-max)), transparent) 100%
             );
             border: 1px solid var(--gold);
             border-radius: var(--radius-md);
             margin-top: 6px;
         }
 
+        /* Die Tinte des Quergriffs; die Zahlen stehen in der Elternregel. */
         .concentration-check-banner .conc-dc {
             font-weight: 700;
-            color: var(--gold);
+            color: var(--gold-text);
         }
 
         .concentration-check-banner .conc-roll-btn {
