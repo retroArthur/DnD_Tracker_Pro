@@ -90,7 +90,7 @@
         
         .damage-type-chip:hover, .damage-type-chip.selected {
             border-color: var(--cyan);
-            background: rgba(126, 196, 207, 0.2);
+            background: color-mix(in srgb, var(--cyan) 20%, transparent);
         }
         
         .dice-history-item:hover {
@@ -113,7 +113,7 @@
         
         .dice-formula-chip:hover {
             border-color: var(--cyan);
-            background: rgba(126, 196, 207, 0.1);
+            background: color-mix(in srgb, var(--cyan) 10%, transparent);
         }
         
         .confetti {
@@ -187,7 +187,7 @@
         }
         
         .campaign-item:hover { border-color: var(--gold); }
-        .campaign-item.active { border-color: var(--green); background: rgba(74,222,128,0.1); }
+        .campaign-item.active { border-color: var(--green); background: color-mix(in srgb, var(--green) 10%, transparent); }
         
         .campaign-name { font-weight: 600; color: var(--cyan); }
         .campaign-info { font-size: 0.8em; color: var(--text-dim); }
@@ -258,7 +258,7 @@
             color: var(--cyan);
             cursor: pointer;
             border-bottom: 1px dotted var(--cyan);
-            background: rgba(168, 85, 247, 0.1); /* F-18: aus der Dublette uebernommen */
+            background: color-mix(in srgb, var(--know-religion) 10%, transparent); /* F-18: aus der Dublette uebernommen */
             padding: 2px 8px; /* F-18: aus der Dublette uebernommen */
             border-radius: var(--radius-sm); /* F-18: aus der Dublette uebernommen */
             font-size: 0.85em; /* F-18: aus der Dublette uebernommen */
@@ -403,7 +403,7 @@
         }
         
         .char-save-box.proficient {
-            background: rgba(74, 222, 128, 0.2);
+            background: color-mix(in srgb, var(--green) 20%, transparent);
             border: 1px solid var(--green);
             color: var(--gold); /* F-18: aus der Dublette uebernommen */
         }
@@ -443,7 +443,7 @@
         }
 
         .enc-save-box.active {
-            background: rgba(74, 222, 128, 0.15);
+            background: color-mix(in srgb, var(--green) 15%, transparent);
             border-color: var(--green);
         }
 
@@ -495,7 +495,7 @@
         }
         
         .char-inspiration-box.active {
-            background: rgba(251, 191, 36, 0.15);
+            background: color-mix(in srgb, var(--yellow) 15%, transparent);
             border-color: var(--gold);
         }
         
@@ -535,7 +535,7 @@
         }
         
         .char-resistance-chip.selected {
-            background: rgba(126, 196, 207, 0.2);
+            background: color-mix(in srgb, var(--cyan) 20%, transparent);
             border-color: var(--cyan);
             color: var(--cyan);
         }
@@ -645,12 +645,12 @@
             --color-note: var(--pink);
         }
         
-        .status-badge.success { background: rgba(74, 222, 128, 0.2); color: var(--green); }
-        .status-badge.danger { background: rgba(239, 68, 68, 0.2); color: var(--red); }
-        .status-badge.info { background: rgba(126, 196, 207, 0.2); color: var(--cyan); }
-        .status-badge.primary { background: rgba(212, 175, 55, 0.2); color: var(--gold); }
-        .entity-tag.quest { background: rgba(251, 146, 60, 0.2); color: var(--color-quest); }
-        .entity-tag.spell { background: rgba(96, 165, 250, 0.2); color: var(--color-spell); }
+        .status-badge.success { background: color-mix(in srgb, var(--green) 20%, transparent); color: var(--green); }
+        .status-badge.danger { background: color-mix(in srgb, var(--red) 20%, transparent); color: var(--red); }
+        .status-badge.info { background: color-mix(in srgb, var(--cyan) 20%, transparent); color: var(--cyan); }
+        .status-badge.primary { background: color-mix(in srgb, var(--gold) 20%, transparent); color: var(--gold); }
+        .entity-tag.quest { background: color-mix(in srgb, var(--orange) 20%, transparent); color: var(--color-quest); }
+        .entity-tag.spell { background: color-mix(in srgb, var(--blue) 20%, transparent); color: var(--color-spell); }
         
         .icon-btn.danger:hover { color: var(--red); }
         .icon-btn.success:hover { color: var(--green); }
@@ -1675,7 +1675,7 @@
 
 .qref-condition.active {
     border-color: var(--gold);
-    background: rgba(212, 175, 55, 0.15);
+    background: color-mix(in srgb, var(--gold) 15%, transparent);
 }
 
 .qref-condition.danger {
@@ -1852,7 +1852,7 @@
     align-items: center;
     gap: 4px;
     padding: 4px 10px;
-    background: rgba(239, 68, 68, 0.1);
+    background: color-mix(in srgb, var(--red) 10%, transparent);
     border: 1px solid var(--red);
     border-radius: var(--radius-sm);
     color: var(--red);
