@@ -2321,6 +2321,41 @@ describe('R-04 — jede Regel haelt 4,5 auf ihrer EIGENEN Flaeche (Ratsche)', ()
         /^color-mix\(\s*in\s+srgb\s*,\s*var\(\s*(--[\w-]+)\s*\)\s+[\s\S]+,\s*transparent\s*\)$/i;
 
     /* ------------------------------------------------------------------
+       KEINE FLAECHE IST AUCH EINE FLAECHE (Pruefung W2-D, Nachtrag Runde 1).
+
+       `background: transparent` ist weder eine Vollton-Rolle noch eine
+       Toenung; die Regel fiel damit vor JEDER Rechnung heraus — `voll`
+       greift nicht, `TOENUNGSFLAECHE` greift nicht, und
+       `mixAusdruecke('transparent')` ist leer. Sichtbar ist die Tinte
+       trotzdem, und zwar direkt auf den drei Traegerflaechen, also genau
+       wie unter einer 0-%-Toenung. Der einzige Unterschied war, dass
+       niemand hinsah.
+
+       WAS DAS GEKOSTET HAT: `file-backup.css .backup-entry-restore` trug
+       `color: var(--red)` — die FLAECHENrolle — und las damit
+       4,07 · 3,94 · 3,68 · 3,98, also in ALLEN VIER Themes unter 4,5. Das
+       ist gewoehnlicher Text und kein Zustand unter der Maus. Behoben im
+       selben Nachtrag auf var(--red-text) (5,48 · 5,04 · 5,05 · 5,73).
+
+       DIE MENGE IST KLEIN UND SOLL ES BLEIBEN: 6 Regeln, alle gruen. Der
+       Test gleich unter dieser Ratsche zaehlt sie, damit der Zweig nicht
+       stillschweigend leerlaeuft.
+
+       ZWEI TINTENARTEN BLEIBEN AUSSEN VOR, und beide haben einen Richter:
+       NEUTRALE Textrollen (--text, --text-dim …) gehoeren R-02 Teilformel 2
+       — dieselbe Abgrenzung, die der Absatz ueber NEUTRAL ganz oben fuer
+       die Flaechen zieht. Und `var(--on-*)`-Tokens NENNEN ihre Flaeche:
+       --on-yellow gehoert auf Gelb, --on-log auf die Blende des
+       Ereignis-Logs. Sie ohne eigene Flaeche gegen --bg-card zu rechnen
+       ergaebe zwei Fehlalarme (party.css .event-log-btn mit 1,87 und
+       pwa.css .pwa-update-dismiss mit 1,00), die beide falsch waeren:
+       gegen ihre WIRKLICHEN Flaechen lesen sie 6,96-8,12 bzw. 8,11-11,97,
+       vorgerechnet in party.css und pwa.css und bewacht von R-17 und von
+       dieser Ratsche an der Leiste selbst. */
+    const BLANKE_FLAECHE = /^transparent$/i;
+    const FREMDE_TINTE = /^--(text|on)(-|$)|^--(bg|surface|border|overlay|scrim)(-|$)/;
+
+    /* ------------------------------------------------------------------
        EINE TOENUNG BLEIBT EINE TOENUNG, AUCH ALS VERLAUFSSTOPP
        (Pruefung W2-D Runde 1, Befund 1/2/4).
 
@@ -2389,6 +2424,12 @@ describe('R-04 — jede Regel haelt 4,5 auf ihrer EIGENEN Flaeche (Ratsche)', ()
                 // Mehrzeilige Verlaeufe lesbar halten — die Zeichenfolge steht
                 // in jeder Befundmeldung.
                 const flaeche = roh.replace(/\s+/g, ' ');
+                if (BLANKE_FLAECHE.test(flaeche)) {
+                    const tm = tinte.match(/^var\((--[\w-]+)\)$/);
+                    if (!tm || FREMDE_TINTE.test(tm[1])) return;
+                    out.push({ ...r, datei: f.name, flaeche, tinte, stopps: null, blank: true });
+                    return;
+                }
                 const voll = flaeche.match(/^var\((--[\w-]+)\)$/);
                 const toenung = voll ? null : flaeche.match(TOENUNGSFLAECHE);
                 const rolle = voll ? voll[1] : toenung ? toenung[1] : null;
@@ -2411,10 +2452,26 @@ describe('R-04 — jede Regel haelt 4,5 auf ihrer EIGENEN Flaeche (Ratsche)', ()
 
     /** Das schlechteste Verhaeltnis EINER Regel in EINEM Theme.
      *  Volle Flaeche: eine Zahl. Toenung: das Minimum ueber die drei Traeger.
-     *  Verlauf: dasselbe, zusaetzlich ueber alle Rollenstopps minimiert. */
+     *  Verlauf: dasselbe, zusaetzlich ueber alle Rollenstopps minimiert.
+     *  Blanke Flaeche (`transparent`): die Tinte liegt unvermittelt auf dem
+     *  Traeger, also dasselbe Minimum ueber dieselben drei Flaechen. */
     function verhaeltnis(regel, p) {
         const tinte = WCAG.resolve(regel.tinte, p);
         if (!tinte) return { fehlt: regel.tinte };
+        if (regel.blank) {
+            let min = Infinity;
+            let fehlt = null;
+            TOENUNGS_TRAEGER.forEach(s => {
+                const grund = WCAG.resolve(`var(${s})`, p);
+                if (!grund) {
+                    fehlt = fehlt || `var(${s})`;
+                    return;
+                }
+                min = Math.min(min, WCAG.ratio(tinte, grund));
+            });
+            if (fehlt) return { fehlt };
+            return { wert: Number(min.toFixed(2)) };
+        }
         if (!regel.stopps && /^var\(--[\w-]+\)$/.test(regel.flaeche)) {
             const grund = WCAG.resolve(regel.flaeche, p);
             if (!grund) return { fehlt: regel.flaeche };
@@ -2527,6 +2584,25 @@ describe('R-04 — jede Regel haelt 4,5 auf ihrer EIGENEN Flaeche (Ratsche)', ()
                 'welt.css .fr-ruf-btn-plus'
             ])
         );
+    });
+
+    /** DIE BLANKEN FLAECHEN NAMENTLICH (Pruefung W2-D, Nachtrag Runde 1).
+     *  Ohne diesen Test kann der `transparent`-Zweig stillschweigend
+     *  leerlaufen — genau die Bauart Fehler, die ihn noetig gemacht hat.
+     *  Sechs Regeln setzen `background: transparent` mit einer Rollentinte;
+     *  `.backup-entry-restore` ist die, die mit var(--red) in allen vier
+     *  Themes durchfiel und im selben Nachtrag auf var(--red-text) gezogen
+     *  wurde. Waechst die Zahl, ist die neue Stelle mitgerechnet worden. */
+    test('die Regeln mit blanker Flaeche stehen namentlich unter Aufsicht', () => {
+        const blank = ruheRegeln().filter(r => r.blank);
+        expect(blank.map(r => `${r.datei} ${r.sel}`).sort()).toEqual([
+            'core.css .btn-text:hover',
+            'dashboard.css .char-attr-box .attr-input',
+            'file-backup.css .backup-entry-restore',
+            'file-backup.css .backup-warning-indicator',
+            'initiative.css .concentration-add-btn',
+            'pwa.css .pwa-install-btn'
+        ]);
     });
 
     /** DIE BEIDEN VERLAUFSREGELN NAMENTLICH (Pruefung W2-D Runde 1). Es sind
@@ -5828,5 +5904,328 @@ describe('R-17 — die Tinte des Ereignis-Logs (Ratsche)', () => {
             });
         });
         expect(befunde.sort()).toEqual([]);
+    });
+});
+
+/* ===========================================================================
+   Design-Handoff v3, Welle 2, Nachtrag — R-18: Zustandsregel toent,
+   Tinte ist geerbt (Ratsche)
+   ===========================================================================
+   DIE BAUART. Eine ZUSTANDSregel wechselt NUR die Flaeche auf eine
+   Rollen-Toenung und setzt keine eigene Tinte. Gemalt wird die geerbte Tinte —
+   auf einer Flaeche, fuer die sie nie gerechnet war:
+
+       .concentration-badge       { color: var(--purple-text); }
+       .concentration-badge:hover { background: color-mix(… --purple 30% …); }
+
+   WARUM ES SIE BRAUCHT, gemessen und nicht vermutet. Der Nachtrag hat vier
+   solche Regeln gedeckelt (core.css .link-chip:hover, initiative.css
+   .concentration-badge:hover und .concentration-add-btn:hover, pwa.css
+   .pwa-install-btn:active). Die Pruefung danach hat per Mutation belegt, dass
+   KEINE Ratsche darueber urteilte: alle vier Deckel in einem kopierten Baum
+   auf den Stand von BASE zurueckgedreht, volle Suite (71 Suiten) —
+   zeichengleich derselbe Befundsatz, 114/114 in dieser Datei gruen, obwohl
+   .link-chip:hover damit wieder auf 2,87 in Dark faellt.
+
+   Der Quelltext sagt warum: R-04 verlangt `background` UND `color` in
+   DERSELBEN Regel; diese Regeln haben keine eigene Tinte. R-03 verwirft jede
+   color-mix-Flaeche und verlangt eine `var(--on-*)`-Tinte. R-05 fuehrt eine
+   Liste benannter Zustaende, in der keiner davon steht. R-14 verlangt eine
+   Nachfahrenschreibweise des Toenungsselektors — eine `:hover`-Regel am selben
+   Element ist keine.
+
+   ZWEI WEGE, EINE BAUART. Die Tinte kann aus der GRUNDREGEL desselben
+   Elements kommen (der Fall oben) oder aus einem NACHFAHREN der Grundregel:
+
+       .dice-attr.save:hover { background: color-mix(… --purple 15% …); }
+       .dice-attr.save small { color: var(--purple-text); }
+
+   Der zweite Weg ist der teure gewesen. Die Aktenlage zaehlt zu W2-D-05 "neun
+   Regeln dieser Bauart" — das sind die neun des ERSTEN Wegs.
+   `.dice-attr.save:hover` stand in keiner Liste, lag in DREI Themes unter 4,5
+   (4,41 · 4,09 · 4,18 · 5,05) und fiel zwischen R-04 (keine eigene Tinte),
+   R-14 (kein Nachfahrenselektor des Toenungsselektors) und der Zaehlung selbst
+   hindurch. Diese Ratsche urteilt ueber beide Wege, damit die Klasse nicht ein
+   drittes Mal unvollstaendig gezaehlt wird.
+
+   DREI AUSSCHLUESSE, jeder mit Grund:
+
+   (1) Eigene Tinte in der Zustandsregel -> R-04 ist zustaendig, nicht diese.
+   (2) Ein NACHFAHRE mit eigener Flaeche -> seine Tinte liegt auf seiner
+       eigenen Flaeche, nicht auf der Toenung des Elters. Derselbe Ausschluss
+       wie in R-14, und aus demselben Grund: ohne ihn meldet die Ratsche
+       Fehlalarme um 1,2.
+   (3) Eine Tinte `var(--on-*)` -> diese Tokens NENNEN ihre Flaeche.
+       --on-yellow gehoert auf Gelb, --on-log auf die Blende des
+       Ereignis-Logs; sie gegen --bg-card zu rechnen ist kategorisch falsch
+       und keine Schwellenfrage. Genau so faellt pwa.css
+       `.pwa-update-dismiss:hover` heraus, das sonst mit 1,00 als schlimmster
+       Befund erschiene, obwohl die Regel auf der gelben
+       Aktualisierungsleiste sitzt und dort 8,11-11,97 liest (in pwa.css
+       vorgerechnet). Beurteilt werden diese Tokens von R-02, R-04 und R-17
+       auf ihren eigenen Flaechen — der Ausschluss verschiebt sie, er verliert
+       sie nicht. Er ist auch kein Schlupfloch: --on-*-Tokens sind themenblind
+       und stehen unter R-01.
+
+   DIE VIER BENANNTEN AUSNAHMEN sind samt und sonders Vorbestand aus offenen
+   Punkten, keine neuen Zugestaendnisse — sie stehen hier mit ihrem gemessenen
+   Minimum und melden sowohl eine Verschlechterung als auch den Fall, dass der
+   Eintrag nur noch Altlast ist (Bauart wie RUHE_AUSNAHME in R-04):
+
+     tools.css `.quick-access-item:hover .remove-btn` und die beiden
+     party.css `.cf-attr-card`-Stellen tragen var(--text-dim) bzw.
+     var(--cyan-text) auf einer 10-%-Goldtoenung. Das ist W2-D-02, und der
+     Befund dort ist gemessen: --text-dim erreicht in Dark schon OHNE jede
+     Toenung nur 4,32. Ein Deckel kann das nicht heilen, die Tinte muss
+     entschieden werden (D-4).
+
+     loot.css `.loot-tag-chip input:checked + span` ist die Stelle, die
+     Welle 1 Schritt 9 ausdruecklich vorgezogen und Welle 2 ausdruecklich
+     NICHT ein zweites Mal angefasst hat (Aktenlage: "die Tintenfrage ist
+     entschieden, offen bleibt die Toenungsstaerke"). Ueber ihre
+     TATSAECHLICHE Flaeche --bg-card gerechnet haelt sie 5,41-9,23; die 4,23
+     hier sind das Minimum ueber die drei Traeger nach D-2.
+
+   WAS SIE NICHT SIEHT. Dasselbe wie R-14: ein Nachfahre, der im DOM unter der
+   Toenung liegt, ohne dass sein Selektor das sagt. Das ist Gruppe B von
+   W1-D-01 und ein eigener offener Punkt.
+   =========================================================================== */
+describe('R-18 — Zustandsregel toent, Tinte ist geerbt (Ratsche)', () => {
+    /** Dieselben drei Traegerflaechen wie in R-04, R-11 und R-14 (D-2). */
+    const TRAEGER = ['--bg-card', '--bg-dark', '--bg-elevated'];
+    const SCHWELLE = 4.5;
+
+    const TOENUNGSSTOPP =
+        /^color-mix\(\s*in\s+srgb\s*,\s*var\(\s*(--[\w-]+)\s*\)\s+[\s\S]+,\s*transparent\s*\)$/i;
+    const NEUTRAL = /^--(bg|surface|border|overlay|scrim)(-|$)/;
+    /** Tinten, die ihre Flaeche selbst nennen — Ausschluss (3) im Kopf. */
+    const NENNT_FLAECHE = /^--on-/;
+
+    /** Zustandsteile eines Selektors. `:has(…)` steht VORNE: sonst frisst die
+     *  Alternative `:checked` das Innere von `:has(input:checked)` und laesst
+     *  eine halbe Klammer stehen. */
+    const ZUSTAND = /:has\([^)]*\)|:(?:hover|active|focus-visible|focus-within|focus|checked)\b/g;
+
+    /** Klammergenaue Abgrenzung, wie in R-04 und R-14 — `min(15%,
+     *  var(--tint-max))` bringt eigene Klammern und ein eigenes Komma mit. */
+    function mixAusdruecke(wert) {
+        const out = [];
+        const re = /color-mix\s*\(/gi;
+        let m;
+        while ((m = re.exec(wert))) {
+            let tiefe = 0;
+            let i = m.index + m[0].length - 1;
+            for (; i < wert.length; i++) {
+                if (wert[i] === '(') tiefe++;
+                else if (wert[i] === ')') {
+                    tiefe--;
+                    if (!tiefe) break;
+                }
+            }
+            if (tiefe === 0) out.push(wert.slice(m.index, i + 1));
+        }
+        return out;
+    }
+
+    const selektorTeile = sel =>
+        sel
+            .split(',')
+            .map(x => x.trim())
+            .filter(Boolean);
+
+    /** Alle Paare (Zustandsregel mit Toenung, Regel mit der geerbten Tinte). */
+    function geerbteZustaende() {
+        const out = [];
+        cssFiles.forEach(f => {
+            if (f.name === 'variables.css' || f.name === 'fonts.css') return;
+            const regeln = regelnMitRumpf(f.content);
+            regeln.forEach(zustand => {
+                // (1) Eigene Tinte -> R-04 urteilt, nicht diese Ratsche.
+                if (deklaration(zustand.rumpf, 'color')) return;
+                const roh = deklaration(zustand.rumpf, 'background(?:-color)?');
+                if (!roh) return;
+                const stopps = mixAusdruecke(roh.replace(/\s+/g, ' ')).filter(x => {
+                    const m = x.match(TOENUNGSSTOPP);
+                    return m && !NEUTRAL.test(m[1]);
+                });
+                if (!stopps.length) return;
+
+                selektorTeile(zustand.sel).forEach(zSel => {
+                    const basis = zSel.replace(ZUSTAND, '').trim();
+                    if (!basis || basis === zSel) return; // kein Zustand
+                    regeln.forEach(quelle => {
+                        if (quelle === zustand) return;
+                        const tinte = deklaration(quelle.rumpf, 'color');
+                        if (!tinte) return;
+                        const tm = tinte.trim().match(/^var\((--[\w-]+)\)$/);
+                        // (3) Tinten, die ihre Flaeche selbst nennen.
+                        if (!tm || NEUTRAL.test(tm[1]) || NENNT_FLAECHE.test(tm[1])) return;
+                        const eigeneFlaeche = Boolean(
+                            deklaration(quelle.rumpf, 'background(?:-color)?')
+                        );
+                        selektorTeile(quelle.sel).forEach(qSel => {
+                            const istBasis = qSel === basis;
+                            const istNachfahre = qSel.startsWith(basis + ' ');
+                            if (!istBasis && !istNachfahre) return;
+                            // (2) Nachfahre mit eigener Flaeche.
+                            if (istNachfahre && eigeneFlaeche) return;
+                            out.push({
+                                datei: f.name,
+                                zustand,
+                                zSel,
+                                quelle,
+                                qSel,
+                                art: istBasis ? 'Grundregel' : 'Nachfahrenregel',
+                                tinte: tinte.trim(),
+                                stopps
+                            });
+                        });
+                    });
+                });
+            });
+        });
+        return out;
+    }
+
+    /** DIE MENGE, nicht nur die Werte — Bauart wie ERWARTETE_PAARE in R-14.
+     *  Eine fuenfzehnte Stelle dieser Bauart ist ein Befund, bis jemand sie
+     *  ausrechnet und hier eintraegt. Genau daran hat es bei
+     *  `.dice-attr.save:hover` gefehlt. */
+    const ERWARTETE_PAARE = [
+        'core.css .link-chip:hover -> .link-chip',
+        'dashboard.css .dice-formula-chip:hover -> .dice-formula-chip',
+        'dice.css .dice-attr.save:hover -> .dice-attr.save small',
+        'file-backup.css .backup-entry-restore:hover -> .backup-entry-restore',
+        'file-backup.css .backup-warning-indicator:hover -> .backup-warning-indicator',
+        'initiative.css .concentration-add-btn:hover -> .concentration-add-btn',
+        'initiative.css .concentration-badge:hover -> .concentration-badge',
+        'loot.css .loot-tag-chip:has(input:checked) -> .loot-tag-chip input:checked + span',
+        'party.css .cf-attr-card:has(.cf-attr-save input:checked) -> .cf-attr-card .cf-attr-mod',
+        'party.css .cf-attr-card:has(.cf-attr-save input:checked) -> .cf-attr-card .cf-attr-name',
+        'party.css .cf-attr-card:has(.cf-attr-save input:checked) -> .cf-attr-card .cf-attr-save',
+        'pwa.css .pwa-install-btn:active -> .pwa-install-btn',
+        'pwa.css .pwa-install-btn:hover -> .pwa-install-btn',
+        'tools.css .quick-access-item:hover -> .quick-access-item .remove-btn'
+    ];
+
+    /** Benannte Ausnahmen mit ihrem gemessenen Minimum ueber die vier Themes.
+     *  Begruendung je Eintrag im Kopf dieses Blocks; alle vier sind Vorbestand
+     *  aus W2-D-02 bzw. der Vorziehung aus Welle 1 Schritt 9. */
+    const AUSNAHME = {
+        'loot.css .loot-tag-chip:has(input:checked) -> .loot-tag-chip input:checked + span': 4.23,
+        'party.css .cf-attr-card:has(.cf-attr-save input:checked) -> .cf-attr-card .cf-attr-mod': 4.29,
+        'party.css .cf-attr-card:has(.cf-attr-save input:checked) -> .cf-attr-card .cf-attr-save': 3.56,
+        'tools.css .quick-access-item:hover -> .quick-access-item .remove-btn': 3.56
+    };
+
+    const schluesselVon = p => `${p.datei} ${p.zSel} -> ${p.qSel}`;
+
+    /** Das schlechteste Verhaeltnis EINES Paares in EINEM Theme: Minimum ueber
+     *  alle Rollenstopps der Toenung und ueber die drei Traegerflaechen. */
+    function verhaeltnisse(paar, pals, alias) {
+        const werte = {};
+        let fehlt = null;
+        WCAG.THEMES.forEach(theme => {
+            const p = { ...pals[theme], ...alias };
+            const tinte = WCAG.resolve(paar.tinte, p);
+            if (!tinte) {
+                fehlt = fehlt || `${theme}: ${paar.tinte}`;
+                return;
+            }
+            let min = Infinity;
+            paar.stopps.forEach(stopp => {
+                TRAEGER.forEach(s => {
+                    const grund = WCAG.resolve(`var(${s})`, p);
+                    const feld = grund ? WCAG.resolveOver(stopp, p, grund) : null;
+                    if (!feld) {
+                        fehlt = fehlt || `${theme}: ${stopp} ueber ${s}`;
+                        return;
+                    }
+                    min = Math.min(min, WCAG.ratio(tinte, feld));
+                });
+            });
+            werte[theme] = Number(min.toFixed(2));
+        });
+        return { werte, fehlt };
+    }
+
+    test('die bekannten Paare dieser Bauart sind die einzigen im Baum', () => {
+        const gefunden = geerbteZustaende().map(schluesselVon).sort();
+        expect(gefunden).toEqual(ERWARTETE_PAARE);
+    });
+
+    test('jedes Paar haelt 4,5 auf der Toenung seiner Zustandsregel', () => {
+        const pals = WCAG.palettes();
+        const alias = aliasSchicht();
+        const befunde = [];
+        const offen = new Set(Object.keys(AUSNAHME));
+
+        geerbteZustaende().forEach(paar => {
+            const schluessel = schluesselVon(paar);
+            const { werte, fehlt } = verhaeltnisse(paar, pals, alias);
+            if (fehlt) {
+                befunde.push(
+                    `${schluessel} (Zeile ${paar.quelle.zeile}) — nicht aufloesbar (${fehlt}). ` +
+                        `Was der Rechner nicht kennt, darf nicht als gruen gelten`
+                );
+                return;
+            }
+            const min = Math.min(...WCAG.THEMES.map(t => werte[t]));
+            const zahlen = WCAG.THEMES.map(t => `${t} ${werte[t]}`).join(' · ');
+            const eingetragen = AUSNAHME[schluessel];
+            offen.delete(schluessel);
+
+            if (eingetragen === undefined) {
+                if (min < SCHWELLE) {
+                    befunde.push(
+                        `${schluessel}: die ${paar.art} setzt ${paar.tinte} auf die Toenung ` +
+                            `von "${paar.zSel}":${paar.zustand.zeile} — min ${min} < ` +
+                            `${SCHWELLE} (${zahlen})`
+                    );
+                }
+                return;
+            }
+            if (min < eingetragen) {
+                befunde.push(
+                    `${schluessel}: eingetragen war min ${eingetragen}, gemessen ${min} ` +
+                        `(${zahlen}) — die benannte Ausnahme verschlechtert sich`
+                );
+            }
+            if (min >= SCHWELLE) {
+                befunde.push(
+                    `${schluessel}: haelt jetzt min ${min} — Eintrag aus AUSNAHME und aus ` +
+                        `HANDOFF-V3-OFFENE-PUNKTE.md entfernen`
+                );
+            }
+        });
+
+        [...offen]
+            .sort()
+            .forEach(k =>
+                befunde.push(
+                    `${k} steht in AUSNAHME, aber es gibt kein solches Paar mehr — ` +
+                        `der Eintrag ist Altlast und gehoert entfernt`
+                )
+            );
+
+        expect(befunde.sort()).toEqual([]);
+    });
+
+    /** KERNBELEG gegen die Momentaufnahme. Die Pruefung des Nachtrags hat per
+     *  Mutation belegt, dass ueber die fuenf Stellen aus W2-D-05 keine Ratsche
+     *  urteilte. Dieser Test haelt fest, dass sie jetzt NAMENTLICH in der
+     *  geurteilten Menge stehen — sonst koennte der Selektorabgleich oben
+     *  stillschweigend leerlaufen und die Ratsche waere gruen und leer. */
+    test('die fuenf Stellen aus W2-D-05 stehen namentlich unter Aufsicht', () => {
+        const gefunden = geerbteZustaende().map(schluesselVon);
+        [
+            'core.css .link-chip:hover -> .link-chip',
+            'initiative.css .concentration-badge:hover -> .concentration-badge',
+            'initiative.css .concentration-add-btn:hover -> .concentration-add-btn',
+            'pwa.css .pwa-install-btn:active -> .pwa-install-btn',
+            'file-backup.css .backup-entry-restore:hover -> .backup-entry-restore'
+        ].forEach(k => expect(gefunden).toContain(k));
+        // Und die sechste, die durch beide Netze fiel, bis der Nachtrag sie fand.
+        expect(gefunden).toContain('dice.css .dice-attr.save:hover -> .dice-attr.save small');
     });
 });
