@@ -566,7 +566,31 @@
     bottom: 90px;
     left: 20px;
     width: 280px;
-    background: rgba(26, 26, 26, 0.98);
+    /* Welle 2 Schritt 7. Hier stand rgba(26,26,26,0.98) — zeichengleich
+       --bg-card im DARK-Block, also eine Kartenflaeche, die fuer ein Theme
+       geschrieben und nie wieder angefasst wurde. Die Tinten darauf folgten
+       dem Theme sehr wohl: var(--text) erreichte in Light 1,04 und in Sepia
+       1,51, die Schrift dieses Panels war dort schlicht unsichtbar.
+       Gemessen ueber --bg-dark, vorher -> nachher (dark light sepia contrast):
+
+         var(--text)      13,18 · 1,04 · 1,51 · 17,58  ->  13,18 · 17,40 · 10,22 · 18,88
+         var(--text-dim)   4,91 · 2,90 · 2,91 ·  7,57  ->   4,91 ·  5,74 ·  5,32 ·  8,13
+
+       Der Preis steht bei .fdp-title: var(--gold) faellt auf einer hellen
+       Karte von 5,12 auf 3,25 und wechselt deshalb im selben Zug auf
+       var(--gold-text) (8,28 · 6,23 · 6,58 · 13,46). Alle Tinten dieses
+       Panels liegen in dieser Datei und sind nachgerechnet.
+
+       Zwei Nebenwirkungen, beide W2-B-01 (die Auflagen-Leiter ist
+       themenblind Weiss): der Trennstrich in .fdp-header und die Hover-
+       Flaeche von .fdp-close sind in Light und Sepia nicht mehr zu sehen.
+       Kosmetik, kein Lesbarkeitsmangel — die Hover-Tinte var(--text) haelt.
+
+       NICHT mitgezogen ist die gleichlautende Stelle an .modal
+       (dmscreen.css): dort kommen die Tinten aus zwanzig Dateien, das ist
+       keine Literalaufloesung mehr, sondern eine Entscheidung. Sie steht als
+       Ausnahme in R-10 und als W2-C-01 in der Aktenlage. */
+    background: color-mix(in srgb, var(--bg-card) 98%, transparent);
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
     border: 1px solid color-mix(in srgb, var(--gold) 30%, transparent);
@@ -601,7 +625,12 @@
 }
 
 .fdp-title {
-    color: var(--gold);
+    /* var(--gold-text) statt var(--gold), seit die Panelflaeche dem Theme
+       folgt (Welle 2 Schritt 7): auf einer hellen Karte faellt var(--gold)
+       auf 3,25 (Light) und 6,58 (Sepia). var(--gold-text) haelt
+       8,28 · 6,23 · 6,58 · 13,46 — dieselbe Tinte, die .fdp-number und
+       .fdp-die in dieser Datei schon fuehren. */
+    color: var(--gold-text);
     font-weight: 600;
     font-size: 1em;
 }
@@ -703,8 +732,27 @@
 }
 
 .fdp-die.d20 {
-    background: linear-gradient(135deg, rgba(220, 38, 38, 0.2), rgba(153, 27, 27, 0.3));
-    border-color: rgba(220, 38, 38, 0.5);
+    /* Entscheidung E1 (Welle 2 Schritt 7). 220,38,38 ist LIGHT --red, also
+       eine fremde Theme-Palette; sie steht jetzt auf der Rotrolle und wird
+       in Dark sichtbar heller (dc2626 -> ef4444). Der dunkle Verlaufsfuss
+       153,27,27 traf zufaellig --ra-crimson-rule, die Linienfarbe des
+       Vorlesetext-Stils "Crimson" — nach dem Zweck hat der Wuerfel damit
+       nichts zu tun; er bekommt --red-dark, den dunklen Abkoemmling
+       derselben Rolle.
+       Gemessen mit der Tinte var(--gold-text) aus .fdp-die, ueber dem Panel,
+       vorher -> nachher (dark light sepia contrast):
+         Verlaufskopf  7,09 · 2,29 · 2,01 · 10,69  ->  6,64 · 4,56 · 4,93 · 11,57
+         Verlaufsfuss  7,23 · 2,35 · 2,07 · 10,90  ->  7,27 · 3,42 · 3,71 · 12,33
+         Rahmen (3:1)  1,72 · 1,69 · 1,69 ·  1,73  ->  2,03 · 2,28 · 2,12 ·  1,88
+       Besser in Light und Sepia, in Dark praktisch unveraendert. Der Rahmen
+       bleibt unter 3:1 — er war es vorher auch; er traegt keine Bedeutung,
+       die nicht auch die Beschriftung traegt. */
+    background: linear-gradient(
+        135deg,
+        color-mix(in srgb, var(--red) 20%, transparent),
+        color-mix(in srgb, var(--red-dark) 30%, transparent)
+    );
+    border-color: color-mix(in srgb, var(--red) 50%, transparent);
 }
 
 .fdp-die.d20:hover {
