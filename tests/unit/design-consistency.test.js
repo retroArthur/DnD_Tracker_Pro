@@ -3758,80 +3758,86 @@ describe('R-09 — die Ortsfarben aus dem JS (Ratsche)', () => {
    gemessenen MANGEL, der eine Gestaltungsentscheidung braucht — er ist als
    W2-C-01 aktenkundig und darf nicht als erledigt gelesen werden.
    =========================================================================== */
+/** Begruendete Ausnahmen von R-10. STEHT AUF MODULEBENE, nicht im
+ *  R-10-Block: R-17 liest die zwei party.css-Literale von hier, statt sie
+ *  ein zweites Mal abzuschreiben (Pruefrunde W2-E, Runde 1 — eine Ratsche,
+ *  die gegen ihre eigene Abschrift rechnet, ist genau der Befund, der dort
+ *  an R-16 Teil (4) erhoben wurde).
+ *
+ *  Schluessel ist NICHT die Zeile (die verschiebt
+ *  jeder Kommentar-Commit, siehe R-06), sondern Datei plus vollstaendiges
+ *  Literal, dazu die Zahl der gedeckten Stellen: deckt eine Ausnahme
+ *  ploetzlich mehr Stellen als eingetragen, meldet die Ratsche das,
+ *  statt die neuen stillschweigend mitzuverzeihen.
+ *
+ *  SIE WAR BEI DER GEBURT LEER, und das war Absicht, nicht Vergessen —
+ *  wie EXEC_COMMAND_ALLOWLIST in editor-floating.spec.js. Schritt 7
+ *  fuellt sie mit VIER Eintraegen. Drei davon sind Flaechen, die
+ *  absichtlich keinem Theme folgen; der vierte ist ein gemessener
+ *  Mangel, der eine Gestaltungsentscheidung braucht und nicht in einem
+ *  Literal-Aufloesungsschritt nebenbei fallen darf. */
+const R10_AUSNAHMEN = [
+    {
+        datei: 'party.css',
+        lit: 'rgba(15, 15, 25, 0.98)',
+        anzahl: 1,
+        grund:
+            '.event-log.persistent — Entscheidung E6. Die dunkle Blende des ' +
+            'Ereignis-Logs ist gewollt themenblind; 15,15,25 kommt in keinem Theme ' +
+            'und keiner Skala vor und hat keine Rolle, auf die es zeigen koennte. ' +
+            'Die geerbte TINTE darauf war dagegen mangelhaft (Light 1,07) und ist ' +
+            'in Schritt 10 auf themenblinde Tokens umgestellt (--on-log, ' +
+            '--on-log-dim; jetzt 6,96-15,63 in allen vier Themes). Die Flaeche ' +
+            'bleibt, die Tinte folgt ihr — nicht umgekehrt.'
+    },
+    {
+        datei: 'party.css',
+        lit: 'rgba(20, 20, 30, 0.95)',
+        anzahl: 1,
+        grund:
+            '.event-log-entry — zweite Flaeche desselben Logs, gleiche Begruendung. ' +
+            'Ihre Tinte ist in Schritt 10 mitgezogen worden.'
+    },
+    {
+        datei: 'pwa.css',
+        lit: 'rgba(251, 191, 36, 0.85)',
+        anzahl: 1,
+        grund:
+            '.pwa-update-banner — W2-B-02, in Schritt 7 entschieden. Der Wert ist ' +
+            'zwar zeichengleich --yellow im Dark-Block, aber die Themen' +
+            'unabhaengigkeit DIESER Flaeche ist die Voraussetzung der Messung, die ' +
+            'Welle 1 daneben gefuehrt hat: --on-yellow ist in allen vier Themes ' +
+            '#111111 und passt nur deshalb (8,29 · 11,97 · 11,79 · 8,11). Folgte ' +
+            'die Flaeche dem Theme, waeren diese Zahlen hinfaellig. Die zwei ' +
+            'kleineren Literale derselben Leiste sind aufgeloest — sie zeigten auf ' +
+            'ein THEME-Token (--bg-dark@dark) und tragen jetzt --on-yellow.'
+    },
+    {
+        datei: 'dmscreen.css',
+        lit: 'rgba(26, 26, 26, 0.95)',
+        anzahl: 1,
+        grund:
+            '.modal — W2-C-01, die einzige Ausnahme dieser Liste, die einen MANGEL ' +
+            'deckt statt einer Absicht. 26,26,26 ist --bg-card im Dark-Block, und ' +
+            'die Tinten darauf folgen dem Theme: var(--text) erreicht Light 1,14 ' +
+            'und Sepia 1,41, der Fliesstext jedes Modals ist dort unsichtbar. ' +
+            'var(--bg-card) 95 % machte daraus 17,40 und 10,15. Aber .modal ist die ' +
+            'Universalschachtel (19 Vorkommen in den Templates, einzige ' +
+            'Flaechenquelle im Baum), ihre Tinten kommen aus rund zwanzig Dateien, ' +
+            'und mindestens eine verschlechtert sich nachweislich (var(--gold) in ' +
+            'Ueberschriften 4,71 -> 3,25). Das ist eine Gestaltungsentscheidung mit ' +
+            'Sichtprobe in vier Themes, keine Literalaufloesung. Die gleich gebaute ' +
+            'Stelle mit ueberschaubarem Tintenkreis IST umgestellt ' +
+            '(dice.css .floating-dice-panel).'
+    }
+];
+
 describe('R-10 — rgba()-Zahlentripel ausserhalb der Schatten (Ratsche)', () => {
     /** Zielwert der Ratsche. 0 von der Geburt an: was bleiben darf, steht
      *  namentlich in R10_AUSNAHMEN, nicht in einer Restzahl. Der gemessene
      *  Ausgangswert 247 steht im Kopfkommentar, nicht hier — eine Ratsche,
      *  deren Schranke mitwandert, schuetzt nichts. */
     const R10_ZIEL = 0;
-
-    /** Begruendete Ausnahmen. Schluessel ist NICHT die Zeile (die verschiebt
-     *  jeder Kommentar-Commit, siehe R-06), sondern Datei plus vollstaendiges
-     *  Literal, dazu die Zahl der gedeckten Stellen: deckt eine Ausnahme
-     *  ploetzlich mehr Stellen als eingetragen, meldet die Ratsche das,
-     *  statt die neuen stillschweigend mitzuverzeihen.
-     *
-     *  SIE WAR BEI DER GEBURT LEER, und das war Absicht, nicht Vergessen —
-     *  wie EXEC_COMMAND_ALLOWLIST in editor-floating.spec.js. Schritt 7
-     *  fuellt sie mit VIER Eintraegen. Drei davon sind Flaechen, die
-     *  absichtlich keinem Theme folgen; der vierte ist ein gemessener
-     *  Mangel, der eine Gestaltungsentscheidung braucht und nicht in einem
-     *  Literal-Aufloesungsschritt nebenbei fallen darf. */
-    const R10_AUSNAHMEN = [
-        {
-            datei: 'party.css',
-            lit: 'rgba(15, 15, 25, 0.98)',
-            anzahl: 1,
-            grund:
-                '.event-log.persistent — Entscheidung E6. Die dunkle Blende des ' +
-                'Ereignis-Logs ist gewollt themenblind; 15,15,25 kommt in keinem Theme ' +
-                'und keiner Skala vor und hat keine Rolle, auf die es zeigen koennte. ' +
-                'Die geerbte TINTE darauf war dagegen mangelhaft (Light 1,07) und ist ' +
-                'in Schritt 10 auf themenblinde Tokens umgestellt (--on-log, ' +
-                '--on-log-dim; jetzt 6,96-15,63 in allen vier Themes). Die Flaeche ' +
-                'bleibt, die Tinte folgt ihr — nicht umgekehrt.'
-        },
-        {
-            datei: 'party.css',
-            lit: 'rgba(20, 20, 30, 0.95)',
-            anzahl: 1,
-            grund:
-                '.event-log-entry — zweite Flaeche desselben Logs, gleiche Begruendung. ' +
-                'Ihre Tinte ist in Schritt 10 mitgezogen worden.'
-        },
-        {
-            datei: 'pwa.css',
-            lit: 'rgba(251, 191, 36, 0.85)',
-            anzahl: 1,
-            grund:
-                '.pwa-update-banner — W2-B-02, in Schritt 7 entschieden. Der Wert ist ' +
-                'zwar zeichengleich --yellow im Dark-Block, aber die Themen' +
-                'unabhaengigkeit DIESER Flaeche ist die Voraussetzung der Messung, die ' +
-                'Welle 1 daneben gefuehrt hat: --on-yellow ist in allen vier Themes ' +
-                '#111111 und passt nur deshalb (8,29 · 11,97 · 11,79 · 8,11). Folgte ' +
-                'die Flaeche dem Theme, waeren diese Zahlen hinfaellig. Die zwei ' +
-                'kleineren Literale derselben Leiste sind aufgeloest — sie zeigten auf ' +
-                'ein THEME-Token (--bg-dark@dark) und tragen jetzt --on-yellow.'
-        },
-        {
-            datei: 'dmscreen.css',
-            lit: 'rgba(26, 26, 26, 0.95)',
-            anzahl: 1,
-            grund:
-                '.modal — W2-C-01, die einzige Ausnahme dieser Liste, die einen MANGEL ' +
-                'deckt statt einer Absicht. 26,26,26 ist --bg-card im Dark-Block, und ' +
-                'die Tinten darauf folgen dem Theme: var(--text) erreicht Light 1,14 ' +
-                'und Sepia 1,41, der Fliesstext jedes Modals ist dort unsichtbar. ' +
-                'var(--bg-card) 95 % machte daraus 17,40 und 10,15. Aber .modal ist die ' +
-                'Universalschachtel (19 Vorkommen in den Templates, einzige ' +
-                'Flaechenquelle im Baum), ihre Tinten kommen aus rund zwanzig Dateien, ' +
-                'und mindestens eine verschlechtert sich nachweislich (var(--gold) in ' +
-                'Ueberschriften 4,71 -> 3,25). Das ist eine Gestaltungsentscheidung mit ' +
-                'Sichtprobe in vier Themes, keine Literalaufloesung. Die gleich gebaute ' +
-                'Stelle mit ueberschaubarem Tintenkreis IST umgestellt ' +
-                '(dice.css .floating-dice-panel).'
-        }
-    ];
 
     /** Kommentare zeilentreu leeren. withoutComments() weiter oben loescht
      *  sie ganz und verschiebt damit jede Zeilennummer — fuer einen Befund,
@@ -5458,6 +5464,163 @@ describe('R-16 — Tinte auf JS-gesetzter Flaeche (Ratsche)', () => {
                 }
             });
         }
+        expect(befunde.sort()).toEqual([]);
+    });
+});
+
+/* ===========================================================================
+   Design-Handoff v3, Welle 2 — R-17: die Tinte des Ereignis-Logs (Ratsche)
+   ===========================================================================
+   NACHGETRAGEN IN DER PRUEFUNG W2-E, RUNDE 1. Schritt 10 hatte zwei Haelften:
+   die Seltenheitsskala (bewacht von R-16) und den Ereignis-Log (E6). Die
+   zweite war von KEINER Ratsche gedeckt und liess sich rueckstandsfrei
+   zurueckdrehen — beide Nachweise gegen die volle Suite gefuehrt, beide mit
+   NULL neuen Fehlschlaegen:
+
+     (a) die vier Tintendeklarationen in party.css zurueck auf var(--text) /
+         var(--text-dim) — also genau der Zustand mit Light 1,07;
+     (b) --on-log auf #101010 und --on-log-dim auf #202020 in allen vier
+         Theme-Bloecken — dunkle Tinte auf der dunklen Blende, rechnerisch
+         ~1,1.
+
+   Warum nichts griff: die neuen Zahlen standen nur in einer Begruendungs-
+   Zeichenkette von R10_AUSNAHMEN und in CSS-Kommentaren. R-01 prueft die
+   NAMENSMENGE der Theme-Bloecke, nicht die Werte; R-13/ruheRegeln() greift
+   nicht, weil die Flaeche ein rgba-Literal ist und keine Rolle. Der Umsetzer
+   hat R-16 selbst damit begruendet, dass die sechs reparierten JS-Stellen
+   sonst unbewacht waeren — fuer die zweite Haelfte desselben Schritts ist
+   dieselbe Begruendung nicht angewandt worden.
+
+   DREI TEILE, dieselbe Bauart wie R-09 und R-16:
+
+   (1) party.css fuehrt an den vier Regeln, die auf der Blende liegen, genau
+       die Log-Tokens. Gelesen wird die Deklaration, nicht ein Kommentar.
+
+   (2) Beide Tokens loesen in allen VIER Themes zum selben Wert auf. Sie
+       MUESSEN themenblind sein, weil die Flaeche darunter es ist — dasselbe
+       Muster, das Welle 1 Schritt 8 an der SW-Update-Leiste beschlossen hat
+       und das R-16 Teil (5) fuer die Seltenheitsmarke prueft.
+
+   (3) Beide halten 4,5 ueber beide Flaechenliterale. Die Literale kommen aus
+       R10_AUSNAHMEN, wo sie ohnehin namentlich stehen — eine zweite
+       Abschrift waere genau die Bauart, die diese Pruefrunde an R-16 Teil (4)
+       beanstandet hat. Der Hintergrund, gegen den die halbdurchsichtige
+       Blende aufgeloest wird, ist die HELLSTE neutrale Flaeche des Themes:
+       der schlechteste Fall fuer eine helle Tinte, aus der Palette gerechnet
+       und nicht gewaehlt. Gemessen ergibt das 6,89 bis 15,51. Die 6,96-15,63
+       in R10_AUSNAHMEN sind dieselbe Rechnung gegen die Seitenflaeche als
+       Hintergrund; der kleine Unterschied ist der strengere Hintergrund hier,
+       kein Widerspruch.
+   =========================================================================== */
+describe('R-17 — die Tinte des Ereignis-Logs (Ratsche)', () => {
+    const SCHWELLE = 4.5;
+    const TOKENS = ['--on-log', '--on-log-dim'];
+
+    /** Die vier Regeln, die auf der themenblinden Blende liegen, mit dem
+     *  Token, das sie tragen muessen. `.event-log-btn:hover` steht bewusst
+     *  NICHT dabei: sie setzt eine eigene THEME-Flaeche (--bg-alt) und dazu
+     *  var(--text) und ist in sich stimmig. */
+    const STELLEN = [
+        { sel: '.event-log-title', tok: '--on-log' },
+        { sel: '.event-log-btn', tok: '--on-log-dim' },
+        { sel: '.event-log-entry', tok: '--on-log' },
+        { sel: '.event-log-time', tok: '--on-log-dim' }
+    ];
+
+    /** Die zwei Flaechenliterale — aus R10_AUSNAHMEN, nicht abgeschrieben. */
+    const FLAECHEN = R10_AUSNAHMEN.filter(a => a.datei === 'party.css').map(a => a.lit);
+
+    /** Hellste der vier neutralen Flaechen des Themes: der schlechteste Fall
+     *  als Hintergrund einer halbdurchsichtigen dunklen Blende. */
+    function hellsteNeutrale(p) {
+        return WCAG.NEUTRAL_SURFACES.map(t => WCAG.resolve(p[t], p))
+            .filter(Boolean)
+            .reduce((a, b) => (WCAG.relLuminance(b) > WCAG.relLuminance(a) ? b : a));
+    }
+
+    test('(1) die vier Regeln des Logs tragen die Log-Tokens, nicht die Theme-Tinte', () => {
+        const css = cssFiles.find(f => f.name === 'party.css');
+        expect(css).toBeDefined();
+        const regeln = regelnMitRumpf(css.content);
+        // Leerlaufschutz: zerfaellt die Zerlegung, waere der Test leer gruen.
+        expect(regeln.length).toBeGreaterThan(20);
+        expect(STELLEN.length).toBe(4);
+
+        const befunde = [];
+        STELLEN.forEach(({ sel, tok }) => {
+            const treffer = regeln.filter(r => r.sel === sel);
+            if (treffer.length !== 1) {
+                befunde.push(`party.css: ${treffer.length} statt 1 Regel "${sel}"`);
+                return;
+            }
+            const wert = deklaration(treffer[0].rumpf, 'color');
+            if (wert !== `var(${tok})`) {
+                befunde.push(
+                    `party.css:${treffer[0].zeile} ${sel} traegt "${wert}" statt var(${tok}). ` +
+                        `Die Flaeche darunter ist ein themenblindes rgba-Literal; eine ` +
+                        `Theme-Tinte darauf erreichte in Light 1,05-3,19`
+                );
+            }
+        });
+        expect(befunde.sort()).toEqual([]);
+    });
+
+    test('(2) beide Log-Tokens sind themenblind', () => {
+        const pals = WCAG.palettes();
+        const alias = aliasSchicht();
+        const befunde = [];
+        TOKENS.forEach(tok => {
+            const werte = new Set();
+            WCAG.THEMES.forEach(theme => {
+                const p = { ...pals[theme], ...alias };
+                if (!(tok in p)) {
+                    befunde.push(`${theme}: ${tok} fehlt`);
+                    return;
+                }
+                werte.add(WCAG.resolve(p[tok], p));
+            });
+            if (werte.size > 1) {
+                befunde.push(
+                    `${tok} loest je Theme verschieden auf (${[...werte].sort().join(' · ')}). ` +
+                        `Die Flaeche darunter folgt keinem Theme, die Tinte darf es dann auch nicht`
+                );
+            }
+        });
+        expect(befunde.sort()).toEqual([]);
+    });
+
+    test('(3) beide Log-Tokens halten die Schwelle auf beiden Flaechen des Logs', () => {
+        // Leerlaufschutz: zwei Flaechen, sonst rechnet der Test ueber nichts.
+        expect(FLAECHEN.length).toBe(2);
+
+        const pals = WCAG.palettes();
+        const alias = aliasSchicht();
+        const befunde = [];
+        WCAG.THEMES.forEach(theme => {
+            const p = { ...pals[theme], ...alias };
+            const grund = hellsteNeutrale(p);
+            FLAECHEN.forEach(lit => {
+                const f = WCAG.resolveOver(lit, p, grund);
+                if (!f) {
+                    befunde.push(`${theme}: "${lit}" loest ueber ${grund} zu keiner Flaeche auf`);
+                    return;
+                }
+                TOKENS.forEach(tok => {
+                    const tinte = p[tok] && WCAG.resolve(p[tok], p);
+                    if (!tinte) {
+                        befunde.push(`${theme}: ${tok} loest zu keinem Farbwert auf`);
+                        return;
+                    }
+                    const r = WCAG.ratio2(tinte, f);
+                    if (r < SCHWELLE) {
+                        befunde.push(
+                            `${theme}: ${tok} (${tinte}) auf "${lit}" ueber ${grund} (= ${f}) ` +
+                                `nur ${r} < ${SCHWELLE}`
+                        );
+                    }
+                });
+            });
+        });
         expect(befunde.sort()).toEqual([]);
     });
 });
