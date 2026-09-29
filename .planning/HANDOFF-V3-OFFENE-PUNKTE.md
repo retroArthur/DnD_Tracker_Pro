@@ -29,92 +29,114 @@ eine begründete Ausnahmeliste; die Liste ist bei ihrer Geburt absichtlich leer)
 
 ---
 
-## W1-B-01 — Vier Attributkürzel fallen in Dark und Contrast beim Überfahren der Zeile unter 4,5
+## W1-B-01 — Vier Attributkürzel fielen in Dark und Contrast beim Überfahren der Zeile unter 4,5
 
-**Status: OFFEN — Rückfrage an den Nutzer, Entscheidung D-5 beruht auf überholten Zahlen.**
+**Status: ERLEDIGT am 2026-09-29 (Welle 2, Schritt 9) — Entscheidung E3, Antwort D.**
 Aufgenommen am 2026-09-28, Welle 1, Schritt 12.
 
-### Worum es geht
+### Worum es ging
 
 Die Attributkürzel der Schnellreferenz (`.attr-str` … `.attr-cha`, Markup
-`assets/templates/modals-editors.html:370-376`) liegen auf **drei** Trägerflächen, nicht auf zwei:
+`assets/templates/modals-editors.html:370-376`) lagen auf **drei** Trägerflächen, nicht auf zwei:
 
 - `--bg-dark` — DM-Screen-Widgets `.dms-attr-item` / `.dms-save-item`
-- `--bg-card` — `.qref-row` im Ruhezustand (`assets/styles/dashboard.css:1257`)
-- `--bg-hover` — `.qref-row:hover` (`assets/styles/dashboard.css:1267`)
+- `--bg-card` — `.qref-row` im Ruhezustand
+- `--bg-hover` — `.qref-row:hover`
 
 Die dritte Fläche ist beim Lesen einer Zeile kein Sonderfall, sondern der Normalfall: man fährt
 mit dem Zeiger über die Zeile, die man liest.
 
-**Entscheidung D-5 („Dark/Contrast behalten ihre Werte, außer `--attr-wis`") wurde auf der
-Zwei-Flächen-Messung getroffen.** Dort zeigen die betroffenen Zellen 4,52–5,95 und damit gar kein
-Problem. Erst `--bg-hover` (#333 in beiden Themes) bringt sie auf 3,16–3,58. Diese Zahlen lagen
-der Entscheidung nicht vor.
+**Entscheidung D-5 („Dark/Contrast behalten ihre Werte, außer `--attr-wis`") war auf der
+Zwei-Flächen-Messung getroffen worden.** Dort zeigen die betroffenen Zellen 4,52–5,95 und damit
+gar kein Problem. Erst `--bg-hover` (#333 in beiden Themes) brachte sie auf 3,16–3,58. Diese
+Zahlen lagen der Entscheidung nicht vor.
 
-### Die acht Zellen, gemessen
+### Die acht Zellen, gemessen — und warum sie hier nicht mehr als Tabellenzeilen stehen
 
 Nachgerechnet am 2026-09-28 mit einem eigenen WCAG-Rechner (Selbstprobe `#777`/`#767676` gegen
-Weiß = 4,48/4,54 — die bekannte Grenzprobe, an der ein falsch implementierter Rechner auffliegt).
-Spalte „min2" ist das Minimum über `--bg-dark` und `--bg-card`, also die Zahl, die D-5 vorlag.
+Weiß = 4,48/4,54 — die bekannte Grenzprobe, an der ein falsch implementierter Rechner auffliegt),
+am 2026-09-29 unabhängig bestätigt. Spalte „min2" ist das Minimum über `--bg-dark` und
+`--bg-card`, also die Zahl, die D-5 vorlag.
 
-| Theme    | Token       | Wert heute            | --bg-hover | min2 (bg-dark/bg-card) | Vorschlag B | dann --bg-hover |
-| -------- | ----------- | --------------------- | ---------- | ---------------------- | ----------- | --------------- |
-| dark     | --attr-str  | #ef4444 via var(--red) | 3,36       | 4,62                   | var(--red-text) = #f37373 | 4,52 |
-| dark     | --attr-int  | #3b82f6               | 3,44       | 4,73                   | #619af8     | 4,50            |
-| dark     | --attr-wis  | #aa58f7               | 3,28       | 4,52                   | #bd7ef9     | 4,52            |
-| dark     | --attr-cha  | #ec4899               | 3,58       | 4,93                   | #f06dae     | 4,51            |
-| contrast | --attr-str  | #ff0000 via var(--red) | 3,16       | 4,72                   | var(--red-text) = #ff6b6b | 4,55 |
-| contrast | --attr-int  | #3b82f6               | 3,44       | 5,13                   | #619af8     | 4,50            |
-| contrast | --attr-wis  | #aa58f7               | 3,28       | 4,90                   | #bd7ef9     | 4,52            |
-| contrast | --attr-cha  | #ec4899               | 3,58       | 5,35                   | #f06dae     | 4,51            |
+Die Zahlen bleiben als **Fließtext** stehen und nicht mehr als Tabelle mit Theme in der ersten
+Spalte. Das ist kein Kosmetikentscheid: die Ratsche im R-02-Block liest genau diese Zeilenform
+und geht rot, sobald eine Zeile geführt wird, zu der es keinen Eintrag in `ATTR_HOVER_AUSNAHME`
+mehr gibt. Die Liste ist seit Schritt 9 leer; eine zurückbleibende Tabellenzeile wäre damit
+Altlast, und die Ratsche sagt das auch so. Der historische Befund darf davon nicht verloren
+gehen, also steht er hier in einer Form, die die Ratsche nicht als Führung liest.
 
-Die übrigen vier Zellen (`--attr-dex` 5,54 · `--attr-con` 5,88 in beiden Themes) halten auch auf
-`--bg-hover`. Light und Sepia sind bereits abgedunkelt und halten dort 4,54–4,61 — dort erlaubt
-D-5 das Abdunkeln ausdrücklich, und es ist geschehen (Commit `dab02ff`).
+Auf `--bg-hover` (in Dark und Contrast beides #333) gemessen, dahinter in Klammern min2:
 
-### Die Frage an den Nutzer
+- **Dark** — Stärke 3,36 (4,62) · Intelligenz 3,44 (4,73) · Weisheit 3,28 (4,52) ·
+  Ausstrahlung 3,58 (4,93)
+- **Contrast** — Stärke 3,16 (4,72) · Intelligenz 3,44 (5,13) · Weisheit 3,28 (4,90) ·
+  Ausstrahlung 3,58 (5,35)
 
-D-5 noch einmal, jetzt mit den vollständigen Zahlen. Zwei Antworten sind möglich:
+Die übrigen vier Zellen (Geschicklichkeit 5,54 · Konstitution 5,88 in beiden Themes) hielten auch
+auf `--bg-hover`. Light und Sepia waren bereits abgedunkelt und hielten dort 4,54–4,61 — dort
+erlaubt D-5 das Abdunkeln ausdrücklich, und es ist geschehen (Commit `dab02ff`).
 
-- **A — bleibt so.** Die vier Kürzel STR/INT/WIS/CHA fallen in Dark und Contrast beim Überfahren
-  der Zeile auf 3,16–3,58:1. Lesbar, aber unter der Schwelle, die diese Welle sonst überall
-  durchsetzt. Die Ausnahmeliste bleibt bestehen und dieser Punkt wird auf „bewusst akzeptiert"
-  gesetzt statt gelöscht.
-- **B — genauso knapp anheben wie `--attr-wis`.** Dieselbe Behandlung, die `--attr-wis` schon
-  bekommen hat (#a855f7 → #aa58f7, 4,40 → 4,52): das Minimum an Aufhellung, das 4,5 erreicht.
-  Die Vorschlagsspalte oben ist genau dieses Minimum, in HSL bei gleicher Sättigung gerechnet;
-  der Farbton wandert um höchstens 0,2° (270,9° → 270,7° beim Violett), die Attribute bleiben
-  also unterscheidbar wie heute — Ratsche D-6 („kleinster Nachbarabstand im Farbton sinkt nicht
-  unter 30°") ist nicht berührt.
+### Die Antwort des Nutzers: E3, Option 1 („Hover ohne Füllung")
 
-**Nebenwirkung von B, die mitentschieden werden muss:** `--attr-str` ist heute in beiden Themes
-`var(--red)`, also an die Rot-Rolle gekoppelt. Der Vorschlag entkoppelt sie nicht, sondern hängt
-sie an `var(--red-text)` — dasselbe, was Light und Sepia bereits tun, und der Wert existiert in
-beiden Themes bereits aus Entscheidung D-3. Die Kopplung an die Rot-Rolle bleibt damit erhalten,
-sie wechselt nur von der Flächen- auf die Textvariante.
+Von den fünf gerechneten Wegen — A „bleibt so", B „genauso knapp anheben wie die Weisheit",
+C „eigene, dunklere Hoverfläche", D „Hover nicht über die Fläche melden", E „Pille aus Fläche und
+Tinte" — ist **D** gewählt worden.
+
+`.qref-row:hover` setzte genau eine Deklaration. Sie meldet das Überfahren seit dem 2026-09-29
+über einen Umriss (`outline: 1px solid var(--gold-dim)`) statt über eine Füllung. Damit ist
+`--bg-card` die einzige Fläche dieser Zeile, und **alle sechs Kürzel halten in allen vier
+Themes**:
+
+| Theme    | min über --bg-dark und --bg-card |
+| -------- | -------------------------------- |
+| dark     | 4,52–8,10                        |
+| light    | 5,66–5,74                        |
+| sepia    | 4,98–5,05                        |
+| contrast | 4,72–8,79                        |
+
+Was das gegenüber B gewonnen hat:
+
+- **Kein Farbwert ändert sich.** D-5 („Dark/Contrast behalten ihre Werte") bleibt unangetastet,
+  statt mit acht neuen Tokenwerten überschrieben zu werden.
+- **D-6 bewegt sich nicht.** Die Farbtöne sind dieselben, der kleinste Nachbarabstand bleibt
+  29,63 / 29,74 / 30,85 / 29,63 — siehe die neue Ratsche R-15.
+- **Eine Regel statt acht Tokenwerten.**
+
+Der Preis, benannt statt verschwiegen: die Schnellreferenz-Zeile verliert ihre Füllung beim
+Überfahren. Der Umriss ist 1px `--gold-dim` und hält WCAG 1.4.11 gegen `--bg-card` (5,21 · 5,09 ·
+9,17 · 8,51). Er ist vom Tastaturfokus unterscheidbar, der in diesem Baum 2px `--gold` ist.
+
+**Weg C ist gerechnet ausgeschlossen und kommt deshalb nicht wieder:** die hellste Graustufe, die
+alle sechs bei ≥ 4,5 hält, ist in Dark #1a1a1a — zeichengleich `--bg-card`, der Hover verschwände
+also ganz. In Contrast wäre es #161616 gegen `--bg-card` #111111, ein Unterschied, den niemand
+sieht. Die Begründung steht auch im CSS an der Regel.
+
+### Was sich in den Tests geändert hat
+
+- `ATTR_FLAECHEN` führt wieder zwei Flächen statt drei — nicht weil die Messung sich geändert
+  hätte, sondern weil es die dritte Fläche nicht mehr gibt.
+- `ATTR_HOVER_AUSNAHME` ist **leer**, absichtlich statt abwesend: die Maschinerie bleibt stehen,
+  damit eine künftige Ausnahme wieder namentlich mit ihrem gemessenen Wert eingetragen und hier
+  geführt werden muss.
+- Neu: die Ratsche „die Attributkuerzel liegen auf genau den Flaechen, die Teilformel 3 prueft"
+  zählt die Flächen aller drei Träger nach. Ohne sie wäre die verkleinerte Prüfmenge eine bloße
+  Behauptung — wer die Füllung zurückschreibt, fiele sonst lautlos auf 3,16 zurück.
+- Neu: **R-15** gibt D-6 zum ersten Mal eine Schranke (Boden 29,63 / 29,63 / 30,67 / 29,63, am
+  Ausgangsbestand `ca85d1b` gemessen).
 
 ### Nachrechnen
 
 ```bash
 cd /d/Claude_Code/Projekte/DnD_Tracker_App_Pro
 grep -n -- "--attr-\|--bg-hover" assets/styles/variables.css
+grep -n "qref-row" assets/styles/dashboard.css
 npx jest tests/unit/design-consistency.test.js -t "vier Teilformeln"
+npx jest tests/unit/design-consistency.test.js -t "R-15"
 ```
 
-Die Werte selbst stehen in `assets/styles/variables.css` (Dark ab Zeile 150, Contrast ab
-Zeile 447), die Ausnahmeliste in `tests/unit/design-consistency.test.js`
-(`ATTR_HOVER_AUSNAHME`). Beide Stellen sind mit der Tabelle oben durch die Ratsche verbunden.
-
-### Was bis zur Antwort gilt
-
-Welle 1 ändert an diesen acht Zellen nichts. Die Ausnahmeliste hält den heutigen Stand fest und
-meldet jede Verschlechterung, jeden Rückfall auf den anderen beiden Flächen und den Fall, dass
-eine Zelle die Schwelle inzwischen hält und der Eintrag nur noch Altlast wäre.
-
-**Nicht verwechseln mit D-4:** Die 108 Stellen auf einer 20-%-Tönung derselben Rolle — darunter
-`.dms-skill-header` (`assets/styles/dmscreen.css:1728-1732`), wo dieselben Attributfarben auf
-einer Tönung sitzen — sind ein anderer, ebenfalls offener Punkt und gehören ausdrücklich in
-Welle 2. Sie sind hier nicht mitgemeint.
+**Nicht verwechseln mit D-4:** Die Tönungsstellen derselben Rolle — darunter `.dms-skill-header`,
+wo dieselben Attributfarben auf einer Tönung sitzen — sind ein anderer Punkt und in Schritt 8
+erledigt worden (die Tönung bleibt, die Tinte ist neutral). Sie sind hier nicht mitgemeint.
 
 ---
 
@@ -553,7 +575,7 @@ dashboard.css
   706  .icon-btn.danger:hover
   707  .icon-btn.success:hover
  1140  .dash-timer-time
- 1404  .qref-chip.danger
+ 1436  .qref-chip.danger
 dice.css
   349  .dice-fav-item:hover .fav-del
 dmscreen.css

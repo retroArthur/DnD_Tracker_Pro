@@ -1367,8 +1367,40 @@
     font-size: 0.85em;
 }
 
+/* Welle 2, Schritt 9, Entscheidung E3 ("Hover ohne Fuellung").
+
+   HIER STAND `background: var(--bg-hover)`. Die Zeile traegt die sechs
+   Attributkuerzel (.attr-* unten), und --bg-hover ist in Dark UND Contrast
+   #333. Darauf fallen vier der sechs unter die Schwelle: STR 3,36/3,16 ·
+   INT 3,44/3,44 · WIS 3,28/3,28 · CHA 3,58/3,58. Nur DEX (5,54) und KON
+   (5,88) halten. Beim Lesen einer Zeile faehrt man mit dem Zeiger darueber —
+   das ist nicht der Sonderfall, sondern der Normalfall.
+
+   Mit dem Umriss statt der Fuellung bleibt --bg-card die einzige Flaeche
+   dieser Zeile, und alle sechs halten in allen vier Themes:
+   dark 4,52-8,10 · light 5,66-5,74 · sepia 4,98-5,05 · contrast 4,72-8,79.
+   Die Farbwerte von Dark und Contrast bleiben unberuehrt, wie D-5 es
+   festgelegt hat, und D-6 bewegt sich nicht (die Toene sind dieselben).
+
+   DIE DUNKLERE EIGENE HOVERFLAECHE IST GERECHNET TOT und kommt deshalb
+   nicht wieder: die hellste Graustufe, die alle sechs bei 4,5 haelt, ist in
+   Dark #1a1a1a — also zeichengleich --bg-card, der Hover verschwaende ganz.
+   In Contrast waere es #161616 gegen --bg-card #111111, ein Unterschied,
+   den niemand sieht.
+
+   UMRISS UND NICHT RAHMEN: die Ruheregel oben setzt keinen border, ein
+   border im Hover verschoebe also das Raster um 1px und liesse die Zeile
+   springen. Ein outline liegt ausserhalb des Kastens, folgt dem
+   border-radius und braucht keinen Platz.
+
+   --gold-dim UND NICHT --gold: 2px --gold ist in diesem Baum der
+   Tastaturfokus (core.css, editors.css, dmscreen.css). Ein 1px --gold-dim
+   ist davon unterscheidbar und haelt WCAG 1.4.11 gegen die Flaeche, auf der
+   er liegt — gegen --bg-card 5,21 · 5,09 · 9,17 · 8,51, also in allen vier
+   Themes ueber 3. Innen wie aussen ist das dieselbe Flaeche: die Zeile
+   liegt auf .qref-panel, das ebenfalls --bg-card traegt. */
 .qref-row:hover {
-    background: var(--bg-hover);
+    outline: 1px solid var(--gold-dim);
 }
 
 /* Attribut-Farben.

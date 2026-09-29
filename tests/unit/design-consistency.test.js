@@ -1315,22 +1315,29 @@ describe('R-02 — Tinte erreicht ihre Schwelle auf der TATSAECHLICHEN Flaeche (
     const MUENZEN = ['--coin-pm', '--coin-gm', '--coin-sm', '--coin-km'];
 
     const TEXT_FLAECHEN = ['--bg-card', '--bg-dark', '--bg-elevated', '--bg-hover'];
-    /** Attributkuerzel liegen auf DREI Flaechen. Die frueher hier stehende
-     *  Zweierliste war doppelt falsch, beides am 2026-09-28 nachgesehen:
+    /** Attributkuerzel liegen auf ZWEI Flaechen — wieder, seit Welle 2
+     *  Schritt 9. Die Geschichte dieser Liste gehoert dazu, weil sie schon
+     *  einmal aus dem falschen Grund zwei Eintraege hatte:
      *
-     *  (a) --bg-hover FEHLTE. `.attr-str`..`.attr-cha` sind direkte Kinder von
-     *      `.qref-row` (modals-editors.html:370-376), und dashboard.css fuehrt
-     *      BEIDE Zustaende: `.qref-row { background: var(--bg-card) }` (:1257)
-     *      und `.qref-row:hover { background: var(--bg-hover) }` (:1267). Der
-     *      Hover-Zustand ist beim Lesen einer Zeile nicht die Ausnahme, sondern
-     *      der Normalfall. Ohne diese Flaeche war die Teilformel gruen, waehrend
-     *      10 der 12 Light-/Sepia-Zellen dort unter 4,5 lagen (3,66-4,21) —
-     *      genau die Auslassung, gegen die D-2 eine Teilformel weiter oben
-     *      geschrieben ist.
-     *  (b) `.cf-coin-label` gehoerte nie hierher: party.css:1494-1498 faerbt es
-     *      mit --coin-pm/-gm/-sm/-km und --green, nie mit einem --attr-*. Die
-     *      Traeger auf --bg-dark sind `.dms-attr-item` (dmscreen.css:1613) und
-     *      `.dms-save-item` (dmscreen.css:1676).
+     *  (a) --bg-hover FEHLTE bis zum 2026-09-28. `.attr-str`..`.attr-cha` sind
+     *      direkte Kinder von `.qref-row` (modals-editors.html:370-376), und
+     *      dashboard.css fuehrte BEIDE Zustaende: `.qref-row` auf --bg-card und
+     *      `.qref-row:hover` auf --bg-hover. Der Hover-Zustand ist beim Lesen
+     *      einer Zeile nicht die Ausnahme, sondern der Normalfall. Ohne diese
+     *      Flaeche war die Teilformel gruen, waehrend 10 der 12
+     *      Light-/Sepia-Zellen dort unter 4,5 lagen (3,66-4,21) — genau die
+     *      Auslassung, gegen die D-2 eine Teilformel weiter oben geschrieben
+     *      ist. Sie kam deshalb dazu.
+     *  (b) `.cf-coin-label` gehoerte nie hierher: party.css faerbt es mit
+     *      --coin-pm/-gm/-sm/-km und --green, nie mit einem Attributtoken. Die
+     *      Traeger auf --bg-dark sind `.dms-attr-item` und `.dms-save-item`.
+     *  (c) SEIT SCHRITT 9 IST --bg-hover WIEDER DRAUSSEN, und zwar nicht, weil
+     *      die Messung sich geaendert haette, sondern weil es die Flaeche nicht
+     *      mehr gibt: Entscheidung E3 meldet das Ueberfahren der
+     *      Schnellreferenz-Zeile ueber einen Umriss statt ueber eine Fuellung.
+     *      Dass das so bleibt, behauptet nicht dieser Kommentar, sondern die
+     *      Ratsche "die Attributkuerzel liegen auf genau den Flaechen …" weiter
+     *      unten — sie zaehlt die Flaechen aller drei Traeger nach.
      *
      *  --bg-elevated bleibt BEWUSST draussen, anders als bei den Rollen: kein
      *  Attributkuerzel erreicht diese Flaeche. Die tragenden Behaelter setzen
@@ -1344,26 +1351,31 @@ describe('R-02 — Tinte erreicht ihre Schwelle auf der TATSAECHLICHEN Flaeche (
      *  erledigt: die Toenung bleibt, die Tinte ist var(--text). Die
      *  Attributfarben treten dort gar nicht mehr als Schrift auf, die
      *  Teilformel muss sie also auch nicht gegen diese Flaeche pruefen. */
-    const ATTR_FLAECHEN = ['--bg-dark', '--bg-card', '--bg-hover'];
+    const ATTR_FLAECHEN = ['--bg-dark', '--bg-card'];
 
-    /** BENANNTE AUSNAHME zu Teilformel 3 — nur fuer --bg-hover, nur fuer die
-     *  Zellen, die Entscheidung D-5 ausdruecklich eingefroren hat
-     *  ("Dark/Contrast behalten ihre Werte, ausser --attr-wis").
+    /** BENANNTE AUSNAHME zu Teilformel 3 — SEIT WELLE 2 SCHRITT 9 LEER, und
+     *  das absichtlich statt abwesend (wie EXEC_COMMAND_ALLOWLIST in
+     *  editor-floating.spec.js): die Maschinerie unten bleibt stehen, damit
+     *  eine kuenftige Ausnahme wieder namentlich mit ihrem gemessenen Wert
+     *  eingetragen und in der Aktenlage gefuehrt werden MUSS und nicht als
+     *  stille Freigabe durchgeht.
      *
-     *  Diese acht Zellen halten auf --bg-dark und --bg-card (4,52-5,95), aber
-     *  nicht auf --bg-hover (#333 in beiden Themes). Sie ANZUHEBEN hiesse, eine
-     *  Nutzerentscheidung zu ueberschreiben; sie STILL zu lassen hiesse, die
-     *  Ratsche wieder etwas Falsches behaupten zu lassen. Also stehen sie hier
-     *  namentlich mit ihrem gemessenen Wert, und der Eintrag ist selbst eine
-     *  Ratsche: er meldet, wenn eine Zelle sich VERSCHLECHTERT, wenn sie auf
-     *  einer der beiden anderen Flaechen faellt, und wenn sie die Schwelle
-     *  inzwischen haelt und der Eintrag damit nur noch Altlast waere.
-     *  Light/Sepia stehen NICHT hier: dort erlaubt D-5 das Abdunkeln
-     *  ("nur so weit wie noetig"), und noetig ist es auf --bg-hover. */
-    const ATTR_HOVER_AUSNAHME = {
-        dark: { '--attr-str': 3.36, '--attr-int': 3.44, '--attr-wis': 3.28, '--attr-cha': 3.58 },
-        contrast: { '--attr-str': 3.16, '--attr-int': 3.44, '--attr-wis': 3.28, '--attr-cha': 3.58 }
-    };
+     *  WAS HIER STAND: acht Zellen, die Entscheidung D-5 eingefroren hatte
+     *  ("Dark/Contrast behalten ihre Werte, ausser die Weisheit") und die auf
+     *  --bg-hover bei 3,16-3,58 lagen — dark str 3,36 int 3,44 wis 3,28
+     *  cha 3,58 · contrast str 3,16 int 3,44 wis 3,28 cha 3,58. Sie
+     *  anzuheben hiesse, eine Nutzerentscheidung zu ueberschreiben; sie still
+     *  zu lassen hiesse, die Ratsche etwas Falsches behaupten zu lassen.
+     *
+     *  WARUM SIE WEG SIND, ohne dass eine Farbe sich geaendert hat:
+     *  Entscheidung E3 hat die dritte Flaeche abgeschafft statt die acht
+     *  Werte. Auf den verbliebenen zwei halten alle sechs Kuerzel in allen
+     *  vier Themes (dark 4,52-8,10 · light 5,66-5,74 · sepia 4,98-5,05 ·
+     *  contrast 4,72-8,79). D-5 bleibt damit unangetastet, und D-6 bewegt
+     *  sich nicht — beides war der Grund, E3 der Aufhellung vorzuziehen.
+     *  Die acht Tabellenzeilen in der Aktenlage sind im selben Commit
+     *  entfallen; die Ratsche darunter prueft beide Richtungen. */
+    const ATTR_HOVER_AUSNAHME = {};
     /** Eingabefelder. Eigene Zaehlung am 2026-09-28, regelweise ueber das
      *  kommentarfreie CSS (Selektor enthaelt input|select|textarea UND die
      *  Regel setzt background/background-color auf ein var(--bg-*)):
@@ -1484,35 +1496,45 @@ describe('R-02 — Tinte erreicht ihre Schwelle auf der TATSAECHLICHEN Flaeche (
                 if (eingetragen === undefined) {
                     if (m.min < TEXT_SCHWELLE) {
                         befunde.push(
-                            `(3) ${theme} ${token} ${wert(token)}: min3 ${m.min} < ` +
-                                `${TEXT_SCHWELLE} (schlechteste Flaeche ${m.worst})`
+                            `(3) ${theme} ${token} ${wert(token)}: min${ATTR_FLAECHEN.length} ` +
+                                `${m.min} < ${TEXT_SCHWELLE} (schlechteste Flaeche ${m.worst})`
                         );
                     }
                     return;
                 }
-                // Eingetragene Ausnahme: sie deckt AUSSCHLIESSLICH --bg-hover,
-                // und auch dort nur den eingetragenen Stand.
-                const hover = m.values['--bg-hover'];
-                const ohneHover = Math.min(
-                    ...ATTR_FLAECHEN.filter(f => f !== '--bg-hover').map(f => m.values[f])
-                );
-                if (ohneHover < TEXT_SCHWELLE) {
+                /* Eingetragene Ausnahme. Sie deckt AUSSCHLIESSLICH die eine
+                   Flaeche, auf der sie sich beruft, und auch dort nur den
+                   eingetragenen Stand. Die Liste ist seit Schritt 9 leer, der
+                   Zweig laeuft also nicht — er bleibt stehen, damit ein
+                   kuenftiger Eintrag dieselbe Pruefung bekommt wie die acht,
+                   die hier standen. Welche Flaeche gemeint ist, sagt der
+                   Eintrag selbst, statt dass ein Name fest verdrahtet waere:
+                   die alte Fassung nannte --bg-hover woertlich und waere nach
+                   dem Streichen dieser Flaeche stumm undefined gelaufen. */
+                const AUSNAHMEFLAECHE = ATTR_FLAECHEN[ATTR_FLAECHEN.length - 1];
+                const gedeckt = m.values[AUSNAHMEFLAECHE];
+                const uebrige = ATTR_FLAECHEN.filter(f => f !== AUSNAHMEFLAECHE);
+                const ohne = uebrige.length
+                    ? Math.min(...uebrige.map(f => m.values[f]))
+                    : Infinity;
+                if (ohne < TEXT_SCHWELLE) {
                     befunde.push(
-                        `(3) ${theme} ${token} ${wert(token)}: min2 ohne --bg-hover ` +
-                            `${ohneHover} < ${TEXT_SCHWELLE} — die Ausnahme deckt nur --bg-hover`
+                        `(3) ${theme} ${token} ${wert(token)}: min ohne ${AUSNAHMEFLAECHE} ` +
+                            `${ohne} < ${TEXT_SCHWELLE} — die Ausnahme deckt nur ` +
+                            `${AUSNAHMEFLAECHE}`
                     );
                 }
-                if (hover < eingetragen) {
+                if (gedeckt < eingetragen) {
                     befunde.push(
-                        `(3) ${theme} ${token} ${wert(token)}: auf --bg-hover ${hover}, ` +
-                            `eingetragen war ${eingetragen} — die benannte Ausnahme ` +
-                            `verschlechtert sich`
+                        `(3) ${theme} ${token} ${wert(token)}: auf ${AUSNAHMEFLAECHE} ` +
+                            `${gedeckt}, eingetragen war ${eingetragen} — die benannte ` +
+                            `Ausnahme verschlechtert sich`
                     );
                 }
-                if (hover >= TEXT_SCHWELLE) {
+                if (gedeckt >= TEXT_SCHWELLE) {
                     befunde.push(
-                        `(3) ${theme} ${token} ${wert(token)}: haelt auf --bg-hover jetzt ` +
-                            `${hover} — Eintrag aus ATTR_HOVER_AUSNAHME entfernen`
+                        `(3) ${theme} ${token} ${wert(token)}: haelt auf ${AUSNAHMEFLAECHE} ` +
+                            `jetzt ${gedeckt} — Eintrag aus ATTR_HOVER_AUSNAHME entfernen`
                     );
                 }
             });
