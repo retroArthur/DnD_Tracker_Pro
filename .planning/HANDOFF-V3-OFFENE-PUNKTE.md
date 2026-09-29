@@ -592,7 +592,7 @@ tools.css
 welt.css
    61  .wp-session-nr
   272  .wp-detail-header h3
-  570  .rs-tagesmarsch
+  583  .rs-tagesmarsch
 ```
 
 ### Wie Gruppe E aufzulösen ist
