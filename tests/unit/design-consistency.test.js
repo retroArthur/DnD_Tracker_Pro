@@ -3579,18 +3579,45 @@ describe('R-09 — die Ortsfarben aus dem JS (Ratsche)', () => {
             );
         }
 
-        // (d) Die tote Tinte in core.css.
-        const core = cssFiles.find(f => f.name === 'core.css');
-        const regel = regelnMitRumpf(core.content).find(r => r.sel === '.loc-item-tag');
-        expect(regel).toBeDefined();
-        const tinte = deklaration(regel.rumpf, 'color');
-        if (tinte) {
-            befunde.push(
-                `core.css:${regel.zeile} .loc-item-tag setzt \`color: ${tinte}\`. Gegen den ` +
-                    `Inline-Stil derselben Elemente gewinnt sie nie — das ist toter Code, und ` +
-                    `solange sie dasteht, sieht sie aus wie die gueltige Tinte`
-            );
-        }
+        /* (d) Regeln, die gegen einen Inline-Stil derselben Elemente nie
+           gewinnen. Bis Welle 2 Schritt 10 stand hier nur der Ortsaufkleber;
+           die Schatzkammer hat die gleich gebaute Stelle daneben (der
+           Seltenheitsaufkleber, dessen Flaeche UND Tinte aus
+           features/initiative-loot.js kommen). Beide sind toter Code, und
+           beide sind gefaehrlicher als gewoehnlicher toter Code: sie sehen
+           aus wie die gueltige Deklaration. Wer die Seltenheitsfarben sucht,
+           findet in npcs.css ein Violett, das nirgends erscheint.
+
+           Die Liste nennt fuer jede Stelle die Eigenschaften, die dort tot
+           sind — beim Ortsaufkleber nur die Tinte (die Flaeche steht im CSS
+           und ist echt), beim Seltenheitsaufkleber beide. */
+        const TOTE_REGELN = [
+            { datei: 'core.css', sel: '.loc-item-tag', eig: ['color'], quelle: 'locations-render.js' },
+            {
+                datei: 'npcs.css',
+                sel: '.loot-item-tag',
+                eig: ['background', 'color'],
+                quelle: 'initiative-loot.js'
+            }
+        ];
+        expect(TOTE_REGELN.length).toBe(2);
+        TOTE_REGELN.forEach(t => {
+            const datei = cssFiles.find(f => f.name === t.datei);
+            expect(datei).toBeDefined();
+            const regel = regelnMitRumpf(datei.content).find(r => r.sel === t.sel);
+            if (!regel) return; // ganz entfernt ist die sauberste Aufloesung
+            t.eig.forEach(eig => {
+                const wert = deklaration(regel.rumpf, eig);
+                if (wert) {
+                    befunde.push(
+                        `${t.datei}:${regel.zeile} ${t.sel} setzt \`${eig}: ${wert}\`. Gegen ` +
+                            `den Inline-Stil aus ${t.quelle} gewinnt sie nie — das ist toter ` +
+                            `Code, und solange sie dasteht, sieht sie aus wie die gueltige ` +
+                            `Deklaration`
+                    );
+                }
+            });
+        });
 
         expect(befunde.sort()).toEqual([]);
     });
