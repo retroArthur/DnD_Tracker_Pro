@@ -26,11 +26,11 @@
 }
 
 .pwa-install-btn:hover {
-    background: rgba(212, 175, 55, 0.12);
+    background: color-mix(in srgb, var(--gold) 12%, transparent);
 }
 
 .pwa-install-btn:active {
-    background: rgba(212, 175, 55, 0.22);
+    background: color-mix(in srgb, var(--gold) 22%, transparent);
 }
 
 /* Mobile: Icon-only mit Tooltip */
