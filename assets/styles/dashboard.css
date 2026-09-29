@@ -1415,9 +1415,15 @@
    fuenf Regeln beziehen ihre Farbe aus dem Token, und die Tokenwerte sind
    in Schritt 4 theme-faehig geworden (Light/Sepia abgedunkelt, Dark/Contrast
    nur --attr-wis von #a855f7 auf #aa58f7). Die Traegerflaeche ist .qref-row
-   oben — --bg-card im Ruhezustand und --bg-hover beim Ueberfahren, NICHT
-   --bg-dark, wie die Befundlage annahm. Beide Flaechen stehen in der
-   R-02-Teilformel 3.
+   oben — --bg-card, NICHT --bg-dark, wie die Befundlage annahm.
+
+   Bis Welle 2 Schritt 9 kam --bg-hover als zweite Flaeche derselben Zeile
+   dazu, und dort fielen vier der fuenf Kuerzel unter die Schwelle. Seit
+   Entscheidung E3 meldet .qref-row:hover ueber einen Umriss statt ueber eine
+   Fuellung; die Begruendung samt Zahlen steht oben an jener Regel. Die
+   verbliebene Flaeche steht in der R-02-Teilformel 3, und die Ratsche "die
+   Attributkuerzel liegen auf genau den Flaechen, die Teilformel 3 prueft"
+   zaehlt nach, dass keine dritte dazukommt.
 
    --attr-con hat hier bewusst KEINE Regel: das Markup
    (assets/templates/modals-editors.html:370-376) fuehrt sieben

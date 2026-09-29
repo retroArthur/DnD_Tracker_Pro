@@ -192,23 +192,30 @@
             --on-coin-sm: #111111;
             --on-coin-km: #111111;
 
-            /* Attributfarben. Sie liegen auf DREI Flaechen, nicht auf einer:
+            /* Attributfarben. Sie liegen auf ZWEI Flaechen:
                .dms-attr-item und .dms-save-item auf --bg-dark, .attr-str..cha
-               der Schnellreferenz auf --bg-card und — beim Ueberfahren der
-               Zeile — auf --bg-hover (.qref-row:hover, dashboard.css:1267).
-               .cf-coin-label stand hier frueher irrtuemlich mit in der Liste;
-               es faerbt sich mit --coin-* und --green, nie mit einem --attr-*.
+               der Schnellreferenz auf --bg-card. .cf-coin-label stand hier
+               frueher irrtuemlich mit in der Liste; es faerbt sich mit
+               --coin-* und --green, nie mit einem Attributtoken.
+
+               BIS WELLE 2 SCHRITT 9 WAREN ES DREI. Die dritte war --bg-hover,
+               weil die Zeile der Schnellreferenz sich beim Ueberfahren
+               fuellte — beim Lesen einer Zeile der Normalfall, nicht der
+               Ausnahmefall. Auf --bg-hover #333 hielten vier der sechs Werte
+               die 4,5 NICHT (str 3,36 · int 3,44 · wis 3,28 · cha 3,58), und
+               sie standen deshalb namentlich in der Ausnahmeliste
+               ATTR_HOVER_AUSNAHME der Ratsche R-02. Entscheidung E3 hat die
+               FLAECHE abgeschafft statt die Werte: die Zeile meldet das
+               Ueberfahren jetzt ueber einen Umriss. Damit halten alle sechs
+               (min2 dark 4,52-8,10 · contrast 4,72-8,79), die Ausnahmeliste
+               ist leer, und D-5 ("Dark/Contrast behalten ihre Werte") bleibt
+               unangetastet. Die Begruendung steht an der Regel in
+               dashboard.css.
 
                In Dark bleibt alles wie bisher bis auf --attr-wis: #a855f7
                erreichte 4,40 gegen --bg-card, #aa58f7 erreicht 4,52 bei
-               identischem Farbton (271 Grad). Auf --bg-hover #333 halten vier
-               der sechs Werte die 4,5 NICHT (str 3,36 · int 3,44 · wis 3,28 ·
-               cha 3,58). Das ist kein Versehen, sondern Entscheidung D-5
-               ("Dark/Contrast behalten ihre Werte"); die vier Zellen stehen
-               deshalb namentlich und mit gemessenem Wert in der Ausnahmeliste
-               ATTR_HOVER_AUSNAHME der Ratsche R-02 und nicht stillschweigend
-               unter dem Teppich. Light und Sepia sind dagegen abgedunkelt,
-               dort erlaubt D-5 es ausdruecklich.
+               identischem Farbton (271 Grad). Light und Sepia sind dagegen
+               abgedunkelt, dort erlaubt D-5 es ausdruecklich.
                --attr-str bleibt eine Referenz auf die Rot-Rolle;
                innerhalb eines Theme-Blocks ist das korrekt, weil --red im
                selben Block steht (min2 4,62). Die NAMEN sind eingefroren:
@@ -313,21 +320,30 @@
                30 Grad (Entscheidung D-6): 29,8 vorher, 29,7 nachher, und diese
                0,1 Grad sind Hex-Rundung, keine Verschiebung.
 
-               GERECHNET WIRD GEGEN DREI FLAECHEN, nicht zwei. Die zweite Runde
-               der Pruefung hat gezeigt, dass .qref-row:hover (dashboard.css
-               :1267) die Kuerzel auf --bg-hover #ddd legt — beim Ueberfahren
-               einer Zeile der Normalfall, nicht der Ausnahmefall. Gegen die
+               GERECHNET WURDE GEGEN DREI FLAECHEN, nicht zwei. Die zweite
+               Runde der Pruefung hatte gezeigt, dass die Zeile der
+               Schnellreferenz sich beim Ueberfahren mit --bg-hover #ddd
+               fuellte — dort der Normalfall, nicht der Ausnahmefall. Gegen die
                frueheren zwei Flaechen hielten diese Werte 4,56-4,60, gegen
-               --bg-hover nur 3,66-3,69. Faktoren daher 0,87 auf die erste,
-               zu helle Fassung; min3 jetzt 4,55-4,61.
+               --bg-hover nur 3,66-3,69. Faktoren daher 0,87 auf die erste, zu
+               helle Fassung; min3 damals 4,55-4,61.
+
+               SEIT WELLE 2 SCHRITT 9 GIBT ES DIESE DRITTE FLAECHE NICHT MEHR
+               (E3, Umriss statt Fuellung). Die Werte hier bleiben trotzdem
+               unveraendert: sie noch einmal aufzuhellen waere eine
+               Sichtaenderung ohne Not, und gegen die verbliebenen zwei
+               Flaechen halten sie mit min2 5,66-5,74 reichlich. Wer sie
+               kuenftig neu herleitet, beachte D-6: eine Neuherleitung per
+               Faktor braucht 0,7 Grad Toleranz im Farbton, und R-15 hat in
+               Light nur 0,11 Grad Luft.
 
                --attr-str ist die einzige Ausnahme von "bleibt var(--red)":
                Lights --red erreicht nur 4,43 gegen --bg-dark. Statt eines
                Beinahe-Duplikats (#d82525, 1 % neben --red) steht hier die
                Referenz auf den text-sicheren Rotwert desselben Themes — so
-               bleibt STR an die Rot-Rolle gebunden. Er haelt auch auf
-               --bg-hover (4,54) und braucht deshalb als einziger keine zweite
-               Abdunklung. */
+               bleibt STR an die Rot-Rolle gebunden. Er hielt damals auch auf
+               --bg-hover (4,54) und brauchte deshalb als einziger keine
+               zweite Abdunklung. */
             --attr-str: var(--red-text);
             --attr-dex: #136f35;
             --attr-con: #875706;
@@ -423,16 +439,22 @@
 
             /* Attributfarben, in Sepia alle sechs zu hell (min 1,71-3,68).
                Dieselbe kanalweise Abdunklung wie in Light. Die schlechteste
-               Flaeche ist hier --bg-hover #e5dbc5 und knapp dahinter --bg-dark
+               Flaeche WAR hier --bg-hover #e5dbc5 und knapp dahinter --bg-dark
                #f4e4c1 — beides Pergamenttoene und damit dunkler als die
                entsprechenden Lightflaechen, weshalb der Abstand zwischen den
-               drei Flaechen kleiner ist als dort (4,55 zu 5,83 statt 4,55 zu
+               drei Flaechen kleiner war als dort (4,55 zu 5,83 statt 4,55 zu
                6,26). Die erste Fassung war gegen zwei Flaechen gerechnet und
                hielt 4,55-4,60, auf --bg-hover aber nur 4,16-4,21; Faktoren
                daher zusaetzlich 0,94. Farbtoene unveraendert, kleinster
-               Nachbarabstand unveraendert 30,8 Grad (D-6), min3 jetzt
-               4,55-4,58. --attr-str wie in Light var(--red-text), min3 4,61
-               (Sepias --red erreichte nur 3,68). */
+               Nachbarabstand unveraendert 30,8 Grad (D-6, seit Welle 2
+               Schritt 9 als R-15 bewacht), min3 damals 4,55-4,58.
+               --attr-str wie in Light var(--red-text) (Sepias --red erreichte
+               nur 3,68).
+
+               Seit Welle 2 Schritt 9 traegt die Schnellreferenz-Zeile beim
+               Ueberfahren keine Fuellung mehr (E3); --bg-hover ist damit
+               keine Traegerflaeche der Attributkuerzel. Die Werte bleiben
+               unveraendert und halten min2 4,98-5,05. */
             --attr-str: var(--red-text);
             --attr-dex: #136f35;
             --attr-con: #865606;
@@ -519,9 +541,14 @@
 
             /* Attributfarben unveraendert bis auf --attr-wis (wie in Dark,
                #a855f7 -> #aa58f7). Auf --bg-dark und --bg-card halten alle
-               sechs (4,72-9,78), auf --bg-hover #333 vier nicht (str 3,16 ·
-               int 3,44 · wis 3,28 · cha 3,58) — dieselbe von D-5 eingefrorene
-               Lage wie in Dark, samt Eintrag in ATTR_HOVER_AUSNAHME. */
+               sechs (4,72-9,78). Auf --bg-hover #333 hielten vier nicht
+               (str 3,16 · int 3,44 · wis 3,28 · cha 3,58) — dieselbe von D-5
+               eingefrorene Lage wie in Dark, samt Eintrag in
+               ATTR_HOVER_AUSNAHME. Seit Welle 2 Schritt 9 ist --bg-hover
+               keine Traegerflaeche dieser Kuerzel mehr (E3, Umriss statt
+               Fuellung), die Eintraege sind entfallen, die Werte unveraendert.
+               Die Begruendung steht im Dark-Block oben und an der Regel in
+               dashboard.css. */
             --attr-str: var(--red);
             --attr-dex: #22c55e;
             --attr-con: #f59e0b;
