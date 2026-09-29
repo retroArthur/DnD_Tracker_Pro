@@ -1569,13 +1569,35 @@
 .sb-progress {
     height: 4px;
     /* Welle 2 Schritt 7: 127,127,127 kommt in keinem Theme und keiner Skala
-       vor — ein Mittelgrau als Laufschiene. Die neutrale Rolle dieses
-       Projekts ist --border, und sie trifft den heutigen Eindruck fast
-       genau: 25 % von 127,127,127 ueber --bg-card ergibt in Dark #353535,
-       --border ist dort #3a3a3a. Deckend statt getoent, weil eine Schiene
-       keine Toenung ist, sondern eine Flaeche; die Fuellung darueber traegt
-       var(--gold). */
-    background: var(--border);
+       vor — ein Mittelgrau als Laufschiene. Aufgeloest wird es wie ueberall
+       sonst in diesem Schritt, als TOENUNG derselben Staerke, nicht als
+       deckende Flaeche (Pruefung W2-C).
+
+       DIE TRAEGERFLAECHE IST --bg-elevated, nicht --bg-card: die Schiene
+       liegt in .sb-track-row. Und das bedeutungstragende Paar eines
+       Fortschrittsbalkens ist die Fuellung gegen die Schiene (WCAG 1.4.11,
+       3:1 fuer Nicht-Text-Information), nicht die Schiene gegen die Reihe.
+       Der erste Anlauf setzte deckendes var(--border) und rechnete dieses
+       Paar gar nicht; es faellt damit in Sepia von 4,51 auf 3,68 und in
+       Contrast von 8,23 auf 5,32.
+
+       Gemessen ueber --bg-elevated, dark · light · sepia · contrast:
+         Fuellung/Schiene  alt rgba(127,127,127,.25)  5,25 · 2,07 · 4,51 · 8,23
+                           var(--border) deckend      5,41 · 2,03 · 3,68 · 5,32
+                           --text-dim 20 %            5,49 · 2,07 · 4,51 · 7,74
+         Schiene/Reihe     alt                        1,39 · 1,28 · 1,29 · 1,38
+                           var(--border) deckend      1,35 · 1,31 · 1,57 · 2,13
+                           --text-dim 20 %            1,33 · 1,28 · 1,28 · 1,46
+       Die Staerke folgt dem ERGEBNIS, nicht der Zahl: --text-dim ist kein
+       reines 127-Grau, und 20 % reproduziert die alte Schiene fast genau
+       (light #cecece zeichengleich, dark #393939 statt #3c3c3c). 25 % waeren
+       in Light sichtbar dunkler.
+
+       LIGHT BLEIBT MIT 2,07 UNTER 3,0 — das lag es vorher ebenso, es ist
+       kein Rueckschritt dieser Welle, sondern das goldene --gold #b8860b auf
+       einer hellen Schiene. Gefuehrt unter W2-C-02, R-11 bewacht beide
+       Reihen. */
+    background: color-mix(in srgb, var(--text-dim) 20%, transparent);
     border-radius: 999px;
     overflow: hidden;
 }
