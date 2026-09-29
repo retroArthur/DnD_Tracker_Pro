@@ -641,9 +641,15 @@
 
            Die Zahlen, die dort als Beleg standen (1,39 -> 9,89 in Sepia),
            gehoerten zu einer Flaeche, die nie erscheint. Was wirklich
-           gerendert wird, ist var(--gold) auf rgba(212,175,55,0.18):
-           dark 5,06 · light 2,41 · sepia 5,28 · contrast 7,94 — eine
-           18-%-Toenung DERSELBEN Rolle und damit ein Fall der
+           gerendert wird, ist var(--gold) auf einer 18-%-Toenung
+           DERSELBEN Rolle. Gemessen am 2026-09-28, als die Toenung noch
+           das feste Dark-Gold war:
+           dark 5,06 · light 2,41 · sepia 5,28 · contrast 7,94.
+           Seit Welle 2 Schritt 6 steht dort color-mix(in srgb,
+           var(--gold) 18%, transparent), die Flaeche folgt also dem Theme,
+           und die Messung lautet
+           dark 5,06 · light 2,25 · sepia 4,47 · contrast 7,09.
+           Das ist ein Fall der
            Nutzerentscheidung D-4. Er ist als offener Punkt gefuehrt
            (.planning/HANDOFF-V3-OFFENE-PUNKTE.md, W1-D-02) und wird von
            R-05 mit seinem gemessenen Wert bewacht. Nicht hier reparieren —

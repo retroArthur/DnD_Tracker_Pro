@@ -173,9 +173,10 @@ dafür R-05.
   `ui/editors/rich-text-toolbars.js:309` auf Knöpfen unterhalb von `[data-toolbar-for]` gesetzt,
   und jedes dieser Elemente trägt zugleich `editor-toolbar` — die 22 statischen Leisten der
   Vorlagen wie die vom Generator erzeugten. Es gab keinen Zustand, in dem sie galt. Die Regel ist
-  entfernt. Was wirklich rendert, ist `var(--gold)` auf `rgba(212,175,55,0.18)`: **5,06 2,41 5,28
-  7,94** — eine 18-%-Tönung derselben Rolle und damit ein Fall von D-4. Er steht jetzt in
-  W1-D-02. **Die frühere Sichtprüfungsanweisung „in Sepia 1,39 → 9,89, dort ist der Unterschied
+  entfernt. Was wirklich rendert, ist `var(--gold)` auf einer 18-%-Tönung derselben Rolle und
+  damit ein Fall von D-4. Er steht jetzt in W1-D-02. Die Zahlen **5,06 2,41 5,28 7,94** galten
+  für die Tönung als festes Dark-Gold; seit Welle 2 Schritt 6 steht dort `color-mix(in srgb,
+  var(--gold) 18%, transparent)` und die Messung lautet **5,06 2,25 4,47 7,09**. **Die frühere Sichtprüfungsanweisung „in Sepia 1,39 → 9,89, dort ist der Unterschied
   am deutlichsten" ist gegenstandslos** — dort war und ist kein Unterschied zu sehen.
 - **`loot.css .shop-cat-badge.active` war umgestellt, aber unwirksam.** Zwölf Zeilen später
   standen die sechs Kategorieregeln mit derselben Spezifität und holten `color` zurück. Jede Marke
@@ -627,7 +628,7 @@ Begründung, mit der D-4 die Trennung gezogen hat.
 | `tools.css:1698` | `.ds-rate-chip.ds-crit` | `color-mix(--green 15%)` | dark 5,26 · light 2,11 · sepia 2,07 · contrast 6,53 | light **3,92** · sepia **4,08** |
 | `tools.css:1714` | `.ds-rate-chip.ds-fumble` | `color-mix(--red 15%)` | dark 2,92 · light 2,89 · sepia 2,78 · contrast 3,02 | dark **3,93** · light **3,69** · sepia **3,82** · contrast **4,35** |
 | `dashboard.css:250` | `.wiki-link` (Ruhezustand) | `rgba(168,85,247,0.1)`, FREMDE Rolle unter Cyan-Text | dark 5,84 · light 2,44 · sepia 2,08 · contrast 9,15 | — |
-| `editors.css:69` + `:75` | `.editor-toolbar .editor-btn.format-active` und `[aria-expanded='true']` | `rgba(212,175,55,0.18)` über `var(--bg-elevated)` | dark 5,06 · light **2,41** · sepia 5,28 · contrast 7,94 | light 4,62 — **reicht** |
+| `editors.css:69` + `:75` | `.editor-toolbar .editor-btn.format-active` und `[aria-expanded='true']` | `color-mix(--gold 18%)` über `var(--bg-elevated)` | dark 5,06 · light **2,25** · sepia 4,47 · contrast 7,09 | light **4,31** — reicht **nicht mehr** |
 
 `.ds-rate-chip.ds-fumble` hält in **keinem** Theme 4,5, auch nicht mit der Textvariante. Die
 Tönung muss dort schwächer werden oder die Fläche eine andere Rolle bekommen.
@@ -640,14 +641,33 @@ Wechsel erneut gemessen und **unverändert**. Die offene Frage bleibt die Tönun
 Schreibweise. Neu in dieser Liste steht damit nichts; neu ist nur, dass die Tönung jetzt für den
 Kontrastrechner auflösbar ist (`rgba(var(--x-rgb), a)` war ihm unsichtbar und lieferte `null`).
 
-**`editors.css:69`/`:75` kam am 2026-09-28 durch die Prüfung W1-D dazu** und ist der einzige
-Eintrag dieser Tabelle, an dem die Textvariante allein genügen würde (light 2,41 → 4,62). Die
+**`editors.css:69`/`:75` kam am 2026-09-28 durch die Prüfung W1-D dazu** und war der einzige
+Eintrag dieser Tabelle, an dem die Textvariante allein genügt hätte (light 2,41 → 4,62). Die
 Stelle ist nachgetragen, weil Schritt 10 sie für erledigt hielt: die dort korrigierte Regel stand
 in `spells.css` und hat nie gemalt (Spezifität 0,2,0 gegen 0,3,0 — siehe Berichtigung unter
 W1-C-01). Die Trägerfläche ist **bewiesen, nicht geschätzt**: `editors.css:15 .editor-toolbar`
 setzt `background: var(--bg-elevated)`. `var(--on-gold)` wäre hier falsch (1,34 in Sepia) — die
-Tönung ist hell, nicht voll. Bewacht von R-05 mit dem gemessenen Wert 2,41; wird der Wert besser
-oder schlechter, meldet die Ratsche es.
+Tönung ist hell, nicht voll. Bewacht von R-05 mit dem gemessenen Wert; wird er besser oder
+schlechter, meldet die Ratsche es.
+
+**Nachtrag 2026-09-29 (Welle 2, Schritt 6) — die Textvariante genügt hier nicht mehr.** Die
+Tönung war ein festes Dark-Gold und folgte damit in drei von vier Themes gar nicht dem Theme;
+Schritt 6 hat sie auf `color-mix(in srgb, var(--gold) 18%, transparent)` gestellt. Die Fläche
+wurde dadurch in light, sepia und contrast eine andere, und alle Zahlen dieser Zeile sind neu
+gemessen (`tests/unit/helpers/wcag-contrast.js`, Tönung über `var(--bg-elevated)`):
+
+| | dark | light | sepia | contrast |
+| - | ---- | ----- | ----- | -------- |
+| `var(--gold)`, vorher | 5,06 | 2,41 | 5,28 | 7,94 |
+| `var(--gold)`, jetzt | 5,06 | **2,25** | 4,47 | 7,09 |
+| `var(--gold-text)`, vorher | 5,06 | 4,62 | 5,28 | 7,94 |
+| `var(--gold-text)`, jetzt | 5,06 | **4,31** | 4,47 | 7,09 |
+
+Dark ist unverändert — dort **ist** das Dark-Gold das Theme-Gold. Die drei anderen verlieren
+0,16 bis 0,85. Keine neue Schwelle wird gerissen (light lag mit 2,41 ohnehin weit darunter),
+aber die vorgerechnete Abhilfe trägt nicht mehr: `var(--gold-text)` erreicht in light nur noch
+4,31 statt 4,62. **D-4 muss für diese Stelle über die TönungsSTÄRKE entscheiden, nicht nur über
+die Tinte.** Der R-05-Eintrag steht seit demselben Commit auf 2,25.
 
 ### Vorziehung: eine Stelle dieser Bauart ist in Welle 1 schon umgestellt
 
