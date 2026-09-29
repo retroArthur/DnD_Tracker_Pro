@@ -3936,3 +3936,335 @@ describe('R-13 — color-mix im Basis-:root ohne Rueckfall (Inventar)', () => {
         expect(gemessen()).toEqual(RUECKFALLLOSE_COLOR_MIX_TOKENS);
     });
 });
+
+/* ===========================================================================
+   Design-Handoff v3, Welle 2 — R-11: Toenungsflaechen werden gemessen
+   ===========================================================================
+   DER BLINDE FLECK, gegen den sie steht, hat eine sehr genaue Form.
+   `ruheRegeln()` im R-04-Block siebt die zu urteilende Menge mit
+
+       const m = flaeche.match(/^var\((--[\w-]+)\)$/);
+       if (!m || NEUTRAL.test(m[1])) return;
+
+   Eine Flaeche der Form `color-mix(in srgb, var(--x) N%, transparent)` faellt
+   damit HERAUS, bevor ueberhaupt gerechnet wird. Genau diese Form hat Welle 2
+   in den Schritten 4-7 flaechendeckend erzeugt: 128 Regeln setzen heute
+   Toenung UND Tinte, und KEINE davon wird beurteilt — R-02 urteilt auf Token-,
+   nicht auf Regelebene; R-10 zaehlt rgba-Tripel, die es hier nicht mehr gibt;
+   R-12 sieht nur Skalentokens.
+
+   BELEGT hat das die Pruefung W2-C, Runde 1, per Mutation: `.calc-diff-badge
+   .trivial` im Spiegel von 20 % auf 95 % gestellt, Tinte unveraendert —
+   Kontrast faellt auf rund 1,0 in allen vier Themes, und `npx jest` meldet
+   KEINEN zusaetzlichen roten Test. Dieselbe Luecke erklaert, warum die vier
+   Rueckschritte, die Schritt 7 selbst verursacht hat (W2-C-02), nur deshalb
+   aktenkundig sind, weil der Umsetzer sie von Hand nachgerechnet hat.
+
+   WAS SIE TUT, UND WAS SIE BEWUSST NICHT TUT. Die vollstaendige Abhilfe ist,
+   in `ruheRegeln()` die Toenung aufzuloesen statt sie zu verwerfen —
+   WCAG.resolveOver() kann die Form laengst. Das ist hier NICHT geschehen, und
+   zwar aus einem gemessenen Grund: mit der 4,5-Schwelle faellt danach nicht
+   eine Handvoll Regeln durch, sondern 124 von 128. Die Abhilfe dafuer heisst
+   D-4/E2 und ist der Gegenstand von Schritt 8; die Erweiterung ist die ROTE
+   Ratsche, mit der Schritt 8 beginnt. Bis dahin deckt R-11 die Stellen ab, die
+   diese Welle beziffert hat, und haelt die Groesse des blinden Flecks als Zahl
+   fest, damit er nicht lautlos waechst.
+   Vollstaendig in .planning/HANDOFF-V3-OFFENE-PUNKTE.md unter W2-C-02.
+   =========================================================================== */
+describe('R-11 — Toenungsflaechen werden gemessen, nicht uebersprungen (Ratsche)', () => {
+    /** D-2: massgeblich ist das Minimum ueber die tatsaechlichen Traegerflaechen. */
+    const TRAEGER = ['--bg-card', '--bg-dark', '--bg-elevated'];
+
+    const TOENUNG =
+        /^color-mix\(\s*in\s+srgb\s*,\s*var\(\s*--[\w-]+\s*\)\s+[\d.]+%\s*,\s*transparent\s*\)$/i;
+
+    /** Alle Regeln, die Flaeche UND Tinte setzen und deren Flaeche eine Toenung
+     *  ist — genau die Menge, die `ruheRegeln()` in R-04 wegwirft. */
+    function toenungsRegeln() {
+        const out = [];
+        cssFiles.forEach(f => {
+            if (f.name === 'variables.css' || f.name === 'fonts.css') return;
+            regelnMitRumpf(f.content).forEach(r => {
+                const flaeche = deklaration(r.rumpf, 'background(?:-color)?');
+                const tinte = deklaration(r.rumpf, 'color');
+                if (!flaeche || !tinte || !TOENUNG.test(flaeche)) return;
+                out.push({ ...r, datei: f.name, flaeche, tinte });
+            });
+        });
+        return out;
+    }
+
+    /** Eine Regel ueber Datei und Selektor holen. Fehlt sie, ist das ein Befund
+     *  und keine stille Null — eine umbenannte Regel darf die Ratsche nicht
+     *  entwaffnen. */
+    function regel(datei, sel) {
+        const f = cssFiles.find(x => x.name === datei);
+        if (!f) return null;
+        return regelnMitRumpf(f.content).find(r => r.sel === sel) || null;
+    }
+
+    /**
+     * BEIDE Achsen einer Toenung, je Theme das Minimum ueber die drei neutralen
+     * Traegerflaechen.
+     *
+     * WARUM ZWEI ZAHLEN UND NICHT EINE: die Pruefung W2-C hat an den farblosen
+     * Zustandsmarken gezeigt, dass eine Toenungsentscheidung zwei Kanten bewegt.
+     * Tinte/Flaeche sagt, ob die Beschriftung lesbar ist; Flaeche/Traeger sagt,
+     * ob die Marke ueberhaupt als Marke zu erkennen ist. Schritt 7 hatte nur die
+     * erste gemessen und dabei die zweite von 1,30-1,71 auf 1,08-1,21 gedrueckt,
+     * ohne dass es auffiel.
+     */
+    function beideAchsen(flaecheExpr, tinteExpr) {
+        const pals = WCAG.palettes();
+        const alias = aliasSchicht();
+        const tinte = {};
+        const flaeche = {};
+        WCAG.THEMES.forEach(t => {
+            const p = { ...pals[t], ...alias };
+            const ink = WCAG.resolve(tinteExpr, p);
+            let mi = Infinity;
+            let mf = Infinity;
+            TRAEGER.forEach(s => {
+                const grund = WCAG.resolve(`var(${s})`, p);
+                const feld = WCAG.resolveOver(flaecheExpr, p, grund);
+                if (!ink || !feld || !grund) return;
+                mi = Math.min(mi, WCAG.ratio(ink, feld));
+                mf = Math.min(mf, WCAG.ratio(feld, grund));
+            });
+            tinte[t] = Number.isFinite(mi) ? Number(mi.toFixed(2)) : null;
+            flaeche[t] = Number.isFinite(mf) ? Number(mf.toFixed(2)) : null;
+        });
+        return { tinte, flaeche };
+    }
+
+    const reihe = o => WCAG.THEMES.map(t => `${t} ${o[t]}`).join(' · ');
+
+    /* -------------------------------------------------------------------
+       (1) Die zehn farblosen Marken
+       ------------------------------------------------------------------- */
+
+    /** Die zehn Regeln, die "keine Farbe" bedeuten: vier farblose Zustaende je
+     *  Zustandsdatei, dazu die beiden neutralen Beziehungsmarken. Sie fuehren
+     *  EINE Bauart — Toenung der gedaempften Textrolle, Tinte die Textrolle —,
+     *  und beide Achsen sind gemessen. Die Staerke steht daneben, weil sie
+     *  zwischen den Gruppen verschieden ist (30 % Zustaende, 20 % Beziehungen). */
+    const FARBLOS = [
+        { datei: 'core.css', sel: '.condition-blinded', staerke: 30 },
+        { datei: 'core.css', sel: '.condition-deafened', staerke: 30 },
+        { datei: 'core.css', sel: '.condition-petrified', staerke: 30 },
+        { datei: 'core.css', sel: '.condition-exhaustion', staerke: 30 },
+        { datei: 'dmscreen.css', sel: '.condition-badge.blinded', staerke: 30 },
+        { datei: 'dmscreen.css', sel: '.condition-badge.deafened', staerke: 30 },
+        { datei: 'dmscreen.css', sel: '.condition-badge.petrified', staerke: 30 },
+        { datei: 'dmscreen.css', sel: '.condition-badge.exhaustion', staerke: 30 },
+        { datei: 'dmscreen.css', sel: '.relationship-badge.neutral', staerke: 20 },
+        { datei: 'initiative.css', sel: '.npc-relation-status.neutral', staerke: 20 }
+    ];
+
+    /** Gemessen am 2026-09-29, Pruefung W2-C Runde 1. Beide Zahlenreihen sind
+     *  Untergrenzen: sie duerfen steigen, nicht fallen. */
+    const FARBLOS_SOLL = {
+        30: {
+            tinte: { dark: 7.49, light: 9.67, sepia: 5.99, contrast: 8.72 },
+            flaeche: { dark: 1.52, light: 1.47, sepia: 1.47, contrast: 1.66 }
+        },
+        20: {
+            tinte: { dark: 8.75, light: 11.06, sepia: 6.87, contrast: 10.86 },
+            flaeche: { dark: 1.28, light: 1.28, sepia: 1.28, contrast: 1.32 }
+        }
+    };
+
+    test('die zehn farblosen Marken halten auf BEIDEN Achsen', () => {
+        const befunde = [];
+        FARBLOS.forEach(({ datei, sel, staerke }) => {
+            const r = regel(datei, sel);
+            if (!r) {
+                befunde.push(`${datei} ${sel}: Regel nicht gefunden — umbenannt oder entfernt`);
+                return;
+            }
+            const flaeche = deklaration(r.rumpf, 'background(?:-color)?');
+            const tinte = deklaration(r.rumpf, 'color');
+            const soll = `color-mix(in srgb, var(--text-dim) ${staerke}%, transparent)`;
+            if (flaeche !== soll) {
+                befunde.push(`${datei} ${sel}:${r.zeile} traegt ${flaeche}, erwartet ${soll}`);
+            }
+            if (tinte !== 'var(--text)') {
+                befunde.push(
+                    `${datei} ${sel}:${r.zeile} traegt Tinte ${tinte}; die farblose Gruppe ` +
+                        `fuehrt var(--text), weil var(--text-dim) auf ihrer eigenen Toenung ` +
+                        `nur 2,79-3,76 ergibt`
+                );
+                return;
+            }
+            const ist = beideAchsen(flaeche, tinte);
+            const sollWerte = FARBLOS_SOLL[staerke];
+            WCAG.THEMES.forEach(t => {
+                if (ist.tinte[t] === null || ist.flaeche[t] === null) {
+                    befunde.push(`${datei} ${sel}: ${t} nicht aufloesbar`);
+                    return;
+                }
+                if (ist.tinte[t] < sollWerte.tinte[t]) {
+                    befunde.push(
+                        `${datei} ${sel}: Tinte/Flaeche ${t} ${ist.tinte[t]} < ` +
+                            `${sollWerte.tinte[t]} (${reihe(ist.tinte)})`
+                    );
+                }
+                if (ist.flaeche[t] < sollWerte.flaeche[t]) {
+                    befunde.push(
+                        `${datei} ${sel}: Flaeche/Traeger ${t} ${ist.flaeche[t]} < ` +
+                            `${sollWerte.flaeche[t]} — die Marke verschmilzt mit der Karte ` +
+                            `(${reihe(ist.flaeche)})`
+                    );
+                }
+                if (ist.tinte[t] < 4.5) {
+                    befunde.push(`${datei} ${sel}: Tinte/Flaeche ${t} ${ist.tinte[t]} < 4,5`);
+                }
+            });
+        });
+        expect(befunde.sort()).toEqual([]);
+    });
+
+    /* -------------------------------------------------------------------
+       (2) Die Laufschiene des Soundboards
+       ------------------------------------------------------------------- */
+
+    /** Fuellung gegen Schiene ist das einzige bedeutungstragende Paar eines
+     *  Fortschrittsbalkens (WCAG 1.4.11). Gemessen ueber `.sb-track-row`, der
+     *  tatsaechlichen Traegerflaeche, nicht ueber --bg-card. Light liegt mit
+     *  2,07 unter 3,0 und lag es vor Welle 2 ebenso — kein Rueckschritt, aber
+     *  gefuehrt. */
+    const SCHIENE_SOLL = {
+        fuellung: { dark: 5.49, light: 2.07, sepia: 4.51, contrast: 7.74 },
+        schiene: { dark: 1.33, light: 1.28, sepia: 1.28, contrast: 1.46 }
+    };
+
+    test('die Laufschiene des Soundboards traegt ihre Fuellung', () => {
+        const schiene = regel('tools.css', '.sb-progress');
+        const fuellung = regel('tools.css', '.sb-progress-fill');
+        expect(Boolean(schiene && fuellung)).toBe(true);
+        const schieneWert = deklaration(schiene.rumpf, 'background(?:-color)?');
+        const fuellWert = deklaration(fuellung.rumpf, 'background(?:-color)?');
+        const pals = WCAG.palettes();
+        const alias = aliasSchicht();
+        const befunde = [];
+        WCAG.THEMES.forEach(t => {
+            const p = { ...pals[t], ...alias };
+            const reihenGrund = WCAG.resolve('var(--bg-elevated)', p);
+            const s = WCAG.resolveOver(schieneWert, p, reihenGrund);
+            const f = WCAG.resolveOver(fuellWert, p, reihenGrund);
+            if (!s || !f) {
+                befunde.push(`${t}: ${!s ? schieneWert : fuellWert} nicht aufloesbar`);
+                return;
+            }
+            const gegenFuellung = Number(WCAG.ratio(f, s).toFixed(2));
+            const gegenReihe = Number(WCAG.ratio(s, reihenGrund).toFixed(2));
+            if (gegenFuellung < SCHIENE_SOLL.fuellung[t]) {
+                befunde.push(
+                    `Fuellung/Schiene ${t} ${gegenFuellung} < ${SCHIENE_SOLL.fuellung[t]}`
+                );
+            }
+            if (gegenReihe < SCHIENE_SOLL.schiene[t]) {
+                befunde.push(
+                    `Schiene/Reihe ${t} ${gegenReihe} < ${SCHIENE_SOLL.schiene[t]} — die ` +
+                        `leere Schiene verschwindet in der Track-Reihe`
+                );
+            }
+        });
+        expect(befunde.sort()).toEqual([]);
+    });
+
+    /* -------------------------------------------------------------------
+       (3) Die vier bezifferten Rueckschritte aus W2-C-02
+       ------------------------------------------------------------------- */
+
+    /** Die vier Regeln, die Schritt 7 in Dark unter 4,5 gedrueckt hat. Sie sind
+     *  bis Schritt 8 offen; bis dahin duerfen sie nicht WEITER fallen. Die Werte
+     *  sind die der Aktenlage-Tabelle unter W2-C-02, unabhaengig nachgerechnet. */
+    const W2C02 = [
+        {
+            datei: 'encounters.css',
+            sel: '.calc-diff-badge.trivial',
+            flaeche: 'color-mix(in srgb, var(--blue) 20%, transparent)',
+            tinte: 'var(--blue)',
+            soll: { dark: 4.22, light: 3.24, sepia: 2.38, contrast: 3.32 }
+        },
+        {
+            datei: 'initiative.css',
+            sel: '.concentration-badge',
+            flaeche: 'color-mix(in srgb, var(--purple) 20%, transparent)',
+            tinte: 'var(--purple)',
+            soll: { dark: 4.03, light: 3.5, sepia: 3.18, contrast: 4.21 }
+        },
+        {
+            datei: 'party.css',
+            sel: '.wiki-tree-item.selected',
+            flaeche: 'color-mix(in srgb, var(--purple) 15%, transparent)',
+            tinte: 'var(--purple)',
+            soll: { dark: 4.41, light: 3.78, sepia: 3.37, contrast: 4.48 }
+        },
+        {
+            datei: 'party.css',
+            sel: '.wiki-detail-category',
+            flaeche: 'color-mix(in srgb, var(--purple) 15%, transparent)',
+            tinte: 'var(--purple)',
+            soll: { dark: 4.41, light: 3.78, sepia: 3.37, contrast: 4.48 }
+        }
+    ];
+
+    test('die vier bezifferten Rueckschritte aus W2-C-02 fallen nicht weiter', () => {
+        const befunde = [];
+        W2C02.forEach(e => {
+            const r = regel(e.datei, e.sel);
+            if (!r) {
+                befunde.push(`${e.datei} ${e.sel}: Regel nicht gefunden`);
+                return;
+            }
+            /* Der Kopf von .concentration-badge steht in einem Verlauf; gesucht
+               wird deshalb im Rumpf, nicht in der Deklaration. */
+            if (!r.rumpf.includes(e.flaeche)) {
+                befunde.push(
+                    `${e.datei} ${e.sel}:${r.zeile} fuehrt ${e.flaeche} nicht mehr — die ` +
+                        `Zeile in W2-C-02 beschreibt etwas anderes als der Quelltext`
+                );
+                return;
+            }
+            const ist = beideAchsen(e.flaeche, e.tinte);
+            WCAG.THEMES.forEach(t => {
+                if (ist.tinte[t] === null) {
+                    befunde.push(`${e.datei} ${e.sel}: ${t} nicht aufloesbar`);
+                    return;
+                }
+                if (ist.tinte[t] < e.soll[t]) {
+                    befunde.push(
+                        `${e.datei} ${e.sel}: ${t} ${ist.tinte[t]} < gefuehrte ${e.soll[t]} ` +
+                            `(${reihe(ist.tinte)})`
+                    );
+                }
+            });
+            const min = Math.min(...WCAG.THEMES.map(t => ist.tinte[t]));
+            if (min >= 4.5) {
+                befunde.push(
+                    `${e.datei} ${e.sel}: haelt jetzt min ${min} — Zeile aus W2-C-02 und ` +
+                        `Eintrag aus W2C02 entfernen`
+                );
+            }
+        });
+        expect(befunde.sort()).toEqual([]);
+    });
+
+    /* -------------------------------------------------------------------
+       (4) Die Groesse des blinden Flecks
+       ------------------------------------------------------------------- */
+
+    /** DIESE ZAHL IST DER BEFUND, nicht die Buchfuehrung. 128 Regeln setzen
+     *  Tinte auf eine Toenung, und R-04 urteilt ueber keine davon. Sie faellt
+     *  weg, sobald `ruheRegeln()` die Toenung aufloest statt sie zu verwerfen —
+     *  das ist die rote Ratsche, mit der Schritt 8 beginnt. Bis dahin: wer eine
+     *  Toenungsregel anlegt, legt sie in den blinden Fleck und traegt sie hier
+     *  ein. */
+    const TOENUNGSREGELN_OHNE_URTEIL = 128;
+
+    test('der blinde Fleck von R-04 ist beziffert und waechst nicht lautlos', () => {
+        expect(toenungsRegeln().length).toBe(TOENUNGSREGELN_OHNE_URTEIL);
+    });
+});
