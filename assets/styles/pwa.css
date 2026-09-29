@@ -61,6 +61,18 @@
     justify-content: space-between;
     padding: 0 16px;
     background: rgba(251, 191, 36, 0.85); /* var(--yellow) @ 85% */
+    /* BLEIBT ein Literal, Welle 2 Schritt 7: gefuehrte Ausnahme von R-10,
+       aktenkundig als W2-B-02. Der Wert ist zwar zeichengleich --yellow im
+       Dark-Block, aber die Themenunabhaengigkeit dieser Flaeche ist die
+       VORAUSSETZUNG der Messung direkt darunter: --on-yellow ist in allen
+       vier Themes #111111 und passt nur deshalb. Wuerde die Flaeche dem Theme
+       folgen (Light #ca8a04, Sepia #b58900, Contrast #ffff00), waeren die
+       Zahlen 11,97 und 11,79 hinfaellig. Eine mechanische Umstellung
+       verwandelt hier eine gemessene Entscheidung in eine unbelegte.
+       Die zwei kleineren Literale derselben Leiste (Rahmen und Hover des
+       Schliessknopfs) sind dagegen aufgeloest — sie zeigten auf --bg-dark
+       im Dark-Block und tragen jetzt --on-yellow, das themenblinde Token
+       dieser Leiste. */
     /* Welle 1 Schritt 8. Die Flaeche ist ein Bernstein-Literal und folgt
        KEINEM Theme; die Tinte stand aber auf var(--bg-dark) und folgte dem
        Theme sehr wohl — in Light und Sepia also Fast-Weiss auf Gelb.
@@ -113,7 +125,15 @@
 .pwa-update-dismiss {
     background: transparent;
     color: var(--on-yellow);
-    border: 1px solid rgba(13, 13, 13, 0.4);
+    /* Welle 2 Schritt 7: 13,13,13 war --bg-dark im DARK-Block, also ein
+       Theme-Token auf einer themenunabhaengigen Flaeche — in Light waere aus
+       der dunklen Kontur fast Weiss geworden, haette jemand das Literal
+       mechanisch nachgezogen. --on-yellow ist die Tinte, die diese Regel
+       eine Zeile darueber schon fuehrt, ist in allen vier Themes #111111 und
+       damit von der Themenfrage unabhaengig. Der Unterschied zum Literal
+       betraegt 4 Kanalpunkte: 4,60 · 2,96 · 2,77 · 6,61 -> 4,66 · 3,04 ·
+       2,84 · 6,77 gegen die Bernsteinflaeche. */
+    border: 1px solid color-mix(in srgb, var(--on-yellow) 40%, transparent);
     padding: 2px 10px;
     border-radius: var(--radius-sm);
     font-size: 12px;
@@ -123,7 +143,9 @@
 }
 
 .pwa-update-dismiss:hover {
-    background: rgba(13, 13, 13, 0.1);
+    /* Wie der Rahmen darueber: --bg-dark@dark -> --on-yellow.
+       9,23 · 5,40 · 4,96 · 14,23 -> 9,33 · 5,42 · 4,98 · 14,23. */
+    background: color-mix(in srgb, var(--on-yellow) 10%, transparent);
 }
 
 /* Animation: slide-up from bottom */

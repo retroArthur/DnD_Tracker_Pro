@@ -458,8 +458,8 @@ Behebung in Runde 2** gedeckt, davor war sie es für eine der beiden Zeilen nich
 | `initiative.css:206` | `.init-hp-value.bloodied` | `--yellow` | GRAD:#0d0d0d · --bg-card | GRAD:#f5f5f5 · --bg-card |
 | `initiative.css:1157` | `.init-mob-alive.healthy` | `--green` | GRAD:#0d0d0d | GRAD:#f5f5f5 |
 | `initiative.css:1158` | `.init-mob-alive.bloodied` | `--yellow` | GRAD:#0d0d0d | GRAD:#f5f5f5 |
-| `spells.css:79` | `.spell-info-line.classes` | `--cyan` | GRAD:#1a1a1a | GRAD:#ffffff |
-| `spells.css:80` | `.spell-info-line.school` | `--purple` | GRAD:#1a1a1a | GRAD:#ffffff |
+| `spells.css:92` | `.spell-info-line.classes` | `--cyan` | GRAD:#1a1a1a | GRAD:#ffffff |
+| `spells.css:93` | `.spell-info-line.school` | `--purple` | GRAD:#1a1a1a | GRAD:#ffffff |
 | `tools.css:851` | `.ld-split-amount` | `--gold` | GRAD:#191919 | GRAD:#1e1e1e |
 
 ### Gruppe C — Akzent- oder Toenungsflaeche, 10 Stellen
@@ -591,7 +591,7 @@ party.css
  2759  .char-skill-item.proficient .char-skill-item-name
  2782  .char-skill-item.expertise .char-skill-item-name
 spells.css
-  135  .spell-material
+  148  .spell-material
 tools.css
   261  .timer-card-time
   455  .rt-result-label
