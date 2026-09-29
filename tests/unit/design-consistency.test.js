@@ -6440,3 +6440,881 @@ describe('R-18 — verfeinernde Regel toent, Tinte ist geerbt (Ratsche)', () => 
         ].forEach(k => expect(gefunden).toContain(k));
     });
 });
+
+/* ===========================================================================
+   Design-Handoff v3, Welle 3 — R-19: Schatten nur aus Tokens (Ratsche)
+   ===========================================================================
+   ZUR NUMMER. Paragraph 6.1 des Handoffs nennt diese Ratsche "R-04". R-04 ist
+   seit Welle 1 vergeben und gruen ("jede Regel haelt 4,5 auf ihrer EIGENEN
+   Flaeche", Zeile 2177). Wer 6.1 woertlich folgt, ueberschreibt sie, und
+   `npx jest -t "R-04"` fuehre danach ZWEI verschiedene Ratschen unter einem
+   Namen. Hoechste vergebene Nummer ist R-18; diese heisst deshalb R-19.
+
+   WARUM SIE DIE EIGENTLICHE ABSICHERUNG DIESER WELLE IST. Welle 1 und Welle 2
+   konnten sich auf den versionierten Stil-Sollstand stuetzen: 254 bzw. 24
+   Digests aenderten sich messbar mit. Fuer Schatten traegt er NICHT. Von 3626
+   Digests fuehren genau 6 einen box-shadow ungleich 'none' — zwei .active-
+   Chips der Laden-Ansicht (loot.css:313/353), je dreimal erfasst. Grund: der
+   Abzug erfasst nur Ruhezustaende innerhalb der View-Container in EINEM Theme;
+   von 71 Deklarationen erreichen nur 2 ueberhaupt einen Schluessel, 8 haengen
+   an :hover/:focus, 61 liegen ausserhalb. Ohne die Ort->Stufe-Tabelle unten
+   waere Welle 3 nach der Sichtprobe ohne jede automatische Absicherung.
+   Deshalb entsteht dieser Block VOR der Umsetzung und ist bei seiner Geburt
+   ROT — er fuehrt die Welle, statt ihr nachgeformt zu werden.
+
+   DER BESTAND, an HEAD 03274fa mit eigenem Parser erhoben (Kommentare
+   zeilentreu geleert, Werte ueber Zeilengrenzen bis ; oder } bei
+   Klammertiefe 0 gelesen, Lagen am Komma auf Klammertiefe 0 zerlegt):
+
+       71   box-shadow-Deklarationen in assets/styles/*.css
+       86   Lagen darin: 53 Hoehe (X=0, Y>0) · 14 Gluehe (X=0, Y=0, blur>0)
+            · 8 Ring (blur=0) · 9 inset · 1 seitlich · 1 none
+        8   text-shadow-Deklarationen  } NICHT Gegenstand der Formpruefung,
+        1   filter: drop-shadow        } siehe "GELTUNGSBEREICH" unten
+       55   verschiedene box-shadow-Werte
+
+   Der Handoff nennt 88 Deklarationen, 65 Werte und "58 hartes Schwarz". Alle
+   drei sind Messverfahrensfehler und kein Zeitstand: 88 ist die Zahl der
+   STICHWORTNENNUNGEN ueber drei Eigenschaften (78 roher box-shadow-grep inkl.
+   6 transition-Zeilen und 1 Kommentar + 9 text-shadow + 1 drop-shadow); bei
+   255f8b8, also vor dem Loeschlauf, misst derselbe Parser identisch 71/55.
+   Ein ZEILENBASIERTER grep zaehlt hier ueberall zu niedrig (72 statt 78
+   Literale), weil mehrlagige Werte ueber Zeilengrenzen laufen — dice.css:628
+   ist der Fall, an dem das auffaellt.
+
+   WAS SIE PRUEFT, in vier Teilen:
+
+   (1) FORM. Jede Lage jeder box-shadow-Deklaration ist var(--shadow-1|-2|-3),
+       var(--shadow-drawer), var(--ring-gold), ein `0 0 <r>px var(--glow-*)`
+       oder das Schluesselwort `none` (auch mit !important) — oder sie steht
+       namentlich in AUSNAHMEN.
+
+   (2) ORT -> STUFE. Die Tabelle unten sagt fuer JEDE Hoehen- und die eine
+       seitliche Lage, welche Stufe sie traegt. Das ist der Kern: Teil (1)
+       allein wuerde auch dann gruen, wenn jede Stelle auf derselben Stufe
+       landete. Die Zuordnung ist AUS DER MESSUNG gebildet (naechster
+       Weichzeichnungsradius zu 6 / 16 / 32, Gleichstand bei 24px nach OBEN),
+       nicht aus dem Ergebnis der Umsetzung abgelesen.
+
+   (3) CONTRAST OHNE WEISS. Im Theme-Block [data-theme="contrast"] traegt kein
+       Schattentoken (--shadow*, --ring*, --glow*) das Tripel 255,255,255.
+       Ausdruecklich auf den THEME-BLOCK beschraenkt: die zwei themenblinden
+       Glanzkanten (dice.css:630, dmscreen.css:782) tragen dasselbe Tripel
+       voellig zu Recht und haben mit Contrast nichts zu tun.
+
+   (4) AUSNAHMEN GESCHLOSSEN. Jeder Eintrag in AUSNAHMEN wird genau einmal
+       getroffen. Eine Ausnahme, die ins Leere zeigt, ist Altlast; eine, die
+       zweimal greift, ist eine stillschweigende Verallgemeinerung.
+
+   DIE LEITER, und warum es diese ist. Paragraph 3.2 schlaegt 2/8 · 4/16 ·
+   12/32 vor. Gemessen an den 53 Hoehenlagen laesst 2/6 · 4/16 · 8/32
+   VIERUNDZWANZIG Lagen wortgleich statt elf; y=8 ist mit 12 Lagen der
+   haeufigste Versatz im oberen Band und fehlt in der Handoff-Leiter,
+   `0 2px 6px` kommt achtmal vor. Eine vierte Stufe kauft in derselben
+   Rechnung nur +1/-1 und betraefe ein einziges Element (Entscheidung W3-D-02).
+
+   DER CONTRAST-UMRISS. Paragraph 3.2 gibt #555/#777/#aaa. #555 ist im
+   Contrast-Block bereits --border (variables.css:583) und haelt gegen die
+   vier Contrast-Flaechen nur 2,82 · 2,53 · 2,13 · 1,69 — R-02 verlangt 3.
+   Gemessen mit demselben Rechenweg wie tests/unit/helpers/wcag-contrast.js
+   ist #888 der kleinste Grauwert, der auf ALLEN vier Flaechen 3:1 haelt
+   (5,92 · 5,33 · 4,49 · 3,56); #aaa liest 9,04 · 8,13 · 6,85 · 5,44, #ccc
+   13,08 · 11,76 · 9,91 · 7,87. Getrennt werden die Stufen ueber die DICKE
+   (Spread 1/2/3px), nicht ueber die Helligkeit: #888 gegen #aaa ist 1,53,
+   das liest niemand als Hoehenunterschied (Entscheidung W3-D-01).
+
+   GELTUNGSBEREICH. Diese Ratsche urteilt ueber box-shadow in
+   assets/styles/*.css. Die 8 text-shadow-Deklarationen und das eine
+   filter: drop-shadow (dice.css:583) sind in Paragraph 3.2 ungeregelt; sie
+   werden hier GEZAEHLT, damit die Restmenge nicht lautlos waechst, aber ihre
+   FORM wird nicht vorgeschrieben. Die sechs Inline-Schatten im JavaScript
+   kommen in Schritt 8 dazu; bis dahin ist die Goldfamilie halb im CSS und
+   halb daneben, und das steht hier, damit es nicht als uebersehener Rest
+   gilt.
+   =========================================================================== */
+describe('R-19 — Schatten nur aus Tokens (Ratsche)', () => {
+    /** Zielwert. 0 von der Geburt an: was bleiben darf, steht namentlich in
+     *  AUSNAHMEN, nicht in einer Restzahl. Die gemessenen Ausgangswerte
+     *  stehen im Kopfkommentar und in den `vorher`-Feldern der Tabelle —
+     *  eine Ratsche, deren Schranke mitwandert, schuetzt nichts. */
+    const R19_ZIEL = 0;
+
+    /** Der Tokenname zu einer Stufe. Die Schublade heisst deshalb 'drawer'
+     *  und nicht 4: `--shadow-drawer` faellt in dieselbe Schreibweise, und
+     *  die Tabelle unten fuehrt sie damit in derselben Spalte. */
+    const stufenToken = stufe => `var(--shadow-${stufe})`;
+
+    /* -------------------------------------------------------------------
+       PARSER. Zeilentreu kommentarfrei, Werte ueber Zeilengrenzen, Lagen am
+       Komma auf Klammertiefe 0, und mit dem SELEKTORPFAD als Schluessel.
+       Der Pfad statt der Zeilennummer, weil Anker in diesem Repo wandern:
+       alle drei Zeilenanker des Handoffs (core.css:857, initiative.css:922,
+       dice.css:621) zeigen heute ins Leere, jedesmal mit richtigem Inhalt an
+       anderer Stelle. Die Zeilennummern der Tabelle werden trotzdem gefuehrt
+       und in einem EIGENEN Test gegen die gefundene Deklaration gehalten —
+       ein Anker ohne Wertabgleich ist in dieser Datei nichts wert.
+       ------------------------------------------------------------------- */
+
+    /** Kommentare zeilentreu leeren; withoutComments() weiter oben loescht sie
+     *  ganz und verschiebt damit jede Zeilennummer. */
+    function leerKommentare(css) {
+        let out = '';
+        let i = 0;
+        while (i < css.length) {
+            if (css[i] === '/' && css[i + 1] === '*') {
+                const e = css.indexOf('*/', i + 2);
+                const stop = e === -1 ? css.length : e + 2;
+                for (let k = i; k < stop; k++) out += css[k] === '\n' ? '\n' : ' ';
+                i = stop;
+                continue;
+            }
+            out += css[i];
+            i++;
+        }
+        return out;
+    }
+
+    /** Zerlegt einen Schattenwert an den Kommas der OBERSTEN Klammerebene.
+     *  Das Komma in `rgba(0, 0, 0, .5)` oder `color-mix(in srgb, …)` trennt
+     *  keine Lage. */
+    function lagenVon(wert) {
+        const out = [];
+        let tiefe = 0;
+        let cur = '';
+        for (const ch of wert) {
+            if (ch === '(') tiefe++;
+            else if (ch === ')') tiefe--;
+            if (ch === ',' && tiefe === 0) {
+                if (cur.trim()) out.push(cur.trim());
+                cur = '';
+            } else cur += ch;
+        }
+        if (cur.trim()) out.push(cur.trim());
+        return out;
+    }
+
+    /** Die FUEHRENDEN Laengen einer Lage (x, y, blur, spread). Abgebrochen
+     *  wird beim ersten Wort, das keine Laenge ist — danach kommt die Farbe. */
+    function laengen(lage) {
+        const nums = [];
+        for (const tok of lage
+            .replace(/\binset\b/g, ' ')
+            .trim()
+            .split(/\s+/)) {
+            if (/^-?\d*\.?\d+px$/.test(tok)) nums.push(parseFloat(tok));
+            else if (tok === '0') nums.push(0);
+            else break;
+        }
+        return nums;
+    }
+
+    /** Bauart einer Lage. Erschoepfend: jede der 86 gemessenen Lagen faellt in
+     *  genau einen dieser Faelle. */
+    function bauart(lage) {
+        if (/\binset\b/.test(lage)) return 'inset';
+        const [x = null, y = null, b = 0] = laengen(lage);
+        if (x !== null && x !== 0) return 'seitlich';
+        if (y !== null && y > 0) return 'hoehe';
+        if (x === 0 && y === 0 && b > 0) return 'gluehe';
+        return 'ring';
+    }
+
+    /** Alle Schattendeklarationen EINER Datei mit Selektorpfad und Zeile.
+     *  Klammertiefe statt Zeilenlogik; runde Klammern werden am Stueck
+     *  uebersprungen, damit ein Semikolon in color-mix() oder einem Verlauf
+     *  keine Deklaration beendet. */
+    function deklarationenVon(datei, roh) {
+        const css = leerKommentare(roh);
+        const zeilenAnfang = [0];
+        for (let i = 0; i < css.length; i++) if (css[i] === '\n') zeilenAnfang.push(i + 1);
+        const zeileVon = idx => {
+            let lo = 0;
+            let hi = zeilenAnfang.length - 1;
+            while (lo < hi) {
+                const m = (lo + hi + 1) >> 1;
+                if (zeilenAnfang[m] <= idx) lo = m;
+                else hi = m - 1;
+            }
+            return lo + 1;
+        };
+        const out = [];
+        const stapel = [];
+        let i = 0;
+        let start = -1;
+        let doppel = -1;
+        let quote = null;
+        const merke = (s, d, e) => {
+            const prop = css.slice(s, d).trim().toLowerCase();
+            const istSchattenProp = /^(-webkit-)?(box|text)-shadow$/.test(prop);
+            const istFilter = /^(-webkit-)?filter$/.test(prop);
+            if (!istSchattenProp && !istFilter) return;
+            const wert = css
+                .slice(d + 1, e)
+                .trim()
+                .replace(/\s+/g, ' ');
+            if (istFilter && !/drop-shadow/.test(wert)) return;
+            out.push({ datei, zeile: zeileVon(s), prop, wert, pfad: stapel.join(' >> ') });
+        };
+        while (i < css.length) {
+            const ch = css[i];
+            if (quote) {
+                if (ch === quote && css[i - 1] !== '\\') quote = null;
+                i++;
+                continue;
+            }
+            if (ch === '"' || ch === "'") {
+                quote = ch;
+                i++;
+                continue;
+            }
+            if (ch === '(') {
+                let k = 1;
+                i++;
+                while (i < css.length && k > 0) {
+                    if (css[i] === '(') k++;
+                    else if (css[i] === ')') k--;
+                    i++;
+                }
+                continue;
+            }
+            if (ch === '{') {
+                stapel.push(
+                    css
+                        .slice(start < 0 ? i : start, i)
+                        .trim()
+                        .replace(/\s+/g, ' ')
+                );
+                start = -1;
+                doppel = -1;
+                i++;
+                continue;
+            }
+            if (ch === '}') {
+                if (start >= 0 && doppel > start) merke(start, doppel, i);
+                stapel.pop();
+                start = -1;
+                doppel = -1;
+                i++;
+                continue;
+            }
+            if (ch === ';') {
+                if (start >= 0 && doppel > start) merke(start, doppel, i);
+                start = -1;
+                doppel = -1;
+                i++;
+                continue;
+            }
+            if (start < 0 && !/\s/.test(ch)) start = i;
+            if (ch === ':' && doppel < 0 && start >= 0) doppel = i;
+            i++;
+        }
+        return out;
+    }
+
+    const alleSchatten = cssFiles.flatMap(f => deklarationenVon(f.name, f.content));
+    const boxSchatten = alleSchatten.filter(d => /box-shadow$/.test(d.prop));
+
+    /** Jede Lage einzeln, mit ihrer Deklaration im Ruecken. */
+    function lagen() {
+        const out = [];
+        boxSchatten.forEach(d => {
+            if (/^none\b/.test(d.wert)) {
+                out.push({ ...d, lage: d.wert, art: 'none' });
+                return;
+            }
+            lagenVon(d.wert).forEach(l => out.push({ ...d, lage: l, art: bauart(l) }));
+        });
+        return out;
+    }
+
+    /* -------------------------------------------------------------------
+       DIE AUSNAHMELISTE. Geschlossen und namentlich — vierzehn Eintraege.
+       `lage` nimmt genau EINE Lage heraus, `ganze: true` die ganze
+       Deklaration. Der Unterschied ist der Kern der Korrektur an Paragraph 7:
+       dort stehen "7 inset-Schatten .read-aloud (Papieroptik)" als
+       DEKLARATIONEN. Jede dieser sieben traegt aber ZUSAETZLICH eine
+       gewoehnliche Aussenlage `0 2px 6px rgba(0,0,0,0.15)`; ganzheitlich
+       ausgenommen blieben sieben rohe Aussenschatten dauerhaft ausserhalb des
+       Tokensystems, waehrend die Ratsche gruen meldet.
+       ------------------------------------------------------------------- */
+    const AUSNAHMEN = [
+        /* (1-7) Der Papierhof des Vorlesetextes. Sieben Papiertoene, roh und
+           themenblind — sie SIND das Papier, keine Hoehenlage. Nur die
+           inset-Lage; die Aussenlage wird var(--shadow-1) (Schritt 7). */
+        {
+            datei: 'party.css',
+            zeile: 390,
+            pfad:
+                '.quest-details .read-aloud, .char-notes-content .read-aloud, ' +
+                '.loot-item-desc .read-aloud, .location-description .read-aloud, ' +
+                '.npc-list-desc .read-aloud, .wiki-detail-body .read-aloud, ' +
+                '.encounter-content .read-aloud, .spell-desc .read-aloud, ' +
+                '.rich-editor .read-aloud',
+            lage: 'inset 0 0 15px rgba(139, 69, 19, 0.08)',
+            grund: 'Papierhof Vorlesetext (Grundton)'
+        },
+        {
+            datei: 'party.css',
+            zeile: 398,
+            pfad: '.read-aloud.parchment',
+            lage: 'inset 0 0 15px rgba(139, 69, 19, 0.08)',
+            grund: 'Papierhof Vorlesetext (Pergament) — wertgleich mit dem Grundton, kein Fehler'
+        },
+        {
+            datei: 'party.css',
+            zeile: 406,
+            pfad: '.read-aloud.crimson',
+            lage: 'inset 0 0 15px rgba(153, 27, 27, 0.08)',
+            grund: 'Papierhof Vorlesetext'
+        },
+        {
+            datei: 'party.css',
+            zeile: 414,
+            pfad: '.read-aloud.violet',
+            lage: 'inset 0 0 15px rgba(109, 40, 217, 0.08)',
+            grund: 'Papierhof Vorlesetext'
+        },
+        {
+            datei: 'party.css',
+            zeile: 422,
+            pfad: '.read-aloud.sage',
+            lage: 'inset 0 0 15px rgba(4, 120, 87, 0.06)',
+            grund: 'Papierhof Vorlesetext'
+        },
+        {
+            datei: 'party.css',
+            zeile: 430,
+            pfad: '.read-aloud.sky',
+            lage: 'inset 0 0 15px rgba(3, 105, 161, 0.06)',
+            grund: 'Papierhof Vorlesetext'
+        },
+        {
+            datei: 'party.css',
+            zeile: 438,
+            pfad: '.read-aloud.slate',
+            lage: 'inset 0 0 15px rgba(71, 85, 105, 0.06)',
+            grund: 'Papierhof Vorlesetext'
+        },
+
+        /* (8-9) Die zwei weissen Glanzkanten. Paragraph 7 kennt sie nicht,
+           Welle 2 fuehrte sie unter ihren eigenen Ausnahmen — sie fielen
+           zwischen die Wellen. Sie sind THEMENBLIND (eine Lichtkante auf
+           einer Glasflaeche, in jedem Theme dieselbe) und genau deshalb bleibt
+           Teilpruefung (3) auf den Contrast-Theme-Block beschraenkt. Die
+           Deklaration beginnt bei dice.css:628 und laeuft ueber drei Zeilen;
+           die Lage selbst steht auf 630 — genau der Unterschied, an dem ein
+           zeilenbasierter grep sechs Literale verliert. */
+        {
+            datei: 'dice.css',
+            zeile: 628,
+            pfad: '.floating-dice-panel',
+            lage: '0 0 0 1px rgba(255, 255, 255, 0.05) inset',
+            grund: 'Glanzkante auf Glas, themenblind'
+        },
+        {
+            datei: 'dmscreen.css',
+            zeile: 782,
+            pfad: '.modal',
+            lage: '0 0 0 1px rgba(255, 255, 255, 0.05) inset',
+            grund: 'Glanzkante auf Glas, themenblind'
+        },
+
+        /* (10-11) Die zwei Bilder der Pulsanimation. Der Spread laeuft von 0
+           auf 8px; ein Token kann das nicht tragen. Sie konservieren
+           rgba(220,38,38) = das Rot des LIGHT-Blocks, also ein themenfremdes
+           Literal — das ist bewusst und steht hier, damit es nicht spaeter
+           als uebersehener Rest gilt. */
+        {
+            datei: 'dice.css',
+            zeile: 587,
+            pfad: '@keyframes floatingPulse >> 0%, 100%',
+            ganze: true,
+            grund: 'Pulsanimation, animierter Spread'
+        },
+        {
+            datei: 'dice.css',
+            zeile: 588,
+            pfad: '@keyframes floatingPulse >> 50%',
+            ganze: true,
+            grund: 'Pulsanimation, animierter Spread'
+        },
+
+        /* (12) Das einzige `none`. Eine Pruefung auf /^none$/ ginge am
+           !important vorbei — deshalb steht es namentlich hier UND ist die
+           Form `none` allgemein erlaubt. */
+        {
+            datei: 'encounters.css',
+            zeile: 95,
+            pfad: '#calculator-modal',
+            ganze: true,
+            grund: 'box-shadow: none !important — ausdruecklich kein Schatten'
+        },
+
+        /* (13) Das Ablageziel beim Ziehen, VOLL DECKEND. Ein einheitliches
+           --ring-gold (15 %) wuerde ausgerechnet das eine Element schwaechen,
+           das unmissverstaendlich sein muss. Es traegt bereits ein Token und
+           kein Literal. Nur die Ringlage; die zweite Lage derselben
+           Deklaration ist ein Hoehenschatten und steht in der Tabelle. */
+        {
+            datei: 'dmscreen.css',
+            zeile: 1137,
+            pfad: '[data-sortable].drag-over',
+            lage: '0 0 0 2px var(--gold)',
+            grund: 'Ablageziel beim Ziehen, volle Deckung gewollt'
+        },
+
+        /* (14) ZUGANG GEGENUEBER DER PLANLISTE, und zwar ein notwendiger.
+           Der Plan nennt zwoelf Ausnahmen und haelt im Bestand zugleich fest:
+           "3 rote Ringlagen in dice.css, davon 2 in @keyframes floatingPulse".
+           Die dritte bekam keinen Platz. Sie ist die RUHELAGE derselben
+           Animation — wortgleich mit dem 0-%-Bild von floatingPulse und nur
+           sichtbar, wenn die Animation aussetzt (prefers-reduced-motion). Die
+           beiden Bilder auszunehmen und ihren Ruhezwilling nicht, waere in
+           sich widerspruechlich: R-19 koennte dann nie gruen werden, weil
+           `0 0 0 0 rgba(…)` in keine erlaubte Form faellt und kein Token
+           diesen Wert traegt. */
+        {
+            datei: 'dice.css',
+            zeile: 564,
+            pfad: '.floating-dice-trigger',
+            lage: '0 0 0 0 rgba(220, 38, 38, 0.4)',
+            grund: 'Ruhelage der Pulsanimation, wortgleich mit dem 0-%-Bild'
+        }
+    ];
+
+    const ausnahmeSchluessel = a => `${a.datei}||${a.pfad}||${a.ganze ? '*GANZE*' : a.lage}`;
+
+    function ausnahmeZu(l) {
+        return AUSNAHMEN.find(
+            a => a.datei === l.datei && a.pfad === l.pfad && (a.ganze ? true : a.lage === l.lage)
+        );
+    }
+
+    /* -------------------------------------------------------------------
+       DIE ORT -> STUFE-TABELLE. 52 Eintraege: 51 Hoehenlagen (53 gemessen,
+       minus die 2 in @keyframes, die als ganze Deklaration ausgenommen sind)
+       und die eine seitliche Lage der Schublade.
+
+       GEBILDET AUS DER MESSUNG, nicht aus dem Ergebnis: Stufe = naechster
+       Weichzeichnungsradius zu 6 / 16 / 32. Gleichstand tritt genau bei 24px
+       ein (8 zu 16 wie 8 zu 32) und wird nach OBEN aufgeloest — das haelt den
+       y-Versatz und laesst die Lage um 1,33x wachsen, statt sie um 0,67x
+       schrumpfen zu lassen.
+
+       22 der 52 Eintraege sind geometrisch WORTGLEICH mit ihrer Stufe (mit
+       den zwei ausgenommenen @keyframes-Lagen sind es 24 von 53).
+
+       EINE EINZIGE ABWEICHUNG VON DER RADIUSREGEL, und sie ist benannt:
+       core.css:840 `.offline-indicator` hat Radius 10 und laege nach der
+       Regel auf Stufe 1. Schritt 2 des Plans weist sie ausdruecklich Stufe 2
+       zu — die Leiste ist `position: fixed`, also eine frei schwebende
+       Auflage und keine angehobene Flaeche, und sie wird in derselben
+       Bewegung von var(--shadow) geloest. Sichtfolge beziffert:
+       Weichzeichnung 10 -> 16 px (Faktor 1,6), y 2 -> 4 px, Deckung Dark
+       0,50 -> 0,45. Nach der Radiusregel waere es 10 -> 6 px (Faktor 0,6) bei
+       gleichem y. Die Stelle steht deswegen auf der Sichtprobenliste.
+
+       `vorher` ist der GEMESSENE Ausgangswert an HEAD 03274fa. Er wird nicht
+       zugesichert — nach der Umsetzung steht dort ein Token — sondern in die
+       Fehlermeldung gehoben, damit sichtbar bleibt, woher die Stufe kommt.
+       ------------------------------------------------------------------- */
+    const ORT_ZU_STUFE = [
+        { datei: 'command-palette.css', zeile: 32, stufe: 3,
+          pfad: '.cp-box',
+          vorher: '0 16px 48px rgba(0, 0, 0, 0.6)' },
+        { datei: 'core.css', zeile: 146, stufe: 3,
+          pfad: '#quicknotes-modal .modal',
+          vorher: '0 8px 32px rgba(0, 0, 0, 0.6)' },
+        { datei: 'core.css', zeile: 390, stufe: 3,
+          pfad: '.nav-group-menu',
+          vorher: '0 8px 24px rgba(0,0,0,0.45)' },
+        { datei: 'core.css', zeile: 840, stufe: 2,
+          pfad: '.offline-indicator',
+          vorher: '0 2px 10px var(--shadow)' },
+        { datei: 'core.css', zeile: 1348, stufe: 1,
+          pfad: '.char-tag.clickable:hover',
+          vorher: '0 2px 6px rgba(0,0,0,0.3)' },
+        { datei: 'core.css', zeile: 1427, stufe: 3,
+          pfad: '.spell-tooltip',
+          vorher: '0 8px 24px rgba(0,0,0,0.5)' },
+        { datei: 'dashboard.css', zeile: 784, stufe: 2,
+          pfad: '.conflict-banner',
+          vorher: '0 4px 12px rgba(0,0,0,0.3)' },
+        { datei: 'dashboard.css', zeile: 867, stufe: 2,
+          pfad: '.dash-char:hover',
+          vorher: '0 4px 12px rgba(0,0,0,0.3)' },
+        { datei: 'dashboard.css', zeile: 1174, stufe: 2,
+          pfad: '.qref-fab',
+          vorher: '0 4px 12px rgba(0,0,0,0.4)' },
+        { datei: 'dashboard.css', zeile: 1181, stufe: 2,
+          pfad: '.qref-fab:hover',
+          vorher: '0 6px 20px rgba(212,175,55,0.4)' },
+        { datei: 'dashboard.css', zeile: 1198, stufe: 3,
+          pfad: '.qref-panel',
+          vorher: '0 8px 32px rgba(0,0,0,0.5)' },
+        { datei: 'dice.css', zeile: 79, stufe: 2,
+          pfad: '.dice-die:hover',
+          vorher: '0 4px 16px rgba(0,0,0,0.3)' },
+        { datei: 'dice.css', zeile: 564, stufe: 2,
+          pfad: '.floating-dice-trigger',
+          vorher: '0 4px 16px rgba(220, 38, 38, 0.4)' },
+        { datei: 'dice.css', zeile: 573, stufe: 3,
+          pfad: '.floating-dice-trigger:hover',
+          vorher: '0 6px 24px rgba(220, 38, 38, 0.5)' },
+        { datei: 'dice.css', zeile: 628, stufe: 3,
+          pfad: '.floating-dice-panel',
+          vorher: '0 8px 32px rgba(0, 0, 0, 0.5)' },
+        { datei: 'dmscreen.css', zeile: 50, stufe: 3,
+          pfad: '.global-search-results',
+          vorher: '0 8px 24px rgba(0,0,0,0.4)' },
+        { datei: 'dmscreen.css', zeile: 263, stufe: 2,
+          pfad: '.condition-tooltip',
+          vorher: '0 4px 12px rgba(0,0,0,0.3)' },
+        { datei: 'dmscreen.css', zeile: 782, stufe: 3,
+          pfad: '.modal',
+          vorher: '0 8px 32px rgba(0, 0, 0, 0.4)' },
+        { datei: 'dmscreen.css', zeile: 815, stufe: 3,
+          pfad: '.dragging',
+          vorher: '0 8px 24px rgba(212, 175, 55, 0.3)' },
+        { datei: 'dmscreen.css', zeile: 872, stufe: 2,
+          pfad: '.export-dropdown-content',
+          vorher: '0 4px 12px rgba(0,0,0,0.3)' },
+        { datei: 'dmscreen.css', zeile: 953, stufe: 1,
+          pfad: '[data-tooltip]::after',
+          vorher: '0 2px 8px rgba(0,0,0,0.3)' },
+        { datei: 'dmscreen.css', zeile: 977, stufe: 2,
+          pfad: '.char-card:hover, .npc-card:hover, .location-card:hover, .encounter-card:hover, .spell-card:hover',
+          vorher: '0 4px 16px rgba(0, 0, 0, 0.25)' },
+        { datei: 'dmscreen.css', zeile: 1131, stufe: 2,
+          pfad: '[data-sortable].dragging',
+          vorher: '0 8px 20px rgba(0, 0, 0, 0.3)' },
+        { datei: 'dmscreen.css', zeile: 1137, stufe: 2,
+          pfad: '[data-sortable].drag-over',
+          vorher: '0 4px 12px rgba(212, 175, 55, 0.3)' },
+        { datei: 'dmscreen.css', zeile: 2183, stufe: 3,
+          pfad: '.dms-config-dropdown',
+          vorher: '0 8px 32px rgba(0,0,0,0.4)' },
+        { datei: 'dmscreen.css', zeile: 2436, stufe: 3,
+          pfad: '.dmscreen-widget.dragging',
+          vorher: '0 8px 32px rgba(0,0,0,0.3)' },
+        { datei: 'editors.css', zeile: 192, stufe: 3,
+          pfad: '.editor-toolbar .tb-menu',
+          vorher: '0 14px 34px rgba(0, 0, 0, 0.65)' },
+        { datei: 'editors.css', zeile: 337, stufe: 2,
+          pfad: '.editor-block-handle',
+          vorher: '0 4px 16px rgba(0, 0, 0, 0.4)' },
+        { datei: 'encounters.css', zeile: 110, stufe: 3,
+          pfad: '#calculator-modal .modal-content',
+          vorher: '0 20px 60px rgba(0, 0, 0, 0.5)' },
+        { datei: 'encounters.css', zeile: 577, stufe: 1,
+          pfad: '#calc-budget-slider::-webkit-slider-thumb',
+          vorher: '0 2px 4px rgba(0,0,0,0.3)' },
+        { datei: 'encounters.css', zeile: 587, stufe: 1,
+          pfad: '#calc-budget-slider::-moz-range-thumb',
+          vorher: '0 2px 4px rgba(0,0,0,0.3)' },
+        { datei: 'encounters.css', zeile: 645, stufe: 2,
+          pfad: '.calc-favorites-dropdown',
+          vorher: '0 4px 12px rgba(0,0,0,0.3)' },
+        { datei: 'encounters.css', zeile: 1377, stufe: 2,
+          pfad: '.enc-lang-dropdown',
+          vorher: '0 4px 12px rgba(0,0,0,0.3)' },
+        { datei: 'initiative.css', zeile: 1055, stufe: 'drawer',
+          pfad: '.init-statblock-content',
+          vorher: '-4px 0 24px rgba(0, 0, 0, 0.5)' },
+        { datei: 'loot.css', zeile: 313, stufe: 1,
+          pfad: '.shop-cat-badge.active',
+          vorher: '0 2px 4px rgba(212, 175, 55, 0.3)' },
+        { datei: 'loot.css', zeile: 353, stufe: 1,
+          pfad: '.shop-sort-btn.active',
+          vorher: '0 2px 4px rgba(212, 175, 55, 0.3)' },
+        { datei: 'npcs.css', zeile: 934, stufe: 3,
+          pfad: '.npc-popup',
+          vorher: '0 8px 32px rgba(0,0,0,0.4)' },
+        { datei: 'npcs.css', zeile: 1063, stufe: 1,
+          pfad: '.npc-list-tag.clickable:hover',
+          vorher: '0 2px 8px rgba(0,0,0,0.3)' },
+        { datei: 'party.css', zeile: 390, stufe: 1,
+          pfad: '.quest-details .read-aloud, .char-notes-content .read-aloud, .loot-item-desc .read-aloud, .location-description .read-aloud, .npc-list-desc .read-aloud, .wiki-detail-body .read-aloud, .encounter-content .read-aloud, .spell-desc .read-aloud, .rich-editor .read-aloud',
+          vorher: '0 2px 6px rgba(0,0,0,0.15)' },
+        { datei: 'party.css', zeile: 398, stufe: 1,
+          pfad: '.read-aloud.parchment',
+          vorher: '0 2px 6px rgba(0,0,0,0.15)' },
+        { datei: 'party.css', zeile: 406, stufe: 1,
+          pfad: '.read-aloud.crimson',
+          vorher: '0 2px 6px rgba(0,0,0,0.15)' },
+        { datei: 'party.css', zeile: 414, stufe: 1,
+          pfad: '.read-aloud.violet',
+          vorher: '0 2px 6px rgba(0,0,0,0.15)' },
+        { datei: 'party.css', zeile: 422, stufe: 1,
+          pfad: '.read-aloud.sage',
+          vorher: '0 2px 6px rgba(0,0,0,0.15)' },
+        { datei: 'party.css', zeile: 430, stufe: 1,
+          pfad: '.read-aloud.sky',
+          vorher: '0 2px 6px rgba(0,0,0,0.15)' },
+        { datei: 'party.css', zeile: 438, stufe: 1,
+          pfad: '.read-aloud.slate',
+          vorher: '0 2px 6px rgba(0,0,0,0.15)' },
+        { datei: 'party.css', zeile: 609, stufe: 2,
+          pfad: '.event-log-entry',
+          vorher: '0 4px 16px rgba(0, 0, 0, 0.4)' },
+        { datei: 'party.css', zeile: 1674, stufe: 2,
+          pfad: '.cf-languages-block .cf-lang-dropdown',
+          vorher: '0 4px 12px rgba(0, 0, 0, 0.4)' },
+        { datei: 'spells.css', zeile: 446, stufe: 2,
+          pfad: '.floating-toolbar',
+          vorher: '0 4px 20px rgba(0, 0, 0, 0.5)' },
+        { datei: 'spells.css', zeile: 535, stufe: 2,
+          pfad: '.table-context-toolbar',
+          vorher: '0 4px 16px rgba(0, 0, 0, 0.4)' },
+        { datei: 'spells.css', zeile: 573, stufe: 2,
+          pfad: '.link-context-toolbar',
+          vorher: '0 4px 16px rgba(0, 0, 0, 0.4)' },
+        { datei: 'tools.css', zeile: 1180, stufe: 3,
+          pfad: '.wiki-search-dropdown',
+          vorher: '0 10px 30px rgba(0,0,0,0.4)' },
+        { datei: 'tools.css', zeile: 1359, stufe: 2,
+          pfad: '.wiki-link-suggester',
+          vorher: '0 4px 20px rgba(0,0,0,0.4)' }
+    ];
+
+    const stufenSchluessel = e => `${e.datei}||${e.pfad}`;
+
+    /** Die Lagen, ueber die Teil (2) urteilt: Hoehe und die eine seitliche,
+     *  ohne die ausgenommenen. */
+    function tabellenLagen() {
+        return lagen().filter(l => (l.art === 'hoehe' || l.art === 'seitlich') && !ausnahmeZu(l));
+    }
+
+    /* -------------------------------------------------------------------
+       TEIL (2) — der Kern. Zuerst, weil alles andere ihn nur einrahmt.
+       ------------------------------------------------------------------- */
+    test('jede Hoehenlage steht in der Ort->Stufe-Tabelle und traegt ihre Stufe', () => {
+        const offen = [];
+        const getroffen = new Map();
+        tabellenLagen().forEach(l => {
+            const e = ORT_ZU_STUFE.find(x => x.datei === l.datei && x.pfad === l.pfad);
+            if (!e) {
+                offen.push(
+                    `${l.datei}:${l.zeile} {${l.pfad}} — Hoehenlage OHNE Eintrag in der ` +
+                        `Ort->Stufe-Tabelle: "${l.lage}"`
+                );
+                return;
+            }
+            const k = stufenSchluessel(e);
+            getroffen.set(k, (getroffen.get(k) || 0) + 1);
+            const soll = stufenToken(e.stufe);
+            if (l.lage !== soll) {
+                offen.push(
+                    `${l.datei}:${l.zeile} {${l.pfad}} — traegt "${l.lage}", Tabelle sagt ` +
+                        `Stufe ${e.stufe} = ${soll} (gemessener Ausgangswert: "${e.vorher}")`
+                );
+            }
+        });
+        ORT_ZU_STUFE.forEach(e => {
+            const ist = getroffen.get(stufenSchluessel(e)) || 0;
+            if (ist !== 1) {
+                offen.push(
+                    `TABELLE ${e.datei} {${e.pfad}} — ${ist}x getroffen, erwartet genau 1x ` +
+                        `(Ausgangswert "${e.vorher}")`
+                );
+            }
+        });
+
+        /* Die Stichprobe haelt die Fehlerausgabe lesbar, solange die Ratsche
+           rot ist: die Zahl ist die Aussage, zwoelf Stellen zeigen die Art. */
+        expect({ anzahl: offen.length, stichprobe: offen.slice(0, 12) }).toEqual({
+            anzahl: R19_ZIEL,
+            stichprobe: []
+        });
+    });
+
+    /* -------------------------------------------------------------------
+       TEIL (1) — Form. Ohne Teil (2) waere sie auch dann gruen, wenn jede
+       Stelle auf derselben Stufe landete.
+       ------------------------------------------------------------------- */
+    test('jede Lage jeder box-shadow-Deklaration hat eine erlaubte Form', () => {
+        const ERLAUBT = [
+            /^var\(--shadow-[123]\)$/,
+            /^var\(--shadow-drawer\)$/,
+            /^var\(--ring-gold\)$/,
+            /^0 0 \d+px var\(--glow-(gold|yellow|green|red)\)$/,
+            /^none(\s+!important)?$/
+        ];
+        const offen = [];
+        lagen().forEach(l => {
+            if (ausnahmeZu(l)) return;
+            if (ERLAUBT.some(re => re.test(l.lage))) return;
+            offen.push(`${l.datei}:${l.zeile} {${l.pfad}} [${l.art}] "${l.lage}"`);
+        });
+        expect({ anzahl: offen.length, stichprobe: offen.slice(0, 12) }).toEqual({
+            anzahl: R19_ZIEL,
+            stichprobe: []
+        });
+    });
+
+    /* -------------------------------------------------------------------
+       TEIL (3) — Contrast ohne Weiss. AUSDRUECKLICH auf den Theme-Block
+       beschraenkt. Ein Lauf ueber den ganzen Baum schluege an den zwei
+       themenblinden Glanzkanten an, die mit Contrast nichts zu tun haben.
+       ------------------------------------------------------------------- */
+    test('kein Schattentoken des Contrast-Blocks traegt 255,255,255', () => {
+        const roh = cssFiles.find(f => f.name === 'variables.css').content;
+        const css = leerKommentare(roh);
+        const anf = css.indexOf('[data-theme="contrast"]');
+        expect(anf).toBeGreaterThan(-1);
+        const auf = css.indexOf('{', anf);
+        let tiefe = 1;
+        let j = auf + 1;
+        while (j < css.length && tiefe) {
+            if (css[j] === '{') tiefe++;
+            else if (css[j] === '}') tiefe--;
+            j++;
+        }
+        const rumpf = css.slice(auf + 1, j - 1);
+
+        const SCHATTENTOKEN = /^--(shadow|ring|glow)(-|$)/;
+        const WEISS = /255\s*,\s*255\s*,\s*255/;
+        const offen = [];
+        for (const d of rumpf.matchAll(/(--[\w-]+)\s*:\s*([^;]+);/g)) {
+            if (!SCHATTENTOKEN.test(d[1])) continue;
+            if (WEISS.test(d[2])) offen.push(`${d[1]}: ${d[2].trim()}`);
+        }
+        expect(offen).toEqual([]);
+
+        /* Gegenprobe gegen eine gruene, leere Ratsche: der Block MUSS
+           ueberhaupt Schattentokens fuehren. Faellt die Klammersuche
+           auseinander oder wird der Tokensatz umbenannt, waere die Pruefung
+           oben sonst trivial erfuellt. Die vier sind --shadow-1/-2/-3 und
+           --shadow-drawer; --ring-gold kommt als fuenftes dazu. */
+        const gefuehrt = [...rumpf.matchAll(/(--[\w-]+)\s*:/g)]
+            .map(m => m[1])
+            .filter(n => SCHATTENTOKEN.test(n));
+        expect(gefuehrt.length).toBeGreaterThanOrEqual(4);
+    });
+
+    /* -------------------------------------------------------------------
+       TEIL (4) — die Ausnahmeliste ist geschlossen. Eine Ausnahme, die ins
+       Leere zeigt, ist Altlast; eine, die zweimal greift, ist eine
+       stillschweigende Verallgemeinerung.
+       ------------------------------------------------------------------- */
+    test('jede Ausnahme wird genau einmal getroffen', () => {
+        const gezaehlt = new Map();
+        lagen().forEach(l => {
+            const a = ausnahmeZu(l);
+            if (!a) return;
+            const k = ausnahmeSchluessel(a);
+            gezaehlt.set(k, (gezaehlt.get(k) || 0) + 1);
+        });
+        const offen = [];
+        AUSNAHMEN.forEach(a => {
+            const k = ausnahmeSchluessel(a);
+            const ist = gezaehlt.get(k) || 0;
+            /* Eine `ganze`-Ausnahme deckt eine Deklaration ab; die zwei
+               @keyframes-Bilder tragen je ZWEI Lagen, das eine `none` genau
+               eine. Deshalb wird die Lagenzahl je Eintrag mitgefuehrt. */
+            const soll = a.ganze ? (a.pfad.startsWith('@keyframes') ? 2 : 1) : 1;
+            if (ist !== soll) {
+                offen.push(
+                    `AUSNAHME ${a.datei}:${a.zeile} {${a.pfad}} — ${ist} Lage(n) getroffen, ` +
+                        `erwartet ${soll} (${a.grund})`
+                );
+            }
+        });
+        expect(offen.sort()).toEqual([]);
+        expect(AUSNAHMEN.length).toBe(14);
+    });
+
+    /* -------------------------------------------------------------------
+       DIE ANKER. Kein Zeilenanker in dieser Datei ohne Wertabgleich: jede
+       Zeilennummer der Tabelle und der Ausnahmeliste wird gegen die
+       Deklaration gehalten, die der Selektorpfad findet. Wandert eine Zeile,
+       geht dieser Test rot und sagt die neue Nummer — er blockiert nicht
+       stillschweigend die Urteilsmenge.
+       ------------------------------------------------------------------- */
+    test('jede Zeilennummer der Tabelle trifft ihre Deklaration', () => {
+        const offen = [];
+        const wo = new Map();
+        boxSchatten.forEach(d => wo.set(`${d.datei}||${d.pfad}`, d.zeile));
+        ORT_ZU_STUFE.forEach(e => {
+            const ist = wo.get(stufenSchluessel(e));
+            if (ist === undefined) {
+                offen.push(`${e.datei} {${e.pfad}} — keine box-shadow-Deklaration gefunden`);
+            } else if (ist !== e.zeile) {
+                offen.push(`${e.datei} {${e.pfad}} — Anker ${e.zeile}, gefunden ${ist}`);
+            }
+        });
+        AUSNAHMEN.forEach(a => {
+            const ist = wo.get(`${a.datei}||${a.pfad}`);
+            if (ist === undefined) {
+                offen.push(`AUSNAHME ${a.datei} {${a.pfad}} — keine Deklaration gefunden`);
+            } else if (ist !== a.zeile) {
+                offen.push(`AUSNAHME ${a.datei} {${a.pfad}} — Anker ${a.zeile}, gefunden ${ist}`);
+            }
+        });
+        expect(offen.sort()).toEqual([]);
+    });
+
+    /* -------------------------------------------------------------------
+       INVENTAR. Nicht Gegenstand der Formpruefung, aber gezaehlt — damit die
+       Restmenge nicht lautlos waechst. Paragraph 3.2 regelt text-shadow und
+       filter: drop-shadow nicht; wenn Schritt 5 sie mitnimmt, bleibt die Zahl
+       gleich und dieser Test gruen. Waechst sie, ist eine neue ungeregelte
+       Stelle entstanden.
+       ------------------------------------------------------------------- */
+    test('der Bestand ist der gemessene: 71 box-shadow, 8 text-shadow, 1 drop-shadow', () => {
+        const zahl = prop => alleSchatten.filter(d => prop.test(d.prop)).length;
+        expect({
+            box: zahl(/box-shadow$/),
+            text: zahl(/text-shadow$/),
+            drop: zahl(/filter$/),
+            lagen: lagen().length
+        }).toEqual({ box: 71, text: 8, drop: 1, lagen: 86 });
+    });
+
+    /* -------------------------------------------------------------------
+       SELBSTPROBE DER ZERLEGUNG, nicht ihres Ergebnisses. Ein zeilenbasierter
+       grep zaehlt in diesem Bestand 72 statt 78 Literale, weil mehrlagige
+       Werte ueber Zeilengrenzen laufen. Faellt die Zerlegung auf dieselbe
+       Schwaeche zurueck, waere R-19 gruen und zu klein — und das faellt bei
+       keinem Zaehllauf auf, sondern erst beim Rueckfall, den sie verhindern
+       soll, und dann nicht mehr.
+       ------------------------------------------------------------------- */
+    test('lagenVon() trennt am Komma der obersten Klammerebene, nicht an der Zeile', () => {
+        expect(lagenVon('0 2px 6px rgba(0, 0, 0, 0.3)')).toEqual(['0 2px 6px rgba(0, 0, 0, 0.3)']);
+        expect(lagenVon('0 8px 32px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.05) inset')).toEqual([
+            '0 8px 32px rgba(0,0,0,0.5)',
+            '0 0 0 1px rgba(255,255,255,0.05) inset'
+        ]);
+        expect(lagenVon('0 0 0 2px color-mix(in srgb, var(--gold) 15%, transparent)')).toEqual([
+            '0 0 0 2px color-mix(in srgb, var(--gold) 15%, transparent)'
+        ]);
+        expect(bauart('-4px 0 24px rgba(0, 0, 0, 0.5)')).toBe('seitlich');
+        expect(bauart('0 0 20px rgba(220, 38, 38, 0.3)')).toBe('gluehe');
+        expect(bauart('0 0 0 3px rgba(212, 175, 55, 0.1)')).toBe('ring');
+        expect(bauart('inset 0 0 15px rgba(139, 69, 19, 0.08)')).toBe('inset');
+        expect(bauart('0 4px 16px rgba(0, 0, 0, 0.4)')).toBe('hoehe');
+
+        /* Der Fall, an dem der zeilenbasierte grep scheitert: eine
+           Deklaration, deren zweite Lage auf einer anderen Zeile steht. Der
+           Parser muss BEIDE sehen und die Deklaration auf ihrer Anfangszeile
+           verankern. */
+        const probe = deklarationenVon(
+            'probe.css',
+            '.a {\n    box-shadow:\n        0 8px 32px rgba(0, 0, 0, 0.5),\n' +
+                '        0 0 0 1px rgba(255, 255, 255, 0.05) inset;\n}\n'
+        );
+        expect(probe.length).toBe(1);
+        expect(probe[0].zeile).toBe(2);
+        expect(lagenVon(probe[0].wert).length).toBe(2);
+        expect(probe[0].pfad).toBe('.a');
+
+        /* Und der Pfad einer verschachtelten At-Regel, damit die zwei
+           @keyframes-Ausnahmen ihren Schluessel behalten. */
+        const kf = deklarationenVon(
+            'probe.css',
+            '@keyframes p {\n    0%, 100% { box-shadow: 0 0 0 0 rgba(1,2,3,0.4); }\n}\n'
+        );
+        expect(kf.length).toBe(1);
+        expect(kf[0].pfad).toBe('@keyframes p >> 0%, 100%');
+    });
+});
