@@ -4582,3 +4582,211 @@ describe('R-14 — Toenung im Elter, Tinte im Kind (Ratsche)', () => {
         expect(befunde.sort()).toEqual([]);
     });
 });
+
+/* ===========================================================================
+   Design-Handoff v3, Welle 2 — R-15: die sechs Attributfarben bleiben
+   unterscheidbar (Ratsche zu D-6)
+   ===========================================================================
+   ZUR NUMMER. Der Plan zu Schritt 9 nennt sie "R-11". Diese Nummer ist seit
+   Schritt 7 mit "Toenungsflaechen werden gemessen" belegt, und die Vergabe
+   steht sogar im Kopf von R-12 als Reservierung, die dann anders eingeloest
+   wurde. Wer dem Plan woertlich folgt, ueberschreibt eine gruene Ratsche.
+   Dieselbe Verwechslung ist schon in Schritt 1 passiert (der Handoff nannte
+   R-10 "R-03"). Die naechste freie Nummer ist R-15, und die hier heisst so.
+
+   WORUEBER SIE URTEILT. Entscheidung D-6 sagt, die sechs Attributfarben
+   muessen unterscheidbar BLEIBEN, und misst das am kleinsten Abstand zweier
+   benachbarter Farbtoene. Bis hierher gab es dazu nichts: null Treffer in
+   tests/, und der Kontrastrechner hatte gar keine Farbtonfunktion. D-6 war
+   damit eine Absichtserklaerung, keine Schranke.
+
+   DER BODEN IST GEMESSEN, NICHT ZITIERT. D-6 spricht von "30 Grad". Das ist
+   eine Rundung: am Ausgangsbestand vor Welle 1 (ca85d1b, identisch mit der
+   Wellenbasis 6ea67ed) betraegt der kleinste Nachbarabstand
+
+       dark 29,63 · light 29,63 · sepia 30,67 · contrast 29,63
+
+   Eine woertliche Schranke ">= 30" waere also am Ausgangsbestand in DREI von
+   vier Themes rot gewesen — sie haette nicht die Verschlechterung gemeldet,
+   gegen die sie steht, sondern den Zustand, den sie schuetzen soll. Der Boden
+   ist deshalb je Theme der dort gemessene Wert.
+
+   SPIELRAUM AN HEAD, und warum das die eigentliche Nachricht ist:
+
+       dark 29,63 (0,00) · light 29,74 (+0,11) · sepia 30,85 (+0,18)
+       contrast 29,63 (0,00)
+
+   In Dark und Contrast liegt der heutige Wert EXAKT auf dem Boden. Jede
+   kuenftige Verschiebung nach unten schlaegt sofort an. Das ist gewollt: der
+   Vergleich ist einseitig (eine groessere Luecke faellt nicht durch) und ohne
+   Toleranz.
+
+   WER ROT ANFASST, BEWEGT DIESE RATSCHE MIT. Das Token der Staerke ist in
+   KEINEM Theme ein eigener Wert: dark und contrast fuehren die Rot-Rolle,
+   light und sepia deren Textvariante. Das Minimum ist in jedem Theme der
+   Umbruch CHA -> STR, haengt also unmittelbar an Rot. Bei festgehaltenen
+   fuenf anderen Toenen ist das erlaubte STR-Farbtonfenster (in
+   0,1-Grad-Schritten gerechnet) dark/light/contrast 0,0-8,0 Grad und sepia
+   0,7-6,8 Grad — heutiger Sepia-Wert 0,85, also 0,15 Grad Luft nach unten.
+
+   EMPFINDLICHKEIT GEGEN HEX-RUNDUNG: plus/minus 1 in einem Kanal verschiebt
+   den Abstand um bis zu 0,65 Grad (light dex). Wer die Light-/Sepia-Werte
+   kuenftig per Faktor neu herleitet, braucht dafuer 0,7 Grad Toleranz — und
+   senkt damit den wirksamen Boden auf 28,9. Das ist eine Entscheidung, keine
+   Formsache, und sie gehoert dann hierher.
+
+   VIER BEFUNDARTEN, nicht nur die Zahl:
+     (1) der kleinste Nachbarabstand liegt unter dem Boden;
+     (2) ein Attributtoken ist in einem Theme nicht aufloesbar (Alias ins
+         Leere, Tippfehler). R-01 prueft nur die NAMENsmenge, nicht den Wert;
+     (3) Saettigung 0 — der Farbton ist dann undefiniert. Die Ratsche scheitert
+         HART, statt die Farbe als 0 Grad zu fuehren, wo sie zufaellig mit der
+         Staerke kollidierte und minNb 0 statt einer sprechenden Meldung
+         ergaebe;
+     (4) Leerlaufschutz wie bei R-09: sechs Attribute, vier Themes. Eine
+         Schleife ueber eine leer gewordene Menge ist gruen und prueft nichts.
+
+   SIE IST BEI IHRER GEBURT GRUEN, und das ist kein Versehen — Schritt 9
+   aendert an den Attributfarben NICHTS (Entscheidung E3 geht ueber die
+   Hover-Flaeche, nicht ueber die Toene, und D-5 hat Dark/Contrast
+   eingefroren). Ihr Rotlauf ist deshalb eine Mutationsprobe, kein
+   Ausgangsbestand. Drei Proben, ausgefuehrt und zurueckgenommen:
+
+     - das Token der Ausstrahlung in variables.css von #ec4899 auf #f0448f
+       gerueckt (Farbton 330,37 -> 333,84, also 3,47 Grad naeher an die
+       Staerke) meldet "dark: minNb 26,16 < 29,63 — die Attributfarben
+       ruecken zusammen" samt der sortierten Farbtonreihe;
+     - das Token der Weisheit auf #808080 gesetzt meldet die Graustufe als
+       eigenen, sprechenden Befund UND laesst den Rechner werfen — beides,
+       weil die Ratsche gar nicht erst zu einer Zahl kommen soll;
+     - ein Verweis ins Leere meldet "loest zu keinem Farbwert auf".
+
+   NEBENSATZ AUS D-6, DER FALSCH IST und deshalb hier steht statt umgesetzt zu
+   werden: D-6 verlangt fuer die Konstitution eine eigene Regel in der
+   Schnellreferenz. Dort gibt es gar keine KON-Zelle — das Markup
+   (assets/templates/modals-editors.html) fuehrt sieben Beispielzeilen mit
+   STR, DEX, DEX, INT, WIS, WIS, CHA. Eine .attr-con-Regel waere toter
+   Buchstabe; R-08 bindet Markup und Regel ohnehin aneinander und meldete die
+   fehlende Regel selbst, sobald jemand eine KON-Zeile schreibt. Der Nebensatz
+   ist damit erledigt, nicht offen. Das Konstitutionstoken ist trotzdem Teil
+   dieser Ratsche: es traegt in den beiden DM-Screen-Widgets.
+   =========================================================================== */
+describe('R-15 — die sechs Attributfarben bleiben unterscheidbar (Ratsche zu D-6)', () => {
+    /** Die sechs Attribute in der Reihenfolge von variables.css. Die Namen
+     *  sind ausserdem an anderer Stelle eingefroren (F-18 verlangt die
+     *  Schreibweise woertlich), ein umbenanntes Token faellt also doppelt
+     *  auf. */
+    const ATTRIBUTE = [
+        '--attr-str',
+        '--attr-dex',
+        '--attr-con',
+        '--attr-int',
+        '--attr-wis',
+        '--attr-cha'
+    ];
+
+    /** Der am Ausgangsbestand ca85d1b gemessene kleinste Nachbarabstand je
+     *  Theme. Vergleich `>=`, auf zwei Nachkommastellen, einseitig, ohne
+     *  Toleranz. Befehl:
+     *    git show ca85d1b:assets/styles/variables.css > <datei>
+     *  Dort stehen die sechs Toene in EINEM Aliasblock statt je Theme —
+     *  deshalb sind dark, light und contrast dort zahlengleich. */
+    const BODEN = { dark: 29.63, light: 29.63, sepia: 30.67, contrast: 29.63 };
+
+    test('der kleinste Farbtonabstand der Attributfarben sinkt in keinem Theme', () => {
+        // Gegenproben zuerst: ohne sie prueften die Schleifen ueber Leerlauf.
+        expect(ATTRIBUTE.length).toBe(6);
+        expect(WCAG.THEMES.length).toBe(4);
+        expect(Object.keys(BODEN).sort()).toEqual([...WCAG.THEMES].sort());
+
+        const pals = WCAG.palettes();
+        const alias = aliasSchicht();
+        const befunde = [];
+
+        WCAG.THEMES.forEach(theme => {
+            const p = { ...pals[theme], ...alias };
+
+            // (2) Aufloesbarkeit. R-01 prueft die Namensmenge, nicht den Wert.
+            const werte = {};
+            let unaufloesbar = false;
+            ATTRIBUTE.forEach(token => {
+                if (!(token in p)) {
+                    befunde.push(`${theme}: ${token} ist im Theme-Block nicht deklariert`);
+                    unaufloesbar = true;
+                    return;
+                }
+                const hex = WCAG.resolve(p[token], p);
+                if (!hex) {
+                    befunde.push(
+                        `${theme}: ${token} = ${p[token]} loest zu keinem Farbwert auf — ` +
+                            `ein Verweis ins Leere oder ein Tippfehler im Tokennamen`
+                    );
+                    unaufloesbar = true;
+                    return;
+                }
+                werte[token] = hex;
+            });
+            if (unaufloesbar) return;
+
+            // (3) Saettigung 0. Hart scheitern statt als 0 Grad fuehren.
+            const grau = ATTRIBUTE.filter(t => WCAG.hue(werte[t]) === null);
+            if (grau.length) {
+                grau.forEach(t =>
+                    befunde.push(
+                        `${theme}: ${t} = ${werte[t]} ist eine Graustufe, ihr Farbton ist ` +
+                            `undefiniert. Als 0 Grad gefuehrt kollidierte sie zufaellig mit ` +
+                            `der Staerke und ergaebe einen Nachbarabstand von 0`
+                    )
+                );
+                return;
+            }
+
+            // (1) Die eigentliche Schranke.
+            const ist = WCAG.minNachbarabstand2(ATTRIBUTE.map(t => werte[t]));
+            if (ist < BODEN[theme]) {
+                const reihe = ATTRIBUTE.map(t => ({ t, h: WCAG.hue(werte[t]) }))
+                    .sort((a, b) => a.h - b.h)
+                    .map(x => `${x.t.slice(7)} ${x.h.toFixed(2)}`)
+                    .join(' · ');
+                befunde.push(
+                    `${theme}: minNb ${ist} < ${BODEN[theme]} — die Attributfarben ruecken ` +
+                        `zusammen. Farbtoene sortiert: ${reihe}`
+                );
+            }
+        });
+
+        expect(befunde.sort()).toEqual([]);
+    });
+
+    test('der heutige Stand steht als Zahl da, nicht nur als "haelt"', () => {
+        // Eine Ratsche, die nur "gruen" sagt, verschweigt, wieviel Luft sie
+        // hat. In Dark und Contrast ist es null.
+        const pals = WCAG.palettes();
+        const alias = aliasSchicht();
+        const ist = {};
+        WCAG.THEMES.forEach(theme => {
+            const p = { ...pals[theme], ...alias };
+            ist[theme] = WCAG.minNachbarabstand2(ATTRIBUTE.map(t => WCAG.resolve(p[t], p)));
+        });
+        expect(ist).toEqual({ dark: 29.63, light: 29.74, sepia: 30.85, contrast: 29.63 });
+    });
+
+    test('die Staerke haengt an der Rot-Rolle, und das darf nicht unbemerkt wegfallen', () => {
+        /* Der Boden dieser Ratsche haengt am Farbton der Staerke (das Minimum
+           ist in jedem Theme der Umbruch CHA -> STR). Sie ist in keinem Theme
+           ein eigener Wert. Wird diese Kopplung geloest, gilt die Begruendung
+           im Kopf dieses Blocks nicht mehr — dann muss sie neu geschrieben
+           werden, und dieser Test ist die Stelle, an der das auffaellt. */
+        const pals = WCAG.palettes();
+        const roh = {};
+        WCAG.THEMES.forEach(t => {
+            roh[t] = (pals[t]['--attr-str'] || '').trim();
+        });
+        expect(roh).toEqual({
+            dark: 'var(--red)',
+            light: 'var(--red-text)',
+            sepia: 'var(--red-text)',
+            contrast: 'var(--red)'
+        });
+    });
+});
