@@ -319,3 +319,61 @@ describe('WCAG-Kontrastrechner — Gegenproben gegen unabhaengig gemessene Zahle
         });
     });
 });
+
+/* ===========================================================================
+   Farbton — Zulieferung fuer Entscheidung D-6 (Welle 2, Schritt 9)
+   ===========================================================================
+   WARUM DIESER BLOCK EBENSO EIGENSTAENDIG IST wie der fuer das
+   Kontrastverhaeltnis: die Ratsche R-15 urteilt ueber Gradzahlen mit einem
+   Spielraum von 0,00 in Dark und Contrast. Eine Farbtonformel mit
+   vertauschtem Sektor oder fehlender 360/0-Naht liefert dort Zahlen, die
+   plausibel aussehen und um 60 bis 358 Grad daneben liegen. Auch dieses
+   Werkzeug braucht seinen eigenen Test, bevor ein anderer ihm glaubt.
+
+   DIE NAHT IST DER KERN. Bei den sechs Attributfarben liegt das Minimum in
+   JEDEM Theme auf dem Umbruch CHA (330 Grad) -> STR (0 Grad). Eine
+   Implementierung, die nur benachbarte Paare der sortierten Liste misst und
+   den Rundschluss vergisst, meldet dort 330 statt 29,63 — sie waere also
+   nicht knapp falsch, sondern blind fuer genau die eine Luecke, um die es
+   geht. Die Gegenprobe dazu steht unten namentlich.
+   =========================================================================== */
+describe('WCAG-Kontrastrechner — Farbton (D-6)', () => {
+    W.HUE_SELFTEST_CASES.forEach(c => {
+        test(`hue('${c.hex}') = ${W.hue(c.hex)}  (soll ${c.soll})`, () => {
+            expect(W.hue(c.hex)).toBe(c.soll);
+        });
+    });
+
+    test('eine Graustufe gibt null, nicht 0 — der Farbton ist dort undefiniert', () => {
+        // Stillschweigend 0 waere der gefaehrlichste Rueckgabewert: ein grau
+        // gewordenes Attribut laege dann genau auf dem Farbton von STR und
+        // erzeugte einen Nachbarabstand von 0 statt einer Meldung.
+        expect(W.hue('#808080')).toBeNull();
+        expect(W.hue('#000000')).toBeNull();
+        expect(W.hue('#ffffff')).toBeNull();
+        expect(() => W.minNachbarabstand(['#ff0000', '#808080'])).toThrow(/Graustufe/);
+    });
+
+    test('die Selbstprobe des Farbtons laeuft beim Laden und wirft bei Abweichung', () => {
+        expect(() => W.selfTest()).not.toThrow();
+        expect(W.HUE_SELFTEST_CASES.length).toBe(6);
+    });
+
+    test('der Rundschluss ueber 360/0 wird gemessen, nicht uebersprungen', () => {
+        // Ohne die Naht waere dieses Paar 358 Grad voneinander entfernt.
+        expect(W.minNachbarabstand2(['#ff0400', '#ff0008'])).toBeLessThan(5);
+        // Und der Fall, der in der Anwendung wirklich vorkommt: CHA -> STR.
+        expect(W.minNachbarabstand2(['#ec4899', '#ef4444'])).toBe(29.63);
+    });
+
+    test('die Reihenfolge der Eingabe aendert das Ergebnis nicht', () => {
+        const a = ['#ef4444', '#22c55e', '#f59e0b', '#3b82f6', '#aa58f7', '#ec4899'];
+        const b = [...a].reverse();
+        expect(W.minNachbarabstand2(a)).toBe(W.minNachbarabstand2(b));
+    });
+
+    test('weniger als zwei Farben sind kein Abstand, sondern ein Fehler', () => {
+        expect(() => W.minNachbarabstand(['#ff0000'])).toThrow(/mindestens zwei/);
+        expect(() => W.minNachbarabstand([])).toThrow(/mindestens zwei/);
+    });
+});

@@ -152,6 +152,82 @@ function ratio2(a, b) {
 }
 
 // ---------------------------------------------------------------------------
+// (a2) Farbton — fuer Entscheidung D-6 (Welle 2, Schritt 9)
+// ---------------------------------------------------------------------------
+
+/**
+ * Farbton in Grad (0-360) nach dem HSV/HSL-Sechseck.
+ *
+ * WARUM HIER UND NICHT IM TEST: Entscheidung D-6 urteilt ueber den ABSTAND
+ * zweier Farbtoene ("der kleinste Nachbarabstand der sechs Attributfarben
+ * sinkt nicht"), und bis Welle 2 Schritt 9 gab es im ganzen Repository keine
+ * Farbtonfunktion. Jede Gradzahl in einem Befund war damit genauso unbelegt,
+ * wie es die Kontrastzahlen vor Welle 1 waren. Der Helfer traegt sie deshalb
+ * neben dem Kontrastverhaeltnis, mit derselben Selbstprobe-Disziplin.
+ *
+ * RUECKGABE null BEI SAETTIGUNG 0: bei einer Graustufe ist der Farbton
+ * mathematisch undefiniert. Ihn stillschweigend als 0 Grad zu fuehren waere
+ * der gefaehrlichere Fehler — ein grau gewordenes Attribut faende sich dann
+ * per Zufall genau auf dem Farbton von STR wieder und erzeugte einen
+ * Nachbarabstand von 0 statt einer sprechenden Meldung. Wer diese Funktion
+ * benutzt, muss null ausdruecklich behandeln.
+ *
+ * Rechenweg: max/min ueber die drei auf 0..1 normierten Kanaele, d = max-min;
+ * Sektor nach dem groessten Kanal, Ergebnis mal 60 Grad, auf [0,360) normiert.
+ */
+function hue(hex) {
+    const [r, g, b] = hexToRgb(hex).map(c => c / 255);
+    const max = Math.max(r, g, b);
+    const min = Math.min(r, g, b);
+    const d = max - min;
+    if (d === 0) return null;
+    let h;
+    if (max === r) h = ((g - b) / d) % 6;
+    else if (max === g) h = (b - r) / d + 2;
+    else h = (r - g) / d + 4;
+    return (((h * 60) % 360) + 360) % 360;
+}
+
+/**
+ * Der kleinste Abstand zweier benachbarter Farbtoene auf dem Kreis.
+ *
+ * Die Toene werden sortiert, die Luecken zwischen aufeinanderfolgenden
+ * gemessen UND die Luecke ueber die 360/0-Naht hinweg — ohne sie waere ein
+ * Paar wie 359 und 1 Grad 358 Grad voneinander entfernt statt 2. Genau dieses
+ * Paar ist bei den Attributfarben der Regelfall: CHA liegt bei 330 Grad,
+ * STR bei 0, und dieser Umbruch IST in jedem Theme das Minimum.
+ *
+ * Wirft bei einer Graustufe — siehe hue().
+ */
+function minNachbarabstand(hexes) {
+    if (hexes.length < 2) {
+        throw new Error('wcag-contrast: minNachbarabstand braucht mindestens zwei Farben');
+    }
+    const toene = hexes.map((h, i) => {
+        const t = hue(h);
+        if (t === null) {
+            throw new Error(
+                `wcag-contrast: minNachbarabstand — ${JSON.stringify(h)} (Position ${i}) ist ` +
+                    `eine Graustufe, ihr Farbton ist undefiniert`
+            );
+        }
+        return t;
+    });
+    const s = toene.slice().sort((a, b) => a - b);
+    let min = Infinity;
+    for (let i = 0; i < s.length; i++) {
+        const luecke = i === s.length - 1 ? 360 - s[i] + s[0] : s[i + 1] - s[i];
+        if (luecke < min) min = luecke;
+    }
+    return min;
+}
+
+/** Farbtonabstand auf zwei Dezimalen, so wie die Ratsche ihn notiert. */
+function minNachbarabstand2(hexes) {
+    return Number(minNachbarabstand(hexes).toFixed(2));
+}
+
+// ---------------------------------------------------------------------------
 // (b) Parser fuer die vier Theme-Bloecke von variables.css
 // ---------------------------------------------------------------------------
 
@@ -494,6 +570,20 @@ const SELFTEST_CASES = [
     { a: '#767676', b: '#ffffff', soll: '4.54' }
 ];
 
+/**
+ * Die Ecken des Farbkreises. Sie verraten einen vertauschten Sektor sofort:
+ * wer rot und blau im Sechseck vertauscht, bekommt fuer #ff0000 nicht 0,
+ * sondern 240 Grad. Die drei Mischtoene decken die drei Sektoren dazwischen.
+ */
+const HUE_SELFTEST_CASES = [
+    { hex: '#ff0000', soll: 0 },
+    { hex: '#ffff00', soll: 60 },
+    { hex: '#00ff00', soll: 120 },
+    { hex: '#00ffff', soll: 180 },
+    { hex: '#0000ff', soll: 240 },
+    { hex: '#ff00ff', soll: 300 }
+];
+
 function selfTest() {
     const ergebnisse = SELFTEST_CASES.map(c => ({
         ...c,
@@ -505,6 +595,17 @@ function selfTest() {
             'wcag-contrast: SELBSTTEST FEHLGESCHLAGEN — die Kontrastformel ist falsch, ' +
                 'jede Zahl dieses Laufs waere unbelegt. ' +
                 fehler.map(e => `ratio(${e.a}, ${e.b}) = ${e.ist}, erwartet ${e.soll}`).join(' · ')
+        );
+    }
+    const hueFehler = HUE_SELFTEST_CASES.filter(c => hue(c.hex) !== c.soll);
+    // Eine Graustufe MUSS null geben — siehe hue(). Stillschweigend 0 waere
+    // der gefaehrlichste Rueckgabewert, den diese Funktion haben koennte.
+    if (hue('#808080') !== null) hueFehler.push({ hex: '#808080', soll: 'null' });
+    if (hueFehler.length) {
+        throw new Error(
+            'wcag-contrast: SELBSTTEST FEHLGESCHLAGEN — die Farbtonformel ist falsch, ' +
+                'jede Gradzahl dieses Laufs waere unbelegt. ' +
+                hueFehler.map(e => `hue(${e.hex}) = ${hue(e.hex)}, erwartet ${e.soll}`).join(' · ')
         );
     }
     return ergebnisse;
@@ -523,6 +624,9 @@ module.exports = {
     relLuminance,
     ratio,
     ratio2,
+    hue,
+    minNachbarabstand,
+    minNachbarabstand2,
     palette,
     palettes,
     blockRegexFor,
@@ -534,5 +638,6 @@ module.exports = {
     zerlegeMix,
     minRatioOverSurfaces,
     selfTest,
-    SELFTEST_CASES
+    SELFTEST_CASES,
+    HUE_SELFTEST_CASES
 };
