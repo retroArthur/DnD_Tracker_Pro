@@ -979,3 +979,100 @@ npx jest tests/unit/design-consistency.test.js -t "keine Skala"
 npx jest tests/unit/design-consistency.test.js -t "kein rgba"
 grep -rn "cat-drink\|cat-food\|cat-gear\|know-religion\|dmg-necrotic-text\|dmg-lightning\|ra-crimson-rule" assets/styles/*.css | grep -v variables.css
 ```
+
+---
+
+## W2-B-04 — 17 Regel-×-Theme-Paare verlieren durch Welle 2 die 4,5; über die Themes minimiert sieht man keines davon
+
+**Stand:** 2026-09-29, Prüfrunde W2-B Runde 1. Offen — Eingangsdaten für die **D-4**-Entscheidung
+in Schritt 8.
+
+### Worum es geht
+
+Die Schritte 4–6 haben feste Farbliterale durch Tönungen derselben Rolle ersetzt. Wo vorher
+`rgba(212,175,55,0.2)` stand — das **Dark**-Gold, in allen vier Themes dasselbe —, steht jetzt
+`color-mix(in srgb, var(--gold) 20%, transparent)`. Die Fläche folgt damit dem Theme. Das ist
+gewollt und richtig. Es hat aber eine Folge, die die bisherige Buchführung nicht zeigt.
+
+**Die Aggregation ist der ganze Punkt.** Hausregel **D-2** sagt: maßgeblich ist das Minimum über
+die tatsächlichen Trägerflächen (`--bg-card`, `--bg-dark`, `--bg-elevated`, `--bg-hover`). Wer
+darüber hinaus auch noch **über die vier Themes** minimiert, bekommt für jede dieser Regeln
+denselben Wert wie vorher — weil sie in **Light** ohnehin schon durchfallen und Light das Minimum
+stellt. Die Zahl „0 neu durchgefallen" ist unter dieser Aggregation richtig gerechnet und sagt
+nichts. Je Theme gerechnet sieht es anders aus:
+
+> **17 Regel-×-Theme-Paare fallen von ≥ 4,5 unter 4,5. Kein einziges steigt darüber.**
+
+### Die 17 Paare
+
+Gemessen mit `tests/unit/helpers/wcag-contrast.js` (Selbsttest `#777777`/`#767676` auf Weiß =
+4,48/4,54 bestanden), Minimum über die vier Trägerflächen, **je Theme**, `765103f` gegen den
+heutigen Stand:
+
+| Datei, Regel | Tinte auf Tönung | Theme | vorher | nachher |
+| --- | --- | --- | ---: | ---: |
+| `dmscreen.css` `mark` (globale Elementregel) | `--gold` auf `--gold` 30 % | sepia | 4,55 | **3,37** |
+| `dmscreen.css` `.notes-search-excerpt mark` | `--gold` auf `--gold` 30 % | sepia | 4,55 | **3,37** |
+| `core.css` `.condition-custom` | `--gold` auf `--gold` 20 % | sepia | 4,74 | **3,91** |
+| `core.css` `.tag-gold` | `--gold` auf `--gold` 20 % | sepia | 4,74 | **3,91** |
+| `dashboard.css` `.status-badge.primary` | `--gold` auf `--gold` 20 % | sepia | 4,74 | **3,91** |
+| `loot.css` `.si-cart-btn` | `--gold` auf `--gold` 20 % | sepia | 4,74 | **3,91** |
+| `editors.css` `.editor-btn.format-active` | `--gold` auf `--gold` 18 % | sepia | 4,78 | **4,03** |
+| `editors.css` `.editor-btn[aria-expanded='true']` | `--gold` auf `--gold` 18 % | sepia | 4,78 | **4,03** |
+| `editors.css` `.tb-menu-item:hover` | `--gold` auf `--gold` 18 % | sepia | 4,78 | **4,03** |
+| `editors.css` `.editor-block-handle button:hover` | `--gold` auf `--gold` 18 % | sepia | 4,78 | **4,03** |
+| `editors.css` `.editor-btn:hover` | `--gold` auf `--gold` 14 % | sepia | 4,87 | **4,26** |
+| `party.css` `.cf-chip.selected` | `--gold` auf `--gold` 15 % | sepia | 4,83 | **4,22** |
+| `tools.css` `.rt-entry .rt-entry-range` | `--gold` auf `--gold` 15 % | sepia | 4,83 | **4,22** |
+| `dashboard.css` `.char-save-box.proficient` | `--gold` auf `--green` 20 % | sepia | 4,84 | **4,42** |
+| `dmscreen.css` `mark` (globale Elementregel) | `--gold` auf `--gold` 30 % | contrast | 5,03 | **4,23** |
+| `dmscreen.css` `.notes-search-excerpt mark` | `--gold` auf `--gold` 30 % | contrast | 5,03 | **4,23** |
+| `dmscreen.css` `.condition-badge.poisoned` | `--green` auf `--green` 30 % | contrast | 4,81 | **4,48** |
+
+14 Paare liegen in **Sepia**, 3 im **Contrast**-Theme — also gerade dem Barrierefreiheits-Theme.
+Der schlechteste Einzelabfall ist **−1,18** (`mark`/sepia).
+
+### Die Ursache ist systematisch, nicht zufällig
+
+In Sepia ist `--gold` ein **dunkles Braun** (`#8b4513`), nicht das helle Dark-Gold (`#d4af37`).
+Die Tönung wird dadurch dunkler **und** trägt dieselbe braune Tinte — der Abstand bricht von zwei
+Seiten ein. Handnachgerechnet für `.tag-gold` über `--bg-hover` (`#e5dbc5`):
+
+| | Mischung | Fläche | L | gegen `#8b4513` (L = 0,0978) |
+| --- | --- | --- | ---: | ---: |
+| vorher | `rgba(212,175,55,0.2)` | `#e2d2a9` | 0,6513 | **4,74** |
+| nachher | `color-mix(--gold 20 %)` | `#d3bda1` | 0,5282 | **3,91** |
+
+### Keine Ratsche urteilt heute über diese Stellen
+
+`ruheRegeln()` im R-04-Block filtert Flächen mit `^var\((--[\w-]+)\)$`. Eine `color-mix`-Fläche
+fällt dort heraus — **vorher wie nachher**, denn vorher stand ein nacktes `rgba(...)` da, das
+ebenso wenig auf das Muster passt. Es geht also keine Deckung verloren; es gab nie welche. Die
+Lücke als solche bleibt offen und ist dieselbe wie unter W2-B-01 zweiter Punkt: Tinte auf einer
+halbdurchsichtigen Fläche wird von keiner Ratsche geprüft.
+
+### Was daraus für Schritt 8 folgt
+
+1. **Die Kontrastbuchhaltung ist je Theme zu führen**, nicht über die Themes zu minimieren. Sonst
+   verschwindet jede Verschlechterung hinter dem ohnehin durchgefallenen Light.
+2. Die 17 Paare sind **Eingangsdaten für D-4**. **E2** deckelt die Stärke je Theme
+   (Dark 13 / Light 7 / Sepia 7 / Contrast 20 %) — das entlastet die Fläche. Für Sepia ist
+   zusätzlich zu entscheiden, ob `--gold` als **Tinte auf einer `--gold`-Tönung** dort überhaupt
+   tragfähig ist; der Nachtrag unter W1-D-02 zeigt für `editors.css:69`, dass auch
+   `var(--gold-text)` auf der themenfolgenden Tönung nicht mehr reicht (light 4,31).
+3. **`dmscreen.css` `mark` vorziehen.** Das ist keine Widget-Regel, sondern eine nackte globale
+   Elementregel in einer Widget-Datei — sie trifft **jede** Texthervorhebung der App. Sie trägt
+   zugleich den schlechtesten Abfall der Liste und ist dreifach geführt
+   (`.notes-search-excerpt mark`, `.search-result-preview mark`). Die Verlagerung der Weltregel
+   selbst bleibt Welle 4, die Farbentscheidung nicht.
+4. `dashboard.css` `.char-save-box.proficient` ist einer der zwei Fälle mit **fremder Rolle**
+   (Gold auf Grün), die Schritt 8 ohnehin namentlich mitentscheidet.
+
+### Befehle
+
+```bash
+cd /d/Claude_Code/Projekte/DnD_Tracker_App_Pro
+node -e "const W=require('./tests/unit/helpers/wcag-contrast.js');console.log(W.selfTest())"
+grep -n "mark {" assets/styles/dmscreen.css
+grep -rn "color-mix(in srgb, var(--gold)" assets/styles/*.css
+```
