@@ -807,3 +807,61 @@ cd /d/Claude_Code/Projekte/DnD_Tracker_App_Pro
 grep -n -- "--overlay-\|--scrim-" assets/styles/variables.css
 grep -rn "var(--overlay-\|var(--scrim-" assets/styles/*.css
 ```
+
+---
+
+## W2-B-02 — Drei Literale der SW-Update-Leiste bleiben stehen und gehören keinem Schritt
+
+**Stand:** 2026-09-29, Welle 2 Schritte 4–6. Offen, bewusst nicht umgestellt.
+
+### Worum es geht
+
+Nach den Schritten 3–6 zählt **R-10** noch 52 Stellen. 49 davon sind vorgesehen: mehrdeutige und
+tokenlose Tripel für Schritt 7, `core.css` `.condition-prone` für die D-4-Entscheidung in
+Schritt 8, und die zwei festen Flächen des Ereignis-Logs (`party.css`) für Schritt 10.
+
+**Die drei übrigen sind es nicht.** Sie liegen in `assets/styles/pwa.css` an der
+SW-Update-Hinweis-Leiste:
+
+| Stelle | Deklaration | Tripel |
+| ------ | ----------- | ------ |
+| `pwa.css` `.pwa-update-banner` | `background` | `251,191,36` = Dark `--yellow`, 85 % |
+| `pwa.css` `.pwa-update-dismiss` | `border` | `13,13,13` = Dark `--bg-dark`, 40 % |
+| `pwa.css` `.pwa-update-dismiss:hover` | `background` | `13,13,13` = Dark `--bg-dark`, 10 % |
+
+Mechanisch sind alle drei eindeutige Dark-Treffer und gehörten damit in die Runde der Schritte
+4–6. Sie sind trotzdem unverändert, weil die Fläche dieser Leiste **absichtlich** keinem Theme
+folgt: Welle 1 Schritt 8 hat das entschieden und im Kommentar über der Regel begründet. Die Tinte
+stand dort auf `var(--bg-dark)` und folgte dem Theme sehr wohl — in Sepia ergab das **1,27**, den
+schlechtesten Wert des ganzen Baums. Die Abhilfe war nicht, die Fläche dem Theme zu unterwerfen,
+sondern die Tinte auf `var(--on-yellow)` zu setzen (`#111111` in allen vier Themes, gemessen
+8,29 · 11,97 · 11,79 · 8,11).
+
+Wer die Fläche jetzt mechanisch auf `color-mix(… var(--yellow) 85% …)` zöge, machte sie
+themenabhängig und die gesamte Welle-1-Messung ungültig — in Light würde aus dem hellen `#fbbf24`
+das dunkle `#ca8a04`. Die beiden `13,13,13`-Stellen sind die dunkle Kontur auf ebendieser festen
+Fläche und teilen die Begründung.
+
+### Dieselbe Bauart an einer zweiten Stelle
+
+`party.css` `.event-log` (zwei Flächen `15,15,25` und `20,20,30`) ist derselbe Fall: feste Fläche,
+Tinte dafür gewählt. Der Unterschied ist nur, dass **E6** für das Ereignis-Log bereits
+entschieden hat (dunkle Blende behalten, themenblinde Tinte-Tokens nach dem Muster `pwa.css`) und
+Schritt 10 sie ausführt. Für die drei Stellen hier gibt es keine solche Entscheidung.
+
+### Was zu entscheiden ist
+
+Entweder bekommen die drei Literale — wie das Ereignis-Log — **themenblinde Tokens** (gleicher
+Wert, andere Schreibweise, R-10 wird dadurch grün), oder sie werden als **begründete Ausnahme**
+in `R10_AUSNAHMEN` eingetragen. Beides ist vertretbar; nichts von beidem darf stillschweigend
+passieren, weil Schritt 7 die Ratsche auf 0 bringen soll und diese drei sonst als „vergessen"
+durchgehen.
+
+### Befehle
+
+```bash
+cd /d/Claude_Code/Projekte/DnD_Tracker_App_Pro
+grep -n "rgba" assets/styles/pwa.css
+grep -n -B18 "pwa-update-banner" assets/styles/pwa.css | grep -n "on-yellow"
+npx jest tests/unit/design-consistency.test.js -t "kein rgba"
+```
