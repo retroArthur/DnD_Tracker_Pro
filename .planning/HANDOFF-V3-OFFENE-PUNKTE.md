@@ -379,8 +379,8 @@ Gruppe E gerade nicht bewiesen ist. Sie sind **kein** erledigter Fall.
 | ------ | -------- | ----- | ------------ | ------------- |
 | `bestiary.css:493` | `.bst-section-title` | `--gold` | #191919 | #1e1e1e |
 | `bestiary.css:506` | `.bst-validation-error` | `--red` | #191919 | #1e1e1e |
-| `core.css:1043` | `.char-modal-title h2` | `--gold` | #191919 | #1e1e1e |
-| `core.css:1048` | `.char-modal-subtitle` | `--cyan` | #191919 | #1e1e1e |
+| `core.css:1067` | `.char-modal-title h2` | `--gold` | #191919 | #1e1e1e |
+| `core.css:1072` | `.char-modal-subtitle` | `--cyan` | #191919 | #1e1e1e |
 | `dashboard.css:240` | `.modal-title` | `--gold` | #191919 | #1e1e1e · #252525 |
 | `initiative.css:461` | `.aoe-modal-header h3` | `--red` | #191919 | #1e1e1e |
 | `initiative.css:601` | `.aoe-target-save` | `--green` | #191919 | #1e1e1e |
@@ -505,9 +505,9 @@ core.css
    75  [data-layout="mobile"] #mobile-timer-display
    79  [data-layout="mobile"] .mobile-timer.running #mobile-timer-display
    83  [data-layout="mobile"] .mobile-timer.paused #mobile-timer-display
-  939  .char-card-currency
- 1715  .quest-reward-item-tag .remove-btn:hover
- 1708  .quest-reward-item-tag .remove-btn
+  963  .char-card-currency
+ 1739  .quest-reward-item-tag .remove-btn:hover
+ 1732  .quest-reward-item-tag .remove-btn
 dashboard.css
     3  .dice-btn.d4
     5  .dice-btn.d6

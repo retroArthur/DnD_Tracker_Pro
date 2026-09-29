@@ -606,22 +606,46 @@
         
         .condition-tag:hover .remove-condition { opacity: 1; }
         
-        /* Condition Colors */
-        .condition-blinded { background: rgba(100,100,100,0.3); color: var(--text-dim); }
+        /* Condition Colors
+           ----------------
+           Bauart der ganzen Gruppe: Toenung einer Rolle plus dieselbe Rolle
+           als Tinte. Welle 2 Schritt 7 loest die fuenf verbliebenen Literale
+           nach dem ZWECK auf, nicht nach dem Wert:
+
+           - Die vier farblosen Zustaende (blinded, deafened, petrified,
+             exhaustion) trugen drei verschiedene Grautoene aus drei fremden
+             Paletten (100,100,100 · 120,113,108 · in dmscreen 107,114,128).
+             Gemeint war immer dasselbe: "keine Farbe". Die neutrale Rolle
+             dieses Projekts heisst --border; sie fuehrt die Gruppe jetzt
+             geschlossen, mit unveraenderter Staerke. Gemessen gegen die
+             schlechteste der drei neutralen Traegerflaechen, vorher/nachher
+             (dark light sepia contrast): 3,31/3,16/3,11/5,20 -> 3,99 · 4,35 ·
+             4,04 · 5,60 bzw. 3,10/3,30/3,26/4,87 -> dieselben vier Werte.
+             Besser in JEDEM Theme; --text-dim als Toenungsbasis waere in
+             Contrast auf 3,76 gefallen (deshalb nicht genommen).
+           - prone trug 180,83,9 und als Tinte --orange-dim. Die Toenung folgt
+             jetzt derselben Rolle wie die Tinte: 1,98/5,63/6,49/1,88 ->
+             2,04 · 5,21 · 5,93 · 2,00. Mit var(--orange) waere es
+             1,62/5,81/6,49/1,62 gewesen — die Tinte gibt den Ausschlag.
+
+           Die Staerken bleiben unangetastet; ueber sie entscheidet D-4 in
+           Schritt 8 zusammen mit der Tinte. Dieselbe Gruppe steht ein
+           zweites Mal in dmscreen.css (.condition-badge.*, D-05). */
+        .condition-blinded { background: color-mix(in srgb, var(--border) 30%, transparent); color: var(--text-dim); }
         .condition-charmed { background: color-mix(in srgb, var(--pink) 20%, transparent); color: var(--pink); }
-        .condition-deafened { background: rgba(100,100,100,0.3); color: var(--text-dim); }
+        .condition-deafened { background: color-mix(in srgb, var(--border) 30%, transparent); color: var(--text-dim); }
         .condition-frightened { background: color-mix(in srgb, var(--purple) 20%, transparent); color: var(--purple); }
         .condition-grappled { background: color-mix(in srgb, var(--orange) 20%, transparent); color: var(--orange); }
         .condition-incapacitated { background: color-mix(in srgb, var(--red) 20%, transparent); color: var(--red); }
         .condition-invisible { background: color-mix(in srgb, var(--blue) 15%, transparent); color: var(--blue); border: 1px dashed var(--blue); }
         .condition-paralyzed { background: color-mix(in srgb, var(--yellow) 20%, transparent); color: var(--yellow); }
-        .condition-petrified { background: rgba(120,113,108,0.3); color: var(--text-dim); }
+        .condition-petrified { background: color-mix(in srgb, var(--border) 30%, transparent); color: var(--text-dim); }
         .condition-poisoned { background: color-mix(in srgb, var(--green) 20%, transparent); color: var(--green); }
-        .condition-prone { background: rgba(180,83,9,0.2); color: var(--orange-dim); }
+        .condition-prone { background: color-mix(in srgb, var(--orange-dim) 20%, transparent); color: var(--orange-dim); }
         .condition-restrained { background: color-mix(in srgb, var(--orange) 20%, transparent); color: var(--orange); }
         .condition-stunned { background: color-mix(in srgb, var(--yellow) 20%, transparent); color: var(--yellow); }
         .condition-unconscious { background: color-mix(in srgb, var(--red) 30%, transparent); color: var(--red); }
-        .condition-exhaustion { background: rgba(120,113,108,0.3); color: var(--text-dim); }
+        .condition-exhaustion { background: color-mix(in srgb, var(--border) 30%, transparent); color: var(--text-dim); }
         .condition-concentration { background: color-mix(in srgb, var(--blue) 20%, transparent); color: var(--blue); border: 1px solid var(--blue); }
         .condition-custom { background: color-mix(in srgb, var(--gold) 20%, transparent); color: var(--gold); }
         
