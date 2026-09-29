@@ -72,7 +72,7 @@
     height: 100vh !important;
     max-width: none !important;
     max-height: none !important;
-    background: rgba(0, 0, 0, 0.85) !important;
+    background: var(--scrim-85) !important;
     backdrop-filter: blur(4px);
     display: none;
     justify-content: center;

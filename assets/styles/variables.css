@@ -713,6 +713,64 @@
             --green-dim: color-mix(in srgb, var(--green) 62%, #000);
             --red-dark: color-mix(in srgb, var(--red) 55%, #000);
             --orange-dim: color-mix(in srgb, var(--orange) 55%, #000);
+
+            /* ------------------------------------------------------------
+               Auflagen und Blenden (Design-Handoff v3, Welle 2, Schritt 3)
+               ------------------------------------------------------------
+               Zwei Leitern aus derselben Werkstatt wie die Hover-/Dim-Stufen
+               darueber: eine WEISSE Auflage, die eine Flaeche aufhellt, und
+               eine SCHWARZE Blende, die alles dahinter abdunkelt.
+
+               Warum ueberhaupt Tokens und nicht color-mix an der Fundstelle:
+               fuer Weiss und Schwarz gibt es keine Rolle, auf die sich
+               `var(--<rolle>)` beziehen koennte. Ein `#fff` direkt im
+               Komponenten-CSS waere ein Farbliteral und damit genau der
+               Befund D-01, den diese Welle abraeumt. Die Literale gehoeren
+               hierher, in die Token-Datei.
+
+               THEMENBLIND, und das ist eine Entscheidung, keine Nachlaessig-
+               keit. Paragraph 3.1 des Handoffs will die Auflage in Light und
+               Sepia auf Schwarz drehen (rgba(0,0,0,.04/.08/.16)). Das ist
+               eine SICHTBARE Aenderung an 16 Flaechen in zwei Themes und
+               steht in keiner der sechs Entscheidungen dieser Welle; der
+               gepruefte Plan verlangt an dieser Stelle ausdruecklich den
+               farbneutralen Weg. Der Umschlag ist damit nicht verworfen,
+               sondern vertagt — er ist in der Aktenlage als offener Punkt
+               gefuehrt. Solange die Leiter themenblind ist, rendert sie
+               zeichengleich wie die 22 Literale, die sie ersetzt.
+
+               DIE STUFEN SIND DER BESTAND, nicht ein Wunschbild: jede der
+               fuenf Auflagen- und vier Blendenstufen kommt mindestens einmal
+               vor, und keine Fundstelle wurde auf eine Nachbarstufe gerundet
+               (das waere die Sichtaenderung, die der Plan als Weg (b) fuehrt
+               und die hier nicht gewaehlt wurde). Die drei Namen des
+               Handoffs — weak/mid/strong — behalten ihre dortigen Werte
+               .05/.1/.2; faint und heavy sind die beiden Enden, fuer die
+               Paragraph 3.1 keine Aussage trifft.
+
+               Die Blenden tragen Prozentzahlen statt Eigenschaftswoerter:
+               vier Werte zwischen 60 und 85 Prozent haben keine ehrlichen
+               Adjektive, und ein erfundenes "mid" neben einem "strong" waere
+               genau die Verwechslungsquelle, gegen die diese Welle arbeitet.
+               Dass die vier ueberhaupt auseinanderlaufen, ist selbst Drift
+               (vier Modalblenden, vier Staerken) — ihre Vereinheitlichung
+               ist sichtbar und gehoert deshalb nicht in diesen Schritt.
+
+               color-mix statt rgba(): in dieser Datei stehen genau VIER
+               rgba()-Tripel, die vier --shadow, und R-10 sichert diese Zahl
+               hart zu. `color-mix(in srgb, #fff 5%, transparent)` ergibt
+               rechnerisch dasselbe wie `rgba(255,255,255,0.05)` — die
+               Deckkraft ist 5 % von 1 plus 95 % von 0, die vormultiplizierte
+               Farbe bleibt Weiss. */
+            --overlay-faint: color-mix(in srgb, #fff 2%, transparent);
+            --overlay-weak: color-mix(in srgb, #fff 5%, transparent);
+            --overlay-mid: color-mix(in srgb, #fff 10%, transparent);
+            --overlay-strong: color-mix(in srgb, #fff 20%, transparent);
+            --overlay-heavy: color-mix(in srgb, #fff 30%, transparent);
+            --scrim-60: color-mix(in srgb, #000 60%, transparent);
+            --scrim-70: color-mix(in srgb, #000 70%, transparent);
+            --scrim-75: color-mix(in srgb, #000 75%, transparent);
+            --scrim-85: color-mix(in srgb, #000 85%, transparent);
         }
 
         /* ============================================================

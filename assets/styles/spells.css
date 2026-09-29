@@ -372,7 +372,7 @@
         }
         
         .spell-editor tr:nth-child(even), .rich-editor tr:nth-child(even) {
-            background: rgba(255,255,255,0.02);
+            background: var(--overlay-faint);
         }
         
         .spell-editor tr:hover, .rich-editor tr:hover {

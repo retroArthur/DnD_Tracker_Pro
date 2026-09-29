@@ -1911,7 +1911,31 @@ describe('R-04 — jede Regel haelt 4,5 auf ihrer EIGENEN Flaeche (Ratsche)', ()
      *  Vollton-Hintergrund auftaucht. Die Abgrenzung laeuft ueber die
      *  Namenspraefixe und nicht ueber eine Liste, damit eine neue Rolle
      *  automatisch mitgeprueft wird statt lautlos durchzufallen. */
-    const NEUTRAL = /^--(bg|surface|border)(-|$)/;
+    const NEUTRAL = /^--(bg|surface|border|overlay|scrim)(-|$)/;
+
+    /* WARUM overlay UND scrim HIER STEHEN (Welle 2, Schritt 3). Sie sind
+       nicht neutral im Sinne des Absatzes darueber — sie sind ueberhaupt
+       KEINE Flaeche. `--overlay-*` und `--scrim-*` sind halbdurchsichtig;
+       was eine Tinte darauf tatsaechlich hinter sich hat, ist die Flaeche
+       des ELTERN-Elements, und die kennt diese Ratsche nicht. `resolve()`
+       liefert fuer die Form `color-mix(..., transparent)` bewusst null, der
+       Befund waere also "nicht aufloesbar" — ein Fehlalarm, kein Fund.
+
+       ES GEHT DABEI KEINE DECKUNG VERLOREN. Dieselben sechs Regeln
+       (core.css .nav-tab und .nav-tab:hover, .nav-group-btn und
+       .nav-group-btn:hover, dashboard.css .conflict-banner .btn,
+       dice.css .fdp-close:hover) trugen bis zu diesem Schritt ein nacktes
+       `rgba(255,255,255,a)` als Hintergrund und fielen damit schon am
+       Filter `^var\((--[\w-]+)\)$` in ruheRegeln() heraus. Die Ratsche hat
+       ueber sie nie geurteilt; sie wuerde es jetzt nur deshalb versuchen,
+       weil das Literal einen Namen bekommen hat. Der Ausschluss stellt den
+       Stand von vorher wieder her, er weicht ihn nicht auf.
+
+       Die eigentliche Luecke — Tinte auf halbdurchsichtiger Auflage ueber
+       einer unbekannten Elternflaeche — bleibt offen und ist in
+       HANDOFF-V3-OFFENE-PUNKTE.md als solche gefuehrt. Sie zu schliessen
+       hiesse, die Elternkette aufzuloesen; das ist kein Nebenzweig dieses
+       Schritts. */
 
     /** BENANNTE AUSNAHMEN, gemessen am 2026-09-28 — Bauart wie
      *  ATTR_HOVER_AUSNAHME und ZUSTAND_AUSNAHME: der Wert ist das gemessene

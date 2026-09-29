@@ -93,7 +93,7 @@
         .shortcuts-overlay {
             position: fixed;
             inset: 0;
-            background: rgba(0,0,0,0.85);
+            background: var(--scrim-85);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -688,7 +688,7 @@
             left: 0; /* F-18: aus der Dublette uebernommen */
             right: 0; /* F-18: aus der Dublette uebernommen */
             bottom: 0; /* F-18: aus der Dublette uebernommen */
-            background: rgba(0,0,0,0.6); /* F-18: aus der Dublette uebernommen */
+            background: var(--scrim-60); /* F-18: aus der Dublette uebernommen */
             backdrop-filter: blur(4px); /* F-18: aus der Dublette uebernommen */
             -webkit-backdrop-filter: blur(4px); /* F-18: aus der Dublette uebernommen */
             z-index: var(--z-modal); /* F-18: aus der Dublette uebernommen */
@@ -1829,7 +1829,7 @@
 }
 
 .dms-size-row:nth-child(odd) {
-    background: rgba(255, 255, 255, 0.02);
+    background: var(--overlay-faint);
 }
 
 .dms-obj-table {

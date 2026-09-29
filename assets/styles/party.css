@@ -140,7 +140,7 @@
         .wiki-detail-body tr:nth-child(even),
         .encounter-content tr:nth-child(even),
         .spell-desc tr:nth-child(even) {
-            background: rgba(255,255,255,0.02) !important;
+            background: var(--overlay-faint) !important;
         }
         
         /* Tabellen-Zeilen (hover) */
@@ -825,7 +825,7 @@
         }
         
         .wiki-tree-item.has-children > .wiki-tree-item-toggle:hover {
-            background: rgba(255,255,255,0.1);
+            background: var(--overlay-mid);
         }
         
         .wiki-tree-item.expanded > .wiki-tree-item-toggle {
@@ -994,7 +994,7 @@
             left: 0;
             right: 0;
             bottom: 0;
-            background: rgba(0,0,0,0.7);
+            background: var(--scrim-70);
             display: flex;
             align-items: center;
             justify-content: center;

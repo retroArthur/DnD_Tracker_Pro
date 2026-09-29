@@ -513,7 +513,7 @@
     height: 56px;
     border-radius: 50%;
     background: linear-gradient(135deg, var(--red-dim) 0%, var(--red-dark) 100%);
-    border: 2px solid rgba(255, 255, 255, 0.2);
+    border: 2px solid var(--overlay-strong);
     /* BLEIBT weiss (Welle 1 Schritt 7, Urteilsstelle). Die Flaeche ist ein
        Verlauf zweier ABGELEITETER Toene: --red-dim = color-mix(--red 70%,
        #000), --red-dark = 55 %. Zu abgeleiteten Flaechen gibt es kein
@@ -595,7 +595,7 @@
     align-items: center;
     margin-bottom: 12px;
     padding-bottom: 8px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    border-bottom: 1px solid var(--overlay-mid);
 }
 
 .fdp-title {
@@ -616,7 +616,7 @@
 }
 
 .fdp-close:hover {
-    background: rgba(255, 255, 255, 0.1);
+    background: var(--overlay-mid);
     color: var(--text);
 }
 
@@ -800,7 +800,7 @@
     align-items: center;
     gap: 8px;
     padding-top: 8px;
-    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    border-top: 1px solid var(--overlay-mid);
 }
 
 .fdp-history-label {

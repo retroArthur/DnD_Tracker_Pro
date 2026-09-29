@@ -329,7 +329,7 @@
         }
 
         .nav-tab {
-            background: rgba(255,255,255,0.05);
+            background: var(--overlay-weak);
             border: 1px solid transparent;
             color: var(--text-dim);
             padding: 8px 12px;
@@ -342,7 +342,7 @@
             flex-shrink: 0;
         }
 
-        .nav-tab:hover { background: rgba(255,255,255,0.1); color: var(--text); border-color: var(--border); }
+        .nav-tab:hover { background: var(--overlay-mid); color: var(--text); border-color: var(--border); }
         .nav-tab.active { background: var(--gold); color: var(--on-gold); font-weight: 600; border-color: var(--gold); }
         
         /* Nav Tab Drag & Drop (Legacy — bei gruppierter Nav inaktiv) */
@@ -360,7 +360,7 @@
         }
 
         .nav-group-btn {
-            background: rgba(255,255,255,0.05);
+            background: var(--overlay-weak);
             border: 1px solid transparent;
             color: var(--text-dim);
             padding: 8px 12px;
@@ -371,7 +371,7 @@
             white-space: nowrap;
             transition: all 0.2s;
         }
-        .nav-group-btn:hover { background: rgba(255,255,255,0.1); color: var(--text); border-color: var(--border); }
+        .nav-group-btn:hover { background: var(--overlay-mid); color: var(--text); border-color: var(--border); }
         .nav-group-btn.has-active { background: var(--gold); color: var(--on-gold); font-weight: 600; border-color: var(--gold); }
         .nav-group.open > .nav-group-btn { color: var(--text); border-color: var(--gold); }
 

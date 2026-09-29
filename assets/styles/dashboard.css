@@ -233,7 +233,7 @@
             align-items: center;
             margin-bottom: 20px;
             padding-bottom: 12px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            border-bottom: 1px solid var(--overlay-mid);
         }
         
         .modal-title { 
@@ -747,8 +747,8 @@
         }
         
         .conflict-banner .btn {
-            background: rgba(255,255,255,0.2);
-            border-color: rgba(255,255,255,0.3);
+            background: var(--overlay-strong);
+            border-color: var(--overlay-heavy);
             /* BLEIBT weiss. Die Flaeche ist ein rgba-Literal AUF dem Verlauf
                der Elternregel, also eine um 20 % aufgehellte Rotflaeche —
                keine Rolle, zu der es ein --on-* gaebe. Gemessen ueber die

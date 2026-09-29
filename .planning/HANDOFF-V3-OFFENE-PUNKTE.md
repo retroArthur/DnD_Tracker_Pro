@@ -717,3 +717,73 @@ cd /d/Claude_Code/Projekte/DnD_Tracker_App_Pro
 grep -n "npc-dialog-marker.used" -A14 assets/styles/npcs.css
 grep -rn "opacity: 0\.[0-9]" assets/styles/*.css | wc -l
 ```
+
+---
+
+## W2-B-01 — Die Auflagen-Leiter ist themenblind geblieben; in Light und Sepia malt sie nichts
+
+**Stand:** 2026-09-29, Welle 2 Schritt 3. Offen, bewusst vertagt.
+
+### Worum es geht
+
+Schritt 3 hat 16 weiße Auflagen `rgba(255,255,255,a)` und 6 schwarze Blenden `rgba(0,0,0,a)` auf
+zwei Token-Leitern in `assets/styles/variables.css` gezogen — `--overlay-faint/-weak/-mid/-strong/-heavy`
+und `--scrim-60/-70/-75/-85`. Beide stehen im Aliasblock und sind damit **themenblind**: in allen
+vier Themes derselbe Wert. Das war die Bedingung dafür, dass der Schritt farbneutral bleibt.
+
+§3.1 des Handoffs will etwas anderes: die Auflage soll in Light und Sepia auf Schwarz umschlagen
+(`rgba(0,0,0,.04/.08/.16)`). Das ist eine **sichtbare** Änderung an 16 Flächen in zwei Themes und
+steht in keiner der sechs Entscheidungen der Welle 2. Sie ist deshalb nicht ausgeführt, sondern
+hier vermerkt.
+
+### Warum der Umschlag trotzdem fällig ist — gemessen
+
+Eine weiße Auflage auf einer hellen Fläche hebt sich nicht ab. Der Helligkeitsabstand zwischen
+Fläche und Auflage (`ratio2` aus `tests/unit/helpers/wcag-contrast.js`, Fläche gegen die über ihr
+gemischte Auflage):
+
+| Fläche | Dark, weiß 5 % | Light, weiß 5 % | Sepia, weiß 5 % | Light, schwarz 5 % |
+| ------ | -------------- | --------------- | --------------- | ------------------ |
+| `--bg-card` | 1,14 | **1,00** | **1,00** | 1,12 |
+| `--bg-dark` | 1,11 | **1,01** | **1,01** | 1,11 |
+| `--bg-elevated` | 1,16 | **1,01** | **1,01** | 1,12 |
+| `--bg-hover` | 1,16 | **1,02** | **1,02** | 1,11 |
+
+Auf Light `--bg-card` (`#ffffff`) ist der Effekt **exakt** null: weiß über weiß ergibt weiß, und
+zwar auch bei der stärksten Stufe (30 % → `#ffffff`, Abstand 1,00). Die Auflage existiert dort
+nur im Quelltext. Ein schwarzes Gegenstück bei 5 % erreicht in Light dieselbe Größenordnung wie
+das weiße in Dark (1,11 gegen 1,14) — der Umschlag ist also nicht Geschmack, sondern die einzige
+Fassung, in der die Leiter in allen vier Themes dasselbe leistet.
+
+Das war schon vor Welle 2 so: die 16 Stellen trugen dasselbe Weiß als Literal. Der Schritt hat
+den Befund nicht erzeugt, er hat ihn nur benennbar gemacht.
+
+### Was zu entscheiden ist
+
+Der Umschlag ändert 16 Flächen in zwei Themes sichtbar. Er braucht dieselbe Vier-Themes-Runde wie
+jede andere Sichtänderung dieser Welle und eine Freigabe. Die Stufen sind dann je Theme zu setzen
+(§3.1 nennt für Light/Sepia `.04/.08/.16` statt `.05/.1/.2`, also nicht nur eine andere Farbe,
+sondern auch eine andere Leiter).
+
+### Zweiter, kleinerer Punkt: R-04 urteilt nicht über Tinte auf halbdurchsichtiger Auflage
+
+`NEUTRAL` in `tests/unit/design-consistency.test.js` (Block R-04) schließt seit Schritt 3 auch
+`--overlay-*` und `--scrim-*` aus. Grund: eine halbdurchsichtige Auflage **ist keine Fläche** —
+was eine Tinte darauf hinter sich hat, ist die Fläche des Eltern-Elements, und die kennt die
+Ratsche nicht. `resolve()` liefert für `color-mix(..., transparent)` bewusst `null`.
+
+**Es geht dadurch keine Deckung verloren.** Dieselben sechs Regeln (`core.css .nav-tab`,
+`.nav-tab:hover`, `.nav-group-btn`, `.nav-group-btn:hover`, `dashboard.css .conflict-banner .btn`,
+`dice.css .fdp-close:hover`) trugen vorher ein nacktes `rgba(...)` als Hintergrund und fielen
+schon am Filter `^var\((--[\w-]+)\)$` in `ruheRegeln()` heraus. Die Ratsche hat über sie nie
+geurteilt. Offen bleibt die Lücke als solche: Tinte auf halbdurchsichtiger Auflage über einer
+unbekannten Elternfläche wird von keiner Ratsche geprüft. Sie zu schließen hieße, die Elternkette
+aufzulösen.
+
+### Befehle
+
+```bash
+cd /d/Claude_Code/Projekte/DnD_Tracker_App_Pro
+grep -n -- "--overlay-\|--scrim-" assets/styles/variables.css
+grep -rn "var(--overlay-\|var(--scrim-" assets/styles/*.css
+```
