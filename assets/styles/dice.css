@@ -703,7 +703,7 @@
 }
 
 .fdp-die.d20 {
-    background: linear-gradient(135deg, rgba(220, 38, 38, 0.2), rgba(153, 27, 27, 0.3));
+    background: linear-gradient(135deg, rgba(220, 38, 38, 0.2), color-mix(in srgb, var(--ra-crimson-rule) 30%, transparent));
     border-color: rgba(220, 38, 38, 0.5);
 }
 

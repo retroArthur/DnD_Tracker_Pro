@@ -345,7 +345,7 @@
             align-items: center;
             gap: 6px;
             padding: 4px 10px;
-            background: linear-gradient(135deg, rgba(147, 51, 234, 0.2) 0%, rgba(168, 85, 247, 0.15) 100%);
+            background: linear-gradient(135deg, rgba(147, 51, 234, 0.2) 0%, color-mix(in srgb, var(--know-religion) 15%, transparent) 100%);
             border: 1px solid var(--purple);
             border-radius: var(--radius-md);
             font-size: 0.75em;
