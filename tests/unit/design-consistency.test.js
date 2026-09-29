@@ -1169,19 +1169,26 @@ describe('R-02 — Tinte erreicht ihre Schwelle auf der TATSAECHLICHEN Flaeche (
        Gegen die drei Flaechen ohne --bg-hover waere diese Ratsche ueber
        16 von 18 zu schwachen Textwerten gruen.
 
-       WAS DIESE RATSCHE BEWUSST NICHT PRUEFT — Entscheidung D-4 (2026-09-28):
-       die 108 Stellen, an denen Akzenttext auf einer 20-%-TOENUNG DERSELBEN
-       Rolle sitzt (Prototyp core.css:579-586: `.color-<rolle> { background:
-       rgba(<Tripel>,0.2); color: var(--<rolle>) }`), plus die eine
-       color-mix-Variante. Auf dieser Flaeche haelt heute kein einziger Wert
-       4,5 (gemessen Light 2,82-3,50 · Sepia 3,01-4,23 · Dark red 3,29 ·
-       Contrast blue 3,32). Sie bleiben in WELLE 1 unangetastet, weil Tinte und
-       Toenungsstaerke rechnerisch nicht unabhaengig sind: eine hier gesetzte
-       Tinte muesste in Welle 2 erneut geaendert werden. WELLE 2 erweitert
-       R-02 um die Toenungsflaeche und entscheidet Staerke und Tinte in einem
-       Zug — der Rechner kann das schon (resolveOver() loest color-mix und
-       rgba-Alpha ueber einer gegebenen Flaeche auf). Bis dahin ist diese
-       Luecke hier benannt und damit keine stille Freigabe.
+       WAS DIESE RATSCHE NICHT PRUEFT, UND WER ES SEIT SCHRITT 8 TUT —
+       Entscheidung D-4. Gemeint sind die 108 Stellen, an denen Akzenttext auf
+       einer TOENUNG DERSELBEN Rolle sitzt. Prototyp ist die Gruppe
+       `.color-<rolle>` in core.css, heute :583-590 und nicht :579-586 wie
+       D-4 schreibt — die Anker haben sich seit der Planung verschoben. Dazu
+       die FUENF `.dms-skill-header`-Regeln (D-4 nennt sechs; eine .con-Regel
+       gibt es nicht, und die Schnellreferenz fuehrt keine KON-Zelle, R-08).
+
+       "20-%-Toenung" ist eine Naeherung: nur 60 der 107 heutigen Stellen
+       liegen bei 20 %, die Staerken reichen von 10 bis 30 %. Eine Regel, die
+       20 % festschreibt, liesse 47 Stellen unberuehrt.
+
+       In Welle 1 blieben sie unangetastet, weil Tinte und Toenungsstaerke
+       rechnerisch nicht unabhaengig sind. WELLE 2 SCHRITT 8 hat beides in
+       einem Zug entschieden (E2: Tinte --<rolle>-text, Staerke gedeckelt auf
+       13/7/7/20 % je Theme) — und die Pruefung sitzt NICHT hier, sondern in
+       R-04: `ruheRegeln()` loest seither die Toenung ueber den drei
+       Traegerflaechen auf, statt sie zu verwerfen. R-02 urteilt weiter ueber
+       TOKENWERTE, R-04 ueber Verwendungsstellen; die Arbeitsteilung bleibt
+       wie sie war.
 
        WAS SCHRITT 9 (WELLE 1, 2026-09-28) DARAUS GEMACHT HAT — und was nicht.
        214 Deklarationen sind von `var(--<rolle>)` auf `var(--<rolle>-text)`
@@ -1205,10 +1212,30 @@ describe('R-02 — Tinte erreicht ihre Schwelle auf der TATSAECHLICHEN Flaeche (
        keine davon mitgenommen hat: die Kategorie `ROLE | rgba-Literal` stand
        vor und nach dem Schritt auf 111 (red 22 · gold 19 · green 16 ·
        orange 12 · cyan 10 · blue 10 · yellow 8 · purple 8 · pink 5 ·
-       orange-dim 1). Die Planung nennt 108; woher die Differenz von drei
-       kommt, ist NICHT geklaert und fuer Welle 1 auch nicht wichtig —
-       massgeblich ist, dass die Zahl sich waehrend des Schritts nicht bewegt
-       hat.
+       orange-dim 1).
+
+       DIE DIFFERENZ ZU DEN 108 IST INZWISCHEN GEKLAERT (Welle 2, Schritt 8),
+       und sie betraegt EINS, nicht drei. Richtig ist 109 = die 108 plus
+       core.css .condition-prone, das mit `color: var(--orange-dim)` auf
+       rgba(180,83,9,0.2) sass und deshalb gegen --orange-dim zu rechnen war,
+       nicht gegen --orange. Die zwei uebrigen Posten der 111 gehoeren nicht
+       dazu:
+         · dashboard.css `.wiki-link` — Cyan auf einer VIOLETTEN Toenung, also
+           eine FREMDE Rolle. Der Kommentar an der Regel sagt das selbst. Die
+           Kategorie hat nur "Rollentinte auf rgba-Literal" gezaehlt und den
+           Rollenvergleich nie gemacht.
+         · party.css `.cf-combat-stat .cf-speed-ft` — Grenzfall: die Tinte ist
+           --cyan, das Literal war rgba(0,180,216,·) und liegt im RGB-Raum 127
+           von --cyan #7ec4cf entfernt, also ausserhalb der Aehnlichkeits-
+           schranke, mit der die 108 gezaehlt wurden. Dieselbe Stelle, zwei
+           Zaehlweisen.
+       Massgeblich fuer Welle 1 blieb ohnehin nur, dass die Zahl sich waehrend
+       des Schritts nicht bewegt hat.
+
+       DIE KATEGORIE SELBST GIBT ES SEIT SCHRITT 7 NICHT MEHR: im
+       Komponenten-CSS steht ausserhalb der Schatten kein rgba-Literal mehr
+       (R-10). Wer heute nachzaehlt, zaehlt color-mix-Toenungen, und das sind
+       128 Regeln — die Menge, die R-04 seit Schritt 8 beurteilt.
 
        WIE WEIT DIESE KONTROLLZAHL TRAEGT, praezisiert nach der Pruefung W1-D
        Runde 1: sie zaehlt REGELWEISE und verbindet `color` und `background`
@@ -1311,8 +1338,12 @@ describe('R-02 — Tinte erreicht ihre Schwelle auf der TATSAECHLICHEN Flaeche (
      *  --bg-dark), damit ist der Hintergrund ihrer Eltern gleichgueltig. Eine
      *  Flaeche mitzupruefen, die es nicht gibt, waere keine schaerfere Ratsche,
      *  sondern eine unbelegte. Die vierte denkbare Flaeche — die 20-%-Toenung
-     *  derselben Rolle in `.dms-skill-header` (dmscreen.css:1728-1732) — ist
-     *  durch D-4 ausdruecklich erst Welle 2. */
+     *  derselben Rolle in den FUENF `.dms-skill-header`-Regeln (dmscreen.css,
+     *  heute :1870-1874; D-4 nennt sechs Regeln und :1771-1775, beides ist
+     *  ueberholt) — war durch D-4 erst Welle 2 und ist seit Schritt 8
+     *  erledigt: die Toenung bleibt, die Tinte ist var(--text). Die
+     *  Attributfarben treten dort gar nicht mehr als Schrift auf, die
+     *  Teilformel muss sie also auch nicht gegen diese Flaeche pruefen. */
     const ATTR_FLAECHEN = ['--bg-dark', '--bg-card', '--bg-hover'];
 
     /** BENANNTE AUSNAHME zu Teilformel 3 — nur fuer --bg-hover, nur fuer die
