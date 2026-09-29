@@ -134,14 +134,14 @@
 }
 
 .wizard-dropzone:hover {
-    border-color: rgba(212, 175, 55, 0.5);
+    border-color: color-mix(in srgb, var(--gold) 50%, transparent);
 }
 
 /* Drag-aktiv-Zustand */
 .wizard-dropzone.dragover {
     border-color: var(--gold, var(--gold));
     border-style: solid;
-    background: rgba(212, 175, 55, 0.08);
+    background: color-mix(in srgb, var(--gold) 8%, transparent);
 }
 
 /* Datei-ausgewaehlt-Zustand */
@@ -240,7 +240,7 @@
     z-index: var(--z-panel);
     min-height: 48px;
     background: var(--bg-elevated, var(--bg-elevated));
-    border-bottom: 1px solid rgba(212, 175, 55, 0.4);
+    border-bottom: 1px solid color-mix(in srgb, var(--gold) 40%, transparent);
     display: flex;
     align-items: center;
     gap: 12px;
