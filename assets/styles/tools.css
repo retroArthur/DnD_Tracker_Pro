@@ -1086,7 +1086,28 @@
      .toc-item.active, Tinte var(--gold)
        4,96 ·  2,56 · 5,52 ·  7,78  ->  5,41 ·  2,32 · 4,56 ·  7,78
    Die Trefferhervorhebung .search-result-preview mark hat dabei zusaetzlich
-   ihre Tinte gewechselt — Begruendung dort. */
+   ihre Tinte gewechselt — Begruendung dort.
+
+   EINE DRITTE TINTE LIEGT AUF DIESEN FLAECHEN, und sie fehlte hier bis zur
+   Pruefung W2-C: var(--text-dim), an genau zwei Stellen. .search-result-preview
+   (unten) liegt im aufgeklappten Suchtreffer, und .quick-access-item:hover
+   .remove-btn liegt in der Schnellzugriff-Kachel — beide auf der 10-%-Toenung.
+   Ihre TATSAECHLICHE Traegerflaeche ist in beiden Faellen var(--bg-card)
+   (.wiki-search-dropdown bzw. .wiki-quick-access fuehren sie ausdruecklich),
+   und dagegen gerechnet halten beide:
+     var(--text-dim) auf Gold 10 % ueber --bg-card
+       3,90 ·  5,52 · 5,16 ·  6,62  ->  4,10 ·  5,19 · 4,58 ·  6,62
+   Dark liegt mit 4,10 unter 4,5 und lag es vorher mit 3,90 ebenso — die
+   Aenderung verbessert es, sie verursacht es nicht.
+
+   Nach der Hauszaehlweise D-2 (min ueber alle drei neutralen Traegerflaechen)
+   lesen dieselben Paare 3,38 · 4,58 · 4,51 · 5,38 -> 3,56 · 4,28 · 3,98 · 5,38,
+   und Light und Sepia wechseln dabei von ">= 4,5" auf "< 4,5". Beide Zaehlungen
+   stehen hier, weil sie verschiedene Fragen beantworten; gefuehrt ist der Fall
+   unter W2-C-02, damit die Aussage "genau vier neue Unterschreitungen" nicht
+   ohne ihre Einschraenkung stehen bleibt. --gold ist ausserhalb des
+   Contrast-Themes DUNKLER als das Muenzgold (Light #b8860b statt #ffd700); die
+   ohnehin blasse Tinte verliert dadurch. */
 .quick-access-item:hover {
     border-color: var(--gold);
     background: color-mix(in srgb, var(--gold) 10%, transparent);

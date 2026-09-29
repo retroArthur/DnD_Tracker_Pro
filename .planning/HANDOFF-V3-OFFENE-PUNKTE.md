@@ -595,8 +595,8 @@ spells.css
 tools.css
   261  .timer-card-time
   455  .rt-result-label
- 1138  .breadcrumb-item:hover
- 1451  .sb-remove-btn:hover
+ 1159  .breadcrumb-item:hover
+ 1472  .sb-remove-btn:hover
 welt.css
    61  .wp-session-nr
   272  .wp-detail-header h3
@@ -1291,13 +1291,56 @@ Entscheidung und ließe die Ratschen von Schritt 8 auf einem Mischbestand urteil
 der Tinte hilft in Dark nicht: gemessen bringt `--purple-text` dort **dieselben** 4,03 bzw. 4,41,
 weil `--purple-text` im Dark-Block auf denselben Wert auflöst.
 
+### Nachtrag I (Prüfung W2-C, Runde 1): „genau vier" gilt nur für **Dark**
+
+Zwei weitere Tinte/Tönung-Paare stehen auf den Goldflächen von `tools.css` und waren in der
+Goldtabelle nicht geführt, weil sie weder die geerbte `--text`- noch die `--gold`-Tinte sind:
+`var(--text-dim)` an `.search-result-preview` und an `.quick-access-item:hover .remove-btn`, beide
+auf der 10-%-Tönung.
+
+Gegen ihre **tatsächliche** Trägerfläche `var(--bg-card)` (`.wiki-search-dropdown` bzw.
+`.wiki-quick-access` führen sie ausdrücklich) halten beide: 3,90 · 5,52 · 5,16 · 6,62 → 4,10 · 5,19
+· 4,58 · 6,62. Dark liegt unter 4,5 und lag es vorher ebenso — verbessert, nicht verursacht.
+
+Nach der Hauszählweise **D-2** (min über `--bg-card`/`--bg-dark`/`--bg-elevated`), mit der diese
+Welle jede andere Zahl belegt, lesen dieselben Paare dagegen 3,38 · 4,58 · 4,51 · 5,38 → 3,56 ·
+4,28 · 3,98 · 5,38: **Light und Sepia wechseln von ≥ 4,5 auf < 4,5.** Die Überschrift dieses Punkts
+stimmt damit weiter für das Dark-Theme, aber die Aussage „genau vier neue Unterschreitungen"
+braucht diese Einschränkung. Beide Zahlenreihen stehen im Goldkommentar von `tools.css`.
+
+Abhilfe gehört zu Schritt 8: `--text-dim` ist die blasseste Tinte des Projekts, die Stärke der
+Goldtönung ist D-4/E2-Gegenstand.
+
+### Nachtrag II (Prüfung W2-C, Runde 1): **keine Ratsche deckte diese vier Befunde**
+
+Sie stehen in dieser Akte, weil sie von Hand nachgerechnet wurden — nicht, weil ein Test sie
+gemeldet hätte. `ruheRegeln()` in R-04 siebt die zu beurteilende Menge mit
+`flaeche.match(/^var\((--[\w-]+)\)$/)` und wirft damit **jede** `color-mix`-Tönung weg, bevor
+gerechnet wird. Belegt per Mutation im Spiegel: `.calc-diff-badge.trivial` von 20 % auf 95 %
+gestellt (Kontrast fällt auf rund 1,0 in allen vier Themes) — `npx jest` meldet **keinen**
+zusätzlichen roten Test.
+
+Seit Runde 1 gilt:
+
+- **R-11** (`design-consistency.test.js`) deckt die hier bezifferten Stellen ab. Die vier Zeilen der
+  Tabelle oben stehen dort als `W2C02` mit denselben Zahlen; fällt eine weiter, ist der Test rot.
+  Erreicht eine ≥ 4,5, verlangt er, die Zeile hier zu streichen.
+- **Der blinde Fleck selbst ist beziffert:** 128 Regeln setzen Tinte auf eine Tönung, und R-04
+  urteilt über keine davon. R-11 friert die Zahl ein, damit sie nicht lautlos wächst.
+- **Offen bleibt die vollständige Abhilfe:** `ruheRegeln()` so erweitern, dass eine Fläche der Form
+  `color-mix(in srgb, var(--x) N%, transparent)` über den drei neutralen Trägerflächen aufgelöst
+  statt verworfen wird (`WCAG.resolveOver()` kann die Form längst). Mit der 4,5-Schwelle gemessen
+  fallen danach **124 von 128** Regeln durch — das ist genau die Menge, die D-4/E2 in Schritt 8
+  behandelt. **Die Erweiterung ist deshalb die rote Ratsche, mit der Schritt 8 beginnt**, nicht eine
+  Nachbesserung von Schritt 7.
+
 ### Befehle
 
 ```bash
 cd /d/Claude_Code/Projekte/DnD_Tracker_App_Pro
 grep -n "calc-diff-badge.trivial" assets/styles/encounters.css
 grep -n "wiki-tree-item.selected\|wiki-detail-category" assets/styles/party.css
-npx jest tests/unit/design-consistency.test.js
+npx jest tests/unit/design-consistency.test.js -t "R-11"
 ```
 
 ---
@@ -1316,8 +1359,13 @@ Schritt, der Literale auflöst. In beiden Dateien steht ein Kommentar.
 Dasselbe gilt für die Doppelführung `.condition-*` (`core.css`) / `.condition-badge.*`
 (`dmscreen.css`), die **D-05** in Welle 4 zusammenlegt: sie trug für die vier farblosen Zustände
 **vier** verschiedene Grautöne (`100,100,100` · `120,113,108` · `107,114,128` · `156,163,175`) und
-steht jetzt in beiden Dateien geschlossen auf `--border`. Wer sie zusammenlegt, findet damit
-erstmals zwei identische Fassungen vor.
+steht jetzt in beiden Dateien geschlossen auf einer 30-%-Tönung von `var(--text-dim)` mit
+`var(--text)` als Tinte. Wer sie zusammenlegt, findet damit erstmals zwei identische Fassungen vor.
+
+**Berichtigung, Prüfung W2-C Runde 1:** dieser Satz stimmte bis dahin nicht. Beide Dateien standen
+zwar auf `--border`, führten für `petrified` aber **zwei verschiedene Tinten** — `core.css`
+`var(--text-dim)`, `dmscreen.css` `var(--text)`. Die Angleichung beider Achsen (Befund 1 derselben
+Prüfung) hat das mit erledigt.
 
 ---
 
@@ -1338,8 +1386,8 @@ braucht keinen Blick.
 | `spells.css` `.spell-card-header` (Ruhe und Hover) | **E1.** Light-`--purple` → eigene Violettrolle. In Dark sichtbar heller (`7c3aed` → `a78bfa`). | alle vier |
 | `tools.css`, sechs Goldstellen | **E1.** Münzgold `255,215,0` → Akzentgold `var(--gold)`. Nur im Contrast-Theme identisch, sonst wärmer und dunkler. | dark, light, sepia |
 | `tools.css` `.search-result-preview mark` | Tinte `--gold` → `--text`. Hält dadurch erstmals in allen vier Themes (vorher in dreien durchgefallen). | alle vier |
-| `tools.css` `.sb-progress` | `rgba(127,127,127,0.25)` → deckendes `var(--border)`. In Dark praktisch identisch (`#353535` → `#3a3a3a`), in den anderen drei folgt die Laufschiene jetzt dem Theme. | light, sepia, contrast |
-| `core.css` / `dmscreen.css`, vier farblose Zustände je Datei | Vier verschiedene Fremdgrau → `var(--border)`. In Dark etwas dunkler, sonst themengerecht. | alle vier |
+| `tools.css` `.sb-progress` | `rgba(127,127,127,0.25)` → 20-%-Tönung von `var(--text-dim)`. Reproduziert die alte Laufschiene fast zeichengleich (Light `#cecece` identisch, Dark `#393939` statt `#3c3c3c`) und folgt dabei dem Theme. **Kaum sichtbar — der Blick gilt dem goldenen Fortschrittsbalken darauf.** | alle vier |
+| `core.css` / `dmscreen.css` / `initiative.css`, die zehn farblosen Marken | Vier verschiedene Fremdgrau → 20-/30-%-Tönung von `var(--text-dim)`, **Tinte jetzt `var(--text)` statt `var(--text-dim)`**. Die Beschriftung der farblosen Zustände und der neutralen Beziehungsmarke liest sich damit kräftiger als bei den farbigen Geschwistern; die Fläche liegt wieder auf dem Stand vor der Welle. **Die zweitgrößte Sichtänderung der Welle.** | alle vier |
 | `encounters.css` Schwierigkeitsskala, `initiative.css` Konzentration/Gelände, `party.css` Wiki-Violett und Cyan-Marken, `npcs.css`, `welt.css`, `dashboard.css` | Flat-UI- bzw. Tailwind-Literale → die Rolle, die die Regel ohnehin als Tinte führt. Jeweils ein kleiner Farbton-Versatz, keine Umfärbung. | alle vier |
 | `welt.css` `.tl-typ-reise` (aus **W2-A**) | `#22c55e` → `var(--green)`. Beziffert: dark 5,64 → 5,26 · light 2,20 → 2,11 · sepia 2,13 → 2,07 · contrast 7,16 → 6,53. | alle vier |
 
