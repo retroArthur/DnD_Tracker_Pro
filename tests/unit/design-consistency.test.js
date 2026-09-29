@@ -4165,6 +4165,26 @@ describe('R-13 — color-mix im Basis-:root ohne Rueckfall (Inventar)', () => {
        Schwelle an derselben Stelle ersetzt, nur haerter: R-04 verlangt 4,5,
        W2C02 verlangte nur "nicht schlechter als gestern".
 
+   BERICHTIGUNG ZUM ZWEITEN SPIEGELSTRICH (Pruefung W2-D Runde 1, Schritt 16).
+   Der Satz stimmte bei seiner Niederschrift fuer DREI der vier Eintraege.
+   Fuer `.concentration-badge` stimmte er NICHT: ihre Flaeche ist ein
+   `linear-gradient(…)`, und `ruheRegeln()` verankerte eine Toenung mit
+   `^color-mix(…)$` — die Regel fiel aus der geurteilten Menge heraus, genau
+   wie vor Schritt 8 die freistehende Toenung. Zwischen Schritt 8 und
+   Schritt 16 war sie also ungedeckt, und nicht mit Luft: gemessen haelt sie
+   im Dark 4,57, also 0,07 ueber der Schwelle. Eine spaetere Aenderung an
+   --purple-text, an den Verlaufsstaerken oder an den Traegerflaechen waere
+   lautlos durchgefallen; die E2E-Pruefung des Banners prueft Text, keine
+   Farbe.
+
+   SEIT SCHRITT 16 STIMMT DER SATZ FUER ALLE VIER. `ruheRegeln()` loest
+   color-mix-Stopps INNERHALB eines Verlaufs auf und urteilt jeden einzeln;
+   der Test "die beiden Toenungen IM VERLAUF stehen namentlich unter
+   Aufsicht" im R-04-Block nennt `.concentration-badge` und `.spell-note`
+   beim Namen, damit die Deckung nicht wieder auf einem Kommentar ruht.
+   Der Satz oben bleibt deshalb stehen — er beschreibt den heutigen Stand
+   richtig; was hier steht, ist, dass er es zwischenzeitlich nicht tat.
+
    WAS BLEIBT, ist das, was R-04 nach wie vor NICHT sieht: die ZWEITE Achse.
    R-04 urteilt ueber Tinte-gegen-Flaeche. Ob eine Marke ueberhaupt als Marke
    zu erkennen ist, entscheidet Flaeche-gegen-Traeger, und das misst nur

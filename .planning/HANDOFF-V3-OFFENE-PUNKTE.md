@@ -1499,6 +1499,17 @@ braucht keinen Blick.
 | `welt.css` `.tl-typ-reise` | Der Verlust aus W2-A ist zurückgeholt und übertroffen: 6,35 · 2,32 · 2,25 · 8,16 → 6,66 · 4,67 · 4,74 · 8,16. | light, sepia |
 | Die drei Stellen mit **fremder Rolle** | `.wiki-link` (Cyan auf Violett), `.char-save-box.proficient` (Gold auf Grün), `.editor-btn:hover` in `spells.css` (Gold auf Gelb). Die Farbpaarung bleibt **absichtlich** erhalten; nur Stärke und Schriftvariante ändern sich. | light, sepia |
 
+### Nachtrag Schritte 16/18 (2026-09-29, Prüfung W2-D Runde 1) — zwei Tönungen **im Verlauf**
+
+Beide waren von der Deckelung der Schritte 8–15 ausgenommen, **ohne dass das jemand entschieden
+hätte**: ihre Tönung steht als Stopp in einem `linear-gradient(…)`, und alle Bestandslisten der
+Welle haben freistehende Tönungen gezählt. Sie folgen jetzt derselben Regel wie die übrigen 113.
+
+| Stelle | Was sich ändert | Sichtbar in |
+| ------ | --------------- | ----------- |
+| `spells.css` `.spell-note` | **E2, nachgezogen.** Verlaufsstopp `--yellow` 10 % → 7 % (Light/Sepia), Tinte `--gold` → `--gold-text`. Die Notizzeile jedes Zaubers (`spell-manager.js:202`). Vorher Light 2,45, jetzt 4,78. Der Zwilling `.editor-btn:hover` in derselben Datei war in Schritt 15 schon umgestellt. | light, sepia |
+| `initiative.css` `.concentration-check-banner` + `.conc-dc` | **E2, nachgezogen.** Beide Verlaufsstopps (`--yellow`, `--purple`) 15 % → 7 % (Light/Sepia), Tinte der DC-Zahl `--gold` → `--gold-text`. Vorher Light 2,35 (Kopf) bzw. 2,16 (Fuß), jetzt 4,78 bzw. 4,62. Vierter **Quergriff** der Welle, jetzt unter R-14. | light, sepia |
+
 **Worauf beim Blick zu achten ist:** ob eine Marke in Light und Sepia noch als Marke erkennbar
 ist. Der Kontrast der Schrift ist gemessen und hält (≥ 4,5 in allen vier Themes, R-04); die
 Frage, die eine Messung nicht beantwortet, ist die nach der **Fläche**: 7 % Tönung über
@@ -1711,4 +1722,82 @@ verlangt nur die umgekehrte Richtung (jedes benutzte `var()` muss definiert sein
 ```bash
 cd /d/Claude_Code/Projekte/DnD_Tracker_App_Pro
 grep -rn -- "--color-quest\|--color-spell\|--color-npc" assets/ features/ ui/ systems/
+```
+
+---
+
+## W2-D-04 — Zehn **deckende** Verlaufsflächen urteilt keine Ratsche; die Tönungen im Verlauf sind seit Schritt 16 drin, diese nicht
+
+**Stand:** 2026-09-29, Prüfung W2-D Runde 1 / Schritte 16–18. Kein akuter Lesbarkeitsmangel,
+aber eine benannte Lücke.
+
+### Worum es geht
+
+Schritt 16 hat `ruheRegeln()` im R-04-Block so erweitert, dass eine **Tönung** auch dann
+beurteilt wird, wenn sie als Stopp in einem `linear-gradient(…)` steht. Das schließt genau die
+Bauart, an der die Prüfung W2-D zwei Befunde gefunden hat (`.spell-note`, und die fehlende
+Deckung von `.concentration-badge`). Die Erweiterung ist **auf Tönungen begrenzt** — auf Stopps
+der Form `color-mix(in srgb, var(--rolle) N%, transparent)`.
+
+**Deckende** Verlaufsstopps bleiben außen: `linear-gradient(135deg, var(--red), var(--red-dark))`.
+Das ist keine Nachlässigkeit, sondern eine andere Rechnung. Unter einem deckenden Stopp liegt
+keine Trägerfläche; das Minimum über `--bg-card`/`--bg-dark`/`--bg-elevated`, mit dem R-04 jede
+Tönung mißt, ist dort sinnlos — gerechnet werden muß gegen den Stopp selbst, und zwar über die
+ganze Verlaufsspanne, nicht nur an den beiden Enden.
+
+### Die Klasse, gemessen
+
+Zehn Regeln im Baum führen eine Verlaufsfläche mit deckenden Stopps **und** eine eigene Tinte
+(eigener Parser über `assets/styles/*.css`, eigene sRGB-Mathematik, Selbstprobe `#777777`/`#767676`
+gegen Weiß = 4,48/4,54). Gemessen ist jeweils das Minimum über beide Verlaufsenden:
+
+| Regel | Tinte | dark | light | sepia | contrast |
+| ----- | ----- | ---- | ----- | ----- | -------- |
+| `dashboard.css` `.conflict-banner` | `--ink-on-dark` | **3,76** | 4,83 | 4,63 | **4,00** |
+| `dice.css` `.floating-dice-trigger` | `--ink-on-dark` | 6,76 | 8,25 | 7,97 | 7,20 |
+| `dmscreen.css` `.dms-dice-btn.dms-dice-d20` | `--ink-on-dark` | 6,76 | 8,25 | 7,97 | 7,20 |
+| `party.css` die sieben `.read-aloud`-Varianten | `--ra-*-ink` | 7,13–11,87 | identisch | identisch | identisch |
+
+**Keine neue Unterschreitung.** Die einzige — `.conflict-banner` in Dark und Contrast — ist seit
+Welle 1 Schritt 7 im CSS-Kommentar derselben Regel aktenkundig, mit denselben vier Zahlen, und
+ausdrücklich auf Welle 3/4 verschoben: abgeleitete Flächen (`--red-dim`, `--red-dark`,
+`--gold-hover`, …) haben kein `--on-*`-Pendant. Weiß ist dort an jedem Punkt der Spanne die
+bessere der beiden möglichen Tinten (`var(--on-red)` ergäbe 2,03 / 1,90). Die sieben
+Vorlese-Varianten sind themenunabhängiges Papier (§7-Ausnahme) und halten mit Abstand.
+
+### Warum das trotzdem offen ist
+
+Der Befund ist nicht die Zahl, sondern dass **niemand hinsieht**. Genau diese Form hat in dieser
+Welle schon zweimal zugeschlagen: Schritt 7 legte `.concentration-badge` in einen Verlauf und
+keine Ratsche urteilte darüber; Schritt 15 behob `.editor-btn:hover` und übersah den Zwilling
+`.spell-note` acht Zeilen davor, weil er im Verlauf stand. Solange die deckende Spanne ungemessen
+bleibt, ist `.conflict-banner` genauso gestellt: eine spätere Änderung an `--red`, an
+`--red-dark` oder an der Tinte fällt lautlos durch.
+
+Der Weg ist bekannt und nicht groß: dieselbe Erweiterung wie in Schritt 16, aber mit dem Stopp
+als Grundfläche statt als Auflage, und mit einer Abtastung über die Spanne (die Enden genügen
+nicht — der schlechteste Punkt von `.conflict-banner` liegt am hellen Ende, das dunkle hält
+9,31–10,87). Er gehört zur Welle, die die abgeleiteten Flächen mit `--on-*`-Pendants versorgt,
+nicht in einen Tönungsschritt.
+
+### Zweiter Punkt derselben Prüfung: die Zahl der ungedeckelten Tönungen
+
+Der Schrittbericht von Schritt 8 hält fest, die ungedeckelt gebliebenen Tönungen seien „alle
+neutral, keine einzige trägt eine Rollentinte". Nachgezählt (eigener Parser, Stand vor Schritt 16):
+**88 ungedeckelte Rollen-Tönungsstopps**, davon **18 in einer Regel mit eigener Tinte** — und
+**eine** davon trug sehr wohl eine Rollentinte: `spells.css` `.spell-note`, Gold auf 10 % Gelb,
+Light 2,45. Sie ist in Schritt 16 behoben. Die übrigen 17 tragen `var(--text)` auf einer
+`--text-dim`- oder `--attr-*`-Tönung; für die gilt der Satz weiterhin. Die Aussage war also **um
+genau eine Stelle zu weit**, und genau diese eine war der Befund.
+
+### Befehle
+
+```bash
+cd /d/Claude_Code/Projekte/DnD_Tracker_App_Pro
+# Alle Verlaufsflaechen mit eigener Tinte:
+grep -n "linear-gradient" assets/styles/*.css | head -40
+# Die Begruendung an der einen Unterschreitung:
+grep -n "BLEIBT weiss" -A 20 assets/styles/dashboard.css
+# Die beiden Toenungen IM VERLAUF, die seit Schritt 16 geurteilt werden:
+npx jest tests/unit/design-consistency.test.js -t "Toenungen IM VERLAUF"
 ```
