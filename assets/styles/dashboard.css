@@ -250,15 +250,21 @@
             /* NICHT Schritt 9/10: die Ruheflaeche ist eine 10-%-Toenung einer
                FREMDEN Rolle (Violett unter Cyan-Text) und faellt damit unter
                Entscheidung D-4 — Toenungsstaerke und Tinte entscheidet Welle 2
-               in einem Zug. Schon gemessen, damit Welle 2 die Zahl nicht neu
-               suchen muss (min ueber die vier neutralen Traegerflaechen, auf
-               denen die Toenung liegen kann): dark 5,84 · light 2,44 ·
-               sepia 2,08 · contrast 9,15. Der Mangel ist echt, aber er ist ein
-               Toenungsmangel und keiner der Tinte. */
+               in einem Zug. Der Mangel ist echt, aber er ist ein
+               Toenungsmangel und keiner der Tinte.
+
+               Welle 2 Schritt 7 hat nur das LITERAL aufgeloest. 168,85,247
+               traf zufaellig --know-religion, das Wissensgebiet "Religion";
+               eine mechanische Runde waere dort gelandet und haette den
+               Wiki-Verweis an die Wissensgebiete gekoppelt — genau die
+               Bedeutungskopplung, gegen die R-12 steht. Nach dem Zweck ist es
+               die Violettrolle. Gemessen wie in Welle 1, min ueber die vier
+               neutralen Traegerflaechen, vorher -> nachher: dark 5,84 -> 5,48 ·
+               light 2,44 -> 2,38 · sepia 2,08 -> 2,05 · contrast 9,15 -> 9,57. */
             color: var(--cyan);
             cursor: pointer;
             border-bottom: 1px dotted var(--cyan);
-            background: rgba(168, 85, 247, 0.1); /* F-18: aus der Dublette uebernommen */
+            background: color-mix(in srgb, var(--purple) 10%, transparent); /* F-18: aus der Dublette uebernommen */
             padding: 2px 8px; /* F-18: aus der Dublette uebernommen */
             border-radius: var(--radius-sm); /* F-18: aus der Dublette uebernommen */
             font-size: 0.85em; /* F-18: aus der Dublette uebernommen */
@@ -1646,7 +1652,13 @@
 /* NEW Badge */
 .qref-new-badge {
     padding: 2px 6px;
-    background: rgba(34, 197, 94, 0.2);
+    /* Welle 2 Schritt 7. 34,197,94 ist vierfach belegt (--attr-dex in Dark und
+       Contrast, --dmg-acid, --know-nature); nach dem Zweck ist es keins davon,
+       sondern die Gruenrolle, die diese Regel als Tinte schon fuehrt.
+       Gemessen (min ueber die drei neutralen Traegerflaechen, vorher ->
+       nachher): 6,12 -> 5,63 · 2,34 -> 2,21 · 2,22 -> 2,15 · 8,01 -> 7,11.
+       Light und Sepia lagen schon vorher unter 4,5 — D-4, Schritt 8. */
+    background: color-mix(in srgb, var(--green) 20%, transparent);
     color: var(--green);
     border-radius: var(--radius-sm);
     font-size: 0.65em;
