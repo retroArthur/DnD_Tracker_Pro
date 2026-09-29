@@ -1799,9 +1799,14 @@
    Ersetzung. --dmg-fire ist ausserdem var(--red) und damit themenabhaengig,
    die anderen vier nicht.
 
-   Seit Welle 2 Schritt 6 Teil B steht die Tinte JEDER Zeile als
-   var(--dmg-<typ>-text) statt als Wort `white` oder `black` — dieselben
-   elf Werte, aber an EINER Stelle in variables.css. Die kuenftige
+   Seit Welle 2 Schritt 6 Teil B steht die Tinte JEDER Zeile auf dem
+   gleichnamigen Tintentoken ihrer Schadensart statt auf dem Wort `white`
+   oder `black` — dieselben elf Werte, aber an EINER Stelle in
+   variables.css. (Der Tokenname ist hier bewusst NICHT als var()-Ausdruck
+   mit Platzhalter ausgeschrieben: F-01 Test 1 liest die Komponenten-
+   dateien samt Kommentaren und haelt den abgeschnittenen Platzhalter fuer
+   ein undefiniertes Token — dieselbe Falle, vor der der Kommentar in
+   pwa.css warnt, und sie hat hier prompt zugeschlagen.) Die kuenftige
    Neuberechnung der ganzen Skala ist damit eine Aenderung an einer Stelle
    statt an elf. Keine der Zahlen oben bewegt sich dadurch. */
 .qref-dmg.physical { background: var(--dmg-physical); color: var(--dmg-physical-text); }
