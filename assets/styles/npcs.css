@@ -261,7 +261,7 @@
 
 .npc-detail-btn.danger:hover {
     border-color: var(--red);
-    background: rgba(239, 68, 68, 0.1);
+    background: color-mix(in srgb, var(--red) 10%, transparent);
 }
 
 .npc-detail-btn.small {
@@ -365,7 +365,7 @@
 }
 
 .npc-trigger-item.triggered {
-    background: rgba(234, 179, 8, 0.1);
+    background: color-mix(in srgb, var(--dmg-lightning) 10%, transparent);
 }
 
 .npc-trigger-content {
@@ -494,12 +494,12 @@
 }
 
 .loot-item:hover {
-    border-color: rgba(251, 191, 36, 0.3);
+    border-color: color-mix(in srgb, var(--yellow) 30%, transparent);
 }
 
 .loot-item.selected {
     border-color: var(--gold);
-    background: rgba(251, 191, 36, 0.1);
+    background: color-mix(in srgb, var(--yellow) 10%, transparent);
 }
 
 .loot-item-icon {
@@ -621,7 +621,7 @@
 
 .loot-detail-btn.danger:hover {
     border-color: var(--red);
-    background: rgba(239, 68, 68, 0.2);
+    background: color-mix(in srgb, var(--red) 20%, transparent);
 }
 
 /* Loot Section */
@@ -1083,7 +1083,7 @@
         }
         
         .npc-trigger-check:hover {
-            background: rgba(251, 191, 36, 0.2);
+            background: color-mix(in srgb, var(--yellow) 20%, transparent);
         }
         
         .npc-trigger-check.triggered {
