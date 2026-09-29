@@ -3731,3 +3731,91 @@ describe('R-12 — Skalentoken als Toenungsflaeche (Ratsche)', () => {
         expect(offen.sort()).toEqual([]);
     });
 });
+
+/* ===========================================================================
+   Design-Handoff v3, Welle 2 — R-13: color-mix im Basis-:root ohne Rueckfall
+   ===========================================================================
+   WOGEGEN SIE STEHT. Entscheidung E4 verzichtet an den FLAECHEN bewusst auf
+   einen Zwei-Deklarations-Rueckfall: eine unbekannte color-mix-Form faellt
+   dort von selbst auf die vorausgehende Deklaration derselben Eigenschaft
+   zurueck, und ein zusaetzliches rgba-Literal liesse R-10 an jeder Stelle
+   anschlagen. Fuer TOKENS gilt das NICHT: steht color-mix im Wert eines
+   Custom Property, das nur EINMAL deklariert ist, gibt es keine vorausgehende
+   Deklaration, auf die zurueckgefallen werden koennte — und ein
+   var(--x, ersatz) hilft auch nicht, weil der Rueckfall nur bei einem NICHT
+   DEFINIERTEN Namen feuert, nicht bei einem definierten mit unbrauchbarem
+   Wert. Der Wert ist dann "invalid at computed value time"; die Eigenschaft
+   faellt auf ihren Anfangswert, bei background-color also auf durchsichtig.
+   Eine Modalblende ist dann nicht blass, sondern weg.
+
+   E4 ordnet die @supports-Absicherung fuer SECHS Tokens an (--gold-hover,
+   --green-hover, --red-dim, --green-dim, --red-dark, --orange-dim). Schritt 3
+   derselben Welle hat NEUN weitere derselben Bauart angelegt
+   (--overlay-faint/-weak/-mid/-strong/-heavy, --scrim-60/-70/-75/-85). Die
+   Klasse ist damit von 6 auf 15 gewachsen, ohne dass die Anordnung
+   mitgewachsen waere — genau der Vorgang, gegen den diese Ratsche steht: die
+   Klasse soll nicht mehr lautlos wachsen koennen.
+
+   WAS SIE ZAEHLT. Jedes Custom Property in variables.css, dessen Wert
+   color-mix( enthaelt und das in GENAU EINEM Block deklariert ist. Sie ist
+   bei der Geburt GRUEN mit 15 Namen; sie ist kein Nachweis, sondern ein
+   Inventar. Wer einen sechzehnten anlegt, traegt ihn hier ein und beantwortet
+   dabei die Frage, die Schritt 11 sonst per Buchstabentreue uebergeht.
+   Vollstaendig in .planning/HANDOFF-V3-OFFENE-PUNKTE.md unter W2-B-05.
+   =========================================================================== */
+describe('R-13 — color-mix im Basis-:root ohne Rueckfall (Inventar)', () => {
+    /** Die gefuehrte Menge. Die ersten sechs sind die von E4 benannten, die
+     *  neun weiteren hat Schritt 3 angelegt. Sortiert, damit ein Zugang an
+     *  seiner Stelle auffaellt und nicht am Listenende versteckt werden kann. */
+    const RUECKFALLLOSE_COLOR_MIX_TOKENS = [
+        '--gold-hover',
+        '--green-dim',
+        '--green-hover',
+        '--orange-dim',
+        '--overlay-faint',
+        '--overlay-heavy',
+        '--overlay-mid',
+        '--overlay-strong',
+        '--overlay-weak',
+        '--red-dark',
+        '--red-dim',
+        '--scrim-60',
+        '--scrim-70',
+        '--scrim-75',
+        '--scrim-85'
+    ];
+
+    function gemessen() {
+        const maskiert = cssFiles
+            .find(f => f.name === 'variables.css')
+            .content.replace(/\/\*[\s\S]*?\*\//g, m => m.replace(/[^\n]/g, ' '));
+        const bloecke = new Map();
+        const mix = new Set();
+        let i = 0;
+        while (i < maskiert.length) {
+            if (maskiert[i] !== '{') {
+                i++;
+                continue;
+            }
+            let tiefe = 1;
+            let j = i + 1;
+            while (j < maskiert.length && tiefe) {
+                if (maskiert[j] === '{') tiefe++;
+                else if (maskiert[j] === '}') tiefe--;
+                j++;
+            }
+            const gesehen = new Set();
+            for (const d of maskiert.slice(i + 1, j - 1).matchAll(/(--[\w-]+)\s*:\s*([^;]+);/g)) {
+                gesehen.add(d[1]);
+                if (d[2].includes('color-mix(')) mix.add(d[1]);
+            }
+            gesehen.forEach(t => bloecke.set(t, (bloecke.get(t) || 0) + 1));
+            i = j;
+        }
+        return [...mix].filter(t => bloecke.get(t) === 1).sort();
+    }
+
+    test('die Menge der rueckfalllosen color-mix-Tokens ist die gefuehrte', () => {
+        expect(gemessen()).toEqual(RUECKFALLLOSE_COLOR_MIX_TOKENS);
+    });
+});
