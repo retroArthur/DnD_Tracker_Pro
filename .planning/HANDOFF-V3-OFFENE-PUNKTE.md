@@ -2140,6 +2140,11 @@ mit der harmloseren Richtung. Alle vier sind in Schritt 10 erledigt (Fläche und
 die falsche Farbe die SCHRIFT ist. Wer eine Skala auf ihre Verwendungen absucht, muss nach dem
 Namen der Skala suchen, nicht nach dem Muster des Fehlers.
 
+**Nachtrag, Prüfrunde W2-E Runde 1:** diese Lehre war zunächst nicht in eine Schranke übersetzt.
+R-16 Teil (4) rechnete die Kontraste nach, aber keiner der fünf Teile las die vier Stellen selbst
+— der reparierte 1,12-Fall ließ sich rückstandsfrei zurückdrehen. Seit Teil (6) sucht die Ratsche
+nach dem Namen der Skala, genau wie die Lehre es verlangt. Siehe W2-E-06.
+
 ### Befehle
 
 ```bash
@@ -2193,6 +2198,77 @@ gehört vor die Entscheidung, nicht in einen Schritt.
 cd /d/Claude_Code/Projekte/DnD_Tracker_App_Pro
 grep -n "legacy #toast" -A 26 utils/utilities.js
 grep -rn "#toast\|\.toast" assets/styles/*.css   # keine verbergende Regel
+```
+
+---
+
+## W2-E-06 — Drei Ratschen-Lücken aus Schritt 10, alle drei geschlossen
+
+**Status: ERLEDIGT am 2026-09-29 (Prüfrunde W2-E, Runde 1).** Steht hier als Lehrstück, nicht als
+offene Frage. Alle drei Lücken haben dieselbe Form: eine Farbe war gemessen und repariert, aber
+die Messung stand nur in Prosa, nicht in einer Schranke.
+
+**Die Probe, mit der alle drei gefunden wurden:** die reparierte Stelle wieder auf ihren alten
+Zustand zurückdrehen und die volle Jest-Suite laufen lassen. Bleibt sie grün, ist die Reparatur
+unbewacht. Das ist billiger als jede Durchsicht und findet genau das, was Prosa nicht kann.
+
+### (1) Der Ereignis-Log war von keiner Ratsche gedeckt
+
+Entscheidung E6 hat dem Log themenblinde Tinte-Tokens gegeben (Light vorher 1,07). Beide
+Rückdrehungen blieben grün: die vier Tintendeklarationen in `party.css` zurück auf die
+Theme-Tinte, und die Tokenwerte in allen vier Theme-Blöcken auf einen dunklen Wert. Die neuen
+Zahlen standen ausschließlich in einer Begründungs-Zeichenkette der R-10-Ausnahmeliste und in
+CSS-Kommentaren; R-01 prüft nur die Namensmenge der Theme-Blöcke, R-13 greift nicht, weil die
+Fläche ein rgba-Literal ist und keine Rolle.
+
+**Geschlossen durch R-17** (drei Teile: Deklaration, Themenblindheit, Kontrast über beide
+Flächen). Die zwei Flächenliterale liest R-17 aus der R-10-Ausnahmeliste, die dafür auf
+Modulebene gezogen wurde.
+
+### (2) R-16 prüfte die Seltenheits-TOKENS, aber nicht ihre Verwendung
+
+Siehe W2-E-04. Dreht man in `features/initiative-loot.js` die Tinte des Gegenstandsnamens von
+`${rarityInk}` auf `${rarityBg}` zurück, blieb die Suite grün — Teil (1) sucht nach
+`color: var(--bg-…)` und sieht einen Template-Platzhalter nicht, Teil (3) liest
+`core/constants.js`, Teil (4) urteilt über Tokenwerte statt über Verwendung.
+
+**Geschlossen durch R-16 Teil (6):** er liest die Quelltexte, wie R-09 es für die Ortsfarben tut,
+und prüft, welcher lokale Name an welche Tabelle gebunden ist und in welche Eigenschaft er geht.
+
+### (3) R-16 Teil (4) rechnete gegen seine eigene Abschrift
+
+Die zwei entscheidenden Trägerflächen — die Auswahlzeile und die zugewiesene Zeile — waren als
+eingetippte Zahlen im Test gebildet, obwohl beide in der Quelle stehen. Der Spielraum an dieser
+Stelle beträgt **0,00 bis 0,11**: die Auswahlzeile ist die bindende Fläche (sepia uncommon 4,50).
+Eine gewöhnliche Gestaltungsanpassung — die Tönung von 10 % auf 15 % — drückt alle fünf Tinten auf
+light 4,42–4,44 und sepia 4,30–4,32, während der Test weiter mit dem alten Wert rechnete,
+4,50–4,53 meldete und grün blieb. Genau diese Bauart nennt der Kommentar zu `ZELL_TOENUNG` aus
+Schritt 7 derselben Welle „die gefährlichste Bauart, die eine Ratsche haben kann".
+
+**Geschlossen:** Basis und Stärke kommen jetzt aus dem Quelltext (`regelnMitRumpf` +
+`zerlegeMix` für das CSS, eine rgba-Regex für das JS-Literal), mit Leerlaufschutz davor.
+
+### Was sich dadurch sonst geändert hat
+
+Die Ausnahmeliste in `tests/unit/module-test-coverage.test.js` schrumpft von 77 auf **75**:
+`features/render-loot.js` und `features/initiative-loot.js` werden jetzt in ausführbarem Code
+gelesen, nicht nur im Erklärtext erwähnt.
+
+### Die Regel, die daraus folgt
+
+Wer eine Farbe repariert, schreibt im selben Commit die Schranke dazu — und weist ihren Rotlauf
+mit der kleinstmöglichen Rückdrehung nach. Eine Zahl in einem Kommentar oder in einer
+Begründungs-Zeichenkette ist keine Schranke; sie wird beim nächsten Umbau nicht gelesen.
+
+### Befehle
+
+```bash
+cd /d/Claude_Code/Projekte/DnD_Tracker_App_Pro
+npx jest tests/unit/design-consistency.test.js tests/unit/module-test-coverage.test.js
+# Die Probe, die alle drei Luecken gefunden hat (Beispiel (3)):
+sed -i '511s/var(--yellow) 10%/var(--yellow) 15%/' assets/styles/npcs.css
+npx jest tests/unit/design-consistency.test.js   # muss jetzt rot sein
+git checkout -- assets/styles/npcs.css
 ```
 
 ---
