@@ -156,6 +156,14 @@ function isCovered(relModulePath) {
 // Sie stand dort als eingetippte 0.15 neben einem Spielraum von 0,00 bis 0,11
 // — eine Ratsche, die gegen ihre eigene Abschrift rechnet. Auch diese
 // Zusicherung fuehrt den Modulpfad in AUSFUEHRBAREM Code.
+//
+// 2026-09-29, Pruefrunde W2-E Runde 1: UND NOCH EINER, die Liste schrumpft von
+// 76 auf 75. `features/initiative-loot.js` wird seither von R-16 Teil (6)
+// gelesen: dass der Gegenstandsname und die Detailueberschrift ihre Tinte aus
+// RARITY_TEXT_COLORS holen und die Seltenheitsmarke ihre Flaeche aus
+// RARITY_COLORS. Vorher beurteilte R-16 die TABELLE, aber keine der Stellen,
+// die sie brauchen — der reparierte 1,12-Fall liess sich rueckstandsfrei
+// zurueckdrehen, ohne dass ein Test etwas gemerkt haette.
 const MODULE_TEST_EXCEPTIONS = [
     'core/themes.js',
     'features/bestiary/bestiary-actions.js',
@@ -174,7 +182,6 @@ const MODULE_TEST_EXCEPTIONS = [
     'features/fraktionen/fraktionen-crud.js',
     'features/initiative-combat-widgets.js', // -- CR-01, 2026-09-07: s. Kommentar oben
     'features/initiative-extras.js',
-    'features/initiative-loot.js', // -- CR-01, 2026-09-07: s. Kommentar oben
     'features/initiative-statblock.js',
     'features/locations/locations-crud.js',
     'features/loot-distribution.js',

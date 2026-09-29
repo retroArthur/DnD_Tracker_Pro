@@ -4993,6 +4993,18 @@ describe('R-15 — die sechs Attributfarben bleiben unterscheidbar (Ratsche zu D
        das Welle 1 Schritt 8 an der SW-Update-Leiste beschlossen hat. Weiss
        waere dort 1,53-2,72 und damit keine Alternative.
 
+   (6) Die Textstellen BENUTZEN die Tintentabelle auch. Nachgetragen in der
+       Pruefung W2-E, Runde 1: die Teile (1) bis (5) beurteilten die TABELLE
+       und die WERTE, aber keine von ihnen las die Stellen, die sie brauchen.
+       Dreht man in initiative-loot.js beide `${rarityInk}` wieder auf
+       `${rarityBg}` zurueck — also genau der 1,12-Fall, den Schritt 10
+       repariert hat —, blieb die volle Suite gruen: Teil (1) sucht nach
+       `color: var(--bg-…)` und sieht ein `${rarityBg}` nicht, Teil (3) liest
+       core/constants.js, Teil (4) urteilt ueber Tokenwerte statt ueber
+       Verwendung. Die Lehre des Befunds W2-E-04 lautet: wer eine Skala
+       absucht, muss nach ihrem NAMEN suchen. Dieser Teil tut das — er liest
+       die Quelltexte, wie R-09 es fuer die Ortsfarben tut.
+
    WARUM DIE SCHWELLE HIER 4,5 IST UND NICHT DIE D-2-MINIMIERUNG ueber die vier
    neutralen Flaechen: die Traeger dieser Stellen sind keine neutralen
    Flaechen, sondern die Akzentflaeche selbst (Teile 2, 5) oder eine benannte
@@ -5306,6 +5318,146 @@ describe('R-16 — Tinte auf JS-gesetzter Flaeche (Ratsche)', () => {
                 );
             }
         });
+        expect(befunde.sort()).toEqual([]);
+    });
+
+    /** Die Stellen, an denen die Seltenheitsfarbe TEXT ist, mit der Zahl der
+     *  erwarteten Vorkommen je Datei. Dieselben drei, die Teil (4)
+     *  ausrechnet — dort als Traegerliste im Erklaertext, hier als gepruefte
+     *  Zusicherung im ausfuehrbaren Code:
+     *    initiative-loot.js  Gegenstandsname (.loot-item-name) und
+     *                        Detailueberschrift (.loot-detail-name)
+     *    render-loot.js      die Zeile der Zuweisungsliste */
+    const TINTENSTELLEN = [
+        { datei: 'features/initiative-loot.js', anzahl: 2 },
+        { datei: 'features/render-loot.js', anzahl: 1 }
+    ];
+
+    /** Die Seltenheits-MARKE: die einzige Stelle, an der die Skala Flaeche
+     *  sein DARF — dann aber mit der themenblinden Tinte woertlich daneben. */
+    const MARKENSTELLE = { datei: 'features/initiative-loot.js', anzahl: 1 };
+
+    /** Kommentare zeichenweise leeren, Zeilenumbrueche behalten. NOETIG, nicht
+     *  Kosmetik: ueber der Bindung in render-loot.js steht der erklaerende
+     *  Satz "das Muster `const X = window.X` in einer Funktion ist in
+     *  CLAUDE.md als Fallstrick gefuehrt" — die Suche unten hat daraus beim
+     *  ersten Versuch die Bindung `X` gelesen und die echte darunter
+     *  ueberlaufen. Dieselbe Falle, die der Kommentar zu withoutComments()
+     *  ganz oben fuer CSS beschreibt.
+     *  Der Schutz `(?<!:)` vor `//` haelt ein `https://` in einer
+     *  Zeichenkette heraus. */
+    function ohneJsKommentare(js) {
+        return js
+            .replace(/\/\*[\s\S]*?\*\//g, m => m.replace(/[^\n]/g, ' '))
+            .replace(/(?<!:)\/\/[^\n]*/g, m => ' '.repeat(m.length));
+    }
+
+    /** Namen, die in dieser Datei an eine der beiden Tabellen gebunden sind.
+     *  Die Luecke zwischen `=` und dem Tabellennamen darf weder Semikolon noch
+     *  geschweifte Klammer enthalten, sonst zoege die Suche ueber die
+     *  Anweisungsgrenze hinweg und schriebe `rarityInk` faelschlich auch die
+     *  Flaechentabelle zu. Der Rueckblick `(?<![A-Z_])` haelt
+     *  RARITY_TEXT_COLORS aus der Suche nach RARITY_COLORS heraus — ohne ihn
+     *  waere jede Tinte auch eine Flaeche. */
+    function gebundeneNamen(js, tabelle) {
+        const re = new RegExp(
+            `(?:const|let|var)\\s+(\\w+)\\s*=[^;{}]{0,200}?(?:window\\.)?(?<![A-Z_])${tabelle}\\s*\\[`,
+            'g'
+        );
+        return new Set([...ohneJsKommentare(js).matchAll(re)].map(m => m[1]));
+    }
+
+    /** Interpolationen einer Eigenschaft: `color: ${name}` bzw.
+     *  `background: ${name}`. Der Praefixschutz ist derselbe wie in
+     *  deklaration() — ohne ihn liest `border-color:` als `color:` mit. */
+    function interpolationen(js, prop) {
+        const re = new RegExp(`(?:^|[^-\\w])${prop}:\\s*\\$\\{(\\w+)\\}`, 'g');
+        return [...ohneJsKommentare(js).matchAll(re)].map(m => m[1]);
+    }
+
+    test('(6) die Textstellen holen ihre Tinte aus der Tintentabelle, die Marke ihre Flaeche aus der Flaechentabelle', () => {
+        // Leerlaufschutz: drei Textstellen, eine Marke. Ohne diesen Beleg
+        // liefe die Schleife ueber eine leere Liste und waere gruen.
+        expect(TINTENSTELLEN.reduce((n, s) => n + s.anzahl, 0)).toBe(3);
+        expect(MARKENSTELLE.anzahl).toBe(1);
+
+        const befunde = [];
+        TINTENSTELLEN.forEach(({ datei, anzahl }) => {
+            const js = lies(datei);
+            if (js === null) {
+                befunde.push(`${datei}: Datei fehlt`);
+                return;
+            }
+            const tinte = gebundeneNamen(js, 'RARITY_TEXT_COLORS');
+            const flaeche = gebundeneNamen(js, 'RARITY_COLORS');
+            if (!tinte.size) {
+                befunde.push(
+                    `${datei}: kein Name ist an RARITY_TEXT_COLORS gebunden. Wer eine ` +
+                        `Seltenheitsfarbe als SCHRIFT setzt, nimmt diese Tabelle`
+                );
+                return;
+            }
+
+            const alsTinte = interpolationen(js, 'color');
+            alsTinte.forEach(name => {
+                if (flaeche.has(name)) {
+                    befunde.push(
+                        `${datei}: "color: \${${name}}" setzt die FLAECHENtabelle als Tinte. ` +
+                            `Genau so erreichte "sehr selten" in Sepia 1,12 — die Flaechenwerte ` +
+                            `sind themenblind und fuer Schrift nur in Dark und Contrast hell genug`
+                    );
+                } else if (!tinte.has(name)) {
+                    befunde.push(
+                        `${datei}: "color: \${${name}}" kommt aus keiner der beiden ` +
+                            `Seltenheitstabellen — die Ratsche kann diese Tinte nicht beurteilen`
+                    );
+                }
+            });
+
+            const echte = alsTinte.filter(n => tinte.has(n)).length;
+            if (echte !== anzahl) {
+                befunde.push(
+                    `${datei}: ${echte} statt ${anzahl} Textstellen mit der Seltenheits-Tinte. ` +
+                        `Teil (4) rechnet die Kontraste fuer ${anzahl} Stellen dieser Datei nach`
+                );
+            }
+
+            interpolationen(js, 'background').forEach(name => {
+                if (tinte.has(name)) {
+                    befunde.push(
+                        `${datei}: "background: \${${name}}" setzt die TINTENtabelle als ` +
+                            `Flaeche. Die abgedunkelten Ableitungen sind fuer Flaechen nicht gedacht`
+                    );
+                }
+            });
+        });
+
+        const marke = lies(MARKENSTELLE.datei);
+        if (marke === null) {
+            befunde.push(`${MARKENSTELLE.datei}: Datei fehlt`);
+        } else {
+            const flaeche = gebundeneNamen(marke, 'RARITY_COLORS');
+            const treffer = [
+                ...ohneJsKommentare(marke).matchAll(
+                    /background:\s*\$\{(\w+)\};\s*color:\s*var\(--on-rarity\)/g
+                )
+            ];
+            if (treffer.length !== MARKENSTELLE.anzahl) {
+                befunde.push(
+                    `${MARKENSTELLE.datei}: ${treffer.length} statt ${MARKENSTELLE.anzahl} Marken ` +
+                        `mit "background: \${…}; color: var(--on-rarity)". Teil (5) rechnet ` +
+                        `--on-rarity gegen die fuenf Flaechen dieser Marke nach`
+                );
+            }
+            treffer.forEach(([, name]) => {
+                if (!flaeche.has(name)) {
+                    befunde.push(
+                        `${MARKENSTELLE.datei}: die Marke fuellt sich aus "${name}", das nicht ` +
+                            `an RARITY_COLORS gebunden ist`
+                    );
+                }
+            });
+        }
         expect(befunde.sort()).toEqual([]);
     });
 });
