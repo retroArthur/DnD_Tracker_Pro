@@ -242,9 +242,30 @@
             transition: color 0.2s, background 0.2s;
         }
 
+        /* DRITTER FALL MIT FREMDER ROLLE (D-4/E2, Schritt 8) — und der einzige,
+           den der Planschritt nicht kennt: Gold als Schrift auf einer
+           10-%-Toenung von GELB. Die zwei benannten Faelle stehen in
+           dashboard.css. Gefunden hat ihn die erweiterte R-04, nicht die
+           Bestandsliste; die suchte nach Toenung und Tinte DERSELBEN Rolle.
+
+           Die fremde Rolle bleibt: Gelb und Gold liegen so nah beieinander,
+           dass der Unterschied hier keine Bedeutung traegt, und eine
+           Vereinheitlichung waere eine Sichtaenderung ohne Entscheidung.
+           Geaendert ist nur, worueber E2 entscheidet — Deckel und
+           Textvariante. Gemessen, min ueber --bg-card/--bg-dark/--bg-elevated:
+             var(--gold)      5,85 · 2,45 · 5,19 · 8,53
+             var(--gold-text) 5,85 · 4,80 · 5,33 · 8,53
+
+           ZUR EINORDNUNG: diese Regel malt vermutlich nie. `.editor-toolbar
+           .editor-btn:hover` in editors.css:58 ist (0,3,0) und schlaegt sie,
+           und `editor-btn` sitzt ausschliesslich in Werkzeugleisten (in
+           Welle 1 Schritt 10 fuer `.format-active` nachgewiesen). R-04
+           urteilt trotzdem ueber sie — ihre benannte Grenze (1): eine Regel,
+           die ueberschrieben wird, faellt dennoch ins Raster. Eine tote Regel
+           zu loeschen waere eine eigene Entscheidung und keine Farbfrage. */
         .editor-btn:hover {
-            color: var(--gold);
-            background: color-mix(in srgb, var(--yellow) 10%, transparent);
+            color: var(--gold-text);
+            background: color-mix(in srgb, var(--yellow) min(10%, var(--tint-max)), transparent);
         }
 
         .editor-select {
