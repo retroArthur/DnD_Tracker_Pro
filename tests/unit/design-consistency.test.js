@@ -3582,11 +3582,16 @@ describe('R-09 — die Ortsfarben aus dem JS (Ratsche)', () => {
         /* (d) Regeln, die gegen einen Inline-Stil derselben Elemente nie
            gewinnen. Bis Welle 2 Schritt 10 stand hier nur der Ortsaufkleber;
            die Schatzkammer hat die gleich gebaute Stelle daneben (der
-           Seltenheitsaufkleber, dessen Flaeche UND Tinte aus
-           features/initiative-loot.js kommen). Beide sind toter Code, und
-           beide sind gefaehrlicher als gewoehnlicher toter Code: sie sehen
-           aus wie die gueltige Deklaration. Wer die Seltenheitsfarben sucht,
-           findet in npcs.css ein Violett, das nirgends erscheint.
+           Seltenheitsaufkleber, dessen Flaeche UND Tinte aus dem Inline-Stil
+           der Schatzkammer-Liste kommen — der Modulpfad steht nur unten im
+           Feld `quelle`, denn ein loader-relativer Pfad in einem
+           Fliesstextkommentar laesst tests/unit/module-test-coverage.test.js
+           das Modul fuer getestet halten und hoehlt dessen Ausnahmeliste
+           lautlos aus; genau das ist hier einmal passiert). Beide sind toter
+           Code, und beide sind gefaehrlicher als gewoehnlicher toter Code:
+           sie sehen aus wie die gueltige Deklaration. Wer die
+           Seltenheitsfarben sucht, findet in npcs.css ein Violett, das
+           nirgends erscheint.
 
            Die Liste nennt fuer jede Stelle die Eigenschaften, die dort tot
            sind — beim Ortsaufkleber nur die Tinte (die Flaeche steht im CSS
