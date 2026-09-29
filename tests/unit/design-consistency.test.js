@@ -5953,12 +5953,13 @@ describe('R-17 — die Tinte des Ereignis-Logs (Ratsche)', () => {
 });
 
 /* ===========================================================================
-   Design-Handoff v3, Welle 2, Nachtrag — R-18: Zustandsregel toent,
-   Tinte ist geerbt (Ratsche)
+   Design-Handoff v3, Welle 2, Nachtrag — R-18: eine verfeinernde Regel toent,
+   die Tinte ist geerbt (Ratsche)
    ===========================================================================
-   DIE BAUART. Eine ZUSTANDSregel wechselt NUR die Flaeche auf eine
-   Rollen-Toenung und setzt keine eigene Tinte. Gemalt wird die geerbte Tinte —
-   auf einer Flaeche, fuer die sie nie gerechnet war:
+   DIE BAUART. Eine VERFEINERNDE Regel — Zustand oder Variante, als
+   Pseudoklasse ODER als zweite Klasse im Kompound — wechselt NUR die Flaeche
+   auf eine Rollen-Toenung und setzt keine eigene Tinte. Gemalt wird die
+   geerbte Tinte, auf einer Flaeche, fuer die sie nie gerechnet war:
 
        .concentration-badge       { color: var(--purple-text); }
        .concentration-badge:hover { background: color-mix(… --purple 30% …); }
@@ -5993,7 +5994,34 @@ describe('R-17 — die Tinte des Ereignis-Logs (Ratsche)', () => {
    hindurch. Diese Ratsche urteilt ueber beide Wege, damit die Klasse nicht ein
    drittes Mal unvollstaendig gezaehlt wird.
 
-   DREI AUSSCHLUESSE, jeder mit Grund:
+   DIE KLASSENFORM — was Runde 2 des Nachtrags berichtigt hat. Bis dahin stand
+   im Kopf dieses Blocks und in der Aktenlage, die Menge der 14 Paare sei
+   geschlossen gefuehrt und eine fuenfzehnte Stelle werde rot. Das galt nur,
+   solange der Zustand eine PSEUDOKLASSE war. `ZUSTAND` streicht `:hover`,
+   `:checked`, `:has(…)` und Genossen; bei `.init-entry.active` blieb der
+   Selektor unveraendert und fiel als "kein Zustand" heraus. Genau dort lag die
+   naechste Stelle:
+
+       .init-entry.active       { background: linear-gradient(90deg,
+                                    color-mix(… --gold 10% …) 0%, …); }
+       .init-entry .drag-handle { color: var(--text-dim); }
+
+   Gemessen 3,56 · 4,28 · 3,98 · 5,38 — Zahl fuer Zahl dieselbe wie bei zwei
+   der benannten Ausnahmen unten, dieselbe Tinte, dieselbe 10-%-Goldtoenung.
+   Belegt war die Luecke per Mutation: Gold von 10 % auf 95 % gestellt (der
+   Kontrast der geerbten Tinte faellt gegen 1,0), volle Jest-Suite unveraendert
+   gruen. Der Zieh-Griff steht als erste Gitterspalte auf dem 0-%-Ende des
+   Verlaufs, also auf der vollen Toenung, und `.active` markiert die Zeile, auf
+   die im Kampf am haeufigsten gesehen wird.
+
+   Warum eine blosse Erweiterung von `ZUSTAND` NICHT genuegt: wer die Klasse
+   aus dem Kompound streicht, verliert dafuer `.dice-attr.save small` — das ist
+   keine Nachfahrenschreibweise von `.dice-attr`, sondern von `.dice-attr.save`.
+   Die Paarung laeuft deshalb ueber die TEILMENGE der Klassen (`trifftBasis()`):
+   `.init-entry` trifft jedes `.init-entry.active`, `.dice-attr.save` trifft
+   sich selbst. Beide Wege bleiben, und die Menge waechst von 14 auf 19.
+
+   FUENF AUSSCHLUESSE, jeder mit Grund:
 
    (1) Eigene Tinte in der Zustandsregel -> R-04 ist zustaendig, nicht diese.
    (2) Ein NACHFAHRE mit eigener Flaeche -> seine Tinte liegt auf seiner
@@ -6011,18 +6039,33 @@ describe('R-17 — die Tinte des Ereignis-Logs (Ratsche)', () => {
        auf ihren eigenen Flaechen — der Ausschluss verschiebt sie, er verliert
        sie nicht. Er ist auch kein Schlupfloch: --on-*-Tokens sind themenblind
        und stehen unter R-01.
+   (4) Reine Klassenform UND ein Nachfahre DESSELBEN Kompounds -> darueber
+       urteilt R-14 (`.init-entry.lair` -> `.init-entry.lair .init-name` steht
+       dort namentlich). Zwei Ratschen auf demselben Paar sind keine doppelte
+       Sicherheit, sondern doppelte Buchfuehrung. Die beiden Ratschen ergaenzen
+       sich genau: R-14 nimmt den Nachfahren MIT der Zustandsklasse, R-18 den
+       ohne sie (`.init-entry .drag-handle`), den R-14s `startsWith`-Vergleich
+       nie trifft.
+   (5) Eine spezifischere Regel desselben Kompounds ueberschreibt die geerbte
+       Tinte -> sie malt dort nie. `.dice-attr small` (0,1,1) verliert gegen
+       `.dice-attr.save small` (0,2,1); ohne diesen Ausschluss stuende dasselbe
+       Element mit zwei verschiedenen Tinten in der Menge, und eine davon ist
+       Fiktion.
 
-   DIE VIER BENANNTEN AUSNAHMEN sind samt und sonders Vorbestand aus offenen
-   Punkten, keine neuen Zugestaendnisse — sie stehen hier mit ihrem gemessenen
-   Minimum und melden sowohl eine Verschlechterung als auch den Fall, dass der
-   Eintrag nur noch Altlast ist (Bauart wie RUHE_AUSNAHME in R-04):
+   DIE SIEBEN BENANNTEN AUSNAHMEN stehen hier mit ihrem gemessenen Minimum und
+   melden sowohl eine Verschlechterung als auch den Fall, dass der Eintrag nur
+   noch Altlast ist (Bauart wie RUHE_AUSNAHME in R-04). Keine ist ein neues
+   Zugestaendnis; alle sieben sind Vorbestand, vier davon schon gefuehrt, drei
+   erst durch die Klassenform sichtbar geworden:
 
-     tools.css `.quick-access-item:hover .remove-btn` und die beiden
-     party.css `.cf-attr-card`-Stellen tragen var(--text-dim) bzw.
-     var(--cyan-text) auf einer 10-%-Goldtoenung. Das ist W2-D-02, und der
-     Befund dort ist gemessen: --text-dim erreicht in Dark schon OHNE jede
-     Toenung nur 4,32. Ein Deckel kann das nicht heilen, die Tinte muss
-     entschieden werden (D-4).
+     tools.css `.quick-access-item:hover .remove-btn`, die beiden party.css
+     `.cf-attr-card`-Stellen und — neu aus Runde 2 — die beiden
+     initiative.css-Paare auf `.init-entry .drag-handle` tragen
+     var(--text-dim) bzw. var(--cyan-text) auf einer 10-%-Toenung. Das ist
+     W2-D-02, und der Befund dort ist gemessen: --text-dim erreicht in Dark
+     schon OHNE jede Toenung nur 4,32. Ein Deckel kann das nicht heilen (an
+     `.init-entry.active` nachgerechnet: mit und ohne Deckel 3,56, weil
+     10 % < --tint-max 13 % in Dark), die Tinte muss entschieden werden (D-4).
 
      loot.css `.loot-tag-chip input:checked + span` ist die Stelle, die
      Welle 1 Schritt 9 ausdruecklich vorgezogen und Welle 2 ausdruecklich
@@ -6031,11 +6074,24 @@ describe('R-17 — die Tinte des Ereignis-Logs (Ratsche)', () => {
      TATSAECHLICHE Flaeche --bg-card gerechnet haelt sie 5,41-9,23; die 4,23
      hier sind das Minimum ueber die drei Traeger nach D-2.
 
+     dice.css `.fdp-die.d20` -> `.fdp-die` ist der dritte Neuzugang und der
+     einzige, der NICHT zur --text-dim-Familie gehoert: var(--gold-text) aus
+     der Grundregel auf den zwei Rotstopps des Wuerfelverlaufs. Die Zahlen
+     stehen seit Welle 2 Schritt 7 im Kommentar der Regel selbst (ueber die
+     tatsaechliche Traegerflaeche --bg-card: Verlaufskopf 6,64 · 4,56 · 4,93 ·
+     11,57, Verlaufsfuss 7,27 · 3,42 · 3,72 · 12,33) — sie waren nur nie gegen
+     eine Schwelle gehalten. Die 2,87 hier sind das Minimum ueber die drei
+     Traeger nach D-2. Ein Deckel allein traegt nicht: gedeckelt liest sie
+     6,40 · 4,48 · 5,01 · 10,00 und verfehlt Light um 0,02. Gefuehrt als
+     W2-D-06.
+
    WAS SIE NICHT SIEHT. Dasselbe wie R-14: ein Nachfahre, der im DOM unter der
    Toenung liegt, ohne dass sein Selektor das sagt. Das ist Gruppe B von
-   W1-D-01 und ein eigener offener Punkt.
+   W1-D-01 und ein eigener offener Punkt. Dazu die Teilmengenregel selbst: sie
+   gilt nur fuer Koepfe aus REINEN Klassen. Ein `a:hover` oder `#id.active`
+   wird weiter nur zeichengleich gepaart — geraten wird nichts.
    =========================================================================== */
-describe('R-18 — Zustandsregel toent, Tinte ist geerbt (Ratsche)', () => {
+describe('R-18 — verfeinernde Regel toent, Tinte ist geerbt (Ratsche)', () => {
     /** Dieselben drei Traegerflaechen wie in R-04, R-11 und R-14 (D-2). */
     const TRAEGER = ['--bg-card', '--bg-dark', '--bg-elevated'];
     const SCHWELLE = 4.5;
@@ -6078,7 +6134,58 @@ describe('R-18 — Zustandsregel toent, Tinte ist geerbt (Ratsche)', () => {
             .map(x => x.trim())
             .filter(Boolean);
 
-    /** Alle Paare (Zustandsregel mit Toenung, Regel mit der geerbten Tinte). */
+    /** Kopf-Kompound eines Selektors (bis zum ersten Kombinator) und der Rest. */
+    function zerlege(sel) {
+        const i = sel.search(/[\s>+~]/);
+        return i === -1 ? [sel, ''] : [sel.slice(0, i), sel.slice(i).trim()];
+    }
+
+    /** Die Klassen eines Kompounds als Menge — null, wenn etwas anderes als
+     *  Klassen darin steht (Element, #id, [attr]). Fuer solche Koepfe gilt nur
+     *  die Zeichengleichheit, nie die Teilmengenregel: `a:hover` und `a.x`
+     *  beschreiben nicht dasselbe Element, und geraten wird hier nichts. */
+    function klassenMenge(komp) {
+        if (!/^(?:\.[\w-]+)+$/.test(komp)) return null;
+        return new Set(komp.match(/\.[\w-]+/g));
+    }
+
+    const istTeilmenge = (a, b) => [...a].every(x => b.has(x));
+
+    /** Malt die Regel `qSel` auf dem Element, das `basis` beschreibt? Zwei Wege,
+     *  und der zweite ist der Nachtrag aus Runde 2:
+     *    1. Zeichengleichheit oder Nachfahrenschreibweise von `basis` — das war
+     *       die ganze Paarung, solange nur Pseudoklassen als Verfeinerung
+     *       galten.
+     *    2. TEILMENGE der Klassen des Basis-Kompounds: `.init-entry` trifft
+     *       jedes `.init-entry.active`, also malt auch `.init-entry
+     *       .drag-handle` auf dessen Toenung. Ohne diesen Weg bleibt die
+     *       Klassenform des Zustands unsichtbar. */
+    function trifftBasis(qSel, basis) {
+        if (qSel === basis) return { istBasis: true, rest: '' };
+        if (qSel.startsWith(basis + ' ')) {
+            return { istBasis: false, rest: qSel.slice(basis.length + 1) };
+        }
+        const [bKomp, bRest] = zerlege(basis);
+        if (bRest) return null;
+        const bSet = klassenMenge(bKomp);
+        if (!bSet) return null;
+        const [qKomp, qRest] = zerlege(qSel);
+        const qSet = klassenMenge(qKomp);
+        if (!qSet || !istTeilmenge(qSet, bSet)) return null;
+        return { istBasis: !qRest, rest: qRest };
+    }
+
+    /** Deckungsgleicher Kopf — Ausschluss (4), R-14s Gebiet. */
+    function kopfDeckungsgleich(qSel, basis) {
+        const [bKomp] = zerlege(basis);
+        const [qKomp] = zerlege(qSel);
+        if (qKomp === bKomp) return true;
+        const bSet = klassenMenge(bKomp);
+        const qSet = klassenMenge(qKomp);
+        return Boolean(bSet && qSet && bSet.size === qSet.size && istTeilmenge(qSet, bSet));
+    }
+
+    /** Alle Paare (verfeinernde Regel mit Toenung, Regel mit der geerbten Tinte). */
     function geerbteZustaende() {
         const out = [];
         cssFiles.forEach(f => {
@@ -6097,7 +6204,14 @@ describe('R-18 — Zustandsregel toent, Tinte ist geerbt (Ratsche)', () => {
 
                 selektorTeile(zustand.sel).forEach(zSel => {
                     const basis = zSel.replace(ZUSTAND, '').trim();
-                    if (!basis || basis === zSel) return; // kein Zustand
+                    if (!basis) return;
+                    const hatPseudo = basis !== zSel;
+                    const [bKomp, bRest] = zerlege(basis);
+                    const bSet = bRest ? null : klassenMenge(bKomp);
+                    // Verfeinerung: Pseudoklasse ODER mehr als eine Klasse im
+                    // Kompound. Alles andere ist keine Zustandsregel, sondern
+                    // die Grundregel selbst.
+                    if (!hatPseudo && !(bSet && bSet.size > 1)) return;
                     regeln.forEach(quelle => {
                         if (quelle === zustand) return;
                         const tinte = deklaration(quelle.rumpf, 'color');
@@ -6109,18 +6223,44 @@ describe('R-18 — Zustandsregel toent, Tinte ist geerbt (Ratsche)', () => {
                             deklaration(quelle.rumpf, 'background(?:-color)?')
                         );
                         selektorTeile(quelle.sel).forEach(qSel => {
-                            const istBasis = qSel === basis;
-                            const istNachfahre = qSel.startsWith(basis + ' ');
-                            if (!istBasis && !istNachfahre) return;
+                            const treffer = trifftBasis(qSel, basis);
+                            if (!treffer) return;
                             // (2) Nachfahre mit eigener Flaeche.
-                            if (istNachfahre && eigeneFlaeche) return;
+                            if (!treffer.istBasis && eigeneFlaeche) return;
+                            // (4) Reine Klassenform UND Nachfahre desselben
+                            // Kompounds: darueber urteilt R-14, nicht diese
+                            // Ratsche. Zwei Ratschen auf demselben Paar sind
+                            // keine doppelte Sicherheit, sondern doppelte
+                            // Buchfuehrung.
+                            if (
+                                !hatPseudo &&
+                                !treffer.istBasis &&
+                                kopfDeckungsgleich(qSel, basis)
+                            ) {
+                                return;
+                            }
+                            // (5) Eine spezifischere Regel DESSELBEN Kompounds
+                            // ueberschreibt die geerbte Tinte — dann malt sie
+                            // hier nie. `.dice-attr small` (0,1,1) verliert so
+                            // gegen `.dice-attr.save small` (0,2,1).
+                            if (!treffer.istBasis) {
+                                const spezifischer = `${basis} ${treffer.rest}`;
+                                const ueberschrieben =
+                                    spezifischer !== qSel &&
+                                    regeln.some(
+                                        r =>
+                                            selektorTeile(r.sel).includes(spezifischer) &&
+                                            deklaration(r.rumpf, 'color')
+                                    );
+                                if (ueberschrieben) return;
+                            }
                             out.push({
                                 datei: f.name,
                                 zustand,
                                 zSel,
                                 quelle,
                                 qSel,
-                                art: istBasis ? 'Grundregel' : 'Nachfahrenregel',
+                                art: treffer.istBasis ? 'Grundregel' : 'Nachfahrenregel',
                                 tinte: tinte.trim(),
                                 stopps
                             });
@@ -6133,17 +6273,23 @@ describe('R-18 — Zustandsregel toent, Tinte ist geerbt (Ratsche)', () => {
     }
 
     /** DIE MENGE, nicht nur die Werte — Bauart wie ERWARTETE_PAARE in R-14.
-     *  Eine fuenfzehnte Stelle dieser Bauart ist ein Befund, bis jemand sie
-     *  ausrechnet und hier eintraegt. Genau daran hat es bei
-     *  `.dice-attr.save:hover` gefehlt. */
+     *  Eine zwanzigste Stelle dieser Bauart ist ein Befund, bis jemand sie
+     *  ausrechnet und hier eintraegt. Genau daran hat es zweimal gefehlt: bei
+     *  `.dice-attr.save:hover` (Runde 1) und bei der ganzen Klassenform
+     *  (Runde 2, die letzten fuenf Zeilen dieser Liste). */
     const ERWARTETE_PAARE = [
+        'core.css .char-action-btn.primary -> .char-action-btn',
         'core.css .link-chip:hover -> .link-chip',
         'dashboard.css .dice-formula-chip:hover -> .dice-formula-chip',
+        'dice.css .dice-attr.save:hover -> .dice-attr span',
         'dice.css .dice-attr.save:hover -> .dice-attr.save small',
+        'dice.css .fdp-die.d20 -> .fdp-die',
         'file-backup.css .backup-entry-restore:hover -> .backup-entry-restore',
         'file-backup.css .backup-warning-indicator:hover -> .backup-warning-indicator',
         'initiative.css .concentration-add-btn:hover -> .concentration-add-btn',
         'initiative.css .concentration-badge:hover -> .concentration-badge',
+        'initiative.css .init-entry.active -> .init-entry .drag-handle',
+        'initiative.css .init-entry.lair -> .init-entry .drag-handle',
         'loot.css .loot-tag-chip:has(input:checked) -> .loot-tag-chip input:checked + span',
         'party.css .cf-attr-card:has(.cf-attr-save input:checked) -> .cf-attr-card .cf-attr-mod',
         'party.css .cf-attr-card:has(.cf-attr-save input:checked) -> .cf-attr-card .cf-attr-name',
@@ -6154,9 +6300,13 @@ describe('R-18 — Zustandsregel toent, Tinte ist geerbt (Ratsche)', () => {
     ];
 
     /** Benannte Ausnahmen mit ihrem gemessenen Minimum ueber die vier Themes.
-     *  Begruendung je Eintrag im Kopf dieses Blocks; alle vier sind Vorbestand
-     *  aus W2-D-02 bzw. der Vorziehung aus Welle 1 Schritt 9. */
+     *  Begruendung je Eintrag im Kopf dieses Blocks. Vier sind Vorbestand aus
+     *  W2-D-02 bzw. der Vorziehung aus Welle 1 Schritt 9, drei sind in Runde 2
+     *  des Nachtrags mit der Klassenform dazugekommen (W2-D-02 bzw. W2-D-06). */
     const AUSNAHME = {
+        'dice.css .fdp-die.d20 -> .fdp-die': 2.87,
+        'initiative.css .init-entry.active -> .init-entry .drag-handle': 3.56,
+        'initiative.css .init-entry.lair -> .init-entry .drag-handle': 3.93,
         'loot.css .loot-tag-chip:has(input:checked) -> .loot-tag-chip input:checked + span': 4.23,
         'party.css .cf-attr-card:has(.cf-attr-save input:checked) -> .cf-attr-card .cf-attr-mod': 4.29,
         'party.css .cf-attr-card:has(.cf-attr-save input:checked) -> .cf-attr-card .cf-attr-save': 3.56,
@@ -6199,7 +6349,7 @@ describe('R-18 — Zustandsregel toent, Tinte ist geerbt (Ratsche)', () => {
         expect(gefunden).toEqual(ERWARTETE_PAARE);
     });
 
-    test('jedes Paar haelt 4,5 auf der Toenung seiner Zustandsregel', () => {
+    test('jedes Paar haelt 4,5 auf der Toenung seiner verfeinernden Regel', () => {
         const pals = WCAG.palettes();
         const alias = aliasSchicht();
         const befunde = [];
@@ -6272,5 +6422,21 @@ describe('R-18 — Zustandsregel toent, Tinte ist geerbt (Ratsche)', () => {
         ].forEach(k => expect(gefunden).toContain(k));
         // Und die sechste, die durch beide Netze fiel, bis der Nachtrag sie fand.
         expect(gefunden).toContain('dice.css .dice-attr.save:hover -> .dice-attr.save small');
+    });
+
+    /** KERNBELEG der Runde 2. Die Klassenform des Zustands war der blinde
+     *  Fleck: `ZUSTAND` streicht Pseudoklassen, `.init-entry.active` blieb
+     *  unveraendert und galt als "kein Zustand". Die Mutation Gold 10 % -> 95 %
+     *  lief damals durch die volle Suite, ohne einen einzigen roten Test.
+     *  Diese drei Stellen halten fest, dass die Klassenform jetzt namentlich in
+     *  der geurteilten Menge steht — sonst koennte `trifftBasis()` still
+     *  leerlaufen und die Ratsche waere wieder gruen und zu klein. */
+    test('die Klassenform des Zustands steht namentlich unter Aufsicht', () => {
+        const gefunden = geerbteZustaende().map(schluesselVon);
+        [
+            'initiative.css .init-entry.active -> .init-entry .drag-handle',
+            'initiative.css .init-entry.lair -> .init-entry .drag-handle',
+            'dice.css .fdp-die.d20 -> .fdp-die'
+        ].forEach(k => expect(gefunden).toContain(k));
     });
 });
