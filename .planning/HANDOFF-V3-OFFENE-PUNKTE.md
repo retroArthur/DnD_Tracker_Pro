@@ -450,8 +450,8 @@ Behebung in Runde 2** gedeckt, davor war sie es für eine der beiden Zeilen nich
 
 | Stelle | Selektor | Rolle | Traeger dark | Traeger light |
 | ------ | -------- | ----- | ------------ | ------------- |
-| `dmscreen.css:592` | `.session-arc-title` | `--gold` | GRAD:#0d0d0d | GRAD:#f5f5f5 |
-| `dmscreen.css:1142` | `.drag-handle:hover` | `--gold` | --bg-card · GRAD:#0d0d0d | --bg-card · GRAD:#f5f5f5 |
+| `dmscreen.css:600` | `.session-arc-title` | `--gold` | GRAD:#0d0d0d | GRAD:#f5f5f5 |
+| `dmscreen.css:1150` | `.drag-handle:hover` | `--gold` | --bg-card · GRAD:#0d0d0d | --bg-card · GRAD:#f5f5f5 |
 | `initiative.css:145` | `.init-value` | `--gold` | GRAD:#0d0d0d · --bg-card | GRAD:#f5f5f5 · --bg-card |
 | `initiative.css:177` | `.init-name:hover` | `--gold` | GRAD:#0d0d0d · --bg-card | GRAD:#f5f5f5 · --bg-card |
 | `initiative.css:205` | `.init-hp-value.healthy` | `--green` | GRAD:#0d0d0d | GRAD:#f5f5f5 |
@@ -475,8 +475,8 @@ diese Tabelle führt.
 | Stelle | Selektor | Rolle | Traeger dark | Traeger light |
 | ------ | -------- | ----- | ------------ | ------------- |
 | `dashboard.css:192` | `.campaign-name` | `--cyan` | #1f2e24 | #edfcf2 |
-| `dmscreen.css:1360` | `.dms-init-marker` | `--gold` | #3c331b | #fef5de |
-| `dmscreen.css:1373` | `.dms-init-value` | `--cyan` | #3c331b | #fef5de |
+| `dmscreen.css:1368` | `.dms-init-marker` | `--gold` | #3c331b | #fef5de |
+| `dmscreen.css:1381` | `.dms-init-value` | `--cyan` | #3c331b | #fef5de |
 | `loot.css:295` | `.shop-cat-badge.weapon` | `--red` | --bg-card | --bg-card |
 | `loot.css:296` | `.shop-cat-badge.armor` | `--blue` | #d4af37 · --bg-card | #b8860b · --bg-card |
 | `loot.css:298` | `.shop-cat-badge.service` | `--purple` | #d4af37 · --bg-card | #b8860b · --bg-card |
@@ -491,7 +491,7 @@ diese Tabelle führt.
 | ------ | -------- | ----- | ------------ | ------------- |
 | `dashboard.css:541` | `.char-section-title` | `--gold` | --bg-card · #191919 | --bg-card · #1e1e1e |
 | `dice.css:639` | `.fdp-title` | `--gold-text` | --bg-card | --bg-card |
-| `dmscreen.css:1060` | `.form-group label` | `--gold` | --bg-card · #191919 | --bg-card · #1e1e1e |
+| `dmscreen.css:1068` | `.form-group label` | `--gold` | --bg-card · #191919 | --bg-card · #1e1e1e |
 | `party.css:2655` | `.char-adv-btn.adv` | `--green` | --bg-dark · #191919 | --bg-dark · #1e1e1e |
 | `party.css:2656` | `.char-adv-btn.dis` | `--red` | --bg-dark · #191919 | --bg-dark · #1e1e1e |
 
@@ -542,12 +542,12 @@ dmscreen.css
    86  .dice-fav-btn .fav-name
   274  .condition-tooltip-title
   394  .notes-search-date
-  516  .session-tag-remove:hover
-  662  .quick-ref-section-title
- 1262  .dms-stat-warning .dms-stat-value
- 2329  .dms-profile-check
- 2355  .dms-profile-save
- 2359  .dms-profile-save .dms-profile-name
+  524  .session-tag-remove:hover
+  670  .quick-ref-section-title
+ 1270  .dms-stat-warning .dms-stat-value
+ 2362  .dms-profile-check
+ 2388  .dms-profile-save
+ 2392  .dms-profile-save .dms-profile-name
 encounters.css
    34  .list-view-row.expanded .row-toggle
    47  .list-dialog-item.used .list-dialog-status

@@ -232,21 +232,21 @@
            Schadensart "nekrotisch"; nach dem Zweck hat ein versteinerter
            Zustand damit nichts zu tun (R-12). R-11 bewacht beide Reihen. */
         .condition-badge.blinded { background: color-mix(in srgb, var(--text-dim) 30%, transparent); color: var(--text); }
-        .condition-badge.charmed { background: color-mix(in srgb, var(--pink) 30%, transparent); color: var(--pink); }
+        .condition-badge.charmed { background: color-mix(in srgb, var(--pink) min(30%, var(--tint-max)), transparent); color: var(--pink-text); }
         .condition-badge.deafened { background: color-mix(in srgb, var(--text-dim) 30%, transparent); color: var(--text); }
-        .condition-badge.frightened { background: color-mix(in srgb, var(--purple) 30%, transparent); color: var(--purple); }
-        .condition-badge.grappled { background: color-mix(in srgb, var(--orange) 30%, transparent); color: var(--orange); }
-        .condition-badge.incapacitated { background: color-mix(in srgb, var(--red) 30%, transparent); color: var(--red); }
-        .condition-badge.invisible { background: color-mix(in srgb, var(--cyan) 30%, transparent); color: var(--cyan); border-style: dashed; }
-        .condition-badge.paralyzed { background: color-mix(in srgb, var(--yellow) 30%, transparent); color: var(--yellow); }
+        .condition-badge.frightened { background: color-mix(in srgb, var(--purple) min(30%, var(--tint-max)), transparent); color: var(--purple-text); }
+        .condition-badge.grappled { background: color-mix(in srgb, var(--orange) min(30%, var(--tint-max)), transparent); color: var(--orange-text); }
+        .condition-badge.incapacitated { background: color-mix(in srgb, var(--red) min(30%, var(--tint-max)), transparent); color: var(--red-text); }
+        .condition-badge.invisible { background: color-mix(in srgb, var(--cyan) min(30%, var(--tint-max)), transparent); color: var(--cyan-text); border-style: dashed; }
+        .condition-badge.paralyzed { background: color-mix(in srgb, var(--yellow) min(30%, var(--tint-max)), transparent); color: var(--yellow-text); }
         .condition-badge.petrified { background: color-mix(in srgb, var(--text-dim) 30%, transparent); color: var(--text); }
-        .condition-badge.poisoned { background: color-mix(in srgb, var(--green) 30%, transparent); color: var(--green); }
-        .condition-badge.prone { background: color-mix(in srgb, var(--orange) 30%, transparent); color: var(--orange); }
-        .condition-badge.restrained { background: color-mix(in srgb, var(--orange) 30%, transparent); color: var(--orange); }
-        .condition-badge.stunned { background: color-mix(in srgb, var(--yellow) 30%, transparent); color: var(--yellow); }
-        .condition-badge.unconscious { background: color-mix(in srgb, var(--red) 30%, transparent); color: var(--red); }
+        .condition-badge.poisoned { background: color-mix(in srgb, var(--green) min(30%, var(--tint-max)), transparent); color: var(--green-text); }
+        .condition-badge.prone { background: color-mix(in srgb, var(--orange) min(30%, var(--tint-max)), transparent); color: var(--orange-text); }
+        .condition-badge.restrained { background: color-mix(in srgb, var(--orange) min(30%, var(--tint-max)), transparent); color: var(--orange-text); }
+        .condition-badge.stunned { background: color-mix(in srgb, var(--yellow) min(30%, var(--tint-max)), transparent); color: var(--yellow-text); }
+        .condition-badge.unconscious { background: color-mix(in srgb, var(--red) min(30%, var(--tint-max)), transparent); color: var(--red-text); }
         .condition-badge.exhaustion { background: color-mix(in srgb, var(--text-dim) 30%, transparent); color: var(--text); }
-        .condition-badge.concentration { background: color-mix(in srgb, var(--blue) 30%, transparent); color: var(--blue); border: 1px solid var(--blue); }
+        .condition-badge.concentration { background: color-mix(in srgb, var(--blue) min(30%, var(--tint-max)), transparent); color: var(--blue-text); border: 1px solid var(--blue); }
         
         .condition-tooltip {
             position: absolute;
@@ -321,8 +321,8 @@
             margin: 2px;
         }
         
-        .relationship-badge.ally { background: color-mix(in srgb, var(--green) 20%, transparent); color: var(--green); }
-        .relationship-badge.enemy { background: color-mix(in srgb, var(--red) 20%, transparent); color: var(--red); }
+        .relationship-badge.ally { background: color-mix(in srgb, var(--green) min(20%, var(--tint-max)), transparent); color: var(--green-text); }
+        .relationship-badge.enemy { background: color-mix(in srgb, var(--red) min(20%, var(--tint-max)), transparent); color: var(--red-text); }
         /* Dieselbe Entscheidung wie bei den farblosen Zustaenden: 156,163,175
            traf --dmg-necrotic-text, gemeint war "keine Farbe". Auch dieselbe
            Nachbesserung aus der Pruefung W2-C — die .relationship-badge
@@ -336,10 +336,10 @@
                              --border 20 %  1,05 · 1,06 · 1,08 · 1,11
                              neu            1,28 · 1,28 · 1,28 · 1,32 */
         .relationship-badge.neutral { background: color-mix(in srgb, var(--text-dim) 20%, transparent); color: var(--text); }
-        .relationship-badge.family { background: color-mix(in srgb, var(--pink) 20%, transparent); color: var(--pink); }
-        .relationship-badge.rival { background: color-mix(in srgb, var(--orange) 20%, transparent); color: var(--orange); }
-        .relationship-badge.mentor { background: color-mix(in srgb, var(--blue) 20%, transparent); color: var(--blue); }
-        .relationship-badge.student { background: color-mix(in srgb, var(--cyan) 20%, transparent); color: var(--cyan); }
+        .relationship-badge.family { background: color-mix(in srgb, var(--pink) min(20%, var(--tint-max)), transparent); color: var(--pink-text); }
+        .relationship-badge.rival { background: color-mix(in srgb, var(--orange) min(20%, var(--tint-max)), transparent); color: var(--orange-text); }
+        .relationship-badge.mentor { background: color-mix(in srgb, var(--blue) min(20%, var(--tint-max)), transparent); color: var(--blue-text); }
+        .relationship-badge.student { background: color-mix(in srgb, var(--cyan) min(20%, var(--tint-max)), transparent); color: var(--cyan-text); }
         
         /* ============================================================
            NOTIZEN-SUCHE
@@ -400,9 +400,17 @@
             color: var(--text-dim);
         }
         
+        /* W2-B-04 nennt diese Regel und ihre Zwillinge als den schlechtesten
+           Abfall der Welle (Sepia 4,55 -> 3,37) und verlangt, die
+           FARBentscheidung vorzuziehen. Sie ist hier getroffen: Deckel plus
+           Textvariante ergeben 5,66 · 4,78 · 5,13 · 6,74, also in allen vier
+           Themes ueber der Schwelle und in Sepia besser als vor Welle 2.
+           Die VERLAGERUNG der Weltregel `mark` aus einer Widget-Datei bleibt
+           Welle 4; sie ist dreifach gefuehrt (hier, :1150 und tools.css
+           .search-result-preview mark). */
         .notes-search-excerpt mark {
-            background: color-mix(in srgb, var(--gold) 30%, transparent);
-            color: var(--gold);
+            background: color-mix(in srgb, var(--gold) min(30%, var(--tint-max)), transparent);
+            color: var(--gold-text);
             padding: 0 2px;
             border-radius: var(--radius-sm);
         }
@@ -1148,8 +1156,8 @@
         
         /* Search Highlight */
         mark {
-            background: color-mix(in srgb, var(--gold) 30%, transparent);
-            color: var(--gold);
+            background: color-mix(in srgb, var(--gold) min(30%, var(--tint-max)), transparent);
+            color: var(--gold-text);
             padding: 0 2px;
             border-radius: var(--radius-sm);
         }
@@ -1816,15 +1824,40 @@
    Attributregeln stehen bewusst NACH dieser Basisregel, damit sie deren
    Flaeche ueberschreiben (D-13/FIX-01/ordering).
 
-   NICHT Welle 1, Entscheidung D-4 (Nutzer, 2026-09-28): die fuenf Regeln
-   darunter setzen Tinte UND eine 20-%-Toenung DERSELBEN Rolle. Tinte und
-   Toenungsstaerke sind rechnerisch nicht unabhaengig — eine hier gesetzte
-   Tinte muesste Welle 2 erneut aendern. Welle 2 entscheidet beides in einem
-   Zug. Gemessen am 2026-09-28 ueber --bg-card (dark light sepia contrast):
-     str 3,71 4,42 4,27 4,06 · dex 5,34 4,64 4,33 5,91 · con 5,54 4,60 4,37 6,13
-     int 3,66 4,66 4,37 4,03 · wis 3,57 4,58 4,35 3,91 · cha 3,88 4,57 4,30 4,25
-   In Sepia haelt KEINE der sechs 4,5, in Dark und Contrast vier von sechs.
-   Das ist der lebende Pruefstein fuer Welle 2. */
+   ES SIND FUENF REGELN, KEINE SECHS. D-4 nennt sechs; eine .con-Regel gibt es
+   nicht und gaebe es auch nichts zu faerben — die Schnellreferenz fuehrt
+   keine KON-Zelle (R-08).
+
+   SCHRITT 8 (D-4/E2) ENTSCHEIDET SIE ANDERS ALS DIE UEBRIGEN 107. Ueberall
+   sonst lautet die Regel: Tinte var(--<rolle>-text), Staerke gedeckelt. Hier
+   traegt beides nicht, und das ist gerechnet:
+
+     (a) Ein --attr-*-text gibt es nicht, und es waere eine Palettenfrage und
+         keine Toenungsfrage. Entscheidung D-5 hat die Attributfarben in Dark
+         und Contrast ausdruecklich EINGEFROREN.
+     (b) Die Staerke allein rettet nichts. --attr-str, --attr-int, --attr-wis
+         und --attr-cha erreichen in Dark und Contrast schon auf der NACKTEN
+         Flaeche nur 3,98-4,35 (min ueber --bg-card/--bg-dark/--bg-elevated).
+         Es gibt also keine Toenungsstaerke, auch 0 % nicht, bei der diese
+         vier 4,5 halten. Genau deshalb fuehrt R-02 fuer dieselben Tokens
+         schon eine benannte Ausnahme (ATTR_HOVER_AUSNAHME).
+
+   GEWAEHLT IST DESHALB DIE NEUTRALE TINTE, wie bei den vier farblosen
+   Zustandsmarken: var(--text) auf der unveraenderten 20-%-Toenung. Die Rolle
+   liest sich hier ueber die FLAECHE, nicht ueber die Schrift — umgekehrt zu
+   den 107 anderen Stellen, und das ist der Grund, warum die Staerke hier
+   NICHT gedeckelt wird: mit 7 % in Light und Sepia waere die Flaeche fast
+   weg, und dann traegt gar nichts mehr die Bedeutung.
+   Gemessen, min ueber --bg-card/--bg-dark/--bg-elevated:
+     heute  str 3,29 3,65 3,74 3,51 · dex 4,68 3,87 3,79 4,82
+            int 3,22 3,87 3,79 3,36 · wis 3,14 3,82 3,78 3,24
+            cha 3,42 3,81 3,77 3,54   — 18 von 20 Zellen unter 4,5
+     neu    str 9,34 10,34 6,49 14,00 · dex 8,07 10,75 6,65 11,05
+            int 9,01 10,79 6,66 12,32 · wis 9,15 10,75 6,64 12,51
+            cha 9,14 10,61 6,59 12,50 — 20 von 20 ueber 4,5
+
+   PREIS, benannt: die Beschriftung verliert ihre Farbe. Sie hatte sie in
+   18 von 20 Zellen ohnehin nicht lesbar. */
 .dms-skill-header {
     font-size: 0.75em;
     font-weight: 600;
@@ -1834,11 +1867,11 @@
     width: fit-content;
 }
 
-.dms-skill-header.str { background: color-mix(in srgb, var(--attr-str) 20%, transparent); color: var(--attr-str); }
-.dms-skill-header.dex { background: color-mix(in srgb, var(--attr-dex) 20%, transparent); color: var(--attr-dex); }
-.dms-skill-header.int { background: color-mix(in srgb, var(--attr-int) 20%, transparent); color: var(--attr-int); }
-.dms-skill-header.wis { background: color-mix(in srgb, var(--attr-wis) 20%, transparent); color: var(--attr-wis); }
-.dms-skill-header.cha { background: color-mix(in srgb, var(--attr-cha) 20%, transparent); color: var(--attr-cha); }
+.dms-skill-header.str { background: color-mix(in srgb, var(--attr-str) 20%, transparent); color: var(--text); }
+.dms-skill-header.dex { background: color-mix(in srgb, var(--attr-dex) 20%, transparent); color: var(--text); }
+.dms-skill-header.int { background: color-mix(in srgb, var(--attr-int) 20%, transparent); color: var(--text); }
+.dms-skill-header.wis { background: color-mix(in srgb, var(--attr-wis) 20%, transparent); color: var(--text); }
+.dms-skill-header.cha { background: color-mix(in srgb, var(--attr-cha) 20%, transparent); color: var(--text); }
 
 .dms-skill-item {
     font-size: 0.8em;
@@ -2117,12 +2150,12 @@
 .dms-live-badge {
     font-size: 0.55em;
     font-weight: 500;
-    color: var(--green);
+    color: var(--green-text);
     /* Welle 2 Schritt 7: 34,197,94 ist vierfach belegt (--attr-dex in Dark und
        Contrast, --dmg-acid, --know-nature). Nach dem Zweck ist es keins davon,
        sondern die Gruenrolle, die diese Regel als Tinte fuehrt.
        6,75 · 2,42 · 2,29 · 8,96 -> 6,32 · 2,33 · 2,25 · 8,17 (D-4, Schritt 8). */
-    background: color-mix(in srgb, var(--green) 15%, transparent);
+    background: color-mix(in srgb, var(--green) min(15%, var(--tint-max)), transparent);
     padding: 3px 8px;
     border-radius: var(--radius-md);
     animation: dms-live-pulse 2s ease-in-out infinite;
