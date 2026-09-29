@@ -464,7 +464,7 @@
 
 .dice-attr.save:hover {
     border-color: var(--purple);
-    background: rgba(167,139,250,0.15);
+    background: color-mix(in srgb, var(--purple) 15%, transparent);
 }
 
 .dice-attr.save small {
@@ -567,7 +567,7 @@
     background: rgba(26, 26, 26, 0.98);
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
-    border: 1px solid rgba(212, 175, 55, 0.3);
+    border: 1px solid color-mix(in srgb, var(--gold) 30%, transparent);
     border-radius: var(--radius-lg);
     padding: 16px;
     z-index: var(--z-floating);
@@ -734,7 +734,7 @@
 }
 
 .fdp-quick.adv {
-    border-color: rgba(74, 222, 128, 0.3);
+    border-color: color-mix(in srgb, var(--green) 30%, transparent);
 }
 
 .fdp-quick.adv:hover {
@@ -743,7 +743,7 @@
 }
 
 .fdp-quick.dis {
-    border-color: rgba(239, 68, 68, 0.3);
+    border-color: color-mix(in srgb, var(--red) 30%, transparent);
 }
 
 .fdp-quick.dis:hover {
