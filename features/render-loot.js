@@ -17,7 +17,6 @@ function showAssignItems(charId) {
 function renderAssignItemList() {
     const D = window.D;
     const CATS = window.CATS;
-    const RARITY_COLORS = window.RARITY_COLORS;
     const container = $('assign-item-list');
     if (!container) return;
     const charIdInput = $('assign-item-char-id');
@@ -72,13 +71,21 @@ function renderAssignItemList() {
         updateAssignItemCount();
         return;
     }
-    // Uses RARITY_COLORS from constants.js
     container.innerHTML = items
         .map(i => {
             const assignedQty = getAssignedQuantity(i.id);
             const maxQty = i.quantity || 1;
             const catIcon = CATS[i.category]?.split(' ')[0] || '📦';
-            const rarityColor = RARITY_COLORS[i.rarity] || RARITY_COLORS.normal;
+            // Die Seltenheitsfarbe steht hier als SCHRIFT, also die
+            // theme-faehige Tabelle (Welle 2 Schritt 10, Paragraph 7).
+            // Traeger: die Liste auf --bg-dark, die zugewiesene Zeile
+            // zusaetzlich unter einer 15-%-Auflage. Mit den alten festen
+            // Werten waren das in Light 1,30-2,31 und in Sepia 1,14-2,03.
+            // Direkter window-Zugriff statt eines funktionslokalen const:
+            // das Muster `const X = window.X` in einer Funktion ist in
+            // CLAUDE.md als Fallstrick der Buendelung gefuehrt.
+            const rarityColor =
+                window.RARITY_TEXT_COLORS[i.rarity] || window.RARITY_TEXT_COLORS.normal;
             return `<div class="assign-item-row" style="display:grid; grid-template-columns: 1fr auto; align-items:center; gap:10px; padding:8px 10px; border-radius:6px; margin-bottom:2px; ${assignedQty > 0 ? 'background:rgba(74,222,128,0.15);' : ''}" data-item-id="${i.id}">
             <div style="display:flex; align-items:center; gap:10px; overflow:hidden;">
                 <span style="font-size:1.1em; flex-shrink:0;">${catIcon}</span>
