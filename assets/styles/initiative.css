@@ -36,7 +36,13 @@
         }
 
         .bf-tag.terrain {
-            background: rgba(249, 115, 22, 0.2);
+            /* Welle 2 Schritt 7 loest das Literal auf, das der Kommentar
+               unten schon als "der WERT bleibt var(--orange)" beschrieb:
+               249,115,22 ist ein fremdes Orange, die Rolle stand nur im
+               Rahmen und in der Tinte. Gemessen (min ueber die drei
+               neutralen Traegerflaechen, vorher -> nachher):
+               4,98 · 2,44 · 3,10 · 4,65 -> 4,64 · 2,32 · 2,86 · 4,51. */
+            background: color-mix(in srgb, var(--orange) 20%, transparent);
             border: 1px solid var(--orange, var(--orange));
             /* Nur die Schreibweise ist geaendert (Welle 1 Schritt 8): der
                Selbst-Fallback `var(--orange, var(--orange))` hatte keine
@@ -345,7 +351,23 @@
             align-items: center;
             gap: 6px;
             padding: 4px 10px;
-            background: linear-gradient(135deg, rgba(147, 51, 234, 0.2) 0%, rgba(168, 85, 247, 0.15) 100%);
+            /* Welle 2 Schritt 7. Beide Verlaufsenden trugen fremdes Violett
+               (147,51,234 und 168,85,247); das zweite traf zufaellig
+               --know-religion, das Wissensgebiet "Religion" — nach dem Zweck
+               hat eine Konzentrationsmarke damit nichts zu tun (R-12). Die
+               Rolle steht in dieser Regel schon im Rahmen und in der Tinte.
+               Gemessen (vorher -> nachher, dark light sepia contrast):
+                 Verlaufskopf 4,84 · 3,51 · 3,05 · 4,36 -> 4,03 · 3,50 · 3,18 · 4,21
+                 Verlaufsfuss 4,76 · 3,94 · 3,43 · 4,27 -> 4,41 · 3,78 · 3,37 · 4,48
+               DARK faellt unter 4,5, weil das fremde Violett dunkler war als
+               die Rolle. Die Abhilfe ist die Staerke, und ueber die
+               entscheidet D-4 in Schritt 8 (Deckel Dark 13 %); diese Regel
+               gehoert ohnehin zu den 108 D-4-Stellen. */
+            background: linear-gradient(
+                135deg,
+                color-mix(in srgb, var(--purple) 20%, transparent) 0%,
+                color-mix(in srgb, var(--purple) 15%, transparent) 100%
+            );
             border: 1px solid var(--purple);
             border-radius: var(--radius-md);
             font-size: 0.75em;
@@ -356,7 +378,9 @@
         }
 
         .concentration-badge:hover {
-            background: rgba(147, 51, 234, 0.3);
+            /* 4,42 · 3,03 · 2,62 · 3,94 -> 3,32 · 3,03 · 2,79 · 3,61; lag
+               schon vorher in allen vier Themes unter 4,5 (D-4). */
+            background: color-mix(in srgb, var(--purple) 30%, transparent);
             transform: translateY(-1px);
         }
 
@@ -404,7 +428,9 @@
 
         .concentration-add-btn:hover {
             opacity: 1;
-            background: rgba(147, 51, 234, 0.1);
+            /* Tinte ist var(--purple-text) aus der Grundregel:
+               5,28 · 4,39 · 4,34 · 5,33 -> 4,81 · 4,40 · 4,43 · 5,31. */
+            background: color-mix(in srgb, var(--purple) 10%, transparent);
         }
 
         .concentration-check-banner {
@@ -412,7 +438,20 @@
             align-items: center;
             gap: 10px;
             padding: 8px 12px;
-            background: linear-gradient(135deg, rgba(234, 179, 8, 0.15) 0%, rgba(147, 51, 234, 0.15) 100%);
+            /* Welle 2 Schritt 7. Der Verlaufskopf 234,179,8 traf zufaellig
+               --dmg-lightning, die Schadensart "Blitz" — gemeint war eine
+               Warnfarbe (R-12). Naechste Rolle nach Abstand ist --yellow
+               (57 Kanalpunkte) vor --gold (73); der Rahmen fuehrt --gold, die
+               Flaeche folgt der Warnung. Der Fuss ist dasselbe fremde Violett
+               wie an der Konzentrationsmarke. Gemessen mit der Tinte
+               var(--gold) aus .conc-dc (vorher -> nachher):
+                 Kopf 5,35 · 2,47 · 5,31 · 8,31 -> 5,18 · 2,35 · 4,96 · 7,27
+                 Fuss 6,54 · 2,16 · 4,57 · 10,12 -> 5,70 · 2,16 · 4,73 · 10,01 */
+            background: linear-gradient(
+                135deg,
+                color-mix(in srgb, var(--yellow) 15%, transparent) 0%,
+                color-mix(in srgb, var(--purple) 15%, transparent) 100%
+            );
             border: 1px solid var(--gold);
             border-radius: var(--radius-md);
             margin-top: 6px;
@@ -731,12 +770,19 @@
         }
 
         .npc-relation-status.friendly {
-            background: rgba(34, 197, 94, 0.2);
+            /* 34,197,94 ist vierfach belegt (--attr-dex Dark/Contrast,
+               --dmg-acid, --know-nature); nach dem Zweck die Gruenrolle der
+               eigenen Tinte. 6,12 · 2,34 · 2,22 · 8,01 -> 5,63 · 2,21 ·
+               2,15 · 7,11 (D-4, Schritt 8). */
+            background: color-mix(in srgb, var(--green) 20%, transparent);
             color: var(--green);
         }
 
         .npc-relation-status.neutral {
-            background: rgba(156, 163, 175, 0.2);
+            /* 156,163,175 traf --dmg-necrotic-text; gemeint war "keine
+               Farbe" -> --border, wie bei den farblosen Zustandsmarken.
+               8,10 · 12,45 · 7,72 · 11,08 -> 11,02 · 13,43 · 8,07 · 13,97. */
+            background: color-mix(in srgb, var(--border) 20%, transparent);
             color: var(--text);
         }
 
