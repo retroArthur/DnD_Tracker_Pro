@@ -4897,3 +4897,312 @@ describe('R-15 — die sechs Attributfarben bleiben unterscheidbar (Ratsche zu D
         });
     });
 });
+
+/* ===========================================================================
+   Design-Handoff v3, Welle 2 — R-16: Tinte auf JS-gesetzter Flaeche (Ratsche)
+   ===========================================================================
+   DIESELBE LUECKE WIE BEI R-09, EINE ETAGE GROESSER. R-02 bis R-05, R-07/R-08,
+   R-10 bis R-15 lesen CSS. Was ein Template-Literal in eine style=-Zeichenkette
+   schreibt, sieht keine von ihnen. R-09 hat diese Luecke fuer EINE Datei
+   geschlossen (die Ortsfarben); die uebrigen Stellen derselben Bauart waren
+   bis Welle 2 Schritt 10 unbewacht.
+
+   DIE SIGNATUR, an der man sie erkennt: `style="background: <Akzent>;
+   color: var(--bg-dark)"`. Eine FLAECHENfarbe als Tinte. Das liest sich im
+   Dark-Theme richtig — --bg-dark ist dort fast schwarz, und auf einer hellen
+   Akzentflaeche ist fast schwarz die richtige Wahl. In Light ist --bg-dark
+   #f5f5f5, in Sepia #f4e4c1: dieselbe Zeile schreibt dort fast weiss auf
+   dieselbe helle Flaeche. Gemessen (eigene Rechnung, Rechner an Welle 1
+   geeicht) reicht das von 2,51 bis 4,43 — der Verfolgen-Knopf der Quests
+   erreicht in Light 2,98, die Zaubergrad-Pille in Sepia 2,93.
+
+   WAS SIE ZAEHLT UND WAS SIE PRUEFT — fuenf Teile:
+
+   (1) Die Signatur selbst, ueber alle sechs Quellordner: 0 Treffer. Der
+       Suchbefehl ist zeichengleich der aus W1-C-02, damit die Zahl
+       vergleichbar bleibt. Er fand dort fuenf Stellen, und diese fuenf sind
+       der Rotlauf dieser Ratsche.
+
+   (2) Die Quest-Status-Pille fuehrt ROLLENNAMEN, nicht Farbwerte, und die
+       Vorlage baut daraus Flaeche und Tinte. Das ist die Bauform aus D-7/R-09
+       (locations-render.js) — sie ist der Grund, warum eine spaetere Aenderung
+       an einer Rolle hier nicht nachgezogen werden muss.
+
+   (3) Die Seltenheitsskala steht in Tokens statt in Hexwerten, und zwar
+       GETRENNT nach Flaeche und Tinte. Die Trennung ist der ganze Punkt:
+       Paragraph 7 erlaubt einer bedeutungstragenden Skala, themenunabhaengig
+       zu sein — aber nur "als Flaeche/Rahmen; als Text nur ueber theme-faehige
+       Ableitungen". Die Seltenheit war beides zugleich, mit denselben fuenf
+       Werten.
+
+   (4) Jede Seltenheits-TINTE haelt 4,5 ueber die Traegerflaechen ihrer drei
+       Textstellen, in allen vier Themes. Hier lag der schlechteste Einzelwert
+       des ganzen Farbbefunds: der Gegenstandsname in "sehr selten" erreichte
+       in Sepia 1,12 auf der ausgewaehlten Zeile. Er stand in KEINER
+       Bestandsliste, weil der Suchbefehl von W1-C-02 nach `color: var(--bg-dark)`
+       sucht und diese Stelle die Farbe als Text setzt.
+
+   (5) Die Tinte der Seltenheits-MARKE ist themenblind und haelt auf allen
+       fuenf Flaechen. Themenblind, weil die Flaeche es ist — genau das Muster,
+       das Welle 1 Schritt 8 an der SW-Update-Leiste beschlossen hat. Weiss
+       waere dort 1,53-2,72 und damit keine Alternative.
+
+   WARUM DIE SCHWELLE HIER 4,5 IST UND NICHT DIE D-2-MINIMIERUNG ueber die vier
+   neutralen Flaechen: die Traeger dieser Stellen sind keine neutralen
+   Flaechen, sondern die Akzentflaeche selbst (Teile 2, 5) oder eine benannte
+   Liste wirklich erreichbarer Karten- und Auswahlflaechen (Teil 4). Die stehen
+   unten einzeln mit ihrer Herkunft da, statt dass eine allgemeine Liste
+   behauptet wuerde, die fuer diese Stellen gar nicht gilt.
+
+   SIE IST BEI IHRER GEBURT ROT, mit allen fuenf Teilen: die Signatur mit
+   ihren fuenf Stellen, die Statusabbildung mit Farbwerten statt Rollennamen,
+   die Seltenheitsskala mit fuenf Hexwerten und ohne Trennung, und die beiden
+   Kontrastteile, weil es die Tokens noch nicht gibt, die sie pruefen sollen.
+   =========================================================================== */
+describe('R-16 — Tinte auf JS-gesetzter Flaeche (Ratsche)', () => {
+    const SCHWELLE = 4.5;
+    const QUELLORDNER = ['core', 'features', 'systems', 'ui', 'render', 'utils'];
+
+    /** Alle .js-Dateien der sechs Quellordner, rekursiv. Kein glob, damit die
+     *  Menge dieselbe ist wie die des grep-Befehls aus W1-C-02. */
+    function quellDateien() {
+        const out = [];
+        const lauf = dir => {
+            fs.readdirSync(dir, { withFileTypes: true }).forEach(e => {
+                const p = path.join(dir, e.name);
+                if (e.isDirectory()) lauf(p);
+                else if (e.name.endsWith('.js')) out.push(p);
+            });
+        };
+        QUELLORDNER.forEach(d => {
+            const p = path.join(REPO, d);
+            if (fs.existsSync(p)) lauf(p);
+        });
+        return out;
+    }
+
+    const DATEIEN = quellDateien();
+
+    function lies(rel) {
+        const p = path.join(REPO, ...rel.split('/'));
+        return fs.existsSync(p) ? fs.readFileSync(p, 'utf8') : null;
+    }
+
+    test('(1) keine JS-Stelle setzt mehr eine Flaechenfarbe als Tinte', () => {
+        // Gegenprobe: ohne Dateien prueft die Schleife ueber Leerlauf.
+        expect(DATEIEN.length).toBeGreaterThan(50);
+
+        const befunde = [];
+        DATEIEN.forEach(p => {
+            const inhalt = fs.readFileSync(p, 'utf8');
+            const rel = path.relative(REPO, p).split(path.sep).join('/');
+            for (const m of inhalt.matchAll(/style="([^"]*)"/g)) {
+                const stil = m[1];
+                if (!/background/.test(stil)) continue;
+                if (!/(^|[^-\w])color:\s*var\(--bg-[\w-]+\)/.test(stil)) continue;
+                const zeile = inhalt.slice(0, m.index).split('\n').length;
+                befunde.push(
+                    `${rel}:${zeile} setzt eine Flaeche UND "color: var(--bg-…)" als Tinte. ` +
+                        `--bg-dark ist in Light #f5f5f5 und in Sepia #f4e4c1 — dieselbe Zeile ` +
+                        `schreibt dort fast weiss auf eine helle Akzentflaeche`
+                );
+            }
+        });
+        expect(befunde.sort()).toEqual([]);
+    });
+
+    test('(2) die Quest-Status-Pille fuehrt Rollennamen und baut Flaeche und Tinte daraus', () => {
+        const js = lies('systems/entity-links.js');
+        expect(js).not.toBeNull();
+
+        const befunde = [];
+        const tabelle = js.match(/const statusColors = \{([\s\S]*?)\}/);
+        if (!tabelle) {
+            befunde.push('entity-links.js: die Statusabbildung ist weg oder heisst anders');
+        } else {
+            const rollen = [...tabelle[1].matchAll(/(\w+):\s*'([^']+)'/g)];
+            if (!rollen.length) befunde.push('entity-links.js: die Statusabbildung ist leer');
+            rollen.forEach(([, status, wert]) => {
+                if (!/^[a-z]+$/.test(wert)) {
+                    befunde.push(
+                        `entity-links.js: Status "${status}" fuehrt "${wert}" statt eines ` +
+                            `blossen Rollennamens. Mit einem fertigen var(…) kann die Vorlage ` +
+                            `die passende --on-<rolle> nicht mehr bilden`
+                    );
+                }
+            });
+            // Und jede Rolle muss ihre eigene Tinte tragen koennen.
+            const pals = WCAG.palettes();
+            const alias = aliasSchicht();
+            rollen.forEach(([, status, rolle]) => {
+                WCAG.THEMES.forEach(theme => {
+                    const p = { ...pals[theme], ...alias };
+                    const f = p[`--${rolle}`] && WCAG.resolve(p[`--${rolle}`], p);
+                    const t = p[`--on-${rolle}`] && WCAG.resolve(p[`--on-${rolle}`], p);
+                    if (!f || !t) {
+                        befunde.push(`${theme}: --${rolle} oder --on-${rolle} fehlt (${status})`);
+                        return;
+                    }
+                    const r = WCAG.ratio2(t, f);
+                    if (r < SCHWELLE) {
+                        befunde.push(
+                            `${theme}: Status "${status}" auf --${rolle}: --on-${rolle} ` +
+                                `erreicht nur ${r} < ${SCHWELLE}`
+                        );
+                    }
+                });
+            });
+        }
+        if (!/background:\s*var\(--\$\{[\w.]+\}\)/.test(js)) {
+            befunde.push(
+                'entity-links.js: die Vorlage baut die Flaeche nicht mehr aus dem Rollennamen'
+            );
+        }
+        if (!/color:\s*var\(--on-\$\{[\w.]+\}\)/.test(js)) {
+            befunde.push(
+                'entity-links.js: die Vorlage baut die Tinte nicht mehr aus dem Rollennamen'
+            );
+        }
+        expect(befunde.sort()).toEqual([]);
+    });
+
+    /** Die fuenf Seltenheitsstufen in der Reihenfolge der Konstantentabelle.
+     *  "normal" steht nicht dabei: es traegt keine eigene Farbe, sondern
+     *  var(--text), und es bekommt auch keine Marke. */
+    const SELTENHEITEN = ['common', 'uncommon', 'rare', 'veryrare', 'legendary'];
+
+    test('(3) die Seltenheitsskala steht in Tokens, getrennt nach Flaeche und Tinte', () => {
+        const js = lies('core/constants.js');
+        expect(js).not.toBeNull();
+        expect(SELTENHEITEN.length).toBe(5);
+
+        const befunde = [];
+        const paare = [
+            { name: 'RARITY_COLORS', muster: s => `var(--rarity-${s})`, was: 'Flaeche' },
+            { name: 'RARITY_TEXT_COLORS', muster: s => `var(--rarity-${s}-text)`, was: 'Tinte' }
+        ];
+        paare.forEach(({ name, muster, was }) => {
+            const m = js.match(new RegExp(`const ${name} = \\{([\\s\\S]*?)\\n\\};`));
+            if (!m) {
+                befunde.push(`constants.js: ${name} (${was}) fehlt`);
+                return;
+            }
+            const rumpf = m[1];
+            if (/#[0-9a-fA-F]{3,6}/.test(rumpf)) {
+                befunde.push(
+                    `constants.js: ${name} (${was}) fuehrt noch Hexwerte. Eine Skala, die in ` +
+                        `JS steht, ist fuer jede Ratsche dieses Testnetzes unsichtbar`
+                );
+            }
+            SELTENHEITEN.forEach(s => {
+                if (!rumpf.includes(muster(s))) {
+                    befunde.push(`constants.js: ${name} (${was}) fuehrt ${s} nicht als ${muster(s)}`);
+                }
+            });
+        });
+        expect(befunde.sort()).toEqual([]);
+    });
+
+    /** Die Traegerflaechen der drei Stellen, an denen die Seltenheitsfarbe
+     *  TEXT ist. Jede mit ihrer Herkunft, damit niemand sie fuer eine
+     *  allgemeine Liste haelt:
+     *    .loot-item-name  — .loot-item traegt --bg-card (core.css), :hover
+     *                       --bg-elevated (core.css), .selected eine
+     *                       10-%-Toenung von --yellow ueber --bg-dark
+     *                       (npcs.css gewinnt in der Kaskade ueber core.css)
+     *    .loot-detail-name— die Detailspalte traegt --bg-card (core.css)
+     *    Zuweisungsliste  — #assign-item-list traegt --bg-dark (modals-entity
+     *                       .html), die zugewiesene Zeile zusaetzlich eine
+     *                       15-%-Auflage (render-loot.js, dort ein
+     *                       rgba-Literal — JS-Literale sind nach E5 nicht
+     *                       Gegenstand dieser Welle) */
+    function textTraeger(theme, p) {
+        const dark = WCAG.resolve(p['--bg-dark'], p);
+        return {
+            '--bg-card': WCAG.resolve(p['--bg-card'], p),
+            '--bg-elevated': WCAG.resolve(p['--bg-elevated'], p),
+            '--bg-dark': dark,
+            'Auswahl (gelb 10 % ueber --bg-dark)': WCAG.mixOver(
+                WCAG.resolve(p['--yellow'], p),
+                0.1,
+                dark
+            ),
+            'zugewiesen (gruen 15 % ueber --bg-dark)': WCAG.mixOver('#4ade80', 0.15, dark)
+        };
+    }
+
+    test('(4) jede Seltenheits-Tinte haelt die Schwelle auf den Traegern ihrer Textstellen', () => {
+        const pals = WCAG.palettes();
+        const alias = aliasSchicht();
+        const befunde = [];
+        WCAG.THEMES.forEach(theme => {
+            const p = { ...pals[theme], ...alias };
+            const F = textTraeger(theme, p);
+            expect(Object.keys(F).length).toBe(5);
+            SELTENHEITEN.forEach(s => {
+                const tok = `--rarity-${s}-text`;
+                if (!(tok in p)) {
+                    befunde.push(`${theme}: ${tok} fehlt`);
+                    return;
+                }
+                const tinte = WCAG.resolve(p[tok], p);
+                if (!tinte) {
+                    befunde.push(`${theme}: ${tok} = ${p[tok]} loest zu keinem Farbwert auf`);
+                    return;
+                }
+                Object.entries(F).forEach(([name, flaeche]) => {
+                    const r = WCAG.ratio2(tinte, flaeche);
+                    if (r < SCHWELLE) {
+                        befunde.push(
+                            `${theme}: ${tok} (${tinte}) auf ${name} nur ${r} < ${SCHWELLE}`
+                        );
+                    }
+                });
+            });
+        });
+        expect(befunde.sort()).toEqual([]);
+    });
+
+    test('(5) die Tinte der Seltenheitsmarke ist themenblind und haelt auf allen fuenf Flaechen', () => {
+        const pals = WCAG.palettes();
+        const alias = aliasSchicht();
+        const befunde = [];
+
+        // Themenblind heisst: in allen vier Themes derselbe aufgeloeste Wert.
+        const werte = new Set();
+        WCAG.THEMES.forEach(theme => {
+            const p = { ...pals[theme], ...alias };
+            if (!('--on-rarity' in p)) {
+                befunde.push(`${theme}: --on-rarity fehlt`);
+                return;
+            }
+            werte.add(WCAG.resolve(p['--on-rarity'], p));
+        });
+        if (werte.size > 1) {
+            befunde.push(
+                `--on-rarity loest je Theme verschieden auf (${[...werte].sort().join(' · ')}). ` +
+                    `Die Flaeche darunter folgt keinem Theme, die Tinte darf es dann auch nicht`
+            );
+        }
+
+        const p0 = { ...pals.dark, ...alias };
+        SELTENHEITEN.forEach(s => {
+            const tok = `--rarity-${s}`;
+            if (!(tok in p0)) {
+                befunde.push(`${tok} fehlt`);
+                return;
+            }
+            const flaeche = WCAG.resolve(p0[tok], p0);
+            const tinte = WCAG.resolve(p0['--on-rarity'] || '', p0);
+            if (!flaeche || !tinte) return;
+            const r = WCAG.ratio2(tinte, flaeche);
+            if (r < SCHWELLE) {
+                befunde.push(
+                    `--on-rarity auf ${tok} (${flaeche}) nur ${r} < ${SCHWELLE}. Weiss waere ` +
+                        `dort 1,53-2,72 und ist keine Alternative`
+                );
+            }
+        });
+        expect(befunde.sort()).toEqual([]);
+    });
+});
