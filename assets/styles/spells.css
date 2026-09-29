@@ -161,10 +161,25 @@
             line-height: 1.5;
         }
         
+        /* Welle 2 Schritt 16 (Pruefung W2-D, Befund 1). VIERTER Fall mit
+           fremder Rolle in dieser Datei, und der Zwilling von
+           `.editor-btn:hover` rund hundert Zeilen weiter unten: dieselbe
+           Paarung Gold auf 10 % Gelb, derselbe Ausgangswert. Der Zwilling ist
+           in Schritt 15 behoben worden, diese Regel nicht — ihre Toenung steht
+           in einem VERLAUF, und die Siebung von R-04 verlangte bis Schritt 16
+           eine Flaeche, die als GANZE eine Toenung ist. Sie ist nicht tot:
+           spell-manager.js:202 malt sie fuer jede Zauber-Notiz.
+           Gemessen, min ueber --bg-card/--bg-dark/--bg-elevated:
+             var(--gold)      5,88 · 2,45 · 5,20 · 8,54
+             var(--gold-text) 5,88 · 4,78 · 5,34 · 8,54 */
         .spell-note {
             font-size: 0.8em;
-            color: var(--gold);
-            background: linear-gradient(90deg, color-mix(in srgb, var(--yellow) 10%, transparent) 0%, transparent 100%);
+            color: var(--gold-text);
+            background: linear-gradient(
+                90deg,
+                color-mix(in srgb, var(--yellow) min(10%, var(--tint-max)), transparent) 0%,
+                transparent 100%
+            );
             padding: 8px;
             border-radius: var(--radius-md);
             margin-bottom: 10px;
