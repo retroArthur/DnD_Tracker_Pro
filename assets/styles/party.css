@@ -152,7 +152,7 @@
         .wiki-detail-body tr:hover,
         .encounter-content tr:hover,
         .spell-desc tr:hover {
-            background: rgba(251, 191, 36, 0.05) !important;
+            background: color-mix(in srgb, var(--yellow) 5%, transparent) !important;
         }
         
         /* Überschriften H1 */
@@ -318,7 +318,7 @@
         .wiki-detail-body mark,
         .encounter-content mark,
         .spell-desc mark {
-            background-color: rgba(251, 191, 36, 0.3);
+            background-color: color-mix(in srgb, var(--yellow) 30%, transparent);
             padding: 0 3px;
             border-radius: var(--radius-sm);
             margin: 0;
@@ -714,7 +714,7 @@
         }
         
         .wiki-tree-cat-header.active {
-            background: rgba(168, 85, 247, 0.2);
+            background: color-mix(in srgb, var(--know-religion) 20%, transparent);
         }
         
         .wiki-tree-toggle {
@@ -787,7 +787,7 @@
         }
         
         .wiki-tree-item.selected {
-            background: rgba(168, 85, 247, 0.15);
+            background: color-mix(in srgb, var(--know-religion) 15%, transparent);
             border-left-color: var(--purple);
             color: var(--purple);
         }
@@ -913,7 +913,7 @@
         }
         
         .wiki-detail-category {
-            background: rgba(168, 85, 247, 0.15);
+            background: color-mix(in srgb, var(--know-religion) 15%, transparent);
             color: var(--purple);
             padding: 2px 10px;
             border-radius: var(--radius-lg);
@@ -1049,7 +1049,7 @@
         
         .wiki-link.missing {
             color: var(--red);
-            background: rgba(239, 68, 68, 0.1);
+            background: color-mix(in srgb, var(--red) 10%, transparent);
             text-decoration: line-through;
         }
         
@@ -1415,7 +1415,7 @@
 
 .cf-attr-card:has(.cf-attr-save input:checked) {
     border-color: var(--gold);
-    background: rgba(212, 175, 55, 0.1);
+    background: color-mix(in srgb, var(--gold) 10%, transparent);
 }
 
 .cf-attr-card .cf-attr-name {
@@ -1683,7 +1683,7 @@
 
 .cf-chip.selected,
 .cf-chip:has(input:checked) {
-    background: rgba(212, 175, 55, 0.15);
+    background: color-mix(in srgb, var(--gold) 15%, transparent);
     border-color: var(--gold);
     color: var(--gold);
 }
@@ -1710,7 +1710,7 @@
 }
 
 .cf-lang-item.selected {
-    background: rgba(212, 175, 55, 0.1);
+    background: color-mix(in srgb, var(--gold) 10%, transparent);
 }
 
 .cf-lang-item input[type="checkbox"] {
@@ -2047,7 +2047,7 @@
 
 .rest-type-btn.active {
     border-color: var(--gold);
-    background: rgba(212, 175, 55, 0.1);
+    background: color-mix(in srgb, var(--gold) 10%, transparent);
 }
 
 .rest-type-icon { font-size: 2em; }
