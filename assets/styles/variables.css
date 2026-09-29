@@ -192,6 +192,36 @@
             --on-coin-sm: #111111;
             --on-coin-km: #111111;
 
+            /* Tinte des Ereignis-Logs (Welle 2 Schritt 10, Entscheidung E6).
+
+               Der Ereignis-Log ist eine dunkle Blende ueber allem — das ist
+               Absicht und bleibt so, in jedem Theme. Seine beiden Flaechen
+               sind deshalb feste rgba-Tripel und stehen als begruendete
+               Ausnahme in R-10. Seine TINTE folgte aber dem Theme: var(--text)
+               und var(--text-dim). In Dark und Contrast liest sich das
+               richtig, in Light und Sepia schrieb es dunkel auf dunkel.
+               Gemessen: die Meldung selbst erreichte in Light 1,07, der Titel
+               1,05, der Zeitstempel 2,84 — und das ist die Anzeige, die der
+               Spielleiter am Tisch liest.
+
+               Eine Flaeche, die keinem Theme folgt, darf keine Tinte tragen,
+               die es tut. Dieselbe Regel, dasselbe Muster wie bei der
+               SW-Update-Leiste (Welle 1 Schritt 8) und der Seltenheitsmarke
+               unten. Ergebnis mit diesen zwei Werten, ueber alle vier Themes
+               und beide Flaechen: Meldung 13,40-15,13 · Titel 15,02-15,63 ·
+               Knopf und Zeitstempel 6,96-8,12. Das Aussehen aendert sich
+               nicht — in Dark war es vorher 13,86/14,43/5,16, also praktisch
+               dasselbe Bild.
+
+               Sie stehen in allen vier Bloecken mit demselben Wert und nicht
+               im Aliasblock: so sieht sie jede Messung, die nur die
+               Theme-Palette kennt. Welle 2 Schritt 8 hat gezeigt, wozu die
+               andere Wahl fuehrt — zwei Stellen, die ihre Tinte ueber ein nur
+               in einer Komponentendatei definiertes Zweittoken nahmen, waren
+               vor jeder Zaehlung dieser Welle verborgen. */
+            --on-log: #e8e8f0;
+            --on-log-dim: #a8a8b8;
+
             /* Seltenheitsskala, TINTE (Welle 2 Schritt 10).
 
                Die Flaeche der Skala ist themenunabhaengig (Aliasblock unten,
@@ -339,6 +369,11 @@
             --on-coin-sm: #111111;
             --on-coin-km: #111111;
 
+            /* Tinte des Ereignis-Logs, themenblind wie seine Flaeche
+               (E6, Welle 2 Schritt 10). Herleitung und Zahlen: Dark-Block. */
+            --on-log: #e8e8f0;
+            --on-log-dim: #a8a8b8;
+
             /* Seltenheitsskala, TINTE — abgedunkelt (Welle 2 Schritt 10).
                Herleitung und Traegerflaechen: siehe Dark-Block. Gemessen
                vorher/nachher auf der schlechtesten Flaeche (--bg-elevated):
@@ -478,6 +513,11 @@
             --on-coin-sm: #111111;
             --on-coin-km: #111111;
 
+            /* Tinte des Ereignis-Logs, themenblind wie seine Flaeche
+               (E6, Welle 2 Schritt 10). Herleitung und Zahlen: Dark-Block. */
+            --on-log: #e8e8f0;
+            --on-log-dim: #a8a8b8;
+
             /* Seltenheitsskala, TINTE — abgedunkelt (Welle 2 Schritt 10).
                Herleitung und Traegerflaechen: siehe Dark-Block. Schlechteste
                Flaeche ist hier die Auswahl-Toenung der Zeile (Pergament unter
@@ -594,6 +634,11 @@
             --on-coin-gm: #111111;
             --on-coin-sm: #111111;
             --on-coin-km: #111111;
+
+            /* Tinte des Ereignis-Logs, themenblind wie seine Flaeche
+               (E6, Welle 2 Schritt 10). Herleitung und Zahlen: Dark-Block. */
+            --on-log: #e8e8f0;
+            --on-log-dim: #a8a8b8;
 
             /* Seltenheitsskala, TINTE — wie in Dark unveraendert die Flaeche
                selbst (Welle 2 Schritt 10). Auf den fuenf Traegerflaechen
