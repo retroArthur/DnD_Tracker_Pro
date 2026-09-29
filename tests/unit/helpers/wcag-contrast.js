@@ -45,8 +45,9 @@ const VARIABLES_CSS = path.join(REPO, 'assets', 'styles', 'variables.css');
 const THEMES = ['dark', 'light', 'sepia', 'contrast'];
 
 /**
- * Die 21 Tokens, die JEDER Theme-Block heute fuehrt (gemessen am 2026-09-28,
- * HEAD ca85d1b: dark=21 light=21 sepia=21 contrast=21).
+ * Die 18 Tokens, die JEDER Theme-Block heute fuehrt (bei der Geburt 21,
+ * gemessen am 2026-09-28, HEAD ca85d1b: dark=21 light=21 sepia=21
+ * contrast=21).
  *
  * Sie dienen als Plausibilitaetsprobe des Block-Parsers: greift die Regex die
  * schliessende Klammer falsch — der Fall, der eintritt, wenn jemand
@@ -54,9 +55,20 @@ const THEMES = ['dark', 'light', 'sepia', 'contrast'];
  * Parser scheitert HART, statt stillschweigend ueber einer halben Palette zu
  * urteilen.
  *
- * ABWEICHUNG VON DER SCHRITTANWEISUNG, bewusst: geprueft wird nicht "genau 21
- * Schluessel", sondern "diese 21 Schluessel sind da". Welle 1 Schritt 4
- * ergaenzt je Block 31 Eintraege; eine Gleichheitsprobe auf 21 waere eine
+ * DREI NAMEN SIND AM 2026-09-29 HERAUS (Welle 2, Schritt 2): die rgba()-Kanaele
+ * zu --gold, --green und --red sind aus variables.css ersatzlos entfallen, weil
+ * color-mix das Hex-Token direkt nimmt. Sie duerfen NICHT zurueckkehren, und
+ * zwar nicht aus Ordnungsliebe: palette() wirft bei einem fehlenden Basis-Token
+ * hart, die vier palettes()-Aufrufe dieser Suite stehen im describe-Rumpf, und
+ * damit laeuft `tests/unit/wcag-contrast-helper.test.js` GAR NICHT MEHR AN
+ * (26 Tests kommen nicht zur Ausfuehrung, Meldung "Test suite failed to run"),
+ * waehrend design-consistency.test.js acht palettes()-Tests einzeln verliert.
+ * Dieselbe Falle schnappt bei jedem kuenftigen Token, das hier gefuehrt und
+ * im CSS entfernt wird: beides gehoert in EINEN Commit.
+ *
+ * ABWEICHUNG VON DER SCHRITTANWEISUNG, bewusst: geprueft wird nicht "genau so
+ * viele Schluessel", sondern "diese Schluessel sind da". Welle 1 Schritt 4
+ * ergaenzt je Block 31 Eintraege; eine Gleichheitsprobe auf die Zahl waere eine
  * Zeitbombe, die genau dann losgeht, wenn der naechste Schritt richtig
  * arbeitet. Gegen den Parser-Fehler, um den es geht, schuetzt die
  * Teilmengenprobe genauso.
@@ -79,10 +91,7 @@ const BASELINE_TOKENS = [
     '--text',
     '--text-dim',
     '--border',
-    '--shadow',
-    '--gold-rgb',
-    '--green-rgb',
-    '--red-rgb'
+    '--shadow'
 ];
 
 /** Die vier neutralen Theme-Flaechen, gegen die Akzenttext gerechnet wird. */

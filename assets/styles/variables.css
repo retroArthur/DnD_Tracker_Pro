@@ -18,13 +18,17 @@
             --text-dim: #888;
             --border: #3a3a3a;
             --shadow: rgba(0,0,0,0.5);
-            /* rgba()-Kanaele zu --gold/--green/--red. Muessen
-               Zahlentripel sein; CSS kann sie nicht aus dem
-               Hex-Token ableiten. BEIM AENDERN EINER FARBE HIER
-               MITZIEHEN. */
-            --gold-rgb: 212, 175, 55;
-            --green-rgb: 74, 222, 128;
-            --red-rgb: 239, 68, 68;
+            /* HIER STANDEN DIE DREI rgba()-KANAELE zu --gold, --green und
+               --red (Welle 1; ihre Namen trugen den Zusatz rgb, hier
+               absichtlich nicht ausgeschrieben, damit ein Suchlauf nach der
+               alten Mechanik 0 Treffer behaelt). Sie sind ersatzlos
+               entfallen: color-mix(in srgb, var(--gold) 15%, transparent)
+               leistet dasselbe, nimmt das Hex-Token direkt und muss beim
+               Aendern einer Farbe nicht mitgezogen werden. Es gab vier
+               Definitionen je Kanal und sechs Verwendungen; alle sechs sind
+               umgestellt. NICHT WIEDER EINFUEHREN — eine zweite Schreibweise
+               derselben Farbe ist genau die Doppelfuehrung, die Welle 2
+               abraeumt. Design-Handoff v3, Welle 2, Schritt 2. */
             /* Sagt dem Browser, welche Helligkeit die Systemteile treffen
                sollen. Ohne diese Zeile zeichnet er Auswahlmenues, Ankreuz-
                felder und Zahlenfelder im Systemhell — im ganzen Baum stand
@@ -190,10 +194,6 @@
             --text-dim: #666;
             --border: #ccc;
             --shadow: rgba(0,0,0,0.15);
-            /* rgba()-Kanaele, siehe Kommentar im Dark-Block. */
-            --gold-rgb: 184, 134, 11;
-            --green-rgb: 22, 163, 74;
-            --red-rgb: 220, 38, 38;
             color-scheme: light;
 
             /* Erlaeuterung zu allen folgenden Gruppen: Dark-Block oben.
@@ -305,10 +305,6 @@
             --text-dim: #666;
             --border: #c9b99a;
             --shadow: rgba(0,0,0,0.1);
-            /* rgba()-Kanaele, siehe Kommentar im Dark-Block. */
-            --gold-rgb: 139, 69, 19;
-            --green-rgb: 133, 153, 0;
-            --red-rgb: 220, 50, 47;
             /* Sepia ist ein HELLES Theme — Pergament, nicht Nacht. */
             color-scheme: light;
 
@@ -400,10 +396,6 @@
             --text-dim: #aaa;
             --border: #555;
             --shadow: rgba(255,255,255,0.1);
-            /* rgba()-Kanaele, siehe Kommentar im Dark-Block. */
-            --gold-rgb: 255, 215, 0;
-            --green-rgb: 0, 255, 0;
-            --red-rgb: 255, 0, 0;
             color-scheme: dark;
 
             /* Erlaeuterung zu allen folgenden Gruppen: Dark-Block oben.

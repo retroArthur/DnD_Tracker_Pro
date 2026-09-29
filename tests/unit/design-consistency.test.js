@@ -71,27 +71,23 @@ describe('F-01 — Custom Properties', () => {
         expect(alias).toBeGreaterThan(lastTheme);
     });
 
-    test('rgba()-Kanaele sind in JEDEM Theme definiert, nicht nur im Dark-Block', () => {
-        const vars = cssFiles.find(f => f.name === 'variables.css').content;
-        for (const theme of ['dark', 'light', 'sepia', 'contrast']) {
-            const re =
-                theme === 'dark'
-                    ? /:root,\s*\[data-theme="dark"\]\s*\{([\s\S]*?)\n\s*\}/
-                    : new RegExp(`\\[data-theme="${theme}"\\]\\s*\\{([\\s\\S]*?)\\n\\s*\\}`);
-            const body = vars.match(re);
-            expect(body).not.toBeNull();
-            ['--gold-rgb', '--green-rgb', '--red-rgb'].forEach(t => {
-                expect(body[1]).toContain(t);
-            });
-        }
-    });
+    /* HIER STANDEN ZWEI TESTS ZU DEN rgba()-KANAELEN, entfernt am 2026-09-29
+       (Welle 2, Schritt 2), weil die Mechanik selbst entfallen ist:
 
-    test('F-01b: keine abweichenden Fallbacks mehr an den rgba()-Kanaelen', () => {
-        // Vorher standen dort DREI verschiedene Goldtoene, einer davon
-        // (180,140,60) nur als Fallback — sichtbar, solange das Token fehlte.
-        const withFallback = cssAll.match(/var\(--(?:gold|green|red)-rgb\s*,[^)]*\)/g) || [];
-        expect(withFallback).toEqual([]);
-    });
+         - "rgba()-Kanaele sind in JEDEM Theme definiert, nicht nur im
+           Dark-Block" haette die Entfernung viermal rot gemeldet.
+         - "F-01b: keine abweichenden Fallbacks mehr an den rgba()-Kanaelen"
+           waere NICHT rot geworden, sondern inhaltsleer gruen — er suchte
+           nach var(--<rolle>-rgb, <fallback>) und findet nichts mehr, weil es
+           die Namen nicht mehr gibt. Ein gruener Test, der nichts prueft, ist
+           schlimmer als keiner; deshalb faellt auch er.
+
+       Was beide zusammen zusicherten — dass eine Farbe nicht in zwei
+       Schreibweisen gefuehrt wird, die auseinanderlaufen koennen —, sichert
+       jetzt die Abwesenheit der Mechanik selbst: color-mix nimmt das
+       Hex-Token direkt, es gibt keine zweite Quelle mehr. F-01 (Test 1 oben)
+       wacht darueber, dass kein var() ins Leere zeigt, und R-10 am Dateiende
+       darueber, dass die Literale nicht auf anderem Weg zurueckkommen. */
 });
 
 describe('F-07 — alle Views im Container', () => {
@@ -3288,10 +3284,18 @@ describe('R-09 — die Ortsfarben aus dem JS (Ratsche)', () => {
    rgba(255,215,0,.) in tools.css:1067/1151/1188/1267/1272/1314.
    AUSSERHALB bleiben: assets/templates/*.html (55 Hex) und der JS-Baum
    (64 Hex, 7 rgba). Zwei davon sind nach Paragraph 7 begruendete Ausnahmen
-   und bleiben es — features/shops/shop-export.js (25, eigenstaendiges
-   Ausgabedokument ohne Theme) und ui/editors/editor-toolbar-build.js (12,
-   die Markierstift-Palette, deren Werte im eingefrorenen Editor-Testnetz
-   zeichenweise zugesichert sind).
+   und bleiben es — der Laden-Handzettel-Export unter features/shops (25 Hex,
+   ein eigenstaendiges Ausgabedokument ohne Theme) und der Leistengenerator
+   unter ui/editors (12, die Markierstift-Palette, deren Werte im
+   eingefrorenen Editor-Testnetz zeichenweise zugesichert sind).
+
+   DIE DATEINAMEN DIESER BEIDEN STEHEN HIER ABSICHTLICH NICHT: das
+   Abdeckungs-Gate in tests/unit/module-test-coverage.test.js haelt ein Modul
+   fuer getestet, sobald sein loader-relativer Pfad WOERTLICH irgendwo unter
+   tests/ vorkommt — auch in einem Kommentar wie diesem. Die erste Fassung
+   nannte den Pfad und hat das Gate prompt rot gemacht ("Eintrag der
+   Ausnahmeliste ist inzwischen abgedeckt"). Wer hier einen Modulpfad
+   ausschreibt, behauptet eine Testabdeckung, die es nicht gibt.
 
    SIE IST BEI IHRER GEBURT ROT, mit 247 Stellen. Das Ziel ist 0 plus eine
    begruendete Ausnahmeliste; gruen wird sie mit Schritt 7 der Welle.

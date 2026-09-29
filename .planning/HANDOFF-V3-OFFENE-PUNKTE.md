@@ -592,7 +592,7 @@ tools.css
 welt.css
    61  .wp-session-nr
   272  .wp-detail-header h3
-  559  .rs-tagesmarsch
+  570  .rs-tagesmarsch
 ```
 
 ### Wie Gruppe E aufzulösen ist
@@ -624,13 +624,21 @@ Begründung, mit der D-4 die Trennung gezogen hat.
 | Stelle | Selektor | Tönung | heute `var(--<rolle>)` min | mit `var(--<rolle>-text)` min |
 | ------ | -------- | ------ | -------------------------- | ----------------------------- |
 | `dice.css:371` | `.dice-fav-add:hover` | `color-mix(--gold 10%)` | dark 5,00 · light 2,20 · sepia 4,51 · contrast 7,10 | light **4,21** — weiter darunter |
-| `tools.css:1700` | `.ds-rate-chip.ds-crit` | `rgba(--green-rgb, 0.15)` | dark 5,26 · light 2,11 · sepia 2,07 · contrast 6,53 | light **3,92** · sepia **4,08** |
-| `tools.css:1706` | `.ds-rate-chip.ds-fumble` | `rgba(--red-rgb, 0.15)` | dark 2,92 · light 2,89 · sepia 2,78 · contrast 3,02 | dark **3,93** · light **3,69** · sepia **3,82** · contrast **4,35** |
+| `tools.css:1698` | `.ds-rate-chip.ds-crit` | `color-mix(--green 15%)` | dark 5,26 · light 2,11 · sepia 2,07 · contrast 6,53 | light **3,92** · sepia **4,08** |
+| `tools.css:1714` | `.ds-rate-chip.ds-fumble` | `color-mix(--red 15%)` | dark 2,92 · light 2,89 · sepia 2,78 · contrast 3,02 | dark **3,93** · light **3,69** · sepia **3,82** · contrast **4,35** |
 | `dashboard.css:250` | `.wiki-link` (Ruhezustand) | `rgba(168,85,247,0.1)`, FREMDE Rolle unter Cyan-Text | dark 5,84 · light 2,44 · sepia 2,08 · contrast 9,15 | — |
 | `editors.css:69` + `:75` | `.editor-toolbar .editor-btn.format-active` und `[aria-expanded='true']` | `rgba(212,175,55,0.18)` über `var(--bg-elevated)` | dark 5,06 · light **2,41** · sepia 5,28 · contrast 7,94 | light 4,62 — **reicht** |
 
 `.ds-rate-chip.ds-fumble` hält in **keinem** Theme 4,5, auch nicht mit der Textvariante. Die
 Tönung muss dort schwächer werden oder die Fläche eine andere Rolle bekommen.
+
+**Mechanikwechsel am 2026-09-29 (Welle 2, Schritt 2), inhaltlich folgenlos.** Die beiden
+`.ds-rate-chip`-Flächen kamen aus den rgba()-Kanal-Tokens, die es seitdem nicht mehr gibt; sie
+stehen jetzt als `color-mix`. Der Wechsel ist **farbneutral** — die Tripel der Kanäle waren
+zeichengleich das Hex ihrer Rolle —, und alle acht Zahlen der beiden Zeilen sind nach dem
+Wechsel erneut gemessen und **unverändert**. Die offene Frage bleibt die Tönungsstärke, nicht die
+Schreibweise. Neu in dieser Liste steht damit nichts; neu ist nur, dass die Tönung jetzt für den
+Kontrastrechner auflösbar ist (`rgba(var(--x-rgb), a)` war ihm unsichtbar und lieferte `null`).
 
 **`editors.css:69`/`:75` kam am 2026-09-28 durch die Prüfung W1-D dazu** und ist der einzige
 Eintrag dieser Tabelle, an dem die Textvariante allein genügen würde (light 2,41 → 4,62). Die

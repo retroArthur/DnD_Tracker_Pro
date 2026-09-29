@@ -58,7 +58,7 @@ describe('WCAG-Kontrastrechner — Theme-Block-Parser', () => {
 
     W.THEMES.forEach(theme => {
         const n = Object.keys(pals[theme]).length;
-        test(`Block "${theme}" liefert ${n} Tokens, darunter alle 21 Basis-Tokens`, () => {
+        test(`Block "${theme}" liefert ${n} Tokens, darunter alle ${W.BASELINE_TOKENS.length} Basis-Tokens`, () => {
             const fehlend = W.BASELINE_TOKENS.filter(t => !(t in pals[theme]));
             expect(fehlend).toEqual([]);
         });

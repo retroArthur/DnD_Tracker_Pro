@@ -153,7 +153,7 @@
 
 .wp-rich-editor:focus {
     border-color: var(--gold);
-    box-shadow: 0 0 0 2px rgba(var(--gold-rgb), 0.15);
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--gold) 15%, transparent);
 }
 
 .wp-rich-editor:empty::before {
@@ -400,15 +400,26 @@
 }
 
 .tl-typ-reise {
-    background: rgba(34, 197, 94, 0.15);
+    /* Welle 2, Schritt 2: hier stand rgba(34,197,94,·) als rohes Literal —
+       drei Zeilen ueber der Schwesterregel .tl-typ-session, die dieselbe
+       Aufgabe in einer ANDEREN Mechanik loeste. Zwei benachbarte Marken in
+       zwei Schreibweisen und zwei Gruentoenen; deshalb mit umgestellt.
+       ALS EINZIGE STELLE DIESES SCHRITTS NICHT FARBNEUTRAL: 34,197,94
+       (#22c55e) ist kein Theme-Wert, --green ist im Dark-Block #4ade80.
+       Gemessen ueber die vier neutralen Traegerflaechen, min je Theme:
+       dark 5,64 -> 5,26 · light 2,20 -> 2,11 · sepia 2,13 -> 2,07 ·
+       contrast 7,16 -> 6,53. Keine Schwelle wird ueberschritten (dark und
+       contrast bleiben ueber 4,5, light und sepia waren schon darunter).
+       Die Toenungsstaerke selbst ist ein D-4-Fall und gehoert Schritt 8. */
+    background: color-mix(in srgb, var(--green) 15%, transparent);
     color: var(--green);
-    border: 1px solid rgba(34, 197, 94, 0.3);
+    border: 1px solid color-mix(in srgb, var(--green) 30%, transparent);
 }
 
 .tl-typ-session {
-    background: rgba(var(--gold-rgb), 0.15);
+    background: color-mix(in srgb, var(--gold) 15%, transparent);
     color: var(--gold);
-    border: 1px solid rgba(var(--gold-rgb), 0.3);
+    border: 1px solid color-mix(in srgb, var(--gold) 30%, transparent);
 }
 
 /* Kalender-Datum-Zeile */
