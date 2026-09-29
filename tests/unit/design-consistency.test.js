@@ -7405,6 +7405,22 @@ describe('R-19 — Schatten nur aus Tokens (Ratsche)', () => {
        eine ungepruefte Sichtprobenliste sonst drei Stellen zuviel und die
        drei schlimmsten nicht hervorgehoben nennt.
 
+       UND SIE IST GROESSER ALS 22 (nachgetragen am 2026-09-30, Runde 2). Die
+       erste Fassung dieses Blocks zaehlte drei Klassen (13 + 6 + 3) und nannte
+       die Summe 22 eine Kandidatenzahl — waehrend eine vierte Klasse `sonst`
+       sechs weitere Regeln auffing, die KEIN Test angesehen hat. Darin lagen
+       `spells.css {.table-context-toolbar}` (Rahmen `var(--cyan)`, in Contrast
+       #00ffff, 1,85 gegen #aaa) und `spells.css {.link-context-toolbar}`
+       (`var(--purple)`, #ff00ff, 1,35) — die zweite also SCHLECHTER als jeder
+       volldeckende Goldrahmen derselben Stufe. Dazu `dice.css
+       {.floating-dice-trigger}`, dessen halbdurchsichtiger Weissrahmen ueber
+       dem roten Verlauf auf 2,37 kommt. Seit Runde 2 gibt es kein
+       Auffangbecken mehr: fuenf Klassen, jede gezaehlt, 28 Regeln mit
+       `border`, davon 27 mit sichtbarem Rahmen neben einem Umriss, und der
+       Abstand JEDER dieser 27 wird gerechnet. Die 13 `var(--border)`-Regeln
+       sind damit auch aufgeschluesselt: nur EINE liegt auf Stufe 1 und damit
+       bei 2,10, die anderen zwoelf bei 3,21 und 4,64.
+
    WAS SIE NICHT TUT. Sie schreibt keiner Gluehlage eine Deckung vor, die von
    ihrer heutigen abweicht — sie besteht darauf, dass jede Abweichung in der
    Aktenlage unter W3-F-01 namentlich auf der Sichtprobenliste steht. Ein Auge
@@ -7488,6 +7504,17 @@ describe('R-20 — Gluehlagen und Rahmennachbarn, beziffert gefuehrt (Ratsche)',
         return null;
     }
 
+    /** Die TRAEGERFARBE einer Lage als Hex, solange sie als Literal dasteht
+     *  — null, sobald sie in einem Token steckt. Gegenstueck zu deckungVon()
+     *  fuer die andere Haelfte der Frage "was aendert sich sichtbar": eine
+     *  Stelle kann ihre Deckung behalten und trotzdem den Ton wechseln. */
+    function literalFarbeVon(lage) {
+        const m = lage.match(/rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/);
+        if (m) return '#' + [1, 2, 3].map(i => Number(m[i]).toString(16).padStart(2, '0')).join('');
+        const h = lage.match(/#[0-9a-f]{6}\b/i);
+        return h ? h[0].toLowerCase() : null;
+    }
+
     /** Alle box-shadow-Deklarationen mit Datei, Selektor, Zeile und Rumpf. */
     function schattenRegeln() {
         const out = [];
@@ -7538,24 +7565,47 @@ describe('R-20 — Gluehlagen und Rahmennachbarn, beziffert gefuehrt (Ratsche)',
        tragen bewusst eine FREMDE Rolle (dice.css: #dc2626 ist das Rot des
        Light-Blocks, nicht --red des Dark-Blocks); sie stehen mit `fremd: true`
        und sind Punkt 5 der Sichtprobenliste.
+
+       `farbe` ist die HEUTE getragene Literalfarbe — vier Stellen haben
+       keine, weil sie schon ein Token tragen. Sie steht hier, weil die
+       Deckung allein nicht zeigt, welche Stelle sich sichtbar aendert: der
+       Aktenlage-Filter sah nur die Deckung und liess damit die zwei
+       Farbfeld-Marken (editors.css:138, spells.css:515) durchfallen, deren
+       Literal ZUFAELLIG die Dark-Ziffer von --yellow ist
+       (rgba(251,191,36,.5) == #fbbf24). Ihre Deckung aendert sich nicht
+       (0,50 -> 0,50), ihr TON aber in Light, Sepia und Contrast. `fremd`
+       konnte das nicht fangen: das Merkmal feuert nur, wenn das Literal
+       ungleich dem Dark-Token ist, und hier ist es gleich — die
+       Theme-Abhaengigkeit entsteht erst durch die Tokenisierung.
        ------------------------------------------------------------------- */
     const GLUEH_STELLEN = [
         { datei: 'dashboard.css', zeile: 34, sel: '.dice-result.crit-effect', radius: 30, vorher: 0.5, rolle: '--green' },
         { datei: 'dashboard.css', zeile: 40, sel: '.dice-result.fail-effect', radius: 30, vorher: 0.5, rolle: '--red' },
-        { datei: 'dice.css', zeile: 573, sel: '.floating-dice-trigger:hover', radius: 20, vorher: 0.3, rolle: '--red', fremd: true },
-        { datei: 'dice.css', zeile: 788, sel: '.fdp-die.d20:hover', radius: 12, vorher: 0.3, rolle: '--red', fremd: true },
-        { datei: 'dmscreen.css', zeile: 983, sel: '.btn:hover', radius: 12, vorher: 0.25, rolle: '--gold' },
-        { datei: 'dmscreen.css', zeile: 989, sel: '.btn-success:hover', radius: 12, vorher: 0.25, rolle: '--green' },
-        { datei: 'dmscreen.css', zeile: 1000, sel: '.btn-danger:hover', radius: 12, vorher: 0.25, rolle: '--red' },
-        { datei: 'editors.css', zeile: 138, sel: '.editor-toolbar .color-swatch.active', radius: 6, vorher: 0.5, rolle: '--yellow' },
+        { datei: 'dice.css', zeile: 573, sel: '.floating-dice-trigger:hover', radius: 20, vorher: 0.3, rolle: '--red', farbe: '#dc2626', fremd: true },
+        { datei: 'dice.css', zeile: 788, sel: '.fdp-die.d20:hover', radius: 12, vorher: 0.3, rolle: '--red', farbe: '#dc2626', fremd: true },
+        { datei: 'dmscreen.css', zeile: 983, sel: '.btn:hover', radius: 12, vorher: 0.25, rolle: '--gold', farbe: '#d4af37' },
+        { datei: 'dmscreen.css', zeile: 989, sel: '.btn-success:hover', radius: 12, vorher: 0.25, rolle: '--green', farbe: '#4ade80' },
+        { datei: 'dmscreen.css', zeile: 1000, sel: '.btn-danger:hover', radius: 12, vorher: 0.25, rolle: '--red', farbe: '#ef4444' },
+        { datei: 'editors.css', zeile: 138, sel: '.editor-toolbar .color-swatch.active', radius: 6, vorher: 0.5, rolle: '--yellow', farbe: '#fbbf24' },
         { datei: 'encounters.css', zeile: 441, sel: '.calc-threshold-marker', radius: 8, vorher: 1.0, rolle: '--gold' },
-        { datei: 'file-backup.css', zeile: 40, sel: '.backup-dot-active', radius: 4, vorher: 0.4, rolle: '--green' },
-        { datei: 'file-backup.css', zeile: 45, sel: '.backup-dot-paused', radius: 4, vorher: 0.4, rolle: '--yellow' },
-        { datei: 'spells.css', zeile: 446, sel: '.floating-toolbar', radius: 10, vorher: 0.2, rolle: '--yellow' },
-        { datei: 'spells.css', zeile: 515, sel: '.color-swatch.active', radius: 6, vorher: 0.5, rolle: '--yellow' },
+        { datei: 'file-backup.css', zeile: 40, sel: '.backup-dot-active', radius: 4, vorher: 0.4, rolle: '--green', farbe: '#4ade80' },
+        { datei: 'file-backup.css', zeile: 45, sel: '.backup-dot-paused', radius: 4, vorher: 0.4, rolle: '--yellow', farbe: '#fbbf24' },
+        { datei: 'spells.css', zeile: 446, sel: '.floating-toolbar', radius: 10, vorher: 0.2, rolle: '--yellow', farbe: '#fbbf24' },
+        { datei: 'spells.css', zeile: 515, sel: '.color-swatch.active', radius: 6, vorher: 0.5, rolle: '--yellow', farbe: '#fbbf24' },
         { datei: 'tools.css', zeile: 1026, sel: '.char-form-progress-dot.current', radius: 8, vorher: 1.0, rolle: '--gold' }
     ];
     const gluehSchluessel = e => `${e.datei} {${e.sel}}`;
+
+    /** Die Themes, in denen die Tokenisierung den TON einer Gluehlage
+     *  aendert: dort, wo das heute getragene Literal ungleich dem Wert ist,
+     *  den `rolle` im Theme-Block hat. GERECHNET aus den vier Paletten, nicht
+     *  abgeschrieben — eine verschobene Ziffer in variables.css faellt damit
+     *  auf, statt hier als Zusicherung zu ueberleben. */
+    function tonwechselThemes(e) {
+        if (!e.farbe) return [];
+        const p = WCAG.palettes();
+        return WCAG.THEMES.filter(t => (p[t][e.rolle] || '').toLowerCase() !== e.farbe.toLowerCase());
+    }
 
     /* -------------------------------------------------------------------
        DIE NEUN SCHATTENREGELN MIT GOLDRAHMEN, gemessen am 2026-09-30.
@@ -7576,17 +7626,83 @@ describe('R-20 — Gluehlagen und Rahmennachbarn, beziffert gefuehrt (Ratsche)',
         { datei: 'dmscreen.css', sel: '.modal', art: 'mix', anteil: 20, flaeche: '--bg-card', stufe: 3, grau: '#cccccc', abstand: 7.2 }
     ];
 
+    /* -------------------------------------------------------------------
+       DIE FUENF SCHATTENREGELN MIT EINEM ANDEREN FARBIGEN RAHMEN, gemessen
+       am 2026-09-30. Sie fielen bis hierher in eine Klasse `sonst`, die KEIN
+       Test angesehen hat — die Summe 22 war damit eine Messung von drei
+       Klassen und keine Aussage ueber Geschlossenheit. Zwei der fuenf sind
+       schlimmer als jeder Goldrahmen derselben Stufe (1,35 und 1,85 gegen
+       1,66), eine dritte liegt knapp darunter, zwei sind unauffaellig.
+
+       `ueber` steht nur, wo der Rahmen HALBDURCHSICHTIG ist und seine Farbe
+       darum von der Traegerflaeche abhaengt: dice.css traegt 20 % Weiss auf
+       einem Verlauf aus --red-dim (70 % Rot auf Schwarz) und --red-dark
+       (55 %). Beide Enden werden gerechnet, `abstand` ist das SCHLECHTERE.
+       ------------------------------------------------------------------- */
+    const RAHMEN_FARBIG = [
+        { datei: 'spells.css', sel: '.link-context-toolbar', token: '--purple', stufe: 2, grau: '#aaaaaa', abstand: 1.35 },
+        { datei: 'spells.css', sel: '.table-context-toolbar', token: '--cyan', stufe: 2, grau: '#aaaaaa', abstand: 1.85 },
+        { datei: 'dice.css', sel: '.floating-dice-trigger', token: '--overlay-strong', stufe: 2, grau: '#aaaaaa', abstand: 2.37,
+          ueber: ['color-mix(in srgb, var(--red) 70%, #000)', 'color-mix(in srgb, var(--red) 55%, #000)'] },
+        { datei: 'encounters.css', sel: '#calc-budget-slider::-webkit-slider-thumb', token: '--bg-dark', stufe: 1, grau: '#888888', abstand: 5.92 },
+        { datei: 'encounters.css', sel: '#calc-budget-slider::-moz-range-thumb', token: '--bg-dark', stufe: 1, grau: '#888888', abstand: 5.92 }
+    ];
+
+    /** Der Umriss, den der Contrast-Block einer Stufe gibt. Zeichengleich mit
+     *  --shadow-1/-2/-3 dort; W3-D-01 trennt die Stufen ueber die DICKE. */
+    const UMRISS_GRAU = { 1: '#888888', 2: '#aaaaaa', 3: '#cccccc' };
+
+    /** Die ERSTE Deklaration eines Tokens in variables.css. Erste, nicht
+     *  letzte: die themeunabhaengigen Bauart-Tokens stehen einmal richtig
+     *  (Zeile ~1220/1280) und ein zweites Mal im @supports-Rueckfall, der
+     *  nach DEVELOPMENT.md nirgends feuert. Letzte-gewinnt lieferte dort
+     *  `var(--red)` und damit einen falschen Traeger. */
+    function tokenDeklaration(token) {
+        const css = fs.readFileSync(WCAG.VARIABLES_CSS, 'utf8');
+        const m = css.match(new RegExp(`${token}\\s*:\\s*([^;]+);`));
+        return m ? m[1].trim() : null;
+    }
+
     /** Rahmenart einer Schattenregel, oder null wenn sie keinen `border`
      *  traegt. `border-left`, `border-color` und Co. zaehlen NICHT: der
-     *  Praefixschutz ist derselbe wie in deklaration(). */
+     *  Praefixschutz ist derselbe wie in deklaration().
+     *
+     *  FUENF Klassen, kein Auffangbecken: die frueher hier stehende Klasse
+     *  `sonst` wurde von keinem Test gelesen, und genau dort lagen die zwei
+     *  spells.css-Leisten mit cyan- und purpurfarbenem Rahmen. `ohne` ist
+     *  ausdruecklich benannt, damit `border: none` nicht als Rahmen zaehlt. */
     function rahmenArt(rumpf) {
         const m = rumpf.match(/(?:^|[;{\s])border\s*:\s*([^;}]+)/);
         if (!m) return null;
         const v = m[1].trim().replace(/\s+/g, ' ');
+        if (/^none\b/.test(v)) return { klasse: 'ohne', wert: v };
         if (/var\(--border\)/.test(v)) return { klasse: 'border', wert: v };
         if (/solid\s+var\(--gold\)/.test(v)) return { klasse: 'goldVoll', wert: v };
         if (/color-mix/.test(v) && /var\(--gold\)/.test(v)) return { klasse: 'goldMix', wert: v };
-        return { klasse: 'sonst', wert: v };
+        return { klasse: 'farbig', wert: v };
+    }
+
+    /** Die Stufe einer Schattendeklaration, ABGELEITET aus dem Radius ihrer
+     *  ersten Hoehenlage: naechster Wert zu 6 / 16 / 32, Gleichstand (24 px)
+     *  nach OBEN. Das ist wortgleich die Regel, nach der R-19s ORT_ZU_STUFE
+     *  gebildet wurde; der Test "die abgeleitete Stufe stimmt mit RAHMEN_GOLD
+     *  ueberein" haelt beide gegeneinander, statt 18 Stufenwerte von Hand
+     *  hierher zu kopieren. Null, wenn die Deklaration keine Hoehenlage
+     *  traegt (`none`, reine Gluehe, reiner Ring). */
+    function stufeAusRadius(wert) {
+        for (const l of lagen20(wert)) {
+            if (/\binset\b/.test(l)) continue;
+            const [x = 0, y = 0, b = 0] = laengen20(l);
+            if (b <= 0 || (x === 0 && y === 0)) continue;
+            const ziele = { 1: 6, 2: 16, 3: 32 };
+            let best = null;
+            for (const s of [1, 2, 3]) {
+                const d = Math.abs(b - ziele[s]);
+                if (best === null || d <= best.d) best = { s, d };
+            }
+            return best.s;
+        }
+        return null;
     }
 
     /** Eine Regel je Datei+Selektor, auch wenn sie zwei box-shadow traegt. */
@@ -7596,9 +7712,41 @@ describe('R-20 — Gluehlagen und Rahmennachbarn, beziffert gefuehrt (Ratsche)',
             const k = `${d.datei} {${d.sel}}`;
             if (out.has(k)) return;
             const a = rahmenArt(d.rumpf);
-            if (a) out.set(k, { datei: d.datei, sel: d.sel, ...a });
+            if (a) out.set(k, { datei: d.datei, sel: d.sel, stufe: stufeAusRadius(d.wert), ...a });
         });
         return [...out.values()];
+    }
+
+    /** Die Rahmenfarbe eines Nachbarn im Contrast-Theme, aufgeloest ueber
+     *  seiner Traegerflaeche — oder null, wenn die Regel keinen sichtbaren
+     *  Rahmen traegt. Fuer die halbdurchsichtigen Faelle wird der
+     *  SCHLECHTESTE der gefuehrten Traeger genommen. */
+    function rahmenFarbeContrast(n) {
+        const c = WCAG.palettes().contrast;
+        if (n.klasse === 'ohne') return null;
+        if (n.klasse === 'border') return c['--border'];
+        if (n.klasse === 'goldVoll') return c['--gold'];
+        if (n.klasse === 'goldMix') {
+            const e = RAHMEN_GOLD.find(x => x.datei === n.datei && x.sel === n.sel);
+            if (!e) return null;
+            return WCAG.resolveOver(
+                `color-mix(in srgb, var(--gold) ${e.anteil}%, transparent)`,
+                c,
+                c[e.flaeche]
+            );
+        }
+        const e = RAHMEN_FARBIG.find(x => x.datei === n.datei && x.sel === n.sel);
+        if (!e) return null;
+        if (!e.ueber) return WCAG.resolve(`var(${e.token})`, c);
+        // Halbdurchsichtig: die Deklaration des Tokens ueber jedem Traeger.
+        const kandidaten = e.ueber
+            .map(ausdruck =>
+                WCAG.resolveOver(tokenDeklaration(e.token), c, WCAG.resolveOver(ausdruck, c, null))
+            )
+            .filter(Boolean);
+        if (!kandidaten.length) return null;
+        // Der Traeger, der dem Umriss am naechsten kommt, ist der Pruefstein.
+        return kandidaten.reduce((a, b) => (WCAG.ratio(e.grau, a) <= WCAG.ratio(e.grau, b) ? a : b));
     }
 
     /* ===================================================================
@@ -7637,6 +7785,79 @@ describe('R-20 — Gluehlagen und Rahmennachbarn, beziffert gefuehrt (Ratsche)',
             return d !== null && d !== undefined && Math.abs(d - e.vorher) > 1e-9;
         }).map(e => `${gluehSchluessel(e)} — Tabelle ${e.vorher}, gefunden ${nach.get(gluehSchluessel(e))}`);
         expect(abweichung.sort()).toEqual([]);
+    });
+
+    test('solange eine Gluehlage ein Farbliteral traegt, ist es das gemessene', () => {
+        const nach = new Map(gluehlagen().map(l => [gluehSchluessel(l), literalFarbeVon(l.lage)]));
+        const abweichung = GLUEH_STELLEN.filter(e => {
+            const f = nach.get(gluehSchluessel(e));
+            return f !== null && f !== (e.farbe || null);
+        }).map(e => `${gluehSchluessel(e)} — Tabelle ${e.farbe || '(Token)'}, gefunden ${nach.get(gluehSchluessel(e))}`);
+        expect(abweichung.sort()).toEqual([]);
+        // Vier Stellen tragen schon ein Token und haben darum kein Literal.
+        expect(GLUEH_STELLEN.filter(e => !e.farbe).map(gluehSchluessel).sort()).toEqual([
+            'dashboard.css {.dice-result.crit-effect}',
+            'dashboard.css {.dice-result.fail-effect}',
+            'encounters.css {.calc-threshold-marker}',
+            'tools.css {.char-form-progress-dot.current}'
+        ]);
+    });
+
+    /* -------------------------------------------------------------------
+       `fremd` WIRD GEMESSEN, NICHT GESETZT. Das Merkmal sagt "das Literal
+       ist nicht der Dark-Wert seiner Rolle". Als handgesetztes Flag hat es
+       genau einen Fehler moeglich gemacht: es wurde als "hier wechselt der
+       Ton" gelesen, obwohl es nur den Sonderfall "schon heute ein fremdes
+       Rot" markiert. Die zwei Farbfeld-Marken sind NICHT fremd (ihr Literal
+       ist die Dark-Ziffer von --yellow) und wechseln den Ton trotzdem.
+       ------------------------------------------------------------------- */
+    test('`fremd` ist genau dort gesetzt, wo das Literal nicht der Dark-Wert seiner Rolle ist', () => {
+        const dark = WCAG.palette('dark');
+        const abweichung = GLUEH_STELLEN.filter(e => e.farbe).filter(
+            e => !!e.fremd !== ((dark[e.rolle] || '').toLowerCase() !== e.farbe.toLowerCase())
+        ).map(e => `${gluehSchluessel(e)} — fremd=${!!e.fremd}, Literal ${e.farbe}, Dark ${dark[e.rolle]}`);
+        expect(abweichung.sort()).toEqual([]);
+        expect(GLUEH_STELLEN.filter(e => e.fremd).map(gluehSchluessel).sort()).toEqual([
+            'dice.css {.fdp-die.d20:hover}',
+            'dice.css {.floating-dice-trigger:hover}'
+        ]);
+    });
+
+    /* -------------------------------------------------------------------
+       DER TONWECHSEL, den die Deckungsrechnung nicht sieht. Jede der zehn
+       Stellen mit Literal wird in DREI der vier Themes tonlich anders: die
+       zwei dice-Stellen in Dark, Sepia und Contrast (ihr Literal ist das
+       Light-Rot), die uebrigen acht in Light, Sepia und Contrast (ihr
+       Literal ist der Dark-Wert). Zwei davon aendern ihre DECKUNG nicht und
+       waren darum fuer den Aktenlage-Filter unsichtbar.
+       ------------------------------------------------------------------- */
+    test('zehn Gluehlagen wechseln den Ton, je in drei von vier Themes', () => {
+        const mitWechsel = GLUEH_STELLEN.filter(e => tonwechselThemes(e).length > 0);
+        expect(mitWechsel.length).toBe(10);
+        expect([...new Set(mitWechsel.map(e => tonwechselThemes(e).length))]).toEqual([3]);
+        expect(
+            GLUEH_STELLEN.filter(e => e.fremd).map(e => tonwechselThemes(e).join('/'))
+        ).toEqual(['dark/sepia/contrast', 'dark/sepia/contrast']);
+        expect(
+            [...new Set(GLUEH_STELLEN.filter(e => e.farbe && !e.fremd).map(e => tonwechselThemes(e).join('/')))]
+        ).toEqual(['light/sepia/contrast']);
+    });
+
+    test('genau zwei Gluehlagen wechseln den Ton OHNE die Deckung zu aendern', () => {
+        const gewaehlt = 0.5;
+        const nurTon = GLUEH_STELLEN.filter(
+            e => Math.abs(gewaehlt - e.vorher) < 1e-9 && tonwechselThemes(e).length > 0
+        );
+        expect(nurTon.map(gluehSchluessel).sort()).toEqual([
+            'editors.css {.editor-toolbar .color-swatch.active}',
+            'spells.css {.color-swatch.active}'
+        ]);
+        // Und der Ton, in den sie wechseln — das ist die Frage der Sichtprobe.
+        const p = WCAG.palettes();
+        expect(nurTon.map(e => WCAG.THEMES.map(t => p[t][e.rolle]).join(' '))).toEqual([
+            '#fbbf24 #ca8a04 #b58900 #ffff00',
+            '#fbbf24 #ca8a04 #b58900 #ffff00'
+        ]);
     });
 
     test('die Verteilung der gemessenen Deckungen ist 0,20/0,25x3/0,30x2/0,40x2/0,50x4/1,00x2', () => {
@@ -7695,28 +7916,117 @@ describe('R-20 — Gluehlagen und Rahmennachbarn, beziffert gefuehrt (Ratsche)',
         ]);
     });
 
-    test('jede Gluehlage, deren Deckung sich aendert, steht in der Aktenlage unter W3-F-01', () => {
+    /* -------------------------------------------------------------------
+       DER FILTER GEHT AUF "DECKUNG ODER TON", nicht mehr nur auf die
+       Deckung. Mit der alten Fassung war die Differenz bei den zwei
+       Farbfeld-Marken null, und sie fielen aus der Sichtprobenliste heraus,
+       obwohl ihr aktiver Rahmen in Light aus Amber zu dunklem Ocker und in
+       Contrast zu reinem Gelb wird. Sichtbar ist sichtbar, egal ob es die
+       Deckung oder die Farbe ist, die sich bewegt.
+       ------------------------------------------------------------------- */
+    test('jede Gluehlage, deren Deckung ODER Ton sich aendert, steht in der Aktenlage unter W3-F-01', () => {
         expect(W3F01).not.toBe('');
         const gewaehlt = 0.5;
-        const offen = GLUEH_STELLEN.filter(e => Math.abs(gewaehlt - e.vorher) > 1e-9)
+        const betroffen = GLUEH_STELLEN.filter(
+            e => Math.abs(gewaehlt - e.vorher) > 1e-9 || tonwechselThemes(e).length > 0
+        );
+        expect(betroffen.length).toBe(12);
+        const offen = betroffen
             .filter(e => !(W3F01.includes(e.datei) && W3F01.includes(e.sel)))
             .map(gluehSchluessel);
         expect(offen.sort()).toEqual([]);
     });
 
     /* ===================================================================
-       (b) DIE RAHMENNACHBARN — 22, nicht 13
+       (b) DIE RAHMENNACHBARN — 27, nicht 22 und nicht 13
        =================================================================== */
 
-    test('die Nachbarschaft von Schatten und Rahmen zaehlt 22 Kandidaten, nicht 13', () => {
+    /* -------------------------------------------------------------------
+       DIE AUFTEILUNG IST RESTLOS. Die frueher hier stehende Fassung zaehlte
+       drei Klassen (13 + 6 + 3 = 22) und nannte die Summe eine Kandidaten-
+       ZAHL — aber eine vierte Klasse `sonst` fing sechs weitere Regeln auf,
+       und KEIN Test hat sie angesehen. Darin lagen die zwei spells.css-
+       Leisten mit cyan- und purpurfarbenem Rahmen, von denen eine (1,35)
+       schlechter liegt als jeder Goldrahmen derselben Stufe (1,66). Jetzt
+       faellt jede Regel mit `border` in genau eine von fuenf Klassen, jede
+       Klasse hat eine Zahl, und die Summe ist eine Aussage.
+       ------------------------------------------------------------------- */
+    test('jede Schattenregel mit Rahmen faellt in eine der fuenf Klassen: 13/6/3/5/1', () => {
         const nb = rahmenNachbarn();
         const zahl = k => nb.filter(n => n.klasse === k).length;
-        expect({ border: zahl('border'), goldVoll: zahl('goldVoll'), goldMix: zahl('goldMix') }).toEqual({
-            border: 13,
-            goldVoll: 6,
-            goldMix: 3
+        expect({
+            border: zahl('border'),
+            goldVoll: zahl('goldVoll'),
+            goldMix: zahl('goldMix'),
+            farbig: zahl('farbig'),
+            ohne: zahl('ohne')
+        }).toEqual({ border: 13, goldVoll: 6, goldMix: 3, farbig: 5, ohne: 1 });
+        // Kein Auffangbecken mehr: die fuenf Klassen sind alle Klassen.
+        expect(nb.length).toBe(28);
+        expect(nb.filter(n => !['border', 'goldVoll', 'goldMix', 'farbig', 'ohne'].includes(n.klasse))).toEqual([]);
+        // 27 tragen einen SICHTBAREN Rahmen neben einem Umriss; die 28. ist
+        // `border: none !important` neben `box-shadow: none !important`.
+        expect(nb.filter(n => n.klasse !== 'ohne').length).toBe(27);
+        expect(nb.filter(n => n.klasse === 'ohne').map(n => `${n.datei} {${n.sel}}`)).toEqual([
+            'encounters.css {#calculator-modal}'
+        ]);
+    });
+
+    /* -------------------------------------------------------------------
+       DIE ABGELEITETE STUFE GEGEN DIE EINGEFRORENE TABELLE. stufeAusRadius()
+       rechnet die Stufe aus dem Radius (naechster zu 6/16/32, Gleichstand
+       nach oben) — dieselbe Regel, nach der R-19s ORT_ZU_STUFE gebildet
+       wurde. Dieser Test haelt beide an den neun Goldrahmen gegeneinander:
+       stimmen sie dort, ist die Ableitung auch fuer die 18 Stellen belastbar,
+       fuer die hier keine Stufe von Hand steht. R-19s EINE benannte
+       Abweichung (core.css .offline-indicator, Radius 10 -> Stufe 2) traegt
+       keinen Rahmen und liegt darum nicht in dieser Menge.
+       ------------------------------------------------------------------- */
+    test('die abgeleitete Stufe stimmt an allen neun Goldrahmen mit der eingefrorenen ueberein', () => {
+        const nb = rahmenNachbarn();
+        const abweichung = RAHMEN_GOLD.map(e => {
+            const n = nb.find(x => x.datei === e.datei && x.sel === e.sel);
+            return n && n.stufe === e.stufe ? null : `${e.datei} {${e.sel}} — Tabelle ${e.stufe}, abgeleitet ${n ? n.stufe : '(nicht gefunden)'}`;
+        }).filter(Boolean);
+        expect(abweichung.sort()).toEqual([]);
+        // Und der Umriss folgt allein aus der Stufe, nicht aus der Tabelle.
+        expect(RAHMEN_GOLD.every(e => UMRISS_GRAU[e.stufe] === e.grau)).toBe(true);
+        expect(RAHMEN_FARBIG.every(e => UMRISS_GRAU[e.stufe] === e.grau)).toBe(true);
+    });
+
+    test('die fuenf farbigen Rahmen sind die gemessenen und stehen in RAHMEN_FARBIG', () => {
+        const ist = rahmenNachbarn()
+            .filter(n => n.klasse === 'farbig')
+            .map(n => `${n.datei} {${n.sel}}`)
+            .sort();
+        expect(ist).toEqual(RAHMEN_FARBIG.map(e => `${e.datei} {${e.sel}}`).sort());
+        // Die Stufe kommt auch hier aus der Ableitung, nicht aus der Tabelle.
+        const nb = rahmenNachbarn();
+        const abweichung = RAHMEN_FARBIG.map(e => {
+            const n = nb.find(x => x.datei === e.datei && x.sel === e.sel);
+            return n && n.stufe === e.stufe ? null : `${e.datei} {${e.sel}} — Tabelle ${e.stufe}, abgeleitet ${n ? n.stufe : '?'}`;
+        }).filter(Boolean);
+        expect(abweichung.sort()).toEqual([]);
+    });
+
+    test('der gemessene Abstand Umriss zu farbigem Rahmen im Contrast-Theme ist der gefuehrte', () => {
+        const nb = rahmenNachbarn();
+        const abweichung = [];
+        RAHMEN_FARBIG.forEach(e => {
+            const n = nb.find(x => x.datei === e.datei && x.sel === e.sel);
+            const farbe = n ? rahmenFarbeContrast(n) : null;
+            const ist = farbe ? +WCAG.ratio(e.grau, farbe).toFixed(2) : null;
+            if (ist === null || Math.abs(ist - e.abstand) > 0.011) {
+                abweichung.push(`${e.datei} {${e.sel}} — gefuehrt ${e.abstand}, gemessen ${ist}`);
+            }
         });
-        expect(zahl('border') + zahl('goldVoll') + zahl('goldMix')).toBe(22);
+        expect(abweichung.sort()).toEqual([]);
+        // Drei liegen unter 3 und sind damit das Problem, zwei nicht.
+        expect(RAHMEN_FARBIG.filter(e => e.abstand < 3).map(e => `${e.datei} {${e.sel}}`).sort()).toEqual([
+            'dice.css {.floating-dice-trigger}',
+            'spells.css {.link-context-toolbar}',
+            'spells.css {.table-context-toolbar}'
+        ]);
     });
 
     test('die neun Goldrahmen sind die gemessenen und stehen in RAHMEN_GOLD', () => {
@@ -7754,14 +8064,56 @@ describe('R-20 — Gluehlagen und Rahmennachbarn, beziffert gefuehrt (Ratsche)',
         expect(RAHMEN_GOLD.filter(e => e.art === 'mix').every(e => e.abstand >= 3)).toBe(true);
     });
 
-    test('die sechs volldeckenden Goldrahmen stehen in der Aktenlage unter W3-F-01', () => {
+    /* -------------------------------------------------------------------
+       DIE RATSCHE ueber ALLE 27, nicht mehr nur ueber die sechs Goldrahmen.
+       Der Abstand jedes Nachbarn wird hier gerechnet — Rahmenfarbe im
+       Contrast-Theme gegen den Umriss SEINER Stufe — und wer unter 3 liegt,
+       muss namentlich in der Aktenlage stehen. Eine kuenftig eingefuegte
+       Schattenregel mit farbigem Rahmen kann damit nicht mehr lautlos
+       hinzukommen: sie faellt in eine gezaehlte Klasse, bekommt eine
+       gerechnete Zahl, und wenn die Zahl klein ist, geht dieser Test rot.
+
+       Die zehn, die heute unter 3 liegen: drei Goldrahmen mit 1,14, drei mit
+       1,66, `--purple` mit 1,35, `--cyan` mit 1,85, der halbdurchsichtige
+       Weissrahmen des Wuerfelknopfs mit 2,37 und die EINE der 13
+       `var(--border)`-Regeln, die auf Stufe 1 liegt (2,10; die anderen zwoelf
+       liegen bei 3,21 und 4,64 und sind damit unauffaellig).
+
+       EHRLICH ZUR STAERKE DIESER PRUEFUNG: sie sucht Datei und Selektor als
+       TEILSTRINGS im Abschnitt, nicht als Paar in einer Zeile. `dice.css
+       {.floating-dice-trigger}` gilt darum schon durch den Nachbareintrag
+       `.floating-dice-trigger:hover` aus Teil C als gefuehrt. Die Stelle steht
+       trotzdem ausdruecklich in Teil B der Aktenlage — die Ratsche ist hier
+       die schwaechere Aussage, nicht die Begruendung.
+       ------------------------------------------------------------------- */
+    test('jeder Rahmennachbar mit Abstand unter 3 steht namentlich in der Aktenlage unter W3-F-01', () => {
         expect(W3F01).not.toBe('');
-        const offen = RAHMEN_GOLD.filter(e => e.art === 'voll')
-            .filter(e => !(W3F01.includes(e.datei) && W3F01.includes(e.sel)))
-            .map(e => `${e.datei} {${e.sel}}`);
+        const knapp = rahmenNachbarn()
+            .filter(n => n.klasse !== 'ohne' && n.stufe)
+            .map(n => {
+                const farbe = rahmenFarbeContrast(n);
+                return { ...n, abstand: farbe ? +WCAG.ratio(UMRISS_GRAU[n.stufe], farbe).toFixed(2) : null };
+            })
+            .filter(n => n.abstand === null || n.abstand < 3);
+        expect(knapp.map(n => `${n.datei} {${n.sel}} ${n.abstand}`).sort()).toEqual([
+            'core.css {.spell-tooltip} 1.14',
+            'dice.css {.floating-dice-trigger} 2.37',
+            'dmscreen.css {[data-tooltip]::after} 2.1',
+            'editors.css {.editor-toolbar .tb-menu} 1.14',
+            'encounters.css {#calculator-modal .modal-content} 1.14',
+            'party.css {.cf-languages-block .cf-lang-dropdown} 1.66',
+            'spells.css {.floating-toolbar} 1.66',
+            'spells.css {.link-context-toolbar} 1.35',
+            'spells.css {.table-context-toolbar} 1.85',
+            'tools.css {.wiki-link-suggester} 1.66'
+        ]);
+        const offen = knapp
+            .filter(n => !(W3F01.includes(n.datei) && W3F01.includes(n.sel)))
+            .map(n => `${n.datei} {${n.sel}}`);
         expect(offen.sort()).toEqual([]);
-        // Die berichtigte Zahl selbst muss dort stehen, nicht die 13 des Plans.
-        expect(/\b22\b/.test(W3F01)).toBe(true);
+        // Die berichtigte Zahl selbst muss dort stehen, nicht die 13 des Plans
+        // und nicht die 22 der drei gezaehlten Klassen.
+        expect(/\b27\b/.test(W3F01)).toBe(true);
     });
 
     /* ===================================================================
@@ -7787,5 +8139,33 @@ describe('R-20 — Gluehlagen und Rahmennachbarn, beziffert gefuehrt (Ratsche)',
         expect(rahmenArt('box-shadow: 0 2px 6px #000; border: 1px solid var(--gold);').klasse).toBe('goldVoll');
         expect(rahmenArt('border-left: 3px solid var(--gold);')).toBe(null);
         expect(rahmenArt('border: 1px solid var(--border);').klasse).toBe('border');
+        // Und die zwei Klassen, die vorher im Auffangbecken `sonst` lagen:
+        expect(rahmenArt('border: 1px solid var(--cyan);').klasse).toBe('farbig');
+        expect(rahmenArt('border: 2px solid var(--overlay-strong);').klasse).toBe('farbig');
+        expect(rahmenArt('border: none !important;').klasse).toBe('ohne');
+        expect(rahmenArt('box-shadow: none;')).toBe(null);
+    });
+
+    test('stufeAusRadius() loest den Gleichstand bei 24px nach OBEN und uebergeht Gluehe, Ring und inset', () => {
+        expect(stufeAusRadius('0 2px 6px rgba(0,0,0,0.3)')).toBe(1);
+        expect(stufeAusRadius('0 4px 16px rgba(0,0,0,0.4)')).toBe(2);
+        expect(stufeAusRadius('0 8px 32px rgba(0,0,0,0.6)')).toBe(3);
+        expect(stufeAusRadius('0 8px 24px rgba(0,0,0,0.5)')).toBe(3); // Gleichstand -> oben
+        expect(stufeAusRadius('0 6px 20px rgba(212,175,55,0.4)')).toBe(2);
+        // Eine Gluehe ist keine Hoehe, ein Ring hat keinen Radius:
+        expect(stufeAusRadius('0 0 20px rgba(220, 38, 38, 0.3)')).toBe(null);
+        expect(stufeAusRadius('0 0 0 2px var(--gold)')).toBe(null);
+        expect(stufeAusRadius('inset 0 0 15px rgba(139,69,19,0.08)')).toBe(null);
+        expect(stufeAusRadius('none')).toBe(null);
+        // Die erste Hoehenlage entscheidet, auch wenn eine Gluehe davor steht:
+        expect(stufeAusRadius('0 0 20px rgba(220,38,38,0.3), 0 4px 16px rgba(0,0,0,0.4)')).toBe(2);
+    });
+
+    test('literalFarbeVon() liest rgba und Hex und gibt bei Tokens null', () => {
+        expect(literalFarbeVon('0 0 6px rgba(251, 191, 36, 0.5)')).toBe('#fbbf24');
+        expect(literalFarbeVon('0 0 20px rgba(220, 38, 38, 0.3)')).toBe('#dc2626');
+        expect(literalFarbeVon('0 0 8px #D4AF37')).toBe('#d4af37');
+        expect(literalFarbeVon('0 0 8px var(--gold)')).toBe(null);
+        expect(literalFarbeVon('0 0 12px var(--glow-yellow)')).toBe(null);
     });
 });
