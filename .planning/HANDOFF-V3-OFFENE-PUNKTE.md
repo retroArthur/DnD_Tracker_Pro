@@ -1911,18 +1911,31 @@ npx jest tests/unit/design-consistency.test.js -t "Toenungen IM VERLAUF"
 
 ## W2-D-05 — Zustandsregeln legen eine Rollen-Tönung, die Tinte kommt aus der Basisregel; keine Ratsche urteilt darüber
 
-**Stand:** 2026-09-29, Prüfung W2-D Runde 2, **berichtigt und teilweise geschlossen im Nachtrag der
-Welle 2**. Vorbestand, kein Rückschritt dieser Welle — aber die vierte Lücke derselben Familie, und
-die einzige, die noch nirgends geführt war.
+**Stand:** 2026-09-29, Prüfung W2-D Runde 2, **geschlossen im Nachtrag der Welle 2, Runde 1** —
+Stellen und Lücke. Vorbestand, kein Rückschritt dieser Welle; es war die vierte Lücke derselben
+Familie und die einzige, die noch nirgends geführt war.
 
-**Was der Nachtrag geändert hat.** Vier der fünf Unterschreitungen sind **geschlossen**, mit dem
-Tönungsdeckel aus Schritt 8 und im selben Idiom wie die 114 übrigen Stellen dieser Welle. Die
-Begründung, mit der diese Akte den Deckel zuvor verworfen hat („keine davon dadurch über 4,5"), war
-**gemessen falsch**; sie steht berichtigt unter „Die Klasse, gemessen". Offen bleibt genau eine
-Stelle — `file-backup.css` `.backup-entry-restore:hover` —, und die aus einem anderen Grund.
-**Nicht geschlossen ist die Lücke selbst:** über diese Bauart urteilt weiterhin keine Ratsche. Die
-vier Korrekturen sind von Hand gerechnet und nur durch die Kommentare an ihren Regeln belegt; wer
-eine der vier Stärken wieder anhebt, merkt es an keinem roten Test.
+**Was der Nachtrag geändert hat, in zwei Schüben.** Der erste Schub hat vier der fünf
+Unterschreitungen mit dem Tönungsdeckel aus Schritt 8 geschlossen, im selben Idiom wie die 114
+übrigen Stellen dieser Welle; die Begründung, mit der diese Akte den Deckel zuvor verworfen hat
+(„keine davon dadurch über 4,5"), war **gemessen falsch** und steht berichtigt unter „Die Klasse,
+gemessen". Runde 1 des Nachtrags hat die drei Reste erledigt:
+
+1. **Die fünfte Stelle**, `file-backup.css` `.backup-entry-restore`, hat **Tintenkorrektur und
+   Deckel** bekommen — beides zusammen, weil der Deckel allein nicht trägt. Die Rechnung dazu stand
+   schon in dieser Akte, umgesetzt war sie nicht. Die schwerere Hälfte war dabei gar nicht der
+   Hover, sondern die **Grundregel**: `background: transparent` mit `color: var(--red)` las
+   4,07 · 3,94 · 3,68 · 3,98, also in allen vier Themes unter 4,5, und das ist gewöhnlicher Text.
+2. **Eine sechste Regel derselben Bauart** war nie gezählt worden, weil ihre Tinte nicht in der
+   eigenen Grundregel steht, sondern in einem **Nachfahren**: `dice.css` `.dice-attr.save:hover`,
+   4,41 · 4,09 · 4,18 · 5,05, in drei Themes darunter. Sie ist gedeckelt; die gekreuzte Bauart ist
+   unter „Die Klasse, gemessen" nachgetragen.
+3. **Die Lücke selbst ist geschlossen** — nicht an R-03, wie diese Akte es vorgezeichnet hatte,
+   sondern in einer eigenen Ratsche **R-18** („Zustandsregel tönt, Tinte ist geerbt", am Ende von
+   `tests/unit/design-consistency.test.js`). Sie urteilt über **beide** Wege, führt die 14 Paare
+   als **Menge** und hat vier benannte Ausnahmen mit gemessenem Minimum, alle Vorbestand aus
+   W2-D-02 bzw. der Vorziehung aus Welle 1 Schritt 9. Die Mutationsprobe, mit der die Prüfung die
+   Lücke belegt hat (alle vier Deckel zurück auf BASE), läuft heute **rot**.
 
 ### Worum es geht
 
@@ -1945,7 +1958,11 @@ Eigene Vollerhebung über `assets/styles/*.css` in Kaskadenreihenfolge des `@imp
 Klammerzähl-Parser, `tests/unit/helpers/wcag-contrast.js` für die sRGB-Mathematik; Selbstprobe
 `#777777`/`#767676` gegen Weiß = 4,48/4,54). Minimum über `--bg-card`/`--bg-dark`/`--bg-elevated`,
 alle vier Themes. Neun Regeln haben diese Bauart, fünf unterschreiten 4,5 — **Stand der Prüfung**;
-vier davon sind seit dem Nachtrag geschlossen, siehe den Abschnitt gleich darunter:
+alle fünf sind seit dem Nachtrag geschlossen, siehe den Abschnitt gleich darunter.
+
+**Präzisiert in Runde 1 des Nachtrags:** die Neun zählt Regeln mit geerbter Tinte **aus der eigenen
+Grundregel**. Die Bauart mit Tinte **im Nachfahren** ist getrennt zu erheben und war in keiner Zahl
+dieser Akte enthalten — siehe „Die gekreuzte Bauart" unten.
 
 | Regel | Tönung | geerbte Tinte | dark | light | sepia | contrast |
 | ----- | ------ | ------------- | ---- | ----- | ----- | -------- |
@@ -1996,10 +2013,14 @@ Kommentar an der Regel. Zwei benannte Sichtfolgen dabei, beide im CSS-Kommentar 
   Sichtfrage der Tönungsregel E2 und nur zusammen mit der Hover-Stufe zu entscheiden; sie gehört zu
   E3/Schritt 9.
 
-#### Die fünfte: `.backup-entry-restore:hover` — offen, und zwar wegen ihrer Tinte
+#### Die fünfte: `.backup-entry-restore:hover` — geschlossen, aber erst mit ihrer Tinte
 
-Sie ist die einzige der fünf, die der Deckel **nicht** trägt, und der Grund steht in der Tabelle
-oben: ihre geerbte Tinte ist `var(--red)`, die Rollenbasis, nicht `var(--red-text)`. Gemessen,
+**Erledigt in Runde 1 des Nachtrags** (Commit `fix(W2): die fuenfte Zustandsregel traegt —
+Tintenkorrektur UND Deckel`). Der Abschnitt bleibt stehen, weil die Rechnung darin die Begründung
+für **beide** Eingriffe ist.
+
+Sie war die einzige der fünf, die der Deckel **nicht** trägt, und der Grund steht in der Tabelle
+oben: ihre geerbte Tinte war `var(--red)`, die Rollenbasis, nicht `var(--red-text)`. Gemessen,
 derselbe Rechenweg, min über die drei Trägerflächen:
 
 | Fassung | dark | light | sepia | contrast | |
@@ -2009,17 +2030,29 @@ derselbe Rechenweg, min über die drei Trägerflächen:
 | **nur Tintenkorrektur** auf `--red-text`, 12 % ungedeckelt | 4,85 | **4,24** | **4,31** | 5,39 | hält **nicht** |
 | Tintenkorrektur **und** Deckel | 4,85 | 4,54 | 4,62 | 5,39 | hält |
 
-**Die Tintenkorrektur allein genügt nicht** — Light 4,24 und Sepia 4,31 bleiben darunter. Deshalb
-ist an dieser Regel im Nachtrag **nichts geändert** worden: eine Änderung, die den Mangel nicht
-schließt, verbraucht die Sichtänderung, ohne die Frage zu erledigen.
+**Die Tintenkorrektur allein genügt nicht** — Light 4,24 und Sepia 4,31 bleiben darunter. Der
+Nachtrag hat deshalb im ersten Schub an dieser Regel **nichts geändert**. Runde 1 hat **beides
+zusammen** gesetzt, also die letzte Zeile der Tabelle: `color`/`border-color` auf `var(--red-text)`,
+`background` auf `min(12%, var(--tint-max))`. Nachgemessen am Endstand: Ruhe
+5,48 · 5,04 · 5,05 · 5,73, Hover 4,85 · 4,54 · 4,62 · 5,39.
 
 **Neu gemessen und bisher nirgends notiert — die Grundregel ist selbst betroffen.** Nicht nur der
-Hover-Zustand: `.backup-entry-restore` trägt `background: transparent`, ihre Tinte `var(--red)`
-liest direkt auf den Trägerflächen **4,07 · 3,94 · 3,68 · 3,98** — in **allen vier** Themes unter
-4,5. Mit `var(--red-text)` wären es 5,48 · 5,04 · 5,05 · 5,73. R-04 sieht das nicht: `transparent`
-löst sich zu keiner Farbe auf, die Regel fällt vor der Rechnung heraus. Das ist ein Rest aus
+Hover-Zustand: `.backup-entry-restore` trug `background: transparent`, ihre Tinte `var(--red)`
+las direkt auf den Trägerflächen **4,07 · 3,94 · 3,68 · 3,98** — in **allen vier** Themes unter
+4,5. Mit `var(--red-text)` sind es 5,48 · 5,04 · 5,05 · 5,73. R-04 sah das nicht: `transparent`
+löst sich zu keiner Farbe auf, die Regel fiel vor der Rechnung heraus. Das war ein Rest aus
 Welle 1 (Rollenbasis als Schriftfarbe) und zugleich die schwerere Hälfte dieses Punktes — es geht um
 lesbaren Text, nicht um einen Zustand unter der Maus.
+
+**Diese zweite Lücke ist mitgeschlossen.** R-04 hat in Runde 1 einen eigenen Zweig für
+`background: transparent` bekommen: die Tinte wird dann unvermittelt gegen dieselben drei
+Trägerflächen gerechnet. Die Menge ist gemessen **6 Regeln** und wird namentlich gezählt
+(`die Regeln mit blanker Flaeche stehen namentlich unter Aufsicht`), damit der Zweig nicht
+stillschweigend leerläuft. Zwei Tintenarten bleiben außen vor, beide mit eigenem Richter: neutrale
+Textrollen (`--text`, `--text-dim`) gehören R-02 Teilformel 2, und `var(--on-*)`-Tokens **nennen**
+ihre Fläche — sie gegen `--bg-card` zu rechnen ergäbe zwei Fehlalarme (`party.css`
+`.event-log-btn` 1,87 und `pwa.css` `.pwa-update-dismiss` 1,00), die gegen ihre wirklichen Flächen
+6,96–8,12 bzw. 8,11–11,97 lesen.
 
 **Und noch eine Ebene tiefer:** die tatsächliche Trägerfläche dieser Schaltfläche ist nicht
 `--bg-card`, sondern `--bg-hover`. Wer den Knopf überfährt, überfährt die Zeile `.backup-entry`
@@ -2038,7 +2071,43 @@ bei der nächsten Stärkeänderung als Erste:
 - `pwa.css` `.pwa-install-btn:hover` — `--gold`, min 4,55 (light)
 - `file-backup.css` `.backup-warning-indicator:hover` — `--yellow`, min 4,60 (sepia)
 
-### Warum keine Ratsche greift — Quelltext, nicht Vermutung
+Die neunte, `pwa.css` `.pwa-update-dismiss:hover`, ist ein **Trägerartefakt** und in beiden
+Zählungen zu Recht ausgeklammert: sie sitzt auf der gelben Aktualisierungsleiste und trägt
+`var(--on-yellow)`, ein Token, das seine Fläche selbst nennt. Gegen die drei neutralen Träger
+gerechnet läse sie 1,00; gegen ihre wirkliche Fläche liest sie 8,11–11,97 (in `pwa.css`
+vorgerechnet). R-18 klammert genau diese Tintenart aus, mit derselben Begründung.
+
+### Die gekreuzte Bauart: Zustandsregel tönt, Tinte steht im Nachfahren
+
+**Nachgetragen in Runde 1 des Nachtrags.** Sie ist dieselbe Bauart, fällt aber aus der Neun oben
+heraus, weil die Tinte nicht aus der eigenen Grundregel kommt:
+
+```css
+.dice-attr.save:hover { background: color-mix(in srgb, var(--purple) 15%, transparent); }
+.dice-attr.save small { color: var(--purple-text); }
+```
+
+Die Spezifität 0,2,1 von `.dice-attr.save small` schlägt `.dice-attr small` mit `--cyan-text` bei
+0,1,1; das Markup steht in `assets/templates/view-tools.html` ab Zeile 194. **Gemessen
+4,41 · 4,09 · 4,18 · 5,05** — in dark, light und sepia unter 4,5, und damit in dark und light
+schlechter als `.concentration-add-btn:hover`, die der erste Schub behoben hat. Gedeckelt sind es
+4,57 · 4,57 · 4,60 · 5,05.
+
+Warum sie durch **alle** Netze fiel: R-04 sieht sie nicht (keine eigene Tinte in der Regel), R-14
+auch nicht (sie paart nach Selektorpräfix, und `.dice-attr.save small` ist keine
+Nachfahrenschreibweise von `.dice-attr.save:hover`) — und die Zählung dieser Akte sah sie ebenfalls
+nicht, weil sie nur die Regeln mit Tinte aus der eigenen Grundregel erfaßt. Beide Wege zusammen sind
+**14 Paare**; sie stehen seit Runde 1 unter R-18. Die vier, die unter 4,5 bleiben, sind Vorbestand
+aus offenen Punkten und dort mit gemessenem Minimum eingetragen:
+
+| Paar | Tinte | min | geführt als |
+| ---- | ----- | --- | ----------- |
+| `tools.css` `.quick-access-item:hover` → `.remove-btn` | `--text-dim` | 3,56 | W2-D-02 |
+| `party.css` `.cf-attr-card:has(…)` → `.cf-attr-save` | `--text-dim` | 3,56 | W2-D-02 (gleiche Tinte, gleiche 10-%-Goldtönung) |
+| `party.css` `.cf-attr-card:has(…)` → `.cf-attr-mod` | `--cyan-text` | 4,29 | dito |
+| `loot.css` `.loot-tag-chip:has(input:checked)` → `input:checked + span` | `--gold-text` | 4,23 | Vorziehung Welle 1 Schritt 9 (siehe oben, § Vorziehung) |
+
+### Warum keine Ratsche greift — Quelltext, nicht Vermutung (Stand der Prüfung)
 
 - **R-03** (geerbte Tinte auf gewechselter Fläche) scheidet **doppelt** aus:
   `if (!flaeche || !/^var\(--[\w-]+\)$/.test(flaeche)) return;` verwirft jede `color-mix`-Fläche
@@ -2058,8 +2127,19 @@ zurückgenommen.
 
 Seit dem Nachtrag trägt dieselbe Regel `min(30%, var(--tint-max))`. Wer die Probe wiederholt, muß
 deshalb **den Deckel mit entfernen** (`background: color-mix(in srgb, var(--purple) 95%,
-transparent)`) — sonst mißt er den Deckel und nicht die fehlende Ratsche. Das Ergebnis ist
-unverändert: die Lücke besteht fort, nur ihre fünf bekannten Stellen sind zu vieren geschlossen.
+transparent)`) — sonst mißt er den Deckel und nicht die Ratsche.
+
+**Seit Runde 1 des Nachtrags läuft dieselbe Probe rot.** Die vier Punkte oben beschreiben den Stand
+der Prüfung und bleiben als Begründung stehen, warum R-18 gebaut werden mußte; über die Bauart
+urteilt jetzt R-18, mit beiden Wegen. Nachgestellt und belegt:
+
+| Mutation | Befund |
+| -------- | ------ |
+| `core.css` `.link-chip:hover` zurück auf 40 % | R-18 rot, min 2,87 (dark 2,87 · light 2,96 · sepia 3,25 · contrast 3,37) |
+| `dice.css` `.dice-attr.save:hover` zurück auf 15 % | R-18 rot, min 4,09 (dark 4,41 · light 4,09 · sepia 4,18 · contrast 5,05) |
+| `file-backup.css` `.backup-entry-restore` zurück auf `var(--red)` | R-04 rot (min 3,68 auf `transparent`) **und** R-18 rot (min 3,37 auf der Tönung) |
+
+Alle drei Mutationen sind zurückgenommen.
 
 ### Was daran Vorbestand ist, und was diese Welle getan hat
 
@@ -2069,16 +2149,17 @@ Dieselbe Erhebung gegen `bb7650e` (BASE der Welle), Trägerflächen und Mathemat
 | ----- | ----------- | ------------------- | --------------------- |
 | `core.css` `.link-chip:hover` | 1,91 (Tinte war `var(--blue)`) | 2,87 | **4,52** |
 | `initiative.css` `.concentration-badge:hover` | 2,79 (Tinte war `var(--purple)`) | 3,28 | **4,57** |
-| `file-backup.css` `.backup-entry-restore:hover` | 3,15 | 3,15 | 3,15 (offen) |
+| `file-backup.css` `.backup-entry-restore:hover` | 3,15 | 3,15 | **4,54** (Tinte + Deckel) |
 | `pwa.css` `.pwa-install-btn:active` | 4,12 | 4,12 | **4,78** |
 | `initiative.css` `.concentration-add-btn:hover` | 4,40 | 4,40 | **4,57** |
+| `dice.css` `.dice-attr.save:hover` (gekreuzt, nie gezählt) | 4,09 | 4,09 | **4,57** |
 
 **Zwei** der fünf hatte Welle 2 bis zur Prüfung verbessert (durch die Umstellung der Basis-Tinte auf
 `--<rolle>-text` in Schritt 5/6), drei waren unverändert, **keine war schlechter geworden**. Der
-Nachtrag hat vier davon über die Schwelle gebracht; die fünfte steht unverändert. Der Befund war
-deshalb nie die Zahl, sondern daß **niemand hinsieht** — derselbe Maßstab wie in W2-D-04, und der
-gilt nach dem Nachtrag unverändert weiter, weil die vier Korrekturen von keiner Ratsche gehalten
-werden.
+Befund war deshalb nie die Zahl, sondern daß **niemand hinsieht** — derselbe Maßstab wie in W2-D-04.
+Genau das ist mit R-18 erledigt: alle sechs Zeilen oben stehen namentlich unter Aufsicht, und die
+Menge der 14 Paare ist geschlossen geführt, so daß eine fünfzehnte Stelle rot wird statt still in
+den blinden Fleck zu fallen.
 
 ### Die eine Stelle, die ein naiver Ausbau falsch melden würde
 
@@ -2090,27 +2171,33 @@ hält sie 9,33 · 5,42 · 4,98 · 14,23, und genau diese vier Zahlen stehen seit
 derselben Regel. Wer R-03 erweitert, braucht für sie ein Trägermodell oder eine benannte Ausnahme,
 sonst kauft er sich einen Fehlalarm mit Faktor 12 ein.
 
-### Der Weg
+**R-18 hat den Fall anders gelöst, ohne benannte Ausnahme:** ausgeschlossen wird nicht diese eine
+Regel, sondern die **Tintenart** `var(--on-*)`. Diese Tokens nennen ihre Fläche; sie gegen
+`--bg-card` zu rechnen ist kategorisch falsch und keine Schwellenfrage. Beurteilt werden sie von
+R-02, R-04 und R-17 auf ihren eigenen Flächen — der Ausschluß verschiebt sie, er verliert sie nicht.
+Ein Schlupfloch ist er auch nicht: `--on-*`-Tokens sind themenblind und stehen unter R-01.
 
-**Berichtigt im Nachtrag.** Dieser Abschnitt hat die Abhilfe an den **fünf** Stellen geschlossen an
-E3/Schritt 9 verwiesen. Das ruhte auf der falschen Zahl oben; vier der fünf waren mit dem Mittel
-dieser Welle und ohne jede Palettenfrage zu schließen, und sie **sind** es. Was bleibt, sind zwei
-verschiedene Dinge:
+### Der Weg — gegangen
 
-1. **Die Ratsche.** Dieselbe Erweiterung wie Schritt 16, nur eine Ebene daneben: **R-03** um
-   Tönungsflächen (`color-mix(…, transparent)`, aufgelöst über die drei Trägerflächen wie in
-   R-04/R-11/R-14) und um **Rollentinten** (`var(--<rolle>-text)` und die nackte Rolle
-   `var(--<rolle>)`) erweitern, statt beides vor der Rechnung zu verwerfen. Das ist der eigentliche
-   offene Punkt: die vier Korrekturen des Nachtrags sind ungesichert, und die vier Regeln unter „Wo
-   derselbe Bau schon trägt" sind es ebenfalls. Wer sie baut, braucht das Trägermodell aus dem
-   Abschnitt darunter, sonst kauft er sich einen Fehlalarm mit Faktor 12 ein.
-2. **Die eine offene Stelle**, `.backup-entry-restore` samt ihrem `:hover`. Sie ist eine
-   **Tintenfrage** (`var(--red)` statt `var(--red-text)`, Rest aus Welle 1) und, für den
-   Hover-Zustand, eine **Trägerflächenfrage** (`--bg-hover`, also E3/„Hover ohne Füllung"). Die
-   gerechneten Fassungen stehen oben. Die Grundregel ist dabei der schwerere Fall: sie ist
-   gewöhnlicher Text und liegt in allen vier Themes unter 4,5.
+**Berichtigt und erledigt im Nachtrag.** Dieser Abschnitt hat die Abhilfe an den **fünf** Stellen
+geschlossen an E3/Schritt 9 verwiesen. Das ruhte auf der falschen Zahl oben. Was er als offen
+führte, ist beides getan:
 
-Für E3 selbst ändert sich nichts an der Lage: drei der fünf melden das Überfahren über eine
+1. **Die Ratsche** ist **R-18**, nicht die hier vorgezeichnete R-03-Erweiterung. Der Grund für den
+   eigenen Block statt des Umbaus an R-03: R-03 modelliert die **Kaskade** (welche Deklaration am
+   Ende gewinnt), R-18 die **Vererbung über die Fläche hinweg** — zwei verschiedene Fragen, und der
+   Umbau hätte die geerbte `--on-*`-Logik von R-03 mitreißen müssen. R-18 führt die 14 Paare als
+   geschlossene Menge, prüft 4,5 auf der Tönung der Zustandsregel und hält vier benannte Ausnahmen
+   mit gemessenem Minimum. Die Regeln unter „Wo derselbe Bau schon trägt" stehen damit ebenfalls
+   unter Aufsicht — sie waren als Erste gefährdet und sind es nicht mehr.
+2. **Die fünfte Stelle**, `.backup-entry-restore` samt ihrem `:hover`, hat **Tintenkorrektur und
+   Deckel**. Die Grundregel war dabei der schwerere Fall: gewöhnlicher Text, in allen vier Themes
+   unter 4,5.
+
+**Offen bleibt nur die Trägerflächenfrage** `--bg-hover` an `.backup-entry-restore:hover` (die Zeile
+`.backup-entry` schaltet beim Überfahren auf `var(--bg-hover)`, und dagegen hält keine Fassung).
+Das ist W1-B-01/E3 und von D-2 ausdrücklich ausgenommen — kein Rest dieses Punktes, sondern ein
+anderer. Für E3 selbst ändert sich an der Lage nichts: drei der fünf melden das Überfahren über eine
 Füllung, und für genau diese Frage ist E3 entschieden — bisher allerdings nur für `.qref-row:hover`
 ausformuliert.
 
@@ -2118,9 +2205,9 @@ ausformuliert.
 
 „128 Tönungsregeln, 0 Befunde, dreifach nachgerechnet, gegen die tatsächliche Trägerfläche" gilt
 für Regeln mit **eigener** Tinte. Regeln, die nur die Fläche wechseln und die Tinte erben, waren in
-den 128 nie enthalten und sind bis heute ungerechnet. Die Einschränkung steht seit dieser Runde
-auch im R-04-Block von `tests/unit/design-consistency.test.js`, damit sie dort steht, wo jemand die
-Zahl liest.
+den 128 nie enthalten; gerechnet **und** bewacht sind sie seit Runde 1 des Nachtrags, durch R-18.
+Die Einschränkung steht seit dieser Runde auch im R-04-Block von
+`tests/unit/design-consistency.test.js`, damit sie dort steht, wo jemand die Zahl liest.
 
 ### Befehle
 
@@ -2131,10 +2218,16 @@ grep -n "concentration-badge:hover\|concentration-add-btn:hover" assets/styles/i
 grep -n "link-chip:hover" assets/styles/core.css
 grep -n "backup-entry-restore:hover" assets/styles/file-backup.css
 grep -n "pwa-install-btn:active" assets/styles/pwa.css
+# Die sechste, gekreuzte Stelle:
+grep -n "dice-attr.save" assets/styles/dice.css
 # Die beiden Ausschluesse in R-03, wortgleich:
 grep -n "setzt eigene Tinte" -B 2 tests/unit/design-consistency.test.js
-# Die Einschraenkung im R-04-Block:
-grep -n "WORAUF SICH DIE ZAHL 128" -A 12 tests/unit/design-consistency.test.js
+# Die Einschraenkung im R-04-Block samt Berichtigung:
+grep -n "WORAUF SICH DIE ZAHL 128" -A 60 tests/unit/design-consistency.test.js
+# Die Ratsche, die die Luecke schliesst:
+npx jest tests/unit/design-consistency.test.js -t "R-18"
+# Der Zweig fuer blanke Flaechen in R-04:
+npx jest tests/unit/design-consistency.test.js -t "blanker Flaeche"
 ```
 
 ---
