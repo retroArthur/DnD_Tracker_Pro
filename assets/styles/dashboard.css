@@ -258,7 +258,7 @@
             color: var(--cyan);
             cursor: pointer;
             border-bottom: 1px dotted var(--cyan);
-            background: color-mix(in srgb, var(--know-religion) 10%, transparent); /* F-18: aus der Dublette uebernommen */
+            background: rgba(168, 85, 247, 0.1); /* F-18: aus der Dublette uebernommen */
             padding: 2px 8px; /* F-18: aus der Dublette uebernommen */
             border-radius: var(--radius-sm); /* F-18: aus der Dublette uebernommen */
             font-size: 0.85em; /* F-18: aus der Dublette uebernommen */

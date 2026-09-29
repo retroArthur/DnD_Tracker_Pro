@@ -865,3 +865,117 @@ grep -n "rgba" assets/styles/pwa.css
 grep -n -B18 "pwa-update-banner" assets/styles/pwa.css | grep -n "on-yellow"
 npx jest tests/unit/design-consistency.test.js -t "kein rgba"
 ```
+
+---
+
+## W2-B-03 — Sechzehn Skalentoken-Stellen waren in den Schritten 4–6 nach Wert entschieden; sie sind zurückgenommen
+
+**Stand:** 2026-09-29, Prüfrunde W2-B Runde 1. Zurückgenommen und wieder offen — die Entscheidung
+gehört **Schritt 7 Punkt (3)**, nicht der mechanischen Runde.
+
+### Worum es geht
+
+Die Schritte 4–6 ersetzen `rgba(R,G,B,a)` durch `color-mix(in srgb, var(--rolle) N%, transparent)`.
+Zugelassen ist dabei nur, was auf einem Tripel mit **genau einem** Tokennamen liegt. Dieser Filter
+trennt eine **Theme-Rolle** nicht von einem **Skalentoken**:
+
+| | Theme-Rolle | Skalentoken |
+| --- | --- | --- |
+| Beispiel | `--gold`, `--red`, `--blue` | `--cat-drink`, `--know-religion`, `--dmg-necrotic-text` |
+| Deklariert in | vier Blöcken, vier Werte | **einem** Block, ein Wert |
+| Trifft das Tripel | in einem Theme | in allen vier |
+
+Ein Skalentoken ist damit der **eindeutigste Treffer überhaupt** — kein zweites Theme vergibt
+seinen Wert noch einmal. Es rutscht zwangsläufig durch einen Filter, der es heraushalten soll.
+Schritt 4 warnt davor wörtlich („Wer es hier nach Wert ersetzt, entscheidet stillschweigend eine
+Bedeutungsfrage"), hatte aber kein Werkzeug, das die Warnung durchsetzt.
+
+### Warum das nicht folgenlos war, obwohl keine Farbe wechselte
+
+Alle acht betroffenen Tokens sind themenblind — in allen vier Themes derselbe Wert. Die 16
+Umstellungen waren bildpunktgleich. Der Schaden liegt woanders:
+
+1. **Eine Zweckentscheidung fiel nach dem Wert.** Der Schwierigkeitsgrad einer Begegnung hing
+   danach an der Ladenkategorie „Getränk", der Zustand „versteinert" an der **Tinte** der
+   Schadensart „nekrotisch", das Konzentrationsabzeichen am Wissensgebiet „Religion", der
+   d20-Würfel an der Linienfarbe eines Vorlesetext-Stils. Wer eine dieser Skalen später umfärbt,
+   färbt unbeteiligte Bedienoberfläche mit.
+2. **Die Klasse verschwand aus der einzigen Ratsche, die sie führte.** `R-10` zählte 52 Stellen,
+   keine der 16 war darunter. Schritt 7, der sie einzeln entscheiden soll, hätte sie nicht mehr
+   vorgelegt bekommen.
+3. **Als Skala waren sie danach unvollständig.** `.calc-diff-badge` hat fünf Stufen; `trivial`,
+   `medium` und `hard` bekamen Ladenkategorie-Tokens, `easy` und `deadly` blieben Literale, weil
+   ihre Tripel in keiner Skala vorkommen. Eine fünfstufige Skala führte drei Fremdtokens und zwei
+   Literale.
+
+### Die 16 Stellen
+
+Zurückgenommen auf ihr Literal, Zeile für Zeile zeichengleich gegen `765103f` geprüft:
+
+| Datei, Regel | Skalentoken, Anteil | Literal |
+| --- | --- | --- |
+| `dashboard.css` `.wiki-link` | `--know-religion` 10 % | `rgba(168, 85, 247, 0.1)` |
+| `party.css` `.wiki-tree-cat-header.active` | `--know-religion` 20 % | `rgba(168, 85, 247, 0.2)` |
+| `party.css` `.wiki-tree-item.selected` | `--know-religion` 15 % | `rgba(168, 85, 247, 0.15)` |
+| `party.css` `.wiki-detail-category` | `--know-religion` 15 % | `rgba(168, 85, 247, 0.15)` |
+| `initiative.css` `.concentration-badge` (Verlaufsstopp) | `--know-religion` 15 % | `rgba(168, 85, 247, 0.15)` |
+| `dmscreen.css` `.condition-badge.petrified` | `--dmg-necrotic-text` 30 % | `rgba(156, 163, 175, 0.3)` |
+| `dmscreen.css` `.relationship-badge.neutral` | `--dmg-necrotic-text` 20 % | `rgba(156, 163, 175, 0.2)` |
+| `initiative.css` `.npc-relation-status.neutral` | `--dmg-necrotic-text` 20 % | `rgba(156, 163, 175, 0.2)` |
+| `encounters.css` `.calc-diff-badge.trivial` | `--cat-gear` 20 % | `rgba(52, 152, 219, 0.2)` |
+| `encounters.css` `.calc-diff-badge.medium` | `--cat-drink` 20 % | `rgba(243, 156, 18, 0.2)` |
+| `encounters.css` `.calc-diff-badge.hard` | `--cat-food` 20 % | `rgba(230, 126, 34, 0.2)` |
+| `encounters.css` `.calc-threshold-seg.medium` | `--cat-drink` 30 % | `rgba(243, 156, 18, 0.3)` |
+| `encounters.css` `.calc-threshold-seg.hard` | `--cat-food` 30 % | `rgba(230, 126, 34, 0.3)` |
+| `initiative.css` `.concentration-check-banner` (Verlaufsstopp) | `--dmg-lightning` 15 % | `rgba(234, 179, 8, 0.15)` |
+| `npcs.css` `.npc-trigger-item.triggered` | `--dmg-lightning` 10 % | `rgba(234, 179, 8, 0.1)` |
+| `dice.css` `.fdp-die.d20` (Verlaufsstopp) | `--ra-crimson-rule` 30 % | `rgba(153, 27, 27, 0.3)` |
+
+**R-10 steigt dadurch von 52 auf 68.** Das ist kein Rückschritt, sondern die Wiederherstellung der
+Zählgrundlage: die Ratsche ist ohnehin bis Schritt 7 rot, und ihre Aufgabe ist es, genau diese
+Stellen vorzulegen.
+
+### Die siebzehnte Stelle, die nie umgestellt war
+
+Der Kopfkommentar von R-10 führt **17** Skalentoken-Stellen. Die fehlende ist `bestiary.css`
+`.bestiary-statblock-meta`: `color: rgba(44, 24, 16, 0.7)` = `--ra-parchment-ink` bei 70 %. Sie
+ist eine **Tinte**, keine Fläche, und fiel deshalb aus der mechanischen Runde heraus. Der
+Kommentar über ihr nennt die Abhilfe bereits („Literal → Token oder color-mix aus
+`--parchment-ink-dark`") und wartet ebenfalls auf Schritt 7.
+
+### Was Schritt 7 Punkt (3) jetzt zu beantworten hat
+
+Der Plan sagt „auf das **TOKEN** umstellen, NICHT auf color-mix". **Das ist an 16 von 17 Stellen
+nicht wörtlich ausführbar:** alle tragen ein Alpha unter 1, `var(--cat-food)` ist deckend. Wer das
+Alpha wegwirft, ändert das Bild; wer eine Mischung baut, ist wieder bei `color-mix` — und damit
+bei genau der Frage, die zurückgenommen wurde. Pro Stelle ist deshalb zuerst zu entscheiden:
+
+- Gehört die Fläche **in den Gegenstandsbereich der Skala**? (Bei `.calc-diff-badge` offensichtlich
+  nicht: die Tinte daneben ist `var(--yellow)`/`var(--orange)`, also eine Theme-Rolle.)
+- Wenn nein: welche **Theme-Rolle** trägt sie? Dann ist es eine Tönung derselben oder einer fremden
+  Rolle und gehört mit in die **D-4**-Entscheidung aus Schritt 8, nicht nur in eine Schreibweise.
+- Wenn ja: Eintrag in `R12_AUSNAHMEN` mit Begründung — die Ratsche verbietet die Skala als Fläche
+  nicht, sie verlangt nur, dass die Entscheidung geschrieben dasteht.
+
+**Sonderfall `dice.css` `.fdp-die.d20`.** Der Verlauf hat zwei Stopps. Der erste
+(`rgba(220,38,38,0.2)`) geht nach **E1** auf `color-mix(var(--red) 20 %)`. Bliebe der zweite auf
+`--ra-crimson-rule`, führte ein und dieselbe Deklaration eine Theme-Rolle und ein themenblindes
+Vorlesetext-Token nebeneinander — der Verlauf liefe in Light und Sepia auseinander. Beide Stopps
+gehören zusammen entschieden.
+
+### Was jetzt verhindert, dass es wieder passiert
+
+`R-12` in `tests/unit/design-consistency.test.js` (Block „Skalentoken als Tönungsfläche"). Sie
+zählt jede `background`-Tönung, deren Basis ein Token einer Skalenfamilie (`--know-`, `--cat-`,
+`--dmg-`, `--ra-`) **und** in genau einem Block von `variables.css` deklariert ist.
+`R12_AUSNAHMEN` ist bei der Geburt leer — wie `R10_AUSNAHMEN`. Sie verbietet nichts; sie macht die
+stille Umstellung unmöglich.
+
+### Befehle
+
+```bash
+cd /d/Claude_Code/Projekte/DnD_Tracker_App_Pro
+npx jest tests/unit/design-consistency.test.js -t "keine Skala"
+npx jest tests/unit/design-consistency.test.js -t "kein rgba"
+grep -rn "cat-drink\|cat-food\|cat-gear\|know-religion\|dmg-necrotic-text\|dmg-lightning\|ra-crimson-rule" assets/styles/*.css | grep -v variables.css
+```

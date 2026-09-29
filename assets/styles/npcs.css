@@ -365,7 +365,7 @@
 }
 
 .npc-trigger-item.triggered {
-    background: color-mix(in srgb, var(--dmg-lightning) 10%, transparent);
+    background: rgba(234, 179, 8, 0.1);
 }
 
 .npc-trigger-content {

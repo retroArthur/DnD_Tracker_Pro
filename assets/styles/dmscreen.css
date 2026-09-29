@@ -212,7 +212,7 @@
         .condition-badge.incapacitated { background: color-mix(in srgb, var(--red) 30%, transparent); color: var(--red); }
         .condition-badge.invisible { background: color-mix(in srgb, var(--cyan) 30%, transparent); color: var(--cyan); border-style: dashed; }
         .condition-badge.paralyzed { background: color-mix(in srgb, var(--yellow) 30%, transparent); color: var(--yellow); }
-        .condition-badge.petrified { background: color-mix(in srgb, var(--dmg-necrotic-text) 30%, transparent); color: var(--text); }
+        .condition-badge.petrified { background: rgba(156, 163, 175, 0.3); color: var(--text); }
         .condition-badge.poisoned { background: color-mix(in srgb, var(--green) 30%, transparent); color: var(--green); }
         .condition-badge.prone { background: color-mix(in srgb, var(--orange) 30%, transparent); color: var(--orange); }
         .condition-badge.restrained { background: color-mix(in srgb, var(--orange) 30%, transparent); color: var(--orange); }
@@ -296,7 +296,7 @@
         
         .relationship-badge.ally { background: color-mix(in srgb, var(--green) 20%, transparent); color: var(--green); }
         .relationship-badge.enemy { background: color-mix(in srgb, var(--red) 20%, transparent); color: var(--red); }
-        .relationship-badge.neutral { background: color-mix(in srgb, var(--dmg-necrotic-text) 20%, transparent); color: var(--text-dim); }
+        .relationship-badge.neutral { background: rgba(156, 163, 175, 0.2); color: var(--text-dim); }
         .relationship-badge.family { background: color-mix(in srgb, var(--pink) 20%, transparent); color: var(--pink); }
         .relationship-badge.rival { background: color-mix(in srgb, var(--orange) 20%, transparent); color: var(--orange); }
         .relationship-badge.mentor { background: color-mix(in srgb, var(--blue) 20%, transparent); color: var(--blue); }
