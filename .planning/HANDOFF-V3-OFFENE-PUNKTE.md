@@ -819,7 +819,13 @@ grep -rn "var(--overlay-\|var(--scrim-" assets/styles/*.css
 
 ## W2-B-02 — Drei Literale der SW-Update-Leiste bleiben stehen und gehören keinem Schritt
 
-**Stand:** 2026-09-29, Welle 2 Schritte 4–6. Offen, bewusst nicht umgestellt.
+**Stand:** 2026-09-29, Welle 2 Schritte 4–6. **ERLEDIGT in Schritt 7**, und zwar für die drei
+Literale verschieden: die Bernsteinfläche bleibt als geführte Ausnahme in `R10_AUSNAHMEN`, die
+beiden `13,13,13`-Stellen sind auf `var(--on-yellow)` aufgelöst. Begründung unten unter
+„Was zu entscheiden ist"; der Ausschlag gab, dass `13,13,13` ein **Theme**-Token
+(`--bg-dark@dark`) auf einer themenunabhängigen Fläche war — genau die Schieflage, die Welle 1 an
+der Tinte behoben hat — während die Fläche selbst die Voraussetzung jener Messung ist.
+Der folgende Text ist der Stand von Schritt 6 und bleibt als Beleg stehen.
 
 ### Worum es geht
 
@@ -876,6 +882,13 @@ npx jest tests/unit/design-consistency.test.js -t "kein rgba"
 ---
 
 ## W2-B-03 — Sechzehn Skalentoken-Stellen waren in den Schritten 4–6 nach Wert entschieden; sie sind zurückgenommen
+
+> **ERLEDIGT in Schritt 7.** Alle sechzehn sind nach Zweck entschieden. Fünfzehn haben eine
+> Theme-Rolle bekommen (`--purple`, `--green`, `--yellow`, `--orange`, `--blue`, `--red`,
+> `--border`); genau **eine** bleibt auf einer Skala und ist als einziger Eintrag in
+> `R12_AUSNAHMEN` begründet: `bestiary.css` `.bestiary-attr-cell` auf `--ra-parchment-rule`, weil
+> die `--ra-*`-Skala dort keine fremde Bedeutung ist, sondern das Pergament selbst.
+> Der folgende Text ist der Stand von Schritt 6 und bleibt als Beleg stehen.
 
 **Stand:** 2026-09-29, Prüfrunde W2-B Runde 1. Zurückgenommen und wieder offen — die Entscheidung
 gehört **Schritt 7 Punkt (3)**, nicht der mechanischen Runde.
@@ -1180,3 +1193,128 @@ grep -rn "var(--overlay-\|var(--scrim-" assets/styles/*.css | wc -l
 grep -rn "@supports" assets/styles/*.css          # heute: kein Treffer
 npx jest tests/unit/design-consistency.test.js -t "rueckfalllosen"
 ```
+
+---
+
+## W2-C-01 — `.modal` ist in Light und Sepia unlesbar; die Abhilfe ist bekannt und darf trotzdem nicht nebenbei fallen
+
+**Stand:** 2026-09-29, Welle 2 Schritt 7. Offen, bewusst nicht umgestellt. Geführte Ausnahme in
+`R10_AUSNAHMEN`.
+
+### Worum es geht
+
+`assets/styles/dmscreen.css` `.modal` trägt `background: rgba(26, 26, 26, 0.95)`. Das Tripel ist
+zeichengleich `--bg-card` im **Dark**-Block. Es ist die **einzige** Flächenquelle für die
+Modal-Schachtel im ganzen Baum — 19 Vorkommen von `class="modal"` in den Templates, und keine
+andere Regel setzt dort einen Hintergrund (`core.css:139` und `file-backup.css:174` setzen nur
+Geometrie, `dashboard.css:226` nur `transform`).
+
+Die Tinten auf dieser Fläche folgen dem Theme sehr wohl. Gemessen über `--bg-dark`, alle vier
+Themes, heute und mit `color-mix(in srgb, var(--bg-card) 95%, transparent)`:
+
+| Tinte | dark | light | sepia | contrast |
+| ----- | ---- | ----- | ----- | -------- |
+| `var(--text)` heute | 13,32 | **1,14** | **1,41** | 17,58 |
+| `var(--text)` umgestellt | 13,32 | 17,40 | 10,15 | 19,03 |
+| `var(--text-dim)` heute | 4,96 | **2,67** | **2,70** | 7,57 |
+| `var(--text-dim)` umgestellt | 4,96 | 5,74 | 5,28 | 8,19 |
+| `var(--gold)` heute | 8,36 | 4,71 | **2,18** | 12,54 |
+| `var(--gold)` umgestellt | 8,36 | **3,25** | 6,53 | 13,57 |
+
+**1,14 heißt: der Fließtext jedes Modals ist im Light-Theme unsichtbar.** Das ist rechnerisch
+schlechter als jede Stelle, die Welle 1 angefasst hat, und schlechter als das Ereignis-Log
+(1,07 ist knapp darunter, betrifft aber eine Anzeige, nicht jedes Formular der Anwendung).
+
+### Warum Schritt 7 es trotzdem stehen lässt
+
+Die Umstellung ist keine Literal-Auflösung mehr, sondern eine Gestaltungsentscheidung:
+
+1. Sie ändert **jedes Modal der Anwendung** in drei von vier Themes sichtbar.
+2. Die Tinten kommen aus rund zwanzig Dateien, nicht aus `dmscreen.css`. Mindestens eine
+   verschlechtert sich nachweislich: `var(--gold)` in Modal-Überschriften fällt in Light von 4,71
+   auf 3,25. Das ist derselbe Preis wie bei `.fdp-title` — dort war er zahlbar, weil **alle**
+   Tinten des Panels in **einer** Datei lagen und in einem Zug mitgemessen werden konnten.
+3. `backdrop-filter: blur(12px)` auf einer nun hellen Fläche ist eine optische Frage, die keine
+   Kontrastrechnung beantwortet.
+
+### Was zu entscheiden ist
+
+Entweder `.modal` bekommt `color-mix(in srgb, var(--bg-card) 95%, transparent)` — dann müssen im
+selben Zug alle `var(--gold)`-Tinten, die auf einem Modal sitzen, auf `var(--gold-text)` gezogen
+und gemessen werden — oder die Fläche bleibt dunkel, dann braucht sie themenblinde Tinte-Tokens
+wie das Ereignis-Log unter **E6** (`--on-modal`, `--on-modal-dim`), und zwar für alle Tinten, die
+darauf liegen. Die zweite Variante ist die kleinere Sichtänderung und die größere Token-Arbeit.
+
+Die Vier-Themes-Runde in Schritt 11 ist der natürliche Ort für die Sichtprobe.
+
+### Befehle
+
+```bash
+cd /d/Claude_Code/Projekte/DnD_Tracker_App_Pro
+grep -rn "\.modal\s*{" assets/styles/*.css
+grep -c 'class="modal"' assets/templates/*.html
+npx jest tests/unit/design-consistency.test.js -t "kein rgba"
+```
+
+---
+
+## W2-C-02 — Vier Regeln fallen durch Schritt 7 in **Dark** unter 4,5; alle vier sind D-4-Stellen
+
+**Stand:** 2026-09-29, Welle 2 Schritt 7. Offen für Schritt 8, keine eigene Entscheidung nötig.
+
+### Worum es geht
+
+Schritt 7 ersetzt palettenfremde Tönungen durch die Rolle, die die jeweilige Regel ohnehin als
+Tinte führt. Wo das fremde Literal **dunkler** war als die Rolle, hellt die Tönung dadurch auf und
+der Kontrast zur gleichfarbigen Tinte sinkt. In vier Regeln überschreitet das die 4,5 — und zwar
+ausschließlich im **Dark**-Theme:
+
+| Stelle | Tinte | dark | light | sepia | contrast |
+| ------ | ----- | ---- | ----- | ----- | -------- |
+| `encounters.css` `.calc-diff-badge.trivial` | `--blue` | 4,51 → **4,22** | 3,52 → 3,24 | 2,45 → 2,38 | 3,11 → 3,32 |
+| `initiative.css` `.concentration-badge` (Kopf) | `--purple` | 4,84 → **4,03** | 3,51 → 3,50 | 3,05 → 3,18 | 4,36 → 4,21 |
+| `party.css` `.wiki-tree-item.selected` | `--purple` | 4,76 → **4,41** | 3,94 → 3,78 | 3,43 → 3,37 | 4,27 → 4,48 |
+| `party.css` `.wiki-detail-category` | `--purple` | 4,76 → **4,41** | 3,94 → 3,78 | 3,43 → 3,37 | 4,27 → 4,48 |
+
+### Warum das kein neuer Befund ist
+
+Alle vier gehören schon vorher zu den **108 D-4-Stellen** — sie sind in der Zählung des Plans als
+„palettenfremdes Literal derselben Familie" (19 der 108) geführt. Sie fielen vor Schritt 7 in
+**drei** von vier Themes durch und fallen jetzt in vier. Schritt 8 bringt nach **E2** alle 108 auf
+≥ 4,5 in allen vier Themes, mit Tönungsdeckel **Dark 13 %** — für `--purple` gerechnet 4,56.
+
+### Warum Schritt 7 es nicht selbst repariert
+
+Die Abhilfe ist in allen vier Fällen die **Tönungsstärke**, nicht die Rolle. Stärken sind
+ausdrücklich Gegenstand von D-4/E2; eine Vorwegnahme an vier von 108 Stellen wäre eine halbe
+Entscheidung und ließe die Ratschen von Schritt 8 auf einem Mischbestand urteilen. Ein Wechsel nur
+der Tinte hilft in Dark nicht: gemessen bringt `--purple-text` dort **dieselben** 4,03 bzw. 4,41,
+weil `--purple-text` im Dark-Block auf denselben Wert auflöst.
+
+### Befehle
+
+```bash
+cd /d/Claude_Code/Projekte/DnD_Tracker_App_Pro
+grep -n "calc-diff-badge.trivial" assets/styles/encounters.css
+grep -n "wiki-tree-item.selected\|wiki-detail-category" assets/styles/party.css
+npx jest tests/unit/design-consistency.test.js
+```
+
+---
+
+## W2-C-03 — Zwei Klassen heißen gleich und sind verschieden gefärbt; Schritt 7 hat das nicht aufgelöst
+
+**Stand:** 2026-09-29, Welle 2 Schritt 7. Nur vermerkt, keine Arbeit in dieser Welle.
+
+`encounters.css` `.list-trigger-item.triggered` und `npcs.css` `.npc-trigger-item.triggered`
+bezeichnen denselben Zustand — ein Auslöser hat ausgelöst — und trugen zwei verschiedene fremde
+Farben (`46,204,113` Flat-UI-Grün, `234,179,8` Tailwind-Gelb). Schritt 7 entscheidet **je Regel
+nach ihrem Zweck** und hat deshalb die jeweils nächstliegende Rolle gesetzt: Grün bzw. Gelb. Die
+Vereinheitlichung wäre eine Sichtänderung an einer der beiden Ansichten und gehört nicht in einen
+Schritt, der Literale auflöst. In beiden Dateien steht ein Kommentar.
+
+Dasselbe gilt für die Doppelführung `.condition-*` (`core.css`) / `.condition-badge.*`
+(`dmscreen.css`), die **D-05** in Welle 4 zusammenlegt: sie trug für die vier farblosen Zustände
+**vier** verschiedene Grautöne (`100,100,100` · `120,113,108` · `107,114,128` · `156,163,175`) und
+steht jetzt in beiden Dateien geschlossen auf `--border`. Wer sie zusammenlegt, findet damit
+erstmals zwei identische Fassungen vor.
