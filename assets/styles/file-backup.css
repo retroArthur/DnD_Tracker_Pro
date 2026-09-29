@@ -153,8 +153,21 @@
 
 /* Restore-Button in Liste: roter Outline-Stil (destruktiv aber nicht solid) */
 .backup-entry-restore {
-    color: var(--red);
-    border-color: var(--red);
+    /* Welle 2, Nachtrag. --red ist eine FLAECHENrolle; als Tinte auf den
+       Traegerflaechen las dieser Knopf in ALLEN vier Themes durch:
+       4,07 · 3,94 · 3,68 · 3,98 (min ueber --bg-card/--bg-dark/--bg-elevated,
+       D-2). --red-text ist in Welle 1 genau gegen diese Flaechen auf 4,5
+       gerechnet worden und hebt ihn auf 5,48 · 5,04 · 5,05 · 5,73.
+
+       WARUM ES NIEMAND GEMELDET HAT: `background: transparent` ist weder
+       eine Vollton-Rolle noch eine Toenung, die Regel fiel damit in R-04 vor
+       jeder Rechnung heraus. Seit dem Nachtrag hat R-04 dafuer einen Zweig.
+
+       Das `border: 1px solid` vier Zeilen tiefer setzt die Randfarbe auf
+       currentcolor zurueck — der Rand folgt der Tinte mit, das
+       `border-color` darueber ist nur der Rueckfall. */
+    color: var(--red-text);
+    border-color: var(--red-text);
     background: transparent;
     font-size: 0.8em;
     padding: 4px 8px;
@@ -166,7 +179,17 @@
 }
 
 .backup-entry-restore:hover {
-    background: color-mix(in srgb, var(--red) 12%, transparent);
+    /* Welle 2, Nachtrag. Die letzte der neun Zustandsregeln aus W2-D-05, die
+       noch durchfiel — und die einzige, an der der Deckel allein nicht
+       gereicht haette: mit der alten Flaechentinte --red bleibt sie auch
+       gedeckelt bei 3,61 · 3,55 · 3,37 · 3,74. Erst beides zusammen traegt.
+       Gemessen (min ueber --bg-card/--bg-dark/--bg-elevated, D-2, dark light
+       sepia contrast):
+         --red / 12 % ungedeckelt   3,61 · 3,32 · 3,15 · 3,74
+         --red-text / 12 % gedeckelt 4,85 · 4,54 · 4,62 · 5,39
+       12 % liegen in light und sepia ueber --tint-max (13/7/7/20 %); in dark
+       und contrast greift der Deckel nicht. */
+    background: color-mix(in srgb, var(--red) min(12%, var(--tint-max)), transparent);
 }
 
 /* Leerer Zustand */
