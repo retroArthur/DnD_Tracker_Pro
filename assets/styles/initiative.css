@@ -42,7 +42,7 @@
                Rahmen und in der Tinte. Gemessen (min ueber die drei
                neutralen Traegerflaechen, vorher -> nachher):
                4,98 · 2,44 · 3,10 · 4,65 -> 4,64 · 2,32 · 2,86 · 4,51. */
-            background: color-mix(in srgb, var(--orange) 20%, transparent);
+            background: color-mix(in srgb, var(--orange) min(20%, var(--tint-max)), transparent);
             border: 1px solid var(--orange, var(--orange));
             /* Nur die Schreibweise ist geaendert (Welle 1 Schritt 8): der
                Selbst-Fallback `var(--orange, var(--orange))` hatte keine
@@ -57,13 +57,13 @@
                Light und Sepia sind heute mangelhaft; ein Wechsel hier waere
                aber eine halbe Entscheidung, weil Welle 2 die 20 % ohnehin
                anfasst. */
-            color: var(--orange);
+            color: var(--orange-text);
         }
 
         .bf-tag.lair {
-            background: color-mix(in srgb, var(--red) 20%, transparent);
+            background: color-mix(in srgb, var(--red) min(20%, var(--tint-max)), transparent);
             border: 1px solid var(--red);
-            color: var(--red);
+            color: var(--red-text);
         }
 
         .bf-xp {
@@ -90,18 +90,25 @@
 
         .bf-clear:hover {
             border-color: var(--red);
-            color: var(--red);
-            background: color-mix(in srgb, var(--red) 10%, transparent);
+            color: var(--red-text);
+            background: color-mix(in srgb, var(--red) min(10%, var(--tint-max)), transparent);
         }
 
         /* Lair Action Entry in Initiative */
+        /* QUERGRIFF (D-4/E2, Schritt 8): die Toenung steht hier, die Tinte in
+           der Kindregel darunter. Weder eine regelweise Bestandsliste noch
+           R-04 sieht diese Bauart — beide verlangen Flaeche UND Tinte in
+           DERSELBEN Regel. Von Hand gerechnet, min ueber
+           --bg-card/--bg-dark/--bg-elevated: var(--red) auf der 10-%-Toenung
+           ergibt 3,69 · 3,41 · 3,23 · 3,81, var(--red-text) mit Deckel
+           4,97 · 4,55 · 4,60 · 5,48. */
         .init-entry.lair {
             border-left: 3px solid var(--red);
-            background: linear-gradient(90deg, color-mix(in srgb, var(--red) 10%, transparent) 0%, var(--bg-card) 100%);
+            background: linear-gradient(90deg, color-mix(in srgb, var(--red) min(10%, var(--tint-max)), transparent) 0%, var(--bg-card) 100%);
         }
 
         .init-entry.lair .init-name {
-            color: var(--red);
+            color: var(--red-text);
             font-weight: 600;
         }
 
@@ -148,9 +155,9 @@
         .init-ac {
             font-size: 0.9em;
             font-weight: 600;
-            color: var(--cyan);
+            color: var(--cyan-text);
             text-align: center;
-            background: color-mix(in srgb, var(--cyan) 15%, transparent);
+            background: color-mix(in srgb, var(--cyan) min(15%, var(--tint-max)), transparent);
             padding: 4px 6px;
             border-radius: var(--radius-sm);
             display: flex;
@@ -362,16 +369,30 @@
                DARK faellt unter 4,5, weil das fremde Violett dunkler war als
                die Rolle. Die Abhilfe ist die Staerke, und ueber die
                entscheidet D-4 in Schritt 8 (Deckel Dark 13 %); diese Regel
-               gehoert ohnehin zu den 108 D-4-Stellen. */
+               gehoert ohnehin zu den 108 D-4-Stellen.
+
+               SCHRITT 8 HAT ES GETAN. Beide Verlaufsenden sind gedeckelt und
+               die Tinte ist var(--purple-text). --purple ist die bindende
+               Rolle des Dark-Deckels ueberhaupt (13 % ergeben 4,56, 14 %
+               nur noch 4,48) — diese Marke ist also die knappste der ganzen
+               Klasse. Gemessen, min ueber --bg-card/--bg-dark/--bg-elevated:
+                 Verlaufskopf 4,03 · 3,50 · 3,18 · 4,21 -> 4,56 · 4,57 · 4,60 · 4,73
+                 Verlaufsfuss 4,41 · 3,78 · 3,37 · 4,48 -> 4,56 · 4,57 · 4,60 · 5,05
+               In Dark und Light fallen Kopf und Fuss auf denselben Wert
+               zusammen, weil beide Staerken ueber dem Deckel liegen.
+
+               R-04 sieht diese Regel NICHT: ihre Flaeche ist ein Verlauf und
+               keine einzelne Toenung. Die Zahlen oben sind von Hand
+               gerechnet, wie bei den Quergriffen in dashboard.css. */
             background: linear-gradient(
                 135deg,
-                color-mix(in srgb, var(--purple) 20%, transparent) 0%,
-                color-mix(in srgb, var(--purple) 15%, transparent) 100%
+                color-mix(in srgb, var(--purple) min(20%, var(--tint-max)), transparent) 0%,
+                color-mix(in srgb, var(--purple) min(15%, var(--tint-max)), transparent) 100%
             );
             border: 1px solid var(--purple);
             border-radius: var(--radius-md);
             font-size: 0.75em;
-            color: var(--purple);
+            color: var(--purple-text);
             cursor: pointer;
             transition: all 0.15s;
             margin-top: 4px;
@@ -397,10 +418,10 @@
         }
 
         .concentration-badge .conc-break {
-            color: var(--red);
+            color: var(--red-text);
             font-weight: 700;
             padding: 2px 6px;
-            background: color-mix(in srgb, var(--red) 20%, transparent);
+            background: color-mix(in srgb, var(--red) min(20%, var(--tint-max)), transparent);
             border-radius: var(--radius-sm);
             margin-left: 4px;
         }
@@ -774,8 +795,8 @@
                --dmg-acid, --know-nature); nach dem Zweck die Gruenrolle der
                eigenen Tinte. 6,12 · 2,34 · 2,22 · 8,01 -> 5,63 · 2,21 ·
                2,15 · 7,11 (D-4, Schritt 8). */
-            background: color-mix(in srgb, var(--green) 20%, transparent);
-            color: var(--green);
+            background: color-mix(in srgb, var(--green) min(20%, var(--tint-max)), transparent);
+            color: var(--green-text);
         }
 
         .npc-relation-status.neutral {
@@ -798,8 +819,8 @@
         }
 
         .npc-relation-status.hostile {
-            background: color-mix(in srgb, var(--red) 20%, transparent);
-            color: var(--red);
+            background: color-mix(in srgb, var(--red) min(20%, var(--tint-max)), transparent);
+            color: var(--red-text);
         }
 
         .npc-relation-actions {
@@ -1144,8 +1165,8 @@
 
 .lr-reset-btn:hover {
     border-color: var(--purple);
-    color: var(--purple);
-    background: color-mix(in srgb, var(--purple) 10%, transparent);
+    color: var(--purple-text);
+    background: color-mix(in srgb, var(--purple) min(10%, var(--tint-max)), transparent);
 }
 
 /* ========================================
@@ -1266,8 +1287,8 @@
 
 .init-mob-dissolve-btn:hover {
     border-color: var(--red);
-    color: var(--red);
-    background: color-mix(in srgb, var(--red) 10%, transparent);
+    color: var(--red-text);
+    background: color-mix(in srgb, var(--red) min(10%, var(--tint-max)), transparent);
 }
 
 .init-mob-defeated-badge {
