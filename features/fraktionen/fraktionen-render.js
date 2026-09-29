@@ -159,6 +159,21 @@ function _renderFraktionDetail(fraktionId) {
     html += '<span class="fr-detail-symbol">' + esc(faction.symbol || '⚔️') + '</span>';
     html += '<div class="fr-detail-title-block">';
     html += '<h3 class="fr-detail-name">' + esc(faction.name) + '</h3>';
+    /* BEFUND, NUR VERMERKT (Design-Handoff v3, Welle 2, Schritt 10): das
+       angehaengte '22' soll eine 13-%-Toenung erzeugen. Das funktioniert nur
+       mit einem Hex-Literal. `stufe.farbe` ist aber eine var()-Referenz
+       (FRAKTIONS_RUF_STUFEN oben), und nach der Ersetzung stehen dort zwei
+       getrennte Bestandteile — der Wert ist zur Berechnungszeit ungueltig, und
+       die ganze background-Deklaration entfaellt. Die beabsichtigte Toenung
+       erscheint in KEINEM Theme und hat es nie getan; die Regel
+       .fr-ruf-statusbar in welt.css setzt selbst keinen Hintergrund. Nur der
+       border-left wirkt.
+
+       Warum es hier stehen bleibt: die Reparatur ist keine Kontrastfrage,
+       sondern eine Gestaltungsfrage (welche Staerke, und ob die Leiste
+       ueberhaupt eine Flaeche bekommen soll), und eine neu erscheinende
+       Toenung waere eine Sichtaenderung ohne Entscheidung. Aktenkundig als
+       W2-E-01. */
     html += '<div class="fr-ruf-statusbar" style="background:' + stufe.farbe + '22; border-left: 3px solid ' + stufe.farbe + '">';
     html += stufe.icon + ' ' + esc(stufe.label) + ' &nbsp;|&nbsp; Ruf: <strong>' + (faction.ruf || 0) + '</strong> / 50';
     html += '</div>';
