@@ -91,15 +91,22 @@ function renderLootItem(item) {
     const catIcon = CATS[item.category]?.split(' ')[0] || '📦';
     const isSelected = item.id === selectedLootId;
     const rarity = item.rarity || 'normal';
-    const rarityColor = RARITY_COLORS[rarity] || RARITY_COLORS.normal;
+    // Zwei Tabellen, zwei Zwecke (Welle 2 Schritt 10, Paragraph 7): die
+    // Seltenheitsfarbe als SCHRIFT braucht die theme-faehige Ableitung, als
+    // FLAECHE den themenunabhaengigen Wert. Vorher stand hier eine Tabelle
+    // fuer beides; die Marke trug dadurch eine Theme-Tinte auf einer
+    // themenlosen Flaeche (Sepia 1,22) und der Name eine themenlose Schrift
+    // auf einer Theme-Flaeche (Sepia 1,12 auf der ausgewaehlten Zeile).
+    const rarityInk = RARITY_TEXT_COLORS[rarity] || RARITY_TEXT_COLORS.normal;
+    const rarityBg = RARITY_COLORS[rarity] || RARITY_COLORS.normal;
     const depleted = item.quantity <= 0;
     return `
         <div class="loot-item ${isSelected ? 'selected' : ''} ${depleted ? 'depleted' : ''}" data-action="select-loot" data-id="${item.id}">
             <div class="loot-item-icon">${catIcon}</div>
             <div class="loot-item-info">
-                <div class="loot-item-name" style="color: ${rarityColor};">
+                <div class="loot-item-name" style="color: ${rarityInk};">
                     ${esc(item.name)}
-                    ${rarity !== 'normal' ? `<span class="loot-item-tag" style="background: ${rarityColor}; color: var(--bg-dark);">${RARITY_LABELS[rarity]}</span>` : ''}
+                    ${rarity !== 'normal' ? `<span class="loot-item-tag" style="background: ${rarityBg}; color: var(--on-rarity);">${RARITY_LABELS[rarity]}</span>` : ''}
                 </div>
                 <div class="loot-item-meta">
                     ×${item.quantity} • ${((item.value || 0) * item.quantity).toFixed(0)} GM
@@ -135,14 +142,16 @@ function showLootDetail(id) {
     }
     const catIcon = CATS[item.category]?.split(' ')[0] || '📦';
     const rarity = item.rarity || 'normal';
-    const rarityColor = RARITY_COLORS[rarity] || RARITY_COLORS.normal;
+    // Nur Schrift, keine Flaeche — deshalb die Tinte-Tabelle (Welle 2
+    // Schritt 10). Traeger ist die Detailspalte auf --bg-card.
+    const rarityInk = RARITY_TEXT_COLORS[rarity] || RARITY_TEXT_COLORS.normal;
     const totalValue = (item.value || 0) * Math.max(0, item.quantity);
     panel.innerHTML = `
         <div class="loot-detail-content">
             <div class="loot-detail-header">
                 <div class="loot-detail-icon">${catIcon}</div>
                 <div class="loot-detail-title">
-                    <div class="loot-detail-name" style="color: ${rarityColor};">${esc(item.name)}</div>
+                    <div class="loot-detail-name" style="color: ${rarityInk};">${esc(item.name)}</div>
                     <div class="loot-detail-subtitle">${CATS[item.category] || 'Sonstiges'} • ${RARITY_LABELS[rarity]}</div>
                 </div>
                 <div class="loot-detail-actions">
