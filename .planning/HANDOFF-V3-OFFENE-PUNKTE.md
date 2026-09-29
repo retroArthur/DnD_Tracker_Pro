@@ -551,17 +551,17 @@ dmscreen.css
 encounters.css
    34  .list-view-row.expanded .row-toggle
    47  .list-dialog-item.used .list-dialog-status
-  298  .calc-list-remove:hover
-  343  .calc-diff-xp
-  375  .calc-threshold-label.easy
-  376  .calc-threshold-label.medium
-  377  .calc-threshold-label.hard
-  378  .calc-threshold-label.deadly
-  449  .calc-stat-info:hover
-  475  .calc-preview-xp
-  480  .calc-preview-change
-  646  .calc-fav-item.save
- 1146  .enc-speed-line
+  308  .calc-list-remove:hover
+  375  .calc-diff-xp
+  407  .calc-threshold-label.easy
+  408  .calc-threshold-label.medium
+  409  .calc-threshold-label.hard
+  410  .calc-threshold-label.deadly
+  483  .calc-stat-info:hover
+  509  .calc-preview-xp
+  514  .calc-preview-change
+  680  .calc-fav-item.save
+ 1180  .enc-speed-line
 file-backup.css
   156  .backup-entry-restore
 initiative.css

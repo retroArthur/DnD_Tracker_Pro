@@ -48,7 +48,15 @@
         }
         
         .list-trigger-item.triggered {
-            background: rgba(46, 204, 113, 0.1);
+            /* Welle 2 Schritt 7: 46,204,113 ist ein Flat-UI-Gruen aus einer
+               Palette, die dieses Projekt nicht fuehrt. Zweck ist "ausgeloest,
+               erledigt" -> Gruenrolle. Ohne eigene Tinte, die Regel erbt
+               var(--text): 9,65 · 13,32 · 8,27 · 13,30 -> 9,36 · 12,87 ·
+               8,10 · 12,78. Die gleichnamige Regel in npcs.css benutzt fuer
+               dasselbe Wort Gelb — eine Drift, die dieser Schritt nicht
+               aufloest (er entscheidet je Regel, nicht ueber die Bedeutung
+               von "ausgeloest"). */
+            background: color-mix(in srgb, var(--green) 10%, transparent);
         }
         
         .list-trigger-item.triggered .list-trigger-check {
@@ -137,7 +145,9 @@
 
 .calc-close:hover {
     color: var(--red);
-    background: rgba(231, 76, 60, 0.1);
+    /* 231,76,60 ist Flat-UI-Rot; die Regel fuehrt die Rotrolle bereits als
+       Tinte. 3,68 · 3,50 · 3,30 · 3,60 -> 3,70 · 3,42 · 3,22 · 3,79 (D-4). */
+    background: color-mix(in srgb, var(--red) 10%, transparent);
 }
 
 /* Body */
@@ -327,11 +337,33 @@
     letter-spacing: 0.5px;
 }
 
-.calc-diff-badge.trivial { background: rgba(52, 152, 219, 0.2); color: var(--blue); }
-.calc-diff-badge.easy { background: rgba(46, 204, 113, 0.2); color: var(--green); }
-.calc-diff-badge.medium { background: rgba(243, 156, 18, 0.2); color: var(--yellow); }
-.calc-diff-badge.hard { background: rgba(230, 126, 34, 0.2); color: var(--orange); }
-.calc-diff-badge.deadly { background: rgba(231, 76, 60, 0.2); color: var(--red); }
+/* Schwierigkeitsskala, Welle 2 Schritt 7. Die fuenf Flaechen trugen die
+   Flat-UI-Palette (52,152,219 · 46,204,113 · 243,156,18 · 230,126,34 ·
+   231,76,60), die dieses Projekt nicht fuehrt. DREI davon trafen zufaellig ein
+   Skalentoken einer voellig anderen Bedeutung: --cat-gear, --cat-drink und
+   --cat-food, die Ladenkategorien. Wer die Ladenkategorien umfaerbt, haette
+   danach den Schwierigkeitsgrad einer Begegnung mitgefaerbt — der Fehler,
+   gegen den R-12 steht. Nach dem Zweck ist die Rolle jeweils die, die die
+   Regel als Tinte schon fuehrt. Gemessen (min ueber die drei neutralen
+   Traegerflaechen, vorher -> nachher, dark light sepia contrast):
+
+     trivial  4,51 · 3,52 · 2,45 · 3,11  ->  4,22 · 3,24 · 2,38 · 3,32
+     easy     5,99 · 2,37 · 2,25 · 7,86  ->  5,63 · 2,21 · 2,15 · 7,11
+     medium   6,25 · 2,12 · 2,29 · 10,12 ->  5,73 · 2,02 · 2,15 · 8,05
+     hard     4,94 · 2,46 · 3,13 · 4,64  ->  4,64 · 2,32 · 2,86 · 4,51
+     deadly   3,25 · 3,13 · 2,94 · 3,20  ->  3,29 · 2,94 · 2,81 · 3,51
+
+   `trivial` faellt in Dark von 4,51 auf 4,22, also unter 4,5 — als einzige
+   Zeile dieser Gruppe und nur in einem Theme. Der Grund ist, dass das fremde
+   Blau dunkler war als die Blaurolle; eine Staerkeaenderung waere hier die
+   Abhilfe, und ueber Staerken entscheidet D-4 in Schritt 8 (Deckel Dark
+   13 %), nicht dieser Schritt. Alle fuenf Zeilen gehoeren ohnehin zu den 108
+   D-4-Stellen und fielen schon vorher in drei von vier Themes durch. */
+.calc-diff-badge.trivial { background: color-mix(in srgb, var(--blue) 20%, transparent); color: var(--blue); }
+.calc-diff-badge.easy { background: color-mix(in srgb, var(--green) 20%, transparent); color: var(--green); }
+.calc-diff-badge.medium { background: color-mix(in srgb, var(--yellow) 20%, transparent); color: var(--yellow); }
+.calc-diff-badge.hard { background: color-mix(in srgb, var(--orange) 20%, transparent); color: var(--orange); }
+.calc-diff-badge.deadly { background: color-mix(in srgb, var(--red) 20%, transparent); color: var(--red); }
 
 .calc-diff-info {
     flex: 1;
@@ -391,10 +423,12 @@
     flex: 1;
 }
 
-.calc-threshold-seg.easy { background: rgba(46, 204, 113, 0.3); }
-.calc-threshold-seg.medium { background: rgba(243, 156, 18, 0.3); }
-.calc-threshold-seg.hard { background: rgba(230, 126, 34, 0.3); }
-.calc-threshold-seg.deadly { background: rgba(231, 76, 60, 0.3); }
+/* Die Balkenabschnitte derselben Schwierigkeitsskala, dieselben vier fremden
+   Werte, dieselbe Aufloesung — hier ohne Tinte, also ohne Kontrastfolge. */
+.calc-threshold-seg.easy { background: color-mix(in srgb, var(--green) 30%, transparent); }
+.calc-threshold-seg.medium { background: color-mix(in srgb, var(--yellow) 30%, transparent); }
+.calc-threshold-seg.hard { background: color-mix(in srgb, var(--orange) 30%, transparent); }
+.calc-threshold-seg.deadly { background: color-mix(in srgb, var(--red) 30%, transparent); }
 
 .calc-threshold-marker {
     position: absolute;
