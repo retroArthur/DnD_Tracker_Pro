@@ -490,10 +490,17 @@ diese Tabelle führt.
 | Stelle | Selektor | Rolle | Traeger dark | Traeger light |
 | ------ | -------- | ----- | ------------ | ------------- |
 | `dashboard.css:511` | `.char-section-title` | `--gold` | --bg-card · #191919 | --bg-card · #1e1e1e |
-| `dice.css:604` | `.fdp-title` | `--gold` | --bg-card | #1e1e1e |
+| `dice.css:633` | `.fdp-title` | `--gold-text` | --bg-card | --bg-card |
 | `dmscreen.css:999` | `.form-group label` | `--gold` | --bg-card · #191919 | --bg-card · #1e1e1e |
 | `party.css:2620` | `.char-adv-btn.adv` | `--green` | --bg-dark · #191919 | --bg-dark · #1e1e1e |
 | `party.css:2621` | `.char-adv-btn.dis` | `--red` | --bg-dark · #191919 | --bg-dark · #1e1e1e |
+
+`.fdp-title` ist als einzige Zeile dieser Gruppe erledigt (Welle 2, Schritt 7), bleibt aber
+gefuehrt, damit die Zahl 124 nicht lautlos sinkt: der zweite Traeger `#1e1e1e` WAR das
+fest verdrahtete `rgba(26,26,26,0.98)` des Wuerfel-Panels. Seit die Panelflaeche
+`var(--bg-card)` folgt, gibt es nur noch EINEN Traeger, und die Tinte ist `--gold-text`
+(8,28 · 6,23 · 6,58 · 13,46 statt 5,12 · 3,25 in Light auf heller Karte). Die
+gleichlautende Stelle an `.modal` ist NICHT erledigt — siehe W2-C-01.
 
 ### Gruppe E — in keinem erreichbaren Zustand gerendert, 82 Stellen
 
