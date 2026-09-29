@@ -580,14 +580,14 @@
         .chip.active { border-color: var(--gold); background: var(--gold); color: var(--on-gold); }
         
         /* Color coding */
-        .color-blue { background: color-mix(in srgb, var(--blue) 20%, transparent); border-color: var(--blue); color: var(--blue); }
-        .color-yellow { background: color-mix(in srgb, var(--yellow) 20%, transparent); border-color: var(--yellow); color: var(--yellow); }
-        .color-red { background: color-mix(in srgb, var(--red) 20%, transparent); border-color: var(--red); color: var(--red); }
-        .color-green { background: color-mix(in srgb, var(--green) 20%, transparent); border-color: var(--green); color: var(--green); }
-        .color-purple { background: color-mix(in srgb, var(--purple) 20%, transparent); border-color: var(--purple); color: var(--purple); }
-        .color-cyan { background: color-mix(in srgb, var(--cyan) 20%, transparent); border-color: var(--cyan); color: var(--cyan); }
-        .color-orange { background: color-mix(in srgb, var(--orange) 20%, transparent); border-color: var(--orange); color: var(--orange); }
-        .color-pink { background: color-mix(in srgb, var(--pink) 20%, transparent); border-color: var(--pink); color: var(--pink); }
+        .color-blue { background: color-mix(in srgb, var(--blue) min(20%, var(--tint-max)), transparent); border-color: var(--blue); color: var(--blue-text); }
+        .color-yellow { background: color-mix(in srgb, var(--yellow) min(20%, var(--tint-max)), transparent); border-color: var(--yellow); color: var(--yellow-text); }
+        .color-red { background: color-mix(in srgb, var(--red) min(20%, var(--tint-max)), transparent); border-color: var(--red); color: var(--red-text); }
+        .color-green { background: color-mix(in srgb, var(--green) min(20%, var(--tint-max)), transparent); border-color: var(--green); color: var(--green-text); }
+        .color-purple { background: color-mix(in srgb, var(--purple) min(20%, var(--tint-max)), transparent); border-color: var(--purple); color: var(--purple-text); }
+        .color-cyan { background: color-mix(in srgb, var(--cyan) min(20%, var(--tint-max)), transparent); border-color: var(--cyan); color: var(--cyan-text); }
+        .color-orange { background: color-mix(in srgb, var(--orange) min(20%, var(--tint-max)), transparent); border-color: var(--orange); color: var(--orange-text); }
+        .color-pink { background: color-mix(in srgb, var(--pink) min(20%, var(--tint-max)), transparent); border-color: var(--pink); color: var(--pink-text); }
         
         .condition-tag {
             font-size: 0.7em;
@@ -655,31 +655,45 @@
              sie NICHT: er wuerde die Flaeche in Light und Sepia auf 7 %
              druecken und die eben gewonnene zweite Achse wieder verlieren.
              R-11 bewacht beide Zahlenreihen.
-           - prone trug 180,83,9 und als Tinte --orange-dim. Die Toenung folgt
-             jetzt derselben Rolle wie die Tinte: 1,98/5,63/6,49/1,88 ->
-             2,04 · 5,21 · 5,93 · 2,00. Mit var(--orange) waere es
-             1,62/5,81/6,49/1,62 gewesen — die Tinte gibt den Ausschlag.
+           - prone trug 180,83,9 und als Tinte --orange-dim. Schritt 7 hat
+             Toenung UND Tinte auf --orange-dim gestellt (2,04 · 5,21 · 5,93 ·
+             2,00), weil var(--orange) als Tinte dort schlechter war.
 
-           Die Staerken bleiben unangetastet; ueber sie entscheidet D-4 in
-           Schritt 8 zusammen mit der Tinte. Dieselbe Gruppe steht ein
-           zweites Mal in dmscreen.css (.condition-badge.*, D-05). */
+             SCHRITT 8 NIMMT DAS ZURUECK, und zwar gemessen: mit der Tinte
+             var(--orange-text) kehrt sich der Vergleich um. Auf der
+             --orange-dim-Toenung ergaebe sie 6,18 · 4,48 · 4,43 · 5,56 — in
+             Light und Sepia knapp DARUNTER. Auf der --orange-Toenung ergibt
+             sie 5,36 · 4,64 · 4,57 · 4,51, also in allen vier Themes ueber
+             der Schwelle. prone traegt deshalb jetzt dieselbe Rolle wie
+             grappled und restrained, und damit auch dieselbe wie seine
+             Zwillingsregel .condition-badge.prone in dmscreen.css, die schon
+             immer --orange trug. Die Doppelfuehrung ist an dieser Stelle
+             erstmals wirklich doppelt gleich.
+
+           DIE STAERKEN SIND SEIT SCHRITT 8 GEDECKELT, nicht mehr fest: die
+           farbigen Zustaende schreiben min(<eigene Staerke>, var(--tint-max)),
+           der Theme-Block begrenzt auf 13/7/7/20 %. Die vier FARBLOSEN
+           Zustaende bleiben bei festen 30 % — sie tragen neutrale Schrift, und
+           der Deckel folgt aus der Rollenschrift (siehe --tint-max in
+           variables.css). Dieselbe Gruppe steht ein zweites Mal in
+           dmscreen.css (.condition-badge.*, D-05). */
         .condition-blinded { background: color-mix(in srgb, var(--text-dim) 30%, transparent); color: var(--text); }
-        .condition-charmed { background: color-mix(in srgb, var(--pink) 20%, transparent); color: var(--pink); }
+        .condition-charmed { background: color-mix(in srgb, var(--pink) min(20%, var(--tint-max)), transparent); color: var(--pink-text); }
         .condition-deafened { background: color-mix(in srgb, var(--text-dim) 30%, transparent); color: var(--text); }
-        .condition-frightened { background: color-mix(in srgb, var(--purple) 20%, transparent); color: var(--purple); }
-        .condition-grappled { background: color-mix(in srgb, var(--orange) 20%, transparent); color: var(--orange); }
-        .condition-incapacitated { background: color-mix(in srgb, var(--red) 20%, transparent); color: var(--red); }
-        .condition-invisible { background: color-mix(in srgb, var(--blue) 15%, transparent); color: var(--blue); border: 1px dashed var(--blue); }
-        .condition-paralyzed { background: color-mix(in srgb, var(--yellow) 20%, transparent); color: var(--yellow); }
+        .condition-frightened { background: color-mix(in srgb, var(--purple) min(20%, var(--tint-max)), transparent); color: var(--purple-text); }
+        .condition-grappled { background: color-mix(in srgb, var(--orange) min(20%, var(--tint-max)), transparent); color: var(--orange-text); }
+        .condition-incapacitated { background: color-mix(in srgb, var(--red) min(20%, var(--tint-max)), transparent); color: var(--red-text); }
+        .condition-invisible { background: color-mix(in srgb, var(--blue) min(15%, var(--tint-max)), transparent); color: var(--blue-text); border: 1px dashed var(--blue); }
+        .condition-paralyzed { background: color-mix(in srgb, var(--yellow) min(20%, var(--tint-max)), transparent); color: var(--yellow-text); }
         .condition-petrified { background: color-mix(in srgb, var(--text-dim) 30%, transparent); color: var(--text); }
-        .condition-poisoned { background: color-mix(in srgb, var(--green) 20%, transparent); color: var(--green); }
-        .condition-prone { background: color-mix(in srgb, var(--orange-dim) 20%, transparent); color: var(--orange-dim); }
-        .condition-restrained { background: color-mix(in srgb, var(--orange) 20%, transparent); color: var(--orange); }
-        .condition-stunned { background: color-mix(in srgb, var(--yellow) 20%, transparent); color: var(--yellow); }
-        .condition-unconscious { background: color-mix(in srgb, var(--red) 30%, transparent); color: var(--red); }
+        .condition-poisoned { background: color-mix(in srgb, var(--green) min(20%, var(--tint-max)), transparent); color: var(--green-text); }
+        .condition-prone { background: color-mix(in srgb, var(--orange) min(20%, var(--tint-max)), transparent); color: var(--orange-text); }
+        .condition-restrained { background: color-mix(in srgb, var(--orange) min(20%, var(--tint-max)), transparent); color: var(--orange-text); }
+        .condition-stunned { background: color-mix(in srgb, var(--yellow) min(20%, var(--tint-max)), transparent); color: var(--yellow-text); }
+        .condition-unconscious { background: color-mix(in srgb, var(--red) min(30%, var(--tint-max)), transparent); color: var(--red-text); }
         .condition-exhaustion { background: color-mix(in srgb, var(--text-dim) 30%, transparent); color: var(--text); }
-        .condition-concentration { background: color-mix(in srgb, var(--blue) 20%, transparent); color: var(--blue); border: 1px solid var(--blue); }
-        .condition-custom { background: color-mix(in srgb, var(--gold) 20%, transparent); color: var(--gold); }
+        .condition-concentration { background: color-mix(in srgb, var(--blue) min(20%, var(--tint-max)), transparent); color: var(--blue-text); border: 1px solid var(--blue); }
+        .condition-custom { background: color-mix(in srgb, var(--gold) min(20%, var(--tint-max)), transparent); color: var(--gold-text); }
         
         /* ============================================================
            AVATARS / IMAGES
@@ -731,21 +745,21 @@
             filter: brightness(1.2);
         }
         
-        .tag-red { background: color-mix(in srgb, var(--red) 20%, transparent); color: var(--red); }
-        .tag-green { background: color-mix(in srgb, var(--green) 20%, transparent); color: var(--green); }
-        .tag-blue { background: color-mix(in srgb, var(--blue) 20%, transparent); color: var(--blue); }
-        .tag-yellow { background: color-mix(in srgb, var(--yellow) 20%, transparent); color: var(--yellow); }
-        .tag-purple { background: color-mix(in srgb, var(--purple) 20%, transparent); color: var(--purple); }
-        .tag-orange { background: color-mix(in srgb, var(--orange) 20%, transparent); color: var(--orange); }
-        .tag-pink { background: color-mix(in srgb, var(--pink) 20%, transparent); color: var(--pink); }
-        .tag-cyan { background: color-mix(in srgb, var(--cyan) 20%, transparent); color: var(--cyan); }
+        .tag-red { background: color-mix(in srgb, var(--red) min(20%, var(--tint-max)), transparent); color: var(--red-text); }
+        .tag-green { background: color-mix(in srgb, var(--green) min(20%, var(--tint-max)), transparent); color: var(--green-text); }
+        .tag-blue { background: color-mix(in srgb, var(--blue) min(20%, var(--tint-max)), transparent); color: var(--blue-text); }
+        .tag-yellow { background: color-mix(in srgb, var(--yellow) min(20%, var(--tint-max)), transparent); color: var(--yellow-text); }
+        .tag-purple { background: color-mix(in srgb, var(--purple) min(20%, var(--tint-max)), transparent); color: var(--purple-text); }
+        .tag-orange { background: color-mix(in srgb, var(--orange) min(20%, var(--tint-max)), transparent); color: var(--orange-text); }
+        .tag-pink { background: color-mix(in srgb, var(--pink) min(20%, var(--tint-max)), transparent); color: var(--pink-text); }
+        .tag-cyan { background: color-mix(in srgb, var(--cyan) min(20%, var(--tint-max)), transparent); color: var(--cyan-text); }
         
         .link-chip {
             font-size: 0.75em;
             padding: 2px 6px;
             border-radius: var(--radius-sm);
-            background: color-mix(in srgb, var(--blue) 20%, transparent);
-            color: var(--blue);
+            background: color-mix(in srgb, var(--blue) min(20%, var(--tint-max)), transparent);
+            color: var(--blue-text);
             cursor: pointer;
             transition: all 0.15s ease;
         }
@@ -753,7 +767,7 @@
             background: color-mix(in srgb, var(--blue) 40%, transparent);
             transform: scale(1.05);
         }
-        .tag-gold { background: color-mix(in srgb, var(--gold) 20%, transparent); color: var(--gold); }
+        .tag-gold { background: color-mix(in srgb, var(--gold) min(20%, var(--tint-max)), transparent); color: var(--gold-text); }
         
         .tags-container {
             display: flex;
@@ -1315,13 +1329,13 @@
         }
         
         .char-tag.spell {
-            background: color-mix(in srgb, var(--blue) 20%, transparent);
-            color: var(--blue);
+            background: color-mix(in srgb, var(--blue) min(20%, var(--tint-max)), transparent);
+            color: var(--blue-text);
         }
         
         .char-tag.item {
-            background: color-mix(in srgb, var(--orange) 20%, transparent);
-            color: var(--orange);
+            background: color-mix(in srgb, var(--orange) min(20%, var(--tint-max)), transparent);
+            color: var(--orange-text);
         }
         
         /* Notes Section */
