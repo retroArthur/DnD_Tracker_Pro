@@ -1098,6 +1098,78 @@ describe('F-21 — DM-Screen-Widget-Klassen ohne Regel (Ratsche)', () => {
 const WCAG = require('./helpers/wcag-contrast.js');
 
 /**
+ * CSS ohne die Zweige, die in KEINEM Browser oberhalb des dokumentierten
+ * Bodens greifen — heute genau die Form `@supports not (...)`.
+ *
+ * WOGEGEN DAS STEHT. Jedes Modell dieser Datei liest Tokens nach der Regel
+ * "letzter Treffer gewinnt" (aliasSchicht) oder zaehlt Bloecke je Token
+ * (themenblindeTokens). Beide Regeln sind fuer flach nebeneinander liegende
+ * Bloecke richtig und fuer einen @supports-not-Zweig FALSCH: dessen
+ * Deklarationen stehen zwar spaeter in der Datei, greifen aber nur dort, wo
+ * die Fassung fehlt — also nirgends, wo diese App laeuft (Browserboden in
+ * DEVELOPMENT.md). Ohne diese Maskierung urteilt das Testnetz ueber den
+ * Rueckfallzweig statt ueber das, was der Nutzer sieht. Gemessen, nicht
+ * vermutet: der Rueckfall aus Schritt 11 liess R-03 und R-04 auf einmal
+ * ANDERE Zahlen melden (`.calc-action-btn.primary:hover` sprang von 5,10 auf
+ * 5,73), obwohl im Browser keine einzige Farbe anders war.
+ *
+ * NUR DIE VERNEINTE FORM. Ein positiver `@supports (...)`-Zweig kann greifen
+ * oder nicht — das haengt an der Bedingung und am Boden und ist keine Frage,
+ * die eine Regex beantworten darf. Deshalb wirft diese Funktion bei einem
+ * positiven Zweig HART, statt ihn stillschweigend als "gilt immer" zu
+ * behandeln. Wer einen einfuehrt, entscheidet hier bewusst.
+ *
+ * Zeilentreu: der Rumpf wird durch Leerzeichen ersetzt, Zeilenumbrueche
+ * bleiben stehen. Befunde, die Zeilennummern nennen, verschieben sich nicht.
+ *
+ * Kommentare zaehlen nicht mit — sonst liest die Suche das Wort "@supports"
+ * aus dem Erklaertext, der neben dem Zweig steht, und wirft ueber einem
+ * Satzzeichen.
+ */
+function ohneUnerreichbareZweige(css) {
+    /* Gesucht wird in einer Fassung OHNE Kommentartext, geschnitten wird am
+       Original. Beide sind zeichengleich lang, die Stellen passen also
+       aufeinander. Ohne diesen Schritt wuerde das Wort "@supports" in einem
+       erklaerenden Kommentar — und genau so einen traegt variables.css an
+       dieser Stelle — als Zweig gelesen. */
+    const maske = css.replace(/\/\*[\s\S]*?\*\//g, m => m.replace(/[^\n]/g, ' '));
+    let out = '';
+    let i = 0;
+    while (i < css.length) {
+        const at = maske.indexOf('@supports', i);
+        if (at === -1) {
+            out += css.slice(i);
+            break;
+        }
+        const auf = maske.indexOf('{', at);
+        if (auf === -1) {
+            out += css.slice(i);
+            break;
+        }
+        const bedingung = maske.slice(at + '@supports'.length, auf).trim();
+        let tiefe = 1;
+        let j = auf + 1;
+        while (j < maske.length && tiefe) {
+            if (maske[j] === '{') tiefe++;
+            else if (maske[j] === '}') tiefe--;
+            j++;
+        }
+        if (!/^not\b/.test(bedingung)) {
+            throw new Error(
+                `design-consistency: positiver @supports-Zweig gefunden ("@supports ${bedingung}"). ` +
+                    'Das Testmodell kann nicht entscheiden, ob er oberhalb des Browserbodens greift. ' +
+                    'Entweder den Zweig verneint schreiben oder diese Funktion um ein bewusstes ' +
+                    'Urteil erweitern — stillschweigend "gilt immer" waere ein Fehlurteil.'
+            );
+        }
+        out += css.slice(i, at);
+        out += css.slice(at, j).replace(/[^\n]/g, ' ');
+        i = j;
+    }
+    return out;
+}
+
+/**
  * Die Tokens der :root-Schichten von variables.css — alles, was NICHT in einem
  * der vier Theme-Bloecke steht.
  *
@@ -1113,7 +1185,7 @@ const WCAG = require('./helpers/wcag-contrast.js');
  * aus und die Farbe aendert sich nicht. R-02 meldet diesen Fall namentlich.
  */
 function aliasSchicht() {
-    let rest = cssFiles.find(f => f.name === 'variables.css').content;
+    let rest = ohneUnerreichbareZweige(cssFiles.find(f => f.name === 'variables.css').content);
     WCAG.THEMES.forEach(t => {
         rest = rest.replace(WCAG.blockRegexFor(t), '\n');
     });
@@ -1122,6 +1194,66 @@ function aliasSchicht() {
     for (const m of rest.matchAll(WCAG.DECL_RE)) out[m[1]] = m[2].trim();
     return out;
 }
+
+describe('Testmodell — unerreichbare @supports-Zweige (Selbstprobe)', () => {
+    /* WARUM MIT KUNST-CSS und nicht gegen variables.css: die Probe soll die
+       Maskierung belegen, nicht den heutigen Dateiinhalt. Faellt der eine
+       Zweig aus variables.css wieder heraus, muss diese Probe gruen BLEIBEN —
+       sonst waere sie eine zweite Fassung derselben Aussage und nichts
+       wert. */
+    const KUNST_CSS = [
+        ':root {',
+        '    --a: rot;',
+        '}',
+        '@supports not (color: color-mix(in srgb, #000 50%, #fff)) {',
+        '    :root {',
+        '        --a: blau;',
+        '    }',
+        '}'
+    ].join('\n');
+
+    test('der verneinte Zweig verschwindet, die Zeilenzahl bleibt', () => {
+        const ohne = ohneUnerreichbareZweige(KUNST_CSS);
+        expect(ohne).not.toMatch(/blau/);
+        expect(ohne).toMatch(/--a: rot;/);
+        expect(ohne.split('\n').length).toBe(KUNST_CSS.split('\n').length);
+    });
+
+    test('ohne @supports bleibt der Text Zeichen fuer Zeichen derselbe', () => {
+        const flach = ':root {\n    --a: rot;\n}\n';
+        expect(ohneUnerreichbareZweige(flach)).toBe(flach);
+    });
+
+    test('ein positiver Zweig wirft, statt stillschweigend zu gelten', () => {
+        const positiv = '@supports (display: grid) {\n    :root {\n        --a: blau;\n    }\n}\n';
+        expect(() => ohneUnerreichbareZweige(positiv)).toThrow(/positiver @supports-Zweig/);
+    });
+
+    test('das Wort im Kommentar ist kein Zweig', () => {
+        /* Diese Falle ist beim Schreiben von Schritt 11 zugeschnappt: der
+           Erklaertext neben dem Rueckfall in variables.css nennt @supports
+           beim Namen, und die erste Fassung der Funktion las daraus einen
+           positiven Zweig — sieben Ratschen warfen auf einmal ueber einem
+           Halbsatz. */
+        const mitKommentar = '/* @supports ist der einzige Weg. */\n:root {\n    --a: rot;\n}\n';
+        expect(() => ohneUnerreichbareZweige(mitKommentar)).not.toThrow();
+        expect(ohneUnerreichbareZweige(mitKommentar)).toBe(mitKommentar);
+    });
+
+    test('ohne die Maskierung waere das Modell anders — die Probe zeigt den Unterschied', () => {
+        // Gegenprobe: dieselbe Kaskadenregel wie in aliasSchicht(), einmal mit
+        // und einmal ohne Maskierung. Waere der Unterschied leer, maskierte
+        // die Funktion nichts und alle drei Proben darueber waeren gruen ohne
+        // Aussage.
+        const letzter = css => {
+            let v = null;
+            for (const m of css.matchAll(WCAG.DECL_RE)) if (m[1] === '--a') v = m[2].trim();
+            return v;
+        };
+        expect(letzter(KUNST_CSS)).toBe('blau');
+        expect(letzter(ohneUnerreichbareZweige(KUNST_CSS))).toBe('rot');
+    });
+});
 
 describe('R-01 — Theme-Symmetrie (Ratsche)', () => {
     // DIESE RATSCHE IST BEI IHRER GEBURT GRUEN, und das ist kein Versehen.
@@ -4134,12 +4266,15 @@ describe('R-12 — Skalentoken als Toenungsflaeche (Ratsche)', () => {
     ];
 
     /** Tokens, die in GENAU EINEM Block von variables.css deklariert sind.
-     *  variables.css hat keine @media-/@supports-Schachtelung (nachgeprueft),
-     *  die Bloecke liegen also flach nebeneinander. */
+     *  variables.css hat keine @media-Schachtelung; der EINE @supports-Zweig
+     *  (Schritt 11, Rueckfall fuer die sechs abgeleiteten Tokens) faellt vor
+     *  dem Zaehlen heraus — er greift oberhalb des Browserbodens nie, und
+     *  wuerde seine sechs Tokens sonst faelschlich als themenabhaengig
+     *  ausweisen. Der Rest liegt flach nebeneinander. */
     function themenblindeTokens() {
-        const maskiert = cssFiles
-            .find(f => f.name === 'variables.css')
-            .content.replace(/\/\*[\s\S]*?\*\//g, m => m.replace(/[^\n]/g, ' '));
+        const maskiert = ohneUnerreichbareZweige(
+            cssFiles.find(f => f.name === 'variables.css').content
+        ).replace(/\/\*[\s\S]*?\*\//g, m => m.replace(/[^\n]/g, ' '));
         const zahl = new Map();
         let i = 0;
         while (i < maskiert.length) {
