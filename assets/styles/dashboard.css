@@ -261,10 +261,22 @@
                die Violettrolle. Gemessen wie in Welle 1, min ueber die vier
                neutralen Traegerflaechen, vorher -> nachher: dark 5,84 -> 5,48 ·
                light 2,44 -> 2,38 · sepia 2,08 -> 2,05 · contrast 9,15 -> 9,57. */
-            color: var(--cyan);
+            /* SCHRITT 8 (D-4/E2) entscheidet diese Stelle jetzt, und zwar
+               als einen der drei Faelle mit FREMDER Rolle: die Flaeche ist
+               Violett, die Schrift Cyan. Beides bleibt — der Wiki-Verweis ist
+               violett hinterlegt und cyan geschrieben, das ist seine Kennung
+               und keine Nachlaessigkeit. Geaendert sind nur die zwei Dinge,
+               ueber die E2 entscheidet: die Staerke wird gedeckelt und die
+               Schrift nimmt ihre Textvariante.
+               Gemessen, min ueber --bg-card/--bg-dark/--bg-elevated:
+                 heute     var(--cyan)      6,65 · 2,62 · 2,24 · 11,81
+                 nachher   var(--cyan-text) 6,65 · 4,59 · 4,55 · 11,81
+               In Dark und Contrast aendert sich nichts: --cyan-text IST dort
+               var(--cyan), und 10 % liegt unter beiden Deckeln. */
+            color: var(--cyan-text);
             cursor: pointer;
             border-bottom: 1px dotted var(--cyan);
-            background: color-mix(in srgb, var(--purple) 10%, transparent); /* F-18: aus der Dublette uebernommen */
+            background: color-mix(in srgb, var(--purple) min(10%, var(--tint-max)), transparent); /* F-18: aus der Dublette uebernommen */
             padding: 2px 8px; /* F-18: aus der Dublette uebernommen */
             border-radius: var(--radius-sm); /* F-18: aus der Dublette uebernommen */
             font-size: 0.85em; /* F-18: aus der Dublette uebernommen */
@@ -408,10 +420,17 @@
             background: var(--bg-card);
         }
         
+        /* Zweiter Fall mit FREMDER Rolle (D-4/E2, Schritt 8): die Flaeche ist
+           Gruen — "dieser Rettungswurf ist geuebt" —, die Zahl darauf Gold,
+           weil Gold in dieser Ansicht durchgehend der Wert ist. Beide
+           Bedeutungen bleiben; gedeckelt wird die Staerke, und die Schrift
+           nimmt ihre Textvariante.
+           Gemessen: var(--gold) 4,66 · 2,18 · 4,76 · 6,94  ->
+                     var(--gold-text) 5,52 · 4,75 · 5,33 · 6,94. */
         .char-save-box.proficient {
-            background: color-mix(in srgb, var(--green) 20%, transparent);
+            background: color-mix(in srgb, var(--green) min(20%, var(--tint-max)), transparent);
             border: 1px solid var(--green);
-            color: var(--gold); /* F-18: aus der Dublette uebernommen */
+            color: var(--gold-text); /* F-18: aus der Dublette uebernommen */
         }
         
         .char-save-box input[type="checkbox"] {
@@ -424,8 +443,15 @@
             color: var(--text-dim);
         }
         
+        /* QUERGRIFF (D-4/E2, Schritt 8): die Toenung steht in der ELTERNregel,
+           die Tinte hier. Regelweise zaehlende Bestandslisten sehen diese
+           Bauart nicht — R-04 sieht sie ebenfalls nicht, weil sie Flaeche UND
+           Tinte in DERSELBEN Regel verlangt. Sie ist deshalb von Hand
+           nachgerechnet: var(--green) auf der 20-%-Gruentoenung des Elters
+           ergibt 5,62 · 2,21 · 2,15 · 7,09, var(--green-text) dagegen
+           6,66 · 4,67 · 4,74 · 7,09. */
         .char-save-box.proficient .save-label {
-            color: var(--green);
+            color: var(--green-text);
         }
 
         /* Encounter Saving Throws Grid */
@@ -449,7 +475,7 @@
         }
 
         .enc-save-box.active {
-            background: color-mix(in srgb, var(--green) 15%, transparent);
+            background: color-mix(in srgb, var(--green) min(15%, var(--tint-max)), transparent);
             border-color: var(--green);
         }
 
@@ -468,8 +494,12 @@
             letter-spacing: 0.5px;
         }
 
+        /* Zweiter Quergriff derselben Bauart, siehe .char-save-box.proficient
+           .save-label. Auf der 15-%-Gruentoenung des Elters:
+           var(--green) 6,35 · 2,32 · 2,25 · 8,16  ->
+           var(--green-text) 6,66 · 4,67 · 4,74 · 8,16. */
         .enc-save-box.active .enc-save-label {
-            color: var(--green);
+            color: var(--green-text);
         }
 
         .enc-save-input {
@@ -541,9 +571,9 @@
         }
         
         .char-resistance-chip.selected {
-            background: color-mix(in srgb, var(--cyan) 20%, transparent);
+            background: color-mix(in srgb, var(--cyan) min(20%, var(--tint-max)), transparent);
             border-color: var(--cyan);
-            color: var(--cyan);
+            color: var(--cyan-text);
         }
         
         .char-resistance-chip input {
@@ -651,12 +681,27 @@
             --color-note: var(--pink);
         }
         
-        .status-badge.success { background: color-mix(in srgb, var(--green) 20%, transparent); color: var(--green); }
-        .status-badge.danger { background: color-mix(in srgb, var(--red) 20%, transparent); color: var(--red); }
-        .status-badge.info { background: color-mix(in srgb, var(--cyan) 20%, transparent); color: var(--cyan); }
-        .status-badge.primary { background: color-mix(in srgb, var(--gold) 20%, transparent); color: var(--gold); }
-        .entity-tag.quest { background: color-mix(in srgb, var(--orange) 20%, transparent); color: var(--color-quest); }
-        .entity-tag.spell { background: color-mix(in srgb, var(--blue) 20%, transparent); color: var(--color-spell); }
+        .status-badge.success { background: color-mix(in srgb, var(--green) min(20%, var(--tint-max)), transparent); color: var(--green-text); }
+        .status-badge.danger { background: color-mix(in srgb, var(--red) min(20%, var(--tint-max)), transparent); color: var(--red-text); }
+        .status-badge.info { background: color-mix(in srgb, var(--cyan) min(20%, var(--tint-max)), transparent); color: var(--cyan-text); }
+        .status-badge.primary { background: color-mix(in srgb, var(--gold) min(20%, var(--tint-max)), transparent); color: var(--gold-text); }
+        /* DIESE ZWEI STANDEN IN KEINER BESTANDSLISTE DER WELLE, und der Grund
+           ist der Umweg: ihre Tinte kam ueber var(--color-quest) bzw.
+           var(--color-spell) aus dem Block darueber, zwei von 13 Aliasen, die
+           nur hier definiert sind. Jede Zaehlung, die nach "Rolle als Tinte
+           auf Toenung derselben Rolle" sucht, sieht an dieser Stelle einen
+           fremden Namen und geht weiter. Gefunden hat sie erst die erweiterte
+           R-04, und zwar als "nicht aufloesbar" — der Rechner kennt nur die
+           Tokens aus variables.css.
+           Die beiden Zeilen nennen ihre Rolle jetzt direkt, wie die vier
+           .status-badge-Regeln darueber, die dasselbe tun. Die Aliase selbst
+           bleiben unberuehrt; dass 11 der 13 ueberhaupt nicht benutzt werden,
+           ist ein eigener Befund und nicht Sache dieses Schritts.
+           Gemessen: quest 4,65 · 2,33 · 2,87 · 4,51 -> 5,36 · 4,64 · 4,57 ·
+           4,51 · spell 4,24 · 3,25 · 2,38 · 3,33 -> 4,84 · 4,64 · 4,63 ·
+           4,53. */
+        .entity-tag.quest { background: color-mix(in srgb, var(--orange) min(20%, var(--tint-max)), transparent); color: var(--orange-text); }
+        .entity-tag.spell { background: color-mix(in srgb, var(--blue) min(20%, var(--tint-max)), transparent); color: var(--blue-text); }
         
         .icon-btn.danger:hover { color: var(--red); }
         .icon-btn.success:hover { color: var(--green); }
@@ -1658,8 +1703,8 @@
        Gemessen (min ueber die drei neutralen Traegerflaechen, vorher ->
        nachher): 6,12 -> 5,63 · 2,34 -> 2,21 · 2,22 -> 2,15 · 8,01 -> 7,11.
        Light und Sepia lagen schon vorher unter 4,5 — D-4, Schritt 8. */
-    background: color-mix(in srgb, var(--green) 20%, transparent);
-    color: var(--green);
+    background: color-mix(in srgb, var(--green) min(20%, var(--tint-max)), transparent);
+    color: var(--green-text);
     border-radius: var(--radius-sm);
     font-size: 0.65em;
     font-weight: 600;
@@ -1882,10 +1927,10 @@
     align-items: center;
     gap: 4px;
     padding: 4px 10px;
-    background: color-mix(in srgb, var(--red) 10%, transparent);
+    background: color-mix(in srgb, var(--red) min(10%, var(--tint-max)), transparent);
     border: 1px solid var(--red);
     border-radius: var(--radius-sm);
-    color: var(--red);
+    color: var(--red-text);
     cursor: pointer;
     font-family: var(--font-mono);
     font-size: 0.9em;

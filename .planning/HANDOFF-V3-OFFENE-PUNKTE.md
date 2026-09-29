@@ -489,7 +489,7 @@ diese Tabelle führt.
 
 | Stelle | Selektor | Rolle | Traeger dark | Traeger light |
 | ------ | -------- | ----- | ------------ | ------------- |
-| `dashboard.css:511` | `.char-section-title` | `--gold` | --bg-card · #191919 | --bg-card · #1e1e1e |
+| `dashboard.css:541` | `.char-section-title` | `--gold` | --bg-card · #191919 | --bg-card · #1e1e1e |
 | `dice.css:633` | `.fdp-title` | `--gold-text` | --bg-card | --bg-card |
 | `dmscreen.css:1060` | `.form-group label` | `--gold` | --bg-card · #191919 | --bg-card · #1e1e1e |
 | `party.css:2655` | `.char-adv-btn.adv` | `--green` | --bg-dark · #191919 | --bg-dark · #1e1e1e |
@@ -530,12 +530,12 @@ dashboard.css
    66  .dice-crit
    67  .dice-fail
    88  .dice-skill-btn:hover
-  428  .char-save-box.proficient .save-label
-  472  .enc-save-box.active .enc-save-label
-  661  .icon-btn.danger:hover
-  662  .icon-btn.success:hover
- 1095  .dash-timer-time
- 1359  .qref-chip.danger
+  454  .char-save-box.proficient .save-label
+  502  .enc-save-box.active .enc-save-label
+  706  .icon-btn.danger:hover
+  707  .icon-btn.success:hover
+ 1140  .dash-timer-time
+ 1404  .qref-chip.danger
 dice.css
   349  .dice-fav-item:hover .fav-del
 dmscreen.css
