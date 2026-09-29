@@ -2301,14 +2301,59 @@ describe('R-04 — jede Regel haelt 4,5 auf ihrer EIGENEN Flaeche (Ratsche)', ()
            .concentration-badge:hover { background: color-mix(…--purple 30%…); }
 
        Neun solche Regeln stehen im Baum, fuenf davon unter 4,5 (schlechteste
-       `core.css .link-chip:hover`, Dark 2,87). Auch R-03 sieht sie nicht — sie
-       verwirft jede color-mix-Flaeche und verlangt eine `var(--on-*)`-Tinte;
-       R-05 fuehrt eine Liste benannter Zustaende, R-14 verlangt einen
-       Nachfahren ohne eigene Flaeche. Belegt per Mutation:
+       `core.css .link-chip:hover`, Dark 2,87) — STAND DER PRUEFUNG W2-D
+       Runde 2, hier bewusst stehengelassen und darunter berichtigt. Auch R-03
+       sieht sie nicht — sie verwirft jede color-mix-Flaeche und verlangt eine
+       `var(--on-*)`-Tinte; R-05 fuehrt eine Liste benannter Zustaende, R-14
+       verlangt einen Nachfahren ohne eigene Flaeche. Belegt per Mutation:
        `.concentration-badge:hover` von 30 % auf 95 % gestellt, Kontrast gegen
        1,0 in allen vier Themes — kein einziger roter Test. Gefuehrt als
-       offener Punkt W2-D-05; der Weg ist derselbe wie in Schritt 16, nur an
-       R-03 statt an R-04.
+       offener Punkt W2-D-05.
+
+       BERICHTIGUNG (Nachtrag, 2026-09-29). Beide Zahlen oben sind ueberholt,
+       und die Mutationsanleitung ist es auch. Die Akte
+       (.planning/HANDOFF-V3-OFFENE-PUNKTE.md) hat den Vorbehalt beim Nachtrag
+       bekommen, diese Spiegelstelle nicht — genau die Bauart Auseinanderlaufen,
+       gegen die R-06 gebaut ist, nur in die andere Richtung.
+
+       (1) DIE ZAHL NEUN STIMMT WEITER, aber sie zaehlt nur den einen der
+           beiden Wege: Tinte aus der EIGENEN Grundregel. Kommt die Tinte aus
+           einem NACHFAHREN der Grundregel, ist es dieselbe Bauart und faellt
+           trotzdem aus dieser Zaehlung — `dice.css .dice-attr.save:hover`
+           (Tinte aus `.dice-attr.save small`) lag mit 4,41 · 4,09 · 4,18 ·
+           5,05 in drei Themes darunter und stand in keiner Liste. Beide Wege
+           zusammen sind 14 Paare; sie stehen am Ende dieser Datei unter R-18.
+
+       (2) UNTER 4,5 IST VON DEN FUENFEN KEINE MEHR. Vier sind im Nachtrag
+           gedeckelt worden, die fuenfte hat Tintenkorrektur und Deckel
+           bekommen. Gemessen am Stand danach, min ueber
+           --bg-card/--bg-dark/--bg-elevated, dark · light · sepia · contrast:
+             core.css .link-chip:hover                4,81 · 4,64 · 4,64 · 4,52
+             initiative.css .concentration-badge:hover
+                                                      4,57 · 4,57 · 4,60 · 4,74
+             initiative.css .concentration-add-btn:hover
+                                                      4,81 · 4,57 · 4,60 · 5,31
+             pwa.css .pwa-install-btn:active          5,65 · 4,78 · 5,14 · 6,76
+             file-backup.css .backup-entry-restore:hover
+                                                      4,85 · 4,54 · 4,62 · 5,39
+           Der als schlechtester Fall genannte Wert 2,87 existiert nicht mehr.
+           Knappster verbliebener Halter der neun ist
+           `dashboard.css .dice-formula-chip:hover` mit genau 4,50 in Sepia.
+
+       (3) DIE MUTATIONSANLEITUNG IST INERT GEWORDEN. `.concentration-badge
+           :hover` traegt jetzt `min(30%, var(--tint-max))`; weil --tint-max
+           13/7/7/20 % ist, ergibt `min(95%, …)` zeichengleich dieselbe Farbe.
+           Der Kontrast faellt NICHT gegen 1,0, er bleibt bei 4,57 · 4,57 ·
+           4,60 · 4,74. Wer die Probe wiederholt, muss den Deckel MITENTFERNEN
+           (`color-mix(in srgb, var(--purple) 95%, transparent)`) — sonst misst
+           er den Deckel und haelt das Ergebnis fuer den Beleg der Luecke.
+
+       (4) DIE LUECKE SELBST IST SEIT DEM NACHTRAG GESCHLOSSEN, und zwar nicht
+           an R-03, wie es hier urspruenglich stand, sondern in einer eigenen
+           Ratsche: R-18 am Ende dieser Datei urteilt ueber beide Wege. Die
+           schaerfere Probe von damals — alle vier Deckel zurueck auf BASE,
+           volle Suite zeichengleich gruen — laeuft heute rot; sie steht im
+           Kopf von R-18 zusammen mit den nachgestellten Zahlen.
        ------------------------------------------------------------------ */
 
     /** Die Traegerflaechen einer TOENUNG (D-2, Lesart wie R-11). */
