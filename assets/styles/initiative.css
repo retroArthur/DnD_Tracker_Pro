@@ -780,9 +780,20 @@
 
         .npc-relation-status.neutral {
             /* 156,163,175 traf --dmg-necrotic-text; gemeint war "keine
-               Farbe" -> --border, wie bei den farblosen Zustandsmarken.
-               8,10 · 12,45 · 7,72 · 11,08 -> 11,02 · 13,43 · 8,07 · 13,97. */
-            background: color-mix(in srgb, var(--border) 20%, transparent);
+               Farbe" — wie bei den farblosen Zustandsmarken, und wie dort
+               auf einer Toenung von --text-dim statt auf --border (Pruefung
+               W2-C: --border traegt die Tinte, laesst die Marke aber mit der
+               Karte verschmelzen). Beide Achsen, min ueber die drei
+               neutralen Traegerflaechen:
+                 Tinte/Flaeche   alt 8,10 · 12,45 · 7,72 · 11,08
+                                 --border 20 %  11,02 · 13,43 · 8,07 · 13,97
+                                 neu             8,75 · 11,06 · 6,87 · 10,86
+                 Flaeche/Traeger alt 1,37 · 1,14 · 1,14 · 1,30
+                                 --border 20 %   1,05 · 1,06 · 1,08 · 1,11
+                                 neu             1,28 · 1,28 · 1,28 · 1,32
+               Die Tinte gibt hier nach, die Flaeche gewinnt; beide bleiben
+               weit ueber ihren Schwellen. */
+            background: color-mix(in srgb, var(--text-dim) 20%, transparent);
             color: var(--text);
         }
 

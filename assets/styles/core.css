@@ -615,14 +615,46 @@
            - Die vier farblosen Zustaende (blinded, deafened, petrified,
              exhaustion) trugen drei verschiedene Grautoene aus drei fremden
              Paletten (100,100,100 · 120,113,108 · in dmscreen 107,114,128).
-             Gemeint war immer dasselbe: "keine Farbe". Die neutrale Rolle
-             dieses Projekts heisst --border; sie fuehrt die Gruppe jetzt
-             geschlossen, mit unveraenderter Staerke. Gemessen gegen die
-             schlechteste der drei neutralen Traegerflaechen, vorher/nachher
-             (dark light sepia contrast): 3,31/3,16/3,11/5,20 -> 3,99 · 4,35 ·
-             4,04 · 5,60 bzw. 3,10/3,30/3,26/4,87 -> dieselben vier Werte.
-             Besser in JEDEM Theme; --text-dim als Toenungsbasis waere in
-             Contrast auf 3,76 gefallen (deshalb nicht genommen).
+             Gemeint war immer dasselbe: "keine Farbe". Sie fuehren jetzt
+             geschlossen eine Toenung von --text-dim mit --text als Tinte,
+             und zwar NACH ZWEI ACHSEN gemessen (Pruefung W2-C, Runde 1).
+
+             WARUM ZWEI ACHSEN. Eine Zustandsmarke traegt weder Rahmen noch
+             Schatten (.condition-tag oben: nur padding und border-radius) —
+             ihre Flaeche ist die einzige Kontur, die sie als Marke ausweist.
+             Der erste Anlauf dieses Schrittes stellte die Gruppe auf --border
+             und mass nur die Tinte. Die Tinte wurde dadurch besser, die
+             Flaeche gleichzeitig unsichtbar: --border ist per Rolle eine
+             Haarlinienfarbe und auf der Karte absichtlich kontrastarm, auf
+             30 % heruntergemischt bleibt fast nichts. In Light war die Marke
+             #d1d1d1 auf Weiss und wurde #f0f0f0 auf Weiss.
+
+             Gemessen, D-2-Minimum ueber die drei neutralen Traegerflaechen,
+             dark · light · sepia · contrast:
+               Tinte/Flaeche  alt 2,47-3,31 · 3,16-3,83 · 3,11-3,78 ·
+                                  3,89-5,20
+                              --border 30 % + --text-dim  3,99 · 4,35 · 4,04
+                                  · 5,60   (in drei Themes unter 4,5)
+                              --text-dim 30 % + --text    7,49 · 9,67 · 5,99
+                                  · 8,72   <- gewaehlt
+               Flaeche/Traeger alt 1,30-1,71 · 1,22-1,48 · 1,21-1,47 ·
+                                  1,26-1,61
+                              --border 30 %      1,08 · 1,08 · 1,13 · 1,21
+                              --text-dim 30 %    1,52 · 1,47 · 1,47 · 1,66
+                                  <- gewaehlt, die Flaeche von frueher
+             In Light ergibt die neue Toenung buchstaeblich wieder #d1d1d1;
+             --text-dim ist ein Mittelgrau und trifft die drei abgeloesten
+             Literale damit naeher als die Haarlinienfarbe.
+
+             DIE TINTE MUSSTE MITWANDERN: --text-dim auf seiner eigenen
+             30-%-Toenung ergibt nur 2,79 · 3,19 · 3,12 · 3,76. Die Gruppe
+             verlaesst dadurch die Bauart "Rolle auf Toenung derselben Rolle"
+             — sie kann sie nicht fuehren, weil eine neutrale Rolle keine
+             lesbare Tinte auf sich selbst hat. Sie ist damit KEINE
+             D-4-Stelle, und der Toenungsdeckel aus E2 (Schritt 8) gilt fuer
+             sie NICHT: er wuerde die Flaeche in Light und Sepia auf 7 %
+             druecken und die eben gewonnene zweite Achse wieder verlieren.
+             R-11 bewacht beide Zahlenreihen.
            - prone trug 180,83,9 und als Tinte --orange-dim. Die Toenung folgt
              jetzt derselben Rolle wie die Tinte: 1,98/5,63/6,49/1,88 ->
              2,04 · 5,21 · 5,93 · 2,00. Mit var(--orange) waere es
@@ -631,21 +663,21 @@
            Die Staerken bleiben unangetastet; ueber sie entscheidet D-4 in
            Schritt 8 zusammen mit der Tinte. Dieselbe Gruppe steht ein
            zweites Mal in dmscreen.css (.condition-badge.*, D-05). */
-        .condition-blinded { background: color-mix(in srgb, var(--border) 30%, transparent); color: var(--text-dim); }
+        .condition-blinded { background: color-mix(in srgb, var(--text-dim) 30%, transparent); color: var(--text); }
         .condition-charmed { background: color-mix(in srgb, var(--pink) 20%, transparent); color: var(--pink); }
-        .condition-deafened { background: color-mix(in srgb, var(--border) 30%, transparent); color: var(--text-dim); }
+        .condition-deafened { background: color-mix(in srgb, var(--text-dim) 30%, transparent); color: var(--text); }
         .condition-frightened { background: color-mix(in srgb, var(--purple) 20%, transparent); color: var(--purple); }
         .condition-grappled { background: color-mix(in srgb, var(--orange) 20%, transparent); color: var(--orange); }
         .condition-incapacitated { background: color-mix(in srgb, var(--red) 20%, transparent); color: var(--red); }
         .condition-invisible { background: color-mix(in srgb, var(--blue) 15%, transparent); color: var(--blue); border: 1px dashed var(--blue); }
         .condition-paralyzed { background: color-mix(in srgb, var(--yellow) 20%, transparent); color: var(--yellow); }
-        .condition-petrified { background: color-mix(in srgb, var(--border) 30%, transparent); color: var(--text-dim); }
+        .condition-petrified { background: color-mix(in srgb, var(--text-dim) 30%, transparent); color: var(--text); }
         .condition-poisoned { background: color-mix(in srgb, var(--green) 20%, transparent); color: var(--green); }
         .condition-prone { background: color-mix(in srgb, var(--orange-dim) 20%, transparent); color: var(--orange-dim); }
         .condition-restrained { background: color-mix(in srgb, var(--orange) 20%, transparent); color: var(--orange); }
         .condition-stunned { background: color-mix(in srgb, var(--yellow) 20%, transparent); color: var(--yellow); }
         .condition-unconscious { background: color-mix(in srgb, var(--red) 30%, transparent); color: var(--red); }
-        .condition-exhaustion { background: color-mix(in srgb, var(--border) 30%, transparent); color: var(--text-dim); }
+        .condition-exhaustion { background: color-mix(in srgb, var(--text-dim) 30%, transparent); color: var(--text); }
         .condition-concentration { background: color-mix(in srgb, var(--blue) 20%, transparent); color: var(--blue); border: 1px solid var(--blue); }
         .condition-custom { background: color-mix(in srgb, var(--gold) 20%, transparent); color: var(--gold); }
         
