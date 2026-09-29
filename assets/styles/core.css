@@ -580,14 +580,14 @@
         .chip.active { border-color: var(--gold); background: var(--gold); color: var(--on-gold); }
         
         /* Color coding */
-        .color-blue { background: rgba(96,165,250,0.2); border-color: var(--blue); color: var(--blue); }
-        .color-yellow { background: rgba(251,191,36,0.2); border-color: var(--yellow); color: var(--yellow); }
-        .color-red { background: rgba(239,68,68,0.2); border-color: var(--red); color: var(--red); }
-        .color-green { background: rgba(74,222,128,0.2); border-color: var(--green); color: var(--green); }
-        .color-purple { background: rgba(167,139,250,0.2); border-color: var(--purple); color: var(--purple); }
-        .color-cyan { background: rgba(126,196,207,0.2); border-color: var(--cyan); color: var(--cyan); }
-        .color-orange { background: rgba(251,146,60,0.2); border-color: var(--orange); color: var(--orange); }
-        .color-pink { background: rgba(244,114,182,0.2); border-color: var(--pink); color: var(--pink); }
+        .color-blue { background: color-mix(in srgb, var(--blue) 20%, transparent); border-color: var(--blue); color: var(--blue); }
+        .color-yellow { background: color-mix(in srgb, var(--yellow) 20%, transparent); border-color: var(--yellow); color: var(--yellow); }
+        .color-red { background: color-mix(in srgb, var(--red) 20%, transparent); border-color: var(--red); color: var(--red); }
+        .color-green { background: color-mix(in srgb, var(--green) 20%, transparent); border-color: var(--green); color: var(--green); }
+        .color-purple { background: color-mix(in srgb, var(--purple) 20%, transparent); border-color: var(--purple); color: var(--purple); }
+        .color-cyan { background: color-mix(in srgb, var(--cyan) 20%, transparent); border-color: var(--cyan); color: var(--cyan); }
+        .color-orange { background: color-mix(in srgb, var(--orange) 20%, transparent); border-color: var(--orange); color: var(--orange); }
+        .color-pink { background: color-mix(in srgb, var(--pink) 20%, transparent); border-color: var(--pink); color: var(--pink); }
         
         .condition-tag {
             font-size: 0.7em;
@@ -608,22 +608,22 @@
         
         /* Condition Colors */
         .condition-blinded { background: rgba(100,100,100,0.3); color: var(--text-dim); }
-        .condition-charmed { background: rgba(244,114,182,0.2); color: var(--pink); }
+        .condition-charmed { background: color-mix(in srgb, var(--pink) 20%, transparent); color: var(--pink); }
         .condition-deafened { background: rgba(100,100,100,0.3); color: var(--text-dim); }
-        .condition-frightened { background: rgba(167,139,250,0.2); color: var(--purple); }
-        .condition-grappled { background: rgba(251,146,60,0.2); color: var(--orange); }
-        .condition-incapacitated { background: rgba(239,68,68,0.2); color: var(--red); }
-        .condition-invisible { background: rgba(96,165,250,0.15); color: var(--blue); border: 1px dashed var(--blue); }
-        .condition-paralyzed { background: rgba(251,191,36,0.2); color: var(--yellow); }
+        .condition-frightened { background: color-mix(in srgb, var(--purple) 20%, transparent); color: var(--purple); }
+        .condition-grappled { background: color-mix(in srgb, var(--orange) 20%, transparent); color: var(--orange); }
+        .condition-incapacitated { background: color-mix(in srgb, var(--red) 20%, transparent); color: var(--red); }
+        .condition-invisible { background: color-mix(in srgb, var(--blue) 15%, transparent); color: var(--blue); border: 1px dashed var(--blue); }
+        .condition-paralyzed { background: color-mix(in srgb, var(--yellow) 20%, transparent); color: var(--yellow); }
         .condition-petrified { background: rgba(120,113,108,0.3); color: var(--text-dim); }
-        .condition-poisoned { background: rgba(74,222,128,0.2); color: var(--green); }
+        .condition-poisoned { background: color-mix(in srgb, var(--green) 20%, transparent); color: var(--green); }
         .condition-prone { background: rgba(180,83,9,0.2); color: var(--orange-dim); }
-        .condition-restrained { background: rgba(251,146,60,0.2); color: var(--orange); }
-        .condition-stunned { background: rgba(251,191,36,0.2); color: var(--yellow); }
-        .condition-unconscious { background: rgba(239,68,68,0.3); color: var(--red); }
+        .condition-restrained { background: color-mix(in srgb, var(--orange) 20%, transparent); color: var(--orange); }
+        .condition-stunned { background: color-mix(in srgb, var(--yellow) 20%, transparent); color: var(--yellow); }
+        .condition-unconscious { background: color-mix(in srgb, var(--red) 30%, transparent); color: var(--red); }
         .condition-exhaustion { background: rgba(120,113,108,0.3); color: var(--text-dim); }
-        .condition-concentration { background: rgba(96,165,250,0.2); color: var(--blue); border: 1px solid var(--blue); }
-        .condition-custom { background: rgba(212,175,55,0.2); color: var(--gold); }
+        .condition-concentration { background: color-mix(in srgb, var(--blue) 20%, transparent); color: var(--blue); border: 1px solid var(--blue); }
+        .condition-custom { background: color-mix(in srgb, var(--gold) 20%, transparent); color: var(--gold); }
         
         /* ============================================================
            AVATARS / IMAGES
@@ -675,29 +675,29 @@
             filter: brightness(1.2);
         }
         
-        .tag-red { background: rgba(239,68,68,0.2); color: var(--red); }
-        .tag-green { background: rgba(74,222,128,0.2); color: var(--green); }
-        .tag-blue { background: rgba(96,165,250,0.2); color: var(--blue); }
-        .tag-yellow { background: rgba(251,191,36,0.2); color: var(--yellow); }
-        .tag-purple { background: rgba(167,139,250,0.2); color: var(--purple); }
-        .tag-orange { background: rgba(251,146,60,0.2); color: var(--orange); }
-        .tag-pink { background: rgba(244,114,182,0.2); color: var(--pink); }
-        .tag-cyan { background: rgba(126,196,207,0.2); color: var(--cyan); }
+        .tag-red { background: color-mix(in srgb, var(--red) 20%, transparent); color: var(--red); }
+        .tag-green { background: color-mix(in srgb, var(--green) 20%, transparent); color: var(--green); }
+        .tag-blue { background: color-mix(in srgb, var(--blue) 20%, transparent); color: var(--blue); }
+        .tag-yellow { background: color-mix(in srgb, var(--yellow) 20%, transparent); color: var(--yellow); }
+        .tag-purple { background: color-mix(in srgb, var(--purple) 20%, transparent); color: var(--purple); }
+        .tag-orange { background: color-mix(in srgb, var(--orange) 20%, transparent); color: var(--orange); }
+        .tag-pink { background: color-mix(in srgb, var(--pink) 20%, transparent); color: var(--pink); }
+        .tag-cyan { background: color-mix(in srgb, var(--cyan) 20%, transparent); color: var(--cyan); }
         
         .link-chip {
             font-size: 0.75em;
             padding: 2px 6px;
             border-radius: var(--radius-sm);
-            background: rgba(96, 165, 250, 0.2);
+            background: color-mix(in srgb, var(--blue) 20%, transparent);
             color: var(--blue);
             cursor: pointer;
             transition: all 0.15s ease;
         }
         .link-chip:hover {
-            background: rgba(96, 165, 250, 0.4);
+            background: color-mix(in srgb, var(--blue) 40%, transparent);
             transform: scale(1.05);
         }
-        .tag-gold { background: rgba(212,175,55,0.2); color: var(--gold); }
+        .tag-gold { background: color-mix(in srgb, var(--gold) 20%, transparent); color: var(--gold); }
         
         .tags-container {
             display: flex;
@@ -978,7 +978,7 @@
         }
 
         .char-action-btn.primary {
-            background: rgba(239, 68, 68, 0.2);
+            background: color-mix(in srgb, var(--red) 20%, transparent);
             border-color: var(--red);
         }
 
@@ -1259,12 +1259,12 @@
         }
         
         .char-tag.spell {
-            background: rgba(96, 165, 250, 0.2);
+            background: color-mix(in srgb, var(--blue) 20%, transparent);
             color: var(--blue);
         }
         
         .char-tag.item {
-            background: rgba(251, 146, 60, 0.2);
+            background: color-mix(in srgb, var(--orange) 20%, transparent);
             color: var(--orange);
         }
         
@@ -1547,7 +1547,7 @@
 
         .assign-spell-item.checked {
             border-color: var(--gold);
-            background: rgba(212, 175, 55, 0.1);
+            background: color-mix(in srgb, var(--gold) 10%, transparent);
         }
 
         .assign-spell-item input[type="checkbox"] {
