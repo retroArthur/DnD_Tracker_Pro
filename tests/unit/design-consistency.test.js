@@ -4982,6 +4982,11 @@ describe('R-15 — die sechs Attributfarben bleiben unterscheidbar (Ratsche zu D
        in Sepia 1,12 auf der ausgewaehlten Zeile. Er stand in KEINER
        Bestandsliste, weil der Suchbefehl von W1-C-02 nach `color: var(--bg-dark)`
        sucht und diese Stelle die Farbe als Text setzt.
+       DIE ZWEI AUFLAGEN DIESER TRAEGERLISTE WERDEN GELESEN, NICHT WIEDERHOLT
+       (Pruefrunde W2-E, Runde 1): der Spielraum betraegt hier 0,00 bis 0,11,
+       und eine eingetippte Toenung neben so wenig Luft ist eine Ratsche, die
+       gegen ihre eigene Abschrift rechnet statt gegen die Gestaltung. Siehe
+       den Kommentar zu auswahlToenung() weiter unten.
 
    (5) Die Tinte der Seltenheits-MARKE ist themenblind und haelt auf allen
        fuenf Flaechen. Themenblind, weil die Flaeche es ist — genau das Muster,
@@ -5144,35 +5149,92 @@ describe('R-16 — Tinte auf JS-gesetzter Flaeche (Ratsche)', () => {
         expect(befunde.sort()).toEqual([]);
     });
 
+    /** Die Auswahl-Toenung DER QUELLE, nicht einer Abschrift: npcs.css
+     *  `.loot-item.selected`. Warum das der entscheidende Unterschied ist —
+     *  Pruefrunde W2-E, Runde 1: der Spielraum dieses Teils betraegt 0,00 bis
+     *  0,11 (die Auswahlzeile IST die bindende Flaeche: sepia uncommon 4,50,
+     *  sepia legendary 4,51, light veryrare 4,61). Stuende die Toenung hier
+     *  als eingetippte 0.1, wuerde eine gewoehnliche Gestaltungsaenderung in
+     *  npcs.css — 10 % auf 15 % — ALLE FUENF Tinten auf light 4,42-4,44 und
+     *  sepia 4,30-4,32 druecken, waehrend dieser Test weiter mit 0,1 rechnet,
+     *  4,50-4,53 meldet und gruen bleibt. Genau diese Bauart nennt der
+     *  Kommentar zu ZELL_TOENUNG (Schritt 7 derselben Welle) "die
+     *  gefaehrlichste Bauart, die eine Ratsche haben kann" — sie darf hier
+     *  nicht durch die Hintertuer zurueckkommen.
+     *  Gibt null zurueck, wenn die Regel verschwunden ist; Teil (4) meldet das
+     *  als Befund, statt ueber Leerlauf gruen zu werden. */
+    function auswahlToenung() {
+        const css = cssFiles.find(f => f.name === 'npcs.css');
+        if (!css) return null;
+        const regel = regelnMitRumpf(css.content).find(r => r.sel === '.loot-item.selected');
+        if (!regel) return null;
+        const mix = WCAG.zerlegeMix(deklaration(regel.rumpf, 'background'));
+        if (!mix || !/^transparent$/i.test(mix.gegen)) return null;
+        const pct = parseFloat(mix.anteil);
+        if (!isFinite(pct)) return null;
+        return { basis: mix.basis, anteil: pct / 100 };
+    }
+
+    /** Dieselbe Lesart fuer die zugewiesene Zeile der Verteilen-Liste. Sie
+     *  steht als rgba-Literal in render-loot.js — JS-Literale sind nach E5
+     *  nicht Gegenstand dieser Welle, aber die Zahl darin ist trotzdem eine
+     *  Quelle und keine Abschrift. */
+    function zuweisungsToenung() {
+        const js = lies('features/render-loot.js');
+        if (js === null) return null;
+        const m = js.match(
+            /background:\s*rgba\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*,\s*([\d.]+)\s*\)/
+        );
+        if (!m) return null;
+        return {
+            basis: WCAG.rgbToHex([Number(m[1]), Number(m[2]), Number(m[3])]),
+            anteil: Number(m[4])
+        };
+    }
+
+    const AUSWAHL = auswahlToenung();
+    const ZUWEISUNG = zuweisungsToenung();
+
     /** Die Traegerflaechen der drei Stellen, an denen die Seltenheitsfarbe
      *  TEXT ist. Jede mit ihrer Herkunft, damit niemand sie fuer eine
      *  allgemeine Liste haelt:
      *    .loot-item-name  — .loot-item traegt --bg-card (core.css), :hover
      *                       --bg-elevated (core.css), .selected eine
-     *                       10-%-Toenung von --yellow ueber --bg-dark
-     *                       (npcs.css gewinnt in der Kaskade ueber core.css)
+     *                       Toenung ueber --bg-dark, deren Basis und Staerke
+     *                       aus npcs.css gelesen werden (npcs.css gewinnt in
+     *                       der Kaskade ueber core.css)
      *    .loot-detail-name— die Detailspalte traegt --bg-card (core.css)
      *    Zuweisungsliste  — #assign-item-list traegt --bg-dark (modals-entity
      *                       .html), die zugewiesene Zeile zusaetzlich eine
-     *                       15-%-Auflage (render-loot.js, dort ein
-     *                       rgba-Literal — JS-Literale sind nach E5 nicht
-     *                       Gegenstand dieser Welle) */
+     *                       Auflage, die aus render-loot.js gelesen wird */
     function textTraeger(theme, p) {
         const dark = WCAG.resolve(p['--bg-dark'], p);
+        const pr = t => `${Math.round(t.anteil * 1000) / 10} %`;
         return {
             '--bg-card': WCAG.resolve(p['--bg-card'], p),
             '--bg-elevated': WCAG.resolve(p['--bg-elevated'], p),
             '--bg-dark': dark,
-            'Auswahl (gelb 10 % ueber --bg-dark)': WCAG.mixOver(
-                WCAG.resolve(p['--yellow'], p),
-                0.1,
+            [`Auswahl (${AUSWAHL.basis} ${pr(AUSWAHL)} ueber --bg-dark)`]: WCAG.mixOver(
+                WCAG.resolve(AUSWAHL.basis, p),
+                AUSWAHL.anteil,
                 dark
             ),
-            'zugewiesen (gruen 15 % ueber --bg-dark)': WCAG.mixOver('#4ade80', 0.15, dark)
+            [`zugewiesen (${ZUWEISUNG.basis} ${pr(ZUWEISUNG)} ueber --bg-dark)`]: WCAG.mixOver(
+                ZUWEISUNG.basis,
+                ZUWEISUNG.anteil,
+                dark
+            )
         };
     }
 
     test('(4) jede Seltenheits-Tinte haelt die Schwelle auf den Traegern ihrer Textstellen', () => {
+        // Leerlaufschutz: verschwindet eine der beiden Quellregeln, ist das
+        // ein Befund. Ohne diese vier Zeilen liefe der Test mit null durch.
+        expect(AUSWAHL).not.toBeNull();
+        expect(ZUWEISUNG).not.toBeNull();
+        expect(typeof AUSWAHL.basis).toBe('string');
+        expect(typeof ZUWEISUNG.basis).toBe('string');
+
         const pals = WCAG.palettes();
         const alias = aliasSchicht();
         const befunde = [];

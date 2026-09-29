@@ -148,6 +148,14 @@ function isCovered(relModulePath) {
 // (gemessen, nicht behauptet). Auch diese Zusicherung fuehrt den Modulpfad in
 // AUSFUEHRBAREM Code, nicht nur im Erklaertext — dieselbe Unterscheidung wie
 // bei den zwei Eintraegen darueber.
+//
+// 2026-09-29, Pruefrunde W2-E Runde 1: NOCH EIN EINTRAG GESTRICHEN, die Liste
+// schrumpft von 77 auf 76. `features/render-loot.js` wird seither von R-16
+// Teil (4) GELESEN und nicht mehr bloss erwaehnt: die Auflage der zugewiesenen
+// Zeile wird aus ihrem Quelltext geholt, statt im Test wiederholt zu werden.
+// Sie stand dort als eingetippte 0.15 neben einem Spielraum von 0,00 bis 0,11
+// — eine Ratsche, die gegen ihre eigene Abschrift rechnet. Auch diese
+// Zusicherung fuehrt den Modulpfad in AUSFUEHRBAREM Code.
 const MODULE_TEST_EXCEPTIONS = [
     'core/themes.js',
     'features/bestiary/bestiary-actions.js',
@@ -183,7 +191,6 @@ const MODULE_TEST_EXCEPTIONS = [
     'features/reise/reise-crud.js',
     'features/reise/reise-default-tables.js',
     'features/reise/reise-render.js',
-    'features/render-loot.js',
     'features/render-spells.js',
     'features/rest-manager.js',
     'features/session-prep/session-prep-crud.js',
