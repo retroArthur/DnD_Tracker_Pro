@@ -2446,7 +2446,7 @@
 }
 
 .cf-skill-row:hover {
-    background: var(--bg-hover, rgba(255,255,255,0.05));
+    background: var(--bg-hover);
 }
 
 .cf-skill-row input[type="checkbox"] {
@@ -2592,7 +2592,7 @@
 }
 
 .char-roll-btn:hover {
-    background: var(--bg-hover, rgba(255,255,255,0.08));
+    background: var(--bg-hover);
     transform: scale(1.04);
 }
 
@@ -2613,7 +2613,7 @@
 }
 
 .char-adv-btn:hover {
-    background: var(--bg-hover, rgba(255,255,255,0.08));
+    background: var(--bg-hover);
     color: var(--text);
 }
 
@@ -2627,7 +2627,7 @@
 }
 
 .char-attr-box.clickable:hover {
-    background: var(--bg-hover, rgba(255,255,255,0.08));
+    background: var(--bg-hover);
     transform: scale(1.03);
 }
 
@@ -2692,7 +2692,7 @@
 }
 
 .char-skill-item:hover {
-    background: var(--bg-hover, rgba(255,255,255,0.07));
+    background: var(--bg-hover);
 }
 
 .char-skill-item-dot {
@@ -2863,7 +2863,7 @@
 }
 
 .char-attack-entry .bestiary-dice:hover {
-    background: var(--bg-hover, rgba(255,255,255,0.07));
+    background: var(--bg-hover);
     transform: scale(1.04);
 }
 
