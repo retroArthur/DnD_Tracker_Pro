@@ -176,7 +176,13 @@ const ZUSTANDSBILDER = [
         name: 'wuerfelblase',
         async aufbau(page) {
             await page.evaluate(() => {
-                // @ts-ignore — global aus features/dice/dice-core.js
+                // @ts-ignore — global aus dem Wuerfelmodul. Sein Pfad steht hier
+                // BEWUSST nicht ausgeschrieben: er steht in der Ausnahmeliste
+                // des Abdeckungs-Gates (module-test-coverage.test.js), und eine
+                // woertliche Nennung unter tests/ zaehlt dort als Abdeckung.
+                // Beim ersten Lauf dieser Datei ist genau das passiert — das
+                // Gate wurde rot, weil ein Kommentar ein Modul "abgedeckt" hat,
+                // das niemand testet.
                 if (typeof window.toggleFloatingDice === 'function') window.toggleFloatingDice();
             });
             await page.waitForTimeout(300);
