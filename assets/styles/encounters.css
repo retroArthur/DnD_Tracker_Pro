@@ -144,10 +144,10 @@
 }
 
 .calc-close:hover {
-    color: var(--red);
+    color: var(--red-text);
     /* 231,76,60 ist Flat-UI-Rot; die Regel fuehrt die Rotrolle bereits als
        Tinte. 3,68 · 3,50 · 3,30 · 3,60 -> 3,70 · 3,42 · 3,22 · 3,79 (D-4). */
-    background: color-mix(in srgb, var(--red) 10%, transparent);
+    background: color-mix(in srgb, var(--red) min(10%, var(--tint-max)), transparent);
 }
 
 /* Body */
@@ -359,11 +359,11 @@
    Abhilfe, und ueber Staerken entscheidet D-4 in Schritt 8 (Deckel Dark
    13 %), nicht dieser Schritt. Alle fuenf Zeilen gehoeren ohnehin zu den 108
    D-4-Stellen und fielen schon vorher in drei von vier Themes durch. */
-.calc-diff-badge.trivial { background: color-mix(in srgb, var(--blue) 20%, transparent); color: var(--blue); }
-.calc-diff-badge.easy { background: color-mix(in srgb, var(--green) 20%, transparent); color: var(--green); }
-.calc-diff-badge.medium { background: color-mix(in srgb, var(--yellow) 20%, transparent); color: var(--yellow); }
-.calc-diff-badge.hard { background: color-mix(in srgb, var(--orange) 20%, transparent); color: var(--orange); }
-.calc-diff-badge.deadly { background: color-mix(in srgb, var(--red) 20%, transparent); color: var(--red); }
+.calc-diff-badge.trivial { background: color-mix(in srgb, var(--blue) min(20%, var(--tint-max)), transparent); color: var(--blue-text); }
+.calc-diff-badge.easy { background: color-mix(in srgb, var(--green) min(20%, var(--tint-max)), transparent); color: var(--green-text); }
+.calc-diff-badge.medium { background: color-mix(in srgb, var(--yellow) min(20%, var(--tint-max)), transparent); color: var(--yellow-text); }
+.calc-diff-badge.hard { background: color-mix(in srgb, var(--orange) min(20%, var(--tint-max)), transparent); color: var(--orange-text); }
+.calc-diff-badge.deadly { background: color-mix(in srgb, var(--red) min(20%, var(--tint-max)), transparent); color: var(--red-text); }
 
 .calc-diff-info {
     flex: 1;
