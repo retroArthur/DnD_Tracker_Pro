@@ -2806,3 +2806,200 @@ Auge misst sie nicht nach. Die Runde beantwortet genau eine Frage, die keine Mes
 beträgt dort rund 1,05).
 
 ---
+
+## W3-F-01 — Sichtprobenliste der Vier-Themes-Runde (Welle 3, Schritt 10)
+
+**Stand:** 2026-09-30, Welle 3 Schritt 2. **Offen bis zur Runde.** Gesichert durch **R-20** in
+`tests/unit/design-consistency.test.js`: die beiden Tests „jede Gluehlage, deren Deckung sich
+aendert, steht in der Aktenlage unter W3-F-01" und „die sechs volldeckenden Goldrahmen stehen in
+der Aktenlage unter W3-F-01" gehen rot, wenn eine Stelle hier verschwindet. Diese Liste kann also
+nicht durch Vergessen kürzer werden.
+
+### Warum sie existiert
+
+Welle 3 ist die erste Welle, die der versionierte Stil-Sollstand **nicht** abnehmen kann: von
+3626 Digests führen genau **6** einen `box-shadow` ungleich `none`. Von 71 Deklarationen
+erreichen nur 2 einen Ruhezustands-Schlüssel, 8 hängen an `:hover`/`:focus`, 61 liegen außerhalb
+der View-Container. Wer aus „6 von 3626 grün" auf „die Welle ist belegt" schließt, hat 61 von 71
+Deklarationen nie gesehen.
+
+`R-19` und `R-20` messen dafür Geometrie, Zuordnung und Kontrastabstand — aber keine der beiden
+beantwortet die Frage, die diese Runde beantwortet: **ob eine Höhenlage noch als Höhe und eine
+Leuchtmarke noch als Marke gelesen wird.**
+
+### Keine Zeilenanker in dieser Liste, und das ist Absicht
+
+Die Stellen stehen als **Datei + Selektor**, nicht als `datei.css:ZEILE`. Grund: die drei
+Zeilenanker, die das Auftragsdokument für Welle 3 nennt (`core.css:857`, `initiative.css:922`,
+`dice.css:621`), zeigen alle drei ins Leere — richtig sind 840, 1055 und 634. `R-19` führt
+Zeilennummern und hält sie in einem **eigenen** Test gegen die gefundene Deklaration; hier, wo
+niemand sie nachzieht, wären sie nach dem nächsten Kommentar-Commit falsch.
+`tools/sync-aktenlage-anker.js` deckt nur die 123 Farbanker von W1-D-01 ab, nicht Schatten.
+
+### Teil A — die Höhenlagen
+
+| # | Stelle | Was sich ändert | Worauf zu achten ist |
+| --: | --- | --- | --- |
+| 1 | `encounters.css` → `#calculator-modal .modal-content` (Begegnungen → Rechner) | **Größter Sprung der Welle:** `0 20px 60px` → Stufe 3 `0 8px 32px`, Faktor 0,53. | Wirkt das Modal noch abgehoben, oder klebt es auf der Seite? Das ist die Stelle, an der zu widersprechen wäre (W3-D-02 nennt den Preis ausdrücklich). |
+| 2 | `command-palette.css` → `.cp-box` (`Strg+Shift+K`) | `0 16px 48px` → Stufe 3, Faktor 0,67. | Dasselbe eine Stufe schwächer. |
+| 3 | `core.css` → `.offline-indicator` | Stufe 2 statt Stufe 1, obwohl der Radius näher an 6 liegt als an 16: die Leiste ist `position: fixed`, eine frei schwebende Auflage. Weichzeichnung 10 → 16 px, y 2 → 4 px. | Die einzige bewusste Abweichung von der Radiusregel. Sieht sie nach zu viel aus? |
+| 4 | Die sechs `transition`-Regeln in **Contrast** (`core.css`, `dmscreen.css` zweimal, `migration.css`, `npcs.css`, `party.css`) | Aus weichem Aufsteigen wird hartes Einrasten — im Kontrast-Theme ist die Höhenlage ein Umriss ohne Verlauf. | Ruckelt es, oder liest es als bewusstes Einschnappen? |
+| 5 | `dashboard.css` → `.dash-char:hover` und `party.css` → `.event-log-entry` | Dort trifft der Contrast-Umriss auf einen farbigen `border-left`-Statusstreifen. | Bleibt der Statusstreifen als Farbe erkennbar, oder verschluckt ihn der Umriss? |
+| 6 | `migration.css` → der Assistentenschritt | Ring von 30 % auf 15 %. | Ist der aktive Schritt noch hervorgehoben? |
+
+### Teil B — die Umrisse in Contrast: **22** Kandidaten, nicht 13
+
+Die Entscheidung W3-D-01 stellt Höhe in Contrast als harten Umriss dar (`#888` / `#aaa` / `#ccc`,
+getrennt über den Spread 1/2/3 px). Der Plan nennt als Kandidaten für „Umriss nicht von Rahmen zu
+unterscheiden" nur die **13** Schattenregeln mit `border: 1px solid var(--border)`. Gemessen am
+2026-09-30 tragen **zusätzlich neun** Schattenregeln einen Rahmen aus `--gold`. Summe **22**.
+
+In Contrast ist `--gold` = `#ffd700`. Gerechnet mit `tests/unit/helpers/wcag-contrast.js`
+(Selbstprobe `#777`/weiß = 4,48 und `#767676`/weiß = 4,54 bestanden):
+
+| Stelle | Rahmen | Stufe | Umriss | Abstand Umriss ↔ Rahmen |
+| --- | --- | --: | --- | --: |
+| `core.css` → `.spell-tooltip` | voll `var(--gold)` | 3 | `#ccc`, 3 px | **1,14** |
+| `editors.css` → `.editor-toolbar .tb-menu` | voll `var(--gold)` | 3 | `#ccc`, 3 px | **1,14** |
+| `encounters.css` → `#calculator-modal .modal-content` | voll `var(--gold)` | 3 | `#ccc`, 3 px | **1,14** |
+| `party.css` → `.cf-languages-block .cf-lang-dropdown` | voll `var(--gold)` | 2 | `#aaa`, 2 px | 1,66 |
+| `spells.css` → `.floating-toolbar` | voll `var(--gold)` | 2 | `#aaa`, 2 px | 1,66 |
+| `tools.css` → `.wiki-link-suggester` | voll `var(--gold)` | 2 | `#aaa`, 2 px | 1,66 |
+| `command-palette.css` → `.cp-box` | 30 % Gold | 3 | `#ccc`, 3 px | 5,33 |
+| `dice.css` → `.floating-dice-panel` | 30 % Gold | 3 | `#ccc`, 3 px | 5,33 |
+| `dmscreen.css` → `.modal` | 20 % Gold | 3 | `#ccc`, 3 px | 7,20 |
+
+**Die drei gemischten sind nicht das Problem, die sechs volldeckenden sind es.** 20–30 % Gold über
+der Contrast-Karte lösen zu einem dunklen Oliv auf (`#41390e` bzw. `#584c0c`) und heben sich vom
+Umriss deutlich ab. Volles `#ffd700` neben `#ccc` dagegen hat **keinen** Helligkeitsunterschied:
+dort entsteht eine 4 px breite Bande aus 1 px Gold und 3 px Fast-Weiß, die als **verbreiteter
+Rahmen** liest und nicht als Höhe. Die drei schlimmsten sind die Stufe-3-Fälle, und
+`#calculator-modal .modal-content` ist gleichzeitig Punkt 1 dieser Liste.
+
+**Anzusehen sind alle 22**, in dieser Reihenfolge: erst die drei mit 1,14, dann die drei mit 1,66,
+dann die 13 Regeln mit `border: 1px solid var(--border)` (dort sollte `#888` gegen `#555`
+unterscheidbar sein), zuletzt die drei gemischten als Gegenprobe.
+
+**Fällt die Ablesung an den sechs Goldrahmen durch, ist die FORM falsch, nicht der Grauwert.** Die
+Grauleiter ist nach oben ausgereizt: `#ccc` ist bereits die hellste der drei Stufen, und heller
+würde den Abstand zu Gold weiter verkleinern. Dann kommen nur zwei Wege in Frage: ein **versetzter**
+Umriss (y > 0, damit die Bande nicht rundherum gleich dick ist) oder für diese sechs Stellen eine
+helle weiche Auflage statt des harten Umrisses. Die Grauleiter nachzujustieren löst es nicht.
+
+### Teil C — die Glühlagen: alle 14 ändern ihre Deckung
+
+`--glow-gold` / `-yellow` / `-green` / `-red` tragen nach W3-D-03 nur die Farbe; die 14 Radien
+bleiben unberührt (4/4/6/6/8/8/10/12/12/12/12/20/30/30, unter `R-20`). Die **Deckung** ist aber
+ebenfalls keine Geometrie, und sie steht heute an jeder Stelle einzeln: sechs verschiedene Werte
+(0,20 · 0,25 ×3 · 0,30 ×2 · 0,40 ×2 · 0,50 ×4 · 1,00 ×2; Median 0,40, Mittel 0,4536). Gewählt ist
+**0,50** — der häufigste Wert —, damit vier Stellen bildpunktgleich bleiben. Die übrigen zehn:
+
+| Stelle | Deckung heute → Token | Faktor | Worauf zu achten ist |
+| --- | --- | --: | --- |
+| `encounters.css` → `.calc-threshold-marker` | 1,00 → 0,50 | **0,50** | Volldeckendes Gold wird halb so stark. Die Marke soll in zwei Sekunden zeigen, wo die Schwelle liegt. |
+| `tools.css` → `.char-form-progress-dot.current` | 1,00 → 0,50 | **0,50** | Derselbe Fall: welcher Schritt des Formulars ist der aktuelle? |
+| `spells.css` → `.floating-toolbar` | 0,20 → 0,50 | **2,50** | Der einzige große Sprung nach **oben**. Drängt sich die schwebende Leiste jetzt auf? |
+| `dmscreen.css` → `.btn:hover` | 0,25 → 0,50 | 2,00 | Alle drei DM-Screen-Knöpfe glühen beim Überfahren doppelt so stark. |
+| `dmscreen.css` → `.btn-success:hover` | 0,25 → 0,50 | 2,00 | ebenda |
+| `dmscreen.css` → `.btn-danger:hover` | 0,25 → 0,50 | 2,00 | ebenda |
+| `dice.css` → `.floating-dice-trigger:hover` | 0,30 → 0,50 | 1,67 | **Zusätzlich** wechselt der Ton: heute `#dc2626` (das Rot des Light-Blocks), künftig `--red` des jeweiligen Themes — in Dark sichtbar heller. |
+| `dice.css` → `.fdp-die.d20:hover` | 0,30 → 0,50 | 1,67 | derselbe Tonwechsel |
+| `file-backup.css` → `.backup-dot-active` | 0,40 → 0,50 | 1,25 | Kaum sichtbar; nur zur Vollständigkeit. |
+| `file-backup.css` → `.backup-dot-paused` | 0,40 → 0,50 | 1,25 | ebenda |
+
+**Die zwei Goldmarken oben sind die CSS-Zwillinge der vier JS-Sprungmarken aus W3-D-05** —
+dieselbe Aufgabe („zeig mir in zwei Sekunden, wohin ich gesprungen bin"), dieselbe Richtung der
+Änderung (volldeckend → halbdurchsichtig). Für alle sechs gilt dieselbe Antwort: **fällt eine
+durch, bekommt sie eine höhere Deckung, am Code begründet** — nicht stillschweigend hinnehmen und
+nicht als Ausnahme wegbuchen.
+
+### Teil D — die vier JS-Sprungmarken und die zwei Ringe (Schritt 8)
+
+Die vier `0 0 20px var(--gold)`-Sprungmarken (`encounters-render.js`, `locations-render.js`,
+`npc-render.js`, `entity-links.js`) und die zwei `0 0 0 2px var(--gold)`-Ringe
+(`entity-actions.js`, `undo.js`) gehen auf `--glow-gold` bzw. `--ring-gold`. Siehe Teil C: die
+Marken wechseln von voll deckendem Gold auf eine Leuchte mit Teildeckung.
+
+### Was diese Runde **nicht** finden kann
+
+Kontrastwerte und Geometrie. Die sind gemessen und durch `R-19` (Form, Ort→Stufe, Contrast ohne
+Weiß) und `R-20` (Radien, Deckungsverteilung, Abstand Umriss ↔ Goldrahmen) gesichert; ein Auge
+misst sie nicht nach. Sie beantwortet genau zwei Fragen, die keine Messung beantwortet: **ob ein
+harter Umriss als Höhe gelesen wird** und **ob eine halbdurchsichtige Marke noch zeigt, wo.**
+
+### Befehle
+
+```bash
+cd /d/Claude_Code/Projekte/DnD_Tracker_App_Pro
+PYTHONIOENCODING=utf-8 python build.py     # dist/dnd-tracker-bundled.html oeffnen
+npx jest tests/unit/design-consistency.test.js -t "R-19"
+npx jest tests/unit/design-consistency.test.js -t "R-20"
+```
+
+---
+
+## W3-F-02 — `aliasSchicht()` liest Tokennamen aus Kommentaren als Deklarationen
+
+**Status: OFFEN, gehört keiner Welle.** Aufgenommen am 2026-09-30, Welle 3 Schritt 2. **Kein
+Befund am Produktivcode** — eine Schwäche des Testnetzes, die beim Schreiben der Begründung für
+`--glow-*` zugeschnappt ist und deshalb hier steht und nicht im Vergessen.
+
+### Was passiert ist
+
+`aliasSchicht()` in `tests/unit/design-consistency.test.js` schneidet die vier Theme-Blöcke aus
+`variables.css` heraus und läuft dann mit `WCAG.DECL_RE` über den Rest. Kommentare werden dabei
+**nicht** maskiert. Der Erklärtext neben den vier Leuchttokens enthielt den Halbsatz „dieselbe
+Regel steckt in `--ring-gold: 15 %`" — `DECL_RE` las daraus eine zweite Deklaration im
+Aliasblock, und `R-02` meldete:
+
+```
+DOPPELT DEFINIERT, der Aliaswert gewinnt und der Theme-Wert ist tot:
+--ring-gold (dark/light/sepia/contrast)
+```
+
+Ein Befund über einem Halbsatz, an einer Datei, in der sich kein Wert geändert hatte.
+
+### Warum das schon einmal passiert ist
+
+**Dieselbe Falle, andere Regex.** In Welle 2 Schritt 11 las `ohneUnerreichbareZweige()` das Wort
+`@supports` aus einem Kommentar als positiven Zweig — „sieben Ratschen warfen auf einmal über
+einem Halbsatz". Dort ist sie **im Parser** geschlossen worden, und die Selbstprobe „das Wort im
+Kommentar ist kein Zweig" bewacht sie seitdem. Für `DECL_RE` gibt es diese Maskierung nicht.
+
+### Umgangen, nicht behoben — und warum
+
+Der Kommentar in `variables.css` ist umformuliert (kein Tokenname mit Doppelpunkt dahinter) und
+trägt jetzt eine Warnung an genau der Stelle, an der der nächste Schreiber sie liest. **Der Parser
+ist bewusst nicht angefasst worden:** `aliasSchicht()` steht in einem abgenommenen Welle-2-Block,
+und ein Eingriff dort gehört in einen eigenen Schritt mit eigenem rotem Nachweis — nicht als
+Beifang einer Kommentaränderung.
+
+### Was noch offen ist
+
+`aliasSchicht()` ist nur die **halbe** Stelle. `palette()` in `tests/unit/helpers/wcag-contrast.js`
+läuft mit derselben `DECL_RE` über die vier **Theme-Blöcke** und maskiert dort ebenfalls keine
+Kommentare. Heute fällt das nicht auf, weil kein Kommentar in einem Theme-Block einen Tokennamen
+mit Doppelpunkt trägt — die Contrast-Erklärung nennt `--border` bewusst ohne. Ein Satz wie
+„`--shadow-2: 0 4px 16px` wäre hier zu weich" in einem Theme-Block würde `palette()` still
+verfälschen und über `BASELINE_TOKENS` bis in die 40 Fälle von
+`wcag-contrast-helper.test.js` durchschlagen.
+
+### Zu entscheiden bleibt
+
+Beide Parser Kommentare maskieren (zeilentreu, wie `leerKommentare()` in `R-19`, damit
+Zeilennummern nicht wandern) und je eine Kunst-CSS-Selbstprobe nach dem Muster „das Wort im
+Kommentar ist kein Zweig" dazu — oder die Regel „in `variables.css` steht kein Tokenname mit
+Doppelpunkt in einem Kommentar" als Ratsche schreiben. Die erste Antwort behebt die Ursache, die
+zweite nur die Ausprägung in einer Datei.
+
+### Befehle
+
+```bash
+cd /d/Claude_Code/Projekte/DnD_Tracker_App_Pro
+# Die Falle nachstellen: in den Aliasblock von variables.css einen Kommentar
+# mit "--ring-gold: 15 %" schreiben, dann
+npx jest tests/unit/design-consistency.test.js -t "vier Teilformeln"
+npx jest tests/unit/design-consistency.test.js -t "das Wort im Kommentar"
+```
+
+---
