@@ -67,6 +67,13 @@ function renderQuestItem(q) {
         rewardParts.push(q.reward); // Legacy field
     }
     const rewardDisplay = rewardParts.join(' + ') || '—';
+    /* Der Verfolgen-Knopf traegt im aktiven Zustand eine volle Goldflaeche.
+       Seine Tinte war bis Welle 2 Schritt 10 var(--bg-dark) — in Dark fast
+       schwarz und damit richtig, in Light #f5f5f5 und in Sepia #f4e4c1, also
+       fast weiss auf Gold: gemessen 2,98 bzw. 5,65. Mit var(--on-gold) sind
+       es 8,98 / 5,80 / 7,10 / 13,46. Dieselbe Goldflaeche traegt in core.css
+       (.filter-chip.active) schon laenger var(--on-gold); es waren zwei
+       Tinten auf einer Flaeche, sichtbar nebeneinander. */
     // Quest type badge
     const typeClass = q.type === 'plot' ? 'plot-quest' : q.type === 'side' ? 'side-quest' : 'quest';
     const typeLabel = q.type === 'plot' ? 'Plot' : q.type === 'side' ? 'Side' : 'Quest';
@@ -74,7 +81,7 @@ function renderQuestItem(q) {
         <div class="quest-header" data-action="toggle-quest" data-id="${q.id}">
             <div class="quest-title-row">
                 <span class="drag-handle" title="Zum Sortieren ziehen">⋮⋮</span>
-                <button class="btn btn-sm" style="padding: 2px 6px; font-size: 12px; ${q.tracked ? 'background: var(--gold); color: var(--bg-dark);' : ''}" data-action="toggle-quest-tracked-stop" data-id="${q.id}" title="${q.tracked ? 'Wird verfolgt' : 'Verfolgen'}">📌</button>
+                <button class="btn btn-sm" style="padding: 2px 6px; font-size: 12px; ${q.tracked ? 'background: var(--gold); color: var(--on-gold);' : ''}" data-action="toggle-quest-tracked-stop" data-id="${q.id}" title="${q.tracked ? 'Wird verfolgt' : 'Verfolgen'}">📌</button>
                 <span class="quest-title">${esc(q.title)}</span>
                 <span class="quest-type-badge ${q.type || 'quest'}">${typeLabel}</span>
                 ${giverDisplay ? renderEntityLink('npcs', q.giverId, giverDisplay, { icon: '👤', fallbackColor: 'var(--cyan)' }) : ''}
