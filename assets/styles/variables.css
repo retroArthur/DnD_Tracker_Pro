@@ -192,6 +192,33 @@
             --on-coin-sm: #111111;
             --on-coin-km: #111111;
 
+            /* Seltenheitsskala, TINTE (Welle 2 Schritt 10).
+
+               Die Flaeche der Skala ist themenunabhaengig (Aliasblock unten,
+               Paragraph 7). Als TEXT geht das nicht: dieselben fuenf hellen
+               Toene liegen an drei Stellen der Schatzkammer auf hellen
+               Flaechen und erreichen dort 1,12 bis 2,72 — der schlechteste
+               Einzelwert des ganzen Farbbefunds steht hier (sehr selten,
+               Sepia, auf der ausgewaehlten Zeile). Paragraph 7 sieht dafuer
+               ausdruecklich eine "theme-faehige Ableitung" vor, und Welle 1
+               hat genau diese Rechnung fuer die Attributfarben schon gefahren.
+
+               In Dark und Contrast bleibt es beim Wert der Flaeche — dort
+               halten die Originaltoene mit 5,46 bis 10,39 ueber alle fuenf
+               Traeger. Light und Sepia sind kanalweise in HSL abgedunkelt,
+               bei festgehaltenem Farbton und festgehaltener Saettigung, bis
+               4,5 auf der SCHLECHTESTEN der fuenf Traegerflaechen erreicht
+               ist. Der Farbton wandert dabei um hoechstens 0,3 Grad.
+
+               Traegerflaechen (alle drei Textstellen zusammen): --bg-card ·
+               --bg-elevated · --bg-dark · die Auswahl-Toenung der Zeile ·
+               die Zuweisungs-Auflage im Verteilen-Dialog. */
+            --rarity-common-text: var(--rarity-common);
+            --rarity-uncommon-text: var(--rarity-uncommon);
+            --rarity-rare-text: var(--rarity-rare);
+            --rarity-veryrare-text: var(--rarity-veryrare);
+            --rarity-legendary-text: var(--rarity-legendary);
+
             /* Attributfarben. Sie liegen auf ZWEI Flaechen:
                .dms-attr-item und .dms-save-item auf --bg-dark, .attr-str..cha
                der Schnellreferenz auf --bg-card. .cf-coin-label stand hier
@@ -311,6 +338,20 @@
             --on-coin-gm: #111111;
             --on-coin-sm: #111111;
             --on-coin-km: #111111;
+
+            /* Seltenheitsskala, TINTE — abgedunkelt (Welle 2 Schritt 10).
+               Herleitung und Traegerflaechen: siehe Dark-Block. Gemessen
+               vorher/nachher auf der schlechtesten Flaeche (--bg-elevated):
+               gewoehnlich 1,42 -> 4,53 · ungewoehnlich 2,07 -> 4,51 ·
+               selten 2,22 -> 4,51 · sehr selten 1,25 -> 4,51 ·
+               legendaer 1,85 -> 4,51. Farbtoene 141,89 -> 142,04 ·
+               213,12 -> 213,04 · 255,14 -> 254,92 · 47,95 -> 47,90 ·
+               27,02 -> 26,95. */
+            --rarity-common-text: #16783a;
+            --rarity-uncommon-text: #0764d6;
+            --rarity-rare-text: #6f42f7;
+            --rarity-veryrare-text: #7f6603;
+            --rarity-legendary-text: #aa4e03;
 
             /* Attributfarben, in Light alle sechs zu hell (min 1,97-4,43).
                Abgedunkelt wird kanalweise mit EINEM Faktor — das haelt Farbton
@@ -437,6 +478,21 @@
             --on-coin-sm: #111111;
             --on-coin-km: #111111;
 
+            /* Seltenheitsskala, TINTE — abgedunkelt (Welle 2 Schritt 10).
+               Herleitung und Traegerflaechen: siehe Dark-Block. Schlechteste
+               Flaeche ist hier die Auswahl-Toenung der Zeile (Pergament unter
+               einer Gelbauflage), nicht --bg-elevated. Gemessen
+               vorher/nachher: gewoehnlich 1,28 -> 4,52 · ungewoehnlich
+               1,86 -> 4,50 · selten 1,99 -> 4,52 · sehr selten 1,12 -> 4,51 ·
+               legendaer 1,66 -> 4,51. Farbtoene 141,89 -> 142,17 ·
+               213,12 -> 213,23 · 255,14 -> 255,23 · 47,95 -> 48,00 ·
+               27,02 -> 27,10. */
+            --rarity-common-text: #147036;
+            --rarity-uncommon-text: #065dc9;
+            --rarity-rare-text: #6635f6;
+            --rarity-veryrare-text: #765f03;
+            --rarity-legendary-text: #9e4903;
+
             /* Attributfarben, in Sepia alle sechs zu hell (min 1,71-3,68).
                Dieselbe kanalweise Abdunklung wie in Light. Die schlechteste
                Flaeche WAR hier --bg-hover #e5dbc5 und knapp dahinter --bg-dark
@@ -538,6 +594,16 @@
             --on-coin-gm: #111111;
             --on-coin-sm: #111111;
             --on-coin-km: #111111;
+
+            /* Seltenheitsskala, TINTE — wie in Dark unveraendert die Flaeche
+               selbst (Welle 2 Schritt 10). Auf den fuenf Traegerflaechen
+               5,85 bis 10,39; eine Abdunklung waere hier eine
+               Verschlechterung. Herleitung: siehe Dark-Block. */
+            --rarity-common-text: var(--rarity-common);
+            --rarity-uncommon-text: var(--rarity-uncommon);
+            --rarity-rare-text: var(--rarity-rare);
+            --rarity-veryrare-text: var(--rarity-veryrare);
+            --rarity-legendary-text: var(--rarity-legendary);
 
             /* Attributfarben unveraendert bis auf --attr-wis (wie in Dark,
                #a855f7 -> #aa58f7). Auf --bg-dark und --bg-card halten alle
@@ -711,6 +777,36 @@
                fehlenden --on-*-Pendants der abgeleiteten Toene sind Welle
                3/4. */
             --ink-on-dark: #ffffff;
+
+            /* Seltenheitsskala der Schatzkammer, FLAECHE (Welle 2 Schritt 10).
+
+               Die fuenf Werte standen bis hierher als Hexliterale in
+               core/constants.js (RARITY_COLORS) und waren damit fuer JEDE
+               Ratsche dieses Testnetzes unsichtbar — es liest CSS. Sie stehen
+               jetzt hier, unveraendert im Wert; kein Ton wechselt.
+
+               SIE BLEIBEN THEMENUNABHAENGIG, und das ist Paragraph 7:
+               bedeutungstragende Skalen sind "themenunabhaengig als
+               Flaeche/Rahmen; als Text nur ueber theme-faehige Ableitungen".
+               Gruen/blau/violett/gelb/orange fuer gewoehnlich bis legendaer
+               ist ausserdem eine Konvention, die der Spieler von woanders
+               mitbringt — sie je Theme umzufaerben hiesse, sie zu brechen.
+
+               DESHALB IST DIE TINTE DARAUF EBENFALLS THEMENBLIND. Genau das
+               Muster, das Welle 1 Schritt 8 an der SW-Update-Leiste
+               beschlossen hat: eine Flaeche, die keinem Theme folgt, darf
+               keine Tinte tragen, die es tut. Bis hierher stand dort
+               `color: var(--bg-dark)` — in Dark fast schwarz und richtig, in
+               Light #f5f5f5 und in Sepia #f4e4c1, also fast weiss auf einer
+               hellen Flaeche: 1,22 bis 2,50 (sehr selten in Sepia 1,22).
+               Mit #111111 sind es 6,94 bis 12,33 in allen vier Themes; weiss
+               waere 1,53 bis 2,72 und keine Alternative. */
+            --rarity-common: #4ade80;
+            --rarity-uncommon: #60a5fa;
+            --rarity-rare: #a78bfa;
+            --rarity-veryrare: #facc15;
+            --rarity-legendary: #fb923c;
+            --on-rarity: #111111;
 
             /* ------------------------------------------------------------
                Kategorie-Skalen (F-04)
