@@ -9,6 +9,9 @@ package-lock.json
 .planning/
 tests/e2e/test-results/
 tests/e2e/test-results-smoke/
+# Ein Playwright-Lauf ohne --config legt denselben Ordner in der Wurzel an;
+# der fuehrende Schraegstrich bindet den Eintrag genau dorthin.
+/test-results/
 playwright-report/
 
 # Generierte Design-Handoff-Referenzartefakte und lokale Claude-Ordner (R09) —

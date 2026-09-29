@@ -25,6 +25,14 @@ npm-debug.log*
 tests/e2e/test-results/
 tests/e2e/test-results-smoke/
 tests/e2e/reports/
+# Playwright legt seinen Ausgabeordner relativ zum AUFRUFORT an, nicht
+# relativ zur Konfiguration. Ein Lauf ohne --config (oder aus einem anderen
+# Verzeichnis) erzeugt deshalb test-results/ in der Wurzel, obwohl beide
+# Konfigurationen nach tests/e2e/ zeigen. Der fuehrende Schraegstrich bindet
+# den Eintrag genau an die Wurzel und laesst die beiden Ordner darueber
+# unberuehrt. Nur loeschen liesse ihn wiederkommen, nur ignorieren verbaerge
+# den Hinweis, dass jemand ohne Konfiguration geprueft hat.
+/test-results/
 # Ablichtungen der Sichtpruefung (welle-1-screens.spec.js, nur mit
 # WELLE1_SCREENS=1): oertliches Material fuer die menschliche Runde,
 # jederzeit neu erzeugbar — ein Stapel Vollbilder gehoert nicht in die Historie.
