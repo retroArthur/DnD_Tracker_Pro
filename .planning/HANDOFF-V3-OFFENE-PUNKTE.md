@@ -1076,3 +1076,100 @@ node -e "const W=require('./tests/unit/helpers/wcag-contrast.js');console.log(W.
 grep -n "mark {" assets/styles/dmscreen.css
 grep -rn "color-mix(in srgb, var(--gold)" assets/styles/*.css
 ```
+
+---
+
+## W2-B-05 — Der `@supports`-Auftrag von Schritt 11 nennt 6 Tokens; die Klasse hat 15
+
+**Stand:** 2026-09-29, Prüfrunde W2-B Runde 1. Offen — **Geltungsbereich von E4 / Schritt 11
+Punkt (2)** ist zu erweitern, bevor Schritt 11 läuft.
+
+### Worum es geht
+
+**E4** verzichtet an den Flächen bewusst auf einen Zwei-Deklarations-Rückfall: eine unbekannte
+`color-mix`-Form fällt dort von selbst auf die vorausgehende Deklaration derselben Eigenschaft
+zurück, und ein zusätzliches `rgba`-Literal ließe `R-10` an jeder Stelle anschlagen. Für **Tokens**
+trägt diese Begründung nicht:
+
+- Ein Custom Property, das nur **einmal** deklariert ist, hat keine vorausgehende Deklaration.
+- `var(--x, ersatz)` hilft ebenfalls nicht — der Rückfall feuert nur bei einem **nicht
+  definierten** Namen, nicht bei einem definierten mit unbrauchbarem Wert. Der Wert ist dann
+  „invalid at computed value time", die Eigenschaft fällt auf ihren Anfangswert. Bei
+  `background-color` heißt das **durchsichtig**.
+
+Deshalb ordnet E4 für die abgeleiteten Tokens eine `@supports`-Absicherung an. Genannt sind
+**sechs** (`--gold-hover`, `--green-hover`, `--red-dim`, `--green-dim`, `--red-dark`,
+`--orange-dim`). Schritt 11 sagt wörtlich „**@supports NUR um die 6 abgeleiteten Tokens**" und
+wiederholt es in der Abnahme.
+
+**Schritt 3 derselben Welle hat neun weitere Tokens exakt derselben Bauart angelegt.**
+
+### Die Klasse, gemessen
+
+| | Tokens | Nutzungen per `var()` | davon mit Rückfall |
+| --- | ---: | ---: | ---: |
+| von E4 benannt (Aliasblock) | 6 | 19 | 0 |
+| von Schritt 3 angelegt | **9** | **22** | 0 |
+| **Klasse insgesamt** | **15** | **41** | **0** |
+
+Die neun: `--overlay-faint`, `--overlay-weak`, `--overlay-mid`, `--overlay-strong`,
+`--overlay-heavy`, `--scrim-60`, `--scrim-70`, `--scrim-75`, `--scrim-85`. Sie stehen im
+Basis-`:root` und werden ausnahmslos ohne Rückfall benutzt. **Die ungeschützte Menge ist damit
+größer als die, für die der Schutz angeordnet ist.**
+
+Vor Schritt 3 trugen alle 22 Stellen ein nacktes `rgba(...)` und funktionierten überall. Der
+Schritt hat die Klasse also nicht nur vergrößert, er hat 22 Stellen aus der sicheren in die
+unsichere Bauart überführt.
+
+### Warum das nicht kosmetisch ist
+
+Sechs der 22 Stellen sind **Modalblenden**:
+
+| Datei | Regel |
+| --- | --- |
+| `command-palette.css` | `.cp-overlay` |
+| `dmscreen.css` | `.shortcuts-overlay` |
+| `dmscreen.css` | `.modal-overlay` |
+| `encounters.css` | `#calculator-modal` |
+| `migration.css` | `.migration-wizard-overlay` |
+| `party.css` | `.wiki-form-overlay` |
+
+Fällt der Wert aus, ist die Blende nicht blass, sondern **weg** — der Dialog steht ohne Abdunklung
+über der Anwendung dahinter.
+
+### Zweite Falle im selben Punkt: die Zeilenanker von Schritt 11 sind verschoben
+
+Schritt 11 verweist auf `variables.css:718-723`. Dort stehen die sechs Tokens **nicht mehr**; sie
+liegen heute auf **`:778-783`** (Welle 1 und die Schritte 3–6 haben Kommentare eingefügt). Die
+neun neuen liegen auf `:833-841`. Wer den Anker wörtlich nimmt, greift ins Leere. Das ist
+dieselbe Fehlerart, gegen die `R-06` steht — nur betrifft sie hier den **Plan**, nicht die
+Aktenlage, und wird von keiner Ratsche gefangen.
+
+### Was zu entscheiden ist
+
+**Eine `@supports`-Absicherung deckt alle 15 in einem Block ab.** Der Geltungsbereich von E4 ist
+dafür auf die neun neuen zu erweitern. Die Alternative wäre, Blenden und Auflagen an der
+Fundstelle als `color-mix` auszuschreiben statt per Token — dann greift E4s Begründung wieder
+(Rückfall auf die vorausgehende Deklaration), allerdings um den Preis, dass `D-01` dort wieder
+Literale sähe und die Leiter als Abstraktion verloren ginge. Die Token-Fassung mit `@supports` ist
+die bessere; sie braucht nur die ausdrückliche Erweiterung.
+
+An den **Flächenregeln** bleibt es unverändert bei **kein `@supports`, kein `rgba`-Rückfall** —
+dort ist E4s Begründung richtig.
+
+### Was jetzt verhindert, dass die Klasse wieder unbemerkt wächst
+
+`R-13` in `tests/unit/design-consistency.test.js` (Block „color-mix im Basis-:root ohne
+Rückfall"). Sie führt die 15 Namen als Inventar und geht rot, sobald ein sechzehnter dazukommt
+oder einer verschwindet. Sie ist bei der Geburt **grün** — sie ist kein Nachweis, sondern die
+Sperre gegen das lautlose Wachsen.
+
+### Befehle
+
+```bash
+cd /d/Claude_Code/Projekte/DnD_Tracker_App_Pro
+grep -n "color-mix" assets/styles/variables.css
+grep -rn "var(--overlay-\|var(--scrim-" assets/styles/*.css | wc -l
+grep -rn "@supports" assets/styles/*.css          # heute: kein Treffer
+npx jest tests/unit/design-consistency.test.js -t "rueckfalllosen"
+```
