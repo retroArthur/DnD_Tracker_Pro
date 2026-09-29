@@ -8159,6 +8159,30 @@ describe('R-20 — Gluehlagen und Rahmennachbarn, beziffert gefuehrt (Ratsche)',
         expect(stufeAusRadius('none')).toBe(null);
         // Die erste Hoehenlage entscheidet, auch wenn eine Gluehe davor steht:
         expect(stufeAusRadius('0 0 20px rgba(220,38,38,0.3), 0 4px 16px rgba(0,0,0,0.4)')).toBe(2);
+
+        /* DIE ZWEITE SCHREIBWEISE DERSELBEN SACHE (Welle 3, Schritte 3 und 4).
+           Sobald eine Stelle ihr Token traegt, steht die Geometrie IM Token und
+           nicht mehr in der Regel. `laengen20()` findet dann keine Laengen,
+           `b <= 0` greift, und die Ableitung gibt null — der Test "die
+           abgeleitete Stufe stimmt an allen neun Goldrahmen mit der
+           eingefrorenen ueberein" ginge rot, weil ALLE NEUN Goldrahmen und
+           ALLE FUENF farbigen Rahmen in den Dateien der Schritte 3 und 4
+           liegen.
+
+           Das ist KEINE Abkuerzung: die Erweiterung liest die Stufe nicht aus
+           dem Tokennamen ab, sondern loest das Token ueber seine ERSTE
+           Deklaration in variables.css auf (der :root-Block, 0 2px 6px /
+           0 4px 16px / 0 8px 32px) und rechnet DANACH wie bisher aus dem
+           Radius. Verschiebt jemand die Leiter in variables.css, wandert die
+           Ableitung mit — genau das soll sie. */
+        expect(stufeAusRadius('var(--shadow-1)')).toBe(1);
+        expect(stufeAusRadius('var(--shadow-2)')).toBe(2);
+        expect(stufeAusRadius('var(--shadow-3)')).toBe(3);
+        // Die Schublade ist keine Hoehe (X-Versatz), der Ring hat keinen Radius:
+        expect(stufeAusRadius('var(--shadow-drawer)')).toBe(null);
+        expect(stufeAusRadius('var(--ring-gold)')).toBe(null);
+        // Und gemischt: Ring voran, Hoehentoken dahinter — dmscreen .drag-over.
+        expect(stufeAusRadius('0 0 0 2px var(--gold), var(--shadow-2)')).toBe(2);
     });
 
     test('literalFarbeVon() liest rgba und Hex und gibt bei Tokens null', () => {
