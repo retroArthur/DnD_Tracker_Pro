@@ -327,10 +327,10 @@
     letter-spacing: 0.5px;
 }
 
-.calc-diff-badge.trivial { background: rgba(52, 152, 219, 0.2); color: var(--blue); }
+.calc-diff-badge.trivial { background: color-mix(in srgb, var(--cat-gear) 20%, transparent); color: var(--blue); }
 .calc-diff-badge.easy { background: rgba(46, 204, 113, 0.2); color: var(--green); }
-.calc-diff-badge.medium { background: rgba(243, 156, 18, 0.2); color: var(--yellow); }
-.calc-diff-badge.hard { background: rgba(230, 126, 34, 0.2); color: var(--orange); }
+.calc-diff-badge.medium { background: color-mix(in srgb, var(--cat-drink) 20%, transparent); color: var(--yellow); }
+.calc-diff-badge.hard { background: color-mix(in srgb, var(--cat-food) 20%, transparent); color: var(--orange); }
 .calc-diff-badge.deadly { background: rgba(231, 76, 60, 0.2); color: var(--red); }
 
 .calc-diff-info {
@@ -392,8 +392,8 @@
 }
 
 .calc-threshold-seg.easy { background: rgba(46, 204, 113, 0.3); }
-.calc-threshold-seg.medium { background: rgba(243, 156, 18, 0.3); }
-.calc-threshold-seg.hard { background: rgba(230, 126, 34, 0.3); }
+.calc-threshold-seg.medium { background: color-mix(in srgb, var(--cat-drink) 30%, transparent); }
+.calc-threshold-seg.hard { background: color-mix(in srgb, var(--cat-food) 30%, transparent); }
 .calc-threshold-seg.deadly { background: rgba(231, 76, 60, 0.3); }
 
 .calc-threshold-marker {
@@ -1535,7 +1535,7 @@
 
 .calc-import-card:hover {
     border-color: var(--gold);
-    background: rgba(212, 175, 55, 0.05);
+    background: color-mix(in srgb, var(--gold) 5%, transparent);
 }
 
 .calc-import-info {
