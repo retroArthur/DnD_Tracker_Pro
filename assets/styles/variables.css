@@ -1085,6 +1085,60 @@
         }
 
         /* ============================================================
+           RUECKFALL FUER DIE SECHS ABGELEITETEN HOVER-/DIM-TOKENS
+           (Design-Handoff v3, Welle 2, Schritt 11, Entscheidung E4)
+           ============================================================
+           WARUM AUSGERECHNET TOKENS EINEN RUECKFALL BRAUCHEN und die
+           Flaechenregeln nicht: eine Flaechenregel mit unbekanntem
+           color-mix() faellt von selbst auf die vorausgehende Deklaration
+           derselben Eigenschaft zurueck. Ein Custom Property kann das nicht.
+           Sein Wert wird beim Einlesen NICHT auf Gueltigkeit geprueft — er
+           ist bis zur Verwendung eine blosse Zeichenkette. Die spaetere
+           Deklaration gewinnt also auch dann, wenn ihr Inhalt unbrauchbar
+           ist; eine davor stehende Ersatzzeile waere schon weg, bevor der
+           Fehler auffaellt. Und auffallen tut er erst beim Einsetzen per
+           var(): der Wert ist dann "invalid at computed value time", die
+           Eigenschaft nimmt ihren Anfangswert an, bei background-color also
+           durchsichtig. Aus demselben Grund hilft ein Rueckfall IM var()
+           ebenfalls nicht — der greift nur bei einem nicht definierten
+           Namen, nicht bei einem definierten mit unbrauchbarem Wert.
+           @supports ist der einzige Weg, der beides umgeht.
+
+           WAS DER RUECKFALL SETZT: die Rolle selbst, kein Literal. Ein Hex
+           an dieser Stelle waere themenblind und liefe in Light, Sepia und
+           Kontrast auf eine falsche Farbe hinaus; ausserdem waere es genau
+           das Farbliteral, das diese Welle ueberall sonst abraeumt. Die
+           Rolle ist blasser bzw. heller als gemischt gedacht (der Hover
+           unterscheidet sich dann nicht mehr von der Ruhefarbe), aber sie
+           ist DA — und das ist der ganze Punkt gegenueber dem Zustand ohne
+           diesen Block, in dem die Flaeche verschwindet.
+
+           NUR DIESE SECHS, so angeordnet von E4. Die neun Tokens derselben
+           Bauart aus Schritt 3 (--overlay-faint/-weak/-mid/-strong/-heavy,
+           --scrim-60/-70/-75/-85) bleiben ungesichert; R-13 in
+           tests/unit/design-consistency.test.js fuehrt sie als Inventar,
+           .planning/HANDOFF-V3-OFFENE-PUNKTE.md als offenen Punkt.
+
+           ERREICHBARKEIT, ehrlich beziffert: mit dem in DEVELOPMENT.md
+           aufgeschriebenen Browserboden feuert dieser Zweig nirgends. Der
+           Boden liegt durch scrollbar-color (dmscreen.css, Chromium 121)
+           und sechs :has()-Regeln (Firefox 121) hoeher, als color-mix
+           verlangt (Chromium 111, Firefox 113). Der Block ist der Gurt
+           neben dem Traeger, nicht das tragende Teil — und er kostet in
+           jedem Browser oberhalb des Bodens exakt nichts, weil die
+           Bedingung dort falsch ist. */
+        @supports not (color: color-mix(in srgb, #000 50%, #fff)) {
+            :root {
+                --gold-hover: var(--gold);
+                --green-hover: var(--green);
+                --red-dim: var(--red);
+                --green-dim: var(--green);
+                --red-dark: var(--red);
+                --orange-dim: var(--orange);
+            }
+        }
+
+        /* ============================================================
            DESIGN PROFILES
            ============================================================ */
         

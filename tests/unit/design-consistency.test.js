@@ -4374,33 +4374,77 @@ describe('R-12 — Skalentoken als Toenungsflaeche (Ratsche)', () => {
    Klasse soll nicht mehr lautlos wachsen koennen.
 
    WAS SIE ZAEHLT. Jedes Custom Property in variables.css, dessen Wert
-   color-mix( enthaelt und das in GENAU EINEM Block deklariert ist. Sie ist
+   color-mix( enthaelt und das in GENAU EINEM Block deklariert ist. Sie war
    bei der Geburt GRUEN mit 15 Namen; sie ist kein Nachweis, sondern ein
    Inventar. Wer einen sechzehnten anlegt, traegt ihn hier ein und beantwortet
    dabei die Frage, die Schritt 11 sonst per Buchstabentreue uebergeht.
    Vollstaendig in .planning/HANDOFF-V3-OFFENE-PUNKTE.md unter W2-B-05.
+
+   STAND SEIT SCHRITT 11: NEUN. Die sechs von E4 benannten haben ihren
+   @supports-Zweig bekommen und sind damit nicht mehr rueckfalllos; die neun
+   aus Schritt 3 sind es weiterhin. Das Inventar ist also kein "erledigt",
+   sondern eine kleiner gewordene Restschuld — und die verbliebenen neun
+   tragen ausgerechnet die Modalblenden, also den Fall, an dem die
+   Eigenschaft nicht blass wird, sondern verschwindet.
    =========================================================================== */
 describe('R-13 — color-mix im Basis-:root ohne Rueckfall (Inventar)', () => {
-    /** Die gefuehrte Menge. Die ersten sechs sind die von E4 benannten, die
-     *  neun weiteren hat Schritt 3 angelegt. Sortiert, damit ein Zugang an
-     *  seiner Stelle auffaellt und nicht am Listenende versteckt werden kann. */
+    /** Die gefuehrte Menge, seit Schritt 11 NEUN statt fuenfzehn. Die sechs
+     *  von E4 benannten sind heraus — nicht weil jemand sie gestrichen haette,
+     *  sondern weil sie einen Rueckfall bekommen haben und damit nicht mehr
+     *  rueckfalllos sind (die zweite Probe unten haelt das fest). Uebrig sind
+     *  die neun, die Schritt 3 angelegt hat: sie tragen die Modalblenden und
+     *  Auflagen und sind damit der Rest der Schuld, nicht ihr Ende.
+     *  Sortiert, damit ein Zugang an seiner Stelle auffaellt und nicht am
+     *  Listenende versteckt werden kann. */
     const RUECKFALLLOSE_COLOR_MIX_TOKENS = [
-        '--gold-hover',
-        '--green-dim',
-        '--green-hover',
-        '--orange-dim',
         '--overlay-faint',
         '--overlay-heavy',
         '--overlay-mid',
         '--overlay-strong',
         '--overlay-weak',
-        '--red-dark',
-        '--red-dim',
         '--scrim-60',
         '--scrim-70',
         '--scrim-75',
         '--scrim-85'
     ];
+
+    /** Die sechs, die E4 herausgeloest hat, mit der Rolle, auf die ihr
+     *  Rueckfall zeigt. Ein Literal stuende hier falsch: es waere themenblind
+     *  und in drei von vier Themes die falsche Farbe. */
+    const ABGESICHERTE = {
+        '--gold-hover': '--gold',
+        '--green-dim': '--green',
+        '--green-hover': '--green',
+        '--orange-dim': '--orange',
+        '--red-dark': '--red',
+        '--red-dim': '--red'
+    };
+
+    /** Die @supports-Zweige von variables.css, Bedingung und Rumpf. */
+    function supportsZweige() {
+        const vars = cssFiles
+            .find(f => f.name === 'variables.css')
+            .content.replace(/\/\*[\s\S]*?\*\//g, m => m.replace(/[^\n]/g, ' '));
+        const out = [];
+        let i = 0;
+        while ((i = vars.indexOf('@supports', i)) !== -1) {
+            const auf = vars.indexOf('{', i);
+            if (auf === -1) break;
+            let tiefe = 1;
+            let j = auf + 1;
+            while (j < vars.length && tiefe) {
+                if (vars[j] === '{') tiefe++;
+                else if (vars[j] === '}') tiefe--;
+                j++;
+            }
+            out.push({
+                bedingung: vars.slice(i + '@supports'.length, auf).trim(),
+                rumpf: vars.slice(auf + 1, j - 1)
+            });
+            i = j;
+        }
+        return out;
+    }
 
     function gemessen() {
         const maskiert = cssFiles
@@ -4434,6 +4478,33 @@ describe('R-13 — color-mix im Basis-:root ohne Rueckfall (Inventar)', () => {
 
     test('die Menge der rueckfalllosen color-mix-Tokens ist die gefuehrte', () => {
         expect(gemessen()).toEqual(RUECKFALLLOSE_COLOR_MIX_TOKENS);
+    });
+
+    /* ZWEI PROBEN FUER DIE SECHS, und beide werden gebraucht. Die erste
+       allein wuerde auch dann gruen bleiben, wenn jemand den Zweig durch
+       einen zweiten :root-Block ersetzt — der wuerde die Farben in JEDEM
+       Browser umstellen und waere eine Sichtaenderung. Die zweite allein
+       wuerde nicht merken, wenn der Zweig zwar dasteht, die sechs aber
+       trotzdem als rueckfalllos gemessen werden. */
+    test('die sechs von E4 benannten stehen in genau einem verneinten Zweig', () => {
+        const zweige = supportsZweige();
+        expect(zweige.length).toBe(1);
+        expect(zweige[0].bedingung).toMatch(/^not\s*\(\s*color\s*:\s*color-mix\(/);
+        const gesetzt = {};
+        for (const d of zweige[0].rumpf.matchAll(/(--[\w-]+)\s*:\s*([^;]+);/g)) {
+            gesetzt[d[1]] = d[2].trim();
+        }
+        expect(Object.keys(gesetzt).sort()).toEqual(Object.keys(ABGESICHERTE).sort());
+        Object.entries(ABGESICHERTE).forEach(([token, rolle]) => {
+            expect(gesetzt[token]).toBe(`var(${rolle})`);
+        });
+    });
+
+    test('keiner der sechs zaehlt noch als rueckfalllos', () => {
+        const rueckfalllos = new Set(gemessen());
+        Object.keys(ABGESICHERTE).forEach(t => {
+            expect(rueckfalllos.has(t)).toBe(false);
+        });
     });
 });
 
