@@ -499,7 +499,7 @@ Behebung in Runde 2** gedeckt, davor war sie es für eine der beiden Zeilen nich
 | Stelle | Selektor | Rolle | Traeger dark | Traeger light |
 | ------ | -------- | ----- | ------------ | ------------- |
 | `dmscreen.css:600` | `.session-arc-title` | `--gold` | GRAD:#0d0d0d | GRAD:#f5f5f5 |
-| `dmscreen.css:1150` | `.drag-handle:hover` | `--gold` | --bg-card · GRAD:#0d0d0d | --bg-card · GRAD:#f5f5f5 |
+| `dmscreen.css:1170` | `.drag-handle:hover` | `--gold` | --bg-card · GRAD:#0d0d0d | --bg-card · GRAD:#f5f5f5 |
 | `initiative.css:175` | `.init-value` | `--gold` | GRAD:#0d0d0d · --bg-card | GRAD:#f5f5f5 · --bg-card |
 | `initiative.css:207` | `.init-name:hover` | `--gold` | GRAD:#0d0d0d · --bg-card | GRAD:#f5f5f5 · --bg-card |
 | `initiative.css:235` | `.init-hp-value.healthy` | `--green` | GRAD:#0d0d0d | GRAD:#f5f5f5 |
@@ -523,8 +523,8 @@ diese Tabelle führt.
 | Stelle | Selektor | Rolle | Traeger dark | Traeger light |
 | ------ | -------- | ----- | ------------ | ------------- |
 | `dashboard.css:192` | `.campaign-name` | `--cyan` | #1f2e24 | #edfcf2 |
-| `dmscreen.css:1368` | `.dms-init-marker` | `--gold` | #3c331b | #fef5de |
-| `dmscreen.css:1381` | `.dms-init-value` | `--cyan` | #3c331b | #fef5de |
+| `dmscreen.css:1388` | `.dms-init-marker` | `--gold` | #3c331b | #fef5de |
+| `dmscreen.css:1401` | `.dms-init-value` | `--cyan` | #3c331b | #fef5de |
 | `loot.css:295` | `.shop-cat-badge.weapon` | `--red` | --bg-card | --bg-card |
 | `loot.css:296` | `.shop-cat-badge.armor` | `--blue` | #d4af37 · --bg-card | #b8860b · --bg-card |
 | `loot.css:298` | `.shop-cat-badge.service` | `--purple` | #d4af37 · --bg-card | #b8860b · --bg-card |
@@ -539,7 +539,7 @@ diese Tabelle führt.
 | ------ | -------- | ----- | ------------ | ------------- |
 | `dashboard.css:541` | `.char-section-title` | `--gold` | --bg-card · #191919 | --bg-card · #1e1e1e |
 | `dice.css:661` | `.fdp-title` | `--gold-text` | --bg-card | --bg-card |
-| `dmscreen.css:1068` | `.form-group label` | `--gold` | --bg-card · #191919 | --bg-card · #1e1e1e |
+| `dmscreen.css:1088` | `.form-group label` | `--gold` | --bg-card · #191919 | --bg-card · #1e1e1e |
 | `party.css:2676` | `.char-adv-btn.adv` | `--green` | --bg-dark · #191919 | --bg-dark · #1e1e1e |
 | `party.css:2677` | `.char-adv-btn.dis` | `--red` | --bg-dark · #191919 | --bg-dark · #1e1e1e |
 
@@ -610,10 +610,10 @@ dmscreen.css
   394  .notes-search-date
   524  .session-tag-remove:hover
   670  .quick-ref-section-title
- 1270  .dms-stat-warning .dms-stat-value
- 2362  .dms-profile-check
- 2388  .dms-profile-save
- 2392  .dms-profile-save .dms-profile-name
+ 1290  .dms-stat-warning .dms-stat-value
+ 2382  .dms-profile-check
+ 2408  .dms-profile-save
+ 2412  .dms-profile-save .dms-profile-name
 encounters.css
    34  .list-view-row.expanded .row-toggle
    47  .list-dialog-item.used .list-dialog-status
@@ -627,7 +627,7 @@ encounters.css
   509  .calc-preview-xp
   514  .calc-preview-change
   680  .calc-fav-item.save
- 1180  .enc-speed-line
+ 1188  .enc-speed-line
 file-backup.css
   243  .backup-entry-restore
 initiative.css
@@ -645,9 +645,9 @@ loot.css
   707  .cart-item-total
 npcs.css
   236  .npc-detail-location
-  900  .npc-name
-  981  .npc-popup-name
- 1014  .npc-popup-section-title
+  904  .npc-name
+  985  .npc-popup-name
+ 1018  .npc-popup-section-title
 party.css
  1982  .party-stat-card.critical .party-stat-value
  2249  .rest-heal-preview

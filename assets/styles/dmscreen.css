@@ -924,9 +924,28 @@
             transform: translateZ(0);
         }
         
-        /* Content-Visibility für besseres Scrolling */
+        /* Content-Visibility für besseres Scrolling.
+           Das Ausblenden der inaktiven Ansicht steht hier und NICHT mehr als
+           `display: none` an `.view` / `display: block` an `.view.active`
+           (frueher weiter unten in dieser Datei, "F-18"): dmscreen.css ist der
+           12. @import, `.view.active` hat mit (0,2,0) dieselbe Spezifitaet wie
+           `.loc-view.active` (core.css, 3.), `.npc-view.active` und
+           `.loot-view.active` (npcs.css, 5.) und `.enc-view.active`
+           (encounters.css, 6.) — und schlug deren `display: flex` allein ueber
+           die Reihenfolge. Die vier Schalen standen aktiv auf `block`, womit
+           `flex: 1; min-height: 0` am inneren `*-layout` wirkungslos wurde,
+           die Master-Spalte keine begrenzte Hoehe und ihr `overflow-y: auto`
+           keinen Scrollbereich bekam: ab dem 10. Listeneintrag war alles
+           Weitere weder per Mausrad noch per Scrollbalken erreichbar.
+           `.view:not(.active)` hat mit (0,2,0) dieselbe Spezifitaet, greift
+           aber nur im INAKTIVEN Zustand und laesst den Schalen ihr `flex`.
+           Nebenwirkung, die ebenfalls gewollt ist: es schlaegt auch
+           `.dmscreen-view { display: flex }` (0,1,0, weiter unten in dieser
+           Datei), das `#view-dmscreen` bis dahin auf 23 der 24 Reiter als
+           Streifen stehen liess. */
         .view:not(.active) {
             content-visibility: hidden;
+            display: none;
         }
         
         /* Tooltips */
@@ -1002,16 +1021,17 @@
             color: var(--on-red); /* F-18: aus der Dublette uebernommen */
         }
         
-        /* View Transitions - opacity only, no transform to avoid layout issues */
+        /* View Transitions - opacity only, no transform to avoid layout issues.
+           Die beiden `display`-Zeilen sind nach `.view:not(.active)` weiter oben
+           in dieser Datei gewandert — Begruendung dort. Hier bleibt nur die
+           Ueberblendung. */
         .view {
             opacity: 0;
             transition: opacity 0.2s ease;
-            display: none; /* F-18: aus der Dublette uebernommen */
         }
 
         .view.active {
             opacity: 1;
-            display: block; /* F-18: aus der Dublette uebernommen */
         }
         
         /* Empty State */

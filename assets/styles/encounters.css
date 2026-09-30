@@ -915,11 +915,19 @@
    ENCOUNTER MASTER-DETAIL LAYOUT (wie Orte/NPCs)
    ============================================================ */
 
+/* `overflow: hidden` wie bei Orten, NSCs, Truhe und Bestiar — vorher stand hier
+   `overflow-y: auto`. Solange die Schale wegen der Kaskade auf `block` stand
+   (siehe dmscreen.css, `.view:not(.active)`), war dieses `auto` der EINZIGE
+   Grund, warum die Begegnungsliste ueberhaupt scrollte: die Schale selbst
+   scrollte. Mit wiederhergestelltem `flex` scrollt `.enc-master` innen, und das
+   aeussere `auto` liess den letzten Eintrag von 24 bei top=805px in einem 720px
+   hohen Fenster liegen — es haette die Korrektur fuer Begegnungen ins Gegenteil
+   verkehrt. */
 .enc-view.active {
     display: flex;
     flex-direction: column;
     height: calc(100vh - 120px);
-    overflow-y: auto;
+    overflow: hidden;
 }
 
 .enc-toolbar button,

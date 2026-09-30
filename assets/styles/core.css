@@ -2199,6 +2199,20 @@
         .fr-layout {
             display: grid;
             grid-template-columns: 1fr 825px;
+            /* Die Zeile MUSS an die Hoehe des Rasters gebunden sein, nicht an
+               seinen Inhalt. Ohne diese Zeile bemisst sich die einzige Rasterzeile
+               am hoechsten Kind — und das ist das Detail mit seinem festen
+               `height: calc(100vh - 120px)` (weiter unten). Das Raster selbst ist
+               aber nur so hoch, wie `flex: 1` in der Schale uebrig laesst, also um
+               die Hoehe der Werkzeugleiste weniger. Die Master-Spalte erbte die
+               zu grosse Zeilenhoehe, ragte um genau diesen Betrag unter die
+               `overflow: hidden`-Kante des Rasters und verlor dort ihr unteres
+               Ende: bei Begegnungen (Werkzeugleiste 184px) lag der letzte von 24
+               Eintraegen auch voll heruntergescrollt noch bei top=805px in einem
+               720px hohen Fenster. `minmax(0, 1fr)` bindet die Zeile an das
+               Raster; die Null als Minimum verhindert, dass der Inhalt sie wieder
+               aufblaeht. */
+            grid-template-rows: minmax(0, 1fr);
             gap: 0;
             flex: 1;
             min-height: 0;
@@ -2250,7 +2264,16 @@
             flex-direction: column;
             position: sticky;
             top: 0;
-            height: calc(100vh - 120px);
+            /* `100%` der Rasterzeile, nicht `calc(100vh - 120px)`. Der feste
+               Fensterbezug stammt aus der Zeit, als die Schale `display: block`
+               war und das Detail neben der Liste am Fenster hing. Seit die Zeile
+               ueber `grid-template-rows: minmax(0, 1fr)` an das Raster gebunden
+               ist (siehe oben), waere er um die Hoehe der Werkzeugleiste zu gross
+               — das Detail ragte unter die `overflow: hidden`-Kante des Rasters,
+               bei Begegnungen um 184px. Unter 900px setzen die vier
+               Master-Detail-Ansichten das Detail ohnehin auf `display: none` und
+               das Bestiar auf `height: auto`; dort wirkt diese Zeile nicht. */
+            height: 100%;
             align-self: start;
         }
 

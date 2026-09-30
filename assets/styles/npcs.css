@@ -423,10 +423,14 @@
    LOOT VIEW - Master-Detail Layout
    ============================================ */
 
+/* `calc(100vh - 120px)` wie die vier Geschwister — hier stand `- 60px`, also
+   60px zu viel. Die Schale ragte um diesen Betrag unter den Fensterrand, ihre
+   Werkzeugleiste blieb hinter der Kopfzeile stehen und der letzte Listeneintrag
+   lag ausserhalb des klickbaren Bereichs. */
 .loot-view.active {
     display: flex;
     flex-direction: column;
-    height: calc(100vh - 60px);
+    height: calc(100vh - 120px);
     overflow: hidden;
 }
 
