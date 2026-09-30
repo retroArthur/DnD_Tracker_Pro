@@ -7951,6 +7951,41 @@ describe('R-20 — Gluehlagen und Rahmennachbarn, beziffert gefuehrt (Ratsche)',
         ).toBe('4/4/6/6/8/8/10/12/12/12/12/20/30/30');
     });
 
+    /* -------------------------------------------------------------------
+       DIE ROLLE IST DIE AUSSAGE, nicht "irgendein Leuchttoken" (Pruefung
+       W3-C, Runde 1). `rolle` steht an jeder der vierzehn Stellen und wurde
+       nur fuer die Kontrastarithmetik benutzt; KEINE Zusicherung hielt das
+       getragene Token dagegen. Gemessen: `dashboard.css:34` von
+       `var(--glow-green)` auf `var(--glow-red)` — der Kritischer-Treffer-Hof
+       in der Farbe des Fehlschlags — liess die ganze Datei unveraendert bei
+       2 roten (beide R-19), kein zusaetzlicher roter Test. Radius, Rueckfall
+       aufs Literal und die Geschlossenheit der Menge waren einzeln per
+       Mutation als dicht nachgewiesen; die FARBE war das Loch.
+
+       Der Stil-Sollstand deckt es nicht ab: er traegt 6 von 3626 Digests,
+       und keine dieser vierzehn Stellen erreicht ueberhaupt einen
+       Digest-Schluessel. R-19/R-20 sind die einzige Deckung.
+
+       Erwartet wird die VOLLE Lage und nicht nur der Tokenname: damit faengt
+       dieselbe Zeile auch den Rueckfall auf ein Literal, den die zwei
+       Literal-Zusicherungen unten per Bauart nicht sehen koennen (sie
+       schweigen, sobald das Literal wieder das gemessene ist). */
+    test('jede Gluehlage traegt das Token IHRER Rolle, nicht irgendein --glow-*', () => {
+        const erwartet = e => `0 0 ${e.radius}px var(--glow${e.rolle.slice(1)})`;
+        const nach = new Map(gluehlagen().map(l => [gluehSchluessel(l), l.lage]));
+        const abweichung = GLUEH_STELLEN.filter(e => nach.get(gluehSchluessel(e)) !== erwartet(e)).map(
+            e => `${gluehSchluessel(e)} — erwartet "${erwartet(e)}", gefunden "${nach.get(gluehSchluessel(e))}"`
+        );
+        expect(abweichung.sort()).toEqual([]);
+        // Und die vier Rollen sind die vier angelegten Tokens, keine fuenfte.
+        expect([...new Set(GLUEH_STELLEN.map(e => e.rolle))].sort()).toEqual([
+            '--gold',
+            '--green',
+            '--red',
+            '--yellow'
+        ]);
+    });
+
     test('solange eine Gluehlage ein Literal traegt, ist es das gemessene', () => {
         const nach = new Map(gluehlagen().map(l => [gluehSchluessel(l), l.deckung]));
         const abweichung = GLUEH_STELLEN.filter(e => {
@@ -9206,6 +9241,25 @@ describe('R-21 — Ringe und Text-Leuchten, beziffert gefuehrt (Ratsche)', () =>
             anzahl: R21_ZIEL,
             stichprobe: []
         });
+    });
+
+    /* -------------------------------------------------------------------
+       DIE ROLLE IST AUCH HIER DIE AUSSAGE. Die Zusicherung darueber prueft
+       die FORM mit einem Sternchen — `var(--glow-(gold|yellow|green|red))` —
+       und laesst damit Gruen gegen Rot durchgehen. Gemessen (Pruefung W3-C,
+       Runde 1): `dice.css:31` von `var(--glow-green)` auf `var(--glow-red)`,
+       also der kritische Treffer in der Farbe des Fehlschlags, aendert an
+       dieser Datei nichts (2 rote, beide R-19). Zeichengleich mit der
+       Zusicherung in R-20, aus derselben Spalte `rolle` gerechnet. */
+    test('jede der sechs Text-Leuchten traegt das Token IHRER Rolle', () => {
+        const erwartet = e => `0 0 ${e.radius}px var(--glow${e.rolle.slice(1)})`;
+        const nach = new Map(textgluehlagen().map(l => [schluessel(l), l.lage]));
+        const abweichung = TEXT_GLUEH.filter(e => nach.get(schluessel(e)) !== erwartet(e)).map(
+            e => `${schluessel(e)} — erwartet "${erwartet(e)}", gefunden "${nach.get(schluessel(e))}"`
+        );
+        expect(abweichung.sort()).toEqual([]);
+        // Nur zwei Rollen bei den Text-Leuchten: Treffer und Fehlschlag.
+        expect([...new Set(TEXT_GLUEH.map(e => e.rolle))].sort()).toEqual(['--green', '--red']);
     });
 
     test('die sechs Radien bleiben unberuehrt: 10/10/20/20/20/20', () => {
