@@ -26,7 +26,30 @@
 }
 
 .pwa-install-btn:hover {
-    background: color-mix(in srgb, var(--gold) 12%, transparent);
+    /* Welle 3 Schritt 9, W2-D-05. Diese Regel trug 12 % UNGEDECKELT, waehrend
+       :active darunter gedeckelt war — und weil beide 4,5 halten, hat darueber
+       keine Kontrastratsche geurteilt. Der Mangel war ein anderer: --tint-max
+       ist 13/7/7/20 %, die gedrueckte Flaeche wurde in Light und Sepia also
+       BLASSER als die ueberfahrene, die Zustandsleiter stand auf dem Kopf
+       (Abstand zur Ruheflaeche ueberfahren 1,14 gegen gedrueckt 1,07 in Light,
+       1,19 gegen 1,11 in Sepia).
+
+       Die Tinte ist geerbt (var(--gold-text) aus der Grundregel), gerechnet
+       ueber die D-2-Dreierliste wie bei R-18 — der Knopf sitzt in der
+       Kopfzeile und damit an keiner einzelnen Regel:
+       R-23: W2-D-05 pwa hover ungedeckelt             5,75 · 4,55 · 4,77 · 8,40
+       R-23: W2-D-05 pwa hover gedeckelt               5,75 · 4,78 · 5,14 · 8,40
+       Der Deckel VERBESSERT hier beides: Light von 4,55 auf 4,78 und Sepia von
+       4,77 auf 5,14.
+
+       SICHTFOLGE, beziffert: die Flaeche faellt auf Faktor 1,00 · 0,58 · 0,58 ·
+       1,00 (12 % -> 12/7/7/12 %). Danach stehen die zwei Sprossen bei
+       12/13 % (dark), 7/7 % (light), 7/7 % (sepia), 12/20 % (contrast) — nur
+       in Contrast bleibt der Unterschied deutlich sichtbar, in Dark ist er ein
+       Prozentpunkt und in Light und Sepia null. Der gedrueckte Zustand wird
+       deshalb an :active von einer NICHT toenenden Deklaration getragen; die
+       Begruendung steht dort. */
+    background: color-mix(in srgb, var(--gold) min(12%, var(--tint-max)), transparent);
 }
 
 .pwa-install-btn:active {
@@ -39,16 +62,37 @@
        Das Minimum stellt --bg-elevated, in Sepia --bg-dark. Dark und
        Contrast hielten schon vorher; Light und Sepia lagen darunter.
 
-       BENANNTE SICHTFOLGE, nicht uebersehen: .pwa-install-btn:hover daneben
-       traegt 12 % UNGEDECKELT und haelt damit (5,75 · 4,55 · 4,77 · 8,40) —
-       sie ist deshalb nicht Teil dieses Nachtrags. In Light und Sepia deckelt
-       --tint-max auf 7 %; die gedrueckte Flaeche wird dort also BLASSER als
-       die ueberfahrene, die Zustandsleiter kehrt sich um. In Dark (13 %) und
-       Contrast (20 %) bleibt sie richtig herum. Das ist eine Sichtfrage der
-       Toenungsregel E2, keine Kontrastfrage; sie ist in der Aktenlage unter
-       W2-D-05 benannt und gehoert zu E3/Schritt 9 ("Hover ohne Fuellung"),
-       weil sie nur zusammen mit der Hover-Stufe zu entscheiden ist. */
+       DIE BENANNTE SICHTFOLGE DES NACHTRAGS IST IN WELLE 3 SCHRITT 9 ERLEDIGT.
+       Hier stand: ".pwa-install-btn:hover daneben traegt 12 % UNGEDECKELT ...
+       die gedrueckte Flaeche wird in Light und Sepia BLASSER als die
+       ueberfahrene, die Zustandsleiter kehrt sich um ... gehoert zu
+       E3/Schritt 9, weil sie nur zusammen mit der Hover-Stufe zu entscheiden
+       ist." Genau das ist jetzt entschieden, und zwar so:
+
+         1. Der Hover ist MITGEDECKELT (Zahlen und Faktoren dort). Damit kann
+            die Leiter sich nicht mehr umkehren — gepruefte Zusicherung in
+            R-23 Teil (5): die gedrueckte Flaeche darf in keinem Theme naeher
+            an der Ruheflaeche liegen als die ueberfahrene.
+         2. Dafuer fallen die zwei Flaechen in Light und Sepia ZUSAMMEN
+            (beide 7 %) und liegen in Dark einen Prozentpunkt auseinander. Der
+            gedrueckte Zustand braucht deshalb eine Rueckmeldung, die keine
+            Toenung ist — `transform: scale(0.97)`. Dasselbe Mittel hat der
+            Nachtrag an .link-chip:hover schon benutzt (dort scale(1.05)), und
+            :active-Regeln in dice.css, dashboard.css, dmscreen.css und
+            party.css tragen 0,95 bis 0,98; 0,97 ist der Wert aus party.css.
+
+       WARUM transform NICHT IN DER transition DER GRUNDREGEL STEHT: ein
+       Tastendruck soll sofort antworten. Mit 0,15 s Uebergang liefe die
+       Verkleinerung der Rueckmeldung hinterher, und beim Loslassen wieder
+       zurueck — das liest sich als Traegheit, nicht als Druck. Die Flaeche
+       darf weich wechseln, die Geometrie nicht.
+
+       Die Flaechenzahl der Regel selbst, unveraendert seit dem Nachtrag:
+       R-23: W2-D-05 pwa aktiv gedeckelt               5,65 · 4,78 · 5,14 · 6,76
+       (Die schliessende Klammer steht auf eigener Zeile: R-23 liest die
+       Zahlenreihe bis zum Zeilenende.) */
     background: color-mix(in srgb, var(--gold) min(22%, var(--tint-max)), transparent);
+    transform: scale(0.97);
 }
 
 /* Mobile: Icon-only mit Tooltip */
