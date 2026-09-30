@@ -318,7 +318,19 @@ async function runPass(page) {
         if (VIEW_STATE_SETUP[viewId]) {
             await VIEW_STATE_SETUP[viewId](page);
         }
-        await page.waitForTimeout(150);
+        // 400 ms statt 150. Die 150 lagen GENAU auf der Dauer des laengsten
+        // Uebergangs, den dieser Lauf beruehrt: `.fr-faction-card` traegt
+        // `transition: border-color 0.15s, background 0.15s` (welt.css), und
+        // `VIEW_STATE_SETUP.fraktionen` waehlt die Karte unmittelbar davor aus.
+        // `getComputedStyle` liefert waehrend eines laufenden Uebergangs den
+        // INTERPOLIERTEN Wert — gemessen ueber drei aufeinanderfolgende Laeufe
+        // lieferte `div.fr-faction-card.fr-selected#0` abwechselnd
+        // `rgb(212, 175, 55)` und `rgb(211, 174, 55)` als `borderColor`, also
+        // einen Digest, der ohne jede Codeaenderung kippt. Ein Waechter, der
+        // muenzwurfartig rot wird, wird abgeschaltet statt gelesen. 400 ms
+        // liegen deutlich hinter jedem Uebergang dieses Laufs; der Aufschlag
+        // kostet 24 Ansichten x 3 Durchgaenge x 250 ms = rund 18 Sekunden.
+        await page.waitForTimeout(400);
         const captured = await page.evaluate(captureViewInBrowser, {
             viewId,
             properties: PROPERTIES,
