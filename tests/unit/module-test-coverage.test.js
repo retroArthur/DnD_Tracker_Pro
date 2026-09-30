@@ -164,6 +164,17 @@ function isCovered(relModulePath) {
 // RARITY_COLORS. Vorher beurteilte R-16 die TABELLE, aber keine der Stellen,
 // die sie brauchen — der reparierte 1,12-Fall liess sich rueckstandsfrei
 // zurueckdrehen, ohne dass ein Test etwas gemerkt haette.
+//
+// 2026-09-30, Pruefrunde U3 Runde 1: NOCH EIN EINTRAG GESTRICHEN, die Liste
+// schrumpft von 75 auf 74. `ui/layout-profiles.js` wird seither vom KERNBELEG U3
+// in tests/unit/design-consistency.test.js Teil (4) GELESEN: der Rumpf von
+// setLayout() wird aus der Datei geschnitten und darauf geprueft, dass er die
+// Versatzkette der angehefteten Ebenen neu rechnet. Vorher tat er das nicht, und
+// der Rueckweg aus dem Mobil-Layout brachte die CSS-Rueckfallwerte
+// 0px/75px/145px zurueck — das Umzugs-Hinweisband deckte die Kopfzeile wieder um
+// 61px zu. Zusaetzlich fuehrt tests/e2e/features/sticky-stapel.spec.js den
+// Layout-Schalter per Klick durch beide Richtungen. Auch diese Zusicherung fuehrt
+// den Modulpfad in AUSFUEHRBAREM Code, nicht nur im Erklaertext.
 const MODULE_TEST_EXCEPTIONS = [
     'core/themes.js',
     'features/bestiary/bestiary-actions.js',
@@ -239,7 +250,6 @@ const MODULE_TEST_EXCEPTIONS = [
     'ui/actions/wiki-actions.js',
     'ui/dom-builder.js',
     'ui/editors/rich-text-toolbars.js', // -- CR-01, 2026-09-07: s. Kommentar oben
-    'ui/layout-profiles.js',
     'ui/lazy-loading.js',
     'ui/safe-render.js',
     'ui/virtual-scroll.js',

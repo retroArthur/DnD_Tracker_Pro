@@ -696,6 +696,59 @@ describe('F-19 — Stapel-Leiter', () => {
         // var() in CSS-Kommentaren, siehe F-01).
         expect(js).not.toContain("setProperty('--header-height'");
         expect(cssAll).not.toContain('var(--header-height)');
+
+        // TEIL (4) — jede Stelle, die `data-layout` UMSCHREIBT, muss die Kette
+        // danach neu rechnen. Der Mobil-Zweig von updateStickyOffsets() raeumt
+        // alle drei Glieder per removeProperty() ab; wer das Attribut zurueck auf
+        // 'desktop' setzt, ohne neu zu rechnen, laesst die CSS-Rueckfallwerte
+        // 0px/75px/145px wieder gewinnen — also genau die verdrahteten Werte,
+        // gegen die der erste Teil dieses Belegs gerichtet ist. Gemessen war das
+        // der Rueckweg aus dem Mobil-Layout: Band deckt die Kopfzeile um 61px,
+        // App-Titel und globale Suche antworten mit SPAN.migration-hint-text.
+        //
+        // setLayout() wird hier GELESEN, nicht bloss erwaehnt: der Rumpf wird aus
+        // ui/layout-profiles.js geschnitten und auf den Aufruf geprueft. Damit
+        // steht der Modulpfad in AUSFUEHRBAREM Code — die Bedingung, unter der
+        // dieses Modul aus der Ausnahmeliste des Abdeckungs-Gates gestrichen ist.
+        const layoutJs = fs.readFileSync(
+            path.join(__dirname, '..', '..', 'ui', 'layout-profiles.js'),
+            'utf8'
+        );
+        // Kommentare werden ABGESCHNITTEN, bevor gesucht wird: der Rumpf erklaert
+        // den Aufruf ausfuehrlich und nennt ihn dabei. Ohne dieses Abschneiden
+        // haelt der Erklaertext die Ratsche gruen, auch wenn der Aufruf fehlt —
+        // nachgemessen, indem der Aufruf probeweise entfernt wurde (die Ratsche
+        // blieb gruen, bis das Abschneiden hier stand). Dieselbe Kommentarfalle
+        // wie bei var() in CSS-Kommentaren, siehe F-01.
+        const ohneKommentare = text =>
+            text.replace(/\/\*[\s\S]*?\*\//g, ' ').replace(/\/\/[^\n]*/g, ' ');
+        const rumpfVon = name => {
+            const start = layoutJs.indexOf(`function ${name}(`);
+            if (start === -1) return null;
+            const ende = layoutJs.indexOf('\n}', start);
+            return ende === -1 ? null : ohneKommentare(layoutJs.slice(start, ende));
+        };
+        const setLayoutRumpf = rumpfVon('setLayout');
+        expect(setLayoutRumpf === null ? 'setLayout() nicht gefunden' : 'setLayout() gefunden').toBe(
+            'setLayout() gefunden'
+        );
+        expect(
+            /updateStickyOffsets\s*\(/.test(String(setLayoutRumpf))
+                ? 'setLayout -> rechnet die Kette neu'
+                : 'setLayout -> laesst die Kette stehen'
+        ).toBe('setLayout -> rechnet die Kette neu');
+
+        // loadLayout() braucht den Aufruf NICHT: core/init.js setzt das Attribut
+        // ueber loadLayout() und ruft updateStickyOffsets() danach selbst auf.
+        // Geprueft wird diese Reihenfolge, damit die Begruendung nicht verfaellt.
+        const initJs = fs.readFileSync(path.join(__dirname, '..', '..', 'core', 'init.js'), 'utf8');
+        const posLoad = initJs.indexOf('loadLayout()');
+        const posKette = initJs.indexOf('updateStickyOffsets()');
+        expect(
+            posLoad !== -1 && posKette !== -1 && posLoad < posKette
+                ? 'core/init.js: loadLayout() vor updateStickyOffsets()'
+                : `core/init.js: Reihenfolge ${posLoad}/${posKette}`
+        ).toBe('core/init.js: loadLayout() vor updateStickyOffsets()');
     });
 
     test('KERNBELEG: schwebende Editor-Werkzeuge liegen ueber Overlays', () => {
