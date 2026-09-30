@@ -9996,3 +9996,670 @@ describe('R-22 — die sechs JS-Marken, ihre Rechnung und ihre Aktenlage (Ratsch
         expect(verbund(0, 0.5)).toBe(0.5);
     });
 });
+
+/* ===========================================================================
+   Design-Handoff v3, Welle 3 — R-23: die Restposten der Wellen 1 und 2,
+   beziffert gefuehrt (Ratsche)
+   ===========================================================================
+   ZUR NUMMER. Hoechste vergebene ist R-22; diese heisst deshalb R-23.
+
+   WOGEGEN SIE STEHT. Schritt 9 raeumt drei Reste der Wellen 1 und 2 ab, und
+   ueber KEINEN davon urteilte bisher eine Ratsche — obwohl alle drei in R-18
+   stehen. Der Grund ist R-18s eigene Bauart: sie rechnet ueber die
+   Dreierliste --bg-card/--bg-dark/--bg-elevated (D-2) und NICHT ueber die
+   Flaeche, auf der die Regel wirklich sitzt. Das hat drei Folgen, und jede
+   ist eine Luecke:
+
+   (a) `.backup-entry-restore:hover` liest bei R-18 4,54 und ist gruen. In
+       Wirklichkeit ist der Knopf nur waehrend des Ueberfahrens seiner ZEILE
+       sichtbar, und die Zeile fuellte sich dabei mit --bg-hover. Dort liest
+       dieselbe Toenung 4,06 · 4,12 · 4,21 · 4,42 — in allen vier Themes
+       darunter. Wer die Fuellung zurueckschreibt, faellt lautlos dorthin
+       zurueck: R-18 sieht --bg-hover nicht, und R-04 sieht die Zeilenregel
+       nicht, weil sie keine eigene Tinte setzt.
+
+   (b) `.fdp-die.d20` ist bei R-18 eine benannte Ausnahme. Ihre Zahlen stehen
+       seit Welle 2 Schritt 7 im Kommentar der Regel selbst — und genau da
+       stand eine davon FALSCH: 3,71 statt 3,72, abgeschnitten statt
+       gerundet. Ein Kommentar mit vier Zahlen je Zeile, den niemand
+       nachrechnet, ist keine Belegkette, sondern eine Behauptung.
+
+   (c) `.pwa-install-btn` hatte Hover UNGEDECKELT und Aktiv GEDECKELT. Beide
+       halten 4,5, also schweigt jede Kontrastratsche — aber in Light und
+       Sepia deckelt --tint-max auf 7 %, die gedrueckte Flaeche wurde damit
+       BLASSER als die ueberfahrene und die Zustandsleiter stand auf dem
+       Kopf: der Abstand zur Ruheflaeche las ueberfahren 1,14 und gedrueckt
+       nur 1,07 (Light) bzw. 1,19 gegen 1,11 (Sepia). Eine verkehrte Leiter
+       ist kein Kontrastmangel; sie faellt durch jedes Raster, das nur
+       Schwellen prueft.
+
+   IHR MITTEL IST EIN ETIKETT. Jede gefuehrte Groesse traegt im CSS eine
+   Zeile der Form
+
+       R-23: <Etikett>  <dark> · <light> · <sepia> · <contrast>
+
+   (Etikett und Zahlenreihe durch mindestens zwei Leerzeichen getrennt) und
+   diese Ratsche RECHNET die vier Zahlen aus variables.css und der jeweiligen
+   Regel neu nach, statt sie abzuschreiben. Die Menge ist in beide Richtungen
+   geschlossen: ein Etikett ohne Rechnung ist ein Befund, eine Rechnung ohne
+   Zeile im CSS auch. Damit kann weder eine Zahl im Kommentar veralten noch
+   eine Regel sich aendern, ohne dass ihr Kommentar widerspricht. Die 3,71
+   aus (b) waere so nie entstanden.
+
+   WAS SIE AUS DEM CSS LIEST UND NICHT SETZT: die Tinten (aus den
+   Grundregeln), die Toenungsstopps (aus den Zustandsregeln), die
+   Zeilenflaeche der Sicherungsliste (aus `.backup-entry`), die Farbe des
+   Umrisses (aus `.backup-entry:hover`) und die sechs Attributtokens (aus den
+   `.dms-attr-item`-Regeln). Fest verdrahtet sind nur die TRAEGER, und jeder
+   mit Grund: --bg-card fuer den Wuerfelknopf (`background: linear-gradient`
+   ist die Kurzschreibweise und setzt background-color auf transparent
+   zurueck; dahinter liegt .floating-dice-panel mit 98 % --bg-card — der
+   Unterschied ist in Teil (3) auf 0,01 gepinnt), die D-2-Dreierliste fuer den
+   Kopfzeilenknopf der PWA (er sitzt an keiner einzelnen Regel), und
+   --bg-hover fuer die Gegenrechnung in (a) — die Flaeche, die Weg E3 gerade
+   entfernt, muss danach weiter rechenbar bleiben, sonst verliert der Befund
+   seine Zahl.
+
+   AUSGANGSWERTE AM 2026-09-30, HEAD c017e76 — FUENF rote Zusicherungen, jede
+   mit der Zahl, die sie gemeldet hat:
+     (2) 13 Etiketten gefuehrt, 0 davon im CSS gefunden.
+     (3) beide Verlaufsstopps ungedeckelt; die Goldtinte liest auf ihnen
+         6,64 · 3,42 · 3,72 · 11,57, also in Light UND Sepia unter 4,5.
+     (4) `.backup-entry:hover` fuellt mit var(--bg-hover) und meldet den
+         Zustand ausschliesslich darueber (kein Umriss). Der Knopf liest auf
+         dieser Flaeche 4,06 · 4,12 · 4,21 · 4,42 — in allen vier Themes
+         darunter.
+     (5) `.pwa-install-btn:hover` ungedeckelt; die Leiter steht in Light
+         (1,14 gegen 1,07) und Sepia (1,19 gegen 1,11) auf dem Kopf.
+     (7) W2-D-06 und W2-B-05 nennen sich in der Stand-Angabe weiter offen;
+         drei gerechnete Reihen und die gezaehlte 6 fehlen in der Akte.
+   Teil (1) und (6) sind bei der Geburt GRUEN, und das ist ausgesprochen:
+   (1) ist die Selbstprobe der Rechenwege, (6) haelt einen Zustand fest, den
+   Welle 3 nicht angetastet hat (keine der 9 inset-Lagen liegt auf einer
+   Attributflaeche). Ein Teil, der bei der Geburt gruen ist, beweist nichts
+   ueber die Aenderung — er verhindert ihren Rueckschritt.
+   =========================================================================== */
+describe('R-23 — die Restposten der Wellen 1 und 2, beziffert gefuehrt (Ratsche)', () => {
+    const SCHWELLE = 4.5;
+    const SCHWELLE_NICHTTEXT = 3.0;
+
+    /** Dieselben drei Traegerflaechen wie in R-04, R-11, R-14 und R-18 (D-2). */
+    const D2 = ['var(--bg-card)', 'var(--bg-dark)', 'var(--bg-elevated)'];
+
+    const AKTENLAGE_PFAD = path.join(REPO, '.planning', 'HANDOFF-V3-OFFENE-PUNKTE.md');
+    const AKTENLAGE = fs.readFileSync(AKTENLAGE_PFAD, 'utf8');
+
+    const pals = WCAG.palettes();
+    const alias = aliasSchicht();
+    const P = t => ({ ...pals[t], ...alias });
+    const komma = x => x.toFixed(2).replace('.', ',');
+    const reihe = f => WCAG.THEMES.map(t => komma(f(t))).join(' · ');
+    const gerundet = x => Number(x.toFixed(2));
+
+    function inhalt(name) {
+        const f = cssFiles.find(x => x.name === name);
+        if (!f) throw new Error(`R-23: ${name} liegt nicht in assets/styles`);
+        return f.content;
+    }
+
+    /** Alle Regeln mit genau diesem Selektorteil — es sind mehrere, sobald ein
+     *  @media-Block denselben Selektor nachschaerft (`.pwa-install-btn` und
+     *  `.backup-entry` tun das beide). */
+    function regeln(name, sel) {
+        return regelnMitRumpf(inhalt(name)).filter(r =>
+            r.sel
+                .split(',')
+                .map(s => s.trim())
+                .includes(sel)
+        );
+    }
+
+    /** Der Wert, der in der Kaskade gewinnt: die LETZTE Regel dieses Selektors,
+     *  die die Eigenschaft ueberhaupt setzt. Die erste zu nehmen waere bei
+     *  `.pwa-install-btn` falsch, die einzige zu verlangen bei `.backup-entry`
+     *  ein Fehlalarm. */
+    function letzteDeklaration(name, sel, prop) {
+        const treffer = regeln(name, sel);
+        if (!treffer.length) throw new Error(`R-23: ${name} hat keine Regel "${sel}"`);
+        let wert = null;
+        treffer.forEach(r => {
+            const d = deklaration(r.rumpf, prop);
+            if (d) wert = d;
+        });
+        return wert;
+    }
+
+    /** Klammergenaue Abgrenzung der color-mix-Ausdruecke eines Wertes, in
+     *  Textreihenfolge. Eigene Fassung und keine Anleihe bei R-18: dessen
+     *  `mixAusdruecke` steht in dessen describe-Rumpf. Das ist ein PARSER und
+     *  keine Norm — bei einer LISTE waere eine zweite Fassung genau der
+     *  Fehler, den W3-D fuer `ERLAUBT` benannt hat. */
+    function mixStopps(wert) {
+        const out = [];
+        const re = /color-mix\s*\(/gi;
+        let m;
+        while ((m = re.exec(wert))) {
+            let tiefe = 0;
+            let i = m.index + m[0].length - 1;
+            for (; i < wert.length; i++) {
+                if (wert[i] === '(') tiefe++;
+                else if (wert[i] === ')') {
+                    tiefe--;
+                    if (!tiefe) break;
+                }
+            }
+            if (tiefe === 0) out.push(wert.slice(m.index, i + 1));
+        }
+        return out;
+    }
+
+    const DECKEL = /min\(\s*\d+(?:\.\d+)?%\s*,\s*var\(\s*--tint-max\s*\)\s*\)/i;
+
+    /** Dieselbe Lage ohne Deckel. Die Regel NENNT ihre eigene Staerke weiter —
+     *  min() deckelt, es setzt nicht gleich —, die ungedeckelte Zahl bleibt
+     *  also aus dem CSS rechenbar und muss nicht abgeschrieben werden. */
+    const ohneDeckel = stopp =>
+        stopp.replace(/min\(\s*(\d+(?:\.\d+)?%)\s*,\s*var\(\s*--tint-max\s*\)\s*\)/gi, '$1');
+
+    function grundfarbe(ausdruck, theme) {
+        const g = WCAG.resolve(ausdruck, P(theme));
+        if (!g) throw new Error(`R-23: ${ausdruck} ist in ${theme} nicht aufloesbar`);
+        return g;
+    }
+
+    /** Das Feld, das `ausdruck` ueber `grund` ergibt; ausdruck === null heisst
+     *  blanker Grund. */
+    function feld(ausdruck, grund, theme) {
+        if (ausdruck === null) return grundfarbe(grund, theme);
+        const f = WCAG.resolveOver(ausdruck, P(theme), grundfarbe(grund, theme));
+        if (!f) throw new Error(`R-23: ${ausdruck} ueber ${grund} ist in ${theme} nicht aufloesbar`);
+        return f;
+    }
+
+    /** Das schlechteste Verhaeltnis einer Tinte ueber mehrere Toenungen und
+     *  mehrere Traeger — dieselbe Form wie R-18s `verhaeltnisse()`. */
+    function minVerhaeltnis(tinte, toenungen, gruende, theme) {
+        const ti = grundfarbe(tinte, theme);
+        let min = Infinity;
+        toenungen.forEach(x => {
+            gruende.forEach(g => {
+                min = Math.min(min, WCAG.ratio(ti, feld(x, g, theme)));
+            });
+        });
+        return gerundet(min);
+    }
+
+    // -----------------------------------------------------------------------
+    // Die drei Stellen, ausschliesslich aus dem CSS gelesen
+    // -----------------------------------------------------------------------
+
+    /** W2-D-06: die zwei Rotstopps des W20-Verlaufs, Kopf zuerst. */
+    function d20Stopps() {
+        const stopps = mixStopps(
+            letzteDeklaration('dice.css', '.fdp-die.d20', 'background(?:-color)?') || ''
+        );
+        if (stopps.length !== 2) {
+            throw new Error(`R-23: .fdp-die.d20 hat ${stopps.length} Verlaufsstopps, erwartet 2`);
+        }
+        return stopps;
+    }
+    const d20Tinte = () => letzteDeklaration('dice.css', '.fdp-die', 'color');
+    /** Die Flaeche hinter dem Wuerfel. Begruendung im Kopf; der Abstand zur
+     *  Panelflaeche ist in Teil (3) auf 0,01 gepinnt. */
+    const D20_GRUND = 'var(--bg-card)';
+
+    /** W2-D-05a: die Zeile der Sicherungsliste und ihr Knopf. */
+    const zeilenFlaeche = () =>
+        letzteDeklaration('file-backup.css', '.backup-entry', 'background(?:-color)?');
+    const knopfTinte = () => letzteDeklaration('file-backup.css', '.backup-entry-restore', 'color');
+    function knopfToenung() {
+        const stopps = mixStopps(
+            letzteDeklaration('file-backup.css', '.backup-entry-restore:hover', 'background(?:-color)?') ||
+                ''
+        );
+        if (stopps.length !== 1) {
+            throw new Error(
+                `R-23: .backup-entry-restore:hover hat ${stopps.length} Toenungen, erwartet 1`
+            );
+        }
+        return stopps[0];
+    }
+    /** Die Farbe des Umrisses, mit dem die Zeile den Zustand jetzt meldet. */
+    function umrissFarbe() {
+        const roh = letzteDeklaration('file-backup.css', '.backup-entry:hover', 'outline');
+        if (!roh) throw new Error('R-23: .backup-entry:hover setzt keinen outline');
+        const m = roh.match(/var\(\s*--[\w-]+\s*\)/);
+        if (!m) throw new Error(`R-23: im outline "${roh}" steht kein Rollentoken`);
+        return m[0];
+    }
+
+    /** W2-D-05b: die zwei Sprossen des PWA-Knopfs. */
+    const pwaTinte = () => letzteDeklaration('pwa.css', '.pwa-install-btn', 'color');
+    function pwaStopp(sel) {
+        const stopps = mixStopps(letzteDeklaration('pwa.css', sel, 'background(?:-color)?') || '');
+        if (stopps.length !== 1) {
+            throw new Error(`R-23: ${sel} hat ${stopps.length} Toenungen, erwartet 1`);
+        }
+        return stopps[0];
+    }
+
+    /** W1-B-01: die sechs Attributtokens, aus den Regeln gelesen statt getippt. */
+    function attrTokens() {
+        const out = new Set();
+        for (const m of inhalt('dmscreen.css').matchAll(
+            /\.dms-attr-item\.[\w-]+\s+\.dms-attr-abbr\s*\{[^}]*color\s*:\s*var\(\s*(--attr-[\w-]+)\s*\)/g
+        )) {
+            out.add(m[1]);
+        }
+        return [...out].sort();
+    }
+    function attrMin(grund, theme) {
+        const tokens = attrTokens();
+        if (tokens.length !== 6) {
+            throw new Error(`R-23: ${tokens.length} Attributtokens gefunden, erwartet 6`);
+        }
+        let min = Infinity;
+        tokens.forEach(tok => {
+            min = Math.min(
+                min,
+                WCAG.ratio(grundfarbe(`var(${tok})`, theme), grundfarbe(grund, theme))
+            );
+        });
+        return gerundet(min);
+    }
+
+    // -----------------------------------------------------------------------
+    // DIE GEFUEHRTEN GROESSEN. Schluessel = Etikett im CSS-Kommentar.
+    // -----------------------------------------------------------------------
+    const GROESSEN = {
+        'W2-D-06 Verlaufskopf ungedeckelt': t =>
+            minVerhaeltnis(d20Tinte(), [ohneDeckel(d20Stopps()[0])], [D20_GRUND], t),
+        'W2-D-06 Verlaufskopf gedeckelt': t =>
+            minVerhaeltnis(d20Tinte(), [d20Stopps()[0]], [D20_GRUND], t),
+        'W2-D-06 Verlaufsfuss ungedeckelt': t =>
+            minVerhaeltnis(d20Tinte(), [ohneDeckel(d20Stopps()[1])], [D20_GRUND], t),
+        'W2-D-06 Verlaufsfuss gedeckelt': t =>
+            minVerhaeltnis(d20Tinte(), [d20Stopps()[1]], [D20_GRUND], t),
+        'W2-D-06 min beider Stopps gedeckelt': t =>
+            minVerhaeltnis(d20Tinte(), d20Stopps(), [D20_GRUND], t),
+
+        'W2-D-05 Knopf auf --bg-hover': t =>
+            minVerhaeltnis(knopfTinte(), [knopfToenung()], ['var(--bg-hover)'], t),
+        'W2-D-05 Knopf auf der Zeilenflaeche': t =>
+            minVerhaeltnis(knopfTinte(), [knopfToenung()], [zeilenFlaeche()], t),
+        'W2-D-05 Umriss gegen die Zeilenflaeche': t =>
+            gerundet(WCAG.ratio(grundfarbe(umrissFarbe(), t), grundfarbe(zeilenFlaeche(), t))),
+
+        'W2-D-05 pwa hover ungedeckelt': t =>
+            minVerhaeltnis(pwaTinte(), [ohneDeckel(pwaStopp('.pwa-install-btn:hover'))], D2, t),
+        'W2-D-05 pwa hover gedeckelt': t =>
+            minVerhaeltnis(pwaTinte(), [pwaStopp('.pwa-install-btn:hover')], D2, t),
+        'W2-D-05 pwa aktiv gedeckelt': t =>
+            minVerhaeltnis(pwaTinte(), [pwaStopp('.pwa-install-btn:active')], D2, t),
+
+        'W1-B-01 Attributfarben auf --bg-dark': t => attrMin('var(--bg-dark)', t),
+        'W1-B-01 Attributfarben auf --bg-card': t => attrMin('var(--bg-card)', t)
+    };
+
+    /** Alle Kommentarzeilen der gefuehrten Form in assets/styles. */
+    function etikettZeilen() {
+        const out = [];
+        cssFiles.forEach(f => {
+            f.content.split(/\r?\n/).forEach((l, i) => {
+                const m = l.match(
+                    /R-23:\s*(\S.*?)\s{2,}(\d+,\d{2})\s*·\s*(\d+,\d{2})\s*·\s*(\d+,\d{2})\s*·\s*(\d+,\d{2})\s*$/
+                );
+                if (m) {
+                    out.push({
+                        datei: f.name,
+                        zeile: i + 1,
+                        etikett: m[1].trim(),
+                        zahlen: [m[2], m[3], m[4], m[5]].join(' · ')
+                    });
+                }
+            });
+        });
+        return out;
+    }
+
+    /* =====================================================================
+       (1) SELBSTPROBE der Rechenwege — bei der Geburt gruen
+       ===================================================================== */
+    test('(1) der Rechenweg besteht die kanonischen WCAG-Paare und liest den Deckel', () => {
+        WCAG.selfTest().forEach(c => expect(c.ist).toBe(c.soll));
+        // Der Deckel wird als Deckel gelesen und nicht als Gleichsetzung: die
+        // eigene Staerke bleibt im Ausdruck stehen und ist wieder freizulegen.
+        expect(
+            ohneDeckel('color-mix(in srgb, var(--red) min(20%, var(--tint-max)), transparent)')
+        ).toBe('color-mix(in srgb, var(--red) 20%, transparent)');
+        expect(DECKEL.test('min(12%, var(--tint-max))')).toBe(true);
+        expect(DECKEL.test('12%')).toBe(false);
+        // Und die Klammerabgrenzung zaehlt die Stopps eines Verlaufs richtig,
+        // obwohl min() ein eigenes Komma mitbringt.
+        expect(
+            mixStopps(
+                'linear-gradient(135deg, color-mix(in srgb, var(--a) min(1%, var(--b)), transparent), ' +
+                    'color-mix(in srgb, var(--c) 2%, transparent))'
+            ).length
+        ).toBe(2);
+    });
+
+    /* =====================================================================
+       (2) DIE ETIKETTEN — jede Zahl im CSS ist nachgerechnet
+       ===================================================================== */
+    test('(2) jede R-23-Zeile im CSS traegt die gerechneten Zahlen, die Menge ist geschlossen', () => {
+        const befunde = [];
+        const offen = new Set(Object.keys(GROESSEN));
+        etikettZeilen().forEach(z => {
+            const rechnung = GROESSEN[z.etikett];
+            if (!rechnung) {
+                befunde.push(
+                    `${z.datei}:${z.zeile} — Etikett "${z.etikett}" ist in GROESSEN nicht gefuehrt`
+                );
+                return;
+            }
+            offen.delete(z.etikett);
+            let soll;
+            try {
+                soll = reihe(rechnung);
+            } catch (e) {
+                befunde.push(`${z.datei}:${z.zeile} "${z.etikett}" — nicht rechenbar: ${e.message}`);
+                return;
+            }
+            if (soll !== z.zahlen) {
+                befunde.push(
+                    `${z.datei}:${z.zeile} "${z.etikett}" — im Kommentar ${z.zahlen}, gerechnet ${soll}`
+                );
+            }
+        });
+        [...offen]
+            .sort()
+            .forEach(k =>
+                befunde.push(
+                    `"${k}" steht in GROESSEN, aber in keinem CSS-Kommentar — die Zahl ist unbelegt`
+                )
+            );
+        expect(befunde.sort()).toEqual([]);
+    });
+
+    /* =====================================================================
+       (3) W2-D-06 — beide Verlaufsstopps gedeckelt, Knopf haelt auf SEINER Flaeche
+       ===================================================================== */
+    test('(3) die zwei Rotstopps des W20-Knopfs sind gedeckelt und halten 4,5 auf --bg-card', () => {
+        const befunde = [];
+        const stopps = d20Stopps();
+        stopps.forEach((s, i) => {
+            if (!DECKEL.test(s)) {
+                befunde.push(`Verlaufsstopp ${i + 1} ist ungedeckelt: ${s.replace(/\s+/g, ' ')}`);
+            }
+        });
+        WCAG.THEMES.forEach(t => {
+            const min = minVerhaeltnis(d20Tinte(), stopps, [D20_GRUND], t);
+            if (min < SCHWELLE) {
+                befunde.push(`${t}: ${d20Tinte()} auf den Stopps nur ${komma(min)} < ${SCHWELLE}`);
+            }
+        });
+        // Die Vereinfachung "Traeger = --bg-card" ist gepinnt, nicht
+        // angenommen: dahinter liegt .floating-dice-panel mit 98 % --bg-card.
+        const panel = letzteDeklaration('dice.css', '.floating-dice-panel', 'background(?:-color)?');
+        WCAG.THEMES.forEach(t => {
+            // Die Panelflaeche ist selbst halbdurchsichtig und braucht deshalb
+            // ihren eigenen Grund: das Panel sitzt position:fixed ueber der
+            // Seite, also ueber --bg-dark.
+            const panelHex = WCAG.resolveOver(panel, P(t), grundfarbe('var(--bg-dark)', t));
+            if (!panelHex) {
+                befunde.push(`${t}: die Panelflaeche "${panel}" ist nicht aufloesbar`);
+                return;
+            }
+            const ti = grundfarbe(d20Tinte(), t);
+            let ueberPanel = Infinity;
+            stopps.forEach(s => {
+                const f = WCAG.resolveOver(s, P(t), panelHex);
+                if (f) ueberPanel = Math.min(ueberPanel, WCAG.ratio(ti, f));
+            });
+            ueberPanel = gerundet(ueberPanel);
+            const ueberKarte = minVerhaeltnis(d20Tinte(), stopps, [D20_GRUND], t);
+            // Gerundet verglichen, nicht rechnerisch: 3,72 - 3,71 ergibt in
+            // Gleitkomma 0,010000000000000231 und waere sonst ein Fehlalarm.
+            const abweichung = gerundet(Math.abs(ueberPanel - ueberKarte));
+            if (abweichung > 0.01) {
+                befunde.push(
+                    `${t}: Panelflaeche und --bg-card weichen um ` +
+                        `${komma(abweichung)} ab (${komma(ueberPanel)} gegen ` +
+                        `${komma(ueberKarte)}) — die Vereinfachung im Kopf traegt nicht mehr`
+                );
+            }
+        });
+        expect(befunde).toEqual([]);
+    });
+
+    /* =====================================================================
+       (4) W2-D-05a — die Zeile toent nicht, sie meldet ueber einen Umriss (E3)
+       ===================================================================== */
+    test('(4) die Zeile der Sicherungsliste meldet ohne Fuellung, der Knopf haelt 4,5', () => {
+        const befunde = [];
+        const hover = regeln('file-backup.css', '.backup-entry:hover');
+        if (hover.length !== 1) {
+            befunde.push(`.backup-entry:hover — ${hover.length} Regeln, erwartet genau 1`);
+        } else {
+            const fuellung = deklaration(hover[0].rumpf, 'background(?:-color)?');
+            if (fuellung) {
+                befunde.push(
+                    `.backup-entry:hover:${hover[0].zeile} toent noch (background: ${fuellung}) — ` +
+                        `der Knopf traegt seine Toenung dann auf dieser Flaeche`
+                );
+            }
+            if (!deklaration(hover[0].rumpf, 'outline')) {
+                befunde.push(
+                    `.backup-entry:hover:${hover[0].zeile} meldet den Zustand nicht — ohne Fuellung ` +
+                        `UND ohne Umriss ist das Ueberfahren unsichtbar`
+                );
+            }
+        }
+        try {
+            const flaeche = zeilenFlaeche();
+            WCAG.THEMES.forEach(t => {
+                const u = GROESSEN['W2-D-05 Umriss gegen die Zeilenflaeche'](t);
+                if (u < SCHWELLE_NICHTTEXT) {
+                    befunde.push(
+                        `${t}: der Umriss haelt gegen ${flaeche} nur ${komma(u)} < ${SCHWELLE_NICHTTEXT}`
+                    );
+                }
+                const k = GROESSEN['W2-D-05 Knopf auf der Zeilenflaeche'](t);
+                if (k < SCHWELLE) {
+                    befunde.push(
+                        `${t}: ${knopfTinte()} auf seiner Toenung ueber ${flaeche} nur ${komma(k)}`
+                    );
+                }
+            });
+        } catch (e) {
+            befunde.push(`nicht rechenbar: ${e.message}`);
+        }
+        expect(befunde.sort()).toEqual([]);
+    });
+
+    /* =====================================================================
+       (5) W2-D-05b — die PWA-Leiter ist gedeckelt und bleibt richtig herum
+       ===================================================================== */
+    test('(5) Hover und Aktiv des PWA-Knopfs halten 4,5, die Leiter steht nicht auf dem Kopf', () => {
+        const befunde = [];
+        const h = pwaStopp('.pwa-install-btn:hover');
+        const a = pwaStopp('.pwa-install-btn:active');
+        if (!DECKEL.test(h)) befunde.push(`.pwa-install-btn:hover ist ungedeckelt: ${h}`);
+        if (!DECKEL.test(a)) befunde.push(`.pwa-install-btn:active ist ungedeckelt: ${a}`);
+
+        /** Wie weit eine Toenung von der blanken Traegerflaeche abweicht. Die
+         *  Sprosse "gedrueckt" darf nie NAEHER an der Ruhe liegen als
+         *  "ueberfahren" — genau das war in Light und Sepia der Fall. */
+        const abstand = (stopp, t) =>
+            gerundet(WCAG.ratio(feld(stopp, 'var(--bg-card)', t), grundfarbe('var(--bg-card)', t)));
+
+        let gleich = 0;
+        WCAG.THEMES.forEach(t => {
+            const vh = GROESSEN['W2-D-05 pwa hover gedeckelt'](t);
+            const va = GROESSEN['W2-D-05 pwa aktiv gedeckelt'](t);
+            if (vh < SCHWELLE) befunde.push(`${t}: Hover haelt nur ${komma(vh)} < ${SCHWELLE}`);
+            if (va < SCHWELLE) befunde.push(`${t}: Aktiv haelt nur ${komma(va)} < ${SCHWELLE}`);
+            const ah = abstand(h, t);
+            const aa = abstand(a, t);
+            if (aa < ah) {
+                befunde.push(
+                    `${t}: die Leiter steht auf dem Kopf — gedrueckt ${komma(aa)} liegt naeher an ` +
+                        `der Ruheflaeche als ueberfahren ${komma(ah)}`
+                );
+            }
+            if (aa === ah) gleich++;
+        });
+        // Fallen die beiden Flaechen in einem Theme zusammen (in Light und
+        // Sepia tun sie das, weil --tint-max dort 7 % ist), muss der Zustand
+        // ueber etwas anderes als die Flaeche gemeldet werden — dasselbe
+        // Mittel, mit dem .link-chip:hover den Deckel ausgehalten hat.
+        if (gleich) {
+            const rumpf = regeln('pwa.css', '.pwa-install-btn:active')
+                .map(r => r.rumpf)
+                .join(';');
+            const andere = rumpf
+                .split(';')
+                .map(s => s.trim())
+                .filter(s => s && !/^background(-color)?\s*:/i.test(s));
+            if (!andere.length) {
+                befunde.push(
+                    `in ${gleich} Theme(s) sind Hover- und Aktivflaeche zeichengleich, und ` +
+                        `.pwa-install-btn:active setzt ausser background nichts — der gedrueckte ` +
+                        `Zustand ist dort nicht zu sehen`
+                );
+            }
+        }
+        expect(befunde.sort()).toEqual([]);
+    });
+
+    /* =====================================================================
+       (6) W1-B-01 — keine Hoehenstufe als inset auf einer Attributflaeche
+       ===================================================================== */
+    test('(6) die zwei Attributflaechen tragen keinen Schatten, alle sechs Werte halten 4,5', () => {
+        const befunde = [];
+        [
+            ['dmscreen.css', '.dms-attr-item', 'var(--bg-dark)'],
+            ['dashboard.css', '.qref-row', 'var(--bg-card)']
+        ].forEach(([f, sel, soll]) => {
+            const ist = letzteDeklaration(f, sel, 'background(?:-color)?');
+            if (ist !== soll) {
+                befunde.push(`${f} ${sel} traegt ${ist} statt ${soll} — die Rechnung unten gilt dann nicht`);
+            }
+            regeln(f, sel).forEach(r => {
+                const s = deklaration(r.rumpf, 'box-shadow');
+                if (s) {
+                    befunde.push(
+                        `${f}:${r.zeile} ${sel} traegt box-shadow: ${s.replace(/\s+/g, ' ')} — eine ` +
+                            `Lage auf dieser Flaeche verschiebt die sechs Attributwerte (W1-B-01)`
+                    );
+                }
+            });
+        });
+        WCAG.THEMES.forEach(t => {
+            [
+                ['--bg-dark', GROESSEN['W1-B-01 Attributfarben auf --bg-dark'](t)],
+                ['--bg-card', GROESSEN['W1-B-01 Attributfarben auf --bg-card'](t)]
+            ].forEach(([g, v]) => {
+                if (v < SCHWELLE) {
+                    befunde.push(`${t}: Attributfarben auf ${g} nur ${komma(v)} < ${SCHWELLE}`);
+                }
+            });
+        });
+        expect(befunde.sort()).toEqual([]);
+    });
+
+    /* =====================================================================
+       (7) DIE AKTENLAGE — kein Punkt mehr ohne entschiedene Zahl
+       ===================================================================== */
+    function abschnitt(marke) {
+        const i = AKTENLAGE.indexOf(`## ${marke} `);
+        if (i < 0) return '';
+        const j = AKTENLAGE.indexOf('\n## ', i + 1);
+        return AKTENLAGE.slice(i, j < 0 ? AKTENLAGE.length : j);
+    }
+
+    test('(7) die vier Punkte des Schritts 9 fuehren ihre entschiedene Zahl', () => {
+        const befunde = [];
+        [
+            ['W2-D-06', ['W2-D-06 min beider Stopps gedeckelt']],
+            [
+                'W2-D-05',
+                [
+                    'W2-D-05 Knopf auf der Zeilenflaeche',
+                    'W2-D-05 pwa hover gedeckelt',
+                    'W2-D-05 pwa aktiv gedeckelt'
+                ]
+            ],
+            [
+                'W1-B-01',
+                ['W1-B-01 Attributfarben auf --bg-dark', 'W1-B-01 Attributfarben auf --bg-card']
+            ]
+        ].forEach(([marke, etiketten]) => {
+            const text = abschnitt(marke);
+            if (!text) {
+                befunde.push(`${marke} — kein Abschnitt in der Aktenlage`);
+                return;
+            }
+            etiketten.forEach(e => {
+                let z;
+                try {
+                    z = reihe(GROESSEN[e]);
+                } catch (err) {
+                    befunde.push(`${marke} — "${e}" ist nicht rechenbar: ${err.message}`);
+                    return;
+                }
+                if (!text.includes(z)) {
+                    befunde.push(`${marke} — die gerechnete Reihe "${z}" (${e}) steht nicht im Abschnitt`);
+                }
+            });
+        });
+
+        // W2-B-05 fuehrt keine Kontrastzahl, sondern einen Bestand: die drei
+        // Zahlen, die dem Punkt gefehlt haben. Sie werden hier GEZAEHLT und
+        // nicht abgeschrieben. Kommentare werden zeilentreu geleert, damit die
+        // Nennung in einem Kommentar (tools.css) nicht als Nutzung zaehlt.
+        const definitionen = (
+            inhalt('variables.css').match(
+                /^\s*--(?:overlay-(?:faint|weak|mid|strong|heavy)|scrim-\d+)\s*:/gm
+            ) || []
+        ).length;
+        let nutzungen = 0;
+        let blenden = 0;
+        cssFiles.forEach(f => {
+            const ohne = f.content.replace(/\/\*[\s\S]*?\*\//g, m => m.replace(/[^\n]/g, ' '));
+            nutzungen += (ohne.match(/var\(\s*--(?:overlay-[\w-]+|scrim-\d+)\s*\)/g) || []).length;
+            blenden += (ohne.match(/var\(\s*--scrim-\d+\s*\)/g) || []).length;
+        });
+        const b05 = abschnitt('W2-B-05');
+        if (!b05) {
+            befunde.push('W2-B-05 — kein Abschnitt in der Aktenlage');
+        } else {
+            [
+                [definitionen, 'Definitionen'],
+                [nutzungen, 'Nutzungen per var()'],
+                [blenden, 'Modalblenden']
+            ].forEach(([n, was]) => {
+                if (!new RegExp(`\\*\\*${n}\\*\\*`).test(b05)) {
+                    befunde.push(
+                        `W2-B-05 — die gezaehlte Zahl ${n} (${was}) steht nicht fett im Abschnitt`
+                    );
+                }
+            });
+        }
+
+        // Und die Stand-Angabe darf den Punkt nicht mehr offen nennen. Zwei
+        // Zeilen, weil die Angabe in dieser Akte oft umbricht.
+        ['W2-D-06', 'W2-B-05'].forEach(marke => {
+            const zeilen = abschnitt(marke).split('\n');
+            const i = zeilen.findIndex(l => l.startsWith('**Stand:'));
+            const stand = i < 0 ? '' : `${zeilen[i]} ${zeilen[i + 1] || ''}`;
+            if (i < 0) {
+                befunde.push(`${marke} — keine Stand-Angabe im Abschnitt`);
+            } else if (/offen/i.test(stand)) {
+                befunde.push(`${marke} — die Stand-Angabe nennt den Punkt weiter offen: ${stand.trim()}`);
+            }
+        });
+        expect(befunde.sort()).toEqual([]);
+    });
+});
