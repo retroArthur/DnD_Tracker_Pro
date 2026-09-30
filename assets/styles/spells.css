@@ -443,7 +443,7 @@
             display: flex; /* F-18: aus der Dublette uebernommen */
             border: 1px solid var(--gold); /* F-18: aus der Dublette uebernommen */
             border-radius: var(--radius-md); /* F-18: aus der Dublette uebernommen */
-            box-shadow: var(--shadow-2), 0 0 10px rgba(251, 191, 36, 0.2); /* F-18: aus der Dublette uebernommen */
+            box-shadow: var(--shadow-2), 0 0 10px var(--glow-yellow); /* F-18: aus der Dublette uebernommen */
             z-index: var(--z-floating); /* F-18: aus der Dublette uebernommen */
             opacity: 0; /* F-18: aus der Dublette uebernommen */
             transform: translateY(5px); /* F-18: aus der Dublette uebernommen */
@@ -512,7 +512,7 @@
 
         .color-swatch.active {
             border-color: var(--gold);
-            box-shadow: 0 0 6px rgba(251, 191, 36, 0.5);
+            box-shadow: 0 0 6px var(--glow-yellow);
         }
 
         /* Font/Size selects in floating toolbar */
