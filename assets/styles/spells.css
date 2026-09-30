@@ -443,7 +443,7 @@
             display: flex; /* F-18: aus der Dublette uebernommen */
             border: 1px solid var(--gold); /* F-18: aus der Dublette uebernommen */
             border-radius: var(--radius-md); /* F-18: aus der Dublette uebernommen */
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5), 0 0 10px rgba(251, 191, 36, 0.2); /* F-18: aus der Dublette uebernommen */
+            box-shadow: var(--shadow-2), 0 0 10px rgba(251, 191, 36, 0.2); /* F-18: aus der Dublette uebernommen */
             z-index: var(--z-floating); /* F-18: aus der Dublette uebernommen */
             opacity: 0; /* F-18: aus der Dublette uebernommen */
             transform: translateY(5px); /* F-18: aus der Dublette uebernommen */
@@ -532,7 +532,7 @@
             background: var(--bg-elevated);
             border: 1px solid var(--cyan);
             border-radius: var(--radius-md);
-            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+            box-shadow: var(--shadow-2);
             z-index: var(--z-floating);
             opacity: 0;
             transform: translateY(5px);
@@ -570,7 +570,7 @@
             background: var(--bg-elevated);
             border: 1px solid var(--purple);
             border-radius: var(--radius-md);
-            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+            box-shadow: var(--shadow-2);
             z-index: var(--z-floating);
             opacity: 0;
             transform: translateY(5px);
