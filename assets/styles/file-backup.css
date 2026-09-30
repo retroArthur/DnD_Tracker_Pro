@@ -37,12 +37,12 @@
 
 .backup-dot-active {
     background: var(--green);
-    box-shadow: 0 0 4px rgba(74, 222, 128, 0.4);
+    box-shadow: 0 0 4px var(--glow-green);
 }
 
 .backup-dot-paused {
     background: var(--yellow);
-    box-shadow: 0 0 4px rgba(251, 191, 36, 0.4);
+    box-shadow: 0 0 4px var(--glow-yellow);
 }
 
 .backup-status-text {
