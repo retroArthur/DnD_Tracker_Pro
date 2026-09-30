@@ -47,7 +47,7 @@
             overflow-y: auto;
             z-index: var(--z-panel);
             display: none;
-            box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+            box-shadow: var(--shadow-3);
         }
         
         .global-search-results.visible {
@@ -260,7 +260,7 @@
             font-size: 0.8em;
             width: 250px;
             z-index: var(--z-tooltip);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            box-shadow: var(--shadow-2);
             pointer-events: none;
             opacity: 0;
             transition: opacity 0.2s;
@@ -779,7 +779,7 @@
             padding: 24px; /* F-18: aus der Dublette uebernommen */
             max-width: 500px; /* F-18: aus der Dublette uebernommen */
             width: 90%; /* F-18: aus der Dublette uebernommen */
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.05) inset; /* F-18: aus der Dublette uebernommen */
+            box-shadow: var(--shadow-3), 0 0 0 1px rgba(255, 255, 255, 0.05) inset; /* F-18: aus der Dublette uebernommen */
             transform: translateY(20px) scale(0.95); /* F-18: aus der Dublette uebernommen */
             transition: transform 0.25s ease, opacity 0.25s ease; /* F-18: aus der Dublette uebernommen */
         }
@@ -812,7 +812,7 @@
         .dragging {
             opacity: 0.5;
             transform: scale(1.02);
-            box-shadow: 0 8px 24px rgba(212, 175, 55, 0.3);
+            box-shadow: var(--shadow-3);
         }
         
         .drag-over {
@@ -869,7 +869,7 @@
             border-radius: var(--radius-md);
             min-width: 120px;
             z-index: var(--z-dropdown);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            box-shadow: var(--shadow-2);
         }
         
         .export-dropdown:hover .export-dropdown-content,
@@ -950,7 +950,7 @@
             pointer-events: none;
             transition: opacity 0.15s ease;
             z-index: var(--z-tooltip);
-            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+            box-shadow: var(--shadow-1);
             border: 1px solid var(--border);
         }
         
@@ -974,7 +974,7 @@
         .encounter-card:hover,
         .spell-card:hover {
             transform: translateY(-2px);
-            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+            box-shadow: var(--shadow-2);
             border-color: var(--gold-dim);
         }
         
@@ -1128,13 +1128,13 @@
         [data-sortable].dragging {
             opacity: 0.5;
             transform: scale(1.02);
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+            box-shadow: var(--shadow-2);
             z-index: var(--z-sticky);
         }
         
         [data-sortable].drag-over {
             border-color: var(--gold);
-            box-shadow: 0 0 0 2px var(--gold), 0 4px 12px rgba(212, 175, 55, 0.3);
+            box-shadow: 0 0 0 2px var(--gold), var(--shadow-2);
         }
         
         .drag-handle {
@@ -2180,7 +2180,7 @@
     background: var(--bg-elevated);
     border: 1px solid var(--border);
     border-radius: var(--radius-md);
-    box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+    box-shadow: var(--shadow-3);
     z-index: var(--z-dropdown);
     display: none;
     overflow: hidden;
@@ -2433,7 +2433,7 @@
 .dmscreen-widget.dragging {
     opacity: 0.5;
     transform: scale(0.98);
-    box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+    box-shadow: var(--shadow-3);
 }
 
 .dmscreen-widget.drag-over {
