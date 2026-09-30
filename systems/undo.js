@@ -750,6 +750,18 @@ function goToNote(date) {
     if (switchView) switchView('notes');
     // Scroll zur Notiz
     setTimeout(() => {
+        /* ACHTUNG, dieser Zweig ist derzeit TOT (gefunden in der Pruefung
+           W3-D, Runde 1): `data-note-date` kommt im ganzen Quellbaum genau
+           einmal vor — in der Abfrage hier. Es gibt keinen Setzer, kein
+           Template, kein setAttribute. Die Sitzungsnotizen werden nach
+           `n.id` gerendert (features/sessions/sessions.js, data-id="${n.id}").
+           `noteEl` ist damit immer null, das `if` greift, und nichts von dem,
+           was darin steht, laeuft je. Wer das reparieren will, hat zwei Wege:
+           `data-note-date` beim Rendern der Notizen setzen oder goToNote()
+           auf `n.id` umstellen (dann auch die data-value der Suchtreffer
+           weiter oben). Gefuehrt in .planning/HANDOFF-V3-OFFENE-PUNKTE.md
+           unter W3-F-01 Teil D, Punkt D6; die Ratsche dazu ist R-22 in
+           tests/unit/design-consistency.test.js. */
         const noteEl = document.querySelector(`[data-note-date="${date}"]`);
         if (noteEl) {
             noteEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
