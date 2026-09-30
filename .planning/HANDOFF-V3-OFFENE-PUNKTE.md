@@ -2817,13 +2817,24 @@ Light/Sepia und der Doppelzustand des Würfelknopfs bei ausgesetzter Animation) 
 Runde 1 der Prüfung W3-B** (Eintrag 7 von sieben auf fünf Stellen: die zwei Höhenlagen des
 Würfelknopfs werden von `floatingPulse` überschrieben und sind auf keinem Schirm zu sehen; Teil B von
 27 auf 41 Regeln mit sichtbarem Rahmen, weil die Klassifikation die Regeln übersah, die ihren Rahmen
-nur **umfärben** — darunter der schlechteste Doppellinienfall der Welle mit 1,05).
-**Offen bis zur Runde.** Gesichert durch **R-20** in
+nur **umfärben** — darunter der schlechteste Doppellinienfall der Welle mit 1,05)
+und **erweitert nach der Umsetzung der Schritte 5 und 6** (neuer **Teil E** für die fünf Ringe,
+Teil C um die sechs **Text-Leuchten** und die drei Schatten, die bewusst draußen bleiben;
+Eintrag 6 in Teil A trägt jetzt Datei, Selektor und alle vier Themes statt einer halben Zahl).
+**Offen bis zur Runde.** Gesichert durch **R-20** und **R-21** in
 `tests/unit/design-consistency.test.js`: die Tests „jede Gluehlage, deren Deckung ODER Ton
 sich aendert, steht in der Aktenlage unter W3-F-01", „jeder Rahmennachbar mit Abstand unter 3
-steht namentlich in der Aktenlage unter W3-F-01" und „jede von einer Animation ueberschriebene Lage
-steht in W3-F-01 als nicht gerendert" gehen rot, wenn eine Stelle hier verschwindet.
+steht namentlich in der Aktenlage unter W3-F-01", „jede von einer Animation ueberschriebene Lage
+steht in W3-F-01 als nicht gerendert", „jeder Ring, dessen Dicke, Deckung oder Ton sich aendert,
+steht zeilentreu in W3-F-01", „vier Text-Leuchten wechseln den Ton, und jede steht zeilentreu in
+W3-F-01" und „die drei nicht mitgenommenen Schatten sind Hoehenform und stehen benannt in
+W3-F-01" gehen rot, wenn eine Stelle hier verschwindet.
 Diese Liste kann also nicht durch Vergessen kürzer werden.
+
+**Die drei Prüfungen aus R-21 sind zeilentreu**, nicht teilstringweise: sie verlangen Datei und
+Marke in **einer** Zeile und tragen denselben Riegel gegen Präfixtreffer wie die Animations-
+ratsche. Das ist die stärkere Form, und sie ist hier möglich, weil jede der zwölf Stellen eine
+eigene Tabellenzeile hat.
 
 Was die Führungs-Ratschen **nicht** leisten: sie suchen Datei und Selektor als Teilstrings im
 Abschnitt, nicht als Paar in einer Zeile. Eine Stelle kann darum durch einen Nachbareintrag
@@ -2863,7 +2874,7 @@ niemand sie nachzieht, wären sie nach dem nächsten Kommentar-Commit falsch.
 | 3 | `core.css` → `.offline-indicator` | Stufe 2 statt Stufe 1, obwohl der Radius näher an 6 liegt als an 16: die Leiste ist `position: fixed`, eine frei schwebende Auflage. Weichzeichnung 10 → 16 px, y 2 → 4 px. | Die einzige bewusste Abweichung von der Radiusregel. Sieht sie nach zu viel aus? |
 | 4 | Die sechs `transition`-Regeln in **Contrast** (`core.css`, `dmscreen.css` zweimal, `migration.css`, `npcs.css`, `party.css`) | Aus weichem Aufsteigen wird hartes Einrasten — im Kontrast-Theme ist die Höhenlage ein Umriss ohne Verlauf. | Ruckelt es, oder liest es als bewusstes Einschnappen? |
 | 5 | `dashboard.css` → `.dash-char:hover` und `party.css` → `.event-log-entry` | Dort trifft der Contrast-Umriss auf einen farbigen `border-left`-Statusstreifen. | Bleibt der Statusstreifen als Farbe erkennbar, oder verschluckt ihn der Umriss? |
-| 6 | `migration.css` → der Assistentenschritt | Ring von 30 % auf 15 %. | Ist der aktive Schritt noch hervorgehoben? |
+| 6 | `migration.css` → `.wizard-step.active` (Umzugsassistent, der aktive Schritt) | **Zwei Änderungen auf einmal:** Dicke 2 → 3 px (Faktor 1,50 in der Breite) **und** Deckung 30 % → 15 % (Faktor 0,50). Der Ring wird breiter und gleichzeitig halb so dicht. Abstand zum Assistentenkasten (`--bg-card`): dark 1,89 → 1,32 · light 1,37 → 1,17 · sepia 1,60 → 1,26 · contrast 2,21 → **13,46**. | Die **einzige Abschwächung** des Schritts 6. Ist der aktive Schritt in Dark, Light und Sepia noch als der aktuelle erkennbar? Die Punktfläche selbst trägt `var(--gold)` gegen `var(--text-dim)` an den inaktiven und ist unberührt — der Zustand hängt also nicht allein am Ring. Vollständig in **Teil E**. |
 | 7 | **Die fünf farbigen Höhenlagen, die schwarz werden** (Schritte 3 und 4): `dashboard.css` → `.qref-fab:hover` · `dmscreen.css` → `.dragging` · `dmscreen.css` → `[data-sortable].drag-over` (zweite Lage) · `loot.css` → `.shop-cat-badge.active` · `loot.css` → `.shop-sort-btn.active` | Sie trugen goldene Tinte (`rgba(212,175,55,.3/.4)`) und tragen jetzt die schwarze Tinte ihrer Stufe. **In Dark verlieren sie ihren farbigen Hof praktisch ersatzlos:** gerechnet mit `tests/unit/helpers/wcag-contrast.js` gegen alle vier Dark-Flächen fällt der Abstand Hof-zu-Untergrund von **1,79–2,40 auf 1,03–1,46**, auf `--bg-dark` je auf 1,03–1,05. In **Light** steigt er von 1,15–1,33 auf **1,24–1,61**, in **Sepia** von 1,13–1,29 auf **1,23–1,52** — dort hebt der schwarze Hof also eher besser ab, nur ohne den Farbhinweis. | **Fehlt der Farbhinweis in Dark?** Vier der fünf melden einen Zustand (Ziehen, Ablegen, aktive Kategorie, aktive Sortierung), eine ist ein Hover. Wo der Zustand nur am Schatten hing, ist er in Dark jetzt weg — Hintergrund, Rahmen und Schriftfarbe müssen ihn allein tragen. |
 | 7a | **Warum hier fünf und nicht sieben stehen** (Prüfung W3-B, Runde 1) | Die zwei roten Höhenlagen des Würfelknopfs standen hier mit `rgba(220,38,38,.4/.5)` und zogen die Dark-Spanne auf 1,48–2,40, die Light-Spanne auf 1,15–2,28 und die Sepia-Spanne auf 1,13–2,21. Beide werden von `floatingPulse` überschrieben und sind **nicht gerendert** — siehe Eintrag 10. Die drei Spannen oben sind ohne sie neu gerechnet. | Nichts. Dieser Eintrag ist nur die Begründung der Zahlen darüber. |
 | 8 | `dashboard.css` → `.qref-fab` **und** `.qref-fab:hover` liegen jetzt auf **derselben** Stufe 2 | Folge der Radiusregel: Ruhe hatte 12 px, Hover 20 px, beide liegen näher an 16 als an 6 oder 32. Der Hover-Schatten ist damit **wertgleich mit dem Ruhezustand**; die Rückmeldung beim Überfahren trägt allein noch `transform: scale(1.1)`. | Reicht das Größerwerden als Rückmeldung, oder braucht der Knopf im Hover Stufe 3? Das wäre **ein** Wert in der Ort→Stufe-Tabelle von R-19 und **einer** in `dashboard.css`, keine Leiteränderung. |
@@ -3047,12 +3058,102 @@ dieselbe Aufgabe („zeig mir in zwei Sekunden, wohin ich gesprungen bin"), dies
 durch, bekommt sie eine höhere Deckung, am Code begründet** — nicht stillschweigend hinnehmen und
 nicht als Ausnahme wegbuchen.
 
+#### Und sechs **Text**-Leuchten dazu — Paragraph 3.2 regelt sie nicht, Schritt 5 nimmt sie mit
+
+Neben den 71 `box-shadow`-Deklarationen trägt der Stilbaum **acht** `text-shadow` und **ein**
+`filter: drop-shadow`. Genau **sechs** der acht haben die Glühform `0 0 <r>px <Farbe>` und gehen
+deshalb auf `--glow-*`. Das kostet nichts: **alle sechs tragen heute 0,50** — genau die Deckung
+des Tokens. Radius und Deckung bleiben an jeder der sechs unberührt; was sich ändert, ist allein
+der **Ton**, und zwar an vier von ihnen in je drei der vier Themes. Gerechnet mit
+`tests/unit/helpers/wcag-contrast.js` über die vier neutralen Flächen (Hof gegen Untergrund):
+
+| Stelle | Radius | Ton heute → Token | Abstand vorher → nachher |
+| --- | --: | --- | --- |
+| `dice.css` → `.dice-hero-result.crit` (große Würfelansicht, Krit) | 20 px | `#4ade80` fest → `--green` des Themes | dark 2,97–3,51 → **gleich** · light 1,16–1,34 → 1,58–1,79 · sepia 1,16–1,30 → 1,50–1,65 · contrast 2,97–3,51 → 3,38–4,09 |
+| `dice.css` → `.dice-hero-result.fail` (ebenda, Fehlschlag) | 20 px | `#ef4444` fest → `--red` des Themes | dark 1,75–2,07 → **gleich** · light 1,75–1,97 → 2,04–2,28 · sepia 1,73–1,91 → 1,92–2,12 · contrast 1,75–2,07 → **1,51–1,92** |
+| `dice.css` → `.fdp-number.crit` (schwebendes Panel, Krit) | 20 px | wie oben | wie oben |
+| `dice.css` → `.fdp-number.fail` (schwebendes Panel, Fehlschlag) | 20 px | wie oben | wie oben |
+| `dashboard.css` → `.dice-crit` | 10 px | schon `color-mix(… --green 50 %)` — **kein** Wechsel | in allen vier Themes unverändert |
+| `dashboard.css` → `.dice-fail` | 10 px | schon `color-mix(… --red 50 %)` — **kein** Wechsel | in allen vier Themes unverändert |
+
+**Der einzige Wert, der in dieser ganzen Einheit schlechter wird,** steht in der zweiten Zeile:
+in Contrast ist `--red` reines `#ff0000` und in der Luminanz dunkler als `#ef4444`; der rote
+Texthof fällt dort von 1,75–2,07 auf 1,51–1,92. Er bleibt über dem Wert, den derselbe Hof heute
+in Dark hat, und die Tinte der Zahl selbst ist `var(--red-text)` und nicht betroffen. **Anzusehen:**
+die rote Fehlschlagzahl in Contrast, große Ansicht und Panel nebeneinander.
+
+**Warum die zwei `dashboard.css`-Zeilen überhaupt hier stehen,** obwohl sie sich nicht ändern:
+`.dice-result.crit-effect` (Rahmen und Hof des Würfelfelds) und `.dice-crit` (die Zahl darin) sind
+dieselbe Aussage in zwei Eigenschaften. Die eine auf das Token zu ziehen und die andere vier Zeilen
+weiter unten am Literal zu lassen, wäre nicht zu erklären — das ist die Begründung dafür, die
+Familie nicht halb zu lassen.
+
+#### Drei Schatten bleiben Literale, und das ist entschieden, nicht übersehen
+
+| Stelle | Wert | Warum er bleibt |
+| --- | --- | --- |
+| `dashboard.css` → `.dice-result-main` | `text-shadow: 0 2px 10px rgba(251,191,36,0.3)` | **Höhenform** (`0 <y> <r>`), keine Glühe. Ein `--glow-*` hätte hier die Deckung um 1,67 erhöht — an der größten Zahl der Anwendung, ohne dass die Form es verlangt. |
+| `dmscreen.css` → `.dms-hp-text` | `text-shadow: 0 1px 2px rgba(0,0,0,0.5)` | Schwarze Höhe für die Lesbarkeit auf dem HP-Balken. Keine Rolle, keine Farbe, kein Token. |
+| `dice.css` → `.floating-dice-trigger svg` | `filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3))` | Schwarze Höhe als Filter, gar keine Schattenlage. Nicht von `floatingPulse` überschrieben — das SVG ist ein anderes Element als der Knopf. |
+
+Für eine **Texthöhe** gibt es kein Token, und zwar nicht aus Nachlässigkeit: `--shadow-1/-2/-3`
+führen ihre Geometrie mit sich, sind schwarz, und in Contrast sind sie ein **Umriss mit Spread** —
+als `text-shadow` ergäbe das eine Kontur um jeden Buchstaben. Ein Token „farbige Texthöhe" hätte
+genau eine Verwendung; dieselbe Rechnung hat `--glow-purple` verhindert. Die drei stehen in
+**R-21** namentlich mit Grund, damit die Restmenge benannt ist und nicht lautlos wächst. **Für die
+Runde nichts zu tun** — sie ändern sich nicht.
+
 ### Teil D — die vier JS-Sprungmarken und die zwei Ringe (Schritt 8)
 
 Die vier `0 0 20px var(--gold)`-Sprungmarken (`encounters-render.js`, `locations-render.js`,
 `npc-render.js`, `entity-links.js`) und die zwei `0 0 0 2px var(--gold)`-Ringe
 (`entity-actions.js`, `undo.js`) gehen auf `--glow-gold` bzw. `--ring-gold`. Siehe Teil C: die
 Marken wechseln von voll deckendem Gold auf eine Leuchte mit Teildeckung.
+
+### Teil E — die fünf Ringe: **vier** gehen auf das Token, und in Contrast ändern sich alle vier
+
+Paragraph 5 zählt vier goldene Zustandsschatten; es sind **fünf** (`welt.css` kam in Welle 2 auf
+`color-mix` und fällt aus jedem `rgba(212,175,55`-Zähllauf heraus). Sie tragen **zwei Rollen in
+zwei Stärken**, und ein einziges Token trägt beide nicht: vier gehen auf `--ring-gold`, das
+Ablageziel beim Ziehen bleibt volldeckend.
+
+`--ring-gold` ist in allen vier Themes **3 px** dick und trägt in Dark, Light und Sepia **15 %**
+Gold — in **Contrast volles Gold**, weil eine 15-%-Mischung in einem Kontrastthema keine Aussage
+ist (entschieden in Schritt 2, am Token begründet). **Daraus folgt der größte Einzelsprung der
+ganzen Welle in einem Theme.** Die 15 % statt der 40 % aus Paragraph 3.2 halten die drei
+Fokusringe da, wo sie sind; 40 % hätten sie um das 2,7- bis 4-fache deckender gemacht **und**
+gleichzeitig das Ablageziel geschwächt — genau verkehrt herum.
+
+Trägerfläche ist jeweils der Kasten **hinter** dem Element, denn der Ring liegt außerhalb; sie ist
+aus dem CSS gelesen und nicht geraten. Gerechnet mit `tests/unit/helpers/wcag-contrast.js`:
+
+| Stelle | Rolle | Dicke | Deckung | Fläche | Abstand vorher → nachher |
+| --- | --- | --- | --- | --- | --- |
+| `dmscreen.css` → `.form-group input:focus` (mit `select` und `textarea`) | Fokus | 3 → 3 px | 10 % → 15 % (Faktor 1,50) | `.modal`, themenblindes Literal `rgba(26,26,26,0.95)` | dark 1,20 → 1,32 · light 1,14 → 1,23 · sepia 1,06 → 1,10 · contrast 1,26 → **12,41** |
+| `party.css` → `.cf-panel .cf-field input:focus` (mit `select`) | Fokus | 3 → 3 px | 15 % → 15 % (**wortgleich**) | `.cf-panel` = `--bg-dark` | dark 1,27 → 1,27 · light 1,16 → 1,16 · sepia 1,24 → 1,24 · contrast 1,29 → **14,97** |
+| `welt.css` → `.wp-rich-editor:focus` | Fokus | **2 → 3 px** | 15 % → 15 % | `.wp-section` = `--surface` → `--bg-card` | dark 1,32 → 1,32 · light 1,17 → 1,17 · sepia 1,26 → 1,26 · contrast 1,41 → **13,46** |
+| `migration.css` → `.wizard-step.active` | Zustand | **2 → 3 px** | **30 % → 15 %** | `.migration-wizard` = `--bg-card` | dark 1,89 → 1,32 · light 1,37 → 1,17 · sepia 1,60 → 1,26 · contrast 2,21 → **13,46** |
+| `dmscreen.css` → `[data-sortable].drag-over` | Ablageziel | 2 px | 100 % | — | **unverändert**, siehe unten |
+
+**Anzusehen sind vier Dinge, in dieser Reihenfolge.** Erstens **Contrast**: dort bekommen alle
+vier Ringe einen satten goldenen 3-px-Rahmen, wo vorher ein nicht ablesbarer Hauch war
+(1,26–2,21 → 12,41–14,97). Das ist gewollt und der Punkt des Themas — aber es ist die
+größte sichtbare Änderung, die Welle 3 irgendwo macht, und sie gehört gesehen. Zweitens
+`migration.css`: die einzige **Abschwächung** (Teil A Eintrag 6). Drittens `welt.css`: der Ring
+wird **einen Bildpunkt breiter**, sonst nichts — der Preis dafür, dass ein Token **eine** Dicke
+hat und zwei der vier Stellen bereits 3 px trugen. Viertens `party.css`: in drei Themes
+**bildpunktgleich**, es ist der Maßstab, an dem die 15 % gewählt wurden.
+
+**Das Ablageziel bleibt volldeckend, und das ist der Kern der Entscheidung.** `[data-sortable]`
+`.drag-over` trägt `0 0 0 2px var(--gold)` — ein einheitliches Token würde ausgerechnet das eine
+Element schwächen, das beim Ziehen unmissverständlich sein muss. Es trägt kein Literal, steht als
+Ausnahme 13 in `R-19` und ist in `R-21` die einzige Zeile mit `unveraendert`. In Contrast liegt
+neben diesem Ring zusätzlich der Umriss der zweiten Lage und der umgefärbte Rahmen des Elements —
+drei Linien übereinander, geführt in Teil B mit 1,66.
+
+**Ein Punkt für den Bericht, keine Aufgabe der Runde:** `--ring-gold` bedeutet nach dieser Welle
+**drei** Dinge — Fokus, aktiver Assistentenschritt, Ablageziel. Welle 6 baut den Tastaturfokus
+genau darauf auf und erbt die Mehrdeutigkeit. Jetzt notiert, jetzt nicht gelöst.
 
 ### Was diese Runde **nicht** finden kann
 
@@ -3069,6 +3170,7 @@ cd /d/Claude_Code/Projekte/DnD_Tracker_App_Pro
 PYTHONIOENCODING=utf-8 python build.py     # dist/dnd-tracker-bundled.html oeffnen
 npx jest tests/unit/design-consistency.test.js -t "R-19"
 npx jest tests/unit/design-consistency.test.js -t "R-20"
+npx jest tests/unit/design-consistency.test.js -t "R-21"
 ```
 
 ---
