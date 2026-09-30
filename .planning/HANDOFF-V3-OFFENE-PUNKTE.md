@@ -2820,7 +2820,14 @@ Würfelknopfs werden von `floatingPulse` überschrieben und sind auf keinem Schi
 nur **umfärben** — darunter der schlechteste Doppellinienfall der Welle mit 1,05)
 und **erweitert nach der Umsetzung der Schritte 5 und 6** (neuer **Teil E** für die fünf Ringe,
 Teil C um die sechs **Text-Leuchten** und die drei Schatten, die bewusst draußen bleiben;
-Eintrag 6 in Teil A trägt jetzt Datei, Selektor und alle vier Themes statt einer halben Zahl).
+Eintrag 6 in Teil A trägt jetzt Datei, Selektor und alle vier Themes statt einer halben Zahl)
+und **erweitert nach der Umsetzung der Schritte 7 und 8** (Teil A von 10 auf **13** Einträge:
+die Schublade des Statblocks, die sieben Außenlagen des Vorlesetextes — die der Plan
+fälschlich für folgenlos hielt — und die zwei weißen Glanzkanten als Nachweis, dass sie nicht
+übersehen wurden; **Teil D** von vier Sätzen auf die vollständige Messung, weil die sechs
+JS-Stellen **nicht** in der Planfassung umgesetzt sind, sondern nach **W3-D-05** verstärkt;
+dazu unter Teil E die Notiz, warum die Ausnahmeliste mit Paragraph 7 nicht deckungsgleich
+werden kann).
 **Offen bis zur Runde.** Gesichert durch **R-20** und **R-21** in
 `tests/unit/design-consistency.test.js`: die Tests „jede Gluehlage, deren Deckung ODER Ton
 sich aendert, steht in der Aktenlage unter W3-F-01", „jeder Rahmennachbar mit Abstand unter 3
@@ -2880,6 +2887,10 @@ niemand sie nachzieht, wären sie nach dem nächsten Kommentar-Commit falsch.
 | 8 | `dashboard.css` → `.qref-fab` **und** `.qref-fab:hover` liegen jetzt auf **derselben** Stufe 2 | Folge der Radiusregel: Ruhe hatte 12 px, Hover 20 px, beide liegen näher an 16 als an 6 oder 32. Der Hover-Schatten ist damit **wertgleich mit dem Ruhezustand**; die Rückmeldung beim Überfahren trägt allein noch `transform: scale(1.1)`. | Reicht das Größerwerden als Rückmeldung, oder braucht der Knopf im Hover Stufe 3? Das wäre **ein** Wert in der Ort→Stufe-Tabelle von R-19 und **einer** in `dashboard.css`, keine Leiteränderung. |
 | 9 | `editors.css` → `.editor-toolbar .tb-menu` in **Light und Sepia** | Die dichteste Schattendeklaration des ganzen Bestands (0,65) steht dort jetzt auf 0,20 bzw. 0,22, Faktor **0,31**; dazu y 14 → 8 px. | Die größte Deckungsänderung der Schritte 3 und 4. Steht das Werkzeugmenü in Light noch frei, oder liegt es flach auf? |
 | 10 | `dice.css` → `.floating-dice-trigger` und `.floating-dice-trigger:hover` sind bei laufender Animation **nicht gerendert**; sichtbar werden sie nur bei **ausgesetzter Animation** (`prefers-reduced-motion`) | Die Regel trägt `animation: floatingPulse 3s ease-in-out infinite`, und `@keyframes floatingPulse` setzt `box-shadow` in allen drei Bildern mit der konstant roten ersten Lage `0 4px 16px rgba(220,38,38,0.4)` (R-19-Ausnahmen 10 und 11). Animationsdeklarationen stehen in der Kaskade **über** normalen Autorendeklarationen — auch über `:hover` und unabhängig von der Spezifität; nur `!important` schlüge sie, und keine der beiden trägt es. Läuft die Animation, sieht man nur die Bilder; setzt sie aus, steht ein **schwarzer** Schatten, wo vorher ein roter stand. **Der `:hover`-Schatten war schon vor Welle 3 toter Code** und ist in Runde 1 der Prüfung W3-B als lebend nachgemessen worden. | Kein Fehler, aber der einzige Ort der Welle, an dem dieselbe Regel zwei verschiedene Gesichter hat. Nur mit abgeschalteten Bewegungen prüfbar. **Für Schritt 7:** wer die Höhe des Knopfs wirklich auf die Leiter holen will, muss sie aus `floatingPulse` nehmen — das ist eine Entscheidung dort, nicht hier. **Für den Bericht von Schritt 10:** die Geometrieänderung an `.floating-dice-trigger:hover` (Weichzeichnung 24 → 32 px, y 6 → 8; einer der fünf Gleichstände, die nach oben aufgelöst wurden) ist wertgeändert, aber **nicht gerendert** — sie darf nicht unter den sichtbaren Sprüngen mitgezählt werden. |
+
+| 11 | `initiative.css` → `.init-statblock-content` (die **Schublade** des Statblocks, Schritt 7) | Sie geht auf ihr eigenes Token `--shadow-drawer`, nicht auf Stufe 2. In **Dark wortgleich** (das Token trägt dort bewusst die gemessene Tinte 0,50 weiter statt der 0,45 von Stufe 2). In Light und Sepia bleibt die Geometrie (`-4px 0 24px`), aber die Deckung fällt **0,50 → 0,14** bzw. **0,16** (Faktor 0,28/0,32, in Sepia zusätzlich warme Tinte `rgba(60,40,10)`). In **Contrast wechselt die Form**: aus der 24-px-Weichzeichnung wird ein harter 2-px-Umriss links (`-2px 0 0 0 #aaa`). Abstand des Hofes zum Backdrop (gerechnet als `--scrim-60`, also 60 % Schwarz über `--bg-dark`): dark 1,01 → 1,01 · light **2,13 → 1,24** · sepia **2,01 → 1,13** · contrast 1,00 → **9,04**. | **Trennt sich die Schublade in Light und Sepia noch vom Backdrop?** Das ist die stärkste Abschwächung des Schritts 7. Der Backdrop ist selbst schon dunkel (`#626262`), ein dunkler Hof darauf ist dort ohnehin schwach — die Frage ist, ob die Kante des 420-px-Panels ohne den Hof verschwimmt. In Contrast umgekehrt: dort steht jetzt eine sichtbare Kante, wo rechnerisch nichts war. |
+| 12 | **Die sieben Außenlagen des Vorlesetextes** (`party.css` → `.read-aloud` Grundton und `.parchment`/`.crimson`/`.violet`/`.sage`/`.sky`/`.slate`, Schritt 7) | Der Plan nennt das „einen reinen Namenswechsel ohne Sichtfolge". **Das ist nicht richtig.** `--shadow-1` ist nicht wertgleich mit dem alten `0 2px 6px rgba(0,0,0,0.15)`: die Geometrie ist in Dark/Light/Sepia wortgleich, die **Deckung ändert sich in jedem Theme**, und in Contrast wechselt die Form ganz. Dark **0,15 → 0,35** (Faktor 2,33, der Hof wird **stärker**) · Light 0,15 → 0,10 (0,67) · Sepia 0,15 → 0,12 (0,80) plus warme Tinte · **Contrast**: `0 2px 6px` → `0 0 0 1px #888`, ein harter Umriss statt eines Hauchs. Abstand je neutraler Fläche: dark 1,01–1,12 → 1,03–1,27 · light 1,40–1,41 → 1,24–1,25 · sepia 1,40–1,41 → 1,23–1,25 · **contrast 1,00–1,12 → 3,56–5,92**. Die sieben `inset`-Papiertöne bleiben roh und unberührt (R-19-Ausnahmen 1–7). | **Contrast ist der eigentliche Seheindruck:** sieben Vorlesekästen bekommen dort einen sichtbaren Umriss. Der Kasten trägt schon einen `border-left: 4px` in seiner Papierfarbe und einen Verlauf als Fläche — konkurriert der neue Umriss mit dem Papierrand, oder rahmt er ihn? In Dark die Gegenfrage: der Hof ist **dunkler** geworden, wirkt der Kasten jetzt tiefer eingesetzt als gewollt? |
+| 13 | **Die zwei weißen Glanzkanten** — `dice.css` → `.floating-dice-panel` und `dmscreen.css` → `.modal`, je `0 0 0 1px rgba(255,255,255,0.05) inset` | **Nichts ändert sich.** Sie stehen hier, weil Paragraph 7 des Handoffs sie nicht kennt und Welle 2 sie unter ihren eigenen Ausnahmen führte — sie fielen zwischen die Wellen. Seit Schritt 7 sind sie namentlich als R-19-Ausnahmen **8 und 9** geführt, mit Grund: sie sind **themenblind** (eine Lichtkante auf einer Glasfläche, in jedem Theme dieselbe), und genau deshalb bleibt die Contrast-Prüfung von R-19 auf den Theme-Block beschränkt — ein Lauf über den ganzen Baum schlüge an ihnen an, obwohl sie mit Contrast nichts zu tun haben. | **Für die Runde nichts zu tun.** Der Eintrag ist der Nachweis, dass sie nicht übersehen wurden. Die Ausnahmeliste im Test hat damit **14** Einträge; Paragraph 7 des Handoffs nennt in einer Zeile drei Gruppen und kann mit ihr nicht deckungsgleich werden — siehe die Notiz unter Teil E. |
 
 ### Teil B — die Umrisse in Contrast: **41** Regeln mit sichtbarem Rahmen, nicht 27, nicht 22, nicht 13
 
@@ -3103,12 +3114,84 @@ genau eine Verwendung; dieselbe Rechnung hat `--glow-purple` verhindert. Die dre
 **R-21** namentlich mit Grund, damit die Restmenge benannt ist und nicht lautlos wächst. **Für die
 Runde nichts zu tun** — sie ändern sich nicht.
 
-### Teil D — die vier JS-Sprungmarken und die zwei Ringe (Schritt 8)
+### Teil D — die vier JS-Sprungmarken und die zwei Ringe (Schritt 8, **umgesetzt und verstärkt**)
 
 Die vier `0 0 20px var(--gold)`-Sprungmarken (`encounters-render.js`, `locations-render.js`,
 `npc-render.js`, `entity-links.js`) und die zwei `0 0 0 2px var(--gold)`-Ringe
-(`entity-actions.js`, `undo.js`) gehen auf `--glow-gold` bzw. `--ring-gold`. Siehe Teil C: die
-Marken wechseln von voll deckendem Gold auf eine Leuchte mit Teildeckung.
+(`entity-actions.js`, `undo.js`) gehen auf `--glow-gold` bzw. `--ring-gold`. Alle sechs waren
+voll deckend; die Tokens sind es nicht. **Sie sind nicht in der Planfassung umgesetzt, sondern
+mit einer zweiten Lage verstärkt** — die Messung hat gezeigt, dass die Planfassung die Marken
+unter die Schwelle drückt, die dieses Projekt selbst für nicht-Text verlangt, und
+Entscheidung **W3-D-05** sieht für genau diesen Fall vor: „gib ihr eine höhere Deckung und
+begründe sie am Code".
+
+**Die Zahlen, die das entschieden haben.** Gerechnet mit `tests/unit/helpers/wcag-contrast.js`
+(Selbstprobe gegen die beiden kanonischen WCAG-Graupaare in jedem Lauf), Abstand des Hofes zu
+seiner Trägerfläche. Für die Sprungmarken als **Minimum über die vier neutralen Flächen**
+(`--bg-card`/`-dark`/`-elevated`/`-hover`), weil eine angesprungene Listenzeile an wechselnden
+Orten sitzt; für die Ringe gegen `--bg-card`, weil die Fläche dort aus dem CSS gelesen werden
+kann (Auftragskarte, Notizzettel).
+
+| Marke | | dark | light | sepia | contrast |
+| --- | --- | --: | --: | --: | --: |
+| **Sprungmarke** (4×) | heute, volles Gold | 6,01 | 2,40 | 5,16 | 9,01 |
+| | Planfassung, **eine** Lage `--glow-gold` (50 %) | **2,64** | **1,52** | **2,11** | 3,44 |
+| | umgesetzt: **zwei** Lagen = 75 % | 4,09 | **1,91** | 3,24 | 5,79 |
+| **Ring** (2×) | heute, volles Gold 2 px | 8,28 | 3,25 | 6,58 | 13,46 |
+| | Planfassung, `--ring-gold` allein (15 %, 3 px) | **1,32** | **1,17** | **1,26** | 13,46 |
+| | umgesetzt: Ring + Leuchte 12 px | 3,61 | **1,90** | 2,66 | 13,46 |
+
+Die fett gesetzten Werte liegen unter **3:1**, der Schwelle, die **R-02** in diesem Projekt für
+nicht-Text durchsetzt. Die Planfassung reißt sie bei den Sprungmarken in **drei von vier**
+Themes — Dark eingeschlossen, also im Standardtheme am Spieltisch — und bei den Ringen in
+**drei von vier** mit Werten um 1,2, was nicht „schwächer" heißt, sondern unsichtbar.
+
+**Was umgesetzt ist, wörtlich:**
+
+- 4× `0 0 20px var(--glow-gold), 0 0 8px var(--glow-gold)` — zwei Lagen desselben Tokens ergeben
+  im Kern (bis 8 px) 75 % Deckung, im Ring von 8 bis 20 px weiter 50 %.
+- 2× `var(--ring-gold), 0 0 12px var(--glow-gold)` — der Ring wird 2 → 3 px und 15 %, die
+  Leuchte darüber bringt den Kern auf etwa 57 %.
+
+Kein Literal und kein Nicht-Schattentoken kehrt damit ins JavaScript zurück; jede einzelne Lage
+fällt unter dieselbe erlaubte Form, die **R-19** für das CSS verlangt (`ERLAUBT` steht seit
+Schritt 8 genau einmal im Test und wird von der CSS- und der JS-Prüfung geteilt).
+
+**Worauf in der Runde zu achten ist**
+
+| # | Stelle | Was zu prüfen ist |
+| --: | --- | --- |
+| D1 | Die vier Sprungmarken: NSC anklicken, der auf einen Ort verweist; Querverweis in einer Wiki-Seite; Begegnung aus dem Rechner heraus anspringen | **Sieht man in den zwei Sekunden, wohin gesprungen wurde?** Das ist die eine Frage. Nicht „ist der Hof schön", sondern „finde ich die Zeile". Die Marke muss **gesucht** werden, nicht nur angesehen — wenn sie nur auffällt, weil man weiß, wo sie ist, ist sie durchgefallen. |
+| D2 | Dieselben vier in **Light** | Hier steht mit 1,91 der schlechteste Wert. **Er ist nicht die Folge der Umstellung:** `--gold` ist in Light `#b8860b` und liest schon volldeckend nur 2,40 gegen die schlechteste der vier Flächen. Die Marke hat in Light **nie** 3:1 gehalten. Fällt sie hier durch, ist die Antwort nicht eine dritte Lage, sondern ein hellerer Goldton für Light oder eine andere Markierungsform (Hintergrund, Rahmen) — eine Palettenfrage, nicht eine Schattenfrage. |
+| D3 | Die zwei Ringe in **Dark** und **Light**: Auftrag aus einem Verweis anspringen; Notiz aus der Notizsuche anspringen | Der Ring ist von 8,28 auf 3,61 (dark) bzw. 3,25 auf 1,90 (light) gefallen — das ist selbst **mit** der Verstärkung die stärkste Abschwächung der ganzen Einheit. Reicht Ring plus Hof, oder muss die Marke voll deckend bleiben? |
+| D4 | Beide Ringe in **Contrast** | Dort ist `--ring-gold` volles Gold: der Wert bleibt 13,46, nur die **Dicke** wächst 2 → 3 px. Wirkt der Ring dort jetzt zu fett neben dem `border` des Kastens? |
+| D5 | `entity-links.js` — die Marke des Querverweis-Systems | Sie ist die einzige der vier, die zusätzlich `transform: scale(1.02)` setzt, also die robusteste. Wenn **diese** in einem Theme nicht auffällt, fallen die anderen drei dort sicher durch. Guter Prüfeinstieg. |
+
+**Der Rücknahmeweg, falls die Runde widerspricht.** Drei Stufen, jede billig:
+
+1. **Verstärkung zurück auf die Planfassung:** die zweite Lage löschen, sechs Zeilen, je ein
+   Teilausdruck. R-19 bleibt grün, weil beide Formen erlaubt sind.
+2. **Voll deckend bleiben** (der Weg, den Schritt 8 selbst vorsieht): `0 0 20px var(--gold)`
+   bzw. `0 0 0 2px var(--gold)` wiederherstellen **und** je einen Eintrag in `JS_AUSNAHMEN`
+   von R-19 Teil (5) aufnehmen — heute sind es drei, dann bis zu neun. Das ist die Form, in der
+   `dmscreen.css:1137` (das Ablageziel beim Ziehen) schon heute volldeckend geführt wird; die
+   Begründung wäre wortgleich.
+3. **Nur einzelne Stellen:** die Ausnahme gilt je Zeile, nicht je Familie.
+
+**Was ausdrücklich draußen bleibt, und warum** — damit es nicht als übersehener Rest gilt:
+
+- `features/shops/shop-export.js:292` (`0 4px 6px rgba(0,0,0,0.1)`) und `:486` (`none`) — die
+  Datei erzeugt ein eigenständiges HTML-Handout zum Ausdrucken, das ohne die Variablen der App
+  auskommen muss.
+- `utils/utilities.js:707` (`0 4px 12px rgba(0,0,0,0.15)`) — eine Inline-Stilzeichenkette im
+  Notfall-Toast (dem Alt-`#toast` aus W2-E-05), die läuft, wenn die App schon halb steht; ein
+  `var()` könnte dort leer sein.
+- `assets/templates/*.html` und die `*.html` im Wurzelverzeichnis: **null** `box-shadow`,
+  nichts zu tun.
+
+Alle drei stehen als `JS_AUSNAHMEN` namentlich in R-19 Teil (5) und werden dort je **genau
+einmal** getroffen, mit Zeilenanker **und** Wertabgleich. Eine Ausnahme, die ins Leere zeigt,
+lässt die Ratsche rot werden.
 
 ### Teil E — die fünf Ringe: **vier** gehen auf das Token, und in Contrast ändern sich alle vier
 
@@ -3173,7 +3256,44 @@ drei Linien übereinander, geführt in Teil B mit 1,66.
 
 **Ein Punkt für den Bericht, keine Aufgabe der Runde:** `--ring-gold` bedeutet nach dieser Welle
 **drei** Dinge — Fokus, aktiver Assistentenschritt, Ablageziel. Welle 6 baut den Tastaturfokus
-genau darauf auf und erbt die Mehrdeutigkeit. Jetzt notiert, jetzt nicht gelöst.
+genau darauf auf und erbt die Mehrdeutigkeit. Jetzt notiert, jetzt nicht gelöst. **Seit Schritt 8
+sind es vier:** die zwei JS-Ringe (Auftragskarte, Notizzettel) sind Sprungmarken, keine
+Fokusringe, und tragen dasselbe Token — siehe Teil D.
+
+### Die Ausnahmeliste ist geschlossen — aber nicht deckungsgleich mit Paragraph 7, und das geht nicht
+
+Schritt 7 verlangt, dass die Ausnahmeliste im Test und die in Paragraph 7 des Handoffs nach ihm
+deckungsgleich sind. **Das ist von hier aus nicht erreichbar, und zwar aus einem strukturellen
+Grund:** `DESIGN-HANDOFF-v3.md` liegt unter `Anpassungen/`, ist **nicht versioniert** und für die
+Umsetzung ausdrücklich eine Nur-Lese-Quelle. Es kann nicht angefasst werden, ohne eine fremde
+Datei in den Baum zu ziehen.
+
+Der Stand, damit die Differenz benannt ist und nicht als Versehen gilt:
+
+| | Test (`R-19` `AUSNAHMEN`) | Handoff Paragraph 7 |
+| --- | --: | --- |
+| `.read-aloud`-Papierhöfe | 7 (Einträge 1–7, je die **`inset`-Lage**) | „7 `inset`-Schatten `.read-aloud`" — als **Deklarationen**, also zu weit |
+| weiße Glanzkanten | 2 (Einträge 8–9) | **fehlen ganz** |
+| `@keyframes floatingPulse` | 2 (Einträge 10–11) | „2 `@keyframes`-Schatten `dice.css`" ✓ |
+| `box-shadow: none !important` | 1 (Eintrag 12) | fehlt |
+| Ablageziel beim Ziehen | 1 (Eintrag 13) | fehlt |
+| Ruhelage der Pulsanimation | 1 (Eintrag 14) | fehlt |
+| **Summe** | **14** | 3 Gruppen in einer Zeile |
+
+Die Liste im Test ist die **verbindliche**: sie wird bei jedem Lauf darauf geprüft, dass jeder
+Eintrag **genau einmal** getroffen wird (Teil 4 von R-19), also weder ins Leere zeigt noch
+stillschweigend verallgemeinert. Paragraph 7 ist Prosa ohne Prüfung. Wer den Handoff später
+nachzieht, findet hier die Sollmenge; wer ihn nicht nachzieht, verliert nichts Prüfbares.
+
+**Auch die zweite Hälfte von Arbeitsregel §2 Nr. 9 („jede Ausnahme steht mit Kommentar im CSS
+**und** in der Ausnahmeliste der Ratsche") ist für diese Familie nicht erfüllt — und zwar für
+**keinen** der 14 Einträge.** Nachgesehen: keiner trägt heute einen Kommentar an seiner
+Deklaration; die Begründungen stehen ausnahmslos in `R-19`. Zwei davon nachzutragen, wie Schritt 7
+für die Glanzkanten vorschlägt, wäre eine einzelne Inkonsequenz und würde zusätzlich die
+Zeilenanker in `dice.css` und `dmscreen.css` verschieben — mit Nachzug in der Ort→Stufe-Tabelle,
+in der Ausnahmeliste, in `R-20`, `R-21`, `R-06` und in dieser Datei, für reine Prosa. Entweder
+alle 14 in einem eigenen Durchgang oder keine; die Entscheidung gehört zu Schritt 10, nicht
+hierher.
 
 ### Was diese Runde **nicht** finden kann
 
