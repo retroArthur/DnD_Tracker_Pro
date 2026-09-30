@@ -992,7 +992,7 @@
         "span.shop-type-label#0"
       ],
       "digests": {
-        "button.active.shop-sort-btn#0": "38e588b7856e2eff",
+        "button.active.shop-sort-btn#0": "ecce5bf471df37eb",
         "button.btn.btn-danger.btn-sm#0": "3815a300548b7f7c",
         "button.btn.btn-danger.btn-sm#1": "1bf75d0cfb7de1e2",
         "button.btn.btn-danger.btn-sm#2": "1bf75d0cfb7de1e2",
@@ -1044,7 +1044,7 @@
         "div.si-qty#1": "53ef8ba75f11c51b",
         "input.toolbar-search#0": "36c0355f6375a997",
         "select.toolbar-select#0": "fb6dc405d189c726",
-        "span.active.all.shop-cat-badge#0": "862fc501b6f3a392",
+        "span.active.all.shop-cat-badge#0": "e46a6b2e76f19cd8",
         "span.clickable.entity-link.location.shop-meta-tag#0": "cfe97fcd2e12c406",
         "span.clickable.entity-link.npc.shop-meta-tag#0": "fc14b8248622dfaa",
         "span.misc.shop-cat-badge#0": "fc5b6932b689a5b8",
@@ -3544,7 +3544,7 @@
         "span.shop-type-label#0"
       ],
       "digests": {
-        "button.active.shop-sort-btn#0": "38e588b7856e2eff",
+        "button.active.shop-sort-btn#0": "ecce5bf471df37eb",
         "button.btn.btn-danger.btn-sm#0": "c89c9ce8fa563372",
         "button.btn.btn-danger.btn-sm#1": "1bf75d0cfb7de1e2",
         "button.btn.btn-danger.btn-sm#2": "1bf75d0cfb7de1e2",
@@ -3596,7 +3596,7 @@
         "div.si-qty#1": "53ef8ba75f11c51b",
         "input.toolbar-search#0": "36c0355f6375a997",
         "select.toolbar-select#0": "fb6dc405d189c726",
-        "span.active.all.shop-cat-badge#0": "862fc501b6f3a392",
+        "span.active.all.shop-cat-badge#0": "e46a6b2e76f19cd8",
         "span.clickable.entity-link.location.shop-meta-tag#0": "cfe97fcd2e12c406",
         "span.clickable.entity-link.npc.shop-meta-tag#0": "fc14b8248622dfaa",
         "span.misc.shop-cat-badge#0": "fc5b6932b689a5b8",
@@ -6164,7 +6164,7 @@
         "span.shop-type-label#0"
       ],
       "digests": {
-        "button.active.shop-sort-btn#0": "38e588b7856e2eff",
+        "button.active.shop-sort-btn#0": "ecce5bf471df37eb",
         "button.btn.btn-danger.btn-sm#0": "3815a300548b7f7c",
         "button.btn.btn-danger.btn-sm#1": "1bf75d0cfb7de1e2",
         "button.btn.btn-danger.btn-sm#2": "1bf75d0cfb7de1e2",
@@ -6216,7 +6216,7 @@
         "div.si-qty#1": "53ef8ba75f11c51b",
         "input.toolbar-search#0": "36c0355f6375a997",
         "select.toolbar-select#0": "fb6dc405d189c726",
-        "span.active.all.shop-cat-badge#0": "862fc501b6f3a392",
+        "span.active.all.shop-cat-badge#0": "e46a6b2e76f19cd8",
         "span.clickable.entity-link.location.shop-meta-tag#0": "cfe97fcd2e12c406",
         "span.clickable.entity-link.npc.shop-meta-tag#0": "fc14b8248622dfaa",
         "span.misc.shop-cat-badge#0": "fc5b6932b689a5b8",
