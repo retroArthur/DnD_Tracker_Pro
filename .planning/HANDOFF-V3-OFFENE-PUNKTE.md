@@ -2406,10 +2406,43 @@ zusammen trägt") — sie war nur an der falschen Hälfte umgesetzt.
 den leeren Fall (findet es das Element nirgends im Markup, ist das ein Befund). Nachgesehen statt
 vermutet: außer dieser einen trägt **keines** der von R-23 gerechneten Elemente einen farbsetzenden
 Inline-Stil — der PWA-Knopf hat `style="display:none"` in `header.html`, das ist keine Farbe;
-`.fdp-die.d20`, `.qref-row` und `.dms-attr-item` haben keinen. **Für die ganze Familie ist die Frage
-damit nicht beantwortet:** die Prüfung gilt für eine Klasse, nicht für alle Inline-Stile des Baumes.
-Wie viele davon eine Tinte setzen, die eine CSS-Regel daneben anders nennt, ist **nicht erhoben** —
-ein eigener Punkt für eine eigene Runde, und nach diesem Befund ein lohnender.
+`.fdp-die.d20`, `.qref-row` und `.dms-attr-item` haben keinen.
+
+**1b. Die Erhebung für die ganze Familie, nachgeholt in Prüfung W3-E, Runde 1.** Diese Akte hat die
+Frage hier als „**nicht erhoben** — ein eigener Punkt für eine eigene Runde" geführt. Sie ist in
+einem Durchgang erhoben, und sie war nicht leer. **259** Tags im Baum tragen `class=` **und**
+`style=` (`sourceJs()` plus `assets/templates`, dieselben Quellen wie `inlineStilVon()`). Gezählt
+nach der Form, über die sich streiten läßt, kommt man auf verschiedene Zahlen — die belastbare
+Abgrenzung ist: **Basisregel** heißt, das Subjekt-Kompound des Selektors ist genau `.klasse`, ohne
+zweite Klasse, Pseudoklasse oder Attribut; dynamische Werte (`${…}`) bleiben außen vor, weil sie
+statisch nicht zu beurteilen sind. So gezählt: **12** Abweichungen von einer Basisregel und **1**
+totgeschlagene Zustandsregel. **Drei** davon waren dieselbe Fehlerklasse wie diese hier, also ein
+Inline-Wert, der vom CSS-Wert **abweicht** und eine Schwelle reißt oder einen Zustand stumm schaltet:
+
+| Stelle | inline | was die Regel sagt | gemalt (d·l·s·c) | jetzt |
+| --- | --- | --- | --- | --- |
+| `features/initiative.js` `.init-type` (Unterzeile „Lair Action") | `color: var(--red)` | `initiative.css` `.init-type { color: var(--text-dim) }` | **4,21 · 4,35 · 3,88 · 4,49** auf dem getönten Lair-Ende — bei 0.75em in **allen vier** Themes unter 4,5 | `.init-entry.lair .init-type { color: var(--red-text) }`, **5,67 · 5,55 · 5,32 · 6,47** |
+| `features/shops/shops-core.js` `.si-tag-v` (Etikett „Nachteil") | `color:var(--red)` | `loot.css` `.si-tag-v { color: var(--cyan) }` | **4,62 · 4,83 · 4,29 · 4,72** auf `.si-details` (`--bg-card`), **Sepia** darunter | `.si-tag-v.si-tag-neg { color: var(--red-text) }`, **6,22 · 6,17 · 5,88 · 6,80** |
+| `systems/spellslots/quick-reference.js` `.qref-btn` (Löschknopf) | `border-color: var(--red)` | `dashboard.css` `.qref-btn:hover { border-color: var(--gold) }` | kein Kontrastmangel (`--red` gegen `--bg-hover` **3,36 · 3,56 · 3,36 · 3,16**), aber der Knopf hatte in **keinem** Theme eine Hover-Kontur | `.qref-btn-del { border-color: var(--red-text) }` mit 0-1-0, der Hover mit 0-2-0 gewinnt wieder; Ruhering **6,22 · 6,17 · 5,88 · 6,80** |
+
+Die erste dieser drei ist die bezeichnendste: **drei CSS-Zeilen weiter** steht
+`initiative.css` `.init-entry.lair .init-name { color: var(--red-text) }`. Die Tintenkorrektur der
+Welle 2 ist am **Geschwister** angekommen und an der Unterzeile nicht — weil deren Tinte im JS stand
+und im CSS gar nichts war, woran die Korrektur hätte greifen können. Wortgleich derselbe Mechanismus
+wie bei diesem Knopf, nur eine Datei weiter.
+
+**Was daraus folgt, und es steht diesmal nicht nur in einer Akte.** Die restlichen **9** Abweichungen
+sind nachgesehen und geduldet, jede mit einem Grund in `INLINE_TINTE_GEDULDET` (die zwei
+`#ef4444`-Knöpfe in `modals-editors.html` fallen auf einen Schlüssel, also 9 Einträge für 10
+geduldete Stellen): die zwei Akzenteinträge der Systemgruppe im Navigationsmenü, vier Stellen des
+eingefrorenen Editorleisten-Markups, der Verfolgen-Knopf der Quests (der Fläche **und** Tinte in
+einem Zug setzt, also gar kein Alleingang der Tinte ist), die Sammelgruppe „Ohne Arc", der
+Zählchip „+N" der Entity-Links und die Zeile „noch nicht eingerichtet" des Datei-Backups.
+**R-23 Teil (8)** führt die Liste in **beide** Richtungen geschlossen — eine Stelle ohne Eintrag ist
+ein Befund, ein Eintrag ohne Stelle auch —, damit sie mit jeder Behebung schrumpft statt zu
+verwesen. Und warum bis dahin keine Ratsche hingesehen hat: **F-19** zählt `style="` ausschließlich
+in `assets/templates`; JS-erzeugte Inline-Stile stehen in keinem Zählwerk, `INLINE_MAX` blieb beim
+Entfernen eines Stils darum zu Recht bei 256, und die Klasse war ungedeckt.
 
 **2. `.pwa-install-btn` — Hover mitgedeckelt plus eine nicht tönende Deklaration an `:active`**
 (Commit `832ebde`). Der Nachtrag hatte `:active` gedeckelt und `:hover` ungedeckelt gelassen. Beide
@@ -3546,6 +3579,42 @@ Welle `.dms-attr-item` zugeschrieben haben, gehören zu `.qref-row`. Auf der Fl�
 `.dms-attr-item` (`--bg-dark`) hält `--attr-wis` in Dark **5,04**, und der knappste Wert dort ist
 `--attr-dex` in Sepia mit **4,98**. Kein Schritt der Welle 3 hat ein `inset` auf eine dieser Flächen
 gelegt; **R-23 Teil (6)** hält das fest. Vollständig unter W1-B-01.
+
+**Nachtrag zu Eintrag 15 (Prüfung W3-E, Runde 1):** der Ring dieser Zeile hat zusätzlich
+`outline-offset: -1px` bekommen und liegt jetzt **innen** statt außen. Zwei Dinge sind daran zu
+sehen. Erstens: er sitzt einen Pixel weiter innen und **deckt dabei das eigene `border-bottom`** der
+Zeile — die Doppellinie aus Ring und Trennlinie, die in Contrast am deutlichsten war, entfällt.
+Zweitens, und das ist der Grund: außen lag er im 24-px-Polster des Modals, und `.modal` trägt ein
+themenblindes `rgba(26, 26, 26, 0.95)` statt `--bg-card`. Gegen diese Fläche las `--gold-dim`
+**5,27 · 3,01 · 1,57 · 7,93** — in **Sepia** waren die seitlichen Segmente des Rings **unsichtbar**,
+in Light standen sie mit 3,01 auf der Schwelle. Die geführte Reihe 5,21 · 5,09 · 9,17 · 8,51 war
+richtig gerechnet und gegen die falsche Fläche gehalten. **Worauf zu achten ist:** ob der Ring in
+allen vier Themes **rundum gleich stark** liest — vorher war er in Sepia links und rechts weg. Und
+ob er in Sepia und Light nicht zu dicht am Text sitzt; er liegt jetzt im 4-px-Polster der Zeile.
+
+### Teil G — der Nachtrag aus Prüfung W3-E, Runde 1: **drei** Tinten, die nie im CSS standen
+
+Diese drei sind keine Schattenlagen und kein Zustand, sondern der Ertrag des Befunds aus Teil F:
+dieselbe Fehlerklasse wie beim Rückhol-Knopf — eine Tinte, die **inline im Markup** stand und damit
+jede Regel und jede Rechnung schlug. Die Erhebung, die Punkt 1a von W2-D-05 als „nicht erhoben"
+geführt hat, ist jetzt gemacht; **R-23 Teil (8)** urteilt seither über die ganze Menge. Alle drei
+wechseln von `--red` auf `--red-text`, also einen etwas helleren Rotton in Dark und Contrast und
+einen dunkleren in Light und Sepia — genau der Wechsel, den Eintrag 15 am Rückhol-Knopf schon zeigt.
+
+| # | Stelle | Was sich ändert | Worauf zu achten ist |
+| --: | --- | --- | --- |
+| 17 | `initiative.css` → `.init-entry.lair .init-type` (die Unterzeile „Lair Action" in der Initiative, sichtbar sobald eine Lair-Action in der Reihenfolge steht) | Die Tinte stand inline als `var(--red)` und las auf dem getönten Ende des Lair-Verlaufs **4,21 · 4,35 · 3,88 · 4,49** — bei `font-size: 0.75em` in **allen vier** Themes unter 4,5. Jetzt `var(--red-text)`: **5,67 · 5,55 · 5,32 · 6,47**. | Die Unterzeile ist klein und steht direkt unter dem Namen der Lair-Action, der seit Welle 2 schon `--red-text` trägt. **Frage:** lesen Name und Unterzeile jetzt als **ein** Paar (gleicher Rotton, verschiedene Größe) oder wirkt die Unterzeile zu nah am Namen, weil der Farbunterschied weg ist? Vorher waren es zwei Rottöne, jetzt einer. |
+| 18 | `loot.css` → `.si-tag-v.si-tag-neg` (das Etikett „Nachteil" bei Heimlichkeit, im aufgeklappten Detail eines Rüstungs-Eintrags im Laden) | Inline `var(--red)` auf `--bg-card`: **4,62 · 4,83 · 4,29 · 4,72**, Sepia darunter. Jetzt `var(--red-text)`: **6,22 · 6,17 · 5,88 · 6,80**. | Dieses Etikett ist das **einzige** rote in einer Reihe cyanfarbener Werte (`.si-tag-v` ist sonst `--cyan`). **Frage:** sticht es noch als Warnung heraus, oder liest es nach dem Wechsel wie ein normaler Wert? Besonders in **Light und Sepia**, wo `--red-text` dunkler geworden ist. |
+| 19 | `dashboard.css` → `.qref-btn-del` (der 🗑️-Knopf an einem eigenen Eintrag der Schnellreferenz, neben dem ✏️-Knopf) | Der rote Rand stand inline und schlug damit **dauerhaft** `.qref-btn:hover { border-color: var(--gold) }`: dieser Knopf hatte in **keinem** Theme eine Hover-Kontur, sein Nachbar schon. Jetzt als Klasse mit `var(--red-text)` und schwächerer Spezifität — der Hover kommt zurück. Ruhering **6,22 · 6,17 · 5,88 · 6,80** statt 4,62 · 4,83 · 4,29 · 4,72. | **Zwei Fragen, und die zweite ist eine Geschmacksfrage, die der Nutzer entscheidet.** Erstens: liest der Knopf in Ruhe noch als „das löscht"? Zweitens: er wird beim Überfahren jetzt **golden** wie jeder andere Knopf der Schnellreferenz und verliert dabei kurz seine Warnfarbe. Ist das richtig (Gold = „hier bin ich", Rot = „das löscht") oder soll der Ring beim Überfahren rot **bleiben**? Beides ist eine Zeile CSS. |
+
+**Ein Punkt für den Bericht, keine Aufgabe dieser Runde.** Zwei Messungen am Rand der drei Stellen
+gehören in keine Welle und sind hier nur festgehalten, damit sie nicht wieder verlorengehen:
+`.qref-btn:hover { border-color: var(--gold) }` hält gegen seine eigene Hover-Füllung
+`--bg-hover` nur **6,01 · 2,40 · 5,16 · 9,01** — in **Light 2,40**, also unter 3 für eine Linie, und
+das gilt für **alle** Knöpfe der Schnellreferenz, nicht erst seit Eintrag 19. Und `.si-tag-v` selbst
+trägt `var(--cyan)` auf `--bg-card`: **8,85 · 3,68 · 2,93 · 15,06**, in Light und Sepia unter 4,5 —
+`--cyan-text` wäre das Gegenstück. Beides sind Vorbestände ohne Ratsche, beides ist keine Folge
+dieser Runde.
 
 ### Die Ausnahmeliste ist geschlossen — aber nicht deckungsgleich mit Paragraph 7, und das geht nicht
 
