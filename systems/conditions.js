@@ -87,7 +87,7 @@ function addCustomCondition() {
     if (renderParty) renderParty();
     if (renderInit) renderInit();
     if (save) save();
-    showToast(`Zustand "${name}" hinzugefügt`);
+    showToast(`Zustand "${name}" hinzugefügt`, 'success', { kategorie: 'kampf' });
 }
 function removeCondition(type, id, conditionIndex) {
     const getEntityByTypeAndId = window.getEntityByTypeAndId;

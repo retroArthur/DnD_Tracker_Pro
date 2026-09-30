@@ -109,7 +109,9 @@ function applyQuickAction(cbId, actionKey) {
         // Check if effect already exists
         const existing = cb.effects.find(e => e.name === action.effect.name);
         if (existing) {
-            showToast(`${cb.name} ist bereits ${action.effect.name}`, 'info');
+            showToast(`${cb.name} ist bereits ${action.effect.name}`, 'info', {
+                kategorie: 'kampf'
+            });
             return;
         }
         cb.effects.push({
@@ -120,7 +122,9 @@ function applyQuickAction(cbId, actionKey) {
             permanent: action.effect.permanent || false,
             description: action.desc
         });
-        showToast(`${action.icon} ${cb.name}: ${action.effect.name}`, 'success');
+        showToast(`${action.icon} ${cb.name}: ${action.effect.name}`, 'success', {
+            kategorie: 'kampf'
+        });
     }
     // Special actions without effect - only toast
     switch (actionKey) {
@@ -132,7 +136,9 @@ function applyQuickAction(cbId, actionKey) {
                     speed = char.speed.split('|')[0];
                 }
             }
-            showToast(`${action.icon} ${cb.name} sprintet (2× ${speed})`, 'info');
+            showToast(`${action.icon} ${cb.name} sprintet (2× ${speed})`, 'info', {
+                kategorie: 'kampf'
+            });
             break;
         }
         case 'hide': {
@@ -148,12 +154,15 @@ function applyQuickAction(cbId, actionKey) {
             const total = stealthRoll + stealthMod;
             showToast(
                 `${action.icon} Stealth: ${stealthRoll}${stealthMod >= 0 ? '+' : ''}${stealthMod} = ${total}`,
-                stealthRoll === 20 ? 'success' : stealthRoll === 1 ? 'error' : 'info'
+                stealthRoll === 20 ? 'success' : stealthRoll === 1 ? 'error' : 'info',
+                { kategorie: 'kampf' }
             );
             break;
         }
         case 'help':
-            showToast(`${action.icon} ${cb.name} hilft einem Verbündeten`, 'info');
+            showToast(`${action.icon} ${cb.name} hilft einem Verbündeten`, 'info', {
+                kategorie: 'kampf'
+            });
             break;
         case 'search': {
             const perceptionRoll = Math.floor(Math.random() * 20) + 1;
@@ -167,12 +176,15 @@ function applyQuickAction(cbId, actionKey) {
             const percTotal = perceptionRoll + perceptionMod;
             showToast(
                 `${action.icon} Wahrnehmung: ${perceptionRoll}${perceptionMod >= 0 ? '+' : ''}${perceptionMod} = ${percTotal}`,
-                perceptionRoll === 20 ? 'success' : perceptionRoll === 1 ? 'error' : 'info'
+                perceptionRoll === 20 ? 'success' : perceptionRoll === 1 ? 'error' : 'info',
+                { kategorie: 'kampf' }
             );
             break;
         }
         case 'useObject':
-            showToast(`${action.icon} ${cb.name} benutzt ein Objekt`, 'info');
+            showToast(`${action.icon} ${cb.name} benutzt ein Objekt`, 'info', {
+                kategorie: 'kampf'
+            });
             break;
     }
     renderInit();

@@ -23,7 +23,7 @@ function rollAllInitiative() {
     D.initiative.currentTurn = 0;
     renderInit();
     save();
-    showToast('Initiative gewürfelt & sortiert');
+    showToast('Initiative gewürfelt & sortiert', 'success', { kategorie: 'kampf' });
 }
 // Drag and Drop for Initiative
 let draggedInitItem = null;

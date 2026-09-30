@@ -265,7 +265,11 @@ test.describe('U5: Kampfprotokoll — Kategorien', () => {
         await ladeApp(page);
 
         const messwert = await page.evaluate(() => {
-            // Mob-Kombattant von Hand setzen, dann den echten Angriffspfad rufen.
+            // Mob-Kombattant von Hand setzen, dann den ECHTEN Angriffspfad rufen.
+            // Die Felder sind die von createMobCombatant() (features/initiative-mob.js):
+            // getMobAlive() rechnet ceil(poolHp / individualMaxHp) — ohne
+            // individualMaxHp meldet der Angriff NaN Treffer und der Fall wuerde
+            // zwar gruen, aber nichts Richtiges messen.
             window.D.initiative = window.D.initiative || {};
             window.D.initiative.combatants = [
                 {
@@ -275,7 +279,13 @@ test.describe('U5: Kampfprotokoll — Kategorien', () => {
                     initiative: 12,
                     currentHp: 42,
                     maxHp: 42,
-                    mob: { count: 6, defeated: 0, poolHp: 42, mode: 'n-fach' }
+                    mob: {
+                        count: 6,
+                        poolHp: 42,
+                        maxPoolHp: 42,
+                        individualMaxHp: 7,
+                        attackMode: 'nfach'
+                    }
                 }
             ];
             window.D.initiative.currentTurn = 0;

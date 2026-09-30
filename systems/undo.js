@@ -797,7 +797,7 @@ function nextEncounterRound() {
     const save = window.save;
     if (save) save();
     updateEncounterDisplay();
-    showToast(`⚔️ Runde ${encounterRound}`);
+    showToast(`⚔️ Runde ${encounterRound}`, 'success', { kategorie: 'kampf' });
 }
 function resetEncounter() {
     if (
@@ -822,7 +822,7 @@ function resetEncounter() {
     if (save) save();
     if (renderInit) renderInit();
     updateEncounterDisplay();
-    showToast('🔄 Encounter zurückgesetzt');
+    showToast('🔄 Encounter zurückgesetzt', 'success', { kategorie: 'kampf' });
 }
 function updateEncounterDisplay() {
     const roundEl = document.querySelector('.encounter-round-num');

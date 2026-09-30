@@ -97,7 +97,7 @@ function saveCustomEffect() {
     hideModal('effect-modal');
     renderInit();
     window.save();
-    showToast(`Effekt "${name}" hinzugefügt`);
+    showToast(`Effekt "${name}" hinzugefügt`, 'success', { kategorie: 'kampf' });
 }
 function removeEffect(cbId, effId) {
     const cb = getCombatant(cbId);
@@ -181,14 +181,14 @@ function toggleDeathSave(cbId, type, index) {
     }
     // Auf Tod prüfen (3 Fehlschläge)
     if (ds.failures >= INIT_CONSTANTS.DEATH_SAVE_THRESHOLD) {
-        showToast('💀 Charakter ist gestorben!', 'error');
+        showToast('💀 Charakter ist gestorben!', 'error', { kategorie: 'kampf' });
     }
     // Auf Stabilisierung prüfen (3 Erfolge)
     if (ds.successes >= INIT_CONSTANTS.DEATH_SAVE_THRESHOLD && cb.currentHp <= 0) {
         cb.currentHp = 1;
         ds.successes = 0;
         ds.failures = 0;
-        showToast('✓ Charakter ist stabilisiert!', 'success');
+        showToast('✓ Charakter ist stabilisiert!', 'success', { kategorie: 'kampf' });
     }
     renderInit();
     window.save();
@@ -408,7 +408,7 @@ function setConcentration(cbId) {
     hideModal('concentration-modal');
     renderInit();
     window.save();
-    showToast(`🔮 Konzentration: ${spell}`);
+    showToast(`🔮 Konzentration: ${spell}`, 'success', { kategorie: 'kampf' });
 }
 function breakConcentration(cbId) {
     const cb = getCombatant(cbId);
@@ -417,7 +417,7 @@ function breakConcentration(cbId) {
     cb.concentration = { active: false, spell: '', lastDC: 10 };
     renderInit();
     window.save();
-    showToast(`❌ Konzentration gebrochen: ${spell}`, 'warning');
+    showToast(`❌ Konzentration gebrochen: ${spell}`, 'warning', { kategorie: 'kampf' });
 }
 function rollConcentrationCheck(cbId, dc) {
     const cb = getCombatant(cbId);
@@ -440,10 +440,10 @@ function rollConcentrationCheck(cbId, dc) {
         ? `✓ Konzentration gehalten! (${roll}${modStr} = ${total} vs DC ${dc})`
         : `✕ Konzentration verloren! (${roll}${modStr} = ${total} vs DC ${dc})`;
     if (success) {
-        showToast(resultText, 'success');
+        showToast(resultText, 'success', { kategorie: 'kampf' });
     } else {
         breakConcentration(cbId);
-        showToast(resultText, 'error');
+        showToast(resultText, 'error', { kategorie: 'kampf' });
     }
     // Ausstehende Prüfung löschen
     if (cb.concentration) {
@@ -650,7 +650,9 @@ function applyAoEDamage() {
     hideModal('aoe-damage-modal');
     renderInit();
     window.save();
-    showToast(`💥 AoE: ${aoeCurrentDamage} Schaden auf ${hitCount} Ziele`);
+    showToast(`💥 AoE: ${aoeCurrentDamage} Schaden auf ${hitCount} Ziele`, 'success', {
+        kategorie: 'kampf'
+    });
 }
 
 // ============================================================

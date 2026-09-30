@@ -338,7 +338,7 @@ function saveLoot() {
         const idx = D.loot.findIndex(i => i.id === parseInt(editId));
         if (idx > -1) {
             D.loot[idx] = { ...D.loot[idx], ...item };
-            showToast('Item aktualisiert');
+            showToast('Item aktualisiert', 'success', { kategorie: 'kampf' });
             // Detail-Panel aktualisieren falls selbes Item
             if (selectedLootId === parseInt(editId)) {
                 showLootDetail(parseInt(editId));
@@ -355,10 +355,10 @@ function saveLoot() {
         );
         if (existing) {
             existing.quantity += newItem.quantity;
-            showToast('Menge erhöht');
+            showToast('Menge erhöht', 'success', { kategorie: 'kampf' });
         } else {
             D.loot.push(newItem);
-            showToast('Item hinzugefügt');
+            showToast('Item hinzugefügt', 'success', { kategorie: 'kampf' });
             // Neues Item selektieren
             selectedLootId = newItem.id;
         }
@@ -384,7 +384,7 @@ function removeLoot(id) {
         }
         renderLootList();
         window.save();
-        showToast('Item entfernt');
+        showToast('Item entfernt', 'success', { kategorie: 'kampf' });
     }
 }
 
