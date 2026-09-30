@@ -1239,6 +1239,97 @@ describe('F-21 — DM-Screen-Widget-Klassen ohne Regel (Ratsche)', () => {
     });
 });
 
+describe('U4 — der Vertrag der Modal-Schale (Ratsche)', () => {
+    // Fundstelle: showTimelineModal() hat die Schale von Hand nachgebaut und
+    // dabei ZWEI Namen erfunden, die es in diesem Baum nie gab — `active` als
+    // Sichtschalter (der heisst `show`; `git log -S'modal-overlay.active'
+    // --all` ist leer) und `modal-box` als Kartenklasse (0 CSS-Regeln,
+    // genau ein Vorkommen im ganzen Baum). Beides zusammen ergab einen
+    // Dialog mit display:none, opacity:0 und einem Rechteck von 0x0 —
+    // stumm, seit d05ce45 vom 15.06.2026.
+    //
+    // Derselbe Defekt steckte drei Tage spaeter im NPC-Generator und wurde
+    // dort von der menschlichen Abnahme gefunden (0d38bdc/4cb9a5b/85d0719).
+    // Dass er sich wiederholen konnte, liegt daran, dass NICHTS den Vertrag
+    // der Schale geprueft hat. Genau das tun die fuenf Faelle hier.
+
+    // Die Klassen, aus denen die Schale besteht. Reihenfolge = Verschachtelung.
+    const SCHALE = [
+        'modal-overlay',
+        'modal',
+        'modal-header',
+        'modal-title',
+        'modal-body',
+        'modal-footer',
+        'modal-close'
+    ];
+
+    // Regelfrei geblieben, namentlich und mit Grund — KEINE stille Freigabe:
+    // .modal-body und .modal-footer tragen in 12 Modulen und 4 Templates
+    // ueberhaupt keine eigene Gestaltung. Gemessen am Buendel vom 2026-10-01
+    // richtet das heute keinen sichtbaren Schaden an, weil .modal selbst
+    // padding, max-height und overflow-y fuehrt und die Fusszeile aus
+    // .btn-Knoepfen besteht. Sie zu gestalten waere eine Designentscheidung
+    // ueber 19 Modale und gehoert nicht in eine Fehlerkorrektur. Diese Liste
+    // darf nur KUERZER werden.
+    const OHNE_REGEL_GEFUEHRT = ['modal-body', 'modal-footer'];
+
+    // Formular-Primitive: dieselbe Fehlerklasse, andere Namen. Beide kommen
+    // aus drei Modulen (timeline-render.js 6x, session-prep-render.js 8x,
+    // npc-generator.js 2x) und hatten bis 2026-10-01 keine einzige Regel.
+    const FORMULAR_PRIMITIVE = ['form-label', 'form-control'];
+
+    function hatSelektor(cls) {
+        return new RegExp(`\\.${cls}(?![\\w-])`).test(cssCode);
+    }
+
+    /** Alle class="…"-Werte des Quellbaums, Interpolationen ausgeblendet. */
+    function klassenWerte() {
+        const out = [];
+        [...sourceJs(), ...tplFiles].forEach(f => {
+            for (const m of f.content.matchAll(/class=(["'])([\s\S]*?)\1/g)) {
+                out.push({ datei: f.name, wert: m[2].replace(/\$\{[^}]*\}/g, ' ') });
+            }
+        });
+        return out;
+    }
+
+    test('kein Sichtschalter heisst "active" — der Schalter der Schale ist "show"', () => {
+        const falsch = klassenWerte()
+            .filter(e => /\bmodal-overlay\b/.test(e.wert) && /\bactive\b/.test(e.wert))
+            .map(e => `${e.datei}: class="${e.wert.trim()}"`);
+        expect(falsch).toEqual([]);
+        // Gegenprobe: es gibt auch keinen Selektor, der `active` bedienen wuerde.
+        expect(/\.modal-overlay\.active/.test(cssCode)).toBe(false);
+    });
+
+    test('die Kartenklasse heisst "modal" — "modal-box" gibt es nicht mehr', () => {
+        const treffer = klassenWerte()
+            .filter(e => /\bmodal-box\b/.test(e.wert))
+            .map(e => e.datei);
+        expect(treffer).toEqual([]);
+        expect(hatSelektor('modal-box')).toBe(false);
+    });
+
+    test('jede Datei, die eine Modal-Schale baut, macht sie ueber showModal() sichtbar', () => {
+        const ohne = sourceJs()
+            .filter(f => /class=(["'])[^"']*\bmodal-overlay\b[^"']*\1/.test(f.content))
+            .filter(f => !/showModal\s*\(/.test(f.content))
+            .map(f => f.name);
+        expect(ohne).toEqual([]);
+    });
+
+    test('jede Klasse der Schale hat eine CSS-Regel, ausser den namentlich gefuehrten', () => {
+        const ohne = SCHALE.filter(c => !hatSelektor(c));
+        expect(ohne.sort()).toEqual([...OHNE_REGEL_GEFUEHRT].sort());
+    });
+
+    test('die Formular-Primitive haben eine CSS-Regel', () => {
+        const ohne = FORMULAR_PRIMITIVE.filter(c => !hatSelektor(c));
+        expect(ohne).toEqual([]);
+    });
+});
+
 /* ===========================================================================
    Design-Handoff v3, Welle 1 — Vorlauf B: die zwei Farb-Ratschen
    ===========================================================================
