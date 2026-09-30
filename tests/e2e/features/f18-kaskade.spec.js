@@ -157,7 +157,6 @@ test.describe('F-18: uebersprungene Dritte gleicher Spezifitaet (U2)', () => {
                 ueberlauf: btn.scrollWidth - btn.clientWidth
             };
         });
-        // eslint-disable-next-line no-console
         console.log('[U2-A] editor-btn-text: ' + JSON.stringify(gemessen));
 
         expect(gemessen.fehlt).toBeUndefined();
@@ -207,7 +206,6 @@ test.describe('F-18: uebersprungene Dritte gleicher Spezifitaet (U2)', () => {
             p.remove();
             return out;
         });
-        // eslint-disable-next-line no-console
         console.log('[U2-B] Zeigezustand: ' + JSON.stringify(gemessen, null, 1) + '\n[U2-B] Tokens: ' + JSON.stringify(gold));
 
         for (const [sel, prop, token] of FAELLE) {
@@ -234,7 +232,6 @@ test.describe('F-18: uebersprungene Dritte gleicher Spezifitaet (U2)', () => {
                 imFormGroup: labels.filter(l => l.closest('.form-group')).length
             };
         });
-        // eslint-disable-next-line no-console
         console.log('[U2-C] spell-classes-grid label: ' + JSON.stringify(gemessen));
 
         expect(gemessen.fehlt).toBeUndefined();
@@ -261,7 +258,6 @@ test.describe('F-18: uebersprungene Dritte gleicher Spezifitaet (U2)', () => {
                 return el ? getComputedStyle(el).display : 'FEHLT';
             }, id);
         }
-        // eslint-disable-next-line no-console
         console.log('[U2-D] Schalen: ' + JSON.stringify(gemessen));
         Object.entries(gemessen).forEach(([id, d]) => expect(d, id).toBe('flex'));
     });

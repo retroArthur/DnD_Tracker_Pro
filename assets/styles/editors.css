@@ -52,6 +52,8 @@
            `padding: 0` und 13px Schrift statt `inline-flex`, `auto`,
            `0 9px`, 12px. */
         .editor-toolbar .editor-btn {
+            /* F-18-BEWACHT: tools/check-f18-kaskade.js haelt die Stellung
+               dieses Blocks gegen jede Regel gleicher Spezifitaet fest. */
             flex-shrink: 0;
             display: grid;
             place-items: center;

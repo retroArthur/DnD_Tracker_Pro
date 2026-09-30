@@ -1,0 +1,763 @@
+{
+  "_hinweis": "Eingefrorener Stand der Reihenfolge-Abhaengigkeiten gleicher Spezifitaet an den F-18-Verschiebungen. Erzeugt von tools/check-f18-kaskade.js --write. Jede neue, entfallene oder GEDREHTE Zeile ist eine Entscheidung und muss begruendet werden — eine Drehung ist die F-18-Fehlerklasse.",
+  "erhoben": "2026-09-30",
+  "anzahl": 126,
+  "abhaengigkeiten": [
+    {
+      "id": "(top) >> @media (max-width: 600px) || .modal || .bst-editor-modal || border-radius || border-radius",
+      "gewinner": "bestiary.css .bst-editor-modal { border-radius }",
+      "verlierer": "dmscreen.css .modal { border-radius }",
+      "spezifitaet": "0,1,0"
+    },
+    {
+      "id": "(top) >> @media (max-width: 600px) || .modal || .bst-editor-modal || max-width || max-width",
+      "gewinner": "bestiary.css .bst-editor-modal { max-width }",
+      "verlierer": "dmscreen.css .modal { max-width }",
+      "spezifitaet": "0,1,0"
+    },
+    {
+      "id": "(top) >> @media (max-width: 600px) || .modal || .bst-editor-modal || width || width",
+      "gewinner": "bestiary.css .bst-editor-modal { width }",
+      "verlierer": "dmscreen.css .modal { width }",
+      "spezifitaet": "0,1,0"
+    },
+    {
+      "id": "(top) >> @media (max-width: 600px) || .modal || .modal || max-width || max-width",
+      "gewinner": "dmscreen.css .modal { max-width }",
+      "verlierer": "dmscreen.css .modal { max-width }",
+      "spezifitaet": "0,1,0"
+    },
+    {
+      "id": "(top) >> @media (max-width: 900px) || .editor-toolbar .editor-btn || .editor-toolbar .editor-btn || font-size || font-size",
+      "gewinner": "editors.css .editor-toolbar .editor-btn { font-size }",
+      "verlierer": "editors.css .editor-toolbar .editor-btn { font-size }",
+      "spezifitaet": "0,2,0"
+    },
+    {
+      "id": "(top) >> @media (max-width: 900px) || .editor-toolbar .editor-btn || .editor-toolbar .editor-btn || padding || padding",
+      "gewinner": "editors.css .editor-toolbar .editor-btn { padding }",
+      "verlierer": "editors.css .editor-toolbar .editor-btn { padding }",
+      "spezifitaet": "0,2,0"
+    },
+    {
+      "id": "(top) >> @media (max-width: 900px) || .editor-toolbar .editor-btn || .floating-toolbar .editor-btn || flex-shrink || flex",
+      "gewinner": "spells.css .floating-toolbar .editor-btn { flex }",
+      "verlierer": "editors.css .editor-toolbar .editor-btn { flex-shrink }",
+      "spezifitaet": "0,2,0"
+    },
+    {
+      "id": "(top) >> @media (max-width: 900px) || .editor-toolbar .editor-btn || .floating-toolbar .editor-btn || font-size || font-size",
+      "gewinner": "spells.css .floating-toolbar .editor-btn { font-size }",
+      "verlierer": "editors.css .editor-toolbar .editor-btn { font-size }",
+      "spezifitaet": "0,2,0"
+    },
+    {
+      "id": "(top) >> @media (max-width: 900px) || .editor-toolbar .editor-btn || .floating-toolbar .editor-btn || padding || padding",
+      "gewinner": "spells.css .floating-toolbar .editor-btn { padding }",
+      "verlierer": "editors.css .editor-toolbar .editor-btn { padding }",
+      "spezifitaet": "0,2,0"
+    },
+    {
+      "id": "(top) >> @media (max-width: 900px) || .floating-toolbar .editor-btn || .floating-toolbar .editor-btn || font-size || font-size",
+      "gewinner": "spells.css .floating-toolbar .editor-btn { font-size }",
+      "verlierer": "spells.css .floating-toolbar .editor-btn { font-size }",
+      "spezifitaet": "0,2,0"
+    },
+    {
+      "id": "(top) >> @media (max-width: 900px) || .floating-toolbar || .floating-toolbar || border-radius || border-radius",
+      "gewinner": "spells.css .floating-toolbar { border-radius }",
+      "verlierer": "spells.css .floating-toolbar { border-radius }",
+      "spezifitaet": "0,1,0"
+    },
+    {
+      "id": "(top) || .aoe-modal || .modal || max-width || max-width",
+      "gewinner": "dmscreen.css .modal { max-width }",
+      "verlierer": "initiative.css .aoe-modal { max-width }",
+      "spezifitaet": "0,1,0"
+    },
+    {
+      "id": "(top) || .aoe-modal || .modal || width || width",
+      "gewinner": "dmscreen.css .modal { width }",
+      "verlierer": "initiative.css .aoe-modal { width }",
+      "spezifitaet": "0,1,0"
+    },
+    {
+      "id": "(top) || .btn-icon:hover || .btn-danger:hover || background || background",
+      "gewinner": "dmscreen.css .btn-danger:hover { background }",
+      "verlierer": "core.css .btn-icon:hover { background }",
+      "spezifitaet": "0,2,0"
+    },
+    {
+      "id": "(top) || .btn-icon:hover || .btn-danger:hover || color || color",
+      "gewinner": "dmscreen.css .btn-danger:hover { color }",
+      "verlierer": "core.css .btn-icon:hover { color }",
+      "spezifitaet": "0,2,0"
+    },
+    {
+      "id": "(top) || .btn:hover || .backup-entry-restore:hover || background || background",
+      "gewinner": "file-backup.css .backup-entry-restore:hover { background }",
+      "verlierer": "core.css .btn:hover { background }",
+      "spezifitaet": "0,2,0"
+    },
+    {
+      "id": "(top) || .btn:hover || .btn-danger:hover || background || background",
+      "gewinner": "dmscreen.css .btn-danger:hover { background }",
+      "verlierer": "core.css .btn:hover { background }",
+      "spezifitaet": "0,2,0"
+    },
+    {
+      "id": "(top) || .btn:hover || .btn-danger:hover || box-shadow || box-shadow",
+      "gewinner": "dmscreen.css .btn-danger:hover { box-shadow }",
+      "verlierer": "core.css .btn:hover { box-shadow }",
+      "spezifitaet": "0,2,0"
+    },
+    {
+      "id": "(top) || .btn:hover || .btn-danger:hover || color || color",
+      "gewinner": "dmscreen.css .btn-danger:hover { color }",
+      "verlierer": "core.css .btn:hover { color }",
+      "spezifitaet": "0,2,0"
+    },
+    {
+      "id": "(top) || .btn:hover || .btn-gold:hover || background || background",
+      "gewinner": "core.css .btn-gold:hover { background }",
+      "verlierer": "core.css .btn:hover { background }",
+      "spezifitaet": "0,2,0"
+    },
+    {
+      "id": "(top) || .btn:hover || .btn-gold:hover || color || color",
+      "gewinner": "core.css .btn-gold:hover { color }",
+      "verlierer": "core.css .btn:hover { color }",
+      "spezifitaet": "0,2,0"
+    },
+    {
+      "id": "(top) || .btn:hover || .btn-icon:hover || background || background",
+      "gewinner": "core.css .btn-icon:hover { background }",
+      "verlierer": "core.css .btn:hover { background }",
+      "spezifitaet": "0,2,0"
+    },
+    {
+      "id": "(top) || .btn:hover || .btn-icon:hover || color || color",
+      "gewinner": "core.css .btn-icon:hover { color }",
+      "verlierer": "core.css .btn:hover { color }",
+      "spezifitaet": "0,2,0"
+    },
+    {
+      "id": "(top) || .btn:hover || .btn-primary:hover || background || background",
+      "gewinner": "core.css .btn-primary:hover { background }",
+      "verlierer": "core.css .btn:hover { background }",
+      "spezifitaet": "0,2,0"
+    },
+    {
+      "id": "(top) || .btn:hover || .btn-secondary:hover || background || background",
+      "gewinner": "core.css .btn-secondary:hover { background }",
+      "verlierer": "core.css .btn:hover { background }",
+      "spezifitaet": "0,2,0"
+    },
+    {
+      "id": "(top) || .btn:hover || .btn-secondary:hover || color || color",
+      "gewinner": "core.css .btn-secondary:hover { color }",
+      "verlierer": "core.css .btn:hover { color }",
+      "spezifitaet": "0,2,0"
+    },
+    {
+      "id": "(top) || .btn:hover || .btn-success:hover || background || background",
+      "gewinner": "dmscreen.css .btn-success:hover { background }",
+      "verlierer": "core.css .btn:hover { background }",
+      "spezifitaet": "0,2,0"
+    },
+    {
+      "id": "(top) || .btn:hover || .btn-success:hover || box-shadow || box-shadow",
+      "gewinner": "dmscreen.css .btn-success:hover { box-shadow }",
+      "verlierer": "core.css .btn:hover { box-shadow }",
+      "spezifitaet": "0,2,0"
+    },
+    {
+      "id": "(top) || .btn:hover || .btn-success:hover || color || color",
+      "gewinner": "dmscreen.css .btn-success:hover { color }",
+      "verlierer": "core.css .btn:hover { color }",
+      "spezifitaet": "0,2,0"
+    },
+    {
+      "id": "(top) || .btn:hover || .btn-text:hover || background || background",
+      "gewinner": "core.css .btn-text:hover { background }",
+      "verlierer": "core.css .btn:hover { background }",
+      "spezifitaet": "0,2,0"
+    },
+    {
+      "id": "(top) || .btn:hover || .btn-text:hover || color || color",
+      "gewinner": "core.css .btn-text:hover { color }",
+      "verlierer": "core.css .btn:hover { color }",
+      "spezifitaet": "0,2,0"
+    },
+    {
+      "id": "(top) || .btn:hover || .btn-warning:hover || background || background",
+      "gewinner": "core.css .btn-warning:hover { background }",
+      "verlierer": "core.css .btn:hover { background }",
+      "spezifitaet": "0,2,0"
+    },
+    {
+      "id": "(top) || .btn:hover || .btn-warning:hover || color || color",
+      "gewinner": "core.css .btn-warning:hover { color }",
+      "verlierer": "core.css .btn:hover { color }",
+      "spezifitaet": "0,2,0"
+    },
+    {
+      "id": "(top) || .btn:hover || .cf-attack-remove:hover || color || color",
+      "gewinner": "party.css .cf-attack-remove:hover { color }",
+      "verlierer": "core.css .btn:hover { color }",
+      "spezifitaet": "0,2,0"
+    },
+    {
+      "id": "(top) || .btn:hover || .conflict-banner .btn || background || background",
+      "gewinner": "dashboard.css .conflict-banner .btn { background }",
+      "verlierer": "core.css .btn:hover { background }",
+      "spezifitaet": "0,2,0"
+    },
+    {
+      "id": "(top) || .btn:hover || .conflict-banner .btn || color || color",
+      "gewinner": "dashboard.css .conflict-banner .btn { color }",
+      "verlierer": "core.css .btn:hover { color }",
+      "spezifitaet": "0,2,0"
+    },
+    {
+      "id": "(top) || .btn:hover || .divergence-banner-dismiss:hover || color || color",
+      "gewinner": "migration.css .divergence-banner-dismiss:hover { color }",
+      "verlierer": "core.css .btn:hover { color }",
+      "spezifitaet": "0,2,0"
+    },
+    {
+      "id": "(top) || .btn:hover || .hp-calc-btn.damage || background || background",
+      "gewinner": "core.css .hp-calc-btn.damage { background }",
+      "verlierer": "core.css .btn:hover { background }",
+      "spezifitaet": "0,2,0"
+    },
+    {
+      "id": "(top) || .btn:hover || .hp-calc-btn.damage || color || color",
+      "gewinner": "core.css .hp-calc-btn.damage { color }",
+      "verlierer": "core.css .btn:hover { color }",
+      "spezifitaet": "0,2,0"
+    },
+    {
+      "id": "(top) || .btn:hover || .hp-calc-btn.heal || background || background",
+      "gewinner": "core.css .hp-calc-btn.heal { background }",
+      "verlierer": "core.css .btn:hover { background }",
+      "spezifitaet": "0,2,0"
+    },
+    {
+      "id": "(top) || .btn:hover || .hp-calc-btn.heal || color || color",
+      "gewinner": "core.css .hp-calc-btn.heal { color }",
+      "verlierer": "core.css .btn:hover { color }",
+      "spezifitaet": "0,2,0"
+    },
+    {
+      "id": "(top) || .btn:hover || .hp-calc-btn.temp || background || background",
+      "gewinner": "core.css .hp-calc-btn.temp { background }",
+      "verlierer": "core.css .btn:hover { background }",
+      "spezifitaet": "0,2,0"
+    },
+    {
+      "id": "(top) || .btn:hover || .hp-calc-btn.temp || color || color",
+      "gewinner": "core.css .hp-calc-btn.temp { color }",
+      "verlierer": "core.css .btn:hover { color }",
+      "spezifitaet": "0,2,0"
+    },
+    {
+      "id": "(top) || .btn:hover || .migration-hint-close:hover || color || color",
+      "gewinner": "migration.css .migration-hint-close:hover { color }",
+      "verlierer": "core.css .btn:hover { color }",
+      "spezifitaet": "0,2,0"
+    },
+    {
+      "id": "(top) || .btn:hover || .migration-skip-btn:hover || color || color",
+      "gewinner": "migration.css .migration-skip-btn:hover { color }",
+      "verlierer": "core.css .btn:hover { color }",
+      "spezifitaet": "0,2,0"
+    },
+    {
+      "id": "(top) || .btn:hover || .pwa-update-dismiss:hover || background || background",
+      "gewinner": "pwa.css .pwa-update-dismiss:hover { background }",
+      "verlierer": "core.css .btn:hover { background }",
+      "spezifitaet": "0,2,0"
+    },
+    {
+      "id": "(top) || .btn:hover || .pwa-update-reload:hover || background || background",
+      "gewinner": "pwa.css .pwa-update-reload:hover { background }",
+      "verlierer": "core.css .btn:hover { background }",
+      "spezifitaet": "0,2,0"
+    },
+    {
+      "id": "(top) || .char-save-box || .drag-over || border || border",
+      "gewinner": "dmscreen.css .drag-over { border }",
+      "verlierer": "dashboard.css .char-save-box { border }",
+      "spezifitaet": "0,1,0"
+    },
+    {
+      "id": "(top) || .char-save-box || .migration-step-error || font-size || font-size",
+      "gewinner": "migration.css .migration-step-error { font-size }",
+      "verlierer": "dashboard.css .char-save-box { font-size }",
+      "spezifitaet": "0,1,0"
+    },
+    {
+      "id": "(top) || .char-tag || .drag-over || background || background",
+      "gewinner": "dmscreen.css .drag-over { background }",
+      "verlierer": "core.css .char-tag { background }",
+      "spezifitaet": "0,1,0"
+    },
+    {
+      "id": "(top) || .char-tag || .migration-step-error || color || color",
+      "gewinner": "migration.css .migration-step-error { color }",
+      "verlierer": "core.css .char-tag { color }",
+      "spezifitaet": "0,1,0"
+    },
+    {
+      "id": "(top) || .conflict-banner .btn || .btn-danger:hover || background || background",
+      "gewinner": "dmscreen.css .btn-danger:hover { background }",
+      "verlierer": "dashboard.css .conflict-banner .btn { background }",
+      "spezifitaet": "0,2,0"
+    },
+    {
+      "id": "(top) || .conflict-banner .btn || .btn-danger:hover || color || color",
+      "gewinner": "dmscreen.css .btn-danger:hover { color }",
+      "verlierer": "dashboard.css .conflict-banner .btn { color }",
+      "spezifitaet": "0,2,0"
+    },
+    {
+      "id": "(top) || .conflict-banner .btn || .btn-success:hover || background || background",
+      "gewinner": "dmscreen.css .btn-success:hover { background }",
+      "verlierer": "dashboard.css .conflict-banner .btn { background }",
+      "spezifitaet": "0,2,0"
+    },
+    {
+      "id": "(top) || .conflict-banner .btn || .btn-success:hover || border-color || border-color",
+      "gewinner": "dmscreen.css .btn-success:hover { border-color }",
+      "verlierer": "dashboard.css .conflict-banner .btn { border-color }",
+      "spezifitaet": "0,2,0"
+    },
+    {
+      "id": "(top) || .drag-over || .fr-ruf-badge || border || border",
+      "gewinner": "welt.css .fr-ruf-badge { border }",
+      "verlierer": "dmscreen.css .drag-over { border }",
+      "spezifitaet": "0,1,0"
+    },
+    {
+      "id": "(top) || .editor-toolbar .editor-btn || .editor-btn:hover || background || background",
+      "gewinner": "spells.css .editor-btn:hover { background }",
+      "verlierer": "editors.css .editor-toolbar .editor-btn { background }",
+      "spezifitaet": "0,2,0"
+    },
+    {
+      "id": "(top) || .editor-toolbar .editor-btn || .editor-btn:hover || color || color",
+      "gewinner": "spells.css .editor-btn:hover { color }",
+      "verlierer": "editors.css .editor-toolbar .editor-btn { color }",
+      "spezifitaet": "0,2,0"
+    },
+    {
+      "id": "(top) || .editor-toolbar .editor-btn || .editor-toolbar .editor-btn-text || display || display",
+      "gewinner": "editors.css .editor-toolbar .editor-btn-text { display }",
+      "verlierer": "editors.css .editor-toolbar .editor-btn { display }",
+      "spezifitaet": "0,2,0"
+    },
+    {
+      "id": "(top) || .editor-toolbar .editor-btn || .editor-toolbar .editor-btn-text || font-size || font-size",
+      "gewinner": "editors.css .editor-toolbar .editor-btn-text { font-size }",
+      "verlierer": "editors.css .editor-toolbar .editor-btn { font-size }",
+      "spezifitaet": "0,2,0"
+    },
+    {
+      "id": "(top) || .editor-toolbar .editor-btn || .editor-toolbar .editor-btn-text || padding || padding",
+      "gewinner": "editors.css .editor-toolbar .editor-btn-text { padding }",
+      "verlierer": "editors.css .editor-toolbar .editor-btn { padding }",
+      "spezifitaet": "0,2,0"
+    },
+    {
+      "id": "(top) || .editor-toolbar .editor-btn || .editor-toolbar .editor-btn-text || place-items || align-items",
+      "gewinner": "editors.css .editor-toolbar .editor-btn-text { align-items }",
+      "verlierer": "editors.css .editor-toolbar .editor-btn { place-items }",
+      "spezifitaet": "0,2,0"
+    },
+    {
+      "id": "(top) || .editor-toolbar .editor-btn || .editor-toolbar .editor-btn-text || width || width",
+      "gewinner": "editors.css .editor-toolbar .editor-btn-text { width }",
+      "verlierer": "editors.css .editor-toolbar .editor-btn { width }",
+      "spezifitaet": "0,2,0"
+    },
+    {
+      "id": "(top) || .editor-toolbar .editor-btn || .editor-toolbar .editor-btn-type || font-size || font-size",
+      "gewinner": "editors.css .editor-toolbar .editor-btn-type { font-size }",
+      "verlierer": "editors.css .editor-toolbar .editor-btn { font-size }",
+      "spezifitaet": "0,2,0"
+    },
+    {
+      "id": "(top) || .editor-toolbar .editor-btn || .floating-toolbar .editor-btn || font-size || font-size",
+      "gewinner": "spells.css .floating-toolbar .editor-btn { font-size }",
+      "verlierer": "editors.css .editor-toolbar .editor-btn { font-size }",
+      "spezifitaet": "0,2,0"
+    },
+    {
+      "id": "(top) || .editor-toolbar .editor-btn || .floating-toolbar .editor-btn || padding || padding",
+      "gewinner": "spells.css .floating-toolbar .editor-btn { padding }",
+      "verlierer": "editors.css .editor-toolbar .editor-btn { padding }",
+      "spezifitaet": "0,2,0"
+    },
+    {
+      "id": "(top) || .editor-toolbar .editor-btn || .table-context-toolbar .editor-btn || font-size || font-size",
+      "gewinner": "spells.css .table-context-toolbar .editor-btn { font-size }",
+      "verlierer": "editors.css .editor-toolbar .editor-btn { font-size }",
+      "spezifitaet": "0,2,0"
+    },
+    {
+      "id": "(top) || .editor-toolbar .editor-btn || .table-context-toolbar .editor-btn || padding || padding",
+      "gewinner": "spells.css .table-context-toolbar .editor-btn { padding }",
+      "verlierer": "editors.css .editor-toolbar .editor-btn { padding }",
+      "spezifitaet": "0,2,0"
+    },
+    {
+      "id": "(top) || .editor-toolbar .editor-btn-text || .floating-toolbar .editor-btn || font-size || font-size",
+      "gewinner": "spells.css .floating-toolbar .editor-btn { font-size }",
+      "verlierer": "editors.css .editor-toolbar .editor-btn-text { font-size }",
+      "spezifitaet": "0,2,0"
+    },
+    {
+      "id": "(top) || .floating-toolbar .editor-btn || .table-context-toolbar .editor-btn || font-size || font-size",
+      "gewinner": "spells.css .table-context-toolbar .editor-btn { font-size }",
+      "verlierer": "spells.css .floating-toolbar .editor-btn { font-size }",
+      "spezifitaet": "0,2,0"
+    },
+    {
+      "id": "(top) || .floating-toolbar || .drag-over || border || border",
+      "gewinner": "dmscreen.css .drag-over { border }",
+      "verlierer": "spells.css .floating-toolbar { border }",
+      "spezifitaet": "0,1,0"
+    },
+    {
+      "id": "(top) || .floating-toolbar || .dragging || box-shadow || box-shadow",
+      "gewinner": "dmscreen.css .dragging { box-shadow }",
+      "verlierer": "spells.css .floating-toolbar { box-shadow }",
+      "spezifitaet": "0,1,0"
+    },
+    {
+      "id": "(top) || .floating-toolbar || .dragging || opacity || opacity",
+      "gewinner": "dmscreen.css .dragging { opacity }",
+      "verlierer": "spells.css .floating-toolbar { opacity }",
+      "spezifitaet": "0,1,0"
+    },
+    {
+      "id": "(top) || .floating-toolbar || .dragging || transform || transform",
+      "gewinner": "dmscreen.css .dragging { transform }",
+      "verlierer": "spells.css .floating-toolbar { transform }",
+      "spezifitaet": "0,1,0"
+    },
+    {
+      "id": "(top) || .floating-toolbar || .touch-active || opacity || opacity",
+      "gewinner": "dashboard.css .touch-active { opacity }",
+      "verlierer": "spells.css .floating-toolbar { opacity }",
+      "spezifitaet": "0,1,0"
+    },
+    {
+      "id": "(top) || .floating-toolbar || .touch-active || transform || transform",
+      "gewinner": "dashboard.css .touch-active { transform }",
+      "verlierer": "spells.css .floating-toolbar { transform }",
+      "spezifitaet": "0,1,0"
+    },
+    {
+      "id": "(top) || .form-group label || .bst-attr-col label || color || color",
+      "gewinner": "bestiary.css .bst-attr-col label { color }",
+      "verlierer": "core.css .form-group label { color }",
+      "spezifitaet": "0,1,1"
+    },
+    {
+      "id": "(top) || .form-group label || .bst-attr-col label || font-size || font-size",
+      "gewinner": "bestiary.css .bst-attr-col label { font-size }",
+      "verlierer": "core.css .form-group label { font-size }",
+      "spezifitaet": "0,1,1"
+    },
+    {
+      "id": "(top) || .form-group label || .bst-attr-col label || font-weight || font-weight",
+      "gewinner": "bestiary.css .bst-attr-col label { font-weight }",
+      "verlierer": "core.css .form-group label { font-weight }",
+      "spezifitaet": "0,1,1"
+    },
+    {
+      "id": "(top) || .form-group label || .dice-combat-section label || color || color",
+      "gewinner": "dice.css .dice-combat-section label { color }",
+      "verlierer": "core.css .form-group label { color }",
+      "spezifitaet": "0,1,1"
+    },
+    {
+      "id": "(top) || .form-group label || .dice-combat-section label || font-weight || font-weight",
+      "gewinner": "dice.css .dice-combat-section label { font-weight }",
+      "verlierer": "core.css .form-group label { font-weight }",
+      "spezifitaet": "0,1,1"
+    },
+    {
+      "id": "(top) || .form-group label || .dice-combat-section label || margin-bottom || margin-bottom",
+      "gewinner": "dice.css .dice-combat-section label { margin-bottom }",
+      "verlierer": "core.css .form-group label { margin-bottom }",
+      "spezifitaet": "0,1,1"
+    },
+    {
+      "id": "(top) || .form-group label || .enc-speed-item label || color || color",
+      "gewinner": "encounters.css .enc-speed-item label { color }",
+      "verlierer": "core.css .form-group label { color }",
+      "spezifitaet": "0,1,1"
+    },
+    {
+      "id": "(top) || .form-group label || .enc-speed-item label || font-size || font-size",
+      "gewinner": "encounters.css .enc-speed-item label { font-size }",
+      "verlierer": "core.css .form-group label { font-size }",
+      "spezifitaet": "0,1,1"
+    },
+    {
+      "id": "(top) || .form-group label || .enc-speed-item label || letter-spacing || letter-spacing",
+      "gewinner": "encounters.css .enc-speed-item label { letter-spacing }",
+      "verlierer": "core.css .form-group label { letter-spacing }",
+      "spezifitaet": "0,1,1"
+    },
+    {
+      "id": "(top) || .form-group label || .ld-gold-input label || color || color",
+      "gewinner": "tools.css .ld-gold-input label { color }",
+      "verlierer": "core.css .form-group label { color }",
+      "spezifitaet": "0,1,1"
+    },
+    {
+      "id": "(top) || .form-group label || .rt-dice-section label || color || color",
+      "gewinner": "tools.css .rt-dice-section label { color }",
+      "verlierer": "core.css .form-group label { color }",
+      "spezifitaet": "0,1,1"
+    },
+    {
+      "id": "(top) || .form-group label || .rt-dice-section label || font-size || font-size",
+      "gewinner": "tools.css .rt-dice-section label { font-size }",
+      "verlierer": "core.css .form-group label { font-size }",
+      "spezifitaet": "0,1,1"
+    },
+    {
+      "id": "(top) || .form-group label || .rt-dice-section label || margin-bottom || margin-bottom",
+      "gewinner": "tools.css .rt-dice-section label { margin-bottom }",
+      "verlierer": "core.css .form-group label { margin-bottom }",
+      "spezifitaet": "0,1,1"
+    },
+    {
+      "id": "(top) || .form-group label || .rt-field label || color || color",
+      "gewinner": "tools.css .rt-field label { color }",
+      "verlierer": "core.css .form-group label { color }",
+      "spezifitaet": "0,1,1"
+    },
+    {
+      "id": "(top) || .form-group label || .rt-field label || font-size || font-size",
+      "gewinner": "tools.css .rt-field label { font-size }",
+      "verlierer": "core.css .form-group label { font-size }",
+      "spezifitaet": "0,1,1"
+    },
+    {
+      "id": "(top) || .form-group label || .session-filter-group label || color || color",
+      "gewinner": "dmscreen.css .session-filter-group label { color }",
+      "verlierer": "core.css .form-group label { color }",
+      "spezifitaet": "0,1,1"
+    },
+    {
+      "id": "(top) || .form-group label || .session-filter-group label || font-size || font-size",
+      "gewinner": "dmscreen.css .session-filter-group label { font-size }",
+      "verlierer": "core.css .form-group label { font-size }",
+      "spezifitaet": "0,1,1"
+    },
+    {
+      "id": "(top) || .form-group label || .spell-classes-grid label || display || display",
+      "gewinner": "spells.css .spell-classes-grid label { display }",
+      "verlierer": "core.css .form-group label { display }",
+      "spezifitaet": "0,1,1"
+    },
+    {
+      "id": "(top) || .form-group label || .spell-classes-grid label || font-size || font-size",
+      "gewinner": "spells.css .spell-classes-grid label { font-size }",
+      "verlierer": "core.css .form-group label { font-size }",
+      "spezifitaet": "0,1,1"
+    },
+    {
+      "id": "(top) || .loc-link || .migration-step-error || color || color",
+      "gewinner": "migration.css .migration-step-error { color }",
+      "verlierer": "npcs.css .loc-link { color }",
+      "spezifitaet": "0,1,0"
+    },
+    {
+      "id": "(top) || .migration-step-error || .fr-card-name || font-size || font-size",
+      "gewinner": "welt.css .fr-card-name { font-size }",
+      "verlierer": "migration.css .migration-step-error { font-size }",
+      "spezifitaet": "0,1,0"
+    },
+    {
+      "id": "(top) || .migration-step-error || .fr-ruf-buttons || margin-top || margin-top",
+      "gewinner": "welt.css .fr-ruf-buttons { margin-top }",
+      "verlierer": "migration.css .migration-step-error { margin-top }",
+      "spezifitaet": "0,1,0"
+    },
+    {
+      "id": "(top) || .migration-step-error || .tl-kalender-header || color || color",
+      "gewinner": "welt.css .tl-kalender-header { color }",
+      "verlierer": "migration.css .migration-step-error { color }",
+      "spezifitaet": "0,1,0"
+    },
+    {
+      "id": "(top) || .migration-step-error || .tl-kalender-header || font-size || font-size",
+      "gewinner": "welt.css .tl-kalender-header { font-size }",
+      "verlierer": "migration.css .migration-step-error { font-size }",
+      "spezifitaet": "0,1,0"
+    },
+    {
+      "id": "(top) || .modal || .bst-editor-modal || max-width || max-width",
+      "gewinner": "bestiary.css .bst-editor-modal { max-width }",
+      "verlierer": "dmscreen.css .modal { max-width }",
+      "spezifitaet": "0,1,0"
+    },
+    {
+      "id": "(top) || .modal || .bst-editor-modal || width || width",
+      "gewinner": "bestiary.css .bst-editor-modal { width }",
+      "verlierer": "dmscreen.css .modal { width }",
+      "spezifitaet": "0,1,0"
+    },
+    {
+      "id": "(top) || .modal || .drag-over || background || background",
+      "gewinner": "dmscreen.css .drag-over { background }",
+      "verlierer": "dmscreen.css .modal { background }",
+      "spezifitaet": "0,1,0"
+    },
+    {
+      "id": "(top) || .modal || .drag-over || border || border",
+      "gewinner": "dmscreen.css .drag-over { border }",
+      "verlierer": "dmscreen.css .modal { border }",
+      "spezifitaet": "0,1,0"
+    },
+    {
+      "id": "(top) || .modal || .dragging || box-shadow || box-shadow",
+      "gewinner": "dmscreen.css .dragging { box-shadow }",
+      "verlierer": "dmscreen.css .modal { box-shadow }",
+      "spezifitaet": "0,1,0"
+    },
+    {
+      "id": "(top) || .modal || .dragging || transform || transform",
+      "gewinner": "dmscreen.css .dragging { transform }",
+      "verlierer": "dmscreen.css .modal { transform }",
+      "spezifitaet": "0,1,0"
+    },
+    {
+      "id": "(top) || .modal || .modal || transform || transform",
+      "gewinner": "dmscreen.css .card, .btn, .modal, .nav-tab { transform }",
+      "verlierer": "dmscreen.css .modal { transform }",
+      "spezifitaet": "0,1,0"
+    },
+    {
+      "id": "(top) || .modal || .npcg-modal-content || width || width",
+      "gewinner": "welt.css .npcg-modal-content { width }",
+      "verlierer": "dmscreen.css .modal { width }",
+      "spezifitaet": "0,1,0"
+    },
+    {
+      "id": "(top) || .modal-lg || .modal || max-width || max-width",
+      "gewinner": "dmscreen.css .modal { max-width }",
+      "verlierer": "core.css .modal-lg { max-width }",
+      "spezifitaet": "0,1,0"
+    },
+    {
+      "id": "(top) || .modal-overlay || .drag-over || background || background",
+      "gewinner": "dmscreen.css .drag-over { background }",
+      "verlierer": "dmscreen.css .modal-overlay { background }",
+      "spezifitaet": "0,1,0"
+    },
+    {
+      "id": "(top) || .modal-overlay || .dragging || opacity || opacity",
+      "gewinner": "dmscreen.css .dragging { opacity }",
+      "verlierer": "dmscreen.css .modal-overlay { opacity }",
+      "spezifitaet": "0,1,0"
+    },
+    {
+      "id": "(top) || .modal-sm || .modal || max-width || max-width",
+      "gewinner": "dmscreen.css .modal { max-width }",
+      "verlierer": "core.css .modal-sm { max-width }",
+      "spezifitaet": "0,1,0"
+    },
+    {
+      "id": "(top) || .npc-dialog-item || .drag-over || background || background",
+      "gewinner": "dmscreen.css .drag-over { background }",
+      "verlierer": "npcs.css .npc-dialog-item { background }",
+      "spezifitaet": "0,1,0"
+    },
+    {
+      "id": "(top) || .npc-dialog-item || .drag-over || border-left || border",
+      "gewinner": "dmscreen.css .drag-over { border }",
+      "verlierer": "npcs.css .npc-dialog-item { border-left }",
+      "spezifitaet": "0,1,0"
+    },
+    {
+      "id": "(top) || .npc-trigger-check || .migration-step-error || font-size || font-size",
+      "gewinner": "migration.css .migration-step-error { font-size }",
+      "verlierer": "npcs.css .npc-trigger-check { font-size }",
+      "spezifitaet": "0,1,0"
+    },
+    {
+      "id": "(top) || .npc-trigger-condition || .migration-step-error || font-size || font-size",
+      "gewinner": "migration.css .migration-step-error { font-size }",
+      "verlierer": "npcs.css .npc-trigger-condition { font-size }",
+      "spezifitaet": "0,1,0"
+    },
+    {
+      "id": "(top) || .npc-trigger-item || .drag-over || background || background",
+      "gewinner": "dmscreen.css .drag-over { background }",
+      "verlierer": "npcs.css .npc-trigger-item { background }",
+      "spezifitaet": "0,1,0"
+    },
+    {
+      "id": "(top) || .npc-trigger-reveal || .drag-over || border-top || border",
+      "gewinner": "dmscreen.css .drag-over { border }",
+      "verlierer": "npcs.css .npc-trigger-reveal { border-top }",
+      "spezifitaet": "0,1,0"
+    },
+    {
+      "id": "(top) || .npc-trigger-reveal || .migration-step-error || font-size || font-size",
+      "gewinner": "migration.css .migration-step-error { font-size }",
+      "verlierer": "npcs.css .npc-trigger-reveal { font-size }",
+      "spezifitaet": "0,1,0"
+    },
+    {
+      "id": "(top) || .npc-trigger-reveal || .migration-step-error || margin-top || margin-top",
+      "gewinner": "migration.css .migration-step-error { margin-top }",
+      "verlierer": "npcs.css .npc-trigger-reveal { margin-top }",
+      "spezifitaet": "0,1,0"
+    },
+    {
+      "id": "(top) || .qref-action-name || .migration-step-error || font-size || font-size",
+      "gewinner": "migration.css .migration-step-error { font-size }",
+      "verlierer": "dashboard.css .qref-action-name { font-size }",
+      "spezifitaet": "0,1,0"
+    },
+    {
+      "id": "(top) || .qref-tab || .migration-step-error || color || color",
+      "gewinner": "migration.css .migration-step-error { color }",
+      "verlierer": "dashboard.css .qref-tab { color }",
+      "spezifitaet": "0,1,0"
+    },
+    {
+      "id": "(top) || .touch-active || .modal || transform || transform",
+      "gewinner": "dmscreen.css .modal { transform }",
+      "verlierer": "dashboard.css .touch-active { transform }",
+      "spezifitaet": "0,1,0"
+    },
+    {
+      "id": "(top) || .touch-active || .modal-overlay || opacity || opacity",
+      "gewinner": "dmscreen.css .modal-overlay { opacity }",
+      "verlierer": "dashboard.css .touch-active { opacity }",
+      "spezifitaet": "0,1,0"
+    },
+    {
+      "id": "(top) || .wiki-link || .drag-over || background || background",
+      "gewinner": "dmscreen.css .drag-over { background }",
+      "verlierer": "dashboard.css .wiki-link { background }",
+      "spezifitaet": "0,1,0"
+    },
+    {
+      "id": "(top) || .wiki-link || .migration-step-error || font-size || font-size",
+      "gewinner": "migration.css .migration-step-error { font-size }",
+      "verlierer": "dashboard.css .wiki-link { font-size }",
+      "spezifitaet": "0,1,0"
+    }
+  ]
+}

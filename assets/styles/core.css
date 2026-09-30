@@ -448,6 +448,8 @@
            Heilen-Knopf des HP-Rechners. Der Gold-Schein zieht mit um — er ist
            nur hier gesetzt, und seine Reihenfolge entscheidet nichts. */
         .btn:hover {
+            /* F-18-BEWACHT: tools/check-f18-kaskade.js haelt die Stellung
+               dieses Blocks gegen jede Regel gleicher Spezifitaet fest. */
             box-shadow: 0 0 12px var(--glow-gold);
             background: var(--gold);
             color: var(--on-gold);
@@ -558,7 +560,7 @@
            verlegt, weil dort eine zweite Kopie stand ("Improved Form Labels":
            Schriftgroesse, Abstand, Kapitaelchen) — nach der Regel "der
            spaetere Block bleibt". Die Regel uebersieht
-           `.spell-classes-grid label { display: inline-flex }` in spells.css
+           `.spell-classes-grid label` mit `display: inline-flex` in spells.css
            (9. @import): mit (0,1,1) DIESELBE Spezifitaet. Die 13
            Klassen-Kaestchen im Zauber-Editor standen danach auf
            `display: block` und verloren ihre mittige Ausrichtung und ihren
@@ -566,11 +568,13 @@
            WARUM DER GANZE BLOCK UMZIEHT und nicht nur `display`: eine zweite
            Kopie waere eine Dublette (die Ratsche in R-19 haelt sie bei 0).
            Das kostet einen gemessenen Nebeneffekt — an genau diesen 13
-           Kaestchen gewinnt nun `.spell-classes-grid label { font-size:
-           0.8em }` statt der 13px hier: 12,8px statt 13px, 0,2px
+           Kaestchen gewinnt nun das `font-size: 0.8em` von
+           `.spell-classes-grid label` statt der 13px hier: 12,8px statt 13px, 0,2px
            Unterschied. Alle 13 liegen innerhalb einer `.form-group`,
            ausserhalb gibt es keine. */
         .form-group label {
+            /* F-18-BEWACHT: tools/check-f18-kaskade.js haelt die Stellung
+               dieses Blocks gegen jede Regel gleicher Spezifitaet fest. */
             font-size: 13px;
             margin-bottom: 4px;
             text-transform: uppercase;
