@@ -204,7 +204,12 @@ const MODULE_TEST_EXCEPTIONS = [
     'features/session-prep/session-prep-render.js',
     'features/sessions/sessions.js',
     'features/shops/links.js',
-    'features/shops/shop-export.js',
+    // -- 2026-09-30, Welle 3 Schritt 8: 'features/shops/shop-export.js' ist hier
+    //    GESTRICHEN. R-19 Teil (5) in design-consistency.test.js fuehrt seine
+    //    beiden Schattenzeilen (:292 und :486) als benannte JS_AUSNAHMEN und
+    //    haelt sie mit Zeilenanker UND Wertabgleich gegen die Quelle, die es
+    //    ueber sourceJs() wirklich einliest. Keine Erwaehnung zur
+    //    Gate-Beruhigung. Die Liste darf nur schrumpfen — sie tut es hier.
     'features/soundboard/soundboard-render.js',
     'features/spells/spell-manager.js', // -- CR-01, 2026-09-07: s. Kommentar oben
     'features/timeline/timeline-crud.js',
@@ -225,7 +230,11 @@ const MODULE_TEST_EXCEPTIONS = [
     'tools/debug.js',
     'ui/actions/combat-actions.js',
     'ui/actions/dice-actions.js',
-    'ui/actions/entity-actions.js',
+    // -- 2026-09-30, Welle 3 Schritt 8: 'ui/actions/entity-actions.js' ist hier
+    //    GESTRICHEN, aus demselben Grund. R-19 Teil (5) liest die Datei ueber
+    //    sourceJs() und urteilt ueber ihren Inline-Schatten in
+    //    'navigate-to-quest' (Zeile 373): jede Lage muss eine der erlaubten
+    //    Tokenformen tragen. Die Liste darf nur schrumpfen.
     'ui/actions/shop-actions.js',
     'ui/actions/wiki-actions.js',
     'ui/dom-builder.js',
