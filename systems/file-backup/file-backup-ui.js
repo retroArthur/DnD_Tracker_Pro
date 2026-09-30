@@ -139,10 +139,17 @@ async function showFileBackupBrowser() {
                     <span class="backup-entry-name">${esc(displayName)}</span>
                     <span class="backup-entry-date" style="color: var(--text-dim);">${esc(dateStr)}</span>
                     <span class="backup-entry-size" style="color: var(--text-dim); font-size: 0.85em;">${esc(size)}</span>
+                    <!-- KEIN Inline-Stil fuer Farbe oder Rand (Welle 3 Schritt 9).
+                         Hier stand style="color: var(--red); border-color: var(--red);".
+                         Ein Inline-Stil schlaegt jeden Selektor, also hat er die
+                         Tintenkorrektur der Welle 2 an .backup-entry-restore
+                         (var(--red) -> var(--red-text)) ueberschrieben: gemalt wurde
+                         4,10 · 4,35 · 3,88 · 4,41 statt 5,52 · 5,55 · 5,32 · 6,35.
+                         Die Farben stehen in assets/styles/file-backup.css; R-23
+                         Teil (4) meldet jeden neuen Inline-Stil an diesem Knopf. -->
                     <button class="btn btn-sm backup-entry-restore"
                         data-action="restore-file-backup"
-                        data-filename="${esc(name)}"
-                        style="color: var(--red); border-color: var(--red);">Wiederherstellen</button>
+                        data-filename="${esc(name)}">Wiederherstellen</button>
                 </div>`;
             }).join('');
             content = tableHeader + rows;
