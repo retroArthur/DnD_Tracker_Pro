@@ -931,7 +931,7 @@
             background: var(--bg-card);
             border: 1px solid var(--border);
             border-radius: var(--radius-lg);
-            box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+            box-shadow: var(--shadow-3);
             max-width: 350px;
             min-width: 280px;
             animation: popupFadeIn 0.15s ease;
@@ -1060,7 +1060,7 @@
         }
         .npc-list-tag.clickable:hover { 
             transform: scale(1.05); 
-            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+            box-shadow: var(--shadow-1);
         }
         
         .npc-triggers-content.collapsed {
