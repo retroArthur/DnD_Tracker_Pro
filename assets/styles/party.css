@@ -606,7 +606,7 @@
                ueber beide Flaechen und alle vier Themes (E6, Schritt 10). */
             color: var(--on-log);
             backdrop-filter: blur(8px);
-            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+            box-shadow: var(--shadow-2);
             animation: eventSlideIn 0.3s ease-out;
             pointer-events: auto;
         }
@@ -1671,7 +1671,7 @@
     overflow-y: auto;
     z-index: var(--z-dropdown);
     margin-top: 4px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+    box-shadow: var(--shadow-2);
 }
 
 .cf-languages-block.open .cf-lang-dropdown {
