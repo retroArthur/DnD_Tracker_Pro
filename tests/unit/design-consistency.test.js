@@ -8830,6 +8830,21 @@ describe('R-21 — Ringe und Text-Leuchten, beziffert gefuehrt (Ratsche)', () =>
        `rgba(26, 26, 26, 0.95)` und ist eine gefuehrte Ausnahme von R-10
        (offener Punkt W2-C-01); ihre Flaeche folgt dem Theme also NICHT,
        waehrend der Goldton darauf es sehr wohl tut.
+
+       `vorher.farbe` IST DER KERN DIESER TABELLE und nicht Beiwerk (Pruefung
+       W3-C, Runde 1). Drei der vier Ringe trugen ein themenblindes
+       `rgba(212, 175, 55, …)` = fest `#d4af37`; nur `welt.css` trug schon
+       `color-mix(… var(--gold) 15% …)` und folgte damit dem Theme. Die erste
+       Fassung dieses Blocks fuehrte die Farbe NICHT, und ringAbstand() nahm
+       fuer das "vorher" das Gold DES THEMES — also `#b8860b` in Light und
+       `#8b4513` in Sepia, die an diesen drei Stellen gar nicht standen. Das
+       ist kein Rundungsfehler: `party.css` galt dadurch in Light und Sepia als
+       bildpunktgleich, obwohl der Ring dort die FARBE wechselt, und bei
+       `dmscreen.css` zeigte die Sepia-Spalte eine Verbesserung, wo in
+       Wahrheit eine Verschlechterung steht. `null` steht dort, wo die Stelle
+       kein Literal trug — dann IST das Theme-Gold die richtige Ausgangsfarbe.
+       Gegenstueck zu `literalFarbeVon()` in R-20, das diese Spalte von Anfang
+       an fuehrte; hier fehlte sie.
        ------------------------------------------------------------------- */
     const RING_STELLEN = [
         {
@@ -8837,7 +8852,7 @@ describe('R-21 — Ringe und Text-Leuchten, beziffert gefuehrt (Ratsche)', () =>
             zeile: 1077,
             sel: '.form-group input:focus, .form-group select:focus, .form-group textarea:focus',
             marke: '.form-group input:focus',
-            vorher: { dicke: 3, deckung: 0.1 },
+            vorher: { dicke: 3, deckung: 0.1, farbe: '#d4af37' },
             flaeche: '#1a1a1a',
             rolle: 'fokus',
             ziel: 'token'
@@ -8847,7 +8862,7 @@ describe('R-21 — Ringe und Text-Leuchten, beziffert gefuehrt (Ratsche)', () =>
             zeile: 1217,
             sel: '.cf-panel .cf-field input:focus, .cf-panel .cf-field select:focus',
             marke: '.cf-panel .cf-field input:focus',
-            vorher: { dicke: 3, deckung: 0.15 },
+            vorher: { dicke: 3, deckung: 0.15, farbe: '#d4af37' },
             flaeche: '--bg-dark',
             rolle: 'fokus',
             ziel: 'token'
@@ -8857,7 +8872,7 @@ describe('R-21 — Ringe und Text-Leuchten, beziffert gefuehrt (Ratsche)', () =>
             zeile: 156,
             sel: '.wp-rich-editor:focus',
             marke: '.wp-rich-editor:focus',
-            vorher: { dicke: 2, deckung: 0.15 },
+            vorher: { dicke: 2, deckung: 0.15, farbe: null },
             flaeche: '--bg-card',
             rolle: 'fokus',
             ziel: 'token'
@@ -8867,7 +8882,7 @@ describe('R-21 — Ringe und Text-Leuchten, beziffert gefuehrt (Ratsche)', () =>
             zeile: 65,
             sel: '.wizard-step.active',
             marke: '.wizard-step.active',
-            vorher: { dicke: 2, deckung: 0.3 },
+            vorher: { dicke: 2, deckung: 0.3, farbe: '#d4af37' },
             flaeche: '--bg-card',
             rolle: 'zustand',
             ziel: 'token'
@@ -8877,7 +8892,7 @@ describe('R-21 — Ringe und Text-Leuchten, beziffert gefuehrt (Ratsche)', () =>
             zeile: 1137,
             sel: '[data-sortable].drag-over',
             marke: '[data-sortable].drag-over',
-            vorher: { dicke: 2, deckung: 1.0 },
+            vorher: { dicke: 2, deckung: 1.0, farbe: null },
             flaeche: '#1a1a1a',
             rolle: 'ablageziel',
             ziel: 'unveraendert'
@@ -8973,11 +8988,18 @@ describe('R-21 — Ringe und Text-Leuchten, beziffert gefuehrt (Ratsche)', () =>
     }
 
     /** Der Goldton einer Ringlage ueber ihrer Traegerflaeche, als Verhaeltnis
-     *  zur Flaeche. `flaeche` ist ein Tokenname oder eine feste Hexangabe. */
-    function ringAbstand(e, theme, deckung) {
+     *  zur Flaeche. `flaeche` ist ein Tokenname oder eine feste Hexangabe.
+     *
+     *  `farbe` ist die Goldangabe, die an der Stelle WIRKLICH steht: das
+     *  gemessene Literal fuer die vorher-Spalte, `null` fuer alles, was dem
+     *  Theme folgt (die nachher-Spalte und die eine Stelle, die schon vorher
+     *  color-mix trug). Ohne diesen Parameter rechnete die vorher-Spalte drei
+     *  der vier Ringe mit einem Gold, das dort nie stand — siehe den
+     *  Tabellenkopf von RING_STELLEN. */
+    function ringAbstand(e, theme, deckung, farbe) {
         const p = WCAG.palettes();
         const fl = e.flaeche.startsWith('#') ? e.flaeche : p[theme][e.flaeche];
-        const ton = WCAG.mixOver(p[theme]['--gold'], deckung, fl);
+        const ton = WCAG.mixOver(farbe || p[theme]['--gold'], deckung, fl);
         return +WCAG.ratio(ton, fl).toFixed(2);
     }
 
@@ -9037,15 +9059,27 @@ describe('R-21 — Ringe und Text-Leuchten, beziffert gefuehrt (Ratsche)', () =>
         expect(RING_STELLEN.filter(x => x.ziel === 'unveraendert').length).toBe(1);
     });
 
-    test('solange eine Ringlage ein Literal traegt, ist es das gemessene', () => {
+    test('solange eine Ringlage ein Literal traegt, sind Dicke, Deckung UND FARBE die gemessenen', () => {
         const nach = new Map(ringlagen().map(l => [schluessel(l), l]));
         const abweichung = RING_STELLEN.filter(e => {
             const l = nach.get(schluessel(e));
             if (!l || l.lage === 'var(--ring-gold)') return false;
-            return l.dicke !== e.vorher.dicke || Math.abs(l.deckung - e.vorher.deckung) > 1e-9;
+            // Die FARBE gehoert dazu, nicht nur die Geometrie: mit gleicher
+            // Dicke und gleicher Deckung, aber anderem Goldliteral waere die
+            // vorher-Spalte des eingefrorenen Blocks falsch, und genau dieser
+            // Fehler ist in Runde 1 der Pruefung W3-C gefunden worden.
+            const f = literalFarbe21(l.lage);
+            return (
+                l.dicke !== e.vorher.dicke ||
+                Math.abs(l.deckung - e.vorher.deckung) > 1e-9 ||
+                f !== (e.vorher.farbe || null)
+            );
         }).map(e => {
             const l = nach.get(schluessel(e));
-            return `${schluessel(e)} — Tabelle ${e.vorher.dicke}px/${e.vorher.deckung}, gefunden ${l.dicke}px/${l.deckung}`;
+            return (
+                `${schluessel(e)} — Tabelle ${e.vorher.dicke}px/${e.vorher.deckung}/${e.vorher.farbe || '(Token)'}, ` +
+                `gefunden ${l.dicke}px/${l.deckung}/${literalFarbe21(l.lage) || '(Token)'}`
+            );
         });
         expect(abweichung.sort()).toEqual([]);
     });
@@ -9067,7 +9101,9 @@ describe('R-21 — Ringe und Text-Leuchten, beziffert gefuehrt (Ratsche)', () =>
         const gerechnet = RING_STELLEN.filter(e => e.ziel === 'token').map(e => [
             `${e.datei} {${e.marke}}`,
             ...WCAG.THEMES.map(
-                th => `${th} ${ringAbstand(e, th, e.vorher.deckung).toFixed(2)}->${ringAbstand(e, th, NACH[th]).toFixed(2)}`
+                th =>
+                    `${th} ${ringAbstand(e, th, e.vorher.deckung, e.vorher.farbe).toFixed(2)}` +
+                    `->${ringAbstand(e, th, NACH[th], null).toFixed(2)}`
             )
         ].join(' | '));
         expect(gerechnet).toEqual([
@@ -9081,11 +9117,22 @@ describe('R-21 — Ringe und Text-Leuchten, beziffert gefuehrt (Ratsche)', () =>
     test('jeder Ring, dessen Dicke, Deckung oder Ton sich aendert, steht zeilentreu in W3-F-01', () => {
         expect(W3F01).not.toBe('');
         const t = ringToken();
+        const p = WCAG.palettes();
         /** In welchen Themes weicht das Token von der gemessenen Lage ab?
-         *  GERECHNET aus dem Token und der Tabelle, nicht behauptet. */
+         *  GERECHNET aus dem Token und der Tabelle, nicht behauptet.
+         *
+         *  DER TON GEHOERT DAZU, und der Testname sagt es seit der Geburt —
+         *  gerechnet wurde er nicht (Pruefung W3-C, Runde 1). Wer ein
+         *  themenblindes `#d4af37` gegen `var(--gold)` tauscht, aendert in
+         *  Light und Sepia die Farbe, ohne einen Bildpunkt Geometrie zu
+         *  bewegen. Genau dieselbe Lehre hat R-20 schon gezogen ("DER FILTER
+         *  GEHT AUF DECKUNG ODER TON"); hier fehlte sie noch. */
         const aendertSich = e =>
             WCAG.THEMES.filter(
-                th => t[th].dicke !== e.vorher.dicke || Math.abs(t[th].deckung - e.vorher.deckung) > 1e-9
+                th =>
+                    t[th].dicke !== e.vorher.dicke ||
+                    Math.abs(t[th].deckung - e.vorher.deckung) > 1e-9 ||
+                    (!!e.vorher.farbe && (p[th]['--gold'] || '').toLowerCase() !== e.vorher.farbe.toLowerCase())
             );
         const ziele = RING_STELLEN.filter(e => e.ziel === 'token');
         expect(ziele.map(e => `${e.datei} {${e.marke}} ${aendertSich(e).join('/') || '(gleich)'}`)).toEqual([
