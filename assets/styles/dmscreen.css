@@ -1074,7 +1074,7 @@
         .form-group select:focus,
         .form-group textarea:focus {
             border-color: var(--gold);
-            box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.1);
+            box-shadow: var(--ring-gold);
             outline: none; /* F-18: aus der Dublette uebernommen */
         }
         
