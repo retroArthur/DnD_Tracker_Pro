@@ -427,7 +427,14 @@ function highlightEntity(type, id) {
         }
         // Highlight effect
         card.style.transition = 'box-shadow 0.3s ease, transform 0.3s ease';
-        card.style.boxShadow = '0 0 20px var(--gold)';
+        /* W3-D-05: Farbe aus --glow-gold statt aus volldeckendem var(--gold).
+           ZWEI Lagen, weil eine (50 %) gegen die vier neutralen Flaechen nur
+           2,64 / 1,52 / 2,11 / 3,44 liest (dark/light/sepia/contrast) — in drei
+           von vier Themes unter den 3:1, die R-02 fuer nicht-Text verlangt.
+           Zwei uebereinander ergeben 75 % und 4,09 / 1,91 / 3,24 / 5,79. Diese
+           Marke trennt sich zusaetzlich durch scale(1.02) vom Umfeld, sie ist
+           die staerkste der vier; Zahlen und Ruecknahmeweg in W3-F-01 Teil F. */
+        card.style.boxShadow = '0 0 20px var(--glow-gold), 0 0 8px var(--glow-gold)';
         card.style.transform = 'scale(1.02)';
         setTimeout(() => {
             card.style.boxShadow = '';
