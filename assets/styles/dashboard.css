@@ -781,7 +781,7 @@
             z-index: var(--z-modal);
             transform: translateY(-100%);
             transition: transform 0.3s ease;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            box-shadow: var(--shadow-2);
         }
         
         .conflict-banner.show {
@@ -864,7 +864,7 @@
 
 .dash-char:hover {
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    box-shadow: var(--shadow-2);
     border-color: var(--gold);
 }
 
@@ -1171,14 +1171,14 @@
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+    box-shadow: var(--shadow-2);
     z-index: var(--z-panel);
     transition: all 0.2s;
 }
 
 .qref-fab:hover {
     transform: scale(1.1);
-    box-shadow: 0 6px 20px rgba(212,175,55,0.4);
+    box-shadow: var(--shadow-2);
 }
 
 .qref-fab-icon {
@@ -1195,7 +1195,7 @@
     background: var(--bg-card);
     border: 1px solid var(--border);
     border-radius: var(--radius-lg);
-    box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+    box-shadow: var(--shadow-3);
     z-index: var(--z-panel);
     display: none;
     flex-direction: column;
