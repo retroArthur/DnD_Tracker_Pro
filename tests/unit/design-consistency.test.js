@@ -8137,7 +8137,147 @@ describe('R-20 — Gluehlagen und Rahmennachbarn, beziffert gefuehrt (Ratsche)',
     });
 
     /* ===================================================================
-       (c) SELBSTPROBE DER ZERLEGUNG, nicht ihres Ergebnisses
+       (c) DIE ANIMATION SCHLAEGT DIE REGEL
+       =================================================================== */
+
+    /* -------------------------------------------------------------------
+       WARUM DIESER BLOCK EXISTIERT (Pruefung W3-B, Runde 1, 2026-09-30).
+       Eine Hoehenlage, die in der Kaskade von einer @keyframes-Animation
+       ueberschrieben wird, aendert sich im Quelltext und auf keinem Schirm.
+       Animationsdeklarationen stehen UEBER den normalen Autorendeklarationen
+       — auch ueber einer `:hover`-Regel und unabhaengig von der Spezifitaet;
+       nur `!important` schlaegt sie. `.floating-dice-trigger` (dice.css)
+       traegt `animation: floatingPulse 3s ease-in-out infinite`, und
+       `floatingPulse` setzt in ALLEN drei Bildern `box-shadow`, dessen erste
+       Lage konstant `0 4px 16px rgba(220,38,38,0.4)` ist — genau der alte
+       Literalwert. Die Stufe-2-Lage der Regel und die Stufe-3-Lage ihres
+       `:hover` sind damit toter Code, solange die Animation laeuft; nur unter
+       `prefers-reduced-motion: reduce` (core.css, Dauer 0,01 ms, ein
+       Durchlauf, KEIN fill-mode) kommt das Token zum Vorschein.
+
+       DAS IST KEIN CSS-BEFUND, SONDERN EINER AN DER AKTENLAGE. Die
+       Sichtprobenliste fuehrte beide Zeilen als bezifferte SICHTBARE
+       Aenderung (Teil A Eintrag 7, „die farbigen Hoehenlagen, die schwarz
+       werden") und widersprach damit ihrem eigenen Eintrag 10, der den
+       Mechanismus richtig beschreibt. Der `:hover`-Schatten war ausserdem
+       schon vor Welle 3 toter Code und wurde als lebend nachgemessen. Diese
+       Ratsche haelt zweierlei fest: eine ueberschriebene Lage steht in
+       W3-F-01 in einer Zeile mit dem Wort `nicht gerendert`, und sie steht
+       NICHT in der Aufzaehlung der sichtbaren Tonwechsel.
+
+       SIE IST NICHT AUF dice.css GESCHNITTEN. Kommt kuenftig eine zweite
+       `@keyframes` mit `box-shadow` dazu oder animiert jemand eine weitere
+       Schattenregel, waechst die gemessene Menge, und beide Tests verlangen
+       den Eintrag in der Aktenlage.
+       ------------------------------------------------------------------- */
+
+    /** Die Namen der @keyframes-Bloecke, die `box-shadow` setzen. Heute genau
+     *  einer; `pulse`, `fadeIn`, `spin` und die 14 anderen setzen keinen. */
+    function keyframesMitSchatten() {
+        const out = new Set();
+        cssFiles.forEach(f => {
+            const re = /@keyframes\s+([\w-]+)\s*\{/g;
+            let m;
+            while ((m = re.exec(f.content))) {
+                let tiefe = 1;
+                let j = m.index + m[0].length;
+                while (j < f.content.length && tiefe) {
+                    if (f.content[j] === '{') tiefe++;
+                    else if (f.content[j] === '}') tiefe--;
+                    j++;
+                }
+                const rumpf = f.content.slice(m.index + m[0].length, j - 1);
+                if (/(?:^|[;{\s])(?:-webkit-)?box-shadow\s*:/.test(rumpf)) out.add(m[1]);
+            }
+        });
+        return out;
+    }
+
+    /** Die Selektoren, die eine solche Animation starten. */
+    function animierteSelektoren() {
+        const namen = keyframesMitSchatten();
+        const out = new Set();
+        cssFiles.forEach(f =>
+            regelnMitRumpf(f.content).forEach(r => {
+                const m = r.rumpf.match(/(?:^|[;{\s])animation(?:-name)?\s*:\s*([^;}]+)/);
+                if (!m) return;
+                if (m[1].split(/[\s,]+/).some(t => namen.has(t))) {
+                    r.sel.split(',').forEach(s => out.add(s.trim()));
+                }
+            })
+        );
+        return out;
+    }
+
+    /** Jede Schattendeklaration, die von so einer Animation ueberschrieben
+     *  wird: die Regel des animierten Selektors selbst und jede Regel
+     *  DESSELBEN Elements in einem Zustand (`:hover`, `.klasse`, ...). Ein
+     *  Nachfahre (`.sel svg`) gehoert NICHT dazu — das ist ein anderes
+     *  Element und traegt die Animation nicht. */
+    function animationUeberschrieben() {
+        const sel = [...animierteSelektoren()];
+        const out = new Set();
+        SCHATTEN.forEach(d =>
+            d.sel.split(',').forEach(teil => {
+                const t = teil.trim();
+                if (sel.some(s => t === s || t.startsWith(`${s}:`) || t.startsWith(`${s}.`))) {
+                    out.add(`${d.datei} {${t}}`);
+                }
+            })
+        );
+        return [...out].sort();
+    }
+
+    /** Nennt diese Zeile der Aktenlage genau dieses Paar? Der Riegel
+     *  `(?![\w:.-])` ist der Kern: ohne ihn gilt `.floating-dice-trigger`
+     *  schon durch `.floating-dice-trigger:hover` als genannt, und die
+     *  Ratsche koennte die beiden Zustaende nicht auseinanderhalten. */
+    function nenntPaar(zeile, datei, sel) {
+        if (!zeile.includes(datei)) return false;
+        return new RegExp(`${sel.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?![\\w:.-])`).test(zeile);
+    }
+
+    function paarAus(schluessel) {
+        const i = schluessel.indexOf(' {');
+        return [schluessel.slice(0, i), schluessel.slice(i + 2, -1)];
+    }
+
+    test('die von einer Animation ueberschriebenen Hoehenlagen sind die zwei des Wuerfelknopfs', () => {
+        expect([...keyframesMitSchatten()].sort()).toEqual(['floatingPulse']);
+        expect([...animierteSelektoren()].sort()).toEqual(['.floating-dice-trigger']);
+        // Reihenfolge der Sortierung: ':' (0x3A) liegt vor '}' (0x7D).
+        expect(animationUeberschrieben()).toEqual([
+            'dice.css {.floating-dice-trigger:hover}',
+            'dice.css {.floating-dice-trigger}'
+        ]);
+    });
+
+    test('jede von einer Animation ueberschriebene Lage steht in W3-F-01 als nicht gerendert', () => {
+        expect(W3F01).not.toBe('');
+        const zeilen = W3F01.split('\n');
+        const ueberschrieben = animationUeberschrieben();
+
+        // (1) Jede steht in einer Zeile, die sie ausdruecklich als nicht
+        //     gerendert fuehrt.
+        const ohneKennzeichnung = ueberschrieben.filter(k => {
+            const [datei, sel] = paarAus(k);
+            return !zeilen.some(z => nenntPaar(z, datei, sel) && /nicht gerendert/.test(z));
+        });
+        expect(ohneKennzeichnung).toEqual([]);
+
+        // (2) Und keine steht in der Aufzaehlung der sichtbaren Tonwechsel:
+        //     dort ist jeder Eintrag eine bezifferte sichtbare Aenderung.
+        const eintrag7 = zeilen.filter(z => z.includes('die schwarz werden'));
+        expect(eintrag7.length).toBe(1);
+        const falschGefuehrt = ueberschrieben.filter(k => {
+            const [datei, sel] = paarAus(k);
+            return nenntPaar(eintrag7[0], datei, sel);
+        });
+        expect(falschGefuehrt).toEqual([]);
+    });
+
+    /* ===================================================================
+       (d) SELBSTPROBE DER ZERLEGUNG, nicht ihres Ergebnisses
        =================================================================== */
 
     test('istGluehe() und deckungVon() urteilen wie R-19 und lesen beide Schreibweisen', () => {
