@@ -753,7 +753,17 @@ function goToNote(date) {
         const noteEl = document.querySelector(`[data-note-date="${date}"]`);
         if (noteEl) {
             noteEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            noteEl.style.boxShadow = '0 0 0 2px var(--gold)';
+            /* W3-D-05: der Ring kommt aus --ring-gold statt aus volldeckendem
+               var(--gold) (2px -> 3px). DAZU eine Leuchte, weil --ring-gold
+               allein 15 % deckend ist und auf --bg-card, der Flaeche des
+               Notizzettels, nur 1,32 / 1,17 / 1,26 liest (dark/light/sepia;
+               Contrast 13,46, dort traegt der Ring volles Gold). Die Marke
+               verschwindet nach zwei Sekunden wieder und waere damit praktisch
+               unsichtbar — heute sind es 8,28 / 3,25 / 6,58 / 13,46, mit der
+               Leuchte 3,61 / 1,90 / 2,66 / 13,46. Zeichengleich mit
+               entity-actions.js 'navigate-to-quest', weil es dieselbe Marke
+               ist. Zahlen in W3-F-01 Teil F. */
+            noteEl.style.boxShadow = 'var(--ring-gold), 0 0 12px var(--glow-gold)';
             setTimeout(() => (noteEl.style.boxShadow = ''), 2000);
         }
     }, 100);
