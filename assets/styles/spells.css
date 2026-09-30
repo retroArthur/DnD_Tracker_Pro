@@ -301,22 +301,12 @@
             outline: none;
         }
 
-        .editor-toolbar .editor-btn {
-            flex-shrink: 0;
-            display: grid; /* F-18: aus der Dublette uebernommen */
-            place-items: center; /* F-18: aus der Dublette uebernommen */
-            width: 30px; /* F-18: aus der Dublette uebernommen */
-            height: 30px; /* F-18: aus der Dublette uebernommen */
-            padding: 0; /* F-18: aus der Dublette uebernommen */
-            background: transparent; /* F-18: aus der Dublette uebernommen */
-            border: none; /* F-18: aus der Dublette uebernommen */
-            border-radius: 0; /* F-18: aus der Dublette uebernommen */
-            color: var(--text); /* F-18: aus der Dublette uebernommen */
-            cursor: pointer; /* F-18: aus der Dublette uebernommen */
-            font-size: 13px; /* F-18: aus der Dublette uebernommen */
-            transition: background 0.15s, color 0.15s; /* F-18: aus der Dublette uebernommen */
-        }
-        
+        /* `.editor-toolbar .editor-btn` stand hier und steht jetzt wieder in
+           editors.css, VOR seinen Varianten — Begruendung dort (U2). Hier
+           bleibt nichts zurueck: der Block trug ausser `flex-shrink: 0` nur
+           die zwoelf aus editors.css nachgezogenen Deklarationen, und
+           `flex-shrink: 0` stand dort ohnehin schon. */
+
         .toolbar-separator {
             width: 1px;
             height: 16px;

@@ -131,13 +131,23 @@ test.describe('F-18: uebersprungene Dritte gleicher Spezifitaet (U2)', () => {
     test('A — die beschrifteten Werkzeugleisten-Knoepfe behalten ihre Textform', async ({ page }) => {
         await appLaden(page);
         await page.evaluate(() => window.switchView('wiki'));
+        await page.waitForTimeout(250);
+        // Die volle Leiste liegt im Eintragsformular. Nur sichtbar hat der
+        // Knopf eine gemessene Breite — im geschlossenen Formular liefert
+        // `width` immer "auto", egal welche Regel gewinnt.
+        await page.evaluate(() => window.showWikiForm());
         await page.waitForTimeout(350);
 
         const gemessen = await page.evaluate(() => {
-            const btn = document.querySelector('.editor-toolbar .editor-btn.editor-btn-text');
+            // Genau die Leiste des geoeffneten Formulars — `querySelector`
+            // ohne Eingrenzung liefert die der Sitzungsansicht, die zu ist.
+            const btn = document.querySelector(
+                '[data-toolbar-for="wiki-content"] .editor-btn.editor-btn-text'
+            );
             if (!btn) return { fehlt: true };
             const s = getComputedStyle(btn);
             return {
+                sichtbar: btn.getBoundingClientRect().height > 0,
                 display: s.display,
                 width: s.width,
                 padding: s.padding,
@@ -151,6 +161,7 @@ test.describe('F-18: uebersprungene Dritte gleicher Spezifitaet (U2)', () => {
         console.log('[U2-A] editor-btn-text: ' + JSON.stringify(gemessen));
 
         expect(gemessen.fehlt).toBeUndefined();
+        expect(gemessen.sichtbar).toBe(true);
         // `inline-flex` wird als Flex-Element der Werkzeuggruppe zu `flex`
         // blockifiziert — `grid` waere die Basis, die die Variante ueberfaehrt.
         expect(gemessen.display).toBe('flex');
@@ -164,28 +175,46 @@ test.describe('F-18: uebersprungene Dritte gleicher Spezifitaet (U2)', () => {
     test('B — Knopfvarianten behalten beim Zeigen ihre eigene Flaeche', async ({ page }) => {
         await appLaden(page);
 
+        /* Soll-Werte als TOKEN, nicht als Zeichenkette: `--gold-hover` ist per
+           color-mix() gebildet und serialisiert als `color(srgb ...)`, nicht
+           als `rgb(...)`. Der Vergleich loest das Token an einem Probe-Element
+           auf — themenunabhaengig und ohne Serialisierungsfalle. Es bleibt eine
+           echte Zusicherung: verglichen wird mit dem Token DER VARIANTE, nie
+           mit `--gold`. */
         const FAELLE = [
-            ['#hp-calc-modal .hp-calc-btn.damage', 'background-color', 'rgb(239, 68, 68)'],
-            ['#hp-calc-modal .hp-calc-btn.heal', 'background-color', 'rgb(74, 222, 128)'],
-            ['#hp-calc-modal .hp-calc-btn.temp', 'background-color', 'rgb(96, 165, 250)'],
-            ['.btn.btn-secondary', 'background-color', 'rgb(51, 51, 51)'],
-            ['.btn.btn-warning', 'background-color', 'rgb(251, 191, 36)'],
-            ['.btn.btn-primary', 'background-color', 'rgb(218, 187, 85)']
+            ['#hp-calc-modal .hp-calc-btn.damage', 'background-color', '--red'],
+            ['#hp-calc-modal .hp-calc-btn.heal', 'background-color', '--green'],
+            ['#hp-calc-modal .hp-calc-btn.temp', 'background-color', '--blue'],
+            ['.btn.btn-secondary', 'background-color', '--bg-hover'],
+            ['.btn.btn-warning', 'background-color', '--yellow'],
+            ['.btn.btn-primary', 'background-color', '--gold-hover'],
+            ['.btn.btn-secondary', 'color', '--text']
         ];
         const gemessen = {};
-        for (const [sel, prop] of FAELLE) {
+        for (const [sel, prop, token] of FAELLE) {
             const w = await imZeigezustand(page, sel, [prop]);
-            gemessen[sel] = w.fehlt ? 'FEHLT' : w[prop];
+            gemessen[`${sel} { ${prop} }`] = { ist: w.fehlt ? 'FEHLT' : w[prop], soll: token };
         }
-        const farbe = await imZeigezustand(page, '.btn.btn-secondary', ['color']);
-        gemessen['.btn.btn-secondary color'] = farbe.fehlt ? 'FEHLT' : farbe.color;
+        const gold = await page.evaluate(() => {
+            const p = document.createElement('span');
+            document.body.appendChild(p);
+            const lies = t => {
+                p.style.color = `var(${t})`;
+                return getComputedStyle(p).color;
+            };
+            const out = {};
+            ['--red', '--green', '--blue', '--bg-hover', '--yellow', '--gold-hover', '--text', '--gold', '--on-gold'].forEach(t => (out[t] = lies(t)));
+            p.remove();
+            return out;
+        });
         // eslint-disable-next-line no-console
-        console.log('[U2-B] Zeigezustand: ' + JSON.stringify(gemessen, null, 1));
+        console.log('[U2-B] Zeigezustand: ' + JSON.stringify(gemessen, null, 1) + '\n[U2-B] Tokens: ' + JSON.stringify(gold));
 
-        for (const [sel, prop, soll] of FAELLE) {
-            expect(gemessen[sel], `${sel} { ${prop} }`).toBe(soll);
+        for (const [sel, prop, token] of FAELLE) {
+            expect(gemessen[`${sel} { ${prop} }`].ist, `${sel} { ${prop} } soll var(${token}) sein`).toBe(gold[token]);
         }
-        expect(gemessen['.btn.btn-secondary color']).toBe('rgb(224, 224, 224)');
+        // Gegenprobe: ohne die Korrektur stand hier ueberall var(--gold).
+        expect(gold['--gold']).not.toBe(gold['--bg-hover']);
     });
 
     test('C — die Klassen-Kaestchen im Zauber-Editor bleiben Flex-Zeilen', async ({ page }) => {

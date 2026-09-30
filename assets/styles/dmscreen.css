@@ -997,13 +997,13 @@
             border-color: var(--gold-dim);
         }
         
-        /* Button Glow */
-        .btn:hover {
-            box-shadow: 0 0 12px var(--glow-gold);
-            background: var(--gold); /* F-18: aus der Dublette uebernommen */
-            color: var(--on-gold); /* F-18: aus der Dublette uebernommen */
-        }
-        
+        /* Button Glow.
+           `.btn:hover` stand hier und steht jetzt wieder in core.css, VOR den
+           Knopfvarianten — Begruendung dort (U2). Der Gold-Schein ist mit
+           umgezogen: er war die einzige eigene Deklaration dieses Blocks und
+           ist nirgends sonst gesetzt. Die beiden Varianten unten bleiben hier
+           und gewinnen weiter gegen `.btn:hover` — dieselbe Spezifitaet,
+           spaeterer @import. */
         .btn-success:hover {
             box-shadow: 0 0 12px var(--glow-green);
             background: var(--green-dim); /* F-18: aus der Dublette uebernommen */
@@ -1078,17 +1078,10 @@
             flex-shrink: 0;
         }
         
-        /* Improved Form Labels */
-        .form-group label {
-            font-size: 13px;
-            margin-bottom: 4px;
-            text-transform: uppercase;
-            letter-spacing: 0.03em;
-            display: block; /* F-18: aus der Dublette uebernommen */
-            color: var(--gold); /* F-18: aus der Dublette uebernommen */
-            font-weight: 500; /* F-18: aus der Dublette uebernommen */
-        }
-        
+        /* Improved Form Labels: der Block `.form-group label` stand hier und
+           steht jetzt wieder in core.css, VOR `.spell-classes-grid label` —
+           Begruendung dort (U2). */
+
         /* Better Input Focus */
         .form-group input:focus,
         .form-group select:focus,

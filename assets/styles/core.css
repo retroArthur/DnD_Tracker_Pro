@@ -435,6 +435,23 @@
             align-items: center;
             gap: 4px;
         }
+
+        /* DIESER BLOCK MUSS VOR DEN KNOPFVARIANTEN STEHEN. f514ba4 (F-18) hat
+           ihn in die spaeter geladene dmscreen.css (12. @import) verlegt, weil
+           dort eine zweite Kopie stand (der Gold-Schein) — nach der Regel "der
+           spaetere Block bleibt". Die Regel uebersieht jede Variante darunter:
+           `.btn-text:hover`, `.btn-secondary:hover`, `.btn-warning:hover`,
+           `.btn-icon:hover`, `.btn-gold:hover`, `.btn-primary:hover` und die
+           drei `.hp-calc-btn.damage|heal|temp` haben mit (0,2,0) DIESELBE
+           Spezifitaet. Sie standen ploetzlich frueher und verloren: JEDER
+           Knopf wurde beim Zeigen gold, auch der rote Schaden- und der gruene
+           Heilen-Knopf des HP-Rechners. Der Gold-Schein zieht mit um — er ist
+           nur hier gesetzt, und seine Reihenfolge entscheidet nichts. */
+        .btn:hover {
+            box-shadow: 0 0 12px var(--glow-gold);
+            background: var(--gold);
+            color: var(--on-gold);
+        }
         .btn-sm { padding: 3px 8px; font-size: 11px; }
 
         /* btn-xs: zweimal im Markup benutzt, nie definiert (F-13). Eine Stufe
@@ -535,7 +552,34 @@
         }
         
         .form-group { margin-bottom: 10px; }
-        
+
+        /* DIESER BLOCK MUSS VOR `.spell-classes-grid label` STEHEN. f514ba4
+           (F-18) hat ihn in die spaeter geladene dmscreen.css (12. @import)
+           verlegt, weil dort eine zweite Kopie stand ("Improved Form Labels":
+           Schriftgroesse, Abstand, Kapitaelchen) — nach der Regel "der
+           spaetere Block bleibt". Die Regel uebersieht
+           `.spell-classes-grid label { display: inline-flex }` in spells.css
+           (9. @import): mit (0,1,1) DIESELBE Spezifitaet. Die 13
+           Klassen-Kaestchen im Zauber-Editor standen danach auf
+           `display: block` und verloren ihre mittige Ausrichtung und ihren
+           `gap: 4px`.
+           WARUM DER GANZE BLOCK UMZIEHT und nicht nur `display`: eine zweite
+           Kopie waere eine Dublette (die Ratsche in R-19 haelt sie bei 0).
+           Das kostet einen gemessenen Nebeneffekt — an genau diesen 13
+           Kaestchen gewinnt nun `.spell-classes-grid label { font-size:
+           0.8em }` statt der 13px hier: 12,8px statt 13px, 0,2px
+           Unterschied. Alle 13 liegen innerhalb einer `.form-group`,
+           ausserhalb gibt es keine. */
+        .form-group label {
+            font-size: 13px;
+            margin-bottom: 4px;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+            display: block;
+            color: var(--gold);
+            font-weight: 500;
+        }
+
         .form-group input, .form-group select, .form-group textarea {
             width: 100%;
             background: var(--bg-dark);

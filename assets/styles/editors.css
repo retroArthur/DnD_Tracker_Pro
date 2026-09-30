@@ -39,6 +39,34 @@
             margin-left: auto;
         }
 
+        /* Icon-Button: 30x30 Raster, randlos, Radius 0 (Variante 2a).
+           DIESER BLOCK MUSS VOR SEINEN VARIANTEN STEHEN. f514ba4 (F-18) hat
+           ihn in die spaeter geladene spells.css (9. @import) verlegt, weil
+           dort eine zweite Kopie stand — nach der Regel "der spaetere Block
+           bleibt". Die Regel uebersieht die beiden Varianten unmittelbar
+           darunter: `.editor-toolbar .editor-btn-type` und
+           `.editor-toolbar .editor-btn-text` haben mit (0,2,0) DIESELBE
+           Spezifitaet und standen damit ploetzlich frueher als die Basis.
+           Die ueberfuhr sie: die beschrifteten Knoepfe ("Marker",
+           "Bausteine") wurden zu 30px-Quadraten mit `display: grid`,
+           `padding: 0` und 13px Schrift statt `inline-flex`, `auto`,
+           `0 9px`, 12px. */
+        .editor-toolbar .editor-btn {
+            flex-shrink: 0;
+            display: grid;
+            place-items: center;
+            width: 30px;
+            height: 30px;
+            padding: 0;
+            background: transparent;
+            border: none;
+            border-radius: 0;
+            color: var(--text);
+            cursor: pointer;
+            font-size: 13px;
+            transition: background 0.15s, color 0.15s;
+        }
+
         /* B/I/U/S als Typografie, nicht als Icon */
         .editor-toolbar .editor-btn-type {
             font-family: var(--font-serif);
