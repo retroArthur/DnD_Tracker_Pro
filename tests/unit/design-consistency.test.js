@@ -10055,6 +10055,18 @@ describe('R-22 — die sechs JS-Marken, ihre Rechnung und ihre Aktenlage (Ratsch
        ist kein Kontrastmangel; sie faellt durch jedes Raster, das nur
        Schwellen prueft.
 
+   (d) DIE VIERTE LUECKE IST DIE SCHWERSTE und ist beim Schreiben von (a)
+       aufgefallen: der Knopf aus (a) trug in seinem Markup
+       `style="color: var(--red); border-color: var(--red);"`. Ein Inline-Stil
+       schlaegt JEDEN Selektor. Die Tintenkorrektur der Welle 2 von --red auf
+       --red-text an dieser Regel ist damit NIE GERENDERT WORDEN — R-18 las
+       die Regel, die Akte fuehrte den Punkt als geschlossen, und gemalt wurde
+       die ganze Zeit die alte Farbe. Ueber der Zeilenflaeche liest die Regel
+       5,52 · 5,55 · 5,32 · 6,35, das Markup aber 4,10 · 4,35 · 3,88 · 4,41.
+       Teil (4) prueft deshalb ZUERST, dass kein Inline-Stil die Tinte setzt:
+       eine gerechnete Reihe zu einer Farbe, die nicht erscheint, ist keine
+       Absicherung, sondern ihr Gegenteil.
+
    IHR MITTEL IST EIN ETIKETT. Jede gefuehrte Groesse traegt im CSS eine
    Zeile der Form
 
@@ -10090,7 +10102,9 @@ describe('R-22 — die sechs JS-Marken, ihre Rechnung und ihre Aktenlage (Ratsch
      (4) `.backup-entry:hover` fuellt mit var(--bg-hover) und meldet den
          Zustand ausschliesslich darueber (kein Umriss). Der Knopf liest auf
          dieser Flaeche 4,06 · 4,12 · 4,21 · 4,42 — in allen vier Themes
-         darunter.
+         darunter. Die Inline-Pruefung aus (d) ist einen Commit spaeter
+         dazugekommen und war ihrerseits rot: eine Stelle
+         (`file-backup-ui.js`), die `color` UND `border-color` inline setzt.
      (5) `.pwa-install-btn:hover` ungedeckelt; die Leiter steht in Light
          (1,14 gegen 1,07) und Sepia (1,19 gegen 1,11) auf dem Kopf.
      (7) W2-D-06 und W2-B-05 nennen sich in der Stand-Angabe weiter offen;
@@ -10253,6 +10267,42 @@ describe('R-23 — die Restposten der Wellen 1 und 2, beziffert gefuehrt (Ratsch
         const m = roh.match(/var\(\s*--[\w-]+\s*\)/);
         if (!m) throw new Error(`R-23: im outline "${roh}" steht kein Rollentoken`);
         return m[0];
+    }
+
+    /** Das `style`-Attribut des Elements, das `klasse` traegt — aus dem
+     *  Quelltext, ueber Zeilengrenzen hinweg. Gebraucht, weil ein Inline-Stil
+     *  JEDEN Selektor schlaegt: eine Tinte, die die Regel setzt und das Markup
+     *  ueberschreibt, wird von R-18 und von den Rechnungen hier als gemalt
+     *  gefuehrt, obwohl sie nie erscheint. Genau das war bei
+     *  `.backup-entry-restore` der Fall (Befund in Welle 3 Schritt 9). */
+    function inlineStilVon(klasse) {
+        const out = [];
+        const quellen = sourceJs()
+            .map(f => ({
+                name: path.relative(REPO, f.name).split(path.sep).join('/'),
+                content: f.content
+            }))
+            .concat(tplFiles.map(f => ({ name: `assets/templates/${f.name}`, content: f.content })));
+        quellen.forEach(f => {
+            let i = 0;
+            while ((i = f.content.indexOf(klasse, i)) !== -1) {
+                const auf = f.content.lastIndexOf('<', i);
+                const zu = f.content.indexOf('>', i);
+                i += klasse.length;
+                if (auf === -1 || zu === -1) continue;
+                const tag = f.content.slice(auf, zu + 1);
+                // Nur echte Klassennennungen, keine Treffer in einem Selektor
+                // oder Kommentar: das Tag muss die Klasse in class="…" fuehren.
+                if (!new RegExp(`class\\s*=\\s*["'\`][^"'\`]*\\b${klasse}\\b`).test(tag)) continue;
+                const m = tag.match(/style\s*=\s*"([^"]*)"/);
+                out.push({
+                    datei: f.name,
+                    zeile: f.content.slice(0, auf).split('\n').length,
+                    stil: m ? m[1] : null
+                });
+            }
+        });
+        return out;
     }
 
     /** W2-D-05b: die zwei Sprossen des PWA-Knopfs. */
@@ -10478,6 +10528,35 @@ describe('R-23 — die Restposten der Wellen 1 und 2, beziffert gefuehrt (Ratsch
                 );
             }
         }
+        /* DIE GERECHNETE TINTE MUSS AUCH DIE GEMALTE SEIN. Ein Inline-Stil
+           schlaegt jeden Selektor; setzt das Markup `color` oder
+           `border-color`, ist die Tinte der CSS-Regel Fiktion — und R-18 wie
+           die Reihe unten rechnen dann mit einer Farbe, die nie erscheint.
+           Genau so war es: der Knopf trug `style="color: var(--red);
+           border-color: var(--red);"`, die Tintenkorrektur der Welle 2 auf
+           var(--red-text) ist also nie gerendert worden. Gemalt wurde
+           4,10 · 4,35 · 3,88 · 4,41 statt 5,52 · 5,55 · 5,32 · 6,35. */
+        const stellen = inlineStilVon('backup-entry-restore');
+        if (!stellen.length) {
+            befunde.push(
+                'backup-entry-restore kommt in keinem Markup vor — die Pruefung des Inline-Stils ' +
+                    'liefe leer, und eine leere Pruefung ist keine'
+            );
+        }
+        stellen.forEach(s => {
+            const gesetzt = (s.stil || '')
+                .split(';')
+                .map(x => x.trim())
+                .filter(x => /^(color|border-color)\s*:/i.test(x));
+            if (gesetzt.length) {
+                befunde.push(
+                    `${s.datei}:${s.zeile} setzt die Tinte des Knopfs INLINE ` +
+                        `(${gesetzt.join('; ')}) und schlaegt damit die CSS-Regel — die Reihe ` +
+                        `unten waere dann Fiktion`
+                );
+            }
+        });
+
         try {
             const flaeche = zeilenFlaeche();
             WCAG.THEMES.forEach(t => {
