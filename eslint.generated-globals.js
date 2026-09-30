@@ -294,6 +294,7 @@ export default {
     "_stopProgress": 'readonly',
     "_unloadFlushDeclined": 'writable',
     "_updateCPFocus": 'readonly',
+    "_updateStickyChainAfterBanner": 'readonly',
     "_waitForPersistSettle": 'readonly',
     "_wizardStep": 'writable',
     "_zeigeTimelineVorschlag": 'readonly',
