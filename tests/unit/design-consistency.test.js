@@ -9554,3 +9554,398 @@ describe('R-21 — Ringe und Text-Leuchten, beziffert gefuehrt (Ratsche)', () =>
         ]);
     });
 });
+
+/* ===========================================================================
+   Design-Handoff v3, Welle 3 — R-22: die sechs JS-Marken, ihre Rechnung und
+   ihre Aktenlage (Ratsche)
+
+   WARUM SIE NEBEN R-19 BIS R-21 STEHT. R-19 Teil (5) urteilt darueber, ob die
+   sechs JS-Stellen eine ERLAUBTE Form tragen — sie tun es. R-20 und R-21
+   urteilen ueber CSS-Gluehlagen und CSS-Ringe. Ueber die sechs JS-Marken
+   urteilt beziffert NICHTS: ihre vier Zahlen je Zeile stehen allein in einer
+   Tabelle der Aktenlage und in Kommentaren am Code, von keiner Rechnung
+   gehalten. Genau dort sind in der Pruefung W3-D Runde 1 zwei Befunde
+   gefallen, und keiner davon war eine Formfrage:
+
+     · Der Sepia-Wert des Rings faellt mit der Umstellung von 6,58 auf 2,66,
+       also von "haelt" auf "haelt nicht", und stand in der Tabelle NICHT fett,
+       obwohl drei Zeilen darunter steht, dass fett "unter 3:1" bedeutet.
+       Sichtpunkt D3 nannte Dark und Light und liess Sepia aus — den groessten
+       Sturz beider Ringe (Faktor 0,40). Damit war der einzige Uebertritt
+       dieser Einheit dem Abnahmeblick entzogen.
+     · Der zweite der zwei Ringe ist UNERREICHBAR. `systems/undo.js` sucht die
+       Notiz ueber `[data-note-date="…"]`; die Zeichenkette `data-note-date`
+       kommt im ganzen Quellbaum genau einmal vor, naemlich in dieser Abfrage.
+       Es gibt keinen Setzer — die Sitzungsnotizen werden nach `n.id` gerendert
+       (`features/sessions/sessions.js`, `data-id="${n.id}"`). `if (noteEl)`
+       greift, der Zweig ist tot, der Ring wird nie gemalt. Die Aktenlage
+       fuehrte seine Traegerflaeche trotzdem als "aus dem CSS gelesen" und
+       schickte die Runde zu einer Probe, die nicht gelingen kann: eine
+       ausbleibende Marke waere als "zu schwach" gelesen worden statt als
+       "gar nicht da".
+
+   WAS SIE TUT. Sie rechnet die vier Zahlen der Ringzeile aus den Tokens und
+   der Palette neu — Verbunddeckung aus `--ring-gold` und `--glow-gold`, ueber
+   `--bg-card` — und haelt sie gegen die Tabelle. Aus derselben Rechnung leitet
+   sie ab, WELCHE Themes unter 3:1 liegen, und verlangt jedes davon namentlich
+   in Sichtpunkt D3. Sie prueft die Fettdruck-Konvention der Tabelle gegen
+   dieselbe Schwelle. Und sie bindet den Unerreichbarkeits-Eintrag an den
+   Quellbaum: solange kein Setzer da ist, MUSS er in der Akte stehen; sobald
+   einer kommt, darf er es NICHT mehr. Keine der drei Zusicherungen liest eine
+   Zahl nur nach.
+
+   WAS SIE NICHT TUT. Sie schreibt keiner Marke eine Deckung vor. Ob Ring plus
+   Hof noch "zeig mir, wohin ich gesprungen bin" leistet, entscheidet ein Auge;
+   eine Ratsche entscheidet nur, ob die Frage am richtigen Theme gestellt wurde
+   und ob die Stelle ueberhaupt sichtbar ist.
+   =========================================================================== */
+describe('R-22 — die sechs JS-Marken, ihre Rechnung und ihre Aktenlage (Ratsche)', () => {
+    /** Zielwert. 0 von der Geburt an; die gemessenen Ausgangswerte stehen als
+     *  Kommentar und nicht als Schranke. Ausgangswerte am 2026-09-30,
+     *  HEAD 70fc160: 2 Zahlen unter 3,00 ohne Fettdruck (2,40 und 2,66),
+     *  1 Theme unter 3:1 ohne Nennung in D3 (sepia) und 1 unerreichbare
+     *  Stelle ohne Eintrag in der Akte — drei rote Zusicherungen. */
+    const R22_ZIEL = 0;
+
+    const AKTENLAGE_PFAD = path.join(REPO, '.planning', 'HANDOFF-V3-OFFENE-PUNKTE.md');
+    const AKTENLAGE = fs.readFileSync(AKTENLAGE_PFAD, 'utf8');
+    const VARIABLES = fs.readFileSync(path.join(REPO, 'assets', 'styles', 'variables.css'), 'utf8');
+
+    function aktenlageAbschnitt(marke) {
+        const i = AKTENLAGE.indexOf(`## ${marke}`);
+        if (i < 0) return '';
+        const j = AKTENLAGE.indexOf('\n## ', i + 1);
+        return AKTENLAGE.slice(i, j < 0 ? AKTENLAGE.length : j);
+    }
+    const W3F01 = aktenlageAbschnitt('W3-F-01');
+    const W3F01_ZEILEN = W3F01.split('\n');
+
+    /** Die Schwelle, die R-02 in diesem Projekt fuer Nicht-Text durchsetzt.
+     *  Dieselbe Zahl, gegen die die Aktenlage ihren Fettdruck erklaert. */
+    const SCHWELLE_NICHTTEXT = 3.0;
+
+    /* ===================================================================
+       (a) DER BESTAND — die sechs Stellen, mit Anker und Wert
+       =================================================================== */
+
+    /** Die sechs `.style.boxShadow`-Zuweisungen mit einem Wert, wie Schritt 8
+     *  sie hinterlassen hat. `traeger`/`flaeche` sind NUR fuer die zwei Ringe
+     *  gesetzt: ihr Traegerelement steht im CSS und seine Flaeche ist damit
+     *  lesbar (siehe Test "die Flaeche beider Ringe steht so im CSS"). Die
+     *  vier Sprungmarken sitzen an wechselnden Orten und werden in der
+     *  Aktenlage als Minimum ueber vier neutrale Flaechen gefuehrt — sie sind
+     *  hier im Bestand, aber nicht in der Rechnung. */
+    const JS_MARKEN = [
+        {
+            datei: 'features/encounters/encounters-render.js',
+            zeile: 528,
+            wert: '0 0 20px var(--glow-gold), 0 0 8px var(--glow-gold)',
+            art: 'sprungmarke'
+        },
+        {
+            datei: 'features/locations/locations-render.js',
+            zeile: 368,
+            wert: '0 0 20px var(--glow-gold), 0 0 8px var(--glow-gold)',
+            art: 'sprungmarke'
+        },
+        {
+            datei: 'features/npcs/npc-render.js',
+            zeile: 390,
+            wert: '0 0 20px var(--glow-gold), 0 0 8px var(--glow-gold)',
+            art: 'sprungmarke'
+        },
+        {
+            datei: 'systems/entity-links.js',
+            zeile: 437,
+            wert: '0 0 20px var(--glow-gold), 0 0 8px var(--glow-gold)',
+            art: 'sprungmarke'
+        },
+        {
+            datei: 'ui/actions/entity-actions.js',
+            zeile: 373,
+            wert: 'var(--ring-gold), 0 0 12px var(--glow-gold)',
+            art: 'ring',
+            traeger: '.quest-item',
+            flaeche: '--bg-card'
+        },
+        {
+            datei: 'systems/undo.js',
+            zeile: 766,
+            wert: 'var(--ring-gold), 0 0 12px var(--glow-gold)',
+            art: 'ring',
+            traeger: '.session-card',
+            flaeche: '--bg-card'
+        }
+    ];
+
+    /** Alle `.style.boxShadow = '<wert>'` mit nicht-leerem Wert, mit Datei,
+     *  Zeile und Wert. Die sechs Ruecknahmen (`= ''`) fallen heraus. */
+    function jsMarken() {
+        const out = [];
+        sourceJs().forEach(f => {
+            const rel = path.relative(REPO, f.name).split(path.sep).join('/');
+            for (const m of f.content.matchAll(/\.style\.boxShadow\s*=\s*(['"`])([\s\S]*?)\1/g)) {
+                const wert = m[2].trim();
+                if (!wert) continue;
+                out.push({
+                    datei: rel,
+                    zeile: f.content.slice(0, m.index).split('\n').length,
+                    wert
+                });
+            }
+        });
+        return out;
+    }
+
+    const schluessel22 = e => `${e.datei}:${e.zeile}`;
+
+    test('der Bestand ist der gemessene: sechs JS-Marken, vier Sprungmarken und zwei Ringe', () => {
+        const ist = jsMarken();
+        expect(ist.map(e => `${schluessel22(e)} ${e.wert}`).sort()).toEqual(
+            JS_MARKEN.map(e => `${schluessel22(e)} ${e.wert}`).sort()
+        );
+        expect(JS_MARKEN.filter(e => e.art === 'ring').length).toBe(2);
+        expect(JS_MARKEN.filter(e => e.art === 'sprungmarke').length).toBe(4);
+    });
+
+    test('die Flaeche beider Ringe steht so im CSS, wie die Aktenlage sie rechnet', () => {
+        const regeln = [];
+        cssFiles.forEach(f => regelnMitRumpf(f.content).forEach(r => regeln.push(r)));
+        const abweichung = JS_MARKEN.filter(e => e.art === 'ring').map(e => {
+            const treffer = regeln.filter(r => r.sel.split(',').some(s => s.trim() === e.traeger));
+            // `deklaration()` und nicht ein eigener Ausdruck: der Praefixschutz
+            // dort haelt `background-image` von `background` getrennt.
+            const hg = treffer.map(r => deklaration(r.rumpf, 'background')).filter(Boolean);
+            return hg.includes(`var(${e.flaeche})`)
+                ? null
+                : `${e.datei} {${e.traeger}} — erwartet background: var(${e.flaeche}), ` +
+                      `gefunden ${JSON.stringify(hg)}`;
+        });
+        expect(abweichung.filter(Boolean).sort()).toEqual([]);
+    });
+
+    /* ===================================================================
+       (b) DIE RECHNUNG — Verbunddeckung und Abstand, aus den Tokens
+       =================================================================== */
+
+    /** Der Mischanteil eines `--glow-*`- oder `--ring-*`-Tokens. `--ring-gold`
+     *  steht in jedem der vier Theme-Bloecke, `--glow-gold` genau einmal im
+     *  Basis-`:root` und folgt dem Theme allein ueber `var(--gold)` — deshalb
+     *  wird es nicht aus `palette()` gelesen, sondern aus der Datei. */
+    function anteilVon(text) {
+        const m = text.match(
+            /color-mix\(\s*in srgb\s*,\s*var\(--[\w-]+\)\s*([\d.]+)%\s*,\s*transparent\s*\)/
+        );
+        return m ? parseFloat(m[1]) / 100 : 1.0;
+    }
+
+    function glowAnteil() {
+        const m = VARIABLES.match(/--glow-gold\s*:\s*([^;]+);/);
+        if (!m) throw new Error('R-22: --glow-gold nicht in variables.css gefunden');
+        return anteilVon(m[1]);
+    }
+
+    /** Die Deckung der zwei uebereinanderliegenden Lagen von
+     *  `var(--ring-gold), 0 0 12px var(--glow-gold)`. Zwei halbdurchsichtige
+     *  Lagen derselben Farbe decken zusammen 1-(1-a1)(1-a2) — nicht a1+a2.
+     *  In Contrast traegt der Ring volles Gold, damit ist der Verbund 1. */
+    function verbunddeckung(theme) {
+        const ring = anteilVon(WCAG.palette(theme)['--ring-gold'] || '');
+        return 1 - (1 - ring) * (1 - glowAnteil());
+    }
+
+    /** Abstand des Rings zu seiner Traegerflaeche, bei der Deckung `d`. */
+    function ringAbstand22(e, theme, d) {
+        const p = WCAG.palettes()[theme];
+        const fl = p[e.flaeche];
+        return +WCAG.ratio(WCAG.mixOver(p['--gold'], d, fl), fl).toFixed(2);
+    }
+
+    test('die Verbunddeckung ist 0,575 in drei Themes und 1,00 in Contrast', () => {
+        expect(glowAnteil()).toBe(0.5);
+        const ist = {};
+        WCAG.THEMES.forEach(t => (ist[t] = +verbunddeckung(t).toFixed(4)));
+        expect(ist).toEqual({ dark: 0.575, light: 0.575, sepia: 0.575, contrast: 1.0 });
+    });
+
+    test('die vier Zahlen der Ringzeile sind gerechnet die der Aktenlage', () => {
+        const ring = JS_MARKEN.find(e => e.datei === 'ui/actions/entity-actions.js');
+        const vorher = WCAG.THEMES.map(t => ringAbstand22(ring, t, 1.0).toFixed(2));
+        const nachher = WCAG.THEMES.map(t => ringAbstand22(ring, t, verbunddeckung(t)).toFixed(2));
+        // Gemessen 2026-09-30, unabhaengig nachgerechnet in der Pruefung W3-D
+        // Runde 1. Die vorher-Zeile ist volldeckendes Gold auf --bg-card.
+        expect(vorher).toEqual(['8.28', '3.25', '6.58', '13.46']);
+        expect(nachher).toEqual(['3.61', '1.90', '2.66', '13.46']);
+
+        // Und dieselben acht Zahlen stehen so in der Akte — Rechnung und
+        // Tabelle sind EINE Aussage, nicht zwei.
+        const komma = a => a.map(v => v.replace('.', ','));
+        const nenntAlle = arr => W3F01_ZEILEN.some(z => komma(arr).every(v => z.includes(v)));
+        expect({ vorher: nenntAlle(vorher), nachher: nenntAlle(nachher) }).toEqual({
+            vorher: true,
+            nachher: true
+        });
+    });
+
+    /* ===================================================================
+       (c) DIE FETTDRUCK-KONVENTION DER TABELLE
+       =================================================================== */
+
+    /** Die Marken-Tabelle aus Teil D, Zeile fuer Zeile. Erkannt an ihrem
+     *  Kopf `| Marke | | dark | light | sepia | contrast |`. Leer, wenn die
+     *  Tabelle fehlt — dann geht die Zusicherung darunter rot. */
+    function markenTabelle() {
+        const i = W3F01_ZEILEN.findIndex(z => /^\|\s*Marke\s*\|\s*\|\s*dark\s*\|/.test(z));
+        if (i < 0) return [];
+        const out = [];
+        for (let j = i + 1; j < W3F01_ZEILEN.length && W3F01_ZEILEN[j].trim().startsWith('|'); j++) {
+            out.push(W3F01_ZEILEN[j]);
+        }
+        return out;
+    }
+
+    test('jeder Wert unter 3,00 in der Marken-Tabelle ist fett, jeder darueber nicht', () => {
+        const zeilen = markenTabelle();
+        // Gegenprobe gegen eine gruene, leere Ratsche: sechs Wertzeilen plus
+        // die Trennzeile sind der gemessene Bestand.
+        expect(zeilen.length).toBeGreaterThanOrEqual(6);
+
+        const offen = [];
+        let zahlen = 0;
+        zeilen.forEach(z => {
+            z.split('|')
+                .slice(1, -1)
+                .forEach(zelle => {
+                    const m = zelle.trim().match(/^(\*\*)?(\d+,\d{2})(\*\*)?$/);
+                    if (!m) return;
+                    zahlen++;
+                    const wert = Number(m[2].replace(',', '.'));
+                    const fett = !!m[1] && !!m[3];
+                    if (wert < SCHWELLE_NICHTTEXT && !fett) {
+                        offen.push(`${m[2]} liegt unter 3:1 und ist NICHT fett — ${z.trim()}`);
+                    }
+                    if (wert >= SCHWELLE_NICHTTEXT && fett) {
+                        offen.push(`${m[2]} liegt ueber 3:1 und IST fett — ${z.trim()}`);
+                    }
+                });
+        });
+        // 24 Zahlen: sechs Wertzeilen zu je vier Themes.
+        expect(zahlen).toBe(24);
+        expect({ anzahl: offen.length, stichprobe: offen.sort() }).toEqual({
+            anzahl: R22_ZIEL,
+            stichprobe: []
+        });
+    });
+
+    /* ===================================================================
+       (d) WELCHE THEMES DIE SICHTPROBE NENNEN MUSS — gerechnet
+       =================================================================== */
+
+    test('jedes Theme, in dem der Ring unter 3:1 faellt, steht namentlich in Sichtpunkt D3', () => {
+        expect(W3F01).not.toBe('');
+        const ring = JS_MARKEN.find(e => e.datei === 'ui/actions/entity-actions.js');
+        const durchfall = WCAG.THEMES.filter(
+            t => ringAbstand22(ring, t, verbunddeckung(t)) < SCHWELLE_NICHTTEXT
+        );
+        // Gerechnet, nicht behauptet: Light UND Sepia. Beide traten mit dieser
+        // Umstellung von "haelt" auf "haelt nicht" ueber (3,25 -> 1,90 und
+        // 6,58 -> 2,66); Sepia ist mit Faktor 0,40 der groessere Sturz und
+        // fehlte in der ersten Fassung von D3.
+        expect(durchfall).toEqual(['light', 'sepia']);
+
+        const d3 = W3F01_ZEILEN.filter(z => /^\|\s*D3\s*\|/.test(z));
+        expect(d3.length).toBe(1);
+        const NAME = { dark: 'Dark', light: 'Light', sepia: 'Sepia', contrast: 'Contrast' };
+        const offen = durchfall
+            .filter(t => !new RegExp(`\\b${NAME[t]}\\b`).test(d3[0]))
+            .map(
+                t =>
+                    `D3 nennt ${NAME[t]} nicht, obwohl der Ring dort ` +
+                    `${ringAbstand22(ring, t, verbunddeckung(t)).toFixed(2)} liest`
+            );
+        expect({ anzahl: offen.length, stichprobe: offen.sort() }).toEqual({
+            anzahl: R22_ZIEL,
+            stichprobe: []
+        });
+    });
+
+    /* ===================================================================
+       (e) DIE UNERREICHBARE STELLE — an den Quellbaum gebunden
+       =================================================================== */
+
+    /** Setzt irgendwo im Baum etwas `data-note-date`? Gezaehlt werden alle
+     *  Vorkommen der Zeichenkette in JS und in den HTML-Vorlagen; die EINE
+     *  lesende Abfrage in `systems/undo.js` faellt heraus. Bleibt nichts
+     *  uebrig, ist der Zweig in `goToNote()` tot. */
+    function noteDateSetzer() {
+        const out = [];
+        const pruefe = (rel, inhalt) => {
+            const zeilen = inhalt.split('\n');
+            for (const m of inhalt.matchAll(/data-note-date|noteDate/g)) {
+                const nr = inhalt.slice(0, m.index).split('\n').length;
+                if (rel === 'systems/undo.js' && /querySelector/.test(zeilen[nr - 1])) continue;
+                out.push(`${rel}:${nr}`);
+            }
+        };
+        sourceJs().forEach(f =>
+            pruefe(path.relative(REPO, f.name).split(path.sep).join('/'), f.content)
+        );
+        const vorlagen = path.join(REPO, 'assets', 'templates');
+        if (fs.existsSync(vorlagen)) {
+            fs.readdirSync(vorlagen)
+                .filter(n => n.endsWith('.html'))
+                .forEach(n =>
+                    pruefe(`assets/templates/${n}`, fs.readFileSync(path.join(vorlagen, n), 'utf8'))
+                );
+        }
+        return out;
+    }
+
+    test('solange kein Setzer fuer data-note-date existiert, fuehrt die Akte die Stelle als unerreichbar', () => {
+        expect(W3F01).not.toBe('');
+        const ring = JS_MARKEN.find(e => e.datei === 'systems/undo.js');
+        const setzer = noteDateSetzer();
+        const anker = `${ring.datei}:${ring.zeile}`;
+        const gefuehrt = W3F01_ZEILEN.some(z => z.includes(anker) && /unerreichbar/i.test(z));
+
+        const offen = [];
+        if (setzer.length === 0 && !gefuehrt) {
+            offen.push(
+                `${anker} ist unerreichbar (kein Setzer fuer data-note-date im Baum), aber ` +
+                    'keine Zeile von W3-F-01 nennt den Anker zusammen mit "unerreichbar" — ' +
+                    'die Runde liest eine ausbleibende Marke dann als "zu schwach" statt ' +
+                    'als "gar nicht da"'
+            );
+        }
+        if (setzer.length > 0 && gefuehrt) {
+            offen.push(
+                `${anker} ist wieder erreichbar (Setzer: ${setzer.join(', ')}), aber W3-F-01 ` +
+                    'fuehrt die Stelle weiter als unerreichbar — der Eintrag hat sich ueberlebt'
+            );
+        }
+        expect({ anzahl: offen.length, stichprobe: offen }).toEqual({
+            anzahl: R22_ZIEL,
+            stichprobe: []
+        });
+    });
+
+    /* ===================================================================
+       (f) SELBSTPROBE DER RECHNUNG, nicht ihres Ergebnisses
+       =================================================================== */
+
+    test('anteilVon() liest color-mix und gibt bei Volldeckung 1,00', () => {
+        expect(anteilVon('0 0 0 3px color-mix(in srgb, var(--gold) 15%, transparent)')).toBe(0.15);
+        expect(anteilVon('color-mix(in srgb, var(--gold) 50%, transparent)')).toBe(0.5);
+        expect(anteilVon('0 0 0 3px var(--gold)')).toBe(1.0);
+    });
+
+    test('zwei halbdurchsichtige Lagen decken 1-(1-a)(1-b), nicht a+b', () => {
+        // 0,15 + 0,50 waeren 0,65 und ergaeben in Sepia 2,97 — knapp UEBER der
+        // Schwelle und damit ein anderes Urteil. Die Formel ist hier die
+        // Entscheidung, nicht Beiwerk.
+        const verbund = (a, b) => +(1 - (1 - a) * (1 - b)).toFixed(4);
+        expect(verbund(0.15, 0.5)).toBe(0.575);
+        expect(verbund(1.0, 0.5)).toBe(1.0);
+        expect(verbund(0, 0.5)).toBe(0.5);
+    });
+});
