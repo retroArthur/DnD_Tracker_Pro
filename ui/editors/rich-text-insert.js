@@ -689,20 +689,85 @@ function insertTable(rows = 3, cols = 3) {
     showToast('📊 Tabelle eingefügt (3×3) - Strg+Shift+T');
     hideFloatingToolbar();
 }
+/**
+ * Setzt die Versatzkette der angehefteten Ebenen (U3).
+ *
+ * Auf Kampf -> Initiative liegen vier Ebenen uebereinander, jede mit eigenem
+ * Anheft-Versatz, und jeder Versatz haengt an der gemessenen Unterkante der
+ * Ebene darueber:
+ *
+ *   Glied 1  festes Umzugs-Band  -> .app-header          (--sticky-top-header)
+ *   Glied 2  Kopfzeile           -> .encounter-controls  (--sticky-top-round)
+ *   Glied 3  Runden-Leiste       -> #quick-actions-bar   (--sticky-top-actions)
+ *
+ * Bis 2026-09 war nur Glied 2 berechnet. Die Aktionsleiste behielt ihren 2026
+ * fest verdrahteten Wert `top: 145px` und schnitt die Runden-Leiste dadurch um
+ * 35px (ab 1280 Breite), 94px (1100) und 87px (1000) — die Leiste bricht um
+ * (`flex-wrap: wrap`), ihre Hoehe ist also keine Konstante und laesst sich
+ * nicht verdrahten. Glied 1 fehlte ganz: das Band ist `position: fixed` auf
+ * --z-panel, die Kopfzeile heftete auf `top: 0` an und fuhr beim Scrollen
+ * 61px darunter — App-Titel und globale Suche waren verdeckt.
+ *
+ * Die Kette wird als drei Custom Properties auf <html> veroeffentlicht, NICHT
+ * als Inline-Stil am Element. Der frueher benutzte Inline-Weg hatte einen
+ * stillen Fehler: beim Wechsel in das Mobil-Layout blieb der Desktop-Wert am
+ * Element stehen und schlug die Regel
+ * `[data-layout="mobile"] .encounter-controls { top: 0 }`. Ueber Custom
+ * Properties gewinnt die spezifischere Mobil-Regel immer.
+ *
+ * Das frueher hier gesetzte --header-height ist entfallen: kein Verbraucher hat
+ * es je gelesen (`git log -S 'var(--header-height)' --all` = null Treffer). Die
+ * drei kumulativen Glieder ersetzen es.
+ *
+ * Aufrufer: core/init.js (einmal beim Start und entprellt am resize-Ereignis),
+ * renderQuickActionsBar() (Glied 3 ist nur messbar, solange die Initiative
+ * sichtbar ist) und die vier Stellen in systems/migration/migration-wizard.js,
+ * an denen ein festes Band erscheint oder verschwindet.
+ */
 function updateStickyOffsets() {
+    const root = document.documentElement;
     const header = document.querySelector('.app-header');
     if (!header) return;
-    const isMobile = document.documentElement.dataset.layout === 'mobile';
-    if (isMobile) {
-        document.documentElement.style.setProperty('--header-height', '0px');
-    } else {
-        const headerHeight = header.offsetHeight;
-        document.documentElement.style.setProperty('--header-height', headerHeight + 'px');
-        const encounterControls = document.querySelector('.encounter-controls');
-        if (encounterControls) {
-            encounterControls.style.top = headerHeight + 'px';
-        }
+
+    if (root.dataset.layout === 'mobile') {
+        // Im Mobil-Layout hat die Kette keinen Gegenstand: die Kopfzeile ist dort
+        // eine feste Leiste am UNTEREN Fensterrand (`top: auto`), und Runden-
+        // wie Aktionsleiste heften nach eigenen Regeln an
+        // ([data-layout="mobile"] ...). Alle drei Glieder werden
+        // zurueckgenommen, damit kein Desktop-Wert stehenbleibt — ein Token, das
+        // niemand liest, ist genau der Fehler, den --header-height war.
+        root.style.removeProperty('--sticky-top-header');
+        root.style.removeProperty('--sticky-top-round');
+        root.style.removeProperty('--sticky-top-actions');
+        return;
     }
+
+    // Glied 1 — Hoehe des Umzugs-Hinweisbands, 0 wenn keines da ist.
+    // ABSICHTLICH NUR dieses Band: das Divergenz-Banner (.divergence-banner,
+    // gleiche Positionierung, gleiche Sprosse) hat KEINE Gegenrechnung am
+    // Seiteninhalt — es fehlt die Entsprechung zu
+    // `body.has-migration-hint { padding-top }` — und verdeckt die Kopfzeile
+    // deshalb auch UNGESCROLLT, wo ein Anheft-Versatz nichts ausrichtet. Es
+    // hier mitzumessen wuerde den halben Fall heilen und den anderen halben
+    // verschleiern; es bleibt unveraendert und ist als offener Punkt gefuehrt.
+    const band = document.querySelector('.migration-hint-banner');
+    const bandHoehe = band ? Math.round(band.getBoundingClientRect().height) : 0;
+    root.style.setProperty('--sticky-top-header', bandHoehe + 'px');
+
+    // Glied 2 — Runden-Leiste unter der Kopfzeile.
+    const rundenTop = bandHoehe + Math.round(header.getBoundingClientRect().height);
+    root.style.setProperty('--sticky-top-round', rundenTop + 'px');
+
+    // Glied 3 — Aktionsleiste unter der Runden-Leiste. Bei verborgener
+    // Initiative ist die Leiste 0px hoch; dann bleibt das Glied unveraendert,
+    // statt auf einen falschen Wert zu fallen (renderQuickActionsBar() ruft
+    // diese Funktion beim Sichtbarwerden erneut auf).
+    const runden = document.querySelector('.encounter-controls');
+    if (!runden) return;
+    const rundenHoehe = Math.round(runden.getBoundingClientRect().height);
+    if (rundenHoehe === 0) return;
+    const abstand = Math.round(parseFloat(getComputedStyle(runden).marginBottom) || 0);
+    root.style.setProperty('--sticky-top-actions', rundenTop + rundenHoehe + abstand + 'px');
 }
 // ============================================================
 // EXPORTS FOR GLOBAL ACCESS

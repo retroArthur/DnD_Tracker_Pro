@@ -2279,8 +2279,8 @@
     border-radius: var(--radius-md);
     margin-bottom: 12px;
     position: sticky;
-    top: 145px;
-    z-index: var(--z-sticky);
+    top: var(--sticky-top-actions, 145px); /* Glied 3: Band + Kopfzeile + Runden-Leiste + Abstand (updateStickyOffsets) */
+    z-index: var(--z-sticky-3); /* unter der Runden-Leiste — siehe variables.css */
 }
 
 [data-layout="mobile"] #quick-actions-bar {

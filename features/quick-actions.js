@@ -85,6 +85,14 @@ function renderQuickActionsBar() {
                 .join('')}
         </div>
     `;
+
+    // Glied 3 der Versatzkette (U3): der Anheft-Versatz dieser Leiste haengt an
+    // der gemessenen Hoehe der Runden-Leiste, und die ist nur messbar, solange
+    // die Initiative sichtbar ist. Beim Start auf einer anderen Ansicht misst
+    // core/init.js dort 0 — deshalb hier erneut, sobald die Leiste erscheint.
+    if (typeof window.updateStickyOffsets === 'function') {
+        window.updateStickyOffsets();
+    }
 }
 function applyQuickAction(cbId, actionKey) {
     const D = window.D;

@@ -862,10 +862,36 @@ function showMigrationHintBanner() {
         banner.offsetHeight + 'px'
     );
     document.body.classList.add('has-migration-hint');
+    _updateStickyChainAfterBanner();
 
     // Sitzungs-Flag setzen
     if (typeof sessionStorage !== 'undefined') {
         sessionStorage.setItem('migration-hint-shown', '1');
+    }
+}
+
+/**
+ * Setzt die Versatzkette der angehefteten Ebenen neu (U3, Glied 1).
+ *
+ * Das Hinweisband ist `position: fixed; top: 0` auf --z-panel (600) und liegt
+ * damit UEBER der Kopfzeile (--z-sticky, 100). `body.has-migration-hint`
+ * schiebt ungescrollt den ganzen Seiteninhalt darunter — gescrollt faehrt die
+ * Kopfzeile aber auf ihren Anheft-Versatz und verschwand dort unter dem Band
+ * (gemessen 61px; App-Titel und globale Suche antworteten auf
+ * elementFromPoint mit SPAN.migration-hint-text). Die Kopfzeile heftet deshalb
+ * auf --sticky-top-header an, und dieses Glied ist die Hoehe des Hinweisbands.
+ *
+ * Aufgerufen an JEDER Stelle, an der ein Band erscheint oder verschwindet —
+ * auch am Divergenz-Banner, obwohl updateStickyOffsets() dessen Hoehe
+ * absichtlich NICHT mitmisst (Begruendung dort): der Wechsel vom Hinweis- zum
+ * Divergenz-Banner muss das Glied auf 0 zuruecknehmen.
+ * core/init.js ruft updateStickyOffsets() VOR initMigrationWizardIfNeeded()
+ * auf (und diese ist async, die Reihenfolge waere ohnehin nicht zugesichert) —
+ * ein einmaliger Aufruf beim Start kann die Baender also nicht sehen.
+ */
+function _updateStickyChainAfterBanner() {
+    if (typeof window.updateStickyOffsets === 'function') {
+        window.updateStickyOffsets();
     }
 }
 
@@ -893,6 +919,7 @@ function showDivergenceBanner(dateStr) {
     `;
 
     document.body.insertBefore(banner, document.body.firstChild);
+    _updateStickyChainAfterBanner();
 
     // Checkpoint-Fix (Weg B): startMigrationFlow() loest den Audio-Download NICHT
     // mehr automatisch aus (Chrome gated den zweiten automatischen Download einer
@@ -992,6 +1019,10 @@ function startMigrationFlow() {
     // Hinweis-Banner ausblenden (Umzug wurde gestartet)
     const hintBanner = document.getElementById('migration-hint-banner');
     if (hintBanner) hintBanner.remove();
+    // Das Divergenz-Banner ist niedriger als der Hinweis: die Kette muss NACH
+    // dem Entfernen noch einmal laufen, sonst behaelt die Kopfzeile den
+    // Versatz des gerade verschwundenen Bands.
+    _updateStickyChainAfterBanner();
 }
 
 /**
@@ -1087,11 +1118,13 @@ function initMigrationActions() {
         const banner = document.getElementById('migration-hint-banner');
         if (banner) banner.remove();
         document.body.classList.remove('has-migration-hint');
+        _updateStickyChainAfterBanner();
     });
     EventDelegation.registerAction('dismiss-divergence-banner', function() {
         StorageAPI.setJSON('migration-divergence-dismissed', { dismissed: true });
         const banner = document.getElementById('migration-divergence-banner');
         if (banner) banner.remove();
+        _updateStickyChainAfterBanner();
     });
     // Checkpoint-Fix (Weg B): expliziter Button im Divergenz-Banner statt
     // automatischem zweitem Download — ein echter Klick liefert die eigene

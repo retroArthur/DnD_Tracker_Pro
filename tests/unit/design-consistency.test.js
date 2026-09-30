@@ -38,9 +38,28 @@ const cssCode = withoutComments(cssAll);
 const tplFiles = readAll('assets/templates', '.html');
 
 describe('F-01 — Custom Properties', () => {
-    // Diese drei werden zur Laufzeit per element.style.setProperty gesetzt und
-    // haben im CSS bewusst keine Definition.
-    const RUNTIME_TOKENS = new Set(['--hp-pct', '--map-zoom', '--migration-hint-height']);
+    // Diese werden zur Laufzeit per element.style.setProperty gesetzt und haben
+    // im CSS bewusst keine Definition. Achtung: die Regex unten prueft den
+    // Fallback NICHT — ein `var(--x, 0px)` ohne Definition faellt ebenfalls
+    // durch, trotz des Testnamens. Deshalb stehen hier auch Tokens, die an
+    // ihren Fundstellen einen Fallback tragen.
+    //
+    // Die drei --sticky-top-* sind die Glieder der Versatzkette (U3): jedes ist
+    // eine GEMESSENE Hoehe (festes Umzugs-Band, Kopfzeile, Runden-Leiste), die
+    // updateStickyOffsets() in ui/editors/rich-text-insert.js auf <html> setzt.
+    // Ein CSS-Standardwert dafuer waere genau der fest verdrahtete Wert, den
+    // der Befund als falsch erwiesen hat; die Fallbacks an den Fundstellen sind
+    // nur der Zustand VOR dem ersten Lauf der Funktion. Dass Tokenname in CSS
+    // und JS uebereinstimmen, sichert der Test "KERNBELEG U3: die drei
+    // Anheft-Versaetze kommen aus der Versatzkette" — nicht diese Liste.
+    const RUNTIME_TOKENS = new Set([
+        '--hp-pct',
+        '--map-zoom',
+        '--migration-hint-height',
+        '--sticky-top-header',
+        '--sticky-top-round',
+        '--sticky-top-actions'
+    ]);
 
     /* ACHTUNG BEIM KOMMENTIEREN VON CSS — diese Falle ist in Welle 1 dreimal
        zugeschnappt (W1-B in variables.css, W1-C in pwa.css, W1-E in core.css).
@@ -558,8 +577,18 @@ describe('F-06 — drei Radien', () => {
 
 describe('F-19 — Stapel-Leiter', () => {
     // Die Reihenfolge ist am gebauten Buendel nachgemessen worden:
-    // 100 -> 300 -> 600 -> 1000 -> 2000 -> 3000 -> 4000.
+    // 98 -> 99 -> 100 -> 300 -> 600 -> 1000 -> 2000 -> 3000 -> 4000.
+    //
+    // Die beiden untersten Sprossen sind in U3 nachgezogen worden. F-19 hatte
+    // Kopfzeile, Runden-Leiste und Aktionsleiste auf die EINE Sprosse
+    // --z-sticky gelegt; bei Gleichstand entscheidet die Dokumentreihenfolge,
+    // und die ist die exakte Umkehrung der Absicht (gemessen: 23 von 25
+    // Nav-Menueeintraegen unerreichbar). Sie stehen hier mit in der Leiter,
+    // damit ein kuenftiges Zusammenschieben auffaellt statt nur unbemerkt
+    // durchzugehen.
     const TIERS = [
+        '--z-sticky-3',
+        '--z-sticky-2',
         '--z-sticky',
         '--z-dropdown',
         '--z-panel',
@@ -588,6 +617,85 @@ describe('F-19 — Stapel-Leiter', () => {
         const roh = [...cssCode.matchAll(/z-index:\s*(\d+)/g)].map(m => parseInt(m[1], 10));
         const global = roh.filter(v => v > 20);
         expect(global).toEqual([]);
+    });
+
+    test('KERNBELEG U3: die drei angehefteten Ebenen tragen drei VERSCHIEDENE Sprossen', () => {
+        // Der eigentliche Befund war nicht ein falscher Wert, sondern DREI
+        // GLEICHE. Ein Test auf die Leiter allein haette ihn nicht gefunden:
+        // die Leiter war in Ordnung, nur alle drei Regeln zeigten auf dieselbe
+        // Sprosse. Geprueft wird deshalb, WELCHE Sprosse jede der drei Regeln
+        // traegt, und dass deren Werte streng fallend sind.
+        const blockVon = sel => {
+            const escaped = sel.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            const m = cssCode.match(new RegExp(`(?:^|\\}|\\*/)\\s*${escaped}\\s*\\{([^{}]*)\\}`, 'm'));
+            return m ? m[1] : null;
+        };
+        const vars = cssFiles.find(f => f.name === 'variables.css').content;
+        const wertVon = token => {
+            const m = vars.match(new RegExp(`${token}:\\s*(\\d+)`));
+            return m ? parseInt(m[1], 10) : null;
+        };
+
+        // Reihenfolge = Absicht: Kopfzeile oben, Aktionsleiste unten.
+        // Jest kennt kein Meldungsargument an expect() — der Befund steckt
+        // deshalb IM verglichenen Wert, damit der Diff ihn benennt.
+        const ebenen = [
+            ['.app-header', '--z-sticky'],
+            ['.encounter-controls', '--z-sticky-2'],
+            ['#quick-actions-bar', '--z-sticky-3']
+        ];
+        const ist = ebenen.map(([sel, token]) => {
+            const body = blockVon(sel);
+            const traegt = body !== null && new RegExp(`z-index:\\s*var\\(${token}\\)`).test(body);
+            return `${sel} -> ${body === null ? 'Regelblock fehlt' : traegt ? token : 'andere/keine Sprosse'}`;
+        });
+        expect(ist).toEqual(ebenen.map(([sel, token]) => `${sel} -> ${token}`));
+
+        const werte = ebenen.map(([, token]) => wertVon(token));
+        expect(werte.filter(w => w === null)).toEqual([]);
+        expect(`${new Set(werte).size} verschiedene Werte in ${werte}`).toBe(`3 verschiedene Werte in ${werte}`);
+        expect(werte).toEqual([...werte].sort((a, b) => b - a));
+    });
+
+    test('KERNBELEG U3: die drei Anheft-Versaetze kommen aus der Versatzkette', () => {
+        // Jeder der drei `top`-Werte muss aus einem Kettenglied kommen, das
+        // updateStickyOffsets() zur Laufzeit messend setzt. Ein fest
+        // verdrahteter Wert war der zweite Teil des Befunds: die Runden-Leiste
+        // bricht um, ihre Hoehe ist keine Konstante, und der verdrahtete
+        // `top: 145px` der Aktionsleiste schnitt sie um 35-94px.
+        const blockVon = sel => {
+            const escaped = sel.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            const m = cssCode.match(new RegExp(`(?:^|\\}|\\*/)\\s*${escaped}\\s*\\{([^{}]*)\\}`, 'm'));
+            return m ? m[1] : null;
+        };
+        const glieder = [
+            ['.app-header', '--sticky-top-header'],
+            ['.encounter-controls', '--sticky-top-round'],
+            ['#quick-actions-bar', '--sticky-top-actions']
+        ];
+        const ist = glieder.map(([sel, token]) => {
+            const body = blockVon(sel);
+            const traegt = body !== null && new RegExp(`top:\\s*var\\(${token}\\s*,`).test(body);
+            return `${sel} -> ${body === null ? 'Regelblock fehlt' : traegt ? token : 'fester Wert oder anderes Glied'}`;
+        });
+        expect(ist).toEqual(glieder.map(([sel, token]) => `${sel} -> ${token}`));
+
+        // Und die Kette hat wirklich drei Glieder — das war der Kern des
+        // Befunds: sie hatte nur EINES.
+        const js = fs.readFileSync(
+            path.join(__dirname, '..', '..', 'ui', 'editors', 'rich-text-insert.js'),
+            'utf8'
+        );
+        const gesetzt = ['--sticky-top-header', '--sticky-top-round', '--sticky-top-actions']
+            .filter(token => js.includes(`'${token}'`));
+        expect(gesetzt).toEqual(['--sticky-top-header', '--sticky-top-round', '--sticky-top-actions']);
+        // Das alte Token hat NIE ein Verbraucher gelesen und ist entfallen.
+        // Geprueft wird der SETZENDE Aufruf und der LESENDE var()-Zugriff, nicht
+        // die bloesse Nennung — der Kopfkommentar der Funktion erklaert, warum
+        // das Token weg ist, und nennt es dabei (dieselbe Kommentarfalle wie bei
+        // var() in CSS-Kommentaren, siehe F-01).
+        expect(js).not.toContain("setProperty('--header-height'");
+        expect(cssAll).not.toContain('var(--header-height)');
     });
 
     test('KERNBELEG: schwebende Editor-Werkzeuge liegen ueber Overlays', () => {

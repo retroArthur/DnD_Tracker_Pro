@@ -289,8 +289,8 @@
             border-bottom: 1px solid var(--border);
             padding: 8px 16px;
             position: sticky;
-            top: 0;
-            z-index: var(--z-sticky);
+            top: var(--sticky-top-header, 0px); /* Glied 1: Hoehe des festen Umzugs-Bands, 0 ohne Band (updateStickyOffsets) */
+            z-index: var(--z-sticky); /* oberste der drei angehefteten Ebenen — siehe variables.css */
         }
         
         .app-header-top {

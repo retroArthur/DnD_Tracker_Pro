@@ -1221,8 +1221,27 @@
                ausserhalb dieser Leiter: sie stapeln Elemente INNERHALB einer
                Komponente uebereinander und haben mit der globalen Reihenfolge
                nichts zu tun. Sie in die Leiter zu ziehen wuerde ihre
-               Reihenfolge zerstoeren. */
-            --z-sticky: 100; /* Kopfzeile, angeheftete Leisten */
+               Reihenfolge zerstoeren.
+
+               DREI ANGEHEFTETE EBENEN, absichtlich abgestuft — nicht wieder
+               zusammenlegen. Kopfzeile ueber Runden-Leiste ueber
+               Aktionsleiste. Diese Ordnung stand seit dem Initialcommit auf
+               100/99/98 und war im Quelltext woertlich kommentiert
+               ("Unter dem Header"); F-19 hat alle drei auf --z-sticky
+               gezogen. Bei Gleichstand entscheidet die Dokumentreihenfolge,
+               und die ist die exakte Umkehrung der Absicht: gescrollt auf der
+               Initiative lag die Aktionsleiste oben und das Nav-Menue der
+               Kopfzeile unten — 23 von 25 Menueeintraegen unerreichbar
+               (gemessen 1440x800 am Buendel zu 1dffc9e). Zusaetzlich ist
+               .app-header selbst ein Stapelkontext (sticky + z-index), womit
+               die 300 des Nav-Menues nach aussen auf den Wert der Kopfzeile
+               gedeckelt sind — die Kopfzeile MUSS also die oberste der drei
+               sein, sonst hilft dem Menue seine eigene Sprosse nichts.
+               Zurueck geht es nicht per nackter Zahl: design-consistency
+               verbietet z-index groesser 20 als Literal. Also zwei Sprossen. */
+            --z-sticky-3: 98; /* Aktionsleiste — unter der Runden-Leiste */
+            --z-sticky-2: 99; /* Runden-Leiste — unter der Kopfzeile */
+            --z-sticky: 100; /* Kopfzeile — oberste angeheftete Ebene */
             --z-dropdown: 300; /* an ein Bedienelement gebundene Menues */
             --z-panel: 600; /* Seitenpanels, Hinweisbaender */
             --z-modal: 1000; /* Overlays, die den Rest blockieren */
