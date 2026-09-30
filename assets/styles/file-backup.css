@@ -105,7 +105,10 @@
     padding: 0 4px;
     border-bottom: 1px solid var(--border);
     background: var(--bg-card);
-    transition: background 0.12s;
+    /* Kein `transition: background` mehr: seit Schritt 9 wechselt diese Zeile
+       beim Ueberfahren ihre Flaeche nicht, die Angabe waere untaetig. Die
+       Vorlage .qref-row fuehrt aus demselben Grund keine. Begruendung an
+       .backup-entry:hover. */
 }
 
 .backup-entry:last-child {
@@ -113,7 +116,41 @@
 }
 
 .backup-entry:hover {
-    background: var(--bg-hover);
+    /* Welle 3 Schritt 9, Entscheidung E3 — zum zweiten Mal, und zum ersten Mal
+       nicht an .qref-row.
+
+       WARUM DIE FUELLUNG WEG MUSS. Der rote Rueckhol-Knopf dieser Zeile
+       (.backup-entry-restore, dreissig Zeilen weiter unten) ist nur sichtbar,
+       WAEHREND man ihre Zeile ueberfaehrt. Er traegt eine gedeckelte
+       Rottoenung unter var(--red-text). Solange die Zeile sich dabei mit
+       var(--bg-hover) fuellte, lag diese Toenung auf --bg-hover, und dort ist
+       die Sache strukturell verloren: --red-text ist in Welle 1 GEGEN GENAU
+       DIESE FLAECHE auf 4,5 gerechnet worden, jede Auflage darueber drueckt
+       es darunter. Blank liest es 4,52 · 4,54 · 4,61 · 4,55; mit Toenung
+       R-23: W2-D-05 Knopf auf --bg-hover              4,06 · 4,12 · 4,21 · 4,42
+       und kein Deckelwert hilft: 12 %, 10 %, 8 %, 7 %, 6 %, 5 %, 4 %, 3 %,
+       2 % geben als Minimum 4,06 · 4,12 · 4,12 · 4,12 · 4,18 · 4,24 · 4,31 ·
+       4,37 · 4,41 — das Beste, was eine Toenung ueberhaupt erreicht, sind
+       4,41 bei 2 %, und dann ist sie unsichtbar. Die Flaeche ist das Problem,
+       nicht die Staerke.
+
+       UMRISS UND NICHT RAHMEN, wie an .qref-row: die Ruheregel setzt keinen
+       border, ein border im Hover verschoebe das Raster um 1px und liesse die
+       Zeile springen. Ein outline liegt ausserhalb des Kastens und braucht
+       keinen Platz.
+
+       --gold-dim UND NICHT --gold, ebenfalls wie dort: 2px --gold ist in
+       diesem Baum der Tastaturfokus (core.css, editors.css, dmscreen.css).
+       Ein 1px --gold-dim ist davon unterscheidbar und haelt WCAG 1.4.11
+       gegen die Flaeche, auf der er liegt (--bg-card, innen wie aussen — die
+       Liste sitzt im Modal auf derselben Karte):
+       R-23: W2-D-05 Umriss gegen die Zeilenflaeche    5,21 · 5,09 · 9,17 · 8,51
+
+       SICHTFOLGE, beziffert: das Ueberfahren war bisher eine Andeutung —
+       --bg-hover gegen --bg-card liest 1,38 · 1,36 · 1,27 · 1,49. Der Umriss
+       liest 5,21 bis 9,17. Die Zeile meldet den Zustand ab jetzt deutlich
+       STAERKER als vorher, nur anders: Ring statt Fuellung. */
+    outline: 1px solid var(--gold-dim);
 }
 
 /* Header-Zeile der Backup-Liste */
@@ -126,7 +163,13 @@
 }
 
 .backup-entry-header:hover {
-    background: transparent;
+    /* Die Kopfzeile ist keine Zeile, die man anklickt — sie darf den
+       Hover-Zustand also auch nicht melden. Bis Schritt 9 genuegte dafuer
+       `background: transparent`, weil .backup-entry:hover eine Fuellung
+       setzte; seit E3 setzt es einen Umriss, und der muss hier ausdruecklich
+       zurueckgenommen werden. Ohne diese Zeile bekaeme die Kopfzeile einen
+       goldenen Ring. */
+    outline: none;
 }
 
 /* Kampagnenname */
@@ -188,7 +231,20 @@
          --red / 12 % ungedeckelt   3,61 · 3,32 · 3,15 · 3,74
          --red-text / 12 % gedeckelt 4,85 · 4,54 · 4,62 · 5,39
        12 % liegen in light und sepia ueber --tint-max (13/7/7/20 %); in dark
-       und contrast greift der Deckel nicht. */
+       und contrast greift der Deckel nicht.
+
+       WELLE 3 SCHRITT 9: DIESE REGEL IST UNVERAENDERT, ihre Traegerflaeche
+       nicht. Bis dahin fuellte sich die Zeile beim Ueberfahren mit
+       var(--bg-hover), und dort las dieselbe Toenung 4,06 · 4,12 · 4,21 ·
+       4,42 — in allen vier Themes unter 4,5, und durch keinen Deckelwert zu
+       retten (Begruendung und die ganze Reihe an .backup-entry:hover). Seit
+       E3 dort meldet die Zeile den Zustand ueber einen Umriss und behaelt
+       ihre Flaeche. Der Knopf sitzt damit auf --bg-card:
+       R-23: W2-D-05 Knopf auf der Zeilenflaeche       5,52 · 5,55 · 5,32 · 6,35
+       min 5,32. Die 4,85 · 4,54 · 4,62 · 5,39 oben sind das Minimum ueber die
+       D-2-Dreierliste und bleiben die Zahl, ueber die R-18 urteilt; die Reihe
+       hier ist die ueber die WIRKLICHE Flaeche, und R-23 Teil (4) rechnet sie
+       bei jedem Lauf nach. */
     background: color-mix(in srgb, var(--red) min(12%, var(--tint-max)), transparent);
 }
 

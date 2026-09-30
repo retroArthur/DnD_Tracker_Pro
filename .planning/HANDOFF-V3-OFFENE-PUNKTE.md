@@ -603,7 +603,7 @@ encounters.css
   680  .calc-fav-item.save
  1180  .enc-speed-line
 file-backup.css
-  169  .backup-entry-restore
+  212  .backup-entry-restore
 initiative.css
    72  .bf-xp
   111  .init-entry.lair .init-name
