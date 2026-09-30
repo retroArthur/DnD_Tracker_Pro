@@ -24,6 +24,20 @@
  *      verschwand gescrollt um 61px darunter — App-Titel UND globale Suche
  *      antworteten auf `elementFromPoint` mit `SPAN.migration-hint-text`.
  *
+ *   4. Der LAYOUT-WECHSEL nahm die Kette ersatzlos weg. `updateStickyOffsets()`
+ *      raeumt im Mobil-Zweig alle drei Glieder ab (`removeProperty`);
+ *      `setLayout()` rechnete sie auf dem Rueckweg nach Desktop aber nicht neu.
+ *      Dann greifen die CSS-Rueckfallwerte `var(--sticky-top-header, 0px)` /
+ *      `var(--sticky-top-round, 75px)` / `var(--sticky-top-actions, 145px)` —
+ *      also genau die verdrahteten Werte, die (2) und (3) als falsch erwiesen
+ *      haben. Der DM trifft das ohne Zutun: `loadLayout()` waehlt bei einem
+ *      Fenster <= 768px selbst 'mobile', der Wert ueberdauert das Grossziehen
+ *      des Fensters, und ein Klick auf den Layout-Schalter fuehrt zurueck.
+ *      Gemessen am Buendel zu 60fcf70: Band deckt die Kopfzeile wieder um 61px,
+ *      App-Titel und globale Suche antworten wieder mit
+ *      `SPAN.migration-hint-text`, und die Aktionsleiste schneidet die
+ *      Runden-Leiste wieder.
+ *
  * Eine Korrektur, die nur die z-Werte zurueckdreht, verschiebt das Opfer (dann
  * wird das Label der Aktionsleiste unsichtbar); eine, die nur `top` richtig
  * rechnet, macht das Menue nicht heil. Dieser Spec misst BEIDES.
@@ -93,6 +107,68 @@ async function oeffneInitiative(page) {
     await waitForAppReady(page);
     await page.evaluate(() => window.switchView('initiative'));
     await page.waitForTimeout(400);
+}
+
+/**
+ * Oeffnet die Initiative in einem SCHMALEN Fenster und zieht es danach gross —
+ * der Weg des DM, der die App auf einem kleinen Fenster zum ersten Mal oeffnet:
+ * `loadLayout()` (ui/layout-profiles.js) waehlt bei `innerWidth <= 768` selbst
+ * 'mobile', und das Grossziehen aendert daran nichts, es feuert nur das
+ * resize-Ereignis.
+ *
+ * `waitForAppReady()` ist hier NICHT benutzbar: es wartet auf eine SICHTBARE
+ * `.app-title`, und im Mobil-Layout ist die Desktop-Kopfzeile ausgeblendet
+ * (`[data-layout="mobile"] .header-actions { display: none }`). Gewartet wird
+ * deshalb nur auf die Bereitschaftsmarkierung — dieselbe zweite Stufe.
+ *
+ * @param {import('@playwright/test').Page} page
+ * @param {number} breite Zielbreite nach dem Grossziehen
+ */
+async function oeffneSchmalUndZieheGross(page, breite) {
+    await page.setViewportSize({ width: 700, height: 800 });
+    await page.addInitScript(seed => {
+        try {
+            localStorage.setItem('dnd-tracker-v4', JSON.stringify(seed));
+        } catch {
+            // siehe oeffneInitiative()
+        }
+    }, SEED);
+    await page.goto(APP_URL);
+    await page.waitForFunction(() => document.documentElement.dataset.appReady === 'true', null, {
+        timeout: 15000
+    });
+    await page.evaluate(() => window.switchView('initiative'));
+    await page.waitForTimeout(400);
+    await page.setViewportSize({ width: breite, height: 800 });
+    // updateStickyOffsets() haengt am resize-Ereignis mit 200ms Entprellung.
+    await page.waitForTimeout(500);
+}
+
+/**
+ * Klickt den Layout-Schalter so, wie der DM ihn findet: im Mobil-Layout ist die
+ * Desktop-Kopfzeile ausgeblendet (`[data-layout="mobile"] .header-actions
+ * { display: none }`), sichtbar ist der Knopf der Mobil-Kopfzeile.
+ * @param {import('@playwright/test').Page} page
+ */
+async function klickeLayoutSchalter(page) {
+    const mobil = page.locator('#mobile-layout-btn');
+    if ((await mobil.count()) > 0 && (await mobil.isVisible())) {
+        await mobil.click();
+        return '#mobile-layout-btn';
+    }
+    await page.locator('#layout-switcher').click();
+    return '#layout-switcher';
+}
+
+/** Liest die drei Glieder der Versatzkette, wie sie auf <html> stehen. */
+function leseGlieder() {
+    const stil = getComputedStyle(document.documentElement);
+    return {
+        layout: document.documentElement.dataset.layout,
+        header: stil.getPropertyValue('--sticky-top-header').trim(),
+        runden: stil.getPropertyValue('--sticky-top-round').trim(),
+        aktionen: stil.getPropertyValue('--sticky-top-actions').trim()
+    };
 }
 
 /** Liest die Geometrie der drei Ebenen im aktuellen Scrollzustand. */
@@ -251,5 +327,98 @@ test.describe('Angeheftete Ebenen auf der Initiative', function () {
         ).toEqual([z.header, z.runden, z.aktionen].slice().sort((a, b) => b - a));
         expect(z.header, `Kopfzeile ${z.header} muss ueber Runden-Leiste ${z.runden} liegen`).toBeGreaterThan(z.runden);
         expect(z.runden, `Runden-Leiste ${z.runden} muss ueber Aktionsleiste ${z.aktionen} liegen`).toBeGreaterThan(z.aktionen);
+    });
+
+    test('der Layout-Wechsel besetzt die Versatzkette neu, statt sie wegzunehmen', async ({ page }) => {
+        const BREITE = 1280;
+
+        /**
+         * Die vier Messgroessen im Desktop-Layout, gescrollt: sitzen die drei
+         * Glieder, laesst das Band die Kopfzeile frei, und schneidet die
+         * Aktionsleiste die Runden-Leiste nicht.
+         *
+         * Die vier Messgroessen sind WEICH geprueft (`expect.soft`): sie haengen
+         * alle an derselben Ursache, und ein Lauf soll den ganzen Schaden zeigen
+         * statt nur die erste Zeile. Die Vorbedingungen (Layout, Vorhandensein
+         * der Elemente) bleiben hart — ohne sie ist das Weitermessen sinnlos.
+         *
+         * @param {string} marke Herkunftsangabe fuer die Fehlermeldungen
+         */
+        async function pruefeDesktop(marke) {
+            const glieder = await page.evaluate(leseGlieder);
+            expect(glieder.layout, `${marke}: Desktop-Layout erwartet`).toBe('desktop');
+            expect
+                .soft(
+                    [glieder.header, glieder.runden, glieder.aktionen],
+                    `${marke}: Kette = ${JSON.stringify(glieder)} — kein Glied darf leer sein, sonst greifen die Rueckfallwerte 0px/75px/145px`
+                )
+                .not.toContain('');
+
+            await page.evaluate(() => window.scrollTo(0, 700));
+            await page.waitForTimeout(300);
+
+            const band = await page.evaluate(messeBand);
+            expect(band.fehlt, `${marke}: Band oder Kopfzeile fehlt (${JSON.stringify(band)})`).toBe(false);
+            expect.soft(band.decktHeader, `${marke}: Band deckt die Kopfzeile um ${band.decktHeader}px`).toBe(0);
+            expect.soft(band.titel.frei, `${marke}: App-Titel verdeckt von ${band.titel.obenauf}`).toBe(true);
+            expect.soft(band.suche.frei, `${marke}: globale Suche verdeckt von ${band.suche.obenauf}`).toBe(true);
+
+            // Glied 3 ohne Umweg ueber renderQuickActionsBar(): der Wechsel selbst
+            // muss die Aktionsleiste richtig setzen. Vorher heilte erst ein
+            // erneutes Rendern der Initiative den Zustand.
+            const kette = await page.evaluate(messeKette);
+            expect(kette.fehlt, `${marke}: Leisten nicht gefunden`).toBe(false);
+            expect(kette.barDisplay, `${marke}: Aktionsleiste muss sichtbar sein`).not.toBe('none');
+            expect
+                .soft(
+                    kette.ueberlappung,
+                    `${marke}: Aktionsleiste ueberlappt Runden-Leiste um ${kette.ueberlappung}px`
+                )
+                .toBe(0);
+
+            await page.evaluate(() => window.scrollTo(0, 0));
+        }
+
+        // FALL A — der gemeldete Weg: schmal geoeffnet (loadLayout waehlt Mobil),
+        // Fenster gross gezogen, Layout-Schalter geklickt. Kein gespeicherter
+        // Layout-Wert, kein Eingriff ins DOM.
+        await oeffneSchmalUndZieheGross(page, BREITE);
+        const mobilStart = await page.evaluate(leseGlieder);
+        expect(mobilStart.layout, 'Fall A: loadLayout() waehlt bei 700px Mobil').toBe('mobile');
+        expect(
+            [mobilStart.header, mobilStart.runden, mobilStart.aktionen],
+            `Fall A: im Mobil-Layout steht kein Glied (${JSON.stringify(mobilStart)})`
+        ).toEqual(['', '', '']);
+        await klickeLayoutSchalter(page);
+        await page.waitForTimeout(400);
+        await pruefeDesktop('Fall A');
+
+        // FALL B — zweimal nach Mobil und zurueck, mit einer Fenstergroessen-
+        // aenderung dazwischen. Die ist der entscheidende Schritt: erst das
+        // resize-Ereignis fuehrt updateStickyOffsets() in den Mobil-Zweig, der
+        // alle drei Glieder per removeProperty() abraeumt. Ohne diesen Schritt
+        // ueberdauern die Desktop-Werte den Ausflug und der Rueckweg faellt gar
+        // nicht auf. Zwei Runden, weil eine einzelne nicht zeigt, dass der
+        // Zustand wiederholbar ist.
+        for (const runde of [1, 2]) {
+            await klickeLayoutSchalter(page);
+            await page.waitForTimeout(400);
+            expect(
+                (await page.evaluate(leseGlieder)).layout,
+                `Fall B/${runde}: Hinweg fuehrt nach Mobil`
+            ).toBe('mobile');
+
+            await page.setViewportSize({ width: BREITE - 40 * runde, height: 800 });
+            await page.waitForTimeout(500);
+            const mobil = await page.evaluate(leseGlieder);
+            expect(
+                [mobil.header, mobil.runden, mobil.aktionen],
+                `Fall B/${runde}: im Mobil-Layout bleibt kein Desktop-Wert stehen (${JSON.stringify(mobil)})`
+            ).toEqual(['', '', '']);
+
+            await klickeLayoutSchalter(page);
+            await page.waitForTimeout(400);
+            await pruefeDesktop(`Fall B/${runde}`);
+        }
     });
 });
