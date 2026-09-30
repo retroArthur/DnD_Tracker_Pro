@@ -10105,6 +10105,16 @@ describe('R-22 — die sechs JS-Marken, ihre Rechnung und ihre Aktenlage (Ratsch
          darunter. Die Inline-Pruefung aus (d) ist einen Commit spaeter
          dazugekommen und war ihrerseits rot: eine Stelle
          (`file-backup-ui.js`), die `color` UND `border-color` inline setzt.
+         ZWEITER NACHTRAG (Pruefung W3-E, Runde 1): die Geometriepruefung des
+         Umrisses ist noch einen Commit spaeter dazugekommen und war ebenfalls
+         rot. `.backup-entry:hover` fuehrte keinen `outline-offset`, der Ring
+         lag also AUSSERHALB des Rahmenkastens und seine senkrechten Segmente
+         im 24px-Polster von `.modal` — einem themenblinden Literal, nicht
+         --bg-card. Gegen diese Flaeche liest var(--gold-dim)
+         5,27 · 3,01 · 1,57 · 7,93, in sepia also 1,57 statt der gefuehrten
+         9,17. Die Reihe war richtig gerechnet und gegen die falsche Flaeche
+         gehalten — dieselbe Fehlerklasse, die diese Ratsche an dice.css
+         selbst als ihren Ertrag meldet.
      (5) `.pwa-install-btn:hover` ungedeckelt; die Leiter steht in Light
          (1,14 gegen 1,07) und Sepia (1,19 gegen 1,11) auf dem Kopf.
      (7) W2-D-06 und W2-B-05 nennen sich in der Stand-Angabe weiter offen;
@@ -10269,6 +10279,43 @@ describe('R-23 — die Restposten der Wellen 1 und 2, beziffert gefuehrt (Ratsch
         return m[0];
     }
 
+    /** Der Versatz des Umrisses in px, aus dem CSS gelesen; 0, wenn die Regel
+     *  keinen nennt (das ist der CSS-Standard).
+     *
+     *  WARUM DIESE ZAHL ZAEHLT — und zwar mehr als die Farbe. `outline` liegt
+     *  bei Versatz 0 einen Pixel AUSSERHALB des Rahmenkastens. `.backup-entry`
+     *  ist ein Grid in der Breite des Inhaltskastens von `.modal`, und `.modal`
+     *  fuehrt `padding: 24px`. Die beiden senkrechten Segmente des Rings (je
+     *  min. 44px hoch) und das untere der letzten Zeile (die traegt
+     *  `border-bottom: none`) liegen damit IM POLSTER DES MODALS, und dessen
+     *  einzige Flaechendeklaration im ganzen Baum ist das themenblinde Literal
+     *  `rgba(26, 26, 26, 0.95)` (dmscreen.css, gefuehrte Ausnahme W2-C-01) —
+     *  kein Theme-Block ueberschreibt sie. Gegen diese Flaeche liest
+     *  var(--gold-dim) 5,27 · 3,01 · 1,57 · 7,93: in Sepia ist der Ring seitlich
+     *  UNSICHTBAR, in Light steht er mit 3,01 auf der Schwelle. Die Reihe
+     *  5,21 · 5,09 · 9,17 · 8,51, die diese Ratsche fuehrt, gilt fuer
+     *  --bg-card — und die ist nur dann die wirkliche Flaeche, wenn der Ring
+     *  INNEN liegt. Ein negativer Versatz stellt genau das her; zugleich deckt
+     *  er das eigene border-bottom der Zeile und nimmt die Doppellinie mit. */
+    /** Die Farbe der Zeilenoberkante: das border-bottom, an das das obere
+     *  Segment des eingerueckten Rings von aussen stoesst. Aus dem CSS gelesen,
+     *  nicht getippt. */
+    function zeilenKante() {
+        const roh = letzteDeklaration('file-backup.css', '.backup-entry', 'border-bottom');
+        if (!roh) throw new Error('R-23: .backup-entry setzt kein border-bottom');
+        const m = roh.match(/var\(\s*--[\w-]+\s*\)/);
+        if (!m) throw new Error(`R-23: im border-bottom "${roh}" steht kein Rollentoken`);
+        return m[0];
+    }
+
+    function umrissVersatz() {
+        const roh = letzteDeklaration('file-backup.css', '.backup-entry:hover', 'outline-offset');
+        if (!roh) return 0;
+        const m = roh.match(/-?\d+(?:\.\d+)?/);
+        if (!m) throw new Error(`R-23: im outline-offset "${roh}" steht keine Laenge`);
+        return parseFloat(m[0]);
+    }
+
     /** Das `style`-Attribut des Elements, das `klasse` traegt — aus dem
      *  Quelltext, ueber Zeilengrenzen hinweg. Gebraucht, weil ein Inline-Stil
      *  JEDEN Selektor schlaegt: eine Tinte, die die Regel setzt und das Markup
@@ -10361,6 +10408,14 @@ describe('R-23 — die Restposten der Wellen 1 und 2, beziffert gefuehrt (Ratsch
             minVerhaeltnis(knopfTinte(), [knopfToenung()], [zeilenFlaeche()], t),
         'W2-D-05 Umriss gegen die Zeilenflaeche': t =>
             gerundet(WCAG.ratio(grundfarbe(umrissFarbe(), t), grundfarbe(zeilenFlaeche(), t))),
+        /* Die ZWEITE Flaeche des eingerueckten Rings. Innen stoesst er ueberall
+           an die Zeilenflaeche; von aussen stoesst sein oberes Segment an das
+           border-bottom der Zeile darueber, und das traegt var(--border). Beide
+           Nachbarn gehoeren zur Rechnung, sonst waere die Behauptung "haelt
+           gegen die Flaeche, auf der er liegt" wieder nur zur Haelfte belegt —
+           genau der Fehler, den der eingerueckte Versatz gerade behebt. */
+        'W2-D-05 Umriss gegen die Zeilenoberkante': t =>
+            gerundet(WCAG.ratio(grundfarbe(umrissFarbe(), t), grundfarbe(zeilenKante(), t))),
 
         'W2-D-05 pwa hover ungedeckelt': t =>
             minVerhaeltnis(pwaTinte(), [ohneDeckel(pwaStopp('.pwa-install-btn:hover'))], D2, t),
@@ -10527,6 +10582,21 @@ describe('R-23 — die Restposten der Wellen 1 und 2, beziffert gefuehrt (Ratsch
                         `UND ohne Umriss ist das Ueberfahren unsichtbar`
                 );
             }
+            /* DER RING MUSS INNEN LIEGEN, sonst rechnet die Reihe unten gegen
+               die falsche Flaeche. Begruendung und Geometrie an
+               umrissVersatz(); die Zahlen hier sind die gemessene Aussenreihe
+               gegen das themenblinde Modal-Literal. */
+            const versatz = umrissVersatz();
+            if (!(versatz < 0)) {
+                befunde.push(
+                    `.backup-entry:hover:${hover[0].zeile} fuehrt outline-offset ${versatz} — der Ring ` +
+                        `liegt damit ausserhalb des Rahmenkastens und seine senkrechten Segmente ` +
+                        `im 24px-Polster von .modal, dessen einzige Flaeche das themenblinde ` +
+                        `rgba(26, 26, 26, 0.95) ist: aussen liest ${umrissFarbe()} dort ` +
+                        `5,27 · 3,01 · 1,57 · 7,93, in sepia also 1,57 < ${SCHWELLE_NICHTTEXT}. ` +
+                        `Die gefuehrte Reihe gegen ${zeilenFlaeche()} gilt erst bei negativem Versatz`
+                );
+            }
         }
         /* DIE GERECHNETE TINTE MUSS AUCH DIE GEMALTE SEIN. Ein Inline-Stil
            schlaegt jeden Selektor; setzt das Markup `color` oder
@@ -10564,6 +10634,12 @@ describe('R-23 — die Restposten der Wellen 1 und 2, beziffert gefuehrt (Ratsch
                 if (u < SCHWELLE_NICHTTEXT) {
                     befunde.push(
                         `${t}: der Umriss haelt gegen ${flaeche} nur ${komma(u)} < ${SCHWELLE_NICHTTEXT}`
+                    );
+                }
+                const o = GROESSEN['W2-D-05 Umriss gegen die Zeilenoberkante'](t);
+                if (o < SCHWELLE_NICHTTEXT) {
+                    befunde.push(
+                        `${t}: der Umriss haelt gegen die Zeilenoberkante nur ${komma(o)} < ${SCHWELLE_NICHTTEXT}`
                     );
                 }
                 const k = GROESSEN['W2-D-05 Knopf auf der Zeilenflaeche'](t);
