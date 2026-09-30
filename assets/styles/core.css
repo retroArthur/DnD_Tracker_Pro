@@ -595,6 +595,76 @@
         }
         
         .form-group textarea { min-height: 60px; resize: vertical; }
+
+        /* FORMULAR-PRIMITIVE .form-label / .form-control (U4, 2026-10-01).
+           Beide Namen kommen aus drei Modulen — timeline-render.js (6x),
+           session-prep-render.js (8x), npc-generator.js (2x) — und hatten bis
+           heute KEINE einzige CSS-Regel im ganzen Baum. Die Folge war am
+           Browser messbar: die Felder standen in nativer Darstellung (2px
+           inset, rgb(59,59,59), Eigenbreite 173px statt 100 %), #tl-form-jahr
+           ragte dadurch 68px aus der 500px-Modalkarte, und jede Beschriftung
+           stand als display:inline NEBEN ihrem Feld statt darueber.
+
+           WARUM NEUE REGELN UND KEINE UMHAENGUNG AUF .form-group: .form-control
+           steht durchweg als ZWEITKLASSE neben modulspezifischen Namen
+           (.npcg-select, .wp-szene-titel, .wp-textarea), und die tragenden
+           Umschlaege heissen .tl-form-col / .wp-form-col und fuehren eigene
+           Flex-Werte. Ein zusaetzliches .form-group an diesen Umschlaegen
+           haette sein `margin-bottom: 10px` auf Zeilen gelegt, die schon
+           `margin-bottom: 12px` von .tl-form-row erben, und haette die
+           Elementmenge des F-18-bewachten Blocks `.form-group label` fuer
+           reine Kosmetik vergroessert. Die Werte hier sind DIESELBEN wie im
+           .form-group-Paar darueber — eine Dublette ist das nicht, weil die
+           Selektoren verschieden sind und keine Regel doppelt steht.
+
+           REIHENFOLGE IST ABSICHT: core.css ist der 3. @import. Die
+           modulspezifischen Regeln gleicher Spezifitaet (0,1,0) in welt.css
+           (20. @import) und tools.css gewinnen also weiterhin — nachgemessen
+           an .npcg-select, dessen eigene Breite unveraendert bleibt. */
+        .form-label {
+            display: block;
+            margin-bottom: 4px;
+            font-size: 13px;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+            color: var(--gold);
+        }
+
+        .form-control {
+            width: 100%;
+            background: var(--bg-dark);
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 6px 10px;
+            border-radius: var(--radius-sm);
+            font-size: 13px;
+        }
+
+        textarea.form-control { min-height: 60px; resize: vertical; }
+
+        /* MODAL-SCHLIESSKNOPF (U4, 2026-10-01). .modal-close steht in sieben
+           Modalen (zwei Templates, fuenf JS-Module) und hatte null Regeln —
+           gemessen war es der graue Systemknopf des Browsers: 2px outset,
+           rgb(107,107,107), cursor default. Die einzige verwandte Regel war
+           `.char-modal-close` (nur Positionierung); die beruehrt diese hier
+           nicht, weil party-details.js ausschliesslich den char-Namen setzt.
+           Die Regel steht hier und nicht bei .modal-header in dashboard.css,
+           weil sie ohne die Kopfzeile funktionieren muss: markdown-import-
+           export.js und party-details.js setzen den Knopf auch ausserhalb. */
+        .modal-close {
+            background: transparent;
+            border: none;
+            color: var(--text-dim);
+            font-size: 22px;
+            line-height: 1;
+            padding: 0 4px;
+            cursor: pointer;
+            transition: color 0.15s;
+        }
+
+        .modal-close:hover { color: var(--gold); }
+
         .form-row { display: flex; gap: 8px; flex-wrap: wrap; }
         .btn-group { display: flex; gap: 6px; margin-top: 10px; flex-wrap: wrap; }
         
