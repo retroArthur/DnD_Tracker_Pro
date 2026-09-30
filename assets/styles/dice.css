@@ -770,15 +770,51 @@
        Gemessen mit der Tinte var(--gold-text) aus .fdp-die, ueber dem Panel,
        vorher -> nachher (dark light sepia contrast):
          Verlaufskopf  7,09 · 2,29 · 2,01 · 10,69  ->  6,64 · 4,56 · 4,93 · 11,57
-         Verlaufsfuss  7,23 · 2,35 · 2,07 · 10,90  ->  7,27 · 3,42 · 3,71 · 12,33
+         Verlaufsfuss  7,23 · 2,35 · 2,07 · 10,90  ->  7,27 · 3,42 · 3,72 · 12,33
          Rahmen (3:1)  1,72 · 1,69 · 1,69 ·  1,73  ->  2,03 · 2,28 · 2,12 ·  1,88
        Besser in Light und Sepia, in Dark praktisch unveraendert. Der Rahmen
        bleibt unter 3:1 — er war es vorher auch; er traegt keine Bedeutung,
-       die nicht auch die Beschriftung traegt. */
+       die nicht auch die Beschriftung traegt.
+
+       W2-D-06, WELLE 3 SCHRITT 9: BEIDE VERLAUFSSTOPPS SIND JETZT GEDECKELT.
+       Der Verlaufsfuss hielt ungedeckelt in Light 3,42 und in Sepia 3,72; das
+       ist die Stelle, wegen der diese Regel in R-18 als benannte Ausnahme
+       steht. Die Akte hat den Deckel dafuer zweimal verworfen ("gedeckelt
+       liest sie 6,40 · 4,48 · 5,01 · 10,00 und verfehlt Light um 0,02") — und
+       das war GEGEN DIE FALSCHE FLAECHE gerechnet. Die D-2-Dreierliste
+       (--bg-card/--bg-dark/--bg-elevated) ist hier nicht die Traegerflaeche:
+       `background: linear-gradient(...)` ist die Kurzschreibweise und setzt
+       background-color auf transparent zurueck, das var(--bg-elevated) aus
+       .fdp-die ist also weg. Dahinter liegt genau eine Flaeche, und sie steht
+       in dieser Datei: .floating-dice-panel mit 98 % --bg-card. Dagegen
+       gerechnet traegt der Deckel mit 0,99 Luft statt 0,02 Fehlbetrag.
+
+       Die Zahlen, alle vier Themes, Tinte var(--gold-text) ueber --bg-card:
+       R-23: W2-D-06 Verlaufskopf ungedeckelt      6,64 · 4,56 · 4,93 · 11,57
+       R-23: W2-D-06 Verlaufskopf gedeckelt        7,28 · 5,61 · 5,95 · 11,57
+       R-23: W2-D-06 Verlaufsfuss ungedeckelt      7,27 · 3,42 · 3,72 · 12,33
+       R-23: W2-D-06 Verlaufsfuss gedeckelt        7,91 · 5,49 · 5,83 · 12,82
+       R-23: W2-D-06 min beider Stopps gedeckelt   7,28 · 5,49 · 5,83 · 11,57
+       R-23 rechnet jede dieser Reihen bei jedem Lauf nach und vergleicht sie
+       mit dem Text hier. Genau das hat die 3,71 in der Zeile "Verlaufsfuss"
+       oben gefunden: gemessen sind 3,7171, also 3,72 — abgeschnitten statt
+       gerundet, folgenlos fuer das Urteil, aber falsch.
+
+       DIE SICHTFOLGE, beziffert und nicht beschoenigt: --tint-max ist
+       13/7/7/20 %, beide Stopps liegen mit 20 % und 30 % darueber (in
+       Contrast der Kopf genau auf dem Deckel). Der Kopf faellt damit auf
+       Faktor 0,65 · 0,35 · 0,35 · 1,00, der Fuss auf 0,43 · 0,23 · 0,23 ·
+       0,67. UND: weil der Deckel in jedem Theme BEIDE Stopps auf denselben
+       Anteil zieht, verliert der Verlauf sein Deckkraftgefaelle — es bleibt
+       das Farbgefaelle --red -> --red-dark bei gleicher Deckung. Der Wuerfel
+       ist also blasser und flacher; rot und als W20 erkennbar bleibt er ueber
+       Farbe und Rahmen. Der Rahmen ist NICHT mitgedeckelt: er ist keine
+       Flaeche unter der Schrift, sondern eine Linie daneben, und seine
+       Zahlen oben bleiben dadurch gueltig. */
     background: linear-gradient(
         135deg,
-        color-mix(in srgb, var(--red) 20%, transparent),
-        color-mix(in srgb, var(--red-dark) 30%, transparent)
+        color-mix(in srgb, var(--red) min(20%, var(--tint-max)), transparent),
+        color-mix(in srgb, var(--red-dark) min(30%, var(--tint-max)), transparent)
     );
     border-color: color-mix(in srgb, var(--red) 50%, transparent);
 }
