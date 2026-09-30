@@ -28,12 +28,12 @@
 
 .dice-hero-result.crit {
     color: var(--green-text);
-    text-shadow: 0 0 20px rgba(74,222,128,0.5);
+    text-shadow: 0 0 20px var(--glow-green);
 }
 
 .dice-hero-result.fail {
     color: var(--red-text);
-    text-shadow: 0 0 20px rgba(239,68,68,0.5);
+    text-shadow: 0 0 20px var(--glow-red);
 }
 
 .dice-hero-formula {
