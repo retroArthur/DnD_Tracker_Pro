@@ -7648,9 +7648,137 @@ describe('R-20 — Gluehlagen und Rahmennachbarn, beziffert gefuehrt (Ratsche)',
         { datei: 'encounters.css', sel: '#calc-budget-slider::-moz-range-thumb', token: '--bg-dark', stufe: 1, grau: '#888888', abstand: 5.92 }
     ];
 
+    /* -------------------------------------------------------------------
+       DIE VIERZEHN SCHATTENREGELN, DIE IHREN RAHMEN NUR UMFAERBEN, gemessen
+       am 2026-09-30 (Pruefung W3-B, Runde 1). Sie setzen `border-color` und
+       keine Kurzschreibweise; Breite und Stil kommen aus einer Basisregel.
+       `rahmenArt()` sah sie bis hierher NICHT, und damit fehlte der
+       SCHLECHTESTE Doppellinienfall der ganzen Welle in der Kandidatenliste:
+       dmscreen.css faerbt beim Schweben ueber fuenf Kartenarten auf
+       `--gold-dim` (#ccac00 in Contrast) um und bekommt daneben den 2-px-
+       Umriss #aaa — Abstand **1,05**, schlechter als die 1,14 der drei
+       gefuehrten Stufe-3-Goldrahmen, und an den zahlreichsten Karten der App.
+
+       `stufe` ist null, wo die Deklaration nur eine Gluehe oder einen Ring
+       traegt: dann entsteht in Contrast kein Umriss, und die Frage nach der
+       Doppellinie stellt sich nicht. Nur die fuenf mit Stufe tragen darum
+       `basis`, `grau` und `abstand` — jede Angabe dort ist geprueft, keine
+       ist Beiwerk.
+
+       `basis` ist der Selektor, der Breite UND Stil malt. Er steht hier von
+       Hand und wird im Test gegen das CSS gehalten, statt aus dem
+       Zustandsselektor abgeleitet zu werden: die Ableitung ist an drei der
+       vierzehn Stellen nicht moeglich (`.dice-result`, `.location-card` und
+       `.encounter-card` haben im ganzen Stilbaum keine Rahmenregel, und
+       `[data-sortable]` bekommt seinen Rahmen von der Klasse des Elements,
+       das das Attribut traegt — `.char-card` bzw. `.quest-item`). Eine
+       Ableitung, die das raten muesste, waere eine Fehlerquelle und keine
+       Messung.
+       ------------------------------------------------------------------- */
+    const RAHMEN_NURFARBE = [
+        // Die fuenf mit Hoehenlage und damit mit Umriss in Contrast.
+        {
+            datei: 'dmscreen.css',
+            sel: '.char-card:hover, .npc-card:hover, .location-card:hover, .encounter-card:hover, .spell-card:hover',
+            token: '--gold-dim',
+            stufe: 2,
+            grau: '#aaaaaa',
+            abstand: 1.05,
+            basis: '.char-card'
+        },
+        {
+            datei: 'dashboard.css',
+            sel: '.dash-char:hover',
+            token: '--gold',
+            stufe: 2,
+            grau: '#aaaaaa',
+            abstand: 1.66,
+            basis: '.dash-char'
+        },
+        {
+            datei: 'dmscreen.css',
+            sel: '[data-sortable].drag-over',
+            token: '--gold',
+            stufe: 2,
+            grau: '#aaaaaa',
+            abstand: 1.66,
+            basis: '.char-card'
+        },
+        {
+            datei: 'loot.css',
+            sel: '.shop-cat-badge.active',
+            token: '--gold',
+            stufe: 1,
+            grau: '#888888',
+            abstand: 2.53,
+            basis: '.shop-cat-badge'
+        },
+        {
+            datei: 'loot.css',
+            sel: '.shop-sort-btn.active',
+            token: '--gold',
+            stufe: 1,
+            grau: '#888888',
+            abstand: 2.53,
+            basis: '.shop-sort-btn'
+        },
+        // Und die neun ohne Hoehenlage: reine Gluehe oder reiner Ring.
+        { datei: 'dashboard.css', sel: '.dice-result.crit-effect', token: '--green', stufe: null },
+        { datei: 'dashboard.css', sel: '.dice-result.fail-effect', token: '--red', stufe: null },
+        { datei: 'dice.css', sel: '.fdp-die.d20:hover', token: '--red', stufe: null },
+        { datei: 'dmscreen.css', sel: '.btn-success:hover', token: '--green-dim', stufe: null },
+        {
+            datei: 'dmscreen.css',
+            sel: '.form-group input:focus, .form-group select:focus, .form-group textarea:focus',
+            token: '--gold',
+            stufe: null
+        },
+        {
+            datei: 'editors.css',
+            sel: '.editor-toolbar .color-swatch.active',
+            token: '--gold',
+            stufe: null
+        },
+        {
+            datei: 'party.css',
+            sel: '.cf-panel .cf-field input:focus, .cf-panel .cf-field select:focus',
+            token: '--gold',
+            stufe: null
+        },
+        { datei: 'spells.css', sel: '.color-swatch.active', token: '--gold', stufe: null },
+        { datei: 'welt.css', sel: '.wp-rich-editor:focus', token: '--gold', stufe: null }
+    ];
+
     /** Der Umriss, den der Contrast-Block einer Stufe gibt. Zeichengleich mit
      *  --shadow-1/-2/-3 dort; W3-D-01 trennt die Stufen ueber die DICKE. */
     const UMRISS_GRAU = { 1: '#888888', 2: '#aaaaaa', 3: '#cccccc' };
+
+    /** Malt irgendeine Regel im Stilbaum fuer diesen Selektor einen Rahmen
+     *  RUNDUM — also eine Kurzschreibweise mit einem Stil ungleich `none`?
+     *  Gegenprobe zu `basis` in RAHMEN_NURFARBE: eine Zustandsregel, die nur
+     *  `border-color` setzt, malt nur dann eine Linie, wenn Breite und Stil
+     *  von woanders kommen. */
+    function malbarerBasisRahmen(sel) {
+        for (const f of cssFiles) {
+            for (const r of regelnMitRumpf(f.content)) {
+                if (
+                    !r.sel
+                        .split(',')
+                        .map(s => s.trim())
+                        .includes(sel)
+                ) {
+                    continue;
+                }
+                const m = r.rumpf.match(/(?:^|[;{\s])border\s*:\s*([^;}]+)/);
+                if (!m) continue;
+                const v = m[1].trim().replace(/\s+/g, ' ');
+                if (/^none\b/.test(v) || /\bnone\b/.test(v) || /(^|\s)0(px)?(\s|$)/.test(v))
+                    continue;
+                return `${f.name}:${r.zeile} ${v}`;
+            }
+        }
+        return null;
+    }
 
     /** Die ERSTE Deklaration eines Tokens in variables.css. Erste, nicht
      *  letzte: die themeunabhaengigen Bauart-Tokens stehen einmal richtig
@@ -7663,17 +7791,38 @@ describe('R-20 — Gluehlagen und Rahmennachbarn, beziffert gefuehrt (Ratsche)',
         return m ? m[1].trim() : null;
     }
 
-    /** Rahmenart einer Schattenregel, oder null wenn sie keinen `border`
-     *  traegt. `border-left`, `border-color` und Co. zaehlen NICHT: der
+    /** Rahmenart einer Schattenregel, oder null wenn sie keinen Rahmen
+     *  traegt. ZWEI Schreibweisen, und nur zwei:
+     *
+     *  (1) die KURZSCHREIBWEISE `border: <breite> <stil> <farbe>` — sie
+     *      bringt Breite, Stil und Farbe in einer Deklaration mit;
+     *  (2) `border-color` ALLEIN — die Zustandsregel faerbt nur um, Breite
+     *      und Stil kommen aus der Basisregel. Klasse `nurFarbe`, dazu-
+     *      gekommen am 2026-09-30 (Pruefung W3-B, Runde 1). Sie fehlte, und
+     *      damit fehlte der schlechteste Doppellinienfall der Welle
+     *      (dmscreen.css, das Schweben der fuenf Kartenarten, 1,05) in der
+     *      Kandidatenliste; vier weitere lagen daneben.
+     *
+     *  `border-left` und `border-<seite>-color` zaehlen weiter NICHT. Das ist
+     *  keine Nachlaessigkeit, sondern dieselbe Entscheidung wie vorher: ein
+     *  Seitenstreifen ist keine Doppellinie rundherum. Sonst waeren die sechs
+     *  `.read-aloud`-Varianten (party.css, `border-left-color` auf einem
+     *  4-px-Streifen links) als Rahmennachbarn gezaehlt worden, obwohl der
+     *  Umriss an drei Seiten allein steht. Die Seitenstreifen sind in der
+     *  Aktenlage in Teil A Eintrag 5 gefuehrt, nicht in Teil B. Der
      *  Praefixschutz ist derselbe wie in deklaration().
      *
-     *  FUENF Klassen, kein Auffangbecken: die frueher hier stehende Klasse
+     *  SECHS Klassen, kein Auffangbecken: die frueher hier stehende Klasse
      *  `sonst` wurde von keinem Test gelesen, und genau dort lagen die zwei
      *  spells.css-Leisten mit cyan- und purpurfarbenem Rahmen. `ohne` ist
      *  ausdruecklich benannt, damit `border: none` nicht als Rahmen zaehlt. */
     function rahmenArt(rumpf) {
         const m = rumpf.match(/(?:^|[;{\s])border\s*:\s*([^;}]+)/);
-        if (!m) return null;
+        if (!m) {
+            const f = rumpf.match(/(?:^|[;{\s])border-color\s*:\s*([^;}]+)/);
+            if (!f) return null;
+            return { klasse: 'nurFarbe', wert: f[1].trim().replace(/\s+/g, ' ') };
+        }
         const v = m[1].trim().replace(/\s+/g, ' ');
         if (/^none\b/.test(v)) return { klasse: 'ohne', wert: v };
         if (/var\(--border\)/.test(v)) return { klasse: 'border', wert: v };
@@ -7746,6 +7895,10 @@ describe('R-20 — Gluehlagen und Rahmennachbarn, beziffert gefuehrt (Ratsche)',
         if (n.klasse === 'ohne') return null;
         if (n.klasse === 'border') return c['--border'];
         if (n.klasse === 'goldVoll') return c['--gold'];
+        // Die Umfaerber tragen ihr Token in der Deklaration; aufgeloest wird
+        // aus dem CSS-Wert und nicht aus der Tabelle, damit ein verschobenes
+        // Token hier auffaellt.
+        if (n.klasse === 'nurFarbe') return WCAG.resolve(n.wert, c);
         if (n.klasse === 'goldMix') {
             const e = RAHMEN_GOLD.find(x => x.datei === n.datei && x.sel === n.sel);
             if (!e) return null;
@@ -7971,7 +8124,7 @@ describe('R-20 — Gluehlagen und Rahmennachbarn, beziffert gefuehrt (Ratsche)',
        faellt jede Regel mit `border` in genau eine von fuenf Klassen, jede
        Klasse hat eine Zahl, und die Summe ist eine Aussage.
        ------------------------------------------------------------------- */
-    test('jede Schattenregel mit Rahmen faellt in eine der fuenf Klassen: 13/6/3/5/1', () => {
+    test('jede Schattenregel mit Rahmen faellt in eine der sechs Klassen: 13/6/3/5/14/1', () => {
         const nb = rahmenNachbarn();
         const zahl = k => nb.filter(n => n.klasse === k).length;
         expect({
@@ -7979,17 +8132,87 @@ describe('R-20 — Gluehlagen und Rahmennachbarn, beziffert gefuehrt (Ratsche)',
             goldVoll: zahl('goldVoll'),
             goldMix: zahl('goldMix'),
             farbig: zahl('farbig'),
+            nurFarbe: zahl('nurFarbe'),
             ohne: zahl('ohne')
-        }).toEqual({ border: 13, goldVoll: 6, goldMix: 3, farbig: 5, ohne: 1 });
-        // Kein Auffangbecken mehr: die fuenf Klassen sind alle Klassen.
-        expect(nb.length).toBe(28);
-        expect(nb.filter(n => !['border', 'goldVoll', 'goldMix', 'farbig', 'ohne'].includes(n.klasse))).toEqual([]);
-        // 27 tragen einen SICHTBAREN Rahmen neben einem Umriss; die 28. ist
+        }).toEqual({ border: 13, goldVoll: 6, goldMix: 3, farbig: 5, nurFarbe: 14, ohne: 1 });
+        // Kein Auffangbecken: die sechs Klassen sind alle Klassen.
+        expect(nb.length).toBe(42);
+        expect(
+            nb.filter(
+                n =>
+                    !['border', 'goldVoll', 'goldMix', 'farbig', 'nurFarbe', 'ohne'].includes(
+                        n.klasse
+                    )
+            )
+        ).toEqual([]);
+        // 41 tragen einen SICHTBAREN Rahmen; die 42. ist
         // `border: none !important` neben `box-shadow: none !important`.
-        expect(nb.filter(n => n.klasse !== 'ohne').length).toBe(27);
+        expect(nb.filter(n => n.klasse !== 'ohne').length).toBe(41);
         expect(nb.filter(n => n.klasse === 'ohne').map(n => `${n.datei} {${n.sel}}`)).toEqual([
             'encounters.css {#calculator-modal}'
         ]);
+        // Von den 41 bekommen die mit einer Hoehenlage einen Umriss und damit
+        // eine Doppellinie: 27 aus der Kurzschreibweise plus 5 Umfaerber.
+        expect(nb.filter(n => n.klasse === 'nurFarbe' && n.stufe).length).toBe(5);
+    });
+
+    test('die vierzehn Umfaerber sind die gemessenen und stehen in RAHMEN_NURFARBE', () => {
+        const ist = rahmenNachbarn()
+            .filter(n => n.klasse === 'nurFarbe')
+            .map(n => `${n.datei} {${n.sel}}`)
+            .sort();
+        expect(ist).toEqual(RAHMEN_NURFARBE.map(e => `${e.datei} {${e.sel}}`).sort());
+        expect(RAHMEN_NURFARBE.length).toBe(14);
+
+        // Das gefuehrte Token steht wirklich in der Deklaration, und die
+        // Stufe kommt aus der Ableitung, nicht aus der Tabelle.
+        const nb = rahmenNachbarn();
+        const abweichung = [];
+        RAHMEN_NURFARBE.forEach(e => {
+            const n = nb.find(x => x.datei === e.datei && x.sel === e.sel);
+            if (!n) return; // von der Mengengleichheit oben schon gemeldet
+            if (n.wert !== `var(${e.token})`)
+                abweichung.push(`${e.datei} {${e.sel}} — Token ${e.token}, im CSS ${n.wert}`);
+            if ((n.stufe || null) !== e.stufe)
+                abweichung.push(`${e.datei} {${e.sel}} — Stufe ${e.stufe}, abgeleitet ${n.stufe}`);
+        });
+        expect(abweichung.sort()).toEqual([]);
+
+        // Die fuenf mit Umriss fuehren eine Basisregel, die Breite und Stil
+        // wirklich malt — sonst waere der `border-color` ohne Wirkung und die
+        // Doppellinie eine Erfindung.
+        const ohneBasis = RAHMEN_NURFARBE.filter(e => e.stufe).filter(
+            e => !e.basis || !malbarerBasisRahmen(e.basis)
+        );
+        expect(ohneBasis.map(e => `${e.datei} {${e.sel}} — Basis ${e.basis}`)).toEqual([]);
+        // Und die neun ohne Hoehenlage tragen bewusst keine dieser Angaben.
+        expect(
+            RAHMEN_NURFARBE.filter(e => !e.stufe).every(e => !e.basis && !e.grau && !e.abstand)
+        ).toBe(true);
+        expect(
+            RAHMEN_NURFARBE.filter(e => e.stufe).every(e => UMRISS_GRAU[e.stufe] === e.grau)
+        ).toBe(true);
+    });
+
+    test('der gemessene Abstand Umriss zu umgefaerbtem Rahmen im Contrast-Theme ist der gefuehrte', () => {
+        const nb = rahmenNachbarn();
+        const abweichung = [];
+        RAHMEN_NURFARBE.filter(e => e.stufe).forEach(e => {
+            const n = nb.find(x => x.datei === e.datei && x.sel === e.sel);
+            const farbe = n ? rahmenFarbeContrast(n) : null;
+            const ist = farbe ? +WCAG.ratio(e.grau, farbe).toFixed(2) : null;
+            if (ist === null || Math.abs(ist - e.abstand) > 0.011) {
+                abweichung.push(`${e.datei} {${e.sel}} — gefuehrt ${e.abstand}, gemessen ${ist}`);
+            }
+        });
+        expect(abweichung.sort()).toEqual([]);
+        // Alle fuenf liegen unter 3, und der schlechteste Wert der ganzen
+        // Welle steht hier: --gold-dim (#ccac00) neben #aaa.
+        expect(RAHMEN_NURFARBE.filter(e => e.stufe).every(e => e.abstand < 3)).toBe(true);
+        expect(Math.min(...RAHMEN_NURFARBE.filter(e => e.stufe).map(e => e.abstand))).toBe(1.05);
+        expect(
+            Math.min(...RAHMEN_GOLD.map(e => e.abstand), ...RAHMEN_FARBIG.map(e => e.abstand))
+        ).toBe(1.14);
     });
 
     /* -------------------------------------------------------------------
@@ -8117,10 +8340,15 @@ describe('R-20 — Gluehlagen und Rahmennachbarn, beziffert gefuehrt (Ratsche)',
             .filter(n => n.abstand === null || n.abstand < 3);
         expect(knapp.map(n => `${n.datei} {${n.sel}} ${n.abstand}`).sort()).toEqual([
             'core.css {.spell-tooltip} 1.14',
+            'dashboard.css {.dash-char:hover} 1.66',
             'dice.css {.floating-dice-trigger} 2.37',
+            'dmscreen.css {.char-card:hover, .npc-card:hover, .location-card:hover, .encounter-card:hover, .spell-card:hover} 1.05',
+            'dmscreen.css {[data-sortable].drag-over} 1.66',
             'dmscreen.css {[data-tooltip]::after} 2.1',
             'editors.css {.editor-toolbar .tb-menu} 1.14',
             'encounters.css {#calculator-modal .modal-content} 1.14',
+            'loot.css {.shop-cat-badge.active} 2.53',
+            'loot.css {.shop-sort-btn.active} 2.53',
             'party.css {.cf-languages-block .cf-lang-dropdown} 1.66',
             'spells.css {.floating-toolbar} 1.66',
             'spells.css {.link-context-toolbar} 1.35',
@@ -8131,9 +8359,10 @@ describe('R-20 — Gluehlagen und Rahmennachbarn, beziffert gefuehrt (Ratsche)',
             .filter(n => !(W3F01.includes(n.datei) && W3F01.includes(n.sel)))
             .map(n => `${n.datei} {${n.sel}}`);
         expect(offen.sort()).toEqual([]);
-        // Die berichtigte Zahl selbst muss dort stehen, nicht die 13 des Plans
-        // und nicht die 22 der drei gezaehlten Klassen.
-        expect(/\b27\b/.test(W3F01)).toBe(true);
+        // Die berichtigte Zahl selbst muss dort stehen, nicht die 13 des Plans,
+        // nicht die 22 der drei gezaehlten Klassen und nicht die 27, solange
+        // die Umfaerber dazugehoeren.
+        expect(/\b41\b/.test(W3F01)).toBe(true);
     });
 
     /* ===================================================================
@@ -8304,6 +8533,16 @@ describe('R-20 — Gluehlagen und Rahmennachbarn, beziffert gefuehrt (Ratsche)',
         expect(rahmenArt('border: 2px solid var(--overlay-strong);').klasse).toBe('farbig');
         expect(rahmenArt('border: none !important;').klasse).toBe('ohne');
         expect(rahmenArt('box-shadow: none;')).toBe(null);
+
+        // Und die Klasse, die in Runde 1 der Pruefung W3-B dazugekommen ist:
+        // nur umgefaerbt zaehlt, nur EINE Seite umgefaerbt nicht.
+        expect(rahmenArt('box-shadow: var(--shadow-2); border-color: var(--gold-dim);').klasse).toBe('nurFarbe');
+        expect(rahmenArt('border-color: var(--gold);').wert).toBe('var(--gold)');
+        expect(rahmenArt('border-left-color: var(--ra-parchment-rule);')).toBe(null);
+        expect(rahmenArt('border-bottom-color: var(--gold);')).toBe(null);
+        // Die Kurzschreibweise gewinnt, wenn beide dastehen: sie traegt Stil
+        // und Breite und entscheidet damit, ob ueberhaupt eine Linie da ist.
+        expect(rahmenArt('border: 1px solid var(--border); border-color: var(--gold);').klasse).toBe('border');
     });
 
     test('stufeAusRadius() loest den Gleichstand bei 24px nach OBEN und uebergeht Gluehe, Ring und inset', () => {
