@@ -29,7 +29,7 @@
     background: var(--bg-card);
     border: 1px solid color-mix(in srgb, var(--gold) 30%, transparent);
     border-radius: var(--radius-lg);
-    box-shadow: 0 16px 48px rgba(0, 0, 0, 0.6);
+    box-shadow: var(--shadow-3);
     width: 90%;
     max-width: 560px;
     overflow: hidden;
