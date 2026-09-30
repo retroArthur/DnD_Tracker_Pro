@@ -10352,6 +10352,21 @@ describe('R-23 — die Restposten der Wellen 1 und 2, beziffert gefuehrt (Ratsch
         return out;
     }
 
+    /** Der eine getoente Verlaufsstopp der Lair-Zeile. Die Unterzeile
+     *  "Lair Action" sitzt in der vierten Rasterspalte, also ueber dem
+     *  helleren Ende des Verlaufs; gerechnet wird trotzdem gegen den GETOENTEN
+     *  Stopp, weil das der schlechtere Fall ist und weil die Regelgruppe
+     *  daneben (.init-entry.lair .init-name) es seit Welle 2 genauso haelt. */
+    function lairStopp() {
+        const stopps = mixStopps(
+            letzteDeklaration('initiative.css', '.init-entry.lair', 'background(?:-color)?') || ''
+        );
+        if (stopps.length !== 1) {
+            throw new Error(`R-23: .init-entry.lair hat ${stopps.length} Toenungen, erwartet 1`);
+        }
+        return stopps[0];
+    }
+
     /** W2-D-05b: die zwei Sprossen des PWA-Knopfs. */
     const pwaTinte = () => letzteDeklaration('pwa.css', '.pwa-install-btn', 'color');
     function pwaStopp(sel) {
@@ -10425,7 +10440,35 @@ describe('R-23 — die Restposten der Wellen 1 und 2, beziffert gefuehrt (Ratsch
             minVerhaeltnis(pwaTinte(), [pwaStopp('.pwa-install-btn:active')], D2, t),
 
         'W1-B-01 Attributfarben auf --bg-dark': t => attrMin('var(--bg-dark)', t),
-        'W1-B-01 Attributfarben auf --bg-card': t => attrMin('var(--bg-card)', t)
+        'W1-B-01 Attributfarben auf --bg-card': t => attrMin('var(--bg-card)', t),
+
+        /* Die drei Tinten, die Teil (8) aus dem Markup ins CSS geholt hat.
+           Jede wird gegen die Flaeche gerechnet, auf der sie WIRKLICH liegt,
+           und jede Flaeche kommt aus derselben Datei wie die Tinte. */
+        'W3-E Lair-Unterzeile auf der Lair-Toenung': t =>
+            minVerhaeltnis(
+                letzteDeklaration('initiative.css', '.init-entry.lair .init-type', 'color'),
+                [lairStopp(), null],
+                ['var(--bg-card)'],
+                t
+            ),
+        'W3-E Nachteil-Etikett auf der Detailflaeche': t =>
+            gerundet(
+                WCAG.ratio(
+                    grundfarbe(letzteDeklaration('loot.css', '.si-tag-v.si-tag-neg', 'color'), t),
+                    grundfarbe(letzteDeklaration('loot.css', '.si-details', 'background'), t)
+                )
+            ),
+        'W3-E Loeschring auf der Ruheflaeche': t =>
+            gerundet(
+                WCAG.ratio(
+                    grundfarbe(
+                        letzteDeklaration('dashboard.css', '.qref-btn-del', 'border-color'),
+                        t
+                    ),
+                    grundfarbe(letzteDeklaration('dashboard.css', '.qref-btn', 'background'), t)
+                )
+            )
     };
 
     /** Alle Kommentarzeilen der gefuehrten Form in assets/styles. */
@@ -10837,6 +10880,243 @@ describe('R-23 — die Restposten der Wellen 1 und 2, beziffert gefuehrt (Ratsch
                 befunde.push(`${marke} — die Stand-Angabe nennt den Punkt weiter offen: ${stand.trim()}`);
             }
         });
+        expect(befunde.sort()).toEqual([]);
+    });
+
+    /* =====================================================================
+       (8) DIE INLINE-TINTE, BAUMWEIT — nicht mehr je Klasse
+       =====================================================================
+       Teil (4) prueft EINE Klasse (.backup-entry-restore) auf einen
+       farbsetzenden Inline-Stil, weil dort einer gefunden wurde. Die Akte
+       nannte die Frage fuer die ganze Familie ausdruecklich "nicht erhoben".
+       Pruefung W3-E, Runde 1 hat sie erhoben, und sie war nicht leer: 259 Tags
+       im Baum tragen class= UND style=, und DREI davon malten eine Farbe, die
+       eine CSS-Regel derselben Klasse anders nennt:
+
+         features/initiative.js       .init-type      color: var(--red)
+             gegen initiative.css .init-type { color: var(--text-dim) }.
+             Auf dem getoenten Verlaufsende der Lair-Zeile las das
+             4,21 · 4,35 · 3,88 · 4,49 — in ALLEN VIER Themes unter 4,5, bei
+             0.75em also gewoehnlicher Text. Drei CSS-Zeilen weiter steht
+             .init-entry.lair .init-name { color: var(--red-text) }: die
+             Wellen-Korrektur war am Geschwister angekommen und an der
+             Unterzeile nicht, weil deren Tinte im JS stand.
+         features/shops/shops-core.js .si-tag-v       color: var(--red)
+             gegen loot.css .si-tag-v { color: var(--cyan) }. Auf .si-details
+             (--bg-card) 4,62 · 4,83 · 4,29 · 4,72, Sepia darunter.
+         systems/spellslots/quick-reference.js .qref-btn border-color: var(--red)
+             schlug dauerhaft dashboard.css .qref-btn:hover { border-color:
+             var(--gold) } — dieser Loeschknopf hatte in KEINEM Theme eine
+             Hover-Kontur. Kein Kontrastmangel (--red gegen --bg-hover
+             3,36 · 3,56 · 3,36 · 3,16), aber ein stumm abgeschalteter
+             Zustandsmelder.
+
+       WARUM ES KEINE RATSCHE GESEHEN HAT: F-19 zaehlt style=" ausschliesslich
+       in assets/templates. JS-erzeugte Inline-Stile stehen in keinem
+       Zaehlwerk, INLINE_MAX blieb beim Entfernen eines Stils darum zu Recht
+       unberuehrt, und die Klasse war ungedeckt.
+
+       WAS DIESER TEIL PRUEFT, und zwar als MENGE:
+         (a) ABWEICHUNG — der Inline-Stil setzt eine Eigenschaft, die die
+             BASISREGEL derselben Klasse mit einem anderen Wert setzt.
+             "Basisregel" heisst: das Subjekt-Kompound des Selektors ist genau
+             `.klasse`, ohne zweite Klasse, Pseudoklasse oder Attribut.
+             Nachfahrenschreibweisen sind erlaubt (`.a .klasse` zaehlt).
+         (b) TOTER ZUSTAND — eine Zustandsregel derselben Klasse
+             (:hover/:focus/:focus-visible/:active) setzt die Eigenschaft. Ein
+             Inline-Stil schlaegt sie dauerhaft, der Zustand ist stumm.
+       Beides nur fuer STATISCHE Werte: enthaelt der Wert eine
+       Template-Einsetzung, ist er nicht zu beurteilen und bleibt aussen vor
+       (z.B. `${rarityInk}` in initiative-loot.js). Aus demselben Grund fallen
+       Klassennamen mit `$` heraus.
+
+       DIE LISTE IST IN BEIDE RICHTUNGEN GESCHLOSSEN, wie bei Teil (2): eine
+       Stelle ohne Eintrag ist ein Befund, ein Eintrag ohne Stelle auch. Damit
+       schrumpft die Liste mit jeder Behebung, statt als Altlast zu verwesen.
+       Der Schluessel enthaelt bewusst KEINE Zeilennummer — Zeilennummern
+       rotten (R-06 muss sie deshalb nachziehen); Datei, Klasse, Eigenschaft
+       und Wert zusammen sind eindeutig genug und ueberleben jede Verschiebung.
+
+       AUSGANGSWERTE AM 2026-09-30, HEAD 6d5c629 — rot mit 12 Abweichungen und
+       1 totem Zustand gegen 9 gefuehrte Eintraege, also drei unentschuldigte
+       Stellen (die zwei #ef4444-Knoepfe in modals-editors.html fallen auf
+       EINEN Schluessel, deshalb 9 Eintraege fuer 10 geduldete Stellen).
+       ===================================================================== */
+    const INLINE_FARBPROPS = [
+        'color',
+        'background',
+        'background-color',
+        'border',
+        'border-color',
+        'border-top',
+        'border-right',
+        'border-bottom',
+        'border-left',
+        'outline',
+        'outline-color',
+        'box-shadow',
+        'text-shadow'
+    ];
+    const INLINE_ZUSTANDSFORMEN = [':hover', ':focus', ':focus-visible', ':active'];
+
+    /** Schluessel: `datei|.klasse|eigenschaft|wert`. Wert = warum die Stelle
+     *  bleiben darf. Jeder Eintrag muss GEBRAUCHT werden. */
+    const INLINE_TINTE_GEDULDET = {
+        'assets/templates/header.html|.nav-tab|color|var(--purple)':
+            'Der Debug-Eintrag der Systemgruppe im Navigationsmenue traegt bewusst einen ' +
+            'eigenen Akzent statt --text-dim. Er ist ein data-action="call" und wird nie ' +
+            '.active, kann die .active-Regel also auch nicht stumm schalten.',
+        'assets/templates/header.html|.nav-tab|color|var(--cyan)':
+            'Der Theme-Eintrag derselben Gruppe, dieselbe Begruendung.',
+        'assets/templates/modals-editors.html|.color-swatch|border|1px dashed #666':
+            'Das Feld "Keine Farbe" der Markerreihe zeigt seine eigene Abwesenheit durch den ' +
+            'gestrichelten Rand. F-19 fuehrt die Swatches der Editorleiste namentlich als ' +
+            'Ausnahme; das Markup der Leisten ist eingefroren.',
+        'assets/templates/modals-editors.html|.editor-btn|color|#888':
+            '"Format entfernen" in der Schwebeleiste ist gedaempft, damit es nicht wie ein ' +
+            'Formatknopf liest. Eingefrorenes Editor-Testnetz.',
+        'assets/templates/modals-editors.html|.editor-btn|color|#ef4444':
+            'Die beiden loeschenden Knoepfe der Tabellen- und der Link-Kontextleiste. ' +
+            'Eingefrorenes Editor-Testnetz.',
+        'features/quests/quests-render.js|.btn|color|var(--on-gold)':
+            'Der Verfolgen-Knopf setzt Flaeche UND Tinte in einem Zug ' +
+            '(background: var(--gold); color: var(--on-gold)). --on-gold ist genau die Tinte, ' +
+            'die fuer diese Flaeche gerechnet ist — kein Alleingang der Tinte.',
+        'features/sessions/sessions.js|.session-arc-title|color|var(--text-dim)':
+            'Die Sammelgruppe "Ohne Arc" ist kein Arc und tritt bewusst hinter die goldenen ' +
+            'Arc-Titel zurueck.',
+        'systems/entity-links.js|.link-chip|background|var(--bg-dark)':
+            'Der Zaehlchip "+N" ist kein Link; er tritt aus der blauen Toenung der echten ' +
+            'Chips heraus.',
+        'systems/file-backup/file-backup-ui.js|.backup-status-text|color|var(--text-dim)':
+            'Der Zustand "noch nicht eingerichtet" ist gegenueber dem eingerichteten bewusst ' +
+            'gedaempft.'
+    };
+
+    /** Das Subjekt-Kompound eines Selektors: der letzte Teil vor dem Ende,
+     *  ueber alle vier Kombinatoren getrennt. */
+    const inlineSubjekt = sel => sel.split(/\s*[\s>+~]\s*/).filter(Boolean).pop() || '';
+
+    /** Alle Regeln aller CSS-Dateien, flach — Teil (8) fragt nicht je Datei. */
+    function inlineAlleRegeln() {
+        const out = [];
+        cssFiles.forEach(f =>
+            regelnMitRumpf(f.content).forEach(r => out.push({ datei: f.name, ...r }))
+        );
+        return out;
+    }
+
+    /** Jedes Tag im Baum, das class= UND style= traegt. Dieselben Quellen wie
+     *  inlineStilVon(), nur ohne Klassenfilter. */
+    function inlineTags() {
+        const out = [];
+        const quellen = sourceJs()
+            .map(f => ({
+                name: path.relative(REPO, f.name).split(path.sep).join('/'),
+                content: f.content
+            }))
+            .concat(tplFiles.map(f => ({ name: `assets/templates/${f.name}`, content: f.content })));
+        quellen.forEach(f => {
+            const re = /<[a-zA-Z][^>]*>/g;
+            let m;
+            while ((m = re.exec(f.content))) {
+                const cm = m[0].match(/class\s*=\s*["'`]([^"'`]*)["'`]/);
+                const sm = m[0].match(/style\s*=\s*"([^"]*)"/);
+                if (!cm || !sm) continue;
+                out.push({
+                    datei: f.name,
+                    zeile: f.content.slice(0, m.index).split('\n').length,
+                    klassen: cm[1].split(/\s+/).filter(k => /^[\w-]+$/.test(k)),
+                    stil: sm[1]
+                });
+            }
+        });
+        return out;
+    }
+
+    test('(8) kein Inline-Stil malt eine Farbe gegen die Regel seiner eigenen Klasse', () => {
+        const regelnFlach = inlineAlleRegeln();
+        const tags = inlineTags();
+        // Die Erhebung selbst muss greifen: findet sie kein einziges Tag, laeuft
+        // sie leer und eine leere Pruefung ist keine.
+        expect(tags.length).toBeGreaterThan(100);
+
+        const befunde = [];
+        const gebraucht = new Set();
+        const gesehen = new Set();
+
+        tags.forEach(tag => {
+            tag.stil
+                .split(';')
+                .map(x => x.trim())
+                .filter(Boolean)
+                .forEach(decl => {
+                    const i = decl.indexOf(':');
+                    if (i < 0) return;
+                    const prop = decl.slice(0, i).trim().toLowerCase();
+                    const wert = decl.slice(i + 1).trim();
+                    if (!INLINE_FARBPROPS.includes(prop)) return;
+                    if (wert.includes('${')) return; // dynamisch, nicht beurteilbar
+                    tag.klassen.forEach(k => {
+                        const paar = `${tag.datei}:${tag.zeile}|${k}|${prop}`;
+                        if (gesehen.has(paar)) return;
+                        const propRe = new RegExp(`(?:^|[;{\\s])${prop}\\s*:\\s*([^;}]+)`, 'i');
+                        let abweichung = null;
+                        let toterZustand = null;
+                        regelnFlach.forEach(r => {
+                            r.sel
+                                .split(',')
+                                .map(s => s.trim())
+                                .forEach(s => {
+                                    const sub = inlineSubjekt(s);
+                                    const istBasis = sub === `.${k}`;
+                                    const istZustand = INLINE_ZUSTANDSFORMEN.some(
+                                        z => sub === `.${k}${z}`
+                                    );
+                                    if (!istBasis && !istZustand) return;
+                                    const rm = r.rumpf.match(propRe);
+                                    if (!rm) return;
+                                    const cssWert = rm[1].trim();
+                                    const info = `${r.datei}:${r.zeile} ${s} { ${prop}: ${cssWert} }`;
+                                    if (
+                                        istBasis &&
+                                        cssWert.replace(/\s+/g, '') !== wert.replace(/\s+/g, '')
+                                    ) {
+                                        abweichung = abweichung || info;
+                                    } else if (istZustand) {
+                                        toterZustand = toterZustand || info;
+                                    }
+                                });
+                        });
+                        if (!abweichung && !toterZustand) return;
+                        gesehen.add(paar);
+                        const schluessel = `${tag.datei}|.${k}|${prop}|${wert}`;
+                        if (INLINE_TINTE_GEDULDET[schluessel]) {
+                            gebraucht.add(schluessel);
+                            return;
+                        }
+                        befunde.push(
+                            abweichung
+                                ? `${tag.datei}:${tag.zeile} setzt .${k} { ${prop}: ${wert} } INLINE und ` +
+                                  `weicht damit von ${abweichung} ab — gemalt wird der Inline-Wert, ` +
+                                  `gerechnet wird ueber den der Regel`
+                                : `${tag.datei}:${tag.zeile} setzt .${k} { ${prop}: ${wert} } INLINE und ` +
+                                  `schlaegt damit dauerhaft ${toterZustand} — der Zustand ist stumm`
+                        );
+                    });
+                });
+        });
+
+        Object.keys(INLINE_TINTE_GEDULDET)
+            .filter(s => !gebraucht.has(s))
+            .sort()
+            .forEach(s =>
+                befunde.push(
+                    `"${s}" steht in INLINE_TINTE_GEDULDET, aber im Baum gibt es die Stelle nicht ` +
+                        `(mehr) — die Liste muss schrumpfen, sonst verwest sie`
+                )
+            );
+
         expect(befunde.sort()).toEqual([]);
     });
 });
