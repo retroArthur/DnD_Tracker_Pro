@@ -9577,7 +9577,10 @@ describe('R-21 — Ringe und Text-Leuchten, beziffert gefuehrt (Ratsche)', () =>
        Notiz ueber `[data-note-date="…"]`; die Zeichenkette `data-note-date`
        kommt im ganzen Quellbaum genau einmal vor, naemlich in dieser Abfrage.
        Es gibt keinen Setzer — die Sitzungsnotizen werden nach `n.id` gerendert
-       (`features/sessions/sessions.js`, `data-id="${n.id}"`). `if (noteEl)`
+       (`sessions.js` unter `features/sessions/`, `data-id="${n.id}"` — der
+       Pfad steht hier absichtlich zerlegt: das Abdeckungs-Gate in
+       `module-test-coverage.test.js` liest eine woertliche Pfadnennung als
+       Abdeckung, und R-22 beurteilt diese Datei nicht). `if (noteEl)`
        greift, der Zweig ist tot, der Ring wird nie gemalt. Die Aktenlage
        fuehrte seine Traegerflaeche trotzdem als "aus dem CSS gelesen" und
        schickte die Runde zu einer Probe, die nicht gelingen kann: eine
@@ -9873,20 +9876,44 @@ describe('R-22 — die sechs JS-Marken, ihre Rechnung und ihre Aktenlage (Ratsch
        (e) DIE UNERREICHBARE STELLE — an den Quellbaum gebunden
        =================================================================== */
 
-    /** Setzt irgendwo im Baum etwas `data-note-date`? Gezaehlt werden alle
-     *  Vorkommen der Zeichenkette in JS und in den HTML-Vorlagen; die EINE
-     *  lesende Abfrage in `systems/undo.js` faellt heraus. Bleibt nichts
-     *  uebrig, ist der Zweig in `goToNote()` tot. */
+    /** Kommentare zu Leerraum, Zeilenumbrueche erhalten — damit die Zeilen-
+     *  nummern stimmen. Ohne diesen Schritt zaehlte der Sammler unten den
+     *  Kommentar, der die Unerreichbarkeit ERKLAERT, als deren Widerlegung:
+     *  genau das ist beim ersten Lauf passiert. Eine Erwaehnung ist kein
+     *  Setzer. */
+    const ohneKommentare = (text, html) =>
+        text
+            .replace(/\/\*[\s\S]*?\*\//g, m => m.replace(/[^\n]/g, ' '))
+            .replace(html ? /<!--[\s\S]*?-->/g : /(?!)/g, m => m.replace(/[^\n]/g, ' '))
+            .replace(/(^|[^:])\/\/[^\n]*/g, (m, p) => p + ' '.repeat(m.length - p.length));
+
+    /** Setzt irgendwo im Baum etwas `data-note-date`? Gezaehlt werden nur
+     *  SETZENDE Formen — ein Attribut in einer Vorlage oder Zeichenkette,
+     *  `setAttribute` oder `dataset.noteDate` —, und die EINE lesende Abfrage
+     *  in `systems/undo.js` faellt heraus. Bleibt nichts uebrig, ist der
+     *  Zweig in `goToNote()` tot. */
+    const SETZER_RE =
+        /data-note-date\s*=|setAttribute\(\s*['"`]data-note-date|dataset\s*\.\s*noteDate\s*=/g;
+
+    /** Die setzenden Stellen EINES Textes. Einzeln, damit die Selbstprobe
+     *  unten sie mit Beispielen fuettern kann, ohne den Baum zu lesen. */
+    function setzerIn(rel, roh) {
+        const out = [];
+        const inhalt = ohneKommentare(roh, rel.endsWith('.html'));
+        const zeilen = inhalt.split('\n');
+        for (const m of inhalt.matchAll(SETZER_RE)) {
+            const nr = inhalt.slice(0, m.index).split('\n').length;
+            // Die lesende Abfrage traegt dieselbe Zeichenfolge im Selektor.
+            // Sie ist der Grund fuer die Pruefung, nicht ihr Gegenstand.
+            if (/querySelector|\.matches\(|\.closest\(/.test(zeilen[nr - 1])) continue;
+            out.push(`${rel}:${nr}`);
+        }
+        return out;
+    }
+
     function noteDateSetzer() {
         const out = [];
-        const pruefe = (rel, inhalt) => {
-            const zeilen = inhalt.split('\n');
-            for (const m of inhalt.matchAll(/data-note-date|noteDate/g)) {
-                const nr = inhalt.slice(0, m.index).split('\n').length;
-                if (rel === 'systems/undo.js' && /querySelector/.test(zeilen[nr - 1])) continue;
-                out.push(`${rel}:${nr}`);
-            }
-        };
+        const pruefe = (rel, roh) => out.push(...setzerIn(rel, roh));
         sourceJs().forEach(f =>
             pruefe(path.relative(REPO, f.name).split(path.sep).join('/'), f.content)
         );
@@ -9937,6 +9964,26 @@ describe('R-22 — die sechs JS-Marken, ihre Rechnung und ihre Aktenlage (Ratsch
         expect(anteilVon('0 0 0 3px color-mix(in srgb, var(--gold) 15%, transparent)')).toBe(0.15);
         expect(anteilVon('color-mix(in srgb, var(--gold) 50%, transparent)')).toBe(0.5);
         expect(anteilVon('0 0 0 3px var(--gold)')).toBe(1.0);
+    });
+
+    test('setzerIn() trennt Erwaehnung, Abfrage und echten Setzer', () => {
+        // Eine Erwaehnung im Kommentar ist KEIN Setzer — sonst widerlegt der
+        // erklaerende Kommentar in goToNote() seine eigene Aussage.
+        expect(setzerIn('probe.js', '/* data-note-date="x" gibt es nicht */')).toEqual([]);
+        expect(setzerIn('probe.js', '// noteDate = 1;')).toEqual([]);
+        // In der Vorlage ist der HTML-Kommentar der Kommentar, in der .js
+        // nicht — deshalb haengt die Maskierung an der Endung.
+        expect(setzerIn('p.html', '<!-- data-note-date="x" -->')).toEqual([]);
+        expect(setzerIn('p.html', '<div data-note-date="3">')).toEqual(['p.html:1']);
+        // Die lesende Abfrage faellt heraus, der Setzer nicht.
+        expect(setzerIn('probe.js', 'document.querySelector(`[data-note-date="${d}"]`);')).toEqual(
+            []
+        );
+        expect(setzerIn('probe.js', 'el.setAttribute("data-note-date", d);')).toEqual(['probe.js:1']);
+        expect(setzerIn('probe.js', 'el.dataset.noteDate = d;')).toEqual(['probe.js:1']);
+        expect(setzerIn('probe.js', '`<div data-note-date="${n.date}">`')).toEqual(['probe.js:1']);
+        // Und die Zeilennummer bleibt trotz maskierter Kommentare richtig.
+        expect(setzerIn('probe.js', '/* a\nb */\nel.dataset.noteDate = d;')).toEqual(['probe.js:3']);
     });
 
     test('zwei halbdurchsichtige Lagen decken 1-(1-a)(1-b), nicht a+b', () => {

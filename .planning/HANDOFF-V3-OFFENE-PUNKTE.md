@@ -3129,22 +3129,54 @@ begründe sie am Code".
 (Selbstprobe gegen die beiden kanonischen WCAG-Graupaare in jedem Lauf), Abstand des Hofes zu
 seiner Trägerfläche. Für die Sprungmarken als **Minimum über die vier neutralen Flächen**
 (`--bg-card`/`-dark`/`-elevated`/`-hover`), weil eine angesprungene Listenzeile an wechselnden
-Orten sitzt; für die Ringe gegen `--bg-card`, weil die Fläche dort aus dem CSS gelesen werden
-kann (Auftragskarte, Notizzettel).
+Orten sitzt; für die Ringe gegen `--bg-card` — beide Trägerflächen stehen so im CSS
+(`core.css` → `.quest-item` und `dmscreen.css` → `.session-card`, je `background: var(--bg-card)`;
+**R-22** liest sie dort nach). **Nur der erste der beiden Ringe ist auch zu sehen** — zum zweiten
+siehe den Absatz „Eine der beiden Ringstellen ist unerreichbar" unten.
 
 | Marke | | dark | light | sepia | contrast |
 | --- | --- | --: | --: | --: | --: |
-| **Sprungmarke** (4×) | heute, volles Gold | 6,01 | 2,40 | 5,16 | 9,01 |
+| **Sprungmarke** (4×) | heute, volles Gold | 6,01 | **2,40** | 5,16 | 9,01 |
 | | Planfassung, **eine** Lage `--glow-gold` (50 %) | **2,64** | **1,52** | **2,11** | 3,44 |
 | | umgesetzt: **zwei** Lagen = 75 % | 4,09 | **1,91** | 3,24 | 5,79 |
 | **Ring** (2×) | heute, volles Gold 2 px | 8,28 | 3,25 | 6,58 | 13,46 |
 | | Planfassung, `--ring-gold` allein (15 %, 3 px) | **1,32** | **1,17** | **1,26** | 13,46 |
-| | umgesetzt: Ring + Leuchte 12 px | 3,61 | **1,90** | 2,66 | 13,46 |
+| | umgesetzt: Ring + Leuchte 12 px | 3,61 | **1,90** | **2,66** | 13,46 |
 
-Die fett gesetzten Werte liegen unter **3:1**, der Schwelle, die **R-02** in diesem Projekt für
-nicht-Text durchsetzt. Die Planfassung reißt sie bei den Sprungmarken in **drei von vier**
-Themes — Dark eingeschlossen, also im Standardtheme am Spieltisch — und bei den Ringen in
-**drei von vier** mit Werten um 1,2, was nicht „schwächer" heißt, sondern unsichtbar.
+**Fett heißt: unter 3:1** — der Schwelle, die **R-02** in diesem Projekt für nicht-Text
+durchsetzt. Die Konvention gilt in **jeder** Zeile, auch in den beiden „heute"-Zeilen: nur so ist
+der Tabelle zu entnehmen, wo die Umstellung einen Wert unter die Schwelle **drückt** und wo er
+schon vorher darunter lag. Zwei Werte standen bis zur Prüfung W3-D Runde 1 unmarkiert da (2,40
+und 2,66) und sind es jetzt; **R-22** prüft die Konvention seitdem beidseitig — jeder Wert unter
+3,00 fett, jeder darüber nicht. Die Planfassung reißt die Schwelle bei den Sprungmarken in
+**drei von vier** Themes — Dark eingeschlossen, also im Standardtheme am Spieltisch — und bei
+den Ringen in **drei von vier** mit Werten um 1,2, was nicht „schwächer" heißt, sondern
+unsichtbar.
+
+**Sepia ist beim Ring der größte Sturz, und er ist ein Übertritt.** 6,58 → 2,66, Faktor **0,40**.
+Das ist etwas anderes als der schlechteste Wert der Sprungmarken in Light: dort waren 2,40 schon
+**volldeckend** unter 3, die Marke hat die Schwelle dort **nie** gehalten (D2 sagt das und
+verweist zu Recht auf die Palettenfrage). Beim Ring dagegen hielten Sepia **und** Light vorher
+(6,58 und 3,25) und halten nachher nicht mehr (2,66 und 1,90) — **diese Umstellung** setzt sie
+darunter, und Sepia am stärksten. Nur Dark bleibt mit 3,61 über der Schwelle, Contrast bleibt
+bei 13,46 unberührt. Läßt die Runde Sepia durchfallen, greift **Rücknahmestufe 3** (je Zeile) oder
+**Stufe 2** (volldeckend plus `JS_AUSNAHMEN`-Eintrag) aus der Liste weiter unten. Welche Themes
+die Sichtprobe nennen muß, rechnet **R-22** aus den Tokens und verlangt jedes namentlich in D3 —
+die erste Fassung von D3 nannte Sepia nicht.
+
+**Eine der beiden Ringstellen ist unerreichbar.** `systems/undo.js:766` wird **nie gemalt**:
+`goToNote()` sucht die Notiz über `document.querySelector('[data-note-date="…"]')`, und
+`data-note-date` kommt im **ganzen Quellbaum genau einmal** vor — in dieser Abfrage selbst. Es
+gibt keinen Setzer, kein Template, kein `setAttribute`. Die Sitzungsnotizen werden nach `n.id`
+gerendert (`features/sessions/sessions.js`, `data-id="${n.id}"`). Die Aktion feuert, `if (noteEl)`
+greift, der Zweig ist tot. Für die Runde heißt das: **die beobachtbare Ringstelle ist die
+Auftragskarte** (`ui/actions/entity-actions.js:373`), und eine ausbleibende Marke in der
+Notizsuche ist **nicht** „zu schwach", sondern „gar nicht da" (Punkt D6). Der Tokenwechsel an der
+Zeile bleibt trotzdem richtig und harmlos — er wirkt, sobald die Stelle erreichbar wird. **R-22**
+hält den Befund an den Quellbaum gebunden: solange kein Setzer da ist, muß er hier stehen; sobald
+einer kommt, verlangt die Ratsche das Gegenteil. Der fehlende Setzer selbst ist ein **eigener
+Fund für Schritt 9/10** — entweder `data-note-date` beim Rendern der Notizen setzen oder
+`goToNote()` auf `n.id` umstellen. Beides gehört nicht in Welle 3.
 
 **Was umgesetzt ist, wörtlich:**
 
@@ -3163,9 +3195,10 @@ Schritt 8 genau einmal im Test und wird von der CSS- und der JS-Prüfung geteilt
 | --: | --- | --- |
 | D1 | Die vier Sprungmarken: NSC anklicken, der auf einen Ort verweist; Querverweis in einer Wiki-Seite; Begegnung aus dem Rechner heraus anspringen | **Sieht man in den zwei Sekunden, wohin gesprungen wurde?** Das ist die eine Frage. Nicht „ist der Hof schön", sondern „finde ich die Zeile". Die Marke muss **gesucht** werden, nicht nur angesehen — wenn sie nur auffällt, weil man weiß, wo sie ist, ist sie durchgefallen. |
 | D2 | Dieselben vier in **Light** | Hier steht mit 1,91 der schlechteste Wert. **Er ist nicht die Folge der Umstellung:** `--gold` ist in Light `#b8860b` und liest schon volldeckend nur 2,40 gegen die schlechteste der vier Flächen. Die Marke hat in Light **nie** 3:1 gehalten. Fällt sie hier durch, ist die Antwort nicht eine dritte Lage, sondern ein hellerer Goldton für Light oder eine andere Markierungsform (Hintergrund, Rahmen) — eine Palettenfrage, nicht eine Schattenfrage. |
-| D3 | Die zwei Ringe in **Dark** und **Light**: Auftrag aus einem Verweis anspringen; Notiz aus der Notizsuche anspringen | Der Ring ist von 8,28 auf 3,61 (dark) bzw. 3,25 auf 1,90 (light) gefallen — das ist selbst **mit** der Verstärkung die stärkste Abschwächung der ganzen Einheit. Reicht Ring plus Hof, oder muss die Marke voll deckend bleiben? |
-| D4 | Beide Ringe in **Contrast** | Dort ist `--ring-gold` volles Gold: der Wert bleibt 13,46, nur die **Dicke** wächst 2 → 3 px. Wirkt der Ring dort jetzt zu fett neben dem `border` des Kastens? |
+| D3 | Der Ring an der **Auftragskarte** (Auftrag aus einem Verweis anspringen) in **Dark**, **Light** UND **Sepia** | Der Ring ist von 8,28 auf 3,61 (dark), 3,25 auf 1,90 (light) und 6,58 auf **2,66** (sepia) gefallen — das ist selbst **mit** der Verstärkung die stärkste Abschwächung der ganzen Einheit. **Sepia ist mit Faktor 0,40 der größte Sturz und gehört deshalb ausdrücklich dazu**; Light und Sepia treten dabei von „hält" zu „hält nicht" über (siehe den Absatz über der Tabelle). Reicht Ring plus Hof, oder muss die Marke voll deckend bleiben? |
+| D4 | Der Ring an der Auftragskarte in **Contrast** | Dort ist `--ring-gold` volles Gold: der Wert bleibt 13,46, nur die **Dicke** wächst 2 → 3 px. Wirkt der Ring dort jetzt zu fett neben dem `border` des Kastens? |
 | D5 | `entity-links.js` — die Marke des Querverweis-Systems | Sie ist die einzige der vier, die zusätzlich `transform: scale(1.02)` setzt, also die robusteste. Wenn **diese** in einem Theme nicht auffällt, fallen die anderen drei dort sicher durch. Guter Prüfeinstieg. |
+| D6 | **Kein Sichtpunkt:** die Notizsuche (`systems/undo.js:766`) | Diese Ringstelle ist **unerreichbar** — nicht anzuschauen, weil sie nicht gemalt wird (Beleg im Absatz „Eine der beiden Ringstellen ist unerreichbar"). Wer hier keine Marke sieht, hat **nichts** über die Stärke der Marke gelernt. Die Zeile steht nur zur Kenntnis in der Liste, damit sie nicht als übersehene Sichtprobe gilt. |
 
 **Der Rücknahmeweg, falls die Runde widerspricht.** Drei Stufen, jede billig:
 
