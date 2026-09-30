@@ -1344,11 +1344,15 @@ describe('U4 — der Vertrag der Modal-Schale (Ratsche)', () => {
         // ui/actions/*.js registriert — das x schliesst nichts (nachgeklickt).
         // Das ist ein eigener Vorgang mit eigenem roten Nachweis; hier steht
         // es, damit es nicht verloren geht. Diese Liste darf nur KUERZER werden.
-        const KARTE_GEFUEHRT = ['session-prep-render.js'];
+        // Der Pfad steht bewusst in AUSFUEHRBAREM Code und nicht nur im
+        // Erklaertext: nur so ist das Modul im Sinne von
+        // tests/unit/module-test-coverage.test.js wirklich beurteilt (dieselbe
+        // Unterscheidung wie bei R-07/R-09 am 2026-09-28).
+        const KARTE_GEFUEHRT = ['features/session-prep/session-prep-render.js'];
         const ohne = sourceJs()
             .filter(f => /class=(["'])[^"']*\bmodal-overlay\b[^"']*\1/.test(f.content))
             .filter(f => !/class=(["'])modal(?:\s[^"']*)?\1/.test(f.content))
-            .map(f => path.basename(f.name));
+            .map(f => path.relative(REPO, f.name).split(path.sep).join('/'));
         expect(ohne.sort()).toEqual([...KARTE_GEFUEHRT].sort());
     });
 });

@@ -212,7 +212,15 @@ const MODULE_TEST_EXCEPTIONS = [
     'features/render-spells.js',
     'features/rest-manager.js',
     'features/session-prep/session-prep-crud.js',
-    'features/session-prep/session-prep-render.js',
+    // 2026-10-01, U4: 'features/session-prep/session-prep-render.js'
+    // GESTRICHEN, die Liste schrumpft um eins. Der sechste Fall der
+    // U4-Beschreibung in tests/unit/design-consistency.test.js liest das Modul
+    // und beurteilt es namentlich: es ist die eine gefuehrte Abweichung von
+    // "jede Modal-Schale traegt eine Karte mit der Klasse modal" (seine Karte
+    // heisst `modal-content modal-large`). Der Pfad steht dort in
+    // AUSFUEHRBAREM Code, nicht im Erklaertext — dieselbe Unterscheidung, die
+    // der Eintrag vom 2026-09-28 fuer bestiary-render.js/locations-render.js
+    // festhaelt.
     'features/sessions/sessions.js',
     'features/shops/links.js',
     // -- 2026-09-30, Welle 3 Schritt 8: 'features/shops/shop-export.js' ist hier
