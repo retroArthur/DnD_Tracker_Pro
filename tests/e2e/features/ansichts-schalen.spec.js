@@ -245,4 +245,130 @@ test.describe('Ansichts-Schalen (U1)', () => {
         );
         expect(abweichungen, abweichungen.join(' | ')).toEqual([]);
     });
+
+    /* DIE MESSUNG, DIE DEN KOMMENTAR AN `.enc-view.active` TRAEGT.
+       encounters.css fuehrt dort `overflow: hidden`; vor der Korrektur stand da
+       `overflow-y: auto`. Der Kommentar an der Regel behauptete, das `auto` sei
+       der einzige Grund gewesen, warum die Begegnungsliste ueberhaupt scrollte,
+       und haette die Korrektur "ins Gegenteil verkehrt". Das ist falsch, und
+       genau diese Probe zeigt es: die Deklaration ZURUECKGENOMMEN, alles andere
+       wie ausgeliefert — der letzte von 24 Eintraegen bleibt per Mausrad
+       erreichbar und anklickbar, und Raster, Master und Detail liegen auf dem
+       Pixel dort, wo sie ohne die Ruecknahme liegen. Tragend ist stattdessen das
+       Paar in core.css (`grid-template-rows: minmax(0, 1fr)` am Raster,
+       `height: 100%` am Detail): fehlen BEIDE, liegt der letzte Eintrag bei
+       top=805px in einem 720px hohen Fenster.
+
+       Eine Behauptung dieser Art gehoert nicht in einen Kommentar allein — sie
+       gehoert hierher, wo sie nachgemessen wird. Der Gegenpart dazu ist
+       tests/unit/schalen-aktenlage.test.js: er haelt den Kommentartext auf dem,
+       was diese Probe hergibt. */
+    test('die aeussere overflow-Deklaration der Begegnungsschale entscheidet die Erreichbarkeit nicht', async ({
+        page
+    }) => {
+        const LISTE = '#encounter-list';
+
+        /** Setzt den Scrollstand zurueck, fuehrt das Mausrad und misst. */
+        async function messen(page) {
+            // Das Zuruecksetzen per scrollTop ist hier KEIN Erreichbarkeits-
+            // beweis, sondern nur die Ausgangslage fuer den Mausradlauf.
+            await page.evaluate(() => {
+                document.scrollingElement.scrollTop = 0;
+                document
+                    .querySelectorAll('#view-encounter, .enc-layout, .enc-master')
+                    .forEach(e => {
+                        e.scrollTop = 0;
+                    });
+            });
+            await page.waitForTimeout(200);
+            const kasten = await page.locator(LISTE).boundingBox();
+            const mx = Math.min(
+                Math.max(kasten.x + kasten.width / 2, 5),
+                page.viewportSize().width - 5
+            );
+            await page.mouse.move(mx, Math.round(page.viewportSize().height / 2));
+            for (let i = 0; i < 60; i++) await page.mouse.wheel(0, 400);
+            await page.waitForTimeout(400);
+            return page.evaluate(sel => {
+                const kante = s => {
+                    const el = document.querySelector(s);
+                    if (!el) return null;
+                    const r = el.getBoundingClientRect();
+                    return `${Math.round(r.top)}..${Math.round(r.bottom)}`;
+                };
+                const posten = Array.from(document.querySelector(sel).children);
+                const letzter = posten[posten.length - 1];
+                const r = letzter.getBoundingClientRect();
+                const imFenster = r.top < window.innerHeight && r.bottom > 0 && r.height > 0;
+                const px = Math.round(r.left + Math.min(r.width, window.innerWidth - r.left) / 2);
+                const py =
+                    Math.round(
+                        Math.max(r.top, 0) +
+                            Math.min(r.bottom, window.innerHeight - 1) -
+                            Math.max(r.top, 0)
+                    ) - 4;
+                const getroffen = imFenster ? document.elementFromPoint(px, py) : null;
+                return {
+                    n: posten.length,
+                    letzter: `${Math.round(r.top)}..${Math.round(r.bottom)}`,
+                    imFenster,
+                    anklickbar: !!(
+                        getroffen &&
+                        (letzter === getroffen || letzter.contains(getroffen))
+                    ),
+                    geometrie: {
+                        raster: kante('.enc-layout'),
+                        master: kante('.enc-master'),
+                        detail: kante('.enc-detail')
+                    }
+                };
+            }, LISTE);
+        }
+
+        await appLaden(page);
+        await reiterWechseln(page, 'encounter');
+        expect(await page.evaluate(sel => document.querySelector(sel).children.length, LISTE)).toBe(
+            ANZAHL
+        );
+
+        const mitHidden = await messen(page);
+        console.log(`[U1] Begegnungen mit overflow:hidden: ${JSON.stringify(mitHidden)}`);
+
+        /* Zurueck auf die Fassung vor der Korrektur. Ein spaeter in den Kopf
+           eingefuegtes Stylesheet gewinnt bei gleicher Spezifitaet; `visible`
+           vor `overflow-y` reicht, weil der Browser die sichtbare Achse neben
+           einer scrollenden auf `auto` anhebt — genau der Rechenstand von
+           `overflow-y: auto` allein. */
+        await page.evaluate(() => {
+            const s = document.createElement('style');
+            s.id = 'u1-probe-enc-overflow';
+            s.textContent = '.enc-view.active { overflow: visible; overflow-y: auto; }';
+            document.head.appendChild(s);
+        });
+        const gerechnet = await page.evaluate(() => {
+            const cs = getComputedStyle(document.getElementById('view-encounter'));
+            return [cs.overflowX, cs.overflowY];
+        });
+        // Gegenprobe: ohne diese Zeile misst der Rest des Tests nichts.
+        expect(gerechnet, 'die Probe muss die Deklaration wirklich zuruecknehmen').toEqual([
+            'auto',
+            'auto'
+        ]);
+
+        const mitAuto = await messen(page);
+        console.log(`[U1] Begegnungen mit overflow-y:auto: ${JSON.stringify(mitAuto)}`);
+
+        expect(
+            mitAuto.imFenster,
+            `letzter Eintrag liegt mit overflow-y:auto bei ${mitAuto.letzter}`
+        ).toBe(true);
+        expect(mitAuto.anklickbar, 'letzter Eintrag liegt mit overflow-y:auto nicht obenauf').toBe(
+            true
+        );
+        expect(
+            mitAuto.geometrie,
+            'Raster, Master und Detail muessen auf dem Pixel gleich liegen'
+        ).toEqual(mitHidden.geometrie);
+        expect(mitAuto.letzter).toBe(mitHidden.letzter);
+    });
 });
