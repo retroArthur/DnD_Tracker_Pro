@@ -980,13 +980,13 @@
         
         /* Button Glow */
         .btn:hover {
-            box-shadow: 0 0 12px rgba(212, 175, 55, 0.25);
+            box-shadow: 0 0 12px var(--glow-gold);
             background: var(--gold); /* F-18: aus der Dublette uebernommen */
             color: var(--on-gold); /* F-18: aus der Dublette uebernommen */
         }
         
         .btn-success:hover {
-            box-shadow: 0 0 12px rgba(74, 222, 128, 0.25);
+            box-shadow: 0 0 12px var(--glow-green);
             background: var(--green-dim); /* F-18: aus der Dublette uebernommen */
             border-color: var(--green-dim); /* F-18: aus der Dublette uebernommen */
             /* Tinte wechselt mit der Flaeche (R-03): --green-dim ist eine
@@ -997,7 +997,7 @@
         }
         
         .btn-danger:hover {
-            box-shadow: 0 0 12px rgba(239, 68, 68, 0.25);
+            box-shadow: 0 0 12px var(--glow-red);
             background: var(--red); /* F-18: aus der Dublette uebernommen */
             color: var(--on-red); /* F-18: aus der Dublette uebernommen */
         }
