@@ -7168,18 +7168,27 @@ describe('R-19 — Schatten nur aus Tokens (Ratsche)', () => {
         });
     });
 
+    /** Die erlaubten Formen einer Schattenlage.
+     *
+     *  SIE STEHT IM describe-RUMPF UND NICHT MEHR IM TEST, seit Teil (5)
+     *  dazugekommen ist (Schritt 8): die JS-Pruefung muss WORTGLEICH dieselbe
+     *  Form verlangen wie die CSS-Pruefung. Zwei Kopien derselben Liste waeren
+     *  genau die Stelle, an der die beiden Geltungsbereiche auseinanderlaufen
+     *  — und zwar lautlos, weil beide Tests dann fuer sich gruen bleiben.
+     *  Inhaltlich unveraendert gegenueber der Fassung im Test. */
+    const ERLAUBT = [
+        /^var\(--shadow-[123]\)$/,
+        /^var\(--shadow-drawer\)$/,
+        /^var\(--ring-gold\)$/,
+        /^0 0 \d+px var\(--glow-(gold|yellow|green|red)\)$/,
+        /^none(\s+!important)?$/
+    ];
+
     /* -------------------------------------------------------------------
        TEIL (1) — Form. Ohne Teil (2) waere sie auch dann gruen, wenn jede
        Stelle auf derselben Stufe landete.
        ------------------------------------------------------------------- */
     test('jede Lage jeder box-shadow-Deklaration hat eine erlaubte Form', () => {
-        const ERLAUBT = [
-            /^var\(--shadow-[123]\)$/,
-            /^var\(--shadow-drawer\)$/,
-            /^var\(--ring-gold\)$/,
-            /^0 0 \d+px var\(--glow-(gold|yellow|green|red)\)$/,
-            /^none(\s+!important)?$/
-        ];
         const offen = [];
         lagen().forEach(l => {
             if (ausnahmeZu(l)) return;
@@ -7262,6 +7271,165 @@ describe('R-19 — Schatten nur aus Tokens (Ratsche)', () => {
         });
         expect(offen.sort()).toEqual([]);
         expect(AUSNAHMEN.length).toBe(14);
+    });
+
+    /* -------------------------------------------------------------------
+       TEIL (5) — DER GELTUNGSBEREICH JAVASCRIPT (Schritt 8, W3-D-05).
+
+       WARUM SIE NOETIG IST, und zwar genau HIER und nicht als eigener Block.
+       Welle 2 hat JavaScript ausdruecklich ausgeschlossen (E5). Bliebe es
+       auch fuer Welle 3 draussen, waere R-19 nach Schritt 7 GRUEN, waehrend
+       sechs goldene Inline-Schatten daneben weiterleben — die Ratsche
+       behauptete dann mehr, als sie prueft. Das ist dieselbe Klasse Fehler,
+       die in Welle 2 die Lehre "Gate existiert != Gate laeuft" erzeugt hat,
+       und sie waere hier besonders teuer: die Goldfamilie waere zur Haelfte
+       im Tokensystem und zur Haelfte nicht, ohne dass irgendetwas anschlaegt.
+
+       Sie steht in R-19 und nicht daneben, weil sie DIESELBE Frage stellt
+       ("traegt diese Schattenlage eine erlaubte Form?") und darum auch
+       dieselbe Antwort benutzen muss: `ERLAUBT` ist aus dem Teil-(1)-Test in
+       den describe-Rumpf gehoben, damit es die Liste genau einmal gibt.
+
+       Das Verfahren ist im Haus vorhanden: R-09 ("die Ortsfarben aus dem JS")
+       und R-16 ("Tinte auf JS-gesetzter Flaeche") lesen bereits JS-Quellen.
+       Gelesen wird ueber `sourceJs()`, also dieselben sechs Quellordner
+       (features, systems, ui, core, render, utils) — Werkzeuge und Tests
+       bleiben aussen vor.
+
+       ZWEI SCHREIBWEISEN, und beide muessen mit. `.style.boxShadow = '…'` ist
+       die eine; die drei Ausnahmen unten sind die andere, naemlich
+       `box-shadow:` in einer CSS-Zeichenkette. Wuerde nur die erste geprueft,
+       waere die Ausnahmeliste eine Behauptung ohne Gegenstand: die drei
+       Stellen kaemen in der Urteilsmenge gar nicht vor, und "geschlossen"
+       hiesse nichts. Deshalb werden beide gesammelt und beide beurteilt.
+
+       DIE GEMESSENEN AUSGANGSWERTE bei der Geburt dieses Teils (HEAD 7976375,
+       Befehl `grep -rn "boxShadow" features/ ui/ systems/ core/ render/
+       utils/ | grep -v transition` und `grep -rn "box-shadow" …`):
+
+           6   `.style.boxShadow`-Zuweisungen mit einem Wert — alle sechs ROT
+               4x `0 0 20px var(--gold)`   Sprungmarken:
+                   features/encounters/encounters-render.js:520
+                   features/locations/locations-render.js:360
+                   features/npcs/npc-render.js:382
+                   systems/entity-links.js:430
+               2x `0 0 0 2px var(--gold)`  Ringe mit Ruecknahme nach 2000 ms:
+                   ui/actions/entity-actions.js:362
+                   systems/undo.js:756
+           6   `.style.boxShadow = ''` — die Ruecknahmen, erlaubt
+           3   `box-shadow:` in CSS-Zeichenketten — die drei Ausnahmen
+           3   `transition = 'box-shadow …'` — keine Schattenwerte, kein Fall
+
+       `var(--gold)` ist ein Token, aber kein SCHATTENtoken: es traegt eine
+       Farbe und keine Lage, und es ist volldeckend. Genau daran haengt die
+       ganze Frage von Schritt 8 — siehe die Begruendung an den sechs Stellen
+       selbst.
+       ------------------------------------------------------------------- */
+
+    /** Die drei Stellen, an denen ein Schatten im JavaScript ein Literal
+     *  bleiben DARF. Namentlich, mit Grund, und jede wird genau einmal
+     *  getroffen — dieselbe Zucht wie bei AUSNAHMEN oben, und aus demselben
+     *  Grund: eine Ausnahme, die ins Leere zeigt, ist Altlast. */
+    const JS_AUSNAHMEN = [
+        {
+            datei: 'features/shops/shop-export.js',
+            zeile: 292,
+            wert: '0 4px 6px rgba(0,0,0,0.1)',
+            grund:
+                'eigenstaendiges Handout-Dokument — die Datei erzeugt eine HTML-Datei ' +
+                'zum Ausdrucken, die ohne die Variablen der App auskommen muss'
+        },
+        {
+            datei: 'features/shops/shop-export.js',
+            zeile: 486,
+            wert: 'none',
+            grund: 'Druckregel desselben Handouts'
+        },
+        {
+            datei: 'utils/utilities.js',
+            zeile: 707,
+            wert: '0 4px 12px rgba(0,0,0,0.15)',
+            grund:
+                'Notfall-Toast (der Alt-#toast aus W2-E-05) — eine Inline-Stilzeichenkette, ' +
+                'die laeuft, wenn die App schon halb steht; ein var() koennte dort leer sein'
+        }
+    ];
+
+    /** Alle Schattenstellen im JavaScript, in beiden Schreibweisen, mit
+     *  Datei, Zeile und Wert. */
+    function jsSchatten() {
+        const out = [];
+        sourceJs().forEach(f => {
+            const rel = path.relative(REPO, f.name).split(path.sep).join('/');
+            const zeileVon = idx => f.content.slice(0, idx).split('\n').length;
+
+            /* (a) `el.style.boxShadow = '<wert>'` — auch ueber eine
+                   Klammer hinweg, wie in `(el.style.boxShadow = '')`. */
+            for (const m of f.content.matchAll(
+                /\.style\.boxShadow\s*=\s*(['"`])([\s\S]*?)\1/g
+            )) {
+                out.push({ datei: rel, zeile: zeileVon(m.index), wert: m[2].trim(), art: 'zuweisung' });
+            }
+
+            /* (b) `box-shadow: <wert>` in einer Zeichenkette. Der Wert laeuft
+                   bis zum Semikolon oder zum Zeilenende. `transition:
+                   box-shadow 0.3s` faellt NICHT darunter (dort folgt dem Wort
+                   kein Doppelpunkt) — genau deshalb steht der Doppelpunkt im
+                   Muster und nicht nur das Wort. */
+            for (const m of f.content.matchAll(/box-shadow\s*:\s*([^;\n]*)/g)) {
+                out.push({ datei: rel, zeile: zeileVon(m.index), wert: m[1].trim(), art: 'zeichenkette' });
+            }
+        });
+        return out;
+    }
+
+    test('keine JS-Stelle setzt einen Schatten aus einem Literal oder Nicht-Schattentoken', () => {
+        const stellen = jsSchatten();
+
+        /* Gegenprobe gegen eine gruene, leere Ratsche: findet der Sammler
+           nichts, prueft die Schleife ueber Leerlauf und meldet Erfolg.
+           Zwoelf Zuweisungen sind der gemessene Bestand (6 Werte + 6
+           Ruecknahmen); unter zehn ist der Sammler kaputt, nicht der Baum. */
+        expect(stellen.filter(s => s.art === 'zuweisung').length).toBeGreaterThanOrEqual(10);
+
+        const getroffen = new Map();
+        const offen = [];
+        stellen.forEach(s => {
+            const a = JS_AUSNAHMEN.find(x => x.datei === s.datei && x.wert === s.wert);
+            if (a) {
+                const k = `${a.datei}:${a.zeile}`;
+                getroffen.set(k, (getroffen.get(k) || 0) + 1);
+                /* Kein Zeilenanker ohne Wertabgleich — dieselbe Regel wie
+                   beim Ankertest oben. Wandert die Zeile, sagt die Meldung
+                   die neue Nummer. */
+                if (s.zeile !== a.zeile) {
+                    offen.push(
+                        `JS-AUSNAHME ${a.datei} "${a.wert}" — Anker ${a.zeile}, gefunden ${s.zeile}`
+                    );
+                }
+                return;
+            }
+            if (s.wert === '') return; /* die Ruecknahme */
+            const ok = lagenVon(s.wert).every(l => ERLAUBT.some(re => re.test(l)));
+            if (ok) return;
+            offen.push(`${s.datei}:${s.zeile} [${s.art}] "${s.wert}"`);
+        });
+
+        JS_AUSNAHMEN.forEach(a => {
+            const ist = getroffen.get(`${a.datei}:${a.zeile}`) || 0;
+            if (ist !== 1) {
+                offen.push(
+                    `JS-AUSNAHME ${a.datei}:${a.zeile} — ${ist}x getroffen, erwartet genau 1x ` +
+                        `("${a.wert}", ${a.grund})`
+                );
+            }
+        });
+
+        expect({ anzahl: offen.length, stichprobe: offen.slice(0, 12) }).toEqual({
+            anzahl: R19_ZIEL,
+            stichprobe: []
+        });
+        expect(JS_AUSNAHMEN.length).toBe(3);
     });
 
     /* -------------------------------------------------------------------
