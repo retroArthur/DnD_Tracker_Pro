@@ -323,6 +323,25 @@
                unangetastet. Die Begruendung steht an der Regel in
                dashboard.css.
 
+               DIE ZWEI FLAECHEN, JE FUER SICH GERECHNET (Welle 3 Schritt 9,
+               W1-B-01). Das Minimum ueber alle sechs Tokens, dark light sepia
+               contrast:
+               R-23: W1-B-01 Attributfarben auf --bg-dark    5,04 · 5,66 · 4,98 · 5,25
+               R-23: W1-B-01 Attributfarben auf --bg-card    4,52 · 6,17 · 5,81 · 4,72
+               R-23 rechnet beide Reihen bei jedem Lauf nach und liest die sechs
+               Tokennamen dafuer aus den .dms-attr-item-Regeln, statt sie zu
+               tippen.
+
+               WICHTIG, WEIL DREI PLAENE DIESER WELLE ES ANDERS GEFUEHRT HABEN:
+               die 4,52 gehoeren NICHT zu .dms-attr-item. Sie sind --attr-wis
+               gegen --bg-card, also die Schnellreferenz-Zeile .qref-row. Auf
+               der Flaeche von .dms-attr-item (--bg-dark) haelt --attr-wis in
+               Dark 5,04; der knappste Wert dort ist --attr-dex in Sepia mit
+               4,98. Wer eine Hoehenstufe als INSET auf eine dieser Flaechen
+               legt, verschiebt also zwei verschiedene Reihen, und die engere
+               liegt bei .qref-row. Heute traegt keine der beiden Regeln einen
+               box-shadow — R-23 Teil (6) haelt das fest.
+
                In Dark bleibt alles wie bisher bis auf --attr-wis: #a855f7
                erreichte 4,40 gegen --bg-card, #aa58f7 erreicht 4,52 bei
                identischem Farbton (271 Grad). Light und Sepia sind dagegen
@@ -1317,8 +1336,43 @@
            NUR DIESE SECHS, so angeordnet von E4. Die neun Tokens derselben
            Bauart aus Schritt 3 (--overlay-faint/-weak/-mid/-strong/-heavy,
            --scrim-60/-70/-75/-85) bleiben ungesichert; R-13 in
-           tests/unit/design-consistency.test.js fuehrt sie als Inventar,
-           .planning/HANDOFF-V3-OFFENE-PUNKTE.md als offenen Punkt.
+           tests/unit/design-consistency.test.js fuehrt sie als Inventar.
+
+           DAS BLEIBT SO, UND SEIT WELLE 3 SCHRITT 9 IST ES ENTSCHIEDEN statt
+           offen (W2-B-05). Der Bestand, gezaehlt: 9 Definitionen, 22 echte
+           var()-Nutzungen (23 Rohtreffer, einer davon eine Nennung im
+           Kommentar von tools.css), davon 6 Modalblenden. Faellt eine Blende
+           aus, ist der Dialog nicht blass, sondern ohne Abdunklung — das ist
+           der schwerste denkbare Fall dieser Klasse und der Grund, warum der
+           Punkt so lange offen stand.
+
+           WARUM TROTZDEM KEIN RUECKFALL. Zwei Gruende, der erste gemessen,
+           der zweite gerechnet.
+
+           (1) Dieser Zweig feuert oberhalb des Browserbodens nirgends (siehe
+               Absatz "ERREICHBARKEIT" unten). Er kauft also nichts fuer
+               irgendeinen Browser, den dieses Projekt als Ziel fuehrt.
+
+           (2) Der einzige EXAKTE Rueckfall fuer diese neun ist ein
+               rgba()-Tripel — sie tragen keine Rolle, auf die man zeigen
+               koennte, sondern sind absichtlich themenblindes Weiss bzw.
+               Schwarz (Absatz oben). Ein Rollenrueckfall wie bei den sechs ist
+               hier also gar nicht moeglich, und ein deckendes #fff waere dort,
+               wo der Zweig feuert, aktiv falsch: eine 2-%-Auflage wuerde zur
+               weissen Flaeche. Der Preis des rgba-Wegs ist NACHGEMESSEN und
+               nicht geschaetzt: die neun Zeilen probehalber eingesetzt, dann
+               R-10 und R-13 gefahren. R-10 geht rot, weil die Zahl der
+               rgba()-Tripel dieser Datei hart auf 12 gepinnt ist und auf 21
+               steigt; R-13 geht zweimal rot, weil die Inventarliste von 13 auf
+               4 faellt und der Zweig statt 6 dann 15 Tokens fuehrt. Drei
+               Zusicherungen in zwei Ratschen also, deren Zweck genau dieses
+               Sichtbarmachen ist — fuer einen Gurt an einem Traeger, den kein
+               Zielbrowser braucht.
+
+           Der Weg ZURUECK ist damit genau beziffert und kostet neun Zeilen in
+           diesem Zweig plus die drei Zahlen 12 -> 21 (R-10), 13 -> 4 und
+           6 -> 15 (R-13). R-13 haelt die neun weiter als Inventar, die Klasse
+           kann also nicht lautlos wachsen.
 
            ERREICHBARKEIT, ehrlich beziffert: mit dem in DEVELOPMENT.md
            aufgeschriebenen Browserboden feuert dieser Zweig nirgends. Der
